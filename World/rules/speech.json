@@ -1,0 +1,50 @@
+{
+ "note": "How a resident's face moves while they speak a line (CHR-007 control set, CHR-008 expressions, CHR-009 lip sync timed from the line's text per Q-14, ANIM-006 nods). Values are from docs/art/CHARACTER_FACE.md §2-§4 and Art/Reference/face_mouth_shapes.png, face_expressions.png, face_talk.mp4: metres on a head of natural size. 'draw' is the larger-than-life scale the mouth is drawn at (CHARACTER_FACE §1). Checked by Tools/worldgen/test_world.py.",
+ "draw": { "width": 1.3, "opening": 1.25 },
+ "shapes": {
+  "rest":  { "width": 0.0175, "opening": 0.0011, "round": 0,   "teeth": 0, "tongue": false, "curve": 0.15 },
+  "MBP":   { "width": 0.0150, "opening": 0.0006, "round": 0.5, "teeth": 0, "tongue": false },
+  "AA":    { "width": 0.0165, "opening": 0.0115, "round": 0,   "teeth": 2, "tongue": true },
+  "EH":    { "width": 0.0185, "opening": 0.0075, "round": 0,   "teeth": 2, "tongue": true },
+  "EE":    { "width": 0.0215, "opening": 0.0048, "round": 0,   "teeth": 2, "tongue": false },
+  "OH":    { "width": 0.0110, "opening": 0.0105, "round": 0.8, "teeth": 0, "tongue": false },
+  "OO":    { "width": 0.0070, "opening": 0.0060, "round": 1,   "teeth": 0, "tongue": false },
+  "FV":    { "width": 0.0160, "opening": 0.0045, "round": 0,   "teeth": 1, "tongue": false },
+  "smile": { "width": 0.0200, "opening": 0.0012, "round": 0,   "teeth": 0, "tongue": false, "curve": 0.4 }
+ },
+ "expressions": {
+  "neutral":   { "mouth": "rest", "curve": 0, "brow_l": [0, 0], "brow_r": [0, 0], "lid": 0, "squint": 0, "open": 1, "gaze": [0, 0] },
+  "happy":     { "mouth": { "width": 0.0200, "opening": 0.0060, "round": 0, "teeth": 1, "tongue": false }, "curve": 0.55, "brow_l": [0.004, 0.005], "brow_r": [0.004, 0.005], "lid": 0, "squint": 0.5, "open": 1, "gaze": [0, 0] },
+  "sad":       { "mouth": { "width": 0.0140, "opening": 0.0006, "round": 0, "teeth": 0, "tongue": false }, "curve": -0.6, "brow_l": [0.008, -0.006], "brow_r": [0.008, -0.006], "lid": 0.3, "squint": 0, "open": 1, "gaze": [0, -0.003] },
+  "angry":     { "mouth": { "width": 0.0180, "opening": 0.0034, "round": 0, "teeth": 2, "tongue": false }, "curve": -0.35, "brow_l": [-0.010, 0.002], "brow_r": [-0.010, 0.002], "lid": 0.14, "squint": 0.3, "open": 1, "gaze": [0, 0] },
+  "surprised": { "mouth": "OH", "curve": 0, "brow_l": [0.010, 0.008], "brow_r": [0.010, 0.008], "lid": 0, "squint": 0, "open": 1.15, "gaze": [0, 0] },
+  "thinking":  { "mouth": { "width": 0.0120, "opening": 0.0008, "round": 0.4, "teeth": 0, "tongue": false }, "curve": 0, "brow_l": [-0.003, -0.002], "brow_r": [0.008, 0.006], "lid": 0, "squint": 0.2, "open": 1, "gaze": [0.003, 0.003] }
+ },
+ "timing": {
+  "fps": 12,
+  "frames": { "quick": 1, "normal": 2, "stressed": 3 },
+  "stressed_shapes": ["AA", "OH"],
+  "stressed_word_letters": 4,
+  "pauses": { ".": 0.4, "!": 0.4, "?": 0.4, ",": 0.2, ";": 0.3, ":": 0.3, "—": 0.3 },
+  "end": { "happy": "smile", "default": "rest" },
+  "blend": { "mouth": 18, "expression": 5 }
+ },
+ "text": {
+  "vowels": "aeiouy",
+  "digraphs": { "oo": "OO", "ee": "EE", "ea": "EE", "ou": "OH", "ow": "OH", "aw": "OH", "ph": "FV", "wh": "OO", "qu": "OO", "th": "EE", "sh": "EE", "ch": "EE" },
+  "letters": {
+   "a": "AA", "e": "EH", "i": "EE", "o": "OH", "u": "EH", "y": "EE",
+   "m": "MBP", "b": "MBP", "p": "MBP", "f": "FV", "v": "FV", "w": "OO", "r": "OO", "q": "OO",
+   "c": "EE", "d": "EE", "g": "EE", "j": "EE", "k": "EE", "l": "EH", "n": "EE", "s": "EE", "t": "EE", "x": "EE", "z": "EE", "h": null
+  }
+ },
+ "accents": {
+  "line_start_brow": 0.003,
+  "line_start_seconds": 0.6,
+  "question_brow": 0.006,
+  "question_seconds": 0.6,
+  "stressed_word_letters": 6,
+  "nod": 0.07,
+  "nod_seconds": 0.3
+ }
+}

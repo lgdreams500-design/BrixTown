@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 9 of 27 | 9 of 27 | 9 of 27 |
-| Size of the plan (points) | 135 | 207 | 437 |
-| Size of the suggested plan | 68 | 167 | 405 |
+| Decided | 10 of 28 | 9 of 28 | 9 of 28 |
+| Size of the plan (points) | 146 | 218 | 448 |
+| Size of the suggested plan | 68 | 178 | 416 |
 
 ## City and buildings
 
@@ -32,6 +32,7 @@
 | **Week and calendar** `F-NPC-WEEK` | undecided | undecided | undecided |  |
 | **Loading people as you arrive** `F-NPC-LOAD` | 1 Placed by routine | 1 Placed by routine ★ | 2 Distance tiers | Placed by routine, then distance tiers in the full game (owner, 2026-11-22). |
 | **Talking with residents** `F-NPC-TALK` | 1 Dialogue ★ | 1 Dialogue | 2 Residents talk to each other | Owner, 2026-11-22: "Slice 1, depth 1, full 2" (conversations with choices from the first slice). |
+| **Faces while talking** `F-NPC-SPEECH` | 2 Lip sync ★ | undecided | undecided | Owner, 2026-11-22: "Yes, level 2 now" (lip sync timed from the line's text, in the first slice). Later milestones not stated. |
 | **Reacting to the world** `F-NPC-REACT` | undecided | undecided | undecided |  |
 | **Animals** `F-ANIMALS` | undecided | undecided | undecided |  |
 
@@ -132,6 +133,11 @@
 - 0 Greetings: People say a line as you pass. Size S.
 - 1 Dialogue: Conversations with choices and outcomes, standing or walking. Size L.
 - 2 Residents talk to each other: People chat among themselves and news spreads. Size L.
+
+**Faces while talking** (`F-NPC-SPEECH`). Whether a speaker's mouth and face move with what they say.
+- 0 Still faces: The line shows as text; the face keeps its resting mouth. Size -.
+- 1 Talking mouth: The speaker's mouth opens and closes in the rhythm of the line's text while it shows, and the face takes the line's mood. Size M.
+- 2 Lip sync: Mouth shapes timed to each sound of the line (from its text, or from voice if Q-14 says so), expressions blended over time, nods and glances on stressed words. Size L.
 
 **Reacting to the world** (`F-NPC-REACT`). Whether people notice rain, night and you.
 - 0 No reaction: People ignore weather and time. Size -.

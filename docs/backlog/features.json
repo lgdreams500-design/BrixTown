@@ -655,6 +655,50 @@
       }
     },
     {
+      "id": "F-NPC-SPEECH",
+      "area": "people",
+      "title": "Faces while talking",
+      "why": "Whether a speaker's mouth and face move with what they say.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "CHR-007",
+        "CHR-008",
+        "CHR-009",
+        "ANIM-006"
+      ],
+      "levels": [
+        {
+          "name": "Still faces",
+          "what": "The line shows as text; the face keeps its resting mouth.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Talking mouth",
+          "what": "The speaker's mouth opens and closes in the rhythm of the line's text while it shows, and the face takes the line's mood.",
+          "effort": "M",
+          "needs": {
+            "F-NPC-TALK": 1
+          }
+        },
+        {
+          "name": "Lip sync",
+          "what": "Mouth shapes timed to each sound of the line (from its text, or from voice if Q-14 says so), expressions blended over time, nods and glances on stressed words.",
+          "effort": "L",
+          "needs": {
+            "F-NPC-TALK": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
       "id": "F-NPC-REACT",
       "area": "people",
       "title": "Reacting to the world",

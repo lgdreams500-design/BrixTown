@@ -136,5 +136,31 @@ class TheDialogue(unittest.TestCase):
         self.assertTrue(any("lonely: the talk can never end" in x for x in p))
 
 
+class TheFaces(unittest.TestCase):
+    """CHR-007, CHR-008, CHR-009: mouth shapes, expressions and lip sync rules (World/rules/speech.json)."""
+
+    def test_CHR_009_speech_rules_are_sound(self):
+        self.assertEqual(world.speech_problems(W), [])
+
+    def test_CHR_007_mouth_shapes_match_the_face_document(self):
+        sh = W["speech"]["shapes"]
+        self.assertEqual((sh["AA"]["width"], sh["AA"]["opening"]), (0.0165, 0.0115))       # CHARACTER_FACE §2
+        self.assertEqual((sh["OO"]["width"], sh["OO"]["round"]), (0.0070, 1))
+        self.assertLess(sh["MBP"]["opening"], sh["rest"]["opening"])                       # lips pressed
+
+    def test_CHR_008_every_dialogue_mood_has_a_face(self):
+        moods = {n["mood"] for c in W["dialogue"]["conversations"].values() for n in c["nodes"].values()}
+        self.assertTrue(moods <= set(W["speech"]["expressions"]))
+
+    def test_CHR_009_broken_speech_rules_are_caught(self):
+        import copy
+        w = copy.deepcopy(W)
+        del w["speech"]["shapes"]["FV"]
+        del w["speech"]["expressions"]["sad"]
+        p = world.speech_problems(w)
+        self.assertTrue(any("FV" in x for x in p))
+        self.assertTrue(any("mood sad" in x for x in p))
+
+
 if __name__ == "__main__":
     unittest.main()

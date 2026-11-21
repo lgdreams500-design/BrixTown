@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -87,7 +87,7 @@ def validate(w):
     if w.get("roads") and not out:
         import traffic
         out += traffic.Roads(w["roads"], w["traffic"]).problems(lots(w))
-    out += dialogue_problems(w)
+    out += dialogue_problems(w) + speech_problems(w)
     kinds = {l["kind"] for l in lots(w)}
     for need in ("home", "shop", "food", "work", "health", "garden", "market", "stop", "utility"):
         if need not in kinds:
@@ -167,6 +167,29 @@ def dialogue_problems(w, acts=None):
                     ends.add(nid)
                     grew = True
         out += ["%s.%s: the talk can never end from here" % (where, nid) for nid in nodes if nid not in ends]
+    return out
+
+
+def speech_problems(w):
+    """Every rule World/rules/speech.json must keep (CHR-007, CHR-008, CHR-009)."""
+    sp, out = w["speech"], []
+    shapes, ex, tx = sp["shapes"], sp["expressions"], sp["text"]
+    for need in ("rest", "MBP", "AA", "EH", "EE", "OH", "OO", "FV"):    # the eight speech shapes of CHARACTER_FACE §2
+        if need not in shapes:
+            out.append("speech: no mouth shape %s" % need)
+    for mood in w["dialogue"]["moods"]:                                 # every mood a line can carry has a face
+        if mood not in ex:
+            out.append("speech: no expression for mood %s" % mood)
+    for name, e in ex.items():
+        if isinstance(e["mouth"], str) and e["mouth"] not in shapes:
+            out.append("speech: expression %s uses unknown mouth %s" % (name, e["mouth"]))
+    for letter in "abcdefghijklmnopqrstuvwxyz":
+        if letter not in tx["letters"]:
+            out.append("speech: no mouth shape for the letter %s" % letter)
+    used = list(tx["letters"].values()) + list(tx["digraphs"].values()) + list(sp["timing"]["end"].values()) + sp["timing"]["stressed_shapes"]
+    for s in used:
+        if s is not None and s not in shapes:
+            out.append("speech: unknown mouth shape %s" % s)
     return out
 
 

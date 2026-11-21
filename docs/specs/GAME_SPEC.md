@@ -1,7 +1,7 @@
 ---
 spec_id: WASTED-SPEC
 title: Wasted — Game Specification
-version: 0.4.3
+version: 0.4.4
 status: draft            # draft | reviewed | approved
 last_updated: 2026-11-22
 owner: project-owner
@@ -130,8 +130,8 @@ Face details: `docs/art/CHARACTER_FACE.md` (ADR-0005).
 | CHR-005 | The appearance system shall accept creator-made items (UGC) without a client patch. | P1 | PH5 | proposed |
 | CHR-006 | Characters shall have skills (e.g. cooking, fitness, charisma, technical) that improve through use. | P1 | PH3 | proposed |
 | CHR-007 | Every head (player and NPC) shall share one **face control set**: brows, eyelids, gaze, mouth corners and at least 8 speech mouth shapes. Faces made in the designer and creator-made hair or accessories shall animate with no per-character work. | P0 | PH3 | accepted |
-| CHR-008 | Characters shall show facial expressions driven by game state and dialogue: at least neutral, happy, sad, angry, surprised and thinking, blended over time. | P1 | PH3 | accepted |
-| CHR-009 | While a character speaks a dialogue line, its mouth shall move in time with that line (lip sync). The timing source is `[OPEN: Q-14]`. | P1 | PH3 | accepted |
+| CHR-008 | Characters shall show facial expressions driven by game state and dialogue: at least neutral, happy, sad, angry, surprised and thinking, blended over time. | P1 | PH1 | accepted |
+| CHR-009 | While a character speaks a dialogue line, its mouth shall move in time with that line (lip sync). Timing comes from the line's text (Q-14). | P1 | PH1 | accepted |
 | CHR-010 | Idle characters shall blink and shift gaze so that faces never look frozen. | P2 | PH3 | proposed |
 | CHR-011 | Facial animation shall be level-of-detail controlled: full on the characters in a conversation and nearby, reduced or off with distance, within the client performance budget. | P1 | PH3 | proposed |
 | CHR-012 | Open mouth shapes shall show upper teeth, lower teeth and tongue where the sound calls for them, and a face at rest shall read as neutral, not sad. | P1 | PH3 | accepted |
@@ -149,7 +149,7 @@ are accepted, the rest stay proposed.
 | ANIM-003 | Game state (needs, mood, weather, carried load) shall change movement through data-defined state layers, so that a tired, happy or cold character is recognisable from its walk at 10 m `[ASSUMPTION]`. See NEED-003. | P1 | PH3 | proposed |
 | ANIM-004 | Animation shall be layered (legs and hips; chest and arms; head and eyes; face) so that any character can speak, look at a target and gesture while walking, without dedicated combined animations. | P0 | PH3 | accepted |
 | ANIM-005 | When a character looks at something, the eyes shall lead, the head follow within limits and the chest turn last, with a blink on large shifts; with no target, a walking character shall glance along its path. | P1 | PH3 | accepted |
-| ANIM-006 | In dialogue, the speaker shall nod and raise brows on stressed words and look at the listener at the start and end of a line; the listener shall look at the speaker for most of the line and show a reaction. | P2 | PH3 | accepted |
+| ANIM-006 | In dialogue, the speaker shall nod and raise brows on stressed words and look at the listener at the start and end of a line; the listener shall look at the speaker for most of the line and show a reaction. | P2 | PH1 | accepted |
 | ANIM-007 | A planted foot shall not slide more than 2 cm `[ASSUMPTION]` at any walking speed or body size. | P1 | PH1 | proposed |
 | ANIM-008 | Clothing longer than the hips (coats, dresses, long tunics) shall not be pierced by the legs while moving; this needs skirt joints or cloth simulation. | P1 | PH3 | proposed |
 | ANIM-009 | Body animation shall be level-of-detail controlled, and in multiplayer only signature, state weights, look target and speech state shall replicate; poses are computed on each client. | P1 | PH3 | proposed |
@@ -380,7 +380,7 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | Q-11 | Team: solo, or others joining? | Affects tooling and process weight. | Solo plus AI agents. |
 | Q-12 | Age rating and audience? | Constrains content, chat, UGC moderation. | Teen. |
 | Q-13 | What does "Wasted" mean for tone and theme? | The name suggests a tone the pillars do not yet reflect. | Owner to define. |
-| Q-14 | Is dialogue voiced (recorded or synthesised speech) or text only? Do player characters' mouths move with chat? | Decides how lip sync is timed: from audio, or generated from the text of the line. | Text first: mouth shapes generated from the line's text and shown with it; voice can be added later without changing the face controls. |
+| Q-14 | Is dialogue voiced (recorded or synthesised speech) or text only? Do player characters' mouths move with chat? | Decides how lip sync is timed: from audio, or generated from the text of the line. | **DECIDED 2026-11-22 (first part):** text first. Mouth shapes are generated from the line's text and shown with it; voice can be added later without changing the face controls. Whether players' mouths move with chat is still open. |
 | Q-15 | How are production character models made: commissioned or bought stylised base, modelled in-house, or MetaHuman? | Sets cost, schedule and whether the laptop can run them. | Commission or buy one stylised base body and head with the CHR-007 control set; build the designer on it. |
 | Q-16 | Blender version pin: 5.2 LTS as first written, or 5.3 as installed? | All look tests and reference renders were made in 5.3 (the Microsoft Store version, which auto-updates). | Pin 5.3; record the exact build; revisit when a second machine joins. |
 | Q-17 | Is the walk cycle fully procedural, or a few authored clips that the movement signature adjusts? | Decides how much animation is bought or made, and how the prototype maps to Unreal. | Authored base walk clips plus signature and state layers on top; head, eyes and face fully procedural. |
@@ -419,3 +419,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.4.1 | 2026-11-22 | Daylight changed to the "kit" light (ADR-0007); ART-001 names `world_street_kit_light.png` as the daylight reference. |
 | 0.4.2 | 2026-11-22 | Feature picker removed: the owner states picks in chat and agents record them, checked by `Tools/backlog.ps1` (ADR-0008). Q-08 decided: drivable cars and real traffic from the first slice. PH1 is now one district, not one block. CITY-005 updated to match. Car and traffic requirements drafted in LIVING_CITY 0.2.0 (CITY-043 to CITY-049, CITY-060 to CITY-067), accepted by the owner with ADR-0009 and Q-25 to Q-28; CITY-005 accepted. |
 | 0.4.3 | 2026-11-22 | CITY-007 (dialogue with NPCs) accepted by the owner and moved to PH1, matching the owner's pick of F-NPC-TALK level 1 for the first slice. The browser slice has sample conversations (`World/rules/dialogue.json`, WORLD_MAP 0.5.3); outcomes that change game state are still to come. |
+| 0.4.4 | 2026-11-22 | Owner picked `F-NPC-SPEECH` level 2 (lip sync) for the first slice: CHR-008, CHR-009 and ANIM-006 move to PH1, and Q-14 is decided as text first. The slice's faces take the CHR-007 control set for this; the designer part of CHR-007 stays in PH3. |

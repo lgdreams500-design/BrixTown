@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-WORLD-MAP
 title: Wasted — World map as data, the starting city and the playable slice
-version: 0.5.3
+version: 0.5.4
 status: draft
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -167,6 +167,12 @@ rules and, since 0.2.0, the look and the movement set in the art documents (§5.
   the resident stops and turns to you; afterwards their day carries on from where they stood, running late
   by the time spent, until they next stand still. Replies can test and set flags kept per resident, ready
   for quests; `residents` in the file gives one person their own conversation.
+- Faces while talking (CHR-007 to CHR-009, ANIM-006, F-NPC-SPEECH level 2): the resident speaking has the
+  full face control set of CHARACTER_FACE. Each line is turned into the eight mouth shapes from its text and
+  played in time (12 a second, pauses at punctuation, ending on a smile or rest); the line's mood sets brows,
+  lids, squint and mouth curve, blended over time; brows lift at the start of a line and before a question,
+  and the head nods on long words. Rules and values in `World/rules/speech.json`. Only the person you talk
+  to gets this face, so it costs nothing elsewhere. The camera comes in to 2.6 m while talking.
 
 ### 5.2 What is not there yet
 - Upper floors: only ground floors are open, plus tower roofs.
@@ -179,7 +185,7 @@ rules and, since 0.2.0, the look and the movement set in the art documents (§5.
   (CITY-060 needs money).
 - The same day repeats at midnight.
 - No needs, money, jobs or saving.
-- From the art documents, not yet: bevelled edges, light shafts, speech and expressions, the state
+- From the art documents, not yet: bevelled edges, light shafts, expressions outside conversations, the state
   layers (tired, happy, cold), cloth that swings. See §5.5.
 
 ### 5.3 Checked
@@ -215,7 +221,7 @@ Checked against the images in `Art/Reference/`. "Partly" means the rule is met i
 | C2, C3 palette cloth, matte skin | Clothes in the world palette with blotches; eight skin tones | Done |
 | C4 solid hair | Short, side, bob, long, bun, afro | Done |
 | C5 silhouette per role | Apron for shop and café staff, cap and bag for couriers, long coat for office workers, scarf and bun for elders | Done |
-| C6 faces | Round eyes with a large iris low in the eye, highlight, brows, small nose, mouth at rest; blink every 2 to 6 s | Partly: no expressions or speech shapes yet |
+| C6 faces | Round eyes with a large iris low in the eye, highlight, brows, small nose, mouth at rest; blink every 2 to 6 s | Done in conversations (speech shapes, expressions, lip sync timed from text); elsewhere the face stays at rest |
 | C7 one body for all | Player and residents are one function with designer values (`People.look`, `People.player`) | Done |
 | M1 movement signatures | Springy, Easy, Hurried and Careful with the numbers of CHARACTER_MOTION §3, ported from `motion_lib.py`; step rate follows leg length | Done |
 | M5 feet first | Feet are placed, legs are solved to reach them; phase comes from distance walked | Done |
@@ -286,3 +292,4 @@ keep a timetable with several stops in it. Something has to give `[OPEN: Q-21]`.
 | 0.5.1 | 2026-11-22 | Faster slice, same picture: the town mesh is drawn in pieces culled to the view and to the sun's shadow box, a depth-only pass comes first so each pixel is lit once, painted names have their own small mesh and shader, and the shader skips the shadow lookup on faces turned from the sun and unused lantern slots. GPU time per frame roughly halved (§5.4). |
 | 0.5.2 | 2026-11-22 | Q-24 decided: pavements and crossings, now that cars are in scope (CITY-043). |
 | 0.5.3 | 2026-11-22 | Talking to residents in the slice (CITY-007; owner picked F-NPC-TALK level 1 for the first slice): `World/rules/dialogue.json`, checked by `world.dialogue_problems` and `test_world.TheDialogue` (every reply leads somewhere, every node is reachable, every talk can end), played by `Prototype/play/conversations.js` (§5.1). |
+| 0.5.4 | 2026-11-22 | Faces while talking (owner picked F-NPC-SPEECH level 2 for the first slice; CHR-008, CHR-009, ANIM-006 to PH1; Q-14 text first): lip sync and expressions from `World/rules/speech.json`, checked by `world.speech_problems` and `test_world.TheFaces`; drawn in `people.js`, timed in `conversations.js` (§5.1). The reference line of CHARACTER_FACE §4 comes out at 53 frames against the reference's 55. |

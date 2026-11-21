@@ -126,3 +126,4 @@ or mouth controls' range of movement.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-21 | First version, after the eye fix (no more sad default) and the teeth fix (lower teeth and tongue visible). |
+| 1.0.1 | 2026-11-22 | The browser slice now uses §1 to §4 for the resident you talk to: values in `World/rules/speech.json`, faces in `Prototype/play/people.js`, timing from the line's text in `Prototype/play/conversations.js` (Q-14 decided: text first). |

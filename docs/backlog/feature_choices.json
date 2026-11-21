@@ -56,6 +56,10 @@
       "depth": 1,
       "full": 2,
       "note": "Owner, 2026-11-22: \"Slice 1, depth 1, full 2\" (conversations with choices from the first slice)."
+    },
+    "F-NPC-SPEECH": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: \"Yes, level 2 now\" (lip sync timed from the line's text, in the first slice). Later milestones not stated."
     }
   }
 }

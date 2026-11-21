@@ -184,7 +184,7 @@ const People = (() => {
   // pose: 0 stand, 1 walk, 2 sit, 3 lie. o: { ph: cycle phase 0..1, t: seconds, lod: 0 near | 1 mid | 2 far, fl: material, look: [yaw, pitch] the head adds, sig: override, sleep }
   function draw(ms, x, y, z, yaw, L, pose, o) {
     const sig = o.sig || L.sig, g = geo(L.S), S = L.S, Sh = S * 1.09, W = L.W * 1.06, lod = o.lod, fl = o.fl, t = o.t, sd = L.seed;
-    const wd = wander(t, sd * .37), lk = o.look || [0, 0], hm = [wd[0] + lk[0], wd[1] + lk[1], wd[2]];
+    const wd = wander(t, sd * .37), lk = o.look || [0, 0], hm = [wd[0] + lk[0], wd[1] + lk[1] + (o.face ? o.face.nod || 0 : 0), wd[2]];   // a speaker nods on stressed words (ANIM-006)
     const P = pose === 1 ? walk(sig, g, W, o.ph, hm) : pose === 2 ? sit(sig, g, W, t, hm, sd) : stand(sig, g, W, t, pose === 3 ? [0, 0, 0] : hm, sd);
     // where the character's axes point in the world: standing (x left, y back, z up) or lying on the back, head to +z
     const c = Math.cos(yaw), s = Math.sin(yaw), ex = pose === 3 ? [-1, 0, 0] : [-c, 0, -s], ey = pose === 3 ? [0, -1, 0] : [-s, 0, c], ez = pose === 3 ? [0, 0, 1] : [0, 1, 0];
@@ -234,7 +234,8 @@ const People = (() => {
       else if (L.hair === "side") blob(.03, .0, .075, .085, .1, .06, hairC, 6, 4);
     }
     if (L.cap) { blob(0, .018, .078, .109, .118, .075, L.cap, hn, hm2); blob(0, -.105, .06, .075, .06, .012, L.cap, 6, 3); }
-    if (lod === 0) {                                                  // the face: full eyes, brows, small nose, mouth at rest
+    if (lod === 0 && o.face) face(blob, o.face, L, t, sd, lk, o.sleep);   // someone in a conversation: the full control set (CHR-007)
+    else if (lod === 0) {                                             // the face: full eyes, brows, small nose, mouth at rest
       const period = 2.4 + 3.4 * ((sd * .618) % 1), shut = o.sleep || ((t + sd) % period) < .17, gx = cl(-lk[0] / rad(34), -1, 1) * .006, gz = cl(-lk[1] / rad(34), -1, 1) * .004;
       for (const e of [-1, 1]) {
         if (shut) { blob(e * .037, -.0975, .012, .0225, .0105, .0235, L.skin, 8, 4, sd + 3); continue; }
@@ -254,6 +255,48 @@ const People = (() => {
       if (L.apron) ball(ms, add(sp, add(sc(ty, -.1 * S), sc(tz, -.03 * S))), sc(tx, .125 * W * S), sc(ty, .022 * S), sc(tz, .27 * S), 8, 5, L.apron, fl, sd + 11);
       if (L.bag) { const bg = add(pel, add(add(sc(px, .2 * W * S), sc(py, -.02 * S)), sc(pz, -.04 * S))); ball(ms, bg, sc(px, .05 * S), sc(py, .075 * S), sc(pz, .085 * S), 7, 4, K.brown, fl, sd + 12); limb(ms, add(Wp(P.sh[1]), sc(tz, .03 * S)), bg, .012 * S, .012 * S, 4, K.brown, fl, false, fwd, sd); }
     }
+  }
+  // The face control set of docs/art/CHARACTER_FACE.md §1, drawn in head units (about metres on a natural head). f: { mouth: { width,
+  // opening, round, teeth 0 none | 1 upper | 2 both, tongue }, curve, brow_l, brow_r: [inner, outer], lid, squint, open, gaze: [x, z] },
+  // mouth sizes already at the larger-than-life drawing scale. Lips are a ring; the dark inside, teeth and tongue sit in the plane
+  // of the opening (CHARACTER_FACE §1 construction notes).
+  const MOUTH = { lip: [.34, .13, .11], dark: [.11, .035, .035], teeth: [.9, .88, .82], tongue: [.62, .26, .26] };
+  function face(blob, f, L, t, sd, lk, sleep) {
+    const period = 2.4 + 3.4 * ((sd * .618) % 1), blink = !sleep && ((t + sd) % period) < .17;
+    const gx = cl(-lk[0] / rad(34), -1, 1) * .006 + f.gaze[0], gz = cl(-lk[1] / rad(34), -1, 1) * .004 + f.gaze[1];
+    const lid = sleep || blink ? 1 : f.lid, op = f.open, sq = f.squint;
+    for (const e of [-1, 1]) {                                         // e = +1 is the character's left
+      const ex = e * .037;
+      if (lid > .97) { blob(ex, -.0975, .012, .0225, .0105, .0235, L.skin, 8, 4, sd + 3); continue; }
+      // the open part of the eye: a squint lifts its lower edge, the upper lid lowers its top edge (the face skin shows where it closes)
+      const R0 = .022 * op, top = .012 + R0 * (1 - 2 * lid * .85), bot = .012 - R0 * (1 - sq * .9), rz = (top - bot) / 2, cz = (top + bot) / 2;
+      blob(ex, -.0975, cz, .0215 * op, .008, rz, [.86, .84, .8], 8, 4);
+      const ir = Math.min(.0158 * op, rz * .9), iz = Math.min(.0065 + gz, top - ir * .7) + (cz - .012) * .3;
+      blob(ex + gx, -.1035, iz, .0158 * op, .004, ir, L.eyes, 8, 3);
+      blob(ex + gx, -.1065, iz, .0078, .002, Math.min(.0078, ir * .55), [.01, .01, .012], 6, 3);
+      if (top - iz > .006) blob(ex + gx + .005, -.108, iz + .0055, .0032, .0012, .0032, [1, 1, 1], 5, 2);
+      if (lid >= .03) blob(ex, -.1062, top - .0008, .0205 * op, .0025, .0016, [.08, .06, .05], 8, 3);   // the lash line along the lowered lid
+    }
+    for (const e of [-1, 1]) {                                         // each brow: inner and outer end move on their own
+      const b = e > 0 ? f.brow_l : f.brow_r, z0 = .062 + (op - 1) * .02, bc = sc(L.hairC, .8);
+      for (let k = 0; k < 5; k++) { const u = k / 4; blob(e * (.026 + .024 * u), -.1 + .0015 * u, z0 + .002 * u + b[0] + (b[1] - b[0]) * u, .0115, .0055, .0047, bc, 6, 3); }
+    }
+    blob(0, -.111, -.014, .0105, .011, .0115, sc(L.skin, .93), 6, 4);   // nose
+    const m = f.mouth, w = m.width, oh = Math.max(m.opening, .0005), mz = -.053, rd = m.round || 0, dep = 1 + rd * .45, cu = cl(f.curve, -1, 1) * .0045;
+    if (oh > .0012) {
+      blob(0, -.0992, mz, w * .9, .0028, oh, MOUTH.dark, 8, 3);
+      if (m.teeth >= 1 && oh > .002) blob(0, -.1002, mz + oh * .6, w * .66, .0022, Math.min(oh * .4, .0032), MOUTH.teeth, 8, 3);
+      if (m.teeth >= 2 && oh > .002) blob(0, -.1002, mz - oh * .62, w * .58, .0022, Math.min(oh * .32, .0026), MOUTH.teeth, 8, 3);
+      if (m.tongue && oh > .004) blob(0, -.0998, mz - oh * .42, w * .5, .0026, oh * .34, MOUTH.tongue, 8, 3);
+    }
+    // the lips: a closed ring of overlapping pieces round the opening; the corners carry the smile or frown
+    const N = 14, th = .0024 + rd * .0008, lw = Math.max(w * .3, .006);
+    for (let k = 0; k < N; k++) {
+      const a = (k + .5) / N * 2 * Math.PI, cx = Math.cos(a), sz = Math.sin(a), x = w * cx;
+      const z = mz + (oh + th * (sz > 0 ? .5 : .65)) * sz + cu * cx * cx;
+      blob(x, -.0998 - .0006 * Math.abs(sz), z, lw * (.55 + .45 * Math.abs(sz)), .0046 * dep, th * (sz < 0 ? 1.15 : 1), MOUTH.lip, 6, 3);
+    }
+    if (L.tash) blob(0, -.104, -.037 + Math.max(0, oh - .002) * .4, .024, .006, .007, L.hairC, 6, 3);
   }
   return { SIG, look, player, draw, stepLength };
 })();
