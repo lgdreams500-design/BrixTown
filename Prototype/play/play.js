@@ -1740,6 +1740,7 @@ function frame(now) {
   stepCamera(dt);
 
   // everyone's place right now; bodies only for those near the player
+  Dodge.frame(now / 1000, pl);                             // is the player's car bearing down on anyone (dodge.js, CITY-070)
   dyn.reset(); people = []; bodies = 0; const heard = [], tags = [], near = started ? [pl.x, pl.z] : [cam.eye[0] + cam.dir[0] * 60, cam.eye[2] + cam.dir[2] * 60], reach = started ? 85 : 130;
   for (let i = 0; i < D.plan.length; i++) {
     const r = Dodge.apply(i, Talk.where(i, clock.m)); if (!r) continue;   // out of the way of the player's car (dodge.js)
@@ -1754,6 +1755,7 @@ function frame(now) {
     }
     People.draw(dyn, r.x, r.y, r.z, r.yaw, L, r.pose, { ph: r.ph || 0, t: now / 1000, lod: dc < 13 ? 0 : dc < 40 ? 1 : 2, fl: r.inside ? 10 : 14, look: lk, sleep: r.pose === 3, face: Talk.face(i), mod: r.mod, sig: r.sig });
     if (started && d < 9 && Math.abs(r.y - pl.y) < 3) tags.push({ x: r.x, y: r.y + (r.pose === 2 ? 1.0 : r.pose === 3 ? .55 : 1.88) * L.S, z: r.z, d, text: D.residents[i].n + ", " + D.roles[D.residents[i].r] + " · " + (r.walking ? GOING[D.acts[r.act]] || "walking" : DOING[D.acts[r.act]] || D.acts[r.act]) });
+    if (started && r.shout && d < D.dodge.tag_m) tags.push({ x: r.x, y: r.y + 2.18 * L.S, z: r.z, d, a: clamp((D.dodge.tag_m - d) / 4, 0, 1), size: 18, text: r.shout });   // telling the driver off (CITY-071)
     if (started) Talk.consider(i, r, d);
   }
   if (started) Talk.pick();                               // the nearest resident in reach can be talked to (E)
@@ -1768,7 +1770,6 @@ function frame(now) {
     const lot = pl.y < 6 ? lotAt(pl.x, pl.z) : null, drv = pl.pose === 4;
     Sound.frame({ m: clock.m, dt, x: pl.x, y: pl.y, z: pl.z, yaw: cam.yaw, lot, talk: Talk.on, residents: heard, trams: tramAt(clock.m), tramZ: TRAM_Z,
       cars: Cars.near ? Cars.near(clock.m, pl.x, pl.z, 75) : [],
-  Dodge.frame(now / 1000, pl);                             // is the player's car bearing down on anyone (dodge.js, CITY-070)
       walk: drv ? null : { moving: pl.moving && pl.pose < 2, ph: pl.ph, run: pl.run, onGround: pl.onGround, vy: pl.vy, surface: lot ? "wood" : (lotAt(pl.x, pl.z, true) || {}).kind === "garden" ? "grass" : "stone" },
       drive: drv ? { v: Cars.speed ? Cars.speed() : 0, gas: !!(keys.KeyW || keys.ArrowUp), brake: !!(keys.Space || ((keys.KeyS || keys.ArrowDown) && (Cars.speed ? Cars.speed() : 0) > 0)) } : null });
   }
@@ -1783,7 +1784,6 @@ function frame(now) {
     let foc = [near[0] + cam.dir[0] * 28, 0, near[1] + cam.dir[2] * 28]; const ox = dot3(foc, lv0.r) % tex, oy = dot3(foc, lv0.u) % tex;
     foc = [foc[0] - lv0.r[0] * ox - lv0.u[0] * oy, foc[1] - lv0.r[1] * ox - lv0.u[1] * oy, foc[2] - lv0.r[2] * ox - lv0.u[2] * oy];   // move in whole texels so shadows do not crawl
     const lv = M4.look([foc[0] + Lt.dir[0] * 260, foc[1] + Lt.dir[1] * 260, foc[2] + Lt.dir[2] * 260], f), nn = 1, ff = 520;
-    if (started && r.shout && d < D.dodge.tag_m) tags.push({ x: r.x, y: r.y + 2.18 * L.S, z: r.z, d, a: clamp((D.dodge.tag_m - d) / 4, 0, 1), size: 18, text: r.shout });   // telling the driver off (CITY-071)
     SM = M4.mul([1 / R, 0, 0, 0, 0, 1 / R, 0, 0, 0, 0, -2 / (ff - nn), 0, 0, 0, -(ff + nn) / (ff - nn), 1], lv.m); shOn = 1;
     gl.bindFramebuffer(gl.FRAMEBUFFER, shFbo); gl.viewport(0, 0, SH, SH); gl.colorMask(false, false, false, false); gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LESS); gl.depthMask(true); gl.clear(gl.DEPTH_BUFFER_BIT);
     gl.disable(gl.CULL_FACE); gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1.5, 3);
