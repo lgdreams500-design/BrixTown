@@ -72,6 +72,10 @@
     "F-SND-MUSIC": {
       "slice": 1,
       "note": "Owner, 2026-11-22: \"1, 1, 1 for slice\" (city sounds, interaction sounds and music in the world, in the first slice). Later milestones not stated."
+    },
+    "F-BLD-CIVIC": {
+      "slice": 1,
+      "note": "Owner, 2026-11-22: \"Places to visit (Recommended)\" for the bank, car showroom, library, museum, cinema and a second hospital and mall, made from existing lots. Later milestones not stated."
     }
   }
 }

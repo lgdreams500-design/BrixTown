@@ -5,9 +5,13 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 13 of 31 | 9 of 31 | 9 of 31 |
-| Size of the plan (points) | 158 | 230 | 479 |
-| Size of the suggested plan | 77 | 190 | 447 |
+| Decided | 14 of 32 | 9 of 32 | 9 of 32 |
+| Size of the plan (points) | 161 | 233 | 502 |
+| Size of the suggested plan | 80 | 193 | 470 |
+
+**Needs not met yet** (these levels are not in scope until their needs are picked):
+
+- F-BLD-CIVIC at First slice needs F-BLD-INSIDE at level 1 (undecided)
 
 ## City and buildings
 
@@ -19,6 +23,7 @@
 | **Shops and market** `F-BLD-SHOP` | undecided | undecided | undecided |  |
 | **Mall** `F-BLD-MALL` | undecided | undecided | undecided |  |
 | **Hospital and clinic** `F-BLD-HOSPITAL` | undecided | undecided | undecided |  |
+| **Bank, showroom, library, museum, cinema** `F-BLD-CIVIC` | 1 Places to visit | undecided | undecided | Owner, 2026-11-22: "Places to visit (Recommended)" for the bank, car showroom, library, museum, cinema and a second hospital and mall, made from existing lots. Later milestones not stated. |
 | **Workplaces** `F-BLD-WORK` | undecided | undecided | undecided |  |
 | **Utility areas** `F-BLD-UTILITY` | undecided | undecided | undecided |  |
 | **Gardens and parks** `F-GARDEN` | undecided | undecided | undecided |  |
@@ -101,6 +106,11 @@
 - 0 A door: A clinic front you cannot enter. Size S.
 - 1 Clinic room: One room where a nurse restores health for a fee. Size M.
 - 2 Hospital: A staffed hospital with wards, a medical career and an ambulance. Size XL.
+
+**Bank, showroom, library, museum, cinema** (`F-BLD-CIVIC`). Places for errands and evenings out beyond shops and cafes, and where money, cars and culture will later live.
+- 0 None: No such places; the town has shops, cafes, a mall and a hospital. Size -.
+- 1 Places to visit: A bank, a car showroom, a library, a museum and a cinema (plus a second hospital and mall), each with its own front and furnished interior, staff at work and residents visiting in their day. Size M.
+- 2 Working places: They work: accounts and loans at the bank through the ledger, buying a car at the showroom, films on a timetable, exhibitions that change. Size XL.
 
 **Workplaces** (`F-BLD-WORK`). Where careers happen.
 - 0 Fronts: Offices and workshops are fronts; workers go in and out. Size S.

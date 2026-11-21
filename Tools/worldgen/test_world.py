@@ -57,6 +57,21 @@ class TheResidents(unittest.TestCase):
             self.assertIn(r["home"], homes)
             self.assertIn(r["role"], W["roles"]["roles"])
 
+    def test_WLD_027_bank_showroom_library_museum_cinema_and_second_hospital_and_mall(self):
+        kinds = {k: [l for l in LOTS if l["kind"] == k] for k in ("bank", "dealer", "library", "museum", "cinema")}
+        for k, ls in kinds.items():
+            self.assertEqual(len(ls), 1, k)
+            self.assertTrue(ls[0]["enterable"] and ls[0]["objects"].get("work"), k)
+        self.assertGreaterEqual(sum("hospital" in l.get("tags", []) for l in LOTS) + 1, 2)          # Mill Street Hospital + one more
+        self.assertGreaterEqual(sum("mall" in l.get("tags", []) for l in LOTS) + 1, 2)              # Lantern Arcade + one more
+        staffed = {r["work"] for r in W["residents"] if r["work"]}
+        visited = {s["place"] for pieces in CITY.plan(DAY).values() for kind, t0, t1, payload, s in pieces if kind == "stay"}
+        for k, ls in kinds.items():
+            self.assertIn(ls[0]["id"], staffed, k)
+            self.assertTrue(any(r["near"].get(k) == ls[0]["id"] for r in W["residents"]), k)
+        for k in ("library", "museum", "cinema", "bank"):
+            self.assertIn(kinds[k][0]["id"], visited, k + " gets visitors in a day")
+
     def test_every_workplace_is_staffed(self):
         staffed = {r["work"] for r in W["residents"] if r["work"]}
         for l in BUILDINGS:
@@ -162,8 +177,6 @@ class TheFaces(unittest.TestCase):
         self.assertTrue(any("mood sad" in x for x in p))
 
 
-if __name__ == "__main__":
-    unittest.main()
 class TheSounds(unittest.TestCase):
     """SND-001 to SND-013: how the city sounds (World/rules/sound.json, played by Prototype/play/sound.js)."""
     S = W["sound"]
@@ -214,3 +227,5 @@ class TheSounds(unittest.TestCase):
             self.assertTrue(any(bit in x for x in p), bit)
 
 
+if __name__ == "__main__":
+    unittest.main()

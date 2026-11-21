@@ -1,5 +1,5 @@
 {
- "note": "Where a token like 'lunch' can lead. 'cafe', 'grocer', 'garden', 'market', 'stop', 'clinic' mean the resident's nearest one.",
+ "note": "Where a token like 'lunch' can lead. 'cafe', 'grocer', 'garden', 'market', 'stop', 'clinic' mean the resident's nearest one. 'bank', 'library', 'museum', 'cinema', 'dealer' likewise (Tools/worldgen/add_places_01.py).",
  "choices": {
   "lunch": {
    "default": [
@@ -52,6 +52,78 @@
     [
      "home",
      "home"
+    ],
+    [
+     "rest",
+     "garden"
+    ],
+    [
+     "stroll",
+     "garden"
+    ],
+    [
+     "eat",
+     "cafe"
+    ],
+    [
+     "stroll",
+     "garden"
+    ],
+    [
+     "home",
+     "home"
+    ],
+    [
+     "rest",
+     "garden"
+    ],
+    [
+     "stroll",
+     "garden"
+    ],
+    [
+     "eat",
+     "cafe"
+    ],
+    [
+     "stroll",
+     "garden"
+    ],
+    [
+     "home",
+     "home"
+    ],
+    [
+     "rest",
+     "garden"
+    ],
+    [
+     "stroll",
+     "garden"
+    ],
+    [
+     "eat",
+     "cafe"
+    ],
+    [
+     "stroll",
+     "garden"
+    ],
+    [
+     "home",
+     "home"
+    ],
+    [
+     "read",
+     "library"
+    ],
+    [
+     "view",
+     "museum"
+    ],
+    [
+     "watch",
+     "cinema"
     ]
    ],
    "market": [
@@ -76,6 +148,42 @@
     [
      "home",
      "home"
+    ],
+    [
+     "eat",
+     "cafe"
+    ],
+    [
+     "home",
+     "home"
+    ],
+    [
+     "home",
+     "home"
+    ],
+    [
+     "eat",
+     "cafe"
+    ],
+    [
+     "home",
+     "home"
+    ],
+    [
+     "home",
+     "home"
+    ],
+    [
+     "watch",
+     "cinema"
+    ],
+    [
+     "read",
+     "library"
+    ],
+    [
+     "view",
+     "museum"
     ]
    ]
   },
@@ -84,6 +192,30 @@
     [
      "shop",
      "grocer"
+    ],
+    [
+     "shop",
+     "grocer"
+    ],
+    [
+     "shop",
+     "grocer"
+    ],
+    [
+     "shop",
+     "grocer"
+    ],
+    [
+     "shop",
+     "grocer"
+    ],
+    [
+     "browse",
+     "dealer"
+    ],
+    [
+     "bank",
+     "bank"
     ]
    ],
    "market": [
@@ -120,6 +252,14 @@
     [
      "visit",
      "clinic"
+    ],
+    [
+     "bank",
+     "bank"
+    ],
+    [
+     "read",
+     "library"
     ]
    ],
    "rain": [
@@ -142,6 +282,11 @@
   "visit": "chair",
   "tend": "flowerbed",
   "eat_home": "room",
-  "rest_fallback": "rim"
+  "rest_fallback": "rim",
+  "read": "seat",
+  "view": "customer",
+  "watch": "seat",
+  "bank": "customer",
+  "browse": "customer"
  }
 }

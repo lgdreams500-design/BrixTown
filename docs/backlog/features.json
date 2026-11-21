@@ -320,6 +320,51 @@
       }
     },
     {
+      "id": "F-BLD-CIVIC",
+      "area": "map",
+      "title": "Bank, showroom, library, museum, cinema",
+      "why": "Places for errands and evenings out beyond shops and cafes, and where money, cars and culture will later live.",
+      "pillars": [
+        1,
+        3
+      ],
+      "spec": [
+        "WLD-027",
+        "BANK-001",
+        "CITY-060"
+      ],
+      "levels": [
+        {
+          "name": "None",
+          "what": "No such places; the town has shops, cafes, a mall and a hospital.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Places to visit",
+          "what": "A bank, a car showroom, a library, a museum and a cinema (plus a second hospital and mall), each with its own front and furnished interior, staff at work and residents visiting in their day.",
+          "effort": "M",
+          "needs": {
+            "F-BLD-INSIDE": 1,
+            "F-NPC-ROUTINE": 1
+          }
+        },
+        {
+          "name": "Working places",
+          "what": "They work: accounts and loans at the bank through the ledger, buying a car at the showroom, films on a timetable, exhibitions that change.",
+          "effort": "XL",
+          "needs": {
+            "F-VEH-DRIVE": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
       "id": "F-BLD-WORK",
       "area": "map",
       "title": "Workplaces",

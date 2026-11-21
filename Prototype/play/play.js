@@ -48,12 +48,12 @@ const C = {
 const PLASTER = [[.68, .63, .55], [.70, .58, .46], [.64, .6, .53], [.7, .6, .5], [.66, .56, .46], [.68, .63, .55]];
 const ROOF = [[.44, .24, .18], [.38, .21, .16], [.22, .22, .27], [.32, .21, .15], [.47, .28, .2]];
 const ACCENT = [C.ochre, C.terracotta, C.teal, C.blue, C.olive, C.plum];
-const FLOOR = { home: [.36, .26, .18], shop: [.5, .46, .4], food: [.42, .3, .22], work: [.38, .36, .36], health: [.6, .6, .57], utility: [.3, .3, .31] };
+const FLOOR = { home: [.36, .26, .18], shop: [.5, .46, .4], food: [.42, .3, .22], work: [.38, .36, .36], health: [.6, .6, .57], utility: [.3, .3, .31], bank: [.62, .6, .55], dealer: [.6, .6, .58], library: [.38, .26, .17], museum: [.6, .58, .54], cinema: [.3, .14, .12] };
 const SKIN = [[.55, .38, .28], [.42, .27, .18], [.30, .19, .13], [.62, .46, .36], [.24, .15, .10], [.5, .33, .22]];
 const HAIR = [[.05, .04, .04], [.16, .1, .06], [.09, .07, .06], [.3, .2, .1], [.22, .12, .08]];
 const CLOTH = [C.brown, C.olive, C.plum, C.charcoal, C.indigo, [.25, .3, .4], [.33, .29, .25]];
-const KIND_CSS = { home: "#b59a7c", shop: "#c79a45", food: "#b0614a", work: "#6f86ab", health: "#d9d3c2", utility: "#4b4b55", garden: "#6f8650", market: "#d8c9a3", stop: "#6fa3a2" };
-const KIND_WORD = { home: "Homes", shop: "Shops", food: "Cafés", work: "Workplaces", health: "Clinics and hospital", utility: "Utilities", garden: "Gardens and parks", market: "Market Square", stop: "Tram stops" };
+const KIND_CSS = { home: "#b59a7c", shop: "#c79a45", food: "#b0614a", work: "#6f86ab", health: "#d9d3c2", utility: "#4b4b55", garden: "#6f8650", market: "#d8c9a3", stop: "#6fa3a2", bank: "#8c7a3c", dealer: "#5a7f8f", library: "#7a5c8f", museum: "#a08a6a", cinema: "#8f3c4a" };
+const KIND_WORD = { home: "Homes", shop: "Shops", food: "Cafés", work: "Workplaces", health: "Clinics and hospital", utility: "Utilities", garden: "Gardens and parks", market: "Market Square", stop: "Tram stops", bank: "Bank", dealer: "Car showroom", library: "Library", museum: "Museum", cinema: "Cinema" };
 
 // ---------------------------------------------------------------- mesh: position 3, normal 3, colour 3, material 1
 // materials: 0 plaster (mottled) · 1 lit window · 2 lamp · 3 indoor surface · 4 dark window · 6 stone blocks · 7 paving · 8 light pool · 9 plain · 10 person indoors
@@ -218,9 +218,11 @@ function awning(l, S, dc, dw, dh, accent, wide) {          // sloped striped can
 // Each keeps the ordinary walkable ground floor, door and collisions, and adds its own front, roof and name.
 function specialKind(l) {
   const t = l.block.template;
+  const tags = l.tags || [];
+  if (["bank", "dealer", "library", "museum", "cinema"].includes(l.kind)) return l.kind;   // the places added by Tools/worldgen/add_places_01.py
+  if (t === "hospital" || tags.includes("hospital")) return "hospital";
+  if (t === "mall" || tags.includes("mall")) return "mall";
   if (t === "hall") return "hall";
-  if (t === "hospital") return "hospital";
-  if (t === "mall") return "mall";
   if (t === "market" && l.kind === "work") return "guild";
   if (l.tower) return l.kind === "home" ? "flats" : "office";
   if (l.kind === "work" && t === "peri") return "works";
@@ -387,6 +389,38 @@ function special(l, ctx) {
     }
     for (const rx of [-.72, .72]) fbox(world, S, dc + rx - .04, dc + rx + .04, Y_PAVE, Y_PAVE + .04, 0, 9, C.metal, 9);
     name(dc, 3.6, .06, .42);
+  } else if (l.sp === "bank" || l.sp === "museum" || l.sp === "library") {
+    // a stone portico: columns on a stepped base, an entablature carrying the name, a pediment; the museum's is wider and hung with banners
+    const n = l.sp === "museum" ? 6 : l.sp === "bank" ? 4 : 2, half = l.sp === "museum" ? 7.2 : l.sp === "bank" ? 4.6 : 2.6, ht = l.sp === "library" ? 3.6 : 4.6, dep = 2.2;
+    SP.steps(S, dc - half - .3, dc + half + .3, 3);
+    for (let k = 0; k < n; k++) {
+      const a = dc - half + .4 + k * (2 * half - .8) / (n - 1), p = SP.at(S, a, 0, dep - .4);
+      world.box(p[0] - .38, .5, p[2] - .38, p[0] + .38, .78, p[2] + .38, C.stoneDark, 0); world.box(p[0] - .26, .78, p[2] - .26, p[0] + .26, ht - .3, p[2] + .26, C.stone, 6);
+      world.box(p[0] - .36, ht - .3, p[2] - .36, p[0] + .36, ht, p[2] + .36, C.stoneDark, 0, { 2: [C.stoneDark, 0] }); solid(p[0] - .3, 0, p[2] - .3, p[0] + .3, ht, p[2] + .3);
+    }
+    fbox(world, S, dc - half - .2, dc + half + .2, ht, ht + .8, 0, dep, C.stone, 6, true, true); fbox(world, S, dc - half - .35, dc + half + .35, ht + .8, ht + 1.0, -.1, dep + .15, C.stoneDark, 0, true, true);
+    name(dc, ht + .4, dep + .02, l.sp === "library" ? .36 : .46);
+    SP.gable({ ns: S.ns, fix: S.fix + S.out * dep, out: S.out }, dc - half - .2, dc + half + .2, ht + 1.0, l.sp === "library" ? 1.4 : 2.0, C.stone, 0);
+    for (const s of [-1, 1]) { const p = SP.at(S, dc + s * (dw / 2 + .5), 2.4, .3); world.box(p[0] - .13, 2.4, p[2] - .13, p[0] + .13, 2.82, p[2] + .13, C.lantern, 2); lights.push([p[0], 2.6, p[2], 1, 1]); }
+    if (l.sp === "museum") for (const s of [-1, 1]) for (const k of [0, 1]) { const a = dc + s * (half + 2.2 + k * 3.2); fbox(world, S, a - .55, a + .55, 3.6, 7.6, .05, .12, k ? C.teal : C.terracotta, 0); fbox(world, S, a - .7, a + .7, 7.6, 7.7, 0, .3, C.metal, 9); fbox(world, S, a - .3, a + .3, 5.2, 6.0, .12, .14, C.cream, 0); }
+    if (l.sp === "bank") { fbox(world, S, dc - .9, dc + .9, 1.8, 2.4, .02, .08, [.55, .45, .2], 0); }
+  } else if (l.sp === "cinema") {
+    // a marquee over the door lit underneath, the name on its front, a tall blade sign spelling it out, lit posters either side
+    fbox(world, S, dc - 5.5, dc + 5.5, 3.0, 3.75, 0, 2.6, C.charcoal, 9, true, true); fbox(world, S, dc - 5.5, dc + 5.5, 3.1, 3.65, 2.6, 2.64, [.95, .86, .62], 9);
+    for (let a = dc - 5.1; a <= dc + 5.1; a += .6) { const p = SP.at(S, a, 2.98, 2.3); world.box(p[0] - .06, 2.92, p[2] - .06, p[0] + .06, 3.0, p[2] + .06, [1, .8, .5], 2); }
+    if (cell) lettering(signs, SP.at(S, dc, 3.38, 2.66), nO, .34, cell);
+    for (const s of [-1, 1]) { const p = SP.at(S, dc, 2.6, 1.6 * s + 1.3); lights.push([p[0], 2.6, p[2], 1, 1]); }
+    const ba = dc + 6.6, word = l.name.split(" ")[0].toUpperCase(), bh = Math.min(H - .6, 3.9 + word.length * .78);
+    fbox(world, S, ba - .09, ba + .09, 3.9, bh, .2, 1.3, C.terracotta, 0, true, true); fbox(world, S, ba - .11, ba + .11, 3.9, bh, 1.3, 1.36, [.95, .86, .62], 9);
+    for (let k = 0; k < word.length; k++) { const c = nameCell(word[k]); if (!c) continue; for (const sg of [-1, 1]) lettering(signs, SP.at(S, ba + sg * .1, bh - .55 - k * .78, .75), S.ns ? [sg, 0, 0] : [0, 0, sg], .55, c); }
+    for (const s of [-1, 1]) for (const k of [0, 1]) { const a = dc + s * (3.0 + k * 1.5); fbox(world, S, a - .6, a + .6, .7, 2.5, 0, .06, C.stoneDark, 0); SP.win(S, a, .85, .95, 1.5, .03, .97, true); }
+  } else if (l.sp === "dealer") {
+    // a showroom front: tall lit panes the width of the ground floor, the name on a long board above, a forecourt marked in bays
+    const n = Math.max(2, Math.floor((L - 4) / 3.4));
+    for (let k = 0; k < n; k++) { const a = S.a0 + 2 + (k + .5) * (L - 4) / n; if (Math.abs(a - dc) < dw / 2 + 1.6) continue; SP.win(S, a, .35, 2.8, 2.4, 0, .97, true); fbox(world, S, a - 1.6, a + 1.6, .1, .35, 0, .12, C.stoneDark, 0); }
+    fbox(world, S, S.a0 + 1.5, S.a1 - 1.5, 3.05, 3.7, 0, .14, C.teal, 0, true); if (cell) lettering(signs, SP.at(S, dc, 3.37, .16), nO, .42, cell);
+    for (let k = 0; k <= 6; k++) { const a = S.a0 + 3 + k * (L - 6) / 6; fbox(world, S, a - .05, a + .05, Y_PAVE + .005, Y_PAVE + .015, 1.2, 5.6, C.cream, 9); }
+    fbox(world, S, S.a0 + 3, S.a1 - 3, Y_PAVE + .005, Y_PAVE + .015, 5.5, 5.6, C.cream, 9);
   }
 }
 
@@ -537,7 +571,7 @@ function banner(x0, z0, x1, z1, seed, y) {                // cloth strung across
 }
 const QUAD_UV = true;
 function windows(l) {                                      // each window is one quad that draws its own frame, sill, reveal and panes
-  const [x0, z0, x1, z1] = l.rect, lit = { home: .5, food: .45, shop: .3, work: .16, health: .5, utility: .1 }[l.kind] || .3;
+  const [x0, z0, x1, z1] = l.rect, lit = { home: .5, food: .45, shop: .3, work: .16, health: .5, utility: .1, bank: .2, dealer: .3, library: .4, museum: .2, cinema: .1 }[l.kind] || .3;
   const flats = l.sp === "flats", old = l.old, w = flats ? 1.2 : l.tower ? 1.7 : old ? 1.25 : 1.15, gap = l.tower ? 3.1 : old ? 3.6 : 2.9, tall = old ? 2 : 1.5;
   const shut = (!l.tower || flats) && (l.kind === "home" || l.kind === "food" || l.kind === "shop") && (flats || hash(l.id, "sh") < .75);
   const sc = old ? pick([C.teal, [.42, .18, .14], C.ochre, C.blue], hash(l.id, "shc")) : pick(ACCENT, hash(l.id, "shc")), dm = detailOf(l.block), plants = [[.26, .38, .2], [.4, .48, .24]];
@@ -555,6 +589,9 @@ function windows(l) {                                      // each window is one
       if (f === 0 && s === l.side && (l.sp === "hall" || l.sp === "depot")) continue;
       if (l.sp === "hospital" && s === l.side && Math.abs(c - doorA) < 5.8) continue;
       if (l.sp === "mall" && s === l.side && Math.abs(c - doorA) < 4.4) continue;
+      if ((l.sp === "dealer" || l.sp === "cinema") && s === l.side && f === 0) continue;   // showroom panes and cinema posters stand there
+      if ((l.sp === "bank" || l.sp === "museum" || l.sp === "library") && s === l.side && Math.abs(c - doorA) < (l.sp === "museum" ? 8.2 : l.sp === "bank" ? 5.6 : 3.6) && f < 2) continue;   // behind the portico
+      if (l.sp === "cinema" && s === l.side && Math.abs(c - doorA - 6.6) < 1.4) continue;   // the blade sign
       if (l.sp === "depot" && s === l.side && f === 1 && Math.min(Math.abs(c - doorA - L / 3), Math.abs(c - doorA + L / 3)) < 2.9) continue;
       if (l.sp === "guild" && s === l.side && f === 1 && Math.abs(c - doorA) < 2.7) continue;
       if (l.sp === "works" && s === l.side && k === kDoor && f > 0) {
@@ -640,6 +677,12 @@ function furnish(l, side, accent, inC, vis) {     // at load (no vis): places, u
   (o.room || []).forEach(([x, z], k) => { const yaw = Math.floor(hash(l.id, k, "r") * 4) * Math.PI / 2; chair(x, z, yaw, fab, l.kind === "home"); occ.push([x, z, 1.0]); spot(l, x, z, 2, yaw, F + .45); use(x, F + .45, z, "sit", "Sit down", yaw); });
   (o.chair || []).forEach(([x, z]) => { chair(x, z, toDoor, R.chair || C.cream); occ.push([x, z, .9]); spot(l, x, z, 2, toDoor, F + .45); use(x, F + .45, z, "sit", "Sit down", toDoor); });
   (o.seat || []).forEach(([x, z], k) => {
+    if (l.kind === "cinema" || l.kind === "museum") {     // a cinema seat facing the screen at the back; a museum bench facing the exhibits
+      const cin = l.kind === "cinema", red = [.42, .1, .1];
+      if (cin) { B(x, 0, z, .5, .42, .5, C.charcoal, -fromDoor); B(x, .42, z, .5, .1, .48, red, -fromDoor); B(x - Math.sin(fromDoor) * .24, .42, z + Math.cos(fromDoor) * .24, .52, .55, .1, red, -fromDoor); }
+      else { B(x, .4, z, 1.5, .07, .45, ROOM_WOOD, -fromDoor); for (const u of [-.65, .65]) B(x + Math.cos(fromDoor) * u, 0, z + Math.sin(fromDoor) * u, .07, .4, .4, ROOM_WOOD, -fromDoor); }
+      occ.push([x, z, cin ? .45 : .9]); spot(l, x, z, 2, fromDoor, F + .45); use(x, F + .45, z, "sit", cin ? "Take a seat" : "Sit on the bench", fromDoor); return;
+    }
     const sgn = k % 2 ? -1 : 1; chair(x, z, yawOf(sgn, 0), R.chair || ROOM_WOOD); table(x + sgn * .7, z, .64, .74, l.kind === "food");
     if (l.kind === "food" || l.sp === "mall") chair(x + sgn * 1.4, z, yawOf(-sgn, 0), R.chair || ROOM_WOOD);   // a table for two: a second chair across it
     hard(x + sgn * .7 - .31, F, z - .31, x + sgn * .7 + .31, F + .74, z + .31); occ.push([x + sgn * .35, z, 1.2]);
@@ -680,6 +723,7 @@ function furnish(l, side, accent, inC, vis) {     // at load (no vis): places, u
 const ROOM_WOOD = [.36, .24, .15], ROOM_GOODS = [C.ochre, C.terracotta, C.olive, C.cream, [.6, .2, .16], [.42, .5, .24], [.3, .38, .52], [.55, .45, .3]];
 const ROOM_FLOOR = {                                         // [material, colour]: 15 boards, 16 tiles
   home: [15, [.4, .27, .17]], food: [16, [.56, .34, .24]], shop: [16, [.58, .52, .44]], work: [15, [.36, .26, .18]], works: [15, [.3, .24, .19]],
+  bank: [16, [.74, .7, .62]], library: [15, [.4, .27, .17]], museum: [16, [.66, .62, .56]], cinema: [16, [.34, .14, .12]], dealer: [16, [.72, .72, .7]],
   health: [16, [.66, .66, .63]], hospital: [16, [.66, .66, .63]], utility: [16, [.4, .4, .4]], mall: [16, [.62, .56, .46]], hall: [16, [.5, .4, .32]], guild: [15, [.38, .25, .16]], office: [15, [.36, .26, .18]], flats: [16, [.58, .5, .42]],
 };
 const espresso = (B, cx, cz, h, ns) => { B(cx - (ns ? .45 : 0), h, cz - (ns ? 0 : .45), .5, .42, .36, C.metal); B(cx - (ns ? .45 : 0), h + .42, cz - (ns ? 0 : .45), .3, .08, .3, [.6, .58, .55]); for (let k = 0; k < 4; k++) B(cx + (ns ? .1 + k * .12 : 0), h, cz + (ns ? 0 : .1 + k * .12), .07, .08, .07, [.86, .84, .8]); B(cx + (ns ? .62 : 0), h, cz + (ns ? 0 : .62), .3, .26, .3, [.95, .82, .55], 0, 2); };
@@ -701,6 +745,11 @@ const ROOM_STYLE = {
   utility: { tall: ["lockers"], low: ["workbench", "crates", "barrels"], mid: ["crates"], pictures: "tools", fabric: [C.charcoal], onCounter: ledger, lamp: C.metal },
   mall: { tall: [], low: ["plant", "bench"], mid: ["kiosk", "plant"], pictures: "price", fabric: [C.cream], counter: [.32, .22, .14], top: C.ochre, onCounter: till, lamp: C.ochre },
   flats: { tall: [], low: ["sofa", "plant"], mid: ["reception", "rug"], pictures: "art", fabric: [C.olive], onCounter: ledger, lamp: C.cream },
+  bank: { tall: ["filing"], low: ["plant", "bench"], mid: [], pictures: "art", fabric: [C.teal], chair: [.42, .3, .2], counter: [.3, .2, .13], top: [.72, .7, .64], onCounter: ledger, lamp: C.cream },
+  library: { tall: ["bookcase", "bookcase", "filing"], low: ["plant", "bench"], mid: [], pictures: "art", fabric: [C.olive], chair: [.36, .24, .15], counter: [.3, .2, .13], top: [.24, .34, .26], onCounter: ledger, lamp: C.olive },
+  museum: { tall: [], low: ["bench", "plant"], mid: [], pictures: "art", fabric: [C.terracotta], counter: [.3, .2, .13], top: [.62, .58, .52], onCounter: ledger, lamp: C.cream },
+  cinema: { tall: [], low: [], mid: [], pictures: "art", fabric: [[.42, .1, .1]], counter: [.42, .1, .1], top: [.62, .5, .3], onCounter: till, lamp: [.42, .1, .1], dim: true },
+  dealer: { tall: [], low: ["plant", "sofa"], mid: [], pictures: "price", fabric: [C.charcoal], counter: [.32, .34, .36], top: [.8, .8, .78], onCounter: ledger, lamp: C.cream },
 };
 // The arrangement of each kind of building, laid out from the door: `a` runs along the door wall, `i` inward from it.
 // Everything is placed round the data's own places (staff behind counters at the back, seats and customers in front).
@@ -718,7 +767,7 @@ function layout(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard, clea
   const ob = k => ((l.objects || {})[k] || []).map(rel), pv = [-o[1], 0, o[0]];
   const lamp = (a, i, drop, c) => { const p = wp(a, i); dm.box(p[0] - .01, GF - drop, p[1] - .01, p[0] + .01, GF, p[1] + .01, C.charcoal, 19); dm.ybox(p[0], GF - drop - .2, p[1], .32, .2, .32, 0, c || C.ochre, 19); dm.box(p[0] - .07, GF - drop - .27, p[1] - .07, p[0] + .07, GF - drop - .19, p[1] + .07, [1, .78, .5], 2); };
   const glass = (a, i0, i1, y0, y1, facing) => { const P1 = (ii, y) => { const p = wp(a, ii); return [p[0], F + y, p[1]]; }; dm.quad(P1(i0, y0), P1(i1, y0), P1(i1, y1), P1(i0, y1), [0, 0, .998], 1, facing, true); };
-  const key = l.sp === "mall" ? "mall" : l.kind === "food" ? "cafe" : l.kind === "shop" ? "grocer" : l.kind === "home" ? "home" : l.sp === "works" ? "works"
+  const key = ["bank", "dealer", "library", "museum", "cinema"].includes(l.kind) ? l.kind : l.sp === "mall" ? "mall" : l.kind === "food" ? "cafe" : l.kind === "shop" ? "grocer" : l.kind === "home" ? "home" : l.sp === "works" ? "works"
     : l.kind === "work" ? (l.sp === "hall" ? "hall" : l.sp === "guild" ? "guild" : "office") : l.kind === "health" ? "clinic" : l.kind === "utility" ? "depot" : null;
   const Wk = ob("work"), Cu = ob("customer"), Ch = ob("chair");
 
@@ -899,6 +948,89 @@ function layout(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard, clea
     const fa = 0, fi = (Math.min(...(Cu.length ? Cu : [[0, iMax / 2]]).map(c => c[1])) + 2.0) / 2 + .5;
     if (FF(fa, fi, 1.8)) { FB(fa, fi, 0, 3.0, .45, 3.0, C.stone, 0, Math.PI / 8); FB(fa, fi, 0, 3.0, .45, 3.0, C.stone, 0, -Math.PI / 8 + Math.PI / 4); FB(fa, fi, .38, 2.5, .04, 2.5, C.water, 9); FB(fa, fi, 0, .3, 1.4, .3, C.stone); FB(fa, fi, 1.4, .9, .12, .9, C.stoneDark, 0, Math.PI / 4); FH(fa - 1.5, fa + 1.5, fi - 1.5, fi + 1.5, .45); FO(fa, fi, 2.0); }
   }
+
+  const backN = [o[0], 0, o[1]], onBack = (a, y, d) => { const p = wp(a, iMax - (d || .02)); return [p[0], F + y, p[1]]; };
+  const counterRow = (bodyC, topC, ht) => {               // one long counter across the back joining the staff places; returns [a0, a1, ci]
+    const wi = Math.max(...Wk.map(w => w[1])), ci = wi - .8, a0 = Math.max(aMin + .4, Math.min(...Wk.map(w => w[0])) - 1.6), a1 = Math.min(aMax - .4, Math.max(...Wk.map(w => w[0])) + 1.6), am = (a0 + a1) / 2, L = a1 - a0;
+    FB(am, ci, 0, L, ht, .6, bodyC); FB(am, ci, ht, L + .08, .05, .74, topC);
+    for (let k = 0; k < Math.floor(L / 1.0); k++) FB(a0 + .5 + k, ci - .31, .12, .86, ht - .25, .02, mul3(bodyC, .8));
+    FH(a0, a1, ci - .35, ci + .35, ht + .05); for (let a = a0 + .5; a < a1; a += 1.2) FO(a, ci, .7);
+    return [a0, a1, ci];
+  };
+
+  if (key === "bank" && Wk.length) {
+    // the tellers' counter with glass screens and a brass tray at each window; the vault door and a clock on the back wall;
+    // queue posts with ropes before the counter; writing desks by the door
+    const [a0, a1, ci] = counterRow(DARK, [.74, .72, .66], 1.05);
+    FB((a0 + a1) / 2, ci, 1.1, a1 - a0, .85, .03, [.6, .7, .76]); FB((a0 + a1) / 2, ci, 1.95, a1 - a0 + .1, .25, .14, DARK);
+    for (const [wa] of Wk) { FB(wa - .6, ci, 1.1, .06, .85, .08, [.55, .45, .2]); FB(wa, ci - .05, 1.1, .45, .05, .14, [.55, .45, .2]); FB(wa, ci - .04, 1.12, .3, .12, .02, [.12, .12, .12]); }
+    const va = (a0 + a1) / 2;
+    if (iMax - ci > 1.1) { SP.disc(dm, onBack(va, 1.25, .04), backN, 1.15, [.32, .34, .36], 9, 28); SP.disc(dm, onBack(va, 1.25, .07), backN, .9, [.42, .44, .46], 9, 28); SP.disc(dm, onBack(va, 1.25, .1), backN, .16, [.55, .45, .2], 9, 12); for (let k = 0; k < 4; k++) FB(va, iMax - .12, 1.21, .06, .06, .02, [.55, .45, .2], 0, k * Math.PI / 4); }
+    SP.disc(dm, onBack(va + 3.5, 2.5, .04), backN, .42, DARK, 19); SP.disc(dm, onBack(va + 3.5, 2.5, .06), backN, .34, [.9, .88, .82], 19);
+    const qi = ci - 3.0; if (qi > 2) for (let a = -6; a <= 6; a += 1.5) { if (Math.abs(a) < dw / 2 + .4 || !FF(a, qi, .15)) continue; FB(a, qi, 0, .22, .04, .22, [.55, .45, .2]); FB(a, qi, 0, .05, .95, .05, [.55, .45, .2]); if (a + 1.5 <= 6 && Math.abs(a + .75) >= dw / 2 + .4) FB(a + .75, qi, .82, 1.4, .05, .05, [.5, .1, .1]); FO(a, qi, .3); }
+    for (const sg of [-1, 1]) { const a = sg * (dw / 2 + 3.0), i = 2.2; if (!FF(a, i, .7)) continue; for (const u of [-.4, .4]) FB(a + u, i, 0, .06, 1.0, .06, C.metal); FB(a, i, 1.0, 1.1, .05, .55, [.3, .2, .13], 0); for (let k = 0; k < 3; k++) FB(a - .3 + k * .3, i, 1.05, .2, .01, .28, [.9, .88, .82]); FH(a - .55, a + .55, i - .28, i + .28, 1.05); FO(a, i, .8); }
+  }
+
+  if (key === "library") {
+    // stacks of double-sided bookcases between the readers' tables and the browsers; green lamps on every table;
+    // a card catalogue and a globe by the door (the issue desk is the counter at the librarians' places)
+    const Se = ob("seat"), si = Se.length ? Math.max(...Se.map(s => s[1])) : 6, cuI = Cu.length ? Math.min(...Cu.map(c => c[1])) : iMax - 4, sti = (si + cuI) / 2;
+    if (cuI - si > 2.4) for (let a = aMin + 1.7; a + 2.6 < aMax - 1.0; a += 3.6) {
+      const m = a + 1.3; if (Math.abs(m) < dw / 2 + 1.6 || !FF(m, sti, .45) || !FF(a + .2, sti, .3) || !FF(a + 2.4, sti, .3)) continue;
+      FB(m, sti, 0, 2.6, 2.1, .7, WD); FB(m, sti, 2.1, 2.7, .06, .74, mul3(WD, .8));
+      for (let s = 0; s < 5; s++) for (const sd of [-1, 1]) { FB(m, sti + sd * .31, .1 + s * .42, 2.5, .03, .1, mul3(WD, .9)); for (let k = 0; k < 14; k++) { const bh = .24 + .1 * h(m, s, k, sd); FB(a + .15 + k * .17, sti + sd * .3, .13 + s * .42, .13, bh, .12, pick(ROOM_GOODS, h(k, s, m, sd))); } }
+      FH(a, a + 2.6, sti - .35, sti + .35, 2.1); FO(m, sti, 1.5);
+    }
+    (l.objects.seat || []).forEach(([x, z], k) => { const [ta, ti] = rel([x + (k % 2 ? -1 : 1) * .7, z]); FB(ta, ti, .74, .14, .03, .14, [.55, .45, .2]); FB(ta, ti, .74, .02, .3, .02, [.55, .45, .2]); FB(ta, ti, 1.02, .28, .1, .14, [.16, .36, .22]); FB(ta, ti, .98, .1, .05, .06, [1, .8, .55], 2); });
+    const ca = dw / 2 + 2.2; if (FF(ca, 1.2, .7)) { FB(ca, 1.2, 0, 1.2, 1.15, .5, WD); for (let r = 0; r < 4; r++) for (let q = 0; q < 4; q++) FB(ca - .42 + q * .28, 1.2 - .26, .15 + r * .25, .22, .18, .02, mul3(WD, .75)); FH(ca - .6, ca + .6, .95, 1.45, 1.15); FO(ca, 1.2, .8); }
+    const ga = -(dw / 2 + 2.2); if (FF(ga, 1.4, .5)) { FB(ga, 1.4, 0, .5, .04, .5, WD, 0, Math.PI / 4); FB(ga, 1.4, 0, .05, .85, .05, WD); FB(ga, 1.4, .85, .5, .5, .5, C.blue, 0, Math.PI / 4); FB(ga, 1.4, .92, .36, .36, .36, C.olive, 0, Math.PI / 8); FO(ga, 1.4, .45); }
+  }
+
+  if (key === "museum") {
+    // an exhibit before each visitor's place (a statue on a plinth, an urn, a glass case of finds) behind rope posts; a great
+    // painting across the back wall
+    const stone = [.72, .7, .66];
+    Cu.forEach(([ca, ci], k) => {
+      const ei = ci + 1.4; if (!FF(ca, ei, .32)) return; const t = k % 3;
+      FB(ca, ei, 0, .8, 1.0, .8, stone);
+      if (t === 0) { FB(ca, ei, 1.0, .5, .1, .4, stone); FB(ca - .1, ei, 1.1, .14, .7, .16, stone); FB(ca + .1, ei, 1.1, .14, .7, .16, stone); FB(ca, ei, 1.8, .42, .62, .26, stone); FB(ca, ei, 2.44, .2, .26, .22, stone); FB(ca + .3, ei, 1.9, .1, .5, .12, stone, 0, .4); }
+      else if (t === 1) { FB(ca, ei, 1.0, .3, .1, .3, C.terracotta, 0, Math.PI / 4); FB(ca, ei, 1.1, .5, .38, .5, C.terracotta, 0, Math.PI / 4); FB(ca, ei, 1.48, .3, .22, .3, C.terracotta, 0, Math.PI / 4); FB(ca, ei, 1.7, .4, .06, .4, C.terracotta, 0, Math.PI / 4); FB(ca, ei, 1.3, .54, .06, .54, C.charcoal, 0, Math.PI / 4); }
+      else { FB(ca, ei, 1.0, .74, .55, .74, [.62, .72, .76]); for (let q = 0; q < 3; q++) FB(ca - .2 + q * .2, ei, 1.02, .12, .05 + .06 * q, .16, pick([C.ochre, [.55, .45, .2], C.teal], h(k, q))); }
+      for (const u of [-.75, .75]) { FB(ca + u, ei - .8, 0, .2, .04, .2, [.55, .45, .2]); FB(ca + u, ei - .8, 0, .05, .9, .05, [.55, .45, .2]); } FB(ca, ei - .8, .8, 1.5, .05, .05, [.5, .1, .1]);
+      FH(ca - .45, ca + .45, ei - .45, ei + .45, 1.6); FO(ca, ei, .9);
+    });
+    const pw = Math.min(6, aMax - aMin - 6); FB(0, iMax - .05, .9, pw + .3, 2.1, .06, [.42, .3, .14]); FB(0, iMax - .1, 1.05, pw, 1.8, .03, [.36, .42, .5]); FB(-pw * .2, iMax - .12, 1.2, pw * .4, .7, .02, [.5, .44, .3]); FB(pw * .15, iMax - .12, 1.6, pw * .35, .9, .02, [.3, .36, .24]);
+  }
+
+  if (key === "cinema") {
+    // the screen on the back wall between red curtains, a stage before it, a red runner up the aisle, wall lights low and
+    // warm; ticket and sweets counters by the door (the counters at the staff places), a popcorn machine on one
+    const sw = Math.min(aMax - aMin - 4, 14), red = [.5, .1, .1];
+    dm.quad(onBack(-sw / 2, .95, .06), onBack(sw / 2, .95, .06), onBack(sw / 2, 2.95, .06), onBack(-sw / 2, 2.95, .06), [.3, .3, .9995], 1, backN);   // (across and up kept off the glazing bars)
+    for (const s of [-1, 1]) FB(s * (sw / 2 + .55), iMax - .2, 0, 1.1, 3.0, .26, red); FB(0, iMax - .2, 2.95, sw + 2.2, .25, .26, red);
+    FB(0, iMax - 1.0, 0, sw + 1, .42, 1.5, DARK); FH(-(sw + 1) / 2, (sw + 1) / 2, iMax - 1.75, iMax - .25, .42); FO(0, iMax - 1.0, 2.5);
+    { const p0 = wp(-.55, 3.0), p1 = wp(.55, iMax - 1.8); dm.flat(Math.min(p0[0], p1[0]), Math.min(p0[1], p1[1]), Math.max(p0[0], p1[0]), Math.max(p0[1], p1[1]), F + .005, [.36, .08, .08], 19); }
+    for (const [aw, sg] of [[aMin, 1], [aMax, -1]]) for (let i = 3; i < iMax - 1; i += 3.0) { FB(aw + sg * .08, i, 2.1, .14, .24, .24, [1, .72, .42], 2); FB(aw + sg * .05, i, 2.0, .08, .1, .3, [.55, .45, .2]); }
+    if (Wk.length) { const [wa, wi] = Wk[0]; FB(wa + .45, wi - .8, .98, .5, .62, .42, [.95, .82, .5], 2); FB(wa + .45, wi - .8, 1.6, .54, .06, .46, red); }
+  }
+
+  if (key === "dealer") {
+    // cars on show between the buyers' places, each with a price board on a stand; tyres and oil by the back wall; a brochure rack
+    const colors = [C.teal, C.terracotta, C.cream, C.blue, C.olive, [.52, .16, .14]];
+    const car = (a, i, col) => {
+      FB(a, i, .32, 1.8, .5, 4.2, col); FB(a, i - .15, .82, 1.62, .48, 2.2, col); FB(a, i - .15, .86, 1.64, .36, 2.0, [.32, .42, .48]);
+      FB(a, i + 1.8, .6, 1.7, .14, .5, col); for (const u of [-1, 1]) for (const v of [-1.35, 1.35]) FB(a + u * .82, i + v, 0, .26, .64, .64, C.charcoal);
+      for (const v of [-2.12, 2.12]) FB(a, i + v, .34, 1.74, .14, .1, C.metal); for (const u of [-.6, .6]) FB(a + u, i - 2.16, .55, .26, .14, .04, [1, .9, .7], 2);
+      FB(a + 1.4, i - 1.6, 0, .04, 1.0, .04, C.metal); FB(a + 1.4, i - 1.6, 1.0, .5, .36, .04, C.cream);
+      FH(a - .9, a + .9, i - 2.1, i + 2.1, 1.3); FO(a, i, 2.3);
+    };
+    const cas = Cu.map(c => c[0]).sort((p, q) => p - q), ci = Cu.length ? Cu[0][1] : 6;
+    let n = 0;
+    for (let k = 0; k + 1 < cas.length; k++) { const m = (cas[k] + cas[k + 1]) / 2; if (Math.abs(m) < dw / 2 + 1.4 || !FF(m, ci + .6, 1.0) || !FF(m, ci - 1.2, .8) || !FF(m, ci + 2.4, .8)) continue; car(m, ci + .6, colors[n++ % colors.length]); }
+    for (let a = aMin + 2.5; a < aMax - 2; a += 5.5) { if (Math.abs(a) > dw / 2 + 1.4 && FF(a, ci + 5.2, 1.0) && FF(a, ci + 3.4, .8) && FF(a, ci + 7.0, .8)) car(a, ci + 5.2, colors[n++ % colors.length]); }
+    for (let a = aMin + 1.0; a < aMax - 1; a += 4.0) { if (!FF(a, iMax - .5, .5)) continue; for (let k = 0; k < 4; k++) FB(a, iMax - .5, k * .24, .62, .22, .62, C.charcoal, 0, k * .3); FB(a + .7, iMax - .4, 0, .3, .45, .3, C.ochre); FO(a, iMax - .5, .7); }
+    const ra = -(dw / 2 + 1.8); if (FF(ra, 1.2, .5)) { FB(ra, 1.2, 0, .7, 1.4, .3, WD); for (let r = 0; r < 3; r++) for (let q = 0; q < 3; q++) FB(ra - .22 + q * .22, 1.04, .3 + r * .38, .18, .26, .02, pick(colors, h(r, q, "br"))); FO(ra, 1.2, .5); }
+  }
 }
 
 function room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard) {
@@ -983,7 +1115,7 @@ function room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard) {
   }
   // lamps hanging from the beams
   const nx = Math.max(1, Math.round((rx1 - rx0) / 4.4)), nz = Math.max(1, Math.round((rz1 - rz0) / 4.4));
-  for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
+  if (!R.dim) for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {   // (a cinema stays dark)
     const lx = rx0 + (i + .5) * (rx1 - rx0) / nx, lz = rz0 + (j + .5) * (rz1 - rz0) / nz, top = GF - .02;
     dm.box(lx - .012, top - .55, lz - .012, lx + .012, top, lz + .012, C.charcoal, 19);
     dm.ybox(lx, top - .78, lz, .42, .24, .42, Math.PI / 4, R.lamp || C.cream, 19); dm.box(lx - .09, top - .86, lz - .09, lx + .09, top - .76, lz + .09, [1, .78, .5], 2);
@@ -1164,8 +1296,8 @@ function resident(i, m) {                                // where resident i is 
   const x = a[0] - dz * lane, z = a[1] + dx * lane;
   return { x, z, y: groundBase(x, z), yaw: yawOf(dx, dz), pose: 1, act: p[2], inside: 0, walking: true, ph: (d / People.stepLength(looks[i].sig, looks[i].S)) % 1 };
 }
-const DOING = { sleep: "asleep", home: "at home", work: "at work", eat: "eating", shop: "shopping", rest: "resting", sell: "selling at the market", wait: "waiting for the tram", visit: "at the clinic", tend: "tending the garden", deliver: "making a delivery", stroll: "out for a stroll", arrive: "back from town", eat_home: "eating at home", check: "on a round", inspect: "on a round", away: "waiting for the tram" };
-const GOING = { sleep: "heading home", home: "heading home", eat_home: "heading home", work: "on the way to work", eat: "going to eat", shop: "going shopping", rest: "going for a sit down", sell: "on the way to the market", wait: "heading for the tram", away: "heading for the tram", visit: "going to the clinic", tend: "going to the garden", deliver: "out on a delivery", stroll: "out for a stroll" };
+const DOING = { read: "reading at the library", view: "looking round the museum", watch: "at the pictures", bank: "at the bank", browse: "looking at cars", sleep: "asleep", home: "at home", work: "at work", eat: "eating", shop: "shopping", rest: "resting", sell: "selling at the market", wait: "waiting for the tram", visit: "at the clinic", tend: "tending the garden", deliver: "making a delivery", stroll: "out for a stroll", arrive: "back from town", eat_home: "eating at home", check: "on a round", inspect: "on a round", away: "waiting for the tram" };
+const GOING = { read: "going to the library", view: "going to the museum", watch: "going to the pictures", bank: "going to the bank", browse: "going to look at cars", sleep: "heading home", home: "heading home", eat_home: "heading home", work: "on the way to work", eat: "going to eat", shop: "going shopping", rest: "going for a sit down", sell: "on the way to the market", wait: "heading for the tram", away: "heading for the tram", visit: "going to the clinic", tend: "going to the garden", deliver: "out on a delivery", stroll: "out for a stroll" };
 
 function tramAt(m) {                                     // every tram on the map now: [x, stopped]
   const tr = D.tram, t0 = (+tr.first.slice(0, 2)) * 60 + (+tr.first.slice(3)), tl = (+tr.last.slice(0, 2)) * 60 + (+tr.last.slice(3)), v = tr.speed * D.pace, dw = tr.dwell, out = [];
@@ -1238,7 +1370,7 @@ void main(){
       vec3 glass=(vec3(.07,.09,.12)*(uSky*1.5+uGround*2.)+uSky*.04)*reveal, warm=mix(vec3(1.,.5,.2),vec3(1.,.68,.36),c.z)*(1.+1.5*g.y);
       float shop=step(.955,c.z);                                          // shop and cafe windows glow by day too
       col=mix(glass,warm*(1.-.5*shop*(1.-uNight)),f<1.5?max(uNight,shop*.8):0.);
-      if(c.z>.995) col=(uFog*1.3+uSky*1.9+uSunCol*.05)*(.7+.5*g.y)*(1.-.85*uNight);   // the same window seen from inside: daylight beyond
+      if(c.z>.995) col=c.z>.9988?vec3(.82,.86,.94)*1.5:(uFog*1.3+uSky*1.9+uSunCol*.05)*(.7+.5*g.y)*(1.-.85*uNight);   // the same window seen from inside: daylight beyond (.999: a lit cinema screen)
       if(abs(g.x-.5)<.035||abs(g.y-.6)<.03) col=vec3(.3,.2,.13)*(uSky+uSunCol*.03+.004);   // glazing bars
       emis=true; }
   }
