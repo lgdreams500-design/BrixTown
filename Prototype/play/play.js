@@ -1061,7 +1061,8 @@ function stepPlayer(dt) {
 }
 function interact() {
   if (pl.pose > 1) { keys.Space = true; stepPlayer(0); keys.Space = false; return; }
-  if (!target) return;
+  if (!target || Talk.on) return;
+  if (target.type === "talk") return Talk.open(target);
   if (target.type === "lift") {
     const fd = document.getElementById("fade"); fd.style.opacity = 1;
     setTimeout(() => { pl.x = target.to[0]; pl.y = target.to[1]; pl.z = target.to[2]; pl.vy = 0; fd.style.opacity = 0; }, 240);
@@ -1169,7 +1170,7 @@ $("legend").innerHTML = Object.keys(KIND_WORD).map(k => `<div><i style="backgrou
 
 function begin() { started = true; $("start").style.display = "none"; $("keys").style.display = "block"; if (cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } }
 $("go").addEventListener("click", begin);
-cv.addEventListener("click", () => { if (started && !locked && cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } });
+cv.addEventListener("click", () => { if (started && !locked && !Talk.on && cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } });
 document.addEventListener("pointerlockchange", () => { locked = document.pointerLockElement === cv; });
 let drag = false; cv.addEventListener("mousedown", () => drag = true); addEventListener("mouseup", () => drag = false);
 addEventListener("mousemove", e => { if (!started || !(locked || drag)) return; cam.yaw += e.movementX * .0024; cam.pitch = clamp(cam.pitch - e.movementY * .0024, -1.35, 1.35); });
@@ -1178,6 +1179,7 @@ const RATES = [1, 5, 20, 100];
 addEventListener("keydown", e => {
   if (e.code === "Space" || e.code.startsWith("Arrow")) e.preventDefault();
   if (!started) { if (e.code === "Enter") begin(); return; }
+  if (Talk.on) { Talk.key(e); return; }                  // number keys answer, Esc leaves
   if (e.repeat) return; keys[e.code] = true;
   if (e.code === "KeyV") cam.fp = !cam.fp;
   else if (e.code === "KeyE") interact();
@@ -1199,13 +1201,13 @@ function frame(now) {
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5) * quality, W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
   if (cv.width !== W || cv.height !== H) { cv.width = ui.width = W; cv.height = ui.height = H; }
   clock.m = (clock.m + dt / D.pace * clock.rate) % 1440;
-  if (started) { stepPlayer(dt); findTarget(); }
+  if (started && !Talk.on) { stepPlayer(dt); findTarget(); } else if (started) Talk.step(dt);   // talking (talk.js) holds the player still
   stepCamera(dt);
 
   // everyone's place right now; bodies only for those near the player
   dyn.reset(); people = []; bodies = 0; const tags = [], near = started ? [pl.x, pl.z] : [cam.eye[0] + cam.dir[0] * 60, cam.eye[2] + cam.dir[2] * 60], reach = started ? 85 : 130;
   for (let i = 0; i < D.plan.length; i++) {
-    const r = resident(i, clock.m); if (!r) continue;
+    const r = Talk.where(i, clock.m); if (!r) continue;
     people.push([r.x, r.z]);
     const d = Math.hypot(r.x - near[0], r.z - near[1]); if (d > reach) continue;
     bodies++;
@@ -1216,7 +1218,9 @@ function frame(now) {
     }
     People.draw(dyn, r.x, r.y, r.z, r.yaw, L, r.pose, { ph: r.ph || 0, t: now / 1000, lod: dc < 13 ? 0 : dc < 40 ? 1 : 2, fl: r.inside ? 10 : 14, look: lk, sleep: r.pose === 3 });
     if (started && d < 9 && Math.abs(r.y - pl.y) < 3) tags.push({ x: r.x, y: r.y + (r.pose === 2 ? 1.0 : r.pose === 3 ? .55 : 1.88) * L.S, z: r.z, d, text: D.residents[i].n + ", " + D.roles[D.residents[i].r] + " · " + (r.walking ? GOING[D.acts[r.act]] || "walking" : DOING[D.acts[r.act]] || D.acts[r.act]) });
+    if (started) Talk.consider(i, r, d);
   }
+  if (started) Talk.pick();                               // the nearest resident in reach can be talked to (E)
   if (started && !cam.fp && !cam.close) {
     let da = cam.yaw - pl.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
     People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,

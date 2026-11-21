@@ -50,6 +50,12 @@
       "depth": 2,
       "full": 2,
       "note": "Owner, 2026-11-22: walking, and drivable cars, from the first slice."
+    },
+    "F-NPC-TALK": {
+      "slice": 1,
+      "depth": 1,
+      "full": 2,
+      "note": "Owner, 2026-11-22: \"Slice 1, depth 1, full 2\" (conversations with choices from the first slice)."
     }
   }
 }

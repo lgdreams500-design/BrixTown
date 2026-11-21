@@ -42,6 +42,16 @@
   #go { margin-top: 26px; font: 600 18px var(--data); color: var(--ink); background: var(--lantern); border: 0; border-radius: 6px; padding: 13px 26px; cursor: pointer; }
   #go:hover { background: #f6b673; }
   #go:focus-visible { outline: 3px solid var(--cream); outline-offset: 3px; }
+  #talk { position: fixed; left: 50%; bottom: 36px; transform: translateX(-50%); width: min(640px, calc(100vw - 32px)); box-sizing: border-box; padding: 16px 20px 12px; background: rgba(23,23,28,.84); border-radius: 6px; border-top: 2px solid rgba(240,163,90,.55); display: none; }
+  #talk-who { display: flex; align-items: baseline; gap: 12px; }
+  #talk-name { font-family: var(--name); font-size: 24px; font-weight: 400; }
+  #talk-role { font-size: 14px; color: var(--dim); }
+  #talk-say { margin: 8px 0 12px; font-size: 19px; line-height: 1.45; }
+  #talk-opts { list-style: none; margin: 0; padding: 0; }
+  #talk-opts button { display: block; width: 100%; text-align: left; font: 16px var(--data); color: var(--cream); background: none; border: 0; border-radius: 4px; padding: 6px 8px; cursor: pointer; }
+  #talk-opts button:hover, #talk-opts button:focus-visible { background: rgba(240,163,90,.14); outline: none; }
+  #talk-opts kbd, #talk-hint kbd { font-family: var(--data); font-size: .85em; padding: 1px 7px; border: 1px solid rgba(240,163,90,.6); border-radius: 4px; margin-right: 10px; color: var(--lantern); }
+  #talk-hint { margin-top: 8px; font-size: 13px; color: var(--dim); text-align: right; }
   #fail { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 8vw; font-size: 20px; line-height: 1.5; }
 </style>
 </head>
@@ -59,10 +69,16 @@
 <div class="hud" id="prompt"></div>
 <div class="hud" id="dot"></div>
 <div class="hud" id="keys">
-  <span><kbd>W A S D</kbd>walk</span><span><kbd>Shift</kbd>run</span><span><kbd>Space</kbd>jump</span><span><kbd>V</kbd>first or third person</span><span><kbd>E</kbd>use</span><br>
+  <span><kbd>W A S D</kbd>walk</span><span><kbd>Shift</kbd>run</span><span><kbd>Space</kbd>jump</span><span><kbd>V</kbd>first or third person</span><span><kbd>E</kbd>use, talk</span><br>
   <span><kbd>[</kbd><kbd>]</kbd>slow or speed the clock</span><span><kbd>T</kbd>skip an hour</span><span><kbd>M</kbd>map</span><span><kbd>Q</kbd>softer picture</span><span><kbd>L</kbd>earlier light</span><span><kbd>H</kbd>hide these</span>
 </div>
 <div id="bigmap"><canvas id="big" width="900" height="900"></canvas><div id="legend"></div></div>
+<div id="talk" role="dialog" aria-label="Conversation">
+  <div id="talk-who"><span id="talk-name"></span><span id="talk-role"></span></div>
+  <p id="talk-say"></p>
+  <ol id="talk-opts"></ol>
+  <div id="talk-hint"><kbd>1</kbd>to<kbd style="margin-left:6px">9</kbd>or click to answer · <kbd style="margin-left:6px">Esc</kbd>leave</div>
+</div>
 <div id="fade"></div>
 
 <div id="start">
@@ -71,7 +87,7 @@
     <p id="lede"></p>
     <div id="controls">
       <span><b>W A S D</b>walk</span><span><b>Mouse</b>look</span><span><b>Shift</b>run</span><span><b>Space</b>jump</span>
-      <span><b>V</b>first or third person</span><span><b>E</b>sit, lie down, ride a lift</span><span><b>M</b>map</span><span><b>[ ] T</b>clock</span>
+      <span><b>V</b>first or third person</span><span><b>E</b>sit, talk, ride a lift</span><span><b>M</b>map</span><span><b>[ ] T</b>clock</span>
     </div>
     <button id="go">Walk into town</button>
     <p class="small">A playable slice built from the files in World/. Doors are open: walk into any building. The towers have a lift to the roof.</p>
@@ -82,5 +98,6 @@
 <script src="city_data.js"></script>
 <script src="people.js"></script>
 <script src="play.js"></script>
+<script src="talk.js"></script>
 </body>
 </html>

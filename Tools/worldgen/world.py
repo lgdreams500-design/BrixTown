@@ -24,7 +24,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "dialogue"):
         w[name] = _read(rules, name + ".json")
     return w
 
@@ -81,10 +81,86 @@ def validate(w):
         c = simulation(w)
         dd, _ = c.net._from(next(iter(c.anchor.values())))
         out += ["%s cannot be reached on foot" % k for k, a in c.anchor.items() if a not in dd]
+    out += dialogue_problems(w)
     kinds = {l["kind"] for l in lots(w)}
     for need in ("home", "shop", "food", "work", "health", "garden", "market", "stop", "utility"):
         if need not in kinds:
             out.append("the city has no %s" % need)
+    return out
+
+
+def dialogue_problems(w, acts=None):
+    """Every rule World/rules/dialogue.json must keep (CITY-007). `acts`: the activity names a rule may test, when known."""
+    import re
+    d, out = w["dialogue"], []
+    convs, roles, moods, names = d["conversations"], w["roles"]["roles"], set(d["moods"]), set(d["vars"])
+    var = re.compile(r"\{([^{}]*)\}")
+    for role in roles:
+        if role not in d["role_words"]:
+            out.append("dialogue: no word for role %s" % role)
+    for n, r in enumerate(d["rules"]):
+        if r["conversation"] not in convs:
+            out.append("dialogue rule %d: no conversation %s" % (n, r["conversation"]))
+        for role in r.get("roles", []):
+            if role not in roles:
+                out.append("dialogue rule %d: unknown role %s" % (n, role))
+        for act in r.get("acts", []):
+            if acts is not None and act not in acts:
+                out.append("dialogue rule %d: unknown activity %s" % (n, act))
+        if set(r) - {"conversation", "roles", "acts", "walking"}:
+            out.append("dialogue rule %d: unknown keys %s" % (n, sorted(set(r) - {"conversation", "roles", "acts", "walking"})))
+    if not d["rules"] or set(d["rules"][-1]) != {"conversation"}:
+        out.append("dialogue: the last rule must match everyone")
+    ids = {r["id"] for r in w["residents"]}
+    for rid, c in d["residents"].items():
+        if rid not in ids:
+            out.append("dialogue: no resident %s" % rid)
+        if c not in convs:
+            out.append("dialogue: %s has no conversation %s" % (rid, c))
+    for cid, c in convs.items():
+        nodes, where = c["nodes"], "dialogue %s" % cid
+        if c["start"] not in nodes:
+            out.append("%s: start node %s does not exist" % (where, c["start"]))
+            continue
+        sets = {f for nd in nodes.values() for o in nd["options"] for f in o.get("do", [])}
+        ends = set()                                   # nodes from which some reply ends the talk
+        for nid, nd in nodes.items():
+            at = "%s.%s" % (where, nid)
+            if nd.get("mood") not in moods:
+                out.append("%s: unknown mood %s" % (at, nd.get("mood")))
+            if not 1 <= len(nd["options"]) <= 9:
+                out.append("%s: needs 1 to 9 replies" % at)
+            if not any(not o.get("if") for o in nd["options"]):
+                out.append("%s: every reply has a condition, so the player could be stuck" % at)
+            for text in [nd["say"]] + [o["text"] for o in nd["options"]]:
+                for v in var.findall(text):
+                    if v not in names:
+                        out.append("%s: unknown {%s}" % (at, v))
+            for o in nd["options"]:
+                if set(o) - {"text", "next", "if", "do"}:
+                    out.append("%s: unknown keys on a reply %s" % (at, sorted(set(o) - {"text", "next", "if", "do"})))
+                if o["next"] is None:
+                    ends.add(nid)
+                elif o["next"] not in nodes:
+                    out.append("%s: reply '%s' goes to %s, which does not exist" % (at, o["text"], o["next"]))
+                for f in o.get("if", []):
+                    if f.lstrip("!") not in sets:
+                        out.append("%s: flag %s is tested but never set" % (at, f.lstrip("!")))
+        seen, todo = {c["start"]}, [c["start"]]        # every node can be reached from the start
+        while todo:
+            for o in nodes[todo.pop()]["options"]:
+                if o["next"] in nodes and o["next"] not in seen:
+                    seen.add(o["next"])
+                    todo.append(o["next"])
+        out += ["%s.%s: cannot be reached from the start" % (where, nid) for nid in nodes if nid not in seen]
+        grew = True                                    # and from every node the talk can end
+        while grew:
+            grew = False
+            for nid, nd in nodes.items():
+                if nid not in ends and any(o["next"] in ends for o in nd["options"]):
+                    ends.add(nid)
+                    grew = True
+        out += ["%s.%s: the talk can never end from here" % (where, nid) for nid in nodes if nid not in ends]
     return out
 
 

@@ -5,8 +5,8 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 8 of 27 | 8 of 27 | 8 of 27 |
-| Size of the plan (points) | 127 | 207 | 437 |
+| Decided | 9 of 27 | 9 of 27 | 9 of 27 |
+| Size of the plan (points) | 135 | 207 | 437 |
 | Size of the suggested plan | 68 | 167 | 405 |
 
 ## City and buildings
@@ -31,7 +31,7 @@
 | **Daily routines** `F-NPC-ROUTINE` | 1 By the clock | 1 By the clock | 2 By their needs | By the clock, then by their needs in the full game (owner, 2026-11-22). |
 | **Week and calendar** `F-NPC-WEEK` | undecided | undecided | undecided |  |
 | **Loading people as you arrive** `F-NPC-LOAD` | 1 Placed by routine | 1 Placed by routine ★ | 2 Distance tiers | Placed by routine, then distance tiers in the full game (owner, 2026-11-22). |
-| **Talking with residents** `F-NPC-TALK` | undecided | undecided | undecided |  |
+| **Talking with residents** `F-NPC-TALK` | 1 Dialogue ★ | 1 Dialogue | 2 Residents talk to each other | Owner, 2026-11-22: "Slice 1, depth 1, full 2" (conversations with choices from the first slice). |
 | **Reacting to the world** `F-NPC-REACT` | undecided | undecided | undecided |  |
 | **Animals** `F-ANIMALS` | undecided | undecided | undecided |  |
 

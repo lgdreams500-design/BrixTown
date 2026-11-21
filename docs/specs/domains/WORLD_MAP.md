@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-WORLD-MAP
 title: Wasted — World map as data, the starting city and the playable slice
-version: 0.5.1
+version: 0.5.3
 status: draft
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -152,10 +152,18 @@ rules and, since 0.2.0, the look and the movement set in the art documents (§5.
 - Day and night from the calendar's sunrise and sunset; lamps and lit windows at night.
 - A tram on Tram Street, on the timetable the residents use.
 
+- Talking to residents (CITY-007, F-NPC-TALK level 1): walk up to someone and press E. Conversations are
+  data in `World/rules/dialogue.json`, picked by the resident's role and what they are doing (at the counter,
+  at the clinic, in passing, an elder, a chat), with replies that branch, loop back and end. While talking,
+  the resident stops and turns to you; afterwards their day carries on from where they stood, running late
+  by the time spent, until they next stand still. Replies can test and set flags kept per resident, ready
+  for quests; `residents` in the file gives one person their own conversation.
+
 ### 5.2 What is not there yet
 - Upper floors: only ground floors are open, plus tower roofs.
 - Interiors are one room per building.
-- Residents do not avoid the player or each other, and do not talk.
+- Residents do not avoid the player or each other, and do not talk among themselves. Conversations are
+  samples, the same for everyone in a role; flags last only until the page is reloaded; no outcomes yet.
 - No rain or fog, no vehicles other than the tram, no trams on the other stops' streets.
 - The same day repeats at midnight.
 - No needs, money, jobs or saving.
@@ -264,3 +272,4 @@ keep a timetable with several stops in it. Something has to give `[OPEN: Q-21]`.
 | 0.4.0 | 2026-11-21 | Buildings in the slice carry the relief of the building kit (`building_kit_07.py`, not yet approved): window trims, louvred shutters, arch stones, quoins, tiled roofs, awnings and signs (§5.5 W3); deep framed windows, arched shop and café fronts lit by day under a full-width awning, café tables, balconies; old-quarter stone storey lowered from 5 m to 3.55 m so upper floors are plaster with windows. |
 | 0.5.0 | 2026-11-22 | Daylight is the "kit" light by default (ADR-0007); the earlier light stays as a preset (L). |
 | 0.5.1 | 2026-11-22 | Faster slice, same picture: the town mesh is drawn in pieces culled to the view and to the sun's shadow box, a depth-only pass comes first so each pixel is lit once, painted names have their own small mesh and shader, and the shader skips the shadow lookup on faces turned from the sun and unused lantern slots. GPU time per frame roughly halved (§5.4). |
+| 0.5.3 | 2026-11-22 | Talking to residents in the slice (CITY-007; owner picked F-NPC-TALK level 1 for the first slice): `World/rules/dialogue.json`, checked by `world.dialogue_problems` and `test_world.TheDialogue` (every reply leads somewhere, every node is reachable, every talk can end), played by `Prototype/play/talk.js` (§5.1). |

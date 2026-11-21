@@ -96,5 +96,45 @@ class TheResidents(unittest.TestCase):
         self.assertTrue(0 < len(near) < len(state) / 4)
 
 
+class TheDialogue(unittest.TestCase):
+    """CITY-007: conversations with residents (World/rules/dialogue.json)."""
+    D = W["dialogue"]
+
+    def test_CITY_007_dialogue_is_sound(self):
+        import build_play
+        self.assertEqual(world.dialogue_problems(W, build_play.ACTS), [])
+
+    def test_CITY_007_at_least_three_conversations_branch(self):
+        branching = [c for c in self.D["conversations"].values() if sum(len(n["options"]) > 1 for n in c["nodes"].values()) >= 2]
+        self.assertGreaterEqual(len(branching), 3)
+
+    def pick(self, role, act, walking):           # the same matching play/talk.js does: the first rule that fits
+        for x in self.D["rules"]:
+            if x.get("roles") and role not in x["roles"] or x.get("acts") and act not in x["acts"] or "walking" in x and x["walking"] != walking:
+                continue
+            return x["conversation"]
+
+    def test_CITY_007_who_says_what(self):
+        self.assertEqual(self.pick("nurse", "work", False), "clinic")
+        self.assertEqual(self.pick("cafe", "work", False), "counter")
+        self.assertEqual(self.pick("shopkeeper", "sell", False), "counter")
+        self.assertEqual(self.pick("shopkeeper", "work", True), "passerby")
+        self.assertEqual(self.pick("elder", "rest", False), "elder")
+        self.assertEqual(self.pick("student", "rest", False), "chat")
+        for role in W["roles"]["roles"]:
+            self.assertIn(self.pick(role, "home", False), self.D["conversations"])
+
+    def test_CITY_007_broken_dialogue_is_caught(self):
+        import copy
+        w = copy.deepcopy(W)
+        c = w["dialogue"]["conversations"]["chat"]["nodes"]
+        c["hello"]["options"][0]["next"] = "nowhere"          # a reply to a node that does not exist
+        c["lonely"] = {"say": "Nobody reaches me.", "mood": "sad", "options": [{"text": "...", "next": "lonely"}]}   # unreachable, and never ends
+        p = world.dialogue_problems(w)
+        self.assertTrue(any("nowhere" in x for x in p))
+        self.assertTrue(any("lonely: cannot be reached" in x for x in p))
+        self.assertTrue(any("lonely: the talk can never end" in x for x in p))
+
+
 if __name__ == "__main__":
     unittest.main()
