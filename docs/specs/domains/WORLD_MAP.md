@@ -1,9 +1,9 @@
 ---
 doc_id: WASTED-SPEC-WORLD-MAP
 title: Wasted — World map as data, the starting city and the playable slice
-version: 0.5.0
+version: 0.5.1
 status: draft
-last_updated: 2026-11-21
+last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
 related: docs/specs/domains/LIVING_CITY.md
 data: World/                           # the city itself
@@ -167,12 +167,12 @@ Driven in headless Chrome: walks in through a café door and out again, is stopp
 the door, sits on a bench, lies on a bed, rides a lift up and down, is held by the roof parapet, jumps
 and lands. `Prototype/play/preview.png` shows the start screen, the market, a café front at dusk and a
 street at night. It has not yet been timed on the owner's laptop: the frame rate is on the HUD. The
-picture costs more since 0.2.0 (shadows, lantern light); Q, or a low frame rate, turns shadows off.
+picture costs more since 0.2.0 (shadows, lantern light); Q, or a low frame rate, turns shadows off. `?quality=1` (or `0.5`) holds the picture so frame times can be compared.
 
 ### 5.4 Numbers
 | | |
 |---|---|
-| Static geometry | About 1.5 million vertices, drawn twice a frame (once from the sun for shadows), plus 8.3 million of building relief in 64 block pieces, of which 0.3 to 0.9 million are drawn near the camera (within 115 m and in front). About 50 to 90 frames a second on the development machine |
+| Static geometry | About 1.7 million vertices in 129 pieces (one per block, the trees of each block square, and the fields and town wall), plus 8.3 million of building relief in 64 block pieces drawn within 115 m. Each frame draws only the pieces inside the view, and for shadows only those inside the sun's box: about 0.7 to 1.1 million vertices in view. Depth is laid first so the lighting runs once per pixel. On an Intel laptop GPU at 1536 × 1152 with shadows: 10 to 14 ms of GPU work a frame, down from 21 to 27 ms in 0.5.0 (measured with GPU timers, same views, same picture) |
 | Things you can bump into | 6,236 |
 | Places you can use | 3,266 |
 | Bodies on screen | 10 to 60 of 1,134, within 85 m |
@@ -263,3 +263,4 @@ keep a timetable with several stops in it. Something has to give `[OPEN: Q-21]`.
 | 0.3.0 | 2026-11-21 | Light, haze, materials and tone taken from the reference Blender script and checked by measured colours; arched alleys and gateways in the courtyard blocks (new `arch` prop); old-quarter buildings built as in the reference. |
 | 0.4.0 | 2026-11-21 | Buildings in the slice carry the relief of the building kit (`building_kit_07.py`, not yet approved): window trims, louvred shutters, arch stones, quoins, tiled roofs, awnings and signs (§5.5 W3); deep framed windows, arched shop and café fronts lit by day under a full-width awning, café tables, balconies; old-quarter stone storey lowered from 5 m to 3.55 m so upper floors are plaster with windows. |
 | 0.5.0 | 2026-11-22 | Daylight is the "kit" light by default (ADR-0007); the earlier light stays as a preset (L). |
+| 0.5.1 | 2026-11-22 | Faster slice, same picture: the town mesh is drawn in pieces culled to the view and to the sun's shadow box, a depth-only pass comes first so each pixel is lit once, painted names have their own small mesh and shader, and the shader skips the shadow lookup on faces turned from the sun and unused lantern slots. GPU time per frame roughly halved (§5.4). |

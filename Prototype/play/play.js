@@ -131,7 +131,8 @@ const spot = (lot, x, z, pose, yaw, h) => lot.spots.push({ x, z, pose, yaw, h })
 const use = (x, y, z, type, label, yaw, extra) => uses.push(Object.assign({ x, y, z, type, label, yaw: yaw || 0 }, extra));
 
 // ---------------------------------------------------------------- building the city from the data
-const world = new Mesh(1 << 22);
+const world = new Mesh(1 << 22), signs = new Mesh(1 << 14);    // painted names are kept apart: they are the only faces that cut holes (discard)
+const RANGES = [];                                         // world in pieces: [first float, end float, whole-town?], so each pass draws only the pieces it can see
 const DOOR_DIR = { n: [0, -1], s: [0, 1], w: [-1, 0], e: [1, 0] };
 const yawOf = (dx, dz) => Math.atan2(dx, -dz);
 // Small relief (sills, lintels, shutters, arch stones, corbels, quoins) goes into one mesh per block, drawn only near the camera.
@@ -291,7 +292,7 @@ function building(l) {
     const y0 = old ? 3.04 : 3.28, y1 = old ? 3.5 : 3.72, lh = (y1 - y0) * .62, tw = lh * 8 * cell.tw * (64 / 46) * .82;
     bw = Math.min(tw + .6, (DS.a1 - DS.a0) - 1);
     fbox(world, DS, dc - bw / 2, dc + bw / 2, y0, y1, 0, .08, l.kind === "food" ? mul3(C.brown, 1.4) : l.kind === "shop" ? C.teal : C.stoneDark, 0, true);
-    lettering(world, at(dc, (y0 + y1) / 2, .09), nOut, lh, cell);
+    lettering(signs, at(dc, (y0 + y1) / 2, .09), nOut, lh, cell);
   }
   if (l.kind === "shop" || l.kind === "food") {          // a striped awning over the door and a sign hung out on an iron arm, named on both faces
     awning(l, DS, dc, dw, dh, accent, aw);
@@ -300,7 +301,7 @@ function building(l) {
     fbox(world, DS, a - .03, a + .03, 3.78, 3.86, 0, 1.2, C.metal, 9, true); fbox(world, DS, a - .03, a + .03, 2.95, 3.86, 0, .07, C.metal, 9);
     fbox(world, DS, a - .045, a + .045, 3.0, 3.7, .22, 1.12, C.teal, 0, true);
     if (cell) { const lh = Math.min(.2, .8 / (8 * cell.tw * (64 / 46) * .82)), na = DS.ns ? [1, 0, 0] : [0, 0, 1];
-      for (const sg of [-1, 1]) { const p = at(a + sg * .05, 3.35, .67); lettering(world, p, na.map(v => v * sg), lh, cell); } }
+      for (const sg of [-1, 1]) { const p = at(a + sg * .05, 3.35, .67); lettering(signs, p, na.map(v => v * sg), lh, cell); } }
   } else if (l.kind === "health") {                      // a plaque with a cross beside the door
     const a = dc - dw / 2 - .75;
     fbox(world, DS, a - .3, a + .3, 1.45, 2.05, 0, .05, C.teal, 0, true); fbox(world, DS, a - .05, a + .05, 1.55, 1.95, .05, .08, C.cream, 0); fbox(world, DS, a - .18, a + .18, 1.7, 1.8, .05, .08, C.cream, 0);
@@ -571,8 +572,9 @@ function buildWorld() {
   for (const [a, c] of [[W0 - th, W0], [W1, W1 + th]]) { wallBox(a, W0, c, TRAM_Z - 3.4); wallBox(a, TRAM_Z + 3.4, c, W1); wallBox(a, TRAM_Z - 3.4, c, TRAM_Z + 3.4, 4.6); solid(a + 1, 0, TRAM_Z - 3.4, c - 1, 4.6, TRAM_Z + 3.4); }
   for (const cx of [W0 - th / 2, W1 + th / 2]) for (const cz of [W0 - th / 2, W1 + th / 2]) world.box(cx - 3.5, 0, cz - 3.5, cx + 3.5, gh + 3, cz + 3.5, C.stone, 6);
   for (const s of [-.72, .72]) world.box(-E - 40, 0, TRAM_Z + s - .05, CITY + E + 40, .04, TRAM_Z + s + .05, C.metal, 9);
+  RANGES.push([0, world.n, true]);                        // fields, town paving, wall and rails: laid first, under everything
   for (const b of D.blocks) {
-    const [bx, bz] = b.origin, S = b.size;
+    const [bx, bz] = b.origin, S = b.size, b0 = world.n;
     world.box(bx - PAVE, 0, bz - PAVE, bx + S + PAVE, Y_PAVE, bz + S + PAVE, C.pave, 7);
     if (b.template === "rows") world.flat(bx + 2, bz + 16.5, bx + S - 2, bz + S - 16.5, Y_GRASS, C.grass, 0);
     if (b.template === "park") world.flat(bx + 1, bz + 1, bx + S - 1, bz + S - 1, Y_GRASS, C.grass, 0);
@@ -589,8 +591,11 @@ function buildWorld() {
       for (const [u, v, ax] of [[8, 37.8, 0], [72, 37.8, 0], [37.8, 8, 1], [37.8, 72, 1]]) if (hash(b.id, "ba", u, v) < .7) ax ? banner(bx + u, bz + v, bx + u + 4.4, bz + v, b.id + u + v, 4.35) : banner(bx + u, bz + v, bx + u, bz + v + 4.4, b.id + u + v, 4.35);   // and across the alleys, between the arches
     }
     for (const p of b.props) prop(p, b);
+    RANGES.push([b0, world.n, false]);
   }
-  D.trees.forEach(tree);
+  const byCell = new Map();                                // trees touch nothing they could tie with, so they are grouped by block square
+  for (const t of D.trees) { const k = Math.floor(t[0] / P) + "," + Math.floor(t[1] / P); if (!byCell.has(k)) byCell.set(k, []); byCell.get(k).push(t); }
+  for (const ts of byCell.values()) { const t0 = world.n; ts.forEach(tree); RANGES.push([t0, world.n, false]); }
 }
 
 // ---------------------------------------------------------------- people
@@ -660,10 +665,10 @@ const TONE = `vec3 tone(vec3 v){                         // AgX with the "Medium
   v=mat3(1.19687900512017,-.0528968517574562,-.0529716355144438,-.0980208811401368,1.15190312990417,-.0980434501171241,-.0990297440797205,-.0989611768448433,1.15107367264116)*v;
   return clamp(v,0.,1.); }
 float haze(float c){ return .64/(12.566*pow(1.36-1.2*c,1.5)); }`;   // how strongly haze scatters sunlight towards the eye (anisotropy 0.6)
-const main = program(`attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,uSM; varying vec3 vP,vN,vC,vS; varying float vF;
-void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`,
-`precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
-uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform float uNight,uFogD,uExp,uShOn; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform mat4 uSM;
+const MAIN_VS = `attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,uSM; varying vec3 vP,vN,vC,vS; varying float vF; invariant gl_Position;
+void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`;   // invariant: the depth-only pass and the lit pass land on the same depths
+const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
+uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform float uNight,uFogD,uExp,uShOn; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
 ${NOISE}
 ${TONE}
 float shadow(){                                   // soft shadow from the sun's (or moon's) point of view
@@ -697,9 +702,11 @@ void main(){
       if(abs(g.x-.5)<.035||abs(g.y-.6)<.03) col=vec3(.3,.2,.13)*(uSky+uSunCol*.03+.004);   // glazing bars
       emis=true; }
   }
+#ifdef LETTERS
   if(f>12.5&&f<13.5){                                                     // painted lettering: vC is (across, up, cell + share of the cell)
     float id=floor(c.z), tw=fract(c.z); vec2 uv=vec2((mod(id,4.)+.5+(c.x-.5)*tw)/4.,(floor(id/4.)+1.-c.y)/32.);
     if(texture2D(uTxt,uv).a<.5) discard; c=vec3(.70,.64,.52); f=0.; }
+#endif
   if(!emis){
     if(f<.5) c=paint(c,vec3(.69,.69,.73),blot)*(.92+.16*ns(vP*.13));
     else if(f>5.5&&f<6.5){ float u=abs(n.x)>.5?vP.z:vP.x; float row=floor(vP.y/.5); float uu=u+.5*mod(row,2.); float t1=h3(vec3(floor(uu),row,3.));
@@ -722,15 +729,17 @@ void main(){
       else {
         vec2 a=texture2D(uAO,(vP.xz+n.xz-uAOm.x)*uAOm.y).rg; float vis=mix(a.r,1.,clamp((vP.y-.3)/max(a.g*85.,.6),0.,1.));   // how much sky this spot sees
         if(abs(n.y)<.5) c*=.66+.34*smoothstep(.1,1.4,vP.y);                 // grime at the foot of walls
-        light=uSunCol*max(dot(n,uSun),0.)*shadow()+uSky*(n.y*.35+.65)*vis*vis+uGround*(1.-.5*vis);   // sun, sky seen, and light bounced off sunlit stone
-        for(int i=0;i<12;i++){ vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*.85+.15)); } }   // lanterns (W6)
+        float ndl=max(dot(n,uSun),0.); light=uSunCol*(ndl>0.?ndl*shadow():0.)+uSky*(n.y*.35+.65)*vis*vis+uGround*(1.-.5*vis);   // sun, sky seen, and light bounced off sunlit stone
+        for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*.85+.15)); } }   // lanterns (W6)
       col=c*light; }
   }
   col=mix(col,uFog+uSunCol*(4.4*haze(dot(vd,uSun)))*airLit(vd,d),fog*(emis?.5:1.));   // haze glows where the sun reaches it
-  float glow=0.; for(int i=0;i<12;i++){ vec3 q=uLamp[i].xyz-uCam; float b=dot(q,vd), h=sqrt(max(dot(q,q)-b*b,.02)); glow+=uLamp[i].w*(atan((d-b)/h)+atan(b/h))/h; }
+  float glow=0.; for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 q=uLamp[i].xyz-uCam; float b=dot(q,vd), h=sqrt(max(dot(q,q)-b*b,.02)); glow+=uLamp[i].w*(atan((d-b)/h)+atan(b/h))/h; }
   col+=vec3(1.,.62,.32)*(glow*uFogD*1.6);                                 // every lantern glows in the haze around it
   gl_FragColor=vec4(tone(col*uExp),1.);
-}`);
+}`;
+const main = program(MAIN_VS, MAIN_FS), signProg = program(MAIN_VS, "#define LETTERS\n" + MAIN_FS);   // only the painted names cut holes, so the town's shader keeps the early depth test
+const pre = program(MAIN_VS, `precision mediump float; void main(){ gl_FragColor=vec4(1.); }`);       // depth only, laid first so each pixel is lit once
 const sky = program(`attribute vec2 aQ; varying vec2 vQ; void main(){ vQ=aQ; gl_Position=vec4(aQ,.9999,1.); }`,
 `precision highp float; varying vec2 vQ; uniform vec3 uR,uU,uF,uSun,uZen,uHor,uSunCol; uniform float uNight,uExp;
 ${NOISE}
@@ -774,11 +783,24 @@ function bakeSky() {                                       // a map of how much 
 }
 function drawDepth(buf, count) { gl.bindBuffer(gl.ARRAY_BUFFER, buf); const loc = gl.getAttribLocation(depthProg.p, "aP"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 3, gl.FLOAT, false, 40, 0); gl.drawArrays(gl.TRIANGLES, 0, count); }
 function buffer(mesh, usage) { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, mesh.a.subarray(0, mesh.n), usage); return b; }
-function drawMesh(buf, count) {
+function attribs(pr, buf) {                                 // point a program of the main vertex layout at a buffer
   gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-  ["aP", "aN", "aC", "aF"].forEach((n, k) => { const loc = gl.getAttribLocation(main.p, n); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, k < 3 ? 3 : 1, gl.FLOAT, false, 40, k * 12); });
-  gl.drawArrays(gl.TRIANGLES, 0, count);
+  if (!pr.loc) pr.loc = ["aP", "aN", "aC", "aF"].map(n => gl.getAttribLocation(pr.p, n));
+  pr.loc.forEach((loc, k) => { if (loc < 0) return; gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, k < 3 ? 3 : 1, gl.FLOAT, false, 40, k * 12); });
 }
+function drawMesh(buf, count, pr) { attribs(pr || main, buf); gl.drawArrays(gl.TRIANGLES, 0, count); }
+function boxOf(a, s, e) { const b = [1e9, 1e9, 1e9, -1e9, -1e9, -1e9]; for (let i = s; i < e; i += 10) for (let k = 0; k < 3; k++) { const v = a[i + k]; if (v < b[k]) b[k] = v; if (v > b[k + 3]) b[k + 3] = v; } return b; }
+function outside(M, b) {                                     // is the box wholly beyond one side of the view M (its 8 corners all past the same plane)?
+  let all = 63;
+  for (let k = 0; k < 8; k++) {
+    const x = b[k & 1 ? 3 : 0], y = b[k & 2 ? 4 : 1], z = b[k & 4 ? 5 : 2];
+    const cx = M[0] * x + M[4] * y + M[8] * z + M[12], cy = M[1] * x + M[5] * y + M[9] * z + M[13], cz = M[2] * x + M[6] * y + M[10] * z + M[14], cw = M[3] * x + M[7] * y + M[11] * z + M[15];
+    all &= (cx < -cw ? 1 : 0) | (cx > cw ? 2 : 0) | (cy < -cw ? 4 : 0) | (cy > cw ? 8 : 0) | (cz < -cw ? 16 : 0) | (cz > cw ? 32 : 0);
+    if (!all) return false;
+  }
+  return true;
+}
+const boxD2 = (b, p) => { const dx = Math.max(b[0] - p[0], 0, p[0] - b[3]), dy = Math.max(b[1] - p[1], 0, p[1] - b[4]), dz = Math.max(b[2] - p[2], 0, p[2] - b[5]); return dx * dx + dy * dy + dz * dz; };
 
 function lighting(m) {                                       // the reference recipe (sun 14 W/m2, sky 0.35, haze) carried through the day
   const rise = D.day.sunrise * 60, set = D.day.sunset * 60, day = smooth(0, 1, Math.min((m - (rise - 30)) / 60, ((set + 30) - m) / 60));
@@ -929,9 +951,12 @@ function hud(VP, W, H, tags) {
 
 // ---------------------------------------------------------------- start up
 buildWorld();
+if (RANGES[RANGES.length - 1][1] !== world.n) fail("World pieces do not cover the whole town mesh.");
 const worldBuf = buffer(world, gl.STATIC_DRAW), worldN = world.n / 10, skyMap = bakeSky();
+const pieces = RANGES.filter(r => r[1] > r[0]).map(([s, e, town]) => ({ first: s / 10, count: (e - s) / 10, town, box: boxOf(world.a, s, e) }));
 world.a = null;
-const chunks = [...DETAIL.values()].map(m => { const c = { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, cx: m.cx, cz: m.cz }; m.a = null; return c; });
+const chunks = [...DETAIL.values()].map(m => { const c = { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, cx: m.cx, cz: m.cz, box: boxOf(m.a, 0, m.n) }; m.a = null; return c; });
+const signBuf = buffer(signs, gl.STATIC_DRAW), signN = signs.n / 10; signs.a = null;
 const detailN = chunks.reduce((s, c) => s + c.n, 0);
 const txtTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, txtTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, TXT); gl.generateMipmap(gl.TEXTURE_2D);
 for (const [kk, vv] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, kk, vv);
@@ -966,10 +991,11 @@ addEventListener("keydown", e => {
 addEventListener("keyup", e => { keys[e.code] = false; });
 addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
 
-let last = performance.now(); const stat = { detail: 0 };
+let last = performance.now(); const stat = { detail: 0 }; const PIN_Q = new URLSearchParams(location.search).has("quality");   // ?quality=1 or 0.5 holds the picture for timing
+if (PIN_Q) quality = clamp(+new URLSearchParams(location.search).get("quality") || 1, .5, 1);
 function frame(now) {
   const dt = Math.min(.05, (now - last) / 1000); last = now; fps = mix(fps, 1 / Math.max(dt, 1e-3), .05);
-  if (fps < 27 && quality > .5) { slow += dt; if (slow > 3) { quality = Math.max(.5, quality - .25); slow = 0; } } else slow = 0;      // a slow machine gets a softer picture, not a slow game
+  if (fps < 27 && quality > .5 && !PIN_Q) { slow += dt; if (slow > 3) { quality = Math.max(.5, quality - .25); slow = 0; } } else slow = 0;      // a slow machine gets a softer picture, not a slow game
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5) * quality, W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
   if (cv.width !== W || cv.height !== H) { cv.width = ui.width = W; cv.height = ui.height = H; }
   clock.m = (clock.m + dt / D.pace * clock.rate) % 1440;
@@ -1015,14 +1041,16 @@ function frame(now) {
     SM = M4.mul([1 / R, 0, 0, 0, 0, 1 / R, 0, 0, 0, 0, -2 / (ff - nn), 0, 0, 0, -(ff + nn) / (ff - nn), 1], lv.m); shOn = 1;
     gl.bindFramebuffer(gl.FRAMEBUFFER, shFbo); gl.viewport(0, 0, SH, SH); gl.colorMask(false, false, false, false); gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LESS); gl.depthMask(true); gl.clear(gl.DEPTH_BUFFER_BIT);
     gl.disable(gl.CULL_FACE); gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1.5, 3);
-    gl.useProgram(depthProg.p); gl.uniformMatrix4fv(depthProg.u.uVP, false, SM); drawDepth(worldBuf, worldN); drawDepth(dynBuf, dyn.n / 10);
-    for (const ch of chunks) if (Math.hypot(ch.cx - foc[0], ch.cz - foc[2]) < R + 25) drawDepth(ch.buf, ch.n);
+    gl.useProgram(depthProg.p); gl.uniformMatrix4fv(depthProg.u.uVP, false, SM);
+    drawDepth(worldBuf, 0); for (const pc of pieces) if (!outside(SM, pc.box)) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);   // only the pieces inside the sun's box
+    drawDepth(dynBuf, dyn.n / 10); drawDepth(signBuf, signN);
+    for (const ch of chunks) if (Math.hypot(ch.cx - foc[0], ch.cz - foc[2]) < R + 25 && !outside(SM, ch.box)) drawDepth(ch.buf, ch.n);
     gl.disable(gl.POLYGON_OFFSET_FILL); gl.colorMask(true, true, true, true); gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
   // the 12 lanterns nearest the camera light the scene; the rest only glow
   const lamp = new Float32Array(48), pickL = [];
   for (const l of lights) { if (!l[4] && Lt.night < .02) continue; const d2 = (l[0] - cam.eye[0]) ** 2 + (l[2] - cam.eye[2]) ** 2; if (d2 < 5600) pickL.push([d2, l]); }   // wall lanterns in the shade stay lit by day, as in the reference
-  pickL.sort((p, q) => p[0] - q[0]);
+  pickL.sort((p, q) => p[0] - q[0]); const lampN = Math.min(12, pickL.length);
   for (let k = 0; k < Math.min(12, pickL.length); k++) { const [d2, l] = pickL[k]; lamp.set([l[0], l[1], l[2], l[3] * 3 * (l[4] ? 1 + Lt.night : 2 * Lt.night) * dials.lanterns * smooth(5600, 3000, d2)], k * 4); }
   gl.viewport(0, 0, W, H); gl.clear(gl.DEPTH_BUFFER_BIT);
   gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE); gl.depthMask(false);
@@ -1031,19 +1059,26 @@ function frame(now) {
   gl.uniform3fv(sky.u.uZen, Lt.zen); gl.uniform3fv(sky.u.uHor, Lt.fog); gl.uniform3fv(sky.u.uSunCol, Lt.sunCol); gl.uniform1f(sky.u.uNight, Lt.night); gl.uniform1f(sky.u.uExp, Lt.exp);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.enable(gl.CULL_FACE); gl.depthMask(true);   // on a tie the layer laid later (the upper one) wins
-  gl.useProgram(main.p); gl.uniformMatrix4fv(main.u.uVP, false, VP); gl.uniformMatrix4fv(main.u.uSM, false, SM); gl.uniform1f(main.u.uShOn, shOn);
-  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, shTex); gl.uniform1i(main.u.uSh, 0); gl.uniform4fv(main.u["uLamp[0]"], lamp);
-  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, skyMap.tex); gl.uniform1i(main.u.uAO, 1); gl.uniform3f(main.u.uAOm, skyMap.lo, 1 / skyMap.size, 0);
-  gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, txtTex); gl.uniform1i(main.u.uTxt, 2); gl.activeTexture(gl.TEXTURE0);
-  gl.uniform3fv(main.u.uSun, Lt.dir); gl.uniform3fv(main.u.uSunCol, Lt.sunCol); gl.uniform3fv(main.u.uSky, Lt.sky); gl.uniform3fv(main.u.uGround, Lt.ground); gl.uniform3fv(main.u.uFog, Lt.fog);
-  gl.uniform3fv(main.u.uCam, cam.eye); gl.uniform1f(main.u.uNight, Lt.night); gl.uniform1f(main.u.uFogD, Lt.fogD); gl.uniform1f(main.u.uExp, Lt.exp);
-  drawMesh(worldBuf, worldN);
-  let drawnDetail = 0;
-  for (const ch of chunks) {                                 // near relief: blocks within reach that are not behind the camera
-    const ex = ch.cx - cam.eye[0], ez = ch.cz - cam.eye[2], dd = Math.hypot(ex, ez);
-    if (dd < DETAIL_R && (dd < 60 || ex * cam.dir[0] + ez * cam.dir[2] > dd * .35)) { drawMesh(ch.buf, ch.n); drawnDetail += ch.n; }   // and roughly in front
-  }
-  stat.detail = drawnDetail;
+  const seen = pieces.filter(pc => !outside(VP, pc.box)), nearD = chunks.filter(ch => Math.hypot(ch.cx - cam.eye[0], ch.cz - cam.eye[2]) < DETAIL_R && !outside(VP, ch.box));   // near relief: blocks within reach and in view
+  for (const pc of seen) pc.d2 = boxD2(pc.box, cam.eye); for (const ch of nearD) ch.d2 = boxD2(ch.box, cam.eye);
+  const front = seen.slice().sort((p, q) => p.d2 - q.d2); nearD.sort((p, q) => p.d2 - q.d2);
+  // depth first, nearest pieces first: the costly light below then runs once for each pixel instead of for every hidden wall and room behind it
+  gl.colorMask(false, false, false, false); gl.useProgram(pre.p); gl.uniformMatrix4fv(pre.u.uVP, false, VP); if (pre.u.uSM) gl.uniformMatrix4fv(pre.u.uSM, false, SM);
+  attribs(pre, worldBuf); for (const pc of front) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
+  for (const ch of nearD) drawMesh(ch.buf, ch.n, pre);
+  gl.colorMask(true, true, true, true); gl.depthMask(false);
+  const lit = pr => {
+    const u = pr.u; gl.useProgram(pr.p); gl.uniformMatrix4fv(u.uVP, false, VP); gl.uniformMatrix4fv(u.uSM, false, SM); gl.uniform1f(u.uShOn, shOn);
+    gl.uniform1i(u.uSh, 0); gl.uniform1i(u.uAO, 1); gl.uniform1i(u.uTxt, 2); gl.uniform4fv(u["uLamp[0]"], lamp); gl.uniform1i(u.uLampN, lampN); gl.uniform3f(u.uAOm, skyMap.lo, 1 / skyMap.size, 0);
+    gl.uniform3fv(u.uSun, Lt.dir); gl.uniform3fv(u.uSunCol, Lt.sunCol); gl.uniform3fv(u.uSky, Lt.sky); gl.uniform3fv(u.uGround, Lt.ground); gl.uniform3fv(u.uFog, Lt.fog);
+    gl.uniform3fv(u.uCam, cam.eye); gl.uniform1f(u.uNight, Lt.night); gl.uniform1f(u.uFogD, Lt.fogD); gl.uniform1f(u.uExp, Lt.exp);
+  };
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, shTex); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, skyMap.tex);
+  gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, txtTex); gl.activeTexture(gl.TEXTURE0);
+  lit(main); attribs(main, worldBuf); for (const pc of seen) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);   // in the order laid, so ties fall as before
+  let drawnDetail = 0; for (const ch of nearD) { drawMesh(ch.buf, ch.n); drawnDetail += ch.n; }
+  stat.detail = drawnDetail; stat.pieces = seen.length;
+  gl.depthMask(true); lit(signProg); drawMesh(signBuf, signN, signProg); gl.useProgram(main.p);
   gl.disable(gl.CULL_FACE); drawMesh(dynBuf, dyn.n / 10);   // people are closed soft forms; either side of a face may show
   hud(VP, W, H, tags); drawMaps();
   requestAnimationFrame(frame);
@@ -1058,5 +1093,5 @@ if (q.has("fp")) cam.fp = true; if (q.has("yaw")) pl.yaw = cam.yaw; if (q.has("r
 const LIGHTS = { reference: { sun: 1, sky: 1, bounce: 1, lanterns: 1, haze: 1, exposure: 1, warm: 0 }, kit: { sun: .62, sky: .9, bounce: 1.5, lanterns: 1, haze: .55, exposure: .7, warm: 1 } };
 let lightName = q.get("light") === "reference" ? "reference" : "kit";
 addEventListener("keydown", e => { if (e.code === "KeyL" && started && !e.repeat) { lightName = lightName === "kit" ? "reference" : "kit"; Object.assign(window.wasted.dials, LIGHTS[lightName]); } });
-window.wasted = { dials: Object.assign({}, LIGHTS[lightName]), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, solids: solids.length, uses: uses.length, bodies, fps, people: people.length, target: target && target.label }) };
+window.wasted = { dials: Object.assign({}, LIGHTS[lightName]), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, fps, people: people.length, target: target && target.label }) };
 requestAnimationFrame(frame);
