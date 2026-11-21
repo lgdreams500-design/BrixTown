@@ -133,6 +133,7 @@ const spot = (lot, x, z, pose, yaw, h) => lot.spots.push({ x, z, pose, yaw, h })
 const use = (x, y, z, type, label, yaw, extra) => uses.push(Object.assign({ x, y, z, type, label, yaw: yaw || 0 }, extra));
 const spotAt = (...a) => spot(...a), useAt = (...a) => use(...a);   // furnish() shadows these with no-ops when it only draws
 const NULL_MESH = { box() { }, quad() { }, obox() { }, ybox() { }, flat() { } };   // geometry that goes nowhere (the load-time pass of a room)
+let ROOM_REC = null;                                     // while a room near the camera is furnished: its lamps and what stands on its floor (nearRooms)
 
 // ---------------------------------------------------------------- building the city from the data
 const world = new Mesh(1 << 22), signs = new Mesh(1 << 14);    // painted names are kept apart: they are the only faces that cut holes (discard)
@@ -653,8 +654,13 @@ function furnish(l, side, accent, inC, vis) {     // at load (no vis): places, u
   // Every place residents and the player use stays where it was (same heights, same collisions); what stands there is real
   // furniture now, drawn in the block's near-only mesh. Then the room is dressed for what the building is (see room()).
   const dm = vis || NULL_MESH, occ = [], R = ROOM_STYLE[l.sp] || ROOM_STYLE[l.kind] || ROOM_STYLE.work, fab = pick(R.fabric, hash(l.id, "fab"));
-  const spot = vis ? () => { } : spotAt, use = vis ? () => { } : useAt, hard = (ax0, ay0, az0, ax1, ay1, az1) => vis || solid(Math.min(ax0, ax1), ay0, Math.min(az0, az1), Math.max(ax0, ax1), ay1, Math.max(az0, az1));
-  const B = (cx, y0, cz, sx, sy, sz, c, yaw, f) => dm.ybox(cx, F + y0, cz, sx, sy, sz, yaw || 0, c, f || 19);
+  const RR = vis && ROOM_REC;                             // what the room's light needs: its lamps and where things stand on the floor
+  const spot = vis ? () => { } : spotAt, use = vis ? () => { } : useAt, hard = (ax0, ay0, az0, ax1, ay1, az1) => { if (RR && ay0 < F + 1.2) RR.foot.push([(ax0 + ax1) / 2, (az0 + az1) / 2, Math.abs(ax1 - ax0) / 2, Math.abs(az1 - az0) / 2, Math.min(1, 1 - (ay0 - F) / 1.4)]); return vis || solid(Math.min(ax0, ax1), ay0, Math.min(az0, az1), Math.max(ax0, ax1), ay1, Math.max(az0, az1)); };
+  const B = (cx, y0, cz, sx, sy, sz, c, yaw, f) => {
+    if (RR) { const cy = Math.abs(Math.cos(yaw || 0)), sn = Math.abs(Math.sin(yaw || 0));
+      if (y0 < 1.1) RR.foot.push([cx, cz, (cy * sx + sn * sz) / 2, (sn * sx + cy * sz) / 2, 1 - y0 / 1.4]);   // seats and table tops shade the floor too, less the higher they are
+      if (f === 2) RR.lamps.push([cx, F + y0 + sy / 2, cz, Math.min(.5, .9 * Math.max(sx, sy, sz))]); }   // small lit things: sconces, cases, signs
+    dm.ybox(cx, F + y0, cz, sx, sy, sz, yaw || 0, c, f || 19); };
   const chair = (x, z, yaw, c, arm) => {                  // a chair facing along yaw; the back stands behind the sitter
     const fx2 = Math.sin(yaw), fz2 = -Math.cos(yaw), w = arm ? .72 : .44;
     B(x, .4, z, w, .07, w, c, -yaw);
@@ -765,7 +771,7 @@ function layout(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard, clea
   const FF = (a, i, r) => { const p = wp(a, i); return clear(p[0], p[1], r) && a - r > aMin - .35 && a + r < aMax + .35 && i - r > iMin - .35 && i + r < iMax + .35; };   // (pieces may stand against a wall)
   const FFrun = (a, i0, i1, r) => { for (let i = i0; i <= i1; i += .8) if (!FF(a, i, r)) return false; return true; };
   const ob = k => ((l.objects || {})[k] || []).map(rel), pv = [-o[1], 0, o[0]];
-  const lamp = (a, i, drop, c) => { const p = wp(a, i); dm.box(p[0] - .01, GF - drop, p[1] - .01, p[0] + .01, GF, p[1] + .01, C.charcoal, 19); dm.ybox(p[0], GF - drop - .2, p[1], .32, .2, .32, 0, c || C.ochre, 19); dm.box(p[0] - .07, GF - drop - .27, p[1] - .07, p[0] + .07, GF - drop - .19, p[1] + .07, [1, .78, .5], 2); };
+  const lamp = (a, i, drop, c) => { const p = wp(a, i); if (ROOM_REC && dm !== NULL_MESH) ROOM_REC.lamps.push([p[0], GF - drop - .3, p[1], 1.0]); dm.box(p[0] - .01, GF - drop, p[1] - .01, p[0] + .01, GF, p[1] + .01, C.charcoal, 19); dm.ybox(p[0], GF - drop - .2, p[1], .32, .2, .32, 0, c || C.ochre, 19); dm.box(p[0] - .07, GF - drop - .27, p[1] - .07, p[0] + .07, GF - drop - .19, p[1] + .07, [1, .78, .5], 2); };
   const glass = (a, i0, i1, y0, y1, facing) => { const P1 = (ii, y) => { const p = wp(a, ii); return [p[0], F + y, p[1]]; }; dm.quad(P1(i0, y0), P1(i1, y0), P1(i1, y1), P1(i0, y1), [0, 0, .998], 1, facing, true); };
   const key = ["bank", "dealer", "library", "museum", "cinema"].includes(l.kind) ? l.kind : l.sp === "mall" ? "mall" : l.kind === "food" ? "cafe" : l.kind === "shop" ? "grocer" : l.kind === "home" ? "home" : l.sp === "works" ? "works"
     : l.kind === "work" ? (l.sp === "hall" ? "hall" : l.sp === "guild" ? "guild" : "office") : l.kind === "health" ? "clinic" : l.kind === "utility" ? "depot" : null;
@@ -1117,6 +1123,7 @@ function room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard) {
   const nx = Math.max(1, Math.round((rx1 - rx0) / 4.4)), nz = Math.max(1, Math.round((rz1 - rz0) / 4.4));
   if (!R.dim) for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {   // (a cinema stays dark)
     const lx = rx0 + (i + .5) * (rx1 - rx0) / nx, lz = rz0 + (j + .5) * (rz1 - rz0) / nz, top = GF - .02;
+    if (ROOM_REC && dm !== NULL_MESH) ROOM_REC.lamps.push([lx, top - .84, lz, 1.4]);
     dm.box(lx - .012, top - .55, lz - .012, lx + .012, top, lz + .012, C.charcoal, 19);
     dm.ybox(lx, top - .78, lz, .42, .24, .42, Math.PI / 4, R.lamp || C.cream, 19); dm.box(lx - .09, top - .86, lz - .09, lx + .09, top - .76, lz + .09, [1, .78, .5], 2);
   }
@@ -1340,8 +1347,31 @@ const MAIN_VS = `attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,u
 void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`;   // invariant: the depth-only pass and the lit pass land on the same depths
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
 uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform float uNight,uFogD,uExp,uShOn; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
+uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO;
 ${NOISE}
 ${TONE}
+// Light indoors: daylight in through the windows and door (sky and bounce, gone at night), the room's own lamps with distance and
+// facing, and contact shade from the map of what stands on the floor (uRoomAO) and from the walls, floor and ceiling meeting.
+// The room the camera is in gets all of that; other rooms an even lamplight, as before.
+vec3 roomLight(vec3 n,float person){
+  float day=1.-uNight, y=vP.y-${Y_FLOOR.toFixed(2)};
+  vec3 hemi=mix(uGround,uSky,n.y*.5+.5);
+  vec3 amb=(hemi*.42*day+uSunCol*.025*day+vec3(.16,.13,.1)*(.5+.5*day))*(.8+.2*n.y)*(.82+.18*smoothstep(.0,1.6,y));
+  bool here=vP.x>uRoomR.x-.05&&vP.x<uRoomR.z+.05&&vP.z>uRoomR.y-.05&&vP.z<uRoomR.w+.05;
+  vec3 lamps=vec3(0.); float ao=1.;
+  if(here){
+    for(int i=0;i<16;i++){ if(i>=uRoomLN) break; vec3 L=uRoomL[i].xyz-vP; float d2=dot(L,L), ndl=dot(n,L*inversesqrt(d2));
+      lamps+=uRoomL[i].w*(max(ndl,0.)*.86+.14*(.5+.5*ndl))/(d2*(.35+.06*d2)+.6); }   // a pool under each lamp, falling off faster than 1/d2 past a few metres
+    vec2 uv=(vP.xz-uRoomR.xy)/(uRoomR.zw-uRoomR.xy); float o=texture2D(uRoomAO,uv).r;
+    float low=1.-smoothstep(0.,.95,y);                                     // contact shade: strong on the floor, fading up the sides of furniture
+    ao*=1.-o*(n.y>.6?.62*low:.45*low)*(1.-.4*person);
+    float e=min(min(vP.x-uRoomR.x,uRoomR.z-vP.x),min(vP.z-uRoomR.y,uRoomR.w-vP.z));
+    ao*=n.y>.6?.72+.28*smoothstep(.25,1.3,e):1.;                           // the floor darkens towards the walls
+    ao*=abs(n.y)<.5?(.7+.3*smoothstep(0.,.7,y))*(.82+.18*smoothstep(0.,.6,${GF.toFixed(1)}-vP.y)):1.;   // walls darken where they meet floor and ceiling
+    ao*=n.y<-.6?.8+.2*smoothstep(.25,1.,e):1.;
+  } else lamps=vec3(.55)*(.82+.16*n.y);
+  return (amb+lamps*vec3(1.,.74,.48)*.85)*ao;
+}
 float shadow(){                                   // soft shadow from the sun's (or moon's) point of view
   if(uShOn<.5) return 1.; vec3 s=vS; if(s.x<0.||s.x>1.||s.y<0.||s.y>1.||s.z>1.) return 1.;
   vec2 p=s.xy*2048.-.5, b0=floor(p), fr=p-b0; float lit=0.;
@@ -1425,16 +1455,18 @@ void main(){
     if(f>1.5&&f<2.5){ col=vec3(1.,.55,.22)*6.; emis=true; }                // lantern glass: emission strength 6
     else {
       vec3 hemi=mix(uGround,uSky,n.y*.5+.5), light;
-      if(f>2.5&&f<3.5){ light=(uSunCol*.03+hemi*.5+vec3(.5,.4,.28))*(.84+.16*n.y+.08*n.x-.05*n.z); c=paint(c,vec3(.76),blot); inside=1.; }
-      else if(f>14.5&&f<19.5){ light=(uSunCol*.03+hemi*.45+vec3(.52,.42,.3))*(.82+.16*n.y+.08*n.x-.05*n.z)*(.8+.2*smoothstep(.2,1.6,vP.y)); inside=1.; }   // room surfaces: warm room light, a little darker low down
-      else if(f>9.5&&f<10.5){ float up=n.y*.5+.5, sd=dot(n,normalize(vec3(.5,0.,-.35)))*.5+.5;   // a person indoors: room light from above and one side, so the body keeps its form
-        light=(uSunCol*.03+hemi*.5+vec3(.5,.4,.28))*(.5+.38*up*up+.34*sd*sd); }
+      if(f>2.5&&f<3.5){ light=roomLight(n,0.); c=paint(c,vec3(.76),blot); inside=1.; }
+      else if(f>14.5&&f<19.5){ light=roomLight(n,0.); inside=1.; }   // room surfaces and furniture (roomLight above)
+      else if(f>9.5&&f<10.5){ float up=n.y*.5+.5;                       // a person indoors: the room's light, a little more from above so the body keeps its form
+        light=roomLight(n,1.)*(.72+.42*up*up); inside=1.; }
       else {
         vec2 a=texture2D(uAO,(vP.xz+n.xz-uAOm.x)*uAOm.y).rg; float vis=mix(a.r,1.,clamp((vP.y-.3)/max(a.g*85.,.6),0.,1.));   // how much sky this spot sees
         if(abs(n.y)<.5&&!(f>21.5&&f<22.5)) c*=.66+.34*smoothstep(.1,1.4,vP.y);   // grime at the foot of walls (not on cars)
         float ndl=max(dot(n,uSun),0.); light=uSunCol*(ndl>0.?ndl*shadow():0.);
         if((f>13.5&&f<14.5)||(f>21.5&&f<22.5)){ float up=n.y*.5+.5, bw=dot(n,normalize(vec3(-uSun.x,-.45,-uSun.z)))*.5+.5;   // a person or a car: sky from above, bounce from the sunlit side away from the sun, so shade still models the body
-          light+=uSky*(.28+.82*up*up)*vis*vis+uGround*(1.-.5*vis)*(.38+1.25*bw*bw); }
+          if(f<14.5){ float ks=dot(n,normalize(vec3(uSun.x,.9,uSun.z)))*.5+.5, dn=max(-n.y,0.);   // a person in shade: the sky is brightest round the sun, so that side of the body is lit more, and what faces down is darker
+            light+=uSky*(.14+.6*up*up+.62*ks*ks*ks)*vis*vis*(1.-.4*dn)+uGround*(1.-.5*vis)*(.3+1.3*bw*bw); }
+          else light+=uSky*(.28+.82*up*up)*vis*vis+uGround*(1.-.5*vis)*(.38+1.25*bw*bw); }
         else light+=uSky*(n.y*.35+.65)*vis*vis+uGround*(1.-.5*vis);   // sun, sky seen, and light bounced off sunlit stone
         for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*.85+.15)); } }   // lanterns (W6)
       col=c*light; }
@@ -1716,15 +1748,37 @@ addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
 
 // Rooms are furnished only near the camera: built when a building comes within 40 m (two a frame at most), dropped past 70 m.
 const ROOMS = new Map();
+// A room's light: its lamps, and a map seen from above of how much of the floor round each spot is covered by furniture, blurred,
+// so floors darken round and under what stands on them and furniture darkens at its foot (contact shade, as baked in Blender).
+const ROOM_AO_CELL = .2;
+function roomAO(l, foot) {
+  const [x0, z0, x1, z1] = l.rect, w = Math.max(2, Math.ceil((x1 - x0) / ROOM_AO_CELL)), hgt = Math.max(2, Math.ceil((z1 - z0) / ROOM_AO_CELL)), g = new Float32Array(w * hgt);
+  for (const [cx, cz, hx, hz, wt] of foot) {
+    const i0 = Math.max(0, Math.floor((cx - hx - x0) / ROOM_AO_CELL)), i1 = Math.min(w - 1, Math.floor((cx + hx - x0) / ROOM_AO_CELL));
+    const j0 = Math.max(0, Math.floor((cz - hz - z0) / ROOM_AO_CELL)), j1 = Math.min(hgt - 1, Math.floor((cz + hz - z0) / ROOM_AO_CELL));
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) g[j * w + i] = Math.max(g[j * w + i], wt);
+  }
+  const blur = (src, r) => { const t = new Float32Array(w * hgt), o = new Float32Array(w * hgt), n = 2 * r + 1;     // a box blur, across then down
+    for (let j = 0; j < hgt; j++) for (let i = 0; i < w; i++) { let s = 0; for (let k = -r; k <= r; k++) s += src[j * w + Math.min(w - 1, Math.max(0, i + k))]; t[j * w + i] = s / n; }
+    for (let j = 0; j < hgt; j++) for (let i = 0; i < w; i++) { let s = 0; for (let k = -r; k <= r; k++) s += t[Math.min(hgt - 1, Math.max(0, j + k)) * w + i]; o[j * w + i] = s / n; }
+    return o; };
+  const a = blur(blur(g, 2), 1), px = new Uint8Array(w * hgt);
+  for (let k = 0; k < w * hgt; k++) px[k] = Math.round(255 * Math.min(1, Math.max(g[k] * .8, a[k] * 1.8)));
+  const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, w, hgt, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, px); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+  for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+  gl.bindTexture(gl.TEXTURE_2D, null); return tex;
+}
 function nearRooms(eye) {
   let built = 0;
   for (const l of LOTS) {
     if (!l.furn) continue;
     const [a0, b0, a1, b1] = l.rect, dd = Math.hypot((a0 + a1) / 2 - eye[0], (b0 + b1) / 2 - eye[2]) - Math.hypot(a1 - a0, b1 - b0) / 2, have = ROOMS.get(l);
     if (!have && dd < 40 && built < 2) {
-      const m = new Mesh(1 << 15); furnish(l, l.furn[0], l.furn[1], l.furn[2], m); built++;
-      ROOMS.set(l, m.n ? { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, box: boxOf(m.a, 0, m.n) } : { n: 0 });
-    } else if (have && dd > 70) { if (have.buf) gl.deleteBuffer(have.buf); ROOMS.delete(l); }
+      const m = new Mesh(1 << 15); ROOM_REC = { lamps: [], foot: [] }; furnish(l, l.furn[0], l.furn[1], l.furn[2], m); built++;
+      const rec = ROOM_REC; ROOM_REC = null;
+      ROOMS.set(l, m.n ? { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, box: boxOf(m.a, 0, m.n), lot: l, lamps: rec.lamps, ao: roomAO(l, rec.foot) } : { n: 0, lot: l, lamps: [] });
+    } else if (have && dd > 70) { if (have.buf) gl.deleteBuffer(have.buf); if (have.ao) gl.deleteTexture(have.ao); ROOMS.delete(l); }
   }
   const out = []; for (const r of ROOMS.values()) if (r.n) out.push(r); return out;
 }
@@ -1806,7 +1860,13 @@ function frame(now) {
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.enable(gl.CULL_FACE); gl.depthMask(true);   // on a tie the layer laid later (the upper one) wins
   const seen = pieces.filter(pc => !outside(VP, pc.box)), nearD = chunks.filter(ch => Math.hypot(ch.cx - cam.eye[0], ch.cz - cam.eye[2]) < DETAIL_R && !outside(VP, ch.box));
-  for (const rm of nearRooms(cam.eye)) if (!outside(VP, rm.box)) nearD.push(rm);   // furnished rooms of the buildings close by   // near relief: blocks within reach and in view
+  const rooms = nearRooms(cam.eye); for (const rm of rooms) if (!outside(VP, rm.box)) nearD.push(rm);
+  // the room the camera is in (or the nearest one in reach) gets its own lamps and contact shade; other rooms an even lamplight
+  let inRoom = null, best = 10;
+  for (const rm of rooms) { if (!rm.ao) continue; const [a0, b0, a1, b1] = rm.lot.rect, e = Math.hypot(Math.max(a0 - cam.eye[0], 0, cam.eye[0] - a1), Math.max(b0 - cam.eye[2], 0, cam.eye[2] - b1)) + (cam.eye[1] > GF + 1 ? 99 : 0); if (e < best) { best = e; inRoom = rm; } }
+  const roomL = new Float32Array(64); let roomLN = 0;
+  if (inRoom) { const ls = inRoom.lamps.map(q => [(q[0] - cam.eye[0]) ** 2 + (q[2] - cam.eye[2]) ** 2, q]).sort((p, q) => p[0] - q[0]);
+    for (; roomLN < Math.min(16, ls.length); roomLN++) { const q = ls[roomLN][1]; roomL.set([q[0], q[1], q[2], q[3] * dials.lanterns * (.75 + .5 * Lt.night)], roomLN * 4); } }   // furnished rooms of the buildings close by   // near relief: blocks within reach and in view
   for (const pc of seen) pc.d2 = boxD2(pc.box, cam.eye); for (const ch of nearD) ch.d2 = boxD2(ch.box, cam.eye);
   const front = seen.slice().sort((p, q) => p.d2 - q.d2); nearD.sort((p, q) => p.d2 - q.d2);
   // depth first, nearest pieces first: the costly light below then runs once for each pixel instead of for every hidden wall and room behind it
@@ -1819,7 +1879,10 @@ function frame(now) {
     gl.uniform1i(u.uSh, 0); gl.uniform1i(u.uAO, 1); gl.uniform1i(u.uTxt, 2); gl.uniform4fv(u["uLamp[0]"], lamp); gl.uniform1i(u.uLampN, lampN); gl.uniform3f(u.uAOm, skyMap.lo, 1 / skyMap.size, 0);
     gl.uniform3fv(u.uSun, Lt.dir); gl.uniform3fv(u.uSunCol, Lt.sunCol); gl.uniform3fv(u.uSky, Lt.sky); gl.uniform3fv(u.uGround, Lt.ground); gl.uniform3fv(u.uFog, Lt.fog);
     gl.uniform3fv(u.uCam, cam.eye); gl.uniform1f(u.uNight, Lt.night); gl.uniform1f(u.uFogD, Lt.fogD); gl.uniform1f(u.uExp, Lt.exp);
+    gl.uniform1i(u.uRoomAO, 3); gl.uniform4fv(u["uRoomL[0]"], roomL); gl.uniform1i(u.uRoomLN, roomLN);
+    if (inRoom) gl.uniform4fv(u.uRoomR, inRoom.lot.rect); else gl.uniform4f(u.uRoomR, 0, 0, -1, -1);
   };
+  gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, inRoom ? inRoom.ao : skyMap.tex);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, shTex); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, skyMap.tex);
   gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, txtTex); gl.activeTexture(gl.TEXTURE0);
   lit(main); attribs(main, worldBuf); for (const pc of seen) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);   // in the order laid, so ties fall as before
