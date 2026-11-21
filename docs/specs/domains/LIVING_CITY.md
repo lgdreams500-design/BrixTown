@@ -201,7 +201,8 @@ up to 42 on the road at once, no overlap, no crossing movements in a box, nobody
 - **Left out for now:** walkers on pavements and crossings (so cars do not yet wait for people;
   `test_cars_wait_for_walkers_at_crossings` is skipped), the tram sharing Tram Street, acceleration (cars go
   straight to the speed limit), lane changes, players' cars (CITY-049 and CITY-060 onward are engine work),
-  and cars in the playable slice. `world.simulation(w, traffic=True)` turns cars on; the slice keeps them off.
+  and cars stopping for the player. `world.simulation(w, traffic=True)` turns cars on; `build_play.py` uses it, so the
+  playable slice shows residents' cars (WORLD_MAP §5.1).
 
 ## 6. Open questions
 

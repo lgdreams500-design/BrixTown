@@ -106,12 +106,17 @@
 <script src="city_data.js"></script>
 <script src="people.js"></script>
 <script src="conversations.js"></script>
+<script src="cars.js"></script>
 <script>
   // conversations.js comes before play.js: play.js starts drawing as soon as it has run, so everything it calls must be here first.
   // If conversations.js was blocked or is missing, the town still runs; you just cannot talk to anyone.
   if (!window.Talk) {
     window.Talk = { on: false, where: (i, m) => resident(i, m), consider() { }, pick() { }, step() { }, key() { }, open() { }, close() { } };
     console.warn("conversations.js did not load: talking to residents is off.");
+  }
+  if (!window.Cars) {                                    // the same for cars.js: no cars, but drivers stay hidden while "in" them
+    window.Cars = { at() { return null; }, draw() { return 0; }, push() { }, count: 0 };
+    console.warn("cars.js did not load: residents' cars are not drawn.");
   }
 </script>
 <script src="play.js"></script>

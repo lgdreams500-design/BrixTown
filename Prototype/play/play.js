@@ -806,7 +806,7 @@ function along(p, d) {
 const STAND = { pose: 0 };
 function resident(i, m) {                                // where resident i is at minute m, or null when they are away
   const row = D.plan[i], k = pieceAt(row, m), p = row[k];
-  if (p[1] === 2) return null;
+  if (p[1] === 2 || p[1] === 3) return null;                 // away by tram or out of town, or in their car (cars.js draws the car)
   if (p[1] === 0) {
     if (!p.s) { const lot = LOTS[p[7]]; p.s = STAND; if (p[5] >= 0) for (const s of lot.spots) if (Math.abs(s.x - p[2]) < .2 && Math.abs(s.z - p[3]) < .2) { p.s = s; break; } }
     const s = p.s;
@@ -1051,6 +1051,7 @@ function stepPlayer(dt) {
   }
   if (cam.fp) pl.yaw = cam.yaw;
   for (const [x, stopped] of tramAt(clock.m)) if (Math.abs(pl.x - x) < 6.4 && Math.abs(pl.z - TRAM_Z) < 1.6 && pl.y < 3) pl.z = TRAM_Z + (pl.z < TRAM_Z ? -1.6 : 1.6);
+  Cars.push(pl, clock.m);                                  // nor through a car (cars.js)
   const g = floorAt(pl.x, pl.z, pl.y);
   if (keys.Space && pl.onGround) { pl.vy = 4.8; pl.onGround = false; }
   if (!pl.onGround || pl.y > g + .01) {
@@ -1231,6 +1232,7 @@ function frame(now) {
     for (let k = 0; k < 6; k++) for (const s of [-1, 1]) { const a = x - 5.3 + k * 1.85; dyn.quad([a, 1.5, z + s * 1.21], [a + 1.4, 1.5, z + s * 1.21], [a + 1.4, 2.55, z + s * 1.21], [a, 2.55, z + s * 1.21], [1, .7, .4], 1, [0, 0, s]); }
     dyn.box(x + 6, 1.1, z - .25, x + 6.06, 1.4, z + .25, C.lantern, 2);
   }
+  stat.cars = Cars.draw(dyn, clock.m, near, reach);       // residents' cars, parked and driving (cars.js)
 
   const Lt = lighting(clock.m), dials = window.wasted.dials; Lt.sunCol = mul3(Lt.sunCol, dials.sun); Lt.sky = mul3(Lt.sky, dials.sky); Lt.ground = mul3(Lt.ground, dials.bounce); Lt.fogD *= dials.haze; Lt.exp *= dials.exposure;
   const wm = dials.warm || 0; Lt.sunCol = [Lt.sunCol[0], Lt.sunCol[1] * (1 - .1 * wm), Lt.sunCol[2] * (1 - .26 * wm)]; Lt.sky = [Lt.sky[0] * (1 - .08 * wm), Lt.sky[1] * (1 - .04 * wm), Lt.sky[2]];   // a more golden sun against a deeper sky
@@ -1297,5 +1299,5 @@ if (q.has("fp")) cam.fp = true; if (q.has("yaw")) pl.yaw = cam.yaw; if (q.has("r
 const LIGHTS = { reference: { sun: 1, sky: 1, bounce: 1, lanterns: 1, haze: 1, exposure: 1, warm: 0 }, kit: { sun: .62, sky: .9, bounce: 1.5, lanterns: 1, haze: .55, exposure: .7, warm: 1 } };
 let lightName = q.get("light") === "reference" ? "reference" : "kit";
 addEventListener("keydown", e => { if (e.code === "KeyL" && started && !e.repeat) { lightName = lightName === "kit" ? "reference" : "kit"; Object.assign(window.wasted.dials, LIGHTS[lightName]); } });
-window.wasted = { dials: Object.assign({}, LIGHTS[lightName]), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, fps, people: people.length, target: target && target.label }) };
+window.wasted = { dials: Object.assign({}, LIGHTS[lightName]), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
 requestAnimationFrame(frame);
