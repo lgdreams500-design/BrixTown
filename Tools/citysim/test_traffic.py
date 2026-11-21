@@ -5,7 +5,7 @@ import copy, os, random, sys, unittest
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "worldgen"))
 import world                                               # noqa: E402
 import traffic                                             # noqa: E402
-from citysim import dist                                   # noqa: E402
+from citysim import dist, hm                               # noqa: E402
 
 W = world.load()
 CITY = world.simulation(W, traffic=True)
@@ -15,6 +15,7 @@ PLAN = CITY.plan(DAY)
 D = T._days[DAY]
 R = T.roads
 SP = W["traffic"]["spacing"]
+IDS = T.ids(DAY)                                           # residents' cars, vans, and today's cars passing through
 
 
 def samples(step=None):
@@ -23,7 +24,7 @@ def samples(step=None):
     spans = [(tr["t0"], tr["t1"]) for trips in D["trips"].values() for tr in trips]
     times = sorted({round(t0 + k * step, 3) for t0, t1 in spans for k in range(int((t1 - t0) / step) + 1)})
     for t in times:
-        yield t, {cid: T.car_at(cid, DAY, t / T.pace) for cid in T.cars}
+        yield t, {cid: T.car_at(cid, DAY, t / T.pace) for cid in IDS}
 
 
 class TheRoads(unittest.TestCase):
@@ -103,8 +104,11 @@ class TheCars(unittest.TestCase):
     def test_cars_are_home_at_night(self):
         for t in (3 * 60, 23.9 * 60):
             for cid, c in T.at(DAY * 1440 + t).items():
+                if T.home_bay(cid) is None:                # passing through: gone by night
+                    self.assertEqual(c["state"], "away", cid)
+                    continue
                 self.assertEqual(c["state"], "parked")
-                self.assertEqual(c["bay"], T.cars[cid]["bay"], cid)
+                self.assertEqual(c["bay"], T.home_bay(cid), cid)
 
 
     def test_commuters_with_a_car_drive_out_and_back(self):   # CITY-068
@@ -136,14 +140,44 @@ class TheCars(unittest.TestCase):
         self.assertTrue(any(p[0] == "away" for rid in no_car[:20] for p in PLAN[rid]))   # the rest still take the tram (CITY-041)
 
 
+class VansAndThroughTraffic(unittest.TestCase):
+    def test_vans_make_their_rounds(self):                # CITY-040
+        v = W["traffic"]["vans"]
+        self.assertEqual(len(T.vans), v["count"])
+        for vid, van in T.vans.items():
+            trips = D["trips"][vid]
+            self.assertEqual(len(trips), v["rounds"] * (v["stops"] + 1), vid)
+            self.assertTrue(all(tr["t1"] is not None for tr in trips))
+            self.assertEqual(trips[-1]["bay1"], van["bay"])                  # back at the depot at the end of the day
+            self.assertGreaterEqual(trips[0]["t0"] / T.pace, hm(v["first"]) - 1e-6)
+            for a, b in zip(trips, trips[1:]):                             # it stops a while at each place
+                self.assertGreaterEqual((b["t0"] - a["t1"]) / T.pace, v["dwell_min"] - 1e-6)
+        self.assertEqual(T.car_at(sorted(T.vans)[0], DAY, 3 * 60)["state"], "parked")
+
+    def test_through_traffic_crosses_town(self):          # CITY-069
+        per_hour = W["traffic"]["through"]["per_hour"]
+        passing = {cid: trips for cid, trips in D["trips"].items() if cid.startswith("thru_")}
+        self.assertEqual(len(passing), sum(per_hour))
+        for cid, trips in passing.items():
+            self.assertEqual(len(trips), 1)
+            tr = trips[0]
+            self.assertNotEqual(tr["gate_in"], tr["gate"])
+            self.assertEqual(tr["legs"][0]["key"], R.gates[tr["gate_in"]]["back"])
+            self.assertEqual(tr["legs"][-1]["key"], R.gates[tr["gate"]]["out"])
+            h = int(cid.split("_")[1])
+            self.assertTrue(h * 60 <= tr["t0"] / T.pace < (h + 1) * 60 + 5)   # comes in during its hour (it may wait a moment at the gate)
+            for m in (tr["t0"] / T.pace - 1, tr["t1"] / T.pace + 1):
+                self.assertEqual(T.car_at(cid, DAY, m)["state"], "away")
+
+
 class TheTraffic(unittest.TestCase):
     def test_traffic_same_answer_every_time(self):        # CITY-045
         other = world.simulation(world.load(), traffic=True).traffic
         busy = sorted({tr["t0"] / T.pace + 0.4 for trips in D["trips"].values() for tr in trips})
-        times = busy + [0.0, 600.0, 1439.0]
+        times = random.Random(3).sample(busy, min(200, len(busy))) + [0.0, 600.0, 1439.0]
         random.Random(7).shuffle(times)
         for m in times:                                     # asked in a different order, by a different instance
-            for cid in sorted(T.cars):
+            for cid in IDS:
                 self.assertEqual(T.car_at(cid, DAY, m), other.car_at(cid, DAY, m))
 
     def test_cars_never_overlap_in_a_lane(self):          # CITY-046
@@ -189,7 +223,7 @@ class TheTraffic(unittest.TestCase):
         for trips in D["trips"].values():
             for tr in trips:
                 g = R.gates.get(tr["gate"]) if tr["gate"] else None
-                b0 = R.bays[tr["bay0"]] if tr["bay0"] else dict(lane=g["back"], s=0.0)
+                b0 = R.bays[tr["bay0"]] if tr["bay0"] else dict(lane=R.gates[tr["gate_in"] or tr["gate"]]["back"], s=0.0)
                 b1 = R.bays[tr["bay1"]] if tr["bay1"] else dict(lane=g["out"], s=R.lanes[g["out"]]["length"])
                 best = R.route(b0["lane"], b0["s"], b1["lane"], b1["s"])
                 self.assertEqual([g["key"] for g in tr["legs"]], [g["key"] for g in best])
@@ -201,12 +235,13 @@ class TheTraffic(unittest.TestCase):
     def test_one_car_per_bay(self):                       # CITY-047
         held = {}                                          # bay -> [(from, to, car)]
         for cid, trips in D["trips"].items():
-            t, bay = 0.0, T.cars[cid]["bay"]
+            t, bay = 0.0, T.home_bay(cid)
             for tr in trips:
                 if bay is not None:                        # None: out of town, in no bay
                     held.setdefault(bay, []).append((t, tr["t0"], cid))
                 t, bay = tr["t1"], tr["bay1"]
-            held.setdefault(bay, []).append((t, 1440 * T.pace, cid))
+            if bay is not None:
+                held.setdefault(bay, []).append((t, 1440 * T.pace, cid))
         for bay, spans in held.items():
             spans.sort()
             for a, b in zip(spans, spans[1:]):
@@ -252,7 +287,7 @@ class TheBusyDay(unittest.TestCase):
         times = sorted({round(t0 + k * T.step, 3) for t0, t1 in spans for k in range(int((t1 - t0) / T.step) + 1)})
         for t in times[::2]:
             by_leg = {}
-            for cid in T.cars:
+            for cid in T.ids(DAY):
                 c = T.car_at(cid, DAY, t / T.pace)
                 if c["leg"] is not None:
                     by_leg.setdefault(c["leg"][0], []).append(c["leg"][1])

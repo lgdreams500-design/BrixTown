@@ -59,7 +59,7 @@ CAR_STEP_S = 1.0                     # real seconds between packed car positions
 
 
 def cars(city, day):
-    """Every resident car's day for the slice: its home bay and its trips, each a list of [x, z, hx, hz] every CAR_STEP_S real
+    """Every vehicle's day for the slice (k: 0 car, 1 van): its home bay (none for a car passing through) and its trips, each a list of [x, z, hx, hz] every CAR_STEP_S real
     seconds (Tools/citysim/traffic.py works them out). Pulling out of a bay and into one is eased over a few seconds here:
     the rules keep a car either in its bay or on its lane, the picture slides it between the two."""
     T = city.traffic
@@ -72,7 +72,7 @@ def cars(city, day):
         return [r1(b["pos"][0]), r1(b["pos"][1]), round(u[0], 2), round(u[1], 2)]
 
     out, index = [], {}
-    for n, cid in enumerate(sorted(T.cars)):
+    for n, cid in enumerate(T.ids(day)):                   # residents' cars, vans, and today's cars passing through
         index[cid] = n
         trips = []
         for tr in D["trips"][cid]:
@@ -98,7 +98,8 @@ def cars(city, day):
                     pts[i][1] += (bp[1] - pts[i][1]) * f
             trips.append([round(tr["t0"] / T.pace, 3), round(tr["t1"] / T.pace, 3), bay(tr["bay1"]) if tr["bay1"] else None,
                           [round(v, 2) for q in pts for v in q]])
-        out.append(dict(home=bay(T.cars[cid]["bay"]), trips=trips))
+        home = T.home_bay(cid)
+        out.append(dict(home=bay(home) if home else None, trips=trips, k=1 if cid in T.vans else 0))
     return out, index, CAR_STEP_S / T.pace
 
 

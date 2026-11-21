@@ -13,7 +13,7 @@ Standard library only, like citysim.py.
 """
 import bisect, heapq, math
 
-from citysim import dist, lengths, rnd
+from citysim import dist, hm, lengths, rnd
 
 
 # ---- the road network --------------------------------------------------------------------------------------
@@ -216,8 +216,58 @@ class Traffic:
         self._days, self._walk = {}, {}
         self._lines()
         self.cars = self._cars()
-        self.home_bays = {c["bay"] for c in self.cars.values()}
+        self.vans = self._vans()
+        self.home_bays = {c["bay"] for c in list(self.cars.values()) + list(self.vans.values())}
         city.traffic = self
+
+    # -- every vehicle: residents' cars, vans, and cars passing through (those exist only on their day) --
+    def vehicle(self, vid):
+        return self.cars.get(vid) or self.vans.get(vid) or dict(id=vid, home=None, bay=None, owner=None)
+
+    def home_bay(self, vid):
+        return self.vehicle(vid)["bay"]
+
+    def ids(self, day):
+        return sorted(set(self.cars) | set(self.vans) | set(self._day(day)["trips"]))
+
+    def _vans(self):
+        """Delivery vans (CITY-040), each kept at a depot: a utility lot you can enter."""
+        v = self.r["vans"]
+        depots = sorted(l for l, lot in self.city.lots.items() if lot["kind"] == "utility" and lot.get("enterable"))
+        taken = {c["bay"] for c in self.cars.values()}
+        vans = {}
+        for n in range(v["count"] if depots else 0):
+            home = depots[n % len(depots)]
+            bay = next((b for b in self.roads.bays_near(self.city.lots[home]["door"], 10 * self.r["bay_reach_m"]) if b not in taken), None)
+            if bay is None:
+                continue
+            taken.add(bay)
+            vans["van_%02d" % n] = dict(id="van_%02d" % n, home=home, bay=bay, owner=None, kind="van")
+        return vans
+
+    def _fleet_legs(self, day):
+        """The day's van rounds (depot, shops, depot, again) and cars passing through town from gate to gate (CITY-069).
+        All drawn from the seed: the same on every machine."""
+        out, v, th = {}, self.r["vans"], self.r["through"]
+        shops = sorted(l for l, lot in self.city.lots.items() if lot["kind"] in ("shop", "food"))
+        for vid, van in sorted(self.vans.items()):
+            legs = []
+            for rd in range(v["rounds"]):
+                stops = [shops[int(rnd("van", vid, day, rd, k) * len(shops))] for k in range(v["stops"])]
+                for k, to in enumerate(stops + [van["home"]]):
+                    first = not legs
+                    legs.append(dict(kind="van", to=to, at=hm(v["first"]) + rnd("van0", vid, day) * 30 if first else None,
+                                     wait=v["depot_min"] if (k == 0 and not first) else v["dwell_min"]))
+            out[vid] = legs
+        gates = sorted(self.roads.gates)
+        if len(gates) >= 2:
+            for h, n in enumerate(th["per_hour"]):
+                for i in range(n):
+                    a = gates[int(rnd("thru_in", day, h, i) * len(gates))]
+                    rest = [g for g in gates if g != a]
+                    b = rest[int(rnd("thru_out", day, h, i) * len(rest))]
+                    out["thru_%02d_%02d" % (h, i)] = [dict(kind="pass", gate_in=a, gate=b, at=h * 60 + (i + rnd("thru_t", day, h, i)) * 60.0 / n)]
+        return out
 
     # -- who has a car --
     def _cars(self):
@@ -342,11 +392,14 @@ class Traffic:
             lg = self.legs(car["owner"], plan[car["owner"]])
             if lg:
                 legs[car["id"]] = lg
+        legs.update(self._fleet_legs(day))
         trips, assigned, boxes, entries = self._simulate(day, legs)
         self._days[day] = dict(trips=trips, assigned=assigned, boxes=boxes, entries=entries)
         if len(self._days) > 12:
             self._days.pop(next(iter(self._days)))
         for cid, lg in legs.items():
+            if cid not in self.cars:
+                continue                                  # vans and passing cars have no driver among the residents
             rid = self.cars[cid]["owner"]
             plan[rid] = self._rewrite(rid, plan[rid], lg, trips[cid])
         return plan
@@ -386,9 +439,10 @@ class Traffic:
         cyc = r["signals"]
         cycle = 2 * (cyc["green_s"] + cyc["amber_s"] + cyc["all_red_s"])
         day0 = day * 1440 * pace                          # real seconds at this day's midnight (signals run on world time)
-        bay_car = {c["bay"]: cid for cid, c in self.cars.items()}   # who is parked in or has reserved each bay
-        at_bay = {cid: c["bay"] for cid, c in self.cars.items()}
-        trips = {cid: [] for cid in self.cars}
+        every = sorted(set(self.cars) | set(self.vans) | set(legs))
+        bay_car = {self.home_bay(v): v for v in every if self.home_bay(v)}   # who is parked in or has reserved each bay
+        at_bay = {v: self.home_bay(v) for v in every}
+        trips = {v: [] for v in every}
         assigned, boxes, entries = [], [], []
         events = []                                       # (time to pull out, car id, leg index)
         state = {}                                        # moving cars: dict(legs, starts, d, k, trip)
@@ -400,6 +454,13 @@ class Traffic:
 
         def schedule(cid, k, ready_min):
             lg = legs[cid][k]
+            if lg["kind"] == "pass":                      # a car passing through: in at one gate on the minute
+                heapq.heappush(events, (lg["at"] * pace, cid, k))
+                return
+            if lg["kind"] == "van":                       # a van leaves when its round says, after its stop
+                t0 = lg["at"] if lg.get("at") is not None else ready_min + lg["wait"]
+                heapq.heappush(events, (t0 * pace, cid, k))
+                return
             car = self.cars[cid]
             rid = car["owner"]
             bay0 = at_bay[cid]
@@ -427,7 +488,7 @@ class Traffic:
             heapq.heappush(events, ((board * pace) + r["board_s"], cid, k))
 
         for cid, lg in sorted(legs.items()):
-            schedule(cid, 0, lg[0]["ready"])
+            schedule(cid, 0, lg[0].get("ready", 0.0))
 
         def signal(jid, axis, t):
             tt = (t + day0 + rnd("sig", jid) * cycle) % cycle
@@ -462,13 +523,13 @@ class Traffic:
             return lambda bid: bay_car.get(bid) in (None, cid)
 
         def pull_out(cid, k, t):
-            car = self.cars[cid]
+            car = self.vehicle(cid)
             lg = legs[cid][k]
-            if lg["kind"] == "in":                        # coming in through a gate: start on its way into town
-                bay0 = dict(lane=R.gates[lg["gate"]]["back"], s=0.0)
+            if lg["kind"] in ("in", "pass"):              # coming in through a gate: start on its way into town
+                bay0 = dict(lane=R.gates[lg.get("gate_in") or lg["gate"]]["back"], s=0.0)
             else:
                 bay0 = R.bays[at_bay[cid]]
-            if lg["kind"] == "out":
+            if lg["kind"] in ("out", "pass"):
                 dest, b1 = None, dict(lane=R.gates[lg["gate"]]["out"], s=R.lanes[R.gates[lg["gate"]]["out"]]["length"])
             else:
                 dest = self._dest_bay(car, lg["to"], free_bay(cid))
@@ -495,7 +556,7 @@ class Traffic:
             starts = [0.0]
             for g in route:
                 starts.append(starts[-1] + g["s1"] - g["s0"])
-            trip = dict(leg=k, t0=t, bay0=at_bay[cid], bay1=dest, legs=route, starts=starts, d=[0.0], t1=None, gate=lg.get("gate"), kind=lg["kind"])
+            trip = dict(leg=k, t0=t, bay0=at_bay[cid], bay1=dest, legs=route, starts=starts, d=[0.0], t1=None, gate=lg.get("gate"), gate_in=lg.get("gate_in"), kind=lg["kind"])
             at_bay[cid] = None
             if lg["kind"] == "in":
                 lg["t_in"] = t / pace
@@ -584,6 +645,13 @@ class Traffic:
                 trip["t1"] = t
                 at_bay[cid] = trip["bay1"]
                 lg = legs[cid][st["leg"]]
+                if lg["kind"] == "pass":                  # out of the far gate: gone
+                    continue
+                if lg["kind"] == "van":                   # parked at a shop or back at the depot
+                    lg.update(t_park=t, bay1=trip["bay1"], trip=trip)
+                    if st["leg"] + 1 < len(legs[cid]):
+                        schedule(cid, st["leg"] + 1, t / pace)
+                    continue
                 rid = self.cars[cid]["owner"]
                 if lg["kind"] == "out":                   # through the gate and off the map until the way back
                     lg.update(t_exit=t / pace, trip=trip)
@@ -664,10 +732,12 @@ class Traffic:
         """dict(pos, heading, state, bay, leg) for one car at a game minute of a day. state: parked | moving | waiting."""
         d = self._day(day)
         t = minute * self.pace
-        trips = d["trips"][cid]
+        trips = d["trips"].get(cid, [])
         i = bisect.bisect_right([tr["t0"] for tr in trips], t) - 1
         if i < 0:
-            b = self.roads.bays[self.cars[cid]["bay"]]
+            if self.home_bay(cid) is None:               # a car passing through: not here yet
+                return dict(pos=None, heading=None, state="away", bay=None, leg=None)
+            b = self.roads.bays[self.home_bay(cid)]
             return dict(pos=b["pos"], heading=self.roads.lanes[b["lane"]]["u"], state="parked", bay=b["id"], leg=None)
         tr = trips[i]
         if tr["t1"] is not None and t >= tr["t1"] and tr["bay1"] is None:
@@ -691,7 +761,7 @@ class Traffic:
 
     def at(self, t):
         day, m = self.city.clock.split(t)
-        return {cid: self.car_at(cid, day, m) for cid in sorted(self.cars)}
+        return {cid: self.car_at(cid, day, m) for cid in self.ids(day)}
 
     def loaded(self, cars, viewers, radius=None):
         """CITY-048: cars that need a body now, within the car load distance of any viewer."""

@@ -1145,7 +1145,7 @@ function hud(VP, W, H, tags) {
   $("date").textContent = D.day.weekday + " · " + D.day.season + (D.day.market ? " · market day" : "") + (clock.rate !== 1 ? "  (clock ×" + clock.rate + ")" : "");
   const [a, b] = placeName(); $("place").textContent = a; $("sub").textContent = b;
   $("stats").innerHTML = bodies + " of " + D.residents.length + " residents have bodies<br>" + Math.round(fps) + " frames a second" + (quality < 1 ? " · soft picture" : "");
-  const pr = $("prompt"); if (started && (target || pl.pose > 1)) { pr.style.display = "block"; pr.innerHTML = "<kbd>E</kbd>" + (pl.pose > 1 ? "Get up" : target.label); } else pr.style.display = "none";
+  const pr = $("prompt"); if (started && (target || pl.pose > 1)) { pr.style.display = "block"; pr.innerHTML = "<kbd>E</kbd>" + (pl.pose === 4 ? Cars.label() : pl.pose > 1 ? "Get up" : target.label); } else pr.style.display = "none";
   $("dot").style.display = started && cam.fp ? "block" : "none";
   g2.clearRect(0, 0, W, H); if (!started) return;
   const inLot = lotAt(pl.x, pl.z), sc = W / ui.clientWidth;
@@ -1221,6 +1221,7 @@ function frame(now) {
 
   // everyone's place right now; bodies only for those near the player
   dyn.reset(); people = []; bodies = 0; const tags = [], near = started ? [pl.x, pl.z] : [cam.eye[0] + cam.dir[0] * 60, cam.eye[2] + cam.dir[2] * 60], reach = started ? 85 : 130;
+  if (pl.pose === 4) return Cars.drive(dt, keys, pl, cam, clock.m);   // driving (cars.js)
   for (let i = 0; i < D.plan.length; i++) {
     const r = Talk.where(i, clock.m); if (!r) continue;
     people.push([r.x, r.z]);
@@ -1236,7 +1237,7 @@ function frame(now) {
     if (started) Talk.consider(i, r, d);
   }
   if (started) Talk.pick();                               // the nearest resident in reach can be talked to (E)
-  if (started && !cam.fp && !cam.close) {
+  if (started && !cam.fp && !cam.close && pl.pose !== 4) {   // not while in a car
     let da = cam.yaw - pl.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
     People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
       look: pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
@@ -1245,9 +1246,11 @@ function frame(now) {
     const z = TRAM_Z; dyn.box(x - 6, .35, z - 1.2, x + 6, 1.35, z + 1.2, C.terracotta, 9); dyn.box(x - 6, 1.35, z - 1.2, x + 6, 2.75, z + 1.2, C.cream, 9); dyn.box(x - 6.1, 2.75, z - 1.25, x + 6.1, 2.95, z + 1.25, C.metal, 9);
     for (let k = 0; k < 6; k++) for (const s of [-1, 1]) { const a = x - 5.3 + k * 1.85; dyn.quad([a, 1.5, z + s * 1.21], [a + 1.4, 1.5, z + s * 1.21], [a + 1.4, 2.55, z + s * 1.21], [a, 2.55, z + s * 1.21], [1, .7, .4], 1, [0, 0, s]); }
     dyn.box(x + 6, 1.1, z - .25, x + 6.06, 1.4, z + .25, C.lantern, 2);
+  if (pl.pose === 4) return Cars.leave(pl, cam);          // out of the car (cars.js)
   }
   stat.cars = Cars.draw(dyn, clock.m, near, reach);       // residents' cars, parked and driving (cars.js)
 
+  if (target.type === "car") return Cars.enter(target, pl, cam, clock.m);   // into a parked car (cars.js)
   const Lt = lighting(clock.m), dials = window.wasted.dials; Lt.sunCol = mul3(Lt.sunCol, dials.sun); Lt.sky = mul3(Lt.sky, dials.sky); Lt.ground = mul3(Lt.ground, dials.bounce); Lt.fogD *= dials.haze; Lt.exp *= dials.exposure;
   const wm = dials.warm || 0; Lt.sunCol = [Lt.sunCol[0], Lt.sunCol[1] * (1 - .1 * wm), Lt.sunCol[2] * (1 - .26 * wm)]; Lt.sky = [Lt.sky[0] * (1 - .08 * wm), Lt.sky[1] * (1 - .04 * wm), Lt.sky[2]];   // a more golden sun against a deeper sky
   const view = M4.look(cam.eye, cam.dir), fov = .9, asp = W / H, VP = M4.mul(M4.persp(fov, asp, .25, 3200), view.m), th = Math.tan(fov / 2);
@@ -1257,6 +1260,7 @@ function frame(now) {
     const R = 70, tex = 2 * R / SH, f = [-Lt.dir[0], -Lt.dir[1], -Lt.dir[2]], lv0 = M4.look([0, 0, 0], f), dot3 = (p, q) => p[0] * q[0] + p[1] * q[1] + p[2] * q[2];
     let foc = [near[0] + cam.dir[0] * 28, 0, near[1] + cam.dir[2] * 28]; const ox = dot3(foc, lv0.r) % tex, oy = dot3(foc, lv0.u) % tex;
     foc = [foc[0] - lv0.r[0] * ox - lv0.u[0] * oy, foc[1] - lv0.r[1] * ox - lv0.u[1] * oy, foc[2] - lv0.r[2] * ox - lv0.u[2] * oy];   // move in whole texels so shadows do not crawl
+  if (!target) target = Cars.target(pl, clock.m);        // a parked car to drive (cars.js)
     const lv = M4.look([foc[0] + Lt.dir[0] * 260, foc[1] + Lt.dir[1] * 260, foc[2] + Lt.dir[2] * 260], f), nn = 1, ff = 520;
     SM = M4.mul([1 / R, 0, 0, 0, 0, 1 / R, 0, 0, 0, 0, -2 / (ff - nn), 0, 0, 0, -(ff + nn) / (ff - nn), 1], lv.m); shOn = 1;
     gl.bindFramebuffer(gl.FRAMEBUFFER, shFbo); gl.viewport(0, 0, SH, SH); gl.colorMask(false, false, false, false); gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LESS); gl.depthMask(true); gl.clear(gl.DEPTH_BUFFER_BIT);

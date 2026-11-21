@@ -1,15 +1,31 @@
 {
- "note": "Rules of the road and residents' cars (docs/specs/domains/LIVING_CITY.md 3.4, ADR-0009). All values are [ASSUMPTION] until tuned. Distances in metres, times in real seconds unless named _min.",
- "car_share": 0.3,
- "no_drive_roles": ["courier", "utility", "student"],
- "no_drive_acts": ["away", "stroll", "tend", "deliver", "inspect"],
- "drive_min_m": 250.0,
+ "note": "Rules of the road and residents' cars (docs/specs/domains/LIVING_CITY.md 3.4, ADR-0009). All values are [ASSUMPTION] until tuned. Distances in metres, times in real seconds unless named _min. car_share 0.6 and drive_min_m 0 since the owner asked for busier streets (2026-11-22); vans (CITY-040) and through traffic (CITY-069) are per day from the seed.",
+ "car_share": 0.6,
+ "no_drive_roles": [
+  "courier",
+  "utility",
+  "student"
+ ],
+ "no_drive_acts": [
+  "away",
+  "stroll",
+  "tend",
+  "deliver",
+  "inspect"
+ ],
+ "drive_min_m": 0.0,
  "gate_road_m": 80.0,
  "gate_margin_s": 30.0,
  "bay_reach_m": 150.0,
  "car_load_m": 120.0,
- "limits_kmh": {"default": 30.0, "through": 40.0},
- "through_streets": ["Market", "Baker"],
+ "limits_kmh": {
+  "default": 30.0,
+  "through": 40.0
+ },
+ "through_streets": [
+  "Market",
+  "Baker"
+ ],
  "lane_offset": 1.75,
  "bay_offset": 4.6,
  "bay_length": 6.0,
@@ -25,5 +41,45 @@
  "board_s": 15.0,
  "park_s": 15.0,
  "step_s": 0.5,
- "signals": {"green_s": 20.0, "amber_s": 3.0, "all_red_s": 2.0}
+ "signals": {
+  "green_s": 20.0,
+  "amber_s": 3.0,
+  "all_red_s": 2.0
+ },
+ "vans": {
+  "count": 6,
+  "first": "07:30",
+  "rounds": 3,
+  "stops": 4,
+  "dwell_min": 6.0,
+  "depot_min": 20.0
+ },
+ "through": {
+  "per_hour": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   3,
+   6,
+   8,
+   6,
+   4,
+   4,
+   5,
+   4,
+   4,
+   5,
+   7,
+   8,
+   6,
+   4,
+   3,
+   2,
+   1,
+   0
+  ]
+ }
 }

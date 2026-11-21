@@ -153,9 +153,14 @@ rules and, since 0.2.0, the look and the movement set in the art documents (§5.
 - Sit on stools and benches, lie on beds, ride the lift to the roof of the five towers.
 - Day and night from the calendar's sunrise and sunset; lamps and lit windows at night.
 - A tram on Tram Street, on the timetable the residents use.
-- Residents' cars (LIVING_CITY 3.4): 91 cars parked in their bays, driven by their owners on the day's plan, out
-  through the town gates and back for commuters. The driver is hidden while in the car. Cars are stand-in boxes in the
-  world palette until a car look test is approved (CITY-067). The player cannot walk through a car.
+- Traffic (LIVING_CITY 3.4): 198 residents' cars parked in their bays and driven by their owners on the day's plan
+  (commuters out through the town gates and back), 6 delivery vans on rounds from the depots, and cars passing through
+  between the gates, busiest at 08:00 and 17:00: 720 trips on day 16. The driver is hidden while in the car. Cars and
+  vans are stand-in boxes in the world palette until a car look test is approved (CITY-067). The player cannot walk
+  through a car.
+- Driving: E beside any parked car or van gets you in (it pulls out of its bay onto the road), W/S to drive and brake,
+  A/D to steer, Space for the handbrake, E to get out. Walls and other cars stop you. A car you have moved stays where
+  you left it and leaves its owner's day (a stand-in for owning a car, CITY-060 to CITY-063).
 - Talking to residents (CITY-007, F-NPC-TALK level 1): walk up to someone and press E. Conversations are
   data in `World/rules/dialogue.json`, picked by the resident's role and what they are doing (at the counter,
   at the clinic, in passing, an elder, a chat), with replies that branch, loop back and end. While talking,
@@ -170,7 +175,8 @@ rules and, since 0.2.0, the look and the movement set in the art documents (§5.
   samples, the same for everyone in a role; flags last only until the page is reloaded; no outcomes yet.
 - No rain or fog, no trams on the other stops' streets. No lay-bys: parked cars stand half on the pavement. People
   still walk in the road (no pavements and crossings yet, Q-24), so walkers and cars pass through each other. Cars do
-  not stop for the player (CITY-049), and the player cannot drive (CITY-060 onward).
+  not stop for the player (CITY-049) or for the player's car; driving is arcade-simple; there is no buying a car yet
+  (CITY-060 needs money).
 - The same day repeats at midnight.
 - No needs, money, jobs or saving.
 - From the art documents, not yet: bevelled edges, light shafts, speech and expressions, the state

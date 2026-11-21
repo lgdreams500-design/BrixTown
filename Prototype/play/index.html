@@ -69,7 +69,8 @@
 <div class="hud" id="prompt"></div>
 <div class="hud" id="dot"></div>
 <div class="hud" id="keys">
-  <span><kbd>W A S D</kbd>walk</span><span><kbd>Shift</kbd>run</span><span><kbd>Space</kbd>jump</span><span><kbd>V</kbd>first or third person</span><span><kbd>E</kbd>use, talk</span><br>
+  <span><kbd>W A S D</kbd>walk</span><span><kbd>Shift</kbd>run</span><span><kbd>Space</kbd>jump</span><span><kbd>V</kbd>first or third person</span><span><kbd>E</kbd>use, talk, get into a parked car</span><br>
+  <span>In a car: <kbd>W</kbd><kbd>S</kbd>drive and brake</span><span><kbd>A</kbd><kbd>D</kbd>steer</span><span><kbd>Space</kbd>handbrake</span><span><kbd>E</kbd>get out</span><br>
   <span><kbd>[</kbd><kbd>]</kbd>slow or speed the clock</span><span><kbd>T</kbd>skip an hour</span><span><kbd>M</kbd>map</span><span><kbd>Q</kbd>softer picture</span><span><kbd>L</kbd>earlier light</span><span><kbd>H</kbd>hide these</span>
 </div>
 <div id="bigmap"><canvas id="big" width="900" height="900"></canvas><div id="legend"></div></div>
@@ -115,7 +116,7 @@
     console.warn("conversations.js did not load: talking to residents is off.");
   }
   if (!window.Cars) {                                    // the same for cars.js: no cars, but drivers stay hidden while "in" them
-    window.Cars = { at() { return null; }, draw() { return 0; }, push() { }, count: 0 };
+    window.Cars = { at() { return null; }, draw() { return 0; }, push() { }, target() { return null; }, enter() { }, leave() { }, drive() { }, label() { return ""; }, driving() { return false; }, count: 0 };
     console.warn("cars.js did not load: residents' cars are not drawn.");
   }
 </script>

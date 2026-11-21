@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-LIVING-CITY
 title: Wasted — Living city (map, residents, things to use, vehicles, seasons and plants)
-version: 0.3.1
+version: 0.3.2
 status: draft
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -64,7 +64,7 @@ what is production-ready in the pinned engine version before PH1 work starts `[O
 ## 3. Requirements
 
 Status of all rows: `proposed`, except CITY-043 to CITY-049 and CITY-060 to CITY-067, which the owner
-accepted on 2026-11-22, and CITY-068, which follows from the owner's answer to Q-29 the same day. "Proven by" names the test in `Tools/citysim/test_citysim.py`, or for cars in `Tools/citysim/test_traffic.py`.
+accepted on 2026-11-22, and CITY-068 and CITY-069, which follow from the owner's answers the same day (Q-29; "both" for busier streets). "Proven by" names the test in `Tools/citysim/test_citysim.py`, or for cars in `Tools/citysim/test_traffic.py`.
 
 ### 3.1 Map, lots and buildings
 
@@ -107,7 +107,7 @@ accepted on 2026-11-22, and CITY-068, which follows from the owner's answer to Q
 
 | ID | Requirement | Feature | Lvl | Pri | Proven by |
 |---|---|---|---|---|---|
-| CITY-040 | Vehicles shall follow fixed routes on a timetable; their position shall be calculated from time, and they shall stop where their route says. | F-VEH-TRAFFIC | 1 | P1 | `test_vehicles_keep_to_their_routes` |
+| CITY-040 | Vehicles shall follow fixed routes on a timetable; their position shall be calculated from time, and they shall stop where their route says. | F-VEH-TRAFFIC | 1 | P1 | `test_vehicles_keep_to_their_routes`; in the city: delivery vans on rounds from the depots, `test_vans_make_their_rounds` |
 | CITY-041 | A tram line shall run on a timetable; residents who work elsewhere shall leave and return by tram; players shall be able to ride it. | F-VEH-TRANSIT | 1 | P1 | `test_at_work_mid_morning` |
 | CITY-042 | Players shall be able to own and ride a light vehicle. | F-VEH-DRIVE | 1 | P2 | |
 
@@ -127,6 +127,7 @@ has the reasoning.
 | CITY-048 | A resident car shall have a body only within the car load distance (120 m `[ASSUMPTION]`, wider than for people because cars are faster) of a player. On loading it is placed where CITY-045 says. Parked cars beyond that distance may show as simple scenery. | F-VEH-TRAFFIC | 2 | P0 | `test_cars_load_by_distance` |
 | CITY-049 | Near a car or person that a player controls, resident cars shall slow, wait or stop instead of colliding; once clear, each shall rejoin its calculated timeline without speeding up past the limit. A delayed car catches up only by skipping its next stop; one more than 10 minutes `[ASSUMPTION]` behind is unloaded and placed back on its timeline out of sight (Q-25). | F-VEH-TRAFFIC | 2 | P0 | |
 | CITY-068 | A car owner who works out of town shall drive out through a town gate instead of taking the tram, leaving early enough to be through the gate when the tram would have left; while away the car is off the map; it comes back through the same gate when the tram would have brought them back, and drives on to their next place (Q-29). Commuters without a car keep the tram (CITY-041). | F-VEH-TRAFFIC | 2 | P1 | `test_commuters_with_a_car_drive_out_and_back` |
+| CITY-069 | Cars from elsewhere shall pass through town from one gate to another, a number each hour set in data, routed and queued like residents' cars and off the map before and after. | F-VEH-TRAFFIC | 2 | P1 | `test_through_traffic_crosses_town` |
 
 #### Cars players drive
 
@@ -169,8 +170,10 @@ Numbers for cars, also `[ASSUMPTION]`, in `World/rules/traffic.json`:
 
 | Number | Value | Note |
 |---|---|---|
-| Households with a car | 30 % | CITY-044 |
-| Shortest trip driven | 250 m | Shorter trips are walked. Was 600 m: in the starting city nobody's trip is that long (§5) |
+| Households with a car | 60 % | CITY-044. Was 30 %; raised for busier streets (owner, 2026-11-22) |
+| Shortest trip driven | 0 m | Car owners drive every errand (owner, 2026-11-22). Was 600, then 250 m (§5.1) |
+| Vans | 6, from the two depots, 3 rounds of 4 shops from 07:30, 6 min at each stop, 20 at the depot | CITY-040 |
+| Cars passing through | 0 to 8 an hour, most at 08:00 and 17:00 | CITY-069 |
 | Speed limit | 30 km/h in the old quarters, 40 km/h on through streets | CITY-046 |
 | Bay within reach of every door | 150 m | CITY-043 |
 | Car load distance | 120 m | CITY-048 |
@@ -188,8 +191,10 @@ built.
 
 `traffic.py` works out a day of car trips once, in time order, on the lanes of `World/city_01/roads.json`, and
 then answers any car's position by lookup (`render_traffic.py` draws it). On day 16 with the rules as set,
-91 households have a car and 30 owners drive: 87 trips, 19 of them commuters out through a town gate and 19 back
-(CITY-068); at most 9 cars are on the road at once. With every household driving every trip: 326 cars, 950 trips,
+198 households have a car (60 %); with 6 vans and 81 cars passing through there are 720 trips: 441 errands, 54
+commuters out through a gate and back (CITY-068), 90 van legs, 81 through. Something is on the road in 822 of the 960
+minutes from 06:00 to 22:00 (198 before vans, through traffic and more cars); at most 29 at once. Through traffic keeps
+to Market and Baker Streets, so back streets stay quieter. With every household driving every trip: 326 cars, 950 trips,
 up to 42 on the road at once, no overlap, no crossing movements in a box, nobody through a red light.
 
 - **Finding: residents' lives are short-range.** The generator gives everyone the café, shop, garden and clinic
@@ -223,5 +228,6 @@ up to 42 on the road at once, no overlap, no crossing movements in a box, nobody
 | 0.1.0 | 2026-11-21 | First version, with the city-in-a-box prototype and its tests. |
 | 0.2.0 | 2026-11-22 | Cars and real traffic drafted after the owner's picks (`F-VEH-DRIVE` 2, `F-VEH-TRAFFIC` 2 from the first slice): CITY-043 to CITY-049 for streets and residents' cars, CITY-060 to CITY-067 for cars players drive, car numbers in §4, Q-25 to Q-28, ADR-0009. All proposed. |
 | 0.2.1 | 2026-11-22 | Owner accepted CITY-043 to CITY-049, CITY-060 to CITY-067 and ADR-0009, and the suggested answers to Q-25 to Q-28, now written into CITY-049, CITY-060, CITY-064 and CITY-066. |
+| 0.3.2 | 2026-11-22 | Owner found the streets empty and asked for both: delivery vans on rounds (CITY-040 in the city) and cars passing through (CITY-069, new), and residents driving more (60 % with a car, every errand driven). |
 | 0.3.1 | 2026-11-22 | Q-29 decided by the owner: car-owning commuters drive out through a town gate (CITY-068, `test_commuters_with_a_car_drive_out_and_back`). Four gates where Market and Baker meet the wall, in `roads.json`. Cars now keep the lower limit as soon as they cross into a slower stretch. |
 | 0.3.0 | 2026-11-22 | Cars proved in `Tools/citysim/traffic.py` with `test_traffic.py` (19 pass, 1 skipped) over the whole starting city; road data in `World/city_01/roads.json`, rules in `World/rules/traffic.json`. Shortest driven trip 600 → 250 m `[ASSUMPTION]` (§5.1). Q-29 added. |
