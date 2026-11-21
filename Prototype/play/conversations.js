@@ -1,13 +1,14 @@
 "use strict";
 // Talking to residents (CITY-007, F-NPC-TALK level 1). Conversations are data: World/rules/dialogue.json, packed into
-// city_data.js as D.dialogue by Tools/worldgen/build_play.py. Loaded after play.js and uses its globals (pl, cam, clock,
-// resident, target...); play.js calls in through the few hooks named in Talk below.
+// city_data.js as D.dialogue by Tools/worldgen/build_play.py. Loaded BEFORE play.js: play.js starts drawing as soon as it
+// has run, and a frame can come before a later script has downloaded. Nothing here touches play.js's globals (pl, cam,
+// clock, resident, target...) until play.js calls in through the few hooks named in Talk below.
 //
 // While a resident talks, their day is held: they stop where they are and turn to the player. When the talk ends their
 // routine carries on from that point, running late by the time spent talking, until they next stand still somewhere
 // (then they are back on the clock). Nothing is stored per frame: only who is late and by how much.
-const Talk = (() => {
-  const DL = D.dialogue, late = new Map(), flags = new Map();
+var Talk = (() => {                    // var: a property of window, so index.html can stand in for it if this file is blocked
+  const DL = window.WASTED.dialogue, late = new Map(), flags = new Map();
   const DAYS = { Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday", Fri: "Friday", Sat: "Saturday", Sun: "Sunday" };
   let cand = null, s = null;                             // the nearest resident to talk to this frame; the talk under way
   const el = id => document.getElementById(id);
@@ -106,4 +107,4 @@ const Talk = (() => {
     late: () => [...late],
   };
 })();
-window.wasted.talk = Talk;
+addEventListener("load", () => { if (window.wasted) window.wasted.talk = Talk; });   // play.js makes window.wasted after this file runs

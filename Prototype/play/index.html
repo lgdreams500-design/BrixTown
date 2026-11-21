@@ -95,9 +95,25 @@
 </div>
 <div id="fail"></div>
 
+<script>
+  // If the city cannot be drawn, say why on screen instead of leaving an empty page.
+  (function () {
+    const say = msg => { const f = document.getElementById("fail"); if (f.style.display === "flex") return; f.style.display = "flex"; f.textContent = msg; document.getElementById("start").style.display = "none"; };
+    addEventListener("error", e => say("The slice stopped while starting: " + (e.message || e) + (e.filename ? " (" + e.filename.split("/").pop() + " line " + e.lineno + ")" : "") + ". Press F5 to try again."));
+    document.getElementById("gl").addEventListener("webglcontextlost", () => say("The graphics card dropped the 3D picture (WebGL context lost), most likely out of graphics memory. Close other tabs and press F5, or open index.html?quality=0.5."));
+  })();
+</script>
 <script src="city_data.js"></script>
 <script src="people.js"></script>
+<script src="conversations.js"></script>
+<script>
+  // conversations.js comes before play.js: play.js starts drawing as soon as it has run, so everything it calls must be here first.
+  // If conversations.js was blocked or is missing, the town still runs; you just cannot talk to anyone.
+  if (!window.Talk) {
+    window.Talk = { on: false, where: (i, m) => resident(i, m), consider() { }, pick() { }, step() { }, key() { }, open() { }, close() { } };
+    console.warn("conversations.js did not load: talking to residents is off.");
+  }
+</script>
 <script src="play.js"></script>
-<script src="talk.js"></script>
 </body>
 </html>

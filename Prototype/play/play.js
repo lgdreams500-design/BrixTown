@@ -1201,7 +1201,7 @@ function frame(now) {
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5) * quality, W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
   if (cv.width !== W || cv.height !== H) { cv.width = ui.width = W; cv.height = ui.height = H; }
   clock.m = (clock.m + dt / D.pace * clock.rate) % 1440;
-  if (started && !Talk.on) { stepPlayer(dt); findTarget(); } else if (started) Talk.step(dt);   // talking (talk.js) holds the player still
+  if (started && !Talk.on) { stepPlayer(dt); findTarget(); } else if (started) Talk.step(dt);   // talking (conversations.js) holds the player still
   stepCamera(dt);
 
   // everyone's place right now; bodies only for those near the player

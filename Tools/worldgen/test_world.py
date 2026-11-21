@@ -108,7 +108,7 @@ class TheDialogue(unittest.TestCase):
         branching = [c for c in self.D["conversations"].values() if sum(len(n["options"]) > 1 for n in c["nodes"].values()) >= 2]
         self.assertGreaterEqual(len(branching), 3)
 
-    def pick(self, role, act, walking):           # the same matching play/talk.js does: the first rule that fits
+    def pick(self, role, act, walking):           # the same matching play/conversations.js does: the first rule that fits
         for x in self.D["rules"]:
             if x.get("roles") and role not in x["roles"] or x.get("acts") and act not in x["acts"] or "walking" in x and x["walking"] != walking:
                 continue

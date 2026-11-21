@@ -7,7 +7,7 @@ Nothing to install; it runs from these five files.
 |---|---|
 | `index.html` | The page and its HUD |
 | `play.js` | Builds the city from the data and runs the game |
-| `talk.js` | Talking to residents: the conversation panel, run from the dialogue data |
+| `conversations.js` | Talking to residents: the conversation panel, run from the dialogue data |
 | `people.js` | The people: option B bodies and faces, and the walk from the movement signatures |
 | `city_data.js` | The city and one day of everyone's routine, packed from `World/`. Generated: do not edit |
 
