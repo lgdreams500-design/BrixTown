@@ -1301,7 +1301,7 @@ void main(){
         vec2 a=texture2D(uAO,(vP.xz+n.xz-uAOm.x)*uAOm.y).rg; float vis=mix(a.r,1.,clamp((vP.y-.3)/max(a.g*85.,.6),0.,1.));   // how much sky this spot sees
         if(abs(n.y)<.5&&!(f>21.5&&f<22.5)) c*=.66+.34*smoothstep(.1,1.4,vP.y);   // grime at the foot of walls (not on cars)
         float ndl=max(dot(n,uSun),0.); light=uSunCol*(ndl>0.?ndl*shadow():0.);
-        if((f>13.5&&f<14.5)||(f>21.5&&f<22.5)){                          // people and cars keep their round forms in shade too float up=n.y*.5+.5, bw=dot(n,normalize(vec3(-uSun.x,-.45,-uSun.z)))*.5+.5;   // a person: sky from above, bounce from the sunlit side away from the sun, so shade still models the body
+        if((f>13.5&&f<14.5)||(f>21.5&&f<22.5)){ float up=n.y*.5+.5, bw=dot(n,normalize(vec3(-uSun.x,-.45,-uSun.z)))*.5+.5;   // a person or a car: sky from above, bounce from the sunlit side away from the sun, so shade still models the body
           light+=uSky*(.28+.82*up*up)*vis*vis+uGround*(1.-.5*vis)*(.38+1.25*bw*bw); }
         else light+=uSky*(n.y*.35+.65)*vis*vis+uGround*(1.-.5*vis);   // sun, sky seen, and light bounced off sunlit stone
         for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*.85+.15)); } }   // lanterns (W6)

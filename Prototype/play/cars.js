@@ -197,7 +197,7 @@ var Cars = (() => {
         const j = (t * 3 + v) * 3, a = P[j], w = P[j + 1], na = N[j], nw = N[j + 1];
         A[i] = c.x + hx * a - hz * w; A[i + 1] = y + P[j + 2]; A[i + 2] = c.z + hz * a + hx * w;
         A[i + 3] = hx * na - hz * nw; A[i + 4] = N[j + 2]; A[i + 5] = hz * na + hx * nw;
-        A[i + 6] = pc[0]; A[i + 7] = pc[1]; A[i + 8] = pc[2]; A[i + 9] = 9;
+        A[i + 6] = pc[0]; A[i + 7] = pc[1]; A[i + 8] = pc[2]; A[i + 9] = 22;   // 22: car paint and its light (play.js)
         i += 10;
       }
     }
