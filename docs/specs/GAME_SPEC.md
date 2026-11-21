@@ -1,7 +1,7 @@
 ---
 spec_id: WASTED-SPEC
 title: Wasted — Game Specification
-version: 0.4.4
+version: 0.4.5
 status: draft            # draft | reviewed | approved
 last_updated: 2026-11-22
 owner: project-owner
@@ -35,7 +35,7 @@ usable by both.
 **ID prefixes:** `CORE` game loop · `ART` art direction · `CHR` character · `ANIM` body motion · `NEED` needs · `CAR` careers · `PROP` property ·
 `CITY` world interaction and NPCs · `WLD` time, weather, vegetation · `ECO` economy · `BANK` banking ·
 `MP` multiplayer · `ACC` accounts · `UGC` creator platform · `UI` interface · `TECH` architecture ·
-`ASSET` asset pipeline · `TEST` test harness · `SEC` security and safety.
+`ASSET` asset pipeline · `TEST` test harness · `SEC` security and safety · `SND` sound.
 
 ### Companion documents
 | Document | Holds |
@@ -216,6 +216,30 @@ is in `docs/specs/domains/LIVING_CITY.md`.
 | WLD-005 | Vegetation shall grow in stages. Growth state shall be **calculated from elapsed time and conditions**, not ticked per plant per frame, and updated in periodic batches. | P1 | PH3 | proposed |
 | WLD-006 | Seasons shall change vegetation appearance and growth rates. | P2 | PH3 | proposed |
 | WLD-007 | Players shall plant and tend vegetation on property they own. | P2 | PH3 | proposed |
+
+### 4.8 Sound — `SND`
+
+Scope is set by three features the owner picked for the first slice on 2026-11-22 ("1, 1, 1 for slice"):
+`F-SND-WORLD` level 1, `F-SND-ACTION` level 1, `F-SND-MUSIC` level 1 (later milestones undecided). Tuning is data in
+`World/rules/sound.json`; the browser slice makes every sound in code from it (`Prototype/play/sound.js`), so there
+are no audio files to license. The requirements were drafted by an agent from that pick and are awaiting the owner's
+wording check; they are `in-progress` because the owner asked for the work.
+
+| ID | Requirement | Feature | Lvl | Pri | Phase | Status | Test |
+|---|---|---|---|---|---|---|---|
+| SND-001 | The street shall have a background sound that follows the time of day (busier by day, quieter at night), a room tone indoors, birds by day (more near gardens), crickets at night and running water by fountains. | F-SND-WORLD | 0 | P1 | PH1 | in-progress | `test_SND_008_sound_rules_are_sound` |
+| SND-002 | Each nearby resident car on a trip shall make an engine sound from where it is, its pitch following its speed; vans sound lower. Parked cars are silent. | F-SND-WORLD | 1 | P1 | PH1 | in-progress | |
+| SND-003 | The player and nearby walking residents shall make footsteps in time with their walk, sounding of stone outside, wood on floors and grass in gardens; a hard landing thuds. | F-SND-WORLD | 1 | P1 | PH1 | in-progress | `test_SND_008_sound_rules_are_sound` |
+| SND-004 | The tram shall hum and rumble with its speed and ring its bell when it stops and when it leaves. | F-SND-WORLD | 1 | P1 | PH1 | in-progress | |
+| SND-005 | A resident's line shall be voiced as wordless syllables, one for each mouth shape of the lip sync (CHR-009) and at the same moment, in a pitch that is the same for that resident every time, rising before a question. No words (Q-14: text first). | F-SND-WORLD | 1 | P1 | PH1 | in-progress | `test_SND_005_every_vowel_the_mouth_shows_has_a_voice` |
+| SND-006 | Residents standing together at leisure or work shall murmur to each other; only the nearest groups are heard (4 `[ASSUMPTION]`). | F-SND-WORLD | 1 | P1 | PH1 | in-progress | |
+| SND-007 | Every sound in the world shall come from where its source is: louder near, panned left or right by direction, gone past its distance. Outdoor sounds shall be muffled while the listener is inside a building. | F-SND-WORLD | 1 | P1 | PH1 | in-progress | `test_SND_007_outside_is_muffled_indoors` |
+| SND-008 | Every sound's tuning (loudness, distance, pitch, times of day, music styles) shall be data, checked before use. | F-SND-WORLD | 0 | P1 | PH1 | in-progress | `test_SND_008_sound_rules_are_sound`, `test_SND_008_broken_sound_rules_are_caught` |
+| SND-009 | Actions shall have sounds: the interface (a prompt appearing, opening, answering and leaving a conversation, the map, the clock), every interaction (sit, lie down, get up, ride a lift, jump) and the player's car (door, engine start, engine with speed, horn, skid, bump). | F-SND-ACTION | 1 | P1 | PH1 | in-progress | `test_SND_009_every_action_has_a_sound` |
+| SND-010 | A soft score shall play that changes with the time of day (morning, afternoon, evening, night); it shall fade under a conversation and under any nearer music. | F-SND-MUSIC | 0 | P1 | PH1 | in-progress | `test_SND_010_the_score_changes_through_the_day` |
+| SND-011 | Open cafés and shops shall play their own music, heard muffled from the street and clear inside; a busker shall play in the market on market days. Opening hours for music are data until lots carry hours `[ASSUMPTION]`. | F-SND-MUSIC | 1 | P1 | PH1 | in-progress | `test_SND_011_cafes_shops_and_the_market_play_music` |
+| SND-012 | A car shall have a radio with at least three stations, switched while driving. | F-SND-MUSIC | 1 | P1 | PH1 | in-progress | `test_SND_012_the_radio_has_three_stations` |
+| SND-013 | The player shall be able to turn all sound off and on with one key, remembered between visits. | F-SND-ACTION | 0 | P1 | PH1 | in-progress | |
 
 ---
 
@@ -420,3 +444,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.4.2 | 2026-11-22 | Feature picker removed: the owner states picks in chat and agents record them, checked by `Tools/backlog.ps1` (ADR-0008). Q-08 decided: drivable cars and real traffic from the first slice. PH1 is now one district, not one block. CITY-005 updated to match. Car and traffic requirements drafted in LIVING_CITY 0.2.0 (CITY-043 to CITY-049, CITY-060 to CITY-067), accepted by the owner with ADR-0009 and Q-25 to Q-28; CITY-005 accepted. |
 | 0.4.3 | 2026-11-22 | CITY-007 (dialogue with NPCs) accepted by the owner and moved to PH1, matching the owner's pick of F-NPC-TALK level 1 for the first slice. The browser slice has sample conversations (`World/rules/dialogue.json`, WORLD_MAP 0.5.3); outcomes that change game state are still to come. |
 | 0.4.4 | 2026-11-22 | Owner picked `F-NPC-SPEECH` level 2 (lip sync) for the first slice: CHR-008, CHR-009 and ANIM-006 move to PH1, and Q-14 is decided as text first. The slice's faces take the CHR-007 control set for this; the designer part of CHR-007 stays in PH3. |
+| 0.4.5 | 2026-11-22 | Sound (§4.8, SND-001 to SND-013) from the owner's pick of `F-SND-WORLD`, `F-SND-ACTION` and `F-SND-MUSIC` at level 1 for the first slice. Built in the browser slice from `World/rules/sound.json`. |

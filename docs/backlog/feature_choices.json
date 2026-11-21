@@ -60,6 +60,18 @@
     "F-NPC-SPEECH": {
       "slice": 2,
       "note": "Owner, 2026-11-22: \"Yes, level 2 now\" (lip sync timed from the line's text, in the first slice). Later milestones not stated."
+    },
+    "F-SND-WORLD": {
+      "slice": 1,
+      "note": "Owner, 2026-11-22: \"1, 1, 1 for slice\" (city sounds, interaction sounds and music in the world, in the first slice). Later milestones not stated."
+    },
+    "F-SND-ACTION": {
+      "slice": 1,
+      "note": "Owner, 2026-11-22: \"1, 1, 1 for slice\" (city sounds, interaction sounds and music in the world, in the first slice). Later milestones not stated."
+    },
+    "F-SND-MUSIC": {
+      "slice": 1,
+      "note": "Owner, 2026-11-22: \"1, 1, 1 for slice\" (city sounds, interaction sounds and music in the world, in the first slice). Later milestones not stated."
     }
   }
 }

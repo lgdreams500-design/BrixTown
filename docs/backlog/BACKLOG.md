@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 10 of 28 | 9 of 28 | 9 of 28 |
-| Size of the plan (points) | 146 | 218 | 448 |
-| Size of the suggested plan | 68 | 178 | 416 |
+| Decided | 13 of 31 | 9 of 31 | 9 of 31 |
+| Size of the plan (points) | 158 | 230 | 479 |
+| Size of the suggested plan | 77 | 190 | 447 |
 
 ## City and buildings
 
@@ -61,6 +61,14 @@
 | **Plant and tree growth** `F-VEG-GROW` | undecided | undecided | undecided |  |
 | **Spring, autumn and leaf fall** `F-VEG-LEAF` | undecided | undecided | undecided |  |
 | **Trees falling and being replanted** `F-VEG-LIFE` | undecided | undecided | undecided |  |
+
+## Sound and music
+
+| Feature | First slice | Life depth | Full game | Note |
+|---|---|---|---|---|
+| **Sounds of the city** `F-SND-WORLD` | 1 Things make sound | undecided | undecided | Owner, 2026-11-22: "1, 1, 1 for slice" (city sounds, interaction sounds and music in the world, in the first slice). Later milestones not stated. |
+| **Interaction sounds** `F-SND-ACTION` | 1 Every action | undecided | undecided | Owner, 2026-11-22: "1, 1, 1 for slice" (city sounds, interaction sounds and music in the world, in the first slice). Later milestones not stated. |
+| **Music** `F-SND-MUSIC` | 1 Music in the world ★ | undecided | undecided | Owner, 2026-11-22: "1, 1, 1 for slice" (city sounds, interaction sounds and music in the world, in the first slice). Later milestones not stated. |
 
 ## What each level means
 
@@ -203,3 +211,18 @@
 - 0 Trees are forever: Nothing ever happens to a tree. Size -.
 - 1 Fall and replant: Trees reach the end of their life, are cleared and replanted by the town. Size S.
 - 2 Storm damage: Storms bring trees down across paths; clearing them is a job. Size L.
+
+**Sounds of the city** (`F-SND-WORLD`). What you hear around you: engines, the tram, voices, birds, doors.
+- 0 Ambience bed: One looping street ambience that changes with time of day and indoors or outdoors. Size S.
+- 1 Things make sound: Each nearby car, tram, resident and door makes its own sound from where it is: engine pitch follows speed, the tram hums and rings its bell at stops, residents murmur when they talk (no words, Q-14), footsteps, birds by day. Size M.
+- 2 Full mix: Sounds follow the world: rain and wind with the weather, echo indoors and in streets, a mix that stays clear in crowds, and each kind of building with its own room sound. Size L.
+
+**Interaction sounds** (`F-SND-ACTION`). Feedback when you do something: open a door, sit, use an object, drive.
+- 0 Menu clicks: Sounds for the interface only: prompts, choices, money in and out. Size S.
+- 1 Every action: Every interaction point and the player car have their own sound: doors, chairs, taps, the car door, engine start, horn, skids. Size M.
+- 2 Made by creators: Creators can attach their own sounds to items they make, checked like other user content. Size M.
+
+**Music** (`F-SND-MUSIC`). Mood, and music as something people play and listen to.
+- 0 Background score: A soft score that changes with time of day; mutes in conversations. Size S.
+- 1 Music in the world: Music comes from places: car radio with a few stations, shop and café music, a busker; the score fades when a source is near. Size M.
+- 2 Players make music: Instruments and speakers players own and play for others, heard by everyone nearby. Size L.

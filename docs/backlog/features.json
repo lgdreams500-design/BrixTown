@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-11-21",
+  "updated": "2026-11-22",
   "note": "The feature backlog. Maintained by the team and AI agents. The owner's picks live in feature_choices.json, never here.",
   "milestones": [
     {
@@ -52,6 +52,10 @@
     {
       "id": "nature",
       "name": "Nature and time"
+    },
+    {
+      "id": "sound",
+      "name": "Sound and music"
     }
   ],
   "pillars": {
@@ -1221,6 +1225,141 @@
           "effort": "L",
           "needs": {
             "F-WEATHER": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-SND-WORLD",
+      "area": "sound",
+      "title": "Sounds of the city",
+      "why": "What you hear around you: engines, the tram, voices, birds, doors.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "SND-001",
+        "SND-002",
+        "SND-003",
+        "SND-004",
+        "SND-005",
+        "SND-006",
+        "SND-007",
+        "SND-008"
+      ],
+      "levels": [
+        {
+          "name": "Ambience bed",
+          "what": "One looping street ambience that changes with time of day and indoors or outdoors.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Things make sound",
+          "what": "Each nearby car, tram, resident and door makes its own sound from where it is: engine pitch follows speed, the tram hums and rings its bell at stops, residents murmur when they talk (no words, Q-14), footsteps, birds by day.",
+          "effort": "M",
+          "needs": {
+            "F-VEH-TRAFFIC": 1
+          }
+        },
+        {
+          "name": "Full mix",
+          "what": "Sounds follow the world: rain and wind with the weather, echo indoors and in streets, a mix that stays clear in crowds, and each kind of building with its own room sound.",
+          "effort": "L",
+          "needs": {
+            "F-WEATHER": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-SND-ACTION",
+      "area": "sound",
+      "title": "Interaction sounds",
+      "why": "Feedback when you do something: open a door, sit, use an object, drive.",
+      "pillars": [
+        1,
+        2
+      ],
+      "spec": [
+        "SND-009",
+        "SND-013"
+      ],
+      "levels": [
+        {
+          "name": "Menu clicks",
+          "what": "Sounds for the interface only: prompts, choices, money in and out.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Every action",
+          "what": "Every interaction point and the player car have their own sound: doors, chairs, taps, the car door, engine start, horn, skids.",
+          "effort": "M",
+          "needs": {
+            "F-OBJ-POINTS": 1
+          }
+        },
+        {
+          "name": "Made by creators",
+          "what": "Creators can attach their own sounds to items they make, checked like other user content.",
+          "effort": "M",
+          "needs": {
+            "F-SND-WORLD": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-SND-MUSIC",
+      "area": "sound",
+      "title": "Music",
+      "why": "Mood, and music as something people play and listen to.",
+      "pillars": [
+        1,
+        2
+      ],
+      "spec": [
+        "SND-010",
+        "SND-011",
+        "SND-012"
+      ],
+      "levels": [
+        {
+          "name": "Background score",
+          "what": "A soft score that changes with time of day; mutes in conversations.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Music in the world",
+          "what": "Music comes from places: car radio with a few stations, shop and café music, a busker; the score fades when a source is near.",
+          "effort": "M",
+          "needs": {
+            "F-SND-WORLD": 1
+          }
+        },
+        {
+          "name": "Players make music",
+          "what": "Instruments and speakers players own and play for others, heard by everyone nearby.",
+          "effort": "L",
+          "needs": {
+            "F-SND-WORLD": 2
           }
         }
       ],

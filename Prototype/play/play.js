@@ -1413,7 +1413,7 @@ function blocked(q) { if (q[1] < groundBase(q[0], q[2]) + .15) return true; let 
 function stepPlayer(dt) {
   if (pl.pose === 4) return Cars.drive(dt, keys, pl, cam, clock.m);   // driving (cars.js)
   const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0), s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
-  if (pl.pose > 1) { if (f || s || keys.Space) { pl.pose = 0; pl.y = floorAt(pl.x, pl.z, pl.y); if (pl.seat) { pl.x = pl.seat.ox; pl.z = pl.seat.oz; } pl.seat = null; } else return; }
+  if (pl.pose > 1) { if (f || s || keys.Space) { Sound.act("stand"); pl.pose = 0; pl.y = floorAt(pl.x, pl.z, pl.y); if (pl.seat) { pl.x = pl.seat.ox; pl.z = pl.seat.oz; } pl.seat = null; } else return; }
   const run = keys.ShiftLeft || keys.ShiftRight, sp = run ? 4.2 : 1.6, sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
   let vx = sy * f + cy * s, vz = -cy * f + sy * s; const l = Math.hypot(vx, vz);
   pl.moving = l > 0;
@@ -1428,7 +1428,7 @@ function stepPlayer(dt) {
   for (const [x, stopped] of tramAt(clock.m)) if (Math.abs(pl.x - x) < 6.4 && Math.abs(pl.z - TRAM_Z) < 1.6 && pl.y < 3) pl.z = TRAM_Z + (pl.z < TRAM_Z ? -1.6 : 1.6);
   Cars.push(pl, clock.m);                                  // nor through a car (cars.js)
   const g = floorAt(pl.x, pl.z, pl.y);
-  if (keys.Space && pl.onGround) { pl.vy = 4.8; pl.onGround = false; }
+  if (keys.Space && pl.onGround) { pl.vy = 4.8; pl.onGround = false; Sound.act("jump"); }
   if (!pl.onGround || pl.y > g + .01) {
     pl.vy -= 14 * dt; pl.y += pl.vy * dt;
     const c = ceilAt(pl.x, pl.z, pl.y - pl.vy * dt); if (pl.vy > 0 && pl.y + TALL > c) { pl.y = c - TALL; pl.vy = 0; }
@@ -1436,15 +1436,15 @@ function stepPlayer(dt) {
   } else { pl.y = mix(pl.y, g, Math.min(1, dt * 18)); pl.onGround = true; }
 }
 function interact() {
-  if (pl.pose === 4) return Cars.leave(pl, cam);          // out of the car (cars.js)
+  if (pl.pose === 4) { Sound.car("out"); return Cars.leave(pl, cam); }   // out of the car (cars.js)
   if (pl.pose > 1) { keys.Space = true; stepPlayer(0); keys.Space = false; return; }
   if (!target || Talk.on) return;
   if (target.type === "talk") return Talk.open(target);
-  if (target.type === "car") return Cars.enter(target, pl, cam, clock.m);   // into a parked car (cars.js)
+  if (target.type === "car") { Sound.car("in"); return Cars.enter(target, pl, cam, clock.m); }   // into a parked car (cars.js)
   if (target.type === "lift") {
-    const fd = document.getElementById("fade"); fd.style.opacity = 1;
+    const fd = document.getElementById("fade"); fd.style.opacity = 1; Sound.act("lift");
     setTimeout(() => { pl.x = target.to[0]; pl.y = target.to[1]; pl.z = target.to[2]; pl.vy = 0; fd.style.opacity = 0; }, 240);
-  } else { pl.seat = { ox: pl.x, oz: pl.z }; pl.x = target.x; pl.z = target.z; pl.y = target.y; pl.yaw = target.yaw; pl.pose = target.type === "lie" ? 3 : 2; pl.vy = 0; if (cam.fp) cam.yaw = target.yaw; }
+  } else { pl.seat = { ox: pl.x, oz: pl.z }; pl.x = target.x; pl.z = target.z; pl.y = target.y; pl.yaw = target.yaw; pl.pose = target.type === "lie" ? 3 : 2; pl.vy = 0; Sound.act(target.type === "lie" ? "lie" : "sit"); if (cam.fp) cam.yaw = target.yaw; }
 }
 function findTarget() {
   target = null; let best = 1.7;
@@ -1547,7 +1547,7 @@ $("lede").textContent = D.city.name + ", a " + D.day.season.toLowerCase() + " " 
   D.blocks.length + " blocks, " + LOTS.filter(l => !isOpen(l) && l.enterable).length + " buildings you can walk into and " + D.residents.length + " residents going about their day.";
 $("legend").innerHTML = Object.keys(KIND_WORD).map(k => `<div><i style="background:${KIND_CSS[k]}"></i>${KIND_WORD[k]}</div>`).join("") + `<div><i style="background:#17171c;width:5px;height:5px"></i>Residents</div><div><i style="background:#f0a35a;border-radius:50%"></i>You</div>`;
 
-function begin() { started = true; $("start").style.display = "none"; $("keys").style.display = "block"; if (cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } }
+function begin() { Sound.start(); started = true; $("start").style.display = "none"; $("keys").style.display = "block"; if (cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } }
 $("go").addEventListener("click", begin);
 cv.addEventListener("click", () => { if (started && !locked && !Talk.on && cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } });
 document.addEventListener("pointerlockchange", () => { locked = document.pointerLockElement === cv; });
@@ -1562,14 +1562,19 @@ addEventListener("keydown", e => {
   if (e.repeat) return; keys[e.code] = true;
   if (e.code === "KeyV") cam.fp = !cam.fp;
   else if (e.code === "KeyE") interact();
-  else if (e.code === "KeyM") { showMap = !showMap; $("bigmap").style.display = showMap ? "flex" : "none"; }
+  else if (e.code === "KeyN") Sound.toggle();
+  else if (e.code === "KeyF" && pl.pose === 4) Sound.horn(true);
+  else if (e.code === "KeyR" && pl.pose === 4) Sound.radio();
+  else if (e.code === "KeyM") { Sound.act("map"); showMap = !showMap; $("bigmap").style.display = showMap ? "flex" : "none"; }
   else if (e.code === "KeyH") $("keys").style.display = $("keys").style.display === "none" ? "block" : "none";
-  else if (e.code === "BracketRight") clock.rate = RATES[Math.min(RATES.length - 1, RATES.indexOf(clock.rate) + 1)];
+  else if (e.code.startsWith("Bracket")) Sound.act("clock");
+  if (e.code === "BracketRight") clock.rate = RATES[Math.min(RATES.length - 1, RATES.indexOf(clock.rate) + 1)];
   else if (e.code === "BracketLeft") clock.rate = RATES[Math.max(0, RATES.indexOf(clock.rate) - 1)];
-  else if (e.code === "KeyT") clock.m = (clock.m + 60) % 1440;
+  else if (e.code === "KeyT") { clock.m = (clock.m + 60) % 1440; Sound.act("hour"); }
   else if (e.code === "KeyQ") quality = quality > .75 ? .5 : 1;
 });
-addEventListener("keyup", e => { keys[e.code] = false; });
+addEventListener("keyup", e => { keys[e.code] = false; if (e.code === "KeyF") Sound.horn(false); });
+addEventListener("pointerdown", () => Sound.start());
 addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
 
 // Rooms are furnished only near the camera: built when a building comes within 40 m (two a frame at most), dropped past 70 m.
@@ -1578,7 +1583,11 @@ function nearRooms(eye) {
   let built = 0;
   for (const l of LOTS) {
     if (!l.furn) continue;
+let lastTarget = null;
     const [a0, b0, a1, b1] = l.rect, dd = Math.hypot((a0 + a1) / 2 - eye[0], (b0 + b1) / 2 - eye[2]) - Math.hypot(a1 - a0, b1 - b0) / 2, have = ROOMS.get(l);
+  findTarget0(); if (target && target !== lastTarget && (!lastTarget || target.type !== lastTarget.type || target.x !== lastTarget.x)) Sound.act("prompt"); lastTarget = target;
+}
+function findTarget0() {
     if (!have && dd < 40 && built < 2) {
       const m = new Mesh(1 << 15); furnish(l, l.furn[0], l.furn[1], l.furn[2], m); built++;
       ROOMS.set(l, m.n ? { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, box: boxOf(m.a, 0, m.n) } : { n: 0 });
@@ -1598,7 +1607,7 @@ function frame(now) {
   stepCamera(dt);
 
   // everyone's place right now; bodies only for those near the player
-  dyn.reset(); people = []; bodies = 0; const tags = [], near = started ? [pl.x, pl.z] : [cam.eye[0] + cam.dir[0] * 60, cam.eye[2] + cam.dir[2] * 60], reach = started ? 85 : 130;
+  dyn.reset(); people = []; bodies = 0; const heard = [], tags = [], near = started ? [pl.x, pl.z] : [cam.eye[0] + cam.dir[0] * 60, cam.eye[2] + cam.dir[2] * 60], reach = started ? 85 : 130;
   for (let i = 0; i < D.plan.length; i++) {
     const r = Talk.where(i, clock.m); if (!r) continue;
     people.push([r.x, r.z]);
@@ -1689,4 +1698,17 @@ const LIGHTS = { reference: { sun: 1, sky: 1, bounce: 1, lanterns: 1, haze: 1, e
 let lightName = q.get("light") === "reference" ? "reference" : "kit";
 addEventListener("keydown", e => { if (e.code === "KeyL" && started && !e.repeat) { lightName = lightName === "kit" ? "reference" : "kit"; Object.assign(window.wasted.dials, LIGHTS[lightName]); } });
 window.wasted = { dials: Object.assign({}, LIGHTS[lightName]), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
+  Sound.start();                                         // browsers allow sound only after a key or a click
 requestAnimationFrame(frame);
+    if (d < 20) heard.push({ i, x: r.x, z: r.z, act: D.acts[r.act], walking: r.walking, pose: r.pose, ph: r.ph, inside: r.inside });
+  if (started) {                                          // what the listener hears (sound.js): where they are and what is near
+    const lot = pl.y < 6 ? lotAt(pl.x, pl.z) : null, drv = pl.pose === 4;
+    Sound.frame({ m: clock.m, dt, x: pl.x, y: pl.y, z: pl.z, yaw: cam.yaw, lot, talk: Talk.on, residents: heard, trams: tramAt(clock.m), tramZ: TRAM_Z,
+      cars: Cars.near ? Cars.near(clock.m, pl.x, pl.z, 75) : [],
+      walk: drv ? null : { moving: pl.moving && pl.pose < 2, ph: pl.ph, run: pl.run, onGround: pl.onGround, vy: pl.vy, surface: lot ? "wood" : (lotAt(pl.x, pl.z, true) || {}).kind === "garden" ? "grass" : "stone" },
+      drive: drv ? { v: Cars.speed ? Cars.speed() : 0, gas: !!(keys.KeyW || keys.ArrowUp), brake: !!(keys.Space || ((keys.KeyS || keys.ArrowDown) && (Cars.speed ? Cars.speed() : 0) > 0)) } : null });
+  }
+// sound (sound.js): which lots play music, where the fountains and gardens are
+Sound.init(LOTS, D.blocks.flatMap(b => b.props.filter(p => p.kind === "fountain").map(p => p.pos)),
+  LOTS.filter(l => l.kind === "garden").map(l => [(l.rect[0] + l.rect[2]) / 2, (l.rect[1] + l.rect[3]) / 2]));
+window.wasted.sound = Sound;

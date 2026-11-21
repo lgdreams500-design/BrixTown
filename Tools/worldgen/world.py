@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -87,7 +87,7 @@ def validate(w):
     if w.get("roads") and not out:
         import traffic
         out += traffic.Roads(w["roads"], w["traffic"]).problems(lots(w))
-    out += dialogue_problems(w) + speech_problems(w)
+    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w)
     kinds = {l["kind"] for l in lots(w)}
     for need in ("home", "shop", "food", "work", "health", "garden", "market", "stop", "utility"):
         if need not in kinds:
@@ -167,6 +167,93 @@ def dialogue_problems(w, acts=None):
                     ends.add(nid)
                     grew = True
         out += ["%s.%s: the talk can never end from here" % (where, nid) for nid in nodes if nid not in ends]
+    return out
+
+
+SOUND_ACTIONS = ("prompt", "sit", "lie", "stand", "lift", "jump", "talk_open", "talk_choose", "talk_close", "car_door", "map", "clock", "hour", "radio")
+SOUND_KINDS = ("tick", "thud", "rustle", "chime")
+
+
+def sound_problems(w, acts=None):
+    """Every rule World/rules/sound.json must keep (SND-001 to SND-013). acts: the activity names residents can have."""
+    import re
+    s, out = w["sound"], []
+
+    def hhmm(t, where):
+        if not (isinstance(t, str) and re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", t)):
+            out.append("sound: %s is not a time (HH:MM): %r" % (where, t))
+
+    def gains(x, path):                                 # every gain is a number from 0 to 1
+        if isinstance(x, dict):
+            for k, v in x.items():
+                if (k == "gain" or k.endswith("_gain")) and not (isinstance(v, (int, float)) and 0 <= v <= 1):
+                    out.append("sound: %s%s should be from 0 to 1, not %r" % (path, k, v))
+                gains(v, path + k + ".")
+        elif isinstance(x, list):
+            for v in x:
+                gains(v, path)
+    gains(s, "")
+    for k in ("master", "world", "voice", "action", "music"):
+        if not 0 <= s["mix"].get(k, -1) <= 1:
+            out.append("sound: mix.%s missing or not from 0 to 1" % k)
+    a = s["ambience"]
+    for part in ("birds", "crickets"):
+        hhmm(a[part]["from"], part + ".from")
+        hhmm(a[part]["to"], part + ".to")
+    for name in ("stone", "wood", "grass"):
+        if name not in s["footsteps"]["surfaces"]:
+            out.append("sound: no footstep sound for %s" % name)
+    for name in SOUND_ACTIONS:
+        r = s["actions"].get(name)
+        if not r:
+            out.append("sound: no sound for the action %s" % name)
+        elif r["kind"] not in SOUND_KINDS:
+            out.append("sound: action %s has an unknown kind %s" % (name, r["kind"]))
+    shapes = w["speech"]["shapes"]
+    for sh in s["voices"]["shapes"]:
+        if sh not in shapes:
+            out.append("sound: voice for unknown mouth shape %s" % sh)
+    for sh in ("AA", "EH", "EE", "OH", "OO"):               # every open vowel the lip sync shows has a voice
+        if sh not in s["voices"]["shapes"]:
+            out.append("sound: mouth shape %s has no voice" % sh)
+    for act in s["voices"]["murmur"]["acts"]:
+        if acts is not None and act not in acts:
+            out.append("sound: murmur for unknown activity %s" % act)
+    m = s["music"]
+
+    def style(st, where):
+        if st["scale"] not in m["scales"]:
+            out.append("sound: %s uses unknown scale %s" % (where, st["scale"]))
+        if st["voice"] not in m["voices"]:
+            out.append("sound: %s uses unknown voice %s" % (where, st["voice"]))
+        if st.get("drums") is not None and st["drums"] not in m["drums"]:
+            out.append("sound: %s uses unknown drums %s" % (where, st["drums"]))
+        if not st["chords"] or any(c not in range(1, 8) for c in st["chords"]):
+            out.append("sound: %s has chords outside 1 to 7" % where)
+        if not 40 <= st["bpm"] <= 200:
+            out.append("sound: %s tempo %s is out of range" % (where, st["bpm"]))
+    for k, sc in m["scales"].items():
+        if len(sc) != 7 or sc[0] != 0 or sorted(sc) != sc:
+            out.append("sound: scale %s should be seven rising steps from 0" % k)
+    moods = m["score"]["moods"]
+    for md in moods:
+        hhmm(md["from"], "score mood " + md["name"])
+        style(md, "score mood " + md["name"])
+    if [md["from"] for md in moods] != sorted(md["from"] for md in moods):
+        out.append("sound: score moods are not in order of the day")
+    for k, st in m["styles"].items():
+        style(st, "style " + k)
+    kinds = {l["kind"] for l in lots(w)}
+    for kind, p in m["places"].items():
+        if kind not in kinds:
+            out.append("sound: music for a kind of place the city does not have: %s" % kind)
+        if p["style"] not in m["styles"]:
+            out.append("sound: %s plays unknown style %s" % (kind, p["style"]))
+        hhmm(p["from"], kind + ".from")
+        hhmm(p["to"], kind + ".to")
+    for st in m["radio"]:
+        if st not in m["styles"]:
+            out.append("sound: radio station %s has no style" % st)
     return out
 
 

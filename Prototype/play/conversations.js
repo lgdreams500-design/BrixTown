@@ -97,6 +97,7 @@ var Talk = (() => {                    // var: a property of window, so index.ht
     s.node = nid; s.opts = node.options.filter(o => has(f, o.if || []));
     const line = fill(node.say); el("talk-say").textContent = line; el("talk").dataset.mood = node.mood;
     s.mood = node.mood; s.line = speak(line); s.t0 = now();          // the resident says the line: mouth, face and nods follow it
+    if (window.Sound) Sound.line(s.line, s.i, s.r.x, s.r.z);          // and their voice: a syllable for each mouth shape (sound.js, SND-005)
     const ol = el("talk-opts"); ol.textContent = "";
     s.opts.forEach((o, n) => {
       const b = document.createElement("button"); b.type = "button";
@@ -108,6 +109,7 @@ var Talk = (() => {                    // var: a property of window, so index.ht
   function choose(n) {
     const o = s && s.opts[n]; if (!o) return;
     const f = flags.get(s.i); for (const x of o.do || []) f.add(x);
+    if (window.Sound) Sound.act("talk_choose");
     show(o.next);
   }
   function open(t) {
@@ -123,7 +125,7 @@ var Talk = (() => {                    // var: a property of window, so index.ht
     const res = D.residents[t.i];
     el("talk-name").textContent = res.n; el("talk-role").textContent = DL.role_words[D.roles[res.r]];
     el("talk").style.display = "block"; el("keys").dataset.was = el("keys").style.display; el("keys").style.display = "none";
-    target = null; show(conv.start);
+    target = null; if (window.Sound) Sound.act("talk_open"); show(conv.start);
   }
   function close() {
     if (!s) return;
@@ -131,6 +133,7 @@ var Talk = (() => {                    // var: a property of window, so index.ht
     if (spent > 0 && dl < 180) late.set(s.i, dl); else late.delete(s.i);   // held more than three hours: they just pick up the day where it is
     el("talk").style.display = "none"; el("keys").style.display = el("keys").dataset.was || "block";
     if (!cam.fp) cam.dist = s.dist;
+    if (window.Sound) { Sound.hush(); Sound.act("talk_close"); }
     s = null;
   }
   function step(dt) {                                    // each frame while talking: the face follows the line; a standing resident turns to the player

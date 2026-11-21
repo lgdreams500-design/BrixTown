@@ -1,0 +1,90 @@
+{
+ "note": "How the city sounds (SND-001 to SND-012; F-SND-WORLD, F-SND-ACTION and F-SND-MUSIC level 1). Every sound is made in code from these recipes, so there are no audio files to license. Gains are 0..1 before the mix, distances in metres, frequencies in Hz, times in seconds, hours as HH:MM. All values are [ASSUMPTION] until the owner has listened. Checked by Tools/worldgen/test_world.py.",
+ "mix": { "master": 0.8, "world": 0.85, "voice": 0.7, "action": 0.6, "music": 0.4 },
+ "hearing": { "near": 2.5, "rolloff": 0.9, "far": 70, "pan": 0.8 },
+ "indoors": { "muffle_hz": 650, "muffle_gain": 0.4 },
+
+ "ambience": {
+  "street":   { "day_gain": 0.10, "night_gain": 0.04, "day_hz": 1100, "night_hz": 500 },
+  "room":     { "gain": 0.035, "hz": 300 },
+  "birds":    { "from": "05:30", "to": "20:30", "per_minute": 18, "garden_per_minute": 40, "garden_m": 35, "gain": 0.09, "hz": [2400, 4800] },
+  "crickets": { "from": "21:00", "to": "05:00", "gain": 0.022, "hz": 4300 },
+  "fountain": { "gain": 0.16, "far": 22, "hz": 1800 }
+ },
+
+ "footsteps": {
+  "player_gain": 0.16, "resident_gain": 0.09, "far": 9, "max": 6,
+  "surfaces": {
+   "stone": { "hz": 1500, "q": 1.2, "len": 0.045 },
+   "wood":  { "hz": 520,  "q": 1.6, "len": 0.07 },
+   "grass": { "hz": 3200, "q": 0.6, "len": 0.06 }
+  },
+  "land_gain": 0.3
+ },
+
+ "vehicles": {
+  "engine": { "idle_hz": 30, "hz_per_mps": 3.6, "max_hz": 95, "gain": 0.16, "far": 70, "voices": 6, "van_pitch": 0.8, "tone_hz": 600, "tyres_gain": 0.05 },
+  "player": { "gain": 0.2, "start_len": 0.8, "door_gain": 0.35, "horn_hz": [370, 466], "horn_gain": 0.22, "skid_mps": 5, "skid_gain": 0.18, "bump_gain": 0.4 },
+  "tram": { "hum_hz": 48, "whine_hz": 380, "gain": 0.3, "far": 140, "bell_hz": [1175, 1480], "bell_gain": 0.35, "bell_far": 160 }
+ },
+
+ "voices": {
+  "pitch": { "min": 140, "max": 300 },
+  "shapes": {
+   "AA": [800, 1250], "EH": [560, 1750], "EE": [320, 2300], "OH": [520, 900], "OO": [360, 780],
+   "FV": [450, 1500], "MBP": [260, 900]
+  },
+  "line_gain": 0.18,
+  "murmur": { "gain": 0.07, "far": 16, "pair_m": 3.2, "groups": 4, "syllables_per_s": 5, "pause_s": [0.6, 2.4],
+   "acts": ["eat", "shop", "rest", "sell", "visit", "stroll", "wait", "check", "work"] }
+ },
+
+ "actions": {
+  "prompt":      { "kind": "tick",  "hz": 1900, "len": 0.04, "gain": 0.06 },
+  "sit":         { "kind": "thud",  "hz": 160,  "len": 0.18, "gain": 0.35 },
+  "lie":         { "kind": "thud",  "hz": 110,  "len": 0.35, "gain": 0.3 },
+  "stand":       { "kind": "rustle","hz": 2200, "len": 0.22, "gain": 0.12 },
+  "lift":        { "kind": "chime", "hz": [880, 1320], "len": 0.5, "gain": 0.22 },
+  "jump":        { "kind": "rustle","hz": 1800, "len": 0.12, "gain": 0.08 },
+  "talk_open":   { "kind": "chime", "hz": [660, 990], "len": 0.25, "gain": 0.14 },
+  "talk_choose": { "kind": "tick",  "hz": 1400, "len": 0.05, "gain": 0.12 },
+  "talk_close":  { "kind": "chime", "hz": [990, 660], "len": 0.25, "gain": 0.12 },
+  "car_door":    { "kind": "thud",  "hz": 95,   "len": 0.22, "gain": 0.5 },
+  "map":         { "kind": "rustle","hz": 3000, "len": 0.25, "gain": 0.12 },
+  "clock":       { "kind": "tick",  "hz": 2400, "len": 0.03, "gain": 0.12 },
+  "hour":        { "kind": "chime", "hz": [784, 1046], "len": 0.6, "gain": 0.16 },
+  "radio":       { "kind": "tick",  "hz": 700,  "len": 0.06, "gain": 0.2 }
+ },
+
+ "music": {
+  "score": {
+   "gain": 0.5, "talk_duck": 0.25, "source_duck": 0.1,
+   "moods": [
+    { "from": "05:00", "name": "morning",   "bpm": 76, "root": 65, "scale": "major",      "chords": [1, 4, 6, 5], "voice": "pluck", "density": 0.45 },
+    { "from": "11:00", "name": "afternoon", "bpm": 88, "root": 67, "scale": "major",      "chords": [1, 6, 4, 5], "voice": "pluck", "density": 0.6 },
+    { "from": "18:00", "name": "evening",   "bpm": 70, "root": 62, "scale": "mixolydian", "chords": [1, 7, 4, 1], "voice": "keys",  "density": 0.4 },
+    { "from": "22:00", "name": "night",     "bpm": 58, "root": 57, "scale": "dorian",     "chords": [1, 4, 1, 7], "voice": "keys",  "density": 0.25 }
+   ]
+  },
+  "places": {
+   "food":   { "style": "cafe", "from": "07:00", "to": "22:00", "far": 26 },
+   "shop":   { "style": "shop", "from": "08:00", "to": "19:00", "far": 18 },
+   "market": { "style": "busker", "from": "09:00", "to": "17:00", "far": 40, "market_days_only": true }
+  },
+  "radio": ["swing", "pop", "calm"],
+  "styles": {
+   "cafe":   { "bpm": 96,  "root": 62, "scale": "major",      "chords": [2, 5, 1, 6], "voice": "keys",   "bass": true,  "drums": "brush", "density": 0.55, "gain": 0.5 },
+   "shop":   { "bpm": 104, "root": 64, "scale": "major",      "chords": [1, 5, 6, 4], "voice": "pluck",  "bass": true,  "drums": null,    "density": 0.5,  "gain": 0.35 },
+   "busker": { "bpm": 112, "root": 60, "scale": "mixolydian", "chords": [1, 7, 4, 1], "voice": "guitar", "bass": false, "drums": null,    "density": 0.7,  "gain": 0.6 },
+   "swing":  { "bpm": 132, "root": 65, "scale": "major",      "chords": [2, 5, 1, 1], "voice": "keys",   "bass": true,  "drums": "brush", "density": 0.7,  "gain": 0.55 },
+   "pop":    { "bpm": 118, "root": 69, "scale": "minor",      "chords": [1, 6, 3, 7], "voice": "pluck",  "bass": true,  "drums": "kit",   "density": 0.65, "gain": 0.5 },
+   "calm":   { "bpm": 72,  "root": 64, "scale": "lydian",     "chords": [1, 2, 1, 5], "voice": "pad",    "bass": true,  "drums": null,    "density": 0.35, "gain": 0.5 }
+  },
+  "scales": {
+   "major": [0, 2, 4, 5, 7, 9, 11], "minor": [0, 2, 3, 5, 7, 8, 10], "dorian": [0, 2, 3, 5, 7, 9, 10],
+   "mixolydian": [0, 2, 4, 5, 7, 9, 10], "lydian": [0, 2, 4, 6, 7, 9, 11]
+  },
+  "voices": ["pluck", "keys", "pad", "guitar"],
+  "drums": ["brush", "kit"]
+ }
+}

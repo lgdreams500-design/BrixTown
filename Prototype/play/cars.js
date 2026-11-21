@@ -372,8 +372,18 @@ var Cars = (() => {
       cam.yaw += d * Math.min(1, dt * 2.2);
     }
   }
+  function near(minute, x, z, r) {                       // cars on a trip within r of (x, z), with their speed in m/s, for the sound (sound.js)
+    const out = [], dm = .02;
+    for (let k = 0; k < CARS.length; k++) {
+      if (drv && drv.k === k) continue;
+      const c = at(k, minute); if (!c || !c.trip || Math.abs(c.x - x) > r || Math.abs(c.z - z) > r) continue;
+      const c2 = at(k, minute + dm), v = c2 ? Math.hypot(c2.x - c.x, c2.z - c.z) / (dm * D.pace) : 0;
+      out.push({ x: c.x, z: c.z, v, van: CARS[k].k === 1 });
+    }
+    return out;
+  }
   const label = () => "Get out · " + Math.round(Math.abs(drv ? drv.v : 0) * 3.6) + " km/h";
 
-  return { at, draw, tram, push, target, enter, leave, drive, label, driving: () => !!drv, count: CARS.length, model: k => model(k).name,
+  return { at, draw, tram, push, target, enter, leave, drive, label, near, speed: () => drv ? drv.v : 0, driving: () => !!drv, count: CARS.length, model: k => model(k).name,
     debugFree: (x, z, a, m) => drv ? free(x, z, a, m) : null };
 })();

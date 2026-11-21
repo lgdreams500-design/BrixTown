@@ -164,3 +164,53 @@ class TheFaces(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+class TheSounds(unittest.TestCase):
+    """SND-001 to SND-013: how the city sounds (World/rules/sound.json, played by Prototype/play/sound.js)."""
+    S = W["sound"]
+
+    def test_SND_008_sound_rules_are_sound(self):
+        import build_play
+        self.assertEqual(world.sound_problems(W, build_play.ACTS), [])
+
+    def test_SND_005_every_vowel_the_mouth_shows_has_a_voice(self):
+        self.assertTrue({"AA", "EH", "EE", "OH", "OO"} <= set(self.S["voices"]["shapes"]))
+
+    def test_SND_009_every_action_has_a_sound(self):
+        for k in world.SOUND_ACTIONS:
+            self.assertIn(k, self.S["actions"])
+
+    def test_SND_011_cafes_shops_and_the_market_play_music(self):
+        kinds = {l["kind"] for l in LOTS}
+        for k in ("food", "shop", "market"):
+            self.assertIn(k, self.S["music"]["places"])
+            self.assertIn(k, kinds)
+        self.assertTrue(self.S["music"]["places"]["market"]["market_days_only"])
+
+    def test_SND_010_the_score_changes_through_the_day(self):
+        moods = self.S["music"]["score"]["moods"]
+        self.assertGreaterEqual(len(moods), 3)
+        self.assertEqual(len({(m["bpm"], m["root"]) for m in moods}), len(moods))   # each part of the day sounds different
+
+    def test_SND_012_the_radio_has_three_stations(self):
+        self.assertGreaterEqual(len(self.S["music"]["radio"]), 3)
+
+    def test_SND_007_outside_is_muffled_indoors(self):
+        self.assertLess(self.S["indoors"]["muffle_hz"], 2000)
+        self.assertLess(self.S["indoors"]["muffle_gain"], 1)
+
+    def test_SND_008_broken_sound_rules_are_caught(self):
+        import copy
+        w = copy.deepcopy(W)
+        s = w["sound"]
+        del s["actions"]["lift"]
+        s["voices"]["shapes"]["XX"] = [500, 1500]
+        s["music"]["places"]["casino"] = {"style": "cafe", "from": "20:00", "to": "04:00", "far": 20}
+        s["music"]["styles"]["cafe"]["scale"] = "blues"
+        s["music"]["radio"].append("jazz")
+        s["ambience"]["birds"]["gain"] = 3
+        s["ambience"]["birds"]["from"] = "25:00"
+        p = world.sound_problems(w, ["eat"])
+        for bit in ("action lift", "XX", "casino", "blues", "jazz", "birds.gain", "25:00", "murmur for unknown activity shop"):
+            self.assertTrue(any(bit in x for x in p), bit)
+
+

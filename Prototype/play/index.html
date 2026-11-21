@@ -70,8 +70,8 @@
 <div class="hud" id="dot"></div>
 <div class="hud" id="keys">
   <span><kbd>W A S D</kbd>walk</span><span><kbd>Shift</kbd>run</span><span><kbd>Space</kbd>jump</span><span><kbd>V</kbd>first or third person</span><span><kbd>E</kbd>use, talk, get into a parked car</span><br>
-  <span>In a car: <kbd>W</kbd><kbd>S</kbd>drive and brake</span><span><kbd>A</kbd><kbd>D</kbd>steer</span><span><kbd>Space</kbd>handbrake</span><span><kbd>E</kbd>get out</span><br>
-  <span><kbd>[</kbd><kbd>]</kbd>slow or speed the clock</span><span><kbd>T</kbd>skip an hour</span><span><kbd>M</kbd>map</span><span><kbd>Q</kbd>softer picture</span><span><kbd>L</kbd>earlier light</span><span><kbd>H</kbd>hide these</span>
+  <span>In a car: <kbd>W</kbd><kbd>S</kbd>drive and brake</span><span><kbd>A</kbd><kbd>D</kbd>steer</span><span><kbd>Space</kbd>handbrake</span><span><kbd>F</kbd>horn</span><span><kbd>R</kbd>radio</span><span><kbd>E</kbd>get out</span><br>
+  <span><kbd>[</kbd><kbd>]</kbd>slow or speed the clock</span><span><kbd>T</kbd>skip an hour</span><span><kbd>M</kbd>map</span><span><kbd>N</kbd>sound</span><span><kbd>Q</kbd>softer picture</span><span><kbd>L</kbd>earlier light</span><span><kbd>H</kbd>hide these</span>
 </div>
 <div id="bigmap"><canvas id="big" width="900" height="900"></canvas><div id="legend"></div></div>
 <div id="talk" role="dialog" aria-label="Conversation">
@@ -88,7 +88,7 @@
     <p id="lede"></p>
     <div id="controls">
       <span><b>W A S D</b>walk</span><span><b>Mouse</b>look</span><span><b>Shift</b>run</span><span><b>Space</b>jump</span>
-      <span><b>V</b>first or third person</span><span><b>E</b>sit, talk, ride a lift</span><span><b>M</b>map</span><span><b>[ ] T</b>clock</span>
+      <span><b>V</b>first or third person</span><span><b>E</b>sit, talk, ride a lift</span><span><b>M</b>map</span><span><b>[ ] T</b>clock</span><span><b>N</b>sound on or off</span>
     </div>
     <button id="go">Walk into town</button>
     <p class="small">A playable slice built from the files in World/. Doors are open: walk into any building. The towers have a lift to the roof.</p>
@@ -109,6 +109,7 @@
 <script src="conversations.js"></script>
 <script src="car_models.js"></script>
 <script src="cars.js"></script>
+<script src="sound.js"></script>
 <script>
   // conversations.js comes before play.js: play.js starts drawing as soon as it has run, so everything it calls must be here first.
   // If conversations.js was blocked or is missing, the town still runs; you just cannot talk to anyone.
@@ -119,6 +120,11 @@
   if (!window.Cars) {                                    // the same for cars.js: no cars, but drivers stay hidden while "in" them
     window.Cars = { at() { return null; }, draw() { return 0; }, tram(m, x, z) { m.box(x - 6, .35, z - 1.2, x + 6, 2.75, z + 1.2, C.cream, 9); }, push() { }, target() { return null; }, enter() { }, leave() { }, drive() { }, label() { return ""; }, driving() { return false; }, count: 0 };
     console.warn("cars.js did not load: residents' cars are not drawn.");
+  }
+  if (!window.Sound) {                                   // and for sound.js: a silent town
+    const no = () => { };
+    window.Sound = { start: no, toggle: no, act: no, line: no, hush: no, frame: no, horn: no, radio: no, car: no, init: no, state: () => ({ on: false }) };
+    console.warn("sound.js did not load: the town is silent.");
   }
 </script>
 <script src="play.js"></script>
