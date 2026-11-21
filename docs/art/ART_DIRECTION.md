@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-ART-DIRECTION
 title: Wasted — Art direction (locked look)
-version: 1.2.0
+version: 1.3.0
 status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22
 last_updated: 2026-11-22
 relates_to: [ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
@@ -93,6 +93,18 @@ alleys are fainter than in the alley image.
 Common to all: AgX view transform with the "Medium High Contrast" look; haze scatters forward
 (anisotropy 0.6); at dusk lanterns are doubled in strength and about half the windows are lit.
 
+### 2.5 Vehicles — "Classic" (ADR-0011)
+
+Reference: `Art/Reference/vehicles_classic.png` (option C of `Tools/blender/car_kit_09.py`; A "Soft box" and B "Pebble"
+were the alternatives, kept in `Art/StyleTests/`).
+
+| # | Rule | Check |
+|---|---|---|
+| V1 | Cars are **small, vintage and soft**: a narrow rounded body, a long round bonnet, separate **round wings arching over the wheels**, running boards, round lamps standing on the wings, a round cream grille. No sharp edges, no flat slab sides (W3). | The wings read from 20 m. |
+| V2 | **Matte painted** like everything else (W1), one accent of the palette for the body and a **cream roof**; vans carry a painted band. No chrome shine, no glossy paint. | No highlights on the body. |
+| V3 | Cabins are **open frames on round posts** with a rounded roof, so the people inside can be seen; seats and a steering wheel inside. | A seated driver shows from the chest up. |
+| V4 | Character comes from extras, not from new shapes: roof racks with luggage or a trunk, spare wheels, crates in a pickup bed. Wheels are dark with pale hubs. | Three cars parked together look like a family, not copies. |
+
 ## 3. Characters — option B "Soft"
 
 ### 3.1 In one sentence
@@ -151,7 +163,7 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | Item | Where tracked |
 |---|---|
 | How production character models are made | Q-15 |
-| Interiors, vegetation, vehicles, UI style | not started |
+| Interiors, vegetation, UI style | not started (vehicles: §2.5) |
 | Night (after dusk) and bad-weather looks | not started; must follow W5–W7 |
 | Whether the iris should be smaller than in `face_expressions.png` | owner to say |
 | How the look is achieved in Unreal on modest hardware (haze, soft light) | PH1 task |
@@ -162,3 +174,4 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | 1.0.0 | 2026-11-21 | First version: world look and character option B recorded from the approved renders. |
 | 1.1.0 | 2026-11-22 | Daylight changed to the kit light (ADR-0007): new reference `world_street_kit_light.png` and light recipe row. |
 | 1.2.0 | 2026-11-22 | Rule C8: option B gets rosy cheeks (ADR-0010). The B reference images predate it and show none. |
+| 1.3.0 | 2026-11-22 | Vehicles: the owner chose "Classic" from car look test 09 (ADR-0011): §2.5 rules V1-V4, reference `vehicles_classic.png`. |

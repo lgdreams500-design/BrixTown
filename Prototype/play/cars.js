@@ -33,8 +33,19 @@ var Cars = (() => {
   let drv = null, saved = null, PAINT = null, ROOF = null, byCar = null, riders = null;
   const people = new Map();                              // looks for people who are not residents: van drivers, visitors
 
-  const model = k => CARS[k].k === 1 ? MODELS[4] : MODELS[Math.floor(hash(k, "model") * 4)];
-  const dims = k => { const md = model(k); return [md.L, md.W]; };
+  // The chosen look (ADR-0011, ART_DIRECTION 2.5): the "Classic" cars of Tools/blender/car_kit_09.py, exported by
+  // car_export_10.py into car_models.js as low-poly meshes, near and far. Without that file, the box cars above stand in.
+  const CM = window.CAR_MODELS, MESH = {};
+  if (CM) for (const [key, md] of Object.entries(CM.models)) {
+    const [a0, a1, w0, w1] = md.box;
+    MESH[key] = { name: key, L: a1 - a0, W: w1 - w0, ca: (a0 + a1) / 2, seat: md.seat, seatY: md.seat_y, back: md.back,
+      lods: md.lods.map(l => ({ p: Float32Array.from(l.p), n: Float32Array.from(l.n, v => v / 100), t: Uint8Array.from(l.t) })) };
+  }
+  const model = k => {
+    if (CM) return MESH[CARS[k].k === 1 ? "van" : (h => h < .4 ? "small" : h < .72 ? "estate" : "pickup")(hash(k, "model"))];
+    return CARS[k].k === 1 ? MODELS[4] : MODELS[Math.floor(hash(k, "model") * 4)];
+  };
+  const dims = k => { const md = model(k); return [md.L, md.W, md.ca || 0]; };
 
   function at(k, m) {                                    // {x, z, hx, hz, moving} of car k at minute m, or null when out of town
     if (drv && drv.k === k) return { x: drv.x, z: drv.z, hx: Math.cos(drv.a), hz: Math.sin(drv.a), moving: Math.abs(drv.v) > .2 };
@@ -101,6 +112,7 @@ var Cars = (() => {
   }
 
   function body(m, c, k, y) {
+    if (CM) return meshCar(m, c, k, y, model(k));
     if (!PAINT) { PAINT = [C.teal, C.terracotta, C.ochre, C.blue, C.olive, C.cream, C.plum, [.55, .40, .34], [.42, .47, .40]]; ROOF = [C.cream, [.74, .70, .62]]; }
     const md = model(k), r = (t) => hash(k, t), F = frame(m, c), L = md.L, W = md.W, h = L / 2, w = W / 2;
     const col = CARS[k].k === 1 ? [C.cream, C.teal, C.ochre, [.55, .40, .34]][k % 4] : PAINT[Math.floor(r("col") * PAINT.length)];
@@ -165,6 +177,33 @@ var Cars = (() => {
     }
   }
 
+  function meshCar(m, c, k, y, md) {                    // one classic car from its exported mesh, in this car's colours
+    if (!PAINT) { PAINT = [C.teal, C.terracotta, C.ochre, C.blue, C.olive, C.cream, C.plum, [.55, .40, .34], [.42, .47, .40]]; ROOF = [C.cream, [.74, .70, .62]]; }
+    const r = t => hash(k, t), van = CARS[k].k === 1;
+    const body = van ? [C.cream, C.teal, C.ochre, [.55, .40, .34]][k % 4] : PAINT[Math.floor(r("col") * PAINT.length)];
+    const roof = r("two") < .75 ? ROOF[Math.floor(r("roof") * 2)] : body;
+    const col = { body, roof, band: body === C.cream ? C.teal : C.cream, tyre: [.07, .065, .065], hub: [.58, .56, .52], leather: [.30, .19, .12],
+      lamp: [.86, .80, .64], cream: C.cream, iron: [.10, .10, .11], wood: C.wood, luggage: C.wood, spare: [.07, .065, .065], cargo: C.wood };
+    const show = { luggage: r("rack") < .65, spare: r("spare") < .5 };
+    const paints = CM.parts.map(name => show[name] === false ? null : col[name] || body);
+    const dc = Math.hypot(c.x - cam.eye[0], c.z - cam.eye[2]), L = md.lods[dc < 45 ? 0 : 1];
+    const P = L.p, N = L.n, T = L.t, need = T.length * 30;
+    if (m.n + need > m.a.length) { const b = new Float32Array(Math.max(m.a.length * 2, m.n + need + 60)); b.set(m.a); m.a = b; }
+    const A = m.a, hx = c.hx, hz = c.hz;
+    let i = m.n;
+    for (let t = 0; t < T.length; t++) {
+      const pc = paints[T[t]]; if (!pc) continue;
+      for (let v = 0; v < 3; v++) {
+        const j = (t * 3 + v) * 3, a = P[j], w = P[j + 1], na = N[j], nw = N[j + 1];
+        A[i] = c.x + hx * a - hz * w; A[i + 1] = y + P[j + 2]; A[i + 2] = c.z + hz * a + hx * w;
+        A[i + 3] = hx * na - hz * nw; A[i + 4] = N[j + 2]; A[i + 5] = hz * na + hx * nw;
+        A[i + 6] = pc[0]; A[i + 7] = pc[1]; A[i + 8] = pc[2]; A[i + 9] = 9;
+        i += 10;
+      }
+    }
+    m.n = i;
+  }
+
   // ---- who sits in which car ----
   function drivers() {                                   // car -> [[from, to, resident]] from the residents' days
     byCar = new Map();
@@ -205,7 +244,7 @@ var Cars = (() => {
       if (!c || Math.hypot(c.x - near[0], c.z - near[1]) > reach + 40) continue;
       const y = groundBase(c.x, c.z);
       body(m, c, k, y);
-      const yaw = yawOf(c.hx, c.hz), sy = y + (CARS[k].k === 1 ? .72 : .66);
+      const md = model(k), yaw = yawOf(c.hx, c.hz), sy = y + (md.seatY || (CARS[k].k === 1 ? .72 : .66));
       for (const [look, a, w] of occupants(k, c, minute)) seat(m, look, c.x + c.hx * a - c.hz * w, sy, c.z + c.hz * a + c.hx * w, yaw, t);
       n++;
     }
@@ -252,7 +291,7 @@ var Cars = (() => {
 
   // ---- collisions and the player driving ----
   function hits(c, k, x, z, pad) {                       // is the point (x, z) inside car k at c, grown by pad?
-    const [L, W] = dims(k), [a, w] = local(c, x, z);
+    const [L, W, ca] = dims(k), [a0, w] = local(c, x, z), a = a0 - ca;
     return Math.abs(a) < L / 2 + pad && Math.abs(w) < W / 2 + pad ? [a, w, L / 2 + pad - Math.abs(a), W / 2 + pad - Math.abs(w)] : null;
   }
   function push(p, minute) {                             // keep the player (on foot) out of cars, as the tram does
@@ -272,7 +311,7 @@ var Cars = (() => {
     for (let k = 0; k < CARS.length; k++) {
       const c = at(k, minute);
       if (!c || c.moving || Math.abs(c.x - p.x) > 5 || Math.abs(c.z - p.z) > 5 || Math.abs(p.y - groundBase(c.x, c.z)) > 1.2) continue;
-      const h = hits(c, k, p.x, p.z, 1.1); if (!h) continue;
+      const h = hits(c, k, p.x, p.z, 1.5); if (!h) continue;   // within arm's reach of the door
       const d = Math.hypot(c.x - p.x, c.z - p.z);
       if (!best || d < best.d) best = { type: "car", label: CARS[k].k === 1 ? "Drive this van" : "Drive this car", k, d, x: c.x, z: c.z, y: groundBase(c.x, c.z) };
     }
@@ -303,9 +342,9 @@ var Cars = (() => {
     drv = null;
   }
   function free(x, z, a, minute) {                       // could the car stand here: no wall, no other car?
-    const [L, W] = dims(drv.k), hx = Math.cos(a), hz = Math.sin(a), y = groundBase(x, z) + .7;
-    for (const [al, w] of [[L / 2, -W / 2], [L / 2, W / 2], [-L / 2, -W / 2], [-L / 2, W / 2], [L / 2, 0], [-L / 2, 0], [0, -W / 2], [0, W / 2]]) {
-      const px = x + hx * al - hz * w, pz = z + hz * al + hx * w;
+    const [L, W, ca] = dims(drv.k), hx = Math.cos(a), hz = Math.sin(a), y = groundBase(x, z) + .7;
+    for (const [al0, w] of [[L / 2, -W / 2], [L / 2, W / 2], [-L / 2, -W / 2], [-L / 2, W / 2], [L / 2, 0], [-L / 2, 0], [0, -W / 2], [0, W / 2]]) {
+      const al = al0 + ca, px = x + hx * al - hz * w, pz = z + hz * al + hx * w;
       if (blocked([px, y, pz])) return false;
       for (let k = 0; k < CARS.length; k++) {
         if (k === drv.k) continue;
