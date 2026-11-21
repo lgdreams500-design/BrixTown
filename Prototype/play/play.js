@@ -40,7 +40,7 @@ const M4 = {
 
 // ---------------------------------------------------------------- palette (linear RGB, docs/art/ART_DIRECTION.md §2.3)
 const C = {
-  stone: [.52, .48, .43], stoneDark: [.37, .34, .32], paving: [.46, .42, .37], pave: [.46, .42, .37], path: [.48, .44, .38], grass: [.3, .35, .2],
+  stone: [.52, .48, .43], stoneDark: [.37, .34, .32], paving: [.46, .42, .37], pave: [.46, .42, .37], path: [.48, .44, .38], road: [.36, .34, .34], grass: [.3, .35, .2],
   field: [.29, .32, .2], water: [.2, .32, .38], brown: [.24, .16, .11], olive: [.30, .33, .20], plum: [.30, .24, .34], charcoal: [.09, .09, .11],
   indigo: [.10, .14, .24], cream: [.66, .61, .50], ochre: [.52, .40, .20], terracotta: [.44, .24, .18], teal: [.20, .36, .37], blue: [.30, .38, .52],
   lantern: [1, .55, .22], metal: [.17, .18, .21], soil: [.2, .15, .11], wood: [.34, .23, .15],
@@ -58,6 +58,7 @@ const KIND_WORD = { home: "Homes", shop: "Shops", food: "Cafés", work: "Workpla
 // ---------------------------------------------------------------- mesh: position 3, normal 3, colour 3, material 1
 // materials: 0 plaster (mottled) · 1 lit window · 2 lamp · 3 indoor surface · 4 dark window · 6 stone blocks · 7 paving · 8 light pool · 9 plain · 10 person indoors
 //            11 barrel roof tiles · 12 louvred shutter (both shade their own relief, after Tools/blender/building_kit_07.py) · 14 person outdoors
+//            20 road setts · 21 cobbled footpath (7 paving also draws the kerb along each pavement's edge)
 class Mesh {
   constructor(n) { this.a = new Float32Array(n || 1 << 16); this.n = 0; }
   reset() { this.n = 0; }
@@ -759,7 +760,7 @@ function buildWorld() {
   const A = -E - 2, B = CITY + E + 2, far = 2500;             // fields all round the town, never under it
   world.flat(-far, -far, CITY + far, A, -.05, C.field, 0); world.flat(-far, B, CITY + far, CITY + far, -.05, C.field, 0);
   world.flat(-far, A, A, B, -.05, C.field, 0); world.flat(B, A, CITY + far, B, -.05, C.field, 0);
-  world.flat(A, A, B, B, 0, C.paving, 7);
+  world.flat(A, A, B, B, 0, C.road, 20);
   // the town wall, with a gate where the tram comes through
   const W0 = -E - 1.5, W1 = CITY + E + 1.5, th = 3, gh = 7.5;
   const wallBox = (a, b, c, d, y0) => { world.box(a, y0 || 0, b, c, gh, d, C.stone, 6, y0 ? { 2: [C.stoneDark, 9] } : null); solid(a, y0 || 0, b, c, gh, d); occl.push([a, b, c, d, gh]); };
@@ -776,7 +777,7 @@ function buildWorld() {
     for (const [p, q] of b.paths) {                      // footpaths, kept inside the block and its pavement
       const lo = [bx - PAVE, bz - PAVE], hi = [bx + S + PAVE, bz + S + PAVE];
       const a = [clamp(Math.min(p[0], q[0]), lo[0], hi[0]), clamp(Math.min(p[1], q[1]), lo[1], hi[1])], c = [clamp(Math.max(p[0], q[0]), lo[0], hi[0]), clamp(Math.max(p[1], q[1]), lo[1], hi[1])];
-      world.flat(a[0] - 1, a[1] - 1, c[0] + 1, c[1] + 1, Y_PATH + (p[0] === q[0] ? .005 : 0), C.path, 7);
+      world.flat(a[0] - 1, a[1] - 1, c[0] + 1, c[1] + 1, Y_PATH + (p[0] === q[0] ? .005 : 0), C.path, 21);
     }
     for (const l of b.lots) isOpen(l) ? openLot(l) : building(l);
     if (b.template === "peri") {                           // cloth strung across the streets of the old quarters
@@ -911,7 +912,20 @@ void main(){
       vec3 c1=c*vec3(.52,.54,.70); c=mix(paint(c,vec3(.52,.54,.70),blot),(c1+c)*.5,t1*.8)*(1.+bev); c=mix(c,c1*vec3(.7,.7,.75),j*(1.-min(1.,d/120.))); }
     else if(f>6.5&&f<7.5){ vec2 q=vec2(vP.x/.83,vP.z/.42); q.x+=.5*mod(floor(q.y),2.); float t1=h3(vec3(floor(q),5.)); vec2 fr=fract(q);
       float j=max(smoothstep(.97,.985,fr.x),smoothstep(.94,.965,fr.y)); float bev=(.07*smoothstep(.75,.93,fr.y)*step(fr.y,.95)-.08*smoothstep(.12,0.,fr.y))*nearK;
-      vec3 c1=c*vec3(.48,.5,.68); c=mix(paint(c,vec3(.48,.5,.68),blot),(c1+c)*.5,t1*.8)*(1.+bev); c=mix(c,c1*vec3(.7,.7,.75),j*(1.-min(1.,d/50.))); }
+      vec3 c1=c*vec3(.48,.5,.68); c=mix(paint(c,vec3(.48,.5,.68),blot),(c1+c)*.5,t1*.8)*(1.+bev); c=mix(c,c1*vec3(.7,.7,.75),j*(1.-min(1.,d/50.)));
+      if(vP.y<${(Y_PAVE + .01).toFixed(3)}){ vec2 u2=mod(vP.xz,${P.toFixed(1)}), e2=min(u2-${(SW / 2 - PAVE).toFixed(3)},${(P - SW / 2 + PAVE).toFixed(3)}-u2); float e=min(e2.x,e2.y);   // kerb: long pale stones along the pavement's edge
+        if(e<.32){ float al=e2.x<e2.y?vP.z:vP.x, t2=h3(vec3(floor(al/1.1),11.,0.)), k2=1.-min(1.,d/50.);
+          vec3 kc=paint(c1*vec3(2.4,2.3,1.75),vec3(.62,.62,.68),blot)*(.9+.16*t2)*(1.+.12*smoothstep(.06,0.,e)*step(.5,n.y)*k2);
+          c=e<.3?mix(kc,kc*.55,smoothstep(.975,.99,fract(al/1.1))*k2):c1*.6; } } }
+    else if(f>19.5&&f<20.5){ vec2 u2=mod(vP.xz,${P.toFixed(1)}), e2=min(u2,${P.toFixed(1)}-u2); bool ns=e2.x<e2.y;   // the road: small setts in courses across the street
+      vec2 q=ns?vec2(vP.x/.24,vP.z/.15):vec2(vP.z/.24,vP.x/.15); q.x+=.5*mod(floor(q.y),2.)+.3*h3(vec3(floor(q.y),0.,13.));
+      float t1=h3(vec3(floor(q),13.)), k2=1.-min(1.,d/40.), k3=1.-min(1.,d/90.); vec2 fr=fract(q);
+      float j=max(smoothstep(.9,.96,fr.x),smoothstep(.86,.94,fr.y)), dome=(1.-pow(abs(fr.x*2.-1.),4.))*(1.-pow(abs(fr.y*2.-1.),4.));
+      float g=ns?e2.x:e2.y, gut=smoothstep(${(SW / 2 - PAVE - .55).toFixed(3)},${(SW / 2 - PAVE - .45).toFixed(3)},g);   // a darker gutter row along each kerb
+      vec3 c1=c*vec3(.62,.64,.78); c=mix(paint(c,vec3(.62,.64,.78),blot),(c1+c)*.5,t1*.7*k3)*(.9+.16*dome*k2)*(1.-.16*gut); c=mix(c,c1*.55,j*k2); }
+    else if(f>20.5&&f<21.5){ vec2 q=vP.xz/.3; q.x+=.5*mod(floor(q.y),2.); vec2 id=floor(q), fr=fract(q)-.5;   // footpaths: round cobbles
+      float t1=h3(vec3(id,17.)), k2=1.-min(1.,d/30.); fr+=vec2(h3(vec3(id,18.)),h3(vec3(id,19.)))*.16-.08; float r=length(fr)*2.;
+      vec3 c1=c*vec3(.6,.6,.72); c=mix(paint(c,vec3(.6,.6,.72),blot),c1,t1*.55*k2)*mix(1.,(1.06-.2*fr.y)*(1.-.55*smoothstep(.72,1.,r)),k2); }
     else if(f>10.5&&f<11.5){ vec3 tg=normalize(vec3(-n.z,0.,n.x)+vec3(1e-3,0.,0.)); float u=dot(vP,tg)/.24, cu=fract(u)*2.-1., row=fract(vP.y/.17);   // barrel tiles laid in courses
       float tube=sqrt(max(1.-cu*cu,0.)), t1=h3(vec3(floor(u),floor(vP.y/.17),9.)), k2=1.-min(1.,d/90.);
       c=paint(c,vec3(.62,.6,.66),blot)*mix(1.,(.5+.5*tube)*(.86+.28*t1)*(1.-.32*smoothstep(.72,1.,row)),k2); n=normalize(n+tg*cu*.6*k2); }
@@ -927,7 +941,7 @@ void main(){
         vec2 a=texture2D(uAO,(vP.xz+n.xz-uAOm.x)*uAOm.y).rg; float vis=mix(a.r,1.,clamp((vP.y-.3)/max(a.g*85.,.6),0.,1.));   // how much sky this spot sees
         if(abs(n.y)<.5) c*=.66+.34*smoothstep(.1,1.4,vP.y);                 // grime at the foot of walls
         float ndl=max(dot(n,uSun),0.); light=uSunCol*(ndl>0.?ndl*shadow():0.);
-        if(f>13.5){ float up=n.y*.5+.5, bw=dot(n,normalize(vec3(-uSun.x,-.45,-uSun.z)))*.5+.5;   // a person: sky from above, bounce from the sunlit side away from the sun, so shade still models the body
+        if(f>13.5&&f<14.5){ float up=n.y*.5+.5, bw=dot(n,normalize(vec3(-uSun.x,-.45,-uSun.z)))*.5+.5;   // a person: sky from above, bounce from the sunlit side away from the sun, so shade still models the body
           light+=uSky*(.28+.82*up*up)*vis*vis+uGround*(1.-.5*vis)*(.38+1.25*bw*bw); }
         else light+=uSky*(n.y*.35+.65)*vis*vis+uGround*(1.-.5*vis);   // sun, sky seen, and light bounced off sunlit stone
         for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*.85+.15)); } }   // lanterns (W6)
