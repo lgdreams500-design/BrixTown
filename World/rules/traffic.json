@@ -1,5 +1,5 @@
 {
- "note": "Rules of the road and residents' cars (docs/specs/domains/LIVING_CITY.md 3.4, ADR-0009). All values are [ASSUMPTION] until tuned. Distances in metres, times in real seconds unless named _min. car_share 0.6 and drive_min_m 0 since the owner asked for busier streets (2026-11-22); vans (CITY-040) and through traffic (CITY-069) are per day from the seed.",
+ "note": "Rules of the road and residents' cars (docs/specs/domains/LIVING_CITY.md 3.4, ADR-0009). All values are [ASSUMPTION] until tuned. Distances in metres, times in real seconds unless named _min. car_share 0.6 and drive_min_m 0 since the owner asked for busier streets (2026-11-22); vans (CITY-040) and through traffic (CITY-069) are per day from the seed. Residents' cars, vans and through traffic keep to 50 km/h on every street; the player's car goes up to 100 km/h (owner, 2026-11-22; limits were 30 and 40).",
  "car_share": 0.6,
  "no_drive_roles": [
   "courier",
@@ -19,9 +19,10 @@
  "bay_reach_m": 150.0,
  "car_load_m": 120.0,
  "limits_kmh": {
-  "default": 30.0,
-  "through": 40.0
+  "default": 50.0,
+  "through": 50.0
  },
+ "player_top_kmh": 100.0,
  "through_streets": [
   "Market",
   "Baker"

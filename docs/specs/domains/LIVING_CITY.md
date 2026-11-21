@@ -176,7 +176,7 @@ Numbers for cars, also `[ASSUMPTION]`, in `World/rules/traffic.json`:
 | Shortest trip driven | 0 m | Car owners drive every errand (owner, 2026-11-22). Was 600, then 250 m (§5.1) |
 | Vans | 6, from the two depots, 3 rounds of 4 shops from 07:30, 6 min at each stop, 20 at the depot | CITY-040 |
 | Cars passing through | 0 to 8 an hour, most at 08:00 and 17:00 | CITY-069 |
-| Speed limit | 30 km/h in the old quarters, 40 km/h on through streets | CITY-046 |
+| Speed limit | 50 km/h on every street for residents' cars, vans and through traffic; the player's car goes up to 100 km/h (`player_top_kmh`) | CITY-046. Owner, 2026-11-22; were 30 and 40. A car is on the road in 772 of the 960 minutes 06:00-22:00 (median trip 29 real seconds) |
 | Bay within reach of every door | 150 m | CITY-043 |
 | Car load distance | 120 m | CITY-048 |
 
@@ -230,6 +230,7 @@ up to 42 on the road at once, no overlap, no crossing movements in a box, nobody
 | 0.1.0 | 2026-11-21 | First version, with the city-in-a-box prototype and its tests. |
 | 0.2.0 | 2026-11-22 | Cars and real traffic drafted after the owner's picks (`F-VEH-DRIVE` 2, `F-VEH-TRAFFIC` 2 from the first slice): CITY-043 to CITY-049 for streets and residents' cars, CITY-060 to CITY-067 for cars players drive, car numbers in §4, Q-25 to Q-28, ADR-0009. All proposed. |
 | 0.2.1 | 2026-11-22 | Owner accepted CITY-043 to CITY-049, CITY-060 to CITY-067 and ADR-0009, and the suggested answers to Q-25 to Q-28, now written into CITY-049, CITY-060, CITY-064 and CITY-066. |
+| 0.3.3 | 2026-11-22 | Speed limit 50 km/h on every street for traffic; the player's car up to 100 km/h, at the owner's request (§4). |
 | 0.3.2 | 2026-11-22 | Owner found the streets empty and asked for both: delivery vans on rounds (CITY-040 in the city) and cars passing through (CITY-069, new), and residents driving more (60 % with a car, every errand driven). |
 | 0.3.1 | 2026-11-22 | Q-29 decided by the owner: car-owning commuters drive out through a town gate (CITY-068, `test_commuters_with_a_car_drive_out_and_back`). Four gates where Market and Baker meet the wall, in `roads.json`. Cars now keep the lower limit as soon as they cross into a slower stretch. |
 | 0.3.0 | 2026-11-22 | Cars proved in `Tools/citysim/traffic.py` with `test_traffic.py` (19 pass, 1 skipped) over the whole starting city; road data in `World/city_01/roads.json`, rules in `World/rules/traffic.json`. Shortest driven trip 600 → 250 m `[ASSUMPTION]` (§5.1). Q-29 added. |

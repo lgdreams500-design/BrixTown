@@ -21,6 +21,7 @@
 // (CITY-067) and need the owner's eye.
 var Cars = (() => {
   const D = window.WASTED, CARS = D.cars || [], STEP = D.car_step || .1;
+  const TOP = (D.car_top_kmh || 50) / 3.6;                  // the player's car: top speed from World/rules/traffic.json, in m/s
   // model: length, width, driver seat [along, across], back-seat row (along) or null, kind of roof
   const MODELS = [
     { name: "bubble", L: 3.0, W: 1.56, seat: [-.3, -.32], back: null },
@@ -357,12 +358,12 @@ var Cars = (() => {
   function drive(dt, keys, p, cam, minute) {             // one step of the player's car: W/S speed and brake, A/D steer, Space handbrake
     const up = keys.KeyW || keys.ArrowUp, down = keys.KeyS || keys.ArrowDown, steer = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
     let v = drv.v;
-    if (up) v += (v < 0 ? 8 : 3.2) * dt;
+    if (up) v += (v < 0 ? 8 : 3.2 + 2.4 * Math.min(1, TOP / 28)) * dt;   // a faster car pulls harder
     else if (down) v -= (v > 0 ? 7 : 2.5) * dt;
     else v -= Math.sign(v) * Math.min(Math.abs(v), 1.2 * dt);
     if (keys.Space) v -= Math.sign(v) * Math.min(Math.abs(v), 9 * dt);
-    v = Math.max(-4, Math.min(14, v));
-    const turn = steer * .5 * (1 - .5 * Math.min(1, Math.abs(v) / 14)), a = drv.a + v / 2.6 * Math.tan(turn) * dt;
+    v = Math.max(-4, Math.min(TOP, v));
+    const turn = steer * .5 * (1 - .5 * Math.min(1, Math.abs(v) / TOP)), a = drv.a + v / 2.6 * Math.tan(turn) * dt;
     const x = drv.x + Math.cos(a) * v * dt, z = drv.z + Math.sin(a) * v * dt;
     if (free(x, z, a, minute)) { drv.x = x; drv.z = z; drv.a = a; drv.v = v; }
     else drv.v = -v * .2;                                 // a bump: stop, and roll back a little
