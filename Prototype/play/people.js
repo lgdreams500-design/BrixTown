@@ -85,7 +85,12 @@ const People = (() => {
   const blank = () => ({ hip: [], kn: [], an: [], heel: [], toe: [], sh: [], el: [], wr: [] });
   const wander = (t, seed) => [rad(1.6) * Math.sin(.9 * t + seed) + rad(.9) * Math.sin(2.3 * t + 1.7 * seed), rad(1) * Math.sin(1.3 * t + 2.1 * seed), rad(1.2) * Math.sin(.7 * t + .6 * seed)];
 
-  function walk(sig, g, W, ph, hm) {
+  function gesture(arms, chest, md) {                                 // CHARACTER_MOTION §4 layers: arm_l / arm_r = [weight, raise, out, elbow], chest = [pitch, yaw] in degrees
+    if (!md) return;
+    if (md.arms) for (const k of [0, 1]) { const a = md.arms[k]; if (a && a[0] > 0) for (let j = 0; j < 3; j++) arms[k][j] += (a[j + 1] - arms[k][j]) * a[0]; }
+    if (md.chest) { chest[1] += rad(md.chest[0]); chest[0] += rad(md.chest[1] || 0); }
+  }
+  function walk(sig, g, W, ph, hm, md) {
     const P = blank(), w = TAU, total = 2 * sig.duty * sig.stride * g.leg, p = pelvis(sig, g, ph, baseHeight(sig, g, total)), n0 = mv(p.R, [1, 0, 0]);
     for (const [k, side, off] of [[0, 1, 0], [1, -1, .5]]) {
       const t = foot(sig, g, (ph + off) % 1, side, total);
@@ -96,14 +101,17 @@ const People = (() => {
       const q = (ph + off) % 1, kk = k ? sig.arm_r : sig.arm_l, sw = -Math.cos(w * (q - .04));
       arms.push([sig.arm_bias + sig.arm_swing * kk * sw, sig.arm_out, sig.elbow + sig.elbow_swing * kk * Math.max(0, sw) + 4 * kk * Math.max(0, -sw)]);
     }
+    gesture(arms, chest, md);
     const lag = sig.head_lag, yawB = -sig.counter * (-rad(sig.hip_yaw) * Math.cos(w * (ph - lag)));
     upper(P, g, W, p.loc, p.R, chest, arms, [sig.head_follow * yawB + hm[0], rad(sig.head_pitch) + rad(sig.head_bob) * Math.cos(2 * w * (ph - .045 - lag)) + .35 * rad(sig.lean) + hm[1], .3 * sig.head_follow * p.roll + hm[2]]);
     return P;
   }
-  function stand(sig, g, W, t, hm, seed) {                              // not in motion_lib yet: a quiet stance in the same terms
+  function stand(sig, g, W, t, hm, seed, md) {                              // not in motion_lib yet: a quiet stance in the same terms
     const P = blank(), br = Math.sin(t * 1.3 + seed), pel = [.006 * g.S * Math.sin(t * .5 + seed), 0, g.pelz - .012 * g.S + .002 * br];
     for (const [k, side] of [[0, 1], [1, -1]]) leg(P, k, g, add(pel, [side * g.hipx, 0, g.hipdz]), [side * g.hipx * Math.max(.8, sig.width), .01 * side, g.ankz], [1, 0, 0], 0, side * rad(sig.toe_out + 4));
-    upper(P, g, W, pel, I3, [0, rad(sig.lean * .5) + .004 * br, 0], [[sig.arm_bias, sig.arm_out * .3, sig.elbow * .7 + 4], [sig.arm_bias, sig.arm_out * .3, sig.elbow * .7 + 4]], [hm[0], rad(sig.head_pitch * .5) + hm[1], hm[2]]);
+    const arms = [[sig.arm_bias, sig.arm_out * .3, sig.elbow * .7 + 4], [sig.arm_bias, sig.arm_out * .3, sig.elbow * .7 + 4]], chest = [0, rad(sig.lean * .5) + .004 * br, 0];
+    gesture(arms, chest, md);
+    upper(P, g, W, pel, I3, chest, arms, [hm[0], rad(sig.head_pitch * .5) + hm[1], hm[2]]);
     return P;
   }
   function sit(sig, g, W, t, hm, seed) {                                // origin is the seat top
@@ -186,7 +194,7 @@ const People = (() => {
   function draw(ms, x, y, z, yaw, L, pose, o) {
     const sig = o.sig || L.sig, g = geo(L.S), S = L.S, Sh = S * 1.09, W = L.W * 1.06, lod = o.lod, fl = o.fl, t = o.t, sd = L.seed;
     const wd = wander(t, sd * .37), lk = o.look || [0, 0], hm = [wd[0] + lk[0], wd[1] + lk[1] + (o.face ? o.face.nod || 0 : 0), wd[2]];   // a speaker nods on stressed words (ANIM-006)
-    const P = pose === 1 ? walk(sig, g, W, o.ph, hm) : pose === 2 ? sit(sig, g, W, t, hm, sd) : stand(sig, g, W, t, pose === 3 ? [0, 0, 0] : hm, sd);
+    const P = pose === 1 ? walk(sig, g, W, o.ph, hm, o.mod) : pose === 2 ? sit(sig, g, W, t, hm, sd) : stand(sig, g, W, t, pose === 3 ? [0, 0, 0] : hm, sd, o.mod);
     // where the character's axes point in the world: standing (x left, y back, z up) or lying on the back, head to +z
     const c = Math.cos(yaw), s = Math.sin(yaw), ex = pose === 3 ? [-1, 0, 0] : [-c, 0, -s], ey = pose === 3 ? [0, -1, 0] : [-s, 0, c], ez = pose === 3 ? [0, 0, 1] : [0, 1, 0];
     const O = pose === 3 ? [x, y + .1 * S, z - .86 * S] : [x, y, z];

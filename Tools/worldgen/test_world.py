@@ -229,3 +229,23 @@ class TheSounds(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class GettingOutOfTheWay(unittest.TestCase):
+    """CITY-070, CITY-071: residents dodge a car a player drives at them, then tell the driver off (World/rules/dodge.json)."""
+    R = W["dodge"]
+
+    def test_CITY_070_dodge_rules(self):
+        r = self.R
+        for k in ("min_speed", "see_s", "see_m", "lane_pad_m", "car_half_w_m", "car_front_m", "clear_m", "startle_s", "scramble_s", "hop_m", "return_s", "cooldown_s"):
+            self.assertGreater(r[k], 0, k)
+        self.assertLess(r["startle_s"] + r["scramble_s"], r["see_s"])       # they are clear before a car seen in time arrives
+        self.assertLess(r["hop_m"], 0.5)                                    # a hop, not a leap
+
+    def test_CITY_071_tell_off_rules(self):
+        r = self.R
+        self.assertGreater(r["scold_s"], 1)
+        self.assertTrue(0 <= r["fist_share"] <= 1)
+        self.assertGreaterEqual(len(r["shouts"]), 3)
+        for s in r["shouts"]:
+            self.assertTrue(0 < len(s) <= 40, s)                            # short enough for a tag over a head
+

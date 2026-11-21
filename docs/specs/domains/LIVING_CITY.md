@@ -141,6 +141,8 @@ has the reasoning.
 | CITY-065 | Other players shall be able to ride as passengers in a car with free seats (from PH2). | F-VEH-DRIVE | 2 | P1 | |
 | CITY-066 | Cars shall need no fuel and shall cost a small weekly upkeep `[ASSUMPTION]`, charged through the ledger from PH4 with the other recurring costs (PROP-006; Q-28). | F-VEH-DRIVE | 2 | P2 | |
 | CITY-067 | Every car model shall match the art direction (ART-001): a look test in `Tools/blender/` comes before any production model. | F-VEH-DRIVE | 2 | P1 | Look test |
+| CITY-070 | A resident on foot outdoors who has a moving car a player drives heading at them, due to reach them within a reaction time set in data, shall get out of its path: after a short startle, a hurried scramble (quick running steps and a small hop) sideways to the side with room, far enough to clear the car, then carry on with their day. This is presented state only (§1): an offset on top of where CITY-010 puts them, near players, never stored; their calculated timeline is unchanged. All times and distances are in `World/rules/dodge.json` `[ASSUMPTION]`. | F-NPC-DODGE | 1 | P1 | `test_dodge_rules` (data); slice |
+| CITY-071 | Once clear, the resident shall turn to the car and tell the driver off: a raised fist or both arms flung up (an arm gesture layer, CHARACTER_MOTION §4) and a short shout shown as a tag over them (a line from data; no words spoken, Q-14), then go back to where their day has them and what they were doing. | F-NPC-DODGE | 2 | P1 | `test_dodge_rules` (data); slice |
 
 ### 3.5 Seasons, weather and plants
 

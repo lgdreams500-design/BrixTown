@@ -789,6 +789,48 @@
       }
     },
     {
+      "id": "F-NPC-DODGE",
+      "area": "people",
+      "title": "Getting out of the way of cars",
+      "why": "Whether residents see a car coming at them and react like people would.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "CITY-049",
+        "CITY-064"
+      ],
+      "levels": [
+        {
+          "name": "Pushed aside",
+          "what": "A car that reaches a resident stops and the resident is pushed aside (CITY-064 as written).",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Dodge",
+          "what": "Residents see a car heading at them and scramble out of its path: a hurried sidestep or jump to the side, then carry on.",
+          "effort": "S",
+          "needs": {
+            "F-VEH-DRIVE": 2
+          }
+        },
+        {
+          "name": "Dodge and tell off",
+          "what": "Once clear, they turn on the driver: a raised fist or arms flung up and a short shout (a speech tag, no words spoken, Q-14), then go back to what they were doing.",
+          "effort": "S",
+          "needs": {
+            "F-VEH-DRIVE": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 2,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
       "id": "F-ANIMALS",
       "area": "people",
       "title": "Animals",
