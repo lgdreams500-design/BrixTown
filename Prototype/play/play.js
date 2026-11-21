@@ -1578,7 +1578,11 @@ function interact() {
     setTimeout(() => { pl.x = target.to[0]; pl.y = target.to[1]; pl.z = target.to[2]; pl.vy = 0; fd.style.opacity = 0; }, 240);
   } else { pl.seat = { ox: pl.x, oz: pl.z }; pl.x = target.x; pl.z = target.z; pl.y = target.y; pl.yaw = target.yaw; pl.pose = target.type === "lie" ? 3 : 2; pl.vy = 0; Sound.act(target.type === "lie" ? "lie" : "sit"); if (cam.fp) cam.yaw = target.yaw; }
 }
+let lastTarget = null;
 function findTarget() {
+  findTarget0(); if (target && target !== lastTarget && (!lastTarget || target.type !== lastTarget.type || target.x !== lastTarget.x)) Sound.act("prompt"); lastTarget = target;
+}
+function findTarget0() {
   target = null; let best = 1.7;
   if (pl.pose > 1) return;
   for (const u of uses) { if (Math.abs(u.x - pl.x) > 2 || Math.abs(u.z - pl.z) > 2 || Math.abs(u.y - pl.y) > 1.2) continue; const d = Math.hypot(u.x - pl.x, u.z - pl.z); if (d < best) { best = d; target = u; } }
@@ -1689,6 +1693,7 @@ addEventListener("wheel", e => { cam.dist = clamp(cam.dist + Math.sign(e.deltaY)
 const RATES = [1, 5, 20, 100];
 addEventListener("keydown", e => {
   if (e.code === "Space" || e.code.startsWith("Arrow")) e.preventDefault();
+  Sound.start();                                         // browsers allow sound only after a key or a click
   if (!started) { if (e.code === "Enter") begin(); return; }
   if (Talk.on) { Talk.key(e); return; }                  // number keys answer, Esc leaves
   if (e.repeat) return; keys[e.code] = true;
@@ -1715,11 +1720,7 @@ function nearRooms(eye) {
   let built = 0;
   for (const l of LOTS) {
     if (!l.furn) continue;
-let lastTarget = null;
     const [a0, b0, a1, b1] = l.rect, dd = Math.hypot((a0 + a1) / 2 - eye[0], (b0 + b1) / 2 - eye[2]) - Math.hypot(a1 - a0, b1 - b0) / 2, have = ROOMS.get(l);
-  findTarget0(); if (target && target !== lastTarget && (!lastTarget || target.type !== lastTarget.type || target.x !== lastTarget.x)) Sound.act("prompt"); lastTarget = target;
-}
-function findTarget0() {
     if (!have && dd < 40 && built < 2) {
       const m = new Mesh(1 << 15); furnish(l, l.furn[0], l.furn[1], l.furn[2], m); built++;
       ROOMS.set(l, m.n ? { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, box: boxOf(m.a, 0, m.n) } : { n: 0 });
@@ -1744,6 +1745,7 @@ function frame(now) {
     const r = Talk.where(i, clock.m); if (!r) continue;
     people.push([r.x, r.z]);
     const d = Math.hypot(r.x - near[0], r.z - near[1]); if (d > reach) continue;
+    if (d < 20) heard.push({ i, x: r.x, z: r.z, act: D.acts[r.act], walking: r.walking, pose: r.pose, ph: r.ph, inside: r.inside });
     bodies++;
     const L = looks[i], dc = Math.hypot(r.x - cam.eye[0], r.z - cam.eye[2]); let lk = null;
     if (started && r.pose !== 3 && d < 5.5 && Math.abs(r.y - pl.y) < 2) {          // someone near turns to look: eyes first, head part of the way (M4)
@@ -1762,6 +1764,13 @@ function frame(now) {
   }
   for (const [x, , T] of tramAt(clock.m)) Cars.tram(dyn, x, TRAM_Z, T, clock.m);   // the tram and the commuters on it (cars.js)
   stat.cars = Cars.draw(dyn, clock.m, near, reach);       // residents' cars, parked and driving (cars.js)
+  if (started) {                                          // what the listener hears (sound.js): where they are and what is near
+    const lot = pl.y < 6 ? lotAt(pl.x, pl.z) : null, drv = pl.pose === 4;
+    Sound.frame({ m: clock.m, dt, x: pl.x, y: pl.y, z: pl.z, yaw: cam.yaw, lot, talk: Talk.on, residents: heard, trams: tramAt(clock.m), tramZ: TRAM_Z,
+      cars: Cars.near ? Cars.near(clock.m, pl.x, pl.z, 75) : [],
+      walk: drv ? null : { moving: pl.moving && pl.pose < 2, ph: pl.ph, run: pl.run, onGround: pl.onGround, vy: pl.vy, surface: lot ? "wood" : (lotAt(pl.x, pl.z, true) || {}).kind === "garden" ? "grass" : "stone" },
+      drive: drv ? { v: Cars.speed ? Cars.speed() : 0, gas: !!(keys.KeyW || keys.ArrowUp), brake: !!(keys.Space || ((keys.KeyS || keys.ArrowDown) && (Cars.speed ? Cars.speed() : 0) > 0)) } : null });
+  }
 
   const Lt = lighting(clock.m), dials = window.wasted.dials; Lt.sunCol = mul3(Lt.sunCol, dials.sun); Lt.sky = mul3(Lt.sky, dials.sky); Lt.ground = mul3(Lt.ground, dials.bounce); Lt.fogD *= dials.haze; Lt.exp *= dials.exposure;
   const wm = dials.warm || 0; Lt.sunCol = [Lt.sunCol[0], Lt.sunCol[1] * (1 - .1 * wm), Lt.sunCol[2] * (1 - .26 * wm)]; Lt.sky = [Lt.sky[0] * (1 - .08 * wm), Lt.sky[1] * (1 - .04 * wm), Lt.sky[2]];   // a more golden sun against a deeper sky
@@ -1830,17 +1839,8 @@ const LIGHTS = { reference: { sun: 1, sky: 1, bounce: 1, lanterns: 1, haze: 1, e
 let lightName = q.get("light") === "reference" ? "reference" : "kit";
 addEventListener("keydown", e => { if (e.code === "KeyL" && started && !e.repeat) { lightName = lightName === "kit" ? "reference" : "kit"; Object.assign(window.wasted.dials, LIGHTS[lightName]); } });
 window.wasted = { dials: Object.assign({}, LIGHTS[lightName]), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
-  Sound.start();                                         // browsers allow sound only after a key or a click
-requestAnimationFrame(frame);
-    if (d < 20) heard.push({ i, x: r.x, z: r.z, act: D.acts[r.act], walking: r.walking, pose: r.pose, ph: r.ph, inside: r.inside });
-  if (started) {                                          // what the listener hears (sound.js): where they are and what is near
-    const lot = pl.y < 6 ? lotAt(pl.x, pl.z) : null, drv = pl.pose === 4;
-    Sound.frame({ m: clock.m, dt, x: pl.x, y: pl.y, z: pl.z, yaw: cam.yaw, lot, talk: Talk.on, residents: heard, trams: tramAt(clock.m), tramZ: TRAM_Z,
-      cars: Cars.near ? Cars.near(clock.m, pl.x, pl.z, 75) : [],
-      walk: drv ? null : { moving: pl.moving && pl.pose < 2, ph: pl.ph, run: pl.run, onGround: pl.onGround, vy: pl.vy, surface: lot ? "wood" : (lotAt(pl.x, pl.z, true) || {}).kind === "garden" ? "grass" : "stone" },
-      drive: drv ? { v: Cars.speed ? Cars.speed() : 0, gas: !!(keys.KeyW || keys.ArrowUp), brake: !!(keys.Space || ((keys.KeyS || keys.ArrowDown) && (Cars.speed ? Cars.speed() : 0) > 0)) } : null });
-  }
 // sound (sound.js): which lots play music, where the fountains and gardens are
 Sound.init(LOTS, D.blocks.flatMap(b => b.props.filter(p => p.kind === "fountain").map(p => p.pos)),
   LOTS.filter(l => l.kind === "garden").map(l => [(l.rect[0] + l.rect[2]) / 2, (l.rect[1] + l.rect[3]) / 2]));
 window.wasted.sound = Sound;
+requestAnimationFrame(frame);
