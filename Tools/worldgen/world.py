@@ -251,9 +251,28 @@ def sound_problems(w, acts=None):
             out.append("sound: %s plays unknown style %s" % (kind, p["style"]))
         hhmm(p["from"], kind + ".from")
         hhmm(p["to"], kind + ".to")
+    shows = s.get("podcasts", {}).get("shows", {})
     for st in m["radio"]:
-        if st not in m["styles"]:
-            out.append("sound: radio station %s has no style" % st)
+        if ("style" in st) == ("podcast" in st):
+            out.append("sound: radio station %s needs a style or a podcast, not both" % st.get("name"))
+        elif "style" in st and st["style"] not in m["styles"]:
+            out.append("sound: radio station %s has no style %s" % (st.get("name"), st["style"]))
+        elif "podcast" in st and st["podcast"] not in shows:
+            out.append("sound: radio station %s plays unknown podcast %s" % (st.get("name"), st["podcast"]))
+    for sid, sh in shows.items():                       # SND-014: every line is said by one of the show's hosts
+        if sh["bed"] not in m["styles"]:
+            out.append("sound: podcast %s has unknown bed music %s" % (sid, sh["bed"]))
+        for hid, h in sh["hosts"].items():
+            if not 60 <= h["pitch"] <= 400:
+                out.append("sound: podcast %s host %s has a pitch out of range" % (sid, hid))
+        if not sh["episodes"]:
+            out.append("sound: podcast %s has no episodes" % sid)
+        for ep in sh["episodes"]:
+            for host, text in ep["lines"]:
+                if host not in sh["hosts"]:
+                    out.append("sound: podcast %s, %s: unknown host %s" % (sid, ep["title"], host))
+                if not re.search(r"[a-z]", text.lower()):
+                    out.append("sound: podcast %s, %s: a line with nothing to say" % (sid, ep["title"]))
     return out
 
 

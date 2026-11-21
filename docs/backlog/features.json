@@ -1424,7 +1424,8 @@
       "spec": [
         "SND-010",
         "SND-011",
-        "SND-012"
+        "SND-012",
+        "SND-014"
       ],
       "levels": [
         {
@@ -1435,7 +1436,7 @@
         },
         {
           "name": "Music in the world",
-          "what": "Music comes from places: car radio with a few stations, shop and café music, a busker; the score fades when a source is near.",
+          "what": "Music comes from places: car radio with a few music stations and podcasts, shop and café music, a busker; the score fades when a source is near.",
           "effort": "M",
           "needs": {
             "F-SND-WORLD": 1

@@ -205,7 +205,29 @@ class TheSounds(unittest.TestCase):
         self.assertEqual(len({(m["bpm"], m["root"]) for m in moods}), len(moods))   # each part of the day sounds different
 
     def test_SND_012_the_radio_has_three_stations(self):
-        self.assertGreaterEqual(len(self.S["music"]["radio"]), 3)
+        self.assertGreaterEqual(len([s for s in self.S["music"]["radio"] if "style" in s]), 3)
+
+    def test_SND_014_the_radio_has_podcasts(self):
+        talk = [s for s in self.S["music"]["radio"] if "podcast" in s]
+        self.assertGreaterEqual(len(talk), 2)
+        for s in talk:
+            sh = self.S["podcasts"]["shows"][s["podcast"]]
+            self.assertGreaterEqual(len(sh["episodes"]), 2, s["name"])
+            for ep in sh["episodes"]:
+                self.assertGreaterEqual(len(ep["lines"]), 5, ep["title"])
+                self.assertTrue(all(len(t) <= 110 for _, t in ep["lines"]), ep["title"] + ": a caption too long to read")
+        self.assertTrue(any(len(self.S["podcasts"]["shows"][s["podcast"]]["hosts"]) >= 2 for s in talk))   # someone to talk to
+
+    def test_SND_014_broken_podcasts_are_caught(self):
+        import copy
+        w = copy.deepcopy(W)
+        s = w["sound"]
+        s["music"]["radio"].append({"name": "Nowhere FM", "podcast": "nowhere"})
+        s["podcasts"]["shows"]["tram_street"]["episodes"][0]["lines"].append(["ghost", "Boo."])
+        s["podcasts"]["shows"]["quiet_hour"]["episodes"][0]["lines"].append(["oskar", "..."])
+        p = world.sound_problems(w)
+        for bit in ("unknown podcast nowhere", "unknown host ghost", "nothing to say"):
+            self.assertTrue(any(bit in x for x in p), bit)
 
     def test_SND_007_outside_is_muffled_indoors(self):
         self.assertLess(self.S["indoors"]["muffle_hz"], 2000)
@@ -219,7 +241,7 @@ class TheSounds(unittest.TestCase):
         s["voices"]["shapes"]["XX"] = [500, 1500]
         s["music"]["places"]["casino"] = {"style": "cafe", "from": "20:00", "to": "04:00", "far": 20}
         s["music"]["styles"]["cafe"]["scale"] = "blues"
-        s["music"]["radio"].append("jazz")
+        s["music"]["radio"].append({"name": "Jazz", "style": "jazz"})
         s["ambience"]["birds"]["gain"] = 3
         s["ambience"]["birds"]["from"] = "25:00"
         p = world.sound_problems(w, ["eat"])

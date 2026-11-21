@@ -1,7 +1,7 @@
 ---
 spec_id: WASTED-SPEC
 title: Wasted — Game Specification
-version: 0.4.5
+version: 0.4.6
 status: draft            # draft | reviewed | approved
 last_updated: 2026-11-22
 owner: project-owner
@@ -240,6 +240,7 @@ wording check; they are `in-progress` because the owner asked for the work.
 | SND-011 | Open cafés and shops shall play their own music, heard muffled from the street and clear inside; a busker shall play in the market on market days. Opening hours for music are data until lots carry hours `[ASSUMPTION]`. | F-SND-MUSIC | 1 | P1 | PH1 | in-progress | `test_SND_011_cafes_shops_and_the_market_play_music` |
 | SND-012 | A car shall have a radio with at least three stations, switched while driving. | F-SND-MUSIC | 1 | P1 | PH1 | in-progress | `test_SND_012_the_radio_has_three_stations` |
 | SND-013 | The player shall be able to turn all sound off and on with one key, remembered between visits. | F-SND-ACTION | 0 | P1 | PH1 | in-progress | |
+| SND-014 | The car radio shall also carry podcasts: shows with hosts who talk in wordless syllables in their own voices, each line shown as a caption, over quiet music. Where a show is shall follow the world clock, so everyone tuned in hears the same line. The shows are data. Asked for by the owner on 2026-11-22. | F-SND-MUSIC | 1 | P1 | PH1 | in-progress | `test_SND_014_the_radio_has_podcasts`, `test_SND_014_broken_podcasts_are_caught` |
 
 ---
 
@@ -445,3 +446,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.4.3 | 2026-11-22 | CITY-007 (dialogue with NPCs) accepted by the owner and moved to PH1, matching the owner's pick of F-NPC-TALK level 1 for the first slice. The browser slice has sample conversations (`World/rules/dialogue.json`, WORLD_MAP 0.5.3); outcomes that change game state are still to come. |
 | 0.4.4 | 2026-11-22 | Owner picked `F-NPC-SPEECH` level 2 (lip sync) for the first slice: CHR-008, CHR-009 and ANIM-006 move to PH1, and Q-14 is decided as text first. The slice's faces take the CHR-007 control set for this; the designer part of CHR-007 stays in PH3. |
 | 0.4.5 | 2026-11-22 | Sound (§4.8, SND-001 to SND-013) from the owner's pick of `F-SND-WORLD`, `F-SND-ACTION` and `F-SND-MUSIC` at level 1 for the first slice. Built in the browser slice from `World/rules/sound.json`. |
+| 0.4.6 | 2026-11-22 | SND-014: podcasts on the car radio (owner's request), as part of `F-SND-MUSIC` level 1. |

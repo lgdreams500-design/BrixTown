@@ -9,7 +9,7 @@
 //
 // The mix: world (ambience, engines, tram, steps, birds) through an "outside" bus that is muffled while the listener is
 // indoors; voices (a resident's line, murmur between residents); actions (sit, lift, car door, interface); music (the
-// score by time of day, music from cafés, shops and the market busker, the car radio). The score fades under a
+// score by time of day, music from cafés, shops and the market busker, the car radio with music and podcasts). The score fades under a
 // conversation and under any nearer music.
 var Sound = (() => {
   const D = window.WASTED, S = D.sound;
@@ -265,15 +265,18 @@ var Sound = (() => {
     env(g, t, .015, gain, Math.max(.05, len)); o.start(t); o.stop(t + len + .12);
   }
   let lineOut = null;
+  function voice(dest, ln, base, gain, from) {           // every syllable of a line (from Talk.speak) from `from` seconds in
+    const t0 = now() + .02 - (from || 0), ask = ln.asks || [], words = ln.words || [];
+    for (const s of ln.seq) {
+      if (s.t0 < (from || 0) || !VO.shapes[s.shape] || s.shape === "MBP" && s.d < .05) continue;
+      const w = words.filter(w => w.t0 <= s.t0).pop(), up = ask.some(a => a > s.t0 && a - s.t0 < .35) ? 1.18 : 1;
+      syllable(dest, t0 + s.t0, base * up * (w && w.long ? 1.08 : 1), s.shape, Math.min(.22, s.d), gain);
+    }
+  }
   function line(ln, i, x, z) {
     if (!ready) return; hush();
     lineOut = gainOf(1); const d = once(bus.voice, x, z, 30) || bus.voice; lineOut.connect(d); st.line = true;
-    const t0 = now() + .02, base = pitchOf(i), ask = ln.asks || [], words = ln.words || [];
-    for (const s of ln.seq) {
-      if (!VO.shapes[s.shape] || s.shape === "MBP" && s.d < .05) continue;
-      const w = words.filter(w => w.t0 <= s.t0).pop(), up = ask.some(a => a > s.t0 && a - s.t0 < .35) ? 1.18 : 1;
-      syllable(lineOut, t0 + s.t0, base * up * (w && w.long ? 1.08 : 1), s.shape, Math.min(.22, s.d), VO.line_gain);
-    }
+    voice(lineOut, ln, pitchOf(i), VO.line_gain);
     setTimeout(() => { st.line = false; }, (ln.end + .2) * 1000);
   }
   function hush() { if (lineOut) { lineOut.gain.setTargetAtTime(0, now(), .03); const o = lineOut; setTimeout(() => o.disconnect(), 300); lineOut = null; } st.line = false; }
@@ -326,15 +329,58 @@ var Sound = (() => {
     if (places[1] && places[1].b.level < .01) { const o = places[1]; setTimeout(() => o.b.out.disconnect(), 2000); places[1] = null; }
     st.place = places[0] ? places[0].pl.style + " at " + places[0].l.name : null;
     // the car radio
-    if (F.drive && radioIx > 0) {
-      const sty = MU.radio[radioIx - 1];
-      if (!radio) { const lp = filt("lowpass", 4200), hp = filt("highpass", 180); chain(hp, lp, bus.music); radio = band(sty, hp); }
-      radio.style = sty; if (radio.level < 1) radio.fade(1, .3); srcNear = 1;
-    } else if (radio && radio.level > 0) radio.fade(0, .2);
+    const sta = F.drive && radioIx > 0 ? MU.radio[radioIx - 1] : null;
+    if (sta) {
+      if (!radio) { const lp = filt("lowpass", 4200), hp = filt("highpass", 180); chain(hp, lp, bus.music); radio = band(sta.style || "calm", hp); }
+      if (sta.podcast) { const sh = PC.shows[sta.podcast]; radio.style = sh.bed; if (Math.abs(radio.level - PC.bed_gain * 2) > .01) radio.fade(PC.bed_gain * 2, .3); podcast(F, sta); }
+      else { radio.style = sta.style; if (radio.level < 1) radio.fade(1, .3); offAir(); caption(sta.name, null); }
+      srcNear = 1;
+    } else { if (radio && radio.level > 0) radio.fade(0, .2); offAir(); caption(null); }
     if (radio) radio.run();
-    st.radio = F.drive ? radioIx : 0;
+    st.radio = F.drive ? radioIx : 0; st.station = sta ? sta.name : null;
     const k = (F.talk ? MU.score.talk_duck : 1) * (1 - (1 - MU.score.source_duck) * Math.min(1, srcNear * 2.5));
     score.fade(MU.score.gain / .5 * k, 1.2); score.run();
+  }
+
+  // ---- podcasts (SND-014): where a show is comes from the world clock, as a broadcast: pace seconds a game minute
+  const PC = S.podcasts, plans = {};
+  let onAir = null, podOut = null, capEl = null, capUntil = 0;
+  function plan(id) {                                    // every part of the show in order: [start s, length s, intro or line]
+    if (plans[id]) return plans[id];
+    const sh = PC.shows[id], items = []; let t = 0;
+    const speak = window.Talk && Talk.speak ? Talk.speak : text => ({ seq: [], words: [], asks: [], end: text.length * .065 });
+    sh.episodes.forEach((ep, e) => {
+      items.push({ t0: t, d: PC.intro_s, key: e + ":intro", ep }); t += PC.intro_s;
+      ep.lines.forEach(([host, text], k) => { const ln = speak(text); items.push({ t0: t, d: ln.end + PC.gap_s, key: e + ":" + k, ep, host: sh.hosts[host], text, ln }); t += ln.end + PC.gap_s; });
+    });
+    return plans[id] = { items, total: t };
+  }
+  function podcast(F, sta) {
+    const sh = PC.shows[sta.podcast], P = plan(sta.podcast), pos = ((F.m * D.pace) % P.total + P.total) % P.total;
+    const it = P.items.find(x => pos >= x.t0 && pos < x.t0 + x.d) || P.items[0], key = sta.podcast + "/" + it.key;
+    if (onAir !== key) {
+      offAir(); onAir = key;
+      podOut = gainOf(1); chain(podOut, filt("highpass", 160), filt("lowpass", 4600), bus.voice);
+      if (it.host) voice(podOut, it.ln, it.host.pitch, PC.voice_gain, pos - it.t0);
+      else if (pos - it.t0 < .6) recipe({ kind: "chime", hz: [523, 659, 784], len: .5, gain: .16 }, podOut);
+    }
+    caption(sh.title + " · " + it.ep.title, it.host ? it.host.name + ": " + it.text : "…", true);
+    st.caption = it.host ? it.host.name + ": " + it.text : sh.title;
+  }
+  function offAir() { if (podOut) { podOut.gain.setTargetAtTime(0, now(), .03); const o = podOut; setTimeout(() => o.disconnect(), 300); podOut = null; } onAir = null; st.caption = null; }
+  function caption(head, text, keep) {                   // what is on the radio, shown above the prompt; a music station only for a moment
+    if (!capEl) {
+      capEl = document.createElement("div");
+      capEl.style.cssText = "position:fixed;left:50%;bottom:150px;transform:translateX(-50%);max-width:min(640px,90vw);padding:8px 16px;background:rgba(23,23,28,.72);border-radius:6px;color:var(--cream,#d9cfb6);font-family:var(--data,sans-serif);font-size:16px;line-height:1.35;text-align:center;pointer-events:none;display:none";
+      capEl.innerHTML = '<div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim,#a79f8c)"></div><div></div>';
+      document.body.appendChild(capEl);
+    }
+    if (!head) { capEl.style.display = "none"; capUntil = 0; return; }
+    if (!keep && !text && capUntil && performance.now() > capUntil) { capEl.style.display = "none"; return; }
+    if (!keep && !capUntil) capUntil = performance.now() + 2500;
+    if (keep) capUntil = 0;
+    capEl.firstChild.textContent = "Radio · " + head; capEl.lastChild.textContent = text || ""; capEl.lastChild.style.display = text ? "block" : "none";
+    capEl.style.display = "block";
   }
 
   // ---- each frame, from play.js
@@ -388,7 +434,7 @@ var Sound = (() => {
     act, line, hush, frame,
     car(inOut) { act("car_door"); if (inOut === "in" && ready) { const s = ctx.createBufferSource(); s.buffer = noise; const g = ctx.createGain(); chain(s, filt("bandpass", 300, 3), g, bus.action); const t = now() + .3; env(g, t, .05, .25, V.player.start_len); s.start(t); s.stop(t + V.player.start_len + .2); } },
     horn(down) { if (horn) ramp(horn.gain, down ? V.player.horn_gain : 0, .01); },
-    radio() { radioIx = (radioIx + 1) % (MU.radio.length + 1); act("radio"); return radioIx ? MU.radio[radioIx - 1] : "off"; },
+    radio() { radioIx = (radioIx + 1) % (MU.radio.length + 1); act("radio"); capUntil = 0; return radioIx ? MU.radio[radioIx - 1].name : "off"; },
     level() { if (!meter) return 0; const d = new Float32Array(meter.fftSize); meter.getFloatTimeDomainData(d); let q = 0; for (const v of d) q += v * v; return Math.sqrt(q / d.length); },
     bus(name) { if (!meter) return 0; return bus[name] ? bus[name].gain.value : 0; },
     state: () => Object.assign({ on, running: !!ctx && ctx.state === "running" }, st),

@@ -71,7 +71,13 @@
    "shop":   { "style": "shop", "from": "08:00", "to": "19:00", "far": 18 },
    "market": { "style": "busker", "from": "09:00", "to": "17:00", "far": 40, "market_days_only": true }
   },
-  "radio": ["swing", "pop", "calm"],
+  "radio": [
+   { "name": "Swing FM", "style": "swing" },
+   { "name": "Pop Ninety", "style": "pop" },
+   { "name": "Calm", "style": "calm" },
+   { "name": "Tram Street Talk", "podcast": "tram_street" },
+   { "name": "The Quiet Hour", "podcast": "quiet_hour" }
+  ],
   "styles": {
    "cafe":   { "bpm": 96,  "root": 62, "scale": "major",      "chords": [2, 5, 1, 6], "voice": "keys",   "bass": true,  "drums": "brush", "density": 0.55, "gain": 0.5 },
    "shop":   { "bpm": 104, "root": 64, "scale": "major",      "chords": [1, 5, 6, 4], "voice": "pluck",  "bass": true,  "drums": null,    "density": 0.5,  "gain": 0.35 },
@@ -86,5 +92,227 @@
   },
   "voices": ["pluck", "keys", "pad", "guitar"],
   "drums": ["brush", "kit"]
+ },
+ "podcasts": {
+  "note": "Talk on the car radio (SND-014). Hosts are voiced as wordless syllables in their own pitch, the way residents speak (Q-14: text first), and each line is shown as a caption. Where a show is now comes from the world clock, as a broadcast would: the same line at the same moment for everyone.",
+  "gap_s": 0.7,
+  "intro_s": 2.5,
+  "bed_gain": 0.22,
+  "voice_gain": 0.2,
+  "shows": {
+   "tram_street": {
+    "title": "Tram Street Talk",
+    "bed": "calm",
+    "hosts": {
+     "mira": {
+      "name": "Mira",
+      "pitch": 235
+     },
+     "teo": {
+      "name": "Teo",
+      "pitch": 150
+     }
+    },
+    "episodes": [
+     {
+      "title": "Market day",
+      "lines": [
+       [
+        "mira",
+        "Good morning, Old Town. This is Tram Street Talk, and I'm Mira."
+       ],
+       [
+        "teo",
+        "And I'm Teo. Mira, I walked through Market Square at dawn and the stalls were already up."
+       ],
+       [
+        "mira",
+        "They always are. The flower stall sets up first. You can smell it from the fountain."
+       ],
+       [
+        "teo",
+        "I bought three apples and somehow left with a plant."
+       ],
+       [
+        "mira",
+        "That is how market day works. Nobody leaves with only what they came for."
+       ],
+       [
+        "teo",
+        "Is it true the busker knows only four songs?"
+       ],
+       [
+        "mira",
+        "Four songs, played with feeling. That counts as a big repertoire round here."
+       ],
+       [
+        "teo",
+        "Fair. If you're heading over, the tram stops right by the square."
+       ],
+       [
+        "mira",
+        "Bring a bag. Bring two. We'll be back after the bell."
+       ]
+      ]
+     },
+     {
+      "title": "Catching the tram",
+      "lines": [
+       [
+        "teo",
+        "You're listening to Tram Street Talk. Today, the tram."
+       ],
+       [
+        "mira",
+        "Our favourite slow, cream coloured friend."
+       ],
+       [
+        "teo",
+        "People ask why it rings twice. Once when it stops, once when it leaves."
+       ],
+       [
+        "mira",
+        "So you know to hurry. Or, if you're like me, to wave sadly as it goes."
+       ],
+       [
+        "teo",
+        "The commuters ride it out of town in the morning and back again at night."
+       ],
+       [
+        "mira",
+        "And the window seats on the left get the sun at the end of the day."
+       ],
+       [
+        "teo",
+        "A local secret, now shared with the whole town."
+       ],
+       [
+        "mira",
+        "Sorry, everyone. See you on the left side."
+       ]
+      ]
+     },
+     {
+      "title": "Rainy day plans",
+      "lines": [
+       [
+        "mira",
+        "If the sky turns grey, where do you go in Old Town?"
+       ],
+       [
+        "teo",
+        "Fountain Library. It's warm, it's quiet, and nobody minds if you nap."
+       ],
+       [
+        "mira",
+        "I'd say the Old Town Museum. You can learn something and stay dry."
+       ],
+       [
+        "teo",
+        "Or the Palace Cinema, with a paper bag of something sweet."
+       ],
+       [
+        "mira",
+        "Then a café after. Café Mina does a very good hot chocolate."
+       ],
+       [
+        "teo",
+        "That's three plans and a dessert. Nobody needs to be bored."
+       ],
+       [
+        "mira",
+        "That's our show. Be kind to each other out there."
+       ]
+      ]
+     }
+    ]
+   },
+   "quiet_hour": {
+    "title": "The Quiet Hour",
+    "bed": "calm",
+    "hosts": {
+     "oskar": {
+      "name": "Oskar",
+      "pitch": 130
+     },
+     "june": {
+      "name": "June",
+      "pitch": 205
+     }
+    },
+    "episodes": [
+     {
+      "title": "Night walk",
+      "lines": [
+       [
+        "oskar",
+        "This is The Quiet Hour. Take a breath. There's nowhere you need to be."
+       ],
+       [
+        "oskar",
+        "Tonight, a walk. Start at the fountain and listen to the water."
+       ],
+       [
+        "oskar",
+        "Turn up Mill Street. The lanterns are lit and the windows glow amber."
+       ],
+       [
+        "oskar",
+        "Somewhere a cat is deciding whether to cross the road. It decides not to."
+       ],
+       [
+        "oskar",
+        "At Linden Park the crickets have taken over the evening."
+       ],
+       [
+        "oskar",
+        "Sit on a bench. Count the windows still awake. One. Two. Three."
+       ],
+       [
+        "oskar",
+        "That's enough for tonight. Sleep well, Old Town."
+       ]
+      ]
+     },
+     {
+      "title": "Letters from listeners",
+      "lines": [
+       [
+        "june",
+        "Welcome to The Quiet Hour. I'm June, reading your letters tonight."
+       ],
+       [
+        "june",
+        "Someone writes: I moved here last spring and I still get lost. Is that normal?"
+       ],
+       [
+        "oskar",
+        "Completely normal. The streets are a grid, but the gardens hide the corners."
+       ],
+       [
+        "june",
+        "Another listener says the baker gave her an extra roll for no reason."
+       ],
+       [
+        "oskar",
+        "There's always a reason. The reason is that it was a good day."
+       ],
+       [
+        "june",
+        "And one more: what's the best time to see the town?"
+       ],
+       [
+        "oskar",
+        "Just after sunset, when the lamps come on one by one."
+       ],
+       [
+        "june",
+        "Thank you for writing. Keep the letters coming."
+       ]
+      ]
+     }
+    ]
+   }
+  }
  }
 }

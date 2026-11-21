@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 14 of 32 | 9 of 32 | 9 of 32 |
-| Size of the plan (points) | 161 | 233 | 502 |
-| Size of the suggested plan | 80 | 193 | 470 |
+| Decided | 15 of 33 | 9 of 33 | 9 of 33 |
+| Size of the plan (points) | 163 | 235 | 504 |
+| Size of the suggested plan | 82 | 195 | 472 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -39,6 +39,7 @@
 | **Talking with residents** `F-NPC-TALK` | 1 Dialogue ★ | 1 Dialogue | 2 Residents talk to each other | Owner, 2026-11-22: "Slice 1, depth 1, full 2" (conversations with choices from the first slice). |
 | **Faces while talking** `F-NPC-SPEECH` | 2 Lip sync ★ | undecided | undecided | Owner, 2026-11-22: "Yes, level 2 now" (lip sync timed from the line's text, in the first slice). Later milestones not stated. |
 | **Reacting to the world** `F-NPC-REACT` | undecided | undecided | undecided |  |
+| **Getting out of the way of cars** `F-NPC-DODGE` | 2 Dodge and tell off | undecided | undecided | Owner, 2026-11-22: "Level 2 for slice" (residents dodge a car coming at them, then gesture and shout at the driver). Later milestones not stated. |
 | **Animals** `F-ANIMALS` | undecided | undecided | undecided |  |
 
 ## Things to use
@@ -162,6 +163,11 @@
 - 1 Weather and night: People shelter from rain, lamps and windows light up, people glance at you. Size M.
 - 2 Events: People gather, flee or help when something happens. Size L.
 
+**Getting out of the way of cars** (`F-NPC-DODGE`). Whether residents see a car coming at them and react like people would.
+- 0 Pushed aside: A car that reaches a resident stops and the resident is pushed aside (CITY-064 as written). Size -.
+- 1 Dodge: Residents see a car heading at them and scramble out of its path: a hurried sidestep or jump to the side, then carry on. Size S.
+- 2 Dodge and tell off: Once clear, they turn on the driver: a raised fist or arms flung up and a short shout (a speech tag, no words spoken, Q-14), then go back to what they were doing. Size S.
+
 **Animals** (`F-ANIMALS`). Birds, cats and dogs around town.
 - 0 None: No animals. Size -.
 - 1 Ambient: Birds and cats that keep to themselves. Size M.
@@ -234,5 +240,5 @@
 
 **Music** (`F-SND-MUSIC`). Mood, and music as something people play and listen to.
 - 0 Background score: A soft score that changes with time of day; mutes in conversations. Size S.
-- 1 Music in the world: Music comes from places: car radio with a few stations, shop and café music, a busker; the score fades when a source is near. Size M.
+- 1 Music in the world: Music comes from places: car radio with a few music stations and podcasts, shop and café music, a busker; the score fades when a source is near. Size M.
 - 2 Players make music: Instruments and speakers players own and play for others, heard by everyone nearby. Size L.
