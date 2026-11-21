@@ -155,9 +155,14 @@ rules and, since 0.2.0, the look and the movement set in the art documents (§5.
 - A tram on Tram Street, on the timetable the residents use.
 - Traffic (LIVING_CITY 3.4): 198 residents' cars parked in their bays and driven by their owners on the day's plan
   (commuters out through the town gates and back), 6 delivery vans on rounds from the depots, and cars passing through
-  between the gates, busiest at 08:00 and 17:00: 720 trips on day 16. The driver is hidden while in the car. Cars and
-  vans are stand-in boxes in the world palette until a car look test is approved (CITY-067). The player cannot walk
-  through a car.
+  between the gates, busiest at 08:00 and 17:00: 720 trips on day 16. Five stand-in models, picked per car: a round
+  bubble car, a hatch, an estate (often with luggage on a roof rack), a little pickup with crates, and the delivery van;
+  soft stacked forms, big round wheels and lamps, one or two muted accents from the palette (W3, W4). Cabins are open
+  frames, so people show: a resident drives their own car, vans and cars passing through have a driver from out of town
+  (sometimes with a passenger), and the player sits in the car they drive. The tram has open windows and bench seats,
+  and the commuters who boarded it ride in it until it leaves the map, and on the way back from the edge to their stop.
+  Vehicles are "not started" in ART_DIRECTION §5: these are stand-ins until a car look test is approved (CITY-067). The
+  player cannot walk through a car.
 - Driving: E beside any parked car or van gets you in (it pulls out of its bay onto the road), W/S to drive and brake,
   A/D to steer, Space for the handbrake, E to get out. Walls and other cars stop you. A car you have moved stays where
   you left it and leaves its owner's day (a stand-in for owning a car, CITY-060 to CITY-063).

@@ -116,7 +116,7 @@
     console.warn("conversations.js did not load: talking to residents is off.");
   }
   if (!window.Cars) {                                    // the same for cars.js: no cars, but drivers stay hidden while "in" them
-    window.Cars = { at() { return null; }, draw() { return 0; }, push() { }, target() { return null; }, enter() { }, leave() { }, drive() { }, label() { return ""; }, driving() { return false; }, count: 0 };
+    window.Cars = { at() { return null; }, draw() { return 0; }, tram(m, x, z) { m.box(x - 6, .35, z - 1.2, x + 6, 2.75, z + 1.2, C.cream, 9); }, push() { }, target() { return null; }, enter() { }, leave() { }, drive() { }, label() { return ""; }, driving() { return false; }, count: 0 };
     console.warn("cars.js did not load: residents' cars are not drawn.");
   }
 </script>

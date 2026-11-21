@@ -8,7 +8,7 @@ Nothing to install; it runs from these five files.
 | `index.html` | The page and its HUD |
 | `play.js` | Builds the city from the data and runs the game |
 | `conversations.js` | Talking to residents: the conversation panel, run from the dialogue data |
-| `cars.js` | Residents' cars: placed from each car's day in the data (worked out by `Tools/citysim/traffic.py`) and drawn as stand-in boxes; drivers are hidden while in them |
+| `cars.js` | Cars, vans and the tram: placed from each vehicle's day in the data (worked out by `Tools/citysim/traffic.py`), five stand-in car models, the people riding in them, and the player driving any parked car |
 | `people.js` | The people: option B bodies and faces, and the walk from the movement signatures |
 | `city_data.js` | The city and one day of everyone's routine, packed from `World/`. Generated: do not edit |
 

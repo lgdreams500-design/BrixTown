@@ -986,7 +986,7 @@ function tramAt(m) {                                     // every tram on the ma
     let t = m - (T - (ref - stops[0]) / v - dw - (stops[0] + 60) / v), x = -60;       // minutes since this tram entered the map
     for (const s of stops) { const run = (s - x) / v; if (t < run) { x += t * v; t = -1; break; } t -= run; x = s; if (t < dw) { t = -2; break; } t -= dw; }
     if (t >= 0) x += t * v;
-    if (m - T > -40 && x > -60 && x < CITY + 60) out.push([x, t === -2]);
+    if (m - T > -40 && x > -60 && x < CITY + 60) out.push([x, t === -2, T]);   // T names the run (cars.js seats its riders)
   }
   return out;
 }
@@ -1221,6 +1221,7 @@ function ceilAt(x, z, y) { let c = 1e9; eachSolid(x, z, .2, s => { if (x > s[0] 
 function blocked(q) { if (q[1] < groundBase(q[0], q[2]) + .15) return true; let hit = false; eachSolid(q[0], q[2], .2, s => { if (q[0] > s[0] - .15 && q[0] < s[3] + .15 && q[1] > s[1] - .15 && q[1] < s[4] + .15 && q[2] > s[2] - .15 && q[2] < s[5] + .15) hit = true; }); return hit; }
 
 function stepPlayer(dt) {
+  if (pl.pose === 4) return Cars.drive(dt, keys, pl, cam, clock.m);   // driving (cars.js)
   const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0), s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
   if (pl.pose > 1) { if (f || s || keys.Space) { pl.pose = 0; pl.y = floorAt(pl.x, pl.z, pl.y); if (pl.seat) { pl.x = pl.seat.ox; pl.z = pl.seat.oz; } pl.seat = null; } else return; }
   const run = keys.ShiftLeft || keys.ShiftRight, sp = run ? 4.2 : 1.6, sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
@@ -1245,9 +1246,11 @@ function stepPlayer(dt) {
   } else { pl.y = mix(pl.y, g, Math.min(1, dt * 18)); pl.onGround = true; }
 }
 function interact() {
+  if (pl.pose === 4) return Cars.leave(pl, cam);          // out of the car (cars.js)
   if (pl.pose > 1) { keys.Space = true; stepPlayer(0); keys.Space = false; return; }
   if (!target || Talk.on) return;
   if (target.type === "talk") return Talk.open(target);
+  if (target.type === "car") return Cars.enter(target, pl, cam, clock.m);   // into a parked car (cars.js)
   if (target.type === "lift") {
     const fd = document.getElementById("fade"); fd.style.opacity = 1;
     setTimeout(() => { pl.x = target.to[0]; pl.y = target.to[1]; pl.z = target.to[2]; pl.vy = 0; fd.style.opacity = 0; }, 240);
@@ -1257,6 +1260,7 @@ function findTarget() {
   target = null; let best = 1.7;
   if (pl.pose > 1) return;
   for (const u of uses) { if (Math.abs(u.x - pl.x) > 2 || Math.abs(u.z - pl.z) > 2 || Math.abs(u.y - pl.y) > 1.2) continue; const d = Math.hypot(u.x - pl.x, u.z - pl.z); if (d < best) { best = d; target = u; } }
+  if (!target) target = Cars.target(pl, clock.m);        // a parked car to drive (cars.js)
 }
 function stepCamera(dt) {
   const cp = Math.cos(cam.pitch); cam.dir = [Math.sin(cam.yaw) * cp, Math.sin(cam.pitch), -Math.cos(cam.yaw) * cp];
@@ -1405,7 +1409,6 @@ function frame(now) {
 
   // everyone's place right now; bodies only for those near the player
   dyn.reset(); people = []; bodies = 0; const tags = [], near = started ? [pl.x, pl.z] : [cam.eye[0] + cam.dir[0] * 60, cam.eye[2] + cam.dir[2] * 60], reach = started ? 85 : 130;
-  if (pl.pose === 4) return Cars.drive(dt, keys, pl, cam, clock.m);   // driving (cars.js)
   for (let i = 0; i < D.plan.length; i++) {
     const r = Talk.where(i, clock.m); if (!r) continue;
     people.push([r.x, r.z]);
@@ -1426,15 +1429,9 @@ function frame(now) {
     People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
       look: pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
   }
-  for (const [x] of tramAt(clock.m)) {
-    const z = TRAM_Z; dyn.box(x - 6, .35, z - 1.2, x + 6, 1.35, z + 1.2, C.terracotta, 9); dyn.box(x - 6, 1.35, z - 1.2, x + 6, 2.75, z + 1.2, C.cream, 9); dyn.box(x - 6.1, 2.75, z - 1.25, x + 6.1, 2.95, z + 1.25, C.metal, 9);
-    for (let k = 0; k < 6; k++) for (const s of [-1, 1]) { const a = x - 5.3 + k * 1.85; dyn.quad([a, 1.5, z + s * 1.21], [a + 1.4, 1.5, z + s * 1.21], [a + 1.4, 2.55, z + s * 1.21], [a, 2.55, z + s * 1.21], [1, .7, .4], 1, [0, 0, s]); }
-    dyn.box(x + 6, 1.1, z - .25, x + 6.06, 1.4, z + .25, C.lantern, 2);
-  if (pl.pose === 4) return Cars.leave(pl, cam);          // out of the car (cars.js)
-  }
+  for (const [x, , T] of tramAt(clock.m)) Cars.tram(dyn, x, TRAM_Z, T, clock.m);   // the tram and the commuters on it (cars.js)
   stat.cars = Cars.draw(dyn, clock.m, near, reach);       // residents' cars, parked and driving (cars.js)
 
-  if (target.type === "car") return Cars.enter(target, pl, cam, clock.m);   // into a parked car (cars.js)
   const Lt = lighting(clock.m), dials = window.wasted.dials; Lt.sunCol = mul3(Lt.sunCol, dials.sun); Lt.sky = mul3(Lt.sky, dials.sky); Lt.ground = mul3(Lt.ground, dials.bounce); Lt.fogD *= dials.haze; Lt.exp *= dials.exposure;
   const wm = dials.warm || 0; Lt.sunCol = [Lt.sunCol[0], Lt.sunCol[1] * (1 - .1 * wm), Lt.sunCol[2] * (1 - .26 * wm)]; Lt.sky = [Lt.sky[0] * (1 - .08 * wm), Lt.sky[1] * (1 - .04 * wm), Lt.sky[2]];   // a more golden sun against a deeper sky
   const view = M4.look(cam.eye, cam.dir), fov = .9, asp = W / H, VP = M4.mul(M4.persp(fov, asp, .25, 3200), view.m), th = Math.tan(fov / 2);
@@ -1444,7 +1441,6 @@ function frame(now) {
     const R = 70, tex = 2 * R / SH, f = [-Lt.dir[0], -Lt.dir[1], -Lt.dir[2]], lv0 = M4.look([0, 0, 0], f), dot3 = (p, q) => p[0] * q[0] + p[1] * q[1] + p[2] * q[2];
     let foc = [near[0] + cam.dir[0] * 28, 0, near[1] + cam.dir[2] * 28]; const ox = dot3(foc, lv0.r) % tex, oy = dot3(foc, lv0.u) % tex;
     foc = [foc[0] - lv0.r[0] * ox - lv0.u[0] * oy, foc[1] - lv0.r[1] * ox - lv0.u[1] * oy, foc[2] - lv0.r[2] * ox - lv0.u[2] * oy];   // move in whole texels so shadows do not crawl
-  if (!target) target = Cars.target(pl, clock.m);        // a parked car to drive (cars.js)
     const lv = M4.look([foc[0] + Lt.dir[0] * 260, foc[1] + Lt.dir[1] * 260, foc[2] + Lt.dir[2] * 260], f), nn = 1, ff = 520;
     SM = M4.mul([1 / R, 0, 0, 0, 0, 1 / R, 0, 0, 0, 0, -2 / (ff - nn), 0, 0, 0, -(ff + nn) / (ff - nn), 1], lv.m); shOn = 1;
     gl.bindFramebuffer(gl.FRAMEBUFFER, shFbo); gl.viewport(0, 0, SH, SH); gl.colorMask(false, false, false, false); gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LESS); gl.depthMask(true); gl.clear(gl.DEPTH_BUFFER_BIT);
