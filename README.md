@@ -3,7 +3,7 @@
 A third-person multiplayer life simulation set in a living city.
 
 - **Spec:** [docs/specs/GAME_SPEC.md](docs/specs/GAME_SPEC.md)
-- **What goes in the game:** open `Tools/feature_picker.html` · [process](docs/process/FEATURE_PROCESS.md) · [backlog](docs/backlog/BACKLOG.md)
+- **What goes in the game:** tell an agent your picks in chat · [process](docs/process/FEATURE_PROCESS.md) · [backlog](docs/backlog/BACKLOG.md)
 - **Living city:** [docs/specs/domains/LIVING_CITY.md](docs/specs/domains/LIVING_CITY.md) · prototype in `Tools/citysim/`
 - **World map and playable slice:** [docs/specs/domains/WORLD_MAP.md](docs/specs/domains/WORLD_MAP.md) · data in `World/` · play it: open `Prototype/play/index.html` in Edge
 - **Art direction:** [docs/art/ART_DIRECTION.md](docs/art/ART_DIRECTION.md) · [faces](docs/art/CHARACTER_FACE.md) · [body motion](docs/art/CHARACTER_MOTION.md) · approved images in `Art/Reference/`

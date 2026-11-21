@@ -1,6 +1,55 @@
 {
   "schema": 1,
-  "note": "The owner's level picks. Written by Tools/feature_picker.html. A feature missing here is undecided.",
-  "updated": null,
-  "choices": {}
+  "note": "The owner's level picks, stated by the owner in chat and recorded by agents (ADR-0008). A feature or milestone missing here is undecided. -1 means out of the game. After editing, run Tools/backlog.ps1.",
+  "updated": "2026-11-22",
+  "choices": {
+    "F-MAP-CITY": {
+      "slice": 1,
+      "depth": 1,
+      "full": 2,
+      "note": "A district from the first slice (so cars fit), whole city in the full game (owner, 2026-11-22)."
+    },
+    "F-MAP-LOTS": {
+      "slice": 1,
+      "depth": 1,
+      "full": 1,
+      "note": "Registry at every milestone (owner, 2026-11-22)."
+    },
+    "F-NPC-POP": {
+      "slice": 1,
+      "depth": 1,
+      "full": 2,
+      "note": "Took the suggestion (owner, 2026-11-22)."
+    },
+    "F-NPC-ROUTINE": {
+      "slice": 1,
+      "depth": 1,
+      "full": 2,
+      "note": "By the clock, then by their needs in the full game (owner, 2026-11-22)."
+    },
+    "F-OBJ-POINTS": {
+      "slice": 1,
+      "depth": 1,
+      "full": 2,
+      "note": "Took the suggestion (owner, 2026-11-22)."
+    },
+    "F-NPC-LOAD": {
+      "slice": 1,
+      "depth": 1,
+      "full": 2,
+      "note": "Placed by routine, then distance tiers in the full game (owner, 2026-11-22)."
+    },
+    "F-VEH-TRAFFIC": {
+      "slice": 2,
+      "depth": 2,
+      "full": 2,
+      "note": "Owner, 2026-11-22: residents have their cars as part of their routine, from the first slice. Cars need this level."
+    },
+    "F-VEH-DRIVE": {
+      "slice": 2,
+      "depth": 2,
+      "full": 2,
+      "note": "Owner, 2026-11-22: walking, and drivable cars, from the first slice."
+    }
+  }
 }

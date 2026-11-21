@@ -1,7 +1,7 @@
 ---
 spec_id: WASTED-SPEC
 title: Wasted — Game Specification
-version: 0.4.1
+version: 0.4.2
 status: draft            # draft | reviewed | approved
 last_updated: 2026-11-22
 owner: project-owner
@@ -45,7 +45,7 @@ usable by both.
 | `docs/art/CHARACTER_MOTION.md` | Skeleton, movement signatures, state layers, talking while walking. |
 | `docs/specs/domains/LIVING_CITY.md` | Map, residents and routines, things to use, vehicles, seasons and plants (CITY-010 and WLD-010 onward), with the controllers behind them. |
 | `docs/process/FEATURE_PROCESS.md` | How a feature goes from idea to game, and what makes the cut. |
-| `docs/backlog/` | `features.json` (the backlog with levels), `feature_choices.json` (the owner's picks), `BACKLOG.md` (readable copy), `SCENARIOS.md`. Picks are made in `Tools/feature_picker.html`. |
+| `docs/backlog/` | `features.json` (the backlog with levels), `feature_choices.json` (the owner's picks), `BACKLOG.md` (readable copy), `SCENARIOS.md`. The owner states picks in chat; agents record them (ADR-0008). |
 | `Art/Reference/` | Approved reference images. Never overwritten. |
 | `docs/decisions/` | ADRs (why each decision was made). |
 
@@ -83,7 +83,7 @@ and tested**, and later systems are designed-for but not built until their phase
 | Phase | Name | Exit criteria (all must be true) |
 |---|---|---|
 | **PH0** | Foundation | Repo, folder layout, source control with large-file support, UE project compiles, dedicated server target builds, CI runs automated tests on every commit, one passing test per test layer (§11). |
-| **PH1** | Vertical slice | One city block. Third-person character walks, interacts with ≥10 object types, has needs that decay and are satisfied, does one job, earns and spends money, state survives a server restart. |
+| **PH1** | Vertical slice | One district of several blocks, with real traffic: residents drive their own cars on their routine and the player can drive (owner, 2026-11-22). Third-person character walks, interacts with ≥10 object types, has needs that decay and are satisfied, does one job, earns and spends money, state survives a server restart. |
 | **PH2** | Multiplayer core | 2–16 `[ASSUMPTION]` players in the same city on a dedicated server; accounts and login; text chat; all PH1 systems server-authoritative. |
 | **PH3** | Life depth | Careers with promotion, property purchase and furnishing, player-run shops, character designer, day/night, weather, vegetation growth. |
 | **PH4** | Economy engine | Banks, deposits, loans, mortgages, central-bank rate simulation, price indices, economy dashboards and soak tests. |
@@ -374,7 +374,7 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | Q-05 | Minimum and target PC hardware? | Sets every performance budget. | Define after first PH1 profiling. |
 | Q-06 | What happens to a character while its player is offline? | Fairness, need decay, burglary/griefing. | Character is safe and frozen; property and accounts keep running. |
 | Q-07 | Inactive-player property policy? | Lots are finite. | After N days unpaid costs, property returns to market. |
-| Q-08 | Vehicles: in scope, and when? | Big cost in physics, networking, city layout. | Walking only through PH3. |
+| Q-08 | Vehicles: in scope, and when? | Big cost in physics, networking, city layout. | **DECIDED 2026-11-22:** drivable cars from the first slice (PH1) onward, with real traffic in which residents drive their own cars as part of their routine (`F-VEH-DRIVE` 2, `F-VEH-TRAFFIC` 2 at every milestone). Car requirements still to be written. |
 | Q-09 | Voice chat? | Moderation cost. | Text only. |
 | Q-10 | Art style: realistic or stylised? | Drives character designer, UGC budgets, hardware needs. | **DECIDED 2026-11-21.** World: the old-town look of `Art/StyleTests/old_town_04_world.png` (warm sandstone blocks and mottled plaster, arches, lantern-lit shade, low sun through haze, muted palette with dull accents, same place readable from morning to dusk). No painterly post-process. Characters: option B "Soft" of `Art/StyleTests/old_town_04_characters.png` (about 5.6 heads tall, larger head and eyes, whole-garment clothing in the world's palette). Production models still to be made (Q-15). |
 | Q-11 | Team: solo, or others joining? | Affects tooling and process weight. | Solo plus AI agents. |
@@ -417,3 +417,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.3.1 | 2026-11-21 | Owner approved the body-motion prototype. ADR-0006 accepted; ANIM-001, 002, 004, 005, 006 accepted (shown in the clips); ANIM-003 and ANIM-007 to 011 stay proposed. Clips added to `Art/Reference/`. |
 | 0.4.0 | 2026-11-21 | Scope is now set by feature levels picked by the owner (`docs/backlog/`, `Tools/feature_picker.html`, `docs/process/FEATURE_PROCESS.md`). Living-city domain spec added (CITY-010 to CITY-042, WLD-010 to WLD-014) with the city-in-a-box prototype and tests. Open questions Q-18 to Q-20. |
 | 0.4.1 | 2026-11-22 | Daylight changed to the "kit" light (ADR-0007); ART-001 names `world_street_kit_light.png` as the daylight reference. |
+| 0.4.2 | 2026-11-22 | Feature picker removed: the owner states picks in chat and agents record them, checked by `Tools/backlog.ps1` (ADR-0008). Q-08 decided: drivable cars and real traffic from the first slice. PH1 is now one district, not one block. |

@@ -844,7 +844,7 @@
         },
         {
           "name": "Real traffic",
-          "what": "Vehicles choose routes, queue and obey signals.",
+          "what": "Vehicles choose routes, queue and obey signals; residents drive their own cars as part of their daily routine.",
           "effort": "XL",
           "needs": {
             "F-MAP-CITY": 1

@@ -22,7 +22,7 @@ Every requirement names a **feature** and a **level** from `docs/backlog/feature
 > milestone is at or above the requirement's level (`docs/backlog/feature_choices.json`).
 > Milestones: first slice = PH1, life depth = PH3, full game = PH6. Undecided means ask.
 
-So there is no Phase column: the picker decides when. Priority says how much it matters once in scope.
+So there is no Phase column: the owner's picks decide when. Priority says how much it matters once in scope.
 
 ## 1. The rule everything follows
 

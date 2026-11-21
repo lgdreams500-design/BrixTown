@@ -2,11 +2,10 @@
 
 Build, export and validation scripts.
 
-## feature_picker.html — choose what goes in the game
-Open it in Microsoft Edge or Google Chrome (double-click), press **Open the project folder** and choose this
-project's folder. Click a step to pick a level for a feature at each milestone; click it again to clear. Picks are
-saved straight to `docs/backlog/feature_choices.json`, and a readable copy to `docs/backlog/BACKLOG.md`.
-Process: `docs/process/FEATURE_PROCESS.md`.
+## backlog.ps1 — check the picks and rewrite the backlog
+The owner says picks in chat; an agent records them in `docs/backlog/feature_choices.json` and runs
+`powershell -NoProfile -ExecutionPolicy Bypass -File Tools/backlog.ps1`. It rejects invalid picks, lists needs that
+are not picked yet, and rewrites `docs/backlog/BACKLOG.md`. Process: `docs/process/FEATURE_PROCESS.md`, ADR-0008.
 
 ## citysim/ — the city in a box
 The living-city rules with no engine, with tests and top-down clips. See `citysim/README.md`.
@@ -25,6 +24,7 @@ of the ones before it, so keep the folder together.
 | `motion_lib.py` | Body motion maths with no Blender code: skeleton, movement signatures, walk, layers. |
 | `character_anim_06.py` | Jointed body; walk signatures clip and talking-while-walking clip. |
 | `building_kit_07.py` | Building kit: real lots from `World/` built with laid stone, cut reveals, arch stones, tiled roofs, shutters, shopfronts. Its street render is the daylight reference (ADR-0007). Also runs headless: `blender -b --factory-startup --python building_kit_07.py`. |
+| `building_kit_08.py` | The special buildings on top of kit 07: town hall, hospital, mall, guild house, office and flats towers, workshop, tram depot. Not yet approved. |
 
 `paint_filter.py` is the painterly filter that was tried and rejected.
 
