@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-ART-DIRECTION
 title: Wasted — Art direction (locked look)
-version: 1.1.0
+version: 1.2.0
 status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22
 last_updated: 2026-11-22
 relates_to: [ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
@@ -121,6 +121,7 @@ dressed in whole garments made of the same mottled matte material as the town.
 | C5 | Silhouette says who someone is: apron for a shopkeeper, cap and bag for a courier, long coat for an office worker, scarf and bun for an elder. |
 | C6 | Faces are built for animation first: see `docs/art/CHARACTER_FACE.md`. |
 | C7 | Player and NPC use the **same body and head**; the character designer changes values, not the model. |
+| C8 | **Rosy cheeks** on every face (ADR-0010): a soft oval below and outside each eye, a redder version of the person's own skin tone. Taken from option C; everything else stays option B. |
 
 ### 3.4 The designer values already in use
 Every person in the tests is one function called with a small set of values. This is the seed of the
@@ -160,3 +161,4 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 |---|---|---|
 | 1.0.0 | 2026-11-21 | First version: world look and character option B recorded from the approved renders. |
 | 1.1.0 | 2026-11-22 | Daylight changed to the kit light (ADR-0007): new reference `world_street_kit_light.png` and light recipe row. |
+| 1.2.0 | 2026-11-22 | Rule C8: option B gets rosy cheeks (ADR-0010). The B reference images predate it and show none. |

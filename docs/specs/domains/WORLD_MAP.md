@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-WORLD-MAP
 title: Wasted — World map as data, the starting city and the playable slice
-version: 0.5.4
+version: 0.5.5
 status: draft
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -224,7 +224,7 @@ Checked against the images in `Art/Reference/`. "Partly" means the rule is met i
 | W8 no post-process | None | Done |
 | C1 whole garments, §3.2 proportions | Tee, long top, tunic, coat and skirt as one soft form; head 1.22, legs 0.95, limbs 1.12 | Done |
 | C2, C3 palette cloth, matte skin | Clothes in the world palette with blotches; eight skin tones | Done |
-| C4 solid hair | Short, side, bob, long, bun, afro | Done |
+| C4 solid hair | Short, side, bob, long, bun, afro; a fringe frames the face for short, side, bob and long hair | Done |
 | C5 silhouette per role | Apron for shop and café staff, cap and bag for couriers, long coat for office workers, scarf and bun for elders | Done |
 | C6 faces | Round eyes with a large iris low in the eye, highlight, brows, small nose, mouth at rest; blink every 2 to 6 s | Done in conversations (speech shapes, expressions, lip sync timed from text); elsewhere the face stays at rest |
 | C7 one body for all | Player and residents are one function with designer values (`People.look`, `People.player`) | Done |
@@ -298,3 +298,4 @@ keep a timetable with several stops in it. Something has to give `[OPEN: Q-21]`.
 | 0.5.2 | 2026-11-22 | Q-24 decided: pavements and crossings, now that cars are in scope (CITY-043). |
 | 0.5.3 | 2026-11-22 | Talking to residents in the slice (CITY-007; owner picked F-NPC-TALK level 1 for the first slice): `World/rules/dialogue.json`, checked by `world.dialogue_problems` and `test_world.TheDialogue` (every reply leads somewhere, every node is reachable, every talk can end), played by `Prototype/play/conversations.js` (§5.1). |
 | 0.5.4 | 2026-11-22 | Faces while talking (owner picked F-NPC-SPEECH level 2 for the first slice; CHR-008, CHR-009, ANIM-006 to PH1; Q-14 text first): lip sync and expressions from `World/rules/speech.json`, checked by `world.speech_problems` and `test_world.TheFaces`; drawn in `people.js`, timed in `conversations.js` (§5.1). The reference line of CHARACTER_FACE §4 comes out at 53 frames against the reference's 55. |
+| 0.5.5 | 2026-11-22 | People brought closer to `character_lineup.png`: rosy cheeks (C8, ADR-0010); cloth mottle blends across each form instead of showing as patches; smoother near bodies (16 sides); a flat bib apron in place of a round blob; arms hang closer when standing, with rounded sleeve tops; chunkier limbs and rounded shoes; a fringe; a larger iris low in the eye; coat and tunic hems wide enough to hide striding legs. |
