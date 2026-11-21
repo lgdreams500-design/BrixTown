@@ -57,7 +57,7 @@ const KIND_WORD = { home: "Homes", shop: "Shops", food: "Cafés", work: "Workpla
 
 // ---------------------------------------------------------------- mesh: position 3, normal 3, colour 3, material 1
 // materials: 0 plaster (mottled) · 1 lit window · 2 lamp · 3 indoor surface · 4 dark window · 6 stone blocks · 7 paving · 8 light pool · 9 plain · 10 person indoors
-//            11 barrel roof tiles · 12 louvred shutter (both shade their own relief, after Tools/blender/building_kit_07.py)
+//            11 barrel roof tiles · 12 louvred shutter (both shade their own relief, after Tools/blender/building_kit_07.py) · 14 person outdoors
 class Mesh {
   constructor(n) { this.a = new Float32Array(n || 1 << 16); this.n = 0; }
   reset() { this.n = 0; }
@@ -725,11 +725,16 @@ void main(){
     if(f>1.5&&f<2.5){ col=vec3(1.,.55,.22)*6.; emis=true; }                // lantern glass: emission strength 6
     else {
       vec3 hemi=mix(uGround,uSky,n.y*.5+.5), light;
-      if((f>2.5&&f<3.5)||(f>9.5&&f<10.5)){ light=(uSunCol*.03+hemi*.5+vec3(.5,.4,.28))*(.84+.16*n.y+.08*n.x-.05*n.z); if(f<3.5) c=paint(c,vec3(.76),blot); }
+      if(f>2.5&&f<3.5){ light=(uSunCol*.03+hemi*.5+vec3(.5,.4,.28))*(.84+.16*n.y+.08*n.x-.05*n.z); c=paint(c,vec3(.76),blot); }
+      else if(f>9.5&&f<10.5){ float up=n.y*.5+.5, sd=dot(n,normalize(vec3(.5,0.,-.35)))*.5+.5;   // a person indoors: room light from above and one side, so the body keeps its form
+        light=(uSunCol*.03+hemi*.5+vec3(.5,.4,.28))*(.5+.38*up*up+.34*sd*sd); }
       else {
         vec2 a=texture2D(uAO,(vP.xz+n.xz-uAOm.x)*uAOm.y).rg; float vis=mix(a.r,1.,clamp((vP.y-.3)/max(a.g*85.,.6),0.,1.));   // how much sky this spot sees
         if(abs(n.y)<.5) c*=.66+.34*smoothstep(.1,1.4,vP.y);                 // grime at the foot of walls
-        float ndl=max(dot(n,uSun),0.); light=uSunCol*(ndl>0.?ndl*shadow():0.)+uSky*(n.y*.35+.65)*vis*vis+uGround*(1.-.5*vis);   // sun, sky seen, and light bounced off sunlit stone
+        float ndl=max(dot(n,uSun),0.); light=uSunCol*(ndl>0.?ndl*shadow():0.);
+        if(f>13.5){ float up=n.y*.5+.5, bw=dot(n,normalize(vec3(-uSun.x,-.45,-uSun.z)))*.5+.5;   // a person: sky from above, bounce from the sunlit side away from the sun, so shade still models the body
+          light+=uSky*(.28+.82*up*up)*vis*vis+uGround*(1.-.5*vis)*(.38+1.25*bw*bw); }
+        else light+=uSky*(n.y*.35+.65)*vis*vis+uGround*(1.-.5*vis);   // sun, sky seen, and light bounced off sunlit stone
         for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*.85+.15)); } }   // lanterns (W6)
       col=c*light; }
   }
@@ -1014,12 +1019,12 @@ function frame(now) {
       let da = yawOf(pl.x - r.x, pl.z - r.z) - r.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
       if (Math.abs(da) < 1.9) { const w = smooth(5.5, 3.2, d); lk = [clamp(-da * .6, -.85, .85) * w, 0]; }
     }
-    People.draw(dyn, r.x, r.y, r.z, r.yaw, L, r.pose, { ph: r.ph || 0, t: now / 1000, lod: dc < 13 ? 0 : dc < 40 ? 1 : 2, fl: r.inside ? 10 : 9, look: lk, sleep: r.pose === 3 });
+    People.draw(dyn, r.x, r.y, r.z, r.yaw, L, r.pose, { ph: r.ph || 0, t: now / 1000, lod: dc < 13 ? 0 : dc < 40 ? 1 : 2, fl: r.inside ? 10 : 14, look: lk, sleep: r.pose === 3 });
     if (started && d < 9 && Math.abs(r.y - pl.y) < 3) tags.push({ x: r.x, y: r.y + (r.pose === 2 ? 1.0 : r.pose === 3 ? .55 : 1.88) * L.S, z: r.z, d, text: D.residents[i].n + ", " + D.roles[D.residents[i].r] + " · " + (r.walking ? GOING[D.acts[r.act]] || "walking" : DOING[D.acts[r.act]] || D.acts[r.act]) });
   }
   if (started && !cam.fp && !cam.close) {
     let da = cam.yaw - pl.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
-    People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 9,
+    People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
       look: pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
   }
   for (const [x] of tramAt(clock.m)) {
