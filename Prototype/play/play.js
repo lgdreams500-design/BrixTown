@@ -641,6 +641,7 @@ function furnish(l, side, accent, inC, vis) {     // at load (no vis): places, u
   (o.chair || []).forEach(([x, z]) => { chair(x, z, toDoor, R.chair || C.cream); occ.push([x, z, .9]); spot(l, x, z, 2, toDoor, F + .45); use(x, F + .45, z, "sit", "Sit down", toDoor); });
   (o.seat || []).forEach(([x, z], k) => {
     const sgn = k % 2 ? -1 : 1; chair(x, z, yawOf(sgn, 0), R.chair || ROOM_WOOD); table(x + sgn * .7, z, .64, .74, l.kind === "food");
+    if (l.kind === "food" || l.sp === "mall") chair(x + sgn * 1.4, z, yawOf(-sgn, 0), R.chair || ROOM_WOOD);   // a table for two: a second chair across it
     hard(x + sgn * .7 - .31, F, z - .31, x + sgn * .7 + .31, F + .74, z + .31); occ.push([x + sgn * .35, z, 1.2]);
     spot(l, x, z, 2, yawOf(sgn, 0), F + .45); use(x, F + .45, z, "sit", "Sit down", yawOf(sgn, 0));
   });
@@ -652,7 +653,7 @@ function furnish(l, side, accent, inC, vis) {     // at load (no vis): places, u
       B(cx - (ns ? w / 2 - .04 : 0), 0, cz - (ns ? 0 : w / 2 - .04), ns ? .05 : dep - .06, h - .04, ns ? dep - .06 : .05, ROOM_WOOD);
       B(cx - (ns ? .2 : 0), h, cz - (ns ? 0 : .2), .32, .02, .24, [.88, .86, .8], .2); B(cx + (ns ? .4 : .1), h, cz + (ns ? .1 : .4), .1, .38, .1, C.metal); B(cx + (ns ? .4 : .1), h + .34, cz + (ns ? .1 : .4), .2, .08, .2, R.lamp || C.teal);
       chair(x, z, toDoor, R.chair || ROOM_WOOD); use(x, F + .45, z, "sit", "Sit at the desk", toDoor);
-    } else {
+    } else if (l.kind !== "food") {                       // (a cafe's staff stand behind one long coffee bar, built in room())
       B(cx, 0, cz, sx, h - .05, sz, R.counter || ROOM_WOOD); B(cx, h - .05, cz, sx + .06, .05, sz + .06, R.top || accent);
       for (let q = 0; q < 3; q++) { const u = (q - 1) * w / 3; B(cx + (ns ? u : d[0] * -.29), .12, cz + (ns ? d[1] * -.29 : u), ns ? w / 3 - .12 : .02, h - .3, ns ? .02 : w / 3 - .12, mul3(R.counter || ROOM_WOOD, .8)); }
       const tool = R.onCounter; if (tool) tool(B, cx, cz, h, ns, l);
@@ -661,19 +662,6 @@ function furnish(l, side, accent, inC, vis) {     // at load (no vis): places, u
     spot(l, x, z, desk ? 2 : 0, toDoor, desk ? F + .45 : F);
   }
   for (const [x, z] of o.customer || []) { spot(l, x, z, 0, fromDoor, F); occ.push([x, z, .7]); }
-  if (l.kind === "shop" && l.sp !== "mall") {            // shelves along the two side walls, stocked
-    const n = Math.max(2, Math.floor((ns ? z1 - z0 : x1 - x0) / 5));
-    for (let k = 0; k < n; k++) for (const sgn of [-1, 1]) {
-      const along = (ns ? z0 : x0) + ((k + .5) / n) * (ns ? z1 - z0 : x1 - x0), at = sgn < 0 ? (ns ? x0 : z0) + .62 : (ns ? x1 : z1) - .62;
-      const cx = ns ? at : along, cz = ns ? along : at, sx = ns ? .45 : 2.4, sz = ns ? 2.4 : .45;
-      for (const e of [-1, 1]) B(cx + (ns ? 0 : e * 1.17), 0, cz + (ns ? e * 1.17 : 0), ns ? .45 : .06, 1.95, ns ? .06 : .45, ROOM_WOOD);
-      for (let s = 0; s < 4; s++) {
-        const y = .12 + s * .5; B(cx, y, cz, sx, .04, sz, ROOM_WOOD);
-        for (let g = 0; g < 7; g++) { const u = -1.05 + g * .35, hh = .14 + .2 * hash(l.id, k, sgn, s, g); B(cx + (ns ? 0 : u), y + .04, cz + (ns ? u : 0), ns ? .3 : .26, hh, ns ? .26 : .3, pick(ROOM_GOODS, hash(l.id, k, s, g, sgn))); }
-      }
-      hard(cx - sx / 2, F, cz - sz / 2, cx + sx / 2, F + 1.95, cz + sz / 2); occ.push([cx, cz, 1.4]);
-    }
-  }
   room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard);
   if (l.tower && !vis) {                                       // a lift in the back corner, up to the roof terrace
     const bx = side === "e" ? x0 + 1.5 : side === "w" ? x1 - 1.5 : x0 + 1.5, bz = side === "s" ? z0 + 1.5 : side === "n" ? z1 - 1.5 : z0 + 1.5;
@@ -696,23 +684,223 @@ const ROOM_FLOOR = {                                         // [material, colou
 };
 const espresso = (B, cx, cz, h, ns) => { B(cx - (ns ? .45 : 0), h, cz - (ns ? 0 : .45), .5, .42, .36, C.metal); B(cx - (ns ? .45 : 0), h + .42, cz - (ns ? 0 : .45), .3, .08, .3, [.6, .58, .55]); for (let k = 0; k < 4; k++) B(cx + (ns ? .1 + k * .12 : 0), h, cz + (ns ? 0 : .1 + k * .12), .07, .08, .07, [.86, .84, .8]); B(cx + (ns ? .62 : 0), h, cz + (ns ? 0 : .62), .3, .26, .3, [.95, .82, .55], 0, 2); };
 const till = (B, cx, cz, h, ns) => { B(cx - (ns ? .5 : 0), h, cz - (ns ? 0 : .5), .36, .2, .3, C.charcoal); B(cx - (ns ? .5 : 0), h + .2, cz - (ns ? 0 : .5), .26, .14, .04, [.2, .3, .3]); B(cx + (ns ? .35 : 0), h, cz + (ns ? 0 : .35), .5, .14, .34, C.ochre); };
+const vise = (B, cx, cz, h, ns) => { B(cx - (ns ? .5 : 0), h, cz - (ns ? 0 : .5), .22, .18, .2, C.metal); B(cx - (ns ? .5 : 0), h + .18, cz - (ns ? 0 : .5), .04, .04, .34, C.metal); B(cx + (ns ? .2 : 0), h, cz + (ns ? 0 : .2), .5, .03, .08, [.5, .32, .18]); B(cx + (ns ? .4 : 0), h, cz + (ns ? 0 : .4), .06, .05, .3, C.metal); };
 const ledger = (B, cx, cz, h, ns) => { B(cx, h, cz, .3, .04, .22, [.86, .84, .78]); B(cx + (ns ? .5 : 0), h, cz + (ns ? 0 : .5), .1, .3, .1, C.metal); };
 const ROOM_STYLE = {
   // tall/low: pieces for the walls (tall ones keep off windows and the door wall); mid: things for open floor; pictures; lamp shades
   home: { tall: ["wardrobe", "bookcase", "dresser", "fireplace"], low: ["sideboard", "plant", "dresser"], mid: ["dining", "rug"], pictures: "art", fabric: [C.olive, C.plum, [.55, .35, .24], C.blue], lamp: C.cream },
-  food: { tall: ["bottles"], low: ["pastry", "plant", "sideboard"], mid: ["plant"], pictures: "menu", fabric: [C.cream], chair: [.42, .3, .2], counter: [.3, .2, .13], top: [.62, .58, .52], onCounter: espresso, lamp: C.ochre },
-  shop: { tall: [], low: ["crates", "plant"], mid: ["produce"], pictures: "price", fabric: [C.cream], counter: [.32, .22, .14], top: C.teal, onCounter: till, lamp: C.cream },
+  food: { tall: [], low: ["plant"], mid: [], pictures: "menu", fabric: [C.cream], chair: [.42, .3, .2], counter: [.3, .2, .13], top: [.62, .58, .52], onCounter: espresso, lamp: C.ochre },
+  shop: { tall: [], low: ["plant"], mid: [], pictures: "price", fabric: [C.cream], counter: [.32, .22, .14], top: C.teal, onCounter: till, lamp: C.cream },
   work: { tall: ["bookcase", "filing"], low: ["plant", "sideboard"], mid: ["rug"], pictures: "art", fabric: [C.blue, C.olive], onCounter: ledger, lamp: C.teal },
   office: { tall: ["bookcase", "filing"], low: ["plant", "sofa"], mid: ["reception", "rug"], pictures: "art", fabric: [C.blue, C.charcoal], onCounter: ledger, lamp: C.teal },
   guild: { tall: ["bookcase", "fireplace"], low: ["sideboard", "plant"], mid: ["long", "rug"], pictures: "art", fabric: [C.terracotta], onCounter: ledger, lamp: C.ochre },
   hall: { tall: ["bookcase", "filing"], low: ["bench", "plant"], mid: ["reception", "benches"], pictures: "art", fabric: [C.terracotta], onCounter: ledger, lamp: C.cream },
-  works: { tall: ["lockers"], low: ["workbench", "machine", "barrels", "crates"], mid: ["crates", "machine"], pictures: "tools", fabric: [C.charcoal], onCounter: ledger, lamp: C.metal },
+  works: { tall: ["lockers"], low: ["workbench", "barrels", "crates"], mid: ["crates"], pictures: "tools", fabric: [C.charcoal], onCounter: vise, counter: [.36, .26, .18], top: [.42, .3, .2], lamp: C.metal },
   health: { tall: ["medcab"], low: ["sink", "bench", "plant"], mid: ["reception", "screens"], pictures: "notice", fabric: [C.teal], chair: [.6, .62, .62], counter: [.8, .8, .76], top: C.teal, onCounter: ledger, lamp: C.cream },
   hospital: { tall: ["medcab"], low: ["sink", "bench", "plant"], mid: ["reception", "screens", "beds"], pictures: "notice", fabric: [C.teal], chair: [.6, .62, .62], counter: [.8, .8, .76], top: C.teal, onCounter: ledger, lamp: C.cream },
   utility: { tall: ["lockers"], low: ["workbench", "crates", "barrels"], mid: ["crates"], pictures: "tools", fabric: [C.charcoal], onCounter: ledger, lamp: C.metal },
   mall: { tall: [], low: ["plant", "bench"], mid: ["kiosk", "plant"], pictures: "price", fabric: [C.cream], counter: [.32, .22, .14], top: C.ochre, onCounter: till, lamp: C.ochre },
   flats: { tall: [], low: ["sofa", "plant"], mid: ["reception", "rug"], pictures: "art", fabric: [C.olive], onCounter: ledger, lamp: C.cream },
 };
+// The arrangement of each kind of building, laid out from the door: `a` runs along the door wall, `i` inward from it.
+// Everything is placed round the data's own places (staff behind counters at the back, seats and customers in front).
+function layout(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard, clear, walls, box, P) {
+  const [x0, z0, x1, z1] = l.rect, t = .35, o = DOOR_DIR[side], [dx, dz] = l.door, dw = l.dw, FR = Math.atan2(-o[0], -o[1]);
+  const h = (...k) => hash(l.id, "lay", ...k), WD = ROOM_WOOD, DARK = [.3, .2, .13], TOP = [.62, .58, .52], WHITE = [.84, .85, .83];
+  const wp = (a, i) => [dx - o[0] * i - o[1] * a, dz - o[1] * i + o[0] * a];
+  const rel = ([x, z]) => [-(x - dx) * o[1] + (z - dz) * o[0], -((x - dx) * o[0] + (z - dz) * o[1])];
+  const cs = [[x0, z0], [x1, z0], [x0, z1], [x1, z1]].map(rel), aMin = Math.min(...cs.map(c => c[0])) + t, aMax = Math.max(...cs.map(c => c[0])) - t, iMax = Math.max(...cs.map(c => c[1])) - t, iMin = t;
+  const FB = (a, i, y0, sa, sy, si, c, f, yaw) => { const p = wp(a, i); B(p[0], y0, p[1], sa, sy, si, c, FR + (yaw || 0), f); };
+  const FH = (a0, a1, i0, i1, ht) => { const p = wp(a0, i0), q = wp(a1, i1); hard(p[0], F, p[1], q[0], F + ht, q[1]); };
+  const FO = (a, i, r) => { const p = wp(a, i); occ.push([p[0], p[1], r]); };
+  const FF = (a, i, r) => { const p = wp(a, i); return clear(p[0], p[1], r) && a - r > aMin - .35 && a + r < aMax + .35 && i - r > iMin - .35 && i + r < iMax + .35; };   // (pieces may stand against a wall)
+  const FFrun = (a, i0, i1, r) => { for (let i = i0; i <= i1; i += .8) if (!FF(a, i, r)) return false; return true; };
+  const ob = k => ((l.objects || {})[k] || []).map(rel), pv = [-o[1], 0, o[0]];
+  const lamp = (a, i, drop, c) => { const p = wp(a, i); dm.box(p[0] - .01, GF - drop, p[1] - .01, p[0] + .01, GF, p[1] + .01, C.charcoal, 19); dm.ybox(p[0], GF - drop - .2, p[1], .32, .2, .32, 0, c || C.ochre, 19); dm.box(p[0] - .07, GF - drop - .27, p[1] - .07, p[0] + .07, GF - drop - .19, p[1] + .07, [1, .78, .5], 2); };
+  const glass = (a, i0, i1, y0, y1, facing) => { const P1 = (ii, y) => { const p = wp(a, ii); return [p[0], F + y, p[1]]; }; dm.quad(P1(i0, y0), P1(i1, y0), P1(i1, y1), P1(i0, y1), [0, 0, .998], 1, facing, true); };
+  const key = l.sp === "mall" ? "mall" : l.kind === "food" ? "cafe" : l.kind === "shop" ? "grocer" : l.kind === "home" ? "home" : l.sp === "works" ? "works"
+    : l.kind === "work" ? (l.sp === "hall" ? "hall" : l.sp === "guild" ? "guild" : "office") : l.kind === "health" ? "clinic" : l.kind === "utility" ? "depot" : null;
+  const Wk = ob("work"), Cu = ob("customer"), Ch = ob("chair");
+
+  if (key === "cafe") {
+    // one coffee bar across the back joining the baristas' places: espresso machines, grinders, cups, a lit cake case
+    if (Wk.length) {
+      const wi = Math.max(...Wk.map(w => w[1])), ci = wi - .8, a0 = Math.max(aMin + .4, Math.min(...Wk.map(w => w[0])) - 2.6), a1 = Math.min(aMax - .4, Math.max(...Wk.map(w => w[0])) + 2.6), am = (a0 + a1) / 2, L = a1 - a0;
+      FB(am, ci, 0, L, 1.0, .62, DARK); FB(am, ci, 1.0, L + .1, .06, .8, TOP);
+      for (let k = 0; k < Math.floor(L / .9); k++) FB(a0 + .45 + k * .9, ci - .32, .15, .78, .72, .02, [.24, .16, .1]);
+      FB(am, ci - .45, .18, L, .04, .04, C.metal); FH(a0, a1, ci - .4, ci + .4, 1.06);
+      for (const [wa] of Wk) {
+        FB(wa - .25, ci + .1, 1.06, .56, .46, .42, C.metal); FB(wa - .25, ci + .1, 1.52, .4, .06, .32, [.6, .58, .55]); FB(wa - .32, ci - .14, 1.18, .05, .12, .05, [.2, .2, .22]); FB(wa - .18, ci - .14, 1.18, .05, .12, .05, [.2, .2, .22]);
+        FB(wa + .4, ci + .15, 1.06, .18, .4, .18, [.2, .2, .22]); FB(wa + .4, ci + .15, 1.46, .2, .12, .2, [.5, .3, .18]);
+        for (let k = 0; k < 4; k++) FB(wa + .75 + (k % 2) * .11, ci - .05, 1.06 + Math.floor(k / 2) * .09, .08, .085, .08, [.9, .88, .84]);
+      }
+      FB(a1 - .75, ci, 1.06, 1.2, .48, .58, [.95, .86, .64], 2); FB(a1 - .75, ci, 1.54, 1.24, .03, .62, C.metal);
+      for (let k = 0; k < 4; k++) FB(a1 - 1.2 + k * .3, ci, 1.08, .22, .11, .22, pick([C.ochre, [.55, .3, .18], C.cream, [.6, .2, .16]], h(k, "cake")));
+      FB(a0 + .35, ci, 1.06, .16, .22, .16, [.75, .8, .82]);
+      const bi = iMax - .32;                                // the back counter, shelves of cups and bottles, chalk menus over the baristas
+      if (bi - ci > 1.2) {
+        FB(am, bi, 0, L, .9, .6, DARK); FB(am, bi, .9, L + .05, .04, .64, TOP); FH(a0, a1, bi - .3, iMax, .95);
+        for (let s = 0; s < 2; s++) { FB(am, iMax - .14, 1.45 + s * .42, L, .04, .28, WD); for (let k = 0; k < Math.floor(L / .24); k++) FB(a0 + .15 + k * .24, iMax - .14, 1.49 + s * .42, .1, s ? .27 : .11, .1, s ? pick([[.16, .3, .18], [.38, .2, .1], [.6, .52, .3], [.5, .14, .12]], h(k, s)) : [.9, .88, .84]); }
+        for (let k = 0; k < 3; k++) { const ma = am + (k - 1) * L / 3.2; FB(ma, iMax - .03, 2.25, 1.1, .72, .03, [.1, .1, .1]); FB(ma, iMax - .05, 2.86, .7, .05, .02, [.9, .86, .74]); for (let q = 0; q < 4; q++) FB(ma - .3 + .12 * h(k, q), iMax - .05, 2.72 - q * .14, .4 + .3 * h(q, k), .03, .02, [.86, .82, .72]); }
+        for (let a = a0 + .7; a < a1; a += 1.5) FO(a, bi, .8);
+      }
+      for (let k = 0; k < Math.max(2, Math.round(L / 2.4)); k++) lamp(a0 + (k + .5) * L / Math.max(2, Math.round(L / 2.4)), ci, .85, C.ochre);
+      for (let a = a0 + .5; a < a1; a += 1.2) FO(a, ci, .7);
+    }
+    // a window bar with stools under the front windows, either side of the door
+    for (const sg of [-1, 1]) {
+      const b0 = sg < 0 ? aMin + .5 : dw / 2 + 1.6, b1 = sg < 0 ? -dw / 2 - 1.6 : aMax - .5;
+      if (b1 - b0 < 1.8 || !FF((b0 + b1) / 2, .9, .2)) continue;
+      let ok = true; for (let a = b0 + .3; a < b1; a += .8) if (!FF(a, .95, .3)) { ok = false; break; } if (!ok) continue;
+      FB((b0 + b1) / 2, .6, 1.02, b1 - b0, .05, .44, TOP); for (let a = b0 + .3; a < b1; a += 1.5) FB(a, .55, 0, .06, 1.02, .06, C.metal); FH(b0, b1, .38, .82, 1.05);
+      for (let a = b0 + .45; a < b1 - .2; a += .9) { FB(a, 1.1, .74, .36, .05, .36, DARK); FB(a, 1.1, 0, .05, .74, .05, C.metal); FB(a, 1.1, .25, .3, .03, .3, C.metal, Math.PI / 4); }
+      for (let a = b0; a <= b1; a += 1) FO(a, .95, .55);
+    }
+    const ka = dw / 2 + .9;                                // a coat stand by the door
+    if (FF(ka, 1.0, .3)) { FB(ka, 1.0, 0, .05, 1.8, .05, WD); FB(ka, 1.0, 0, .46, .04, .46, WD, Math.PI / 4); FB(ka, 1.0, 1.62, .5, .05, .05, WD); FB(ka, 1.0, 1.62, .05, .05, .5, WD); FB(ka + .18, 1.0, 1.2, .2, .45, .12, C.olive); FO(ka, 1.0, .35); }
+  }
+
+  if (key === "grocer") {
+    // checkouts at the staff places: a belt, a sweets rack in front, a stack of baskets by the door
+    const wiMin = Wk.length ? Math.min(...Wk.map(w => w[1])) : iMax - 2, ci = wiMin - .8;
+    for (const [wa, wiK] of Wk) {
+      FB(wa, wiK - .8, .98, 1.5, .02, .32, [.12, .12, .13]); FB(wa - .55, wiK - .8, .98, .3, .2, .3, [.2, .2, .2]);
+      FB(wa + .35, wiK - 1.3, 0, .9, 1.1, .26, WD); for (let s = 0; s < 3; s++) for (let k = 0; k < 4; k++) FB(wa + .02 + k * .22, wiK - 1.38, .18 + s * .3, .16, .13, .1, pick(ROOM_GOODS, h(wa, s, k)));
+      FH(wa - .1, wa + .8, wiK - 1.45, wiK - 1.15, 1.1); FO(wa + .35, wiK - 1.3, .5);
+      const p = wp(wa, wiK - .8); dm.box(p[0] - .01, GF - .55, p[1] - .01, p[0] + .01, GF, p[1] + .01, C.charcoal, 19); FB(wa, wiK - .8, GF - F - .8, .9, .25, .04, C.teal); FB(wa, wiK - .82, GF - F - .74, .5, .12, .02, C.cream);
+    }
+    const ba = -(dw / 2 + 1.1); if (FF(ba, 1.0, .3)) { for (let k = 0; k < 5; k++) FB(ba, 1.0, k * .2, .5, .18, .36, [.62, .16, .12]); FO(ba, 1.0, .4); }
+    // fridges with lit glass doors down one side wall; produce stands down the other
+    const sideRun = (aw, sg, build) => { for (let i = 2.0; i + 1.3 < iMax - .3; i += 1.4) build(aw + sg * .45, i + .65, sg, i); };
+    sideRun(aMin, 1, (a, i, sg, i0) => {
+      if (!FF(a, i, .5)) return;
+      FB(a, i, 0, .86, 2.05, 1.34, WHITE); FB(a, i, 2.05, .92, .28, 1.36, C.teal); FB(a + sg * .44, i, .0, .02, .15, 1.3, [.2, .2, .22]);
+      glass(a + sg * .44, i0 + .05, i0 + .64, .2, 1.95, sg > 0 ? pv : pv.map(v => -v)); glass(a + sg * .44, i0 + .68, i0 + 1.27, .2, 1.95, sg > 0 ? pv : pv.map(v => -v));
+      for (let s = 0; s < 4; s++) for (let k = 0; k < 4; k++) FB(a + sg * .2, i0 + .15 + k * .32, .3 + s * .42, .2, .2, .16, pick([[.85, .85, .8], [.3, .45, .6], [.7, .2, .15], [.85, .7, .3]], h(i0, s, k)));
+      FH(a - .45, a + .45, i0, i0 + 1.34, 2.3); FO(a, i, .8);
+    });
+    sideRun(aMax, -1, (a, i, sg, i0) => {
+      if (!FF(a, i, .5)) return;
+      FB(a, i, 0, .86, .62, 1.3, WD); FB(a - sg * .1, i, .62, .66, .2, 1.26, WD); FB(a + sg * .2, i, .62, .4, .45, 1.26, WD);
+      for (let k = 0; k < 8; k++) FB(a + (k % 2 ? sg * .2 : -sg * .1), i0 + .2 + Math.floor(k / 2) * .3, (k % 2 ? 1.07 : .82), .26, .1, .24, pick([[.6, .2, .16], [.42, .5, .24], C.ochre, [.55, .3, .45], [.3, .45, .2]], h(i0, k)));
+      FH(a - .45, a + .45, i0, i0 + 1.3, 1.1); FO(a, i, .8);
+    });
+    // aisles of stocked shelving between the customers' places, running in from the door; signs hang over them
+    const cas = Cu.map(c => c[0]).sort((p, q) => p - q), ais = [];
+    for (let k = 0; k + 1 < cas.length; k++) ais.push((cas[k] + cas[k + 1]) / 2);
+    if (cas.length) ais.push(cas[0] - 2.6, cas[cas.length - 1] + 2.6);
+    const i0 = 2.2, i1 = Math.min(ci - 2.1, iMax - 1.5);
+    for (const a of ais) {
+      if (Math.abs(a) < dw / 2 + 1.3 || a < aMin + 2.0 || a > aMax - 2.0 || i1 - i0 < 1.6 || !FFrun(a, i0, i1, .55)) continue;
+      const im = (i0 + i1) / 2, Lg = i1 - i0;
+      FB(a, im, 0, 1.0, .12, Lg, [.3, .3, .32]); FB(a, im, .12, .06, 1.5, Lg, WHITE);
+      for (let s = 0; s < 4; s++) {
+        const y = .22 + s * .38; FB(a, im, y, 1.0, .03, Lg, WHITE);
+        for (const sd of [-1, 1]) for (let g = 0; g < Math.floor(Lg / .3); g++) FB(a + sd * .28, i0 + .15 + g * .3, y + .03, .34, .12 + .16 * h(a, s, g, sd), .25, pick(ROOM_GOODS, h(a, g, s, sd)));
+      }
+      FB(a, i0, 0, 1.04, 1.62, .06, C.teal); FB(a, i0 - .04, 1.2, .8, .3, .02, C.cream);
+      const p = wp(a, im); dm.box(p[0] - .01, GF - .5, p[1] - .01, p[0] + .01, GF, p[1] + .01, C.charcoal, 19); FB(a, im, GF - F - .78, .05, .28, 1.3, C.teal); FB(a, im, GF - F - .72, .07, .14, 1.0, C.cream);
+      FH(a - .5, a + .5, i0, i1, 1.65); for (let i = i0; i <= i1; i += .9) FO(a, i, .6);
+    }
+    // stocked shelving along the back wall behind the checkouts
+    if (iMax - ci > 1.6) for (let a = aMin + 1.2; a < aMax - 1.0; a += 2.0) { if (!FF(a, iMax - .3, .4)) continue; FB(a, iMax - .25, 0, 1.9, 1.9, .45, WD); for (let s = 0; s < 4; s++) for (let k = 0; k < 6; k++) FB(a - .8 + k * .32, iMax - .45, .2 + s * .44, .24, .12 + .14 * h(a, s, k), .1, pick(ROOM_GOODS, h(k, s, a))); FH(a - .95, a + .95, iMax - .5, iMax, 1.9); FO(a, iMax - .3, .7); }
+  }
+
+  if (key === "home") {
+    // one home round each bed: a wardrobe at the back wall, a rug and lamp by the armchair, a kitchenette and a small table
+    const beds = ob("bed"), rooms = ob("room");
+    beds.forEach(([ba, bi], k) => {
+      const wa = ba + 1.5;
+      if (bi > iMax - 2.8 && FF(wa, iMax - .35, .55)) { FB(wa, iMax - .32, 0, 1.1, 2.0, .58, WD); FB(wa, iMax - .62, .1, .02, 1.85, .02, mul3(WD, .6)); FB(wa, iMax - .32, 2.0, 1.16, .07, .62, mul3(WD, .8)); FB(wa - .1, iMax - .64, 1.0, .04, .15, .04, C.ochre); FB(wa + .1, iMax - .64, 1.0, .04, .15, .04, C.ochre); FH(wa - .55, wa + .55, iMax - .62, iMax, 2.0); FO(wa, iMax - .35, .7); }
+    });
+    rooms.forEach(([ra, ri], k) => {
+      const p = wp(ra, ri); dm.flat(p[0] - 1.25, p[1] - 1.0, p[0] + 1.25, p[1] + 1.0, F + .004, mul3(accent, .7), 19); dm.flat(p[0] - 1.1, p[1] - .85, p[0] + 1.1, p[1] + .85, F + .006, mul3(pick(ROOM_GOODS, h(k, "rug")), .85), 19);
+      const ta = ra + 1.0; if (FF(ta, ri, .35)) { FB(ta, ri, .38, .72, .05, .5, WD); for (const [u, v] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) FB(ta + u * .3, ri + v * .2, 0, .04, .38, .04, WD); FB(ta, ri, .43, .26, .04, .18, pick(ROOM_GOODS, h(k, "bk"))); FB(ta + .2, ri + .1, .43, .08, .1, .08, [.9, .88, .84]); FH(ta - .36, ta + .36, ri - .25, ri + .25, .43); FO(ta, ri, .45); }
+      const la = ra - .8; if (FF(la, ri + .4, .2)) { FB(la, ri + .4, 0, .28, .03, .28, C.metal); FB(la, ri + .4, 0, .03, 1.45, .03, C.metal); FB(la, ri + .4, 1.4, .38, .32, .38, C.cream); FB(la, ri + .4, 1.46, .14, .12, .14, [1, .8, .55], 2); FO(la, ri + .4, .3); }
+    });
+    beds.forEach(([ba], k) => {
+      let ka = ba; if (Math.abs(ka) < dw / 2 + 1.4) ka += ka >= 0 ? 2.4 : -2.4;
+      if (!FF(ka, .65, .85)) return;
+      FB(ka, .62, 0, 1.8, .88, .58, [.8, .78, .72]); FB(ka, .62, .88, 1.84, .05, .62, [.4, .36, .32]); FB(ka - .45, .62, .93, .5, .02, .36, C.metal); FB(ka - .45, .45, .93, .04, .3, .04, C.metal);
+      FB(ka + .45, .62, .93, .56, .03, .48, [.15, .15, .16]); for (const u of [-.13, .13]) FB(ka + .45 + u, .62, .96, .16, .02, .16, [.3, .3, .3]);
+      for (const u of [-.6, 0, .6]) FB(ka + u, .34, .15, .02, .65, .02, mul3([.8, .78, .72], .7));
+      FB(ka, .5, 1.5, 1.8, .6, .32, WD); FH(ka - .9, ka + .9, .33, .92, .93); FO(ka, .65, .95);
+      if (FF(ka, 2.0, .9)) { table(...wp(ka, 2.0), .8, .74, false); const q = wp(ka, 2.0); hard(q[0] - .4, F, q[1] - .4, q[0] + .4, F + .74, q[1] + .4); for (const sg of [-1, 1]) { const c = wp(ka + sg * .62, 2.0); chair(c[0], c[1], yawOf(-sg * pv[0], -sg * pv[2]), fab); } FO(ka, 2.0, 1.0); }
+    });
+    const bs = beds.map(b => b[0]).sort((p, q) => p - q);
+    for (let k = 0; k + 1 < bs.length; k++) if (bs[k + 1] - bs[k] > 5.5) {
+      const ma = (bs[k] + bs[k + 1]) / 2, di0 = Math.max(iMin + 2.5, iMax - 6.5), dim = (di0 + iMax) / 2;
+      if (!FFrun(ma, di0, iMax - .2, .1)) continue;
+      FB(ma, dim, 0, .1, 1.2, iMax - di0, mul3(WD, .9)); FB(ma, dim, 1.2, .16, .05, iMax - di0, WD); FH(ma - .06, ma + .06, di0, iMax, 1.25);
+    }
+  }
+
+  if (key === "works") {
+    // a hoist rail under the beams; timber racks down one side wall, bar stock and sheets down the other; machines between the benches
+    FB((aMin + aMax) / 2, (iMin + iMax) / 2, GF - .5, aMax - aMin - 1, .16, .14, C.metal);
+    FB((aMin + aMax) / 2, (iMin + iMax) / 2, GF - 1.4, .03, .9, .03, C.charcoal); FB((aMin + aMax) / 2, (iMin + iMax) / 2, GF - 1.5, .1, .12, .06, C.metal);
+    for (const [aw, sg] of [[aMin, 1], [aMax, -1]]) for (let i = 2.0; i < iMax - 1.6; i += 2.4) {
+      const a = aw + sg * .45; if (!FF(a, i + 1.1, .5)) continue;
+      for (const u of [0, 2.2]) FB(a, i + u, 0, .1, 2.0, .1, C.metal);
+      for (let s = 0; s < 3; s++) { FB(a, i + 1.1, .4 + s * .6, .8, .04, 2.3, C.metal); for (let k = 0; k < 4; k++) FB(a + (k - 1.5) * .18, i + 1.1, .44 + s * .6, .14, .1, 2.2, sg > 0 ? mul3(WD, .9 + .2 * h(i, s, k)) : [.4, .42, .44]); }
+      FH(a - .45, a + .45, i, i + 2.2, 2.0); FO(a, i + 1.1, 1.1);
+    }
+    const rows = {}; for (const [wa, wi] of Wk) (rows[wi.toFixed(1)] = rows[wi.toFixed(1)] || []).push(wa);
+    for (const [wi, as] of Object.entries(rows)) { as.sort((p, q) => p - q); for (let k = 0; k + 1 < as.length; k++) { const ma = (as[k] + as[k + 1]) / 2, mi = +wi - .4; if (!FF(ma, mi, .9)) continue; FB(ma, mi, 0, 1.4, .95, .8, [.3, .34, .32]); FB(ma - .3, mi, .95, .5, .55, .6, [.3, .34, .32]); FB(ma + .4, mi, .95, .5, .2, .5, C.metal); FB(ma + .55, mi - .3, 1.0, .06, .35, .2, C.ochre); FH(ma - .7, ma + .7, mi - .4, mi + .4, 1.5); FO(ma, mi, 1.0); } }
+  }
+
+  if (key === "office" || key === "hall" || key === "guild") {
+    // a typewriter and papers on every desk; the town hall gets a public counter and benches, the guild banners, the offices a water cooler
+    for (const [wa, wi] of Wk) { FB(wa - .15, wi - .8, .76, .42, .1, .3, [.15, .15, .16]); FB(wa - .15, wi - .68, .86, .38, .14, .03, [.9, .9, .86]); FB(wa + .35, wi - .85, .76, .2, .08, .26, [.86, .84, .78]); }
+    if (key === "hall" && Wk.length) {
+      const ci = Math.min(...Wk.map(w => w[1])) - 2.6;
+      for (const [s0, s1] of [[aMin + 1.5, -dw / 2 - 1.2], [dw / 2 + 1.2, aMax - 1.5]]) if (s1 - s0 > 2 && FFrun((s0 + s1) / 2, ci - .3, ci + .3, .2)) { FB((s0 + s1) / 2, ci, 0, s1 - s0, 1.05, .6, DARK); FB((s0 + s1) / 2, ci, 1.05, s1 - s0 + .1, .05, .72, TOP); for (let a = s0 + .8; a < s1; a += 2.2) { FB(a, ci, 1.1, .05, .5, .05, C.metal); FB(a, ci + .05, 1.4, .3, .22, .03, C.cream); } FH(s0, s1, ci - .3, ci + .3, 1.1); for (let a = s0; a < s1; a += 1) FO(a, ci, .6); }
+      for (const sg of [-1, 1]) for (let r = 0; r < 2; r++) { const a = sg * (dw / 2 + 3.5), i = 1.8 + r * 1.6; if (!FF(a, i, 1.3)) continue; FB(a, i, .42, 2.4, .06, .45, WD); FB(a, i + .2, .48, 2.4, .4, .06, WD); for (const u of [-1.1, 1.1]) FB(a + u, i, 0, .08, .42, .4, WD); FH(a - 1.2, a + 1.2, i - .25, i + .25, .5); FO(a, i, 1.3); }
+      for (const sg of [-1, 1]) { const a = sg * 3.2, i = iMax - .5; if (!FF(a, i, .3)) continue; FB(a, i, 0, .3, .1, .3, C.stoneDark); FB(a, i, 0, .04, 2.6, .04, C.metal); FB(a + .3, i, 1.6, .6, .9, .02, sg < 0 ? C.terracotta : C.teal); FO(a, i, .5); }
+      FB(0, iMax - .03, 1.5, 1.3, 1.1, .05, [.3, .2, .12]); FB(0, iMax - .06, 1.58, 1.1, .94, .02, [.42, .34, .3]);
+    }
+    if (key === "guild") for (const [aw, sg] of [[aMin, 1], [aMax, -1]]) for (let i = 2.5; i < iMax - 1; i += 3.0) { FB(aw + sg * .02, i, 1.0, .03, 1.6, .7, pick([C.terracotta, C.teal, C.ochre], h(i, sg))); FB(aw + sg * .04, i, 2.55, .05, .06, .85, C.metal); FB(aw + sg * .04, i, 1.5, .02, .3, .3, C.ochre); }
+    if (key === "office") { const a = aMax - .6, i = 1.6; if (FF(a, i, .35)) { FB(a, i, 0, .4, .95, .4, WHITE); FB(a, i, .95, .3, .45, .3, [.55, .7, .82]); FB(a, i - .21, .8, .06, .06, .04, C.metal); FO(a, i, .4); } }
+  }
+
+  if (key === "clinic") {
+    // a low table with magazines before the waiting chairs; an examination bay with a couch, screens, a sink and a cabinet at the back
+    if (Ch.length) { const ma = Ch.reduce((s, c) => s + c[0], 0) / Ch.length, mi = Math.min(...Ch.map(c => c[1])) - 1.0; if (FF(ma, mi, .6)) { FB(ma, mi, .36, 1.2, .05, .55, WD); for (const [u, v] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) FB(ma + u * .55, mi + v * .22, 0, .04, .36, .04, WD); for (let k = 0; k < 3; k++) FB(ma - .35 + k * .3, mi, .41, .22, .02, .3, pick([C.teal, C.terracotta, C.cream], h(k, "mag"))); FH(ma - .6, ma + .6, mi - .28, mi + .28, .41); FO(ma, mi, .8); } }
+    const recA = Wk.length ? Wk[0][0] : 0, ea = recA > 0 ? aMin + 2.0 : aMax - 2.0, ei = iMax - 1.4;
+    if (FF(ea, ei, 1.2)) {
+      FB(ea, ei, 0, 1.95, .6, .7, WHITE); FB(ea, ei, .6, 1.9, .12, .66, [.92, .92, .9]); FB(ea + .7, ei, .72, .45, .1, .32, [.95, .95, .93]);
+      for (let k = 0; k < 3; k++) FB(ea - .9 + k * .9, ei - 1.0, 0, .86, 1.75, .04, [.82, .8, .72], 0, k === 1 ? 0 : (k - 1) * .3);
+      FB(ea - 1.6, iMax - .3, 0, .7, .85, .5, WHITE); FB(ea - 1.6, iMax - .3, .85, .45, .04, .35, C.metal); FB(ea + 1.5, iMax - .25, 0, .9, 1.85, .4, WHITE); FB(ea + 1.5, iMax - .46, 1.45, .08, .3, .02, C.teal); FB(ea + 1.5, iMax - .46, 1.56, .3, .08, .02, C.teal);
+      FH(ea - 1.0, ea + 1.0, ei - .35, ei + .35, .75); FO(ea, ei, 1.6);
+    }
+  }
+
+  if (key === "depot") {
+    // a tram bay down one side: rails, a pit, a tram standing over it
+    const ta = aMin + 2.0, ti0 = 1.6, ti1 = iMax - 1.2;
+    if (ti1 - ti0 > 6 && FFrun(ta, ti0 + 1, ti1 - 1, 1.2)) {
+      for (const u of [-.72, .72]) FB(ta + u, (ti0 + ti1) / 2, 0, .08, .05, ti1 - ti0, C.metal);
+      const tl = Math.min(11, ti1 - ti0 - 1), tm = (ti0 + ti1) / 2;
+      FB(ta, tm, .35, 2.4, 1.0, tl, C.terracotta); FB(ta, tm, 1.35, 2.4, 1.4, tl, C.cream); FB(ta, tm, 2.75, 2.5, .2, tl + .1, C.metal);
+      for (let k = 0; k < Math.floor(tl / 1.9); k++) for (const sg of [-1, 1]) glass(ta + sg * 1.21, tm - tl / 2 + .4 + k * 1.9, tm - tl / 2 + 1.8 + k * 1.9, 1.5, 2.55, sg > 0 ? pv : pv.map(v => -v));
+      FH(ta - 1.25, ta + 1.25, tm - tl / 2, tm + tl / 2, 2.95); for (let i = ti0; i < ti1; i += 1.5) FO(ta, i, 1.6);
+    }
+  }
+
+  if (key === "mall") {
+    // a shop booth at each trader's place: shelves behind, a canopy and a name board over the counter; a fountain in the court
+    for (const [wa, wi] of Wk) {
+      const col = pick([C.teal, C.terracotta, C.ochre, C.blue], h(wa, "bo"));
+      FB(wa, wi + .6, 0, 3.2, 2.2, .45, WD); for (let s = 0; s < 4; s++) for (let k = 0; k < 9; k++) FB(wa - 1.4 + k * .35, wi + .38, .25 + s * .5, .28, .14 + .14 * h(wa, s, k), .12, pick(ROOM_GOODS, h(k, s, wa)));
+      for (const u of [-1.6, 1.6]) for (const v of [-1.2, .8]) FB(wa + u, wi + v, 0, .08, 2.6, .08, C.metal);
+      FB(wa, wi - .2, 2.6, 3.5, .12, 2.2, col); FB(wa, wi - 1.32, 2.2, 3.4, .4, .06, col); FB(wa, wi - 1.36, 2.28, 2.2, .22, .02, C.cream);
+      FH(wa - 1.6, wa + 1.6, wi + .35, wi + .85, 2.2); FO(wa, wi + .6, 1.6);
+    }
+    const fa = 0, fi = (Math.min(...(Cu.length ? Cu : [[0, iMax / 2]]).map(c => c[1])) + 2.0) / 2 + .5;
+    if (FF(fa, fi, 1.8)) { FB(fa, fi, 0, 3.0, .45, 3.0, C.stone, 0, Math.PI / 8); FB(fa, fi, 0, 3.0, .45, 3.0, C.stone, 0, -Math.PI / 8 + Math.PI / 4); FB(fa, fi, .38, 2.5, .04, 2.5, C.water, 9); FB(fa, fi, 0, .3, 1.4, .3, C.stone); FB(fa, fi, 1.4, .9, .12, .9, C.stoneDark, 0, Math.PI / 4); FH(fa - 1.5, fa + 1.5, fi - 1.5, fi + 1.5, .45); FO(fa, fi, 2.0); }
+  }
+}
+
 function room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard) {
   const [x0, z0, x1, z1] = l.rect, t = .35, rx0 = x0 + t, rx1 = x1 - t, rz0 = z0 + t, rz1 = z1 - t, d = DOOR_DIR[side], [dx, dz] = l.door, dw = l.dw;
   for (let s = 0; s < 5; s++) occ.push([dx - d[0] * s * 1.2, dz - d[1] * s * 1.2, dw / 2 + .7]);        // keep the way in clear
@@ -744,6 +932,7 @@ function room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard) {
     lockers: [1.4, .5, 1.85, (S, a) => { box(S, a, 0, 1.85, 0, .5, 1.4, [.32, .4, .4]); for (let k = 1; k < 4; k++) box(S, a - .7 + k * .35, .05, 1.8, .5, .51, .02, [.2, .26, .26]); for (let k = 0; k < 4; k++) box(S, a - .52 + k * .35, 1.5, 1.6, .5, .52, .18, [.2, .26, .26]); }],
     sofa: [2.0, .85, .85, (S, a) => { box(S, a, 0, .42, .05, .85, 2.0, fab); box(S, a, .42, .85, .05, .3, 2.0, fab); for (const u of [-.92, .92]) box(S, a + u, .42, .62, .05, .85, .16, fab); for (const u of [-.5, .5]) box(S, a + u, .42, .52, .3, .8, .9, mul3(fab, 1.12)); }],
   };
+  layout(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard, clear, walls, box, P);
   // along each wall: tall pieces where there is no window and it is not the door wall, low ones elsewhere; pictures above the low ones
   const winAt = (s, a, w) => (l.inWin || []).some(([ws, w0, w1]) => ws === s && a + w / 2 > w0 && a - w / 2 < w1);
   let placed = 0;
@@ -1081,6 +1270,7 @@ void main(){
     else if(f>20.5&&f<21.5){ vec2 q=vP.xz/.3; q.x+=.5*mod(floor(q.y),2.); vec2 id=floor(q), fr=fract(q)-.5;   // footpaths: round cobbles
       float t1=h3(vec3(id,17.)), k2=1.-min(1.,d/30.); fr+=vec2(h3(vec3(id,18.)),h3(vec3(id,19.)))*.16-.08; float r=length(fr)*2.;
       vec3 c1=c*vec3(.6,.6,.72); c=mix(paint(c,vec3(.6,.6,.72),blot),c1,t1*.55*k2)*mix(1.,(1.06-.2*fr.y)*(1.-.55*smoothstep(.72,1.,r)),k2); }
+    else if(f>21.5&&f<22.5) c=paint(c,vec3(.74,.72,.8),blot)*(.95+.1*ns(vP*3.1));   // car paint: matte and mottled like everything else (W1, V2; cars.js)
     else if(f>10.5&&f<11.5){ vec3 tg=normalize(vec3(-n.z,0.,n.x)+vec3(1e-3,0.,0.)); float u=dot(vP,tg)/.24, cu=fract(u)*2.-1., row=fract(vP.y/.17);   // barrel tiles laid in courses
       float tube=sqrt(max(1.-cu*cu,0.)), t1=h3(vec3(floor(u),floor(vP.y/.17),9.)), k2=1.-min(1.,d/90.);
       c=paint(c,vec3(.62,.6,.66),blot)*mix(1.,(.5+.5*tube)*(.86+.28*t1)*(1.-.32*smoothstep(.72,1.,row)),k2); n=normalize(n+tg*cu*.6*k2); }
@@ -1109,9 +1299,9 @@ void main(){
         light=(uSunCol*.03+hemi*.5+vec3(.5,.4,.28))*(.5+.38*up*up+.34*sd*sd); }
       else {
         vec2 a=texture2D(uAO,(vP.xz+n.xz-uAOm.x)*uAOm.y).rg; float vis=mix(a.r,1.,clamp((vP.y-.3)/max(a.g*85.,.6),0.,1.));   // how much sky this spot sees
-        if(abs(n.y)<.5) c*=.66+.34*smoothstep(.1,1.4,vP.y);                 // grime at the foot of walls
+        if(abs(n.y)<.5&&!(f>21.5&&f<22.5)) c*=.66+.34*smoothstep(.1,1.4,vP.y);   // grime at the foot of walls (not on cars)
         float ndl=max(dot(n,uSun),0.); light=uSunCol*(ndl>0.?ndl*shadow():0.);
-        if(f>13.5&&f<14.5){ float up=n.y*.5+.5, bw=dot(n,normalize(vec3(-uSun.x,-.45,-uSun.z)))*.5+.5;   // a person: sky from above, bounce from the sunlit side away from the sun, so shade still models the body
+        if((f>13.5&&f<14.5)||(f>21.5&&f<22.5)){                          // people and cars keep their round forms in shade too float up=n.y*.5+.5, bw=dot(n,normalize(vec3(-uSun.x,-.45,-uSun.z)))*.5+.5;   // a person: sky from above, bounce from the sunlit side away from the sun, so shade still models the body
           light+=uSky*(.28+.82*up*up)*vis*vis+uGround*(1.-.5*vis)*(.38+1.25*bw*bw); }
         else light+=uSky*(n.y*.35+.65)*vis*vis+uGround*(1.-.5*vis);   // sun, sky seen, and light bounced off sunlit stone
         for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*.85+.15)); } }   // lanterns (W6)
