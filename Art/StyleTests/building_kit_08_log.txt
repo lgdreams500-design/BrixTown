@@ -1,0 +1,18 @@
+00:30:02 Blender 5.3.0
+00:30:02 lot b_3_3_l0 'Town Hall' kind=work floors=3 rect=[312.0, 310.0, 360.0, 344.0] district=Centre
+00:30:02 lot b_5_4_l0 'Mill Street Hospital' kind=health floors=5 rect=[498.0, 404.0, 558.0, 442.0] district=Centre
+00:30:02 lot b_4_2_l0 'Lantern Arcade' kind=shop floors=2 rect=[400.0, 210.0, 464.0, 252.0] district=Centre
+00:30:02 lot b_3_4_l4 'Guild House' kind=work floors=3 rect=[350.0, 454.0, 372.0, 468.0] district=Centre
+00:30:02 lot b_2_2_l0 'Fountain Tower' kind=work floors=22 rect=[225.0, 220.0, 255.0, 250.0] district=Centre
+00:30:02 lot b_1_6_l0 'Depot Heights' kind=home floors=14 rect=[129.0, 604.0, 159.0, 634.0] district=Old Town
+00:30:02 lot b_1_1_l3 'Linden Works' kind=work floors=4 rect=[146.2, 168.0, 184.0, 184.0] district=Old Town
+00:30:02 lot b_0_7_l0 'Depot Depot' kind=utility floors=2 rect=[16.0, 688.0, 52.0, 710.0] district=Outskirts
+00:30:03 lantern_arcade built in 0.5s
+00:30:03 office_tower built in 0.4s
+00:30:34 tram_depot built in 31.5s
+00:30:34 scene built: 512 objects in 32.5s
+00:30:35 saved .blend
+00:31:12 lantern_arcade rendered in 37.9s
+00:31:43 office_tower rendered in 30.7s
+00:32:22 tram_depot rendered in 38.8s
+00:32:22 DONE
