@@ -1,0 +1,22 @@
+17:51:10 Blender 5.3.0
+17:51:11   PlayerA: Springy, 1.23 m/s, 120 steps a minute
+17:51:11   PlayerB: Easy, 1.14 m/s, 96 steps a minute
+17:51:11   Courier: Hurried, 1.68 m/s, 144 steps a minute
+17:51:11   Elder: Careful, 0.58 m/s, 96 steps a minute
+17:51:11 walks built: 286 objects, rendering 120 frames
+17:51:15   walks frame 0, 4s so far
+17:53:57   walks frame 24, 166s so far
+17:56:41   walks frame 48, 330s so far
+17:59:28   walks frame 72, 497s so far
+18:02:13   walks frame 96, 662s so far
+18:04:57 walks: 120 frames rendered in 826.4s
+18:04:58 walktalk built: 176 objects, rendering 128 frames
+18:05:11   walktalk frame 0, 13s so far
+18:10:03   walktalk frame 24, 305s so far
+18:15:04   walktalk frame 48, 606s so far
+18:20:12   walktalk frame 72, 914s so far
+18:25:18   walktalk frame 96, 1220s so far
+18:30:21   walktalk frame 120, 1523s so far
+18:31:46 walktalk: 128 frames rendered in 1607.4s
+18:31:46 saved .blend
+18:31:46 DONE

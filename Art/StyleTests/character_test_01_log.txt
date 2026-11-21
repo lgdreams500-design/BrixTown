@@ -1,0 +1,6 @@
+12:25:50 Blender 5.3.0
+12:25:52 scene built: 424 objects
+12:25:52 saved .blend
+12:26:22 lineup rendered in 29.8s
+12:27:14 faces rendered in 52.7s
+12:27:14 DONE

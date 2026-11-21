@@ -1,0 +1,2763 @@
+{
+ "name": "Old Town block 01",
+ "size": [
+  160,
+  160
+ ],
+ "calendar": {
+  "day_minutes": 1440,
+  "days_per_season": 12,
+  "seasons": [
+   "Spring",
+   "Summer",
+   "Autumn",
+   "Winter"
+  ],
+  "week": [
+   "Mon",
+   "Tue",
+   "Wed",
+   "Thu",
+   "Fri",
+   "Sat",
+   "Sun"
+  ],
+  "market_days": [
+   2,
+   5
+  ],
+  "rest_days": [
+   5,
+   6
+  ],
+  "sunrise": [
+   6.0,
+   5.0,
+   6.5,
+   7.75
+  ],
+  "sunset": [
+   19.0,
+   20.5,
+   18.5,
+   16.75
+  ]
+ },
+ "streets": [
+  [
+   [
+    20,
+    20
+   ],
+   [
+    140,
+    20
+   ]
+  ],
+  [
+   [
+    140,
+    20
+   ],
+   [
+    140,
+    140
+   ]
+  ],
+  [
+   [
+    140,
+    140
+   ],
+   [
+    20,
+    140
+   ]
+  ],
+  [
+   [
+    20,
+    140
+   ],
+   [
+    20,
+    20
+   ]
+  ],
+  [
+   [
+    80,
+    20
+   ],
+   [
+    80,
+    62
+   ]
+  ],
+  [
+   [
+    140,
+    80
+   ],
+   [
+    98,
+    80
+   ]
+  ],
+  [
+   [
+    80,
+    140
+   ],
+   [
+    80,
+    98
+   ]
+  ],
+  [
+   [
+    20,
+    80
+   ],
+   [
+    62,
+    80
+   ]
+  ],
+  [
+   [
+    62,
+    62
+   ],
+   [
+    98,
+    62
+   ]
+  ],
+  [
+   [
+    98,
+    62
+   ],
+   [
+    98,
+    98
+   ]
+  ],
+  [
+   [
+    98,
+    98
+   ],
+   [
+    62,
+    98
+   ]
+  ],
+  [
+   [
+    62,
+    98
+   ],
+   [
+    62,
+    62
+   ]
+  ]
+ ],
+ "stroll_loop": [
+  [
+   62,
+   62
+  ],
+  [
+   98,
+   62
+  ],
+  [
+   98,
+   98
+  ],
+  [
+   62,
+   98
+  ]
+ ],
+ "lots": [
+  {
+   "id": "homeA",
+   "name": "Home A",
+   "kind": "home",
+   "rect": [
+    30,
+    30,
+    52,
+    52
+   ],
+   "door": [
+    41,
+    30
+   ],
+   "objects": {
+    "bed": [
+     [
+      35.0,
+      34.2
+     ],
+     [
+      41.0,
+      34.2
+     ],
+     [
+      47.0,
+      34.2
+     ],
+     [
+      35.0,
+      38.8
+     ],
+     [
+      41.0,
+      38.8
+     ]
+    ],
+    "room": [
+     [
+      35.0,
+      43.2
+     ],
+     [
+      41.0,
+      43.2
+     ],
+     [
+      47.0,
+      43.2
+     ],
+     [
+      35.0,
+      47.8
+     ],
+     [
+      41.0,
+      47.8
+     ]
+    ]
+   }
+  },
+  {
+   "id": "homeB",
+   "name": "Home B",
+   "kind": "home",
+   "rect": [
+    108,
+    30,
+    130,
+    52
+   ],
+   "door": [
+    119,
+    30
+   ],
+   "objects": {
+    "bed": [
+     [
+      113.0,
+      34.2
+     ],
+     [
+      119.0,
+      34.2
+     ],
+     [
+      125.0,
+      34.2
+     ],
+     [
+      113.0,
+      38.8
+     ]
+    ],
+    "room": [
+     [
+      113.0,
+      43.2
+     ],
+     [
+      119.0,
+      43.2
+     ],
+     [
+      125.0,
+      43.2
+     ],
+     [
+      113.0,
+      47.8
+     ]
+    ]
+   }
+  },
+  {
+   "id": "homeC",
+   "name": "Home C",
+   "kind": "home",
+   "rect": [
+    30,
+    108,
+    52,
+    130
+   ],
+   "door": [
+    41,
+    130
+   ],
+   "objects": {
+    "bed": [
+     [
+      35.0,
+      112.2
+     ],
+     [
+      41.0,
+      112.2
+     ],
+     [
+      47.0,
+      112.2
+     ],
+     [
+      35.0,
+      116.8
+     ]
+    ],
+    "room": [
+     [
+      35.0,
+      121.2
+     ],
+     [
+      41.0,
+      121.2
+     ],
+     [
+      47.0,
+      121.2
+     ],
+     [
+      35.0,
+      125.8
+     ]
+    ]
+   }
+  },
+  {
+   "id": "homeD",
+   "name": "Home D",
+   "kind": "home",
+   "rect": [
+    52,
+    108,
+    74,
+    130
+   ],
+   "door": [
+    63,
+    130
+   ],
+   "objects": {
+    "bed": [
+     [
+      57.0,
+      112.2
+     ],
+     [
+      63.0,
+      112.2
+     ],
+     [
+      69.0,
+      112.2
+     ],
+     [
+      57.0,
+      116.8
+     ],
+     [
+      63.0,
+      116.8
+     ]
+    ],
+    "room": [
+     [
+      57.0,
+      121.2
+     ],
+     [
+      63.0,
+      121.2
+     ],
+     [
+      69.0,
+      121.2
+     ],
+     [
+      57.0,
+      125.8
+     ],
+     [
+      63.0,
+      125.8
+     ]
+    ]
+   }
+  },
+  {
+   "id": "homeE",
+   "name": "Home E",
+   "kind": "home",
+   "rect": [
+    108,
+    108,
+    130,
+    130
+   ],
+   "door": [
+    119,
+    130
+   ],
+   "objects": {
+    "bed": [
+     [
+      113.0,
+      112.2
+     ],
+     [
+      119.0,
+      112.2
+     ],
+     [
+      125.0,
+      112.2
+     ],
+     [
+      113.0,
+      116.8
+     ]
+    ],
+    "room": [
+     [
+      113.0,
+      121.2
+     ],
+     [
+      119.0,
+      121.2
+     ],
+     [
+      125.0,
+      121.2
+     ],
+     [
+      113.0,
+      125.8
+     ]
+    ]
+   }
+  },
+  {
+   "id": "homeF",
+   "name": "Home F",
+   "kind": "home",
+   "rect": [
+    30,
+    52,
+    52,
+    74
+   ],
+   "door": [
+    30,
+    63
+   ],
+   "objects": {
+    "bed": [
+     [
+      35.0,
+      56.2
+     ],
+     [
+      41.0,
+      56.2
+     ],
+     [
+      47.0,
+      56.2
+     ],
+     [
+      35.0,
+      60.8
+     ],
+     [
+      41.0,
+      60.8
+     ]
+    ],
+    "room": [
+     [
+      35.0,
+      65.2
+     ],
+     [
+      41.0,
+      65.2
+     ],
+     [
+      47.0,
+      65.2
+     ],
+     [
+      35.0,
+      69.8
+     ],
+     [
+      41.0,
+      69.8
+     ]
+    ]
+   }
+  },
+  {
+   "id": "grocer",
+   "name": "Grocer",
+   "kind": "shop",
+   "rect": [
+    52,
+    30,
+    74,
+    52
+   ],
+   "door": [
+    63,
+    30
+   ],
+   "objects": {
+    "work": [
+     [
+      63,
+      45
+     ],
+     [
+      70,
+      48
+     ]
+    ],
+    "customer": [
+     [
+      58,
+      39
+     ],
+     [
+      63,
+      38
+     ],
+     [
+      68,
+      39
+     ]
+    ]
+   }
+  },
+  {
+   "id": "cafe",
+   "name": "Café",
+   "kind": "food",
+   "rect": [
+    86,
+    30,
+    108,
+    52
+   ],
+   "door": [
+    97,
+    52
+   ],
+   "objects": {
+    "work": [
+     [
+      97,
+      35
+     ],
+     [
+      91,
+      34
+     ]
+    ],
+    "seat": [
+     [
+      90,
+      45
+     ],
+     [
+      95,
+      45
+     ],
+     [
+      100,
+      45
+     ],
+     [
+      105,
+      45
+     ],
+     [
+      89,
+      56
+     ],
+     [
+      93,
+      56
+     ],
+     [
+      97,
+      57
+     ],
+     [
+      101,
+      56
+     ],
+     [
+      105,
+      56
+     ],
+     [
+      89,
+      59
+     ]
+    ]
+   }
+  },
+  {
+   "id": "workshop",
+   "name": "Workshop",
+   "kind": "work",
+   "rect": [
+    108,
+    52,
+    130,
+    74
+   ],
+   "door": [
+    130,
+    63
+   ],
+   "objects": {
+    "work": [
+     [
+      114,
+      58
+     ],
+     [
+      122,
+      58
+     ],
+     [
+      114,
+      68
+     ],
+     [
+      122,
+      68
+     ]
+    ]
+   }
+  },
+  {
+   "id": "clinic",
+   "name": "Clinic",
+   "kind": "health",
+   "rect": [
+    108,
+    86,
+    130,
+    108
+   ],
+   "door": [
+    130,
+    97
+   ],
+   "objects": {
+    "work": [
+     [
+      124,
+      97
+     ]
+    ],
+    "chair": [
+     [
+      113,
+      91
+     ],
+     [
+      113,
+      95
+     ],
+     [
+      113,
+      99
+     ],
+     [
+      113,
+      103
+     ]
+    ]
+   }
+  },
+  {
+   "id": "office",
+   "name": "Office",
+   "kind": "work",
+   "rect": [
+    86,
+    108,
+    108,
+    130
+   ],
+   "door": [
+    97,
+    130
+   ],
+   "objects": {
+    "work": [
+     [
+      91.0,
+      114.5
+     ],
+     [
+      97.0,
+      114.5
+     ],
+     [
+      103.0,
+      114.5
+     ],
+     [
+      91.0,
+      123.5
+     ],
+     [
+      97.0,
+      123.5
+     ],
+     [
+      103.0,
+      123.5
+     ]
+    ]
+   }
+  },
+  {
+   "id": "depot",
+   "name": "Depot",
+   "kind": "utility",
+   "rect": [
+    30,
+    86,
+    52,
+    108
+   ],
+   "door": [
+    30,
+    97
+   ],
+   "objects": {
+    "work": [
+     [
+      38,
+      93
+     ],
+     [
+      44,
+      101
+     ]
+    ]
+   }
+  },
+  {
+   "id": "garden",
+   "name": "Garden",
+   "kind": "garden",
+   "rect": [
+    64,
+    64,
+    96,
+    96
+   ],
+   "door": [
+    80,
+    62
+   ],
+   "objects": {
+    "bench": [
+     [
+      74,
+      65.5
+     ],
+     [
+      77,
+      65.5
+     ],
+     [
+      83,
+      65.5
+     ],
+     [
+      86,
+      65.5
+     ],
+     [
+      74,
+      94.5
+     ],
+     [
+      77,
+      94.5
+     ],
+     [
+      65.5,
+      78
+     ],
+     [
+      65.5,
+      82
+     ],
+     [
+      94.5,
+      78
+     ],
+     [
+      94.5,
+      82
+     ]
+    ],
+    "rim": [
+     [
+      77,
+      83.2
+     ],
+     [
+      83,
+      83.2
+     ],
+     [
+      80,
+      76.3
+     ]
+    ],
+    "flowerbed": [
+     [
+      70,
+      71.5
+     ],
+     [
+      90,
+      71.5
+     ],
+     [
+      70,
+      88.5
+     ],
+     [
+      90,
+      88.5
+     ]
+    ],
+    "work": [
+     [
+      70,
+      71.5
+     ],
+     [
+      90,
+      71.5
+     ],
+     [
+      70,
+      88.5
+     ],
+     [
+      90,
+      88.5
+     ]
+    ]
+   }
+  },
+  {
+   "id": "market",
+   "name": "Market",
+   "kind": "market",
+   "rect": [
+    54,
+    54,
+    73,
+    61
+   ],
+   "door": [
+    66,
+    62
+   ],
+   "objects": {
+    "stall": [
+     [
+      57,
+      55.5
+     ],
+     [
+      63,
+      55.5
+     ],
+     [
+      69,
+      55.5
+     ]
+    ],
+    "customer": [
+     [
+      57,
+      59.5
+     ],
+     [
+      63,
+      59.5
+     ],
+     [
+      69,
+      59.5
+     ],
+     [
+      60,
+      60.2
+     ],
+     [
+      66,
+      60.2
+     ]
+    ]
+   }
+  },
+  {
+   "id": "stop",
+   "name": "Tram stop",
+   "kind": "stop",
+   "rect": [
+    72,
+    11,
+    88,
+    16
+   ],
+   "door": [
+    80,
+    20
+   ],
+   "objects": {
+    "wait": [
+     [
+      74,
+      14.5
+     ],
+     [
+      77,
+      14.5
+     ],
+     [
+      80,
+      14.5
+     ],
+     [
+      83,
+      14.5
+     ],
+     [
+      86,
+      14.5
+     ]
+    ]
+   }
+  }
+ ],
+ "residents": [
+  {
+   "id": "r00",
+   "name": "Asha",
+   "role": "shopkeeper",
+   "home": "homeA",
+   "work": "grocer"
+  },
+  {
+   "id": "r01",
+   "name": "Tomas",
+   "role": "shopkeeper",
+   "home": "homeA",
+   "work": "grocer",
+   "offset": 35,
+   "market_seller": true
+  },
+  {
+   "id": "r02",
+   "name": "Mina",
+   "role": "cafe",
+   "home": "homeB",
+   "work": "cafe"
+  },
+  {
+   "id": "r03",
+   "name": "Jon",
+   "role": "cafe",
+   "home": "homeB",
+   "work": "cafe",
+   "offset": 20
+  },
+  {
+   "id": "r04",
+   "name": "Ruth",
+   "role": "nurse",
+   "home": "homeB",
+   "work": "clinic"
+  },
+  {
+   "id": "r05",
+   "name": "Kofi",
+   "role": "maker",
+   "home": "homeC",
+   "work": "workshop"
+  },
+  {
+   "id": "r06",
+   "name": "Ines",
+   "role": "maker",
+   "home": "homeD",
+   "work": "workshop",
+   "offset": 15,
+   "market_seller": true
+  },
+  {
+   "id": "r07",
+   "name": "Bo",
+   "role": "maker",
+   "home": "homeD",
+   "work": "workshop",
+   "offset": -10
+  },
+  {
+   "id": "r08",
+   "name": "Dev",
+   "role": "clerk",
+   "home": "homeD",
+   "work": "office",
+   "offset": -8
+  },
+  {
+   "id": "r09",
+   "name": "Lena",
+   "role": "clerk",
+   "home": "homeE",
+   "work": "office",
+   "offset": -1
+  },
+  {
+   "id": "r10",
+   "name": "Omar",
+   "role": "clerk",
+   "home": "homeE",
+   "work": "office",
+   "offset": 6
+  },
+  {
+   "id": "r11",
+   "name": "Yui",
+   "role": "clerk",
+   "home": "homeF",
+   "work": "office",
+   "offset": -7
+  },
+  {
+   "id": "r12",
+   "name": "Sam",
+   "role": "clerk",
+   "home": "homeF",
+   "work": "office",
+   "offset": 0
+  },
+  {
+   "id": "r13",
+   "name": "Pia",
+   "role": "commuter",
+   "home": "homeA",
+   "work": null,
+   "offset": -12
+  },
+  {
+   "id": "r14",
+   "name": "Raj",
+   "role": "commuter",
+   "home": "homeE",
+   "work": null,
+   "offset": -3
+  },
+  {
+   "id": "r15",
+   "name": "Nell",
+   "role": "commuter",
+   "home": "homeF",
+   "work": null,
+   "offset": 6
+  },
+  {
+   "id": "r16",
+   "name": "Abe",
+   "role": "commuter",
+   "home": "homeA",
+   "work": null,
+   "offset": 15
+  },
+  {
+   "id": "r17",
+   "name": "Zed",
+   "role": "courier",
+   "home": "homeC",
+   "work": null
+  },
+  {
+   "id": "r18",
+   "name": "Fay",
+   "role": "courier",
+   "home": "homeC",
+   "work": null,
+   "offset": 20
+  },
+  {
+   "id": "r19",
+   "name": "Olu",
+   "role": "gardener",
+   "home": "homeF",
+   "work": "garden"
+  },
+  {
+   "id": "r20",
+   "name": "Edda",
+   "role": "elder",
+   "home": "homeA",
+   "work": null,
+   "offset": -30
+  },
+  {
+   "id": "r21",
+   "name": "Hugo",
+   "role": "elder",
+   "home": "homeB",
+   "work": null,
+   "offset": -5
+  },
+  {
+   "id": "r22",
+   "name": "Mei",
+   "role": "elder",
+   "home": "homeE",
+   "work": null,
+   "offset": 20
+  },
+  {
+   "id": "r23",
+   "name": "Walt",
+   "role": "elder",
+   "home": "homeF",
+   "work": null,
+   "offset": 45
+  },
+  {
+   "id": "r24",
+   "name": "Kit",
+   "role": "student",
+   "home": "homeD",
+   "work": null
+  },
+  {
+   "id": "r25",
+   "name": "Noor",
+   "role": "student",
+   "home": "homeD",
+   "work": null,
+   "offset": 10
+  },
+  {
+   "id": "r26",
+   "name": "Gus",
+   "role": "utility",
+   "home": "homeC",
+   "work": "depot"
+  }
+ ],
+ "roles": {
+  "shopkeeper": {
+   "color": [
+    0.72,
+    0.55,
+    0.2
+   ],
+   "sig": "Easy",
+   "jitter": 8,
+   "weekday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "06:20",
+     "home",
+     "home"
+    ],
+    [
+     "06:55",
+     "work",
+     "work"
+    ],
+    [
+     "12:40",
+     "eat",
+     "lunch"
+    ],
+    [
+     "13:25",
+     "work",
+     "work"
+    ],
+    [
+     "18:30",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "20:00",
+     "home",
+     "home"
+    ],
+    [
+     "22:45",
+     "sleep",
+     "home"
+    ]
+   ],
+   "market": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "06:20",
+     "home",
+     "home"
+    ],
+    [
+     "07:40",
+     "sell",
+     "market"
+    ],
+    [
+     "13:00",
+     "eat",
+     "lunch"
+    ],
+    [
+     "13:45",
+     "work",
+     "work"
+    ],
+    [
+     "18:30",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "20:00",
+     "home",
+     "home"
+    ],
+    [
+     "22:45",
+     "sleep",
+     "home"
+    ]
+   ],
+   "sunday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "08:00",
+     "home",
+     "home"
+    ],
+    [
+     "10:00",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "12:30",
+     "eat",
+     "lunch"
+    ],
+    [
+     "14:00",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "17:00",
+     "home",
+     "home"
+    ],
+    [
+     "22:45",
+     "sleep",
+     "home"
+    ]
+   ]
+  },
+  "cafe": {
+   "color": [
+    0.66,
+    0.33,
+    0.24
+   ],
+   "sig": "Springy",
+   "jitter": 6,
+   "weekday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "05:40",
+     "home",
+     "home"
+    ],
+    [
+     "06:10",
+     "work",
+     "work"
+    ],
+    [
+     "15:00",
+     "rest",
+     "garden"
+    ],
+    [
+     "15:35",
+     "work",
+     "work"
+    ],
+    [
+     "19:40",
+     "home",
+     "home"
+    ],
+    [
+     "22:30",
+     "sleep",
+     "home"
+    ]
+   ]
+  },
+  "nurse": {
+   "color": [
+    0.86,
+    0.84,
+    0.78
+   ],
+   "sig": "Easy",
+   "jitter": 8,
+   "weekday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "06:45",
+     "home",
+     "home"
+    ],
+    [
+     "07:50",
+     "work",
+     "work"
+    ],
+    [
+     "12:30",
+     "eat",
+     "lunch"
+    ],
+    [
+     "13:10",
+     "work",
+     "work"
+    ],
+    [
+     "17:10",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "18:45",
+     "home",
+     "home"
+    ],
+    [
+     "22:30",
+     "sleep",
+     "home"
+    ]
+   ],
+   "sunday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "08:30",
+     "home",
+     "home"
+    ],
+    [
+     "10:30",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "12:45",
+     "eat",
+     "lunch"
+    ],
+    [
+     "14:30",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "17:30",
+     "home",
+     "home"
+    ],
+    [
+     "22:30",
+     "sleep",
+     "home"
+    ]
+   ]
+  },
+  "maker": {
+   "color": [
+    0.45,
+    0.3,
+    0.2
+   ],
+   "sig": "Easy",
+   "jitter": 10,
+   "weekday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "06:50",
+     "home",
+     "home"
+    ],
+    [
+     "07:55",
+     "work",
+     "work"
+    ],
+    [
+     "12:20",
+     "eat",
+     "lunch"
+    ],
+    [
+     "13:05",
+     "work",
+     "work"
+    ],
+    [
+     "17:30",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "19:20",
+     "home",
+     "home"
+    ],
+    [
+     "23:00",
+     "sleep",
+     "home"
+    ]
+   ],
+   "market": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "06:50",
+     "home",
+     "home"
+    ],
+    [
+     "08:30",
+     "sell",
+     "market"
+    ],
+    [
+     "13:00",
+     "eat",
+     "lunch"
+    ],
+    [
+     "13:45",
+     "work",
+     "work"
+    ],
+    [
+     "17:30",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "19:20",
+     "home",
+     "home"
+    ],
+    [
+     "23:00",
+     "sleep",
+     "home"
+    ]
+   ],
+   "sunday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "08:40",
+     "home",
+     "home"
+    ],
+    [
+     "10:15",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "12:40",
+     "eat",
+     "lunch"
+    ],
+    [
+     "14:10",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "18:00",
+     "home",
+     "home"
+    ],
+    [
+     "23:00",
+     "sleep",
+     "home"
+    ]
+   ]
+  },
+  "clerk": {
+   "color": [
+    0.2,
+    0.26,
+    0.45
+   ],
+   "sig": "Easy",
+   "jitter": 12,
+   "weekday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "06:50",
+     "home",
+     "home"
+    ],
+    [
+     "07:50",
+     "work",
+     "work"
+    ],
+    [
+     "12:30",
+     "eat",
+     "lunch"
+    ],
+    [
+     "13:15",
+     "work",
+     "work"
+    ],
+    [
+     "17:30",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "19:15",
+     "home",
+     "home"
+    ],
+    [
+     "22:45",
+     "sleep",
+     "home"
+    ]
+   ],
+   "weekend": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "08:30",
+     "home",
+     "home"
+    ],
+    [
+     "10:00",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "12:30",
+     "eat",
+     "lunch"
+    ],
+    [
+     "13:40",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "16:30",
+     "home",
+     "home"
+    ],
+    [
+     "23:15",
+     "sleep",
+     "home"
+    ]
+   ]
+  },
+  "commuter": {
+   "color": [
+    0.4,
+    0.5,
+    0.66
+   ],
+   "sig": "Hurried",
+   "jitter": 6,
+   "weekday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "06:30",
+     "home",
+     "home"
+    ],
+    [
+     "07:20",
+     "away",
+     "stop"
+    ],
+    [
+     "17:45",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "19:00",
+     "home",
+     "home"
+    ],
+    [
+     "22:30",
+     "sleep",
+     "home"
+    ]
+   ],
+   "weekend": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "08:45",
+     "home",
+     "home"
+    ],
+    [
+     "10:30",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "12:40",
+     "eat",
+     "lunch"
+    ],
+    [
+     "14:00",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "17:00",
+     "home",
+     "home"
+    ],
+    [
+     "23:00",
+     "sleep",
+     "home"
+    ]
+   ]
+  },
+  "courier": {
+   "color": [
+    0.18,
+    0.5,
+    0.48
+   ],
+   "sig": "Hurried",
+   "jitter": 5,
+   "round_every": 13,
+   "round_act": "deliver",
+   "weekday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "06:20",
+     "home",
+     "home"
+    ],
+    [
+     "07:10",
+     "rounds",
+     "rounds"
+    ],
+    [
+     "12:05",
+     "eat",
+     "lunch"
+    ],
+    [
+     "12:45",
+     "rounds",
+     "rounds"
+    ],
+    [
+     "17:00",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "19:00",
+     "home",
+     "home"
+    ],
+    [
+     "22:30",
+     "sleep",
+     "home"
+    ]
+   ],
+   "sunday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "09:00",
+     "home",
+     "home"
+    ],
+    [
+     "11:00",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "12:45",
+     "eat",
+     "lunch"
+    ],
+    [
+     "14:15",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "18:00",
+     "home",
+     "home"
+    ],
+    [
+     "22:30",
+     "sleep",
+     "home"
+    ]
+   ]
+  },
+  "gardener": {
+   "color": [
+    0.36,
+    0.44,
+    0.22
+   ],
+   "sig": "Easy",
+   "jitter": 8,
+   "round_every": 40,
+   "round_act": "tend",
+   "weekday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "06:10",
+     "home",
+     "home"
+    ],
+    [
+     "06:50",
+     "tend",
+     "garden"
+    ],
+    [
+     "11:40",
+     "eat",
+     "lunch"
+    ],
+    [
+     "12:25",
+     "tend",
+     "garden"
+    ],
+    [
+     "16:00",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "18:30",
+     "home",
+     "home"
+    ],
+    [
+     "22:00",
+     "sleep",
+     "home"
+    ]
+   ],
+   "sunday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "08:00",
+     "home",
+     "home"
+    ],
+    [
+     "10:00",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "12:30",
+     "eat",
+     "lunch"
+    ],
+    [
+     "14:00",
+     "home",
+     "home"
+    ],
+    [
+     "22:00",
+     "sleep",
+     "home"
+    ]
+   ]
+  },
+  "elder": {
+   "color": [
+    0.47,
+    0.36,
+    0.52
+   ],
+   "sig": "Careful",
+   "jitter": 18,
+   "weekday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "07:15",
+     "home",
+     "home"
+    ],
+    [
+     "09:10",
+     "rest",
+     "garden"
+    ],
+    [
+     "10:35",
+     "shop",
+     "shopping"
+    ],
+    [
+     "11:25",
+     "home",
+     "home"
+    ],
+    [
+     "14:10",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "16:00",
+     "visit",
+     "afternoon"
+    ],
+    [
+     "17:10",
+     "home",
+     "home"
+    ],
+    [
+     "21:30",
+     "sleep",
+     "home"
+    ]
+   ]
+  },
+  "student": {
+   "color": [
+    0.8,
+    0.5,
+    0.3
+   ],
+   "sig": "Springy",
+   "jitter": 6,
+   "weekday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "06:50",
+     "home",
+     "home"
+    ],
+    [
+     "07:40",
+     "away",
+     "stop"
+    ],
+    [
+     "15:40",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "18:20",
+     "home",
+     "home"
+    ],
+    [
+     "22:15",
+     "sleep",
+     "home"
+    ]
+   ],
+   "weekend": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "09:15",
+     "home",
+     "home"
+    ],
+    [
+     "10:45",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "13:00",
+     "eat",
+     "lunch"
+    ],
+    [
+     "14:00",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "18:00",
+     "home",
+     "home"
+    ],
+    [
+     "23:00",
+     "sleep",
+     "home"
+    ]
+   ]
+  },
+  "utility": {
+   "color": [
+    0.16,
+    0.16,
+    0.2
+   ],
+   "sig": "Easy",
+   "jitter": 8,
+   "round_every": 28,
+   "round_act": "inspect",
+   "weekday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "06:30",
+     "home",
+     "home"
+    ],
+    [
+     "07:25",
+     "work",
+     "work"
+    ],
+    [
+     "09:00",
+     "rounds",
+     "rounds"
+    ],
+    [
+     "12:00",
+     "eat",
+     "lunch"
+    ],
+    [
+     "12:45",
+     "work",
+     "work"
+    ],
+    [
+     "16:30",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "18:30",
+     "home",
+     "home"
+    ],
+    [
+     "22:30",
+     "sleep",
+     "home"
+    ]
+   ],
+   "weekend": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "08:30",
+     "home",
+     "home"
+    ],
+    [
+     "10:30",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "12:45",
+     "eat",
+     "lunch"
+    ],
+    [
+     "14:00",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "17:30",
+     "home",
+     "home"
+    ],
+    [
+     "22:30",
+     "sleep",
+     "home"
+    ]
+   ]
+  }
+ },
+ "signatures": {
+  "Springy": 1.23,
+  "Easy": 1.14,
+  "Hurried": 1.68,
+  "Careful": 0.58
+ },
+ "choices": {
+  "lunch": {
+   "default": [
+    [
+     "eat",
+     "cafe"
+    ],
+    [
+     "eat",
+     "cafe"
+    ],
+    [
+     "shop",
+     "grocer"
+    ],
+    [
+     "eat",
+     "home"
+    ]
+   ],
+   "market": [
+    [
+     "shop",
+     "market"
+    ],
+    [
+     "eat",
+     "cafe"
+    ]
+   ]
+  },
+  "leisure": {
+   "default": [
+    [
+     "rest",
+     "garden"
+    ],
+    [
+     "stroll",
+     "garden"
+    ],
+    [
+     "eat",
+     "cafe"
+    ],
+    [
+     "stroll",
+     "garden"
+    ],
+    [
+     "home",
+     "home"
+    ]
+   ],
+   "market": [
+    [
+     "shop",
+     "market"
+    ],
+    [
+     "rest",
+     "garden"
+    ]
+   ],
+   "rain": [
+    [
+     "eat",
+     "cafe"
+    ],
+    [
+     "home",
+     "home"
+    ],
+    [
+     "home",
+     "home"
+    ]
+   ]
+  },
+  "shopping": {
+   "default": [
+    [
+     "shop",
+     "grocer"
+    ]
+   ],
+   "market": [
+    [
+     "shop",
+     "market"
+    ]
+   ],
+   "rain": [
+    [
+     "shop",
+     "grocer"
+    ],
+    [
+     "home",
+     "home"
+    ]
+   ]
+  },
+  "afternoon": {
+   "default": [
+    [
+     "home",
+     "home"
+    ],
+    [
+     "rest",
+     "garden"
+    ],
+    [
+     "home",
+     "home"
+    ],
+    [
+     "visit",
+     "clinic"
+    ]
+   ],
+   "rain": [
+    [
+     "home",
+     "home"
+    ]
+   ]
+  },
+  "rounds": [
+   "grocer",
+   "cafe",
+   "clinic",
+   "workshop",
+   "office",
+   "depot",
+   "homeA",
+   "homeB",
+   "homeC",
+   "homeD",
+   "homeE",
+   "homeF"
+  ]
+ },
+ "use": {
+  "sleep": "bed",
+  "home": "room",
+  "work": "work",
+  "eat": "seat",
+  "shop": "customer",
+  "rest": "bench",
+  "sell": "stall",
+  "away": "wait",
+  "visit": "chair",
+  "tend": "flowerbed",
+  "eat_home": "room",
+  "rest_fallback": "rim"
+ },
+ "weather": {
+  "rain_chance": [
+   0.3,
+   0.16,
+   0.36,
+   0.26
+  ],
+  "cloud_chance": [
+   0.35,
+   0.25,
+   0.4,
+   0.45
+  ],
+  "fog_chance": [
+   0.05,
+   0.0,
+   0.2,
+   0.25
+  ]
+ },
+ "tram": {
+  "y": 20,
+  "stop_x": 80,
+  "every": 20,
+  "first": "05:40",
+  "last": "23:00",
+  "dwell": 1.0,
+  "speed": 8.0
+ },
+ "van": {
+  "runs": [
+   "07:25",
+   "14:05"
+  ],
+  "speed": 5.0,
+  "loop": [
+   [
+    20,
+    20
+   ],
+   [
+    140,
+    20
+   ],
+   [
+    140,
+    140
+   ],
+   [
+    20,
+    140
+   ],
+   [
+    20,
+    20
+   ]
+  ],
+  "stops": [
+   [
+    63,
+    20,
+    4.0
+   ],
+   [
+    140,
+    63,
+    3.0
+   ],
+   [
+    97,
+    140,
+    3.0
+   ]
+  ]
+ },
+ "species": {
+  "plane": {
+   "r_max": 6.5,
+   "rate": 0.16,
+   "shape": 1.3,
+   "life": [
+    38,
+    55
+   ],
+   "bud": 4,
+   "full": 9,
+   "turn": 27,
+   "bare": 34,
+   "autumn": [
+    0.62,
+    0.44,
+    0.14
+   ],
+   "summer": [
+    0.24,
+    0.36,
+    0.2
+   ]
+  },
+  "linden": {
+   "r_max": 5.0,
+   "rate": 0.3,
+   "shape": 1.4,
+   "life": [
+    30,
+    45
+   ],
+   "bud": 3,
+   "full": 8,
+   "turn": 25,
+   "bare": 32,
+   "autumn": [
+    0.7,
+    0.56,
+    0.16
+   ],
+   "summer": [
+    0.3,
+    0.42,
+    0.22
+   ]
+  },
+  "plum": {
+   "r_max": 3.2,
+   "rate": 0.45,
+   "shape": 1.5,
+   "life": [
+    14,
+    22
+   ],
+   "bud": 2,
+   "full": 7,
+   "turn": 28,
+   "bare": 35,
+   "blossom": [
+    1,
+    5
+   ],
+   "autumn": [
+    0.52,
+    0.22,
+    0.16
+   ],
+   "summer": [
+    0.26,
+    0.38,
+    0.24
+   ]
+  }
+ },
+ "trees": [
+  {
+   "id": "t00",
+   "species": "plane",
+   "pos": [
+    12,
+    44
+   ],
+   "planted": -960,
+   "seed": 0
+  },
+  {
+   "id": "t01",
+   "species": "plane",
+   "pos": [
+    12,
+    116
+   ],
+   "planted": -1488,
+   "seed": 1
+  },
+  {
+   "id": "t02",
+   "species": "plane",
+   "pos": [
+    148,
+    44
+   ],
+   "planted": -1747.1999999999998,
+   "seed": 2
+  },
+  {
+   "id": "t03",
+   "species": "plane",
+   "pos": [
+    148,
+    116
+   ],
+   "planted": -576,
+   "seed": 3
+  },
+  {
+   "id": "t04",
+   "species": "plane",
+   "pos": [
+    44,
+    148
+   ],
+   "planted": -1200,
+   "seed": 4
+  },
+  {
+   "id": "t05",
+   "species": "plane",
+   "pos": [
+    116,
+    148
+   ],
+   "planted": -2112,
+   "seed": 5
+  },
+  {
+   "id": "t06",
+   "species": "plane",
+   "pos": [
+    44,
+    9
+   ],
+   "planted": -768,
+   "seed": 6
+  },
+  {
+   "id": "t07",
+   "species": "plane",
+   "pos": [
+    120,
+    9
+   ],
+   "planted": -1344,
+   "seed": 7
+  },
+  {
+   "id": "t08",
+   "species": "linden",
+   "pos": [
+    71,
+    73
+   ],
+   "planted": 0,
+   "seed": 8
+  },
+  {
+   "id": "t09",
+   "species": "linden",
+   "pos": [
+    89,
+    73
+   ],
+   "planted": 0,
+   "seed": 9
+  },
+  {
+   "id": "t10",
+   "species": "linden",
+   "pos": [
+    71,
+    87
+   ],
+   "planted": 0,
+   "seed": 10
+  },
+  {
+   "id": "t11",
+   "species": "linden",
+   "pos": [
+    89,
+    87
+   ],
+   "planted": 0,
+   "seed": 11
+  },
+  {
+   "id": "t12",
+   "species": "plum",
+   "pos": [
+    58,
+    68
+   ],
+   "planted": 0,
+   "seed": 12
+  },
+  {
+   "id": "t13",
+   "species": "plum",
+   "pos": [
+    102,
+    68
+   ],
+   "planted": 0,
+   "seed": 13
+  },
+  {
+   "id": "t14",
+   "species": "plum",
+   "pos": [
+    58,
+    92
+   ],
+   "planted": -600.0,
+   "seed": 14
+  },
+  {
+   "id": "t15",
+   "species": "plum",
+   "pos": [
+    102,
+    92
+   ],
+   "planted": 0,
+   "seed": 15
+  },
+  {
+   "id": "t16",
+   "species": "plum",
+   "pos": [
+    80,
+    101
+   ],
+   "planted": -96,
+   "seed": 16
+  }
+ ],
+ "flowers": {
+  "sprout": 3,
+  "bloom": [
+   9,
+   27
+  ],
+  "gone": 31,
+  "beds": [
+   [
+    70,
+    70
+   ],
+   [
+    90,
+    70
+   ],
+   [
+    70,
+    90
+   ],
+   [
+    90,
+    90
+   ]
+  ],
+  "colors": [
+   [
+    0.74,
+    0.3,
+    0.28
+   ],
+   [
+    0.8,
+    0.62,
+    0.2
+   ],
+   [
+    0.52,
+    0.36,
+    0.6
+   ],
+   [
+    0.82,
+    0.74,
+    0.6
+   ]
+  ]
+ },
+ "replant_gap_days": 10,
+ "fallen_days": 4,
+ "lamps": [
+  [
+   80,
+   30
+  ],
+  [
+   80,
+   52
+  ],
+  [
+   30,
+   80
+  ],
+  [
+   52,
+   80
+  ],
+  [
+   130,
+   80
+  ],
+  [
+   108,
+   80
+  ],
+  [
+   80,
+   130
+  ],
+  [
+   80,
+   108
+  ],
+  [
+   26,
+   26
+  ],
+  [
+   134,
+   26
+  ],
+  [
+   134,
+   134
+  ],
+  [
+   26,
+   134
+  ],
+  [
+   80,
+   80
+  ],
+  [
+   63,
+   26
+  ],
+  [
+   97,
+   134
+  ]
+ ]
+}

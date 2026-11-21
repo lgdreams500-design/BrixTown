@@ -1,0 +1,9 @@
+13:00:23 Blender 5.3.0
+13:00:24 A_toybox built: 593 objects in 1.3s
+13:02:07 A_toybox wide rendered in 103.3s
+13:03:20 A_toybox people rendered in 72.5s
+13:03:22 B_pastel_dusk built: 541 objects in 2.2s
+13:04:57 B_pastel_dusk wide rendered in 94.9s
+13:05:59 B_pastel_dusk people rendered in 62.1s
+13:05:59 saved .blend
+13:05:59 DONE

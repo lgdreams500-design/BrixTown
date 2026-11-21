@@ -1,0 +1,24 @@
+23:36:45 Blender 5.3.0
+23:36:45 lot b_1_1_l6 'Café Mina' kind=food floors=2 rect=[168.0, 120.0, 184.0, 141.8] district=Old Town
+23:36:45 lot b_1_1_l0 'Plum Court' kind=home floors=4 rect=[104.0, 104.0, 141.8, 120.0] district=Old Town
+23:36:45 lot b_1_2_l5 'Tanner Clinic' kind=health floors=2 rect=[104.0, 242.2, 120.0, 264.0] district=Old Town
+23:36:45 lot b_1_1_l2 'Linden Grocer' kind=shop floors=2 rect=[104.0, 168.0, 141.8, 184.0] district=Old Town
+23:36:45 lot b_0_0_l0 '1 North Wall Street' kind=home floors=2 rect=[11.0, 11.0, 25.0, 23.0] district=Outskirts
+23:36:45 lot b_0_0_l2 '3 North Wall Street' kind=home floors=2 rect=[31.0, 11.0, 45.0, 23.0] district=Outskirts
+23:36:45   b_1_1_l6: food, 2 floors, 16 x 14 m, plaster
+23:36:45   b_1_1_l0: home, 4 floors, 20 x 14 m, plaster
+23:36:57   b_1_2_l5: health, 2 floors, 16 x 14 m, all stone
+23:36:57   b_1_1_l2: shop, 2 floors, 16 x 14 m, plaster
+23:37:05   b_0_0_l0: home, 2 floors, 14 x 12 m, plaster
+23:37:09   b_0_0_l2: home, 2 floors, 14 x 12 m, plaster_b
+23:37:15 street built: 1012 objects in 29.7s
+23:37:15 saved .blend
+23:38:08 street rendered in 52.6s
+23:38:50 detail rendered in 42.4s
+23:39:27 cafe_mina rendered in 36.5s
+23:40:03 plum_court rendered in 36.3s
+23:40:42 tanner_clinic rendered in 38.8s
+23:41:51 linden_grocer rendered in 69.2s
+23:42:31 1_north_wall_street rendered in 40.3s
+23:43:03 3_north_wall_street rendered in 31.5s
+23:43:03 DONE

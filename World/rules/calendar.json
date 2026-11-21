@@ -1,0 +1,70 @@
+{
+ "calendar": {
+  "day_minutes": 1440,
+  "days_per_season": 12,
+  "seasons": [
+   "Spring",
+   "Summer",
+   "Autumn",
+   "Winter"
+  ],
+  "week": [
+   "Mon",
+   "Tue",
+   "Wed",
+   "Thu",
+   "Fri",
+   "Sat",
+   "Sun"
+  ],
+  "market_days": [
+   2,
+   5
+  ],
+  "rest_days": [
+   5,
+   6
+  ],
+  "sunrise": [
+   6.0,
+   5.0,
+   6.5,
+   7.75
+  ],
+  "sunset": [
+   19.0,
+   20.5,
+   18.5,
+   16.75
+  ],
+  "real_seconds_per_minute": 10.0
+ },
+ "weather": {
+  "rain_chance": [
+   0.3,
+   0.16,
+   0.36,
+   0.26
+  ],
+  "cloud_chance": [
+   0.35,
+   0.25,
+   0.4,
+   0.45
+  ],
+  "fog_chance": [
+   0.05,
+   0.0,
+   0.2,
+   0.25
+  ]
+ },
+ "tram": {
+  "every": 20,
+  "first": "05:40",
+  "last": "23:00",
+  "dwell": 1.0,
+  "speed": 8.0
+ },
+ "note": "The calendar, the weather odds and the tram timetable. real_seconds_per_minute sets how fast the clock runs: 10 means a game day lasts 4 real hours. People always walk at their true speed, so a faster clock makes them late (docs/specs/domains/WORLD_MAP.md, Q-21)."
+}

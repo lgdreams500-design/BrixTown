@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wasted: what goes in the game</title>
+<!--
+  Feature level picker for the Wasted project.
+  Open this file in Microsoft Edge or Google Chrome, choose the project folder once, then click levels.
+  Reads   docs/backlog/features.json          (the backlog, maintained by the team and AI agents)
+  Writes  docs/backlog/feature_choices.json   (the owner's picks: the source of truth for scope)
+          docs/backlog/BACKLOG.md             (a readable copy, regenerated on every save)
+  No server and no internet needed. Process: docs/process/FEATURE_PROCESS.md
+-->
+<style>
+:root {
+  --stone: #dfdbd6; --plaster: #f0ede9; --ink: #1e2440; --mute: #5c6078; --line: #c2bcb5;
+  --teal: #2f6f6b; --teal-soft: #cfe0dd; --ochre: #a97b1e; --lantern: #e8973a; --warn: #9a3b2e;
+  --sign: "Bahnschrift", "DIN Alternate", "Segoe UI", system-ui, sans-serif;
+  --text: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+* { box-sizing: border-box; }
+html { background: var(--stone); }
+body { margin: 0; color: var(--ink); font: 15px/1.5 var(--text); }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--lantern); outline-offset: 2px; }
+
+.top { max-width: 1180px; margin: 0 auto; padding: 36px 28px 8px; display: grid; grid-template-columns: 1fr auto; gap: 12px 32px; align-items: end; }
+h1 { font: 600 44px/1.02 var(--sign); letter-spacing: -0.01em; margin: 0; font-stretch: 85%; }
+.lede { max-width: 62ch; margin: 10px 0 0; color: var(--mute); }
+.status { text-align: right; min-width: 250px; }
+.lamp { display: inline-flex; align-items: center; gap: 10px; font: 500 15px var(--sign); }
+.lamp i { width: 14px; height: 18px; border-radius: 3px 3px 5px 5px; background: #8d8a86; border: 2px solid var(--ink); display: inline-block; transition: background .25s, box-shadow .25s; }
+.lamp.lit i { background: var(--lantern); box-shadow: 0 0 14px 4px rgba(232, 151, 58, .55); }
+.lamp.fail i { background: var(--warn); }
+.where { margin: 4px 0 0; color: var(--mute); font-size: 13px; word-break: break-all; }
+
+.actions { max-width: 1180px; margin: 0 auto; padding: 14px 28px 22px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.btn { border: 2px solid var(--ink); background: var(--ink); color: var(--plaster); padding: 8px 16px; border-radius: 4px; cursor: pointer; font: 500 15px var(--sign); }
+.btn.quiet { background: transparent; color: var(--ink); }
+.btn:hover { background: var(--teal); border-color: var(--teal); color: #fff; }
+.hint { color: var(--mute); font-size: 14px; margin-left: 4px; }
+.fallback { max-width: 1180px; margin: 0 auto 18px; padding: 14px 28px; }
+.fallback .box { border: 2px dashed var(--line); border-radius: 6px; padding: 14px 16px; background: var(--plaster); }
+.fallback label { display: block; margin: 8px 0; }
+[hidden] { display: none !important; }
+
+.board { max-width: 1180px; margin: 0 auto; padding: 0 28px 80px; }
+.cols { position: sticky; top: 0; z-index: 5; background: var(--stone); display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, 150px); gap: 0 14px; padding: 12px 0 10px; border-bottom: 3px solid var(--ink); }
+.cols h2 { font: 600 19px/1.1 var(--sign); margin: 0; }
+.cols p { margin: 2px 0 0; font-size: 12.5px; color: var(--mute); line-height: 1.3; }
+.cols .tally { margin-top: 6px; font: 500 13px var(--sign); color: var(--ink); }
+.cols .tally b { font-size: 20px; font-weight: 600; }
+.cols .tally .over { color: var(--warn); }
+
+.area { font: 600 24px/1.1 var(--sign); margin: 34px 0 4px; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, 150px); gap: 0 14px; padding: 16px 0 14px; border-bottom: 1px solid var(--line); }
+.row h3 { font: 600 18px/1.2 var(--text); margin: 0; }
+.row .why { margin: 1px 0 8px; color: var(--mute); }
+.lv { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+.lv li { display: grid; grid-template-columns: 22px 1fr; padding: 2px 6px 2px 0; border-radius: 3px; }
+.lv li b { font: 600 14px var(--sign); }
+.lv li.hot { background: var(--teal-soft); }
+.lv .size { color: var(--mute); white-space: nowrap; }
+.note { margin-top: 8px; width: min(100%, 520px); border: 0; border-bottom: 1px solid var(--line); background: transparent; padding: 4px 0; font-size: 14px; }
+.note::placeholder { color: #8a8da0; }
+.needs { margin: 6px 0 0; color: var(--warn); font-size: 13.5px; }
+
+/* the level control: four steps that climb, like storeys going up */
+.steps { display: flex; align-items: flex-end; gap: 5px; height: 78px; padding-top: 6px; }
+.step { flex: 1; border: 0; background: none; padding: 0; cursor: pointer; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-end; height: 100%; position: relative; }
+.step .bar { border: 2px solid var(--ink); border-radius: 3px 3px 0 0; background: transparent; }
+.step[data-l="-1"] .bar { height: 10px; border-style: dashed; border-color: var(--mute); }
+.step[data-l="0"] .bar { height: 20px; }
+.step[data-l="1"] .bar { height: 34px; }
+.step[data-l="2"] .bar { height: 48px; }
+.step .num { font: 500 12px var(--sign); text-align: center; padding-top: 3px; color: var(--mute); }
+.step.on .bar { background: var(--teal); border-color: var(--teal); }
+.step.pick .num { color: var(--ink); font-weight: 700; }
+.step.out.pick .bar { background: repeating-linear-gradient(135deg, var(--mute) 0 3px, transparent 3px 6px); }
+.step.sug::after { content: ""; position: absolute; left: 50%; bottom: -7px; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--ochre); }
+.step:hover .bar { border-color: var(--teal); }
+.cell { position: relative; }
+.cell .state { font-size: 12.5px; color: var(--mute); margin-top: 12px; min-height: 18px; }
+.cell.bump .steps { animation: bump .5s; }
+@keyframes bump { 30% { transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .cell.bump .steps { animation: none; } .lamp i { transition: none; } }
+
+.key { display: flex; flex-wrap: wrap; gap: 6px 22px; color: var(--mute); font-size: 13.5px; margin: 14px 0 0; }
+.key span::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 7px; border-radius: 50%; background: var(--ochre); }
+.key span.t::before { border-radius: 2px; background: var(--teal); }
+.key span.o::before { border-radius: 2px; background: repeating-linear-gradient(135deg, var(--mute) 0 2px, transparent 2px 4px); }
+.empty { padding: 50px 0; max-width: 60ch; font-size: 17px; }
+@media (max-width: 860px) {
+  .top { grid-template-columns: 1fr; } .status { text-align: left; }
+  .cols, .row { grid-template-columns: repeat(3, 1fr); }
+  .cols > :first-child, .row > :first-child { grid-column: 1 / -1; margin-bottom: 10px; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>What goes in the game</h1>
+    <p class="lede">Every feature can be built small, medium or large. For each one, pick how far it goes in the first slice, in the life-depth phase and in the finished game. Your picks are saved into the project folder as you click.</p>
+  </div>
+  <div class="status">
+    <div class="lamp" id="lamp"><i></i><span id="lampText">Not connected</span></div>
+    <p class="where" id="where"></p>
+  </div>
+</header>
+<div class="actions">
+  <button class="btn" id="connect">Open the project folder</button>
+  <button class="btn quiet" id="useSug" hidden>Use every suggestion</button>
+  <button class="btn quiet" id="download" hidden>Download my picks</button>
+  <span class="hint" id="hint">Choose the folder that holds CLAUDE.md, usually C:\Projects\Wasted.</span>
+</div>
+<div class="fallback" id="fallback" hidden>
+  <div class="box">
+    <strong>This browser cannot open a folder.</strong> Use Microsoft Edge or Google Chrome for saving straight into the project. Until then you can load the two files by hand and download your picks afterwards.
+    <label>Backlog: docs/backlog/features.json <input type="file" id="fileFeatures" accept=".json"></label>
+    <label>Earlier picks, if any: docs/backlog/feature_choices.json <input type="file" id="fileChoices" accept=".json"></label>
+  </div>
+</div>
+<main class="board" id="board">
+  <p class="empty" id="empty">Nothing loaded yet. Open the project folder to see the backlog.</p>
+</main>
+
+<script>
+"use strict";
+const S = { data: null, choices: {}, dir: null, saveTimer: null, mode: "none" };
+const $ = (id) => document.getElementById(id);
+const MS = () => S.data.milestones.map((m) => m.id);
+
+// ---------- pure helpers (also used by the tests) ----------
+function cost(data, feature, level) {            // points to reach `level` from nothing
+  if (level == null || level < 0) return 0;
+  let n = 0;
+  for (let i = 0; i <= level; i++) n += data.effort.points[feature.levels[i].effort] || 0;
+  return n;
+}
+function effective(data, choices, fid, m) {      // the owner's pick, or the suggestion while undecided
+  const c = choices[fid];
+  if (c && c[m] != null) return c[m];
+  return data.features.find((f) => f.id === fid).suggested[m];
+}
+function missing(data, choices, feature, m) {    // what a pick still needs at this milestone
+  const lvl = effective(data, choices, feature.id, m), out = [];
+  for (let i = 0; i <= lvl; i++) {
+    for (const [fid, need] of Object.entries(feature.levels[i].needs || {})) {
+      if (effective(data, choices, fid, m) < need) {
+        const g = data.features.find((f) => f.id === fid);
+        out.push(g.title + " at level " + need);
+      }
+    }
+  }
+  return [...new Set(out)];
+}
+function setPick(data, choices, fid, m, level) { // returns the milestones that had to move with it
+  const ids = data.milestones.map((x) => x.id), i = ids.indexOf(m), moved = [];
+  const c = choices[fid] = choices[fid] || {};
+  if (c[m] === level) { delete c[m]; if (!Object.keys(c).length) delete choices[fid]; return moved; }
+  c[m] = level;
+  ids.forEach((id, j) => {                       // a feature never shrinks from one milestone to the next
+    if (c[id] == null) return;
+    if (j > i && c[id] < level) { c[id] = level; moved.push(id); }
+    if (j < i && c[id] > level) { c[id] = level; moved.push(id); }
+  });
+  return moved;
+}
+function totals(data, choices) {
+  const t = {};
+  for (const m of data.milestones) {
+    let mine = 0, sug = 0, decided = 0;
+    for (const f of data.features) {
+      sug += cost(data, f, f.suggested[m.id]);
+      mine += cost(data, f, effective(data, choices, f.id, m.id));
+      if (choices[f.id] && choices[f.id][m.id] != null) decided++;
+    }
+    t[m.id] = { mine, sug, decided };
+  }
+  return t;
+}
+function levelName(f, l) { return l == null ? "undecided" : l < 0 ? "Out" : l + " " + f.levels[l].name; }
+function stamp() {
+  const d = new Date(), p = (n) => String(n).padStart(2, "0"), o = -d.getTimezoneOffset();
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds()) +
+    (o >= 0 ? "+" : "-") + p(Math.floor(Math.abs(o) / 60)) + ":" + p(Math.abs(o) % 60);
+}
+function choicesFile(data, choices) {
+  const ordered = {};
+  for (const f of data.features) if (choices[f.id]) ordered[f.id] = choices[f.id];
+  return JSON.stringify({
+    schema: 1,
+    note: "The owner's level picks. Written by Tools/feature_picker.html. A feature or milestone missing here is undecided. -1 means out of the game.",
+    updated: stamp(), choices: ordered }, null, 2) + "\n";
+}
+function backlogMarkdown(data, choices) {
+  const t = totals(data, choices), ms = data.milestones, L = [];
+  L.push("# Feature backlog and the owner's picks", "",
+    "> Generated by `Tools/feature_picker.html` on " + stamp() + ". Do not edit by hand: change picks in the picker,",
+    "> and change features in `docs/backlog/features.json`. A star marks a pick that differs from the suggestion.", "",
+    "| | " + ms.map((m) => m.name + " (" + m.phase + ")").join(" | ") + " |", "|---|" + ms.map(() => "---").join("|") + "|",
+    "| Decided | " + ms.map((m) => t[m.id].decided + " of " + data.features.length).join(" | ") + " |",
+    "| Size of the plan (points) | " + ms.map((m) => t[m.id].mine).join(" | ") + " |",
+    "| Size of the suggested plan | " + ms.map((m) => t[m.id].sug).join(" | ") + " |", "");
+  for (const a of data.areas) {
+    L.push("## " + a.name, "", "| Feature | " + ms.map((m) => m.name).join(" | ") + " | Note |", "|---|" + ms.map(() => "---").join("|") + "|---|");
+    for (const f of data.features.filter((x) => x.area === a.id)) {
+      const c = choices[f.id] || {};
+      L.push("| **" + f.title + "** `" + f.id + "` | " + ms.map((m) => {
+        const v = c[m.id]; return levelName(f, v) + (v != null && v !== f.suggested[m.id] ? " ★" : "");
+      }).join(" | ") + " | " + (c.note || "").replace(/\|/g, "/") + " |");
+    }
+    L.push("");
+  }
+  L.push("## What each level means", "");
+  for (const f of data.features) {
+    L.push("**" + f.title + "** (`" + f.id + "`). " + f.why);
+    f.levels.forEach((l, i) => L.push("- " + i + " " + l.name + ": " + l.what + " Size " + l.effort + "."));
+    L.push("");
+  }
+  return L.join("\n");
+}
+
+// ---------- reading and writing the project folder ----------
+async function fileIn(dir, path, create) {
+  const parts = path.split("/");
+  let d = dir;
+  for (const p of parts.slice(0, -1)) d = await d.getDirectoryHandle(p, { create: !!create });
+  return d.getFileHandle(parts[parts.length - 1], { create: !!create });
+}
+async function readJson(dir, path) { return JSON.parse(await (await (await fileIn(dir, path)).getFile()).text()); }
+async function writeText(dir, path, text) {
+  const w = await (await fileIn(dir, path, true)).createWritable();
+  await w.write(text); await w.close();
+}
+function idb(mode, fn) {
+  return new Promise((res) => {
+    try {
+      const r = indexedDB.open("wasted-picker", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("kv");
+      r.onerror = () => res(null);
+      r.onsuccess = () => {
+        try { const q = fn(r.result.transaction("kv", mode).objectStore("kv")); q.onsuccess = () => res(q.result); q.onerror = () => res(null); }
+        catch (e) { res(null); }                 // remembering the folder is a convenience; never block on it
+      };
+    } catch (e) { res(null); }
+  });
+}
+async function openFolder(dir) {
+  let data;
+  try { data = await readJson(dir, "docs/backlog/features.json"); }
+  catch (e) { lamp("fail", "That folder has no docs/backlog/features.json"); $("hint").textContent = "Pick the Wasted project folder itself, the one that holds CLAUDE.md."; return; }
+  let saved = {};
+  try { saved = (await readJson(dir, "docs/backlog/feature_choices.json")).choices || {}; } catch (e) { /* first run */ }
+  S.dir = dir; S.data = data; S.choices = saved; S.mode = "folder";
+  await idb("readwrite", (s) => s.put(dir, "dir"));
+  $("where").textContent = "Saving to " + dir.name + "/docs/backlog/feature_choices.json";
+  $("connect").textContent = "Open a different folder";
+  $("hint").textContent = "Click a step to pick a level. Click it again to clear the pick.";
+  lamp("lit", Object.keys(saved).length ? "Picks loaded" : "Ready");
+  render();
+}
+async function save() {
+  if (S.mode !== "folder") { lamp("", "Not saved yet: download your picks"); return; }
+  try {
+    await writeText(S.dir, "docs/backlog/feature_choices.json", choicesFile(S.data, S.choices));
+    await writeText(S.dir, "docs/backlog/BACKLOG.md", backlogMarkdown(S.data, S.choices));
+    lamp("lit", "Saved " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+  } catch (e) { lamp("fail", "Could not save: " + (e.message || e.name)); }
+}
+function queueSave() { lamp("", "Saving"); clearTimeout(S.saveTimer); S.saveTimer = setTimeout(save, 350); }
+function lamp(state, text) { $("lamp").className = "lamp " + state; $("lampText").textContent = text; }
+
+// ---------- drawing the board ----------
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function render() {
+  const d = S.data, board = $("board");
+  board.textContent = "";
+  $("useSug").hidden = false; $("download").hidden = S.mode === "folder";
+  const head = el("div", "cols");
+  const first = el("div"); first.append(el("h2", "", d.features.length + " features"));
+  const key = el("p", "key"); key.append(el("span", "", "suggested"), el("span", "t", "your pick"), el("span", "o", "out of the game")); first.append(key);
+  head.append(first);
+  for (const m of d.milestones) {
+    const c = el("div"); c.append(el("h2", "", m.name), el("p", "", m.phase + ". " + m.about));
+    const t = el("div", "tally"); t.id = "tally-" + m.id; c.append(t); head.append(c);
+  }
+  board.append(head);
+  for (const a of d.areas) {
+    board.append(el("h2", "area", a.name));
+    for (const f of d.features.filter((x) => x.area === a.id)) board.append(row(f));
+  }
+  tally();
+}
+function row(f) {
+  const d = S.data, r = el("section", "row"); r.id = "row-" + f.id;
+  const info = el("div"); info.append(el("h3", "", f.title), el("p", "why", f.why));
+  const ul = el("ul", "lv");
+  f.levels.forEach((l, i) => {
+    const li = el("li"); li.dataset.l = i; li.append(el("b", "", String(i)));
+    const span = el("span"); span.append(el("strong", "", l.name + ". "), document.createTextNode(l.what + " "), el("span", "size", l.effort === "-" ? "" : "Size " + l.effort));
+    li.append(span); ul.append(li);
+  });
+  info.append(ul);
+  const needs = el("p", "needs"); needs.hidden = true; info.append(needs);
+  const note = el("input", "note"); note.placeholder = "Add a note about this feature"; note.value = (S.choices[f.id] || {}).note || "";
+  note.setAttribute("aria-label", "Note about " + f.title);
+  note.addEventListener("input", () => {
+    const c = S.choices[f.id] = S.choices[f.id] || {};
+    if (note.value.trim()) c.note = note.value.trim(); else { delete c.note; if (!Object.keys(c).length) delete S.choices[f.id]; }
+    queueSave();
+  });
+  info.append(note); r.append(info);
+  for (const m of d.milestones) {
+    const cell = el("div", "cell"); cell.dataset.m = m.id;
+    const steps = el("div", "steps"); steps.setAttribute("role", "radiogroup"); steps.setAttribute("aria-label", f.title + ", " + m.name);
+    for (const l of [-1, 0, 1, 2]) {
+      const b = el("button", "step" + (l < 0 ? " out" : "")); b.type = "button"; b.dataset.l = l; b.setAttribute("role", "radio");
+      b.title = l < 0 ? "Out of the game" : l + ". " + f.levels[l].name;
+      b.setAttribute("aria-label", (l < 0 ? "Out of the game" : "Level " + l + ", " + f.levels[l].name) + ", " + m.name);
+      b.append(el("span", "bar"), el("span", "num", l < 0 ? "out" : String(l)));
+      const hot = (on) => { if (l >= 0) ul.children[l].classList.toggle("hot", on); };
+      b.addEventListener("mouseenter", () => hot(true)); b.addEventListener("mouseleave", () => hot(false));
+      b.addEventListener("focus", () => hot(true)); b.addEventListener("blur", () => hot(false));
+      b.addEventListener("click", () => {
+        const moved = setPick(S.data, S.choices, f.id, m.id, l);
+        paint(f);
+        moved.forEach((id) => { const c = r.querySelector('.cell[data-m="' + id + '"]'); c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump"); });
+        S.data.features.forEach(warn); tally(); queueSave();
+      });
+      steps.append(b);
+    }
+    cell.append(steps, el("div", "state")); r.append(cell);
+  }
+  queueMicrotask(() => { paint(f); warn(f); });
+  return r;
+}
+function paint(f) {
+  const r = $("row-" + f.id), c = S.choices[f.id] || {};
+  for (const cell of r.querySelectorAll(".cell")) {
+    const m = cell.dataset.m, v = c[m];
+    for (const b of cell.querySelectorAll(".step")) {
+      const l = +b.dataset.l;
+      b.classList.toggle("on", v != null && v >= 0 && l >= 0 && l <= v);
+      b.classList.toggle("pick", v === l);
+      b.classList.toggle("sug", f.suggested[m] === l);
+      b.setAttribute("aria-checked", v === l ? "true" : "false");
+    }
+    cell.querySelector(".state").textContent = v == null ? "Undecided" : v < 0 ? "Out of the game" : f.levels[v].name;
+  }
+}
+function warn(f) {
+  const r = $("row-" + f.id); if (!r) return;
+  const lines = [];
+  for (const m of S.data.milestones) {
+    const c = S.choices[f.id];
+    if (!c || c[m.id] == null || c[m.id] < 0) continue;
+    const miss = missing(S.data, S.choices, f, m.id);
+    if (miss.length) lines.push(m.name + ": needs " + miss.join(" and ") + ".");
+  }
+  const p = r.querySelector(".needs"); p.hidden = !lines.length; p.textContent = lines.join(" ");
+}
+function tally() {
+  const t = totals(S.data, S.choices);
+  for (const m of S.data.milestones) {
+    const box = $("tally-" + m.id), x = t[m.id]; box.textContent = "";
+    const b = el("b", x.mine > x.sug ? "over" : "", String(x.mine));
+    box.append(b, document.createTextNode(" points"), el("br"), document.createTextNode("suggested plan " + x.sug), el("br"),
+      document.createTextNode(x.decided + " of " + S.data.features.length + " decided"));
+  }
+}
+
+// ---------- wiring ----------
+$("connect").addEventListener("click", async () => {
+  if (!window.showDirectoryPicker) { $("fallback").hidden = false; return; }
+  try { await openFolder(await window.showDirectoryPicker({ id: "wasted", mode: "readwrite" })); }
+  catch (e) { if (e.name !== "AbortError") lamp("fail", "Could not open the folder: " + (e.message || e.name)); }
+});
+$("useSug").addEventListener("click", () => {
+  for (const f of S.data.features) { const c = S.choices[f.id] = S.choices[f.id] || {}; for (const m of MS()) if (c[m] == null) c[m] = f.suggested[m]; }
+  S.data.features.forEach((f) => { paint(f); warn(f); }); tally(); queueSave();
+});
+$("download").addEventListener("click", () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([choicesFile(S.data, S.choices)], { type: "application/json" }));
+  a.download = "feature_choices.json"; a.click();
+  $("hint").textContent = "Put the downloaded file in docs/backlog/ in the project folder.";
+});
+$("fileFeatures").addEventListener("change", async (ev) => {
+  S.data = JSON.parse(await ev.target.files[0].text()); S.mode = "files";
+  lamp("", "Loaded by hand: download your picks when done"); render();
+});
+$("fileChoices").addEventListener("change", async (ev) => {
+  S.choices = JSON.parse(await ev.target.files[0].text()).choices || {}; if (S.data) render();
+});
+(async function start() {
+  if (!window.showDirectoryPicker) { $("fallback").hidden = false; $("connect").hidden = true; $("hint").textContent = ""; return; }
+  const dir = await idb("readonly", (s) => s.get("dir"));
+  if (!dir) return;
+  try {
+    if ((await dir.queryPermission({ mode: "readwrite" })) === "granted") { await openFolder(dir); return; }
+    $("connect").textContent = "Reconnect " + dir.name;
+    $("hint").textContent = "The browser asks once per visit before it lets this page save.";
+    $("connect").addEventListener("click", async function once(ev) {
+      ev.stopImmediatePropagation(); $("connect").removeEventListener("click", once, true);
+      if ((await dir.requestPermission({ mode: "readwrite" })) === "granted") await openFolder(dir);
+    }, true);
+  } catch (e) { /* stored folder no longer usable: fall back to choosing again */ }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wasted: Old Town</title>
+<style>
+  :root {
+    --ink: #17171c; --cream: #d9cfb6; --dim: #a79f8c; --lantern: #f0a35a; --teal: #6fa3a2;
+    --name: Constantia, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    --data: Bahnschrift, "Segoe UI", "Trebuchet MS", sans-serif;
+  }
+  html, body { margin: 0; height: 100%; background: var(--ink); overflow: hidden; color: var(--cream); font-family: var(--data); }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #ui { pointer-events: none; }
+  .hud { position: fixed; pointer-events: none; text-shadow: 0 1px 2px rgba(0,0,0,.75); }
+  #clock { left: 22px; top: 16px; }
+  #time { font-size: 44px; font-weight: 600; letter-spacing: .02em; line-height: 1; font-variant-numeric: tabular-nums; }
+  #date { margin-top: 6px; font-size: 15px; color: var(--dim); }
+  #place { margin-top: 14px; font-family: var(--name); font-size: 24px; }
+  #sub { font-size: 14px; color: var(--dim); margin-top: 2px; }
+  #mapbox { right: 18px; top: 16px; width: 204px; }
+  #mini { position: static; width: 204px; height: 204px; border-radius: 50%; border: 2px solid rgba(217,207,182,.55); background: #24242b; }
+  #stats { margin-top: 8px; font-size: 13px; line-height: 1.5; color: var(--cream); text-align: center; font-variant-numeric: tabular-nums; }
+  #prompt { left: 50%; bottom: 96px; transform: translateX(-50%); font-size: 18px; padding: 8px 16px; background: rgba(23,23,28,.72); border-radius: 6px; display: none; }
+  #prompt kbd, #keys kbd { font-family: var(--data); font-size: .85em; padding: 1px 7px; border: 1px solid rgba(240,163,90,.6); border-radius: 4px; margin-right: 6px; color: var(--lantern); }
+  #keys { left: 14px; bottom: 12px; font-size: 13px; color: var(--cream); line-height: 1.9; background: rgba(23,23,28,.62); border-radius: 6px; padding: 6px 12px; text-shadow: none; display: none; }
+  #keys span { margin-right: 14px; white-space: nowrap; }
+  #dot { left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: rgba(217,207,182,.8); display: none; }
+  #fade { position: fixed; inset: 0; background: var(--ink); opacity: 0; pointer-events: none; transition: opacity .22s; }
+  #bigmap { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(23,23,28,.82); }
+  #bigmap canvas { position: static; width: min(84vh, 84vw); height: min(84vh, 84vw); border: 2px solid rgba(217,207,182,.5); }
+  #legend { margin-left: 26px; font-size: 14px; line-height: 2; }
+  #legend i { display: inline-block; width: 12px; height: 12px; margin-right: 9px; vertical-align: -1px; }
+  #start { position: fixed; inset: 0; display: flex; align-items: flex-end; background: linear-gradient(to top, rgba(23,23,28,.94) 0%, rgba(23,23,28,.72) 38%, rgba(23,23,28,0) 72%); }
+  #card { padding: 0 6vw 7vh; max-width: 1000px; }
+  #card h1 { font-family: var(--name); font-weight: 400; font-size: clamp(56px, 9vw, 120px); line-height: .95; margin: 0; letter-spacing: -.01em; }
+  #card p { font-size: 18px; max-width: 60ch; line-height: 1.5; margin: 18px 0 0; }
+  #card p.small { font-size: 14px; color: var(--dim); }
+  #controls { display: grid; grid-template-columns: repeat(4, max-content); gap: 6px 34px; margin-top: 22px; font-size: 14px; color: var(--dim); }
+  #controls b { color: var(--cream); font-weight: 600; margin-right: 8px; }
+  #go { margin-top: 26px; font: 600 18px var(--data); color: var(--ink); background: var(--lantern); border: 0; border-radius: 6px; padding: 13px 26px; cursor: pointer; }
+  #go:hover { background: #f6b673; }
+  #go:focus-visible { outline: 3px solid var(--cream); outline-offset: 3px; }
+  #fail { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 8vw; font-size: 20px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<canvas id="ui"></canvas>
+
+<div class="hud" id="clock">
+  <div id="time">08:00</div>
+  <div id="date"></div>
+  <div id="place"></div>
+  <div id="sub"></div>
+</div>
+<div class="hud" id="mapbox"><canvas id="mini" width="408" height="408"></canvas><div id="stats"></div></div>
+<div class="hud" id="prompt"></div>
+<div class="hud" id="dot"></div>
+<div class="hud" id="keys">
+  <span><kbd>W A S D</kbd>walk</span><span><kbd>Shift</kbd>run</span><span><kbd>Space</kbd>jump</span><span><kbd>V</kbd>first or third person</span><span><kbd>E</kbd>use</span><br>
+  <span><kbd>[</kbd><kbd>]</kbd>slow or speed the clock</span><span><kbd>T</kbd>skip an hour</span><span><kbd>M</kbd>map</span><span><kbd>Q</kbd>softer picture</span><span><kbd>L</kbd>earlier light</span><span><kbd>H</kbd>hide these</span>
+</div>
+<div id="bigmap"><canvas id="big" width="900" height="900"></canvas><div id="legend"></div></div>
+<div id="fade"></div>
+
+<div id="start">
+  <div id="card">
+    <h1>Wasted</h1>
+    <p id="lede"></p>
+    <div id="controls">
+      <span><b>W A S D</b>walk</span><span><b>Mouse</b>look</span><span><b>Shift</b>run</span><span><b>Space</b>jump</span>
+      <span><b>V</b>first or third person</span><span><b>E</b>sit, lie down, ride a lift</span><span><b>M</b>map</span><span><b>[ ] T</b>clock</span>
+    </div>
+    <button id="go">Walk into town</button>
+    <p class="small">A playable slice built from the files in World/. Doors are open: walk into any building. The towers have a lift to the roof.</p>
+  </div>
+</div>
+<div id="fail"></div>
+
+<script src="city_data.js"></script>
+<script src="people.js"></script>
+<script src="play.js"></script>
+</body>
+</html>

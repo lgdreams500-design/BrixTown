@@ -1,0 +1,9 @@
+17:00:45 Blender 5.3.0
+17:00:48 sheets built: 719 objects
+17:01:28 lineup rendered in 39.8s
+17:02:29 expressions rendered in 61.2s
+17:02:58 mouths rendered in 29.1s
+17:02:58 talk built: 38 objects, 55 frames
+17:06:11 talk: 55 frames rendered in 193.3s
+17:06:12 saved .blend
+17:06:12 DONE

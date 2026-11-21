@@ -1,0 +1,1190 @@
+{
+  "schema": 1,
+  "updated": "2026-11-21",
+  "note": "The feature backlog. Maintained by the team and AI agents. The owner's picks live in feature_choices.json, never here.",
+  "milestones": [
+    {
+      "id": "slice",
+      "name": "First slice",
+      "phase": "PH1",
+      "about": "One city block that proves the whole loop."
+    },
+    {
+      "id": "depth",
+      "name": "Life depth",
+      "phase": "PH3",
+      "about": "Careers, property, weather and a fuller town."
+    },
+    {
+      "id": "full",
+      "name": "Full game",
+      "phase": "PH6",
+      "about": "Where each feature should end up."
+    }
+  ],
+  "effort": {
+    "note": "Rough size of the extra work to reach a level from the one below. Estimates, not measurements.",
+    "points": {
+      "-": 0,
+      "S": 1,
+      "M": 3,
+      "L": 8,
+      "XL": 20
+    }
+  },
+  "areas": [
+    {
+      "id": "map",
+      "name": "City and buildings"
+    },
+    {
+      "id": "people",
+      "name": "People and animals"
+    },
+    {
+      "id": "objects",
+      "name": "Things to use"
+    },
+    {
+      "id": "vehicles",
+      "name": "Vehicles"
+    },
+    {
+      "id": "nature",
+      "name": "Nature and time"
+    }
+  ],
+  "pillars": {
+    "1": "A city that feels alive",
+    "2": "A life worth building",
+    "3": "A real economy",
+    "4": "Shared world",
+    "5": "Creator-powered"
+  },
+  "features": [
+    {
+      "id": "F-MAP-CITY",
+      "area": "map",
+      "title": "City layout",
+      "why": "How much city there is to walk around.",
+      "pillars": [
+        1,
+        4
+      ],
+      "spec": [
+        "TECH-006",
+        "CITY-010"
+      ],
+      "levels": [
+        {
+          "name": "One block",
+          "what": "One hand-built city block with streets around it.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "A district",
+          "what": "Several blocks laid out from lot data, loaded as you move.",
+          "effort": "L",
+          "needs": {
+            "F-MAP-LOTS": 1
+          }
+        },
+        {
+          "name": "Whole city",
+          "what": "Districts with their own character, streamed seamlessly.",
+          "effort": "XL",
+          "needs": {
+            "F-NPC-LOAD": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-MAP-LOTS",
+      "area": "map",
+      "title": "Lots and building records",
+      "why": "Every plot knows what it is, who owns it and when it is open.",
+      "pillars": [
+        1,
+        2,
+        3
+      ],
+      "spec": [
+        "CITY-011",
+        "CITY-012",
+        "PROP-002"
+      ],
+      "levels": [
+        {
+          "name": "Hand-placed",
+          "what": "Buildings are placed by hand with no data behind them.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Registry",
+          "what": "A data record per lot drives signs, opening hours, owners and who lives or works there.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "Changing lots",
+          "what": "Lots can change use, be built on or stand empty over time.",
+          "effort": "L",
+          "needs": {}
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-BLD-INSIDE",
+      "area": "map",
+      "title": "Going inside buildings",
+      "why": "Whether doors lead anywhere.",
+      "pillars": [
+        1,
+        2
+      ],
+      "spec": [
+        "CITY-013"
+      ],
+      "levels": [
+        {
+          "name": "Fronts only",
+          "what": "Buildings are fronts; people step in and vanish.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Key rooms",
+          "what": "A few important buildings have one room you can enter.",
+          "effort": "L",
+          "needs": {}
+        },
+        {
+          "name": "Most buildings",
+          "what": "Most buildings have furnished interiors.",
+          "effort": "XL",
+          "needs": {
+            "F-MAP-LOTS": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-BLD-SHOP",
+      "area": "map",
+      "title": "Shops and market",
+      "why": "Where money gets spent.",
+      "pillars": [
+        2,
+        3
+      ],
+      "spec": [
+        "CITY-004",
+        "PROP-005"
+      ],
+      "levels": [
+        {
+          "name": "Decoration",
+          "what": "Stalls and shop fronts you cannot use.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Buy at a counter",
+          "what": "A shopkeeper sells a short list of goods through the ledger.",
+          "effort": "M",
+          "needs": {
+            "F-OBJ-POINTS": 1
+          }
+        },
+        {
+          "name": "Stock and prices",
+          "what": "Shops hold stock, change prices and can be run by players.",
+          "effort": "XL",
+          "needs": {
+            "F-MAP-LOTS": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-BLD-MALL",
+      "area": "map",
+      "title": "Mall",
+      "why": "A big indoor place to shop and meet.",
+      "pillars": [
+        1,
+        3
+      ],
+      "spec": [
+        "CITY-014"
+      ],
+      "levels": [
+        {
+          "name": "None",
+          "what": "No mall; shops are on the street.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Arcade",
+          "what": "One covered arcade with four shops and seating.",
+          "effort": "L",
+          "needs": {
+            "F-BLD-SHOP": 1,
+            "F-BLD-INSIDE": 1
+          }
+        },
+        {
+          "name": "Full mall",
+          "what": "Several floors, many shops, events and crowds.",
+          "effort": "XL",
+          "needs": {
+            "F-NPC-POP": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-BLD-HOSPITAL",
+      "area": "map",
+      "title": "Hospital and clinic",
+      "why": "Where health is restored.",
+      "pillars": [
+        2
+      ],
+      "spec": [
+        "CITY-015",
+        "NEED-001"
+      ],
+      "levels": [
+        {
+          "name": "A door",
+          "what": "A clinic front you cannot enter.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Clinic room",
+          "what": "One room where a nurse restores health for a fee.",
+          "effort": "M",
+          "needs": {
+            "F-BLD-INSIDE": 1,
+            "F-OBJ-POINTS": 1
+          }
+        },
+        {
+          "name": "Hospital",
+          "what": "A staffed hospital with wards, a medical career and an ambulance.",
+          "effort": "XL",
+          "needs": {
+            "F-NPC-ROUTINE": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-BLD-WORK",
+      "area": "map",
+      "title": "Workplaces",
+      "why": "Where careers happen.",
+      "pillars": [
+        2
+      ],
+      "spec": [
+        "CAR-001",
+        "CAR-003"
+      ],
+      "levels": [
+        {
+          "name": "Fronts",
+          "what": "Offices and workshops are fronts; workers go in and out.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "One job site",
+          "what": "One workplace with real tasks for the player.",
+          "effort": "L",
+          "needs": {
+            "F-OBJ-POINTS": 1
+          }
+        },
+        {
+          "name": "Several careers",
+          "what": "Different workplaces for each career track.",
+          "effort": "XL",
+          "needs": {
+            "F-BLD-INSIDE": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-BLD-UTILITY",
+      "area": "map",
+      "title": "Utility areas",
+      "why": "Power, water, waste and depots.",
+      "pillars": [
+        1,
+        3
+      ],
+      "spec": [
+        "CITY-016",
+        "PROP-006"
+      ],
+      "levels": [
+        {
+          "name": "Set dressing",
+          "what": "A depot and pipes as scenery.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Bills and workers",
+          "what": "Utility workers do rounds; lots get utility bills.",
+          "effort": "M",
+          "needs": {
+            "F-MAP-LOTS": 1,
+            "F-NPC-ROUTINE": 1
+          }
+        },
+        {
+          "name": "Outages and repairs",
+          "what": "Things break; districts feel it; repair is a job.",
+          "effort": "L",
+          "needs": {
+            "F-OBJ-POINTS": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-GARDEN",
+      "area": "map",
+      "title": "Gardens and parks",
+      "why": "Green places to rest and meet.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "CITY-017"
+      ],
+      "levels": [
+        {
+          "name": "Static garden",
+          "what": "A garden with paths and plants that never change.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Living garden",
+          "what": "Benches people use, seasonal plants, a gardener at work.",
+          "effort": "M",
+          "needs": {
+            "F-OBJ-POINTS": 1,
+            "F-VEG-LEAF": 1
+          }
+        },
+        {
+          "name": "Community garden",
+          "what": "Players plant and tend plots; garden events.",
+          "effort": "L",
+          "needs": {
+            "F-VEG-GROW": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-NPC-POP",
+      "area": "people",
+      "title": "Population",
+      "why": "How many residents there are and how varied.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "CITY-003",
+        "CITY-006",
+        "CITY-020"
+      ],
+      "levels": [
+        {
+          "name": "A handful",
+          "what": "Five or six people standing at their posts.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "A neighbourhood",
+          "what": "20 to 30 residents per block, each with a home, a role and a look.",
+          "effort": "M",
+          "needs": {
+            "F-MAP-LOTS": 1
+          }
+        },
+        {
+          "name": "A crowd",
+          "what": "Hundreds across the city, with cheaper far-away versions.",
+          "effort": "XL",
+          "needs": {
+            "F-NPC-LOAD": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-NPC-ROUTINE",
+      "area": "people",
+      "title": "Daily routines",
+      "why": "What residents do with their day.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "CITY-003",
+        "CITY-021",
+        "CITY-022",
+        "CITY-028"
+      ],
+      "levels": [
+        {
+          "name": "At a post",
+          "what": "Each person stays in one place.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "By the clock",
+          "what": "Home, work, meals and leisure by the time of day, a little different each day.",
+          "effort": "M",
+          "needs": {
+            "F-NPC-POP": 1,
+            "F-OBJ-POINTS": 1
+          }
+        },
+        {
+          "name": "By their needs",
+          "what": "People choose what to do from their own needs, money and mood.",
+          "effort": "XL",
+          "needs": {}
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-NPC-WEEK",
+      "area": "people",
+      "title": "Week and calendar",
+      "why": "Whether Tuesday differs from Sunday.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "CITY-023"
+      ],
+      "levels": [
+        {
+          "name": "Every day the same",
+          "what": "One routine for every day.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Weekdays and weekends",
+          "what": "Work days, rest days and market days differ.",
+          "effort": "S",
+          "needs": {
+            "F-NPC-ROUTINE": 1
+          }
+        },
+        {
+          "name": "Festivals",
+          "what": "Holidays and seasonal events change the whole town.",
+          "effort": "L",
+          "needs": {
+            "F-SEASONS": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-NPC-LOAD",
+      "area": "people",
+      "title": "Loading people as you arrive",
+      "why": "Residents appear where their routine says, only near players.",
+      "pillars": [
+        1,
+        4
+      ],
+      "spec": [
+        "CITY-006",
+        "CITY-024",
+        "CITY-025",
+        "MP-006"
+      ],
+      "levels": [
+        {
+          "name": "Always there",
+          "what": "Everyone is always loaded. Fine for one block.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Placed by routine",
+          "what": "People are placed from their routine when a player comes near and removed when all leave.",
+          "effort": "M",
+          "needs": {
+            "F-NPC-ROUTINE": 1
+          }
+        },
+        {
+          "name": "Distance tiers",
+          "what": "Full, simple and data-only versions by distance, within a server budget, for many players.",
+          "effort": "L",
+          "needs": {}
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-NPC-TALK",
+      "area": "people",
+      "title": "Talking with residents",
+      "why": "What happens when you speak to someone.",
+      "pillars": [
+        1,
+        2
+      ],
+      "spec": [
+        "CITY-007",
+        "ANIM-006"
+      ],
+      "levels": [
+        {
+          "name": "Greetings",
+          "what": "People say a line as you pass.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Dialogue",
+          "what": "Conversations with choices and outcomes, standing or walking.",
+          "effort": "L",
+          "needs": {}
+        },
+        {
+          "name": "Residents talk to each other",
+          "what": "People chat among themselves and news spreads.",
+          "effort": "L",
+          "needs": {
+            "F-NPC-ROUTINE": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-NPC-REACT",
+      "area": "people",
+      "title": "Reacting to the world",
+      "why": "Whether people notice rain, night and you.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "WLD-004",
+        "CITY-026"
+      ],
+      "levels": [
+        {
+          "name": "No reaction",
+          "what": "People ignore weather and time.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Weather and night",
+          "what": "People shelter from rain, lamps and windows light up, people glance at you.",
+          "effort": "M",
+          "needs": {
+            "F-WEATHER": 1,
+            "F-NPC-ROUTINE": 1
+          }
+        },
+        {
+          "name": "Events",
+          "what": "People gather, flee or help when something happens.",
+          "effort": "L",
+          "needs": {}
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-ANIMALS",
+      "area": "people",
+      "title": "Animals",
+      "why": "Birds, cats and dogs around town.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "CITY-027"
+      ],
+      "levels": [
+        {
+          "name": "None",
+          "what": "No animals.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Ambient",
+          "what": "Birds and cats that keep to themselves.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "Pets",
+          "what": "Animals with owners, routines and needs.",
+          "effort": "L",
+          "needs": {
+            "F-NPC-ROUTINE": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 1
+      }
+    },
+    {
+      "id": "F-OBJ-POINTS",
+      "area": "objects",
+      "title": "Places to do things",
+      "why": "Benches, counters, beds and desks that players and residents both use.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "CITY-001",
+        "CITY-030",
+        "CITY-031",
+        "CITY-033",
+        "CITY-034"
+      ],
+      "levels": [
+        {
+          "name": "Players only",
+          "what": "Only the player can use objects.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Shared",
+          "what": "Residents and players share the same objects, each with a number of places.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "Objects with a state",
+          "what": "Things get dirty, empty or broken and someone has to fix them.",
+          "effort": "L",
+          "needs": {
+            "F-NPC-ROUTINE": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-OBJ-CARRY",
+      "area": "objects",
+      "title": "Carrying and moving things",
+      "why": "Deliveries, shopping bags, things left where you put them.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "CITY-032"
+      ],
+      "levels": [
+        {
+          "name": "Nothing moves",
+          "what": "Objects stay where they are.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Residents carry",
+          "what": "Couriers and shoppers carry things between places.",
+          "effort": "M",
+          "needs": {
+            "F-NPC-ROUTINE": 1
+          }
+        },
+        {
+          "name": "Things stay moved",
+          "what": "Anything a player or resident moves stays there for everyone.",
+          "effort": "L",
+          "needs": {}
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-VEH-TRAFFIC",
+      "area": "vehicles",
+      "title": "Traffic",
+      "why": "Vehicles moving through the streets.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "CITY-005",
+        "CITY-040",
+        "Q-08"
+      ],
+      "levels": [
+        {
+          "name": "Parked",
+          "what": "Vehicles are parked scenery.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Fixed routes",
+          "what": "Vans and carts follow set routes and stop where they should.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "Real traffic",
+          "what": "Vehicles choose routes, queue and obey signals.",
+          "effort": "XL",
+          "needs": {
+            "F-MAP-CITY": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 1
+      }
+    },
+    {
+      "id": "F-VEH-TRANSIT",
+      "area": "vehicles",
+      "title": "Tram or bus",
+      "why": "Public transport people ride.",
+      "pillars": [
+        1,
+        4
+      ],
+      "spec": [
+        "CITY-005",
+        "CITY-041"
+      ],
+      "levels": [
+        {
+          "name": "None",
+          "what": "No public transport.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "One line",
+          "what": "One tram line on a timetable; residents use it to leave and return; players ride it.",
+          "effort": "L",
+          "needs": {
+            "F-VEH-TRAFFIC": 1
+          }
+        },
+        {
+          "name": "Network",
+          "what": "Several lines across the city.",
+          "effort": "L",
+          "needs": {
+            "F-MAP-CITY": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-VEH-DRIVE",
+      "area": "vehicles",
+      "title": "Driving yourself",
+      "why": "Whether players steer anything.",
+      "pillars": [
+        2
+      ],
+      "spec": [
+        "CITY-005",
+        "CITY-042",
+        "Q-08"
+      ],
+      "levels": [
+        {
+          "name": "Walking only",
+          "what": "Players walk.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Bicycle or scooter",
+          "what": "A light vehicle to own and ride.",
+          "effort": "L",
+          "needs": {}
+        },
+        {
+          "name": "Cars",
+          "what": "Cars to buy, drive and park.",
+          "effort": "XL",
+          "needs": {
+            "F-VEH-TRAFFIC": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 0,
+        "full": 1
+      }
+    },
+    {
+      "id": "F-TIME-DAY",
+      "area": "nature",
+      "title": "Day and night",
+      "why": "Light that follows the clock.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "WLD-001",
+        "WLD-002"
+      ],
+      "levels": [
+        {
+          "name": "Fixed hour",
+          "what": "Always the same time of day.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Clock-driven light",
+          "what": "Sun, dusk, lanterns and lit windows follow the world clock.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "Night life",
+          "what": "The town works differently after dark: night shops, quiet streets.",
+          "effort": "M",
+          "needs": {
+            "F-NPC-ROUTINE": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-WEATHER",
+      "area": "nature",
+      "title": "Weather",
+      "why": "Rain, cloud and fog shared by everyone.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "WLD-003",
+        "WLD-004",
+        "WLD-014"
+      ],
+      "levels": [
+        {
+          "name": "Always clear",
+          "what": "No weather.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Changing weather",
+          "what": "Clear, cloud, rain and fog, the same for every player.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "Storms that matter",
+          "what": "Storms, puddles and effects on needs and trade.",
+          "effort": "L",
+          "needs": {}
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-SEASONS",
+      "area": "nature",
+      "title": "Seasons",
+      "why": "A year that turns.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "WLD-006",
+        "WLD-010"
+      ],
+      "levels": [
+        {
+          "name": "One season",
+          "what": "Always summer.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Four seasons",
+          "what": "Light, weather odds and plants change through the year.",
+          "effort": "M",
+          "needs": {
+            "F-TIME-DAY": 1
+          }
+        },
+        {
+          "name": "Seasonal life",
+          "what": "Seasonal goods, prices and activities.",
+          "effort": "L",
+          "needs": {
+            "F-BLD-SHOP": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-VEG-GROW",
+      "area": "nature",
+      "title": "Plant and tree growth",
+      "why": "Plants get bigger over the years.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "WLD-005",
+        "WLD-007",
+        "WLD-011"
+      ],
+      "levels": [
+        {
+          "name": "Static",
+          "what": "Plants never change size.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Growth from age",
+          "what": "Size is worked out from how long ago something was planted.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "Planting and tending",
+          "what": "Players plant, water and harvest on land they own.",
+          "effort": "L",
+          "needs": {
+            "F-MAP-LOTS": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-VEG-LEAF",
+      "area": "nature",
+      "title": "Spring, autumn and leaf fall",
+      "why": "Buds, blossom, autumn colour and bare branches.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "WLD-006",
+        "WLD-012"
+      ],
+      "levels": [
+        {
+          "name": "Evergreen",
+          "what": "Leaves never change.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Leaf cycle",
+          "what": "Each kind of tree buds, blossoms, turns and drops its leaves on its own dates.",
+          "effort": "M",
+          "needs": {
+            "F-SEASONS": 1
+          }
+        },
+        {
+          "name": "Leaves on the ground",
+          "what": "Fallen leaves pile up and are swept away by residents.",
+          "effort": "M",
+          "needs": {
+            "F-OBJ-POINTS": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-VEG-LIFE",
+      "area": "nature",
+      "title": "Trees falling and being replanted",
+      "why": "Old or storm-hit trees come down and new ones go in.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "WLD-013"
+      ],
+      "levels": [
+        {
+          "name": "Trees are forever",
+          "what": "Nothing ever happens to a tree.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Fall and replant",
+          "what": "Trees reach the end of their life, are cleared and replanted by the town.",
+          "effort": "S",
+          "needs": {
+            "F-VEG-GROW": 1
+          }
+        },
+        {
+          "name": "Storm damage",
+          "what": "Storms bring trees down across paths; clearing them is a job.",
+          "effort": "L",
+          "needs": {
+            "F-WEATHER": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    }
+  ]
+}

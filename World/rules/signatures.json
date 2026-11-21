@@ -1,0 +1,9 @@
+{
+ "note": "Walking speed in m/s for each movement signature (docs/art/CHARACTER_MOTION.md).",
+ "signatures": {
+  "Springy": 1.23,
+  "Easy": 1.14,
+  "Hurried": 1.68,
+  "Careful": 0.58
+ }
+}

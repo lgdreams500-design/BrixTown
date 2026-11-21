@@ -1,0 +1,9 @@
+13:37:09 Blender 5.3.0
+13:37:10 alley_dusk built: 415 objects
+13:39:11 alley_dusk rendered in 120.5s
+13:39:12 characters built: 321 objects
+13:39:55 characters_A rendered in 43.5s
+13:40:34 characters_B rendered in 39.3s
+13:41:19 characters_C rendered in 44.5s
+13:41:19 saved .blend
+13:41:19 DONE

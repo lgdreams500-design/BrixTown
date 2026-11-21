@@ -1,0 +1,147 @@
+{
+ "note": "Where a token like 'lunch' can lead. 'cafe', 'grocer', 'garden', 'market', 'stop', 'clinic' mean the resident's nearest one.",
+ "choices": {
+  "lunch": {
+   "default": [
+    [
+     "eat",
+     "cafe"
+    ],
+    [
+     "eat",
+     "cafe"
+    ],
+    [
+     "shop",
+     "grocer"
+    ],
+    [
+     "eat",
+     "home"
+    ]
+   ],
+   "market": [
+    [
+     "shop",
+     "market"
+    ],
+    [
+     "eat",
+     "cafe"
+    ]
+   ]
+  },
+  "leisure": {
+   "default": [
+    [
+     "rest",
+     "garden"
+    ],
+    [
+     "stroll",
+     "garden"
+    ],
+    [
+     "eat",
+     "cafe"
+    ],
+    [
+     "stroll",
+     "garden"
+    ],
+    [
+     "home",
+     "home"
+    ]
+   ],
+   "market": [
+    [
+     "shop",
+     "market"
+    ],
+    [
+     "rest",
+     "garden"
+    ]
+   ],
+   "rain": [
+    [
+     "eat",
+     "cafe"
+    ],
+    [
+     "home",
+     "home"
+    ],
+    [
+     "home",
+     "home"
+    ]
+   ]
+  },
+  "shopping": {
+   "default": [
+    [
+     "shop",
+     "grocer"
+    ]
+   ],
+   "market": [
+    [
+     "shop",
+     "market"
+    ]
+   ],
+   "rain": [
+    [
+     "shop",
+     "grocer"
+    ],
+    [
+     "home",
+     "home"
+    ]
+   ]
+  },
+  "afternoon": {
+   "default": [
+    [
+     "home",
+     "home"
+    ],
+    [
+     "rest",
+     "garden"
+    ],
+    [
+     "home",
+     "home"
+    ],
+    [
+     "visit",
+     "clinic"
+    ]
+   ],
+   "rain": [
+    [
+     "home",
+     "home"
+    ]
+   ]
+  }
+ },
+ "use": {
+  "sleep": "bed",
+  "home": "room",
+  "work": "work",
+  "eat": "seat",
+  "shop": "customer",
+  "rest": "bench",
+  "sell": "stall",
+  "away": "wait",
+  "visit": "chair",
+  "tend": "flowerbed",
+  "eat_home": "room",
+  "rest_fallback": "rim"
+ }
+}

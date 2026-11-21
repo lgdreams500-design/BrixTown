@@ -1,0 +1,693 @@
+{
+ "schema": 1,
+ "id": "city_01",
+ "name": "Old Town",
+ "seed": 20261121,
+ "note": "The starting city. Blocks are listed here and stored one per file; add a block by adding a file and an entry. Units: metres, x east, z south.",
+ "grid": {
+  "columns": 8,
+  "rows": 8,
+  "pitch": 96.0,
+  "street_width": 16.0,
+  "block_size": 80.0
+ },
+ "streets": {
+  "north_south": [
+   "West Wall",
+   "Tanner",
+   "Cooper",
+   "Lantern",
+   "Market",
+   "Mill",
+   "Weaver",
+   "Garden",
+   "East Wall"
+  ],
+  "east_west": [
+   "North Wall",
+   "Plum",
+   "Linden",
+   "Fountain",
+   "Baker",
+   "Tram",
+   "Quarry",
+   "Depot",
+   "South Wall"
+  ]
+ },
+ "spawn": {
+  "pos": [
+   300.5,
+   528.0
+  ],
+  "facing": [
+   1,
+   0
+  ],
+  "time": "07:20",
+  "note": "In an alley south of Market Square, looking east through its arches into the morning sun"
+ },
+ "rules": "../rules",
+ "blocks": [
+  {
+   "id": "b_0_0",
+   "grid": [
+    0,
+    0
+   ],
+   "file": "blocks/b_0_0.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_1_0",
+   "grid": [
+    1,
+    0
+   ],
+   "file": "blocks/b_1_0.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_2_0",
+   "grid": [
+    2,
+    0
+   ],
+   "file": "blocks/b_2_0.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_3_0",
+   "grid": [
+    3,
+    0
+   ],
+   "file": "blocks/b_3_0.json",
+   "template": "park",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_4_0",
+   "grid": [
+    4,
+    0
+   ],
+   "file": "blocks/b_4_0.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_5_0",
+   "grid": [
+    5,
+    0
+   ],
+   "file": "blocks/b_5_0.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_6_0",
+   "grid": [
+    6,
+    0
+   ],
+   "file": "blocks/b_6_0.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_7_0",
+   "grid": [
+    7,
+    0
+   ],
+   "file": "blocks/b_7_0.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_0_1",
+   "grid": [
+    0,
+    1
+   ],
+   "file": "blocks/b_0_1.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_1_1",
+   "grid": [
+    1,
+    1
+   ],
+   "file": "blocks/b_1_1.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_2_1",
+   "grid": [
+    2,
+    1
+   ],
+   "file": "blocks/b_2_1.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_3_1",
+   "grid": [
+    3,
+    1
+   ],
+   "file": "blocks/b_3_1.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_4_1",
+   "grid": [
+    4,
+    1
+   ],
+   "file": "blocks/b_4_1.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_5_1",
+   "grid": [
+    5,
+    1
+   ],
+   "file": "blocks/b_5_1.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_6_1",
+   "grid": [
+    6,
+    1
+   ],
+   "file": "blocks/b_6_1.json",
+   "template": "towerR",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_7_1",
+   "grid": [
+    7,
+    1
+   ],
+   "file": "blocks/b_7_1.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_0_2",
+   "grid": [
+    0,
+    2
+   ],
+   "file": "blocks/b_0_2.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_1_2",
+   "grid": [
+    1,
+    2
+   ],
+   "file": "blocks/b_1_2.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_2_2",
+   "grid": [
+    2,
+    2
+   ],
+   "file": "blocks/b_2_2.json",
+   "template": "towerO",
+   "district": "Centre"
+  },
+  {
+   "id": "b_3_2",
+   "grid": [
+    3,
+    2
+   ],
+   "file": "blocks/b_3_2.json",
+   "template": "peri",
+   "district": "Centre"
+  },
+  {
+   "id": "b_4_2",
+   "grid": [
+    4,
+    2
+   ],
+   "file": "blocks/b_4_2.json",
+   "template": "mall",
+   "district": "Centre"
+  },
+  {
+   "id": "b_5_2",
+   "grid": [
+    5,
+    2
+   ],
+   "file": "blocks/b_5_2.json",
+   "template": "park",
+   "district": "Centre"
+  },
+  {
+   "id": "b_6_2",
+   "grid": [
+    6,
+    2
+   ],
+   "file": "blocks/b_6_2.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_7_2",
+   "grid": [
+    7,
+    2
+   ],
+   "file": "blocks/b_7_2.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_0_3",
+   "grid": [
+    0,
+    3
+   ],
+   "file": "blocks/b_0_3.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_1_3",
+   "grid": [
+    1,
+    3
+   ],
+   "file": "blocks/b_1_3.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_2_3",
+   "grid": [
+    2,
+    3
+   ],
+   "file": "blocks/b_2_3.json",
+   "template": "peri",
+   "district": "Centre"
+  },
+  {
+   "id": "b_3_3",
+   "grid": [
+    3,
+    3
+   ],
+   "file": "blocks/b_3_3.json",
+   "template": "hall",
+   "district": "Centre"
+  },
+  {
+   "id": "b_4_3",
+   "grid": [
+    4,
+    3
+   ],
+   "file": "blocks/b_4_3.json",
+   "template": "towerO",
+   "district": "Centre"
+  },
+  {
+   "id": "b_5_3",
+   "grid": [
+    5,
+    3
+   ],
+   "file": "blocks/b_5_3.json",
+   "template": "peri",
+   "district": "Centre"
+  },
+  {
+   "id": "b_6_3",
+   "grid": [
+    6,
+    3
+   ],
+   "file": "blocks/b_6_3.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_7_3",
+   "grid": [
+    7,
+    3
+   ],
+   "file": "blocks/b_7_3.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_0_4",
+   "grid": [
+    0,
+    4
+   ],
+   "file": "blocks/b_0_4.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_1_4",
+   "grid": [
+    1,
+    4
+   ],
+   "file": "blocks/b_1_4.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_2_4",
+   "grid": [
+    2,
+    4
+   ],
+   "file": "blocks/b_2_4.json",
+   "template": "park",
+   "district": "Centre"
+  },
+  {
+   "id": "b_3_4",
+   "grid": [
+    3,
+    4
+   ],
+   "file": "blocks/b_3_4.json",
+   "template": "market",
+   "district": "Centre"
+  },
+  {
+   "id": "b_4_4",
+   "grid": [
+    4,
+    4
+   ],
+   "file": "blocks/b_4_4.json",
+   "template": "towerO",
+   "district": "Centre"
+  },
+  {
+   "id": "b_5_4",
+   "grid": [
+    5,
+    4
+   ],
+   "file": "blocks/b_5_4.json",
+   "template": "hospital",
+   "district": "Centre"
+  },
+  {
+   "id": "b_6_4",
+   "grid": [
+    6,
+    4
+   ],
+   "file": "blocks/b_6_4.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_7_4",
+   "grid": [
+    7,
+    4
+   ],
+   "file": "blocks/b_7_4.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_0_5",
+   "grid": [
+    0,
+    5
+   ],
+   "file": "blocks/b_0_5.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_1_5",
+   "grid": [
+    1,
+    5
+   ],
+   "file": "blocks/b_1_5.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_2_5",
+   "grid": [
+    2,
+    5
+   ],
+   "file": "blocks/b_2_5.json",
+   "template": "peri",
+   "district": "Centre"
+  },
+  {
+   "id": "b_3_5",
+   "grid": [
+    3,
+    5
+   ],
+   "file": "blocks/b_3_5.json",
+   "template": "peri",
+   "district": "Centre"
+  },
+  {
+   "id": "b_4_5",
+   "grid": [
+    4,
+    5
+   ],
+   "file": "blocks/b_4_5.json",
+   "template": "peri",
+   "district": "Centre"
+  },
+  {
+   "id": "b_5_5",
+   "grid": [
+    5,
+    5
+   ],
+   "file": "blocks/b_5_5.json",
+   "template": "peri",
+   "district": "Centre"
+  },
+  {
+   "id": "b_6_5",
+   "grid": [
+    6,
+    5
+   ],
+   "file": "blocks/b_6_5.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_7_5",
+   "grid": [
+    7,
+    5
+   ],
+   "file": "blocks/b_7_5.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_0_6",
+   "grid": [
+    0,
+    6
+   ],
+   "file": "blocks/b_0_6.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_1_6",
+   "grid": [
+    1,
+    6
+   ],
+   "file": "blocks/b_1_6.json",
+   "template": "towerR",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_2_6",
+   "grid": [
+    2,
+    6
+   ],
+   "file": "blocks/b_2_6.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_3_6",
+   "grid": [
+    3,
+    6
+   ],
+   "file": "blocks/b_3_6.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_4_6",
+   "grid": [
+    4,
+    6
+   ],
+   "file": "blocks/b_4_6.json",
+   "template": "park",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_5_6",
+   "grid": [
+    5,
+    6
+   ],
+   "file": "blocks/b_5_6.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_6_6",
+   "grid": [
+    6,
+    6
+   ],
+   "file": "blocks/b_6_6.json",
+   "template": "peri",
+   "district": "Old Town"
+  },
+  {
+   "id": "b_7_6",
+   "grid": [
+    7,
+    6
+   ],
+   "file": "blocks/b_7_6.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_0_7",
+   "grid": [
+    0,
+    7
+   ],
+   "file": "blocks/b_0_7.json",
+   "template": "utility",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_1_7",
+   "grid": [
+    1,
+    7
+   ],
+   "file": "blocks/b_1_7.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_2_7",
+   "grid": [
+    2,
+    7
+   ],
+   "file": "blocks/b_2_7.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_3_7",
+   "grid": [
+    3,
+    7
+   ],
+   "file": "blocks/b_3_7.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_4_7",
+   "grid": [
+    4,
+    7
+   ],
+   "file": "blocks/b_4_7.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_5_7",
+   "grid": [
+    5,
+    7
+   ],
+   "file": "blocks/b_5_7.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_6_7",
+   "grid": [
+    6,
+    7
+   ],
+   "file": "blocks/b_6_7.json",
+   "template": "rows",
+   "district": "Outskirts"
+  },
+  {
+   "id": "b_7_7",
+   "grid": [
+    7,
+    7
+   ],
+   "file": "blocks/b_7_7.json",
+   "template": "utility",
+   "district": "Outskirts"
+  }
+ ]
+}
