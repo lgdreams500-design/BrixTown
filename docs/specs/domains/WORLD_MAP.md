@@ -55,9 +55,11 @@ World/
     calendar.json        seasons, week, sunrise and sunset, weather odds, tram timetable, clock pace
     vegetation.json      growth and leaf dates per species, flower dates
     signatures.json      walking speed per movement signature (CHARACTER_MOTION §3)
+    traffic.json         rules of the road and residents' cars (LIVING_CITY §3.4)
   city_01/
     city.json            name, seed, grid, street names, spawn point, list of block files
     residents.json       every resident: home, role, workplace, nearest amenities
+    roads.json           junctions and their control, streets with speed limits, parking bays, crossings, town gates (CITY-043, CITY-068)
     blocks/b_<i>_<j>.json   one file per block
 ```
 
@@ -151,7 +153,6 @@ rules and, since 0.2.0, the look and the movement set in the art documents (§5.
 - Sit on stools and benches, lie on beds, ride the lift to the roof of the five towers.
 - Day and night from the calendar's sunrise and sunset; lamps and lit windows at night.
 - A tram on Tram Street, on the timetable the residents use.
-
 - Talking to residents (CITY-007, F-NPC-TALK level 1): walk up to someone and press E. Conversations are
   data in `World/rules/dialogue.json`, picked by the resident's role and what they are doing (at the counter,
   at the clinic, in passing, an elder, a chat), with replies that branch, loop back and end. While talking,
@@ -261,7 +262,7 @@ keep a timetable with several stops in it. Something has to give `[OPEN: Q-21]`.
 | Q-21 | How long is a game day? A 60-minute day (WLD-001) does not fit residents who walk at true speed between places 150 m apart. | A 4-hour day for now. To shorten it later, give residents fewer and longer stops, or let the tram carry them, rather than making them walk faster. |
 | Q-22 | Is the starting city generated or hand-made from here on? | Generate once, then edit by hand and with a block editor; keep the generator for new districts. |
 | Q-23 | How are upper floors reached? | Stairs in houses, lifts in towers, each floor its own set of places in the lot data. |
-| Q-24 | Do streets carry people down the middle, or on pavements with crossings? | Pavements and crossings once vehicles are in scope; the path data then needs a lane per side. |
+| Q-24 | Do streets carry people down the middle, or on pavements with crossings? | **DECIDED 2026-11-22:** pavements and crossings (CITY-043, accepted); the path data needs a lane per side. |
 
 ## 8. Change log
 | Version | Date | Change |
@@ -272,4 +273,5 @@ keep a timetable with several stops in it. Something has to give `[OPEN: Q-21]`.
 | 0.4.0 | 2026-11-21 | Buildings in the slice carry the relief of the building kit (`building_kit_07.py`, not yet approved): window trims, louvred shutters, arch stones, quoins, tiled roofs, awnings and signs (§5.5 W3); deep framed windows, arched shop and café fronts lit by day under a full-width awning, café tables, balconies; old-quarter stone storey lowered from 5 m to 3.55 m so upper floors are plaster with windows. |
 | 0.5.0 | 2026-11-22 | Daylight is the "kit" light by default (ADR-0007); the earlier light stays as a preset (L). |
 | 0.5.1 | 2026-11-22 | Faster slice, same picture: the town mesh is drawn in pieces culled to the view and to the sun's shadow box, a depth-only pass comes first so each pixel is lit once, painted names have their own small mesh and shader, and the shader skips the shadow lookup on faces turned from the sun and unused lantern slots. GPU time per frame roughly halved (§5.4). |
+| 0.5.2 | 2026-11-22 | Q-24 decided: pavements and crossings, now that cars are in scope (CITY-043). |
 | 0.5.3 | 2026-11-22 | Talking to residents in the slice (CITY-007; owner picked F-NPC-TALK level 1 for the first slice): `World/rules/dialogue.json`, checked by `world.dialogue_problems` and `test_world.TheDialogue` (every reply leads somewhere, every node is reachable, every talk can end), played by `Prototype/play/conversations.js` (§5.1). |

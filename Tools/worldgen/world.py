@@ -4,6 +4,7 @@
     w = world.load()                 # the whole city as one dict
     problems = world.validate(w)     # [] when the data is sound
     city = world.simulation(w)       # a citysim.City running the living-city rules over the whole map
+    city = world.simulation(w, traffic=True)   # the same, with residents' cars on the roads (citysim/traffic.py)
 """
 import json, os, sys
 
@@ -24,8 +25,10 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "dialogue"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue"):
         w[name] = _read(rules, name + ".json")
+    roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
+    w["roads"] = _read(roads) if os.path.exists(roads) else None
     return w
 
 
@@ -81,6 +84,9 @@ def validate(w):
         c = simulation(w)
         dd, _ = c.net._from(next(iter(c.anchor.values())))
         out += ["%s cannot be reached on foot" % k for k, a in c.anchor.items() if a not in dd]
+    if w.get("roads") and not out:
+        import traffic
+        out += traffic.Roads(w["roads"], w["traffic"]).problems(lots(w))
     out += dialogue_problems(w)
     kinds = {l["kind"] for l in lots(w)}
     for need in ("home", "shop", "food", "work", "health", "garden", "market", "stop", "utility"):
@@ -185,6 +191,12 @@ def sim_data(w):
                 replant_gap_days=veg["replant_gap_days"], fallen_days=veg["fallen_days"], trees=[t for b in w["blocks"] for t in b["trees"]], lamps=[])
 
 
-def simulation(w):
+def simulation(w, traffic=False):
+    """The living-city rules over the whole map. With traffic=True, residents who own a car drive their longer
+    trips (LIVING_CITY CITY-043 to CITY-049). The playable slice does not draw cars yet, so it stays off by default."""
     import citysim
-    return citysim.City(data=sim_data(w))
+    city = citysim.City(data=sim_data(w))
+    if traffic:
+        import traffic as tr
+        tr.Traffic(city, w["roads"], w["traffic"])
+    return city

@@ -270,6 +270,7 @@ class City:
         for rid in sorted(self.res):
             self.mates.setdefault(self.res[rid]["home"], []).append(rid)
         self._plans = {}
+        self.traffic = None                              # set by traffic.Traffic: residents who own a car drive their longer trips
 
     # -- routines: today's list of things to do --
     def _pick(self, token, rid, day, idx, minute):
@@ -378,6 +379,8 @@ class City:
                     alt = self.lots[place]["objects"].get(self.d["use"]["rest_fallback"], [])
                     s["alt"] = [alt[int(rnd("rim", rid, day) * len(alt))]] if alt else None
         plan = {rid: self._timeline(rid, day, ss) for rid, ss in stays.items()}
+        if self.traffic is not None:
+            plan = self.traffic.apply(day, plan)
         self._plans[day] = plan
         if len(self._plans) > 12:
             self._plans.pop(next(iter(self._plans)))
@@ -504,6 +507,8 @@ class City:
                 out[rid] = dict(pos=along(route, cum, (m - t0) * vv), act="walk", place=s["place"], state="walking", to=s["act"])
             elif kind == "stroll":
                 out[rid] = dict(pos=self._stroll_at(rid, day, s, m), act="stroll", place=s["place"], state="outside")
+            elif kind == "drive":                         # in their car: where the car is (traffic.py)
+                out[rid] = dict(pos=self.traffic.car_at(payload, day, m)["pos"], act="drive", place=s["place"], state="driving", car=payload)
             else:
                 indoors = lot["kind"] not in ("garden", "market", "stop") and s["use"] is not None and \
                     lot["rect"][0] <= payload[0] <= lot["rect"][2] and lot["rect"][1] <= payload[1] <= lot["rect"][3]

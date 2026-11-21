@@ -1,9 +1,9 @@
 ---
 doc_id: WASTED-SPEC-LIVING-CITY
 title: Wasted — Living city (map, residents, things to use, vehicles, seasons and plants)
-version: 0.1.0
+version: 0.3.1
 status: draft
-last_updated: 2026-11-21
+last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
 prototype: Tools/citysim/               # rules and tests with no engine
 scope_source: docs/backlog/feature_choices.json
@@ -54,6 +54,8 @@ Unreal layer that only presents its answers.
 | **Population** | Who needs a body now | everyone's position, viewer positions | load and unload lists | `City.at()`, `City.loaded()` |
 | **Vegetation** | Size and leaves of every plant | planting day, species data, calendar | size, leaf, blossom, fallen, replanted | `Vegetation` |
 | **Vehicles** | Trams and vans on routes | timetables, routes | positions, stopped or moving | `City.vehicles()` |
+| **Road traffic** | Residents' cars: route, queue, park | road network, bays, residents' trips | car positions and states at any time, bay use | not built (CITY-043 to CITY-049) |
+| **Player cars** | Cars players own and drive | vehicle records, handling data, player input | live car on the server, parked cars saved | engine only (CITY-060 to CITY-067) |
 
 In Unreal each controller becomes a subsystem in its own module (TECH-003). Which built-in systems to
 build on (crowd, shared interaction points, streaming, vegetation tools) is to be checked against
@@ -61,7 +63,8 @@ what is production-ready in the pinned engine version before PH1 work starts `[O
 
 ## 3. Requirements
 
-Status of all rows: `proposed`. "Proven by" names the test in `Tools/citysim/test_citysim.py`.
+Status of all rows: `proposed`, except CITY-043 to CITY-049 and CITY-060 to CITY-067, which the owner
+accepted on 2026-11-22, and CITY-068, which follows from the owner's answer to Q-29 the same day. "Proven by" names the test in `Tools/citysim/test_citysim.py`, or for cars in `Tools/citysim/test_traffic.py`.
 
 ### 3.1 Map, lots and buildings
 
@@ -108,6 +111,36 @@ Status of all rows: `proposed`. "Proven by" names the test in `Tools/citysim/tes
 | CITY-041 | A tram line shall run on a timetable; residents who work elsewhere shall leave and return by tram; players shall be able to ride it. | F-VEH-TRANSIT | 1 | P1 | `test_at_work_mid_morning` |
 | CITY-042 | Players shall be able to own and ride a light vehicle. | F-VEH-DRIVE | 1 | P2 | |
 
+#### Streets and resident traffic
+
+Residents' cars follow the rule in §1: a resident car's day is **calculated** like the resident's own,
+queues included, and gets a body only near a player. Only cars that players drive are live. ADR-0009
+has the reasoning.
+
+| ID | Requirement | Feature | Lvl | Pri | Proven by |
+|---|---|---|---|---|---|
+| CITY-043 | Streets shall carry a road network as data: one lane each way, junctions with a control (give way or signals) and a speed limit, parking bays along the kerb, and crossings where footpaths meet a road. People walk on pavements and cross at crossings (the suggested answer to Q-24). The data checks shall refuse a lane that does not connect and a lot whose door has no bay within 150 m `[ASSUMPTION]`. | F-VEH-TRAFFIC | 2 | P0 | `test_road_network_is_sound`, `test_every_door_has_a_bay_within_reach` |
+| CITY-044 | Residents whose data gives them a car (a share of households, 30 % `[ASSUMPTION]`) shall own one: a vehicle record with id, owner, model and home bay. A trip in their routine longer than 250 m `[ASSUMPTION]` shall be driven: walk to the car, drive, park in a free bay near the destination, walk to the door. Shorter trips stay on foot. | F-VEH-TRAFFIC | 2 | P0 | `test_drivers_park_and_walk_to_the_door`, `test_short_tours_are_walked`, `test_about_the_right_share_of_households_has_a_car` |
+| CITY-045 | A resident car's position, speed and state (parked, moving, waiting) at any time shall be calculable from world time, seed and data, with no stepping and no stored history; any two machines shall give the same answer. Waits at junctions and behind other cars shall be worked out when the day's plan is made, not live. | F-VEH-TRAFFIC | 2 | P0 | `test_traffic_same_answer_every_time` |
+| CITY-046 | Resident cars shall keep to their lane, keep to the speed limit, give way at junctions and at crossings with someone on them, stop at red signals, and never share a lane space with another car. Cars shall choose the quickest route by the network's speed limits. | F-VEH-TRAFFIC | 2 | P0 | `test_cars_never_overlap_in_a_lane`, `test_cars_keep_to_the_speed_limit`, `test_cars_give_way_at_junctions`, `test_cars_choose_the_quickest_route`, the `test_busy_day_` tests; `test_cars_wait_for_walkers_at_crossings` is skipped until people walk on pavements |
+| CITY-047 | A parking bay shall hold one car at a time. When no bay is free near the destination, the driver shall take the next nearest free one (as CITY-031 does for places). | F-VEH-TRAFFIC | 2 | P1 | `test_one_car_per_bay` |
+| CITY-048 | A resident car shall have a body only within the car load distance (120 m `[ASSUMPTION]`, wider than for people because cars are faster) of a player. On loading it is placed where CITY-045 says. Parked cars beyond that distance may show as simple scenery. | F-VEH-TRAFFIC | 2 | P0 | `test_cars_load_by_distance` |
+| CITY-049 | Near a car or person that a player controls, resident cars shall slow, wait or stop instead of colliding; once clear, each shall rejoin its calculated timeline without speeding up past the limit. A delayed car catches up only by skipping its next stop; one more than 10 minutes `[ASSUMPTION]` behind is unloaded and placed back on its timeline out of sight (Q-25). | F-VEH-TRAFFIC | 2 | P0 | |
+| CITY-068 | A car owner who works out of town shall drive out through a town gate instead of taking the tram, leaving early enough to be through the gate when the tram would have left; while away the car is off the map; it comes back through the same gate when the tram would have brought them back, and drives on to their next place (Q-29). Commuters without a car keep the tram (CITY-041). | F-VEH-TRAFFIC | 2 | P1 | `test_commuters_with_a_car_drive_out_and_back` |
+
+#### Cars players drive
+
+| ID | Requirement | Feature | Lvl | Pri | Proven by |
+|---|---|---|---|---|---|
+| CITY-060 | A character shall be able to buy a car at a car dealer, paid through the ledger (ECO-002), with ownership recorded on the server (PROP-001), and sell it again. Models and prices shall be data `[ASSUMPTION]`. Dealers are a new lot kind, `dealer`, with a forecourt of bays; the starting city has one on a through street (Q-26). | F-VEH-DRIVE | 2 | P0 | |
+| CITY-061 | The owner, and players the owner allows, shall get in at a door, drive in third person with keyboard or gamepad, and get out. Top speed, acceleration, braking and steering shall be data per model. Getting in, sitting at the wheel and getting out shall be motions added to CHARACTER_MOTION. | F-VEH-DRIVE | 2 | P0 | |
+| CITY-062 | Driving shall be server-authoritative: the client sends inputs only, the server moves the car and corrects the client, and a car moving faster or further than its model allows is put back. | F-VEH-DRIVE | 2 | P0 | Engine test `CITY-062` |
+| CITY-063 | A player may park in any free bay or on their own lot. A parked car shall stay where it was left, be saved, and survive a server restart. A bay taken by a player's car is unavailable to residents, who take the next nearest (CITY-047). | F-VEH-DRIVE | 2 | P0 | Engine test `CITY-063` |
+| CITY-064 | Cars shall collide with walls, props and other cars. A car that hits a person stops and the person is pushed aside; nobody is hurt, and cars take no damage (Q-27). | F-VEH-DRIVE | 2 | P0 | |
+| CITY-065 | Other players shall be able to ride as passengers in a car with free seats (from PH2). | F-VEH-DRIVE | 2 | P1 | |
+| CITY-066 | Cars shall need no fuel and shall cost a small weekly upkeep `[ASSUMPTION]`, charged through the ledger from PH4 with the other recurring costs (PROP-006; Q-28). | F-VEH-DRIVE | 2 | P2 | |
+| CITY-067 | Every car model shall match the art direction (ART-001): a look test in `Tools/blender/` comes before any production model. | F-VEH-DRIVE | 2 | P1 | Look test |
+
 ### 3.5 Seasons, weather and plants
 
 | ID | Requirement | Feature | Lvl | Pri | Proven by |
@@ -132,12 +165,43 @@ All `[ASSUMPTION]`; all live in `Tools/citysim/data/block_01.json`, none in code
 | Tram | every 20 minutes, 05:40 to 23:00 | |
 | Rain chance by season | 30 %, 16 %, 36 %, 26 % of six-hour slots | |
 
+Numbers for cars, also `[ASSUMPTION]`, in `World/rules/traffic.json`:
+
+| Number | Value | Note |
+|---|---|---|
+| Households with a car | 30 % | CITY-044 |
+| Shortest trip driven | 250 m | Shorter trips are walked. Was 600 m: in the starting city nobody's trip is that long (§5) |
+| Speed limit | 30 km/h in the old quarters, 40 km/h on through streets | CITY-046 |
+| Bay within reach of every door | 150 m | CITY-043 |
+| Car load distance | 120 m | CITY-048 |
+
 ## 5. What the prototype does not cover
 
 Interiors, the mall, animals, carried objects, object state, needs-driven choices, several blocks,
-many players, saving. Residents do not avoid each other or queue. Stays that end while someone is
+many players, saving. Cars (CITY-043 to CITY-049) are in `traffic.py` and `test_traffic.py`, run over the whole starting city; what
+they leave out is in §5.1.
+Residents do not avoid each other or queue. Stays that end while someone is
 still walking shorten the walk rather than re-plan. These are levels or requirements above; none is
 built.
+
+### 5.1 Cars: what the prototype shows and leaves out
+
+`traffic.py` works out a day of car trips once, in time order, on the lanes of `World/city_01/roads.json`, and
+then answers any car's position by lookup (`render_traffic.py` draws it). On day 16 with the rules as set,
+91 households have a car and 30 owners drive: 87 trips, 19 of them commuters out through a town gate and 19 back
+(CITY-068); at most 9 cars are on the road at once. With every household driving every trip: 326 cars, 950 trips,
+up to 42 on the road at once, no overlap, no crossing movements in a box, nobody through a red light.
+
+- **Finding: residents' lives are short-range.** The generator gives everyone the café, shop, garden and clinic
+  nearest their home and staffs workplaces nearest first, and commuters leave by tram. No car owner has a trip
+  longer than 432 m, so at the accepted 600 m nobody drove. The threshold is now 250 m `[ASSUMPTION]`. Since
+  Q-29, car-owning commuters drive out through a town gate (CITY-068); errands still go to the nearest place.
+- **Traffic is light.** Even the busy run peaks at 42 cars on the road at once; queues are short. Junction and
+  queue rules are proven to hold, not yet proven to look right at rush hour.
+- **Left out for now:** walkers on pavements and crossings (so cars do not yet wait for people;
+  `test_cars_wait_for_walkers_at_crossings` is skipped), the tram sharing Tram Street, acceleration (cars go
+  straight to the speed limit), lane changes, players' cars (CITY-049 and CITY-060 onward are engine work),
+  and cars in the playable slice. `world.simulation(w, traffic=True)` turns cars on; the slice keeps them off.
 
 ## 6. Open questions
 
@@ -146,8 +210,17 @@ built.
 | Q-18 | Which built-in Unreal systems carry the controllers (crowds, shared interaction points, streaming, vegetation)? | Check the pinned version's production-ready list at the start of PH1; prefer production-ready, wrap experimental ones behind our own controller interface. |
 | Q-19 | How long may a resident keep a player waiting for a bench, counter or bed? | Residents give way at once to a player unless they are working at that point. |
 | Q-20 | Length of the game year and week? | 48-day year, 7-day week, as in the prototype. |
+| Q-25 | When a player's car or body blocks a resident car, how far may it drift from its calculated timeline, and how does it catch up? | **DECIDED 2026-11-22:** it waits; it catches up only by skipping its next stop (as CITY-052 does for walkers), never by speeding. A car more than 10 minutes behind `[ASSUMPTION]` is unloaded and placed back on its timeline out of sight. |
+| Q-26 | Where are cars bought, and is a car dealer a new lot kind in the city data? | **DECIDED 2026-11-22:** a new lot kind `dealer`, one in the starting city on a through street, with a forecourt of bays. |
+| Q-27 | What happens when a car hits a person, and do cars take damage? | **DECIDED 2026-11-22:** nobody is hurt: people are pushed aside and the car stops. Cars take no damage until a later level. |
+| Q-29 | Should commuters who own a car drive out of town instead of taking the tram, and should some errands go beyond the nearest shop or café? | **DECIDED 2026-11-22** (owner: "drive out"), now CITY-068: car-owning commuters drive out through a town gate on the wall streets; the tram stays for everyone else. Errands stay nearest. |
+| Q-28 | Do cars need fuel, and what do they cost to keep? | **DECIDED 2026-11-22:** no fuel; a small weekly upkeep through the ledger, from PH4 with the other recurring costs (PROP-006). |
 
 ## 7. Change log
 | Version | Date | Change |
 |---|---|---|
 | 0.1.0 | 2026-11-21 | First version, with the city-in-a-box prototype and its tests. |
+| 0.2.0 | 2026-11-22 | Cars and real traffic drafted after the owner's picks (`F-VEH-DRIVE` 2, `F-VEH-TRAFFIC` 2 from the first slice): CITY-043 to CITY-049 for streets and residents' cars, CITY-060 to CITY-067 for cars players drive, car numbers in §4, Q-25 to Q-28, ADR-0009. All proposed. |
+| 0.2.1 | 2026-11-22 | Owner accepted CITY-043 to CITY-049, CITY-060 to CITY-067 and ADR-0009, and the suggested answers to Q-25 to Q-28, now written into CITY-049, CITY-060, CITY-064 and CITY-066. |
+| 0.3.1 | 2026-11-22 | Q-29 decided by the owner: car-owning commuters drive out through a town gate (CITY-068, `test_commuters_with_a_car_drive_out_and_back`). Four gates where Market and Baker meet the wall, in `roads.json`. Cars now keep the lower limit as soon as they cross into a slower stretch. |
+| 0.3.0 | 2026-11-22 | Cars proved in `Tools/citysim/traffic.py` with `test_traffic.py` (19 pass, 1 skipped) over the whole starting city; road data in `World/city_01/roads.json`, rules in `World/rules/traffic.json`. Shortest driven trip 600 → 250 m `[ASSUMPTION]` (§5.1). Q-29 added. |

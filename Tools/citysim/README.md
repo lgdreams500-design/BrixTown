@@ -14,6 +14,9 @@ data file; nothing is stepped frame by frame.
 | `make_block_01.py` | Writes that data file. Edit and re-run to change the block. |
 | `test_citysim.py` | 13 tests, each named in the spec's "Proven by" column. |
 | `render.py` | Draws top-down clips. Needs Pillow and numpy. |
+| `traffic.py` | Residents' cars: road network, who drives, the day's car plan, `car_at()` (LIVING_CITY 3.4, ADR-0009). Standard library only. |
+| `test_traffic.py` | 21 tests over the whole starting city in `World/` (one skipped until pavements exist). |
+| `render_traffic.py` | Writes an HTML page that plays a day of traffic: `python render_traffic.py traffic_day.html` |
 
 ```
 python -m unittest test_citysim -v
