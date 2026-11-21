@@ -59,6 +59,7 @@ const KIND_WORD = { home: "Homes", shop: "Shops", food: "Cafés", work: "Workpla
 // materials: 0 plaster (mottled) · 1 lit window · 2 lamp · 3 indoor surface · 4 dark window · 6 stone blocks · 7 paving · 8 light pool · 9 plain · 10 person indoors
 //            11 barrel roof tiles · 12 louvred shutter (both shade their own relief, after Tools/blender/building_kit_07.py) · 14 person outdoors
 //            20 road setts · 21 cobbled footpath (7 paving also draws the kerb along each pavement's edge)
+//            15 floorboards · 16 floor tiles · 17 panelled room wall · 18 beamed ceiling (rooms: warm room light, little haze)
 class Mesh {
   constructor(n) { this.a = new Float32Array(n || 1 << 16); this.n = 0; }
   reset() { this.n = 0; }
@@ -130,6 +131,8 @@ function groundBase(x, z) {                              // height of the ground
 }
 const spot = (lot, x, z, pose, yaw, h) => lot.spots.push({ x, z, pose, yaw, h });       // how a resident holds themselves at a place
 const use = (x, y, z, type, label, yaw, extra) => uses.push(Object.assign({ x, y, z, type, label, yaw: yaw || 0 }, extra));
+const spotAt = (...a) => spot(...a), useAt = (...a) => use(...a);   // furnish() shadows these with no-ops when it only draws
+const NULL_MESH = { box() { }, quad() { }, obox() { }, ybox() { }, flat() { } };   // geometry that goes nowhere (the load-time pass of a room)
 
 // ---------------------------------------------------------------- building the city from the data
 const world = new Mesh(1 << 22), signs = new Mesh(1 << 14);    // painted names are kept apart: they are the only faces that cut holes (discard)
@@ -400,7 +403,7 @@ function building(l) {
     windows(l, wallC); return;
   }
   // ground floor: four stone walls with an open doorway, plaster inside
-  const wall = (ax0, az0, ax1, az1, y0, inner) => { world.box(ax0, y0, az0, ax1, GF, az1, C.stone, 6, { [inner]: [inC, 3], 3: null, 2: y0 > 0 ? [C.stoneDark, 9] : null }); solid(ax0, y0, az0, ax1, GF, az1); };
+  const wall = (ax0, az0, ax1, az1, y0, inner) => { world.box(ax0, y0, az0, ax1, GF, az1, C.stone, 6, { [inner]: [inC, 17], 3: null, 2: y0 > 0 ? [C.stoneDark, 9] : null }); solid(ax0, y0, az0, ax1, GF, az1); };
   for (const s of "nswe") {
     const ns = s === "n" || s === "s", inner = { n: 5, s: 4, w: 1, e: 0 }[s];
     const a0 = ns ? x0 : z0 + t, a1 = ns ? x1 : z1 - t, f0 = s === "n" ? z0 : s === "s" ? z1 - t : s === "w" ? x0 : x1 - t;
@@ -410,8 +413,8 @@ function building(l) {
     piece(a0, dc - dw / 2, 0); piece(dc + dw / 2, a1, 0); arch(ns, s, f0, dc, dw / 2, inC, detailOf(l.block));
     ns ? solid(dc - dw / 2, dh, f0, dc + dw / 2, GF, f0 + t) : solid(f0, dh, dc - dw / 2, f0 + t, GF, dc + dw / 2);
   }
-  world.flat(x0 + t, z0 + t, x1 - t, z1 - t, Y_FLOOR, FLOOR[l.kind] || FLOOR.work, 3);
-  const flatRoof = big || l.kind === "utility", old = l.block.district !== "Outskirts" && !l.tower && H > 6, ceil = [mix3(inC, [1, 1, 1], .15), 3]; l.old = old;
+  const fl = ROOM_FLOOR[l.sp] || ROOM_FLOOR[l.kind] || ROOM_FLOOR.work; world.flat(x0 + t, z0 + t, x1 - t, z1 - t, Y_FLOOR, fl[1], fl[0]);
+  const flatRoof = big || l.kind === "utility", old = l.block.district !== "Outskirts" && !l.tower && H > 6, ceil = [mix3(inC, [1, 1, 1], .25), 18]; l.old = old;
   l.sp = specialKind(l);
   const stoneUp = l.sp === "office" || (l.block.template === "peri" && hash(l.id, "st") < .15);     // most old houses are plaster over a stone storey, as in the building kit
   const front = (l.kind === "shop" || l.kind === "food") && !l.tower, DSa = sideOf(l, side), aw = front ? Math.min(DSa.a1 - DSa.a0 - 2, 14) : 0; l.aw = aw;
@@ -486,7 +489,7 @@ function building(l) {
     fbox(world, DS, a - .3, a + .3, 1.45, 2.05, 0, .05, C.teal, 0, true); fbox(world, DS, a - .05, a + .05, 1.55, 1.95, .05, .08, C.cream, 0); fbox(world, DS, a - .18, a + .18, 1.7, 1.8, .05, .08, C.cream, 0);
   }
   if (l.sp) special(l, { H, DS, dc, dw, dh, wallC, roofC });
-  furnish(l, side, accent, inC);
+  l.furn = [side, accent, inC]; furnish(l, side, accent, inC);     // the room itself is drawn only when someone is near (rooms near the camera, below)
 }
 
 function arch(ns, s, f0, dc, r, inC, dm) {                // the wall over a doorway, cut to a round arch (W3), ringed with arch stones and a keystone
@@ -569,6 +572,10 @@ function windows(l) {                                      // each window is one
       const arched = shopW && old, yb = arched ? yTop - ww / 2 : yTop;
       const P = (aa, yy, pp) => ns ? [aa, yy, pp] : [pp, yy, aa];
       world.quad(P(a, ya, p), P(b, ya, p), P(b, yb, p), P(a, yb, p), [0, 0, seed], on ? 1 : 4, hint, QUAD_UV);
+      if (f === 0 && l.enterable && ya < GF - .3) {        // the same window from inside the room, and a note of it so tall furniture keeps clear
+        const pi = fix - out * .36, yi = Math.min(yb, GF - .25); world.quad(P(a, ya, pi), P(b, ya, pi), P(b, yi, pi), P(a, yi, pi), [0, 0, .998], 1, [-hint[0], 0, -hint[2]], QUAD_UV);
+        (l.inWin = l.inWin || []).push([s, a - .3, b + .3]);
+      }
       if (arched) archHead(dm, S, c, yb, ww / 2 + .12, seed, true);
       // louvred shutters folded back against the wall, mostly in the building's own colour; the far picture keeps a flat copy
       const plainSp = l.sp && l.sp !== "guild" && l.sp !== "flats";          // civic halls, offices, works and the depot have no shutters
@@ -603,38 +610,72 @@ function windows(l) {                                      // each window is one
   }
 }
 
-function furnish(l, side, accent, inC) {
+function furnish(l, side, accent, inC, vis) {     // at load (no vis): places, uses and collisions; near the camera (vis = a mesh): the furniture itself
   const [x0, z0, x1, z1] = l.rect, o = l.objects, d = DOOR_DIR[side], ns = side === "n" || side === "s", F = Y_FLOOR;
   const toDoor = yawOf(d[0], d[1]), fromDoor = yawOf(-d[0], -d[1]);
-  const block = (cx, cz, sx, sy, sz, c, hard) => { world.box(cx - sx / 2, F, cz - sz / 2, cx + sx / 2, F + sy, cz + sz / 2, c, 3); if (hard) solid(cx - sx / 2, F, cz - sz / 2, cx + sx / 2, F + sy, cz + sz / 2); };
-  const stool = (x, z, c) => block(x, z, .42, .45, .42, c || C.wood);
-  for (const [x, z] of o.bed || []) {
-    block(x, z, 1, .5, 2, C.wood, true); world.box(x - .46, F + .5, z - .96, x + .46, F + .62, z + .96, pick([C.cream, C.blue, C.olive, C.plum], hash(l.id, x, z)), 3); world.box(x - .3, F + .62, z + .5, x + .3, F + .72, z + .9, C.cream, 3);
+  // Every place residents and the player use stays where it was (same heights, same collisions); what stands there is real
+  // furniture now, drawn in the block's near-only mesh. Then the room is dressed for what the building is (see room()).
+  const dm = vis || NULL_MESH, occ = [], R = ROOM_STYLE[l.sp] || ROOM_STYLE[l.kind] || ROOM_STYLE.work, fab = pick(R.fabric, hash(l.id, "fab"));
+  const spot = vis ? () => { } : spotAt, use = vis ? () => { } : useAt, hard = (ax0, ay0, az0, ax1, ay1, az1) => vis || solid(Math.min(ax0, ax1), ay0, Math.min(az0, az1), Math.max(ax0, ax1), ay1, Math.max(az0, az1));
+  const B = (cx, y0, cz, sx, sy, sz, c, yaw, f) => dm.ybox(cx, F + y0, cz, sx, sy, sz, yaw || 0, c, f || 19);
+  const chair = (x, z, yaw, c, arm) => {                  // a chair facing along yaw; the back stands behind the sitter
+    const fx2 = Math.sin(yaw), fz2 = -Math.cos(yaw), w = arm ? .72 : .44;
+    B(x, .4, z, w, .07, w, c, -yaw);
+    for (const [u, v] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const px = Math.cos(yaw) * u * (w / 2 - .04) + fx2 * v * (w / 2 - .04), pz = Math.sin(yaw) * u * (w / 2 - .04) + fz2 * v * (w / 2 - .04); B(x + px, 0, z + pz, .045, .4, .045, ROOM_WOOD, -yaw); }
+    B(x - fx2 * (w / 2 - .03), .47, z - fz2 * (w / 2 - .03), w, arm ? .5 : .48, .06, c, -yaw);
+    if (arm) for (const u of [-1, 1]) B(x + Math.cos(yaw) * u * (w / 2 - .05), .47, z + Math.sin(yaw) * u * (w / 2 - .05), .1, .2, w, c, -yaw);
+  };
+  const table = (x, z, size, h, round) => {               // a table: a round top on a pedestal, or a square one on four legs
+    B(x, h - .04, z, size, .045, size, ROOM_WOOD, 0); if (round) { B(x, h - .04, z, size, .045, size, ROOM_WOOD, Math.PI / 4); B(x, 0, z, .09, h - .04, .09, C.metal); B(x, 0, z, .45, .04, .45, C.metal, Math.PI / 4); }
+    else for (const [u, v] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) B(x + u * (size / 2 - .06), 0, z + v * (size / 2 - .06), .06, h - .04, .06, ROOM_WOOD);
+  };
+  for (const [x, z] of o.bed || []) {                     // a framed bed with a headboard, blanket and pillow, a nightstand and its lamp
+    const bl = pick([C.cream, C.blue, C.olive, C.plum, C.terracotta], hash(l.id, x, z));
+    B(x, 0, z, 1.0, .32, 2.0, ROOM_WOOD); B(x, .32, z, .94, .2, 1.92, [.78, .74, .66]); B(x, .5, z - .3, .98, .1, 1.36, bl); B(x, .52, z + .68, .62, .14, .34, [.85, .82, .76]);
+    B(x, 0, z + 1.02, 1.06, .98, .08, ROOM_WOOD); B(x, 0, z - 1.02, 1.06, .5, .07, ROOM_WOOD);
+    if (hash(l.id, x, z, "ns") < .7) { const sx = x + (hash(l.id, z, "s") < .5 ? -.82 : .82); B(sx, 0, z + .75, .42, .5, .38, ROOM_WOOD); B(sx, .5, z + .75, .12, .22, .12, [.9, .8, .6], 0, 2); }
+    hard(x - .5, F, z - 1, x + .5, F + .5, z + 1); occ.push([x, z, 1.5]);
     spot(l, x, z, 3, 0, F + .62); use(x, F + .62, z, "lie", "Lie down", 0);
   }
-  (o.room || []).forEach(([x, z], k) => { stool(x, z); const yaw = Math.floor(hash(l.id, k, "r") * 4) * Math.PI / 2; spot(l, x, z, 2, yaw, F + .45); use(x, F + .45, z, "sit", "Sit down", yaw); });
-  (o.chair || []).forEach(([x, z]) => { stool(x, z, C.cream); spot(l, x, z, 2, toDoor, F + .45); use(x, F + .45, z, "sit", "Sit down", toDoor); });
+  (o.room || []).forEach(([x, z], k) => { const yaw = Math.floor(hash(l.id, k, "r") * 4) * Math.PI / 2; chair(x, z, yaw, fab, l.kind === "home"); occ.push([x, z, 1.0]); spot(l, x, z, 2, yaw, F + .45); use(x, F + .45, z, "sit", "Sit down", yaw); });
+  (o.chair || []).forEach(([x, z]) => { chair(x, z, toDoor, R.chair || C.cream); occ.push([x, z, .9]); spot(l, x, z, 2, toDoor, F + .45); use(x, F + .45, z, "sit", "Sit down", toDoor); });
   (o.seat || []).forEach(([x, z], k) => {
-    const sgn = k % 2 ? -1 : 1; stool(x, z); block(x + sgn * .7, z, .62, .74, .62, C.brown, true);
+    const sgn = k % 2 ? -1 : 1; chair(x, z, yawOf(sgn, 0), R.chair || ROOM_WOOD); table(x + sgn * .7, z, .64, .74, l.kind === "food");
+    hard(x + sgn * .7 - .31, F, z - .31, x + sgn * .7 + .31, F + .74, z + .31); occ.push([x + sgn * .35, z, 1.2]);
     spot(l, x, z, 2, yawOf(sgn, 0), F + .45); use(x, F + .45, z, "sit", "Sit down", yawOf(sgn, 0));
   });
-  for (const [x, z] of o.work || []) {
-    const desk = l.kind === "work", cx = x + d[0] * .8, cz = z + d[1] * .8, w = desk ? 1.3 : 1.7, dep = desk ? .65 : .55, h = desk ? .76 : .98;
-    block(cx, cz, ns ? w : dep, h, ns ? dep : w, desk ? C.wood : C.brown, true);
-    if (!desk) world.box(cx - (ns ? w / 2 : dep / 2) - .03, F + h, cz - (ns ? dep / 2 : w / 2) - .03, cx + (ns ? w / 2 : dep / 2) + .03, F + h + .05, cz + (ns ? dep / 2 : w / 2) + .03, accent, 3);
-    if (desk) { stool(x, z); use(x, F + .45, z, "sit", "Sit at the desk", toDoor); }
+  for (const [x, z] of o.work || []) {                    // a desk with a lamp and papers, or a counter with what that trade keeps on it
+    const desk = l.kind === "work" && l.sp !== "works", cx = x + d[0] * .8, cz = z + d[1] * .8, w = desk ? 1.3 : 1.7, dep = desk ? .65 : .55, h = desk ? .76 : .98;
+    const sx = ns ? w : dep, sz = ns ? dep : w;
+    if (desk) {
+      B(cx, h - .04, cz, sx, .04, sz, ROOM_WOOD); B(cx + (ns ? w / 2 - .22 : 0), 0, cz + (ns ? 0 : w / 2 - .22), ns ? .4 : dep - .04, h - .04, ns ? dep - .04 : .4, ROOM_WOOD);
+      B(cx - (ns ? w / 2 - .04 : 0), 0, cz - (ns ? 0 : w / 2 - .04), ns ? .05 : dep - .06, h - .04, ns ? dep - .06 : .05, ROOM_WOOD);
+      B(cx - (ns ? .2 : 0), h, cz - (ns ? 0 : .2), .32, .02, .24, [.88, .86, .8], .2); B(cx + (ns ? .4 : .1), h, cz + (ns ? .1 : .4), .1, .38, .1, C.metal); B(cx + (ns ? .4 : .1), h + .34, cz + (ns ? .1 : .4), .2, .08, .2, R.lamp || C.teal);
+      chair(x, z, toDoor, R.chair || ROOM_WOOD); use(x, F + .45, z, "sit", "Sit at the desk", toDoor);
+    } else {
+      B(cx, 0, cz, sx, h - .05, sz, R.counter || ROOM_WOOD); B(cx, h - .05, cz, sx + .06, .05, sz + .06, R.top || accent);
+      for (let q = 0; q < 3; q++) { const u = (q - 1) * w / 3; B(cx + (ns ? u : d[0] * -.29), .12, cz + (ns ? d[1] * -.29 : u), ns ? w / 3 - .12 : .02, h - .3, ns ? .02 : w / 3 - .12, mul3(R.counter || ROOM_WOOD, .8)); }
+      const tool = R.onCounter; if (tool) tool(B, cx, cz, h, ns, l);
+    }
+    hard(cx - sx / 2, F, cz - sz / 2, cx + sx / 2, F + h, cz + sz / 2); occ.push([cx, cz, 1.2], [x, z, .8]);
     spot(l, x, z, desk ? 2 : 0, toDoor, desk ? F + .45 : F);
   }
-  for (const [x, z] of o.customer || []) spot(l, x, z, 0, fromDoor, F);
-  if (l.kind === "shop") {                               // shelves along the two side walls
+  for (const [x, z] of o.customer || []) { spot(l, x, z, 0, fromDoor, F); occ.push([x, z, .7]); }
+  if (l.kind === "shop" && l.sp !== "mall") {            // shelves along the two side walls, stocked
     const n = Math.max(2, Math.floor((ns ? z1 - z0 : x1 - x0) / 5));
     for (let k = 0; k < n; k++) for (const sgn of [-1, 1]) {
       const along = (ns ? z0 : x0) + ((k + .5) / n) * (ns ? z1 - z0 : x1 - x0), at = sgn < 0 ? (ns ? x0 : z0) + .62 : (ns ? x1 : z1) - .62;
-      const cx = ns ? at : along, cz = ns ? along : at; block(cx, cz, ns ? .45 : 2.4, 1.9, ns ? 2.4 : .45, C.wood, true);
-      for (let s = 0; s < 3; s++) world.box(cx - (ns ? .26 : 1.1), F + .5 + s * .5, cz - (ns ? 1.1 : .26), cx + (ns ? .26 : 1.1), F + .72 + s * .5, cz + (ns ? 1.1 : .26), pick(ACCENT, hash(l.id, k, sgn, s)), 3);
+      const cx = ns ? at : along, cz = ns ? along : at, sx = ns ? .45 : 2.4, sz = ns ? 2.4 : .45;
+      for (const e of [-1, 1]) B(cx + (ns ? 0 : e * 1.17), 0, cz + (ns ? e * 1.17 : 0), ns ? .45 : .06, 1.95, ns ? .06 : .45, ROOM_WOOD);
+      for (let s = 0; s < 4; s++) {
+        const y = .12 + s * .5; B(cx, y, cz, sx, .04, sz, ROOM_WOOD);
+        for (let g = 0; g < 7; g++) { const u = -1.05 + g * .35, hh = .14 + .2 * hash(l.id, k, sgn, s, g); B(cx + (ns ? 0 : u), y + .04, cz + (ns ? u : 0), ns ? .3 : .26, hh, ns ? .26 : .3, pick(ROOM_GOODS, hash(l.id, k, s, g, sgn))); }
+      }
+      hard(cx - sx / 2, F, cz - sz / 2, cx + sx / 2, F + 1.95, cz + sz / 2); occ.push([cx, cz, 1.4]);
     }
   }
-  if (l.tower) {                                         // a lift in the back corner, up to the roof terrace
+  room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard);
+  if (l.tower && !vis) {                                       // a lift in the back corner, up to the roof terrace
     const bx = side === "e" ? x0 + 1.5 : side === "w" ? x1 - 1.5 : x0 + 1.5, bz = side === "s" ? z0 + 1.5 : side === "n" ? z1 - 1.5 : z0 + 1.5;
     const ix = bx < (x0 + x1) / 2 ? 1 : -1, iz = bz < (z0 + z1) / 2 ? 1 : -1, top = l.H;
     for (const y of [F, top]) {
@@ -644,6 +685,119 @@ function furnish(l, side, accent, inC) {
     use(bx + ix * 1.9, F, bz, "lift", "Take the lift to the roof", 0, { to: [bx + ix * 2.2, top, bz + iz * 1.2] });
     use(bx + ix * 1.9, top, bz, "lift", "Take the lift down", 0, { to: [bx + ix * 2.2, F, bz + iz * 1.2] });
     labels.push({ x: bx, y: 2.9, z: bz, text: "Lift", lot: l, r: 14, indoor: true });
+  }
+}
+
+// ---------------------------------------------------------------- rooms: what each kind of building is furnished with
+const ROOM_WOOD = [.36, .24, .15], ROOM_GOODS = [C.ochre, C.terracotta, C.olive, C.cream, [.6, .2, .16], [.42, .5, .24], [.3, .38, .52], [.55, .45, .3]];
+const ROOM_FLOOR = {                                         // [material, colour]: 15 boards, 16 tiles
+  home: [15, [.4, .27, .17]], food: [16, [.56, .34, .24]], shop: [16, [.58, .52, .44]], work: [15, [.36, .26, .18]], works: [15, [.3, .24, .19]],
+  health: [16, [.66, .66, .63]], hospital: [16, [.66, .66, .63]], utility: [16, [.4, .4, .4]], mall: [16, [.62, .56, .46]], hall: [16, [.5, .4, .32]], guild: [15, [.38, .25, .16]], office: [15, [.36, .26, .18]], flats: [16, [.58, .5, .42]],
+};
+const espresso = (B, cx, cz, h, ns) => { B(cx - (ns ? .45 : 0), h, cz - (ns ? 0 : .45), .5, .42, .36, C.metal); B(cx - (ns ? .45 : 0), h + .42, cz - (ns ? 0 : .45), .3, .08, .3, [.6, .58, .55]); for (let k = 0; k < 4; k++) B(cx + (ns ? .1 + k * .12 : 0), h, cz + (ns ? 0 : .1 + k * .12), .07, .08, .07, [.86, .84, .8]); B(cx + (ns ? .62 : 0), h, cz + (ns ? 0 : .62), .3, .26, .3, [.95, .82, .55], 0, 2); };
+const till = (B, cx, cz, h, ns) => { B(cx - (ns ? .5 : 0), h, cz - (ns ? 0 : .5), .36, .2, .3, C.charcoal); B(cx - (ns ? .5 : 0), h + .2, cz - (ns ? 0 : .5), .26, .14, .04, [.2, .3, .3]); B(cx + (ns ? .35 : 0), h, cz + (ns ? 0 : .35), .5, .14, .34, C.ochre); };
+const ledger = (B, cx, cz, h, ns) => { B(cx, h, cz, .3, .04, .22, [.86, .84, .78]); B(cx + (ns ? .5 : 0), h, cz + (ns ? 0 : .5), .1, .3, .1, C.metal); };
+const ROOM_STYLE = {
+  // tall/low: pieces for the walls (tall ones keep off windows and the door wall); mid: things for open floor; pictures; lamp shades
+  home: { tall: ["wardrobe", "bookcase", "dresser", "fireplace"], low: ["sideboard", "plant", "dresser"], mid: ["dining", "rug"], pictures: "art", fabric: [C.olive, C.plum, [.55, .35, .24], C.blue], lamp: C.cream },
+  food: { tall: ["bottles"], low: ["pastry", "plant", "sideboard"], mid: ["plant"], pictures: "menu", fabric: [C.cream], chair: [.42, .3, .2], counter: [.3, .2, .13], top: [.62, .58, .52], onCounter: espresso, lamp: C.ochre },
+  shop: { tall: [], low: ["crates", "plant"], mid: ["produce"], pictures: "price", fabric: [C.cream], counter: [.32, .22, .14], top: C.teal, onCounter: till, lamp: C.cream },
+  work: { tall: ["bookcase", "filing"], low: ["plant", "sideboard"], mid: ["rug"], pictures: "art", fabric: [C.blue, C.olive], onCounter: ledger, lamp: C.teal },
+  office: { tall: ["bookcase", "filing"], low: ["plant", "sofa"], mid: ["reception", "rug"], pictures: "art", fabric: [C.blue, C.charcoal], onCounter: ledger, lamp: C.teal },
+  guild: { tall: ["bookcase", "fireplace"], low: ["sideboard", "plant"], mid: ["long", "rug"], pictures: "art", fabric: [C.terracotta], onCounter: ledger, lamp: C.ochre },
+  hall: { tall: ["bookcase", "filing"], low: ["bench", "plant"], mid: ["reception", "benches"], pictures: "art", fabric: [C.terracotta], onCounter: ledger, lamp: C.cream },
+  works: { tall: ["lockers"], low: ["workbench", "machine", "barrels", "crates"], mid: ["crates", "machine"], pictures: "tools", fabric: [C.charcoal], onCounter: ledger, lamp: C.metal },
+  health: { tall: ["medcab"], low: ["sink", "bench", "plant"], mid: ["reception", "screens"], pictures: "notice", fabric: [C.teal], chair: [.6, .62, .62], counter: [.8, .8, .76], top: C.teal, onCounter: ledger, lamp: C.cream },
+  hospital: { tall: ["medcab"], low: ["sink", "bench", "plant"], mid: ["reception", "screens", "beds"], pictures: "notice", fabric: [C.teal], chair: [.6, .62, .62], counter: [.8, .8, .76], top: C.teal, onCounter: ledger, lamp: C.cream },
+  utility: { tall: ["lockers"], low: ["workbench", "crates", "barrels"], mid: ["crates"], pictures: "tools", fabric: [C.charcoal], onCounter: ledger, lamp: C.metal },
+  mall: { tall: [], low: ["plant", "bench"], mid: ["kiosk", "plant"], pictures: "price", fabric: [C.cream], counter: [.32, .22, .14], top: C.ochre, onCounter: till, lamp: C.ochre },
+  flats: { tall: [], low: ["sofa", "plant"], mid: ["reception", "rug"], pictures: "art", fabric: [C.olive], onCounter: ledger, lamp: C.cream },
+};
+function room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard) {
+  const [x0, z0, x1, z1] = l.rect, t = .35, rx0 = x0 + t, rx1 = x1 - t, rz0 = z0 + t, rz1 = z1 - t, d = DOOR_DIR[side], [dx, dz] = l.door, dw = l.dw;
+  for (let s = 0; s < 5; s++) occ.push([dx - d[0] * s * 1.2, dz - d[1] * s * 1.2, dw / 2 + .7]);        // keep the way in clear
+  if (l.tower) { const bx = side === "e" ? x0 + 1.5 : side === "w" ? x1 - 1.5 : x0 + 1.5, bz = side === "s" ? z0 + 1.5 : side === "n" ? z1 - 1.5 : z0 + 1.5; occ.push([bx, bz, 3.2]); }
+  const clear = (x, z, r) => occ.every(([ox, oz, or]) => Math.hypot(x - ox, z - oz) > r + or);   // nothing placed or used there
+  const free = (x, z, r) => x > rx0 + r * .7 && x < rx1 - r * .7 && z > rz0 + r * .7 && z < rz1 - r * .7 && occ.every(([ox, oz, or]) => Math.hypot(x - ox, z - oz) > r + or);
+  const walls = { n: { ns: true, fix: rz0, out: 1 }, s: { ns: true, fix: rz1, out: -1 }, w: { ns: false, fix: rx0, out: 1 }, e: { ns: false, fix: rx1, out: -1 } };
+  const W = ROOM_WOOD, h = (...k) => hash(l.id, "room", ...k); let menuDone = 0;
+  const box = (S, a, y0, y1, d0, d1, w, c, f) => fbox(dm, S, a - w / 2, a + w / 2, F + y0, F + y1, d0, d1, c, f || 19, false, true);
+  const solidOn = (S, a, w, dep, ht) => { const p = SP.at(S, a - w / 2, 0, 0), q = SP.at(S, a + w / 2, 0, dep); hard(p[0], F, p[2], q[0], F + ht, q[2]); };
+  // wall pieces: [width, depth, height, build(S, a)]
+  const P = {
+    wardrobe: [1.2, .6, 2.1, (S, a) => { box(S, a, 0, 2.1, 0, .6, 1.2, W); box(S, a, .1, 2.0, .6, .61, .02, mul3(W, .6)); for (const u of [-.1, .1]) box(S, a + u, 1.0, 1.15, .6, .64, .04, C.ochre); box(S, a, 2.1, 2.18, -.02, .64, 1.26, mul3(W, .8)); }],
+    bookcase: [1.3, .34, 2.0, (S, a) => { box(S, a, 0, 2.0, 0, .05, 1.3, W); for (const u of [-.63, .63]) box(S, a + u, 0, 2.0, 0, .34, .04, W); for (let k = 0; k < 5; k++) { box(S, a, .05 + k * .46, .09 + k * .46, 0, .34, 1.22, W); if (k < 4) for (let b = 0, u = -.56; u < .52; b++) { const bw = .05 + .05 * h(a, k, b), bh = .24 + .12 * h(b, k, a); box(S, a + u + bw / 2, .09 + k * .46, .09 + k * .46 + bh, .04, .28, bw, pick(ROOM_GOODS, h(a, b, k))); u += bw + .01; } } }],
+    dresser: [1.0, .5, 1.0, (S, a) => { box(S, a, 0, .95, 0, .5, 1.0, W); for (let k = 0; k < 3; k++) box(S, a, .12 + k * .28, .14 + k * .28, .5, .51, .92, mul3(W, .6)); box(S, a, 1.3, 2.0, 0, .04, .7, mul3(W, .7)); box(S, a, 1.36, 1.94, .04, .05, .58, [.55, .62, .66]); }],
+    fireplace: [1.8, .45, 1.25, (S, a) => { box(S, a, 0, 1.15, 0, .4, 1.8, C.stone); box(S, a, .1, .8, .4, .41, .9, [.08, .06, .05]); box(S, a, .12, .3, .2, .38, .5, [1, .5, .2], 2); box(S, a, 1.15, 1.25, -.02, .5, 2.0, C.stoneDark); box(S, a, 1.6, 2.2, 0, .04, .9, mul3(W, .7)); box(S, a, 1.66, 2.14, .04, .05, .78, pick(ROOM_GOODS, h(a, "f"))); }],
+    sideboard: [1.6, .45, .85, (S, a) => { box(S, a, 0, .85, 0, .45, 1.6, W); for (const u of [-.4, .4]) box(S, a + u, .1, .75, .45, .46, .7, mul3(W, .7)); box(S, a - .4, .85, 1.15, .15, .3, .16, pick([C.teal, C.ochre, C.terracotta], h(a, "v"))); box(S, a + .3, .85, .9, .1, .35, .4, [.86, .84, .78]); }],
+    plant: [.6, .6, 1.3, (S, a) => { box(S, a, 0, .45, .1, .5, .4, C.terracotta); for (let k = 0; k < 5; k++) box(S, a + (h(a, k) - .5) * .3, .45 + k * .16, .75 + k * .16, .08 + h(k, a) * .2, .32 + h(k, a) * .2, .32, pick([[.26, .38, .2], [.36, .46, .24]], h(a, k, "p")), 19); }],
+    bottles: [1.6, .3, 1.9, (S, a) => { box(S, a, 0, 1.9, 0, .04, 1.6, W); for (let k = 0; k < 4; k++) { box(S, a, .3 + k * .42, .33 + k * .42, 0, .3, 1.6, W); for (let b = 0; b < 9; b++) box(S, a - .7 + b * .17, .33 + k * .42, .33 + k * .42 + .24 + .06 * h(a, k, b), .1, .18, .06, pick([[.16, .3, .18], [.38, .2, .1], [.6, .52, .3], [.5, .14, .12]], h(b, k, a))); } }],
+    pastry: [1.4, .6, 1.05, (S, a) => { box(S, a, 0, .8, 0, .6, 1.4, W); box(S, a, .8, 1.05, .05, .55, 1.3, [.95, .85, .62], 2); for (let b = 0; b < 5; b++) box(S, a - .5 + b * .25, .82, .9, .15, .45, .16, pick([C.ochre, [.55, .3, .18], C.cream], h(a, b))); }],
+    crates: [1.2, .8, 1.1, (S, a) => { for (let k = 0; k < 2; k++) { box(S, a - .3 + k * .6, 0, .5, .05, .7, .56, W); box(S, a - .3 + k * .6, .5, .62, .1, .65, .46, pick(ROOM_GOODS, h(a, k))); } box(S, a, .62, 1.05, .1, .6, .55, mul3(W, .85)); }],
+    workbench: [2.2, .7, .9, (S, a) => { box(S, a, .82, .9, 0, .7, 2.2, W); for (const u of [-1, 1]) box(S, a + u * 1.0, 0, .82, .05, .65, .08, W); box(S, a, .25, .3, .05, .65, 2.0, W); box(S, a + .8, .9, 1.05, .45, .65, .2, C.metal); box(S, a, 1.2, 2.2, 0, .03, 2.0, [.3, .22, .16]); for (let k = 0; k < 7; k++) box(S, a - .8 + k * .27, 1.4 + .3 * h(a, k), 1.75 + .3 * h(a, k), .03, .06, .05, C.metal); }],
+    machine: [1.3, .9, 1.4, (S, a) => { box(S, a, 0, .9, .05, .85, 1.3, [.3, .34, .32]); box(S, a - .3, .9, 1.4, .2, .7, .5, [.3, .34, .32]); box(S, a + .35, .95, 1.1, .3, .6, .5, C.metal); box(S, a + .55, 1.0, 1.35, .2, .3, .06, C.ochre); }],
+    barrels: [1.3, .65, .95, (S, a) => { for (const u of [-.32, .32]) { box(S, a + u, 0, .95, .05, .62, .56, W); for (const y of [.2, .75]) box(S, a + u, y, y + .05, .04, .63, .58, C.metal); } }],
+    filing: [1.2, .6, 1.35, (S, a) => { for (const u of [-.3, .3]) { box(S, a + u, 0, 1.35, 0, .6, .56, [.42, .44, .44]); for (let k = 0; k < 4; k++) box(S, a + u, .15 + k * .32, .18 + k * .32, .6, .61, .3, C.metal); } }],
+    medcab: [1.0, .45, 1.9, (S, a) => { box(S, a, 0, 1.9, 0, .45, 1.0, [.86, .86, .82]); box(S, a, .9, 1.8, .45, .46, .86, [.55, .62, .66]); box(S, a, 1.45, 1.75, .46, .47, .08, C.teal); box(S, a, 1.56, 1.64, .46, .47, .3, C.teal); }],
+    sink: [1.0, .55, .9, (S, a) => { box(S, a, 0, .85, 0, .55, 1.0, [.86, .86, .82]); box(S, a, .85, .9, .05, .5, .6, C.metal); box(S, a, .9, 1.15, .05, .1, .05, C.metal); box(S, a, 1.2, 1.9, 0, .03, .7, [.55, .62, .66]); }],
+    bench: [1.8, .5, .9, (S, a) => { box(S, a, .42, .48, 0, .45, 1.8, R.chair || W); box(S, a, .48, .9, 0, .06, 1.8, R.chair || W); for (const u of [-.8, .8]) box(S, a + u, 0, .42, .05, .42, .06, C.metal); }],
+    lockers: [1.4, .5, 1.85, (S, a) => { box(S, a, 0, 1.85, 0, .5, 1.4, [.32, .4, .4]); for (let k = 1; k < 4; k++) box(S, a - .7 + k * .35, .05, 1.8, .5, .51, .02, [.2, .26, .26]); for (let k = 0; k < 4; k++) box(S, a - .52 + k * .35, 1.5, 1.6, .5, .52, .18, [.2, .26, .26]); }],
+    sofa: [2.0, .85, .85, (S, a) => { box(S, a, 0, .42, .05, .85, 2.0, fab); box(S, a, .42, .85, .05, .3, 2.0, fab); for (const u of [-.92, .92]) box(S, a + u, .42, .62, .05, .85, .16, fab); for (const u of [-.5, .5]) box(S, a + u, .42, .52, .3, .8, .9, mul3(fab, 1.12)); }],
+  };
+  // along each wall: tall pieces where there is no window and it is not the door wall, low ones elsewhere; pictures above the low ones
+  const winAt = (s, a, w) => (l.inWin || []).some(([ws, w0, w1]) => ws === s && a + w / 2 > w0 && a - w / 2 < w1);
+  let placed = 0;
+  for (const s of "nswe") {
+    const S = walls[s], A0 = S.ns ? rx0 : rz0, A1 = S.ns ? rx1 : rz1, doorA = S.ns ? dx : dz, onDoor = s === side;
+    for (let a = A0 + 1.3, k = 0; a < A1 - 1.0 && placed < 60; a += 2.7, k++) {
+      if (onDoor && Math.abs(a - doorA) < dw / 2 + 1.6) continue;
+      const tall = !onDoor && !winAt(s, a, 1.5) && R.tall.length && h(s, k) < .55, list = tall ? R.tall : R.low;
+      if (!list.length || h(s, k, "skip") < .18) continue;
+      const name = pick(list, h(s, k, "pick")), [w, dep, ht, build] = P[name], c = SP.at(S, a, 0, dep / 2 + .05);
+      if (a - w / 2 < A0 + .2 || a + w / 2 > A1 - .2 || !clear(c[0], c[2], Math.max(w, dep) / 2)) continue;
+      build(S, a); if (name !== "plant") solidOn(S, a, w, dep, ht); occ.push([c[0], c[2], Math.max(w, dep) / 2 + .3]); placed++;
+      if (ht < 1.3 && name !== "fireplace" && !winAt(s, a, 1.0) && R.pictures) picture(S, a, k);
+    }
+  }
+  function picture(S, a, k) {                             // something on the wall: a painting, the menu, price boards, a notice, tools
+    const kind = R.pictures, y0 = F + 1.45;
+    if (kind === "menu" && !menuDone) { menuDone = 1; fbox(dm, S, a - .6, a + .6, y0, y0 + .85, 0, .04, [.1, .1, .1], 19); for (let q = 0; q < 5; q++) fbox(dm, S, a - .45, a - .45 + .5 + .35 * h(a, q), y0 + .65 - q * .13, y0 + .69 - q * .13, .04, .05, [.85, .82, .74], 19); return; }
+    if (kind === "tools") { fbox(dm, S, a - .5, a + .5, y0, y0 + .8, 0, .03, [.3, .22, .16], 19); for (let q = 0; q < 4; q++) fbox(dm, S, a - .38 + q * .25, a - .33 + q * .25, y0 + .15, y0 + .55 + .1 * h(a, q), .03, .07, C.metal, 19); return; }
+    const w = kind === "notice" || kind === "price" ? .55 : .6 + .4 * h(a, k, "w"), ht = kind === "price" ? .4 : .5 + .3 * h(k, a, "h");
+    fbox(dm, S, a - w / 2, a + w / 2, y0, y0 + ht, 0, .04, kind === "art" ? [.3, .2, .12] : [.2, .16, .12], 19);
+    fbox(dm, S, a - w / 2 + .05, a + w / 2 - .05, y0 + .05, y0 + ht - .05, .04, .045, kind === "notice" ? [.86, .84, .78] : kind === "price" ? [.12, .12, .12] : pick(ROOM_GOODS, h(a, k, "c")), 19);
+  }
+  // open floor: what this kind of building has standing in the room
+  const cx = (rx0 + rx1) / 2, cz = (rz0 + rz1) / 2, spots = [];
+  for (let gx = rx0 + 2; gx < rx1 - 1.5; gx += 2.5) for (let gz = rz0 + 2; gz < rz1 - 1.5; gz += 2.5) spots.push([gx, gz, Math.hypot(gx - cx, gz - cz) + 3 * h(gx, gz)]);
+  spots.sort((p, q) => p[2] - q[2]);
+  const want = { dining: 1, rug: 1, produce: 4, kiosk: 6, crates: 2, machine: 2, reception: 1, screens: 2, beds: 6, benches: 3, long: 1, plant: 2 };
+  for (const m of R.mid) {
+    let n = Math.round((want[m] || 1) * Math.max(1, (rx1 - rx0) * (rz1 - rz0) / 160));     // bigger rooms hold more
+    for (const [px, pz] of spots) {
+      if (n <= 0) break;
+      if (m === "rug") { if (!free(px, pz, .3)) continue; dm.flat(px - 1.4, pz - 1.0, px + 1.4, pz + 1.0, F + .004, mul3(accent, .8), 19); dm.flat(px - 1.25, pz - .85, px + 1.25, pz + .85, F + .006, mul3(pick(ROOM_GOODS, h(px, pz)), .9), 19); n--; continue; }
+      const r = { dining: 1.9, produce: 1.4, kiosk: 2.2, crates: .9, machine: 1.0, reception: 1.6, screens: 1.2, beds: 1.4, benches: 1.6, long: 2.4, plant: .5 }[m];
+      if (!free(px, pz, r)) continue;
+      if (m === "dining") { table(px, pz, 1.1, .76, false); hard(px - .55, F, pz - .55, px + .55, F + .76, pz + .55); for (const [u, v] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) chair(px + u * .8, pz + v * .8, yawOf(-u, -v), fab); }
+      else if (m === "produce") { B(px, 0, pz, 2.2, .7, 1.0, ROOM_WOOD); for (let k = 0; k < 6; k++) { const u = -.75 + (k % 3) * .75, v = k < 3 ? -.25 : .25; B(px + u, .7, pz + v, .66, .12, .44, ROOM_WOOD); B(px + u, .82, pz + v, .58, .1, .38, pick(ROOM_GOODS, h(px, k))); } hard(px - 1.1, F, pz - .5, px + 1.1, F + .9, pz + .5); }
+      else if (m === "kiosk") { for (const [u, v] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) B(px + u * .95, 0, pz + v * .95, .08, 2.3, .08, C.metal); B(px, 2.3, pz, 2.2, .12, 2.2, pick([C.teal, C.terracotta, C.ochre], h(px, pz))); B(px, 0, pz, 1.7, 1.0, 1.7, ROOM_WOOD); B(px, 1.0, pz, 1.8, .05, 1.8, [.62, .58, .52]); for (let k = 0; k < 4; k++) B(px - .5 + k * .33, 1.05, pz, .22, .2, .3, pick(ROOM_GOODS, h(px, k))); hard(px - .9, F, pz - .9, px + .9, F + 1.05, pz + .9); }
+      else if (m === "crates") { for (let k = 0; k < 3; k++) B(px + (k - 1) * .62, 0, pz, .58, .55 + (k === 1 ? .55 : 0), .58, mul3(ROOM_WOOD, .85 + .2 * h(px, k))); hard(px - .9, F, pz - .3, px + .9, F + 1.1, pz + .3); }
+      else if (m === "machine") { B(px, 0, pz, 1.4, .95, .8, [.3, .34, .32]); B(px - .3, .95, pz, .5, .55, .6, [.3, .34, .32]); B(px + .4, .95, pz, .5, .2, .5, C.metal); hard(px - .7, F, pz - .4, px + .7, F + 1.5, pz + .4); }
+      else if (m === "reception") { B(px, 0, pz, 2.4, 1.05, .7, R.counter || ROOM_WOOD); B(px, 1.05, pz, 2.5, .05, .8, R.top || C.teal); B(px + .7, 1.1, pz, .14, .35, .14, C.metal); B(px + .7, 1.42, pz, .26, .1, .26, R.lamp || C.cream); B(px - .5, 1.1, pz, .4, .03, .3, [.86, .84, .78]); hard(px - 1.2, F, pz - .35, px + 1.2, F + 1.1, pz + .35); }
+      else if (m === "screens") { for (let k = 0; k < 3; k++) { const yaw = (k - 1) * .5; B(px + Math.cos(yaw) * (k - 1) * .62, 0, pz + Math.sin(yaw) * (k - 1) * .62, .62, 1.75, .04, [.82, .8, .72], -yaw); } B(px, 0, pz + .9, .9, .55, 1.9, [.86, .86, .82]); B(px, .55, pz + .9, .86, .1, 1.8, [.92, .92, .9]); hard(px - .45, F, pz - .05, px + .45, F + .6, pz + 1.85); }
+      else if (m === "beds") { B(px, 0, pz, .95, .55, 2.0, [.86, .86, .82]); B(px, .55, pz, .9, .12, 1.9, [.92, .92, .9]); B(px, .67, pz + .65, .6, .1, .3, [.95, .95, .93]); B(px, 0, pz - 1.05, .95, .95, .06, C.metal); hard(px - .48, F, pz - 1, px + .48, F + .67, pz + 1); }
+      else if (m === "benches" || m === "long") { const L2 = m === "long" ? 3.4 : 2.4; B(px, .42, pz, L2, .06, .45, ROOM_WOOD); B(px, .48, pz + .2, L2, .4, .06, ROOM_WOOD); for (const u of [-1, 1]) B(px + u * (L2 / 2 - .1), 0, pz, .08, .42, .4, ROOM_WOOD); if (m === "long") { B(px, .74, pz - 1.1, L2, .05, 1.0, ROOM_WOOD); for (const u of [-1, 1]) B(px + u * (L2 / 2 - .2), 0, pz - 1.1, .1, .74, .9, ROOM_WOOD); hard(px - L2 / 2, F, pz - 1.6, px + L2 / 2, F + .78, pz - .6); } hard(px - L2 / 2, F, pz - .25, px + L2 / 2, F + .5, pz + .25); }
+      else if (m === "plant") { B(px, 0, pz, .45, .45, .45, C.terracotta); for (let k = 0; k < 4; k++) B(px + (h(px, k) - .5) * .3, .45 + k * .2, pz + (h(k, pz) - .5) * .3, .5 - k * .07, .32, .5 - k * .07, [.28, .4, .21]); }
+      occ.push([px, pz, r + .3]); n--;
+    }
+  }
+  // lamps hanging from the beams
+  const nx = Math.max(1, Math.round((rx1 - rx0) / 4.4)), nz = Math.max(1, Math.round((rz1 - rz0) / 4.4));
+  for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
+    const lx = rx0 + (i + .5) * (rx1 - rx0) / nx, lz = rz0 + (j + .5) * (rz1 - rz0) / nz, top = GF - .02;
+    dm.box(lx - .012, top - .55, lz - .012, lx + .012, top, lz + .012, C.charcoal, 19);
+    dm.ybox(lx, top - .78, lz, .42, .24, .42, Math.PI / 4, R.lamp || C.cream, 19); dm.box(lx - .09, top - .86, lz - .09, lx + .09, top - .76, lz + .09, [1, .78, .5], 2);
   }
 }
 
@@ -886,7 +1040,7 @@ void main(){
   float hh=45., dy=vP.y-uCam.y; float k=abs(dy)>.05?(exp(-uCam.y/hh)-exp(-vP.y/hh))/(dy/hh):exp(-uCam.y/hh);
   float fog=1.-exp(-d*uFogD*max(k,0.));
   float blot=clamp((ns(vP*.9)*.6+ns(vP*2.7+7.)*.4-.5)*2.2+.5,0.,1.), nearK=1.-min(1.,d/70.);
-  vec3 col; bool emis=false;
+  vec3 col; bool emis=false; float inside=0.;
   if((f>.5&&f<1.5)||(f>3.5&&f<4.5)){                                      // a window: vC is (across, up, seed)
     vec2 uv=c.xy; float bx=min(uv.x,1.-uv.x);
     if(bx<.09||uv.y<.07||uv.y>.93){ c=paint(vec3(.37,.34,.32),vec3(.49,.53,.69),blot)*(uv.y<.07?1.2:1.); f=9.; }   // stone frame and sill
@@ -895,6 +1049,7 @@ void main(){
       vec3 glass=(vec3(.07,.09,.12)*(uSky*1.5+uGround*2.)+uSky*.04)*reveal, warm=mix(vec3(1.,.5,.2),vec3(1.,.68,.36),c.z)*(1.+1.5*g.y);
       float shop=step(.955,c.z);                                          // shop and cafe windows glow by day too
       col=mix(glass,warm*(1.-.5*shop*(1.-uNight)),f<1.5?max(uNight,shop*.8):0.);
+      if(c.z>.995) col=(uFog*1.3+uSky*1.9+uSunCol*.05)*(.7+.5*g.y)*(1.-.85*uNight);   // the same window seen from inside: daylight beyond
       if(abs(g.x-.5)<.035||abs(g.y-.6)<.03) col=vec3(.3,.2,.13)*(uSky+uSunCol*.03+.004);   // glazing bars
       emis=true; }
   }
@@ -931,10 +1086,25 @@ void main(){
       c=paint(c,vec3(.62,.6,.66),blot)*mix(1.,(.5+.5*tube)*(.86+.28*t1)*(1.-.32*smoothstep(.72,1.,row)),k2); n=normalize(n+tg*cu*.6*k2); }
     else if(f>11.5&&f<12.5){ float s=fract(vP.y/.1), k2=1.-min(1.,d/60.);                                            // louvred shutter slats
       c=paint(c,vec3(.7,.7,.74),blot)*mix(1.,mix(.42,1.08,smoothstep(0.,.3,s))*(1.-.45*smoothstep(.82,1.,s)),k2); n=normalize(n+vec3(0.,(.5-s)*.9*k2,0.)); }
+    else if(f>14.5&&f<15.5){ float pz=vP.z/.19, pi=floor(pz), fz=fract(pz), px=vP.x/2.1+h3(vec3(pi,1.,7.)), fx=fract(px);   // floorboards
+      float t1=h3(vec3(pi,floor(px),8.)); c=c*(.8+.34*t1)*(.93+.14*ns(vec3(vP.x*2.5,pi*.7,1.)));
+      c*=1.-.5*max(smoothstep(.9,.99,fz),smoothstep(.985,.999,fx))*nearK; }
+    else if(f>15.5&&f<16.5){ vec2 q=vP.xz/.42, fr=fract(q); float ck=mod(floor(q.x)+floor(q.y),2.), t1=h3(vec3(floor(q),4.));   // tiles in two tones
+      c=mix(c,c*vec3(.8,.8,.84),ck)*(.95+.1*t1); c=mix(c,c*.62,max(smoothstep(.955,.985,fr.x),smoothstep(.955,.985,fr.y))*nearK); }
+    else if(f>16.5&&f<17.5){ float y=vP.y-.2, u=abs(n.x)>.5?vP.z:vP.x, pu=fract(u/.85);   // a room wall: wooden panelling with a rail below, plaster above, a dark skirting
+      vec3 wood=mix(c,vec3(.34,.22,.14),.72);
+      if(y<.13) c=wood*.55;
+      else if(y<.92) c=wood*(.86+.14*smoothstep(.06,.12,pu)*smoothstep(.94,.88,pu))*(1.-.25*smoothstep(.13,.2,y)*smoothstep(.2,.13,y))*(.95+.1*ns(vP*3.));
+      else if(y<1.0) c=wood*1.1;
+      else c=paint(c,vec3(.86),blot); }
+    else if(f>17.5&&f<18.5){ float bx=fract(vP.x/1.4);                                // a ceiling: dark timber beams across plaster
+      c=bx<.16?vec3(.24,.16,.1)*(.85+.3*ns(vP*2.)):paint(c,vec3(.88),blot); }
+    else if(f>18.5&&f<19.5) c*=.93+.14*ns(vP*5.);                         // room furniture: plain, a little grain
     if(f>1.5&&f<2.5){ col=vec3(1.,.55,.22)*6.; emis=true; }                // lantern glass: emission strength 6
     else {
       vec3 hemi=mix(uGround,uSky,n.y*.5+.5), light;
-      if(f>2.5&&f<3.5){ light=(uSunCol*.03+hemi*.5+vec3(.5,.4,.28))*(.84+.16*n.y+.08*n.x-.05*n.z); c=paint(c,vec3(.76),blot); }
+      if(f>2.5&&f<3.5){ light=(uSunCol*.03+hemi*.5+vec3(.5,.4,.28))*(.84+.16*n.y+.08*n.x-.05*n.z); c=paint(c,vec3(.76),blot); inside=1.; }
+      else if(f>14.5&&f<19.5){ light=(uSunCol*.03+hemi*.45+vec3(.52,.42,.3))*(.82+.16*n.y+.08*n.x-.05*n.z)*(.8+.2*smoothstep(.2,1.6,vP.y)); inside=1.; }   // room surfaces: warm room light, a little darker low down
       else if(f>9.5&&f<10.5){ float up=n.y*.5+.5, sd=dot(n,normalize(vec3(.5,0.,-.35)))*.5+.5;   // a person indoors: room light from above and one side, so the body keeps its form
         light=(uSunCol*.03+hemi*.5+vec3(.5,.4,.28))*(.5+.38*up*up+.34*sd*sd); }
       else {
@@ -947,7 +1117,7 @@ void main(){
         for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*.85+.15)); } }   // lanterns (W6)
       col=c*light; }
   }
-  col=mix(col,uFog+uSunCol*(4.4*haze(dot(vd,uSun)))*airLit(vd,d),fog*(emis?.5:1.));   // haze glows where the sun reaches it
+  col=mix(col,uFog+uSunCol*(4.4*haze(dot(vd,uSun)))*airLit(vd,d),fog*(emis?.5:1.)*(1.-.85*inside));   // haze glows where the sun reaches it; little haze indoors
   float glow=0.; for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 q=uLamp[i].xyz-uCam; float b=dot(q,vd), h=sqrt(max(dot(q,q)-b*b,.02)); glow+=uLamp[i].w*(atan((d-b)/h)+atan(b/h))/h; }
   col+=vec3(1.,.62,.32)*(glow*uFogD*1.6);                                 // every lantern glows in the haze around it
   gl_FragColor=vec4(tone(col*uExp),1.);
@@ -1208,6 +1378,20 @@ addEventListener("keydown", e => {
 addEventListener("keyup", e => { keys[e.code] = false; });
 addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
 
+// Rooms are furnished only near the camera: built when a building comes within 40 m (two a frame at most), dropped past 70 m.
+const ROOMS = new Map();
+function nearRooms(eye) {
+  let built = 0;
+  for (const l of LOTS) {
+    if (!l.furn) continue;
+    const [a0, b0, a1, b1] = l.rect, dd = Math.hypot((a0 + a1) / 2 - eye[0], (b0 + b1) / 2 - eye[2]) - Math.hypot(a1 - a0, b1 - b0) / 2, have = ROOMS.get(l);
+    if (!have && dd < 40 && built < 2) {
+      const m = new Mesh(1 << 15); furnish(l, l.furn[0], l.furn[1], l.furn[2], m); built++;
+      ROOMS.set(l, m.n ? { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, box: boxOf(m.a, 0, m.n) } : { n: 0 });
+    } else if (have && dd > 70) { if (have.buf) gl.deleteBuffer(have.buf); ROOMS.delete(l); }
+  }
+  const out = []; for (const r of ROOMS.values()) if (r.n) out.push(r); return out;
+}
 let last = performance.now(); const stat = { detail: 0 }; const PIN_Q = new URLSearchParams(location.search).has("quality");   // ?quality=1 or 0.5 holds the picture for timing
 if (PIN_Q) quality = clamp(+new URLSearchParams(location.search).get("quality") || 1, .5, 1);
 function frame(now) {
@@ -1283,7 +1467,8 @@ function frame(now) {
   gl.uniform3fv(sky.u.uZen, Lt.zen); gl.uniform3fv(sky.u.uHor, Lt.fog); gl.uniform3fv(sky.u.uSunCol, Lt.sunCol); gl.uniform1f(sky.u.uNight, Lt.night); gl.uniform1f(sky.u.uExp, Lt.exp);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.enable(gl.CULL_FACE); gl.depthMask(true);   // on a tie the layer laid later (the upper one) wins
-  const seen = pieces.filter(pc => !outside(VP, pc.box)), nearD = chunks.filter(ch => Math.hypot(ch.cx - cam.eye[0], ch.cz - cam.eye[2]) < DETAIL_R && !outside(VP, ch.box));   // near relief: blocks within reach and in view
+  const seen = pieces.filter(pc => !outside(VP, pc.box)), nearD = chunks.filter(ch => Math.hypot(ch.cx - cam.eye[0], ch.cz - cam.eye[2]) < DETAIL_R && !outside(VP, ch.box));
+  for (const rm of nearRooms(cam.eye)) if (!outside(VP, rm.box)) nearD.push(rm);   // furnished rooms of the buildings close by   // near relief: blocks within reach and in view
   for (const pc of seen) pc.d2 = boxD2(pc.box, cam.eye); for (const ch of nearD) ch.d2 = boxD2(ch.box, cam.eye);
   const front = seen.slice().sort((p, q) => p.d2 - q.d2); nearD.sort((p, q) => p.d2 - q.d2);
   // depth first, nearest pieces first: the costly light below then runs once for each pixel instead of for every hidden wall and room behind it
@@ -1317,5 +1502,5 @@ if (q.has("fp")) cam.fp = true; if (q.has("yaw")) pl.yaw = cam.yaw; if (q.has("r
 const LIGHTS = { reference: { sun: 1, sky: 1, bounce: 1, lanterns: 1, haze: 1, exposure: 1, warm: 0 }, kit: { sun: .62, sky: .9, bounce: 1.5, lanterns: 1, haze: .55, exposure: .7, warm: 1 } };
 let lightName = q.get("light") === "reference" ? "reference" : "kit";
 addEventListener("keydown", e => { if (e.code === "KeyL" && started && !e.repeat) { lightName = lightName === "kit" ? "reference" : "kit"; Object.assign(window.wasted.dials, LIGHTS[lightName]); } });
-window.wasted = { dials: Object.assign({}, LIGHTS[lightName]), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
+window.wasted = { dials: Object.assign({}, LIGHTS[lightName]), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
 requestAnimationFrame(frame);
