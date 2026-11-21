@@ -37,3 +37,7 @@ Desktop.ini
 *.pem
 *.key
 secrets.*
+
+# Generated or downloaded, not project files
+Tools/citysim/traffic_day.html
+Claude outputs/
