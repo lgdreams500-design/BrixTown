@@ -142,9 +142,9 @@ function sideOf(l, s) {                                   // a wall of a lot: is
   const [x0, z0, x1, z1] = l.rect, ns = s === "n" || s === "s";
   return { ns, fix: s === "n" ? z0 : s === "s" ? z1 : s === "w" ? x0 : x1, out: s === "n" || s === "w" ? -1 : 1, a0: ns ? x0 : z0, a1: ns ? x1 : z1 };
 }
-function fbox(m, S, a0, a1, y0, y1, d0, d1, c, f, under) {     // a box on a wall face: a along the wall, d out from it; the face against the wall is left out
+function fbox(m, S, a0, a1, y0, y1, d0, d1, c, f, under, all) { // a box on a wall face: a along the wall, d out from it; the face against the wall is left out unless `all`
   const p0 = S.fix + S.out * d0, p1 = S.fix + S.out * d1, lo = Math.min(p0, p1), hi = Math.max(p0, p1);
-  const o = { [S.ns ? (S.out < 0 ? 5 : 4) : (S.out < 0 ? 1 : 0)]: null }; if (under) o[2] = [mul3(c, .8), f];
+  const o = all ? {} : { [S.ns ? (S.out < 0 ? 5 : 4) : (S.out < 0 ? 1 : 0)]: null }; if (under) o[2] = [mul3(c, .8), f];
   S.ns ? m.box(a0, y0, lo, a1, y1, hi, c, f, o) : m.box(lo, y0, a0, hi, y1, a1, c, f, o);
 }
 // Painted names: every sign's name is drawn once into a 4 x 32 grid of cells; a lettering quad carries (u, v, cell + share of the cell the name fills).
@@ -210,6 +210,182 @@ function awning(l, S, dc, dw, dh, accent, wide) {          // sloped striped can
   }
 }
 
+// ---------------------------------------------------------------- the special buildings (Tools/blender/building_kit_08.py)
+// Each keeps the ordinary walkable ground floor, door and collisions, and adds its own front, roof and name.
+function specialKind(l) {
+  const t = l.block.template;
+  if (t === "hall") return "hall";
+  if (t === "hospital") return "hospital";
+  if (t === "mall") return "mall";
+  if (t === "market" && l.kind === "work") return "guild";
+  if (l.tower) return l.kind === "home" ? "flats" : "office";
+  if (l.kind === "work" && t === "peri") return "works";
+  if (l.kind === "utility" && l.enterable) return "depot";
+  return null;
+}
+const SP = {                                               // where a point on a face is, and small shapes laid on faces
+  at: (S, a, y, d) => S.ns ? [a, y, S.fix + S.out * d] : [S.fix + S.out * d, y, a],
+  n: S => S.ns ? [0, 0, S.out] : [S.out, 0, 0],
+  win(S, c, y, w, h, d, seed, lit) {                       // a window quad on a face standing d out from the wall
+    const a = c - w / 2 - .12, b = c + w / 2 + .12, ya = y - .1, yb = y + h, P = (aa, yy) => SP.at(S, aa, yy, d + .03);
+    world.quad(P(a, ya), P(b, ya), P(b, yb), P(a, yb), [0, 0, seed], lit ? 1 : 4, SP.n(S), QUAD_UV);
+  },
+  disc(m, ctr, n, r, col, f, segs) {                       // a flat round face looking along n
+    const rv = [n[2], 0, -n[0]], N = segs || 20, P = a => [ctr[0] + rv[0] * r * Math.cos(a), ctr[1] + r * Math.sin(a), ctr[2] + rv[2] * r * Math.cos(a)];
+    for (let i = 0; i < N; i++) m.quad(ctr, P(i * 6.2832 / N), P((i + 1) * 6.2832 / N), ctr, col, f, n);
+  },
+  clock(S, a, y, d, r) {                                   // stone rim, cream face, iron hands at ten past ten
+    const n = SP.n(S);
+    SP.disc(world, SP.at(S, a, y, d), n, r + .18, C.stoneDark, 0); SP.disc(world, SP.at(S, a, y, d + .03), n, r, C.cream, 9);
+    const hand = (ang, len, w) => { const c = SP.at(S, a + Math.sin(ang) * len / 2, y + Math.cos(ang) * len / 2, d + .07); const m = S.ns ? M4.mul(M4.t(c[0], c[1], c[2]), M4.rz(-ang)) : M4.mul(M4.mul(M4.t(c[0], c[1], c[2]), M4.ry(-Math.PI / 2)), M4.rz(-ang)); world.obox(m, 0, 0, 0, w, len, .04, C.charcoal, 9); };
+    hand(-.95, r * .62, .09); hand(1.05, r * .85, .06);
+  },
+  pyramid(cx, y0, cz, w, h, col) {                         // a tiled pyramid roof
+    const q = [[cx - w / 2, y0, cz - w / 2], [cx + w / 2, y0, cz - w / 2], [cx + w / 2, y0, cz + w / 2], [cx - w / 2, y0, cz + w / 2]], ap = [cx, y0 + h, cz];
+    for (let i = 0; i < 4; i++) { const p = q[i], r = q[(i + 1) % 4], mid = [(p[0] + r[0]) / 2 - cx, h * .3, (p[2] + r[2]) / 2 - cz]; world.quad(p, r, ap, ap, col, 11, mid); }
+  },
+  flag(x, y, z, col) { world.box(x - .04, y, z - .04, x + .04, y + 3.2, z + .04, C.metal, 9); world.box(x + .04, y + 2.2, z - .02, x + 1.6, y + 3.1, z + .02, col, 0, { 2: [col, 0] }); },
+  gable(S, a0, a1, y, h, col, f) {                         // a triangle standing on the face, with its two sloping tops
+    const m = (a0 + a1) / 2, F = d => [SP.at(S, a0, y, d), SP.at(S, a1, y, d), SP.at(S, m, y + h, d)];
+    const o = F(.02), i = F(-.4);
+    world.quad(o[0], o[1], o[2], o[2], col, f, SP.n(S));
+    world.quad(o[0], o[2], i[2], i[0], C.stoneDark, 0, [0, 1, 0]); world.quad(o[2], o[1], i[1], i[2], C.stoneDark, 0, [0, 1, 0]);
+  },
+  key(m, S, a, y, d, s) {                                  // the guild's gilded key, bow up
+    SP.disc(m, SP.at(S, a, y + .32 * s, d + .04), SP.n(S), .3 * s, C.ochre, 0); SP.disc(m, SP.at(S, a, y + .32 * s, d + .05), SP.n(S), .12 * s, C.stone, 0);
+    fbox(m, S, a - .06 * s, a + .06 * s, y - .75 * s, y + .05, d, d + .05, C.ochre, 0); fbox(m, S, a, a + .24 * s, y - .72 * s, y - .6 * s, d, d + .05, C.ochre, 0); fbox(m, S, a, a + .18 * s, y - .5 * s, y - .4 * s, d, d + .05, C.ochre, 0);
+  },
+  lamp(S, a, y) { const p = SP.at(S, a, y, .55); world.box(p[0] - .13, y, p[2] - .13, p[0] + .13, y + .42, p[2] + .13, C.lantern, 2); world.box(p[0] - .17, y + .42, p[2] - .17, p[0] + .17, y + .5, p[2] + .17, C.metal, 9); fbox(world, S, a - .03, a + .03, y + .46, y + .52, 0, .55, C.metal, 9, true); const q = SP.at(S, a, y + .2, 1.0); lights.push([q[0], q[1], q[2], 1, 1]); },
+  steps(S, a0, a1, n) { for (let s = 0; s < n; s++) { const p = SP.at(S, a0 - .4 * (n - s), 0, 0), q = SP.at(S, a1 + .4 * (n - s), .16 * (s + 1), 1.4 - .42 * s); const b = [Math.min(p[0], q[0]), 0, Math.min(p[2], q[2]), Math.max(p[0], q[0]), .16 * (s + 1) + Y_PAVE, Math.max(p[2], q[2])]; world.box(b[0], b[1], b[2], b[3], b[4], b[5], C.stoneDark, 6); solid(b[0], b[1], b[2], b[3], b[4], b[5]); } },
+};
+function special(l, ctx) {
+  const { H, DS, dc, dw, dh, wallC, roofC } = ctx, S = DS, dm = detailOf(l.block), cell = nameCell(l.name), nO = SP.n(S), L = S.a1 - S.a0;
+  const [x0, z0, x1, z1] = l.rect, depth = S.ns ? z1 - z0 : x1 - x0, seed = k => .96 + .03 * hash(l.id, k);
+  const name = (a, y, d, h) => { if (cell) lettering(signs, SP.at(S, a, y, d), nO, h, cell); };
+  if (l.sp === "hall") {
+    // a blind arcade of lit arches along the front, broad steps to the door, a name panel on the attic, a clock tower behind it
+    for (let a = S.a0 + 3; a < S.a1 - 2; a += 4.4) {
+      if (Math.abs(a - dc) < dw / 2 + 2.2) continue;
+      SP.win(S, a, .35, 2.6, 1.85, 0, seed(a), true); archHead(dm, S, a, 2.1, 1.42, seed(a), true);
+      SP.lamp(S, a + 2.2, 2.3);
+    }
+    SP.steps(S, dc - dw / 2 - 1, dc + dw / 2 + 1, 3);
+    fbox(world, S, dc - 6.5, dc + 6.5, H + 1.1, H + 2.9, -.4, .05, C.stone, 6, true, true); fbox(world, S, dc - 6.7, dc + 6.7, H + 2.9, H + 3.1, -.5, .15, C.stoneDark, 0, true);
+    name(dc, H + 2.0, .07, .62);
+    const T = SP.at(S, dc, 0, -6.5), tw = 6, ty = H + 1.1, top = ty + 10;
+    world.box(T[0] - tw / 2, ty, T[2] - tw / 2, T[0] + tw / 2, top, T[2] + tw / 2, C.stone, 6);
+    for (const y of [ty + 3.6, top - .3]) world.box(T[0] - tw / 2 - .15, y, T[2] - tw / 2 - .15, T[0] + tw / 2 + .15, y + .3, T[2] + tw / 2 + .15, C.stoneDark, 0, { 2: [C.stoneDark, 0] });
+    SP.clock({ ns: S.ns, fix: S.fix - S.out * (6.5 - tw / 2), out: S.out }, dc, ty + 6.6, .05, 1.5);
+    for (const [px, pz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) world.box(T[0] + px * (tw / 2 - .45) - .45, top, T[2] + pz * (tw / 2 - .45) - .45, T[0] + px * (tw / 2 - .45) + .45, top + 3, T[2] + pz * (tw / 2 - .45) + .45, C.stone, 6);
+    world.box(T[0] - .7, top, T[2] - .7, T[0] + .7, top + 1.4, T[2] + .7, C.ochre, 0);
+    world.box(T[0] - tw / 2 - .2, top + 3, T[2] - tw / 2 - .2, T[0] + tw / 2 + .2, top + 3.4, T[2] + tw / 2 + .2, C.stoneDark, 0, { 2: [C.stoneDark, 0] });
+    SP.pyramid(T[0], top + 3.4, T[2], tw + .6, 4.4, roofC); SP.flag(T[0], top + 7.8, T[2], C.terracotta);
+  } else if (l.sp === "hospital") {
+    // a stone centre bay standing forward with a gable and the name, a canopy over the door on four columns
+    const cw = 5, pr = .6, ytop = H + 1.4;
+    for (const [p, q] of [[dc - cw, dc - dw / 2], [dc + dw / 2, dc + cw]]) { fbox(world, S, p, q, 0, ytop, 0, pr, C.stone, 6, false, true); const A = SP.at(S, p, 0, 0), B = SP.at(S, q, ytop, pr); solid(Math.min(A[0], B[0]), 0, Math.min(A[2], B[2]), Math.max(A[0], B[0]), ytop, Math.max(A[2], B[2])); }
+    fbox(world, S, dc - dw / 2, dc + dw / 2, dh + .7, ytop, 0, pr, C.stone, 6, true, true);
+    for (let f = 1; f < l.floors; f++) for (const c of [dc - 3, dc, dc + 3]) SP.win(S, c, f * 3 + 1, 1.15, 1.5, pr, hash(l.id, f, c) * .95, hash(l.id, f, c, 1) < .5);
+    fbox(world, S, dc - cw - .15, dc + cw + .15, ytop, ytop + .35, -.2, pr + .2, C.stoneDark, 0, true);
+    SP.gable({ ns: S.ns, fix: S.fix + S.out * pr, out: S.out }, dc - cw, dc + cw, ytop + .35, 2.6, C.stone, 0);
+    fbox(world, S, dc - .45, dc + .45, ytop + .7, ytop + 1.6, pr, pr + .05, C.teal, 0); fbox(world, S, dc - .08, dc + .08, ytop + .8, ytop + 1.5, pr + .05, pr + .08, C.cream, 0); fbox(world, S, dc - .3, dc + .3, ytop + 1.07, ytop + 1.23, pr + .05, pr + .08, C.cream, 0);
+    name(dc, H + .5, pr + .02, .45);
+    fbox(world, S, dc - 3.4, dc + 3.4, 3.35, 3.7, pr, 5.2, C.stoneDark, 0, true, true); fbox(world, S, dc - 3.3, dc + 3.3, 3.4, 3.66, 5.2, 5.26, C.teal, 0);
+    for (const ca of [dc - 3, dc + 3]) for (const cd of [1.3, 4.8]) { const p = SP.at(S, ca, 0, cd); world.box(p[0] - .2, Y_PAVE, p[2] - .2, p[0] + .2, 3.35, p[2] + .2, C.stone, 0); world.box(p[0] - .3, Y_PAVE, p[2] - .3, p[0] + .3, .45, p[2] + .3, C.stoneDark, 0); solid(p[0] - .25, 0, p[2] - .25, p[0] + .25, 3.35, p[2] + .25); }
+    for (const la of [dc - 2, dc + 2]) { const p = SP.at(S, la, 3.0, 3.2); world.box(p[0] - .12, 2.95, p[2] - .12, p[0] + .12, 3.35, p[2] + .12, C.lantern, 2); lights.push([p[0], 2.9, p[2], 1, 1]); }
+  } else if (l.sp === "mall") {
+    // a great fanlit arch over the door, a gable above the parapet with the name and a clock, a glass vault running in over the middle
+    const R = 3.4, sp = dh + .5;
+    archHead(dm, S, dc, sp, R, .5, false);
+    for (let k = 1; k < 9; k++) { const a = Math.PI * k / 9, c = SP.at(S, dc + Math.cos(a) * R / 2, sp + Math.sin(a) * R / 2, .07); const m = S.ns ? M4.mul(M4.t(c[0], c[1], c[2]), M4.rz(a - Math.PI / 2)) : M4.mul(M4.mul(M4.t(c[0], c[1], c[2]), M4.ry(-Math.PI / 2)), M4.rz(a - Math.PI / 2)); dm.obox(m, 0, 0, 0, .06, R, .05, C.metal, 9); }
+    fbox(dm, S, dc - R, dc + R, sp - .08, sp + .04, .03, .09, C.metal, 9, true);
+    for (const s of [-1, 1]) fbox(world, S, dc + s * (R + .2) - .35, dc + s * (R + .2) + .35, 0, sp + .2, 0, .25, C.stone, 6);
+    const gy = H + 1.24;
+    fbox(world, S, dc - 6, dc + 6, H + 1.1, gy + .9, -.4, .06, C.stone, 6, true, true);
+    name(dc, gy + .42, .08, .6);
+    SP.gable(S, dc - 6, dc + 6, gy + .9, 3.2, C.stone, 6); SP.clock(S, dc, gy + 2.0, .07, .7);
+    const vw = 3.5, vh = 2.2, run = Math.min(depth - 3, 36), segs = 6, prof = k => { const a = Math.PI * k / segs; return [Math.cos(a) * vw, Math.sin(a) * vh]; };
+    for (let k = 0; k < segs; k++) {
+      const [a0, h0] = prof(k), [a1, h1] = prof(k + 1), Q = (aa, hh, d) => SP.at(S, dc + aa, H + .25 + hh, d), out = [ (a0 + a1) / 2, (h0 + h1) / 2 ];
+      const nrm = S.ns ? [out[0], out[1], 0] : [0, out[1], out[0]];
+      world.quad(Q(a0, h0, -1), Q(a1, h1, -1), Q(a1, h1, -1 - run), Q(a0, h0, -1 - run), [.5, .5, .3], 4, nrm);
+    }
+    for (let d = -1; d >= -1 - run; d -= 3) for (let k = 0; k < segs; k++) { const [a0, h0] = prof(k), [a1, h1] = prof(k + 1), c = SP.at(S, dc + (a0 + a1) / 2, H + .25 + (h0 + h1) / 2, d), len = Math.hypot(a1 - a0, h1 - h0) * 1.04, ang = Math.atan2(h1 - h0, a1 - a0); const m = S.ns ? M4.mul(M4.t(c[0], c[1], c[2]), M4.rz(ang)) : M4.mul(M4.mul(M4.t(c[0], c[1], c[2]), M4.ry(-Math.PI / 2)), M4.rz(ang)); world.obox(m, 0, 0, 0, len, .12, .12, C.metal, 9); }
+  } else if (l.sp === "guild") {
+    // two stepped gables over steep roofs whose ridges run back from the street; copings and stone balls on every step;
+    // a portal with columns and a hood, the guild's key over it and a key sign hung out
+    const nG = L >= 18 ? 2 : 1, gw = L / nG, rise = (gw / 2) * Math.tan(50 * Math.PI / 180), nst = 5, y0 = H + .4, sh = rise / nst;
+    for (let g = 0; g < nG; g++) {
+      const g0 = S.a0 + g * gw, g1 = g0 + gw, gc = (g0 + g1) / 2, ins = k => (k + .5) * (gw / 2 - .9) / nst;
+      for (let k = 0; k < nst; k++) {
+        fbox(world, S, g0 + ins(k), g1 - ins(k), y0 + k * sh, y0 + (k + 1) * sh, -.45, .02, C.stone, 6, false, true);
+        if (k < nst - 1) for (const sd of [-1, 1]) {
+          const outer = sd < 0 ? g0 + ins(k) : g1 - ins(k), inner = sd < 0 ? g0 + ins(k + 1) : g1 - ins(k + 1), a = Math.min(outer, inner) - (sd < 0 ? .07 : 0), b = Math.max(outer, inner) + (sd > 0 ? .07 : 0), yy = y0 + (k + 1) * sh;
+          fbox(dm, S, a, b, yy, yy + .14, -.52, .09, C.stoneDark, 0, true, true);
+          const bx = (outer + inner) / 2, p = SP.at(S, bx, yy + .14, -.2);
+          dm.box(p[0] - .1, yy + .14, p[2] - .1, p[0] + .1, yy + .26, p[2] + .1, C.stone, 0); dm.ybox(p[0], yy + .26, p[2], .2, .2, .2, Math.PI / 4, C.stone, 0);
+        }
+      }
+      fbox(dm, S, g0 + ins(nst - 1) - .07, g1 - ins(nst - 1) + .07, y0 + rise, y0 + rise + .16, -.52, .09, C.stoneDark, 0, true, true);
+      const tp = SP.at(S, gc, y0 + rise + .16, -.2); dm.box(tp[0] - .16, y0 + rise + .16, tp[2] - .16, tp[0] + .16, y0 + rise + .6, tp[2] + .16, C.stone, 0); dm.ybox(tp[0], y0 + rise + .6, tp[2], .34, .34, .34, Math.PI / 4, C.ochre, 0);
+      for (const [wa, wy, ww] of [[gc - 1.9, y0 + .7, .9], [gc, y0 + .7, .9], [gc + 1.9, y0 + .7, .9], [gc - .9, y0 + 2.9, .8], [gc + .9, y0 + 2.9, .8], [gc, y0 + 4.8, .6]]) if (wy + 1.3 < y0 + rise) SP.win(S, wa, wy, ww, ww < .7 ? .9 : 1.3, 0, hash(l.id, wa, wy) * .95, false);
+      const Q = (a, y, d) => SP.at(S, a, y, d), ry = y0 + rise - .5;           // its roof, from just behind the gable to the back wall
+      world.quad(Q(g0 - .2, y0 - .2, -.45), Q(gc, ry, -.45), Q(gc, ry, -depth - .3), Q(g0 - .2, y0 - .2, -depth - .3), roofC, 11, [0, 1, 0]);
+      world.quad(Q(gc, ry, -.45), Q(g1 + .2, y0 - .2, -.45), Q(g1 + .2, y0 - .2, -depth - .3), Q(gc, ry, -depth - .3), roofC, 11, [0, 1, 0]);
+      world.quad(Q(g0, y0, -depth), Q(g1, y0, -depth), Q(gc, ry, -depth), Q(gc, ry, -depth), wallC, 0, mul3(nO, -1));
+    }
+    for (const s of [-1, 1]) { const p = SP.at(S, dc + s * (dw / 2 + .55), 0, .35); world.box(p[0] - .2, Y_PAVE, p[2] - .2, p[0] + .2, 2.6, p[2] + .2, C.stone, 0); world.box(p[0] - .3, 2.6, p[2] - .3, p[0] + .3, 2.8, p[2] + .3, C.stoneDark, 0); solid(p[0] - .22, 0, p[2] - .22, p[0] + .22, 2.8, p[2] + .22); }
+    fbox(world, S, dc - dw / 2 - 1.1, dc + dw / 2 + 1.1, 2.8, 3.1, 0, .7, C.stoneDark, 0, true);
+    fbox(world, S, dc - 2.1, dc + 2.1, 3.5, 5.7, 0, .06, C.stone, 6); SP.key(world, S, dc, 5.0, .06, 1.25); name(dc, 3.78, .08, .3);
+    const ka = Math.min(S.a1 - 2, dc + 6.5);
+    fbox(world, S, ka - .03, ka + .03, 4.55, 4.62, 0, 1.9, C.metal, 9, true); fbox(world, S, ka - .03, ka + .03, 3.6, 4.62, 0, .07, C.metal, 9); SP.key(world, S, ka, 3.8, 1.5, .85);
+  } else if (l.sp === "office") {
+    // stone piers up every face between the window columns, a cornice over the podium with the name, a clock crown on the roof
+    for (const s of "nswe") {
+      const F = sideOf(l, s), Lf = F.a1 - F.a0, n = Math.max(1, Math.floor((Lf - 1.6) / 3.1));
+      for (let k = 0; k <= n; k++) { const a = clamp(F.a0 + k * Lf / n, F.a0 + .35, F.a1 - .35); fbox(world, F, a - .35, a + .35, 6.6, H, 0, .45, mul3(C.stone, 1.15), 6); }
+      for (let f = 2; f < l.floors; f++) for (let k = 0; k < n; k++) {         // dark panels between the floors, so the piers read as ribs
+        const a = F.a0 + k * Lf / n + .35, b = F.a0 + (k + 1) * Lf / n - .35; fbox(world, F, a, b, f * 3 + .2, f * 3 + .85, 0, .08, mul3(C.stoneDark, .62), 0, true);
+      }
+      fbox(world, F, F.a0 - .1, F.a1 + .1, 6.2, 6.6, 0, .4, C.stoneDark, 0, true); fbox(world, F, F.a0, F.a1, 5.65, 6.2, 0, .1, C.stone, 6);
+    }
+    name(dc, 5.92, .12, .4);
+    const T = SP.at(S, dc, 0, -6), tw = 6.5;
+    world.box(T[0] - tw / 2, H, T[2] - tw / 2, T[0] + tw / 2, H + 5, T[2] + tw / 2, C.stone, 6); solid(T[0] - tw / 2, H, T[2] - tw / 2, T[0] + tw / 2, H + 5, T[2] + tw / 2);
+    world.box(T[0] - tw / 2 - .2, H + 5, T[2] - tw / 2 - .2, T[0] + tw / 2 + .2, H + 5.4, T[2] + tw / 2 + .2, C.stoneDark, 0, { 2: [C.stoneDark, 0] });
+    SP.clock({ ns: S.ns, fix: S.fix - S.out * (6 - tw / 2), out: S.out }, dc, H + 2.6, .05, 1.5);
+    SP.pyramid(T[0], H + 5.4, T[2], tw + .5, 2.6, roofC); SP.flag(T[0], H + 8, T[2], C.teal);
+  } else if (l.sp === "flats") {
+    // shutters and balconies come from windows(); here a water tank on legs on the roof, clear of the lift
+    const T = SP.at(S, dc + 6, 0, -6);
+    for (const [px, pz] of [[-1.2, -1.2], [1.2, -1.2], [-1.2, 1.2], [1.2, 1.2]]) world.box(T[0] + px - .1, H, T[2] + pz - .1, T[0] + px + .1, H + 4, T[2] + pz + .1, C.wood, 9);
+    world.box(T[0] - 1.6, H + 4, T[2] - 1.6, T[0] + 1.6, H + 6.2, T[2] + 1.6, [.42, .3, .2], 0, { 2: [C.brown, 0] }); SP.pyramid(T[0], H + 6.2, T[2], 3.6, 1.0, roofC);
+    solid(T[0] - 1.4, H, T[2] - 1.4, T[0] + 1.4, H + 6, T[2] + 1.4);
+  } else if (l.sp === "works") {
+    // a hoist beam, pulley and crate over the loading doors (windows() puts the doors in), a tall lettered chimney at the back
+    const hy = H - .5, ha = l.hoistA || dc;
+    fbox(world, S, ha - .1, ha + .1, hy, hy + .25, 0, 1.7, C.wood, 0, true); fbox(world, S, ha - .04, ha + .04, hy - .3, hy, 1.4, 1.48, C.metal, 9);
+    fbox(world, S, ha - .01, ha + .01, 4.3, hy - .3, 1.43, 1.45, C.charcoal, 9); fbox(world, S, ha - .45, ha + .45, 3.7, 4.3, 1.1, 1.8, [.5, .32, .16], 0, true, true);
+    const ca = S.a1 - 3, cd = -(depth - 2.5), P0 = SP.at(S, ca, 0, cd), cH = H + 14;
+    world.box(P0[0] - .9, H, P0[2] - .9, P0[0] + .9, H + 5, P0[2] + .9, C.stone, 6); world.box(P0[0] - .7, H + 5, P0[2] - .7, P0[0] + .7, cH, P0[2] + .7, C.stone, 6);
+    world.box(P0[0] - .85, cH, P0[2] - .85, P0[0] + .85, cH + .35, P0[2] + .85, C.stoneDark, 0, { 2: [C.stoneDark, 0] });
+    const letters = l.name.toUpperCase().replace(/\s+/g, "").slice(0, 12);
+    for (let k = 0; k < letters.length; k++) { const c = nameCell(letters[k]); if (c) lettering(signs, SP.at(S, ca, cH - 1.0 - k * .82, cd + .72), nO, .62, c); }
+  } else if (l.sp === "depot") {
+    // three gables over the front, each with a round window; great boarded doors either side of the entrance; rails running out
+    const nb = 3, bw = L / nb;
+    for (let i = 0; i < nb; i++) { const b0 = S.a0 + i * bw; SP.gable(S, b0 + .05, b0 + bw - .05, H + 1.24, bw / 2 * .53, C.stone, 6); const oc = SP.at(S, b0 + bw / 2, H + 1.24 + bw * .12, .04); SP.disc(world, oc, nO, .8, C.stoneDark, 0); SP.disc(world, SP.at(S, b0 + bw / 2, H + 1.24 + bw * .12, .07), nO, .58, [.07, .09, .12], 9); }
+    for (const s of [-1, 1]) {
+      const c = dc + s * bw; if (c - 2.4 < S.a0 || c + 2.4 > S.a1) continue;
+      fbox(world, S, c - 2.3, c + 2.3, .02, 3.2, .02, .1, C.teal, 12); archHead(dm, S, c, 3.2, 2.3, .4, false);
+      fbox(dm, S, c - .9, c + .9, 1.3, 2.3, .1, .14, C.cream, 0);
+      for (const rx of [-.72, .72]) fbox(world, S, c + rx - .04, c + rx + .04, Y_PAVE, Y_PAVE + .04, 0, 9, C.metal, 9);
+    }
+    for (const rx of [-.72, .72]) fbox(world, S, dc + rx - .04, dc + rx + .04, Y_PAVE, Y_PAVE + .04, 0, 9, C.metal, 9);
+    name(dc, 3.6, .06, .42);
+  }
+}
+
 function building(l) {
   const [x0, z0, x1, z1] = l.rect, t = 0.35, H = Math.max(l.floors * 3 + 0.4, GF + 0.4), [dx, dz] = l.door;
   const side = Math.abs(dz - z0) < .01 ? "n" : Math.abs(dz - z1) < .01 ? "s" : Math.abs(dx - x0) < .01 ? "w" : "e";
@@ -235,7 +411,8 @@ function building(l) {
   }
   world.flat(x0 + t, z0 + t, x1 - t, z1 - t, Y_FLOOR, FLOOR[l.kind] || FLOOR.work, 3);
   const flatRoof = big || l.kind === "utility", old = l.block.district !== "Outskirts" && !l.tower && H > 6, ceil = [mix3(inC, [1, 1, 1], .15), 3]; l.old = old;
-  const stoneUp = l.block.template === "peri" && hash(l.id, "st") < .15;     // most old houses are plaster over a stone storey, as in the building kit
+  l.sp = specialKind(l);
+  const stoneUp = l.sp === "office" || (l.block.template === "peri" && hash(l.id, "st") < .15);     // most old houses are plaster over a stone storey, as in the building kit
   const front = (l.kind === "shop" || l.kind === "food") && !l.tower, DSa = sideOf(l, side), aw = front ? Math.min(DSa.a1 - DSa.a0 - 2, 14) : 0; l.aw = aw;
   if (old) world.box(x0, GF, z0, x1, OLD_BASE, z1, C.stone, 6, { 2: ceil, 3: null });
   world.box(x0, old ? OLD_BASE : GF, z0, x1, H, z1, stoneUp ? C.stone : wallC, stoneUp ? 6 : 0, old ? { 3: [C.stoneDark, 0] } : { 2: ceil, 3: [flatRoof ? C.stoneDark : roofC, 0] });
@@ -285,7 +462,7 @@ function building(l) {
     lights.push([lx + d[0] * .5, 2.7, lz + d[1] * .5, 1, 1]);
   }
   if ((l.kind === "shop" || l.kind === "food") && hash(l.id, "cr") < .7) crates(dx + (ns ? -dw / 2 - 1.1 : d[0] * .6), dz + (ns ? d[1] * .6 : -dw / 2 - 1.1), l.id);
-  const cell = (l.kind === "shop" || l.kind === "food" || l.kind === "health") ? nameCell(l.name) : null;
+  const cell = !l.sp && (l.kind === "shop" || l.kind === "food" || l.kind === "health") ? nameCell(l.name) : null;   // special buildings carry their own name
   const at = (a, y, dd) => DS.ns ? [a, y, DS.fix + DS.out * dd] : [DS.fix + DS.out * dd, y, a], nOut = DS.ns ? [0, 0, DS.out] : [DS.out, 0, 0];
   let bw = 0;
   if (cell) {                                            // a name board over the door, cream letters on painted wood (or dark stone for a clinic)
@@ -295,17 +472,19 @@ function building(l) {
     lettering(signs, at(dc, (y0 + y1) / 2, .09), nOut, lh, cell);
   }
   if (l.kind === "shop" || l.kind === "food") {          // a striped awning over the door and a sign hung out on an iron arm, named on both faces
-    awning(l, DS, dc, dw, dh, accent, aw);
+    if (l.sp === "mall") for (const s of [-1, 1]) awning(l, DS, dc + s * 7.3, dw, dh, accent, 6.4);   // either side of the great arch
+    else awning(l, DS, dc, dw, dh, accent, aw);
     if (l.kind === "food") for (const off of [-6.6, -3.5, 3.5, 6.6]) { const ta = dc + off; if (ta > DS.a0 + 1 && ta < DS.a1 - 1) { const p = at(ta, 0, 2.4); cafeTable(p[0], p[2], DS.ns); } }
     const a = dc - Math.max(dw / 2 + .95, bw / 2 + .35);
-    fbox(world, DS, a - .03, a + .03, 3.78, 3.86, 0, 1.2, C.metal, 9, true); fbox(world, DS, a - .03, a + .03, 2.95, 3.86, 0, .07, C.metal, 9);
-    fbox(world, DS, a - .045, a + .045, 3.0, 3.7, .22, 1.12, C.teal, 0, true);
+    if (!l.sp) { fbox(world, DS, a - .03, a + .03, 3.78, 3.86, 0, 1.2, C.metal, 9, true); fbox(world, DS, a - .03, a + .03, 2.95, 3.86, 0, .07, C.metal, 9);
+      fbox(world, DS, a - .045, a + .045, 3.0, 3.7, .22, 1.12, C.teal, 0, true); }
     if (cell) { const lh = Math.min(.2, .8 / (8 * cell.tw * (64 / 46) * .82)), na = DS.ns ? [1, 0, 0] : [0, 0, 1];
       for (const sg of [-1, 1]) { const p = at(a + sg * .05, 3.35, .67); lettering(signs, p, na.map(v => v * sg), lh, cell); } }
   } else if (l.kind === "health") {                      // a plaque with a cross beside the door
     const a = dc - dw / 2 - .75;
     fbox(world, DS, a - .3, a + .3, 1.45, 2.05, 0, .05, C.teal, 0, true); fbox(world, DS, a - .05, a + .05, 1.55, 1.95, .05, .08, C.cream, 0); fbox(world, DS, a - .18, a + .18, 1.7, 1.8, .05, .08, C.cream, 0);
   }
+  if (l.sp) special(l, { H, DS, dc, dw, dh, wallC, roofC });
   furnish(l, side, accent, inC);
 }
 
@@ -355,7 +534,8 @@ function banner(x0, z0, x1, z1, seed, y) {                // cloth strung across
 const QUAD_UV = true;
 function windows(l) {                                      // each window is one quad that draws its own frame, sill, reveal and panes
   const [x0, z0, x1, z1] = l.rect, lit = { home: .5, food: .45, shop: .3, work: .16, health: .5, utility: .1 }[l.kind] || .3;
-  const old = l.old, w = l.tower ? 1.7 : old ? 1.25 : 1.15, gap = l.tower ? 3.1 : old ? 3.6 : 2.9, tall = old ? 2 : 1.5, shut = !l.tower && (l.kind === "home" || l.kind === "food" || l.kind === "shop") && hash(l.id, "sh") < .75;
+  const flats = l.sp === "flats", old = l.old, w = flats ? 1.2 : l.tower ? 1.7 : old ? 1.25 : 1.15, gap = l.tower ? 3.1 : old ? 3.6 : 2.9, tall = old ? 2 : 1.5;
+  const shut = (!l.tower || flats) && (l.kind === "home" || l.kind === "food" || l.kind === "shop") && (flats || hash(l.id, "sh") < .75);
   const sc = old ? pick([C.teal, [.42, .18, .14], C.ochre, C.blue], hash(l.id, "shc")) : pick(ACCENT, hash(l.id, "shc")), dm = detailOf(l.block), plants = [[.26, .38, .2], [.4, .48, .24]];
   const frameC = pick([C.cream, [.3, .2, .13], C.teal, C.cream], hash(l.id, "fr")), balF = 1, balOdds = l.kind === "food" ? .9 : l.kind === "home" ? .35 : 0;
   for (const s of "nswe") {
@@ -367,7 +547,21 @@ function windows(l) {                                      // each window is one
       if (f === 0 && s === l.side && Math.abs(c - doorA) < l.dw / 2 + (shopW ? 1.35 : 1.5)) continue;
       if (f === 0 && s !== l.side && l.block.template === "peri") continue;      // alley and yard walls of the old courts are plain stone at street level
       if (shopW && Math.abs(c - doorA) > l.aw / 2) continue;
-      const balc = s === l.side && f === balF && k === kDoor && hash(l.id, "bal") < balOdds;
+      // the special buildings: no windows where an arcade, a centre bay or a name plaque stands; loading doors up a works
+      if (f === 0 && s === l.side && (l.sp === "hall" || l.sp === "depot")) continue;
+      if (l.sp === "hospital" && s === l.side && Math.abs(c - doorA) < 5.8) continue;
+      if (l.sp === "mall" && s === l.side && Math.abs(c - doorA) < 4.4) continue;
+      if (l.sp === "depot" && s === l.side && f === 1 && Math.min(Math.abs(c - doorA - L / 3), Math.abs(c - doorA + L / 3)) < 2.9) continue;
+      if (l.sp === "guild" && s === l.side && f === 1 && Math.abs(c - doorA) < 2.7) continue;
+      if (l.sp === "works" && s === l.side && k === kDoor && f > 0) {
+        const z = old && f === 1 ? OLD_BASE + .3 : f * 3 + .15, wd = [.42, .28, .18];
+        fbox(world, S, c - .8, c + .8, z, z + 2.2, .02, .08, wd, 0);
+        for (let q = 1; q < 6; q++) fbox(dm, S, c - .8 + q * .267 - .015, c - .8 + q * .267 + .015, z, z + 2.2, .08, .095, mul3(wd, .6), 0);
+        fbox(dm, S, c - 1, c + 1, z - .13, z, 0, .22, C.stoneDark, 0, true); fbox(dm, S, c - 1, c + 1, z + 2.2, z + 2.42, 0, .14, C.stoneDark, 0, true);
+        fbox(dm, S, c - .75, c + .75, z + .85, z + .9, .08, .14, C.metal, 9);
+        l.hoistA = c; continue;
+      }
+      const balc = s === l.side && f === balF && k === kDoor && hash(l.id, "bal") < balOdds || flats && f > 1 && (k + f) % 2 === 0;
       const ww = shopW ? 2.0 : w;
       let y = shopW ? .55 : f * 3 + (old ? (f ? 1.05 : .7) : 1), tall0 = shopW ? 2.35 : old && f ? 1.72 : tall; const yTop = y + tall0; if (balc) y = old ? OLD_BASE + .4 : f * 3 + .25;
       const on = shopW || hash(l.id, s, f, k) < lit, seed = shopW ? .96 + .03 * hash(l.id, k) : hash(l.id, s, f, k, 2) * .95, p = fix + out * .03, a = c - ww / 2 - .12, b = c + ww / 2 + .12, ya = y - .1;
@@ -376,13 +570,14 @@ function windows(l) {                                      // each window is one
       world.quad(P(a, ya, p), P(b, ya, p), P(b, yb, p), P(a, yb, p), [0, 0, seed], on ? 1 : 4, hint, QUAD_UV);
       if (arched) archHead(dm, S, c, yb, ww / 2 + .12, seed, true);
       // louvred shutters folded back against the wall, mostly in the building's own colour; the far picture keeps a flat copy
-      const hasSh = !shopW && (old ? hash(l.id, s, f, k, 5) < .8 : shut && f > 0), scol = hash(l.id, s, f, k, 6) < .9 ? sc : pick(ACCENT, hash(l.id, s, f, k, 7)), lw = ww * .5;
+      const plainSp = l.sp && l.sp !== "guild" && l.sp !== "flats";          // civic halls, offices, works and the depot have no shutters
+      const hasSh = !shopW && !plainSp && (old ? hash(l.id, s, f, k, 5) < .8 : shut && f > 0), scol = hash(l.id, s, f, k, 6) < .9 ? sc : pick(ACCENT, hash(l.id, s, f, k, 7)), lw = ww * .5;
       const leaves = [[a - .17 - lw, a - .17], [b + .17, b + .17 + lw]];
       if (hasSh) for (const [sa, sb] of leaves) world.quad(P(sa, ya + .1, p + out * .02), P(sb, ya + .1, p + out * .02), P(sb, yb - .06, p + out * .02), P(sa, yb - .06, p + out * .02), scol, 12, hint);
       // the relief, near the camera only: a deep reveal (sill, jambs and lintel stand 0.25 m proud of the glass), a real frame with bars,
       // keystone, shutters standing proud, now and then a flower box or a balcony
       if (!balc) fbox(dm, S, a - .14, b + .14, ya - .16, ya + .02, 0, .3, C.stoneDark, 0, true);
-      if (l.tower) continue;
+      if (l.tower && !flats) continue;
       fbox(dm, S, a - .17, a + .04, ya + .02, yb, 0, .25, C.stoneDark, 0); fbox(dm, S, b - .04, b + .17, ya + .02, yb, 0, .25, C.stoneDark, 0);
       if (!arched) { fbox(dm, S, a - .24, b + .24, yb - .04, yb + .22, 0, .27, C.stoneDark, 0, true); if (old || hash(l.id, "ks") < .5) fbox(dm, S, c - .13, c + .13, yb - .05, yb + .3, 0, .31, C.stone, 0, true); }
       const g0 = a + .16, g1 = b - .16, gy0 = ya + .1, gy1 = yb - .08, fm = shopW ? [.3, .2, .13] : frameC;

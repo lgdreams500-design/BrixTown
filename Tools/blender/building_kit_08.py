@@ -391,67 +391,130 @@ def lantern_arcade(lot, x0, rng):
     return dict(x0=x0, x1=x1, top=top + 3.6, D=D)
 
 
+GUILD_PITCH = 50.0                # stepped gables are steep; the roofs behind them follow the same pitch
+
+
+def guild_key(K, x, y, z, s=1.0):
+    """The guild's emblem: a gilded key, bow up."""
+    K.cyl("ochre", (x, y, z + 0.32 * s), "y", 0.3 * s, 0.08, segs=20)
+    K.cyl("stone_b", (x, y - 0.05, z + 0.32 * s), "y", 0.13 * s, 0.04, segs=16)
+    K.block("ochre", x - 0.06 * s, x + 0.06 * s, y - 0.04, y + 0.04, z - 0.75 * s, z + 0.05, 0.01)
+    K.block("ochre", x, x + 0.24 * s, y - 0.04, y + 0.04, z - 0.72 * s, z - 0.6 * s, 0.0)
+    K.block("ochre", x, x + 0.18 * s, y - 0.04, y + 0.04, z - 0.5 * s, z - 0.4 * s, 0.0)
+
+
 def guild_house(lot, x0, rng):
-    """A narrow, tall stone house with its stepped gable to the street and the guild's sign hung out."""
+    """Two stepped gables side by side, each over its own steep roof; a grand portal with the guild's key over it."""
     W, D = lot["width"], lot["depth"]
     x1 = x0 + W
     H = 3 * CIVIC_FLOOR
     t = 0.5
     K = Kit("Guild")
-    look = look_for(rng, frame="wood", door="wood_red")
+    look = look_for(rng, frame="wood", door="wood_red", shutter="wood_red", shutters=True)
     core_box("Guild_Core", x0, x1, D, H, "stone_a", t=t)
     cx = (x0 + x1) / 2
-    holes = [door(K, rng, cx, 2.0, 2.8, t, look, arch=True, steps=2)]
-    voussoirs(K, rng, cx, 2.8 - 1.0, 1.0, t, ring=0.5)
-    bays = bays_of(x0, x1, 5)
-    window_row(K, rng, bays, 0.9, 1.4, 2.0, t, look, holes, skip=(2,), arch=True)
-    window_row(K, rng, bays, CIVIC_FLOOR + 0.8, 1.3, 2.2, t, look, holes, caps=True)
-    window_row(K, rng, bays, 2 * CIVIC_FLOOR + 0.7, 1.2, 1.8, t, look, holes, caps=True)
-    p = math.radians(KIT["roof_pitch"] + 18)
-    ridge = H + (W / 2) * math.tan(p)
-    nst = 6
-    # windows in the gable before the stone is laid round them
-    for (gx, gz, gw, gh) in ((cx - 2.6, H + 0.9, 1.0, 1.5), (cx + 2.6, H + 0.9, 1.0, 1.5), (cx, H + 3.0, 1.0, 1.6), (cx, H + 5.6, 0.7, 1.1)):
-        holes.append(window(K, rng, gx, gz, gw, gh, t, look))
+    Wb = W / 2
+    gables = ((x0, cx), (cx, x1))
+    cols = [g0 + (i + 0.5) * Wb / 3 for (g0, g1) in gables for i in range(3)]
+    holes = []
+    # the portal: a wide round arch on two short columns under a stone hood, steps up to it
+    holes.append(door(K, rng, cx, 2.4, 3.1, t, look, arch=True, steps=3))
+    voussoirs(K, rng, cx, 3.1 - 1.2, 1.2, t, ring=0.5)
+    for s in (-1, 1):
+        K.cyl("stone_b", (cx + s * 1.75, -0.25, 1.35), "z", 0.22, 2.7, segs=16)
+        K.block("stone_dark", cx + s * 1.75 - 0.32, cx + s * 1.75 + 0.32, -0.57, 0.07, 0.48, 0.7)
+        K.block("stone_dark", cx + s * 1.75 - 0.32, cx + s * 1.75 + 0.32, -0.57, 0.07, 2.7, 2.92)
+    K.block("stone_dark", cx - 2.25, cx + 2.25, -0.62, t, 3.65, 3.95)
+    K.block("stone_dark", cx - 2.05, cx + 2.05, -0.5, t, 3.95, 4.08)
+    window_row(K, rng, cols, 0.9, 1.3, 2.0, t, look, holes, skip=(2, 3), arch=True)
+    window_row(K, rng, cols, CIVIC_FLOOR + 0.8, 1.2, 2.1, t, look, holes, skip=(2, 3), caps=True)
+    window_row(K, rng, cols, 2 * CIVIC_FLOOR + 0.7, 1.1, 1.8, t, look, holes, caps=True)
+    # gable windows (laid out before the stone so the stone goes round them)
+    zb = H + 0.39
+    gh = []
+    for (g0, g1) in gables:
+        gc = (g0 + g1) / 2
+        for (gx, gz, gw, ghh) in ((gc - 1.9, zb + 0.75, 0.95, 1.5), (gc + 1.9, zb + 0.75, 0.95, 1.5), (gc, zb + 0.75, 0.95, 1.5),
+                                  (gc - 0.9, zb + 3.0, 0.8, 1.3), (gc + 0.9, zb + 3.0, 0.8, 1.3), (gc, zb + 5.0, 0.6, 0.9)):
+            gh.append(window(K, rng, gx, gz, gw, ghh, t, dict(look, shutters=False)))
     masonry(K, rng, x0, x1, 0.0, H, holes, t)
-    band(K, x0, x1, CIVIC_FLOOR, t, 1)
+    for (a, b) in ((x0, cx - 2.3), (cx + 2.3, x1)):
+        band(K, a, b, CIVIC_FLOOR, t, 1)
     band(K, x0, x1, 2 * CIVIC_FLOOR, t, 1)
-    zb = band(K, x0, x1, H, t, 2)
-    K.block("stone_b", cx - 4.6, cx + 4.6, -0.05, t, zb, zb + 0.5, 0.03)
-    text("Guild_Name", lot["name"].upper(), cx, -0.08, zb + 0.25, 0.36, "dark", 0.02)
-    sh = (ridge - zb) / nst
-    gable_holes = [h for h in holes if h["z0"] > H]
-    for k in range(nst):                              # the stepped gable, each step capped
-        inset = (k + 0.5) * (W / 2 - 1.2) / nst
-        za, zz = zb + k * sh, zb + (k + 1) * sh
-        masonry(K, rng, x0 + inset, x1 - inset, za, zz, gable_holes, t)
-        for sx in (x0 + inset, x1 - inset):
-            K.block("stone_dark", sx - 0.55, sx + 0.55, -0.12, t + 0.1, zz, zz + 0.18)
-            K.cube("stone_a", (sx, t / 2 - 0.05, zz + 0.45), (0.28, 0.28, 0.55), bevel=0.04)
-    K.block("stone_dark", cx - 0.6, cx + 0.6, -0.12, t + 0.1, ridge, ridge + 0.2)
-    K.cube("stone_a", (cx, t / 2, ridge + 0.75), (0.34, 0.34, 1.0), bevel=0.05)
-    K.cyl("ochre", (cx, t / 2, ridge + 1.45), "z", 0.18, 0.36, segs=14, r2=0.02)
-    # roof with its ridge running back from the gable
-    def roof():
-        R = Kit("Guild_Roof")
-        tile_roof(R, rng, 0.9, D, W - 0.2, H + 0.5, ())      # starts behind the stepped gable so no eave shows in front
-        R.flush(K_M)
-    K_M["gable"] = K_M["stone_a"]
-    turned(roof, x1 - 0.1, math.pi / 2)
-    # the guild sign: a gilded key on a long iron arm
-    ax = x1 - 1.6
-    K.block("iron", ax - 0.03, ax + 0.03, -1.9, 0.0, 4.6, 4.68, 0)
-    K.block("iron", ax - 0.03, ax + 0.03, -0.08, 0.0, 3.6, 4.68, 0)
-    K.cyl("ochre", (ax, -1.5, 4.0), "y", 0.32, 0.08, segs=20)
-    K.block("ochre", ax - 0.06, ax + 0.06, -1.54, -1.46, 3.0, 3.7, 0.01)
-    K.block("ochre", ax, ax + 0.22, -1.54, -1.46, 3.05, 3.15, 0.0)
-    K.block("ochre", ax, ax + 0.18, -1.54, -1.46, 3.25, 3.33, 0.0)
-    K.block("iron", ax - 0.01, ax + 0.01, -1.51, -1.49, 4.32, 4.6, 0)
-    wall_lamp(K, "Guild_DoorLamp", cx - 1.6, 2.4)
-    wall_lamp(K, "Guild_DoorLamp", cx + 1.6, 2.4)
+    band(K, x0, x1, H, t, 2)
+    # the name runs across both houses; the key hangs over the portal between the first-floor windows
+    K.block("stone_b", cx - 2.2, cx + 2.2, -0.08, t, CIVIC_FLOOR + 0.55, CIVIC_FLOOR + 2.95, 0.03)
+    guild_key(K, cx, -0.14, CIVIC_FLOOR + 2.0, 1.35)
+    text("Guild_Name", lot["name"].upper(), cx, -0.1, CIVIC_FLOOR + 0.82, 0.32, "dark", 0.02)
+    rise = (Wb / 2) * math.tan(math.radians(GUILD_PITCH))
+    nst = 5
+    for (g0, g1) in gables:                             # each gable in five capped steps, a finial on top
+        gc = (g0 + g1) / 2
+        sh = rise / nst
+        mine = [h for h in gh if g0 < (h["x0"] + h["x1"]) / 2 < g1]
+        ins = [(k + 0.5) * (Wb / 2 - 0.9) / nst for k in range(nst)]
+        for k in range(nst):
+            inset = ins[k]
+            za, zz = zb + k * sh, zb + (k + 1) * sh
+            masonry(K, rng, g0 + inset + (0.0 if k else 0.25), g1 - inset - (0.0 if k else 0.25), za, zz, mine, t)
+            if k == nst - 1:
+                break
+            # the coping lies on the step's tread, from just past its outer edge to the foot of the next step,
+            # and a small stone ball sits in the middle of the tread
+            nxt = ins[k + 1]
+            for side in (-1, 1):
+                outer = g0 + inset if side < 0 else g1 - inset
+                inner = g0 + nxt if side < 0 else g1 - nxt
+                a, b = min(outer, inner) - (0.07 if side < 0 else 0.0), max(outer, inner) + (0.07 if side > 0 else 0.0)
+                K.block("stone_dark", a, b, -0.07, t + 0.07, zz, zz + 0.14, 0.03)
+                bx = (outer + inner) / 2
+                K.block("stone_b", bx - 0.1, bx + 0.1, t / 2 - 0.1, t / 2 + 0.1, zz + 0.14, zz + 0.26, 0.02)
+                ellipsoid("Guild_Ball", Vector((bx, t / 2, zz + 0.38)), (0.13, 0.13, 0.13), K_M["stone_b"])
+        # the top step: a coping across it, a taller finial with a gilded ball
+        top_a, top_b = g0 + ins[-1] - 0.07, g1 - ins[-1] + 0.07
+        K.block("stone_dark", top_a, top_b, -0.07, t + 0.07, zb + rise, zb + rise + 0.16, 0.03)
+        K.block("stone_b", gc - 0.16, gc + 0.16, t / 2 - 0.16, t / 2 + 0.16, zb + rise + 0.16, zb + rise + 0.6, 0.03)
+        ellipsoid("Guild_TopBall", Vector((gc, t / 2, zb + rise + 0.82)), (0.2, 0.2, 0.2), K_M["ochre"])
+        K.block("stone_dark", gc - 2.6, gc + 2.6, -0.1, t, zb + 2.55, zb + 2.7)      # a thin band across each gable
+        # its own steep roof, ridge running back from the gable, starting behind the stone so no eave shows in front
+        def roof(g0=g0, g1=g1):
+            R = Kit("Guild_Roof")
+            keep = KIT["roof_pitch"]
+            KIT["roof_pitch"] = GUILD_PITCH
+            try:
+                tile_roof(R, rng, 0.9, D, Wb - 0.6, H + 0.2, ())
+            finally:
+                KIT["roof_pitch"] = keep
+            R.flush(K_M)
+        K_M["gable"] = K_M["stone_a"]
+        turned(roof, g1 - 0.3, math.pi / 2)
+    # the east side: stone with windows on each floor and a chimney at the back
+    def side():
+        S = Kit("Guild_Side")
+        sb = bays_of(0, D, 4)
+        sh2 = []
+        window_row(S, rng, sb, 0.9, 1.2, 1.9, t, dict(look, shutters=False), sh2, arch=True)
+        window_row(S, rng, sb, CIVIC_FLOOR + 0.8, 1.2, 2.1, t, look, sh2, caps=True)
+        window_row(S, rng, sb, 2 * CIVIC_FLOOR + 0.7, 1.1, 1.8, t, look, sh2, caps=True)
+        masonry(S, rng, 0, D, 0, H, sh2, t)
+        band(S, 0, D, CIVIC_FLOOR, t, 1)
+        band(S, 0, D, 2 * CIVIC_FLOOR, t, 1)
+        band(S, 0, D, H, t, 2)
+        S.flush(K_M)
+    as_side(side, x1)
+    K.block("stone_a", x1 - 2.4, x1 - 1.6, D - 3.2, D - 2.4, H, H + rise + 1.6, 0.03)
+    K.block("stone_dark", x1 - 2.55, x1 - 1.45, D - 3.35, D - 2.25, H + rise + 1.6, H + rise + 1.8)
+    # the guild sign on its iron arm, on the pier between two windows, and lamps either side of the portal
+    ax = (cols[4] + cols[5]) / 2
+    K.block("iron", ax - 0.03, ax + 0.03, -1.9, 0.0, 4.7, 4.78, 0)
+    K.block("iron", ax - 0.03, ax + 0.03, -0.08, 0.0, 3.7, 4.78, 0)
+    K.block("iron", ax - 0.01, ax + 0.01, -1.51, -1.49, 4.25, 4.7, 0)
+    guild_key(K, ax, -1.5, 3.9, 0.9)
+    wall_lamp(K, "Guild_DoorLamp", cx - 2.6, 2.4)
+    wall_lamp(K, "Guild_DoorLamp", cx + 2.6, 2.4)
     K.flush(K_M)
-    people((("Shopkeeper", cx + 1.0, -2.2), ("Elder", x0 + 4.0, -4.0)))
-    return dict(x0=x0, x1=x1, top=ridge + 1.6, D=D)
+    people((("Shopkeeper", cx + 1.0, -2.6), ("Elder", x0 + 4.0, -4.0), ("Office", cx - 1.6, -5.0)))
+    return dict(x0=x0, x1=x1, top=zb + rise + 1.8, D=D)
 
 
 def tower_face(K, rng, W, z0, z1, floors0, fh, inset=0.0, lit_share=0.25):
@@ -820,7 +883,7 @@ def cams(scene, facts):
         d_v = (f["top"] * 0.55) / math.tan(half_v) * 1.05
         d_h = (W * 0.62) / math.tan(half_h)
         dist = max(d_v, d_h, 12.0)
-        sides = lot["key"] in ("town_hall", "office_tower", "flats_tower")      # these have a finished east side: look at it
+        sides = lot["key"] in ("town_hall", "office_tower", "flats_tower", "guild_house")      # these have a finished east side: look at it
         loc = (f["x1"] + W * 0.25 if sides else cx + W * 0.28, -dist, ch)
         tgt = (cx - W * 0.02, 0.0, f["top"] * 0.47)
         out.append((lot["key"], camera(scene, "Cam_" + lot["key"], loc, tgt, lens), res))
