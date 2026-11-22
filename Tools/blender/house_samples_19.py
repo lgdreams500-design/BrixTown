@@ -100,12 +100,19 @@ GARDEN = [
     ("o_smallplants", 1.3, -4.6, math.pi),
 ]
 
-# what the outside takes from each line (walls stay the town's: plaster and stone, tile roof)
-OUTSIDE = dict(plain=dict(wall="plaster", trim="stone", shutter="teal", door="teal", roof="tile", quoins=False),
-               oldtown=dict(wall="plaster_b", trim="stone_dark", shutter="terra", door="wood", roof="tile", quoins=True),
-               workshop=dict(wall="stone_b", trim="stone_dark", shutter="wood", door="iron", roof="tile_dark", quoins=False),
-               curve=dict(wall="plaster", trim="plaster_b", shutter="dusty", door="ochre", roof="tile", quoins=False))
-
+# what the outside takes from each line. Walls, windows, shutters and roofs are the town's own kit (building_kit_07:
+# barrel tiles, ridge tiles, corbels, stone surrounds, louvred shutters); a line picks which of them and its colours.
+OUTSIDE = dict(
+    plain=dict(wall="plaster", gable="plaster", frame="cream", shutter="teal", door="teal", roof="tile",
+               stone=False, quoins=False, patches=0, arches=False, hood=False, band=1, boxes=False),
+    oldtown=dict(wall="plaster_b", gable="plaster_b", frame="wood", shutter="wood_red", door="wood_red", roof="tile",
+                 stone=False, quoins=True, patches=0, arches=False, hood=True, band=2, boxes=True),
+    workshop=dict(wall="stone_a", gable="stone_b", frame="cream", shutter="wood", door="wood", roof="tile_dark",
+                  stone=True, quoins=False, patches=0, arches=False, hood=False, band=2, boxes=False),
+    curve=dict(wall="plaster", gable="plaster", frame="ochre", shutter="dusty", door="ochre", roof="tile",
+               stone=False, quoins=False, patches=0, arches=True, hood=False, band=1, boxes=True),
+)
+WT = KIT["wall_t"]                          # outside walls are the town kit's depth, so windows sit in deep reveals
 
 # ---- walls with holes -----------------------------------------------------------------------------------------------
 def wall(name, axis, at, a0, a1, z0, z1, mat, holes=(), t=T, bevel=0.02):
@@ -201,76 +208,104 @@ def furnish_storey(n, items, L, z, rng):
 
 
 # ---- outside ------------------------------------------------------------------------------------------------------
-def gable_end(name, x, mat, z0, half, rise, t=T):
-    bm = bmesh.new()
-    pts = [(x - t / 2, -half, z0), (x - t / 2, half, z0), (x - t / 2, 0, z0 + rise),
-           (x + t / 2, -half, z0), (x + t / 2, half, z0), (x + t / 2, 0, z0 + rise)]
-    v = [bm.verts.new(p) for p in pts]
-    for f in ((0, 1, 2), (5, 4, 3), (0, 3, 4, 1), (1, 4, 5, 2), (2, 5, 3, 0)):
-        bm.faces.new([v[i] for i in f])
-    add_obj(name, bm, mat)
+# Each outside wall is built as a town facade (street face at y'=0, outward to -y', along x') and then turned into
+# place on an empty: front (0, D0) as built, back turned half round, the sides a quarter each way.
+FACES = dict(front=((0.0, D0), 0.0, (W0, W1), 1), back=((0.0, D1), math.pi, (W0, W1), -1),
+             left=((W0, 0.0), -math.pi / 2, (D0 + WT, D1 - WT), -1), right=((W1, 0.0), math.pi / 2, (D0 + WT, D1 - WT), 1))
+
+
+def on_empty(name, at, yaw, build):
+    """Run build(); everything it makes is parented to an empty at `at` turned by `yaw`."""
+    E = group(name, at[0], at[1], yaw)
+    before = set(bpy.data.objects)
+    build()
+    for ob in set(bpy.data.objects) - before:
+        if ob.parent is None and ob is not E:
+            ob.parent = E
+    return E
+
+
+def facade(side, look, rng):
+    at, yaw, (a0, a1), flip = FACES[side]
+    a0, a1 = (a0, a1) if side in ("front", "back") else (-(a1), -(a0)) if flip < 0 else (a0, a1)
+    lk = dict(frame=look["frame"], shutter=look["shutter"], door=look["door"], shutters=True, boxes=False)
+    t = WT
+
+    def build():
+        K = Kit("F_" + side)
+        holes = []
+        if side == "front":
+            holes.append(door(K, rng, 0.1, 1.2, 2.4, t, lk, arch=look["arches"], steps=2, hood=look["hood"]))
+            if look["arches"]:
+                voussoirs(K, rng, 0.1, 2.4 - 0.6, 0.6, t, ring=0.32)
+            lantern("F_DoorLamp", 1.05, -0.14, 2.2, M, 30)
+        for s, c, w in WINDOWS:
+            if s != side:
+                continue
+            x = c * flip
+            arch = look["arches"]
+            holes.append(window(K, rng, x, 0.95, w, 1.6, t, lk, arch=arch))
+            holes.append(window(K, rng, x, H + 0.8, w, 1.45, t, lk))
+            if arch:
+                voussoirs(K, rng, x, 0.95 + 1.6 - w / 2, w / 2, t, ring=0.3)
+            if look["boxes"] and side in ("front", "right"):
+                K.block("terra", x - w / 2 - 0.05, x + w / 2 + 0.05, -0.42, -0.16, H + 0.8, H + 1.06, 0.03)
+                for k in range(3):
+                    blob(None, "F_Box%s%d%d" % (side, int(x * 10), k), M["plant" if k % 2 else "leaf_light"],
+                         x - w / 2 + (k + 0.5) * w / 3, -0.29, H + 1.16, 0.32, 0.26, 0.26, levels=2)
+        top = 2 * H
+        if look["stone"]:
+            masonry(K, rng, a0, a1, 0.0, top, holes, t)
+        else:
+            masonry(K, rng, a0, a1, 0.0, 0.5, holes, t)          # a stone plinth under the plaster (W2)
+            wall = plaster_wall("F_%s_Wall" % side, M, a0, a1, 0.5, top, t, holes, look["wall"])
+            for i, h in enumerate(hh for hh in holes if "spring" in hh):
+                r = (h["x1"] - h["x0"]) / 2
+                cut(wall, box("F_%s_ArchBox%d" % (side, i), h["x0"], h["x1"], -0.5, t + 0.5, max(h["z0"], 0.5) - 0.01, h["spring"], None, bevel=0))
+                cut(wall, cyl_y("F_%s_ArchTop%d" % (side, i), (h["x0"] + h["x1"]) / 2, t / 2, h["spring"], r, t + 1.0))
+            if look["patches"]:
+                stone_patches(K, rng, a0, a1, 0.6, top - 0.3, holes, look["patches"])
+        band(K, a0, a1, H - 0.1, t, steps=look["band"])
+        if look["quoins"] and side in ("front", "back"):
+            quoins(K, a0, 0.5, top, -1, t)
+            quoins(K, a1, 0.5, top, 1, t)
+        if side == "front":
+            drainpipe(K, a1 - 0.3, top)
+        K.flush(M)
+
+    on_empty("Facade_" + side, at, yaw, build)
 
 
 def outside(look, L, rng):
-    z2 = 2 * H
-    eave, pitch = 0.45, math.radians(38)
-    half = (D1 - D0) / 2 + eave
-    rise = (half - eave) * math.tan(pitch)
-    wm = M[look["wall"]]
-    # the two storeys' outside walls, full height, with windows and a front door
-    for s, z in (("ground", 0.0), ("upstairs", H)):
-        fh = window_holes("front", z) + ([(-0.4, 0.6, z, z + 2.2)] if s == "ground" else [])
-        wall("Out%s_Front" % s, "y", D0 + T / 2, W0, W1, z, z + H, wm, fh)
-        wall("Out%s_Back" % s, "y", D1 - T / 2, W0, W1, z, z + H, wm, window_holes("back", z))
-        wall("Out%s_Left" % s, "x", W0 + T / 2, D0 + T, D1 - T, z, z + H, wm, window_holes("left", z))
-        wall("Out%s_Right" % s, "x", W1 - T / 2, D0 + T, D1 - T, z, z + H, wm, window_holes("right", z))
-        for side, c, w in WINDOWS:                            # frames, sills, glass and shutters (W4)
-            face, axis, sign = dict(front=(D0, "y", -1), back=(D1, "y", 1), left=(W0, "x", -1), right=(W1, "x", 1))[side]
-            win("Win%s%s%d" % (s, side, int(c * 10)), face, c, z + 0.9, w, 1.4, M, axis=axis, sign=sign, shutter=M[look["shutter"]])
-    box("Dark_Inside", W0 + T, W1 - T, D0 + T, D1 - T, 0.0, z2, M["dark"], bevel=0)
-    box("Footing", W0 - 0.06, W1 + 0.06, D0 - 0.06, D1 + 0.06, -0.1, 0.45, M[look["trim"]], bevel=0.02)
-    box("Band", W0 - 0.04, W1 + 0.04, D0 - 0.04, D1 + 0.04, H - 0.08, H + 0.08, M[look["trim"]], bevel=0.02)
-    if look["quoins"]:                                      # dressed stone corners, long and short in turn
-        for cx in (W0, W1):
-            for cy in (D0, D1):
-                for i in range(10):
-                    z = 0.45 + i * 0.56
-                    l = 0.5 if i % 2 else 0.3
-                    xs = (cx - 0.04, cx + l) if cx < 0 else (cx - l, cx + 0.04)
-                    ys = (cy - 0.04, cy + 0.3) if cy < 0 else (cy - 0.3, cy + 0.04)
-                    box("Quoin%d%d%d" % (cx, cy, i), xs[0], xs[1], ys[0], ys[1], z, z + 0.28, M["stone"], bevel=0.02)
-    # the door: a panelled leaf under a lintel, a step and a lamp
-    box("Door", -0.35, 0.55, D0 - 0.02, D0 + 0.08, 0.0, 2.15, M[look["door"]], bevel=0.02)
-    for zz in (0.5, 1.4):
-        box("DoorPanel%d" % int(zz * 10), -0.22, 0.42, D0 - 0.04, D0 - 0.01, zz, zz + 0.6, M[look["trim"]] if look["door"] != "wood" else M["wood_red"], bevel=0.01)
-    ball(None, "DoorKnob", M["ochre"], 0.42, D0 - 0.07, 1.05, 0.08, 0.06, 0.08)
-    box("Lintel", -0.55, 0.75, D0 - 0.1, D0 + 0.05, 2.2, 2.42, M[look["trim"]], bevel=0.02)
-    box("Step", -0.6, 0.8, D0 - 0.55, D0, -0.05, 0.16, M["stone_dark"], bevel=0.02)
-    lantern("DoorLamp", 0.95, D0 - 0.12, 2.1, M, 30)
-    # gable roof, ridge along x, tiles in the town's terracotta (W2)
-    for g, x in (("L", W0 + T / 2), ("R", W1 - T / 2)):
-        gable_end("Gable" + g, x, wm, z2, half - eave, rise)
-    L_ = half / math.cos(pitch)
-    for s in (-1, 1):
-        zc = z2 + rise * (1 - (half / 2) / (half - eave)) + 0.12   # the roof line at the slab's middle
-        o = rbox(None, "Roof%d" % s, M[look["roof"]], 0, s * half / 2, zc, W1 - W0 + 0.7, L_, 0.18, 0.02, 2)
-        o.rotation_euler = (-pitch if s > 0 else pitch, 0, 0)
-    rbox(None, "Ridge", M["tile_dark"], 0, 0, z2 + rise + 0.16, W1 - W0 + 0.75, 0.24, 0.18, 0.05)
-    box("Chimney", -5.05, -4.35, -2.1, -1.5, z2 - 0.5, z2 + rise + 0.9, M[look["trim"]] if look["trim"] != "plaster_b" else M["stone"], bevel=0.02)
-    box("ChimneyCap", -5.15, -4.25, -2.2, -1.4, z2 + rise + 0.9, z2 + rise + 1.02, M["stone_dark"], bevel=0.02)
+    M["gable"] = M[look["gable"]]
+    saved = M["tile"]
+    if look["roof"] == "tile_dark":                           # Workshop: the darker of the town's two tile tones
+        M["tile"] = M["tile_dark"]
+    for side in ("front", "back", "left", "right"):
+        facade(side, look, rng)
+    box("Dark_Inside", W0 + WT, W1 - WT, D0 + WT, D1 - WT, 0.0, 2 * H, M["dark"], bevel=0)
+
+    def roof():
+        K = Kit("Roof")
+        tile_roof(K, rng, W0, W1, D1 - D0, 2 * H, chimneys=[(-4.55, -1.8 - D0)])
+        K.flush(M)
+    on_empty("Roof", (0.0, D0), 0.0, roof)
+    M["tile"] = saved
     # the garden: lawn, a stone path to the door, a low wall with a gate gap, a tree, the garden pieces
     lawn = painted("M_Lawn", (0.20, 0.27, 0.13), (0.34, 0.40, 0.20), noise_scale=1.4, bump=0.3)
     box("Lawn", -10, 10, -9, 8, -0.12, -0.02, lawn, bevel=0)
     box("Street", -30, 30, -16, -9, -0.14, -0.1, M["paving"], bevel=0)
-    for i in range(6):
+    for i in range(5):
         box("Path%d" % i, -0.45 + (i % 2) * 0.1, 0.65 + (i % 2) * 0.1, -8.6 + i * 0.75, -8.0 + i * 0.75, -0.04, 0.0, M["stone_b"], bevel=0.02)
+    gm = M["stone_dark"] if look["stone"] else M["stone"]
     for x0, x1 in ((-10, -0.7), (0.9, 10)):
-        box("WallF%d" % int(x0), x0, x1, -9.0, -8.7, -0.05, 0.8, M[look["trim"]] if look["trim"] != "plaster_b" else M["stone"], bevel=0.03)
+        box("WallF%d" % int(x0), x0, x1, -9.0, -8.7, -0.05, 0.8, gm, bevel=0.03)
     for x in (-10, 10):
-        box("WallS%d" % x, x - 0.15, x + 0.15, -9.0, 8, -0.05, 0.8, M["stone"], bevel=0.03)
-    box("WallB", -10, 10, 7.7, 8.0, -0.05, 0.8, M["stone"], bevel=0.03)
+        box("WallS%d" % x, x - 0.15, x + 0.15, -9.0, 8, -0.05, 0.8, gm, bevel=0.03)
+    box("WallB", -10, 10, 7.7, 8.0, -0.05, 0.8, gm, bevel=0.03)
     for gx in (-0.85, 1.05):
         box("GatePost%d" % int(gx * 10), gx - 0.15, gx + 0.15, -9.05, -8.65, -0.05, 1.1, M["stone_dark"], bevel=0.02)
+        ball(None, "GateCap%d" % int(gx * 10), M["stone_dark"], gx, -8.85, 1.2, 0.26, 0.26, 0.2)
     tree = group("Tree", -7.5, -5.5, 0)
     rod(tree, "Tree_Trunk", M["wood"], (0, 0, 0), (0, 0, 2.2), 0.14)
     for i in range(6):

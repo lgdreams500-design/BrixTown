@@ -76,8 +76,11 @@ They are for the owner to choose from; nothing here is in force until approved.
 `Tools/blender/house_samples_19.py` builds on kit 18 and furnishes one plan of a two-storey detached house (10 × 8 m,
 in its own garden) once in each line: hall and stairs, living room, kitchen, dining room and bathroom downstairs; main
 bedroom, children's room, study and guest room upstairs; garden pieces outside. Renders in
-`Art/StyleTests/house_samples_19/`: the house outside, and each floor cut away at waist height. The outside keeps the
-town's walls, windows and tile roof; only shutters, door and trim take the line's accent. Not in the map: if the owner
+`Art/StyleTests/house_samples_19/`: the house outside, and each floor cut away at waist height. The outside is built from the
+town's own kit (`building_kit_07.py`): barrel-tile roof with ridge tiles, eave corbels and a chimney with pots, stone
+plinth, string course, stone window surrounds and louvred shutters. Each line picks from it: Plain is plaster with teal
+shutters; Old Town warm plaster with dressed corner stones, a door hood and window boxes; Workshop dressed stone all
+over with a darker roof; Curve plaster with round-arched ground-floor windows and door. Not in the map: if the owner
 wants such houses in the town, they become lots in `World/` (WORLD_MAP).
 
 ## 6. How the renders get their look, and how the game must match it
