@@ -52,7 +52,7 @@ const ACCENT = [C.ochre, C.terracotta, C.teal, C.blue, C.olive, C.plum];
 // World/rules/surfaces.json (D.surfaces); a pattern is drawn as material 30 + its number, its sizes held in uPatA/uPatB.
 const SURF = D.surfaces || { patterns: [], lots: {}, blocks: {}, table: {} }, SURF_TYPE = { bond: 0, flemish: 1, rubble: 2, flags: 3, herringbone: 4, basket: 5 };
 const SURF_A = new Float32Array(64), SURF_B = new Float32Array(64);
-SURF.patterns.forEach((name, k) => { const t = SURF.table[name]; SURF_A.set([SURF_TYPE[t.type], t.unit[0], t.unit[1], t.joint], k * 4); SURF_B.set([t.vary || .8, t.bevel || 0, t.dome || 0, 0], k * 4); });
+SURF.patterns.forEach((name, k) => { const t = SURF.table[name]; SURF_A.set([SURF_TYPE[t.type], t.unit[0], t.unit[1], t.joint], k * 4); SURF_B.set([t.vary || .8, t.bevel || 0, t.dome || 0, t.mortar || 0], k * 4); });
 function wallStone(l) {                                    // [colour, material] of a building's stone, and whether its upper storeys are that too
   const s = SURF.lots[l.id]; if (!s || s.wall === undefined) return [C.stone, 6, false];
   return [s.color || C.stone, 30 + s.wall, s.upper];
@@ -1426,30 +1426,35 @@ vec3 paint(vec3 c2,vec3 r,float v){               // the painted() material: dar
 // along the surface. Types: 0 bond (ashlar, running brick, slabs, setts), 1 Flemish bond, 2 coursed rubble, 3 flagstones,
 // 4 herringbone, 5 basket weave.
 float jnt(float em,float jw){ return 1.-smoothstep(jw*.45,jw,em); }
-vec3 pat(vec2 q,vec4 A,vec4 B){
-  float t=A.x, w=A.y, h=A.z, jw=A.w, j=0., id=0., bev=0.;
-  if(t<.5){ float row=floor(q.y/h), u=q.x/w+.5*mod(row,2.); vec2 fr=vec2(fract(u),fract(q.y/h)); vec2 e=min(fr,1.-fr)*vec2(w,h); float em=min(e.x,e.y);
-    id=h3(vec3(floor(u),row,21.)); j=jnt(em,jw);
-    if(B.y>0.) bev=-.3*(1.-smoothstep(jw,B.y,em));                         // rusticated: the edges cut back
-    if(B.z>0.){ vec2 cc=fr*2.-1.; bev-=B.z*2.*(pow(abs(cc.x),4.)+pow(abs(cc.y),4.)); } }   // setts: each stone domed
+vec4 pat(vec2 q,vec4 A,vec4 B){
+  float t=A.x, w=A.y, h=A.z, jw=A.w, id=0.; vec4 e=vec4(1.);           // e: how far this point is from the stone's left, right, lower and upper edge (m)
+  if(t<.5){ float row=floor(q.y/h), u=q.x/w+.5*mod(row,2.); vec2 fr=vec2(fract(u),fract(q.y/h));
+    e=vec4(fr.x*w,(1.-fr.x)*w,fr.y*h,(1.-fr.y)*h); id=h3(vec3(floor(u),row,21.)); }
   else if(t<1.5){ float row=floor(q.y/h), P=w*1.5, u=(q.x+mod(row,2.)*P*.5)/P, fa=fract(u)*P; bool hd=fa>w; float a=hd?fa-w:fa, L=hd?w*.5:w, fy=fract(q.y/h)*h;
-    float em=min(min(a,L-a),min(fy,h-fy)); id=h3(vec3(floor(u),row,hd?23.:22.))*(hd?.55:1.); j=jnt(em,jw); }
-  else if(t<3.5){ bool rub=t<2.5; float yy=q.y+(rub?.045*sin(q.x*2.3+floor(q.y/h)*1.7):0.), row=floor(yy/h), fy=fract(yy/h)*h;   // rubble and flags: stones of one, two or three parts
-    float cw=w*(rub?.5:.5), u=(q.x+h3(vec3(row,4.,25.))*w)/cw, i=floor(u), fa=fract(u)*cw, l=fa, r=cw-fa, k0=i;
+    e=vec4(a,L-a,fy,h-fy); id=h3(vec3(floor(u),row,hd?23.:22.))*(hd?.55:1.); }
+  else if(t<3.5){ bool rub=t<2.5; float row=floor(q.y/h), fy=fract(q.y/h)*h;   // rubble and flags: stones of one, two or three parts
+    float cw=w*.5, u=(q.x+h3(vec3(row,4.,25.))*w)/cw, i=floor(u), fa=fract(u)*cw, l=fa, r=cw-fa, k0=i;
     for(int s=0;s<2;s++){ if(h3(vec3(k0-1.,row,26.))<.5) break; k0-=1.; l+=cw; }
     float k1=i; for(int s=0;s<2;s++){ if(h3(vec3(k1,row,26.))<.5) break; k1+=1.; r+=cw; }
-    float em=min(min(l,r),min(fy,h-fy)); id=h3(vec3(k0,row,27.)); j=jnt(em,jw);
-    if(rub){ vec2 cc=vec2((l-r)/(l+r),(fy/h)*2.-1.); bev=-.16*(pow(abs(cc.x),6.)+pow(abs(cc.y),6.)); } }
-  else if(t<4.5){ vec2 p=q/h; id=0.; float em=1.;                          // herringbone: bricks h by 2h in steps along (1,1), rows repeat by (2,-2)
-    float s0=floor((p.x-p.y)/4.);
+    e=vec4(l,r,fy,h-fy); id=h3(vec3(k0,row,27.));
+    if(rub) e-=vec4(.01+.035*h3(vec3(id,1.,31.)),.01+.035*h3(vec3(id,2.,31.)),.008+.03*h3(vec3(id,3.,31.)),.008+.03*h3(vec3(id,4.,31.))); }   // each stone set a little short of its neighbours: mortar beds of uneven width
+  else if(t<4.5){ vec2 p=q/h; float s0=floor((p.x-p.y)/4.);              // herringbone: bricks h by 2h in steps along (1,1), rows repeat by (2,-2)
     for(int ds=-1;ds<=1;ds++){ vec2 pp=p-(s0+float(ds))*vec2(2.,-2.); float m=floor(pp.y), a=pp.x-m;
-      if(a>=0.&&a<2.){ float b=pp.y-m; em=min(min(a,2.-a),min(b,1.-b)); id=h3(vec3(m,s0+float(ds),28.)); break; }
+      if(a>=0.&&a<2.){ float b=pp.y-m; e=vec4(a,2.-a,b,1.-b)*h; id=h3(vec3(m,s0+float(ds),28.)); break; }
       m=floor(pp.x); a=pp.y-m;
-      if(a>=1.&&a<3.){ float b=pp.x-m; em=min(min(a-1.,3.-a),min(b,1.-b)); id=h3(vec3(m,s0+float(ds),29.)); break; } }
-    j=jnt(em*h,jw); }
+      if(a>=1.&&a<3.){ float b=pp.x-m; e=vec4(b,1.-b,a-1.,3.-a)*h; id=h3(vec3(m,s0+float(ds),29.)); break; } } }
   else { vec2 cell=floor(q/w), fr=fract(q/w); bool turn=mod(cell.x+cell.y,2.)>.5; float a=turn?fr.x:fr.y, b=turn?fr.y:fr.x, hb=floor(a*2.), fa=fract(a*2.);   // basket weave
-    float em=min(min(fa,1.-fa)*w*.5,min(b,1.-b)*w); id=h3(vec3(cell,hb+30.))*(turn?1.:.85); j=jnt(em,jw); }
-  return vec3(j,id,bev); }
+    e=turn?vec4(fa*w*.5,(1.-fa)*w*.5,b*w,(1.-b)*w):vec4(b*w,(1.-b)*w,fa*w*.5,(1.-fa)*w*.5); id=h3(vec3(cell,hb+30.))*(turn?1.:.85); }
+  float em=min(min(e.x,e.y),min(e.z,e.w)), j=jnt(em,jw);
+  // relief, as the old stone had (W2): each stone's upper edge catches the light, its lower edge sits in shadow, the sides a
+  // little of each; rusticated stone is cut back further; rubble stones and setts are rounded over their face
+  float bw=B.y>0.?B.y:clamp(min(w,h)*.22,.012,.07), lip=1.+(B.y>0.?1.2:0.);
+  float bev=lip*(.13*(1.-smoothstep(jw*.5,jw+bw,e.w))-.2*(1.-smoothstep(jw*.5,jw+bw,e.z))+.05*(1.-smoothstep(jw*.5,jw+bw,e.y))-.08*(1.-smoothstep(jw*.5,jw+bw,e.x)));
+  vec4 ep=max(e,vec4(.001)); vec2 cc=vec2((ep.x-ep.y)/(ep.x+ep.y),(ep.z-ep.w)/(ep.z+ep.w));
+  if(t>1.5&&t<2.5){ float rr=min(h*.45,.09); bev+=.06*cc.y-.24*(1.-smoothstep(0.,rr,em))*(1.-smoothstep(0.,rr,em)); }   // rubble: each face rounded off towards its edges, lit from above
+  if(B.z>0.) bev-=B.z*2.*(pow(abs(cc.x),4.)+pow(abs(cc.y),4.));             // setts: each stone domed
+  float sh=e.z<=min(min(e.x,e.y),e.w)?1.:(e.w<=min(e.x,e.y)?0.:.45);      // the bed under a stone is in its shadow; the one above it is lit
+  return vec4(j,id,bev,sh); }
 void main(){
   float f=vF; vec3 c=vC; vec3 n=normalize(vN); vec3 tc=uCam-vP; float d=length(tc); vec3 vd=-tc/d;
   float hh=45., dy=vP.y-uCam.y; float k=abs(dy)>.05?(exp(-uCam.y/hh)-exp(-vP.y/hh))/(dy/hh):exp(-uCam.y/hh);
@@ -1489,9 +1494,12 @@ void main(){
           vec3 kc=paint(c1*vec3(2.4,2.3,1.75),vec3(.62,.62,.68),blot)*(.9+.16*t2)*(1.+.12*smoothstep(.06,0.,e)*step(.5,n.y)*k2);
           c=e<.3?mix(kc,kc*.55,smoothstep(.975,.99,fract(al/1.1))*k2):c1*.6; } } }
     else if(f>29.5&&f<45.5){ int pk=int(f-29.5); vec4 A=vec4(0.),B=vec4(0.); for(int i=0;i<16;i++){ if(i==pk){ A=uPatA[i]; B=uPatB[i]; } }   // stone, brick and paving by the surfaces rules (ADR-0017)
-      float wall=abs(1.-abs(n.y)); vec2 q=wall>.5?vec2(abs(n.x)>.5?vP.z:vP.x,vP.y):vP.xz; vec3 r=pat(q,A,B);
+      float wall=abs(1.-abs(n.y)); vec2 q=wall>.5?vec2(abs(n.x)>.5?vP.z:vP.x,vP.y):vP.xz; vec4 r=pat(q,A,B);
       float fade=1.-min(1.,d/(A.y<.3?45.:110.));                          // small bricks fade to their colour sooner
-      vec3 c1=c*vec3(.52,.54,.70); c=mix(paint(c,vec3(.52,.54,.70),blot),(c1+c)*.5,r.y*B.x)*(1.+r.z*nearK); c=mix(c,c1*vec3(.7,.7,.75),r.x*fade);
+      vec3 c1=c*vec3(.52,.54,.70), tint=mix(vec3(1.06,1.,.92),vec3(.92,.97,1.05),fract(r.y*53.7));   // each stone its own tone, warmer or cooler, and a pitted face near
+      c=mix(paint(c,vec3(.52,.54,.70),blot),(c1+c)*.5,r.y*B.x)*tint*(.8+.36*fract(r.y*97.13))*(1.+r.z*nearK)*(1.-.18*nearK*ns(vP*9.)*ns(vP*23.+3.));
+      vec3 mortar=mix(c1*vec3(.62,.62,.68),vec3(.55,.53,.49)*(.9+.2*ns(vP*17.)),B.w)*(1.-.55*r.w*B.w);   // lime mortar set back from the face, shadowed under each stone
+      c=mix(c,mortar,r.x*fade);
       if(wall<.5&&vP.y<${(Y_PAVE + .01).toFixed(3)}){ vec2 u2=mod(vP.xz,${P.toFixed(1)}), e2=min(u2-${(SW / 2 - PAVE).toFixed(3)},${(P - SW / 2 + PAVE).toFixed(3)}-u2); float e=min(e2.x,e2.y);   // the same kerb stones as before
         if(e<.32){ vec3 kp=vec3(${C.pave.join(",")})*vec3(.48,.5,.68); float al=e2.x<e2.y?vP.z:vP.x, t2=h3(vec3(floor(al/1.1),11.,0.)), k2=1.-min(1.,d/50.);
           vec3 kc=paint(kp*vec3(2.4,2.3,1.75),vec3(.62,.62,.68),blot)*(.9+.16*t2)*(1.+.12*smoothstep(.06,0.,e)*step(.5,n.y)*k2);
