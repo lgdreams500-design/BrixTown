@@ -164,7 +164,8 @@ var Smash = (() => {
     if (!R) return null;
     if (!ready) init();
     const l = grid.get(Math.floor(x / G) + "," + Math.floor(z / G)); if (!l) return null;
-    for (const b of l) if (!b.broken && x >= b.box[0] - .05 && x <= b.box[2] + .05 && z >= b.box[1] - .05 && z <= b.box[3] + .05 && y < b.top + .2) return b;
+    const M = .2;                                        // wider than the .15 m that play.js keeps round every solid, so the thing is met before its solid
+    for (const b of l) if (!b.broken && x >= b.box[0] - M && x <= b.box[2] + M && z >= b.box[1] - M && z <= b.box[3] + M && y < b.top + .2) return b;
     return null;
   }
   const breakSpeed = () => R ? R.break_kmh / 3.6 : 1e9;

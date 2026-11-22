@@ -58,7 +58,7 @@
 | **Traffic** `F-VEH-TRAFFIC` | 2 Real traffic ★ | 2 Real traffic ★ | 2 Real traffic ★ | Owner, 2026-11-22: residents have their cars as part of their routine, from the first slice. Cars need this level. |
 | **Tram or bus** `F-VEH-TRANSIT` | undecided | undecided | undecided |  |
 | **Driving yourself** `F-VEH-DRIVE` | 2 Cars ★ | 2 Cars ★ | 2 Cars ★ | Owner, 2026-11-22: walking, and drivable cars, from the first slice. |
-| **Crash damage** `F-VEH-CRASH` | 2 Broken until mended ★ | undecided | undecided | Owner, 2026-11-22: objects on the pavements, trees and building corners destructible when driving, with a breaking animation; "Until a worker fixes it", "Fast hits break", residents "Yes, they shout". Later milestones not stated. |
+| **Crash damage** `F-VEH-CRASH` | 2 Broken until mended ★ | undecided | undecided | Owner, 2026-11-22: objects on the pavements, trees and building corners destructible when driving, with a breaking animation; "Until a worker fixes it", "Fast hits break", residents "Yes, they shout". Later milestones not stated. Then the same day: "remove speed requirement for the damage, it should damage at any speed". |
 
 ## Nature and time
 
@@ -217,7 +217,7 @@
 
 **Crash damage** (`F-VEH-CRASH`). Cars driven carelessly leave a mark: street things break, trees fall, corners chip, and someone has to mend them.
 - 0 Bump: Cars stop against street things, trees and walls; nothing breaks. Size -.
-- 1 Things break: A fast hit breaks street furniture, fells a tree or chips a building corner, with pieces flying; it is whole again the next day. Size M.
+- 1 Things break: Any hit breaks street furniture, fells a tree or chips a building corner, with pieces flying; it is whole again the next day. Size M.
 - 2 Broken until mended: Damage is kept (saved, the same for every player) until a repair crew from a depot comes and mends it; nearby residents shout at the driver. Size L.
 
 **Day and night** (`F-TIME-DAY`). Light that follows the clock.

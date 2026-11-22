@@ -1,6 +1,6 @@
 {
  "note": "Crash damage (docs/specs/domains/LIVING_CITY.md CITY-072 to CITY-076; F-VEH-CRASH level 2). What breaks, how it looks, and how repair crews mend it. All values are [ASSUMPTION] until tuned. Speeds in km/h or m/s as named, times in game minutes unless named _s, distances in metres.",
- "break_kmh": 20.0,
+ "break_kmh": 0.0,
  "kinds": {
   "lamp": {"how": "topple", "slow": 0.7, "work_min": 45},
   "tree": {"how": "topple", "slow": 0.4, "work_min": 120},

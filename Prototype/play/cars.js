@@ -344,7 +344,7 @@ var Cars = (() => {
   }
   function free(x, z, a, minute, speed = 0, hit = null) {   // could the car stand here: no wall, no other car? (hit: what a fast car breaks)
     const [L, W, ca] = dims(drv.k), hx = Math.cos(a), hz = Math.sin(a), y = groundBase(x, z) + .7;
-    const fast = hit && speed >= Smash.breakSpeed();
+    const fast = hit && speed > .05 && speed >= Smash.breakSpeed();   // moving at all, and at least the break speed (0: any speed)
     for (const [al0, w] of [[L / 2, -W / 2], [L / 2, W / 2], [-L / 2, -W / 2], [-L / 2, W / 2], [L / 2, 0], [-L / 2, 0], [0, -W / 2], [0, W / 2]]) {
       const al = al0 + ca, px = x + hx * al - hz * w, pz = z + hz * al + hx * w;
       const b = hit ? Smash.probe(px, y - .5, pz) : null;   // a street thing or a tree (smash.js, CITY-072)

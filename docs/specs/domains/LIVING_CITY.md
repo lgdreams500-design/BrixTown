@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-LIVING-CITY
 title: Wasted — Living city (map, residents, things to use, vehicles, seasons and plants)
-version: 0.3.4
+version: 0.3.5
 status: draft
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -143,7 +143,7 @@ has the reasoning.
 | CITY-067 | Every car model shall match the art direction (ART-001): a look test in `Tools/blender/` comes before any production model. | F-VEH-DRIVE | 2 | P1 | Look test |
 | CITY-070 | A resident on foot outdoors who has a moving car a player drives heading at them, due to reach them within a reaction time set in data, shall get out of its path: after a short startle, a hurried scramble (quick running steps and a small hop) sideways to the side with room, far enough to clear the car, then carry on with their day. This is presented state only (§1): an offset on top of where CITY-010 puts them, near players, never stored; their calculated timeline is unchanged. All times and distances are in `World/rules/dodge.json` `[ASSUMPTION]`. | F-NPC-DODGE | 1 | P1 | `test_dodge_rules` (data); slice |
 | CITY-071 | Once clear, the resident shall turn to the car and tell the driver off: a raised fist or both arms flung up (an arm gesture layer, CHARACTER_MOTION §4) and a short shout shown as a tag over them (a line from data; no words spoken, Q-14), then go back to where their day has them and what they were doing. | F-NPC-DODGE | 2 | P1 | `test_dodge_rules` (data); slice |
-| CITY-072 | A car a player drives that hits a street thing (lamp, bench, café table and chairs, bin, planter, bollard, post box, telephone box, notice board, crates, market stall, flowerbed), a tree or the corner of a building faster than 20 km/h `[ASSUMPTION]` shall break it; a slower hit only stops the car (CITY-064). | F-VEH-CRASH | 1 | P1 | Slice |
+| CITY-072 | A car a player drives that hits a street thing (lamp, bench, café table and chairs, bin, planter, bollard, post box, telephone box, notice board, crates, market stall, flowerbed), a tree or the corner of a building shall break it at any speed (the owner, 2026-11-22: no speed limit for damage; `break_kmh` 0 in `World/rules/crash.json`). | F-VEH-CRASH | 1 | P1 | Slice |
 | CITY-073 | Breaking shall be shown: tall things (lamps, trees, posts, telephone boxes) topple the way they were hit and lie there; low things burst into pieces in their own colours that fly, bounce and settle as rubble; a building corner loses chips of stone and shows its rough core. The car loses speed. A broken lamp goes out and a broken bench cannot be sat on. | F-VEH-CRASH | 1 | P1 | Slice |
 | CITY-074 | Damage shall be stored state (§1): what was broken, where and when. The server keeps it, saves it and shows it to every player until it is mended; nothing about it is re-rolled. (The slice keeps it in the browser.) | F-VEH-CRASH | 2 | P1 | Slice |
 | CITY-075 | A repair crew from the nearest depot shall mend each damaged thing, in the order the damage happened, within working hours (07:00 to 19:00 `[ASSUMPTION]`), walking there at their own pace and working a time set per kind; then the thing is whole again. When each thing is mended is calculated from the damage list and the rules alone, the same on every machine. | F-VEH-CRASH | 2 | P1 | `test_repairs` |
@@ -235,6 +235,7 @@ up to 42 on the road at once, no overlap, no crossing movements in a box, nobody
 | 0.1.0 | 2026-11-21 | First version, with the city-in-a-box prototype and its tests. |
 | 0.2.0 | 2026-11-22 | Cars and real traffic drafted after the owner's picks (`F-VEH-DRIVE` 2, `F-VEH-TRAFFIC` 2 from the first slice): CITY-043 to CITY-049 for streets and residents' cars, CITY-060 to CITY-067 for cars players drive, car numbers in §4, Q-25 to Q-28, ADR-0009. All proposed. |
 | 0.2.1 | 2026-11-22 | Owner accepted CITY-043 to CITY-049, CITY-060 to CITY-067 and ADR-0009, and the suggested answers to Q-25 to Q-28, now written into CITY-049, CITY-060, CITY-064 and CITY-066. |
+| 0.3.5 | 2026-11-22 | CITY-072: things break at any speed, not only above 20 km/h (owner). |
 | 0.3.4 | 2026-11-22 | Crash damage (F-VEH-CRASH level 2 for the first slice, owner): CITY-072 to CITY-076; repairs proved in `Tools/citysim/repairs.py`. |
 | 0.3.3 | 2026-11-22 | Speed limit 50 km/h on every street for traffic; the player's car up to 100 km/h, at the owner's request (§4). |
 | 0.3.2 | 2026-11-22 | Owner found the streets empty and asked for both: delivery vans on rounds (CITY-040 in the city) and cars passing through (CITY-069, new), and residents driving more (60 % with a car, every errand driven). |

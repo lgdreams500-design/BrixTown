@@ -1150,7 +1150,7 @@
         },
         {
           "name": "Things break",
-          "what": "A fast hit breaks street furniture, fells a tree or chips a building corner, with pieces flying; it is whole again the next day.",
+          "what": "Any hit breaks street furniture, fells a tree or chips a building corner, with pieces flying; it is whole again the next day.",
           "effort": "M",
           "needs": {
             "F-VEH-DRIVE": 2
