@@ -120,7 +120,8 @@ def roads(city):
         cycle={k: cyc[k] for k in ("green_s", "amber_s", "all_red_s")},
         width=T.r["crossing_width"], bay_length=T.r["bay_length"],
         gates=[[g["name"], R.j[g["junction"]]["pos"][0], R.j[g["junction"]]["pos"][1], g["dir"][0], g["dir"][1], g["length"]]   # roads out of town (CITY-068)
-               for g in R.d.get("gates", [])])
+               for g in R.d.get("gates", [])],
+        links=[dict(name=l["name"], width=l["width"], points=[[r1(p[0]), r1(p[1])] for p in l["points"]]) for l in R.d.get("links", [])])   # the roads out to the new areas
 
 
 def dialogue(w):
@@ -242,7 +243,7 @@ def main(day=16):
             if l["id"] in ds:
                 l["design"] = ds[l["id"]]
     data = dict(
-        city=w["city"], blocks=[{k: b[k] for k in ("id", "grid", "template", "district", "origin", "size", "lots", "paths", "props")} for b in w["blocks"]],
+        city=w["city"], blocks=[{k: b[k] for k in ("id", "grid", "template", "district", "origin", "size", "lots", "paths", "props", "span", "lanes") if k in b} for b in w["blocks"]],
         day=dict(index=day, weekday=info["weekday_name"], season=cal["seasons"][info["season"]], market=info["market"],
                  sunrise=cal["sunrise"][info["season"]], sunset=cal["sunset"][info["season"]],
                  weather=[citysim.weather(city.d, city.clock, day * 1440 + h * 60) for h in (3, 9, 15, 21)]),

@@ -275,23 +275,35 @@ var Outlet = (() => {
   }
 
   // ---- the car park south of the hall: dark tarmac, painted bays, cars of the Soft box kind (CITY-067) ----
+  const FULL_CARS = 16;
   function carpark(p, b) {
     const [cx, cz] = p.pos, [w, d] = p.size, y = Y_PAVE + .006, a0 = cx - w / 2, c0 = cz - d / 2, rows = p.rows || 2;
     world.flat(a0, c0, a0 + w, c0 + d, y, [.27, .26, .27], 9);
     const bay = 2.6, n = Math.floor((w - 2) / bay), deep = 5, aisle = d - rows * deep, bays = [];
     for (let r = 0; r < rows; r++) {
-      const zs = r === 0 ? c0 + .5 : c0 + d - .5 - deep, face = r === 0 ? 1 : -1;
+      // two rows: one along each side (the outlet's); more: back-to-back pairs of rows with a 6 m aisle after each pair (the malls')
+      const zs = rows <= 2 ? (r === 0 ? c0 + .5 : c0 + d - .5 - deep) : c0 + .5 + Math.floor(r / 2) * (2 * deep + 6) + (r % 2) * deep, face = rows <= 2 ? (r === 0 ? 1 : -1) : (r % 2 ? -1 : 1);
+      if (zs + deep > c0 + d) break;
       for (let k = 0; k <= n; k++) world.flat(a0 + 1 + k * bay - .05, zs, a0 + 1 + k * bay + .05, zs + deep, y + .002, [.66, .61, .5], 9);
       for (let k = 0; k < n; k++) bays.push([a0 + 1 + (k + .5) * bay, zs + deep / 2, face]);
     }
     world.flat(a0 + 1, c0 + d / 2 - .06, a0 + w - 1, c0 + d / 2 + .06, y + .002, [.66, .61, .5], 9);   // the aisle's centre line
     const want = Math.min(p.cars || 0, bays.length), used = bays.map((q, k) => [hash(b.id, "park", k), q]).sort((p1, p2) => p1[0] - p2[0]).slice(0, want);
-    for (const [, [x, z, face]] of used) {
-      const yaw = face > 0 ? Math.PI / 2 : -Math.PI / 2, dims = typeof Cars !== "undefined" && Cars.parked ? Cars.parked(world, x, z, yaw, "park" + x.toFixed(1) + z.toFixed(1), y) : null;
-      const [L, W] = dims || [3.6, 1.7]; solid(x - W / 2, 0, z - L / 2, x + W / 2, 1.5, z + L / 2); BLOBS.push([x, z, W / 2 + .2, L / 2 + .2]);
-    }
+    used.forEach(([, [x, z, face]], k) => {
+      // the first FULL_CARS are full car models (some ten thousand vertices each); the rest of a big car park are plain painted
+      // shapes in the town's palette (V2), a few dozen vertices, so a mall's 160 cars cost what a dozen did
+      const yaw = face > 0 ? Math.PI / 2 : -Math.PI / 2, full = k < FULL_CARS;
+      const dims = full && typeof Cars !== "undefined" && Cars.parked ? Cars.parked(world, x, z, yaw, "park" + x.toFixed(1) + z.toFixed(1), y) : null;
+      if (!full) {
+        const col = pick([C.terracotta, C.teal, C.blue, C.ochre, C.olive, C.plum, C.cream], hash(b.id, "car", k)), roof = C.cream;
+        world.box(x - .85, y + .25, z - 1.85, x + .85, y + .95, z + 1.85, col, 9);
+        world.box(x - .75, y + .95, z - (face > 0 ? .6 : 1.1), x + .75, y + 1.45, z + (face > 0 ? 1.1 : .6), roof, 9);
+        for (const u of [-.7, .7]) for (const v of [-1.2, 1.2]) world.box(x + u - .12, y, z + v - .32, x + u + .12, y + .5, z + v + .32, C.charcoal, 9);
+      }
+      const [L, W] = dims || [3.7, 1.7]; solid(x - W / 2, 0, z - L / 2, x + W / 2, 1.5, z + L / 2); BLOBS.push([x, z, W / 2 + .2, L / 2 + .2]);
+    });
     void aisle;
   }
 
-  return { build, inside, carpark, LINES };
+  return { build, inside, carpark, LINES, pieces: { sofa, coffee, bed, bedside, wardrobe, bookcase, floorLamp, rug, extra, legs, leg, oct } };   // pieces: kit 17 for the houses (furniture.js)
 })();

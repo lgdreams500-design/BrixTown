@@ -36,6 +36,47 @@ def lots(w):
     return [l for b in w["blocks"] for l in b["lots"]]
 
 
+def extent(w, b):
+    """How far a block's ground runs east and south of its origin: one cell, or several with "span" (the grid streets
+    between them are the block's)."""
+    g = w["city"]["grid"]
+    cols, rows = b.get("span", [1, 1])
+    return b["size"] + (cols - 1) * g["pitch"], b["size"] + (rows - 1) * g["pitch"]
+
+
+def cells_of(b):
+    cols, rows = b.get("span", [1, 1])
+    i, j = b["grid"]
+    return [(i + di, j + dj) for di in range(cols) for dj in range(rows)]
+
+
+def lot_frame(l):
+    """A function taking a world point to the lot's own frame: for a lot turned by "angle" degrees about its centre,
+    the point turned back; for any other lot, the point as it is."""
+    a = l.get("angle")
+    if not a:
+        return lambda p: p
+    x0, z0, x1, z1 = l["rect"]
+    cx, cz, t = (x0 + x1) / 2, (z0 + z1) / 2, -math.radians(a)
+    c, s = math.cos(t), math.sin(t)
+    return lambda p: (cx + (p[0] - cx) * c - (p[1] - cz) * s, cz + (p[0] - cx) * s + (p[1] - cz) * c)
+
+
+def lots_inside(w):
+    """The lots of the blocks wholly inside the town wall: the part of the city the road network (roads.json streets)
+    serves. Outside it, roads.json "links" and the lanes are walked but not yet driven."""
+    return [l for b in w["blocks"] if all(in_wall(w, q) for q in cells_of(b)) for l in b["lots"]]
+
+
+def in_wall(w, cell):
+    """Is this grid cell inside the town wall (city.json "wall", grid lines i0, j0, i1, j1)? With no wall, all are."""
+    wl = w["city"].get("wall")
+    if not wl:
+        return True
+    i0, j0, i1, j1 = wl["cells"]
+    return i0 <= cell[0] < i1 and j0 <= cell[1] < j1
+
+
 def validate(w):
     """Every rule a block file must keep. Returns a list of problems in plain words."""
     out = []
@@ -43,9 +84,11 @@ def validate(w):
     seen, ids = {}, set()
     for b in w["blocks"]:
         i, j = b["grid"]
-        if (i, j) in seen:
-            out.append("two blocks at %s: %s and %s" % ((i, j), seen[(i, j)], b["id"]))
-        seen[(i, j)] = b["id"]
+        sx, sz = extent(w, b)
+        for cell in cells_of(b):                                  # a block may cover several cells ("span")
+            if cell in seen:
+                out.append("two blocks at %s: %s and %s" % (cell, seen[cell], b["id"]))
+            seen[cell] = b["id"]
         x0, z0 = i * g["pitch"] + g["street_width"] / 2, j * g["pitch"] + g["street_width"] / 2
         if [x0, z0] != b["origin"]:
             out.append("%s: origin %s does not match its grid cell" % (b["id"], b["origin"]))
@@ -58,15 +101,18 @@ def validate(w):
             a0, c0, a1, c1 = l["rect"]
             if not (a0 < a1 and c0 < c1):
                 out.append("%s: empty footprint" % l["id"])
-            if a0 < x0 - pave or c0 < z0 - pave or a1 > x0 + b["size"] + pave or c1 > z0 + b["size"] + pave:
+            if a0 < x0 - pave or c0 < z0 - pave or a1 > x0 + sx + pave or c1 > z0 + sz + pave:
                 out.append("%s: footprint leaves its block" % l["id"])
             if l["kind"] not in OPEN_KINDS:
-                dx, dz = l["door"]
-                on_edge = (abs(dx - a0) < 0.01 or abs(dx - a1) < 0.01) and c0 <= dz <= c1 or (abs(dz - c0) < 0.01 or abs(dz - c1) < 0.01) and a0 <= dx <= a1
+                unturn = lot_frame(l)                                 # a turned lot: its door and places in its own frame
+                dx, dz = unturn(l["door"])
+                e = 0.05 if l.get("angle") else 0.01                    # a turned lot's angle is kept to 0.1 degrees
+                on_edge = (abs(dx - a0) < e or abs(dx - a1) < e) and c0 - e <= dz <= c1 + e or (abs(dz - c0) < e or abs(dz - c1) < e) and a0 - e <= dx <= a1 + e
                 if not on_edge:
                     out.append("%s: door is not on a wall" % l["id"])
                 for kind, pts in l["objects"].items():
                     for p in pts:
+                        p = unturn(p)
                         if not (a0 + 0.5 <= p[0] <= a1 - 0.5 and c0 + 0.5 <= p[1] <= c1 - 0.5):
                             out.append("%s: a %s place is outside the building" % (l["id"], kind))
         for n, a in enumerate(walls):
@@ -86,7 +132,7 @@ def validate(w):
         out += ["%s cannot be reached on foot" % k for k, a in c.anchor.items() if a not in dd]
     if w.get("roads") and not out:
         import traffic
-        out += traffic.Roads(w["roads"], w["traffic"]).problems(lots(w))
+        out += traffic.Roads(w["roads"], w["traffic"]).problems(lots_inside(w))   # cars drive inside the wall for now
     out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + estate_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w) + react_problems(w)
     kinds = {l["kind"] for l in lots(w)}
     for need in ("home", "shop", "food", "work", "health", "garden", "market", "stop", "utility"):
@@ -733,13 +779,16 @@ def speech_problems(w):
 
 
 def walkways(w):
-    """Where people walk (Q-24, CITY-043): a ring round every block along its pavement, `walk_offset` from the street
-    centre lines, and a zebra crossing over each street `crossing_at` from every junction, joining the rings on either
-    side. Block footpaths that ran to a street's centre line stop at the ring instead. Returns (segments, crossings)
-    with crossings {(x, z) of the middle, rounded to cm: (street id, junction id)}."""
+    """Where people walk (Q-24, CITY-043): a ring round every block inside the town wall along its pavement, `walk_offset`
+    from the street centre lines, and a zebra crossing over each street `crossing_at` from every junction, joining the
+    rings on either side (never across the wall). Block footpaths that ran to a street's centre line stop at the ring
+    instead. Outside the wall people walk along the gate roads, the links out to the new areas (roads.json "links") and
+    the communities' lanes (block "lanes"); doors there join the nearest of them. Returns (segments, crossings) with
+    crossings {(x, z) of the middle, rounded to cm: (street id, junction id)}."""
     g, r = w["city"]["grid"], w["traffic"]
     P, cols, rows, off, c = g["pitch"], g["columns"], g["rows"], r["walk_offset"], r["crossing_at"]
-    have = {tuple(b["grid"]) for b in w["blocks"]}
+    inside = [b for b in w["blocks"] if all(in_wall(w, q) for q in cells_of(b))]
+    have = {tuple(b["grid"]) for b in inside}
     segs, crossings = [], {}
     for (i, j) in sorted(have):
         x0, x1, z0, z1 = i * P + off, (i + 1) * P - off, j * P + off, (j + 1) * P - off
@@ -759,7 +808,7 @@ def walkways(w):
                 cross([X - off, Z - c], [X + off, Z - c], "s_ns_%d_%d" % (I, J - 1), jid)
             if J < rows and (I - 1, J) in have and (I, J) in have:          # south arm
                 cross([X - off, Z + c], [X + off, Z + c], "s_ns_%d_%d" % (I, J), jid)
-    for b in w["blocks"]:                                                   # footpaths meet the ring, not the road
+    for b in inside:                                                        # footpaths meet the ring, not the road
         cx, cz = b["origin"][0] + b["size"] / 2, b["origin"][1] + b["size"] / 2
         for a, bb in b["paths"]:
             pts = []
@@ -771,6 +820,19 @@ def walkways(w):
                 pts.append([x, z])
             if pts[0] != pts[1]:
                 segs.append(pts)
+    roads = w.get("roads") or {}
+    J = {j["id"]: j["pos"] for j in roads.get("junctions", [])}
+    for gt in roads.get("gates", []):                                       # out through a gate: from the corners of its junction
+        X, Z = J[gt["junction"]]
+        end = [X + gt["dir"][0] * gt["length"], Z + gt["dir"][1] * gt["length"]]
+        segs.append([[X, Z], end])
+        I, Jn = int(round(X / P)), int(round(Z / P))
+        for di, dj, sx, sz in ((-1, -1, -1, -1), (0, -1, 1, -1), (-1, 0, -1, 1), (0, 0, 1, 1)):
+            if (I + di, Jn + dj) in have:
+                segs.append([[X, Z], [X + sx * off, Z + sz * off]])
+    lines = [l["points"] for l in roads.get("links", [])] + [ln["points"] for b in w["blocks"] for ln in b.get("lanes", [])]
+    for pts in lines:
+        segs += [[list(a), list(b)] for a, b in zip(pts, pts[1:]) if a != b]
     return segs, crossings
 
 
@@ -794,6 +856,7 @@ def simulation(w, traffic=False):
     city = citysim.City(data=sim_data(w))
     if traffic:
         import traffic as tr
+        city.car_homes = {l["id"] for l in lots_inside(w)}             # only households inside the wall keep a car for now
         tr.Traffic(city, w["roads"], w["traffic"])
     return city
 

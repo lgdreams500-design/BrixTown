@@ -11,7 +11,7 @@
  "start": { "cash": 4000, "welcome_deposit": 2500 },
  "day": { "settle_minute": 0, "note": "Accounts are settled for each game day that has ended, at midnight." },
  "bank": {
-  "lot": "b_3_2_l0",
+  "lot": "b_9_6_l0",
   "vault": 5000000,
   "accounts": {
    "current": { "name": "Current account", "rate_bp": 0 },
@@ -56,6 +56,8 @@
   "grocer": { "name": "Grocer", "match": { "kind": "shop", "name_has": "Grocer" }, "sells": ["bread", "apples", "milk", "cheese", "jam", "flowers", "seeds"], "buys": ["bread", "apples", "milk", "cheese", "jam", "flowers", "seeds"], "till": 40000 },
   "kiosk":  { "name": "Kiosk",  "match": { "kind": "shop", "name_has": "Kiosk" }, "sells": ["newspaper", "map", "umbrella", "sweets", "postcard"], "buys": ["map", "umbrella", "sweets", "postcard"], "till": 20000 },
   "arcade": { "name": "Arcade", "match": { "kind": "shop", "name_has": "Arcade" }, "sells": ["scarf", "hat", "book", "candle", "teapot", "umbrella"], "buys": ["scarf", "hat", "book", "candle", "teapot", "umbrella", "rare_book"], "till": 80000 },
+  "bakery": { "name": "Bakery", "match": { "kind": "shop", "name_has": "Bakery" }, "sells": ["bread", "cake", "jam"], "buys": [], "till": 15000 },
+  "mall": { "name": "Mall", "match": { "kind": "shop", "name_has": "Mall" }, "sells": ["scarf", "hat", "book", "candle", "teapot", "umbrella"], "buys": [], "till": 200000 },
   "cafe":   { "name": "Café",   "match": { "kind": "food" }, "sells": ["coffee", "cake", "sandwich", "bread"], "buys": [], "till": 15000 }
  },
  "stock": {
@@ -78,7 +80,7 @@
   "note": "A shop's prices to the player move with the best reputation the player has with anyone who works there."
  },
  "stall": {
-  "lot": "b_3_4_l0",
+  "lot": "b_9_8_l0",
   "rent": 1500,
   "slots": 6,
   "open": [480, 1080],

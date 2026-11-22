@@ -128,7 +128,7 @@
    "stages": {
     "pickup": {
      "log": "Collect Abe's parcel from Market Grocer, by the fountain behind Market Square.",
-     "goal": { "go": "b_3_5_l7" },
+     "goal": { "go": "b_9_9_l7" },
      "on_done": { "give": ["parcel"] },
      "then": "stage:deliver"
     },
