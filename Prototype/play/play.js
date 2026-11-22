@@ -1852,8 +1852,11 @@ function frame(now) {
       drive: drv ? { v: Cars.speed ? Cars.speed() : 0, gas: !!(keys.KeyW || keys.ArrowUp), brake: !!(keys.Space || ((keys.KeyS || keys.ArrowDown) && (Cars.speed ? Cars.speed() : 0) > 0)) } : null });
   }
 
-  const Lt = lighting(clock.m), dials = window.wasted.dials; Lt.sunCol = mul3(Lt.sunCol, dials.sun); Lt.sky = mul3(Lt.sky, dials.sky); Lt.ground = mul3(Lt.ground, dials.bounce); Lt.fogD *= dials.haze; Lt.exp *= dials.exposure;
+  const Lt = lighting(clock.m), dials = window.wasted.dials; Lt.sunCol = mul3(Lt.sunCol, dials.sun); Lt.sky = mul3(Lt.sky, mix(dials.skyLow || dials.sky, dials.sky, smooth(.05, .5, Lt.dir[1]) * Lt.day)); Lt.ground = mul3(Lt.ground, dials.bounce);   // skyLow: the sky fill at dusk and night, which ADR-0007 left alone
+  Lt.fogD *= dials.haze; Lt.exp *= dials.exposure;
   const wm = dials.warm || 0; Lt.sunCol = [Lt.sunCol[0], Lt.sunCol[1] * (1 - .1 * wm), Lt.sunCol[2] * (1 - .26 * wm)]; Lt.sky = [Lt.sky[0] * (1 - .08 * wm), Lt.sky[1] * (1 - .04 * wm), Lt.sky[2]];   // a more golden sun against a deeper sky
+  const nu = dials.neutral || 0, gl0 = Lt.ground[0] * .3 + Lt.ground[1] * .6 + Lt.ground[2] * .1; Lt.ground = mix3(Lt.ground, [gl0 * 1.04, gl0 * 1.0, gl0 * .95], nu);   // bounce off pale stone, not off orange: shade stays grey (world_street_kit_light.png)
+  const vl = (dials.veil || 0) * Lt.day; Lt.fog = Lt.fog.map((v, i) => v + Lt.sunCol[i] * vl); Lt.zen = Lt.zen.map((v, i) => v + Lt.sunCol[i] * vl * .7);   // sunlight scattered all through the haze: a pale sky, and distance fades to it (W5)
   const view = M4.look(cam.eye, cam.dir), fov = .9, asp = W / H, VP = M4.mul(M4.persp(fov, asp, .25, 3200), view.m), th = Math.tan(fov / 2);
   gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf); gl.bufferData(gl.ARRAY_BUFFER, dyn.a.subarray(0, dyn.n), gl.DYNAMIC_DRAW);
   let SM = M4.t(0, 0, 0), shOn = 0;
@@ -1924,9 +1927,11 @@ for (const [k, o, key] of [["x", pl, "x"], ["z", pl, "z"], ["y", pl, "y"], ["yaw
 if (q.has("fp")) cam.fp = true; if (q.has("yaw")) pl.yaw = cam.yaw; if (q.has("rate")) clock.rate = +q.get("rate");
 // Light presets. "kit" is the daylight of ADR-0007: the softer, warmer light of the building kit renders, and the default.
 // "reference" is the earlier light of the reference alley image (ADR-0004), kept for comparison: L switches, ?light=reference starts with it.
-const LIGHTS = { reference: { sun: 1, sky: 1, bounce: 1, lanterns: 1, haze: 1, exposure: 1, warm: 0 }, kit: { sun: .62, sky: .9, bounce: 1.5, lanterns: 1, haze: .55, exposure: .7, warm: 1 } };
-let lightName = q.get("light") === "reference" ? "reference" : "kit";
-addEventListener("keydown", e => { if (e.code === "KeyL" && started && !e.repeat) { lightName = lightName === "kit" ? "reference" : "kit"; Object.assign(window.wasted.dials, LIGHTS[lightName]); } });
+const LIGHTS = { reference: { sun: 1, sky: 1, bounce: 1, lanterns: 1, haze: 1, exposure: 1, warm: 0, neutral: 0, veil: 0 }, kit: { sun: .7, sky: 1.25, bounce: 1.2, lanterns: 1, haze: .55, exposure: .74, warm: .35, neutral: .7, veil: .12, skyLow: .9 },   // between the two below: the owner found the measured match too pale (ADR-0013)
+  measured: { sun: .62, sky: 1.5, bounce: 1.2, lanterns: 1, haze: .55, exposure: .78, warm: 0, neutral: 1, veil: .3, skyLow: .9 },   // matches world_street_kit_light.png by measured colour (?light=measured)
+  golden: { sun: .62, sky: .9, bounce: 1.5, lanterns: 1, haze: .55, exposure: .7, warm: 1 } };   // golden: the kit light as first tuned (ADR-0007), kept for comparison (?light=golden)
+let lightName = LIGHTS[q.get("light")] ? q.get("light") : "kit";
+addEventListener("keydown", e => { if (e.code === "KeyL" && started && !e.repeat) { lightName = lightName === "kit" ? "reference" : "kit"; Object.assign(window.wasted.dials, { warm: 0, neutral: 0, veil: 0, skyLow: 0 }, LIGHTS[lightName]); } });
 window.wasted = { dials: Object.assign({}, LIGHTS[lightName]), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, begin, setLook: L => { playerLook = L; }, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
 // sound (sound.js): which lots play music, where the fountains and gardens are
 Sound.init(LOTS, D.blocks.flatMap(b => b.props.filter(p => p.kind === "fountain").map(p => p.pos)),

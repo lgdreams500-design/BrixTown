@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-WORLD-MAP
 title: Wasted — World map as data, the starting city and the playable slice
-version: 0.5.5
+version: 0.5.6
 status: draft
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -266,6 +266,16 @@ sky ×0.9, bounce ×1.5, haze ×0.55, exposure ×0.7, a more golden sun. Sunlit 
 the hazy light shafts of the reference alley are weaker. The earlier light is kept as the "reference" preset: L switches,
 `?light=reference` starts with it. The colour measurements above were taken under the earlier light.
 
+**Kit light retuned by measurement (0.5.6, ADR-0013).** Against `world_street_kit_light.png` the slice was two to
+four times too saturated (sunlit paving 0.21 against 0.09) and its sky was darker than its walls. The exact match
+(the script's own sun colour, sky fill ×1.5, a grey bounce ×1.2, a pale haze veil, exposure ×0.78) measured sunlit paving
+(167, 156, 151) against the reference's (171, 160, 156) and shaded paving (108, 102, 101) against (112, 106, 106), but the
+owner found it too pale; it is kept as `?light=measured`. The default is a setting between it and the old one (values in
+ADR-0013). Materials are unchanged: softer paint blotches and a slab
+carriageway were tried and taken back at the owner's word. The old values are kept as
+`?light=golden`. Still
+different from the reference: round cobbles on footpaths, faceted trees, unbevelled edges, shop windows dark by day.
+
 New and not approved: the running signature, and the standing, sitting and lying poses (CHARACTER_MOTION §6
 lists them as missing). They are in `Prototype/play/people.js` and need the owner's eye.
 
@@ -307,3 +317,4 @@ keep a timetable with several stops in it. Something has to give `[OPEN: Q-21]`.
 | 0.5.3 | 2026-11-22 | Talking to residents in the slice (CITY-007; owner picked F-NPC-TALK level 1 for the first slice): `World/rules/dialogue.json`, checked by `world.dialogue_problems` and `test_world.TheDialogue` (every reply leads somewhere, every node is reachable, every talk can end), played by `Prototype/play/conversations.js` (§5.1). |
 | 0.5.4 | 2026-11-22 | Faces while talking (owner picked F-NPC-SPEECH level 2 for the first slice; CHR-008, CHR-009, ANIM-006 to PH1; Q-14 text first): lip sync and expressions from `World/rules/speech.json`, checked by `world.speech_problems` and `test_world.TheFaces`; drawn in `people.js`, timed in `conversations.js` (§5.1). The reference line of CHARACTER_FACE §4 comes out at 53 frames against the reference's 55. |
 | 0.5.5 | 2026-11-22 | People brought closer to `character_lineup.png`: rosy cheeks (C8, ADR-0010); cloth mottle blends across each form instead of showing as patches; smoother near bodies (16 sides); a flat bib apron in place of a round blob; arms hang closer when standing, with rounded sleeve tops; chunkier limbs and rounded shoes; a fringe; a larger iris low in the eye; coat and tunic hems wide enough to hide striding legs. |
+| 0.5.6 | 2026-11-22 | Kit light retuned towards the measured colours of `world_street_kit_light.png` (ADR-0013): greyer shade, paler sky. §5.5. |
