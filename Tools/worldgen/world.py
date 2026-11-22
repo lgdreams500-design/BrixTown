@@ -306,6 +306,25 @@ def night_sky_problems(w):
     out += ["sky: night.weather has an unknown kind %s" % k for k in wx if k not in WEATHER_KINDS]
     if all(num(wx.get(k, {}).get("stars")) for k in ("clear", "rain")) and wx["rain"]["stars"] >= wx["clear"]["stars"]:
         out.append("sky: fewer stars should show in rain than on a clear night")
+    pa = n.get("paths", {})
+    for k, lo, hi in (("sun_lift", 0, .3), ("sun_size", .002, .05), ("sun_glare_ease", 0, 1), ("moon_by_day", 0, 1), ("moon_swing", 0, 30), ("moon_tilt", 0, 10), ("moon_node_days", 1, 10000)):
+        if not (num(pa.get(k)) and lo <= pa[k] <= hi):
+            out.append("sky: night.paths.%s missing or not from %s to %s" % (k, lo, hi))
+    if num(n.get("latitude")):
+        for season, dec in sun_heights(w).items():
+            if dec is None or abs(dec) > 35:
+                out.append("sky: the calendar's day in %s cannot be seen from latitude %s" % (season, n["latitude"]))
+    return out
+
+
+def sun_heights(w):
+    """WLD-043: the sun's declination in degrees for each season, the one that makes it rise and set at the calendar's times when seen
+    from sky.json night.latitude (as Prototype/play/play.js sunDec() works it out). None where no declination can do that."""
+    cal, la = w["calendar"]["calendar"], math.radians(w["sky"]["night"]["latitude"])
+    out = {}
+    for s, name in enumerate(cal["seasons"]):
+        half = (cal["sunset"][s] - cal["sunrise"][s]) / 24 * math.pi
+        out[name] = None if not 0 < half < math.pi or math.tan(la) == 0 else math.degrees(math.atan(-math.cos(half) / math.tan(la)))
     return out
 
 

@@ -18,6 +18,10 @@ Brix Town: a third-person multiplayer life-sim in Unreal Engine 5.8. Art source 
 - Gameplay logic in C++ modules; tunable numbers in data, not code.
 - Money is integer minor units and moves only through the ledger.
 - The server is authoritative; never trust client input.
+- Never commit directly to `main`. Commit on a work branch (e.g. `work/YYYY-MM-DD`), push it, and merge into `main` only
+  through a pull request.
+- Several sessions may share this checkout and branch: commit only your own changes, and check that each committed file
+  matches the working file line for line, so a partial commit cannot reorder lines.
 - Do not commit secrets, engine binaries, or `Saved/`, `Intermediate/`, `DerivedDataCache/`, `Binaries/`.
 - Binary assets (`.uasset`, `.umap`, `.blend`) cannot be merged: lock before editing.
 - Record any significant design choice as an ADR in `docs/decisions/`.
