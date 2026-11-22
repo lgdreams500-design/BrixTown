@@ -449,6 +449,17 @@ class Traffic:
         legs = self.roads.route(b0["lane"], b0["s"], lane, s)
         return sum((g["s1"] - g["s0"]) / g["v"] for g in legs) if legs else 1e9
 
+    def _red_wait(self, bay0, lane, s):
+        """What the lights on the quickest way could cost (CITY-068): for every junction with signals on the route, the
+        time its lights are not green for one road, times the share in `gate_light_allowance`. Free-flow estimates leave
+        this out, and a commuter who must be through the gate on time cannot gain by leaving a little earlier and
+        meeting the same red."""
+        legs = self.roads.route(self.roads.bays[bay0]["lane"], self.roads.bays[bay0]["s"], lane, s) or []
+        cyc = self.r["signals"]
+        red = cyc["green_s"] + 2 * (cyc["amber_s"] + cyc["all_red_s"])     # one road waits through the other's green, both ambers and all-reds
+        n = sum(1 for g in legs if g["kind"] == "box" and self.roads.j[g["junction"]]["control"] == "signals")
+        return n * red * self.r.get("gate_light_allowance", 0.0)
+
     def gate_for(self, bay0):
         """The town gate quickest to reach from a bay (ties by name)."""
         R = self.roads
@@ -508,7 +519,8 @@ class Traffic:
                 gate = self.gate_for(bay0)
                 g = R.gates[gate]
                 w1 = lengths(self.walk(lg["frm"], lg["spot0"], bay0))[-1]
-                est = walk_time(rid, w1) + (r["board_s"] + self._est_to(bay0, g["out"], R.lanes[g["out"]]["length"]) + r["gate_margin_s"]) / pace
+                L = R.lanes[g["out"]]["length"]
+                est = walk_time(rid, w1) + (r["board_s"] + self._est_to(bay0, g["out"], L) + self._red_wait(bay0, g["out"], L) + r["gate_margin_s"]) / pace
                 leave = max(ready_min, lg["target"] - est)
                 board = leave + walk_time(rid, w1)
                 lg.update(leave=leave, board=board, bay0=bay0, w1=w1, gate=gate)
