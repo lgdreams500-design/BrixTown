@@ -1492,11 +1492,21 @@ void main(){
 const main = program(MAIN_VS, MAIN_FS), signProg = program(MAIN_VS, "#define LETTERS\n" + MAIN_FS);   // only the painted names cut holes, so the town's shader keeps the early depth test
 const pre = program(MAIN_VS, `precision mediump float; void main(){ gl_FragColor=vec4(1.); }`);       // depth only, laid first so each pixel is lit once
 const sky = program(`attribute vec2 aQ; varying vec2 vQ; void main(){ vQ=aQ; gl_Position=vec4(aQ,.9999,1.); }`,
-`precision highp float; varying vec2 vQ; uniform vec3 uR,uU,uF,uSun,uZen,uHor,uSunCol; uniform float uNight,uExp;
+`precision highp float; varying vec2 vQ; uniform vec3 uR,uU,uF,uSun,uZen,uHor,uSunCol; uniform float uNight,uExp; uniform vec4 uCl; uniform vec2 uClOff,uClLit;   // uCl: cover, edge softness, size, shape phase
 ${NOISE}
 ${TONE}
 void main(){ vec3 d=normalize(uF+vQ.x*uR+vQ.y*uU); float s=dot(d,uSun), p=haze(s); vec3 c=mix(uHor+uSunCol*(4.4*p),uZen+uSunCol*(.9*p),pow(clamp(d.y,0.,1.),.5));
-  c+=uSunCol*pow(max(s,0.),2500.)*30.*step(0.,d.y); c+=step(.9982,h3(floor(d*170.)))*uNight*smoothstep(.03,.3,d.y)*.05;
+  float a=0.; vec3 cloud=vec3(0.);
+  if(d.y>.015&&uCl.x>0.){                                                  // clouds (WLD-035): soft heaps on a flat layer overhead, lit from the sun's side, lost in the haze towards the horizon
+    vec2 q=d.xz/(d.y+.12)*uCl.z+uClOff, sd=normalize(uSun.xz+vec2(1e-4))*.3; vec3 q3=vec3(q.x,uCl.w,q.y), qs=vec3(q.x+sd.x,uCl.w,q.y+sd.y);
+    float low=(ns(q3)*.5+ns(q3*2.03+3.1)*.25)/.75, n=low*.8+ns(q3*4.01+7.3)*.133+ns(q3*8.1+1.7)*.067;
+    float th=.72-.44*uCl.x;                                              // the noise crowds round its middle value, so this spread makes cover about the share of sky hidden
+    a=smoothstep(th-uCl.y,th+uCl.y,n)*smoothstep(.015,.2,d.y);
+    if(a>0.){ float lowS=(ns(qs)*.5+ns(qs*2.03+3.1)*.25)/.75;             // thinner towards the sun: that edge is bright; the thick middle is shaded underneath
+      float lit=clamp(.55+(low-lowS)*3.,0.,1.)*(1.-.4*smoothstep(th,th+.3,n));
+      cloud=mix((uZen*.45+uHor*.55)*uClLit.y+uSunCol*uClLit.x*.2,uSunCol*uClLit.x+uHor*.6,lit)+uSunCol*(1.4*p); } }
+  c=mix(c,cloud,a);
+  c+=uSunCol*pow(max(s,0.),2500.)*30.*step(0.,d.y)*(1.-.92*a); c+=step(.9982,h3(floor(d*170.)))*uNight*smoothstep(.03,.3,d.y)*.05*(1.-a);
   gl_FragColor=vec4(tone(c*uExp),1.); }`);
 const depthProg = program(`attribute vec3 aP; uniform mat4 uVP; void main(){ gl_Position=uVP*vec4(aP,1.); }`, `precision mediump float; void main(){ gl_FragColor=vec4(1.); }`);
 const SH = 2048; let shFbo = null, shTex = null;
@@ -1553,6 +1563,14 @@ function outside(M, b) {                                     // is the box wholl
 }
 const boxD2 = (b, p) => { const dx = Math.max(b[0] - p[0], 0, p[0] - b[3]), dy = Math.max(b[1] - p[1], 0, p[1] - b[4]), dz = Math.max(b[2] - p[2], 0, p[2] - b[5]); return dx * dx + dy * dy + dz * dz; };
 
+// The sky and its clouds (World/rules/sky.json). How much of the sky is covered follows the day's weather slots (six hours each) once
+// follow_weather is on (it is: the owner picked F-SKY level 2); with it off, the clear-day cover all day.
+const SKY = D.sky;
+function cloudCover(m) {
+  const c = SKY.clouds, w = D.day.weather || [], cov = i => c.cover[(c.follow_weather && w[((i % 4) + 4) % 4]) || "clear"];
+  const s = Math.floor(m / 360), into = m - s * 360, b = c.blend_minutes;
+  return into < b ? mix(cov(s - 1), cov(s), .5 + .5 * into / b) : into > 360 - b ? mix(cov(s), cov(s + 1), .5 * (into - (360 - b)) / b) : cov(s);
+}
 function lighting(m) {                                       // the reference recipe (sun 14 W/m2, sky 0.35, haze) carried through the day
   const rise = D.day.sunrise * 60, set = D.day.sunset * 60, day = smooth(0, 1, Math.min((m - (rise - 30)) / 60, ((set + 30) - m) / 60));
   const a = clamp((m - rise) / (set - rise), 0, 1) * Math.PI, unit = v => { const n = Math.hypot(v[0], v[1], v[2]); return v.map(q => q / n); };
@@ -1857,6 +1875,7 @@ function frame(now) {
   Lt.fogD *= dials.haze; Lt.exp *= dials.exposure;
   const wm = dials.warm || 0; Lt.sunCol = [Lt.sunCol[0], Lt.sunCol[1] * (1 - .1 * wm), Lt.sunCol[2] * (1 - .26 * wm)]; Lt.sky = [Lt.sky[0] * (1 - .08 * wm), Lt.sky[1] * (1 - .04 * wm), Lt.sky[2]];   // a more golden sun against a deeper sky
   const nu = dials.neutral || 0, gl0 = Lt.ground[0] * .3 + Lt.ground[1] * .6 + Lt.ground[2] * .1; Lt.ground = mix3(Lt.ground, [gl0 * 1.04, gl0 * 1.0, gl0 * .95], nu);   // bounce off pale stone, not off orange: shade stays grey (world_street_kit_light.png)
+  { const sl = Math.min(1, (Lt.sunCol[0] * .3 + Lt.sunCol[1] * .6 + Lt.sunCol[2] * .1) / SKY.sun_ref), bl = dials.blue == null ? 1 : dials.blue; Lt.zen = mix3(Lt.zen, mul3(SKY.zenith, sl * SKY.brightness), SKY.depth * Lt.day * bl); }   // a blue sky overhead by day; the horizon stays hazy (WLD-035, W5)
   const vl = (dials.veil || 0) * Lt.day; Lt.fog = Lt.fog.map((v, i) => v + Lt.sunCol[i] * vl); Lt.zen = Lt.zen.map((v, i) => v + Lt.sunCol[i] * vl * .7);   // sunlight scattered all through the haze: a pale sky, and distance fades to it (W5)
   const view = M4.look(cam.eye, cam.dir), fov = .9, asp = W / H, VP = M4.mul(M4.persp(fov, asp, .25, 3200), view.m), th = Math.tan(fov / 2);
   gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf); gl.bufferData(gl.ARRAY_BUFFER, dyn.a.subarray(0, dyn.n), gl.DYNAMIC_DRAW);
@@ -1885,6 +1904,8 @@ function frame(now) {
   gl.useProgram(sky.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const aq = gl.getAttribLocation(sky.p, "aQ"); gl.enableVertexAttribArray(aq); gl.vertexAttribPointer(aq, 2, gl.FLOAT, false, 0, 0);
   gl.uniform3fv(sky.u.uR, mul3(view.r, th * asp)); gl.uniform3fv(sky.u.uU, mul3(view.u, th)); gl.uniform3fv(sky.u.uF, cam.dir); gl.uniform3fv(sky.u.uSun, Lt.dir);
   gl.uniform3fv(sky.u.uZen, Lt.zen); gl.uniform3fv(sky.u.uHor, Lt.fog); gl.uniform3fv(sky.u.uSunCol, Lt.sunCol); gl.uniform1f(sky.u.uNight, Lt.night); gl.uniform1f(sky.u.uExp, Lt.exp);
+  { const c = SKY.clouds, T = clock.day * 1440 + clock.m, cov = dials.clouds == null ? cloudCover(clock.m) : dials.clouds;   // where the clouds are and what shape they have comes from the clock alone (WLD-036)
+    gl.uniform4f(sky.u.uCl, cov, c.soft, c.scale, (c.change * T) % 512); gl.uniform2f(sky.u.uClOff, (c.wind[0] * c.speed * T) % 512, (c.wind[1] * c.speed * T) % 512); gl.uniform2f(sky.u.uClLit, c.lit, c.shade); }
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.enable(gl.CULL_FACE); gl.depthMask(true);   // on a tie the layer laid later (the upper one) wins
   const seen = pieces.filter(pc => !outside(VP, pc.box)), nearD = chunks.filter(ch => Math.hypot(ch.cx - cam.eye[0], ch.cz - cam.eye[2]) < DETAIL_R && !outside(VP, ch.box));

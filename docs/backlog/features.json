@@ -1166,6 +1166,48 @@
       }
     },
     {
+      "id": "F-SKY",
+      "area": "nature",
+      "title": "Sky and clouds",
+      "why": "A sky worth looking up at, that changes with the hour.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "WLD-035",
+        "WLD-036"
+      ],
+      "levels": [
+        {
+          "name": "Plain sky",
+          "what": "One hazy colour with a glow round the sun.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Blue sky and drifting clouds",
+          "what": "Blue overhead, hazy horizon, clouds that drift and change with the hour.",
+          "effort": "S",
+          "needs": {
+            "F-TIME-DAY": 1
+          }
+        },
+        {
+          "name": "Clouds follow the weather",
+          "what": "More cloud on cloudy and wet days.",
+          "effort": "M",
+          "needs": {
+            "F-WEATHER": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
       "id": "F-WEATHER",
       "area": "nature",
       "title": "Weather",

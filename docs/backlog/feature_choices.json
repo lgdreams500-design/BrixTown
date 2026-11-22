@@ -100,6 +100,14 @@
     "F-CHR-DESIGN": {
       "slice": 2,
       "note": "Owner, 2026-11-22: chose \"2: Full designer\" for the first slice. Later milestones not stated."
+    },
+    "F-SKY": {
+      "slice": 2,
+      "note": "Asked for a sky and cloud system, then said yes to cloud cover following the day's weather (owner, 2026-11-22). Later milestones not picked."
+    },
+    "F-WEATHER": {
+      "slice": 1,
+      "note": "Said yes to 'F-WEATHER level 1 for the first slice' so clouds follow the weather (owner, 2026-11-22). Rain and fog are in scope but not drawn yet. Later milestones not picked."
     }
   }
 }

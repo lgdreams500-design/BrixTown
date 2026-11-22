@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -87,7 +87,7 @@ def validate(w):
     if w.get("roads") and not out:
         import traffic
         out += traffic.Roads(w["roads"], w["traffic"]).problems(lots(w))
-    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + quest_problems(w) + designer_problems(w)
+    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w)
     kinds = {l["kind"] for l in lots(w)}
     for need in ("home", "shop", "food", "work", "health", "garden", "market", "stop", "utility"):
         if need not in kinds:
@@ -175,6 +175,39 @@ def dialogue_problems(w, acts=None):
 
 SOUND_ACTIONS = ("prompt", "sit", "lie", "stand", "lift", "jump", "talk_open", "talk_choose", "talk_close", "car_door", "map", "clock", "hour", "radio")
 SOUND_KINDS = ("tick", "thud", "rustle", "chime", "clink", "hiss", "snip", "type", "snore", "creak", "whoosh", "scrape", "clank")
+WEATHER_KINDS = ("clear", "cloud", "rain", "fog")       # what citysim.weather() can answer
+
+
+def sky_problems(w):
+    """Every rule World/rules/sky.json must keep (WLD-035, WLD-036)."""
+    s, out = w["sky"], []
+    unit = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool) and 0 <= v <= 1
+    if not (isinstance(s.get("zenith"), list) and len(s["zenith"]) == 3 and all(unit(v) for v in s["zenith"])):
+        out.append("sky: zenith should be three numbers from 0 to 1")
+    if not unit(s.get("depth")):
+        out.append("sky: depth should be from 0 to 1")
+    for k in ("sun_ref", "brightness"):
+        if not (isinstance(s.get(k), (int, float)) and s[k] > 0):
+            out.append("sky: %s should be above 0" % k)
+    c = s.get("clouds", {})
+    if not isinstance(c.get("follow_weather"), bool):
+        out.append("sky: clouds.follow_weather should be true or false")
+    cover = c.get("cover", {})
+    for k in WEATHER_KINDS:
+        if not unit(cover.get(k)):
+            out.append("sky: clouds.cover.%s missing or not from 0 to 1" % k)
+    out += ["sky: clouds.cover has an unknown kind of weather %s" % k for k in cover if k not in WEATHER_KINDS]
+    if all(unit(cover.get(k)) for k in WEATHER_KINDS) and not cover["clear"] <= cover["cloud"] <= cover["rain"]:
+        out.append("sky: cover should grow from clear to cloud to rain")
+    for k in ("scale", "soft", "speed", "change", "lit", "shade", "blend_minutes"):
+        if not (isinstance(c.get(k), (int, float)) and c[k] > 0):
+            out.append("sky: clouds.%s should be above 0" % k)
+    if isinstance(c.get("blend_minutes"), (int, float)) and c["blend_minutes"] > 180:
+        out.append("sky: clouds.blend_minutes should be at most 180 (half a weather slot)")
+    wind = c.get("wind")
+    if not (isinstance(wind, list) and len(wind) == 2 and any(wind)):
+        out.append("sky: clouds.wind should be two numbers, not both 0")
+    return out
 
 
 def sound_problems(w, acts=None):

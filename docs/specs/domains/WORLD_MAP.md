@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-WORLD-MAP
 title: Wasted — World map as data, the starting city and the playable slice
-version: 0.5.6
+version: 0.5.7
 status: draft
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -113,6 +113,8 @@ café, grocer, garden, market, stop and clinic), and for couriers and utility wo
 | WLD-032 | Children (role `child`, the students who live nearest each park) shall take the tram to school on weekdays and play on the swings, slide, seesaws, sandpit and climbing frame after school and at weekends, staying in when it rains; the slice moves them with what they play on. | F-MAP-DRESS | 2 | P1 | `test_WLD_032_children_play_after_school` |
 | WLD-033 | Residents shall stop to read the notice boards and buy a paper at the kiosk, which has its own keeper. | F-MAP-DRESS | 2 | P1 | `test_WLD_033_notices_and_the_kiosk` |
 | WLD-034 | What the dressing shows shall be worked out from the day and `World/rules/dressing.json`, never stored: each advert board changes every few days, out of step with the others; the cinema shows the film of the day; bunting is up on market days only. | F-MAP-DRESS | 2 | P1 | `test_WLD_034_what_changes_with_the_day` |
+| WLD-035 | By day the sky shall be blue overhead and hazy at the horizon, with soft clouds lit from the sun's side that take the colour of the hour; its numbers shall be data in `World/rules/sky.json`. | F-SKY | 1 | P1 | `test_WLD_035_sky_rules_are_sound`; slice at morning, midday, dusk and night |
+| WLD-036 | Where the clouds are, their shape and how much sky they cover shall be worked out from the world clock, the day's weather and the data, never stored or ticked; every kind of weather shall have a cover. Cover follows the weather only from F-SKY level 2. | F-SKY | 1 | P1 | `test_WLD_036_every_kind_of_weather_has_a_sky`, `test_WLD_036_the_slice_gets_the_sky` |
 | CITY-050 | At least 95% of buildings shall be enterable through an open door, with the places inside taken from the lot's `objects`. | F-BLD-INSIDE | 2 | P0 | `test_nearly_every_building_can_be_entered` |
 | CITY-051 | Residents shall use the same doors and the same places inside as the player. | F-BLD-INSIDE | 2 | P0 | Slice: residents sit, work and sleep at the listed places |
 | CITY-052 | A resident shall leave early enough to arrive on time; one who is late skips the stop they have missed and walks on. Nobody speeds up. | F-NPC-ROUTINE | 1 | P0 | `test_most_walks_arrive_on_time`, `test_the_day_has_no_gaps…` |
@@ -318,3 +320,4 @@ keep a timetable with several stops in it. Something has to give `[OPEN: Q-21]`.
 | 0.5.4 | 2026-11-22 | Faces while talking (owner picked F-NPC-SPEECH level 2 for the first slice; CHR-008, CHR-009, ANIM-006 to PH1; Q-14 text first): lip sync and expressions from `World/rules/speech.json`, checked by `world.speech_problems` and `test_world.TheFaces`; drawn in `people.js`, timed in `conversations.js` (§5.1). The reference line of CHARACTER_FACE §4 comes out at 53 frames against the reference's 55. |
 | 0.5.5 | 2026-11-22 | People brought closer to `character_lineup.png`: rosy cheeks (C8, ADR-0010); cloth mottle blends across each form instead of showing as patches; smoother near bodies (16 sides); a flat bib apron in place of a round blob; arms hang closer when standing, with rounded sleeve tops; chunkier limbs and rounded shoes; a fringe; a larger iris low in the eye; coat and tunic hems wide enough to hide striding legs. |
 | 0.5.6 | 2026-11-22 | Kit light retuned towards the measured colours of `world_street_kit_light.png` (ADR-0013): greyer shade, paler sky. §5.5. |
+| 0.5.7 | 2026-11-22 | Sky and clouds in the slice (WLD-035, WLD-036; feature F-SKY; ADR-0014): blue overhead, hazy horizon, clouds placed by the clock, numbers in `World/rules/sky.json`. Cloud cover follows the day's weather (owner picked F-SKY level 2 and F-WEATHER level 1 for the first slice); rain and fog themselves are not drawn yet. |

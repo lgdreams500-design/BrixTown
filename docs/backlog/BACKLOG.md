@@ -5,13 +5,14 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 20 of 37 | 9 of 37 | 9 of 37 |
-| Size of the plan (points) | 235 | 279 | 556 |
-| Size of the suggested plan | 99 | 239 | 524 |
+| Decided | 22 of 38 | 9 of 38 | 9 of 38 |
+| Size of the plan (points) | 242 | 283 | 560 |
+| Size of the suggested plan | 100 | 243 | 528 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
 - F-BLD-CIVIC at First slice needs F-BLD-INSIDE at level 1 (undecided)
+- F-SKY at First slice needs F-TIME-DAY at level 1 (undecided)
 
 ## City and buildings
 
@@ -63,7 +64,8 @@
 | Feature | First slice | Life depth | Full game | Note |
 |---|---|---|---|---|
 | **Day and night** `F-TIME-DAY` | undecided | undecided | undecided |  |
-| **Weather** `F-WEATHER` | undecided | undecided | undecided |  |
+| **Sky and clouds** `F-SKY` | 2 Clouds follow the weather ★ | undecided | undecided | Asked for a sky and cloud system, then said yes to cloud cover following the day's weather (owner, 2026-11-22). Later milestones not picked. |
+| **Weather** `F-WEATHER` | 1 Changing weather ★ | undecided | undecided | Said yes to 'F-WEATHER level 1 for the first slice' so clouds follow the weather (owner, 2026-11-22). Rain and fog are in scope but not drawn yet. Later milestones not picked. |
 | **Seasons** `F-SEASONS` | undecided | undecided | undecided |  |
 | **Plant and tree growth** `F-VEG-GROW` | undecided | undecided | undecided |  |
 | **Spring, autumn and leaf fall** `F-VEG-LEAF` | undecided | undecided | undecided |  |
@@ -216,6 +218,11 @@
 - 0 Fixed hour: Always the same time of day. Size -.
 - 1 Clock-driven light: Sun, dusk, lanterns and lit windows follow the world clock. Size M.
 - 2 Night life: The town works differently after dark: night shops, quiet streets. Size M.
+
+**Sky and clouds** (`F-SKY`). A sky worth looking up at, that changes with the hour.
+- 0 Plain sky: One hazy colour with a glow round the sun. Size -.
+- 1 Blue sky and drifting clouds: Blue overhead, hazy horizon, clouds that drift and change with the hour. Size S.
+- 2 Clouds follow the weather: More cloud on cloudy and wet days. Size M.
 
 **Weather** (`F-WEATHER`). Rain, cloud and fog shared by everyone.
 - 0 Always clear: No weather. Size -.

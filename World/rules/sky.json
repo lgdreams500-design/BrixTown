@@ -1,0 +1,24 @@
+{
+ "note": "The sky and its clouds (WLD-035, WLD-036). Drawn by Prototype/play/play.js; nothing here is stored or ticked: the clouds' place and shape are worked out from the world clock. Colours are linear RGB, 0 to 1. zenith is the blue overhead on a clear day (greener than it looks: the picture's tone curve turns a pure blue to purple) and brightness scales it; depth is how much of it replaces the hazy sky (0 keeps the pale haze of the reference renders, 1 is all blue overhead); the horizon always stays hazy (W5). sun_ref is the sun strength at which the blue is at full brightness. clouds.cover is the share of sky covered for each kind of weather; follow_weather false means the sky always uses cover.clear (the owner switched it on, 2026-11-22). scale sets the size of the clouds (bigger number, smaller clouds), soft the softness of their edges, wind the direction they drift, speed how far they drift per game minute, change how fast they change shape, lit and shade how bright their sunny and shaded sides are, blend_minutes how long the sky takes to change when the weather does.",
+ "zenith": [0.07, 0.42, 1.0],
+ "brightness": 1.2,
+ "depth": 0.9,
+ "sun_ref": 1.0,
+ "clouds": {
+  "follow_weather": true,
+  "cover": {
+   "clear": 0.36,
+   "cloud": 0.62,
+   "rain": 0.86,
+   "fog": 0.55
+  },
+  "scale": 2.4,
+  "soft": 0.07,
+  "wind": [1.0, 0.35],
+  "speed": 0.012,
+  "change": 0.003,
+  "lit": 0.42,
+  "shade": 0.8,
+  "blend_minutes": 40
+ }
+}

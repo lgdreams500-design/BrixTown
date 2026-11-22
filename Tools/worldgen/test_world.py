@@ -259,6 +259,33 @@ class TheFaces(unittest.TestCase):
         self.assertTrue(any("mood sad" in x for x in p))
 
 
+class TheSky(unittest.TestCase):
+    """WLD-035, WLD-036: the sky and its clouds (World/rules/sky.json, drawn by Prototype/play/play.js)."""
+
+    def test_WLD_035_sky_rules_are_sound(self):
+        self.assertEqual(world.sky_problems(W), [])
+
+    def test_WLD_035_a_broken_sky_is_caught(self):
+        import copy
+        bad = copy.deepcopy(W)
+        bad["sky"]["zenith"] = [0.2, 0.4]
+        bad["sky"]["clouds"]["cover"].pop("rain")
+        bad["sky"]["clouds"]["wind"] = [0, 0]
+        self.assertEqual(len(world.sky_problems(bad)), 3)
+
+    def test_WLD_036_every_kind_of_weather_has_a_sky(self):
+        import citysim
+        city = world.simulation(W)
+        seen = {citysim.weather(city.d, city.clock, t) for t in range(0, 48 * 1440, 360)}
+        self.assertTrue(seen <= set(world.WEATHER_KINDS), seen)
+        self.assertTrue(seen <= set(W["sky"]["clouds"]["cover"]), seen)
+
+    def test_WLD_036_the_slice_gets_the_sky(self):
+        import build_play
+        with open(build_play.__file__, encoding="utf-8") as f:
+            self.assertIn('sky={k: v for k, v in w["sky"].items()', f.read())
+
+
 class TheSounds(unittest.TestCase):
     """SND-001 to SND-013: how the city sounds (World/rules/sound.json, played by Prototype/play/sound.js)."""
     S = W["sound"]
