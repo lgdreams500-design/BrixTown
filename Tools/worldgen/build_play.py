@@ -118,7 +118,9 @@ def roads(city):
         bays=[[r1(b["pos"][0]), r1(b["pos"][1]), 1 if abs(R.lanes[b["lane"]]["u"][0]) > .5 else 0] for b in R.bays.values()],
         signals=[[j["pos"][0], j["pos"][1], round(citysim.rnd("sig", j["id"]) * cycle, 3)] for j in R.d["junctions"] if j["control"] == "signals"],
         cycle={k: cyc[k] for k in ("green_s", "amber_s", "all_red_s")},
-        width=T.r["crossing_width"], bay_length=T.r["bay_length"])
+        width=T.r["crossing_width"], bay_length=T.r["bay_length"],
+        gates=[[g["name"], R.j[g["junction"]]["pos"][0], R.j[g["junction"]]["pos"][1], g["dir"][0], g["dir"][1], g["length"]]   # roads out of town (CITY-068)
+               for g in R.d.get("gates", [])])
 
 
 def dialogue(w):

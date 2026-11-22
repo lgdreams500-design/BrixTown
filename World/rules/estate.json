@@ -8,6 +8,7 @@
   "work":    { "per_floor": "office" },
   "utility": { "whole": "plant" },
   "dealer":  { "whole": "showroom" },
+  "furniture": { "whole": "showroom" },
   "default": { "whole": "civic" }
  },
  "kinds": {

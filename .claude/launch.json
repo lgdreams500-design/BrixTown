@@ -42,6 +42,20 @@
         "8790"
       ],
       "port": 8790
+    },
+    {
+      "name": "play-8796",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "Tools/serve_play.ps1",
+        "-Port",
+        "8796"
+      ],
+      "port": 8796
     }
   ]
 }
