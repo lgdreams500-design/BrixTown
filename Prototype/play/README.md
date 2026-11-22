@@ -41,6 +41,7 @@ Nothing to install; it runs from these files.
 | [ and ] | Slow or speed the clock (×1, ×5, ×20, ×100) |
 | Y | Try the next season: spring, summer, autumn, winter. The page loads again in the same spot at the same hour, without touching the save. Daylight hours, that season's weather, trees and flowers change; everyone's routine, the cars and the notice boards stay those of the built day. `?season=Winter` starts with one |
 | G | Switch off the bounced light and contact shade (ADR-0018) to see the flat shade the slice had before; press again to bring them back. `?gi=0` starts without them |
+| O | Switch off the corner shade worked out from the screen's depth (ambient occlusion, ADR-0028); press again to bring it back. `?d_ao=0` starts without it, `?d_ao=2` shows it alone |
 | K | Try the weather: steps through clear, cloud, rain and fog, then back to the day's own weather. For looking only; the day itself does not change. `?weather=rain` starts with one |
 | T | Skip an hour |
 | M | Whole-city map with every resident on it |
