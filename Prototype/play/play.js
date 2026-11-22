@@ -144,9 +144,10 @@ function lotAt(x, z, any) {
   return null;
 }
 function groundBase(x, z) {                              // height of the ground itself: street, pavement, yard or a building's floor
-  if (x < -SW / 2 || z < -SW / 2 || x > CITY + SW / 2 || z > CITY + SW / 2) return 0;
+  const there = blockOf(x, z);                             // beyond the wall only a block built out there has ground of its own (the furniture outlet, FURN-020)
+  if (!there && (x < -SW / 2 || z < -SW / 2 || x > CITY + SW / 2 || z > CITY + SW / 2)) return 0;
   const u = x - Math.floor(x / P) * P, v = z - Math.floor(z / P) * P, lo = SW / 2 - PAVE, hi = P - SW / 2 + PAVE;
-  if (u < lo || u > hi || v < lo || v > hi || x < 0 || z < 0 || x > CITY || z > CITY) return 0;
+  if (u < lo || u > hi || v < lo || v > hi || x < 0 || z < 0 || (!there && (x > CITY || z > CITY))) return 0;
   if (u < SW / 2 || u > P - SW / 2 || v < SW / 2 || v > P - SW / 2) return Y_PAVE;
   const l = lotAt(x, z); return l && l.enterable ? Y_FLOOR : Y_YARD;
 }
@@ -1417,23 +1418,26 @@ function buildWorld() {
   // the town wall, with a gate where the tram comes through
   const W0 = -E - 1.5, W1 = CITY + E + 1.5, th = 3, gh = 7.5;
   const wallBox = (a, b, c, d, y0) => { world.box(a, y0 || 0, b, c, gh, d, C.stone, 6, y0 ? { 2: [C.stoneDark, 9] } : null); solid(a, y0 || 0, b, c, gh, d); occl.push([a, b, c, d, gh]); };
-  wallBox(W0 - th, W0 - th, W1 + th, W0); wallBox(W0 - th, W1, W1 + th, W1 + th);
-  // A road out of town gets a gate in the wall where it leads to a block outside the walls (the furniture outlet beyond
-  // the East Gate, FURN-020): an opening as wide as the street, a stone band over it with the gate's name, a tower each side.
-  const OUTSIDE = D.blocks.filter(b => b.district === "Outside the walls"), GATE_W = 8, GATE_H = 5.2;
-  const GATES = ((D.roads || {}).gates || []).filter(g => g[3] !== 0 && OUTSIDE.some(b => { const cx = b.origin[0] + b.size / 2, cz = b.origin[1] + b.size / 2; return Math.sign(cx - g[1]) === g[3] && Math.abs(cz - g[2]) < P; }));
-  for (const [a, c] of [[W0 - th, W0], [W1, W1 + th]]) {
-    const east = a > CITY / 2, cuts = [[TRAM_Z - 3.4, TRAM_Z + 3.4, 4.6, null]];
-    for (const g of GATES) if (g[3] === (east ? 1 : -1)) cuts.push([g[2] - GATE_W, g[2] + GATE_W, GATE_H, g]);
-    cuts.sort((p, q) => p[0] - q[0]); let z = W0;
-    for (const [z0, z1, h, g] of cuts) {
-      wallBox(a, z, c, z0); wallBox(a, z0, c, z1, h); z = z1;
-      if (!g) { solid(a + 1, 0, z0, c - 1, h, z1); continue; }   // the tram's way through is for the tram
-      for (const tz of [z0 - 2.6, z1 + 2.6]) { world.box((a + c) / 2 - 2.6, 0, tz - 2.6, (a + c) / 2 + 2.6, gh + 2.4, tz + 2.6, C.stone, 6); solid((a + c) / 2 - 2.6, 0, tz - 2.6, (a + c) / 2 + 2.6, gh + 2.4, tz + 2.6); }
-      const cell = nameCell(g[0]); if (cell) lettering(signs, [east ? c + .04 : a - .04, (h + gh) / 2, g[2]], [g[3], 0, 0], .8, cell);
-      const out = g[1] + g[3] * g[5]; world.flat(Math.min(east ? c : a, out), g[2] - 3.5, Math.max(east ? c : a, out), g[2] + 3.5, 0, C.road, 20);   // the road out, through the fields
+  // Every road out of town has a gate in the wall (CITY-068; the furniture outlet lies beyond the East Gate, FURN-020): an
+  // opening as wide as the street, a stone band over it with the gate's name, a tower each side, the road on through the
+  // fields. The tram's arch can be walked through too. Each side of the wall is a run with its openings cut out of it.
+  const GATE_W = 8, GATE_H = 5.2, GATES = (D.roads || {}).gates || [];
+  for (const [side, a, c, r0, r1] of [["n", W0 - th, W0, W0 - th, W1 + th], ["s", W1, W1 + th, W0 - th, W1 + th], ["w", W0 - th, W0, W0, W1], ["e", W1, W1 + th, W0, W1]]) {
+    const alongZ = side === "w" || side === "e", out = { n: [0, -1], s: [0, 1], w: [-1, 0], e: [1, 0] }[side];
+    const run = (p0, p1, y0) => { if (p1 - p0 > .01) alongZ ? wallBox(a, p0, c, p1, y0) : wallBox(p0, a, p1, c, y0); };
+    const cuts = alongZ ? [[TRAM_Z - 3.4, TRAM_Z + 3.4, 4.6, null]] : [];
+    for (const g of GATES) if (g[3] === out[0] && g[4] === out[1]) { const m = alongZ ? g[2] : g[1]; cuts.push([m - GATE_W, m + GATE_W, GATE_H, g]); }
+    cuts.sort((p, q) => p[0] - q[0]); let at = r0;
+    for (const [p0, p1, h, g] of cuts) {
+      run(at, p0); run(p0, p1, h); at = p1;
+      if (!g) continue;
+      const mid = (a + c) / 2, face = side === "w" || side === "n" ? a - .04 : c + .04, m = (p0 + p1) / 2;
+      for (const t of [p0 - 2.6, p1 + 2.6]) { const b = alongZ ? [mid - 2.6, t - 2.6, mid + 2.6, t + 2.6] : [t - 2.6, mid - 2.6, t + 2.6, mid + 2.6]; world.box(b[0], 0, b[1], b[2], gh + 2.4, b[3], C.stone, 6); solid(b[0], 0, b[1], b[2], gh + 2.4, b[3]); }
+      const cell = nameCell(g[0]); if (cell) lettering(signs, alongZ ? [face, (h + gh) / 2, m] : [m, (h + gh) / 2, face], [out[0], 0, out[1]], .8, cell);
+      const end = (alongZ ? g[1] : g[2]) + (alongZ ? g[3] : g[4]) * g[5], f0 = Math.min(face, end), f1 = Math.max(face, end);
+      alongZ ? world.flat(f0, m - 3.5, f1, m + 3.5, 0, C.road, 20) : world.flat(m - 3.5, f0, m + 3.5, f1, 0, C.road, 20);   // the road out, through the fields
     }
-    wallBox(a, z, c, W1);
+    run(at, r1);
   }
   for (const cx of [W0 - th / 2, W1 + th / 2]) for (const cz of [W0 - th / 2, W1 + th / 2]) world.box(cx - 3.5, 0, cz - 3.5, cx + 3.5, gh + 3, cz + 3.5, C.stone, 6);
   for (const s of [-.72, .72]) world.box(-E - 40, 0, TRAM_Z + s - .05, CITY + E + 40, .04, TRAM_Z + s + .05, C.metal, 9);
