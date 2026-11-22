@@ -288,6 +288,78 @@ var Life = (() => {
     if (P.msg) body.prepend(h("p", { cls: "pmsg" }, P.msg));
     el("life-title").textContent = title; el("life-sub").textContent = sub;
   }
+  // ---------------------------------------------------------------- moving house (PROP-022) and the boards at the doors (PROP-023)
+  // A resident whose household has moved keeps the day citysim planned, but lives at the new home: what they did at the
+  // old home they do at the new one (the same kind of place, on the new home's floors), and the walks to and from it
+  // follow the streets (D.life.walk_net, citysim's net). Their car trips still start where the car was parked.
+  const ORIG = D.plan.slice(), HOME0 = D.residents.map(r => r.h), STROLL = D.acts.indexOf("stroll"), WN = X.walk_net || { nodes: [], edges: [], anchor: {} };
+  let movesSeen = null, netAdj = null; const fromCache = new Map();
+  function adjOf() {
+    if (!netAdj) { netAdj = WN.nodes.map(() => []); for (const [a, b, w] of WN.edges) { netAdj[a].push([b, w]); netAdj[b].push([a, w]); } }
+    return netAdj;
+  }
+  function nearestNode(x, z) { let best = -1, bd = 1e18; WN.nodes.forEach(([nx, nz], n) => { const d = (nx - x) ** 2 + (nz - z) ** 2; if (d < bd) { bd = d; best = n; } }); return best; }
+  function walkPath(a, b) {                               // node coordinates from a to b along the streets (Dijkstra)
+    if (a < 0 || b < 0 || a === b) return a >= 0 ? [WN.nodes[a]] : [];
+    let prev = fromCache.get(a);
+    if (!prev) {
+      const A = adjOf(), dist = new Float64Array(A.length).fill(Infinity), done = new Uint8Array(A.length); prev = new Int32Array(A.length).fill(-1); dist[a] = 0;
+      const heap = [[0, a]], push = x => { heap.push(x); let i = heap.length - 1; while (i > 0) { const j = (i - 1) >> 1; if (heap[j][0] <= heap[i][0]) break; [heap[i], heap[j]] = [heap[j], heap[i]]; i = j; } };
+      const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === i) break; [heap[i], heap[m]] = [heap[m], heap[i]]; i = m; } } return top; };
+      while (heap.length) { const [d, u] = pop(); if (done[u]) continue; done[u] = 1; for (const [v, w] of A[u]) if (d + w < dist[v]) { dist[v] = d + w; prev[v] = u; push([d + w, v]); } }
+      fromCache.set(a, prev);
+    }
+    const out = [b]; while (out[out.length - 1] !== a) { const q = prev[out[out.length - 1]]; if (q < 0) return [WN.nodes[a], WN.nodes[b]]; out.push(q); }
+    return out.reverse().map(n => WN.nodes[n]);
+  }
+  function spotIn(OL, NL, x, z, floors, m) {              // the same kind of place in the new home, on its floors
+    for (const t in OL.objects || {}) {
+      const j = OL.objects[t].findIndex(q => Math.abs(q[0] - x) < .25 && Math.abs(q[1] - z) < .25); if (j < 0) continue;
+      const lv = (NL.levels || {})[t], opts = ((NL.objects || {})[t] || []).filter((_, n) => floors.includes(lv ? lv[n] : 0));
+      if (opts.length) return opts[m % opts.length].slice();
+      break;
+    }
+    const [a0, b0, a1, b1] = OL.rect, [c0, d0, c1, d1] = NL.rect;
+    return [c0 + (x - a0) / (a1 - a0) * (c1 - c0), d0 + (z - b0) / (b1 - b0) * (d1 - d0)];
+  }
+  function planFrom(i, nl, unit, m) {
+    const old = HOME0[i], OL = LOTS[old], NL = LOTS[nl], row = ORIG[i].map(p => p.slice()), moved = new Set();
+    row.forEach((p, k) => { if (p[1] === 0 && p[7] === old) { const q = spotIn(OL, NL, p[2], p[3], unit.floors, m); p[2] = q[0]; p[3] = q[1]; p[7] = nl; moved.add(k); } });
+    row.forEach((p, k) => {
+      if (p[1] !== 1 || p[2] === STROLL) return;
+      const a = k > 0 && row[k - 1][1] === 0 ? k - 1 : -1, b = k + 1 < row.length && row[k + 1][1] === 0 ? k + 1 : -1;
+      if (!moved.has(a) && !moved.has(b)) return;
+      const from = a >= 0 ? [row[a][2], row[a][3]] : [p[3], p[4]], to = b >= 0 ? [row[b][2], row[b][3]] : [p[p.length - 2], p[p.length - 1]];
+      const same = a >= 0 && b >= 0 && row[a][7] === row[b][7];
+      const na = a >= 0 && WN.anchor[row[a][7]] !== undefined ? WN.anchor[row[a][7]] : nearestNode(from[0], from[1]);
+      const nb = b >= 0 && WN.anchor[row[b][7]] !== undefined ? WN.anchor[row[b][7]] : nearestNode(to[0], to[1]);
+      const pts = same ? [] : walkPath(na, nb), flat = [p[0], 1, p[2], from[0], from[1]];
+      for (const q of pts) flat.push(q[0], q[1]);
+      flat.push(to[0], to[1]); row[k] = flat;
+    });
+    return row;
+  }
+  function rehome() {
+    const last = M.moves[M.moves.length - 1], key = M.moves.length + ":" + (last ? last.join(",") : "");
+    if (key === movesSeen) return; movesSeen = key;
+    D.residents.forEach((r, i) => {
+      const u = M.home[r.id], nl = u === undefined ? HOME0[i] : M.units[u].lot;
+      D.plan[i] = nl === HOME0[i] ? ORIG[i] : planFrom(i, nl, M.units[u], Math.max(0, M.members[u].indexOf(r.id)));
+    });
+  }
+  function boardText(n) {
+    const [sale, let_] = M.board(n), k = M.byLot.get(n).length;
+    if (!sale && !let_) return null;
+    const part = (c, w) => c ? (k > 1 ? c + " " + w : w) : null;
+    return [part(sale, "for sale"), part(let_, "to let")].filter(Boolean).join(" · ").replace(/^./, c => c.toUpperCase());
+  }
+  function boards(tags) {                                 // a board over the door of every building near you with something on the market
+    if (!ready || !M) return;
+    for (const n of M.byLot.keys()) {
+      const l = LOTS[n], d = Math.hypot(l.door[0] - pl.x, l.door[1] - pl.z); if (d > 32) continue;
+      const t = boardText(n); if (t) tags.push({ x: l.door[0], y: 3.1, z: l.door[1], d, a: Math.min(1, (32 - d) / 8), size: 14, text: "▣ " + t });
+    }
+  }
   // ---------------------------------------------------------------- property: B at an estate agent, P anywhere (PROP-011 to PROP-019)
   const m2 = i => M.units[i].area + " m²";
   function tenantText(i) {
@@ -384,6 +456,7 @@ var Life = (() => {
     if (!ready) { if (started && !designing) { transient = true; newGame(Object.assign({}, DG.default)); applyLook(); } else return; }   // ?auto=1 starts without the designer and saves nothing
     if (clock.day < E.day || (clock.day === E.day && clock.m < E.minute)) { clock.day = E.day; clock.m = E.minute; }   // the clock only goes forward
     E.advance(clock.day, clock.m);
+    rehome();                                             // residents who moved house live at the new home (PROP-022)
     if (performance.now() - checkT > 250) { checkT = performance.now(); Q.check(ctx()); }   // four times a second, however slow the frames
     const tm = E.totalMoney();
     if (lastMoney !== null && tm !== lastMoney) { const d = tm - lastMoney; el("purse-delta").textContent = (d > 0 ? "+" : "") + fmt(d); el("purse-delta").className = d > 0 ? "pos" : "neg"; el("purse-delta").style.opacity = 1; setTimeout(() => el("purse-delta").style.opacity = 0, 2200); if (panel) draw(); }
@@ -404,7 +477,10 @@ var Life = (() => {
     tr.style.display = lines.length && !Talk.on ? "block" : "none";
     const n = lotHere(), hint = el("counter");
     const what = n === null || n < 0 ? null : n === E.bankLot ? "Bank counter" : n === E.marketLot ? "Your market stall" : LOTS[n] && M.office[LOTS[n].id] ? "Estate agent: " + M.cos[M.office[LOTS[n].id]].name : E.shopKind(n) ? "Buy and sell at " + lotName(n) : null;
-    if (what && !panel && !Talk.on && pl.pose !== 4) { hint.style.display = "block"; hint.innerHTML = "<kbd>B</kbd>" + what; } else hint.style.display = "none";
+    const bt = !what && n !== null && n >= 0 && M.byLot.has(n) ? boardText(n) : null;   // PROP-023: what is on the market here
+    if (what && !panel && !Talk.on && pl.pose !== 4) { hint.style.display = "block"; hint.innerHTML = "<kbd>B</kbd>" + what; }
+    else if (bt && !panel && !Talk.on && pl.pose !== 4) { hint.style.display = "block"; hint.innerHTML = "<kbd>P</kbd>" + bt + ": see the prices"; }
+    else hint.style.display = "none";
   }
   function targets() {                                    // residents to see and places to go, for markers (QST-005)
     const out = [];
@@ -447,7 +523,7 @@ var Life = (() => {
   });
   return {
     get on() { return !!panel; }, get designing() { return designing; }, get ready() { return ready; },
-    go, frame, camera, mark, marks, conversation, allowed, chose, talkEnded, vars, key, counter, toast,
+    go, frame, camera, mark, marks, boards, conversation, allowed, chose, talkEnded, vars, key, counter, toast,
     panel: k => open(k, null), spin: dx => { spin += dx * .006; },
   };
 })();

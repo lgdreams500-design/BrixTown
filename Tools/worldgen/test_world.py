@@ -445,6 +445,27 @@ class TheSky(unittest.TestCase):
         del n["weather"]["fog"]["cover"]
         self.assertEqual(len(world.night_sky_problems(bad)), 4)
 
+    def test_WLD_043_the_sun_climbs_higher_in_summer(self):
+        h = world.sun_heights(W)
+        self.assertGreater(h["Summer"], h["Spring"])                 # long days: north of the equator, rising north of east
+        self.assertLess(h["Winter"], h["Autumn"])                    # short days: south of it, rising south of east
+        self.assertGreater(h["Summer"], 0)
+        self.assertLess(h["Winter"], 0)
+        import math
+        la = math.radians(W["sky"]["night"]["latitude"])
+        cal = W["calendar"]["calendar"]
+        for s, name in enumerate(cal["seasons"]):                    # seen from the latitude, that height sets the sun at the calendar's sunset
+            half = (cal["sunset"][s] - cal["sunrise"][s]) / 24 * math.pi, math.radians(h[name])
+            alt = math.sin(la) * math.sin(half[1]) + math.cos(la) * math.cos(half[1]) * math.cos(half[0])
+            self.assertAlmostEqual(alt, 0, places=9)
+
+    def test_WLD_043_broken_paths_are_caught(self):
+        import copy
+        bad = copy.deepcopy(W)
+        bad["sky"]["night"]["paths"]["sun_lift"] = 0.5
+        del bad["sky"]["night"]["paths"]["moon_tilt"]
+        self.assertEqual(len(world.night_sky_problems(bad)), 2)
+
     def test_WLD_010_the_slice_can_show_every_season(self):
         """The season key (Y) of the slice: one look for each season, on the same day of the season as the built day."""
         import build_play

@@ -46,7 +46,8 @@ var Estate = (() => {
         else if (kind === "flat" || (kind === "office" && f0 > 0 && !work.includes(f0))) tenant = hash01(uid, "lodger") * 1000 < R.letting.lodger_occupied_permille ? "lodger" : null;
         else if (kind === "house") tenant = null;
         else tenant = "firm";
-        out.push({ id: uid, lot: n, lot_id: l.id, block: blockOf(l.id), kind, floors: fl, area: Math.floor(fw * fh * fl.length * R.usable_bp / 10000), loc_bp: loc, floor_bp: fb, members, tenant0: tenant });
+        const nBed = (((l.objects || {}).bed) || []).filter((_, b) => fl.includes(b < beds.length ? beds[b] : 0)).length;
+        out.push({ id: uid, lot: n, lot_id: l.id, block: blockOf(l.id), kind, floors: fl, area: Math.floor(fw * fh * fl.length * R.usable_bp / 10000), loc_bp: loc, floor_bp: fb, members, beds: nBed, tenant0: tenant });
       });
     });
     return out;
@@ -59,9 +60,10 @@ var Estate = (() => {
       this.byId = {}; this.byLot = new Map();
       this.units.forEach((u, i) => { this.byId[u.id] = i; if (!this.byLot.has(u.lot)) this.byLot.set(u.lot, []); this.byLot.get(u.lot).push(i); });
       this.blocks = []; for (const u of this.units) if (!this.blocks.includes(u.block)) this.blocks.push(u.block);
-      const roles = {}; for (const r of residents) roles[r.id] = r.role;
-      const W = R.town.wages;
-      this.wage = this.units.map(u => u.members.reduce((s, m) => s + (W[roles[m]] || 0), 0));
+      this.roles = {}; for (const r of residents) this.roles[r.id] = r.role;
+      this.members = this.units.map(u => u.members.slice());   // who lives in each unit now (PROP-022)
+      this.moves = [];                                      // the last households to move: [day, from unit, to unit]
+      this.homes();
       this.cos = {}; for (const c of R.companies) this.cos[c.id] = c;
       this.office = {}; for (const c of R.companies) this.office[c.office] = c.id;
       this.base = this.units.map(u => idiv(idiv(u.area * R.kinds[u.kind].per_m2 * u.loc_bp, 10000) * u.floor_bp, 10000));
@@ -77,6 +79,12 @@ var Estate = (() => {
       this.hook();
     }
     get L() { return this.E.L; }
+    homes() {
+      const W = this.R.town.wages;
+      this.wage = this.members.map(ms => ms.reduce((s, m) => s + (W[this.roles[m]] || 0), 0));
+      this.home = {}; this.members.forEach((ms, i) => { for (const m of ms) this.home[m] = i; });
+    }
+    homeOf(rid) { const i = this.home[rid]; return i === undefined ? null : this.units[i].lot_id; }   // PROP-022
     hook() { if (!this._h) this._h = d => this.settle(d); if (!this.E.hooks.includes(this._h)) this.E.hooks.push(this._h); }
     firstOwner(i) {                                       // PROP-010
       const u = this.units[i], w = this.R.kinds[u.kind].owners;
@@ -156,6 +164,7 @@ var Estate = (() => {
       if (!this.started) return;
       this.updateIndex(d);
       let [earned, spent] = this.rentsAndCosts(d);
+      this.moving(d);
       this.letting(d);
       const sales = this.market(d);
       this.mortgageDays(d);
@@ -225,6 +234,35 @@ var Estate = (() => {
       lines.push([to, amount]);
       this.L.post(d, d === this.E.day && this.E.minute < 1440 ? this.E.minute : 1440, memo, lines);
       return true;
+    }
+    moving(d) {                                           // PROP-022
+      const Mv = this.R.moving, cands = [];
+      this.units.forEach((u, j) => { if ((u.kind === "house" || u.kind === "flat") && this.tenant[j] === null && u.beds > 0 && (this.owner[j] !== "player" || this.to_let[j])) cands.push(j); });
+      if (!cands.length) return;
+      for (let i = 0; i < this.units.length; i++) {
+        const ms = this.members[i];
+        if (this.tenant[i] !== "hh" || this.owner[i] === "hh" || !ms.length) continue;
+        const budget = idiv(this.wage[i] * Mv.rent_share_bp, 10000);
+        const ch = Mv.move_bp + (this.rentOf(i) > budget ? Mv.over_bp : 0);
+        if (hash01(this.units[i].id, d, "move") * 10000 >= ch) continue;
+        let best = null, bs = -1;
+        for (const j of cands) {
+          if (this.tenant[j] !== null || this.units[j].beds < ms.length || this.rentOf(j) > budget) continue;
+          const sc = hash01(this.units[i].id, this.units[j].id, d, "pick");
+          if (sc > bs) { best = j; bs = sc; }
+        }
+        if (best === null) continue;
+        const j = best, ls = this.listing[String(j)];
+        if (ls && this.owner[j] !== "player") {
+          const tax = idiv(ls.price * this.R.trade.transfer_tax_bp, 10000);
+          if (hash01(this.units[i].id, d, "buyhome") * 10000 < Mv.buy_bp && this.L.balance(TOWN) >= ls.price + tax + this.R.trade.household_min_pool_days * this.income)
+            this.transfer(j, "hh", ls.price, d, ls.agent, "Sold: " + this.name(j));
+        }
+        this.members[j] = ms; this.members[i] = [];
+        this.tenant[j] = "hh"; this.tenant[i] = null;
+        this.homes();
+        this.moves.push([d, i, j]); this.moves = this.moves.slice(-40);
+      }
     }
     letting(d) {                                          // PROP-015
       const T = this.R.letting;
@@ -392,6 +430,10 @@ var Estate = (() => {
       const typ = o.startsWith("co:") ? "company" : o === "hh" ? "household" : o;
       return idiv(this.value(i) * M.offer_bp[typ], 10000);
     }
+    board(lot) {                                          // PROP-023: the board at a building's door
+      const ix = this.byLot.get(lot) || [];
+      return [ix.filter(i => String(i) in this.listing && this.owner[i] !== "player").length, ix.filter(i => this.tenant[i] === null && this.owner[i] !== "player").length];
+    }
     bid(i) { return idiv(this.value(i) * this.R.trade.bid_bp, 10000); }
     // ---- what the player does
     needOffice(agent) { if (agent !== null && agent !== undefined && !(agent in this.cos)) no("no such estate agent"); }
@@ -486,8 +528,8 @@ var Estate = (() => {
       m.fees_paid += fee; m.paid += owed - fee; m.status = "repaid";
     }
     // ---- saving
-    save() { return clone({ started: this.started, owner: this.owner, tenant: this.tenant, rent: this.rent, to_let: this.to_let, tenancy: this.tenancy, listing: this.listing, missed: this.missed, owed: this.owed, mortgages: this.mortgages, buys: this.buys, idx: this.idx, history: this.history, sales: this.sales, short: this.short, income: this.income }); }
-    load(s) { Object.assign(this, clone(s)); }
+    save() { return clone({ started: this.started, owner: this.owner, tenant: this.tenant, rent: this.rent, to_let: this.to_let, tenancy: this.tenancy, listing: this.listing, missed: this.missed, owed: this.owed, mortgages: this.mortgages, buys: this.buys, idx: this.idx, history: this.history, sales: this.sales, short: this.short, income: this.income, members: this.members, moves: this.moves }); }
+    load(s) { Object.assign(this, clone(s)); this.homes(); }
   }
 
   // ---------------------------------------------------------------- the self-check against Python (estate.run_script)
@@ -522,13 +564,14 @@ var Estate = (() => {
     const idx = {}; for (const b of Object.keys(est.idx).sort()) idx[b] = est.idx[b];
     const listing = {}; for (const k of Object.keys(est.listing).sort((x, y) => x - y)) listing[k] = est.listing[k].price;
     return { results, balances, tx: E.L.tx.length, supply: E.L.supply(), owner: est.owner.slice(), tenant: est.tenant.slice(), idx, history: est.history,
-      mortgages: est.mortgages.map(m => [m.status, m.paid, m.fees, m.missed]), listing, units: est.units.length, mine };
+      mortgages: est.mortgages.map(m => [m.status, m.paid, m.fees, m.missed]), listing, units: est.units.length, mine,
+      moves: est.moves, beds: est.units.reduce((a, u) => a + u.beds, 0) };
   }
   function residentsOf(D, lots) { return D.residents.map(r => ({ id: r.id, role: D.roles[r.r], home: lots[r.h] ? lots[r.h].id : null })); }
   function selfTest(D, lots) {
     const X = D.life, C = X.estate_checks, E = new Econ.Economy(X.economy, lots, {}, {});
     const got = runScript(new Market(X.estate, E, lots, residentsOf(D, lots)), C.script), want = C.want, bad = [];
-    for (const k of ["results", "balances", "tx", "supply", "owner", "tenant", "idx", "history", "mortgages", "listing", "units", "mine"])
+    for (const k of ["results", "balances", "tx", "supply", "owner", "tenant", "idx", "history", "mortgages", "listing", "units", "mine", "moves", "beds"])
       if (JSON.stringify(got[k]) !== JSON.stringify(want[k])) bad.push(k + ": " + JSON.stringify(got[k]).slice(0, 300) + " should be " + JSON.stringify(want[k]).slice(0, 300));
     return bad;
   }

@@ -1,7 +1,7 @@
 ---
 spec_id: WASTED-SPEC
 title: Brix Town — Game Specification
-version: 0.5.5
+version: 0.5.6
 status: draft            # draft | reviewed | approved
 last_updated: 2026-11-22
 owner: project-owner
@@ -201,7 +201,8 @@ are accepted, the rest stay proposed.
 | PROP-019 | The bank shall lend a mortgage on a purchase: at least a data deposit, a term from data, simple interest, equal daily instalments from the current account from the day after; three missed instalments and the bank sells the units at the forced bid, clears the debt from the price, pays the rest to the player and lends no more. Selling a mortgaged unit pays the mortgage off first. Part of BANK-002. `F-PROP-ESTATE` level 2. | P0 | PH1 | in-progress |
 | PROP-020 | The market shall be balanced against what a player earns (`balance.player_day_income`, `[ASSUMPTION]` until measured in play): the cheapest home rents for at most a data share of a day's income, its deposit takes at most a few days of income, its mortgage instalment with upkeep and tax is at most a data share, buying to let pays back in a data range of days, and buying and selling straight back always loses money. `F-PROP-ESTATE` level 2. | P0 | PH1 | in-progress |
 | PROP-021 | The market shall not be ticked: it is settled one game day at a time, in day order, at each day's end, from the day, the data and what the player did, so the same game gives the same market on every machine and after loading a save. The browser slice's port shall reproduce the rules' results exactly (self-test). `F-PROP-ESTATE` level 2. | P0 | PH1 | in-progress |
-| PROP-022 | Residents shall move house: a household that buys or rents another unit moves there, and its routine follows. Needs the routines to read homes from the market instead of `World/city_01/residents.json`. Until then residents buy the homes they live in but do not move. `F-PROP-ESTATE` level 2. | P1 | PH3 | proposed |
+| PROP-022 | Residents shall move house: each day a renting household may move to an empty house or flat it can afford (a data share of its wages) that has a bed for each of them, sooner if its own rent is more than it can afford, and buys it if it is listed and the town can pay; its old home stands empty. Who lives where is kept with the market and saved with it. In the slice a resident who has moved does what they did at the old home at the new one, on its floors, and walks there along the streets; their car trips still start where the car was parked. Asked for by the owner on 2026-11-22. `F-PROP-ESTATE` level 2. | P1 | PH1 | in-progress |
+| PROP-023 | Every building with a unit for sale or to let shall show it on a board over its door, with how many when it has more than one unit, and say so when the player stands there; the real estate companies' offices shall carry their names. Empty flats shall have beds and living space on their floors (`Tools/worldgen/add_estate_01.py`). Asked for by the owner on 2026-11-22. `F-PROP-ESTATE` level 2. | P1 | PH1 | in-progress |
 
 ### 4.6 Living city — `CITY`
 
@@ -496,3 +497,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.5.2 | 2026-11-22 | Q-14 decided: dialogue is voiced (ADR-0019). SND-018 added; SND-005 cut; CHR-009 and CITY-007 updated to match. |
 | 0.5.3 | 2026-11-22 | Real estate in the first slice, from the owner's request and pick of `F-PROP-ESTATE` level 2: PROP-002 and PROP-006 moved to PH1; PROP-009 to PROP-021 added (units, owners, several real estate companies, buying, selling, renting, letting, block price indices, tax and seizure, mortgages, balance), PROP-022 proposed (residents moving house). ADR-0022. |
 | 0.5.5 | 2026-11-22 | The game is called **Brix Town** (owner); "Wasted" was a working title. Q-13 decided. ADR-0025. |
+| 0.5.6 | 2026-11-22 | Real estate, the missing pieces (owner's request): residents move house (PROP-022, now PH1 in progress), For Sale and To Let boards and the agents' names on their offices (PROP-023), beds in empty flats. |

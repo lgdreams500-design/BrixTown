@@ -1754,10 +1754,10 @@ const main = program(MAIN_VS, MAIN_FS), signProg = program(MAIN_VS, "#define LET
 const pre = program(MAIN_VS, `precision mediump float; void main(){ gl_FragColor=vec4(1.); }`);       // depth only, laid first so each pixel is lit once
 const sky = program(`attribute vec2 aQ; varying vec2 vQ; void main(){ vQ=aQ; gl_Position=vec4(aQ,.9999,1.); }`,
 `precision highp float; varying vec2 vQ; uniform vec3 uR,uU,uF,uSun,uZen,uHor,uSunCol; uniform float uNight,uExp; uniform vec4 uCl; uniform vec2 uClOff,uClLit;   // uCl: cover, edge softness, size, shape phase
-uniform mat3 uCel; uniform vec3 uMoon,uSunT,uCity,uMw; uniform vec4 uSt,uMn; uniform float uT;   // night (WLD-042): uSt stars (seen, density, twinkle, pixel size), uMn moon (lit share, size, brightness, dims stars), uMw Milky Way (brightness, width, dust)
+uniform mat3 uCel; uniform vec3 uMoon,uSunT,uCity,uMw; uniform vec4 uSt,uMn; uniform float uT,uMoonDay,uSunR,uGlare;   // night (WLD-042): uSt stars (seen, density, twinkle, pixel size), uMn moon (lit share, size, brightness, dims stars), uMw Milky Way (brightness, width, dust)
 ${NOISE}
 ${TONE}
-void main(){ vec3 d=normalize(uF+vQ.x*uR+vQ.y*uU); float s=dot(d,uSun), p=haze(s); float hz=1.-.85*uNight; vec3 c=mix(uHor+uSunCol*(4.4*p*hz),uZen+uSunCol*(.9*p*hz),pow(clamp(d.y,0.,1.),.5));   // hz: moonlight lights the air far less than sunlight
+void main(){ vec3 d=normalize(uF+vQ.x*uR+vQ.y*uU); float s=dot(d,uSun), p=haze(s); float hz=(1.-.85*uNight)*(1.-uGlare*smoothstep(.94,.9996,s)); vec3 c=mix(uHor+uSunCol*(4.4*p*hz),uZen+uSunCol*(.9*p*hz),pow(clamp(d.y,0.,1.),.5));   // hz: moonlight lights the air far less than sunlight; near the sun the glare eases (uGlare) so its disc can be seen
   float a=0.; vec3 cloud=vec3(0.);
   if(d.y>.015&&uCl.x>0.){                                                  // clouds (WLD-035): soft heaps on a flat layer overhead, lit from the sun's side, lost in the haze towards the horizon
     vec2 q=d.xz/(d.y+.12)*uCl.z+uClOff, sd=normalize(uSun.xz+vec2(1e-4))*.3; vec3 q3=vec3(q.x,uCl.w,q.y), qs=vec3(q.x+sd.x,uCl.w,q.y+sd.y);
@@ -1786,13 +1786,15 @@ void main(){ vec3 d=normalize(uF+vQ.x*uR+vQ.y*uU); float s=dot(d,uSun), p=haze(s
         st+=mix(vec3(.7,.8,1.),vec3(1.,.78,.55),t*t)*mag*tw*exp(-r*r*1.6); } }
     float md=1.-uMn.w*uMn.x*(.6+.4*pow(max(mo,0.),6.));                     // a bright moon washes the stars out, most of all round itself
     c+=st*uSt.x*ext*md*uNight*(1.-a);
-    float rr=length(d-uMoon*mo)/uMn.y;                                     // the moon: a lit ball, its phase from where the sun is, its seas a little darker
-    if(mo>0.&&rr<1.2&&d.y>-.01){ vec3 q=(d-uMoon*mo)/uMn.y, N=q-uMoon*sqrt(max(1.-dot(q,q),0.));
-      float lit=smoothstep(-.06,.12,dot(N,uSunT)), sea=.72+.28*smoothstep(.62,.38,ns(N*2.6+5.)*.7+ns(N*6.)*.3);
-      c=mix(c,vec3(1.,.96,.88)*(lit*sea*uMn.z*2.2+.012),smoothstep(1.,.93,rr)*uNight*(1.-.85*a)); }
     c+=vec3(.75,.82,1.)*uMn.x*uMn.z*.06*(pow(max(mo,0.),900.)*3.+pow(max(mo,0.),60.)*.6)*uNight*(1.+a); }   // a halo round the moon, wider in cloud
+  { float mo=dot(d,uMoon), rr=length(d-uMoon*mo)/uMn.y;                   // the moon (WLD-043): a lit ball, its phase from where the sun is, its seas a little darker; by day a pale shape in the blue
+    if(mo>0.&&rr<1.2&&d.y>-.01){ vec3 q=(d-uMoon*mo)/uMn.y, N=q-uMoon*sqrt(max(1.-dot(q,q),0.));
+      float lit=smoothstep(-.06,.12,dot(N,uSunT)), sea=.72+.28*smoothstep(.62,.38,ns(N*2.6+5.)*.7+ns(N*6.)*.3), edge=smoothstep(1.,.93,rr)*(1.-.85*a);
+      vec3 night=mix(c*.6+vec3(.004,.005,.008),vec3(1.,.96,.88)*sea*uMn.z*2.2,lit), day=c+vec3(.62,.66,.72)*lit*sea*uMoonDay;   // the dark part hides the stars behind it but is only a little darker than the sky (earthshine)
+      c=mix(c,mix(day,night,uNight),edge); } }
   c=mix(c,cloud,a);
-  c+=uSunCol*pow(max(s,0.),2500.)*30.*step(0.,d.y)*(1.-.92*a)*(1.-uNight);
+  float sd=acos(clamp(s,-1.,1.));                                          // the sun's disc (WLD-043): a round, sharp-edged ball that stands out from the glare round it
+  c+=uSunCol*(smoothstep(uSunR*1.08,uSunR*.92,sd)*45.+pow(max(s,0.),2500.)*8.)*step(-.01,d.y)*(1.-.97*a)*(1.-uNight);
   gl_FragColor=vec4(tone(c*uExp),1.); }`);
 // Rain (WLD-037): drops falling in the world, not on the screen. Each layer is a ring of drops round the camera (1.6 to 11 m away),
 // so they fall straight down whichever way you look, draw together overhead when you look up, and far ones are small and many.
@@ -1906,21 +1908,27 @@ function weatherNow(m) {
   out.wet = Math.max(Math.min(1, out.rain * 1.5), SKY.weather[WX_KIND(s - 1)].rain > 0 ? clamp(1 - into / SKY.rain.dry_minutes, 0, 1) : 0);
   return out;
 }
-// The night sky (WLD-042), worked out from the clock alone. The moon runs the sun's path, later by its phase; the stars turn round the
-// celestial pole once a day and a little further each day of the year (sky.json "night").
-const NIGHT = SKY.night;
-function arc(m) {                                           // the sun's path at minute m of any day: above the horizon from sunrise to sunset, below it at night
-  const rise = D.day.sunrise * 60, set = D.day.sunset * 60, t = ((m % 1440) + 1440) % 1440;
-  const a = t >= rise && t <= set ? (t - rise) / (set - rise) * Math.PI : Math.PI + ((t - set + 1440) % 1440) / (1440 - (set - rise)) * Math.PI;
-  const v = [Math.cos(a) * .85, Math.sin(a) * .8 + .08, .42 * Math.sin(a) + .12], n = Math.hypot(v[0], v[1], v[2]); return v.map(q => q / n);
+// The night sky (WLD-042) and the paths of the sun and moon (WLD-043), worked out from the clock alone (sky.json "night", "paths").
+// Both bodies cross the sky as seen from the town's latitude. The sun's height for the season is the one that gives the calendar's
+// sunrise and sunset: in summer it rises north of east, climbs high and sets north of west; in winter it rises south of east and
+// stays low. The moon is later than the sun by its phase and keeps to its own height, which swings with where it is on its orbit,
+// so a winter full moon rides high and a summer one stays low. The stars turn round the pole with the same clock.
+const NIGHT = SKY.night, TAU = 2 * Math.PI;
+const LAT = NIGHT.latitude * Math.PI / 180, POLE = [0, Math.sin(LAT), -Math.cos(LAT)], MERID = [0, Math.cos(LAT), Math.sin(LAT)];   // the pole, low in the north; the equator crosses the south at 90 - latitude
+function skyAt(H, dec) {                                   // where a body is at hour angle H (0 when due south, growing westward) and declination dec
+  const cd = Math.cos(dec), sd = Math.sin(dec), ch = Math.cos(H);
+  return [-cd * Math.sin(H), cd * ch * MERID[1] + sd * POLE[1], cd * ch * MERID[2] + sd * POLE[2]];   // east is +x, south +z
 }
+function sunHour(m) { return (m - (D.day.sunrise + D.day.sunset) * 30) / 1440 * TAU; }   // the sun's hour angle: 0 at the middle of the calendar's day
+function sunDec() { return Math.atan(-Math.cos((D.day.sunset - D.day.sunrise) / 24 * Math.PI) / Math.tan(LAT)); }   // the height that sets the sun at the calendar's sunset
 function nightSky(m) {
   const day = D.day.look_day != null ? D.day.look_day : D.day.index || 0, mn = NIGHT.moon, ph = (((day + m / 1440 + mn.offset_days) / mn.cycle_days) % 1 + 1) % 1;
-  const moon = arc(m - ph * 1440), lit = (1 - Math.cos(ph * 2 * Math.PI)) / 2, up = smooth(-.02, .2, moon[1]);
-  const la = NIGHT.latitude * Math.PI / 180, P = [0, Math.sin(la), -Math.cos(la)], Mr = [0, Math.cos(la), Math.sin(la)];   // the pole, low in the north; the equator crosses the south at 90 - latitude
-  const lst = (m / 1440 - .5 + (day % NIGHT.year_days) / NIGHT.year_days) * 2 * Math.PI, c = Math.cos(lst), s = Math.sin(lst);   // sidereal time: the stars overhead at this minute of this day of the year
-  const X = [-s, Mr[1] * c, Mr[2] * c], Y = [c, Mr[1] * s, Mr[2] * s];   // the stars' x and y axes: X = M cos + W sin, Y = M sin - W cos, west being -x
-  return { moon, lit, up, sun: arc(m), cel: new Float32Array([X[0], Y[0], P[0], X[1], Y[1], P[1], X[2], Y[2], P[2]]) };
+  const yr = (day % NIGHT.year_days) / NIGHT.year_days, Hs = sunHour(m), P = NIGHT.paths, ob = P.moon_swing * Math.PI / 180;
+  const lm = (yr + ph) * TAU, dm = Math.asin(Math.sin(ob) * Math.sin(lm)) + P.moon_tilt * Math.PI / 180 * Math.sin(lm - (day + m / 1440) / P.moon_node_days * TAU);   // the moon's height: its place on its orbit, and the tilt of the orbit, which turns slowly
+  const moon = skyAt(Hs - ph * TAU, dm), lit = (1 - Math.cos(ph * TAU)) / 2, up = smooth(-.02, .2, moon[1]);
+  const lst = Hs + yr * TAU, c = Math.cos(lst), s = Math.sin(lst);   // sidereal time: the stars overhead at this minute of this day of the year
+  const X = [-s, MERID[1] * c, MERID[2] * c], Y = [c, MERID[1] * s, MERID[2] * s];   // the stars' x and y axes: X = M cos + W sin, Y = M sin - W cos, west being -x
+  return { moon, lit, up, sun: skyAt(Hs, sunDec()), cel: new Float32Array([X[0], Y[0], POLE[0], X[1], Y[1], POLE[1], X[2], Y[2], POLE[2]]) };
 }
 // ?studio=1: one standing person under the light and camera of the reference lineup (Tools/blender/character_face_05.py, sheets()), to compare
 // the slice's people with character_lineup.png without the town's own light in the way. Sun from the front left at 48 degrees, strength 3.2 in
@@ -1929,10 +1937,10 @@ const STUDIO = new URLSearchParams(location.search).has("studio"), STUDIO_AT = [
 const LINEUP = STUDIO || new URLSearchParams(location.search).has("lineup") ? People.cast() : null;
 function lighting(m) {                                       // the reference recipe (sun 14 W/m2, sky 0.35, haze) carried through the day
   const rise = D.day.sunrise * 60, set = D.day.sunset * 60, day = smooth(0, 1, Math.min((m - (rise - 30)) / 60, ((set + 30) - m) / 60));
-  const a = clamp((m - rise) / (set - rise), 0, 1) * Math.PI, unit = v => { const n = Math.hypot(v[0], v[1], v[2]); return v.map(q => q / n); };
-  const sun = unit([Math.cos(a) * .85, Math.sin(a) * .8 + .08, .42 * Math.sin(a) + .12]), moon = unit([-.42, .74, -.52]), low = smooth(.05, .5, sun[1]), isDay = day > .03;
+  const unit = v => { const n = Math.hypot(v[0], v[1], v[2]); return v.map(q => q / n); }, Nt = nightSky(m), st = Nt.sun;   // the sun on its path for the season (WLD-043)
+  const sun = unit([st[0], Math.max(st[1], NIGHT.paths.sun_lift), st[2]]), moon = unit([-.42, .74, -.52]), low = smooth(.05, .5, sun[1]), isDay = day > .03;   // its light comes from no lower than sun_lift, so dawn and dusk shadows stay in the shadow picture
   const fogD = mix(.014, .009, low) * (.6 + .4 * day), through = Math.exp(-fogD * 14 / Math.max(sun[1], .12));      // sunlight left after crossing the haze
-  const Nt = nightSky(m), ml = Nt.lit * Nt.up, moonL = mul3(NIGHT.moon.light, ml * (.35 + .65 * smooth(.02, .5, Nt.moon[1])));   // moonlight (WLD-042): by phase and by how high the moon is; none when it is down
+  const ml = Nt.lit * Nt.up, moonL = mul3(NIGHT.moon.light, ml * (.35 + .65 * smooth(.02, .5, Nt.moon[1])));   // moonlight (WLD-042): by phase and by how high the moon is; none when it is down
   const sunCol = isDay ? mul3(mix3([1, .42, .22], [1, .86, .68], low), 14 / Math.PI * through * day) : moonL;
   const sky = mix3(NIGHT.fill.map((v, i) => v + moonL[i] * .22), mix3([.036, .06, .18], [.147, .193, .287], low), day);
   const nz = NIGHT.zenith.map((v, i) => v + [.003, .006, .016][i] * ml), nh = NIGHT.horizon.map((v, i) => v + NIGHT.city_glow[i] * .3 + [.005, .008, .014][i] * ml);   // a moonlit sky is a deeper blue, not black
@@ -2099,6 +2107,7 @@ function hud(VP, W, H, tags) {
     if (L.indoor ? inLot !== L.lot : (inLot && pl.y < 6)) continue;
     put(L.x, L.y, L.z, L.text, clamp((L.r - d) / (L.r * .35), 0, 1), d < 14 ? 19 : 16, "400");
   }
+  if (Life.boards) Life.boards(tags);                     // For Sale and To Let over the doors (life.js, PROP-023)
   for (const t of tags) put(t.x, t.y, t.z, t.text, t.a !== undefined ? t.a : clamp((9 - t.d) / 3, 0, 1), t.size || 14, "600");
   g2.globalAlpha = 1;
 }
@@ -2317,7 +2326,8 @@ function frame(now) {
   { const N = NIGHT, Nt = Lt.Nt;   // the night sky (WLD-042): stars, Milky Way and moon from the clock, how much of them shows from the weather
     gl.uniformMatrix3fv(sky.u.uCel, false, Nt.cel); gl.uniform3fv(sky.u.uMoon, Nt.moon); gl.uniform3fv(sky.u.uSunT, Nt.sun); gl.uniform3fv(sky.u.uCity, mul3(N.city_glow, mix(1, 1.5, clamp(Wx.haze - 1, 0, 1))));
     gl.uniform4f(sky.u.uSt, N.stars.brightness * Wx.stars, N.stars.density, N.stars.twinkle, 2 * th / H); gl.uniform4f(sky.u.uMn, Nt.lit * Nt.up, N.moon.size, N.moon.glow * Wx.sun + .15, N.moon.dims_stars);
-    gl.uniform3f(sky.u.uMw, N.milky_way.brightness * Wx.stars, N.milky_way.width, N.milky_way.dust); gl.uniform1f(sky.u.uT, now / 1000 % 600); }
+    gl.uniform3f(sky.u.uMw, N.milky_way.brightness * Wx.stars, N.milky_way.width, N.milky_way.dust); gl.uniform1f(sky.u.uT, now / 1000 % 600);
+    gl.uniform1f(sky.u.uMoonDay, NIGHT.paths.moon_by_day * Nt.up * Wx.sun); gl.uniform1f(sky.u.uSunR, NIGHT.paths.sun_size); gl.uniform1f(sky.u.uGlare, NIGHT.paths.sun_glare_ease); }
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.enable(gl.CULL_FACE); gl.depthMask(true);   // on a tie the layer laid later (the upper one) wins
   const seen = pieces.filter(pc => !outside(VP, pc.box)), nearD = chunks.filter(ch => Math.hypot(ch.cx - cam.eye[0], ch.cz - cam.eye[2]) < DETAIL_R && !outside(VP, ch.box));
