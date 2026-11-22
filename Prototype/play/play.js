@@ -48,6 +48,19 @@ const C = {
 const PLASTER = [[.68, .63, .55], [.70, .58, .46], [.64, .6, .53], [.7, .6, .5], [.66, .56, .46], [.68, .63, .55]];
 const ROOF = [[.44, .24, .18], [.38, .21, .16], [.22, .22, .27], [.32, .21, .15], [.47, .28, .2]];
 const ACCENT = [C.ochre, C.terracotta, C.teal, C.blue, C.olive, C.plum];
+// Stone, brick and paving (ADR-0017, WLD-039): which pattern each building, block and open lot uses comes worked out from
+// World/rules/surfaces.json (D.surfaces); a pattern is drawn as material 30 + its number, its sizes held in uPatA/uPatB.
+const SURF = D.surfaces || { patterns: [], lots: {}, blocks: {}, table: {} }, SURF_TYPE = { bond: 0, flemish: 1, rubble: 2, flags: 3, herringbone: 4, basket: 5 };
+const SURF_A = new Float32Array(64), SURF_B = new Float32Array(64);
+SURF.patterns.forEach((name, k) => { const t = SURF.table[name]; SURF_A.set([SURF_TYPE[t.type], t.unit[0], t.unit[1], t.joint], k * 4); SURF_B.set([t.vary || .8, t.bevel || 0, t.dome || 0, 0], k * 4); });
+function wallStone(l) {                                    // [colour, material] of a building's stone, and whether its upper storeys are that too
+  const s = SURF.lots[l.id]; if (!s || s.wall === undefined) return [C.stone, 6, false];
+  return [s.color || C.stone, 30 + s.wall, s.upper];
+}
+function groundOf(id, fallback, block) {                   // [colour, material] of a block's ground and pavements, or an open lot's
+  const s = block ? SURF.blocks[id] : SURF.lots[id]; if (!s) return [fallback, 7];
+  return [s.color || fallback, 30 + (block ? s.pavement : s.ground)];
+}
 const FLOOR = { home: [.36, .26, .18], shop: [.5, .46, .4], food: [.42, .3, .22], work: [.38, .36, .36], health: [.6, .6, .57], utility: [.3, .3, .31], bank: [.62, .6, .55], dealer: [.6, .6, .58], library: [.38, .26, .17], museum: [.6, .58, .54], cinema: [.3, .14, .12] };
 const SKIN = [[.55, .38, .28], [.42, .27, .18], [.30, .19, .13], [.62, .46, .36], [.24, .15, .10], [.5, .33, .22]];
 const HAIR = [[.05, .04, .04], [.16, .1, .06], [.09, .07, .06], [.3, .2, .1], [.22, .12, .08]];
@@ -436,12 +449,13 @@ function building(l) {
   l.side = side; l.dw = dw; l.H = H;
   labels.push({ x: dx, y: 3.3, z: dz, text: l.name, lot: l, r: big ? 60 : 30 });
   if (!l.enterable) {
-    world.box(x0, 0, z0, x1, H, z1, C.stone, 6); solid(x0, 0, z0, x1, H, z1);
+    const [sc0, sf0] = wallStone(l); world.box(x0, 0, z0, x1, H, z1, sc0, sf0); solid(x0, 0, z0, x1, H, z1);
     const d = DOOR_DIR[side]; world.ybox(dx + d[0] * .03, Y_PAVE, dz + d[1] * .03, side === "n" || side === "s" ? 1.6 : .1, 2.3, side === "n" || side === "s" ? .1 : 1.6, 0, C.metal, 9);
     windows(l, wallC); return;
   }
   // ground floor: four stone walls with an open doorway, plaster inside
-  const wall = (ax0, az0, ax1, az1, y0, inner) => { world.box(ax0, y0, az0, ax1, GF, az1, C.stone, 6, { [inner]: [inC, 17], 3: null, 2: y0 > 0 ? [C.stoneDark, 9] : null }); solid(ax0, y0, az0, ax1, GF, az1); };
+  const [stoneC, stoneF, stoneAll] = wallStone(l);       // this building's stone or brick (surfaces.json)
+  const wall = (ax0, az0, ax1, az1, y0, inner) => { world.box(ax0, y0, az0, ax1, GF, az1, stoneC, stoneF, { [inner]: [inC, 17], 3: null, 2: y0 > 0 ? [C.stoneDark, 9] : null }); solid(ax0, y0, az0, ax1, GF, az1); };
   for (const s of "nswe") {
     const ns = s === "n" || s === "s", inner = { n: 5, s: 4, w: 1, e: 0 }[s];
     const a0 = ns ? x0 : z0 + t, a1 = ns ? x1 : z1 - t, f0 = s === "n" ? z0 : s === "s" ? z1 - t : s === "w" ? x0 : x1 - t;
@@ -456,8 +470,9 @@ function building(l) {
   l.sp = specialKind(l);
   const stoneUp = l.sp === "office" || (l.block.template === "peri" && hash(l.id, "st") < .15);     // most old houses are plaster over a stone storey, as in the building kit
   const front = (l.kind === "shop" || l.kind === "food") && !l.tower, DSa = sideOf(l, side), aw = front ? Math.min(DSa.a1 - DSa.a0 - 2, 14) : 0; l.aw = aw;
-  if (old) world.box(x0, GF, z0, x1, OLD_BASE, z1, C.stone, 6, { 2: ceil, 3: null });
-  world.box(x0, old ? OLD_BASE : GF, z0, x1, H, z1, stoneUp ? C.stone : wallC, stoneUp ? 6 : 0, old ? { 3: [C.stoneDark, 0] } : { 2: ceil, 3: [flatRoof ? C.stoneDark : roofC, 0] });
+  if (old) world.box(x0, GF, z0, x1, OLD_BASE, z1, stoneC, stoneF, { 2: ceil, 3: null });
+  const upAll = stoneUp || stoneAll;                       // all-stone buildings, and the brick terraces brick to the eaves
+  world.box(x0, old ? OLD_BASE : GF, z0, x1, H, z1, upAll ? stoneC : wallC, upAll ? stoneF : 0, old ? { 3: [C.stoneDark, 0] } : { 2: ceil, 3: [flatRoof ? C.stoneDark : roofC, 0] });
   solid(x0, GF, z0, x1, H, z1);
   const dm = detailOf(l.block), ring = (x, y0, y1, ov) => world.box(x0 - ov, y0, z0 - ov, x1 + ov, y1, z1 + ov, C.stoneDark, 0, { 2: [mul3(C.stoneDark, .8), 0] });
   if (flatRoof) {                                        // a flat roof with a parapet you can walk on, a coping on top and a cornice below
@@ -1144,7 +1159,7 @@ function openLot(l) {
     for (const [x, z] of o.flowerbed || []) spot(l, x, z, 0, yawOf(0, -1), Y_YARD);
     labels.push({ x: cx, y: 3, z: cz, text: l.name, lot: l, r: 46 });
   } else if (l.kind === "market") {
-    world.flat(x0, z0, x1, z1, Y_PATH, C.path, 7);
+    const [mc, mf] = groundOf(l.id, C.path); world.flat(x0, z0, x1, z1, Y_PATH, mc, mf);
     for (const [x, z] of o.stall || []) spot(l, x, z, 0, yawOf(0, z < cz ? 1 : -1), Y_YARD);
     for (const [x, z] of o.customer || []) spot(l, x, z, 0, yawOf(0, z < cz ? -1 : 1), Y_YARD);
     labels.push({ x: cx, y: 5, z: cz, text: l.name, lot: l, r: 70 });
@@ -1267,7 +1282,7 @@ function buildWorld() {
   RANGES.push([0, world.n, true]);                        // fields, town paving, wall and rails: laid first, under everything
   for (const b of D.blocks) {
     const [bx, bz] = b.origin, S = b.size, b0 = world.n;
-    world.box(bx - PAVE, 0, bz - PAVE, bx + S + PAVE, Y_PAVE, bz + S + PAVE, C.pave, 7);
+    const [pc, pf] = groundOf(b.id, C.pave, true); world.box(bx - PAVE, 0, bz - PAVE, bx + S + PAVE, Y_PAVE, bz + S + PAVE, pc, pf);   // paving by surfaces.json
     if (b.template === "rows") world.flat(bx + 2, bz + 16.5, bx + S - 2, bz + S - 16.5, Y_GRASS, C.grass, 0);
     if (b.template === "park") world.flat(bx + 1, bz + 1, bx + S - 1, bz + S - 1, Y_GRASS, C.grass, 0);
     for (const [p, q] of b.paths) {                      // footpaths, kept inside the block and its pavement
@@ -1362,6 +1377,7 @@ void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
 uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec2 uWet; uniform float uNight,uFogD,uExp,uShOn; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
 uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO;
+uniform vec4 uPatA[16], uPatB[16];                       // stone, brick and paving patterns (World/rules/surfaces.json): (type, unit w, unit h, joint), (vary, bevel, dome, -)
 ${NOISE}
 ${TONE}
 // Light indoors: daylight in through the windows and door (sky and bounce, gone at night), the room's own lamps with distance and
@@ -1400,13 +1416,41 @@ float airLit(vec3 dir,float dist){                // how much of the air between
 vec3 paint(vec3 c2,vec3 r,float v){               // the painted() material: dark tone, a mid tone and a warm highlight blotched together (W1)
   vec3 c1=c2*r, mid=(c1+c2)*vec3(.48,.465,.53), hi=c2*vec3(1.12,1.04,.92);
   return v<.45?mix(c1,mid,v/.45):(v<.86?mix(mid,hi,(v-.45)/.41):mix(hi,c2,(v-.86)/.14)); }
+// One stone, brick or paving pattern (ADR-0017): returns (joint 0..1, the stone's own number 0..1, relief -1..1) at q, in metres
+// along the surface. Types: 0 bond (ashlar, running brick, slabs, setts), 1 Flemish bond, 2 coursed rubble, 3 flagstones,
+// 4 herringbone, 5 basket weave.
+float jnt(float em,float jw){ return 1.-smoothstep(jw*.45,jw,em); }
+vec3 pat(vec2 q,vec4 A,vec4 B){
+  float t=A.x, w=A.y, h=A.z, jw=A.w, j=0., id=0., bev=0.;
+  if(t<.5){ float row=floor(q.y/h), u=q.x/w+.5*mod(row,2.); vec2 fr=vec2(fract(u),fract(q.y/h)); vec2 e=min(fr,1.-fr)*vec2(w,h); float em=min(e.x,e.y);
+    id=h3(vec3(floor(u),row,21.)); j=jnt(em,jw);
+    if(B.y>0.) bev=-.3*(1.-smoothstep(jw,B.y,em));                         // rusticated: the edges cut back
+    if(B.z>0.){ vec2 cc=fr*2.-1.; bev-=B.z*2.*(pow(abs(cc.x),4.)+pow(abs(cc.y),4.)); } }   // setts: each stone domed
+  else if(t<1.5){ float row=floor(q.y/h), P=w*1.5, u=(q.x+mod(row,2.)*P*.5)/P, fa=fract(u)*P; bool hd=fa>w; float a=hd?fa-w:fa, L=hd?w*.5:w, fy=fract(q.y/h)*h;
+    float em=min(min(a,L-a),min(fy,h-fy)); id=h3(vec3(floor(u),row,hd?23.:22.))*(hd?.55:1.); j=jnt(em,jw); }
+  else if(t<3.5){ bool rub=t<2.5; float yy=q.y+(rub?.045*sin(q.x*2.3+floor(q.y/h)*1.7):0.), row=floor(yy/h), fy=fract(yy/h)*h;   // rubble and flags: stones of one, two or three parts
+    float cw=w*(rub?.5:.5), u=(q.x+h3(vec3(row,4.,25.))*w)/cw, i=floor(u), fa=fract(u)*cw, l=fa, r=cw-fa, k0=i;
+    for(int s=0;s<2;s++){ if(h3(vec3(k0-1.,row,26.))<.5) break; k0-=1.; l+=cw; }
+    float k1=i; for(int s=0;s<2;s++){ if(h3(vec3(k1,row,26.))<.5) break; k1+=1.; r+=cw; }
+    float em=min(min(l,r),min(fy,h-fy)); id=h3(vec3(k0,row,27.)); j=jnt(em,jw);
+    if(rub){ vec2 cc=vec2((l-r)/(l+r),(fy/h)*2.-1.); bev=-.16*(pow(abs(cc.x),6.)+pow(abs(cc.y),6.)); } }
+  else if(t<4.5){ vec2 p=q/h; id=0.; float em=1.;                          // herringbone: bricks h by 2h in steps along (1,1), rows repeat by (2,-2)
+    float s0=floor((p.x-p.y)/4.);
+    for(int ds=-1;ds<=1;ds++){ vec2 pp=p-(s0+float(ds))*vec2(2.,-2.); float m=floor(pp.y), a=pp.x-m;
+      if(a>=0.&&a<2.){ float b=pp.y-m; em=min(min(a,2.-a),min(b,1.-b)); id=h3(vec3(m,s0+float(ds),28.)); break; }
+      m=floor(pp.x); a=pp.y-m;
+      if(a>=1.&&a<3.){ float b=pp.x-m; em=min(min(a-1.,3.-a),min(b,1.-b)); id=h3(vec3(m,s0+float(ds),29.)); break; } }
+    j=jnt(em*h,jw); }
+  else { vec2 cell=floor(q/w), fr=fract(q/w); bool turn=mod(cell.x+cell.y,2.)>.5; float a=turn?fr.x:fr.y, b=turn?fr.y:fr.x, hb=floor(a*2.), fa=fract(a*2.);   // basket weave
+    float em=min(min(fa,1.-fa)*w*.5,min(b,1.-b)*w); id=h3(vec3(cell,hb+30.))*(turn?1.:.85); j=jnt(em,jw); }
+  return vec3(j,id,bev); }
 void main(){
   float f=vF; vec3 c=vC; vec3 n=normalize(vN); vec3 tc=uCam-vP; float d=length(tc); vec3 vd=-tc/d;
   float hh=45., dy=vP.y-uCam.y; float k=abs(dy)>.05?(exp(-uCam.y/hh)-exp(-vP.y/hh))/(dy/hh):exp(-uCam.y/hh);
   float fog=1.-exp(-d*uFogD*max(k,0.));
   float blot=clamp((ns(vP*.9)*.6+ns(vP*2.7+7.)*.4-.5)*2.2+.5,0.,1.), nearK=1.-min(1.,d/70.);
   vec3 col; bool emis=false; float inside=0.;
-  float wetG=((f>6.5&&f<7.5)||(f>19.5&&f<21.5))?step(.5,n.y):0.;          // paving, road and footpaths go dark and shine a little when wet (WLD-037)
+  float wetG=((f>6.5&&f<7.5)||(f>19.5&&f<21.5)||f>29.5)?step(.5,n.y):0.;          // paving, road and footpaths go dark and shine a little when wet (WLD-037)
   if((f>.5&&f<1.5)||(f>3.5&&f<4.5)){                                      // a window: vC is (across, up, seed)
     vec2 uv=c.xy; float bx=min(uv.x,1.-uv.x);
     if(bx<.09||uv.y<.07||uv.y>.93){ c=paint(vec3(.37,.34,.32),vec3(.49,.53,.69),blot)*(uv.y<.07?1.2:1.); f=9.; }   // stone frame and sill
@@ -1438,6 +1482,14 @@ void main(){
         if(e<.32){ float al=e2.x<e2.y?vP.z:vP.x, t2=h3(vec3(floor(al/1.1),11.,0.)), k2=1.-min(1.,d/50.);
           vec3 kc=paint(c1*vec3(2.4,2.3,1.75),vec3(.62,.62,.68),blot)*(.9+.16*t2)*(1.+.12*smoothstep(.06,0.,e)*step(.5,n.y)*k2);
           c=e<.3?mix(kc,kc*.55,smoothstep(.975,.99,fract(al/1.1))*k2):c1*.6; } } }
+    else if(f>29.5&&f<45.5){ int pk=int(f-29.5); vec4 A=vec4(0.),B=vec4(0.); for(int i=0;i<16;i++){ if(i==pk){ A=uPatA[i]; B=uPatB[i]; } }   // stone, brick and paving by the surfaces rules (ADR-0017)
+      float wall=abs(1.-abs(n.y)); vec2 q=wall>.5?vec2(abs(n.x)>.5?vP.z:vP.x,vP.y):vP.xz; vec3 r=pat(q,A,B);
+      float fade=1.-min(1.,d/(A.y<.3?45.:110.));                          // small bricks fade to their colour sooner
+      vec3 c1=c*vec3(.52,.54,.70); c=mix(paint(c,vec3(.52,.54,.70),blot),(c1+c)*.5,r.y*B.x)*(1.+r.z*nearK); c=mix(c,c1*vec3(.7,.7,.75),r.x*fade);
+      if(wall<.5&&vP.y<${(Y_PAVE + .01).toFixed(3)}){ vec2 u2=mod(vP.xz,${P.toFixed(1)}), e2=min(u2-${(SW / 2 - PAVE).toFixed(3)},${(P - SW / 2 + PAVE).toFixed(3)}-u2); float e=min(e2.x,e2.y);   // the same kerb stones as before
+        if(e<.32){ vec3 kp=vec3(${C.pave.join(",")})*vec3(.48,.5,.68); float al=e2.x<e2.y?vP.z:vP.x, t2=h3(vec3(floor(al/1.1),11.,0.)), k2=1.-min(1.,d/50.);
+          vec3 kc=paint(kp*vec3(2.4,2.3,1.75),vec3(.62,.62,.68),blot)*(.9+.16*t2)*(1.+.12*smoothstep(.06,0.,e)*step(.5,n.y)*k2);
+          c=e<.3?mix(kc,kc*.55,smoothstep(.975,.99,fract(al/1.1))*k2):kp*.6; } } }
     else if(f>19.5&&f<20.5){ vec2 u2=mod(vP.xz,${P.toFixed(1)}), e2=min(u2,${P.toFixed(1)}-u2); bool ns=e2.x<e2.y;   // the road: small setts in courses across the street
       vec2 q=ns?vec2(vP.x/.24,vP.z/.15):vec2(vP.z/.24,vP.x/.15); q.x+=.5*mod(floor(q.y),2.)+.3*h3(vec3(floor(q.y),0.,13.));
       float t1=h3(vec3(floor(q),13.)), k2=1.-min(1.,d/40.), k3=1.-min(1.,d/90.); vec2 fr=fract(q);
@@ -1973,6 +2025,7 @@ function frame(now) {
   gl.depthMask(true); lit(signProg); drawMesh(signBuf, signN, signProg); gl.useProgram(main.p);
   gl.disable(gl.CULL_FACE); drawMesh(dynBuf, dyn.n / 10);   // people are closed soft forms; either side of a face may show
   if (Lt.rain > .01 && !(cam.eye[1] < 6 && lotAt(cam.eye[0], cam.eye[2]))) {   // rain over the picture, unless the camera is under a roof
+    gl.uniform4fv(u["uPatA[0]"], SURF_A); gl.uniform4fv(u["uPatB[0]"], SURF_B);
     gl.useProgram(rainProg.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const ar = gl.getAttribLocation(rainProg.p, "aQ"); gl.enableVertexAttribArray(ar); gl.vertexAttribPointer(ar, 2, gl.FLOAT, false, 0, 0);
     gl.disable(gl.DEPTH_TEST); gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
     gl.uniform3fv(rainProg.u.uCol, Lt.fog.map((v, i) => v * 1.4 + Lt.sky[i])); gl.uniform4f(rainProg.u.uR, Lt.rain, SKY.rain.alpha, SKY.rain.slant, SKY.rain.length);

@@ -199,6 +199,7 @@ def main(day=16):
         sound={k: v for k, v in w["sound"].items() if k != "note"}, cars=car_days, car_step=car_step, car_top_kmh=w["traffic"].get("player_top_kmh", 50.0),
         sky={k: v for k, v in w["sky"].items() if k != "note"},   # WLD-035, WLD-036: the sky and its clouds
         dodge={k: v for k, v in w["dodge"].items() if k != "note"},   # CITY-070, CITY-071: getting out of the way of cars
+        surfaces=dict(world.surfaces(w), table=w["surfaces"]["patterns"]),   # WLD-039: which stone, brick and paving where
         dressing=world.dressing_today(w, day),          # WLD-034: what the boards show today, bunting on market days
         life=life(w, city, plan, acts))                   # money, shops, quests, the designer (ADR-0012)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)

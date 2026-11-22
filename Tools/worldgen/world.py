@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -646,3 +646,118 @@ def dressing_today(w, day):
     film = d["films"][(day // d["film_every_days"]) % len(d["films"])]
     return dict(adverts=adverts, film=film, bunting=bool(clock.info(day)["market"]) if d["bunting"] == "market_days" else True,
                 advert_list=d["adverts"], motion=d["motion"])
+
+
+# ---------------------------------------------------------------- stone, brick and paving (WLD-038, WLD-039, ADR-0017)
+SURFACE_TYPES = {"bond", "flemish", "rubble", "flags", "herringbone", "basket"}
+SURFACE_SLOTS = {"wall": "wall", "pavement": "pavement", "ground": "pavement"}     # slot -> what its patterns are made 'for'
+
+
+def _surface_hash(*k):
+    import hashlib
+    return int(hashlib.md5("|".join(map(str, k)).encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
+
+
+def _surface_match(cond, b, l):
+    """Does a rule's 'if' fit this block (and lot)? Every field named must match; an empty 'if' always does."""
+    for k, want in cond.items():
+        if k == "template":
+            got = [b["template"]]
+        elif k == "district":
+            got = [b["district"]]
+        elif l is None:
+            return False
+        elif k == "tags":
+            got = l.get("tags", [])
+        else:
+            got = [l.get(k)]
+        if not set(got) & set(want):
+            return False
+    return True
+
+
+def surface_pick(w, slot, b, l=None):
+    """The pattern one slot of a block (l None) or lot uses, and why: 'own' (its 'surface' field) or 'rule'."""
+    S = w["surfaces"]
+    own = (l if l is not None else b).get("surface", {}).get(slot)
+    if own:
+        return own, "own"
+    for rule in S["rules"][slot]:
+        if _surface_match(rule["if"], b, l):
+            use = rule["use"]
+            if isinstance(use, str):
+                return use, "rule"
+            names = sorted(use)
+            r, total = _surface_hash((l or b)["id"], slot) * sum(use.values()), 0
+            for n in names:
+                total += use[n]
+                if r < total:
+                    return n, "rule"
+            return names[-1], "rule"
+    return None, "none"
+
+
+def surfaces(w):
+    """Which pattern every surface uses: {patterns: [names], lots: {lot: {wall, color, upper} or {ground, color}},
+    blocks: {block: {pavement, color}}}. Patterns are given by their place in 'patterns'; color None means the town's own."""
+    S = w["surfaces"]
+    names = list(S["patterns"])
+    out = dict(patterns=names, lots={}, blocks={})
+
+    def colour(name, key):
+        cs = S["patterns"][name]["colors"]
+        c = cs[int(_surface_hash(key, "colour") * len(cs)) % len(cs)]
+        return None if isinstance(c, str) else c
+    for b in w["blocks"]:
+        name, _ = surface_pick(w, "pavement", b)
+        out["blocks"][b["id"]] = dict(pavement=names.index(name), color=colour(name, b["id"]))
+        for l in b["lots"]:
+            if l["kind"] == "garden":
+                continue
+            if l["kind"] in OPEN_KINDS:
+                name, _ = surface_pick(w, "ground", b, l)
+                out["lots"][l["id"]] = dict(ground=names.index(name), color=colour(name, l["id"]))
+            else:
+                name, _ = surface_pick(w, "wall", b, l)
+                up = S["patterns"][name].get("upper", 0)
+                out["lots"][l["id"]] = dict(wall=names.index(name), color=colour(name, l["id"]), upper=bool(up and _surface_hash(l["id"], "upper") < up))
+    return out
+
+
+def surface_problems(w):
+    """Every rule World/rules/surfaces.json and the 'surface' fields in the block files must keep (WLD-038)."""
+    S, out = w["surfaces"], []
+    for n, p in S["patterns"].items():
+        if p.get("type") not in SURFACE_TYPES:
+            out.append("surfaces.json: %s has unknown type %s" % (n, p.get("type")))
+        if p.get("for") not in ("wall", "pavement"):
+            out.append("surfaces.json: %s is for neither wall nor pavement" % n)
+        if not (isinstance(p.get("unit"), list) and len(p["unit"]) == 2 and all(0.03 <= v <= 2.0 for v in p["unit"])):
+            out.append("surfaces.json: %s has a unit size out of range" % n)
+        if not p.get("colors"):
+            out.append("surfaces.json: %s has no colours" % n)
+    if len(S["patterns"]) > 16:
+        out.append("surfaces.json: more than 16 patterns (the slice's shader holds 16)")
+
+    def check(name, slot, where):
+        if name not in S["patterns"]:
+            out.append("%s: %s pattern %s does not exist" % (where, slot, name))
+        elif S["patterns"][name]["for"] != SURFACE_SLOTS[slot]:
+            out.append("%s: %s pattern %s is made for %s" % (where, slot, name, S["patterns"][name]["for"]))
+    for slot in SURFACE_SLOTS:
+        rules = S["rules"].get(slot, [])
+        if not rules or rules[-1]["if"] != {}:
+            out.append("surfaces.json: the %s rules must end with one that fits everything" % slot)
+        for k, rule in enumerate(rules):
+            for f in rule["if"]:
+                if f not in ("template", "district", "kind", "tags", "name"):
+                    out.append("surfaces.json: %s rule %d asks about %s" % (slot, k, f))
+            for name in ([rule["use"]] if isinstance(rule["use"], str) else rule["use"]):
+                check(name, slot, "surfaces.json %s rule %d" % (slot, k))
+    for b in w["blocks"]:
+        for slot, name in b.get("surface", {}).items():
+            check(name, slot, b["id"])
+        for l in b["lots"]:
+            for slot, name in l.get("surface", {}).items():
+                check(name, slot, l["id"])
+    return out

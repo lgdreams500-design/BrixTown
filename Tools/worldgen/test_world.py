@@ -191,6 +191,51 @@ class TheDressing(unittest.TestCase):
             self.assertFalse({"text", "film", "advert"} & set(p), p["id"])
 
 
+class TheSurfaces(unittest.TestCase):
+    """WLD-038, WLD-039: stone, brick and paving by rules (World/rules/surfaces.json, ADR-0017)."""
+    S = world.surfaces(W)
+
+    def name(self, k):
+        return self.S["patterns"][k]
+
+    def test_WLD_038_surfaces_are_sound(self):
+        self.assertEqual(world.surface_problems(W), [])
+        import copy
+        w = copy.deepcopy(W)
+        w["surfaces"]["patterns"]["glass"] = {"for": "wall", "type": "mosaic", "unit": [9, 9], "colors": []}
+        w["surfaces"]["rules"]["pavement"].insert(0, {"if": {"colour": ["red"]}, "use": "rubble"})
+        w["blocks"][0]["lots"][0]["surface"] = {"wall": "marble"}
+        p = world.surface_problems(w)
+        for bit in ("unknown type mosaic", "unit size out of range", "glass has no colours", "asks about colour", "rubble is made for wall", "marble does not exist"):
+            self.assertTrue(any(bit in x for x in p), bit)
+
+    def test_WLD_038_a_lot_can_name_its_own(self):
+        import copy
+        w = copy.deepcopy(W)
+        lot = next(l for b in w["blocks"] for l in b["lots"] if b["template"] == "rows" and l["kind"] == "home")
+        lot["surface"] = {"wall": "rusticated"}
+        self.assertEqual(world.surfaces(w)["patterns"][world.surfaces(w)["lots"][lot["id"]]["wall"]], "rusticated")
+
+    def test_WLD_039_surfaces_mix_by_district(self):
+        walls = {}
+        for b in W["blocks"]:
+            for l in b["lots"]:
+                s = self.S["lots"].get(l["id"])
+                if s and "wall" in s:
+                    walls.setdefault(b["template"], []).append(self.name(s["wall"]))
+        self.assertGreater(walls["peri"].count("rubble"), len(walls["peri"]) / 2)
+        self.assertGreater(sum(n.startswith("brick") for n in walls["rows"]), len(walls["rows"]) / 2)
+        civic = [l for l in LOTS if l["kind"] in ("bank", "museum", "library") or l["name"] == "Town Hall" or "hospital" in l.get("tags", [])]
+        self.assertTrue(all(self.name(self.S["lots"][l["id"]]["wall"]) == "rusticated" for l in civic))
+        uppers = [s for s in self.S["lots"].values() if s.get("upper")]
+        self.assertTrue(uppers and all(self.name(s["wall"]).startswith("brick") for s in uppers))
+        grounds = {self.name(v["pavement"]) for v in self.S["blocks"].values()}
+        self.assertTrue({"slabs", "flags", "herringbone", "basket"} <= grounds)
+        market = next(l for l in LOTS if l["kind"] == "market")
+        self.assertEqual(self.name(self.S["lots"][market["id"]]["ground"]), "setts")
+        self.assertEqual(world.surfaces(W), self.S)                              # the same every time
+
+
 class TheDialogue(unittest.TestCase):
     """CITY-007: conversations with residents (World/rules/dialogue.json)."""
     D = W["dialogue"]
