@@ -178,16 +178,16 @@ var Cars = (() => {
     }
   }
 
-  function meshCar(m, c, k, y, md) {                    // one classic car from its exported mesh, in this car's colours
+  function meshCar(m, c, k, y, md, lod) {               // one classic car from its exported mesh, in this car's colours
     if (!PAINT) { PAINT = [C.teal, C.terracotta, C.ochre, C.blue, C.olive, C.cream, C.plum, [.55, .40, .34], [.42, .47, .40]]; ROOF = [C.cream, [.74, .70, .62]]; }
-    const r = t => hash(k, t), van = CARS[k].k === 1;
+    const r = t => hash(k, t), van = !!CARS[k] && CARS[k].k === 1;
     const body = van ? [C.cream, C.teal, C.ochre, [.55, .40, .34]][k % 4] : PAINT[Math.floor(r("col") * PAINT.length)];
     const roof = r("two") < .75 ? ROOF[Math.floor(r("roof") * 2)] : body;
     const col = { body, roof, band: body === C.cream ? C.teal : C.cream, tyre: [.07, .065, .065], hub: [.58, .56, .52], leather: [.30, .19, .12],
       lamp: [.86, .80, .64], cream: C.cream, iron: [.10, .10, .11], wood: C.wood, luggage: C.terracotta, bag: C.cream, rail: [.10, .10, .11], spare: [.07, .065, .065], cargo: C.wood };
     const rack = r("rack") < .65, show = { luggage: rack, bag: rack, rail: rack, spare: r("spare") < .5 };   // a roof load comes as one
     const paints = CM.parts.map(name => show[name] === false ? null : col[name] || body);
-    const dc = Math.hypot(c.x - cam.eye[0], c.z - cam.eye[2]), L = md.lods[dc < 45 ? 0 : 1];
+    const dc = Math.hypot(c.x - cam.eye[0], c.z - cam.eye[2]), L = md.lods[lod != null ? lod : dc < 45 ? 0 : 1];
     const P = L.p, N = L.n, T = L.t, need = T.length * 30;
     if (m.n + need > m.a.length) { const b = new Float32Array(Math.max(m.a.length * 2, m.n + need + 60)); b.set(m.a); m.a = b; }
     const A = m.a, hx = c.hx, hz = c.hz;
@@ -395,7 +395,15 @@ var Cars = (() => {
   }
   const label = () => "Get out · " + Math.round(Math.abs(drv ? drv.v : 0) * 3.6) + " km/h";
 
-  return { at, draw, tram, push, target, enter, leave, drive, label, near, speed: () => drv ? drv.v : 0, driving: () => !!drv, count: CARS.length, model: k => model(k).name,
+  function parked(m, x, z, yaw, seed, y) {               // a car left in a car park (the furniture outlet's, FURN-020): drawn once, into the
+    if (!CM) return null;                                  // town's own mesh; one of the Soft box models, its colours from the seed
+    const md = MESH[(h => h < .4 ? "small" : h < .72 ? "estate" : "pickup")(hash(seed, "model"))];
+    if (!md) return null;
+    meshCar(m, { x, z, hx: Math.cos(yaw), hz: Math.sin(yaw) }, seed, y || 0, md, 0);
+    return [md.L, md.W];
+  }
+
+  return { at, draw, tram, push, target, enter, leave, drive, label, near, parked, speed: () => drv ? drv.v : 0, driving: () => !!drv, count: CARS.length, model: k => model(k).name,
     debugFree: (x, z, a, m) => drv ? free(x, z, a, m) : null,
     debugPlace: (x, z, a) => { if (drv) Object.assign(drv, { x, z, a, v: 0 }); } };   // for tests: put the player's car somewhere
 })();

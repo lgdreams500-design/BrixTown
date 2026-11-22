@@ -17,7 +17,9 @@ class TheMap(unittest.TestCase):
     def test_eight_by_eight_blocks_each_cell_once(self):
         g = W["city"]["grid"]
         self.assertEqual((g["columns"], g["rows"]), (8, 8))
-        self.assertEqual(sorted(tuple(b["grid"]) for b in W["blocks"]), [(i, j) for i in range(8) for j in range(8)])
+        inside = [b for b in W["blocks"] if b["district"] != "Outside the walls"]
+        self.assertEqual(sorted(tuple(b["grid"]) for b in inside), [(i, j) for i in range(8) for j in range(8)])
+        self.assertEqual(len({tuple(b["grid"]) for b in W["blocks"]}), len(W["blocks"]))   # blocks outside the walls too (FURN-020)
 
     def test_key_amenities_exist(self):
         names = {l["name"] for l in LOTS}
@@ -656,6 +658,39 @@ class GettingOutOfTheWay(unittest.TestCase):
         self.assertGreaterEqual(len(r["shouts"]), 3)
         for s in r["shouts"]:
             self.assertTrue(0 < len(s) <= 40, s)                            # short enough for a tag over a head
+
+
+
+class TheFurnitureOutlet(unittest.TestCase):
+    """FURNITURE FURN-020, FURN-021: the huge outlet outside the East Gate (Q-30, Tools/worldgen/add_outlet_01.py)."""
+
+    def outlet(self):
+        return next(l for l in LOTS if l["kind"] == "furniture")
+
+    def test_FURN_020_outlet_outside_the_walls(self):
+        l, P = self.outlet(), W["city"]["grid"]["pitch"]
+        x0, z0, x1, z1 = l["rect"]
+        self.assertGreater(x0, W["city"]["grid"]["columns"] * P + 9.5)          # beyond East Wall Street and the wall
+        self.assertGreaterEqual((x1 - x0) * (z1 - z0), 2000)                      # huge: a big hall
+        self.assertTrue(l["enterable"])
+        self.assertEqual(l["door"][1], z0)                                         # its door faces the gate road
+        gate = next(g for g in W["roads"]["gates"] if g["id"] == "gate_east")
+        self.assertGreaterEqual(W["city"]["grid"]["columns"] * P + gate["length"], x1)   # the road runs past it
+        for k in ("work", "customer", "seat"):
+            self.assertTrue(l["objects"][k], k)
+        staff = [r for r in W["residents"] if r.get("work") == l["id"]]
+        self.assertEqual(len(staff), l["staff"])
+        b = next(b for b in W["blocks"] if any(q is l for q in b["lots"]))
+        self.assertTrue(any(p["kind"] == "carpark" for p in b["props"]))
+
+    def test_FURN_021_residents_browse_and_staff_work(self):
+        l = self.outlet()
+        stays = [s for d in (DAY, DAY + 1, DAY + 2) for pieces in CITY.plan(d).values() for kind, t0, t1, payload, s in pieces
+                 if kind == "stay" and s["place"] == l["id"]]
+        self.assertTrue(any(s["act"] == "browse" for s in stays))
+        self.assertTrue(any(s["act"] == "work" for s in stays))
+        self.assertTrue(all(r["near"].get("furniture") == l["id"] for r in W["residents"]))
+
 
 if __name__ == "__main__":
     unittest.main()
