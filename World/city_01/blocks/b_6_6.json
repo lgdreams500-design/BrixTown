@@ -1041,6 +1041,271 @@
     580.0,
     624.0
    ]
+  },
+  {
+   "kind": "statue",
+   "pos": [
+    624.0,
+    632.0
+   ],
+   "set": "dress",
+   "small": true,
+   "id": "b_6_6_d0"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    627.18,
+    580.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_6_6_d1"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    640.17,
+    580.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_6_6_d2"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    597.49,
+    667.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_6_6_d3"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    606.91,
+    667.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_6_6_d4"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    580.25,
+    595.45
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_6_6_d5"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    580.25,
+    603.42
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_6_6_d6"
+  },
+  {
+   "kind": "bikerack",
+   "pos": [
+    580.25,
+    617.95
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_6_6_d7"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    580.25,
+    628.14
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_6_6_d8"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    667.75,
+    595.3
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_6_6_d9"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    667.75,
+    605.7
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_6_6_d10"
+  },
+  {
+   "kind": "bikerack",
+   "pos": [
+    667.75,
+    620.09
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_6_6_d11"
+  },
+  {
+   "kind": "postbox",
+   "pos": [
+    667.75,
+    628.99
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_6_6_d12"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    580.1,
+    582.7
+   ],
+   "set": "dress",
+   "id": "b_6_6_d13"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    582.7,
+    580.1
+   ],
+   "set": "dress",
+   "id": "b_6_6_d14"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    667.9,
+    582.7
+   ],
+   "set": "dress",
+   "id": "b_6_6_d15"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    665.3,
+    580.1
+   ],
+   "set": "dress",
+   "id": "b_6_6_d16"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    580.1,
+    665.3
+   ],
+   "set": "dress",
+   "id": "b_6_6_d17"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    582.7,
+    667.9
+   ],
+   "set": "dress",
+   "id": "b_6_6_d18"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    667.9,
+    665.3
+   ],
+   "set": "dress",
+   "id": "b_6_6_d19"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    665.3,
+    667.9
+   ],
+   "set": "dress",
+   "id": "b_6_6_d20"
+  },
+  {
+   "kind": "hoarding",
+   "pos": [
+    664.02,
+    656.0
+   ],
+   "set": "dress",
+   "out": [
+    1,
+    0
+   ],
+   "w": 12.0,
+   "lot": "b_6_6_l3",
+   "id": "b_6_6_d21"
   }
  ]
 }

@@ -1,5 +1,5 @@
 {
- "note": "Where a token like 'lunch' can lead. 'cafe', 'grocer', 'garden', 'market', 'stop', 'clinic' mean the resident's nearest one. 'bank', 'library', 'museum', 'cinema', 'dealer' likewise (Tools/worldgen/add_places_01.py).",
+ "note": "Where a token like 'lunch' can lead. 'cafe', 'grocer', 'garden', 'market', 'stop', 'clinic' mean the resident's nearest one. 'bank', 'library', 'museum', 'cinema', 'dealer' likewise (Tools/worldgen/add_places_01.py). 'playground', 'noticeboard', 'kiosk' likewise, and 'play' is the children's list (Tools/worldgen/add_dressing_01.py).",
  "choices": {
   "lunch": {
    "default": [
@@ -216,6 +216,14 @@
     [
      "bank",
      "bank"
+    ],
+    [
+     "paper",
+     "kiosk"
+    ],
+    [
+     "paper",
+     "kiosk"
     ]
    ],
    "market": [
@@ -260,6 +268,40 @@
     [
      "read",
      "library"
+    ],
+    [
+     "notices",
+     "noticeboard"
+    ]
+   ],
+   "rain": [
+    [
+     "home",
+     "home"
+    ]
+   ]
+  },
+  "play": {
+   "default": [
+    [
+     "swing",
+     "playground"
+    ],
+    [
+     "slide",
+     "playground"
+    ],
+    [
+     "seesaw",
+     "playground"
+    ],
+    [
+     "sandpit",
+     "playground"
+    ],
+    [
+     "climb",
+     "playground"
     ]
    ],
    "rain": [
@@ -287,6 +329,13 @@
   "view": "customer",
   "watch": "seat",
   "bank": "customer",
-  "browse": "customer"
+  "browse": "customer",
+  "swing": "swing",
+  "slide": "slide",
+  "seesaw": "seesaw",
+  "sandpit": "sandpit",
+  "climb": "climb",
+  "notices": "notice",
+  "paper": "kiosk"
  }
 }

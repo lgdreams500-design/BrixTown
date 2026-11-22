@@ -4,7 +4,8 @@
  "no_drive_roles": [
   "courier",
   "utility",
-  "student"
+  "student",
+  "child"
  ],
  "no_drive_acts": [
   "away",

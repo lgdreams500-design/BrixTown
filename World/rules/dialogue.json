@@ -13,7 +13,8 @@
   "gardener": "gardener",
   "elder": "pensioner",
   "student": "student",
-  "utility": "utility worker"
+  "utility": "utility worker",
+  "child": "schoolchild"
  },
  "rules": [
   { "conversation": "clinic", "roles": ["nurse"], "acts": ["work"], "walking": false },

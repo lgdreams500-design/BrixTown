@@ -410,6 +410,9 @@ function special(l, ctx) {
     fbox(world, S, dc - 5.5, dc + 5.5, 3.0, 3.75, 0, 2.6, C.charcoal, 9, true, true); fbox(world, S, dc - 5.5, dc + 5.5, 3.1, 3.65, 2.6, 2.64, [.95, .86, .62], 9);
     for (let a = dc - 5.1; a <= dc + 5.1; a += .6) { const p = SP.at(S, a, 2.98, 2.3); world.box(p[0] - .06, 2.92, p[2] - .06, p[0] + .06, 3.0, p[2] + .06, [1, .8, .5], 2); }
     if (cell) lettering(signs, SP.at(S, dc, 3.38, 2.66), nO, .34, cell);
+    if (D.dressing) { const fc = nameCell(D.dressing.film);    // today's film on a board over the marquee (WLD-034)
+      fbox(world, S, dc - 4.9, dc + 4.9, 3.78, 4.5, 2.0, 2.12, [.1, .08, .08], 9, true, true); fbox(world, S, dc - 4.9, dc + 4.9, 4.5, 4.56, 2.0, 2.14, [1, .8, .5], 2);
+      if (fc) lettering(signs, SP.at(S, dc, 4.14, 2.14), nO, Math.min(.3, 9 / (8 * fc.tw * (64 / 46) * .82)), fc); }
     for (const s of [-1, 1]) { const p = SP.at(S, dc, 2.6, 1.6 * s + 1.3); lights.push([p[0], 2.6, p[2], 1, 1]); }
     const ba = dc + 6.6, word = l.name.split(" ")[0].toUpperCase(), bh = Math.min(H - .6, 3.9 + word.length * .78);
     fbox(world, S, ba - .09, ba + .09, 3.9, bh, .2, 1.3, C.terracotta, 0, true, true); fbox(world, S, ba - .11, ba + .11, 3.9, bh, 1.3, 1.36, [.95, .86, .62], 9);
@@ -606,6 +609,7 @@ function windows(l) {                                      // each window is one
       const balc = s === l.side && f === balF && k === kDoor && hash(l.id, "bal") < balOdds || flats && f > 1 && (k + f) % 2 === 0;
       const ww = shopW ? 2.0 : w;
       let y = shopW ? .55 : f * 3 + (old ? (f ? 1.05 : .7) : 1), tall0 = shopW ? 2.35 : old && f ? 1.72 : tall; const yTop = y + tall0; if (balc) y = old ? OLD_BASE + .4 : f * 3 + .25;
+      if (Dress.covers(l, s, c, y, yTop)) continue;          // a painted advert or a hoarding is there (dressing.js)
       const on = shopW || hash(l.id, s, f, k) < lit, seed = shopW ? .96 + .03 * hash(l.id, k) : hash(l.id, s, f, k, 2) * .95, p = fix + out * .03, a = c - ww / 2 - .12, b = c + ww / 2 + .12, ya = y - .1;
       const arched = shopW && old, yb = arched ? yTop - ww / 2 : yTop;
       const P = (aa, yy, pp) => ns ? [aa, yy, pp] : [pp, yy, aa];
@@ -640,8 +644,9 @@ function windows(l) {                                      // each window is one
         for (const sx of [c - h2 + .03, c + h2 - .07]) { fbox(dm, S, sx, sx + .04, ya + .86, ya + .92, .02, .86, C.metal, 9, true); for (let q = 1; q < 6; q++) fbox(dm, S, sx + .01, sx + .03, ya, ya + .88, q * .15 - .01, q * .15 + .01, C.metal, 9); }
         for (let x = c - h2 + .15; x < c + h2 - .1; x += .13) fbox(dm, S, x - .012, x + .012, ya, ya + .88, .81, .85, C.metal, 9);
         for (const dx of [-h2 + .35, h2 - .35]) { fbox(dm, S, c + dx - .16, c + dx + .16, ya - .02, ya + .3, .4, .7, C.terracotta, 0, true); fbox(dm, S, c + dx - .2, c + dx + .2, ya + .3, ya + .6, .36, .74, plants[0], 0); }
-      } else if (f > 0 && l.kind !== "health" && l.kind !== "work" && hash(l.id, s, f, k, 8) < .2) {
+      } else if (f > 0 && l.kind !== "health" && l.kind !== "work" && hash(l.id, s, f, k, 8) < (l.window_boxes ? .8 : .2)) {   // window boxes (WLD-030)
         fbox(dm, S, a, b, ya - .42, ya - .16, .06, .36, C.terracotta, 0, true);
+        if (l.window_boxes && D.flowers.size > .2) for (let q = 0; q < 6; q++) { const pa = a + .12 + q * (b - a - .24) / 6; fbox(dm, S, pa, pa + .1, ya + .04, ya + .16 + .08 * hash(l.id, k, q, 4), .12, .26, D.flowers.colors[(q + k + f) % D.flowers.colors.length], 0); }
         for (let q = 0; q < 3; q++) { const pa = a + .05 + q * (b - a - .1) / 3; fbox(dm, S, pa, pa + (b - a - .1) / 3, ya - .16, ya + .06 + .1 * hash(l.id, k, q), .1, .32, plants[q % 2], 0); }
       }
     }
@@ -1151,6 +1156,7 @@ function openLot(l) {
 
 function prop(p, b) {
   const [x, z] = p.pos, g = groundBase(x, z);
+  if (p.set === "dress" && Dress.prop(p, b)) return;      // street dressing (dressing.js, WLD-028)
   if (p.kind === "lantern") {                              // a wall lantern: glass on an iron arm, and the light it gives (watts as in the Blender scene)
     const o = p.out, lx = x + o[0] * .32, lz = z + o[1] * .32, h = p.height;
     world.box(Math.min(x, lx) - .03, h + .28, Math.min(z, lz) - .03, Math.max(x, lx) + .03, h + .33, Math.max(z, lz) + .03, C.metal, 9);
@@ -1203,6 +1209,13 @@ function prop(p, b) {
     }
     world.box(x - .28, g + .4, z - .28, x + .28, g + 1.5, z + .28, C.stone, 6); world.box(x - .75, g + 1.5, z - .75, x + .75, g + 1.72, z + .75, C.stone, 0, { 2: [C.stoneDark, 0] }); world.box(x - .16, g + 1.72, z - .16, x + .16, g + 2.05, z + .16, C.stone, 0);
     solid(x - R * .92, g, z - R * .92, x + R * .92, g + .55, z + R * .92);
+    if (p.grand) {                                         // the grand one (WLD-029): a second bowl higher up, and a bronze figure pouring water
+      world.box(x - .2, g + 2.05, z - .2, x + .2, g + 2.9, z + .2, C.stone, 6); world.box(x - .5, g + 2.9, z - .5, x + .5, g + 3.05, z + .5, C.stone, 0, { 2: [C.stoneDark, 0] });
+      world.flat(x - .42, z - .42, x + .42, z + .42, g + 3.0, C.water, 9); world.flat(x - .7, z - .7, x + .7, z + .7, g + 1.68, C.water, 9);
+      const Bz = [.3, .42, .36]; world.box(x - .14, g + 3.05, z - .1, x + .14, g + 3.55, z + .1, Bz, 9); world.box(x - .18, g + 3.5, z - .13, x + .18, g + 3.95, z + .13, Bz, 9); world.ybox(x, g + 3.95, z, .17, .2, .17, Math.PI / 4, Bz, 9);
+      world.ybox(x + .26, g + 3.75, z, .22, .2, .18, .3, [.55, .45, .2], 9);
+      for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; world.box(x + Math.cos(a) * .66 - .015, g + 1.7, z + Math.sin(a) * .66 - .015, x + Math.cos(a) * .7 + .015, g + 2.05, z + Math.sin(a) * .7 + .015, [.62, .72, .78], 9); }
+    }
   } else if (p.kind === "flowerbed") {
     world.box(x - 1.3, g, z - 1.3, x + 1.3, g + .3, z + 1.3, C.stone, 6); world.flat(x - 1.08, z - 1.08, x + 1.08, z + 1.08, g + .32, C.soil, 0);
     const s = D.flowers.size, col = D.flowers.colors[p.color % D.flowers.colors.length];
@@ -1702,7 +1715,7 @@ function hud(VP, W, H, tags) {
 }
 
 // ---------------------------------------------------------------- start up
-buildWorld();
+buildWorld(); Dress.init();                              // which play spot is on which swing or slide (dressing.js)
 if (RANGES[RANGES.length - 1][1] !== world.n) fail("World pieces do not cover the whole town mesh.");
 const worldBuf = buffer(world, gl.STATIC_DRAW), worldN = world.n / 10, skyMap = bakeSky();
 const pieces = RANGES.filter(r => r[1] > r[0]).map(([s, e, town]) => ({ first: s / 10, count: (e - s) / 10, town, box: boxOf(world.a, s, e) }));
@@ -1805,7 +1818,7 @@ function frame(now) {
   Dodge.frame(now / 1000, pl);                             // is the player's car bearing down on anyone (dodge.js, CITY-070)
   dyn.reset(); people = []; bodies = 0; const heard = [], tags = [], near = started ? [pl.x, pl.z] : [cam.eye[0] + cam.dir[0] * 60, cam.eye[2] + cam.dir[2] * 60], reach = started ? 85 : 130;
   for (let i = 0; i < D.plan.length; i++) {
-    const r = Dodge.apply(i, Talk.where(i, clock.m)); if (!r) continue;   // out of the way of the player's car (dodge.js)
+    const r = Dress.apply(i, Dodge.apply(i, Talk.where(i, clock.m)), now / 1000); if (!r) continue;   // children on the swings (dressing.js)   // out of the way of the player's car (dodge.js)
     people.push([r.x, r.z]);
     const d = Math.hypot(r.x - near[0], r.z - near[1]); if (d > reach) continue;
     if (d < 20) heard.push({ i, x: r.x, z: r.z, act: D.acts[r.act], walking: r.walking, pose: r.pose, ph: r.ph, inside: r.inside });
@@ -1829,7 +1842,8 @@ function frame(now) {
       look: pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
   }
   for (const [x, , T] of tramAt(clock.m)) Cars.tram(dyn, x, TRAM_Z, T, clock.m);   // the tram and the commuters on it (cars.js)
-  stat.cars = Cars.draw(dyn, clock.m, near, reach);       // residents' cars, parked and driving (cars.js)
+  stat.cars = Cars.draw(dyn, clock.m, near, reach);
+  Dress.draw(dyn, cam.eye, now / 1000);                   // swing seats and seesaws (dressing.js)       // residents' cars, parked and driving (cars.js)
   if (started) {                                          // what the listener hears (sound.js): where they are and what is near
     const lot = pl.y < 6 ? lotAt(pl.x, pl.z) : null, drv = pl.pose === 4;
     Sound.frame({ m: clock.m, dt, x: pl.x, y: pl.y, z: pl.z, yaw: cam.yaw, lot, talk: Talk.on, residents: heard, trams: tramAt(clock.m), tramZ: TRAM_Z,

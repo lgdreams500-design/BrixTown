@@ -1,0 +1,27 @@
+{
+ "note": "Street dressing (WORLD_MAP WLD-028 to WLD-034, F-MAP-DRESS level 2). The props are placed in the block files by Tools/worldgen/add_dressing_01.py; this file holds what changes with the days and how the play things move. Nothing here is stored per day: what a board shows is worked out from the day number (world.dressing_today). All values are [ASSUMPTION] until tuned.",
+ "adverts": [
+  {"text": "Palace Cinema", "ground": [0.5, 0.1, 0.1], "ink": [0.95, 0.85, 0.55]},
+  {"text": "Linden Bank", "ground": [0.16, 0.24, 0.36], "ink": [0.9, 0.84, 0.66]},
+  {"text": "Baker Street Motors", "ground": [0.2, 0.36, 0.37], "ink": [0.95, 0.92, 0.82]},
+  {"text": "Lantern Arcade", "ground": [0.52, 0.4, 0.2], "ink": [0.2, 0.12, 0.08]},
+  {"text": "Old Town Museum", "ground": [0.3, 0.33, 0.2], "ink": [0.92, 0.88, 0.74]},
+  {"text": "Fountain Library", "ground": [0.3, 0.24, 0.34], "ink": [0.92, 0.88, 0.74]},
+  {"text": "Ride the Tram", "ground": [0.2, 0.36, 0.37], "ink": [0.95, 0.85, 0.55]},
+  {"text": "Market Day Wednesday", "ground": [0.44, 0.24, 0.18], "ink": [0.95, 0.9, 0.78]},
+  {"text": "Drink Fresh Milk", "ground": [0.2, 0.3, 0.5], "ink": [0.9, 0.88, 0.8]},
+  {"text": "Lemonade 5c", "ground": [0.52, 0.4, 0.2], "ink": [0.95, 0.92, 0.82]}
+ ],
+ "advert_every_days": 3,
+ "films": ["The Lantern Thief", "Summer on Quarry Hill", "Two Tickets to Linden", "The Last Tram", "A Fountain in Winter", "Market Day Murder"],
+ "film_every_days": 2,
+ "bunting": "market_days",
+ "motion": {
+  "swing_period_s": 2.9,
+  "swing_angle_deg": 32,
+  "seesaw_period_s": 3.4,
+  "seesaw_angle_deg": 14,
+  "slide_cycle_s": 9.0,
+  "climb_bob_s": 6.0
+ }
+}

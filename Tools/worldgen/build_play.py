@@ -169,6 +169,7 @@ def main(day=16):
         tram=w["calendar"]["tram"], dialogue=dialogue(w), speech={k: v for k, v in w["speech"].items() if k != "note"},
         sound={k: v for k, v in w["sound"].items() if k != "note"}, cars=car_days, car_step=car_step, car_top_kmh=w["traffic"].get("player_top_kmh", 50.0),
         dodge={k: v for k, v in w["dodge"].items() if k != "note"},   # CITY-070, CITY-071: getting out of the way of cars
+        dressing=world.dressing_today(w, day),          # WLD-034: what the boards show today, bunting on market days
         life=life(w, city, plan, acts))                   # money, shops, quests, the designer (ADR-0012)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:

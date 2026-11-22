@@ -58,7 +58,8 @@
      ]
     ]
    },
-   "residents": 3
+   "residents": 3,
+   "window_boxes": true
   },
   {
    "id": "b_1_0_l1",
@@ -154,7 +155,8 @@
      ]
     ]
    },
-   "residents": 2
+   "residents": 2,
+   "window_boxes": true
   },
   {
    "id": "b_1_0_l3",
@@ -202,7 +204,8 @@
      ]
     ]
    },
-   "residents": 3
+   "residents": 3,
+   "window_boxes": true
   },
   {
    "id": "b_1_0_l4",
@@ -242,7 +245,8 @@
      ]
     ]
    },
-   "residents": 2
+   "residents": 2,
+   "window_boxes": true
   },
   {
    "id": "b_1_0_l5",
@@ -394,7 +398,8 @@
      ]
     ]
    },
-   "residents": 3
+   "residents": 3,
+   "window_boxes": true
   },
   {
    "id": "b_1_0_l8",
@@ -434,7 +439,8 @@
      ]
     ]
    },
-   "residents": 2
+   "residents": 2,
+   "window_boxes": true
   },
   {
    "id": "b_1_0_l9",
@@ -601,6 +607,246 @@
     100.0,
     48.0
    ]
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    115.97,
+    4.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_1_0_d0"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    128.38,
+    4.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_1_0_d1"
+  },
+  {
+   "kind": "postbox",
+   "pos": [
+    146.99,
+    4.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_1_0_d2"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    116.24,
+    91.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_1_0_d3"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    131.77,
+    91.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_1_0_d4"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    141.62,
+    91.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_1_0_d5"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    100.25,
+    21.51
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_1_0_d6"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    100.25,
+    30.19
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_1_0_d7"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    187.75,
+    18.95
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_1_0_d8"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    187.75,
+    26.43
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_1_0_d9"
+  },
+  {
+   "kind": "postbox",
+   "pos": [
+    187.75,
+    33.72
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_1_0_d10"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    187.75,
+    47.56
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_1_0_d11"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    100.1,
+    6.7
+   ],
+   "set": "dress",
+   "id": "b_1_0_d12"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    102.7,
+    4.1
+   ],
+   "set": "dress",
+   "id": "b_1_0_d13"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    187.9,
+    6.7
+   ],
+   "set": "dress",
+   "id": "b_1_0_d14"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    185.3,
+    4.1
+   ],
+   "set": "dress",
+   "id": "b_1_0_d15"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    100.1,
+    89.3
+   ],
+   "set": "dress",
+   "id": "b_1_0_d16"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    102.7,
+    91.9
+   ],
+   "set": "dress",
+   "id": "b_1_0_d17"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    187.9,
+    89.3
+   ],
+   "set": "dress",
+   "id": "b_1_0_d18"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    185.3,
+    91.9
+   ],
+   "set": "dress",
+   "id": "b_1_0_d19"
   }
  ]
 }

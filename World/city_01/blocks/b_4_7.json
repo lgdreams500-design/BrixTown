@@ -50,7 +50,8 @@
      ]
     ]
    },
-   "residents": 2
+   "residents": 2,
+   "window_boxes": true
   },
   {
    "id": "b_4_7_l1",
@@ -138,7 +139,8 @@
      ]
     ]
    },
-   "residents": 3
+   "residents": 3,
+   "window_boxes": true
   },
   {
    "id": "b_4_7_l3",
@@ -186,7 +188,8 @@
      ]
     ]
    },
-   "residents": 3
+   "residents": 3,
+   "window_boxes": true
   },
   {
    "id": "b_4_7_l4",
@@ -274,7 +277,8 @@
      ]
     ]
    },
-   "residents": 3
+   "residents": 3,
+   "window_boxes": true
   },
   {
    "id": "b_4_7_l6",
@@ -362,7 +366,8 @@
      ]
     ]
    },
-   "residents": 3
+   "residents": 3,
+   "window_boxes": true
   },
   {
    "id": "b_4_7_l8",
@@ -402,7 +407,8 @@
      ]
     ]
    },
-   "residents": 2
+   "residents": 2,
+   "window_boxes": true
   },
   {
    "id": "b_4_7_l9",
@@ -617,6 +623,273 @@
     388.0,
     720.0
    ]
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    404.58,
+    676.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_4_7_d0"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    417.12,
+    676.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_4_7_d1"
+  },
+  {
+   "kind": "phonebox",
+   "pos": [
+    436.1,
+    676.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_4_7_d2"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    402.87,
+    763.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_4_7_d3"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    412.53,
+    763.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_4_7_d4"
+  },
+  {
+   "kind": "postbox",
+   "pos": [
+    422.5,
+    763.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_4_7_d5"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    388.25,
+    693.28
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_4_7_d6"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    388.25,
+    708.39
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_4_7_d7"
+  },
+  {
+   "kind": "bikerack",
+   "pos": [
+    388.25,
+    723.81
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_4_7_d8"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    475.75,
+    693.6
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_4_7_d9"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    475.75,
+    705.04
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_4_7_d10"
+  },
+  {
+   "kind": "postbox",
+   "pos": [
+    475.75,
+    719.49
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_4_7_d11"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    388.1,
+    678.7
+   ],
+   "set": "dress",
+   "id": "b_4_7_d12"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    390.7,
+    676.1
+   ],
+   "set": "dress",
+   "id": "b_4_7_d13"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    475.9,
+    678.7
+   ],
+   "set": "dress",
+   "id": "b_4_7_d14"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    473.3,
+    676.1
+   ],
+   "set": "dress",
+   "id": "b_4_7_d15"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    388.1,
+    761.3
+   ],
+   "set": "dress",
+   "id": "b_4_7_d16"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    390.7,
+    763.9
+   ],
+   "set": "dress",
+   "id": "b_4_7_d17"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    475.9,
+    761.3
+   ],
+   "set": "dress",
+   "id": "b_4_7_d18"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    473.3,
+    763.9
+   ],
+   "set": "dress",
+   "id": "b_4_7_d19"
+  },
+  {
+   "kind": "timetable",
+   "pos": [
+    439.3,
+    762.6
+   ],
+   "set": "dress",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_4_7_d20"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    424.7,
+    762.6
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_4_7_d21"
   }
  ]
 }

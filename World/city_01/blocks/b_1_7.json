@@ -50,7 +50,8 @@
      ]
     ]
    },
-   "residents": 2
+   "residents": 2,
+   "window_boxes": true
   },
   {
    "id": "b_1_7_l1",
@@ -90,7 +91,8 @@
      ]
     ]
    },
-   "residents": 2
+   "residents": 2,
+   "window_boxes": true
   },
   {
    "id": "b_1_7_l2",
@@ -146,7 +148,8 @@
      ]
     ]
    },
-   "residents": 4
+   "residents": 4,
+   "window_boxes": true
   },
   {
    "id": "b_1_7_l3",
@@ -186,7 +189,8 @@
      ]
     ]
    },
-   "residents": 2
+   "residents": 2,
+   "window_boxes": true
   },
   {
    "id": "b_1_7_l4",
@@ -290,7 +294,8 @@
      ]
     ]
    },
-   "residents": 3
+   "residents": 3,
+   "window_boxes": true
   },
   {
    "id": "b_1_7_l6",
@@ -370,7 +375,8 @@
      ]
     ]
    },
-   "residents": 2
+   "residents": 2,
+   "window_boxes": true
   },
   {
    "id": "b_1_7_l8",
@@ -418,7 +424,8 @@
      ]
     ]
    },
-   "residents": 3
+   "residents": 3,
+   "window_boxes": true
   },
   {
    "id": "b_1_7_l9",
@@ -458,7 +465,8 @@
      ]
     ]
    },
-   "residents": 2
+   "residents": 2,
+   "window_boxes": true
   }
  ],
  "paths": [],
@@ -565,6 +573,246 @@
     100.0,
     720.0
    ]
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    113.71,
+    676.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_1_7_d0"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    124.84,
+    676.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_1_7_d1"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    114.68,
+    763.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_1_7_d2"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    128.0,
+    763.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_1_7_d3"
+  },
+  {
+   "kind": "bikerack",
+   "pos": [
+    139.11,
+    763.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_1_7_d4"
+  },
+  {
+   "kind": "postbox",
+   "pos": [
+    152.68,
+    763.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_1_7_d5"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    166.23,
+    763.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_1_7_d6"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    100.25,
+    689.33
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_1_7_d7"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    100.25,
+    701.62
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_1_7_d8"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    100.25,
+    710.16
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_1_7_d9"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    187.75,
+    690.93
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_1_7_d10"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    187.75,
+    706.08
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_1_7_d11"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    100.1,
+    678.7
+   ],
+   "set": "dress",
+   "id": "b_1_7_d12"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    102.7,
+    676.1
+   ],
+   "set": "dress",
+   "id": "b_1_7_d13"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    187.9,
+    678.7
+   ],
+   "set": "dress",
+   "id": "b_1_7_d14"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    185.3,
+    676.1
+   ],
+   "set": "dress",
+   "id": "b_1_7_d15"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    100.1,
+    761.3
+   ],
+   "set": "dress",
+   "id": "b_1_7_d16"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    102.7,
+    763.9
+   ],
+   "set": "dress",
+   "id": "b_1_7_d17"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    187.9,
+    761.3
+   ],
+   "set": "dress",
+   "id": "b_1_7_d18"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    185.3,
+    763.9
+   ],
+   "set": "dress",
+   "id": "b_1_7_d19"
   }
  ]
 }

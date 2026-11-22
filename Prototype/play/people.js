@@ -178,6 +178,7 @@ const People = (() => {
     maker: { g: "tunic", top: ["ochre", "olive", "terra", "sand"], bottom: ["olive", "brown"], shorts: .4, bag: .5, hair: ["afro", "short", "side", "bun"], shoes: ["sand", "brown"], h: [1.62, 1.82], b: [.96, 1.14] },
     nurse: { g: "tunic", top: ["cream"], bottom: ["teal"], hair: ["bun", "bob"], shoes: ["cream"], h: [1.6, 1.76], b: [.92, 1.04] },
     gardener: { g: "tunic", top: ["olive"], bottom: ["brown"], cap: ["ochre"], hair: ["short", "side"], shoes: ["brown"], h: [1.64, 1.8], b: [1, 1.12] },
+    child: { g: "tee", top: ["teal", "ochre", "terra", "cream", "blue", "plum"], bottom: ["indigo", "olive", "blue", "brown"], shorts: .55, skirt: .25, hair: ["short", "bob", "afro", "long", "bun"], shoes: ["cream", "brown"], h: [1.12, 1.45], b: [.8, .92] },   // WLD-032
     utility: { g: "long", top: ["charcoal"], bottom: ["indigo"], cap: ["ochre"], hair: ["short"], shoes: ["black"], h: [1.66, 1.82], b: [1, 1.12] },
   };
   function look(id, role, sigName) {

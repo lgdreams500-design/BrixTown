@@ -504,6 +504,44 @@
       }
     },
     {
+      "id": "F-MAP-DRESS",
+      "area": "map",
+      "title": "Street dressing",
+      "why": "Squares, parks and streets that look lived in: things to look at, sit on and play on, and signs that say what each building is.",
+      "pillars": [
+        1
+      ],
+      "spec": [],
+      "levels": [
+        {
+          "name": "None",
+          "what": "As now: lamps, benches, flowerbeds and one small fountain in each park, court and square.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Dressed places",
+          "what": "Objects placed as data in the block files, drawn in the town's look: playgrounds in the four big parks (swings, slide, seesaw, sandpit, climbing frame), a statue and a grand fountain on the squares, a bandstand in one park; hanging signs, awnings, painted wall adverts and hoardings, window boxes on buildings; bollards, bins, post boxes, bicycle racks, planters, notice boards, a news kiosk and a telephone box along streets; crates, barrows and bunting at the market. They stand still and block the way where solid.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "Used and changing",
+          "what": "Children play on the swings, slide and seesaw; residents read notice boards and buy at the kiosk; posters and cinema boards change with what is on; bunting only on market days; decorations change with the season.",
+          "effort": "L",
+          "needs": {
+            "F-OBJ-POINTS": 1,
+            "F-NPC-ROUTINE": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
       "id": "F-NPC-POP",
       "area": "people",
       "title": "Population",

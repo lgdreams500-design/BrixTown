@@ -114,7 +114,8 @@
      ]
     ]
    },
-   "residents": 3
+   "residents": 3,
+   "window_boxes": true
   },
   {
    "id": "b_7_4_l2",
@@ -202,7 +203,8 @@
      ]
     ]
    },
-   "residents": 3
+   "residents": 3,
+   "window_boxes": true
   },
   {
    "id": "b_7_4_l4",
@@ -258,7 +260,8 @@
      ]
     ]
    },
-   "residents": 4
+   "residents": 4,
+   "window_boxes": true
   },
   {
    "id": "b_7_4_l5",
@@ -402,7 +405,8 @@
      ]
     ]
    },
-   "residents": 3
+   "residents": 3,
+   "window_boxes": true
   },
   {
    "id": "b_7_4_l8",
@@ -490,7 +494,8 @@
      ]
     ]
    },
-   "residents": 2
+   "residents": 2,
+   "window_boxes": true
   },
   {
    "id": "b_7_4_l10",
@@ -655,6 +660,287 @@
     676.0,
     432.0
    ]
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    693.24,
+    388.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_7_4_d0"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    700.82,
+    388.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_7_4_d1"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    710.15,
+    388.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_7_4_d2"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    694.55,
+    475.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_7_4_d3"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    708.26,
+    475.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_7_4_d4"
+  },
+  {
+   "kind": "postbox",
+   "pos": [
+    729.89,
+    475.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_7_4_d5"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    676.25,
+    401.78
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_7_4_d6"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    676.25,
+    413.42
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_7_4_d7"
+  },
+  {
+   "kind": "bikerack",
+   "pos": [
+    676.25,
+    422.31
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_7_4_d8"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    763.75,
+    404.17
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_7_4_d9"
+  },
+  {
+   "kind": "bikerack",
+   "pos": [
+    763.75,
+    414.19
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_7_4_d10"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    763.75,
+    430.02
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_7_4_d11"
+  },
+  {
+   "kind": "phonebox",
+   "pos": [
+    763.75,
+    441.78
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_7_4_d12"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    676.1,
+    390.7
+   ],
+   "set": "dress",
+   "id": "b_7_4_d13"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    678.7,
+    388.1
+   ],
+   "set": "dress",
+   "id": "b_7_4_d14"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    763.9,
+    390.7
+   ],
+   "set": "dress",
+   "id": "b_7_4_d15"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    761.3,
+    388.1
+   ],
+   "set": "dress",
+   "id": "b_7_4_d16"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    676.1,
+    473.3
+   ],
+   "set": "dress",
+   "id": "b_7_4_d17"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    678.7,
+    475.9
+   ],
+   "set": "dress",
+   "id": "b_7_4_d18"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    763.9,
+    473.3
+   ],
+   "set": "dress",
+   "id": "b_7_4_d19"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    761.3,
+    475.9
+   ],
+   "set": "dress",
+   "id": "b_7_4_d20"
+  },
+  {
+   "kind": "timetable",
+   "pos": [
+    727.3,
+    474.6
+   ],
+   "set": "dress",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_7_4_d21"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    712.7,
+    474.6
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_7_4_d22"
   }
  ]
 }

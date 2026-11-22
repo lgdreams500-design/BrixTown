@@ -111,6 +111,86 @@ class TheResidents(unittest.TestCase):
         self.assertTrue(0 < len(near) < len(state) / 4)
 
 
+class TheDressing(unittest.TestCase):
+    """WLD-028 to WLD-034: street dressing (F-MAP-DRESS level 2; Tools/worldgen/add_dressing_01.py, World/rules/dressing.json)."""
+    PROPS = [p for b in W["blocks"] for p in b["props"] if p.get("set") == "dress"]
+
+    def count(self, kind):
+        return sum(p["kind"] == kind for p in self.PROPS)
+
+    def test_WLD_028_dressing_is_sound(self):
+        self.assertEqual(world.dressing_problems(W), [])
+        import copy
+        w = copy.deepcopy(W)
+        bad = next(p for b in w["blocks"] for p in b["props"] if p.get("set") == "dress" and p["kind"] == "bin")
+        bad["kind"], bad["pos"] = "trampoline", [-500, -500]
+        p = world.dressing_problems(w)
+        self.assertTrue(any("unknown dressing trampoline" in x for x in p))
+        self.assertTrue(any("outside its block" in x for x in p))
+
+    def test_WLD_029_parks_courts_and_squares(self):
+        parks = [l for l in LOTS if l["name"].endswith(" Park")]
+        self.assertEqual(len(parks), 4)
+        for l in parks:
+            for k in world.PLAY_USES + ("notice",):
+                self.assertTrue(l["objects"].get(k), (l["name"], k))
+        for k in ("playground", "swing", "slide", "sandpit", "climber"):
+            self.assertEqual(self.count(k), 4, k)
+        self.assertEqual(self.count("seesaw"), 8)
+        self.assertEqual(self.count("bandstand"), 1)
+        courts = [l for l in LOTS if l["kind"] == "garden" and not l["name"].endswith(" Park")]
+        pieces = [p for p in self.PROPS if p["kind"] in ("sundial", "well", "pergola", "statue")]
+        self.assertGreaterEqual(len(pieces), len(courts) + 1)                   # one in each court, and the Town Hall's statue
+        market = next(l for l in LOTS if l["kind"] == "market")
+        self.assertTrue(market["objects"].get("kiosk") and market["objects"].get("notice"))
+        self.assertTrue(any(p["kind"] == "fountain" and p.get("grand") for b in W["blocks"] for p in b["props"]))
+
+    def test_WLD_030_buildings(self):
+        self.assertGreaterEqual(self.count("advert"), 15)
+        self.assertGreaterEqual(self.count("hoarding"), 3)
+        homes = [l for l in LOTS if l["kind"] == "home"]
+        self.assertTrue(.3 < sum(bool(l.get("window_boxes")) for l in homes) / len(homes) < .6)
+
+    def test_WLD_031_streets(self):
+        for k, least in (("bin", 64), ("planter", 40), ("bikerack", 20), ("postbox", 10), ("phonebox", 3), ("bollard", 256)):
+            self.assertGreaterEqual(self.count(k), least, k)
+        self.assertEqual(self.count("timetable"), sum(p["kind"] == "shelter" for b in W["blocks"] for p in b["props"]))
+
+    def test_WLD_032_children_play_after_school(self):
+        kids = [r for r in W["residents"] if r["role"] == "child"]
+        self.assertEqual(len(kids), 60)
+        self.assertEqual(len({r["near"]["playground"] for r in kids}), 4)
+        self.assertIn("child", W["traffic"]["no_drive_roles"])
+        state = CITY.at(DAY * 1440 + 16.5 * 60)
+        playing = [rid for rid, s in state.items() if s["act"] in world.PLAY_USES and s["state"] != "walking" and s.get("slot") is not None]
+        self.assertGreaterEqual(len(playing), 35)
+        self.assertTrue(all(CITY.res[rid]["role"] == "child" for rid in playing))
+        morning = CITY.at(DAY * 1440 + 11 * 60)
+        self.assertFalse(any(s["act"] in world.PLAY_USES for s in morning.values()))   # at school on a weekday
+
+    def test_WLD_033_notices_and_the_kiosk(self):
+        stays = [s for pieces in CITY.plan(DAY).values() for kind, t0, t1, payload, s in pieces if kind == "stay"]
+        self.assertTrue(any(s["act"] == "notices" and s.get("slot") is not None for s in stays))
+        self.assertTrue(any(s["act"] == "paper" and s.get("slot") is not None for s in stays))
+        market = next(l for l in LOTS if l["kind"] == "market")
+        self.assertTrue(any(s["act"] == "work" and s["place"] == market["id"] for s in stays))
+
+    def test_WLD_034_what_changes_with_the_day(self):
+        d = W["dressing"]
+        a, b = world.dressing_today(W, 0), world.dressing_today(W, d["advert_every_days"])
+        self.assertNotEqual(a["adverts"], b["adverts"])
+        self.assertEqual(a["adverts"], world.dressing_today(W, d["advert_every_days"] - 1)["adverts"])
+        self.assertGreater(len(set(a["adverts"].values())), 3)                  # the boards are out of step
+        self.assertNotEqual(a["film"], world.dressing_today(W, d["film_every_days"])["film"])
+        clock = CITY.clock
+        days = range(0, 14)
+        for day in days:
+            self.assertEqual(world.dressing_today(W, day)["bunting"], bool(clock.info(day)["market"]))
+        self.assertTrue(any(clock.info(day)["market"] for day in days) and not all(clock.info(day)["market"] for day in days))
+        for p in self.PROPS:                                                     # never stored in the map
+            self.assertFalse({"text", "film", "advert"} & set(p), p["id"])
+
+
 class TheDialogue(unittest.TestCase):
     """CITY-007: conversations with residents (World/rules/dialogue.json)."""
     D = W["dialogue"]

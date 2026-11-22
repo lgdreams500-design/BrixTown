@@ -376,6 +376,218 @@
     388.0,
     432.0
    ]
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    402.27,
+    388.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_4_4_d0"
+  },
+  {
+   "kind": "bikerack",
+   "pos": [
+    414.23,
+    388.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_4_4_d1"
+  },
+  {
+   "kind": "postbox",
+   "pos": [
+    425.86,
+    388.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_4_4_d2"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    405.18,
+    475.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_4_4_d3"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    419.55,
+    475.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_4_4_d4"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    388.25,
+    401.89
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_4_4_d5"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    388.25,
+    415.88
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_4_4_d6"
+  },
+  {
+   "kind": "bikerack",
+   "pos": [
+    388.25,
+    427.02
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_4_4_d7"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    475.75,
+    406.81
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_4_4_d8"
+  },
+  {
+   "kind": "bikerack",
+   "pos": [
+    475.75,
+    415.48
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_4_4_d9"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    388.1,
+    390.7
+   ],
+   "set": "dress",
+   "id": "b_4_4_d10"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    390.7,
+    388.1
+   ],
+   "set": "dress",
+   "id": "b_4_4_d11"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    475.9,
+    390.7
+   ],
+   "set": "dress",
+   "id": "b_4_4_d12"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    473.3,
+    388.1
+   ],
+   "set": "dress",
+   "id": "b_4_4_d13"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    388.1,
+    473.3
+   ],
+   "set": "dress",
+   "id": "b_4_4_d14"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    390.7,
+    475.9
+   ],
+   "set": "dress",
+   "id": "b_4_4_d15"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    475.9,
+    473.3
+   ],
+   "set": "dress",
+   "id": "b_4_4_d16"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    473.3,
+    475.9
+   ],
+   "set": "dress",
+   "id": "b_4_4_d17"
   }
  ]
 }

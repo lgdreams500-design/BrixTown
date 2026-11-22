@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 19 of 36 | 9 of 36 | 9 of 36 |
-| Size of the plan (points) | 224 | 268 | 545 |
-| Size of the suggested plan | 96 | 228 | 513 |
+| Decided | 20 of 37 | 9 of 37 | 9 of 37 |
+| Size of the plan (points) | 235 | 279 | 556 |
+| Size of the suggested plan | 99 | 239 | 524 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -27,6 +27,7 @@
 | **Workplaces** `F-BLD-WORK` | undecided | undecided | undecided |  |
 | **Utility areas** `F-BLD-UTILITY` | undecided | undecided | undecided |  |
 | **Gardens and parks** `F-GARDEN` | undecided | undecided | undecided |  |
+| **Street dressing** `F-MAP-DRESS` | 2 Used and changing ★ | undecided | undecided | Owner, 2026-11-22: "Level 2: used, changing" (playgrounds, statues, signs, street furniture; children play, residents read notices and use the kiosk, posters and bunting change). Later milestones not stated. |
 
 ## People and animals
 
@@ -135,6 +136,11 @@
 - 0 Static garden: A garden with paths and plants that never change. Size S.
 - 1 Living garden: Benches people use, seasonal plants, a gardener at work. Size M.
 - 2 Community garden: Players plant and tend plots; garden events. Size L.
+
+**Street dressing** (`F-MAP-DRESS`). Squares, parks and streets that look lived in: things to look at, sit on and play on, and signs that say what each building is.
+- 0 None: As now: lamps, benches, flowerbeds and one small fountain in each park, court and square. Size -.
+- 1 Dressed places: Objects placed as data in the block files, drawn in the town's look: playgrounds in the four big parks (swings, slide, seesaw, sandpit, climbing frame), a statue and a grand fountain on the squares, a bandstand in one park; hanging signs, awnings, painted wall adverts and hoardings, window boxes on buildings; bollards, bins, post boxes, bicycle racks, planters, notice boards, a news kiosk and a telephone box along streets; crates, barrows and bunting at the market. They stand still and block the way where solid. Size M.
+- 2 Used and changing: Children play on the swings, slide and seesaw; residents read notice boards and buy at the kiosk; posters and cinema boards change with what is on; bunting only on market days; decorations change with the season. Size L.
 
 **Population** (`F-NPC-POP`). How many residents there are and how varied.
 - 0 A handful: Five or six people standing at their posts. Size S.

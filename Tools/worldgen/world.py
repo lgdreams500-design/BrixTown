@@ -6,7 +6,7 @@
     city = world.simulation(w)       # a citysim.City running the living-city rules over the whole map
     city = world.simulation(w, traffic=True)   # the same, with residents' cars on the roads (citysim/traffic.py)
 """
-import json, os, sys
+import json, math, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 WORLD = os.path.normpath(os.path.join(HERE, "..", "..", "World"))
@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -486,3 +486,56 @@ def simulation(w, traffic=False):
         import traffic as tr
         tr.Traffic(city, w["roads"], w["traffic"])
     return city
+
+
+# ---------------------------------------------------------------- street dressing (WLD-028 to WLD-034, F-MAP-DRESS)
+DRESS_KINDS = {"playground", "swing", "slide", "seesaw", "sandpit", "climber", "bench", "bandstand", "noticeboard", "sundial", "well",
+               "pergola", "statue", "kiosk", "bunting", "planter", "bin", "bikerack", "postbox", "phonebox", "bollard", "timetable",
+               "advert", "hoarding"}
+PLAY_USES = ("swing", "slide", "seesaw", "sandpit", "climb")
+
+
+def dressing_problems(w):
+    """Every rule the street dressing must keep (WLD-028, WLD-034). Returns a list of problems in plain words."""
+    out = []
+    g = w["city"]["grid"]
+    lots_by_id = {l["id"]: l for l in lots(w)}
+    for b in w["blocks"]:
+        ox, oz = b["origin"]
+        lo_x, lo_z, hi_x, hi_z = ox - g["street_width"] / 2, oz - g["street_width"] / 2, ox + b["size"] + g["street_width"] / 2, oz + b["size"] + g["street_width"] / 2
+        for p in b["props"]:
+            if p.get("set") != "dress":
+                continue
+            if p["kind"] not in DRESS_KINDS:
+                out.append("%s: unknown dressing %s" % (p.get("id"), p["kind"]))
+            x, z = p["pos"]
+            if not (lo_x <= x <= hi_x and lo_z <= z <= hi_z):
+                out.append("%s: %s at %s is outside its block and pavements" % (p.get("id"), p["kind"], p["pos"]))
+            if p["kind"] in ("advert", "hoarding") and p.get("lot") not in lots_by_id:
+                out.append("%s: %s on a lot that does not exist" % (p.get("id"), p["kind"]))
+            for l in b["lots"]:                       # nothing on the street stands in a doorway
+                if p["kind"] not in ("advert", "hoarding") and math.hypot(x - l["door"][0], z - l["door"][1]) < 1.6:
+                    out.append("%s: %s blocks the door of %s" % (p.get("id"), p["kind"], l["id"]))
+    d = w["dressing"]
+    for k in ("adverts", "films", "advert_every_days", "film_every_days", "motion"):
+        if not d.get(k):
+            out.append("dressing.json: %s is missing" % k)
+    for k in PLAY_USES + ("notices", "paper"):
+        if k not in w["choices"]["use"]:
+            out.append("choices.json: nothing to use for %s" % k)
+    return out
+
+
+def dressing_today(w, day):
+    """What the changing dressing shows on a day (WLD-034): worked out from the day number and World/rules/dressing.json,
+    never stored. Each advert board shows one advert for advert_every_days days, boards out of step with each other; the
+    cinema's board shows the film of the day; bunting is up on market days."""
+    import citysim
+    d = w["dressing"]
+    clock = citysim.Clock(w["calendar"]["calendar"])
+    boards = [p["id"] for b in w["blocks"] for p in b["props"] if p.get("set") == "dress" and p["kind"] in ("advert", "hoarding")]
+    n = len(d["adverts"])
+    adverts = {pid: (day // d["advert_every_days"] + k * 7) % n for k, pid in enumerate(boards)}
+    film = d["films"][(day // d["film_every_days"]) % len(d["films"])]
+    return dict(adverts=adverts, film=film, bunting=bool(clock.info(day)["market"]) if d["bunting"] == "market_days" else True,
+                advert_list=d["adverts"], motion=d["motion"])
