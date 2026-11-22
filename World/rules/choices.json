@@ -1,5 +1,5 @@
 {
- "note": "Where a token like 'lunch' can lead. 'cafe', 'grocer', 'garden', 'market', 'stop', 'clinic' mean the resident's nearest one. 'bank', 'library', 'museum', 'cinema', 'dealer' likewise (Tools/worldgen/add_places_01.py). 'playground', 'noticeboard', 'kiosk' likewise, and 'play' is the children's list (Tools/worldgen/add_dressing_01.py).",
+ "note": "Where a token like 'lunch' can lead. 'cafe', 'grocer', 'garden', 'market', 'stop', 'clinic' mean the resident's nearest one. 'bank', 'library', 'museum', 'cinema', 'dealer' likewise (Tools/worldgen/add_places_01.py). 'playground', 'noticeboard', 'kiosk' likewise, and 'play' is the children's list (Tools/worldgen/add_dressing_01.py). 'furniture' likewise: the furniture outlet (Tools/worldgen/add_outlet_01.py).",
  "choices": {
   "lunch": {
    "default": [
@@ -124,6 +124,10 @@
     [
      "watch",
      "cinema"
+    ],
+    [
+     "browse",
+     "furniture"
     ]
    ],
    "market": [
@@ -184,6 +188,10 @@
     [
      "view",
      "museum"
+    ],
+    [
+     "browse",
+     "furniture"
     ]
    ]
   },

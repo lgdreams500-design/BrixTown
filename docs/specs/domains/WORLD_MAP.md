@@ -42,6 +42,7 @@ The starting city, **Old Town**: 64 blocks, 503 lots, 1,134 residents, 589 trees
 | Market Square | 1 | 8 stalls, staffed on market days |
 | Tram stops | 6 | |
 | Utilities | 4 | 2 depots you can enter, 2 substations you cannot |
+| Furniture outlet | 1 | Outside the walls, beyond the East Gate: block `b_8_4`, the first outside the 8×8 grid (FURN-020, ADR-0027; `Tools/worldgen/add_outlet_01.py`) |
 
 466 of the 468 buildings can be entered (the two substations cannot).
 

@@ -58,6 +58,8 @@ const SURF = D.surfaces || { patterns: [], lots: {}, blocks: {}, table: {} }, SU
 const SURF_A = new Float32Array(64), SURF_B = new Float32Array(64);
 SURF.patterns.forEach((name, k) => { const t = SURF.table[name]; SURF_A.set([SURF_TYPE[t.type], t.unit[0], t.unit[1], t.joint], k * 4); SURF_B.set([t.vary || .8, t.bevel || 0, t.dome || 0, t.mortar || 0], k * 4); });
 function wallStone(l) {                                    // [colour, material] of a building's stone, and whether its upper storeys are that too
+  const st = l.design && l.design.walls;                  // from the building's design (BUILD-001)
+  if (st && st.stone.pattern) return [st.stone.color || C.stone, 30 + SURF.patterns.indexOf(st.stone.pattern), st.brick_to_eaves];
   const s = SURF.lots[l.id]; if (!s || s.wall === undefined) return [C.stone, 6, false];
   return [s.color || C.stone, 30 + s.wall, s.upper];
 }
@@ -71,8 +73,8 @@ const HAIR = [[.05, .04, .04], [.16, .1, .06], [.09, .07, .06], [.3, .2, .1], [.
 const CLOTH = [C.brown, C.olive, C.plum, C.charcoal, C.indigo, [.25, .3, .4], [.33, .29, .25]];
 const BLOBS = [];                                             // street furniture that shades the ground it stands on (trial light): x, z, half-width, half-depth
 const BLOB_SIZE = { bench: [1, .27], bin: [.32, .32], planter: [.5, .5], postbox: [.3, .3], bollard: [.16, .16], well: [1, 1], bikerack: [1, .4], advert: [.5, .25], lamp: [.2, .2] };
-const KIND_CSS = { home: "#b59a7c", shop: "#c79a45", food: "#b0614a", work: "#6f86ab", health: "#d9d3c2", utility: "#4b4b55", garden: "#6f8650", market: "#d8c9a3", stop: "#6fa3a2", bank: "#8c7a3c", dealer: "#5a7f8f", library: "#7a5c8f", museum: "#a08a6a", cinema: "#8f3c4a" };
-const KIND_WORD = { home: "Homes", shop: "Shops", food: "Cafés", work: "Workplaces", health: "Clinics and hospital", utility: "Utilities", garden: "Gardens and parks", market: "Market Square", stop: "Tram stops", bank: "Bank", dealer: "Car showroom", library: "Library", museum: "Museum", cinema: "Cinema" };
+const KIND_CSS = { home: "#b59a7c", shop: "#c79a45", food: "#b0614a", work: "#6f86ab", health: "#d9d3c2", utility: "#4b4b55", garden: "#6f8650", market: "#d8c9a3", stop: "#6fa3a2", bank: "#8c7a3c", dealer: "#5a7f8f", library: "#7a5c8f", museum: "#a08a6a", furniture: "#a8744a", cinema: "#8f3c4a" };
+const KIND_WORD = { home: "Homes", shop: "Shops", food: "Cafés", work: "Workplaces", health: "Clinics and hospital", utility: "Utilities", garden: "Gardens and parks", market: "Market Square", stop: "Tram stops", bank: "Bank", dealer: "Car showroom", library: "Library", museum: "Museum", cinema: "Cinema", furniture: "Furniture outlet" };
 
 // ---------------------------------------------------------------- mesh: position 3, normal 3, colour 3, material 1
 // materials: 0 plaster (mottled) · 1 lit window · 2 lamp · 3 indoor surface · 4 dark window · 6 stone blocks · 7 paving · 8 light pool · 9 plain · 10 person indoors
@@ -142,9 +144,10 @@ function lotAt(x, z, any) {
   return null;
 }
 function groundBase(x, z) {                              // height of the ground itself: street, pavement, yard or a building's floor
-  if (x < -SW / 2 || z < -SW / 2 || x > CITY + SW / 2 || z > CITY + SW / 2) return 0;
+  const there = blockOf(x, z);                             // beyond the wall only a block built out there has ground of its own (the furniture outlet, FURN-020)
+  if (!there && (x < -SW / 2 || z < -SW / 2 || x > CITY + SW / 2 || z > CITY + SW / 2)) return 0;
   const u = x - Math.floor(x / P) * P, v = z - Math.floor(z / P) * P, lo = SW / 2 - PAVE, hi = P - SW / 2 + PAVE;
-  if (u < lo || u > hi || v < lo || v > hi || x < 0 || z < 0 || x > CITY || z > CITY) return 0;
+  if (u < lo || u > hi || v < lo || v > hi || x < 0 || z < 0 || (!there && (x > CITY || z > CITY))) return 0;
   if (u < SW / 2 || u > P - SW / 2 || v < SW / 2 || v > P - SW / 2) return Y_PAVE;
   const l = lotAt(x, z); return l && l.enterable ? Y_FLOOR : Y_YARD;
 }
@@ -450,10 +453,12 @@ function special(l, ctx) {
 function building(l) {
   const [x0, z0, x1, z1] = l.rect, t = 0.35, H = Math.max(l.floors * 3 + 0.4, GF + 0.4), [dx, dz] = l.door;
   const side = Math.abs(dz - z0) < .01 ? "n" : Math.abs(dz - z1) < .01 ? "s" : Math.abs(dx - x0) < .01 ? "w" : "e";
-  const big = (x1 - x0) * (z1 - z0) > 800 || l.tower, dw = big ? 3.2 : 1.7, dh = 2.4;
-  const wallC = pick(PLASTER, hash(l.id, 1)), roofC = pick(ROOF, hash(l.id, 2)), accent = pick(ACCENT, hash(l.id, 3)), inC = mix3(wallC, [.8, .74, .62], .5);
+  const Dz = l.design;                                    // the building's design: every choice below comes from it (world.py design_of, BUILD-001)
+  const big = Dz.shell.big, dw = Dz.shell.door_width, dh = 2.4;
+  const wallC = Dz.walls.plaster, roofC = Dz.roof.tiles, accent = Dz.openings.awning, inC = Dz.walls.inner;
   l.side = side; l.dw = dw; l.H = H;
   labels.push({ x: dx, y: 3.3, z: dz, text: l.name, lot: l, r: big ? 60 : 30 });
+  if (l.kind === "furniture") return Outlet.build(l, side);   // the furniture outlet: a hall of its own (outlet.js, FURN-020)
   if (!l.enterable) {
     const [sc0, sf0] = wallStone(l); world.box(x0, 0, z0, x1, H, z1, sc0, sf0); solid(x0, 0, z0, x1, H, z1);
     const d = DOOR_DIR[side]; world.ybox(dx + d[0] * .03, Y_PAVE, dz + d[1] * .03, side === "n" || side === "s" ? 1.6 : .1, 2.3, side === "n" || side === "s" ? .1 : 1.6, 0, C.metal, 9);
@@ -471,11 +476,11 @@ function building(l) {
     piece(a0, dc - dw / 2, 0); piece(dc + dw / 2, a1, 0); arch(ns, s, f0, dc, dw / 2, inC, detailOf(l.block));
     ns ? solid(dc - dw / 2, dh, f0, dc + dw / 2, GF, f0 + t) : solid(f0, dh, dc - dw / 2, f0 + t, GF, dc + dw / 2);
   }
-  const fl = ROOM_FLOOR[l.sp] || ROOM_FLOOR[l.kind] || ROOM_FLOOR.work; world.flat(x0 + t, z0 + t, x1 - t, z1 - t, Y_FLOOR, fl[1], fl[0]);
-  const flatRoof = big || l.kind === "utility", old = l.block.district !== "Outskirts" && !l.tower && H > 6, ceil = [mix3(inC, [1, 1, 1], .25), 18]; l.old = old;
-  l.sp = specialKind(l);
-  const stoneUp = l.sp === "office" || (l.block.template === "peri" && hash(l.id, "st") < .15);     // most old houses are plaster over a stone storey, as in the building kit
-  const front = (l.kind === "shop" || l.kind === "food") && !l.tower, DSa = sideOf(l, side), aw = front ? Math.min(DSa.a1 - DSa.a0 - 2, 14) : 0; l.aw = aw;
+  const fl = Dz.inside.floors[0]; world.flat(x0 + t, z0 + t, x1 - t, z1 - t, Y_FLOOR, fl[1], fl[0]);
+  const flatRoof = Dz.roof.type === "flat", old = Dz.shell.old, ceil = [mix3(inC, [1, 1, 1], .25), 18]; l.old = old;
+  l.sp = Dz.special;
+  const stoneUp = Dz.walls.stone_to_eaves;                // most old houses are plaster over a stone storey, as in the building kit
+  const front = Dz.openings.shop_front > 0, aw = Dz.openings.shop_front; l.aw = aw;
   const upAll = stoneUp || stoneAll;                       // all-stone buildings, and the brick terraces brick to the eaves
   if (l.stair) Storeys.shell(l, { H, old, stoneC, stoneF, upC: upAll ? stoneC : wallC, upF: upAll ? stoneF : 0, inC, capC: old || flatRoof ? C.stoneDark : roofC });   // hollow, every floor reachable (storeys.js)
   else {
@@ -489,7 +494,7 @@ function building(l) {
     ring(0, H - .3, H, .12);
   } else if (old) { world.box(x0 - .2, H, z0 - .2, x1 + .2, H + .4, z1 + .2, C.stoneDark, 0, { 2: [C.stoneDark, 0] }); ring(0, H - .24, H, .1); piers(l, dw); }
   else {                                                 // a pitched roof of barrel tiles, ridge along the long side, on corbels, with a chimney
-    const alongX = x1 - x0 >= z1 - z0, o = .45, rh = Math.min(5, (alongX ? z1 - z0 : x1 - x0) * .38), up = [0, 1, 0], top = H + rh;
+    const alongX = Dz.roof.ridge === "x", o = .45, rh = Dz.roof.rise, up = [0, 1, 0], top = H + rh;
     ring(0, H - .32, H - .12, .07);
     if (alongX) {
       const zc = (z0 + z1) / 2;
@@ -499,7 +504,7 @@ function building(l) {
       world.box(x0 - o, top - .08, zc - .17, x1 + o, top + .16, zc + .17, mul3(roofC, .9), 11);
       for (const ez of [z0 - o, z1 + o]) world.box(x0 - o, H - .2, ez - .06, x1 + o, H + .02, ez + .06, C.wood, 0, { 2: [C.wood, 0] });
       for (const s of "ns") { const S = sideOf(l, s), n = Math.floor((x1 - x0) / .9); for (let k = 0; k < n; k++) { const c = x0 + (k + .5) * (x1 - x0) / n; fbox(dm, S, c - .09, c + .09, H - .3, H - .02, 0, .34, C.stoneDark, 0, true); } }
-      chimney(x0 + 1.2 + (x1 - x0 - 2.4) * hash(l.id, "ch"), zc + .5, H, top, wallC);
+      chimney(x0 + 1.2 + (x1 - x0 - 2.4) * Dz.roof.chimney, zc + .5, H, top, wallC);
     } else {
       const xc = (x0 + x1) / 2;
       world.quad([x0 - o, H, z0 - o], [x0 - o, H, z1 + o], [xc, top, z1 + o], [xc, top, z0 - o], roofC, 11, up);
@@ -508,11 +513,11 @@ function building(l) {
       world.box(xc - .17, top - .08, z0 - o, xc + .17, top + .16, z1 + o, mul3(roofC, .9), 11);
       for (const ex of [x0 - o, x1 + o]) world.box(ex - .06, H - .2, z0 - o, ex + .06, H + .02, z1 + o, C.wood, 0, { 2: [C.wood, 0] });
       for (const s of "we") { const S = sideOf(l, s), n = Math.floor((z1 - z0) / .9); for (let k = 0; k < n; k++) { const c = z0 + (k + .5) * (z1 - z0) / n; fbox(dm, S, c - .09, c + .09, H - .3, H - .02, 0, .34, C.stoneDark, 0, true); } }
-      chimney(xc + .5, z0 + 1.2 + (z1 - z0 - 2.4) * hash(l.id, "ch"), H, top, wallC);
+      chimney(xc + .5, z0 + 1.2 + (z1 - z0 - 2.4) * Dz.roof.chimney, H, top, wallC);
     }
   }
   windows(l, wallC);
-  if (!stoneUp && !l.tower) quoins(l, old ? OLD_BASE + .25 : l.floors > 1 ? GF + .16 : .45);
+  if (Dz.ornament.quoins) quoins(l, old ? OLD_BASE + .25 : l.floors > 1 ? GF + .16 : .45);
   const d = DOOR_DIR[side], ns = side === "n" || side === "s", DS = sideOf(l, side), dc = ns ? dx : dz;
   for (const s of "nswe") {                              // a dark stone plinth round the foot of the walls, open at the door
     const S = sideOf(l, s), segs = s === side ? [[S.a0, dc - dw / 2], [dc + dw / 2, S.a1]] : [[S.a0, S.a1]];
@@ -522,12 +527,12 @@ function building(l) {
   fbox(world, DS, da - .06, da + .06, .12, H - .2, .06, .18, C.metal, 9); fbox(world, DS, da - .15, da + .15, H - .45, H - .15, .02, .32, C.metal, 9, true); fbox(world, DS, da - .1, da + .1, .12, .3, .06, .42, C.metal, 9);
   if (l.floors > 1) world.box(x0 - .22, old ? OLD_BASE : GF - .1, z0 - .22, x1 + .22, old ? OLD_BASE + .25 : GF + .16, z1 + .22, C.stoneDark, 0, { 2: [C.stoneDark, 0] });
   const shopish = l.kind === "shop" || l.kind === "food" || l.kind === "health";
-  if (shopish || big || hash(l.id, "lan") < .4) {              // a wall lantern beside the door
+  if (Dz.ornament.lantern) {                                  // a wall lantern beside the door
     const o = front ? aw / 2 + .45 : dw / 2 + .55, lx = dx + (ns ? o : d[0] * .2), lz = dz + (ns ? d[1] * .2 : o);
     world.box(lx - .13, 2.5, lz - .13, lx + .13, 2.92, lz + .13, C.lantern, 2); world.box(lx - .17, 2.92, lz - .17, lx + .17, 3, lz + .17, C.metal, 9); world.box(lx - .17, 2.44, lz - .17, lx + .17, 2.5, lz + .17, C.metal, 9);
     lights.push([lx + d[0] * .5, 2.7, lz + d[1] * .5, 1, 1]);
   }
-  if ((l.kind === "shop" || l.kind === "food") && hash(l.id, "cr") < .7) crates(dx + (ns ? -dw / 2 - 1.1 : d[0] * .6), dz + (ns ? d[1] * .6 : -dw / 2 - 1.1), l.id);
+  if (Dz.ornament.crates) crates(dx + (ns ? -dw / 2 - 1.1 : d[0] * .6), dz + (ns ? d[1] * .6 : -dw / 2 - 1.1), l.id);
   const cell = !l.sp && (l.kind === "shop" || l.kind === "food" || l.kind === "health") ? nameCell(l.name) : null;   // special buildings carry their own name
   const at = (a, y, dd) => DS.ns ? [a, y, DS.fix + DS.out * dd] : [DS.fix + DS.out * dd, y, a], nOut = DS.ns ? [0, 0, DS.out] : [DS.out, 0, 0];
   let bw = 0;
@@ -602,10 +607,10 @@ function banner(x0, z0, x1, z1, seed, y) {                // cloth strung across
 const QUAD_UV = true;
 function windows(l) {                                      // each window is one quad that draws its own frame, sill, reveal and panes
   const [x0, z0, x1, z1] = l.rect, lit = { home: .5, food: .45, shop: .3, work: .16, health: .5, utility: .1, bank: .2, dealer: .3, library: .4, museum: .2, cinema: .1 }[l.kind] || .3;
-  const flats = l.sp === "flats", old = l.old, w = flats ? 1.2 : l.tower ? 1.7 : old ? 1.25 : 1.15, gap = l.tower ? 3.1 : old ? 3.6 : 2.9, tall = old ? 2 : 1.5;
-  const shut = (!l.tower || flats) && (l.kind === "home" || l.kind === "food" || l.kind === "shop") && (flats || hash(l.id, "sh") < .75);
-  const sc = old ? pick([C.teal, [.42, .18, .14], C.ochre, C.blue], hash(l.id, "shc")) : pick(ACCENT, hash(l.id, "shc")), dm = detailOf(l.block), plants = [[.26, .38, .2], [.4, .48, .24]];
-  const frameC = pick([C.cream, [.3, .2, .13], C.teal, C.cream], hash(l.id, "fr")), balF = 1, balOdds = l.kind === "food" ? .9 : l.kind === "home" ? .35 : 0;
+  const Wd = l.design.openings, flats = l.sp === "flats", old = l.old, w = Wd.width, gap = Wd.gap, tall = Wd.tall;   // from the building's design (BUILD-001)
+  const shut = Wd.shutters;
+  const sc = Wd.shutter_color, dm = detailOf(l.block), plants = [[.26, .38, .2], [.4, .48, .24]];
+  const frameC = Wd.frame, balF = 1;
   for (const s of "nswe") {
     const ns = s === "n" || s === "s", L = ns ? x1 - x0 : z1 - z0, n = Math.max(1, Math.floor((L - 1.6) / gap)), a0 = ns ? x0 : z0;
     const fix = s === "n" ? z0 : s === "s" ? z1 : s === "w" ? x0 : x1, out = s === "n" || s === "w" ? -1 : 1, hint = ns ? [0, 0, out] : [out, 0, 0], S = { ns, fix, out };
@@ -632,7 +637,7 @@ function windows(l) {                                      // each window is one
         fbox(dm, S, c - .75, c + .75, z + .85, z + .9, .08, .14, C.metal, 9);
         l.hoistA = c; continue;
       }
-      const balc = s === l.side && f === balF && k === kDoor && hash(l.id, "bal") < balOdds || flats && f > 1 && (k + f) % 2 === 0;
+      const balc = s === l.side && f === balF && k === kDoor && Wd.balcony || flats && f > 1 && (k + f) % 2 === 0;
       const ww = shopW ? 2.0 : w;
       let y = shopW ? .55 : f * 3 + (old ? (f ? 1.05 : .7) : 1), tall0 = shopW ? 2.35 : old && f ? 1.72 : tall; const yTop = y + tall0; if (balc) y = old ? OLD_BASE + .4 : f * 3 + .25;
       if (Dress.covers(l, s, c, y, yTop)) continue;          // a painted advert or a hoarding is there (dressing.js)
@@ -658,7 +663,7 @@ function windows(l) {                                      // each window is one
       if (!balc) fbox(dm, S, a - .14, b + .14, ya - .16, ya + .02, 0, .3, C.stoneDark, 0, true);
       if (l.tower && !flats) continue;
       fbox(dm, S, a - .17, a + .04, ya + .02, yb, 0, .25, C.stoneDark, 0); fbox(dm, S, b - .04, b + .17, ya + .02, yb, 0, .25, C.stoneDark, 0);
-      if (!arched) { fbox(dm, S, a - .24, b + .24, yb - .04, yb + .22, 0, .27, C.stoneDark, 0, true); if (old || hash(l.id, "ks") < .5) fbox(dm, S, c - .13, c + .13, yb - .05, yb + .3, 0, .31, C.stone, 0, true); }
+      if (!arched) { fbox(dm, S, a - .24, b + .24, yb - .04, yb + .22, 0, .27, C.stoneDark, 0, true); if (Wd.keystones) fbox(dm, S, c - .13, c + .13, yb - .05, yb + .3, 0, .31, C.stone, 0, true); }
       const g0 = a + .16, g1 = b - .16, gy0 = ya + .1, gy1 = yb - .08, fm = shopW ? [.3, .2, .13] : frameC;
       fbox(dm, S, g0 - .02, g0 + .06, gy0, gy1, .03, .09, fm, 0); fbox(dm, S, g1 - .06, g1 + .02, gy0, gy1, .03, .09, fm, 0);
       fbox(dm, S, g0, g1, gy0 - .02, gy0 + .06, .03, .09, fm, 0, true); fbox(dm, S, g0, g1, gy1 - .06, gy1 + .02, .03, .09, fm, 0, true);
@@ -709,6 +714,7 @@ function furnish(l, side, accent, inC, vis, level) {     // at load (no vis): pl
     B(x, h - .04, z, size, .045, size, ROOM_WOOD, 0); if (round) { B(x, h - .04, z, size, .045, size, ROOM_WOOD, Math.PI / 4); B(x, 0, z, .09, h - .04, .09, C.metal); B(x, 0, z, .45, .04, .45, C.metal, Math.PI / 4); }
     else for (const [u, v] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) B(x + u * (size / 2 - .06), 0, z + v * (size / 2 - .06), .06, h - .04, .06, ROOM_WOOD);
   };
+  if (l.kind === "furniture") return Outlet.inside(l, B, hard, spot, use, RR, dm);   // room sets, racks, tills and cafe (outlet.js)
   for (const [x, z] of o.bed || []) {                     // a framed bed with a headboard, blanket and pillow, a nightstand and its lamp
     const bl = pick([C.cream, C.blue, C.olive, C.plum, C.terracotta], hash(l.id, x, z));
     B(x, 0, z, 1.0, .32, 2.0, ROOM_WOOD); B(x, .32, z, .94, .2, 1.92, [.78, .74, .66]); B(x, .5, z - .3, .98, .1, 1.36, bl); B(x, .52, z + .68, .62, .14, .34, [.85, .82, .76]);
@@ -1233,6 +1239,7 @@ function prop(p, b) {
   const [x, z] = p.pos, g = groundBase(x, z);
   if (BLOB_SIZE[p.kind]) { const [a, c] = BLOB_SIZE[p.kind], ax = p.along !== "z"; BLOBS.push([x, z, ax ? a : c, ax ? c : a]); }
   if (p.kind === "plant") return plant(p);                 // garden planting (CITY-017, WLD-040)
+  if (p.kind === "carpark") return Outlet.carpark(p, b);   // the furniture outlet's car park (outlet.js)
   if (p.set === "dress" && Dress.prop(p, b)) return;      // street dressing (dressing.js, WLD-028)
   if (p.kind === "lantern") {                              // a wall lantern: glass on an iron arm, and the light it gives (watts as in the Blender scene)
     const o = p.out, lx = x + o[0] * .32, lz = z + o[1] * .32, h = p.height;
@@ -1411,8 +1418,27 @@ function buildWorld() {
   // the town wall, with a gate where the tram comes through
   const W0 = -E - 1.5, W1 = CITY + E + 1.5, th = 3, gh = 7.5;
   const wallBox = (a, b, c, d, y0) => { world.box(a, y0 || 0, b, c, gh, d, C.stone, 6, y0 ? { 2: [C.stoneDark, 9] } : null); solid(a, y0 || 0, b, c, gh, d); occl.push([a, b, c, d, gh]); };
-  wallBox(W0 - th, W0 - th, W1 + th, W0); wallBox(W0 - th, W1, W1 + th, W1 + th);
-  for (const [a, c] of [[W0 - th, W0], [W1, W1 + th]]) { wallBox(a, W0, c, TRAM_Z - 3.4); wallBox(a, TRAM_Z + 3.4, c, W1); wallBox(a, TRAM_Z - 3.4, c, TRAM_Z + 3.4, 4.6); solid(a + 1, 0, TRAM_Z - 3.4, c - 1, 4.6, TRAM_Z + 3.4); }
+  // Every road out of town has a gate in the wall (CITY-068; the furniture outlet lies beyond the East Gate, FURN-020): an
+  // opening as wide as the street, a stone band over it with the gate's name, a tower each side, the road on through the
+  // fields. The tram's arch can be walked through too. Each side of the wall is a run with its openings cut out of it.
+  const GATE_W = 8, GATE_H = 5.2, GATES = (D.roads || {}).gates || [];
+  for (const [side, a, c, r0, r1] of [["n", W0 - th, W0, W0 - th, W1 + th], ["s", W1, W1 + th, W0 - th, W1 + th], ["w", W0 - th, W0, W0, W1], ["e", W1, W1 + th, W0, W1]]) {
+    const alongZ = side === "w" || side === "e", out = { n: [0, -1], s: [0, 1], w: [-1, 0], e: [1, 0] }[side];
+    const run = (p0, p1, y0) => { if (p1 - p0 > .01) alongZ ? wallBox(a, p0, c, p1, y0) : wallBox(p0, a, p1, c, y0); };
+    const cuts = alongZ ? [[TRAM_Z - 3.4, TRAM_Z + 3.4, 4.6, null]] : [];
+    for (const g of GATES) if (g[3] === out[0] && g[4] === out[1]) { const m = alongZ ? g[2] : g[1]; cuts.push([m - GATE_W, m + GATE_W, GATE_H, g]); }
+    cuts.sort((p, q) => p[0] - q[0]); let at = r0;
+    for (const [p0, p1, h, g] of cuts) {
+      run(at, p0); run(p0, p1, h); at = p1;
+      if (!g) continue;
+      const mid = (a + c) / 2, face = side === "w" || side === "n" ? a - .04 : c + .04, m = (p0 + p1) / 2;
+      for (const t of [p0 - 2.6, p1 + 2.6]) { const b = alongZ ? [mid - 2.6, t - 2.6, mid + 2.6, t + 2.6] : [t - 2.6, mid - 2.6, t + 2.6, mid + 2.6]; world.box(b[0], 0, b[1], b[2], gh + 2.4, b[3], C.stone, 6); solid(b[0], 0, b[1], b[2], gh + 2.4, b[3]); }
+      const cell = nameCell(g[0]); if (cell) lettering(signs, alongZ ? [face, (h + gh) / 2, m] : [m, (h + gh) / 2, face], [out[0], 0, out[1]], .8, cell);
+      const end = (alongZ ? g[1] : g[2]) + (alongZ ? g[3] : g[4]) * g[5], f0 = Math.min(face, end), f1 = Math.max(face, end);
+      alongZ ? world.flat(f0, m - 3.5, f1, m + 3.5, 0, C.road, 20) : world.flat(m - 3.5, f0, m + 3.5, f1, 0, C.road, 20);   // the road out, through the fields
+    }
+    run(at, r1);
+  }
   for (const cx of [W0 - th / 2, W1 + th / 2]) for (const cz of [W0 - th / 2, W1 + th / 2]) world.box(cx - 3.5, 0, cz - 3.5, cx + 3.5, gh + 3, cz + 3.5, C.stone, 6);
   for (const s of [-.72, .72]) world.box(-E - 40, 0, TRAM_Z + s - .05, CITY + E + 40, .04, TRAM_Z + s + .05, C.metal, 9);
   RANGES.push([0, world.n, true]);                        // fields, town paving, wall and rails: laid first, under everything
@@ -1513,7 +1539,7 @@ const MAIN_VS = `attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,u
 void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`;   // invariant: the depth-only pass and the lit pass land on the same depths
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
 uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform vec2 uNk; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
-uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec2 uRoomY;
+uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY;
 uniform sampler2D uGi; uniform vec4 uGiM, uBlob[16]; uniform int uBlobN; uniform vec3 uPf;
 uniform vec3 uHZ[4], uHNo[4], uHBr[4], uHSt; uniform vec4 uHLk[4];
 uniform vec4 uPatA[16], uPatB[16];                       // stone, brick and paving patterns (World/rules/surfaces.json): (type, unit w, unit h, joint), (vary, bevel, dome, -)
@@ -1525,8 +1551,9 @@ ${TONE}
 vec3 roomLight(vec3 n,float person){
   float day=1.-uNight, y=vP.y-uRoomY.x;                    // height above the floor the camera is on (storeys.js); other floors read the same way
   vec3 hemi=mix(uGround,uSky,n.y*.5+.5);
-  vec3 amb=(hemi*.42*day+uSunCol*.025*day+vec3(.16,.13,.1)*(.5+.5*day))*(.8+.2*n.y)*(.82+.18*smoothstep(.0,1.6,y));
   bool here=vP.x>uRoomR.x-.05&&vP.x<uRoomR.z+.05&&vP.z>uRoomR.y-.05&&vP.z<uRoomR.w+.05&&vP.y>uRoomY.x-.25&&vP.y<uRoomY.y+.25;
+  float sky=here?uRoomY.z:1.;                              // a hall under skylights sees more of the day (outlet.js: the lot's "skylight")
+  vec3 amb=(hemi*.42*day*sky+uSunCol*.025*day*(1.+4.*(sky-1.))+vec3(.16,.13,.1)*(.5+.5*day))*(.8+.2*n.y)*(.82+.18*smoothstep(.0,1.6,y));
   if(!here) y=mod(vP.y-.4,3.);
   vec3 lamps=vec3(0.); float ao=1.;
   if(here){
@@ -2175,7 +2202,7 @@ function camFloor() {                                      // the building the c
   return l && l.stair && fy < l.H ? [l, Storeys.levelAt(l, fy + .3)] : [null, 0];
 }
 function roomEntry(l, m, rec, level) {
-  return m.n ? { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, box: boxOf(m.a, 0, m.n), lot: l, level, lamps: rec.lamps, ao: roomAO(l, rec.foot), y0: Storeys.floorY(level), y1: Storeys.ceilY(level) } : { n: 0, lot: l, level, lamps: [] };
+  return m.n ? { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, box: boxOf(m.a, 0, m.n), lot: l, level, lamps: rec.lamps, ao: roomAO(l, rec.foot), y0: Storeys.floorY(level), y1: l.hall_height || Storeys.ceilY(level) } : { n: 0, lot: l, level, lamps: [] };
 }
 // A room's light: its lamps, and a map seen from above of how much of the floor round each spot is covered by furniture, blurred,
 // so floors darken round and under what stands on them and furniture darkens at its foot (contact shade, as baked in Blender).
@@ -2215,7 +2242,7 @@ function nearRooms(eye) {
   for (const [k, e] of UPSTAIRS) if (!want.has(k)) { if (e.buf) gl.deleteBuffer(e.buf); if (e.ao) gl.deleteTexture(e.ao); UPSTAIRS.delete(k); }
   for (const k of want) if (!UPSTAIRS.has(k) && built < 2) {
     const f = +k.split("|")[1], m = new Mesh(1 << 15); ROOM_REC = { lamps: [], foot: [] }; furnish(cl, cl.furn[0], cl.furn[1], cl.furn[2], m, f); built++;
-    Storeys.build(cl, f, m, floorMatOf(Storeys.proxy(cl, f))); const rec = ROOM_REC; ROOM_REC = null; UPSTAIRS.set(k, roomEntry(cl, m, rec, f));
+    Storeys.build(cl, f, m, cl.design ? cl.design.inside.floors[f] : floorMatOf(Storeys.proxy(cl, f))); const rec = ROOM_REC; ROOM_REC = null; UPSTAIRS.set(k, roomEntry(cl, m, rec, f));
   }
   const out = []; for (const r of ROOMS.values()) if (r.n) out.push(r); for (const r of UPSTAIRS.values()) if (r.n) out.push(r); return out;
 }
@@ -2335,7 +2362,7 @@ function frame(now) {
   // the room the camera is in (or the nearest one in reach) gets its own lamps and contact shade; other rooms an even lamplight
   let inRoom = null, best = 10;
   const [camL, camF] = camFloor();
-  for (const rm of rooms) { if (!rm.ao) continue; const [a0, b0, a1, b1] = rm.lot.rect, e = Math.hypot(Math.max(a0 - cam.eye[0], 0, cam.eye[0] - a1), Math.max(b0 - cam.eye[2], 0, cam.eye[2] - b1)) + (camL ? (rm.lot === camL && rm.level === camF ? 0 : 99) : (rm.level || cam.eye[1] > GF + 1 ? 99 : 0)); if (e < best) { best = e; inRoom = rm; } }
+  for (const rm of rooms) { if (!rm.ao) continue; const [a0, b0, a1, b1] = rm.lot.rect, e = Math.hypot(Math.max(a0 - cam.eye[0], 0, cam.eye[0] - a1), Math.max(b0 - cam.eye[2], 0, cam.eye[2] - b1)) + (camL ? (rm.lot === camL && rm.level === camF ? 0 : 99) : (rm.level || cam.eye[1] > (rm.lot.hall_height || GF) + 1 ? 99 : 0)); if (e < best) { best = e; inRoom = rm; } }
   const roomL = new Float32Array(64); let roomLN = 0;
   if (inRoom) { const ls = inRoom.lamps.map(q => [(q[0] - cam.eye[0]) ** 2 + (q[2] - cam.eye[2]) ** 2, q]).sort((p, q) => p[0] - q[0]);
     for (; roomLN < Math.min(16, ls.length); roomLN++) { const q = ls[roomLN][1]; roomL.set([q[0], q[1], q[2], q[3] * dials.lanterns * (.75 + .5 * Lt.night)], roomLN * 4); } }   // furnished rooms of the buildings close by   // near relief: blocks within reach and in view
@@ -2361,7 +2388,7 @@ function frame(now) {
     gl.uniform1i(u.uGi, 4); gl.uniform4f(u.uGiM, giAt[0], giAt[1], giAt[2], giK); gl.uniform4fv(u["uBlob[0]"], blob); gl.uniform1i(u.uBlobN, blobN);
     gl.uniform4fv(u["uPatA[0]"], SURF_A); gl.uniform4fv(u["uPatB[0]"], SURF_B);
     if (inRoom) gl.uniform4fv(u.uRoomR, inRoom.lot.rect); else gl.uniform4f(u.uRoomR, 0, 0, -1, -1);
-    gl.uniform2f(u.uRoomY, inRoom ? inRoom.y0 : Y_FLOOR, inRoom ? inRoom.y1 : GF);   // the floor the camera is on (storeys.js)
+    gl.uniform3f(u.uRoomY, inRoom ? inRoom.y0 : Y_FLOOR, inRoom ? inRoom.y1 : GF, inRoom ? inRoom.lot.skylight || 1 : 1);   // the floor the camera is on (storeys.js)
   };
   const blob = new Float32Array(64); let blobN = 0;         // the 16 pieces of street furniture nearest the camera shade the ground under them (trial light)
   if (giK > 0) { const near2 = []; for (const b of BLOBS) { const d2 = (b[0] - cam.eye[0]) ** 2 + (b[1] - cam.eye[2]) ** 2; if (d2 < 1600) near2.push([d2, b]); }

@@ -203,6 +203,142 @@
       }
     },
     {
+      "id": "F-BLD-DESIGN",
+      "area": "map",
+      "title": "Building designer",
+      "why": "Players make a place their own: remodel what they own, or build new on an open plot, in the town's look.",
+      "pillars": [
+        2,
+        4,
+        5
+      ],
+      "spec": [
+        "BUILD-001",
+        "BUILD-008",
+        "BUILD-015"
+      ],
+      "levels": [
+        {
+          "name": "None",
+          "what": "Buildings are as the town made them.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Remodel",
+          "what": "Change the finishes of a building or unit you own: walls and their colour, brick or stone, roof tiles, windows and doors outside; floors, walls and ceilings inside. Every building is a design in data; choices from priced catalogues within the district's palette; checked, paid through the ledger.",
+          "effort": "M",
+          "needs": {
+            "F-PROP-ESTATE": 1,
+            "F-BLD-INSIDE": 3
+          }
+        },
+        {
+          "name": "Build new",
+          "what": "On an empty plot: draw the footprint, set the storeys and each one's height, choose facades, roof, openings, stairs and lift, rooms and finishes; checked for planning, reachability, stairs and rooms; the result joins the estate market.",
+          "effort": "XL",
+          "needs": {
+            "F-MAP-PLOTS": 1
+          }
+        },
+        {
+          "name": "Free-form and published",
+          "what": "L-shapes, courtyards, set-backs, bays and arcades; designs saved as templates and published by creators.",
+          "effort": "XL",
+          "needs": {
+            "F-MAP-PLOTS": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 2,
+        "full": 3
+      }
+    },
+    {
+      "id": "F-MAP-PLOTS",
+      "area": "map",
+      "title": "Open plots",
+      "why": "Somewhere to build: the town is full today.",
+      "pillars": [
+        2,
+        3
+      ],
+      "spec": [
+        "BUILD-011",
+        "BUILD-012"
+      ],
+      "levels": [
+        {
+          "name": "None",
+          "what": "Every lot is built on.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Plots for sale",
+          "what": "A few empty plots with an owner and a price, bought and sold through the estate market.",
+          "effort": "S",
+          "needs": {
+            "F-PROP-ESTATE": 1
+          }
+        },
+        {
+          "name": "Clear and rebuild",
+          "what": "Owners of a whole building may clear it (tenants given notice); plots come up over time.",
+          "effort": "M",
+          "needs": {}
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-BLD-CONSTRUCT",
+      "area": "map",
+      "title": "From design to building",
+      "why": "Building should take a little time and show in the street.",
+      "pillars": [
+        1,
+        2
+      ],
+      "spec": [
+        "BUILD-013",
+        "BUILD-014"
+      ],
+      "levels": [
+        {
+          "name": "Instant",
+          "what": "A confirmed design is there at once.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Takes days",
+          "what": "Hoardings and scaffolding, then the building, over game days by its size; worked out from the clock.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "Builders at work",
+          "what": "Resident builders on site in their day, materials by van, stages you can watch.",
+          "effort": "L",
+          "needs": {
+            "F-NPC-ROUTINE": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
       "id": "F-BLD-SHOP",
       "area": "map",
       "title": "Shops and market",
@@ -978,7 +1114,8 @@
         1
       ],
       "spec": [
-        "CITY-032"
+        "CITY-032",
+        "FURN-057"
       ],
       "levels": [
         {
@@ -1799,6 +1936,261 @@
           "needs": {
             "F-MAP-LOTS": 1,
             "F-NPC-POP": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-PROP-FURNISH",
+      "area": "life",
+      "title": "Furniture that belongs to the unit",
+      "why": "Furniture is part of the home: sell the flat and its furniture goes with it, unless the owner takes it out first.",
+      "pillars": [
+        2,
+        3
+      ],
+      "spec": [
+        "PROP-001",
+        "PROP-003",
+        "FURN-050",
+        "FURN-051",
+        "FURN-052",
+        "FURN-053",
+        "FURN-054",
+        "FURN-055",
+        "FURN-056"
+      ],
+      "levels": [
+        {
+          "name": "Fixed furnishing",
+          "what": "Units come furnished; the furniture is part of the unit and is sold with it. It cannot be moved.",
+          "effort": "S",
+          "needs": {
+            "F-PROP-ESTATE": 1
+          }
+        },
+        {
+          "name": "Owned, placed from the inventory, sold with the unit",
+          "what": "Each piece of furniture is an owned item. Bought or taken out, it sits in the player's inventory; the player places it in a unit they own or rent, and once placed it is recorded against that unit. A sale or repossession of the unit includes everything still in it, and its value counts toward the price. The player can pick a placed piece back up into the inventory. Storage containers are a separate feature (F-PROP-STORAGE).",
+          "effort": "L",
+          "needs": {
+            "F-PROP-ESTATE": 1,
+            "F-OBJ-CARRY": 1
+          }
+        },
+        {
+          "name": "Arrange and trade",
+          "what": "The owner places, moves and turns furniture freely inside the unit (PROP-003), buys it from furniture shops and sells it on; furniture wears and has its own price. Visitors see the layout.",
+          "effort": "L",
+          "needs": {
+            "F-BLD-SHOP": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-PROP-STORAGE",
+      "area": "life",
+      "title": "Storage containers",
+      "why": "Somewhere to keep furniture and belongings that are not in use, so the inventory does not have to hold everything.",
+      "pillars": [
+        2,
+        3
+      ],
+      "spec": [
+        "PROP-001"
+      ],
+      "levels": [
+        {
+          "name": "None",
+          "what": "No storage; furniture is either placed in a home or held in the inventory.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Locker and storage unit",
+          "what": "The player moves pieces from the inventory or a home into a locker (small, free) or a rented storage unit at a storage depot (sized, rent each day through the ledger, settled from the clock), and takes them out again into the inventory.",
+          "effort": "L",
+          "needs": {
+            "F-PROP-FURNISH": 1,
+            "F-ECO-BANK": 1
+          }
+        },
+        {
+          "name": "Containers everywhere",
+          "what": "Wardrobes, chests, cupboards and shelves in a home hold items by size; storage units of several sizes at more than one depot; unpaid rent ends in the contents being sold at auction.",
+          "effort": "L",
+          "needs": {
+            "F-PROP-FURNISH": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-FURN-ITEMS",
+      "area": "objects",
+      "title": "Furniture designs",
+      "why": "Homes, shops and offices need furniture, and a large catalogue needs many pieces that still look like one world.",
+      "pillars": [
+        1,
+        2
+      ],
+      "spec": [
+        "FURN-001",
+        "FURN-002",
+        "FURN-003",
+        "FURN-004",
+        "FURN-005",
+        "FURN-006",
+        "FURN-007",
+        "FURN-008"
+      ],
+      "levels": [
+        {
+          "name": "Basic set",
+          "what": "About 30 plain pieces (bed, sofa, table, chairs, desk, wardrobe, shelves, lamp, kitchen run, bath) in one style, used to dress interiors. Made in Blender to the locked look; an interior style section is added to ART_DIRECTION first, with the owner's approval.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "Kit and variants",
+          "what": "About 80 base pieces built from one shared kit (legs, frames, cushions, handles) on a common grid, each with finishes and colours set in data, giving about 400 catalogue items in four style lines (budget, modern, classic, retro). A Blender look test renders every piece to check it matches the reference.",
+          "effort": "L",
+          "needs": {}
+        },
+        {
+          "name": "Large range",
+          "what": "About 200 base pieces and 1,500+ catalogue items across every room (living, bed, kitchen, bath, children, office, garden, shop fittings), with seasonal collections added from data, wear that shows with age, and sets that match across a room.",
+          "effort": "XL",
+          "needs": {}
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-FURN-STORE",
+      "area": "life",
+      "title": "Furniture company and outlets",
+      "why": "Somewhere to see furniture full size, laid out in rooms, before buying it, and a company that sells it through the ledger.",
+      "pillars": [
+        1,
+        2,
+        3
+      ],
+      "spec": [
+        "FURN-020",
+        "FURN-021",
+        "FURN-022",
+        "FURN-023",
+        "FURN-024",
+        "FURN-025",
+        "FURN-026",
+        "FURN-027",
+        "FURN-028",
+        "FURN-029",
+        "FURN-030",
+        "FURN-031",
+        "FURN-032",
+        "FURN-033",
+        "FURN-034",
+        "FURN-035"
+      ],
+      "levels": [
+        {
+          "name": "Outlet to walk round",
+          "what": "One huge furniture outlet on the edge of town: a big shed with a car park, a showroom floor of furnished room sets, a marked walking route, a café and a warehouse hall. Residents browse it in their day. Nothing can be bought.",
+          "effort": "M",
+          "needs": {
+            "F-BLD-INSIDE": 1,
+            "F-FURN-ITEMS": 0
+          }
+        },
+        {
+          "name": "See it, buy it, have it delivered",
+          "what": "A furniture company with its own account and catalogue (data). Every piece on the showroom floor carries a tag with name, price and the catalogue's other colours; the catalogue can also be browsed at the outlet or at home. The player buys at the till through the ledger and the piece is owned (PROP-001). At the till the player chooses delivery or instant. Delivery: on a booked slot a crew of the company's workers (residents) drives a van to the building, unloads and carries each piece through the door and up the stairs or lift into the flat, flat-packed in its boxes or assembled, as chosen at the till. A flat-packed piece stays boxed in the flat until it is put together: either the player assembles it (a timed action in this level) or pays the company for assembly, and a fitter assembles it in place. Instant: the piece goes straight into the player's inventory, at no extra cost (free for now; the charge, if any, is a tunable number in data). From the inventory the player places it in a home (F-PROP-FURNISH) or, later, moves it to storage (F-PROP-STORAGE).",
+          "effort": "XL",
+          "needs": {
+            "F-BLD-SHOP": 1,
+            "F-ECO-BANK": 1,
+            "F-PROP-FURNISH": 1,
+            "F-FURN-ITEMS": 1,
+            "F-VEH-TRAFFIC": 1,
+            "F-OBJ-CARRY": 1,
+            "F-NPC-ROUTINE": 1
+          }
+        },
+        {
+          "name": "Several companies, living catalogue",
+          "what": "Three companies (a budget flat-pack chain, a mid-range chain and a premium design house) with outlets of different sizes, two of them huge. Catalogues change with the seasons; sales and ex-display clearance; stock and delivery slots per day calculated from the clock, so delivery dates move when vans are busy; delivery crews and vans in traffic; residents buy furniture and get it delivered too; the player can sell used furniture back or on the market stall.",
+          "effort": "XL",
+          "needs": {
+            "F-BLD-SHOP": 2,
+            "F-PROP-FURNISH": 2,
+            "F-VEH-TRAFFIC": 1,
+            "F-NPC-ROUTINE": 1,
+            "F-FURN-ITEMS": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-FURN-ASSEMBLE",
+      "area": "objects",
+      "title": "Assembling flat-pack furniture",
+      "why": "Putting furniture together from the instructions is a small, satisfying job of its own.",
+      "pillars": [
+        2
+      ],
+      "spec": [
+        "PROP-001"
+      ],
+      "levels": [
+        {
+          "name": "Timed action",
+          "what": "The player assembles a boxed piece with one action that takes a set time from data; the boxes turn into the piece.",
+          "effort": "S",
+          "needs": {
+            "F-FURN-STORE": 1
+          }
+        },
+        {
+          "name": "Follow the instructions",
+          "what": "A mini-game: the boxes open into labelled parts and fixings, and the player follows the instruction sheet step by step to fit them together. Mistakes show (a wobble, a part left over) and can be undone.",
+          "effort": "L",
+          "needs": {
+            "F-FURN-STORE": 1
+          }
+        },
+        {
+          "name": "Every piece its own build",
+          "what": "Every flat-pack piece in the catalogue has its own steps made from data; help from a friend makes it faster in multiplayer; a well-built piece wears more slowly.",
+          "effort": "L",
+          "needs": {
+            "F-FURN-ITEMS": 2
           }
         }
       ],

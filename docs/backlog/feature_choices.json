@@ -81,6 +81,18 @@
       "slice": 1,
       "note": "Owner, 2026-11-22: \"1 Living garden\" for the first slice (asked for flowers and bushes in the parks). Later milestones not stated."
     },
+    "F-BLD-DESIGN": {
+      "slice": 1,
+      "note": "Owner, 2026-11-22: \"Yes, suggested levels\" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated."
+    },
+    "F-MAP-PLOTS": {
+      "slice": 0,
+      "note": "Owner, 2026-11-22: \"Yes, suggested levels\" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated."
+    },
+    "F-BLD-CONSTRUCT": {
+      "slice": 0,
+      "note": "Owner, 2026-11-22: \"Yes, suggested levels\" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated."
+    },
     "F-BLD-INSIDE": {
       "slice": 3,
       "note": "Owner, 2026-11-22: \"3: Every floor, true size\" (all buildings accessible inside, stairs to every level, inside the same size as outside), with \"Stairs and a lift\" in the towers and \"Residents too\" (beds and desks upstairs). Later milestones not stated."
@@ -128,6 +140,22 @@
     "F-PROP-ESTATE": {
       "slice": 2,
       "note": "Owner, 2026-11-22: asked to \"build whole real estate economy\" (every building residential, commercial, utility sellable, owned by a player, a resident or one of several real estate companies, smaller units inside, balanced), then, asked for first-slice levels: \"focus on estate and have it at level 2\". Later milestones not stated. Furniture (F-PROP-FURNISH) is being handled in another session; no pick recorded here."
+    },
+    "F-FURN-ITEMS": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: \"level to for design and company and outlets\" (asked for first-slice levels; read as level 2). Bought furniture is delivered to the flat by NPCs, unassembled or assembled, or the player takes an instant option into the inventory, then places it from the inventory or moves it to storage; \"we will build storage container mechanics later\". Later milestones not stated."
+    },
+    "F-FURN-STORE": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: \"level to for design and company and outlets\" (asked for first-slice levels; read as level 2). Bought furniture is delivered to the flat by NPCs, unassembled or assembled, or the player takes an instant option into the inventory, then places it from the inventory or moves it to storage; \"we will build storage container mechanics later\". Later milestones not stated. Then: \"for packed delivery, paid assemble as well as player can assemble, in future we can add a mini game where player can assemble the furniture based on the instructions\" (mini-game proposed as F-FURN-ASSEMBLE, no pick). Then: \"instant doesn't cost any money it's free for now\"."
+    },
+    "F-PROP-FURNISH": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: \"furnish level 2 and carry level 1\" (asked for first-slice levels, needed by F-FURN-STORE level 2). Storage taken out to F-PROP-STORAGE, to be built later. Later milestones not stated."
+    },
+    "F-OBJ-CARRY": {
+      "slice": 1,
+      "note": "Owner, 2026-11-22: \"furnish level 2 and carry level 1\" (asked for the first slice, so delivery crews can carry furniture into the flat). Later milestones not stated."
     }
   }
 }

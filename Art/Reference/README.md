@@ -12,6 +12,8 @@ Experiments and rejected directions live in `Art/StyleTests/`.
 | `world_street_kit_light.png` | 2026-11-22 | The daylight (ADR-0007): softer, warmer sun, thinner haze, on a street of kit buildings | `Tools/blender/building_kit_07.py` (the `street` image) |
 | `vehicles_soft_box.png` | 2026-11-22 | Cars and vans: option A "Soft box" of car look test 09 (ADR-0015) | `Tools/blender/car_kit_09.py` (the `A` image) |
 | `vehicles_classic.png` | 2026-11-22 | Superseded by `vehicles_soft_box.png` (ADR-0015). Was the car look: option C "Classic" (ADR-0011) | `Tools/blender/car_kit_09.py` (the `C` image) |
+| `furniture_lines.png` | 2026-11-22 | Furniture: every piece of the four style lines Plain, Old Town, Workshop, Curve (ADR-0026) | `Tools/blender/furniture_kit_17.py` (the `sheet` image) |
+| `interior_room_daylight.png` | 2026-11-22 | Interiors: an Old Town room in the kit daylight, sun through the window, two lamps (ADR-0026) | `Tools/blender/furniture_kit_17.py` (the `room_oldtown` image) |
 | `character_options.png` | 2026-11-21 | Character option **B "Soft"** (middle group) | `Tools/blender/old_town_04.py` |
 | `character_lineup.png` | 2026-11-21 | Six people in option B | `Tools/blender/character_face_05.py` |
 | `face_expressions.png` | 2026-11-21 | Six expressions | `Tools/blender/character_face_05.py` |

@@ -1,0 +1,39 @@
+{
+ "note": "The building kit: every choice a building's design is made from (docs/specs/domains/BUILDER.md BUILD-001 to BUILD-003; F-BLD-DESIGN level 1). The town's buildings take their designs from these by the rules in Tools/worldgen/world.py design_of(): a colour is picked from a list by the lot's id with the slice's own hash, so each building keeps the look it had. The building designer will offer the same lists. Colours are the town's (ART_DIRECTION; the look is locked, ADR-0004): adding one needs a look test and the owner's approval. Stone and brick patterns are in surfaces.json, stairs and floors in storeys.json.",
+ "plaster": [[0.68, 0.63, 0.55], [0.70, 0.58, 0.46], [0.64, 0.60, 0.53], [0.70, 0.60, 0.50], [0.66, 0.56, 0.46], [0.68, 0.63, 0.55]],
+ "roof_tiles": [[0.44, 0.24, 0.18], [0.38, 0.21, 0.16], [0.22, 0.22, 0.27], [0.32, 0.21, 0.15], [0.47, 0.28, 0.20]],
+ "accents": [[0.52, 0.40, 0.20], [0.44, 0.24, 0.18], [0.20, 0.36, 0.37], [0.30, 0.38, 0.52], [0.30, 0.33, 0.20], [0.30, 0.24, 0.34]],
+ "shutters_old": [[0.20, 0.36, 0.37], [0.42, 0.18, 0.14], [0.52, 0.40, 0.20], [0.30, 0.38, 0.52]],
+ "frames": [[0.66, 0.61, 0.50], [0.30, 0.20, 0.13], [0.20, 0.36, 0.37], [0.66, 0.61, 0.50]],
+ "inner_mix": {"with": [0.80, 0.74, 0.62], "share": 0.5},
+ "odds": {"stone_to_eaves_old_quarter": 0.15, "shutters": 0.75, "lantern": 0.4, "crates": 0.7, "keystones": 0.5, "balcony": {"food": 0.9, "home": 0.35}},
+ "doors": {"big": 3.2, "small": 1.7, "big_from_m2": 800},
+ "windows": {
+  "flats": {"width": 1.2, "gap": 3.1, "tall": 1.5},
+  "tower": {"width": 1.7, "gap": 3.1, "tall": 1.5},
+  "old":   {"width": 1.25, "gap": 3.6, "tall": 2.0},
+  "plain": {"width": 1.15, "gap": 2.9, "tall": 1.5}
+ },
+ "roofs": {
+  "pitched": {"rise_share": 0.38, "rise_max": 5.0, "tiles": "barrel"},
+  "flat":    {"parapet": 1.1},
+  "cornice": {}
+ },
+ "shop_front_max": 14.0,
+ "floors": {
+  "home": [15, [0.40, 0.27, 0.17]], "food": [16, [0.56, 0.34, 0.24]], "shop": [16, [0.58, 0.52, 0.44]], "work": [15, [0.36, 0.26, 0.18]], "works": [15, [0.30, 0.24, 0.19]],
+  "bank": [16, [0.74, 0.70, 0.62]], "library": [15, [0.40, 0.27, 0.17]], "museum": [16, [0.66, 0.62, 0.56]], "cinema": [16, [0.34, 0.14, 0.12]], "dealer": [16, [0.72, 0.72, 0.70]],
+  "health": [16, [0.66, 0.66, 0.63]], "hospital": [16, [0.66, 0.66, 0.63]], "utility": [16, [0.40, 0.40, 0.40]], "mall": [16, [0.62, 0.56, 0.46]], "hall": [16, [0.50, 0.40, 0.32]],
+  "guild": [15, [0.38, 0.25, 0.16]], "office": [15, [0.36, 0.26, 0.18]], "flats": [16, [0.58, 0.50, 0.42]]
+ },
+ "floor_uses": {
+  "bedrooms": ["home", null], "flat": ["home", "flats"], "store": ["shop", null], "rooms": ["home", null], "office": ["work", "office"],
+  "wards": ["health", null], "stacks": ["library", null], "gallery": ["museum", null], "plant": ["utility", "depot"]
+ },
+ "prices": {
+  "note": "What each change costs, in chips (100 chips = 1 brix), by what it is measured in (Tools/citysim/builder.py cost). Set so that a full remodel of a typical house (about 1,900 brix) comes to about a quarter of its value, about 470 brix, and a repaint about 60 brix (Q-39, the owner, 2026-11-22). [ASSUMPTION] until play-tested.",
+  "plaster_m2": 32, "stone_m2": 72, "brick_to_eaves_m2": 72, "roof_tiles_m2": 64,
+  "shutters_each": 480, "shutter_paint_each": 190, "frame_each": 160, "balcony": 4800, "keystones_each": 320,
+  "quoins": 3200, "lantern": 800, "floor_m2": 48, "inner_m2": 24, "permit": 800
+ }
+}
