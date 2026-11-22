@@ -549,18 +549,25 @@ window.Houses = (() => {
 
   // ================================================================ plan "samples_19": the four sample houses of Tools/blender/house_samples_19.py,
   // one per furniture line, on Northwood Way (owner 2026-11-22: "showing me sample houses"). Drawn through the *1 helpers, so u is
-  // Blender's x (the living room on the left seen from the lane) and v Blender's y: the house is 10 x 8 m, u -5..5, v -4..4, in its
-  // 13 x 10 m lot. Two 3 m storeys on a 0.3 m plinth, a 24 degree gable roof with the ridge along the front (the town kit's).
+  // Blender's x (the living room on the left seen from the lane) and v Blender's y. After the owner's review (2026-11-23: more room
+  // to walk, a little more ceiling height, only the essential furniture) the house is 12 x 9 m, u -6..6, v -4.5..4.5, in its
+  // 13 x 10 m lot, with two 3.3 m storeys on a 0.3 m plinth and a 24 degree gable roof with the ridge along the front (the town
+  // kit's). The rooms keep the Blender layout: a piece keeps its distance to the nearer wall of its room (mu, mv), so the extra
+  // space opens the middle of each room.
   // Made for walking through: doorways 1 m wide where nothing stands in them, a straight stair up the side of the hall with a
   // rail round its well, and a solid floor, ceiling and walls everywhere, so the camera (play.js stepCamera) stays inside.
-  const S0 = .3, SF = 3.0, S1 = S0 + SF, SE = S0 + 2 * SF, SK0 = S1 - .2, SK1 = SE - .05, SW = .32, SI = 4.68, SJ = 3.68;
-  const SA = -1, SB = 1.2, SM = .5, SWELL = [.075, 1.075, .3, 3.75], SOFF = 2.65, SPITCH = 24 * Math.PI / 180, SEAVE = .55;
-  const SWIN = { front: [[-3.3, 1.3], [3.1, 1.3]], back: [[-2.4, 1.1], [3.6, 1.1]], left: [[-.4, .9], [2.4, 1.0]], right: [[-3.1, 1.0], [2.3, 1.0]] };
-  const SFRONT_DOOR = [.1, 1.2, 2.4];
+  const HU = 6, HV = 4.5, S0 = .3, SF = 3.3, S1 = S0 + SF, SE = S0 + 2 * SF, SK0 = S1 - .2, SK1 = SE - .05, SW = .32, SI = HU - SW, SJ = HV - SW;
+  const SA = -1.2, SB = 1.5, SM = .6, SPITCH = 24 * Math.PI / 180, SEAVE = .55;
+  // Blender (10 x 8 m) to this house: within each room a point keeps its distance to the nearer of the room's two walls
+  const mapA = (x, o, n) => { if (x <= o[0]) return n[0] + x - o[0]; for (let i = 0; i + 1 < o.length; i++) if (x <= o[i + 1]) return x - o[i] <= o[i + 1] - x ? n[i] + x - o[i] : n[i + 1] - (o[i + 1] - x); return n[n.length - 1] + x - o[o.length - 1]; };
+  const mu = u => +mapA(u, [-4.68, -1, 1.2, 4.68], [-SI, SA, SB, SI]).toFixed(3), mv = v => +mapA(v, [-3.68, .5, 3.68], [-SJ, SM, SJ]).toFixed(3);
+  const SWELL = [SB - .06 - 1.0, SB - .06, .3, SJ], SOFF = SJ - 1.1;   // the stair against the hall's right wall; off it to the left at the top
+  const SWIN = { front: [[mu(-3.3), 1.3], [mu(3.1), 1.3]], back: [[mu(-2.4), 1.1], [mu(3.6), 1.1]], left: [[mv(-.4), .9], [mv(2.4), 1.0]], right: [[mv(-3.1), 1.0], [mv(2.3), 1.0]] };
+  const SFRONT_DOOR = [mu(.1), 1.2, 2.4];
   // doorways [wall axis, line, centre]: the hall to each room; living room to kitchen; dining room to bathroom (the stair stands
   // along the hall's right wall, so the rooms behind it are reached from the room in front); upstairs the same round the landing
-  const SDOORS = { 0: [["x", SA, -.9], ["x", SA, 1.4], ["x", SB, -1.8], ["y", SM, -3.0], ["y", SM, 4.2]],
-                   1: [["x", SA, -.9], ["x", SA, 1.4], ["x", SB, -1.8], ["y", SM, 3.3]] };
+  const SDOORS = { 0: [["x", SA, mv(-.9)], ["x", SA, mv(1.4)], ["x", SB, mv(-1.8)], ["y", SM, mu(-3.0)], ["y", SM, mu(4.2)]],
+                   1: [["x", SA, mv(-.9)], ["x", SA, mv(1.4)], ["x", SB, mv(-1.8)], ["y", SM, mu(3.3)]] };
   const SROOMS = [["Living room", 0, -SI, -SJ, SA, SM], ["Kitchen", 0, -SI, SM, SA, SJ], ["Hall", 0, SA, -SJ, SB, SJ], ["Dining room", 0, SB, -SJ, SI, SM],
                   ["Bathroom", 0, SB, SM, SI, SJ], ["Main bedroom", 1, -SI, -SJ, SA, SM], ["Study", 1, -SI, SM, SA, SJ], ["Landing", 1, SA, -SJ, SB, SJ],
                   ["Children's room", 1, SB, -SJ, SI, SM], ["Guest room", 1, SB, SM, SI, SJ]];
@@ -569,33 +576,39 @@ window.Houses = (() => {
                   oldtown: { wall: [.7, .58, .46], shutter: [.44, .24, .18], door: [.45, .17, .12], quoins: true, boxes: true, roof: [.44, .24, .18] },
                   workshop: { wall: [.56, .53, .5], stone: true, shutter: [.36, .24, .15], door: [.36, .24, .15], quoins: false, boxes: false, roof: [.32, .19, .14] },
                   curve: { wall: [.7, .66, .58], shutter: [.3, .38, .52], door: [.52, .4, .2], quoins: false, boxes: true, roof: [.47, .28, .2] } };
-  // the furniture: [floor (+ a lift), piece, Blender x, y, yaw], as house_samples_19.py GROUND and UPSTAIRS
+  // the furniture: [floor (+ a lift), piece, Blender x, y, yaw, rule]. Rule "E": every house has it (what a home needs: seats,
+  // a table, the kitchen run, the bathroom, a bed for each resident, a wardrobe, lamps). "kids": with three or more residents (the
+  // bunk room). "guest": with five. Any other rule names a group of extras that a house has or has not, by a hash of the lot, so
+  // no two houses have every piece and the rooms keep their space.
   const P2 = Math.PI / 2, PI = Math.PI;
   const SFURN = [
-    [0, "l_fireplace", -4.55, -1.8, P2], [0, "o_painting", -4.73, -1.8, P2], [0, "k17:rug", -3.0, -1.8, P2], [0, "k17:coffee", -3.0, -1.8, P2],
-    [0, "k17:sofa", -1.57, -1.8, -P2], [0, "k17:armchair", -3.3, -.05, 0], [0, "k17:floor_lamp", -4.35, -.1, 0], [0, "k17:bookcase", -4.58, -3.2, P2],
-    [0, "l_tv", -1.75, -3.52, PI], [0, "o_floorplant", -1.45, -.1, 0], [0, "l_magrack", -3.3, -3.45, 0],
-    [0, "k_counter", -3.85, 3.45, 0], [0, "k_sink", -2.4, 3.45, 0], [0, "k_stove", -1.475, 3.44, 0], [0, "k_wall", -3.85, 3.58, 0],
-    [0, "k_fridge", -4.42, 1.3, P2], [0, "k17:dining", -2.6, 1.8, 0], [0, "d_pendant", -2.6, 1.8, 0],
-    [0, "h_coatstand", .8, -3.3, 0], [0, "h_shoebench", -.76, -2.6, P2], [0, "h_umbrella", .8, -2.55, 0], [0, "h_console", -.77, .35, P2],
-    [0, "h_mirror", -.92, .35, P2], [0, "d_pendant", .1, -1.8, 0], [0, "k17:rug", -.1, -2.0, P2],
-    [0, "k17:dining", 3.0, -1.7, 0], [0, "d_pendant", 3.0, -1.7, 0], [0, "d_sideboard", 2.6, .2, 0], [0, "o_painting", 2.6, .42, 0],
-    [0, "d_dresser", 4.51, -1.5, -P2], [0, "d_display", 1.47, -3.2, P2], [0, "o_vases", 4.3, -3.59, PI], [.91, "o_candles", 2.9, .2, 0],
-    [0, "b_bath", 4.31, 2.3, -P2], [0, "b_toilet", 1.8, 3.43, 0], [0, "b_basin", 2.6, 3.5, 0], [0, "b_mirror", 2.6, 3.67, 0],
-    [0, "b_rail", 1.5, 1.6, P2], [0, "b_basket", 2.7, 1.1, 0], [0, "d_pendant", 3.0, 2.2, 0],
-    [1, "k17:bed", -2.9, -.68, 0], [1, "k17:bedside", -4.1, .23, 0], [1, "k17:bedside", -1.65, .23, 0], [1, "k17:wardrobe", -4.45, -1.5, P2],
-    [1, "r_chest", -2.0, -3.5, PI], [1, "r_blanket", -2.9, -2.0, 0], [1, "k17:rug", -2.9, -1.4, 0], [1, "r_cheval", -4.2, -3.2, .6], [1, "o_painting", -2.9, .42, 0],
-    [1, "c_bunk", 4.2, -.6, 0], [1, "c_toyshelf", 2.3, .26, 0], [1, "c_table", 2.7, -2.1, 0], [1, "c_horse", 3.9, -3.0, -.6], [1, "c_toychest", 1.5, -3.2, P2],
-    [1, "k17:rug", 2.9, -1.6, 0], [1, "d_pendant", 3.0, -1.8, 0],
-    [1, "s_desk", -2.4, 3.41, 0], [1, "s_chair", -2.4, 2.75, PI], [1.75, "s_lamp", -2.85, 3.5, 0], [1, "s_shelving", -4.55, 1.35, P2], [1, "s_filing", -1.5, 3.45, 0],
-    [1, "s_pinboard", -4.0, 3.73, 0], [1, "k17:armchair", -1.85, 1.4, -P2 - .4], [1, "k17:floor_lamp", -1.45, .95, 0],
-    [1, "r_single", 4.15, 2.65, 0], [1, "k17:bedside", 3.35, 3.54, 0], [1, "r_vanity", 2.2, 3.51, 0], [1, "r_cheval", 4.3, 1.1, -P2 - .3],
-    [1, "o_curtains", 3.6, 3.71, 0], [1, "o_floorplant", 1.6, 1.1, 0],
-    [1, "o_floorplant", -.45, -3.3, 0], [1, "o_bust", -.76, -1.6, P2], [1, "d_pendant", -.4, -1.8, 0], [1, "o_wallshelf", -.95, 2.4, P2],
-  ];
-  // where people sleep and sit (worldgen add_samples_19 writes the same points into the lot): Blender x, y, height, facing x, y
-  const SBEDS = [[-3.3, -.6, .62, 0, 1], [-2.5, -.6, .62, 0, 1], [4.2, -.6, .5, 0, 1], [4.2, -.6, 1.45, 0, 1], [4.15, 2.65, .62, 0, 1]];
-  const SSEATS = [[-1.75, -2.3, .45, -1, 0], [-1.75, -1.3, .45, -1, 0], [-3.3, -.25, .45, 0, -1], [-2.6, 1.1, .45, 0, 1], [-2.6, 2.5, .45, 0, -1]];
+    [0, "k17:sofa", -1.57, -1.8, -P2, "E"], [0, "k17:armchair", -3.3, -.05, 0, "E"], [0, "k17:coffee", -3.0, -1.8, P2, "E"], [0, "k17:rug", -3.0, -1.8, P2, "E"],
+    [0, "k17:floor_lamp", -4.35, -.1, 0, "E"], [0, "l_fireplace", -4.55, -1.8, P2, "fire"], [0, "o_painting", -4.73, -1.8, P2, "fire"],
+    [0, "k17:bookcase", -4.58, -3.2, P2, "books"], [0, "l_tv", -1.75, -3.52, PI, "tv"], [0, "o_floorplant", -1.45, -.1, 0, "plant"],
+    [0, "k_counter", -3.85, 3.45, 0, "E"], [0, "k_sink", -2.4, 3.45, 0, "E"], [0, "k_stove", -1.475, 3.44, 0, "E"], [0, "k_fridge", -4.42, 1.3, P2, "E"],
+    [0, "k_wall", -3.85, 3.58, 0, "cupboards"], [0, "k17:dining", -2.6, 1.8, 0, "E"], [0, "d_pendant", -2.6, 1.8, 0, "E"],
+    [0, "h_coatstand", .8, -3.3, 0, "E"], [0, "h_shoebench", -.76, -2.6, P2, "shoes"], [0, "h_console", -.77, .35, P2, "console"], [0, "h_mirror", -.92, .35, P2, "console"],
+    [0, "d_pendant", .1, -1.8, 0, "E"],
+    [0, "k17:dining", 3.0, -1.7, 0, "E"], [0, "d_pendant", 3.0, -1.7, 0, "E"], [0, "d_sideboard", 2.6, .2, 0, "sideboard"], [.91, "o_candles", 2.9, .2, 0, "sideboard"],
+    [0, "o_painting", 2.6, .42, 0, "pictures"], [0, "d_dresser", 4.51, -1.5, -P2, "dresser"], [0, "d_display", 1.47, -3.2, P2, "display"],
+    [0, "b_bath", 4.31, 2.3, -P2, "E"], [0, "b_toilet", 1.8, 3.43, 0, "E"], [0, "b_basin", 2.6, 3.5, 0, "E"], [0, "b_mirror", 2.6, 3.67, 0, "E"],
+    [0, "b_rail", 1.5, 1.6, P2, "towels"], [0, "d_pendant", 3.0, 2.2, 0, "E"],
+    [1, "k17:bed", -2.9, -.68, 0, "E"], [1, "k17:bedside", -4.1, .23, 0, "E"], [1, "k17:bedside", -1.65, .23, 0, "E"], [1, "k17:wardrobe", -4.45, -1.5, P2, "E"],
+    [1, "r_chest", -2.0, -3.5, PI, "chest"], [1, "k17:rug", -2.9, -1.4, 0, "bedrug"], [1, "o_painting", -2.9, .42, 0, "pictures"],
+    [1, "c_bunk", 4.2, -.6, 0, "kids"], [1, "c_toyshelf", 2.3, .26, 0, "kids"], [1, "c_toychest", 1.5, -3.2, P2, "toys"], [1, "k17:rug", 2.9, -1.6, 0, "kids"],
+    [1, "d_pendant", 3.0, -1.8, 0, "E"],
+    [1, "s_desk", -2.4, 3.41, 0, "E"], [1, "s_chair", -2.4, 2.75, PI, "E"], [1.75, "s_lamp", -2.85, 3.5, 0, "E"], [1, "s_shelving", -4.55, 1.35, P2, "shelves"],
+    [1, "k17:armchair", -1.85, 1.4, -P2 - .4, "reading"], [1, "k17:floor_lamp", -1.45, .95, 0, "E"],
+    [1, "r_single", 4.15, 2.65, 0, "guest"], [1, "k17:bedside", 3.35, 3.54, 0, "guest"], [1, "r_vanity", 2.2, 3.51, 0, "vanity"], [1, "o_floorplant", 1.6, 1.1, 0, "plant"],
+    [1, "d_pendant", -.4, -1.8, 0, "E"], [1, "d_pendant", 3.0, 2.2, 0, "E"],
+  ].map(([f, kind, x, y, th, rule]) => [f, kind, mu(x), mv(y), th, rule]);
+  function furnS(l) {                                         // the pieces this house has
+    const n = ((l.objects || {}).bed || []).length;
+    return SFURN.filter(([, , , , , rule]) => rule === "E" || (rule === "kids" ? n >= 3 : rule === "guest" ? n >= 5 : hash(l.id, "extra", rule) < .45));
+  }
+  // where people sleep and sit (the lot's objects hold the same points): x, y in this house, height, facing x, y
+  const SBEDS = [[mu(-3.3), mv(-.6), .62, 0, 1], [mu(-2.5), mv(-.6), .62, 0, 1], [mu(4.2), mv(-.6), .5, 0, 1], [mu(4.2), mv(-.6), 1.45, 0, 1], [mu(4.15), mv(2.65), .62, 0, 1]];
+  const SSEATS = [[mu(-1.75), mv(-2.3), .45, -1, 0], [mu(-1.75), mv(-1.3), .45, -1, 0], [mu(-3.3), mv(-.25), .45, 0, -1], [mu(-2.6), mv(1.1), .45, 0, 1], [mu(-2.6), mv(2.5), .45, 0, -1]];
   function stepsS() { const out = [], n = 16, [x0, x1, y0, y1] = SWELL; for (let k = 0; k < n; k++) out.push([x0, y0 + (y1 - y0) * k / n, x1, y0 + (y1 - y0) * (k + 1) / n, S0 + SF * (k + 1) / n]); return out; }
   // a wall's pieces round its holes [a0, a1, z0, z1], as boxes along axis ax ("u": along u at v c0..c1; "v": along v at u c0..c1)
   function holedS(put, a0, a1, z0, z1, holes) {
@@ -610,7 +623,7 @@ window.Houses = (() => {
   const sHoles = side => [...SWIN[side].flatMap(([a, w]) => [[a - w / 2, a + w / 2, S0 + .95, S0 + 2.55], [a - w / 2, a + w / 2, S1 + .8, S1 + 2.25]]),
                           ...(side === "front" ? [[SFRONT_DOOR[0] - SFRONT_DOOR[1] / 2, SFRONT_DOOR[0] + SFRONT_DOOR[1] / 2, S0, S0 + SFRONT_DOOR[2]]] : [])];
   // the four faces: [axis along, outer line, outward sign]
-  const SFACES = { front: ["u", -4, -1], back: ["u", 4, 1], left: ["v", -5, -1], right: ["v", 5, 1] };
+  const SFACES = { front: ["u", -HV, -1], back: ["u", HV, 1], left: ["v", -HU, -1], right: ["v", HU, 1] };
   function lineS(l) { return SLOOK[l.house.furniture] ? l.house.furniture : "oldtown"; }
 
   function outsideS(l) {
@@ -619,7 +632,7 @@ window.Houses = (() => {
     l.H = SE + R + .5;
     const wb = (ax, a0, z0, c0, a1, z1, c1, col, f, mm) => ax === "u" ? bx1(mm || m, Fr, a0, z0, Math.min(c0, c1), a1, z1, Math.max(c0, c1), col, f) : bx1(mm || m, Fr, Math.min(c0, c1), z0, a0, Math.max(c0, c1), z1, a1, col, f);
     for (const side of Object.keys(SFACES)) {
-      const [ax, line, o] = SFACES[side], a0 = ax === "u" ? -5 : -4 + SW, a1 = -a0, c0 = line, c1 = line - o * SW;
+      const [ax, line, o] = SFACES[side], a0 = ax === "u" ? -HU : -HV + SW, a1 = -a0, c0 = line, c1 = line - o * SW;
       holedS((p, z, q, zz) => wb(ax, p, z, c0, q, zz, c1, lk.wall, wallF), a0, a1, 0, SE, sHoles(side));
       const out = d => line + o * d;
       for (const [a, w] of SWIN[side]) for (const [z0, z1, box] of [[S0 + .95, S0 + 2.55, false], [S1 + .8, S1 + 2.25, lk.boxes && side !== "back"]]) {
@@ -637,40 +650,40 @@ window.Houses = (() => {
         if (box) { wb(ax, a - w / 2 - .05, z0, out(.16), a + w / 2 + .05, z0 + .26, out(.42), C.terracotta, 9);
           for (let k = 0; k < 3; k++) { const pa = a - w / 2 + (k + .5) * w / 3, pc = out(.29); yb1(dm, Fr, ax === "u" ? pa : pc, z0 + .26, ax === "u" ? pc : pa, .3, .22, .26, 0, k % 2 ? [.26, .38, .2] : [.4, .48, .24], 9); } }
       }
-      bx1(m, Fr, ax === "u" ? -5.05 : Math.min(out(.06), out(0)), 0, ax === "u" ? Math.min(out(.06), out(0)) : -4.05, ax === "u" ? 5.05 : Math.max(out(.06), out(0)), S0 + .3, ax === "u" ? Math.max(out(.06), out(0)) : 4.05, C.stoneDark, 6);   // plinth
-      for (const s of [0, 1]) bx1(m, Fr, ax === "u" ? -5.05 - .04 * s : Math.min(out(.08 + .07 * s), out(0)), S1 - .1 + .11 * s, ax === "u" ? Math.min(out(.08 + .07 * s), out(0)) : -4.05 - .04 * s,
-        ax === "u" ? 5.05 + .04 * s : Math.max(out(.08 + .07 * s), out(0)), S1 + .04 + .11 * s, ax === "u" ? Math.max(out(.08 + .07 * s), out(0)) : 4.05 + .04 * s, STONE_L, 6);   // string course
+      bx1(m, Fr, ax === "u" ? -HU - .05 : Math.min(out(.06), out(0)), 0, ax === "u" ? Math.min(out(.06), out(0)) : -HV - .05, ax === "u" ? HU + .05 : Math.max(out(.06), out(0)), S0 + .3, ax === "u" ? Math.max(out(.06), out(0)) : HV + .05, C.stoneDark, 6);   // plinth
+      for (const s of [0, 1]) bx1(m, Fr, ax === "u" ? -HU - .05 - .04 * s : Math.min(out(.08 + .07 * s), out(0)), S1 - .1 + .11 * s, ax === "u" ? Math.min(out(.08 + .07 * s), out(0)) : -HV - .05 - .04 * s,
+        ax === "u" ? HU + .05 + .04 * s : Math.max(out(.08 + .07 * s), out(0)), S1 + .04 + .11 * s, ax === "u" ? Math.max(out(.08 + .07 * s), out(0)) : HV + .05 + .04 * s, STONE_L, 6);   // string course
     }
-    if (lk.quoins) for (const [cu, cv] of [[-5, -4], [5, -4], [-5, 4], [5, 4]]) for (let k = 0; S0 + .3 + k * .5 + .45 < SE; k++) {
+    if (lk.quoins) for (const [cu, cv] of [[-HU, -HV], [HU, -HV], [-HU, HV], [HU, HV]]) for (let k = 0; S0 + .3 + k * .5 + .45 < SE; k++) {
       const z0 = S0 + .3 + k * .5, la = k % 2 ? .3 : .55, lb = k % 2 ? .55 : .3, su = Math.sign(cu), sv = Math.sign(cv);
       bx1(dm, Fr, Math.min(cu - su * la, cu + su * .04), z0, Math.min(cv, cv + sv * .04), Math.max(cu - su * la, cu + su * .04), z0 + .45, Math.max(cv, cv + sv * .04), STONE_Q, 6);
       bx1(dm, Fr, Math.min(cu, cu + su * .04), z0, Math.min(cv - sv * lb, cv + sv * .04), Math.max(cu, cu + su * .04), z0 + .45, Math.max(cv - sv * lb, cv + sv * .04), STONE_Q, 6);
     }
     // the front door, open into the hall; its stone surround, a step and a lamp
     const [du, dw, dh] = SFRONT_DOOR;
-    bx1(m, Fr, du - dw / 2 + .02, S0, -4 + SW, du - dw / 2 + .1, S0 + dh - .02, -4 + SW + 1.1, lk.door, 9);
-    for (const e of [du - dw / 2 - .2, du + dw / 2]) bx1(m, Fr, e, 0, -4.07, e + .2, S0 + dh, -3.95, C.stoneDark, 6);
-    bx1(m, Fr, du - dw / 2 - .28, S0 + dh, -4.1, du + dw / 2 + .28, S0 + dh + .3, -3.95, C.stoneDark, 6);
-    bx1(m, Fr, du - .9, 0, -4.6, du + .9, S0, -4, C.stoneDark, 6); grid1(Fr, du - .9, -4.6, du + .9, -4, 0, S0);
+    bx1(m, Fr, du - dw / 2 + .02, S0, -HV + SW, du - dw / 2 + .1, S0 + dh - .02, -HV + SW + 1.1, lk.door, 9);
+    for (const e of [du - dw / 2 - .2, du + dw / 2]) bx1(m, Fr, e, 0, -HV - .07, e + .2, S0 + dh, -HV + .05, C.stoneDark, 6);
+    bx1(m, Fr, du - dw / 2 - .28, S0 + dh, -HV - .1, du + dw / 2 + .28, S0 + dh + .3, -HV + .05, C.stoneDark, 6);
+    bx1(m, Fr, du - .9, 0, -HV - .6, du + .9, S0, -HV, C.stoneDark, 6); grid1(Fr, du - .9, -HV - .6, du + .9, -HV, 0, S0);
     // the roof: two slopes of tiles, gable ends in the wall, the ridge, a chimney on the left gable with two pots
-    const o = SEAVE, E = SE, GR = 4 * Math.tan(SPITCH), RR = (4 + o) * Math.tan(SPITCH), U0 = -5 - .3, U1 = 5 + .3;
-    qd1(m, Fr, [U0, E - o * Math.tan(SPITCH), -4 - o], [U1, E - o * Math.tan(SPITCH), -4 - o], [U1, E + GR, 0], [U0, E + GR, 0], lk.roof, 11);
-    qd1(m, Fr, [U0, E + GR, 0], [U1, E + GR, 0], [U1, E - o * Math.tan(SPITCH), 4 + o], [U0, E - o * Math.tan(SPITCH), 4 + o], lk.roof, 11);
-    for (const sv of [-1, 1]) qd1(m, Fr, [U0, E - o * Math.tan(SPITCH) - .01, sv * (4 + o)], [U1, E - o * Math.tan(SPITCH) - .01, sv * (4 + o)], [U1, E - .01, sv * 4], [U0, E - .01, sv * 4], mul3(lk.roof, .6), 11, "down");
+    const o = SEAVE, E = SE, GR = HV * Math.tan(SPITCH), RR = (HV + o) * Math.tan(SPITCH), U0 = -HU - .3, U1 = HU + .3;
+    qd1(m, Fr, [U0, E - o * Math.tan(SPITCH), -HV - o], [U1, E - o * Math.tan(SPITCH), -HV - o], [U1, E + GR, 0], [U0, E + GR, 0], lk.roof, 11);
+    qd1(m, Fr, [U0, E + GR, 0], [U1, E + GR, 0], [U1, E - o * Math.tan(SPITCH), HV + o], [U0, E - o * Math.tan(SPITCH), HV + o], lk.roof, 11);
+    for (const sv of [-1, 1]) qd1(m, Fr, [U0, E - o * Math.tan(SPITCH) - .01, sv * (HV + o)], [U1, E - o * Math.tan(SPITCH) - .01, sv * (HV + o)], [U1, E - .01, sv * HV], [U0, E - .01, sv * HV], mul3(lk.roof, .6), 11, "down");
     for (let k = 1; k < 12; k++) for (const sv of [-1, 1]) {                       // courses of tiles: a lip every 0.42 m down each slope
-      const vv = sv * (4 + o) * k / 12, z = E + GR - (GR + o * Math.tan(SPITCH)) * k / 12;
+      const vv = sv * (HV + o) * k / 12, z = E + GR - (GR + o * Math.tan(SPITCH)) * k / 12;
       bx1(dm, Fr, U0, z, Math.min(vv, vv + sv * .06), U1, z + .05, Math.max(vv, vv + sv * .06), mul3(lk.roof, k % 3 ? .9 : .8), 11);
     }
-    for (const u of [-5, 5]) qd1(m, Fr, [u, E, -4], [u, E, 4], [u, E + GR, 0], [u, E + GR, 0], lk.wall, wallF, Math.sign(u), 0);
+    for (const u of [-HU, HU]) qd1(m, Fr, [u, E, -HV], [u, E, HV], [u, E + GR, 0], [u, E + GR, 0], lk.wall, wallF, Math.sign(u), 0);
     bx1(m, Fr, U0 - .05, E + GR - .02, -.14, U1 + .05, E + GR + .14, .14, mul3(lk.roof, .85), 11);
     for (let k = 0; k < 26; k++) yb1(dm, Fr, U0 + (U1 - U0) * (k + .5) / 26, E + GR + .1, 0, .4, .12, .3, 0, mul3(lk.roof, k % 2 ? 1 : .9), 11);
-    for (const v of [-4 - o, 4 + o]) bx1(m, Fr, U0, E - o * Math.tan(SPITCH) - .2, Math.min(v, v + Math.sign(v) * -.12), U1, E - o * Math.tan(SPITCH), Math.max(v, v + Math.sign(v) * -.12), C.brown, 9);   // fascia
-    bx1(m, Fr, -5.05, E - .5, -2.1, -4.35, E + RR + .9, -1.5, lk.stone ? lk.wall : C.stoneDark, lk.stone ? wallF : 6);
-    bx1(m, Fr, -5.15, E + RR + .9, -2.2, -4.25, E + RR + 1.02, -1.4, C.stoneDark, 6);
-    for (const d of [-.17, .17]) yb1(dm, Fr, -4.7, E + RR + 1.02, -1.8 + d, .18, .45, .18, 0, C.terracotta, 9);
+    for (const v of [-HV - o, HV + o]) bx1(m, Fr, U0, E - o * Math.tan(SPITCH) - .2, Math.min(v, v + Math.sign(v) * -.12), U1, E - o * Math.tan(SPITCH), Math.max(v, v + Math.sign(v) * -.12), C.brown, 9);   // fascia
+    bx1(m, Fr, -HU - .05, E - .5, mv(-2.1), -HU + .65, E + RR + .9, mv(-1.5), lk.stone ? lk.wall : C.stoneDark, lk.stone ? wallF : 6);
+    bx1(m, Fr, -HU - .15, E + RR + .9, mv(-2.2), -HU + .75, E + RR + 1.02, mv(-1.4), C.stoneDark, 6);
+    for (const d of [-.17, .17]) yb1(dm, Fr, -HU + .3, E + RR + 1.02, mv(-1.8) + d, .18, .45, .18, 0, C.terracotta, 9);
     // what cannot be walked through: the outer walls (a gap at the door), floors, the ceiling under the roof, inner walls, the
     // stair and the rail round its well, and the furniture
-    chain1(Fr, -5, -4, 5, -4, 0, SE, [[du, -4]]); chain1(Fr, -5, 4, 5, 4, 0, SE); chain1(Fr, -5, -4, -5, 4, 0, SE); chain1(Fr, 5, -4, 5, 4, 0, SE);
+    chain1(Fr, -HU, -HV, HU, -HV, 0, SE, [[du, -HV]]); chain1(Fr, -HU, HV, HU, HV, 0, SE); chain1(Fr, -HU, -HV, -HU, HV, 0, SE); chain1(Fr, HU, -HV, HU, HV, 0, SE);
     grid1(Fr, -SI, -SJ, SI, SJ, 0, S0);
     const [wx0, wx1, wy0] = SWELL;
     for (const [a, b, c, d] of [[-SI, -SJ, wx0, SJ], [wx1, -SJ, SI, SJ], [wx0, -SJ, wx1, wy0]]) grid1(Fr, a, b, c, d, SK0, S1, .7);
@@ -681,7 +694,7 @@ window.Houses = (() => {
     }
     for (const [u0, v0, u1, v1, top] of stepsS()) grid1(Fr, u0, v0, u1, v1, 0, top, .6);
     chain1(Fr, wx0, wy0, wx0, SOFF, S1, S1 + 1, null, .06); chain1(Fr, wx0, wy0, wx1, wy0, S1, S1 + 1, null, .06);   // open past SOFF: the way off the top step
-    SFURN.forEach(([f, kind, x, y, th]) => {
+    furnS(l).forEach(([f, kind, x, y, th]) => {
       const sz = Furniture.SIZE[kind]; if (!sz || f % 1) return;
       const q = Math.round(th / P2) % 2 !== 0 && Math.abs(Math.abs(th) - P2) < .2, w = q ? sz[1] : sz[0], d = q ? sz[0] : sz[1], y0 = f ? S1 : S0;
       grid1(Fr, x - w / 2 + .05, y - d / 2 + .05, x + w / 2 - .05, y + d / 2 - .05, y0, y0 + Math.max(sz[2], .9), .6);
@@ -747,7 +760,7 @@ window.Houses = (() => {
     R(wx0 - .035, S1 + .95, wy0, wx0 + .035, S1 + 1.0, SOFF, wood); R(wx0, S1 + .95, wy0 - .035, wx1, S1 + 1.0, wy0 + .035, wood);
     // the furniture, in the house's line (furniture.js)
     const Lf = Outlet.LINES[lineS(l)] || Outlet.LINES.oldtown;
-    SFURN.forEach(([f, kind, x, y, th], i) => {
+    furnS(l).forEach(([f, kind, x, y, th], i) => {
       const y0 = (Math.floor(f) ? S1 : S0) + (f % 1 ? (f % 1) : 0) * (Math.floor(f) ? 1 : 1), c = Math.cos(th), sn = Math.sin(th);
       const Q = (a, yy, b, sa, sy, sb, col, fm, yaw) => yb1(m, Fr, x + a * c - b * sn, y0 + yy, y + a * sn + b * c, sa, sy, sb, -(th + (yaw || 0)), col, fm || 19);
       Furniture.draw(kind, Q, Lf, hash(l.id, "furn", i));
