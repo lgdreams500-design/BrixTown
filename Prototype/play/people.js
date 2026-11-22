@@ -1,4 +1,4 @@
-/* Wasted: people. Bodies follow character option B "Soft" (docs/art/ART_DIRECTION.md §3): larger head, full eyes, chunky
+/* Brix Town: people. Bodies follow character option B "Soft" (docs/art/ART_DIRECTION.md §3): larger head, full eyes, chunky
    limbs, whole garments, solid hair, a silhouette per role. They move by the movement signatures of
    docs/art/CHARACTER_MOTION.md; the walk is a port of Tools/blender/motion_lib.py with the same numbers and rules
    (feet placed first, legs solved to reach them, hips, chest, arms and head layered on top).

@@ -1,7 +1,7 @@
 ---
 spec_id: WASTED-SPEC
-title: Wasted — Game Specification
-version: 0.5.3
+title: Brix Town — Game Specification
+version: 0.5.5
 status: draft            # draft | reviewed | approved
 last_updated: 2026-11-22
 owner: project-owner
@@ -10,7 +10,7 @@ dcc: Blender 5.2 LTS       # 5.3 is what is installed and was used for all look 
 perspective: third-person
 ---
 
-# Wasted — Game Specification
+# Brix Town — Game Specification
 
 > **One-line pitch:** A third-person multiplayer life simulation set in a living city, where players
 > build a life (needs, careers, property, businesses) inside a simulated economy, and creators
@@ -29,7 +29,7 @@ usable by both.
 | Numbers that are guesses are tagged **`[ASSUMPTION]`**; undecided items are tagged **`[OPEN: Q-nn]`** and listed in §13. | Agents must not treat a guess as a decision. |
 | Design decisions live in `docs/decisions/` as ADRs and are linked from here. | The spec says *what*; ADRs say *why*. |
 | When a domain section exceeds ~40 requirements, move it to `docs/specs/domains/<PREFIX>.md` and leave a link. | Keeps each file small enough to load whole into an AI context. |
-| Tests name the requirement they verify, e.g. `Wasted.Economy.ECO_003_InterestAccrual`. | Gives requirement-to-test traceability. |
+| Tests name the requirement they verify, e.g. `BrixTown.Economy.ECO_003_InterestAccrual`. | Gives requirement-to-test traceability. |
 | Scope is set by **feature levels**. The owner picks a level (0 set dressing, 1 simple, 2 full) for each feature at three milestones; the picks live in `docs/backlog/feature_choices.json`. Domain specs tag each requirement with its feature and level. | One place decides what is in the game and when; see `docs/process/FEATURE_PROCESS.md`. |
 
 **ID prefixes:** `CORE` game loop · `ART` art direction · `CHR` character · `ANIM` body motion · `NEED` needs · `CAR` careers · `PROP` property ·
@@ -448,7 +448,7 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | Q-10 | Art style: realistic or stylised? | Drives character designer, UGC budgets, hardware needs. | **DECIDED 2026-11-21.** World: the old-town look of `Art/StyleTests/old_town_04_world.png` (warm sandstone blocks and mottled plaster, arches, lantern-lit shade, low sun through haze, muted palette with dull accents, same place readable from morning to dusk). No painterly post-process. Characters: option B "Soft" of `Art/StyleTests/old_town_04_characters.png` (about 5.6 heads tall, larger head and eyes, whole-garment clothing in the world's palette). Production models still to be made (Q-15). |
 | Q-11 | Team: solo, or others joining? | Affects tooling and process weight. | Solo plus AI agents. |
 | Q-12 | Age rating and audience? | Constrains content, chat, UGC moderation. | Teen. |
-| Q-13 | What does "Wasted" mean for tone and theme? | The name suggests a tone the pillars do not yet reflect. | Owner to define. |
+| Q-13 | What does "Wasted" mean for tone and theme? | The name suggested a tone the pillars did not reflect. | **DECIDED 2026-11-22:** the game is called **Brix Town** (owner), after its currency, the brix (ADR-0025). "Wasted" was a working title. |
 | Q-14 | Is dialogue voiced (recorded or synthesised speech) or text only? Do player characters' mouths move with chat? | Decides how lip sync is timed: from audio, or generated from the text of the line. | **DECIDED 2026-11-22:** voiced (ADR-0019). Residents and the player speak their lines in natural voices, pre-made offline with the Kokoro model; the text stays on screen. Mouth shapes still come from the line's text, stretched to the length of its audio. (Earlier the same day: text first.) Whether players' mouths move with chat is still open. |
 | Q-15 | How are production character models made: commissioned or bought stylised base, modelled in-house, or MetaHuman? | Sets cost, schedule and whether the laptop can run them. | Commission or buy one stylised base body and head with the CHR-007 control set; build the designer on it. |
 | Q-16 | Blender version pin: 5.2 LTS as first written, or 5.3 as installed? | All look tests and reference renders were made in 5.3 (the Microsoft Store version, which auto-updates). | Pin 5.3; record the exact build; revisit when a second machine joins. |
@@ -495,3 +495,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.5.1 | 2026-11-22 | SND-015 to SND-017: people's movements, activities and chatter (owner's request), as part of `F-SND-WORLD` level 1. SND-006's murmur becomes conversations that take turns. |
 | 0.5.2 | 2026-11-22 | Q-14 decided: dialogue is voiced (ADR-0019). SND-018 added; SND-005 cut; CHR-009 and CITY-007 updated to match. |
 | 0.5.3 | 2026-11-22 | Real estate in the first slice, from the owner's request and pick of `F-PROP-ESTATE` level 2: PROP-002 and PROP-006 moved to PH1; PROP-009 to PROP-021 added (units, owners, several real estate companies, buying, selling, renting, letting, block price indices, tax and seizure, mortgages, balance), PROP-022 proposed (residents moving house). ADR-0022. |
+| 0.5.5 | 2026-11-22 | The game is called **Brix Town** (owner); "Wasted" was a working title. Q-13 decided. ADR-0025. |

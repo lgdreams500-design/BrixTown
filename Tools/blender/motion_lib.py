@@ -1,4 +1,4 @@
-"""Wasted - motion library (pure Python, no Blender imports).
+"""Brix Town - motion library (pure Python, no Blender imports).
 
 One walk for every body, shaped by a small set of numbers (a "movement signature"), plus the layers
 that let a character talk and look around while walking. The same numbers are meant to drive the

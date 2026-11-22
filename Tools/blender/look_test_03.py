@@ -1,4 +1,4 @@
-"""Wasted - look test 03: three playful art directions, street and characters together.
+"""Brix Town - look test 03: three playful art directions, street and characters together.
 
 Run inside Blender (Python console):
     exec(compile(open("C:/Projects/Wasted/Tools/blender/look_test_03.py").read(), "look_test_03.py", "exec"))

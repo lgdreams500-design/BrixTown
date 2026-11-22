@@ -1,4 +1,4 @@
-"""Wasted - building kit 08: the special buildings in the locked look (ART-001, ART-002; daylight ADR-0007).
+"""Brix Town - building kit 08: the special buildings in the locked look (ART-001, ART-002; daylight ADR-0007).
 
 Run inside Blender (Python console):
     exec(compile(open("C:/Projects/Wasted/Tools/blender/building_kit_08.py").read(), "building_kit_08.py", "exec"))

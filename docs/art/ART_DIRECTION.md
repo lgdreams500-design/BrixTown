@@ -1,6 +1,6 @@
 ---
 doc_id: WASTED-ART-DIRECTION
-title: Wasted — Art direction (locked look)
+title: Brix Town — Art direction (locked look)
 version: 1.4.0
 status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22
 last_updated: 2026-11-22
@@ -8,7 +8,7 @@ relates_to: [ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10
 decision: docs/decisions/ADR-0004-art-direction.md, docs/decisions/ADR-0007-warmer-kit-light.md, docs/decisions/ADR-0013-kit-light-measured.md
 ---
 
-# Wasted — Art direction
+# Brix Town — Art direction
 
 This is the visual target for the game. Everything here was approved by the owner from Blender
 renders. When a new asset, light setup or shader is made, compare it against the reference images in

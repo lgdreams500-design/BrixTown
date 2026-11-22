@@ -38,7 +38,7 @@ Check Epic's hardware and software specification page for UE 5.8 for exact figur
 | 3 | Epic Games Launcher | From unrealengine.com/download. Needs an Epic account (sign in yourself). | ☐ |
 | 4 | Unreal Engine 5.8 | Launcher → Unreal Engine → Library → add engine version 5.8. In install options, tick **Editor symbols for debugging** only if disk allows. | ☐ |
 | 5 | Blender 5.2 LTS | From blender.org/download (pick the LTS build). | ☐ |
-| 6 | Create the Unreal project | New project → Games → Third Person → **C++**, location `C:\Projects\Wasted\Game`, name `Wasted`. | ☐ |
+| 6 | Create the Unreal project | New project → Games → Third Person → **C++**, location `C:\Projects\Wasted\Game`, name `BrixTown` (the game is Brix Town, ADR-0025). | ☐ |
 | 7 | First commit | `git init`, `git lfs install`, commit the skeleton. `.gitignore` and `.gitattributes` are already in the repo root. | ☐ |
 
 ## 3. Later (PH0 completion)

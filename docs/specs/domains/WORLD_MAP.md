@@ -1,6 +1,6 @@
 ---
 doc_id: WASTED-SPEC-WORLD-MAP
-title: Wasted — World map as data, the starting city and the playable slice
+title: Brix Town — World map as data, the starting city and the playable slice
 version: 0.5.16
 status: draft
 last_updated: 2026-11-22

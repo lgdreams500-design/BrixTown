@@ -1,6 +1,6 @@
 ---
 doc_id: WASTED-SPEC-LIVING-CITY
-title: Wasted — Living city (map, residents, things to use, vehicles, seasons and plants)
+title: Brix Town — Living city (map, residents, things to use, vehicles, seasons and plants)
 version: 0.3.7
 status: draft
 last_updated: 2026-11-22

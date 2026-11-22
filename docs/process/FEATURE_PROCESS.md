@@ -1,6 +1,6 @@
 ---
 doc_id: WASTED-FEATURE-PROCESS
-title: Wasted — How a feature gets from idea to game
+title: Brix Town — How a feature gets from idea to game
 version: 1.1.0
 status: accepted          # owner agreed the approach on 2026-11-21
 last_updated: 2026-11-22

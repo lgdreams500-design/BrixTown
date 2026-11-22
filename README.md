@@ -1,4 +1,4 @@
-# Wasted
+# Brix Town
 
 A third-person multiplayer life simulation set in a living city.
 

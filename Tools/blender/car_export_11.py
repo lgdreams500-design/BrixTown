@@ -1,4 +1,4 @@
-"""Wasted - car export 11: the "Soft box" cars (ADR-0015, replacing Classic) as low-poly meshes for the playable slice.
+"""Brix Town - car export 11: the "Soft box" cars (ADR-0015, replacing Classic) as low-poly meshes for the playable slice.
 
 Headless:
     blender-launcher.exe -b --factory-startup --python C:/Projects/Wasted/Tools/blender/car_export_11.py

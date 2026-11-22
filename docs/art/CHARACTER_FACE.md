@@ -1,6 +1,6 @@
 ---
 doc_id: WASTED-CHARACTER-FACE
-title: Wasted — Face controls, expressions and lip sync
+title: Brix Town — Face controls, expressions and lip sync
 version: 1.0.0
 status: accepted          # prototype approved by the owner on 2026-11-21
 last_updated: 2026-11-21
@@ -9,7 +9,7 @@ decision: docs/decisions/ADR-0005-face-control-set.md
 prototype: Tools/blender/character_face_05.py
 ---
 
-# Wasted — Face controls, expressions and lip sync
+# Brix Town — Face controls, expressions and lip sync
 
 Every head in the game, player or NPC, is animated through **one small set of named controls**.
 An expression, a blink or a spoken sound is nothing more than a set of values for those controls.

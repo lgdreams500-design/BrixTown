@@ -1,6 +1,6 @@
-# Wasted — instructions for AI agents
+# Brix Town — instructions for AI agents
 
-Third-person multiplayer life-sim in Unreal Engine 5.8. Art source in Blender (5.3 installed; pin is Q-16).
+Brix Town: a third-person multiplayer life-sim in Unreal Engine 5.8. Art source in Blender (5.3 installed; pin is Q-16).
 
 ## Before any work
 1. Read `docs/specs/GAME_SPEC.md`. It is the source of truth for scope.
@@ -37,7 +37,7 @@ Third-person multiplayer life-sim in Unreal Engine 5.8. Art source in Blender (5
 ## Layout
 | Path | Contents |
 |---|---|
-| `Game/` | Unreal project (`Wasted.uproject`, `Source/`, `Content/`, `Config/`, `Plugins/`) |
+| `Game/` | Unreal project (`BrixTown.uproject`, `Source/`, `Content/`, `Config/`, `Plugins/`) |
 | `Art/Reference/` | Approved look targets (read-only) |
 | `Art/StyleTests/` | Look and animation experiments, including rejected ones |
 | `Art/Source/` | Blender files and textures being authored |

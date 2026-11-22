@@ -1,4 +1,4 @@
-"""Wasted - car kit 09: three directions for the cars, with curves instead of boxes (CITY-067, look test; ART W1-W4).
+"""Brix Town - car kit 09: three directions for the cars, with curves instead of boxes (CITY-067, look test; ART W1-W4).
 
 Run inside Blender (Python console):
     exec(compile(open("C:/Projects/Wasted/Tools/blender/car_kit_09.py").read(), "car_kit_09.py", "exec"))

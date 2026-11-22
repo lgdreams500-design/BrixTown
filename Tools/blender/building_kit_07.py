@@ -1,4 +1,4 @@
-"""Wasted - building kit 07: production-style building models in the locked old-town look (ART-001, ART-002).
+"""Brix Town - building kit 07: production-style building models in the locked old-town look (ART-001, ART-002).
 
 Run inside Blender (Python console):
     exec(compile(open("C:/Projects/Wasted/Tools/blender/building_kit_07.py").read(), "building_kit_07.py", "exec"))

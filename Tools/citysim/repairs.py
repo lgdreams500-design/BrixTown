@@ -1,4 +1,4 @@
-"""Wasted - repair crews mending crash damage (docs/specs/domains/LIVING_CITY.md CITY-074, CITY-075; F-VEH-CRASH).
+"""Brix Town - repair crews mending crash damage (docs/specs/domains/LIVING_CITY.md CITY-074, CITY-075; F-VEH-CRASH).
 
 Damage is stored state: a list of what broke, where and when (LIVING_CITY §1). When each thing is mended is not stored
 and not stepped: it is worked out from that list and World/rules/crash.json alone, so every machine gets the same answer

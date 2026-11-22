@@ -1,4 +1,4 @@
-/* Wasted: playable slice. Builds the whole city from the block files bundled in city_data.js (see
+/* Brix Town: playable slice. Builds the whole city from the block files bundled in city_data.js (see
    Tools/worldgen/build_play.py) and plays one day of everyone's routine. No libraries: plain WebGL.
    The look follows docs/art/ART_DIRECTION.md (rules W1-W8 are named where they are applied); people are in people.js.
    Layout of this file: helpers, mesh, world building, residents, shaders and light, player, camera, HUD, frame loop. */

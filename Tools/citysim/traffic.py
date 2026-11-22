@@ -1,4 +1,4 @@
-"""Wasted - residents' cars on the roads (docs/specs/domains/LIVING_CITY.md 3.4, CITY-043 to CITY-049; ADR-0009).
+"""Brix Town - residents' cars on the roads (docs/specs/domains/LIVING_CITY.md 3.4, CITY-043 to CITY-049; ADR-0009).
 
 The same rule as the rest of the city: a resident car's position at any moment is a lookup, not a step.
 When a day's plan is made, every car trip of that day is worked out once, in order, from the residents'

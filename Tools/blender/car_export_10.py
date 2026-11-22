@@ -1,4 +1,4 @@
-"""Wasted - car export 10: the chosen "Classic" cars (ADR-0011) as low-poly meshes for the playable slice.
+"""Brix Town - car export 10: the chosen "Classic" cars (ADR-0011) as low-poly meshes for the playable slice.
 
 Headless:
     blender-launcher.exe -b --factory-startup --python C:/Projects/Wasted/Tools/blender/car_export_10.py

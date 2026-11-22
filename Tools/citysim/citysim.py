@@ -1,4 +1,4 @@
-"""Wasted - city in a box: the rules of a living block, with no engine and no drawing code.
+"""Brix Town - city in a box: the rules of a living block, with no engine and no drawing code.
 
 Everything here is *calculated from the world clock and the data file*, never stepped frame by frame:
 ask where a resident is at any minute of any day and the answer is the same every time, on any
