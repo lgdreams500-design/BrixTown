@@ -1458,6 +1458,10 @@ vec4 pat(vec2 q,vec4 A,vec4 B){
 void main(){
   float f=vF; vec3 c=vC; vec3 n=normalize(vN); vec3 tc=uCam-vP; float d=length(tc); vec3 vd=-tc/d;
   float hh=45., dy=vP.y-uCam.y; float k=abs(dy)>.05?(exp(-uCam.y/hh)-exp(-vP.y/hh))/(dy/hh):exp(-uCam.y/hh);
+  if(abs(c.x)>1.5){                                                        // a near person (people.js): the colour comes packed in one number, with two coordinates that stay on the cloth
+    float p=abs(c.x), k=c.x>0.?1.:.3; vec2 q=c.yz; vec3 e=clamp((vec3(floor(p/65536.),floor(mod(p,65536.)/256.),mod(p,256.))-64.)/127.,0.,1.); c=e*e;
+    float m1=ns(vec3(q*8.,1.))*.6+ns(vec3(q*21.,5.))*.4, fib=ns(vec3(q.x*150.+m1*4.,q.y*46.,3.))*.55+ns(vec3(q.x*60.,q.y*190.+m1*3.,7.))*.45;   // soft two-tone blotches, and fine fibres across them
+    c*=mix(1.,(.84+.3*smoothstep(.25,.8,m1))*(.9+.2*fib),k); }                // cloth as the reference paints it (cloth() in old_town_04.py): the tone runs from 0.82 to 1.12 of its colour, brushed
   float fog=1.-exp(-d*uFogD*max(k,0.));
   float blot=clamp((ns(vP*.9)*.6+ns(vP*2.7+7.)*.4-.5)*2.2+.5,0.,1.), nearK=1.-min(1.,d/70.);
   vec3 col; bool emis=false; float inside=0.;
@@ -1701,6 +1705,7 @@ addEventListener("keydown", e => { if (e.code === "KeyG" && !e.repeat && window.
 }
 function lighting(m) {                                       // the reference recipe (sun 14 W/m2, sky 0.35, haze) carried through the day
   const rise = D.day.sunrise * 60, set = D.day.sunset * 60, day = smooth(0, 1, Math.min((m - (rise - 30)) / 60, ((set + 30) - m) / 60));
+const LINEUP = new URLSearchParams(location.search).has("lineup") ? People.cast() : null;
   const a = clamp((m - rise) / (set - rise), 0, 1) * Math.PI, unit = v => { const n = Math.hypot(v[0], v[1], v[2]); return v.map(q => q / n); };
   const sun = unit([Math.cos(a) * .85, Math.sin(a) * .8 + .08, .42 * Math.sin(a) + .12]), moon = unit([-.42, .74, -.52]), low = smooth(.05, .5, sun[1]), isDay = day > .03;
   const fogD = mix(.014, .009, low) * (.6 + .4 * day), through = Math.exp(-fogD * 14 / Math.max(sun[1], .12));      // sunlight left after crossing the haze
@@ -1986,6 +1991,7 @@ function frame(now) {
   if (started) Life.frame(dt);                            // money, quests and jobs move on with the clock (life.js)
   if ((started || Life.designing) && !cam.fp && !cam.close && pl.pose !== 4) {   // not while in a car; and in the designer, to see who you are making
     let da = cam.yaw - pl.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
+  if (LINEUP) LINEUP.forEach((L, k) => People.draw(dyn, 300.5 + k * 1.1, groundBase(300.5 + k * 1.1, 186.6), 186.6, Math.PI, L, 0, { ph: 0, t: now / 1000, lod: 0, fl: 14 }));   // ?lineup=1: the six people of character_lineup.png in a row on Linden Street, to compare with it
     People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
       look: pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
   }

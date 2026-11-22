@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-WORLD-MAP
 title: Wasted — World map as data, the starting city and the playable slice
-version: 0.5.11
+version: 0.5.12
 status: draft
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -334,3 +334,4 @@ keep a timetable with several stops in it. Something has to give `[OPEN: Q-21]`.
 | 0.5.9 | 2026-11-22 | Two keys for looking, at the owner's request: K tries each kind of weather, Y loads the next season (daylight hours, that season's weather, trees and flowers from `city_seasons.js`; routines, cars and boards stay those of the built day). Neither is a level pick: F-SEASONS is still undecided. |
 | 0.5.10 | 2026-11-22 | Rain redone after the owner found it bad (WLD-037, ADR-0016): drops fall in the world round the camera, the sky closes over, paving fills with puddles and drop rings, lamplight shows in the wet at night. |
 | 0.5.11 | 2026-11-22 | A bench in the start alley, as in the reference alley (`b_3_5.json`). New default daylight (ADR-0018, approved by the owner after a trial): bounce only near sunlit ground, contact shade under street furniture; G switches it off to compare. Comparison pictures in `Art/StyleTests/light_compare_12/`. |
+| 0.5.12 | 2026-11-22 | People rebuilt part for part from the script behind `character_lineup.png` (`character_face_05.py`): head at 1.22 (it was 1.09), limbs at the reference thickness, a yoke across the shoulders, hips under the top, one-piece arms and legs, oval hands and shoes, scarf tail, bib apron, bag strap (ART-004, C1). Cloth has the reference's brushed two-tone felt (`cloth()` in `old_town_04.py`), drawn in the shader from coordinates that stay on the garment; heads are egg-shaped with a jaw and ears; hair and hats are shells cut away round the face (`hair_cap()`), long hair has a lock each side, eyes have a lash line; hems turn under in a clean line. `index.html?lineup=1` stands the six reference people in a row on Linden Street; the comparison is in `Art/StyleTests/people_compare_13/`. |

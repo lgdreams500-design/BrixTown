@@ -126,27 +126,36 @@ const People = (() => {
 
   // ---- shapes: everything is lofted rings with smooth normals, so forms read as soft
   const JIT = new Float32Array(64); for (let i = 0; i < 64; i++) JIT[i] = .9 + .2 * (Math.abs(Math.sin(i * 12.9898) * 43758.5453) % 1);
-  const scratch = new Float32Array(24 * 24 * 6), vjit = new Float32Array(24 * 24);
-  function loft(ms, rings, n, col, fl, ctr, seed) {                   // ring: [centre, u, v] in world space; ctr gives ball normals
+  const scratch = new Float32Array(24 * 24 * 6), vjit = new Float32Array(24 * 24), cu = new Float32Array(24 * 24), cv = new Float32Array(24 * 24); let run = 0, ru = 0, rv = 0;
+  // Cloth texture (play.js reads it): near people send, in place of a colour, the colour packed into one number and two coordinates that
+  // stay on the cloth as the body moves. TEX: 0 plain colour, 1 textured. Skin gets the same, marked by a minus sign, for a fainter mottle.
+  let TEX = 0, SKINREF = null;
+  const pack = c => { const e = v => Math.round(Math.sqrt(Math.min(1, Math.max(0, v))) * 127) + 64; return e(c[0]) * 65536 + e(c[1]) * 256 + e(c[2]); };
+  function loft(ms, rings, n, col, fl, ctr, seed, sq, mask) {               // ring: [centre, u, v] in world space; ctr gives ball normals; sq < 1 squares the ring off towards a soft box
     const m = rings.length, need = (m - 1) * n * 60;
     if (ms.n + need > ms.a.length) { const b = new Float32Array(Math.max(ms.a.length * 2, ms.n + need)); b.set(ms.a.subarray(0, ms.n)); ms.a = b; }
     for (let k = 0; k < m; k++) {
       const [c, u, v] = rings[k];
       for (let i = 0; i < n; i++) {
-        const a = TAU * i / n, ca = Math.cos(a), sa = Math.sin(a), o = (k * n + i) * 6;
+        const a = TAU * i / n, o = (k * n + i) * 6; let ca = Math.cos(a), sa = Math.sin(a);
+        if (sq) { ca = Math.sign(ca) * Math.pow(Math.abs(ca), sq); sa = Math.sign(sa) * Math.pow(Math.abs(sa), sq); }
         const px = c[0] + u[0] * ca + v[0] * sa, py = c[1] + u[1] * ca + v[1] * sa, pz = c[2] + u[2] * ca + v[2] * sa;
         let nx, ny, nz; if (ctr) { nx = px - ctr[0]; ny = py - ctr[1]; nz = pz - ctr[2]; } else { nx = px - c[0]; ny = py - c[1]; nz = pz - c[2]; }
         vjit[k * n + i] = JIT[((k * n + i) * 7 + seed * 13) & 63];   // one shade per vertex: the mottle blends softly across the form (C2)
+        if (TEX) { if (i === 0) { if (k === 0) run = 0; else { const p = rings[k - 1][0]; run += Math.hypot(c[0] - p[0], c[1] - p[1], c[2] - p[2]); } ru = Math.hypot(u[0], u[1], u[2]); rv = Math.hypot(v[0], v[1], v[2]); }
+          cu[k * n + i] = ru * ca + seed * .37; cv[k * n + i] = run + rv * sa * .7 + seed * .21; }
         const l = Math.hypot(nx, ny, nz) || 1; scratch[o] = px; scratch[o + 1] = py; scratch[o + 2] = pz; scratch[o + 3] = nx / l; scratch[o + 4] = ny / l; scratch[o + 5] = nz / l;
       }
     }
-    const a = ms.a; let q = ms.n;
+    const a = ms.a, pk = TEX ? (col === SKINREF ? -pack(col) : pack(col)) : 0; let q = ms.n;
     for (let k = 0; k < m - 1; k++) for (let i = 0; i < n; i++) {
+      if (mask && !mask(k, i)) continue;
       const j = (i + 1) % n, A = (k * n + i) * 6, B = (k * n + j) * 6, Cc = ((k + 1) * n + j) * 6, Dd = ((k + 1) * n + i) * 6;
       for (const o of [A, B, Cc, A, Cc, Dd]) {
         const jt = vjit[o / 6];
         a[q] = scratch[o]; a[q + 1] = scratch[o + 1]; a[q + 2] = scratch[o + 2]; a[q + 3] = scratch[o + 3]; a[q + 4] = scratch[o + 4]; a[q + 5] = scratch[o + 5];
-        a[q + 6] = col[0] * jt; a[q + 7] = col[1] * jt; a[q + 8] = col[2] * jt; a[q + 9] = fl; q += 10;
+        if (TEX) { a[q + 6] = pk; a[q + 7] = cu[o / 6]; a[q + 8] = cv[o / 6]; } else { a[q + 6] = col[0] * jt; a[q + 7] = col[1] * jt; a[q + 8] = col[2] * jt; }
+        a[q + 9] = fl; q += 10;
       }
     }
     ms.n = q;
@@ -156,10 +165,24 @@ const People = (() => {
     const ring = (c, r) => [c, sc(u, r), sc(v, r)];
     loft(ms, caps ? [ring(add(A, sc(d, -ra * .92)), ra * .3), ring(add(A, sc(d, -ra * .55)), ra * .82), ring(A, ra), ring(B, rb), ring(add(B, sc(d, rb * .55)), rb * .82), ring(add(B, sc(d, rb * .92)), rb * .3)] : [ring(A, ra), ring(B, rb)], n, col, fl, null, seed);
   }
-  function ball(ms, c, ax, ay, az, n, m, col, fl, seed) {               // an ellipsoid with half-axes ax, ay, az
+  function tube(ms, pts, rs, n, col, fl, ref, seed, capA, capB) {      // one soft form through several points, bending at each: an arm with no joint showing (C1)
+    const rings = [], m = pts.length;
+    for (let i = 0; i < m; i++) {
+      const din = i > 0 ? unit(sub(pts[i], pts[i - 1])) : null, dout = i < m - 1 ? unit(sub(pts[i + 1], pts[i])) : null, d = unit(din && dout ? add(din, dout) : din || dout);
+      let u = cross(d, ref); if (len(u) < .05) u = cross(d, [ref[1], ref[2], ref[0]]); u = unit(u); const v = cross(d, u);
+      const r = rs[i] * (din && dout ? Math.min(1.35, 1 / Math.max(.5, dot(d, dout))) : 1);   // a bend keeps its thickness
+      if (i === 0 && capA) rings.push([add(pts[0], sc(d, -r * .92)), sc(u, r * .3), sc(v, r * .3)], [add(pts[0], sc(d, -r * .55)), sc(u, r * .82), sc(v, r * .82)]);
+      rings.push([pts[i], sc(u, r), sc(v, r)]);
+      if (i === m - 1 && capB) rings.push([add(pts[i], sc(d, r * .55)), sc(u, r * .82), sc(v, r * .82)], [add(pts[i], sc(d, r * .92)), sc(u, r * .3), sc(v, r * .3)]);
+    }
+    loft(ms, rings, n, col, fl, null, seed);
+  }
+  const jaw = zu => zu < 0 ? 1 - .3 * Math.pow(-zu, 1.4) : 1;          // the head narrows to the chin (character_test_02.py)
+  function ball(ms, c, ax, ay, az, n, m, col, fl, seed, opt) {          // an ellipsoid with half-axes ax, ay, az. opt.taper: a head with a jaw; opt.keep(x, y, z): which part of the unit sphere to draw
     const rings = [];
-    for (let k = 0; k <= m; k++) { const f = -Math.PI / 2 + Math.PI * k / m, cf = Math.max(.02, Math.cos(f)); rings.push([add(c, sc(az, Math.sin(f))), sc(ax, cf), sc(ay, cf)]); }
-    loft(ms, rings, n, col, fl, c, seed);
+    for (let k = 0; k <= m; k++) { const f = -Math.PI / 2 + Math.PI * k / m, cf = Math.max(.02, Math.cos(f)) * (opt && opt.taper ? jaw(Math.sin(f)) : 1); rings.push([add(c, sc(az, Math.sin(f))), sc(ax, cf), sc(ay, cf)]); }
+    const keep = opt && opt.keep;
+    loft(ms, rings, n, col, fl, c, seed, 0, keep ? (k, i) => { const f = -Math.PI / 2 + Math.PI * (k + .5) / m, a = TAU * (i + .5) / n, cf = Math.cos(f); return keep(cf * Math.cos(a), cf * Math.sin(a), Math.sin(f)); } : null);
   }
 
   // ---- who people are: designer values per role (ART_DIRECTION §3.4 and rule C5)
@@ -196,12 +219,21 @@ const People = (() => {
       top: P[v.top], bottom: P[v.bottom], legs: v.bottom_type, shoes: P[v.shoes], scarf: c("scarf"), cap: c("cap"), apron: c("apron"), bag: !!v.bag, tash: !!v.tash,
       sig: SIG[v.walk] || SIG.Springy, seed: 7, fm: { face_w: v.face_w, eye_size: v.eye_size, eye_open: v.eye_open, brow: v.brow, nose: v.nose, lips: v.lips } };
   }
+  const cast = () => [                                                // left to right as in Art/Reference/character_lineup.png
+    { S: 1.68 / 1.72, W: .92 * 1.04, skin: [.62, .42, .30], hair: "long", hairC: [.28, .10, .05], eyes: [.14, .36, .20], g: "tee", top: K.teal, bottom: K.indigo, legs: "trousers", shoes: K.cream, scarf: K.ochre, sig: SIG.Springy, seed: 7 },
+    { S: 1.80 / 1.72, W: 1.06 * 1.04, skin: [.30, .19, .13], hair: "afro", hairC: K.black, eyes: [.2, .1, .05], g: "tunic", top: K.ochre, bottom: K.olive, legs: "shorts", shoes: [.6, .57, .5], bag: true, sig: SIG.Easy, seed: 11 },
+    { S: 1.72 / 1.72, W: 1.14 * 1.04, skin: [.78, .56, .44], hair: "side", hairC: [.10, .06, .04], eyes: [.2, .1, .05], g: "long", top: K.cream, bottom: K.brown, legs: "trousers", shoes: [.1, .08, .06], apron: K.terra, tash: true, sig: SIG.Easy, seed: 13, fm: Object.assign({}, FM0, { face_w: 1.05, nose: 1.15 }) },
+    { S: 1.78 / 1.72, W: 1.0 * 1.04, skin: [.84, .64, .52], hair: "short", hairC: [.55, .40, .18], eyes: [.18, .34, .55], g: "tee", top: K.blue, bottom: K.charcoal, legs: "shorts", shoes: K.terra, cap: K.terra, bag: true, sig: SIG.Hurried, seed: 17 },
+    { S: 1.58 / 1.72, W: 1.06 * 1.04, skin: [.70, .50, .38], hair: "bun", hairC: [.55, .55, .56], eyes: [.2, .1, .05], g: "coat", top: K.plum, bottom: K.olive, legs: "skirt", shoes: K.brown, scarf: K.cream, sig: SIG.Careful, seed: 19 },
+    { S: 1.74 / 1.72, W: .96 * 1.04, skin: [.47, .31, .22], hair: "bob", hairC: K.black, eyes: [.2, .1, .05], g: "coat", top: K.indigo, bottom: K.charcoal, legs: "trousers", shoes: K.black, sig: SIG.Easy, seed: 23 },
+  ];
   const player = () => ({ S: 1.68 / 1.72, W: .92 * 1.04, skin: [.62, .42, .30], hair: "long", hairC: [.28, .10, .05], eyes: [.14, .36, .20], g: "tee", top: K.teal, bottom: K.indigo, legs: "trousers", shoes: K.cream, scarf: K.ochre, sig: SIG.Springy, seed: 7 });
 
   // pose: 0 stand, 1 walk, 2 sit, 3 lie. o: { ph: cycle phase 0..1, t: seconds, lod: 0 near | 1 mid | 2 far, fl: material, look: [yaw, pitch] the head adds, sig: override, sleep }
   function draw(ms, x, y, z, yaw, L, pose, o) {
-    const sig = o.sig || L.sig, g = geo(L.S), S = L.S, Sh = S * 1.09, W = L.W * 1.06, lod = o.lod, fl = o.fl, t = o.t, sd = L.seed;
+    const sig = o.sig || L.sig, g = geo(L.S), S = L.S, Sh = S * 1.22, W = L.W, T = 1.12 * S, lod = o.lod, fl = o.fl, t = o.t, sd = L.seed;
     const wd = wander(t, sd * .37), lk = o.look || [0, 0], hm = [wd[0] + lk[0], wd[1] + lk[1] + (o.face ? o.face.nod || 0 : 0), wd[2]];   // a speaker nods on stressed words (ANIM-006)
+    TEX = lod < 2 ? 1 : 0; SKINREF = L.skin;
     const P = pose === 1 ? walk(sig, g, W, o.ph, hm, o.mod) : pose === 2 ? sit(sig, g, W, t, hm, sd) : stand(sig, g, W, t, pose === 3 ? [0, 0, 0] : hm, sd, o.mod);
     // where the character's axes point in the world: standing (x left, y back, z up) or lying on the back, head to +z
     const c = Math.cos(yaw), s = Math.sin(yaw), ex = pose === 3 ? [-1, 0, 0] : [-c, 0, -s], ey = pose === 3 ? [0, -1, 0] : [-s, 0, c], ez = pose === 3 ? [0, 0, 1] : [0, 1, 0];
@@ -210,62 +242,85 @@ const People = (() => {
     const Wd = p => [ex[0] * p[0] + ey[0] * p[1] + ez[0] * p[2], ex[1] * p[0] + ey[1] * p[1] + ez[1] * p[2], ex[2] * p[0] + ey[2] * p[1] + ez[2] * p[2]];
     const n = lod === 0 ? 16 : lod === 1 ? 8 : 5, nl = lod === 0 ? 12 : lod === 1 ? 6 : 4, caps = lod === 0, fat = 1.34 * S, fwd = Wd([0, -1, 0]);
     const long = L.g !== "tee", legCol = L.legs === "skirt" ? L.skin : L.bottom;
-    // legs and shoes
+    // ---- the body, part for part as Tools/blender/character_face_05.py builds the people of character_lineup.png (option B: limbs x1.12).
+    // Heights there are in the same skeleton: hips .8835, shoulders and yoke +.436 above them, neck +.451.
+    const kind = L.legs, bare = kind !== "trousers";
+    // capsule: the script's limb() with flat (depth as a share of width) and cap (how round the ends are), built on the hips below the waist and on the chest above
+    const capsule = (z0, r0, z1, r1, flat, cap, col, seed, y0, y1, xo, sway, lip) => {   // lip: the bottom is a hem that turns under, not a rounded end
+      const rings = [], at = (z, r, k) => { const f = (z - z0) / (z1 - z0), y = (y0 || 0) + ((y1 || 0) - (y0 || 0)) * Math.min(1, Math.max(0, f)), d = r * flat * k + (sway ? sway * Math.max(0, 1 - f * 2.2) : 0);
+        rings.push(z < .1 ? [add(pel, add(add(sc(pz, z * S), sc(py, y * S)), sc(px, (xo || 0) * S))), sc(px, r * k * S), sc(py, d * S)] : [add(sp, add(add(sc(tz, (z - .098) * S), sc(ty, y * S)), sc(tx, (xo || 0) * S))), sc(tx, r * k * S), sc(ty, d * S)]); };
+      if (lip) at(z0 + .004, r0, .84); else { at(z0 - r0 * cap * .92, r0, .3); at(z0 - r0 * cap * .55, r0, .82); } at(z0, r0, 1);
+      for (const f of [.25, .5, .75]) at(z0 + (z1 - z0) * f, r0 + (r1 - r0) * f, 1);
+      at(z1, r1, 1); at(z1 + r1 * cap * .55, r1, .82); at(z1 + r1 * cap * .92, r1, .3);
+      loft(ms, rings, n, col, fl, null, seed);
+    };
+    // legs: one form from hip to ankle, bending at the knee; bare legs are thinner, shorts cover the thigh; shoes are rounded ovals
     for (const k of [0, 1]) {
       const hip = Wp(P.hip[k]), kn = Wp(P.kn[k]), an = Wp(P.an[k]);
-      limb(ms, hip, kn, .072 * fat, .056 * fat, nl, legCol, fl, caps, fwd, sd + k);
-      limb(ms, kn, an, .056 * fat, .043 * fat, nl, L.legs === "trousers" ? L.bottom : L.skin, fl, caps, fwd, sd + k + 2);
-      const he = Wp(P.heel[k]), to = Wp(P.toe[k]), up = sc(Wd([0, 0, 1]), .012 * S);     // a chunky rounded shoe
-      limb(ms, add(he, up), add(add(to, sc(sub(to, he), .04)), up), .046 * fat, .044 * fat, nl, L.shoes, fl, lod < 2, [0, 1, 0], sd + k + 4);
+      if (bare) tube(ms, [hip, kn, an], [.08 * T, .0625 * T, .045 * T], nl, L.skin, fl, fwd, sd + k, lod < 2, false);
+      else tube(ms, [hip, kn, an], [.088 * T, .073 * T, .058 * T], nl, L.bottom, fl, fwd, sd + k, lod < 2, false);
+      if (kind === "shorts") limb(ms, hip, add(hip, sc(sub(kn, hip), .82)), .092 * T, .086 * T, nl, L.bottom, fl, lod < 2, fwd, sd + k + 2);
+      const he = Wp(P.heel[k]), to = Wp(P.toe[k]), f = unit(sub(to, he)), up0 = Wd([0, 0, 1]), side = unit(cross(f, up0)), up = cross(side, f);
+      ball(ms, add(add(he, sc(f, .105 * T)), sc(up, .004 * S)), sc(side, .05 * T), sc(f, .12 * T), sc(up, .045 * T), lod === 0 ? 10 : 6, lod === 0 ? 6 : 4, L.shoes, fl, sd + k + 4);
     }
-    // the garment: one soft form from hem to shoulders
     const tx = Wd(mv(P.Rt, [1, 0, 0])), ty = Wd(mv(P.Rt, [0, 1, 0])), tz = Wd(mv(P.Rt, [0, 0, 1])), px = Wd(mv(P.Rp, [1, 0, 0])), py = Wd(mv(P.Rp, [0, 1, 0])), pz = Wd(mv(P.Rp, [0, 0, 1]));
     const pel = Wp(P.pel), sp = Wp(P.spine), swing = Math.abs(P.an[0][1] - P.an[1][1]);
-    const ringP = (dz, rx, ry, oy) => [add(pel, add(sc(pz, dz * S), sc(py, (oy || 0) * S))), sc(px, rx * S), sc(py, ry * S)], ringT = (dz, rx, ry) => [add(sp, sc(tz, dz * S)), sc(tx, rx * S), sc(ty, ry * S)];
-    const body = [];
-    if (L.g === "coat") body.push(ringP(-.47, .2 * W, .162 + swing * .32), ringP(-.2, .19 * W, .15 + swing * .2));
-    else if (L.g === "tunic") body.push(ringP(-.23, .176 * W, .136 + swing * .18));
-    else body.push(ringP(-.09, .152 * W, .108));
-    body.push(ringP(0, .155 * W, .112), ringT(.06, .138 * W, .1), ringT(.25, .172 * W, .112), ringT(.315, .192 * W, .104), ringT(.36, .14 * W, .085), ringT(.39, .06, .055));
-    loft(ms, body, n, L.top, fl, null, sd);
-    if (L.legs === "skirt") loft(ms, [ringP(-.44, .19 * W, .16 + swing * .3), ringP(-.2, .168 * W, .125), ringP(-.02, .15 * W, .108)], n, L.bottom, fl, null, sd + 9);
-    // arms and hands
+    const chest = .172 * W, flat = .62 * (1 + .25 * .12), front = -chest * flat;
+    // hips, in the colour of what is worn below
+    if (kind !== "skirt") ball(ms, pel, sc(px, .16 * W * S), sc(py, .108 * T), sc(pz, .1156 * S), n, lod === 0 ? 6 : 4, L.bottom, fl, sd + 13);
+    // the garment: a tee or long top to the waist, a tunic to the thigh, a skirt under either, a coat over it all
+    if (kind === "skirt") capsule(L.g === "coat" ? -.5 : -.44, (L.g === "coat" ? .21 : .225) * W, .4214, chest - .004, flat, .28, L.bottom, sd + 9, 0, 0, 0, swing * .3, true);
+    const coat = L.g === "coat", outer = L.top;
+    if (coat) { capsule(kind === "skirt" ? -.29 : -.33, .218 * W, .431, chest + .014, flat * 1.06, .25, L.top, sd, .006, .006, 0, swing * .3, true);
+      ball(ms, add(sp, sc(tz, .387 * S)), sc(tx, .085 * T), sc(ty, .08 * T), sc(tz, .035 * S), n, 4, L.top, fl, sd + 14); }   // the collar
+    else if (L.g === "tunic") capsule(-.1235, .19 * W, .4214, chest, flat, .28, L.top, sd, 0, 0, 0, swing * .18, true);
+    else capsule(.088, .142 * W, .4214, chest, flat, .28, L.top, sd, 0, 0, 0, 0, true);
+    // the yoke: a rounded bar across the shoulders that the arms hang from
+    const sh0 = Wp(P.sh[0]), sh1 = Wp(P.sh[1]);
+    limb(ms, sh1, sh0, .052 * T, .052 * T, nl, outer, fl, lod < 2, fwd, sd + 15);
+    // arms: one form from shoulder to wrist; a tee has a sleeve to above the elbow; hands are long ovals
     for (const k of [0, 1]) {
-      const a = add(Wp(P.sh[k]), sc(tz, -.035 * S)), b = Wp(P.el[k]), w = Wp(P.wr[k]);
-      limb(ms, a, b, .052 * fat, .045 * fat, nl, L.top, fl, caps, fwd, sd + k + 6);   // a rounded top, so the sleeve meets the shoulder softly (C1)
-      limb(ms, b, w, .045 * fat, .036 * fat, nl, long ? L.top : L.skin, fl, caps, fwd, sd + k + 8);
-      if (lod < 2) ball(ms, add(w, sc(unit(sub(w, b)), .035 * S)), sc(tx, .034 * fat), sc(ty, .03 * fat), sc(tz, .042 * fat), 6, 4, L.skin, fl, sd);
+      const a = k ? sh1 : sh0, b = Wp(P.el[k]), w = Wp(P.wr[k]), dir = unit(sub(w, b));
+      tube(ms, [a, b, w], [.052 * T, .0435 * T, .035 * T], nl, long ? outer : L.skin, fl, fwd, sd + k + 6, lod < 2, lod < 2);
+      if (!long) limb(ms, a, add(a, sc(sub(b, a), .875)), .057 * T, .052 * T, nl, L.top, fl, lod < 2, fwd, sd + k + 8);
+      if (lod < 2) ball(ms, add(w, sc(dir, .058 * S)), sc(tx, .03 * T), sc(ty, .042 * T), sc(dir, .055 * T), 8, 5, L.skin, fl, sd);
     }
     // neck and head
-    const fm = L.fm || FM0, hx = sc(Wd(mv(P.Rh, [1, 0, 0])), fm.face_w), hy = Wd(mv(P.Rh, [0, 1, 0])), hz = Wd(mv(P.Rh, [0, 0, 1])), nk = Wp(P.neck), hj = Wp(P.headJ), hc = add(hj, sc(hz, .1 * Sh));
-    const H = (a, b, cc) => add(hc, add(add(sc(hx, a * Sh), sc(hy, b * Sh)), sc(hz, cc * Sh)));
-    const blob = (a, b, cc, rx, ry, rz, col, nn, mm2, s2) => ball(ms, H(a, b, cc), sc(hx, rx * Sh), sc(hy, ry * Sh), sc(hz, rz * Sh), nn, mm2, col, fl, s2 || sd);
-    limb(ms, nk, hj, .046 * S, .044 * S, nl, L.skin, fl, false, fwd, sd);
-    blob(0, 0, 0, .098, .108, .125, L.skin, lod === 0 ? 18 : lod === 1 ? 9 : 6, lod === 0 ? 12 : lod === 1 ? 6 : 4);
-    const hn = lod === 0 ? 16 : lod === 1 ? 8 : 5, hm2 = lod === 0 ? 9 : 4, hairC = L.hairC;
-    if (L.hair === "afro") blob(0, .02, .04, .142, .14, .135, hairC, hn, hm2);
-    else if (L.hair !== "bald") {
-      blob(0, .03, .04, .106, .116, .122, hairC, hn, hm2);
-      if (L.hair === "bob") blob(0, .038, -.035, .112, .098, .105, hairC, hn, hm2);
-      else if (L.hair === "long") blob(0, .055, -.1, .104, .072, .165, hairC, hn, hm2);
-      else if (L.hair === "bun") blob(0, .075, .105, .05, .05, .048, hairC, 6, 4);
-      else if (L.hair === "side") blob(.03, .0, .075, .085, .1, .06, hairC, 6, 4);
-      if (!L.cap && lod < 2) {                                         // the fringe: straight for a bob or long hair, swept for short and side
-        if (L.hair === "bob" || L.hair === "long") blob(0, -.064, .094, .094, .03, .03, hairC, hn, 5);
-        else if (L.hair === "short" || L.hair === "side") { blob(.028, -.066, .1, .07, .028, .024, hairC, hn, 5); blob(-.035, -.058, .106, .05, .024, .018, hairC, 8, 4); }
-      }
+    const fm = L.fm || FM0, hx = sc(Wd(mv(P.Rh, [1, 0, 0])), fm.face_w), hy = Wd(mv(P.Rh, [0, 1, 0])), hz = Wd(mv(P.Rh, [0, 0, 1])), nk = Wp(P.neck), hj = Wp(P.headJ), hc = add(hj, sc(hz, .146 * Sh));   // the head's centre, where character_face_05.py puts it
+    // things on the front of the face follow the jaw as it narrows towards the chin
+    const H = (a, b, cc) => { if (b < -.05 && cc < 0) b *= 1 - .27 * Math.pow(Math.min(1, -cc / .13), 1.4); return add(hc, add(add(sc(hx, a * Sh), sc(hy, b * Sh)), sc(hz, cc * Sh))); };
+    const blob = (a, b, cc, rx, ry, rz, col, nn, mm2, s2, opt) => ball(ms, H(a, b, cc), sc(hx, rx * Sh), sc(hy, ry * Sh), sc(hz, rz * Sh), nn, mm2, col, fl, s2 || sd, opt);
+    limb(ms, nk, add(hj, sc(hz, .03 * S)), .046 * T, .044 * T, nl, L.skin, fl, false, fwd, sd);
+    const RX = .104, RY = .11, RZ = .13;                              // the head of character_face_05.py: an egg with a jaw, and ears
+    blob(0, 0, 0, RX, RY, RZ, L.skin, lod === 0 ? 20 : lod === 1 ? 10 : 6, lod === 0 ? 14 : lod === 1 ? 7 : 4, 0, { taper: true });
+    if (lod === 0) for (const e of [-1, 1]) blob(e * RX * .97, .012, -.012, .012, .022, .032, L.skin, 6, 4);
+    // hair and hats are shells over the head with the face cut away (hair_cap() in character_test_02.py), so the fringe is a clean line
+    const hn = lod === 0 ? 20 : lod === 1 ? 10 : 6, hm2 = lod === 0 ? 12 : lod === 1 ? 6 : 4, hairC = L.hairC, st = L.hair;
+    const shell = (b, cc, rx, ry, rz, col, keep, s2) => blob(0, b, cc, rx, ry, rz, col, hn, hm2, s2, { keep });
+    if (st === "afro") shell(.012, .035, RX + .055, RY + .055, RZ + .06, hairC, (x, y, z) => !(z < -.5 || (y < -.35 && z < .22)));
+    else if (st !== "bald") {
+      shell(.012, .014, RX + .02, RY + .022, RZ + .02, hairC,
+        st === "side" ? (x, y, z) => !(z < -.35 || (y < -.25 && z < .3 + .28 * x) || (y < .25 && z < .05))
+        : st === "bob" || st === "long" ? (x, y, z) => !(z < -.8 || (y < -.3 && z < .3))
+        : (x, y, z) => !(z < -.35 || (y < -.25 && z < .45) || (y < .25 && z < .05)));
+      if (st === "short" || st === "side") blob(st === "side" ? .022 : 0, -.018, .108, .086, .104, .052, hairC, hn, 5);
+      if (st === "long") { blob(0, .052, -.115, .112, .068, .17, hairC, hn, hm2);          // long hair falls down the back, with a lock each side of the face
+        if (lod < 2) for (const e of [-1, 1]) limb(ms, H(e * .106, 0, 0), H(e * .1, -.018, -.19), .021 * Sh, .013 * Sh, 6, hairC, fl, true, fwd, sd + 20); }
+      if (st === "bun") blob(0, .085, .135, .052, .052, .046, hairC, 8, 5);
     }
-    if (L.cap) { blob(0, .018, .078, .109, .118, .075, L.cap, hn, hm2); blob(0, -.105, .06, .075, .06, .012, L.cap, 6, 3); }
+    if (L.cap) { shell(.006, .016, RX + .03, RY + .032, RZ + .028, L.cap, (x, y, z) => z >= .12, sd + 21); blob(0, -.135, .062, .09, .075, .009, L.cap, 8, 3, sd + 21); }
+    const tex0 = TEX; TEX = 0;                                        // the face is plain: eyes, lids and lips keep their own colours
     if (lod === 0 && o.face) face(blob, o.face, L, t, sd, lk, o.sleep);   // someone in a conversation: the full control set (CHR-007)
     else if (lod === 0) {                                             // the face: full eyes, brows, small nose, mouth at rest
       const period = 2.4 + 3.4 * ((sd * .618) % 1), shut = o.sleep || ((t + sd) % period) < .17, gx = cl(-lk[0] / rad(34), -1, 1) * .006, gz = cl(-lk[1] / rad(34), -1, 1) * .004;
-      const es = fm.eye_size, eo = fm.eye_open, ns = fm.nose;
+      const es = fm.eye_size * 1.12, eo = fm.eye_open, ns = fm.nose;   // the reference's eyes are 1.15 times natural size
       for (const e of [-1, 1]) {
         if (shut) { blob(e * .037, -.0975, .012, .0225 * es, .0105, .0235 * es, L.skin, 8, 4, sd + 3); continue; }
         blob(e * .037, -.0975, .012, .0215 * es, .008, .022 * es * eo, [.86, .84, .8], 8, 4);
         blob(e * .037 + gx, -.1035, .0045 + gz, .0172 * es, .004, Math.min(.0168 * es, .022 * es * eo * .9), L.eyes, 8, 3);
         blob(e * .037 + gx, -.1065, .0045 + gz, .0082 * es, .002, .0082 * es, [.01, .01, .012], 6, 3);
         blob(e * .037 + gx + .005 * es, -.108, .012 + gz, .0032, .0012, .0032, [1, 1, 1], 5, 2);
+        blob(e * .037, -.1035, .012 + .0195 * es * eo, .0225 * es, .003, .0034, [.06, .045, .04], 8, 3);   // the lash line
       }
       for (const e of [-1, 1]) blob(e * .038, -.1, .012 + .05 + fm.brow + (es - 1) * .02, .021, .0055, .0048, sc(hairC, .8), 6, 3);
       blob(0, -.111, -.014, .0105 * ns, .011 * ns, .0115 * ns, sc(L.skin, .93), 6, 4);
@@ -273,15 +328,21 @@ const People = (() => {
       blob(0, -.1, -.053, .024 * fm.lips, .0045, .0048, [.34, .13, .11], 8, 3);
       if (L.tash) blob(0, -.104, -.037, .024, .006, .007, hairC, 6, 3);
     }
+    TEX = tex0;
     // what the role wears on top (C5)
-    if (L.scarf) { ball(ms, add(nk, sc(tz, .012 * S)), sc(tx, .078 * S), sc(ty, .072 * S), sc(tz, .036 * S), hn, 4, L.scarf, fl, sd + 5); if (lod < 2) limb(ms, add(nk, add(sc(ty, -.07 * S), sc(tx, .03 * S))), add(nk, add(add(sc(ty, -.105 * S), sc(tx, .035 * S)), sc(tz, -.2 * S))), .024 * S, .022 * S, 5, L.scarf, fl, false, tx, sd + 5); }
+    if (L.scarf) {                                                    // a wrap round the neck and a flat tail down the front of the chest
+      ball(ms, add(nk, sc(tz, .049 * S)), sc(tx, .088 * T), sc(ty, .084 * T), sc(tz, .04 * S), hn, 4, L.scarf, fl, sd + 5);
+      if (lod < 2) capsule(.2893, .034, .4637, .03, .35, .4, L.scarf, sd + 5, front - .012, front - .006, .042); }
     if (lod < 2) {
-      if (L.apron) {                                                  // a flat bib apron, chest to thigh, on a strap round the neck (C5)
-        const thin = .009 * S, AT = (dz, rx, f) => [add(sp, add(sc(tz, dz * S), sc(ty, -f * S))), sc(tx, rx * S), sc(ty, thin)], AP = (dz, rx, f) => [add(pel, add(sc(pz, dz * S), sc(py, -f * S))), sc(px, rx * S), sc(py, thin)];
-        loft(ms, [AT(.27, .07 * W, .108), AT(.17, .078 * W, .118), AT(.06, .118 * W, .108), AP(0, .13 * W, .12), AP(-.2, .136 * W, .126 + swing * .1), AP(-.36, .134 * W, .132 + swing * .2)], n, L.apron, fl, null, sd + 11);
-        for (const e of [-1, 1]) limb(ms, add(sp, add(sc(tz, .27 * S), add(sc(ty, -.106 * S), sc(tx, e * .06 * W * S)))), add(nk, add(sc(tx, e * .05 * S), sc(ty, -.01 * S))), .008 * S, .008 * S, 4, L.apron, fl, false, fwd, sd);
+      if (L.apron) {                                                  // a flat bib apron from chest to thigh, lying on the front of the body
+        capsule(-.2565, .118 * W, .2842, .1 * W, .26, .2, L.apron, sd + 11, front * .82, front * .86, 0, swing * .12);
+        for (const e of [-1, 1]) limb(ms, add(sp, add(sc(tz, .19 * S), add(sc(ty, (front * .86 - .01) * S), sc(tx, e * .07 * W * S)))), add(nk, add(sc(tx, e * .05 * S), sc(ty, -.01 * S))), .008 * S, .008 * S, 4, L.apron, fl, false, fwd, sd);
       }
-      if (L.bag) { const bg = add(pel, add(add(sc(px, .2 * W * S), sc(py, -.02 * S)), sc(pz, -.04 * S))); ball(ms, bg, sc(px, .05 * S), sc(py, .075 * S), sc(pz, .085 * S), 7, 4, K.brown, fl, sd + 12); limb(ms, add(Wp(P.sh[1]), sc(tz, .03 * S)), bg, .012 * S, .012 * S, 4, K.brown, fl, false, fwd, sd); }
+      if (L.bag) {                                                    // a strap across the chest and the bag at the left hip
+        const bg = add(pel, add(sc(px, .2 * S), sc(py, -.105 * T)));
+        ball(ms, bg, sc(px, .05 * S), sc(py, .1 * S), sc(pz, .09 * S), 8, 5, K.brown, fl, sd + 12);
+        limb(ms, add(sp, add(add(sc(tz, .3626 * S), sc(ty, (front - .006) * S)), sc(tx, -.15 * S))), add(pel, add(add(sc(pz, .0686 * S), sc(py, (front + .006) * S)), sc(px, .18 * S))), .012 * S, .012 * S, 4, K.brown, fl, false, fwd, sd);
+      }
     }
   }
   // The face control set of docs/art/CHARACTER_FACE.md §1, drawn in head units (about metres on a natural head). f: { mouth: { width,
@@ -331,5 +392,5 @@ const People = (() => {
     }
     if (L.tash) blob(0, -.104, -.037 + Math.max(0, oh - .002) * .4, .024, .006, .007, L.hairC, 6, 3);
   }
-  return { SIG, look, player, design, draw, stepLength };
+  return { SIG, look, player, design, draw, stepLength, cast };
 })();

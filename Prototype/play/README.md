@@ -15,7 +15,7 @@ Nothing to install; it runs from these files.
 | `economy.js` | Money, shops, the market stall, quests and jobs: a port of `Tools/citysim/economy.py` and `quests.py`, checked against them each time the page loads (the console says whether it matches) |
 | `life.js` | The character designer, the money line and quest tracker, the bank, shop and stall counters, the quest log, quests and jobs in conversation, and the save in the browser (ADR-0012) |
 | `jukebox.html` | Every music track (score, café, shop, busker, radio), played on its own by `sound.js` so it can be heard and approved |
-| `people.js` | The people: option B bodies and faces, and the walk from the movement signatures |
+| `people.js` | The people: option B bodies and faces, built part for part as `Tools/blender/character_face_05.py` builds the reference lineup, and the walk from the movement signatures. `index.html?lineup=1` stands the six reference people in a row on Linden Street to compare |
 | (sky) | The sky and its clouds are drawn by `play.js` from `World/rules/sky.json`: blue overhead, hazy horizon, clouds placed by the world clock (ADR-0014); cloud, rain and fog follow the day's weather (ADR-0016) |
 | `city_seasons.js` | How each season looks, for the Y key: daylight hours, weather, trees and flowers on the same day of each season. Generated: do not edit |
 | `city_data.js` | The city and one day of everyone's routine, packed from `World/`. Generated: do not edit |
