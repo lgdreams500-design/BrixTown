@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-LIVING-CITY
 title: Wasted — Living city (map, residents, things to use, vehicles, seasons and plants)
-version: 0.3.6
+version: 0.3.7
 status: draft
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -77,7 +77,7 @@ accepted on 2026-11-22, and CITY-068 and CITY-069, which follow from the owner's
 | CITY-014 | An arcade shall hold at least four shops under one roof with shared seating. | F-BLD-MALL | 1 | P2 | |
 | CITY-015 | A character shall be able to restore health at a clinic for a fee through the ledger; how many can be treated at once is set by the clinic's places. | F-BLD-HOSPITAL | 1 | P1 | |
 | CITY-016 | Each occupied lot shall be charged utilities every cycle (PROP-006), and utility workers shall visit lots on rounds. | F-BLD-UTILITY | 1 | P2 | rounds in data |
-| CITY-017 | A garden shall offer benches and paths used by residents and players, planting that follows the seasons, and a gardener who tends it. | F-GARDEN | 1 | P1 | `test_one_person_per_place` |
+| CITY-017 | A garden shall offer benches and paths used by residents and players, planting that follows the seasons, and a gardener who tends it. | F-GARDEN | 1 | P1 | `test_one_person_per_place`, `test_CITY_017_planting_follows_the_seasons`, `test_CITY_017_gardeners_tend_the_borders` |
 
 ### 3.2 Residents
 
@@ -238,6 +238,7 @@ up to 42 on the road at once, no overlap, no crossing movements in a box, nobody
 | 0.1.0 | 2026-11-21 | First version, with the city-in-a-box prototype and its tests. |
 | 0.2.0 | 2026-11-22 | Cars and real traffic drafted after the owner's picks (`F-VEH-DRIVE` 2, `F-VEH-TRAFFIC` 2 from the first slice): CITY-043 to CITY-049 for streets and residents' cars, CITY-060 to CITY-067 for cars players drive, car numbers in §4, Q-25 to Q-28, ADR-0009. All proposed. |
 | 0.2.1 | 2026-11-22 | Owner accepted CITY-043 to CITY-049, CITY-060 to CITY-067 and ADR-0009, and the suggested answers to Q-25 to Q-28, now written into CITY-049, CITY-060, CITY-064 and CITY-066. |
+| 0.3.7 | 2026-11-22 | CITY-017 gardens (owner's pick, F-GARDEN level 1): garden plants (box, lilac, hydrangea, rose, lavender, daffodil, tulip, aster) look as their dates in `vegetation.json` "plants" say on any day, worked out by `Vegetation.plant()` with no stored state (`test_CITY_017_planting_follows_the_seasons`); something flowers every day from early spring to the end of autumn, the evergreens stay green in winter. Gardeners tend the new borders at places added to each garden's flowerbed places (`test_CITY_017_gardeners_tend_the_borders`). |
 | 0.3.6 | 2026-11-22 | Pavements, zebras, lights and bays (owner): people walk on pavement lines and cross on zebras, cars wait for them; signals at every junction of a through street; bays kept clear of things at the kerb and of shop fronts. §4 numbers. |
 | 0.3.5 | 2026-11-22 | CITY-072: things break at any speed, not only above 20 km/h (owner). |
 | 0.3.4 | 2026-11-22 | Crash damage (F-VEH-CRASH level 2 for the first slice, owner): CITY-072 to CITY-076; repairs proved in `Tools/citysim/repairs.py`. |

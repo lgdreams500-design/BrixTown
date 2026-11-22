@@ -145,6 +145,39 @@ class TheDressing(unittest.TestCase):
         self.assertTrue(market["objects"].get("kiosk") and market["objects"].get("notice"))
         self.assertTrue(any(p["kind"] == "fountain" and p.get("grand") for b in W["blocks"] for p in b["props"]))
 
+    def test_WLD_040_every_garden_is_planted(self):
+        """WLD-040, CITY-017: every park and court garden has hedges, flower borders, shrubs and bulbs, from data; each
+        border has a place for the gardener, and nothing is planted on a seat, outside a garden or of an unknown kind."""
+        self.assertEqual(world.garden_problems(W), [])
+        for l in [l for l in LOTS if l["kind"] == "garden"]:
+            mine = [p for b in W["blocks"] for p in b["props"] if p.get("set") == "garden"
+                    and l["rect"][0] <= p["pos"][0] <= l["rect"][2] and l["rect"][1] <= p["pos"][1] <= l["rect"][3]]
+            shapes = {p["shape"] for p in mine}
+            self.assertTrue({"hedge", "border", "bush"} <= shapes, (l["name"], l["id"], shapes))
+            if l["name"].endswith(" Park"):
+                self.assertIn("drift", shapes, l["id"])
+            borders = [p for p in mine if p["shape"] == "border"]
+            self.assertEqual(len(l.get("tend_borders", [])), len(borders), l["id"])
+            for q in l["tend_borders"]:
+                self.assertIn(q, l["objects"]["flowerbed"])
+        import copy
+        w = copy.deepcopy(W)
+        bad = next(p for b in w["blocks"] for p in b["props"] if p.get("set") == "garden" and p["shape"] == "bush")
+        bad["species"], bad["pos"] = "triffid", [-500, -500]
+        p = world.garden_problems(w)
+        self.assertTrue(any("unknown plant triffid" in x for x in p))
+        self.assertTrue(any("is not in a garden" in x for x in p))
+
+    def test_CITY_017_gardeners_tend_the_borders(self):
+        """CITY-017: on the day the slice shows, gardeners are at work at a garden's places, the borders' among them."""
+        spots = {(round(q[0], 2), round(q[1], 2)) for l in LOTS if l["kind"] == "garden" for q in l.get("tend_borders", [])}
+        seen = set()
+        for m in range(7 * 60, 17 * 60, 5):
+            for rid, s in CITY.at(DAY * 1440 + m).items():
+                if s.get("act") == "tend" and s.get("pos"):
+                    seen.add((round(s["pos"][0], 2), round(s["pos"][1], 2)))
+        self.assertTrue(seen & spots, "no gardener tended a border")
+
     def test_WLD_030_buildings(self):
         self.assertGreaterEqual(self.count("advert"), 15)
         self.assertGreaterEqual(self.count("hoarding"), 3)

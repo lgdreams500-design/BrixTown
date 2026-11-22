@@ -184,7 +184,7 @@ def season_looks(w, city, day):
         out[cal["seasons"][s]] = dict(
             day=dict(season=cal["seasons"][s], sunrise=cal["sunrise"][s], sunset=cal["sunset"][s], look_day=d,
                      weather=[citysim.weather(city.d, city.clock, d * 1440 + h * 60) for h in (3, 9, 15, 21)]),
-            trees=tree_rows(w, city, d), flowers=flower_row(w, city, d))
+            trees=tree_rows(w, city, d), flowers=flower_row(w, city, d), plants=world.plants_today(w, city, d))
     return out
 
 
@@ -211,7 +211,7 @@ def main(day=16):
         role_color={k: v["color"] for k, v in w["roles"]["roles"].items()},
         role_sig={k: v["sig"] for k, v in w["roles"]["roles"].items()}, signatures=w["signatures"]["signatures"],
         residents=[dict(n=r["name"], r=roles.index(r["role"]), id=r["id"], h=lot_at[r["home"]], w=lot_at[r["work"]] if r["work"] else -1) for r in w["residents"]],
-        plan=plan, trees=trees, flowers=flower_row(w, city, day),
+        plan=plan, trees=trees, flowers=flower_row(w, city, day), plants=world.plants_today(w, city, day),   # CITY-017: the garden plants today
         lawn={k: v for k, v in w["vegetation"]["lawn"].items() if k != "note"},   # ART-001: how the grass looks
         tram=w["calendar"]["tram"], dialogue=dialogue(w), speech={k: v for k, v in w["speech"].items() if k != "note"}, crash={k: v for k, v in w["crash"].items() if k != "note"},
         sound={k: v for k, v in w["sound"].items() if k != "note"}, cars=car_days, car_step=car_step, car_top_kmh=w["traffic"].get("player_top_kmh", 50.0),

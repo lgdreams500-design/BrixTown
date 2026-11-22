@@ -227,6 +227,39 @@ class Vegetation:
         fade = min(1.0, max(0.0, (doy - f["bloom"][1]) / float(f["gone"] - f["bloom"][1])))
         return dict(size=size * (1.0 - 0.6 * fade), bloom=1.0 - fade if f["bloom"][0] <= doy else 0.0)
 
+    def plant(self, name, day):
+        """CITY-017: a garden plant's look on any day of the year, from its kind's dates alone (vegetation.json "plants").
+        size: how much of it stands (bulbs and asters come up and die back); leaf: how much leaf it carries; color: the
+        leaf's colour (fresh in spring, turning in autumn, duller in winter); bloom: how far into flower; spent: dry heads
+        left standing after the flowers."""
+        p = self.d["plants"][name]
+        doy = day % self.clock.year_days
+        ramp = lambda v: min(1.0, max(0.0, v))
+        size = 1.0
+        if "up" in p:
+            rise, gone = p["up"]
+            size = 0.0 if doy < rise or doy >= gone else ramp((doy - rise + 1) / 3.0) * ramp((gone - doy) / 3.0)
+        if p.get("leaf"):
+            bud, full, turn_d, bare = p["leaf"]
+            leaf = ramp((doy - bud) / float(full - bud))
+            turn = ramp((doy - turn_d) / 4.0)
+            leaf *= 1.0 - ramp((doy - turn_d - 2) / float(bare - turn_d - 2))
+            color = [p["summer"][i] + (p["autumn"][i] - p["summer"][i]) * turn for i in range(3)]
+        else:                                                  # evergreen: always in leaf, duller through the winter
+            leaf, w = 1.0, ramp((doy - p.get("winter_from", 34)) / 3.0)
+            color = [p["summer"][i] + (p.get("winter", p["summer"])[i] - p["summer"][i]) * w for i in range(3)]
+        if "flush" in p:                                       # new growth, paler, for a few days in spring
+            f0, f1 = p["flush"]
+            k = ramp((doy - f0 + 1) / 2.0) * ramp((f1 - doy) / 2.0)
+            color = [color[i] + (p["fresh"][i] - color[i]) * k for i in range(3)]
+        bloom, spent = 0.0, 0.0
+        if "bloom" in p:
+            b0, b1 = p["bloom"]
+            bloom = ramp((doy - b0 + 1) / 2.0) * ramp((b1 - doy) / 2.0) * (1.0 if size > 0 else 0.0)
+            if "spent_until" in p and b1 - 1 <= doy < p["spent_until"]:
+                spent = 1.0 - bloom
+        return dict(size=size, leaf=leaf * (1.0 if size > 0 else 0.0), color=color, bloom=bloom, spent=spent)
+
 
 # ---- the city ----------------------------------------------------------------------------------------
 class City:

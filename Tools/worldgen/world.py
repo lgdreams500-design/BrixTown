@@ -87,7 +87,7 @@ def validate(w):
     if w.get("roads") and not out:
         import traffic
         out += traffic.Roads(w["roads"], w["traffic"]).problems(lots(w))
-    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w)
+    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w)
     kinds = {l["kind"] for l in lots(w)}
     for need in ("home", "shop", "food", "work", "health", "garden", "market", "stop", "utility"):
         if need not in kinds:
@@ -614,7 +614,7 @@ def sim_data(w):
     veg = w["vegetation"]
     return dict(name=w["city"]["name"], size=[n * P, g["rows"] * P], calendar=cal["calendar"], weather=cal["weather"], tram=cal["tram"],
                 streets=streets, lots=lots(w), residents=w["residents"], roles=w["roles"]["roles"], signatures=w["signatures"]["signatures"],
-                choices=dict(w["choices"]["choices"], rounds=[]), use=w["choices"]["use"], species=veg["species"], flowers=veg["flowers"],
+                choices=dict(w["choices"]["choices"], rounds=[]), use=w["choices"]["use"], species=veg["species"], flowers=veg["flowers"], plants=veg.get("plants", {}),
                 replant_gap_days=veg["replant_gap_days"], fallen_days=veg["fallen_days"], trees=[t for b in w["blocks"] for t in b["trees"]], lamps=[])
 
 
@@ -664,6 +664,62 @@ def dressing_problems(w):
     for k in PLAY_USES + ("notices", "paper"):
         if k not in w["choices"]["use"]:
             out.append("choices.json: nothing to use for %s" % k)
+    return out
+
+
+# ---------------------------------------------------------------- garden planting (CITY-017, WLD-040, F-GARDEN)
+PLANT_SHAPES = ("hedge", "border", "bush", "drift")
+
+
+def garden_problems(w):
+    """Every rule the planting in parks and gardens must keep (WLD-040). Returns a list of problems in plain words."""
+    out = []
+    plants = {k for k in w["vegetation"].get("plants", {}) if k != "note"}
+    for k in plants:
+        p = w["vegetation"]["plants"][k]
+        for need in ("summer",) + (("autumn",) if p.get("leaf") else ()) + (("bloom_color",) if "bloom" in p else ()) + (("spent_color",) if "spent_until" in p else ()):
+            if need not in p:
+                out.append("vegetation.json: plant %s has no %s" % (k, need))
+    for b in w["blocks"]:
+        gardens = [l for l in b["lots"] if l["kind"] == "garden"]
+        for p in b["props"]:
+            if p.get("set") != "garden":
+                continue
+            if p["kind"] != "plant" or p.get("shape") not in PLANT_SHAPES:
+                out.append("%s: unknown planting %s %s" % (p.get("id"), p["kind"], p.get("shape")))
+            for sp in (p.get("species") if isinstance(p.get("species"), list) else [p.get("species")]):
+                if sp not in plants:
+                    out.append("%s: unknown plant %s" % (p.get("id"), sp))
+            x, z = p["pos"]
+            in_park = b["template"] == "park" and b["origin"][0] + 1 < x < b["origin"][0] + b["size"] - 1 and b["origin"][1] + 1 < z < b["origin"][1] + b["size"] - 1
+            if not in_park and not any(l["rect"][0] <= x <= l["rect"][2] and l["rect"][1] <= z <= l["rect"][3] for l in gardens):
+                out.append("%s: %s at %s is not in a garden" % (p.get("id"), p.get("shape"), p["pos"]))
+            for l in gardens:                             # nothing planted on a seat or a place someone stands
+                for k in ("bench", "rim", "flowerbed"):
+                    for q in l.get("objects", {}).get(k, []):
+                        if p.get("shape") in ("hedge", "border"):
+                            ax = p.get("along") == "x"
+                            du, dv = abs((q[0] - x) if ax else (q[1] - z)), abs((q[1] - z) if ax else (q[0] - x))
+                            inside = du < p["len"] / 2 and dv < p["depth"] / 2
+                        else:
+                            inside = p.get("shape") == "bush" and math.hypot(q[0] - x, q[1] - z) < p.get("r", 1)
+                        if inside:
+                            out.append("%s: %s covers a %s place in %s" % (p.get("id"), p.get("shape"), k, l["id"]))
+    if "tend" not in w["choices"]["use"]:
+        out.append("choices.json: nothing to use for tend")
+    return out
+
+
+def plants_today(w, city, day):
+    """What every garden plant looks like on a day (CITY-017), for the slice: worked out by citysim from the day alone."""
+    r3 = lambda c: [round(v, 3) for v in c]
+    out = {}
+    for k, p in w["vegetation"]["plants"].items():
+        if k == "note":
+            continue
+        s = city.veg.plant(k, day)
+        out[k] = dict(size=round(s["size"], 2), leaf=round(s["leaf"], 2), bloom=round(s["bloom"], 2), spent=round(s["spent"], 2), color=r3(s["color"]),
+                      bloom_color=p.get("bloom_color", [0, 0, 0]), spent_color=p.get("spent_color", [0, 0, 0]), height=p.get("height", .5), evergreen=not p.get("leaf"))
     return out
 
 

@@ -533,6 +533,38 @@
      [
       153.0,
       250.6
+     ],
+     [
+      134.55,
+      228.45
+     ],
+     [
+      153.3,
+      228.45
+     ],
+     [
+      134.55,
+      251.55
+     ],
+     [
+      153.3,
+      251.55
+     ],
+     [
+      132.45,
+      230.55
+     ],
+     [
+      132.45,
+      246.43
+     ],
+     [
+      155.55,
+      233.43
+     ],
+     [
+      155.55,
+      249.3
      ]
     ],
     "work": [
@@ -570,6 +602,40 @@
     [
      126.0,
      258.0
+    ]
+   ],
+   "tend_borders": [
+    [
+     134.55,
+     228.45
+    ],
+    [
+     153.3,
+     228.45
+    ],
+    [
+     134.55,
+     251.55
+    ],
+    [
+     153.3,
+     251.55
+    ],
+    [
+     132.45,
+     230.55
+    ],
+    [
+     132.45,
+     246.43
+    ],
+    [
+     155.55,
+     233.43
+    ],
+    [
+     155.55,
+     249.3
     ]
    ]
   }
@@ -1329,6 +1395,367 @@
    "w": 6.0,
    "lot": "b_1_2_l2",
    "id": "b_1_2_d24"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    134.8,
+    226.57
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 4.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_1_2_g0"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    147.3,
+    226.57
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 3.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_1_2_g1"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    153.18,
+    226.57
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 4.0,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_1_2_g2"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    134.55,
+    227.45
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "daffodil",
+    "rose"
+   ],
+   "along": "x",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 4298,
+   "id": "b_1_2_g3"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    153.3,
+    227.45
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "daffodil",
+    "rose"
+   ],
+   "along": "x",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 9037,
+   "id": "b_1_2_g4"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    134.8,
+    253.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 4.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_1_2_g5"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    147.3,
+    253.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 3.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_1_2_g6"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    153.18,
+    253.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 4.0,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_1_2_g7"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    134.55,
+    252.55
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "daffodil",
+    "rose"
+   ],
+   "along": "x",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 5670,
+   "id": "b_1_2_g8"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    153.3,
+    252.55
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "daffodil",
+    "rose"
+   ],
+   "along": "x",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 3666,
+   "id": "b_1_2_g9"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    130.57,
+    230.8
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 4.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_1_2_g10"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    130.57,
+    246.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 9.5,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_1_2_g11"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    131.45,
+    230.55
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "lavender"
+   ],
+   "along": "z",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 1742,
+   "id": "b_1_2_g12"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    131.45,
+    246.43
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "lavender"
+   ],
+   "along": "z",
+   "len": 9.25,
+   "depth": 0.9,
+   "seed": 7115,
+   "id": "b_1_2_g13"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    157.43,
+    233.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 9.5,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_1_2_g14"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    157.43,
+    243.3
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 3.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_1_2_g15"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    157.43,
+    249.18
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 4.0,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_1_2_g16"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    156.55,
+    233.43
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "daffodil",
+    "rose"
+   ],
+   "along": "z",
+   "len": 9.25,
+   "depth": 0.9,
+   "seed": 7744,
+   "id": "b_1_2_g17"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    156.55,
+    249.3
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "daffodil",
+    "rose"
+   ],
+   "along": "z",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 165,
+   "id": "b_1_2_g18"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    131.3,
+    227.3
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "lilac",
+   "r": 1.04,
+   "seed": 526,
+   "id": "b_1_2_g19"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    156.7,
+    227.3
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "hydrangea",
+   "r": 1.04,
+   "seed": 1767,
+   "id": "b_1_2_g20"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    131.3,
+    252.7
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "hydrangea",
+   "r": 1.07,
+   "seed": 9000,
+   "id": "b_1_2_g21"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    156.7,
+    252.7
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "lilac",
+   "r": 1.09,
+   "seed": 2811,
+   "id": "b_1_2_g22"
   }
  ]
 }

@@ -1164,7 +1164,9 @@ function lawn(x0, z0, x1, z1, y, c, b, tufts) {
   world.flat(x0, z0, x1, z0 + e, ye, ec, 24); world.flat(x0, z1 - e, x1, z1, ye, ec, 24);
   world.flat(x0, z0 + e, x0 + e, z1 - e, ye, ec, 24); world.flat(x1 - e, z0 + e, x1, z1 - e, ye, ec, 24);
   const segD = (px, pz, a, q) => { const dx = q[0] - a[0], dz = q[1] - a[1], L = dx * dx + dz * dz || 1, t = clamp(((px - a[0]) * dx + (pz - a[1]) * dz) / L, 0, 1); return Math.hypot(px - a[0] - t * dx, pz - a[1] - t * dz); };
-  const clear = (px, pz) => !b.paths.some(([p, q]) => segD(px, pz, p, q) < 1.4) && !b.props.some(p => Math.hypot(p.pos[0] - px, p.pos[1] - pz) < (p.kind === "fountain" ? 3.6 : p.kind === "playground" ? 9 : 1.7));
+  const long = p => { const h = p.len / 2, ax = p.along === "x"; return ax ? [[p.pos[0] - h, p.pos[1]], [p.pos[0] + h, p.pos[1]]] : [[p.pos[0], p.pos[1] - h], [p.pos[0], p.pos[1] + h]]; };   // a hedge or border, as a line
+  const clear = (px, pz) => !b.paths.some(([p, q]) => segD(px, pz, p, q) < 1.4) && !b.props.some(p => p.len ? segD(px, pz, ...long(p)) < p.depth / 2 + .5
+    : Math.hypot(p.pos[0] - px, p.pos[1] - pz) < (p.kind === "fountain" ? 3.6 : p.kind === "playground" ? 9 : p.shape === "drift" ? p.r : p.r ? p.r + .4 : 1.7));
   if (!tufts) return;
   const n = Math.round((x1 - x0) * (z1 - z0) / 100 * LAWN.tufts_per_100m2), W = x1 - x0, H = z1 - z0;
   for (let i = 0; i < n; i++) {
@@ -1214,6 +1216,7 @@ function openLot(l) {
 function prop(p, b) {
   const [x, z] = p.pos, g = groundBase(x, z);
   if (BLOB_SIZE[p.kind]) { const [a, c] = BLOB_SIZE[p.kind], ax = p.along !== "z"; BLOBS.push([x, z, ax ? a : c, ax ? c : a]); }
+  if (p.kind === "plant") return plant(p);                 // garden planting (CITY-017, WLD-040)
   if (p.set === "dress" && Dress.prop(p, b)) return;      // street dressing (dressing.js, WLD-028)
   if (p.kind === "lantern") {                              // a wall lantern: glass on an iron arm, and the light it gives (watts as in the Blender scene)
     const o = p.out, lx = x + o[0] * .32, lz = z + o[1] * .32, h = p.height;
@@ -1292,6 +1295,79 @@ function prop(p, b) {
   } else if (p.kind === "watertower") {
     for (const sx of [-2, 2]) for (const sz of [-2, 2]) { world.box(x + sx - .2, g, z + sz - .2, x + sx + .2, g + 9, z + sz + .2, C.brown, 9); solid(x + sx - .2, g, z + sz - .2, x + sx + .2, g + 9, z + sz + .2); }
     world.box(x - 2.8, g + 9, z - 2.8, x + 2.8, g + 13, z + 2.8, [.5, .32, .16], 0, { 2: [C.brown, 9] }); world.box(x - 3, g + 13, z - 3, x + 3, g + 13.3, z + 3, C.metal, 9);
+  }
+}
+
+// Garden planting (CITY-017, WLD-040): hedges, borders, shrubs and drifts placed in the block files by add_garden_01.py;
+// how each kind looks today (in leaf, in flower, dry heads, died back) comes in D.plants, worked out by citysim.
+const PLANTS = D.plants || {};
+function dome(x, y0, z, R, H, col, seed) {                 // a low faceted crown, as the trees have, sitting on the ground
+  const N = 7, M = 3, cy = y0 + H * .5, ring = [];
+  for (let k = 0; k <= M; k++) { const f = -.55 + (Math.PI / 2 + .55) * k / M, row = []; for (let i = 0; i < N; i++) { const a = i / N * 6.2832 + k * .5 + seed, rr = R * (.82 + .36 * hash(seed, k, i)) * (k === M ? 0 : Math.cos(f)); row.push([x + Math.cos(a) * rr, Math.max(y0, cy + Math.sin(f) * H * .58 * (k === M ? 1 : .85 + .3 * hash(i, seed, k))), z + Math.sin(a) * rr]); } ring.push(row); }
+  for (let k = 0; k < M; k++) for (let i = 0; i < N; i++) {
+    const j = (i + 1) % N, a = ring[k][i], b2 = ring[k][j], c = ring[k + 1][j], d = ring[k + 1][i], mid = [(a[0] + c[0]) / 2 - x, (a[1] + c[1]) / 2 - cy, (a[2] + c[2]) / 2 - z], cc = mul3(col, .74 + .5 * hash(seed, k, i) + .07 * k);
+    world.quad(a, b2, c, c, cc, 0, mid); if (k < M - 1) world.quad(a, c, d, d, cc, 0, mid);
+  }
+  return cy;
+}
+function heads(x, cy, z, R, H, n, size, col, seed) {        // flower heads (or dry ones) dotted over the top of a crown
+  for (let k = 0; k < n; k++) {
+    const a = hash(seed, k, "a") * 6.283, e = .2 + 1.1 * hash(seed, k, "e"), s = size * (.75 + .5 * hash(k, seed));
+    world.ybox(x + Math.cos(a) * Math.cos(e) * R * .92, cy + Math.sin(e) * H * .52 - s * .4, z + Math.sin(a) * Math.cos(e) * R * .92, s, s * .8, s, Math.PI / 4 + a, mul3(col, .85 + .3 * hash(seed, k, "c")), 0);
+  }
+}
+function plantClump(px, y, pz, st, sc, seed) {             // one plant in a border or drift: leaves, and flowers or dry heads on top
+  if (!st || st.size <= 0) return;
+  const h = st.height * (.75 + .5 * hash(seed, "h")) * st.size * sc, w = (.14 + .5 * st.height) * sc * (.8 + .4 * hash(seed, "w"));
+  if (st.leaf > .05) {                                     // a rounded clump: a low wide box and a taller one turned across it, so the outline is many-sided
+    const lc = mul3(st.color, .85 + .3 * hash(seed, "c")), yaw = hash(seed) * 3, hl = h * (st.evergreen ? .9 : .7);
+    world.ybox(px, y, pz, w, hl * .6, w * .9, yaw, mul3(lc, .9), 0); world.ybox(px, y, pz, w * .7, hl, w * .65, yaw + Math.PI / 4, lc, 0);
+  }
+  else world.ybox(px, y, pz, .05, h * .6, .05, 0, [.3, .26, .2], 0);
+  const fl = st.bloom > .05 ? st.bloom_color : st.spent > .05 ? st.spent_color : null;
+  if (!fl) return;
+  const k2 = st.bloom > .05 ? st.bloom : st.spent * .8, n = st.height > .42 ? 3 : 1;
+  for (let i = 0; i < n; i++) { const s = (.08 + .1 * st.height) * sc * (.6 + .4 * k2), ox = n > 1 ? (hash(seed, i, "x") - .5) * w * .8 : 0, oz = n > 1 ? (hash(seed, i, "z") - .5) * w * .8 : 0;
+    world.ybox(px + ox, y + h * (.7 + .25 * hash(seed, i)), pz + oz, s, s * (st.height < .42 ? 1.2 : .9), s, Math.PI / 4 + i, mul3(fl, .85 + .3 * hash(seed, i, "f")), 0); }
+}
+function plant(p) {
+  const [x, z] = p.pos, y = Math.max(groundBase(x, z), Y_GRASS) + .03, sd = p.seed || hash(x, z) * 9999;
+  if (p.shape === "hedge") {                               // clipped box: sections a little uneven in height and tone, the top paler where it catches the sun
+    const st = PLANTS[p.species]; if (!st) return;
+    const ax = p.along === "x", L = p.len, dep = p.depth, n = Math.max(1, Math.round(L / 1.3));
+    for (let i = 0; i < n; i++) {
+      const a0 = -L / 2 + L * i / n, a1 = -L / 2 + L * (i + 1) / n, hh = p.h * (.95 + .08 * hash(sd, i)), col = mul3(st.color, .88 + .22 * hash(sd, i, "c")), top = mix3(col, st.color.map(v => v * 1.35), .5);
+      const bx = ax ? [x + a0, z - dep / 2, x + a1, z + dep / 2] : [x - dep / 2, z + a0, x + dep / 2, z + a1];
+      world.box(bx[0], y, bx[1], bx[2], y + hh - .07, bx[3], col, 0, { 3: null });
+      world.box(bx[0] + .05, y + hh - .07, bx[1] + .05, bx[2] - .05, y + hh, bx[3] - .05, col, 0, { 3: [top, 0] });
+    }
+    const hb = ax ? [x - L / 2, z - dep / 2, x + L / 2, z + dep / 2] : [x - dep / 2, z - L / 2, x + dep / 2, z + L / 2];
+    solid(hb[0], y, hb[1], hb[2], y + p.h, hb[3]); BLOBS.push([x, z, ax ? L / 2 : dep / 2, ax ? dep / 2 : L / 2]);
+  } else if (p.shape === "bush") {
+    const st = PLANTS[p.species]; if (!st) return;
+    const r = p.r, H = Math.min(st.height, r * 1.7) * (.85 + .3 * hash(sd, "H")), R = r * (.62 + .3 * st.leaf);
+    let cy = y + H * .42;
+    if (st.leaf > .05) {                                   // a big dome with two smaller ones leaning off it, so it reads as a shrub, not a stone
+      for (let k = 0; k < 2; k++) { const a = sd + k * 2.6 + hash(sd, k) * 1.2, o = R * .55; dome(x + Math.cos(a) * o, y, z + Math.sin(a) * o, R * .62, H * .72, mul3(st.color, .9 + .15 * k), (sd + k * 11) % 97); }
+      cy = dome(x, y + H * .08, z, R * .85, H * .95, st.color, sd % 97);
+    }
+    else for (let k = 0; k < 7; k++) { const a = k / 7 * 6.283 + sd, l = H * (.7 + .3 * hash(sd, k)); world.ybox(x + Math.cos(a) * r * .25, y, z + Math.sin(a) * r * .25, .06, l, .06, a, [.3, .25, .2], 0); }   // bare twigs in winter
+    if (st.bloom > .05) heads(x, cy, z, R, H, Math.round((10 + 10 * r) * st.bloom), .2 + .08 * r, st.bloom_color, sd);
+    else if (st.spent > .05) heads(x, cy, z, R, H, Math.round(8 + 6 * r), .18 + .06 * r, st.spent_color, sd + 7);
+    solid(x - r * .65, y, z - r * .65, x + r * .65, y + H * .8, z + r * .65); BLOBS.push([x, z, r, r]);
+  } else if (p.shape === "border") {                       // a bed of dark earth, the two kinds planted in drifts along it
+    const ax = p.along === "x", L = p.len, dep = p.depth, sp = p.species;
+    ax ? world.flat(x - L / 2, z - dep / 2, x + L / 2, z + dep / 2, y - .005, C.soil, 0) : world.flat(x - dep / 2, z - L / 2, x + dep / 2, z + L / 2, y - .005, C.soil, 0);
+    const n = Math.round(L / .5);
+    for (let i = 0; i < n; i++) for (const row of [-.22, .22]) {
+      const t = -L / 2 + (i + .5 + (hash(sd, i, row) - .5) * .6) * L / n, v = row * dep + (hash(sd, row, i) - .5) * .12;
+      const which = Math.floor(((t + L / 2) / 2.4 + hash(sd, "d")) % sp.length), st = PLANTS[sp[(which + (row > 0 && hash(sd, i) < .3 ? 1 : 0)) % sp.length]];
+      plantClump(ax ? x + t : x + v, y, ax ? z + v : z + t, st, 1, sd * 31 + i * 7 + (row > 0 ? 3 : 0));
+    }
+  } else if (p.shape === "drift") {                        // flowers coming up in the grass, thinning out at the edge
+    const st = PLANTS[p.species]; if (!st || st.size <= 0) return;
+    const r = p.r, hole = p.hole || 0, n = Math.min(40, Math.round((r * r - hole * hole) * 2.6));
+    for (let k = 0; k < n; k++) { const a = hash(sd, k, "a") * 6.283, d = hole + (r - hole) * Math.sqrt(hash(sd, k, "d")) * (.7 + .3 * hash(k, sd)); plantClump(x + Math.cos(a) * d, y, z + Math.sin(a) * d, st, .8, sd + k * 13); }
   }
 }
 

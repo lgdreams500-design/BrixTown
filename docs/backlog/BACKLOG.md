@@ -5,13 +5,14 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 23 of 39 | 9 of 39 | 9 of 39 |
+| Decided | 24 of 39 | 9 of 39 | 9 of 39 |
 | Size of the plan (points) | 253 | 286 | 571 |
 | Size of the suggested plan | 100 | 246 | 539 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
 - F-BLD-CIVIC at First slice needs F-BLD-INSIDE at level 1 (undecided)
+- F-GARDEN at First slice needs F-VEG-LEAF at level 1 (undecided)
 - F-SKY at First slice needs F-TIME-DAY at level 1 (undecided)
 
 ## City and buildings
@@ -27,7 +28,7 @@
 | **Bank, showroom, library, museum, cinema** `F-BLD-CIVIC` | 1 Places to visit | undecided | undecided | Owner, 2026-11-22: "Places to visit (Recommended)" for the bank, car showroom, library, museum, cinema and a second hospital and mall, made from existing lots. Later milestones not stated. |
 | **Workplaces** `F-BLD-WORK` | undecided | undecided | undecided |  |
 | **Utility areas** `F-BLD-UTILITY` | undecided | undecided | undecided |  |
-| **Gardens and parks** `F-GARDEN` | undecided | undecided | undecided |  |
+| **Gardens and parks** `F-GARDEN` | 1 Living garden | undecided | undecided | Owner, 2026-11-22: "1 Living garden" for the first slice (asked for flowers and bushes in the parks). Later milestones not stated. |
 | **Street dressing** `F-MAP-DRESS` | 2 Used and changing ★ | undecided | undecided | Owner, 2026-11-22: "Level 2: used, changing" (playgrounds, statues, signs, street furniture; children play, residents read notices and use the kiosk, posters and bunting change). Later milestones not stated. |
 
 ## People and animals

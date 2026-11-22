@@ -180,7 +180,7 @@
 (function () {
   var S = window.WASTED_SEASONS || {}, want = new URLSearchParams(location.search).get("season"), look = S[want];
   if (!look) return;
-  Object.assign(window.WASTED.day, look.day); window.WASTED.trees = look.trees; window.WASTED.flowers = look.flowers; window.WASTED.day.trying = true;
+  Object.assign(window.WASTED.day, look.day); window.WASTED.trees = look.trees; window.WASTED.flowers = look.flowers; if (look.plants) window.WASTED.plants = look.plants; window.WASTED.day.trying = true;
 })();
 </script>
 <script src="people.js"></script>

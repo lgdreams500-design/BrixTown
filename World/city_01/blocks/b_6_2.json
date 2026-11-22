@@ -598,6 +598,38 @@
      [
       633.0,
       250.6
+     ],
+     [
+      614.55,
+      228.45
+     ],
+     [
+      633.3,
+      228.45
+     ],
+     [
+      614.55,
+      251.55
+     ],
+     [
+      633.3,
+      251.55
+     ],
+     [
+      612.45,
+      230.55
+     ],
+     [
+      612.45,
+      246.43
+     ],
+     [
+      635.55,
+      233.43
+     ],
+     [
+      635.55,
+      249.3
      ]
     ],
     "work": [
@@ -635,6 +667,40 @@
     [
      606.0,
      258.0
+    ]
+   ],
+   "tend_borders": [
+    [
+     614.55,
+     228.45
+    ],
+    [
+     633.3,
+     228.45
+    ],
+    [
+     614.55,
+     251.55
+    ],
+    [
+     633.3,
+     251.55
+    ],
+    [
+     612.45,
+     230.55
+    ],
+    [
+     612.45,
+     246.43
+    ],
+    [
+     635.55,
+     233.43
+    ],
+    [
+     635.55,
+     249.3
     ]
    ]
   }
@@ -1289,6 +1355,337 @@
    ],
    "set": "dress",
    "id": "b_6_2_d16"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    614.8,
+    226.57
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 4.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_6_2_g0"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    633.17,
+    226.57
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 4.0,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_6_2_g1"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    614.55,
+    227.45
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "aster"
+   ],
+   "along": "x",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 2737,
+   "id": "b_6_2_g2"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    633.3,
+    227.45
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "aster"
+   ],
+   "along": "x",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 8860,
+   "id": "b_6_2_g3"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    614.8,
+    253.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 4.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_6_2_g4"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    633.17,
+    253.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 4.0,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_6_2_g5"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    614.55,
+    252.55
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "aster"
+   ],
+   "along": "x",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 6982,
+   "id": "b_6_2_g6"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    633.3,
+    252.55
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "aster"
+   ],
+   "along": "x",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 6193,
+   "id": "b_6_2_g7"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    610.58,
+    230.8
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 4.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_6_2_g8"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    610.58,
+    246.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 9.5,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_6_2_g9"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    611.45,
+    230.55
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "lavender",
+    "aster"
+   ],
+   "along": "z",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 7821,
+   "id": "b_6_2_g10"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    611.45,
+    246.43
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "lavender",
+    "aster"
+   ],
+   "along": "z",
+   "len": 9.25,
+   "depth": 0.9,
+   "seed": 6795,
+   "id": "b_6_2_g11"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    637.42,
+    233.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 9.5,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_6_2_g12"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    637.42,
+    243.3
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 3.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_6_2_g13"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    637.42,
+    249.18
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 4.0,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_6_2_g14"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    636.55,
+    233.43
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "lavender",
+    "rose"
+   ],
+   "along": "z",
+   "len": 9.25,
+   "depth": 0.9,
+   "seed": 3246,
+   "id": "b_6_2_g15"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    636.55,
+    249.3
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "lavender",
+    "rose"
+   ],
+   "along": "z",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 7449,
+   "id": "b_6_2_g16"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    611.3,
+    227.3
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "hydrangea",
+   "r": 1.02,
+   "seed": 7301,
+   "id": "b_6_2_g17"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    636.7,
+    227.3
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "hydrangea",
+   "r": 0.98,
+   "seed": 9114,
+   "id": "b_6_2_g18"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    611.3,
+    252.7
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "lilac",
+   "r": 1.0,
+   "seed": 4213,
+   "id": "b_6_2_g19"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    636.7,
+    252.7
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "hydrangea",
+   "r": 0.99,
+   "seed": 4380,
+   "id": "b_6_2_g20"
   }
  ]
 }

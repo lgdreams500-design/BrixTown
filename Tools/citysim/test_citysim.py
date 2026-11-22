@@ -110,6 +110,42 @@ class World(unittest.TestCase):
         self.assertEqual(C.veg.tree(plum, 48 + 3)["blossom"], 1.0)
         self.assertEqual(C.veg.tree(plum, 48 + 20)["blossom"], 0.0)
 
+    def test_CITY_017_planting_follows_the_seasons(self):
+        """CITY-017: garden plants (World/rules/vegetation.json) bulbs and lilac in spring, roses, lavender and hydrangea in
+        summer, asters and dry heads in autumn; in winter the deciduous shrubs are bare, the bulbs gone, the evergreens
+        still green. Something is in flower on every day from early spring to the end of autumn, and the answer for a day never
+        depends on what was asked before."""
+        import json, os
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "World", "rules", "vegetation.json"), encoding="utf-8") as f:
+            plants = json.load(f)["plants"]
+        veg = cs.Vegetation(dict(plants=plants), C.clock)
+        names = [k for k in plants if k != "note"]
+        Y = 48 * 3                                          # a year well after the start
+        at = lambda n, doy: veg.plant(n, Y + doy)
+        self.assertEqual(at("daffodil", 5)["bloom"], 1.0)
+        self.assertEqual(at("lilac", 7)["bloom"], 1.0)
+        for n in ("rose", "lavender", "hydrangea"):
+            self.assertEqual(at(n, 18)["bloom"], 1.0, n)
+            self.assertEqual(at(n, 18)["leaf"], 1.0, n)
+        self.assertEqual(at("aster", 30)["bloom"], 1.0)
+        self.assertEqual(at("hydrangea", 32)["spent"], 1.0)
+        self.assertGreater(at("rose", 31)["color"][0], at("rose", 18)["color"][0])   # leaves turning
+        for doy in (40, 44):
+            for n in ("lilac", "hydrangea", "rose"):
+                self.assertEqual(at(n, doy)["leaf"], 0.0, (n, doy))
+            for n in ("daffodil", "tulip"):
+                self.assertEqual(at(n, doy)["size"], 0.0, (n, doy))
+            for n in ("box", "lavender"):
+                self.assertEqual(at(n, doy)["leaf"], 1.0, (n, doy))
+            self.assertTrue(all(at(n, doy)["bloom"] == 0.0 for n in names), doy)
+        for doy in range(3, 35):
+            self.assertTrue(any(at(n, doy)["bloom"] > 0.5 for n in names), "nothing in flower on day %d" % doy)
+        a = at("hydrangea", 20)
+        for d in range(0, 300, 7):
+            veg.plant("rose", d)
+        self.assertEqual(a, at("hydrangea", 20))
+        self.assertEqual(veg.plant("tulip", 7), veg.plant("tulip", 7 + 48 * 5))   # the same day of any year looks the same
+
     def test_trees_fall_and_are_replanted(self):
         """WLD-013: within ten years at least one tree falls, the site stands empty, then a sapling grows."""
         seen = set()
