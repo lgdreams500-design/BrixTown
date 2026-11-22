@@ -2554,42 +2554,39 @@
    "objects": {
     "bed": [
      [
-      25.24,
-      214.93
+      25.23,
+      214.73
      ],
      [
-      25.3,
-      215.73
+      24.43,
+      214.79
      ],
      [
-      16.72,
-      214.93
+      17.75,
+      215.25
      ]
     ],
     "room": [
      [
-      24.57,
-      213.88
+      23.57,
+      213.14
      ],
      [
-      24.64,
-      214.87
+      23.64,
+      214.14
      ],
      [
-      26.37,
-      212.4
+      25.25,
+      215.08
      ]
     ]
    },
    "residents": 3,
    "angle": -4.0,
    "house": {
-    "plan": "house_01",
+    "plan": "samples_19",
     "mirror": false,
-    "porch": "columns",
-    "roof": "gable",
-    "walls": "plaster",
-    "furniture": "oldtown",
+    "furniture": "plain",
     "trim": {
      "shutters": true,
      "shutter_color": "teal",
@@ -2598,136 +2595,107 @@
      "plaster": 2,
      "roof_tone": 4
     },
-    "extras": [
-     {
-      "kind": "balcony",
-      "rect": [
-       -6.5,
-       5,
-       -3.3,
-       6.3
-      ]
-     },
-     {
-      "kind": "balcony",
-      "rect": [
-       3.3,
-       5,
-       6.5,
-       6.3
-      ]
-     }
-    ],
+    "source": "Tools/blender/house_samples_19.py",
     "rooms": [
      {
       "name": "Living room",
       "floor": 0,
       "rect": [
-       -6.5,
        -5,
-       -2.1,
-       2.95
-      ]
-     },
-     {
-      "name": "Hall",
-      "floor": 0,
-      "rect": [
-       -2.1,
-       -5,
-       2.1,
-       2.95
+       -4,
+       -1,
+       0.5
       ]
      },
      {
       "name": "Kitchen",
       "floor": 0,
       "rect": [
-       2.1,
        -5,
-       6.5,
-       2.95
+       0.5,
+       -1,
+       4
       ]
      },
      {
-      "name": "En-suite",
-      "floor": 1,
+      "name": "Hall",
+      "floor": 0,
       "rect": [
-       -6.5,
-       -5,
-       -2.1,
-       -2.4
+       -1,
+       -4,
+       1.2,
+       4
+      ]
+     },
+     {
+      "name": "Dining room",
+      "floor": 0,
+      "rect": [
+       1.2,
+       -4,
+       5,
+       0.5
+      ]
+     },
+     {
+      "name": "Bathroom",
+      "floor": 0,
+      "rect": [
+       1.2,
+       0.5,
+       5,
+       4
       ]
      },
      {
       "name": "Main bedroom",
       "floor": 1,
       "rect": [
-       -6.5,
-       -2.4,
-       -2.1,
-       2.95
+       -5,
+       -4,
+       -1,
+       0.5
       ]
      },
      {
-      "name": "Bedroom 2",
+      "name": "Study",
       "floor": 1,
       "rect": [
-       2.1,
        -5,
-       6.5,
-       2.95
+       0.5,
+       -1,
+       4
       ]
-     }
-    ],
-    "doors": [
-     {
-      "floor": 0,
-      "at": [
-       -2.1,
-       -3.4
-      ],
-      "wall": "u"
      },
      {
-      "floor": 0,
-      "at": [
-       2.1,
-       -3.4
-      ],
-      "wall": "u"
-     },
-     {
-      "floor": 0,
-      "at": [
-       5.8,
-       2.95
-      ],
-      "wall": "v"
-     },
-     {
+      "name": "Landing",
       "floor": 1,
-      "at": [
-       -5.4,
-       2.95
-      ],
-      "wall": "v"
+      "rect": [
+       -1,
+       -4,
+       1.2,
+       4
+      ]
      },
      {
+      "name": "Children's room",
       "floor": 1,
-      "at": [
-       -3.9,
-       -2.4
-      ],
-      "wall": "v"
+      "rect": [
+       1.2,
+       -4,
+       5,
+       0.5
+      ]
      },
      {
+      "name": "Guest room",
       "floor": 1,
-      "at": [
-       5.4,
-       2.95
-      ],
-      "wall": "v"
+      "rect": [
+       1.2,
+       0.5,
+       5,
+       4
+      ]
      }
     ]
    },
@@ -2990,49 +2958,46 @@
    "objects": {
     "bed": [
      [
-      46.88,
-      213.34
+      46.87,
+      213.14
      ],
      [
-      46.94,
-      214.14
+      46.07,
+      213.2
      ],
      [
-      38.36,
-      213.36
+      39.39,
+      213.69
      ],
      [
-      38.51,
-      215.36
+      39.39,
+      213.69
      ]
     ],
     "room": [
      [
-      46.2,
-      212.29
+      45.2,
+      211.56
      ],
      [
-      46.28,
-      213.28
+      45.27,
+      212.56
      ],
      [
-      48.0,
-      210.8
+      46.89,
+      213.49
      ],
      [
-      48.27,
-      214.49
+      46.29,
+      214.89
      ]
     ]
    },
    "residents": 4,
    "angle": -4.2,
    "house": {
-    "plan": "house_01",
+    "plan": "samples_19",
     "mirror": false,
-    "porch": "columns",
-    "roof": "gable",
-    "walls": "plaster",
     "furniture": "oldtown",
     "trim": {
      "shutters": true,
@@ -3042,136 +3007,107 @@
      "plaster": 4,
      "roof_tone": 3
     },
-    "extras": [
-     {
-      "kind": "balcony",
-      "rect": [
-       -6.5,
-       5,
-       -3.3,
-       6.3
-      ]
-     },
-     {
-      "kind": "balcony",
-      "rect": [
-       3.3,
-       5,
-       6.5,
-       6.3
-      ]
-     }
-    ],
+    "source": "Tools/blender/house_samples_19.py",
     "rooms": [
      {
       "name": "Living room",
       "floor": 0,
       "rect": [
-       -6.5,
        -5,
-       -2.1,
-       2.95
-      ]
-     },
-     {
-      "name": "Hall",
-      "floor": 0,
-      "rect": [
-       -2.1,
-       -5,
-       2.1,
-       2.95
+       -4,
+       -1,
+       0.5
       ]
      },
      {
       "name": "Kitchen",
       "floor": 0,
       "rect": [
-       2.1,
        -5,
-       6.5,
-       2.95
+       0.5,
+       -1,
+       4
       ]
      },
      {
-      "name": "En-suite",
-      "floor": 1,
+      "name": "Hall",
+      "floor": 0,
       "rect": [
-       -6.5,
-       -5,
-       -2.1,
-       -2.4
+       -1,
+       -4,
+       1.2,
+       4
+      ]
+     },
+     {
+      "name": "Dining room",
+      "floor": 0,
+      "rect": [
+       1.2,
+       -4,
+       5,
+       0.5
+      ]
+     },
+     {
+      "name": "Bathroom",
+      "floor": 0,
+      "rect": [
+       1.2,
+       0.5,
+       5,
+       4
       ]
      },
      {
       "name": "Main bedroom",
       "floor": 1,
       "rect": [
-       -6.5,
-       -2.4,
-       -2.1,
-       2.95
+       -5,
+       -4,
+       -1,
+       0.5
       ]
      },
      {
-      "name": "Bedroom 2",
+      "name": "Study",
       "floor": 1,
       "rect": [
-       2.1,
        -5,
-       6.5,
-       2.95
+       0.5,
+       -1,
+       4
       ]
-     }
-    ],
-    "doors": [
-     {
-      "floor": 0,
-      "at": [
-       -2.1,
-       -3.4
-      ],
-      "wall": "u"
      },
      {
-      "floor": 0,
-      "at": [
-       2.1,
-       -3.4
-      ],
-      "wall": "u"
-     },
-     {
-      "floor": 0,
-      "at": [
-       5.8,
-       2.95
-      ],
-      "wall": "v"
-     },
-     {
+      "name": "Landing",
       "floor": 1,
-      "at": [
-       -5.4,
-       2.95
-      ],
-      "wall": "v"
+      "rect": [
+       -1,
+       -4,
+       1.2,
+       4
+      ]
      },
      {
+      "name": "Children's room",
       "floor": 1,
-      "at": [
-       -3.9,
-       -2.4
-      ],
-      "wall": "v"
+      "rect": [
+       1.2,
+       -4,
+       5,
+       0.5
+      ]
      },
      {
+      "name": "Guest room",
       "floor": 1,
-      "at": [
-       5.4,
-       2.95
-      ],
-      "wall": "v"
+      "rect": [
+       1.2,
+       0.5,
+       5,
+       4
+      ]
      }
     ]
    },
@@ -3669,34 +3605,31 @@
    "objects": {
     "bed": [
      [
-      86.71,
-      210.71
+      86.7,
+      210.51
      ],
      [
-      86.76,
-      211.51
+      85.9,
+      210.56
      ]
     ],
     "room": [
      [
-      86.05,
-      209.65
+      85.05,
+      208.9
      ],
      [
-      86.11,
-      210.65
+      85.11,
+      209.9
      ]
     ]
    },
    "residents": 2,
    "angle": -3.3,
    "house": {
-    "plan": "house_01",
+    "plan": "samples_19",
     "mirror": false,
-    "porch": "columns",
-    "roof": "gable",
-    "walls": "plaster",
-    "furniture": "oldtown",
+    "furniture": "workshop",
     "trim": {
      "shutters": true,
      "shutter_color": "plum",
@@ -3705,136 +3638,107 @@
      "plaster": 2,
      "roof_tone": 4
     },
-    "extras": [
-     {
-      "kind": "balcony",
-      "rect": [
-       -6.5,
-       5,
-       -3.3,
-       6.3
-      ]
-     },
-     {
-      "kind": "balcony",
-      "rect": [
-       3.3,
-       5,
-       6.5,
-       6.3
-      ]
-     }
-    ],
+    "source": "Tools/blender/house_samples_19.py",
     "rooms": [
      {
       "name": "Living room",
       "floor": 0,
       "rect": [
-       -6.5,
        -5,
-       -2.1,
-       2.95
-      ]
-     },
-     {
-      "name": "Hall",
-      "floor": 0,
-      "rect": [
-       -2.1,
-       -5,
-       2.1,
-       2.95
+       -4,
+       -1,
+       0.5
       ]
      },
      {
       "name": "Kitchen",
       "floor": 0,
       "rect": [
-       2.1,
        -5,
-       6.5,
-       2.95
+       0.5,
+       -1,
+       4
       ]
      },
      {
-      "name": "En-suite",
-      "floor": 1,
+      "name": "Hall",
+      "floor": 0,
       "rect": [
-       -6.5,
-       -5,
-       -2.1,
-       -2.4
+       -1,
+       -4,
+       1.2,
+       4
+      ]
+     },
+     {
+      "name": "Dining room",
+      "floor": 0,
+      "rect": [
+       1.2,
+       -4,
+       5,
+       0.5
+      ]
+     },
+     {
+      "name": "Bathroom",
+      "floor": 0,
+      "rect": [
+       1.2,
+       0.5,
+       5,
+       4
       ]
      },
      {
       "name": "Main bedroom",
       "floor": 1,
       "rect": [
-       -6.5,
-       -2.4,
-       -2.1,
-       2.95
+       -5,
+       -4,
+       -1,
+       0.5
       ]
      },
      {
-      "name": "Bedroom 2",
+      "name": "Study",
       "floor": 1,
       "rect": [
-       2.1,
        -5,
-       6.5,
-       2.95
+       0.5,
+       -1,
+       4
       ]
-     }
-    ],
-    "doors": [
-     {
-      "floor": 0,
-      "at": [
-       -2.1,
-       -3.4
-      ],
-      "wall": "u"
      },
      {
-      "floor": 0,
-      "at": [
-       2.1,
-       -3.4
-      ],
-      "wall": "u"
-     },
-     {
-      "floor": 0,
-      "at": [
-       5.8,
-       2.95
-      ],
-      "wall": "v"
-     },
-     {
+      "name": "Landing",
       "floor": 1,
-      "at": [
-       -5.4,
-       2.95
-      ],
-      "wall": "v"
+      "rect": [
+       -1,
+       -4,
+       1.2,
+       4
+      ]
      },
      {
+      "name": "Children's room",
       "floor": 1,
-      "at": [
-       -3.9,
-       -2.4
-      ],
-      "wall": "v"
+      "rect": [
+       1.2,
+       -4,
+       5,
+       0.5
+      ]
      },
      {
+      "name": "Guest room",
       "floor": 1,
-      "at": [
-       5.4,
-       2.95
-      ],
-      "wall": "v"
+      "rect": [
+       1.2,
+       0.5,
+       5,
+       4
+      ]
      }
     ]
    },
@@ -3872,58 +3776,55 @@
    "objects": {
     "bed": [
      [
-      110.31,
-      209.58
+      110.3,
+      209.38
      ],
      [
-      110.34,
-      210.38
+      109.5,
+      209.41
      ],
      [
-      101.79,
-      209.32
+      102.81,
+      209.68
      ],
      [
-      101.87,
-      211.32
+      102.81,
+      209.68
      ],
      [
-      101.71,
-      207.32
+      102.99,
+      212.92
      ]
     ],
     "room": [
      [
+      108.69,
+      207.74
+     ],
+     [
+      108.73,
+      208.74
+     ],
+     [
+      110.32,
+      209.73
+     ],
+     [
       109.67,
-      208.5
+      211.1
      ],
      [
-      109.71,
-      209.5
-     ],
-     [
-      111.51,
-      207.08
-     ],
-     [
-      111.66,
-      210.77
-     ],
-     [
-      109.69,
-      209.0
+      109.73,
+      212.5
      ]
     ]
    },
    "residents": 5,
    "angle": -2.3,
    "house": {
-    "plan": "house_01",
+    "plan": "samples_19",
     "mirror": false,
-    "porch": "columns",
-    "roof": "gable",
-    "walls": "plaster",
-    "furniture": "oldtown",
+    "furniture": "curve",
     "trim": {
      "shutters": true,
      "shutter_color": "plum",
@@ -3932,136 +3833,107 @@
      "plaster": 1,
      "roof_tone": 4
     },
-    "extras": [
-     {
-      "kind": "balcony",
-      "rect": [
-       -6.5,
-       5,
-       -3.3,
-       6.3
-      ]
-     },
-     {
-      "kind": "balcony",
-      "rect": [
-       3.3,
-       5,
-       6.5,
-       6.3
-      ]
-     }
-    ],
+    "source": "Tools/blender/house_samples_19.py",
     "rooms": [
      {
       "name": "Living room",
       "floor": 0,
       "rect": [
-       -6.5,
        -5,
-       -2.1,
-       2.95
-      ]
-     },
-     {
-      "name": "Hall",
-      "floor": 0,
-      "rect": [
-       -2.1,
-       -5,
-       2.1,
-       2.95
+       -4,
+       -1,
+       0.5
       ]
      },
      {
       "name": "Kitchen",
       "floor": 0,
       "rect": [
-       2.1,
        -5,
-       6.5,
-       2.95
+       0.5,
+       -1,
+       4
       ]
      },
      {
-      "name": "En-suite",
-      "floor": 1,
+      "name": "Hall",
+      "floor": 0,
       "rect": [
-       -6.5,
-       -5,
-       -2.1,
-       -2.4
+       -1,
+       -4,
+       1.2,
+       4
+      ]
+     },
+     {
+      "name": "Dining room",
+      "floor": 0,
+      "rect": [
+       1.2,
+       -4,
+       5,
+       0.5
+      ]
+     },
+     {
+      "name": "Bathroom",
+      "floor": 0,
+      "rect": [
+       1.2,
+       0.5,
+       5,
+       4
       ]
      },
      {
       "name": "Main bedroom",
       "floor": 1,
       "rect": [
-       -6.5,
-       -2.4,
-       -2.1,
-       2.95
+       -5,
+       -4,
+       -1,
+       0.5
       ]
      },
      {
-      "name": "Bedroom 2",
+      "name": "Study",
       "floor": 1,
       "rect": [
-       2.1,
        -5,
-       6.5,
-       2.95
+       0.5,
+       -1,
+       4
       ]
-     }
-    ],
-    "doors": [
-     {
-      "floor": 0,
-      "at": [
-       -2.1,
-       -3.4
-      ],
-      "wall": "u"
      },
      {
-      "floor": 0,
-      "at": [
-       2.1,
-       -3.4
-      ],
-      "wall": "u"
-     },
-     {
-      "floor": 0,
-      "at": [
-       5.8,
-       2.95
-      ],
-      "wall": "v"
-     },
-     {
+      "name": "Landing",
       "floor": 1,
-      "at": [
-       -5.4,
-       2.95
-      ],
-      "wall": "v"
+      "rect": [
+       -1,
+       -4,
+       1.2,
+       4
+      ]
      },
      {
+      "name": "Children's room",
       "floor": 1,
-      "at": [
-       -3.9,
-       -2.4
-      ],
-      "wall": "v"
+      "rect": [
+       1.2,
+       -4,
+       5,
+       0.5
+      ]
      },
      {
+      "name": "Guest room",
       "floor": 1,
-      "at": [
-       5.4,
-       2.95
-      ],
-      "wall": "v"
+      "rect": [
+       1.2,
+       0.5,
+       5,
+       4
+      ]
      }
     ]
    },

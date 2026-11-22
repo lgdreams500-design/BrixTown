@@ -2262,10 +2262,23 @@ function stepCamera(dt) {
   }
   const eyeH = pl.pose === 2 ? .72 : pl.pose === 3 ? .3 : 1.51 * playerLook.S;
   cam.close = false; if (cam.fp) { cam.eye = [pl.x + Math.sin(cam.yaw) * .1, pl.y + eyeH, pl.z - Math.cos(cam.yaw) * .1]; return; }
-  const t = [pl.x, pl.y + (pl.pose > 1 ? eyeH + .3 : 1.5), pl.z]; let d = .3;
-  for (; d < cam.dist; d += .12) if (blocked([t[0] - cam.dir[0] * d, t[1] - cam.dir[1] * d, t[2] - cam.dir[2] * d])) break;
-  d = Math.max(.35, d - .3); cam.close = d < 1.3;      // with a wall right behind, look through the player's eyes instead of at the back of their head
-  cam.eye = cam.close ? [pl.x, pl.y + eyeH, pl.z] : [t[0] - cam.dir[0] * d, t[1] - cam.dir[1] * d, t[2] - cam.dir[2] * d];
+  // Indoors (a house, a flat, a shop) rooms are 3 to 6 m across: the camera comes nearer, keeps further from walls, floors and
+  // ceilings than its own near plane reaches (so it never sees through one), and eases back out instead of jumping.
+  const inL = lotAt(pl.x, pl.z); cam.indoor = !!(inL && !isOpen(inL) && inL.H && pl.y < inL.H - .2);
+  const maxD = cam.indoor ? Math.min(cam.dist, CAM_IN.dist) : cam.dist, mg = cam.indoor ? CAM_IN.clear : .15;
+  const t = [pl.x, pl.y + (pl.pose > 1 ? eyeH + .3 : cam.indoor ? CAM_IN.lookH : 1.5), pl.z]; let d = .3;
+  for (; d < maxD; d += .08) if (camBlocked([t[0] - cam.dir[0] * d, t[1] - cam.dir[1] * d, t[2] - cam.dir[2] * d], mg)) break;
+  d = Math.max(.35, d - (cam.indoor ? .08 : .3));
+  camD = camD === null || d < camD ? d : Math.min(d, camD + dt * CAM_IN.ease);   // pull in at once, ease back out
+  cam.close = camD < (cam.indoor ? CAM_IN.close : 1.3);  // with a wall right behind, look through the player's eyes instead of at the back of their head
+  cam.eye = cam.close ? [pl.x, pl.y + eyeH, pl.z] : [t[0] - cam.dir[0] * camD, t[1] - cam.dir[1] * camD, t[2] - cam.dir[2] * camD];
+}
+const CAM_IN = { dist: 3.4, clear: .34, lookH: 1.45, close: .9, ease: 2.5, near: .1 };   // the indoor camera (metres; ease in m/s)
+let camD = null;
+function camBlocked(q, m) {                                // like blocked(), with the camera's own clearance m round every solid
+  if (q[1] < groundBase(q[0], q[2]) + m) return true; let hit = false;
+  eachSolid(q[0], q[2], m + .1, s => { if (q[0] > s[0] - m && q[0] < s[3] + m && q[1] > s[1] - m && q[1] < s[4] + m && q[2] > s[2] - m && q[2] < s[5] + m) hit = true; });
+  return hit;
 }
 
 // ---------------------------------------------------------------- HUD, labels and maps
@@ -2555,7 +2568,7 @@ function frame(now) {
   const vl = ((dials.veil || 0) + Wx.veil) * Lt.day * (1 - .45 * Wx.grey); Lt.fog = Lt.fog.map((v, i) => v + mix(sun0[i], lum0, Wx.grey) * vl); Lt.zen = Lt.zen.map((v, i) => v + sun0[i] * vl * .7);   // sunlight scattered all through the haze: a pale sky, and distance fades to it (W5)
   if (STUDIO) { Lt.dir = [-.45 / 1.0005, .74 / 1.0005, .5 / 1.0005]; Lt.sunCol = [3.2 / Math.PI, 3.2 / Math.PI * .82, 3.2 / Math.PI * .62]; Lt.sky = [.42 * .25, .55 * .25, .82 * .25];
     Lt.ground = [.004 + Lt.sunCol[0] * .1, .004 + Lt.sunCol[1] * .068, .005 + Lt.sunCol[2] * .042]; Lt.fogD = 0; Lt.fog = mul3(Lt.sky, 1.25); Lt.zen = mul3(Lt.sky, 1.5); Lt.exp = Math.pow(2, -.3); Lt.day = 1; Lt.night = 0; Lt.wet = 0; Lt.rain = 0; }
-  const view = M4.look(cam.eye, cam.dir), fov = STUDIO ? .27 : .9, asp = W / H, VP = M4.mul(M4.persp(fov, asp, .25, 3200), view.m), th = Math.tan(fov / 2);
+  const view = M4.look(cam.eye, cam.dir), fov = STUDIO ? .27 : .9, asp = W / H, NEAR = cam.indoor && !cam.fp ? CAM_IN.near : .25, VP = M4.mul(M4.persp(fov, asp, NEAR, 3200), view.m), th = Math.tan(fov / 2);
   gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf); gl.bufferData(gl.ARRAY_BUFFER, dyn.a.subarray(0, dyn.n), gl.DYNAMIC_DRAW);
   let SM = M4.t(0, 0, 0), shOn = 0, giAt = [0, 0, 1], giK = 0;
   if (shFbo && quality > .6) {                              // shadows: draw the town from the light, around where the player looks
@@ -2633,7 +2646,7 @@ function frame(now) {
     for (const ch of nearD) drawDepth(ch.buf, ch.n); drawDepth(dynBuf, dyn.n / 10);   // people too, so an arm shades the body beside it
     gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.colorMask(true, true, true, true);
     const quad = pr => { gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const a = gl.getAttribLocation(pr.p, "aQ"); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
-      gl.uniform4f(pr.u.uPr, 1 / (th * asp), 1 / th, .25, 3200); gl.uniform2f(pr.u.uPx, 1 / aw, 1 / ah); gl.uniform1i(pr.u.uD, 6); };
+      gl.uniform4f(pr.u.uPr, 1 / (th * asp), 1 / th, NEAR, 3200); gl.uniform2f(pr.u.uPx, 1 / aw, 1 / ah); gl.uniform1i(pr.u.uD, 6); };
     gl.activeTexture(gl.TEXTURE6); gl.bindTexture(gl.TEXTURE_2D, AO.depth);
     gl.bindFramebuffer(gl.FRAMEBUFFER, AO.fbo[0]); quad(aoProg);
     gl.uniform4f(aoProg.u.uAo, dials.aoR || 1.2, dials.aoI || 6, 0, dials.aoFar || 45);   // reach (m), strength, -, fades out by (m)
