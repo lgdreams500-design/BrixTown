@@ -1539,7 +1539,7 @@ const MAIN_VS = `attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,u
 void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`;   // invariant: the depth-only pass and the lit pass land on the same depths
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
 uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform vec2 uNk; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
-uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY; uniform vec4 uSkyB; uniform vec2 uSkyH;
+uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY; uniform vec4 uSkyB; uniform vec2 uSkyH; uniform vec4 uRacks[9]; uniform int uRackN; uniform vec3 uRackY;
 uniform sampler2D uGi; uniform vec4 uGiM, uBlob[16]; uniform int uBlobN; uniform vec3 uPf;
 uniform vec3 uHZ[4], uHNo[4], uHBr[4], uHSt; uniform vec4 uHLk[4];
 uniform vec4 uPatA[16], uPatB[16];                       // stone, brick and paving patterns (World/rules/surfaces.json): (type, unit w, unit h, joint), (vary, bevel, dome, -)
@@ -1577,6 +1577,14 @@ vec3 roomLight(vec3 n,float person){
     ao*=n.y>.6?.72+.28*smoothstep(.25,1.3,e):1.;                           // the floor darkens towards the walls
     ao*=abs(n.y)<.5?(.7+.3*smoothstep(0.,.7,y))*(.82+.18*smoothstep(0.,.6,uRoomY.y-vP.y)):1.;   // walls darken where they meet floor and ceiling
     ao*=n.y<-.6?.8+.2*smoothstep(.25,1.,e):1.;
+    for(int i=0;i<9;i++){ if(i>=uRackN) break; vec4 r=uRacks[i];             // the warehouse racks (outlet.js): open-sided boxes of shelves
+      vec3 lo=vec3(r.x,uRoomY.x,r.y), hi=vec3(r.z,uRoomY.x+uRackY.z,r.w), dv=vP-clamp(vP,lo,hi); float d=length(dv);
+      if(d<.002){                                                            // inside a rack: darker deeper in from the open face, and just under a shelf
+        float din=clamp(min(vP.z-r.y,r.w-vP.z)/(.5*(r.w-r.y)),0.,1.), gap=(y<uRackY.x?uRackY.x:(y<uRackY.y?uRackY.y:9.))-y;
+        float ys=y-(y>=uRackY.y?uRackY.y:(y>=uRackY.x?uRackY.x:.1))-.07;   // height above the shelf it stands on: each box sits in its own shade
+        ao*=(1.-.65*smoothstep(.1,.9,din))*(.32+.68*smoothstep(0.,1.4,gap))*(.55+.45*smoothstep(0.,.45,ys)); }
+      else if(d<3.5){ float f=clamp(max(dot(n,-dv/d),0.)+(n.y>.6?.45:0.),0.,1.);   // just outside: a wall or floor facing a rack is in its shade
+        ao*=1.-.55*f*(1.-smoothstep(0.,3.5,d))*(1.-smoothstep(uRackY.z-.5,uRackY.z+1.,y)); } }
   } else lamps=vec3(.55)*(.82+.16*n.y);
   vec3 sun=vec3(0.);                                       // a hall under skylights: the sun comes in through the openings in the roof and lays
   if(here&&uRoomY.z>1.){ float ndl=max(dot(n,uSun),0.);    // patches on the floor, with the shadows of the trusses, sets, racks, furniture and people (INTERIOR_STYLE R2)
@@ -2414,6 +2422,9 @@ function frame(now) {
     if (inRoom) gl.uniform4fv(u.uRoomR, inRoom.lot.rect); else gl.uniform4f(u.uRoomR, 0, 0, -1, -1);
     const sb = inRoom && inRoom.lot.skylight > 1 && inRoom.lot.skyband;   // the hall's skylights, for skyFF() in roomLight
     if (sb) { gl.uniform4f(u.uSkyB, sb[0], sb[1], sb[2], sb[3]); gl.uniform2f(u.uSkyH, sb[4], 1 / skyRef(sb)); } else gl.uniform2f(u.uSkyH, 0, 0);
+    const rk = (sb && inRoom.lot.racks) || [];                 // the hall's racks, for their shade in roomLight
+    if (rk.length) { const ra = new Float32Array(36); rk.slice(0, 9).forEach((q, k) => ra.set(q, k * 4)); gl.uniform4fv(u["uRacks[0]"], ra); gl.uniform3fv(u.uRackY, inRoom.lot.rackY); }
+    gl.uniform1i(u.uRackN, Math.min(9, rk.length));
     gl.uniform3f(u.uRoomY, inRoom ? inRoom.y0 : Y_FLOOR, inRoom ? inRoom.y1 : GF, inRoom ? inRoom.lot.skylight || 1 : 1);   // the floor the camera is on (storeys.js)
   };
   const blob = new Float32Array(64); let blobN = 0;         // the 16 pieces of street furniture nearest the camera shade the ground under them (trial light)
