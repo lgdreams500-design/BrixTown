@@ -45,6 +45,10 @@ const C = {
   indigo: [.10, .14, .24], cream: [.66, .61, .50], ochre: [.52, .40, .20], terracotta: [.44, .24, .18], teal: [.20, .36, .37], blue: [.30, .38, .52],
   lantern: [1, .55, .22], metal: [.17, .18, .21], soil: [.2, .15, .11], wood: [.34, .23, .15],
 };
+// Lawns (ART-001): World/rules/vegetation.json "lawn", drawn as material 24; every lawn laid is kept in LAWNS for the tree rings
+const LAWN = Object.assign({ tones: [[.18, .27, .13], [.29, .34, .19], [.42, .39, .21]], patch_m: 8, stripe_m: 2.2, stripe: .06, clover: .5, daisies: .05, daisy_color: [.72, .69, .58],
+  edge_m: .45, edge_color: [.23, .31, .16], tufts_per_100m2: 7, tuft_color: [.24, .32, .16], tree_ring_m: 1.2, mulch_color: [.2, .15, .11] }, D.lawn || {});
+const v3 = a => `vec3(${a.map(n => (+n).toFixed(3)).join(",")})`, LAWNS = [];
 const PLASTER = [[.68, .63, .55], [.70, .58, .46], [.64, .6, .53], [.7, .6, .5], [.66, .56, .46], [.68, .63, .55]];
 const ROOF = [[.44, .24, .18], [.38, .21, .16], [.22, .22, .27], [.32, .21, .15], [.47, .28, .2]];
 const ACCENT = [C.ochre, C.terracotta, C.teal, C.blue, C.olive, C.plum];
@@ -1152,10 +1156,45 @@ function room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard) {
   }
 }
 
+// A lawn (ART-001): the grass itself in material 24, a band of longer, darker grass along its edges, and tufts that the
+// mower missed, most of them near the edges and none on a path or under something standing on the grass.
+function lawn(x0, z0, x1, z1, y, c, b, tufts) {
+  world.flat(x0, z0, x1, z1, y, c, 24); LAWNS.push([x0, z0, x1, z1]);
+  const e = LAWN.edge_m, ec = mul3(LAWN.edge_color, c[1] / LAWN.tones[1][1]), ye = y + .006;
+  world.flat(x0, z0, x1, z0 + e, ye, ec, 24); world.flat(x0, z1 - e, x1, z1, ye, ec, 24);
+  world.flat(x0, z0 + e, x0 + e, z1 - e, ye, ec, 24); world.flat(x1 - e, z0 + e, x1, z1 - e, ye, ec, 24);
+  const segD = (px, pz, a, q) => { const dx = q[0] - a[0], dz = q[1] - a[1], L = dx * dx + dz * dz || 1, t = clamp(((px - a[0]) * dx + (pz - a[1]) * dz) / L, 0, 1); return Math.hypot(px - a[0] - t * dx, pz - a[1] - t * dz); };
+  const clear = (px, pz) => !b.paths.some(([p, q]) => segD(px, pz, p, q) < 1.4) && !b.props.some(p => Math.hypot(p.pos[0] - px, p.pos[1] - pz) < (p.kind === "fountain" ? 3.6 : p.kind === "playground" ? 9 : 1.7));
+  if (!tufts) return;
+  const n = Math.round((x1 - x0) * (z1 - z0) / 100 * LAWN.tufts_per_100m2), W = x1 - x0, H = z1 - z0;
+  for (let i = 0; i < n; i++) {
+    const r1 = hash(x0, z0, "tu", i), r2 = hash(z0, x0, "tv", i), side = Math.floor(hash(i, x0, "ts") * 5);
+    let px, pz;
+    if (side < 4) { const off = .25 + 1.1 * hash(i, z0, "to"); px = side < 2 ? x0 + r1 * W : (side === 2 ? x0 + off : x1 - off); pz = side >= 2 ? z0 + r2 * H : (side === 0 ? z0 + off : z1 - off); }
+    else { px = x0 + .5 + r1 * (W - 1); pz = z0 + .5 + r2 * (H - 1); }
+    if (!clear(px, pz)) continue;
+    const s = .7 + .6 * hash(pz, px, "sz"), tc = mul3(LAWN.tuft_color, .88 + .24 * hash(i, "tc"));
+    for (let k = 0; k < 6; k++) {                          // a clump of faceted spikes leaning out from one root, like the faceted tree crowns
+      const a = (k / 6 + .15 * hash(px, pz, k)) * 6.283, ca = Math.cos(a), sa = Math.sin(a), rx = px + ca * .06, rz = pz + sa * .06, w = .05 * s;
+      const tip = [px + ca * (.14 + .1 * hash(k, px)) * s, y + (.2 + .2 * hash(pz, k)) * s, pz + sa * (.14 + .1 * hash(k, pz)) * s];
+      const p0 = [rx - sa * w, y, rz + ca * w], p1 = [rx + sa * w, y, rz - ca * w], p2 = [rx - ca * w, y, rz - sa * w], col = mul3(tc, .85 + .3 * hash(k, i));
+      world.quad(p0, p1, tip, tip, col, 0, [ca, .5, sa]); world.quad(p1, p2, tip, tip, mul3(col, .85), 0, [sa - ca, .5, -ca - sa]); world.quad(p2, p0, tip, tip, mul3(col, .9), 0, [-sa - ca, .5, ca - sa]);
+    }
+  }
+}
+function treeRing(x, z, g) {                               // a ring of bare earth and mulch round a trunk standing in a lawn
+  if (!LAWNS.some(([a, b2, c, d]) => x > a + .5 && x < c - .5 && z > b2 + .5 && z < d - .5)) return;
+  const R = LAWN.tree_ring_m * (.85 + .3 * hash(x, z, "ring")), y = Math.max(g, Y_GRASS) + .03, N = 9;
+  for (let k = 0; k < N; k++) {
+    const a0 = k / N * 6.283, a1 = (k + 1) / N * 6.283, r0 = R * (.9 + .2 * hash(x, z, k)), r1 = R * (.9 + .2 * hash(x, z, (k + 1) % N));
+    world.quad([x, y, z], [x + Math.cos(a1) * r1, y, z + Math.sin(a1) * r1], [x + Math.cos(a0) * r0, y, z + Math.sin(a0) * r0], [x, y, z], mul3(LAWN.mulch_color, .9 + .2 * hash(k, x)), 0, [0, 1, 0]);
+  }
+}
+
 function openLot(l) {
   const [x0, z0, x1, z1] = l.rect, o = l.objects, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, b = l.block;
   if (l.kind === "garden") {
-    world.flat(x0, z0, x1, z1, Y_GRASS + .02, mul3(C.grass, 1.08), 0);
+    lawn(x0, z0, x1, z1, Y_GRASS + .02, mul3(C.grass, 1.08), b, true);
     for (const [x, z] of o.bench || []) spot(l, x, z, 2, Math.abs(z - cz) > Math.abs(x - cx) ? yawOf(0, cz - z) : yawOf(cx - x, 0), Y_YARD + .46);
     for (const [x, z] of o.rim || []) spot(l, x, z, 2, yawOf(x - cx, z - cz), Y_YARD + .5);
     for (const [x, z] of o.flowerbed || []) spot(l, x, z, 0, yawOf(0, -1), Y_YARD);
@@ -1238,7 +1277,8 @@ function prop(p, b) {
   } else if (p.kind === "flowerbed") {
     world.box(x - 1.3, g, z - 1.3, x + 1.3, g + .3, z + 1.3, C.stone, 6); world.flat(x - 1.08, z - 1.08, x + 1.08, z + 1.08, g + .32, C.soil, 0);
     const s = D.flowers.size, col = D.flowers.colors[p.color % D.flowers.colors.length];
-    if (s > 0) for (let k = 0; k < 16; k++) { const fx = x - .82 + (k % 4) * .55 + (hash(x, z, k) - .5) * .25, fz = z - .82 + Math.floor(k / 4) * .55 + (hash(z, x, k) - .5) * .25, hh = .2 + .25 * s * hash(k, x); world.box(fx - .13, g + .32, fz - .13, fx + .13, g + .32 + hh, fz + .13, mul3(C.olive, .9 + .3 * hash(k, z)), 0); if (D.flowers.bloom > 0) world.box(fx - .1, g + .32 + hh, fz - .1, fx + .1, g + .44 + hh, fz + .1, mul3(col, .62), 0); }
+    if (s > 0) for (let k = 0; k < 16; k++) { const fx = x - .82 + (k % 4) * .55 + (hash(x, z, k) - .5) * .25, fz = z - .82 + Math.floor(k / 4) * .55 + (hash(z, x, k) - .5) * .25, hh = .2 + .25 * s * hash(k, x); world.box(fx - .13, g + .32, fz - .13, fx + .13, g + .32 + hh, fz + .13, mul3(C.olive, .9 + .3 * hash(k, z)), 0); if (D.flowers.bloom > 0) { const fc = mul3(col, (.8 + .2 * hash(z, k)) * (.6 + .4 * D.flowers.bloom)), hb = .1 + .06 * D.flowers.bloom;   // a round head of blooms in the bed's colour, a paler one beside it
+        world.ybox(fx, g + .3 + hh, fz, .26, hb, .26, Math.PI / 4 + hash(x, k), fc, 0); world.ybox(fx + .08, g + .34 + hh, fz - .06, .16, hb * .8, .16, hash(k, z), mix3(fc, C.cream, .3), 0); } }
   } else if (p.kind === "stall") {
     const f = p.face, col = pick(ACCENT, (p.color % 6) / 6 + .01), tz = z + f * 1.1;
     world.box(x - 1.2, g, tz - .4, x + 1.2, g + .9, tz + .4, [.5, .32, .16], 0); solid(x - 1.2, g, tz - .4, x + 1.2, g + .9, tz + .4);
@@ -1257,6 +1297,7 @@ function prop(p, b) {
 
 function tree(t) {                                         // a pale trunk and a faceted crown, like the tree in the reference square
   const [x, z, r, leaf, cr, cg, cb, blossom, fallen] = t, g = groundBase(x, z), w = clamp(.09 + r * .03, .11, .25), h = 1.3 + r * .75, bark = [.46, .38, .3];
+  treeRing(x, z, g);
   if (fallen) { world.ybox(x + h / 2, g, z, h, w * 2, w * 2, hash(x, z) * 6.28, bark, 0); return; }
   world.box(x - w, g, z - w, x + w, g + h + r * .3, z + w, bark, 0); solid(x - w, g, z - w, x + w, g + h, z + w);
   if (leaf <= .05) return;
@@ -1286,8 +1327,8 @@ function buildWorld() {
   for (const b of D.blocks) {
     const [bx, bz] = b.origin, S = b.size, b0 = world.n;
     const [pc, pf] = groundOf(b.id, C.pave, true); world.box(bx - PAVE, 0, bz - PAVE, bx + S + PAVE, Y_PAVE, bz + S + PAVE, pc, pf);   // paving by surfaces.json
-    if (b.template === "rows") world.flat(bx + 2, bz + 16.5, bx + S - 2, bz + S - 16.5, Y_GRASS, C.grass, 0);
-    if (b.template === "park") world.flat(bx + 1, bz + 1, bx + S - 1, bz + S - 1, Y_GRASS, C.grass, 0);
+    if (b.template === "rows") lawn(bx + 2, bz + 16.5, bx + S - 2, bz + S - 16.5, Y_GRASS, C.grass, b);
+    if (b.template === "park") lawn(bx + 1, bz + 1, bx + S - 1, bz + S - 1, Y_GRASS, C.grass, b, true);
     for (const [p, q] of b.paths) {                      // footpaths, kept inside the block and its pavement
       const lo = [bx - PAVE, bz - PAVE], hi = [bx + S + PAVE, bz + S + PAVE];
       const a = [clamp(Math.min(p[0], q[0]), lo[0], hi[0]), clamp(Math.min(p[1], q[1]), lo[1], hi[1])], c = [clamp(Math.max(p[0], q[0]), lo[0], hi[0]), clamp(Math.max(p[1], q[1]), lo[1], hi[1])];
@@ -1544,6 +1585,17 @@ void main(){
     else if(f>20.5&&f<21.5){ vec2 q=vP.xz/.3; q.x+=.5*mod(floor(q.y),2.); vec2 id=floor(q), fr=fract(q)-.5;   // footpaths: round cobbles
       float t1=h3(vec3(id,17.)), k2=1.-min(1.,d/30.); fr+=vec2(h3(vec3(id,18.)),h3(vec3(id,19.)))*.16-.08; float r=length(fr)*2.;
       vec3 c1=c*vec3(.6,.6,.72); c=mix(paint(c,vec3(.6,.6,.72),blot),c1,t1*.55*k2)*mix(1.,(1.06-.2*fr.y)*(1.-.55*smoothstep(.72,1.,r)),k2); }
+    else if(f>23.5&&f<24.5){ float k2=1.-min(1.,d/35.), k3=1.-min(1.,d/140.);   // a lawn (ART-001, vegetation.json "lawn"): muted patches, faint mowing stripes, clover, daisies
+      float big=ns(vec3(vP.xz/${LAWN.patch_m.toFixed(2)},3.))*.65+ns(vec3(vP.xz/${(LAWN.patch_m * .37).toFixed(2)},9.))*.35;
+      vec3 g=mix(mix(${v3(LAWN.tones[0])},${v3(LAWN.tones[1])},smoothstep(.3,.46,big)),${v3(LAWN.tones[2])},smoothstep(.56,.72,big));
+      g*=c/${v3(LAWN.tones[1])};                                               // an edge band or a darker lawn keeps its own brightness
+      float sx=fract(vP.x/${LAWN.stripe_m.toFixed(2)}); g*=1.+${LAWN.stripe.toFixed(3)}*(smoothstep(.42,.5,sx)-smoothstep(.92,1.,sx)-.5)*2.*k3;   // the mower's passes, light and dark
+      float cl=smoothstep(.6,.72,ns(vec3(vP.xz*.9,5.))*.7+ns(vec3(vP.xz*3.1,6.))*.3); g=mix(g,g*vec3(.78,.92,.76),cl*${LAWN.clover.toFixed(2)}*k3);   // clumps of clover, darker and cooler
+      g*=.9+.2*mix(.5,ns(vec3(vP.xz*11.,7.))*.6+ns(vec3(vP.xz*29.,8.))*.4,k2);   // blades, close up
+      c=paint(g,vec3(.74,.78,.72),blot);
+      vec2 dq=vP.xz/.32, dc=floor(dq); float dk=h3(vec3(dc,41.)), dm=smoothstep(.45,.75,ns(vec3(vP.xz*.35,12.)));   // daisies, gathered in drifts
+      if(dk<${LAWN.daisies.toFixed(3)}*3.*dm&&k2>0.){ vec2 o=fract(dq)-.5-(vec2(h3(vec3(dc,42.)),h3(vec3(dc,43.)))-.5)*.5; float r=length(o);
+        c=mix(c,mix(${v3(LAWN.daisy_color)},vec3(.62,.5,.2),1.-smoothstep(.03,.06,r)),(1.-smoothstep(.1,.15,r))*k2); } }
     else if(f>21.5&&f<22.5) c=paint(c,vec3(.74,.72,.8),blot)*(.95+.1*ns(vP*3.1));   // car paint: matte and mottled like everything else (W1, V2; cars.js)
     else if(f>10.5&&f<11.5){ vec3 tg=normalize(vec3(-n.z,0.,n.x)+vec3(1e-3,0.,0.)); float u=dot(vP,tg)/.24, cu=fract(u)*2.-1., row=fract(vP.y/.17);   // barrel tiles laid in courses
       float tube=sqrt(max(1.-cu*cu,0.)), t1=h3(vec3(floor(u),floor(vP.y/.17),9.)), k2=1.-min(1.,d/90.);
