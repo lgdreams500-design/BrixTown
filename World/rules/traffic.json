@@ -17,6 +17,7 @@
  "drive_min_m": 0.0,
  "gate_road_m": 80.0,
  "gate_margin_s": 60.0,
+ "gate_light_allowance": 1.0,
  "bay_reach_m": 150.0,
  "car_load_m": 120.0,
  "limits_kmh": {
