@@ -1278,7 +1278,7 @@ function buildWorld() {
 
 // ---------------------------------------------------------------- people
 const looks = D.residents.map((r, i) => People.look(i, D.roles[r.r], D.role_sig[D.roles[r.r]]));
-const playerLook = People.player();
+let playerLook = People.player();                  // the designed character replaces this (life.js, CHR-001)
 
 function pieceAt(row, m) { let lo = 0, hi = row.length - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (row[mid][0] <= m) lo = mid; else hi = mid - 1; } return lo; }
 function along(p, d) {
@@ -1556,7 +1556,7 @@ function lighting(m) {                                       // the reference re
 const spawn = D.city.spawn;
 const pl = { x: spawn.pos[0], y: 0, z: spawn.pos[1], vy: 0, yaw: yawOf(spawn.facing[0], spawn.facing[1]), pose: 0, ph: 0, moving: false, seat: null, onGround: true };
 const cam = { yaw: pl.yaw, pitch: -.04, dist: 4.4, fp: false, eye: [0, 0, 0], dir: [0, 0, -1] };
-const clock = { m: spawn.time ? (+spawn.time.slice(0, 2)) * 60 + (+spawn.time.slice(3)) : 8 * 60, rate: 1 };
+const clock = { m: spawn.time ? (+spawn.time.slice(0, 2)) * 60 + (+spawn.time.slice(3)) : 8 * 60, rate: 1, day: 0 };   // day: game days since the character arrived (the bank settles by them, BANK-008)
 const keys = {}; let started = false, locked = false, showMap = false, bodies = 0, fps = 60, target = null, quality = 1, slow = 0;
 const R = 0.32, TALL = 1.75;
 
@@ -1622,6 +1622,7 @@ function findTarget0() {
 }
 function stepCamera(dt) {
   const cp = Math.cos(cam.pitch); cam.dir = [Math.sin(cam.yaw) * cp, Math.sin(cam.pitch), -Math.cos(cam.yaw) * cp];
+  if (!started && Life.designing) return Life.camera();  // the character designer turns round the player (life.js)
   if (!started) {                                        // before play: a slow turn above Market Square
     const a = performance.now() / 16000, c = [3 * P + P / 2, 0, 4 * P + P / 2]; cam.eye = [c[0] + Math.sin(a) * 105, 46, c[2] + Math.cos(a) * 105];
     const d = [c[0] - cam.eye[0], 6 - cam.eye[1], c[2] - cam.eye[2]], n = Math.hypot(d[0], d[1], d[2]); cam.dir = d.map(v => v / n); return;
@@ -1655,10 +1656,13 @@ function drawMaps() {
   mc.fillStyle = "#3a3d2c"; mc.fillRect(0, 0, S, S);
   mc.drawImage(base, (pl.x + o - span / 2) * k, (pl.z + o - span / 2) * k, span * k, span * k, 0, 0, S, S);
   mc.fillStyle = "#17171c"; for (const q of people) { const x = (q[0] - pl.x) * z + S / 2, y = (q[1] - pl.z) * z + S / 2; if (x > 0 && x < S && y > 0 && y < S) mc.fillRect(x - 2, y - 2, 4, 4); }
+  const marks = Life.marks();                             // quest people and places (life.js, QST-005)
+  for (const [x0, z0, kind] of marks) { const x = clamp((x0 - pl.x) * z + S / 2, 12, S - 12), y = clamp((z0 - pl.z) * z + S / 2, 12, S - 12); mc.fillStyle = kind ? "#f0c35a" : "#9fd1c4"; mc.strokeStyle = "#17171c"; mc.lineWidth = 2; mc.beginPath(); mc.arc(x, y, 7, 0, 7); mc.fill(); mc.stroke(); }
   mc.translate(S / 2, S / 2); mc.rotate(cam.yaw); mc.fillStyle = "#f0a35a"; mc.strokeStyle = "#17171c"; mc.lineWidth = 2; mc.beginPath(); mc.moveTo(0, -13); mc.lineTo(9, 10); mc.lineTo(0, 5); mc.lineTo(-9, 10); mc.closePath(); mc.fill(); mc.stroke(); mc.restore();
   if (!showMap) return;
   const bc = $("big").getContext("2d"); bc.drawImage(base, 0, 0);
   bc.fillStyle = "#17171c"; for (const q of people) bc.fillRect((q[0] + o) * k - 1.5, (q[1] + o) * k - 1.5, 3, 3);
+  for (const [x, z0, kind] of marks) { bc.fillStyle = kind ? "#f0c35a" : "#9fd1c4"; bc.strokeStyle = "#17171c"; bc.lineWidth = 2; bc.beginPath(); bc.arc((x + o) * k, (z0 + o) * k, 8, 0, 7); bc.fill(); bc.stroke(); }
   bc.fillStyle = "#f0a35a"; bc.strokeStyle = "#17171c"; bc.lineWidth = 2; bc.beginPath(); bc.arc((pl.x + o) * k, (pl.z + o) * k, 7, 0, 7); bc.fill(); bc.stroke();
 }
 function placeName() {
@@ -1674,7 +1678,7 @@ function placeName() {
 }
 function hud(VP, W, H, tags) {
   $("time").textContent = hhmm(clock.m);
-  $("date").textContent = D.day.weekday + " · " + D.day.season + (D.day.market ? " · market day" : "") + (clock.rate !== 1 ? "  (clock ×" + clock.rate + ")" : "");
+  $("date").textContent = (Life.ready ? "Day " + (clock.day + 1) + " · " : "") + D.day.weekday + " · " + D.day.season + (D.day.market ? " · market day" : "") + (clock.rate !== 1 ? "  (clock ×" + clock.rate + ")" : "");
   const [a, b] = placeName(); $("place").textContent = a; $("sub").textContent = b;
   $("stats").innerHTML = bodies + " of " + D.residents.length + " residents have bodies<br>" + Math.round(fps) + " frames a second" + (quality < 1 ? " · soft picture" : "");
   const pr = $("prompt"); if (started && (target || pl.pose > 1)) { pr.style.display = "block"; pr.innerHTML = "<kbd>E</kbd>" + (pl.pose === 4 ? Cars.label() : pl.pose > 1 ? "Get up" : target.label); } else pr.style.display = "none";
@@ -1716,22 +1720,26 @@ $("lede").textContent = D.city.name + ", a " + D.day.season.toLowerCase() + " " 
 $("legend").innerHTML = Object.keys(KIND_WORD).map(k => `<div><i style="background:${KIND_CSS[k]}"></i>${KIND_WORD[k]}</div>`).join("") + `<div><i style="background:#17171c;width:5px;height:5px"></i>Residents</div><div><i style="background:#f0a35a;border-radius:50%"></i>You</div>`;
 
 function begin() { Sound.start(); started = true; $("start").style.display = "none"; $("keys").style.display = "block"; if (cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } }
-$("go").addEventListener("click", begin);
-cv.addEventListener("click", () => { if (started && !locked && !Talk.on && cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } });
+$("go").addEventListener("click", () => Life.go(begin));   // carry on, or the character designer first (life.js)
+cv.addEventListener("click", () => { if (started && !locked && !Talk.on && !Life.on && cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } });
 document.addEventListener("pointerlockchange", () => { locked = document.pointerLockElement === cv; });
 let drag = false; cv.addEventListener("mousedown", () => drag = true); addEventListener("mouseup", () => drag = false);
-addEventListener("mousemove", e => { if (!started || !(locked || drag)) return; cam.yaw += e.movementX * .0024; cam.pitch = clamp(cam.pitch - e.movementY * .0024, -1.35, 1.35); });
+addEventListener("mousemove", e => { if (Life.designing && drag) return Life.spin(e.movementX); if (!started || !(locked || drag)) return; cam.yaw += e.movementX * .0024; cam.pitch = clamp(cam.pitch - e.movementY * .0024, -1.35, 1.35); });
 addEventListener("wheel", e => { cam.dist = clamp(cam.dist + Math.sign(e.deltaY) * .6, 2.2, 14); });
 const RATES = [1, 5, 20, 100];
 addEventListener("keydown", e => {
   if (e.code === "Space" || e.code.startsWith("Arrow")) e.preventDefault();
   Sound.start();                                         // browsers allow sound only after a key or a click
-  if (!started) { if (e.code === "Enter") begin(); return; }
+  if (!started) { if (e.code === "Enter" && !Life.designing && document.activeElement === document.body) Life.go(begin); return; }
+  if (Life.on) { Life.key(e); return; }                  // a counter or the quest log is open: Esc closes it (life.js)
   if (Talk.on) { Talk.key(e); return; }                  // number keys answer, Esc leaves
   if (e.repeat) return; keys[e.code] = true;
   if (e.code === "KeyV") cam.fp = !cam.fp;
   else if (e.code === "KeyE") interact();
   else if (e.code === "KeyN") Sound.toggle();
+  else if (e.code === "KeyB" && pl.pose !== 4) Life.counter();   // buy, sell, bank or stall where you stand (life.js)
+  else if (e.code === "KeyI") Life.panel("wallet");     // money and what you carry
+  else if (e.code === "KeyJ") Life.panel("quests");     // the quest log
   else if (e.code === "KeyF" && pl.pose === 4) Sound.horn(true);
   else if (e.code === "KeyR" && pl.pose === 4) Sound.radio();
   else if (e.code === "KeyM") { Sound.act("map"); showMap = !showMap; $("bigmap").style.display = showMap ? "flex" : "none"; }
@@ -1739,7 +1747,7 @@ addEventListener("keydown", e => {
   else if (e.code.startsWith("Bracket")) Sound.act("clock");
   if (e.code === "BracketRight") clock.rate = RATES[Math.min(RATES.length - 1, RATES.indexOf(clock.rate) + 1)];
   else if (e.code === "BracketLeft") clock.rate = RATES[Math.max(0, RATES.indexOf(clock.rate) - 1)];
-  else if (e.code === "KeyT") { clock.m = (clock.m + 60) % 1440; Sound.act("hour"); }
+  else if (e.code === "KeyT") { if (clock.m + 60 >= 1440) clock.day++; clock.m = (clock.m + 60) % 1440; Sound.act("hour"); }
   else if (e.code === "KeyQ") quality = quality > .75 ? .5 : 1;
 });
 addEventListener("keyup", e => { keys[e.code] = false; if (e.code === "KeyF") Sound.horn(false); });
@@ -1789,8 +1797,8 @@ function frame(now) {
   if (fps < 27 && quality > .5 && !PIN_Q) { slow += dt; if (slow > 3) { quality = Math.max(.5, quality - .25); slow = 0; } } else slow = 0;      // a slow machine gets a softer picture, not a slow game
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5) * quality, W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
   if (cv.width !== W || cv.height !== H) { cv.width = ui.width = W; cv.height = ui.height = H; }
-  clock.m = (clock.m + dt / D.pace * clock.rate) % 1440;
-  if (started && !Talk.on) { stepPlayer(dt); findTarget(); } else if (started) Talk.step(dt);   // talking (conversations.js) holds the player still
+  const m0 = clock.m; clock.m = (clock.m + dt / D.pace * clock.rate) % 1440; if (clock.m < m0) clock.day++;
+  if (started && !Talk.on && !Life.on) { stepPlayer(dt); findTarget(); } else if (started && Talk.on) Talk.step(dt);   // a counter or the quest log (life.js) also holds the player still   // talking (conversations.js) holds the player still
   stepCamera(dt);
 
   // everyone's place right now; bodies only for those near the player
@@ -1811,9 +1819,11 @@ function frame(now) {
     if (started && d < 9 && Math.abs(r.y - pl.y) < 3) tags.push({ x: r.x, y: r.y + (r.pose === 2 ? 1.0 : r.pose === 3 ? .55 : 1.88) * L.S, z: r.z, d, text: D.residents[i].n + ", " + D.roles[D.residents[i].r] + " · " + (r.walking ? GOING[D.acts[r.act]] || "walking" : DOING[D.acts[r.act]] || D.acts[r.act]) });
     if (started && r.shout && d < D.dodge.tag_m) tags.push({ x: r.x, y: r.y + 2.18 * L.S, z: r.z, d, a: clamp((D.dodge.tag_m - d) / 4, 0, 1), size: 18, text: r.shout });   // telling the driver off (CITY-071)
     if (started) Talk.consider(i, r, d);
+    if (started) Life.mark(i, r, d, L, tags);             // someone with a quest or a job for the player (life.js, QST-005)
   }
   if (started) Talk.pick();                               // the nearest resident in reach can be talked to (E)
-  if (started && !cam.fp && !cam.close && pl.pose !== 4) {   // not while in a car
+  if (started) Life.frame(dt);                            // money, quests and jobs move on with the clock (life.js)
+  if ((started || Life.designing) && !cam.fp && !cam.close && pl.pose !== 4) {   // not while in a car; and in the designer, to see who you are making
     let da = cam.yaw - pl.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
     People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
       look: pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
@@ -1903,7 +1913,7 @@ if (q.has("fp")) cam.fp = true; if (q.has("yaw")) pl.yaw = cam.yaw; if (q.has("r
 const LIGHTS = { reference: { sun: 1, sky: 1, bounce: 1, lanterns: 1, haze: 1, exposure: 1, warm: 0 }, kit: { sun: .62, sky: .9, bounce: 1.5, lanterns: 1, haze: .55, exposure: .7, warm: 1 } };
 let lightName = q.get("light") === "reference" ? "reference" : "kit";
 addEventListener("keydown", e => { if (e.code === "KeyL" && started && !e.repeat) { lightName = lightName === "kit" ? "reference" : "kit"; Object.assign(window.wasted.dials, LIGHTS[lightName]); } });
-window.wasted = { dials: Object.assign({}, LIGHTS[lightName]), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
+window.wasted = { dials: Object.assign({}, LIGHTS[lightName]), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, begin, setLook: L => { playerLook = L; }, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
 // sound (sound.js): which lots play music, where the fountains and gardens are
 Sound.init(LOTS, D.blocks.flatMap(b => b.props.filter(p => p.kind === "fountain").map(p => p.pos)),
   LOTS.filter(l => l.kind === "garden").map(l => [(l.rect[0] + l.rect[2]) / 2, (l.rect[1] + l.rect[3]) / 2]));

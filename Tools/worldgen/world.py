@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -87,7 +87,7 @@ def validate(w):
     if w.get("roads") and not out:
         import traffic
         out += traffic.Roads(w["roads"], w["traffic"]).problems(lots(w))
-    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w)
+    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + quest_problems(w) + designer_problems(w)
     kinds = {l["kind"] for l in lots(w)}
     for need in ("home", "shop", "food", "work", "health", "garden", "market", "stop", "utility"):
         if need not in kinds:
@@ -143,8 +143,11 @@ def dialogue_problems(w, acts=None):
                     if v not in names:
                         out.append("%s: unknown {%s}" % (at, v))
             for o in nd["options"]:
-                if set(o) - {"text", "next", "if", "do"}:
-                    out.append("%s: unknown keys on a reply %s" % (at, sorted(set(o) - {"text", "next", "if", "do"})))
+                if set(o) - {"text", "next", "if", "do", "act"}:
+                    out.append("%s: unknown keys on a reply %s" % (at, sorted(set(o) - {"text", "next", "if", "do", "act"})))
+                for a in o.get("act", []):                 # opening the shop or bank counter where the resident works (ECO-011, BANK-007)
+                    if a not in ("shop", "bank"):
+                        out.append("%s: unknown act %s" % (at, a))
                 if o["next"] is None:
                     ends.add(nid)
                 elif o["next"] not in nodes:
@@ -273,6 +276,160 @@ def sound_problems(w, acts=None):
                     out.append("sound: podcast %s, %s: unknown host %s" % (sid, ep["title"], host))
                 if not re.search(r"[a-z]", text.lower()):
                     out.append("sound: podcast %s, %s: a line with nothing to say" % (sid, ep["title"]))
+    return out
+
+
+def economy_problems(w, acts=None):
+    """Every rule World/rules/economy.json must keep (ECO-001, ECO-012, BANK-001, BANK-002, PROP-008)."""
+    e, out = w["economy"], []
+    L = {l["id"]: l for l in lots(w)}
+
+    def whole(v):                                      # ECO-001: money is whole chips
+        return type(v) is int
+
+    if e["currency"].get("per") != 100 or e["currency"].get("symbol") != "Bx":
+        out.append("economy: the currency is the brix, Bx, of 100 chips")
+    for a in e["system_accounts"]:
+        if not a.startswith("sys:"):
+            out.append("economy: system account %s must start with sys:" % a)
+    for a in ("sys:start", "sys:founding", "sys:rewards", "sys:residents", "sys:fees"):
+        if a not in e["system_accounts"]:
+            out.append("economy: missing system account %s" % a)
+    for k, v in e["start"].items():
+        if not whole(v) or v < 0:
+            out.append("economy: start %s must be whole chips" % k)
+    B = e["bank"]
+    if L.get(B["lot"], {}).get("kind") != "bank":
+        out.append("economy: the bank lot %s is not a bank" % B["lot"])
+    if not whole(B["vault"]) or B["vault"] <= 0:
+        out.append("economy: the vault must be whole chips")
+    if set(B["accounts"]) != {"current", "savings"}:
+        out.append("economy: the bank has a current and a savings account")
+    for k, a in B["accounts"].items():
+        if not whole(a["rate_bp"]) or a["rate_bp"] < 0:
+            out.append("economy: %s rate must be whole basis points" % k)
+    C = B["loan"]
+    for k in ("min", "max", "step", "rate_bp", "max_loans", "late_fee", "default_after_missed"):
+        if not whole(C[k]) or C[k] < 0:
+            out.append("economy: loan %s must be a whole number" % k)
+    if not (0 < C["min"] <= C["max"]) or C["step"] <= 0 or C["min"] % C["step"] or C["max"] % C["step"]:
+        out.append("economy: loan sizes do not fit their step")
+    if not C["terms"] or any(not whole(t) or t < 1 for t in C["terms"]):
+        out.append("economy: loan terms are whole days")
+    items = e["items"]
+    for k, i in items.items():
+        if not whole(i.get("price")) or i["price"] < 0 or not i.get("name"):
+            out.append("economy: item %s needs a name and a price in whole chips" % k)
+    for k, S in e["shops"].items():
+        for it in S["sells"] + S["buys"]:
+            if it not in items:
+                out.append("economy: shop %s has unknown item %s" % (k, it))
+        for it in S["buys"]:
+            if it in items and not items[it]["sell"]:
+                out.append("economy: shop %s buys %s, which cannot be sold" % (k, it))
+        for it in S["sells"]:
+            if it in items and (items[it].get("quest") or items[it]["price"] <= 0):
+                out.append("economy: shop %s sells quest item %s" % (k, it))
+        if not whole(S["till"]) or S["till"] <= 0:
+            out.append("economy: shop %s till must be whole chips" % k)
+    for l in L.values():                               # every shop and cafe is one of the shop types
+        if l["kind"] in ("shop", "food") and not any(l["kind"] == S["match"]["kind"] and S["match"].get("name_has", "") in l["name"] for S in e["shops"].values()):
+            out.append("economy: %s (%s) matches no shop type" % (l["id"], l["name"]))
+    T, P = e["stock"], e["price"]
+    if not whole(T["target"]) or T["target"] < 1 or not 0 <= T["restock_minute"] < 1440:
+        out.append("economy: stock needs a target and a restock minute")
+    for a in T["visit_acts"] + e["stall"]["visit_acts"]:
+        if acts is not None and a not in acts:
+            out.append("economy: unknown activity %s" % a)
+    if not (whole(P["min_bp"]) and whole(P["max_bp"]) and whole(P["slope_bp"]) and P["min_bp"] <= 10000 <= P["max_bp"]):
+        out.append("economy: price bounds must hold the usual price")
+    if not 0 < P["sell_share_bp"] <= 10000:
+        out.append("economy: shops pay a share of their price")
+    Q = e["reputation"]
+    if Q["min"] >= 0 or Q["max"] <= 0 or not 0 <= Q["discount_bp_at_max"] < 10000:
+        out.append("economy: reputation runs from below zero to above it")
+    S = e["stall"]
+    if L.get(S["lot"], {}).get("kind") != "market":
+        out.append("economy: the stall lot %s is not the market" % S["lot"])
+    if not (whole(S["rent"]) and whole(S["slots"]) and S["slots"] > 0 and whole(S["buy_bp"]) and whole(S["elasticity"]) and whole(S["max_price_factor_bp"])):
+        out.append("economy: stall numbers must be whole")
+    if not 0 <= S["open"][0] < S["open"][1] <= 1440:
+        out.append("economy: the stall opens and closes within the day")
+    return out
+
+
+def quest_problems(w):
+    """Every rule World/rules/quests.json must keep (QST-001 to QST-003, QST-006)."""
+    import quests
+    return quests.problems(w["quests"], w["economy"], {r["id"] for r in w["residents"]}, {l["id"] for l in lots(w)},
+                           set(w["roles"]["roles"]), set(w["dialogue"]["moods"]), w["dialogue"]["vars"])
+
+
+DESIGNER_HAIR = ("short", "side", "long", "bob", "bun", "afro", "bald")          # what Prototype/play/people.js can draw
+DESIGNER_GARMENT = ("tee", "long", "tunic", "coat")
+DESIGNER_BOTTOM = ("trousers", "shorts", "skirt")
+DESIGNER_WALK = ("Springy", "Easy", "Hurried", "Careful")                       # CHARACTER_MOTION §3 signatures
+
+
+def designer_problems(w):
+    """Every rule World/rules/designer.json must keep (CHR-002, CHR-013)."""
+    d, out = w["designer"], []
+
+    def colour(c):
+        return isinstance(c, list) and len(c) == 3 and all(isinstance(v, (int, float)) and 0 <= v <= 1 for v in c)
+
+    for k, s in d["sliders"].items():
+        if not (s["min"] <= s["default"] <= s["max"] and s["min"] < s["max"] and s["step"] > 0):
+            out.append("designer: slider %s needs min <= default <= max and a step" % k)
+    h = d["sliders"].get("height")
+    if not h or h["min"] < 1.58 or h["max"] > 1.80:
+        out.append("designer: height must stay inside the cast range 1.58 to 1.80 m (ART_DIRECTION 3.2)")
+    for k in ("height", "build", "face_w", "eye_size", "eye_open", "brow", "nose", "lips"):   # ART_DIRECTION 3.4 designer values
+        if k not in d["sliders"]:
+            out.append("designer: no slider for %s" % k)
+    for k in ("skin", "hair_color", "eyes"):
+        if not d[k] or not all(colour(c) for c in d[k]):
+            out.append("designer: %s must be colours" % k)
+    if len(d["skin"]) < 8:
+        out.append("designer: offer a wide range of skin tones (rule C3)")
+    for c in d["palette"].values():
+        if not colour(c):
+            out.append("designer: palette colours must be colours")
+    for k, allowed in (("hair", DESIGNER_HAIR), ("garment", DESIGNER_GARMENT), ("bottom_type", DESIGNER_BOTTOM), ("walk", DESIGNER_WALK)):
+        for v in d[k]:
+            if v not in allowed:
+                out.append("designer: %s %s cannot be drawn" % (k, v))
+    for v in d["extras"]:
+        if v not in ("scarf", "cap", "bag", "apron", "tash"):
+            out.append("designer: extra %s cannot be drawn" % v)
+    out += ["designer default: " + p for p in look_problems(d, d["default"])]
+    return out
+
+
+def look_problems(d, v):
+    """What is wrong with one character's designer values (the slice checks the same before it loads a saved character)."""
+    out = []
+    for k, s in d["sliders"].items():
+        x = v.get(k)
+        if isinstance(x, bool) or not isinstance(x, (int, float)) or not s["min"] - 1e-9 <= x <= s["max"] + 1e-9:
+            out.append("%s out of range" % k)
+    for k in ("skin", "hair_color", "eyes"):
+        if not (type(v.get(k)) is int and 0 <= v[k] < len(d[k])):
+            out.append("%s is not a swatch" % k)
+    for k in ("hair", "garment", "bottom_type", "walk"):
+        if v.get(k) not in d[k]:
+            out.append("%s %s is not offered" % (k, v.get(k)))
+    for k in ("top", "bottom", "shoes"):
+        if v.get(k) not in d["palette"]:
+            out.append("%s colour %s is not in the palette" % (k, v.get(k)))
+    for k in ("scarf", "cap", "apron"):
+        if v.get(k) is not None and v[k] not in d["palette"]:
+            out.append("%s colour %s is not in the palette" % (k, v.get(k)))
+    for k in ("bag", "tash"):
+        if not isinstance(v.get(k), bool):
+            out.append("%s must be yes or no" % k)
+    if not isinstance(v.get("name"), str) or not 0 < len(v["name"].strip()) <= d["name"]["max"]:
+        out.append("the name must be 1 to %d letters" % d["name"]["max"])
     return out
 
 

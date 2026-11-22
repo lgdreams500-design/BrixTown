@@ -4,14 +4,44 @@
     {
       "name": "play",
       "runtimeExecutable": "powershell",
-      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "Tools/serve_play.ps1"],
+      "runtimeArgs": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "Tools/serve_play.ps1"
+      ],
       "port": 8765
     },
     {
       "name": "citysim",
       "runtimeExecutable": "powershell",
-      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "Tools/serve_play.ps1", "-Root", "Tools/citysim", "-Port", "8771"],
+      "runtimeArgs": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "Tools/serve_play.ps1",
+        "-Root",
+        "Tools/citysim",
+        "-Port",
+        "8771"
+      ],
       "port": 8771
+    },
+    {
+      "name": "play-8790",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "Tools/serve_play.ps1",
+        "-Port",
+        "8790"
+      ],
+      "port": 8790
     }
   ]
 }

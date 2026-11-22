@@ -1,5 +1,5 @@
 {
- "note": "Conversations with residents (CITY-007, F-NPC-TALK level 1). The first rule that matches a resident picks their conversation; a resident listed in 'residents' gets that conversation instead (for their own storyline later). A node has the resident's line ('say'), its emotion tag ('mood', used by the faces in CHR-008) and up to 9 replies. A reply has the player's 'text' and 'next': a node id, or null to end the talk. Optional on a reply: 'if', a list of flags that must be set ('name') or not set ('!name'), and 'do', flags it sets. Flags are kept per resident; quests will read and set them later. In lines and replies, {name} {role} {place} {doing} {greeting} {weekday} {season} are filled in. Checked by Tools/worldgen/test_world.py.",
+ "note": "Conversations with residents (CITY-007, F-NPC-TALK level 1). The first rule that matches a resident picks their conversation; a resident listed in 'residents' gets that conversation instead (for their own storyline later). A node has the resident's line ('say'), its emotion tag ('mood', used by the faces in CHR-008) and up to 9 replies. A reply has the player's 'text' and 'next': a node id, or null to end the talk. Optional on a reply: 'if', a list of flags that must be set ('name') or not set ('!name'), 'do', flags it sets, and 'act': 'shop' or 'bank' opens that counter where the resident is (ECO-011, BANK-007). Flags are kept per resident; quests will read and set them later. In lines and replies, {name} {role} {place} {doing} {greeting} {weekday} {season} are filled in. Checked by Tools/worldgen/test_world.py.",
  "moods": ["neutral", "happy", "sad", "angry", "surprised", "thinking"],
  "vars": ["name", "role", "place", "doing", "greeting", "weekday", "season"],
  "role_words": {
@@ -32,6 +32,7 @@
      "say": "{greeting}! Welcome to {place}. What can I do for you?",
      "mood": "happy",
      "options": [
+      { "text": "I'd like to buy something.", "next": null, "act": ["shop"] },
       { "text": "What's good today?", "next": "today" },
       { "text": "How's business?", "next": "business" },
       { "text": "What's new in town?", "next": "news" },
@@ -42,6 +43,7 @@
      "say": "Anything else I can help with?",
      "mood": "neutral",
      "options": [
+      { "text": "I'd like to buy something.", "next": null, "act": ["shop"] },
       { "text": "What's good today?", "next": "today" },
       { "text": "How's business?", "next": "business" },
       { "text": "What's new in town?", "next": "news", "if": ["!heard_rumour"] },

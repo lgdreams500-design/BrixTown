@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 15 of 33 | 9 of 33 | 9 of 33 |
-| Size of the plan (points) | 163 | 235 | 504 |
-| Size of the suggested plan | 82 | 195 | 472 |
+| Decided | 19 of 36 | 9 of 36 | 9 of 36 |
+| Size of the plan (points) | 224 | 268 | 545 |
+| Size of the suggested plan | 96 | 228 | 513 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -20,7 +20,7 @@
 | **City layout** `F-MAP-CITY` | 1 A district ★ | 1 A district | 2 Whole city | A district from the first slice (so cars fit), whole city in the full game (owner, 2026-11-22). |
 | **Lots and building records** `F-MAP-LOTS` | 1 Registry | 1 Registry | 1 Registry ★ | Registry at every milestone (owner, 2026-11-22). |
 | **Going inside buildings** `F-BLD-INSIDE` | undecided | undecided | undecided |  |
-| **Shops and market** `F-BLD-SHOP` | undecided | undecided | undecided |  |
+| **Shops and market** `F-BLD-SHOP` | 2 Stock and prices ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Stock and prices" for the first slice. Later milestones not stated. |
 | **Mall** `F-BLD-MALL` | undecided | undecided | undecided |  |
 | **Hospital and clinic** `F-BLD-HOSPITAL` | undecided | undecided | undecided |  |
 | **Bank, showroom, library, museum, cinema** `F-BLD-CIVIC` | 1 Places to visit | undecided | undecided | Owner, 2026-11-22: "Places to visit (Recommended)" for the bank, car showroom, library, museum, cinema and a second hospital and mall, made from existing lots. Later milestones not stated. |
@@ -76,6 +76,14 @@
 | **Interaction sounds** `F-SND-ACTION` | 1 Every action | undecided | undecided | Owner, 2026-11-22: "1, 1, 1 for slice" (city sounds, interaction sounds and music in the world, in the first slice). Later milestones not stated. |
 | **Music** `F-SND-MUSIC` | 1 Music in the world ★ | undecided | undecided | Owner, 2026-11-22: "1, 1, 1 for slice" (city sounds, interaction sounds and music in the world, in the first slice). Later milestones not stated. |
 
+## Money, work and the player
+
+| Feature | First slice | Life depth | Full game | Note |
+|---|---|---|---|---|
+| **Money and the bank** `F-ECO-BANK` | 2 Full bank ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Full bank now" for the first slice. Later milestones not stated. |
+| **Quests from residents** `F-QUEST` | 2 Branching and repeatable ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Branching + repeatable" for the first slice. Later milestones not stated. |
+| **Character designer** `F-CHR-DESIGN` | 2 Full designer ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Full designer" for the first slice. Later milestones not stated. |
+
 ## What each level means
 
 **City layout** (`F-MAP-CITY`). How much city there is to walk around.
@@ -96,7 +104,7 @@
 **Shops and market** (`F-BLD-SHOP`). Where money gets spent.
 - 0 Decoration: Stalls and shop fronts you cannot use. Size S.
 - 1 Buy at a counter: A shopkeeper sells a short list of goods through the ledger. Size M.
-- 2 Stock and prices: Shops hold stock, change prices and can be run by players. Size XL.
+- 2 Stock and prices: Shops hold stock that sells down through the day and restocks, prices move with stock within set bounds, the player sells back to them, and the player can rent a market stall and sell to residents. Size XL.
 
 **Mall** (`F-BLD-MALL`). A big indoor place to shop and meet.
 - 0 None: No mall; shops are on the street. Size -.
@@ -242,3 +250,18 @@
 - 0 Background score: A soft score that changes with time of day; mutes in conversations. Size S.
 - 1 Music in the world: Music comes from places: car radio with a few music stations and podcasts, shop and café music, a busker; the score fades when a source is near. Size M.
 - 2 Players make music: Instruments and speakers players own and play for others, heard by everyone nearby. Size L.
+
+**Money and the bank** (`F-ECO-BANK`). Brix in a ledger: what the player earns, keeps, saves and borrows.
+- 0 Cash only: Cash in the player's pocket, moved only through the ledger; no bank account. Size M.
+- 1 One account: Cash plus one current account at the bank, a statement of every movement. Size M.
+- 2 Full bank: Current and savings accounts with interest each game day, loans with a schedule, late fees and repossession on default. Size L.
+
+**Quests from residents** (`F-QUEST`). Things to do for the people of the town, and money for doing them.
+- 0 None: No quests; money comes from the job only. Size -.
+- 1 Starter quest lines: A few short quest lines given in conversation, a quest log, rewards through the ledger, progress saved. Size L.
+- 2 Branching and repeatable: Choices that branch a quest line to different endings, daily jobs offered by residents worked out from the day, reputation with each resident. Size L.
+
+**Character designer** (`F-CHR-DESIGN`). Players make who they are before they walk into town.
+- 0 Default character: Everyone starts as the same player character. Size -.
+- 1 Presets: Choose from set options for body, skin, hair and outfit. Size M.
+- 2 Full designer: Sliders for height, build and face shape, every skin tone, hair, garments, colours, extras and walk, with a live preview; stored as compact values. Size L.

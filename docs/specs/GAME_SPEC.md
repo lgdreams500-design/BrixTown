@@ -1,7 +1,7 @@
 ---
 spec_id: WASTED-SPEC
 title: Wasted — Game Specification
-version: 0.4.6
+version: 0.5.0
 status: draft            # draft | reviewed | approved
 last_updated: 2026-11-22
 owner: project-owner
@@ -35,7 +35,7 @@ usable by both.
 **ID prefixes:** `CORE` game loop · `ART` art direction · `CHR` character · `ANIM` body motion · `NEED` needs · `CAR` careers · `PROP` property ·
 `CITY` world interaction and NPCs · `WLD` time, weather, vegetation · `ECO` economy · `BANK` banking ·
 `MP` multiplayer · `ACC` accounts · `UGC` creator platform · `UI` interface · `TECH` architecture ·
-`ASSET` asset pipeline · `TEST` test harness · `SEC` security and safety · `SND` sound.
+`ASSET` asset pipeline · `TEST` test harness · `SEC` security and safety · `SND` sound · `QST` quests.
 
 ### Companion documents
 | Document | Holds |
@@ -123,8 +123,8 @@ Face details: `docs/art/CHARACTER_FACE.md` (ADR-0005).
 
 | ID | Requirement | Pri | Phase | Status |
 |---|---|---|---|---|
-| CHR-001 | A new player shall create a character by choosing body, face, hair, skin tone and starting outfit. | P0 | PH3 | proposed |
-| CHR-002 | The designer shall expose sliders/morphs for body and face; all values shall be stored as compact data, not baked meshes. | P1 | PH3 | proposed |
+| CHR-001 | A new player shall create a character by choosing body, face, hair, skin tone and starting outfit. Moved to PH1 by the owner's pick of `F-CHR-DESIGN` level 2 for the first slice. | P0 | PH1 | in-progress |
+| CHR-002 | The designer shall expose sliders/morphs for body and face; all values shall be stored as compact data, not baked meshes. Moved to PH1 with CHR-001. | P1 | PH1 | in-progress |
 | CHR-003 | Clothing and accessories shall be modular items that fit every supported body shape. | P0 | PH3 | proposed |
 | CHR-004 | Appearance shall replicate to other players and load within 2 s of the character becoming relevant `[ASSUMPTION]`. | P1 | PH3 | proposed |
 | CHR-005 | The appearance system shall accept creator-made items (UGC) without a client patch. | P1 | PH5 | proposed |
@@ -134,6 +134,7 @@ Face details: `docs/art/CHARACTER_FACE.md` (ADR-0005).
 | CHR-009 | While a character speaks a dialogue line, its mouth shall move in time with that line (lip sync). Timing comes from the line's text (Q-14). | P1 | PH1 | accepted |
 | CHR-010 | Idle characters shall blink and shift gaze so that faces never look frozen. | P2 | PH3 | proposed |
 | CHR-011 | Facial animation shall be level-of-detail controlled: full on the characters in a conversation and nearby, reduced or off with distance, within the client performance budget. | P1 | PH3 | proposed |
+| CHR-013 | The designer shall show the character live as values change and keep every value inside the ranges in `World/rules/designer.json` (height within the cast range of ART_DIRECTION §3.2). Choices come from the world palette (rule C2), and the face control set shall work unchanged on every designed face (CHR-007). `F-CHR-DESIGN` level 2. Asked for by the owner on 2026-11-22. | P0 | PH1 | in-progress |
 | CHR-012 | Open mouth shapes shall show upper teeth, lower teeth and tongue where the sound calls for them, and a face at rest shall read as neutral, not sad. | P1 | PH3 | accepted |
 
 ### 4.2a Body motion — `ANIM`
@@ -179,12 +180,13 @@ are accepted, the rest stay proposed.
 
 | ID | Requirement | Pri | Phase | Status |
 |---|---|---|---|---|
-| PROP-001 | Characters shall buy, own and sell items; ownership shall be recorded server-side. | P0 | PH1 | proposed |
+| PROP-001 | Characters shall buy, own and sell items; ownership shall be recorded server-side. In the browser slice ownership is kept in the player's save (QST-008) until the server exists (PH2). | P0 | PH1 | in-progress |
 | PROP-002 | Characters shall buy, sell and rent houses and apartments from a finite set of city lots. | P0 | PH3 | proposed |
 | PROP-003 | Owners shall place, move and remove furniture inside their property; layout persists and is visible to visitors. | P0 | PH3 | proposed |
 | PROP-004 | Owners shall control access (private, friends, public). | P1 | PH3 | proposed |
 | PROP-005 | Characters shall buy or lease commercial units and run shops: stock, prices, opening hours, staff (NPC or player). | P1 | PH3 | proposed |
 | PROP-006 | Property shall carry recurring costs (tax, utilities, upkeep) charged through the ledger. | P1 | PH4 | proposed |
+| PROP-008 | A player shall rent a stall in the market square for a game day, set out items they own at prices they choose, and residents who visit the market that day shall buy from it. Who buys what is calculated from their routine and the price against the item's usual price, not ticked; takings go through the ledger. `F-BLD-SHOP` level 2 (the slice's form of player-run shops, PROP-005). Asked for by the owner on 2026-11-22. | P1 | PH1 | in-progress |
 | PROP-007 | The world shall define what happens to property of long-inactive players `[OPEN: Q-07]`. | P1 | PH4 | proposed |
 
 ### 4.6 Living city — `CITY`
@@ -242,6 +244,23 @@ wording check; they are `in-progress` because the owner asked for the work.
 | SND-013 | The player shall be able to turn all sound off and on with one key, remembered between visits. | F-SND-ACTION | 0 | P1 | PH1 | in-progress | |
 | SND-014 | The car radio shall also carry podcasts: shows with hosts who talk in wordless syllables in their own voices, each line shown as a caption, over quiet music. Where a show is shall follow the world clock, so everyone tuned in hears the same line. The shows are data. Asked for by the owner on 2026-11-22. | F-SND-MUSIC | 1 | P1 | PH1 | in-progress | `test_SND_014_the_radio_has_podcasts`, `test_SND_014_broken_podcasts_are_caught` |
 
+### 4.9 Quests — `QST`
+
+From the owner's pick of `F-QUEST` level 2 for the first slice (2026-11-22). Rules proved in
+`Tools/citysim/economy.py` and `Tools/citysim/quests.py` (tests in `test_economy.py`); data in
+`World/rules/quests.json`; built in the browser slice (`Prototype/play/quests.js`). Design: ADR-0012.
+
+| ID | Requirement | Pri | Phase | Status |
+|---|---|---|---|---|
+| QST-001 | Quest lines shall be data: who gives them, what must be done first, stages with a goal (talk to someone, go somewhere, have an item, a bank or stall condition), the lines said at each stage, and endings with their rewards. They are checked before use: every stage reachable, every stage able to finish, every person, place and item real. | P0 | PH1 | in-progress |
+| QST-002 | A new game shall start with the character designer (CHR-001), then the first starter quest line, which leads the player to the bank, a shop and a resident. At least four starter quest lines shall exist; finishing one opens the next ones. | P0 | PH1 | in-progress |
+| QST-003 | Every starter quest line shall have at least one choice that leads to a different ending, with different rewards and reputation. | P1 | PH1 | in-progress |
+| QST-004 | Quest and job rewards shall be paid through the ledger from the named rewards account (ECO-003); items given or taken are recorded as owned (PROP-001). | P0 | PH1 | in-progress |
+| QST-005 | A quest log shall show each active quest line's current stage, where the person to see is right now (from their routine) and the finished lines with their endings; the people to see are marked on the maps. | P1 | PH1 | in-progress |
+| QST-006 | Residents shall offer repeatable daily jobs (deliveries, shopping, a shift at their work). Which resident offers which job on which day, and what it pays, shall be calculated from the day and the data, not stored. One job at a time; a job has a time limit and failing it costs reputation. | P1 | PH1 | in-progress |
+| QST-007 | The player shall have a reputation with each resident from −100 to 100, changed by quest endings and jobs. It changes that resident's shop prices (within data bounds) and whether they offer jobs. | P1 | PH1 | in-progress |
+| QST-008 | The character, money, items, quest progress and reputation shall survive closing and reopening the slice, and a new game shall start clean. In the slice this is a save in the browser; from PH2 it is server-side (CORE-003, ACC-003). | P0 | PH1 | in-progress |
+
 ---
 
 ## 5. Economy — `ECO`, `BANK`
@@ -250,19 +269,25 @@ The economy is the system most likely to break the game if built loosely, so it 
 
 | ID | Requirement | Pri | Phase | Status |
 |---|---|---|---|---|
-| ECO-001 | The game shall have one in-game currency, the **brix** (symbol `Bx`, plural "brix"), divided into 100 **chips**. All amounts shall be stored as integer chips; no floating-point money. | P0 | PH1 | proposed |
-| ECO-002 | Every currency movement shall be a **double-entry ledger transaction**: debits equal credits, written atomically, never edited, only reversed by a new transaction. | P0 | PH1 | proposed |
-| ECO-003 | Currency shall only be created or destroyed by named system accounts (wages source, tax sink, central bank…); total supply shall be computable at any moment. | P0 | PH1 | proposed |
+| ECO-001 | The game shall have one in-game currency, the **brix** (symbol `Bx`, plural "brix"), divided into 100 **chips**. All amounts shall be stored as integer chips; no floating-point money. | P0 | PH1 | in-progress |
+| ECO-002 | Every currency movement shall be a **double-entry ledger transaction**: debits equal credits, written atomically, never edited, only reversed by a new transaction. | P0 | PH1 | in-progress |
+| ECO-003 | Currency shall only be created or destroyed by named system accounts (wages source, tax sink, central bank…); total supply shall be computable at any moment. | P0 | PH1 | in-progress |
 | ECO-004 | All faucets (money in) and sinks (money out) shall be listed in data and reported per game day. | P0 | PH4 | proposed |
-| ECO-005 | Prices of goods shall respond to supply and demand within data-defined bounds. | P1 | PH4 | proposed |
+| ECO-005 | Prices of goods shall respond to supply and demand within data-defined bounds. In the slice a shop's price follows its stock (ECO-010); moved to PH1 by the owner's pick of `F-BLD-SHOP` level 2. | P1 | PH1 | in-progress |
 | ECO-006 | The simulation shall publish indices: price index (inflation), employment, money supply, average wage. | P1 | PH4 | proposed |
 | ECO-007 | The economy simulation shall run headless, without the game client, at accelerated time for testing and tuning. | P0 | PH4 | proposed |
-| BANK-001 | Banks shall offer current and savings accounts; deposits earn interest accrued on a fixed cycle. | P0 | PH4 | proposed |
-| BANK-002 | Banks shall offer loans and mortgages with principal, rate, term, schedule, and defined default consequences (fees, repossession). | P0 | PH4 | proposed |
+| BANK-001 | Banks shall offer current and savings accounts; deposits earn interest accrued on a fixed cycle. Moved to PH1 by the owner's pick of `F-ECO-BANK` level 2; rates are fixed data until the central bank (BANK-003) exists `[ASSUMPTION]`. | P0 | PH1 | in-progress |
+| BANK-002 | Banks shall offer loans and mortgages with principal, rate, term, schedule, and defined default consequences (fees, repossession). Loans moved to PH1 with BANK-001; mortgages wait for property (PROP-002). | P0 | PH1 | in-progress |
 | BANK-003 | A simulated central bank shall set a policy rate on a fixed cycle using a published rule (inflation and activity vs. targets). | P0 | PH4 | proposed |
 | BANK-004 | Deposit and loan rates shall derive from the policy rate plus data-defined spreads; rate changes shall be announced in-game before they apply. | P1 | PH4 | proposed |
 | BANK-005 | Characters shall have a credit score affecting loan eligibility and rate. | P2 | PH4 | proposed |
 | BANK-006 | Player-to-player transfers shall be supported with limits and logging to deter abuse. | P1 | PH4 | proposed |
+| ECO-009 | The player shall see their cash, each account's balance and a statement of every ledger line that touched them, newest first. `F-ECO-BANK` level 1. Asked for by the owner on 2026-11-22. | P1 | PH1 | in-progress |
+| ECO-010 | A shop's stock of each item shall be calculated from its restock time, the residents' shop visits in their routine and the player's own trades since then; it is not ticked. Price = usual price × a factor that rises as stock falls, inside data bounds, rounded to whole chips. `F-BLD-SHOP` level 2. Asked for by the owner on 2026-11-22. | P1 | PH1 | in-progress |
+| ECO-011 | The player shall sell items to a shop that deals in them, at a data-set share of its current price, paid from the shop's till account; a shop whose till cannot pay buys nothing. `F-BLD-SHOP` level 2. Asked for by the owner on 2026-11-22. | P0 | PH1 | in-progress |
+| ECO-012 | Every economy number (starting money, prices, stock, rates, fees, terms, rewards) shall be data in `World/rules/economy.json` and `World/rules/quests.json`, checked before use. Asked for by the owner on 2026-11-22. | P0 | PH1 | in-progress |
+| BANK-007 | At the bank the player shall open accounts and move money between cash, current and savings; a payment that would take an account below zero is refused, never partly made. `F-ECO-BANK` level 2. Asked for by the owner on 2026-11-22. | P0 | PH1 | in-progress |
+| BANK-008 | Interest, loan repayments, late fees and default for every game day that has passed shall be worked out in day order when the game next looks at the accounts, each as its own ledger transaction dated at the day's end; nothing is ticked (TECH-004). On default the bank repossesses the player's items, valued at their sell price toward the debt, and refuses new loans. `F-ECO-BANK` level 2. Asked for by the owner on 2026-11-22. | P0 | PH1 | in-progress |
 
 ---
 
@@ -383,6 +408,7 @@ specs and validation tools that creators will later use, so the UGC pipeline is 
 | ADR-0005 | One shared face control set; lip sync from mouth shapes | accepted |
 | ADR-0006 | Body motion: one skeleton, movement signatures, independent layers (Q-17 still open) | accepted |
 | ADR-0007 | Daylight: the softer, warmer "kit" light replaces the reference light as the default (amends ADR-0004) | accepted |
+| ADR-0012 | Money, shops, quests and the designer in the slice: one ledger, settled by the day; stock, stall sales and daily jobs calculated from the clock and routines | proposed |
 
 ADR-0001 to ADR-0003 are reserved numbers; their files are written when the decision is taken.
 
@@ -447,3 +473,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.4.4 | 2026-11-22 | Owner picked `F-NPC-SPEECH` level 2 (lip sync) for the first slice: CHR-008, CHR-009 and ANIM-006 move to PH1, and Q-14 is decided as text first. The slice's faces take the CHR-007 control set for this; the designer part of CHR-007 stays in PH3. |
 | 0.4.5 | 2026-11-22 | Sound (§4.8, SND-001 to SND-013) from the owner's pick of `F-SND-WORLD`, `F-SND-ACTION` and `F-SND-MUSIC` at level 1 for the first slice. Built in the browser slice from `World/rules/sound.json`. |
 | 0.4.6 | 2026-11-22 | SND-014: podcasts on the car radio (owner's request), as part of `F-SND-MUSIC` level 1. |
+| 0.5.0 | 2026-11-22 | Money, shops, quests and the character designer in the first slice, from the owner's request and picks (`F-ECO-BANK` 2, `F-BLD-SHOP` 2, `F-QUEST` 2, `F-CHR-DESIGN` 2). ECO-001 to 003 in progress; ECO-005, BANK-001, BANK-002, CHR-001 and CHR-002 moved to PH1. Added ECO-009 to 012, BANK-007, BANK-008, PROP-008, CHR-013 and §4.9 Quests (QST-001 to 008). ADR-0012. |

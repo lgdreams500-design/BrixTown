@@ -56,6 +56,10 @@
     {
       "id": "sound",
       "name": "Sound and music"
+    },
+    {
+      "id": "life",
+      "name": "Money, work and the player"
     }
   ],
   "pillars": {
@@ -201,7 +205,12 @@
       ],
       "spec": [
         "CITY-004",
-        "PROP-005"
+        "PROP-001",
+        "PROP-005",
+        "PROP-008",
+        "ECO-005",
+        "ECO-010",
+        "ECO-011"
       ],
       "levels": [
         {
@@ -215,15 +224,17 @@
           "what": "A shopkeeper sells a short list of goods through the ledger.",
           "effort": "M",
           "needs": {
-            "F-OBJ-POINTS": 1
+            "F-OBJ-POINTS": 1,
+            "F-ECO-BANK": 0
           }
         },
         {
           "name": "Stock and prices",
-          "what": "Shops hold stock, change prices and can be run by players.",
+          "what": "Shops hold stock that sells down through the day and restocks, prices move with stock within set bounds, the player sells back to them, and the player can rent a market stall and sell to residents.",
           "effort": "XL",
           "needs": {
-            "F-MAP-LOTS": 1
+            "F-MAP-LOTS": 1,
+            "F-ECO-BANK": 1
           }
         }
       ],
@@ -1454,6 +1465,145 @@
       "suggested": {
         "slice": 0,
         "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-ECO-BANK",
+      "area": "life",
+      "title": "Money and the bank",
+      "why": "Brix in a ledger: what the player earns, keeps, saves and borrows.",
+      "pillars": [
+        2,
+        3
+      ],
+      "spec": [
+        "ECO-001",
+        "ECO-002",
+        "ECO-003",
+        "ECO-009",
+        "BANK-001",
+        "BANK-002",
+        "BANK-007",
+        "BANK-008"
+      ],
+      "levels": [
+        {
+          "name": "Cash only",
+          "what": "Cash in the player's pocket, moved only through the ledger; no bank account.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "One account",
+          "what": "Cash plus one current account at the bank, a statement of every movement.",
+          "effort": "M",
+          "needs": {
+            "F-BLD-CIVIC": 1
+          }
+        },
+        {
+          "name": "Full bank",
+          "what": "Current and savings accounts with interest each game day, loans with a schedule, late fees and repossession on default.",
+          "effort": "L",
+          "needs": {
+            "F-BLD-CIVIC": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-QUEST",
+      "area": "life",
+      "title": "Quests from residents",
+      "why": "Things to do for the people of the town, and money for doing them.",
+      "pillars": [
+        1,
+        2
+      ],
+      "spec": [
+        "QST-001",
+        "QST-002",
+        "QST-003",
+        "QST-004",
+        "QST-005",
+        "QST-006",
+        "QST-007",
+        "QST-008"
+      ],
+      "levels": [
+        {
+          "name": "None",
+          "what": "No quests; money comes from the job only.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Starter quest lines",
+          "what": "A few short quest lines given in conversation, a quest log, rewards through the ledger, progress saved.",
+          "effort": "L",
+          "needs": {
+            "F-NPC-TALK": 1,
+            "F-ECO-BANK": 0
+          }
+        },
+        {
+          "name": "Branching and repeatable",
+          "what": "Choices that branch a quest line to different endings, daily jobs offered by residents worked out from the day, reputation with each resident.",
+          "effort": "L",
+          "needs": {
+            "F-NPC-ROUTINE": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-CHR-DESIGN",
+      "area": "life",
+      "title": "Character designer",
+      "why": "Players make who they are before they walk into town.",
+      "pillars": [
+        2,
+        5
+      ],
+      "spec": [
+        "CHR-001",
+        "CHR-002",
+        "CHR-013"
+      ],
+      "levels": [
+        {
+          "name": "Default character",
+          "what": "Everyone starts as the same player character.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Presets",
+          "what": "Choose from set options for body, skin, hair and outfit.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "Full designer",
+          "what": "Sliders for height, build and face shape, every skin tone, hair, garments, colours, extras and walk, with a live preview; stored as compact values.",
+          "effort": "L",
+          "needs": {}
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 2,
         "full": 2
       }
     }

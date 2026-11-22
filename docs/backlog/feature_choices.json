@@ -80,6 +80,22 @@
     "F-BLD-CIVIC": {
       "slice": 1,
       "note": "Owner, 2026-11-22: \"Places to visit (Recommended)\" for the bank, car showroom, library, museum, cinema and a second hospital and mall, made from existing lots. Later milestones not stated."
+    },
+    "F-ECO-BANK": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: chose \"2: Full bank now\" for the first slice. Later milestones not stated."
+    },
+    "F-BLD-SHOP": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: chose \"2: Stock and prices\" for the first slice. Later milestones not stated."
+    },
+    "F-QUEST": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: chose \"2: Branching + repeatable\" for the first slice. Later milestones not stated."
+    },
+    "F-CHR-DESIGN": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: chose \"2: Full designer\" for the first slice. Later milestones not stated."
     }
   }
 }

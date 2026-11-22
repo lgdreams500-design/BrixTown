@@ -1,5 +1,5 @@
 "use strict";
-// Talking to residents (CITY-007, F-NPC-TALK level 1). Conversations are data: World/rules/dialogue.json, packed into
+// Talking to residents (CITY-007, F-NPC-TALK level 1; quests and jobs join in through life.js, QST-001 to QST-007). Conversations are data: World/rules/dialogue.json, packed into
 // city_data.js as D.dialogue by Tools/worldgen/build_play.py. Loaded BEFORE play.js: play.js starts drawing as soon as it
 // has run, and a frame can come before a later script has downloaded. Nothing here touches play.js's globals (pl, cam,
 // clock, resident, target...) until play.js calls in through the few hooks named in Talk below.
@@ -88,13 +88,14 @@ var Talk = (() => {                    // var: a property of window, so index.ht
       greeting: m < 300 ? "Good evening" : m < 720 ? "Good morning" : m < 1080 ? "Good afternoon" : "Good evening",
       weekday: DAYS[D.day.weekday] || D.day.weekday, season: D.day.season.toLowerCase(),
     };
+    Object.assign(v, s.conv.vars || {}, window.Life ? Life.vars() : {});   // {player}, and a job's {pay} {item} {from} {to} {hours} (life.js)
     return text.replace(/\{(\w+)\}/g, (_, k) => k in v ? v[k] : "{" + k + "}");
   }
   const has = (f, c) => c.every(x => x[0] === "!" ? !f.has(x.slice(1)) : f.has(x));
   function show(nid) {
     if (nid === null) return close();
     const node = s.conv.nodes[nid], f = flags.get(s.i);
-    s.node = nid; s.opts = node.options.filter(o => has(f, o.if || []));
+    s.node = nid; s.opts = node.options.filter(o => has(f, o.if || []) && (!window.Life || Life.allowed(o)));   // and a quest reply's needs (life.js)
     const line = fill(node.say); el("talk-say").textContent = line; el("talk").dataset.mood = node.mood;
     s.mood = node.mood; s.line = speak(line); s.t0 = now();          // the resident says the line: mouth, face and nods follow it
     if (window.Sound) Sound.line(s.line, s.i, s.r.x, s.r.z);          // and their voice: a syllable for each mouth shape (sound.js, SND-005)
@@ -109,12 +110,13 @@ var Talk = (() => {                    // var: a property of window, so index.ht
   function choose(n) {
     const o = s && s.opts[n]; if (!o) return;
     const f = flags.get(s.i); for (const x of o.do || []) f.add(x);
+    if (window.Life) Life.chose(s.i, o);                 // quest acts, a job taken, a counter to open (life.js)
     if (window.Sound) Sound.act("talk_choose");
     show(o.next);
   }
   function open(t) {
     const r0 = where(t.i, clock.m); if (!r0) return;
-    const cid = conversationFor(t.i, r0), conv = DL.conversations[cid];
+    const cid = conversationFor(t.i, r0), conv = window.Life ? Life.conversation(t.i, DL.conversations[cid]) : DL.conversations[cid];   // with quests and jobs (life.js)
     const r = Object.assign({}, r0); if (r.pose === 1) { r.pose = 0; r.walking = false; r.ph = 0; }   // a walker stops and stands
     s = { i: t.i, r, r0, conv, cid, m0: clock.m, node: null, opts: [], f: restFace(), dist: cam.dist };
     if (!cam.fp) cam.dist = Math.min(cam.dist, 2.6);       // come in closer so the face can be read
@@ -135,6 +137,7 @@ var Talk = (() => {                    // var: a property of window, so index.ht
     if (!cam.fp) cam.dist = s.dist;
     if (window.Sound) { Sound.hush(); Sound.act("talk_close"); }
     s = null;
+    if (window.Life) Life.talkEnded();
   }
   function step(dt) {                                    // each frame while talking: the face follows the line; a standing resident turns to the player
     if (!s) return;

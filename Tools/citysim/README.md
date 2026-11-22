@@ -16,6 +16,9 @@ data file; nothing is stepped frame by frame.
 | `render.py` | Draws top-down clips. Needs Pillow and numpy. |
 | `traffic.py` | Residents' cars: road network, who drives, the day's car plan, `car_at()` (LIVING_CITY 3.4, ADR-0009). Standard library only. |
 | `test_traffic.py` | 21 tests over the whole starting city in `World/` (one skipped until pavements exist). |
+| `economy.py` | Money in the slice (ADR-0012): the ledger, the bank (interest, loans, settled day by day), shop stock and prices from the residents' visits, the market stall. Standard library only. |
+| `quests.py` | Quest lines, daily jobs and reputation, run against `economy.py`; `problems()` checks `World/rules/quests.json`. |
+| `test_economy.py` | 31 tests named after ECO, BANK, PROP, QST and CHR requirements; every starter quest line is played to every ending. `python -m unittest test_economy -v` |
 | `render_traffic.py` | Writes an HTML page that plays a day of traffic: `python render_traffic.py traffic_day.html` |
 
 ```

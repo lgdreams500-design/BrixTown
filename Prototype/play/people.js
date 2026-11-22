@@ -188,6 +188,13 @@ const People = (() => {
       legs: R.skirt && r("sk") < R.skirt ? "skirt" : R.shorts && r("sh") < R.shorts ? "shorts" : "trousers", shoes: pk(R.shoes, "so"), apron: R.apron ? pk(R.apron, "ap") : null, cap: R.cap ? pk(R.cap, "cp") : null,
       bag: R.bag && r("bg") < R.bag, scarf: R.scarf && r("sf") < (R.scarfP || 1) ? pk(R.scarf, "sc") : null, tash: R.tash && r("ta") < R.tash, sig: SIG[sigName] || SIG.Easy, seed: Math.floor(r("seed") * 1000) };
   }
+  const FM0 = { face_w: 1, eye_size: 1, eye_open: 1, brow: 0, nose: 1, lips: 1 };
+  function design(v, d) {                                             // v: one character's designer values; d: World/rules/designer.json
+    const P = d.palette, c = k => v[k] ? P[v[k]] : null;
+    return { S: v.height / 1.72, W: v.build * 1.04, skin: d.skin[v.skin], hair: v.hair, hairC: d.hair_color[v.hair_color], eyes: d.eyes[v.eyes], g: v.garment,
+      top: P[v.top], bottom: P[v.bottom], legs: v.bottom_type, shoes: P[v.shoes], scarf: c("scarf"), cap: c("cap"), apron: c("apron"), bag: !!v.bag, tash: !!v.tash,
+      sig: SIG[v.walk] || SIG.Springy, seed: 7, fm: { face_w: v.face_w, eye_size: v.eye_size, eye_open: v.eye_open, brow: v.brow, nose: v.nose, lips: v.lips } };
+  }
   const player = () => ({ S: 1.68 / 1.72, W: .92 * 1.04, skin: [.62, .42, .30], hair: "long", hairC: [.28, .10, .05], eyes: [.14, .36, .20], g: "tee", top: K.teal, bottom: K.indigo, legs: "trousers", shoes: K.cream, scarf: K.ochre, sig: SIG.Springy, seed: 7 });
 
   // pose: 0 stand, 1 walk, 2 sit, 3 lie. o: { ph: cycle phase 0..1, t: seconds, lod: 0 near | 1 mid | 2 far, fl: material, look: [yaw, pitch] the head adds, sig: override, sleep }
@@ -229,7 +236,7 @@ const People = (() => {
       if (lod < 2) ball(ms, add(w, sc(unit(sub(w, b)), .035 * S)), sc(tx, .034 * fat), sc(ty, .03 * fat), sc(tz, .042 * fat), 6, 4, L.skin, fl, sd);
     }
     // neck and head
-    const hx = Wd(mv(P.Rh, [1, 0, 0])), hy = Wd(mv(P.Rh, [0, 1, 0])), hz = Wd(mv(P.Rh, [0, 0, 1])), nk = Wp(P.neck), hj = Wp(P.headJ), hc = add(hj, sc(hz, .1 * Sh));
+    const fm = L.fm || FM0, hx = sc(Wd(mv(P.Rh, [1, 0, 0])), fm.face_w), hy = Wd(mv(P.Rh, [0, 1, 0])), hz = Wd(mv(P.Rh, [0, 0, 1])), nk = Wp(P.neck), hj = Wp(P.headJ), hc = add(hj, sc(hz, .1 * Sh));
     const H = (a, b, cc) => add(hc, add(add(sc(hx, a * Sh), sc(hy, b * Sh)), sc(hz, cc * Sh)));
     const blob = (a, b, cc, rx, ry, rz, col, nn, mm2, s2) => ball(ms, H(a, b, cc), sc(hx, rx * Sh), sc(hy, ry * Sh), sc(hz, rz * Sh), nn, mm2, col, fl, s2 || sd);
     limb(ms, nk, hj, .046 * S, .044 * S, nl, L.skin, fl, false, fwd, sd);
@@ -251,17 +258,18 @@ const People = (() => {
     if (lod === 0 && o.face) face(blob, o.face, L, t, sd, lk, o.sleep);   // someone in a conversation: the full control set (CHR-007)
     else if (lod === 0) {                                             // the face: full eyes, brows, small nose, mouth at rest
       const period = 2.4 + 3.4 * ((sd * .618) % 1), shut = o.sleep || ((t + sd) % period) < .17, gx = cl(-lk[0] / rad(34), -1, 1) * .006, gz = cl(-lk[1] / rad(34), -1, 1) * .004;
+      const es = fm.eye_size, eo = fm.eye_open, ns = fm.nose;
       for (const e of [-1, 1]) {
-        if (shut) { blob(e * .037, -.0975, .012, .0225, .0105, .0235, L.skin, 8, 4, sd + 3); continue; }
-        blob(e * .037, -.0975, .012, .0215, .008, .022, [.86, .84, .8], 8, 4);
-        blob(e * .037 + gx, -.1035, .0045 + gz, .0172, .004, .0168, L.eyes, 8, 3);
-        blob(e * .037 + gx, -.1065, .0045 + gz, .0082, .002, .0082, [.01, .01, .012], 6, 3);
-        blob(e * .037 + gx + .005, -.108, .012 + gz, .0032, .0012, .0032, [1, 1, 1], 5, 2);
+        if (shut) { blob(e * .037, -.0975, .012, .0225 * es, .0105, .0235 * es, L.skin, 8, 4, sd + 3); continue; }
+        blob(e * .037, -.0975, .012, .0215 * es, .008, .022 * es * eo, [.86, .84, .8], 8, 4);
+        blob(e * .037 + gx, -.1035, .0045 + gz, .0172 * es, .004, Math.min(.0168 * es, .022 * es * eo * .9), L.eyes, 8, 3);
+        blob(e * .037 + gx, -.1065, .0045 + gz, .0082 * es, .002, .0082 * es, [.01, .01, .012], 6, 3);
+        blob(e * .037 + gx + .005 * es, -.108, .012 + gz, .0032, .0012, .0032, [1, 1, 1], 5, 2);
       }
-      for (const e of [-1, 1]) blob(e * .038, -.1, .012 + .05, .021, .0055, .0048, sc(hairC, .8), 6, 3);
-      blob(0, -.111, -.014, .0105, .011, .0115, sc(L.skin, .93), 6, 4);
+      for (const e of [-1, 1]) blob(e * .038, -.1, .012 + .05 + fm.brow + (es - 1) * .02, .021, .0055, .0048, sc(hairC, .8), 6, 3);
+      blob(0, -.111, -.014, .0105 * ns, .011 * ns, .0115 * ns, sc(L.skin, .93), 6, 4);
       cheeks(blob, L);
-      blob(0, -.1, -.053, .024, .0045, .0048, [.34, .13, .11], 8, 3);
+      blob(0, -.1, -.053, .024 * fm.lips, .0045, .0048, [.34, .13, .11], 8, 3);
       if (L.tash) blob(0, -.104, -.037, .024, .006, .007, hairC, 6, 3);
     }
     // what the role wears on top (C5)
@@ -287,26 +295,26 @@ const People = (() => {
   function face(blob, f, L, t, sd, lk, sleep) {
     const period = 2.4 + 3.4 * ((sd * .618) % 1), blink = !sleep && ((t + sd) % period) < .17;
     const gx = cl(-lk[0] / rad(34), -1, 1) * .006 + f.gaze[0], gz = cl(-lk[1] / rad(34), -1, 1) * .004 + f.gaze[1];
-    const lid = sleep || blink ? 1 : f.lid, op = f.open, sq = f.squint;
+    const fm = L.fm || FM0, es = fm.eye_size, lid = sleep || blink ? 1 : f.lid, op = f.open * fm.eye_open, sq = f.squint;
     for (const e of [-1, 1]) {                                         // e = +1 is the character's left
       const ex = e * .037;
-      if (lid > .97) { blob(ex, -.0975, .012, .0225, .0105, .0235, L.skin, 8, 4, sd + 3); continue; }
+      if (lid > .97) { blob(ex, -.0975, .012, .0225 * es, .0105, .0235 * es, L.skin, 8, 4, sd + 3); continue; }
       // the open part of the eye: a squint lifts its lower edge, the upper lid lowers its top edge (the face skin shows where it closes)
-      const R0 = .022 * op, top = .012 + R0 * (1 - 2 * lid * .85), bot = .012 - R0 * (1 - sq * .9), rz = (top - bot) / 2, cz = (top + bot) / 2;
-      blob(ex, -.0975, cz, .0215 * op, .008, rz, [.86, .84, .8], 8, 4);
-      const ir = Math.min(.0172 * op, rz * .9), iz = Math.min(.0045 + gz, top - ir * .7) + (cz - .012) * .3;
-      blob(ex + gx, -.1035, iz, .0172 * op, .004, ir, L.eyes, 8, 3);
+      const R0 = .022 * op * es, top = .012 + R0 * (1 - 2 * lid * .85), bot = .012 - R0 * (1 - sq * .9), rz = (top - bot) / 2, cz = (top + bot) / 2;
+      blob(ex, -.0975, cz, .0215 * op * es, .008, rz, [.86, .84, .8], 8, 4);
+      const ir = Math.min(.0172 * op * es, rz * .9), iz = Math.min(.0045 + gz, top - ir * .7) + (cz - .012) * .3;
+      blob(ex + gx, -.1035, iz, .0172 * op * es, .004, ir, L.eyes, 8, 3);
       blob(ex + gx, -.1065, iz, .0078, .002, Math.min(.0078, ir * .55), [.01, .01, .012], 6, 3);
       if (top - iz > .006) blob(ex + gx + .005, -.108, iz + .0055, .0032, .0012, .0032, [1, 1, 1], 5, 2);
       if (lid >= .03) blob(ex, -.1062, top - .0008, .0205 * op, .0025, .0016, [.08, .06, .05], 8, 3);   // the lash line along the lowered lid
     }
     for (const e of [-1, 1]) {                                         // each brow: inner and outer end move on their own
-      const b = e > 0 ? f.brow_l : f.brow_r, z0 = .062 + (op - 1) * .02, bc = sc(L.hairC, .8);
+      const b = e > 0 ? f.brow_l : f.brow_r, z0 = .062 + (op - 1) * .02 + fm.brow + (es - 1) * .02, bc = sc(L.hairC, .8);
       for (let k = 0; k < 5; k++) { const u = k / 4; blob(e * (.026 + .024 * u), -.1 + .0015 * u, z0 + .002 * u + b[0] + (b[1] - b[0]) * u, .0115, .0055, .0047, bc, 6, 3); }
     }
-    blob(0, -.111, -.014, .0105, .011, .0115, sc(L.skin, .93), 6, 4);   // nose
+    blob(0, -.111, -.014, .0105 * fm.nose, .011 * fm.nose, .0115 * fm.nose, sc(L.skin, .93), 6, 4);   // nose
     cheeks(blob, L);
-    const m = f.mouth, w = m.width, oh = Math.max(m.opening, .0005), mz = -.053, rd = m.round || 0, dep = 1 + rd * .45, cu = cl(f.curve, -1, 1) * .0045;
+    const m = f.mouth, w = m.width * fm.lips, oh = Math.max(m.opening, .0005), mz = -.053, rd = m.round || 0, dep = 1 + rd * .45, cu = cl(f.curve, -1, 1) * .0045;
     if (oh > .0012) {
       blob(0, -.0992, mz, w * .9, .0028, oh, MOUTH.dark, 8, 3);
       if (m.teeth >= 1 && oh > .002) blob(0, -.1002, mz + oh * .6, w * .66, .0022, Math.min(oh * .4, .0032), MOUTH.teeth, 8, 3);
@@ -322,5 +330,5 @@ const People = (() => {
     }
     if (L.tash) blob(0, -.104, -.037 + Math.max(0, oh - .002) * .4, .024, .006, .007, L.hairC, 6, 3);
   }
-  return { SIG, look, player, draw, stepLength };
+  return { SIG, look, player, design, draw, stepLength };
 })();

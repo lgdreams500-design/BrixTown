@@ -249,8 +249,6 @@ class TheSounds(unittest.TestCase):
             self.assertTrue(any(bit in x for x in p), bit)
 
 
-if __name__ == "__main__":
-    unittest.main()
 
 class GettingOutOfTheWay(unittest.TestCase):
     """CITY-070, CITY-071: residents dodge a car a player drives at them, then tell the driver off (World/rules/dodge.json)."""
@@ -271,3 +269,5 @@ class GettingOutOfTheWay(unittest.TestCase):
         for s in r["shouts"]:
             self.assertTrue(0 < len(s) <= 40, s)                            # short enough for a tag over a head
 
+if __name__ == "__main__":
+    unittest.main()
