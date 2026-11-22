@@ -1548,6 +1548,7 @@ ${TONE}
 // Light indoors: daylight in through the windows and door (sky and bounce, gone at night), the room's own lamps with distance and
 // facing, and contact shade from the map of what stands on the floor (uRoomAO) and from the walls, floor and ceiling meeting.
 // The room the camera is in gets all of that; other rooms an even lamplight, as before.
+float shadow();
 vec3 roomLight(vec3 n,float person){
   float day=1.-uNight, y=vP.y-uRoomY.x;                    // height above the floor the camera is on (storeys.js); other floors read the same way
   vec3 hemi=mix(uGround,uSky,n.y*.5+.5);
@@ -1567,7 +1568,10 @@ vec3 roomLight(vec3 n,float person){
     ao*=abs(n.y)<.5?(.7+.3*smoothstep(0.,.7,y))*(.82+.18*smoothstep(0.,.6,uRoomY.y-vP.y)):1.;   // walls darken where they meet floor and ceiling
     ao*=n.y<-.6?.8+.2*smoothstep(.25,1.,e):1.;
   } else lamps=vec3(.55)*(.82+.16*n.y);
-  return (amb+lamps*vec3(1.,.74,.48)*.85)*ao;
+  vec3 sun=vec3(0.);                                       // a hall under skylights: the sun comes in through the openings in the roof and lays
+  if(here&&uRoomY.z>1.){ float ndl=max(dot(n,uSun),0.);    // patches on the floor, with the shadows of the trusses, sets, racks, furniture and people (INTERIOR_STYLE R2)
+    if(ndl>0.) sun=uSunCol*ndl*shadow()*day*(.6+.4*ao); }
+  return (amb+lamps*vec3(1.,.74,.48)*.85)*ao+sun;
 }
 float sunNear(vec2 xz,float lod){                 // how much of the ground round a spot is in the sun (the GI map, read blurred)
   vec2 uv=(xz-uGiM.xy)*uGiM.z, e=min(uv,1.-uv); return mix(.55,texture2D(uGi,uv,lod).r,smoothstep(0.,.06,min(e.x,e.y))); }
@@ -2327,6 +2331,7 @@ function frame(now) {
     drawDepth(worldBuf, 0); for (const pc of pieces) if (!outside(SM, pc.box)) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);   // only the pieces inside the sun's box
     drawDepth(dynBuf, dyn.n / 10); drawDepth(signBuf, signN);
     for (const ch of chunks) if (Math.hypot(ch.cx - foc[0], ch.cz - foc[2]) < R + 25 && !outside(SM, ch.box)) drawDepth(ch.buf, ch.n);
+    for (const rm of ROOMS.values()) if (rm.n && rm.lot.skylight > 1 && !outside(SM, rm.box)) drawDepth(rm.buf, rm.n);   // furniture under skylights casts the sun's shadow too
     gl.disable(gl.POLYGON_OFFSET_FILL); gl.colorMask(true, true, true, true); gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     if (giFbo && dials.gi > 0 && Lt.day > .05) {            // the GI map: where the sun reaches the ground, GI_SIZE metres round the same spot
       const tx = GI_SIZE / GI_N; giAt = [Math.floor((foc[0] - GI_SIZE / 2) / tx) * tx, Math.floor((foc[2] - GI_SIZE / 2) / tx) * tx, 1 / GI_SIZE]; giK = dials.gi * Lt.day;
