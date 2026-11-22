@@ -235,6 +235,12 @@ def sound_problems(w, acts=None):
             out.append("sound: %s has chords outside 1 to 7" % where)
         if not 40 <= st["bpm"] <= 200:
             out.append("sound: %s tempo %s is out of range" % (where, st["bpm"]))
+        if st.get("comp") is not None and st["comp"] not in m["voices"]:
+            out.append("sound: %s plays its chords on unknown voice %s" % (where, st["comp"]))
+        if st.get("comp_pattern") is not None and st["comp_pattern"] not in m.get("patterns", []):
+            out.append("sound: %s uses unknown comping pattern %s" % (where, st["comp_pattern"]))
+        if st.get("bass") not in (None, True, False) and st["bass"] not in m.get("basslines", []):
+            out.append("sound: %s uses unknown bass line %s" % (where, st["bass"]))
     for k, sc in m["scales"].items():
         if len(sc) != 7 or sc[0] != 0 or sorted(sc) != sc:
             out.append("sound: scale %s should be seven rising steps from 0" % k)
@@ -255,6 +261,9 @@ def sound_problems(w, acts=None):
         hhmm(p["from"], kind + ".from")
         hhmm(p["to"], kind + ".to")
     shows = s.get("podcasts", {}).get("shows", {})
+    for k, ph in enumerate(m.get("phrases", [])):            # melody rhythms: notes in order inside two bars of 16ths
+        if not ph or any(not (0 <= a < 32 and 0 < n <= 32 - a) for a, n in ph) or [a for a, _ in ph] != sorted({a for a, _ in ph}):
+            out.append("sound: melody phrase %d does not fit two bars in order" % k)
     for st in m["radio"]:
         if ("style" in st) == ("podcast" in st):
             out.append("sound: radio station %s needs a style or a podcast, not both" % st.get("name"))
