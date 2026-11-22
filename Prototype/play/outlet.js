@@ -175,7 +175,8 @@ var Outlet = (() => {
     for (let z = z0 + 4; z < z1 - 1; z += 4) world.flat(x0 + t, z - .03, x1 - t, z + .03, F + .002, [.48, .45, .4], 3);
     // roof on timber trusses every 6 m, with a skylight between each pair along the middle of the hall
     const tx = []; for (let x = x0 + 3; x < x1 - 1; x += 6) tx.push(x);
-    const sk0 = z0 + 11, sk1 = z1 - 11, roof = (a, b, c, d) => { world.box(a, H, b, c, H + .3, d, [.30, .28, .3], 9, { 2: [mix3(INW, [1, 1, 1], .15), 3] }); solid(a, H, b, c, H + .3, d); };
+    const sk0 = z0 + 11, sk1 = z1 - 11; l.skyband = [x0, sk0, x1, sk1, H];   // where the daylight comes in (play.js roomLight: surfaces facing it, and near it, get more)
+    const roof =(a, b, c, d) => { world.box(a, H, b, c, H + .3, d, [.30, .28, .3], 9, { 2: [mix3(INW, [1, 1, 1], .15), 3] }); solid(a, H, b, c, H + .3, d); };
     roof(x0, z0, x1, sk0); roof(x0, sk1, x1, z1);
     let xa = x0;
     for (let k = 0; k < tx.length - 1; k++) { const a = tx[k] + .9, b = tx[k + 1] - .9; roof(xa, sk0, a, sk1); xa = b;

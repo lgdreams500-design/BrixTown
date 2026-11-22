@@ -1539,7 +1539,7 @@ const MAIN_VS = `attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,u
 void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`;   // invariant: the depth-only pass and the lit pass land on the same depths
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
 uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform vec2 uNk; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
-uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY;
+uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY; uniform vec4 uSkyB; uniform vec2 uSkyH;
 uniform sampler2D uGi; uniform vec4 uGiM, uBlob[16]; uniform int uBlobN; uniform vec3 uPf;
 uniform vec3 uHZ[4], uHNo[4], uHBr[4], uHSt; uniform vec4 uHLk[4];
 uniform vec4 uPatA[16], uPatB[16];                       // stone, brick and paving patterns (World/rules/surfaces.json): (type, unit w, unit h, joint), (vary, bevel, dome, -)
@@ -1549,11 +1549,21 @@ ${TONE}
 // facing, and contact shade from the map of what stands on the floor (uRoomAO) and from the walls, floor and ceiling meeting.
 // The room the camera is in gets all of that; other rooms an even lamplight, as before.
 float shadow();
+// How much a surface sees of a hall's skylights (uSkyB: the band of openings, uSkyH: its height and 1 / the value for the floor
+// under its middle): the openings as one big light in the roof, summed over 6 x 3 patches with the cosines at both ends and 1/d2.
+// So a wall far from the skylights, or high up under the roof, gets less of the extra daylight than the floor beneath them.
+float skyFF(vec3 n){
+  float e=0.;
+  for(int i=0;i<6;i++) for(int j=0;j<3;j++){
+    vec3 L=vec3(mix(uSkyB.x,uSkyB.z,(float(i)+.5)/6.),uSkyH.x,mix(uSkyB.y,uSkyB.w,(float(j)+.5)/3.))-vP; float d2=dot(L,L);
+    e+=max(dot(n,L),0.)*max(L.y,0.)/(d2*d2); }
+  return e*uSkyH.y; }
 vec3 roomLight(vec3 n,float person){
   float day=1.-uNight, y=vP.y-uRoomY.x;                    // height above the floor the camera is on (storeys.js); other floors read the same way
   vec3 hemi=mix(uGround,uSky,n.y*.5+.5);
   bool here=vP.x>uRoomR.x-.05&&vP.x<uRoomR.z+.05&&vP.z>uRoomR.y-.05&&vP.z<uRoomR.w+.05&&vP.y>uRoomY.x-.25&&vP.y<uRoomY.y+.25;
   float sky=here?uRoomY.z:1.;                              // a hall under skylights sees more of the day (outlet.js: the lot's "skylight")
+  if(here&&sky>1.&&uSkyH.y>0.) sky=1.+(sky-1.)*clamp(skyFF(n),0.,1.4);   // as much more as it sees of the skylights
   vec3 amb=(hemi*.42*day*sky+uSunCol*.025*day*(1.+4.*(sky-1.))+vec3(.16,.13,.1)*(.5+.5*day))*(.8+.2*n.y)*(.82+.18*smoothstep(.0,1.6,y));
   if(!here) y=mod(vP.y-.4,3.);
   vec3 lamps=vec3(0.); float ao=1.;
@@ -2208,6 +2218,15 @@ function camFloor() {                                      // the building the c
 function roomEntry(l, m, rec, level) {
   return m.n ? { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, box: boxOf(m.a, 0, m.n), lot: l, level, lamps: rec.lamps, ao: roomAO(l, rec.foot), y0: Storeys.floorY(level), y1: l.hall_height || Storeys.ceilY(level) } : { n: 0, lot: l, level, lamps: [] };
 }
+// skyFF() in the shader, for the floor under the middle of a hall's skylights: the value it is scaled by, so that spot keeps the light it had
+function skyRef(sb) {
+  if (sb.ref) return sb.ref;
+  const p = [(sb[0] + sb[2]) / 2, Y_FLOOR, (sb[1] + sb[3]) / 2]; let e = 0;
+  for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) {
+    const L = [sb[0] + (sb[2] - sb[0]) * (i + .5) / 6 - p[0], sb[4] - p[1], sb[1] + (sb[3] - sb[1]) * (j + .5) / 3 - p[2]], d2 = L[0] ** 2 + L[1] ** 2 + L[2] ** 2;
+    e += L[1] * L[1] / (d2 * d2); }
+  return (sb.ref = e);
+}
 // A room's light: its lamps, and a map seen from above of how much of the floor round each spot is covered by furniture, blurred,
 // so floors darken round and under what stands on them and furniture darkens at its foot (contact shade, as baked in Blender).
 const ROOM_AO_CELL = .2;
@@ -2393,6 +2412,8 @@ function frame(now) {
     gl.uniform1i(u.uGi, 4); gl.uniform4f(u.uGiM, giAt[0], giAt[1], giAt[2], giK); gl.uniform4fv(u["uBlob[0]"], blob); gl.uniform1i(u.uBlobN, blobN);
     gl.uniform4fv(u["uPatA[0]"], SURF_A); gl.uniform4fv(u["uPatB[0]"], SURF_B);
     if (inRoom) gl.uniform4fv(u.uRoomR, inRoom.lot.rect); else gl.uniform4f(u.uRoomR, 0, 0, -1, -1);
+    const sb = inRoom && inRoom.lot.skylight > 1 && inRoom.lot.skyband;   // the hall's skylights, for skyFF() in roomLight
+    if (sb) { gl.uniform4f(u.uSkyB, sb[0], sb[1], sb[2], sb[3]); gl.uniform2f(u.uSkyH, sb[4], 1 / skyRef(sb)); } else gl.uniform2f(u.uSkyH, 0, 0);
     gl.uniform3f(u.uRoomY, inRoom ? inRoom.y0 : Y_FLOOR, inRoom ? inRoom.y1 : GF, inRoom ? inRoom.lot.skylight || 1 : 1);   // the floor the camera is on (storeys.js)
   };
   const blob = new Float32Array(64); let blobN = 0;         // the 16 pieces of street furniture nearest the camera shade the ground under them (trial light)
