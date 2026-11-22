@@ -142,8 +142,9 @@ var Outlet = (() => {
   const LAYOUT = [["rug", -.9, .5, 0], ["sofa", -.9, 1.65, 0], ["chair", .55, .45, 3], ["coffee", -.9, .5, 0], ["lamp", -2.4, 1.85, 0],
     ["case", -2.95, -.2, 1], ["bed", 2.05, 1.1, 0], ["side", .95, 1.95, 0], ["ward", 2.85, -1.3, 3], ["extra", 2.05, -.4, 0]];
   const SIZE = { sofa: [2.0, .92, 1.0], chair: [.95, .92, 1.0], coffee: [1.1, .6, .45], bed: [1.6, 2.2, .6], side: [.48, .42, .6], ward: [1.1, .6, 2.1], case: [.9, .34, 1.8], extra: [.8, .45, .5] };
-  function furnishSet(B, hard, use, L, ox, oz, F, seed) {
-    for (const [kind, u, v, rot] of LAYOUT) {
+  function furnishSet(B, hard, use, L, ox, oz, F, seed, south) {
+    for (const [kind, u0, v0, rot0] of LAYOUT) {
+      const u = south ? -u0 : u0, v = south ? -v0 : v0, rot = south ? (rot0 + 2) % 4 : rot0;   // a set open to the south: turned round
       const Q = placer(B, ox + u, oz + v, rot);
       ({ rug, sofa: q => sofa(q, L, 2.0), chair: q => sofa(q, L, .95), coffee, lamp: floorLamp, case: q => bookcase(q, L, seed), bed, side: bedside, ward: wardrobe, extra })[kind](Q, L);
       const sz = SIZE[kind];
@@ -152,6 +153,23 @@ var Outlet = (() => {
       if (kind === "sofa" || kind === "chair") { const [x, z] = Q.at(0, -.1); use(x, F + .45, z, "sit", kind === "sofa" ? "Try the sofa" : "Try the armchair", face); }
       if (kind === "bed") { const [x, z] = Q.at(0, 0); use(x, F + .62, z, "lie", "Try the bed", 0); }
     }
+  }
+  // a kit 18 room (furniture_kit_18.py ROOMS, copied into the set's data by Tools/worldgen/expand_outlet_01.py): each piece
+  // [kind, x, y, yaw] in Blender's room, x across, y to the back wall, drawn by furniture.js. Seen from the walk, Blender's
+  // left wall stays on the left: for a set open to the north its x runs west, for one open to the south east.
+  function furnishRoom(B, hard, use, L, st, F, seed) {
+    const [a, b, c, d] = st.rect, cx = (a + c) / 2, cz = (b + d) / 2, south = st.open === "s";
+    const W = (X, Y) => south ? [cx + X, cz - Y] : [cx - X, cz + Y];
+    st.pieces.forEach(([kind, px, py, th], i) => {
+      const co = Math.cos(th), si = Math.sin(th);
+      const Q = (u, y, v, su, sy, sv, col, f, yaw) => { const [x, z] = W(px + u * co - v * si, py + u * si + v * co); B(x, y, z, su, sy, sv, col, th + (yaw || 0), f); };
+      Furniture.draw(kind, Q, L, seed + i);
+      const sz = Furniture.SIZE[kind];
+      if (sz) { const ac = Math.abs(co), as = Math.abs(si), hx = (ac * sz[0] + as * sz[1]) / 2, hz = (as * sz[0] + ac * sz[1]) / 2, [x, z] = W(px, py);
+        hard(x - hx, F, z - hz, x + hx, F + Math.max(sz[2], .9), z + hz); }
+      const seat = Furniture.SEAT && Furniture.SEAT[kind];
+      if (seat) { const [x, z] = W(px + .1 * si, py - .1 * co), [fx, fz] = south ? [si, co] : [-si, -co]; use(x, F + seat[1], z, seat[0], seat[2], yawOf(fx, fz)); }
+    });
   }
 
   // ---- the hall: walls, roof, windows, sign, door (in the town's mesh, at load) ----
@@ -211,32 +229,45 @@ var Outlet = (() => {
   function inside0(l, F) {
     const [x0, z0, x1, z1] = l.rect, H = l.hall_height || 8.5;
     const box = (a, y0, b, c, y1, d, col, f, all) => { world.box(a, y0, b, c, y1, d, col, f == null ? 3 : f); if (!all) solid(a, y0, b, c, y1, d); };
-    // the walking route: a painted band with arrows, from the door round past the sets
-    const rz0 = z0 + 5.2, rz1 = z0 + 6.6;
-    world.flat(x0 + 3, rz0, x1 - 14, rz1, F + .004, [.44, .24, .18], 3);
-    for (let x = x0 + 4; x < x1 - 15; x += 3) world.quad([x, F + .007, rz0 + .3], [x + .6, F + .007, (rz0 + rz1) / 2], [x + .6, F + .007, (rz0 + rz1) / 2], [x, F + .007, rz1 - .3], [.66, .61, .5], 3, [0, 1, 0]);
-    // room sets: three plaster walls each, a board floor, the line's name over the back wall
-    for (const st of l.sets || []) {
-      const [a, b, c, d] = st.rect, L = LINES[st.line] || LINES.plain, h = 2.8;
-      world.box(a, F, b, c, F + .03, d, [.4, .27, .17], 15, { 2: null });
-      box(a - .15, F, d, c + .15, F + h, d + .15, INW); box(a - .15, F, b, a, F + h, d, INW); box(c, F, b, c + .15, F + h, d, INW);
-      world.box(a, F, d - .03, c, F + .14, d, WOOD, 19);                                            // skirting
-      world.box((a + c) / 2 - 1.7, F + 3.05, d + .02, (a + c) / 2 + 1.7, F + 3.65, d + .08, C.teal, 3);   // the name board
-      const cell = nameCell(L.label); if (cell) lettering(signs, [(a + c) / 2, F + 3.35, d], [0, 0, -1], .4, cell);
-      for (const [u, v] of [[a + 1.4, b - .9], [c - 1.0, b - .9]]) { box(u - .02, F, v - .02, u + .02, F + 1.0, v + .02, IRON, 9, true); world.box(u - .16, F + .98, v - .03, u + .16, F + 1.2, v, [.66, .61, .5], 3); world.box(u - .16, F + 1.14, v - .035, u + .16, F + 1.19, v - .03, L.cloth, 3); }   // price tags
+    // the walking route: painted bands with arrows (the lot's "route": [x0, z0, x1, z1, the way the arrows point]), a loop
+    // round the island of room sets (Tools/worldgen/expand_outlet_01.py)
+    const route = l.route || [[x0 + 3, z0 + 5.2, x1 - 14, z0 + 6.6, "e"]], RED = [.44, .24, .18], PAINT = [.66, .61, .5];
+    route.forEach(([a, b, c, d], k) => world.flat(a, b, c, d, F + .004 + .0005 * k, RED, 3));
+    for (const [a, b, c, d, w] of route) {
+      const along = w === "e" || w === "w", s = w === "e" || w === "s" ? 1 : -1, m = along ? (b + d) / 2 : (a + c) / 2, half = (along ? d - b : c - a) / 2 - .3;
+      const lo = (along ? a : b) + 1.2, hi = (along ? c : d) - 1.8;
+      for (let t = lo; t < hi; t += 3) {
+        const t0 = s > 0 ? t : t + .6, t1 = s > 0 ? t + .6 : t, P = (p, q) => along ? [p, F + .008, q] : [q, F + .008, p];
+        world.quad(P(t0, m - half), P(t1, m), P(t0, m + half), P(t0, m + half), PAINT, 3, [0, 1, 0]);   // a triangle: its first three corners distinct, so it has a normal
+      }
     }
-    // staff places: tills by the door, the cafe counter, desks between the sets, packing tables by the racks
-    const o = l.objects;
-    (o.work || []).forEach(([x, z]) => {
-      if (z < z0 + 5) { const cafe = x > x1 - 9; box(x - (cafe ? 1.7 : 1.1), F, z - 1.2, x + (cafe ? 1.7 : 1.1), F + .95, z - .6, cafe ? C.brown : WOOD, 19);
-        world.box(x - (cafe ? 1.75 : 1.15), F + .95, z - 1.25, x + (cafe ? 1.75 : 1.15), F + 1.0, z - .55, cafe ? C.cream : C.teal, 3);
-        world.box(x - .2, F + 1.0, z - 1.05, x + .2, F + 1.25, z - .8, cafe ? IRON : C.charcoal, 9); }
-      else if (z < z0 + 16) { box(x - .65, F, z - 1.15, x + .65, F + .76, z - .5, WOOD, 19); world.box(x - .15, F + .76, z - 1.0, x + .15, F + .78, z - .78, [.88, .86, .8], 3); }
-      else box(x - 1.2, F, z - 1.3, x + 1.2, F + .9, z - .5, WOOD, 19);
-    });
+    // room sets: three plaster walls each, a board floor, the room's name over the back wall, price tags at the front
+    for (const st of l.sets || []) {
+      const [a, b, c, d] = st.rect, L = LINES[st.line] || LINES.plain, h = 2.8, south = st.open === "s", cx = (a + c) / 2;
+      world.box(a, F, b, c, F + .03, d, [.4, .27, .17], 15, { 2: null });
+      if (south) { box(a - .15, F, b - .15, c + .15, F + h, b, INW); world.box(a, F, b, c, F + .14, b + .03, WOOD, 19); }   // the back wall, north
+      else { box(a - .15, F, d, c + .15, F + h, d + .15, INW); world.box(a, F, d - .03, c, F + .14, d, WOOD, 19); }        // the back wall, south; skirting
+      box(a - .15, F, b, a, F + h, d, INW); box(c, F, b, c + .15, F + h, d, INW);
+      const bz = south ? b : d, n = south ? 1 : -1, label = st.name ? st.name + " · " + L.label : L.label;
+      world.box(cx - 1.7, F + 3.05, Math.min(bz - .02 * n, bz - .08 * n), cx + 1.7, F + 3.65, Math.max(bz - .02 * n, bz - .08 * n), C.teal, 3);   // the name board
+      const cell = nameCell(label); if (cell) lettering(signs, [cx, F + 3.35, bz], [0, 0, n], .4, cell);
+      const fz = south ? d + .9 : b - .9, tags = south ? [[c - 1.4, fz], [a + 1.0, fz]] : [[a + 1.4, fz], [c - 1.0, fz]];
+      for (const [u, v] of tags) { box(u - .02, F, v - .02, u + .02, F + 1.0, v + .02, IRON, 9, true);   // price tags, facing the walk
+        world.box(u - .16, F + .98, Math.min(v, v - .03 * -n), u + .16, F + 1.2, Math.max(v, v - .03 * -n), [.66, .61, .5], 3);
+        world.box(u - .16, F + 1.14, Math.min(v - .03 * -n, v - .035 * -n), u + .16, F + 1.19, Math.max(v - .03 * -n, v - .035 * -n), L.cloth, 3); }
+    }
+    // staff places, by what stands there (the lot's "fittings"): tills by the door, sales desks, the cafe counter, packing tables
+    const o = l.objects, fit = l.fittings || { tills: [], desks: [], cafe: [], packing: [] };
+    if (!l.fittings) (o.work || []).forEach(q => { const [x, z] = q; (z < z0 + 5 ? (x > x1 - 9 ? fit.cafe : fit.tills) : z < z0 + 16 ? fit.desks : fit.packing).push(q); });
+    for (const [x, z] of fit.tills.concat(fit.cafe)) { const cafe = fit.cafe.some(q => q[0] === x && q[1] === z), hw = cafe ? 1.7 : 1.1;
+      box(x - hw, F, z - 1.2, x + hw, F + .95, z - .6, cafe ? C.brown : WOOD, 19);
+      world.box(x - hw - .05, F + .95, z - 1.25, x + hw + .05, F + 1.0, z - .55, cafe ? C.cream : C.teal, 3);
+      world.box(x - .2, F + 1.0, z - 1.05, x + .2, F + 1.25, z - .8, cafe ? IRON : C.charcoal, 9); }
+    for (const [x, z] of fit.desks) { box(x - .65, F, z - 1.15, x + .65, F + .76, z - .5, WOOD, 19); world.box(x - .15, F + .76, z - 1.0, x + .15, F + .78, z - .78, [.88, .86, .8], 3); }
+    for (const [x, z] of fit.packing) box(x - 1.2, F, z - 1.3, x + 1.2, F + .9, z - .5, WOOD, 19);
     // the warehouse: three rows of tall timber racks with flat-pack boxes in the company's band (rule I9)
     const racks = l.racks = []; l.rackY = [1.8, 3.5, 5];  // their outlines and shelf heights, for their shade (play.js roomLight)
-    for (const rz of [z0 + 25.5, z0 + 31.5, z0 + 37]) {
+    for (const rz of l.rack_rows || [z0 + 25.5, z0 + 31.5, z0 + 37]) {
       for (const [a, c] of [[x0 + 3, x0 + 20], [x0 + 24, x0 + 42], [x0 + 46, x1 - 3]]) {
         for (let x = a; x <= c + .01; x += (c - a) / 3) box(x - .06, F, rz - .7, x + .06, F + 5, rz + .7, WOOD, 19);
         [.1, 1.8, 3.5].forEach((y, si) => {
@@ -259,9 +290,15 @@ var Outlet = (() => {
   // ---- inside, for furnish(): the furniture near the camera (vis) and, at load, its places, uses and collisions ----
   function inside(l, B, hard, spot, use, RR, dm) {
     const F = Y_FLOOR, H = l.hall_height || 8.5, o = l.objects, z0 = l.rect[1], north = yawOf(0, -1), south = yawOf(0, 1);
-    (l.sets || []).forEach((st, k) => { const [a, b, c, d] = st.rect; furnishSet(B, hard, use, LINES[st.line] || LINES.plain, (a + c) / 2, (b + d) / 2, F, l.id + k); });
+    const sets = l.sets || [];
+    sets.forEach((st, k) => { const [a, b, c, d] = st.rect, L = LINES[st.line] || LINES.plain;
+      if (st.pieces && typeof Furniture !== "undefined") furnishRoom(B, hard, use, L, st, F, l.id + k);                 // a kit 18 room
+      else furnishSet(B, hard, use, L, (a + c) / 2, (b + d) / 2, F, l.id + k, st.open === "s"); });                    // kit 17's living room
     for (const [x, z] of o.work || []) spot(l, x, z, 0, north, F);                                // staff face the door
-    for (const [x, z] of o.customer || []) spot(l, x, z, 0, z < z0 + 10 ? south : north, F);      // customers face the sets, or the racks
+    for (const [x, z] of o.customer || []) {                                                     // customers face the nearest room set, or the racks
+      const st = sets.find(s => x > s.rect[0] - .5 && x < s.rect[2] + .5 && z > s.rect[1] - 1.5 && z < s.rect[3] + 1.5);
+      spot(l, x, z, 0, st ? (st.open === "s" ? north : south) : l.sets && l.sets.some(s => s.open) ? north : (z < z0 + 10 ? south : north), F);
+    }
     const cafe = [], seatC = [.66, .61, .5], seats = o.seat || [];
     for (const [x, z] of seats) {                                                                // the cafe: two chairs facing across a small round table
       const mate = seats.filter(q => q[0] !== x || q[1] !== z).sort((p, q) => Math.hypot(p[0] - x, p[1] - z) - Math.hypot(q[0] - x, q[1] - z))[0];

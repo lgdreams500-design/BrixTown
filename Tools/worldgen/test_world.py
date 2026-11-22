@@ -691,6 +691,41 @@ class TheFurnitureOutlet(unittest.TestCase):
         self.assertTrue(any(s["act"] == "work" for s in stays))
         self.assertTrue(all(r["near"].get("furniture") == l["id"] for r in W["residents"]))
 
+    def test_FURN_020_showroom_shows_every_kit(self):
+        """The showroom floor has kit 17's room set in each line and a room for each of kit 18's kits (expand_outlet_01.py),
+        every set inside the hall and clear of the others, the walks, the fittings and the cafe."""
+        import expand_outlet_01 as X
+        l = self.outlet()
+        x0, z0, x1, z1 = l["rect"]
+        sets = l["sets"]
+        self.assertEqual(sorted(s["line"] for s in sets if "room" not in s), ["curve", "oldtown", "plain", "workshop"])
+        rooms = X.kit18_rooms()
+        self.assertEqual(sorted(s["room"] for s in sets if "room" in s), sorted(rooms))
+        for s in sets:
+            if "room" in s:
+                self.assertEqual(s["line"], rooms[s["room"]][0], s["room"])                # in the line it was rendered in
+                self.assertEqual([p[0] for p in s["pieces"]], [p[0] for p in rooms[s["room"]][1]], s["room"])
+        over = lambda a, b, m=0.0: a[0] < b[2] + m and b[0] < a[2] + m and a[1] < b[3] + m and b[1] < a[3] + m
+        walled = [[s["rect"][0] - .15, s["rect"][1] - .15, s["rect"][2] + .15, s["rect"][3] + .15] for s in sets]
+        for i, r in enumerate(walled):
+            self.assertTrue(x0 + .5 < r[0] and r[2] < x1 - .5 and z0 + .5 < r[1] and r[3] < z1 - .5, sets[i]["rect"])
+            for j in range(i + 1, len(sets)):
+                self.assertFalse(over(sets[i]["rect"], sets[j]["rect"]), (sets[i]["rect"], sets[j]["rect"]))
+            for q in l["route"]:
+                self.assertFalse(over(r, q[:4]), (sets[i].get("room"), q))
+        for k, places in l["fittings"].items():
+            for x, z in places:
+                self.assertTrue(x0 < x < x1 and z0 < z < z1, (k, x, z))
+                self.assertFalse(any(over(r, [x - 1.8, z - 1.4, x + 1.8, z]) for r in walled), (k, x, z))
+        work = l["fittings"]["tills"] + l["fittings"]["desks"] + l["fittings"]["cafe"] + l["fittings"]["packing"]
+        self.assertEqual(sorted(map(tuple, work)), sorted(map(tuple, l["objects"]["work"])))
+        for x, z in l["objects"]["seat"]:
+            self.assertFalse(any(over(r, [x, z, x, z], .3) for r in walled), (x, z))
+        b = next(b for b in W["blocks"] if any(q is l for q in b["lots"]))
+        cp = next(p for p in b["props"] if p["kind"] == "carpark")
+        self.assertGreaterEqual(cp["pos"][1] - cp["size"][1] / 2, z1)                     # the car park is south of the hall
+        self.assertLessEqual(cp["pos"][1] + cp["size"][1] / 2, b["origin"][1] + b["size"])  # and in its block
+
 
 if __name__ == "__main__":
     unittest.main()
