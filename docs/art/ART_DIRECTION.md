@@ -179,7 +179,7 @@ Office.
 Scripts build on each other by loading the helper part of an earlier script, so keep all of
 `Tools/blender/` together:
 `style_test_02.py` → `character_test_02.py` → `old_town_04.py` → `character_face_05.py`; and
-`old_town_04.py` → `building_kit_07.py` → `car_kit_09.py` → `furniture_kit_17.py`.
+`old_town_04.py` → `building_kit_07.py` → `car_kit_09.py` → `furniture_kit_17.py` → `furniture_kit_18.py`.
 
 ## 5. Not decided yet
 
@@ -187,6 +187,7 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 |---|---|
 | How production character models are made | Q-15 |
 | Vegetation, UI style | not started (vehicles: §2.5, interiors and furniture: §2.6) |
+| More furniture kits and decoration (kitchen, bathroom, dining, study, children, hallway, garden, shop, café, bedroom, living, decoration) | not approved; renders of `Tools/blender/furniture_kit_18.py` in `Art/StyleTests/furniture_kit_18/` for the owner to choose from |
 | Wear stages (I8) | not yet rendered. (The furniture outlet's look, `Art/StyleTests/furniture_kit_17/showroom.png`, was approved by the owner's request to build it, ADR-0027.) |
 | Night (after dusk) and bad-weather looks | night: approved in the slice (ADR-0023, owner 2026-11-22), no reference image yet; pictures in `Art/StyleTests/night_sky_15/`. Rain, fog and overcast: approved in the slice (ADR-0016), no rule or reference image yet; must follow W5–W7 |
 | The sky: blue overhead with drifting clouds | approved in the slice (ADR-0014); not in the reference renders, still needs a rule and a reference image |
