@@ -1539,7 +1539,7 @@ const MAIN_VS = `attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,u
 void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`;   // invariant: the depth-only pass and the lit pass land on the same depths
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
 uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform vec2 uNk; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
-uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY; uniform vec4 uSkyB; uniform vec2 uSkyH; uniform vec4 uRacks[9]; uniform int uRackN; uniform vec3 uRackY; uniform vec4 uTruss; uniform vec2 uTruss2;
+uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY; uniform vec4 uSkyB; uniform vec2 uSkyH; uniform vec4 uRacks[9]; uniform int uRackN; uniform vec3 uRackY; uniform vec4 uTruss; uniform vec2 uTruss2; uniform vec4 uFeet[8]; uniform int uFeetN;
 uniform sampler2D uGi; uniform vec4 uGiM, uBlob[16]; uniform int uBlobN; uniform vec3 uPf;
 uniform vec3 uHZ[4], uHNo[4], uHBr[4], uHSt; uniform vec4 uHLk[4];
 uniform vec4 uPatA[16], uPatB[16];                       // stone, brick and paving patterns (World/rules/surfaces.json): (type, unit w, unit h, joint), (vary, bevel, dome, -)
@@ -1563,7 +1563,9 @@ vec3 roomLight(vec3 n,float person){
   vec3 hemi=mix(uGround,uSky,n.y*.5+.5);
   bool here=vP.x>uRoomR.x-.05&&vP.x<uRoomR.z+.05&&vP.z>uRoomR.y-.05&&vP.z<uRoomR.w+.05&&vP.y>uRoomY.x-.25&&vP.y<uRoomY.y+.25;
   float sky=here?uRoomY.z:1.;                              // a hall under skylights sees more of the day (outlet.js: the lot's "skylight")
-  if(here&&sky>1.&&uSkyH.y>0.) sky=1.+(sky-1.)*clamp(skyFF(n),0.,1.4);   // as much more as it sees of the skylights
+  if(here&&sky>1.&&uSkyH.y>0.){ float ff=skyFF(n);                      // as much more as it sees of the skylights;
+    if(person>.5) ff=max(ff,.2+.6*(n.y*.5+.5));                           // a person in the aisles keeps most of it on top and less below, so they are
+    sky=1.+(sky-1.)*clamp(ff,0.,1.4); }                                   // not lost in the shade under the solid roof (as in showroom.png)
   vec3 amb=(hemi*.42*day*sky+uSunCol*.025*day*(1.+4.*(sky-1.))+vec3(.16,.13,.1)*(.5+.5*day))*(.8+.2*n.y)*(.82+.18*smoothstep(.0,1.6,y));
   if(!here) y=mod(vP.y-.4,3.);
   vec3 lamps=vec3(0.); float ao=1.;
@@ -1573,6 +1575,8 @@ vec3 roomLight(vec3 n,float person){
     vec2 uv=(vP.xz-uRoomR.xy)/(uRoomR.zw-uRoomR.xy); float o=texture2D(uRoomAO,uv).r;
     float low=1.-smoothstep(0.,.95,y);                                     // contact shade: strong on the floor, fading up the sides of furniture
     ao*=1.-o*(n.y>.6?.62*low:.45*low)*(1.-.4*person);
+    if(n.y>.6&&person<.5) for(int i=0;i<8;i++){ if(i>=uFeetN) break;      // people in a hall under skylights: a soft shade on the floor round their feet
+      ao*=1.-.55*low*smoothstep(uFeet[i].z*1.9,uFeet[i].z*.25,length(vP.xz-uFeet[i].xy)); }
     float e=min(min(vP.x-uRoomR.x,uRoomR.z-vP.x),min(vP.z-uRoomR.y,uRoomR.w-vP.z));
     ao*=n.y>.6?.72+.28*smoothstep(.25,1.3,e):1.;                           // the floor darkens towards the walls
     ao*=abs(n.y)<.5?(.7+.3*smoothstep(0.,.7,y))*(.82+.18*smoothstep(0.,.6,uRoomY.y-vP.y)):1.;   // walls darken where they meet floor and ceiling
@@ -1778,8 +1782,13 @@ void main(){
       vec3 hemi=mix(uGround,uSky,n.y*.5+.5), light, sunL=vec3(0.);
       if(f>2.5&&f<3.5){ light=roomLight(n,0.); c=paint(c,vec3(.76),blot); inside=1.; }
       else if(f>14.5&&f<19.5){ light=roomLight(n,0.); inside=1.; }   // room surfaces and furniture (roomLight above)
-      else if(f>9.5&&f<10.5){ float up=n.y*.5+.5;                       // a person indoors: the room's light, a little more from above so the body keeps its form
-        light=roomLight(n,1.)*(.72+.42*up*up); inside=1.; }
+      else if(f>9.5&&f<10.5){ float up=n.y*.5+.5, dn=max(-n.y,0.);     // a person indoors: the room's light, more from above so the body keeps its form
+        if(uSkyH.y>0.){                                                     // under skylights, as outdoors under the sky: brightest towards the nearest
+          vec3 key=normalize(vec3(clamp(vP.x,uSkyB.x,uSkyB.z),uSkyH.x,clamp(vP.z,uSkyB.y,uSkyB.w))-vP);   // part of the openings, darker on what faces down
+          float ks=dot(n,key)*.5+.5;                                        // (under the hair, the arms, the chin)
+          light=roomLight(n,1.)*(.42+.5*up*up+.55*ks*ks*ks)*(1.-.4*dn); }
+        else light=roomLight(n,1.)*(.72+.42*up*up);
+        inside=1.; }
       else {
         vec2 a=texture2D(uAO,(vP.xz+n.xz-uAOm.x)*uAOm.y).rg; float vis=mix(a.r,1.,clamp((vP.y-.3)/max(a.g*85.,.6),0.,1.));   // how much sky this spot sees
         if(abs(n.y)<.5&&!(f>21.5&&f<22.5)) c*=.66+.34*smoothstep(.1,1.4,vP.y);   // grime at the foot of walls (not on cars)
@@ -2406,12 +2415,17 @@ function frame(now) {
   const seen = pieces.filter(pc => !outside(VP, pc.box)), nearD = chunks.filter(ch => Math.hypot(ch.cx - cam.eye[0], ch.cz - cam.eye[2]) < DETAIL_R && !outside(VP, ch.box));
   const rooms = nearRooms(cam.eye); for (const rm of rooms) if (!outside(VP, rm.box)) nearD.push(rm);
   // the room the camera is in (or the nearest one in reach) gets its own lamps and contact shade; other rooms an even lamplight
-  let inRoom = null, best = 10;
+  let inRoom = null, best = 10; const feet = new Float32Array(32); let feetN = 0;   // feet: people's floor shade in a hall (below)
   const [camL, camF] = camFloor();
   for (const rm of rooms) { if (!rm.ao) continue; const [a0, b0, a1, b1] = rm.lot.rect, e = Math.hypot(Math.max(a0 - cam.eye[0], 0, cam.eye[0] - a1), Math.max(b0 - cam.eye[2], 0, cam.eye[2] - b1)) + (camL ? (rm.lot === camL && rm.level === camF ? 0 : 99) : (rm.level || cam.eye[1] > (rm.lot.hall_height || GF) + 1 ? 99 : 0)); if (e < best) { best = e; inRoom = rm; } }
   const roomL = new Float32Array(64); let roomLN = 0;
   if (inRoom) { const ls = inRoom.lamps.map(q => [(q[0] - cam.eye[0]) ** 2 + (q[2] - cam.eye[2]) ** 2, q]).sort((p, q) => p[0] - q[0]);
     for (; roomLN < Math.min(16, ls.length); roomLN++) { const q = ls[roomLN][1]; roomL.set([q[0], q[1], q[2], q[3] * dials.lanterns * (.75 + .5 * Lt.night)], roomLN * 4); } }   // furnished rooms of the buildings close by   // near relief: blocks within reach and in view
+  if (inRoom && inRoom.lot.skylight > 1) {                  // a hall under skylights (one storey): the player and the 7 nearest people in it shade the floor at their feet
+    const [a0, b0, a1, b1] = inRoom.lot.rect, fs = people.filter(p => p[0] > a0 && p[0] < a1 && p[1] > b0 && p[1] < b1);
+    fs.sort((p, q) => Math.hypot(p[0] - cam.eye[0], p[1] - cam.eye[2]) - Math.hypot(q[0] - cam.eye[0], q[1] - cam.eye[2]));
+    if (started && !cam.fp && pl.pose !== 4) fs.unshift([pl.x, pl.z]);
+    for (; feetN < Math.min(8, fs.length); feetN++) feet.set([fs[feetN][0], fs[feetN][1], .34, 0], feetN * 4); }
   for (const pc of seen) pc.d2 = boxD2(pc.box, cam.eye); for (const ch of nearD) ch.d2 = boxD2(ch.box, cam.eye);
   const front = seen.slice().sort((p, q) => p.d2 - q.d2); nearD.sort((p, q) => p.d2 - q.d2);
   // depth first, nearest pieces first: the costly light below then runs once for each pixel instead of for every hidden wall and room behind it
@@ -2436,6 +2450,7 @@ function frame(now) {
     if (inRoom) gl.uniform4fv(u.uRoomR, inRoom.lot.rect); else gl.uniform4f(u.uRoomR, 0, 0, -1, -1);
     const sb = inRoom && inRoom.lot.skylight > 1 && inRoom.lot.skyband;   // the hall's skylights, for skyFF() in roomLight
     if (sb) { gl.uniform4f(u.uSkyB, sb[0], sb[1], sb[2], sb[3]); gl.uniform2f(u.uSkyH, sb[4], 1 / skyRef(sb)); } else gl.uniform2f(u.uSkyH, 0, 0);
+    gl.uniform4fv(u["uFeet[0]"], feet); gl.uniform1i(u.uFeetN, feetN);
     const rk = (sb && inRoom.lot.racks) || [];                 // the hall's racks, for their shade in roomLight
     if (rk.length) { const ra = new Float32Array(36); rk.slice(0, 9).forEach((q, k) => ra.set(q, k * 4)); gl.uniform4fv(u["uRacks[0]"], ra); gl.uniform3fv(u.uRackY, inRoom.lot.rackY); }
     gl.uniform1i(u.uRackN, Math.min(9, rk.length));
