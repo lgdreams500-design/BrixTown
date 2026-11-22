@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-BUILDER
 title: Wasted — The building designer (remodel a building you own, or build a new one on an open plot)
-version: 0.2.0
+version: 0.3.0
 status: draft            # a plan: every row proposed; levels and open questions wait for the owner
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.5 PROP; same ID rules; new prefix BUILD
@@ -162,10 +162,10 @@ Suggested: slice — designer 1, plots 0, construct 0; life depth — designer 2
 | BUILD-001 | Every building shall be a design: one document of data giving its footprint, storeys and their heights, walls and ornament per facade and band, roof, openings, stairs and lifts, rooms and finishes. The town's buildings get theirs from the rules; a player's is the same kind of document. | F-BLD-DESIGN | 1 | P0 | `test_BUILD_001_every_building_has_a_whole_design` |
 | BUILD-002 | The slice, and later Unreal, shall build a building only from its design; a design made from the rules shall look exactly as the building does today. | F-BLD-DESIGN | 1 | P0 | `test_BUILD_002_designs_pick_as_the_slice_does`; the slice's town mesh fingerprint unchanged (checked 2026-11-22) |
 | BUILD-003 | Every choice in the designer shall come from a catalogue in data with a price and an approved look; adding a choice shall need only data and, for a new kind of part, a look test. | F-BLD-DESIGN | 1 | P0 | `test_BUILD_003_every_choice_comes_from_the_kit` |
-| BUILD-004 | A player shall be able to remodel the outside of a building they own whole, and the inside of a unit they own: walls and their colour, brick or stone, roof tiles, windows and doors; floors, walls and ceilings per room. | F-BLD-DESIGN | 1 | P0 | (to write) |
-| BUILD-005 | The designer shall show the change in place and its cost before it is confirmed, with undo; on confirm the cost shall move through the ledger. | F-BLD-DESIGN | 1 | P0 | (to write) |
-| BUILD-006 | A design shall be checked as it is made and again by the server on submit: it fits, keeps the planning rules for its district, every room is reachable from the door, there is a stair to every storey and a lift where required, every room has a door and each lived-in room a window, and the player can pay. | F-BLD-DESIGN | 1 | P0 | (to write) |
-| BUILD-007 | The planning rules (palette by district, height, cover, street front, neighbours) shall be data, and the designer shall offer only choices they allow, so the town's look holds (ADR-0004). | F-BLD-DESIGN | 1 | P0 | (to write) |
+| BUILD-004 | A player shall be able to remodel the outside of a building they own whole, and the inside of a unit they own: walls and their colour, brick or stone, roof tiles, windows and doors; floors, walls and ceilings per room. | F-BLD-DESIGN | 1 | P0 | `test_BUILD_004_who_may_change_what` (Tools/citysim/test_builder.py) |
+| BUILD-005 | The designer shall show the change in place and its cost before it is confirmed, with undo; on confirm the cost shall move through the ledger. | F-BLD-DESIGN | 1 | P0 | `test_BUILD_005_the_cost_is_known_line_by_line`, `test_BUILD_005_a_full_remodel_is_about_a_quarter_of_a_house` (Tools/citysim/test_builder.py) |
+| BUILD-006 | A design shall be checked as it is made and again by the server on submit: it fits, keeps the planning rules for its district, every room is reachable from the door, there is a stair to every storey and a lift where required, every room has a door and each lived-in room a window, and the player can pay. | F-BLD-DESIGN | 1 | P0 | `test_BUILD_006_a_remodel_is_checked` (Tools/citysim/test_builder.py) |
+| BUILD-007 | The planning rules (palette by district, height, cover, street front, neighbours) shall be data, and the designer shall offer only choices they allow, so the town's look holds (ADR-0004). | F-BLD-DESIGN | 1 | P0 | `test_BUILD_007_the_town_keeps_its_own_district_rules`, `test_BUILD_007_a_district_offers_only_its_own_palette` (Tools/citysim/test_builder.py) |
 | BUILD-008 | On an empty plot they own, a player shall be able to make a new building: draw the footprint on a 0.5 m grid, set the number of storeys and each one's height (2.6 to 4.5 m; the ground floor 3.0 to 5.0 m), and choose facades, roof, openings, stairs and lift, and rooms. | F-BLD-DESIGN | 2 | P0 | (to write) |
 | BUILD-009 | Templates (an Old Town house, a brick terrace, a corner shop, a small block of flats) and "copy from" any building in town shall start a design. | F-BLD-DESIGN | 2 | P1 | (to write) |
 | BUILD-010 | A finished design shall become units in the estate market (ADR-0022) like any building: lived in by its owner, or let or sold, with residents moving in. | F-BLD-DESIGN | 2 | P0 | (to write) |
@@ -180,17 +180,18 @@ Suggested: slice — designer 1, plots 0, construct 0; life depth — designer 2
 | ID | Question | Why it matters | Suggestion |
 |---|---|---|---|
 | Q-33 | Where do open plots come from? | The town is full: every lot is built on | Turn a handful of lots in the outskirts into empty plots now; more later by clearing |
-| Q-34 | May players change how the town looks, or only choose within each district's palette? | The look is locked (ADR-0004) | Within the palette; anything new joins the palette only with an ADR and your approval |
+| Q-34 | May players change how the town looks, or only choose within each district's palette? | The look is locked (ADR-0004) | **Decided 2026-11-22 by the owner: "District palette".** Each district offers only its own stone, brick, plaster colours and tiles (`World/rules/planning.json`); anything new joins a palette only with an ADR and the owner's approval. |
 | Q-35 | Does building take time? | Instant is simple; days feel real and give construction sites in the street | A few game days, worked out from the clock |
 | Q-36 | How tall may players build, and where? | Height shapes the skyline and the streets | Old Town up to 5 storeys, outskirts up to 4, no player towers yet |
 | Q-37 | Can a player clear a building they own? | Lets the town change; risks losing what people like | Yes, if they own all of it and the tenants have had notice |
 | Q-38 | Who sees a draft, and do neighbours have a say? | Shared world (pillar 4) | Drafts are private; a built design is public; no neighbour vote |
-| Q-39 | How much should building cost against what a player earns? | Balance with the estate market | Set with the estate market's targets (`estate.json` balance) |
+| Q-39 | How much should building cost against what a player earns? | Balance with the estate market | **Decided 2026-11-22 by the owner: "Expensive", about 25% of value.** A full remodel of a typical house (about 1,900 brix) costs about 470 brix, some 8 game days of an active player's income (60 brix); a repaint about 60 brix. Prices in `World/rules/building_kit.json` `prices`. |
 
 ## 9. Change log
 
 | Version | Date | Change |
 |---|---|---|
+| 0.3.0 | 2026-11-22 | Step 2 done: `Tools/citysim/builder.py` checks a remodel (what level 1 may change, who may change it, the kit, each district's palette from `World/rules/planning.json`, funds) and prices it line by line (`building_kit.json` `prices`): a full remodel of a typical house costs about 545 brix, 28% of its value; a repaint about 65 brix. Q-34 and Q-39 decided. The slice will need a port of `check` and `cost` (step 3), as the estate rules have. |
 | 0.2.0 | 2026-11-22 | Step 1 done: every building is a design (`world.design_of`, `designs`, `design_problems`; the kit in `World/rules/building_kit.json`); the slice builds from designs and the town is the same to the last vertex. |
 | 0.1.1 | 2026-11-22 | First-slice picks recorded: designer 1, plots 0, construction 0. |
 | 0.1.0 | 2026-11-22 | First plan, from the owner's request: the designer, its one model of a building, the order of work, features and requirements proposed, open questions. |

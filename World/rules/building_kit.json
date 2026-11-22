@@ -29,5 +29,11 @@
  "floor_uses": {
   "bedrooms": ["home", null], "flat": ["home", "flats"], "store": ["shop", null], "rooms": ["home", null], "office": ["work", "office"],
   "wards": ["health", null], "stacks": ["library", null], "gallery": ["museum", null], "plant": ["utility", "depot"]
+ },
+ "prices": {
+  "note": "What each change costs, in chips (100 chips = 1 brix), by what it is measured in (Tools/citysim/builder.py cost). Set so that a full remodel of a typical house (about 1,900 brix) comes to about a quarter of its value, about 470 brix, and a repaint about 60 brix (Q-39, the owner, 2026-11-22). [ASSUMPTION] until play-tested.",
+  "plaster_m2": 32, "stone_m2": 72, "brick_to_eaves_m2": 72, "roof_tiles_m2": 64,
+  "shutters_each": 480, "shutter_paint_each": 190, "frame_each": 160, "balcony": 4800, "keystones_each": 320,
+  "quoins": 3200, "lantern": 800, "floor_m2": 48, "inner_m2": 24, "permit": 800
  }
 }

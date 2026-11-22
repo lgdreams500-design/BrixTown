@@ -1,0 +1,16 @@
+{
+ "note": "The town's planning rules for the building designer (docs/specs/domains/BUILDER.md BUILD-006, BUILD-007; Q-34 decided 2026-11-22: each district offers only its own palette). Checked by Tools/citysim/builder.py. Each district's palette is what its buildings have today, so the town's own designs all pass; a new choice joins a palette only with an ADR and the owner's approval (the look is locked, ADR-0004). Colours are given by their place in building_kit.json's lists; stone and brick by their name in surfaces.json. 'remodel' lists what a level-1 remodel may change (F-BLD-DESIGN level 1): everything else in a design stays as it is. 'outside' parts need the whole building; 'inside' parts need the unit on that floor (ADR-0022 units).",
+ "districts": {
+  "Outskirts":         {"stone": ["ashlar", "brick_running", "brick_flemish"], "plaster": [0, 1, 2, 3, 4], "roof_tiles": [0, 1, 2, 3, 4]},
+  "Old Town":          {"stone": ["rubble", "ashlar"], "plaster": [0, 1, 2, 3, 4], "roof_tiles": [0, 1, 2, 3, 4]},
+  "Centre":            {"stone": ["rubble", "ashlar", "brick_running"], "plaster": [0, 1, 2, 3, 4], "roof_tiles": [0, 1, 2, 3, 4]},
+  "Outside the walls": {"stone": ["ashlar"], "plaster": [0, 1, 2, 3, 4], "roof_tiles": [0, 1, 2, 3, 4]}
+ },
+ "civic_only": {"stone": ["rusticated"], "kinds": ["bank", "museum", "library"], "tags": ["hospital"], "names": ["Town Hall"], "templates": ["hall", "hospital"]},
+ "brick_to_eaves": ["brick_running", "brick_flemish"],
+ "shutters": {"old": "shutters_old", "default": "accents"},
+ "remodel": {
+  "outside": ["walls.plaster", "walls.stone", "walls.brick_to_eaves", "roof.tiles", "openings.shutters", "openings.shutter_color", "openings.frame", "openings.balcony", "openings.keystones", "ornament.quoins", "ornament.lantern"],
+  "inside": ["walls.inner", "inside.floors"]
+ }
+}
