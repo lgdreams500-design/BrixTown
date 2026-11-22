@@ -278,6 +278,8 @@ class Traffic:
             drivers = [rid for rid in mates if self.city.res[rid]["role"] not in no]
             if not drivers or rnd("car", home) >= self.r["car_share"]:
                 continue
+            if getattr(self.city, "car_homes", None) is not None and home not in self.city.car_homes:
+                continue                                       # a home the road network does not reach yet
             door = self.city.lots[home]["door"]
             bay = next((b for b in self.roads.bays_near(door, 10 * self.r["bay_reach_m"]) if b not in taken), None)
             if bay is None:

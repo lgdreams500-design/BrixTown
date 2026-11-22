@@ -21,7 +21,7 @@
   "civic":    { "name": "Building",    "per_m2": 400,  "yield_bp": 80,  "owners": { "city": 100 } }
  },
  "usable_bp": 8000,
- "location": { "centre_lot": "b_3_4_l0", "near_bp": 13000, "far_bp": 8000, "radius": 420 },
+ "location": { "centre_lot": "b_9_8_l0", "near_bp": 13000, "far_bp": 8000, "radius": 420 },
  "floor": { "up_bp": 200, "no_lift_above": 2, "no_lift_down_bp": 300 },
  "index": {
   "min_bp": 7000, "max_bp": 14000,
@@ -71,9 +71,9 @@
   "note": "Residents and the businesses they run share one account, npc:town, until residents have their own (CITY-004). Their earnings come in from sys:wages each day: a household's wages by its members' roles; a business's and an unseen lodger's takings as a share of the rent they pay. What the town holds beyond pool_days of earnings is spent (sys:spend), half each day, so its money neither runs away nor runs dry."
  },
  "companies": [
-  { "id": "lark",    "name": "Lark & Daughters",   "office": "b_3_2_l1", "focus": ["house", "flat", "shop"],         "cash": 3000000, "reserve": 400000, "cap": 9000000, "dividend_bp": 2000, "weight": 40 },
-  { "id": "harrow",  "name": "Harrow Property Co.", "office": "b_2_5_l1", "focus": ["shop", "office", "showroom", "plant", "civic"], "cash": 3000000, "reserve": 400000, "cap": 9000000, "dividend_bp": 2000, "weight": 35 },
-  { "id": "cobble",  "name": "Cobblestone Homes",   "office": "b_5_3_l4", "focus": ["house", "flat", "office"],       "cash": 2000000, "reserve": 300000, "cap": 7000000, "dividend_bp": 2000, "weight": 25 }
+  { "id": "lark",    "name": "Lark & Daughters",   "office": "b_9_6_l1", "focus": ["house", "flat", "shop"],         "cash": 3000000, "reserve": 400000, "cap": 9000000, "dividend_bp": 2000, "weight": 40 },
+  { "id": "harrow",  "name": "Harrow Property Co.", "office": "b_8_9_l1", "focus": ["shop", "office", "showroom", "plant", "civic"], "cash": 3000000, "reserve": 400000, "cap": 9000000, "dividend_bp": 2000, "weight": 35 },
+  { "id": "cobble",  "name": "Cobblestone Homes",   "office": "b_11_7_l4", "focus": ["house", "flat", "office"],       "cash": 2000000, "reserve": 300000, "cap": 7000000, "dividend_bp": 2000, "weight": 25 }
  ],
  "balance": {
   "player_day_income": 6000,

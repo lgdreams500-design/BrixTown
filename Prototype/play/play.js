@@ -4,11 +4,14 @@
    Layout of this file: helpers, mesh, world building, residents, shaders and light, player, camera, HUD, frame loop. */
 "use strict";
 const D = window.WASTED;
-const G = D.city.grid, P = G.pitch, SW = G.street_width, CITY = G.columns * P;
+const G = D.city.grid, P = G.pitch, SW = G.street_width, CITY_X = G.columns * P, CITY_Z = G.rows * P, CITY = Math.max(CITY_X, CITY_Z);
+// Old Town inside its wall (city.json "wall": grid lines i0, j0, i1, j1); beyond it the city's newer areas, on open ground
+const WALL = (D.city.wall && D.city.wall.cells) || [0, 0, G.columns, G.rows], OX = WALL[0] * P, OZ = WALL[1] * P, OX1 = WALL[2] * P, OZ1 = WALL[3] * P;
+const inTown = (x, z) => x > OX - SW / 2 && z > OZ - SW / 2 && x < OX1 + SW / 2 && z < OZ1 + SW / 2;
 const Y_PAVE = 0.12, Y_YARD = 0.16, Y_GRASS = 0.15, Y_PATH = 0.18, Y_FLOOR = 0.2, GF = 3.2;
 const OLD_BASE = 3.55;                                      // the old quarters' stone storey: one floor, plaster above (building_kit_07: 3.4 m)
 const PAVE = 4.5;                                        // pavement width round every block
-const TRAM_Z = 5 * P - 1.8;                              // the tram runs along Tram Street
+const TRAM_Z = Math.max(0, D.city.streets.east_west.indexOf("Tram")) * P - 1.8;   // the tram runs along Tram Street
 
 // ---------------------------------------------------------------- helpers
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -67,14 +70,14 @@ function groundOf(id, fallback, block) {                   // [colour, material]
   const s = block ? SURF.blocks[id] : SURF.lots[id]; if (!s) return [fallback, 7];
   return [s.color || fallback, 30 + (block ? s.pavement : s.ground)];
 }
-const FLOOR = { home: [.36, .26, .18], shop: [.5, .46, .4], food: [.42, .3, .22], work: [.38, .36, .36], health: [.6, .6, .57], utility: [.3, .3, .31], bank: [.62, .6, .55], dealer: [.6, .6, .58], library: [.38, .26, .17], museum: [.6, .58, .54], cinema: [.3, .14, .12] };
+const FLOOR = { school: [.5, .44, .36], fire: [.4, .38, .36], police: [.42, .42, .44], home: [.36, .26, .18], shop: [.5, .46, .4], food: [.42, .3, .22], work: [.38, .36, .36], health: [.6, .6, .57], utility: [.3, .3, .31], bank: [.62, .6, .55], dealer: [.6, .6, .58], library: [.38, .26, .17], museum: [.6, .58, .54], cinema: [.3, .14, .12] };
 const SKIN = [[.55, .38, .28], [.42, .27, .18], [.30, .19, .13], [.62, .46, .36], [.24, .15, .10], [.5, .33, .22]];
 const HAIR = [[.05, .04, .04], [.16, .1, .06], [.09, .07, .06], [.3, .2, .1], [.22, .12, .08]];
 const CLOTH = [C.brown, C.olive, C.plum, C.charcoal, C.indigo, [.25, .3, .4], [.33, .29, .25]];
 const BLOBS = [];                                             // street furniture that shades the ground it stands on (trial light): x, z, half-width, half-depth
 const BLOB_SIZE = { bench: [1, .27], bin: [.32, .32], planter: [.5, .5], postbox: [.3, .3], bollard: [.16, .16], well: [1, 1], bikerack: [1, .4], advert: [.5, .25], lamp: [.2, .2] };
-const KIND_CSS = { home: "#b59a7c", shop: "#c79a45", food: "#b0614a", work: "#6f86ab", health: "#d9d3c2", utility: "#4b4b55", garden: "#6f8650", market: "#d8c9a3", stop: "#6fa3a2", bank: "#8c7a3c", dealer: "#5a7f8f", library: "#7a5c8f", museum: "#a08a6a", furniture: "#a8744a", cinema: "#8f3c4a" };
-const KIND_WORD = { home: "Homes", shop: "Shops", food: "Cafés", work: "Workplaces", health: "Clinics and hospital", utility: "Utilities", garden: "Gardens and parks", market: "Market Square", stop: "Tram stops", bank: "Bank", dealer: "Car showroom", library: "Library", museum: "Museum", cinema: "Cinema", furniture: "Furniture outlet" };
+const KIND_CSS = { school: "#d8b74a", fire: "#b8443a", police: "#4a5a9a", home: "#b59a7c", shop: "#c79a45", food: "#b0614a", work: "#6f86ab", health: "#d9d3c2", utility: "#4b4b55", garden: "#6f8650", market: "#d8c9a3", stop: "#6fa3a2", bank: "#8c7a3c", dealer: "#5a7f8f", library: "#7a5c8f", museum: "#a08a6a", furniture: "#a8744a", cinema: "#8f3c4a" };
+const KIND_WORD = { school: "Schools", fire: "Fire station", police: "Police station", home: "Homes", shop: "Shops", food: "Cafés", work: "Workplaces", health: "Clinics and hospital", utility: "Utilities", garden: "Gardens and parks", market: "Market Square", stop: "Tram stops", bank: "Bank", dealer: "Car showroom", library: "Library", museum: "Museum", cinema: "Cinema", furniture: "Furniture outlet" };
 
 // ---------------------------------------------------------------- mesh: position 3, normal 3, colour 3, material 1
 // materials: 0 plaster (mottled) · 1 lit window · 2 lamp · 3 indoor surface · 4 dark window · 6 stone blocks · 7 paving · 8 light pool · 9 plain · 10 person indoors
@@ -135,19 +138,50 @@ function eachSolid(x, z, r, fn) {
   }
 }
 const blockAt = new Map(), LOTS = [];
-for (const b of D.blocks) { blockAt.set(b.grid[0] + "," + b.grid[1], b); for (const l of b.lots) { l.block = b; l.spots = []; LOTS.push(l); } }
+for (const b of D.blocks) {                             // a block covering several cells ("span") is found from each of them
+  const [ci, cj] = b.span || [1, 1]; b.ext = [b.size + (ci - 1) * P, b.size + (cj - 1) * P];
+  for (let di = 0; di < ci; di++) for (let dj = 0; dj < cj; dj++) blockAt.set((b.grid[0] + di) + "," + (b.grid[1] + dj), b);
+  for (const l of b.lots) { l.block = b; l.spots = []; LOTS.push(l); }
+}
+function unturn(l, x, z) {                                // a point in a turned lot's own frame (lot.angle, degrees about its centre)
+  if (!l.angle) return [x, z];
+  const cx = (l.rect[0] + l.rect[2]) / 2, cz = (l.rect[1] + l.rect[3]) / 2, t = -l.angle * Math.PI / 180, c = Math.cos(t), s = Math.sin(t);
+  return [cx + (x - cx) * c - (z - cz) * s, cz + (x - cx) * s + (z - cz) * c];
+}
 const isOpen = l => l.kind === "garden" || l.kind === "market" || l.kind === "stop";
 function blockOf(x, z) { return blockAt.get(Math.floor(x / P) + "," + Math.floor(z / P)); }
+const LOT_CELL = 16;                                      // a big block (a community, a mall site) finds its lots through a 16 m grid
+function lotsNear(b, x, z) {
+  if (b.lots.length < 40) return b.lots;
+  if (!b.lotGrid) {
+    b.lotGrid = new Map();
+    for (const l of b.lots) {                                 // a turned lot by the circle round it
+      const [x0, z0, x1, z1] = l.rect, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, r = l.angle ? Math.hypot(x1 - x0, z1 - z0) / 2 : 0;
+      const a0 = l.angle ? cx - r : x0, a1 = l.angle ? cx + r : x1, c0 = l.angle ? cz - r : z0, c1 = l.angle ? cz + r : z1;
+      for (let i = Math.floor(a0 / LOT_CELL); i <= Math.floor(a1 / LOT_CELL); i++) for (let j = Math.floor(c0 / LOT_CELL); j <= Math.floor(c1 / LOT_CELL); j++) {
+        const k = i + "," + j; let v = b.lotGrid.get(k); if (!v) b.lotGrid.set(k, v = []); v.push(l);
+      }
+    }
+  }
+  return b.lotGrid.get(Math.floor(x / LOT_CELL) + "," + Math.floor(z / LOT_CELL)) || [];
+}
 function lotAt(x, z, any) {
   const b = blockOf(x, z); if (!b) return null;
-  for (const l of b.lots) if ((any || !isOpen(l)) && x >= l.rect[0] && x <= l.rect[2] && z >= l.rect[1] && z <= l.rect[3]) return l;
+  for (const l of lotsNear(b, x, z)) { if (!(any || !isOpen(l))) continue; const [u, v] = unturn(l, x, z); if (u >= l.rect[0] && u <= l.rect[2] && v >= l.rect[1] && v <= l.rect[3]) return l; }
   return null;
 }
 function groundBase(x, z) {                              // height of the ground itself: street, pavement, yard or a building's floor
-  const there = blockOf(x, z);                             // beyond the wall only a block built out there has ground of its own (the furniture outlet, FURN-020)
-  if (!there && (x < -SW / 2 || z < -SW / 2 || x > CITY + SW / 2 || z > CITY + SW / 2)) return 0;
+  const there = blockOf(x, z);                             // beyond the wall only a block built out there has ground of its own
+  if (!inTown(x, z)) {
+    if (!there) return 0;
+    const l = lotAt(x, z); if (l && l.enterable) return Y_FLOOR;
+    if (there.lanes) return 0;                             // a community: houses on open ground along its lanes
+    const [bx, bz] = there.origin, [ex, ez] = there.ext;
+    if (x > bx && z > bz && x < bx + ex && z < bz + ez) return Y_YARD;
+    return x > bx - PAVE && z > bz - PAVE && x < bx + ex + PAVE && z < bz + ez + PAVE ? Y_PAVE : 0;
+  }
   const u = x - Math.floor(x / P) * P, v = z - Math.floor(z / P) * P, lo = SW / 2 - PAVE, hi = P - SW / 2 + PAVE;
-  if (u < lo || u > hi || v < lo || v > hi || x < 0 || z < 0 || (!there && (x > CITY || z > CITY))) return 0;
+  if (u < lo || u > hi || v < lo || v > hi || !there) return 0;
   if (u < SW / 2 || u > P - SW / 2 || v < SW / 2 || v > P - SW / 2) return Y_PAVE;
   const l = lotAt(x, z); return l && l.enterable ? Y_FLOOR : Y_YARD;
 }
@@ -754,7 +788,7 @@ function furnish(l, side, accent, inC, vis, level) {     // at load (no vis): pl
     spot(l, x, z, desk ? 2 : 0, toDoor, desk ? F + .45 : F);
   }
   for (const [x, z] of o.customer || []) { spot(l, x, z, 0, fromDoor, F); occ.push([x, z, .7]); }
-  room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard);
+  if (!l.flats) room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard);   // a building of flats: each flat keeps its own beds and chairs, walled by storeys.js
   if (level) Storeys.fill(l, level, B, hard, occ);           // storerooms, wards, plant rooms, galleries and stacks upstairs (storeys.js)
   if (l.tower && !vis && !l.lift) {                            // a lift in the back corner, up to the roof terrace (a tower with floors has its own: storeys.js)
     const bx = side === "e" ? x0 + 1.5 : side === "w" ? x1 - 1.5 : x0 + 1.5, bz = side === "s" ? z0 + 1.5 : side === "n" ? z1 - 1.5 : z0 + 1.5;
@@ -1409,20 +1443,80 @@ function tree(t) {                                         // a pale trunk and a
   for (let i = 0; i < N; i++) world.quad(ring[0][i], ring[0][(i + 1) % N], [x, cy - R * .9, z], [x, cy - R * .9, z], mul3(base, .6), 0, [0, -1, 0]);
 }
 
+// ---------------------------------------------------------------- the newer areas beyond the wall: curved roads and turned houses
+function ribbon(m, pts, w, y, c, f) {                       // a strip w wide along a line of points, lying on the ground at height y
+  const h = w / 2;
+  for (let k = 0; k + 1 < pts.length; k++) {
+    const [ax, az] = pts[k], [bx, bz] = pts[k + 1], L = Math.hypot(bx - ax, bz - az); if (L < 1e-3) continue;
+    const nx = -(bz - az) / L * h, nz = (bx - ax) / L * h, e = Math.min(.4, L / 2), ux = (bx - ax) / L * e, uz = (bz - az) / L * e;   // a little overlap hides the joins
+    m.quad([ax - nx - ux, y, az - nz - uz], [ax + nx - ux, y, az + nz - uz], [bx + nx + ux, y, bz + nz + uz], [bx - nx + ux, y, bz - nz + uz], c, f, [0, 1, 0]);
+  }
+}
+function disc(m, p, r, y, c, f) {                            // a round patch of road: a turning circle
+  const n = 18;
+  for (let k = 0; k < n; k++) { const a = 2 * Math.PI * k / n, b = 2 * Math.PI * (k + 1) / n; const A = [p[0] + Math.cos(a) * r, y, p[1] + Math.sin(a) * r], B = [p[0] + Math.cos(b) * r, y, p[1] + Math.sin(b) * r]; m.quad([p[0], y, p[1]], A, B, B, c, f, [0, 1, 0]); }   // a wedge: its last corner twice
+}
+function turnedHouse(l) {
+  if (l.house && window.Houses) return Houses.outside(l);   // a designed house, inside and out (houses.js)
+  // A house turned to face its lane (lot.angle): plastered walls on a stone plinth, a pitched roof along its long side, the front
+  // door on the side that faces the lane (the footprint's north wall before turning), windows on every floor; the walls are
+  // solid all round but for the door. Not furnished inside yet.
+  const [x0, z0, x1, z1] = l.rect, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, hw = (x1 - x0) / 2, hd = (z1 - z0) / 2, t = l.angle * Math.PI / 180, c = Math.cos(t), s = Math.sin(t);
+  const T = (u, y, v) => [cx + u * c - v * s, y, cz + u * s + v * c];
+  const H = (l.floors || 2) * 3 + .4, wallC = pick(PLASTER, hash(l.id, "pl")), roofC = pick(ROOF, hash(l.id, "rf")), yaw = -t;
+  l.H = H;
+  world.ybox(cx, 0, cz, hw * 2 + .2, .5, hd * 2 + .2, yaw, C.stone, 6);
+  world.ybox(cx, .5, cz, hw * 2, H - .5, hd * 2, yaw, wallC, 0);
+  const o = .5, R = 2.4, q = (a, b2, c2, d) => world.quad(T(...a), T(...b2), T(...c2), T(...d), roofC, 11, [0, 1, 0]);
+  q([-hw - o, H, -hd - o], [hw + o, H, -hd - o], [hw + o, H + R, 0], [-hw - o, H + R, 0]);
+  q([-hw - o, H + R, 0], [hw + o, H + R, 0], [hw + o, H, hd + o], [-hw - o, H, hd + o]);
+  for (const sx of [-1, 1]) world.quad(T(sx * hw, H, -hd), T(sx * hw, H, hd), T(sx * hw, H + R * hd / (hd + o), 0), T(sx * hw, H + R * hd / (hd + o), 0), wallC, 0, [sx * c, 0, sx * s]);
+  const face = (u0, u1, y0, y1, v, f, col, n) => world.quad(T(u0, y0, v), T(u1, y0, v), T(u1, y1, v), T(u0, y1, v), col, f, [-n * s, 0, n * c]);
+  face(-.55, .55, .5, 2.6, -hd - .02, 9, C.brown, -1);                                   // the front door
+  for (let f = 0; f < (l.floors || 2); f++) for (const u of [-hw + 2, hw - 2]) for (const v of [-hd - .02, hd + .02]) face(u - .6, u + .6, 3 * f + 1.4, 3 * f + 2.8, v, 4, [.1, .1, .12], v < 0 ? -1 : 1);
+  for (let k = -hw; k < hw; k += 1) for (const v of [-hd, hd]) { if (v < 0 && Math.abs(k + .5) < .8) continue; const p = T(k + .5, 0, v); solid(p[0] - .45, 0, p[2] - .45, p[0] + .45, H, p[2] + .45); }   // walls you cannot walk through
+  for (let k = -hd; k < hd; k += 1) for (const u of [-hw, hw]) { const p = T(u, 0, k + .5); solid(p[0] - .45, 0, p[2] - .45, p[0] + .45, H, p[2] + .45); }
+}
+
+function mallShell(l) {
+  // A mall from outside, until its floors (lot.plan, Tools/worldgen/malls_01.py) are built inside: a stone plinth, plastered walls
+  // as high as its storeys, a big window to every 12 m bay of every floor, a cornice, a glass roof light along its length, and the
+  // entrance under a canopy at its door. Some two thousand vertices, where the general building() gives a front this long an old
+  // town's detail along every metre (1.5 to 1.9 million). Closed for now: its walls are solid all round.
+  const [x0, z0, x1, z1] = l.rect, H = (l.plan.storey_height || 6) * (l.floors || 3), wallC = pick(PLASTER, hash(l.id, "mall")), glass = [.1, .12, .14];
+  l.H = H;
+  world.box(x0, 0, z0, x1, .6, z1, C.stone, 6);
+  world.box(x0 + .2, .6, z0 + .2, x1 - .2, H, z1 - .2, wallC, 0);
+  world.box(x0 - .4, H, z0 - .4, x1 + .4, H + .7, z1 + .4, C.stoneDark, 0);
+  if (!l.open_air) { const alongX = x1 - x0 > z1 - z0, w = alongX ? (z1 - z0) / 6 : (x1 - x0) / 6, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+    alongX ? world.box(x0 + 20, H + .7, cz - w, x1 - 20, H + 3.2, cz + w, [.55, .64, .7], 4) : world.box(cx - w, H + .7, z0 + 20, cx + w, H + 3.2, z1 - 20, [.55, .64, .7], 4); }
+  const st = l.plan.storey_height || 6;
+  for (const [s, fix, a0, a1, out] of [["n", z0, x0, x1, -1], ["s", z1, x0, x1, 1], ["w", x0, z0, z1, -1], ["e", x1, z0, z1, 1]]) {
+    const ns = s === "n" || s === "s", f = fix + out * .22, n = Math.max(1, Math.floor((a1 - a0) / 12));
+    for (let k = 0; k < n; k++) for (let fl = 0; fl < (l.floors || 3); fl++) {
+      const u0 = a0 + (a1 - a0) * (k + .15) / n, u1 = a0 + (a1 - a0) * (k + .85) / n, y0 = fl * st + 1.4, y1 = fl * st + st - .9;
+      ns ? world.quad([u0, y0, f], [u1, y0, f], [u1, y1, f], [u0, y1, f], glass, 4, [0, 0, out]) : world.quad([f, y0, u0], [f, y0, u1], [f, y1, u1], [f, y1, u0], glass, 4, [out, 0, 0]);
+    }
+    ns ? solid(x0, 0, fix - .3, x1, H, fix + .3) : solid(fix - .3, 0, z0, fix + .3, H, z1);
+  }
+  const [dx, dz] = l.door, ns = Math.abs(dz - z0) < .01 || Math.abs(dz - z1) < .01, o = Math.abs(dz - z0) < .01 ? -1 : Math.abs(dz - z1) < .01 ? 1 : Math.abs(dx - x0) < .01 ? -1 : 1;
+  ns ? world.box(dx - 8, 0, dz + o * .25 - .05, dx + 8, 5.5, dz + o * .25 + .05, glass, 4) : world.box(dx + o * .25 - .05, 0, dz - 8, dx + o * .25 + .05, 5.5, dz + 8, glass, 4);   // the entrance
+  ns ? world.box(dx - 10, 5.6, Math.min(dz, dz + o * 5), dx + 10, 6.1, Math.max(dz, dz + o * 5), C.stoneDark, 0) : world.box(Math.min(dx, dx + o * 5), 5.6, dz - 10, Math.max(dx, dx + o * 5), 6.1, dz + 10, C.stoneDark, 0);   // its canopy
+}
+
 function buildWorld() {
   const E = SW / 2;
-  const A = -E - 2, B = CITY + E + 2, far = 2500;             // fields all round the town, never under it
-  world.flat(-far, -far, CITY + far, A, -.05, C.field, 0); world.flat(-far, B, CITY + far, CITY + far, -.05, C.field, 0);
-  world.flat(-far, A, A, B, -.05, C.field, 0); world.flat(B, A, CITY + far, B, -.05, C.field, 0);
-  world.flat(A, A, B, B, 0, C.road, 20);
+  const far = 2500;                                        // fields everywhere, the town's paved streets inside the wall
+  world.flat(-far, -far, CITY_X + far, CITY_Z + far, -.05, C.field, 0);
+  world.flat(OX - E - 2, OZ - E - 2, OX1 + E + 2, OZ1 + E + 2, 0, C.road, 20);
   // the town wall, with a gate where the tram comes through
-  const W0 = -E - 1.5, W1 = CITY + E + 1.5, th = 3, gh = 7.5;
+  const W0 = OX - E - 1.5, W1 = OX1 + E + 1.5, V0 = OZ - E - 1.5, V1 = OZ1 + E + 1.5, th = 3, gh = 7.5;
   const wallBox = (a, b, c, d, y0) => { world.box(a, y0 || 0, b, c, gh, d, C.stone, 6, y0 ? { 2: [C.stoneDark, 9] } : null); solid(a, y0 || 0, b, c, gh, d); occl.push([a, b, c, d, gh]); };
   // Every road out of town has a gate in the wall (CITY-068; the furniture outlet lies beyond the East Gate, FURN-020): an
   // opening as wide as the street, a stone band over it with the gate's name, a tower each side, the road on through the
   // fields. The tram's arch can be walked through too. Each side of the wall is a run with its openings cut out of it.
   const GATE_W = 8, GATE_H = 5.2, GATES = (D.roads || {}).gates || [];
-  for (const [side, a, c, r0, r1] of [["n", W0 - th, W0, W0 - th, W1 + th], ["s", W1, W1 + th, W0 - th, W1 + th], ["w", W0 - th, W0, W0, W1], ["e", W1, W1 + th, W0, W1]]) {
+  for (const [side, a, c, r0, r1] of [["n", V0 - th, V0, W0 - th, W1 + th], ["s", V1, V1 + th, W0 - th, W1 + th], ["w", W0 - th, W0, V0, V1], ["e", W1, W1 + th, V0, V1]]) {
     const alongZ = side === "w" || side === "e", out = { n: [0, -1], s: [0, 1], w: [-1, 0], e: [1, 0] }[side];
     const run = (p0, p1, y0) => { if (p1 - p0 > .01) alongZ ? wallBox(a, p0, c, p1, y0) : wallBox(p0, a, p1, c, y0); };
     const cuts = alongZ ? [[TRAM_Z - 3.4, TRAM_Z + 3.4, 4.6, null]] : [];
@@ -1439,20 +1533,26 @@ function buildWorld() {
     }
     run(at, r1);
   }
-  for (const cx of [W0 - th / 2, W1 + th / 2]) for (const cz of [W0 - th / 2, W1 + th / 2]) world.box(cx - 3.5, 0, cz - 3.5, cx + 3.5, gh + 3, cz + 3.5, C.stone, 6);
-  for (const s of [-.72, .72]) world.box(-E - 40, 0, TRAM_Z + s - .05, CITY + E + 40, .04, TRAM_Z + s + .05, C.metal, 9);
+  for (const cx of [W0 - th / 2, W1 + th / 2]) for (const cz of [V0 - th / 2, V1 + th / 2]) world.box(cx - 3.5, 0, cz - 3.5, cx + 3.5, gh + 3, cz + 3.5, C.stone, 6);
+  for (const s of [-.72, .72]) world.box(OX - E - 40, 0, TRAM_Z + s - .05, OX1 + E + 40, .04, TRAM_Z + s + .05, C.metal, 9);
+  for (const ln of (D.roads || {}).links || []) ribbon(world, ln.points, ln.width, .02, C.road, 20);   // the roads out to the new areas
   RANGES.push([0, world.n, true]);                        // fields, town paving, wall and rails: laid first, under everything
   for (const b of D.blocks) {
-    const [bx, bz] = b.origin, S = b.size, b0 = world.n;
-    const [pc, pf] = groundOf(b.id, C.pave, true); world.box(bx - PAVE, 0, bz - PAVE, bx + S + PAVE, Y_PAVE, bz + S + PAVE, pc, pf);   // paving by surfaces.json
+    const [bx, bz] = b.origin, S = b.size, [SX, SZ] = b.ext, b0 = world.n;
+    if (b.lanes) {                                          // a community: its lanes and turning circles on the open ground
+      for (const ln of b.lanes) { ribbon(world, ln.points, ln.width, .02, C.road, 20); if (ln.end === "turning") disc(world, ln.points[ln.points.length - 1], ln.width, .021, C.road, 20); }
+    } else {
+      const [pc, pf] = groundOf(b.id, C.pave, true); world.box(bx - PAVE, 0, bz - PAVE, bx + SX + PAVE, Y_PAVE, bz + SZ + PAVE, pc, pf);   // paving by surfaces.json
+    }
     if (b.template === "rows") lawn(bx + 2, bz + 16.5, bx + S - 2, bz + S - 16.5, Y_GRASS, C.grass, b);
-    if (b.template === "park") lawn(bx + 1, bz + 1, bx + S - 1, bz + S - 1, Y_GRASS, C.grass, b, true);
+    if (b.template === "park") lawn(bx + 1, bz + 1, bx + SX - 1, bz + SZ - 1, Y_GRASS, C.grass, b, true);
     for (const [p, q] of b.paths) {                      // footpaths, kept inside the block and its pavement
-      const lo = [bx - PAVE, bz - PAVE], hi = [bx + S + PAVE, bz + S + PAVE];
+      if (b.lanes || (p[0] !== q[0] && p[1] !== q[1])) { ribbon(world, [p, q], 1.6, b.lanes ? .03 : Y_PATH, C.path, 21); continue; }   // a slanting path: a strip along it
+      const lo = [bx - PAVE, bz - PAVE], hi = [bx + SX + PAVE, bz + SZ + PAVE];
       const a = [clamp(Math.min(p[0], q[0]), lo[0], hi[0]), clamp(Math.min(p[1], q[1]), lo[1], hi[1])], c = [clamp(Math.max(p[0], q[0]), lo[0], hi[0]), clamp(Math.max(p[1], q[1]), lo[1], hi[1])];
       world.flat(a[0] - 1, a[1] - 1, c[0] + 1, c[1] + 1, Y_PATH + (p[0] === q[0] ? .005 : 0), C.path, 21);
     }
-    for (const l of b.lots) isOpen(l) ? openLot(l) : building(l);
+    for (const l of b.lots) isOpen(l) ? openLot(l) : l.house || l.angle ? turnedHouse(l) : l.plan ? mallShell(l) : building(l);   // a designed house even when it is not turned
     if (b.template === "peri") {                           // cloth strung across the streets of the old quarters
       const up = blockAt.get(b.grid[0] + "," + (b.grid[1] - 1)), left = blockAt.get((b.grid[0] - 1) + "," + b.grid[1]);
       if (up && up.template === "peri") for (const u of [20, 60]) if (hash(b.id, "bn", u) < .55) banner(bx + u, bz - SW, bx + u, bz, b.id + u);
@@ -1500,13 +1600,13 @@ const GOING = { read: "going to the library", view: "going to the museum", watch
 
 function tramAt(m) {                                     // every tram on the map now: [x, stopped]
   const tr = D.tram, t0 = (+tr.first.slice(0, 2)) * 60 + (+tr.first.slice(3)), tl = (+tr.last.slice(0, 2)) * 60 + (+tr.last.slice(3)), v = tr.speed * D.pace, dw = tr.dwell, out = [];
-  const stops = [P / 2, 3 * P + P / 2, 7 * P + P / 2], ref = stops[1];
+  const stops = [OX + P / 2, OX + 3 * P + P / 2, OX + 7 * P + P / 2], ref = stops[1], X0 = OX - 60;
   for (let k = Math.floor((m - t0) / tr.every) - 2; k <= Math.floor((m - t0) / tr.every) + 2; k++) {
     const T = t0 + k * tr.every; if (T < t0 || T > tl) continue;
-    let t = m - (T - (ref - stops[0]) / v - dw - (stops[0] + 60) / v), x = -60;       // minutes since this tram entered the map
+    let t = m - (T - (ref - stops[0]) / v - dw - (stops[0] - X0) / v), x = X0;       // minutes since this tram entered the map
     for (const s of stops) { const run = (s - x) / v; if (t < run) { x += t * v; t = -1; break; } t -= run; x = s; if (t < dw) { t = -2; break; } t -= dw; }
     if (t >= 0) x += t * v;
-    if (m - T > -40 && x > -60 && x < CITY + 60) out.push([x, t === -2, T]);   // T names the run (cars.js seats its riders)
+    if (m - T > -40 && x > X0 && x < OX1 + 60) out.push([x, t === -2, T]);   // T names the run (cars.js seats its riders)
   }
   return out;
 }
@@ -2057,7 +2157,7 @@ function nightSky(m) {
 // ?studio=1: one standing person under the light and camera of the reference lineup (Tools/blender/character_face_05.py, sheets()), to compare
 // the slice's people with character_lineup.png without the town's own light in the way. Sun from the front left at 48 degrees, strength 3.2 in
 // (1, 0.82, 0.62); a flat sky of (0.42, 0.55, 0.82) at 0.25; two 60 W lanterns by the wall behind; no haze; exposure -0.3; a 60 mm lens from 9.6 m.
-const STUDIO = new URLSearchParams(location.search).has("studio"), STUDIO_AT = [300.5, 186.6], STUDIO_WHO = Math.max(0, (+new URLSearchParams(location.search).get("studio") || 1) - 1);   // ?studio=2 shows the second person of the lineup, and so on
+const STUDIO = new URLSearchParams(location.search).has("studio"), STUDIO_AT = [OX + 300.5, OZ + 186.6], STUDIO_WHO = Math.max(0, (+new URLSearchParams(location.search).get("studio") || 1) - 1);   // ?studio=2 shows the second person of the lineup, and so on
 const LINEUP = STUDIO || new URLSearchParams(location.search).has("lineup") ? People.cast() : null;
 function lighting(m) {                                       // the reference recipe (sun 14 W/m2, sky 0.35, haze) carried through the day
   const rise = D.day.sunrise * 60, set = D.day.sunset * 60, day = smooth(0, 1, Math.min((m - (rise - 30)) / 60, ((set + 30) - m) / 60));
@@ -2157,7 +2257,7 @@ function stepCamera(dt) {
   const cp = Math.cos(cam.pitch); cam.dir = [Math.sin(cam.yaw) * cp, Math.sin(cam.pitch), -Math.cos(cam.yaw) * cp];
   if (!started && Life.designing) return Life.camera();  // the character designer turns round the player (life.js)
   if (!started) {                                        // before play: a slow turn above Market Square
-    const a = performance.now() / 16000, c = [3 * P + P / 2, 0, 4 * P + P / 2]; cam.eye = [c[0] + Math.sin(a) * 105, 46, c[2] + Math.cos(a) * 105];
+    const a = performance.now() / 16000, c = [OX + 3 * P + P / 2, 0, OZ + 4 * P + P / 2]; cam.eye = [c[0] + Math.sin(a) * 105, 46, c[2] + Math.cos(a) * 105];
     const d = [c[0] - cam.eye[0], 6 - cam.eye[1], c[2] - cam.eye[2]], n = Math.hypot(d[0], d[1], d[2]); cam.dir = d.map(v => v / n); return;
   }
   const eyeH = pl.pose === 2 ? .72 : pl.pose === 3 ? .3 : 1.51 * playerLook.S;
@@ -2174,12 +2274,19 @@ const hhmm = m => String(Math.floor(m / 60) % 24).padStart(2, "0") + ":" + Strin
 const base = document.createElement("canvas"); base.width = base.height = 900;
 function drawBase() {
   const c = base.getContext("2d"), k = 900 / (CITY + 40), o = 20;
-  c.fillStyle = "#3a3d2c"; c.fillRect(0, 0, 900, 900); c.fillStyle = "#4b4745"; c.fillRect((o - SW / 2) * k, (o - SW / 2) * k, (CITY + SW) * k, (CITY + SW) * k);
+  c.fillStyle = "#3a3d2c"; c.fillRect(0, 0, 900, 900); c.fillStyle = "#4b4745"; c.fillRect((OX + o - SW / 2) * k, (OZ + o - SW / 2) * k, (OX1 - OX + SW) * k, (OZ1 - OZ + SW) * k);
+  const line = (pts, w) => { c.lineWidth = Math.max(1, w * k); c.beginPath(); pts.forEach((q, n) => n ? c.lineTo((q[0] + o) * k, (q[1] + o) * k) : c.moveTo((q[0] + o) * k, (q[1] + o) * k)); c.stroke(); };
+  c.strokeStyle = "#4b4745"; c.lineCap = "round"; c.lineJoin = "round";
+  for (const ln of (D.roads || {}).links || []) line(ln.points, ln.width);
   for (const b of D.blocks) {
-    c.fillStyle = b.template === "park" ? "#5d7343" : "#77705f"; c.fillRect((b.origin[0] + o - 2) * k, (b.origin[1] + o - 2) * k, (b.size + 4) * k, (b.size + 4) * k);
-    for (const l of b.lots) { c.fillStyle = KIND_CSS[l.kind]; c.fillRect((l.rect[0] + o) * k, (l.rect[1] + o) * k, (l.rect[2] - l.rect[0]) * k, (l.rect[3] - l.rect[1]) * k); }
+    if (b.lanes) { for (const ln of b.lanes) line(ln.points, ln.width); }
+    else { c.fillStyle = b.template === "park" ? "#5d7343" : "#77705f"; c.fillRect((b.origin[0] + o - 2) * k, (b.origin[1] + o - 2) * k, (b.ext[0] + 4) * k, (b.ext[1] + 4) * k); }
+    for (const l of b.lots) {
+      c.fillStyle = KIND_CSS[l.kind] || "#999"; const r = l.rect, cx = (r[0] + r[2]) / 2, cz = (r[1] + r[3]) / 2;
+      c.save(); c.translate((cx + o) * k, (cz + o) * k); if (l.angle) c.rotate(l.angle * Math.PI / 180); c.fillRect((r[0] - cx) * k, (r[1] - cz) * k, (r[2] - r[0]) * k, (r[3] - r[1]) * k); c.restore();
+    }
   }
-  c.strokeStyle = "#2a2a30"; c.lineWidth = 1.5; c.beginPath(); c.moveTo((o - 8) * k, (TRAM_Z + o) * k); c.lineTo((CITY + o + 8) * k, (TRAM_Z + o) * k); c.stroke();
+  c.strokeStyle = "#2a2a30"; c.lineWidth = 1.5; c.beginPath(); c.moveTo((OX + o - 8) * k, (TRAM_Z + o) * k); c.lineTo((OX1 + o + 8) * k, (TRAM_Z + o) * k); c.stroke();
   return { k, o };
 }
 let mapScale, people = [];
@@ -2198,16 +2305,25 @@ function drawMaps() {
   for (const [x, z0, kind] of marks) { bc.fillStyle = kind ? "#f0c35a" : "#9fd1c4"; bc.strokeStyle = "#17171c"; bc.lineWidth = 2; bc.beginPath(); bc.arc((x + o) * k, (z0 + o) * k, 8, 0, 7); bc.fill(); bc.stroke(); }
   bc.fillStyle = "#f0a35a"; bc.strokeStyle = "#17171c"; bc.lineWidth = 2; bc.beginPath(); bc.arc((pl.x + o) * k, (pl.z + o) * k, 7, 0, 7); bc.fill(); bc.stroke();
 }
+function segDist(x, z, a, b) {                              // distance from (x, z) to the segment a-b
+  const vx = b[0] - a[0], vz = b[1] - a[1], L2 = vx * vx + vz * vz || 1, t = clamp(((x - a[0]) * vx + (z - a[1]) * vz) / L2, 0, 1);
+  return Math.hypot(x - a[0] - vx * t, z - a[1] - vz * t);
+}
 function placeName() {
   const l = lotAt(pl.x, pl.z, true), b = blockOf(pl.x, pl.z);
   if (l && !isOpen(l) && l.stair && pl.y < l.H - .1) { const f = Storeys.levelAt(l, pl.y + .3); return [l.name, f ? "Floor " + f + ((l.storeys || [])[f] ? ", " + l.storeys[f] : "") : "Inside, ground floor"]; }   // which floor (storeys.js)
   if (pl.y > 6 && l) return [l.name, "On the roof, " + Math.round(pl.y) + " m up"];
   if (l && !isOpen(l)) return [l.name, "Inside"];
-  if (l && l.kind !== "stop") return [l.name, b.district];
-  if (pl.x < -SW / 2 || pl.z < -SW / 2 || pl.x > CITY + SW / 2 || pl.z > CITY + SW / 2) return ["Outside the walls", ""];
+  if (l && l.kind !== "stop") return [l.name, b ? b.district : ""];
+  if (!inTown(pl.x, pl.z)) {                               // beyond the wall: the road you are on, or the area you are in
+    const near = (pts, w) => pts.some((q, n) => n && segDist(pl.x, pl.z, pts[n - 1], q) < w / 2 + 2);
+    for (const ln of (D.roads || {}).links || []) if (near(ln.points, ln.width)) return [ln.name, b ? b.district : "Outside the walls"];
+    if (b && b.lanes) for (const ln of b.lanes) if (near(ln.points, ln.width)) return [ln.name, b.district];
+    return b ? [b.district, ""] : ["Outside the walls", ""];
+  }
   const i = Math.floor(pl.x / P), j = Math.floor(pl.z / P), u = pl.x - i * P, v = pl.z - j * P, ns = D.city.streets.north_south, ew = D.city.streets.east_west;
   const du = Math.min(u, P - u), dv = Math.min(v, P - v);
-  if (Math.min(du, dv) < SW / 2 + PAVE) return [(du < dv ? ns[u < P / 2 ? i : i + 1] : ew[v < P / 2 ? j : j + 1]) + " Street", b ? b.district : ""];
+  if (Math.min(du, dv) < SW / 2 + PAVE) { const nm = du < dv ? ns[u < P / 2 ? i : i + 1] : ew[v < P / 2 ? j : j + 1]; return [nm ? nm + " Street" : "A street", b ? b.district : ""]; }
   return [b ? b.district : D.city.name, b && b.template === "rows" ? "Back gardens" : "Yard"];
 }
 function hud(VP, W, H, tags) {
@@ -2337,7 +2453,7 @@ function nearRooms(eye) {
     if (!l.furn) continue;
     const [a0, b0, a1, b1] = l.rect, dd = Math.hypot((a0 + a1) / 2 - eye[0], (b0 + b1) / 2 - eye[2]) - Math.hypot(a1 - a0, b1 - b0) / 2, have = ROOMS.get(l);
     if (!have && dd < 40 && built < 2) {
-      const m = new Mesh(1 << 15); ROOM_REC = { lamps: [], foot: [] }; furnish(l, l.furn[0], l.furn[1], l.furn[2], m); built++;
+      const m = new Mesh(1 << 15); ROOM_REC = { lamps: [], foot: [] }; if (l.house) Houses.inside(l, m, ROOM_REC); else furnish(l, l.furn[0], l.furn[1], l.furn[2], m); built++;
       if (l.stair) Storeys.build(l, 0, m, floorMatOf(l));    // the stair up and the ceiling with its opening
       const rec = ROOM_REC; ROOM_REC = null;
       ROOMS.set(l, roomEntry(l, m, rec, 0));
@@ -2354,6 +2470,14 @@ function nearRooms(eye) {
 }
 let last = performance.now(); const stat = { detail: 0 }; const PIN_Q = new URLSearchParams(location.search).has("quality");   // ?quality=1 or 0.5 holds the picture for timing
 if (PIN_Q) quality = clamp(+new URLSearchParams(location.search).get("quality") || 1, .5, 1);
+function flatOf(l, x, z, y) {                                // which flat of building l a point is in ("floor:corridor" outside any flat)
+  const f = Storeys.levelAt(l, y + .3);
+  for (const q of l.flats) if (q.floor === f && x > q.rect[0] && x < q.rect[2] && z > q.rect[1] && z < q.rect[3]) return q.id;
+  return f + ":corridor";
+}
+const INDOOR_R = 90;                                         // how far the camera sees out of a window (frame)
+const FULL_MAX = 3; let FULL = new Set();                   // the full-detail body (25,000 vertices, ~4 ms each) only for the nearest few
+const FAR_EVERY = 12, FAR_M = 60, FAR_CACHE = new Array(D.plan.length).fill(null); let FRAME_NO = 0;   // residents far from the player (frame)
 function frame(now) {
   People.setSun(STUDIO ? [-.45 / 1.0005, .74 / 1.0005, .5 / 1.0005] : lighting(clock.m).dir, cam.eye);   // for the shadows a body casts on itself (people.js)
   const dt = Math.min(.05, (now - last) / 1000); last = now; fps = mix(fps, 1 / Math.max(dt, 1e-3), .05);
@@ -2368,27 +2492,40 @@ function frame(now) {
   Dodge.frame(now / 1000, pl);                             // is the player's car bearing down on anyone (dodge.js, CITY-070)
   dyn.reset(); people = []; bodies = 0; const heard = [], tags = [], near = started ? [pl.x, pl.z] : [cam.eye[0] + cam.dir[0] * 60, cam.eye[2] + cam.dir[2] * 60], reach = started ? 85 : 130;
   Wet.frame(clock.m);                                      // how hard it is raining on the people (wet.js)
+  FRAME_NO++; const plLot = lotAt(pl.x, pl.z), plIn = !!plLot && !isOpen(plLot), plFlat = plLot && plLot.flats ? flatOf(plLot, pl.x, pl.z, pl.y) : null, near13 = [];
   for (let i = 0; i < D.plan.length; i++) {
-    const r = Dress.apply(i, Smash.apply(i, Dodge.apply(i, Talk.where(i, clock.m))), now / 1000); if (!r) continue;   // shouting at a smash (smash.js)   // children on the swings (dressing.js)   // out of the way of the player's car (dodge.js)
+    // Someone far from the player is only a dot on the maps: worked out again every FAR_EVERY frames, a share of them each frame,
+    // and their last place reused in between. Anyone within FAR_M of the player is worked out every frame, as before.
+    const fc = FAR_CACHE[i];
+    if (fc && (FRAME_NO + i) % FAR_EVERY) { if (fc.p) people.push(fc.p); continue; }
+    const r = Dress.apply(i, Smash.apply(i, Dodge.apply(i, Talk.where(i, clock.m))), now / 1000);   // shouting at a smash (smash.js)   // children on the swings (dressing.js)   // out of the way of the player's car (dodge.js)
+    if (!r) { FAR_CACHE[i] = { p: null }; continue; }
     people.push([r.x, r.z]);
-    const d = Math.hypot(r.x - near[0], r.z - near[1]); if (d > reach) continue;
+    const d = Math.hypot(r.x - near[0], r.z - near[1]);
+    FAR_CACHE[i] = d > reach + FAR_M ? { p: [r.x, r.z] } : null;
+    if (d > reach) continue;
+    if (r.inside && r.lot && r.lot.angle && !r.lot.house && plLot !== r.lot) continue;   // at home in a house that has no rooms drawn yet: never seen
+    if (r.inside && plLot && plLot === r.lot && plLot.flats && flatOf(plLot, r.x, r.z, r.y) !== plFlat) continue;   // behind a flat's walls or on another floor
     if (d < 20) heard.push({ i, x: r.x, z: r.z, act: D.acts[r.act], walking: r.walking, pose: r.pose, ph: r.ph, inside: r.inside,   // for sound.js
       role: D.roles[D.residents[i].r], run: r.sig === People.SIG.Run, shout: r.shout || null, kind: (lotAt(r.x, r.z, true) || {}).kind });
     bodies++;
-    const wet = Wet.apply(i, r, looks[i], clock.m), L = wet.L || looks[i], dc = Math.hypot(r.x - cam.eye[0], r.z - cam.eye[2]); let lk = null;   // a coat, an umbrella or a hood, a hurried walk (wet.js, CITY-077 to CITY-080)
+    const wet = Wet.apply(i, r, looks[i], clock.m), L = wet.L || looks[i], dc = Math.hypot(r.x - cam.eye[0], r.z - cam.eye[2]); let lk = null;
+    if (r.inside && plIn && r.lot !== plLot) continue;      // from indoors, people inside other buildings are behind two walls
+    if (dc < 13) near13.push([dc, i]);   // a coat, an umbrella or a hood, a hurried walk (wet.js, CITY-077 to CITY-080)
     if (started && r.pose !== 3 && d < 5.5 && Math.abs(r.y - pl.y) < 2) {          // someone near turns to look: eyes first, head part of the way (M4)
       let da = yawOf(pl.x - r.x, pl.z - r.z) - r.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
       if (Math.abs(da) < 1.9) { const w = smooth(5.5, 3.2, d); lk = [clamp(-da * .6, -.85, .85) * w, 0]; }
     }
-    People.draw(dyn, r.x, r.y, r.z, r.yaw, L, r.pose, { ph: wet.ph !== undefined ? wet.ph : r.ph || 0, t: now / 1000, lod: dc < 13 ? 0 : dc < 40 ? 1 : 2, fl: r.inside ? 10 : 14, look: lk, sleep: r.pose === 3, face: Talk.face(i), mod: r.mod || wet.mod, sig: r.sig || wet.sig, hood: wet.hood, umb: wet.umb });
+    People.draw(dyn, r.x, r.y, r.z, r.yaw, L, r.pose, { ph: wet.ph !== undefined ? wet.ph : r.ph || 0, t: now / 1000, lod: dc < 13 && FULL.has(i) && !(r.inside && r.lot !== plLot) ? 0 : dc < 40 ? 1 : 2, fl: r.inside ? 10 : 14, look: lk, sleep: r.pose === 3, face: Talk.face(i), mod: r.mod || wet.mod, sig: r.sig || wet.sig, hood: wet.hood, umb: wet.umb });
     if (started && d < 9 && Math.abs(r.y - pl.y) < 3) tags.push({ x: r.x, y: r.y + (r.pose === 2 ? 1.0 : r.pose === 3 ? .55 : 1.88) * L.S, z: r.z, d, text: D.residents[i].n + ", " + D.roles[D.residents[i].r] + " · " + (r.walking ? GOING[D.acts[r.act]] || "walking" : DOING[D.acts[r.act]] || D.acts[r.act]) });
     if (started && r.shout && d < D.dodge.tag_m) tags.push({ x: r.x, y: r.y + 2.18 * L.S, z: r.z, d, a: clamp((D.dodge.tag_m - d) / 4, 0, 1), size: 18, text: r.shout });   // telling the driver off (CITY-071)
     if (started) Talk.consider(i, r, d);
     if (started) Life.mark(i, r, d, L, tags);             // someone with a quest or a job for the player (life.js, QST-005)
   }
+  FULL = new Set(near13.sort((a, b) => a[0] - b[0]).slice(0, FULL_MAX).map(e => e[1]));   // next frame's full-detail bodies
   if (started) Talk.pick();                               // the nearest resident in reach can be talked to (E)
   if (started) Life.frame(dt);                            // money, quests and jobs move on with the clock (life.js)
-  if (LINEUP) LINEUP.forEach((L, k) => { if (STUDIO && k !== STUDIO_WHO) return; const lx = STUDIO ? STUDIO_AT[0] : 300.5 + k * 1.1; People.draw(dyn, lx, groundBase(lx, 186.6), 186.6, Math.PI, L, 0, { ph: 0, t: now / 1000, lod: 0, fl: 14, mod: STUDIO ? { arms: [[1, 0, 4, 0], [1, 0, 4, 0]] } : null }); });   // in the studio the arms hang straight, as in the reference   // ?lineup=1: the six people of character_lineup.png in a row on Linden Street, to compare with it
+  if (LINEUP) LINEUP.forEach((L, k) => { if (STUDIO && k !== STUDIO_WHO) return; const lx = STUDIO ? STUDIO_AT[0] : OX + 300.5 + k * 1.1; People.draw(dyn, lx, groundBase(lx, OZ + 186.6), OZ + 186.6, Math.PI, L, 0, { ph: 0, t: now / 1000, lod: 0, fl: 14, mod: STUDIO ? { arms: [[1, 0, 4, 0], [1, 0, 4, 0]] } : null }); });   // in the studio the arms hang straight, as in the reference   // ?lineup=1: the six people of character_lineup.png in a row on Linden Street, to compare with it
   if ((started || Life.designing) && !cam.fp && !cam.close && pl.pose !== 4) {   // not while in a car; and in the designer, to see who you are making
     let da = cam.yaw - pl.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
     People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.play ? pl.playPose : pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
@@ -2464,7 +2601,10 @@ function frame(now) {
     gl.uniform1f(sky.u.uMoonDay, NIGHT.paths.moon_by_day * Nt.up * Wx.sun); gl.uniform1f(sky.u.uSunR, NIGHT.paths.sun_size); gl.uniform1f(sky.u.uGlare, NIGHT.paths.sun_glare_ease); }
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.enable(gl.CULL_FACE); gl.depthMask(true);   // on a tie the layer laid later (the upper one) wins
-  const seen = pieces.filter(pc => !outside(VP, pc.box)), nearD = chunks.filter(ch => Math.hypot(ch.cx - cam.eye[0], ch.cz - cam.eye[2]) < DETAIL_R && !outside(VP, ch.box));
+  // From indoors the city is seen only through the windows: the pieces within INDOOR_R of the camera, and the whole-town one (ground,
+  // paving, wall); the rest lie behind the building's own walls.
+  const inL = lotAt(cam.eye[0], cam.eye[2]), indoor = inL && !isOpen(inL) && inL.H && cam.eye[1] < inL.H - .2;
+  const seen = pieces.filter(pc => !outside(VP, pc.box) && (!indoor || pc.town || boxD2(pc.box, cam.eye) < INDOOR_R * INDOOR_R)), nearD = chunks.filter(ch => Math.hypot(ch.cx - cam.eye[0], ch.cz - cam.eye[2]) < DETAIL_R && !outside(VP, ch.box));
   const rooms = nearRooms(cam.eye); for (const rm of rooms) if (!outside(VP, rm.box)) nearD.push(rm);
   // the room the camera is in (or the nearest one in reach) gets its own lamps and contact shade; other rooms an even lamplight
   let inRoom = null, best = 10; const feet = new Float32Array(32); let feetN = 0;   // feet: people's floor shade in a hall (below)

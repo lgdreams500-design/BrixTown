@@ -1,0 +1,17 @@
+23:02:19 Blender 5.3.0
+23:02:22 furnished: 47 pieces in the Old Town line
+23:02:22 built in 3.8s: 1104 objects
+23:02:24 front rendered in 1.4s
+23:02:25 front_straight rendered in 1.4s
+23:02:27 back rendered in 1.4s
+23:02:28 side rendered in 1.4s
+23:02:30 above rendered in 1.5s
+23:02:32 plan_ground rendered in 2.8s
+23:02:35 plan_first rendered in 2.9s
+23:02:39 room_living rendered in 3.4s
+23:02:42 room_kitchen rendered in 3.7s
+23:02:46 room_hall rendered in 3.9s
+23:02:50 room_bedroom rendered in 3.9s
+23:02:54 room_ensuite rendered in 4.0s
+23:02:58 room_bedroom2 rendered in 3.9s
+23:02:58 DONE
