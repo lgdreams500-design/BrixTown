@@ -226,7 +226,7 @@ def sky_problems(w):
     if ok("clear", "haze") and ok("fog", "haze") and not wx["fog"]["haze"] > wx["clear"]["haze"]:
         out.append("sky: fog should be thicker than clear air")
     r = s.get("rain", {})
-    for k in ("alpha", "speed", "length", "wet_dark", "wet_sheen", "dry_minutes"):
+    for k in ("alpha", "speed", "length", "wet_dark", "wet_sheen", "puddles", "ripples", "dry_minutes"):
         if not (num(r.get(k)) and r[k] > 0):
             out.append("sky: rain.%s should be above 0" % k)
     if not num(r.get("slant")):

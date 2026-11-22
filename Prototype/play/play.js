@@ -1375,7 +1375,7 @@ float haze(float c){ return .64/(12.566*pow(1.36-1.2*c,1.5)); }`;   // how stron
 const MAIN_VS = `attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,uSM; varying vec3 vP,vN,vC,vS; varying float vF; invariant gl_Position;
 void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`;   // invariant: the depth-only pass and the lit pass land on the same depths
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
-uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec2 uWet; uniform float uNight,uFogD,uExp,uShOn; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
+uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
 uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO;
 uniform vec4 uPatA[16], uPatB[16];                       // stone, brick and paving patterns (World/rules/surfaces.json): (type, unit w, unit h, joint), (vary, bevel, dome, -)
 ${NOISE}
@@ -1536,13 +1536,20 @@ void main(){
           else light+=uSky*(.28+.82*up*up)*vis*vis+uGround*(1.-.5*vis)*(.38+1.25*bw*bw); }
         else light+=uSky*(n.y*.35+.65)*vis*vis+uGround*(1.-.5*vis);   // sun, sky seen, and light bounced off sunlit stone
         for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*.85+.15)); } }   // lanterns (W6)
-      col=c*light*(1.-wetG*uWet.x)+(uFog+uSky)*(wetG*uWet.y*pow(1.-max(dot(-vd,n),0.),4.)); }
+      col=c*light*(1.-wetG*uWet.x);
+      if(wetG>0.&&uWet.x>0.){                                              // wet paving (WLD-037): puddles that hold the sky, a sheen towards the light, and rings where drops land
+        float fr=pow(1.-max(dot(-vd,n),0.),4.), pud=smoothstep(.5,.6,ns(vec3(vP.xz*.37+vP.zx*.11,3.))*.5+ns(vec3(vP.xz*.83-vP.zx*.29,9.))*.3+ns(vec3(vP.xz*2.1+vP.zx*.6,5.))*.2)*uWet.z;
+        vec3 refl=uFog*.8+uSky*.6+light*(1.1*uNight); col=mix(col,col*.5+refl*(.08+.55*fr+.1*uNight),pud)+refl*(uWet.y*fr*(1.-pud));   // by night the water holds the lamplight
+        if(uWet.w>0.&&d<26.){ vec2 g=vP.xz/.3, id=floor(g), o=fract(g)-.5+(vec2(h3(vec3(id,22.)),h3(vec3(id,23.)))-.5)*.4;
+          float hh=h3(vec3(id,21.)), ph=fract(uTime*(1.2+hh)+hh*9.), rg=smoothstep(.07,0.,abs(length(o)-ph*.26))*(1.-ph)*(1.-ph)*step(hh,uWet.w*.6);
+          col+=refl*(rg*(.1+.35*pud)*(1.-d/26.)); } } }
   }
   col=mix(col,uFog+uSunCol*(4.4*haze(dot(vd,uSun)))*airLit(vd,d),fog*(emis?.5:1.)*(1.-.85*inside));   // haze glows where the sun reaches it; little haze indoors
   float glow=0.; for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 q=uLamp[i].xyz-uCam; float b=dot(q,vd), h=sqrt(max(dot(q,q)-b*b,.02)); glow+=uLamp[i].w*(atan((d-b)/h)+atan(b/h))/h; }
   col+=vec3(1.,.62,.32)*(glow*min(uFogD,.007)*1.6);                       // every lantern glows in the haze around it (no more than in a thick haze, or rain and fog turn the night orange)
   gl_FragColor=vec4(tone(col*uExp),1.);
 }`;
+        c*=1.-uWet.x*.3*(1.-wetG);                                         // everything out in the rain is a little darker
 const main = program(MAIN_VS, MAIN_FS), signProg = program(MAIN_VS, "#define LETTERS\n" + MAIN_FS);   // only the painted names cut holes, so the town's shader keeps the early depth test
 const pre = program(MAIN_VS, `precision mediump float; void main(){ gl_FragColor=vec4(1.); }`);       // depth only, laid first so each pixel is lit once
 const sky = program(`attribute vec2 aQ; varying vec2 vQ; void main(){ vQ=aQ; gl_Position=vec4(aQ,.9999,1.); }`,
@@ -1562,15 +1569,19 @@ void main(){ vec3 d=normalize(uF+vQ.x*uR+vQ.y*uU); float s=dot(d,uSun), p=haze(s
   c=mix(c,cloud,a);
   c+=uSunCol*pow(max(s,0.),2500.)*30.*step(0.,d.y)*(1.-.92*a); c+=step(.9982,h3(floor(d*170.)))*uNight*smoothstep(.03,.3,d.y)*.05*(1.-a);
   gl_FragColor=vec4(tone(c*uExp),1.); }`);
-// Rain (WLD-037): three layers of falling streaks over the whole picture, nearer ones longer, wider apart and faster. Not drawn indoors.
+// Rain (WLD-037): drops falling in the world, not on the screen. Each layer is a ring of drops round the camera (1.6 to 11 m away),
+// so they fall straight down whichever way you look, draw together overhead when you look up, and far ones are small and many.
 const rainProg = program(`attribute vec2 aQ; varying vec2 vQ; void main(){ vQ=aQ; gl_Position=vec4(aQ,0.,1.); }`,
-`precision highp float; varying vec2 vQ; uniform vec3 uCol; uniform vec4 uR; uniform float uT,uAsp,uExp;   // uR: how hard, alpha, slant, length
+`precision highp float; varying vec2 vQ; uniform vec3 uRr,uRu,uRf,uCol; uniform vec4 uR; uniform float uT,uExp,uCamY;   // uR: how hard, alpha, slant, streak length in metres
 ${NOISE}
 ${TONE}
-float streaks(vec2 p,float cols,float sp,float seed){ p.x=(p.x+p.y*uR.z)*uAsp*cols; float col=floor(p.x), h=h3(vec3(col,seed,1.));
-  float y=p.y/(uR.w*(.6+.8*h))*(30./cols)+uT*sp*(.8+.4*h)+h*17., row=floor(y), on=step(h3(vec3(col,row,seed)),.38*uR.x);
-  float fx=abs(fract(p.x)-.5), fy=fract(y); return on*smoothstep(.09,0.,fx)*smoothstep(0.,.15,fy)*smoothstep(1.,.35,fy); }
-void main(){ float a=streaks(vQ,30.,2.2,3.)+streaks(vQ,58.,1.7,5.)*.7+streaks(vQ,110.,1.3,7.)*.45;
+float ring(vec3 d,float R,float seed){ float h=length(d.xz); if(h<.1) return 0.;
+  float v=R*d.y/h+uCamY, u=atan(d.z,d.x)*R+v*uR.z, cw=.06+.03*R, col=floor(u/cw), r1=h3(vec3(col,seed,1.)), r2=h3(vec3(col,seed,2.));
+  float cell=2.+2.4*r1, y=(v+uT*(.8+.4*r2))/cell+r1*31., fy=fract(y), len=uR.w*(.7+.6*r2)/cell;
+  float on=step(h3(vec3(col,floor(y),seed)),uR.x*.6), wd=(.004+.0016*R)/cw, fx=abs(fract(u/cw)-.5);
+  return on*smoothstep(wd,wd*.25,fx)*smoothstep(0.,len*.25,fy)*smoothstep(len,len*.6,fy)*smoothstep(.1,.3,h); }
+void main(){ vec3 d=normalize(uRf+vQ.x*uRr+vQ.y*uRu);
+  float a=ring(d,1.6,3.)+ring(d,3.2,5.)*.8+ring(d,6.,7.)*.6+ring(d,11.,9.)*.45;
   gl_FragColor=vec4(tone(uCol*uExp),min(a,1.)*uR.y); }`);
 const depthProg = program(`attribute vec3 aP; uniform mat4 uVP; void main(){ gl_Position=uVP*vec4(aP,1.); }`, `precision mediump float; void main(){ gl_FragColor=vec4(1.); }`);
 const SH = 2048; let shFbo = null, shTex = null;
@@ -2012,7 +2023,7 @@ function frame(now) {
     const u = pr.u; gl.useProgram(pr.p); gl.uniformMatrix4fv(u.uVP, false, VP); gl.uniformMatrix4fv(u.uSM, false, SM); gl.uniform1f(u.uShOn, shOn);
     gl.uniform1i(u.uSh, 0); gl.uniform1i(u.uAO, 1); gl.uniform1i(u.uTxt, 2); gl.uniform4fv(u["uLamp[0]"], lamp); gl.uniform1i(u.uLampN, lampN); gl.uniform3f(u.uAOm, skyMap.lo, 1 / skyMap.size, 0);
     gl.uniform3fv(u.uSun, Lt.dir); gl.uniform3fv(u.uSunCol, Lt.sunCol); gl.uniform3fv(u.uSky, Lt.sky); gl.uniform3fv(u.uGround, Lt.ground); gl.uniform3fv(u.uFog, Lt.fog);
-    gl.uniform3fv(u.uCam, cam.eye); gl.uniform1f(u.uNight, Lt.night); gl.uniform1f(u.uFogD, Lt.fogD); gl.uniform1f(u.uExp, Lt.exp); gl.uniform2f(u.uWet, Lt.wet * SKY.rain.wet_dark, Lt.wet * SKY.rain.wet_sheen);
+    gl.uniform3fv(u.uCam, cam.eye); gl.uniform1f(u.uNight, Lt.night); gl.uniform1f(u.uFogD, Lt.fogD); gl.uniform1f(u.uExp, Lt.exp); gl.uniform4f(u.uWet, Lt.wet * SKY.rain.wet_dark, Lt.wet * SKY.rain.wet_sheen, Lt.wet * SKY.rain.puddles, Lt.rain * SKY.rain.ripples); gl.uniform1f(u.uTime, now / 1000 % 600);
     gl.uniform1i(u.uRoomAO, 3); gl.uniform4fv(u["uRoomL[0]"], roomL); gl.uniform1i(u.uRoomLN, roomLN);
     if (inRoom) gl.uniform4fv(u.uRoomR, inRoom.lot.rect); else gl.uniform4f(u.uRoomR, 0, 0, -1, -1);
   };
@@ -2028,8 +2039,9 @@ function frame(now) {
     gl.uniform4fv(u["uPatA[0]"], SURF_A); gl.uniform4fv(u["uPatB[0]"], SURF_B);
     gl.useProgram(rainProg.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const ar = gl.getAttribLocation(rainProg.p, "aQ"); gl.enableVertexAttribArray(ar); gl.vertexAttribPointer(ar, 2, gl.FLOAT, false, 0, 0);
     gl.disable(gl.DEPTH_TEST); gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
-    gl.uniform3fv(rainProg.u.uCol, Lt.fog.map((v, i) => v * 1.4 + Lt.sky[i])); gl.uniform4f(rainProg.u.uR, Lt.rain, SKY.rain.alpha, SKY.rain.slant, SKY.rain.length);
-    gl.uniform1f(rainProg.u.uT, (now / 1000 * SKY.rain.speed) % 4096); gl.uniform1f(rainProg.u.uAsp, asp); gl.uniform1f(rainProg.u.uExp, Lt.exp);
+    gl.uniform3fv(rainProg.u.uCol, Lt.fog.map((v, i) => v * 1.1 + Lt.sky[i] * .8 + .02 + [.55, .45, .34][i] * Lt.night)); gl.uniform4f(rainProg.u.uR, Lt.rain, SKY.rain.alpha * (1 + Lt.night), SKY.rain.slant, SKY.rain.length);   // by night the drops catch the lamplight and stand out more
+    gl.uniform1f(rainProg.u.uT, (now / 1000 % 600) * SKY.rain.speed); gl.uniform1f(rainProg.u.uExp, Lt.exp); gl.uniform1f(rainProg.u.uCamY, cam.eye[1]);
+    gl.uniform3fv(rainProg.u.uRr, mul3(view.r, th * asp)); gl.uniform3fv(rainProg.u.uRu, mul3(view.u, th)); gl.uniform3fv(rainProg.u.uRf, cam.dir);
     gl.drawArrays(gl.TRIANGLES, 0, 3); gl.disable(gl.BLEND); gl.enable(gl.DEPTH_TEST);
   }
   hud(VP, W, H, tags); drawMaps();
