@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-WORLD-MAP
 title: Wasted — World map as data, the starting city and the playable slice
-version: 0.5.9
+version: 0.5.11
 status: draft
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -203,7 +203,7 @@ rules and, since 0.2.0, the look and the movement set in the art documents (§5.
 - Interiors are one room per building.
 - Residents do not avoid the player or each other, and do not talk among themselves. Conversations are
   samples, the same for everyone in a role; flags last only until the page is reloaded; no outcomes yet.
-- Rain falls over the whole picture, also under arches and awnings, and is not seen from indoors; no puddles or splashes, no sound of rain (ADR-0016). No trams on the other stops' streets. No lay-bys: parked cars stand half on the pavement. People
+- Rain and its puddles show under arches and awnings too, and rain is not seen from indoors; no sound of rain (ADR-0016). No trams on the other stops' streets. No lay-bys: parked cars stand half on the pavement. People
   still walk in the road (no pavements and crossings yet, Q-24), so walkers and cars pass through each other. Cars do
   not stop for the player (CITY-049) or for the player's car; driving is arcade-simple; there is no buying a car yet
   (CITY-060 needs money).
@@ -332,3 +332,5 @@ keep a timetable with several stops in it. Something has to give `[OPEN: Q-21]`.
 | 0.5.7 | 2026-11-22 | Sky and clouds in the slice (WLD-035, WLD-036; feature F-SKY; ADR-0014): blue overhead, hazy horizon, clouds placed by the clock, numbers in `World/rules/sky.json`. Cloud cover follows the day's weather (owner picked F-SKY level 2 and F-WEATHER level 1 for the first slice); rain and fog themselves are not drawn yet. |
 | 0.5.8 | 2026-11-22 | Rain, fog and overcast in the slice (WLD-037; ADR-0016): the light changes with each kind of weather, rain falls and wets the paving, the HUD names the weather. §5.2. |
 | 0.5.9 | 2026-11-22 | Two keys for looking, at the owner's request: K tries each kind of weather, Y loads the next season (daylight hours, that season's weather, trees and flowers from `city_seasons.js`; routines, cars and boards stay those of the built day). Neither is a level pick: F-SEASONS is still undecided. |
+| 0.5.10 | 2026-11-22 | Rain redone after the owner found it bad (WLD-037, ADR-0016): drops fall in the world round the camera, the sky closes over, paving fills with puddles and drop rings, lamplight shows in the wet at night. |
+| 0.5.11 | 2026-11-22 | A bench in the start alley, as in the reference alley (`b_3_5.json`). New default daylight (ADR-0018, approved by the owner after a trial): bounce only near sunlit ground, contact shade under street furniture; G switches it off to compare. Comparison pictures in `Art/StyleTests/light_compare_12/`. |

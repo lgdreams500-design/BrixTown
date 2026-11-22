@@ -89,7 +89,9 @@ From the scripts; use as starting values when building the Unreal sky and sun fo
 In the playable slice the kit daylight is the reference recipe scaled towards the colours measured in
 `world_street_kit_light.png` (ADR-0013): sun ×0.7 and slightly golden, sky fill ×1.25 by day, a mostly grey
 bounce ×1.2, haze ×0.55 with a light veil over sky and distance, exposure ×0.74 (`LIGHTS.kit` in
-`Prototype/play/play.js`). The exact measured match was too pale for the owner; it is kept as `?light=measured`. Its cost: the light shafts in narrow alleys are fainter than in the alley image.
+`Prototype/play/play.js`). The exact measured match was too pale for the owner; it is kept as `?light=measured`. In shade, bounced
+light comes only from sunlit ground nearby and things stand in contact shade (ADR-0018), so alleys go dark and warm as in
+the alley image. Its cost: the light shafts in narrow alleys are fainter than in the alley image.
 
 Common to all: AgX view transform with the "Medium High Contrast" look; haze scatters forward
 (anisotropy 0.6); at dusk lanterns are doubled in strength and about half the windows are lit.

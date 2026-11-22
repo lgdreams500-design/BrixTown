@@ -65,6 +65,8 @@ const FLOOR = { home: [.36, .26, .18], shop: [.5, .46, .4], food: [.42, .3, .22]
 const SKIN = [[.55, .38, .28], [.42, .27, .18], [.30, .19, .13], [.62, .46, .36], [.24, .15, .10], [.5, .33, .22]];
 const HAIR = [[.05, .04, .04], [.16, .1, .06], [.09, .07, .06], [.3, .2, .1], [.22, .12, .08]];
 const CLOTH = [C.brown, C.olive, C.plum, C.charcoal, C.indigo, [.25, .3, .4], [.33, .29, .25]];
+const BLOBS = [];                                             // street furniture that shades the ground it stands on (trial light): x, z, half-width, half-depth
+const BLOB_SIZE = { bench: [1, .27], bin: [.32, .32], planter: [.5, .5], postbox: [.3, .3], bollard: [.16, .16], well: [1, 1], bikerack: [1, .4], advert: [.5, .25], lamp: [.2, .2] };
 const KIND_CSS = { home: "#b59a7c", shop: "#c79a45", food: "#b0614a", work: "#6f86ab", health: "#d9d3c2", utility: "#4b4b55", garden: "#6f8650", market: "#d8c9a3", stop: "#6fa3a2", bank: "#8c7a3c", dealer: "#5a7f8f", library: "#7a5c8f", museum: "#a08a6a", cinema: "#8f3c4a" };
 const KIND_WORD = { home: "Homes", shop: "Shops", food: "Cafés", work: "Workplaces", health: "Clinics and hospital", utility: "Utilities", garden: "Gardens and parks", market: "Market Square", stop: "Tram stops", bank: "Bank", dealer: "Car showroom", library: "Library", museum: "Museum", cinema: "Cinema" };
 
@@ -574,7 +576,7 @@ function piers(l, dw) {                                    // dark stone piers e
   }
 }
 function crates(x, z, seed) { Smash.wrap("crates", x, z, () => cratesNow(x, z, seed)); }   // breakable by a car (smash.js)
-function cratesNow(x, z, seed) {                          // goods stacked by a door, in the accent colours
+function cratesNow(x, z, seed) { BLOBS.push([x, z, .75, .6]);                          // goods stacked by a door, in the accent colours
   const g = groundBase(x, z), a = .38 + .1 * hash(seed, "c1"), col = k => pick([C.ochre, C.terracotta, [.58, .5, .38], C.ochre], hash(seed, "cc", k));
   world.box(x - a, g, z - a, x + a, g + 2 * a, z + a, col(0), 0); solid(x - a, g, z - a, x + a, g + 2 * a, z + a);
   if (hash(seed, "c2") < .7) { const b = a * .72, ox = (hash(seed, "c3") - .5) * .2; world.box(x + ox - b, g + 2 * a, z - b, x + ox + b, g + 2 * a + 2 * b, z + b, col(1), 0); }
@@ -1172,6 +1174,7 @@ function openLot(l) {
 
 function prop(p, b) {
   const [x, z] = p.pos, g = groundBase(x, z);
+  if (BLOB_SIZE[p.kind]) { const [a, c] = BLOB_SIZE[p.kind], ax = p.along !== "z"; BLOBS.push([x, z, ax ? a : c, ax ? c : a]); }
   if (p.set === "dress" && Dress.prop(p, b)) return;      // street dressing (dressing.js, WLD-028)
   if (p.kind === "lantern") {                              // a wall lantern: glass on an iron arm, and the light it gives (watts as in the Blender scene)
     const o = p.out, lx = x + o[0] * .32, lz = z + o[1] * .32, h = p.height;
@@ -1377,6 +1380,7 @@ void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
 uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
 uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO;
+uniform sampler2D uGi; uniform vec4 uGiM, uBlob[16]; uniform int uBlobN;
 uniform vec4 uPatA[16], uPatB[16];                       // stone, brick and paving patterns (World/rules/surfaces.json): (type, unit w, unit h, joint), (vary, bevel, dome, -)
 ${NOISE}
 ${TONE}
@@ -1402,6 +1406,8 @@ vec3 roomLight(vec3 n,float person){
   } else lamps=vec3(.55)*(.82+.16*n.y);
   return (amb+lamps*vec3(1.,.74,.48)*.85)*ao;
 }
+float sunNear(vec2 xz,float lod){                 // how much of the ground round a spot is in the sun (the GI map, read blurred)
+  vec2 uv=(xz-uGiM.xy)*uGiM.z, e=min(uv,1.-uv); return mix(.55,texture2D(uGi,uv,lod).r,smoothstep(0.,.06,min(e.x,e.y))); }
 float shadow(){                                   // soft shadow from the sun's (or moon's) point of view
   if(uShOn<.5) return 1.; vec3 s=vS; if(s.x<0.||s.x>1.||s.y<0.||s.y>1.||s.z>1.) return 1.;
   vec2 p=s.xy*2048.-.5, b0=floor(p), fr=p-b0; float lit=0.;
@@ -1532,13 +1538,19 @@ void main(){
         float ndl=max(dot(n,uSun),0.); light=uSunCol*(ndl>0.?ndl*shadow():0.);
         if((f>13.5&&f<14.5)||(f>21.5&&f<22.5)){ float up=n.y*.5+.5, bw=dot(n,normalize(vec3(-uSun.x,-.45,-uSun.z)))*.5+.5;   // a person or a car: sky from above, bounce from the sunlit side away from the sun, so shade still models the body
           if(f<14.5){ float ks=dot(n,normalize(vec3(uSun.x,.9,uSun.z)))*.5+.5, dn=max(-n.y,0.);   // a person in shade: the sky is brightest round the sun, so that side of the body is lit more, and what faces down is darker
-            light+=uSky*(.14+.6*up*up+.62*ks*ks*ks)*vis*vis*(1.-.4*dn)+uGround*(1.-.5*vis)*(.3+1.3*bw*bw); }
-          else light+=uSky*(.28+.82*up*up)*vis*vis+uGround*(1.-.5*vis)*(.38+1.25*bw*bw); }
-        else light+=uSky*(n.y*.35+.65)*vis*vis+uGround*(1.-.5*vis);   // sun, sky seen, and light bounced off sunlit stone
+            light+=uSky*(.14+.6*up*up+.62*ks*ks*ks)*vis*vis*(1.-.4*dn)+uGround*gk*(1.-.5*vis)*(.3+1.3*bw*bw); }
+          else light+=uSky*(.28+.82*up*up)*vis*vis+uGround*gk*(1.-.5*vis)*(.38+1.25*bw*bw); }
+        else light+=(uSky*(n.y*.35+.65)*vis*vis+uGround*gk*(1.-.5*vis))*ct;   // sun, sky seen, and light bounced off sunlit stone
         for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*.85+.15)); } }   // lanterns (W6)
       col=c*light*(1.-wetG*uWet.x);
       if(wetG>0.&&uWet.x>0.){                                              // wet paving (WLD-037): puddles that hold the sky, a sheen towards the light, and rings where drops land
         float fr=pow(1.-max(dot(-vd,n),0.),4.), pud=smoothstep(.5,.6,ns(vec3(vP.xz*.37+vP.zx*.11,3.))*.5+ns(vec3(vP.xz*.83-vP.zx*.29,9.))*.3+ns(vec3(vP.xz*2.1+vP.zx*.6,5.))*.2)*uWet.z;
+        float gk=1., ct=1.;
+        if(uGiM.w>0.){ float fl=length(n.xz); vec2 fw=n.xz/max(fl,1e-3);         // trial: bounce follows the sunlit ground a surface faces; a floor or ceiling takes what is round it
+          float sn=fl>.3?sunNear(vP.xz+fw*1.5,1.)*.5+sunNear(vP.xz+fw*4.5,2.5)*.5:sunNear(vP.xz,2.5);
+          gk=mix(1.,(n.y>.5?.42:.14)+1.75*sn,uGiM.w);   // a floor also catches light off the walls round it
+          float hy=vP.y-${Y_PAVE.toFixed(2)}; if(hy<1.1) for(int i=0;i<16;i++){ if(i>=uBlobN) break;   // contact shade: the ground, and the foot of a wall, darken where something stands
+            ct*=1.-.6*uGiM.w*smoothstep(1.9,.7,length((vP.xz-uBlob[i].xy)/uBlob[i].zw))*smoothstep(1.1,0.,hy); } }
         vec3 refl=uFog*.8+uSky*.6+light*(1.1*uNight); col=mix(col,col*.5+refl*(.08+.55*fr+.1*uNight),pud)+refl*(uWet.y*fr*(1.-pud));   // by night the water holds the lamplight
         if(uWet.w>0.&&d<26.){ vec2 g=vP.xz/.3, id=floor(g), o=fract(g)-.5+(vec2(h3(vec3(id,22.)),h3(vec3(id,23.)))-.5)*.4;
           float hh=h3(vec3(id,21.)), ph=fract(uTime*(1.2+hh)+hh*9.), rg=smoothstep(.07,0.,abs(length(o)-ph*.26))*(1.-ph)*(1.-ph)*step(hh,uWet.w*.6);
@@ -1592,6 +1604,21 @@ if (gl.getExtension("WEBGL_depth_texture")) {                     // a depth pic
   shFbo = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, shFbo);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, colTex, 0); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, shTex, 0);
   if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) shFbo = null;
+// Local bounce and contact shade (dial gi, key G; ADR-0018): bounced light only where sunlit ground is near, and shade under street furniture.
+// GI map: a small picture, redrawn each frame, of which ground near the camera the sun reaches. The lit pass reads it blurred, so a wall
+// facing a sun patch is warmed by it and a wall deep in an alley is not, as in the path-traced reference renders.
+const GI_N = 128, GI_SIZE = 96;
+const giTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, giTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, GI_N, GI_N, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+gl.generateMipmap(gl.TEXTURE_2D);
+let giFbo = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, giFbo); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, giTex, 0);
+if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) giFbo = null;
+gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+const giProg = program(`attribute vec2 aQ; varying vec2 vQ; void main(){ vQ=aQ*.5+.5; gl_Position=vec4(aQ,0.,1.); }`,
+`precision highp float; varying vec2 vQ; uniform mat4 uSM; uniform sampler2D uSh; uniform vec3 uGiM;
+float lit(vec2 xz){ vec3 s=(uSM*vec4(xz.x,.5,xz.y,1.)).xyz*.5+.5; if(s.x<0.||s.x>1.||s.y<0.||s.y>1.||s.z>1.) return 1.; return step(s.z,texture2D(uSh,s.xy).r+.0006); }
+void main(){ vec2 xz=uGiM.xy+vQ/uGiM.z; float d=${(GI_SIZE / GI_N * .25).toFixed(3)};
+  gl_FragColor=vec4(vec3((lit(xz+vec2(d,d))+lit(xz+vec2(-d,d))+lit(xz+vec2(d,-d))+lit(xz+vec2(-d,-d)))*.25),1.); }`);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 }
 function bakeSky() {                                       // a map of how much sky each spot on the ground sees, worked out once from the heights around it
@@ -1662,6 +1689,7 @@ function weatherNow(m) {
     out[k] = into < b ? mix(v(s - 1), v(s), .5 + .5 * into / b) : into > 360 - b ? mix(v(s), v(s + 1), .5 * (into - (360 - b)) / b) : v(s); }
   out.wet = Math.max(Math.min(1, out.rain * 1.5), SKY.weather[WX_KIND(s - 1)].rain > 0 ? clamp(1 - into / SKY.rain.dry_minutes, 0, 1) : 0);
   return out;
+addEventListener("keydown", e => { if (e.code === "KeyG" && !e.repeat && window.wasted) window.wasted.dials.gi = window.wasted.dials.gi ? 0 : 1; });   // G: local bounce and contact shade off and on, to compare with the flat fill it replaced
 }
 function lighting(m) {                                       // the reference recipe (sun 14 W/m2, sky 0.35, haze) carried through the day
   const rise = D.day.sunrise * 60, set = D.day.sunset * 60, day = smooth(0, 1, Math.min((m - (rise - 30)) / 60, ((set + 30) - m) / 60));
@@ -1969,12 +1997,12 @@ function frame(now) {
   const wm = dials.warm || 0; Lt.sunCol = [Lt.sunCol[0], Lt.sunCol[1] * (1 - .1 * wm), Lt.sunCol[2] * (1 - .26 * wm)]; Lt.sky = [Lt.sky[0] * (1 - .08 * wm), Lt.sky[1] * (1 - .04 * wm), Lt.sky[2]];   // a more golden sun against a deeper sky
   const Wx = weatherNow(clock.m), sun0 = Lt.sunCol, lum0 = sun0[0] * .3 + sun0[1] * .6 + sun0[2] * .1, lost = (1 - Wx.sun) * Lt.day;   // weather: cloud, rain and fog keep sunlight off the street and send some of it down as soft grey light
   Lt.sunCol = mul3(sun0, 1 - lost); Lt.sky = Lt.sky.map(v => v + lum0 * lost * SKY.overcast_fill); Lt.ground = mul3(Lt.ground, 1 - lost * .7); Lt.fogD *= Wx.haze; Lt.wet = Wx.wet; Lt.rain = Wx.rain;
-  const nu = dials.neutral || 0, gl0 = Lt.ground[0] * .3 + Lt.ground[1] * .6 + Lt.ground[2] * .1; Lt.ground = mix3(Lt.ground, [gl0 * 1.04, gl0 * 1.0, gl0 * .95], nu);   // bounce off pale stone, not off orange: shade stays grey (world_street_kit_light.png)
-  { const sl = Math.min(1, lum0 / SKY.sun_ref), bl = dials.blue == null ? 1 : dials.blue; Lt.zen = mix3(Lt.zen, mul3(SKY.zenith, sl * SKY.brightness), SKY.depth * Lt.day * bl); }   // a blue sky overhead by day; the horizon stays hazy (WLD-035, W5)
+  const gi = dials.gi || 0, nu = (dials.neutral || 0) * (1 - .8 * gi), gl0 = Lt.ground[0] * .3 + Lt.ground[1] * .6 + Lt.ground[2] * .1; Lt.ground = mix3(Lt.ground, [gl0 * 1.04, gl0 * 1.0, gl0 * .95], nu);   // bounce off pale stone, not off orange: shade stays grey (world_street_kit_light.png)
+  { const sl = Math.min(1, lum0 / SKY.sun_ref), bl = dials.blue == null ? 1 : dials.blue; Lt.zen = mix3(Lt.zen, mul3(SKY.zenith, sl * SKY.brightness), SKY.depth * Lt.day * bl * (1 - .85 * Wx.grey)); }   // a blue sky overhead by day; the horizon stays hazy (WLD-035, W5)
   const vl = ((dials.veil || 0) + Wx.veil) * Lt.day * (1 - .45 * Wx.grey); Lt.fog = Lt.fog.map((v, i) => v + mix(sun0[i], lum0, Wx.grey) * vl); Lt.zen = Lt.zen.map((v, i) => v + sun0[i] * vl * .7);   // sunlight scattered all through the haze: a pale sky, and distance fades to it (W5)
   const view = M4.look(cam.eye, cam.dir), fov = .9, asp = W / H, VP = M4.mul(M4.persp(fov, asp, .25, 3200), view.m), th = Math.tan(fov / 2);
   gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf); gl.bufferData(gl.ARRAY_BUFFER, dyn.a.subarray(0, dyn.n), gl.DYNAMIC_DRAW);
-  let SM = M4.t(0, 0, 0), shOn = 0;
+  let SM = M4.t(0, 0, 0), shOn = 0, giAt = [0, 0, 1], giK = 0;
   if (shFbo && quality > .6) {                              // shadows: draw the town from the light, around where the player looks
     const R = 70, tex = 2 * R / SH, f = [-Lt.dir[0], -Lt.dir[1], -Lt.dir[2]], lv0 = M4.look([0, 0, 0], f), dot3 = (p, q) => p[0] * q[0] + p[1] * q[1] + p[2] * q[2];
     let foc = [near[0] + cam.dir[0] * 28, 0, near[1] + cam.dir[2] * 28]; const ox = dot3(foc, lv0.r) % tex, oy = dot3(foc, lv0.u) % tex;
@@ -1997,6 +2025,14 @@ function frame(now) {
   gl.viewport(0, 0, W, H); gl.clear(gl.DEPTH_BUFFER_BIT);
   gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE); gl.depthMask(false);
   gl.useProgram(sky.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const aq = gl.getAttribLocation(sky.p, "aQ"); gl.enableVertexAttribArray(aq); gl.vertexAttribPointer(aq, 2, gl.FLOAT, false, 0, 0);
+    if (giFbo && dials.gi > 0 && Lt.day > .05) {            // the GI map: where the sun reaches the ground, GI_SIZE metres round the same spot
+      const tx = GI_SIZE / GI_N; giAt = [Math.floor((foc[0] - GI_SIZE / 2) / tx) * tx, Math.floor((foc[2] - GI_SIZE / 2) / tx) * tx, 1 / GI_SIZE]; giK = dials.gi * Lt.day;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, giFbo); gl.viewport(0, 0, GI_N, GI_N); gl.disable(gl.DEPTH_TEST); gl.depthMask(false);
+      gl.useProgram(giProg.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const ag = gl.getAttribLocation(giProg.p, "aQ"); gl.enableVertexAttribArray(ag); gl.vertexAttribPointer(ag, 2, gl.FLOAT, false, 0, 0);
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, shTex); gl.uniform1i(giProg.u.uSh, 0); gl.uniformMatrix4fv(giProg.u.uSM, false, SM); gl.uniform3fv(giProg.u.uGiM, giAt);
+      gl.drawArrays(gl.TRIANGLES, 0, 3); gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.bindTexture(gl.TEXTURE_2D, giTex); gl.generateMipmap(gl.TEXTURE_2D); gl.depthMask(true);
+    }
   gl.uniform3fv(sky.u.uR, mul3(view.r, th * asp)); gl.uniform3fv(sky.u.uU, mul3(view.u, th)); gl.uniform3fv(sky.u.uF, cam.dir); gl.uniform3fv(sky.u.uSun, Lt.dir);
   gl.uniform3fv(sky.u.uZen, Lt.zen); gl.uniform3fv(sky.u.uHor, Lt.fog); gl.uniform3fv(sky.u.uSunCol, Lt.sunCol); gl.uniform1f(sky.u.uNight, Lt.night); gl.uniform1f(sky.u.uExp, Lt.exp);
   { const c = SKY.clouds, T = clock.day * 1440 + clock.m, cov = dials.clouds == null ? cloudCover(clock.m) : dials.clouds;   // where the clouds are and what shape they have comes from the clock alone (WLD-036)
@@ -2033,8 +2069,14 @@ function frame(now) {
   lit(main); attribs(main, worldBuf); for (const pc of seen) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);   // in the order laid, so ties fall as before
   let drawnDetail = 0; for (const ch of nearD) { drawMesh(ch.buf, ch.n); drawnDetail += ch.n; }
   stat.detail = drawnDetail; stat.pieces = seen.length;
+    gl.uniform1i(u.uGi, 4); gl.uniform4f(u.uGiM, giAt[0], giAt[1], giAt[2], giK); gl.uniform4fv(u["uBlob[0]"], blob); gl.uniform1i(u.uBlobN, blobN);
+    gl.uniform4fv(u["uPatA[0]"], SURF_A); gl.uniform4fv(u["uPatB[0]"], SURF_B);
   gl.depthMask(true); lit(signProg); drawMesh(signBuf, signN, signProg); gl.useProgram(main.p);
   gl.disable(gl.CULL_FACE); drawMesh(dynBuf, dyn.n / 10);   // people are closed soft forms; either side of a face may show
+  const blob = new Float32Array(64); let blobN = 0;         // the 16 pieces of street furniture nearest the camera shade the ground under them (trial light)
+  if (giK > 0) { const near2 = []; for (const b of BLOBS) { const d2 = (b[0] - cam.eye[0]) ** 2 + (b[1] - cam.eye[2]) ** 2; if (d2 < 1600) near2.push([d2, b]); }
+    near2.sort((p, q) => p[0] - q[0]); for (; blobN < Math.min(16, near2.length); blobN++) blob.set(near2[blobN][1], blobN * 4); }
+  gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, giTex);
   if (Lt.rain > .01 && !(cam.eye[1] < 6 && lotAt(cam.eye[0], cam.eye[2]))) {   // rain over the picture, unless the camera is under a roof
     gl.uniform4fv(u["uPatA[0]"], SURF_A); gl.uniform4fv(u["uPatB[0]"], SURF_B);
     gl.useProgram(rainProg.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const ar = gl.getAttribLocation(rainProg.p, "aQ"); gl.enableVertexAttribArray(ar); gl.vertexAttribPointer(ar, 2, gl.FLOAT, false, 0, 0);
@@ -2054,12 +2096,12 @@ for (const [k, o, key] of [["x", pl, "x"], ["z", pl, "z"], ["y", pl, "y"], ["yaw
 if (q.has("fp")) cam.fp = true; if (q.has("yaw")) pl.yaw = cam.yaw; if (q.has("rate")) clock.rate = +q.get("rate");
 // Light presets. "kit" is the daylight of ADR-0007: the softer, warmer light of the building kit renders, and the default.
 // "reference" is the earlier light of the reference alley image (ADR-0004), kept for comparison: L switches, ?light=reference starts with it.
-const LIGHTS = { reference: { sun: 1, sky: 1, bounce: 1, lanterns: 1, haze: 1, exposure: 1, warm: 0, neutral: 0, veil: 0 }, kit: { sun: .7, sky: 1.25, bounce: 1.2, lanterns: 1, haze: .55, exposure: .74, warm: .35, neutral: .7, veil: .12, skyLow: .9 },   // between the two below: the owner found the measured match too pale (ADR-0013)
+const LIGHTS = { reference: { sun: 1, sky: 1, bounce: 1, lanterns: 1, haze: 1, exposure: 1, warm: 0, neutral: 0, veil: 0 }, kit: { sun: .7, sky: 1.25, bounce: 1.2, lanterns: 1, haze: .55, exposure: .74, warm: .35, neutral: .7, veil: .12, skyLow: .9, gi: 1 },   // between the two below: the owner found the measured match too pale (ADR-0013)
   measured: { sun: .62, sky: 1.5, bounce: 1.2, lanterns: 1, haze: .55, exposure: .78, warm: 0, neutral: 1, veil: .3, skyLow: .9 },   // matches world_street_kit_light.png by measured colour (?light=measured)
   golden: { sun: .62, sky: .9, bounce: 1.5, lanterns: 1, haze: .55, exposure: .7, warm: 1 } };   // golden: the kit light as first tuned (ADR-0007), kept for comparison (?light=golden)
 let lightName = LIGHTS[q.get("light")] ? q.get("light") : "kit";
-addEventListener("keydown", e => { if (e.code === "KeyL" && started && !e.repeat) { lightName = lightName === "kit" ? "reference" : "kit"; Object.assign(window.wasted.dials, { warm: 0, neutral: 0, veil: 0, skyLow: 0 }, LIGHTS[lightName]); } });
-window.wasted = { dials: Object.assign({}, LIGHTS[lightName]), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, begin, setLook: L => { playerLook = L; }, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
+addEventListener("keydown", e => { if (e.code === "KeyL" && started && !e.repeat) { lightName = lightName === "kit" ? "reference" : "kit"; Object.assign(window.wasted.dials, { warm: 0, neutral: 0, veil: 0, skyLow: 0, gi: 0 }, LIGHTS[lightName]); } });
+window.wasted = { dials: Object.assign({ gi: 0 }, LIGHTS[lightName], q.has("gi") ? { gi: +q.get("gi") } : {}), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, begin, setLook: L => { playerLook = L; }, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
 // sound (sound.js): which lots play music, where the fountains and gardens are
 Sound.init(LOTS, D.blocks.flatMap(b => b.props.filter(p => p.kind === "fountain").map(p => p.pos)),
   LOTS.filter(l => l.kind === "garden").map(l => [(l.rect[0] + l.rect[2]) / 2, (l.rect[1] + l.rect[3]) / 2]));
