@@ -32,7 +32,7 @@ usable by both.
 | Tests name the requirement they verify, e.g. `BrixTown.Economy.ECO_003_InterestAccrual`. | Gives requirement-to-test traceability. |
 | Scope is set by **feature levels**. The owner picks a level (0 set dressing, 1 simple, 2 full) for each feature at three milestones; the picks live in `docs/backlog/feature_choices.json`. Domain specs tag each requirement with its feature and level. | One place decides what is in the game and when; see `docs/process/FEATURE_PROCESS.md`. |
 
-**ID prefixes:** `CORE` game loop · `ART` art direction · `CHR` character · `ANIM` body motion · `NEED` needs · `CAR` careers · `PROP` property · `FURN` furniture · `BUILD` building designer ·
+**ID prefixes:** `CORE` game loop · `ART` art direction · `CHR` character · `ANIM` body motion · `NEED` needs · `CAR` careers · `PROP` property · `BUILD` building designer ·
 `CITY` world interaction and NPCs · `WLD` time, weather, vegetation · `ECO` economy · `BANK` banking ·
 `MP` multiplayer · `ACC` accounts · `UGC` creator platform · `UI` interface · `TECH` architecture ·
 `ASSET` asset pipeline · `TEST` test harness · `SEC` security and safety · `SND` sound · `QST` quests.
@@ -44,7 +44,6 @@ usable by both.
 | `docs/art/CHARACTER_FACE.md` | The face control set, expressions, mouth shapes and lip sync. |
 | `docs/art/CHARACTER_MOTION.md` | Skeleton, movement signatures, state layers, talking while walking. |
 | `docs/specs/domains/LIVING_CITY.md` | Map, residents and routines, things to use, vehicles, seasons and plants (CITY-010 and WLD-010 onward), with the controllers behind them. |
-| `docs/specs/domains/FURNITURE.md` | Furniture designs, the furniture companies and their outlets, delivery, and furniture in the home (FURN-001 onward; the detail of PROP-003). |
 | `docs/process/FEATURE_PROCESS.md` | How a feature goes from idea to game, and what makes the cut. |
 | `docs/backlog/` | `features.json` (the backlog with levels), `feature_choices.json` (the owner's picks), `BACKLOG.md` (readable copy), `SCENARIOS.md`. The owner states picks in chat; agents record them (ADR-0008). |
 | `Art/Reference/` | Approved reference images. Never overwritten. |
@@ -183,7 +182,7 @@ are accepted, the rest stay proposed.
 |---|---|---|---|---|
 | PROP-001 | Characters shall buy, own and sell items; ownership shall be recorded server-side. In the browser slice ownership is kept in the player's save (QST-008) until the server exists (PH2). | P0 | PH1 | in-progress |
 | PROP-002 | Characters shall buy, sell and rent buildings of every kind (homes, shops, workplaces, utilities, civic buildings) and the units inside them, from a finite set of city lots. Moved to PH1 by the owner's pick of `F-PROP-ESTATE` level 2 for the first slice; detail in PROP-009 to PROP-021. | P0 | PH1 | in-progress |
-| PROP-003 | Owners shall place, move and remove furniture inside their property; layout persists and is visible to visitors. Moved to PH1 by the owner's pick of `F-PROP-FURNISH` level 2 for the first slice (2026-11-22); detail in `docs/specs/domains/FURNITURE.md` (FURN-050 to FURN-057). | P0 | PH1 | proposed |
+| PROP-003 | Owners shall place, move and remove furniture inside their property; layout persists and is visible to visitors. | P0 | PH3 | proposed |
 | PROP-004 | Owners shall control access (private, friends, public). | P1 | PH3 | proposed |
 | PROP-005 | Characters shall buy or lease commercial units and run shops: stock, prices, opening hours, staff (NPC or player). | P1 | PH3 | proposed |
 | PROP-006 | Property shall carry recurring costs (tax, utilities, upkeep) charged through the ledger. Moved to PH1 with PROP-002: upkeep and tax are a data share of the unit's value each game day (PROP-017); utilities wait for `F-BLD-UTILITY`. | P1 | PH1 | in-progress |
@@ -497,6 +496,5 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.5.1 | 2026-11-22 | SND-015 to SND-017: people's movements, activities and chatter (owner's request), as part of `F-SND-WORLD` level 1. SND-006's murmur becomes conversations that take turns. |
 | 0.5.2 | 2026-11-22 | Q-14 decided: dialogue is voiced (ADR-0019). SND-018 added; SND-005 cut; CHR-009 and CITY-007 updated to match. |
 | 0.5.3 | 2026-11-22 | Real estate in the first slice, from the owner's request and pick of `F-PROP-ESTATE` level 2: PROP-002 and PROP-006 moved to PH1; PROP-009 to PROP-021 added (units, owners, several real estate companies, buying, selling, renting, letting, block price indices, tax and seizure, mortgages, balance), PROP-022 proposed (residents moving house). ADR-0022. |
-| 0.5.4 | 2026-11-22 | Furniture in the first slice, from the owner's request and picks (`F-FURN-ITEMS` 2, `F-FURN-STORE` 2, `F-PROP-FURNISH` 2, `F-OBJ-CARRY` 1): new domain spec `docs/specs/domains/FURNITURE.md` (FURN-001 onward, all proposed; Q-30 to Q-32), new prefix `FURN`; PROP-003 moved to PH1. Interior style drafted for approval in `docs/art/INTERIOR_STYLE.md`. |
 | 0.5.5 | 2026-11-22 | The game is called **Brix Town** (owner); "Wasted" was a working title. Q-13 decided. ADR-0025. |
 | 0.5.6 | 2026-11-22 | Real estate, the missing pieces (owner's request): residents move house (PROP-022, now PH1 in progress), For Sale and To Let boards and the agents' names on their offices (PROP-023), beds in empty flats. |

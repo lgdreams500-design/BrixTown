@@ -17,7 +17,6 @@
   "museum": ["gallery", "office"],
   "cinema": ["office"],
   "dealer": ["office"],
-  "furniture": ["store"],
   "utility": ["plant"],
   "default": ["rooms"]
  },

@@ -1,11 +1,11 @@
 ---
 doc_id: WASTED-ART-DIRECTION
 title: Brix Town — Art direction (locked look)
-version: 1.5.0
-status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22, interiors and furniture on 2026-11-22
+version: 1.4.0
+status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22
 last_updated: 2026-11-22
-relates_to: [FURN-003, ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
-decision: docs/decisions/ADR-0004-art-direction.md, docs/decisions/ADR-0007-warmer-kit-light.md, docs/decisions/ADR-0013-kit-light-measured.md, docs/decisions/ADR-0026-interior-and-furniture-look.md
+relates_to: [ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
+decision: docs/decisions/ADR-0004-art-direction.md, docs/decisions/ADR-0007-warmer-kit-light.md, docs/decisions/ADR-0013-kit-light-measured.md
 ---
 
 # Brix Town — Art direction
@@ -32,8 +32,6 @@ All in `Art/Reference/`. Originals and every earlier experiment stay in `Art/Sty
 | `character_lineup.png` | Six people in option B: two player examples and four NPC roles. | `Tools/blender/character_face_05.py` |
 | `face_expressions.png` | Six expressions on one face. | `Tools/blender/character_face_05.py` |
 | `face_mouth_shapes.png` | The eight speech mouth shapes. | `Tools/blender/character_face_05.py` |
-| `furniture_lines.png` | **Furniture**: every piece of the four style lines Plain, Old Town, Workshop and Curve (ADR-0026). | `Tools/blender/furniture_kit_17.py` (`sheet`) |
-| `interior_room_daylight.png` | **Interiors**: an Old Town living room with a bed corner, low sun through a side window, two warm lamps. | `Tools/blender/furniture_kit_17.py` (`room_oldtown`) |
 | `face_talk.mp4` / `.gif` | A spoken line with lip sync, blink and brow movement. | `Tools/blender/character_face_05.py` |
 
 Rejected directions, kept only so they are not tried again: the first 2D sketches, the painterly
@@ -110,23 +108,6 @@ Reference: `Art/Reference/vehicles_soft_box.png` (option A of `Tools/blender/car
 | V3 | Cabins are **open frames on round posts** with a rounded roof, so the people inside can be seen; seats and a steering wheel inside. | A seated driver shows from the chest up. |
 | V4 | Character comes from extras, not from new shapes: roof racks with cases and bags, crates in a pickup bed. | Three cars parked together look like a family, not copies. |
 
-### 2.6 Interiors and furniture (ADR-0026)
-
-References: `Art/Reference/furniture_lines.png` and `Art/Reference/interior_room_daylight.png`. Style lines, the outlet and
-how the renders get their look (and what the slice and Unreal must do to match it): `docs/art/INTERIOR_STYLE.md`.
-
-| # | Rule | Check |
-|---|---|---|
-| I1 | **Matte and mottled, like the streets** (W1): wood, cloth, paint and tile use the `painted()` material. No gloss, no chrome, no shiny glass; metal is dull dark iron or painted. | Roughness about 0.9; no highlights on any piece. |
-| I2 | **Chunky and soft** (W3): tops at least 4 cm thick, every edge bevelled at least 1 cm, fat cushions, block or turned legs. | No leg under 4 cm across; no edge reads sharp from 3 m. |
-| I3 | **True size, readable details**: pieces true size for people 1.58–1.80 m (seats about 45 cm, tables 75 cm, beds 50 cm); handles, knobs, buttons and seams about 1.3× real. | A character sits with feet on the floor. |
-| I4 | **The world palette indoors** (§2.3): woods from Brown, Ochre and Cream, cloth from the accents, walls in Plaster, floors in boards, flags or tiles. | Every catalogue colour is a palette entry or a mix of two. |
-| I5 | **Light from outside and from lamps** (W5, W6): low sun through deep windows lays a patch on the floor; every room has a lamp in the Lantern colour that carries it at dusk. | A room reads at dusk with the sun gone. |
-| I6 | **One kit, four lines**: Plain, Old Town, Workshop and Curve share the kit of parts and the materials and differ by silhouette, proportion and accent only. | Two lines side by side look like the same town. |
-| I7 | **Silhouette first**: a sofa, bed, wardrobe and dresser are told apart by outline from 6 m; colour variants of one piece clearly differ from 6 m. | The sheet still reads in grey. |
-| I8 | **Wear shows**: used pieces have paler edges and stronger mottling, worn ones a sagging cushion and a chipped corner. | Three stages side by side (not yet rendered). |
-| I9 | **Boxes belong too**: flat-pack boxes are mottled cardboard (Cream ↔ Ochre) with the company's painted band. | A stack reads as one company's. |
-
 ## 3. Characters — option B "Soft"
 
 ### 3.1 In one sentence
@@ -178,16 +159,14 @@ Office.
 
 Scripts build on each other by loading the helper part of an earlier script, so keep all of
 `Tools/blender/` together:
-`style_test_02.py` → `character_test_02.py` → `old_town_04.py` → `character_face_05.py`; and
-`old_town_04.py` → `building_kit_07.py` → `car_kit_09.py` → `furniture_kit_17.py`.
+`style_test_02.py` → `character_test_02.py` → `old_town_04.py` → `character_face_05.py`.
 
 ## 5. Not decided yet
 
 | Item | Where tracked |
 |---|---|
 | How production character models are made | Q-15 |
-| Vegetation, UI style | not started (vehicles: §2.5, interiors and furniture: §2.6) |
-| Wear stages (I8) | not yet rendered. (The furniture outlet's look, `Art/StyleTests/furniture_kit_17/showroom.png`, was approved by the owner's request to build it, ADR-0027.) |
+| Interiors, vegetation, UI style | not started (vehicles: §2.5) |
 | Night (after dusk) and bad-weather looks | night: approved in the slice (ADR-0023, owner 2026-11-22), no reference image yet; pictures in `Art/StyleTests/night_sky_15/`. Rain, fog and overcast: approved in the slice (ADR-0016), no rule or reference image yet; must follow W5–W7 |
 | The sky: blue overhead with drifting clouds | approved in the slice (ADR-0014); not in the reference renders, still needs a rule and a reference image |
 | Whether the iris should be smaller than in `face_expressions.png` | owner to say |
@@ -202,4 +181,3 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | 1.3.0 | 2026-11-22 | Vehicles: the owner chose "Classic" from car look test 09 (ADR-0011): §2.5 rules V1-V4, reference `vehicles_classic.png`. |
 | 1.3.1 | 2026-11-22 | §2.4: the slice's kit light retuned towards the measured colours of the reference street (ADR-0013). No rule or reference changed. |
 | 1.4.0 | 2026-11-22 | Vehicles: the owner switched to A "Soft box" after playing with the Classic cars (ADR-0015): §2.5 rewritten, new reference `vehicles_soft_box.png`. |
-| 1.5.0 | 2026-11-22 | Interiors and furniture: the owner chose all four style lines from furniture look test 17 (ADR-0026): §2.6 rules I1-I9, references `furniture_lines.png` and `interior_room_daylight.png`. |

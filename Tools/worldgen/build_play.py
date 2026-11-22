@@ -118,9 +118,7 @@ def roads(city):
         bays=[[r1(b["pos"][0]), r1(b["pos"][1]), 1 if abs(R.lanes[b["lane"]]["u"][0]) > .5 else 0] for b in R.bays.values()],
         signals=[[j["pos"][0], j["pos"][1], round(citysim.rnd("sig", j["id"]) * cycle, 3)] for j in R.d["junctions"] if j["control"] == "signals"],
         cycle={k: cyc[k] for k in ("green_s", "amber_s", "all_red_s")},
-        width=T.r["crossing_width"], bay_length=T.r["bay_length"],
-        gates=[[g["name"], R.j[g["junction"]]["pos"][0], R.j[g["junction"]]["pos"][1], g["dir"][0], g["dir"][1], g["length"]]   # roads out of town (CITY-068)
-               for g in R.d.get("gates", [])])
+        width=T.r["crossing_width"], bay_length=T.r["bay_length"])
 
 
 def dialogue(w):
@@ -236,6 +234,11 @@ def main(day=16):
     roles = sorted(w["roles"]["roles"])
     lot_at = {l["id"]: n for n, l in enumerate(city.d["lots"])}
     trees = tree_rows(w, city, day)
+    ds = world.designs(w)                               # BUILD-001: every building is a design; the slice builds from it
+    for b in w["blocks"]:
+        for l in b["lots"]:
+            if l["id"] in ds:
+                l["design"] = ds[l["id"]]
     data = dict(
         city=w["city"], blocks=[{k: b[k] for k in ("id", "grid", "template", "district", "origin", "size", "lots", "paths", "props")} for b in w["blocks"]],
         day=dict(index=day, weekday=info["weekday_name"], season=cal["seasons"][info["season"]], market=info["market"],

@@ -17,9 +17,7 @@ class TheMap(unittest.TestCase):
     def test_eight_by_eight_blocks_each_cell_once(self):
         g = W["city"]["grid"]
         self.assertEqual((g["columns"], g["rows"]), (8, 8))
-        inside = [b for b in W["blocks"] if b["district"] != "Outside the walls"]
-        self.assertEqual(sorted(tuple(b["grid"]) for b in inside), [(i, j) for i in range(8) for j in range(8)])
-        self.assertEqual(len({tuple(b["grid"]) for b in W["blocks"]}), len(W["blocks"]))   # blocks outside the walls too (FURN-020)
+        self.assertEqual(sorted(tuple(b["grid"]) for b in W["blocks"]), [(i, j) for i in range(8) for j in range(8)])
 
     def test_key_amenities_exist(self):
         names = {l["name"] for l in LOTS}
@@ -324,6 +322,41 @@ class TheStoreys(unittest.TestCase):
         self.assertTrue(any(f >= 1 for l in offices for f in l.get("levels", {}).get("work", [])))
 
 
+class TheDesigns(unittest.TestCase):
+    """BUILD-001 to BUILD-003: every building is a design (docs/specs/domains/BUILDER.md; World/rules/building_kit.json)."""
+    D = world.designs(W)
+
+    def test_BUILD_001_every_building_has_a_whole_design(self):
+        self.assertEqual(set(self.D), {l["id"] for l in BUILDINGS})
+        self.assertEqual(world.design_problems(W, self.D), [])
+        cafe = self.D[next(l["id"] for l in LOTS if l["name"] == "Market Café")]
+        self.assertEqual((cafe["shell"]["floors"], cafe["roof"]["type"], cafe["inside"]["uses"]), (2, "cornice", ["main", "store"]))
+        self.assertGreater(cafe["openings"]["shop_front"], 0)
+
+    def test_BUILD_002_designs_pick_as_the_slice_does(self):
+        # the slice's hash() gives these (taken from Prototype/play/play.js in the browser); the design picks with the same
+        for keys, want in ((("b_0_0_l0", 1), 0.5495072316844016), (("b_3_1_l2", "st"), 0.1645335874054581), (("b_6_1_l0", "ch"), 0.1171064767986536),
+                           (("x", 2.5, "y"), 0.3554460408631712), (("b_1_1_l2", "shc"), 0.47174760745838284), (("Café Mina", "fr"), 0.34352535218931735)):
+            self.assertEqual(world.js_hash(*keys), want, keys)
+        K = W["building_kit"]
+        d = self.D["b_0_0_l0"]
+        self.assertEqual(d["walls"]["plaster"], world.js_pick(K["plaster"], 0.5495072316844016))
+        self.assertEqual(world.designs(W), self.D)                                   # the same every time
+
+    def test_BUILD_003_every_choice_comes_from_the_kit(self):
+        import copy
+        w = copy.deepcopy(W)
+        ds = copy.deepcopy(self.D)
+        d = ds["b_0_0_l0"]
+        d["walls"]["plaster"] = [1, 0, 1]
+        d["roof"]["type"] = "dome"
+        d["walls"]["stone"]["pattern"] = "marble"
+        del ds["b_0_0_l1"]["ornament"]
+        p = world.design_problems(w, ds)
+        for bit in ("plaster colour not in the kit", "roof type dome", "stone pattern not in surfaces.json", "design has no ornament"):
+            self.assertTrue(any(bit in x for x in p), bit)
+
+
 class TheDialogue(unittest.TestCase):
     """CITY-007: conversations with residents (World/rules/dialogue.json)."""
     D = W["dialogue"]
@@ -623,39 +656,6 @@ class GettingOutOfTheWay(unittest.TestCase):
         self.assertGreaterEqual(len(r["shouts"]), 3)
         for s in r["shouts"]:
             self.assertTrue(0 < len(s) <= 40, s)                            # short enough for a tag over a head
-
-
-
-class TheFurnitureOutlet(unittest.TestCase):
-    """FURNITURE FURN-020, FURN-021: the huge outlet outside the East Gate (Q-30, Tools/worldgen/add_outlet_01.py)."""
-
-    def outlet(self):
-        return next(l for l in LOTS if l["kind"] == "furniture")
-
-    def test_FURN_020_outlet_outside_the_walls(self):
-        l, P = self.outlet(), W["city"]["grid"]["pitch"]
-        x0, z0, x1, z1 = l["rect"]
-        self.assertGreater(x0, W["city"]["grid"]["columns"] * P + 9.5)          # beyond East Wall Street and the wall
-        self.assertGreaterEqual((x1 - x0) * (z1 - z0), 2000)                      # huge: a big hall
-        self.assertTrue(l["enterable"])
-        self.assertEqual(l["door"][1], z0)                                         # its door faces the gate road
-        gate = next(g for g in W["roads"]["gates"] if g["id"] == "gate_east")
-        self.assertGreaterEqual(W["city"]["grid"]["columns"] * P + gate["length"], x1)   # the road runs past it
-        for k in ("work", "customer", "seat"):
-            self.assertTrue(l["objects"][k], k)
-        staff = [r for r in W["residents"] if r.get("work") == l["id"]]
-        self.assertEqual(len(staff), l["staff"])
-        b = next(b for b in W["blocks"] if any(q is l for q in b["lots"]))
-        self.assertTrue(any(p["kind"] == "carpark" for p in b["props"]))
-
-    def test_FURN_021_residents_browse_and_staff_work(self):
-        l = self.outlet()
-        stays = [s for d in (DAY, DAY + 1, DAY + 2) for pieces in CITY.plan(d).values() for kind, t0, t1, payload, s in pieces
-                 if kind == "stay" and s["place"] == l["id"]]
-        self.assertTrue(any(s["act"] == "browse" for s in stays))
-        self.assertTrue(any(s["act"] == "work" for s in stays))
-        self.assertTrue(all(r["near"].get("furniture") == l["id"] for r in W["residents"]))
-
 
 if __name__ == "__main__":
     unittest.main()

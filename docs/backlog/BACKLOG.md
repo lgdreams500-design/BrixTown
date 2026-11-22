@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 31 of 45 | 9 of 45 | 9 of 45 |
-| Size of the plan (points) | 434 | 380 | 741 |
-| Size of the suggested plan | 114 | 340 | 709 |
+| Decided | 30 of 43 | 9 of 43 | 9 of 43 |
+| Size of the plan (points) | 343 | 340 | 676 |
+| Size of the suggested plan | 110 | 300 | 644 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -21,6 +21,9 @@
 | **City layout** `F-MAP-CITY` | 1 A district ★ | 1 A district | 2 Whole city | A district from the first slice (so cars fit), whole city in the full game (owner, 2026-11-22). |
 | **Lots and building records** `F-MAP-LOTS` | 1 Registry | 1 Registry | 1 Registry ★ | Registry at every milestone (owner, 2026-11-22). |
 | **Going inside buildings** `F-BLD-INSIDE` | 3 Every floor, true size ★ | undecided | undecided | Owner, 2026-11-22: "3: Every floor, true size" (all buildings accessible inside, stairs to every level, inside the same size as outside), with "Stairs and a lift" in the towers and "Residents too" (beds and desks upstairs). Later milestones not stated. |
+| **Building designer** `F-BLD-DESIGN` | 1 Remodel | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. |
+| **Open plots** `F-MAP-PLOTS` | 0 None | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. |
+| **From design to building** `F-BLD-CONSTRUCT` | 0 Instant | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. |
 | **Shops and market** `F-BLD-SHOP` | 2 Stock and prices ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Stock and prices" for the first slice. Later milestones not stated. |
 | **Mall** `F-BLD-MALL` | undecided | undecided | undecided |  |
 | **Hospital and clinic** `F-BLD-HOSPITAL` | undecided | undecided | undecided |  |
@@ -49,9 +52,7 @@
 | Feature | First slice | Life depth | Full game | Note |
 |---|---|---|---|---|
 | **Places to do things** `F-OBJ-POINTS` | 1 Shared | 1 Shared | 2 Objects with a state | Took the suggestion (owner, 2026-11-22). |
-| **Carrying and moving things** `F-OBJ-CARRY` | 1 Residents carry ★ | undecided | undecided | Owner, 2026-11-22: "furnish level 2 and carry level 1" (asked for the first slice, so delivery crews can carry furniture into the flat). Later milestones not stated. |
-| **Furniture designs** `F-FURN-ITEMS` | 2 Large range ★ | undecided | undecided | Owner, 2026-11-22: "level to for design and company and outlets" (asked for first-slice levels; read as level 2). Bought furniture is delivered to the flat by NPCs, unassembled or assembled, or the player takes an instant option into the inventory, then places it from the inventory or moves it to storage; "we will build storage container mechanics later". Later milestones not stated. |
-| **Assembling flat-pack furniture** `F-FURN-ASSEMBLE` | undecided | undecided | undecided |  |
+| **Carrying and moving things** `F-OBJ-CARRY` | undecided | undecided | undecided |  |
 
 ## Vehicles
 
@@ -90,9 +91,6 @@
 | **Quests from residents** `F-QUEST` | 2 Branching and repeatable ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Branching + repeatable" for the first slice. Later milestones not stated. |
 | **Character designer** `F-CHR-DESIGN` | 2 Full designer ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Full designer" for the first slice. Later milestones not stated. |
 | **Real estate market** `F-PROP-ESTATE` | 2 Living market ★ | undecided | undecided | Owner, 2026-11-22: asked to "build whole real estate economy" (every building residential, commercial, utility sellable, owned by a player, a resident or one of several real estate companies, smaller units inside, balanced), then, asked for first-slice levels: "focus on estate and have it at level 2". Later milestones not stated. Furniture (F-PROP-FURNISH) is being handled in another session; no pick recorded here. |
-| **Furniture that belongs to the unit** `F-PROP-FURNISH` | 2 Arrange and trade ★ | undecided | undecided | Owner, 2026-11-22: "furnish level 2 and carry level 1" (asked for first-slice levels, needed by F-FURN-STORE level 2). Storage taken out to F-PROP-STORAGE, to be built later. Later milestones not stated. |
-| **Storage containers** `F-PROP-STORAGE` | undecided | undecided | undecided |  |
-| **Furniture company and outlets** `F-FURN-STORE` | 2 Several companies, living catalogue ★ | undecided | undecided | Owner, 2026-11-22: "level to for design and company and outlets" (asked for first-slice levels; read as level 2). Bought furniture is delivered to the flat by NPCs, unassembled or assembled, or the player takes an instant option into the inventory, then places it from the inventory or moves it to storage; "we will build storage container mechanics later". Later milestones not stated. Then: "for packed delivery, paid assemble as well as player can assemble, in future we can add a mini game where player can assemble the furniture based on the instructions" (mini-game proposed as F-FURN-ASSEMBLE, no pick). Then: "instant doesn't cost any money it's free for now". |
 
 ## What each level means
 
@@ -111,6 +109,22 @@
 - 1 Key rooms: A few important buildings have one room you can enter. Size L.
 - 2 Most buildings: Most buildings have furnished interiors. Size XL.
 - 3 Every floor, true size: Every building can be entered and every storey reached by its own stairs (and lifts in the towers). Inside is the same size as outside, behind the same windows; each floor is laid out and furnished for what it is (bedrooms upstairs in houses, a flat on each tower floor, offices, shop stores and staff rooms). Floors are built only near the player. Size XL.
+
+**Building designer** (`F-BLD-DESIGN`). Players make a place their own: remodel what they own, or build new on an open plot, in the town's look.
+- 0 None: Buildings are as the town made them. Size -.
+- 1 Remodel: Change the finishes of a building or unit you own: walls and their colour, brick or stone, roof tiles, windows and doors outside; floors, walls and ceilings inside. Every building is a design in data; choices from priced catalogues within the district's palette; checked, paid through the ledger. Size M.
+- 2 Build new: On an empty plot: draw the footprint, set the storeys and each one's height, choose facades, roof, openings, stairs and lift, rooms and finishes; checked for planning, reachability, stairs and rooms; the result joins the estate market. Size XL.
+- 3 Free-form and published: L-shapes, courtyards, set-backs, bays and arcades; designs saved as templates and published by creators. Size XL.
+
+**Open plots** (`F-MAP-PLOTS`). Somewhere to build: the town is full today.
+- 0 None: Every lot is built on. Size -.
+- 1 Plots for sale: A few empty plots with an owner and a price, bought and sold through the estate market. Size S.
+- 2 Clear and rebuild: Owners of a whole building may clear it (tenants given notice); plots come up over time. Size M.
+
+**From design to building** (`F-BLD-CONSTRUCT`). Building should take a little time and show in the street.
+- 0 Instant: A confirmed design is there at once. Size S.
+- 1 Takes days: Hoardings and scaffolding, then the building, over game days by its size; worked out from the clock. Size M.
+- 2 Builders at work: Resident builders on site in their day, materials by van, stages you can watch. Size L.
 
 **Shops and market** (`F-BLD-SHOP`). Where money gets spent.
 - 0 Decoration: Stalls and shop fronts you cannot use. Size S.
@@ -296,28 +310,3 @@
 - 0 Owners on record: Every building and unit has an owner in the lot registry (resident, company or the city); For Sale and To Let signs show it. Nothing can be bought. Size S.
 - 1 Buy, sell and rent: Buildings of every kind (homes, shops, workplaces, utilities) are split into units (flats, shop floors, offices). The player buys, sells and rents buildings or single units through the ledger, from residents and from several real estate companies that each hold a portfolio and an account. Prices come from data: size, kind, block and condition. Mortgages from the bank. Buying and selling carry a transfer tax and agent fee (sinks); owners pay upkeep and tax each day, tenants pay rent. Settled from the clock, not ticked. Size XL.
 - 2 Living market: Companies buy, sell, list and set rents on their own from demand (empty units, residents moving, nearby shops), so prices and rents rise and fall within data bounds per block. Residents buy and move house. Players compete with companies and each other; a price index and the money supply are published and kept balanced by tuned faucets and sinks. Size XL.
-
-**Furniture that belongs to the unit** (`F-PROP-FURNISH`). Furniture is part of the home: sell the flat and its furniture goes with it, unless the owner takes it out first.
-- 0 Fixed furnishing: Units come furnished; the furniture is part of the unit and is sold with it. It cannot be moved. Size S.
-- 1 Owned, placed from the inventory, sold with the unit: Each piece of furniture is an owned item. Bought or taken out, it sits in the player's inventory; the player places it in a unit they own or rent, and once placed it is recorded against that unit. A sale or repossession of the unit includes everything still in it, and its value counts toward the price. The player can pick a placed piece back up into the inventory. Storage containers are a separate feature (F-PROP-STORAGE). Size L.
-- 2 Arrange and trade: The owner places, moves and turns furniture freely inside the unit (PROP-003), buys it from furniture shops and sells it on; furniture wears and has its own price. Visitors see the layout. Size L.
-
-**Storage containers** (`F-PROP-STORAGE`). Somewhere to keep furniture and belongings that are not in use, so the inventory does not have to hold everything.
-- 0 None: No storage; furniture is either placed in a home or held in the inventory. Size -.
-- 1 Locker and storage unit: The player moves pieces from the inventory or a home into a locker (small, free) or a rented storage unit at a storage depot (sized, rent each day through the ledger, settled from the clock), and takes them out again into the inventory. Size L.
-- 2 Containers everywhere: Wardrobes, chests, cupboards and shelves in a home hold items by size; storage units of several sizes at more than one depot; unpaid rent ends in the contents being sold at auction. Size L.
-
-**Furniture designs** (`F-FURN-ITEMS`). Homes, shops and offices need furniture, and a large catalogue needs many pieces that still look like one world.
-- 0 Basic set: About 30 plain pieces (bed, sofa, table, chairs, desk, wardrobe, shelves, lamp, kitchen run, bath) in one style, used to dress interiors. Made in Blender to the locked look; an interior style section is added to ART_DIRECTION first, with the owner's approval. Size M.
-- 1 Kit and variants: About 80 base pieces built from one shared kit (legs, frames, cushions, handles) on a common grid, each with finishes and colours set in data, giving about 400 catalogue items in four style lines (budget, modern, classic, retro). A Blender look test renders every piece to check it matches the reference. Size L.
-- 2 Large range: About 200 base pieces and 1,500+ catalogue items across every room (living, bed, kitchen, bath, children, office, garden, shop fittings), with seasonal collections added from data, wear that shows with age, and sets that match across a room. Size XL.
-
-**Furniture company and outlets** (`F-FURN-STORE`). Somewhere to see furniture full size, laid out in rooms, before buying it, and a company that sells it through the ledger.
-- 0 Outlet to walk round: One huge furniture outlet on the edge of town: a big shed with a car park, a showroom floor of furnished room sets, a marked walking route, a café and a warehouse hall. Residents browse it in their day. Nothing can be bought. Size M.
-- 1 See it, buy it, have it delivered: A furniture company with its own account and catalogue (data). Every piece on the showroom floor carries a tag with name, price and the catalogue's other colours; the catalogue can also be browsed at the outlet or at home. The player buys at the till through the ledger and the piece is owned (PROP-001). At the till the player chooses delivery or instant. Delivery: on a booked slot a crew of the company's workers (residents) drives a van to the building, unloads and carries each piece through the door and up the stairs or lift into the flat, flat-packed in its boxes or assembled, as chosen at the till. A flat-packed piece stays boxed in the flat until it is put together: either the player assembles it (a timed action in this level) or pays the company for assembly, and a fitter assembles it in place. Instant: the piece goes straight into the player's inventory, at no extra cost (free for now; the charge, if any, is a tunable number in data). From the inventory the player places it in a home (F-PROP-FURNISH) or, later, moves it to storage (F-PROP-STORAGE). Size XL.
-- 2 Several companies, living catalogue: Three companies (a budget flat-pack chain, a mid-range chain and a premium design house) with outlets of different sizes, two of them huge. Catalogues change with the seasons; sales and ex-display clearance; stock and delivery slots per day calculated from the clock, so delivery dates move when vans are busy; delivery crews and vans in traffic; residents buy furniture and get it delivered too; the player can sell used furniture back or on the market stall. Size XL.
-
-**Assembling flat-pack furniture** (`F-FURN-ASSEMBLE`). Putting furniture together from the instructions is a small, satisfying job of its own.
-- 0 Timed action: The player assembles a boxed piece with one action that takes a set time from data; the boxes turn into the piece. Size S.
-- 1 Follow the instructions: A mini-game: the boxes open into labelled parts and fixings, and the player follows the instruction sheet step by step to fit them together. Mistakes show (a wobble, a part left over) and can be undone. Size L.
-- 2 Every piece its own build: Every flat-pack piece in the catalogue has its own steps made from data; help from a friend makes it faster in multiplayer; a well-built piece wears more slowly. Size L.

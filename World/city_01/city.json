@@ -688,16 +688,6 @@
    "file": "blocks/b_7_7.json",
    "template": "utility",
    "district": "Outskirts"
-  },
-  {
-   "id": "b_8_4",
-   "grid": [
-    8,
-    4
-   ],
-   "file": "blocks/b_8_4.json",
-   "template": "outlet",
-   "district": "Outside the walls"
   }
  ]
 }
