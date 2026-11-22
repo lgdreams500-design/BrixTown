@@ -61,8 +61,8 @@
    "gain": 0.5, "talk_duck": 0.25, "source_duck": 0.1,
    "moods": [
     { "from": "05:00", "name": "morning", "bpm": 84, "root": 62, "scale": "major", "chords": [1, 5, 6, 4], "bars_per_chord": 1, "sevenths": false, "comp": "nylon", "comp_pattern": "arp", "voice": "harp", "bass": "root", "drums": "shaker", "density": 0.45, "swing": 0 },
-    { "from": "11:00", "name": "afternoon", "bpm": 94, "root": 67, "scale": "major", "chords": [1, 6, 2, 5], "bars_per_chord": 1, "sevenths": true, "comp": "nylon", "comp_pattern": "strum", "voice": "harp", "bass": "root", "drums": "brush", "density": 0.55, "swing": 0.12 },
-    { "from": "18:00", "name": "evening", "bpm": 72, "root": 65, "scale": "major", "chords": [4, 5, 3, 6], "bars_per_chord": 1, "sevenths": true, "comp": "epiano", "comp_pattern": "block", "voice": "bell", "bass": "walk", "drums": "brush", "density": 0.4, "swing": 0.3 },
+    { "from": "11:00", "name": "afternoon", "bpm": 92, "root": 67, "scale": "major", "chords": [1, 6, 4, 5], "bars_per_chord": 1, "sevenths": false, "comp": "nylon", "comp_pattern": "gentle_strum", "comp_level": 0.85, "under": "pad", "under_level": 0.6, "voice": "harp", "bass": "root", "drums": "brush", "drum_level": 0.55, "density": 0.45, "swing": 0 },
+    { "from": "18:00", "name": "evening", "bpm": 74, "root": 65, "scale": "major", "chords": [1, 3, 4, 5], "bars_per_chord": 1, "sevenths": true, "comp": "nylon", "comp_pattern": "arp", "comp_level": 0.8, "under": "pad", "under_level": 0.9, "voice": "bell", "bass": "root", "drums": null, "density": 0.35, "swing": 0, "reverb": 1.2 },
     { "from": "22:00", "name": "night", "bpm": 60, "root": 57, "scale": "dorian", "chords": [1, 4, 1, 7], "bars_per_chord": 2, "sevenths": true, "comp": "pad", "comp_pattern": "pad", "voice": "bell", "bass": "root", "drums": null, "density": 0.22, "swing": 0, "reverb": 1.4 }
    ]
   },
@@ -79,10 +79,10 @@
    { "name": "The Quiet Hour", "podcast": "quiet_hour" }
   ],
   "styles": {
-   "cafe": { "bpm": 100, "root": 62, "scale": "major", "chords": [2, 5, 1, 6], "bars_per_chord": 1, "sevenths": true, "comp": "epiano", "comp_pattern": "block", "voice": "bell", "bass": "walk", "drums": "brush", "density": 0.5, "swing": 0.3, "gain": 0.5 },
+   "cafe": { "bpm": 96, "root": 62, "scale": "major", "chords": [2, 5, 1, 6], "bars_per_chord": 1, "sevenths": true, "comp": "nylon", "comp_pattern": "gentle_strum", "comp_level": 0.85, "under": "pad", "under_level": 0.6, "voice": "bell", "bass": "root", "drums": "brush", "drum_level": 0.45, "density": 0.45, "swing": 0, "gain": 0.5 },
    "shop": { "bpm": 108, "root": 64, "scale": "major", "chords": [1, 5, 6, 4], "bars_per_chord": 1, "sevenths": false, "comp": "harp", "comp_pattern": "arp", "voice": "bell", "bass": "root", "drums": "shaker", "density": 0.45, "swing": 0, "gain": 0.35 },
    "busker": { "bpm": 112, "root": 60, "scale": "mixolydian", "chords": [1, 7, 4, 1], "bars_per_chord": 1, "sevenths": false, "comp": "nylon", "comp_pattern": "strum", "voice": "nylon", "bass": null, "drums": null, "density": 0.6, "swing": 0, "gain": 0.95, "reverb": 0.6 },
-   "swing": { "bpm": 140, "root": 65, "scale": "major", "chords": [2, 5, 1, 6], "bars_per_chord": 1, "sevenths": true, "comp": "epiano", "comp_pattern": "block", "voice": "bell", "bass": "walk", "drums": "brush", "density": 0.65, "swing": 0.33, "gain": 0.55 },
+   "swing": { "bpm": 132, "root": 65, "scale": "major", "chords": [2, 5, 1, 6], "bars_per_chord": 1, "sevenths": true, "comp": "nylon", "comp_pattern": "four", "comp_level": 0.9, "voice": "bell", "bass": "walk", "bass_voice": "bass", "drums": "brush", "drum_level": 0.55, "density": 0.6, "swing": 0.3, "gain": 0.55 },
    "pop": { "bpm": 116, "root": 69, "scale": "minor", "chords": [1, 6, 3, 7], "bars_per_chord": 1, "sevenths": false, "comp": "harp", "comp_pattern": "arp", "voice": "bell", "bass": "pulse", "drums": "kit", "density": 0.6, "swing": 0, "gain": 0.5 },
    "calm": { "bpm": 66, "root": 64, "scale": "lydian", "chords": [1, 2, 1, 5], "bars_per_chord": 2, "sevenths": true, "comp": "pad", "comp_pattern": "pad", "voice": "harp", "bass": "root", "drums": null, "density": 0.3, "swing": 0, "gain": 0.5, "reverb": 1.3 }
   },
@@ -96,7 +96,7 @@
   "voices": ["harp", "nylon", "epiano", "bell", "pad", "pluck", "keys", "guitar"],
   "chords_only": ["epiano", "keys"],
   "drums": ["brush", "kit", "shaker"],
-  "patterns": ["block", "arp", "strum", "pad", "offbeat"],
+  "patterns": ["block", "arp", "strum", "gentle_strum", "four", "pad", "offbeat"],
   "basslines": ["root", "walk", "pulse"],
   "room": { "seconds": 2.6, "wet": 0.32, "predelay": 0.015 },
   "phrases": [

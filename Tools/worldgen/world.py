@@ -240,6 +240,13 @@ def sound_problems(w, acts=None):
         solo = m.get("chords_only", [])                    # the piano plays chords, never a tune or one note at a time (owner, 2026-11-22)
         if st["voice"] in solo or st.get("comp") in solo and st.get("comp_pattern") not in ("block", "pad", "offbeat"):
             out.append("sound: %s plays single notes on %s, which only plays chords" % (where, st["voice"] if st["voice"] in solo else st["comp"]))
+        if st.get("bass_voice") is not None and st["bass_voice"] not in ("bass", "upright"):
+            out.append("sound: %s walks its bass on unknown voice %s" % (where, st["bass_voice"]))
+        if st.get("under") is not None and st["under"] not in m["voices"]:
+            out.append("sound: %s holds its under layer on unknown voice %s" % (where, st["under"]))
+        for lv in ("comp_level", "under_level", "drum_level"):
+            if lv in st and not (isinstance(st[lv], (int, float)) and 0 <= st[lv] <= 1.5):
+                out.append("sound: %s %s should be from 0 to 1.5" % (where, lv))
         if st.get("comp_pattern") is not None and st["comp_pattern"] not in m.get("patterns", []):
             out.append("sound: %s uses unknown comping pattern %s" % (where, st["comp_pattern"]))
         if st.get("bass") not in (None, True, False) and st["bass"] not in m.get("basslines", []):

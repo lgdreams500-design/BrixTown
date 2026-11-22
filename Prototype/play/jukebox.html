@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wasted: music</title>
+<style>
+  /* Every music track in the slice, played live by sound.js from World/rules/sound.json (the same engine as the game). */
+  :root {
+    --ink: #17171c; --panel: #212128; --line: #34343d; --cream: #d9cfb6; --dim: #a79f8c; --lantern: #f0a35a; --teal: #6fa3a2;
+    --name: Constantia, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    --data: Bahnschrift, "Segoe UI", "Trebuchet MS", sans-serif;
+  }
+  html, body { margin: 0; background: var(--ink); color: var(--cream); font-family: var(--data); }
+  main { max-width: 760px; margin: 0 auto; padding: 28px 16px 48px; }
+  h1 { font-family: var(--name); font-weight: normal; font-size: 32px; margin: 0 0 6px; }
+  p.lede { color: var(--dim); margin: 0 0 22px; line-height: 1.5; }
+  h2 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); margin: 26px 0 10px; font-weight: 600; }
+  .track { display: flex; gap: 14px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
+  .track.on { border-color: var(--lantern); }
+  button.play { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--lantern); background: transparent; color: var(--lantern); font-size: 16px; cursor: pointer; }
+  .track.on button.play { background: var(--lantern); color: var(--ink); }
+  .what { flex: 1; min-width: 0; }
+  .title { font-family: var(--name); font-size: 19px; }
+  .where { font-size: 13px; color: var(--teal); margin-top: 2px; }
+  .how { font-size: 13px; color: var(--dim); margin-top: 4px; line-height: 1.45; }
+  .num { font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; flex: none; }
+  #note { font-size: 13px; color: var(--dim); margin-top: 22px; line-height: 1.5; }
+  #err { color: var(--lantern); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Music in Old Town</h1>
+  <p class="lede">Every music track in the playable slice. Each one is composed live as it plays, so it never repeats exactly, but it keeps the same instruments, chords and feel. Press a track to play it; press again to stop.</p>
+  <div id="list"></div>
+  <p id="note">Tracks are made by <code>sound.js</code> from <code>World/rules/sound.json</code>. Tell Claude in chat which ones you approve, and what to change in the others.</p>
+  <p id="err"></p>
+</main>
+<script src="city_data.js"></script>
+<script src="sound.js"></script>
+<script>
+  const M = window.WASTED.sound.music, NOTE = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
+  const INSTR = { harp: "harp", nylon: "nylon guitar", epiano: "electric piano", bell: "bells", pad: "soft pads" };
+  const PAT = { arp: "arpeggios", strum: "strummed", gentle_strum: "gentle strums", four: "chords on every beat", block: "chords", pad: "held chords", offbeat: "off-beat chords" };
+  const BASS = { root: "bass", walk: "walking upright bass", pulse: "pulsing bass" };
+  const DRUM = { brush: "brushes", kit: "soft drum kit", shaker: "shaker" };
+  const PLACE = { food: "Cafés", shop: "Shops", market: "Market Square busker" };
+  function how(s) {
+    const parts = [INSTR[s.comp] + " " + PAT[s.comp_pattern]];
+    if (s.under) parts.push(INSTR[s.under] + " underneath");
+    parts.push(INSTR[s.voice] + " tune");
+    if (s.bass) parts.push(s.bass === "walk" && s.bass_voice === "bass" ? "walking bass" : BASS[s.bass] || "bass"); if (s.drums) parts.push(DRUM[s.drums]);
+    return s.bpm + " bpm · " + NOTE[s.root % 12] + " " + s.scale + (s.swing > .2 ? " · swung" : "") + " · " + parts.join(", ");
+  }
+  const tracks = [];
+  const moods = M.score.moods;
+  moods.forEach((m, k) => tracks.push({ group: "Background score (changes with the time of day)", title: m.name[0].toUpperCase() + m.name.slice(1),
+    where: "Everywhere, " + m.from + " to " + moods[(k + 1) % moods.length].from, style: m }));
+  for (const [kind, p] of Object.entries(M.places)) tracks.push({ group: "Music from places", title: p.style[0].toUpperCase() + p.style.slice(1),
+    where: PLACE[kind] + ", " + p.from + " to " + p.to + (p.market_days_only ? " on market days" : ""), style: p.style });
+  for (const r of M.radio) if (r.style) tracks.push({ group: "Car radio (R while driving)", title: r.name, where: "Car radio", style: r.style });
+
+  const list = document.getElementById("list"); let group = null, playing = null;
+  tracks.forEach((t, i) => {
+    if (t.group !== group) { group = t.group; const h = document.createElement("h2"); h.textContent = group; list.appendChild(h); }
+    const s = typeof t.style === "string" ? M.styles[t.style] : t.style;
+    const row = document.createElement("div"); row.className = "track";
+    row.innerHTML = `<button class="play" aria-label="Play ${t.title}">▶</button><div class="what"><div class="title"></div><div class="where"></div><div class="how"></div></div><div class="num">${i + 1}</div>`;
+    row.querySelector(".title").textContent = t.title; row.querySelector(".where").textContent = t.where; row.querySelector(".how").textContent = how(s);
+    row.querySelector("button").addEventListener("click", () => {
+      Sound.start();
+      if (playing === row) { Sound.preview(null); stop(); return; }
+      stop(); setTimeout(() => { if (!Sound.preview(t.style)) document.getElementById("err").textContent = "Sound could not start in this browser."; }, 60);
+      playing = row; row.classList.add("on"); row.querySelector("button").textContent = "■";
+    });
+    list.appendChild(row);
+  });
+  function stop() { if (playing) { playing.classList.remove("on"); playing.querySelector("button").textContent = "▶"; } playing = null; Sound.preview(null); }
+  window.jukebox = { tracks, play: i => list.querySelectorAll("button.play")[i].click(), stop };
+</script>
+</body>
+</html>

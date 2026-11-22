@@ -13,6 +13,7 @@ Nothing to install; it runs from these files.
 | `sound.js` | All the sound, made in code from `World/rules/sound.json` (no audio files): street air, birds and crickets, fountains, footsteps, car engines, the tram and its bell, residents' voices and murmur, action sounds, music by time of day, café, shop and busker music, the car radio with music and podcasts |
 | `economy.js` | Money, shops, the market stall, quests and jobs: a port of `Tools/citysim/economy.py` and `quests.py`, checked against them each time the page loads (the console says whether it matches) |
 | `life.js` | The character designer, the money line and quest tracker, the bank, shop and stall counters, the quest log, quests and jobs in conversation, and the save in the browser (ADR-0012) |
+| `jukebox.html` | Every music track (score, café, shop, busker, radio), played on its own by `sound.js` so it can be heard and approved |
 | `people.js` | The people: option B bodies and faces, and the walk from the movement signatures |
 | `city_data.js` | The city and one day of everyone's routine, packed from `World/`. Generated: do not edit |
 

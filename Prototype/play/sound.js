@@ -15,7 +15,7 @@ var Sound = (() => {
   const D = window.WASTED, S = D.sound;
   if (!S || !(window.AudioContext || window.webkitAudioContext)) {
     const no = () => { };
-    return { start: no, toggle: no, act: no, line: no, hush: no, frame: no, horn: no, radio: no, car: no, init: no, state: () => ({ on: false, reason: S ? "no Web Audio" : "no sound data" }) };
+    return { start: no, toggle: no, act: no, line: no, hush: no, frame: no, horn: no, radio: no, car: no, init: no, preview: () => false, state: () => ({ on: false, reason: S ? "no Web Audio" : "no sound data" }) };
   }
   const H = S.hearing, MU = S.music, V = S.vehicles, A = S.ambience, FS = S.footsteps, VO = S.voices;
   const hm = s => (+s.slice(0, 2)) * 60 + (+s.slice(3));
@@ -241,13 +241,17 @@ var Sound = (() => {
           if (!voicing || step === 0 && ci !== chordAt) { voicing = voice(deg, s); chordAt = ci; }
           const swing = step % 4 === 2 ? (s.swing || 0) * 2 * q : 0;
           const at = (dt) => t + swing + (dt || 0) + (rng() - .5) * .01, vel = k => k * (.9 + .2 * rng());
+          const lvl = (x, d) => x !== undefined ? x : d, cv = k => vel(k * lvl(s.comp_level, 1)), dv = k => vel(k * lvl(s.drum_level, 1));
           const comp = s.comp || "epiano", pat = s.comp_pattern || "block";
-          // comping
-          if (pat === "pad" && step === 0 && bar % bpc === 0) for (const p of voicing) note(out, at(), p, q * 16 * bpc, "pad", vel(.8), -.2);
-          else if (pat === "block" && (step === 0 || s.bpm > 100 && step === 10)) voicing.forEach((p, k) => note(out, at(k * .012), p, q * (step ? 5 : 12), comp, vel(step ? .3 : .42), -.25));
-          else if (pat === "arp" && step % 2 === 0) { const ord = [0, 1, 2, 1, 3, 1, 2, 1], k = ord[(step / 2) % 8] % (voicing.length + 1), p = k === voicing.length ? voicing[0] + 12 : voicing[k]; note(out, at(), p, q * 3, comp, vel(step % 8 ? .3 : .4), -.25); }
-          else if (pat === "strum" && [0, 6, 8, 12, 14].indexOf(step) >= 0) { const up = step === 6 || step === 14, vs = up ? voicing.slice().reverse() : voicing; vs.forEach((p, k) => note(out, at(k * .016), p, q * (up ? 2 : 4), comp, vel(up ? .25 : .38), -.2)); }
-          else if (pat === "offbeat" && step % 8 === 4) voicing.forEach((p, k) => note(out, at(k * .008), p, q * 2, comp, vel(.32), -.25));
+          // comping (comp_level scales it), and a held layer under it if the style asks (under)
+          if (pat === "pad" && step === 0 && bar % bpc === 0) for (const p of voicing) note(out, at(), p, q * 16 * bpc, "pad", cv(.8), -.2);
+          else if (pat === "block" && (step === 0 || s.bpm > 100 && step === 10)) voicing.forEach((p, k) => note(out, at(k * .012), p, q * (step ? 5 : 12), comp, cv(step ? .3 : .42), -.25));
+          else if (pat === "arp" && step % 2 === 0) { const ord = [0, 1, 2, 1, 3, 1, 2, 1], k = ord[(step / 2) % 8] % (voicing.length + 1), p = k === voicing.length ? voicing[0] + 12 : voicing[k]; note(out, at(), p, q * 3, comp, cv(step % 8 ? .3 : .4), -.25); }
+          else if (pat === "strum" && [0, 6, 8, 12, 14].indexOf(step) >= 0) { const up = step === 6 || step === 14, vs = up ? voicing.slice().reverse() : voicing; vs.forEach((p, k) => note(out, at(k * .016), p, q * (up ? 2 : 4), comp, cv(up ? .25 : .38), -.2)); }
+          else if (pat === "offbeat" && step % 8 === 4) voicing.forEach((p, k) => note(out, at(k * .008), p, q * 2, comp, cv(.32), -.25));
+          else if (pat === "gentle_strum" && (step === 0 || step === 8 || step === 12)) { const up = step === 12, vs = up ? voicing.slice().reverse() : voicing; vs.forEach((p, k) => note(out, at(k * .024), p, q * (up ? 3 : 7), comp, cv(up ? .17 : .3), -.2)); }
+          else if (pat === "four" && step % 4 === 0) voicing.forEach((p, k) => note(out, at(k * .01), p, q * 1.8, comp, cv(step % 8 === 4 ? .3 : .22), -.2));   // a short chord on every beat, 2 and 4 leaned on
+          if (s.under && step === 0 && bar % bpc === 0) for (const p of voicing) note(out, at(), p, q * 16 * bpc, s.under, vel(.8 * lvl(s.under_level, 1)), .1);   // a held layer under the comping
           // bass
           const root = pitch(s, deg) - 24, fifth = pitch(s, deg + 4) - 24, bs = s.bass === true ? "root" : s.bass;
           if (bs === "root" && (step === 0 || step === 8)) note(out, at(), step === 0 || rng() < .5 ? root : fifth, q * 7, "bass", vel(.8));
@@ -255,7 +259,7 @@ var Sound = (() => {
           else if (bs === "walk" && step % 4 === 0) {
             const nextDeg = s.chords[(Math.floor((bar + 1) / bpc)) % s.chords.length] - 1, beat = step / 4;
             const p = beat === 0 ? root : beat === 3 && (bar + 1) % bpc === 0 ? pitch(s, nextDeg) - 24 + (rng() < .5 ? 1 : -1) : pitch(s, deg + [0, 2, 4, 5][beat] - (rng() < .3 ? 1 : 0)) - 24;
-            note(out, at(), p, q * 3.6, "upright", vel(beat === 0 ? .85 : .7));
+            note(out, at(), p, q * 3.6, s.bass_voice || "upright", vel(beat === 0 ? .85 : .7));
           }
           // melody: the phrase for these two bars, its notes on their steps
           const ph = sec.plan[Math.floor((bar % 8) / 2)], ls = (bar % 2) * 16 + step;
@@ -271,9 +275,9 @@ var Sound = (() => {
           }
           // drums
           const dr = s.drums;
-          if (dr === "brush") { if (step % 8 === 4) drum(out, at(), "brush", vel(1)); if (step % 4 === 0) drum(out, at(), "ride", vel(step % 8 ? .7 : 1)); if (step % 4 === 2 && swing) drum(out, at(), "ride", vel(.5)); }
-          else if (dr === "kit") { if (step === 0 || step === 10 && rng() < .5 || step === 8) drum(out, at(), "kick", vel(1)); if (step % 8 === 4) drum(out, at(), "snare", vel(1)); if (step % 2 === 0) drum(out, at(), "hat", vel(step % 4 ? .6 : 1)); }
-          else if (dr === "shaker") drum(out, at(), "shaker", vel(step % 4 === 0 ? 1 : step % 2 ? .45 : .7));
+          if (dr === "brush") { if (step % 8 === 4) drum(out, at(), "brush", dv(1)); if (step % 4 === 0) drum(out, at(), "ride", dv(step % 8 ? .7 : 1)); if (step % 4 === 2 && swing) drum(out, at(), "ride", dv(.5)); }
+          else if (dr === "kit") { if (step === 0 || step === 10 && rng() < .5 || step === 8) drum(out, at(), "kick", dv(1)); if (step % 8 === 4) drum(out, at(), "snare", dv(1)); if (step % 2 === 0) drum(out, at(), "hat", dv(step % 4 ? .6 : 1)); }
+          else if (dr === "shaker") drum(out, at(), "shaker", dv(step % 4 === 0 ? 1 : step % 2 ? .45 : .7));
           t += q; step = (step + 1) % 16; if (step === 0) bar++;
         }
       },
@@ -425,6 +429,7 @@ var Sound = (() => {
 
   // ---- music (SND-010 to SND-012)
   let score = null, places = [], radio = null, radioIx = 0;
+  let pv = null;                                         // a style played on its own by preview()
   function moodAt(m) { let best = MU.score.moods[MU.score.moods.length - 1]; for (const md of MU.score.moods) if (hm(md.from) <= m) best = md; return best; }
   function music(F) {
     if (!score) { score = band(moodAt(F.m), bus.music); }
@@ -559,6 +564,12 @@ var Sound = (() => {
     start() { if (!ctx) { try { build(); } catch (e) { console.warn("sound off:", e); return; } } if (ctx.state === "suspended") ctx.resume(); },
     toggle() { on = !on; try { localStorage.setItem("wasted.sound", on ? "on" : "off"); } catch (e) { } if (ctx) ramp(master.gain, on ? S.mix.master : 0, .05); return on; },
     act, line, hush, frame, render,
+    preview(style) {                                     // play one music style on its own (jukebox.html); null stops it
+      if (!ready) return false;
+      if (pv) { const o = pv; o.b.fade(0, .15); clearInterval(o.timer); setTimeout(() => o.b.out.disconnect(), 800); pv = null; }
+      if (!style) return true;
+      const b = band(style, bus.music); b.fade(1, .2); pv = { b, timer: setInterval(() => b.run(), 40) }; b.run(); return true;
+    },
     car(inOut) { act("car_door"); if (inOut === "in" && ready) { const s = ctx.createBufferSource(); s.buffer = noise; const g = ctx.createGain(); chain(s, filt("bandpass", 300, 3), g, bus.action); const t = now() + .3; env(g, t, .05, .25, V.player.start_len); s.start(t); s.stop(t + V.player.start_len + .2); } },
     horn(down) { if (horn) ramp(horn.gain, down ? V.player.horn_gain : 0, .01); },
     radio() { radioIx = (radioIx + 1) % (MU.radio.length + 1); act("radio"); capUntil = 0; return radioIx ? MU.radio[radioIx - 1].name : "off"; },
