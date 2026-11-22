@@ -71,6 +71,15 @@ per kit in one line. New objects need a few new shared materials, used the same 
 enamel (matte, Cream), a dull blue-grey mirror that never shines (I1), chalkboard, cork, wicker and terracotta pots.
 They are for the owner to choose from; nothing here is in force until approved.
 
+## 5b. Sample houses (look test 19, not approved)
+
+`Tools/blender/house_samples_19.py` builds on kit 18 and furnishes one plan of a two-storey detached house (10 × 8 m,
+in its own garden) once in each line: hall and stairs, living room, kitchen, dining room and bathroom downstairs; main
+bedroom, children's room, study and guest room upstairs; garden pieces outside. Renders in
+`Art/StyleTests/house_samples_19/`: the house outside, and each floor cut away at waist height. The outside keeps the
+town's walls, windows and tile roof; only shutters, door and trim take the line's accent. Not in the map: if the owner
+wants such houses in the town, they become lots in `World/` (WORLD_MAP).
+
 ## 6. How the renders get their look, and how the game must match it
 
 The look test renders are not painted or filtered: the look comes from a handful of settings in the scripts

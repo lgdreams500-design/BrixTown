@@ -1,0 +1,15 @@
+23:04:07 Blender 5.3.0
+23:04:07 one house plan, 75 pieces placed inside and 8 in the garden, in each of four lines
+23:04:28 plain_outside rendered in 21.0s (397 objects)
+23:05:06 plain_ground rendered in 37.6s (657 objects)
+23:05:40 plain_upstairs rendered in 33.9s (558 objects)
+23:06:03 oldtown_outside rendered in 22.3s (444 objects)
+23:06:41 oldtown_ground rendered in 36.9s (925 objects)
+23:07:18 oldtown_upstairs rendered in 36.0s (790 objects)
+23:07:43 workshop_outside rendered in 24.3s (401 objects)
+23:08:20 workshop_ground rendered in 37.0s (781 objects)
+23:08:58 workshop_upstairs rendered in 37.3s (624 objects)
+23:09:24 curve_outside rendered in 25.0s (402 objects)
+23:10:03 curve_ground rendered in 38.4s (634 objects)
+23:10:38 curve_upstairs rendered in 34.6s (543 objects)
+23:10:38 DONE
