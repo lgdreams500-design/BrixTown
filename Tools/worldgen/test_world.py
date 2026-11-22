@@ -289,6 +289,16 @@ class TheSounds(unittest.TestCase):
     def test_SND_012_the_radio_has_three_stations(self):
         self.assertGreaterEqual(len([s for s in self.S["music"]["radio"] if "style" in s]), 3)
 
+    def test_SND_010_the_piano_only_plays_chords(self):
+        import copy
+        self.assertIn("epiano", self.S["music"]["chords_only"])
+        w = copy.deepcopy(W)
+        w["sound"]["music"]["styles"]["cafe"]["voice"] = "epiano"                 # a tune on the piano
+        w["sound"]["music"]["score"]["moods"][0].update(comp="epiano", comp_pattern="arp")   # piano arpeggios
+        p = world.sound_problems(w)
+        self.assertTrue(any("style cafe plays single notes on epiano" in x for x in p))
+        self.assertTrue(any("morning plays single notes on epiano" in x for x in p))
+
     def test_SND_014_the_radio_has_podcasts(self):
         talk = [s for s in self.S["music"]["radio"] if "podcast" in s]
         self.assertGreaterEqual(len(talk), 2)

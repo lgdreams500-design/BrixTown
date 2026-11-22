@@ -237,6 +237,9 @@ def sound_problems(w, acts=None):
             out.append("sound: %s tempo %s is out of range" % (where, st["bpm"]))
         if st.get("comp") is not None and st["comp"] not in m["voices"]:
             out.append("sound: %s plays its chords on unknown voice %s" % (where, st["comp"]))
+        solo = m.get("chords_only", [])                    # the piano plays chords, never a tune or one note at a time (owner, 2026-11-22)
+        if st["voice"] in solo or st.get("comp") in solo and st.get("comp_pattern") not in ("block", "pad", "offbeat"):
+            out.append("sound: %s plays single notes on %s, which only plays chords" % (where, st["voice"] if st["voice"] in solo else st["comp"]))
         if st.get("comp_pattern") is not None and st["comp_pattern"] not in m.get("patterns", []):
             out.append("sound: %s uses unknown comping pattern %s" % (where, st["comp_pattern"]))
         if st.get("bass") not in (None, True, False) and st["bass"] not in m.get("basslines", []):
