@@ -5,13 +5,12 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 25 of 39 | 9 of 39 | 9 of 39 |
-| Size of the plan (points) | 258 | 291 | 576 |
+| Decided | 26 of 39 | 9 of 39 | 9 of 39 |
+| Size of the plan (points) | 298 | 291 | 576 |
 | Size of the suggested plan | 105 | 251 | 544 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
-- F-BLD-CIVIC at First slice needs F-BLD-INSIDE at level 1 (undecided)
 - F-GARDEN at First slice needs F-VEG-LEAF at level 1 (undecided)
 - F-SKY at First slice needs F-TIME-DAY at level 1 (undecided)
 
@@ -21,7 +20,7 @@
 |---|---|---|---|---|
 | **City layout** `F-MAP-CITY` | 1 A district ★ | 1 A district | 2 Whole city | A district from the first slice (so cars fit), whole city in the full game (owner, 2026-11-22). |
 | **Lots and building records** `F-MAP-LOTS` | 1 Registry | 1 Registry | 1 Registry ★ | Registry at every milestone (owner, 2026-11-22). |
-| **Going inside buildings** `F-BLD-INSIDE` | undecided | undecided | undecided |  |
+| **Going inside buildings** `F-BLD-INSIDE` | 3 Every floor, true size ★ | undecided | undecided | Owner, 2026-11-22: "3: Every floor, true size" (all buildings accessible inside, stairs to every level, inside the same size as outside), with "Stairs and a lift" in the towers and "Residents too" (beds and desks upstairs). Later milestones not stated. |
 | **Shops and market** `F-BLD-SHOP` | 2 Stock and prices ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Stock and prices" for the first slice. Later milestones not stated. |
 | **Mall** `F-BLD-MALL` | undecided | undecided | undecided |  |
 | **Hospital and clinic** `F-BLD-HOSPITAL` | undecided | undecided | undecided |  |
@@ -105,6 +104,7 @@
 - 0 Fronts only: Buildings are fronts; people step in and vanish. Size S.
 - 1 Key rooms: A few important buildings have one room you can enter. Size L.
 - 2 Most buildings: Most buildings have furnished interiors. Size XL.
+- 3 Every floor, true size: Every building can be entered and every storey reached by its own stairs (and lifts in the towers). Inside is the same size as outside, behind the same windows; each floor is laid out and furnished for what it is (bedrooms upstairs in houses, a flat on each tower floor, offices, shop stores and staff rooms). Floors are built only near the player. Size XL.
 
 **Shops and market** (`F-BLD-SHOP`). Where money gets spent.
 - 0 Decoration: Stalls and shop fronts you cannot use. Size S.

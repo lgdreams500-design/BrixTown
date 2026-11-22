@@ -186,6 +186,14 @@
           "needs": {
             "F-MAP-LOTS": 1
           }
+        },
+        {
+          "name": "Every floor, true size",
+          "what": "Every building can be entered and every storey reached by its own stairs (and lifts in the towers). Inside is the same size as outside, behind the same windows; each floor is laid out and furnished for what it is (bedrooms upstairs in houses, a flat on each tower floor, offices, shop stores and staff rooms). Floors are built only near the player.",
+          "effort": "XL",
+          "needs": {
+            "F-MAP-LOTS": 1
+          }
         }
       ],
       "suggested": {

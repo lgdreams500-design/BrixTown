@@ -91,7 +91,25 @@
     ]
    },
    "staff": 4,
-   "chairs": 10
+   "chairs": 10,
+   "stair": {
+    "rect": [
+     498.4,
+     404.35,
+     505.3,
+     406.7
+    ],
+    "axis": "x",
+    "wall": "n",
+    "up0": -1
+   },
+   "storeys": [
+    "main",
+    "wards",
+    "wards",
+    "wards",
+    "wards"
+   ]
   }
  ],
  "paths": [

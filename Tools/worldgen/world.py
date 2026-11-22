@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "weather_react"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -887,3 +887,67 @@ def surface_problems(w):
             for slot, name in l.get("surface", {}).items():
                 check(name, slot, l["id"])
     return out
+
+
+# ---------------------------------------------------------------- every floor of every building (WLD-050 to WLD-053, ADR-0021)
+def storey_floor(f):
+    """Height of floor f's surface: the ground floor at 0.2, floor f above at 3f + 0.4 (World/rules/storeys.json)."""
+    return 0.2 if f == 0 else 3.0 * f + 0.4
+
+
+def storey_problems(w):
+    """Every rule the floors, stairs, lifts and upstairs places in the block files must keep (WLD-050, WLD-051)."""
+    S, out = w["storeys"], []
+    st = S["stair"]
+    need_w, need_l = 2 * st["width"] + st["spine"], st["run"] + 2 * st["landing"]
+    for l in lots(w):
+        if l["kind"] in OPEN_KINDS:
+            continue
+        n, where = l["floors"], l["id"]
+        if not l["enterable"]:
+            out.append("%s: cannot be entered" % where)
+        if len(l.get("storeys", [])) != n:
+            out.append("%s: %d storeys named for %d floors" % (where, len(l.get("storeys", [])), n))
+        x0, z0, x1, z1 = l["rect"]
+        if n >= 2:
+            s = l.get("stair")
+            if not s:
+                out.append("%s: %d floors and no stair" % (where, n))
+                continue
+            r = s["rect"]
+            if not (x0 + S["wall"] - .01 <= r[0] < r[2] <= x1 - S["wall"] + .01 and z0 + S["wall"] - .01 <= r[1] < r[3] <= z1 - S["wall"] + .01):
+                out.append("%s: stair is not inside the walls" % where)
+            long_, short = (r[2] - r[0], r[3] - r[1]) if s["axis"] == "x" else (r[3] - r[1], r[2] - r[0])
+            if long_ < need_l - .02 or short < need_w - .02:                  # (sizes are kept to the centimetre)
+                out.append("%s: stairwell %.1f by %.1f is too small" % (where, long_, short))
+            if s["wall"] == side_of_door(l):
+                out.append("%s: stair against the door's wall" % where)
+            lv = l.get("levels", {})
+            for k, v in l["objects"].items():
+                levels = lv.get(k, [0] * len(v))
+                if len(levels) != len(v):
+                    out.append("%s: %s has %d places and %d floors for them" % (where, k, len(v), len(levels)))
+                    continue
+                for p, f in zip(v, levels):
+                    if not 0 <= f < n:
+                        out.append("%s: a %s on floor %d of %d" % (where, k, f, n))
+                    dx, dz = max(r[0] - p[0], 0, p[0] - r[2]), max(r[1] - p[1], 0, p[1] - r[3])
+                    if f > 0 and math.hypot(dx, dz) < 1.0:
+                        out.append("%s: a %s upstairs stands in the stairwell" % (where, k))
+            spots = {}
+            for k, v in l["objects"].items():                # the slice finds a resident's place by where it is on the plan
+                for p, f in zip(v, lv.get(k, [0] * len(v))):
+                    spots.setdefault((round(p[0], 1), round(p[1], 1)), set()).add(f)
+            if any(len(fs) > 1 for fs in spots.values()):
+                out.append("%s: places on two floors at the same spot" % where)
+            if n >= S["lift_from_floors"] and not l.get("lift"):
+                out.append("%s: %d floors and no lift" % (where, n))
+        elif l.get("levels"):
+            out.append("%s: one floor but places upstairs" % where)
+    return out
+
+
+def side_of_door(l):
+    x0, z0, x1, z1 = l["rect"]
+    dx, dz = l["door"]
+    return "n" if abs(dz - z0) < .01 else "s" if abs(dz - z1) < .01 else "w" if abs(dx - x0) < .01 else "e"

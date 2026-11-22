@@ -269,6 +269,59 @@ class TheSurfaces(unittest.TestCase):
         self.assertEqual(world.surfaces(W), self.S)                              # the same every time
 
 
+class TheStoreys(unittest.TestCase):
+    """WLD-050 to WLD-053: every floor of every building (F-BLD-INSIDE level 3; World/rules/storeys.json, ADR-0021)."""
+
+    def test_WLD_050_storeys_are_sound(self):
+        self.assertEqual(world.storey_problems(W), [])
+        import copy
+        w = copy.deepcopy(W)
+        lots_ = [l for l in world.lots(w) if l.get("stair")]
+        del lots_[0]["stair"]
+        lots_[1]["stair"]["rect"][2] += 40
+        lot = next(l for l in lots_[2:] if l.get("levels", {}).get("bed"))
+        lot["levels"]["bed"][0] = 99
+        p = world.storey_problems(w)
+        for bit in ("floors and no stair", "stair is not inside the walls", "a bed on floor 99"):
+            self.assertTrue(any(bit in x for x in p), bit)
+
+    def test_WLD_050_every_building_can_be_entered_and_climbed(self):
+        for l in BUILDINGS:
+            self.assertTrue(l["enterable"], l["id"])
+            self.assertEqual(len(l["storeys"]), l["floors"], l["id"])
+            if l["floors"] >= 2:
+                self.assertIn("stair", l, l["id"])
+
+    def test_WLD_051_towers_have_a_lift(self):
+        towers = [l for l in BUILDINGS if l.get("tower")]
+        self.assertEqual(len(towers), 5)
+        for l in towers:
+            self.assertIn("lift", l, l["name"])
+
+    def test_WLD_052_inside_is_the_size_of_outside(self):
+        for n in range(2, 23):
+            top = n * 3 + 0.4                                         # the height a building has from outside (play.js building())
+            self.assertAlmostEqual(world.storey_floor(n - 1) + 2.8 + 0.2, top)   # top floor, its ceiling, the roof slab
+            for f in range(1, n):
+                self.assertAlmostEqual(world.storey_floor(f) - world.storey_floor(f - 1), 3.2 if f == 1 else 3.0)
+        uses = set(W["storeys"]["uses"]) - {"default"}
+        self.assertTrue({"home", "flats", "work", "shop"} <= uses)
+
+    def test_WLD_053_residents_sleep_upstairs(self):
+        lots_ = {l["id"]: l for l in LOTS}
+        state = CITY.at(DAY * 1440 + 3 * 60)
+        up = total = 0
+        for rid, s in state.items():
+            l = lots_[s["place"]]
+            if l["kind"] == "home" and l["floors"] >= 2 and s.get("use") == "bed" and s.get("slot") is not None:
+                total += 1
+                up += l["levels"]["bed"][s["slot"]] >= 1
+        self.assertGreater(total, 500)
+        self.assertEqual(up, total)
+        offices = [l for l in LOTS if l["kind"] == "work" and l["floors"] >= 2 and l["objects"].get("work")]
+        self.assertTrue(any(f >= 1 for l in offices for f in l.get("levels", {}).get("work", [])))
+
+
 class TheDialogue(unittest.TestCase):
     """CITY-007: conversations with residents (World/rules/dialogue.json)."""
     D = W["dialogue"]

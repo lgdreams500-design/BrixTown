@@ -153,6 +153,21 @@
    "seats": 12,
    "tags": [
     "cafe"
+   ],
+   "stair": {
+    "rect": [
+     400.4,
+     210.35,
+     407.3,
+     212.7
+    ],
+    "axis": "x",
+    "wall": "n",
+    "up0": -1
+   },
+   "storeys": [
+    "main",
+    "store"
    ]
   }
  ],

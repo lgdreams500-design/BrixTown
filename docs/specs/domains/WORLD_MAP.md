@@ -120,6 +120,10 @@ café, grocer, garden, market, stop and clinic), and for couriers and utility wo
 | WLD-039 | The town shall mix its surfaces by district (ADR-0017): rubble in the old quarter, brick terraces (some brick to the eaves), rusticated civic buildings; flagstones, slabs, herringbone, basket weave and setts on the ground; the same building always gets the same pattern. | ART-001 | 1 | P1 | `test_WLD_039_surfaces_mix_by_district` |
 | WLD-040 | Every park and court garden shall be planted from data in its block file (`Tools/worldgen/add_garden_01.py`): a low clipped box hedge along each side, open at the corners, the middle of each side and wherever a seat needs the room; a border of two kinds of flower in front of it; flowering shrubs (lilac, hydrangea, rose) in the corners and on the lawn; bulbs coming up under the trees and asters on the lawn; in the four park blocks, groups of shrubs with bulbs on the outer lawn. What each kind looks like on a day (in leaf, in flower, dry heads, died back) comes from `World/rules/vegetation.json` "plants" through citysim (CITY-017). Hedges and shrubs block the way; nothing is planted on a path or a seat. | F-GARDEN | 1 | P1 | `test_WLD_040_every_garden_is_planted`, `garden_problems()` |
 | WLD-041 | The player shall be able to play on the playgrounds as the children do: sit on a swing seat and swing, higher as they keep at it; sit on a seesaw end and rock; climb the slide's ladder and slide down, getting off at the bottom; sit in the sandpit; stand on the climbing frame's deck. E or moving gets off, beside the piece. A swing seat, seesaw end or sandpit place a child is on is not offered to the player (one person per place); the slide takes turns and the frame has room for all. Timings in `World/rules/dressing.json` "motion". | F-OBJ-POINTS | 1 | P1 | slice (`dressing.js` playerAt) |
+| WLD-050 | Every building shall be enterable, and every storey of one with two or more shall be reachable from inside: a switchback stair in a stairwell against a side wall (two flights a storey, a spine wall between them, a landing at each end, a rail where a floor stops at the opening), placed in the block file (`stair`) by `Tools/worldgen/add_storeys_01.py` from `World/rules/storeys.json`; the data is checked (`world.storey_problems`). | F-BLD-INSIDE | 3 | P1 | `test_WLD_050_storeys_are_sound` |
+| WLD-051 | Buildings of `lift_from_floors` storeys or more (the towers) shall also have a lift that goes up or down a floor, to the ground, to the top floor and to the roof (owner, Q-23: "Stairs and a lift"). | F-BLD-INSIDE | 3 | P1 | `test_WLD_051_towers_have_a_lift` |
+| WLD-052 | Inside shall be the size seen from outside: the ground floor at 0.2 m with its ceiling at 3.2 m, floor f at 3f + 0.4 m under a 0.2 m slab, the top ceiling meeting the roof at floors × 3 + 0.4 m, behind the same windows; each floor furnished for what `storeys` says it is (bedrooms, flats, offices, storerooms, wards, galleries, stacks, plant rooms). | F-BLD-INSIDE | 3 | P1 | `test_WLD_052_inside_is_the_size_of_outside` |
+| WLD-053 | Residents shall use the upper floors: beds in houses and flats are upstairs (`levels`), and half the desks in offices; no two floors have a place at the same spot on the plan. | F-BLD-INSIDE | 3 | P1 | `test_WLD_053_residents_sleep_upstairs` |
 | CITY-050 | At least 95% of buildings shall be enterable through an open door, with the places inside taken from the lot's `objects`. | F-BLD-INSIDE | 2 | P0 | `test_nearly_every_building_can_be_entered` |
 | CITY-051 | Residents shall use the same doors and the same places inside as the player. | F-BLD-INSIDE | 2 | P0 | Slice: residents sit, work and sleep at the listed places |
 | CITY-052 | A resident shall leave early enough to arrive on time; one who is late skips the stop they have missed and walks on. Nobody speeds up. | F-NPC-ROUTINE | 1 | P0 | `test_most_walks_arrive_on_time`, `test_the_day_has_no_gaps…` |
@@ -201,7 +205,7 @@ rules and, since 0.2.0, the look and the movement set in the art documents (§5.
   to gets this face, so it costs nothing elsewhere. The camera comes in to 2.6 m while talking.
 
 ### 5.2 What is not there yet
-- Upper floors: only ground floors are open, plus tower roofs.
+- Upper floors: every storey is reachable by stairs, the towers by a lift as well (WLD-050 to WLD-053, ADR-0021).
 - Interiors are one room per building.
 - Residents do not avoid the player or each other, and do not talk among themselves. Conversations are
   samples, the same for everyone in a role; flags last only until the page is reloaded; no outcomes yet.
@@ -314,7 +318,7 @@ keep a timetable with several stops in it. Something has to give `[OPEN: Q-21]`.
 |---|---|---|
 | Q-21 | How long is a game day? A 60-minute day (WLD-001) does not fit residents who walk at true speed between places 150 m apart. | A 4-hour day for now. To shorten it later, give residents fewer and longer stops, or let the tram carry them, rather than making them walk faster. |
 | Q-22 | Is the starting city generated or hand-made from here on? | Generate once, then edit by hand and with a block editor; keep the generator for new districts. |
-| Q-23 | How are upper floors reached? | Stairs in houses, lifts in towers, each floor its own set of places in the lot data. |
+| Q-23 | How are upper floors reached? | Decided 2026-11-22 by the owner: stairs in every building of two or more storeys, stairs and a lift in the towers; each floor's places are in the lot data (`levels`). ADR-0021. |
 | Q-24 | Do streets carry people down the middle, or on pavements with crossings? | **DECIDED 2026-11-22:** pavements and crossings (CITY-043, accepted); the path data needs a lane per side. |
 
 ## 8. Change log

@@ -44,7 +44,22 @@
      ]
     ]
    },
-   "staff": 3
+   "staff": 3,
+   "stair": {
+    "rect": [
+     16.4,
+     688.35,
+     23.3,
+     690.7
+    ],
+    "axis": "x",
+    "wall": "n",
+    "up0": -1
+   },
+   "storeys": [
+    "main",
+    "plant"
+   ]
   },
   {
    "id": "b_0_7_l1",
@@ -61,7 +76,7 @@
     730.0
    ],
    "floors": 1,
-   "enterable": false,
+   "enterable": true,
    "objects": {
     "work": [
      [
@@ -73,7 +88,10 @@
       738.68
      ]
     ]
-   }
+   },
+   "storeys": [
+    "main"
+   ]
   }
  ],
  "paths": [

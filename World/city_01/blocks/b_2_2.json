@@ -55,34 +55,89 @@
       233.34
      ],
      [
-      243.38,
-      233.34
+      239.85,
+      221.65
      ],
      [
-      250.12,
-      233.34
+      229.22,
+      221.65
      ],
      [
-      229.88,
-      239.97
+      240.59,
+      221.65
      ],
      [
-      236.62,
-      239.97
+      240.96,
+      221.65
      ],
      [
-      243.38,
-      239.97
+      241.33,
+      221.65
      ],
      [
-      250.12,
-      239.97
+      239.5,
+      221.65
      ]
     ]
    },
    "desks": 12,
    "residents": 0,
-   "tower": true
+   "tower": true,
+   "stair": {
+    "rect": [
+     230.98,
+     220.35,
+     237.88,
+     222.7
+    ],
+    "axis": "x",
+    "wall": "n",
+    "up0": -1
+   },
+   "lift": [
+    226.5,
+    221.5
+   ],
+   "levels": {
+    "work": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ]
+   },
+   "storeys": [
+    "main",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office"
+   ]
   },
   {
    "id": "b_2_2_l1",
@@ -138,7 +193,10 @@
      ]
     ]
    },
-   "seats": 6
+   "seats": 6,
+   "storeys": [
+    "main"
+   ]
   },
   {
    "id": "b_2_2_l2",
@@ -182,7 +240,10 @@
      ]
     ]
    },
-   "customers": 3
+   "customers": 3,
+   "storeys": [
+    "main"
+   ]
   }
  ],
  "paths": [

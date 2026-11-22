@@ -476,10 +476,13 @@ function building(l) {
   l.sp = specialKind(l);
   const stoneUp = l.sp === "office" || (l.block.template === "peri" && hash(l.id, "st") < .15);     // most old houses are plaster over a stone storey, as in the building kit
   const front = (l.kind === "shop" || l.kind === "food") && !l.tower, DSa = sideOf(l, side), aw = front ? Math.min(DSa.a1 - DSa.a0 - 2, 14) : 0; l.aw = aw;
-  if (old) world.box(x0, GF, z0, x1, OLD_BASE, z1, stoneC, stoneF, { 2: ceil, 3: null });
   const upAll = stoneUp || stoneAll;                       // all-stone buildings, and the brick terraces brick to the eaves
-  world.box(x0, old ? OLD_BASE : GF, z0, x1, H, z1, upAll ? stoneC : wallC, upAll ? stoneF : 0, old ? { 3: [C.stoneDark, 0] } : { 2: ceil, 3: [flatRoof ? C.stoneDark : roofC, 0] });
-  solid(x0, GF, z0, x1, H, z1);
+  if (l.stair) Storeys.shell(l, { H, old, stoneC, stoneF, upC: upAll ? stoneC : wallC, upF: upAll ? stoneF : 0, inC, capC: old || flatRoof ? C.stoneDark : roofC });   // hollow, every floor reachable (storeys.js)
+  else {
+    if (old) world.box(x0, GF, z0, x1, OLD_BASE, z1, stoneC, stoneF, { 2: ceil, 3: null });
+    world.box(x0, old ? OLD_BASE : GF, z0, x1, H, z1, upAll ? stoneC : wallC, upAll ? stoneF : 0, old ? { 3: [C.stoneDark, 0] } : { 2: ceil, 3: [flatRoof ? C.stoneDark : roofC, 0] });
+    solid(x0, GF, z0, x1, H, z1);
+  }
   const dm = detailOf(l.block), ring = (x, y0, y1, ov) => world.box(x0 - ov, y0, z0 - ov, x1 + ov, y1, z1 + ov, C.stoneDark, 0, { 2: [mul3(C.stoneDark, .8), 0] });
   if (flatRoof) {                                        // a flat roof with a parapet you can walk on, a coping on top and a cornice below
     for (const [a, b, c, d] of [[x0, z0, x1, z0 + .4], [x0, z1 - .4, x1, z1], [x0, z0 + .4, x0 + .4, z1 - .4], [x1 - .4, z0 + .4, x1, z1 - .4]]) { world.box(a, H, b, c, H + 1.1, d, wallC, 0); solid(a, H, b, c, H + 1.1, d); world.box(a - .06, H + 1.1, b - .06, c + .06, H + 1.24, d + .06, C.stoneDark, 0, { 2: [C.stoneDark, 0] }); }
@@ -549,6 +552,7 @@ function building(l) {
   }
   if (l.sp) special(l, { H, DS, dc, dw, dh, wallC, roofC });
   l.furn = [side, accent, inC]; furnish(l, side, accent, inC);     // the room itself is drawn only when someone is near (rooms near the camera, below)
+  if (l.stair) for (let f = 1; f < l.floors; f++) furnish(l, side, accent, inC, null, f);   // and every floor above it: its places, uses and collisions
 }
 
 function arch(ns, s, f0, dc, r, inC, dm) {                // the wall over a doorway, cut to a round arch (W3), ringed with arch stones and a keystone
@@ -639,6 +643,9 @@ function windows(l) {                                      // each window is one
       if (f === 0 && l.enterable && ya < GF - .3) {        // the same window from inside the room, and a note of it so tall furniture keeps clear
         const pi = fix - out * .36, yi = Math.min(yb, GF - .25); world.quad(P(a, ya, pi), P(b, ya, pi), P(b, yi, pi), P(a, yi, pi), [0, 0, .998], 1, [-hint[0], 0, -hint[2]], QUAD_UV);
         (l.inWin = l.inWin || []).push([s, a - .3, b + .3]);
+      } else if (f > 0 && l.stair) {                         // and on every floor above (storeys.js)
+        const pi = fix - out * .36, y0 = Math.max(ya, Storeys.floorY(f) + .05), yi = Math.min(yb, Storeys.ceilY(f) - .05);
+        if (yi > y0 + .2) { world.quad(P(a, y0, pi), P(b, y0, pi), P(b, yi, pi), P(a, yi, pi), [0, 0, .998], 1, [-hint[0], 0, -hint[2]], QUAD_UV); (l.inWinUp = l.inWinUp || []).push([s, a - .3, b + .3, f]); }
       }
       if (arched) archHead(dm, S, c, yb, ww / 2 + .12, seed, true);
       // louvred shutters folded back against the wall, mostly in the building's own colour; the far picture keeps a flat copy
@@ -675,8 +682,9 @@ function windows(l) {                                      // each window is one
   }
 }
 
-function furnish(l, side, accent, inC, vis) {     // at load (no vis): places, uses and collisions; near the camera (vis = a mesh): the furniture itself
-  const [x0, z0, x1, z1] = l.rect, o = l.objects, d = DOOR_DIR[side], ns = side === "n" || side === "s", F = Y_FLOOR;
+function furnish(l, side, accent, inC, vis, level) {     // at load (no vis): places, uses and collisions; near the camera (vis = a mesh): the furniture itself
+  level = level || 0; l = Storeys.proxy(l, level);       // one floor: its own places, and what it is for above the ground (storeys.js)
+  const [x0, z0, x1, z1] = l.rect, o = l.objects, d = DOOR_DIR[side], ns = side === "n" || side === "s", F = Storeys.floorY(level);
   const toDoor = yawOf(d[0], d[1]), fromDoor = yawOf(-d[0], -d[1]);
   // Every place residents and the player use stays where it was (same heights, same collisions); what stands there is real
   // furniture now, drawn in the block's near-only mesh. Then the room is dressed for what the building is (see room()).
@@ -739,7 +747,8 @@ function furnish(l, side, accent, inC, vis) {     // at load (no vis): places, u
   }
   for (const [x, z] of o.customer || []) { spot(l, x, z, 0, fromDoor, F); occ.push([x, z, .7]); }
   room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard);
-  if (l.tower && !vis) {                                       // a lift in the back corner, up to the roof terrace
+  if (level) Storeys.fill(l, level, B, hard, occ);           // storerooms, wards, plant rooms, galleries and stacks upstairs (storeys.js)
+  if (l.tower && !vis && !l.lift) {                            // a lift in the back corner, up to the roof terrace (a tower with floors has its own: storeys.js)
     const bx = side === "e" ? x0 + 1.5 : side === "w" ? x1 - 1.5 : x0 + 1.5, bz = side === "s" ? z0 + 1.5 : side === "n" ? z1 - 1.5 : z0 + 1.5;
     const ix = bx < (x0 + x1) / 2 ? 1 : -1, iz = bz < (z0 + z1) / 2 ? 1 : -1, top = l.H;
     for (const y of [F, top]) {
@@ -787,6 +796,7 @@ const ROOM_STYLE = {
 // The arrangement of each kind of building, laid out from the door: `a` runs along the door wall, `i` inward from it.
 // Everything is placed round the data's own places (staff behind counters at the back, seats and customers in front).
 function layout(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard, clear, walls, box, P) {
+  const CEIL = Storeys.ceilY(l.level || 0);                // this floor's ceiling (storeys.js)
   const [x0, z0, x1, z1] = l.rect, t = .35, o = DOOR_DIR[side], [dx, dz] = l.door, dw = l.dw, FR = Math.atan2(-o[0], -o[1]);
   const h = (...k) => hash(l.id, "lay", ...k), WD = ROOM_WOOD, DARK = [.3, .2, .13], TOP = [.62, .58, .52], WHITE = [.84, .85, .83];
   const wp = (a, i) => [dx - o[0] * i - o[1] * a, dz - o[1] * i + o[0] * a];
@@ -798,7 +808,7 @@ function layout(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard, clea
   const FF = (a, i, r) => { const p = wp(a, i); return clear(p[0], p[1], r) && a - r > aMin - .35 && a + r < aMax + .35 && i - r > iMin - .35 && i + r < iMax + .35; };   // (pieces may stand against a wall)
   const FFrun = (a, i0, i1, r) => { for (let i = i0; i <= i1; i += .8) if (!FF(a, i, r)) return false; return true; };
   const ob = k => ((l.objects || {})[k] || []).map(rel), pv = [-o[1], 0, o[0]];
-  const lamp = (a, i, drop, c) => { const p = wp(a, i); if (ROOM_REC && dm !== NULL_MESH) ROOM_REC.lamps.push([p[0], GF - drop - .3, p[1], 1.0]); dm.box(p[0] - .01, GF - drop, p[1] - .01, p[0] + .01, GF, p[1] + .01, C.charcoal, 19); dm.ybox(p[0], GF - drop - .2, p[1], .32, .2, .32, 0, c || C.ochre, 19); dm.box(p[0] - .07, GF - drop - .27, p[1] - .07, p[0] + .07, GF - drop - .19, p[1] + .07, [1, .78, .5], 2); };
+  const lamp = (a, i, drop, c) => { const p = wp(a, i); if (ROOM_REC && dm !== NULL_MESH) ROOM_REC.lamps.push([p[0], CEIL - drop - .3, p[1], 1.0]); dm.box(p[0] - .01, CEIL - drop, p[1] - .01, p[0] + .01, CEIL, p[1] + .01, C.charcoal, 19); dm.ybox(p[0], CEIL - drop - .2, p[1], .32, .2, .32, 0, c || C.ochre, 19); dm.box(p[0] - .07, CEIL - drop - .27, p[1] - .07, p[0] + .07, CEIL - drop - .19, p[1] + .07, [1, .78, .5], 2); };
   const glass = (a, i0, i1, y0, y1, facing) => { const P1 = (ii, y) => { const p = wp(a, ii); return [p[0], F + y, p[1]]; }; dm.quad(P1(i0, y0), P1(i1, y0), P1(i1, y1), P1(i0, y1), [0, 0, .998], 1, facing, true); };
   const key = ["bank", "dealer", "library", "museum", "cinema"].includes(l.kind) ? l.kind : l.sp === "mall" ? "mall" : l.kind === "food" ? "cafe" : l.kind === "shop" ? "grocer" : l.kind === "home" ? "home" : l.sp === "works" ? "works"
     : l.kind === "work" ? (l.sp === "hall" ? "hall" : l.sp === "guild" ? "guild" : "office") : l.kind === "health" ? "clinic" : l.kind === "utility" ? "depot" : null;
@@ -849,7 +859,7 @@ function layout(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard, clea
       FB(wa, wiK - .8, .98, 1.5, .02, .32, [.12, .12, .13]); FB(wa - .55, wiK - .8, .98, .3, .2, .3, [.2, .2, .2]);
       FB(wa + .35, wiK - 1.3, 0, .9, 1.1, .26, WD); for (let s = 0; s < 3; s++) for (let k = 0; k < 4; k++) FB(wa + .02 + k * .22, wiK - 1.38, .18 + s * .3, .16, .13, .1, pick(ROOM_GOODS, h(wa, s, k)));
       FH(wa - .1, wa + .8, wiK - 1.45, wiK - 1.15, 1.1); FO(wa + .35, wiK - 1.3, .5);
-      const p = wp(wa, wiK - .8); dm.box(p[0] - .01, GF - .55, p[1] - .01, p[0] + .01, GF, p[1] + .01, C.charcoal, 19); FB(wa, wiK - .8, GF - F - .8, .9, .25, .04, C.teal); FB(wa, wiK - .82, GF - F - .74, .5, .12, .02, C.cream);
+      const p = wp(wa, wiK - .8); dm.box(p[0] - .01, CEIL - .55, p[1] - .01, p[0] + .01, CEIL, p[1] + .01, C.charcoal, 19); FB(wa, wiK - .8, CEIL - F - .8, .9, .25, .04, C.teal); FB(wa, wiK - .82, CEIL - F - .74, .5, .12, .02, C.cream);
     }
     const ba = -(dw / 2 + 1.1); if (FF(ba, 1.0, .3)) { for (let k = 0; k < 5; k++) FB(ba, 1.0, k * .2, .5, .18, .36, [.62, .16, .12]); FO(ba, 1.0, .4); }
     // fridges with lit glass doors down one side wall; produce stands down the other
@@ -881,7 +891,7 @@ function layout(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard, clea
         for (const sd of [-1, 1]) for (let g = 0; g < Math.floor(Lg / .3); g++) FB(a + sd * .28, i0 + .15 + g * .3, y + .03, .34, .12 + .16 * h(a, s, g, sd), .25, pick(ROOM_GOODS, h(a, g, s, sd)));
       }
       FB(a, i0, 0, 1.04, 1.62, .06, C.teal); FB(a, i0 - .04, 1.2, .8, .3, .02, C.cream);
-      const p = wp(a, im); dm.box(p[0] - .01, GF - .5, p[1] - .01, p[0] + .01, GF, p[1] + .01, C.charcoal, 19); FB(a, im, GF - F - .78, .05, .28, 1.3, C.teal); FB(a, im, GF - F - .72, .07, .14, 1.0, C.cream);
+      const p = wp(a, im); dm.box(p[0] - .01, CEIL - .5, p[1] - .01, p[0] + .01, CEIL, p[1] + .01, C.charcoal, 19); FB(a, im, CEIL - F - .78, .05, .28, 1.3, C.teal); FB(a, im, CEIL - F - .72, .07, .14, 1.0, C.cream);
       FH(a - .5, a + .5, i0, i1, 1.65); for (let i = i0; i <= i1; i += .9) FO(a, i, .6);
     }
     // stocked shelving along the back wall behind the checkouts
@@ -1069,6 +1079,8 @@ function layout(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard, clea
 function room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard) {
   const [x0, z0, x1, z1] = l.rect, t = .35, rx0 = x0 + t, rx1 = x1 - t, rz0 = z0 + t, rz1 = z1 - t, d = DOOR_DIR[side], [dx, dz] = l.door, dw = l.dw;
   for (let s = 0; s < 5; s++) occ.push([dx - d[0] * s * 1.2, dz - d[1] * s * 1.2, dw / 2 + .7]);        // keep the way in clear
+  const SG = Storeys.stairOf(l);                             // and the stairwell (storeys.js)
+  if (SG) for (let u = SG.u0 + .5; u < SG.u1; u += .8) for (const v of [(SG.lane0[0] + SG.lane0[1]) / 2, (SG.lane1[0] + SG.lane1[1]) / 2]) { const q = SG.P(u, v, 0); occ.push([q[0], q[2], .9]); }
   if (l.tower) { const bx = side === "e" ? x0 + 1.5 : side === "w" ? x1 - 1.5 : x0 + 1.5, bz = side === "s" ? z0 + 1.5 : side === "n" ? z1 - 1.5 : z0 + 1.5; occ.push([bx, bz, 3.2]); }
   const clear = (x, z, r) => occ.every(([ox, oz, or]) => Math.hypot(x - ox, z - oz) > r + or);   // nothing placed or used there
   const free = (x, z, r) => x > rx0 + r * .7 && x < rx1 - r * .7 && z > rz0 + r * .7 && z < rz1 - r * .7 && occ.every(([ox, oz, or]) => Math.hypot(x - ox, z - oz) > r + or);
@@ -1149,7 +1161,8 @@ function room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard) {
   // lamps hanging from the beams
   const nx = Math.max(1, Math.round((rx1 - rx0) / 4.4)), nz = Math.max(1, Math.round((rz1 - rz0) / 4.4));
   if (!R.dim) for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {   // (a cinema stays dark)
-    const lx = rx0 + (i + .5) * (rx1 - rx0) / nx, lz = rz0 + (j + .5) * (rz1 - rz0) / nz, top = GF - .02;
+    const lx = rx0 + (i + .5) * (rx1 - rx0) / nx, lz = rz0 + (j + .5) * (rz1 - rz0) / nz, top = Storeys.ceilY(l.level || 0) - .02;
+    if (SG) { const a = SG.P(SG.u0 - .3, Math.min(SG.v0, SG.v1) - .3, 0), b = SG.P(SG.u1 + .3, Math.max(SG.v0, SG.v1) + .3, 0); if (lx > Math.min(a[0], b[0]) && lx < Math.max(a[0], b[0]) && lz > Math.min(a[2], b[2]) && lz < Math.max(a[2], b[2])) continue; }   // no lamp over the stairwell
     if (ROOM_REC && dm !== NULL_MESH) ROOM_REC.lamps.push([lx, top - .84, lz, 1.4]);
     dm.box(lx - .012, top - .55, lz - .012, lx + .012, top, lz + .012, C.charcoal, 19);
     dm.ybox(lx, top - .78, lz, .42, .24, .42, Math.PI / 4, R.lamp || C.cream, 19); dm.box(lx - .09, top - .86, lz - .09, lx + .09, top - .76, lz + .09, [1, .78, .5], 2);
@@ -1497,7 +1510,7 @@ const MAIN_VS = `attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,u
 void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`;   // invariant: the depth-only pass and the lit pass land on the same depths
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
 uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
-uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO;
+uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec2 uRoomY;
 uniform sampler2D uGi; uniform vec4 uGiM, uBlob[16]; uniform int uBlobN; uniform vec3 uPf;
 uniform vec3 uHZ[4], uHNo[4], uHBr[4], uHSt; uniform vec4 uHLk[4];
 uniform vec4 uPatA[16], uPatB[16];                       // stone, brick and paving patterns (World/rules/surfaces.json): (type, unit w, unit h, joint), (vary, bevel, dome, -)
@@ -1507,10 +1520,11 @@ ${TONE}
 // facing, and contact shade from the map of what stands on the floor (uRoomAO) and from the walls, floor and ceiling meeting.
 // The room the camera is in gets all of that; other rooms an even lamplight, as before.
 vec3 roomLight(vec3 n,float person){
-  float day=1.-uNight, y=vP.y-${Y_FLOOR.toFixed(2)};
+  float day=1.-uNight, y=vP.y-uRoomY.x;                    // height above the floor the camera is on (storeys.js); other floors read the same way
   vec3 hemi=mix(uGround,uSky,n.y*.5+.5);
   vec3 amb=(hemi*.42*day+uSunCol*.025*day+vec3(.16,.13,.1)*(.5+.5*day))*(.8+.2*n.y)*(.82+.18*smoothstep(.0,1.6,y));
-  bool here=vP.x>uRoomR.x-.05&&vP.x<uRoomR.z+.05&&vP.z>uRoomR.y-.05&&vP.z<uRoomR.w+.05;
+  bool here=vP.x>uRoomR.x-.05&&vP.x<uRoomR.z+.05&&vP.z>uRoomR.y-.05&&vP.z<uRoomR.w+.05&&vP.y>uRoomY.x-.25&&vP.y<uRoomY.y+.25;
+  if(!here) y=mod(vP.y-.4,3.);
   vec3 lamps=vec3(0.); float ao=1.;
   if(here){
     for(int i=0;i<16;i++){ if(i>=uRoomLN) break; vec3 L=uRoomL[i].xyz-vP; float d2=dot(L,L), ndl=dot(n,L*inversesqrt(d2));
@@ -1520,7 +1534,7 @@ vec3 roomLight(vec3 n,float person){
     ao*=1.-o*(n.y>.6?.62*low:.45*low)*(1.-.4*person);
     float e=min(min(vP.x-uRoomR.x,uRoomR.z-vP.x),min(vP.z-uRoomR.y,uRoomR.w-vP.z));
     ao*=n.y>.6?.72+.28*smoothstep(.25,1.3,e):1.;                           // the floor darkens towards the walls
-    ao*=abs(n.y)<.5?(.7+.3*smoothstep(0.,.7,y))*(.82+.18*smoothstep(0.,.6,${GF.toFixed(1)}-vP.y)):1.;   // walls darken where they meet floor and ceiling
+    ao*=abs(n.y)<.5?(.7+.3*smoothstep(0.,.7,y))*(.82+.18*smoothstep(0.,.6,uRoomY.y-vP.y)):1.;   // walls darken where they meet floor and ceiling
     ao*=n.y<-.6?.8+.2*smoothstep(.25,1.,e):1.;
   } else lamps=vec3(.55)*(.82+.16*n.y);
   return (amb+lamps*vec3(1.,.74,.48)*.85)*ao;
@@ -2051,6 +2065,7 @@ const chunks = [...DETAIL.values()].map(m => { const c = { buf: buffer(m, gl.STA
 const signBuf = buffer(signs, gl.STATIC_DRAW), signN = signs.n / 10; signs.a = null;
 const detailN = chunks.reduce((s, c) => s + c.n, 0);
 const txtTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, txtTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, TXT); gl.generateMipmap(gl.TEXTURE_2D);
+  if (l && !isOpen(l) && l.stair && pl.y < l.H - .1) { const f = Storeys.levelAt(l, pl.y + .3); return [l.name, f ? "Floor " + f + ((l.storeys || [])[f] ? ", " + l.storeys[f] : "") : "Inside, ground floor"]; }   // which floor (storeys.js)
 for (const [kk, vv] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, kk, vv);
 const dyn = new Mesh(1 << 18), dynBuf = gl.createBuffer(), skyBuf = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
@@ -2095,7 +2110,15 @@ addEventListener("pointerdown", () => Sound.start());
 addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
 
 // Rooms are furnished only near the camera: built when a building comes within 40 m (two a frame at most), dropped past 70 m.
-const ROOMS = new Map();
+const ROOMS = new Map(), UPSTAIRS = new Map();          // ground floors near the camera; the floors above of the building it is in (storeys.js)
+const floorMatOf = p => ROOM_FLOOR[p.sp] || ROOM_FLOOR[p.kind] || ROOM_FLOOR.work;
+function camFloor() {                                      // the building the camera is in, and which of its floors
+  const fy = started ? pl.y : cam.eye[1] - 1.6, l = lotAt(cam.eye[0], cam.eye[2]);
+  return l && l.stair && fy < l.H ? [l, Storeys.levelAt(l, fy + .3)] : [null, 0];
+}
+function roomEntry(l, m, rec, level) {
+  return m.n ? { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, box: boxOf(m.a, 0, m.n), lot: l, level, lamps: rec.lamps, ao: roomAO(l, rec.foot), y0: Storeys.floorY(level), y1: Storeys.ceilY(level) } : { n: 0, lot: l, level, lamps: [] };
+}
 // A room's light: its lamps, and a map seen from above of how much of the floor round each spot is covered by furniture, blurred,
 // so floors darken round and under what stands on them and furniture darkens at its foot (contact shade, as baked in Blender).
 const ROOM_AO_CELL = .2;
@@ -2125,10 +2148,17 @@ function nearRooms(eye) {
     if (!have && dd < 40 && built < 2) {
       const m = new Mesh(1 << 15); ROOM_REC = { lamps: [], foot: [] }; furnish(l, l.furn[0], l.furn[1], l.furn[2], m); built++;
       const rec = ROOM_REC; ROOM_REC = null;
-      ROOMS.set(l, m.n ? { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, box: boxOf(m.a, 0, m.n), lot: l, lamps: rec.lamps, ao: roomAO(l, rec.foot) } : { n: 0, lot: l, lamps: [] });
+      ROOMS.set(l, roomEntry(l, m, rec, 0));
     } else if (have && dd > 70) { if (have.buf) gl.deleteBuffer(have.buf); if (have.ao) gl.deleteTexture(have.ao); ROOMS.delete(l); }
   }
-  const out = []; for (const r of ROOMS.values()) if (r.n) out.push(r); return out;
+  const [cl, cf] = camFloor(), want = new Set();
+  if (cl) for (let f = Math.max(1, cf - 1); f <= Math.min(cl.floors - 1, cf + 1); f++) want.add(cl.id + "|" + f);
+  for (const [k, e] of UPSTAIRS) if (!want.has(k)) { if (e.buf) gl.deleteBuffer(e.buf); if (e.ao) gl.deleteTexture(e.ao); UPSTAIRS.delete(k); }
+  for (const k of want) if (!UPSTAIRS.has(k) && built < 2) {
+    const f = +k.split("|")[1], m = new Mesh(1 << 15); ROOM_REC = { lamps: [], foot: [] }; furnish(cl, cl.furn[0], cl.furn[1], cl.furn[2], m, f); built++;
+    Storeys.build(cl, f, m, floorMatOf(Storeys.proxy(cl, f))); const rec = ROOM_REC; ROOM_REC = null; UPSTAIRS.set(k, roomEntry(cl, m, rec, f));
+  }
+  const out = []; for (const r of ROOMS.values()) if (r.n) out.push(r); for (const r of UPSTAIRS.values()) if (r.n) out.push(r); return out;
 }
 let last = performance.now(); const stat = { detail: 0 }; const PIN_Q = new URLSearchParams(location.search).has("quality");   // ?quality=1 or 0.5 holds the picture for timing
 if (PIN_Q) quality = clamp(+new URLSearchParams(location.search).get("quality") || 1, .5, 1);
@@ -2170,6 +2200,7 @@ function frame(now) {
   if ((started || Life.designing) && !cam.fp && !cam.close && pl.pose !== 4) {   // not while in a car; and in the designer, to see who you are making
     let da = cam.yaw - pl.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
     People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.play ? pl.playPose : pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
+      if (l.stair) Storeys.build(l, 0, m, floorMatOf(l));    // the stair up and the ceiling with its opening
       look: pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
   }
   for (const [x, , T] of tramAt(clock.m)) Cars.tram(dyn, x, TRAM_Z, T, clock.m);   // the tram and the commuters on it (cars.js)
@@ -2239,7 +2270,8 @@ function frame(now) {
   const rooms = nearRooms(cam.eye); for (const rm of rooms) if (!outside(VP, rm.box)) nearD.push(rm);
   // the room the camera is in (or the nearest one in reach) gets its own lamps and contact shade; other rooms an even lamplight
   let inRoom = null, best = 10;
-  for (const rm of rooms) { if (!rm.ao) continue; const [a0, b0, a1, b1] = rm.lot.rect, e = Math.hypot(Math.max(a0 - cam.eye[0], 0, cam.eye[0] - a1), Math.max(b0 - cam.eye[2], 0, cam.eye[2] - b1)) + (cam.eye[1] > GF + 1 ? 99 : 0); if (e < best) { best = e; inRoom = rm; } }
+  const [camL, camF] = camFloor();
+  for (const rm of rooms) { if (!rm.ao) continue; const [a0, b0, a1, b1] = rm.lot.rect, e = Math.hypot(Math.max(a0 - cam.eye[0], 0, cam.eye[0] - a1), Math.max(b0 - cam.eye[2], 0, cam.eye[2] - b1)) + (camL ? (rm.lot === camL && rm.level === camF ? 0 : 99) : (rm.level || cam.eye[1] > GF + 1 ? 99 : 0)); if (e < best) { best = e; inRoom = rm; } }
   const roomL = new Float32Array(64); let roomLN = 0;
   if (inRoom) { const ls = inRoom.lamps.map(q => [(q[0] - cam.eye[0]) ** 2 + (q[2] - cam.eye[2]) ** 2, q]).sort((p, q) => p[0] - q[0]);
     for (; roomLN < Math.min(16, ls.length); roomLN++) { const q = ls[roomLN][1]; roomL.set([q[0], q[1], q[2], q[3] * dials.lanterns * (.75 + .5 * Lt.night)], roomLN * 4); } }   // furnished rooms of the buildings close by   // near relief: blocks within reach and in view
@@ -2307,3 +2339,4 @@ Sound.init(LOTS, D.blocks.flatMap(b => b.props.filter(p => p.kind === "fountain"
 for (const [k, v] of q) if (k.startsWith("d_")) window.wasted.dials[k.slice(2)] = +v;   // ?d_name=value sets a light dial from the address, for tests
 window.wasted.sound = Sound;
 requestAnimationFrame(frame);
+    gl.uniform2f(u.uRoomY, inRoom ? inRoom.y0 : Y_FLOOR, inRoom ? inRoom.y1 : GF);   // the floor the camera is on (storeys.js)
