@@ -566,8 +566,10 @@ window.Houses = (() => {
   const SFRONT_DOOR = [mu(.1), 1.2, 2.4];
   // doorways [wall axis, line, centre]: the hall to each room; living room to kitchen; dining room to bathroom (the stair stands
   // along the hall's right wall, so the rooms behind it are reached from the room in front); upstairs the same round the landing
-  const SDOORS = { 0: [["x", SA, mv(-.9)], ["x", SA, mv(1.4)], ["x", SB, mv(-1.8)], ["y", SM, mu(-3.0)], ["y", SM, mu(4.2)]],
-                   1: [["x", SA, mv(-.9)], ["x", SA, mv(1.4)], ["x", SB, mv(-1.8)], ["y", SM, mu(3.3)]] };
+  // (checked: nothing stands within 0.9 m of a doorway on either side; the living room and kitchen share no door, the armchair
+  // stands where one would be)
+  const SDOORS = { 0: [["x", SA, -.75], ["x", SA, mv(1.4)], ["x", SB, mv(-1.8)], ["y", SM, mu(4.2)]],
+                   1: [["x", SA, -.75], ["x", SA, mv(1.4)], ["x", SB, mv(-1.8)], ["y", SM, 3.7]] };
   const SROOMS = [["Living room", 0, -SI, -SJ, SA, SM], ["Kitchen", 0, -SI, SM, SA, SJ], ["Hall", 0, SA, -SJ, SB, SJ], ["Dining room", 0, SB, -SJ, SI, SM],
                   ["Bathroom", 0, SB, SM, SI, SJ], ["Main bedroom", 1, -SI, -SJ, SA, SM], ["Study", 1, -SI, SM, SA, SJ], ["Landing", 1, SA, -SJ, SB, SJ],
                   ["Children's room", 1, SB, -SJ, SI, SM], ["Guest room", 1, SB, SM, SI, SJ]];
@@ -586,7 +588,7 @@ window.Houses = (() => {
     [0, "k17:floor_lamp", -4.35, -.1, 0, "E"], [0, "l_fireplace", -4.55, -1.8, P2, "fire"], [0, "o_painting", -4.73, -1.8, P2, "fire"],
     [0, "k17:bookcase", -4.58, -3.2, P2, "books"], [0, "l_tv", -1.75, -3.52, PI, "tv"], [0, "o_floorplant", -1.45, -.1, 0, "plant"],
     [0, "k_counter", -3.85, 3.45, 0, "E"], [0, "k_sink", -2.4, 3.45, 0, "E"], [0, "k_stove", -1.475, 3.44, 0, "E"], [0, "k_fridge", -4.42, 1.3, P2, "E"],
-    [0, "k_wall", -3.85, 3.58, 0, "cupboards"], [0, "k17:dining", -2.6, 1.8, 0, "E"], [0, "d_pendant", -2.6, 1.8, 0, "E"],
+    [0, "k_wall", -3.85, 3.58, 0, "cupboards"], [0, "k17:dining", -2.8, 1.8, 0, "E"], [0, "d_pendant", -2.8, 1.8, 0, "E"],
     [0, "h_coatstand", .8, -3.3, 0, "E"], [0, "h_shoebench", -.76, -2.6, P2, "shoes"], [0, "h_console", -.77, .35, P2, "console"], [0, "h_mirror", -.92, .35, P2, "console"],
     [0, "d_pendant", .1, -1.8, 0, "E"],
     [0, "k17:dining", 3.0, -1.7, 0, "E"], [0, "d_pendant", 3.0, -1.7, 0, "E"], [0, "d_sideboard", 2.6, .2, 0, "sideboard"], [.91, "o_candles", 2.9, .2, 0, "sideboard"],
@@ -598,7 +600,7 @@ window.Houses = (() => {
     [1, "c_bunk", 4.2, -.6, 0, "kids"], [1, "c_toyshelf", 2.3, .26, 0, "kids"], [1, "c_toychest", 1.5, -3.2, P2, "toys"], [1, "k17:rug", 2.9, -1.6, 0, "kids"],
     [1, "d_pendant", 3.0, -1.8, 0, "E"],
     [1, "s_desk", -2.4, 3.41, 0, "E"], [1, "s_chair", -2.4, 2.75, PI, "E"], [1.75, "s_lamp", -2.85, 3.5, 0, "E"], [1, "s_shelving", -4.55, 1.35, P2, "shelves"],
-    [1, "k17:armchair", -1.85, 1.4, -P2 - .4, "reading"], [1, "k17:floor_lamp", -1.45, .95, 0, "E"],
+    [1, "k17:armchair", -3.0, 1.4, -P2 - .4, "reading"], [1, "k17:floor_lamp", -3.8, 1.8, 0, "E"],
     [1, "r_single", 4.15, 2.65, 0, "guest"], [1, "k17:bedside", 3.35, 3.54, 0, "guest"], [1, "r_vanity", 2.2, 3.51, 0, "vanity"], [1, "o_floorplant", 1.6, 1.1, 0, "plant"],
     [1, "d_pendant", -.4, -1.8, 0, "E"], [1, "d_pendant", 3.0, 2.2, 0, "E"],
   ].map(([f, kind, x, y, th, rule]) => [f, kind, mu(x), mv(y), th, rule]);
@@ -608,7 +610,7 @@ window.Houses = (() => {
   }
   // where people sleep and sit (the lot's objects hold the same points): x, y in this house, height, facing x, y
   const SBEDS = [[mu(-3.3), mv(-.6), .62, 0, 1], [mu(-2.5), mv(-.6), .62, 0, 1], [mu(4.2), mv(-.6), .5, 0, 1], [mu(4.2), mv(-.6), 1.45, 0, 1], [mu(4.15), mv(2.65), .62, 0, 1]];
-  const SSEATS = [[mu(-1.75), mv(-2.3), .45, -1, 0], [mu(-1.75), mv(-1.3), .45, -1, 0], [mu(-3.3), mv(-.25), .45, 0, -1], [mu(-2.6), mv(1.1), .45, 0, 1], [mu(-2.6), mv(2.5), .45, 0, -1]];
+  const SSEATS = [[mu(-1.75), mv(-2.3), .45, -1, 0], [mu(-1.75), mv(-1.3), .45, -1, 0], [mu(-3.3), mv(-.25), .45, 0, -1], [mu(-2.8), mv(1.1), .45, 0, 1], [mu(-2.8), mv(2.5), .45, 0, -1]];
   function stepsS() { const out = [], n = 16, [x0, x1, y0, y1] = SWELL; for (let k = 0; k < n; k++) out.push([x0, y0 + (y1 - y0) * k / n, x1, y0 + (y1 - y0) * (k + 1) / n, S0 + SF * (k + 1) / n]); return out; }
   // a wall's pieces round its holes [a0, a1, z0, z1], as boxes along axis ax ("u": along u at v c0..c1; "v": along v at u c0..c1)
   function holedS(put, a0, a1, z0, z1, holes) {
@@ -753,8 +755,12 @@ window.Houses = (() => {
     }
     // the stair: treads on a closed side, a handrail on balusters along the open side, a rail round the well upstairs
     for (const [u0, v0, u1, v1, top] of stepsS()) { R(u0, top - .05, v0, u1, top, v1, [.4, .27, .17], 15); R(u0, S0, v0, u1, top - .05, v1, [.74, .7, .62], 17); }
-    for (let k = 0; k <= 8; k++) { const v = wy0 + (wy1 - wy0) * k / 8, y = S0 + SF * k / 8; R(wx0 - .03, y, v - .02, wx0 + .01, y + .9, v + .02, wood); }
-    for (let k = 0; k < 8; k++) { const v = wy0 + (wy1 - wy0) * k / 8, y = S0 + SF * (k + .5) / 8; R(wx0 - .045, y + .88, v, wx0 + .025, y + .95, v + (wy1 - wy0) / 8, wood); }
+    // the handrail and its balusters run up the open side only as far as SOFF, where you step off on to the landing, and end
+    // there in a newel post; past it the top steps are open to the left
+    const SN = 6, vEnd = SOFF, yAt = v => S0 + SF * (v - wy0) / (wy1 - wy0);
+    for (let k = 0; k <= SN; k++) { const v = wy0 + (vEnd - wy0) * k / SN, y = yAt(v); R(wx0 - .03, y, v - .02, wx0 + .01, y + .9, v + .02, wood); }
+    for (let k = 0, RN = 40; k < RN; k++) { const v = wy0 + (vEnd - wy0) * k / RN, y = yAt(v + (vEnd - wy0) / RN / 2); R(wx0 - .045, y + .88, v, wx0 + .025, y + .96, v + (vEnd - wy0) / RN + .01, wood); }   // the rail, in short pieces so it reads as one slope
+    R(wx0 - .06, yAt(vEnd), vEnd - .05, wx0 + .04, yAt(vEnd) + 1.05, vEnd + .05, wood);
     for (let k = 0; k <= 6; k++) R(wx0 - .02, S1, wy0 + (SOFF - wy0) * k / 6 - .02, wx0 + .02, S1 + .95, wy0 + (SOFF - wy0) * k / 6 + .02, wood);
     for (let k = 1; k <= 4; k++) R(wx0 + (wx1 - wx0) * k / 4 - .02, S1, wy0 - .02, wx0 + (wx1 - wx0) * k / 4 + .02, S1 + .95, wy0 + .02, wood);
     R(wx0 - .035, S1 + .95, wy0, wx0 + .035, S1 + 1.0, SOFF, wood); R(wx0, S1 + .95, wy0 - .035, wx1, S1 + 1.0, wy0 + .035, wood);
@@ -768,5 +774,6 @@ window.Houses = (() => {
     if (rec) for (const [name, f, u0, v0, u1, v1] of SROOMS) { const p = Fr.P(-(u0 + u1) / 2, (f ? SK1 : SK0) - .4, (v0 + v1) / 2); rec.lamps.push([p[0], p[1], p[2], 1.1]); }
   }
 
-  return { outside: l => l.house.plan === "samples_19" ? outsideS(l) : outside(l), inside: (l, m, rec) => l.house.plan === "samples_19" ? insideS(l, m, rec) : inside(l, m, rec), frame };
+  const samples = { SFURN, SDOORS, SWELL, mu, mv };   // for the doorway check in the browser (tests)
+  return { samples, outside: l => l.house.plan === "samples_19" ? outsideS(l) : outside(l), inside: (l, m, rec) => l.house.plan === "samples_19" ? insideS(l, m, rec) : inside(l, m, rec), frame };
 })();
