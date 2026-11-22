@@ -75,6 +75,10 @@ def main():
     cpath = os.path.join(CITY, "city.json")
     city = json.load(open(cpath, encoding="utf-8"))
     bfile = "blocks/%s.json" % BLOCK
+    if any(e.get("template") == "outlet" and e["id"] != BLOCK for e in city["blocks"]) or \
+            any(e["id"] == BLOCK and e.get("template") != "outlet" for e in city["blocks"]):
+        # the city remodel moved the outlet and built homes on b_8_4: this script would overwrite them (ADR-0029)
+        raise SystemExit("the outlet is no longer block %s; to change it use expand_outlet_01.py" % BLOCK)
     if not any(b["id"] == BLOCK for b in city["blocks"]):
         city["blocks"].append(dict(id=BLOCK, grid=[8, 4], file=bfile, template="outlet", district="Outside the walls"))
         with open(cpath, "w", encoding="utf-8") as f:
