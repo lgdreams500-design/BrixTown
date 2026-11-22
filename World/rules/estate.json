@@ -80,6 +80,10 @@
   "rent_share_bp": 4000, "deposit_days": 6, "mortgage_share_bp": 6500, "payback_days": [80, 220],
   "supply_drift_bp": 1500, "index_days": 365
  },
+ "moving": {
+  "move_bp": 40, "over_bp": 300, "rent_share_bp": 3500, "buy_bp": 3000,
+  "note": "PROP-022: each day a renting household moves with chance move_bp (over_bp more if its rent is above rent_share_bp of its wages) to an empty house or flat it can afford at that share and that has a bed for each of them; if the home is listed it buys it with chance buy_bp when the town can pay. Households that own their home stay."
+ },
  "household_size": 2,
  "history_days": 30
 }

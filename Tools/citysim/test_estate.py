@@ -201,9 +201,9 @@ class Renting(unittest.TestCase):
             before = e.total_money()
             run(e, 1)
             got += max(0, e.total_money() - before)
-            if s.tenant[i] == "lodger":
+            if s.tenant[i] in ("lodger", "hh"):
                 break
-        self.assertEqual(s.tenant[i], "lodger")
+        self.assertIn(s.tenant[i], ("lodger", "hh"), "a lodger or a household that moves house takes it (PROP-015, PROP-022)")
 
     def test_PROP_014_sitting_tenants_pay_no_more_than_the_market(self):
         e, s = town(cash=900000)
@@ -375,6 +375,61 @@ class Balance(unittest.TestCase):
             s.buy([i], "lark")
             s.sell_now(i)
         self.assertLess(e.total_money(), start)
+
+
+class Moving(unittest.TestCase):
+    def test_PROP_022_renting_households_move_house(self):
+        e, s = town()
+        first = {r["id"]: r["home"] for r in W["residents"]}
+        run(e, 60)
+        self.assertGreater(len(s.moves), 5)
+        moved = [rid for rid, h in first.items() if s.home_of(rid) != h]
+        self.assertTrue(moved)
+        seen = set()
+        for ms in s.members:                                       # everyone lives in exactly one place
+            self.assertFalse(seen & set(ms))
+            seen |= set(ms)
+        self.assertEqual(seen, set(first))
+        for i, ms in enumerate(s.members):
+            self.assertEqual(bool(ms), s.tenant[i] == "hh", s.units[i]["id"])
+            if ms:
+                self.assertGreaterEqual(s.units[i]["beds"], len(ms) if i in {m[2] for m in s.moves} else 0)
+        for _, a, b in s.moves:                                    # only renters move, into homes
+            self.assertIn(s.units[b]["kind"], ("house", "flat"))
+
+    def test_PROP_022_a_resident_who_moved_sleeps_at_the_new_home(self):
+        import citysim
+        e, s = town()
+        run(e, 60)
+        rid = next(r["id"] for r in W["residents"] if s.home_of(r["id"]) != r["home"])
+        data = world.sim_data(W)
+        data["residents"] = [dict(r, home=s.home_of(r["id"])) for r in W["residents"]]
+        plan = citysim.City(data=data).plan(16)[rid]
+        night = [p for p in plan if p[0] == "stay" and p[1] < 300]
+        self.assertTrue(night)
+        self.assertEqual(night[0][4]["place"], s.home_of(rid))
+
+    def test_PROP_022_moves_survive_a_saved_game(self):
+        e, s = town()
+        run(e, 30)
+        s2 = es.Estate(R, e, LOTS, W["residents"])
+        s2.load(s.save())
+        self.assertEqual({r["id"]: s2.home_of(r["id"]) for r in W["residents"]}, {r["id"]: s.home_of(r["id"]) for r in W["residents"]})
+        self.assertEqual(s2.wage, s.wage)
+
+    def test_PROP_023_agents_offices_carry_their_names(self):
+        names = {l["id"]: l["name"] for l in LOTS}
+        for c in R["companies"]:
+            self.assertEqual(names[c["office"]], c["name"])
+
+    def test_PROP_023_boards_say_what_is_for_sale_and_to_let(self):
+        e, s = town()
+        run(e, 10)
+        for lot, ix in s.by_lot.items():
+            sale, let = s.board(lot)
+            self.assertEqual(sale, sum(1 for i in ix if str(i) in s.listing and s.owner[i] != "player"))
+            self.assertEqual(let, sum(1 for i in ix if s.tenant[i] is None and s.owner[i] != "player"))
+        self.assertTrue(any(s.board(l)[0] for l in s.by_lot) and any(s.board(l)[1] for l in s.by_lot))
 
 
 class Determinism(unittest.TestCase):

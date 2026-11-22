@@ -38,7 +38,7 @@ def clamp(v, a, b):
 
 def carve(R, lots, residents):
     """PROP-009: the units of every building, in lot order. A unit is {id, lot, lot_id, block, kind, floors, area,
-    loc_bp, floor_bp, members (resident ids of the household living there), tenant0}."""
+    loc_bp, floor_bp, members (resident ids of the household living there), beds (beds on its floors), tenant0}."""
     by_home = {}
     for r in residents:
         if r.get("home"):
@@ -95,9 +95,11 @@ def carve(R, lots, residents):
                 tenant = None
             else:
                 tenant = "firm"
+            nb = sum(1 for b in range(len((l.get("objects") or {}).get("bed") or []))
+                     if (beds[b] if b < len(beds) else 0) in fl)
             out.append(dict(id=uid, lot=n, lot_id=l["id"], block=block_of(l["id"]), kind=kind, floors=fl,
                             area=int(fw * fh * len(fl) * R["usable_bp"] / 10000), loc_bp=loc, floor_bp=fb,
-                            members=members, tenant0=tenant))
+                            members=members, beds=nb, tenant0=tenant))
     return out
 
 
@@ -118,9 +120,10 @@ class Estate:
         for u in self.units:
             if u["block"] not in self.blocks:
                 self.blocks.append(u["block"])
-        roles = {r["id"]: r["role"] for r in residents}
-        W = rules["town"]["wages"]
-        self.wage = [sum(W.get(roles[m], 0) for m in u["members"]) for u in self.units]
+        self.roles = {r["id"]: r["role"] for r in residents}
+        self.members = [list(u["members"]) for u in self.units]   # who lives in each unit now (PROP-022)
+        self.moves = []                                     # the last households to move: [day, from unit, to unit]
+        self._homes()
         self.cos = {c["id"]: c for c in rules["companies"]}
         self.office = {c["office"]: c["id"] for c in rules["companies"]}
         self.base = [u["area"] * rules["kinds"][u["kind"]]["per_m2"] * u["loc_bp"] // 10000 * u["floor_bp"] // 10000 for u in self.units]
@@ -146,6 +149,16 @@ class Estate:
     @property
     def L(self):
         return self.E.L                                     # the economy's ledger (a loaded game has a new one)
+
+    def _homes(self):
+        W = self.R["town"]["wages"]
+        self.wage = [sum(W.get(self.roles[m], 0) for m in ms) for ms in self.members]
+        self.home = {m: i for i, ms in enumerate(self.members) for m in ms}
+
+    def home_of(self, rid):
+        """PROP-022: the lot a resident lives in today, or None."""
+        i = self.home.get(rid)
+        return None if i is None else self.units[i]["lot_id"]
 
     def econ_hook(self):
         if self.settle not in self.E.hooks:
@@ -280,6 +293,7 @@ class Estate:
             return
         self.update_index(d)
         earned, spent = self._rents_and_costs(d)
+        self._moving(d)
         self._letting(d)
         sales = self._market(d)
         self._mortgages(d)
@@ -383,6 +397,44 @@ class Estate:
         lines.append((to, amount))
         self.L.post(d, self.E.minute if d == self.E.day and self.E.minute < 1440 else 1440, memo, lines)
         return True
+
+    def _moving(self, d):
+        """PROP-022: a renting household now and then moves to an empty home it can afford and has beds for, sooner if
+        its rent is more than it can afford; if that home is listed it may buy it. Its old home stands empty."""
+        Mv = self.R["moving"]
+        cands = [j for j, u in enumerate(self.units) if u["kind"] in ("house", "flat") and self.tenant[j] is None and u["beds"] > 0
+                 and (self.owner[j] != "player" or self.to_let[j])]
+        if not cands:
+            return
+        for i in range(len(self.units)):
+            ms = self.members[i]
+            if self.tenant[i] != "hh" or self.owner[i] == "hh" or not ms:
+                continue
+            budget = self.wage[i] * Mv["rent_share_bp"] // 10000
+            ch = Mv["move_bp"] + (Mv["over_bp"] if self.rent_of(i) > budget else 0)
+            if hash01(self.units[i]["id"], d, "move") * 10000 >= ch:
+                continue
+            best, bs = None, -1.0
+            for j in cands:
+                if self.tenant[j] is not None or self.units[j]["beds"] < len(ms) or self.rent_of(j) > budget:
+                    continue
+                sc = hash01(self.units[i]["id"], self.units[j]["id"], d, "pick")
+                if sc > bs:
+                    best, bs = j, sc
+            if best is None:
+                continue
+            j = best
+            ls = self.listing.get(str(j))
+            if ls and self.owner[j] != "player":
+                tax = ls["price"] * self.R["trade"]["transfer_tax_bp"] // 10000
+                if hash01(self.units[i]["id"], d, "buyhome") * 10000 < Mv["buy_bp"] and \
+                        self.L.balance(TOWN) >= ls["price"] + tax + self.R["trade"]["household_min_pool_days"] * self.income:
+                    self._transfer(j, "hh", ls["price"], d, ls["agent"], "Sold: %s" % self.name(j))
+            self.members[j], self.members[i] = ms, []
+            self.tenant[j], self.tenant[i] = "hh", None
+            self._homes()
+            self.moves.append([d, i, j])
+            self.moves = self.moves[-40:]
 
     def _letting(self, d):
         """PROP-015: unseen lodgers take empty units that are offered and leave in time; rent above the market keeps
@@ -643,6 +695,12 @@ class Estate:
         typ = "company" if o.startswith("co:") else "household" if o == "hh" else o
         return self.value(i) * M["offer_bp"][typ] // 10000
 
+    def board(self, lot):
+        """PROP-023: what the board at a building's door says: units for sale (not the player's) and empty units to let."""
+        sale = sum(1 for i in self.by_lot.get(lot, []) if str(i) in self.listing and self.owner[i] != "player")
+        let = sum(1 for i in self.by_lot.get(lot, []) if self.tenant[i] is None and self.owner[i] != "player")
+        return sale, let
+
     def bid(self, i):
         return self.value(i) * self.R["trade"]["bid_bp"] // 10000
 
@@ -800,11 +858,12 @@ class Estate:
         return copy.deepcopy(dict(started=self.started, owner=self.owner, tenant=self.tenant, rent=self.rent, to_let=self.to_let,
                                   tenancy=self.tenancy, listing=self.listing, missed=self.missed, owed=self.owed,
                                   mortgages=self.mortgages, buys=self.buys, idx=self.idx, history=self.history, sales=self.sales,
-                                  short=self.short, income=self.income))
+                                  short=self.short, income=self.income, members=self.members, moves=self.moves))
 
     def load(self, s):
         for k, v in copy.deepcopy(s).items():
             setattr(self, k, v)
+        self._homes()
 
 
 def check_script():
@@ -863,4 +922,5 @@ def run_script(est, ops):
     return dict(results=out, balances={a: E.L.balance(a) for a in accts}, tx=len(E.L.tx), supply=E.L.supply(),
                 owner=[o for o in est.owner], tenant=[t for t in est.tenant], idx=dict(sorted(est.idx.items())),
                 history=est.history, mortgages=[[m["status"], m["paid"], m["fees"], m["missed"]] for m in est.mortgages],
-                listing={k: est.listing[k]["price"] for k in sorted(est.listing, key=int)}, units=len(est.units), mine=mine)
+                listing={k: est.listing[k]["price"] for k in sorted(est.listing, key=int)}, units=len(est.units), mine=mine,
+                moves=est.moves, beds=sum(u["beds"] for u in est.units))

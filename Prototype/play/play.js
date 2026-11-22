@@ -2107,6 +2107,7 @@ function hud(VP, W, H, tags) {
     if (L.indoor ? inLot !== L.lot : (inLot && pl.y < 6)) continue;
     put(L.x, L.y, L.z, L.text, clamp((L.r - d) / (L.r * .35), 0, 1), d < 14 ? 19 : 16, "400");
   }
+  if (Life.boards) Life.boards(tags);                     // For Sale and To Let over the doors (life.js, PROP-023)
   for (const t of tags) put(t.x, t.y, t.z, t.text, t.a !== undefined ? t.a : clamp((9 - t.d) / 3, 0, 1), t.size || 14, "600");
   g2.globalAlpha = 1;
 }
