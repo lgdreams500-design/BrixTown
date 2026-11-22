@@ -535,9 +535,11 @@ var Estate = (() => {
     load(s) {
       const d = clone(s), n = this.units.length, old = (d.owner || []).length;
       const map = d.ids ? d.ids.map(id => id in this.byId ? this.byId[id] : -1) : Array.from({ length: old }, (_, o) => o < n ? o : -1);
-      for (const k of ["owner", "tenant", "rent", "to_let", "members"]) {
-        if (!Array.isArray(d[k])) { delete d[k]; continue; }
-        const a = this[k].slice(); d[k].forEach((v, o) => { if (map[o] >= 0) a[map[o]] = v; }); d[k] = a; }
+      const start = { owner: (u, i) => this.firstOwner(i), tenant: u => u.tenant0, rent: () => 0, to_let: () => false, members: u => u.members.slice() };   // as in the constructor
+      for (const k of Object.keys(start)) {
+        const a = this.units.map(start[k]);
+        if (Array.isArray(d[k])) d[k].forEach((v, o) => { if (map[o] >= 0) a[map[o]] = v; });
+        d[k] = a; }
       for (const k of ["tenancy", "listing", "missed", "owed"]) {
         const b = {}; for (const [o, v] of Object.entries(d[k] || {})) if (map[+o] >= 0) b[String(map[+o])] = v; d[k] = b; }
       for (const m of d.mortgages || []) m.units = m.units.map(o => map[o]).filter(j => j >= 0);
