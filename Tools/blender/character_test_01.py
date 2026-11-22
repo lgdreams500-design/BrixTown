@@ -1,4 +1,4 @@
-"""Wasted - character style test 01: modular characters for players and NPCs.
+"""Brix Town - character style test 01: modular characters for players and NPCs.
 
 Run inside Blender (Python console):
     exec(compile(open("C:/Projects/Wasted/Tools/blender/character_test_01.py").read(), "character_test_01.py", "exec"))

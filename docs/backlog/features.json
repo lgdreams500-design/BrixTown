@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-11-21",
+  "updated": "2026-11-22",
   "note": "The feature backlog. Maintained by the team and AI agents. The owner's picks live in feature_choices.json, never here.",
   "milestones": [
     {
@@ -52,6 +52,14 @@
     {
       "id": "nature",
       "name": "Nature and time"
+    },
+    {
+      "id": "sound",
+      "name": "Sound and music"
+    },
+    {
+      "id": "life",
+      "name": "Money, work and the player"
     }
   ],
   "pillars": {
@@ -178,6 +186,14 @@
           "needs": {
             "F-MAP-LOTS": 1
           }
+        },
+        {
+          "name": "Every floor, true size",
+          "what": "Every building can be entered and every storey reached by its own stairs (and lifts in the towers). Inside is the same size as outside, behind the same windows; each floor is laid out and furnished for what it is (bedrooms upstairs in houses, a flat on each tower floor, offices, shop stores and staff rooms). Floors are built only near the player.",
+          "effort": "XL",
+          "needs": {
+            "F-MAP-LOTS": 1
+          }
         }
       ],
       "suggested": {
@@ -197,7 +213,12 @@
       ],
       "spec": [
         "CITY-004",
-        "PROP-005"
+        "PROP-001",
+        "PROP-005",
+        "PROP-008",
+        "ECO-005",
+        "ECO-010",
+        "ECO-011"
       ],
       "levels": [
         {
@@ -211,15 +232,17 @@
           "what": "A shopkeeper sells a short list of goods through the ledger.",
           "effort": "M",
           "needs": {
-            "F-OBJ-POINTS": 1
+            "F-OBJ-POINTS": 1,
+            "F-ECO-BANK": 0
           }
         },
         {
           "name": "Stock and prices",
-          "what": "Shops hold stock, change prices and can be run by players.",
+          "what": "Shops hold stock that sells down through the day and restocks, prices move with stock within set bounds, the player sells back to them, and the player can rent a market stall and sell to residents.",
           "effort": "XL",
           "needs": {
-            "F-MAP-LOTS": 1
+            "F-MAP-LOTS": 1,
+            "F-ECO-BANK": 1
           }
         }
       ],
@@ -311,6 +334,51 @@
       ],
       "suggested": {
         "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-BLD-CIVIC",
+      "area": "map",
+      "title": "Bank, showroom, library, museum, cinema",
+      "why": "Places for errands and evenings out beyond shops and cafes, and where money, cars and culture will later live.",
+      "pillars": [
+        1,
+        3
+      ],
+      "spec": [
+        "WLD-027",
+        "BANK-001",
+        "CITY-060"
+      ],
+      "levels": [
+        {
+          "name": "None",
+          "what": "No such places; the town has shops, cafes, a mall and a hospital.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Places to visit",
+          "what": "A bank, a car showroom, a library, a museum and a cinema (plus a second hospital and mall), each with its own front and furnished interior, staff at work and residents visiting in their day.",
+          "effort": "M",
+          "needs": {
+            "F-BLD-INSIDE": 1,
+            "F-NPC-ROUTINE": 1
+          }
+        },
+        {
+          "name": "Working places",
+          "what": "They work: accounts and loans at the bank through the ledger, buying a car at the showroom, films on a timetable, exhibitions that change.",
+          "effort": "XL",
+          "needs": {
+            "F-VEH-DRIVE": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
         "depth": 1,
         "full": 2
       }
@@ -440,6 +508,44 @@
       "suggested": {
         "slice": 1,
         "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-MAP-DRESS",
+      "area": "map",
+      "title": "Street dressing",
+      "why": "Squares, parks and streets that look lived in: things to look at, sit on and play on, and signs that say what each building is.",
+      "pillars": [
+        1
+      ],
+      "spec": [],
+      "levels": [
+        {
+          "name": "None",
+          "what": "As now: lamps, benches, flowerbeds and one small fountain in each park, court and square.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Dressed places",
+          "what": "Objects placed as data in the block files, drawn in the town's look: playgrounds in the four big parks (swings, slide, seesaw, sandpit, climbing frame), a statue and a grand fountain on the squares, a bandstand in one park; hanging signs, awnings, painted wall adverts and hoardings, window boxes on buildings; bollards, bins, post boxes, bicycle racks, planters, notice boards, a news kiosk and a telephone box along streets; crates, barrows and bunting at the market. They stand still and block the way where solid.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "Used and changing",
+          "what": "Children play on the swings, slide and seesaw; residents read notice boards and buy at the kiosk; posters and cinema boards change with what is on; bunting only on market days; decorations change with the season.",
+          "effort": "L",
+          "needs": {
+            "F-OBJ-POINTS": 1,
+            "F-NPC-ROUTINE": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 2,
         "full": 2
       }
     },
@@ -655,6 +761,50 @@
       }
     },
     {
+      "id": "F-NPC-SPEECH",
+      "area": "people",
+      "title": "Faces while talking",
+      "why": "Whether a speaker's mouth and face move with what they say.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "CHR-007",
+        "CHR-008",
+        "CHR-009",
+        "ANIM-006"
+      ],
+      "levels": [
+        {
+          "name": "Still faces",
+          "what": "The line shows as text; the face keeps its resting mouth.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Talking mouth",
+          "what": "The speaker's mouth opens and closes in the rhythm of the line's text while it shows, and the face takes the line's mood.",
+          "effort": "M",
+          "needs": {
+            "F-NPC-TALK": 1
+          }
+        },
+        {
+          "name": "Lip sync",
+          "what": "Mouth shapes timed to each sound of the line (from its text, or from voice if Q-14 says so), expressions blended over time, nods and glances on stressed words.",
+          "effort": "L",
+          "needs": {
+            "F-NPC-TALK": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
       "id": "F-NPC-REACT",
       "area": "people",
       "title": "Reacting to the world",
@@ -675,8 +825,8 @@
         },
         {
           "name": "Weather and night",
-          "what": "People shelter from rain, lamps and windows light up, people glance at you.",
-          "effort": "M",
+          "what": "People dress for the weather (coats and hoods on cold or wet days, umbrellas up in rain), hurry for cover when rain starts and wait it out under awnings or indoors; lamps and windows light up; people glance at you.",
+          "effort": "L",
           "needs": {
             "F-WEATHER": 1,
             "F-NPC-ROUTINE": 1
@@ -692,6 +842,48 @@
       "suggested": {
         "slice": 1,
         "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-NPC-DODGE",
+      "area": "people",
+      "title": "Getting out of the way of cars",
+      "why": "Whether residents see a car coming at them and react like people would.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "CITY-049",
+        "CITY-064"
+      ],
+      "levels": [
+        {
+          "name": "Pushed aside",
+          "what": "A car that reaches a resident stops and the resident is pushed aside (CITY-064 as written).",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Dodge",
+          "what": "Residents see a car heading at them and scramble out of its path: a hurried sidestep or jump to the side, then carry on.",
+          "effort": "S",
+          "needs": {
+            "F-VEH-DRIVE": 2
+          }
+        },
+        {
+          "name": "Dodge and tell off",
+          "what": "Once clear, they turn on the driver: a raised fist or arms flung up and a short shout (a speech tag, no words spoken, Q-14), then go back to what they were doing.",
+          "effort": "S",
+          "needs": {
+            "F-VEH-DRIVE": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 2,
+        "depth": 2,
         "full": 2
       }
     },
@@ -844,7 +1036,7 @@
         },
         {
           "name": "Real traffic",
-          "what": "Vehicles choose routes, queue and obey signals.",
+          "what": "Vehicles choose routes, queue and obey signals; residents drive their own cars as part of their daily routine.",
           "effort": "XL",
           "needs": {
             "F-MAP-CITY": 1
@@ -942,6 +1134,53 @@
       }
     },
     {
+      "id": "F-VEH-CRASH",
+      "area": "vehicles",
+      "title": "Crash damage",
+      "why": "Cars driven carelessly leave a mark: street things break, trees fall, corners chip, and someone has to mend them.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "CITY-072",
+        "CITY-073",
+        "CITY-074",
+        "CITY-075",
+        "CITY-076",
+        "Q-27"
+      ],
+      "levels": [
+        {
+          "name": "Bump",
+          "what": "Cars stop against street things, trees and walls; nothing breaks.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Things break",
+          "what": "Any hit breaks street furniture, fells a tree or chips a building corner, with pieces flying; it is whole again the next day.",
+          "effort": "M",
+          "needs": {
+            "F-VEH-DRIVE": 2
+          }
+        },
+        {
+          "name": "Broken until mended",
+          "what": "Damage is kept (saved, the same for every player) until a repair crew from a depot comes and mends it; nearby residents shout at the driver.",
+          "effort": "L",
+          "needs": {
+            "F-VEH-DRIVE": 2,
+            "F-MAP-LOTS": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
       "id": "F-TIME-DAY",
       "area": "nature",
       "title": "Day and night",
@@ -982,6 +1221,48 @@
       }
     },
     {
+      "id": "F-SKY",
+      "area": "nature",
+      "title": "Sky and clouds",
+      "why": "A sky worth looking up at, that changes with the hour.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "WLD-035",
+        "WLD-036"
+      ],
+      "levels": [
+        {
+          "name": "Plain sky",
+          "what": "One hazy colour with a glow round the sun.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Blue sky and drifting clouds",
+          "what": "Blue overhead, hazy horizon, clouds that drift and change with the hour.",
+          "effort": "S",
+          "needs": {
+            "F-TIME-DAY": 1
+          }
+        },
+        {
+          "name": "Clouds follow the weather",
+          "what": "More cloud on cloudy and wet days.",
+          "effort": "M",
+          "needs": {
+            "F-WEATHER": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
       "id": "F-WEATHER",
       "area": "nature",
       "title": "Weather",
@@ -992,7 +1273,8 @@
       "spec": [
         "WLD-003",
         "WLD-004",
-        "WLD-014"
+        "WLD-014",
+        "WLD-037"
       ],
       "levels": [
         {
@@ -1177,6 +1459,345 @@
           "effort": "L",
           "needs": {
             "F-WEATHER": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-SND-WORLD",
+      "area": "sound",
+      "title": "Sounds of the city",
+      "why": "What you hear around you: engines, the tram, voices, birds, doors.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "SND-001",
+        "SND-002",
+        "SND-003",
+        "SND-004",
+        "SND-005",
+        "SND-006",
+        "SND-007",
+        "SND-008"
+      ],
+      "levels": [
+        {
+          "name": "Ambience bed",
+          "what": "One looping street ambience that changes with time of day and indoors or outdoors.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Things make sound",
+          "what": "Each nearby car, tram, resident and door makes its own sound from where it is: engine pitch follows speed, the tram hums and rings its bell at stops, residents murmur when they talk (no words, Q-14), footsteps, birds by day.",
+          "effort": "M",
+          "needs": {
+            "F-VEH-TRAFFIC": 1
+          }
+        },
+        {
+          "name": "Full mix",
+          "what": "Sounds follow the world: rain and wind with the weather, echo indoors and in streets, a mix that stays clear in crowds, and each kind of building with its own room sound.",
+          "effort": "L",
+          "needs": {
+            "F-WEATHER": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-SND-ACTION",
+      "area": "sound",
+      "title": "Interaction sounds",
+      "why": "Feedback when you do something: open a door, sit, use an object, drive.",
+      "pillars": [
+        1,
+        2
+      ],
+      "spec": [
+        "SND-009",
+        "SND-013"
+      ],
+      "levels": [
+        {
+          "name": "Menu clicks",
+          "what": "Sounds for the interface only: prompts, choices, money in and out.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Every action",
+          "what": "Every interaction point and the player car have their own sound: doors, chairs, taps, the car door, engine start, horn, skids.",
+          "effort": "M",
+          "needs": {
+            "F-OBJ-POINTS": 1
+          }
+        },
+        {
+          "name": "Made by creators",
+          "what": "Creators can attach their own sounds to items they make, checked like other user content.",
+          "effort": "M",
+          "needs": {
+            "F-SND-WORLD": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-SND-MUSIC",
+      "area": "sound",
+      "title": "Music",
+      "why": "Mood, and music as something people play and listen to.",
+      "pillars": [
+        1,
+        2
+      ],
+      "spec": [
+        "SND-010",
+        "SND-011",
+        "SND-012",
+        "SND-014"
+      ],
+      "levels": [
+        {
+          "name": "Background score",
+          "what": "A soft score that changes with time of day; mutes in conversations.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Music in the world",
+          "what": "Music comes from places: car radio with a few music stations and podcasts, shop and café music, a busker; the score fades when a source is near.",
+          "effort": "M",
+          "needs": {
+            "F-SND-WORLD": 1
+          }
+        },
+        {
+          "name": "Players make music",
+          "what": "Instruments and speakers players own and play for others, heard by everyone nearby.",
+          "effort": "L",
+          "needs": {
+            "F-SND-WORLD": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-ECO-BANK",
+      "area": "life",
+      "title": "Money and the bank",
+      "why": "Brix in a ledger: what the player earns, keeps, saves and borrows.",
+      "pillars": [
+        2,
+        3
+      ],
+      "spec": [
+        "ECO-001",
+        "ECO-002",
+        "ECO-003",
+        "ECO-009",
+        "BANK-001",
+        "BANK-002",
+        "BANK-007",
+        "BANK-008"
+      ],
+      "levels": [
+        {
+          "name": "Cash only",
+          "what": "Cash in the player's pocket, moved only through the ledger; no bank account.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "One account",
+          "what": "Cash plus one current account at the bank, a statement of every movement.",
+          "effort": "M",
+          "needs": {
+            "F-BLD-CIVIC": 1
+          }
+        },
+        {
+          "name": "Full bank",
+          "what": "Current and savings accounts with interest each game day, loans with a schedule, late fees and repossession on default.",
+          "effort": "L",
+          "needs": {
+            "F-BLD-CIVIC": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-QUEST",
+      "area": "life",
+      "title": "Quests from residents",
+      "why": "Things to do for the people of the town, and money for doing them.",
+      "pillars": [
+        1,
+        2
+      ],
+      "spec": [
+        "QST-001",
+        "QST-002",
+        "QST-003",
+        "QST-004",
+        "QST-005",
+        "QST-006",
+        "QST-007",
+        "QST-008"
+      ],
+      "levels": [
+        {
+          "name": "None",
+          "what": "No quests; money comes from the job only.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Starter quest lines",
+          "what": "A few short quest lines given in conversation, a quest log, rewards through the ledger, progress saved.",
+          "effort": "L",
+          "needs": {
+            "F-NPC-TALK": 1,
+            "F-ECO-BANK": 0
+          }
+        },
+        {
+          "name": "Branching and repeatable",
+          "what": "Choices that branch a quest line to different endings, daily jobs offered by residents worked out from the day, reputation with each resident.",
+          "effort": "L",
+          "needs": {
+            "F-NPC-ROUTINE": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-CHR-DESIGN",
+      "area": "life",
+      "title": "Character designer",
+      "why": "Players make who they are before they walk into town.",
+      "pillars": [
+        2,
+        5
+      ],
+      "spec": [
+        "CHR-001",
+        "CHR-002",
+        "CHR-013"
+      ],
+      "levels": [
+        {
+          "name": "Default character",
+          "what": "Everyone starts as the same player character.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Presets",
+          "what": "Choose from set options for body, skin, hair and outfit.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "Full designer",
+          "what": "Sliders for height, build and face shape, every skin tone, hair, garments, colours, extras and walk, with a live preview; stored as compact values.",
+          "effort": "L",
+          "needs": {}
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-PROP-ESTATE",
+      "area": "life",
+      "title": "Real estate market",
+      "why": "Every building and every unit inside it is owned by someone (a player, a resident or a real estate company) and can be bought, sold and rented.",
+      "pillars": [
+        2,
+        3,
+        4
+      ],
+      "spec": [
+        "PROP-002",
+        "PROP-006",
+        "PROP-009",
+        "PROP-010",
+        "PROP-011",
+        "PROP-012",
+        "PROP-013",
+        "PROP-014",
+        "PROP-015",
+        "PROP-016",
+        "PROP-017",
+        "PROP-018",
+        "PROP-019",
+        "PROP-020",
+        "PROP-021",
+        "PROP-022",
+        "BANK-002"
+      ],
+      "levels": [
+        {
+          "name": "Owners on record",
+          "what": "Every building and unit has an owner in the lot registry (resident, company or the city); For Sale and To Let signs show it. Nothing can be bought.",
+          "effort": "S",
+          "needs": {
+            "F-MAP-LOTS": 1
+          }
+        },
+        {
+          "name": "Buy, sell and rent",
+          "what": "Buildings of every kind (homes, shops, workplaces, utilities) are split into units (flats, shop floors, offices). The player buys, sells and rents buildings or single units through the ledger, from residents and from several real estate companies that each hold a portfolio and an account. Prices come from data: size, kind, block and condition. Mortgages from the bank. Buying and selling carry a transfer tax and agent fee (sinks); owners pay upkeep and tax each day, tenants pay rent. Settled from the clock, not ticked.",
+          "effort": "XL",
+          "needs": {
+            "F-MAP-LOTS": 1,
+            "F-ECO-BANK": 2,
+            "F-BLD-INSIDE": 1
+          }
+        },
+        {
+          "name": "Living market",
+          "what": "Companies buy, sell, list and set rents on their own from demand (empty units, residents moving, nearby shops), so prices and rents rise and fall within data bounds per block. Residents buy and move house. Players compete with companies and each other; a price index and the money supply are published and kept balanced by tuned faucets and sinks.",
+          "effort": "XL",
+          "needs": {
+            "F-MAP-LOTS": 1,
+            "F-NPC-POP": 1
           }
         }
       ],

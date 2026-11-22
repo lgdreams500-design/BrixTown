@@ -1,0 +1,91 @@
+{
+ "note": "Money, the bank, items and shops for the first slice (ECO-001 to ECO-012, BANK-001, BANK-002, BANK-007, BANK-008, PROP-001, PROP-008; ADR-0012). Every amount is in chips (100 chips = 1 brix). Rates are in basis points per game day (100 bp = 1%). The numbers are first guesses for play-testing [ASSUMPTION]. Rules: Tools/citysim/economy.py. Checked by world.economy_problems().",
+ "currency": { "name": "brix", "symbol": "Bx", "minor": "chips", "per": 100 },
+ "system_accounts": {
+  "sys:start": "Creates a new character's starting cash and the bank's welcome deposit.",
+  "sys:founding": "Creates the bank vault and the shop tills when the town begins.",
+  "sys:rewards": "Pays quest and job rewards.",
+  "sys:residents": "What residents spend at the player's market stall (residents have no accounts until CITY-004).",
+  "sys:fees": "Takes late fees and stall rent out of the economy."
+ },
+ "start": { "cash": 4000, "welcome_deposit": 2500 },
+ "day": { "settle_minute": 0, "note": "Accounts are settled for each game day that has ended, at midnight." },
+ "bank": {
+  "lot": "b_3_2_l0",
+  "vault": 5000000,
+  "accounts": {
+   "current": { "name": "Current account", "rate_bp": 0 },
+   "savings": { "name": "Savings account", "rate_bp": 50 }
+  },
+  "loan": {
+   "min": 2000, "max": 30000, "step": 1000,
+   "rate_bp": 150,
+   "terms": [3, 5, 7],
+   "max_loans": 1,
+   "late_fee": 300,
+   "default_after_missed": 3,
+   "note": "Simple interest: total = principal + principal x rate x term. Paid in equal daily instalments from the current account at each day's end, the first at the end of the day after the loan is taken; the last instalment takes what is left."
+  }
+ },
+ "items": {
+  "bread":    { "name": "Loaf of bread",       "price": 250,  "sell": true },
+  "apples":   { "name": "Bag of apples",       "price": 180,  "sell": true },
+  "milk":     { "name": "Bottle of milk",      "price": 150,  "sell": true },
+  "cheese":   { "name": "Wedge of cheese",     "price": 420,  "sell": true },
+  "jam":      { "name": "Jar of jam",          "price": 300,  "sell": true },
+  "flowers":  { "name": "Bunch of flowers",    "price": 600,  "sell": true },
+  "seeds":    { "name": "Packet of seeds",     "price": 200,  "sell": true },
+  "newspaper":{ "name": "Newspaper",           "price": 120,  "sell": false },
+  "map":      { "name": "Town map",            "price": 300,  "sell": true },
+  "umbrella": { "name": "Umbrella",            "price": 900,  "sell": true },
+  "sweets":   { "name": "Bag of sweets",       "price": 100,  "sell": true },
+  "postcard": { "name": "Postcard",            "price": 80,   "sell": true },
+  "scarf":    { "name": "Wool scarf",          "price": 1800, "sell": true },
+  "hat":      { "name": "Felt hat",            "price": 2200, "sell": true },
+  "book":     { "name": "Novel",               "price": 1200, "sell": true },
+  "candle":   { "name": "Beeswax candle",      "price": 450,  "sell": true },
+  "teapot":   { "name": "Teapot",              "price": 1600, "sell": true },
+  "coffee":   { "name": "Coffee to go",        "price": 180,  "sell": false },
+  "cake":     { "name": "Slice of cake",       "price": 320,  "sell": false },
+  "sandwich": { "name": "Sandwich",            "price": 450,  "sell": false },
+  "parcel":   { "name": "Parcel",              "price": 0,    "sell": false, "quest": true },
+  "trowel":   { "name": "Trowel marked \"H.\"", "price": 0,   "sell": false, "quest": true },
+  "rare_book":{ "name": "Rare first edition",  "price": 6000, "sell": true, "quest": true }
+ },
+ "shops": {
+  "grocer": { "name": "Grocer", "match": { "kind": "shop", "name_has": "Grocer" }, "sells": ["bread", "apples", "milk", "cheese", "jam", "flowers", "seeds"], "buys": ["bread", "apples", "milk", "cheese", "jam", "flowers", "seeds"], "till": 40000 },
+  "kiosk":  { "name": "Kiosk",  "match": { "kind": "shop", "name_has": "Kiosk" }, "sells": ["newspaper", "map", "umbrella", "sweets", "postcard"], "buys": ["map", "umbrella", "sweets", "postcard"], "till": 20000 },
+  "arcade": { "name": "Arcade", "match": { "kind": "shop", "name_has": "Arcade" }, "sells": ["scarf", "hat", "book", "candle", "teapot", "umbrella"], "buys": ["scarf", "hat", "book", "candle", "teapot", "umbrella", "rare_book"], "till": 80000 },
+  "cafe":   { "name": "Café",   "match": { "kind": "food" }, "sells": ["coffee", "cake", "sandwich", "bread"], "buys": [], "till": 15000 }
+ },
+ "stock": {
+  "target": 10,
+  "restock_minute": 360,
+  "visit_acts": ["shop", "eat"],
+  "note": "Each resident's shop visit (a stay doing one of visit_acts) buys one item the shop sells, chosen by a fixed hash of the resident, the day and the shop."
+ },
+ "price": {
+  "slope_bp": 6000,
+  "min_bp": 8000,
+  "max_bp": 16000,
+  "sell_share_bp": 5000,
+  "note": "factor = 1 + slope x (target - stock) / target, kept between min and max; price = usual price x factor, in whole chips. The shop pays sell_share of its current price for what it buys."
+ },
+ "reputation": {
+  "min": -100, "max": 100,
+  "discount_bp_at_max": 1000,
+  "markup_bp_at_min": 1500,
+  "note": "A shop's prices to the player move with the best reputation the player has with anyone who works there."
+ },
+ "stall": {
+  "lot": "b_3_4_l0",
+  "rent": 1500,
+  "slots": 6,
+  "open": [480, 1080],
+  "visit_acts": ["shop"],
+  "buy_bp": 1000,
+  "elasticity": 3,
+  "max_price_factor_bp": 30000,
+  "note": "Rent is paid for the game day it is taken. A resident who comes to the market while the stall is open looks at each item set out; they buy one with chance buy_bp x (usual price / price)^elasticity, at most 95%, decided by a fixed hash. Prices may be set from 1 chip up to max_price_factor x the usual price."
+ }
+}

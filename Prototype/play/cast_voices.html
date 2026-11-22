@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brix Town: cast voices</title>
+<style>
+  /* Voice samples for the cast: audio/voice_sample/cast.json, voiced offline by Tools/voice/make_voice_samples.py (Kokoro,
+     docs/licenses/kokoro-tts.md). Each character says their opening line, then the player replies. Needs the slice server
+     (serve_play.ps1), because the page reads cast.json. */
+  :root { --ink: #17171c; --panel: #212128; --line: #34343d; --cream: #d9cfb6; --dim: #a79f8c; --lantern: #f0a35a; --teal: #6fa3a2;
+    --name: Constantia, "Palatino Linotype", Georgia, serif; --data: Bahnschrift, "Segoe UI", sans-serif; }
+  html, body { margin: 0; background: var(--ink); color: var(--cream); font-family: var(--data); }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 16px 48px; }
+  h1 { font-family: var(--name); font-weight: normal; font-size: 30px; margin: 0 0 6px; }
+  p.lede { color: var(--dim); line-height: 1.5; margin: 0 0 14px; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 14px; color: var(--dim); margin-bottom: 16px; }
+  .seg button { border-radius: 0; margin-left: -1px; } .seg button:first-child { border-radius: 6px 0 0 6px; } .seg button:last-child { border-radius: 0 6px 6px 0; }
+  .seg button.sel { background: var(--lantern); color: var(--ink); }
+  .char { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+  .char.on { border-color: var(--lantern); }
+  .who { display: flex; align-items: baseline; gap: 10px; }
+  .who b { font-family: var(--name); font-weight: normal; font-size: 21px; }
+  .who span { font-size: 13px; color: var(--teal); }
+  .chosen { font-size: 12px; color: var(--ink); background: var(--teal); border-radius: 4px; padding: 1px 7px; }
+  .line { margin: 6px 0 2px; } .reply { color: var(--dim); font-size: 14px; margin-bottom: 10px; }
+  .line.on, .reply.on { color: var(--lantern); }
+  .opts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .moods { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; font-size: 13px; color: var(--dim); }
+  .moods button { font-size: 13px; padding: 5px 10px; color: var(--teal); border-color: rgba(111,163,162,.6); }
+  button { font: inherit; font-size: 14px; background: transparent; color: var(--lantern); border: 1px solid rgba(240,163,90,.6); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+  button:disabled { opacity: .45; cursor: default; }
+  #err { color: var(--lantern); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Voices for the townspeople</h1>
+  <p class="lede">Each resident greets you and you answer. The ticked voice is the one chosen for each character; the other is kept for comparison. The mood buttons play the chosen voice saying the same line happy, sad, angry, surprised or thinking. The voices are made on this computer by a neural voice model, and nothing is sent online.</p>
+  <div class="bar"><span>Your voice</span><span class="seg" id="seg"></span></div>
+  <div id="list"></div>
+  <p id="err"></p>
+</main>
+<script>
+  const DIR = "audio/voice_sample/";
+  let cast = null, me = "man", busy = false;
+  const list = document.getElementById("list"), seg = document.getElementById("seg");
+  const playFile = (f, el) => new Promise(r => { const a = new Audio(DIR + f + ".wav"); el.classList.add("on");
+    const done = x => { el.classList.remove("on"); r(x); }; a.onended = () => done("ok"); a.onerror = () => done("error"); a.play().catch(() => done("blocked")); });
+  async function play(ci, key) {
+    if (busy) return "busy"; busy = true; const c = cast.characters[ci], card = list.children[ci];
+    document.querySelectorAll("button").forEach(b => b.disabled = true); card.classList.add("on");
+    const a = await playFile(c.id + "_" + key, card.querySelector(".line")); await new Promise(r => setTimeout(r, 350));
+    const b = await playFile("you_" + me + "_" + c.id, card.querySelector(".reply"));
+    card.classList.remove("on"); document.querySelectorAll("button").forEach(x => x.disabled = false); busy = false; return [a, b];
+  }
+  async function playMood(ci, mood) {                    // the chosen voice saying the line in one mood
+    if (busy) return "busy"; busy = true; const c = cast.characters[ci], card = list.children[ci];
+    document.querySelectorAll("button").forEach(b => b.disabled = true); card.classList.add("on");
+    const a = await playFile(c.id + "_" + c.chosen + "_" + mood, card.querySelector(".line"));
+    card.classList.remove("on"); document.querySelectorAll("button").forEach(x => x.disabled = false); busy = false; return a;
+  }
+  function build() {
+    for (const [k, o] of Object.entries(cast.player.options)) {
+      const b = document.createElement("button"); b.textContent = o.about[0].toUpperCase() + o.about.slice(1); if (k === me) b.className = "sel";
+      b.addEventListener("click", () => { me = k; seg.querySelectorAll("button").forEach(x => x.classList.toggle("sel", x === b)); }); seg.appendChild(b);
+    }
+    cast.characters.forEach((c, ci) => {
+      const card = document.createElement("div"); card.className = "char";
+      card.innerHTML = '<div class="who"><b></b><span></span></div><div class="line"></div><div class="reply"></div><div class="opts"></div>';
+      card.querySelector("b").textContent = c.name; card.querySelector(".who span").textContent = c.role;
+      if (c.chosen) { const t = document.createElement("span"); t.className = "chosen"; t.textContent = "chosen"; card.querySelector(".who").appendChild(t); }
+      card.querySelector(".line").textContent = "“" + c.say + "”"; card.querySelector(".reply").textContent = "You: “" + c.reply + "”";
+      for (const [key, o] of Object.entries(c.options)) {
+        const b = document.createElement("button"); b.textContent = "▶ Voice " + key.toUpperCase() + " · " + o.about + (c.chosen === key ? " ✓" : ""); if (c.chosen === key) b.style.borderWidth = "2px";
+        b.addEventListener("click", () => play(ci, key)); card.querySelector(".opts").appendChild(b);
+      }
+      if (c.chosen && cast.moods) {
+        const row = document.createElement("div"); row.className = "moods"; row.textContent = "Moods:";
+        for (const [m, v] of Object.entries(cast.moods)) {
+          if (typeof v !== "object") continue;
+          const b = document.createElement("button"); b.textContent = "▶ " + m; b.addEventListener("click", () => playMood(ci, m)); row.appendChild(b);
+        }
+        card.appendChild(row);
+      }
+      list.appendChild(card);
+    });
+  }
+  fetch(DIR + "cast.json").then(r => r.json()).then(j => { cast = j; build(); }).catch(e => { document.getElementById("err").textContent = "Could not read the cast (" + e.message + "). Open this page through the slice server."; });
+  window.castPage = { play, playMood, get cast() { return cast; }, set voice(v) { me = v; } };
+</script>
+</body>
+</html>

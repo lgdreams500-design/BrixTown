@@ -1,0 +1,33 @@
+{
+ "note": "Who speaks in which voice (ADR-0019, SND-018). Voices are Kokoro v1.0 voices (docs/licenses/kokoro-tts.md), voiced offline by Tools/voice/make_dialogue_voices.py into Prototype/play/audio/voices/. Each role has a pool; a resident takes one by a fixed hash of their id, so they always sound the same. 'pick' marks the owner's choice from the cast samples (2026-11-22); the rest were added for variety (owner chose 'a few voices per role') and can be swapped. shift raises (above 1) or lowers (below 1) pitch and voice size together; speed is the pace. Moods are the level the owner chose (2026-11-22).",
+ "roles": {
+  "cafe":       [ { "voice": "af_bella", "lang": "en-us", "pick": "Mina" }, { "voice": "am_liam", "lang": "en-us" }, { "voice": "bf_lily", "lang": "en-gb" } ],
+  "child":      [ { "voice": "af_nova", "lang": "en-us", "shift": 1.24, "speed": 1.05, "pick": "Bo" }, { "voice": "af_sky", "lang": "en-us", "shift": 1.28 }, { "voice": "am_puck", "lang": "en-us", "shift": 1.26 } ],
+  "nurse":      [ { "voice": "bm_george", "lang": "en-gb", "pick": "Tomas" }, { "voice": "af_jessica", "lang": "en-us" }, { "voice": "am_adam", "lang": "en-us" } ],
+  "elder":      [ { "voice": "af_sarah", "lang": "en-us", "shift": 0.92, "speed": 0.88, "pick": "Edda" }, { "voice": "bm_daniel", "lang": "en-gb", "shift": 0.93, "speed": 0.88 }, { "voice": "bf_isabella", "lang": "en-gb", "shift": 0.93, "speed": 0.88 } ],
+  "commuter":   [ { "voice": "bm_lewis", "lang": "en-gb", "speed": 1.05, "pick": "Dev" }, { "voice": "af_kore", "lang": "en-us" }, { "voice": "am_echo", "lang": "en-us" } ],
+  "clerk":      [ { "voice": "af_river", "lang": "en-us" }, { "voice": "bm_fable", "lang": "en-gb" }, { "voice": "af_alloy", "lang": "en-us" } ],
+  "courier":    [ { "voice": "am_eric", "lang": "en-us" }, { "voice": "af_aoede", "lang": "en-us" }, { "voice": "am_fenrir", "lang": "en-us" } ],
+  "gardener":   [ { "voice": "am_onyx", "lang": "en-us" }, { "voice": "bf_emma", "lang": "en-gb" }, { "voice": "af_heart", "lang": "en-us" } ],
+  "maker":      [ { "voice": "bm_daniel", "lang": "en-gb" }, { "voice": "af_kore", "lang": "en-us" }, { "voice": "am_adam", "lang": "en-us" } ],
+  "shopkeeper": [ { "voice": "bf_emma", "lang": "en-gb" }, { "voice": "am_eric", "lang": "en-us" }, { "voice": "af_heart", "lang": "en-us" } ],
+  "student":    [ { "voice": "af_sky", "lang": "en-us" }, { "voice": "am_puck", "lang": "en-us" }, { "voice": "af_aoede", "lang": "en-us" } ],
+  "utility":    [ { "voice": "am_echo", "lang": "en-us" }, { "voice": "am_liam", "lang": "en-us" }, { "voice": "af_river", "lang": "en-us" } ]
+ },
+ "player": {
+  "note": "The player's voice. The character designer has no voice choice yet, so the default is used.",
+  "default": "woman",
+  "voices": { "man": { "voice": "am_michael", "lang": "en-us" }, "woman": { "voice": "af_nicole", "lang": "en-us" } },
+  "default_name": "Sam"
+ },
+ "moods": {
+  "neutral":   { "semitones": 0,    "speed": 1.0,  "tilt": 0,     "edge": 0,   "peak": 0.85 },
+  "happy":     { "semitones": 1.5,  "speed": 1.08, "tilt": 0.08,  "edge": 0,   "peak": 0.9,  "punctuation": "lift" },
+  "sad":       { "semitones": -1.5, "speed": 0.84, "tilt": -0.3,  "edge": 0,   "peak": 0.62, "punctuation": "soften" },
+  "angry":     { "semitones": 0.5,  "speed": 1.1,  "tilt": 0.18,  "edge": 1.8, "peak": 0.95, "punctuation": "lift" },
+  "surprised": { "semitones": 2.5,  "speed": 1.02, "tilt": 0.1,   "edge": 0,   "peak": 0.9,  "punctuation": "surprise" },
+  "thinking":  { "semitones": -0.7, "speed": 0.86, "tilt": -0.12, "edge": 0,   "peak": 0.72, "punctuation": "pause" }
+ },
+ "play": { "gap_s": 0.06, "blank_gap_s": 0.35, "volume": 0.9 },
+ "status": { "complete": false, "note": "The dialogue is still being revised (owner, 2026-11-22), so lines are voiced only in part; the rest fall back to wordless syllables. Set complete to true and run make_dialogue_voices.py when the lines are final." }
+}

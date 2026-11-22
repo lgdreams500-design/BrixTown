@@ -1,4 +1,4 @@
-"""Wasted - art style test 01: painterly old-quarter back street.
+"""Brix Town - art style test 01: painterly old-quarter back street.
 
 Run inside Blender (Scripting workspace, Python console):
     exec(compile(open("C:/Projects/Wasted/Tools/blender/style_test_01.py").read(), "style_test_01.py", "exec"))

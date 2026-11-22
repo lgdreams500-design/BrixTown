@@ -1,0 +1,399 @@
+{
+ "note": "Conversations with residents (CITY-007, F-NPC-TALK level 1). The first rule that matches a resident picks their conversation; a resident listed in 'residents' gets that conversation instead (for their own storyline later). A node has the resident's line ('say'), its emotion tag ('mood', used by the faces in CHR-008) and up to 9 replies. A reply has the player's 'text' and 'next': a node id, or null to end the talk. Optional on a reply: 'if', a list of flags that must be set ('name') or not set ('!name'), 'do', flags it sets, and 'act': 'shop' or 'bank' opens that counter where the resident is (ECO-011, BANK-007). Flags are kept per resident; quests will read and set them later. In lines and replies, {name} {role} {place} {doing} {greeting} {weekday} {season} are filled in. Checked by Tools/worldgen/test_world.py.",
+ "moods": ["neutral", "happy", "sad", "angry", "surprised", "thinking"],
+ "vars": ["name", "role", "place", "doing", "greeting", "weekday", "season"],
+ "role_words": {
+  "shopkeeper": "shopkeeper",
+  "cafe": "café hand",
+  "nurse": "nurse",
+  "maker": "workshop hand",
+  "clerk": "clerk",
+  "commuter": "office worker",
+  "courier": "courier",
+  "gardener": "gardener",
+  "elder": "pensioner",
+  "student": "student",
+  "utility": "utility worker",
+  "child": "schoolchild"
+ },
+ "rules": [
+  { "conversation": "clinic", "roles": ["nurse"], "acts": ["work"], "walking": false },
+  { "conversation": "counter", "roles": ["shopkeeper", "cafe"], "acts": ["work", "sell"], "walking": false },
+  { "conversation": "child", "roles": ["child"] },
+  { "conversation": "passerby", "walking": true },
+  { "conversation": "elder", "roles": ["elder"] },
+  { "conversation": "chat" }
+ ],
+ "residents": {},
+ "conversations": {
+  "child": {
+   "title": "At the playground",
+   "start": "hello",
+   "nodes": {
+    "hello": {
+     "say": "Hi! Are you here to play too?",
+     "mood": "happy",
+     "options": [
+      { "text": "What's the best thing here?", "next": "best" },
+      { "text": "What did you do at school?", "next": "school" },
+      { "text": "Bye!", "next": null }
+     ]
+    },
+    "menu": {
+     "say": "Do you want to see me go down the slide?",
+     "mood": "neutral",
+     "options": [
+      { "text": "Go on, then!", "next": "watch" },
+      { "text": "What's the best thing here?", "next": "best", "if": ["!told_secret"] },
+      { "text": "What's seven times eight?", "next": "quiz", "if": ["learned"] },
+      { "text": "I have to go. Bye!", "next": null }
+     ]
+    },
+    "best": {
+     "say": "The slide! If you go down on your tummy it's faster. Don't tell my mum.",
+     "mood": "happy",
+     "options": [
+      { "text": "Your secret's safe.", "next": "menu", "do": ["told_secret"] },
+      { "text": "Bye!", "next": null, "do": ["told_secret"] }
+     ]
+    },
+    "school": {
+     "say": "We did sums. I got them all right except one.",
+     "mood": "thinking",
+     "options": [
+      { "text": "Which one?", "next": "which" },
+      { "text": "Well done!", "next": "menu" }
+     ]
+    },
+    "which": {
+     "say": "Seven times eight. It's always seven times eight.",
+     "mood": "sad",
+     "options": [
+      { "text": "It's fifty-six.", "next": "fiftysix" },
+      { "text": "That one's hard for everyone.", "next": "menu" }
+     ]
+    },
+    "fiftysix": {
+     "say": "Fifty-six. Fifty-six! I'm going to remember that forever!",
+     "mood": "surprised",
+     "options": [
+      { "text": "Good!", "next": "menu", "do": ["learned"] },
+      { "text": "Bye!", "next": null, "do": ["learned"] }
+     ]
+    },
+    "watch": {
+     "say": "Wheee! Did you see? Did you see?",
+     "mood": "happy",
+     "options": [
+      { "text": "That was fast!", "next": "menu" },
+      { "text": "Bye!", "next": null }
+     ]
+    },
+    "quiz": {
+     "say": "Fifty-six! See, I told you I'd remember.",
+     "mood": "happy",
+     "options": [
+      { "text": "Brilliant.", "next": "menu" },
+      { "text": "Bye!", "next": null }
+     ]
+    }
+   }
+  },
+  "counter": {
+   "title": "At the counter",
+   "start": "hello",
+   "nodes": {
+    "hello": {
+     "say": "{greeting}! Welcome to {place}. What can I do for you?",
+     "mood": "happy",
+     "options": [
+      { "text": "I'd like to buy something.", "next": null, "act": ["shop"] },
+      { "text": "What's good today?", "next": "today" },
+      { "text": "How's business?", "next": "business" },
+      { "text": "What's new in town?", "next": "news" },
+      { "text": "Just looking, thanks.", "next": null }
+     ]
+    },
+    "menu": {
+     "say": "Anything else I can help with?",
+     "mood": "neutral",
+     "options": [
+      { "text": "I'd like to buy something.", "next": null, "act": ["shop"] },
+      { "text": "What's good today?", "next": "today" },
+      { "text": "How's business?", "next": "business" },
+      { "text": "What's new in town?", "next": "news", "if": ["!heard_rumour"] },
+      { "text": "Any more on those flowers?", "next": "flowers", "if": ["heard_rumour"] },
+      { "text": "That's all, thanks.", "next": null }
+     ]
+    },
+    "today": {
+     "say": "The {season} stock came in this morning. Honestly? Whatever's nearest the window. That's what sells fastest.",
+     "mood": "thinking",
+     "options": [
+      { "text": "I'll take a look. Anything else?", "next": "menu" },
+      { "text": "I'll think about it.", "next": null }
+     ]
+    },
+    "business": {
+     "say": "Steady. Market days are busy, the rest of the week is regulars. You'd be surprised how many come in just to talk.",
+     "mood": "thinking",
+     "options": [
+      { "text": "I can see why.", "next": "menu" },
+      { "text": "Then I'll leave you to it.", "next": null }
+     ]
+    },
+    "news": {
+     "say": "Someone's been planting flowers round the fountain at night. Nobody's owned up yet.",
+     "mood": "surprised",
+     "options": [
+      { "text": "Who do you think it is?", "next": "news_who" },
+      { "text": "Odd. Anyway...", "next": "menu" }
+     ]
+    },
+    "news_who": {
+     "say": "No idea! If you find out, tell me first. I've got a bet on with the baker.",
+     "mood": "happy",
+     "options": [
+      { "text": "I'll keep an eye out.", "next": "menu", "do": ["heard_rumour"] },
+      { "text": "Bye for now.", "next": null, "do": ["heard_rumour"] }
+     ]
+    },
+    "flowers": {
+     "say": "Not yet. Ask a gardener. They notice everything that grows.",
+     "mood": "thinking",
+     "options": [
+      { "text": "Good idea.", "next": "menu" },
+      { "text": "Bye for now.", "next": null }
+     ]
+    }
+   }
+  },
+  "clinic": {
+   "title": "At the clinic",
+   "start": "hello",
+   "nodes": {
+    "hello": {
+     "say": "{greeting}. Are you here to be seen, or just visiting?",
+     "mood": "neutral",
+     "options": [
+      { "text": "I'm feeling a bit off.", "next": "symptom" },
+      { "text": "Just visiting. Long shift?", "next": "shift" },
+      { "text": "Sorry, wrong door.", "next": null }
+     ]
+    },
+    "menu": {
+     "say": "What else can I help with?",
+     "mood": "neutral",
+     "options": [
+      { "text": "I'm feeling a bit off.", "next": "symptom" },
+      { "text": "How's the shift going?", "next": "shift" },
+      { "text": "Nothing, thanks.", "next": null }
+     ]
+    },
+    "symptom": {
+     "say": "Let's see. Tired, hungry, or something worse?",
+     "mood": "thinking",
+     "options": [
+      { "text": "Tired.", "next": "tired" },
+      { "text": "Hungry.", "next": "hungry" },
+      { "text": "Actually, I'm fine.", "next": "menu" }
+     ]
+    },
+    "tired": {
+     "say": "Then the cure is a bed, not a pill. Go home, sleep, and come back if it doesn't pass.",
+     "mood": "happy",
+     "options": [
+      { "text": "Thanks, I will.", "next": null },
+      { "text": "Can I ask something else?", "next": "menu" }
+     ]
+    },
+    "hungry": {
+     "say": "There's a café on most corners. Eat something warm and drink some water. Doctor's orders. Well, nurse's.",
+     "mood": "happy",
+     "options": [
+      { "text": "Thanks, I will.", "next": null },
+      { "text": "Can I ask something else?", "next": "menu" }
+     ]
+    },
+    "shift": {
+     "say": "Since six. Mostly small things: scraped knees, and sore backs from the market stalls.",
+     "mood": "thinking",
+     "options": [
+      { "text": "That sounds hard.", "next": "shift2" },
+      { "text": "I'll let you get on.", "next": null }
+     ]
+    },
+    "shift2": {
+     "say": "It's good work. People tell you things in here they wouldn't tell anyone else.",
+     "mood": "happy",
+     "options": [
+      { "text": "Can I ask something else?", "next": "menu" },
+      { "text": "I'll let you get on.", "next": null }
+     ]
+    }
+   }
+  },
+  "passerby": {
+   "title": "In passing",
+   "start": "hello",
+   "nodes": {
+    "hello": {
+     "say": "Oh! Sorry, I can't stop long. I'm {doing}.",
+     "mood": "surprised",
+     "options": [
+      { "text": "Busy day?", "next": "busy" },
+      { "text": "Which way is Market Square?", "next": "market" },
+      { "text": "Don't let me keep you.", "next": null }
+     ]
+    },
+    "busy": {
+     "say": "Same as every {weekday}. The day doesn't run itself!",
+     "mood": "happy",
+     "options": [
+      { "text": "Fair enough.", "next": null },
+      { "text": "One quick question...", "next": "market" }
+     ]
+    },
+    "market": {
+     "say": "Market Square's in the middle of town. Head for the fountain and you can't miss it.",
+     "mood": "neutral",
+     "options": [
+      { "text": "And the tram?", "next": "tram" },
+      { "text": "Thanks!", "next": null }
+     ]
+    },
+    "tram": {
+     "say": "Tram Street runs right across the town. Wait at a stop and one comes along soon enough.",
+     "mood": "neutral",
+     "options": [
+      { "text": "Thanks! Busy day, then?", "next": "busy" },
+      { "text": "Thanks!", "next": null }
+     ]
+    }
+   }
+  },
+  "elder": {
+   "title": "An old hand",
+   "start": "hello",
+   "nodes": {
+    "hello": {
+     "say": "{greeting}, young one. Stay a while, if you like.",
+     "mood": "happy",
+     "options": [
+      { "text": "How long have you lived here?", "next": "years" },
+      { "text": "Any advice for someone new?", "next": "advice" },
+      { "text": "Another time.", "next": null }
+     ]
+    },
+    "menu": {
+     "say": "Anything else on your mind?",
+     "mood": "neutral",
+     "options": [
+      { "text": "How long have you lived here?", "next": "years", "if": ["!told_years"] },
+      { "text": "Tell me more about the old days.", "next": "before", "if": ["told_years"] },
+      { "text": "Any advice for someone new?", "next": "advice" },
+      { "text": "Goodbye.", "next": null }
+     ]
+    },
+    "years": {
+     "say": "All my life. Born two streets from here, and I'll likely end up two streets the other way.",
+     "mood": "happy",
+     "options": [
+      { "text": "What was it like back then?", "next": "before", "do": ["told_years"] },
+      { "text": "Something else...", "next": "menu", "do": ["told_years"] }
+     ]
+    },
+    "before": {
+     "say": "Fewer towers, more gardens. The market was twice the size, and nobody locked a door.",
+     "mood": "thinking",
+     "options": [
+      { "text": "Do you miss it?", "next": "miss" },
+      { "text": "Something else...", "next": "menu" }
+     ]
+    },
+    "miss": {
+     "say": "Some of it. But the young ones still meet at the fountain at dusk, same as we did. That part never changed.",
+     "mood": "sad",
+     "options": [
+      { "text": "That's nice to hear.", "next": "menu" },
+      { "text": "I should go.", "next": null }
+     ]
+    },
+    "advice": {
+     "say": "Learn your neighbours' names. Everything else follows from that.",
+     "mood": "thinking",
+     "options": [
+      { "text": "I'll try.", "next": "menu" },
+      { "text": "Goodbye.", "next": null }
+     ]
+    }
+   }
+  },
+  "chat": {
+   "title": "A chat",
+   "start": "hello",
+   "nodes": {
+    "hello": {
+     "say": "{greeting}. Can I help you?",
+     "mood": "neutral",
+     "options": [
+      { "text": "Just saying hello. I'm new in town.", "next": "new" },
+      { "text": "What do you do?", "next": "job" },
+      { "text": "Nice {season}, isn't it?", "next": "weather" },
+      { "text": "Sorry, never mind.", "next": null }
+     ]
+    },
+    "menu": {
+     "say": "Anything else?",
+     "mood": "neutral",
+     "options": [
+      { "text": "I'm new in town, by the way.", "next": "new", "if": ["!met"] },
+      { "text": "What do you do?", "next": "job" },
+      { "text": "Nice {season}, isn't it?", "next": "weather" },
+      { "text": "Goodbye.", "next": null }
+     ]
+    },
+    "new": {
+     "say": "Then welcome! I'm {name}. Most people here are friendly, if you give them a minute.",
+     "mood": "happy",
+     "options": [
+      { "text": "Nice to meet you, {name}.", "next": "menu", "do": ["met"] },
+      { "text": "Thanks. See you around.", "next": null, "do": ["met"] }
+     ]
+    },
+    "job": {
+     "say": "I'm a {role}. It's not glamorous, but it's mine.",
+     "mood": "neutral",
+     "options": [
+      { "text": "What's that like?", "next": "job2" },
+      { "text": "Something else...", "next": "menu" }
+     ]
+    },
+    "job2": {
+     "say": "Up early, home tired, same as anyone. The good days are the ones where something surprises you.",
+     "mood": "thinking",
+     "options": [
+      { "text": "Like a stranger saying hello?", "next": "surprise" },
+      { "text": "Something else...", "next": "menu" }
+     ]
+    },
+    "surprise": {
+     "say": "Ha! Maybe. Don't make it a habit.",
+     "mood": "happy",
+     "options": [
+      { "text": "No promises.", "next": "menu" },
+      { "text": "See you around.", "next": null }
+     ]
+    },
+    "weather": {
+     "say": "For {season}? It'll do. Could be worse. Could be raining.",
+     "mood": "happy",
+     "options": [
+      { "text": "True enough.", "next": "menu" },
+      { "text": "See you around.", "next": null }
+     ]
+    }
+   }
+  }
+ }
+}

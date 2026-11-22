@@ -1,0 +1,431 @@
+{
+ "note": "Quest lines and daily jobs (QST-001 to QST-008, ADR-0012). A quest line has a giver (null: it starts with a new game), the quest lines that must be finished first ('needs'), an offer (the giver's conversation that starts it), stages and endings. A stage has a log line and a goal: talk (to a resident, using the stage's own nodes), go (into a lot, optionally between two minutes of the day), near (within r metres of a point), have (an item), bank (open), money (cash and accounts together at least), stall (rented) or stall_sold (items sold since the stage began). Goals other than talk move on by themselves to 'then'. 'on_done' gives or takes items when a goal is met. Nodes use the dialogue format (World/rules/dialogue.json) plus, on a reply, 'act': start | stage:<id> | end:<id> | give:<item> | take:<item> | rep:<n> (with the person you are talking to), and 'need': have:<item> | !have:<item> | money:<chips>. Endings pay from sys:rewards ('pay', chips), give and take items and change reputation ('rep'). Jobs: which resident offers which job on a day is worked out from the day (Tools/citysim/quests.py). Amounts are chips [ASSUMPTION]. Checked by world.quest_problems().",
+ "vars": ["player", "item", "from", "to", "by", "hours", "pay", "minutes"],
+ "first": "new_in_town",
+ "quests": {
+  "new_in_town": {
+   "title": "New in town",
+   "summary": "Settle in: meet your neighbour, open a bank account, and do her a small favour.",
+   "starter": true,
+   "giver": null,
+   "needs": [],
+   "start": "meet",
+   "stages": {
+    "meet": {
+     "log": "Your new neighbour Mei works at the Tram Café on Market Square. Go and say hello.",
+     "goal": { "talk": "r0504" },
+     "start": "hello",
+     "nodes": {
+      "hello": {
+       "say": "{greeting}! You must be {player}, from across the courtyard. I'm Mei. Welcome to Linden!",
+       "mood": "happy",
+       "options": [
+        { "text": "Thanks! I've only just arrived.", "next": "money" },
+        { "text": "Hello. Is it always this busy?", "next": "busy" }
+       ]
+      },
+      "busy": {
+       "say": "Only when the tram's in! You'll get used to it. Have you sorted yourself out yet? Money and all that?",
+       "mood": "thinking",
+       "options": [ { "text": "Not yet. Where do I start?", "next": "money" } ]
+      },
+      "money": {
+       "say": "Open an account at Linden Bank first. Nobody here pays in cash, and the bank gives newcomers a little something to start. Then... could I ask a favour?",
+       "mood": "neutral",
+       "options": [
+        { "text": "Of course. What is it?", "next": "favour" },
+        { "text": "Depends on the favour.", "next": "favour" }
+       ]
+      },
+      "favour": {
+       "say": "I'm stuck here until close and there's no bread at home. Could you bring me a loaf from a grocer? Market Grocer is just behind the square.",
+       "mood": "thinking",
+       "options": [
+        { "text": "Bank first, then bread. Leave it to me.", "next": null, "act": ["stage:bank"] }
+       ]
+      }
+     }
+    },
+    "bank": {
+     "log": "Open an account at Linden Bank, on Linden's north side. Go inside and press B at the counter.",
+     "goal": { "bank": "open" },
+     "then": "stage:bread"
+    },
+    "bread": {
+     "log": "Buy a loaf of bread at a grocer. Inside a shop, press B.",
+     "goal": { "have": "bread" },
+     "then": "stage:back"
+    },
+    "back": {
+     "log": "Take the bread to Mei.",
+     "goal": { "talk": "r0504" },
+     "start": "back",
+     "nodes": {
+      "back": {
+       "say": "You're back! Did you find a loaf?",
+       "mood": "happy",
+       "options": [
+        { "text": "Here you are. Call it a welcome present.", "next": "gift", "need": ["have:bread"], "act": ["take:bread"] },
+        { "text": "Here. That'll be the price on the shelf, please.", "next": "paid", "need": ["have:bread"], "act": ["take:bread"] },
+        { "text": "About that... I ate it on the way.", "next": "ate" },
+        { "text": "Not yet. I'll be back.", "next": null }
+       ]
+      },
+      "gift": {
+       "say": "Oh, that's kind! Then the next coffee's on me. And I'll tell everyone at the café about you.",
+       "mood": "happy",
+       "options": [ { "text": "See you around, Mei.", "next": null, "act": ["end:gift"] } ]
+      },
+      "paid": {
+       "say": "Of course! Here you go. A head for business already, I see.",
+       "mood": "neutral",
+       "options": [ { "text": "Thanks, Mei.", "next": null, "act": ["end:paid"] } ]
+      },
+      "ate": {
+       "say": "You ate my bread? Well. At least you're honest. I'll manage.",
+       "mood": "sad",
+       "options": [ { "text": "Sorry, Mei.", "next": null, "act": ["end:ate"] } ]
+      }
+     }
+    }
+   },
+   "endings": {
+    "gift": { "log": "You gave Mei the bread. She won't forget it.", "pay": 1000, "rep": { "r0504": 20 } },
+    "paid": { "log": "Mei paid you for the bread.", "pay": 300, "rep": { "r0504": 5 } },
+    "ate": { "log": "You ate Mei's bread. She'll manage.", "pay": 0, "rep": { "r0504": -15 } }
+   }
+  },
+
+  "errand_runner": {
+   "title": "Errand runner",
+   "summary": "Abe the courier has too many parcels and not enough legs.",
+   "starter": true,
+   "giver": "r0518",
+   "needs": ["new_in_town"],
+   "offer": {
+    "line": "You look like you're in a hurry too.",
+    "start": "o1",
+    "nodes": {
+     "o1": {
+      "say": "Always! Three rounds and one pair of legs. Say... you're new, aren't you? Want to earn a few brix?",
+      "mood": "thinking",
+      "options": [
+       { "text": "What's the job?", "next": "o2" },
+       { "text": "Not today, thanks.", "next": null }
+      ]
+     },
+     "o2": {
+      "say": "A parcel's waiting at Market Grocer. It goes to Jai at the Old Town Museum, and only Jai. Bring me word when it's done and I'll pay you.",
+      "mood": "neutral",
+      "options": [
+       { "text": "Deal.", "next": null, "act": ["start"] },
+       { "text": "Maybe later.", "next": null }
+      ]
+     }
+    }
+   },
+   "start": "pickup",
+   "stages": {
+    "pickup": {
+     "log": "Collect Abe's parcel from Market Grocer, by the fountain behind Market Square.",
+     "goal": { "go": "b_3_5_l7" },
+     "on_done": { "give": ["parcel"] },
+     "then": "stage:deliver"
+    },
+    "deliver": {
+     "log": "Take the parcel to Jai at the Old Town Museum. Only Jai.",
+     "goal": { "talk": "r0505" },
+     "start": "d1",
+     "nodes": {
+      "d1": {
+       "say": "{greeting}. Is that... a parcel for me? I've been waiting all week.",
+       "mood": "surprised",
+       "options": [
+        { "text": "From Abe. Here you are.", "next": "d2", "need": ["have:parcel"], "act": ["take:parcel"] },
+        { "text": "It might be. What's in it?", "next": "d3", "need": ["have:parcel"] },
+        { "text": "Not yet. I'll be back.", "next": null }
+       ]
+      },
+      "d2": {
+       "say": "Wonderful. Tell Abe he's got a fast new runner.",
+       "mood": "happy",
+       "options": [ { "text": "I will.", "next": null, "act": ["stage:report"] } ]
+      },
+      "d3": {
+       "say": "A first edition, for the museum. Worth more than this building's roof. Please, it's ours.",
+       "mood": "thinking",
+       "options": [
+        { "text": "Of course. Here.", "next": "d2", "act": ["take:parcel"] },
+        { "text": "I think I'll hold on to it.", "next": "d4" }
+       ]
+      },
+      "d4": {
+       "say": "You... wait! I'm telling Abe!",
+       "mood": "angry",
+       "options": [ { "text": "Tell whoever you like.", "next": null, "act": ["take:parcel", "give:rare_book", "rep:-40", "end:kept"] } ]
+      }
+     }
+    },
+    "report": {
+     "log": "Tell Abe the parcel reached Jai.",
+     "goal": { "talk": "r0518" },
+     "start": "r1",
+     "nodes": {
+      "r1": {
+       "say": "Well? Did Jai get it?",
+       "mood": "thinking",
+       "options": [
+        { "text": "Safe and sound.", "next": "r2" },
+        { "text": "Yes, and I could do more of these.", "next": "r3" }
+       ]
+      },
+      "r2": {
+       "say": "Good work. Here's your pay. Couriers around town will have rounds for you now, if you want them.",
+       "mood": "happy",
+       "options": [ { "text": "Thanks, Abe.", "next": null, "act": ["end:delivered"] } ]
+      },
+      "r3": {
+       "say": "Ha! Keen. Here's your pay. Ask any courier for a round; I'll put the word out.",
+       "mood": "happy",
+       "options": [ { "text": "I will.", "next": null, "act": ["rep:5", "end:delivered"] } ]
+      }
+     }
+    }
+   },
+   "endings": {
+    "delivered": { "log": "You delivered Abe's parcel. Couriers now offer you rounds.", "pay": 1500, "rep": { "r0518": 10, "r0505": 10 } },
+    "kept": { "log": "You kept the museum's rare book. Abe and Jai will not forget.", "pay": 0, "rep": { "r0518": -40 } }
+   }
+  },
+
+  "night_gardener": {
+   "title": "The night gardener",
+   "summary": "Someone has been planting flowers round the fountain at night. Olu at Market Grocer wants to know who.",
+   "starter": true,
+   "giver": "r0408",
+   "needs": ["new_in_town"],
+   "offer": {
+    "line": "Any idea who's planting those flowers?",
+    "start": "o1",
+    "nodes": {
+     "o1": {
+      "say": "None! Every morning there's a new row round the fountain behind the shop. If you're up late, have a look for me?",
+      "mood": "surprised",
+      "options": [
+       { "text": "I'll keep watch tonight.", "next": null, "act": ["start"] },
+       { "text": "I sleep at night, sorry.", "next": null }
+      ]
+     }
+    }
+   },
+   "start": "watch",
+   "stages": {
+    "watch": {
+     "log": "Look round the fountain behind Market Grocer between 21:00 and 05:00. Press ] to speed the clock.",
+     "goal": { "near": [336.0, 528.0], "r": 9, "from": 1260, "to": 300 },
+     "on_done": { "give": ["trowel"] },
+     "then": "stage:who"
+    },
+    "who": {
+     "log": "Fresh earth, and a trowel marked \"H.\" Hari tends the Tram Court garden. Ask him about it.",
+     "goal": { "talk": "r0410" },
+     "start": "w1",
+     "nodes": {
+      "w1": {
+       "say": "{greeting}. Can I help you?",
+       "mood": "neutral",
+       "options": [
+        { "text": "Is this trowel yours, Hari?", "next": "w2", "need": ["have:trowel"] },
+        { "text": "Nothing, sorry.", "next": null }
+       ]
+      },
+      "w2": {
+       "say": "Ah. Yes. The council cut the flower money this year, so... I plant them at night, with my own seeds. Don't tell anyone?",
+       "mood": "sad",
+       "options": [
+        { "text": "Your secret's safe with me.", "next": "w3", "act": ["take:trowel"] },
+        { "text": "Let me help you plant the next row.", "next": "w4", "act": ["take:trowel"] },
+        { "text": "Olu asked me to find out. I'll have to tell him.", "next": "w5" }
+       ]
+      },
+      "w3": {
+       "say": "Thank you. Here, take some seeds. Sell them, plant them, whatever you like.",
+       "mood": "happy",
+       "options": [ { "text": "Thanks, Hari.", "next": null, "act": ["end:kept"] } ]
+      },
+      "w4": {
+       "say": "Really? Then come by the garden any day. There's always weeding, and I'll pay you for it.",
+       "mood": "happy",
+       "options": [ { "text": "I'll be there.", "next": null, "act": ["end:helped"] } ]
+      },
+      "w5": {
+       "say": "I see. Well. Do what you must.",
+       "mood": "sad",
+       "options": [ { "text": "Sorry, Hari.", "next": null, "act": ["stage:tell"] } ]
+      }
+     }
+    },
+    "tell": {
+     "log": "Tell Olu at Market Grocer who the night gardener is.",
+     "goal": { "talk": "r0408" },
+     "start": "t1",
+     "nodes": {
+      "t1": {
+       "say": "Well? Did you find out who it is?",
+       "mood": "surprised",
+       "options": [
+        { "text": "It's Hari, from the Tram Court garden.", "next": "t2", "need": ["have:trowel"], "act": ["take:trowel"] },
+        { "text": "Not yet. I'm still looking.", "next": null }
+       ]
+      },
+      "t2": {
+       "say": "Hari! The quiet one! Here, for your trouble. I owe you a good story.",
+       "mood": "happy",
+       "options": [ { "text": "Glad to help.", "next": null, "act": ["end:told"] } ]
+      }
+     }
+    }
+   },
+   "endings": {
+    "kept": { "log": "You kept Hari's secret. He gave you seeds.", "pay": 500, "give": ["seeds", "seeds", "seeds"], "rep": { "r0410": 25 } },
+    "helped": { "log": "You offered to help Hari. Gardeners now offer you work.", "pay": 800, "rep": { "r0410": 30 } },
+    "told": { "log": "You told Olu about Hari. Olu paid you for the news.", "pay": 2000, "rep": { "r0408": 20, "r0410": -25 } }
+   }
+  },
+
+  "own_stall": {
+   "title": "A stall of your own",
+   "summary": "Eli at the square's grocer thinks you could sell at the market.",
+   "starter": true,
+   "giver": "r0497",
+   "needs": ["errand_runner"],
+   "offer": {
+    "line": "How does a market stall work here?",
+    "start": "o1",
+    "nodes": {
+     "o1": {
+      "say": "You rent one by the day, fifteen brix, right here on the square. Buy cheap, sell dear, and the market crowd does the rest.",
+      "mood": "thinking",
+      "options": [
+       { "text": "I'll save up for it.", "next": "o2" },
+       { "text": "Could I borrow the money?", "next": "o3" },
+       { "text": "Not for me.", "next": null }
+      ]
+     },
+     "o2": {
+      "say": "Sensible. Put it by in a savings account at the bank; it grows a little every day. Come and rent a stall once you've the money.",
+      "mood": "neutral",
+      "options": [ { "text": "I will.", "next": null, "act": ["start"] } ]
+      },
+     "o3": {
+      "say": "Linden Bank lends to anyone with an account. Just mind you pay it back on time; they're not forgiving.",
+      "mood": "thinking",
+      "options": [ { "text": "I'll talk to them.", "next": null, "act": ["start"] } ]
+     }
+    }
+   },
+   "start": "funds",
+   "stages": {
+    "funds": {
+     "log": "Get together 15 Bx for a day's rent: save it, or borrow it at Linden Bank.",
+     "goal": { "money": 1500 },
+     "then": "stage:rent"
+    },
+    "rent": {
+     "log": "Rent a stall on Market Square: stand on the square and press B.",
+     "goal": { "stall": "rented" },
+     "then": "stage:sell"
+    },
+    "sell": {
+     "log": "Set out items on your stall (B on the square) and sell three of them to the market crowd.",
+     "goal": { "stall_sold": 3 },
+     "then": "stage:report"
+    },
+    "report": {
+     "log": "Tell Eli how your first day went.",
+     "goal": { "talk": "r0497" },
+     "start": "r1",
+     "nodes": {
+      "r1": {
+       "say": "There's the new trader! How did it go?",
+       "mood": "happy",
+       "options": [
+        { "text": "Sold out! Thanks for the tip. Let me buy you lunch.", "next": "r2", "need": ["money:500"] },
+        { "text": "Not bad. I'm keeping every chip, mind.", "next": "r3" }
+       ]
+      },
+      "r2": {
+       "say": "Ha! I won't say no. Come by any time; for you, the regulars' price.",
+       "mood": "happy",
+       "options": [ { "text": "Deal.", "next": null, "act": ["end:shared"] } ]
+      },
+      "r3": {
+       "say": "Fair enough. That's how you get rich, I suppose.",
+       "mood": "neutral",
+       "options": [ { "text": "See you, Eli.", "next": null, "act": ["end:solo"] } ]
+      }
+     }
+    }
+   },
+   "endings": {
+    "shared": { "log": "You stood Eli lunch. Market Grocer now gives you the regulars' price.", "pay": 0, "charge": 500, "rep": { "r0497": 40 } },
+    "solo": { "log": "Your first market day is done. The stall is yours to rent any day.", "pay": 1000, "rep": { "r0497": 5 } }
+   }
+  }
+ },
+
+ "jobs": {
+  "min_rep": -20,
+  "kinds": {
+   "parcel": {
+    "title": "Courier round",
+    "roles": ["courier"],
+    "chance_bp": 6000,
+    "needs": ["errand_runner:delivered"],
+    "offer": "Got a round going spare. Take a parcel from {from} to {to} within {hours} hours, and it's {pay} for you.",
+    "log": "Take a parcel from {from} to {to} by {by}. Pays {pay}.",
+    "hours": 3,
+    "pay": 500,
+    "pay_per_100m": 120,
+    "rep": 4,
+    "fail_rep": -6
+   },
+   "shopping": {
+    "title": "Shopping",
+    "roles": ["elder"],
+    "chance_bp": 3500,
+    "needs": ["new_in_town"],
+    "items": ["bread", "milk", "apples", "jam", "cheese", "newspaper", "candle"],
+    "offer": "Would you fetch me a {item}? My knees aren't what they were. I'll pay you back, and {pay} for your trouble, if it's here within {hours} hours.",
+    "log": "Buy a {item} and bring it to {from} by {by}. You'll be paid back, plus {pay}.",
+    "hours": 4,
+    "pay": 300,
+    "rep": 5,
+    "fail_rep": -5
+   },
+   "shift": {
+    "title": "A shift",
+    "roles": ["cafe", "shopkeeper", "maker", "gardener"],
+    "chance_bp": 2500,
+    "needs": ["new_in_town"],
+    "role_needs": { "gardener": "night_gardener:helped" },
+    "offer": "We're short-handed. Help out here at {to} for {minutes} minutes in the next {hours} hours, and it's {pay}.",
+    "log": "Work {minutes} minutes at {to} before {by}. Pays {pay}.",
+    "minutes": 30,
+    "hours": 5,
+    "pay": 900,
+    "rep": 3,
+    "fail_rep": -4
+   }
+  },
+  "lines": {
+   "ask": "Any work going?",
+   "accept": "I'll do it.",
+   "decline": "Not today.",
+   "none": "Nothing today, sorry. Try me tomorrow.",
+   "busy": "You've already got a job on. Finish that first!",
+   "hand_over": "Here's your {item}.",
+   "thanks": "Lovely, thank you! Here's what I owe you, and a bit extra."
+  }
+ }
+}

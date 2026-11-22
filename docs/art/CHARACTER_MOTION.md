@@ -1,6 +1,6 @@
 ---
 doc_id: WASTED-CHARACTER-MOTION
-title: Wasted — Body motion, movement signatures and talking while walking
+title: Brix Town — Body motion, movement signatures and talking while walking
 version: 1.0.0
 status: accepted          # owner approved the two test clips on 2026-11-21; Q-17 is still open
 last_updated: 2026-11-21
@@ -9,9 +9,9 @@ decision: docs/decisions/ADR-0006-layered-procedural-motion.md
 prototype: [Tools/blender/motion_lib.py, Tools/blender/character_anim_06.py]
 ---
 
-# Wasted — Body motion
+# Brix Town — Body motion
 
-How people in Wasted move, and what makes that movement the game's own. The prototype is
+How people in Brix Town move, and what makes that movement the game's own. The prototype is
 `Tools/blender/motion_lib.py` (plain Python, no Blender code: the numbers and rules are meant to
 carry over to Unreal) and `Tools/blender/character_anim_06.py` (builds the jointed test body and
 renders the clips).

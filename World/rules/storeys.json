@@ -1,0 +1,28 @@
+{
+ "note": "Every floor of every building (WORLD_MAP WLD-050 to WLD-053, F-BLD-INSIDE level 3, ADR-0021). Heights in metres: the ground floor stands at 0.2 with its ceiling at 3.2; floor f above it stands at 3f + 0.4 under a 0.2 slab, so the top ceiling meets the roof at floors x 3 + 0.4, the height the building has from outside. 'stair' is the switchback stair every building of two or more storeys has (two flights a storey, a spine wall between them, a landing at each end); 'lift_from_floors' gives a lift as well. 'uses' says what each upper floor is for, by the building's kind or special name (the first floor first; the last one repeats), and 'move' which of the residents' places go upstairs. Tools/worldgen/add_storeys_01.py places the stairs, lifts and upstairs places in the block files from these. All values are [ASSUMPTION] until tuned.",
+ "storey": 3.0,
+ "slab": 0.2,
+ "wall": 0.35,
+ "stair": {"width": 1.1, "spine": 0.15, "landing": 1.2, "run": 4.5, "keep_clear": 0.7},
+ "lift_from_floors": 6,
+ "uses": {
+  "home": ["bedrooms"],
+  "flats": ["flat"],
+  "shop": ["store", "rooms"],
+  "food": ["store", "rooms"],
+  "work": ["office"],
+  "health": ["wards"],
+  "bank": ["office"],
+  "library": ["stacks", "office"],
+  "museum": ["gallery", "office"],
+  "cinema": ["office"],
+  "dealer": ["office"],
+  "utility": ["plant"],
+  "default": ["rooms"]
+ },
+ "move": {
+  "home": {"bed": "all"},
+  "flats": {"bed": "all"},
+  "work": {"work": "half"}
+ }
+}

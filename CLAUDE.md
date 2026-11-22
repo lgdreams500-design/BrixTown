@@ -1,6 +1,6 @@
-# Wasted — instructions for AI agents
+# Brix Town — instructions for AI agents
 
-Third-person multiplayer life-sim in Unreal Engine 5.8. Art source in Blender (5.3 installed; pin is Q-16).
+Brix Town: a third-person multiplayer life-sim in Unreal Engine 5.8. Art source in Blender (5.3 installed; pin is Q-16).
 
 ## Before any work
 1. Read `docs/specs/GAME_SPEC.md`. It is the source of truth for scope.
@@ -25,8 +25,9 @@ Third-person multiplayer life-sim in Unreal Engine 5.8. Art source in Blender (5
   look needs a new ADR and the owner's approval.
 - Every head uses the one face control set and every body the one skeleton (joint names in CHARACTER_MOTION §2).
 - Look tests are scripts in `Tools/blender/` that build on each other; keep them together and runnable.
-- Never edit `docs/backlog/feature_choices.json` or `docs/backlog/BACKLOG.md`: only the owner changes them, through
-  `Tools/feature_picker.html`. Propose features and levels by editing `docs/backlog/features.json` and saying so.
+- Only the owner picks levels, by saying them in chat. Record a pick in `docs/backlog/feature_choices.json` only from the
+  owner's own words, then run `Tools/backlog.ps1` to check it and rewrite `docs/backlog/BACKLOG.md` (never edit that by
+  hand; ADR-0008). Propose features and levels by editing `docs/backlog/features.json` and saying so.
 - If something can be calculated from the world clock and data, do not tick it or store it. Prove city rules in
   `Tools/citysim/` with tests before building them in the engine (`docs/specs/domains/LIVING_CITY.md` §1).
 - The map is data in `World/` (`docs/specs/domains/WORLD_MAP.md`). Change the city by editing block files, never by
@@ -36,7 +37,7 @@ Third-person multiplayer life-sim in Unreal Engine 5.8. Art source in Blender (5
 ## Layout
 | Path | Contents |
 |---|---|
-| `Game/` | Unreal project (`Wasted.uproject`, `Source/`, `Content/`, `Config/`, `Plugins/`) |
+| `Game/` | Unreal project (`BrixTown.uproject`, `Source/`, `Content/`, `Config/`, `Plugins/`) |
 | `Art/Reference/` | Approved look targets (read-only) |
 | `Art/StyleTests/` | Look and animation experiments, including rejected ones |
 | `Art/Source/` | Blender files and textures being authored |

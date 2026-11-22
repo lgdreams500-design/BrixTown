@@ -1,4 +1,4 @@
-"""Wasted - art style test 02: painterly old-quarter back street, arch framing and stronger light.
+"""Brix Town - art style test 02: painterly old-quarter back street, arch framing and stronger light.
 
 Run inside Blender (Scripting workspace, Python console):
     exec(compile(open("C:/Projects/Wasted/Tools/blender/style_test_02.py").read(), "style_test_02.py", "exec"))

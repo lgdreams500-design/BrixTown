@@ -1,4 +1,4 @@
-"""Wasted - painterly post-process for style-test renders.
+"""Brix Town - painterly post-process for style-test renders.
 
 Usage: python paint_filter.py <input.png> <output.png> [radius]
 

@@ -14,8 +14,8 @@
  "lots": [
   {
    "id": "b_2_3_l0",
-   "kind": "work",
-   "name": "Fountain Works",
+   "kind": "library",
+   "name": "Fountain Library",
    "rect": [
     200.0,
     296.0,
@@ -31,32 +31,126 @@
    "objects": {
     "work": [
      [
-      207.3,
-      302.37
+      215.6,
+      310.0
      ],
      [
-      218.9,
-      302.37
+      216.9,
+      310.0
      ],
      [
-      230.5,
-      302.37
+      218.2,
+      310.0
      ],
      [
-      207.3,
-      307.26
+      219.6,
+      310.0
      ],
      [
-      218.9,
-      307.26
+      220.9,
+      310.0
      ],
      [
-      230.5,
-      307.26
+      222.2,
+      310.0
+     ]
+    ],
+    "seat": [
+     [
+      204.5,
+      300.4
+     ],
+     [
+      209.4,
+      300.4
+     ],
+     [
+      214.4,
+      300.4
+     ],
+     [
+      223.4,
+      300.4
+     ],
+     [
+      228.4,
+      300.4
+     ],
+     [
+      233.3,
+      300.4
+     ],
+     [
+      204.5,
+      303.6
+     ],
+     [
+      209.4,
+      303.6
+     ],
+     [
+      214.4,
+      303.6
+     ],
+     [
+      223.4,
+      303.6
+     ],
+     [
+      228.4,
+      303.6
+     ],
+     [
+      233.3,
+      303.6
+     ]
+    ],
+    "customer": [
+     [
+      204.4,
+      307.2
+     ],
+     [
+      209.2,
+      307.2
+     ],
+     [
+      214.0,
+      307.2
+     ],
+     [
+      223.8,
+      307.2
+     ],
+     [
+      228.6,
+      307.2
+     ],
+     [
+      233.4,
+      307.2
      ]
     ]
    },
-   "residents": 0
+   "residents": 0,
+   "tags": [
+    "library"
+   ],
+   "stair": {
+    "rect": [
+     200.35,
+     296.45,
+     202.7,
+     303.35
+    ],
+    "axis": "z",
+    "wall": "w",
+    "up0": 1
+   },
+   "storeys": [
+    "main",
+    "stacks"
+   ]
   },
   {
    "id": "b_2_3_l1",
@@ -77,24 +171,24 @@
    "objects": {
     "bed": [
      [
-      247.18,
-      307.94
+      246.45,
+      297.65
      ],
      [
-      254.14,
-      307.94
+      249.05,
+      297.65
      ],
      [
-      261.1,
-      307.94
+      251.65,
+      297.65
      ],
      [
-      268.06,
-      307.94
+      246.82,
+      297.65
      ],
      [
-      275.02,
-      307.94
+      249.42,
+      297.65
      ]
     ],
     "room": [
@@ -120,7 +214,33 @@
      ]
     ]
    },
-   "residents": 5
+   "residents": 5,
+   "window_boxes": true,
+   "stair": {
+    "rect": [
+     242.55,
+     296.45,
+     244.9,
+     303.35
+    ],
+    "axis": "z",
+    "wall": "w",
+    "up0": 1
+   },
+   "levels": {
+    "bed": [
+     1,
+     1,
+     1,
+     2,
+     2
+    ]
+   },
+   "storeys": [
+    "main",
+    "bedrooms",
+    "bedrooms"
+   ]
   },
   {
    "id": "b_2_3_l2",
@@ -184,7 +304,23 @@
      ]
     ]
    },
-   "residents": 0
+   "residents": 0,
+   "stair": {
+    "rect": [
+     200.35,
+     368.65,
+     202.7,
+     375.55
+    ],
+    "axis": "z",
+    "wall": "w",
+    "up0": -1
+   },
+   "storeys": [
+    "main",
+    "store",
+    "rooms"
+   ]
   },
   {
    "id": "b_2_3_l3",
@@ -232,7 +368,22 @@
      ]
     ]
    },
-   "residents": 0
+   "residents": 0,
+   "stair": {
+    "rect": [
+     242.55,
+     368.65,
+     244.9,
+     375.55
+    ],
+    "axis": "z",
+    "wall": "w",
+    "up0": -1
+   },
+   "storeys": [
+    "main",
+    "store"
+   ]
   },
   {
    "id": "b_2_3_l4",
@@ -253,20 +404,20 @@
    "objects": {
     "bed": [
      [
-      211.94,
-      315.85
+      209.45,
+      313.65
      ],
      [
-      211.94,
-      320.55
+      212.05,
+      313.65
      ],
      [
-      211.94,
-      325.25
+      209.82,
+      313.65
      ],
      [
-      211.94,
-      329.95
+      212.42,
+      313.65
      ]
     ],
     "room": [
@@ -288,7 +439,31 @@
      ]
     ]
    },
-   "residents": 4
+   "residents": 4,
+   "stair": {
+    "rect": [
+     200.45,
+     312.35,
+     207.35,
+     314.7
+    ],
+    "axis": "x",
+    "wall": "n",
+    "up0": 1
+   },
+   "levels": {
+    "bed": [
+     1,
+     1,
+     2,
+     2
+    ]
+   },
+   "storeys": [
+    "main",
+    "bedrooms",
+    "bedrooms"
+   ]
   },
   {
    "id": "b_2_3_l5",
@@ -309,20 +484,20 @@
    "objects": {
     "bed": [
      [
-      211.94,
-      342.05
+      209.45,
+      339.85
      ],
      [
-      211.94,
-      346.75
+      212.05,
+      339.85
      ],
      [
-      211.94,
-      351.45
+      209.82,
+      339.85
      ],
      [
-      211.94,
-      356.15
+      212.42,
+      339.85
      ]
     ],
     "room": [
@@ -344,7 +519,33 @@
      ]
     ]
    },
-   "residents": 4
+   "residents": 4,
+   "window_boxes": true,
+   "stair": {
+    "rect": [
+     200.45,
+     338.55,
+     207.35,
+     340.9
+    ],
+    "axis": "x",
+    "wall": "n",
+    "up0": 1
+   },
+   "levels": {
+    "bed": [
+     1,
+     1,
+     2,
+     2
+    ]
+   },
+   "storeys": [
+    "main",
+    "bedrooms",
+    "bedrooms",
+    "bedrooms"
+   ]
   },
   {
    "id": "b_2_3_l6",
@@ -408,7 +609,24 @@
      ]
     ]
    },
-   "residents": 0
+   "residents": 0,
+   "stair": {
+    "rect": [
+     272.65,
+     312.35,
+     279.55,
+     314.7
+    ],
+    "axis": "x",
+    "wall": "n",
+    "up0": -1
+   },
+   "storeys": [
+    "main",
+    "store",
+    "rooms",
+    "rooms"
+   ]
   },
   {
    "id": "b_2_3_l7",
@@ -429,20 +647,20 @@
    "objects": {
     "bed": [
      [
-      268.06,
-      342.05
+      265.65,
+      339.85
      ],
      [
-      268.06,
-      346.75
+      268.25,
+      339.85
      ],
      [
-      268.06,
-      351.45
+      266.02,
+      339.85
      ],
      [
-      268.06,
-      356.15
+      268.62,
+      339.85
      ]
     ],
     "room": [
@@ -464,7 +682,31 @@
      ]
     ]
    },
-   "residents": 4
+   "residents": 4,
+   "stair": {
+    "rect": [
+     272.65,
+     338.55,
+     279.55,
+     340.9
+    ],
+    "axis": "x",
+    "wall": "n",
+    "up0": -1
+   },
+   "levels": {
+    "bed": [
+     1,
+     1,
+     2,
+     2
+    ]
+   },
+   "storeys": [
+    "main",
+    "bedrooms",
+    "bedrooms"
+   ]
   },
   {
    "id": "b_2_3_l8",
@@ -563,6 +805,38 @@
      [
       249.0,
       346.6
+     ],
+     [
+      230.55,
+      324.45
+     ],
+     [
+      249.3,
+      324.45
+     ],
+     [
+      230.55,
+      347.55
+     ],
+     [
+      249.3,
+      347.55
+     ],
+     [
+      228.45,
+      326.55
+     ],
+     [
+      228.45,
+      342.43
+     ],
+     [
+      251.55,
+      329.43
+     ],
+     [
+      251.55,
+      345.3
      ]
     ],
     "work": [
@@ -600,6 +874,40 @@
     [
      222.0,
      354.0
+    ]
+   ],
+   "tend_borders": [
+    [
+     230.55,
+     324.45
+    ],
+    [
+     249.3,
+     324.45
+    ],
+    [
+     230.55,
+     347.55
+    ],
+    [
+     249.3,
+     347.55
+    ],
+    [
+     228.45,
+     326.55
+    ],
+    [
+     228.45,
+     342.43
+    ],
+    [
+     251.55,
+     329.43
+    ],
+    [
+     251.55,
+     345.3
     ]
    ]
   }
@@ -1051,6 +1359,646 @@
     196.0,
     336.0
    ]
+  },
+  {
+   "kind": "pergola",
+   "pos": [
+    240.0,
+    344.0
+   ],
+   "set": "dress",
+   "id": "b_2_3_d0"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    212.57,
+    292.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_2_3_d1"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    223.83,
+    292.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_2_3_d2"
+  },
+  {
+   "kind": "bikerack",
+   "pos": [
+    235.46,
+    292.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_2_3_d3"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    241.22,
+    379.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_2_3_d4"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    256.81,
+    379.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_2_3_d5"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    265.1,
+    379.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_2_3_d6"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    196.25,
+    306.07
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_2_3_d7"
+  },
+  {
+   "kind": "bikerack",
+   "pos": [
+    196.25,
+    316.62
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_2_3_d8"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    283.75,
+    306.52
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_2_3_d9"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    283.75,
+    336.88
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_2_3_d10"
+  },
+  {
+   "kind": "bikerack",
+   "pos": [
+    283.75,
+    345.24
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_2_3_d11"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    196.1,
+    294.7
+   ],
+   "set": "dress",
+   "id": "b_2_3_d12"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    198.7,
+    292.1
+   ],
+   "set": "dress",
+   "id": "b_2_3_d13"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    283.9,
+    294.7
+   ],
+   "set": "dress",
+   "id": "b_2_3_d14"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    281.3,
+    292.1
+   ],
+   "set": "dress",
+   "id": "b_2_3_d15"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    196.1,
+    377.3
+   ],
+   "set": "dress",
+   "id": "b_2_3_d16"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    198.7,
+    379.9
+   ],
+   "set": "dress",
+   "id": "b_2_3_d17"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    283.9,
+    377.3
+   ],
+   "set": "dress",
+   "id": "b_2_3_d18"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    281.3,
+    379.9
+   ],
+   "set": "dress",
+   "id": "b_2_3_d19"
+  },
+  {
+   "kind": "advert",
+   "pos": [
+    280.02,
+    304.0
+   ],
+   "set": "dress",
+   "out": [
+    1,
+    0
+   ],
+   "w": 6.0,
+   "lot": "b_2_3_l1",
+   "id": "b_2_3_d20"
+  },
+  {
+   "kind": "advert",
+   "pos": [
+    199.98,
+    368.0
+   ],
+   "set": "dress",
+   "out": [
+    -1,
+    0
+   ],
+   "w": 6.0,
+   "lot": "b_2_3_l2",
+   "id": "b_2_3_d21"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    230.8,
+    322.57
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 4.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_2_3_g0"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    243.3,
+    322.57
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 3.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_2_3_g1"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    249.18,
+    322.57
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 4.0,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_2_3_g2"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    230.55,
+    323.45
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "lavender",
+    "aster"
+   ],
+   "along": "x",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 8122,
+   "id": "b_2_3_g3"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    249.3,
+    323.45
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "lavender",
+    "aster"
+   ],
+   "along": "x",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 112,
+   "id": "b_2_3_g4"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    230.8,
+    349.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 4.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_2_3_g5"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    243.3,
+    349.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 3.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_2_3_g6"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    249.18,
+    349.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 4.0,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_2_3_g7"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    230.55,
+    348.55
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "aster"
+   ],
+   "along": "x",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 3317,
+   "id": "b_2_3_g8"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    249.3,
+    348.55
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "aster"
+   ],
+   "along": "x",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 3589,
+   "id": "b_2_3_g9"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    226.57,
+    326.8
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 4.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_2_3_g10"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    226.57,
+    342.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 9.5,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_2_3_g11"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    227.45,
+    326.55
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "lavender",
+    "rose"
+   ],
+   "along": "z",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 1143,
+   "id": "b_2_3_g12"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    227.45,
+    342.43
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "lavender",
+    "rose"
+   ],
+   "along": "z",
+   "len": 9.25,
+   "depth": 0.9,
+   "seed": 5414,
+   "id": "b_2_3_g13"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    253.43,
+    329.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 9.5,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_2_3_g14"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    253.43,
+    339.3
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 3.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_2_3_g15"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    253.43,
+    345.18
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 4.0,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_2_3_g16"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    252.55,
+    329.43
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "lavender"
+   ],
+   "along": "z",
+   "len": 9.25,
+   "depth": 0.9,
+   "seed": 7248,
+   "id": "b_2_3_g17"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    252.55,
+    345.3
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "lavender"
+   ],
+   "along": "z",
+   "len": 3.5,
+   "depth": 0.9,
+   "seed": 156,
+   "id": "b_2_3_g18"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    227.3,
+    323.3
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "hydrangea",
+   "r": 0.94,
+   "seed": 3204,
+   "id": "b_2_3_g19"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    252.7,
+    323.3
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "lilac",
+   "r": 1.07,
+   "seed": 3232,
+   "id": "b_2_3_g20"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    227.3,
+    348.7
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "hydrangea",
+   "r": 0.92,
+   "seed": 9233,
+   "id": "b_2_3_g21"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    252.7,
+    348.7
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "hydrangea",
+   "r": 0.95,
+   "seed": 224,
+   "id": "b_2_3_g22"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    233.0,
+    343.0
+   ],
+   "set": "garden",
+   "shape": "drift",
+   "species": "daffodil",
+   "r": 2.0,
+   "hole": 1.3,
+   "seed": 2478,
+   "id": "b_2_3_g23"
   }
  ]
 }

@@ -1,4 +1,4 @@
-"""Wasted - character animation test 06: a jointed body, walks with a "movement signature",
+"""Brix Town - character animation test 06: a jointed body, walks with a "movement signature",
 and talking while walking.
 
 Run inside Blender (Python console):

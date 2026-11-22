@@ -1,6 +1,6 @@
 ---
 doc_id: WASTED-CHARACTER-FACE
-title: Wasted — Face controls, expressions and lip sync
+title: Brix Town — Face controls, expressions and lip sync
 version: 1.0.0
 status: accepted          # prototype approved by the owner on 2026-11-21
 last_updated: 2026-11-21
@@ -9,7 +9,7 @@ decision: docs/decisions/ADR-0005-face-control-set.md
 prototype: Tools/blender/character_face_05.py
 ---
 
-# Wasted — Face controls, expressions and lip sync
+# Brix Town — Face controls, expressions and lip sync
 
 Every head in the game, player or NPC, is animated through **one small set of named controls**.
 An expression, a blink or a spoken sound is nothing more than a set of values for those controls.
@@ -93,13 +93,17 @@ sets width and opening.
 The reference line "Welcome to Brix Mart. Fancy a coffee?" is the `SEQ` table in the prototype
 (55 frames at 12 per second).
 
-### Where the timing comes from — `[OPEN: Q-14]`
+### Where the timing comes from (Q-14, decided: ADR-0019)
 | Source | Works when | Cost |
 |---|---|---|
 | **Text (default)** | Dialogue is text, or text plus synthetic voice | Cheap; runs for every NPC; needs a small pronunciation table |
 | Audio | Dialogue is recorded voice | Needs analysis per line (offline) or a runtime plug-in |
 
 The control set is the same either way, so the choice can be made later without redoing faces.
+
+**Decided 2026-11-22:** dialogue is spoken in pre-made natural voices (ADR-0019). The timing still comes from the
+line's text, as above, stretched so the mouth finishes with the spoken audio. Timing from the audio itself is a later
+refinement; the controls stay the same.
 
 ## 5. Always-on face life (CHR-010)
 - Blink every 2–6 s, and usually **during a head turn or gaze shift**.
@@ -126,3 +130,4 @@ or mouth controls' range of movement.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-21 | First version, after the eye fix (no more sad default) and the teeth fix (lower teeth and tongue visible). |
+| 1.0.1 | 2026-11-22 | The browser slice now uses §1 to §4 for the resident you talk to: values in `World/rules/speech.json`, faces in `Prototype/play/people.js`, timing from the line's text in `Prototype/play/conversations.js` (Q-14 decided: text first). |

@@ -1,4 +1,4 @@
-"""Wasted - old town test 04: the style-test-02 look, extended to a world and its people.
+"""Brix Town - old town test 04: the style-test-02 look, extended to a world and its people.
 
 Run inside Blender (Python console):
     exec(compile(open("C:/Projects/Wasted/Tools/blender/old_town_04.py").read(), "old_town_04.py", "exec"))

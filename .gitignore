@@ -37,3 +37,6 @@ Desktop.ini
 *.pem
 *.key
 secrets.*
+
+# Generated or downloaded, not project files
+Claude outputs/

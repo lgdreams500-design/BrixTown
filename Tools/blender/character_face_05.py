@@ -1,4 +1,4 @@
-"""Wasted - character test 05: option B refined, with a face built to animate.
+"""Brix Town - character test 05: option B refined, with a face built to animate.
 
 Run inside Blender (Python console):
     exec(compile(open("C:/Projects/Wasted/Tools/blender/character_face_05.py").read(), "character_face_05.py", "exec"))

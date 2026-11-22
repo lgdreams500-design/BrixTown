@@ -1,0 +1,32 @@
+{
+ "note": "The character designer (CHR-001, CHR-002, CHR-013, F-CHR-DESIGN level 2). A character is these values and nothing else: the same body and head as every resident (ART_DIRECTION rule C7), changed by numbers. Sliders keep to the ranges here; height stays inside the cast range of ART_DIRECTION §3.2. Face values only change the shape of the face, never the face control set (CHR-007), so expressions and lip sync work on every face. Colours are the world palette (rule C2). Checked by world.designer_problems().",
+ "sliders": {
+  "height":   { "label": "Height",       "min": 1.58, "max": 1.80, "step": 0.01, "default": 1.68, "unit": "m" },
+  "build":    { "label": "Build",        "min": 0.88, "max": 1.16, "step": 0.01, "default": 0.96 },
+  "face_w":   { "label": "Face width",   "min": 0.90, "max": 1.10, "step": 0.01, "default": 1.00 },
+  "eye_size": { "label": "Eye size",     "min": 0.85, "max": 1.15, "step": 0.01, "default": 1.00 },
+  "eye_open": { "label": "Eye openness", "min": 0.85, "max": 1.10, "step": 0.01, "default": 1.00 },
+  "brow":     { "label": "Brow height",  "min": -0.008, "max": 0.008, "step": 0.001, "default": 0.0 },
+  "nose":     { "label": "Nose size",    "min": 0.80, "max": 1.30, "step": 0.01, "default": 1.00 },
+  "lips":     { "label": "Mouth width",  "min": 0.85, "max": 1.20, "step": 0.01, "default": 1.00 }
+ },
+ "skin": [[0.84, 0.64, 0.52], [0.78, 0.56, 0.44], [0.70, 0.50, 0.38], [0.62, 0.42, 0.30], [0.55, 0.36, 0.25], [0.47, 0.31, 0.22], [0.38, 0.24, 0.16], [0.30, 0.19, 0.13], [0.24, 0.15, 0.10], [0.20, 0.12, 0.08]],
+ "hair": ["short", "side", "long", "bob", "bun", "afro", "bald"],
+ "hair_color": [[0.03, 0.03, 0.035], [0.10, 0.06, 0.04], [0.18, 0.10, 0.06], [0.28, 0.10, 0.05], [0.55, 0.40, 0.18], [0.50, 0.50, 0.51]],
+ "eyes": [[0.20, 0.10, 0.05], [0.12, 0.08, 0.05], [0.30, 0.20, 0.08], [0.14, 0.36, 0.20], [0.18, 0.34, 0.55]],
+ "garment": { "tee": "T-shirt", "long": "Long sleeves", "tunic": "Tunic", "coat": "Long coat" },
+ "bottom_type": { "trousers": "Trousers", "shorts": "Shorts", "skirt": "Skirt" },
+ "palette": {
+  "cream": [0.66, 0.61, 0.50], "sand": [0.58, 0.52, 0.44], "ochre": [0.52, 0.40, 0.20], "terra": [0.44, 0.24, 0.18], "brown": [0.24, 0.16, 0.11],
+  "olive": [0.30, 0.33, 0.20], "teal": [0.20, 0.36, 0.37], "blue": [0.30, 0.38, 0.52], "slate": [0.25, 0.30, 0.40], "indigo": [0.10, 0.14, 0.24],
+  "plum": [0.30, 0.24, 0.34], "charcoal": [0.09, 0.09, 0.11], "black": [0.03, 0.03, 0.035]
+ },
+ "extras": { "scarf": "Scarf", "cap": "Cap", "bag": "Shoulder bag", "apron": "Apron", "tash": "Moustache" },
+ "walk": { "Springy": "Springy", "Easy": "Easy", "Hurried": "Hurried", "Careful": "Careful" },
+ "name": { "max": 16, "default": "Sam" },
+ "default": {
+  "name": "Sam", "height": 1.68, "build": 0.96, "face_w": 1.0, "eye_size": 1.0, "eye_open": 1.0, "brow": 0.0, "nose": 1.0, "lips": 1.0,
+  "skin": 3, "hair": "long", "hair_color": 3, "eyes": 3, "garment": "tee", "top": "teal", "bottom_type": "trousers", "bottom": "indigo", "shoes": "cream",
+  "scarf": "ochre", "cap": null, "bag": false, "apron": null, "tash": false, "walk": "Springy"
+ }
+}

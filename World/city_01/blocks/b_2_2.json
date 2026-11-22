@@ -55,34 +55,89 @@
       233.34
      ],
      [
-      243.38,
-      233.34
+      231.05,
+      221.65
      ],
      [
-      250.12,
-      233.34
+      229.22,
+      221.65
      ],
      [
-      229.88,
-      239.97
+      229.59,
+      221.65
      ],
      [
-      236.62,
-      239.97
+      229.96,
+      221.65
      ],
      [
-      243.38,
-      239.97
+      230.33,
+      221.65
      ],
      [
-      250.12,
-      239.97
+      230.7,
+      221.65
      ]
     ]
    },
    "desks": 12,
    "residents": 0,
-   "tower": true
+   "tower": true,
+   "stair": {
+    "rect": [
+     225.35,
+     242.65,
+     227.7,
+     249.55
+    ],
+    "axis": "z",
+    "wall": "w",
+    "up0": -1
+   },
+   "lift": [
+    226.5,
+    221.5
+   ],
+   "levels": {
+    "work": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ]
+   },
+   "storeys": [
+    "main",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office",
+    "office"
+   ]
   },
   {
    "id": "b_2_2_l1",
@@ -138,7 +193,10 @@
      ]
     ]
    },
-   "seats": 6
+   "seats": 6,
+   "storeys": [
+    "main"
+   ]
   },
   {
    "id": "b_2_2_l2",
@@ -182,7 +240,10 @@
      ]
     ]
    },
-   "customers": 3
+   "customers": 3,
+   "storeys": [
+    "main"
+   ]
   }
  ],
  "paths": [
@@ -376,6 +437,204 @@
     196.0,
     240.0
    ]
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    209.92,
+    196.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_2_2_d0"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    219.98,
+    196.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_2_2_d1"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    213.46,
+    283.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_2_2_d2"
+  },
+  {
+   "kind": "bikerack",
+   "pos": [
+    226.37,
+    283.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_2_2_d3"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    196.25,
+    211.09
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_2_2_d4"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    196.25,
+    224.05
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_2_2_d5"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    196.25,
+    243.13
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_2_2_d6"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    283.75,
+    213.31
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_2_2_d7"
+  },
+  {
+   "kind": "bikerack",
+   "pos": [
+    283.75,
+    224.66
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_2_2_d8"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    196.1,
+    198.7
+   ],
+   "set": "dress",
+   "id": "b_2_2_d9"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    198.7,
+    196.1
+   ],
+   "set": "dress",
+   "id": "b_2_2_d10"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    283.9,
+    198.7
+   ],
+   "set": "dress",
+   "id": "b_2_2_d11"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    281.3,
+    196.1
+   ],
+   "set": "dress",
+   "id": "b_2_2_d12"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    196.1,
+    281.3
+   ],
+   "set": "dress",
+   "id": "b_2_2_d13"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    198.7,
+    283.9
+   ],
+   "set": "dress",
+   "id": "b_2_2_d14"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    283.9,
+    281.3
+   ],
+   "set": "dress",
+   "id": "b_2_2_d15"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    281.3,
+    283.9
+   ],
+   "set": "dress",
+   "id": "b_2_2_d16"
   }
  ]
 }

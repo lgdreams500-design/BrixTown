@@ -1,0 +1,28 @@
+{
+ "note": "Residents getting out of the way of a car a player drives (CITY-070, CITY-071; F-NPC-DODGE). Presented state only: nothing here is stored or ticked in the city. All values are [ASSUMPTION] until tuned. Times in real seconds, distances in metres, speeds in m/s.",
+ "min_speed": 2.0,
+ "see_s": 1.7,
+ "see_m": 26.0,
+ "lane_pad_m": 0.9,
+ "car_half_w_m": 0.9,
+ "car_front_m": 2.3,
+ "clear_m": 1.7,
+ "startle_s": 0.14,
+ "scramble_s": 0.5,
+ "hop_m": 0.22,
+ "scold_s": 2.4,
+ "return_s": 1.4,
+ "cooldown_s": 1.0,
+ "fist_share": 0.55,
+ "tag_m": 22.0,
+ "shouts": [
+  "Oi! Watch it!",
+  "Hey! Eyes on the road!",
+  "Are you mad?!",
+  "Slow down!",
+  "You nearly had me!",
+  "Learn to drive!",
+  "Oi! This is a street, not a racetrack!",
+  "Look where you're going!"
+ ]
+}

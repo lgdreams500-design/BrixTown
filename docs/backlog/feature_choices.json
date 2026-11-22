@@ -1,6 +1,133 @@
 {
   "schema": 1,
-  "note": "The owner's level picks. Written by Tools/feature_picker.html. A feature missing here is undecided.",
-  "updated": null,
-  "choices": {}
+  "note": "The owner's level picks, stated by the owner in chat and recorded by agents (ADR-0008). A feature or milestone missing here is undecided. -1 means out of the game. After editing, run Tools/backlog.ps1.",
+  "updated": "2026-11-22",
+  "choices": {
+    "F-MAP-CITY": {
+      "slice": 1,
+      "depth": 1,
+      "full": 2,
+      "note": "A district from the first slice (so cars fit), whole city in the full game (owner, 2026-11-22)."
+    },
+    "F-MAP-LOTS": {
+      "slice": 1,
+      "depth": 1,
+      "full": 1,
+      "note": "Registry at every milestone (owner, 2026-11-22)."
+    },
+    "F-NPC-POP": {
+      "slice": 1,
+      "depth": 1,
+      "full": 2,
+      "note": "Took the suggestion (owner, 2026-11-22)."
+    },
+    "F-NPC-ROUTINE": {
+      "slice": 1,
+      "depth": 1,
+      "full": 2,
+      "note": "By the clock, then by their needs in the full game (owner, 2026-11-22)."
+    },
+    "F-OBJ-POINTS": {
+      "slice": 1,
+      "depth": 1,
+      "full": 2,
+      "note": "Took the suggestion (owner, 2026-11-22)."
+    },
+    "F-NPC-LOAD": {
+      "slice": 1,
+      "depth": 1,
+      "full": 2,
+      "note": "Placed by routine, then distance tiers in the full game (owner, 2026-11-22)."
+    },
+    "F-VEH-TRAFFIC": {
+      "slice": 2,
+      "depth": 2,
+      "full": 2,
+      "note": "Owner, 2026-11-22: residents have their cars as part of their routine, from the first slice. Cars need this level."
+    },
+    "F-VEH-DRIVE": {
+      "slice": 2,
+      "depth": 2,
+      "full": 2,
+      "note": "Owner, 2026-11-22: walking, and drivable cars, from the first slice."
+    },
+    "F-NPC-TALK": {
+      "slice": 1,
+      "depth": 1,
+      "full": 2,
+      "note": "Owner, 2026-11-22: \"Slice 1, depth 1, full 2\" (conversations with choices from the first slice)."
+    },
+    "F-NPC-SPEECH": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: \"Yes, level 2 now\" (lip sync timed from the line's text, in the first slice). Later milestones not stated."
+    },
+    "F-SND-WORLD": {
+      "slice": 1,
+      "note": "Owner, 2026-11-22: \"1, 1, 1 for slice\" (city sounds, interaction sounds and music in the world, in the first slice). Later milestones not stated."
+    },
+    "F-SND-ACTION": {
+      "slice": 1,
+      "note": "Owner, 2026-11-22: \"1, 1, 1 for slice\" (city sounds, interaction sounds and music in the world, in the first slice). Later milestones not stated."
+    },
+    "F-SND-MUSIC": {
+      "slice": 1,
+      "note": "Owner, 2026-11-22: \"1, 1, 1 for slice\" (city sounds, interaction sounds and music in the world, in the first slice). Later milestones not stated."
+    },
+    "F-NPC-DODGE": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: \"Level 2 for slice\" (residents dodge a car coming at them, then gesture and shout at the driver). Later milestones not stated."
+    },
+    "F-GARDEN": {
+      "slice": 1,
+      "note": "Owner, 2026-11-22: \"1 Living garden\" for the first slice (asked for flowers and bushes in the parks). Later milestones not stated."
+    },
+    "F-BLD-INSIDE": {
+      "slice": 3,
+      "note": "Owner, 2026-11-22: \"3: Every floor, true size\" (all buildings accessible inside, stairs to every level, inside the same size as outside), with \"Stairs and a lift\" in the towers and \"Residents too\" (beds and desks upstairs). Later milestones not stated."
+    },
+    "F-MAP-DRESS": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: \"Level 2: used, changing\" (playgrounds, statues, signs, street furniture; children play, residents read notices and use the kiosk, posters and bunting change). Later milestones not stated."
+    },
+    "F-BLD-CIVIC": {
+      "slice": 1,
+      "note": "Owner, 2026-11-22: \"Places to visit (Recommended)\" for the bank, car showroom, library, museum, cinema and a second hospital and mall, made from existing lots. Later milestones not stated."
+    },
+    "F-ECO-BANK": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: chose \"2: Full bank now\" for the first slice. Later milestones not stated."
+    },
+    "F-BLD-SHOP": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: chose \"2: Stock and prices\" for the first slice. Later milestones not stated."
+    },
+    "F-QUEST": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: chose \"2: Branching + repeatable\" for the first slice. Later milestones not stated."
+    },
+    "F-CHR-DESIGN": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: chose \"2: Full designer\" for the first slice. Later milestones not stated."
+    },
+    "F-SKY": {
+      "slice": 2,
+      "note": "Asked for a sky and cloud system, then said yes to cloud cover following the day's weather (owner, 2026-11-22). Later milestones not picked."
+    },
+    "F-WEATHER": {
+      "slice": 1,
+      "note": "Said yes to 'F-WEATHER level 1 for the first slice' so clouds follow the weather (owner, 2026-11-22). Rain and fog are in scope but not drawn yet. Later milestones not picked."
+    },
+    "F-VEH-CRASH": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: objects on the pavements, trees and building corners destructible when driving, with a breaking animation; \"Until a worker fixes it\", \"Fast hits break\", residents \"Yes, they shout\". Later milestones not stated. Then the same day: \"remove speed requirement for the damage, it should damage at any speed\"."
+    },
+    "F-NPC-REACT": {
+      "slice": 1,
+      "note": "Owner, 2026-11-22: asked for people to react to the weather (clothing, umbrellas in rain, running for cover when rain starts), then said \"Level 1 for the slice\". Later milestones not stated."
+    },
+    "F-PROP-ESTATE": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: asked to \"build whole real estate economy\" (every building residential, commercial, utility sellable, owned by a player, a resident or one of several real estate companies, smaller units inside, balanced), then, asked for first-slice levels: \"focus on estate and have it at level 2\". Later milestones not stated. Furniture (F-PROP-FURNISH) is being handled in another session; no pick recorded here."
+    }
+  }
 }

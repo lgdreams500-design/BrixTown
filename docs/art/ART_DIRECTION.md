@@ -1,14 +1,14 @@
 ---
 doc_id: WASTED-ART-DIRECTION
-title: Wasted — Art direction (locked look)
-version: 1.1.0
+title: Brix Town — Art direction (locked look)
+version: 1.4.0
 status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22
 last_updated: 2026-11-22
 relates_to: [ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
-decision: docs/decisions/ADR-0004-art-direction.md, docs/decisions/ADR-0007-warmer-kit-light.md
+decision: docs/decisions/ADR-0004-art-direction.md, docs/decisions/ADR-0007-warmer-kit-light.md, docs/decisions/ADR-0013-kit-light-measured.md
 ---
 
-# Wasted — Art direction
+# Brix Town — Art direction
 
 This is the visual target for the game. Everything here was approved by the owner from Blender
 renders. When a new asset, light setup or shader is made, compare it against the reference images in
@@ -86,12 +86,27 @@ From the scripts; use as starting values when building the Unreal sky and sun fo
 | Dusk | (0.42, 0.83, 0.36) | (1.0, 0.42, 0.22) | 2.5 | (0.06, 0.10, 0.30) | 0.6 | 0.014 | +0.2 |
 | Character sheets | (−0.45, −0.50, 0.74) | (1.0, 0.82, 0.62) | 3.2 | (0.42, 0.55, 0.82) | 0.25 | 0.012 or none | −0.3 |
 
-In the playable slice the kit daylight is the reference recipe scaled: sun ×0.62 and more golden, sky ×0.9 and deeper,
-bounce ×1.5, haze ×0.55, exposure ×0.7 (`LIGHTS.kit` in `Prototype/play/play.js`). Its cost: the light shafts in narrow
-alleys are fainter than in the alley image.
+In the playable slice the kit daylight is the reference recipe scaled towards the colours measured in
+`world_street_kit_light.png` (ADR-0013): sun ×0.7 and slightly golden, sky fill ×1.25 by day, a mostly grey
+bounce ×1.2, haze ×0.55 with a light veil over sky and distance, exposure ×0.74 (`LIGHTS.kit` in
+`Prototype/play/play.js`). The exact measured match was too pale for the owner; it is kept as `?light=measured`. In shade, bounced
+light comes only from sunlit ground nearby and things stand in contact shade (ADR-0018), so alleys go dark and warm as in
+the alley image. Its cost: the light shafts in narrow alleys are fainter than in the alley image.
 
 Common to all: AgX view transform with the "Medium High Contrast" look; haze scatters forward
 (anisotropy 0.6); at dusk lanterns are doubled in strength and about half the windows are lit.
+
+### 2.5 Vehicles — "Soft box" (ADR-0015, replacing "Classic" of ADR-0011)
+
+Reference: `Art/Reference/vehicles_soft_box.png` (option A of `Tools/blender/car_kit_09.py`). The owner first chose C
+"Classic" (`vehicles_classic.png`, kept for the record), then after playing with it in the slice preferred A.
+
+| # | Rule | Check |
+|---|---|---|
+| V1 | Cars are **small and friendly soft boxes**: simple body shapes with **generously rounded edges and corners** everywhere, a soft waist above the body, round lamps, rounded bumpers, round tyres with pale hubs. No sharp edges, no flat slab sides (W3). | No corner reads as sharp from 5 m. |
+| V2 | **Matte painted** like everything else (W1), one accent of the palette for the body and a **cream roof**, sometimes a cream belt stripe; vans carry a painted band on a rounded load box. No chrome shine, no glossy paint. | No highlights on the body. |
+| V3 | Cabins are **open frames on round posts** with a rounded roof, so the people inside can be seen; seats and a steering wheel inside. | A seated driver shows from the chest up. |
+| V4 | Character comes from extras, not from new shapes: roof racks with cases and bags, crates in a pickup bed. | Three cars parked together look like a family, not copies. |
 
 ## 3. Characters — option B "Soft"
 
@@ -121,6 +136,7 @@ dressed in whole garments made of the same mottled matte material as the town.
 | C5 | Silhouette says who someone is: apron for a shopkeeper, cap and bag for a courier, long coat for an office worker, scarf and bun for an elder. |
 | C6 | Faces are built for animation first: see `docs/art/CHARACTER_FACE.md`. |
 | C7 | Player and NPC use the **same body and head**; the character designer changes values, not the model. |
+| C8 | **Rosy cheeks** on every face (ADR-0010): a soft oval below and outside each eye, a redder version of the person's own skin tone. Taken from option C; everything else stays option B. |
 
 ### 3.4 The designer values already in use
 Every person in the tests is one function called with a small set of values. This is the seed of the
@@ -150,8 +166,9 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | Item | Where tracked |
 |---|---|
 | How production character models are made | Q-15 |
-| Interiors, vegetation, vehicles, UI style | not started |
-| Night (after dusk) and bad-weather looks | not started; must follow W5–W7 |
+| Interiors, vegetation, UI style | not started (vehicles: §2.5) |
+| Night (after dusk) and bad-weather looks | night: approved in the slice (ADR-0023, owner 2026-11-22), no reference image yet; pictures in `Art/StyleTests/night_sky_15/`. Rain, fog and overcast: approved in the slice (ADR-0016), no rule or reference image yet; must follow W5–W7 |
+| The sky: blue overhead with drifting clouds | approved in the slice (ADR-0014); not in the reference renders, still needs a rule and a reference image |
 | Whether the iris should be smaller than in `face_expressions.png` | owner to say |
 | How the look is achieved in Unreal on modest hardware (haze, soft light) | PH1 task |
 
@@ -160,3 +177,7 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 |---|---|---|
 | 1.0.0 | 2026-11-21 | First version: world look and character option B recorded from the approved renders. |
 | 1.1.0 | 2026-11-22 | Daylight changed to the kit light (ADR-0007): new reference `world_street_kit_light.png` and light recipe row. |
+| 1.2.0 | 2026-11-22 | Rule C8: option B gets rosy cheeks (ADR-0010). The B reference images predate it and show none. |
+| 1.3.0 | 2026-11-22 | Vehicles: the owner chose "Classic" from car look test 09 (ADR-0011): §2.5 rules V1-V4, reference `vehicles_classic.png`. |
+| 1.3.1 | 2026-11-22 | §2.4: the slice's kit light retuned towards the measured colours of the reference street (ADR-0013). No rule or reference changed. |
+| 1.4.0 | 2026-11-22 | Vehicles: the owner switched to A "Soft box" after playing with the Classic cars (ADR-0015): §2.5 rewritten, new reference `vehicles_soft_box.png`. |

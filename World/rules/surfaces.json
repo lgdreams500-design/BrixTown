@@ -1,0 +1,39 @@
+{
+ "note": "Which stone, brick or paving each surface uses (WORLD_MAP WLD-038, WLD-039; ADR-0017). 'patterns' says how each one is laid; 'rules' says where. For each slot the first rule whose 'if' matches wins; 'use' is a pattern or {pattern: weight}, picked by the lot's or block's id so it never changes between runs. A lot or block may name its own in a 'surface' field ({\"wall\": \"rubble\"}), which beats the rules. Slots: 'wall' (a building's stone: ground-floor walls, the stone storey of the old houses, all-stone buildings), 'pavement' (the ground of a block and the pavements round it), 'ground' (an open lot: the market, a tram stop). A wall pattern with 'upper' share > 0 also covers the plaster storeys of that many of its buildings (brick terraces). Sizes in metres; colours are the town's (ART_DIRECTION); 'stone' and 'pave' mean the town's own stone and paving colour; 'mortar' 0..1 is how far the joints are pale lime mortar set back from the face rather than a dark line. All values are [ASSUMPTION] until tuned.",
+ "patterns": {
+  "ashlar":        {"for": "wall", "type": "bond", "unit": [1.0, 0.5], "joint": 0.02, "vary": 0.8, "mortar": 0.35, "colors": ["stone"]},
+  "brick_running": {"for": "wall", "type": "bond", "unit": [0.25, 0.075], "joint": 0.012, "vary": 0.7, "upper": 0.45, "mortar": 0.75, "colors": [[0.5, 0.28, 0.2], [0.47, 0.3, 0.22], [0.53, 0.32, 0.23]]},
+  "brick_flemish": {"for": "wall", "type": "flemish", "unit": [0.25, 0.075], "joint": 0.012, "vary": 0.7, "upper": 0.45, "mortar": 0.75, "colors": [[0.5, 0.28, 0.2], [0.44, 0.27, 0.2]]},
+  "rubble":        {"for": "wall", "type": "rubble", "unit": [0.6, 0.3], "joint": 0.03, "vary": 0.9, "mortar": 0.9, "colors": [[0.46, 0.45, 0.43], [0.5, 0.47, 0.42], [0.47, 0.44, 0.4]]},
+  "rusticated":    {"for": "wall", "type": "bond", "unit": [1.2, 0.6], "joint": 0.015, "bevel": 0.06, "vary": 0.5, "mortar": 0.4, "colors": [[0.59, 0.5, 0.41], [0.56, 0.5, 0.44]]},
+  "slabs":         {"for": "pavement", "type": "bond", "unit": [0.83, 0.42], "joint": 0.015, "vary": 0.8, "colors": ["pave"]},
+  "flags":         {"for": "pavement", "type": "flags", "unit": [0.8, 0.8], "joint": 0.015, "vary": 0.8, "colors": [[0.48, 0.44, 0.39], [0.46, 0.43, 0.4]]},
+  "herringbone":   {"for": "pavement", "type": "herringbone", "unit": [0.2, 0.1], "joint": 0.01, "vary": 0.7, "colors": [[0.54, 0.32, 0.24], [0.5, 0.33, 0.26]]},
+  "basket":        {"for": "pavement", "type": "basket", "unit": [0.2, 0.2], "joint": 0.012, "vary": 0.7, "colors": [[0.46, 0.42, 0.37], [0.52, 0.34, 0.26]]},
+  "setts":         {"for": "pavement", "type": "bond", "unit": [0.14, 0.12], "joint": 0.012, "dome": 0.1, "vary": 0.8, "colors": [[0.39, 0.38, 0.36]]}
+ },
+ "rules": {
+  "wall": [
+   {"if": {"name": ["Town Hall"]}, "use": "rusticated"},
+   {"if": {"kind": ["bank", "museum", "library"]}, "use": "rusticated"},
+   {"if": {"tags": ["hospital"]}, "use": "rusticated"},
+   {"if": {"template": ["hospital", "hall"]}, "use": "rusticated"},
+   {"if": {"template": ["peri"]}, "use": {"rubble": 3, "ashlar": 1}},
+   {"if": {"template": ["rows"], "kind": ["home", "shop", "food"]}, "use": {"brick_running": 3, "brick_flemish": 2, "ashlar": 1}},
+   {"if": {"kind": ["utility", "work"]}, "use": {"ashlar": 2, "brick_running": 1}},
+   {"if": {}, "use": "ashlar"}
+  ],
+  "pavement": [
+   {"if": {"template": ["peri"]}, "use": "flags"},
+   {"if": {"template": ["hall", "hospital"]}, "use": "flags"},
+   {"if": {"template": ["mall"]}, "use": "herringbone"},
+   {"if": {"template": ["rows"]}, "use": {"slabs": 2, "herringbone": 1}},
+   {"if": {"template": ["park"]}, "use": "basket"},
+   {"if": {}, "use": "slabs"}
+  ],
+  "ground": [
+   {"if": {"kind": ["market"]}, "use": "setts"},
+   {"if": {}, "use": "slabs"}
+  ]
+ }
+}

@@ -1,0 +1,394 @@
+{
+ "note": "How the city sounds (SND-001 to SND-017; F-SND-WORLD, F-SND-ACTION and F-SND-MUSIC level 1). Every sound is made in code from these recipes, so there are no audio files to license. Music: styles name an instrument for the chords (comp) and the melody (voice), a comping pattern, a bass line and drums; phrases are the melody rhythms. Gains are 0..1 before the mix, distances in metres, frequencies in Hz, times in seconds, hours as HH:MM. All values are [ASSUMPTION] until the owner has listened. Checked by Tools/worldgen/test_world.py.",
+ "mix": { "master": 0.8, "world": 0.85, "voice": 0.7, "action": 0.6, "music": 0.4 },
+ "hearing": { "near": 2.5, "rolloff": 0.9, "far": 70, "pan": 0.8 },
+ "indoors": { "muffle_hz": 650, "muffle_gain": 0.4 },
+
+ "ambience": {
+  "street":   { "day_gain": 0.10, "night_gain": 0.04, "day_hz": 1100, "night_hz": 500 },
+  "room":     { "gain": 0.035, "hz": 300 },
+  "birds":    { "from": "05:30", "to": "20:30", "per_minute": 18, "garden_per_minute": 40, "garden_m": 35, "gain": 0.09, "hz": [2400, 4800] },
+  "crickets": { "from": "21:00", "to": "05:00", "gain": 0.022, "hz": 4300 },
+  "fountain": { "gain": 0.16, "far": 22, "hz": 1800 }
+ },
+
+ "footsteps": {
+  "player_gain": 0.16, "resident_gain": 0.09, "far": 9, "max": 6,
+  "surfaces": {
+   "stone": { "hz": 1500, "q": 1.2, "len": 0.045 },
+   "wood":  { "hz": 520,  "q": 1.6, "len": 0.07 },
+   "grass": { "hz": 3200, "q": 0.6, "len": 0.06 }
+  },
+  "land_gain": 0.3
+ },
+
+ "vehicles": {
+  "engine": { "idle_hz": 30, "hz_per_mps": 3.6, "max_hz": 95, "gain": 0.16, "far": 70, "voices": 6, "van_pitch": 0.8, "tone_hz": 600, "tyres_gain": 0.05 },
+  "player": { "gain": 0.2, "start_len": 0.8, "door_gain": 0.35, "horn_hz": [370, 466], "horn_gain": 0.22, "skid_mps": 5, "skid_gain": 0.18, "bump_gain": 0.4 },
+  "tram": { "hum_hz": 48, "whine_hz": 380, "gain": 0.3, "far": 140, "bell_hz": [1175, 1480], "bell_gain": 0.35, "bell_far": 160 }
+ },
+
+ "voices": {
+  "pitch": { "min": 140, "max": 300 },
+  "shapes": {
+   "AA": [800, 1250], "EH": [560, 1750], "EE": [320, 2300], "OH": [520, 900], "OO": [360, 780],
+   "FV": [450, 1500], "MBP": [260, 900]
+  },
+  "line_gain": 0.18
+ },
+
+ "people": {
+  "note": "People (SND-003, SND-006, SND-015 to SND-017): steps by pace and age, sitting and standing, the sounds of what each resident is doing, conversations that take turns, laughter, the hum of a crowd, sellers calling, shouts. Voices are wordless (Q-14). Quiet places (library, museum, cinema) have no chatter.",
+  "far": 18, "busy": 8,
+  "pitch": { "child": [270, 380], "elder": [120, 210] },
+  "steps": { "run_louder": 1.5, "child_softer": 0.7, "child_pitch": 1.3 },
+  "poses": { "sit": "sit", "stand": "stand", "lie": "lie" },
+  "chat": { "acts": ["eat", "shop", "rest", "sell", "visit", "stroll", "wait", "check", "work", "notices", "swing", "slide", "seesaw", "sandpit", "climb", "home"], "pair_m": 3.2, "groups": 5, "far": 16, "gain": 0.07, "syllables": [3, 9], "syllables_per_s": 5.5, "turn_gap_s": [0.2, 0.8], "pause_s": [1.2, 3.5], "question": 0.2, "laugh": 0.1, "child_laugh": 0.3, "laugh_gain": 0.06 },
+  "crowd": { "min": 6, "full": 20, "far": 16, "gain": 0.04, "hz": 900, "per_s": 0.25 },
+  "greet": { "m": 2.2, "chance": 0.25, "every_s": 60, "gain": 0.08 },
+  "call_gain": 0.12, "shout_gain": 0.2,
+  "sounds": {
+   "sit": { "kind": "thud", "hz": 150, "len": 0.16, "gain": 0.16 },
+   "stand": { "kind": "rustle", "hz": 2000, "len": 0.18, "gain": 0.07 },
+   "lie": { "kind": "thud", "hz": 100, "len": 0.3, "gain": 0.12 },
+   "cutlery": { "kind": "clink", "hz": 2600, "len": 0.08, "gain": 0.05 },
+   "cup": { "kind": "clink", "hz": 1700, "len": 0.12, "gain": 0.06 },
+   "espresso": { "kind": "hiss", "hz": 2400, "len": 2.2, "gain": 0.05 },
+   "till": { "kind": "chime", "hz": [1568, 2093], "len": 0.35, "gain": 0.06 },
+   "bag": { "kind": "rustle", "hz": 2800, "len": 0.3, "gain": 0.05 },
+   "coins": { "kind": "clink", "hz": 3300, "len": 0.05, "gain": 0.05, "n": 3 },
+   "page": { "kind": "rustle", "hz": 3600, "len": 0.15, "gain": 0.04 },
+   "typing": { "kind": "type", "hz": 2200, "len": 0.025, "gain": 0.03, "n": 8 },
+   "hammer": { "kind": "thud", "hz": 320, "len": 0.08, "gain": 0.12 },
+   "shears": { "kind": "snip", "hz": 5200, "len": 0.04, "gain": 0.05 },
+   "box": { "kind": "thud", "hz": 140, "len": 0.2, "gain": 0.15 },
+   "wrench": { "kind": "clank", "hz": 900, "len": 0.25, "gain": 0.06 },
+   "stamp": { "kind": "thud", "hz": 220, "len": 0.1, "gain": 0.1 },
+   "beep": { "kind": "chime", "hz": [1760], "len": 0.12, "gain": 0.03 },
+   "snore": { "kind": "snore", "hz": 320, "len": 1.4, "gain": 0.03 },
+   "shuffle": { "kind": "rustle", "hz": 1200, "len": 0.25, "gain": 0.04 },
+   "creak": { "kind": "creak", "hz": 700, "len": 0.4, "gain": 0.05 },
+   "whoosh": { "kind": "whoosh", "hz": 600, "len": 0.7, "gain": 0.05 },
+   "seesaw": { "kind": "thud", "hz": 180, "len": 0.18, "gain": 0.08 },
+   "sand": { "kind": "scrape", "hz": 2500, "len": 0.4, "gain": 0.03 },
+   "clank": { "kind": "clank", "hz": 1200, "len": 0.2, "gain": 0.04 }
+  },
+  "activities": [
+   { "acts": ["eat", "eat_home"], "every": [2.5, 7], "sound": "cutlery" },
+   { "acts": ["eat"], "every": [6, 14], "sound": "cup" },
+   { "acts": ["work"], "every": [14, 30], "roles": ["cafe"], "sound": "espresso" },
+   { "acts": ["work"], "every": [4, 9], "roles": ["cafe"], "sound": "cup" },
+   { "acts": ["work", "sell"], "every": [9, 22], "roles": ["shopkeeper"], "sound": "till" },
+   { "acts": ["shop"], "every": [6, 14], "sound": "bag" },
+   { "acts": ["sell"], "every": [7, 16], "sound": "coins" },
+   { "acts": ["sell"], "every": [10, 20], "call": true },
+   { "acts": ["work"], "every": [3, 8], "roles": ["clerk"], "sound": "typing" },
+   { "acts": ["work"], "every": [1.2, 4], "roles": ["maker"], "sound": "hammer" },
+   { "acts": ["work"], "every": [6, 15], "roles": ["nurse"], "sound": "beep" },
+   { "acts": ["work", "tend"], "every": [2, 6], "roles": ["gardener"], "sound": "shears" },
+   { "acts": ["deliver"], "every": [5, 12], "sound": "box" },
+   { "acts": ["work", "check"], "every": [3, 9], "roles": ["utility"], "sound": "wrench" },
+   { "acts": ["bank"], "every": [6, 14], "sound": "stamp" },
+   { "acts": ["read", "paper", "notices"], "every": [5, 12], "sound": "page" },
+   { "acts": ["sleep"], "every": [3.5, 5], "sound": "snore", "chance": 0.35 },
+   { "acts": ["wait"], "every": [6, 15], "sound": "shuffle" },
+   { "acts": ["swing"], "every": [1.4, 1.6], "sound": "creak" },
+   { "acts": ["slide"], "every": [4, 7], "sound": "whoosh", "call": true },
+   { "acts": ["seesaw"], "every": [1.6, 2.2], "sound": "seesaw" },
+   { "acts": ["sandpit"], "every": [1.5, 4], "sound": "sand" },
+   { "acts": ["climb"], "every": [2, 5], "sound": "clank" }
+  ]
+ },
+ "actions": {
+  "prompt":      { "kind": "tick",  "hz": 1900, "len": 0.04, "gain": 0.06 },
+  "sit":         { "kind": "thud",  "hz": 160,  "len": 0.18, "gain": 0.35 },
+  "lie":         { "kind": "thud",  "hz": 110,  "len": 0.35, "gain": 0.3 },
+  "stand":       { "kind": "rustle","hz": 2200, "len": 0.22, "gain": 0.12 },
+  "lift":        { "kind": "chime", "hz": [880, 1320], "len": 0.5, "gain": 0.22 },
+  "jump":        { "kind": "rustle","hz": 1800, "len": 0.12, "gain": 0.08 },
+  "talk_open":   { "kind": "chime", "hz": [660, 990], "len": 0.25, "gain": 0.14 },
+  "talk_choose": { "kind": "tick",  "hz": 1400, "len": 0.05, "gain": 0.12 },
+  "talk_close":  { "kind": "chime", "hz": [990, 660], "len": 0.25, "gain": 0.12 },
+  "car_door":    { "kind": "thud",  "hz": 95,   "len": 0.22, "gain": 0.5 },
+  "map":         { "kind": "rustle","hz": 3000, "len": 0.25, "gain": 0.12 },
+  "clock":       { "kind": "tick",  "hz": 2400, "len": 0.03, "gain": 0.12 },
+  "hour":        { "kind": "chime", "hz": [784, 1046], "len": 0.6, "gain": 0.16 },
+  "radio":       { "kind": "tick",  "hz": 700,  "len": 0.06, "gain": 0.2 }
+ },
+
+ "music": {
+  "score": {
+   "gain": 0.5, "talk_duck": 0.25, "source_duck": 0.1,
+   "moods": [
+    { "from": "05:00", "name": "morning", "bpm": 84, "root": 62, "scale": "major", "chords": [1, 5, 6, 4], "bars_per_chord": 1, "sevenths": false, "comp": "nylon", "comp_pattern": "arp", "voice": "harp", "bass": "root", "drums": "shaker", "density": 0.45, "swing": 0 },
+    { "from": "11:00", "name": "afternoon", "bpm": 92, "root": 67, "scale": "major", "chords": [1, 6, 4, 5], "bars_per_chord": 1, "sevenths": false, "comp": "nylon", "comp_pattern": "gentle_strum", "comp_level": 0.85, "under": "pad", "under_level": 0.6, "voice": "harp", "bass": "root", "drums": "brush", "drum_level": 0.55, "density": 0.45, "swing": 0 },
+    { "from": "18:00", "name": "evening", "bpm": 74, "root": 65, "scale": "major", "chords": [1, 3, 4, 5], "bars_per_chord": 1, "sevenths": true, "comp": "nylon", "comp_pattern": "arp", "comp_level": 0.8, "under": "pad", "under_level": 0.9, "voice": "bell", "bass": "root", "drums": null, "density": 0.35, "swing": 0, "reverb": 1.2 },
+    { "from": "22:00", "name": "night", "bpm": 60, "root": 57, "scale": "dorian", "chords": [1, 4, 1, 7], "bars_per_chord": 2, "sevenths": true, "comp": "pad", "comp_pattern": "pad", "voice": "bell", "bass": "root", "drums": null, "density": 0.22, "swing": 0, "reverb": 1.4 }
+   ]
+  },
+  "places": {
+   "food": { "style": "cafe", "from": "07:00", "to": "22:00", "far": 26 },
+   "shop": { "style": "shop", "from": "08:00", "to": "19:00", "far": 18 },
+   "market": { "style": "busker", "from": "09:00", "to": "17:00", "far": 40, "market_days_only": true }
+  },
+  "radio": [
+   { "name": "Swing FM", "style": "swing" },
+   { "name": "Pop Ninety", "style": "pop" },
+   { "name": "Calm", "style": "calm" },
+   { "name": "Tram Street Talk", "podcast": "tram_street" },
+   { "name": "The Quiet Hour", "podcast": "quiet_hour" }
+  ],
+  "styles": {
+   "cafe": { "bpm": 96, "root": 62, "scale": "major", "chords": [2, 5, 1, 6], "bars_per_chord": 1, "sevenths": true, "comp": "nylon", "comp_pattern": "gentle_strum", "comp_level": 0.85, "under": "pad", "under_level": 0.6, "voice": "bell", "bass": "root", "drums": "brush", "drum_level": 0.45, "density": 0.45, "swing": 0, "gain": 0.5 },
+   "shop": { "bpm": 108, "root": 64, "scale": "major", "chords": [1, 5, 6, 4], "bars_per_chord": 1, "sevenths": false, "comp": "harp", "comp_pattern": "arp", "voice": "bell", "bass": "root", "drums": "shaker", "density": 0.45, "swing": 0, "gain": 0.35 },
+   "busker": { "bpm": 112, "root": 60, "scale": "mixolydian", "chords": [1, 7, 4, 1], "bars_per_chord": 1, "sevenths": false, "comp": "nylon", "comp_pattern": "strum", "voice": "nylon", "bass": null, "drums": null, "density": 0.6, "swing": 0, "gain": 0.95, "reverb": 0.6 },
+   "swing": { "bpm": 132, "root": 65, "scale": "major", "chords": [2, 5, 1, 6], "bars_per_chord": 1, "sevenths": true, "comp": "nylon", "comp_pattern": "four", "comp_level": 0.9, "voice": "bell", "bass": "walk", "bass_voice": "bass", "drums": "brush", "drum_level": 0.55, "density": 0.6, "swing": 0.3, "gain": 0.55 },
+   "pop": { "bpm": 116, "root": 69, "scale": "minor", "chords": [1, 6, 3, 7], "bars_per_chord": 1, "sevenths": false, "comp": "harp", "comp_pattern": "arp", "voice": "bell", "bass": "pulse", "drums": "kit", "density": 0.6, "swing": 0, "gain": 0.5 },
+   "calm": { "bpm": 66, "root": 64, "scale": "lydian", "chords": [1, 2, 1, 5], "bars_per_chord": 2, "sevenths": true, "comp": "pad", "comp_pattern": "pad", "voice": "harp", "bass": "root", "drums": null, "density": 0.3, "swing": 0, "gain": 0.5, "reverb": 1.3 }
+  },
+  "scales": {
+   "major": [0, 2, 4, 5, 7, 9, 11],
+   "minor": [0, 2, 3, 5, 7, 8, 10],
+   "dorian": [0, 2, 3, 5, 7, 9, 10],
+   "mixolydian": [0, 2, 4, 5, 7, 9, 10],
+   "lydian": [0, 2, 4, 6, 7, 9, 11]
+  },
+  "voices": ["harp", "nylon", "epiano", "bell", "pad", "pluck", "keys", "guitar"],
+  "chords_only": ["epiano", "keys"],
+  "drums": ["brush", "kit", "shaker"],
+  "patterns": ["block", "arp", "strum", "gentle_strum", "four", "pad", "offbeat"],
+  "basslines": ["root", "walk", "pulse"],
+  "room": { "seconds": 2.6, "wet": 0.32, "predelay": 0.015 },
+  "phrases": [
+   [[0, 6], [6, 2], [8, 8], [16, 4], [20, 4], [24, 8]],
+   [[0, 4], [4, 4], [8, 4], [12, 4], [16, 12]],
+   [[2, 2], [4, 4], [8, 8], [18, 2], [20, 4], [24, 8]],
+   [[0, 8], [8, 8], [16, 16]],
+   [[0, 3], [3, 3], [6, 2], [8, 8], [16, 3], [19, 3], [22, 2], [24, 8]],
+   [[4, 4], [8, 4], [12, 4], [16, 16]],
+   [[0, 12], [12, 4], [16, 16]]
+  ]
+ },
+ "podcasts": {
+  "note": "Talk on the car radio (SND-014). Hosts are voiced as wordless syllables in their own pitch, the way residents speak (Q-14: text first), and each line is shown as a caption. Where a show is now comes from the world clock, as a broadcast would: the same line at the same moment for everyone.",
+  "gap_s": 0.7,
+  "intro_s": 2.5,
+  "bed_gain": 0.22,
+  "voice_gain": 0.2,
+  "shows": {
+   "tram_street": {
+    "title": "Tram Street Talk",
+    "bed": "calm",
+    "hosts": {
+     "mira": {
+      "name": "Mira",
+      "pitch": 235
+     },
+     "teo": {
+      "name": "Teo",
+      "pitch": 150
+     }
+    },
+    "episodes": [
+     {
+      "title": "Market day",
+      "lines": [
+       [
+        "mira",
+        "Good morning, Old Town. This is Tram Street Talk, and I'm Mira."
+       ],
+       [
+        "teo",
+        "And I'm Teo. Mira, I walked through Market Square at dawn and the stalls were already up."
+       ],
+       [
+        "mira",
+        "They always are. The flower stall sets up first. You can smell it from the fountain."
+       ],
+       [
+        "teo",
+        "I bought three apples and somehow left with a plant."
+       ],
+       [
+        "mira",
+        "That is how market day works. Nobody leaves with only what they came for."
+       ],
+       [
+        "teo",
+        "Is it true the busker knows only four songs?"
+       ],
+       [
+        "mira",
+        "Four songs, played with feeling. That counts as a big repertoire round here."
+       ],
+       [
+        "teo",
+        "Fair. If you're heading over, the tram stops right by the square."
+       ],
+       [
+        "mira",
+        "Bring a bag. Bring two. We'll be back after the bell."
+       ]
+      ]
+     },
+     {
+      "title": "Catching the tram",
+      "lines": [
+       [
+        "teo",
+        "You're listening to Tram Street Talk. Today, the tram."
+       ],
+       [
+        "mira",
+        "Our favourite slow, cream coloured friend."
+       ],
+       [
+        "teo",
+        "People ask why it rings twice. Once when it stops, once when it leaves."
+       ],
+       [
+        "mira",
+        "So you know to hurry. Or, if you're like me, to wave sadly as it goes."
+       ],
+       [
+        "teo",
+        "The commuters ride it out of town in the morning and back again at night."
+       ],
+       [
+        "mira",
+        "And the window seats on the left get the sun at the end of the day."
+       ],
+       [
+        "teo",
+        "A local secret, now shared with the whole town."
+       ],
+       [
+        "mira",
+        "Sorry, everyone. See you on the left side."
+       ]
+      ]
+     },
+     {
+      "title": "Rainy day plans",
+      "lines": [
+       [
+        "mira",
+        "If the sky turns grey, where do you go in Old Town?"
+       ],
+       [
+        "teo",
+        "Fountain Library. It's warm, it's quiet, and nobody minds if you nap."
+       ],
+       [
+        "mira",
+        "I'd say the Old Town Museum. You can learn something and stay dry."
+       ],
+       [
+        "teo",
+        "Or the Palace Cinema, with a paper bag of something sweet."
+       ],
+       [
+        "mira",
+        "Then a café after. Café Mina does a very good hot chocolate."
+       ],
+       [
+        "teo",
+        "That's three plans and a dessert. Nobody needs to be bored."
+       ],
+       [
+        "mira",
+        "That's our show. Be kind to each other out there."
+       ]
+      ]
+     }
+    ]
+   },
+   "quiet_hour": {
+    "title": "The Quiet Hour",
+    "bed": "calm",
+    "hosts": {
+     "oskar": {
+      "name": "Oskar",
+      "pitch": 130
+     },
+     "june": {
+      "name": "June",
+      "pitch": 205
+     }
+    },
+    "episodes": [
+     {
+      "title": "Night walk",
+      "lines": [
+       [
+        "oskar",
+        "This is The Quiet Hour. Take a breath. There's nowhere you need to be."
+       ],
+       [
+        "oskar",
+        "Tonight, a walk. Start at the fountain and listen to the water."
+       ],
+       [
+        "oskar",
+        "Turn up Mill Street. The lanterns are lit and the windows glow amber."
+       ],
+       [
+        "oskar",
+        "Somewhere a cat is deciding whether to cross the road. It decides not to."
+       ],
+       [
+        "oskar",
+        "At Linden Park the crickets have taken over the evening."
+       ],
+       [
+        "oskar",
+        "Sit on a bench. Count the windows still awake. One. Two. Three."
+       ],
+       [
+        "oskar",
+        "That's enough for tonight. Sleep well, Old Town."
+       ]
+      ]
+     },
+     {
+      "title": "Letters from listeners",
+      "lines": [
+       [
+        "june",
+        "Welcome to The Quiet Hour. I'm June, reading your letters tonight."
+       ],
+       [
+        "june",
+        "Someone writes: I moved here last spring and I still get lost. Is that normal?"
+       ],
+       [
+        "oskar",
+        "Completely normal. The streets are a grid, but the gardens hide the corners."
+       ],
+       [
+        "june",
+        "Another listener says the baker gave her an extra roll for no reason."
+       ],
+       [
+        "oskar",
+        "There's always a reason. The reason is that it was a good day."
+       ],
+       [
+        "june",
+        "And one more: what's the best time to see the town?"
+       ],
+       [
+        "oskar",
+        "Just after sunset, when the lamps come on one by one."
+       ],
+       [
+        "june",
+        "Thank you for writing. Keep the letters coming."
+       ]
+      ]
+     }
+    ]
+   }
+  }
+ }
+}

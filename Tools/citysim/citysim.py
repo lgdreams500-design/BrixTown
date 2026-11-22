@@ -1,4 +1,4 @@
-"""Wasted - city in a box: the rules of a living block, with no engine and no drawing code.
+"""Brix Town - city in a box: the rules of a living block, with no engine and no drawing code.
 
 Everything here is *calculated from the world clock and the data file*, never stepped frame by frame:
 ask where a resident is at any minute of any day and the answer is the same every time, on any
@@ -227,6 +227,39 @@ class Vegetation:
         fade = min(1.0, max(0.0, (doy - f["bloom"][1]) / float(f["gone"] - f["bloom"][1])))
         return dict(size=size * (1.0 - 0.6 * fade), bloom=1.0 - fade if f["bloom"][0] <= doy else 0.0)
 
+    def plant(self, name, day):
+        """CITY-017: a garden plant's look on any day of the year, from its kind's dates alone (vegetation.json "plants").
+        size: how much of it stands (bulbs and asters come up and die back); leaf: how much leaf it carries; color: the
+        leaf's colour (fresh in spring, turning in autumn, duller in winter); bloom: how far into flower; spent: dry heads
+        left standing after the flowers."""
+        p = self.d["plants"][name]
+        doy = day % self.clock.year_days
+        ramp = lambda v: min(1.0, max(0.0, v))
+        size = 1.0
+        if "up" in p:
+            rise, gone = p["up"]
+            size = 0.0 if doy < rise or doy >= gone else ramp((doy - rise + 1) / 3.0) * ramp((gone - doy) / 3.0)
+        if p.get("leaf"):
+            bud, full, turn_d, bare = p["leaf"]
+            leaf = ramp((doy - bud) / float(full - bud))
+            turn = ramp((doy - turn_d) / 4.0)
+            leaf *= 1.0 - ramp((doy - turn_d - 2) / float(bare - turn_d - 2))
+            color = [p["summer"][i] + (p["autumn"][i] - p["summer"][i]) * turn for i in range(3)]
+        else:                                                  # evergreen: always in leaf, duller through the winter
+            leaf, w = 1.0, ramp((doy - p.get("winter_from", 34)) / 3.0)
+            color = [p["summer"][i] + (p.get("winter", p["summer"])[i] - p["summer"][i]) * w for i in range(3)]
+        if "flush" in p:                                       # new growth, paler, for a few days in spring
+            f0, f1 = p["flush"]
+            k = ramp((doy - f0 + 1) / 2.0) * ramp((f1 - doy) / 2.0)
+            color = [color[i] + (p["fresh"][i] - color[i]) * k for i in range(3)]
+        bloom, spent = 0.0, 0.0
+        if "bloom" in p:
+            b0, b1 = p["bloom"]
+            bloom = ramp((doy - b0 + 1) / 2.0) * ramp((b1 - doy) / 2.0) * (1.0 if size > 0 else 0.0)
+            if "spent_until" in p and b1 - 1 <= doy < p["spent_until"]:
+                spent = 1.0 - bloom
+        return dict(size=size, leaf=leaf * (1.0 if size > 0 else 0.0), color=color, bloom=bloom, spent=spent)
+
 
 # ---- the city ----------------------------------------------------------------------------------------
 class City:
@@ -270,6 +303,95 @@ class City:
         for rid in sorted(self.res):
             self.mates.setdefault(self.res[rid]["home"], []).append(rid)
         self._plans = {}
+        self.traffic = None                              # set by traffic.Traffic: residents who own a car drive their longer trips
+        self.react = d.get("react")                      # World/rules/weather_react.json; None: people ignore the weather (F-NPC-REACT level 0)
+
+    # -- reacting to the weather (F-NPC-REACT level 1, CITY-077 to CITY-080): all of it from the clock, the seed and data --
+    def raining(self, t):
+        return weather(self.d, self.clock, t) == "rain"
+
+    def rain_spells(self, day):
+        """[(start, end)] minutes of the day when it rains, neighbouring wet slots joined into one spell."""
+        out = []
+        for k in range(4):
+            if self.raining(day * 1440 + k * 360 + 1):
+                if out and out[-1][1] == k * 360:
+                    out[-1] = (out[-1][0], (k + 1) * 360)
+                else:
+                    out.append((k * 360, (k + 1) * 360))
+        return out
+
+    def wear(self, rid, day, wet=None):
+        """What a resident puts on and takes out today: dict(coat, hood, umbrella, coat_colour, umbrella_colour). Decided
+        once in the morning from the season and the day's weather, so it never changes during the day (CITY-077).
+        wet=True or False asks what they would wear if the day did or did not have rain in it."""
+        R = self.react
+        if not R:
+            return dict(coat=False, hood=False, umbrella=False, coat_colour=None, umbrella_colour=None)
+        wet = bool(self.rain_spells(day)) if wet is None else wet
+        season = self.clock.info(day)["season"]
+        u, c = R["umbrella"], R["coat"]
+        umbrella = rnd("umb", rid, day) < (u["rain_day"] if wet else u["dry_day"])
+        coat = rnd("coat", rid, day) < max(c["season"][season], c["rain_day"] if wet else 0.0)
+        return dict(coat=coat, hood=coat and rnd("hood", rid) < c["hood"], umbrella=umbrella,
+                    coat_colour=c["colours"][int(rnd("coatc", rid) * len(c["colours"]))] if coat else None,
+                    umbrella_colour=u["colours"][int(rnd("umbc", rid) * len(u["colours"]))] if umbrella else None)
+
+    def _open_air(self, s):
+        R = self.react
+        return self.lots[s["place"]]["kind"] in R["open_kinds"] and s["act"] not in R["stay_out"]
+
+    def _take_cover(self, rid, day, ss):
+        """CITY-078: someone out in the open when rain starts stops within a minute or two and makes for cover (their nearest
+        café's awning, or home), waits there until the rain stops, then goes back if enough of what they were doing is left.
+        Someone due somewhere open while it is already raining goes straight to the cover instead."""
+        R, sh = self.react, self.react["shelter"]
+        spells = self.rain_spells(day)
+        if not spells:
+            return ss
+        r = self.res[rid]
+        out = []
+        for s in ss:
+            if not self._open_air(s):
+                out.append(s)
+                continue
+            cur = s
+            for a, b in spells:
+                if cur is None or b <= cur["start"] or a >= cur["end"]:
+                    continue
+                already = a <= cur["start"]
+                t = cur["start"] if already else a + sh["notice_minutes"][0] + rnd("notice", rid, day, a) * (sh["notice_minutes"][1] - sh["notice_minutes"][0])
+                if t >= cur["end"] - 1.0:
+                    continue
+                to = sh["to"][int(rnd("cover", rid, day, a) * len(sh["to"]))]
+                place = r["home"] if to == "home" else r.get("near", {}).get(to) or r["home"]
+                act = "home" if place == r["home"] else "shelter"
+                back = b if cur["end"] - b >= sh["resume_minutes"] else cur["end"]
+                if not already:
+                    out.append(dict(cur, end=t))
+                out.append(dict(start=t, end=back, act=act, place=place, use=self._use(act, place), idx=cur["idx"] + 0.25 + a / 1e4, rush=not already))
+                cur = dict(cur, start=back, idx=cur["idx"] + 0.5 + a / 1e4) if back < cur["end"] else None
+            if cur is not None:
+                out.append(cur)
+        return out
+
+    def pace_in_rain(self, rid, day, t, rush):
+        """How much faster than their own pace someone walks a leg that sets off at minute t (CITY-079)."""
+        R = self.react
+        if not R or not self.raining(day * 1440 + t):
+            return 1.0
+        p = R["pace"]
+        if self.wear(rid, day)["umbrella"]:
+            return p["umbrella"]
+        return p["run"] if rush else p["hurry"]
+
+    def cover(self, rid, day, m, state, act=None):
+        """What a resident does about the rain at minute m (CITY-080): None when it is dry or they are under a roof or an
+        awning; 'umbrella' (up), 'hood' (up) or 'bare' (head down, a hand up when walking)."""
+        if not self.react or state in ("inside", "away", "driving") or act == "shelter" or not self.raining(day * 1440 + m):
+            return None
+        w = self.wear(rid, day)
+        return "umbrella" if w["umbrella"] else "hood" if w["hood"] else "bare"
 
     # -- routines: today's list of things to do --
     def _pick(self, token, rid, day, idx, minute):
@@ -347,6 +469,8 @@ class City:
             bl = self.blocks(rid, day)
             stays[rid] = [dict(start=m, end=bl[i + 1][0] if i + 1 < len(bl) else 1440.0, act=a, place=p, use=self._use(a, p), idx=i)
                           for i, (m, a, p) in enumerate(bl)]
+            if self.react:
+                stays[rid] = self._take_cover(rid, day, stays[rid])
         # who gets which place to sit, stand or work: first come, first served, worked out for the whole day
         users = {}
         for rid, ss in stays.items():
@@ -378,6 +502,8 @@ class City:
                     alt = self.lots[place]["objects"].get(self.d["use"]["rest_fallback"], [])
                     s["alt"] = [alt[int(rnd("rim", rid, day) * len(alt))]] if alt else None
         plan = {rid: self._timeline(rid, day, ss) for rid, ss in stays.items()}
+        if self.traffic is not None:
+            plan = self.traffic.apply(day, plan)
         self._plans[day] = plan
         if len(self._plans) > 12:
             self._plans.pop(next(iter(self._plans)))
@@ -398,6 +524,14 @@ class City:
         door = self.anchor[s["place"]]
         x0, y0, x1, y1 = lot["rect"]
         cx, cy = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+        if s["act"] == "shelter":                      # under the awning: anywhere along the front, close to the wall (CITY-078)
+            n = dist(door, (cx, cy)) or 1.0
+            ox, oy = (door[0] - cx) / n, (door[1] - cy) / n
+            ex, ey = oy, -ox
+            half = (abs(ex) * (x1 - x0) + abs(ey) * (y1 - y0)) * 0.45
+            k = (rnd("awn", rid, day, s["idx"]) * 2 - 1) * half
+            out = 0.5 + rnd("awn2", rid, day, s["idx"]) * 1.2
+            return (door[0] + ox * out + ex * k, door[1] + oy * out + ey * k)
         if s["use"] is None or lot["kind"] in ("garden", "market", "stop"):   # at the door, or standing nearby when every place is taken
             n = dist(door, (cx, cy)) or 1.0
             out = (door[0] - (cx - door[0]) / n * 1.6, door[1] - (cy - door[1]) / n * 1.6) if s["use"] is None else door
@@ -444,11 +578,13 @@ class City:
             end = nxt["start"] if nxt else 1440.0
             # When to leave: early enough to be on time for the next thing, if the current one has started by then.
             # Someone who arrives after they should have left again does not stop at all and walks on.
+            # Running for cover (CITY-078) sets off the moment the rain is noticed, not early to arrive on time.
             route = None
+            rush = nxt is not None and nxt.get("rush", False)
             if nxt is not None and cur["act"] != "stroll":
                 target = self._spot(rid, day, nxt)
                 route = self._route(pos, cur, nxt, target)
-                dep = max(t, end - lengths(route)[-1] / v)
+                dep = max(t, end if rush else end - lengths(route)[-1] / (v * self.pace_in_rain(rid, day, end, rush)))
             else:
                 dep = max(t, end)
             if dep > t + 1e-9:
@@ -474,7 +610,7 @@ class City:
                 target = self._spot(rid, day, nxt)
                 route = self._route(pos, cur, nxt, target)
             cum = lengths(route)
-            t_arr = min(dep + cum[-1] / v, max(dep, 1439.5))   # the day closes at midnight with everyone where they sleep
+            t_arr = min(dep + cum[-1] / (v * self.pace_in_rain(rid, day, dep, rush)), max(dep, 1439.5))   # the day closes at midnight with everyone where they sleep
             if cum[-1] > 1e-6:
                 pieces.append(("move", dep, t_arr, (route, cum, cum[-1] / max(t_arr - dep, 1e-6)), nxt))
             nxt["t_in"] = t_arr
@@ -504,11 +640,16 @@ class City:
                 out[rid] = dict(pos=along(route, cum, (m - t0) * vv), act="walk", place=s["place"], state="walking", to=s["act"])
             elif kind == "stroll":
                 out[rid] = dict(pos=self._stroll_at(rid, day, s, m), act="stroll", place=s["place"], state="outside")
+            elif kind == "drive":                         # in their car: where the car is (traffic.py)
+                out[rid] = dict(pos=self.traffic.car_at(payload, day, m)["pos"], act="drive", place=s["place"], state="driving", car=payload)
             else:
                 indoors = lot["kind"] not in ("garden", "market", "stop") and s["use"] is not None and \
                     lot["rect"][0] <= payload[0] <= lot["rect"][2] and lot["rect"][1] <= payload[1] <= lot["rect"][3]
                 act = "wait" if s["act"] in ("away", "arrive") else s["act"]
                 out[rid] = dict(pos=payload, act=act, place=s["place"], state="inside" if indoors else "outside", slot=s.get("slot"), use=s["use"])
+        if self.react:                                   # umbrella, hood or nothing, out in the rain (CITY-080)
+            for rid, s in out.items():
+                s["cover"] = self.cover(rid, day, m, s["state"], s["act"])
         return out
 
     def loaded(self, state, viewers, radius=40.0):

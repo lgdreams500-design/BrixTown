@@ -1,0 +1,11 @@
+01:54:40 Blender 5.3.0
+01:54:40 small lod 0: 2572 triangles (from 7180)
+01:54:40 small lod 1: 390 triangles (from 1936)
+01:54:40 estate lod 0: 2550 triangles (from 9528)
+01:54:40 estate lod 1: 406 triangles (from 2636)
+01:54:40 pickup lod 0: 2566 triangles (from 8044)
+01:54:40 pickup lod 1: 392 triangles (from 2200)
+01:54:41 van lod 0: 2574 triangles (from 7180)
+01:54:41 van lod 1: 480 triangles (from 1936)
+01:54:41 wrote C:/Projects/Wasted/Prototype/play/car_models.js (1024 KB)
+01:54:41 DONE
