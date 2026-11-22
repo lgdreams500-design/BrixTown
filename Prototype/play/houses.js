@@ -352,7 +352,7 @@ window.Houses = (() => {
   }
 
   function outside01(l) {
-    const Fr = frame(l), Hs = l.house, tr = Hs.trim, s = sg(l), m = world, dm = detailOf(l.block), U = u => u * s;   // dm: the small parts, drawn only near
+    const Fr = frame(l), Hs = l.house, tr = Hs.trim, s = sg(l), m = world, dm = detailFor(l), U = u => u * s;   // dm: the small parts, drawn only near
     const wallC = PLASTER[tr.plaster % PLASTER.length], roofC = ROOF[tr.roof_tone % ROOF.length], shut = SH[tr.shutter_color] || C.teal;
     l.H = HH + 3.3;
     // a box on a wall face: a = along the wall, c = across it (axis "u": a is u and c is v; axis "v": the other way round)
@@ -627,9 +627,17 @@ window.Houses = (() => {
   // the four faces: [axis along, outer line, outward sign]
   const SFACES = { front: ["u", -HV, -1], back: ["u", HV, 1], left: ["v", -HU, -1], right: ["v", HU, 1] };
   function lineS(l) { return SLOOK[l.house.furniture] ? l.house.furniture : "oldtown"; }
+  function lookS(l) {                                         // the line's outside, varied by the lot's trim: shutter and door colour,
+    const base = SLOOK[lineS(l)], tr = l.house.trim || {}, lk = Object.assign({}, base);   // a shade of plaster, a tone of roof tiles
+    if (!base.stone) lk.wall = mix3(base.wall, PLASTER[(tr.plaster || 0) % PLASTER.length], .5);
+    if (tr.shutter_color && SH[tr.shutter_color] && lineS(l) !== "workshop") { lk.shutter = SH[tr.shutter_color]; lk.door = mix3(SH[tr.shutter_color], [.45, .17, .12], .4); }
+    lk.roof = mix3(base.roof, ROOF[(tr.roof_tone || 0) % ROOF.length], .4);
+    if (tr.window_boxes === false) lk.boxes = false;
+    return lk;
+  }
 
   function outsideS(l) {
-    const Fr = frame(l), m = world, dm = detailOf(l.block), lk = SLOOK[lineS(l)], R = (SI + SEAVE + .32) * Math.tan(SPITCH), stone = SURF.patterns.indexOf("ashlar");
+    const Fr = frame(l), m = world, dm = detailFor(l), lk = lookS(l), R = (SI + SEAVE + .32) * Math.tan(SPITCH), stone = SURF.patterns.indexOf("ashlar");
     const wallF = lk.stone ? (stone >= 0 ? 30 + stone : 6) : 0;
     l.H = SE + R + .5;
     const wb = (ax, a0, z0, c0, a1, z1, c1, col, f, mm) => ax === "u" ? bx1(mm || m, Fr, a0, z0, Math.min(c0, c1), a1, z1, Math.max(c0, c1), col, f) : bx1(mm || m, Fr, Math.min(c0, c1), z0, a0, Math.max(c0, c1), z1, a1, col, f);
@@ -639,17 +647,16 @@ window.Houses = (() => {
       const out = d => line + o * d;
       for (const [a, w] of SWIN[side]) for (const [z0, z1, box] of [[S0 + .95, S0 + 2.55, false], [S1 + .8, S1 + 2.25, lk.boxes && side !== "back"]]) {
         wb(ax, a - w / 2, z0, out(-.2), a + w / 2, z1, out(-.17), GLASS, 4);                                            // glass, deep in the reveal
-        for (const [p, q] of [[a - w / 2, a - w / 2 + .08], [a + w / 2 - .08, a + w / 2], [a - .035, a + .035]]) wb(ax, p, z0, out(-.22), q, z1, out(-.12), CREAM_F, 9, dm);
-        for (const z of [z0, z1 - .08, z0 + (z1 - z0) * .68]) wb(ax, a - w / 2, z, out(-.22), a + w / 2, z + .07, out(-.12), CREAM_F, 9, dm);
-        wb(ax, a - w / 2 - .22, z0 - .15, out(-.05), a + w / 2 + .22, z0, out(.17), STONE_L, 6);                       // sill
-        for (const e of [a - w / 2 - .17, a + w / 2]) wb(ax, e, z0, out(-.05), e + .17, z1, out(.06), STONE_L, 6);     // stone surround
-        wb(ax, a - w / 2 - .24, z1, out(-.05), a + w / 2 + .24, z1 + .24, out(.09), STONE_L, 6);
+        wb(ax, a - .035, z0, out(-.22), a + .035, z1, out(-.12), CREAM_F, 9, dm); wb(ax, a - w / 2, z0 + (z1 - z0) * .68, out(-.22), a + w / 2, z0 + (z1 - z0) * .68 + .07, out(-.12), CREAM_F, 9, dm);   // glazing bars (the frame is the stone surround's)
+        wb(ax, a - w / 2 - .22, z0 - .15, out(-.05), a + w / 2 + .22, z0, out(.17), STONE_L, 6, dm);                       // sill
+        for (const e of [a - w / 2 - .17, a + w / 2]) wb(ax, e, z0, out(-.05), e + .17, z1, out(.06), STONE_L, 6, dm);     // stone surround
+        wb(ax, a - w / 2 - .24, z1, out(-.05), a + w / 2 + .24, z1 + .24, out(.09), STONE_L, 6, dm);
         for (const sd of [-1, 1]) {                                                                                    // louvred shutters, open
           const e = a + sd * (w / 2 + .2), e0 = Math.min(e, e + sd * w / 2), e1 = Math.max(e, e + sd * w / 2);
-          wb(ax, e0, z0, out(.02), e1, z1, out(.09), lk.shutter, 12);
-          for (let k = 1; k < 9; k++) wb(ax, e0 + .06, z0 + (z1 - z0) * k / 9 - .015, out(.09), e1 - .06, z0 + (z1 - z0) * k / 9 + .015, out(.11), mul3(lk.shutter, .7), 12, dm);
+          wb(ax, e0, z0, out(.02), e1, z1, out(.09), lk.shutter, 12, dm);
+          for (let k = 1; k < 4; k++) wb(ax, e0 + .06, z0 + (z1 - z0) * k / 4 - .02, out(.09), e1 - .06, z0 + (z1 - z0) * k / 4 + .02, out(.11), mul3(lk.shutter, .7), 12, dm);   // three louvre bands
         }
-        if (box) { wb(ax, a - w / 2 - .05, z0, out(.16), a + w / 2 + .05, z0 + .26, out(.42), C.terracotta, 9);
+        if (box) { wb(ax, a - w / 2 - .05, z0, out(.16), a + w / 2 + .05, z0 + .26, out(.42), C.terracotta, 9, dm);
           for (let k = 0; k < 3; k++) { const pa = a - w / 2 + (k + .5) * w / 3, pc = out(.29); yb1(dm, Fr, ax === "u" ? pa : pc, z0 + .26, ax === "u" ? pc : pa, .3, .22, .26, 0, k % 2 ? [.26, .38, .2] : [.4, .48, .24], 9); } }
       }
       bx1(m, Fr, ax === "u" ? -HU - .05 : Math.min(out(.06), out(0)), 0, ax === "u" ? Math.min(out(.06), out(0)) : -HV - .05, ax === "u" ? HU + .05 : Math.max(out(.06), out(0)), S0 + .3, ax === "u" ? Math.max(out(.06), out(0)) : HV + .05, C.stoneDark, 6);   // plinth
@@ -664,24 +671,23 @@ window.Houses = (() => {
     // the front door, open into the hall; its stone surround, a step and a lamp
     const [du, dw, dh] = SFRONT_DOOR;
     bx1(m, Fr, du - dw / 2 + .02, S0, -HV + SW, du - dw / 2 + .1, S0 + dh - .02, -HV + SW + 1.1, lk.door, 9);
-    for (const e of [du - dw / 2 - .2, du + dw / 2]) bx1(m, Fr, e, 0, -HV - .07, e + .2, S0 + dh, -HV + .05, C.stoneDark, 6);
-    bx1(m, Fr, du - dw / 2 - .28, S0 + dh, -HV - .1, du + dw / 2 + .28, S0 + dh + .3, -HV + .05, C.stoneDark, 6);
+    for (const e of [du - dw / 2 - .2, du + dw / 2]) bx1(dm, Fr, e, 0, -HV - .07, e + .2, S0 + dh, -HV + .05, C.stoneDark, 6);
+    bx1(dm, Fr, du - dw / 2 - .28, S0 + dh, -HV - .1, du + dw / 2 + .28, S0 + dh + .3, -HV + .05, C.stoneDark, 6);
     bx1(m, Fr, du - .9, 0, -HV - .6, du + .9, S0, -HV, C.stoneDark, 6); grid1(Fr, du - .9, -HV - .6, du + .9, -HV, 0, S0);
     // the roof: two slopes of tiles, gable ends in the wall, the ridge, a chimney on the left gable with two pots
     const o = SEAVE, E = SE, GR = HV * Math.tan(SPITCH), RR = (HV + o) * Math.tan(SPITCH), U0 = -HU - .3, U1 = HU + .3;
     qd1(m, Fr, [U0, E - o * Math.tan(SPITCH), -HV - o], [U1, E - o * Math.tan(SPITCH), -HV - o], [U1, E + GR, 0], [U0, E + GR, 0], lk.roof, 11);
     qd1(m, Fr, [U0, E + GR, 0], [U1, E + GR, 0], [U1, E - o * Math.tan(SPITCH), HV + o], [U0, E - o * Math.tan(SPITCH), HV + o], lk.roof, 11);
     for (const sv of [-1, 1]) qd1(m, Fr, [U0, E - o * Math.tan(SPITCH) - .01, sv * (HV + o)], [U1, E - o * Math.tan(SPITCH) - .01, sv * (HV + o)], [U1, E - .01, sv * HV], [U0, E - .01, sv * HV], mul3(lk.roof, .6), 11, "down");
-    for (let k = 1; k < 12; k++) for (const sv of [-1, 1]) {                       // courses of tiles: a lip every 0.42 m down each slope
-      const vv = sv * (HV + o) * k / 12, z = E + GR - (GR + o * Math.tan(SPITCH)) * k / 12;
+    for (let k = 1; k < 6; k++) for (const sv of [-1, 1]) {                       // courses of tiles: a lip every 0.42 m down each slope
+      const vv = sv * (HV + o) * k / 6, z = E + GR - (GR + o * Math.tan(SPITCH)) * k / 6;
       bx1(dm, Fr, U0, z, Math.min(vv, vv + sv * .06), U1, z + .05, Math.max(vv, vv + sv * .06), mul3(lk.roof, k % 3 ? .9 : .8), 11);
     }
     for (const u of [-HU, HU]) qd1(m, Fr, [u, E, -HV], [u, E, HV], [u, E + GR, 0], [u, E + GR, 0], lk.wall, wallF, Math.sign(u), 0);
     bx1(m, Fr, U0 - .05, E + GR - .02, -.14, U1 + .05, E + GR + .14, .14, mul3(lk.roof, .85), 11);
-    for (let k = 0; k < 26; k++) yb1(dm, Fr, U0 + (U1 - U0) * (k + .5) / 26, E + GR + .1, 0, .4, .12, .3, 0, mul3(lk.roof, k % 2 ? 1 : .9), 11);
     for (const v of [-HV - o, HV + o]) bx1(m, Fr, U0, E - o * Math.tan(SPITCH) - .2, Math.min(v, v + Math.sign(v) * -.12), U1, E - o * Math.tan(SPITCH), Math.max(v, v + Math.sign(v) * -.12), C.brown, 9);   // fascia
     bx1(m, Fr, -HU - .05, E - .5, mv(-2.1), -HU + .65, E + RR + .9, mv(-1.5), lk.stone ? lk.wall : C.stoneDark, lk.stone ? wallF : 6);
-    bx1(m, Fr, -HU - .15, E + RR + .9, mv(-2.2), -HU + .75, E + RR + 1.02, mv(-1.4), C.stoneDark, 6);
+    bx1(dm, Fr, -HU - .15, E + RR + .9, mv(-2.2), -HU + .75, E + RR + 1.02, mv(-1.4), C.stoneDark, 6);
     for (const d of [-.17, .17]) yb1(dm, Fr, -HU + .3, E + RR + 1.02, mv(-1.8) + d, .18, .45, .18, 0, C.terracotta, 9);
     // what cannot be walked through: the outer walls (a gap at the door), floors, the ceiling under the roof, inner walls, the
     // stair and the rail round its well, and the furniture
@@ -711,19 +717,19 @@ window.Houses = (() => {
   // line's way with a gate in line with the front door, a stone path, planters at the door, a letterbox and a tree; and, by a hash of
   // the lot, some of a bench, a bistro table with a parasol, a lounger, a washing line, a flowerbed and a woodpile. It reaches
   // 7.5 m to each side, 9.5 m to the front (the lane's edge is 11 m off) and 8 m to the back, clear of the neighbours.
-  const GU = 7.5, GF = -9.5, GB = 8.0;
   function gardenS(l, Fr, lk) {
-    const m = world, dm = world,   // all in the main mesh: the block's near-only mesh is full with its many houses
-    line = lineS(l), du = SFRONT_DOOR[0], has = k => hash(l.id, "garden", k) < .5;
-    const B = (u0, y0, v0, u1, y1, v1, col, f, mm) => bx1(mm || m, Fr, Math.min(u0, u1), y0, Math.min(v0, v1), Math.max(u0, u1), y1, Math.max(v0, v1), col, f || 9);
-    const Y = (u, y0, v, su, sy, sv, col, f, yaw, mm) => yb1(mm || m, Fr, u, y0, v, su, sy, sv, yaw || 0, col, f || 9);
+    const m = world, dm = detailFor(l), line = lineS(l), du = SFRONT_DOOR[0], has = k => hash(l.id, "garden", k) < .5;
+    // the garden's own size, from the map (worldgen add_houses_03.py keeps it clear of the lanes and half way to the neighbours)
+    const [GL, GF, GR, GB] = l.house.garden || [-7.5, -9.5, 7.5, 8.0], front = -HV - GF, back = GB - HV, left = -HU - GL, right = GR - HU;
+    const B = (u0, y0, v0, u1, y1, v1, col, f, mm) => bx1(mm || dm, Fr, Math.min(u0, u1), y0, Math.min(v0, v1), Math.max(u0, u1), y1, Math.max(v0, v1), col, f || 9);
+    const Y = (u, y0, v, su, sy, sv, col, f, yaw, mm) => yb1(mm || dm, Fr, u, y0, v, su, sy, sv, yaw || 0, col, f || 9);
     const solidBox = (u0, v0, u1, v1, h) => grid1(Fr, Math.min(u0, u1), Math.min(v0, v1), Math.max(u0, u1), Math.max(v0, v1), 0, h, .6);
     // the lawn, a shade fresher than the common ground, and the path of stone slabs from the gate to the door step
-    qd1(m, Fr, [-GU, .012, GF], [GU, .012, GF], [GU, .012, GB], [-GU, .012, GB], LAWN.tones[1], 24);
+    qd1(m, Fr, [GL, .012, GF], [GR, .012, GF], [GR, .012, GB], [GL, .012, GB], LAWN.tones[1], 24);
     for (let v = GF + .2, k = 0; v < -HV - .7; v += .75, k++) B(du - .55 + (k % 2) * .08, .012, v, du + .55 + (k % 2) * .08, .045, v + .6, C.path, 6);
     // the fence, in the line's way, with a gate gap in front of the door
     const gate = [du - .75, du + .75];
-    const runs = [["u", GF, -GU, gate[0]], ["u", GF, gate[1], GU], ["u", GB, -GU, GU], ["v", -GU, GF, GB], ["v", GU, GF, GB]];
+    const runs = [["u", GF, GL, gate[0]], ["u", GF, gate[1], GR], ["u", GB, GL, GR], ["v", GL, GF, GB], ["v", GR, GF, GB]];
     for (const [ax, at, a0, a1] of runs) {
       const seg = (p, q, y0, y1, d, col, f, mm) => ax === "u" ? B(p, y0, at - d / 2, q, y1, at + d / 2, col, f, mm) : B(at - d / 2, y0, p, at + d / 2, y1, q, col, f, mm);
       const post = (p, y0, y1, d, col, f, mm) => seg(p - d / 2, p + d / 2, y0, y1, d, col, f, mm);
@@ -731,15 +737,15 @@ window.Houses = (() => {
       if (line === "plain") {                                   // a cream picket fence: posts, two rails, pickets
         for (let k = 0; k <= n; k++) post(a0 + L * k / n, 0, 1.0, .1, C.cream);
         for (const y of [.25, .75]) seg(a0, a1, y, y + .07, .05, C.cream);
-        for (let p = a0 + .08; p < a1 - .05; p += .16) post(p, 0, .92, .07, mul3(C.cream, .95), 9, dm);
+        for (let p = a0 + .12; p < a1 - .05; p += .3) post(p, 0, .92, .09, mul3(C.cream, .95), 9, dm);
       } else if (line === "oldtown") {                          // a low wall of dressed stone with a cap
-        seg(a0, a1, 0, .8, .32, C.stone, 6); seg(a0 - .02, a1 + .02, .8, .92, .42, C.stoneDark, 6);
+        seg(a0, a1, 0, .8, .32, C.stone, 6, m); seg(a0 - .02, a1 + .02, .8, .92, .42, C.stoneDark, 6, m);
       } else if (line === "workshop") {                         // iron railings on a stone plinth
-        seg(a0, a1, 0, .35, .3, C.stoneDark, 6); seg(a0, a1, .95, 1.0, .05, C.charcoal);
-        for (let p = a0 + .06; p < a1; p += .13) post(p, .35, 1.0, .03, C.charcoal, 9, dm);
+        seg(a0, a1, 0, .35, .3, C.stoneDark, 6, m); seg(a0, a1, .95, 1.0, .05, C.charcoal);
+        for (let p = a0 + .1; p < a1; p += .26) post(p, .35, 1.0, .035, C.charcoal, 9, dm);
         for (let k = 0; k <= n; k++) post(a0 + L * k / n, .35, 1.12, .08, C.charcoal);
       } else {                                                   // a clipped hedge, rounded on top in two steps
-        seg(a0, a1, 0, .95, .7, [.22, .32, .15]); seg(a0 + .05, a1 - .05, .95, 1.1, .55, [.26, .36, .17]);
+        seg(a0, a1, 0, .95, .7, [.22, .32, .15], 9, m); seg(a0 + .05, a1 - .05, .95, 1.1, .55, [.26, .36, .17], 9, m);
       }
       ax === "u" ? chain1(Fr, a0, at, a1, at, 0, 1.15, null, .15) : chain1(Fr, at, a0, at, a1, 0, 1.15, null, .15);
     }
@@ -753,20 +759,20 @@ window.Houses = (() => {
     // the letterbox on a post by the gate, planters each side of the door, a tree in a front corner
     Y(gate[1] + .55, 0, GF + .3, .08, 1.0, .08, C.wood); Y(gate[1] + .55, 1.0, GF + .3, .4, .28, .3, lk.door);
     for (const sd of [-1, 1]) { const u = du + sd * 1.2; Y(u, 0, -HV - .45, .5, .45, .5, C.terracotta); Y(u, .45, -HV - .45, .5, .35, .5, [.26, .38, .2], 9, 0, dm); solidBox(u - .25, -HV - .7, u + .25, -HV - .2, .9); }
-    const tu = (has("treeSide") ? 1 : -1) * (GU - 2.2), tv = GF + 2.6;
-    Y(tu, 0, tv, .26, 2.4, .26, C.wood); for (let k = 0; k < 5; k++) Y(tu + Math.cos(k * 1.3) * .7, 2.2 + (k % 3) * .4, tv + Math.sin(k * 1.3) * .7, 1.6, 1.3, 1.6, k % 2 ? [.24, .36, .2] : [.4, .48, .24], 9, k * .4);
-    solidAt1(Fr, tu, tv, 0, 3, .25);
+    const treeR = has("treeSide"), tu = treeR ? GR - 2.2 : GL + 2.2, tv = GF + 2.6;
+    if (front > 3.5) { Y(tu, 0, tv, .26, 2.4, .26, C.wood, 9, 0, m); for (let k = 0; k < 5; k++) Y(tu + Math.cos(k * 1.3) * .7, 2.2 + (k % 3) * .4, tv + Math.sin(k * 1.3) * .7, 1.6, 1.3, 1.6, k % 2 ? [.24, .36, .2] : [.4, .48, .24], 9, k * .4, m);
+    solidAt1(Fr, tu, tv, 0, 3, .25); }
     // the extras: each in some gardens and not others (by a hash of the lot)
-    if (has("bench")) { const u = -tu * .9, v = GF + 2.2; Y(u, 0, v, 1.5, .45, .55, C.wood, 9, Math.PI); Y(u, .45, v + .25, 1.5, .45, .06, C.wood, 9, Math.PI); solidBox(u - .75, v - .3, u + .75, v + .3, .9); }
-    if (has("bistro")) { const u = GU - 2.4, v = HV + 2.2; Y(u, 0, v, .6, .72, .6, C.charcoal); Y(u, .72, v, .7, .04, .7, lk.door);
+    if (has("bench") && front > 3.0) { const u = treeR ? GL + 2.75 : GR - 2.75, v = GF + 2.2; Y(u, 0, v, 1.5, .45, .55, C.wood, 9, Math.PI); Y(u, .45, v + .25, 1.5, .45, .06, C.wood, 9, Math.PI); solidBox(u - .75, v - .3, u + .75, v + .3, .9); }
+    if (has("bistro") && back > 2.8) { const u = GR - 2.4, v = HV + 2.2; Y(u, 0, v, .6, .72, .6, C.charcoal); Y(u, .72, v, .7, .04, .7, lk.door);
       for (const sd of [-1, 1]) { Y(u + sd * .65, 0, v, .42, .45, .42, C.charcoal); Y(u + sd * .65, .45, v, .42, .04, .42, C.wood); }
       Y(u, 0, v, .05, 2.3, .05, C.wood, 9, 0, dm); Y(u, 2.0, v, 2.2, .3, 2.2, line === "plain" ? C.cream : lk.shutter, 9, Math.PI / 4); solidBox(u - .9, v - .4, u + .9, v + .4, .9); }
-    if (has("lounger")) { const u = -GU + 1.4, v = HV + 1.8; Y(u, 0, v, .65, .35, 1.9, C.wood); Y(u, .35, v + .3, .6, .1, 1.3, lk.shutter); solidBox(u - .35, v - .95, u + .35, v + .95, .9); }
-    if (has("washing")) { for (const u of [-1.5, 2.5]) { Y(u, 0, GB - 1.5, .08, 1.9, .08, C.wood); solidAt1(Fr, u, GB - 1.5, 0, 1.9, .1); } B(-1.5, 1.85, GB - 1.52, 2.5, 1.87, GB - 1.48, C.charcoal, 9, dm);
+    if (has("lounger") && back > 2.9) { const u = GL + 1.4, v = HV + 1.8; Y(u, 0, v, .65, .35, 1.9, C.wood); Y(u, .35, v + .3, .6, .1, 1.3, lk.shutter); solidBox(u - .35, v - .95, u + .35, v + .95, .9); }
+    if (has("washing") && back > 2.2) { for (const u of [-1.5, 2.5]) { Y(u, 0, GB - 1.5, .08, 1.9, .08, C.wood); solidAt1(Fr, u, GB - 1.5, 0, 1.9, .1); } B(-1.5, 1.85, GB - 1.52, 2.5, 1.87, GB - 1.48, C.charcoal, 9, dm);
       for (let k = 0; k < 4; k++) Y(-1.0 + k * .95, 1.25, GB - 1.5, .55, .6, .03, [C.cream, C.blue, C.terracotta, C.cream][k], 9, 0, dm); }
-    if (has("flowers")) { const u = du - 3.4, v = GF + 1.4; B(u - 1.6, 0, v - .45, u + 1.6, .22, v + .45, C.soil);
+    if (has("flowers") && front > 2.5) { const u = du - 3.4, v = GF + 1.4; B(u - 1.6, 0, v - .45, u + 1.6, .22, v + .45, C.soil);
       for (let k = 0; k < 9; k++) Y(u - 1.4 + k * .35, .22, v + (k % 2 ? .18 : -.18), .22, .25, .22, [C.terracotta, C.cream, C.plum, C.ochre][k % 4], 9, 0, dm); }
-    if (has("woodpile")) { const u = GU - .6, v = 1.5; B(u - .35, 0, v - 1.0, u + .35, 1.1, v + 1.0, C.brown); B(u - .45, 1.1, v - 1.1, u + .45, 1.18, v + 1.1, C.wood); solidBox(u - .45, v - 1.1, u + .45, v + 1.1, 1.2); }
+    if (has("woodpile") && right > 1.1) { const u = GR - .6, v = 1.5; B(u - .35, 0, v - 1.0, u + .35, 1.1, v + 1.0, C.brown); B(u - .45, 1.1, v - 1.1, u + .45, 1.18, v + 1.1, C.wood); solidBox(u - .45, v - 1.1, u + .45, v + 1.1, 1.2); }
     // the everyday things of a home outside (owner 2026-11-23: "add mail, trash cans, etc outside the house")
     const iron = [.2, .21, .22], lid = [.26, .27, .28];
     for (const u of [4.75, 5.45]) { Y(u, 0, -HV - .5, .55, .85, .55, iron); Y(u, .85, -HV - .5, .62, .06, .62, lid); Y(u, .91, -HV - .5, .14, .05, .06, iron); }   // two dustbins by the front corner
@@ -779,18 +785,18 @@ window.Houses = (() => {
     Y(gate[1] + .55, 1.12, GF + .14, .26, .14, .04, C.cream);                                         // post in the letterbox
     if (has("parcel")) { Y(du + .45, S0, -HV - .35, .4, .3, .32, [.58, .48, .32], 9, .3); Y(du + .45, S0 + .3, -HV - .35, .4, .02, .08, C.teal, 9, .3); }   // a parcel waiting on the step
     if (has("milk")) for (const k of [0, 1]) Y(du - .5 + k * .12, S0, -HV - .3, .08, .24, .08, C.cream);
-    if (has("birdbath")) { Y(2.6, 0, -7.0, .2, .8, .2, C.stone, 6); Y(2.6, .8, -7.0, .7, .12, .7, C.stone, 6); Y(2.6, .9, -7.0, .5, .03, .5, [.3, .4, .45]); solidAt1(Fr, 2.6, -7.0, 0, .95, .3); }
-    { const u = -GU + .75, v = GB - .75; B(u - .5, 0, v - .5, u + .5, .9, v + .5, C.wood); for (let k = 0; k < 4; k++) B(u - .52, .1 + k * .2, v - .52, u + .52, .16 + k * .2, v - .5, C.brown); solidBox(u - .5, v - .5, u + .5, v + .5, 1.0); }   // the compost bin
+    if (has("birdbath") && front > 3.3) { Y(2.6, 0, -7.0, .2, .8, .2, C.stone, 6); Y(2.6, .8, -7.0, .7, .12, .7, C.stone, 6); Y(2.6, .9, -7.0, .5, .03, .5, [.3, .4, .45]); solidAt1(Fr, 2.6, -7.0, 0, .95, .3); }
+    if (back > 1.3) { const u = GL + .75, v = GB - .75; B(u - .5, 0, v - .5, u + .5, .9, v + .5, C.wood); for (let k = 0; k < 4; k++) B(u - .52, .1 + k * .2, v - .52, u + .52, .16 + k * .2, v - .5, C.brown); solidBox(u - .5, v - .5, u + .5, v + .5, 1.0); }   // the compost bin
     { const v = 3.3; B(HU, .5, v - .25, HU + .12, 1.0, v + .25, [.2, .34, .3]); Y(HU + .2, .5, v, .1, .5, .5, [.3, .4, .25]); }   // a hose reel on the side wall
-    if (!has("bistro") && has("shed")) {                                                              // a garden shed in the back corner
-      const u0 = GU - 2.4, u1 = GU - .4, v0 = GB - 2.4, v1 = GB - .4, h = 2.1;
-      B(u0, 0, v0, u1, h, v1, line === "plain" ? C.cream : line === "workshop" ? [.3, .22, .15] : C.wood); B(u0 + .7, 0, v0 - .02, u1 - .7, 1.9, v0, lk.door);
+    if (!(has("bistro") && back > 2.8) && has("shed") && back > 2.6) {                                                              // a garden shed in the back corner
+      const u0 = GR - 2.4, u1 = GR - .4, v0 = GB - 2.4, v1 = GB - .4, h = 2.1;
+      B(u0, 0, v0, u1, h, v1, line === "plain" ? C.cream : line === "workshop" ? [.3, .22, .15] : C.wood, 9, m); B(u0 + .7, 0, v0 - .02, u1 - .7, 1.9, v0, lk.door);
       qd1(m, Fr, [u0 - .15, h, v0 - .15], [u1 + .15, h, v0 - .15], [u1 + .15, h + .5, (v0 + v1) / 2], [u0 - .15, h + .5, (v0 + v1) / 2], lk.roof, 11);
       qd1(m, Fr, [u0 - .15, h + .5, (v0 + v1) / 2], [u1 + .15, h + .5, (v0 + v1) / 2], [u1 + .15, h, v1 + .15], [u0 - .15, h, v1 + .15], lk.roof, 11);
       for (const u of [u0, u1]) qd1(m, Fr, [u, h, v0], [u, h, v1], [u, h + .5, (v0 + v1) / 2], [u, h + .5, (v0 + v1) / 2], line === "plain" ? C.cream : C.wood, 9, Math.sign(u), 0);
       solidBox(u0, v0, u1, v1, 2.6);
       if (has("can")) Y(u0 - .4, 0, v0 + .3, .3, .28, .18, C.teal);                                  // a watering can by its door
-    } else if (has("can")) Y(GU - 2.4, 0, 3.0, .3, .28, .18, C.teal);
+    } else if (has("can") && right > .6) Y(GR - .35, 0, 3.0, .3, .28, .18, C.teal);
   }
   const GLOW_W = [1.0, .8, .5];
 
