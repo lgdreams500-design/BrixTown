@@ -15,7 +15,8 @@ Nothing to install; it runs from these files.
 | `life.js` | The character designer, the money line and quest tracker, the bank, shop and stall counters, the quest log, quests and jobs in conversation, and the save in the browser (ADR-0012) |
 | `jukebox.html` | Every music track (score, café, shop, busker, radio), played on its own by `sound.js` so it can be heard and approved |
 | `people.js` | The people: option B bodies and faces, and the walk from the movement signatures |
-| (sky) | The sky and its clouds are drawn by `play.js` from `World/rules/sky.json`: blue overhead, hazy horizon, clouds placed by the world clock (ADR-0014) |
+| (sky) | The sky and its clouds are drawn by `play.js` from `World/rules/sky.json`: blue overhead, hazy horizon, clouds placed by the world clock (ADR-0014); cloud, rain and fog follow the day's weather (ADR-0016) |
+| `city_seasons.js` | How each season looks, for the Y key: daylight hours, weather, trees and flowers on the same day of each season. Generated: do not edit |
 | `city_data.js` | The city and one day of everyone's routine, packed from `World/`. Generated: do not edit |
 
 ## Keys
@@ -35,6 +36,8 @@ Nothing to install; it runs from these files.
 | F, R | In a car: horn; car radio (three music stations, two podcasts with captions, then off) |
 | N | Sound on or off (remembered) |
 | [ and ] | Slow or speed the clock (×1, ×5, ×20, ×100) |
+| Y | Try the next season: spring, summer, autumn, winter. The page loads again in the same spot at the same hour, without touching the save. Daylight hours, that season's weather, trees and flowers change; everyone's routine, the cars and the notice boards stay those of the built day. `?season=Winter` starts with one |
+| K | Try the weather: steps through clear, cloud, rain and fog, then back to the day's own weather. For looking only; the day itself does not change. `?weather=rain` starts with one |
 | T | Skip an hour |
 | M | Whole-city map with every resident on it |
 | Q | Softer picture without shadows, for a slow machine (it also switches on by itself below 27 frames a second) |

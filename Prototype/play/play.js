@@ -1359,7 +1359,7 @@ float haze(float c){ return .64/(12.566*pow(1.36-1.2*c,1.5)); }`;   // how stron
 const MAIN_VS = `attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,uSM; varying vec3 vP,vN,vC,vS; varying float vF; invariant gl_Position;
 void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`;   // invariant: the depth-only pass and the lit pass land on the same depths
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
-uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform float uNight,uFogD,uExp,uShOn; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
+uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec2 uWet; uniform float uNight,uFogD,uExp,uShOn; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
 uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO;
 ${NOISE}
 ${TONE}
@@ -1405,6 +1405,7 @@ void main(){
   float fog=1.-exp(-d*uFogD*max(k,0.));
   float blot=clamp((ns(vP*.9)*.6+ns(vP*2.7+7.)*.4-.5)*2.2+.5,0.,1.), nearK=1.-min(1.,d/70.);
   vec3 col; bool emis=false; float inside=0.;
+  float wetG=((f>6.5&&f<7.5)||(f>19.5&&f<21.5))?step(.5,n.y):0.;          // paving, road and footpaths go dark and shine a little when wet (WLD-037)
   if((f>.5&&f<1.5)||(f>3.5&&f<4.5)){                                      // a window: vC is (across, up, seed)
     vec2 uv=c.xy; float bx=min(uv.x,1.-uv.x);
     if(bx<.09||uv.y<.07||uv.y>.93){ c=paint(vec3(.37,.34,.32),vec3(.49,.53,.69),blot)*(uv.y<.07?1.2:1.); f=9.; }   // stone frame and sill
@@ -1482,11 +1483,11 @@ void main(){
           else light+=uSky*(.28+.82*up*up)*vis*vis+uGround*(1.-.5*vis)*(.38+1.25*bw*bw); }
         else light+=uSky*(n.y*.35+.65)*vis*vis+uGround*(1.-.5*vis);   // sun, sky seen, and light bounced off sunlit stone
         for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*.85+.15)); } }   // lanterns (W6)
-      col=c*light; }
+      col=c*light*(1.-wetG*uWet.x)+(uFog+uSky)*(wetG*uWet.y*pow(1.-max(dot(-vd,n),0.),4.)); }
   }
   col=mix(col,uFog+uSunCol*(4.4*haze(dot(vd,uSun)))*airLit(vd,d),fog*(emis?.5:1.)*(1.-.85*inside));   // haze glows where the sun reaches it; little haze indoors
   float glow=0.; for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 q=uLamp[i].xyz-uCam; float b=dot(q,vd), h=sqrt(max(dot(q,q)-b*b,.02)); glow+=uLamp[i].w*(atan((d-b)/h)+atan(b/h))/h; }
-  col+=vec3(1.,.62,.32)*(glow*uFogD*1.6);                                 // every lantern glows in the haze around it
+  col+=vec3(1.,.62,.32)*(glow*min(uFogD,.007)*1.6);                       // every lantern glows in the haze around it (no more than in a thick haze, or rain and fog turn the night orange)
   gl_FragColor=vec4(tone(col*uExp),1.);
 }`;
 const main = program(MAIN_VS, MAIN_FS), signProg = program(MAIN_VS, "#define LETTERS\n" + MAIN_FS);   // only the painted names cut holes, so the town's shader keeps the early depth test
@@ -1508,6 +1509,16 @@ void main(){ vec3 d=normalize(uF+vQ.x*uR+vQ.y*uU); float s=dot(d,uSun), p=haze(s
   c=mix(c,cloud,a);
   c+=uSunCol*pow(max(s,0.),2500.)*30.*step(0.,d.y)*(1.-.92*a); c+=step(.9982,h3(floor(d*170.)))*uNight*smoothstep(.03,.3,d.y)*.05*(1.-a);
   gl_FragColor=vec4(tone(c*uExp),1.); }`);
+// Rain (WLD-037): three layers of falling streaks over the whole picture, nearer ones longer, wider apart and faster. Not drawn indoors.
+const rainProg = program(`attribute vec2 aQ; varying vec2 vQ; void main(){ vQ=aQ; gl_Position=vec4(aQ,0.,1.); }`,
+`precision highp float; varying vec2 vQ; uniform vec3 uCol; uniform vec4 uR; uniform float uT,uAsp,uExp;   // uR: how hard, alpha, slant, length
+${NOISE}
+${TONE}
+float streaks(vec2 p,float cols,float sp,float seed){ p.x=(p.x+p.y*uR.z)*uAsp*cols; float col=floor(p.x), h=h3(vec3(col,seed,1.));
+  float y=p.y/(uR.w*(.6+.8*h))*(30./cols)+uT*sp*(.8+.4*h)+h*17., row=floor(y), on=step(h3(vec3(col,row,seed)),.38*uR.x);
+  float fx=abs(fract(p.x)-.5), fy=fract(y); return on*smoothstep(.09,0.,fx)*smoothstep(0.,.15,fy)*smoothstep(1.,.35,fy); }
+void main(){ float a=streaks(vQ,30.,2.2,3.)+streaks(vQ,58.,1.7,5.)*.7+streaks(vQ,110.,1.3,7.)*.45;
+  gl_FragColor=vec4(tone(uCol*uExp),min(a,1.)*uR.y); }`);
 const depthProg = program(`attribute vec3 aP; uniform mat4 uVP; void main(){ gl_Position=uVP*vec4(aP,1.); }`, `precision mediump float; void main(){ gl_FragColor=vec4(1.); }`);
 const SH = 2048; let shFbo = null, shTex = null;
 if (gl.getExtension("WEBGL_depth_texture")) {                     // a depth picture of the scene from the sun, for shadows
@@ -1567,9 +1578,26 @@ const boxD2 = (b, p) => { const dx = Math.max(b[0] - p[0], 0, p[0] - b[3]), dy =
 // follow_weather is on (it is: the owner picked F-SKY level 2); with it off, the clear-day cover all day.
 const SKY = D.sky;
 function cloudCover(m) {
-  const c = SKY.clouds, w = D.day.weather || [], cov = i => c.cover[(c.follow_weather && w[((i % 4) + 4) % 4]) || "clear"];
+  const c = SKY.clouds, cov = i => c.cover[WX_KIND(i)];
   const s = Math.floor(m / 360), into = m - s * 360, b = c.blend_minutes;
   return into < b ? mix(cov(s - 1), cov(s), .5 + .5 * into / b) : into > 360 - b ? mix(cov(s), cov(s + 1), .5 * (into - (360 - b)) / b) : cov(s);
+}
+// What the weather does to the light right now (WLD-037): each part blended across the edges of the six-hour slots, like the cover.
+// wet: how wet the paving is, 1 while it rains and drying for rain.dry_minutes after a wet slot ends. All of it from the clock.
+let wxTry = new URLSearchParams(location.search).get("weather"); if (!SKY.weather[wxTry]) wxTry = null;   // for looking at the weather: K steps through the day's own weather, clear, cloud, rain and fog; ?weather=rain starts with one
+addEventListener("keydown", e => { if (e.code === "KeyY" && !e.repeat && started && window.WASTED_SEASONS) {   // Y: the next season, by loading the page again in the same spot at the same hour
+  const names = Object.keys(window.WASTED_SEASONS), u = new URLSearchParams(location.search);
+  u.set("season", names[(names.indexOf(D.day.season) + 1) % names.length]); u.set("auto", "1");
+  for (const [k, v] of [["x", pl.x], ["z", pl.z], ["y", pl.y], ["yaw", cam.yaw], ["pitch", cam.pitch], ["t", clock.m]]) u.set(k, (+v).toFixed(2));
+  location.search = u.toString(); } });
+addEventListener("keydown", e => { if (e.code === "KeyK" && !e.repeat) { const order = [null, "clear", "cloud", "rain", "fog"]; wxTry = order[(order.indexOf(wxTry) + 1) % order.length]; } });
+const WX_KIND = i => wxTry || (SKY.clouds.follow_weather && (D.day.weather || [])[((i % 4) + 4) % 4]) || "clear";
+function weatherNow(m) {
+  const s = Math.floor(m / 360), into = m - s * 360, b = SKY.clouds.blend_minutes, out = { kind: WX_KIND(s) };
+  for (const k of ["sun", "haze", "veil", "grey", "rain"]) { const v = i => SKY.weather[WX_KIND(i)][k];
+    out[k] = into < b ? mix(v(s - 1), v(s), .5 + .5 * into / b) : into > 360 - b ? mix(v(s), v(s + 1), .5 * (into - (360 - b)) / b) : v(s); }
+  out.wet = Math.max(Math.min(1, out.rain * 1.5), SKY.weather[WX_KIND(s - 1)].rain > 0 ? clamp(1 - into / SKY.rain.dry_minutes, 0, 1) : 0);
+  return out;
 }
 function lighting(m) {                                       // the reference recipe (sun 14 W/m2, sky 0.35, haze) carried through the day
   const rise = D.day.sunrise * 60, set = D.day.sunset * 60, day = smooth(0, 1, Math.min((m - (rise - 30)) / 60, ((set + 30) - m) / 60));
@@ -1709,7 +1737,7 @@ function placeName() {
 }
 function hud(VP, W, H, tags) {
   $("time").textContent = hhmm(clock.m);
-  $("date").textContent = (Life.ready ? "Day " + (clock.day + 1) + " · " : "") + D.day.weekday + " · " + D.day.season + (D.day.market ? " · market day" : "") + (clock.rate !== 1 ? "  (clock ×" + clock.rate + ")" : "");
+  $("date").textContent = (Life.ready ? "Day " + (clock.day + 1) + " · " : "") + D.day.weekday + " · " + (D.day.trying ? "trying " : "") + D.day.season + (wxTry ? " · trying " + wxTry : { cloud: " · cloudy", rain: " · rain", fog: " · fog" }[weatherNow(clock.m).kind] || "") + (D.day.market ? " · market day" : "") + (clock.rate !== 1 ? "  (clock ×" + clock.rate + ")" : "");
   const [a, b] = placeName(); $("place").textContent = a; $("sub").textContent = b;
   $("stats").innerHTML = bodies + " of " + D.residents.length + " residents have bodies<br>" + Math.round(fps) + " frames a second" + (quality < 1 ? " · soft picture" : "");
   const pr = $("prompt"); if (started && (target || pl.pose > 1)) { pr.style.display = "block"; pr.innerHTML = "<kbd>E</kbd>" + (pl.pose === 4 ? Cars.label() : pl.pose > 1 ? "Get up" : target.label); } else pr.style.display = "none";
@@ -1874,9 +1902,11 @@ function frame(now) {
   const Lt = lighting(clock.m), dials = window.wasted.dials; Lt.sunCol = mul3(Lt.sunCol, dials.sun); Lt.sky = mul3(Lt.sky, mix(dials.skyLow || dials.sky, dials.sky, smooth(.05, .5, Lt.dir[1]) * Lt.day)); Lt.ground = mul3(Lt.ground, dials.bounce);   // skyLow: the sky fill at dusk and night, which ADR-0007 left alone
   Lt.fogD *= dials.haze; Lt.exp *= dials.exposure;
   const wm = dials.warm || 0; Lt.sunCol = [Lt.sunCol[0], Lt.sunCol[1] * (1 - .1 * wm), Lt.sunCol[2] * (1 - .26 * wm)]; Lt.sky = [Lt.sky[0] * (1 - .08 * wm), Lt.sky[1] * (1 - .04 * wm), Lt.sky[2]];   // a more golden sun against a deeper sky
+  const Wx = weatherNow(clock.m), sun0 = Lt.sunCol, lum0 = sun0[0] * .3 + sun0[1] * .6 + sun0[2] * .1, lost = (1 - Wx.sun) * Lt.day;   // weather: cloud, rain and fog keep sunlight off the street and send some of it down as soft grey light
+  Lt.sunCol = mul3(sun0, 1 - lost); Lt.sky = Lt.sky.map(v => v + lum0 * lost * SKY.overcast_fill); Lt.ground = mul3(Lt.ground, 1 - lost * .7); Lt.fogD *= Wx.haze; Lt.wet = Wx.wet; Lt.rain = Wx.rain;
   const nu = dials.neutral || 0, gl0 = Lt.ground[0] * .3 + Lt.ground[1] * .6 + Lt.ground[2] * .1; Lt.ground = mix3(Lt.ground, [gl0 * 1.04, gl0 * 1.0, gl0 * .95], nu);   // bounce off pale stone, not off orange: shade stays grey (world_street_kit_light.png)
-  { const sl = Math.min(1, (Lt.sunCol[0] * .3 + Lt.sunCol[1] * .6 + Lt.sunCol[2] * .1) / SKY.sun_ref), bl = dials.blue == null ? 1 : dials.blue; Lt.zen = mix3(Lt.zen, mul3(SKY.zenith, sl * SKY.brightness), SKY.depth * Lt.day * bl); }   // a blue sky overhead by day; the horizon stays hazy (WLD-035, W5)
-  const vl = (dials.veil || 0) * Lt.day; Lt.fog = Lt.fog.map((v, i) => v + Lt.sunCol[i] * vl); Lt.zen = Lt.zen.map((v, i) => v + Lt.sunCol[i] * vl * .7);   // sunlight scattered all through the haze: a pale sky, and distance fades to it (W5)
+  { const sl = Math.min(1, lum0 / SKY.sun_ref), bl = dials.blue == null ? 1 : dials.blue; Lt.zen = mix3(Lt.zen, mul3(SKY.zenith, sl * SKY.brightness), SKY.depth * Lt.day * bl); }   // a blue sky overhead by day; the horizon stays hazy (WLD-035, W5)
+  const vl = ((dials.veil || 0) + Wx.veil) * Lt.day * (1 - .45 * Wx.grey); Lt.fog = Lt.fog.map((v, i) => v + mix(sun0[i], lum0, Wx.grey) * vl); Lt.zen = Lt.zen.map((v, i) => v + sun0[i] * vl * .7);   // sunlight scattered all through the haze: a pale sky, and distance fades to it (W5)
   const view = M4.look(cam.eye, cam.dir), fov = .9, asp = W / H, VP = M4.mul(M4.persp(fov, asp, .25, 3200), view.m), th = Math.tan(fov / 2);
   gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf); gl.bufferData(gl.ARRAY_BUFFER, dyn.a.subarray(0, dyn.n), gl.DYNAMIC_DRAW);
   let SM = M4.t(0, 0, 0), shOn = 0;
@@ -1927,7 +1957,7 @@ function frame(now) {
     const u = pr.u; gl.useProgram(pr.p); gl.uniformMatrix4fv(u.uVP, false, VP); gl.uniformMatrix4fv(u.uSM, false, SM); gl.uniform1f(u.uShOn, shOn);
     gl.uniform1i(u.uSh, 0); gl.uniform1i(u.uAO, 1); gl.uniform1i(u.uTxt, 2); gl.uniform4fv(u["uLamp[0]"], lamp); gl.uniform1i(u.uLampN, lampN); gl.uniform3f(u.uAOm, skyMap.lo, 1 / skyMap.size, 0);
     gl.uniform3fv(u.uSun, Lt.dir); gl.uniform3fv(u.uSunCol, Lt.sunCol); gl.uniform3fv(u.uSky, Lt.sky); gl.uniform3fv(u.uGround, Lt.ground); gl.uniform3fv(u.uFog, Lt.fog);
-    gl.uniform3fv(u.uCam, cam.eye); gl.uniform1f(u.uNight, Lt.night); gl.uniform1f(u.uFogD, Lt.fogD); gl.uniform1f(u.uExp, Lt.exp);
+    gl.uniform3fv(u.uCam, cam.eye); gl.uniform1f(u.uNight, Lt.night); gl.uniform1f(u.uFogD, Lt.fogD); gl.uniform1f(u.uExp, Lt.exp); gl.uniform2f(u.uWet, Lt.wet * SKY.rain.wet_dark, Lt.wet * SKY.rain.wet_sheen);
     gl.uniform1i(u.uRoomAO, 3); gl.uniform4fv(u["uRoomL[0]"], roomL); gl.uniform1i(u.uRoomLN, roomLN);
     if (inRoom) gl.uniform4fv(u.uRoomR, inRoom.lot.rect); else gl.uniform4f(u.uRoomR, 0, 0, -1, -1);
   };
@@ -1939,6 +1969,13 @@ function frame(now) {
   stat.detail = drawnDetail; stat.pieces = seen.length;
   gl.depthMask(true); lit(signProg); drawMesh(signBuf, signN, signProg); gl.useProgram(main.p);
   gl.disable(gl.CULL_FACE); drawMesh(dynBuf, dyn.n / 10);   // people are closed soft forms; either side of a face may show
+  if (Lt.rain > .01 && !(cam.eye[1] < 6 && lotAt(cam.eye[0], cam.eye[2]))) {   // rain over the picture, unless the camera is under a roof
+    gl.useProgram(rainProg.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const ar = gl.getAttribLocation(rainProg.p, "aQ"); gl.enableVertexAttribArray(ar); gl.vertexAttribPointer(ar, 2, gl.FLOAT, false, 0, 0);
+    gl.disable(gl.DEPTH_TEST); gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
+    gl.uniform3fv(rainProg.u.uCol, Lt.fog.map((v, i) => v * 1.4 + Lt.sky[i])); gl.uniform4f(rainProg.u.uR, Lt.rain, SKY.rain.alpha, SKY.rain.slant, SKY.rain.length);
+    gl.uniform1f(rainProg.u.uT, (now / 1000 * SKY.rain.speed) % 4096); gl.uniform1f(rainProg.u.uAsp, asp); gl.uniform1f(rainProg.u.uExp, Lt.exp);
+    gl.drawArrays(gl.TRIANGLES, 0, 3); gl.disable(gl.BLEND); gl.enable(gl.DEPTH_TEST);
+  }
   hud(VP, W, H, tags); drawMaps();
   requestAnimationFrame(frame);
 }

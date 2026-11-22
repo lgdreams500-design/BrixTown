@@ -165,7 +165,7 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 |---|---|
 | How production character models are made | Q-15 |
 | Interiors, vegetation, UI style | not started (vehicles: §2.5) |
-| Night (after dusk) and bad-weather looks | not started; must follow W5–W7 |
+| Night (after dusk) and bad-weather looks | night: not started. Rain, fog and overcast: approved in the slice (ADR-0016), no rule or reference image yet; must follow W5–W7 |
 | The sky: blue overhead with drifting clouds | approved in the slice (ADR-0014); not in the reference renders, still needs a rule and a reference image |
 | Whether the iris should be smaller than in `face_expressions.png` | owner to say |
 | How the look is achieved in Unreal on modest hardware (haze, soft light) | PH1 task |

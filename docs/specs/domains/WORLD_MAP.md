@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-WORLD-MAP
 title: Wasted — World map as data, the starting city and the playable slice
-version: 0.5.7
+version: 0.5.9
 status: draft
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -115,6 +115,7 @@ café, grocer, garden, market, stop and clinic), and for couriers and utility wo
 | WLD-034 | What the dressing shows shall be worked out from the day and `World/rules/dressing.json`, never stored: each advert board changes every few days, out of step with the others; the cinema shows the film of the day; bunting is up on market days only. | F-MAP-DRESS | 2 | P1 | `test_WLD_034_what_changes_with_the_day` |
 | WLD-035 | By day the sky shall be blue overhead and hazy at the horizon, with soft clouds lit from the sun's side that take the colour of the hour; its numbers shall be data in `World/rules/sky.json`. | F-SKY | 1 | P1 | `test_WLD_035_sky_rules_are_sound`; slice at morning, midday, dusk and night |
 | WLD-036 | Where the clouds are, their shape and how much sky they cover shall be worked out from the world clock, the day's weather and the data, never stored or ticked; every kind of weather shall have a cover. Cover follows the weather only from F-SKY level 2. | F-SKY | 1 | P1 | `test_WLD_036_every_kind_of_weather_has_a_sky`, `test_WLD_036_the_slice_gets_the_sky` |
+| WLD-037 | Cloud, rain and fog shall be seen, not only named: each kind of weather shall change the sunlight, the thickness of the air and the clouds by numbers in `World/rules/sky.json`; rain shall fall and wet the paving, which dries after it stops; clear weather shall leave the approved light untouched. All of it shall be worked out from the world clock and the day's weather. | F-WEATHER | 1 | P1 | `test_WLD_037_every_kind_of_weather_changes_the_light`, `test_WLD_037_broken_weather_is_caught`; slice in rain, fog and cloud, by day and at night |
 | CITY-050 | At least 95% of buildings shall be enterable through an open door, with the places inside taken from the lot's `objects`. | F-BLD-INSIDE | 2 | P0 | `test_nearly_every_building_can_be_entered` |
 | CITY-051 | Residents shall use the same doors and the same places inside as the player. | F-BLD-INSIDE | 2 | P0 | Slice: residents sit, work and sleep at the listed places |
 | CITY-052 | A resident shall leave early enough to arrive on time; one who is late skips the stop they have missed and walks on. Nobody speeds up. | F-NPC-ROUTINE | 1 | P0 | `test_most_walks_arrive_on_time`, `test_the_day_has_no_gaps…` |
@@ -194,7 +195,7 @@ rules and, since 0.2.0, the look and the movement set in the art documents (§5.
 - Interiors are one room per building.
 - Residents do not avoid the player or each other, and do not talk among themselves. Conversations are
   samples, the same for everyone in a role; flags last only until the page is reloaded; no outcomes yet.
-- No rain or fog, no trams on the other stops' streets. No lay-bys: parked cars stand half on the pavement. People
+- Rain falls over the whole picture, also under arches and awnings, and is not seen from indoors; no puddles or splashes, no sound of rain (ADR-0016). No trams on the other stops' streets. No lay-bys: parked cars stand half on the pavement. People
   still walk in the road (no pavements and crossings yet, Q-24), so walkers and cars pass through each other. Cars do
   not stop for the player (CITY-049) or for the player's car; driving is arcade-simple; there is no buying a car yet
   (CITY-060 needs money).
@@ -321,3 +322,5 @@ keep a timetable with several stops in it. Something has to give `[OPEN: Q-21]`.
 | 0.5.5 | 2026-11-22 | People brought closer to `character_lineup.png`: rosy cheeks (C8, ADR-0010); cloth mottle blends across each form instead of showing as patches; smoother near bodies (16 sides); a flat bib apron in place of a round blob; arms hang closer when standing, with rounded sleeve tops; chunkier limbs and rounded shoes; a fringe; a larger iris low in the eye; coat and tunic hems wide enough to hide striding legs. |
 | 0.5.6 | 2026-11-22 | Kit light retuned towards the measured colours of `world_street_kit_light.png` (ADR-0013): greyer shade, paler sky. §5.5. |
 | 0.5.7 | 2026-11-22 | Sky and clouds in the slice (WLD-035, WLD-036; feature F-SKY; ADR-0014): blue overhead, hazy horizon, clouds placed by the clock, numbers in `World/rules/sky.json`. Cloud cover follows the day's weather (owner picked F-SKY level 2 and F-WEATHER level 1 for the first slice); rain and fog themselves are not drawn yet. |
+| 0.5.8 | 2026-11-22 | Rain, fog and overcast in the slice (WLD-037; ADR-0016): the light changes with each kind of weather, rain falls and wets the paving, the HUD names the weather. §5.2. |
+| 0.5.9 | 2026-11-22 | Two keys for looking, at the owner's request: K tries each kind of weather, Y loads the next season (daylight hours, that season's weather, trees and flowers from `city_seasons.js`; routines, cars and boards stay those of the built day). Neither is a level pick: F-SEASONS is still undecided. |

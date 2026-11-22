@@ -207,6 +207,32 @@ def sky_problems(w):
     wind = c.get("wind")
     if not (isinstance(wind, list) and len(wind) == 2 and any(wind)):
         out.append("sky: clouds.wind should be two numbers, not both 0")
+    # WLD-037: what each kind of weather does to the light, and the rain itself
+    num = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
+    if not unit(s.get("overcast_fill")):
+        out.append("sky: overcast_fill should be from 0 to 1")
+    wx = s.get("weather", {})
+    for k in WEATHER_KINDS:
+        for part, top in (("sun", 1), ("haze", 20), ("veil", 1), ("grey", 1), ("rain", 1)):
+            v = wx.get(k, {}).get(part)
+            if not (num(v) and 0 <= v <= top):
+                out.append("sky: weather.%s.%s missing or not from 0 to %s" % (k, part, top))
+    out += ["sky: weather has an unknown kind %s" % k for k in wx if k not in WEATHER_KINDS]
+    ok = lambda k, part: num(wx.get(k, {}).get(part))
+    if ok("clear", "rain") and ok("rain", "rain") and not (wx["clear"]["rain"] == 0 and wx["rain"]["rain"] > 0):
+        out.append("sky: it should rain in rain and not in clear weather")
+    if ok("clear", "sun") and ok("rain", "sun") and not wx["rain"]["sun"] < wx["clear"]["sun"]:
+        out.append("sky: rain should let less sun through than clear weather")
+    if ok("clear", "haze") and ok("fog", "haze") and not wx["fog"]["haze"] > wx["clear"]["haze"]:
+        out.append("sky: fog should be thicker than clear air")
+    r = s.get("rain", {})
+    for k in ("alpha", "speed", "length", "wet_dark", "wet_sheen", "dry_minutes"):
+        if not (num(r.get(k)) and r[k] > 0):
+            out.append("sky: rain.%s should be above 0" % k)
+    if not num(r.get("slant")):
+        out.append("sky: rain.slant should be a number")
+    if num(r.get("dry_minutes")) and r["dry_minutes"] > 360:
+        out.append("sky: rain.dry_minutes should be at most 360 (one weather slot)")
     return out
 
 

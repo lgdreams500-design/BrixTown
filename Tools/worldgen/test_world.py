@@ -280,6 +280,37 @@ class TheSky(unittest.TestCase):
         self.assertTrue(seen <= set(world.WEATHER_KINDS), seen)
         self.assertTrue(seen <= set(W["sky"]["clouds"]["cover"]), seen)
 
+    def test_WLD_037_every_kind_of_weather_changes_the_light(self):
+        wx = W["sky"]["weather"]
+        self.assertEqual(set(wx), set(world.WEATHER_KINDS))
+        self.assertEqual(wx["clear"], dict(sun=1.0, haze=1.0, veil=0.0, grey=0.0, rain=0.0))   # clear weather is the light as approved
+        self.assertGreater(wx["clear"]["sun"], wx["cloud"]["sun"])
+        self.assertGreater(wx["cloud"]["sun"], wx["rain"]["sun"])
+        self.assertGreater(wx["fog"]["haze"], wx["rain"]["haze"])
+        self.assertEqual([k for k in wx if wx[k]["rain"] > 0], ["rain"])
+
+    def test_WLD_037_broken_weather_is_caught(self):
+        import copy
+        bad = copy.deepcopy(W)
+        bad["sky"]["weather"]["fog"]["haze"] = 0.5        # thinner than clear air
+        bad["sky"]["weather"]["rain"]["sun"] = 1.5        # out of range, and not less than clear: two problems
+        bad["sky"]["rain"]["dry_minutes"] = 500
+        del bad["sky"]["weather"]["cloud"]["grey"]
+        self.assertEqual(len(world.sky_problems(bad)), 5)
+
+    def test_WLD_010_the_slice_can_show_every_season(self):
+        """The season key (Y) of the slice: one look for each season, on the same day of the season as the built day."""
+        import build_play
+        cal = W["calendar"]["calendar"]
+        self.assertEqual(build_play.season_days(16, cal), [4, 16, 28, 40])
+        looks = build_play.season_looks(W, world.simulation(W), 16)
+        self.assertEqual(list(looks), cal["seasons"])
+        for n, name in enumerate(cal["seasons"]):
+            self.assertEqual(looks[name]["day"]["sunrise"], cal["sunrise"][n])
+            self.assertTrue(set(looks[name]["day"]["weather"]) <= set(world.WEATHER_KINDS))
+        leaf = lambda name: sum(t[3] for t in looks[name]["trees"])
+        self.assertGreater(leaf("Summer"), leaf("Winter"))               # trees are in leaf in summer and bare in winter
+
     def test_WLD_036_the_slice_gets_the_sky(self):
         import build_play
         with open(build_play.__file__, encoding="utf-8") as f:
