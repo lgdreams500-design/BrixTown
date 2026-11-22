@@ -218,11 +218,28 @@ window.Dress = (() => {
 
   // ------------------------------------------------------------ after the town is built: which spot belongs to which piece
   function init() {
-    motion = D.dressing ? D.dressing.motion : { swing_period_s: 2.9, swing_angle_deg: 32, seesaw_period_s: 3.4, seesaw_angle_deg: 14, slide_cycle_s: 9, climb_bob_s: 6 };
+    motion = Object.assign({ swing_period_s: 2.9, swing_angle_deg: 32, seesaw_period_s: 3.4, seesaw_angle_deg: 14, slide_cycle_s: 9, climb_bob_s: 6,
+      player_swing_build_s: 3, player_slide_climb_s: 2.6, player_slide_down_s: 1.3 }, D.dressing ? D.dressing.motion : {});
     for (const l of LOTS) for (const u of PLAY) for (const [k, s] of ((l.objects || {})[u] || []).entries()) {
       let best = null, bd = 1e9;
       for (const pc of pieces) { if (pc.kind !== u) continue; const d = Math.hypot(pc.x - s[0], pc.z - s[1]); if (d < bd) { bd = d; best = pc; } }
       if (best && bd < 8) bySpot.set(key(s[0], s[1]), { pc: best, k, sx: s[0], sz: s[1], use: u });
+    }
+    // the player can have a go too (WLD-041, F-OBJ-POINTS level 1: residents and players share the places): a use point at
+    // each swing seat and seesaw end, one at the foot of each slide's ladder and by each climbing frame, two at each sandpit
+    const LABEL = { swing: "Have a go on the swing", seesaw: "Sit on the seesaw", slide: "Go down the slide", sandpit: "Play in the sandpit", climb: "Climb the frame" };
+    const once = new Set();
+    for (const sp of bySpot.values()) {
+      const pc = sp.pc, g = pc.g, u = sp.use;
+      if ((u === "slide" || u === "climb") && once.has(pc.p.id)) continue;
+      if (u === "sandpit" && [...once].filter(q => q.startsWith(pc.p.id + "#")).length >= 2) continue;
+      once.add(u === "sandpit" ? pc.p.id + "#" + sp.k : pc.p.id);
+      let x = sp.sx, z = sp.sz, yaw = 0;
+      if (u === "swing") { x = pc.x + (sp.k - (pc.n - 1) / 2) * 1.1; z = pc.z + .75; yaw = yawOf(0, -1); }
+      else if (u === "seesaw") { x = pc.x + (sp.sx < pc.x ? -1 : 1) * 1.6; z = pc.z + .7; yaw = yawOf(0, -1); }
+      else if (u === "slide") { x = pc.x - 2.35; z = pc.z; yaw = yawOf(1, 0); }
+      else if (u === "climb") { x = pc.x + 1.45; z = pc.z; yaw = yawOf(-1, 0); }
+      use(x, g, z, "play", LABEL[u], yaw, { sp });
     }
     Object.assign(DOING, { swing: "on the swings", slide: "on the slide", seesaw: "on the seesaw", sandpit: "in the sandpit", climb: "on the climbing frame", notices: "reading the notices", paper: "buying a paper" });
     Object.assign(GOING, { swing: "off to the swings", slide: "off to the slide", seesaw: "off to the seesaw", sandpit: "off to the sandpit", climb: "off to the climbing frame", notices: "going to read the notices", paper: "going for a paper" });
@@ -240,7 +257,7 @@ window.Dress = (() => {
     if (!PLAY.includes(act)) return r;
     const sp = bySpot.get(key(r.x, r.z)); if (!sp) return r;
     const pc = sp.pc, g = pc.g, ph = hash(i, "play") * 6.283;
-    busy.add(pc.p.id + ":" + sp.k);
+    busy.add(pc.p.id + ":" + sp.k); busy.add(pc.p.id); busy.add(key(sp.sx, sp.sz));   // the seat moves, and the player cannot take this place
     if (pc.kind === "swing") {
       const th = swingAngle(pc, sp.k, t), a = (sp.k - (pc.n - 1) / 2) * 1.1, L = 1.85;
       return Object.assign(r, { x: pc.x + a, z: pc.z + Math.sin(th) * L, y: g + 2.36 - Math.cos(th) * L + .04, yaw: yawOf(0, 1), pose: 2 });
@@ -271,25 +288,58 @@ window.Dress = (() => {
   }
   function seesawAngle(pc, t) { return motion.seesaw_angle_deg * Math.PI / 180 * Math.sin(t * 6.283 / motion.seesaw_period_s + hash(pc.p.id) * 6.283); }
 
+  // ------------------------------------------------------------ the player on the playground (WLD-041)
+  const swingOf = new Map();                                 // a seat the player is on: its angle, so the seat goes with them
+  let taken = new Set();                                     // places children were on last frame
+  const takenBy = u => u.sp && u.sp.use !== "slide" && u.sp.use !== "climb" && taken.has(key(u.sp.sx, u.sp.sz));   // a slide takes turns, a frame has room
+  function playerAt(st, t) {                                 // where the player is and how they sit or stand, t seconds into the go
+    const sp = st.sp, pc = sp.pc, g = pc.g, e = t - st.t0, u = sp.use;
+    busy.add(pc.p.id); busy.add(pc.p.id + ":" + sp.k);
+    if (u === "swing") {                                     // still at first, swinging higher as they pump
+      const th = swingAngle(pc, sp.k, t) * Math.min(1, e / motion.player_swing_build_s), a = (sp.k - (pc.n - 1) / 2) * 1.1, L = 1.85;
+      swingOf.set(pc.p.id + ":" + sp.k, th);
+      return { x: pc.x + a, z: pc.z + Math.sin(th) * L, y: g + 2.36 - Math.cos(th) * L + .04, yaw: yawOf(0, 1), pose: 2 };
+    }
+    if (u === "seesaw") { const s = sp.sx < pc.x ? -1 : 1, phi = seesawAngle(pc, t); return { x: pc.x + s * 1.6, z: pc.z, y: g + .52 + s * 1.6 * Math.sin(phi) + .06, yaw: yawOf(-s, 0), pose: 2 }; }
+    if (u === "slide") {                                     // up the ladder, a moment at the top, down the chute, off at the bottom: one go
+      const c = motion.player_slide_climb_s, dn = motion.player_slide_down_s, x = pc.x, z = pc.z;
+      if (e < c) return { x: x - 1.55, z, y: g + e / c * 1.55, yaw: yawOf(1, 0), pose: 1, ph: (t * 1.7) % 1 };
+      if (e < c + .5) return { x: x - 1.25, z, y: g + 1.6, yaw: yawOf(1, 0), pose: 2 };
+      if (e < c + .5 + dn) { const q = (e - c - .5) / dn, k = q * q; return { x: mix(x - 1.15, x + 2.1, k), z, y: mix(g + 1.6, g + .36, k), yaw: yawOf(1, 0), pose: 2 }; }
+      return { x: x + 2.6, z, y: g, yaw: yawOf(1, 0), pose: 0, done: true };
+    }
+    if (u === "sandpit") return { x: sp.sx, z: sp.sz, y: g + .3, yaw: yawOf(pc.x - sp.sx, pc.z - sp.sz), pose: 2 };
+    if (u === "climb") return { x: pc.x + .35, z: pc.z, y: g + .9 + .04 * Math.sin(e * 1.3), yaw: yawOf(1, 0) + .4 * Math.sin(e * .35), pose: 0 };
+    return { x: sp.sx, z: sp.sz, y: g, yaw: 0, pose: 0, done: true };
+  }
+  function playerOff(st) {                                   // where the player steps off to
+    const sp = st.sp, pc = sp.pc;
+    if (sp.use === "swing") return [pc.x + (sp.k - (pc.n - 1) / 2) * 1.1, pc.z + 1.1];
+    if (sp.use === "seesaw") return [pc.x + (sp.sx < pc.x ? -1 : 1) * 1.6, pc.z + .8];
+    if (sp.use === "slide") return [pc.x - 2.35, pc.z];
+    if (sp.use === "climb") return [pc.x + 1.45, pc.z];
+    return [sp.sx, sp.sz + .9];
+  }
+
   // ------------------------------------------------------------ the moving parts, every frame near the camera
   function draw(dyn, eye, t) {
     for (const pc of pieces) {
       if (Math.abs(pc.x - eye[0]) > 70 || Math.abs(pc.z - eye[2]) > 70) continue;
       if (pc.kind === "swing") for (let k = 0; k < pc.n; k++) {
-        const on = busy.has(pc.p.id + ":" + k), th = on ? swingAngle(pc, k, t) : .04 * Math.sin(t * .9 + k), a = pc.x + (k - (pc.n - 1) / 2) * 1.1;
+        const own = swingOf.get(pc.p.id + ":" + k), on = busy.has(pc.p.id + ":" + k), th = own !== undefined ? own : on ? swingAngle(pc, k, t) : .04 * Math.sin(t * .9 + k), a = pc.x + (k - (pc.n - 1) / 2) * 1.1;
         const m = M4.mul(M4.mul(M4.t(a, pc.g + 2.36, pc.z), M4.rx(th)), M4.t(0, 0, 0));
         for (const s of [-.2, .2]) dyn.obox(m, s, -.9, 0, .02, 1.8, .02, IRON, 9);
         dyn.obox(m, 0, -1.84, 0, .48, .05, .2, [.18, .14, .1], 0);
       }
       else if (pc.kind === "seesaw") {
-        const on = busy.has(pc.p.id + ":0") || busy.has(pc.p.id + ":1"), phi = on ? seesawAngle(pc, t) : -.24;
+        const on = busy.has(pc.p.id), phi = on ? seesawAngle(pc, t) : -.24;   // anyone on either end rocks it
         const m = M4.mul(M4.t(pc.x, pc.g + .52, pc.z), M4.rz(phi)), col = pick(PAINT(), hash(pc.p.id, "ss"));
         dyn.obox(m, 0, 0, 0, 3.6, .07, .3, col, 0);
         for (const s of [-1.45, 1.45]) { dyn.obox(m, s, .2, 0, .05, .35, .05, IRON, 9); dyn.obox(m, s, .38, 0, .05, .05, .4, IRON, 9); }
       }
     }
-    busy = new Set();
+    taken = busy; busy = new Set(); swingOf.clear();
   }
 
-  return { prop, init, apply, draw, covers, PLAY };
+  return { prop, init, apply, draw, covers, PLAY, playerAt, playerOff, takenBy };
 })();

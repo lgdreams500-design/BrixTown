@@ -1904,6 +1904,12 @@ function blocked(q) { if (q[1] < groundBase(q[0], q[2]) + .15) return true; let 
 function stepPlayer(dt) {
   if (pl.pose === 4) return Cars.drive(dt, keys, pl, cam, clock.m);   // driving (cars.js)
   const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0), s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
+  if (pl.play) {                                           // on a swing, slide, seesaw, sandpit or climbing frame (dressing.js, WLD-041)
+    const r = Dress.playerAt(pl.play, performance.now() / 1000);
+    if (f || s || keys.Space || r.done) return offPlay(r.done ? [r.x, r.z] : null);
+    pl.x = r.x; pl.y = r.y; pl.z = r.z; pl.yaw = r.yaw; pl.playPose = r.pose; if (r.ph !== undefined) pl.ph = r.ph;
+    if (cam.fp) cam.yaw = r.yaw; return;
+  }
   if (pl.pose > 1) { if (f || s || keys.Space) { Sound.act("stand"); pl.pose = 0; pl.y = floorAt(pl.x, pl.z, pl.y); if (pl.seat) { pl.x = pl.seat.ox; pl.z = pl.seat.oz; } pl.seat = null; } else return; }
   const run = keys.ShiftLeft || keys.ShiftRight, sp = run ? 4.2 : 1.6, sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
   let vx = sy * f + cy * s, vz = -cy * f + sy * s; const l = Math.hypot(vx, vz);
@@ -1926,12 +1932,17 @@ function stepPlayer(dt) {
     if (pl.y <= g) { pl.y = g; pl.vy = 0; pl.onGround = true; } else pl.onGround = false;
   } else { pl.y = mix(pl.y, g, Math.min(1, dt * 18)); pl.onGround = true; }
 }
+function offPlay(at) {                                     // step off what you were playing on, beside it
+  const [x, z] = at || Dress.playerOff(pl.play); pl.play = null; pl.pose = 0; pl.x = x; pl.z = z; pl.y = floorAt(x, z, 1); pl.vy = 0; pl.onGround = true; Sound.act("stand");
+}
 function interact() {
+  if (pl.play) return offPlay();
   if (pl.pose === 4) { Sound.car("out"); return Cars.leave(pl, cam); }   // out of the car (cars.js)
   if (pl.pose > 1) { keys.Space = true; stepPlayer(0); keys.Space = false; return; }
   if (!target || Talk.on) return;
   if (target.type === "talk") return Talk.open(target);
   if (target.type === "car") { Sound.car("in"); return Cars.enter(target, pl, cam, clock.m); }   // into a parked car (cars.js)
+  if (target.type === "play") { pl.play = { sp: target.sp, t0: performance.now() / 1000 }; pl.pose = 2; pl.playPose = 0; pl.vy = 0; pl.seat = null; Sound.act(target.sp.use === "climb" ? "jump" : "sit"); return; }   // a go on the playground (WLD-041)
   if (target.type === "lift") {
     const fd = document.getElementById("fade"); fd.style.opacity = 1; Sound.act("lift");
     setTimeout(() => { pl.x = target.to[0]; pl.y = target.to[1]; pl.z = target.to[2]; pl.vy = 0; fd.style.opacity = 0; }, 240);
@@ -1944,7 +1955,7 @@ function findTarget() {
 function findTarget0() {
   target = null; let best = 1.7;
   if (pl.pose > 1) return;
-  for (const u of uses) { if (Math.abs(u.x - pl.x) > 2 || Math.abs(u.z - pl.z) > 2 || Math.abs(u.y - pl.y) > 1.2) continue; const d = Math.hypot(u.x - pl.x, u.z - pl.z); if (d < best) { best = d; target = u; } }
+  for (const u of uses) { if (Math.abs(u.x - pl.x) > 2 || Math.abs(u.z - pl.z) > 2 || Math.abs(u.y - pl.y) > 1.2 || (u.type === "play" && Dress.takenBy(u))) continue; const d = Math.hypot(u.x - pl.x, u.z - pl.z); if (d < best) { best = d; target = u; } }
   if (!target) target = Cars.target(pl, clock.m);        // a parked car to drive (cars.js)
 }
 function stepCamera(dt) {
@@ -2009,7 +2020,7 @@ function hud(VP, W, H, tags) {
   $("date").textContent = (Life.ready ? "Day " + (clock.day + 1) + " · " : "") + D.day.weekday + " · " + (D.day.trying ? "trying " : "") + D.day.season + (wxTry ? " · trying " + wxTry : { cloud: " · cloudy", rain: " · rain", fog: " · fog" }[weatherNow(clock.m).kind] || "") + (D.day.market ? " · market day" : "") + (clock.rate !== 1 ? "  (clock ×" + clock.rate + ")" : "");
   const [a, b] = placeName(); $("place").textContent = a; $("sub").textContent = b;
   $("stats").innerHTML = bodies + " of " + D.residents.length + " residents have bodies<br>" + Math.round(fps) + " frames a second" + (quality < 1 ? " · soft picture" : "");
-  const pr = $("prompt"); if (started && (target || pl.pose > 1)) { pr.style.display = "block"; pr.innerHTML = "<kbd>E</kbd>" + (pl.pose === 4 ? Cars.label() : pl.pose > 1 ? "Get up" : target.label); } else pr.style.display = "none";
+  const pr = $("prompt"); if (started && (target || pl.pose > 1)) { pr.style.display = "block"; pr.innerHTML = "<kbd>E</kbd>" + (pl.pose === 4 ? Cars.label() : pl.play ? "Get off" : pl.pose > 1 ? "Get up" : target.label); } else pr.style.display = "none";
   $("dot").style.display = started && cam.fp ? "block" : "none";
   g2.clearRect(0, 0, W, H); if (!started) return;
   const inLot = lotAt(pl.x, pl.z), sc = W / ui.clientWidth;
@@ -2157,7 +2168,7 @@ function frame(now) {
   if (LINEUP) LINEUP.forEach((L, k) => { if (STUDIO && k !== STUDIO_WHO) return; const lx = STUDIO ? STUDIO_AT[0] : 300.5 + k * 1.1; People.draw(dyn, lx, groundBase(lx, 186.6), 186.6, Math.PI, L, 0, { ph: 0, t: now / 1000, lod: 0, fl: 14, mod: STUDIO ? { arms: [[1, 0, 4, 0], [1, 0, 4, 0]] } : null }); });   // in the studio the arms hang straight, as in the reference   // ?lineup=1: the six people of character_lineup.png in a row on Linden Street, to compare with it
   if ((started || Life.designing) && !cam.fp && !cam.close && pl.pose !== 4) {   // not while in a car; and in the designer, to see who you are making
     let da = cam.yaw - pl.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
-    People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
+    People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.play ? pl.playPose : pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
       look: pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
   }
   for (const [x, , T] of tramAt(clock.m)) Cars.tram(dyn, x, TRAM_Z, T, clock.m);   // the tram and the commuters on it (cars.js)
