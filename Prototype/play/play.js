@@ -199,6 +199,13 @@ const yawOf = (dx, dz) => Math.atan2(dx, -dz);
 // Small relief (sills, lintels, shutters, arch stones, corbels, quoins) goes into one mesh per block, drawn only near the camera.
 const DETAIL = new Map(), DETAIL_R = 115;
 function detailOf(b) { let m = DETAIL.get(b.id); if (!m) { m = new Mesh(1 << 17); m.cx = b.origin[0] + b.size / 2; m.cz = b.origin[1] + b.size / 2; DETAIL.set(b.id, m); } return m; }
+// A lot's small parts: in a block that spans several cells (a community, a mall site) one near-only mesh per 40 m square, centred
+// on it, so the parts show when the camera is near the lot and not only near the block's first cell
+function detailFor(l) {
+  const b = l.block, [ci, cj] = b.span || [1, 1]; if (ci * cj === 1) return detailOf(b);
+  const x = (l.rect[0] + l.rect[2]) / 2, z = (l.rect[1] + l.rect[3]) / 2, i = Math.floor(x / 40), j = Math.floor(z / 40), k = b.id + ":" + i + "," + j;
+  let m = DETAIL.get(k); if (!m) { m = new Mesh(1 << 17); m.cx = (i + .5) * 40; m.cz = (j + .5) * 40; m.r = 75; DETAIL.set(k, m); } return m;   // slats, bars and pickets cannot be made out past ~70 m
+}
 function sideOf(l, s) {                                   // a wall of a lot: is it along x, where its face is, which way is out, its span
   const [x0, z0, x1, z1] = l.rect, ns = s === "n" || s === "s";
   return { ns, fix: s === "n" ? z0 : s === "s" ? z1 : s === "w" ? x0 : x1, out: s === "n" || s === "w" ? -1 : 1, a0: ns ? x0 : z0, a1: ns ? x1 : z1 };
@@ -229,7 +236,7 @@ function chimney(x, z, y0, top, wallC) {
   for (const s of [-.17, .17]) world.box(x + s - .09, top + 1.15, z - .09, x + s + .09, top + 1.55, z + .09, C.terracotta, 0);
 }
 function quoins(l, y0) {                                   // corner stones up the plaster, long and short in turn
-  const [x0, z0, x1, z1] = l.rect, dm = detailOf(l.block);
+  const [x0, z0, x1, z1] = l.rect, dm = detailFor(l);
   for (const [cx, sx] of [[x0, -1], [x1, 1]]) for (const [cz, sz] of [[z0, -1], [z1, 1]]) {
     for (let y = y0, k = 0; y < l.H - .3; y += .5, k++) {
       const y1 = Math.min(y + .5, l.H - .05), la = k % 2 ? .55 : .95, lb = k % 2 ? .95 : .55, col = mul3(C.stone, .88 + .2 * hash(l.id, cx, cz, k));
@@ -322,7 +329,7 @@ const SP = {                                               // where a point on a
   steps(S, a0, a1, n) { for (let s = 0; s < n; s++) { const p = SP.at(S, a0 - .4 * (n - s), 0, 0), q = SP.at(S, a1 + .4 * (n - s), .16 * (s + 1), 1.4 - .42 * s); const b = [Math.min(p[0], q[0]), 0, Math.min(p[2], q[2]), Math.max(p[0], q[0]), .16 * (s + 1) + Y_PAVE, Math.max(p[2], q[2])]; world.box(b[0], b[1], b[2], b[3], b[4], b[5], C.stoneDark, 6); solid(b[0], b[1], b[2], b[3], b[4], b[5]); } },
 };
 function special(l, ctx) {
-  const { H, DS, dc, dw, dh, wallC, roofC } = ctx, S = DS, dm = detailOf(l.block), cell = nameCell(l.name), nO = SP.n(S), L = S.a1 - S.a0;
+  const { H, DS, dc, dw, dh, wallC, roofC } = ctx, S = DS, dm = detailFor(l), cell = nameCell(l.name), nO = SP.n(S), L = S.a1 - S.a0;
   const [x0, z0, x1, z1] = l.rect, depth = S.ns ? z1 - z0 : x1 - x0, seed = k => .96 + .03 * hash(l.id, k);
   const name = (a, y, d, h) => { if (cell) lettering(signs, SP.at(S, a, y, d), nO, h, cell); };
   if (l.sp === "hall") {
@@ -507,7 +514,7 @@ function building(l) {
     const piece = (p, q, y0) => { if (q - p > .01) ns ? wall(p, f0, q, f0 + t, y0, inner) : wall(f0, p, f0 + t, q, y0, inner); };
     if (s !== side) { piece(a0, a1, 0); continue; }
     const dc = ns ? dx : dz;
-    piece(a0, dc - dw / 2, 0); piece(dc + dw / 2, a1, 0); arch(ns, s, f0, dc, dw / 2, inC, detailOf(l.block));
+    piece(a0, dc - dw / 2, 0); piece(dc + dw / 2, a1, 0); arch(ns, s, f0, dc, dw / 2, inC, detailFor(l));
     ns ? solid(dc - dw / 2, dh, f0, dc + dw / 2, GF, f0 + t) : solid(f0, dh, dc - dw / 2, f0 + t, GF, dc + dw / 2);
   }
   const fl = Dz.inside.floors[0]; world.flat(x0 + t, z0 + t, x1 - t, z1 - t, Y_FLOOR, fl[1], fl[0]);
@@ -522,7 +529,7 @@ function building(l) {
     world.box(x0, old ? OLD_BASE : GF, z0, x1, H, z1, upAll ? stoneC : wallC, upAll ? stoneF : 0, old ? { 3: [C.stoneDark, 0] } : { 2: ceil, 3: [flatRoof ? C.stoneDark : roofC, 0] });
     solid(x0, GF, z0, x1, H, z1);
   }
-  const dm = detailOf(l.block), ring = (x, y0, y1, ov) => world.box(x0 - ov, y0, z0 - ov, x1 + ov, y1, z1 + ov, C.stoneDark, 0, { 2: [mul3(C.stoneDark, .8), 0] });
+  const dm = detailFor(l), ring = (x, y0, y1, ov) => world.box(x0 - ov, y0, z0 - ov, x1 + ov, y1, z1 + ov, C.stoneDark, 0, { 2: [mul3(C.stoneDark, .8), 0] });
   if (flatRoof) {                                        // a flat roof with a parapet you can walk on, a coping on top and a cornice below
     for (const [a, b, c, d] of [[x0, z0, x1, z0 + .4], [x0, z1 - .4, x1, z1], [x0, z0 + .4, x0 + .4, z1 - .4], [x1 - .4, z0 + .4, x1, z1 - .4]]) { world.box(a, H, b, c, H + 1.1, d, wallC, 0); solid(a, H, b, c, H + 1.1, d); world.box(a - .06, H + 1.1, b - .06, c + .06, H + 1.24, d + .06, C.stoneDark, 0, { 2: [C.stoneDark, 0] }); }
     ring(0, H - .3, H, .12);
@@ -643,7 +650,7 @@ function windows(l) {                                      // each window is one
   const [x0, z0, x1, z1] = l.rect, lit = { home: .5, food: .45, shop: .3, work: .16, health: .5, utility: .1, bank: .2, dealer: .3, library: .4, museum: .2, cinema: .1 }[l.kind] || .3;
   const Wd = l.design.openings, flats = l.sp === "flats", old = l.old, w = Wd.width, gap = Wd.gap, tall = Wd.tall;   // from the building's design (BUILD-001)
   const shut = Wd.shutters;
-  const sc = Wd.shutter_color, dm = detailOf(l.block), plants = [[.26, .38, .2], [.4, .48, .24]];
+  const sc = Wd.shutter_color, dm = detailFor(l), plants = [[.26, .38, .2], [.4, .48, .24]];
   const frameC = Wd.frame, balF = 1;
   for (const s of "nswe") {
     const ns = s === "n" || s === "s", L = ns ? x1 - x0 : z1 - z0, n = Math.max(1, Math.floor((L - 1.6) / gap)), a0 = ns ? x0 : z0;
@@ -2262,10 +2269,23 @@ function stepCamera(dt) {
   }
   const eyeH = pl.pose === 2 ? .72 : pl.pose === 3 ? .3 : 1.51 * playerLook.S;
   cam.close = false; if (cam.fp) { cam.eye = [pl.x + Math.sin(cam.yaw) * .1, pl.y + eyeH, pl.z - Math.cos(cam.yaw) * .1]; return; }
-  const t = [pl.x, pl.y + (pl.pose > 1 ? eyeH + .3 : 1.5), pl.z]; let d = .3;
-  for (; d < cam.dist; d += .12) if (blocked([t[0] - cam.dir[0] * d, t[1] - cam.dir[1] * d, t[2] - cam.dir[2] * d])) break;
-  d = Math.max(.35, d - .3); cam.close = d < 1.3;      // with a wall right behind, look through the player's eyes instead of at the back of their head
-  cam.eye = cam.close ? [pl.x, pl.y + eyeH, pl.z] : [t[0] - cam.dir[0] * d, t[1] - cam.dir[1] * d, t[2] - cam.dir[2] * d];
+  // Indoors (a house, a flat, a shop) rooms are 3 to 6 m across: the camera comes nearer, keeps further from walls, floors and
+  // ceilings than its own near plane reaches (so it never sees through one), and eases back out instead of jumping.
+  const inL = lotAt(pl.x, pl.z); cam.indoor = !!(inL && !isOpen(inL) && inL.H && pl.y < inL.H - .2);
+  const maxD = cam.indoor ? Math.min(cam.dist, CAM_IN.dist) : cam.dist, mg = cam.indoor ? CAM_IN.clear : .15;
+  const t = [pl.x, pl.y + (pl.pose > 1 ? eyeH + .3 : cam.indoor ? CAM_IN.lookH : 1.5), pl.z]; let d = .3;
+  for (; d < maxD; d += .08) if (camBlocked([t[0] - cam.dir[0] * d, t[1] - cam.dir[1] * d, t[2] - cam.dir[2] * d], mg)) break;
+  d = Math.max(.35, d - (cam.indoor ? .08 : .3));
+  camD = camD === null || d < camD ? d : Math.min(d, camD + dt * CAM_IN.ease);   // pull in at once, ease back out
+  cam.close = camD < (cam.indoor ? CAM_IN.close : 1.3);  // with a wall right behind, look through the player's eyes instead of at the back of their head
+  cam.eye = cam.close ? [pl.x, pl.y + eyeH, pl.z] : [t[0] - cam.dir[0] * camD, t[1] - cam.dir[1] * camD, t[2] - cam.dir[2] * camD];
+}
+const CAM_IN = { dist: 3.4, clear: .34, lookH: 1.45, close: .9, ease: 2.5, near: .1 };   // the indoor camera (metres; ease in m/s)
+let camD = null;
+function camBlocked(q, m) {                                // like blocked(), with the camera's own clearance m round every solid
+  if (q[1] < groundBase(q[0], q[2]) + m) return true; let hit = false;
+  eachSolid(q[0], q[2], m + .1, s => { if (q[0] > s[0] - m && q[0] < s[3] + m && q[1] > s[1] - m && q[1] < s[4] + m && q[2] > s[2] - m && q[2] < s[5] + m) hit = true; });
+  return hit;
 }
 
 // ---------------------------------------------------------------- HUD, labels and maps
@@ -2359,7 +2379,7 @@ const worldBuf = buffer(world, gl.STATIC_DRAW), worldN = world.n / 10, skyMap = 
 const pieces = RANGES.filter(r => r[1] > r[0]).map(([s, e, town]) => ({ first: s / 10, count: (e - s) / 10, town, box: boxOf(world.a, s, e) }));
 Smash.prepare();                                         // breakable things keep their own copy of their triangles (smash.js)
 world.a = null;
-const chunks = [...DETAIL.values()].map(m => { const c = { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, cx: m.cx, cz: m.cz, box: boxOf(m.a, 0, m.n) }; m.a = null; return c; });
+const chunks = [...DETAIL.values()].map(m => { const c = { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, cx: m.cx, cz: m.cz, r: m.r || DETAIL_R, box: boxOf(m.a, 0, m.n) }; m.a = null; return c; });
 const signBuf = buffer(signs, gl.STATIC_DRAW), signN = signs.n / 10; signs.a = null;
 const detailN = chunks.reduce((s, c) => s + c.n, 0);
 const txtTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, txtTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, TXT); gl.generateMipmap(gl.TEXTURE_2D);
@@ -2555,7 +2575,7 @@ function frame(now) {
   const vl = ((dials.veil || 0) + Wx.veil) * Lt.day * (1 - .45 * Wx.grey); Lt.fog = Lt.fog.map((v, i) => v + mix(sun0[i], lum0, Wx.grey) * vl); Lt.zen = Lt.zen.map((v, i) => v + sun0[i] * vl * .7);   // sunlight scattered all through the haze: a pale sky, and distance fades to it (W5)
   if (STUDIO) { Lt.dir = [-.45 / 1.0005, .74 / 1.0005, .5 / 1.0005]; Lt.sunCol = [3.2 / Math.PI, 3.2 / Math.PI * .82, 3.2 / Math.PI * .62]; Lt.sky = [.42 * .25, .55 * .25, .82 * .25];
     Lt.ground = [.004 + Lt.sunCol[0] * .1, .004 + Lt.sunCol[1] * .068, .005 + Lt.sunCol[2] * .042]; Lt.fogD = 0; Lt.fog = mul3(Lt.sky, 1.25); Lt.zen = mul3(Lt.sky, 1.5); Lt.exp = Math.pow(2, -.3); Lt.day = 1; Lt.night = 0; Lt.wet = 0; Lt.rain = 0; }
-  const view = M4.look(cam.eye, cam.dir), fov = STUDIO ? .27 : .9, asp = W / H, VP = M4.mul(M4.persp(fov, asp, .25, 3200), view.m), th = Math.tan(fov / 2);
+  const view = M4.look(cam.eye, cam.dir), fov = STUDIO ? .27 : .9, asp = W / H, NEAR = cam.indoor && !cam.fp ? CAM_IN.near : .25, VP = M4.mul(M4.persp(fov, asp, NEAR, 3200), view.m), th = Math.tan(fov / 2);
   gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf); gl.bufferData(gl.ARRAY_BUFFER, dyn.a.subarray(0, dyn.n), gl.DYNAMIC_DRAW);
   let SM = M4.t(0, 0, 0), shOn = 0, giAt = [0, 0, 1], giK = 0;
   if (shFbo && quality > .6) {                              // shadows: draw the town from the light, around where the player looks
@@ -2604,7 +2624,7 @@ function frame(now) {
   // From indoors the city is seen only through the windows: the pieces within INDOOR_R of the camera, and the whole-town one (ground,
   // paving, wall); the rest lie behind the building's own walls.
   const inL = lotAt(cam.eye[0], cam.eye[2]), indoor = inL && !isOpen(inL) && inL.H && cam.eye[1] < inL.H - .2;
-  const seen = pieces.filter(pc => !outside(VP, pc.box) && (!indoor || pc.town || boxD2(pc.box, cam.eye) < INDOOR_R * INDOOR_R)), nearD = chunks.filter(ch => Math.hypot(ch.cx - cam.eye[0], ch.cz - cam.eye[2]) < DETAIL_R && !outside(VP, ch.box));
+  const seen = pieces.filter(pc => !outside(VP, pc.box) && (!indoor || pc.town || boxD2(pc.box, cam.eye) < INDOOR_R * INDOOR_R)), nearD = chunks.filter(ch => Math.hypot(ch.cx - cam.eye[0], ch.cz - cam.eye[2]) < ch.r && !outside(VP, ch.box));
   const rooms = nearRooms(cam.eye); for (const rm of rooms) if (!outside(VP, rm.box)) nearD.push(rm);
   // the room the camera is in (or the nearest one in reach) gets its own lamps and contact shade; other rooms an even lamplight
   let inRoom = null, best = 10; const feet = new Float32Array(32); let feetN = 0;   // feet: people's floor shade in a hall (below)
@@ -2633,7 +2653,7 @@ function frame(now) {
     for (const ch of nearD) drawDepth(ch.buf, ch.n); drawDepth(dynBuf, dyn.n / 10);   // people too, so an arm shades the body beside it
     gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.colorMask(true, true, true, true);
     const quad = pr => { gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const a = gl.getAttribLocation(pr.p, "aQ"); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
-      gl.uniform4f(pr.u.uPr, 1 / (th * asp), 1 / th, .25, 3200); gl.uniform2f(pr.u.uPx, 1 / aw, 1 / ah); gl.uniform1i(pr.u.uD, 6); };
+      gl.uniform4f(pr.u.uPr, 1 / (th * asp), 1 / th, NEAR, 3200); gl.uniform2f(pr.u.uPx, 1 / aw, 1 / ah); gl.uniform1i(pr.u.uD, 6); };
     gl.activeTexture(gl.TEXTURE6); gl.bindTexture(gl.TEXTURE_2D, AO.depth);
     gl.bindFramebuffer(gl.FRAMEBUFFER, AO.fbo[0]); quad(aoProg);
     gl.uniform4f(aoProg.u.uAo, dials.aoR || 1.2, dials.aoI || 6, 0, dials.aoFar || 45);   // reach (m), strength, -, fades out by (m)

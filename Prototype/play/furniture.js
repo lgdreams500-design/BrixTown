@@ -577,9 +577,11 @@ var Furniture = (() => {
       else { Q(0, 0, 0, .36, 1.0, .36, L.panels ? STONE : L.wood); if (L.panels) Q(0, .99, 0, .42, .06, .42, STONE); }
       Q(0, 1.04, 0, .34, .22, .2, ...m); Q(0, 1.2, 0, .1, .12, .1, ...m); Q(0, 1.29, 0, .2, .26, .22, ...m); Q(0, 1.39, -.11, .04, .06, .05, ...m);
     },
+    // the television cabinet of the sample houses (house_samples_19.py), which the showroom sets do not use
+    tv(Q, L) { cabinet(Q, L, 1.3, .45, .55, 2); Q(0, .55, 0, .72, .5, .44, L.round ? ENAMEL : L.panels ? L.wood : IRON, L.panels ? 19 : 9); Q(-.07, .62, -.23, .46, .36, .02, [.12, .15, .16]); for (const s of [-1, 1]) Q(s * .12, 1.05, .05, .025, .3, .025, IRON, 9, s * .5); },
   };
   // Blender kit names (furniture_kit_18.py, "k17:" for kit 17) to these, so a house's furniture list reads as the Blender one
-  const NAMES = { l_fireplace: "fireplace", o_painting: "painting", l_sidetable: "sidetable", l_piano: "piano", o_floorplant: "floorplant",
+  const NAMES = { l_tv: "tv", l_fireplace: "fireplace", o_painting: "painting", l_sidetable: "sidetable", l_piano: "piano", o_floorplant: "floorplant",
     h_console: "console", h_mirror: "mirror", h_shoebench: "shoebench", h_hooks: "hooks", h_coatstand: "coatstand", h_umbrella: "umbrella",
     k_counter: "counter", k_sink: "sink", k_stove: "stove", k_wall: "wallcupboard", k_fridge: "fridge", k_potshelf: "potshelf",
     d_pendant: "pendant", b_bath: "bath", b_toilet: "toilet", b_basin: "basin", b_mirror: "mirrorcab", b_basket: "basket",
@@ -594,7 +596,7 @@ var Furniture = (() => {
     r_blanket: "blanketbox", r_vanity: "vanity", r_screen: "screen", r_cheval: "cheval", l_records: "records", l_magrack: "magrack" };
   // what each piece takes up, for walking into it: [width across, depth front to back, height]; pieces on the wall or the
   // ceiling (painting, mirror, hooks, wall cupboard, mirror cabinet, pendant) and rugs are left out: you walk under or over them
-  const SIZE = { "k17:sofa": [2.0, .92, 1.0], "k17:armchair": [.95, .92, 1.0], "k17:coffee": [1.1, .6, .45], "k17:bed": [1.6, 2.2, .6],
+  const SIZE = { l_tv: [1.3, .45, 1.1], "k17:sofa": [2.0, .92, 1.0], "k17:armchair": [.95, .92, 1.0], "k17:coffee": [1.1, .6, .45], "k17:bed": [1.6, 2.2, .6],
     "k17:bedside": [.48, .42, .6], "k17:wardrobe": [1.1, .6, 2.1], "k17:bookcase": [.9, .34, 1.8], "k17:floor_lamp": [.34, .34, 1.7],
     "k17:dining": [1.4, 1.7, .95], l_fireplace: [1.7, .6, 1.2], l_sidetable: [.5, .5, .6], l_piano: [1.45, .58, 1.25], o_floorplant: [.4, .4, 1.0],
     h_console: [1.0, .34, .8], h_shoebench: [1.0, .36, .5], h_coatstand: [.42, .42, 1.8], h_umbrella: [.3, .3, .6],

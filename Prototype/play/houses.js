@@ -352,7 +352,7 @@ window.Houses = (() => {
   }
 
   function outside01(l) {
-    const Fr = frame(l), Hs = l.house, tr = Hs.trim, s = sg(l), m = world, dm = detailOf(l.block), U = u => u * s;   // dm: the small parts, drawn only near
+    const Fr = frame(l), Hs = l.house, tr = Hs.trim, s = sg(l), m = world, dm = detailFor(l), U = u => u * s;   // dm: the small parts, drawn only near
     const wallC = PLASTER[tr.plaster % PLASTER.length], roofC = ROOF[tr.roof_tone % ROOF.length], shut = SH[tr.shutter_color] || C.teal;
     l.H = HH + 3.3;
     // a box on a wall face: a = along the wall, c = across it (axis "u": a is u and c is v; axis "v": the other way round)
@@ -453,6 +453,7 @@ window.Houses = (() => {
     chain1(Fr, -6.5, 5, 6.5, 5, 0, G1 - .2, [[bd[0], 5]]); chain1(Fr, -6.5, 5, 6.5, 5, G1 + .05, HH, [[U(-5.39), 5], [U(5.39), 5]]);
     chain1(Fr, -6.5, -5, -6.5, 5, 0, HH); chain1(Fr, 6.5, -5, 6.5, 5, 0, HH);
     grid1(Fr, -6.18, -4.68, 6.18, 4.68, 0, G0);
+    grid1(Fr, -6.18, -4.68, 6.18, 4.68, K1, K1 + .3);   // the ceiling under the roof (upstairs and over the two-storey hall): the camera stays below it
     for (const f of [0, 1]) for (const [u0, v0, u1, v1, ds] of innerWalls(l, f)) chain1(Fr, u0, v0, u1, v1, f ? G1 + .05 : G0, f ? K1 : K0 - .3, ds, .12);
     for (const r of Hs.rooms.filter(r => r.floor === 1)) { const [u0, v0, u1, v1] = r.rect; grid1(Fr, u0, v0, u1, v1, K0, G1, .7); }
     for (const [u0, v0, u1, v1, top] of steps01(l)) { const a = U(u0), b = U(u1); grid1(Fr, Math.min(a, b), v0, Math.max(a, b), v1, top >= G1 - .01 && Math.abs(u1 - u0) < 2 ? top - .2 : 0, top, .6); }
@@ -546,5 +547,327 @@ window.Houses = (() => {
     if (rec) for (const [u, v, f] of [[-4.3, -1, 0], [4.3, -1, 0], [0, -2.5, 0], [0, 3.8, 0], [-4.3, -3.6, 1], [-4.3, .3, 1], [4.3, -1, 1], [-5.4, 3.8, 1], [5.4, 3.8, 1]]) { const p = Fr.P(-U(u), (f ? K1 : K0) - .4, v); rec.lamps.push([p[0], p[1], p[2], 1.1]); }
   }
 
-  return { outside, inside, frame };
+  // ================================================================ plan "samples_19": the four sample houses of Tools/blender/house_samples_19.py,
+  // one per furniture line, on Northwood Way (owner 2026-11-22: "showing me sample houses"). Drawn through the *1 helpers, so u is
+  // Blender's x (the living room on the left seen from the lane) and v Blender's y. After the owner's review (2026-11-23: more room
+  // to walk, a little more ceiling height, only the essential furniture) the house is 12 x 9 m, u -6..6, v -4.5..4.5, in its
+  // 13 x 10 m lot, with two 3.3 m storeys on a 0.3 m plinth and a 24 degree gable roof with the ridge along the front (the town
+  // kit's). The rooms keep the Blender layout: a piece keeps its distance to the nearer wall of its room (mu, mv), so the extra
+  // space opens the middle of each room.
+  // Made for walking through: doorways 1 m wide where nothing stands in them, a straight stair up the side of the hall with a
+  // rail round its well, and a solid floor, ceiling and walls everywhere, so the camera (play.js stepCamera) stays inside.
+  const HU = 6, HV = 4.5, S0 = .3, SF = 3.3, S1 = S0 + SF, SE = S0 + 2 * SF, SK0 = S1 - .2, SK1 = SE - .05, SW = .32, SI = HU - SW, SJ = HV - SW;
+  const SA = -1.2, SB = 1.5, SM = .6, SPITCH = 24 * Math.PI / 180, SEAVE = .55;
+  // Blender (10 x 8 m) to this house: within each room a point keeps its distance to the nearer of the room's two walls
+  const mapA = (x, o, n) => { if (x <= o[0]) return n[0] + x - o[0]; for (let i = 0; i + 1 < o.length; i++) if (x <= o[i + 1]) return x - o[i] <= o[i + 1] - x ? n[i] + x - o[i] : n[i + 1] - (o[i + 1] - x); return n[n.length - 1] + x - o[o.length - 1]; };
+  const mu = u => +mapA(u, [-4.68, -1, 1.2, 4.68], [-SI, SA, SB, SI]).toFixed(3), mv = v => +mapA(v, [-3.68, .5, 3.68], [-SJ, SM, SJ]).toFixed(3);
+  const SWELL = [SB - .06 - 1.0, SB - .06, .3, SJ], SOFF = SJ - 1.1;   // the stair against the hall's right wall; off it to the left at the top
+  const SWIN = { front: [[mu(-3.3), 1.3], [mu(3.1), 1.3]], back: [[mu(-2.4), 1.1], [mu(3.6), 1.1]], left: [[mv(-.4), .9], [mv(2.4), 1.0]], right: [[mv(-3.1), 1.0], [mv(2.3), 1.0]] };
+  const SFRONT_DOOR = [mu(.1), 1.2, 2.4];
+  // doorways [wall axis, line, centre]: the hall to each room; living room to kitchen; dining room to bathroom (the stair stands
+  // along the hall's right wall, so the rooms behind it are reached from the room in front); upstairs the same round the landing
+  // (checked: nothing stands within 0.9 m of a doorway on either side; the living room and kitchen share no door, the armchair
+  // stands where one would be)
+  const SDOORS = { 0: [["x", SA, -.75], ["x", SA, mv(1.4)], ["x", SB, mv(-1.8)], ["y", SM, mu(4.2)]],
+                   1: [["x", SA, -.75], ["x", SA, mv(1.4)], ["x", SB, mv(-1.8)], ["y", SM, 3.7]] };
+  const SROOMS = [["Living room", 0, -SI, -SJ, SA, SM], ["Kitchen", 0, -SI, SM, SA, SJ], ["Hall", 0, SA, -SJ, SB, SJ], ["Dining room", 0, SB, -SJ, SI, SM],
+                  ["Bathroom", 0, SB, SM, SI, SJ], ["Main bedroom", 1, -SI, -SJ, SA, SM], ["Study", 1, -SI, SM, SA, SJ], ["Landing", 1, SA, -SJ, SB, SJ],
+                  ["Children's room", 1, SB, -SJ, SI, SM], ["Guest room", 1, SB, SM, SI, SJ]];
+  // the outside, per line: the town's plaster or stone, the line's shutters and door (as the renders)
+  const SLOOK = { plain: { wall: [.68, .63, .55], shutter: [.2, .36, .37], door: [.2, .36, .37], quoins: false, boxes: false, roof: [.44, .24, .18] },
+                  oldtown: { wall: [.7, .58, .46], shutter: [.44, .24, .18], door: [.45, .17, .12], quoins: true, boxes: true, roof: [.44, .24, .18] },
+                  workshop: { wall: [.56, .53, .5], stone: true, shutter: [.36, .24, .15], door: [.36, .24, .15], quoins: false, boxes: false, roof: [.32, .19, .14] },
+                  curve: { wall: [.7, .66, .58], shutter: [.3, .38, .52], door: [.52, .4, .2], quoins: false, boxes: true, roof: [.47, .28, .2] } };
+  // the furniture: [floor (+ a lift), piece, Blender x, y, yaw, rule]. Rule "E": every house has it (what a home needs: seats,
+  // a table, the kitchen run, the bathroom, a bed for each resident, a wardrobe, lamps). "kids": with three or more residents (the
+  // bunk room). "guest": with five. Any other rule names a group of extras that a house has or has not, by a hash of the lot, so
+  // no two houses have every piece and the rooms keep their space.
+  const P2 = Math.PI / 2, PI = Math.PI;
+  const SFURN = [
+    [0, "k17:sofa", -1.57, -1.8, -P2, "E"], [0, "k17:armchair", -3.3, -.05, 0, "E"], [0, "k17:coffee", -3.0, -1.8, P2, "E"], [0, "k17:rug", -3.0, -1.8, P2, "E"],
+    [0, "k17:floor_lamp", -4.35, -.1, 0, "E"], [0, "l_fireplace", -4.55, -1.8, P2, "fire"], [0, "o_painting", -4.73, -1.8, P2, "fire"],
+    [0, "k17:bookcase", -4.58, -3.2, P2, "books"], [0, "l_tv", -1.75, -3.52, PI, "tv"], [0, "o_floorplant", -1.45, -.1, 0, "plant"],
+    [0, "k_counter", -3.85, 3.45, 0, "E"], [0, "k_sink", -2.4, 3.45, 0, "E"], [0, "k_stove", -1.475, 3.44, 0, "E"], [0, "k_fridge", -4.42, 1.3, P2, "E"],
+    [0, "k_wall", -3.85, 3.58, 0, "cupboards"], [0, "k17:dining", -2.8, 1.8, 0, "E"], [0, "d_pendant", -2.8, 1.8, 0, "E"],
+    [0, "h_coatstand", .8, -3.3, 0, "E"], [0, "h_shoebench", -.76, -2.6, P2, "shoes"], [0, "h_console", -.77, .35, P2, "console"], [0, "h_mirror", -.92, .35, P2, "console"],
+    [0, "d_pendant", .1, -1.8, 0, "E"],
+    [0, "k17:dining", 3.0, -1.7, 0, "E"], [0, "d_pendant", 3.0, -1.7, 0, "E"], [0, "d_sideboard", 2.6, .2, 0, "sideboard"], [.91, "o_candles", 2.9, .2, 0, "sideboard"],
+    [0, "o_painting", 2.6, .42, 0, "pictures"], [0, "d_dresser", 4.51, -1.5, -P2, "dresser"], [0, "d_display", 1.47, -3.2, P2, "display"],
+    [0, "b_bath", 4.31, 2.3, -P2, "E"], [0, "b_toilet", 1.8, 3.43, 0, "E"], [0, "b_basin", 2.6, 3.5, 0, "E"], [0, "b_mirror", 2.6, 3.67, 0, "E"],
+    [0, "b_rail", 1.5, 1.6, P2, "towels"], [0, "d_pendant", 3.0, 2.2, 0, "E"],
+    [1, "k17:bed", -2.9, -.68, 0, "E"], [1, "k17:bedside", -4.1, .23, 0, "E"], [1, "k17:bedside", -1.65, .23, 0, "E"], [1, "k17:wardrobe", -4.45, -1.5, P2, "E"],
+    [1, "r_chest", -2.0, -3.5, PI, "chest"], [1, "k17:rug", -2.9, -1.4, 0, "bedrug"], [1, "o_painting", -2.9, .42, 0, "pictures"],
+    [1, "c_bunk", 4.2, -.6, 0, "kids"], [1, "c_toyshelf", 2.3, .26, 0, "kids"], [1, "c_toychest", 1.5, -3.2, P2, "toys"], [1, "k17:rug", 2.9, -1.6, 0, "kids"],
+    [1, "d_pendant", 3.0, -1.8, 0, "E"],
+    [1, "s_desk", -2.4, 3.41, 0, "E"], [1, "s_chair", -2.4, 2.75, PI, "E"], [1.75, "s_lamp", -2.85, 3.5, 0, "E"], [1, "s_shelving", -4.55, 1.35, P2, "shelves"],
+    [1, "k17:armchair", -3.0, 1.4, -P2 - .4, "reading"], [1, "k17:floor_lamp", -3.8, 1.8, 0, "E"],
+    [1, "r_single", 4.15, 2.65, 0, "guest"], [1, "k17:bedside", 3.35, 3.54, 0, "guest"], [1, "r_vanity", 2.2, 3.51, 0, "vanity"], [1, "o_floorplant", 1.6, 1.1, 0, "plant"],
+    [1, "d_pendant", -.4, -1.8, 0, "E"], [1, "d_pendant", 3.0, 2.2, 0, "E"],
+  ].map(([f, kind, x, y, th, rule]) => [f, kind, mu(x), mv(y), th, rule]);
+  function furnS(l) {                                         // the pieces this house has
+    const n = ((l.objects || {}).bed || []).length;
+    return SFURN.filter(([, , , , , rule]) => rule === "E" || (rule === "kids" ? n >= 3 : rule === "guest" ? n >= 5 : hash(l.id, "extra", rule) < .45));
+  }
+  // where people sleep and sit (the lot's objects hold the same points): x, y in this house, height, facing x, y
+  const SBEDS = [[mu(-3.3), mv(-.6), .62, 0, 1], [mu(-2.5), mv(-.6), .62, 0, 1], [mu(4.2), mv(-.6), .5, 0, 1], [mu(4.2), mv(-.6), 1.45, 0, 1], [mu(4.15), mv(2.65), .62, 0, 1]];
+  const SSEATS = [[mu(-1.75), mv(-2.3), .45, -1, 0], [mu(-1.75), mv(-1.3), .45, -1, 0], [mu(-3.3), mv(-.25), .45, 0, -1], [mu(-2.8), mv(1.1), .45, 0, 1], [mu(-2.8), mv(2.5), .45, 0, -1]];
+  function stepsS() { const out = [], n = 16, [x0, x1, y0, y1] = SWELL; for (let k = 0; k < n; k++) out.push([x0, y0 + (y1 - y0) * k / n, x1, y0 + (y1 - y0) * (k + 1) / n, S0 + SF * (k + 1) / n]); return out; }
+  // a wall's pieces round its holes [a0, a1, z0, z1], as boxes along axis ax ("u": along u at v c0..c1; "v": along v at u c0..c1)
+  function holedS(put, a0, a1, z0, z1, holes) {
+    const xs = [...new Set([a0, a1, ...holes.flatMap(h => [Math.max(a0, Math.min(a1, h[0])), Math.max(a0, Math.min(a1, h[1]))])])].sort((p, q) => p - q);
+    for (let i = 0; i + 1 < xs.length; i++) {
+      const p = xs[i], q = xs[i + 1], mid = (p + q) / 2; if (q - p < .005) continue;
+      let z = z0;
+      for (const [h0, h1] of holes.filter(h => h[0] < mid && h[1] > mid).map(h => [h[2], h[3]]).sort((x, y) => x[0] - y[0])) { if (h0 > z + .005) put(p, z, q, h0); z = Math.max(z, h1); }
+      if (z1 > z + .005) put(p, z, q, z1);
+    }
+  }
+  const sHoles = side => [...SWIN[side].flatMap(([a, w]) => [[a - w / 2, a + w / 2, S0 + .95, S0 + 2.55], [a - w / 2, a + w / 2, S1 + .8, S1 + 2.25]]),
+                          ...(side === "front" ? [[SFRONT_DOOR[0] - SFRONT_DOOR[1] / 2, SFRONT_DOOR[0] + SFRONT_DOOR[1] / 2, S0, S0 + SFRONT_DOOR[2]]] : [])];
+  // the four faces: [axis along, outer line, outward sign]
+  const SFACES = { front: ["u", -HV, -1], back: ["u", HV, 1], left: ["v", -HU, -1], right: ["v", HU, 1] };
+  function lineS(l) { return SLOOK[l.house.furniture] ? l.house.furniture : "oldtown"; }
+  function lookS(l) {                                         // the line's outside, varied by the lot's trim: shutter and door colour,
+    const base = SLOOK[lineS(l)], tr = l.house.trim || {}, lk = Object.assign({}, base);   // a shade of plaster, a tone of roof tiles
+    if (!base.stone) lk.wall = mix3(base.wall, PLASTER[(tr.plaster || 0) % PLASTER.length], .5);
+    if (tr.shutter_color && SH[tr.shutter_color] && lineS(l) !== "workshop") { lk.shutter = SH[tr.shutter_color]; lk.door = mix3(SH[tr.shutter_color], [.45, .17, .12], .4); }
+    lk.roof = mix3(base.roof, ROOF[(tr.roof_tone || 0) % ROOF.length], .4);
+    if (tr.window_boxes === false) lk.boxes = false;
+    return lk;
+  }
+
+  function outsideS(l) {
+    const Fr = frame(l), m = world, dm = detailFor(l), lk = lookS(l), R = (SI + SEAVE + .32) * Math.tan(SPITCH), stone = SURF.patterns.indexOf("ashlar");
+    const wallF = lk.stone ? (stone >= 0 ? 30 + stone : 6) : 0;
+    l.H = SE + R + .5;
+    const wb = (ax, a0, z0, c0, a1, z1, c1, col, f, mm) => ax === "u" ? bx1(mm || m, Fr, a0, z0, Math.min(c0, c1), a1, z1, Math.max(c0, c1), col, f) : bx1(mm || m, Fr, Math.min(c0, c1), z0, a0, Math.max(c0, c1), z1, a1, col, f);
+    for (const side of Object.keys(SFACES)) {
+      const [ax, line, o] = SFACES[side], a0 = ax === "u" ? -HU : -HV + SW, a1 = -a0, c0 = line, c1 = line - o * SW;
+      holedS((p, z, q, zz) => wb(ax, p, z, c0, q, zz, c1, lk.wall, wallF), a0, a1, 0, SE, sHoles(side));
+      const out = d => line + o * d;
+      for (const [a, w] of SWIN[side]) for (const [z0, z1, box] of [[S0 + .95, S0 + 2.55, false], [S1 + .8, S1 + 2.25, lk.boxes && side !== "back"]]) {
+        wb(ax, a - w / 2, z0, out(-.2), a + w / 2, z1, out(-.17), GLASS, 4);                                            // glass, deep in the reveal
+        wb(ax, a - .035, z0, out(-.22), a + .035, z1, out(-.12), CREAM_F, 9, dm); wb(ax, a - w / 2, z0 + (z1 - z0) * .68, out(-.22), a + w / 2, z0 + (z1 - z0) * .68 + .07, out(-.12), CREAM_F, 9, dm);   // glazing bars (the frame is the stone surround's)
+        wb(ax, a - w / 2 - .22, z0 - .15, out(-.05), a + w / 2 + .22, z0, out(.17), STONE_L, 6, dm);                       // sill
+        for (const e of [a - w / 2 - .17, a + w / 2]) wb(ax, e, z0, out(-.05), e + .17, z1, out(.06), STONE_L, 6, dm);     // stone surround
+        wb(ax, a - w / 2 - .24, z1, out(-.05), a + w / 2 + .24, z1 + .24, out(.09), STONE_L, 6, dm);
+        for (const sd of [-1, 1]) {                                                                                    // louvred shutters, open
+          const e = a + sd * (w / 2 + .2), e0 = Math.min(e, e + sd * w / 2), e1 = Math.max(e, e + sd * w / 2);
+          wb(ax, e0, z0, out(.02), e1, z1, out(.09), lk.shutter, 12, dm);
+          for (let k = 1; k < 4; k++) wb(ax, e0 + .06, z0 + (z1 - z0) * k / 4 - .02, out(.09), e1 - .06, z0 + (z1 - z0) * k / 4 + .02, out(.11), mul3(lk.shutter, .7), 12, dm);   // three louvre bands
+        }
+        if (box) { wb(ax, a - w / 2 - .05, z0, out(.16), a + w / 2 + .05, z0 + .26, out(.42), C.terracotta, 9, dm);
+          for (let k = 0; k < 3; k++) { const pa = a - w / 2 + (k + .5) * w / 3, pc = out(.29); yb1(dm, Fr, ax === "u" ? pa : pc, z0 + .26, ax === "u" ? pc : pa, .3, .22, .26, 0, k % 2 ? [.26, .38, .2] : [.4, .48, .24], 9); } }
+      }
+      bx1(m, Fr, ax === "u" ? -HU - .05 : Math.min(out(.06), out(0)), 0, ax === "u" ? Math.min(out(.06), out(0)) : -HV - .05, ax === "u" ? HU + .05 : Math.max(out(.06), out(0)), S0 + .3, ax === "u" ? Math.max(out(.06), out(0)) : HV + .05, C.stoneDark, 6);   // plinth
+      for (const s of [0, 1]) bx1(m, Fr, ax === "u" ? -HU - .05 - .04 * s : Math.min(out(.08 + .07 * s), out(0)), S1 - .1 + .11 * s, ax === "u" ? Math.min(out(.08 + .07 * s), out(0)) : -HV - .05 - .04 * s,
+        ax === "u" ? HU + .05 + .04 * s : Math.max(out(.08 + .07 * s), out(0)), S1 + .04 + .11 * s, ax === "u" ? Math.max(out(.08 + .07 * s), out(0)) : HV + .05 + .04 * s, STONE_L, 6);   // string course
+    }
+    if (lk.quoins) for (const [cu, cv] of [[-HU, -HV], [HU, -HV], [-HU, HV], [HU, HV]]) for (let k = 0; S0 + .3 + k * .5 + .45 < SE; k++) {
+      const z0 = S0 + .3 + k * .5, la = k % 2 ? .3 : .55, lb = k % 2 ? .55 : .3, su = Math.sign(cu), sv = Math.sign(cv);
+      bx1(dm, Fr, Math.min(cu - su * la, cu + su * .04), z0, Math.min(cv, cv + sv * .04), Math.max(cu - su * la, cu + su * .04), z0 + .45, Math.max(cv, cv + sv * .04), STONE_Q, 6);
+      bx1(dm, Fr, Math.min(cu, cu + su * .04), z0, Math.min(cv - sv * lb, cv + sv * .04), Math.max(cu, cu + su * .04), z0 + .45, Math.max(cv - sv * lb, cv + sv * .04), STONE_Q, 6);
+    }
+    // the front door, open into the hall; its stone surround, a step and a lamp
+    const [du, dw, dh] = SFRONT_DOOR;
+    bx1(m, Fr, du - dw / 2 + .02, S0, -HV + SW, du - dw / 2 + .1, S0 + dh - .02, -HV + SW + 1.1, lk.door, 9);
+    for (const e of [du - dw / 2 - .2, du + dw / 2]) bx1(dm, Fr, e, 0, -HV - .07, e + .2, S0 + dh, -HV + .05, C.stoneDark, 6);
+    bx1(dm, Fr, du - dw / 2 - .28, S0 + dh, -HV - .1, du + dw / 2 + .28, S0 + dh + .3, -HV + .05, C.stoneDark, 6);
+    bx1(m, Fr, du - .9, 0, -HV - .6, du + .9, S0, -HV, C.stoneDark, 6); grid1(Fr, du - .9, -HV - .6, du + .9, -HV, 0, S0);
+    // the roof: two slopes of tiles, gable ends in the wall, the ridge, a chimney on the left gable with two pots
+    const o = SEAVE, E = SE, GR = HV * Math.tan(SPITCH), RR = (HV + o) * Math.tan(SPITCH), U0 = -HU - .3, U1 = HU + .3;
+    qd1(m, Fr, [U0, E - o * Math.tan(SPITCH), -HV - o], [U1, E - o * Math.tan(SPITCH), -HV - o], [U1, E + GR, 0], [U0, E + GR, 0], lk.roof, 11);
+    qd1(m, Fr, [U0, E + GR, 0], [U1, E + GR, 0], [U1, E - o * Math.tan(SPITCH), HV + o], [U0, E - o * Math.tan(SPITCH), HV + o], lk.roof, 11);
+    for (const sv of [-1, 1]) qd1(m, Fr, [U0, E - o * Math.tan(SPITCH) - .01, sv * (HV + o)], [U1, E - o * Math.tan(SPITCH) - .01, sv * (HV + o)], [U1, E - .01, sv * HV], [U0, E - .01, sv * HV], mul3(lk.roof, .6), 11, "down");
+    for (let k = 1; k < 6; k++) for (const sv of [-1, 1]) {                       // courses of tiles: a lip every 0.42 m down each slope
+      const vv = sv * (HV + o) * k / 6, z = E + GR - (GR + o * Math.tan(SPITCH)) * k / 6;
+      bx1(dm, Fr, U0, z, Math.min(vv, vv + sv * .06), U1, z + .05, Math.max(vv, vv + sv * .06), mul3(lk.roof, k % 3 ? .9 : .8), 11);
+    }
+    for (const u of [-HU, HU]) qd1(m, Fr, [u, E, -HV], [u, E, HV], [u, E + GR, 0], [u, E + GR, 0], lk.wall, wallF, Math.sign(u), 0);
+    bx1(m, Fr, U0 - .05, E + GR - .02, -.14, U1 + .05, E + GR + .14, .14, mul3(lk.roof, .85), 11);
+    for (const v of [-HV - o, HV + o]) bx1(m, Fr, U0, E - o * Math.tan(SPITCH) - .2, Math.min(v, v + Math.sign(v) * -.12), U1, E - o * Math.tan(SPITCH), Math.max(v, v + Math.sign(v) * -.12), C.brown, 9);   // fascia
+    bx1(m, Fr, -HU - .05, E - .5, mv(-2.1), -HU + .65, E + RR + .9, mv(-1.5), lk.stone ? lk.wall : C.stoneDark, lk.stone ? wallF : 6);
+    bx1(dm, Fr, -HU - .15, E + RR + .9, mv(-2.2), -HU + .75, E + RR + 1.02, mv(-1.4), C.stoneDark, 6);
+    for (const d of [-.17, .17]) yb1(dm, Fr, -HU + .3, E + RR + 1.02, mv(-1.8) + d, .18, .45, .18, 0, C.terracotta, 9);
+    // what cannot be walked through: the outer walls (a gap at the door), floors, the ceiling under the roof, inner walls, the
+    // stair and the rail round its well, and the furniture
+    chain1(Fr, -HU, -HV, HU, -HV, 0, SE, [[du, -HV]]); chain1(Fr, -HU, HV, HU, HV, 0, SE); chain1(Fr, -HU, -HV, -HU, HV, 0, SE); chain1(Fr, HU, -HV, HU, HV, 0, SE);
+    grid1(Fr, -SI, -SJ, SI, SJ, 0, S0);
+    const [wx0, wx1, wy0] = SWELL;
+    for (const [a, b, c, d] of [[-SI, -SJ, wx0, SJ], [wx1, -SJ, SI, SJ], [wx0, -SJ, wx1, wy0]]) grid1(Fr, a, b, c, d, SK0, S1, .7);
+    grid1(Fr, -SI, -SJ, SI, SJ, SK1, SK1 + .3);
+    for (const f of [0, 1]) for (const [ax, at, a0, a1] of [["x", SA, -SJ, SJ], ["x", SB, -SJ, SJ], ["y", SM, -SI, SA], ["y", SM, SB, SI]]) {
+      const gaps = SDOORS[f].filter(d => d[0] === ax && d[1] === at && d[2] > a0 && d[2] < a1).map(d => ax === "x" ? [at, d[2]] : [d[2], at]);
+      ax === "x" ? chain1(Fr, at, a0, at, a1, f ? S1 : S0, f ? SK1 : SK0, gaps, .12) : chain1(Fr, a0, at, a1, at, f ? S1 : S0, f ? SK1 : SK0, gaps, .12);
+    }
+    for (const [u0, v0, u1, v1, top] of stepsS()) grid1(Fr, u0, v0, u1, v1, 0, top, .6);
+    chain1(Fr, wx0, wy0, wx0, SOFF, S1, S1 + 1, null, .06); chain1(Fr, wx0, wy0, wx1, wy0, S1, S1 + 1, null, .06);   // open past SOFF: the way off the top step
+    furnS(l).forEach(([f, kind, x, y, th]) => {
+      const sz = Furniture.SIZE[kind]; if (!sz || f % 1) return;
+      const q = Math.round(th / P2) % 2 !== 0 && Math.abs(Math.abs(th) - P2) < .2, w = q ? sz[1] : sz[0], d = q ? sz[0] : sz[1], y0 = f ? S1 : S0;
+      grid1(Fr, x - w / 2 + .05, y - d / 2 + .05, x + w / 2 - .05, y + d / 2 - .05, y0, y0 + Math.max(sz[2], .9), .6);
+    });
+    gardenS(l, Fr, lk);
+    placesS(l, Fr);
+    l.furn = ["house"];
+    occl.push([Math.min(l.rect[0], l.rect[2]) - 2, Math.min(l.rect[1], l.rect[3]) - 2, Math.max(l.rect[0], l.rect[2]) + 2, Math.max(l.rect[1], l.rect[3]) + 2, SE]);
+  }
+
+  // The garden round each sample house (owner 2026-11-23: "lacking external fences and outside objects"): a lawn fenced in the
+  // line's way with a gate in line with the front door, a stone path, planters at the door, a letterbox and a tree; and, by a hash of
+  // the lot, some of a bench, a bistro table with a parasol, a lounger, a washing line, a flowerbed and a woodpile. It reaches
+  // 7.5 m to each side, 9.5 m to the front (the lane's edge is 11 m off) and 8 m to the back, clear of the neighbours.
+  function gardenS(l, Fr, lk) {
+    const m = world, dm = detailFor(l), line = lineS(l), du = SFRONT_DOOR[0], has = k => hash(l.id, "garden", k) < .5;
+    // the garden's own size, from the map (worldgen add_houses_03.py keeps it clear of the lanes and half way to the neighbours)
+    const [GL, GF, GR, GB] = l.house.garden || [-7.5, -9.5, 7.5, 8.0], front = -HV - GF, back = GB - HV, left = -HU - GL, right = GR - HU;
+    const B = (u0, y0, v0, u1, y1, v1, col, f, mm) => bx1(mm || dm, Fr, Math.min(u0, u1), y0, Math.min(v0, v1), Math.max(u0, u1), y1, Math.max(v0, v1), col, f || 9);
+    const Y = (u, y0, v, su, sy, sv, col, f, yaw, mm) => yb1(mm || dm, Fr, u, y0, v, su, sy, sv, yaw || 0, col, f || 9);
+    const solidBox = (u0, v0, u1, v1, h) => grid1(Fr, Math.min(u0, u1), Math.min(v0, v1), Math.max(u0, u1), Math.max(v0, v1), 0, h, .6);
+    // the lawn, a shade fresher than the common ground, and the path of stone slabs from the gate to the door step
+    qd1(m, Fr, [GL, .012, GF], [GR, .012, GF], [GR, .012, GB], [GL, .012, GB], LAWN.tones[1], 24);
+    for (let v = GF + .2, k = 0; v < -HV - .7; v += .75, k++) B(du - .55 + (k % 2) * .08, .012, v, du + .55 + (k % 2) * .08, .045, v + .6, C.path, 6);
+    // the fence, in the line's way, with a gate gap in front of the door
+    const gate = [du - .75, du + .75];
+    const runs = [["u", GF, GL, gate[0]], ["u", GF, gate[1], GR], ["u", GB, GL, GR], ["v", GL, GF, GB], ["v", GR, GF, GB]];
+    for (const [ax, at, a0, a1] of runs) {
+      const seg = (p, q, y0, y1, d, col, f, mm) => ax === "u" ? B(p, y0, at - d / 2, q, y1, at + d / 2, col, f, mm) : B(at - d / 2, y0, p, at + d / 2, y1, q, col, f, mm);
+      const post = (p, y0, y1, d, col, f, mm) => seg(p - d / 2, p + d / 2, y0, y1, d, col, f, mm);
+      const L = a1 - a0, n = Math.max(1, Math.round(L / 2.2));
+      if (line === "plain") {                                   // a cream picket fence: posts, two rails, pickets
+        for (let k = 0; k <= n; k++) post(a0 + L * k / n, 0, 1.0, .1, C.cream);
+        for (const y of [.25, .75]) seg(a0, a1, y, y + .07, .05, C.cream);
+        for (let p = a0 + .12; p < a1 - .05; p += .3) post(p, 0, .92, .09, mul3(C.cream, .95), 9, dm);
+      } else if (line === "oldtown") {                          // a low wall of dressed stone with a cap
+        seg(a0, a1, 0, .8, .32, C.stone, 6, m); seg(a0 - .02, a1 + .02, .8, .92, .42, C.stoneDark, 6, m);
+      } else if (line === "workshop") {                         // iron railings on a stone plinth
+        seg(a0, a1, 0, .35, .3, C.stoneDark, 6, m); seg(a0, a1, .95, 1.0, .05, C.charcoal);
+        for (let p = a0 + .1; p < a1; p += .26) post(p, .35, 1.0, .035, C.charcoal, 9, dm);
+        for (let k = 0; k <= n; k++) post(a0 + L * k / n, .35, 1.12, .08, C.charcoal);
+      } else {                                                   // a clipped hedge, rounded on top in two steps
+        seg(a0, a1, 0, .95, .7, [.22, .32, .15], 9, m); seg(a0 + .05, a1 - .05, .95, 1.1, .55, [.26, .36, .17], 9, m);
+      }
+      ax === "u" ? chain1(Fr, a0, at, a1, at, 0, 1.15, null, .15) : chain1(Fr, at, a0, at, a1, 0, 1.15, null, .15);
+    }
+    for (const g of gate) {                                      // gate piers (or posts), the gate leaf open into the garden
+      if (line === "oldtown") { B(g - .2, 0, GF - .2, g + .2, 1.15, GF + .2, C.stoneDark, 6); Y(g, 1.15, GF, .28, .26, .28, C.stone, 6); }
+      else B(g - .07, 0, GF - .07, g + .07, 1.2, GF + .07, line === "plain" ? C.cream : line === "curve" ? C.wood : C.charcoal);
+      solidAt1(Fr, g, GF, 0, 1.2, .2);
+    }
+    const leaf = line === "workshop" ? C.charcoal : line === "plain" ? C.cream : C.wood;
+    B(gate[0] + .05, .08, GF + .05, gate[0] + .11, .95, GF + .75, leaf);
+    // the letterbox on a post by the gate, planters each side of the door, a tree in a front corner
+    Y(gate[1] + .55, 0, GF + .3, .08, 1.0, .08, C.wood); Y(gate[1] + .55, 1.0, GF + .3, .4, .28, .3, lk.door);
+    for (const sd of [-1, 1]) { const u = du + sd * 1.2; Y(u, 0, -HV - .45, .5, .45, .5, C.terracotta); Y(u, .45, -HV - .45, .5, .35, .5, [.26, .38, .2], 9, 0, dm); solidBox(u - .25, -HV - .7, u + .25, -HV - .2, .9); }
+    const treeR = has("treeSide"), tu = treeR ? GR - 2.2 : GL + 2.2, tv = GF + 2.6;
+    if (front > 3.5) { Y(tu, 0, tv, .26, 2.4, .26, C.wood, 9, 0, m); for (let k = 0; k < 5; k++) Y(tu + Math.cos(k * 1.3) * .7, 2.2 + (k % 3) * .4, tv + Math.sin(k * 1.3) * .7, 1.6, 1.3, 1.6, k % 2 ? [.24, .36, .2] : [.4, .48, .24], 9, k * .4, m);
+    solidAt1(Fr, tu, tv, 0, 3, .25); }
+    // the extras: each in some gardens and not others (by a hash of the lot)
+    if (has("bench") && front > 3.0) { const u = treeR ? GL + 2.75 : GR - 2.75, v = GF + 2.2; Y(u, 0, v, 1.5, .45, .55, C.wood, 9, Math.PI); Y(u, .45, v + .25, 1.5, .45, .06, C.wood, 9, Math.PI); solidBox(u - .75, v - .3, u + .75, v + .3, .9); }
+    if (has("bistro") && back > 2.8) { const u = GR - 2.4, v = HV + 2.2; Y(u, 0, v, .6, .72, .6, C.charcoal); Y(u, .72, v, .7, .04, .7, lk.door);
+      for (const sd of [-1, 1]) { Y(u + sd * .65, 0, v, .42, .45, .42, C.charcoal); Y(u + sd * .65, .45, v, .42, .04, .42, C.wood); }
+      Y(u, 0, v, .05, 2.3, .05, C.wood, 9, 0, dm); Y(u, 2.0, v, 2.2, .3, 2.2, line === "plain" ? C.cream : lk.shutter, 9, Math.PI / 4); solidBox(u - .9, v - .4, u + .9, v + .4, .9); }
+    if (has("lounger") && back > 2.9) { const u = GL + 1.4, v = HV + 1.8; Y(u, 0, v, .65, .35, 1.9, C.wood); Y(u, .35, v + .3, .6, .1, 1.3, lk.shutter); solidBox(u - .35, v - .95, u + .35, v + .95, .9); }
+    if (has("washing") && back > 2.2) { for (const u of [-1.5, 2.5]) { Y(u, 0, GB - 1.5, .08, 1.9, .08, C.wood); solidAt1(Fr, u, GB - 1.5, 0, 1.9, .1); } B(-1.5, 1.85, GB - 1.52, 2.5, 1.87, GB - 1.48, C.charcoal, 9, dm);
+      for (let k = 0; k < 4; k++) Y(-1.0 + k * .95, 1.25, GB - 1.5, .55, .6, .03, [C.cream, C.blue, C.terracotta, C.cream][k], 9, 0, dm); }
+    if (has("flowers") && front > 2.5) { const u = du - 3.4, v = GF + 1.4; B(u - 1.6, 0, v - .45, u + 1.6, .22, v + .45, C.soil);
+      for (let k = 0; k < 9; k++) Y(u - 1.4 + k * .35, .22, v + (k % 2 ? .18 : -.18), .22, .25, .22, [C.terracotta, C.cream, C.plum, C.ochre][k % 4], 9, 0, dm); }
+    if (has("woodpile") && right > 1.1) { const u = GR - .6, v = 1.5; B(u - .35, 0, v - 1.0, u + .35, 1.1, v + 1.0, C.brown); B(u - .45, 1.1, v - 1.1, u + .45, 1.18, v + 1.1, C.wood); solidBox(u - .45, v - 1.1, u + .45, v + 1.1, 1.2); }
+    // the everyday things of a home outside (owner 2026-11-23: "add mail, trash cans, etc outside the house")
+    const iron = [.2, .21, .22], lid = [.26, .27, .28];
+    for (const u of [4.75, 5.45]) { Y(u, 0, -HV - .5, .55, .85, .55, iron); Y(u, .85, -HV - .5, .62, .06, .62, lid); Y(u, .91, -HV - .5, .14, .05, .06, iron); }   // two dustbins by the front corner
+    Y(5.1, 0, -HV - 1.15, .6, .3, .42, [.2, .34, .3]); Y(5.0, .3, -HV - 1.15, .3, .08, .25, C.cream); Y(5.22, .3, -HV - 1.1, .12, .2, .12, [.3, .42, .2]);   // a recycling crate: papers, a bottle
+    solidBox(4.4, -HV - 1.4, 5.8, -HV - .2, 1.0);
+    B(du - .45, S0, -HV - .5, du + .45, S0 + .02, -HV - .1, [.36, .26, .16]);                         // the doormat on the step
+    B(du + .78, S0 + 1.7, -HV - .03, du + 1.02, S0 + 1.9, -HV, line === "workshop" ? C.cream : C.charcoal);   // the house number
+    B(du + .85, S0 + 1.76, -HV - .04, du + .95, S0 + 1.84, -HV - .03, line === "workshop" ? C.charcoal : C.cream);
+    B(du - 1.0, S0 + 2.0, -HV - .2, du - .82, S0 + 2.32, -HV, C.charcoal); B(du - .98, S0 + 2.05, -HV - .18, du - .84, S0 + 2.27, -HV - .02, GLOW_W, 2);   // the door lamp
+    Y(gate[1] + .55, 1.12, GF + .14, .26, .14, .04, C.cream);                                         // post in the letterbox
+    if (has("parcel")) { Y(du + .45, S0, -HV - .35, .4, .3, .32, [.58, .48, .32], 9, .3); Y(du + .45, S0 + .3, -HV - .35, .4, .02, .08, C.teal, 9, .3); }   // a parcel waiting on the step
+    if (has("milk")) for (const k of [0, 1]) Y(du - .5 + k * .12, S0, -HV - .3, .08, .24, .08, C.cream);
+    if (has("birdbath") && front > 3.3) { Y(2.6, 0, -7.0, .2, .8, .2, C.stone, 6); Y(2.6, .8, -7.0, .7, .12, .7, C.stone, 6); Y(2.6, .9, -7.0, .5, .03, .5, [.3, .4, .45]); solidAt1(Fr, 2.6, -7.0, 0, .95, .3); }
+    if (back > 1.3) { const u = GL + .75, v = GB - .75; B(u - .5, 0, v - .5, u + .5, .9, v + .5, C.wood); for (let k = 0; k < 4; k++) B(u - .52, .1 + k * .2, v - .52, u + .52, .16 + k * .2, v - .5, C.brown); solidBox(u - .5, v - .5, u + .5, v + .5, 1.0); }   // the compost bin
+    { const v = 3.3; B(HU, .5, v - .25, HU + .12, 1.0, v + .25, [.2, .34, .3]); Y(HU + .2, .5, v, .1, .5, .5, [.3, .4, .25]); }   // a hose reel on the side wall
+    if (!(has("bistro") && back > 2.8) && has("shed") && back > 2.6) {                                                              // a garden shed in the back corner
+      const u0 = GR - 2.4, u1 = GR - .4, v0 = GB - 2.4, v1 = GB - .4, h = 2.1;
+      B(u0, 0, v0, u1, h, v1, line === "plain" ? C.cream : line === "workshop" ? [.3, .22, .15] : C.wood, 9, m); B(u0 + .7, 0, v0 - .02, u1 - .7, 1.9, v0, lk.door);
+      qd1(m, Fr, [u0 - .15, h, v0 - .15], [u1 + .15, h, v0 - .15], [u1 + .15, h + .5, (v0 + v1) / 2], [u0 - .15, h + .5, (v0 + v1) / 2], lk.roof, 11);
+      qd1(m, Fr, [u0 - .15, h + .5, (v0 + v1) / 2], [u1 + .15, h + .5, (v0 + v1) / 2], [u1 + .15, h, v1 + .15], [u0 - .15, h, v1 + .15], lk.roof, 11);
+      for (const u of [u0, u1]) qd1(m, Fr, [u, h, v0], [u, h, v1], [u, h + .5, (v0 + v1) / 2], [u, h + .5, (v0 + v1) / 2], line === "plain" ? C.cream : C.wood, 9, Math.sign(u), 0);
+      solidBox(u0, v0, u1, v1, 2.6);
+      if (has("can")) Y(u0 - .4, 0, v0 + .3, .3, .28, .18, C.teal);                                  // a watering can by its door
+    } else if (has("can") && right > .6) Y(GR - .35, 0, 3.0, .3, .28, .18, C.teal);
+  }
+  const GLOW_W = [1.0, .8, .5];
+
+  function placesS(l, Fr) {
+    const o = l.objects || {}, loc = (x, z) => { const dx = x - Fr.cx, dz = z - Fr.cz; return [-(dx * Fr.c + dz * Fr.s), -dx * Fr.s + dz * Fr.c]; };   // world to Blender x, y
+    const near = (list, x, z) => { const [u, v] = loc(x, z); return list.reduce((b, p) => Math.hypot(p[0] - u, p[1] - v) < Math.hypot(b[0] - u, b[1] - v) ? p : b); };
+    const seen = new Set();
+    (o.bed || []).forEach(([x, z]) => {
+      let b = near(SBEDS, x, z); if (seen.has(b)) b = SBEDS.find(p => !seen.has(p) && Math.hypot(p[0] - b[0], p[1] - b[1]) < .1) || b; seen.add(b);
+      const d = Fr.N(-b[3], b[4]), yaw = yawOf(-d[0], -d[2]);
+      spotAt(l, x, z, 3, yaw, S1 + b[2]); useAt(x, S1 + b[2], z, "lie", "Lie down", yaw);
+    });
+    (o.room || []).forEach(([x, z]) => {
+      const s = near(SSEATS, x, z), d = Fr.N(-s[3], s[4]), yaw = yawOf(d[0], d[2]);
+      spotAt(l, x, z, 2, yaw, S0 + s[2]); useAt(x, S0 + s[2], z, "sit", "Sit down", yaw);
+    });
+  }
+
+  function insideS(l, m, rec) {
+    const Fr = frame(l), plasterIn = [.82, .78, .7], boards = [.42, .29, .18], tiles = [.7, .68, .64], ceil = [.8, .76, .68], wood = ROOM_WOOD;
+    const R = (u0, y0, v0, u1, y1, v1, col, f) => bx1(m, Fr, Math.min(u0, u1), y0, Math.min(v0, v1), Math.max(u0, u1), y1, Math.max(v0, v1), col, f || 19);
+    const [wx0, wx1, wy0, wy1] = SWELL;
+    // floors and ceilings, the slab between the storeys (open over the stair)
+    for (const [name, f, u0, v0, u1, v1] of SROOMS) {
+      const wet = /Kitchen|Bathroom/.test(name), y = f ? S1 : S0, col = wet ? tiles : boards, fc = wet ? 16 : 15;
+      const parts = f && name === "Landing" ? [[u0, v0, wx0, v1], [wx0, v0, u1, wy0], [wx1, wy0, u1, v1]] : [[u0, v0, u1, v1]];
+      for (const [a, b, c, d] of parts) {
+        qd1(m, Fr, [a, y + .005, b], [c, y + .005, b], [c, y + .005, d], [a, y + .005, d], col, fc);
+        if (!f) qd1(m, Fr, [a, SK0 - .005, d], [c, SK0 - .005, d], [c, SK0 - .005, b], [a, SK0 - .005, b], ceil, 18, "down");
+      }
+      if (!f && name === "Hall") qd1(m, Fr, [wx0, SK0 - .005, wy0], [wx1, SK0 - .005, wy0], [wx1, SK0 - .005, -SJ], [wx0, SK0 - .005, -SJ], ceil, 18, "down");
+    }
+    for (const [a, b, c, d] of [[-SI, -SJ, wx0, SJ], [wx1, -SJ, SI, SJ], [wx0, -SJ, wx1, wy0]]) R(a, SK0, b, c, S1, d, plasterIn, 17);
+    qd1(m, Fr, [-SI, SK1, SJ], [SI, SK1, SJ], [SI, SK1, -SJ], [-SI, SK1, -SJ], ceil, 18, "down");
+    // the outer walls' inner faces, with the windows and the front door
+    for (const side of Object.keys(SFACES)) {
+      const [ax, line, o] = SFACES[side], c = line - o * SW, a0 = ax === "u" ? -SI : -SJ;
+      holedS((p, z, q, zz) => ax === "u" ? R(p, z, c, q, zz, c - o * .02, plasterIn, 17) : R(c, z, p, c - o * .02, zz, q, plasterIn, 17), a0, -a0, S0, SK1, sHoles(side));
+    }
+    // inner walls with their doorways and door frames
+    for (const f of [0, 1]) for (const [ax, at, a0, a1] of [["x", SA, -SJ, SJ], ["x", SB, -SJ, SJ], ["y", SM, -SI, SA], ["y", SM, SB, SI]]) {
+      const y0 = f ? S1 : S0, y1 = f ? SK1 : SK0, cuts = SDOORS[f].filter(d => d[0] === ax && d[1] === at && d[2] > a0 && d[2] < a1).map(d => d[2]).sort((p, q) => p - q);
+      const seg = (p, q, ya, yb2) => { if (q - p < .02) return; ax === "x" ? R(at - PART / 2, ya, p, at + PART / 2, yb2, q, plasterIn, 17) : R(p, ya, at - PART / 2, q, yb2, at + PART / 2, plasterIn, 17); };
+      let a = a0;
+      for (const c of cuts) {
+        seg(a, c - .5, y0, y1); seg(c - .5, c + .5, y0 + DOOR_H, y1); a = c + .5;
+        for (const e of [c - .5, c + .5]) ax === "x" ? R(at - .08, y0, e - .05, at + .08, y0 + DOOR_H + .08, e + .05, wood) : R(e - .05, y0, at - .08, e + .05, y0 + DOOR_H + .08, at + .08, wood);
+      }
+      seg(a, a1, y0, y1);
+    }
+    // the stair: treads on a closed side, a handrail on balusters along the open side, a rail round the well upstairs
+    for (const [u0, v0, u1, v1, top] of stepsS()) { R(u0, top - .05, v0, u1, top, v1, [.4, .27, .17], 15); R(u0, S0, v0, u1, top - .05, v1, [.74, .7, .62], 17); }
+    // the handrail and its balusters run up the open side only as far as SOFF, where you step off on to the landing, and end
+    // there in a newel post; past it the top steps are open to the left
+    const SN = 6, vEnd = SOFF, yAt = v => S0 + SF * (v - wy0) / (wy1 - wy0);
+    for (let k = 0; k <= SN; k++) { const v = wy0 + (vEnd - wy0) * k / SN, y = yAt(v); R(wx0 - .03, y, v - .02, wx0 + .01, y + .9, v + .02, wood); }
+    for (let k = 0, RN = 40; k < RN; k++) { const v = wy0 + (vEnd - wy0) * k / RN, y = yAt(v + (vEnd - wy0) / RN / 2); R(wx0 - .045, y + .88, v, wx0 + .025, y + .96, v + (vEnd - wy0) / RN + .01, wood); }   // the rail, in short pieces so it reads as one slope
+    R(wx0 - .06, yAt(vEnd), vEnd - .05, wx0 + .04, yAt(vEnd) + 1.05, vEnd + .05, wood);
+    for (let k = 0; k <= 6; k++) R(wx0 - .02, S1, wy0 + (SOFF - wy0) * k / 6 - .02, wx0 + .02, S1 + .95, wy0 + (SOFF - wy0) * k / 6 + .02, wood);
+    for (let k = 1; k <= 4; k++) R(wx0 + (wx1 - wx0) * k / 4 - .02, S1, wy0 - .02, wx0 + (wx1 - wx0) * k / 4 + .02, S1 + .95, wy0 + .02, wood);
+    R(wx0 - .035, S1 + .95, wy0, wx0 + .035, S1 + 1.0, SOFF, wood); R(wx0, S1 + .95, wy0 - .035, wx1, S1 + 1.0, wy0 + .035, wood);
+    // the furniture, in the house's line (furniture.js)
+    const Lf = Outlet.LINES[lineS(l)] || Outlet.LINES.oldtown;
+    furnS(l).forEach(([f, kind, x, y, th], i) => {
+      const y0 = (Math.floor(f) ? S1 : S0) + (f % 1 ? (f % 1) : 0) * (Math.floor(f) ? 1 : 1), c = Math.cos(th), sn = Math.sin(th);
+      const Q = (a, yy, b, sa, sy, sb, col, fm, yaw) => yb1(m, Fr, x + a * c - b * sn, y0 + yy, y + a * sn + b * c, sa, sy, sb, -(th + (yaw || 0)), col, fm || 19);
+      Furniture.draw(kind, Q, Lf, hash(l.id, "furn", i));
+    });
+    if (rec) for (const [name, f, u0, v0, u1, v1] of SROOMS) { const p = Fr.P(-(u0 + u1) / 2, (f ? SK1 : SK0) - .4, (v0 + v1) / 2); rec.lamps.push([p[0], p[1], p[2], 1.1]); }
+  }
+
+  const samples = { SFURN, SDOORS, SWELL, mu, mv };   // for the doorway check in the browser (tests)
+  return { samples, outside: l => l.house.plan === "samples_19" ? outsideS(l) : outside(l), inside: (l, m, rec) => l.house.plan === "samples_19" ? insideS(l, m, rec) : inside(l, m, rec), frame };
 })();
