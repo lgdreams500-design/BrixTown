@@ -1126,6 +1126,53 @@
       }
     },
     {
+      "id": "F-VEH-CRASH",
+      "area": "vehicles",
+      "title": "Crash damage",
+      "why": "Cars driven carelessly leave a mark: street things break, trees fall, corners chip, and someone has to mend them.",
+      "pillars": [
+        1
+      ],
+      "spec": [
+        "CITY-072",
+        "CITY-073",
+        "CITY-074",
+        "CITY-075",
+        "CITY-076",
+        "Q-27"
+      ],
+      "levels": [
+        {
+          "name": "Bump",
+          "what": "Cars stop against street things, trees and walls; nothing breaks.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Things break",
+          "what": "A fast hit breaks street furniture, fells a tree or chips a building corner, with pieces flying; it is whole again the next day.",
+          "effort": "M",
+          "needs": {
+            "F-VEH-DRIVE": 2
+          }
+        },
+        {
+          "name": "Broken until mended",
+          "what": "Damage is kept (saved, the same for every player) until a repair crew from a depot comes and mends it; nearby residents shout at the driver.",
+          "effort": "L",
+          "needs": {
+            "F-VEH-DRIVE": 2,
+            "F-MAP-LOTS": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
       "id": "F-TIME-DAY",
       "area": "nature",
       "title": "Day and night",

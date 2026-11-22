@@ -342,11 +342,14 @@ var Cars = (() => {
     if (saved) { cam.dist = saved.dist; cam.fp = saved.fp; }
     drv = null;
   }
-  function free(x, z, a, minute) {                       // could the car stand here: no wall, no other car?
+  function free(x, z, a, minute, speed = 0, hit = null) {   // could the car stand here: no wall, no other car? (hit: what a fast car breaks)
     const [L, W, ca] = dims(drv.k), hx = Math.cos(a), hz = Math.sin(a), y = groundBase(x, z) + .7;
+    const fast = hit && speed >= Smash.breakSpeed();
     for (const [al0, w] of [[L / 2, -W / 2], [L / 2, W / 2], [-L / 2, -W / 2], [-L / 2, W / 2], [L / 2, 0], [-L / 2, 0], [0, -W / 2], [0, W / 2]]) {
       const al = al0 + ca, px = x + hx * al - hz * w, pz = z + hz * al + hx * w;
-      if (blocked([px, y, pz])) return false;
+      const b = hit ? Smash.probe(px, y - .5, pz) : null;   // a street thing or a tree (smash.js, CITY-072)
+      if (b) { if (fast) { if (!hit.includes(b)) hit.push(b); continue; } return false; }
+      if (blocked([px, y, pz])) { if (fast) hit.wall = [px, pz]; return false; }
       for (let k = 0; k < CARS.length; k++) {
         if (k === drv.k) continue;
         const c = at(k, minute);
@@ -365,8 +368,15 @@ var Cars = (() => {
     v = Math.max(-4, Math.min(TOP, v));
     const turn = steer * .5 * (1 - .5 * Math.min(1, Math.abs(v) / TOP)), a = drv.a + v / 2.6 * Math.tan(turn) * dt;
     const x = drv.x + Math.cos(a) * v * dt, z = drv.z + Math.sin(a) * v * dt;
-    if (free(x, z, a, minute)) { drv.x = x; drv.z = z; drv.a = a; drv.v = v; }
-    else drv.v = -v * .2;                                 // a bump: stop, and roll back a little
+    const hit = [];
+    if (free(x, z, a, minute, Math.abs(v), hit)) {
+      drv.x = x; drv.z = z; drv.a = a;
+      for (const b of hit) v *= Smash.smash(b, Math.cos(a) * v, Math.sin(a) * v);   // broken, and the car loses speed (CITY-073)
+      drv.v = v;
+    } else {
+      if (hit.wall) Smash.chip(hit.wall[0], hit.wall[1], Math.cos(a) * v, Math.sin(a) * v);   // a fast hit chips a building corner
+      drv.v = -v * .2;                                    // a bump: stop, and roll back a little
+    }
     p.x = drv.x; p.z = drv.z; p.y = groundBase(drv.x, drv.z); p.yaw = yawOf(Math.cos(drv.a), Math.sin(drv.a)); p.moving = false;
     if (Math.abs(drv.v) > .5) {                          // the camera swings round behind the car
       let d = yawOf(Math.cos(drv.a) * Math.sign(drv.v), Math.sin(drv.a) * Math.sign(drv.v)) - cam.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
@@ -386,5 +396,6 @@ var Cars = (() => {
   const label = () => "Get out · " + Math.round(Math.abs(drv ? drv.v : 0) * 3.6) + " km/h";
 
   return { at, draw, tram, push, target, enter, leave, drive, label, near, speed: () => drv ? drv.v : 0, driving: () => !!drv, count: CARS.length, model: k => model(k).name,
-    debugFree: (x, z, a, m) => drv ? free(x, z, a, m) : null };
+    debugFree: (x, z, a, m) => drv ? free(x, z, a, m) : null,
+    debugPlace: (x, z, a) => { if (drv) Object.assign(drv, { x, z, a, v: 0 }); } };   // for tests: put the player's car somewhere
 })();

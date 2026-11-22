@@ -20,6 +20,8 @@ data file; nothing is stepped frame by frame.
 | `quests.py` | Quest lines, daily jobs and reputation, run against `economy.py`; `problems()` checks `World/rules/quests.json`. |
 | `test_economy.py` | 31 tests named after ECO, BANK, PROP, QST and CHR requirements; every starter quest line is played to every ending. `python -m unittest test_economy -v` |
 | `render_traffic.py` | Writes an HTML page that plays a day of traffic: `python render_traffic.py traffic_day.html` |
+| `repairs.py` | Repair crews mending crash damage: when each broken thing is mended, worked out from the damage list and `World/rules/crash.json` (CITY-075). Standard library only. |
+| `test_repairs.py` | 8 tests: everything mended, one job at a time at walking pace, working hours only, same answer in any order. |
 
 ```
 python -m unittest test_citysim -v

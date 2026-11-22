@@ -177,6 +177,12 @@ rules and, since 0.2.0, the look and the movement set in the art documents (§5.
 - Driving: E beside any parked car or van gets you in (it pulls out of its bay onto the road), W/S to drive and brake,
   A/D to steer, Space for the handbrake, E to get out. Walls and other cars stop you. A car you have moved stays where
   you left it and leaves its owner's day (a stand-in for owning a car, CITY-060 to CITY-063).
+- Crash damage (F-VEH-CRASH level 2, CITY-072 to CITY-076): above 20 km/h the player's car breaks lamps, benches, bins,
+  planters, bollards, post and phone boxes, boards, racks, flowerbeds, stalls, crates, café tables and trees (2,596 in
+  all), and chips building corners; slower knocks still bump. Tall things topple the way they were hit, low things burst
+  into pieces in their own colours that settle as rubble, a corner shows its rough core. Lamps go out and broken benches
+  can't be sat on. Damage is saved in the browser (`wasted.damage.v1`; the server in the game) and stays until a repair
+  crew from a depot has worked at it (07:00 to 19:00); a label says when they come. Residents within 18 m shout.
 - Talking to residents (CITY-007, F-NPC-TALK level 1): walk up to someone and press E. Conversations are
   data in `World/rules/dialogue.json`, picked by the resident's role and what they are doing (at the counter,
   at the clinic, in passing, an elder, a chat), with replies that branch, loop back and end. While talking,

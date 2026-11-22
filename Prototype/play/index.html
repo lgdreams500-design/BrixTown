@@ -187,6 +187,7 @@
 <script src="conversations.js"></script>
 <script src="car_models.js"></script>
 <script src="cars.js"></script>
+<script src="smash.js"></script>
 <script src="sound.js"></script>
 <script src="dodge.js"></script>
 <script src="economy.js"></script>
@@ -197,6 +198,10 @@
   if (!window.Talk) {
     window.Talk = { on: false, where: (i, m) => resident(i, m), consider() { }, pick() { }, step() { }, key() { }, open() { }, close() { }, face() { return null; } };
     console.warn("conversations.js did not load: talking to residents is off.");
+  }
+  if (!window.Smash) {                                   // and for smash.js: nothing breaks
+    window.Smash = { wrap(k, x, z, fn) { fn(); }, prepare() { }, probe() { return null; }, smash() { return 1; }, chip() { }, draw() { return 0; }, apply(i, r) { return r; }, breakSpeed() { return 1e9; } };
+    console.warn("smash.js did not load: cars do not break things.");
   }
   if (!window.Cars) {                                    // the same for cars.js: no cars, but drivers stay hidden while "in" them
     window.Cars = { at() { return null; }, draw() { return 0; }, tram(m, x, z) { m.box(x - 6, .35, z - 1.2, x + 6, 2.75, z + 1.2, C.cream, 9); }, push() { }, target() { return null; }, enter() { }, leave() { }, drive() { }, label() { return ""; }, driving() { return false; }, count: 0 };

@@ -108,6 +108,10 @@
     "F-WEATHER": {
       "slice": 1,
       "note": "Said yes to 'F-WEATHER level 1 for the first slice' so clouds follow the weather (owner, 2026-11-22). Rain and fog are in scope but not drawn yet. Later milestones not picked."
+    },
+    "F-VEH-CRASH": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: objects on the pavements, trees and building corners destructible when driving, with a breaking animation; \"Until a worker fixes it\", \"Fast hits break\", residents \"Yes, they shout\". Later milestones not stated."
     }
   }
 }

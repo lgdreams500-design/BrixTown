@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 22 of 38 | 9 of 38 | 9 of 38 |
-| Size of the plan (points) | 242 | 283 | 560 |
-| Size of the suggested plan | 100 | 243 | 528 |
+| Decided | 23 of 39 | 9 of 39 | 9 of 39 |
+| Size of the plan (points) | 253 | 286 | 571 |
+| Size of the suggested plan | 100 | 246 | 539 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -58,6 +58,7 @@
 | **Traffic** `F-VEH-TRAFFIC` | 2 Real traffic ★ | 2 Real traffic ★ | 2 Real traffic ★ | Owner, 2026-11-22: residents have their cars as part of their routine, from the first slice. Cars need this level. |
 | **Tram or bus** `F-VEH-TRANSIT` | undecided | undecided | undecided |  |
 | **Driving yourself** `F-VEH-DRIVE` | 2 Cars ★ | 2 Cars ★ | 2 Cars ★ | Owner, 2026-11-22: walking, and drivable cars, from the first slice. |
+| **Crash damage** `F-VEH-CRASH` | 2 Broken until mended ★ | undecided | undecided | Owner, 2026-11-22: objects on the pavements, trees and building corners destructible when driving, with a breaking animation; "Until a worker fixes it", "Fast hits break", residents "Yes, they shout". Later milestones not stated. |
 
 ## Nature and time
 
@@ -213,6 +214,11 @@
 - 0 Walking only: Players walk. Size -.
 - 1 Bicycle or scooter: A light vehicle to own and ride. Size L.
 - 2 Cars: Cars to buy, drive and park. Size XL.
+
+**Crash damage** (`F-VEH-CRASH`). Cars driven carelessly leave a mark: street things break, trees fall, corners chip, and someone has to mend them.
+- 0 Bump: Cars stop against street things, trees and walls; nothing breaks. Size -.
+- 1 Things break: A fast hit breaks street furniture, fells a tree or chips a building corner, with pieces flying; it is whole again the next day. Size M.
+- 2 Broken until mended: Damage is kept (saved, the same for every player) until a repair crew from a depot comes and mends it; nearby residents shout at the driver. Size L.
 
 **Day and night** (`F-TIME-DAY`). Light that follows the clock.
 - 0 Fixed hour: Always the same time of day. Size -.

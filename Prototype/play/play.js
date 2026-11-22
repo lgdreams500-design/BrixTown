@@ -516,7 +516,7 @@ function building(l) {
   if (l.kind === "shop" || l.kind === "food") {          // a striped awning over the door and a sign hung out on an iron arm, named on both faces
     if (l.sp === "mall") for (const s of [-1, 1]) awning(l, DS, dc + s * 7.3, dw, dh, accent, 6.4);   // either side of the great arch
     else awning(l, DS, dc, dw, dh, accent, aw);
-    if (l.kind === "food") for (const off of [-6.6, -3.5, 3.5, 6.6]) { const ta = dc + off; if (ta > DS.a0 + 1 && ta < DS.a1 - 1) { const p = at(ta, 0, 2.4); cafeTable(p[0], p[2], DS.ns); } }
+    if (l.kind === "food") for (const off of [-6.6, -3.5, 3.5, 6.6]) { const ta = dc + off; if (ta > DS.a0 + 1 && ta < DS.a1 - 1) { const p = at(ta, 0, 2.4); Smash.wrap("table", p[0], p[2], () => cafeTable(p[0], p[2], DS.ns)); } }
     const a = dc - Math.max(dw / 2 + .95, bw / 2 + .35);
     if (!l.sp) { fbox(world, DS, a - .03, a + .03, 3.78, 3.86, 0, 1.2, C.metal, 9, true); fbox(world, DS, a - .03, a + .03, 2.95, 3.86, 0, .07, C.metal, 9);
       fbox(world, DS, a - .045, a + .045, 3.0, 3.7, .22, 1.12, C.teal, 0, true); }
@@ -558,7 +558,8 @@ function piers(l, dw) {                                    // dark stone piers e
     }
   }
 }
-function crates(x, z, seed) {                             // goods stacked by a door, in the accent colours
+function crates(x, z, seed) { Smash.wrap("crates", x, z, () => cratesNow(x, z, seed)); }   // breakable by a car (smash.js)
+function cratesNow(x, z, seed) {                          // goods stacked by a door, in the accent colours
   const g = groundBase(x, z), a = .38 + .1 * hash(seed, "c1"), col = k => pick([C.ochre, C.terracotta, [.58, .5, .38], C.ochre], hash(seed, "cc", k));
   world.box(x - a, g, z - a, x + a, g + 2 * a, z + a, col(0), 0); solid(x - a, g, z - a, x + a, g + 2 * a, z + a);
   if (hash(seed, "c2") < .7) { const b = a * .72, ox = (hash(seed, "c3") - .5) * .2; world.box(x + ox - b, g + 2 * a, z - b, x + ox + b, g + 2 * a + 2 * b, z + b, col(1), 0); }
@@ -1281,12 +1282,12 @@ function buildWorld() {
       if (left && left.template === "peri") for (const v of [25, 55]) if (hash(b.id, "bw", v) < .55) banner(bx - SW, bz + v, bx, bz + v, b.id + v);
       for (const [u, v, ax] of [[8, 37.8, 0], [72, 37.8, 0], [37.8, 8, 1], [37.8, 72, 1]]) if (hash(b.id, "ba", u, v) < .7) ax ? banner(bx + u, bz + v, bx + u + 4.4, bz + v, b.id + u + v, 4.35) : banner(bx + u, bz + v, bx + u, bz + v + 4.4, b.id + u + v, 4.35);   // and across the alleys, between the arches
     }
-    for (const p of b.props) prop(p, b);
+    for (const p of b.props) Smash.wrap(p.kind, p.pos[0], p.pos[1], () => prop(p, b));   // street things a car can break (smash.js)
     RANGES.push([b0, world.n, false]);
   }
   const byCell = new Map();                                // trees touch nothing they could tie with, so they are grouped by block square
   for (const t of D.trees) { const k = Math.floor(t[0] / P) + "," + Math.floor(t[1] / P); if (!byCell.has(k)) byCell.set(k, []); byCell.get(k).push(t); }
-  for (const ts of byCell.values()) { const t0 = world.n; ts.forEach(tree); RANGES.push([t0, world.n, false]); }
+  for (const ts of byCell.values()) { const t0 = world.n; ts.forEach(t => Smash.wrap(t[8] ? "log" : "tree", t[0], t[1], () => tree(t))); RANGES.push([t0, world.n, false]); }
 }
 
 // ---------------------------------------------------------------- people
@@ -1828,6 +1829,7 @@ function roomAO(l, foot) {
   const blur = (src, r) => { const t = new Float32Array(w * hgt), o = new Float32Array(w * hgt), n = 2 * r + 1;     // a box blur, across then down
     for (let j = 0; j < hgt; j++) for (let i = 0; i < w; i++) { let s = 0; for (let k = -r; k <= r; k++) s += src[j * w + Math.min(w - 1, Math.max(0, i + k))]; t[j * w + i] = s / n; }
     for (let j = 0; j < hgt; j++) for (let i = 0; i < w; i++) { let s = 0; for (let k = -r; k <= r; k++) s += t[Math.min(hgt - 1, Math.max(0, j + k)) * w + i]; o[j * w + i] = s / n; }
+Smash.prepare();                                         // breakable things keep their own copy of their triangles (smash.js)
     return o; };
   const a = blur(blur(g, 2), 1), px = new Uint8Array(w * hgt);
   for (let k = 0; k < w * hgt; k++) px[k] = Math.round(255 * Math.min(1, Math.max(g[k] * .8, a[k] * 1.8)));
@@ -1864,7 +1866,7 @@ function frame(now) {
   Dodge.frame(now / 1000, pl);                             // is the player's car bearing down on anyone (dodge.js, CITY-070)
   dyn.reset(); people = []; bodies = 0; const heard = [], tags = [], near = started ? [pl.x, pl.z] : [cam.eye[0] + cam.dir[0] * 60, cam.eye[2] + cam.dir[2] * 60], reach = started ? 85 : 130;
   for (let i = 0; i < D.plan.length; i++) {
-    const r = Dress.apply(i, Dodge.apply(i, Talk.where(i, clock.m)), now / 1000); if (!r) continue;   // children on the swings (dressing.js)   // out of the way of the player's car (dodge.js)
+    const r = Dress.apply(i, Smash.apply(i, Dodge.apply(i, Talk.where(i, clock.m))), now / 1000); if (!r) continue;   // shouting at a smash (smash.js)   // children on the swings (dressing.js)   // out of the way of the player's car (dodge.js)
     people.push([r.x, r.z]);
     const d = Math.hypot(r.x - near[0], r.z - near[1]); if (d > reach) continue;
     if (d < 20) heard.push({ i, x: r.x, z: r.z, act: D.acts[r.act], walking: r.walking, pose: r.pose, ph: r.ph, inside: r.inside,   // for sound.js
@@ -1953,6 +1955,7 @@ function frame(now) {
   attribs(pre, worldBuf); for (const pc of front) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
   for (const ch of nearD) drawMesh(ch.buf, ch.n, pre);
   gl.colorMask(true, true, true, true); gl.depthMask(false);
+  stat.smash = Smash.draw(dyn, tags, now / 1000);         // broken things, falling and lying, and the repair crews (smash.js)
   const lit = pr => {
     const u = pr.u; gl.useProgram(pr.p); gl.uniformMatrix4fv(u.uVP, false, VP); gl.uniformMatrix4fv(u.uSM, false, SM); gl.uniform1f(u.uShOn, shOn);
     gl.uniform1i(u.uSh, 0); gl.uniform1i(u.uAO, 1); gl.uniform1i(u.uTxt, 2); gl.uniform4fv(u["uLamp[0]"], lamp); gl.uniform1i(u.uLampN, lampN); gl.uniform3f(u.uAOm, skyMap.lo, 1 / skyMap.size, 0);

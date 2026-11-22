@@ -195,7 +195,7 @@ def main(day=16):
         role_sig={k: v["sig"] for k, v in w["roles"]["roles"].items()}, signatures=w["signatures"]["signatures"],
         residents=[dict(n=r["name"], r=roles.index(r["role"]), id=r["id"], h=lot_at[r["home"]], w=lot_at[r["work"]] if r["work"] else -1) for r in w["residents"]],
         plan=plan, trees=trees, flowers=flower_row(w, city, day),
-        tram=w["calendar"]["tram"], dialogue=dialogue(w), speech={k: v for k, v in w["speech"].items() if k != "note"},
+        tram=w["calendar"]["tram"], dialogue=dialogue(w), speech={k: v for k, v in w["speech"].items() if k != "note"}, crash={k: v for k, v in w["crash"].items() if k != "note"},
         sound={k: v for k, v in w["sound"].items() if k != "note"}, cars=car_days, car_step=car_step, car_top_kmh=w["traffic"].get("player_top_kmh", 50.0),
         sky={k: v for k, v in w["sky"].items() if k != "note"},   # WLD-035, WLD-036: the sky and its clouds
         dodge={k: v for k, v in w["dodge"].items() if k != "note"},   # CITY-070, CITY-071: getting out of the way of cars
