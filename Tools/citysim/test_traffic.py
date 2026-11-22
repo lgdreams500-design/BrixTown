@@ -69,8 +69,9 @@ class TheCars(unittest.TestCase):
                     continue
                 self.assertLess(dist(after[3][0][0], T.car_at(cid, DAY, t1)["pos"]), 0.01)
                 self.assertEqual(after[3][0][-1], tuple(after[3][0][-1]))
-                mid = (t0 + t1) / 2
-                self.assertLess(dist(CITY.at(DAY * 1440 + mid)[car["owner"]]["pos"], T.car_at(cid, DAY, mid)["pos"]), 1e-6)
+                mid = (t0 + t1) / 2 + 0.013                  # off the arrival instant, where float day sums may land either side
+                m = (DAY * 1440 + mid) - DAY * 1440           # the very minute City.at will look at
+                self.assertLess(dist(CITY.at(DAY * 1440 + mid)[car["owner"]]["pos"], T.car_at(cid, DAY, m)["pos"]), 1e-6)
         self.assertGreater(driven, 0)
 
     def test_short_tours_are_walked(self):                # CITY-044
@@ -228,9 +229,38 @@ class TheTraffic(unittest.TestCase):
                 best = R.route(b0["lane"], b0["s"], b1["lane"], b1["s"])
                 self.assertEqual([g["key"] for g in tr["legs"]], [g["key"] for g in best])
 
-    @unittest.skip("needs pavements: residents still walk the street centre lines (Q-24 decided, not built yet)")
     def test_cars_wait_for_walkers_at_crossings(self):    # CITY-046
-        pass
+        crossers = D["crossers"]
+        self.assertGreater(sum(len(v) for v in crossers.values()), 100)          # people do cross at the zebras
+        for e in D["entries"]:
+            jid, a, b = e["key"]
+            for lane in (a, b):
+                key = (R.lanes[lane]["street"], jid)
+                for t0, t1 in crossers.get(key, []):
+                    self.assertFalse(t0 < e["t"] + .1 and t1 > e["t"], (e, key, t0, t1))
+
+    def test_people_walk_on_pavements_and_cross_at_zebras(self):   # CITY-043
+        c, P = W["traffic"]["crossing_at"], W["city"]["grid"]["pitch"]
+        half = W["city"]["grid"]["street_width"] / 2 - 4.5               # the carriageway either side of a centre line
+        doors = {tuple(l["door"]) for l in world.lots(W) if l["kind"] == "stop"}   # the tram boards in the street
+        def on_road(v):
+            return abs(v - round(v / P) * P) < half - .01
+        def at_zebra(v):
+            return abs(abs(v - round(v / P) * P) - c) < .01
+        checked = 0
+        for rid, pieces in list(PLAN.items())[:300]:
+            for kind, t0, t1, payload, s in pieces:
+                if kind != "move":
+                    continue
+                for (x, z) in payload[0]:
+                    if any(abs(x - d[0]) < 2 and abs(z - d[1]) < 2 for d in doors):
+                        continue
+                    checked += 1
+                    if on_road(x):                                  # in a north-south carriageway: only on a zebra
+                        self.assertTrue(at_zebra(z), (rid, x, z))
+                    if on_road(z):
+                        self.assertTrue(at_zebra(x), (rid, x, z))
+        self.assertGreater(checked, 1000)
 
     def test_one_car_per_bay(self):                       # CITY-047
         held = {}                                          # bay -> [(from, to, car)]

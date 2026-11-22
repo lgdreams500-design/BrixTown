@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-LIVING-CITY
 title: Wasted — Living city (map, residents, things to use, vehicles, seasons and plants)
-version: 0.3.5
+version: 0.3.6
 status: draft
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -183,6 +183,9 @@ Numbers for cars, also `[ASSUMPTION]`, in `World/rules/traffic.json`:
 | Cars passing through | 0 to 8 an hour, most at 08:00 and 17:00 | CITY-069 |
 | Speed limit | 50 km/h on every street for residents' cars, vans and through traffic; the player's car goes up to 100 km/h (`player_top_kmh`) | CITY-046. Owner, 2026-11-22; were 30 and 40. A car is on the road in 772 of the 960 minutes 06:00-22:00 (median trip 29 real seconds) |
 | Bay within reach of every door | 150 m | CITY-043 |
+| Pavements and zebras | People walk a line 6.6 m from the centre line (`walk_offset`) and cross only on zebras 10 m from each junction; a car waits while someone is on the zebra it would drive over, from 0.5 s before to 2.5 s after (`crossing_clear_s`) | CITY-043, CITY-046. Owner, 2026-11-22: people walked in the road and there were no crossings |
+| Traffic lights | At every junction on a through street (17), not only where two cross (`signals_on_through`) | CITY-046. Owner, 2026-11-22 |
+| Parking bays | 1,387 bays marked in the kerb edge, each clear of anything standing there (lamps, bins, bollards, trees) and 11 m clear of a shop or cafe door (`bay_clear_of_front`); were 2,280 | CITY-043. Owner, 2026-11-22: cars stood among things on the pavement |
 | Car load distance | 120 m | CITY-048 |
 
 ## 5. What the prototype does not cover
@@ -235,6 +238,7 @@ up to 42 on the road at once, no overlap, no crossing movements in a box, nobody
 | 0.1.0 | 2026-11-21 | First version, with the city-in-a-box prototype and its tests. |
 | 0.2.0 | 2026-11-22 | Cars and real traffic drafted after the owner's picks (`F-VEH-DRIVE` 2, `F-VEH-TRAFFIC` 2 from the first slice): CITY-043 to CITY-049 for streets and residents' cars, CITY-060 to CITY-067 for cars players drive, car numbers in §4, Q-25 to Q-28, ADR-0009. All proposed. |
 | 0.2.1 | 2026-11-22 | Owner accepted CITY-043 to CITY-049, CITY-060 to CITY-067 and ADR-0009, and the suggested answers to Q-25 to Q-28, now written into CITY-049, CITY-060, CITY-064 and CITY-066. |
+| 0.3.6 | 2026-11-22 | Pavements, zebras, lights and bays (owner): people walk on pavement lines and cross on zebras, cars wait for them; signals at every junction of a through street; bays kept clear of things at the kerb and of shop fronts. §4 numbers. |
 | 0.3.5 | 2026-11-22 | CITY-072: things break at any speed, not only above 20 km/h (owner). |
 | 0.3.4 | 2026-11-22 | Crash damage (F-VEH-CRASH level 2 for the first slice, owner): CITY-072 to CITY-076; repairs proved in `Tools/citysim/repairs.py`. |
 | 0.3.3 | 2026-11-22 | Speed limit 50 km/h on every street for traffic; the player's car up to 100 km/h, at the owner's request (§4). |

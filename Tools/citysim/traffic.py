@@ -213,7 +213,7 @@ class Traffic:
         self.roads = Roads(roads_data, rules)
         self.pace = city.pace                             # real seconds per game minute
         self.step = rules["step_s"]
-        self._days, self._walk = {}, {}
+        self._days, self._walk, self._crossers = {}, {}, {}
         self._lines()
         self.cars = self._cars()
         self.vans = self._vans()
@@ -288,9 +288,11 @@ class Traffic:
 
     # -- walking between a door and a bay, along the same streets people use --
     def _lines(self):
-        """Walking-network nodes on each street centre line, sorted, so a bay finds its stretch of street quickly."""
-        xs = {j["pos"][0] for j in self.roads.j.values()}      # streets lie on the lines through the junctions
-        zs = {j["pos"][1] for j in self.roads.j.values()}
+        """Walking-network nodes on each pavement line (`walk_offset` either side of every street), sorted, so a bay
+        finds its stretch of pavement quickly."""
+        off = self.r["walk_offset"]
+        xs = {j["pos"][0] + s * off for j in self.roads.j.values() for s in (-1, 1)}
+        zs = {j["pos"][1] + s * off for j in self.roads.j.values() for s in (-1, 1)}
         self._ns, self._ew = {x: [] for x in xs}, {z: [] for z in zs}
         for p in self.city.net.adj:
             if p[0] in self._ns:
@@ -302,17 +304,20 @@ class Traffic:
                 d[k].sort()
 
     def _kerb(self, bid):
-        """The point on the street centre line beside a bay, and the walking nodes either side of it."""
+        """The point on the pavement beside a bay (its own side of the street), and the walking nodes either side of it."""
         b = self.roads.bays[bid]
         lane = self.roads.lanes[b["lane"]]
         base = self.roads.j[self.roads.streets[b["street"]]["a"]]["pos"]
+        off = self.r["walk_offset"]
         if lane["axis"] == "ns":
-            x, zs = base[0], self._ns[base[0]]
+            x = base[0] + (off if b["pos"][0] > base[0] else -off)
+            zs = self._ns[x]
             c = (x, b["pos"][1])
             i = bisect.bisect_left(zs, c[1])
             ends = [(x, zs[k]) for k in (i - 1, i) if 0 <= k < len(zs)]
         else:
-            z, xs = base[1], self._ew[base[1]]
+            z = base[1] + (off if b["pos"][1] > base[1] else -off)
+            xs = self._ew[z]
             c = (b["pos"][0], z)
             i = bisect.bisect_left(xs, c[0])
             ends = [(xs[k], z) for k in (i - 1, i) if 0 <= k < len(xs)]
@@ -393,8 +398,9 @@ class Traffic:
             if lg:
                 legs[car["id"]] = lg
         legs.update(self._fleet_legs(day))
+        self._crossers = self.crossings_in_use(plan)
         trips, assigned, boxes, entries = self._simulate(day, legs)
-        self._days[day] = dict(trips=trips, assigned=assigned, boxes=boxes, entries=entries)
+        self._days[day] = dict(trips=trips, assigned=assigned, boxes=boxes, entries=entries, crossers=self._crossers)
         if len(self._days) > 12:
             self._days.pop(next(iter(self._days)))
         for cid, lg in legs.items():
@@ -403,6 +409,36 @@ class Traffic:
             rid = self.cars[cid]["owner"]
             plan[rid] = self._rewrite(rid, plan[rid], lg, trips[cid])
         return plan
+
+    def crossings_in_use(self, plan):
+        """When walkers are on each zebra crossing today: {(street, junction): [(from, to)] real seconds, sorted}. Worked
+        out from the residents' walks (CITY-046: cars give way to anyone on a crossing)."""
+        keys = {(round(c["pos"][0], 2), round(c["pos"][1], 2)): (c["street"], c["junction"]) for c in self.roads.d["crossings"]}
+        use, pace = {}, self.pace
+        for pieces in plan.values():
+            for kind, t0, t1, payload, s in pieces:
+                if kind != "move":
+                    continue
+                route, cum, v = payload
+                for k in range(len(route) - 1):
+                    a, b = route[k], route[k + 1]
+                    key = keys.get((round((a[0] + b[0]) / 2, 2), round((a[1] + b[1]) / 2, 2)))
+                    if key is not None and dist(a, b) > 3:
+                        use.setdefault(key, []).append(((t0 + cum[k] / v) * pace, (t0 + cum[k + 1] / v) * pace))
+        for k in use:
+            use[k].sort()
+        return use
+
+    def walker_on(self, key, t0, t1):
+        """Is anyone on this crossing at any moment between t0 and t1 (real seconds)?"""
+        spans = self._crossers.get(key)
+        if not spans:
+            return False
+        i = bisect.bisect_left(spans, (t1, float("inf")))
+        for a, b in spans[max(0, i - 40):i]:                    # crossings take seconds: only recent starts can still be on it
+            if a < t1 and b > t0:
+                return True
+        return False
 
     def _est(self, bay0, bid1):
         b1 = self.roads.bays[bid1]
@@ -507,6 +543,9 @@ class Traffic:
             room = occ.get(bx["into"], {})
             if any(s < sp + 0.5 for s in room.values()):
                 return False                              # do not block the box: the lane beyond must have room
+            la, lb = R.lanes[bx["frm"]], R.lanes[bx["into"]]   # walkers on the crossings it passes: wait (CITY-046)
+            if self.walker_on((la["street"], jid), t - .5, t + r["crossing_clear_s"]) or                     self.walker_on((lb["street"], jid), t, t + 2 * r["crossing_clear_s"]):
+                return False
             if j["control"] == "signals":
                 return signal(jid, bx["axis"], t) == "green"
             if j["control"] == "priority" and bx["axis"] != j["main"]:

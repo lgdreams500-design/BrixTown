@@ -1306,6 +1306,7 @@ function buildWorld() {
   const byCell = new Map();                                // trees touch nothing they could tie with, so they are grouped by block square
   for (const t of D.trees) { const k = Math.floor(t[0] / P) + "," + Math.floor(t[1] / P); if (!byCell.has(k)) byCell.set(k, []); byCell.get(k).push(t); }
   for (const ts of byCell.values()) { const t0 = world.n; ts.forEach(t => Smash.wrap(t[8] ? "log" : "tree", t[0], t[1], () => tree(t))); RANGES.push([t0, world.n, false]); }
+  for (const k of Roads.cells()) { const r0 = world.n; Roads.build(world, Y_PAVE, k); RANGES.push([r0, world.n, false]); }   // zebras, parking bays, traffic lights (roads.js)
 }
 
 // ---------------------------------------------------------------- people
@@ -1331,7 +1332,7 @@ function resident(i, m) {                                // where resident i is 
   const t1 = k + 1 < row.length ? row[k + 1][0] : 1440, n = p.c.length, L = p.c[n - 1], d = clamp((m - p[0]) / Math.max(t1 - p[0], 1e-6), 0, 1) * L;
   const a = along(p, d), b = along(p, Math.min(L, d + 2)), c = along(p, Math.max(0, d - 2));
   let dx = b[0] - c[0], dz = b[1] - c[1]; const len = Math.hypot(dx, dz) || 1; dx /= len; dz /= len;
-  const lane = n >= 4 ? (hash(i, "lane") * 2 - 1) * 2.3 * clamp(Math.min(d - p.c[1], p.c[n - 2] - d) / 5, 0, 1) : 0;   // keep to one side of the street, never at a door
+  const lane = n >= 4 ? (hash(i, "lane") * 2 - 1) * .6 * clamp(Math.min(d - p.c[1], p.c[n - 2] - d) / 5, 0, 1) : 0;   // a little to one side of the pavement line, never at a door (CITY-043)
   const x = a[0] - dz * lane, z = a[1] + dx * lane;
   return { x, z, y: groundBase(x, z), yaw: yawOf(dx, dz), pose: 1, act: p[2], inside: 0, walking: true, ph: (d / People.stepLength(looks[i].sig, looks[i].S)) % 1 };
 }
@@ -1538,6 +1539,7 @@ void main(){
       c=bx<.16?vec3(.24,.16,.1)*(.85+.3*ns(vP*2.)):paint(c,vec3(.88),blot); }
     else if(f>18.5&&f<19.5) c*=.93+.14*ns(vP*5.);                         // room furniture: plain, a little grain
     if(f>1.5&&f<2.5){ col=vec3(1.,.55,.22)*6.; emis=true; }                // lantern glass: emission strength 6
+    else if(f>22.5&&f<23.5){ col=c*5.; emis=true; }                         // a signal lamp, lit in its own colour (roads.js)
     else {
       vec3 hemi=mix(uGround,uSky,n.y*.5+.5), light;
       if(f>2.5&&f<3.5){ light=roomLight(n,0.); c=paint(c,vec3(.76),blot); inside=1.; }
@@ -1997,6 +1999,7 @@ function frame(now) {
   }
   for (const [x, , T] of tramAt(clock.m)) Cars.tram(dyn, x, TRAM_Z, T, clock.m);   // the tram and the commuters on it (cars.js)
   stat.cars = Cars.draw(dyn, clock.m, near, reach);
+  stat.signals = Roads.draw(dyn, clock.m, near, 220);     // the lit lamp of each traffic light (roads.js)
   Dress.draw(dyn, cam.eye, now / 1000);                   // swing seats and seesaws (dressing.js)       // residents' cars, parked and driving (cars.js)
   if (started) {                                          // what the listener hears (sound.js): where they are and what is near
     const lot = pl.y < 6 ? lotAt(pl.x, pl.z) : null, drv = pl.pose === 4;

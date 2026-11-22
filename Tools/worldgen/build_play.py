@@ -104,6 +104,23 @@ def cars(city, day):
     return out, index, CAR_STEP_S / T.pace
 
 
+def roads(city):
+    """What the slice draws of the road network (CITY-043, CITY-045, CITY-046): zebra crossings [x, z, along x],
+    parking lay-bys [x, z, along x], and traffic lights [x, z, offset s] that run on the same cycle as traffic.py."""
+    T = city.traffic
+    R, cyc = T.roads, T.r["signals"]
+    cycle = 2 * (cyc["green_s"] + cyc["amber_s"] + cyc["all_red_s"])
+    gates = {g["id"]: g for g in R.d.get("gates", [])}
+    def ew(street):                                        # does this street run east-west?
+        return gates[street]["dir"][1] == 0 if street in gates else street.startswith("s_ew_")
+    return dict(
+        crossings=[[r1(c["pos"][0]), r1(c["pos"][1]), 1 if ew(c["street"]) else 0] for c in R.d["crossings"]],
+        bays=[[r1(b["pos"][0]), r1(b["pos"][1]), 1 if abs(R.lanes[b["lane"]]["u"][0]) > .5 else 0] for b in R.bays.values()],
+        signals=[[j["pos"][0], j["pos"][1], round(citysim.rnd("sig", j["id"]) * cycle, 3)] for j in R.d["junctions"] if j["control"] == "signals"],
+        cycle={k: cyc[k] for k in ("green_s", "amber_s", "all_red_s")},
+        width=T.r["crossing_width"], bay_length=T.r["bay_length"])
+
+
 def dialogue(w):
     """World/rules/dialogue.json for the slice: residents named by their place in the list instead of their id."""
     d = w["dialogue"]
@@ -197,6 +214,7 @@ def main(day=16):
         plan=plan, trees=trees, flowers=flower_row(w, city, day),
         tram=w["calendar"]["tram"], dialogue=dialogue(w), speech={k: v for k, v in w["speech"].items() if k != "note"}, crash={k: v for k, v in w["crash"].items() if k != "note"},
         sound={k: v for k, v in w["sound"].items() if k != "note"}, cars=car_days, car_step=car_step, car_top_kmh=w["traffic"].get("player_top_kmh", 50.0),
+        roads=roads(city),                                # zebras, lay-bys and traffic lights (CITY-043, CITY-045)
         sky={k: v for k, v in w["sky"].items() if k != "note"},   # WLD-035, WLD-036: the sky and its clouds
         dodge={k: v for k, v in w["dodge"].items() if k != "note"},   # CITY-070, CITY-071: getting out of the way of cars
         surfaces=dict(world.surfaces(w), table=w["surfaces"]["patterns"]),   # WLD-039: which stone, brick and paving where

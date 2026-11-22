@@ -1,9 +1,10 @@
 """Writes World/city_01/roads.json: the road network of the starting city as data (CITY-043).
 
 Streets run along the grid lines of city.json. Each street between two junctions is one segment with a lane
-each way. Junctions get a control: signals where two through streets cross, priority for the through street
-where one does, give way (first come) elsewhere, none at a bend. Parking bays are lay-bys cut into the
-pavement, clear of junctions, lamps and tram stops. Crossings sit on every arm of every junction.
+each way. Junctions get a control: signals wherever a through street meets another (only where two through streets
+cross when signals_on_through is false, with priority for the through street elsewhere), give way (first come)
+elsewhere, none at a bend. Parking bays are lay-bys cut into the pavement, clear of junctions, tram stops and
+anything standing at the kerb (lamps, bins, bollards, trees), and of shop and cafe fronts. Crossings sit on every arm of every junction.
 
 The file is data: once written it can be edited by hand (move a bay, change a control). Re-running this
 script rewrites it from city.json and the block files.     python make_roads_01.py
@@ -42,8 +43,8 @@ def build(w):
             ns_through, ew_through = names["north_south"][i] in through, names["east_west"][j] in through
             if ns_arms + ew_arms <= 2 and not (ns_arms == 2 or ew_arms == 2):
                 control, main = "none", None                   # a corner of the town wall
-            elif ns_through and ew_through:
-                control, main = "signals", None
+            elif ns_through and ew_through or (ns_through or ew_through) and rules["signals_on_through"]:
+                control, main = "signals", None               # traffic lights wherever a through street meets another
             elif ns_through or ew_through:
                 control, main = "priority", "ns" if ns_through else "ew"
             else:
@@ -54,6 +55,8 @@ def build(w):
     lamps = [tuple(p["pos"]) for b in w["blocks"] for p in b["props"] if p["kind"] == "lamp"]
     shelters = [tuple(p["pos"]) for b in w["blocks"] for p in b["props"] if p["kind"] == "shelter"]
     stops = [l["rect"] for l in world.lots(w) if l["kind"] == "stop"]
+    kerb = [tuple(p["pos"]) for b in w["blocks"] for p in b["props"]] +         [tuple(t["pos"] if isinstance(t, dict) else t[:2]) for b in w["blocks"] for t in b["trees"]]   # anything on the pavement
+    fronts = [tuple(l["door"]) for l in world.lots(w) if l["kind"] in ("food", "shop")]   # cafe tables and crates by the door
     jpos = {j["id"]: j["pos"] for j in junctions}
 
     bays, crossings = [], []
@@ -75,7 +78,10 @@ def build(w):
                                 abs((p[0] - c[0]) * nx + (p[1] - c[1]) * nz) < 3.0 for p in lamps)
                 near_stop = any(r[0] - 4 <= c[0] <= r[2] + 4 and r[1] - 4 <= c[1] <= r[3] + 4 for r in stops) or \
                     any(math.hypot(p[0] - c[0], p[1] - c[1]) < 6.0 for p in shelters)
-                if not near_lamp and not near_stop:
+                along = lambda p: abs((p[0] - c[0]) * u[0] + (p[1] - c[1]) * u[1])
+                across = lambda p: abs((p[0] - c[0]) * nx + (p[1] - c[1]) * nz)
+                near_thing = any(along(p) < L / 2 + 0.6 and across(p) < 2.6 for p in kerb) or                     any(along(p) < rules["bay_clear_of_front"] and across(p) < 6.0 for p in fronts)
+                if not near_lamp and not near_stop and not near_thing:
                     bays.append(dict(id="bay_%s_%s%d" % (s["id"][2:], "r" if side > 0 else "l", k), street=s["id"], side=side,
                                      at=round(d, 2), pos=[round(c[0], 2), round(c[1], 2)]))
                     k += 1

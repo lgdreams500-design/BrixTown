@@ -563,19 +563,53 @@ def speech_problems(w):
     return out
 
 
+def walkways(w):
+    """Where people walk (Q-24, CITY-043): a ring round every block along its pavement, `walk_offset` from the street
+    centre lines, and a zebra crossing over each street `crossing_at` from every junction, joining the rings on either
+    side. Block footpaths that ran to a street's centre line stop at the ring instead. Returns (segments, crossings)
+    with crossings {(x, z) of the middle, rounded to cm: (street id, junction id)}."""
+    g, r = w["city"]["grid"], w["traffic"]
+    P, cols, rows, off, c = g["pitch"], g["columns"], g["rows"], r["walk_offset"], r["crossing_at"]
+    have = {tuple(b["grid"]) for b in w["blocks"]}
+    segs, crossings = [], {}
+    for (i, j) in sorted(have):
+        x0, x1, z0, z1 = i * P + off, (i + 1) * P - off, j * P + off, (j + 1) * P - off
+        segs += [[[x0, z0], [x1, z0]], [[x1, z0], [x1, z1]], [[x1, z1], [x0, z1]], [[x0, z1], [x0, z0]]]
+
+    def cross(a, b, street, junction):
+        segs.append([a, b])
+        crossings[(round((a[0] + b[0]) / 2, 2), round((a[1] + b[1]) / 2, 2))] = (street, junction)
+    for I in range(cols + 1):
+        for J in range(rows + 1):
+            X, Z, jid = I * P, J * P, "j_%d_%d" % (I, J)
+            if I < cols and (I, J - 1) in have and (I, J) in have:          # east arm, over the street along z = Z
+                cross([X + c, Z - off], [X + c, Z + off], "s_ew_%d_%d" % (I, J), jid)
+            if I > 0 and (I - 1, J - 1) in have and (I - 1, J) in have:     # west arm
+                cross([X - c, Z - off], [X - c, Z + off], "s_ew_%d_%d" % (I - 1, J), jid)
+            if J > 0 and (I - 1, J - 1) in have and (I, J - 1) in have:     # north arm, over the street along x = X
+                cross([X - off, Z - c], [X + off, Z - c], "s_ns_%d_%d" % (I, J - 1), jid)
+            if J < rows and (I - 1, J) in have and (I, J) in have:          # south arm
+                cross([X - off, Z + c], [X + off, Z + c], "s_ns_%d_%d" % (I, J), jid)
+    for b in w["blocks"]:                                                   # footpaths meet the ring, not the road
+        cx, cz = b["origin"][0] + b["size"] / 2, b["origin"][1] + b["size"] / 2
+        for a, bb in b["paths"]:
+            pts = []
+            for x, z in (a, bb):
+                if abs(x / P - round(x / P)) < 1e-9:
+                    x = x + (off if cx > x else -off)
+                if abs(z / P - round(z / P)) < 1e-9:
+                    z = z + (off if cz > z else -off)
+                pts.append([x, z])
+            if pts[0] != pts[1]:
+                segs.append(pts)
+    return segs, crossings
+
+
 def sim_data(w):
     """The city in the shape the living-city rules read (Tools/citysim/citysim.py)."""
     g = w["city"]["grid"]
     P, n = g["pitch"], g["columns"]
-    streets = []
-    for k in range(g["rows"] + 1):
-        for m in range(n):
-            streets.append([[m * P, k * P], [(m + 1) * P, k * P]])
-    for k in range(n + 1):
-        for m in range(g["rows"]):
-            streets.append([[k * P, m * P], [k * P, (m + 1) * P]])
-    for b in w["blocks"]:
-        streets += b["paths"]
+    streets, _ = walkways(w)
     cal = w["calendar"]
     veg = w["vegetation"]
     return dict(name=w["city"]["name"], size=[n * P, g["rows"] * P], calendar=cal["calendar"], weather=cal["weather"], tram=cal["tram"],
