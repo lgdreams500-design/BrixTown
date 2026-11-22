@@ -176,6 +176,7 @@ var Outlet = (() => {
     // roof on timber trusses every 6 m, with a skylight between each pair along the middle of the hall
     const tx = []; for (let x = x0 + 3; x < x1 - 1; x += 6) tx.push(x);
     const sk0 = z0 + 11, sk1 = z1 - 11; l.skyband = [x0, sk0, x1, sk1, H];   // where the daylight comes in (play.js roomLight: surfaces facing it, and near it, get more)
+    l.truss = [x0 + 3, 6, .16, .5]; l.wallT = t;           // the trusses (first, spacing, half width, depth) and the wall's thickness, for corner shade (roomLight)
     const roof =(a, b, c, d) => { world.box(a, H, b, c, H + .3, d, [.30, .28, .3], 9, { 2: [mix3(INW, [1, 1, 1], .15), 3] }); solid(a, H, b, c, H + .3, d); };
     roof(x0, z0, x1, sk0); roof(x0, sk1, x1, z1);
     let xa = x0;

@@ -1539,7 +1539,7 @@ const MAIN_VS = `attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,u
 void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`;   // invariant: the depth-only pass and the lit pass land on the same depths
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
 uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform vec2 uNk; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
-uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY; uniform vec4 uSkyB; uniform vec2 uSkyH; uniform vec4 uRacks[9]; uniform int uRackN; uniform vec3 uRackY;
+uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY; uniform vec4 uSkyB; uniform vec2 uSkyH; uniform vec4 uRacks[9]; uniform int uRackN; uniform vec3 uRackY; uniform vec4 uTruss; uniform vec2 uTruss2;
 uniform sampler2D uGi; uniform vec4 uGiM, uBlob[16]; uniform int uBlobN; uniform vec3 uPf;
 uniform vec3 uHZ[4], uHNo[4], uHBr[4], uHSt; uniform vec4 uHLk[4];
 uniform vec4 uPatA[16], uPatB[16];                       // stone, brick and paving patterns (World/rules/surfaces.json): (type, unit w, unit h, joint), (vary, bevel, dome, -)
@@ -1585,6 +1585,20 @@ vec3 roomLight(vec3 n,float person){
         ao*=(1.-.65*smoothstep(.1,.9,din))*(.32+.68*smoothstep(0.,1.4,gap))*(.55+.45*smoothstep(0.,.45,ys)); }
       else if(d<3.5){ float f=clamp(max(dot(n,-dv/d),0.)+(n.y>.6?.45:0.),0.,1.);   // just outside: a wall or floor facing a rack is in its shade
         ao*=1.-.55*f*(1.-smoothstep(0.,3.5,d))*(1.-smoothstep(uRackY.z-.5,uRackY.z+1.,y)); } }
+    if(uTruss.y>0.){                                                         // a hall's corners: the inside faces of its walls are uTruss2.x in from the lot
+      float t=uTruss2.x, top=uSkyH.x-vP.y;                                   // top: how far below the roof
+      float ex=min(vP.x-uRoomR.x-t,uRoomR.z-t-vP.x), ez=min(vP.z-uRoomR.y-t,uRoomR.w-t-vP.z);
+      bool onWall=min(ex,ez)<.05&&person<.5;                                 // a point on the hall's own walls (not furniture or people standing by them)
+      if(abs(n.y)<.5&&onWall){                                               // walls: darker into the corners where two walls meet, and up under the roof
+        float dc=abs(n.z)>.5?ex:ez;
+        ao*=(.4+.6*smoothstep(0.,3.,dc))*(.45+.55*smoothstep(0.,2.6,top)); }
+      bool roof=n.y<-.6&&top<.1;                                             // the underside of the roof itself (not of a truss or a shelf)
+      if(roof) ao*=.45+.55*smoothstep(0.,3.,min(ex,ez));                     // the roof: darker towards the walls
+      float tx=abs(mod(vP.x-uTruss.x+.5*uTruss.y,uTruss.y)-.5*uTruss.y)-uTruss.z;   // across from the nearest truss's side (0 at its face)
+      if(roof) ao*=.45+.55*smoothstep(0.,1.4,max(tx,0.));                    // the roof between trusses: darker where it meets one
+      if(abs(n.x)>.5&&tx<.02&&top<uTruss.w+.05) ao*=.5+.5*smoothstep(0.,uTruss.w,top);   // a truss's sides: darker up into the roof
+      if(abs(n.z)>.5&&onWall&&top<uTruss.w+.6) ao*=.6+.4*smoothstep(0.,.9,max(tx,0.));        // a wall where a truss meets it
+    }
   } else lamps=vec3(.55)*(.82+.16*n.y);
   vec3 sun=vec3(0.);                                       // a hall under skylights: the sun comes in through the openings in the roof and lays
   if(here&&uRoomY.z>1.){ float ndl=max(dot(n,uSun),0.);    // patches on the floor, with the shadows of the trusses, sets, racks, furniture and people (INTERIOR_STYLE R2)
@@ -2425,6 +2439,8 @@ function frame(now) {
     const rk = (sb && inRoom.lot.racks) || [];                 // the hall's racks, for their shade in roomLight
     if (rk.length) { const ra = new Float32Array(36); rk.slice(0, 9).forEach((q, k) => ra.set(q, k * 4)); gl.uniform4fv(u["uRacks[0]"], ra); gl.uniform3fv(u.uRackY, inRoom.lot.rackY); }
     gl.uniform1i(u.uRackN, Math.min(9, rk.length));
+    const tr = sb && inRoom.lot.truss;                         // the hall's trusses and wall thickness, for its corner shade
+    if (tr) { gl.uniform4fv(u.uTruss, tr); gl.uniform2f(u.uTruss2, inRoom.lot.wallT || 0, 0); } else gl.uniform4f(u.uTruss, 0, 0, 0, 0);
     gl.uniform3f(u.uRoomY, inRoom ? inRoom.y0 : Y_FLOOR, inRoom ? inRoom.y1 : GF, inRoom ? inRoom.lot.skylight || 1 : 1);   // the floor the camera is on (storeys.js)
   };
   const blob = new Float32Array(64); let blobN = 0;         // the 16 pieces of street furniture nearest the camera shade the ground under them (trial light)
