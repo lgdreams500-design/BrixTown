@@ -31,6 +31,10 @@ Screen-space ambient occlusion in `Prototype/play/play.js`, on by default at ful
 - `aoBlur` smooths it over 3 × 3 points without carrying shade across an edge to something far behind.
 - The lit pass darkens only the ambient part of the light (sky, bounce, lamps), never the direct sun, which the sun's
   shadows already handle. Indoors `roomLight()` reports its sun part (`gRoomSun`) for this.
+- People are not darkened by it, only the things round them. Its 1.2 m reach is wider than a body, so on a person it
+  found the arms, torso and nearby walls all round and dimmed the whole figure (indoors the sleeves fell from 59 to 44 and
+  the arms from 58 to 39 in grey level); people have their own shading and self-shadow. They are still in the depth
+  picture, so they shade the floor and walls they stand by. Changed on the owner's request in chat on 2026-11-22.
 - Key **O**, or `?d_ao=0`, switches it off to compare. `?d_ao=2` shows the occlusion alone, for tuning; `?d_aoR=`,
   `?d_aoI=` and `?d_aoFar=` set the reach, strength and fade distance. Like the sun's shadows it is off below full
   quality (key Q, or a slow machine below 27 frames a second).
@@ -39,8 +43,8 @@ Screen-space ambient occlusion in `Prototype/play/play.js`, on by default at ful
 
 ## Consequences
 - Seen at 13:00 in the outlet, 10:00 on Linden Street and close up: the bases of walls, window reveals, the kerb, café
-  chairs, the floor under beds and sofas, the foot of a wardrobe and the gap between an arm and the body darken; open
-  floor, open walls and the sky do not. From behind, the line where a sleeve meets the back reads as a soft shadow.
+  chairs, the floor under beds and sofas, the foot of a wardrobe and the floor round a person darken; open floor, open
+  walls, the sky and people themselves do not (see the Decision).
 - Cost: in a close room view 53 frames a second without it, 41 with; on the street no difference could be measured in
   the browser pane, which holds the rate near 28. It turns itself off with the soft picture on slow machines.
 - An estimate from the screen: what is off screen or hidden behind something casts no occlusion, and a thin object in

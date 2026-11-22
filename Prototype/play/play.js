@@ -1810,7 +1810,10 @@ void main(){
         else light+=(uSky*(n.y*.35+.65)*vis*vis+uGround*gk*(1.-.5*vis))*ct;   // sun, sky seen, and light bounced off sunlit stone
         for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*(1.-uNk.x)+uNk.x)); } }   // lanterns (W6)
       float aoV=1.;
-      if(uSSAO.z>0.){ aoV=texture2D(uSSAOt,gl_FragCoord.xy*uSSAO.xy).r; float o=mix(1.,aoV,min(uSSAO.z,1.));   // corners, creases and what stands close together see less
+      bool person=(f>9.5&&f<10.5)||(f>13.5&&f<14.5);                       // people are not darkened by it: its reach is wider than a body, so it found arms, torso
+      if(uSSAO.z>0.&&!person){ aoV=texture2D(uSSAOt,gl_FragCoord.xy*uSSAO.xy).r; float o=mix(1.,aoV,min(uSSAO.z,1.));   // and walls all round and dimmed the whole figure;
+                                                                            // they have their own shading. They still cast it on the floor and walls round them.
+                                                                            // Corners, creases and what stands close together see less
         vec3 dl=min(sunL,light); light=dl+(light-dl)*o; }                  // of the sky and the light bounced round: ambient occlusion darkens that, not the direct sun (ADR-0028)
       col=c*light*(1.-wetG*uWet.x);
       if(uSSAO.z>1.5) col=vec3(aoV*aoV)*1.2;                                // ?d_ao=2: the occlusion alone, for tuning
