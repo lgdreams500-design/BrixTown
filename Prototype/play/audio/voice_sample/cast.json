@@ -1,0 +1,36 @@
+{
+ "note": "Voice samples for the cast, made offline with the Kokoro voice model (docs/licenses/kokoro-tts.md) by Tools/voice/make_voice_samples.py. Each character has voice options to choose from; 'chosen' is the owner's pick. 'shift' raises (above 1) or lowers (below 1) pitch and voice size together, which makes a child sound younger; 'speed' is the final pace. Samples only: spoken dialogue reverses Q-14 and waits for the owner.",
+ "characters": [
+  { "id": "mina", "name": "Mina", "role": "café worker", "say": "Good morning! Welcome to Café Mina. What can I do for you?", "reply": "What's good today?",
+    "chosen": "c", "options": { "c": { "voice": "af_bella", "lang": "en-us", "about": "bright, American" } },
+    "picked": "Owner, 2026-11-22: voice C (af_bella), after first choosing A then saying C sounds better." },
+  { "id": "bo", "name": "Bo", "role": "child", "say": "Hi! Are you here to play too?", "reply": "What's the best thing here?",
+    "chosen": "b", "picked": "Owner, 2026-11-22: \"option B for all\".",
+    "options": { "a": { "voice": "af_sky", "lang": "en-us", "shift": 1.28, "about": "light, younger" },
+                 "b": { "voice": "af_nova", "lang": "en-us", "shift": 1.24, "speed": 1.05, "about": "lively, younger" } } },
+  { "id": "tomas", "name": "Tomas", "role": "nurse", "say": "Good morning. Are you here to be seen, or just visiting?", "reply": "Just visiting. Long shift?",
+    "chosen": "b", "picked": "Owner, 2026-11-22: \"option B for all\".",
+    "options": { "a": { "voice": "am_eric", "lang": "en-us", "about": "calm, American" },
+                 "b": { "voice": "bm_george", "lang": "en-gb", "about": "kind, British" } } },
+  { "id": "edda", "name": "Edda", "role": "elder", "say": "Good morning, young one. Stay a while, if you like.", "reply": "How long have you lived here?",
+    "chosen": "b", "picked": "Owner, 2026-11-22: \"option B for all\".",
+    "options": { "a": { "voice": "bf_isabella", "lang": "en-gb", "shift": 0.93, "speed": 0.88, "about": "gentle, older, British" },
+                 "b": { "voice": "af_sarah", "lang": "en-us", "shift": 0.92, "speed": 0.88, "about": "warm, older, American" } } },
+  { "id": "dev", "name": "Dev", "role": "passer-by in a hurry", "say": "Oh! Sorry, I can't stop long. I'm on my way to work.", "reply": "Busy day?",
+    "chosen": "b", "picked": "Owner, 2026-11-22: \"option B for all\".",
+    "options": { "a": { "voice": "am_puck", "lang": "en-us", "speed": 1.12, "about": "quick, American" },
+                 "b": { "voice": "bm_lewis", "lang": "en-gb", "speed": 1.12, "about": "quick, British" } } }
+ ],
+ "moods": {
+  "note": "How a line is shaped for each mood (World/rules/dialogue.json moods). semitones: pitch up or down; speed: pace; tilt: tone colour, above 0 brighter and below 0 darker; edge: a little grit; peak: loudness; punctuation: how the voice model is asked to phrase it (the words never change). The generator can also lay a melody over the line and put a sound before it (melody, depth, breath, before); the owner found those too much (2026-11-22), so they are off.",
+  "neutral":   { "semitones": 0,    "speed": 1.0,  "tilt": 0,     "edge": 0,   "peak": 0.85 },
+  "happy":     { "semitones": 1.5,  "speed": 1.08, "tilt": 0.08,  "edge": 0,   "peak": 0.9,  "punctuation": "lift" },
+  "sad":       { "semitones": -1.5, "speed": 0.84, "tilt": -0.3,  "edge": 0,   "peak": 0.62, "punctuation": "soften" },
+  "angry":     { "semitones": 0.5,  "speed": 1.1,  "tilt": 0.18,  "edge": 1.8, "peak": 0.95, "punctuation": "lift" },
+  "surprised": { "semitones": 2.5,  "speed": 1.02, "tilt": 0.1,   "edge": 0,   "peak": 0.9,  "punctuation": "surprise" },
+  "thinking":  { "semitones": -0.7, "speed": 0.86, "tilt": -0.12, "edge": 0,   "peak": 0.72, "punctuation": "pause" }
+ },
+ "player": { "name": "You", "note": "The player's voice follows the character they make: one voice for each.",
+   "options": { "man": { "voice": "am_michael", "lang": "en-us", "about": "man" },
+                "woman": { "voice": "af_nicole", "lang": "en-us", "about": "woman" } } }
+}
