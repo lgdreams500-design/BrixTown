@@ -175,7 +175,9 @@ var Outlet = (() => {
     for (let z = z0 + 4; z < z1 - 1; z += 4) world.flat(x0 + t, z - .03, x1 - t, z + .03, F + .002, [.48, .45, .4], 3);
     // roof on timber trusses every 6 m, with a skylight between each pair along the middle of the hall
     const tx = []; for (let x = x0 + 3; x < x1 - 1; x += 6) tx.push(x);
-    const sk0 = z0 + 11, sk1 = z1 - 11, roof = (a, b, c, d) => { world.box(a, H, b, c, H + .3, d, [.30, .28, .3], 9, { 2: [mix3(INW, [1, 1, 1], .15), 3] }); solid(a, H, b, c, H + .3, d); };
+    const sk0 = z0 + 11, sk1 = z1 - 11; l.skyband = [x0, sk0, x1, sk1, H];   // where the daylight comes in (play.js roomLight: surfaces facing it, and near it, get more)
+    l.truss = [x0 + 3, 6, .16, .5]; l.wallT = t;           // the trusses (first, spacing, half width, depth) and the wall's thickness, for corner shade (roomLight)
+    const roof =(a, b, c, d) => { world.box(a, H, b, c, H + .3, d, [.30, .28, .3], 9, { 2: [mix3(INW, [1, 1, 1], .15), 3] }); solid(a, H, b, c, H + .3, d); };
     roof(x0, z0, x1, sk0); roof(x0, sk1, x1, z1);
     let xa = x0;
     for (let k = 0; k < tx.length - 1; k++) { const a = tx[k] + .9, b = tx[k + 1] - .9; roof(xa, sk0, a, sk1); xa = b;
@@ -233,6 +235,7 @@ var Outlet = (() => {
       else box(x - 1.2, F, z - 1.3, x + 1.2, F + .9, z - .5, WOOD, 19);
     });
     // the warehouse: three rows of tall timber racks with flat-pack boxes in the company's band (rule I9)
+    const racks = l.racks = []; l.rackY = [1.8, 3.5, 5];  // their outlines and shelf heights, for their shade (play.js roomLight)
     for (const rz of [z0 + 25.5, z0 + 31.5, z0 + 37]) {
       for (const [a, c] of [[x0 + 3, x0 + 20], [x0 + 24, x0 + 42], [x0 + 46, x1 - 3]]) {
         for (let x = a; x <= c + .01; x += (c - a) / 3) box(x - .06, F, rz - .7, x + .06, F + 5, rz + .7, WOOD, 19);
@@ -241,7 +244,7 @@ var Outlet = (() => {
           for (let x = a + .1, k = 0; x < c - .5; k++) { const bw = .5 + .6 * hash(l.id, rz, a, si, k), bh = .3 + .9 * hash(l.id, rz, si, k, "h"); if (x + bw > c - .1) break;
             world.box(x, F + y + .07, rz - .55, x + bw, F + y + .07 + bh, rz + .55, CARD, 3); world.box(x, F + y + .07 + bh * .62, rz - .56, x + bw, F + y + .07 + bh * .62 + .08, rz - .55, C.teal, 3); x += bw + .06; }
         });
-        solid(a, F, rz - .7, c, F + 5, rz + .7);
+        solid(a, F, rz - .7, c, F + 5, rz + .7); racks.push([a, rz - .7, c, rz + .7]);
       }
     }
     // lanterns hanging under the trusses (their light is added to the room in inside())

@@ -366,7 +366,8 @@ const People = (() => {
     const chest = .172 * W, flat = .62 * (1 + .25 * .12), front = -chest * flat;
     // hips, in the colour of what is worn below
     OSKIP = 4;
-    if (kind !== "skirt") ball(ms, pel, sc(px, .16 * W * S), sc(py, .108 * T), sc(pz, .1156 * S), n, lod === 0 ? 6 : 4, L.bottom, fl, sd + 13);
+    if (kind !== "skirt") ball(ms, add(pel, sc(py, -.01 * T)), sc(px, .16 * W * S), sc(py, .098 * T), sc(pz, .1156 * S), n, lod === 0 ? 6 : 4, L.bottom, fl, sd + 13);   // front where it was; the back
+    // only as deep as the legs, so from behind no seat stands out over them with a crease round where they leave it
     // the garment: a tee or long top to the waist, a tunic to the thigh, a skirt under either, a coat over it all
     if (kind === "skirt") capsule(L.g === "coat" ? -.5 : -.44, (L.g === "coat" ? .21 : .225) * W, .4214, chest - .004, flat, .28, L.bottom, sd + 9, 0, 0, 0, swing * .3, true);
     const coat = L.g === "coat", outer = L.top;

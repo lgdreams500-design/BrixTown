@@ -1539,7 +1539,8 @@ const MAIN_VS = `attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,u
 void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`;   // invariant: the depth-only pass and the lit pass land on the same depths
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
 uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform vec2 uNk; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
-uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY;
+uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY; uniform vec4 uSkyB; uniform vec2 uSkyH; uniform vec4 uRacks[9]; uniform int uRackN; uniform vec3 uRackY; uniform vec4 uTruss; uniform vec2 uTruss2; uniform vec4 uFeet[8]; uniform int uFeetN;
+uniform sampler2D uSSAOt; uniform vec3 uSSAO;              // ambient occlusion worked out from the screen's depth (aoProg below): 1/width, 1/height, strength (0: off)
 uniform sampler2D uGi; uniform vec4 uGiM, uBlob[16]; uniform int uBlobN; uniform vec3 uPf;
 uniform vec3 uHZ[4], uHNo[4], uHBr[4], uHSt; uniform vec4 uHLk[4];
 uniform vec4 uPatA[16], uPatB[16];                       // stone, brick and paving patterns (World/rules/surfaces.json): (type, unit w, unit h, joint), (vary, bevel, dome, -)
@@ -1548,11 +1549,25 @@ ${TONE}
 // Light indoors: daylight in through the windows and door (sky and bounce, gone at night), the room's own lamps with distance and
 // facing, and contact shade from the map of what stands on the floor (uRoomAO) and from the walls, floor and ceiling meeting.
 // The room the camera is in gets all of that; other rooms an even lamplight, as before.
+float shadow();
+vec3 gRoomSun;                                             // the direct sun in the last roomLight(), so ambient occlusion can leave it alone
+// How much a surface sees of a hall's skylights (uSkyB: the band of openings, uSkyH: its height and 1 / the value for the floor
+// under its middle): the openings as one big light in the roof, summed over 6 x 3 patches with the cosines at both ends and 1/d2.
+// So a wall far from the skylights, or high up under the roof, gets less of the extra daylight than the floor beneath them.
+float skyFF(vec3 n){
+  float e=0.;
+  for(int i=0;i<6;i++) for(int j=0;j<3;j++){
+    vec3 L=vec3(mix(uSkyB.x,uSkyB.z,(float(i)+.5)/6.),uSkyH.x,mix(uSkyB.y,uSkyB.w,(float(j)+.5)/3.))-vP; float d2=dot(L,L);
+    e+=max(dot(n,L),0.)*max(L.y,0.)/(d2*d2); }
+  return e*uSkyH.y; }
 vec3 roomLight(vec3 n,float person){
   float day=1.-uNight, y=vP.y-uRoomY.x;                    // height above the floor the camera is on (storeys.js); other floors read the same way
   vec3 hemi=mix(uGround,uSky,n.y*.5+.5);
   bool here=vP.x>uRoomR.x-.05&&vP.x<uRoomR.z+.05&&vP.z>uRoomR.y-.05&&vP.z<uRoomR.w+.05&&vP.y>uRoomY.x-.25&&vP.y<uRoomY.y+.25;
   float sky=here?uRoomY.z:1.;                              // a hall under skylights sees more of the day (outlet.js: the lot's "skylight")
+  if(here&&sky>1.&&uSkyH.y>0.){ float ff=skyFF(n);                      // as much more as it sees of the skylights;
+    if(person>.5) ff=max(ff,.2+.6*(n.y*.5+.5));                           // a person in the aisles keeps most of it on top and less below, so they are
+    sky=1.+(sky-1.)*clamp(ff,0.,1.4); }                                   // not lost in the shade under the solid roof (as in showroom.png)
   vec3 amb=(hemi*.42*day*sky+uSunCol*.025*day*(1.+4.*(sky-1.))+vec3(.16,.13,.1)*(.5+.5*day))*(.8+.2*n.y)*(.82+.18*smoothstep(.0,1.6,y));
   if(!here) y=mod(vP.y-.4,3.);
   vec3 lamps=vec3(0.); float ao=1.;
@@ -1562,12 +1577,40 @@ vec3 roomLight(vec3 n,float person){
     vec2 uv=(vP.xz-uRoomR.xy)/(uRoomR.zw-uRoomR.xy); float o=texture2D(uRoomAO,uv).r;
     float low=1.-smoothstep(0.,.95,y);                                     // contact shade: strong on the floor, fading up the sides of furniture
     ao*=1.-o*(n.y>.6?.62*low:.45*low)*(1.-.4*person);
+    if(n.y>.6&&person<.5) for(int i=0;i<8;i++){ if(i>=uFeetN) break;      // people in a hall under skylights: a soft shade on the floor round their feet
+      ao*=1.-.55*low*smoothstep(uFeet[i].z*1.9,uFeet[i].z*.25,length(vP.xz-uFeet[i].xy)); }
     float e=min(min(vP.x-uRoomR.x,uRoomR.z-vP.x),min(vP.z-uRoomR.y,uRoomR.w-vP.z));
     ao*=n.y>.6?.72+.28*smoothstep(.25,1.3,e):1.;                           // the floor darkens towards the walls
     ao*=abs(n.y)<.5?(.7+.3*smoothstep(0.,.7,y))*(.82+.18*smoothstep(0.,.6,uRoomY.y-vP.y)):1.;   // walls darken where they meet floor and ceiling
     ao*=n.y<-.6?.8+.2*smoothstep(.25,1.,e):1.;
+    for(int i=0;i<9;i++){ if(i>=uRackN) break; vec4 r=uRacks[i];             // the warehouse racks (outlet.js): open-sided boxes of shelves
+      vec3 lo=vec3(r.x,uRoomY.x,r.y), hi=vec3(r.z,uRoomY.x+uRackY.z,r.w), dv=vP-clamp(vP,lo,hi); float d=length(dv);
+      if(d<.002){                                                            // inside a rack: darker deeper in from the open face, and just under a shelf
+        float din=clamp(min(vP.z-r.y,r.w-vP.z)/(.5*(r.w-r.y)),0.,1.), gap=(y<uRackY.x?uRackY.x:(y<uRackY.y?uRackY.y:9.))-y;
+        float ys=y-(y>=uRackY.y?uRackY.y:(y>=uRackY.x?uRackY.x:.1))-.07;   // height above the shelf it stands on: each box sits in its own shade
+        ao*=(1.-.65*smoothstep(.1,.9,din))*(.32+.68*smoothstep(0.,1.4,gap))*(.55+.45*smoothstep(0.,.45,ys)); }
+      else if(d<3.5){ float f=clamp(max(dot(n,-dv/d),0.)+(n.y>.6?.45:0.),0.,1.);   // just outside: a wall or floor facing a rack is in its shade
+        ao*=1.-.55*f*(1.-smoothstep(0.,3.5,d))*(1.-smoothstep(uRackY.z-.5,uRackY.z+1.,y)); } }
+    if(uTruss.y>0.){                                                         // a hall's corners: the inside faces of its walls are uTruss2.x in from the lot
+      float t=uTruss2.x, top=uSkyH.x-vP.y;                                   // top: how far below the roof
+      float ex=min(vP.x-uRoomR.x-t,uRoomR.z-t-vP.x), ez=min(vP.z-uRoomR.y-t,uRoomR.w-t-vP.z);
+      bool onWall=min(ex,ez)<.05&&person<.5;                                 // a point on the hall's own walls (not furniture or people standing by them)
+      if(abs(n.y)<.5&&onWall){                                               // walls: darker into the corners where two walls meet, and up under the roof
+        float dc=abs(n.z)>.5?ex:ez;
+        ao*=(.4+.6*smoothstep(0.,3.,dc))*(.45+.55*smoothstep(0.,2.6,top)); }
+      bool roof=n.y<-.6&&top<.1;                                             // the underside of the roof itself (not of a truss or a shelf)
+      if(roof) ao*=.45+.55*smoothstep(0.,3.,min(ex,ez));                     // the roof: darker towards the walls
+      float tx=abs(mod(vP.x-uTruss.x+.5*uTruss.y,uTruss.y)-.5*uTruss.y)-uTruss.z;   // across from the nearest truss's side (0 at its face)
+      if(roof) ao*=.45+.55*smoothstep(0.,1.4,max(tx,0.));                    // the roof between trusses: darker where it meets one
+      if(abs(n.x)>.5&&tx<.02&&top<uTruss.w+.05) ao*=.5+.5*smoothstep(0.,uTruss.w,top);   // a truss's sides: darker up into the roof
+      if(abs(n.z)>.5&&onWall&&top<uTruss.w+.6) ao*=.6+.4*smoothstep(0.,.9,max(tx,0.));        // a wall where a truss meets it
+    }
   } else lamps=vec3(.55)*(.82+.16*n.y);
-  return (amb+lamps*vec3(1.,.74,.48)*.85)*ao;
+  vec3 sun=vec3(0.);                                       // a hall under skylights: the sun comes in through the openings in the roof and lays
+  if(here&&uRoomY.z>1.){ float ndl=max(dot(n,uSun),0.);    // patches on the floor, with the shadows of the trusses, sets, racks, furniture and people (INTERIOR_STYLE R2)
+    if(ndl>0.) sun=uSunCol*ndl*shadow()*day*(.6+.4*ao); }
+  gRoomSun=sun;
+  return (amb+lamps*vec3(1.,.74,.48)*.85)*ao+sun;
 }
 float sunNear(vec2 xz,float lod){                 // how much of the ground round a spot is in the sun (the GI map, read blurred)
   vec2 uv=(xz-uGiM.xy)*uGiM.z, e=min(uv,1.-uv); return mix(.55,texture2D(uGi,uv,lod).r,smoothstep(0.,.06,min(e.x,e.y))); }
@@ -1740,10 +1783,15 @@ void main(){
     else if(f>22.5&&f<23.5){ col=c*5.; emis=true; }                         // a signal lamp, lit in its own colour (roads.js)
     else {
       vec3 hemi=mix(uGround,uSky,n.y*.5+.5), light, sunL=vec3(0.);
-      if(f>2.5&&f<3.5){ light=roomLight(n,0.); c=paint(c,vec3(.76),blot); inside=1.; }
-      else if(f>14.5&&f<19.5){ light=roomLight(n,0.); inside=1.; }   // room surfaces and furniture (roomLight above)
-      else if(f>9.5&&f<10.5){ float up=n.y*.5+.5;                       // a person indoors: the room's light, a little more from above so the body keeps its form
-        light=roomLight(n,1.)*(.72+.42*up*up); inside=1.; }
+      if(f>2.5&&f<3.5){ light=roomLight(n,0.); sunL=gRoomSun; c=paint(c,vec3(.76),blot); inside=1.; }
+      else if(f>14.5&&f<19.5){ light=roomLight(n,0.); sunL=gRoomSun; inside=1.; }   // room surfaces and furniture (roomLight above)
+      else if(f>9.5&&f<10.5){ float up=n.y*.5+.5, dn=max(-n.y,0.), pm;  // a person indoors: the room's light, more from above so the body keeps its form
+        if(uSkyH.y>0.){                                                     // under skylights, as outdoors under the sky: brightest towards the nearest
+          vec3 key=normalize(vec3(clamp(vP.x,uSkyB.x,uSkyB.z),uSkyH.x,clamp(vP.z,uSkyB.y,uSkyB.w))-vP);   // part of the openings, darker on what faces down
+          float ks=dot(n,key)*.5+.5;                                        // (under the hair, the arms, the chin)
+          pm=(.42+.5*up*up+.55*ks*ks*ks)*(1.-.4*dn); }
+        else pm=.72+.42*up*up;
+        light=roomLight(n,1.)*pm; sunL=gRoomSun*pm; inside=1.; }
       else {
         vec2 a=texture2D(uAO,(vP.xz+n.xz-uAOm.x)*uAOm.y).rg; float vis=mix(a.r,1.,clamp((vP.y-.3)/max(a.g*85.,.6),0.,1.));   // how much sky this spot sees
         if(abs(n.y)<.5&&!(f>21.5&&f<22.5)) c*=.66+.34*smoothstep(.1,1.4,vP.y);   // grime at the foot of walls (not on cars)
@@ -1761,7 +1809,14 @@ void main(){
           else light+=uSky*(.28+.82*up*up)*vis*vis+uGround*gk*(1.-.5*vis)*(.38+1.25*bw*bw); }
         else light+=(uSky*(n.y*.35+.65)*vis*vis+uGround*gk*(1.-.5*vis))*ct;   // sun, sky seen, and light bounced off sunlit stone
         for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*(1.-uNk.x)+uNk.x)); } }   // lanterns (W6)
+      float aoV=1.;
+      bool person=(f>9.5&&f<10.5)||(f>13.5&&f<14.5);                       // people are not darkened by it: its reach is wider than a body, so it found arms, torso
+      if(uSSAO.z>0.&&!person){ aoV=texture2D(uSSAOt,gl_FragCoord.xy*uSSAO.xy).r; float o=mix(1.,aoV,min(uSSAO.z,1.));   // and walls all round and dimmed the whole figure;
+                                                                            // they have their own shading. They still cast it on the floor and walls round them.
+                                                                            // Corners, creases and what stands close together see less
+        vec3 dl=min(sunL,light); light=dl+(light-dl)*o; }                  // of the sky and the light bounced round: ambient occlusion darkens that, not the direct sun (ADR-0028)
       col=c*light*(1.-wetG*uWet.x);
+      if(uSSAO.z>1.5) col=vec3(aoV*aoV)*1.2;                                // ?d_ao=2: the occlusion alone, for tuning
       if(f>13.5&&f<14.5) col*=1.-.93*smoothstep(.1,.42,dot(n,vd));           // the inside of a hair shell or a hat, seen past the face, is in its own shade
       if(f>13.5&&f<14.5&&uPf.z>0.){ float fr=pow(1.-abs(dot(-vd,n)),4.);   // people: the faint sheen every surface has in the renders, strongest at a glancing angle. It lifts dark cloth and cools it with the sky
         col+=(uSky*(.6+.4*n.y)*1.6+uGround*.5+sunL*.22)*(uPf.z*(.02+.1*fr)); }
@@ -1838,6 +1893,47 @@ void main(){ vec3 d=normalize(uRf+vQ.x*uRr+vQ.y*uRu);
   float a=ring(d,1.6,3.)+ring(d,3.2,5.)*.8+ring(d,6.,7.)*.6+ring(d,11.,9.)*.45;
   gl_FragColor=vec4(tone(uCol*uExp),min(a,1.)*uR.y); }`);
 const depthProg = program(`attribute vec3 aP; uniform mat4 uVP; void main(){ gl_Position=uVP*vec4(aP,1.); }`, `precision mediump float; void main(){ gl_FragColor=vec4(1.); }`);
+// Ambient occlusion from the screen (dial ao, key O; ADR-0028). The scene's depth is drawn at half size (aoDepth); for each pixel aoProg
+// rebuilds where it is and which way it faces from that depth, then looks at points round it within uAo.x metres: the more of them stand
+// in front of the surface, the less sky and bounced light reach it. So every corner, crease and gap darkens the same way, wherever it is:
+// a wall meeting the street, a doorway, the foot of a wardrobe, an arm against a body. aoBlur smooths the noise of the few samples taken,
+// without carrying shade across an edge to something far behind. The lit pass reads the result (uSSAOt) and darkens only ambient light.
+const AO_VS = `attribute vec2 aQ; varying vec2 vQ; void main(){ vQ=aQ; gl_Position=vec4(aQ,0.,1.); }`;
+const AO_DEPTH = `uniform sampler2D uD; uniform vec4 uPr;
+float lin(vec2 uv){ float z=texture2D(uD,uv).r*2.-1.; return 2.*uPr.z*uPr.w/(uPr.w+uPr.z-z*(uPr.w-uPr.z)); }   // metres in front of the camera
+vec3 pos(vec2 uv){ float zl=lin(uv); vec2 q=uv*2.-1.; return vec3(q.x*zl/uPr.x,q.y*zl/uPr.y,-zl); }`;
+const aoProg = program(AO_VS, `precision highp float; varying vec2 vQ; ${AO_DEPTH} uniform vec4 uAo; uniform vec2 uPx;
+void main(){ vec2 uv=vQ*.5+.5; if(texture2D(uD,uv).r>.99999){ gl_FragColor=vec4(1.); return; }   // the sky
+  vec3 p=pos(uv); float zl=-p.z; if(zl>uAo.w){ gl_FragColor=vec4(1.); return; }
+  vec3 pr=pos(uv+vec2(uPx.x,0.)), pl=pos(uv-vec2(uPx.x,0.)), pu=pos(uv+vec2(0.,uPx.y)), pd=pos(uv-vec2(0.,uPx.y));
+  vec3 n=normalize(cross(abs(pr.z-p.z)<abs(pl.z-p.z)?pr-p:p-pl,abs(pu.z-p.z)<abs(pd.z-p.z)?pu-p:p-pd));   // facing the camera
+  float R=uAo.x, rx=R*uPr.x/zl*.5, ry=R*uPr.y/zl*.5, a0=6.2832*fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(.06711056,.00583715)))), s=0.;
+  for(int i=0;i<10;i++){ float t=(float(i)+.5)/10., a=a0+t*18.85;   // a spiral of 10 points out to R, turned differently at each pixel
+    vec3 v=pos(uv+vec2(cos(a)*rx,sin(a)*ry)*t)-p; float vv=dot(v,v), f=max(R*R-vv,0.)/(R*R);
+    s+=f*f*f*max(dot(v,n)-.004*zl,0.)/(vv+.01); }
+  float o=max(0.,1.-s*uAo.y/10.);
+  gl_FragColor=vec4(vec3(mix(o,1.,smoothstep(uAo.w*.6,uAo.w,zl))),1.); }`);   // fading out with distance
+const aoBlur = program(AO_VS, `precision highp float; varying vec2 vQ; ${AO_DEPTH} uniform sampler2D uA; uniform vec2 uPx;
+void main(){ vec2 uv=vQ*.5+.5; float z0=lin(uv), s=0., w=0.;
+  for(int i=-1;i<=1;i++) for(int j=-1;j<=1;j++){ vec2 q=uv+vec2(float(i),float(j))*uPx*1.6; float k=1./(1.+abs(lin(q)-z0)*40./z0);   // not across an edge
+    s+=texture2D(uA,q).r*k; w+=k; }
+  gl_FragColor=vec4(vec3(s/w),1.); }`);
+const AO = { w: 0, h: 0, depth: null, dFbo: null, tex: [null, null], fbo: [null, null], white: null };
+function aoTargets(w, h) {                                 // the half-size depth and the two occlusion pictures, made again when the window changes size
+  if (!shFbo) return false;                                // needs depth textures, as the sun's shadows do
+  if (AO.w === w && AO.h === h) return !!AO.dFbo;
+  const tex = (fmt, type, filt) => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, fmt, w, h, 0, fmt, type, null);
+    for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, filt], [gl.TEXTURE_MAG_FILTER, filt], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v); return t; };
+  for (const t of [AO.depth, AO.dCol, ...AO.tex]) if (t) gl.deleteTexture(t); for (const f of [AO.dFbo, ...AO.fbo]) if (f) gl.deleteFramebuffer(f);
+  AO.w = w; AO.h = h; AO.depth = tex(gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, gl.NEAREST); AO.dCol = tex(gl.RGBA, gl.UNSIGNED_BYTE, gl.NEAREST);
+  AO.dFbo = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, AO.dFbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, AO.dCol, 0); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, AO.depth, 0);
+  let ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+  for (const k of [0, 1]) { AO.tex[k] = tex(gl.RGBA, gl.UNSIGNED_BYTE, gl.LINEAR); AO.fbo[k] = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, AO.fbo[k]);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, AO.tex[k], 0); ok = ok && gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE; }
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null); if (!ok) AO.dFbo = null; return ok;
+}
+AO.white = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, AO.white); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));   // "no occlusion", when it is off
 // Local bounce and contact shade (dial gi, key G; ADR-0018): bounced light only where sunlit ground is near, and shade under street furniture.
 // GI map: a small picture, redrawn each frame, of which ground near the camera the sun reaches. The lit pass reads it blurred, so a wall
 // facing a sun patch is warmed by it and a wall deep in an alley is not, as in the path-traced reference renders.
@@ -1923,7 +2019,8 @@ addEventListener("keydown", e => { if (e.code === "KeyY" && !e.repeat && started
   u.set("season", names[(names.indexOf(D.day.season) + 1) % names.length]); u.set("auto", "1");
   for (const [k, v] of [["x", pl.x], ["z", pl.z], ["y", pl.y], ["yaw", cam.yaw], ["pitch", cam.pitch], ["t", clock.m]]) u.set(k, (+v).toFixed(2));
   location.search = u.toString(); } });
-addEventListener("keydown", e => { if (e.code === "KeyG" && !e.repeat && window.wasted) window.wasted.dials.gi = window.wasted.dials.gi ? 0 : 1; });   // G: local bounce and contact shade off and on, to compare with the flat fill it replaced
+addEventListener("keydown", e => { if (e.code === "KeyG" && !e.repeat && window.wasted) window.wasted.dials.gi = window.wasted.dials.gi ? 0 : 1; });
+addEventListener("keydown", e => { if (e.code === "KeyO" && !e.repeat && window.wasted) window.wasted.dials.ao = window.wasted.dials.ao === 0 ? 1 : 0; });   // O: ambient occlusion off and on (ADR-0028); ?d_ao=0 starts without it   // G: local bounce and contact shade off and on, to compare with the flat fill it replaced
 addEventListener("keydown", e => { if (e.code === "KeyK" && !e.repeat) { const order = [null, "clear", "cloud", "rain", "fog"]; wxTry = order[(order.indexOf(wxTry) + 1) % order.length]; } });
 const WX_KIND = i => wxTry || (SKY.clouds.follow_weather && (D.day.weather || [])[((i % 4) + 4) % 4]) || "clear";
 function weatherNow(m) {
@@ -2204,6 +2301,15 @@ function camFloor() {                                      // the building the c
 function roomEntry(l, m, rec, level) {
   return m.n ? { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, box: boxOf(m.a, 0, m.n), lot: l, level, lamps: rec.lamps, ao: roomAO(l, rec.foot), y0: Storeys.floorY(level), y1: l.hall_height || Storeys.ceilY(level) } : { n: 0, lot: l, level, lamps: [] };
 }
+// skyFF() in the shader, for the floor under the middle of a hall's skylights: the value it is scaled by, so that spot keeps the light it had
+function skyRef(sb) {
+  if (sb.ref) return sb.ref;
+  const p = [(sb[0] + sb[2]) / 2, Y_FLOOR, (sb[1] + sb[3]) / 2]; let e = 0;
+  for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) {
+    const L = [sb[0] + (sb[2] - sb[0]) * (i + .5) / 6 - p[0], sb[4] - p[1], sb[1] + (sb[3] - sb[1]) * (j + .5) / 3 - p[2]], d2 = L[0] ** 2 + L[1] ** 2 + L[2] ** 2;
+    e += L[1] * L[1] / (d2 * d2); }
+  return (sb.ref = e);
+}
 // A room's light: its lamps, and a map seen from above of how much of the floor round each spot is covered by furniture, blurred,
 // so floors darken round and under what stands on them and furniture darkens at its foot (contact shade, as baked in Blender).
 const ROOM_AO_CELL = .2;
@@ -2327,6 +2433,7 @@ function frame(now) {
     drawDepth(worldBuf, 0); for (const pc of pieces) if (!outside(SM, pc.box)) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);   // only the pieces inside the sun's box
     drawDepth(dynBuf, dyn.n / 10); drawDepth(signBuf, signN);
     for (const ch of chunks) if (Math.hypot(ch.cx - foc[0], ch.cz - foc[2]) < R + 25 && !outside(SM, ch.box)) drawDepth(ch.buf, ch.n);
+    for (const rm of ROOMS.values()) if (rm.n && rm.lot.skylight > 1 && !outside(SM, rm.box)) drawDepth(rm.buf, rm.n);   // furniture under skylights casts the sun's shadow too
     gl.disable(gl.POLYGON_OFFSET_FILL); gl.colorMask(true, true, true, true); gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     if (giFbo && dials.gi > 0 && Lt.day > .05) {            // the GI map: where the sun reaches the ground, GI_SIZE metres round the same spot
       const tx = GI_SIZE / GI_N; giAt = [Math.floor((foc[0] - GI_SIZE / 2) / tx) * tx, Math.floor((foc[2] - GI_SIZE / 2) / tx) * tx, 1 / GI_SIZE]; giK = dials.gi * Lt.day;
@@ -2360,18 +2467,41 @@ function frame(now) {
   const seen = pieces.filter(pc => !outside(VP, pc.box)), nearD = chunks.filter(ch => Math.hypot(ch.cx - cam.eye[0], ch.cz - cam.eye[2]) < DETAIL_R && !outside(VP, ch.box));
   const rooms = nearRooms(cam.eye); for (const rm of rooms) if (!outside(VP, rm.box)) nearD.push(rm);
   // the room the camera is in (or the nearest one in reach) gets its own lamps and contact shade; other rooms an even lamplight
-  let inRoom = null, best = 10;
+  let inRoom = null, best = 10; const feet = new Float32Array(32); let feetN = 0;   // feet: people's floor shade in a hall (below)
   const [camL, camF] = camFloor();
   for (const rm of rooms) { if (!rm.ao) continue; const [a0, b0, a1, b1] = rm.lot.rect, e = Math.hypot(Math.max(a0 - cam.eye[0], 0, cam.eye[0] - a1), Math.max(b0 - cam.eye[2], 0, cam.eye[2] - b1)) + (camL ? (rm.lot === camL && rm.level === camF ? 0 : 99) : (rm.level || cam.eye[1] > (rm.lot.hall_height || GF) + 1 ? 99 : 0)); if (e < best) { best = e; inRoom = rm; } }
   const roomL = new Float32Array(64); let roomLN = 0;
   if (inRoom) { const ls = inRoom.lamps.map(q => [(q[0] - cam.eye[0]) ** 2 + (q[2] - cam.eye[2]) ** 2, q]).sort((p, q) => p[0] - q[0]);
     for (; roomLN < Math.min(16, ls.length); roomLN++) { const q = ls[roomLN][1]; roomL.set([q[0], q[1], q[2], q[3] * dials.lanterns * (.75 + .5 * Lt.night)], roomLN * 4); } }   // furnished rooms of the buildings close by   // near relief: blocks within reach and in view
+  if (inRoom && inRoom.lot.skylight > 1) {                  // a hall under skylights (one storey): the player and the 7 nearest people in it shade the floor at their feet
+    const [a0, b0, a1, b1] = inRoom.lot.rect, fs = people.filter(p => p[0] > a0 && p[0] < a1 && p[1] > b0 && p[1] < b1);
+    fs.sort((p, q) => Math.hypot(p[0] - cam.eye[0], p[1] - cam.eye[2]) - Math.hypot(q[0] - cam.eye[0], q[1] - cam.eye[2]));
+    if (started && !cam.fp && pl.pose !== 4) fs.unshift([pl.x, pl.z]);
+    for (; feetN < Math.min(8, fs.length); feetN++) feet.set([fs[feetN][0], fs[feetN][1], .34, 0], feetN * 4); }
   for (const pc of seen) pc.d2 = boxD2(pc.box, cam.eye); for (const ch of nearD) ch.d2 = boxD2(ch.box, cam.eye);
   const front = seen.slice().sort((p, q) => p.d2 - q.d2); nearD.sort((p, q) => p.d2 - q.d2);
   // depth first, nearest pieces first: the costly light below then runs once for each pixel instead of for every hidden wall and room behind it
   gl.colorMask(false, false, false, false); gl.useProgram(pre.p); gl.uniformMatrix4fv(pre.u.uVP, false, VP); if (pre.u.uSM) gl.uniformMatrix4fv(pre.u.uSM, false, SM);
   attribs(pre, worldBuf); for (const pc of front) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
   for (const ch of nearD) drawMesh(ch.buf, ch.n, pre);
+  // ambient occlusion (ADR-0028): the same things again, at half size into a depth picture, then the occlusion and its smoothing from it
+  const aoK = (dials.ao == null ? 1 : dials.ao) * (quality > .6 ? 1 : 0), aw = Math.ceil(W / 2), ah = Math.ceil(H / 2), aoOn = aoK > 0 && aoTargets(aw, ah);
+  if (aoOn) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, AO.dFbo); gl.viewport(0, 0, aw, ah); gl.depthMask(true); gl.clear(gl.DEPTH_BUFFER_BIT); gl.disable(gl.CULL_FACE);
+    gl.useProgram(depthProg.p); gl.uniformMatrix4fv(depthProg.u.uVP, false, VP);
+    drawDepth(worldBuf, 0); for (const pc of front) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
+    for (const ch of nearD) drawDepth(ch.buf, ch.n); drawDepth(dynBuf, dyn.n / 10);   // people too, so an arm shades the body beside it
+    gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.colorMask(true, true, true, true);
+    const quad = pr => { gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const a = gl.getAttribLocation(pr.p, "aQ"); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
+      gl.uniform4f(pr.u.uPr, 1 / (th * asp), 1 / th, .25, 3200); gl.uniform2f(pr.u.uPx, 1 / aw, 1 / ah); gl.uniform1i(pr.u.uD, 6); };
+    gl.activeTexture(gl.TEXTURE6); gl.bindTexture(gl.TEXTURE_2D, AO.depth);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, AO.fbo[0]); quad(aoProg);
+    gl.uniform4f(aoProg.u.uAo, dials.aoR || 1.2, dials.aoI || 6, 0, dials.aoFar || 45);   // reach (m), strength, -, fades out by (m)
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, AO.fbo[1]); quad(aoBlur); gl.activeTexture(gl.TEXTURE7); gl.bindTexture(gl.TEXTURE_2D, AO.tex[0]); gl.uniform1i(aoBlur.u.uA, 7); gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, W, H); gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.enable(gl.CULL_FACE); gl.activeTexture(gl.TEXTURE0);
+  }
+  gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, aoOn ? AO.tex[1] : AO.white); gl.activeTexture(gl.TEXTURE0);
   gl.colorMask(true, true, true, true); gl.depthMask(false);
   const lit = pr => {
     const u = pr.u; gl.useProgram(pr.p); gl.uniformMatrix4fv(u.uVP, false, VP); gl.uniformMatrix4fv(u.uSM, false, SM); gl.uniform1f(u.uShOn, shOn);
@@ -2388,6 +2518,15 @@ function frame(now) {
     gl.uniform1i(u.uGi, 4); gl.uniform4f(u.uGiM, giAt[0], giAt[1], giAt[2], giK); gl.uniform4fv(u["uBlob[0]"], blob); gl.uniform1i(u.uBlobN, blobN);
     gl.uniform4fv(u["uPatA[0]"], SURF_A); gl.uniform4fv(u["uPatB[0]"], SURF_B);
     if (inRoom) gl.uniform4fv(u.uRoomR, inRoom.lot.rect); else gl.uniform4f(u.uRoomR, 0, 0, -1, -1);
+    const sb = inRoom && inRoom.lot.skylight > 1 && inRoom.lot.skyband;   // the hall's skylights, for skyFF() in roomLight
+    if (sb) { gl.uniform4f(u.uSkyB, sb[0], sb[1], sb[2], sb[3]); gl.uniform2f(u.uSkyH, sb[4], 1 / skyRef(sb)); } else gl.uniform2f(u.uSkyH, 0, 0);
+    gl.uniform4fv(u["uFeet[0]"], feet); gl.uniform1i(u.uFeetN, feetN);
+    gl.uniform1i(u.uSSAOt, 5); gl.uniform3f(u.uSSAO, 1 / W, 1 / H, aoOn ? aoK : 0);   // ambient occlusion (ADR-0028)
+    const rk = (sb && inRoom.lot.racks) || [];                 // the hall's racks, for their shade in roomLight
+    if (rk.length) { const ra = new Float32Array(36); rk.slice(0, 9).forEach((q, k) => ra.set(q, k * 4)); gl.uniform4fv(u["uRacks[0]"], ra); gl.uniform3fv(u.uRackY, inRoom.lot.rackY); }
+    gl.uniform1i(u.uRackN, Math.min(9, rk.length));
+    const tr = sb && inRoom.lot.truss;                         // the hall's trusses and wall thickness, for its corner shade
+    if (tr) { gl.uniform4fv(u.uTruss, tr); gl.uniform2f(u.uTruss2, inRoom.lot.wallT || 0, 0); } else gl.uniform4f(u.uTruss, 0, 0, 0, 0);
     gl.uniform3f(u.uRoomY, inRoom ? inRoom.y0 : Y_FLOOR, inRoom ? inRoom.y1 : GF, inRoom ? inRoom.lot.skylight || 1 : 1);   // the floor the camera is on (storeys.js)
   };
   const blob = new Float32Array(64); let blobN = 0;         // the 16 pieces of street furniture nearest the camera shade the ground under them (trial light)

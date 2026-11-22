@@ -528,8 +528,25 @@ var Estate = (() => {
       m.fees_paid += fee; m.paid += owed - fee; m.status = "repaid";
     }
     // ---- saving
-    save() { return clone({ started: this.started, owner: this.owner, tenant: this.tenant, rent: this.rent, to_let: this.to_let, tenancy: this.tenancy, listing: this.listing, missed: this.missed, owed: this.owed, mortgages: this.mortgages, buys: this.buys, idx: this.idx, history: this.history, sales: this.sales, short: this.short, income: this.income, members: this.members, moves: this.moves }); }
-    load(s) { Object.assign(this, clone(s)); this.homes(); }
+    save() { return clone({ ids: this.units.map(u => u.id), started: this.started, owner: this.owner, tenant: this.tenant, rent: this.rent, to_let: this.to_let, tenancy: this.tenancy, listing: this.listing, missed: this.missed, owed: this.owed, mortgages: this.mortgages, buys: this.buys, idx: this.idx, history: this.history, sales: this.sales, short: this.short, income: this.income, members: this.members, moves: this.moves }); }
+    // A save made before the city changed (a block remodelled, the outlet added) has a different list of units. Match the saved units
+    // to today's by id; a save from before ids were kept is matched by position. Units gone since are dropped; units new since keep
+    // the owner, tenant and residents they start a game with (set in the constructor), instead of an owner of undefined.
+    load(s) {
+      const d = clone(s), n = this.units.length, old = (d.owner || []).length;
+      const map = d.ids ? d.ids.map(id => id in this.byId ? this.byId[id] : -1) : Array.from({ length: old }, (_, o) => o < n ? o : -1);
+      const start = { owner: (u, i) => this.firstOwner(i), tenant: u => u.tenant0, rent: () => 0, to_let: () => false, members: u => u.members.slice() };   // as in the constructor
+      for (const k of Object.keys(start)) {
+        const a = this.units.map(start[k]);
+        if (Array.isArray(d[k])) d[k].forEach((v, o) => { if (map[o] >= 0) a[map[o]] = v; });
+        d[k] = a; }
+      for (const k of ["tenancy", "listing", "missed", "owed"]) {
+        const b = {}; for (const [o, v] of Object.entries(d[k] || {})) if (map[+o] >= 0) b[String(map[+o])] = v; d[k] = b; }
+      for (const m of d.mortgages || []) m.units = m.units.map(o => map[o]).filter(j => j >= 0);
+      if (d.sales) d.sales = d.sales.filter(r => map[r[1]] >= 0).map(r => [r[0], map[r[1]]].concat(r.slice(2)));
+      if (d.moves) d.moves = d.moves.filter(r => map[r[1]] >= 0 && map[r[2]] >= 0).map(r => [r[0], map[r[1]], map[r[2]]]);
+      delete d.ids; Object.assign(this, d); this.homes();
+    }
   }
 
   // ---------------------------------------------------------------- the self-check against Python (estate.run_script)
