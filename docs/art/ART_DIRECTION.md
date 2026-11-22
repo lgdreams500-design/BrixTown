@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-ART-DIRECTION
 title: Wasted — Art direction (locked look)
-version: 1.3.1
+version: 1.4.0
 status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22
 last_updated: 2026-11-22
 relates_to: [ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
@@ -94,17 +94,17 @@ bounce ×1.2, haze ×0.55 with a light veil over sky and distance, exposure ×0.
 Common to all: AgX view transform with the "Medium High Contrast" look; haze scatters forward
 (anisotropy 0.6); at dusk lanterns are doubled in strength and about half the windows are lit.
 
-### 2.5 Vehicles — "Classic" (ADR-0011)
+### 2.5 Vehicles — "Soft box" (ADR-0015, replacing "Classic" of ADR-0011)
 
-Reference: `Art/Reference/vehicles_classic.png` (option C of `Tools/blender/car_kit_09.py`; A "Soft box" and B "Pebble"
-were the alternatives, kept in `Art/StyleTests/`).
+Reference: `Art/Reference/vehicles_soft_box.png` (option A of `Tools/blender/car_kit_09.py`). The owner first chose C
+"Classic" (`vehicles_classic.png`, kept for the record), then after playing with it in the slice preferred A.
 
 | # | Rule | Check |
 |---|---|---|
-| V1 | Cars are **small, vintage and soft**: a narrow rounded body, a long round bonnet, separate **round wings arching over the wheels**, running boards, round lamps standing on the wings, a round cream grille. No sharp edges, no flat slab sides (W3). | The wings read from 20 m. |
-| V2 | **Matte painted** like everything else (W1), one accent of the palette for the body and a **cream roof**; vans carry a painted band. No chrome shine, no glossy paint. | No highlights on the body. |
+| V1 | Cars are **small and friendly soft boxes**: simple body shapes with **generously rounded edges and corners** everywhere, a soft waist above the body, round lamps, rounded bumpers, round tyres with pale hubs. No sharp edges, no flat slab sides (W3). | No corner reads as sharp from 5 m. |
+| V2 | **Matte painted** like everything else (W1), one accent of the palette for the body and a **cream roof**, sometimes a cream belt stripe; vans carry a painted band on a rounded load box. No chrome shine, no glossy paint. | No highlights on the body. |
 | V3 | Cabins are **open frames on round posts** with a rounded roof, so the people inside can be seen; seats and a steering wheel inside. | A seated driver shows from the chest up. |
-| V4 | Character comes from extras, not from new shapes: roof racks with luggage or a trunk, spare wheels, crates in a pickup bed. Wheels are dark with pale hubs. | Three cars parked together look like a family, not copies. |
+| V4 | Character comes from extras, not from new shapes: roof racks with cases and bags, crates in a pickup bed. | Three cars parked together look like a family, not copies. |
 
 ## 3. Characters — option B "Soft"
 
@@ -178,3 +178,4 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | 1.2.0 | 2026-11-22 | Rule C8: option B gets rosy cheeks (ADR-0010). The B reference images predate it and show none. |
 | 1.3.0 | 2026-11-22 | Vehicles: the owner chose "Classic" from car look test 09 (ADR-0011): §2.5 rules V1-V4, reference `vehicles_classic.png`. |
 | 1.3.1 | 2026-11-22 | §2.4: the slice's kit light retuned towards the measured colours of the reference street (ADR-0013). No rule or reference changed. |
+| 1.4.0 | 2026-11-22 | Vehicles: the owner switched to A "Soft box" after playing with the Classic cars (ADR-0015): §2.5 rewritten, new reference `vehicles_soft_box.png`. |

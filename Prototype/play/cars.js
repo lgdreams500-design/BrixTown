@@ -34,8 +34,8 @@ var Cars = (() => {
   let drv = null, saved = null, PAINT = null, ROOF = null, byCar = null, riders = null;
   const people = new Map();                              // looks for people who are not residents: van drivers, visitors
 
-  // The chosen look (ADR-0011, ART_DIRECTION 2.5): the "Classic" cars of Tools/blender/car_kit_09.py, exported by
-  // car_export_10.py into car_models.js as low-poly meshes, near and far. Without that file, the box cars above stand in.
+  // The chosen look (ADR-0015, ART_DIRECTION 2.5): the "Soft box" cars of Tools/blender/car_kit_09.py, exported by
+  // car_export_11.py into car_models.js as low-poly meshes, near and far. Without that file, the box cars above stand in.
   const CM = window.CAR_MODELS, MESH = {};
   if (CM) for (const [key, md] of Object.entries(CM.models)) {
     const [a0, a1, w0, w1] = md.box;
@@ -184,8 +184,8 @@ var Cars = (() => {
     const body = van ? [C.cream, C.teal, C.ochre, [.55, .40, .34]][k % 4] : PAINT[Math.floor(r("col") * PAINT.length)];
     const roof = r("two") < .75 ? ROOF[Math.floor(r("roof") * 2)] : body;
     const col = { body, roof, band: body === C.cream ? C.teal : C.cream, tyre: [.07, .065, .065], hub: [.58, .56, .52], leather: [.30, .19, .12],
-      lamp: [.86, .80, .64], cream: C.cream, iron: [.10, .10, .11], wood: C.wood, luggage: C.wood, spare: [.07, .065, .065], cargo: C.wood };
-    const show = { luggage: r("rack") < .65, spare: r("spare") < .5 };
+      lamp: [.86, .80, .64], cream: C.cream, iron: [.10, .10, .11], wood: C.wood, luggage: C.terracotta, bag: C.cream, rail: [.10, .10, .11], spare: [.07, .065, .065], cargo: C.wood };
+    const rack = r("rack") < .65, show = { luggage: rack, bag: rack, rail: rack, spare: r("spare") < .5 };   // a roof load comes as one
     const paints = CM.parts.map(name => show[name] === false ? null : col[name] || body);
     const dc = Math.hypot(c.x - cam.eye[0], c.z - cam.eye[2]), L = md.lods[dc < 45 ? 0 : 1];
     const P = L.p, N = L.n, T = L.t, need = T.length * 30;

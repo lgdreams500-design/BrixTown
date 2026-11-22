@@ -1,7 +1,7 @@
 ---
 adr: ADR-0011
 title: Vehicles look — "Classic" small vintage cars with round wings
-status: accepted          # owner chose option C in chat on 2026-11-22
+status: superseded by ADR-0015   # owner chose option C, then A, in chat on 2026-11-22
 date: 2026-11-22
 relates_to: [CITY-067, ART-001, ADR-0004]
 amends: ADR-0004          # adds vehicles to the locked look; nothing else changes

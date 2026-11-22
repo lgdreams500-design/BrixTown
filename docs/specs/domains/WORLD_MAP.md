@@ -165,10 +165,10 @@ rules and, since 0.2.0, the look and the movement set in the art documents (§5.
 - A tram on Tram Street, on the timetable the residents use.
 - Traffic (LIVING_CITY 3.4): 198 residents' cars parked in their bays and driven by their owners on the day's plan
   (commuters out through the town gates and back), 6 delivery vans on rounds from the depots, and cars passing through
-  between the gates, busiest at 08:00 and 17:00: 720 trips on day 16. The cars are the chosen "Classic" look (ADR-0011,
-  ART_DIRECTION 2.5): a small car, an estate (often with a roof trunk and a spare wheel), a pickup with crates and the
-  delivery van, round wings over the wheels, lamps on the wings, a cream roof; drawn from meshes exported by
-  `Tools/blender/car_export_10.py` into `car_models.js`, about 2,600 triangles near and 400 far. Cabins are open
+  between the gates, busiest at 08:00 and 17:00: 720 trips on day 16. The cars are the chosen "Soft box" look (ADR-0015,
+  ART_DIRECTION 2.5): a small car, an estate (often with a case, a bag and rails on the roof), a pickup with crates and
+  the delivery van, simple shapes with generously rounded edges, round lamps and wheels, a cream roof; drawn from meshes
+  exported by `Tools/blender/car_export_11.py` into `car_models.js`, about 3,200 triangles near and 900 far. Cabins are open
   frames, so people show: a resident drives their own car, vans and cars passing through have a driver from out of town
   (sometimes with a passenger), and the player sits in the car they drive. The tram has open windows and bench seats,
   and the commuters who boarded it ride in it until it leaves the map, and on the way back from the edge to their stop.
