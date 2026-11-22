@@ -216,6 +216,8 @@ class TheDialogue(unittest.TestCase):
         self.assertEqual(self.pick("shopkeeper", "work", True), "passerby")
         self.assertEqual(self.pick("elder", "rest", False), "elder")
         self.assertEqual(self.pick("student", "rest", False), "chat")
+        self.assertEqual(self.pick("child", "swing", False), "child")
+        self.assertEqual(self.pick("child", "home", True), "child")      # walking home too: a child does not get the passer-by talk
         for role in W["roles"]["roles"]:
             self.assertIn(self.pick(role, "home", False), self.D["conversations"])
 

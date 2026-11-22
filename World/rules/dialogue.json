@@ -19,12 +19,86 @@
  "rules": [
   { "conversation": "clinic", "roles": ["nurse"], "acts": ["work"], "walking": false },
   { "conversation": "counter", "roles": ["shopkeeper", "cafe"], "acts": ["work", "sell"], "walking": false },
+  { "conversation": "child", "roles": ["child"] },
   { "conversation": "passerby", "walking": true },
   { "conversation": "elder", "roles": ["elder"] },
   { "conversation": "chat" }
  ],
  "residents": {},
  "conversations": {
+  "child": {
+   "title": "At the playground",
+   "start": "hello",
+   "nodes": {
+    "hello": {
+     "say": "Hi! Are you here to play too?",
+     "mood": "happy",
+     "options": [
+      { "text": "What's the best thing here?", "next": "best" },
+      { "text": "What did you do at school?", "next": "school" },
+      { "text": "Bye!", "next": null }
+     ]
+    },
+    "menu": {
+     "say": "Do you want to see me go down the slide?",
+     "mood": "neutral",
+     "options": [
+      { "text": "Go on, then!", "next": "watch" },
+      { "text": "What's the best thing here?", "next": "best", "if": ["!told_secret"] },
+      { "text": "What's seven times eight?", "next": "quiz", "if": ["learned"] },
+      { "text": "I have to go. Bye!", "next": null }
+     ]
+    },
+    "best": {
+     "say": "The slide! If you go down on your tummy it's faster. Don't tell my mum.",
+     "mood": "happy",
+     "options": [
+      { "text": "Your secret's safe.", "next": "menu", "do": ["told_secret"] },
+      { "text": "Bye!", "next": null, "do": ["told_secret"] }
+     ]
+    },
+    "school": {
+     "say": "We did sums. I got them all right except one.",
+     "mood": "thinking",
+     "options": [
+      { "text": "Which one?", "next": "which" },
+      { "text": "Well done!", "next": "menu" }
+     ]
+    },
+    "which": {
+     "say": "Seven times eight. It's always seven times eight.",
+     "mood": "sad",
+     "options": [
+      { "text": "It's fifty-six.", "next": "fiftysix" },
+      { "text": "That one's hard for everyone.", "next": "menu" }
+     ]
+    },
+    "fiftysix": {
+     "say": "Fifty-six. Fifty-six! I'm going to remember that forever!",
+     "mood": "surprised",
+     "options": [
+      { "text": "Good!", "next": "menu", "do": ["learned"] },
+      { "text": "Bye!", "next": null, "do": ["learned"] }
+     ]
+    },
+    "watch": {
+     "say": "Wheee! Did you see? Did you see?",
+     "mood": "happy",
+     "options": [
+      { "text": "That was fast!", "next": "menu" },
+      { "text": "Bye!", "next": null }
+     ]
+    },
+    "quiz": {
+     "say": "Fifty-six! See, I told you I'd remember.",
+     "mood": "happy",
+     "options": [
+      { "text": "Brilliant.", "next": "menu" },
+      { "text": "Bye!", "next": null }
+     ]
+    }
+   }
+  },
   "counter": {
    "title": "At the counter",
    "start": "hello",
