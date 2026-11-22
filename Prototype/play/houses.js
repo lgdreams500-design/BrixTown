@@ -701,9 +701,72 @@ window.Houses = (() => {
       const q = Math.round(th / P2) % 2 !== 0 && Math.abs(Math.abs(th) - P2) < .2, w = q ? sz[1] : sz[0], d = q ? sz[0] : sz[1], y0 = f ? S1 : S0;
       grid1(Fr, x - w / 2 + .05, y - d / 2 + .05, x + w / 2 - .05, y + d / 2 - .05, y0, y0 + Math.max(sz[2], .9), .6);
     });
+    gardenS(l, Fr, lk);
     placesS(l, Fr);
     l.furn = ["house"];
     occl.push([Math.min(l.rect[0], l.rect[2]) - 2, Math.min(l.rect[1], l.rect[3]) - 2, Math.max(l.rect[0], l.rect[2]) + 2, Math.max(l.rect[1], l.rect[3]) + 2, SE]);
+  }
+
+  // The garden round each sample house (owner 2026-11-23: "lacking external fences and outside objects"): a lawn fenced in the
+  // line's way with a gate in line with the front door, a stone path, planters at the door, a letterbox and a tree; and, by a hash of
+  // the lot, some of a bench, a bistro table with a parasol, a lounger, a washing line, a flowerbed and a woodpile. It reaches
+  // 7.5 m to each side, 9.5 m to the front (the lane's edge is 11 m off) and 8 m to the back, clear of the neighbours.
+  const GU = 7.5, GF = -9.5, GB = 8.0;
+  function gardenS(l, Fr, lk) {
+    const m = world, dm = world,   // all in the main mesh: the block's near-only mesh is full with its many houses
+    line = lineS(l), du = SFRONT_DOOR[0], has = k => hash(l.id, "garden", k) < .5;
+    const B = (u0, y0, v0, u1, y1, v1, col, f, mm) => bx1(mm || m, Fr, Math.min(u0, u1), y0, Math.min(v0, v1), Math.max(u0, u1), y1, Math.max(v0, v1), col, f || 9);
+    const Y = (u, y0, v, su, sy, sv, col, f, yaw, mm) => yb1(mm || m, Fr, u, y0, v, su, sy, sv, yaw || 0, col, f || 9);
+    const solidBox = (u0, v0, u1, v1, h) => grid1(Fr, Math.min(u0, u1), Math.min(v0, v1), Math.max(u0, u1), Math.max(v0, v1), 0, h, .6);
+    // the lawn, a shade fresher than the common ground, and the path of stone slabs from the gate to the door step
+    qd1(m, Fr, [-GU, .012, GF], [GU, .012, GF], [GU, .012, GB], [-GU, .012, GB], LAWN.tones[1], 24);
+    for (let v = GF + .2, k = 0; v < -HV - .7; v += .75, k++) B(du - .55 + (k % 2) * .08, .012, v, du + .55 + (k % 2) * .08, .045, v + .6, C.path, 6);
+    // the fence, in the line's way, with a gate gap in front of the door
+    const gate = [du - .75, du + .75];
+    const runs = [["u", GF, -GU, gate[0]], ["u", GF, gate[1], GU], ["u", GB, -GU, GU], ["v", -GU, GF, GB], ["v", GU, GF, GB]];
+    for (const [ax, at, a0, a1] of runs) {
+      const seg = (p, q, y0, y1, d, col, f, mm) => ax === "u" ? B(p, y0, at - d / 2, q, y1, at + d / 2, col, f, mm) : B(at - d / 2, y0, p, at + d / 2, y1, q, col, f, mm);
+      const post = (p, y0, y1, d, col, f, mm) => seg(p - d / 2, p + d / 2, y0, y1, d, col, f, mm);
+      const L = a1 - a0, n = Math.max(1, Math.round(L / 2.2));
+      if (line === "plain") {                                   // a cream picket fence: posts, two rails, pickets
+        for (let k = 0; k <= n; k++) post(a0 + L * k / n, 0, 1.0, .1, C.cream);
+        for (const y of [.25, .75]) seg(a0, a1, y, y + .07, .05, C.cream);
+        for (let p = a0 + .08; p < a1 - .05; p += .16) post(p, 0, .92, .07, mul3(C.cream, .95), 9, dm);
+      } else if (line === "oldtown") {                          // a low wall of dressed stone with a cap
+        seg(a0, a1, 0, .8, .32, C.stone, 6); seg(a0 - .02, a1 + .02, .8, .92, .42, C.stoneDark, 6);
+      } else if (line === "workshop") {                         // iron railings on a stone plinth
+        seg(a0, a1, 0, .35, .3, C.stoneDark, 6); seg(a0, a1, .95, 1.0, .05, C.charcoal);
+        for (let p = a0 + .06; p < a1; p += .13) post(p, .35, 1.0, .03, C.charcoal, 9, dm);
+        for (let k = 0; k <= n; k++) post(a0 + L * k / n, .35, 1.12, .08, C.charcoal);
+      } else {                                                   // a clipped hedge, rounded on top in two steps
+        seg(a0, a1, 0, .95, .7, [.22, .32, .15]); seg(a0 + .05, a1 - .05, .95, 1.1, .55, [.26, .36, .17]);
+      }
+      ax === "u" ? chain1(Fr, a0, at, a1, at, 0, 1.15, null, .15) : chain1(Fr, at, a0, at, a1, 0, 1.15, null, .15);
+    }
+    for (const g of gate) {                                      // gate piers (or posts), the gate leaf open into the garden
+      if (line === "oldtown") { B(g - .2, 0, GF - .2, g + .2, 1.15, GF + .2, C.stoneDark, 6); Y(g, 1.15, GF, .28, .26, .28, C.stone, 6); }
+      else B(g - .07, 0, GF - .07, g + .07, 1.2, GF + .07, line === "plain" ? C.cream : line === "curve" ? C.wood : C.charcoal);
+      solidAt1(Fr, g, GF, 0, 1.2, .2);
+    }
+    const leaf = line === "workshop" ? C.charcoal : line === "plain" ? C.cream : C.wood;
+    B(gate[0] + .05, .08, GF + .05, gate[0] + .11, .95, GF + .75, leaf);
+    // the letterbox on a post by the gate, planters each side of the door, a tree in a front corner
+    Y(gate[1] + .55, 0, GF + .3, .08, 1.0, .08, C.wood); Y(gate[1] + .55, 1.0, GF + .3, .4, .28, .3, lk.door);
+    for (const sd of [-1, 1]) { const u = du + sd * 1.2; Y(u, 0, -HV - .45, .5, .45, .5, C.terracotta); Y(u, .45, -HV - .45, .5, .35, .5, [.26, .38, .2], 9, 0, dm); solidBox(u - .25, -HV - .7, u + .25, -HV - .2, .9); }
+    const tu = (has("treeSide") ? 1 : -1) * (GU - 2.2), tv = GF + 2.6;
+    Y(tu, 0, tv, .26, 2.4, .26, C.wood); for (let k = 0; k < 5; k++) Y(tu + Math.cos(k * 1.3) * .7, 2.2 + (k % 3) * .4, tv + Math.sin(k * 1.3) * .7, 1.6, 1.3, 1.6, k % 2 ? [.24, .36, .2] : [.4, .48, .24], 9, k * .4);
+    solidAt1(Fr, tu, tv, 0, 3, .25);
+    // the extras: each in some gardens and not others (by a hash of the lot)
+    if (has("bench")) { const u = -tu * .9, v = GF + 2.2; Y(u, 0, v, 1.5, .45, .55, C.wood, 9, Math.PI); Y(u, .45, v + .25, 1.5, .45, .06, C.wood, 9, Math.PI); solidBox(u - .75, v - .3, u + .75, v + .3, .9); }
+    if (has("bistro")) { const u = GU - 2.4, v = HV + 2.2; Y(u, 0, v, .6, .72, .6, C.charcoal); Y(u, .72, v, .7, .04, .7, lk.door);
+      for (const sd of [-1, 1]) { Y(u + sd * .65, 0, v, .42, .45, .42, C.charcoal); Y(u + sd * .65, .45, v, .42, .04, .42, C.wood); }
+      Y(u, 0, v, .05, 2.3, .05, C.wood, 9, 0, dm); Y(u, 2.0, v, 2.2, .3, 2.2, line === "plain" ? C.cream : lk.shutter, 9, Math.PI / 4); solidBox(u - .9, v - .4, u + .9, v + .4, .9); }
+    if (has("lounger")) { const u = -GU + 1.4, v = HV + 1.8; Y(u, 0, v, .65, .35, 1.9, C.wood); Y(u, .35, v + .3, .6, .1, 1.3, lk.shutter); solidBox(u - .35, v - .95, u + .35, v + .95, .9); }
+    if (has("washing")) { for (const u of [-1.5, 2.5]) { Y(u, 0, GB - 1.5, .08, 1.9, .08, C.wood); solidAt1(Fr, u, GB - 1.5, 0, 1.9, .1); } B(-1.5, 1.85, GB - 1.52, 2.5, 1.87, GB - 1.48, C.charcoal, 9, dm);
+      for (let k = 0; k < 4; k++) Y(-1.0 + k * .95, 1.25, GB - 1.5, .55, .6, .03, [C.cream, C.blue, C.terracotta, C.cream][k], 9, 0, dm); }
+    if (has("flowers")) { const u = du - 3.4, v = GF + 1.4; B(u - 1.6, 0, v - .45, u + 1.6, .22, v + .45, C.soil);
+      for (let k = 0; k < 9; k++) Y(u - 1.4 + k * .35, .22, v + (k % 2 ? .18 : -.18), .22, .25, .22, [C.terracotta, C.cream, C.plum, C.ochre][k % 4], 9, 0, dm); }
+    if (has("woodpile")) { const u = GU - .6, v = 1.5; B(u - .35, 0, v - 1.0, u + .35, 1.1, v + 1.0, C.brown); B(u - .45, 1.1, v - 1.1, u + .45, 1.18, v + 1.1, C.wood); solidBox(u - .45, v - 1.1, u + .45, v + 1.1, 1.2); }
   }
 
   function placesS(l, Fr) {
