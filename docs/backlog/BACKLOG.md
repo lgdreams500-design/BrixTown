@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 26 of 39 | 9 of 39 | 9 of 39 |
-| Size of the plan (points) | 298 | 291 | 576 |
-| Size of the suggested plan | 105 | 251 | 544 |
+| Decided | 27 of 40 | 9 of 40 | 9 of 40 |
+| Size of the plan (points) | 339 | 312 | 617 |
+| Size of the suggested plan | 106 | 272 | 585 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -87,6 +87,7 @@
 | **Money and the bank** `F-ECO-BANK` | 2 Full bank ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Full bank now" for the first slice. Later milestones not stated. |
 | **Quests from residents** `F-QUEST` | 2 Branching and repeatable ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Branching + repeatable" for the first slice. Later milestones not stated. |
 | **Character designer** `F-CHR-DESIGN` | 2 Full designer ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Full designer" for the first slice. Later milestones not stated. |
+| **Real estate market** `F-PROP-ESTATE` | 2 Living market ★ | undecided | undecided | Owner, 2026-11-22: asked to "build whole real estate economy" (every building residential, commercial, utility sellable, owned by a player, a resident or one of several real estate companies, smaller units inside, balanced), then, asked for first-slice levels: "focus on estate and have it at level 2". Later milestones not stated. Furniture (F-PROP-FURNISH) is being handled in another session; no pick recorded here. |
 
 ## What each level means
 
@@ -285,3 +286,8 @@
 - 0 Default character: Everyone starts as the same player character. Size -.
 - 1 Presets: Choose from set options for body, skin, hair and outfit. Size M.
 - 2 Full designer: Sliders for height, build and face shape, every skin tone, hair, garments, colours, extras and walk, with a live preview; stored as compact values. Size L.
+
+**Real estate market** (`F-PROP-ESTATE`). Every building and every unit inside it is owned by someone (a player, a resident or a real estate company) and can be bought, sold and rented.
+- 0 Owners on record: Every building and unit has an owner in the lot registry (resident, company or the city); For Sale and To Let signs show it. Nothing can be bought. Size S.
+- 1 Buy, sell and rent: Buildings of every kind (homes, shops, workplaces, utilities) are split into units (flats, shop floors, offices). The player buys, sells and rents buildings or single units through the ledger, from residents and from several real estate companies that each hold a portfolio and an account. Prices come from data: size, kind, block and condition. Mortgages from the bank. Buying and selling carry a transfer tax and agent fee (sinks); owners pay upkeep and tax each day, tenants pay rent. Settled from the clock, not ticked. Size XL.
+- 2 Living market: Companies buy, sell, list and set rents on their own from demand (empty units, residents moving, nearby shops), so prices and rents rise and fall within data bounds per block. Residents buy and move house. Players compete with companies and each other; a price index and the money supply are published and kept balanced by tuned faucets and sinks. Size XL.

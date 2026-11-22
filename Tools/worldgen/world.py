@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -87,7 +87,7 @@ def validate(w):
     if w.get("roads") and not out:
         import traffic
         out += traffic.Roads(w["roads"], w["traffic"]).problems(lots(w))
-    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w) + react_problems(w)
+    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + estate_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w) + react_problems(w)
     kinds = {l["kind"] for l in lots(w)}
     for need in ("home", "shop", "food", "work", "health", "garden", "market", "stop", "utility"):
         if need not in kinds:
@@ -535,6 +535,83 @@ def economy_problems(w, acts=None):
         out.append("economy: stall numbers must be whole")
     if not 0 <= S["open"][0] < S["open"][1] <= 1440:
         out.append("economy: the stall opens and closes within the day")
+    return out
+
+
+def estate_problems(w):
+    """Every rule World/rules/estate.json must keep (PROP-009 to PROP-021, F-PROP-ESTATE level 2)."""
+    R, out = w["estate"], []
+    L = {l["id"]: l for l in lots(w)}
+
+    def whole(v, lo=0):
+        return type(v) is int and v >= lo
+
+    def bp_pair(p, where):
+        if not (isinstance(p, list) and len(p) == 2 and whole(p[0], 1) and whole(p[1]) and p[0] <= p[1]):
+            out.append("estate: %s must be [low, high] in basis points" % where)
+    kinds = R.get("kinds", {})
+    for k, K in kinds.items():
+        if not (whole(K.get("per_m2"), 1) and whole(K.get("yield_bp"), 1) and isinstance(K.get("name"), str)):
+            out.append("estate: kind %s needs a name, per_m2 and yield_bp in whole numbers" % k)
+        ow = K.get("owners", {})
+        if not ow or any(o not in ("household", "company", "firm", "city") or not whole(v) for o, v in ow.items()) or not sum(ow.values()):
+            out.append("estate: kind %s has bad owner weights" % k)
+    for name, rule in R.get("units", {}).items():
+        made = [rule.get("whole"), rule.get("per_floor"), rule.get("main")]
+        for m in made:
+            if m is not None and m not in kinds:
+                out.append("estate: units.%s makes unknown kind %s" % (name, m))
+        if rule.get("flat_use") and "flat" not in kinds:
+            out.append("estate: units.%s makes flats but there is no flat kind" % name)
+    if "default" not in R.get("units", {}):
+        out.append("estate: units needs a default")
+    if R.get("location", {}).get("centre_lot") not in L:
+        out.append("estate: location.centre_lot is not a lot")
+    ids = [c.get("id") for c in R.get("companies", [])]
+    if len(ids) < 2 or len(set(ids)) != len(ids):
+        out.append("estate: there must be at least two real estate companies with different ids")
+    for c in R.get("companies", []):
+        if L.get(c.get("office"), {}).get("kind") in (None, "garden", "stop", "market"):
+            out.append("estate: %s's office is not a building" % c.get("id"))
+        for f in c.get("focus", []):
+            if f not in kinds:
+                out.append("estate: %s focuses on unknown kind %s" % (c.get("id"), f))
+        if not all(whole(c.get(k)) for k in ("cash", "reserve", "cap", "dividend_bp", "weight")) or c["reserve"] > c["cap"]:
+            out.append("estate: %s needs whole cash, reserve <= cap, dividend_bp and weight" % c.get("id"))
+    for k in kinds:
+        if k not in R["trade"]["city_sells"] and not any(k in c.get("focus", []) for c in R.get("companies", [])):
+            out.append("estate: no company buys %s and the town does not sell it" % k)
+    T = R.get("trade", {})
+    for k in ("transfer_tax_bp", "agent_fee_bp", "bid_bp", "forced_bid_bp", "whole_building_discount_bp", "listing_days", "price_cut_bp",
+              "sale_bp", "sale_slope_bp", "sale_max_bp", "household_buy_bp", "household_min_pool_days", "list_high_index_bp", "list_low_cash_bp"):
+        if not whole(T.get(k)):
+            out.append("estate: trade.%s must be a whole number" % k)
+    if whole(T.get("bid_bp")) and whole(T.get("forced_bid_bp")) and not T["forced_bid_bp"] <= T["bid_bp"] < 10000:
+        out.append("estate: the forced bid must be at most the bid, and the bid below the value")
+    if any(not whole(v) or v <= T.get("bid_bp", 0) for v in T.get("offer_bp", {}).values()):
+        out.append("estate: an offer must be above the bid, or buying and selling back makes money")
+    bp_pair(T.get("ask_bp"), "trade.ask_bp")
+    bp_pair(T.get("player_ask_range_bp"), "trade.player_ask_range_bp")
+    bp_pair(R.get("letting", {}).get("rent_range_bp"), "letting.rent_range_bp")
+    for k in ("arrive_bp", "arrive_slope_bp", "leave_bp", "leave_slope_bp", "lodger_occupied_permille", "max_tenancies", "missed_before_eviction"):
+        if not whole(R.get("letting", {}).get(k)):
+            out.append("estate: letting.%s must be a whole number" % k)
+    C = R.get("costs", {})
+    for k in ("upkeep_bp", "tax_bp", "portfolio_free", "portfolio_bp_per_unit", "portfolio_cap_bp", "missed_before_seizure", "seizure_fee"):
+        if not whole(C.get(k)):
+            out.append("estate: costs.%s must be a whole number" % k)
+    for k, K in kinds.items():
+        if whole(K.get("yield_bp")) and whole(C.get("upkeep_bp")) and K["yield_bp"] <= C["upkeep_bp"] + C["tax_bp"]:
+            out.append("estate: %s rent does not cover its upkeep and tax" % k)
+    I = R.get("index", {})
+    if not (whole(I.get("min_bp"), 1) and whole(I.get("max_bp")) and I["min_bp"] <= 10000 <= I["max_bp"]):
+        out.append("estate: index bounds must hold 10000")
+    Mo = R.get("mortgage", {})
+    if not (whole(Mo.get("deposit_bp"), 1) and whole(Mo.get("rate_bp")) and Mo.get("terms") and all(whole(t, 1) for t in Mo["terms"]) and whole(Mo.get("max"), 1)):
+        out.append("estate: mortgage needs deposit_bp, rate_bp, terms and max")
+    for role in {r["role"] for r in w["residents"]}:
+        if not whole(R.get("town", {}).get("wages", {}).get(role)):
+            out.append("estate: town.wages has no whole amount for %s" % role)
     return out
 
 

@@ -59,6 +59,7 @@ var Econ = (() => {
       this.L = new Ledger(); this.day = 0; this.minute = 0; this.settled = 0;
       this.inv = {}; this.accounts = []; this.welcomed = false; this.loans = []; this.barred = false; this.trades = {}; this.rep = {};
       this.stall = null; this.stall_sold_total = 0;
+      this.hooks = [];                                    // more rules settled at each day's end, after the bank (estate.js)
       this.bankLot = this.lotIndex[R.bank.lot]; this.marketLot = this.lotIndex[R.stall.lot];
       this.kinds = lots.map((l, n) => this.kindOf(n));
       const lines = [["bank:vault", R.bank.vault]];
@@ -94,6 +95,7 @@ var Econ = (() => {
       }
       for (const loan of this.loans) if (loan.status === "active") this.loanDay(loan, d);
       if (this.stall && this.stall.day === d) { for (const s of this.stall.slots) if (!s.sold) this.giveItem(s.item); this.stall = null; }
+      for (const hook of this.hooks) hook(d);
     }
     openAccount(kind) {
       if (!(kind in this.R.bank.accounts)) no("no such account");

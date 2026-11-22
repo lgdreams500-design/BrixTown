@@ -138,6 +138,7 @@ class Economy:
         self.rep = {}                          # resident id -> -100..100 (QST-007)
         self.stall = None
         self.stall_sold_total = 0
+        self.hooks = []                        # more rules settled at each day's end, after the bank (estate.py)
         self.bank_lot = self.lot_index[rules["bank"]["lot"]]
         self.market_lot = self.lot_index[rules["stall"]["lot"]]
         lines = [("bank:vault", rules["bank"]["vault"])]
@@ -212,6 +213,8 @@ class Economy:
                 if not s["sold"]:
                     self.give_item(s["item"])
             self.stall = None
+        for hook in self.hooks:
+            hook(d)
 
     def open_account(self, kind):
         if kind not in self.R["bank"]["accounts"]:

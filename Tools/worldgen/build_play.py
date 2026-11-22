@@ -148,7 +148,17 @@ def life(w, city, plan, acts):
     return dict(economy={k: v for k, v in e.items() if k != "note"}, quests={k: v for k, v in w["quests"].items() if k != "note"},
                 designer={k: v for k, v in w["designer"].items() if k != "note"},
                 visits={str(k): [[t, i] for t, i in v] for k, v in visits.items()}, visit_acts=visit_acts,
-                staff={str(k): v for k, v in staff.items()}, checks=dict(script=script, shops=shops, want=want))
+                staff={str(k): v for k, v in staff.items()}, checks=dict(script=script, shops=shops, want=want),
+                estate={k: v for k, v in w["estate"].items() if k != "note"}, estate_checks=estate_checks(w, lots_))
+
+
+def estate_checks(w, lots_):
+    """The real estate market's fixed run (estate.check_script) and its results, for estate.js to reproduce (PROP-021)."""
+    import economy as ec
+    import estate as es
+    script = es.check_script()
+    want = es.run_script(es.Estate(w["estate"], ec.Economy(w["economy"], lots_, {}, {}), lots_, w["residents"]), script)
+    return dict(script=script, want=want)
 
 
 def season_days(day, cal):

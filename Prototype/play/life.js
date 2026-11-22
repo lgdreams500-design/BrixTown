@@ -7,7 +7,7 @@
 var Life = (() => {
   const D = window.WASTED, X = D.life, DG = X.designer, EC = X.economy, QR = X.quests, SAVE_KEY = "wasted.save.v1";
   const el = id => document.getElementById(id), fmt = Econ.fmt;
-  let E = null, Q = null, look = null, transient = false, designing = false, panel = null, spin = 0, ready = false, lastSave = 0, toastT = 0, lastMoney = null, checkT = 0;
+  let E = null, Q = null, M = null, look = null, transient = false, designing = false, panel = null, spin = 0, ready = false, lastSave = 0, toastT = 0, lastMoney = null, checkT = 0;
   const visits = {}; for (const k in X.visits) visits[k] = X.visits[k];
   const staff = {}; for (const k in X.staff) staff[k] = X.staff[k];
   const resIdx = {}; D.residents.forEach((r, i) => resIdx[r.id] = i);
@@ -28,19 +28,20 @@ var Life = (() => {
     E = new Econ.Economy(EC, LOTS, visits, staff);
     Q = new Econ.Quests(QR, E, residentsForQuests(), LOTS);
     Q.onNote = text => toast(text);
+    M = new Estate.Market(X.estate, E, LOTS, Estate.residentsOf(D, LOTS));   // the real estate market (PROP-009 to PROP-021)
   }
   function newGame(v) {
     fresh(); look = v; clock.day = 0;
-    E.advance(0, clock.m); Q.newGame(); ready = true; lastMoney = E.totalMoney(); save();
+    E.advance(0, clock.m); Q.newGame(); M.start(); ready = true; lastMoney = E.totalMoney(); save();
   }
   function readSave() { try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
   function save() {
     if (!ready || transient) return;                      // ?auto=1 (tests, screenshots) never overwrites a real save
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), at: Date.now() })); } catch (e) { }
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), estate: M.save(), at: Date.now() })); } catch (e) { }
     lastSave = performance.now();
   }
   function loadSave(s) {
-    fresh(); E.load(s.econ); Q.load(s.quests); look = s.look;
+    fresh(); E.load(s.econ); Q.load(s.quests); if (s.estate) M.load(s.estate); else M.start(); look = s.look;
     Object.assign(pl, s.pl); pl.pose = 0; pl.vy = 0; cam.yaw = pl.yaw; clock.day = s.clock.day; clock.m = s.clock.m;
     ready = true; lastMoney = E.totalMoney();
   }
@@ -183,6 +184,7 @@ var Life = (() => {
     if (n === undefined || n === null) n = lotHere();
     if (n === null || n < 0) return toast("No counter here. Shops, cafés, the bank and the market square have one.");
     if (n === E.bankLot) return open("bank", n);
+    if (LOTS[n] && M.office[LOTS[n].id]) return open("agent", n);
     if (n === E.marketLot) return open("stall", n);
     if (E.shopKind(n)) return open("shop", n);
     toast("No counter here. Shops, cafés, the bank and the market square have one.");
@@ -282,8 +284,84 @@ var Life = (() => {
       const reps = Object.entries(E.rep).filter(([, v]) => v).sort((a, b) => b[1] - a[1]);
       if (reps.length) body.append(h("h3", {}, "People you know"), tbl(reps.map(([rid, v]) => [D.residents[resIdx[rid]].n, DLR(rid), h("span", { cls: v > 0 ? "pos" : "neg" }, (v > 0 ? "+" : "") + v)])));
     }
+    else if (P.kind === "agent" || P.kind === "property") { const t = estatePanel(P, body); title = t[0]; sub = t[1]; }
     if (P.msg) body.prepend(h("p", { cls: "pmsg" }, P.msg));
     el("life-title").textContent = title; el("life-sub").textContent = sub;
+  }
+  // ---------------------------------------------------------------- property: B at an estate agent, P anywhere (PROP-011 to PROP-019)
+  const m2 = i => M.units[i].area + " m²";
+  function tenantText(i) {
+    const t = M.tenant[i];
+    return t === "player" ? "you rent it" : t === "hh" ? "lived in" : t === "firm" ? "in business" : t === "lodger" ? "let" : "empty";
+  }
+  function payChoice() {                                  // outright, or a mortgage at the least deposit (BANK-002, PROP-019)
+    const C = X.estate.mortgage, sel = h("select", { "aria-label": "How to pay" }, h("option", { value: "0" }, "outright"), ...C.terms.map(t => h("option", { value: String(t) }, "mortgage, " + t + " days")));
+    sel.value = panel.pay || "0"; sel.onchange = () => { panel.pay = sel.value; };
+    return sel;
+  }
+  function buyUnits(units, agent) {
+    const term = +(panel.pay || 0), C = X.estate.mortgage, D_ = X.estate.trade.whole_building_discount_bp;
+    if (!term) { const p = M.buy(units, agent); return "Bought for " + fmt(p) + " with the transfer tax."; }
+    const total = units.map(i => units.length > 1 ? Math.floor(M.ask(i) * (10000 - D_) / 10000) : M.ask(i)).reduce((a, b) => a + b, 0);
+    const dep = Math.ceil(total * C.deposit_bp / 10000);
+    M.buy(units, agent, dep, term);
+    const m = M.mortgages[M.mortgages.length - 1];
+    return "Bought with a deposit of " + fmt(dep) + "; the bank lends " + fmt(m.principal) + ", repaid at about " + fmt(m.plan[0]) + " a day for " + term + " days.";
+  }
+  function unitRow(i, agent) {
+    const a = M.ask(i), cells = [h("span", {}, M.name(i)), h("span", { cls: "dim" }, m2(i) + " · " + M.ownerName(i) + " · " + tenantText(i))];
+    cells.push(a !== null ? money(a) : h("span", { cls: "dim" }, M.owner[i] === "player" ? "yours" : "not for sale"));
+    cells.push(h("span", { cls: "dim" }, fmt(M.marketRent(i)) + "/day"));
+    const bs = [];
+    if (a !== null) bs.push(btn("Buy", () => buyUnits([i], agent)));
+    if (M.tenant[i] === null && M.owner[i] !== "player") bs.push(btn("Rent", () => { M.rentUnit(i, agent); return "You rent " + M.name(i) + " for " + fmt(M.tenancy[String(i)].rent) + " a day, paid each midnight."; }));
+    cells.push(h("span", {}, ...bs));
+    return cells;
+  }
+  function estatePanel(P, body) {
+    const agent = P.kind === "agent" ? M.office[LOTS[P.n].id] : null, R = X.estate, hist = M.history[M.history.length - 1];
+    body.append(purseLine(), h("p", { cls: "dim" }, "Prices in town " + ((hist ? hist[1] : M.townIndex()) / 100).toFixed(1) + "% of usual · money in town " + fmt(E.L.supply()) + (hist ? " · " + hist[3] + " sold yesterday" : "")));
+    const here = P.kind === "property" ? lotHere() : null;
+    if (here !== null && here >= 0 && M.byLot.has(here)) {     // the building you stand in
+      const ix = M.byLot.get(here), rest = ix.filter(i => M.owner[i] !== "player");
+      body.append(h("h3", {}, "This building: " + lotName(here)), h("div", { cls: "prow" }, "Pay", payChoice()), tbl(ix.map(i => unitRow(i, null))));
+      if (ix.length > 1 && rest.length && rest.every(i => M.ask(i) !== null)) {
+        const tot = rest.map(i => Math.floor(M.ask(i) * (10000 - R.trade.whole_building_discount_bp) / 10000)).reduce((a, b) => a + b, 0);
+        body.append(btn("Buy the whole building for " + fmt(tot), () => buyUnits(rest, null)));
+      }
+    }
+    if (agent) {
+      const kinds = ["all"].concat(Object.keys(R.kinds)), f = h("select", { "aria-label": "Kind" }, kinds.map(k => h("option", { value: k }, k === "all" ? "everything" : R.kinds[k].name.toLowerCase())));
+      f.value = P.filter || "all"; f.onchange = () => { P.filter = f.value; draw(); };
+      const want = i => P.filter && P.filter !== "all" ? M.units[i].kind === P.filter : true;
+      const listed = Object.keys(M.listing).map(Number).filter(i => M.owner[i] !== "player" && want(i)).sort((a, b) => M.listing[a].price - M.listing[b].price || a - b).slice(0, 12);
+      body.append(h("h3", {}, "For sale"), h("div", { cls: "prow" }, "Show", f, "Pay", payChoice()),
+        listed.length ? tbl(listed.map(i => unitRow(i, agent))) : h("p", { cls: "dim" }, "Nothing of that kind on the market today."),
+        h("p", { cls: "dim" }, "Anything else in town can be bought too: stand in the building and press P to see what its owners would take."));
+      const free = M.units.map((u, i) => i).filter(i => M.tenant[i] === null && M.owner[i] !== "player" && want(i)).sort((a, b) => M.marketRent(a) - M.marketRent(b) || a - b).slice(0, 8);
+      body.append(h("h3", {}, "To let"), free.length ? tbl(free.map(i => unitRow(i, agent))) : h("p", { cls: "dim" }, "Nothing empty just now."));
+    }
+    const mine = M.owned();
+    body.append(h("h3", {}, "Your property"));
+    if (!mine.length) body.append(h("p", { cls: "dim" }, "You own nothing yet."));
+    for (const i of mine) {
+      const ls = M.listing[String(i)], rent = h("input", { type: "number", min: "0.01", step: "0.01", cls: "amt", value: (M.rentOf(i) / 100).toFixed(2), "aria-label": "Rent in brix a day" });
+      const row = [btn("Sell now for " + fmt(M.bid(i)), () => { const p = M.sellNow(i, agent); return "Sold for " + fmt(p) + "."; })];
+      if (agent) row.push(ls ? btn("Take it off the market", () => { M.unlist(i); }) : btn("List at " + fmt(M.value(i)), () => { M.listForSale(i, M.value(i), agent); return "Listed with " + M.cos[agent].name + "; the agent takes " + (R.trade.agent_fee_bp / 100) + "% when it sells."; }));
+      const owed = M.owed[String(i)];
+      body.append(h("div", { cls: "qline" }, h("b", {}, M.name(i)),
+        h("p", { cls: "dim" }, m2(i) + " · worth about " + fmt(M.value(i)) + " · " + tenantText(i) + " · upkeep and tax " + fmt(M.costOf(i)) + "/day" + (ls ? " · listed at " + fmt(ls.price) : "") + (owed ? " · " + fmt(owed) + " unpaid!" : "")),
+        h("div", { cls: "prow" }, "Rent Bx", rent, h("span", { cls: "dim" }, "a day (market " + fmt(M.marketRent(i)) + ")"),
+          btn("Set", () => { M.setRent(i, Math.round(+rent.value * 100), true); return "Rent set; offered to tenants."; }),
+          btn(M.to_let[i] ? "Stop letting" : "Offer to let", () => { M.to_let[i] = !M.to_let[i]; })), h("div", { cls: "prow" }, ...row)));
+    }
+    const ten = Object.keys(M.tenancy).map(Number);
+    if (ten.length) body.append(h("h3", {}, "Places you rent"), tbl(ten.map(i => [M.name(i), money(M.tenancy[String(i)].rent), h("span", { cls: "dim" }, "a day" + (M.tenancy[String(i)].missed ? ", " + M.tenancy[String(i)].missed + " unpaid" : "")), btn("Move out", () => { M.leave(i); return "You have moved out."; })])));
+    const ms = M.mortgages.filter(m => m.status === "active");
+    if (ms.length) body.append(h("h3", {}, "Mortgages"), tbl(ms.map(m => ["Mortgage " + m.id, money(M.mortgageOwed(m)), h("span", { cls: "dim" }, "about " + fmt(m.plan[0]) + " a day" + (m.missed ? "; " + m.missed + " missed" : "")), btn("Repay now", () => { M.repay(m.id); return "Mortgage repaid."; })])));
+    const sales = M.sales.slice(-5).reverse(), who = b => b === "player" ? "you" : b === "hh" ? "the household" : b === "firm" ? "the business" : b === "city" ? "the town" : M.cos[b.slice(3)].name;
+    if (sales.length) body.append(h("h3", {}, "Lately sold"), tbl(sales.map(([d, i, p, , b]) => [M.name(i), money(p), h("span", { cls: "dim" }, "day " + (d + 1) + " to " + who(b))])));
+    return agent ? [M.cos[agent].name, "Estate agents · buy, sell and rent anywhere in town"] : ["Property", "What you own and rent · P to close"];
   }
   const DLR = rid => { const r = D.residents[resIdx[rid]]; return D.dialogue.role_words[D.roles[r.r]] || D.roles[r.r]; };
   function fillJob(text, o) { const v = jobVars(o); return text.replace(/\{(\w+)\}/g, (_, k) => k in v ? v[k] : "{" + k + "}"); }
@@ -297,7 +375,7 @@ var Life = (() => {
     return null;
   }
   function key(e) {
-    if (e.code === "Escape" || (panel && ((e.code === "KeyB" && ["shop", "bank", "stall"].includes(panel.kind)) || (e.code === "KeyI" && panel.kind === "wallet") || (e.code === "KeyJ" && panel.kind === "quests")))) { e.preventDefault(); close(); }
+    if (e.code === "Escape" || (panel && ((e.code === "KeyB" && ["shop", "bank", "stall", "agent"].includes(panel.kind)) || (e.code === "KeyP" && panel.kind === "property") || (e.code === "KeyI" && panel.kind === "wallet") || (e.code === "KeyJ" && panel.kind === "quests")))) { e.preventDefault(); close(); }
   }
 
   // ---------------------------------------------------------------- each frame (play.js)
@@ -325,7 +403,7 @@ var Life = (() => {
     if (tr.dataset.k !== key) { tr.dataset.k = key; tr.textContent = ""; for (const [a, b] of lines) tr.append(h("div", { cls: "trk" }, h("b", {}, a), h("span", {}, b))); }
     tr.style.display = lines.length && !Talk.on ? "block" : "none";
     const n = lotHere(), hint = el("counter");
-    const what = n === null || n < 0 ? null : n === E.bankLot ? "Bank counter" : n === E.marketLot ? "Your market stall" : E.shopKind(n) ? "Buy and sell at " + lotName(n) : null;
+    const what = n === null || n < 0 ? null : n === E.bankLot ? "Bank counter" : n === E.marketLot ? "Your market stall" : LOTS[n] && M.office[LOTS[n].id] ? "Estate agent: " + M.cos[M.office[LOTS[n].id]].name : E.shopKind(n) ? "Buy and sell at " + lotName(n) : null;
     if (what && !panel && !Talk.on && pl.pose !== 4) { hint.style.display = "block"; hint.innerHTML = "<kbd>B</kbd>" + what; } else hint.style.display = "none";
   }
   function targets() {                                    // residents to see and places to go, for markers (QST-005)
@@ -361,7 +439,9 @@ var Life = (() => {
   }
   addEventListener("beforeunload", save);
   addEventListener("load", () => {
-    if (window.wasted) window.wasted.life = { get E() { return E; }, get Q() { return Q; }, get look() { return look; }, selfTest: () => Econ.selfTest(X, LOTS), save, newGame, readSave, open, close, counter };
+    if (window.wasted) window.wasted.life = { get E() { return E; }, get Q() { return Q; }, get M() { return M; }, get look() { return look; }, selfTest: () => Econ.selfTest(X, LOTS), estateTest: () => Estate.selfTest(D, LOTS), save, newGame, readSave, open, close, counter };
+    const badE = Estate.selfTest(D, LOTS);
+    if (badE.length) console.error("estate.js does not match Tools/citysim/estate.py:\n  " + badE.join("\n  ")); else console.info("estate.js matches Tools/citysim/estate.py (self-test passed).");
     const bad = Econ.selfTest(X, LOTS);
     if (bad.length) console.error("economy.js does not match Tools/citysim/economy.py:\n  " + bad.join("\n  ")); else console.info("economy.js matches Tools/citysim/economy.py (self-test passed).");
   });

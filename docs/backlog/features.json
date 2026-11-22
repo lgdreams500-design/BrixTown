@@ -1742,6 +1742,70 @@
         "depth": 2,
         "full": 2
       }
+    },
+    {
+      "id": "F-PROP-ESTATE",
+      "area": "life",
+      "title": "Real estate market",
+      "why": "Every building and every unit inside it is owned by someone (a player, a resident or a real estate company) and can be bought, sold and rented.",
+      "pillars": [
+        2,
+        3,
+        4
+      ],
+      "spec": [
+        "PROP-002",
+        "PROP-006",
+        "PROP-009",
+        "PROP-010",
+        "PROP-011",
+        "PROP-012",
+        "PROP-013",
+        "PROP-014",
+        "PROP-015",
+        "PROP-016",
+        "PROP-017",
+        "PROP-018",
+        "PROP-019",
+        "PROP-020",
+        "PROP-021",
+        "PROP-022",
+        "BANK-002"
+      ],
+      "levels": [
+        {
+          "name": "Owners on record",
+          "what": "Every building and unit has an owner in the lot registry (resident, company or the city); For Sale and To Let signs show it. Nothing can be bought.",
+          "effort": "S",
+          "needs": {
+            "F-MAP-LOTS": 1
+          }
+        },
+        {
+          "name": "Buy, sell and rent",
+          "what": "Buildings of every kind (homes, shops, workplaces, utilities) are split into units (flats, shop floors, offices). The player buys, sells and rents buildings or single units through the ledger, from residents and from several real estate companies that each hold a portfolio and an account. Prices come from data: size, kind, block and condition. Mortgages from the bank. Buying and selling carry a transfer tax and agent fee (sinks); owners pay upkeep and tax each day, tenants pay rent. Settled from the clock, not ticked.",
+          "effort": "XL",
+          "needs": {
+            "F-MAP-LOTS": 1,
+            "F-ECO-BANK": 2,
+            "F-BLD-INSIDE": 1
+          }
+        },
+        {
+          "name": "Living market",
+          "what": "Companies buy, sell, list and set rents on their own from demand (empty units, residents moving, nearby shops), so prices and rents rise and fall within data bounds per block. Residents buy and move house. Players compete with companies and each other; a price index and the money supply are published and kept balanced by tuned faucets and sinks.",
+          "effort": "XL",
+          "needs": {
+            "F-MAP-LOTS": 1,
+            "F-NPC-POP": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
     }
   ]
 }

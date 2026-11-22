@@ -124,6 +124,10 @@
     "F-NPC-REACT": {
       "slice": 1,
       "note": "Owner, 2026-11-22: asked for people to react to the weather (clothing, umbrellas in rain, running for cover when rain starts), then said \"Level 1 for the slice\". Later milestones not stated."
+    },
+    "F-PROP-ESTATE": {
+      "slice": 2,
+      "note": "Owner, 2026-11-22: asked to \"build whole real estate economy\" (every building residential, commercial, utility sellable, owned by a player, a resident or one of several real estate companies, smaller units inside, balanced), then, asked for first-slice levels: \"focus on estate and have it at level 2\". Later milestones not stated. Furniture (F-PROP-FURNISH) is being handled in another session; no pick recorded here."
     }
   }
 }

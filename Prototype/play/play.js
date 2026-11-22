@@ -2143,6 +2143,7 @@ addEventListener("keydown", e => {
   else if (e.code === "KeyB" && pl.pose !== 4) Life.counter();   // buy, sell, bank or stall where you stand (life.js)
   else if (e.code === "KeyI") Life.panel("wallet");     // money and what you carry
   else if (e.code === "KeyJ") Life.panel("quests");     // the quest log
+  else if (e.code === "KeyP") Life.panel("property");   // what you own and rent, and the building you stand in (life.js, estate.js)
   else if (e.code === "KeyF" && pl.pose === 4) Sound.horn(true);
   else if (e.code === "KeyR" && pl.pose === 4) Sound.radio();
   else if (e.code === "KeyM") { Sound.act("map"); showMap = !showMap; $("bigmap").style.display = showMap ? "flex" : "none"; }

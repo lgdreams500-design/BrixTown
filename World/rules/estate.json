@@ -1,0 +1,85 @@
+{
+ "note": "The real estate market (PROP-002, PROP-006, PROP-009 to PROP-020, BANK-002 mortgages; F-PROP-ESTATE level 2; ADR-0022). Every building is carved into units from its floors ('storeys' in the block files): a house is one unit, a tower or the rooms over a shop give a flat per floor, offices a unit per floor, everything else one unit for the whole building. Gardens, stops and the market square are public land and are not sold. Amounts are chips (100 chips = 1 brix); rates in basis points (100 bp = 1%), per game day where they are rates. Rules: Tools/citysim/estate.py, ported to Prototype/play/estate.js. Checked by world.estate_problems(). Every number is a first guess for play-testing [ASSUMPTION].",
+ "public_kinds": ["garden", "stop", "market"],
+ "units": {
+  "home":    { "flat_use": "flat", "whole": "house" },
+  "shop":    { "main": "shop", "with_main": ["store"], "flat_use": "rooms" },
+  "food":    { "main": "shop", "with_main": ["store"], "flat_use": "rooms" },
+  "work":    { "per_floor": "office" },
+  "utility": { "whole": "plant" },
+  "dealer":  { "whole": "showroom" },
+  "default": { "whole": "civic" }
+ },
+ "kinds": {
+  "house":    { "name": "House",       "per_m2": 700, "yield_bp": 100, "owners": { "household": 50, "company": 45, "city": 5 } },
+  "flat":     { "name": "Flat",        "per_m2": 550,  "yield_bp": 110, "owners": { "company": 90, "city": 10 } },
+  "shop":     { "name": "Shop",        "per_m2": 450,  "yield_bp": 115, "owners": { "company": 70, "firm": 30 } },
+  "office":   { "name": "Office floor","per_m2": 400,  "yield_bp": 110, "owners": { "company": 80, "firm": 20 } },
+  "showroom": { "name": "Showroom",    "per_m2": 500,  "yield_bp": 110, "owners": { "firm": 100 } },
+  "plant":    { "name": "Works",       "per_m2": 350,  "yield_bp": 90,  "owners": { "city": 100 } },
+  "civic":    { "name": "Building",    "per_m2": 400,  "yield_bp": 80,  "owners": { "city": 100 } }
+ },
+ "usable_bp": 8000,
+ "location": { "centre_lot": "b_3_4_l0", "near_bp": 13000, "far_bp": 8000, "radius": 420 },
+ "floor": { "up_bp": 200, "no_lift_above": 2, "no_lift_down_bp": 300 },
+ "index": {
+  "min_bp": 7000, "max_bp": 14000,
+  "wave_bp": 1200, "wave_days": 7,
+  "occupancy_target_permille": 900, "occupancy_bp_per_permille": 3,
+  "player_buy_bp": 150, "player_buy_days": 7, "player_buy_cap_bp": 1000
+ },
+ "costs": {
+  "upkeep_bp": 20, "tax_bp": 15,
+  "portfolio_free": 2, "portfolio_bp_per_unit": 5, "portfolio_cap_bp": 40,
+  "missed_before_seizure": 3, "seizure_fee": 2500
+ },
+ "trade": {
+  "transfer_tax_bp": 200,
+  "agent_fee_bp": 150,
+  "bid_bp": 9000,
+  "forced_bid_bp": 8000,
+  "offer_bp": { "company": 11500, "household": 13000, "firm": 13000, "city": 12000 },
+  "city_sells": ["house", "flat", "shop", "office", "plant", "civic"],
+  "whole_building_discount_bp": 300,
+  "ask_bp": [10200, 10800],
+  "list_bp": { "company": 40, "household": 8, "firm": 4 },
+  "list_high_index_bp": 2, "list_low_cash_bp": 400,
+  "listing_days": 10, "price_cut_bp": 300,
+  "sale_bp": 1200, "sale_slope_bp": 6000, "sale_max_bp": 5000,
+  "household_buy_bp": 3000, "household_min_pool_days": 4,
+  "player_ask_range_bp": [5000, 20000]
+ },
+ "letting": {
+  "arrive_bp": 2500, "arrive_slope_bp": 8000, "leave_bp": 150, "leave_slope_bp": 4000,
+  "lodger_occupied_permille": 750,
+  "rent_range_bp": [5000, 20000],
+  "max_tenancies": 2,
+  "missed_before_eviction": 3
+ },
+ "mortgage": {
+  "deposit_bp": 2000, "rate_bp": 25, "terms": [30, 60, 90], "max": 2,
+  "default_after_missed": 3, "late_fee": 500,
+  "note": "Simple interest like the bank's loans: total = principal + principal x rate x term. Paid in equal daily instalments from the current account at each day's end, the first at the end of the day after the purchase; the last instalment takes what is left. On default the bank sells the unit to a company at the forced bid, clears the debt from the proceeds and pays the rest to the player."
+ },
+ "town": {
+  "wages": { "commuter": 5500, "maker": 5000, "courier": 4500, "cafe": 4500, "shopkeeper": 5000, "clerk": 5500, "nurse": 6000, "gardener": 4500, "utility": 5000, "elder": 3000, "student": 1500, "child": 0 },
+  "firm_cover_bp": 14000,
+  "lodger_cover_bp": 15000,
+  "pool_days": 3,
+  "spend_bp": 5000,
+  "note": "Residents and the businesses they run share one account, npc:town, until residents have their own (CITY-004). Their earnings come in from sys:wages each day: a household's wages by its members' roles; a business's and an unseen lodger's takings as a share of the rent they pay. What the town holds beyond pool_days of earnings is spent (sys:spend), half each day, so its money neither runs away nor runs dry."
+ },
+ "companies": [
+  { "id": "lark",    "name": "Lark & Daughters",   "office": "b_3_2_l1", "focus": ["house", "flat", "shop"],         "cash": 3000000, "reserve": 400000, "cap": 9000000, "dividend_bp": 2000, "weight": 40 },
+  { "id": "harrow",  "name": "Harrow Property Co.", "office": "b_2_5_l1", "focus": ["shop", "office", "showroom", "plant", "civic"], "cash": 3000000, "reserve": 400000, "cap": 9000000, "dividend_bp": 2000, "weight": 35 },
+  { "id": "cobble",  "name": "Cobblestone Homes",   "office": "b_5_3_l4", "focus": ["house", "flat", "office"],       "cash": 2000000, "reserve": 300000, "cap": 7000000, "dividend_bp": 2000, "weight": 25 }
+ ],
+ "balance": {
+  "player_day_income": 6000,
+  "note": "What an active player earns in a game day from jobs and the stall, for the balance tests (test_estate.py); measure it in play and change it here [ASSUMPTION]. Targets, as shares of that income: the cheapest home to rent at most rent_share_bp a day; the deposit on the cheapest home within deposit_days of income; the cheapest home on the longest mortgage at most mortgage_share_bp a day with its upkeep and tax; a unit bought outright and let at the market rent pays for itself in payback_days.",
+  "rent_share_bp": 4000, "deposit_days": 6, "mortgage_share_bp": 6500, "payback_days": [80, 220],
+  "supply_drift_bp": 1500, "index_days": 365
+ },
+ "household_size": 2,
+ "history_days": 30
+}
