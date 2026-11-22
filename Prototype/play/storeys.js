@@ -172,5 +172,21 @@ window.Storeys = (() => {
     }
   }
 
-  return { floorY, ceilY, levelAt, objectsOn, proxy, stairOf, shell, build, fill, USE_AS };
+  // ------------------------------------------------------------ what furniture must leave clear on a floor: the stairwell and 0.6 m round
+  // it, and on the ground floor the way from the door to the foot of the stair. keepOut(l, f) gives a test of a footprint.
+  function keepOut(l, f) {
+    const G = stairOf(l); if (!G) return () => false;
+    const a = G.P(G.u0, Math.min(G.v0, G.v1), 0), b = G.P(G.u1, Math.max(G.v0, G.v1), 0), e = .6;
+    const wx0 = Math.min(a[0], b[0]) - e, wx1 = Math.max(a[0], b[0]) + e, wz0 = Math.min(a[2], b[2]) - e, wz1 = Math.max(a[2], b[2]) + e;
+    const segs = [];
+    if (f === 0) { const d = DOOR_DIR[l.side] || [0, 0], p0 = [l.door[0] - d[0] * .4, l.door[1] - d[1] * .4], p1 = [l.door[0] - d[0] * 1.6, l.door[1] - d[1] * 1.6], ft = G.footAt(0); segs.push([p0, p1], [p1, ft]); }
+    const nearSeg = (x, z, [p, q], r) => { const vx = q[0] - p[0], vz = q[1] - p[1], L2 = vx * vx + vz * vz || 1, t = Math.max(0, Math.min(1, ((x - p[0]) * vx + (z - p[1]) * vz) / L2)); return Math.hypot(x - p[0] - vx * t, z - p[1] - vz * t) < r; };
+    return (x0, z0, x1, z1) => {
+      if (x1 > wx0 && x0 < wx1 && z1 > wz0 && z0 < wz1) return true;
+      const cx = Math.max(x0, Math.min((x0 + x1) / 2, x1)), cz = (z0 + z1) / 2, r = Math.hypot(x1 - x0, z1 - z0) / 2 + .55;
+      return segs.some(sg => nearSeg(cx, cz, sg, r));
+    };
+  }
+
+  return { floorY, ceilY, levelAt, objectsOn, proxy, stairOf, shell, build, fill, keepOut, USE_AS };
 })();

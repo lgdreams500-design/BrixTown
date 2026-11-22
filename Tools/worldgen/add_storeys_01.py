@@ -8,8 +8,8 @@ For each building of two or more storeys this writes into its lot in the block f
   storeys   what each floor is for, ground floor first ("main"), from World/rules/storeys.json "uses"
   levels    for each kind of place that has some upstairs, the floor of each one (the same order as objects)
 and moves residents' places upstairs as storeys.json "move" says: beds in houses and flats, half the desks in offices.
-The stairwell goes against a side wall (never the door's), wherever it is furthest from the places already on the
-ground floor and from the way in. Both substations are made enterable, each with a place for its engineer.
+The stairwell goes against a side wall (never the door's or the back wall, where counters stand), at the front, so its
+first flight starts by the way in; any ground-floor place in its way is moved. Both substations are made enterable, each with a place for its engineer.
 
 Run from Tools/worldgen:   py add_storeys_01.py        (running it again changes nothing: what it placed stays)
 Then:                      py -m unittest test_world ;  py build_play.py
@@ -48,47 +48,77 @@ def dist_rect(p, r):
 
 
 def place_stair(l, S):
-    """The stairwell rect along a side wall, as far as can be from the ground floor's places and the way in."""
+    """The stairwell rect against one of the two side walls (never the door's wall, never the back wall, where shops,
+    cafes, banks and offices keep their counters), starting at the front so the first flight begins by the way in.
+    Of the two sides, the one with fewer of the ground floor's places in the way; those are moved (clear_well)."""
     x0, z0, x1, z1 = l["rect"]
     t, st = S["wall"], S["stair"]
     W = 2 * st["width"] + st["spine"]
     L = st["run"] + 2 * st["landing"]
-    door = l["door"]
     side = side_of(l)
     lv = l.get("levels", {})
     pts = [tuple(p[:2]) for k, v in l["objects"].items() for i, p in enumerate(v) if not lv.get(k) or lv[k][i] == 0]   # the ground floor's places
     lift = lift_at(l) if l.get("tower") else None
+    sides = {"n": "we", "s": "we", "w": "ns", "e": "ns"}[side]
     best = None
-    for wall in "nswe":
-        if wall == side:
-            continue
+    for wall in sides:
         along_x = wall in "ns"
         a0, a1 = (x0 + t, x1 - t) if along_x else (z0 + t, z1 - t)
         if a1 - a0 < L + .2:
             continue
-        for frac in (0.0, 0.25, 0.5, 0.75, 1.0):
-            a = a0 + .05 + frac * (a1 - a0 - L - .1)
+        front_low = side in ("w", "n")                         # is the door at the low end of this side wall?
+        for back in (0.0, 1.5, 3.0):                            # as near the front as it can go, a little further back if a lift is there
+            a = a0 + .1 + back if front_low else a1 - .1 - back - L
             if along_x:
                 zz = (z0 + t, z0 + t + W) if wall == "n" else (z1 - t - W, z1 - t)
                 r = [a, zz[0], a + L, zz[1]]
             else:
                 xx = (x0 + t, x0 + t + W) if wall == "w" else (x1 - t - W, x1 - t)
                 r = [xx[0], a, xx[1], a + L]
-            hits = sum(dist_rect(p, r) < st["keep_clear"] for p in pts)
-            near_door = dist_rect(door, r)
             if lift and dist_rect(lift, r) < 1.8:
                 continue
-            score = (hits, -min(near_door, 8.0), -min(min(dist_rect(p, r) for p in pts) if pts else 9, 3.0))
+            hits = sum(dist_rect(p, r) < st["keep_clear"] for p in pts)
+            score = (hits, back)
             if best is None or score < best[0]:
                 best = (score, r, wall, along_x)
+            break
     if best is None:
         return None
     _, r, wall, along_x = best
-    # lane 0 runs against the wall and climbs away from the door's end of the building
-    dpos = door[0] if along_x else door[1]
+    dpos = l["door"][0] if along_x else l["door"][1]
     mid = (r[0] + r[2]) / 2 if along_x else (r[1] + r[3]) / 2
-    up0 = 1 if dpos < mid else -1
+    up0 = 1 if dpos < mid else -1                               # lane 0 climbs away from the front
     return dict(rect=[round(v, 2) for v in r], axis="x" if along_x else "z", wall=wall, up0=up0)
+
+
+def clear_well(l, st, S):
+    """Move any of the ground floor's places that stand in the stairwell, or on the way from the door to its foot, to the
+    nearest free spot in the room."""
+    x0, z0, x1, z1 = l["rect"]
+    r, keep = st["rect"], S["stair"]["keep_clear"]
+    lv = l.get("levels", {})
+    allp = [(k, i) for k, v in l["objects"].items() for i in range(len(v)) if not lv.get(k) or lv[k][i] == 0]
+    dx, dz = l["door"]
+    m = S["wall"] + .8
+    moved = 0
+    for k, i in allp:
+        p = l["objects"][k][i]
+        if dist_rect(p, r) >= keep:
+            continue
+        others = [tuple(l["objects"][k2][i2]) for k2, i2 in allp if (k2, i2) != (k, i)]
+        best = None
+        for gz in [z0 + m + q * .3 for q in range(int((z1 - z0 - 2 * m) / .3) + 1)]:
+            for gx in [x0 + m + q * .3 for q in range(int((x1 - x0 - 2 * m) / .3) + 1)]:
+                if dist_rect((gx, gz), r) < keep + .5 or math.hypot(gx - dx, gz - dz) < 2.0 or any(math.hypot(gx - a, gz - b) < .9 for a, b in others):
+                    continue
+                d = math.hypot(gx - p[0], gz - p[1])
+                if best is None or d < best[0]:
+                    best = (d, gx, gz)
+        if best is None:
+            raise SystemExit("%s: nowhere to move a %s out of the stairwell" % (l["id"], k))
+        l["objects"][k][i] = [round(best[1], 2), round(best[2], 2)]
+        moved += 1
+    return moved
 
 
 def floor_spots(l, stair, lift, n, gap, clear_of, S, f=1):
@@ -120,7 +150,7 @@ def main():
     files = [(os.path.join(CITY, e["file"]), None) for e in city["blocks"]]
     blocks = [(p, jload(p)) for p, _ in files]
     moved = dict(bed=0, work=0)
-    stairs = lifts = 0
+    stairs = lifts = cleared = 0
     for path, b in blocks:
         for l in b["lots"]:
             if l["kind"] in ("garden", "market", "stop"):
@@ -139,6 +169,7 @@ def main():
             if st is None:
                 raise SystemExit("%s: no wall long enough for a stair" % l["id"])
             l["stair"] = st
+            cleared += clear_well(l, st, S)
             stairs += 1
             lift = None
             if n >= S["lift_from_floors"]:
@@ -175,7 +206,7 @@ def main():
                 l["levels"] = levels
         with open(path, "w", encoding="utf-8") as f:
             json.dump(b, f, ensure_ascii=False, indent=1)
-    print("%d stairs, %d lifts; upstairs: %d beds, %d desks" % (stairs, lifts, moved["bed"], moved["work"]))
+    print("%d stairs, %d lifts; %d places moved out of stairwells; upstairs: %d beds, %d desks" % (stairs, lifts, cleared, moved["bed"], moved["work"]))
 
 
 if __name__ == "__main__":

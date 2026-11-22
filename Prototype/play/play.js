@@ -689,11 +689,12 @@ function furnish(l, side, accent, inC, vis, level) {     // at load (no vis): pl
   // Every place residents and the player use stays where it was (same heights, same collisions); what stands there is real
   // furniture now, drawn in the block's near-only mesh. Then the room is dressed for what the building is (see room()).
   const dm = vis || NULL_MESH, occ = [], R = ROOM_STYLE[l.sp] || ROOM_STYLE[l.kind] || ROOM_STYLE.work, fab = pick(R.fabric, hash(l.id, "fab"));
+  const KEEP = Storeys.keepOut(l, level);                 // nothing stands in the stairwell or on the way to it (storeys.js)
   const RR = vis && ROOM_REC;                             // what the room's light needs: its lamps and where things stand on the floor
   const spot = vis ? () => { } : spotAt, use = vis ? () => { } : useAt, hard = (ax0, ay0, az0, ax1, ay1, az1) => { if (ay0 < F + 2 && KEEP(Math.min(ax0, ax1), Math.min(az0, az1), Math.max(ax0, ax1), Math.max(az0, az1))) return; if (RR && ay0 < F + 1.2) RR.foot.push([(ax0 + ax1) / 2, (az0 + az1) / 2, Math.abs(ax1 - ax0) / 2, Math.abs(az1 - az0) / 2, Math.min(1, 1 - (ay0 - F) / 1.4)]); return vis || solid(Math.min(ax0, ax1), ay0, Math.min(az0, az1), Math.max(ax0, ax1), ay1, Math.max(az0, az1)); };
   const B = (cx, y0, cz, sx, sy, sz, c, yaw, f) => {
-    if (RR) { const cy = Math.abs(Math.cos(yaw || 0)), sn = Math.abs(Math.sin(yaw || 0));
     { const cy = Math.abs(Math.cos(yaw || 0)), sn = Math.abs(Math.sin(yaw || 0)), hx = (cy * sx + sn * sz) / 2, hz = (sn * sx + cy * sz) / 2; if (y0 < 2 && KEEP(cx - hx, cz - hz, cx + hx, cz + hz)) return; }
+    if (RR) { const cy = Math.abs(Math.cos(yaw || 0)), sn = Math.abs(Math.sin(yaw || 0));
       if (y0 < 1.1) RR.foot.push([cx, cz, (cy * sx + sn * sz) / 2, (sn * sx + cy * sz) / 2, 1 - y0 / 1.4]);   // seats and table tops shade the floor too, less the higher they are
       if (f === 2) RR.lamps.push([cx, F + y0 + sy / 2, cz, Math.min(.5, .9 * Math.max(sx, sy, sz))]); }   // small lit things: sconces, cases, signs
     dm.ybox(cx, F + y0, cz, sx, sy, sz, yaw || 0, c, f || 19); };
@@ -1082,8 +1083,8 @@ function room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard) {
   for (let s = 0; s < 5; s++) occ.push([dx - d[0] * s * 1.2, dz - d[1] * s * 1.2, dw / 2 + .7]);        // keep the way in clear
   const SG = Storeys.stairOf(l);                             // and the stairwell (storeys.js)
   if (SG) for (let u = SG.u0 + .5; u < SG.u1; u += .8) for (const v of [(SG.lane0[0] + SG.lane0[1]) / 2, (SG.lane1[0] + SG.lane1[1]) / 2]) { const q = SG.P(u, v, 0); occ.push([q[0], q[2], .9]); }
-  if (l.tower) { const bx = side === "e" ? x0 + 1.5 : side === "w" ? x1 - 1.5 : x0 + 1.5, bz = side === "s" ? z0 + 1.5 : side === "n" ? z1 - 1.5 : z0 + 1.5; occ.push([bx, bz, 3.2]); }
   if (SG && !(l.level > 0)) { const ft = SG.footAt(0), p1 = [dx - d[0] * 1.6, dz - d[1] * 1.6], L = Math.hypot(ft[0] - p1[0], ft[1] - p1[1]); for (let t = 0; t <= L; t += .7) occ.push([p1[0] + (ft[0] - p1[0]) * t / L, p1[1] + (ft[1] - p1[1]) * t / L, .8]); }   // and the way from the door to its foot
+  if (l.tower) { const bx = side === "e" ? x0 + 1.5 : side === "w" ? x1 - 1.5 : x0 + 1.5, bz = side === "s" ? z0 + 1.5 : side === "n" ? z1 - 1.5 : z0 + 1.5; occ.push([bx, bz, 3.2]); }
   const clear = (x, z, r) => occ.every(([ox, oz, or]) => Math.hypot(x - ox, z - oz) > r + or);   // nothing placed or used there
   const free = (x, z, r) => x > rx0 + r * .7 && x < rx1 - r * .7 && z > rz0 + r * .7 && z < rz1 - r * .7 && occ.every(([ox, oz, or]) => Math.hypot(x - ox, z - oz) > r + or);
   const walls = { n: { ns: true, fix: rz0, out: 1 }, s: { ns: true, fix: rz1, out: -1 }, w: { ns: false, fix: rx0, out: 1 }, e: { ns: false, fix: rx1, out: -1 } };
@@ -1753,8 +1754,8 @@ const main = program(MAIN_VS, MAIN_FS), signProg = program(MAIN_VS, "#define LET
 const pre = program(MAIN_VS, `precision mediump float; void main(){ gl_FragColor=vec4(1.); }`);       // depth only, laid first so each pixel is lit once
 const sky = program(`attribute vec2 aQ; varying vec2 vQ; void main(){ vQ=aQ; gl_Position=vec4(aQ,.9999,1.); }`,
 `precision highp float; varying vec2 vQ; uniform vec3 uR,uU,uF,uSun,uZen,uHor,uSunCol; uniform float uNight,uExp; uniform vec4 uCl; uniform vec2 uClOff,uClLit;   // uCl: cover, edge softness, size, shape phase
-${NOISE}
 uniform mat3 uCel; uniform vec3 uMoon,uSunT,uCity,uMw; uniform vec4 uSt,uMn; uniform float uT;   // night (WLD-042): uSt stars (seen, density, twinkle, pixel size), uMn moon (lit share, size, brightness, dims stars), uMw Milky Way (brightness, width, dust)
+${NOISE}
 ${TONE}
 void main(){ vec3 d=normalize(uF+vQ.x*uR+vQ.y*uU); float s=dot(d,uSun), p=haze(s); float hz=1.-.85*uNight; vec3 c=mix(uHor+uSunCol*(4.4*p*hz),uZen+uSunCol*(.9*p*hz),pow(clamp(d.y,0.,1.),.5));   // hz: moonlight lights the air far less than sunlight
   float a=0.; vec3 cloud=vec3(0.);
@@ -1900,12 +1901,11 @@ function weatherNow(m) {
   const s = Math.floor(m / 360), into = m - s * 360, b = SKY.clouds.blend_minutes, out = { kind: WX_KIND(s) };
   for (const k of ["sun", "haze", "veil", "grey", "rain"]) { const v = i => SKY.weather[WX_KIND(i)][k];
     out[k] = into < b ? mix(v(s - 1), v(s), .5 + .5 * into / b) : into > 360 - b ? mix(v(s), v(s + 1), .5 * (into - (360 - b)) / b) : v(s); }
-  out.wet = Math.max(Math.min(1, out.rain * 1.5), SKY.weather[WX_KIND(s - 1)].rain > 0 ? clamp(1 - into / SKY.rain.dry_minutes, 0, 1) : 0);
   for (const k of ["stars", "lamp_glow", "cover"]) { const v = i => SKY.night.weather[WX_KIND(i)][k];   // at night: how much starry sky shows, how lanterns glow in the air (WLD-042)
     out[k] = into < b ? mix(v(s - 1), v(s), .5 + .5 * into / b) : into > 360 - b ? mix(v(s), v(s + 1), .5 * (into - (360 - b)) / b) : v(s); }
+  out.wet = Math.max(Math.min(1, out.rain * 1.5), SKY.weather[WX_KIND(s - 1)].rain > 0 ? clamp(1 - into / SKY.rain.dry_minutes, 0, 1) : 0);
   return out;
 }
-// ?studio=1: one standing person under the light and camera of the reference lineup (Tools/blender/character_face_05.py, sheets()), to compare
 // The night sky (WLD-042), worked out from the clock alone. The moon runs the sun's path, later by its phase; the stars turn round the
 // celestial pole once a day and a little further each day of the year (sky.json "night").
 const NIGHT = SKY.night;
@@ -1922,6 +1922,7 @@ function nightSky(m) {
   const X = [-s, Mr[1] * c, Mr[2] * c], Y = [c, Mr[1] * s, Mr[2] * s];   // the stars' x and y axes: X = M cos + W sin, Y = M sin - W cos, west being -x
   return { moon, lit, up, sun: arc(m), cel: new Float32Array([X[0], Y[0], P[0], X[1], Y[1], P[1], X[2], Y[2], P[2]]) };
 }
+// ?studio=1: one standing person under the light and camera of the reference lineup (Tools/blender/character_face_05.py, sheets()), to compare
 // the slice's people with character_lineup.png without the town's own light in the way. Sun from the front left at 48 degrees, strength 3.2 in
 // (1, 0.82, 0.62); a flat sky of (0.42, 0.55, 0.82) at 0.25; two 60 W lanterns by the wall behind; no haze; exposure -0.3; a 60 mm lens from 9.6 m.
 const STUDIO = new URLSearchParams(location.search).has("studio"), STUDIO_AT = [300.5, 186.6], STUDIO_WHO = Math.max(0, (+new URLSearchParams(location.search).get("studio") || 1) - 1);   // ?studio=2 shows the second person of the lineup, and so on
@@ -2067,6 +2068,7 @@ function drawMaps() {
 }
 function placeName() {
   const l = lotAt(pl.x, pl.z, true), b = blockOf(pl.x, pl.z);
+  if (l && !isOpen(l) && l.stair && pl.y < l.H - .1) { const f = Storeys.levelAt(l, pl.y + .3); return [l.name, f ? "Floor " + f + ((l.storeys || [])[f] ? ", " + l.storeys[f] : "") : "Inside, ground floor"]; }   // which floor (storeys.js)
   if (pl.y > 6 && l) return [l.name, "On the roof, " + Math.round(pl.y) + " m up"];
   if (l && !isOpen(l)) return [l.name, "Inside"];
   if (l && l.kind !== "stop") return [l.name, b.district];
@@ -2112,7 +2114,6 @@ const chunks = [...DETAIL.values()].map(m => { const c = { buf: buffer(m, gl.STA
 const signBuf = buffer(signs, gl.STATIC_DRAW), signN = signs.n / 10; signs.a = null;
 const detailN = chunks.reduce((s, c) => s + c.n, 0);
 const txtTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, txtTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, TXT); gl.generateMipmap(gl.TEXTURE_2D);
-  if (l && !isOpen(l) && l.stair && pl.y < l.H - .1) { const f = Storeys.levelAt(l, pl.y + .3); return [l.name, f ? "Floor " + f + ((l.storeys || [])[f] ? ", " + l.storeys[f] : "") : "Inside, ground floor"]; }   // which floor (storeys.js)
 for (const [kk, vv] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, kk, vv);
 const dyn = new Mesh(1 << 18), dynBuf = gl.createBuffer(), skyBuf = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
@@ -2194,6 +2195,7 @@ function nearRooms(eye) {
     const [a0, b0, a1, b1] = l.rect, dd = Math.hypot((a0 + a1) / 2 - eye[0], (b0 + b1) / 2 - eye[2]) - Math.hypot(a1 - a0, b1 - b0) / 2, have = ROOMS.get(l);
     if (!have && dd < 40 && built < 2) {
       const m = new Mesh(1 << 15); ROOM_REC = { lamps: [], foot: [] }; furnish(l, l.furn[0], l.furn[1], l.furn[2], m); built++;
+      if (l.stair) Storeys.build(l, 0, m, floorMatOf(l));    // the stair up and the ceiling with its opening
       const rec = ROOM_REC; ROOM_REC = null;
       ROOMS.set(l, roomEntry(l, m, rec, 0));
     } else if (have && dd > 70) { if (have.buf) gl.deleteBuffer(have.buf); if (have.ao) gl.deleteTexture(have.ao); ROOMS.delete(l); }
@@ -2247,7 +2249,6 @@ function frame(now) {
   if ((started || Life.designing) && !cam.fp && !cam.close && pl.pose !== 4) {   // not while in a car; and in the designer, to see who you are making
     let da = cam.yaw - pl.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
     People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.play ? pl.playPose : pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
-      if (l.stair) Storeys.build(l, 0, m, floorMatOf(l));    // the stair up and the ceiling with its opening
       look: pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
   }
   for (const [x, , T] of tramAt(clock.m)) Cars.tram(dyn, x, TRAM_Z, T, clock.m);   // the tram and the commuters on it (cars.js)
@@ -2268,9 +2269,9 @@ function frame(now) {
   const wm = dials.warm || 0; Lt.sunCol = [Lt.sunCol[0], Lt.sunCol[1] * (1 - .1 * wm), Lt.sunCol[2] * (1 - .26 * wm)]; Lt.sky = [Lt.sky[0] * (1 - .08 * wm), Lt.sky[1] * (1 - .04 * wm), Lt.sky[2]];   // a more golden sun against a deeper sky
   const Wx = weatherNow(clock.m), sun0 = Lt.sunCol, lum0 = sun0[0] * .3 + sun0[1] * .6 + sun0[2] * .1, lost = (1 - Wx.sun) * Lt.day;   // weather: cloud, rain and fog keep sunlight off the street and send some of it down as soft grey light
   Lt.sunCol = mul3(sun0, 1 - lost); Lt.sky = Lt.sky.map(v => v + lum0 * lost * SKY.overcast_fill); Lt.ground = mul3(Lt.ground, 1 - lost * .7); Lt.fogD *= Wx.haze; Lt.wet = Wx.wet; Lt.rain = Wx.rain;
+  Lt.sunCol = mul3(Lt.sunCol, 1 - (1 - Wx.sun) * Lt.night);   // cloud, rain and fog hide the moon too (WLD-042)
   const gi = dials.gi || 0, nu = (dials.neutral || 0) * (1 - .8 * gi), gl0 = Lt.ground[0] * .3 + Lt.ground[1] * .6 + Lt.ground[2] * .1; Lt.ground = mix3(Lt.ground, [gl0 * 1.04, gl0 * 1.0, gl0 * .95], nu);   // bounce off pale stone, not off orange: shade stays grey (world_street_kit_light.png)
   { const sl = Math.min(1, lum0 / SKY.sun_ref), bl = dials.blue == null ? 1 : dials.blue; Lt.zen = mix3(Lt.zen, mul3(SKY.zenith, sl * SKY.brightness), SKY.depth * Lt.day * bl * (1 - .85 * Wx.grey)); }   // a blue sky overhead by day; the horizon stays hazy (WLD-035, W5)
-  Lt.sunCol = mul3(Lt.sunCol, 1 - (1 - Wx.sun) * Lt.night);   // cloud, rain and fog hide the moon too (WLD-042)
   const vl = ((dials.veil || 0) + Wx.veil) * Lt.day * (1 - .45 * Wx.grey); Lt.fog = Lt.fog.map((v, i) => v + mix(sun0[i], lum0, Wx.grey) * vl); Lt.zen = Lt.zen.map((v, i) => v + sun0[i] * vl * .7);   // sunlight scattered all through the haze: a pale sky, and distance fades to it (W5)
   if (STUDIO) { Lt.dir = [-.45 / 1.0005, .74 / 1.0005, .5 / 1.0005]; Lt.sunCol = [3.2 / Math.PI, 3.2 / Math.PI * .82, 3.2 / Math.PI * .62]; Lt.sky = [.42 * .25, .55 * .25, .82 * .25];
     Lt.ground = [.004 + Lt.sunCol[0] * .1, .004 + Lt.sunCol[1] * .068, .005 + Lt.sunCol[2] * .042]; Lt.fogD = 0; Lt.fog = mul3(Lt.sky, 1.25); Lt.zen = mul3(Lt.sky, 1.5); Lt.exp = Math.pow(2, -.3); Lt.day = 1; Lt.night = 0; Lt.wet = 0; Lt.rain = 0; }
@@ -2312,12 +2313,12 @@ function frame(now) {
   gl.uniform3fv(sky.u.uZen, Lt.zen); gl.uniform3fv(sky.u.uHor, Lt.fog); gl.uniform3fv(sky.u.uSunCol, Lt.sunCol); gl.uniform1f(sky.u.uNight, Lt.night); gl.uniform1f(sky.u.uExp, Lt.exp);
   { const c = SKY.clouds, T = clock.day * 1440 + clock.m, cov = dials.clouds == null ? cloudCover(clock.m) * mix(1, Wx.cover, Lt.night) : dials.clouds;   // where the clouds are and what shape they have comes from the clock alone (WLD-036)
     gl.uniform4f(sky.u.uCl, cov, c.soft, c.scale, (c.change * T) % 512); gl.uniform2f(sky.u.uClOff, (c.wind[0] * c.speed * T) % 512, (c.wind[1] * c.speed * T) % 512); gl.uniform2f(sky.u.uClLit, c.lit, c.shade); }
-  gl.drawArrays(gl.TRIANGLES, 0, 3);
-  gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.enable(gl.CULL_FACE); gl.depthMask(true);   // on a tie the layer laid later (the upper one) wins
   { const N = NIGHT, Nt = Lt.Nt;   // the night sky (WLD-042): stars, Milky Way and moon from the clock, how much of them shows from the weather
     gl.uniformMatrix3fv(sky.u.uCel, false, Nt.cel); gl.uniform3fv(sky.u.uMoon, Nt.moon); gl.uniform3fv(sky.u.uSunT, Nt.sun); gl.uniform3fv(sky.u.uCity, mul3(N.city_glow, mix(1, 1.5, clamp(Wx.haze - 1, 0, 1))));
     gl.uniform4f(sky.u.uSt, N.stars.brightness * Wx.stars, N.stars.density, N.stars.twinkle, 2 * th / H); gl.uniform4f(sky.u.uMn, Nt.lit * Nt.up, N.moon.size, N.moon.glow * Wx.sun + .15, N.moon.dims_stars);
     gl.uniform3f(sky.u.uMw, N.milky_way.brightness * Wx.stars, N.milky_way.width, N.milky_way.dust); gl.uniform1f(sky.u.uT, now / 1000 % 600); }
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.enable(gl.CULL_FACE); gl.depthMask(true);   // on a tie the layer laid later (the upper one) wins
   const seen = pieces.filter(pc => !outside(VP, pc.box)), nearD = chunks.filter(ch => Math.hypot(ch.cx - cam.eye[0], ch.cz - cam.eye[2]) < DETAIL_R && !outside(VP, ch.box));
   const rooms = nearRooms(cam.eye); for (const rm of rooms) if (!outside(VP, rm.box)) nearD.push(rm);
   // the room the camera is in (or the nearest one in reach) gets its own lamps and contact shade; other rooms an even lamplight
@@ -2339,9 +2340,9 @@ function frame(now) {
     gl.uniform1i(u.uSh, 0); gl.uniform1i(u.uAO, 1); gl.uniform1i(u.uTxt, 2); gl.uniform4fv(u["uLamp[0]"], lamp); gl.uniform1i(u.uLampN, lampN); gl.uniform3f(u.uAOm, skyMap.lo, 1 / skyMap.size, 0);
     gl.uniform3fv(u.uSun, Lt.dir); gl.uniform3fv(u.uSunCol, Lt.sunCol); gl.uniform3fv(u.uSky, Lt.sky); gl.uniform3fv(u.uGround, Lt.ground); gl.uniform3fv(u.uFog, Lt.fog);
     gl.uniform3fv(u.uCam, cam.eye); gl.uniform1f(u.uNight, Lt.night); gl.uniform1f(u.uFogD, Lt.fogD); gl.uniform1f(u.uExp, Lt.exp); gl.uniform4f(u.uWet, Lt.wet * SKY.rain.wet_dark, Lt.wet * SKY.rain.wet_sheen, Lt.wet * SKY.rain.puddles, Lt.rain * SKY.rain.ripples); gl.uniform1f(u.uTime, now / 1000 % 600);
+    gl.uniform2f(u.uNk, mix(.15, NIGHT.lamp_wrap, Lt.night), mix(1, Wx.lamp_glow, Lt.night));   // at night lanterns light what faces them and glow less in clear air (WLD-042)
     gl.uniform1i(u.uRoomAO, 3); gl.uniform4fv(u["uRoomL[0]"], roomL); gl.uniform1i(u.uRoomLN, roomLN);
     { const h = People.hero(), o3 = e => e ? [...e.c, ...e.ix, ...e.iy, ...e.iz] : new Array(12).fill(0);   // the nearest face's shapes, for its per-pixel shadows
-    gl.uniform2f(u.uNk, mix(.15, NIGHT.lamp_wrap, Lt.night), mix(1, Wx.lamp_glow, Lt.night));   // at night lanterns light what faces them and glow less in clear air (WLD-042)
       if (h) { gl.uniform3fv(u["uHZ[0]"], o3(h.zone)); gl.uniform3fv(u["uHNo[0]"], o3(h.nose)); gl.uniform3fv(u["uHBr[0]"], o3(h.brim)); gl.uniform3f(u.uHSt, h.st, h.nose ? 1 : 0, h.brim ? 1 : 0);
         const lk = new Float32Array(16); h.locks.forEach((c, k) => { if (k < 2) { lk.set([c.a[0], c.a[1], c.a[2], c.r], k * 8); lk.set([c.b[0], c.b[1], c.b[2], 0], k * 8 + 4); } }); gl.uniform4fv(u["uHLk[0]"], lk); }
       else gl.uniform3f(u.uHSt, -1, 0, 0); }
@@ -2349,6 +2350,7 @@ function frame(now) {
     gl.uniform1i(u.uGi, 4); gl.uniform4f(u.uGiM, giAt[0], giAt[1], giAt[2], giK); gl.uniform4fv(u["uBlob[0]"], blob); gl.uniform1i(u.uBlobN, blobN);
     gl.uniform4fv(u["uPatA[0]"], SURF_A); gl.uniform4fv(u["uPatB[0]"], SURF_B);
     if (inRoom) gl.uniform4fv(u.uRoomR, inRoom.lot.rect); else gl.uniform4f(u.uRoomR, 0, 0, -1, -1);
+    gl.uniform2f(u.uRoomY, inRoom ? inRoom.y0 : Y_FLOOR, inRoom ? inRoom.y1 : GF);   // the floor the camera is on (storeys.js)
   };
   const blob = new Float32Array(64); let blobN = 0;         // the 16 pieces of street furniture nearest the camera shade the ground under them (trial light)
   if (giK > 0) { const near2 = []; for (const b of BLOBS) { const d2 = (b[0] - cam.eye[0]) ** 2 + (b[1] - cam.eye[2]) ** 2; if (d2 < 1600) near2.push([d2, b]); }
@@ -2392,4 +2394,3 @@ Sound.init(LOTS, D.blocks.flatMap(b => b.props.filter(p => p.kind === "fountain"
 for (const [k, v] of q) if (k.startsWith("d_")) window.wasted.dials[k.slice(2)] = +v;   // ?d_name=value sets a light dial from the address, for tests
 window.wasted.sound = Sound;
 requestAnimationFrame(frame);
-    gl.uniform2f(u.uRoomY, inRoom ? inRoom.y0 : Y_FLOOR, inRoom ? inRoom.y1 : GF);   // the floor the camera is on (storeys.js)

@@ -959,6 +959,8 @@ def storey_problems(w):
                 out.append("%s: stairwell %.1f by %.1f is too small" % (where, long_, short))
             if s["wall"] == side_of_door(l):
                 out.append("%s: stair against the door's wall" % where)
+            if s["wall"] == {"n": "s", "s": "n", "w": "e", "e": "w"}[side_of_door(l)]:
+                out.append("%s: stair against the back wall, where counters stand" % where)
             lv = l.get("levels", {})
             for k, v in l["objects"].items():
                 levels = lv.get(k, [0] * len(v))
