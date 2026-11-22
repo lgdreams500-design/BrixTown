@@ -1821,7 +1821,8 @@ function frame(now) {
     const r = Dress.apply(i, Dodge.apply(i, Talk.where(i, clock.m)), now / 1000); if (!r) continue;   // children on the swings (dressing.js)   // out of the way of the player's car (dodge.js)
     people.push([r.x, r.z]);
     const d = Math.hypot(r.x - near[0], r.z - near[1]); if (d > reach) continue;
-    if (d < 20) heard.push({ i, x: r.x, z: r.z, act: D.acts[r.act], walking: r.walking, pose: r.pose, ph: r.ph, inside: r.inside });
+    if (d < 20) heard.push({ i, x: r.x, z: r.z, act: D.acts[r.act], walking: r.walking, pose: r.pose, ph: r.ph, inside: r.inside,   // for sound.js
+      role: D.roles[D.residents[i].r], run: r.sig === People.SIG.Run, shout: r.shout || null, kind: (lotAt(r.x, r.z, true) || {}).kind });
     bodies++;
     const L = looks[i], dc = Math.hypot(r.x - cam.eye[0], r.z - cam.eye[2]); let lk = null;
     if (started && r.pose !== 3 && d < 5.5 && Math.abs(r.y - pl.y) < 2) {          // someone near turns to look: eyes first, head part of the way (M4)

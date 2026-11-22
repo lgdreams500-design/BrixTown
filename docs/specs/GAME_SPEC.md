@@ -1,7 +1,7 @@
 ---
 spec_id: WASTED-SPEC
 title: Wasted — Game Specification
-version: 0.5.0
+version: 0.5.1
 status: draft            # draft | reviewed | approved
 last_updated: 2026-11-22
 owner: project-owner
@@ -243,6 +243,9 @@ wording check; they are `in-progress` because the owner asked for the work.
 | SND-012 | A car shall have a radio with at least three stations, switched while driving. | F-SND-MUSIC | 1 | P1 | PH1 | in-progress | `test_SND_012_the_radio_has_three_stations` |
 | SND-013 | The player shall be able to turn all sound off and on with one key, remembered between visits. | F-SND-ACTION | 0 | P1 | PH1 | in-progress | |
 | SND-014 | The car radio shall also carry podcasts: shows with hosts who talk in wordless syllables in their own voices, each line shown as a caption, over quiet music. Where a show is shall follow the world clock, so everyone tuned in hears the same line. The shows are data. Asked for by the owner on 2026-11-22. | F-SND-MUSIC | 1 | P1 | PH1 | in-progress | `test_SND_014_the_radio_has_podcasts`, `test_SND_014_broken_podcasts_are_caught` |
+| SND-015 | What residents are doing shall be heard near them, from data: cutlery and cups where people eat, the espresso machine and till at work, bags in shops, coins and calls at a stall, typing, hammering, shears, deliveries, pages turned, snoring in bed, children on the swings, slide, seesaw, sandpit and climbing frame. | F-SND-WORLD | 1 | P1 | PH1 | in-progress | `test_SND_015_what_people_do_makes_a_sound`, `test_SND_015_broken_people_sounds_are_caught` |
+| SND-016 | Residents together shall talk in turns: one speaks a wordless phrase that falls to an end or rises to a question, another replies, then a pause; now and then someone laughs (children more often). Where many are gathered a crowd hum shall rise. Quiet places (library, museum, cinema, bedrooms) have no chatter. A passer-by sometimes says hello to the player; a resident who dodges the player's car shouts (CITY-071). | F-SND-WORLD | 1 | P1 | PH1 | in-progress | `test_SND_016_talk_is_turns_and_quiet_places_stay_quiet` |
+| SND-017 | People's movements shall be heard: steps louder when running and lighter and higher for children, on stone, wood or grass; a sound when a resident sits, lies down or gets up. Children's voices are higher, elders' lower. | F-SND-WORLD | 1 | P1 | PH1 | in-progress | `test_SND_017_children_sound_lighter` |
 
 ### 4.9 Quests — `QST`
 
@@ -474,3 +477,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.4.5 | 2026-11-22 | Sound (§4.8, SND-001 to SND-013) from the owner's pick of `F-SND-WORLD`, `F-SND-ACTION` and `F-SND-MUSIC` at level 1 for the first slice. Built in the browser slice from `World/rules/sound.json`. |
 | 0.4.6 | 2026-11-22 | SND-014: podcasts on the car radio (owner's request), as part of `F-SND-MUSIC` level 1. |
 | 0.5.0 | 2026-11-22 | Money, shops, quests and the character designer in the first slice, from the owner's request and picks (`F-ECO-BANK` 2, `F-BLD-SHOP` 2, `F-QUEST` 2, `F-CHR-DESIGN` 2). ECO-001 to 003 in progress; ECO-005, BANK-001, BANK-002, CHR-001 and CHR-002 moved to PH1. Added ECO-009 to 012, BANK-007, BANK-008, PROP-008, CHR-013 and §4.9 Quests (QST-001 to 008). ADR-0012. |
+| 0.5.1 | 2026-11-22 | SND-015 to SND-017: people's movements, activities and chatter (owner's request), as part of `F-SND-WORLD` level 1. SND-006's murmur becomes conversations that take turns. |

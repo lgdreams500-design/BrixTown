@@ -174,7 +174,7 @@ def dialogue_problems(w, acts=None):
 
 
 SOUND_ACTIONS = ("prompt", "sit", "lie", "stand", "lift", "jump", "talk_open", "talk_choose", "talk_close", "car_door", "map", "clock", "hour", "radio")
-SOUND_KINDS = ("tick", "thud", "rustle", "chime")
+SOUND_KINDS = ("tick", "thud", "rustle", "chime", "clink", "hiss", "snip", "type", "snore", "creak", "whoosh", "scrape", "clank")
 
 
 def sound_problems(w, acts=None):
@@ -219,9 +219,38 @@ def sound_problems(w, acts=None):
     for sh in ("AA", "EH", "EE", "OH", "OO"):               # every open vowel the lip sync shows has a voice
         if sh not in s["voices"]["shapes"]:
             out.append("sound: mouth shape %s has no voice" % sh)
-    for act in s["voices"]["murmur"]["acts"]:
-        if acts is not None and act not in acts:
-            out.append("sound: murmur for unknown activity %s" % act)
+    pe = s["people"]                                      # SND-015 to SND-017: people's steps, doings and talk
+    known = None
+    if acts is not None:                                  # the day's activities, and those residents choose (choices.json)
+        known = set(acts) | {o[0] for c in w["choices"]["choices"].values() for opts in c.values() for o in opts}
+    roles = set(w["roles"]["roles"])
+    for act in pe["chat"]["acts"]:
+        if known is not None and act not in known:
+            out.append("sound: chat for unknown activity %s" % act)
+    for name, r in pe["sounds"].items():
+        if r["kind"] not in SOUND_KINDS:
+            out.append("sound: people sound %s has an unknown kind %s" % (name, r["kind"]))
+    for pose, name in pe["poses"].items():
+        if name not in pe["sounds"]:
+            out.append("sound: no sound %s for %s" % (name, pose))
+    for role in pe["pitch"]:
+        if role not in roles:
+            out.append("sound: voice pitch for unknown role %s" % role)
+    for k, a in enumerate(pe["activities"]):
+        what = "activity %d (%s)" % (k, "/".join(a["acts"]))
+        if not a.get("sound") and not a.get("call"):
+            out.append("sound: %s makes no sound" % what)
+        if a.get("sound") and a["sound"] not in pe["sounds"]:
+            out.append("sound: %s plays unknown sound %s" % (what, a["sound"]))
+        for act in a["acts"]:
+            if known is not None and act not in known:
+                out.append("sound: %s is for unknown activity %s" % (what, act))
+        for role in a.get("roles", []):
+            if role not in roles:
+                out.append("sound: %s is for unknown role %s" % (what, role))
+        lo, hi = a["every"]
+        if not 0 < lo <= hi:
+            out.append("sound: %s repeats at a bad interval %s" % (what, a["every"]))
     m = s["music"]
 
     def style(st, where):

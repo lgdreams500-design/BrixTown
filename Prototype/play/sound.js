@@ -29,7 +29,7 @@ var Sound = (() => {
   let ctx = null, on = true, ready = false;
   try { on = localStorage.getItem("wasted.sound") !== "off"; } catch (e) { }
   let master, meter, bus = {}, outside, outsideLP, noise, L = { x: 0, z: 0, yaw: 0, lot: null }, lots = [], fountains = [], gardens = [];
-  const st = { engines: 0, trams: 0, murmur: 0, place: null, radio: 0, mood: null, steps: 0, birds: 0, line: false, lastAct: null };
+  const st = { engines: 0, trams: 0, murmur: 0, chat: 0, crowd: 0, acts: 0, laughs: 0, calls: 0, shouts: 0, greets: 0, place: null, radio: 0, mood: null, steps: 0, birds: 0, line: false, lastAct: null };
 
   // ---- the graph
   function build() {
@@ -81,6 +81,7 @@ var Sound = (() => {
         env(og, t0, .004, r.gain, r.kind === "tick" ? r.len : r.len * .9); o.start(t0); o.stop(t0 + r.len * 1.6);
       });
       g.gain.value = 1;
+    } else if (KINDS2[r.kind]) { g.gain.value = 1; KINDS2[r.kind](r, g, t);
     } else {
       const s = ctx.createBufferSource(); s.buffer = noise; s.playbackRate.value = r.kind === "thud" ? .5 : 1;
       const f = r.kind === "thud" ? filt("lowpass", r.hz * 3, 1) : filt("bandpass", r.hz, .8);
@@ -91,6 +92,26 @@ var Sound = (() => {
       }
     }
   }
+  // the small sounds of what people do (SND-015): each draws itself into g, starting at t
+  function burst(g, t, type, hz, q, peak, att, len, rate) {   // a shaped puff of noise through one filter
+    const s = ctx.createBufferSource(), e = ctx.createGain(); s.buffer = noise; if (rate) s.playbackRate.value = rate;
+    const f = filt(type, hz, q); chain(s, f, e, g); env(e, t, att, peak, len); s.start(t, Math.random()); s.stop(t + att + len + .1); return f;
+  }
+  function ping(g, t, hz, peak, len, type) {             // a struck tone
+    const o = ctx.createOscillator(), e = ctx.createGain(); o.type = type || "sine"; o.frequency.value = hz; chain(o, e, g); env(e, t, .002, peak, len); o.start(t); o.stop(t + len + .1);
+  }
+  const KINDS2 = {
+    clink(r, g, t) { for (let k = 0; k < (r.n || 1); k++) { const t0 = t + k * rnd(.05, .11), h = r.hz * rnd(.94, 1.08); ping(g, t0, h, r.gain, r.len); ping(g, t0, h * 1.51, r.gain * .5, r.len * .7); } },
+    hiss(r, g, t) { burst(g, t, "bandpass", r.hz, .7, r.gain, .08, r.len); },
+    snip(r, g, t) { burst(g, t, "highpass", r.hz, .7, r.gain, .001, r.len); burst(g, t + .07, "highpass", r.hz * 1.1, .7, r.gain * .8, .001, r.len); },
+    type(r, g, t) { let t0 = t; for (let k = 0; k < (r.n || 6); k++) { burst(g, t0, "bandpass", r.hz * rnd(.85, 1.2), 3, r.gain, .001, r.len); t0 += rnd(.07, .16); } },
+    snore(r, g, t) { burst(g, t, "lowpass", r.hz, .8, r.gain, r.len * .45, r.len * .5, .5); },
+    creak(r, g, t) { const o = ctx.createOscillator(), e = ctx.createGain(); o.type = "triangle"; o.frequency.setValueAtTime(r.hz, t); o.frequency.linearRampToValueAtTime(r.hz * 1.25, t + r.len);
+      chain(o, filt("bandpass", r.hz * 1.5, 2), e, g); e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(r.gain, t + r.len * .3); e.gain.linearRampToValueAtTime(0, t + r.len); o.start(t); o.stop(t + r.len + .05); },
+    whoosh(r, g, t) { const f = burst(g, t, "bandpass", r.hz, 1.2, r.gain, r.len * .4, r.len * .6); f.frequency.setValueAtTime(r.hz, t); f.frequency.exponentialRampToValueAtTime(r.hz * 3, t + r.len); },
+    scrape(r, g, t) { burst(g, t, "bandpass", r.hz, .5, r.gain, .05, r.len); },
+    clank(r, g, t) { ping(g, t, r.hz, r.gain, r.len, "triangle"); ping(g, t, r.hz * 2.76, r.gain * .5, r.len * .6); },
+  };
   function act(name, x, z) {                             // an action sound, here or out in the world
     if (!ready || !S.actions[name]) return; st.lastAct = name;
     const d = once(bus.action, x, z, 30); if (d) recipe(S.actions[name], d);
@@ -322,10 +343,10 @@ var Sound = (() => {
   }
 
   // ---- footsteps (SND-003)
-  function step(x, z, surface, gain, far) {
+  function step(x, z, surface, gain, far, pitch) {
     const d = once(bus.world, x, z, far); if (!d) return; st.steps++;
     const s = FS.surfaces[surface] || FS.surfaces.stone, src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = noise;
-    chain(src, filt("bandpass", s.hz * rnd(.85, 1.15), s.q), g, d); env(g, now(), .002, gain, s.len); src.start(now(), Math.random()); src.stop(now() + s.len + .05);
+    chain(src, filt("bandpass", s.hz * (pitch || 1) * rnd(.85, 1.15), s.q), g, d); env(g, now(), .002, gain, s.len); src.start(now(), Math.random()); src.stop(now() + s.len + .05);
   }
 
   // ---- engines (SND-002): a pool of voices given to the nearest moving cars; the player's car has its own
@@ -385,8 +406,8 @@ var Sound = (() => {
     if (tramSeen.size > 30) for (const k of [...tramSeen.keys()].slice(0, 10)) tramSeen.delete(k);
   }
 
-  // ---- voices (SND-005, SND-006): a resident's line voiced syllable by syllable in time with their mouth (CHR-009), and
-  // the murmur between residents who stand together. Never words (Q-14: text first).
+  // ---- voices (SND-005): a resident's line voiced syllable by syllable in time with their mouth (CHR-009). Never words
+  // (Q-14: text first). The talk between residents is under people, below.
   const pitchOf = i => VO.pitch.min + hashOf(i) * (VO.pitch.max - VO.pitch.min);
   function syllable(dest, t, hz, shape, len, gain) {
     const fm = VO.shapes[shape]; if (!fm) return;
@@ -411,20 +432,105 @@ var Sound = (() => {
     setTimeout(() => { st.line = false; }, (ln.end + .2) * 1000);
   }
   function hush() { if (lineOut) { lineOut.gain.setTargetAtTime(0, now(), .03); const o = lineOut; setTimeout(() => o.disconnect(), 300); lineOut = null; } st.line = false; }
-  const talkers = new Map();
-  const SHAPES = Object.keys(VO.shapes).filter(s => s !== "MBP");
-  function murmur(res) {
-    const M = VO.murmur, can = res.filter(r => !r.walking && r.pose !== 3 && M.acts.indexOf(r.act) >= 0 && Math.hypot(r.x - L.x, r.z - L.z) < M.far);
-    const chat = can.filter(r => can.some(o => o !== r && Math.hypot(o.x - r.x, o.z - r.z) < M.pair_m)).sort((a, b) => Math.hypot(a.x - L.x, a.z - L.z) - Math.hypot(b.x - L.x, b.z - L.z)).slice(0, M.groups * 2);
-    st.murmur = chat.length;
-    for (const r of chat) {
-      let tk = talkers.get(r.i); if (!tk) { tk = { next: now() + rnd(0, 2) }; talkers.set(r.i, tk); }
-      if (now() < tk.next) continue;
-      const d = once(bus.voice, r.x, r.z, M.far); let t = now() + .02; const n = 2 + Math.floor(Math.random() * 7), base = pitchOf(r.i);
-      if (d) for (let k = 0; k < n; k++) { const len = 1 / M.syllables_per_s * rnd(.6, 1.2); syllable(d, t, base * rnd(.94, 1.08), SHAPES[Math.floor(Math.random() * SHAPES.length)], len * .8, M.gain); t += len; }
-      tk.next = t + rnd(M.pause_s[0], M.pause_s[1]);
+  // ---- people (SND-003, SND-006, SND-015 to SND-017): the steps, sitting and standing, and doings of the residents near
+  // the listener; conversations that take turns, with laughter; the hum of a crowd; sellers calling; shouts at a driver.
+  // All from World/rules/sound.json "people". Nothing is stored about anyone beyond what is near (per-resident timers).
+  const PE = S.people, SND = PE.sounds, BY_ACT = new Map(), SHAPES = Object.keys(VO.shapes).filter(x => x !== "MBP");
+  for (const a of PE.activities) for (const act of a.acts) { if (!BY_ACT.has(act)) BY_ACT.set(act, []); BY_ACT.get(act).push(a); }
+  const voiceHz = r => { const pr = PE.pitch[r.role]; return pr ? pr[0] + hashOf(r.i) * (pr[1] - pr[0]) : pitchOf(r.i); };
+  const pst = new Map(), groups = new Map();
+  let crowdBed = null, crowdT = 0, pruneT = 0;
+  function sfx(name, x, z, far) { const r = SND[name], d = r && once(bus.world, x, z, far || PE.far); if (d) { recipe(r, d); st.acts++; } }
+  function phrase(dest, t, base, n, gain, ask) {         // n wordless syllables that fall to an end (or rise to a question)
+    const C = PE.chat;
+    for (let k = 0; k < n; k++) {
+      const len = 1 / C.syllables_per_s * rnd(.6, 1.25), f = k / Math.max(1, n - 1), c = ask ? 1 + .22 * f * f : 1.06 - .12 * f;
+      syllable(dest, t, base * c * rnd(.96, 1.04), SHAPES[Math.floor(Math.random() * SHAPES.length)], len * .8, gain); t += len;
     }
-    if (talkers.size > 200) talkers.clear();
+    return t;
+  }
+  function laugh(dest, t, base, gain) {                  // ha-ha-ha, falling and fading
+    const n = 3 + Math.floor(Math.random() * 3);
+    for (let k = 0; k < n; k++) { syllable(dest, t, base * (1.3 - k * .06), k % 2 ? "EH" : "AA", .09, gain * (1 - k * .13)); t += rnd(.13, .17); }
+    st.laughs++; return t;
+  }
+  function people(res, F) {
+    const C = PE.chat, tnow = now(); let nSteps = 0, busy = 0;
+    const order = res.map(r => [Math.hypot(r.x - L.x, r.z - L.z), r]).sort((a, b) => a[0] - b[0]).map(a => a[1]);   // nearest first
+    for (const r of order) {
+      const d = Math.hypot(r.x - L.x, r.z - L.z), child = r.role === "child";
+      let p = pst.get(r.i);
+      if (!p) { p = { half: null, pose: r.pose, act: r.act, next: new Map(), shout: null, greet: -1e9 }; pst.set(r.i, p); }
+      p.seen = tnow;
+      if (r.walking && d < FS.far) {                     // steps: louder running, lighter and higher for children (SND-017)
+        const half = Math.floor((r.ph || 0) * 2);
+        if (p.half !== null && half !== p.half && nSteps++ < FS.max)
+          step(r.x, r.z, r.inside ? "wood" : r.kind === "garden" ? "grass" : "stone", FS.resident_gain * (r.run ? PE.steps.run_louder : 1) * (child ? PE.steps.child_softer : 1), FS.far, child ? PE.steps.child_pitch : 1);
+        p.half = half;
+      } else p.half = null;
+      if (p.pose !== r.pose && d < 10) {                 // sitting down, lying down, getting up
+        const name = r.pose === 2 ? PE.poses.sit : r.pose === 3 ? PE.poses.lie : p.pose >= 2 ? PE.poses.stand : null;
+        if (name) sfx(name, r.x, r.z, 10);
+      }
+      p.pose = r.pose;
+      if (p.act !== r.act) { p.act = r.act; p.next.clear(); }
+      const doing = !r.walking && d < PE.far && BY_ACT.get(r.act); if (doing) busy++;
+      if (doing && busy <= PE.busy) for (const a of doing) {   // what they are doing, now and then (the nearest few only)
+        if (a.roles && a.roles.indexOf(r.role) < 0 || a.chance !== undefined && hashOf(r.i * 7 + 3) > a.chance) continue;
+        const due = p.next.get(a);
+        if (due === undefined) { p.next.set(a, tnow + rnd(0, a.every[1])); continue; }
+        if (tnow < due) continue;
+        p.next.set(a, tnow + rnd(a.every[0], a.every[1]));
+        if (a.sound) sfx(a.sound, r.x, r.z);
+        if (a.call) { const dd = once(bus.voice, r.x, r.z, 30); if (dd) { phrase(dd, tnow + .05, voiceHz(r) * 1.15, 2 + Math.floor(Math.random() * 2), PE.call_gain, false); st.calls++; } }
+      }
+      if (r.shout && r.shout !== p.shout && window.Talk && Talk.speak) {   // told off: the shout, voiced (CITY-071)
+        const dd = once(bus.voice, r.x, r.z, 40); if (dd) { voice(dd, Talk.speak(r.shout), voiceHz(r) * 1.2, PE.shout_gain); st.shouts++; }
+      }
+      p.shout = r.shout || null;
+      const G = PE.greet;                                // a passer-by says hello as the player goes by
+      if (F.walk && F.walk.moving && !F.talk && r.pose < 2 && d < G.m && tnow - p.greet > G.every_s) {
+        p.greet = tnow;
+        if (Math.random() < G.chance) { const dd = once(bus.voice, r.x, r.z, 10); if (dd) { phrase(dd, tnow + .1, voiceHz(r) * 1.1, 2, G.gain, false); st.greets++; } }
+      }
+    }
+    // conversations: people standing or sitting together take turns to talk, and now and then laugh (SND-006)
+    const can = res.filter(r => !r.walking && r.pose !== 3 && C.acts.indexOf(r.act) >= 0 && Math.hypot(r.x - L.x, r.z - L.z) < C.far);
+    const used = new Set(), found = [];
+    for (const r of can) {
+      if (used.has(r.i)) continue;
+      const g = [r]; used.add(r.i);
+      for (let k = 0; k < g.length; k++) for (const o of can) if (!used.has(o.i) && Math.hypot(o.x - g[k].x, o.z - g[k].z) < C.pair_m) { g.push(o); used.add(o.i); }
+      if (g.length > 1) found.push(g);
+    }
+    found.sort((a, b) => Math.hypot(a[0].x - L.x, a[0].z - L.z) - Math.hypot(b[0].x - L.x, b[0].z - L.z));
+    const live = new Set(); st.chat = 0; st.murmur = 0;
+    for (const g of found.slice(0, C.groups)) {
+      const key = g.map(r => r.i).sort((a, b) => a - b).join(","); live.add(key); st.chat++; st.murmur += g.length;
+      let gs = groups.get(key); if (!gs) { gs = { turn: Math.floor(Math.random() * g.length), next: tnow + rnd(0, 1.5) }; groups.set(key, gs); }
+      if (tnow < gs.next) continue;
+      const who = g[gs.turn % g.length], dd = once(bus.voice, who.x, who.z, C.far); let end = tnow + .3;
+      if (dd) end = phrase(dd, tnow + .02, voiceHz(who), C.syllables[0] + Math.floor(Math.random() * (C.syllables[1] - C.syllables[0] + 1)), C.gain, Math.random() < C.question);
+      const kids = g.some(r => r.role === "child");
+      if (Math.random() < (kids ? C.child_laugh : C.laugh)) {          // someone else in the group laughs at it
+        const o = g[(gs.turn + 1) % g.length], d2 = once(bus.voice, o.x, o.z, C.far); if (d2) end = Math.max(end, laugh(d2, end + .05, voiceHz(o), C.laugh_gain));
+      }
+      gs.turn++;
+      gs.next = end + (gs.turn % (2 + Math.floor(Math.random() * 2)) === 0 ? rnd(C.pause_s[0], C.pause_s[1]) : rnd(C.turn_gap_s[0], C.turn_gap_s[1]));
+    }
+    for (const k of groups.keys()) if (!live.has(k)) groups.delete(k);
+    // the hum of a crowd: where many are gathered, a low bed and distant syllables from among them
+    const Cr = PE.crowd, near = res.filter(r => !r.walking && r.pose !== 3 && Math.hypot(r.x - L.x, r.z - L.z) < Cr.far);
+    const k = sm(Cr.min, Cr.full, near.length); st.crowd = near.length;
+    if (!crowdBed) { crowdBed = gainOf(0); chain(noiseSrc(), filt("bandpass", Cr.hz, .9), crowdBed, bus.voice); }
+    ramp(crowdBed.gain, Cr.gain * k * .5, .8);
+    crowdT -= F.dt;
+    if (k > 0 && crowdT <= 0) {
+      const r = near[Math.floor(Math.random() * near.length)], dd = once(bus.voice, r.x, r.z, Cr.far);
+      if (dd) phrase(dd, tnow + .02, voiceHz(r), 2 + Math.floor(Math.random() * 4), Cr.gain * (.5 + .5 * k), Math.random() < .2);
+      crowdT = rnd(.5, 1.5) / (Cr.per_s * (1 + near.length / 4));
+    }
+    if (tnow - pruneT > 10) { pruneT = tnow; for (const [i, q] of pst) if (tnow - q.seen > 30) pst.delete(i); }
   }
 
   // ---- music (SND-010 to SND-012)
@@ -516,7 +622,7 @@ var Sound = (() => {
   }
 
   // ---- each frame, from play.js
-  let lastStep = null, lastRes = new Map(), birdT = 0, prevV, drive = null, prevGround = true, prevVy = 0;
+  let lastStep = null, birdT = 0, prevV, drive = null, prevGround = true, prevVy = 0;
   function frame(F) {
     if (!ready || ctx.state !== "running") return;
     L.x = F.x; L.z = F.z; L.yaw = F.yaw; L.lot = F.lot;
@@ -541,15 +647,8 @@ var Sound = (() => {
       if (w.onGround && !prevGround && prevVy < -3) act2("land", FS.land_gain * Math.min(1.5, -prevVy / 6));
       prevGround = w.onGround; prevVy = w.vy;
     }
-    // residents walking near: their steps; residents standing together: their murmur
-    let n = 0; const seen = new Map();
-    for (const r of F.residents) {
-      if (!r.walking) continue; const d = Math.hypot(r.x - L.x, r.z - L.z); if (d > FS.far) continue;
-      const half = Math.floor((r.ph || 0) * 2), p = lastRes.get(r.i); seen.set(r.i, half);
-      if (p !== undefined && p !== half && n++ < FS.max) step(r.x, r.z, r.inside ? "wood" : "stone", FS.resident_gain, FS.far);
-    }
-    lastRes = seen;
-    murmur(F.residents);
+    // the residents near: steps, sitting and standing, what they are doing, their talk, the crowd
+    people(F.residents, F);
     // vehicles
     if (F.drive && !drive) drive = { since: now() }; else if (!F.drive) drive = null;
     if (drive) Object.assign(drive, F.drive, { prev: prevV }); prevV = F.drive ? F.drive.v : undefined;

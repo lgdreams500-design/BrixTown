@@ -289,6 +289,41 @@ class TheSounds(unittest.TestCase):
     def test_SND_012_the_radio_has_three_stations(self):
         self.assertGreaterEqual(len([s for s in self.S["music"]["radio"] if "style" in s]), 3)
 
+    def test_SND_015_what_people_do_makes_a_sound(self):
+        pe = self.S["people"]
+        acts = {a for x in pe["activities"] for a in x["acts"]}
+        for a in ("eat", "shop", "sell", "work", "read", "sleep", "swing", "slide", "seesaw", "sandpit", "climb"):
+            self.assertIn(a, acts)
+        jobs = {r for x in pe["activities"] if "work" in x["acts"] for r in x.get("roles", [])}
+        for role in ("cafe", "shopkeeper", "clerk", "maker", "nurse", "gardener", "utility"):
+            self.assertIn(role, jobs, role + " at work is silent")
+
+    def test_SND_016_talk_is_turns_and_quiet_places_stay_quiet(self):
+        c = self.S["people"]["chat"]
+        self.assertLess(c["turn_gap_s"][1], c["pause_s"][0] + 1)           # a reply comes sooner than a new topic
+        self.assertGreater(c["child_laugh"], c["laugh"])                   # children laugh more
+        for quiet in ("read", "view", "watch", "sleep"):
+            self.assertNotIn(quiet, c["acts"])
+
+    def test_SND_017_children_sound_lighter(self):
+        pe = self.S["people"]
+        self.assertGreater(pe["pitch"]["child"][0], self.S["voices"]["pitch"]["max"] - 40)
+        self.assertGreater(pe["steps"]["child_pitch"], 1)
+        self.assertLess(pe["steps"]["child_softer"], 1)
+        self.assertGreater(pe["steps"]["run_louder"], 1)
+
+    def test_SND_015_broken_people_sounds_are_caught(self):
+        import copy
+        w = copy.deepcopy(W)
+        pe = w["sound"]["people"]
+        pe["activities"].append({"acts": ["juggle"], "every": [1, 2], "sound": "drum"})
+        pe["activities"].append({"acts": ["eat"], "every": [5, 1], "roles": ["pirate"], "sound": "cup"})
+        pe["sounds"]["bang"] = {"kind": "explosion", "hz": 100, "len": 1, "gain": .5}
+        import build_play
+        p = world.sound_problems(w, build_play.ACTS)
+        for bit in ("unknown sound drum", "unknown activity juggle", "unknown role pirate", "bad interval", "unknown kind explosion"):
+            self.assertTrue(any(bit in x for x in p), bit)
+
     def test_SND_010_the_piano_only_plays_chords(self):
         import copy
         self.assertIn("epiano", self.S["music"]["chords_only"])
@@ -337,7 +372,7 @@ class TheSounds(unittest.TestCase):
         s["ambience"]["birds"]["gain"] = 3
         s["ambience"]["birds"]["from"] = "25:00"
         p = world.sound_problems(w, ["eat"])
-        for bit in ("action lift", "XX", "casino", "blues", "jazz", "birds.gain", "25:00", "murmur for unknown activity shop"):
+        for bit in ("action lift", "XX", "casino", "blues", "jazz", "birds.gain", "25:00", "chat for unknown activity sell"):
             self.assertTrue(any(bit in x for x in p), bit)
 
 
