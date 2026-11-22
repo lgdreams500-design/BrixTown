@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-FURNITURE
 title: Wasted — Furniture (designs, the furniture companies and their outlets, furniture in the home)
-version: 0.2.0
+version: 0.3.0
 status: draft            # every row proposed; the owner accepts
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.5 PROP; same ID rules; new prefix FURN
@@ -52,7 +52,7 @@ are not in this file; the owner said both come later.
 
 | ID | Requirement | Feature | Lvl | Pri | Proven by |
 |---|---|---|---|---|---|
-| FURN-001 | The catalogue shall be data. Each base piece has a stable id, a room (living, bed, kitchen, bath, children, office, garden, shop), a kind, a footprint on a 5 cm grid, a height, whether it stands on the floor, hangs on a wall or sits on another piece, its places to sit, lie or use (CITY-030), its kit parts, its flat-pack boxes (count and size) and an assembly time. Each catalogue item is a base piece in one finish and colour, with its own id and usual price in chips. | F-FURN-ITEMS | 1 | P0 | `test_FURN_001_catalogue_valid` |
+| FURN-001 | The catalogue shall be data. Each base piece has a stable id, a room (living, bed, kitchen, bath, children, office, hall, garden, shop), a kind, a footprint on a 5 cm grid, a height, whether it stands on the floor, hangs on a wall or sits on another piece, its places to sit, lie or use (CITY-030), its kit parts, its flat-pack boxes (count and size) and an assembly time. Each catalogue item is a base piece in one finish and colour, with its own id and usual price in chips. | F-FURN-ITEMS | 1 | P0 | `test_FURN_001_catalogue_valid` |
 | FURN-002 | Every piece shall be built from one shared kit of parts (legs, frames, panels, tops, cushions, doors, drawers, handles, shades) on the 5 cm grid, so a new piece is a new row of data. The Blender look test and the engine build pieces from the same rows. | F-FURN-ITEMS | 1 | P1 | look test |
 | FURN-003 | Every piece shall follow the interior style (ART_DIRECTION §2.6, rules I1–I9, and `docs/art/INTERIOR_STYLE.md`; ADR-0026). A Blender look test renders every catalogue item on a contact sheet and checks each piece's built size against its data. | F-FURN-ITEMS | 1 | P0 | look test |
 | FURN-004 | Every piece shall be able to get into a home: carried whole by one or two people through a door and up the stairs (WLD-050 to WLD-053, `World/rules/storeys.json`), or in its boxes. A piece too big for that is marked flat-pack only, and every box fits. | F-FURN-ITEMS | 1 | P0 | `test_FURN_004_fits_through_doors` |
@@ -115,4 +115,5 @@ buy-back share. Every number `[ASSUMPTION]` until tuned in play.
 | Version | Date | Change |
 |---|---|---|
 | 0.1.0 | 2026-11-22 | First draft from the owner's request and picks (`F-FURN-ITEMS` 2, `F-FURN-STORE` 2, `F-PROP-FURNISH` 2, `F-OBJ-CARRY` 1): FURN-001 to 008, 020 to 035, 050 to 057; Q-30 to Q-32. All proposed. |
+| 0.3.0 | 2026-11-22 | The owner asked for at least ten more furniture kits and more kinds of objects and decoration: look test `furniture_kit_18.py` (twelve kits, 78 base pieces in the four lines; renders in `Art/StyleTests/furniture_kit_18/`, not approved). FURN-001 gains a hall room. |
 | 0.2.0 | 2026-11-22 | The outlet built outside the East Gate (owner's request; Q-30 decided; ADR-0027): FURN-020 and FURN-021 accepted, with tests. FURN-003 and FURN-005 point at the approved look (ADR-0026). |

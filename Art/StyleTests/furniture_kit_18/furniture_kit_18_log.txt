@@ -1,0 +1,46 @@
+22:27:06 Blender 5.3.0
+22:27:06 12 kits, 78 new base pieces, 312 made in the four lines
+22:27:33 sheet_kitchen rendered in 26.4s (539 objects)
+22:28:46 room_kitchen rendered in 73.3s (203 objects)
+22:28:46   kitchen room in the Plain line
+22:29:09 sheet_bathroom rendered in 22.4s (284 objects)
+22:30:17 room_bathroom rendered in 67.7s (132 objects)
+22:30:17   bathroom room in the Curve line
+22:30:45 sheet_dining rendered in 27.9s (553 objects)
+22:32:10 room_dining rendered in 84.2s (288 objects)
+22:32:10   dining room in the Old Town line
+22:32:41 sheet_study rendered in 30.6s (547 objects)
+22:33:38 room_study rendered in 56.7s (202 objects)
+22:33:38   study room in the Workshop line
+22:34:05 sheet_children rendered in 26.0s (641 objects)
+22:35:12 room_children rendered in 67.2s (184 objects)
+22:35:12   children room in the Curve line
+22:35:37 sheet_hallway rendered in 24.1s (461 objects)
+22:36:52 room_hallway rendered in 74.7s (235 objects)
+22:36:52   hallway room in the Old Town line
+22:37:18 sheet_garden rendered in 25.9s (507 objects)
+22:38:07 room_garden rendered in 49.0s (199 objects)
+22:38:07   garden room in the Workshop line
+22:38:35 sheet_shop rendered in 27.4s (727 objects)
+22:40:01 room_shop rendered in 85.3s (223 objects)
+22:40:01   shop room in the Plain line
+22:40:27 sheet_cafe rendered in 25.1s (433 objects)
+22:42:01 room_cafe rendered in 93.8s (231 objects)
+22:42:01   cafe room in the Old Town line
+22:42:26 sheet_bedroom rendered in 24.8s (491 objects)
+22:43:17 room_bedroom rendered in 49.9s (172 objects)
+22:43:17   bedroom room in the Plain line
+22:43:45 sheet_living rendered in 27.7s (522 objects)
+22:44:54 room_living rendered in 69.1s (182 objects)
+22:44:54   living room in the Curve line
+22:45:16 sheet_decor rendered in 20.7s (688 objects)
+22:46:09 room_decor rendered in 52.3s (240 objects)
+22:46:09   decor room in the Old Town line
+22:46:09 DONE
+re-rendered after widening the curtains and adding a lamp to the decor room:
+22:47:25 room_bedroom rendered in 50.6s (172 objects)
+22:47:25   bedroom room in the Plain line
+22:47:46 sheet_decor rendered in 20.2s (688 objects)
+22:48:43 room_decor rendered in 56.6s (245 objects)
+22:48:43   decor room in the Old Town line
+22:48:43 DONE

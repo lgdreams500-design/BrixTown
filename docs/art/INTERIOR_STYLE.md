@@ -62,6 +62,15 @@ warehouse hall has tall timber racks of boxes. No fluorescent white light, no sh
 | Are four lines right? | **Decided 2026-11-22:** all four (ADR-0026). |
 | Should the handles and details be larger than real (I3)? | **Decided 2026-11-22** with the lines: 1.3×, as rendered (ADR-0026). |
 
+## 5a. More kits (look test 18, not approved)
+
+`Tools/blender/furniture_kit_18.py` builds on kit 17 and adds twelve kits, each piece in all four lines from the same
+kit parts: kitchen, bathroom, dining, study, children, hallway, garden, shop, café, bedroom, living and decoration
+(78 base pieces, 312 in the four lines). Renders in `Art/StyleTests/furniture_kit_18/`: a sheet per kit and one room
+per kit in one line. New objects need a few new shared materials, used the same way by every line (I6): porcelain and
+enamel (matte, Cream), a dull blue-grey mirror that never shines (I1), chalkboard, cork, wicker and terracotta pots.
+They are for the owner to choose from; nothing here is in force until approved.
+
 ## 6. How the renders get their look, and how the game must match it
 
 The look test renders are not painted or filtered: the look comes from a handful of settings in the scripts
