@@ -767,7 +767,32 @@ window.Houses = (() => {
     if (has("flowers")) { const u = du - 3.4, v = GF + 1.4; B(u - 1.6, 0, v - .45, u + 1.6, .22, v + .45, C.soil);
       for (let k = 0; k < 9; k++) Y(u - 1.4 + k * .35, .22, v + (k % 2 ? .18 : -.18), .22, .25, .22, [C.terracotta, C.cream, C.plum, C.ochre][k % 4], 9, 0, dm); }
     if (has("woodpile")) { const u = GU - .6, v = 1.5; B(u - .35, 0, v - 1.0, u + .35, 1.1, v + 1.0, C.brown); B(u - .45, 1.1, v - 1.1, u + .45, 1.18, v + 1.1, C.wood); solidBox(u - .45, v - 1.1, u + .45, v + 1.1, 1.2); }
+    // the everyday things of a home outside (owner 2026-11-23: "add mail, trash cans, etc outside the house")
+    const iron = [.2, .21, .22], lid = [.26, .27, .28];
+    for (const u of [4.75, 5.45]) { Y(u, 0, -HV - .5, .55, .85, .55, iron); Y(u, .85, -HV - .5, .62, .06, .62, lid); Y(u, .91, -HV - .5, .14, .05, .06, iron); }   // two dustbins by the front corner
+    Y(5.1, 0, -HV - 1.15, .6, .3, .42, [.2, .34, .3]); Y(5.0, .3, -HV - 1.15, .3, .08, .25, C.cream); Y(5.22, .3, -HV - 1.1, .12, .2, .12, [.3, .42, .2]);   // a recycling crate: papers, a bottle
+    solidBox(4.4, -HV - 1.4, 5.8, -HV - .2, 1.0);
+    B(du - .45, S0, -HV - .5, du + .45, S0 + .02, -HV - .1, [.36, .26, .16]);                         // the doormat on the step
+    B(du + .78, S0 + 1.7, -HV - .03, du + 1.02, S0 + 1.9, -HV, line === "workshop" ? C.cream : C.charcoal);   // the house number
+    B(du + .85, S0 + 1.76, -HV - .04, du + .95, S0 + 1.84, -HV - .03, line === "workshop" ? C.charcoal : C.cream);
+    B(du - 1.0, S0 + 2.0, -HV - .2, du - .82, S0 + 2.32, -HV, C.charcoal); B(du - .98, S0 + 2.05, -HV - .18, du - .84, S0 + 2.27, -HV - .02, GLOW_W, 2);   // the door lamp
+    Y(gate[1] + .55, 1.12, GF + .14, .26, .14, .04, C.cream);                                         // post in the letterbox
+    if (has("parcel")) { Y(du + .45, S0, -HV - .35, .4, .3, .32, [.58, .48, .32], 9, .3); Y(du + .45, S0 + .3, -HV - .35, .4, .02, .08, C.teal, 9, .3); }   // a parcel waiting on the step
+    if (has("milk")) for (const k of [0, 1]) Y(du - .5 + k * .12, S0, -HV - .3, .08, .24, .08, C.cream);
+    if (has("birdbath")) { Y(2.6, 0, -7.0, .2, .8, .2, C.stone, 6); Y(2.6, .8, -7.0, .7, .12, .7, C.stone, 6); Y(2.6, .9, -7.0, .5, .03, .5, [.3, .4, .45]); solidAt1(Fr, 2.6, -7.0, 0, .95, .3); }
+    { const u = -GU + .75, v = GB - .75; B(u - .5, 0, v - .5, u + .5, .9, v + .5, C.wood); for (let k = 0; k < 4; k++) B(u - .52, .1 + k * .2, v - .52, u + .52, .16 + k * .2, v - .5, C.brown); solidBox(u - .5, v - .5, u + .5, v + .5, 1.0); }   // the compost bin
+    { const v = 3.3; B(HU, .5, v - .25, HU + .12, 1.0, v + .25, [.2, .34, .3]); Y(HU + .2, .5, v, .1, .5, .5, [.3, .4, .25]); }   // a hose reel on the side wall
+    if (!has("bistro") && has("shed")) {                                                              // a garden shed in the back corner
+      const u0 = GU - 2.4, u1 = GU - .4, v0 = GB - 2.4, v1 = GB - .4, h = 2.1;
+      B(u0, 0, v0, u1, h, v1, line === "plain" ? C.cream : line === "workshop" ? [.3, .22, .15] : C.wood); B(u0 + .7, 0, v0 - .02, u1 - .7, 1.9, v0, lk.door);
+      qd1(m, Fr, [u0 - .15, h, v0 - .15], [u1 + .15, h, v0 - .15], [u1 + .15, h + .5, (v0 + v1) / 2], [u0 - .15, h + .5, (v0 + v1) / 2], lk.roof, 11);
+      qd1(m, Fr, [u0 - .15, h + .5, (v0 + v1) / 2], [u1 + .15, h + .5, (v0 + v1) / 2], [u1 + .15, h, v1 + .15], [u0 - .15, h, v1 + .15], lk.roof, 11);
+      for (const u of [u0, u1]) qd1(m, Fr, [u, h, v0], [u, h, v1], [u, h + .5, (v0 + v1) / 2], [u, h + .5, (v0 + v1) / 2], line === "plain" ? C.cream : C.wood, 9, Math.sign(u), 0);
+      solidBox(u0, v0, u1, v1, 2.6);
+      if (has("can")) Y(u0 - .4, 0, v0 + .3, .3, .28, .18, C.teal);                                  // a watering can by its door
+    } else if (has("can")) Y(GU - 2.4, 0, 3.0, .3, .28, .18, C.teal);
   }
+  const GLOW_W = [1.0, .8, .5];
 
   function placesS(l, Fr) {
     const o = l.objects || {}, loc = (x, z) => { const dx = x - Fr.cx, dz = z - Fr.cz; return [-(dx * Fr.c + dz * Fr.s), -dx * Fr.s + dz * Fr.c]; };   // world to Blender x, y
