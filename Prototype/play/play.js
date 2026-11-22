@@ -1464,13 +1464,13 @@ float hKeep(vec3 q,float st){
   if(st<4.5) return (1.-hS(q.z,-.5))*(1.-hS(q.y,-.35)*hS(q.z,.22));
   return 1.-hS(q.z,.12); }
 float hSolid(vec3 c,vec3 ix,vec3 iy,vec3 iz){ vec3 r=vP-c, o=vec3(dot(r,ix),dot(r,iy),dot(r,iz)), d=vec3(dot(uSun,ix),dot(uSun,iy),dot(uSun,iz));
-  if(dot(o,o)<1.) return 0.; float t=-dot(o,d)/dot(d,d); if(t<=0.) return 0.; return smoothstep(1.55,.5,length(o+t*d)); }
+  if(dot(o,o)<1.) return 0.; float t=-dot(o,d)/dot(d,d); if(t<=0.) return 0.; return smoothstep(1.25,.45,length(o+t*d)); }
 float heroShade(){
   vec3 r=vP-uHZ[0], o=vec3(dot(r,uHZ[1]),dot(r,uHZ[2]),dot(r,uHZ[3])); if(dot(o,o)>1.12||o.z<-.85) return 1.;
   float v=1.; vec3 d=vec3(dot(uSun,uHZ[1]),dot(uSun,uHZ[2]),dot(uSun,uHZ[3]));
   float a=dot(d,d), b=dot(o,d), disc=b*b-a*(dot(o,o)-1.);
   if(disc>0.){ float t2=(-b+sqrt(disc))/a; if(t2>.04) v*=1.-hKeep(o+t2*d,uHSt.x); }
-  if(uHSt.y>.5) v*=1.-hSolid(uHNo[0],uHNo[1],uHNo[2],uHNo[3]);
+  if(uHSt.y>.5) v*=1.-.8*hSolid(uHNo[0],uHNo[1],uHNo[2],uHNo[3]);
   if(uHSt.z>.5) v*=1.-hSolid(uHBr[0],uHBr[1],uHBr[2],uHBr[3]);
   for(int i=0;i<2;i++){ float rr=uHLk[i*2].w; if(rr<=0.) continue; vec3 A=uHLk[i*2].xyz, V=uHLk[i*2+1].xyz-A, w=vP-A;
     float B=dot(uSun,V), C=dot(V,V), D=dot(uSun,w), E=dot(V,w), den=C-B*B, sg=den>1e-6?clamp((E-B*D)/den,0.,1.):0., t=max(0.,B*sg-D);

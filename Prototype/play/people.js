@@ -324,7 +324,7 @@ const People = (() => {
     if (lod === 0) {                                                  // the body's big shapes, for self-shadow: 1 head, 2 hair or hat, 4 torso, 8 and 16 arms, 32 and 64 legs
       const fw0 = (L.fm || FM0).face_w, ohx = sc(Wd(mv(P.Rh, [1, 0, 0])), fw0), ohy = Wd(mv(P.Rh, [0, 1, 0])), ohz = Wd(mv(P.Rh, [0, 0, 1])), ohc = add(Wp(P.headJ), sc(ohz, .156 * Sh));
       const at = (a, b, c2) => add(ohc, add(add(sc(ohx, a * Sh), sc(ohy, b * Sh)), sc(ohz, c2 * Sh))), ell = (id, ctr, rx, ry, rz, keep) => oEll(id, ctr, sc(ohx, rx * Sh), sc(ohy, ry * Sh), sc(ohz, rz * Sh), keep);
-      const noseO = ell(128, at(0, -.117, -.0325), .012, .0105, .018), occ = [ell(1, ohc, .104, .11, .14), noseO], hs = L.hair; let hairO = null, brimO = null, stId = 0; const lockO = [];
+      const nsz = (L.fm || FM0).nose * .72, noseO = ell(128, at(0, -.108, -.0226), .0115 * nsz, .013 * nsz, .017 * nsz), occ = [ell(1, ohc, .104, .11, .14), noseO], hs = L.hair; let hairO = null, brimO = null, stId = 0; const lockO = [];
       if (L.cap) { hairO = ell(2, at(0, .006, .016), .134, .142, .168, (x, y, z) => z >= .12); brimO = ell(2, at(0, -.135, .067), .09, .075, .012); stId = 5; occ.push(hairO, brimO); }
       else if (hs === "afro") { hairO = ell(2, at(0, .012, .035), .159, .165, .2, (x, y, z) => !(z < -.5 || (y < -.35 && z < .22))); stId = 4; occ.push(hairO); }
       else if (hs !== "bald") { stId = hs === "side" ? 2 : hs === "bob" || hs === "long" ? 3 : 1; occ.push(hairO = ell(2, at(0, .012, .014), .124, .132, .16, hs === "side" ? (x, y, z) => !(z < -.35 || (y < -.25 && z < .3 + .28 * x) || (y < .25 && z < .05))
@@ -443,7 +443,7 @@ const People = (() => {
       const by = (.008 + .0445 * Math.max(1, es * .9)) * RZ / .13 + fm.brow;
       for (const e of [-1, 1]) limb(ms, HR(FS(e * (ex - .02), by, .0045)), HR(FS(e * (ex + .025), by + .004, .0045)), .0048 * Sh, .0032 * Sh, 12, sc(hairC, .6), fl, true, hy, sd);
       TEX = tex0; OSKIP = 129 | HEROSKIP;
-      ball(ms, HR(FS(0, -.03 * RZ / .13, .003)), sc(hx, .0115 * ns * .85 * Sh), sc(hy, .013 * ns * .85 * Sh), sc(hz, .017 * ns * .85 * Sh), 18, 12, L.skin, fl, sd);
+      ball(ms, HR(FS(0, -.021 * RZ / .13, .003)), sc(hx, .0115 * ns * .72 * Sh), sc(hy, .013 * ns * .72 * Sh), sc(hz, .017 * ns * .72 * Sh), 18, 12, L.skin, fl, sd);
       TEX = 0; OSKIP = 1 | HEROSKIP; PLAIN = true;
       cheeks(blob, L);
       blob(0, -.1, -.053, .032 * fm.lips, .005, .0062, [.34, .13, .11], 10, 3);
