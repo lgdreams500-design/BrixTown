@@ -1381,7 +1381,8 @@ void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
 uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
 uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO;
-uniform sampler2D uGi; uniform vec4 uGiM, uBlob[16]; uniform int uBlobN;
+uniform sampler2D uGi; uniform vec4 uGiM, uBlob[16]; uniform int uBlobN; uniform vec3 uPf;
+uniform vec3 uHZ[4], uHNo[4], uHBr[4], uHSt; uniform vec4 uHLk[4];
 uniform vec4 uPatA[16], uPatB[16];                       // stone, brick and paving patterns (World/rules/surfaces.json): (type, unit w, unit h, joint), (vary, bevel, dome, -)
 ${NOISE}
 ${TONE}
@@ -1409,6 +1410,31 @@ vec3 roomLight(vec3 n,float person){
 }
 float sunNear(vec2 xz,float lod){                 // how much of the ground round a spot is in the sun (the GI map, read blurred)
   vec2 uv=(xz-uGiM.xy)*uGiM.z, e=min(uv,1.-uv); return mix(.55,texture2D(uGi,uv,lod).r,smoothstep(0.,.06,min(e.x,e.y))); }
+// The nearest face (people.js): its own shadows worked out for every pixel. uHZ is the hair or hat as a shell (centre, then the three
+// rows that turn a point into the shell's own unit space), uHNo the nose and uHBr a hat's brim the same way, uHLk two locks as rods;
+// uHSt says which hair it is, and whether there is a nose and a brim. A point of the face looks along the sun: if it leaves the shell
+// through hair that is there, it is in the hair's shade; the cut round the face is soft, so the shade's edge is too.
+float hS(float a,float b){ return smoothstep(b+.2,b-.2,a); }          // a soft "a is less than b"
+float hKeep(vec3 q,float st){
+  if(st<.5) return 0.;
+  if(st<1.5) return (1.-hS(q.z,-.35))*(1.-hS(q.y,-.25)*hS(q.z,.45))*(1.-hS(q.y,.25)*hS(q.z,.05));
+  if(st<2.5) return (1.-hS(q.z,-.35))*(1.-hS(q.y,-.25)*hS(q.z,.3+.28*q.x))*(1.-hS(q.y,.25)*hS(q.z,.05));
+  if(st<3.5) return (1.-hS(q.z,-.8))*(1.-hS(q.y,-.3)*hS(q.z,.38));
+  if(st<4.5) return (1.-hS(q.z,-.5))*(1.-hS(q.y,-.35)*hS(q.z,.22));
+  return 1.-hS(q.z,.12); }
+float hSolid(vec3 c,vec3 ix,vec3 iy,vec3 iz){ vec3 r=vP-c, o=vec3(dot(r,ix),dot(r,iy),dot(r,iz)), d=vec3(dot(uSun,ix),dot(uSun,iy),dot(uSun,iz));
+  if(dot(o,o)<1.) return 0.; float t=-dot(o,d)/dot(d,d); if(t<=0.) return 0.; return smoothstep(1.55,.5,length(o+t*d)); }
+float heroShade(){
+  vec3 r=vP-uHZ[0], o=vec3(dot(r,uHZ[1]),dot(r,uHZ[2]),dot(r,uHZ[3])); if(dot(o,o)>1.12||o.z<-.85) return 1.;
+  float v=1.; vec3 d=vec3(dot(uSun,uHZ[1]),dot(uSun,uHZ[2]),dot(uSun,uHZ[3]));
+  float a=dot(d,d), b=dot(o,d), disc=b*b-a*(dot(o,o)-1.);
+  if(disc>0.){ float t2=(-b+sqrt(disc))/a; if(t2>.04) v*=1.-hKeep(o+t2*d,uHSt.x); }
+  if(uHSt.y>.5) v*=1.-hSolid(uHNo[0],uHNo[1],uHNo[2],uHNo[3]);
+  if(uHSt.z>.5) v*=1.-hSolid(uHBr[0],uHBr[1],uHBr[2],uHBr[3]);
+  for(int i=0;i<2;i++){ float rr=uHLk[i*2].w; if(rr<=0.) continue; vec3 A=uHLk[i*2].xyz, V=uHLk[i*2+1].xyz-A, w=vP-A;
+    float B=dot(uSun,V), C=dot(V,V), D=dot(uSun,w), E=dot(V,w), den=C-B*B, sg=den>1e-6?clamp((E-B*D)/den,0.,1.):0., t=max(0.,B*sg-D);
+    if(t>.012){ sg=clamp((E+B*t)/C,0.,1.); v*=1.-smoothstep(rr*1.5,rr*.5,length(w+t*uSun-sg*V)); } }
+  return v; }
 float shadow(){                                   // soft shadow from the sun's (or moon's) point of view
   if(uShOn<.5) return 1.; vec3 s=vS; if(s.x<0.||s.x>1.||s.y<0.||s.y>1.||s.z>1.) return 1.;
   vec2 p=s.xy*2048.-.5, b0=floor(p), fr=p-b0; float lit=0.;
@@ -1457,12 +1483,12 @@ vec4 pat(vec2 q,vec4 A,vec4 B){
   float sh=e.z<=min(min(e.x,e.y),e.w)?1.:(e.w<=min(e.x,e.y)?0.:.45);      // the bed under a stone is in its shadow; the one above it is lit
   return vec4(j,id,bev,sh); }
 void main(){
-  float f=vF; vec3 c=vC; vec3 n=normalize(vN); vec3 tc=uCam-vP; float d=length(tc); vec3 vd=-tc/d;
-  float hh=45., dy=vP.y-uCam.y; float k=abs(dy)>.05?(exp(-uCam.y/hh)-exp(-vP.y/hh))/(dy/hh):exp(-uCam.y/hh);
+  float f=vF; vec3 c=vC; vec3 n=normalize(vN); float skyP=clamp(length(vN)*2.-1.,0.,1.); vec3 tc=uCam-vP; float d=length(tc); vec3 vd=-tc/d;
   if(abs(c.x)>1.5){                                                        // a near person (people.js): the colour comes packed in one number, with two coordinates that stay on the cloth
     float p=abs(c.x), k=c.x>0.?1.:.3; vec2 q=c.yz; vec3 e=clamp((vec3(floor(p/65536.),floor(mod(p,65536.)/256.),mod(p,256.))-64.)/127.,0.,1.); c=e*e;
     float m1=ns(vec3(q*8.,1.))*.6+ns(vec3(q*21.,5.))*.4, fib=ns(vec3(q.x*150.+m1*4.,q.y*46.,3.))*.55+ns(vec3(q.x*60.,q.y*190.+m1*3.,7.))*.45;   // soft two-tone blotches, and fine fibres across them
     c*=mix(1.,(.84+.3*smoothstep(.25,.8,m1))*(.9+.2*fib),k); }                // cloth as the reference paints it (cloth() in old_town_04.py): the tone runs from 0.82 to 1.12 of its colour, brushed
+  float hh=45., dy=vP.y-uCam.y; float k=abs(dy)>.05?(exp(-uCam.y/hh)-exp(-vP.y/hh))/(dy/hh):exp(-uCam.y/hh);
   float fog=1.-exp(-d*uFogD*max(k,0.));
   float blot=clamp((ns(vP*.9)*.6+ns(vP*2.7+7.)*.4-.5)*2.2+.5,0.,1.), nearK=1.-min(1.,d/70.);
   vec3 col; bool emis=false; float inside=0.;
@@ -1541,7 +1567,7 @@ void main(){
     if(f>1.5&&f<2.5){ col=vec3(1.,.55,.22)*6.; emis=true; }                // lantern glass: emission strength 6
     else if(f>22.5&&f<23.5){ col=c*5.; emis=true; }                         // a signal lamp, lit in its own colour (roads.js)
     else {
-      vec3 hemi=mix(uGround,uSky,n.y*.5+.5), light;
+      vec3 hemi=mix(uGround,uSky,n.y*.5+.5), light, sunL=vec3(0.);
       if(f>2.5&&f<3.5){ light=roomLight(n,0.); c=paint(c,vec3(.76),blot); inside=1.; }
       else if(f>14.5&&f<19.5){ light=roomLight(n,0.); inside=1.; }   // room surfaces and furniture (roomLight above)
       else if(f>9.5&&f<10.5){ float up=n.y*.5+.5;                       // a person indoors: the room's light, a little more from above so the body keeps its form
@@ -1549,22 +1575,26 @@ void main(){
       else {
         vec2 a=texture2D(uAO,(vP.xz+n.xz-uAOm.x)*uAOm.y).rg; float vis=mix(a.r,1.,clamp((vP.y-.3)/max(a.g*85.,.6),0.,1.));   // how much sky this spot sees
         if(abs(n.y)<.5&&!(f>21.5&&f<22.5)) c*=.66+.34*smoothstep(.1,1.4,vP.y);   // grime at the foot of walls (not on cars)
-        float ndl=max(dot(n,uSun),0.); light=uSunCol*(ndl>0.?ndl*shadow():0.);
-        if((f>13.5&&f<14.5)||(f>21.5&&f<22.5)){ float up=n.y*.5+.5, bw=dot(n,normalize(vec3(-uSun.x,-.45,-uSun.z)))*.5+.5;   // a person or a car: sky from above, bounce from the sunlit side away from the sun, so shade still models the body
-          if(f<14.5){ float ks=dot(n,normalize(vec3(uSun.x,.9,uSun.z)))*.5+.5, dn=max(-n.y,0.);   // a person in shade: the sky is brightest round the sun, so that side of the body is lit more, and what faces down is darker
-            light+=uSky*(.14+.6*up*up+.62*ks*ks*ks)*vis*vis*(1.-.4*dn)+uGround*gk*(1.-.5*vis)*(.3+1.3*bw*bw); }
-          else light+=uSky*(.28+.82*up*up)*vis*vis+uGround*gk*(1.-.5*vis)*(.38+1.25*bw*bw); }
-        else light+=(uSky*(n.y*.35+.65)*vis*vis+uGround*gk*(1.-.5*vis))*ct;   // sun, sky seen, and light bounced off sunlit stone
-        for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*.85+.15)); } }   // lanterns (W6)
-      col=c*light*(1.-wetG*uWet.x);
-      if(wetG>0.&&uWet.x>0.){                                              // wet paving (WLD-037): puddles that hold the sky, a sheen towards the light, and rings where drops land
-        float fr=pow(1.-max(dot(-vd,n),0.),4.), pud=smoothstep(.5,.6,ns(vec3(vP.xz*.37+vP.zx*.11,3.))*.5+ns(vec3(vP.xz*.83-vP.zx*.29,9.))*.3+ns(vec3(vP.xz*2.1+vP.zx*.6,5.))*.2)*uWet.z;
+        c*=1.-uWet.x*.3*(1.-wetG);                                         // everything out in the rain is a little darker
+        float ndl=max(dot(n,uSun),0.); light=uSunCol*(ndl>0.?ndl*shadow():0.); sunL=light;
         float gk=1., ct=1.;
         if(uGiM.w>0.){ float fl=length(n.xz); vec2 fw=n.xz/max(fl,1e-3);         // trial: bounce follows the sunlit ground a surface faces; a floor or ceiling takes what is round it
           float sn=fl>.3?sunNear(vP.xz+fw*1.5,1.)*.5+sunNear(vP.xz+fw*4.5,2.5)*.5:sunNear(vP.xz,2.5);
           gk=mix(1.,(n.y>.5?.42:.14)+1.75*sn,uGiM.w);   // a floor also catches light off the walls round it
           float hy=vP.y-${Y_PAVE.toFixed(2)}; if(hy<1.1) for(int i=0;i<16;i++){ if(i>=uBlobN) break;   // contact shade: the ground, and the foot of a wall, darken where something stands
             ct*=1.-.6*uGiM.w*smoothstep(1.9,.7,length((vP.xz-uBlob[i].xy)/uBlob[i].zw))*smoothstep(1.1,0.,hy); } }
+        if((f>13.5&&f<14.5)||(f>21.5&&f<22.5)){ float up=n.y*.5+.5, bw=dot(n,normalize(vec3(-uSun.x,-.45,-uSun.z)))*.5+.5;   // a person or a car: sky from above, bounce from the sunlit side away from the sun, so shade still models the body
+          if(f<14.5){ light*=clamp(1.-(14.-f)/.4,0.,1.); if(uHSt.x>-.5) light*=heroShade(); sunL=light; float ks=dot(n,normalize(vec3(uSun.x,.9,uSun.z)))*.5+.5, dn=max(-n.y,0.);   // a person in shade: the sky is brightest round the sun, so that side of the body is lit more, and what faces down is darker
+            light+=uSky*(.14+.6*up*up+.62*ks*ks*ks)*vis*2.9*(1.-.4*dn)*uPf.x+(uSunCol*vec3(.1,.068,.042)+.004)*gk*(1.-.5*vis)*(.3+1.3*bw*bw)*.6*uPf.y; light=sunL+(light-sunL)*mix(.3,1.,skyP); }   // set by matching one standing figure to character_lineup.png under that image's own light (?studio=1): more of the sky a person can see, less bounce
+          else light+=uSky*(.28+.82*up*up)*vis*vis+uGround*gk*(1.-.5*vis)*(.38+1.25*bw*bw); }
+        else light+=(uSky*(n.y*.35+.65)*vis*vis+uGround*gk*(1.-.5*vis))*ct;   // sun, sky seen, and light bounced off sunlit stone
+        for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*.85+.15)); } }   // lanterns (W6)
+      col=c*light*(1.-wetG*uWet.x);
+      if(f>13.5&&f<14.5) col*=1.-.93*smoothstep(.1,.42,dot(n,vd));           // the inside of a hair shell or a hat, seen past the face, is in its own shade
+      if(f>13.5&&f<14.5&&uPf.z>0.){ float fr=pow(1.-abs(dot(-vd,n)),4.);   // people: the faint sheen every surface has in the renders, strongest at a glancing angle. It lifts dark cloth and cools it with the sky
+        col+=(uSky*(.6+.4*n.y)*1.6+uGround*.5+sunL*.22)*(uPf.z*(.02+.1*fr)); }
+      if(wetG>0.&&uWet.x>0.){                                              // wet paving (WLD-037): puddles that hold the sky, a sheen towards the light, and rings where drops land
+        float fr=pow(1.-max(dot(-vd,n),0.),4.), pud=smoothstep(.5,.6,ns(vec3(vP.xz*.37+vP.zx*.11,3.))*.5+ns(vec3(vP.xz*.83-vP.zx*.29,9.))*.3+ns(vec3(vP.xz*2.1+vP.zx*.6,5.))*.2)*uWet.z;
         vec3 refl=uFog*.8+uSky*.6+light*(1.1*uNight); col=mix(col,col*.5+refl*(.08+.55*fr+.1*uNight),pud)+refl*(uWet.y*fr*(1.-pud));   // by night the water holds the lamplight
         if(uWet.w>0.&&d<26.){ vec2 g=vP.xz/.3, id=floor(g), o=fract(g)-.5+(vec2(h3(vec3(id,22.)),h3(vec3(id,23.)))-.5)*.4;
           float hh=h3(vec3(id,21.)), ph=fract(uTime*(1.2+hh)+hh*9.), rg=smoothstep(.07,0.,abs(length(o)-ph*.26))*(1.-ph)*(1.-ph)*step(hh,uWet.w*.6);
@@ -1575,7 +1605,6 @@ void main(){
   col+=vec3(1.,.62,.32)*(glow*min(uFogD,.007)*1.6);                       // every lantern glows in the haze around it (no more than in a thick haze, or rain and fog turn the night orange)
   gl_FragColor=vec4(tone(col*uExp),1.);
 }`;
-        c*=1.-uWet.x*.3*(1.-wetG);                                         // everything out in the rain is a little darker
 const main = program(MAIN_VS, MAIN_FS), signProg = program(MAIN_VS, "#define LETTERS\n" + MAIN_FS);   // only the painted names cut holes, so the town's shader keeps the early depth test
 const pre = program(MAIN_VS, `precision mediump float; void main(){ gl_FragColor=vec4(1.); }`);       // depth only, laid first so each pixel is lit once
 const sky = program(`attribute vec2 aQ; varying vec2 vQ; void main(){ vQ=aQ; gl_Position=vec4(aQ,.9999,1.); }`,
@@ -1610,14 +1639,6 @@ void main(){ vec3 d=normalize(uRf+vQ.x*uRr+vQ.y*uRu);
   float a=ring(d,1.6,3.)+ring(d,3.2,5.)*.8+ring(d,6.,7.)*.6+ring(d,11.,9.)*.45;
   gl_FragColor=vec4(tone(uCol*uExp),min(a,1.)*uR.y); }`);
 const depthProg = program(`attribute vec3 aP; uniform mat4 uVP; void main(){ gl_Position=uVP*vec4(aP,1.); }`, `precision mediump float; void main(){ gl_FragColor=vec4(1.); }`);
-const SH = 2048; let shFbo = null, shTex = null;
-if (gl.getExtension("WEBGL_depth_texture")) {                     // a depth picture of the scene from the sun, for shadows
-  shTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, shTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT, SH, SH, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null);
-  const colTex = gl.createTexture(), par = t => { for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v); };
-  par(); gl.bindTexture(gl.TEXTURE_2D, colTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, SH, SH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); par();
-  shFbo = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, shFbo);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, colTex, 0); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, shTex, 0);
-  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) shFbo = null;
 // Local bounce and contact shade (dial gi, key G; ADR-0018): bounced light only where sunlit ground is near, and shade under street furniture.
 // GI map: a small picture, redrawn each frame, of which ground near the camera the sun reaches. The lit pass reads it blurred, so a wall
 // facing a sun patch is warmed by it and a wall deep in an alley is not, as in the path-traced reference renders.
@@ -1633,6 +1654,14 @@ const giProg = program(`attribute vec2 aQ; varying vec2 vQ; void main(){ vQ=aQ*.
 float lit(vec2 xz){ vec3 s=(uSM*vec4(xz.x,.5,xz.y,1.)).xyz*.5+.5; if(s.x<0.||s.x>1.||s.y<0.||s.y>1.||s.z>1.) return 1.; return step(s.z,texture2D(uSh,s.xy).r+.0006); }
 void main(){ vec2 xz=uGiM.xy+vQ/uGiM.z; float d=${(GI_SIZE / GI_N * .25).toFixed(3)};
   gl_FragColor=vec4(vec3((lit(xz+vec2(d,d))+lit(xz+vec2(-d,d))+lit(xz+vec2(d,-d))+lit(xz+vec2(-d,-d)))*.25),1.); }`);
+const SH = 2048; let shFbo = null, shTex = null;
+if (gl.getExtension("WEBGL_depth_texture")) {                     // a depth picture of the scene from the sun, for shadows
+  shTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, shTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT, SH, SH, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null);
+  const colTex = gl.createTexture(), par = t => { for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v); };
+  par(); gl.bindTexture(gl.TEXTURE_2D, colTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, SH, SH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); par();
+  shFbo = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, shFbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, colTex, 0); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, shTex, 0);
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) shFbo = null;
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 }
 function bakeSky() {                                       // a map of how much sky each spot on the ground sees, worked out once from the heights around it
@@ -1695,6 +1724,7 @@ addEventListener("keydown", e => { if (e.code === "KeyY" && !e.repeat && started
   u.set("season", names[(names.indexOf(D.day.season) + 1) % names.length]); u.set("auto", "1");
   for (const [k, v] of [["x", pl.x], ["z", pl.z], ["y", pl.y], ["yaw", cam.yaw], ["pitch", cam.pitch], ["t", clock.m]]) u.set(k, (+v).toFixed(2));
   location.search = u.toString(); } });
+addEventListener("keydown", e => { if (e.code === "KeyG" && !e.repeat && window.wasted) window.wasted.dials.gi = window.wasted.dials.gi ? 0 : 1; });   // G: local bounce and contact shade off and on, to compare with the flat fill it replaced
 addEventListener("keydown", e => { if (e.code === "KeyK" && !e.repeat) { const order = [null, "clear", "cloud", "rain", "fog"]; wxTry = order[(order.indexOf(wxTry) + 1) % order.length]; } });
 const WX_KIND = i => wxTry || (SKY.clouds.follow_weather && (D.day.weather || [])[((i % 4) + 4) % 4]) || "clear";
 function weatherNow(m) {
@@ -1703,11 +1733,14 @@ function weatherNow(m) {
     out[k] = into < b ? mix(v(s - 1), v(s), .5 + .5 * into / b) : into > 360 - b ? mix(v(s), v(s + 1), .5 * (into - (360 - b)) / b) : v(s); }
   out.wet = Math.max(Math.min(1, out.rain * 1.5), SKY.weather[WX_KIND(s - 1)].rain > 0 ? clamp(1 - into / SKY.rain.dry_minutes, 0, 1) : 0);
   return out;
-addEventListener("keydown", e => { if (e.code === "KeyG" && !e.repeat && window.wasted) window.wasted.dials.gi = window.wasted.dials.gi ? 0 : 1; });   // G: local bounce and contact shade off and on, to compare with the flat fill it replaced
 }
+// ?studio=1: one standing person under the light and camera of the reference lineup (Tools/blender/character_face_05.py, sheets()), to compare
+// the slice's people with character_lineup.png without the town's own light in the way. Sun from the front left at 48 degrees, strength 3.2 in
+// (1, 0.82, 0.62); a flat sky of (0.42, 0.55, 0.82) at 0.25; two 60 W lanterns by the wall behind; no haze; exposure -0.3; a 60 mm lens from 9.6 m.
+const STUDIO = new URLSearchParams(location.search).has("studio"), STUDIO_AT = [300.5, 186.6], STUDIO_WHO = Math.max(0, (+new URLSearchParams(location.search).get("studio") || 1) - 1);   // ?studio=2 shows the second person of the lineup, and so on
+const LINEUP = STUDIO || new URLSearchParams(location.search).has("lineup") ? People.cast() : null;
 function lighting(m) {                                       // the reference recipe (sun 14 W/m2, sky 0.35, haze) carried through the day
   const rise = D.day.sunrise * 60, set = D.day.sunset * 60, day = smooth(0, 1, Math.min((m - (rise - 30)) / 60, ((set + 30) - m) / 60));
-const LINEUP = new URLSearchParams(location.search).has("lineup") ? People.cast() : null;
   const a = clamp((m - rise) / (set - rise), 0, 1) * Math.PI, unit = v => { const n = Math.hypot(v[0], v[1], v[2]); return v.map(q => q / n); };
   const sun = unit([Math.cos(a) * .85, Math.sin(a) * .8 + .08, .42 * Math.sin(a) + .12]), moon = unit([-.42, .74, -.52]), low = smooth(.05, .5, sun[1]), isDay = day > .03;
   const fogD = mix(.014, .009, low) * (.6 + .4 * day), through = Math.exp(-fogD * 14 / Math.max(sun[1], .12));      // sunlight left after crossing the haze
@@ -1787,6 +1820,7 @@ function findTarget0() {
   if (!target) target = Cars.target(pl, clock.m);        // a parked car to drive (cars.js)
 }
 function stepCamera(dt) {
+  if (STUDIO) { const gy = groundBase(STUDIO_AT[0], STUDIO_AT[1]), near = new URLSearchParams(location.search).has("face"), D9 = near ? (+new URLSearchParams(location.search).get("face") >= 2 ? 1.25 : 2.6) : 9.6, ch = near ? 1.5 : 1.25, d = [0, (near ? 1.5 : .97) - ch, -D9], n = Math.hypot(d[0], d[1], d[2]); cam.fp = true; cam.eye = [STUDIO_AT[0], gy + ch, STUDIO_AT[1] + D9]; cam.dir = d.map(v => v / n); return; }   // &face=1: the same lens brought up to the head
   const cp = Math.cos(cam.pitch); cam.dir = [Math.sin(cam.yaw) * cp, Math.sin(cam.pitch), -Math.cos(cam.yaw) * cp];
   if (!started && Life.designing) return Life.camera();  // the character designer turns round the player (life.js)
   if (!started) {                                        // before play: a slow turn above Market Square
@@ -1872,6 +1906,7 @@ buildWorld(); Dress.init();                              // which play spot is o
 if (RANGES[RANGES.length - 1][1] !== world.n) fail("World pieces do not cover the whole town mesh.");
 const worldBuf = buffer(world, gl.STATIC_DRAW), worldN = world.n / 10, skyMap = bakeSky();
 const pieces = RANGES.filter(r => r[1] > r[0]).map(([s, e, town]) => ({ first: s / 10, count: (e - s) / 10, town, box: boxOf(world.a, s, e) }));
+Smash.prepare();                                         // breakable things keep their own copy of their triangles (smash.js)
 world.a = null;
 const chunks = [...DETAIL.values()].map(m => { const c = { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, cx: m.cx, cz: m.cz, box: boxOf(m.a, 0, m.n) }; m.a = null; return c; });
 const signBuf = buffer(signs, gl.STATIC_DRAW), signN = signs.n / 10; signs.a = null;
@@ -1935,7 +1970,6 @@ function roomAO(l, foot) {
   const blur = (src, r) => { const t = new Float32Array(w * hgt), o = new Float32Array(w * hgt), n = 2 * r + 1;     // a box blur, across then down
     for (let j = 0; j < hgt; j++) for (let i = 0; i < w; i++) { let s = 0; for (let k = -r; k <= r; k++) s += src[j * w + Math.min(w - 1, Math.max(0, i + k))]; t[j * w + i] = s / n; }
     for (let j = 0; j < hgt; j++) for (let i = 0; i < w; i++) { let s = 0; for (let k = -r; k <= r; k++) s += t[Math.min(hgt - 1, Math.max(0, j + k)) * w + i]; o[j * w + i] = s / n; }
-Smash.prepare();                                         // breakable things keep their own copy of their triangles (smash.js)
     return o; };
   const a = blur(blur(g, 2), 1), px = new Uint8Array(w * hgt);
   for (let k = 0; k < w * hgt; k++) px[k] = Math.round(255 * Math.min(1, Math.max(g[k] * .8, a[k] * 1.8)));
@@ -1960,6 +1994,7 @@ function nearRooms(eye) {
 let last = performance.now(); const stat = { detail: 0 }; const PIN_Q = new URLSearchParams(location.search).has("quality");   // ?quality=1 or 0.5 holds the picture for timing
 if (PIN_Q) quality = clamp(+new URLSearchParams(location.search).get("quality") || 1, .5, 1);
 function frame(now) {
+  People.setSun(STUDIO ? [-.45 / 1.0005, .74 / 1.0005, .5 / 1.0005] : lighting(clock.m).dir, cam.eye);   // for the shadows a body casts on itself (people.js)
   const dt = Math.min(.05, (now - last) / 1000); last = now; fps = mix(fps, 1 / Math.max(dt, 1e-3), .05);
   if (fps < 27 && quality > .5 && !PIN_Q) { slow += dt; if (slow > 3) { quality = Math.max(.5, quality - .25); slow = 0; } } else slow = 0;      // a slow machine gets a softer picture, not a slow game
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5) * quality, W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
@@ -1991,15 +2026,16 @@ function frame(now) {
   }
   if (started) Talk.pick();                               // the nearest resident in reach can be talked to (E)
   if (started) Life.frame(dt);                            // money, quests and jobs move on with the clock (life.js)
+  if (LINEUP) LINEUP.forEach((L, k) => { if (STUDIO && k !== STUDIO_WHO) return; const lx = STUDIO ? STUDIO_AT[0] : 300.5 + k * 1.1; People.draw(dyn, lx, groundBase(lx, 186.6), 186.6, Math.PI, L, 0, { ph: 0, t: now / 1000, lod: 0, fl: 14, mod: STUDIO ? { arms: [[1, 0, 4, 0], [1, 0, 4, 0]] } : null }); });   // in the studio the arms hang straight, as in the reference   // ?lineup=1: the six people of character_lineup.png in a row on Linden Street, to compare with it
   if ((started || Life.designing) && !cam.fp && !cam.close && pl.pose !== 4) {   // not while in a car; and in the designer, to see who you are making
     let da = cam.yaw - pl.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
-  if (LINEUP) LINEUP.forEach((L, k) => People.draw(dyn, 300.5 + k * 1.1, groundBase(300.5 + k * 1.1, 186.6), 186.6, Math.PI, L, 0, { ph: 0, t: now / 1000, lod: 0, fl: 14 }));   // ?lineup=1: the six people of character_lineup.png in a row on Linden Street, to compare with it
     People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
       look: pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
   }
   for (const [x, , T] of tramAt(clock.m)) Cars.tram(dyn, x, TRAM_Z, T, clock.m);   // the tram and the commuters on it (cars.js)
   stat.cars = Cars.draw(dyn, clock.m, near, reach);
   stat.signals = Roads.draw(dyn, clock.m, near, 220);     // the lit lamp of each traffic light (roads.js)
+  stat.smash = Smash.draw(dyn, tags, now / 1000);         // broken things, falling and lying, and the repair crews (smash.js)
   Dress.draw(dyn, cam.eye, now / 1000);                   // swing seats and seesaws (dressing.js)       // residents' cars, parked and driving (cars.js)
   if (started) {                                          // what the listener hears (sound.js): where they are and what is near
     const lot = pl.y < 6 ? lotAt(pl.x, pl.z) : null, drv = pl.pose === 4;
@@ -2017,7 +2053,9 @@ function frame(now) {
   const gi = dials.gi || 0, nu = (dials.neutral || 0) * (1 - .8 * gi), gl0 = Lt.ground[0] * .3 + Lt.ground[1] * .6 + Lt.ground[2] * .1; Lt.ground = mix3(Lt.ground, [gl0 * 1.04, gl0 * 1.0, gl0 * .95], nu);   // bounce off pale stone, not off orange: shade stays grey (world_street_kit_light.png)
   { const sl = Math.min(1, lum0 / SKY.sun_ref), bl = dials.blue == null ? 1 : dials.blue; Lt.zen = mix3(Lt.zen, mul3(SKY.zenith, sl * SKY.brightness), SKY.depth * Lt.day * bl * (1 - .85 * Wx.grey)); }   // a blue sky overhead by day; the horizon stays hazy (WLD-035, W5)
   const vl = ((dials.veil || 0) + Wx.veil) * Lt.day * (1 - .45 * Wx.grey); Lt.fog = Lt.fog.map((v, i) => v + mix(sun0[i], lum0, Wx.grey) * vl); Lt.zen = Lt.zen.map((v, i) => v + sun0[i] * vl * .7);   // sunlight scattered all through the haze: a pale sky, and distance fades to it (W5)
-  const view = M4.look(cam.eye, cam.dir), fov = .9, asp = W / H, VP = M4.mul(M4.persp(fov, asp, .25, 3200), view.m), th = Math.tan(fov / 2);
+  if (STUDIO) { Lt.dir = [-.45 / 1.0005, .74 / 1.0005, .5 / 1.0005]; Lt.sunCol = [3.2 / Math.PI, 3.2 / Math.PI * .82, 3.2 / Math.PI * .62]; Lt.sky = [.42 * .25, .55 * .25, .82 * .25];
+    Lt.ground = [.004 + Lt.sunCol[0] * .1, .004 + Lt.sunCol[1] * .068, .005 + Lt.sunCol[2] * .042]; Lt.fogD = 0; Lt.fog = mul3(Lt.sky, 1.25); Lt.zen = mul3(Lt.sky, 1.5); Lt.exp = Math.pow(2, -.3); Lt.day = 1; Lt.night = 0; Lt.wet = 0; Lt.rain = 0; }
+  const view = M4.look(cam.eye, cam.dir), fov = STUDIO ? .27 : .9, asp = W / H, VP = M4.mul(M4.persp(fov, asp, .25, 3200), view.m), th = Math.tan(fov / 2);
   gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf); gl.bufferData(gl.ARRAY_BUFFER, dyn.a.subarray(0, dyn.n), gl.DYNAMIC_DRAW);
   let SM = M4.t(0, 0, 0), shOn = 0, giAt = [0, 0, 1], giK = 0;
   if (shFbo && quality > .6) {                              // shadows: draw the town from the light, around where the player looks
@@ -2033,15 +2071,6 @@ function frame(now) {
     drawDepth(dynBuf, dyn.n / 10); drawDepth(signBuf, signN);
     for (const ch of chunks) if (Math.hypot(ch.cx - foc[0], ch.cz - foc[2]) < R + 25 && !outside(SM, ch.box)) drawDepth(ch.buf, ch.n);
     gl.disable(gl.POLYGON_OFFSET_FILL); gl.colorMask(true, true, true, true); gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  }
-  // the 12 lanterns nearest the camera light the scene; the rest only glow
-  const lamp = new Float32Array(48), pickL = [];
-  for (const l of lights) { if (!l[4] && Lt.night < .02) continue; const d2 = (l[0] - cam.eye[0]) ** 2 + (l[2] - cam.eye[2]) ** 2; if (d2 < 5600) pickL.push([d2, l]); }   // wall lanterns in the shade stay lit by day, as in the reference
-  pickL.sort((p, q) => p[0] - q[0]); const lampN = Math.min(12, pickL.length);
-  for (let k = 0; k < Math.min(12, pickL.length); k++) { const [d2, l] = pickL[k]; lamp.set([l[0], l[1], l[2], l[3] * 3 * (l[4] ? 1 + Lt.night : 2 * Lt.night) * dials.lanterns * smooth(5600, 3000, d2)], k * 4); }
-  gl.viewport(0, 0, W, H); gl.clear(gl.DEPTH_BUFFER_BIT);
-  gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE); gl.depthMask(false);
-  gl.useProgram(sky.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const aq = gl.getAttribLocation(sky.p, "aQ"); gl.enableVertexAttribArray(aq); gl.vertexAttribPointer(aq, 2, gl.FLOAT, false, 0, 0);
     if (giFbo && dials.gi > 0 && Lt.day > .05) {            // the GI map: where the sun reaches the ground, GI_SIZE metres round the same spot
       const tx = GI_SIZE / GI_N; giAt = [Math.floor((foc[0] - GI_SIZE / 2) / tx) * tx, Math.floor((foc[2] - GI_SIZE / 2) / tx) * tx, 1 / GI_SIZE]; giK = dials.gi * Lt.day;
       gl.bindFramebuffer(gl.FRAMEBUFFER, giFbo); gl.viewport(0, 0, GI_N, GI_N); gl.disable(gl.DEPTH_TEST); gl.depthMask(false);
@@ -2050,6 +2079,16 @@ function frame(now) {
       gl.drawArrays(gl.TRIANGLES, 0, 3); gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       gl.bindTexture(gl.TEXTURE_2D, giTex); gl.generateMipmap(gl.TEXTURE_2D); gl.depthMask(true);
     }
+  }
+  // the 12 lanterns nearest the camera light the scene; the rest only glow
+  const lamp = new Float32Array(48), pickL = [];
+  for (const l of lights) { if (!l[4] && Lt.night < .02) continue; const d2 = (l[0] - cam.eye[0]) ** 2 + (l[2] - cam.eye[2]) ** 2; if (d2 < 5600) pickL.push([d2, l]); }   // wall lanterns in the shade stay lit by day, as in the reference
+  pickL.sort((p, q) => p[0] - q[0]); let lampN = Math.min(12, pickL.length);
+  for (let k = 0; k < Math.min(12, pickL.length); k++) { const [d2, l] = pickL[k]; lamp.set([l[0], l[1], l[2], l[3] * 3 * (l[4] ? 1 + Lt.night : 2 * Lt.night) * dials.lanterns * smooth(5600, 3000, d2)], k * 4); }
+  if (STUDIO) { const gy = groundBase(STUDIO_AT[0], STUDIO_AT[1]); lamp.fill(0); lamp.set([STUDIO_AT[0] - 1, gy + 2.75, STUDIO_AT[1] - .95, 1.5], 0); lamp.set([STUDIO_AT[0] + 5.6, gy + 2.75, STUDIO_AT[1] - .95, 1.5], 4); lampN = 2; }   // the reference's two 60 W lanterns by the wall
+  gl.viewport(0, 0, W, H); gl.clear(gl.DEPTH_BUFFER_BIT);
+  gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE); gl.depthMask(false);
+  gl.useProgram(sky.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const aq = gl.getAttribLocation(sky.p, "aQ"); gl.enableVertexAttribArray(aq); gl.vertexAttribPointer(aq, 2, gl.FLOAT, false, 0, 0);
   gl.uniform3fv(sky.u.uR, mul3(view.r, th * asp)); gl.uniform3fv(sky.u.uU, mul3(view.u, th)); gl.uniform3fv(sky.u.uF, cam.dir); gl.uniform3fv(sky.u.uSun, Lt.dir);
   gl.uniform3fv(sky.u.uZen, Lt.zen); gl.uniform3fv(sky.u.uHor, Lt.fog); gl.uniform3fv(sky.u.uSunCol, Lt.sunCol); gl.uniform1f(sky.u.uNight, Lt.night); gl.uniform1f(sky.u.uExp, Lt.exp);
   { const c = SKY.clouds, T = clock.day * 1440 + clock.m, cov = dials.clouds == null ? cloudCover(clock.m) : dials.clouds;   // where the clouds are and what shape they have comes from the clock alone (WLD-036)
@@ -2071,31 +2110,34 @@ function frame(now) {
   attribs(pre, worldBuf); for (const pc of front) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
   for (const ch of nearD) drawMesh(ch.buf, ch.n, pre);
   gl.colorMask(true, true, true, true); gl.depthMask(false);
-  stat.smash = Smash.draw(dyn, tags, now / 1000);         // broken things, falling and lying, and the repair crews (smash.js)
   const lit = pr => {
     const u = pr.u; gl.useProgram(pr.p); gl.uniformMatrix4fv(u.uVP, false, VP); gl.uniformMatrix4fv(u.uSM, false, SM); gl.uniform1f(u.uShOn, shOn);
     gl.uniform1i(u.uSh, 0); gl.uniform1i(u.uAO, 1); gl.uniform1i(u.uTxt, 2); gl.uniform4fv(u["uLamp[0]"], lamp); gl.uniform1i(u.uLampN, lampN); gl.uniform3f(u.uAOm, skyMap.lo, 1 / skyMap.size, 0);
     gl.uniform3fv(u.uSun, Lt.dir); gl.uniform3fv(u.uSunCol, Lt.sunCol); gl.uniform3fv(u.uSky, Lt.sky); gl.uniform3fv(u.uGround, Lt.ground); gl.uniform3fv(u.uFog, Lt.fog);
     gl.uniform3fv(u.uCam, cam.eye); gl.uniform1f(u.uNight, Lt.night); gl.uniform1f(u.uFogD, Lt.fogD); gl.uniform1f(u.uExp, Lt.exp); gl.uniform4f(u.uWet, Lt.wet * SKY.rain.wet_dark, Lt.wet * SKY.rain.wet_sheen, Lt.wet * SKY.rain.puddles, Lt.rain * SKY.rain.ripples); gl.uniform1f(u.uTime, now / 1000 % 600);
     gl.uniform1i(u.uRoomAO, 3); gl.uniform4fv(u["uRoomL[0]"], roomL); gl.uniform1i(u.uRoomLN, roomLN);
+    { const h = People.hero(), o3 = e => e ? [...e.c, ...e.ix, ...e.iy, ...e.iz] : new Array(12).fill(0);   // the nearest face's shapes, for its per-pixel shadows
+      if (h) { gl.uniform3fv(u["uHZ[0]"], o3(h.zone)); gl.uniform3fv(u["uHNo[0]"], o3(h.nose)); gl.uniform3fv(u["uHBr[0]"], o3(h.brim)); gl.uniform3f(u.uHSt, h.st, h.nose ? 1 : 0, h.brim ? 1 : 0);
+        const lk = new Float32Array(16); h.locks.forEach((c, k) => { if (k < 2) { lk.set([c.a[0], c.a[1], c.a[2], c.r], k * 8); lk.set([c.b[0], c.b[1], c.b[2], 0], k * 8 + 4); } }); gl.uniform4fv(u["uHLk[0]"], lk); }
+      else gl.uniform3f(u.uHSt, -1, 0, 0); }
+    gl.uniform3f(u.uPf, dials.pSky == null ? 1 : dials.pSky, dials.pGround == null ? 1 : dials.pGround, dials.pSheen == null ? 1 : dials.pSheen);   // people: how much sky fill and bounce they take (for comparing with the reference figure)
+    gl.uniform1i(u.uGi, 4); gl.uniform4f(u.uGiM, giAt[0], giAt[1], giAt[2], giK); gl.uniform4fv(u["uBlob[0]"], blob); gl.uniform1i(u.uBlobN, blobN);
+    gl.uniform4fv(u["uPatA[0]"], SURF_A); gl.uniform4fv(u["uPatB[0]"], SURF_B);
     if (inRoom) gl.uniform4fv(u.uRoomR, inRoom.lot.rect); else gl.uniform4f(u.uRoomR, 0, 0, -1, -1);
   };
+  const blob = new Float32Array(64); let blobN = 0;         // the 16 pieces of street furniture nearest the camera shade the ground under them (trial light)
+  if (giK > 0) { const near2 = []; for (const b of BLOBS) { const d2 = (b[0] - cam.eye[0]) ** 2 + (b[1] - cam.eye[2]) ** 2; if (d2 < 1600) near2.push([d2, b]); }
+    near2.sort((p, q) => p[0] - q[0]); for (; blobN < Math.min(16, near2.length); blobN++) blob.set(near2[blobN][1], blobN * 4); }
+  gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, giTex);
   gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, inRoom ? inRoom.ao : skyMap.tex);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, shTex); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, skyMap.tex);
   gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, txtTex); gl.activeTexture(gl.TEXTURE0);
   lit(main); attribs(main, worldBuf); for (const pc of seen) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);   // in the order laid, so ties fall as before
   let drawnDetail = 0; for (const ch of nearD) { drawMesh(ch.buf, ch.n); drawnDetail += ch.n; }
   stat.detail = drawnDetail; stat.pieces = seen.length;
-    gl.uniform1i(u.uGi, 4); gl.uniform4f(u.uGiM, giAt[0], giAt[1], giAt[2], giK); gl.uniform4fv(u["uBlob[0]"], blob); gl.uniform1i(u.uBlobN, blobN);
-    gl.uniform4fv(u["uPatA[0]"], SURF_A); gl.uniform4fv(u["uPatB[0]"], SURF_B);
   gl.depthMask(true); lit(signProg); drawMesh(signBuf, signN, signProg); gl.useProgram(main.p);
   gl.disable(gl.CULL_FACE); drawMesh(dynBuf, dyn.n / 10);   // people are closed soft forms; either side of a face may show
-  const blob = new Float32Array(64); let blobN = 0;         // the 16 pieces of street furniture nearest the camera shade the ground under them (trial light)
-  if (giK > 0) { const near2 = []; for (const b of BLOBS) { const d2 = (b[0] - cam.eye[0]) ** 2 + (b[1] - cam.eye[2]) ** 2; if (d2 < 1600) near2.push([d2, b]); }
-    near2.sort((p, q) => p[0] - q[0]); for (; blobN < Math.min(16, near2.length); blobN++) blob.set(near2[blobN][1], blobN * 4); }
-  gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, giTex);
   if (Lt.rain > .01 && !(cam.eye[1] < 6 && lotAt(cam.eye[0], cam.eye[2]))) {   // rain over the picture, unless the camera is under a roof
-    gl.uniform4fv(u["uPatA[0]"], SURF_A); gl.uniform4fv(u["uPatB[0]"], SURF_B);
     gl.useProgram(rainProg.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const ar = gl.getAttribLocation(rainProg.p, "aQ"); gl.enableVertexAttribArray(ar); gl.vertexAttribPointer(ar, 2, gl.FLOAT, false, 0, 0);
     gl.disable(gl.DEPTH_TEST); gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
     gl.uniform3fv(rainProg.u.uCol, Lt.fog.map((v, i) => v * 1.1 + Lt.sky[i] * .8 + .02 + [.55, .45, .34][i] * Lt.night)); gl.uniform4f(rainProg.u.uR, Lt.rain, SKY.rain.alpha * (1 + Lt.night), SKY.rain.slant, SKY.rain.length);   // by night the drops catch the lamplight and stand out more
@@ -2122,5 +2164,6 @@ window.wasted = { dials: Object.assign({ gi: 0 }, LIGHTS[lightName], q.has("gi")
 // sound (sound.js): which lots play music, where the fountains and gardens are
 Sound.init(LOTS, D.blocks.flatMap(b => b.props.filter(p => p.kind === "fountain").map(p => p.pos)),
   LOTS.filter(l => l.kind === "garden").map(l => [(l.rect[0] + l.rect[2]) / 2, (l.rect[1] + l.rect[3]) / 2]));
+for (const [k, v] of q) if (k.startsWith("d_")) window.wasted.dials[k.slice(2)] = +v;   // ?d_name=value sets a light dial from the address, for tests
 window.wasted.sound = Sound;
 requestAnimationFrame(frame);
