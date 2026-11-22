@@ -269,6 +269,43 @@ def sky_problems(w):
         out.append("sky: rain.slant should be a number")
     if num(r.get("dry_minutes")) and r["dry_minutes"] > 360:
         out.append("sky: rain.dry_minutes should be at most 360 (one weather slot)")
+    return out + night_sky_problems(w)
+
+
+def night_sky_problems(w):
+    """Every rule the night sky in World/rules/sky.json must keep (WLD-042)."""
+    n, out = w["sky"].get("night"), []
+    num = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
+    if not isinstance(n, dict):
+        return ["sky: night is missing"]
+    col = lambda v: isinstance(v, list) and len(v) == 3 and all(num(x) and 0 <= x <= 1 for x in v)
+    for k in ("zenith", "horizon", "city_glow", "fill"):
+        if not col(n.get(k)):
+            out.append("sky: night.%s should be three numbers from 0 to 1" % k)
+    if col(n.get("zenith")) and col(n.get("horizon")) and sum(n["zenith"]) >= sum(n["horizon"]):
+        out.append("sky: night.zenith should be darker than night.horizon")
+    if not (num(n.get("latitude")) and -70 <= n["latitude"] <= 70):
+        out.append("sky: night.latitude should be from -70 to 70 degrees")
+    cal = w["calendar"]["calendar"]
+    if n.get("year_days") != cal["days_per_season"] * len(cal["seasons"]):
+        out.append("sky: night.year_days should be the calendar's year (%d days)" % (cal["days_per_season"] * len(cal["seasons"])))
+    st, mw, mo = n.get("stars", {}), n.get("milky_way", {}), n.get("moon", {})
+    for part, d, k, lo, hi in (("stars", st, "brightness", 0, 5), ("stars", st, "density", 0, .6), ("stars", st, "twinkle", 0, 1),
+                               ("milky_way", mw, "brightness", 0, 1), ("milky_way", mw, "width", .02, .5), ("milky_way", mw, "dust", 0, 1),
+                               ("moon", mo, "cycle_days", 1, 60), ("moon", mo, "offset_days", 0, 60), ("moon", mo, "size", .002, .05),
+                               ("moon", mo, "glow", 0, 5), ("moon", mo, "dims_stars", 0, 1), ("night", n, "lamp_wrap", 0, .15)):
+        if not (num(d.get(k)) and lo <= d[k] <= hi):
+            out.append("sky: %s.%s missing or not from %s to %s" % (part if part == "night" else "night." + part, k, lo, hi))
+    if not col(mo.get("light")):
+        out.append("sky: night.moon.light should be three numbers from 0 to 1")
+    wx = n.get("weather", {})
+    for k in WEATHER_KINDS:
+        for part in ("stars", "lamp_glow", "cover"):
+            if not (num(wx.get(k, {}).get(part)) and 0 <= wx[k][part] <= 1):
+                out.append("sky: night.weather.%s.%s missing or not from 0 to 1" % (k, part))
+    out += ["sky: night.weather has an unknown kind %s" % k for k in wx if k not in WEATHER_KINDS]
+    if all(num(wx.get(k, {}).get("stars")) for k in ("clear", "rain")) and wx["rain"]["stars"] >= wx["clear"]["stars"]:
+        out.append("sky: fewer stars should show in rain than on a clear night")
     return out
 
 

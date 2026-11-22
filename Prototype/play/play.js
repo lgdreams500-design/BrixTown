@@ -690,9 +690,10 @@ function furnish(l, side, accent, inC, vis, level) {     // at load (no vis): pl
   // furniture now, drawn in the block's near-only mesh. Then the room is dressed for what the building is (see room()).
   const dm = vis || NULL_MESH, occ = [], R = ROOM_STYLE[l.sp] || ROOM_STYLE[l.kind] || ROOM_STYLE.work, fab = pick(R.fabric, hash(l.id, "fab"));
   const RR = vis && ROOM_REC;                             // what the room's light needs: its lamps and where things stand on the floor
-  const spot = vis ? () => { } : spotAt, use = vis ? () => { } : useAt, hard = (ax0, ay0, az0, ax1, ay1, az1) => { if (RR && ay0 < F + 1.2) RR.foot.push([(ax0 + ax1) / 2, (az0 + az1) / 2, Math.abs(ax1 - ax0) / 2, Math.abs(az1 - az0) / 2, Math.min(1, 1 - (ay0 - F) / 1.4)]); return vis || solid(Math.min(ax0, ax1), ay0, Math.min(az0, az1), Math.max(ax0, ax1), ay1, Math.max(az0, az1)); };
+  const spot = vis ? () => { } : spotAt, use = vis ? () => { } : useAt, hard = (ax0, ay0, az0, ax1, ay1, az1) => { if (ay0 < F + 2 && KEEP(Math.min(ax0, ax1), Math.min(az0, az1), Math.max(ax0, ax1), Math.max(az0, az1))) return; if (RR && ay0 < F + 1.2) RR.foot.push([(ax0 + ax1) / 2, (az0 + az1) / 2, Math.abs(ax1 - ax0) / 2, Math.abs(az1 - az0) / 2, Math.min(1, 1 - (ay0 - F) / 1.4)]); return vis || solid(Math.min(ax0, ax1), ay0, Math.min(az0, az1), Math.max(ax0, ax1), ay1, Math.max(az0, az1)); };
   const B = (cx, y0, cz, sx, sy, sz, c, yaw, f) => {
     if (RR) { const cy = Math.abs(Math.cos(yaw || 0)), sn = Math.abs(Math.sin(yaw || 0));
+    { const cy = Math.abs(Math.cos(yaw || 0)), sn = Math.abs(Math.sin(yaw || 0)), hx = (cy * sx + sn * sz) / 2, hz = (sn * sx + cy * sz) / 2; if (y0 < 2 && KEEP(cx - hx, cz - hz, cx + hx, cz + hz)) return; }
       if (y0 < 1.1) RR.foot.push([cx, cz, (cy * sx + sn * sz) / 2, (sn * sx + cy * sz) / 2, 1 - y0 / 1.4]);   // seats and table tops shade the floor too, less the higher they are
       if (f === 2) RR.lamps.push([cx, F + y0 + sy / 2, cz, Math.min(.5, .9 * Math.max(sx, sy, sz))]); }   // small lit things: sconces, cases, signs
     dm.ybox(cx, F + y0, cz, sx, sy, sz, yaw || 0, c, f || 19); };
@@ -1082,6 +1083,7 @@ function room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard) {
   const SG = Storeys.stairOf(l);                             // and the stairwell (storeys.js)
   if (SG) for (let u = SG.u0 + .5; u < SG.u1; u += .8) for (const v of [(SG.lane0[0] + SG.lane0[1]) / 2, (SG.lane1[0] + SG.lane1[1]) / 2]) { const q = SG.P(u, v, 0); occ.push([q[0], q[2], .9]); }
   if (l.tower) { const bx = side === "e" ? x0 + 1.5 : side === "w" ? x1 - 1.5 : x0 + 1.5, bz = side === "s" ? z0 + 1.5 : side === "n" ? z1 - 1.5 : z0 + 1.5; occ.push([bx, bz, 3.2]); }
+  if (SG && !(l.level > 0)) { const ft = SG.footAt(0), p1 = [dx - d[0] * 1.6, dz - d[1] * 1.6], L = Math.hypot(ft[0] - p1[0], ft[1] - p1[1]); for (let t = 0; t <= L; t += .7) occ.push([p1[0] + (ft[0] - p1[0]) * t / L, p1[1] + (ft[1] - p1[1]) * t / L, .8]); }   // and the way from the door to its foot
   const clear = (x, z, r) => occ.every(([ox, oz, or]) => Math.hypot(x - ox, z - oz) > r + or);   // nothing placed or used there
   const free = (x, z, r) => x > rx0 + r * .7 && x < rx1 - r * .7 && z > rz0 + r * .7 && z < rz1 - r * .7 && occ.every(([ox, oz, or]) => Math.hypot(x - ox, z - oz) > r + or);
   const walls = { n: { ns: true, fix: rz0, out: 1 }, s: { ns: true, fix: rz1, out: -1 }, w: { ns: false, fix: rx0, out: 1 }, e: { ns: false, fix: rx1, out: -1 } };
@@ -1509,7 +1511,7 @@ float haze(float c){ return .64/(12.566*pow(1.36-1.2*c,1.5)); }`;   // how stron
 const MAIN_VS = `attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,uSM; varying vec3 vP,vN,vC,vS; varying float vF; invariant gl_Position;
 void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`;   // invariant: the depth-only pass and the lit pass land on the same depths
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
-uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
+uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform vec2 uNk; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
 uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec2 uRoomY;
 uniform sampler2D uGi; uniform vec4 uGiM, uBlob[16]; uniform int uBlobN; uniform vec3 uPf;
 uniform vec3 uHZ[4], uHNo[4], uHBr[4], uHSt; uniform vec4 uHLk[4];
@@ -1730,7 +1732,7 @@ void main(){
             light+=uSky*(.14+.6*up*up+.62*ks*ks*ks)*vis*2.9*(1.-.4*dn)*uPf.x+(uSunCol*vec3(.1,.068,.042)+.004)*gk*(1.-.5*vis)*(.3+1.3*bw*bw)*.6*uPf.y; light=sunL+(light-sunL)*mix(.3,1.,skyP); }   // set by matching one standing figure to character_lineup.png under that image's own light (?studio=1): more of the sky a person can see, less bounce
           else light+=uSky*(.28+.82*up*up)*vis*vis+uGround*gk*(1.-.5*vis)*(.38+1.25*bw*bw); }
         else light+=(uSky*(n.y*.35+.65)*vis*vis+uGround*gk*(1.-.5*vis))*ct;   // sun, sky seen, and light bounced off sunlit stone
-        for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*.85+.15)); } }   // lanterns (W6)
+        for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 L=uLamp[i].xyz-vP; float d2=dot(L,L); light+=vec3(1.,.62,.32)*(uLamp[i].w/(d2+.25)*smoothstep(420.,60.,d2)*(max(dot(n,L*inversesqrt(d2)),0.)*(1.-uNk.x)+uNk.x)); } }   // lanterns (W6)
       col=c*light*(1.-wetG*uWet.x);
       if(f>13.5&&f<14.5) col*=1.-.93*smoothstep(.1,.42,dot(n,vd));           // the inside of a hair shell or a hat, seen past the face, is in its own shade
       if(f>13.5&&f<14.5&&uPf.z>0.){ float fr=pow(1.-abs(dot(-vd,n)),4.);   // people: the faint sheen every surface has in the renders, strongest at a glancing angle. It lifts dark cloth and cools it with the sky
@@ -1744,7 +1746,7 @@ void main(){
   }
   col=mix(col,uFog+uSunCol*(4.4*haze(dot(vd,uSun)))*airLit(vd,d),fog*(emis?.5:1.)*(1.-.85*inside));   // haze glows where the sun reaches it; little haze indoors
   float glow=0.; for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 q=uLamp[i].xyz-uCam; float b=dot(q,vd), h=sqrt(max(dot(q,q)-b*b,.02)); glow+=uLamp[i].w*(atan((d-b)/h)+atan(b/h))/h; }
-  col+=vec3(1.,.62,.32)*(glow*min(uFogD,.007)*1.6);                       // every lantern glows in the haze around it (no more than in a thick haze, or rain and fog turn the night orange)
+  col+=vec3(1.,.62,.32)*(glow*min(uFogD,.007)*1.6*uNk.y);                 // every lantern glows in the haze around it (no more than in a thick haze, or rain and fog turn the night orange); uNk.y: less in clear night air (WLD-042)
   gl_FragColor=vec4(tone(col*uExp),1.);
 }`;
 const main = program(MAIN_VS, MAIN_FS), signProg = program(MAIN_VS, "#define LETTERS\n" + MAIN_FS);   // only the painted names cut holes, so the town's shader keeps the early depth test
@@ -1752,8 +1754,9 @@ const pre = program(MAIN_VS, `precision mediump float; void main(){ gl_FragColor
 const sky = program(`attribute vec2 aQ; varying vec2 vQ; void main(){ vQ=aQ; gl_Position=vec4(aQ,.9999,1.); }`,
 `precision highp float; varying vec2 vQ; uniform vec3 uR,uU,uF,uSun,uZen,uHor,uSunCol; uniform float uNight,uExp; uniform vec4 uCl; uniform vec2 uClOff,uClLit;   // uCl: cover, edge softness, size, shape phase
 ${NOISE}
+uniform mat3 uCel; uniform vec3 uMoon,uSunT,uCity,uMw; uniform vec4 uSt,uMn; uniform float uT;   // night (WLD-042): uSt stars (seen, density, twinkle, pixel size), uMn moon (lit share, size, brightness, dims stars), uMw Milky Way (brightness, width, dust)
 ${TONE}
-void main(){ vec3 d=normalize(uF+vQ.x*uR+vQ.y*uU); float s=dot(d,uSun), p=haze(s); vec3 c=mix(uHor+uSunCol*(4.4*p),uZen+uSunCol*(.9*p),pow(clamp(d.y,0.,1.),.5));
+void main(){ vec3 d=normalize(uF+vQ.x*uR+vQ.y*uU); float s=dot(d,uSun), p=haze(s); float hz=1.-.85*uNight; vec3 c=mix(uHor+uSunCol*(4.4*p*hz),uZen+uSunCol*(.9*p*hz),pow(clamp(d.y,0.,1.),.5));   // hz: moonlight lights the air far less than sunlight
   float a=0.; vec3 cloud=vec3(0.);
   if(d.y>.015&&uCl.x>0.){                                                  // clouds (WLD-035): soft heaps on a flat layer overhead, lit from the sun's side, lost in the haze towards the horizon
     vec2 q=d.xz/(d.y+.12)*uCl.z+uClOff, sd=normalize(uSun.xz+vec2(1e-4))*.3; vec3 q3=vec3(q.x,uCl.w,q.y), qs=vec3(q.x+sd.x,uCl.w,q.y+sd.y);
@@ -1762,9 +1765,33 @@ void main(){ vec3 d=normalize(uF+vQ.x*uR+vQ.y*uU); float s=dot(d,uSun), p=haze(s
     a=smoothstep(th-uCl.y,th+uCl.y,n)*smoothstep(.015,.2,d.y);
     if(a>0.){ float lowS=(ns(qs)*.5+ns(qs*2.03+3.1)*.25)/.75;             // thinner towards the sun: that edge is bright; the thick middle is shaded underneath
       float lit=clamp(.55+(low-lowS)*3.,0.,1.)*(1.-.4*smoothstep(th,th+.3,n));
-      cloud=mix((uZen*.45+uHor*.55)*uClLit.y+uSunCol*uClLit.x*.2,uSunCol*uClLit.x+uHor*.6,lit)+uSunCol*(1.4*p); } }
+      cloud=mix((uZen*.45+uHor*.55)*uClLit.y+uSunCol*uClLit.x*.2,uSunCol*uClLit.x+uHor*.6,lit)+uSunCol*(1.4*p)+uCity*(.9-.5*lit)*uNight; } }   // at night the town's light shows under the clouds
+  if(uNight>0.){                                                           // the night sky (WLD-042): the town's glow low down, the Milky Way, the stars and the moon, all behind the clouds
+    float up=max(d.y,0.), ext=smoothstep(-.01,.32,d.y), mo=dot(d,uMoon);   // ext: thicker air near the horizon dims what is behind it
+    c+=uCity*(exp(-up*6.)*1.3+.15)*uNight;
+    vec3 e=uCel*d, st=vec3(0.);                                           // e: the direction among the stars, which turn round the pole with the clock
+    const vec3 GP=vec3(-.8677,-.1981,.4560), GC=vec3(-.0550,-.8734,-.4839), GY=vec3(.4942,-.4450,.7470);   // the galaxy's pole and centre, in the stars' own frame
+    float b=dot(e,GP), l=atan(dot(e,GY),dot(e,GC)), core=exp(-l*l/.9);
+    float w=uMw.y*(.7+.6*core)*(.8+.4*ns(e*3.1)), band=exp(-b*b/(w*w)), bulge=exp(-l*l/.16-b*b/.012);
+    float cl=ns(e*5.)*.4+ns(e*11.)*.3+ns(e*23.)*.2+ns(e*51.)*.1, fine=ns(e*110.)*.5+ns(e*230.)*.5;   // star clouds at every size
+    float dust=smoothstep(.42,.6,ns(e*7.+2.)*.5+ns(e*16.)*.3+ns(e*37.)*.2)*exp(-pow((b-.02*sin(l*2.3)-.01)/(w*.5),2.))+.45*smoothstep(.55,.75,ns(e*45.+9.))*band;   // the great rift down the middle, and smaller dark lanes
+    float mw=(band*(.1+1.9*cl*cl*cl*(.6+.8*fine))+exp(-b*b/(w*w*5.))*.07+bulge*1.9*(.5+cl))*(1.-uMw.z*min(dust,1.));   // a bright clumpy band in a faint wide glow, with a bulge at the centre
+    st+=mix(vec3(.55,.66,1.),vec3(1.,.74,.48),clamp(core*.8+bulge,0.,1.))*mw*uMw.x;   // bluish arms, a warm centre
+    float dens=uSt.y*(1.+1.4*band+2.*bulge), grain=.55*band*cl+.6*bulge;                              // more stars along the band
+    for(int k=0;k<4;k++){ float fk=float(k), sc=70.*pow(2.1,fk); vec3 g=e*sc, i=floor(g); float h=h3(i+fk*17.);   // layers of ever fainter, ever more numerous stars; the last, finest, only in the Milky Way
+      if(h<(k<3?dens*(.35+.3*fk):grain)){ vec3 o=i+.25+.5*vec3(h3(i+fk*17.+1.3),h3(i+fk*17.+2.7),h3(i+fk*17.+4.1));
+        float t=h3(i+fk*17.+6.1), r=length(normalize(o)-e)*sc/max(uSt.w*sc,.0001), mag=pow(h3(i+fk*17.+5.5),7.)*(3.5/(1.+fk*2.))+.012/(1.+fk);
+        float tw=1.+uSt.z*(.4+1.6*(1.-ext))*sin(uT*(2.+6.*t)+h*80.);        // stars shimmer, more so low down
+        st+=mix(vec3(.7,.8,1.),vec3(1.,.78,.55),t*t)*mag*tw*exp(-r*r*1.6); } }
+    float md=1.-uMn.w*uMn.x*(.6+.4*pow(max(mo,0.),6.));                     // a bright moon washes the stars out, most of all round itself
+    c+=st*uSt.x*ext*md*uNight*(1.-a);
+    float rr=length(d-uMoon*mo)/uMn.y;                                     // the moon: a lit ball, its phase from where the sun is, its seas a little darker
+    if(mo>0.&&rr<1.2&&d.y>-.01){ vec3 q=(d-uMoon*mo)/uMn.y, N=q-uMoon*sqrt(max(1.-dot(q,q),0.));
+      float lit=smoothstep(-.06,.12,dot(N,uSunT)), sea=.72+.28*smoothstep(.62,.38,ns(N*2.6+5.)*.7+ns(N*6.)*.3);
+      c=mix(c,vec3(1.,.96,.88)*(lit*sea*uMn.z*2.2+.012),smoothstep(1.,.93,rr)*uNight*(1.-.85*a)); }
+    c+=vec3(.75,.82,1.)*uMn.x*uMn.z*.06*(pow(max(mo,0.),900.)*3.+pow(max(mo,0.),60.)*.6)*uNight*(1.+a); }   // a halo round the moon, wider in cloud
   c=mix(c,cloud,a);
-  c+=uSunCol*pow(max(s,0.),2500.)*30.*step(0.,d.y)*(1.-.92*a); c+=step(.9982,h3(floor(d*170.)))*uNight*smoothstep(.03,.3,d.y)*.05*(1.-a);
+  c+=uSunCol*pow(max(s,0.),2500.)*30.*step(0.,d.y)*(1.-.92*a)*(1.-uNight);
   gl_FragColor=vec4(tone(c*uExp),1.); }`);
 // Rain (WLD-037): drops falling in the world, not on the screen. Each layer is a ring of drops round the camera (1.6 to 11 m away),
 // so they fall straight down whichever way you look, draw together overhead when you look up, and far ones are small and many.
@@ -1874,9 +1901,27 @@ function weatherNow(m) {
   for (const k of ["sun", "haze", "veil", "grey", "rain"]) { const v = i => SKY.weather[WX_KIND(i)][k];
     out[k] = into < b ? mix(v(s - 1), v(s), .5 + .5 * into / b) : into > 360 - b ? mix(v(s), v(s + 1), .5 * (into - (360 - b)) / b) : v(s); }
   out.wet = Math.max(Math.min(1, out.rain * 1.5), SKY.weather[WX_KIND(s - 1)].rain > 0 ? clamp(1 - into / SKY.rain.dry_minutes, 0, 1) : 0);
+  for (const k of ["stars", "lamp_glow", "cover"]) { const v = i => SKY.night.weather[WX_KIND(i)][k];   // at night: how much starry sky shows, how lanterns glow in the air (WLD-042)
+    out[k] = into < b ? mix(v(s - 1), v(s), .5 + .5 * into / b) : into > 360 - b ? mix(v(s), v(s + 1), .5 * (into - (360 - b)) / b) : v(s); }
   return out;
 }
 // ?studio=1: one standing person under the light and camera of the reference lineup (Tools/blender/character_face_05.py, sheets()), to compare
+// The night sky (WLD-042), worked out from the clock alone. The moon runs the sun's path, later by its phase; the stars turn round the
+// celestial pole once a day and a little further each day of the year (sky.json "night").
+const NIGHT = SKY.night;
+function arc(m) {                                           // the sun's path at minute m of any day: above the horizon from sunrise to sunset, below it at night
+  const rise = D.day.sunrise * 60, set = D.day.sunset * 60, t = ((m % 1440) + 1440) % 1440;
+  const a = t >= rise && t <= set ? (t - rise) / (set - rise) * Math.PI : Math.PI + ((t - set + 1440) % 1440) / (1440 - (set - rise)) * Math.PI;
+  const v = [Math.cos(a) * .85, Math.sin(a) * .8 + .08, .42 * Math.sin(a) + .12], n = Math.hypot(v[0], v[1], v[2]); return v.map(q => q / n);
+}
+function nightSky(m) {
+  const day = D.day.look_day != null ? D.day.look_day : D.day.index || 0, mn = NIGHT.moon, ph = (((day + m / 1440 + mn.offset_days) / mn.cycle_days) % 1 + 1) % 1;
+  const moon = arc(m - ph * 1440), lit = (1 - Math.cos(ph * 2 * Math.PI)) / 2, up = smooth(-.02, .2, moon[1]);
+  const la = NIGHT.latitude * Math.PI / 180, P = [0, Math.sin(la), -Math.cos(la)], Mr = [0, Math.cos(la), Math.sin(la)];   // the pole, low in the north; the equator crosses the south at 90 - latitude
+  const lst = (m / 1440 - .5 + (day % NIGHT.year_days) / NIGHT.year_days) * 2 * Math.PI, c = Math.cos(lst), s = Math.sin(lst);   // sidereal time: the stars overhead at this minute of this day of the year
+  const X = [-s, Mr[1] * c, Mr[2] * c], Y = [c, Mr[1] * s, Mr[2] * s];   // the stars' x and y axes: X = M cos + W sin, Y = M sin - W cos, west being -x
+  return { moon, lit, up, sun: arc(m), cel: new Float32Array([X[0], Y[0], P[0], X[1], Y[1], P[1], X[2], Y[2], P[2]]) };
+}
 // the slice's people with character_lineup.png without the town's own light in the way. Sun from the front left at 48 degrees, strength 3.2 in
 // (1, 0.82, 0.62); a flat sky of (0.42, 0.55, 0.82) at 0.25; two 60 W lanterns by the wall behind; no haze; exposure -0.3; a 60 mm lens from 9.6 m.
 const STUDIO = new URLSearchParams(location.search).has("studio"), STUDIO_AT = [300.5, 186.6], STUDIO_WHO = Math.max(0, (+new URLSearchParams(location.search).get("studio") || 1) - 1);   // ?studio=2 shows the second person of the lineup, and so on
@@ -1886,11 +1931,13 @@ function lighting(m) {                                       // the reference re
   const a = clamp((m - rise) / (set - rise), 0, 1) * Math.PI, unit = v => { const n = Math.hypot(v[0], v[1], v[2]); return v.map(q => q / n); };
   const sun = unit([Math.cos(a) * .85, Math.sin(a) * .8 + .08, .42 * Math.sin(a) + .12]), moon = unit([-.42, .74, -.52]), low = smooth(.05, .5, sun[1]), isDay = day > .03;
   const fogD = mix(.014, .009, low) * (.6 + .4 * day), through = Math.exp(-fogD * 14 / Math.max(sun[1], .12));      // sunlight left after crossing the haze
-  const sunCol = isDay ? mul3(mix3([1, .42, .22], [1, .86, .68], low), 14 / Math.PI * through * day) : [.04, .055, .1];
-  const sky = mix3([.012, .018, .045], mix3([.036, .06, .18], [.147, .193, .287], low), day);
-  return { day, night: 1 - day, dir: isDay ? sun : moon, sunCol, sky, fogD,
+  const Nt = nightSky(m), ml = Nt.lit * Nt.up, moonL = mul3(NIGHT.moon.light, ml * (.35 + .65 * smooth(.02, .5, Nt.moon[1])));   // moonlight (WLD-042): by phase and by how high the moon is; none when it is down
+  const sunCol = isDay ? mul3(mix3([1, .42, .22], [1, .86, .68], low), 14 / Math.PI * through * day) : moonL;
+  const sky = mix3(NIGHT.fill.map((v, i) => v + moonL[i] * .22), mix3([.036, .06, .18], [.147, .193, .287], low), day);
+  const nz = NIGHT.zenith.map((v, i) => v + [.003, .006, .016][i] * ml), nh = NIGHT.horizon.map((v, i) => v + NIGHT.city_glow[i] * .3 + [.005, .008, .014][i] * ml);   // a moonlit sky is a deeper blue, not black
+  return { day, night: 1 - day, dir: isDay ? sun : Nt.up > 0 ? Nt.moon : moon, sunCol, sky, fogD, Nt,
     ground: [.004 + sunCol[0] * .1, .004 + sunCol[1] * .068, .005 + sunCol[2] * .042],
-    fog: mul3(sky, 1.25), zen: mul3(sky, 1.5), exp: mix(1.7, 1.23, day) };
+    fog: mix3(nh, mul3(sky, 1.25), day), zen: mix3(nz, mul3(sky, 1.5), day), exp: mix(1.7, 1.23, day) };
 }
 
 // ---------------------------------------------------------------- the player
@@ -2223,6 +2270,7 @@ function frame(now) {
   Lt.sunCol = mul3(sun0, 1 - lost); Lt.sky = Lt.sky.map(v => v + lum0 * lost * SKY.overcast_fill); Lt.ground = mul3(Lt.ground, 1 - lost * .7); Lt.fogD *= Wx.haze; Lt.wet = Wx.wet; Lt.rain = Wx.rain;
   const gi = dials.gi || 0, nu = (dials.neutral || 0) * (1 - .8 * gi), gl0 = Lt.ground[0] * .3 + Lt.ground[1] * .6 + Lt.ground[2] * .1; Lt.ground = mix3(Lt.ground, [gl0 * 1.04, gl0 * 1.0, gl0 * .95], nu);   // bounce off pale stone, not off orange: shade stays grey (world_street_kit_light.png)
   { const sl = Math.min(1, lum0 / SKY.sun_ref), bl = dials.blue == null ? 1 : dials.blue; Lt.zen = mix3(Lt.zen, mul3(SKY.zenith, sl * SKY.brightness), SKY.depth * Lt.day * bl * (1 - .85 * Wx.grey)); }   // a blue sky overhead by day; the horizon stays hazy (WLD-035, W5)
+  Lt.sunCol = mul3(Lt.sunCol, 1 - (1 - Wx.sun) * Lt.night);   // cloud, rain and fog hide the moon too (WLD-042)
   const vl = ((dials.veil || 0) + Wx.veil) * Lt.day * (1 - .45 * Wx.grey); Lt.fog = Lt.fog.map((v, i) => v + mix(sun0[i], lum0, Wx.grey) * vl); Lt.zen = Lt.zen.map((v, i) => v + sun0[i] * vl * .7);   // sunlight scattered all through the haze: a pale sky, and distance fades to it (W5)
   if (STUDIO) { Lt.dir = [-.45 / 1.0005, .74 / 1.0005, .5 / 1.0005]; Lt.sunCol = [3.2 / Math.PI, 3.2 / Math.PI * .82, 3.2 / Math.PI * .62]; Lt.sky = [.42 * .25, .55 * .25, .82 * .25];
     Lt.ground = [.004 + Lt.sunCol[0] * .1, .004 + Lt.sunCol[1] * .068, .005 + Lt.sunCol[2] * .042]; Lt.fogD = 0; Lt.fog = mul3(Lt.sky, 1.25); Lt.zen = mul3(Lt.sky, 1.5); Lt.exp = Math.pow(2, -.3); Lt.day = 1; Lt.night = 0; Lt.wet = 0; Lt.rain = 0; }
@@ -2262,10 +2310,14 @@ function frame(now) {
   gl.useProgram(sky.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const aq = gl.getAttribLocation(sky.p, "aQ"); gl.enableVertexAttribArray(aq); gl.vertexAttribPointer(aq, 2, gl.FLOAT, false, 0, 0);
   gl.uniform3fv(sky.u.uR, mul3(view.r, th * asp)); gl.uniform3fv(sky.u.uU, mul3(view.u, th)); gl.uniform3fv(sky.u.uF, cam.dir); gl.uniform3fv(sky.u.uSun, Lt.dir);
   gl.uniform3fv(sky.u.uZen, Lt.zen); gl.uniform3fv(sky.u.uHor, Lt.fog); gl.uniform3fv(sky.u.uSunCol, Lt.sunCol); gl.uniform1f(sky.u.uNight, Lt.night); gl.uniform1f(sky.u.uExp, Lt.exp);
-  { const c = SKY.clouds, T = clock.day * 1440 + clock.m, cov = dials.clouds == null ? cloudCover(clock.m) : dials.clouds;   // where the clouds are and what shape they have comes from the clock alone (WLD-036)
+  { const c = SKY.clouds, T = clock.day * 1440 + clock.m, cov = dials.clouds == null ? cloudCover(clock.m) * mix(1, Wx.cover, Lt.night) : dials.clouds;   // where the clouds are and what shape they have comes from the clock alone (WLD-036)
     gl.uniform4f(sky.u.uCl, cov, c.soft, c.scale, (c.change * T) % 512); gl.uniform2f(sky.u.uClOff, (c.wind[0] * c.speed * T) % 512, (c.wind[1] * c.speed * T) % 512); gl.uniform2f(sky.u.uClLit, c.lit, c.shade); }
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.enable(gl.CULL_FACE); gl.depthMask(true);   // on a tie the layer laid later (the upper one) wins
+  { const N = NIGHT, Nt = Lt.Nt;   // the night sky (WLD-042): stars, Milky Way and moon from the clock, how much of them shows from the weather
+    gl.uniformMatrix3fv(sky.u.uCel, false, Nt.cel); gl.uniform3fv(sky.u.uMoon, Nt.moon); gl.uniform3fv(sky.u.uSunT, Nt.sun); gl.uniform3fv(sky.u.uCity, mul3(N.city_glow, mix(1, 1.5, clamp(Wx.haze - 1, 0, 1))));
+    gl.uniform4f(sky.u.uSt, N.stars.brightness * Wx.stars, N.stars.density, N.stars.twinkle, 2 * th / H); gl.uniform4f(sky.u.uMn, Nt.lit * Nt.up, N.moon.size, N.moon.glow * Wx.sun + .15, N.moon.dims_stars);
+    gl.uniform3f(sky.u.uMw, N.milky_way.brightness * Wx.stars, N.milky_way.width, N.milky_way.dust); gl.uniform1f(sky.u.uT, now / 1000 % 600); }
   const seen = pieces.filter(pc => !outside(VP, pc.box)), nearD = chunks.filter(ch => Math.hypot(ch.cx - cam.eye[0], ch.cz - cam.eye[2]) < DETAIL_R && !outside(VP, ch.box));
   const rooms = nearRooms(cam.eye); for (const rm of rooms) if (!outside(VP, rm.box)) nearD.push(rm);
   // the room the camera is in (or the nearest one in reach) gets its own lamps and contact shade; other rooms an even lamplight
@@ -2289,6 +2341,7 @@ function frame(now) {
     gl.uniform3fv(u.uCam, cam.eye); gl.uniform1f(u.uNight, Lt.night); gl.uniform1f(u.uFogD, Lt.fogD); gl.uniform1f(u.uExp, Lt.exp); gl.uniform4f(u.uWet, Lt.wet * SKY.rain.wet_dark, Lt.wet * SKY.rain.wet_sheen, Lt.wet * SKY.rain.puddles, Lt.rain * SKY.rain.ripples); gl.uniform1f(u.uTime, now / 1000 % 600);
     gl.uniform1i(u.uRoomAO, 3); gl.uniform4fv(u["uRoomL[0]"], roomL); gl.uniform1i(u.uRoomLN, roomLN);
     { const h = People.hero(), o3 = e => e ? [...e.c, ...e.ix, ...e.iy, ...e.iz] : new Array(12).fill(0);   // the nearest face's shapes, for its per-pixel shadows
+    gl.uniform2f(u.uNk, mix(.15, NIGHT.lamp_wrap, Lt.night), mix(1, Wx.lamp_glow, Lt.night));   // at night lanterns light what faces them and glow less in clear air (WLD-042)
       if (h) { gl.uniform3fv(u["uHZ[0]"], o3(h.zone)); gl.uniform3fv(u["uHNo[0]"], o3(h.nose)); gl.uniform3fv(u["uHBr[0]"], o3(h.brim)); gl.uniform3f(u.uHSt, h.st, h.nose ? 1 : 0, h.brim ? 1 : 0);
         const lk = new Float32Array(16); h.locks.forEach((c, k) => { if (k < 2) { lk.set([c.a[0], c.a[1], c.a[2], c.r], k * 8); lk.set([c.b[0], c.b[1], c.b[2], 0], k * 8 + 4); } }); gl.uniform4fv(u["uHLk[0]"], lk); }
       else gl.uniform3f(u.uHSt, -1, 0, 0); }

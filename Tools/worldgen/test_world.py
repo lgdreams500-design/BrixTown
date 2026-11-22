@@ -429,6 +429,22 @@ class TheSky(unittest.TestCase):
         del bad["sky"]["weather"]["cloud"]["grey"]
         self.assertEqual(len(world.sky_problems(bad)), 5)
 
+    def test_WLD_042_night_sky_rules_are_sound(self):
+        self.assertEqual(world.night_sky_problems(W), [])
+        n = W["sky"]["night"]
+        self.assertEqual(max(n["weather"], key=lambda k: n["weather"][k]["stars"]), "clear")   # a clear night shows the most sky
+        self.assertLess(n["weather"]["clear"]["cover"], 1)                                     # and fewer clouds than the day
+
+    def test_WLD_042_a_broken_night_sky_is_caught(self):
+        import copy
+        bad = copy.deepcopy(W)
+        n = bad["sky"]["night"]
+        n["zenith"] = [0.5, 0.5, 0.5]              # brighter than the horizon
+        n["year_days"] = 40                        # not the calendar's year
+        n["stars"]["density"] = 0.9                # out of range
+        del n["weather"]["fog"]["cover"]
+        self.assertEqual(len(world.night_sky_problems(bad)), 4)
+
     def test_WLD_010_the_slice_can_show_every_season(self):
         """The season key (Y) of the slice: one look for each season, on the same day of the season as the built day."""
         import build_play
