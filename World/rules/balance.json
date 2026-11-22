@@ -1,0 +1,41 @@
+{
+ "note": "City balance (docs/specs/domains/CITY_BALANCE.md, BAL-002, BAL-006). Read by Tools/worldgen/balance.py and the generators. 'homes': how a building's floor area becomes homes. Every home building gives 'common_share' of its floor area to corridors, stairs, lifts, utilities and shared rooms (the owner, 2026-11-22: 35 %); the rest is shared among homes of 'sizes' square metres, 'mix' being each size's share of flats by count. 'people' is a household's size by home size, 'beds' the bed spaces a home of that size is furnished with. 'corridor' is the width of the corridor flats open on to, 'lobby' the width of the way in from the street door. Sizes are nominal: a flat is within 'size_tolerance' of its size. 'jobs': how many people a workplace employs, from its floor area: usable_share of the floors it works on, divided by the square metres one job takes in its sector; shops and cafes work on their ground floor (their upper floors are flats). Job places beyond what residents fill are taken by people who come in through the gates to work ('in-commuters'; the owner, 2026-11-22: the city is a job centre and its malls draw shoppers from outside). 'targets': shares and ratios per head of the population the homes hold, each with 'band' either side. Every number is [ASSUMPTION] until the owner tunes it.",
+ "homes": {
+  "common_share": 0.35,
+  "sizes": [80, 160, 320, 640],
+  "mix": {"80": 0.50, "160": 0.36, "320": 0.12, "640": 0.02},
+  "people": {"80": 1.6, "160": 2.8, "320": 3.8, "640": 4.5},
+  "beds": {"80": 2, "160": 3, "320": 4, "640": 5},
+  "size_tolerance": 0.25,
+  "corridor": 1.6,
+  "lobby": 2.4,
+  "penthouse_only_top_floor": true
+ },
+ "jobs": {
+  "usable_share": 0.8,
+  "m2_per_job": {"office": 12, "retail": 30, "food": 20, "making": 40, "health": 25, "education": 96, "culture": 40, "showrooms": 60, "utility": 80, "services": 40},
+  "sector_of_kind": {"shop": "retail", "market": "retail", "food": "food", "bank": "office", "health": "health", "school": "education",
+                     "library": "culture", "museum": "culture", "cinema": "culture", "dealer": "showrooms", "furniture": "showrooms",
+                     "utility": "utility", "fire": "services", "police": "services", "work": "office"},
+  "making_names_end": ["Works"],
+  "ground_floor_only": ["shop", "food"],
+  "mall_unit_kinds": {"shop": "retail", "kiosk": "retail", "anchor": "retail", "food": "food", "foodhall": "food"}
+ },
+ "visitors": {
+  "mall_shoppers_from_outside": 0.8
+ },
+ "schools": {
+  "m2_per_pupil": 8,
+  "primary_share_of_children": 0.6
+ },
+ "targets": {
+  "band": 0.2,
+  "residents": {"child": 0.14, "student": 0.08, "elder": 0.18, "working_in_town": 0.45, "commuter_out": 0.10, "courier": 0.05},
+  "per_1000": {"street_shops": 12, "food": 10, "clinics": 1},
+  "jobs_per_1000": {"utility": 25, "services": 9},
+  "at_least": ["street_shops", "food", "clinics", "park", "school places"],
+  "park_m2_per_resident": 15,
+  "school_places_per_child": 1.0,
+  "local_centre_in_each_community": ["shop", "food", "health", "school"]
+ }
+}

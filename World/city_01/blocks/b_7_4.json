@@ -15,7 +15,7 @@
   {
    "id": "b_7_4_l0",
    "kind": "home",
-   "name": "71 Baker Street",
+   "name": "11 North Wall Street",
    "rect": [
     683.0,
     395.0,
@@ -41,10 +41,6 @@
      [
       687.62,
       396.65
-     ],
-     [
-      690.22,
-      396.65
      ]
     ],
     "room": [
@@ -53,20 +49,17 @@
       399.15
      ],
      [
-      688.62,
+      690.0,
       399.27
      ],
      [
-      691.38,
-      399.27
-     ],
-     [
-      694.12,
+      693.67,
       399.27
      ]
     ]
    },
-   "residents": 4,
+   "residents": 3,
+   "window_boxes": true,
    "stair": {
     "rect": [
      683.35,
@@ -82,7 +75,6 @@
     "bed": [
      1,
      1,
-     2,
      2
     ]
    },
@@ -95,7 +87,7 @@
   {
    "id": "b_7_4_l1",
    "kind": "home",
-   "name": "72 Tram Street",
+   "name": "12 Plum Street",
    "rect": [
     683.0,
     457.0,
@@ -121,6 +113,10 @@
      [
       689.85,
       458.65
+     ],
+     [
+      692.45,
+      458.65
      ]
     ],
     "room": [
@@ -129,17 +125,20 @@
       464.75
      ],
      [
-      690.0,
+      688.62,
       464.73
      ],
      [
-      693.67,
+      691.38,
+      464.73
+     ],
+     [
+      694.12,
       464.73
      ]
     ]
    },
-   "residents": 3,
-   "window_boxes": true,
+   "residents": 4,
    "stair": {
     "rect": [
      683.35,
@@ -155,6 +154,7 @@
     "bed": [
      1,
      1,
+     1,
      1
     ]
    },
@@ -166,7 +166,7 @@
   {
    "id": "b_7_4_l2",
    "kind": "home",
-   "name": "73 Baker Street",
+   "name": "13 North Wall Street",
    "rect": [
     703.0,
     395.0,
@@ -202,6 +202,7 @@
     ]
    },
    "residents": 2,
+   "window_boxes": true,
    "stair": {
     "rect": [
      703.35,
@@ -227,7 +228,7 @@
   {
    "id": "b_7_4_l3",
    "kind": "home",
-   "name": "74 Tram Street",
+   "name": "14 Plum Street",
    "rect": [
     703.0,
     457.0,
@@ -298,7 +299,7 @@
   {
    "id": "b_7_4_l4",
    "kind": "home",
-   "name": "75 Baker Street",
+   "name": "15 North Wall Street",
    "rect": [
     723.0,
     395.0,
@@ -309,7 +310,7 @@
     730.0,
     395.0
    ],
-   "floors": 3,
+   "floors": 2,
    "enterable": true,
    "objects": {
     "bed": [
@@ -320,36 +321,20 @@
      [
       729.85,
       396.65
-     ],
-     [
-      727.62,
-      396.65
-     ],
-     [
-      730.22,
-      396.65
      ]
     ],
     "room": [
      [
-      727.15,
-      399.15
-     ],
-     [
-      728.62,
+      727.25,
       399.27
      ],
      [
-      731.38,
-      399.27
-     ],
-     [
-      734.12,
+      732.75,
       399.27
      ]
     ]
    },
-   "residents": 4,
+   "residents": 2,
    "window_boxes": true,
    "stair": {
     "rect": [
@@ -365,21 +350,18 @@
    "levels": {
     "bed": [
      1,
-     1,
-     2,
-     2
+     1
     ]
    },
    "storeys": [
     "main",
-    "bedrooms",
     "bedrooms"
    ]
   },
   {
    "id": "b_7_4_l5",
    "kind": "home",
-   "name": "76 Tram Street",
+   "name": "16 Plum Street",
    "rect": [
     723.0,
     457.0,
@@ -390,7 +372,7 @@
     730.0,
     469.0
    ],
-   "floors": 2,
+   "floors": 3,
    "enterable": true,
    "objects": {
     "bed": [
@@ -403,11 +385,7 @@
       458.65
      ],
      [
-      729.85,
-      458.65
-     ],
-     [
-      732.45,
+      725.02,
       458.65
      ]
     ],
@@ -417,20 +395,16 @@
       464.75
      ],
      [
-      728.62,
+      730.0,
       464.73
      ],
      [
-      731.38,
-      464.73
-     ],
-     [
-      734.12,
+      733.67,
       464.73
      ]
     ]
    },
-   "residents": 4,
+   "residents": 3,
    "stair": {
     "rect": [
      723.35,
@@ -446,19 +420,19 @@
     "bed": [
      1,
      1,
-     1,
-     1
+     2
     ]
    },
    "storeys": [
     "main",
+    "bedrooms",
     "bedrooms"
    ]
   },
   {
    "id": "b_7_4_l6",
    "kind": "home",
-   "name": "77 Baker Street",
+   "name": "17 North Wall Street",
    "rect": [
     743.0,
     395.0,
@@ -469,7 +443,7 @@
     750.0,
     395.0
    ],
-   "floors": 3,
+   "floors": 2,
    "enterable": true,
    "objects": {
     "bed": [
@@ -478,22 +452,38 @@
       396.65
      ],
      [
-      747.62,
+      749.85,
+      396.65
+     ],
+     [
+      752.45,
+      396.65
+     ],
+     [
+      755.05,
       396.65
      ]
     ],
     "room": [
      [
-      747.25,
+      747.15,
+      399.15
+     ],
+     [
+      748.62,
       399.27
      ],
      [
-      752.75,
+      751.38,
+      399.27
+     ],
+     [
+      754.12,
       399.27
      ]
     ]
    },
-   "residents": 2,
+   "residents": 4,
    "stair": {
     "rect": [
      743.35,
@@ -508,19 +498,20 @@
    "levels": {
     "bed": [
      1,
-     2
+     1,
+     1,
+     1
     ]
    },
    "storeys": [
     "main",
-    "bedrooms",
     "bedrooms"
    ]
   },
   {
    "id": "b_7_4_l7",
    "kind": "home",
-   "name": "78 Tram Street",
+   "name": "18 Plum Street",
    "rect": [
     743.0,
     457.0,
@@ -591,7 +582,7 @@
   {
    "id": "b_7_4_l8",
    "kind": "home",
-   "name": "49 Garden Street",
+   "name": "9 Tanner Street",
    "rect": [
     683.0,
     424.0,
@@ -613,28 +604,21 @@
      [
       684.65,
       428.25
-     ],
-     [
-      687.25,
-      428.25
      ]
     ],
     "room": [
      [
       687.27,
-      427.67
+      428.75
      ],
      [
       687.27,
-      432.0
-     ],
-     [
-      687.27,
-      436.33
+      435.25
      ]
     ]
    },
-   "residents": 3,
+   "residents": 2,
+   "window_boxes": true,
    "stair": {
     "rect": [
      683.45,
@@ -649,7 +633,6 @@
    "levels": {
     "bed": [
      1,
-     1,
      1
     ]
    },
@@ -661,7 +644,7 @@
   {
    "id": "b_7_4_l9",
    "kind": "home",
-   "name": "49 East Wall Street",
+   "name": "9 Cooper Street",
    "rect": [
     745.0,
     424.0,
@@ -697,7 +680,6 @@
     ]
    },
    "residents": 2,
-   "window_boxes": true,
    "stair": {
     "rect": [
      749.65,
@@ -719,100 +701,59 @@
     "main",
     "bedrooms"
    ]
-  },
-  {
-   "id": "b_7_4_l10",
-   "kind": "stop",
-   "name": "Tram stop",
-   "rect": [
-    713.0,
-    473.0,
-    727.0,
-    476.5
-   ],
-   "door": [
-    720.0,
-    480.0
-   ],
-   "floors": 0,
-   "enterable": false,
-   "objects": {
-    "wait": [
-     [
-      715.0,
-      474.6
-     ],
-     [
-      717.4,
-      474.6
-     ],
-     [
-      719.8,
-      474.6
-     ],
-     [
-      722.2,
-      474.6
-     ],
-     [
-      724.6,
-      474.6
-     ]
-    ]
-   }
   }
  ],
  "paths": [],
  "trees": [
   {
    "id": "b_7_4_t0",
-   "species": "plane",
+   "species": "plum",
    "pos": [
-    704.32,
-    439.58
+    705.98,
+    435.63
    ],
-   "planted": -290,
-   "seed": 656650
+   "planted": -482,
+   "seed": 824383
   },
   {
    "id": "b_7_4_t1",
-   "species": "linden",
+   "species": "plane",
    "pos": [
-    710.74,
-    444.54
+    710.09,
+    441.02
    ],
-   "planted": -805,
-   "seed": 946823
+   "planted": -323,
+   "seed": 406081
   },
   {
    "id": "b_7_4_t2",
-   "species": "plum",
+   "species": "plane",
    "pos": [
-    721.68,
-    434.41
+    719.92,
+    418.95
    ],
-   "planted": -161,
-   "seed": 165172
+   "planted": -1017,
+   "seed": 408915
   },
   {
    "id": "b_7_4_t3",
-   "species": "linden",
+   "species": "plane",
    "pos": [
-    727.55,
-    440.13
+    728.44,
+    439.78
    ],
-   "planted": -732,
-   "seed": 121514
+   "planted": -919,
+   "seed": 417146
   },
   {
    "id": "b_7_4_t4",
-   "species": "plane",
+   "species": "plum",
    "pos": [
-    736.28,
-    432.15
+    734.14,
+    428.09
    ],
-   "planted": -435,
-   "seed": 548080
+   "planted": -434,
+   "seed": 345883
   },
   {
    "id": "b_7_4_t5",
@@ -821,48 +762,51 @@
     694.0,
     388.5
    ],
-   "planted": -839,
-   "seed": 686353
+   "planted": -1084,
+   "seed": 931878
   },
   {
    "id": "b_7_4_t6",
    "species": "plane",
    "pos": [
-    676.5,
-    406.0
+    720.0,
+    388.5
    ],
-   "planted": -1741,
-   "seed": 538243
+   "planted": -1699,
+   "seed": 564058
   },
   {
    "id": "b_7_4_t7",
    "species": "plane",
    "pos": [
-    746.0,
-    388.5
+    676.5,
+    432.0
    ],
-   "planted": -772,
-   "seed": 274477
+   "planted": -1606,
+   "seed": 539348
   },
   {
    "id": "b_7_4_t8",
    "species": "plane",
    "pos": [
+    746.0,
+    388.5
+   ],
+   "planted": -729,
+   "seed": 979113
+  },
+  {
+   "id": "b_7_4_t9",
+   "species": "plane",
+   "pos": [
     676.5,
     458.0
    ],
-   "planted": -1790,
-   "seed": 726199
+   "planted": -886,
+   "seed": 616855
   }
  ],
  "props": [
-  {
-   "kind": "shelter",
-   "pos": [
-    720.0,
-    474.6
-   ]
-  },
   {
    "kind": "lamp",
    "pos": [
@@ -887,7 +831,7 @@
   {
    "kind": "bin",
    "pos": [
-    693.24,
+    691.97,
     388.25
    ],
    "set": "dress",
@@ -901,7 +845,7 @@
   {
    "kind": "planter",
    "pos": [
-    700.82,
+    704.38,
     388.25
    ],
    "set": "dress",
@@ -913,9 +857,9 @@
    "id": "b_7_4_d1"
   },
   {
-   "kind": "planter",
+   "kind": "postbox",
    "pos": [
-    710.15,
+    722.99,
     388.25
    ],
    "set": "dress",
@@ -929,7 +873,7 @@
   {
    "kind": "bin",
    "pos": [
-    694.55,
+    692.24,
     475.75
    ],
    "set": "dress",
@@ -943,7 +887,7 @@
   {
    "kind": "planter",
    "pos": [
-    708.26,
+    707.77,
     475.75
    ],
    "set": "dress",
@@ -955,9 +899,9 @@
    "id": "b_7_4_d4"
   },
   {
-   "kind": "postbox",
+   "kind": "planter",
    "pos": [
-    729.89,
+    717.62,
     475.75
    ],
    "set": "dress",
@@ -972,7 +916,7 @@
    "kind": "bin",
    "pos": [
     676.25,
-    401.78
+    405.51
    ],
    "set": "dress",
    "along": "z",
@@ -986,7 +930,7 @@
    "kind": "planter",
    "pos": [
     676.25,
-    413.42
+    414.19
    ],
    "set": "dress",
    "along": "z",
@@ -997,24 +941,24 @@
    "id": "b_7_4_d7"
   },
   {
-   "kind": "bikerack",
+   "kind": "bin",
    "pos": [
-    676.25,
-    422.31
+    763.75,
+    402.95
    ],
    "set": "dress",
    "along": "z",
    "out": [
-    -1,
+    1,
     0
    ],
    "id": "b_7_4_d8"
   },
   {
-   "kind": "bin",
+   "kind": "planter",
    "pos": [
     763.75,
-    404.17
+    410.43
    ],
    "set": "dress",
    "along": "z",
@@ -1025,10 +969,10 @@
    "id": "b_7_4_d9"
   },
   {
-   "kind": "bikerack",
+   "kind": "postbox",
    "pos": [
     763.75,
-    414.19
+    417.72
    ],
    "set": "dress",
    "along": "z",
@@ -1042,7 +986,7 @@
    "kind": "planter",
    "pos": [
     763.75,
-    430.02
+    431.56
    ],
    "set": "dress",
    "along": "z",
@@ -1053,24 +997,19 @@
    "id": "b_7_4_d11"
   },
   {
-   "kind": "phonebox",
+   "kind": "bollard",
    "pos": [
-    763.75,
-    441.78
+    676.1,
+    390.7
    ],
    "set": "dress",
-   "along": "z",
-   "out": [
-    1,
-    0
-   ],
    "id": "b_7_4_d12"
   },
   {
    "kind": "bollard",
    "pos": [
-    676.1,
-    390.7
+    678.7,
+    388.1
    ],
    "set": "dress",
    "id": "b_7_4_d13"
@@ -1078,20 +1017,11 @@
   {
    "kind": "bollard",
    "pos": [
-    678.7,
-    388.1
-   ],
-   "set": "dress",
-   "id": "b_7_4_d14"
-  },
-  {
-   "kind": "bollard",
-   "pos": [
     763.9,
     390.7
    ],
    "set": "dress",
-   "id": "b_7_4_d15"
+   "id": "b_7_4_d14"
   },
   {
    "kind": "bollard",
@@ -1100,7 +1030,7 @@
     388.1
    ],
    "set": "dress",
-   "id": "b_7_4_d16"
+   "id": "b_7_4_d15"
   },
   {
    "kind": "bollard",
@@ -1109,7 +1039,7 @@
     473.3
    ],
    "set": "dress",
-   "id": "b_7_4_d17"
+   "id": "b_7_4_d16"
   },
   {
    "kind": "bollard",
@@ -1118,7 +1048,7 @@
     475.9
    ],
    "set": "dress",
-   "id": "b_7_4_d18"
+   "id": "b_7_4_d17"
   },
   {
    "kind": "bollard",
@@ -1127,7 +1057,7 @@
     473.3
    ],
    "set": "dress",
-   "id": "b_7_4_d19"
+   "id": "b_7_4_d18"
   },
   {
    "kind": "bollard",
@@ -1136,34 +1066,7 @@
     475.9
    ],
    "set": "dress",
-   "id": "b_7_4_d20"
-  },
-  {
-   "kind": "timetable",
-   "pos": [
-    727.3,
-    474.6
-   ],
-   "set": "dress",
-   "out": [
-    0,
-    1
-   ],
-   "id": "b_7_4_d21"
-  },
-  {
-   "kind": "bin",
-   "pos": [
-    712.7,
-    474.6
-   ],
-   "set": "dress",
-   "along": "x",
-   "out": [
-    0,
-    1
-   ],
-   "id": "b_7_4_d22"
+   "id": "b_7_4_d19"
   }
  ]
 }

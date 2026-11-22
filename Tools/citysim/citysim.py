@@ -118,10 +118,16 @@ def weather(data, clock, t):
 class Network:
     def __init__(self, segments, extra_points):
         self.nodes, self.adj = [], {}
-        pts = [tuple(p) for s in segments for p in s] + [tuple(p) for p in extra_points]
+        pts = {tuple(p) for s in segments for p in s} | {tuple(p) for p in extra_points}
+        B = 16.0                                                # points by 16 m square, so a segment only tests those near it
+        grid = {}
+        for p in pts:
+            grid.setdefault((int(p[0] // B), int(p[1] // B)), []).append(p)
         for a, b in segments:
             a, b = tuple(a), tuple(b)
-            on = sorted({p for p in pts if abs(dist(a, p) + dist(p, b) - dist(a, b)) < 1e-6}, key=lambda p: dist(a, p))
+            near = [p for i in range(int(min(a[0], b[0]) // B), int(max(a[0], b[0]) // B) + 1)
+                    for j in range(int(min(a[1], b[1]) // B), int(max(a[1], b[1]) // B) + 1) for p in grid.get((i, j), ())]
+            on = sorted({p for p in near if abs(dist(a, p) + dist(p, b) - dist(a, b)) < 1e-6}, key=lambda p: dist(a, p))
             for p, q in zip(on, on[1:]):
                 self._edge(p, q)
         self._cache = {}

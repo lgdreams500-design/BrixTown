@@ -1,0 +1,485 @@
+{
+ "id": "b_9_7",
+ "grid": [
+  9,
+  7
+ ],
+ "template": "hall",
+ "district": "Centre",
+ "origin": [
+  872.0,
+  680.0
+ ],
+ "size": 80.0,
+ "lots": [
+  {
+   "id": "b_9_7_l0",
+   "kind": "work",
+   "name": "Town Hall",
+   "rect": [
+    888.0,
+    694.0,
+    936.0,
+    728.0
+   ],
+   "door": [
+    912.0,
+    728.0
+   ],
+   "floors": 3,
+   "enterable": true,
+   "objects": {
+    "work": [
+     [
+      895.12,
+      703.42
+     ],
+     [
+      906.38,
+      703.42
+     ],
+     [
+      917.62,
+      703.42
+     ],
+     [
+      928.88,
+      703.42
+     ],
+     [
+      889.65,
+      695.65
+     ],
+     [
+      891.85,
+      695.65
+     ],
+     [
+      890.02,
+      695.65
+     ],
+     [
+      892.22,
+      695.65
+     ]
+    ]
+   },
+   "desks": 8,
+   "stair": {
+    "rect": [
+     888.35,
+     720.65,
+     890.7,
+     727.55
+    ],
+    "axis": "z",
+    "wall": "w",
+    "up0": -1
+   },
+   "levels": {
+    "work": [
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     2,
+     2
+    ]
+   },
+   "storeys": [
+    "main",
+    "office",
+    "office"
+   ]
+  }
+ ],
+ "paths": [
+  [
+   [
+    912.0,
+    728.0
+   ],
+   [
+    912.0,
+    768.0
+   ]
+  ]
+ ],
+ "trees": [
+  {
+   "id": "b_9_7_t0",
+   "species": "linden",
+   "pos": [
+    884.0,
+    746.0
+   ],
+   "planted": -390,
+   "seed": 561420
+  },
+  {
+   "id": "b_9_7_t1",
+   "species": "linden",
+   "pos": [
+    898.0,
+    746.0
+   ],
+   "planted": -375,
+   "seed": 179367
+  },
+  {
+   "id": "b_9_7_t2",
+   "species": "linden",
+   "pos": [
+    926.0,
+    746.0
+   ],
+   "planted": -708,
+   "seed": 409830
+  },
+  {
+   "id": "b_9_7_t3",
+   "species": "linden",
+   "pos": [
+    940.0,
+    746.0
+   ],
+   "planted": -946,
+   "seed": 876014
+  },
+  {
+   "id": "b_9_7_t4",
+   "species": "plane",
+   "pos": [
+    868.5,
+    694.0
+   ],
+   "planted": -865,
+   "seed": 692337
+  },
+  {
+   "id": "b_9_7_t5",
+   "species": "plane",
+   "pos": [
+    868.5,
+    720.0
+   ],
+   "planted": -1884,
+   "seed": 129072
+  },
+  {
+   "id": "b_9_7_t6",
+   "species": "plane",
+   "pos": [
+    938.0,
+    676.5
+   ],
+   "planted": -558,
+   "seed": 741281
+  },
+  {
+   "id": "b_9_7_t7",
+   "species": "plane",
+   "pos": [
+    868.5,
+    746.0
+   ],
+   "planted": -848,
+   "seed": 149790
+  }
+ ],
+ "props": [
+  {
+   "kind": "bench",
+   "pos": [
+    892.0,
+    740.0
+   ],
+   "along": "x"
+  },
+  {
+   "kind": "bench",
+   "pos": [
+    932.0,
+    740.0
+   ],
+   "along": "x"
+  },
+  {
+   "kind": "lamp",
+   "pos": [
+    868.0,
+    676.0
+   ]
+  },
+  {
+   "kind": "lamp",
+   "pos": [
+    912.0,
+    676.0
+   ]
+  },
+  {
+   "kind": "lamp",
+   "pos": [
+    868.0,
+    720.0
+   ]
+  },
+  {
+   "kind": "statue",
+   "pos": [
+    912.0,
+    746.0
+   ],
+   "set": "dress",
+   "id": "b_9_7_d0"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    906.5,
+    732.0
+   ],
+   "set": "dress",
+   "along": "x",
+   "big": true,
+   "id": "b_9_7_d1"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    917.5,
+    732.0
+   ],
+   "set": "dress",
+   "along": "x",
+   "big": true,
+   "id": "b_9_7_d2"
+  },
+  {
+   "kind": "noticeboard",
+   "pos": [
+    903.0,
+    731.2
+   ],
+   "set": "dress",
+   "face": "z",
+   "sign": 1,
+   "id": "b_9_7_d3"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    882.2,
+    676.25
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
+   "id": "b_9_7_d4"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    883.94,
+    763.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_9_7_d5"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    892.36,
+    763.75
+   ],
+   "set": "dress",
+   "along": "x",
+   "out": [
+    0,
+    1
+   ],
+   "id": "b_9_7_d6"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    868.25,
+    694.66
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_9_7_d7"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    868.25,
+    710.42
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_9_7_d8"
+  },
+  {
+   "kind": "postbox",
+   "pos": [
+    868.25,
+    724.4
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    -1,
+    0
+   ],
+   "id": "b_9_7_d9"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    955.75,
+    690.85
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_9_7_d10"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    955.75,
+    701.79
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_9_7_d11"
+  },
+  {
+   "kind": "bikerack",
+   "pos": [
+    955.75,
+    714.41
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_9_7_d12"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    955.75,
+    728.36
+   ],
+   "set": "dress",
+   "along": "z",
+   "out": [
+    1,
+    0
+   ],
+   "id": "b_9_7_d13"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    868.1,
+    678.7
+   ],
+   "set": "dress",
+   "id": "b_9_7_d14"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    870.7,
+    676.1
+   ],
+   "set": "dress",
+   "id": "b_9_7_d15"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    955.9,
+    678.7
+   ],
+   "set": "dress",
+   "id": "b_9_7_d16"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    953.3,
+    676.1
+   ],
+   "set": "dress",
+   "id": "b_9_7_d17"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    868.1,
+    761.3
+   ],
+   "set": "dress",
+   "id": "b_9_7_d18"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    870.7,
+    763.9
+   ],
+   "set": "dress",
+   "id": "b_9_7_d19"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    955.9,
+    761.3
+   ],
+   "set": "dress",
+   "id": "b_9_7_d20"
+  },
+  {
+   "kind": "bollard",
+   "pos": [
+    953.3,
+    763.9
+   ],
+   "set": "dress",
+   "id": "b_9_7_d21"
+  }
+ ]
+}
