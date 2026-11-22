@@ -43,7 +43,7 @@ var Talk = (() => {                    // var: a property of window, so index.ht
     return { mouth, curve: E.curve + mouth.curve * .5, brow_l: [E.brow_l[0] + lift, E.brow_l[1] + lift], brow_r: [E.brow_r[0] + lift, E.brow_r[1] + lift], lid: E.lid, squint: E.squint, open: E.open, gaze: E.gaze.slice(), nod };
   }
   function blendFace(dt) {
-    const f = s.f, g = faceTarget(now() - s.t0), km = Math.min(1, dt * SP.timing.blend.mouth), ke = Math.min(1, dt * SP.timing.blend.expression), mix1 = (a, b, k) => a + (b - a) * k;
+    const f = s.f, g = faceTarget((now() - s.t0) * (s.k || 1)), km = Math.min(1, dt * SP.timing.blend.mouth), ke = Math.min(1, dt * SP.timing.blend.expression), mix1 = (a, b, k) => a + (b - a) * k;
     for (const k of ["width", "opening", "round"]) f.mouth[k] = mix1(f.mouth[k], g.mouth[k], km);
     f.mouth.teeth = g.mouth.teeth; f.mouth.tongue = g.mouth.tongue;
     f.curve = mix1(f.curve, g.curve, ke); f.lid = mix1(f.lid, g.lid, ke); f.squint = mix1(f.squint, g.squint, ke); f.open = mix1(f.open, g.open, ke); f.nod = mix1(f.nod, g.nod, km);
@@ -80,7 +80,7 @@ var Talk = (() => {                    // var: a property of window, so index.ht
       return x.conversation;
     }
   }
-  function fill(text) {
+  function vars() {                                      // what each blank in a line stands for, for this resident now
     const m = clock.m, res = D.residents[s.i], r = s.r0;
     const v = {
       name: res.n, role: DL.role_words[D.roles[res.r]], place: r.lot ? r.lot.name : D.city.name,
@@ -89,16 +89,19 @@ var Talk = (() => {                    // var: a property of window, so index.ht
       weekday: DAYS[D.day.weekday] || D.day.weekday, season: D.day.season.toLowerCase(),
     };
     Object.assign(v, s.conv.vars || {}, window.Life ? Life.vars() : {});   // {player}, and a job's {pay} {item} {from} {to} {hours} (life.js)
-    return text.replace(/\{(\w+)\}/g, (_, k) => k in v ? v[k] : "{" + k + "}");
+    return v;
   }
+  function fill(text) { const v = vars(); return text.replace(/\{(\w+)\}/g, (_, k) => k in v ? v[k] : "{" + k + "}"); }
   const has = (f, c) => c.every(x => x[0] === "!" ? !f.has(x.slice(1)) : f.has(x));
   function show(nid) {
     if (nid === null) return close();
     const node = s.conv.nodes[nid], f = flags.get(s.i);
     s.node = nid; s.opts = node.options.filter(o => has(f, o.if || []) && (!window.Life || Life.allowed(o)));   // and a quest reply's needs (life.js)
     const line = fill(node.say); el("talk-say").textContent = line; el("talk").dataset.mood = node.mood;
-    s.mood = node.mood; s.line = speak(line); s.t0 = now();          // the resident says the line: mouth, face and nods follow it
-    if (window.Sound) Sound.line(s.line, s.i, s.r.x, s.r.z);          // and their voice: a syllable for each mouth shape (sound.js, SND-005)
+    s.mood = node.mood; s.line = speak(line); s.t0 = now(); s.k = 1;   // the resident says the line: mouth, face and nods follow it
+    const said = window.Voices && Voices.speak(s.i, node.say, vars(), node.mood || "neutral");   // spoken aloud (voices.js, SND-018)
+    if (said) s.k = s.line.end / Math.max(.3, said.dur);             // the mouth finishes with the voice (CHR-009)
+    else if (window.Sound) Sound.line(s.line, s.i, s.r.x, s.r.z);    // a line with no voice yet: wordless syllables, as before
     const ol = el("talk-opts"); ol.textContent = "";
     s.opts.forEach((o, n) => {
       const b = document.createElement("button"); b.type = "button";
@@ -112,7 +115,12 @@ var Talk = (() => {                    // var: a property of window, so index.ht
     const f = flags.get(s.i); for (const x of o.do || []) f.add(x);
     if (window.Life) Life.chose(s.i, o);                 // quest acts, a job taken, a counter to open (life.js)
     if (window.Sound) Sound.act("talk_choose");
-    show(o.next);
+    const said = window.Voices && Voices.speak("player", o.text, vars(), "neutral");   // you say your answer (SND-018)
+    if (!said) return show(o.next);
+    const me = s; s.opts = []; el("talk-opts").textContent = "";
+    el("talk-say").textContent = "You: " + fill(o.text); el("talk").dataset.mood = "neutral";
+    s.line = speak(""); s.t0 = now();                    // the resident listens, mouth at rest
+    setTimeout(() => { if (s === me) show(o.next); }, (said.dur + .35) * 1000);
   }
   function open(t) {
     const r0 = where(t.i, clock.m); if (!r0) return;
@@ -135,6 +143,7 @@ var Talk = (() => {                    // var: a property of window, so index.ht
     if (spent > 0 && dl < 180) late.set(s.i, dl); else late.delete(s.i);   // held more than three hours: they just pick up the day where it is
     el("talk").style.display = "none"; el("keys").style.display = el("keys").dataset.was || "block";
     if (!cam.fp) cam.dist = s.dist;
+    if (window.Voices) Voices.stop();
     if (window.Sound) { Sound.hush(); Sound.act("talk_close"); }
     s = null;
     if (window.Life) Life.talkEnded();

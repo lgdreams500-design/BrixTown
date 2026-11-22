@@ -93,13 +93,17 @@ sets width and opening.
 The reference line "Welcome to Brix Mart. Fancy a coffee?" is the `SEQ` table in the prototype
 (55 frames at 12 per second).
 
-### Where the timing comes from — `[OPEN: Q-14]`
+### Where the timing comes from (Q-14, decided: ADR-0019)
 | Source | Works when | Cost |
 |---|---|---|
 | **Text (default)** | Dialogue is text, or text plus synthetic voice | Cheap; runs for every NPC; needs a small pronunciation table |
 | Audio | Dialogue is recorded voice | Needs analysis per line (offline) or a runtime plug-in |
 
 The control set is the same either way, so the choice can be made later without redoing faces.
+
+**Decided 2026-11-22:** dialogue is spoken in pre-made natural voices (ADR-0019). The timing still comes from the
+line's text, as above, stretched so the mouth finishes with the spoken audio. Timing from the audio itself is a later
+refinement; the controls stay the same.
 
 ## 5. Always-on face life (CHR-010)
 - Blink every 2–6 s, and usually **during a head turn or gaze shift**.

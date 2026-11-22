@@ -1,7 +1,7 @@
 ---
 spec_id: WASTED-SPEC
 title: Wasted — Game Specification
-version: 0.5.1
+version: 0.5.2
 status: draft            # draft | reviewed | approved
 last_updated: 2026-11-22
 owner: project-owner
@@ -131,7 +131,7 @@ Face details: `docs/art/CHARACTER_FACE.md` (ADR-0005).
 | CHR-006 | Characters shall have skills (e.g. cooking, fitness, charisma, technical) that improve through use. | P1 | PH3 | proposed |
 | CHR-007 | Every head (player and NPC) shall share one **face control set**: brows, eyelids, gaze, mouth corners and at least 8 speech mouth shapes. Faces made in the designer and creator-made hair or accessories shall animate with no per-character work. | P0 | PH3 | accepted |
 | CHR-008 | Characters shall show facial expressions driven by game state and dialogue: at least neutral, happy, sad, angry, surprised and thinking, blended over time. | P1 | PH1 | accepted |
-| CHR-009 | While a character speaks a dialogue line, its mouth shall move in time with that line (lip sync). Timing comes from the line's text (Q-14). | P1 | PH1 | accepted |
+| CHR-009 | While a character speaks a dialogue line, its mouth shall move in time with that line (lip sync). Timing comes from the line's text, stretched to the length of its spoken audio (Q-14, ADR-0019). | P1 | PH1 | accepted |
 | CHR-010 | Idle characters shall blink and shift gaze so that faces never look frozen. | P2 | PH3 | proposed |
 | CHR-011 | Facial animation shall be level-of-detail controlled: full on the characters in a conversation and nearby, reduced or off with distance, within the client performance budget. | P1 | PH3 | proposed |
 | CHR-013 | The designer shall show the character live as values change and keep every value inside the ranges in `World/rules/designer.json` (height within the cast range of ART_DIRECTION §3.2). Choices come from the world palette (rule C2), and the face control set shall work unchanged on every designed face (CHR-007). `F-CHR-DESIGN` level 2. Asked for by the owner on 2026-11-22. | P0 | PH1 | in-progress |
@@ -202,7 +202,7 @@ interaction points, vehicles) is in `docs/specs/domains/LIVING_CITY.md`, proven 
 | CITY-004 | NPCs shall staff shops and services and transact through the same ledger as players. | P1 | PH3 | proposed |
 | CITY-005 | The city shall provide transport: walking, cars that players drive and residents' cars in real traffic from PH1 (Q-08), public transit by its own pick. Detail in LIVING_CITY §3.4 (CITY-040 to CITY-067). | P0 | PH1 | accepted |
 | CITY-006 | Ambient crowd and traffic density shall scale with time of day and with a server performance budget. | P1 | PH3 | proposed |
-| CITY-007 | Players shall hold dialogues with NPCs: lines shown as text (and voice if Q-14 says so), player choices, and outcomes that can change game state. Lines carry an emotion tag used by CHR-008. | P1 | PH1 | accepted |
+| CITY-007 | Players shall hold dialogues with NPCs: lines shown as text and spoken aloud (Q-14, ADR-0019), player choices, and outcomes that can change game state. Lines carry an emotion tag used by CHR-008. | P1 | PH1 | accepted |
 
 ### 4.7 Time, weather, vegetation — `WLD`
 
@@ -233,7 +233,7 @@ wording check; they are `in-progress` because the owner asked for the work.
 | SND-002 | Each nearby resident car on a trip shall make an engine sound from where it is, its pitch following its speed; vans sound lower. Parked cars are silent. | F-SND-WORLD | 1 | P1 | PH1 | in-progress | |
 | SND-003 | The player and nearby walking residents shall make footsteps in time with their walk, sounding of stone outside, wood on floors and grass in gardens; a hard landing thuds. | F-SND-WORLD | 1 | P1 | PH1 | in-progress | `test_SND_008_sound_rules_are_sound` |
 | SND-004 | The tram shall hum and rumble with its speed and ring its bell when it stops and when it leaves. | F-SND-WORLD | 1 | P1 | PH1 | in-progress | |
-| SND-005 | A resident's line shall be voiced as wordless syllables, one for each mouth shape of the lip sync (CHR-009) and at the same moment, in a pitch that is the same for that resident every time, rising before a question. No words (Q-14: text first). | F-SND-WORLD | 1 | P1 | PH1 | in-progress | `test_SND_005_every_vowel_the_mouth_shows_has_a_voice` |
+| SND-005 | A resident's line shall be voiced as wordless syllables, one for each mouth shape of the lip sync (CHR-009) and at the same moment, in a pitch that is the same for that resident every time, rising before a question. No words (Q-14: text first). *Cut 2026-11-22: lines are spoken (SND-018, ADR-0019).* | F-SND-WORLD | 1 | P1 | PH1 | cut | `test_SND_005_every_vowel_the_mouth_shows_has_a_voice` |
 | SND-006 | Residents standing together at leisure or work shall murmur to each other; only the nearest groups are heard (4 `[ASSUMPTION]`). | F-SND-WORLD | 1 | P1 | PH1 | in-progress | |
 | SND-007 | Every sound in the world shall come from where its source is: louder near, panned left or right by direction, gone past its distance. Outdoor sounds shall be muffled while the listener is inside a building. | F-SND-WORLD | 1 | P1 | PH1 | in-progress | `test_SND_007_outside_is_muffled_indoors` |
 | SND-008 | Every sound's tuning (loudness, distance, pitch, times of day, music styles) shall be data, checked before use. | F-SND-WORLD | 0 | P1 | PH1 | in-progress | `test_SND_008_sound_rules_are_sound`, `test_SND_008_broken_sound_rules_are_caught` |
@@ -246,6 +246,7 @@ wording check; they are `in-progress` because the owner asked for the work.
 | SND-015 | What residents are doing shall be heard near them, from data: cutlery and cups where people eat, the espresso machine and till at work, bags in shops, coins and calls at a stall, typing, hammering, shears, deliveries, pages turned, snoring in bed, children on the swings, slide, seesaw, sandpit and climbing frame. | F-SND-WORLD | 1 | P1 | PH1 | in-progress | `test_SND_015_what_people_do_makes_a_sound`, `test_SND_015_broken_people_sounds_are_caught` |
 | SND-016 | Residents together shall talk in turns: one speaks a wordless phrase that falls to an end or rises to a question, another replies, then a pause; now and then someone laughs (children more often). Where many are gathered a crowd hum shall rise. Quiet places (library, museum, cinema, bedrooms) have no chatter. A passer-by sometimes says hello to the player; a resident who dodges the player's car shouts (CITY-071). | F-SND-WORLD | 1 | P1 | PH1 | in-progress | `test_SND_016_talk_is_turns_and_quiet_places_stay_quiet` |
 | SND-017 | People's movements shall be heard: steps louder when running and lighter and higher for children, on stone, wood or grass; a sound when a resident sits, lies down or gets up. Children's voices are higher, elders' lower. | F-SND-WORLD | 1 | P1 | PH1 | in-progress | `test_SND_017_children_sound_lighter` |
+| SND-018 | Residents and the player shall speak their dialogue lines aloud in natural voices (ADR-0019), with the text still shown. Each resident speaks in a voice from their role's pool in `World/rules/voices.json`, always the same one; the player in the player voice. Each line is spoken in its mood. Blanks are joined from pieces voiced for every value the speaker can use; a typed player name other than the default is a short pause. A resident's next line waits for the player's spoken answer. | F-NPC-TALK | 1 | P1 | PH1 | in-progress | `test_SND_018_every_role_has_voices`, `test_SND_018_every_line_can_be_spoken`, `test_SND_018_the_owners_picks_are_kept` |
 
 ### 4.9 Quests — `QST`
 
@@ -434,7 +435,7 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | Q-11 | Team: solo, or others joining? | Affects tooling and process weight. | Solo plus AI agents. |
 | Q-12 | Age rating and audience? | Constrains content, chat, UGC moderation. | Teen. |
 | Q-13 | What does "Wasted" mean for tone and theme? | The name suggests a tone the pillars do not yet reflect. | Owner to define. |
-| Q-14 | Is dialogue voiced (recorded or synthesised speech) or text only? Do player characters' mouths move with chat? | Decides how lip sync is timed: from audio, or generated from the text of the line. | **DECIDED 2026-11-22 (first part):** text first. Mouth shapes are generated from the line's text and shown with it; voice can be added later without changing the face controls. Whether players' mouths move with chat is still open. |
+| Q-14 | Is dialogue voiced (recorded or synthesised speech) or text only? Do player characters' mouths move with chat? | Decides how lip sync is timed: from audio, or generated from the text of the line. | **DECIDED 2026-11-22:** voiced (ADR-0019). Residents and the player speak their lines in natural voices, pre-made offline with the Kokoro model; the text stays on screen. Mouth shapes still come from the line's text, stretched to the length of its audio. (Earlier the same day: text first.) Whether players' mouths move with chat is still open. |
 | Q-15 | How are production character models made: commissioned or bought stylised base, modelled in-house, or MetaHuman? | Sets cost, schedule and whether the laptop can run them. | Commission or buy one stylised base body and head with the CHR-007 control set; build the designer on it. |
 | Q-16 | Blender version pin: 5.2 LTS as first written, or 5.3 as installed? | All look tests and reference renders were made in 5.3 (the Microsoft Store version, which auto-updates). | Pin 5.3; record the exact build; revisit when a second machine joins. |
 | Q-17 | Is the walk cycle fully procedural, or a few authored clips that the movement signature adjusts? | Decides how much animation is bought or made, and how the prototype maps to Unreal. | Authored base walk clips plus signature and state layers on top; head, eyes and face fully procedural. |
@@ -478,3 +479,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.4.6 | 2026-11-22 | SND-014: podcasts on the car radio (owner's request), as part of `F-SND-MUSIC` level 1. |
 | 0.5.0 | 2026-11-22 | Money, shops, quests and the character designer in the first slice, from the owner's request and picks (`F-ECO-BANK` 2, `F-BLD-SHOP` 2, `F-QUEST` 2, `F-CHR-DESIGN` 2). ECO-001 to 003 in progress; ECO-005, BANK-001, BANK-002, CHR-001 and CHR-002 moved to PH1. Added ECO-009 to 012, BANK-007, BANK-008, PROP-008, CHR-013 and §4.9 Quests (QST-001 to 008). ADR-0012. |
 | 0.5.1 | 2026-11-22 | SND-015 to SND-017: people's movements, activities and chatter (owner's request), as part of `F-SND-WORLD` level 1. SND-006's murmur becomes conversations that take turns. |
+| 0.5.2 | 2026-11-22 | Q-14 decided: dialogue is voiced (ADR-0019). SND-018 added; SND-005 cut; CHR-009 and CITY-007 updated to match. |
