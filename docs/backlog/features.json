@@ -817,8 +817,8 @@
         },
         {
           "name": "Weather and night",
-          "what": "People shelter from rain, lamps and windows light up, people glance at you.",
-          "effort": "M",
+          "what": "People dress for the weather (coats and hoods on cold or wet days, umbrellas up in rain), hurry for cover when rain starts and wait it out under awnings or indoors; lamps and windows light up; people glance at you.",
+          "effort": "L",
           "needs": {
             "F-WEATHER": 1,
             "F-NPC-ROUTINE": 1

@@ -171,5 +171,110 @@ class World(unittest.TestCase):
         self.assertTrue(any(cs.dist(v["pos"], (63, 20)) < 0.5 for v in vans))
 
 
+class Weather(unittest.TestCase):
+    """F-NPC-REACT level 1: residents react to the weather (CITY-077 to CITY-080), over the real city in World/."""
+    RAIN_AT_SIX = 18                     # a summer Friday: dry until 18:00, when rain starts over full gardens
+
+    @classmethod
+    def setUpClass(cls):
+        import os, sys
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "worldgen"))
+        import world
+        cls.W = world.load()
+        cls.C = world.simulation(cls.W)
+        cls.R = cls.W["weather_react"]
+
+    def test_CITY_077_dress_for_the_weather(self):
+        """Coats in the cold and the wet, umbrellas on days with rain, decided once a day and the same on every machine."""
+        C, R = self.C, self.R
+        self.assertEqual(C.rain_spells(self.RAIN_AT_SIX), [(1080, 1440)])
+        def share(day, key, wet=None):
+            return sum(C.wear(rid, day, wet)[key] for rid in C.res) / len(C.res)
+        self.assertAlmostEqual(share(16, "umbrella", True), R["umbrella"]["rain_day"], delta=0.05)
+        self.assertLess(share(16, "umbrella", False), 0.1)
+        self.assertGreater(share(16, "coat", True), share(16, "coat", False) + 0.5)   # summer: coats come out for rain
+        self.assertGreater(share(42, "coat", False), share(16, "coat", False) + 0.6)  # winter against summer
+        for rid in list(C.res)[:200]:
+            w = C.wear(rid, self.RAIN_AT_SIX)
+            self.assertEqual(w, C.wear(rid, self.RAIN_AT_SIX))
+            self.assertTrue(w["coat"] or not w["hood"], rid)
+            self.assertEqual(w["umbrella"], w["umbrella_colour"] is not None)
+
+    def test_CITY_078_take_cover_when_rain_starts(self):
+        """Out in the open when rain starts: under cover within a few minutes, and nobody stays out in the open in the rain."""
+        C, R, day = self.C, self.R, self.RAIN_AT_SIX
+        before = C.at(day * 1440 + 1079)
+        out = [rid for rid, s in before.items() if s["pos"] and C.lots[s["place"]]["kind"] in R["open_kinds"] and s["act"] not in R["stay_out"] + ["walk"]]
+        self.assertGreater(len(out), 100, "the gardens should be full before the rain")
+        for m in (1080 + R["shelter"]["notice_minutes"][1] + 12, 1200, 1320):
+            now = C.at(day * 1440 + m)
+            caught = [rid for rid, s in now.items() if s["pos"] and s["state"] != "walking" and C.lots[s["place"]]["kind"] in R["open_kinds"] and s["act"] not in R["stay_out"]]
+            self.assertEqual(caught, [], "still out in the open at minute %d" % m)
+        under = C.at(day * 1440 + 1110)
+        self.assertGreater(sum(1 for rid in out if under[rid]["act"] == "shelter"), len(out) / 3)
+        self.assertEqual(C.at(day * 1440 + 1100), world_city_again().at(day * 1440 + 1100))     # CITY-022 still holds
+
+    def test_CITY_078_back_out_when_the_rain_stops(self):
+        """A spell that ends with enough of the stay left: they go back; too little left: they stay under cover."""
+        C, day = self.C, self.RAIN_AT_SIX
+        rid = next(r for r in C.res if C.res[r].get("near", {}).get("garden"))
+        g = C.res[rid]["near"]["garden"]
+        stay = lambda a, b: [dict(start=float(a), end=float(b), act="rest", place=g, use=C._use("rest", g), idx=3)]
+        real = C.rain_spells
+        try:
+            C.rain_spells = lambda d: [(720, 780)]
+            got = C._take_cover(rid, day, stay(700, 840))
+            self.assertEqual([(s["act"] in ("shelter", "home"), round(s["start"]), round(s["end"])) for s in got][0], (False, 700, round(got[1]["start"])))
+            self.assertTrue(720 < got[1]["start"] <= 720 + self.R["shelter"]["notice_minutes"][1] and got[1]["rush"])
+            self.assertEqual((got[1]["end"], got[2]["act"], got[2]["start"], got[2]["end"]), (780, "rest", 780, 840))
+            got = C._take_cover(rid, day, stay(700, 790))                   # 10 minutes left: not worth going back
+            self.assertEqual((len(got), got[-1]["end"]), (2, 790))
+            got = C._take_cover(rid, day, stay(730, 840))                   # due out while it rains: straight to cover, no running
+            self.assertEqual((got[0]["start"], got[0]["rush"], got[1]["act"]), (730, False, "rest"))
+        finally:
+            C.rain_spells = real
+
+    def test_CITY_079_hurry_in_the_rain(self):
+        """Walks in the rain are faster: a little under an umbrella, more without; running for cover faster still. Dry walks are not."""
+        C, p, day = self.C, self.R["pace"], self.RAIN_AT_SIX
+        runs = 0
+        for rid, pieces in C.plan(day).items():
+            v = C.speed(rid) * C.pace
+            umb = C.wear(rid, day)["umbrella"]
+            for kind, t0, t1, payload, s in pieces:
+                if kind != "move" or t1 >= 1439.4:
+                    continue
+                f = payload[2] / v
+                if not C.raining(day * 1440 + t0):
+                    self.assertAlmostEqual(f, 1.0, places=3, msg=rid)
+                elif umb:
+                    self.assertAlmostEqual(f, p["umbrella"], places=3, msg=rid)
+                else:
+                    self.assertAlmostEqual(f, p["run"] if s.get("rush") else p["hurry"], places=3, msg=rid)
+                    runs += bool(s.get("rush"))
+        self.assertGreater(runs, 20, "someone should run for cover")
+
+    def test_CITY_080_cover_in_the_rain(self):
+        """Out in the rain: umbrella up if they brought one, else a hood if their coat has one, else bare-headed. Dry, indoors
+        or under an awning: nothing."""
+        C, day = self.C, self.RAIN_AT_SIX
+        self.assertTrue(all(s["cover"] is None for s in C.at(day * 1440 + 1000).values()))
+        wet = C.at(day * 1440 + 1150)
+        seen = set()
+        for rid, s in wet.items():
+            w = C.wear(rid, day)
+            if s["state"] in ("inside", "away", "driving") or s["act"] == "shelter":
+                self.assertIsNone(s["cover"], rid)
+            else:
+                self.assertEqual(s["cover"], "umbrella" if w["umbrella"] else "hood" if w["hood"] else "bare", rid)
+                seen.add(s["cover"])
+        self.assertEqual(seen, {"umbrella", "hood", "bare"})
+
+
+def world_city_again():
+    import world
+    return world.simulation(world.load())
+
+
 if __name__ == "__main__":
     unittest.main()

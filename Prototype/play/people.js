@@ -114,13 +114,15 @@ const People = (() => {
     upper(P, g, W, pel, I3, chest, arms, [hm[0], rad(sig.head_pitch * .5) + hm[1], hm[2]]);
     return P;
   }
-  function sit(sig, g, W, t, hm, seed) {                                // origin is the seat top
+  function sit(sig, g, W, t, hm, seed, md) {                            // origin is the seat top
     const P = blank(), pel = [0, 0, .095 * g.S - g.hipdz];
     for (const [k, side] of [[0, 1], [1, -1]]) {
       const hip = add(pel, [side * g.hipx, 0, g.hipdz]);
       leg(P, k, g, hip, add(hip, [side * .035 * g.S, -g.L1 * .97, -g.L2 * .98]), [1, 0, 0], 0, side * rad(8));
     }
-    upper(P, g, W, pel, I3, [0, rad(4) + .004 * Math.sin(t * 1.3 + seed), 0], [[26, 6, 62], [26, 6, 62]], [hm[0], rad(4) + hm[1], hm[2]]);
+    const arms = [[26, 6, 62], [26, 6, 62]], chest = [0, rad(4) + .004 * Math.sin(t * 1.3 + seed), 0];
+    gesture(arms, chest, md);                                         // an umbrella held up while sitting out in the rain
+    upper(P, g, W, pel, I3, chest, arms, [hm[0], rad(4) + hm[1], hm[2]]);
     return P;
   }
 
@@ -310,7 +312,7 @@ const People = (() => {
     const sig = o.sig || L.sig, g = geo(L.S), S = L.S, Sh = S * 1.22, W = L.W, T = 1.12 * S, lod = o.lod, fl = o.fl, t = o.t, sd = L.seed;
     const wd = wander(t, sd * .37), lk = o.look || [0, 0], hm = [wd[0] + lk[0], wd[1] + lk[1] + (o.face ? o.face.nod || 0 : 0), wd[2]];   // a speaker nods on stressed words (ANIM-006)
     TEX = lod < 2 ? 1 : 0; SKINREF = L.skin; OCC = null; OSKIP = 0; HEROSKIP = 0;
-    const P = pose === 1 ? walk(sig, g, W, o.ph, hm, o.mod) : pose === 2 ? sit(sig, g, W, t, hm, sd) : stand(sig, g, W, t, pose === 3 ? [0, 0, 0] : hm, sd, o.mod);
+    const P = pose === 1 ? walk(sig, g, W, o.ph, hm, o.mod) : pose === 2 ? sit(sig, g, W, t, hm, sd, o.mod) : stand(sig, g, W, t, pose === 3 ? [0, 0, 0] : hm, sd, o.mod);
     // where the character's axes point in the world: standing (x left, y back, z up) or lying on the back, head to +z
     const c = Math.cos(yaw), s = Math.sin(yaw), ex = pose === 3 ? [-1, 0, 0] : [-c, 0, -s], ey = pose === 3 ? [0, -1, 0] : [-s, 0, c], ez = pose === 3 ? [0, 0, 1] : [0, 1, 0];
     const O = pose === 3 ? [x, y + .1 * S, z - .86 * S] : [x, y, z];
@@ -395,7 +397,11 @@ const People = (() => {
     OSKIP = 3;
     const hn = lod === 0 ? 24 : lod === 1 ? 10 : 6, hm2 = lod === 0 ? 16 : lod === 1 ? 6 : 4, hairC = L.hairC, st = L.hair;
     const shell = (b, cc, rx, ry, rz, col, keep, s2, hood) => blob(0, b, cc, rx, ry, rz, col, hn, hm2, s2, { keep, hood });
-    if (st === "afro") shell(.012, .035, RX + .055, RY + .055, RZ + .06, hairC, (x, y, z) => !(z < -.5 || (y < -.35 && z < .22)));
+    if (o.hood) {                                                     // a coat's hood up in the rain (CITY-080): the long-hair shell, a size up, in the coat's colour
+      shell(.016, .018, RX + (st === "afro" ? .06 : .036), RY + (st === "afro" ? .06 : .04), RZ + (st === "afro" ? .06 : .034), o.hood, (x, y, z) => !(z < -.85 || (y < -.28 && z < .44)), sd + 23, true);
+      blob(0, -.104, .118, .074, .03, .03, o.hood, hn, 5, sd + 23);   // the hood's front edge over the brow
+    }
+    else if (st === "afro") shell(.012, .035, RX + .055, RY + .055, RZ + .06, hairC, (x, y, z) => !(z < -.5 || (y < -.35 && z < .22)));
     else if (st !== "bald") {
       shell(.012, .014, RX + .02, RY + .022, RZ + .02, hairC,
         st === "side" ? (x, y, z) => !(z < -.35 || (y < -.25 && z < .3 + .28 * x) || (y < .25 && z < .05))
@@ -407,8 +413,18 @@ const People = (() => {
       if (st === "long" && lod < 2) for (const e of [-1, 1]) limb(ms, H(e * .106, 0, 0), H(e * .1, -.018, -.19), .021 * Sh, .013 * Sh, 10, hairC, fl, true, fwd, sd + 20);
       if (st === "bun") blob(0, .085, .135, .052, .052, .046, hairC, 8, 5);
     }
-    if (L.cap) { shell(.006, .016, RX + .03, RY + .032, RZ + .028, L.cap, (x, y, z) => z >= .12, sd + 21); blob(0, -.135, .062, .09, .075, .009, L.cap, 8, 3, sd + 21); }
-    const tex0 = TEX; TEX = 0;                                        // the face is plain: eyes, lids and lips keep their own colours
+    if (L.cap && !o.hood) { shell(.006, .016, RX + .03, RY + .032, RZ + .028, L.cap, (x, y, z) => z >= .12, sd + 21); blob(0, -.135, .062, .09, .075, .009, L.cap, 8, 3, sd + 21); }
+    if (o.umb) {                                                      // an umbrella up (CITY-080): held in the right hand, the canopy over the head
+      const wr = Wp(P.wr[1]), up = Wd([0, 0, 1]), top = add(hc, sc(up, .36 * S)), rim = add(top, sc(up, -.13 * S)), R0 = .5 * S;
+      const fx = unit(sub(Wd([1, 0, 0]), sc(up, dot(Wd([1, 0, 0]), up)))), fy = cross(up, fx), seg = lod === 0 ? 8 : 6;
+      OSKIP = 0; limb(ms, wr, add(top, sc(up, .07 * S)), .009 * S, .007 * S, 5, [.12, .1, .09], fl, false, fwd, sd);
+      const rings = [], under = [];
+      for (const [h, r] of [[.13, .03], [.115, .2], [.08, .36], [.035, .46], [0, .5]]) { const c = add(rim, sc(up, h * S)); rings.push([c, sc(fx, r * S), sc(fy, r * S)]); under.unshift([add(c, sc(up, -.008 * S)), sc(fx, r * S * .98), sc(fy, r * S * .98)]); }
+      loft(ms, rings, seg, o.umb, fl, add(rim, sc(up, -.35 * S)), sd + 31);           // panels: a soft octagon, normals out of the dome
+      loft(ms, under, seg, sc(o.umb, .75), fl, add(rim, sc(up, .6 * S)), sd + 31);    // the underside, facing down
+      if (R0 && lod === 0) for (let k = 0; k < seg; k++) { const a = TAU * k / seg, d = add(sc(fx, Math.cos(a)), sc(fy, Math.sin(a))); ball(ms, add(rim, sc(d, R0)), sc(fx, .008 * S), sc(fy, .008 * S), sc(up, .008 * S), 4, 3, [.12, .1, .09], fl, sd); }   // the rib tips
+    }
+    const tex0 = TEX; TEX = 0;                                       // the face is plain: eyes, lids and lips keep their own colours
     OSKIP = 1 | HEROSKIP;
     if (lod === 0 && o.face) face(blob, o.face, L, t, sd, lk, o.sleep);   // someone in a conversation: the full control set (CHR-007)
     else if (lod === 0) {                                             // the face: full eyes, brows, small nose, mouth at rest
@@ -514,5 +530,5 @@ const People = (() => {
     }
     if (L.tash) blob(0, -.104, -.037 + Math.max(0, oh - .002) * .4, .024, .006, .007, L.hairC, 6, 3);
   }
-  return { SIG, look, player, design, draw, stepLength, cast, setSun, hero: () => HERO };
+  return { SIG, look, player, design, draw, stepLength, cast, setSun, hero: () => HERO, colour: n => K[n] };
 })();

@@ -1453,8 +1453,8 @@ function resident(i, m) {                                // where resident i is 
   const x = a[0] - dz * lane, z = a[1] + dx * lane;
   return { x, z, y: groundBase(x, z), yaw: yawOf(dx, dz), pose: 1, act: p[2], inside: 0, walking: true, ph: (d / People.stepLength(looks[i].sig, looks[i].S)) % 1 };
 }
-const DOING = { read: "reading at the library", view: "looking round the museum", watch: "at the pictures", bank: "at the bank", browse: "looking at cars", sleep: "asleep", home: "at home", work: "at work", eat: "eating", shop: "shopping", rest: "resting", sell: "selling at the market", wait: "waiting for the tram", visit: "at the clinic", tend: "tending the garden", deliver: "making a delivery", stroll: "out for a stroll", arrive: "back from town", eat_home: "eating at home", check: "on a round", inspect: "on a round", away: "waiting for the tram" };
-const GOING = { read: "going to the library", view: "going to the museum", watch: "going to the pictures", bank: "going to the bank", browse: "going to look at cars", sleep: "heading home", home: "heading home", eat_home: "heading home", work: "on the way to work", eat: "going to eat", shop: "going shopping", rest: "going for a sit down", sell: "on the way to the market", wait: "heading for the tram", away: "heading for the tram", visit: "going to the clinic", tend: "going to the garden", deliver: "out on a delivery", stroll: "out for a stroll" };
+const DOING = { read: "reading at the library", view: "looking round the museum", watch: "at the pictures", bank: "at the bank", browse: "looking at cars", sleep: "asleep", home: "at home", work: "at work", eat: "eating", shop: "shopping", rest: "resting", sell: "selling at the market", wait: "waiting for the tram", visit: "at the clinic", tend: "tending the garden", deliver: "making a delivery", stroll: "out for a stroll", arrive: "back from town", eat_home: "eating at home", check: "on a round", inspect: "on a round", away: "waiting for the tram", shelter: "sheltering from the rain" };
+const GOING = { read: "going to the library", view: "going to the museum", watch: "going to the pictures", bank: "going to the bank", browse: "going to look at cars", sleep: "heading home", home: "heading home", eat_home: "heading home", work: "on the way to work", eat: "going to eat", shop: "going shopping", rest: "going for a sit down", sell: "on the way to the market", wait: "heading for the tram", away: "heading for the tram", visit: "going to the clinic", tend: "going to the garden", deliver: "out on a delivery", stroll: "out for a stroll", shelter: "running for cover" };
 
 function tramAt(m) {                                     // every tram on the map now: [x, stopped]
   const tr = D.tram, t0 = (+tr.first.slice(0, 2)) * 60 + (+tr.first.slice(3)), tl = (+tr.last.slice(0, 2)) * 60 + (+tr.last.slice(3)), v = tr.speed * D.pace, dw = tr.dwell, out = [];
@@ -2145,6 +2145,7 @@ function frame(now) {
   // everyone's place right now; bodies only for those near the player
   Dodge.frame(now / 1000, pl);                             // is the player's car bearing down on anyone (dodge.js, CITY-070)
   dyn.reset(); people = []; bodies = 0; const heard = [], tags = [], near = started ? [pl.x, pl.z] : [cam.eye[0] + cam.dir[0] * 60, cam.eye[2] + cam.dir[2] * 60], reach = started ? 85 : 130;
+  Wet.frame(clock.m);                                      // how hard it is raining on the people (wet.js)
   for (let i = 0; i < D.plan.length; i++) {
     const r = Dress.apply(i, Smash.apply(i, Dodge.apply(i, Talk.where(i, clock.m))), now / 1000); if (!r) continue;   // shouting at a smash (smash.js)   // children on the swings (dressing.js)   // out of the way of the player's car (dodge.js)
     people.push([r.x, r.z]);
@@ -2152,12 +2153,12 @@ function frame(now) {
     if (d < 20) heard.push({ i, x: r.x, z: r.z, act: D.acts[r.act], walking: r.walking, pose: r.pose, ph: r.ph, inside: r.inside,   // for sound.js
       role: D.roles[D.residents[i].r], run: r.sig === People.SIG.Run, shout: r.shout || null, kind: (lotAt(r.x, r.z, true) || {}).kind });
     bodies++;
-    const L = looks[i], dc = Math.hypot(r.x - cam.eye[0], r.z - cam.eye[2]); let lk = null;
+    const wet = Wet.apply(i, r, looks[i], clock.m), L = wet.L || looks[i], dc = Math.hypot(r.x - cam.eye[0], r.z - cam.eye[2]); let lk = null;   // a coat, an umbrella or a hood, a hurried walk (wet.js, CITY-077 to CITY-080)
     if (started && r.pose !== 3 && d < 5.5 && Math.abs(r.y - pl.y) < 2) {          // someone near turns to look: eyes first, head part of the way (M4)
       let da = yawOf(pl.x - r.x, pl.z - r.z) - r.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
       if (Math.abs(da) < 1.9) { const w = smooth(5.5, 3.2, d); lk = [clamp(-da * .6, -.85, .85) * w, 0]; }
     }
-    People.draw(dyn, r.x, r.y, r.z, r.yaw, L, r.pose, { ph: r.ph || 0, t: now / 1000, lod: dc < 13 ? 0 : dc < 40 ? 1 : 2, fl: r.inside ? 10 : 14, look: lk, sleep: r.pose === 3, face: Talk.face(i), mod: r.mod, sig: r.sig });
+    People.draw(dyn, r.x, r.y, r.z, r.yaw, L, r.pose, { ph: wet.ph !== undefined ? wet.ph : r.ph || 0, t: now / 1000, lod: dc < 13 ? 0 : dc < 40 ? 1 : 2, fl: r.inside ? 10 : 14, look: lk, sleep: r.pose === 3, face: Talk.face(i), mod: r.mod || wet.mod, sig: r.sig || wet.sig, hood: wet.hood, umb: wet.umb });
     if (started && d < 9 && Math.abs(r.y - pl.y) < 3) tags.push({ x: r.x, y: r.y + (r.pose === 2 ? 1.0 : r.pose === 3 ? .55 : 1.88) * L.S, z: r.z, d, text: D.residents[i].n + ", " + D.roles[D.residents[i].r] + " · " + (r.walking ? GOING[D.acts[r.act]] || "walking" : DOING[D.acts[r.act]] || D.acts[r.act]) });
     if (started && r.shout && d < D.dodge.tag_m) tags.push({ x: r.x, y: r.y + 2.18 * L.S, z: r.z, d, a: clamp((D.dodge.tag_m - d) / 4, 0, 1), size: 18, text: r.shout });   // telling the driver off (CITY-071)
     if (started) Talk.consider(i, r, d);

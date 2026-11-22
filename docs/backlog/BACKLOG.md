@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 24 of 39 | 9 of 39 | 9 of 39 |
-| Size of the plan (points) | 253 | 286 | 571 |
-| Size of the suggested plan | 100 | 246 | 539 |
+| Decided | 25 of 39 | 9 of 39 | 9 of 39 |
+| Size of the plan (points) | 258 | 291 | 576 |
+| Size of the suggested plan | 105 | 251 | 544 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -41,7 +41,7 @@
 | **Loading people as you arrive** `F-NPC-LOAD` | 1 Placed by routine | 1 Placed by routine ★ | 2 Distance tiers | Placed by routine, then distance tiers in the full game (owner, 2026-11-22). |
 | **Talking with residents** `F-NPC-TALK` | 1 Dialogue ★ | 1 Dialogue | 2 Residents talk to each other | Owner, 2026-11-22: "Slice 1, depth 1, full 2" (conversations with choices from the first slice). |
 | **Faces while talking** `F-NPC-SPEECH` | 2 Lip sync ★ | undecided | undecided | Owner, 2026-11-22: "Yes, level 2 now" (lip sync timed from the line's text, in the first slice). Later milestones not stated. |
-| **Reacting to the world** `F-NPC-REACT` | undecided | undecided | undecided |  |
+| **Reacting to the world** `F-NPC-REACT` | 1 Weather and night | undecided | undecided | Owner, 2026-11-22: asked for people to react to the weather (clothing, umbrellas in rain, running for cover when rain starts), then said "Level 1 for the slice". Later milestones not stated. |
 | **Getting out of the way of cars** `F-NPC-DODGE` | 2 Dodge and tell off | undecided | undecided | Owner, 2026-11-22: "Level 2 for slice" (residents dodge a car coming at them, then gesture and shout at the driver). Later milestones not stated. |
 | **Animals** `F-ANIMALS` | undecided | undecided | undecided |  |
 
@@ -178,7 +178,7 @@
 
 **Reacting to the world** (`F-NPC-REACT`). Whether people notice rain, night and you.
 - 0 No reaction: People ignore weather and time. Size -.
-- 1 Weather and night: People shelter from rain, lamps and windows light up, people glance at you. Size M.
+- 1 Weather and night: People dress for the weather (coats and hoods on cold or wet days, umbrellas up in rain), hurry for cover when rain starts and wait it out under awnings or indoors; lamps and windows light up; people glance at you. Size L.
 - 2 Events: People gather, flee or help when something happens. Size L.
 
 **Getting out of the way of cars** (`F-NPC-DODGE`). Whether residents see a car coming at them and react like people would.

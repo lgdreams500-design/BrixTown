@@ -13,7 +13,7 @@ import citysim
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.normpath(os.path.join(HERE, "..", "..", "Prototype", "play", "city_data.js"))
 OUT_SEASONS = os.path.join(os.path.dirname(OUT), "city_seasons.js")
-ACTS = ["sleep", "home", "work", "eat", "shop", "rest", "sell", "wait", "visit", "tend", "deliver", "stroll", "walk", "arrive", "eat_home", "check"]
+ACTS = ["sleep", "home", "work", "eat", "shop", "rest", "sell", "wait", "visit", "tend", "deliver", "stroll", "walk", "arrive", "eat_home", "check", "shelter"]
 USES = ["bed", "room", "work", "seat", "customer", "bench", "stall", "wait", "chair", "flowerbed", "rim"]
 
 
@@ -188,6 +188,17 @@ def season_looks(w, city, day):
     return out
 
 
+def wear(w, city, day):
+    """CITY-077, CITY-080: what each resident wears and carries today, and what they would on a wet day (for the weather key, K).
+    Per resident: [coat colour or -1, hood 0/1, umbrella colour or -1]; colours are indexes into `colours` (people.js names)."""
+    R = w["weather_react"]
+    cols = sorted(set(R["coat"]["colours"]) | set(R["umbrella"]["colours"]))
+    def row(x):
+        return [cols.index(x["coat_colour"]) if x["coat"] else -1, int(x["hood"]), cols.index(x["umbrella_colour"]) if x["umbrella"] else -1]
+    return dict(colours=cols, today=[row(city.wear(r["id"], day)) for r in w["residents"]], wet=[row(city.wear(r["id"], day, True)) for r in w["residents"]],
+                pace={k: v for k, v in R["pace"].items() if k != "note"})
+
+
 def main(day=16):
     w = world.load()
     problems = world.validate(w)
@@ -220,6 +231,7 @@ def main(day=16):
         dodge={k: v for k, v in w["dodge"].items() if k != "note"},   # CITY-070, CITY-071: getting out of the way of cars
         surfaces=dict(world.surfaces(w), table=w["surfaces"]["patterns"]),   # WLD-039: which stone, brick and paving where
         dressing=world.dressing_today(w, day),          # WLD-034: what the boards show today, bunting on market days
+        wear=wear(w, city, day),                        # CITY-077, CITY-080: coats, hoods and umbrellas
         life=life(w, city, plan, acts))                   # money, shops, quests, the designer (ADR-0012)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:

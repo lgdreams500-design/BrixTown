@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "weather_react"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -87,7 +87,7 @@ def validate(w):
     if w.get("roads") and not out:
         import traffic
         out += traffic.Roads(w["roads"], w["traffic"]).problems(lots(w))
-    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w)
+    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w) + react_problems(w)
     kinds = {l["kind"] for l in lots(w)}
     for need in ("home", "shop", "food", "work", "health", "garden", "market", "stop", "utility"):
         if need not in kinds:
@@ -176,6 +176,42 @@ def dialogue_problems(w, acts=None):
 SOUND_ACTIONS = ("prompt", "sit", "lie", "stand", "lift", "jump", "talk_open", "talk_choose", "talk_close", "car_door", "map", "clock", "hour", "radio")
 SOUND_KINDS = ("tick", "thud", "rustle", "chime", "clink", "hiss", "snip", "type", "snore", "creak", "whoosh", "scrape", "clank")
 WEATHER_KINDS = ("clear", "cloud", "rain", "fog")       # what citysim.weather() can answer
+
+
+REACT_PALETTE = ("cream", "ochre", "terra", "olive", "teal", "blue", "indigo", "plum", "brown", "charcoal", "slate", "black", "sand")   # people.js K names
+
+
+def react_problems(w):
+    """Every rule World/rules/weather_react.json must keep (CITY-077 to CITY-080)."""
+    r, out = w.get("weather_react"), []
+    if not r:
+        return ["weather_react: World/rules/weather_react.json is missing"]
+    chance = lambda v: isinstance(v, (int, float)) and 0 <= v <= 1
+    for part, keys in (("umbrella", ("rain_day", "dry_day")), ("coat", ("rain_day", "hood"))):
+        for k in keys:
+            if not chance(r.get(part, {}).get(k)):
+                out.append("weather_react: %s.%s should be from 0 to 1" % (part, k))
+    if r["umbrella"]["dry_day"] > r["umbrella"]["rain_day"]:
+        out.append("weather_react: more umbrellas on dry days than on wet ones")
+    s = r["coat"].get("season", [])
+    if len(s) != len(w["calendar"]["calendar"]["seasons"]) or not all(chance(v) for v in s):
+        out.append("weather_react: coat.season should be one chance per season")
+    for part in ("umbrella", "coat"):
+        cols = r[part].get("colours", [])
+        if not cols or any(c not in REACT_PALETTE for c in cols):
+            out.append("weather_react: %s.colours should be names from the people palette" % part)
+    sh = r.get("shelter", {})
+    n = sh.get("notice_minutes", [])
+    if len(n) != 2 or not 0 <= n[0] <= n[1] <= 30:
+        out.append("weather_react: shelter.notice_minutes should be [least, most], at most 30")
+    if not sh.get("to") or any(t != "home" and t not in w["choices"]["choices"] and t not in ("cafe", "grocer", "library", "museum", "cinema") for t in sh["to"]):
+        out.append("weather_react: shelter.to should name kinds of place")
+    p = r.get("pace", {})
+    if not (1 <= p.get("umbrella", 0) <= p.get("hurry", 0) <= p.get("run", 0) <= 3):
+        out.append("weather_react: pace should go 1 <= umbrella <= hurry <= run <= 3")
+    if any(k not in OPEN_KINDS for k in r.get("open_kinds", [])):
+        out.append("weather_react: open_kinds should be places without walls")
+    return out
 
 
 def sky_problems(w):
@@ -615,7 +651,7 @@ def sim_data(w):
     return dict(name=w["city"]["name"], size=[n * P, g["rows"] * P], calendar=cal["calendar"], weather=cal["weather"], tram=cal["tram"],
                 streets=streets, lots=lots(w), residents=w["residents"], roles=w["roles"]["roles"], signatures=w["signatures"]["signatures"],
                 choices=dict(w["choices"]["choices"], rounds=[]), use=w["choices"]["use"], species=veg["species"], flowers=veg["flowers"], plants=veg.get("plants", {}),
-                replant_gap_days=veg["replant_gap_days"], fallen_days=veg["fallen_days"], trees=[t for b in w["blocks"] for t in b["trees"]], lamps=[])
+                replant_gap_days=veg["replant_gap_days"], fallen_days=veg["fallen_days"], trees=[t for b in w["blocks"] for t in b["trees"]], lamps=[], react=w.get("weather_react"))
 
 
 def simulation(w, traffic=False):

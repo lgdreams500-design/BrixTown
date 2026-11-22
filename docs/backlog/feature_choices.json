@@ -116,6 +116,10 @@
     "F-VEH-CRASH": {
       "slice": 2,
       "note": "Owner, 2026-11-22: objects on the pavements, trees and building corners destructible when driving, with a breaking animation; \"Until a worker fixes it\", \"Fast hits break\", residents \"Yes, they shout\". Later milestones not stated. Then the same day: \"remove speed requirement for the damage, it should damage at any speed\"."
+    },
+    "F-NPC-REACT": {
+      "slice": 1,
+      "note": "Owner, 2026-11-22: asked for people to react to the weather (clothing, umbrellas in rain, running for cover when rain starts), then said \"Level 1 for the slice\". Later milestones not stated."
     }
   }
 }
