@@ -83,7 +83,7 @@ var Talk = (() => {                    // var: a property of window, so index.ht
   function vars() {                                      // what each blank in a line stands for, for this resident now
     const m = clock.m, res = D.residents[s.i], r = s.r0;
     const v = {
-      name: res.n, role: DL.role_words[D.roles[res.r]], place: r.lot ? r.lot.name : D.city.name,
+      name: res.n, role: res.c || DL.role_words[D.roles[res.r]], place: r.lot ? r.lot.name : D.city.name,
       doing: r.walking ? GOING[D.acts[r.act]] || "on my way somewhere" : DOING[D.acts[r.act]] || D.acts[r.act],
       greeting: m < 300 ? "Good evening" : m < 720 ? "Good morning" : m < 1080 ? "Good afternoon" : "Good evening",
       weekday: DAYS[D.day.weekday] || D.day.weekday, season: D.day.season.toLowerCase(),
@@ -133,7 +133,7 @@ var Talk = (() => {                    // var: a property of window, so index.ht
     pl.yaw = yawOf(r.x - pl.x, r.z - pl.z); cam.yaw = cam.fp ? pl.yaw : pl.yaw - .45; cam.pitch = cam.fp ? -.08 : -.12;   // face them; in third person look past the shoulder
     if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
     const res = D.residents[t.i];
-    el("talk-name").textContent = res.n; el("talk-role").textContent = DL.role_words[D.roles[res.r]];
+    el("talk-name").textContent = res.n; el("talk-role").textContent = res.c || DL.role_words[D.roles[res.r]];   // CITY-081: their career
     el("talk").style.display = "block"; el("keys").dataset.was = el("keys").style.display; el("keys").style.display = "none";
     target = null; if (window.Sound) Sound.act("talk_open"); show(conv.start);
   }

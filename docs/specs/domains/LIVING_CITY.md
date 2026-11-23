@@ -1,11 +1,11 @@
 ---
 doc_id: WASTED-SPEC-LIVING-CITY
 title: Brix Town — Living city (map, residents, things to use, vehicles, seasons and plants)
-version: 0.3.7
+version: 0.4.2
 status: draft
-last_updated: 2026-11-22
+last_updated: 2026-11-23
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
-prototype: Tools/citysim/               # rules and tests with no engine
+prototype: Tools/citysim/               # rules and tests with no engine; careers in careers.py, test_careers.py
 scope_source: docs/backlog/feature_choices.json
 ---
 
@@ -63,7 +63,7 @@ what is production-ready in the pinned engine version before PH1 work starts `[O
 
 ## 3. Requirements
 
-Status of all rows: `proposed`, except CITY-043 to CITY-049 and CITY-060 to CITY-067, which the owner
+Status of all rows: `proposed` (CITY-081 to CITY-088 from the owner's requests of 2026-11-23 for more and more realistic careers), except CITY-043 to CITY-049 and CITY-060 to CITY-067, which the owner
 accepted on 2026-11-22, and CITY-068 and CITY-069, which follow from the owner's answers the same day (Q-29; "both" for busier streets), and CITY-072 to CITY-076 (crash damage), from the owner's request and answers the same day. "Proven by" names the test in `Tools/citysim/test_citysim.py`, or for cars in `Tools/citysim/test_traffic.py`.
 
 ### 3.1 Map, lots and buildings
@@ -95,6 +95,14 @@ accepted on 2026-11-22, and CITY-068 and CITY-069, which follow from the owner's
 | CITY-079 | Walks in the rain shall be faster than the resident's own pace: a little under an umbrella, more without, and running for cover fastest; factors in data. | F-NPC-REACT | 1 | P2 | `test_CITY_079_hurry_in_the_rain` |
 | CITY-080 | Out in the rain a resident shall have their umbrella up, else their hood up, else go bare-headed (a hand over the head when walking); nothing under a roof or awning. | F-NPC-REACT | 1 | P2 | `test_CITY_080_cover_in_the_rain` |
 | CITY-027 | Ambient animals shall appear by time and place and shall not affect play. | F-ANIMALS | 1 | P2 | |
+| CITY-081 | Careers shall be data (`World/rules/careers.json`): more than 50 `[ASSUMPTION: 122]`, each with a title, a group and the routine role it follows. Every resident who works shall have one; the slice shows it as their title in talk and over their head. | F-NPC-POP | 1 | P1 | `test_CITY_081_more_than_fifty_careers_in_data`, `test_CITY_081_everyone_who_works_has_a_career` |
+| CITY-082 | Each kind of workplace shall have posts in data: careers with a min and max head count, moving from min to max with the place's floor area. A place never has more of a career than its posts, and always has its minimum. A café has one or two at the counter, one or two baristas and one table attendant; a grocer two or three at the tills and one or two stocking shelves or helping customers; the others in proportion (`staffing`). | F-NPC-POP | 1 | P1 | `test_CITY_082_cafes_have_two_at_the_counter_two_baristas_and_one_cleaning_tables`, `test_CITY_082_grocers_have_two_or_three_at_the_tills_and_one_or_two_on_the_floor`, `test_CITY_082_every_workplace_within_its_posts`, `test_CITY_082_no_more_crowds_behind_the_counter`, `test_CITY_082_bigger_places_have_more_posts` |
+| CITY-083 | A share of residents working in town (8 % `[ASSUMPTION]`, band 5 to 10 %) shall work from home in creative careers (painter, musician, composer, novelist, poet, illustrator, sculptor, songwriter, screenwriter, potter, photographer, game designer): their routine has them `create` at home through the working day and some evenings. | F-NPC-ROUTINE | 1 | P1 | `test_CITY_083_artists_work_from_home`, `test_CITY_083_artists_spend_the_working_day_creating_at_home` |
+| CITY-084 | Each group of careers shall take a share of residents working in town set in data (`shares`; office 39 % `[ASSUMPTION]`), so office work (software, banking, back office and operations, law, insurance, the town hall) is the largest group, at least 30 % of everyone who works, commuters included. Posts beyond a group's share go to in-commuters (CITY_BALANCE 2.2). | F-NPC-POP | 1 | P1 | `test_CITY_084_office_workers_are_the_largest_group`, `test_CITY_084_no_group_takes_more_than_its_share` |
+| CITY-085 | Every worker shall have their own post at their workplace: their own place to work there, which nobody else takes (as beds at home). | F-OBJ-POINTS | 1 | P1 | `test_CITY_085_each_worker_stands_at_their_own_post` |
+| CITY-086 | Who does which job shall be worked out from the residents' homes, the lots and the rules alone, the same in any order: every workplace's minimum filled first by the nearest residents, then everyone else to the nearest workplace whose group is under its share. Too few posts for the people is a data error. | F-NPC-POP | 1 | P1 | `test_CITY_086_careers_are_worked_out_from_the_rules_alone`, `test_CITY_086_minimums_first_nearest_first`, `test_CITY_086_too_few_posts_is_an_error` |
+| CITY-087 | Couriers and postal workers shall be a small share of all residents (1 % `[ASSUMPTION]`, `couriers_share`; the owner, 2026-11-23: there were far too many at 5 %); the rest work in town. `balance.json`'s courier target is the same number. | F-NPC-POP | 1 | P1 | `test_CITY_087_couriers_and_postal_workers_are_few` |
+| CITY-088 | A career may have a second job (`second_jobs`). Waste collectors (routine `binman`) clock in at the waste depot about 05:10, collect bins on a round of their nearby places from 05:30 to about 08:40, return to the depot, and after a break do a day job as a courier, postal worker or parcel driver on rounds until mid-afternoon; their title shows both jobs (the owner, 2026-11-23). | F-NPC-ROUTINE | 1 | P1 | `test_CITY_088_waste_collectors_collect_at_dawn_then_do_a_day_job` |
 | CITY-028 | At level 2 a resident shall choose the next activity from their own needs, money and mood. Their state is then *stored* (§1) and advanced in batches, not every frame. | F-NPC-ROUTINE | 2 | P1 | |
 
 ### 3.3 Things to use
@@ -177,6 +185,20 @@ All `[ASSUMPTION]`; all live in `Tools/citysim/data/block_01.json`, none in code
 | Tram | every 20 minutes, 05:40 to 23:00 | |
 | Rain chance by season | 30 %, 16 %, 36 %, 26 % of six-hour slots | |
 
+Numbers for careers, also `[ASSUMPTION]`, in `World/rules/careers.json` (CITY-081 to CITY-086):
+
+| Number | Value | Note |
+|---|---|---|
+| Careers | 122 in 15 groups; 116 held by someone in the city | CITY-081 |
+| Café | counter 1-2, baristas 1-2, table attendant 1 (3 to 5 staff, by floor area 200-600 m²) | CITY-082; was up to 24 |
+| Grocer | tills 2-3, stock 1, shop floor 0-1 (3 to 5) | CITY-082; was up to 16 |
+| Bakery, kiosk | baker 1-2 and counter 1-2; kiosk keeper 1 and 0-1 more | CITY-082 |
+| Works | foreman 1, machinists and assemblers 1-5 each, welders, carpenters, inspectors, forklift drivers (3 to 21) | CITY-082; was up to 36 |
+| Office tower | about 190 to 240 a tower: developers, analysts, accountants, support, HR, payroll, compliance, underwriters, cleaners, security | CITY-082, CITY-084; was 12 |
+| Shares of those working in town | office 39 %, retail 17.2 %, making 10.5 %, food 10 %, creative (at home) 8 %, health 6 %, utility 2.7 %, education 2.6 %, facilities 1.4 %, services 1.2 %, culture 0.8 %, showrooms 0.6 % | CITY-084. On the starting city: 991 office workers, 41 % of the 2,401 who work |
+| Home-based | 156 (8 %) | CITY-083 |
+| Couriers and postal workers | 1 % of residents: 40 (were 202, 5 %) | CITY-087 |
+
 Numbers for cars, also `[ASSUMPTION]`, in `World/rules/traffic.json`:
 
 | Number | Value | Note |
@@ -242,6 +264,9 @@ up to 42 on the road at once, no overlap, no crossing movements in a box, nobody
 | 0.1.0 | 2026-11-21 | First version, with the city-in-a-box prototype and its tests. |
 | 0.2.0 | 2026-11-22 | Cars and real traffic drafted after the owner's picks (`F-VEH-DRIVE` 2, `F-VEH-TRAFFIC` 2 from the first slice): CITY-043 to CITY-049 for streets and residents' cars, CITY-060 to CITY-067 for cars players drive, car numbers in §4, Q-25 to Q-28, ADR-0009. All proposed. |
 | 0.2.1 | 2026-11-22 | Owner accepted CITY-043 to CITY-049, CITY-060 to CITY-067 and ADR-0009, and the suggested answers to Q-25 to Q-28, now written into CITY-049, CITY-060, CITY-064 and CITY-066. |
+| 0.4.2 | 2026-11-23 | CITY-088: waste collectors have two jobs, the bin round at dawn and a courier day job (new routine `binman`, act `collect`; a rounds entry may name its own act). |
+| 0.4.1 | 2026-11-23 | CITY-087: couriers and postal workers cut from 5 % of residents to 1 % at the owner's request; the 162 others work in town. Office towers take a few more. |
+| 0.4.0 | 2026-11-23 | Careers and staffing (owner's request: more varied careers, artists at home, realistic staff counts, more office workers): CITY-081 to CITY-086, `World/rules/careers.json`, proved in `Tools/citysim/careers.py` with `test_careers.py`, written into the city by `Tools/worldgen/add_careers_01.py`. New routine role `creative`. |
 | 0.3.7 | 2026-11-22 | CITY-017 gardens (owner's pick, F-GARDEN level 1): garden plants (box, lilac, hydrangea, rose, lavender, daffodil, tulip, aster) look as their dates in `vegetation.json` "plants" say on any day, worked out by `Vegetation.plant()` with no stored state (`test_CITY_017_planting_follows_the_seasons`); something flowers every day from early spring to the end of autumn, the evergreens stay green in winter. Gardeners tend the new borders at places added to each garden's flowerbed places (`test_CITY_017_gardeners_tend_the_borders`). |
 | 0.3.6 | 2026-11-22 | Pavements, zebras, lights and bays (owner): people walk on pavement lines and cross on zebras, cars wait for them; signals at every junction of a through street; bays kept clear of things at the kerb and of shop fronts. §4 numbers. |
 | 0.3.5 | 2026-11-22 | CITY-072: things break at any speed, not only above 20 km/h (owner). |

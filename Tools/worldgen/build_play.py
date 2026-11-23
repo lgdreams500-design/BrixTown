@@ -13,7 +13,7 @@ import citysim
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.normpath(os.path.join(HERE, "..", "..", "Prototype", "play", "city_data.js"))
 OUT_SEASONS = os.path.join(os.path.dirname(OUT), "city_seasons.js")
-ACTS = ["sleep", "home", "work", "eat", "shop", "rest", "sell", "wait", "visit", "tend", "deliver", "stroll", "walk", "arrive", "eat_home", "check", "shelter"]
+ACTS = ["sleep", "home", "work", "eat", "shop", "rest", "sell", "wait", "visit", "tend", "deliver", "collect", "stroll", "walk", "arrive", "eat_home", "check", "shelter"]
 USES = ["bed", "room", "work", "seat", "customer", "bench", "stall", "wait", "chair", "flowerbed", "rim"]
 
 
@@ -250,7 +250,8 @@ def main(day=16):
         pace=city.pace, acts=acts, uses=USES, roles=roles,
         role_color={k: v["color"] for k, v in w["roles"]["roles"].items()},
         role_sig={k: v["sig"] for k, v in w["roles"]["roles"].items()}, signatures=w["signatures"]["signatures"],
-        residents=[dict(n=r["name"], r=roles.index(r["role"]), id=r["id"], h=lot_at[r["home"]], w=lot_at[r["work"]] if r["work"] else -1) for r in w["residents"]],
+        residents=[dict(n=r["name"], r=roles.index(r["role"]), id=r["id"], h=lot_at[r["home"]], w=lot_at[r["work"]] if r["work"] else -1,
+                        **({"c": w["careers"]["careers"][r["career"]]["title"] + (" and " + w["careers"]["careers"][r["day_career"]]["title"] if r.get("day_career") else "")} if r.get("career") else {})) for r in w["residents"]],   # CITY-081
         plan=plan, trees=trees, flowers=flower_row(w, city, day), plants=world.plants_today(w, city, day),   # CITY-017: the garden plants today
         lawn={k: v for k, v in w["vegetation"]["lawn"].items() if k != "note"},   # ART-001: how the grass looks
         tram=w["calendar"]["tram"], dialogue=dialogue(w), speech={k: v for k, v in w["speech"].items() if k != "note"}, crash={k: v for k, v in w["crash"].items() if k != "note"},

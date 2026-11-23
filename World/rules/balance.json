@@ -30,7 +30,7 @@
  },
  "targets": {
   "band": 0.2,
-  "residents": {"child": 0.14, "student": 0.08, "elder": 0.18, "working_in_town": 0.45, "commuter_out": 0.10, "courier": 0.05},
+  "residents": {"child": 0.14, "student": 0.08, "elder": 0.18, "working_in_town": 0.49, "commuter_out": 0.10, "courier": 0.01},
   "per_1000": {"street_shops": 12, "food": 10, "clinics": 1},
   "jobs_per_1000": {"utility": 25, "services": 9},
   "at_least": ["street_shops", "food", "clinics", "park", "school places"],
