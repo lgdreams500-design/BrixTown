@@ -828,6 +828,32 @@ class TheHomes(unittest.TestCase):
         self.assertEqual([(i["piece"], i["x"], i["y"], i["level"]) for i in stored],
                          [(i["piece"], i["x"], i["y"], i["level"]) for i in plan.ITEMS])   # the game's plan is the checked one
 
+    def test_BUILD_003_building_colourways_come_from_the_palette(self):
+        import json
+        S = json.load(open(os.path.join(self.RULES, "building_styles.json"), encoding="utf-8"))
+        names = {**S["palette"], **S["plasters"], **S.get("stones", {}), **S["roofs"], "stone": None}
+        for group, ways in S["colourways"].items():
+            self.assertIn(group, S["groups"])
+            self.assertEqual(sorted(ways), ["a", "b", "c"], group)
+            for w, c in ways.items():
+                for part, v in c.items():
+                    if part != "name":
+                        for one in (v if isinstance(v, list) else [v]):       # an awning is a pair of stripes
+                            self.assertIn(one, names, (group, w, part))
+        self.assertTrue(set(S["types"].values()) <= set(S["groups"]))
+
+    def test_FURN_061_every_home_plan_keeps_clear(self):
+        import importlib.util, sys
+        here = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "blender")
+        sys.path.insert(0, here)
+        spec = importlib.util.spec_from_file_location("home_interiors_22_plan", os.path.join(here, "home_interiors_22_plan.py"))
+        plan = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(plan)
+        for p in plan.build():
+            self.assertEqual(p.check(), [], p.key)
+            self.assertEqual([(i["piece"], i["x"], i["y"], i["level"]) for i in self.plans[p.key]["items"]],
+                             [(i["piece"], i["x"], i["y"], i["level"]) for i in p.items], p.key)   # the game's plan is the checked one
+
     def test_FURN_062_levels_add_up(self):
         for name, p in self.plans.items():
             n = [sum(1 for it in p["items"] if it["level"] <= lv) for lv in (1, 2, 3, 4)]

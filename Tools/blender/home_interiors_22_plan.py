@@ -662,4 +662,14 @@ if __name__ == "__main__":
         for e in errs: print("    ", e)
         total += len(errs)
     print("%d problems" % total)
+    if not total:                                            # the approved plans for the game (ADR-0034, FURN-060)
+        wp = os.path.join(ROOT, "World", "rules", "home_plans.json")
+        world = json.load(open(wp, encoding="utf-8"))
+        for p in build():
+            lay = json.load(open(os.path.join(DIR, "layout_%s.json" % p.key), encoding="utf-8"))
+            world["plans"][p.key] = dict(source="Tools/blender/home_interiors_22_plan.py", **lay)
+        with open(wp, "w", encoding="utf-8", newline="\n") as f:
+            json.dump(world, f, indent=1, ensure_ascii=False)
+            f.write("\n")
+        print("wrote", wp, sorted(world["plans"]))
     sys.exit(1 if total else 0)
