@@ -19,7 +19,7 @@ Brix Town: a third-person multiplayer life-sim in Unreal Engine 5.8. Art source 
 - Money is integer minor units and moves only through the ledger.
 - The server is authoritative; never trust client input.
 - Never commit directly to `main`. Commit on a work branch (e.g. `work/YYYY-MM-DD`), push it, and merge into `main` only
-  through a pull request.
+  through a pull request. Once its pull request is merged into `main`, delete the work branch on the remote and locally.
 - Several sessions may share this checkout and branch: commit only your own changes, and check that each committed file
   matches the working file line for line, so a partial commit cannot reorder lines.
 - Do not commit secrets, engine binaries, or `Saved/`, `Intermediate/`, `DerivedDataCache/`, `Binaries/`.
