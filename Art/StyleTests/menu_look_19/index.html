@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brix Town: menu look samples (look test 19)</title>
+<!--
+  Look test 19: three look-and-feel directions for the game menu (docs/specs/domains/MENU.md, UI-005 to UI-014).
+  Samples only, for the owner to choose from: nothing here is wired to the game, and every figure is made up.
+  Serve the repository root (launch entry "menu-samples") and open /Art/StyleTests/menu_look_19/index.html,
+  or open this file straight from disk. The picture behind the menu is Prototype/play/preview.png.
+  Keys: 1 2 3 change the sample; the menu's own letters (C I G P J U M H) change the tab.
+-->
+<style>
+  :root {
+    --name: Constantia, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    --data: Bahnschrift, "Segoe UI", "Trebuchet MS", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #17171c; overflow: hidden; font-family: var(--data); color: #d9cfb6; }
+  button { font-family: inherit; }
+  /* ------------------------------------------------ the sample chooser (not part of the menu) */
+  #bar { position: fixed; inset: 0 0 auto 0; height: 66px; z-index: 5; background: #101014; border-bottom: 1px solid #33333c; padding: 7px 14px; font-size: 13px; color: #9a968c; }
+  #bar .row { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; white-space: nowrap; }
+  #bar .row + .row { margin-top: 6px; }
+  #bar b { color: #d9cfb6; font-weight: 600; margin-right: 4px; }
+  #bar button { font: 600 13px var(--data); color: #c9c2b0; background: #24242b; border: 1px solid #3a3a44; border-radius: 6px; padding: 4px 11px; cursor: pointer; }
+  #bar button.on { color: #17171c; background: #d9cfb6; border-color: #d9cfb6; }
+  #bar .gap { width: 14px; }
+  #blurb { overflow: hidden; text-overflow: ellipsis; }
+  #scene { position: fixed; inset: 66px 0 0 0; background: url(../../../Prototype/play/preview.png) no-repeat; background-size: 200% 200%; transform: scale(1.04); transition: filter .25s; }
+  #stage { position: fixed; inset: 66px 0 0 0; display: flex; align-items: center; justify-content: center; padding: 14px; }
+  #flash { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 6; background: #101014; color: #d9cfb6; border: 1px solid #44444e; border-radius: 8px; padding: 7px 14px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+
+  /* ------------------------------------------------ what every sample shares: the parts of a page */
+  .menu { color: var(--text); font-size: 15px; line-height: 1.4; }
+  .menu h1 { font: 400 30px/1.1 var(--name); margin: 0; letter-spacing: -.005em; }
+  .menu h3 { font: 600 12px var(--data); text-transform: uppercase; letter-spacing: .09em; color: var(--dim); margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
+  .menu p { margin: 0; }
+  .dim { color: var(--dim); } .sm { font-size: 13px; }
+  .pos { color: var(--pos); } .neg { color: var(--neg); } .warn { color: var(--warn); }
+  .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .ic { flex: none; display: block; }
+  .pb { overflow: auto; padding: 18px 22px 20px; scrollbar-width: thin; scrollbar-color: var(--line2) transparent; }
+  .stack { display: grid; gap: 14px; align-content: start; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .card { background-color: var(--card); background-image: var(--mottle); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; box-shadow: var(--thick); }
+  .card.flat { background: none; box-shadow: none; }
+  .stat { text-align: left; color: inherit; cursor: pointer; font: inherit; display: block; width: 100%; }
+  .stat:hover { border-color: var(--line2); }
+  .stat .k { font: 600 12px var(--data); text-transform: uppercase; letter-spacing: .09em; color: var(--dim); display: flex; gap: 6px; align-items: center; }
+  .stat .v { font: 600 21px var(--data); margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .stat .s { font-size: 13px; color: var(--dim); margin-top: 2px; }
+  .li { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .li:last-child { border-bottom: 0; padding-bottom: 2px; } .li:first-of-type { padding-top: 2px; }
+  .li .m { flex: 1; min-width: 0; }
+  .li .m b { font: 400 17px var(--name); display: block; }
+  .li .m span { display: block; color: var(--dim); font-size: 13px; }
+  .li .when { width: 92px; flex: none; color: var(--dim); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .btn { font: 600 14px var(--data); color: var(--accent-ink); background: var(--accent); border: 0; border-radius: var(--rb); padding: 7px 14px 8px; cursor: pointer; box-shadow: inset 0 -2px 0 rgba(0,0,0,.2); white-space: nowrap; }
+  .btn:hover { filter: brightness(1.07); } .btn:active { transform: translateY(1px); box-shadow: none; }
+  .btn.quiet { color: var(--text); background: var(--quiet); box-shadow: inset 0 0 0 1.5px var(--line2); }
+  .btn.risk { color: var(--neg); background: none; box-shadow: inset 0 0 0 1.5px currentColor; }
+  .btn[disabled] { opacity: .42; cursor: default; filter: none; }
+  .btn:focus-visible, .chip:focus-visible, .nav:focus-visible, .tile:focus-visible, .stat:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .tag { font: 600 12px var(--data); padding: 2px 9px 3px; border-radius: 10px; background: var(--tagbg); white-space: nowrap; }
+  .new { font: 700 10px var(--data); letter-spacing: .08em; text-transform: uppercase; color: var(--newink); background: var(--newbg); padding: 1px 6px 2px; border-radius: 5px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { font: 600 13px var(--data); color: var(--text); background: var(--quiet); border: 0; box-shadow: inset 0 0 0 1.5px var(--line2); border-radius: 16px; padding: 5px 12px; cursor: pointer; }
+  .chip.on { color: var(--accent-ink); background: var(--accent); box-shadow: none; }
+  .sws { display: flex; gap: 6px; flex-wrap: wrap; }
+  .sw { width: 24px; height: 24px; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(0,0,0,.18); }
+  .sw.on { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--accent); }
+  .kbd { font: 600 12px var(--data); color: var(--kbd); border: 1.5px solid var(--kbdline); border-bottom-width: 3px; border-radius: 6px; padding: 1px 7px; margin-right: 4px; white-space: nowrap; }
+  .bar { height: 8px; border-radius: 4px; background: var(--card2); overflow: hidden; } .bar i { display: block; height: 100%; border-radius: 4px; background: var(--accent); }
+  .srow { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 14px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .srow:last-child { border-bottom: 0; }
+  .srow input[type=range] { width: 100%; accent-color: var(--accent); }
+  .slide { display: flex; align-items: center; gap: 10px; } .slide output { width: 34px; text-align: right; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .field { font: 15px var(--data); color: var(--text); background: var(--card2); border: 1px solid var(--line2); border-radius: 6px; padding: 5px 8px; width: 86px; }
+  .field.wide { width: 170px; }
+  .portrait { display: flex; gap: 14px; align-items: center; }
+  .portrait svg { flex: none; border-radius: 14px; }
+  .portrait .pn { font: 400 26px/1.1 var(--name); }
+  .week { display: flex; align-items: flex-end; gap: 10px; height: 74px; margin-top: 4px; }
+  .week div { flex: 1; display: flex; align-items: flex-end; gap: 3px; height: 100%; position: relative; }
+  .week i { flex: 1; border-radius: 3px 3px 0 0; display: block; } .week i.in { background: var(--pos); } .week i.out { background: var(--neg); opacity: .85; }
+  .weekl { display: flex; gap: 10px; margin-top: 4px; font-size: 11px; color: var(--dim); } .weekl span { flex: 1; text-align: center; }
+  .item { text-align: center; padding: 12px 8px; } .item .ib { width: 44px; height: 44px; margin: 0 auto 6px; border-radius: 10px; background: var(--card2); display: flex; align-items: center; justify-content: center; color: var(--dim); }
+  .item b { display: block; font: 400 16px var(--name); }
+  .empty { text-align: center; padding: 34px 20px; } .empty .ic { margin: 0 auto 10px; color: var(--dim); }
+  .mapbox { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 14px; } .mapbox svg { width: 100%; height: auto; border-radius: var(--r); display: block; }
+  .subnav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .steps { display: flex; gap: 4px; margin: 8px 0 2px; } .steps i { flex: 1; height: 6px; border-radius: 3px; background: var(--card2); } .steps i.d { background: var(--accent); }
+
+  /* ------------------------------------------------ A. Lantern light: the town at dusk, a lit window where you are */
+  .menu.a {
+    --text: #e4dbc5; --dim: #a59d8b; --card: #27262d; --card2: #34333c; --line: rgba(217,207,182,.12); --line2: rgba(217,207,182,.3);
+    --accent: #f0a35a; --accent-ink: #1b1a1f; --quiet: rgba(217,207,182,.07); --pos: #a3d0a2; --neg: #ea947e; --warn: #f0c35a; --focus: #e4dbc5;
+    --tagbg: rgba(217,207,182,.1); --newbg: #6fa3a2; --newink: #14201f; --kbd: #f0a35a; --kbdline: rgba(240,163,90,.55); --r: 12px; --rb: 8px;
+    --thick: inset 0 -3px 0 rgba(0,0,0,.2); --mottle: var(--mottle-d);
+    width: min(1140px, 100%); height: min(720px, 100%); display: grid; grid-template-columns: 216px 1fr; border-radius: 18px; overflow: hidden;
+    background: radial-gradient(520px 340px at 0% 0%, rgba(240,163,90,.2), transparent 70%), var(--mottle-d), #1c1b21;
+    box-shadow: 0 24px 80px rgba(0,0,0,.55), inset 0 0 0 1px rgba(217,207,182,.14);
+  }
+  .a .rail { padding: 16px 12px 12px; display: flex; flex-direction: column; gap: 4px; background: rgba(0,0,0,.2); border-right: 1px solid var(--line); overflow: auto; }
+  .a .who { display: flex; gap: 10px; align-items: center; padding: 2px 6px 12px; }
+  .a .who svg { border-radius: 50%; box-shadow: 0 0 0 2px rgba(240,163,90,.6), 0 0 22px rgba(240,163,90,.35); }
+  .a .who b { font: 400 20px/1.1 var(--name); display: block; } .a .who span { font-size: 12px; color: var(--dim); }
+  .a .rail h4 { font: 600 11px var(--data); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin: 10px 8px 4px; }
+  .nav { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; font: 600 15px var(--data); color: var(--text); background: none; border: 0; border-radius: 9px; padding: 7px 9px; cursor: pointer; }
+  .nav span { flex: 1; } .nav em { font: 600 11px var(--data); font-style: normal; color: var(--dim); border: 1px solid var(--line2); border-radius: 5px; padding: 0 5px; }
+  .nav .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); flex: none; }
+  .a .nav .ic { color: var(--dim); }
+  .a .nav:hover { background: rgba(217,207,182,.07); }
+  .a .nav.on { color: #1b1a1f; background: linear-gradient(#f6b36c, #e9954c); box-shadow: 0 0 26px rgba(240,163,90,.38), inset 0 -2px 0 rgba(0,0,0,.18); }
+  .a .nav.on .ic, .a .nav.on em { color: #1b1a1f; border-color: rgba(27,26,31,.4); }
+  .a .resume { margin-top: auto; }
+  .a .resume .btn { width: 100%; margin-top: 12px; padding: 9px; }
+  .a .page { display: grid; grid-template-rows: auto 1fr auto; min-height: 0; min-width: 0; }
+  .a .ph { display: flex; align-items: flex-end; gap: 16px; padding: 18px 22px 12px; border-bottom: 1px solid var(--line); }
+  .a .ph p { color: var(--dim); font-size: 14px; margin-top: 3px; }
+  .status { margin-left: auto; display: flex; gap: 8px; align-items: center; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .status span { padding: 4px 11px; border-radius: 14px; background: var(--quiet); box-shadow: inset 0 0 0 1px var(--line); font-weight: 600; font-size: 14px; }
+  .a .pf, .b .pf { padding: 9px 22px; border-top: 1px solid var(--line); font-size: 13px; color: var(--dim); display: flex; gap: 16px; }
+
+  /* ------------------------------------------------ B. Plaster ledger: daylight on a plaster wall, a stone course on top, the town's books */
+  .menu.b {
+    --text: #2b2520; --dim: #6c6257; --card: #f3eee2; --card2: #dcd3c1; --line: rgba(64,50,38,.16); --line2: rgba(64,50,38,.38);
+    --accent: #a4553f; --accent-ink: #fbf4e6; --quiet: rgba(255,255,255,.35); --pos: #47703f; --neg: #a63c2a; --warn: #8a6414; --focus: #2b2520;
+    --tagbg: rgba(64,50,38,.09); --newbg: #3f7273; --newink: #f3eee2; --kbd: #2b2520; --kbdline: rgba(64,50,38,.5); --r: 10px; --rb: 7px;
+    --thick: 0 2px 0 rgba(64,50,38,.16); --mottle: none;
+    width: min(1080px, 100%); height: min(720px, 100%); display: grid; grid-template-rows: auto auto 1fr auto; border-radius: 14px; overflow: hidden;
+    background: var(--mottle-w), #e7e0d0; box-shadow: 0 24px 80px rgba(0,0,0,.5), 0 0 0 3px #8f8a86, 0 0 0 5px rgba(40,36,40,.55);
+  }
+  .b .band { display: flex; align-items: flex-end; gap: 14px; padding: 12px 18px 0; background: var(--blocks), var(--mottle-d), #a59f9b; border-bottom: 4px solid #6f6a68; color: #26221f; }
+  .b .who { display: flex; gap: 10px; align-items: center; padding-bottom: 10px; }
+  .b .who svg { border-radius: 50%; box-shadow: 0 0 0 2px #f3eee2; }
+  .b .who b { font: 400 21px/1.1 var(--name); display: block; } .b .who span { font-size: 12px; color: #4a443f; }
+  .b .gtabs { display: flex; gap: 6px; margin-left: 18px; }
+  .b .gtab { font: 400 19px var(--name); color: #3a342f; background: rgba(243,238,226,.45); border: 0; border-radius: 10px 10px 0 0; padding: 8px 22px 9px; cursor: pointer; position: relative; top: 4px; }
+  .b .gtab.on { background: #e7e0d0; color: #2b2520; box-shadow: 0 -3px 0 #a4553f inset; padding-bottom: 13px; }
+  .b .band .status { padding-bottom: 12px; } .b .band .status span { background: rgba(243,238,226,.6); box-shadow: none; color: #26221f; }
+  .b .ptabs { display: flex; gap: 2px; padding: 10px 18px 0; border-bottom: 1px solid var(--line); }
+  .b .nav { width: auto; padding: 7px 12px 9px; border-radius: 0; border-bottom: 3px solid transparent; color: var(--dim); }
+  .b .nav span { flex: none; } .b .nav:hover { color: var(--text); }
+  .b .nav.on { color: var(--text); border-bottom-color: var(--accent); } .b .nav.on .ic { color: var(--accent); }
+  .b .page { display: grid; grid-template-rows: auto 1fr; min-height: 0; }
+  .b .ph { display: flex; align-items: baseline; gap: 14px; padding: 16px 22px 0; } .b .ph h1 { font-size: 34px; } .b .ph p { color: var(--dim); font-size: 14px; }
+  .b .card { background-image: none; }
+  .b .li, .b .srow { border-bottom-style: dashed; }
+  .b .pf { justify-content: space-between; align-items: center; }
+
+  /* ------------------------------------------------ C. Painted signs: the whole screen, every part of your life a painted board in its own colour */
+  .menu.c {
+    --text: #e8dfc9; --dim: #a8a293; --card: #2a2b36; --card2: #383947; --line: rgba(217,207,182,.12); --line2: rgba(217,207,182,.3);
+    --accent: var(--sec, #e0964e); --accent-ink: var(--sec-ink, #1c1b21); --quiet: rgba(217,207,182,.07); --pos: #a3d0a2; --neg: #ea947e; --warn: #f0c35a; --focus: #e8dfc9;
+    --tagbg: rgba(217,207,182,.1); --newbg: #e8dfc9; --newink: #20212b; --kbd: #e8dfc9; --kbdline: rgba(217,207,182,.5); --r: 14px; --rb: 9px;
+    --thick: inset 0 -3px 0 rgba(0,0,0,.2); --mottle: var(--mottle-d);
+    width: 100%; height: 100%; display: grid; grid-template-rows: auto 1fr; max-width: 1240px;
+  }
+  .c .top { display: flex; align-items: center; gap: 12px; padding: 2px 4px 12px; }
+  .c .who { display: flex; gap: 10px; align-items: center; } .c .who svg { border-radius: 50%; box-shadow: 0 0 0 2px #e8dfc9; }
+  .c .who b { font: 400 22px/1.1 var(--name); display: block; } .c .who span { font-size: 12px; color: var(--dim); }
+  .c .top .status span { background: rgba(20,20,28,.6); }
+  .c .top .btn { --accent: #e8dfc9; --accent-ink: #20212b; }
+  .c .hub { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: 1fr 1fr .62fr; gap: 12px; min-height: 0; }
+  .tile { position: relative; text-align: left; color: var(--ink); background-color: var(--col); background-image: var(--mottle-t); border: 0; border-radius: 16px; padding: 16px 18px; cursor: pointer; overflow: hidden;
+    box-shadow: inset 0 -5px 0 rgba(0,0,0,.2), inset 0 0 0 2px rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.35); display: flex; flex-direction: column; min-height: 0; transition: transform .12s; }
+  .tile:hover { transform: translateY(-3px); } .tile:active { transform: translateY(1px); }
+  .tile .ic { opacity: .9; }
+  .tile .tn { font: 400 27px/1.05 var(--name); margin-top: auto; }
+  .tile .tf { font: 600 15px var(--data); margin-top: 4px; font-variant-numeric: tabular-nums; } .tile .ts { font-size: 13px; opacity: .8; }
+  .tile em { position: absolute; right: 14px; top: 14px; font: 600 12px var(--data); font-style: normal; border: 1.5px solid currentColor; border-bottom-width: 3px; border-radius: 6px; padding: 0 6px; opacity: .75; }
+  .tile .bdg { position: absolute; right: 14px; bottom: 16px; font: 700 12px var(--data); background: var(--ink); color: var(--col); border-radius: 10px; padding: 2px 9px; }
+  .tile.me { grid-row: span 2; } .tile.me .big { margin: 22px 0 10px; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; } .tile.me .big svg { border-radius: 18px; max-height: 100%; max-width: 100%; height: auto; width: auto; }
+  .tile.small { flex-direction: row; align-items: center; gap: 12px; } .tile.small .tn { margin: 0; font-size: 22px; }
+  .c .sec { display: grid; grid-template-columns: 62px 1fr; gap: 12px; min-height: 0; }
+  .c .strip { display: flex; flex-direction: column; gap: 5px; overflow: auto; scrollbar-width: none; }
+  .c .strip button { width: 100%; flex: 0 1 46px; min-height: 34px; border: 0; border-radius: 12px; color: var(--ink); background-color: var(--col); background-image: var(--mottle-d); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 -3px 0 rgba(0,0,0,.2); opacity: .55; }
+  .c .strip button:hover { opacity: .85; } .c .strip button.on { opacity: 1; box-shadow: inset 0 -3px 0 rgba(0,0,0,.2), 0 0 0 2px #e8dfc9; }
+  .c .strip .all { background: rgba(217,207,182,.12); color: #e8dfc9; opacity: 1; }
+  .c .page { display: grid; grid-template-rows: auto 1fr; min-height: 0; border-radius: 18px; overflow: hidden; background: var(--mottle-d), #20212b; box-shadow: 0 10px 40px rgba(0,0,0,.45); }
+  .c .ph { display: flex; align-items: center; gap: 14px; padding: 16px 22px; color: var(--sec-ink); background-color: var(--sec); background-image: var(--mottle-t); box-shadow: inset 0 -4px 0 rgba(0,0,0,.18); }
+  .c .ph h1 { font-size: 32px; } .c .ph p { font-size: 14px; opacity: .85; }
+  .c .ph em { margin-left: auto; font: 600 12px var(--data); font-style: normal; border: 1.5px solid currentColor; border-bottom-width: 3px; border-radius: 6px; padding: 1px 7px; opacity: .8; }
+
+  @media (max-width: 900px) { .grid4 { grid-template-columns: 1fr 1fr; } .grid2, .mapbox { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div id="bar">
+  <div class="row"><b>Menu look samples</b>
+    <button data-sample="a">A · Lantern light</button><button data-sample="b">B · Plaster ledger</button><button data-sample="c">C · Painted signs</button>
+    <span class="gap"></span><span>Behind the menu:</span>
+    <button data-back="morning">Morning</button><button data-back="midday">Midday</button><button data-back="dusk">Dusk</button><button data-back="night">Night</button>
+  </div>
+  <div class="row"><span id="blurb"></span></div>
+</div>
+<div id="scene"></div>
+<div id="stage"></div>
+<div id="flash"></div>
+
+<script>
+"use strict";
+// ---------------------------------------------------------------- textures: the town's mottled paint and its stone course, drawn once
+const svgUrl = s => 'url("data:image/svg+xml,' + encodeURIComponent(s) + '")';
+const mottle = (seed, col, a, f) => svgUrl(`<svg xmlns='http://www.w3.org/2000/svg' width='700' height='700'><filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='${f || ".011 .016"}' numOctaves='2' seed='${seed}' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 ${col} 0 0 0 0 ${col} 0 0 0 0 ${col} ${4 * a} 0 0 0 ${-1.7 * a}'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>`);
+const root = document.documentElement.style;
+root.setProperty("--mottle-d", mottle(3, 0, .16));            // darker blotches
+root.setProperty("--mottle-l", mottle(8, 1, .1));             // paler blotches
+root.setProperty("--mottle-w", mottle(5, .35, .12) + ", " + mottle(11, 1, .22));   // plaster: warm shade and pale patches
+root.setProperty("--mottle-t", mottle(3, 0, .09) + ", " + mottle(8, 1, .05));   // a painted board: two close tones
+root.setProperty("--blocks", svgUrl(`<svg xmlns='http://www.w3.org/2000/svg' width='168' height='68'><path d='M0 1H168M0 35H168M1 0V35M85 35V68' stroke='rgba(38,34,38,.4)' stroke-width='2' fill='none'/></svg>`));
+
+// ---------------------------------------------------------------- the menu's parts. Colours: ART_DIRECTION §2.3 accents, as they look in shade
+const COL = { lantern: ["#e0964e", "#1c1b21"], ochre: ["#a8843f", "#fbf3e0"], terracotta: ["#a35a44", "#fbf3e0"], teal: ["#3f7273", "#fbf3e0"], blue: ["#55698c", "#fbf3e0"],
+  plum: ["#6c5578", "#fbf3e0"], olive: ["#6b7245", "#fbf3e0"], brown: ["#77583f", "#fbf3e0"], stone: ["#6a6871", "#fbf3e0"], dark: ["#3b3c4a", "#e8dfc9"] };
+const GROUPS = [["you", "You"], ["town", "Town"], ["game", "Game"]];
+const TABS = [
+  { id: "me", name: "Me", key: "C", group: "you", col: "lantern", sub: "Who you are, what you have, how the town sees you", fig: "Sam", fig2: "Day 12 in Old Town" },
+  { id: "wallet", name: "Money", key: "I", group: "you", col: "ochre", sub: "Cash, accounts, loans and the statement", fig: "Bx 5254.50", fig2: "in all · Bx 600.00 owed", dot: 1 },
+  { id: "belongings", name: "Belongings", key: "G", group: "you", col: "brown", sub: "What you carry and the furniture not placed", fig: "7 things", fig2: "2 pieces of furniture" },
+  { id: "wardrobe", name: "Wardrobe", key: "U", group: "you", col: "plum", sub: "What you wear, and outfits saved by name", fig: "2 outfits", fig2: "wearing Market day" },
+  { id: "quests", name: "Journal", key: "J", group: "town", col: "teal", sub: "Quests and work under way, on offer and finished", fig: "2 under way", fig2: "1 on offer", dot: 1, badge: "1 new" },
+  { id: "property", name: "Properties", key: "P", group: "town", col: "terracotta", sub: "Your buildings: remodel, furnish, let and sell", fig: "2 buildings", fig2: "worth about Bx 14120.00" },
+  { id: "storage", name: "Storage", key: "", group: "town", col: "olive", sub: "Lockers and storage units", fig: "None yet", fig2: "" },
+  { id: "map", name: "Map", key: "M", group: "town", col: "blue", sub: "The town's big map, your mark and what it shows", fig: "Mark: Tram Café", fig2: "240 m" },
+  { id: "settings", name: "Settings", key: "", group: "game", col: "stone", sub: "Picture, sound, the screen and the controls" },
+  { id: "save", name: "Save", key: "", group: "game", col: "stone", sub: "Three save slots, kept on this device" },
+  { id: "help", name: "Help", key: "H", group: "game", col: "stone", sub: "The controls, by what you are doing" }
+];
+const tabOf = id => TABS.find(t => t.id === id);
+const IC = {
+  me: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+  wallet: '<ellipse cx="12" cy="7" rx="7" ry="3"/><path d="M5 7v5c0 1.7 3.1 3 7 3s7-1.300 7-3V7"/><path d="M5 12v5c0 1.700 3.100 3 7 3s7-1.300 7-3v-5"/>',
+  belongings: '<path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+  wardrobe: '<path d="M8 3 3 7l2 4 3-2v12h8V9l3 2 2-4-5-4c-.7 1.600-2.200 2.500-4 2.500S8.700 4.600 8 3z"/>',
+  property: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+  storage: '<rect x="3" y="8" width="18" height="12" rx="1.500"/><path d="M3 13h18M8 8V5h8v3M10.500 13v2.500h3V13"/>',
+  quests: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5z"/><path d="M4 19a2 2 0 0 1 2-2h13M9 8h6"/>',
+  map: '<path d="M12 21s-7-6.200-7-11a7 7 0 0 1 14 0c0 4.800-7 11-7 11z"/><circle cx="12" cy="10" r="2.500"/>',
+  settings: '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+  save: '<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3M8 21v-7h8v7"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.500 9.500a2.500 2.500 0 1 1 3.500 2.300c-.7.4-1 1-1 1.700"/><path d="M12 17h.01"/>',
+  grid: '<rect x="4" y="4" width="6.500" height="6.500" rx="1.500"/><rect x="13.500" y="4" width="6.500" height="6.500" rx="1.500"/><rect x="4" y="13.500" width="6.500" height="6.500" rx="1.500"/><rect x="13.500" y="13.500" width="6.500" height="6.500" rx="1.500"/>',
+  box: '<path d="M4 8l8-4 8 4v8l-8 4-8-4V8z"/><path d="M4 8l8 4 8-4M12 12v8"/>'
+};
+const icon = (id, s) => `<svg class="ic" viewBox="0 0 24 24" width="${s || 20}" height="${s || 20}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IC[id]}</svg>`;
+// A stand-in for the player's own face (character option B "Soft": big eyes, rosy cheeks, solid hair). The game would draw the real one.
+const face = (s, bg) => `<svg viewBox="0 0 120 120" width="${s}" height="${s}" role="img" aria-label="Sam">
+  <rect width="120" height="120" fill="${bg || "#cfc3ab"}"/>
+  <path d="M27 62c-4-30 10-48 33-48s37 18 33 48l4 46H23z" fill="#8a4a33"/>
+  <path d="M18 120c2-20 16-28 42-28s40 8 42 28z" fill="#4f8f90"/>
+  <path d="M40 96c6-6 34-6 40 0l-6 12c-8 4-20 4-28 0z" fill="#b99347"/>
+  <rect x="51" y="78" width="18" height="18" rx="7" fill="#d9a988"/>
+  <ellipse cx="60" cy="58" rx="27" ry="29" fill="#e6b998"/>
+  <path d="M31 56c0-24 12-36 29-36s29 12 29 34c-9-2-17-8-22-17-6 10-20 17-36 19z" fill="#8a4a33"/>
+  <ellipse cx="41" cy="71" rx="7" ry="4.500" fill="#e58f7c" opacity=".55"/><ellipse cx="79" cy="71" rx="7" ry="4.500" fill="#e58f7c" opacity=".55"/>
+  <ellipse cx="48" cy="60" rx="6.500" ry="7.500" fill="#fbf6ec"/><ellipse cx="72" cy="60" rx="6.500" ry="7.500" fill="#fbf6ec"/>
+  <circle cx="48.500" cy="61" r="4.600" fill="#4e7f73"/><circle cx="71.500" cy="61" r="4.600" fill="#4e7f73"/>
+  <circle cx="48.500" cy="61" r="2.300" fill="#1c1b21"/><circle cx="71.500" cy="61" r="2.300" fill="#1c1b21"/>
+  <circle cx="50" cy="59" r="1.200" fill="#fff"/><circle cx="73" cy="59" r="1.200" fill="#fff"/>
+  <path d="M41 49c4-3 9-3 13-1M66 48c4-2 9-2 13 1" stroke="#6e3a28" stroke-width="2.600" stroke-linecap="round" fill="none"/>
+  <path d="M58 68c1 2 3 2 4 0" stroke="#c48a6c" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M52 77c5 4 11 4 16 0" stroke="#a45a48" stroke-width="2.600" stroke-linecap="round" fill="none"/>
+</svg>`;
+
+// ---------------------------------------------------------------- the pages (made-up figures, the game's own wording where it has one)
+const NEW = '<span class="new" title="An addition proposed with this look: not in the menu today">proposed</span>';
+const li = (main, sub, right, when) => `<div class="li">${when ? `<span class="when">${when}</span>` : ""}<div class="m"><b>${main}</b>${sub ? `<span>${sub}</span>` : ""}</div>${right || ""}</div>`;
+const stat = (k, v, s, go, cls) => `<button type="button" class="card stat" data-go="${go}"><div class="k">${icon(go, 15)}${k}</div><div class="v ${cls || ""}">${v}</div><div class="s">${s}</div></button>`;
+const btn = (t, cls, extra) => `<button type="button" class="btn ${cls || ""}" ${extra || ""}>${t}</button>`;
+const chips = (list, on) => `<div class="chips">${list.map((t, i) => `<button type="button" class="chip${i === on ? " on" : ""}">${t}</button>`).join("")}</div>`;
+const sws = (cols, on) => `<div class="sws">${cols.map((c, i) => `<span class="sw${i === on ? " on" : ""}" style="background:${c}"></span>`).join("")}</div>`;
+const kbd = (...k) => k.map(x => `<span class="kbd">${x}</span>`).join("");
+const PAL = ["#bda87b", "#b08575", "#7ba0a2", "#d3ccba", "#94a4bd", "#856f5e", "#949a7b", "#94859c", "#55555e", "#5a6885"];   // the world palette, as the wardrobe shows it
+
+const PAGES = {
+  me: s => `<div class="stack">
+    <div class="grid2" style="grid-template-columns: minmax(250px, .8fr) 1.2fr">
+      <div class="card portrait">${face(104)}<div><div class="pn">Sam</div><p class="dim">Day 12 in Old Town</p><p class="dim sm" style="margin:6px 0 10px">T-shirt in teal, trousers in indigo, cream shoes, an ochre scarf.</p>${btn("Change clothes", "quiet", 'data-go="wardrobe"')}</div></div>
+      <div class="grid2" style="gap:10px">
+        ${stat("Money", "Bx 5254.50", "cash, current and savings", "wallet")}
+        ${stat("Property", "2 buildings", "worth about Bx 14120.00", "property")}
+        ${stat("Belongings", "7 things", "2 pieces of furniture", "belongings")}
+        ${stat("Journal", "2 under way", "1 on offer", "quests")}
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>Today ${NEW}</h3>
+        ${li("New in town", "Say hello to Mei at the Tram Café · 240 m", btn("Show on map", "quiet", 'data-go="map"'))}
+        ${li("A parcel for the clinic", "Work: you have the parcel", '<span class="tag">Bx 18.00</span>')}
+        ${li("At midnight", "Rent in Bx 31.20 · loan instalment Bx 52.40 · upkeep and tax Bx 32.68", '<span class="tag neg">− Bx 53.88</span>')}
+      </div>
+      <div class="card"><h3>How the town sees you</h3>
+        ${li("Mina", "café owner", '<span class="tag pos">trusts you</span>')}
+        ${li("Gus", "maker", '<span class="tag pos">likes you</span>')}
+        ${li("Leo", "elder", '<span class="tag pos">knows you</span>')}
+        ${li("Linden Grocer", "prices a little lower for you", '<span class="tag pos">regular</span>')}
+        ${li("Odile", "clerk", '<span class="tag neg">is wary of you</span>')}
+      </div>
+    </div></div>`,
+
+  wallet: s => `<div class="stack">
+    <div class="grid4">
+      <div class="card stat"><div class="k">Cash</div><div class="v">Bx 214.50</div><div class="s">in your pocket</div></div>
+      <div class="card stat"><div class="k">Current</div><div class="v">Bx 1840.00</div><div class="s">Linden Bank</div></div>
+      <div class="card stat"><div class="k">Savings</div><div class="v">Bx 3200.00</div><div class="s">earns 0.1% a day</div></div>
+      <div class="card stat"><div class="k">Loan</div><div class="v warn">Bx 600.00</div><div class="s">Bx 52.40 due at midnight</div></div>
+    </div>
+    <div class="grid2" style="grid-template-columns: 1.55fr 1fr">
+      <div class="card"><h3>Statement</h3>
+        ${[["Day 12 17:05", "Café Mina: coffee", "− Bx 3.20", "neg"], ["Day 12 14:30", "Parcel delivered: Tanner Clinic", "+ Bx 18.00", "pos"], ["Day 12 09:10", "Stall sales, 4 things", "+ Bx 41.60", "pos"],
+           ["Day 12 00:00", "Rent: 3 North Wall Street", "+ Bx 31.20", "pos"], ["Day 12 00:00", "Loan instalment", "− Bx 52.40", "neg"], ["Day 12 00:00", "Upkeep and tax: Lantern Court", "− Bx 32.68", "neg"],
+           ["Day 11 18:20", "Linden Grocer: bread × 2", "− Bx 4.80", "neg"]].map(r => `<div class="li"><span class="when">${r[0]}</span><div class="m">${r[1]}</div><span class="num ${r[3]}">${r[2]}</span></div>`).join("")}
+      </div>
+      <div class="stack">
+        <div class="card"><h3>This week ${NEW}</h3>
+          <div class="week">${[[40, 30], [55, 62], [30, 28], [70, 35], [48, 80], [66, 40], [90, 58]].map(d => `<div><i class="in" style="height:${d[0]}%"></i><i class="out" style="height:${d[1]}%"></i></div>`).join("")}</div>
+          <div class="weekl">${["6", "7", "8", "9", "10", "11", "12"].map(d => `<span>Day ${d}</span>`).join("")}</div>
+          <p class="sm dim" style="margin-top:8px"><span class="pos">In Bx 612.40</span> · <span class="neg">out Bx 498.10</span></p>
+        </div>
+        <div class="card"><h3>Loan</h3><p>You owe <b class="num">Bx 600.00</b> to Linden Bank.</p><p class="dim sm" style="margin:4px 0 10px">Instalments of Bx 52.40 each midnight, 12 to go.</p>
+          <div class="bar"><i style="width:40%"></i></div><p class="dim sm" style="margin-top:6px">Repaid at the bank's counter.</p></div>
+      </div>
+    </div></div>`,
+
+  belongings: s => `<div class="stack">
+    <div class="acts">${chips(["Everything", "You carry", "Furniture"], 0)} ${NEW}</div>
+    <div class="card"><h3>You carry</h3><div class="grid4">
+      ${[["Bread", "× 2", "Bx 4.80"], ["Lantern oil", "× 1", "Bx 6.00"], ["Cloth", "× 3", "Bx 27.00"], ["Tools", "× 1", "Bx 22.00"]].map(i => `<div class="card flat item"><div class="ib">${icon("box", 24)}</div><b>${i[0]}</b><span class="dim sm">${i[1]} · ${i[2]}</span></div>`).join("")}
+    </div></div>
+    <div class="card"><h3>Furniture not placed</h3>
+      ${li("Armchair", "Old Town · 0.90 × 0.85 m · from Lantern Court", '<span class="num">Bx 86.00</span>' + btn("Place in a home", "quiet", 'data-go="property"'))}
+      ${li("Bookshelf", "Plain · 1.00 × 0.35 m", '<span class="num">Bx 54.00</span>' + btn("Place in a home", "quiet", 'data-go="property"'))}
+      <p class="dim sm" style="margin-top:8px">A piece you take away in the building designer comes here; place it again from Furnish, in any home of yours.</p>
+    </div></div>`,
+
+  wardrobe: s => `<div class="grid2" style="grid-template-columns: minmax(240px, .75fr) 1.25fr">
+    <div class="stack">
+      <div class="card" style="text-align:center">${face(170)}<p class="dim sm" style="margin-top:8px">In the game you stand here yourself, and turn round.</p></div>
+      <div class="card"><h3>Outfits</h3>
+        ${li("Market day", sws(["#7ba0a2", "#5a6885", "#d3ccba", "#bda87b"]), btn("Wearing", "quiet", "disabled"))}
+        ${li("Work", sws(["#856f5e", "#55555e", "#856f5e"]), btn("Wear") + btn("Forget", "quiet"))}
+        <div class="acts" style="margin-top:10px"><input class="field wide" placeholder="Name this outfit" aria-label="Outfit name">${btn("Save what you wear", "quiet")}</div>
+      </div>
+    </div>
+    <div class="card"><h3>What you wear</h3>
+      <div class="srow"><span>Hair</span>${chips(["Short", "Side", "Long", "Bob", "Bun", "Afro", "Bald"], 2)}</div>
+      <div class="srow"><span>Hair colour</span>${sws(["#2a221e", "#5b3d2a", "#8a4a33", "#b98a4e", "#d9c9a0", "#8d8a8c"], 2)}</div>
+      <div class="srow"><span>Top</span><div class="stack" style="gap:8px">${chips(["T-shirt", "Long sleeves", "Tunic", "Dress"], 0)}${sws(PAL, 2)}</div></div>
+      <div class="srow"><span>Bottom</span><div class="stack" style="gap:8px">${chips(["Trousers", "Shorts"], 0)}${sws(PAL, 9)}</div></div>
+      <div class="srow"><span>Shoes</span>${sws(PAL, 3)}</div>
+      <div class="srow"><span>Scarf</span>${sws(PAL, 0)}</div>
+      <div class="srow"><span>Extras</span>${chips(["Cap", "Apron", "Bag", "Moustache"], -1)}</div>
+      <p class="dim sm" style="margin-top:10px">Changing is free, anywhere.</p>
+    </div></div>`,
+
+  quests: s => `<div class="grid2" style="grid-template-columns: 1.4fr 1fr">
+    <div class="stack">
+      <div class="card"><h3>Under way</h3>
+        <div class="li"><div class="m"><b>New in town</b><span>Your new neighbour Mei works at the Tram Café on Market Square. Go and say hello.</span><div class="steps"><i class="d"></i><i></i><i></i></div><span>Step 1 of 3 · Tram Café, 240 m</span></div><div class="stack" style="gap:6px">${btn("Show on map", "", 'data-go="map"')}${btn("Follow", "quiet")}</div></div>
+        <div class="li"><div class="m"><b>A parcel for the clinic</b><span>Work for the courier office: you have the parcel. Take it to Tanner Clinic.</span><span>Pays Bx 18.00 · 410 m</span></div>${btn("Show on map", "quiet", 'data-go="map"')}</div>
+        <p class="sm dim" style="margin-top:6px">Follow keeps a quest on the screen as you walk. ${NEW}</p>
+      </div>
+      <div class="card"><h3>On offer</h3>${li("The baker's early start", "Gus needs flour fetched before the market opens. Ask Gus, at his stall.", '<span class="tag warn">new</span>')}</div>
+    </div>
+    <div class="stack">
+      <div class="card"><h3>Finished</h3>${li("A room of your own", "You bought Lantern Court.", '<span class="tag">Day 4</span>')}${li("First coffee", "Mina remembers you.", '<span class="tag">Day 1</span>')}</div>
+      <div class="card"><h3>Work</h3><p>9 jobs done, 2 quests finished.</p><p class="dim sm" style="margin-top:4px">Ask people for work: some have a shift, some a parcel.</p></div>
+    </div></div>`,
+
+  property: s => `<div class="stack">
+    <div class="grid3">
+      <div class="card stat"><div class="k">You own</div><div class="v">2 buildings</div><div class="s">worth about Bx 14120.00</div></div>
+      <div class="card stat"><div class="k">Each midnight</div><div class="v pos">+ Bx 31.20</div><div class="s">rent in</div></div>
+      <div class="card stat"><div class="k">Each midnight</div><div class="v neg">− Bx 46.10</div><div class="s">upkeep and tax</div></div>
+    </div>
+    <div class="card"><h3>Your buildings</h3>
+      <div class="li"><div class="m"><b>Lantern Court</b><span>The whole building · 1116 m² · you live here · worth about Bx 9337.68</span></div><div class="acts">${btn("Remodel")}${btn("Furnish", "quiet")}${btn("Show on map", "quiet", 'data-go="map"')}</div></div>
+      <div class="li"><div class="m"><b>3 North Wall Street</b><span>Your rooms on floor 1 · let to Mina for Bx 31.20 a day · worth about Bx 4782.32</span></div><div class="acts">${btn("Redecorate your rooms")}${btn("Furnish", "quiet")}${btn("Show on map", "quiet", 'data-go="map"')}</div></div>
+      <div class="li"><div class="m"><b>Guild House, room 4</b><span>You rent this · Bx 12.00 a day · the community houses cannot be remodelled yet</span></div><div class="acts">${btn("Remodel", "", "disabled")}${btn("Furnish", "quiet")}${btn("Show on map", "quiet", 'data-go="map"')}</div></div>
+    </div>
+    <div class="card"><h3>Let and sell</h3>
+      <div class="li"><div class="m"><b>Lantern Court</b><span>Market rent Bx 93.37 a day · prices in town 100% of usual</span></div><div class="acts"><span class="dim sm">Rent Bx</span><input class="field" value="93.37" aria-label="Rent a day">${btn("Offer to let", "quiet")}${btn("Sell for Bx 8403.91", "risk")}</div></div>
+      <div class="li"><div class="m"><b>3 North Wall Street</b><span>Let until day 30</span></div><div class="acts">${btn("Sell for Bx 4304.09", "risk")}</div></div>
+    </div></div>`,
+
+  storage: s => `<div class="card empty">${icon("storage", 44)}<h1 style="font-size:24px">No storage yet</h1>
+    <p class="dim" style="max-width:52ch;margin:8px auto 14px">Lockers and storage units, somewhere to keep furniture and things you are not using, come with a feature not picked for this slice. Until then, furniture you take out of a home is kept in your belongings.</p>
+    ${btn("Open Belongings", "", 'data-go="belongings"')}</div>`,
+
+  map: s => `<div class="mapbox"><div class="card" style="padding:8px">${townMap()}</div>
+    <div class="stack">
+      <div class="card"><h3>Your mark</h3><p><b style="font:400 18px var(--name)">Tram Café</b></p><p class="dim sm" style="margin:2px 0 10px">Market Square · 240 m</p>${btn("Clear the mark", "quiet")}</div>
+      <div class="card"><h3>Show</h3><div class="stack" style="gap:8px">${["Residents", "Quests", "Your buildings", "Names of shops", "The mark"].map((t, i) => `<label class="acts" style="cursor:pointer"><input type="checkbox" ${i !== 0 ? "checked" : ""} style="accent-color:var(--accent);width:16px;height:16px">${t}</label>`).join("")}</div></div>
+      <p class="dim sm">A click marks a place; again on it clears the mark. In the game the map fills the screen.</p>
+    </div></div>`,
+
+  settings: s => { const G = SETTINGS[s.sub] || SETTINGS.Picture;
+    return `<div class="subnav">${Object.keys(SETTINGS).map(g => `<button type="button" class="chip${g === (s.sub in SETTINGS ? s.sub : "Picture") ? " on" : ""}" data-sub="${g}">${g}</button>`).join("")}</div>
+    <div class="card">${G.map(r => `<div class="srow"><span>${r[0]}</span>${Array.isArray(r[1]) ? chips(r[1], r[2]) : `<div class="slide"><input type="range" min="${r[1].min}" max="${r[1].max}" value="${r[1].v}" aria-label="${r[0]}" oninput="this.nextElementSibling.value=this.value"><output>${r[1].v}</output></div>`}</div>`).join("")}</div>
+    <div class="acts" style="margin-top:14px">${btn("Back to the defaults", "quiet")}<span class="dim sm">Settings are kept on this device, not in your save.</span></div>`; },
+
+  save: s => `<div class="stack"><div class="grid3">
+      ${[["Slot 1", "Sam", "Day 12 · saved 23 Nov 18:40", 1], ["Slot 2", "Ada", "Day 3 · saved 21 Nov 20:12", 0], ["Slot 3", "", "", 0]].map(x => `<div class="card"><h3>${x[0]} ${x[3] ? '<span class="tag pos">playing</span>' : ""}</h3>
+        ${x[1] ? `<div class="portrait" style="gap:12px;margin-bottom:12px">${face(56, x[1] === "Ada" ? "#b9b0c4" : "#cfc3ab")}<div><div class="pn" style="font-size:22px">${x[1]}</div><p class="dim sm">${x[2]}</p></div></div><div class="acts">${btn(x[3] ? "Save now" : "Save here", x[3] ? "" : "quiet")}${btn("Load", "quiet")}${btn("New game here", "risk")}</div>`
+        : `<p class="dim" style="margin:14px 0 24px">Empty</p><div class="acts">${btn("Save here", "quiet")}${btn("New game", "quiet")}</div>`}</div>`).join("")}
+    </div>
+    <p class="dim sm">The game saves itself in the slot you are playing as you go. A new game in a slot that holds a save deletes it, so it asks twice.</p>
+    <div class="acts">${btn("Back to the title", "quiet")}</div></div>`,
+
+  help: s => `<div class="subnav">${chips(["Keyboard and mouse (this one)", "Gamepad", "Touch"], 0)}</div><div class="grid2">
+    <div class="card"><h3>On foot</h3>${[["W A S D", "Walk"], ["Shift", "Run"], ["Space", "Jump"], ["Mouse", "Look"], ["V", "First or third person"], ["E", "Use, talk, get into a parked car"], ["B", "Buy, sell, bank"]].map(r => `<div class="li"><div class="m">${r[1]}</div><span>${kbd(...r[0].split(" "))}</span></div>`).join("")}</div>
+    <div class="stack">
+      <div class="card"><h3>In a car</h3>${[["W S", "Drive and brake"], ["A D", "Steer"], ["Space", "Handbrake"], ["F", "Horn"], ["R", "Radio"], ["E", "Get out"]].map(r => `<div class="li"><div class="m">${r[1]}</div><span>${kbd(...r[0].split(" "))}</span></div>`).join("")}</div>
+      <div class="card"><h3>The menu</h3>${[["Esc", "Open, and back to town"], ["C I G P J U M H", "Straight to a page"]].map(r => `<div class="li"><div class="m">${r[1]}</div><span>${kbd(...r[0].split(" "))}</span></div>`).join("")}</div>
+    </div></div>`
+};
+const SETTINGS = {
+  Picture: [["Picture", ["Better", "Simple"], 0], ["Sun shadows", ["On", "Off"], 0], ["Ambient occlusion", ["On", "Off"], 0], ["Bounce light and contact shade", ["On", "Off"], 0], ["Resolution", ["Keep 60 frames a second", "Full", "Soft (half)"], 0],
+    ["People with full bodies", { min: 0, max: 6, v: 1 }], ["Field of view (degrees)", { min: 40, max: 80, v: 52 }], ["Frame counter", ["On", "Off"], 1]],
+  Sound: [["Sound", ["On", "Off"], 0], ["All sound", { min: 0, max: 100, v: 100 }], ["Music", { min: 0, max: 100, v: 70 }], ["Street and weather", { min: 0, max: 100, v: 100 }], ["Voices", { min: 0, max: 100, v: 90 }], ["Actions and the interface", { min: 0, max: 100, v: 80 }]],
+  "The map": [["Residents on the map", ["On", "Off"], 1], ["Quests", ["On", "Off"], 0], ["Your buildings", ["On", "Off"], 0], ["Names of shops and services", ["On", "Off"], 0], ["The mark", ["On", "Off"], 0]],
+  "On the screen": [["Minimap", ["On", "Off"], 0], ["Clock", ["On", "Off"], 0], ["Money", ["On", "Off"], 0], ["Names over residents", ["On", "Off"], 0], ["Prompts", ["On", "Off"], 0], ["Text size", ["Small", "Medium", "Large"], 1]],
+  Controls: [["Look sensitivity", { min: 1, max: 10, v: 5 }], ["Invert look", ["On", "Off"], 1], ["Camera distance", { min: 2, max: 8, v: 4 }], ["First person", ["On", "Off"], 1]]
+};
+function townMap() {                                      // a stand-in for the big map: blocks, squares, your buildings outlined, you and your mark
+  const roofs = ["#b08575", "#bda87b", "#a59f9b", "#94a4bd", "#d3ccba", "#949a7b"]; let out = "", k = 7;
+  for (let y = 0; y < 6; y++) for (let x = 0; x < 8; x++) {
+    k = (k * 73 + 41) % 997; const X = 14 + x * 72, Y = 14 + y * 72, sq = (x === 3 && y === 2) || (x === 6 && y === 4), gr = k % 9 === 0;
+    out += sq ? `<rect x="${X}" y="${Y}" width="62" height="62" rx="5" fill="#cfc6b3"/>` : gr ? `<rect x="${X}" y="${Y}" width="62" height="62" rx="5" fill="#6f8457"/>`
+      : `<rect x="${X}" y="${Y}" width="62" height="62" rx="5" fill="#8d8a84"/><rect x="${X + 5}" y="${Y + 5}" width="${24 + k % 9}" height="24" rx="3" fill="${roofs[k % 6]}"/><rect x="${X + 35}" y="${Y + 5}" width="22" height="${22 + k % 14}" rx="3" fill="${roofs[(k >> 2) % 6]}"/><rect x="${X + 5}" y="${Y + 34}" width="26" height="23" rx="3" fill="${roofs[(k >> 4) % 6]}"/>`;
+  }
+  return `<svg viewBox="0 0 600 446" role="img" aria-label="The town's map"><rect width="600" height="446" fill="#5d5a5e"/>${out}
+    <rect x="89" y="161" width="34" height="30" rx="4" fill="none" stroke="#f0a35a" stroke-width="3"/><rect x="377" y="89" width="30" height="30" rx="4" fill="none" stroke="#f0a35a" stroke-width="3"/>
+    <path d="M150 246l8 20-8-5-8 5z" fill="#fbf6ec" stroke="#1c1b21" stroke-width="1.500"/><path d="M150 246C190 236 232 214 258 188" stroke="#fbf6ec" stroke-width="2.500" stroke-dasharray="2 7" stroke-linecap="round" fill="none"/>
+    <path d="M262 170l12 12-12 12-12-12z" fill="#f0a35a" stroke="#1c1b21" stroke-width="1.500"/><text x="280" y="187" font-family="Constantia, Georgia, serif" font-size="17" fill="#fbf6ec" stroke="#1c1b21" stroke-width="3" paint-order="stroke">Tram Café · 240 m</text></svg>`;
+}
+
+// ---------------------------------------------------------------- the three shells: where things are, and how they look
+const statusBar = () => `<div class="status"><span>Wed 18:42</span><span>Bx 214.50</span></div>`;
+const who = s => `<div class="who">${face(s)}<div><b>Sam</b><span>Day 12 · Summer · market day</span></div></div>`;
+const navBtn = (t, on, bare) => `<button type="button" class="nav${on ? " on" : ""}" data-go="${t.id}">${icon(t.id, 18)}<span>${t.name}</span>${t.dot && !on ? '<i class="dot" title="Something new here"></i>' : ""}${t.key && !bare ? `<em>${t.key}</em>` : ""}</button>`;
+const SHELL = {
+  a: s => { const t = tabOf(s.tab);
+    return `<div class="menu a"><nav class="rail">${who(44)}
+      ${GROUPS.map(([g, name]) => `<h4>${name}</h4>` + TABS.filter(x => x.group === g).map(x => navBtn(x, x.id === t.id)).join("")).join("")}
+      <div class="resume">${btn('Back to town', "", "data-close")}</div></nav>
+      <section class="page"><header class="ph"><div><h1>${t.name}</h1><p>${t.sub}</p></div>${statusBar()}</header><div class="pb">${PAGES[t.id](s)}</div>
+      <footer class="pf"><span>${kbd("Esc")}back to town</span><span>${kbd("C", "I", "G", "P", "J", "U", "M", "H")}straight to a page</span></footer></section></div>`; },
+  b: s => { const t = tabOf(s.tab);
+    return `<div class="menu b"><div class="band">${who(40)}<div class="gtabs">${GROUPS.map(([g, name]) => `<button type="button" class="gtab${g === t.group ? " on" : ""}" data-go="${TABS.find(x => x.group === g).id}">${name}</button>`).join("")}</div>${statusBar()}</div>
+      <nav class="ptabs">${TABS.filter(x => x.group === t.group).map(x => navBtn(x, x.id === t.id)).join("")}</nav>
+      <section class="page"><header class="ph"><h1>${t.name}</h1><p>${t.sub}</p></header><div class="pb">${PAGES[t.id](s)}</div></section>
+      <footer class="pf"><span><span style="margin-right:16px">${kbd("Esc")}back to town</span>${kbd("C", "I", "G", "P", "J", "U", "M", "H")}straight to a page</span>${btn("Back to town", "", "data-close")}</footer></div>`; },
+  c: s => { const top = `<header class="top">${who(42)}${statusBar()}${btn("Back to town", "", "data-close")}</header>`;
+    if (s.tab === "hub") return `<div class="menu c">${top}<div class="hub">${["me", "wallet", "quests", "property", "belongings", "wardrobe", "map", "storage", "settings", "save", "help"].map(id => { const t = tabOf(id), [col, ink] = COL[t.group === "game" ? "dark" : t.col];
+      return t.id === "me" ? `<button type="button" class="tile me" data-go="me" style="--col:${col};--ink:${ink}">${t.key ? `<em>${t.key}</em>` : ""}<div class="big">${face(250, "#f0c592")}</div><div class="tn">Sam</div><div class="tf">Day 12 in Old Town</div><div class="ts">Mina trusts you · Gus likes you</div></button>`
+        : t.group === "game" ? `<button type="button" class="tile small" data-go="${t.id}" style="--col:${col};--ink:${ink}">${icon(t.id, 26)}<div class="tn">${t.name}</div>${t.key ? `<em>${t.key}</em>` : ""}</button>`
+        : t.id === "storage" ? `<button type="button" class="tile small" data-go="${t.id}" style="--col:${col};--ink:${ink}">${icon(t.id, 26)}<div><div class="tn">${t.name}</div><div class="ts">${t.fig}</div></div></button>`
+        : `<button type="button" class="tile" data-go="${t.id}" style="--col:${col};--ink:${ink}">${icon(t.id, 30)}${t.key ? `<em>${t.key}</em>` : ""}<div class="tn">${t.name}</div><div class="tf">${t.fig}</div><div class="ts">${t.fig2}</div>${t.badge ? `<span class="bdg">${t.badge}</span>` : ""}</button>`; }).join("")}</div></div>`;
+    const t = tabOf(s.tab), [sec, ink] = COL[t.col];
+    return `<div class="menu c" style="--sec:${sec};--sec-ink:${ink}">${top}<div class="sec"><nav class="strip"><button type="button" class="all" data-go="hub" title="Everything">${icon("grid", 22)}</button>
+      ${TABS.map(x => `<button type="button" class="${x.id === t.id ? "on" : ""}" data-go="${x.id}" title="${x.name}" style="--col:${COL[x.col][0]};--ink:${COL[x.col][1]}">${icon(x.id, 20)}</button>`).join("")}</nav>
+      <section class="page"><header class="ph">${icon(t.id, 30)}<div><h1>${t.name}</h1><p>${t.sub}</p></div>${t.key ? `<em>${t.key}</em>` : ""}</header><div class="pb">${PAGES[t.id](s)}</div></section></div></div>`; }
+};
+const BLURB = {
+  a: "The town at dusk: dark stone, cream lettering, one warm lit window where you are. A rail on the left sorts the pages into You, Town and Game.",
+  b: "Daylight: patchy plaster under a course of stone blocks, dark lettering, terracotta for what you can do. Three dividers (You, Town, Game), their pages beneath.",
+  c: "The whole screen: each part of your life is a painted board in its own colour from the town's palette, with its headline on it. A page keeps its board's colour."
+};
+const VEIL = { a: "blur(7px) brightness(.5) saturate(.9)", b: "blur(7px) brightness(.78)", c: "blur(12px) brightness(.36) saturate(1.1)" };
+const BACK = { morning: "0 0", midday: "100% 0", dusk: "0 100%", night: "100% 100%" };
+
+// ---------------------------------------------------------------- state: #sample/tab/backdrop
+const S = { sample: "a", tab: "me", back: "dusk", sub: "Picture" };
+(function fromHash() { const [a, t, b] = location.hash.slice(1).split("/"); if (SHELL[a]) S.sample = a; if (t && (tabOf(t) || t === "hub")) S.tab = t; else if (S.sample === "c") S.tab = "hub"; if (BACK[b]) S.back = b; })();
+function draw() {
+  if (S.tab === "hub" && S.sample !== "c") S.tab = "me";
+  document.getElementById("stage").innerHTML = SHELL[S.sample](S);
+  document.getElementById("blurb").textContent = BLURB[S.sample];
+  const sc = document.getElementById("scene"); sc.style.backgroundPosition = BACK[S.back]; sc.style.filter = VEIL[S.sample];
+  for (const b of document.querySelectorAll("#bar button")) b.classList.toggle("on", b.dataset.sample === S.sample || b.dataset.back === S.back);
+  history.replaceState(null, "", "#" + S.sample + "/" + S.tab + "/" + S.back);
+}
+function flash(t) { const f = document.getElementById("flash"); f.textContent = t; f.style.opacity = 1; clearTimeout(flash.t); flash.t = setTimeout(() => { f.style.opacity = 0; }, 1600); }
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.sample) { S.sample = b.dataset.sample; S.tab = S.sample === "c" ? "hub" : S.tab === "hub" ? "me" : S.tab; }
+  else if (b.dataset.back) S.back = b.dataset.back;
+  else if (b.dataset.go) S.tab = b.dataset.go;
+  else if (b.dataset.sub) S.sub = b.dataset.sub;
+  else if ("close" in b.dataset) return flash("In the game this closes the menu and the clock runs again.");
+  else if (b.classList.contains("chip") && b.parentElement.classList.contains("chips")) { for (const c of b.parentElement.children) c.classList.toggle("on", c === b); return; }
+  else return;
+  draw();
+});
+document.addEventListener("keydown", e => {
+  if (e.target.matches("input")) return;
+  const k = e.key.toUpperCase(), t = TABS.find(x => x.key === k);
+  if ("123".includes(k) && k) { S.sample = "abc"["123".indexOf(k)]; S.tab = S.sample === "c" ? "hub" : S.tab === "hub" ? "me" : S.tab; draw(); }
+  else if (t) { S.tab = t.id; draw(); }
+  else if (k === "ESCAPE") { if (S.sample === "c" && S.tab !== "hub") { S.tab = "hub"; draw(); } else flash("In the game this closes the menu and the clock runs again."); }
+});
+draw();
+</script>
+</body>
+</html>

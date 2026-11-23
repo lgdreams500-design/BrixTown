@@ -17,6 +17,39 @@ class TheMenu(unittest.TestCase):
                 self.assertTrue(P["controls"].get(t["action"]), "%s: no control opens %s" % (p, t["name"]))
         self.assertTrue(S["menu"]["pauses"], "the menu pauses the clock while the slice is single-player (owner, 2026-11-23)")
 
+    def test_UI_015_every_tab_is_in_a_group(self):
+        groups = [g["id"] for g in S["menu"]["groups"]]
+        self.assertEqual(groups, ["you", "town", "game"])
+        for t in S["menu"]["tabs"]:
+            self.assertIn(t["group"], groups, t["id"])
+        for g in groups:
+            self.assertTrue([t for t in S["menu"]["tabs"] if t["group"] == g], "group %s is empty" % g)
+        import copy
+        w = copy.deepcopy(W); w["settings"]["menu"]["tabs"][0]["group"] = "nowhere"
+        self.assertTrue(any("no group nowhere" in p for p in world.settings_problems(w)))
+
+    def test_UI_016_every_tab_has_a_board_colour_that_can_be_read(self):
+        C = S["menu"]["colours"]
+        lum = lambda c: sum(w * ((v / 255 / 12.92) if v / 255 <= .03928 else ((v / 255 + .055) / 1.055) ** 2.4) for w, v in zip((.2126, .7152, .0722), (int(c[i:i + 2], 16) for i in (1, 3, 5))))
+        for k, (board, ink) in C.items():
+            a, b = sorted((lum(board), lum(ink)), reverse=True)
+            self.assertGreaterEqual((a + .05) / (b + .05), 3.0, "%s: lettering too faint on its board" % k)   # large lettering (WCAG AA large)
+        for t in S["menu"]["tabs"]:
+            self.assertIn(t["colour"], C, t["id"])
+        import copy
+        w = copy.deepcopy(W); w["settings"]["menu"]["tabs"][1]["colour"] = "pink"
+        self.assertTrue(any("no colour pink" in p for p in world.settings_problems(w)))
+
+    def test_UI_017_the_menu_shows_the_player_themself(self):
+        L = S["menu"]["live"]
+        self.assertLess(L["face_m"], 1.0, "the face window shows a face, not a body")
+        self.assertGreater(L["body_m"], 1.72, "the wardrobe shows all of a person 1.72 m tall")
+        self.assertGreater(L["face_y"], L["body_y"])
+        import copy
+        w = copy.deepcopy(W); w["settings"]["menu"]["live"]["face_d"] = 0
+        self.assertTrue(any("live.face_d" in p for p in world.settings_problems(w)))
+        w = copy.deepcopy(W); w["settings"]["menu"]["live"]["body_fill"] = 1.5
+        self.assertTrue(any("live.body_fill" in p for p in world.settings_problems(w)))
 
     def test_UI_013_more_than_one_save_slot(self):
         self.assertGreaterEqual(S["save"]["slots"], 3, "level 2: more than one save slot (owner, 2026-11-23: build the game menu level 2)")

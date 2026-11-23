@@ -1461,6 +1461,23 @@ def settings_problems(w):
     for t in S["menu"]["tabs"]:
         if t["action"] not in A:
             out.append("menu tab %s: no action %s" % (t["id"], t["action"]))
+        if t.get("group") not in [g["id"] for g in S["menu"].get("groups", [])]:      # UI-015: every tab is in a group
+            out.append("menu tab %s: no group %s" % (t["id"], t.get("group")))
+        if t.get("colour") not in S["menu"].get("colours", {}):                       # UI-016: and has a board colour
+            out.append("menu tab %s: no colour %s" % (t["id"], t.get("colour")))
+        if t.get("board", "big") not in ("big", "tall", "small"):
+            out.append("menu tab %s: no board size %s" % (t["id"], t.get("board")))
+    for k, c in S["menu"].get("colours", {}).items():
+        if not (isinstance(c, list) and len(c) == 2 and all(isinstance(x, str) and len(x) == 7 and x[0] == "#" for x in c)):
+            out.append("menu colour %s: needs a board colour and a lettering colour, as #rrggbb" % k)
+    if "quiet" not in S["menu"].get("colours", {}):
+        out.append("menu colours: no quiet colour for the small boards")
+    L = S["menu"].get("live", {})                                                     # UI-017: the camera on the player in the menu
+    for k in ("face_d", "face_y", "face_m", "body_y", "body_m", "body_fill"):
+        if not (isinstance(L.get(k), (int, float)) and not isinstance(L.get(k), bool) and L[k] > 0):
+            out.append("menu live.%s: needs a number above 0" % k)
+    if isinstance(L.get("body_fill"), (int, float)) and L["body_fill"] > 1:
+        out.append("menu live.body_fill: the player cannot fill more than the screen")
     for p, P in S["platforms"].items():
         got = P["controls"]
         for a in A:
