@@ -1,4 +1,5 @@
 """Checks on the city data in World/ and on the living-city rules running over it.   python -m unittest test_world"""
+import os
 import unittest
 
 import world
@@ -776,6 +777,62 @@ class TheTimings(unittest.TestCase):
                     near += d <= 400
                     far += d > 400
         self.assertGreater(near, 20 * max(far, 1))                       # lunch from work is near work
+
+
+class TheHomes(unittest.TestCase):
+    """The houses' colourways (ADR-0032) and the plan homes are furnished from (ADR-0033)."""
+    RULES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "World", "rules")
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        cls.styles = json.load(open(os.path.join(cls.RULES, "house_styles.json"), encoding="utf-8"))
+        cls.plans = json.load(open(os.path.join(cls.RULES, "home_plans.json"), encoding="utf-8"))["plans"]
+        cls.houses = [l for l in world.lots(W) if l.get("house", {}).get("plan") == "samples_19"]
+
+    def test_BUILD_003_house_colourways_come_from_the_palette(self):
+        S = self.styles
+        art = open(os.path.join(self.RULES, "..", "..", "docs", "art", "ART_DIRECTION.md"), encoding="utf-8").read()
+        for name, rgb in S["palette"].items():
+            self.assertIn("(%.2f, %.2f, %.2f)" % tuple(rgb), art, name)        # every accent is a palette entry of section 2.3
+        for line, ways in S["colourways"].items():
+            self.assertIn(line, S["lines"])
+            self.assertEqual(sorted(ways), ["a", "b", "c"], line)
+            for w, c in ways.items():
+                self.assertTrue(c["wall"] == "stone" if S["lines"][line]["stone"] else c["wall"] in S["plasters"], (line, w))
+                for part in ("shutter", "door", "frame"):
+                    self.assertIn(c[part], S["palette"], (line, w, part))
+                self.assertIn(c["roof"], S["roofs"], (line, w))
+
+    def test_FURN_060_every_home_has_a_plan(self):
+        self.assertEqual(len(self.houses), 469)
+        spots = self.plans["house_12x9"]["house"]["spots"]
+        beds = sum(len(spots[it["piece"]]) for it in self.plans["house_12x9"]["items"] if it["piece"] in self.plans["house_12x9"]["house"]["beds"])
+        for l in self.houses:
+            h = l["house"]
+            self.assertIn(h.get("interior"), self.plans, l["id"])
+            self.assertIn(h.get("style"), self.styles["colourways"][h["furniture"]], l["id"])
+            self.assertEqual(len(h["rooms"]), 10, l["id"])
+            self.assertLessEqual(len(l["objects"]["bed"]), beds, l["id"])     # a bed for every resident
+        for lid in ("b_0_0_l7", "b_0_0_l9", "b_0_0_l12", "b_0_0_l13"):     # the houses the owner reviewed keep the line as drawn
+            self.assertEqual(next(l for l in self.houses if l["id"] == lid)["house"]["style"], "a")
+
+    def test_FURN_061_plans_keep_clear(self):
+        import importlib.util
+        p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "blender", "house_interiors_21_plan.py")
+        spec = importlib.util.spec_from_file_location("house_interiors_21_plan", p)
+        plan = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(plan)
+        self.assertEqual(plan.check(), [])
+        stored = self.plans["house_12x9"]["items"]
+        self.assertEqual([(i["piece"], i["x"], i["y"], i["level"]) for i in stored],
+                         [(i["piece"], i["x"], i["y"], i["level"]) for i in plan.ITEMS])   # the game's plan is the checked one
+
+    def test_FURN_062_levels_add_up(self):
+        for name, p in self.plans.items():
+            n = [sum(1 for it in p["items"] if it["level"] <= lv) for lv in (1, 2, 3, 4)]
+            self.assertTrue(0 < n[0] < n[1] < n[2] < n[3] == len(p["items"]), (name, n))
+            self.assertEqual(sorted(int(k) for k in p["levels"]), [1, 2, 3, 4])
 
 
 if __name__ == "__main__":

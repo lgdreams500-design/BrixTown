@@ -27,7 +27,7 @@ Every requirement names a **feature** and a **level** from `docs/backlog/feature
 > Milestones: first slice = PH1, life depth = PH3, full game = PH6. Undecided means ask.
 
 There is no Phase column: the owner's picks decide when. Priority says how much it matters once in
-scope. Status of every row: `proposed`, except FURN-020 and FURN-021: `accepted` (the owner asked for the outlet to be built, 2026-11-22; ADR-0027). "Proven by" names the test that is still to be written, in
+scope. Status of every row: `proposed`, except FURN-020 and FURN-021: `accepted` (the owner asked for the outlet to be built, 2026-11-22; ADR-0027), and FURN-060 to FURN-063: `accepted` (the owner approved the house plan and its four furnishing levels and picked F-HOME-FURNISH level 3, 2026-11-23; ADR-0033). "Proven by" names the test that is still to be written, in
 `Tools/citysim/test_furniture.py` for rules and in a Blender look test for designs.
 
 Storage containers (`F-PROP-STORAGE`) and the assembly mini-game (`F-FURN-ASSEMBLE`) have no pick and
@@ -94,6 +94,15 @@ are not in this file; the owner said both come later.
 | FURN-055 | The player shall move and turn placed pieces freely (turns in 15° steps `[ASSUMPTION]`), hang wall pieces on walls and stand small pieces on others; the layout is saved and, from PH2, visitors see it. | F-PROP-FURNISH | 2 | P0 | `test_FURN_051_placing` |
 | FURN-056 | Each piece shall have a condition worked out from its age and how much it is used (from the clock and the routines), shown in the stages of FURN-008, lowering what it sells for. | F-PROP-FURNISH | 2 | P2 | `test_FURN_056_wear` |
 | FURN-057 | The player carrying a piece shall walk slower by its size, and only pieces one person can carry are carried; bigger ones are moved in place (FURN-055) or by a crew. | F-OBJ-CARRY | 1 | P2 | engine test |
+
+### 2.4 How residents' homes are furnished — `F-HOME-FURNISH` (ADR-0033)
+
+| ID | Requirement | Feature | Lvl | Pri | Proven by |
+|---|---|---|---|---|---|
+| FURN-060 | Every home shall be furnished from data: the plan of its type (rooms, doorways, windows, stair) and each room's pieces with their places and the furnishing level each first comes in at, in `World/rules/home_plans.json`; the home's line (FURN-005) decides which version of each piece stands there. | F-HOME-FURNISH | 1 | P1 | `test_FURN_060_every_home_has_a_plan` |
+| FURN-061 | Every plan shall be checked: each piece inside its room, no two floor pieces in each other, doorways, the front door, stairs and lift kept clear, and nothing taller than the sill in front of a window. | F-HOME-FURNISH | 1 | P1 | `test_FURN_061_plans_keep_clear` |
+| FURN-062 | There shall be four furnishing levels, Bare, Basic, Homely and Full, each adding pieces to the one before; a home shows the pieces of its level and those below. | F-HOME-FURNISH | 2 | P1 | `test_FURN_062_levels_add_up` |
+| FURN-063 | A household's furnishing level shall be worked out from data and the world clock, never ticked or stored: it starts from a level set by the household's daily wages (bands in `World/rules/furnishing.json`) and rises a level each time its furniture savings, a share of its wages for each day since it moved in, reach the next level's cost; on the day a level rises that cost moves from the residents' account to `sys:spend` in one ledger transaction (until FURN-034 has residents buy from the companies). | F-HOME-FURNISH | 3 | P1 | `test_FURN_063_level_follows_the_household` |
 
 ## 3. Data
 

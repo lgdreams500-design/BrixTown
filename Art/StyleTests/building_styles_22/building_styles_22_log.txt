@@ -1,0 +1,357 @@
+00:18:16 Blender 5.3.0; samples 32; only ('row_house', 'court_flats', 'tower_home')
+00:18:16   b_10_11_l0: home, 2 floors, 14 x 12 m, plaster_b
+00:18:17   terrace_14x12_2: built b_10_11_l0 as kit07 (home, 2 floors, front 14.0 m of 14.0, depth 12.0, district Outskirts)
+00:18:17   kit colours terrace_14x12_2: {"frame": "cream", "shutter": "wood_red", "door": "wood_red", "wall": "warm"}
+00:18:17 terrace_14x12_2 built in 1.7s (113 objects)
+00:18:34 row_house_a rendered in 16.9s (114 objects)
+00:18:34   row_house_b: 25 material slots recoloured
+00:19:00 row_house_b rendered in 25.4s (115 objects)
+00:19:00   row_house_c: 25 material slots recoloured
+00:19:20 row_house_c rendered in 19.8s (116 objects)
+00:19:20   b_10_11_l2: home, 3 floors, 14 x 12 m, plaster_b
+00:19:21   terrace_14x12_3: built b_10_11_l2 as kit07 (home, 3 floors, front 14.0 m of 14.0, depth 12.0, district Outskirts)
+00:19:21   kit colours terrace_14x12_3: {"frame": "cream", "shutter": "ochre", "door": "wood_red", "wall": "warm"}
+00:19:22 terrace_14x12_3 built in 1.8s (121 objects)
+00:19:41 front_terrace_14x12_3 rendered in 19.1s (122 objects)
+00:19:41   b_10_11_l8: home, 2 floors, 16 x 12 m, plaster_b
+00:19:42   terrace_12x16_2: built b_10_11_l8 as kit07 (home, 2 floors, front 16.0 m of 16.0, depth 12.0, district Outskirts)
+00:19:42   kit colours terrace_12x16_2: {"frame": "cream", "shutter": "teal", "door": "wood_red", "wall": "warm"}
+00:19:42 terrace_12x16_2 built in 1.6s (121 objects)
+00:20:08 front_terrace_12x16_2 rendered in 25.5s (122 objects)
+00:20:08   b_10_5_l4: home, 3 floors, 22 x 14 m, plaster_b
+00:20:10   flats_16x22: built b_10_5_l4 as kit07 (home, 3 floors, front 21.8 m of 21.8, depth 14.0, district Old Town)
+00:20:10   kit colours flats_16x22: {"frame": "wood", "shutter": "ochre", "door": "wood", "wall": "warm"}
+00:20:10 flats_16x22 built in 2.7s (156 objects)
+00:20:31 court_flats_a rendered in 20.7s (157 objects)
+00:20:31   court_flats_b: 34 material slots recoloured
+00:20:54 court_flats_b rendered in 22.3s (158 objects)
+00:20:54   court_flats_c: 34 material slots recoloured
+00:21:13 court_flats_c rendered in 19.9s (159 objects)
+00:21:14   b_10_5_l0: home, 4 floors, 38 x 14 m, plaster_b
+00:21:17   flats_16x38: built b_10_5_l0 as kit07 (home, 4 floors, front 37.8 m of 37.8, depth 14.0, district Old Town)
+00:21:17   kit colours flats_16x38: {"frame": "wood", "shutter": "wood_red", "door": "wood", "wall": "warm"}
+00:21:17 flats_16x38 built in 4.0s (195 objects)
+00:21:37 front_flats_16x38 rendered in 19.3s (196 objects)
+00:21:38   tower_home: built b_12_5_l0 as flats_tower (home, 12 floors, front 26.0 m of 30.0, depth 26.0, district Old Town)
+00:21:38   kit colours tower_home: {"frame": "cream", "door_look": "wood_red", "shutter": "teal", "awning": ["teal", "cream"], "wall": "warm"}
+00:21:38 tower_home built in 1.1s (362 objects)
+00:21:59 tower_home_a rendered in 21.2s (363 objects)
+00:21:59   tower_home_b: 21 material slots recoloured
+00:22:14 tower_home_b rendered in 14.4s (364 objects)
+00:22:14   tower_home_c: 21 material slots recoloured
+00:22:31 tower_home_c rendered in 17.5s (365 objects)
+00:22:31 DONE
+00:22:46 Blender 5.3.0; samples 32; only ('shop_front', 'kiosk', 'cafe_front')
+00:22:46   b_10_5_l5: shop, 4 floors, 22 x 14 m, plaster
+00:22:49   shop_16x22: built b_10_5_l5 as kit07 (shop, 4 floors, front 21.8 m of 21.8, depth 14.0, district Old Town)
+00:22:49   kit colours shop_16x22: {"awning": ["cream", "terracotta"], "frame": "teal", "shutter": "wood_red", "wall": "cool"}
+00:22:49 shop_16x22 built in 2.6s (155 objects)
+00:23:21 shop_front_a rendered in 32.6s (156 objects)
+00:23:21   shop_front_b: 39 material slots recoloured
+00:23:52 shop_front_b rendered in 30.7s (157 objects)
+00:23:52   shop_front_c: 39 material slots recoloured
+00:24:26 shop_front_c rendered in 34.3s (158 objects)
+00:24:26   b_10_9_l2: shop, 3 floors, 38 x 14 m, plaster
+00:24:38   shop_16x38: built b_10_9_l2 as kit07 (shop, 3 floors, front 37.8 m of 37.8, depth 14.0, district Centre)
+00:24:38   kit colours shop_16x38: {"awning": ["cream", "terracotta"], "frame": "cream", "shutter": "ochre", "wall": "cool"}
+00:24:38 shop_16x38 built in 11.5s (178 objects)
+00:25:11 front_shop_16x38 rendered in 32.8s (179 objects)
+00:25:11   b_9_8_l2: shop, 2 floors, 22 x 14 m, plaster_b
+00:25:17   market_shop: built b_9_8_l2 as kit07 (shop, 2 floors, front 22.0 m of 22.0, depth 14.0, district Centre)
+00:25:17   kit colours market_shop: {"awning": ["cream", "terracotta"], "frame": "teal", "shutter": "dusty_blue", "wall": "warm"}
+00:25:17 market_shop built in 6.1s (158 objects)
+00:25:48 front_market_shop rendered in 31.6s (159 objects)
+00:25:48   b_0_0_l0: shop, 1 floors, 12 x 11 m, plaster_b
+00:25:53   community_shop: built b_0_0_l0 as kit07 (shop, 1 floors, front 12.0 m of 12.0, depth 11.0, district Northwood)
+00:25:53   kit colours community_shop: {"awning": ["cream", "terracotta"], "wall": "warm"}
+00:25:53 community_shop built in 4.9s (129 objects)
+00:26:26 front_community_shop rendered in 32.6s (130 objects)
+00:26:26   b_11_10_l5: food, 4 floors, 22 x 14 m, plaster
+00:26:27   food_16x22: built b_11_10_l5 as kit07 (food, 4 floors, front 21.8 m of 21.8, depth 14.0, district Old Town)
+00:26:27   kit colours food_16x22: {"frame": "teal", "door": "wood", "shutter": "teal", "wall": "cool", "awning": ["terracotta", "cream"]}
+00:26:27 food_16x22 built in 1.0s (138 objects)
+00:27:05 cafe_front_a rendered in 38.2s (139 objects)
+00:27:05   cafe_front_b: 13 material slots recoloured
+00:27:39 cafe_front_b rendered in 33.8s (140 objects)
+00:27:39   cafe_front_c: 13 material slots recoloured
+00:28:14 cafe_front_c rendered in 35.8s (141 objects)
+00:28:15   b_10_5_l2: food, 2 floors, 38 x 14 m, plaster
+00:28:16   food_16x38: built b_10_5_l2 as kit07 (food, 2 floors, front 37.8 m of 37.8, depth 14.0, district Old Town)
+00:28:16   kit colours food_16x38: {"frame": "teal", "door": "teal", "shutter": "ochre", "wall": "cool", "awning": ["terracotta", "cream"]}
+00:28:16 food_16x38 built in 1.0s (136 objects)
+00:28:42 front_food_16x38 rendered in 26.3s (137 objects)
+00:28:42   b_9_8_l1: food, 2 floors, 22 x 14 m, plaster
+00:28:43   market_cafe: built b_9_8_l1 as kit07 (food, 2 floors, front 22.0 m of 22.0, depth 14.0, district Centre)
+00:28:43   kit colours market_cafe: {"frame": "cream", "door": "wood_red", "shutter": "dusty_blue", "wall": "cool", "awning": ["terracotta", "cream"]}
+00:28:43 market_cafe built in 0.9s (126 objects)
+00:29:13 front_market_cafe rendered in 29.9s (127 objects)
+00:29:13   b_0_0_l2: food, 1 floors, 12 x 11 m, plaster
+00:29:13   community_cafe: built b_0_0_l2 as kit07 (food, 1 floors, front 12.0 m of 12.0, depth 11.0, district Northwood)
+00:29:13   kit colours community_cafe: {"frame": "cream", "door": "teal", "wall": "cool", "awning": ["terracotta", "cream"]}
+00:29:13 community_cafe built in 0.8s (110 objects)
+00:29:46 front_community_cafe rendered in 32.7s (111 objects)
+00:29:46   b_10_7_l1: food, 1 floors, 16 x 13 m, plaster_b
+00:29:47   plaza_cafe: built b_10_7_l1 as kit07 (food, 1 floors, front 16.0 m of 16.0, depth 13.0, district Centre)
+00:29:47   kit colours plaza_cafe: {"frame": "cream", "door": "wood", "wall": "warm", "awning": ["terracotta", "cream"]}
+00:29:47 plaza_cafe built in 1.1s (117 objects)
+00:30:19 front_plaza_cafe rendered in 31.4s (118 objects)
+00:30:20   kiosk: built b_10_7_l2 as kiosk (shop, 1 floors, front 7.0 m of 16.0, depth 5.1, district Centre)
+00:30:20   kit colours kiosk: {"kiosk_roof": "teal"}
+00:30:20 kiosk built in 1.3s (86 objects)
+00:30:48 kiosk_a rendered in 28.4s (87 objects)
+00:30:48   kiosk_b: 2 material slots recoloured
+00:31:10 kiosk_b rendered in 21.4s (88 objects)
+00:31:10   kiosk_c: 2 material slots recoloured
+00:31:35 kiosk_c rendered in 24.9s (89 objects)
+00:31:35 DONE
+00:31:47 Blender 5.3.0; samples 32; only ('works', 'tower_office', 'clinic', 'cafe_front_b', 'front_community_cafe')
+00:31:47   b_11_10_l5: food, 4 floors, 22 x 14 m, plaster
+00:31:48   food_16x22: built b_11_10_l5 as kit07 (food, 4 floors, front 21.8 m of 21.8, depth 14.0, district Old Town)
+00:31:48   kit colours food_16x22: {"frame": "teal", "door": "wood", "shutter": "teal", "wall": "cool", "awning": ["terracotta", "cream"]}
+00:31:48 food_16x22 built in 1.1s (138 objects)
+00:31:48   cafe_front_b: 13 material slots recoloured
+00:32:25 cafe_front_b rendered in 36.6s (139 objects)
+00:32:25   b_0_0_l2: food, 1 floors, 12 x 11 m, plaster
+00:32:26   community_cafe: built b_0_0_l2 as kit07 (food, 1 floors, front 12.0 m of 12.0, depth 11.0, district Northwood)
+00:32:26   kit colours community_cafe: {"frame": "cream", "door": "teal", "wall": "cool", "awning": ["terracotta", "cream"]}
+00:32:26 community_cafe built in 0.8s (112 objects)
+00:32:48 front_community_cafe rendered in 22.1s (113 objects)
+00:32:50   work_16x22: built b_10_5_l6 as workshop (work, 4 floors, front 21.8 m of 21.8, depth 16.0, district Old Town)
+00:32:50   kit colours work_16x22: {"frame": "wood", "door_look": "wood", "wall": "warm"}
+00:32:50 work_16x22 built in 2.0s (145 objects)
+00:33:11 works_a rendered in 20.8s (146 objects)
+00:33:11   works_b: 38 material slots recoloured
+00:33:25 works_b rendered in 13.9s (147 objects)
+00:33:25   works_c: 38 material slots recoloured
+00:33:41 works_c rendered in 16.0s (148 objects)
+00:33:45   work_16x38: built b_10_5_l1 as workshop (work, 2 floors, front 30.0 m of 37.8, depth 16.0, district Old Town)
+00:33:45   kit colours work_16x38: {"frame": "wood", "door_look": "wood", "wall": "warm"}
+00:33:45 work_16x38 built in 4.5s (155 objects)
+00:34:04 front_work_16x38 rendered in 18.5s (156 objects)
+00:34:07   works: built b_11_12_l0 as workshop (utility, 2 floors, front 30.0 m of 50.0, depth 16.0, district Civic Row)
+00:34:07   kit colours works: {"frame": "wood", "door_look": "wood", "wall": "warm"}
+00:34:07 works built in 3.0s (158 objects)
+00:34:27 front_works rendered in 20.1s (159 objects)
+00:34:28   tower_office: built b_10_7_l0 as office_tower (work, 16 floors, front 26.0 m of 30.0, depth 26.0, district Centre)
+00:34:28   kit colours tower_office: {"frame": "wood", "door_look": "wood_red", "door": "wood"}
+00:34:28 tower_office built in 0.7s (188 objects)
+00:34:41 tower_office_a rendered in 13.1s (189 objects)
+00:34:41   tower_office_b: 26 material slots recoloured
+00:34:58 tower_office_b rendered in 16.8s (190 objects)
+00:34:58   tower_office_c: 26 material slots recoloured
+00:35:08 tower_office_c rendered in 9.8s (191 objects)
+00:35:08   b_11_5_l5: health, 4 floors, 22 x 14 m, all stone
+00:35:08   health_16x22: built b_11_5_l5 as kit07 (health, 4 floors, front 21.8 m of 21.8, depth 14.0, district Old Town)
+00:35:08   kit colours health_16x22: {"frame": "wood", "door": "wood"}
+00:35:08 health_16x22 built in 0.6s (100 objects)
+00:35:32 clinic_a rendered in 24.0s (101 objects)
+00:35:32   clinic_b: 11 material slots recoloured
+00:35:52 clinic_b rendered in 19.8s (102 objects)
+00:35:52   clinic_c: 11 material slots recoloured
+00:36:16 clinic_c rendered in 23.6s (103 objects)
+00:36:16   b_10_9_l1: health, 3 floors, 38 x 14 m, all stone
+00:36:16   health_16x38: built b_10_9_l1 as kit07 (health, 3 floors, front 37.8 m of 37.8, depth 14.0, district Centre)
+00:36:16   kit colours health_16x38: {"frame": "wood", "door": "wood"}
+00:36:16 health_16x38 built in 0.6s (100 objects)
+00:36:34 front_health_16x38 rendered in 18.2s (101 objects)
+00:36:35   b_0_0_l4: health, 1 floors, 12 x 11 m, all stone
+00:36:35   community_clinic: built b_0_0_l4 as kit07 (health, 1 floors, front 12.0 m of 12.0, depth 11.0, district Northwood)
+00:36:35   kit colours community_clinic: {"frame": "wood", "door": "wood"}
+00:36:35 community_clinic built in 0.5s (100 objects)
+00:36:53 front_community_clinic rendered in 18.3s (101 objects)
+00:36:53 DONE
+00:37:15 Blender 5.3.0; samples 32; only ('hospital', 'civic_stone', 'front_community_cafe', 'front_plaza_cafe')
+00:37:15   b_0_0_l2: food, 1 floors, 12 x 11 m, plaster
+00:37:16   community_cafe: built b_0_0_l2 as kit07 (food, 1 floors, front 12.0 m of 12.0, depth 11.0, district Northwood)
+00:37:16   kit colours community_cafe: {"frame": "cream", "door": "teal", "wall": "cool", "awning": ["terracotta", "cream"]}
+00:37:16 community_cafe built in 0.3s (110 objects)
+00:37:41 front_community_cafe rendered in 25.5s (111 objects)
+00:37:41   b_10_7_l1: food, 1 floors, 16 x 13 m, plaster_b
+00:37:42   plaza_cafe: built b_10_7_l1 as kit07 (food, 1 floors, front 16.0 m of 16.0, depth 13.0, district Centre)
+00:37:42   kit colours plaza_cafe: {"frame": "cream", "door": "wood", "wall": "warm", "awning": ["terracotta", "cream"]}
+00:37:42 plaza_cafe built in 0.6s (115 objects)
+00:38:00 front_plaza_cafe rendered in 18.5s (116 objects)
+00:38:01   hospital_b_11_8_l0: built b_11_8_l0 as hospital (health, 5 floors, front 44.0 m of 60.0, depth 18.0, district Centre)
+00:38:01   kit colours hospital_b_11_8_l0: {"frame": "cream", "door_look": "wood_red", "wall": "cool", "door": "teal"}
+00:38:01 hospital_b_11_8_l0 built in 1.0s (166 objects)
+00:38:27 hospital_a rendered in 25.6s (167 objects)
+00:38:27   hospital_b: 12 material slots recoloured
+00:38:42 hospital_b rendered in 15.2s (168 objects)
+00:38:42   hospital_c: 25 material slots recoloured
+00:39:06 hospital_c rendered in 24.2s (169 objects)
+00:39:07   hospital_b_12_7_l0: built b_12_7_l0 as hospital (health, 3 floors, front 37.8 m of 37.8, depth 16.0, district Old Town)
+00:39:07   kit colours hospital_b_12_7_l0: {"frame": "cream", "door_look": "teal", "wall": "cool", "door": "teal"}
+00:39:07 hospital_b_12_7_l0 built in 0.8s (166 objects)
+00:39:22 front_hospital_b_12_7_l0 rendered in 14.6s (167 objects)
+00:39:22   b_9_6_l0: work, 3 floors, 38 x 14 m, all stone
+00:39:22   bank: built b_9_6_l0 as kit07 (work, 3 floors, front 37.8 m of 37.8, depth 14.0, district Centre)
+00:39:22   kit colours bank: {"frame": "cream", "door": "wood"}
+00:39:22 bank built in 0.4s (103 objects)
+00:39:37 civic_stone_a rendered in 15.0s (104 objects)
+00:39:37   civic_stone_b: 10 material slots recoloured
+00:39:56 civic_stone_b rendered in 18.9s (105 objects)
+00:39:56   civic_stone_c: 10 material slots recoloured
+00:40:15 civic_stone_c rendered in 18.4s (106 objects)
+00:40:15   b_8_7_l0: work, 2 floors, 38 x 14 m, all stone
+00:40:16   library: built b_8_7_l0 as kit07 (work, 2 floors, front 37.8 m of 37.8, depth 14.0, district Centre)
+00:40:16   kit colours library: {"frame": "wood", "door": "wood"}
+00:40:16 library built in 1.0s (103 objects)
+00:40:36 front_library rendered in 20.4s (104 objects)
+00:40:36   b_9_9_l2: work, 3 floors, 38 x 14 m, all stone
+00:40:37   museum: built b_9_9_l2 as kit07 (work, 3 floors, front 37.8 m of 37.8, depth 14.0, district Centre)
+00:40:37   kit colours museum: {"frame": "wood", "door": "wood"}
+00:40:37 museum built in 1.0s (115 objects)
+00:41:06 front_museum rendered in 28.6s (116 objects)
+00:41:06   b_10_12_l0: work, 2 floors, 30 x 14 m, all stone
+00:41:07   police: built b_10_12_l0 as kit07 (work, 2 floors, front 30.0 m of 30.0, depth 14.0, district Civic Row)
+00:41:07   kit colours police: {"frame": "teal", "door": "wood"}
+00:41:07 police built in 1.0s (100 objects)
+00:41:37 front_police rendered in 30.4s (101 objects)
+00:41:37   b_0_0_l5: work, 2 floors, 36 x 14 m, all stone
+00:41:38   school_primary: built b_0_0_l5 as kit07 (work, 2 floors, front 36.0 m of 36.0, depth 14.0, district Northwood)
+00:41:38   kit colours school_primary: {"frame": "cream", "door": "wood"}
+00:41:38 school_primary built in 0.8s (103 objects)
+00:42:04 front_school_primary rendered in 26.0s (104 objects)
+00:42:04   b_7_12_l0: work, 3 floors, 40 x 14 m, all stone
+00:42:05   school_secondary: built b_7_12_l0 as kit07 (work, 3 floors, front 40.0 m of 40.0, depth 14.0, district Civic Row)
+00:42:05   kit colours school_secondary: {"frame": "teal", "door": "wood"}
+00:42:05 school_secondary built in 1.1s (112 objects)
+00:42:34 front_school_secondary rendered in 28.8s (113 objects)
+00:42:34 DONE
+00:42:46 Blender 5.3.0; samples 32; only ('showroom', 'hall', 'guild', 'cafe_front_a', 'cafe_front_c')
+00:42:46   b_11_10_l5: food, 4 floors, 22 x 14 m, plaster
+00:42:47   food_16x22: built b_11_10_l5 as kit07 (food, 4 floors, front 21.8 m of 21.8, depth 14.0, district Old Town)
+00:42:47   kit colours food_16x22: {"frame": "teal", "door": "wood", "shutter": "teal", "wall": "cool", "awning": ["terracotta", "cream"]}
+00:42:47 food_16x22 built in 1.1s (138 objects)
+00:43:28 cafe_front_a rendered in 41.0s (139 objects)
+00:43:28   cafe_front_c: 13 material slots recoloured
+00:44:04 cafe_front_c rendered in 35.5s (140 objects)
+00:44:04   b_8_9_l0: shop, 3 floors, 38 x 14 m, plaster_b
+00:44:09   cinema: built b_8_9_l0 as kit07 (shop, 3 floors, front 37.8 m of 37.8, depth 14.0, district Centre)
+00:44:09   kit colours cinema: {"awning": ["cream", "terracotta"], "frame": "wood", "shutter": "teal", "wall": "warm"}
+00:44:09 cinema built in 5.3s (165 objects)
+00:44:36 showroom_a rendered in 26.7s (166 objects)
+00:44:36   showroom_b: 54 material slots recoloured
+00:45:05 showroom_b rendered in 29.7s (167 objects)
+00:45:05   showroom_c: 54 material slots recoloured
+00:45:31 showroom_c rendered in 25.3s (168 objects)
+00:45:31   b_12_7_l2: shop, 3 floors, 38 x 14 m, plaster_b
+00:45:36   dealer: built b_12_7_l2 as kit07 (shop, 3 floors, front 37.8 m of 37.8, depth 14.0, district Old Town)
+00:45:36   kit colours dealer: {"awning": ["cream", "terracotta"], "frame": "wood", "shutter": "teal", "wall": "warm"}
+00:45:36 dealer built in 5.8s (149 objects)
+00:46:07 front_dealer rendered in 30.4s (150 objects)
+00:46:07   b_14_8_l0: shop, 1 floors, 40 x 14 m, plaster_b
+00:46:14   furniture: built b_14_8_l0 as kit07 (shop, 1 floors, front 40.0 m of 66.0, depth 14.0, district Outside the walls)
+00:46:14   kit colours furniture: {"awning": ["cream", "terracotta"], "wall": "warm"}
+00:46:14 furniture built in 6.8s (140 objects)
+00:46:38 front_furniture rendered in 24.1s (141 objects)
+00:46:39   hall: built b_9_7_l0 as town_hall (work, 3 floors, front 40.0 m of 48.0, depth 22.0, district Centre)
+00:46:39   kit colours hall: {"frame": "wood", "door_look": "wood"}
+00:46:39 hall built in 1.2s (182 objects)
+00:47:02 hall_a rendered in 23.3s (183 objects)
+00:47:02   hall_b: 18 material slots recoloured
+00:47:24 hall_b rendered in 21.4s (184 objects)
+00:47:24   hall_c: 18 material slots recoloured
+00:47:48 hall_c rendered in 24.5s (185 objects)
+00:47:54   guild: built b_9_8_l4 as guild_house (work, 3 floors, front 22.0 m of 22.0, depth 14.0, district Centre)
+00:47:54   kit colours guild: {"frame": "wood", "door_look": "wood_red", "shutter": "wood_red"}
+00:47:54 guild built in 6.1s (205 objects)
+00:48:18 guild_a rendered in 23.4s (206 objects)
+00:48:18   guild_b: 73 material slots recoloured
+00:48:47 guild_b rendered in 29.1s (207 objects)
+00:48:47   guild_c: 73 material slots recoloured
+00:49:14 guild_c rendered in 26.8s (208 objects)
+00:49:14 DONE
+00:49:26 Blender 5.3.0; samples 32; only ('arcade_mall', 'depot_hall', 'substation')
+00:49:28   arcade_b_10_6_l0: built b_10_6_l0 as lantern_arcade (shop, 2 floors, front 40.0 m of 64.0, depth 34.0, district Centre)
+00:49:28   kit colours arcade_b_10_6_l0: {"frame": "teal", "door_look": "wood", "awning": ["teal", "cream"]}
+00:49:28 arcade_b_10_6_l0 built in 1.9s (200 objects)
+00:49:58 arcade_mall_a rendered in 30.4s (201 objects)
+00:49:58   arcade_mall_b: 12 material slots recoloured
+00:50:28 arcade_mall_b rendered in 30.3s (202 objects)
+00:50:28   arcade_mall_c: 12 material slots recoloured
+00:50:52 arcade_mall_c rendered in 23.8s (203 objects)
+00:50:53   arcade_b_12_8_l0: built b_12_8_l0 as lantern_arcade (shop, 2 floors, front 37.8 m of 37.8, depth 16.0, district Old Town)
+00:50:53   kit colours arcade_b_12_8_l0: {"frame": "teal", "door_look": "wood_red", "awning": ["teal", "cream"]}
+00:50:53 arcade_b_12_8_l0 built in 0.8s (200 objects)
+00:51:14 front_arcade_b_12_8_l0 rendered in 20.9s (201 objects)
+00:51:15   mall_b_1_5_l0: built b_1_5_l0 as lantern_arcade (shop, 3 floors, front 40.0 m of 160.0, depth 34.0, district Westgate Mall)
+00:51:15   kit colours mall_b_1_5_l0: {"frame": "teal", "door_look": "wood", "awning": ["teal", "cream"]}
+00:51:15 mall_b_1_5_l0 built in 0.8s (200 objects)
+00:51:32 front_mall_b_1_5_l0 rendered in 16.7s (201 objects)
+00:51:33   mall_b_16_5_l0: built b_16_5_l0 as lantern_arcade (shop, 3 floors, front 40.0 m of 240.0, depth 34.0, district Eastgate Mall)
+00:51:33   kit colours mall_b_16_5_l0: {"frame": "teal", "door_look": "wood", "awning": ["teal", "cream"]}
+00:51:33 mall_b_16_5_l0 built in 1.0s (200 objects)
+00:51:53 front_mall_b_16_5_l0 rendered in 20.1s (201 objects)
+00:51:53   mall_b_7_0_l0: built b_7_0_l0 as lantern_arcade (shop, 3 floors, front 40.0 m of 540.0, depth 34.0, district Northgate Mall)
+00:51:53   kit colours mall_b_7_0_l0: {"frame": "teal", "door_look": "teal", "awning": ["teal", "cream"]}
+00:51:53 mall_b_7_0_l0 built in 0.7s (200 objects)
+00:52:11 front_mall_b_7_0_l0 rendered in 17.0s (201 objects)
+00:52:15   depot: built b_13_11_l0 as tram_depot (utility, 2 floors, front 36.0 m of 36.0, depth 22.0, district Outskirts)
+00:52:15   kit colours depot: {"frame": "teal", "door_look": "teal"}
+00:52:15 depot built in 4.1s (185 objects)
+00:52:30 depot_hall_a rendered in 15.5s (186 objects)
+00:52:30   depot_hall_b: 72 material slots recoloured
+00:52:47 depot_hall_b rendered in 17.0s (187 objects)
+00:52:47   depot_hall_c: 72 material slots recoloured
+00:53:04 depot_hall_c rendered in 17.2s (188 objects)
+00:53:09   fire: built b_9_12_l0 as tram_depot (fire, 1 floors, front 36.0 m of 40.0, depth 24.0, district Civic Row)
+00:53:09   kit colours fire: {"frame": "teal", "door_look": "teal"}
+00:53:09 fire built in 4.4s (191 objects)
+00:53:29 front_fire rendered in 20.5s (192 objects)
+00:53:29   b_13_11_l1: utility, 1 floors, 20 x 14 m, plaster
+00:53:31   substation: built b_13_11_l1 as kit07 (utility, 1 floors, front 20.0 m of 20.0, depth 14.0, district Outskirts)
+00:53:31   kit colours substation: {"frame": "wood", "door": "wood_red", "wall": "cool"}
+00:53:31 substation built in 2.0s (122 objects)
+00:53:41 substation_a rendered in 10.0s (123 objects)
+00:53:41   substation_b: 29 material slots recoloured
+00:53:56 substation_b rendered in 14.8s (124 objects)
+00:53:56   substation_c: 29 material slots recoloured
+00:54:12 substation_c rendered in 15.9s (125 objects)
+00:54:12 DONE
+00:54:29 Blender 5.3.0; samples 32; only ('open',)
+00:54:30   court_garden: b_10_5_l8 Plum Court garden, 28 x 28 m, props {'bench': 6, 'fountain': 1, 'flowerbed': 4, 'pergola': 1, 'plant': 23}, trees 4
+00:54:30 court_garden built in 1.1s (240 objects)
+00:54:50 open_court_garden rendered in 20.3s (241 objects)
+00:54:51   park_52: b_10_10_l0 Quarry Park, 52 x 52 m, props {'bench': 7, 'fountain': 1, 'flowerbed': 4, 'playground': 1, 'swing': 1, 'slide': 1, 'seesaw': 2, 'sandpit': 1, 'climber': 1, 'noticeboard': 1, 'plant': 33}, trees 13
+00:54:51 park_52 built in 0.9s (301 objects)
+00:55:09 open_park_52 rendered in 18.2s (302 objects)
+00:55:10   park_168: b_4_11_l0 Town Park, 168 x 168 m, props {'bench': 8, 'flowerbed': 6, 'pond': 1, 'fountain': 1}, trees 48
+00:55:10 park_168 built in 1.0s (515 objects)
+00:55:32 open_park_168 rendered in 21.6s (516 objects)
+00:55:33   green: b_0_0_l6 Northwood Green, 64 x 64 m, props {'bench': 4, 'flowerbed': 4, 'fountain': 1}, trees 10
+00:55:33 green built in 1.0s (277 objects)
+00:55:51 open_green rendered in 18.3s (278 objects)
+00:55:51   field: b_7_12_l1 School Playing Field, 102 x 64 m, props {}, trees 0
+00:55:51 field built in 0.1s (7 objects)
+00:56:24 open_field rendered in 32.4s (8 objects)
+00:56:27   market: b_9_8_l0 Market Square, 44 x 28 m, props {'stall': 8, 'fountain': 1, 'kiosk': 1, 'noticeboard': 1, 'bunting': 4}, trees 0
+00:56:27 market built in 3.1s (437 objects)
+00:56:59 open_market rendered in 32.4s (438 objects)
+00:57:01   stop: b_10_11_l10 Tram stop, 14 x 4 m, props {'shelter': 1, 'postbox': 1, 'timetable': 1, 'bin': 1}, trees 0
+00:57:01 stop built in 2.1s (196 objects)
+00:57:34 open_stop rendered in 32.7s (197 objects)
+00:57:34 DONE
+00:58:15 Blender 5.3.0; samples 32; only ('open',)
+00:58:16   court_garden: b_10_5_l8 Plum Court garden, 28 x 28 m, props {'bench': 6, 'fountain': 1, 'flowerbed': 4, 'pergola': 1, 'plant': 23}, trees 4
+00:58:16 court_garden built in 1.0s (240 objects)
+00:58:28 open_court_garden rendered in 11.8s (241 objects)
+00:58:29   park_52: b_10_10_l0 Quarry Park, 52 x 52 m, props {'bench': 7, 'fountain': 1, 'flowerbed': 4, 'playground': 1, 'swing': 1, 'slide': 1, 'seesaw': 2, 'sandpit': 1, 'climber': 1, 'noticeboard': 1, 'plant': 33}, trees 13
+00:58:29 park_52 built in 1.0s (301 objects)
+00:58:50 open_park_52 rendered in 20.9s (302 objects)
+00:58:51   park_168: b_4_11_l0 Town Park, 168 x 168 m, props {'bench': 8, 'flowerbed': 6, 'pond': 1, 'fountain': 1}, trees 48
+00:58:51 park_168 built in 1.0s (515 objects)
+00:59:10 open_park_168 rendered in 19.0s (516 objects)
+00:59:10   green: b_0_0_l6 Northwood Green, 64 x 64 m, props {'bench': 4, 'flowerbed': 4, 'fountain': 1}, trees 10
+00:59:10 green built in 0.9s (277 objects)
+00:59:26 open_green rendered in 15.9s (278 objects)
+00:59:27   field: b_7_12_l1 School Playing Field, 102 x 64 m, props {}, trees 0
+00:59:27 field built in 0.1s (7 objects)
+00:59:47 open_field rendered in 20.1s (8 objects)
+00:59:48   market: b_9_8_l0 Market Square, 44 x 28 m, props {'stall': 8, 'fountain': 1, 'kiosk': 1, 'noticeboard': 1, 'bunting': 4}, trees 0
+00:59:48 market built in 1.4s (437 objects)
+01:00:06 open_market rendered in 17.5s (438 objects)
+01:00:06   stop: b_10_11_l10 Tram stop, 14 x 4 m, props {'shelter': 1, 'postbox': 1, 'timetable': 1, 'bin': 1}, trees 0
+01:00:06 stop built in 0.9s (196 objects)
+01:00:26 open_stop rendered in 19.5s (197 objects)
+01:00:26 DONE

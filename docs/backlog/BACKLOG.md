@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 35 of 48 | 9 of 48 | 9 of 48 |
-| Size of the plan (points) | 454 | 408 | 800 |
-| Size of the suggested plan | 118 | 368 | 768 |
+| Decided | 36 of 49 | 9 of 49 | 9 of 49 |
+| Size of the plan (points) | 467 | 421 | 813 |
+| Size of the suggested plan | 123 | 381 | 781 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -56,6 +56,7 @@
 | **Carrying and moving things** `F-OBJ-CARRY` | 1 Residents carry ★ | undecided | undecided | Owner, 2026-11-22: "furnish level 2 and carry level 1" (asked for the first slice, so delivery crews can carry furniture into the flat). Later milestones not stated. |
 | **Furniture designs** `F-FURN-ITEMS` | 2 Large range ★ | undecided | undecided | Owner, 2026-11-22: "level to for design and company and outlets" (asked for first-slice levels; read as level 2). Bought furniture is delivered to the flat by NPCs, unassembled or assembled, or the player takes an instant option into the inventory, then places it from the inventory or moves it to storage; "we will build storage container mechanics later". Later milestones not stated. |
 | **Assembling flat-pack furniture** `F-FURN-ASSEMBLE` | undecided | undecided | undecided |  |
+| **How residents' homes are furnished** `F-HOME-FURNISH` | 3 Follows the household ★ | undecided | undecided | Owner, 2026-11-23: "3 Follows the household" (asked which level for furnishing variety, after approving house interiors look test 21). Later milestones not stated. |
 
 ## Vehicles
 
@@ -341,3 +342,9 @@
 - 0 Timed action: The player assembles a boxed piece with one action that takes a set time from data; the boxes turn into the piece. Size S.
 - 1 Follow the instructions: A mini-game: the boxes open into labelled parts and fixings, and the player follows the instruction sheet step by step to fit them together. Mistakes show (a wobble, a part left over) and can be undone. Size L.
 - 2 Every piece its own build: Every flat-pack piece in the catalogue has its own steps made from data; help from a friend makes it faster in multiplayer; a well-built piece wears more slowly. Size L.
+
+**How residents' homes are furnished** (`F-HOME-FURNISH`). Homes should differ: a household just starting out has the bare essentials, one that has lived well for years has every piece of every set.
+- 0 As built: Homes are furnished as the slice does now: the same few pieces in every house, extras by a hash of the lot. Size S.
+- 1 One level for all: Every home is furnished the same: every piece of its line's sets in the rooms of its plan. Size S.
+- 2 Four levels per home: Each home is given one of four furnishing levels (Bare, Basic, Homely, Full) once, when it is made, and keeps it; each level adds pieces to the one before (ADR-0033). Size M.
+- 3 Follows the household: A household's level is worked out from its income and how long it has lived there, from data and the world clock (never ticked or stored): it starts from its income band and moves up a level each time its savings for furniture reach the next level's cost. Size L.

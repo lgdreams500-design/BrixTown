@@ -1,11 +1,11 @@
 ---
 doc_id: WASTED-ART-DIRECTION
 title: Brix Town — Art direction (locked look)
-version: 1.6.0
-status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22, interiors and furniture on 2026-11-22, the house colourways on 2026-11-23
+version: 1.7.0
+status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22, interiors and furniture on 2026-11-22, the house colourways and the house plan with its furnishing levels on 2026-11-23
 last_updated: 2026-11-23
 relates_to: [FURN-003, ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
-decision: docs/decisions/ADR-0004-art-direction.md, docs/decisions/ADR-0007-warmer-kit-light.md, docs/decisions/ADR-0013-kit-light-measured.md, docs/decisions/ADR-0026-interior-and-furniture-look.md, docs/decisions/ADR-0032-house-colourways.md
+decision: docs/decisions/ADR-0004-art-direction.md, docs/decisions/ADR-0007-warmer-kit-light.md, docs/decisions/ADR-0013-kit-light-measured.md, docs/decisions/ADR-0026-interior-and-furniture-look.md, docs/decisions/ADR-0032-house-colourways.md, docs/decisions/ADR-0033-house-plan-and-furnishing-levels.md
 ---
 
 # Brix Town — Art direction
@@ -35,6 +35,7 @@ All in `Art/Reference/`. Originals and every earlier experiment stay in `Art/Sty
 | `furniture_lines.png` | **Furniture**: every piece of the four style lines Plain, Old Town, Workshop and Curve (ADR-0026). | `Tools/blender/furniture_kit_17.py` (`sheet`) |
 | `interior_room_daylight.png` | **Interiors**: an Old Town living room with a bed corner, low sun through a side window, two warm lamps. | `Tools/blender/furniture_kit_17.py` (`room_oldtown`) |
 | `house_colourways.png` | **Houses**: the four house lines Plain, Old Town, Workshop and Curve, three colourways each (ADR-0032). | `Tools/blender/house_styles_20.py` (`house_styles_20_sheet.py`) |
+| `house_interior_ground.png`, `house_interior_upstairs.png` | **Furnished houses**: the house at 12 x 9 m in each line at the four furnishing levels Bare, Basic, Homely and Full (ADR-0033). | `Tools/blender/house_interiors_21.py` (`house_interiors_21_sheet.py`) |
 | `face_talk.mp4` / `.gif` | A spoken line with lip sync, blink and brow movement. | `Tools/blender/character_face_05.py` |
 
 Rejected directions, kept only so they are not tried again: the first 2D sketches, the painterly
@@ -133,8 +134,7 @@ how the renders get their look (and what the slice and Unreal must do to match i
 Reference: `Art/Reference/house_colourways.png`. Each of the four house lines comes in three colourways; a colourway
 sets the walls (a plaster pair from §2.3, or the line's stone), the shutters, door, window frames and roof tiles, and
 the line keeps its shape (Old Town's corner stones, door hood and window boxes; Workshop's dressed stone; Curve's
-arched ground floor). The values are the `WAYS` table of `Tools/blender/house_styles_20.py`, to move into
-`World/rules/house_styles.json`.
+arched ground floor). The values are kept in `World/rules/house_styles.json`.
 
 | Line | a | b | c |
 |---|---|---|---|
@@ -142,6 +142,11 @@ arched ground floor). The values are the `WAYS` table of `Tools/blender/house_st
 | Old Town | Terracotta, warm plaster | Ochre, ochre-washed plaster | Plum, cool plaster, dark roof |
 | Workshop | Brown wood, stone, dark roof | Teal, stone, terracotta roof | Dusty blue, stone, slate roof |
 | Curve | Dusty blue and ochre, cool plaster | Cream and terracotta, warm plaster | Teal and cream, pale plaster, brown roof |
+
+Inside (ADR-0033; references `house_interior_ground.png` and `house_interior_upstairs.png`), each line furnishes its own
+house, from the plan in `World/rules/home_plans.json`, at one of four levels that add to each other: Bare (beds, sofa, a
+table to eat at, kitchen, bathroom), Basic (storage and comfort), Homely (rugs, shelves, pictures, the hall) and Full (every
+piece and the decoration). Rules I1-I9 hold at every level.
 
 ## 3. Characters — option B "Soft"
 
@@ -221,3 +226,4 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | 1.4.0 | 2026-11-22 | Vehicles: the owner switched to A "Soft box" after playing with the Classic cars (ADR-0015): §2.5 rewritten, new reference `vehicles_soft_box.png`. |
 | 1.5.0 | 2026-11-22 | Interiors and furniture: the owner chose all four style lines from furniture look test 17 (ADR-0026): §2.6 rules I1-I9, references `furniture_lines.png` and `interior_room_daylight.png`. |
 | 1.6.0 | 2026-11-23 | Houses: the owner approved all twelve colourways of house styles look test 20 (ADR-0032): §2.7, reference `house_colourways.png`. |
+| 1.7.0 | 2026-11-23 | Houses inside: the owner approved house interiors look test 21 (ADR-0033): §2.7, references `house_interior_ground.png` and `house_interior_upstairs.png`. |

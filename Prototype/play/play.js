@@ -1647,6 +1647,14 @@ const TONE = `vec3 tone(vec3 v){                         // AgX with the "Medium
 float haze(float c){ return .64/(12.566*pow(1.36-1.2*c,1.5)); }`;   // how strongly haze scatters sunlight towards the eye (anisotropy 0.6)
 const MAIN_VS = `attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,uSM; varying vec3 vP,vN,vC,vS; varying float vF; invariant gl_Position;
 void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`;   // invariant: the depth-only pass and the lit pass land on the same depths
+// The house cut away (owner 2026-11-24: "when inside the house, hide the roof and anything above that level"): inside the
+// footprint of the house the player is in, every surface above a cut is not drawn. The cut follows the player's feet (so it
+// rises with them up the stair) and slopes with the view: low on the camera's side, so the near walls stand only waist high,
+// higher across the room. uCutA: the house's centre and turn (cos, sin); uCutB: half its width, its front and back (with the
+// front garden on the camera's side), the player's feet; uCutC: the way the camera looks, flat, and the player's x, z.
+const CUT_GLSL = `uniform vec4 uCutA,uCutB,uCutC;
+bool cutAway(vec3 p){ if(uCutB.x<=0.) return false; vec2 d=p.xz-uCutA.xy; float u=d.x*uCutA.z+d.y*uCutA.w, v=-d.x*uCutA.w+d.y*uCutA.z;
+  if(abs(u)>uCutB.x||v<uCutB.y||v>uCutB.z) return false; float al=dot(p.xz-uCutC.zw,uCutC.xy); return p.y>uCutB.w+clamp(2.05+.5*al,.95,2.7); }`;
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF;
 uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform vec2 uNk; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
 uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY; uniform vec4 uSkyB; uniform vec2 uSkyH; uniform vec4 uRacks[9]; uniform int uRackN; uniform vec3 uRackY; uniform vec4 uTruss; uniform vec2 uTruss2; uniform vec4 uFeet[8]; uniform int uFeetN;
@@ -1796,7 +1804,13 @@ vec4 pat(vec2 q,vec4 A,vec4 B){
   if(B.z>0.) bev-=B.z*2.*(pow(abs(cc.x),4.)+pow(abs(cc.y),4.));             // setts: each stone domed
   float sh=e.z<=min(min(e.x,e.y),e.w)?1.:(e.w<=min(e.x,e.y)?0.:.45);      // the bed under a stone is in its shadow; the one above it is lit
   return vec4(j,id,bev,sh); }
+#ifdef CUT
+${CUT_GLSL}
+#endif
 void main(){
+#ifdef CUT
+  if(cutAway(vP)) discard;
+#endif
   float f=vF; vec3 c=vC; vec3 n=normalize(vN); float skyP=clamp(length(vN)*2.-1.,0.,1.); vec3 tc=uCam-vP; float d=length(tc); vec3 vd=-tc/d;
   if(abs(c.x)>1.5){                                                        // a near person (people.js): the colour comes packed in one number, with two coordinates that stay on the cloth
     float p=abs(c.x), k=c.x>0.?1.:.3; vec2 q=c.yz; vec3 e=clamp((vec3(floor(p/65536.),floor(mod(p,65536.)/256.),mod(p,256.))-64.)/127.,0.,1.); c=e*e;
@@ -1943,7 +1957,9 @@ void main(){
   gl_FragColor=vec4(tone(col*uExp),1.);
 }`;
 const main = program(MAIN_VS, MAIN_FS), signProg = program(MAIN_VS, "#define LETTERS\n" + MAIN_FS);   // only the painted names cut holes, so the town's shader keeps the early depth test
-const pre = program(MAIN_VS, `precision mediump float; void main(){ gl_FragColor=vec4(1.); }`);       // depth only, laid first so each pixel is lit once
+const pre = program(MAIN_VS, `precision mediump float; void main(){ gl_FragColor=vec4(1.); }`);
+const mainCut = program(MAIN_VS, "#define CUT\n" + MAIN_FS);   // the same three with the house cut away (CUT_GLSL), used only for what is round that house
+const preCut = program(MAIN_VS, `precision highp float; varying vec3 vP; ${CUT_GLSL} void main(){ if(cutAway(vP)) discard; gl_FragColor=vec4(1.); }`);       // depth only, laid first so each pixel is lit once
 const sky = program(`attribute vec2 aQ; varying vec2 vQ; void main(){ vQ=aQ; gl_Position=vec4(aQ,.9999,1.); }`,
 `precision highp float; varying vec2 vQ; uniform vec3 uR,uU,uF,uSun,uZen,uHor,uSunCol; uniform float uNight,uExp; uniform vec4 uCl; uniform vec2 uClOff,uClLit;   // uCl: cover, edge softness, size, shape phase
 uniform mat3 uCel; uniform vec3 uMoon,uSunT,uCity,uMw; uniform vec4 uSt,uMn; uniform float uT,uMoonDay,uSunR,uGlare;   // night (WLD-042): uSt stars (seen, density, twinkle, pixel size), uMn moon (lit share, size, brightness, dims stars), uMw Milky Way (brightness, width, dust)
@@ -2003,6 +2019,7 @@ void main(){ vec3 d=normalize(uRf+vQ.x*uRr+vQ.y*uRu);
   float a=ring(d,1.6,3.)+ring(d,3.2,5.)*.8+ring(d,6.,7.)*.6+ring(d,11.,9.)*.45;
   gl_FragColor=vec4(tone(uCol*uExp),min(a,1.)*uR.y); }`);
 const depthProg = program(`attribute vec3 aP; uniform mat4 uVP; void main(){ gl_Position=uVP*vec4(aP,1.); }`, `precision mediump float; void main(){ gl_FragColor=vec4(1.); }`);
+const depthCut = program(`attribute vec3 aP; uniform mat4 uVP; varying vec3 vP; void main(){ vP=aP; gl_Position=uVP*vec4(aP,1.); }`, `precision highp float; varying vec3 vP; ${CUT_GLSL} void main(){ if(cutAway(vP)) discard; gl_FragColor=vec4(1.); }`);
 // Ambient occlusion from the screen (dial ao, key O; ADR-0028). The scene's depth is drawn at half size (aoDepth); for each pixel aoProg
 // rebuilds where it is and which way it faces from that depth, then looks at points round it within uAo.x metres: the more of them stand
 // in front of the surface, the less sky and bounced light reach it. So every corner, crease and gap darkens the same way, wherever it is:
@@ -2092,7 +2109,7 @@ function bakeSky() {                                       // a map of how much 
   for (const [kk, vv] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, kk, vv);
   return { tex, lo, size };
 }
-function drawDepth(buf, count) { gl.bindBuffer(gl.ARRAY_BUFFER, buf); const loc = gl.getAttribLocation(depthProg.p, "aP"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 3, gl.FLOAT, false, 40, 0); gl.drawArrays(gl.TRIANGLES, 0, count); }
+function drawDepth(buf, count, pr) { gl.bindBuffer(gl.ARRAY_BUFFER, buf); const loc = gl.getAttribLocation((pr || depthProg).p, "aP"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 3, gl.FLOAT, false, 40, 0); gl.drawArrays(gl.TRIANGLES, 0, count); }
 function buffer(mesh, usage) { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, mesh.a.subarray(0, mesh.n), usage); return b; }
 function attribs(pr, buf) {                                 // point a program of the main vertex layout at a buffer
   gl.bindBuffer(gl.ARRAY_BUFFER, buf);
@@ -2193,6 +2210,7 @@ const R = 0.32, TALL = 1.75;
 
 function pushOut(p) {
   eachSolid(p.x, p.z, R, s => {
+    if (s.stair || s.cam) return;                          // stair steps are walked up (floorAt), never pushed against; .cam solids stop only the camera
     if (s[4] <= p.y + .5 || s[1] >= p.y + TALL - .05) return;
     const cx = clamp(p.x, s[0], s[3]), cz = clamp(p.z, s[2], s[5]), dx = p.x - cx, dz = p.z - cz, d2 = dx * dx + dz * dz;
     if (d2 >= R * R) return;
@@ -2201,9 +2219,9 @@ function pushOut(p) {
     if (k === 0) p.x = s[0] - R; else if (k === 1) p.x = s[3] + R; else if (k === 2) p.z = s[2] - R; else p.z = s[5] + R;
   });
 }
-function floorAt(x, z, y) { let g = groundBase(x, z); eachSolid(x, z, .2, s => { if (x > s[0] - .15 && x < s[3] + .15 && z > s[2] - .15 && z < s[5] + .15 && s[4] <= y + .5 && s[4] > g) g = s[4]; }); return g; }
-function ceilAt(x, z, y) { let c = 1e9; eachSolid(x, z, .2, s => { if (x > s[0] && x < s[3] && z > s[2] && z < s[5] && s[1] >= y + TALL - .3 && s[1] < c) c = s[1]; }); return c; }
-function blocked(q) { if (q[1] < groundBase(q[0], q[2]) + .15) return true; let hit = false; eachSolid(q[0], q[2], .2, s => { if (q[0] > s[0] - .15 && q[0] < s[3] + .15 && q[1] > s[1] - .15 && q[1] < s[4] + .15 && q[2] > s[2] - .15 && q[2] < s[5] + .15) hit = true; }); return hit; }
+function floorAt(x, z, y) { let g = groundBase(x, z); eachSolid(x, z, .2, s => { if (!s.cam && x > s[0] - .15 && x < s[3] + .15 && z > s[2] - .15 && z < s[5] + .15 && s[4] <= y + .5 && s[4] > g) g = s[4]; }); return g; }
+function ceilAt(x, z, y) { let c = 1e9; eachSolid(x, z, .2, s => { if (!s.cam && x > s[0] && x < s[3] && z > s[2] && z < s[5] && s[1] >= y + TALL - .3 && s[1] < c) c = s[1]; }); return c; }
+function blocked(q) { if (q[1] < groundBase(q[0], q[2]) + .15) return true; let hit = false; eachSolid(q[0], q[2], .2, s => { if (!s.cam && q[0] > s[0] - .15 && q[0] < s[3] + .15 && q[1] > s[1] - .15 && q[1] < s[4] + .15 && q[2] > s[2] - .15 && q[2] < s[5] + .15) hit = true; }); return hit; }
 
 function stepPlayer(dt) {
   if (pl.pose === 4) return Cars.drive(dt, keys, pl, cam, clock.m);   // driving (cars.js)
@@ -2271,6 +2289,17 @@ function stepCamera(dt) {
     const d = [c[0] - cam.eye[0], 6 - cam.eye[1], c[2] - cam.eye[2]], n = Math.hypot(d[0], d[1], d[2]); cam.dir = d.map(v => v / n); return;
   }
   const eyeH = pl.pose === 2 ? .72 : pl.pose === 3 ? .3 : 1.51 * playerLook.S;
+  cutState();
+  if (CUT.on) {                                            // in a house: the cutaway view, as in a building game, that never turns
+    if (!cam.cutaway) { cam.cutaway = { pitch: cam.pitch }; }
+    cam.yaw = CUT.yaw; cam.pitch = CUT_CAM.pitch; cam.close = false; cam.indoor = false;
+    const cp2 = Math.cos(cam.pitch), d = [Math.sin(cam.yaw) * cp2, Math.sin(cam.pitch), -Math.cos(cam.yaw) * cp2], t = [pl.x, pl.y + 1.0, pl.z];
+    const want = [t[0] - d[0] * CUT_CAM.dist, t[1] - d[1] * CUT_CAM.dist, t[2] - d[2] * CUT_CAM.dist], k = Math.min(1, dt * CUT_CAM.follow);
+    cam.eye = cam.eye && cam.cutaway.eased ? cam.eye.map((v, i) => mix(v, want[i], k)) : want; cam.cutaway.eased = true;
+    const n = Math.hypot(t[0] - cam.eye[0], t[1] - cam.eye[1], t[2] - cam.eye[2]); cam.dir = [(t[0] - cam.eye[0]) / n, (t[1] - cam.eye[1]) / n, (t[2] - cam.eye[2]) / n];
+    return;
+  }
+  if (cam.cutaway) { cam.pitch = cam.cutaway.pitch; cam.cutaway = null; }   // out of the house: the camera as it was
   cam.close = false; if (cam.fp) { cam.eye = [pl.x + Math.sin(cam.yaw) * .1, pl.y + eyeH, pl.z - Math.cos(cam.yaw) * .1]; return; }
   // Indoors (a house, a flat, a shop) rooms are 3 to 6 m across: the camera comes nearer, keeps further from walls, floors and
   // ceilings than its own near plane reaches (so it never sees through one), and eases back out instead of jumping.
@@ -2281,9 +2310,32 @@ function stepCamera(dt) {
   d = Math.max(.35, d - (cam.indoor ? .08 : .3));
   camD = camD === null || d < camD ? d : Math.min(d, camD + dt * CAM_IN.ease);   // pull in at once, ease back out
   cam.close = camD < (cam.indoor ? CAM_IN.close : 1.3);  // with a wall right behind, look through the player's eyes instead of at the back of their head
-  cam.eye = cam.close ? [pl.x, pl.y + eyeH, pl.z] : [t[0] - cam.dir[0] * camD, t[1] - cam.dir[1] * camD, t[2] - cam.dir[2] * camD];
+  // indoors the camera slides in along its own line to the eyes instead of jumping there, so passing a doorway is smooth;
+  // the body is hidden once the camera is that close (frame); outdoors, as before
+  if (cam.indoor) { const k = smooth(CAM_IN.close, CAM_IN.close + .5, camD); cam.eye = [mix(pl.x, t[0] - cam.dir[0] * camD, k), mix(pl.y + eyeH, t[1] - cam.dir[1] * camD, k), mix(pl.z, t[2] - cam.dir[2] * camD, k)]; }
+  else cam.eye = cam.close ? [pl.x, pl.y + eyeH, pl.z] : [t[0] - cam.dir[0] * camD, t[1] - cam.dir[1] * camD, t[2] - cam.dir[2] * camD];
 }
-const CAM_IN = { dist: 3.4, clear: .34, lookH: 1.45, close: .9, ease: 2.5, near: .1 };   // the indoor camera (metres; ease in m/s)
+// the cutaway view in a house: from the street side, 54 degrees down, 8.5 m from the player's chest, following them softly
+const CUT_CAM = { pitch: -.95, dist: 8.5, follow: 6 };
+let CUT = { on: false };
+function cutState() {                                      // is the player inside a designed house (houses.js), and where is the cut
+  CUT = { on: false };
+  if (!started || cam.fp || pl.pose === 4 || window.Bench) return;
+  const l = lotAt(pl.x, pl.z);
+  if (!l || !l.house || l.house.plan !== "samples_19" || !l.H || pl.y > l.H - .5) return;
+  const Fr = Houses.frame(l), fx = -Fr.s, fz = Fr.c;       // the house's front to back (its +v), the way the camera looks
+  const hu = 6.9, v0 = -4.5 - 9.5, v1 = 4.5 + .9;         // the walls and eaves, and the front garden on the camera's side
+  const xs = [], zs = []; for (const [u, v] of [[-hu, v0], [hu, v0], [hu, v1], [-hu, v1]]) { const p = Fr.P(u, 0, v); xs.push(p[0]); zs.push(p[2]); }
+  CUT = { on: true, l, a: [Fr.cx, Fr.cz, Fr.c, Fr.s], b: [hu, v0, v1, pl.y], c: [fx, fz, pl.x, pl.z], yaw: Math.atan2(fx, -fz),
+          box: [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)] };
+}
+const cutHit = b => CUT.on && b[3] > CUT.box[0] && b[0] < CUT.box[1] && b[5] > CUT.box[2] && b[2] < CUT.box[3];   // does a piece of the town reach into the cut
+function cutUniforms(pr) {
+  const u = pr.u; if (!u.uCutA) return;
+  if (!CUT.on) { gl.uniform4f(u.uCutB, 0, 0, 0, 0); return; }
+  gl.uniform4fv(u.uCutA, CUT.a); gl.uniform4fv(u.uCutB, CUT.b); gl.uniform4fv(u.uCutC, CUT.c);
+}
+const CAM_IN = { dist: 2.0, clear: .34, lookH: 1.45, close: .5, ease: 1.5, near: .1 };   // the indoor camera (metres; ease in m/s): 2.0 m back, as rooms are 4-5 m across and the hall 2.4, so a doorway or a turn cuts it less (measured on a walk round a house)
 let camD = null;
 function camBlocked(q, m) {                                // like blocked(), with the camera's own clearance m round every solid
   if (q[1] < groundBase(q[0], q[2]) + m) return true; let hit = false;
@@ -2705,16 +2757,22 @@ function frame(now) {
   // only the near pieces: far away a surface is small and seldom hidden twice over, and drawing the whole town again costs
   // more than it saves (60 fps work, the owner's ?perf=1 reading); the far pieces write their own depth when lit, below
   const PRE2 = PRE_M * PRE_M, preN = front.filter(pc => pc.d2 < PRE2);
-  attribs(pre, worldBuf); for (const pc of preN) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
-  for (const ch of nearD) drawMesh(ch.buf, ch.n, pre);
+  attribs(pre, worldBuf); for (const pc of preN) if (!cutHit(pc.box)) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
+  for (const ch of nearD) if (!cutHit(ch.box)) drawMesh(ch.buf, ch.n, pre);
+  if (CUT.on) { gl.useProgram(preCut.p); gl.uniformMatrix4fv(preCut.u.uVP, false, VP); cutUniforms(preCut); attribs(preCut, worldBuf);
+    for (const pc of preN) if (cutHit(pc.box)) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
+    for (const ch of nearD) if (cutHit(ch.box)) drawMesh(ch.buf, ch.n, preCut); }
   // ambient occlusion (ADR-0028): the same things again, at half size into a depth picture, then the occlusion and its smoothing from it
   const aoK = (dials.ao == null ? 1 : dials.ao) * (quality > .6 ? 1 : 0), aw = Math.ceil(W / 2), ah = Math.ceil(H / 2), aoOn = aoK > 0 && aoTargets(aw, ah);
   gpuMark("corner shade");
   if (aoOn) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, AO.dFbo); gl.viewport(0, 0, aw, ah); gl.depthMask(true); gl.clear(gl.DEPTH_BUFFER_BIT); gl.disable(gl.CULL_FACE);
     gl.useProgram(depthProg.p); gl.uniformMatrix4fv(depthProg.u.uVP, false, VP);
-    drawDepth(worldBuf, 0); for (const pc of front) if (pc.d2 < AO_M * AO_M) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);   // the shade fades out by aoFar: only what is near
-    for (const ch of nearD) drawDepth(ch.buf, ch.n); drawDepth(dynBuf, dyn.n / 10);   // people too, so an arm shades the body beside it
+    drawDepth(worldBuf, 0); for (const pc of front) if (pc.d2 < AO_M * AO_M && !cutHit(pc.box)) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);   // the shade fades out by aoFar: only what is near
+    for (const ch of nearD) if (!cutHit(ch.box)) drawDepth(ch.buf, ch.n); drawDepth(dynBuf, dyn.n / 10);   // people too, so an arm shades the body beside it
+    if (CUT.on) { gl.useProgram(depthCut.p); gl.uniformMatrix4fv(depthCut.u.uVP, false, VP); cutUniforms(depthCut);
+      drawDepth(worldBuf, 0, depthCut); for (const pc of front) if (pc.d2 < AO_M * AO_M && cutHit(pc.box)) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
+      for (const ch of nearD) if (cutHit(ch.box)) drawDepth(ch.buf, ch.n, depthCut); }
     gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.colorMask(true, true, true, true);
     const quad = pr => { gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const a = gl.getAttribLocation(pr.p, "aQ"); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
       gl.uniform4f(pr.u.uPr, 1 / (th * asp), 1 / th, NEAR, 3200); gl.uniform2f(pr.u.uPx, 1 / aw, 1 / ah); gl.uniform1i(pr.u.uD, 6); };
@@ -2728,7 +2786,7 @@ function frame(now) {
   gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, aoOn ? AO.tex[1] : AO.white); gl.activeTexture(gl.TEXTURE0);
   gl.colorMask(true, true, true, true); gl.depthMask(false);
   const lit = pr => {
-    const u = pr.u; gl.useProgram(pr.p); gl.uniformMatrix4fv(u.uVP, false, VP); gl.uniformMatrix4fv(u.uSM, false, SM); gl.uniform1f(u.uShOn, shOn);
+    const u = pr.u; gl.useProgram(pr.p); cutUniforms(pr); gl.uniformMatrix4fv(u.uVP, false, VP); gl.uniformMatrix4fv(u.uSM, false, SM); gl.uniform1f(u.uShOn, shOn);
     gl.uniform1i(u.uSh, 0); gl.uniform1i(u.uAO, 1); gl.uniform1i(u.uTxt, 2); gl.uniform4fv(u["uLamp[0]"], lamp); gl.uniform1i(u.uLampN, lampN); gl.uniform3f(u.uAOm, skyMap.lo, 1 / skyMap.size, 0);
     gl.uniform3fv(u.uSun, Lt.dir); gl.uniform3fv(u.uSunCol, Lt.sunCol); gl.uniform3fv(u.uSky, Lt.sky); gl.uniform3fv(u.uGround, Lt.ground); gl.uniform3fv(u.uFog, Lt.fog);
     gl.uniform3fv(u.uCam, cam.eye); gl.uniform1f(u.uNight, Lt.night); gl.uniform1f(u.uFogD, Lt.fogD); gl.uniform1f(u.uExp, Lt.exp); gl.uniform4f(u.uWet, Lt.wet * SKY.rain.wet_dark, Lt.wet * SKY.rain.wet_sheen, Lt.wet * SKY.rain.puddles, Lt.rain * SKY.rain.ripples); gl.uniform1f(u.uTime, now / 1000 % 600);
@@ -2761,9 +2819,15 @@ function frame(now) {
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, shTex); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, skyMap.tex);
   gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, txtTex); gl.activeTexture(gl.TEXTURE0);
   gpuMark("lit town");
-  lit(main); attribs(main, worldBuf); for (const pc of seen) if (pc.d2 < PRE2) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
-  gl.depthMask(true); for (const pc of seen) if (pc.d2 >= PRE2) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count); gl.depthMask(false);   // the far ones, writing their own depth   // in the order laid, so ties fall as before
-  let drawnDetail = 0; for (const ch of nearD) { drawMesh(ch.buf, ch.n); drawnDetail += ch.n; }
+  lit(main); attribs(main, worldBuf); for (const pc of seen) if (pc.d2 < PRE2 && !cutHit(pc.box)) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
+  gl.depthMask(true); for (const pc of seen) if (pc.d2 >= PRE2 && !cutHit(pc.box)) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count); gl.depthMask(false);   // the far ones, writing their own depth   // in the order laid, so ties fall as before
+  let drawnDetail = 0; for (const ch of nearD) if (!cutHit(ch.box)) { drawMesh(ch.buf, ch.n); drawnDetail += ch.n; }
+  if (CUT.on) {                                            // round the house the player is in: the same, cut away (CUT_GLSL)
+    lit(mainCut); attribs(mainCut, worldBuf);
+    for (const pc of seen) if (cutHit(pc.box)) { gl.depthMask(pc.d2 >= PRE2); gl.drawArrays(gl.TRIANGLES, pc.first, pc.count); }
+    gl.depthMask(false); for (const ch of nearD) if (cutHit(ch.box)) { drawMesh(ch.buf, ch.n, mainCut); drawnDetail += ch.n; }
+    gl.useProgram(main.p);
+  }
   stat.detail = drawnDetail; stat.pieces = seen.length;
   gl.depthMask(true); lit(signProg); drawMesh(signBuf, signN, signProg); gl.useProgram(main.p);
   gpuMark("people and cars");

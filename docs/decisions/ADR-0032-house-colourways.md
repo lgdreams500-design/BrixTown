@@ -39,13 +39,12 @@ shutters, door, window frames and roof tiles; the line keeps its shape.
 | Workshop | Brown wood on stone, dark roof | Teal on stone, terracotta roof | Dusty blue on stone, brown door, slate roof |
 | Curve | Dusty blue shutters, ochre door and frames, cool plaster | Cream shutters, terracotta door, warm plaster | Teal on pale plaster, brown roof |
 
-The exact values are the `WAYS` table of `house_styles_20.py`. New reference: `Art/Reference/house_colourways.png` (the
+The exact values are kept in `World/rules/house_styles.json`, which `house_styles_20.py` reads. New reference: `Art/Reference/house_colourways.png` (the
 sheet). ART_DIRECTION gets §2.7 for houses.
 
 ## Consequences
-- `World/rules/house_styles.json` is to hold these twelve sets (and the lines' shapes), read by the slice's
-  `houses.js`, by the Blender scripts and later by Unreal, so a colour is changed in one place. Until then each house
-  keeps its stored trim, which mixes the same palette colours but not as these sets.
+- `World/rules/house_styles.json` holds these twelve sets and the lines' shapes, read by the slice's `houses.js`, by
+  the Blender scripts and later by Unreal, so a colour is changed in one place.
 - Which colourway a house gets is to be picked once, when the house is made, and stored in its lot, as the line and
   trim are now (`add_houses_03.py`); loading the game never changes it.
 - In the renders every shutter of a house takes its colourway's colour. In the town kit about one shutter in twelve

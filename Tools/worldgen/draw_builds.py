@@ -9,14 +9,17 @@ Reads World/city_01 only; writes nothing else.
 Run:  python draw_builds.py [out.html]      (default Prototype/play/builds.html)
 """
 import collections, html, json, os, re, sys
+from draw_builds_plans import plans_of
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
 OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "Prototype", "play", "builds.html")
 CITY = os.path.join(ROOT, "World", "city_01")
+FRONT = os.path.join(os.path.dirname(OUT), "builds", "front")   # one front picture per type (Tools/blender/building_styles_22.py)
 city = json.load(open(os.path.join(CITY, "city.json"), encoding="utf-8"))
 blocks = [json.load(open(os.path.join(CITY, b["file"]), encoding="utf-8")) for b in city["blocks"]]
 e = lambda s: html.escape(str(s), quote=True)
+STYLES = json.load(open(os.path.join(ROOT, "World", "rules", "house_styles.json"), encoding="utf-8"))
 
 # ------------------------------------------------------------------ what each build is for
 PURPOSE = {
@@ -167,13 +170,11 @@ def details(g):
     if "house" in s:
         h = s["house"]
         add("House line", LINE[h["furniture"]] + " (lot.house.furniture; picked by add_houses_03.py)")
-        trims = collections.Counter()
-        for l in L:
-            t = l["house"]["trim"]
-            trims["shutters " + (t.get("shutter_color") or "") if t.get("shutters") else "no shutters"] += 1
-        add("Plan", f"{h['plan']} ({h['source']}), mirror: {sum(1 for l in L if l['house'].get('mirror'))} of {len(L)}")
+        ways = collections.Counter(l["house"].get("style", "a") for l in L)
+        add("Colourways", ", ".join(f"{w}: {STYLES['colourways'][h['furniture']][w]['name']} ({n})" for w, n in sorted(ways.items())) + " (house.style, add_houses_04.py; ADR-0032)")
+        add("Plan", f"{h.get('interior', h['plan'])} (World/rules/home_plans.json; ADR-0033), outside {h['plan']} ({h['source']})")
         add("Rooms", ", ".join(f"{r['name']} (floor {r['floor']})" for r in h["rooms"]))
-        add("Trim", ", ".join(f"{k} ({n})" for k, n in trims.most_common()) + f"; window boxes {sum(1 for l in L if l['house']['trim'].get('window_boxes'))}, keystones {sum(1 for l in L if l['house']['trim'].get('keystones'))}")
+        add("Window boxes", f"{sum(1 for l in L if l['house']['trim'].get('window_boxes'))} of {len(L)} (where the line has them)")
         add("Turned to its lane", rng([l.get("angle", 0) for l in L], "°"))
     if s.get("plan"):
         p = s["plan"]
@@ -225,8 +226,12 @@ def write_page():
                     f'<td>{e(summary(g, "floors"))}</td><td>{e(summary(g, "size"))}</td><td>{e(summary(g, "people"))}</td><td>{e(summary(g, "where"))}</td></tr>')
         det = "".join(f"<dt>{e(k)}</dt><dd>{e(v)}</dd>" for k, v in details(g))
         nm = names_of(g)
+        pic = os.path.join(FRONT, g["key"] + ".jpg")
+        front = (f'<figure class="front"><img src="builds/front/{e(g["key"])}.jpg" alt="Front of {e(g["sample"]["name"])}" loading="lazy">'
+                 f'<figcaption>Front: {e(g["sample"]["name"])}</figcaption></figure>' if os.path.exists(pic) else "")
+        figs = f'<div class="figs">{front}{"".join(plans_of(g["sample"]))}</div>'
         cards.append(f'<article id="{e(g["key"])}" data-q="{q}"><header><h3><span class="n">{i}</span>{e(g["title"])}</h3><span class="pill">{len(g["lots"])} in town</span></header>'
-                     f'<p class="purpose">{e(g["purpose"])}</p><dl>{det}<dt>Names</dt><dd class="names">{e(nm)}</dd></dl></article>')
+                     f'<p class="purpose">{e(g["purpose"])}</p>{figs}<dl>{det}<dt>Names</dt><dd class="names">{e(nm)}</dd></dl></article>')
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Brix Town builds</title>
 <style>
@@ -253,13 +258,15 @@ article h3 {{ margin:0; font-size:16px; }} span.n {{ margin-right:10px; font-wei
 .purpose {{ margin:6px 0 12px; color:var(--mute); }}
 dl {{ display:grid; grid-template-columns:180px minmax(0,1fr); gap:4px 16px; margin:0; font-size:13px; }}
 dt {{ color:var(--mute); }} dd {{ margin:0; }} dd.names {{ max-height:9em; overflow:auto; }}
+.figs {{ display:flex; flex-wrap:wrap; gap:14px; align-items:flex-start; margin:0 0 14px; }} figure {{ margin:0; }} figcaption {{ color:var(--mute); font-size:12px; margin-top:3px; }}
+.figs svg {{ display:block; max-width:100%; height:auto; background:#faf7f2; border-radius:4px; }} .front img {{ display:block; width:360px; max-width:100%; aspect-ratio:3/2; object-fit:cover; border-radius:6px; }}
 @media (max-width:720px) {{ .top, main {{ padding-left:16px; padding-right:16px; }} .top input {{ margin-left:0; width:100%; }}
   .hide-s {{ display:none; }} dl {{ grid-template-columns:1fr; }} dt {{ margin-top:6px; }} table {{ font-size:13px; }} }}
 </style></head><body>
 <div class="top"><h1>Brix Town builds</h1><span class="sum">{len(nb)} building types over {sum(len(g["lots"]) for g in nb)} buildings, {len(order) - len(nb)} kinds of open place; {total} lots in World/city_01</span>
 <input id="q" type="search" placeholder="Filter: name, street, district…"></div>
 <main>
-<p class="note">One entry per type of build, read from the block files by Tools/worldgen/draw_builds.py. Pictures and plans come later.</p>
+<p class="note">One entry per type of build, read from the block files by Tools/worldgen/draw_builds.py. Front pictures are Blender renders (Tools/blender/building_styles_22.py); plans are drawn from the data, front at the bottom.</p>
 <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>Type</th><th>Count</th><th>Floors</th><th>Footprint (m)</th><th>People</th><th>Districts</th></tr></thead><tbody>
 {"".join(rows)}
 </tbody></table></div>

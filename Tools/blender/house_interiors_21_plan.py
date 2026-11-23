@@ -48,6 +48,12 @@ ROOMS = {
                  "Children's room": (b, i1, j0, m - TP / 2), "Guest room": (b, i1, m + TP / 2, j1)},
 }
 
+# where people lie and sit on a piece: [x, y, height, facing x, facing y] in the piece's own frame (yaw 0, back towards +y)
+SPOTS = {"k17:bed": [[-0.4, 0.2, 0.62, 0, 1], [0.4, 0.2, 0.62, 0, 1]], "c_bunk": [[0, 0.1, 0.5, 0, 1], [0, 0.1, 1.45, 0, 1]],
+         "r_single": [[0, 0.2, 0.62, 0, 1]], "k17:sofa": [[-0.5, 0, 0.45, 0, -1], [0.5, 0, 0.45, 0, -1]],
+         "k17:armchair": [[0, 0, 0.45, 0, -1]], "k17:dining": [[0, -0.7, 0.45, 0, 1], [0, 0.7, 0.45, 0, -1]]}
+BEDS_OF = ("k17:bed", "c_bunk", "r_single")
+
 WALL = {"k_wall", "b_mirror", "h_mirror", "h_hooks", "s_pinboard", "o_painting", "o_clock", "o_curtains", "o_wallshelf"}
 CEILING = {"d_pendant"}
 RUG = {"k17:rug"}
@@ -222,6 +228,14 @@ put(U, Ld, "o_bust", 1.15, -3.85, 0.0, 4)
 put(U, Ld, "d_pendant", 0.25, -1.6, 0.0, 2)
 
 
+PLANS_NOTE = ("The plans homes are furnished from (FURN-060, FURN-061, ADR-0033): per plan the house (walls, doorways, windows, "
+              "stair, rooms; metres in the house's own frame, x across the front left to right seen from the street, y from the "
+              "front to the back) and the pieces of furniture kits 17 and 18 in each room with their place, turn, lift and the "
+              "furnishing level each first comes in at (1 Bare, 2 Basic, 3 Homely, 4 Full; a home shows its level and those "
+              "below, FURN-062). Written by the Blender planners after their checks pass (house_interiors_21_plan.py); do not "
+              "edit by hand. Read by Prototype/play/houses.js, Tools/worldgen/add_houses_04.py and the Blender renderers.")
+
+
 # ---- checks ---------------------------------------------------------------------------------------------------------
 def kind(spec):
     return "wall" if spec in WALL else "ceiling" if spec in CEILING else "rug" if spec in RUG else "floor"
@@ -331,9 +345,17 @@ if __name__ == "__main__":
     for st in ("ground", "upstairs"):
         draw(st, os.path.join(DIR, "plan_%s.png" % st))
     plan = dict(house=dict(W0=W0, W1=W1, D0=D0, D1=D1, T=T, XA=XA, XB=XB, YM=YM, H=H, stair=STAIR, doors=DOORS,
-                           windows=WINDOWS, front_door=FRONT_DOOR, rooms=ROOMS),
+                           windows=WINDOWS, front_door=FRONT_DOOR, rooms=ROOMS, spots=SPOTS, beds=BEDS_OF),
                 levels=LEVELS, items=[{k: v for k, v in it.items() if not k.startswith("_")} for it in ITEMS])
     json.dump(plan, open(os.path.join(DIR, "layout.json"), "w", encoding="utf-8"), indent=1)
+    if not errs:                                             # the approved plan for the game (ADR-0033, FURN-060)
+        wp = os.path.join(ROOT, "World", "rules", "home_plans.json")
+        world = json.load(open(wp, encoding="utf-8")) if os.path.exists(wp) else dict(note=PLANS_NOTE, plans={})
+        world["note"] = PLANS_NOTE
+        world["plans"]["house_12x9"] = dict(source="Tools/blender/house_interiors_21_plan.py", **plan)
+        with open(wp, "w", encoding="utf-8", newline="\n") as f:
+            json.dump(world, f, indent=1, ensure_ascii=False)
+            f.write("\n")
     n = {lv: sum(1 for it in ITEMS if it["level"] <= lv) for lv in LEVELS}
     print("pieces by level:", n)
     for e in errs: print("  ", e)

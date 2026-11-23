@@ -1,0 +1,20 @@
+{
+ "note": "How furnished a resident household's home is (FURN-062, FURN-063; F-HOME-FURNISH level 3; ADR-0033). Worked out from these numbers, the household's daily wages (World/rules/estate.json town.wages by its members' roles) and the clock day, never ticked or stored: a household starts at the level of the highest band its wages reach, sets aside save_bp of its wages each day since it moved in, and goes up a level each time those savings reach the cost of the levels it has bought so far plus the next one, up to the last level. On the day a level rises its cost moves from the residents' account npc:town to sys:spend in one ledger transaction (until FURN-034 has residents buy from the companies). A household that moves takes its furniture with it: every household counts its savings from day 0, the day the starting town moved in. Amounts are chips (100 chips = 1 brix), rates basis points. Rules: Tools/citysim/furnishing.py and estate.py, ported to Prototype/play/estate.js and furnishing.js. Every number is a first guess for play-testing [ASSUMPTION].",
+ "levels": ["Bare", "Basic", "Homely", "Full"],
+ "start_bands": [
+  { "from_wage": 0, "level": 1 },
+  { "from_wage": 9000, "level": 2 },
+  { "from_wage": 16000, "level": 3 }
+ ],
+ "save_bp": 1000,
+ "step_cost": [30000, 60000, 120000],
+ "lodger_level": 2,
+ "empty_level": 1,
+ "notes": {
+  "start_bands": "[ASSUMPTION] daily wages from which a household starts at each level; chosen so the starting town of city_01 spreads over Bare, Basic and Homely (262 / 350 / 219 of 831 households).",
+  "save_bp": "[ASSUMPTION] the share of its daily wages a household sets aside for furniture: 1000 bp = 10%.",
+  "step_cost": "[ASSUMPTION] what each step costs, in chips: Bare to Basic, Basic to Homely, Homely to Full. A household on 10000 a day saves 1000 a day and takes 60 days to go from Basic to Homely.",
+  "lodger_level": "[ASSUMPTION] the level an unseen lodger's flat shows (lodgers have no wages in the sim and pay nothing for it).",
+  "empty_level": "[ASSUMPTION] the level of a home nobody lives in, or one the player rents (the player furnishes their own, FURN-034)."
+ }
+}
