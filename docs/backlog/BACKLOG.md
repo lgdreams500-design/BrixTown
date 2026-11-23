@@ -6,11 +6,12 @@
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
 | Decided | 38 of 52 | 9 of 52 | 9 of 52 |
-| Size of the plan (points) | 448 | 427 | 827 |
+| Size of the plan (points) | 468 | 427 | 827 |
 | Size of the suggested plan | 128 | 387 | 795 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
+- F-BLD-DESIGN at First slice needs F-MAP-PLOTS at level 1 (picked 0)
 - F-GARDEN at First slice needs F-VEG-LEAF at level 1 (undecided)
 - F-SKY at First slice needs F-TIME-DAY at level 1 (undecided)
 
@@ -21,7 +22,7 @@
 | **City layout** `F-MAP-CITY` | 1 A district ★ | 1 A district | 2 Whole city | A district from the first slice (so cars fit), whole city in the full game (owner, 2026-11-22). |
 | **Lots and building records** `F-MAP-LOTS` | 1 Registry | 1 Registry | 1 Registry ★ | Registry at every milestone (owner, 2026-11-22). |
 | **Going inside buildings** `F-BLD-INSIDE` | 3 Every floor, true size ★ | undecided | undecided | Owner, 2026-11-22: "3: Every floor, true size" (all buildings accessible inside, stairs to every level, inside the same size as outside), with "Stairs and a lift" in the towers and "Residents too" (beds and desks upstairs). Later milestones not stated. |
-| **Building designer** `F-BLD-DESIGN` | 1 Remodel | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. |
+| **Building designer** `F-BLD-DESIGN` | 2 Build new ★ | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. Then on 2026-11-23, asked whether inner walls meant finishes per wall or the room plan (moving, adding and removing walls and doors, level 2): "Both"; read as level 2 for the first slice. |
 | **Open plots** `F-MAP-PLOTS` | 0 None | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. |
 | **From design to building** `F-BLD-CONSTRUCT` | 0 Instant | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. |
 | **Shops and market** `F-BLD-SHOP` | 2 Stock and prices ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Stock and prices" for the first slice. Later milestones not stated. |

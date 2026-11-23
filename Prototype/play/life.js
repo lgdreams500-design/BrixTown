@@ -936,6 +936,6 @@ var Life = (() => {
     get on() { return !!panel; }, get designing() { return designing; }, get ready() { return ready; }, get view() { return view; }, pointer, designMarks, designTags, endView: () => { view = null; },
     go, frame, camera, mark, marks, boards, remodelTarget, remodel, conversation, allowed, chose, talkEnded, vars, key, counter, toast,
     panel: k => menu(k), menu: () => menu(), setting, spin: dx => { spin += dx * .006; },
-    get paused() { return !!(panel && panel.menu && ST.menu.pauses); },
+    get paused() { return !!(panel && panel.menu && ST.menu.pauses) || !!(view && !view.leave); },   // the menu, and the building designer, stop the clock
   };
 })();

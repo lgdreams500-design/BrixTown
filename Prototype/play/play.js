@@ -2377,6 +2377,12 @@ function designCam(dt) {
   cam.yaw = c.yaw;
   if (v.leave && Math.abs(dy) < .02 && Math.abs(g.dist - c.dist) < .25 && Math.hypot(g.tx - c.tx, g.tz - c.tz) < .25 && Math.abs(g.fov - c.fov) < .01) { cam.pitch = c.pitch; Life.endView(); }   // home: the player's own camera again
 }
+function designFolk(v, now) {                               // the people in the designer's building: found once (the clock stands still), drawn at full detail
+  if (!v.folk) { v.folk = [];
+    for (let i = 0; i < D.plan.length; i++) { const r = Talk.where(i, clock.m); if (r && r.inside && r.lot === v.lot) v.folk.push([i, r]); } }
+  for (const [i, r] of v.folk) { people.push([r.x, r.z]); bodies++;
+    People.draw(dyn, r.x, r.y, r.z, r.yaw, looks[i], r.pose, { ph: r.ph || 0, t: now / 1000, lod: 0, fl: 10, sleep: r.pose === 3, sig: r.sig, mod: r.mod }); }
+}
 function designMarks() {                                     // a glowing outline on the floor round the piece picked (and a faint one round the piece under the mouse)
   for (const m of Life.designMarks ? Life.designMarks() : []) {
     const p = m.p, Y = p.yaw * Math.PI / 180,  /* lit in its own colour (material 23, as a signal lamp) */ c = Math.cos(Y), sn = Math.sin(Y), e = .07, w = p.w + 2 * e, d = p.d + 2 * e, y = m.F + .012, t = m.sel ? .05 : .03;
@@ -2770,13 +2776,17 @@ function frame(now) {
   if (started && !Talk.on && !Life.on) { stepPlayer(dt); findTarget(); } else if (started && Talk.on) Talk.step(dt);   // a counter or the quest log (life.js) also holds the player still   // talking (conversations.js) holds the player still
   stepCamera(dt);
   { const v = started && Life.view; CUT_NOW = v ? designCut(v) : null; cutPrograms(!!CUT_NOW); }   // the building designer (life.js)
+  // In the building designer only its building lives: the clock stands still (Life.paused), nobody else is worked out, no traffic,
+  // and everything is drawn as near (rooms, relief, the people inside at full detail) wherever the camera is.
+  const DZ = started && Life.view && !Life.view.leave ? Life.view : null, LODE = DZ ? [DZ.cur.tx, DZ.cur.ty, DZ.cur.tz] : cam.eye;
 
   // everyone's place right now; bodies only for those near the player
-  Dodge.frame(now / 1000, pl);                             // is the player's car bearing down on anyone (dodge.js, CITY-070)
-  dyn.reset(); people = []; bodies = 0; const heard = [], tags = [], near = started ? [pl.x, pl.z] : [cam.eye[0] + cam.dir[0] * 60, cam.eye[2] + cam.dir[2] * 60], reach = started ? 85 : 130;
-  Wet.frame(clock.m);                                      // how hard it is raining on the people (wet.js)
+  if (!DZ) Dodge.frame(now / 1000, pl);                             // is the player's car bearing down on anyone (dodge.js, CITY-070)
+  dyn.reset(); people = []; bodies = 0; const heard = [], tags = [], near = DZ ? [DZ.cur.tx, DZ.cur.tz] : started ? [pl.x, pl.z] : [cam.eye[0] + cam.dir[0] * 60, cam.eye[2] + cam.dir[2] * 60], reach = DZ ? 30 : started ? 85 : 130;
+  if (!DZ) Wet.frame(clock.m);                             // how hard it is raining on the people (wet.js)
   FRAME_NO++; const plLot = lotAt(pl.x, pl.z), plIn = !!plLot && !isOpen(plLot), plFlat = plLot && plLot.flats ? flatOf(plLot, pl.x, pl.z, pl.y) : null, near13 = [];
-  for (let i = 0; i < D.plan.length; i++) {
+  if (DZ) designFolk(DZ, now);                             // the designer: only the people in its building
+  for (let i = 0; i < (DZ ? 0 : D.plan.length); i++) {
     // Someone far from the player is only a dot on the maps: worked out again every FAR_EVERY frames, a share of them each frame,
     // and their last place reused in between. Anyone within FAR_M of the player is worked out every frame, as before.
     const fc = FAR_CACHE[i];
@@ -2806,7 +2816,7 @@ function frame(now) {
     if (started) Life.mark(i, r, d, L, tags);             // someone with a quest or a job for the player (life.js, QST-005)
   }
   FULL = new Set(near13.sort((a, b) => a[0] - b[0]).slice(0, FULL_MAX).map(e => e[1]));   // next frame's full-detail bodies
-  if (started) Talk.pick();                               // the nearest resident in reach can be talked to (E)
+  if (started && !DZ) Talk.pick();                               // the nearest resident in reach can be talked to (E)
   if (started) Life.frame(dt);                            // money, quests and jobs move on with the clock (life.js)
   if (LINEUP) LINEUP.forEach((L, k) => { if (STUDIO && k !== STUDIO_WHO) return; const lx = STUDIO ? STUDIO_AT[0] : OX + 300.5 + k * 1.1; People.draw(dyn, lx, groundBase(lx, OZ + 186.6), OZ + 186.6, Math.PI, L, 0, { ph: 0, t: now / 1000, lod: 0, fl: 14, mod: STUDIO ? { arms: [[1, 0, 4, 0], [1, 0, 4, 0]] } : null }); });   // in the studio the arms hang straight, as in the reference   // ?lineup=1: the six people of character_lineup.png in a row on Linden Street, to compare with it
   if ((started || Life.designing) && !cam.fp && !cam.close && pl.pose !== 4) {   // not while in a car; and in the designer, to see who you are making
@@ -2815,12 +2825,12 @@ function frame(now) {
       look: pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
   }
   if (started && Life.view) designMarks();             // the building designer's picked piece (life.js)
-  for (const [x, , T] of tramAt(clock.m)) Cars.tram(dyn, x, TRAM_Z, T, clock.m);   // the tram and the commuters on it (cars.js)
-  stat.cars = Cars.draw(dyn, clock.m, near, reach);
-  stat.signals = Roads.draw(dyn, clock.m, near, 220);     // the lit lamp of each traffic light (roads.js)
-  stat.smash = Smash.draw(dyn, tags, now / 1000);         // broken things, falling and lying, and the repair crews (smash.js)
-  Dress.draw(dyn, cam.eye, now / 1000);                   // swing seats and seesaws (dressing.js)       // residents' cars, parked and driving (cars.js)
-  if (started) {                                          // what the listener hears (sound.js): where they are and what is near
+  if (!DZ) for (const [x, , T] of tramAt(clock.m)) Cars.tram(dyn, x, TRAM_Z, T, clock.m);   // the tram and the commuters on it (cars.js)
+  stat.cars = DZ ? 0 : Cars.draw(dyn, clock.m, near, reach);
+  stat.signals = DZ ? 0 : Roads.draw(dyn, clock.m, near, 220);     // the lit lamp of each traffic light (roads.js)
+  stat.smash = DZ ? 0 : Smash.draw(dyn, tags, now / 1000);         // broken things, falling and lying, and the repair crews (smash.js)
+  if (!DZ) Dress.draw(dyn, cam.eye, now / 1000);                   // swing seats and seesaws (dressing.js)       // residents' cars, parked and driving (cars.js)
+  if (started && !DZ) {                                   // what the listener hears (sound.js): where they are and what is near
     const lot = pl.y < 6 ? lotAt(pl.x, pl.z) : null, drv = pl.pose === 4;
     Sound.frame({ m: clock.m, dt, x: pl.x, y: pl.y, z: pl.z, yaw: cam.yaw, lot, talk: Talk.on, residents: heard, trams: tramAt(clock.m), tramZ: TRAM_Z,
       cars: Cars.near ? Cars.near(clock.m, pl.x, pl.z, 75) : [],
@@ -2844,7 +2854,7 @@ function frame(now) {
   let SM = M4.t(0, 0, 0), shOn = 0, giAt = [0, 0, 1], giK = 0;
   if (shFbo && quality > .6 && SET.shadows) {                              // shadows: draw the town from the light, around where the player looks
     const R = 70, tex = 2 * R / SH, f = [-Lt.dir[0], -Lt.dir[1], -Lt.dir[2]], lv0 = M4.look([0, 0, 0], f), dot3 = (p, q) => p[0] * q[0] + p[1] * q[1] + p[2] * q[2];
-    let foc = [near[0] + cam.dir[0] * 28, 0, near[1] + cam.dir[2] * 28]; const ox = dot3(foc, lv0.r) % tex, oy = dot3(foc, lv0.u) % tex;
+    let foc = DZ ? [near[0], 0, near[1]] : [near[0] + cam.dir[0] * 28, 0, near[1] + cam.dir[2] * 28]; const ox = dot3(foc, lv0.r) % tex, oy = dot3(foc, lv0.u) % tex;
     foc = [foc[0] - lv0.r[0] * ox - lv0.u[0] * oy, foc[1] - lv0.r[1] * ox - lv0.u[1] * oy, foc[2] - lv0.r[2] * ox - lv0.u[2] * oy];   // move in whole texels so shadows do not crawl
     const lv = M4.look([foc[0] + Lt.dir[0] * 260, foc[1] + Lt.dir[1] * 260, foc[2] + Lt.dir[2] * 260], f), nn = 1, ff = 520;
     SM = M4.mul([1 / R, 0, 0, 0, 0, 1 / R, 0, 0, 0, 0, -2 / (ff - nn), 0, 0, 0, -(ff + nn) / (ff - nn), 1], lv.m); shOn = 1;
@@ -2888,8 +2898,8 @@ function frame(now) {
   // From indoors the city is seen only through the windows: the pieces within INDOOR_R of the camera, and the whole-town one (ground,
   // paving, wall); the rest lie behind the building's own walls.
   const inL = lotAt(cam.eye[0], cam.eye[2]), indoor = inL && !isOpen(inL) && inL.H && cam.eye[1] < inL.H - .2;
-  const seen = pieces.filter(pc => !outside(VP, pc.box) && (!indoor || pc.town || boxD2(pc.box, cam.eye) < INDOOR_R * INDOOR_R)), nearD = chunks.filter(ch => Math.hypot(ch.cx - cam.eye[0], ch.cz - cam.eye[2]) < ch.r && !outside(VP, ch.box));
-  const rooms = nearRooms(cam.eye); for (const rm of rooms) if (!outside(VP, rm.box)) nearD.push(rm);
+  const seen = pieces.filter(pc => !outside(VP, pc.box) && (!indoor || pc.town || boxD2(pc.box, cam.eye) < INDOOR_R * INDOOR_R)), nearD = chunks.filter(ch => Math.hypot(ch.cx - LODE[0], ch.cz - LODE[2]) < ch.r && !outside(VP, ch.box));
+  const rooms = nearRooms(LODE); for (const rm of rooms) if (!outside(VP, rm.box)) nearD.push(rm);
   // the room the camera is in (or the nearest one in reach) gets its own lamps and contact shade; other rooms an even lamplight
   let inRoom = null, best = started && Life.view ? 1e9 : 10; const feet = new Float32Array(32); let feetN = 0;   // feet: people's floor shade in a hall (below)
   const [camL, camF] = camFloor();
