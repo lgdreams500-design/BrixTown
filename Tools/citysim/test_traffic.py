@@ -331,6 +331,20 @@ class TheOutskirtsAndBuses(unittest.TestCase):
             self.assertNotIn(bid, {c["bay"] for c in T.cars.values()})
             self.assertNotIn(bid, R.parking_near(R.stops[bid]["pos"], 5))
 
+    def test_CITY_091_bus_stops_keep_clear_of_street_things(self):
+        b = W["traffic"]["buses"]
+        size = b["obstacle_m"]
+        things = [(p["pos"], size.get(p["kind"], size["default"])) for bl in W["blocks"] for p in bl["props"]
+                  if "pos" in p and p["kind"] not in size["ignore"]] + [(t["pos"], size["tree"]) for bl in W["blocks"] for t in bl["trees"]]
+        for bid, st in R.stops.items():
+            u, n = st["u"], (-st["u"][1], st["u"][0])
+            sh = b["shelter_out_m"][1 if R.is_outer_bay(bid) else 0]
+            for (x, z), rad in things:
+                dx, dz = x - st["pos"][0], z - st["pos"][1]
+                a, c = dx * u[0] + dz * u[1], dx * n[0] + dz * n[1]
+                self.assertFalse(abs(a) < b["length"] / 2 + rad and abs(c) < 1.2 + rad, (bid, "bus", x, z))   # no lamp or rack under the bus
+                self.assertFalse(-2.2 - rad < a < 2.9 + rad and sh - .8 - rad < c < sh + .8 + rad, (bid, "shelter", x, z))
+
     def test_CITY_092_residents_without_a_car_ride_the_bus(self):
         rides, b = D["rides"], W["traffic"]["buses"]
         self.assertGreater(len(rides), 1500)                             # long walks are ridden, not walked
