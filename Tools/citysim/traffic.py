@@ -1213,6 +1213,7 @@ class Traffic:
         state = {}                                        # moving cars: dict(legs, starts, d, k, trip)
         occ = {}                                          # leg key -> {car id: s on that leg}
         in_box = {}                                       # junction -> {car id: box leg}
+        held = {}                                         # car id -> when it came to a stop at the stop line it waits at
 
         def walk_time(rid, length):
             return length / (self.city.speed(rid) * pace)                       # game minutes
@@ -1280,8 +1281,11 @@ class Traffic:
             need = sum(sp + 0.5 + 2 * self.ext(v) for v in [cid] + coming)   # room for this car and any turning in already
             if any(s - self.ext(oc) < need for oc, s in room.items()) or R.lanes[bx["into"]]["length"] < need - sp:
                 return False                              # do not block the box: the lane beyond must have room
-            la, lb = R.lanes[bx["frm"]], R.lanes[bx["into"]]   # walkers on the crossings it passes: wait (CITY-046)
-            if self.walker_on((la["street"], jid), t - .5, t + r["crossing_clear_s"]) or                     self.walker_on((lb["street"], jid), t, t + 2 * r["crossing_clear_s"]):
+            la, lb = R.lanes[bx["frm"]], R.lanes[bx["into"]]   # walkers on the crossings it passes: wait (CITY-046, CITY-097)
+            # at traffic lights walkers cross on their own phase, so a car with green goes; at a zebra a car gives way, but one
+            # that has waited crossing_patience_s is let through
+            if j["control"] != "signals" and t - held.get(cid, t) < r["crossing_patience_s"] and (
+                    self.walker_on((la["street"], jid), t - .5, t + r["crossing_clear_s"]) or self.walker_on((lb["street"], jid), t, t + 2 * r["crossing_clear_s"])):
                 return False
             if j["control"] == "signals":
                 return signal(jid, bx["axis"], t) == "green"
@@ -1408,6 +1412,8 @@ class Traffic:
                     bx = legs_[k + 1]
                     if cid not in in_box.get(bx["junction"], {}) and not box_ok(bx["junction"], bx, t, cid):
                         cap = min(cap, starts[k + 1])
+                        if free > starts[k + 1] - 1e-9 and d >= starts[k + 1] - .5:
+                            held.setdefault(cid, t)               # waiting at the stop line since t (CITY-097)
                 nd = max(d, min(free, cap))
                 # crossing into the box or out of it
                 nk = k
@@ -1417,7 +1423,8 @@ class Traffic:
                         bx = legs_[nk]
                         j = R.j[bx["junction"]]
                         entries.append(dict(t=t, car=cid, junction=bx["junction"], key=bx["key"], axis=bx["axis"], control=j["control"],
-                                            main=j.get("main"), signal=signal(bx["junction"], bx["axis"], t) if j["control"] == "signals" else None))
+                                            main=j.get("main"), signal=signal(bx["junction"], bx["axis"], t) if j["control"] == "signals" else None,
+                                            waited=t - held.pop(cid, t)))
                         in_box.setdefault(bx["junction"], {})[cid] = bx
                         boxes.append(dict(car=cid, junction=bx["junction"], key=bx["key"], straight=bx["straight"], axis=bx["axis"], t0=t, t1=None))
                     elif legs_[nk - 1]["kind"] == "box":

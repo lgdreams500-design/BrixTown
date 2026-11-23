@@ -75,6 +75,7 @@
  "crossing_at": 10.0,
  "walk_offset": 6.6,
  "crossing_clear_s": 2.5,
+ "crossing_patience_s": 20.0,
  "crossing_width": 3.0,
  "car_length": 4.2,
  "spacing": 7.0,
