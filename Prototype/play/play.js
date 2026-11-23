@@ -2570,28 +2570,62 @@ function camBlocked(q, m) {                                // like blocked(), wi
 // ---------------------------------------------------------------- HUD, labels and maps
 const $ = id => document.getElementById(id);
 const hhmm = m => String(Math.floor(m / 60) % 24).padStart(2, "0") + ":" + String(Math.floor(m % 60)).padStart(2, "0");
-const base = document.createElement("canvas"); base.width = base.height = 900;
-function drawBase() {
-  const c = base.getContext("2d"), k = 900 / (CITY + 40), o = 20;
-  c.fillStyle = "#3a3d2c"; c.fillRect(0, 0, 900, 900); c.fillStyle = "#4b4745"; c.fillRect((OX + o - SW / 2) * k, (OZ + o - SW / 2) * k, (OX1 - OX + SW) * k, (OZ1 - OZ + SW) * k);
+const base = document.createElement("canvas"), baseHi = document.createElement("canvas"); base.width = base.height = 900; baseHi.width = baseHi.height = 2700;   // baseHi: the big map drawn three times as fine, for zooming in (UI-018)
+function drawBase(cv = base) {
+  const c = cv.getContext("2d"), N = cv.width, k = N / (CITY + 40), o = 20;
+  c.fillStyle = "#3a3d2c"; c.fillRect(0, 0, N, N); c.fillStyle = "#4b4745"; c.fillRect((OX + o - SW / 2) * k, (OZ + o - SW / 2) * k, (OX1 - OX + SW) * k, (OZ1 - OZ + SW) * k);
   const line = (pts, w) => { c.lineWidth = Math.max(1, w * k); c.beginPath(); pts.forEach((q, n) => n ? c.lineTo((q[0] + o) * k, (q[1] + o) * k) : c.moveTo((q[0] + o) * k, (q[1] + o) * k)); c.stroke(); };
   c.strokeStyle = "#4b4745"; c.lineCap = "round"; c.lineJoin = "round";
   for (const ln of (D.roads || {}).links || []) line(ln.points, ln.width);
+  for (const g of (D.roads || {}).gates || []) line([[g[1], g[2]], [g[1] + g[3] * g[5], g[2] + g[4] * g[5]]], 7);   // the roads out of Old Town
+  const R = (x0, z0, w, d) => c.fillRect((x0 + o) * k, (z0 + o) * k, w * k, d * k);
   for (const b of D.blocks) {
     if (b.lanes) { for (const ln of b.lanes) line(ln.points, ln.width); }
+    else if (GREEN_KINDS[b.template]) {                     // the open ground (WLD-056): what it is, as the town draws it
+      c.fillStyle = MAP_GREEN[b.template]; R(b.origin[0], b.origin[1], b.ext[0], b.ext[1]);
+      for (const p of b.props) {
+        if (p.kind === "crop") { c.fillStyle = MAP_CROP[p.crop] || MAP_CROP.rough; R(p.pos[0] - p.size[0] / 2, p.pos[1] - p.size[1] / 2, p.size[0], p.size[1]); }
+        else if (p.kind === "pond") { c.fillStyle = "#4f6f7a"; c.beginPath(); c.arc((p.pos[0] + o) * k, (p.pos[1] + o) * k, p.r * k, 0, 7); c.fill(); }
+      }
+      c.save(); c.strokeStyle = "#a3967a"; for (const [p, q] of b.paths) line([p, q], 2.5); c.strokeStyle = "#8a7d64"; for (const t of b.tracks || []) line(t.points, t.width); c.restore();
+      c.save(); c.strokeStyle = "#7a5f43"; for (const p of b.props) if (p.kind === "fence") line(p.along === "x" ? [[p.pos[0] - p.len / 2, p.pos[1]], [p.pos[0] + p.len / 2, p.pos[1]]] : [[p.pos[0], p.pos[1] - p.len / 2], [p.pos[0], p.pos[1] + p.len / 2]], 1);
+      c.strokeStyle = "#33461f"; for (const p of b.props) if (p.shape === "hedge") line(p.along === "x" ? [[p.pos[0] - p.len / 2, p.pos[1]], [p.pos[0] + p.len / 2, p.pos[1]]] : [[p.pos[0], p.pos[1] - p.len / 2], [p.pos[0], p.pos[1] + p.len / 2]], 2); c.restore();
+      for (const p of b.props) if (p.kind === "board") { c.fillStyle = "#f0c35a"; R(p.pos[0] - 3, p.pos[1] - 3, 6, 6); }   // a plot for sale
+    }
     else { c.fillStyle = b.template === "park" ? "#5d7343" : "#77705f"; c.fillRect((b.origin[0] + o - 2) * k, (b.origin[1] + o - 2) * k, (b.ext[0] + 4) * k, (b.ext[1] + 4) * k); }
     for (const l of b.lots) {
       c.fillStyle = KIND_CSS[l.kind] || "#999"; const r = l.rect, cx = (r[0] + r[2]) / 2, cz = (r[1] + r[3]) / 2;
       c.save(); c.translate((cx + o) * k, (cz + o) * k); if (l.angle) c.rotate(l.angle * Math.PI / 180); c.fillRect((r[0] - cx) * k, (r[1] - cz) * k, (r[2] - r[0]) * k, (r[3] - r[1]) * k); c.restore();
     }
   }
+  c.fillStyle = "#2f4524";                                 // every tree, so a wood reads as a wood and an orchard as rows
+  for (const t of D.trees) { if (t[8]) continue; c.beginPath(); c.arc((t[0] + o) * k, (t[1] + o) * k, Math.max(.9, t[2] * k * .8), 0, 7); c.fill(); }
   c.strokeStyle = "#2a2a30"; c.lineWidth = 1.5; c.beginPath(); c.moveTo((OX + o - 8) * k, (TRAM_Z + o) * k); c.lineTo((OX1 + o + 8) * k, (TRAM_Z + o) * k); c.stroke();
   return { k, o };
 }
+const MAP_GREEN = { woods: "#4f6b3a", common: "#5d7343", orchard: "#5a6e3f", fields: "#66703f", plots: "#6c7449", meadow: "#5d7343" };   // the open ground on the maps (WLD-056)
+const MAP_CROP = { wheat: "#a8924a", barley: "#9a8d55", furrow: "#5a4632", pasture: "#617a3e", cabbage: "#4c6a3e", rough: "#76804d" };
+const MAP_WORDS = [["#4f6b3a", "Woods"], ["#5d7343", "Commons and greens"], ["#66703f", "Farmland"], ["#76804d", "Building plots"], ["#f0c35a", "Plot for sale"]];
 let mapScale, people = [];
 const SHOP_KINDS = new Set(["shop", "food", "bank", "dealer", "library", "museum", "cinema", "furniture", "health"]);   // named on the big map when asked (UI-012)
-$("big").addEventListener("click", e => {                    // a click on the big map marks the place (again on the mark: cleared)
-  const b = $("big").getBoundingClientRect(), { k, o } = mapScale, x = (e.clientX - b.left) / b.width * 900 / k - o, z = (e.clientY - b.top) / b.height * 900 / k - o;
+// The big map zooms and pans (UI-018): the wheel zooms about the pointer (1 to 6 times), dragging moves it, 0 or the
+// middle button shows the whole town again, + and - zoom about the middle. MV: zoom and the point of the map (in its
+// own 900-px units) at the middle of the canvas.
+const MV = { z: 1, cx: 450, cy: 450 }, MAP_ZOOM = [1, 6];
+const mapClamp = () => { const h = 450 / MV.z; MV.cx = clamp(MV.cx, h, 900 - h); MV.cy = clamp(MV.cy, h, 900 - h); };
+const mapAt = e => { const b = $("big").getBoundingClientRect(); return [(e.clientX - b.left) / b.width * 900, (e.clientY - b.top) / b.height * 900]; };   // canvas px
+const mapPx = ([sx, sy]) => [(sx - 450) / MV.z + MV.cx, (sy - 450) / MV.z + MV.cy];   // canvas px -> map px
+const mapZoom = (f, at) => { const [mx, my] = mapPx(at); MV.z = clamp(MV.z * f, MAP_ZOOM[0], MAP_ZOOM[1]); MV.cx = mx - (at[0] - 450) / MV.z; MV.cy = my - (at[1] - 450) / MV.z; mapClamp(); };
+let mapDrag = null;
+$("big").addEventListener("wheel", e => { e.preventDefault(); mapZoom(e.deltaY < 0 ? 1.25 : 1 / 1.25, mapAt(e)); }, { passive: false });
+$("big").addEventListener("mousedown", e => { if (e.button === 1) { e.preventDefault(); MV.z = 1; mapClamp(); return; } mapDrag = { at: mapAt(e), c: [MV.cx, MV.cy], moved: false }; });
+addEventListener("mousemove", e => { if (!mapDrag) return; const p = mapAt(e), dx = p[0] - mapDrag.at[0], dy = p[1] - mapDrag.at[1]; if (Math.hypot(dx, dy) > 4) mapDrag.moved = true;
+  MV.cx = mapDrag.c[0] - dx / MV.z; MV.cy = mapDrag.c[1] - dy / MV.z; mapClamp(); });
+addEventListener("mouseup", () => { setTimeout(() => { mapDrag = null; }, 0); });
+addEventListener("keydown", e => { if (!showMap) return; if (e.key === "+" || e.key === "=") mapZoom(1.25, [450, 450]); else if (e.key === "-") mapZoom(1 / 1.25, [450, 450]); else if (e.key === "0") { MV.z = 1; mapClamp(); } });
+$("big").addEventListener("click", e => {                    // a click on the big map marks the place (again on the mark: cleared); not the end of a drag
+  if (mapDrag && mapDrag.moved) return;
+  const { k, o } = mapScale, [px, py] = mapPx(mapAt(e)), x = px / k - o, z = py / k - o;
   if (Life.markAt) Life.markAt(x, z);
 });
 function drawMaps() {
@@ -2605,18 +2639,23 @@ function drawMaps() {
   for (const [x0, z0, kind] of marks) { const x = clamp((x0 - pl.x) * z + S / 2, 12, S - 12), y = clamp((z0 - pl.z) * z + S / 2, 12, S - 12); mc.fillStyle = kind === 2 ? "#f4e9d0" : kind ? "#f0c35a" : "#9fd1c4"; mc.strokeStyle = "#17171c"; mc.lineWidth = 2; mc.beginPath(); mc.arc(x, y, 7, 0, 7); mc.fill(); mc.stroke(); }
   mc.translate(S / 2, S / 2); mc.rotate(cam.yaw); mc.fillStyle = "#f0a35a"; mc.strokeStyle = "#17171c"; mc.lineWidth = 2; mc.beginPath(); mc.moveTo(0, -13); mc.lineTo(9, 10); mc.lineTo(0, 5); mc.lineTo(-9, 10); mc.closePath(); mc.fill(); mc.stroke(); mc.restore();
   if (!showMap) return;
-  const bc = $("big").getContext("2d"); bc.drawImage(base, 0, 0);
-  if (MS.map_mine) for (const n of Life.mine()) { const r = LOTS[n].rect; bc.strokeStyle = "#f0a35a"; bc.lineWidth = 3; bc.strokeRect((r[0] + o) * k - 2, (r[1] + o) * k - 2, (r[2] - r[0]) * k + 4, (r[3] - r[1]) * k + 4); }   // yours, outlined (UI-012)
+  const bc = $("big").getContext("2d"), Z = MV.z, X = x => ((x + o) * k - MV.cx) * Z + 450, Y = y => ((y + o) * k - MV.cy) * Z + 450;   // metres -> canvas px
+  bc.fillStyle = "#3a3d2c"; bc.fillRect(0, 0, 900, 900);
+  bc.drawImage(baseHi, (MV.cx - 450 / Z) * 3, (MV.cy - 450 / Z) * 3, 2700 / Z, 2700 / Z, 0, 0, 900, 900);
+  if (MS.map_mine) for (const n of Life.mine()) { const r = LOTS[n].rect; bc.strokeStyle = "#f0a35a"; bc.lineWidth = 3; bc.strokeRect(X(r[0]) - 2, Y(r[1]) - 2, (r[2] - r[0]) * k * Z + 4, (r[3] - r[1]) * k * Z + 4); }   // yours, outlined (UI-012)
   if (MS.map_shops) { bc.font = "600 9px Bahnschrift, 'Segoe UI', sans-serif"; bc.textAlign = "center"; bc.lineWidth = 3; bc.strokeStyle = "rgba(23,23,28,.9)"; bc.fillStyle = "#f4e9d0";
-    const put = [], seen = new Set();                      // each name once, and none over another
+    const put = [], seen = new Set();                      // each name once, and none over another (more of them fit as you zoom in)
     for (const l of LOTS) { if (!SHOP_KINDS.has(l.kind) || !l.name || seen.has(l.name)) continue;
-      const x = ((l.rect[0] + l.rect[2]) / 2 + o) * k, y = ((l.rect[1] + l.rect[3]) / 2 + o) * k, w = bc.measureText(l.name).width / 2 + 2, r = [x - w, y - 8, x + w, y + 3];
+      const x = X((l.rect[0] + l.rect[2]) / 2), y = Y((l.rect[1] + l.rect[3]) / 2); if (x < -60 || x > 960 || y < -10 || y > 910) continue;
+      const w = bc.measureText(l.name).width / 2 + 2, r = [x - w, y - 8, x + w, y + 3];
       if (put.some(q => q[0] < r[2] && r[0] < q[2] && q[1] < r[3] && r[1] < q[3])) continue;
       put.push(r); seen.add(l.name); bc.strokeText(l.name, x, y); bc.fillText(l.name, x, y); } }
-  if (MS.map_people) { bc.fillStyle = "#17171c"; for (const q of people) bc.fillRect((q[0] + o) * k - 1.5, (q[1] + o) * k - 1.5, 3, 3); }
-  for (const [x, z0, kind] of marks) { if (kind === 2) { const X = (x + o) * k, Y = (z0 + o) * k; bc.fillStyle = "#f4e9d0"; bc.strokeStyle = "#17171c"; bc.lineWidth = 2; bc.beginPath(); bc.moveTo(X, Y - 11); bc.lineTo(X + 8, Y); bc.lineTo(X, Y + 11); bc.lineTo(X - 8, Y); bc.closePath(); bc.fill(); bc.stroke(); continue; }   // the mark: a diamond
-    bc.fillStyle = kind ? "#f0c35a" : "#9fd1c4"; bc.strokeStyle = "#17171c"; bc.lineWidth = 2; bc.beginPath(); bc.arc((x + o) * k, (z0 + o) * k, 8, 0, 7); bc.fill(); bc.stroke(); }
-  bc.fillStyle = "#f0a35a"; bc.strokeStyle = "#17171c"; bc.lineWidth = 2; bc.beginPath(); bc.arc((pl.x + o) * k, (pl.z + o) * k, 7, 0, 7); bc.fill(); bc.stroke();
+  if (MS.map_people) { bc.fillStyle = "#17171c"; const s = Math.min(5, 1.5 * Math.sqrt(Z)); for (const q of people) bc.fillRect(X(q[0]) - s, Y(q[1]) - s, 2 * s, 2 * s); }
+  for (const [x, z0, kind] of marks) { if (kind === 2) { const X0 = X(x), Y0 = Y(z0); bc.fillStyle = "#f4e9d0"; bc.strokeStyle = "#17171c"; bc.lineWidth = 2; bc.beginPath(); bc.moveTo(X0, Y0 - 11); bc.lineTo(X0 + 8, Y0); bc.lineTo(X0, Y0 + 11); bc.lineTo(X0 - 8, Y0); bc.closePath(); bc.fill(); bc.stroke(); continue; }   // the mark: a diamond
+    bc.fillStyle = kind ? "#f0c35a" : "#9fd1c4"; bc.strokeStyle = "#17171c"; bc.lineWidth = 2; bc.beginPath(); bc.arc(X(x), Y(z0), 8, 0, 7); bc.fill(); bc.stroke(); }
+  bc.save(); bc.translate(X(pl.x), Y(pl.z)); bc.rotate(cam.yaw);   // you: an arrow pointing the way you look, as on the round map
+  bc.fillStyle = "#f0a35a"; bc.strokeStyle = "#17171c"; bc.lineWidth = 2; bc.beginPath(); bc.moveTo(0, -13); bc.lineTo(9, 10); bc.lineTo(0, 5); bc.lineTo(-9, 10); bc.closePath(); bc.fill(); bc.stroke(); bc.restore();
+  if (Z > 1.01) { bc.font = "600 12px Bahnschrift, 'Segoe UI', sans-serif"; bc.textAlign = "left"; bc.fillStyle = "rgba(244,233,208,.85)"; bc.fillText("x" + Z.toFixed(1) + "   wheel: zoom   drag: move   0: whole town", 10, 890); }
 }
 function segDist(x, z, a, b) {                              // distance from (x, z) to the segment a-b
   const vx = b[0] - a[0], vz = b[1] - a[1], L2 = vx * vx + vz * vz || 1, t = clamp(((x - a[0]) * vx + (z - a[1]) * vz) / L2, 0, 1);
@@ -2716,10 +2755,10 @@ const txtTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, txtTex); gl.tex
 for (const [kk, vv] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, kk, vv);
 const dyn = new Mesh(1 << 18), dynBuf = gl.createBuffer(), skyBuf = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-mapScale = drawBase();
+mapScale = drawBase(); drawBase(baseHi);
 $("lede").textContent = D.city.name + ", a " + D.day.season.toLowerCase() + " " + ({ Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday", Fri: "Friday", Sat: "Saturday", Sun: "Sunday" })[D.day.weekday] + (D.day.market ? ", market day" : "") + ". " +
   D.blocks.length + " blocks, " + LOTS.filter(l => !isOpen(l) && l.enterable).length + " buildings you can walk into and " + D.residents.length + " residents going about their day.";
-$("legend").innerHTML = Object.keys(KIND_WORD).map(k => `<div><i style="background:${KIND_CSS[k]}"></i>${KIND_WORD[k]}</div>`).join("") + `<div><i style="background:#17171c;width:5px;height:5px"></i>Residents</div><div><i style="background:#f0a35a;border-radius:50%"></i>You</div>`;
+$("legend").innerHTML = Object.keys(KIND_WORD).map(k => `<div><i style="background:${KIND_CSS[k]}"></i>${KIND_WORD[k]}</div>`).join("") + MAP_WORDS.map(([c, w]) => `<div><i style="background:${c}"></i>${w}</div>`).join("") + `<div><i style="background:#17171c;width:5px;height:5px"></i>Residents</div><div><i style="background:#f0a35a;clip-path:polygon(50% 0,100% 100%,50% 75%,0 100%)"></i>You, facing the way you look</div>`;
 
 function begin() { Sound.start(); started = true; $("start").style.display = "none"; $("keys").style.display = "block"; if (cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } }
 $("go").addEventListener("click", () => Life.go(begin));   // carry on, or the character designer first (life.js)
@@ -2731,7 +2770,7 @@ cv.addEventListener("dblclick", e => { if (started && Life.view) Life.pointer("d
 addEventListener("mouseup", e => { drag = false; if (started && Life.view) Life.pointer("up", e); });
 addEventListener("mousemove", e => { if (drag && e.buttons === 0) { drag = false; if (started && Life.view) Life.pointer("up", e); }   // a button let go outside the window
   if (Life.designing && drag) return Life.spin(e.movementX); if (started && Life.view) return Life.pointer("move", e, drag); if (!started || !(locked || drag)) return; cam.yaw += e.movementX * SET.look; cam.pitch = clamp(cam.pitch - e.movementY * SET.look * (SET.invert ? -1 : 1), -1.35, 1.35); });
-addEventListener("wheel", e => { if (started && Life.view) return Life.pointer("wheel", e); cam.dist = clamp(cam.dist + Math.sign(e.deltaY) * .6, 2.2, 14); });
+addEventListener("wheel", e => { if (showMap) return; if (started && Life.view) return Life.pointer("wheel", e); cam.dist = clamp(cam.dist + Math.sign(e.deltaY) * .6, 2.2, 14); });
 const RATES = [1, 5, 20, 100];
 addEventListener("keydown", e => {
   if (e.code === "Space" || e.code.startsWith("Arrow")) e.preventDefault();

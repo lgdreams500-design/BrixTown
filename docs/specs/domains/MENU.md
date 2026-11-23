@@ -1,9 +1,9 @@
 ---
 doc_id: WASTED-SPEC-MENU
 title: Brix Town — The game menu (money, belongings, properties, journal, wardrobe, map, settings, save, help)
-version: 0.3.0
+version: 0.3.1
 status: in-progress      # F-UI-MENU level 2, the others level 1, accepted and built in the slice
-last_updated: 2026-11-23
+last_updated: 2026-11-24
 parent: docs/specs/GAME_SPEC.md        # extends §UI (UI-001 to UI-004); same ID rules; UI, INV and CHR rows
 related: docs/specs/domains/BUILDER.md, docs/specs/domains/FURNITURE.md, docs/decisions/ADR-0031-designer-view-and-furniture-from-the-room.md
 prototype: Tools/worldgen/world.py settings_problems, outfit_problems; Tools/citysim/furnish.py stow
@@ -95,6 +95,7 @@ with a keyboard and mouse; the other two are its defaults for when they come (UI
 | UI-015 | The menu shall open on a home screen showing every page with its headline, sort its pages into the groups You, Town and Game, always show who is playing, the day, the time, the cash in hand and a way back to town, and show Settings one group at a time. | F-UI-MENU | 2 | P1 | accepted | `test_UI_015_every_tab_is_in_a_group`; slice |
 | UI-016 | Each page shall have a board colour and a lettering colour from data, taken from the town's palette, with the lettering readable on the board (contrast at least 3 to 1); a page's header and main buttons use them. | F-UI-MENU | 2 | P1 | accepted | `test_UI_016_every_tab_has_a_board_colour_that_can_be_read` |
 | UI-017 | Where the menu shows the player it shall show the character themself, live (the face on the Me board and in the top bar; the whole character, from the front, in the wardrobe), not a drawing; a drawing may stand in only when the character cannot be framed. | F-UI-MENU | 2 | P1 | accepted | `test_UI_017_the_menu_shows_the_player_themself`; slice |
+| UI-018 | The big map (M, and the menu's Map page) shall show the town as it is now, the open ground outside Old Town included (woods, commons and ponds, orchards, fields and their crops, plots for sale, paths, tracks and the roads out of town; WLD-056), with every tree; show the player as an arrow pointing the way they look; and zoom about the pointer with the wheel (1 to 6 times, + and - about the middle, 0 or the middle button for the whole town) and move when dragged, a drag never setting a mark. Owner, 2026-11-24. | F-UI-MENU | 2 | P1 | accepted | Slice: `drawBase`, `drawMaps` in `play.js` |
 | CHR-014 | The player shall change what they wear (hair, clothes, their colours, extras; never the body) at any time, free, from the choices of the character designer. | F-CHR-WARDROBE | 1 | P0 | accepted | `test_CHR_014_an_outfit_is_only_clothes_and_hair_the_designer_offers` |
 | CHR-015 | The player shall save what they wear as a named outfit (up to a number in data), change into one and forget one; outfits are kept in the save. | F-CHR-WARDROBE | 1 | P1 | accepted | `test_CHR_015_the_wardrobe_holds_a_few_outfits` |
 
@@ -112,6 +113,7 @@ following a quest, a dot on a board with something new): not proposed in the bac
 
 | Version | Date | Change |
 |---|---|---|
+| 0.3.1 | 2026-11-24 | The big map shows the outskirts and every tree, the player as an arrow, and zooms and pans (UI-018; owner's request). |
 | 0.3.0 | 2026-11-23 | The menu's look and organisation (owner: "C, Painted signs", ADR-0033): §1.1, UI-015, UI-016. On 2026-11-24 the owner added: the real face, live, and the whole character in the wardrobe (UI-017). |
 | 0.2.0 | 2026-11-23 | `F-UI-MENU` level 2 (owner: "now build the game menu level 2"): UI-011 to UI-014, the Me and Storage tabs, the map's mark and filters, three save slots. |
 | 0.1.1 | 2026-11-23 | Properties opens with *Your buildings*, where Remodel is always shown (greyed out with the reason when it cannot be used). |
