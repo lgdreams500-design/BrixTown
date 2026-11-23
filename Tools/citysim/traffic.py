@@ -878,7 +878,125 @@ class Traffic:
         self._days[day]["pooled"] = sorted(pools)          # every car left at home for a shared ride, whichever halves fitted
         drivers = {self.cars[c]["owner"] for c in legs if c in self.cars}
         self._days[day]["rides"] = self._riders(plan, trips, drivers)
+        self._days[day]["at_lights"] = self._hold_walkers(day, plan)
         return plan
+
+    # -- people on foot at the lights (CITY-097) --
+    def light_wait(self, day, jid, axis, t, need):
+        """Real seconds someone at the kerb at real second t of the day must wait before crossing a road whose traffic moves
+        along `axis` at junction jid, so that its traffic has red for the next `need` seconds (traffic.py's signal cycle)."""
+        cyc = self.r["signals"]
+        g, a, ar = cyc["green_s"], cyc["amber_s"], cyc["all_red_s"]
+        half = g + a + ar
+        cycle = 2 * half
+        ph = (t + day * 1440 * self.pace + rnd("sig", jid) * cycle) % cycle
+        if axis == "ns":                                   # ns: green, amber, then red for the all-red and the whole ew half
+            wins = [(g + a + k * cycle, cycle + k * cycle) for k in (0, 1, 2)]
+        else:                                              # ew: red through the ns half and its own all-red
+            wins = [(half + g + a + k * cycle, cycle + half + k * cycle) for k in (-1, 0, 1, 2)]
+        best = None
+        for s0, s1 in wins:
+            x = max(ph, s0)
+            if x + need <= s1 and (best is None or x < best):
+                best = x
+        return 0.0 if best is None else best - ph
+
+    def signal_crossings(self):
+        R = self.roads
+        return {(round(c["pos"][0], 2), round(c["pos"][1], 2)): (c["street"], c["junction"]) for c in R.d["crossings"]
+                if R.j.get(c["junction"], {}).get("control") == "signals"}
+
+    @staticmethod
+    def _planned_at(route, cum, v, t0, key, keys):
+        for k in range(len(route) - 1):
+            if keys.get((round((route[k][0] + route[k + 1][0]) / 2, 2), round((route[k][1] + route[k + 1][1]) / 2, 2))) == key:
+                return t0 + cum[k] / v
+        return t0
+
+    def _hold_walkers(self, day, plan):
+        """At a crossing with traffic lights a resident on foot steps out only while that road's traffic has red, with red
+        left for the crossing and walk_at_lights.margin_s; until then they wait at the kerb. The wait comes out of the stay
+        that follows the walk, so the rest of their day keeps its times; where there is no such stay to take it from (a car
+        or a bus to catch), they cross as they come. Returns the crossings as they were walked, for the tests."""
+        keys = self.signal_crossings()
+        if not keys:
+            return []
+        pace, m = self.pace, self.r.get("walk_at_lights", {}).get("margin_s", 1.0)
+        record = []
+        for rid in sorted(plan):
+            pieces, out, i, changed = plan[rid], [], 0, False
+            while i < len(pieces):
+                p = pieces[i]
+                if p[0] != "move" or i + 1 >= len(pieces):
+                    out.append(p); i += 1
+                    continue
+                route, cum, v = p[3]
+                s = p[4]
+
+                def walk_from(t0):
+                    """The walk set off at t0, waiting at each crossing at the lights for red: (pieces, delay, crossings)."""
+                    new, delay, seg, tcur, crossed = [], 0.0, 0, t0, []
+                    for k in range(len(route) - 1):
+                        a, b = route[k], route[k + 1]
+                        key = keys.get((round((a[0] + b[0]) / 2, 2), round((a[1] + b[1]) / 2, 2)))
+                        if key is None or dist(a, b) <= 3 or v <= 0:
+                            continue
+                        ta = t0 + delay + cum[k] / v                       # at the kerb (game minutes)
+                        need = dist(a, b) / v * pace + m
+                        w = self.light_wait(day, key[1], "ns" if key[0].startswith("s_ns_") else "ew", ta * pace, need)
+                        if w > .05:
+                            sub = route[seg:k + 1]
+                            if len(sub) >= 2:
+                                new.append(("move", tcur, ta, (sub, lengths(sub), v), s))
+                            new.append(("stay", ta, ta + w / pace, tuple(a), dict(s, act="cross", use=None, slot=None, alt=None)))
+                            delay += w / pace
+                            seg, tcur = k, ta + w / pace
+                        crossed.append((key, ta * pace + max(w, 0.0), need))
+                    sub = route[seg:]
+                    new.append(("move", tcur, t0 + cum[-1] / v + delay, (sub, lengths(sub), v), s))
+                    return new, delay, crossed
+
+                t0, t1 = p[1], p[2]
+                new, delay, crossed = walk_from(t0)
+                if delay <= 0:
+                    record += [dict(rid=rid, key=c[0], t=c[1], need=c[2], held=False, wanted=False) for c in crossed]
+                    out.append(p); i += 1
+                    continue
+                nxt = pieces[i + 1]
+                if nxt[0] == "stay" and nxt[2] - nxt[1] > delay + .05:   # take the wait from the stay after: there a little later
+                    out += new
+                    out.append((nxt[0], nxt[1] + delay, nxt[2], nxt[3], nxt[4]))
+                    record += [dict(rid=rid, key=c[0], t=c[1], need=c[2], held=True, wanted=True) for c in crossed]
+                    changed = True
+                    i += 2
+                    continue
+                prev = out[-1] if out else None                     # or from the stay before: off a little earlier, there on time
+                early = None
+                if prev is not None and prev[0] == "stay" and nxt[0] != "drive":   # not to stand about by their car
+                    for lead in (delay, delay * 1.5, delay * 2 + .5):
+                        if prev[2] - prev[1] <= lead + .05:
+                            break
+                        n2, d2, c2 = walk_from(t0 - lead)
+                        if d2 <= lead + 1e-9:
+                            early = (lead, n2, c2)
+                            break
+                if early is None:
+                    record += [dict(rid=rid, key=c[0], t=self._planned_at(route, cum, v, t0, c[0], keys) * pace, need=c[2], held=False, wanted=True)
+                               for c in crossed]                    # crossed as planned
+                    out.append(p); i += 1                            # nothing to take the wait from: cross as they come
+                    continue
+                lead, n2, c2 = early
+                out[-1] = (prev[0], prev[1], t0 - lead, prev[3], prev[4])
+                out += n2
+                end = n2[-1][2]
+                if end < t1 - 1e-9:                                 # there early: wait at the door for the time they were due
+                    out.append(("stay", end, t1, tuple(route[-1]), dict(s, act="wait", use=None, slot=None, alt=None)))
+                record += [dict(rid=rid, key=c[0], t=c[1], need=c[2], held=True, wanted=True) for c in c2]
+                changed = True
+                i += 1
+            if changed:
+                plan[rid] = out
+        return record
 
     # -- car pooling (CITY-094) --
     def _commute(self, cid, lg):

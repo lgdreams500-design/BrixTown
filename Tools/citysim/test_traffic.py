@@ -427,6 +427,20 @@ class NoCarIsStuck(unittest.TestCase):
                 self.assertEqual(e["signal"], "green", e)                # and nobody goes on red to get there
 
 
+    def test_CITY_097_walkers_cross_at_the_lights_on_red(self):
+        rec = D["at_lights"]
+        self.assertGreater(len(rec), 1000)
+        def on_red(c):
+            return T.light_wait(DAY, c["key"][1], "ns" if c["key"][0].startswith("s_ns_") else "ew", c["t"], c["need"]) < .05
+        held = [c for c in rec if c["held"]]
+        self.assertGreater(len(held), 1000)
+        self.assertTrue(all(on_red(c) for c in held))                     # held for red, they cross on red
+        self.assertGreater(sum(on_red(c) for c in rec) / len(rec), .9)    # and nearly everyone crosses on red
+        for rid in {c["rid"] for c in held}:                              # their days stay whole
+            for a, b in zip(PLAN[rid], PLAN[rid][1:]):
+                self.assertAlmostEqual(a[2], b[1], places=6)
+
+
 class TheBusyDay(unittest.TestCase):
     """Every household has a car and drives every trip: the same rules must still hold."""
 
