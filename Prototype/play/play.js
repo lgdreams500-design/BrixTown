@@ -729,7 +729,11 @@ function windows(l) {                                      // each window is one
 }
 
 function furnish(l, side, accent, inC, vis, level) {     // at load (no vis): places, uses and collisions; near the camera (vis = a mesh): the furniture itself
-  level = level || 0; l = Storeys.proxy(l, level);       // one floor: its own places, and what it is for above the ground (storeys.js)
+  level = level || 0;
+  if (Homes.has(l)) return Homes.floor(l, level, vis);     // a row house furnished from its plan (homes.js, ADR-0034)
+  if (l.flats) Homes.flats(l, level, vis);                 // and a court's planned flats; the rest of the floor as before
+  l = Storeys.proxy(l, level);                             // one floor: its own places, and what it is for above the ground (storeys.js)
+  if (l.flats) l.objects = Homes.others(Object.getPrototypeOf(l), level, l.objects);
   const [x0, z0, x1, z1] = l.rect, o = l.objects, d = DOOR_DIR[side], ns = side === "n" || side === "s", F = Storeys.floorY(level);
   const toDoor = yawOf(d[0], d[1]), fromDoor = yawOf(-d[0], -d[1]);
   // Every place residents and the player use stays where it was (same heights, same collisions); what stands there is real
@@ -2328,6 +2332,14 @@ function cutState() {                                      // is the player insi
   CUT = { on: false };
   if (!started || cam.fp || pl.pose === 4 || window.Bench) return;
   const l = lotAt(pl.x, pl.z);
+  if (l && !l.house && l.H && pl.y < l.H - .5 && (Homes.has(l) || l.flats)) {   // a row house or a court's planned flat (homes.js): the lot's footprint,
+    const h = Homes.at(l, pl.x, pl.z, Storeys.levelAt(l, pl.y + .3)); if (!h) return;   // seen from the home's door side, cut above the player's feet
+    const [x0, z0, x1, z1] = l.rect, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, fx = -h.front[0], fz = -h.front[1], c = fz, s = -fx;
+    const hu = (Math.abs(c) > .5 ? x1 - x0 : z1 - z0) / 2 + .5, hv = (Math.abs(c) > .5 ? z1 - z0 : x1 - x0) / 2, v0 = -hv - 3, v1 = hv + .5;
+    const xs = [], zs = []; for (const [u, v] of [[-hu, v0], [hu, v0], [hu, v1], [-hu, v1]]) { xs.push(cx + u * c - v * s); zs.push(cz + u * s + v * c); }
+    CUT = { on: true, l, home: h.H, a: [cx, cz, c, s], b: [hu, v0, v1, pl.y], c: [fx, fz, pl.x, pl.z], yaw: Math.atan2(fx, -fz), box: [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)] };
+    return;
+  }
   if (!l || !l.house || l.house.plan !== "samples_19" || !l.H || pl.y > l.H - .5) return;
   const Fr = Houses.frame(l), fx = -Fr.s, fz = Fr.c;       // the house's front to back (its +v), the way the camera looks
   const hu = 6.9, v0 = -4.5 - 9.5, v1 = 4.5 + .9;         // the walls and eaves, and the front garden on the camera's side
@@ -2494,7 +2506,7 @@ addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
 const ROOMS = new Map(), UPSTAIRS = new Map();          // ground floors near the camera; the floors above of the building it is in (storeys.js)
 const floorMatOf = p => ROOM_FLOOR[p.sp] || ROOM_FLOOR[p.kind] || ROOM_FLOOR.work;
 function camFloor() {                                      // the building the camera is in, and which of its floors
-  const fy = started ? pl.y : cam.eye[1] - 1.6, l = lotAt(cam.eye[0], cam.eye[2]);
+  const fy = started ? pl.y : cam.eye[1] - 1.6, l = CUT.on ? CUT.l : lotAt(cam.eye[0], cam.eye[2]);   // (the cutaway camera stands outside the building it shows)
   return l && l.stair && fy < l.H ? [l, Storeys.levelAt(l, fy + .3)] : [null, 0];
 }
 function roomEntry(l, m, rec, level) {

@@ -817,6 +817,24 @@ class TheHomes(unittest.TestCase):
         for lid in ("b_0_0_l7", "b_0_0_l9", "b_0_0_l12", "b_0_0_l13"):     # the houses the owner reviewed keep the line as drawn
             self.assertEqual(next(l for l in self.houses if l["id"] == lid)["house"]["style"], "a")
 
+    def test_FURN_060_row_houses_and_flats_have_a_plan(self):
+        """ADR-0034: every row house and court flat of 80 or 160 m2 is furnished from its plan (add_homes_01.py)."""
+        spots = self.plans["house_12x9"]["house"]["spots"]
+        rows = [l for l in world.lots(W) if l.get("interior")]
+        flats = [(l, q) for l in world.lots(W) for q in l.get("flats", []) if q.get("interior")]
+        self.assertEqual(len(rows), 250)
+        self.assertEqual(len(flats), 653)
+        for l in rows:
+            p = self.plans[l["interior"]]
+            self.assertEqual(len(p["house"]["floors"]), l["floors"], l["id"])
+            self.assertEqual(l["stair"]["kind"], "straight", l["id"])
+            beds = sum(len(spots[i["piece"]]) for i in p["items"] if i["piece"] in ("k17:bed", "c_bunk", "r_single"))
+            self.assertLessEqual(len(l["objects"]["bed"]), beds, l["id"])          # a bed for every resident
+            self.assertTrue(all(f >= 1 for f in l["levels"]["bed"]), l["id"])     # the beds are upstairs
+        for l, q in flats:
+            self.assertIn(q["interior"], ("flat_80", "flat_160"), q["id"])
+            self.assertFalse(l.get("tower"), q["id"])
+
     def test_FURN_061_plans_keep_clear(self):
         import importlib.util
         p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "blender", "house_interiors_21_plan.py")

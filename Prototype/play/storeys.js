@@ -43,14 +43,18 @@ window.Storeys = (() => {
     const s = l.stair, S = D.storeys.stair, [rx0, rz0, rx1, rz1] = s.rect, ax = s.axis === "x";
     const u0 = ax ? rx0 : rz0, u1 = ax ? rx1 : rz1, v0 = ax ? rz0 : rx0, v1 = ax ? rz1 : rx1;
     const wallLow = ax ? s.wall === "n" : s.wall === "w";   // is lane 0 (against the wall) at the low v end?
-    const w = S.width, sp = S.spine, lane0 = wallLow ? [v0, v0 + w] : [v1 - w, v1], lane1 = wallLow ? [v0 + w + sp, v1] : [v0, v1 - w - sp], spine = wallLow ? [v0 + w, v0 + w + sp] : [v1 - w - sp, v1 - w];
+    // a "straight" stair (the row houses' plans, World/rules/home_plans.json; Tools/worldgen/add_homes_01.py): one flight a storey
+    // up the side wall, each above the one below and rising the same way, s.width wide, open to the hall on its other side
+    const straight = s.kind === "straight";
+    const w = s.width || S.width, sp = S.spine, lane0 = wallLow ? [v0, v0 + w] : [v1 - w, v1], lane1 = wallLow ? [v0 + w + sp, v1] : [v0, v1 - w - sp], spine = wallLow ? [v0 + w, v0 + w + sp] : [v1 - w - sp, v1 - w];
+    const open = wallLow ? lane0[1] : lane0[0];             // the flight's open side (a straight stair)
     const uLo = u0 + S.landing, uHi = u1 - S.landing;
     const P = (u, v, y) => ax ? [u, y, v] : [v, y, u];       // (along, across) to world
     const box = (m, ua, ub, va, vb, y0, y1, c, f, o) => { const a = P(Math.min(ua, ub), Math.min(va, vb), y0), b = P(Math.max(ua, ub), Math.max(va, vb), y1); m.box(a[0], y0, a[2], b[0], y1, b[2], c, f, o); };
-    const sol = (ua, ub, va, vb, y0, y1) => { const a = P(Math.min(ua, ub), Math.min(va, vb), y0), b = P(Math.max(ua, ub), Math.max(va, vb), y1); solid(Math.min(a[0], b[0]), y0, Math.min(a[2], b[2]), Math.max(a[0], b[0]), y1, Math.max(a[2], b[2])); };
-    const flight = f => { const lane = f % 2 ? lane1 : lane0, dir = (f % 2 ? -1 : 1) * s.up0, ub = dir > 0 ? uLo : uHi, ut = dir > 0 ? uHi : uLo; return { lane, dir, ub, ut }; };
+    const sol = (ua, ub, va, vb, y0, y1) => { const a = P(Math.min(ua, ub), Math.min(va, vb), y0), b = P(Math.max(ua, ub), Math.max(va, vb), y1); solid(Math.min(a[0], b[0]), y0, Math.min(a[2], b[2]), Math.max(a[0], b[0]), y1, Math.max(a[2], b[2])); return solids[solids.length - 1]; };
+    const flight = f => { const odd = !straight && f % 2, lane = odd ? lane1 : lane0, dir = (odd ? -1 : 1) * s.up0, ub = dir > 0 ? uLo : uHi, ut = dir > 0 ? uHi : uLo; return { lane, dir, ub, ut }; };
     const g = {
-      ax, u0, u1, v0, v1, uLo, uHi, lane0, lane1, spine, P, box, sol, flight,
+      ax, u0, u1, v0, v1, uLo, uHi, lane0, lane1, spine, P, box, sol, flight, straight, open,
       footAt(f) { const F = flight(f), v = (F.lane[0] + F.lane[1]) / 2, u = F.ub - F.dir * .6; const p = P(u, v, 0); return [p[0], p[2]]; },   // where you step on to go up from floor f
       hole(f) { if (f < 1) return null; const F = flight(f - 1); return [uLo, uHi, F.lane[0], F.lane[1]]; },                                     // the opening in floor f's slab
     };
@@ -123,10 +127,15 @@ window.Storeys = (() => {
     // the flights: steps you can climb, solid down to the floor they stand on; the spine wall between the flights; a rail at each hole
     for (let f = 0; f < n - 1; f++) {
       const F = G.flight(f), y0 = floorY(f), rise = floorY(f + 1) - y0, N = Math.ceil(rise / STEP), tr = (G.uHi - G.uLo) / N;
-      for (let k = 0; k < N; k++) { const ua = F.ub + F.dir * k * tr, ub = F.ub + F.dir * (k + 1) * tr; G.sol(ua, ub, F.lane[0], F.lane[1], y0, y0 + (k + 1) * rise / N); }
+      // a straight stair's upper flights stand over the flight below: thin treads there, so the way up underneath stays open
+      // (flagged .stair: walked up through floorAt, never pushed against)
+      for (let k = 0; k < N; k++) { const ua = F.ub + F.dir * k * tr, ub = F.ub + F.dir * (k + 1) * tr, top = y0 + (k + 1) * rise / N;
+        if (G.straight && f > 0) G.sol(ua, ub, F.lane[0], F.lane[1], top - .2, top).stair = true; else G.sol(ua, ub, F.lane[0], F.lane[1], y0, top); }
     }
-    for (let f = 0; f < n; f++) G.sol(G.uLo, G.uHi, G.spine[0], G.spine[1], floorY(f), ceilY(f));
-    for (let f = 1; f < n; f++) { const F = G.flight(f - 1), u = F.ub; G.sol(u - .04, u + .04, F.lane[0], F.lane[1], floorY(f), floorY(f) + 1.0); }
+    if (G.straight) for (let f = 1; f < n; f++) G.sol(G.uLo, G.uHi, G.open - .03, G.open + .03, floorY(f), floorY(f) + 1.0);   // a rail along the well's open side
+    else for (let f = 0; f < n; f++) G.sol(G.uLo, G.uHi, G.spine[0], G.spine[1], floorY(f), ceilY(f));
+    for (let f = 1; f < n; f++) { if (G.straight && f < n - 1) continue;   // (a straight stair goes on up from the foot of the well)
+      const F = G.flight(f - 1), u = F.ub; G.sol(u - .04, u + .04, F.lane[0], F.lane[1], floorY(f), floorY(f) + 1.0); }
     // the lift: a shaft from the ground to the top floor, a door and a call button on each floor; up and down a floor, or all the way
     if (l.lift) {
       const [bx, bz] = l.lift, ix = bx < (x0 + x1) / 2 ? 1 : -1;
@@ -156,11 +165,21 @@ window.Storeys = (() => {
     if (G) {
       if (f < n - 1) {                                       // the flight up from this floor, its treads and risers, a handrail on the open side
         const F = G.flight(f), rise = floorY(f + 1) - y, N = Math.ceil(rise / STEP), tr = (G.uHi - G.uLo) / N;
-        for (let k = 0; k < N; k++) { const ua = F.ub + F.dir * k * tr, ub = F.ub + F.dir * (k + 1) * tr; G.box(m, ua, ub, F.lane[0], F.lane[1], y, y + (k + 1) * rise / N, k % 2 ? WOOD : [.4, .27, .17], 19, { 2: null }); }   // each step built down to the floor: a solid flight
-        G.box(m, F.ub, F.ut, F.lane[0] - .03, F.lane[0] + .03, y, y + .25, RAIL, 19);
+        const thin = G.straight && f > 0;                    // treads over the flight below (a straight stair)
+        for (let k = 0; k < N; k++) { const ua = F.ub + F.dir * k * tr, ub = F.ub + F.dir * (k + 1) * tr, top = y + (k + 1) * rise / N, c = k % 2 ? WOOD : [.4, .27, .17];
+          if (thin) G.box(m, ua, ub, F.lane[0], F.lane[1], top - .2, top, c, 19, { 2: [[.74, .7, .62], 17] }); else G.box(m, ua, ub, F.lane[0], F.lane[1], y, top, c, 19, { 2: null }); }   // each step built down to the floor: a solid flight
+        if (G.straight) {                                    // a handrail on posts up the open side
+          const yAt = u => y + rise * (u - F.ub) / (F.ut - F.ub), M = 24;
+          for (let k = 0; k < M; k++) { const ua = F.ub + (F.ut - F.ub) * k / M, ub = F.ub + (F.ut - F.ub) * (k + 1) / M, yy = yAt((ua + ub) / 2) + .88; G.box(m, ua, ub, G.open - .03, G.open + .03, yy, yy + .07, RAIL, 19); }
+          for (let k = 0; k <= 6; k++) { const u = F.ub + (F.ut - F.ub) * k / 6; G.box(m, u - .02, u + .02, G.open - .02, G.open + .02, yAt(u) - (thin ? .2 : 0), yAt(u) + .9, RAIL, 19); }
+        } else G.box(m, F.ub, F.ut, F.lane[0] - .03, F.lane[0] + .03, y, y + .25, RAIL, 19);
       }
-      G.box(m, G.uLo, G.uHi, G.spine[0], G.spine[1], y, cy, [.78, .73, .64], 17);   // the spine wall between the flights
-      if (f > 0) {                                           // a rail where the floor stops at the hole
+      if (!G.straight) G.box(m, G.uLo, G.uHi, G.spine[0], G.spine[1], y, cy, [.78, .73, .64], 17);   // the spine wall between the flights
+      else if (f > 0) {                                      // a rail along the well's open side
+        G.box(m, G.uLo, G.uHi, G.open - .03, G.open + .03, y + .92, y + 1.0, RAIL, 19);
+        for (let u = G.uLo + .1; u < G.uHi; u += .3) G.box(m, u - .015, u + .015, G.open - .015, G.open + .015, y, y + .92, RAIL, 19);
+      }
+      if (f > 0 && !(G.straight && f < n - 1)) {             // a rail where the floor stops at the hole
         const F = G.flight(f - 1), u = F.ub;
         G.box(m, u - .03, u + .03, F.lane[0], F.lane[1], y + .92, y + 1.0, RAIL, 19);
         for (let v = F.lane[0] + .1; v < F.lane[1]; v += .25) G.box(m, u - .015, u + .015, v - .015, v + .015, y, y + .92, RAIL, 19);
