@@ -110,7 +110,7 @@ class Estate:
 
     def __init__(self, rules, econ, lots, residents, furnish=None):
         self.R = rules
-        self.F = furnish or rules.get("furnishing") or fu.load_rules()   # FURN-063: World/rules/furnishing.json
+        self.F = furnish or rules.get("furnishing") or fu.load_rules()   # FURN-063: World/rules/furnishing_levels.json
         self.E = econ
         self.lots = lots
         self.units = carve(rules, lots, residents)

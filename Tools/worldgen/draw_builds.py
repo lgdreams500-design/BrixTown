@@ -172,7 +172,7 @@ def details(g):
         add("House line", LINE[h["furniture"]] + " (lot.house.furniture; picked by add_houses_03.py)")
         ways = collections.Counter(l["house"].get("style", "a") for l in L)
         add("Colourways", ", ".join(f"{w}: {STYLES['colourways'][h['furniture']][w]['name']} ({n})" for w, n in sorted(ways.items())) + " (house.style, add_houses_04.py; ADR-0032)")
-        add("Plan", f"{h.get('interior', h['plan'])} (World/rules/home_plans.json; ADR-0033), outside {h['plan']} ({h['source']})")
+        add("Plan", f"{h.get('interior', h['plan'])} (World/rules/home_plans.json; ADR-0035), outside {h['plan']} ({h['source']})")
         add("Rooms", ", ".join(f"{r['name']} (floor {r['floor']})" for r in h["rooms"]))
         add("Window boxes", f"{sum(1 for l in L if l['house']['trim'].get('window_boxes'))} of {len(L)} (where the line has them)")
         add("Turned to its lane", rng([l.get("angle", 0) for l in L], "°"))

@@ -1,37 +1,105 @@
 {
- "note": "The building kit: every choice a building's design is made from (docs/specs/domains/BUILDER.md BUILD-001 to BUILD-003; F-BLD-DESIGN level 1). The town's buildings take their designs from these by the rules in Tools/worldgen/world.py design_of(): a colour is picked from a list by the lot's id with the slice's own hash, so each building keeps the look it had. The building designer will offer the same lists. Colours are the town's (ART_DIRECTION; the look is locked, ADR-0004): adding one needs a look test and the owner's approval. Stone and brick patterns are in surfaces.json, stairs and floors in storeys.json.",
- "plaster": [[0.68, 0.63, 0.55], [0.70, 0.58, 0.46], [0.64, 0.60, 0.53], [0.70, 0.60, 0.50], [0.66, 0.56, 0.46], [0.68, 0.63, 0.55]],
- "roof_tiles": [[0.44, 0.24, 0.18], [0.38, 0.21, 0.16], [0.22, 0.22, 0.27], [0.32, 0.21, 0.15], [0.47, 0.28, 0.20]],
- "accents": [[0.52, 0.40, 0.20], [0.44, 0.24, 0.18], [0.20, 0.36, 0.37], [0.30, 0.38, 0.52], [0.30, 0.33, 0.20], [0.30, 0.24, 0.34]],
- "shutters_old": [[0.20, 0.36, 0.37], [0.42, 0.18, 0.14], [0.52, 0.40, 0.20], [0.30, 0.38, 0.52]],
- "frames": [[0.66, 0.61, 0.50], [0.30, 0.20, 0.13], [0.20, 0.36, 0.37], [0.66, 0.61, 0.50]],
- "inner_mix": {"with": [0.80, 0.74, 0.62], "share": 0.5},
+ "note": "The building kit: every choice a building's design is made from (docs/specs/domains/BUILDER.md BUILD-001 to BUILD-003; F-BLD-DESIGN level 1). A design names its choices by id (BUILD-016); world.built() turns the ids into the colours and sizes the slice builds with. 'colours' is the one table of named colours; each slot ('plaster', 'roof_tiles', 'accents', 'shutters_old', 'frames') lists the ids a designer may offer for it. 'town' gives the lists the town's own buildings pick from by the lot's id with the slice's hash (world.py design_of): a repeated id weights that choice, so each building keeps the look it had while the designer offers each colour once. Colours are the town's (ART_DIRECTION; the look is locked, ADR-0004): adding one needs a look test and the owner's approval. Stone and brick patterns are in surfaces.json, stairs and floors in storeys.json, what each district may use in planning.json.",
+ "colours": {
+  "limewash":        {"name": "Limewash",        "rgb": [0.68, 0.63, 0.55]},
+  "apricot":         {"name": "Apricot",         "rgb": [0.70, 0.58, 0.46]},
+  "putty":           {"name": "Putty",           "rgb": [0.64, 0.60, 0.53]},
+  "peach":           {"name": "Peach",           "rgb": [0.70, 0.60, 0.50]},
+  "biscuit":         {"name": "Biscuit",         "rgb": [0.66, 0.56, 0.46]},
+  "terracotta":      {"name": "Terracotta",      "rgb": [0.44, 0.24, 0.18]},
+  "dark_terracotta": {"name": "Dark terracotta", "rgb": [0.38, 0.21, 0.16]},
+  "slate":           {"name": "Slate grey",      "rgb": [0.22, 0.22, 0.27]},
+  "umber":           {"name": "Umber",           "rgb": [0.32, 0.21, 0.15]},
+  "sunbaked":        {"name": "Sunbaked",        "rgb": [0.47, 0.28, 0.20]},
+  "ochre":           {"name": "Ochre",           "rgb": [0.52, 0.40, 0.20]},
+  "teal":            {"name": "Teal",            "rgb": [0.20, 0.36, 0.37]},
+  "blue":            {"name": "Blue",            "rgb": [0.30, 0.38, 0.52]},
+  "olive":           {"name": "Olive",           "rgb": [0.30, 0.33, 0.20]},
+  "plum":            {"name": "Plum",            "rgb": [0.30, 0.24, 0.34]},
+  "oxblood":         {"name": "Oxblood",         "rgb": [0.42, 0.18, 0.14]},
+  "cream":           {"name": "Cream",           "rgb": [0.66, 0.61, 0.50]},
+  "dark_oak":        {"name": "Dark oak",        "rgb": [0.30, 0.20, 0.13]},
+  "pale":           {"name": "Pale",           "rgb": [0.74, 0.7, 0.62]},
+  "ochre_wash":     {"name": "Ochre wash",     "rgb": [0.7, 0.6, 0.44]},
+  "tiles_brown":    {"name": "Tiles brown",    "rgb": [0.27, 0.205, 0.14]},
+  "tiles_dark":     {"name": "Tiles dark",     "rgb": [0.19, 0.115, 0.085]},
+  "sign_teal":      {"name": "Sign teal",      "rgb": [0.16, 0.3, 0.31]},
+  "brown":          {"name": "Brown",          "rgb": [0.24, 0.16, 0.11]},
+  "indigo":         {"name": "Indigo",         "rgb": [0.1, 0.14, 0.24]}
+ },
+ "plaster": ["limewash", "apricot", "putty", "peach", "biscuit", "pale", "ochre_wash"],
+ "roof_tiles": ["terracotta", "dark_terracotta", "slate", "umber", "sunbaked", "tiles_brown", "tiles_dark"],
+ "accents": ["ochre", "terracotta", "teal", "blue", "olive", "plum", "cream", "sign_teal", "brown", "indigo"],
+ "shutters_old": ["teal", "oxblood", "ochre", "blue"],
+ "frames": ["cream", "dark_oak", "teal", "brown", "blue", "olive"],
+ "town": {
+  "plaster": ["limewash", "apricot", "putty", "peach", "biscuit", "limewash", "pale", "ochre_wash"],
+  "roof_tiles": ["terracotta", "dark_terracotta", "slate", "umber", "sunbaked", "tiles_brown", "tiles_dark"],
+  "accents": ["ochre", "terracotta", "teal", "blue", "olive", "plum", "cream", "sign_teal", "brown", "indigo"],
+  "shutters_old": ["teal", "oxblood", "ochre", "blue"],
+  "frames": ["cream", "dark_oak", "teal", "cream", "brown", "blue", "olive"]
+ },
+ "inner_mix": {"note": "An inside wall is painted in a plaster colour mixed this far toward 'with', so each plaster id is also an inside colour (inside.walls).", "with": [0.80, 0.74, 0.62], "share": 0.5},
  "odds": {"stone_to_eaves_old_quarter": 0.15, "shutters": 0.75, "lantern": 0.4, "crates": 0.7, "keystones": 0.5, "balcony": {"food": 0.9, "home": 0.35}},
  "doors": {"big": 3.2, "small": 1.7, "big_from_m2": 800},
- "windows": {
-  "flats": {"width": 1.2, "gap": 3.1, "tall": 1.5},
-  "tower": {"width": 1.7, "gap": 3.1, "tall": 1.5},
-  "old":   {"width": 1.25, "gap": 3.6, "tall": 2.0},
-  "plain": {"width": 1.15, "gap": 2.9, "tall": 1.5}
- },
+ "catalogue_note": "The roof and openings catalogues (BUILD-017). Each item has a name, the look test that shows it ('look', a script in Tools/blender/) and a status: only 'approved' items are offered or allowed in a design; a new kind of part is added as 'proposed' with its look test and becomes 'approved' only with the owner's approval (ADR-0004). 'price' names the line of 'prices' it is charged by; 'when' says which buildings may have it (big: a big building or a tower; old: an old house of the walled town; kinds: the building kinds).",
  "roofs": {
-  "pitched": {"rise_share": 0.38, "rise_max": 5.0, "tiles": "barrel"},
-  "flat":    {"parapet": 1.1},
-  "cornice": {}
+  "pitched": {"name": "Pitched roof", "status": "approved", "look": "building_kit_07.py", "when": {"big": false, "not_kinds": ["utility"]}, "rise_share": 0.38, "rise_max": 5.0, "tiles": "barrel"},
+  "flat":    {"name": "Flat roof with a parapet", "status": "approved", "look": "building_kit_07.py", "when": {}, "parapet": 1.1},
+  "cornice": {"name": "Stone cornice", "status": "approved", "look": "building_kit_07.py", "when": {"old": true}}
+ },
+ "tiles": {
+  "barrel": {"name": "Barrel tiles", "status": "approved", "look": "building_kit_07.py"}
+ },
+ "windows": {
+  "flats": {"name": "Flats windows", "status": "approved", "look": "building_kit_08.py", "when": {"specials": ["flats"]}, "width": 1.2, "gap": 3.1, "tall": 1.5},
+  "tower": {"name": "Tower windows", "status": "approved", "look": "building_kit_08.py", "when": {"tower": true}, "width": 1.7, "gap": 3.1, "tall": 1.5},
+  "old":   {"name": "Tall old-town windows", "status": "approved", "look": "building_kit_07.py", "when": {"old": true}, "width": 1.25, "gap": 3.6, "tall": 2.0},
+  "plain": {"name": "Plain windows", "status": "approved", "look": "building_kit_07.py", "when": {"old": false, "tower": false}, "width": 1.15, "gap": 2.9, "tall": 1.5}
+ },
+ "openings": {
+  "shutters":   {"name": "Louvred shutters", "status": "approved", "look": "building_kit_07.py", "price": "shutters_each", "colours": "shutters_old for old windows, else accents (planning.json shutters)"},
+  "frame":      {"name": "Window frames", "status": "approved", "look": "building_kit_07.py", "price": "frame_each", "colours": "frames"},
+  "balcony":    {"name": "Iron balcony", "status": "approved", "look": "building_kit_07.py", "price": "balcony"},
+  "keystones":  {"name": "Keystones over the windows", "status": "approved", "look": "building_kit_07.py", "price": "keystones_each"},
+  "shop_front": {"name": "Shop front", "status": "approved", "look": "building_kit_07.py", "when": {"kinds": ["shop", "food"]}},
+  "awning":     {"name": "Striped awning", "status": "approved", "look": "building_kit_07.py", "when": {"kinds": ["shop", "food"]}, "colours": "accents"}
+ },
+ "ornaments": {
+  "quoins":  {"name": "Corner stones", "status": "approved", "look": "building_kit_07.py", "price": "quoins"},
+  "lantern": {"name": "Wall lantern", "status": "approved", "look": "building_kit_07.py", "price": "lantern"},
+  "crates":  {"name": "Crates by the door", "status": "approved", "look": "building_kit_07.py", "when": {"kinds": ["shop", "food"]}}
  },
  "shop_front_max": 14.0,
+ "floor_finishes": {
+  "note": "Inside floors (inside.floors, one per storey): 'mat' is how it is laid in the slice (15 boards, 16 tiles in two tones), 'rgb' its colour. Interiors follow ADR-0026.",
+  "dark_boards":     {"name": "Dark boards",       "mat": 15, "rgb": [0.40, 0.27, 0.17]},
+  "brown_boards":    {"name": "Brown boards",      "mat": 15, "rgb": [0.36, 0.26, 0.18]},
+  "chestnut_boards": {"name": "Chestnut boards",   "mat": 15, "rgb": [0.38, 0.25, 0.16]},
+  "workshop_boards": {"name": "Workshop boards",   "mat": 15, "rgb": [0.30, 0.24, 0.19]},
+  "red_tiles":       {"name": "Red tiles",         "mat": 16, "rgb": [0.56, 0.34, 0.24]},
+  "sand_tiles":      {"name": "Sand tiles",        "mat": 16, "rgb": [0.58, 0.52, 0.44]},
+  "buff_tiles":      {"name": "Buff tiles",        "mat": 16, "rgb": [0.62, 0.56, 0.46]},
+  "brown_tiles":     {"name": "Brown tiles",       "mat": 16, "rgb": [0.50, 0.40, 0.32]},
+  "pale_stone":      {"name": "Pale stone tiles",  "mat": 16, "rgb": [0.74, 0.70, 0.62]},
+  "grey_stone":      {"name": "Grey stone tiles",  "mat": 16, "rgb": [0.66, 0.62, 0.56]},
+  "white_tiles":     {"name": "White tiles",       "mat": 16, "rgb": [0.72, 0.72, 0.70]},
+  "clinic_tiles":    {"name": "Clinic tiles",      "mat": 16, "rgb": [0.66, 0.66, 0.63]},
+  "grey_tiles":      {"name": "Grey tiles",        "mat": 16, "rgb": [0.40, 0.40, 0.40]},
+  "oxblood_tiles":   {"name": "Oxblood tiles",     "mat": 16, "rgb": [0.34, 0.14, 0.12]}
+ },
  "floors": {
-  "home": [15, [0.40, 0.27, 0.17]], "food": [16, [0.56, 0.34, 0.24]], "shop": [16, [0.58, 0.52, 0.44]], "work": [15, [0.36, 0.26, 0.18]], "works": [15, [0.30, 0.24, 0.19]],
-  "bank": [16, [0.74, 0.70, 0.62]], "library": [15, [0.40, 0.27, 0.17]], "museum": [16, [0.66, 0.62, 0.56]], "cinema": [16, [0.34, 0.14, 0.12]], "dealer": [16, [0.72, 0.72, 0.70]],
-  "health": [16, [0.66, 0.66, 0.63]], "hospital": [16, [0.66, 0.66, 0.63]], "utility": [16, [0.40, 0.40, 0.40]], "mall": [16, [0.62, 0.56, 0.46]], "hall": [16, [0.50, 0.40, 0.32]],
-  "guild": [15, [0.38, 0.25, 0.16]], "office": [15, [0.36, 0.26, 0.18]], "flats": [16, [0.58, 0.50, 0.42]]
+  "home": "dark_boards", "food": "red_tiles", "shop": "sand_tiles", "work": "brown_boards", "works": "workshop_boards",
+  "bank": "pale_stone", "library": "dark_boards", "museum": "grey_stone", "cinema": "oxblood_tiles", "dealer": "white_tiles",
+  "health": "clinic_tiles", "hospital": "clinic_tiles", "utility": "grey_tiles", "mall": "buff_tiles", "hall": "brown_tiles",
+  "guild": "chestnut_boards", "office": "brown_boards", "flats": "sand_tiles"
  },
  "floor_uses": {
   "bedrooms": ["home", null], "flat": ["home", "flats"], "store": ["shop", null], "rooms": ["home", null], "office": ["work", "office"],
   "wards": ["health", null], "stacks": ["library", null], "gallery": ["museum", null], "plant": ["utility", "depot"]
  },
  "prices": {
-  "note": "What each change costs, in chips (100 chips = 1 brix), by what it is measured in (Tools/citysim/builder.py cost). Set so that a full remodel of a typical house (about 1,900 brix) comes to about a quarter of its value, about 470 brix, and a repaint about 60 brix (Q-39, the owner, 2026-11-22). [ASSUMPTION] until play-tested.",
+  "note": "What each change costs, in chips (100 chips = 1 brix), by what it is measured in (Tools/citysim/builder.py cost). Set so that a full remodel of a typical house (about 1,900 brix) comes to about a quarter of its value, about 470 brix, and a repaint about 60 brix (Q-39, the owner, 2026-11-22). Walls are charged by the area of each facade changed. [ASSUMPTION] until play-tested.",
   "plaster_m2": 32, "stone_m2": 72, "brick_to_eaves_m2": 72, "roof_tiles_m2": 64,
   "shutters_each": 480, "shutter_paint_each": 190, "frame_each": 160, "balcony": 4800, "keystones_each": 320,
   "quoins": 3200, "lantern": 800, "floor_m2": 48, "inner_m2": 24, "permit": 800

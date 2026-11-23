@@ -1,4 +1,4 @@
-/* The row houses and the court flats furnished from their approved plans (ADR-0034; FURN-060 to FURN-063), as houses.js
+/* The row houses and the court flats furnished from their approved plans (ADR-0036; FURN-060 to FURN-063), as houses.js
    furnishes the designed houses. Each planned home names its plan (World/rules/home_plans.json) in `interior` and how the
    plan lies in it in `interior_frame` (Tools/worldgen/add_homes_01.py): a row house on its lot, a flat on its entry in
    lot.flats. The building's outside, its outer walls, floors, stair (storeys.js; a row house's is the plan's straight stair)

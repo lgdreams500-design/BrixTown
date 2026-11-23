@@ -75,6 +75,10 @@
  "crossing_at": 10.0,
  "walk_offset": 6.6,
  "crossing_clear_s": 2.5,
+ "crossing_patience_s": 20.0,
+ "walk_at_lights": {
+  "margin_s": 1.0
+ },
  "crossing_width": 3.0,
  "car_length": 4.2,
  "spacing": 7.0,
@@ -142,7 +146,27 @@
   "min_stay_min": 2.0,
   "wait_spread_m": 4.0,
   "wait_back_m": 1.0,
-  "alight_spread_min": 0.8
+  "alight_spread_min": 0.8,
+  "shelter_out_m": [
+   3.6,
+   2.3
+  ],
+  "stop_slide_m": 40.0,
+  "obstacle_m": {
+   "default": 0.5,
+   "tree": 1.0,
+   "arch": 2.0,
+   "lamp": 0.3,
+   "bollard": 0.3,
+   "plant": 0.6,
+   "ignore": [
+    "carpark",
+    "paving",
+    "lantern",
+    "hoarding",
+    "advert"
+   ]
+  }
  },
  "park_away": {
   "share": 0.6,

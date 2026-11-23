@@ -1,0 +1,574 @@
+{
+ "id": "b_0_11",
+ "grid": [
+  0,
+  11
+ ],
+ "template": "fields",
+ "district": "Mill Fields",
+ "origin": [
+  8.0,
+  1064.0
+ ],
+ "size": 80.0,
+ "span": [
+  4,
+  2
+ ],
+ "lots": [],
+ "paths": [],
+ "tracks": [
+  {
+   "points": [
+    [
+     8.0,
+     1068.0
+    ],
+    [
+     376.0,
+     1068.0
+    ]
+   ],
+   "width": 3.5
+  }
+ ],
+ "trees": [
+  {
+   "id": "b_0_11_t0",
+   "species": "oak",
+   "pos": [
+    7.69,
+    1090.87
+   ],
+   "planted": -1513,
+   "seed": 489322
+  },
+  {
+   "id": "b_0_11_t1",
+   "species": "oak",
+   "pos": [
+    8.29,
+    1128.91
+   ],
+   "planted": -809,
+   "seed": 385283
+  },
+  {
+   "id": "b_0_11_t2",
+   "species": "oak",
+   "pos": [
+    8.35,
+    1164.07
+   ],
+   "planted": -1546,
+   "seed": 536534
+  },
+  {
+   "id": "b_0_11_t3",
+   "species": "oak",
+   "pos": [
+    7.76,
+    1193.72
+   ],
+   "planted": -1413,
+   "seed": 224595
+  },
+  {
+   "id": "b_0_11_t4",
+   "species": "oak",
+   "pos": [
+    81.92,
+    1091.25
+   ],
+   "planted": -1541,
+   "seed": 521863
+  },
+  {
+   "id": "b_0_11_t5",
+   "species": "oak",
+   "pos": [
+    81.38,
+    1125.2
+   ],
+   "planted": -1397,
+   "seed": 155688
+  },
+  {
+   "id": "b_0_11_t6",
+   "species": "oak",
+   "pos": [
+    81.54,
+    1161.55
+   ],
+   "planted": -1075,
+   "seed": 879794
+  },
+  {
+   "id": "b_0_11_t7",
+   "species": "oak",
+   "pos": [
+    81.21,
+    1194.69
+   ],
+   "planted": -930,
+   "seed": 627113
+  },
+  {
+   "id": "b_0_11_t8",
+   "species": "oak",
+   "pos": [
+    155.56,
+    1096.31
+   ],
+   "planted": -1276,
+   "seed": 367970
+  },
+  {
+   "id": "b_0_11_t9",
+   "species": "oak",
+   "pos": [
+    155.69,
+    1125.07
+   ],
+   "planted": -878,
+   "seed": 102038
+  },
+  {
+   "id": "b_0_11_t10",
+   "species": "oak",
+   "pos": [
+    155.11,
+    1163.56
+   ],
+   "planted": -1012,
+   "seed": 741140
+  },
+  {
+   "id": "b_0_11_t11",
+   "species": "oak",
+   "pos": [
+    154.88,
+    1197.13
+   ],
+   "planted": -1858,
+   "seed": 474927
+  },
+  {
+   "id": "b_0_11_t12",
+   "species": "oak",
+   "pos": [
+    229.24,
+    1093.84
+   ],
+   "planted": -999,
+   "seed": 74424
+  },
+  {
+   "id": "b_0_11_t13",
+   "species": "oak",
+   "pos": [
+    228.36,
+    1129.06
+   ],
+   "planted": -1744,
+   "seed": 550247
+  },
+  {
+   "id": "b_0_11_t14",
+   "species": "oak",
+   "pos": [
+    228.44,
+    1163.39
+   ],
+   "planted": -1776,
+   "seed": 608019
+  },
+  {
+   "id": "b_0_11_t15",
+   "species": "oak",
+   "pos": [
+    228.69,
+    1195.67
+   ],
+   "planted": -1700,
+   "seed": 418948
+  },
+  {
+   "id": "b_0_11_t16",
+   "species": "oak",
+   "pos": [
+    302.89,
+    1093.89
+   ],
+   "planted": -1006,
+   "seed": 522405
+  },
+  {
+   "id": "b_0_11_t17",
+   "species": "oak",
+   "pos": [
+    302.23,
+    1126.78
+   ],
+   "planted": -1193,
+   "seed": 721665
+  },
+  {
+   "id": "b_0_11_t18",
+   "species": "oak",
+   "pos": [
+    302.35,
+    1160.18
+   ],
+   "planted": -1596,
+   "seed": 242575
+  },
+  {
+   "id": "b_0_11_t19",
+   "species": "oak",
+   "pos": [
+    302.01,
+    1196.15
+   ],
+   "planted": -1114,
+   "seed": 139293
+  },
+  {
+   "id": "b_0_11_t20",
+   "species": "oak",
+   "pos": [
+    376.2,
+    1094.52
+   ],
+   "planted": -781,
+   "seed": 688864
+  },
+  {
+   "id": "b_0_11_t21",
+   "species": "oak",
+   "pos": [
+    375.7,
+    1125.93
+   ],
+   "planted": -1287,
+   "seed": 249417
+  },
+  {
+   "id": "b_0_11_t22",
+   "species": "oak",
+   "pos": [
+    375.95,
+    1160.71
+   ],
+   "planted": -952,
+   "seed": 95119
+  },
+  {
+   "id": "b_0_11_t23",
+   "species": "oak",
+   "pos": [
+    376.32,
+    1195.3
+   ],
+   "planted": -918,
+   "seed": 529499
+  }
+ ],
+ "props": [
+  {
+   "id": "b_0_11_p0",
+   "kind": "crop",
+   "pos": [
+    44.8,
+    1155.25
+   ],
+   "set": "wild",
+   "size": [
+    70.1,
+    166.0
+   ],
+   "crop": "pasture",
+   "along": "z"
+  },
+  {
+   "id": "b_0_11_p1",
+   "kind": "haybale",
+   "pos": [
+    17.06,
+    1112.58
+   ],
+   "set": "wild",
+   "yaw": 0.8
+  },
+  {
+   "id": "b_0_11_p2",
+   "kind": "haybale",
+   "pos": [
+    52.11,
+    1188.6
+   ],
+   "set": "wild",
+   "yaw": 1.65
+  },
+  {
+   "id": "b_0_11_p3",
+   "kind": "haybale",
+   "pos": [
+    59.98,
+    1168.41
+   ],
+   "set": "wild",
+   "yaw": 0.49
+  },
+  {
+   "id": "b_0_11_p4",
+   "kind": "haybale",
+   "pos": [
+    47.3,
+    1187.42
+   ],
+   "set": "wild",
+   "yaw": 1.4
+  },
+  {
+   "id": "b_0_11_p5",
+   "kind": "haybale",
+   "pos": [
+    45.7,
+    1216.86
+   ],
+   "set": "wild",
+   "yaw": 1.79
+  },
+  {
+   "id": "b_0_11_p6",
+   "kind": "haybale",
+   "pos": [
+    73.76,
+    1135.39
+   ],
+   "set": "wild",
+   "yaw": 0.23
+  },
+  {
+   "id": "b_0_11_p7",
+   "kind": "crop",
+   "pos": [
+    118.4,
+    1155.25
+   ],
+   "set": "wild",
+   "size": [
+    70.1,
+    166.0
+   ],
+   "crop": "furrow",
+   "along": "z"
+  },
+  {
+   "id": "b_0_11_p8",
+   "kind": "crop",
+   "pos": [
+    192.0,
+    1155.25
+   ],
+   "set": "wild",
+   "size": [
+    70.1,
+    166.0
+   ],
+   "crop": "wheat",
+   "along": "z"
+  },
+  {
+   "id": "b_0_11_p9",
+   "kind": "crop",
+   "pos": [
+    265.6,
+    1155.25
+   ],
+   "set": "wild",
+   "size": [
+    70.1,
+    166.0
+   ],
+   "crop": "barley",
+   "along": "z"
+  },
+  {
+   "id": "b_0_11_p10",
+   "kind": "crop",
+   "pos": [
+    339.2,
+    1155.25
+   ],
+   "set": "wild",
+   "size": [
+    70.1,
+    166.0
+   ],
+   "crop": "cabbage",
+   "along": "z"
+  },
+  {
+   "id": "b_0_11_p11",
+   "kind": "plant",
+   "set": "wild",
+   "shape": "hedge",
+   "species": "hawthorn",
+   "pos": [
+    8.0,
+    1157.75
+   ],
+   "along": "z",
+   "len": 162.5,
+   "depth": 1.4,
+   "h": 1.8
+  },
+  {
+   "id": "b_0_11_p12",
+   "kind": "plant",
+   "set": "wild",
+   "shape": "hedge",
+   "species": "hawthorn",
+   "pos": [
+    81.6,
+    1157.75
+   ],
+   "along": "z",
+   "len": 162.5,
+   "depth": 1.4,
+   "h": 1.8
+  },
+  {
+   "id": "b_0_11_p13",
+   "kind": "plant",
+   "set": "wild",
+   "shape": "hedge",
+   "species": "hawthorn",
+   "pos": [
+    155.2,
+    1157.75
+   ],
+   "along": "z",
+   "len": 162.5,
+   "depth": 1.4,
+   "h": 1.8
+  },
+  {
+   "id": "b_0_11_p14",
+   "kind": "plant",
+   "set": "wild",
+   "shape": "hedge",
+   "species": "hawthorn",
+   "pos": [
+    228.8,
+    1157.75
+   ],
+   "along": "z",
+   "len": 162.5,
+   "depth": 1.4,
+   "h": 1.8
+  },
+  {
+   "id": "b_0_11_p15",
+   "kind": "plant",
+   "set": "wild",
+   "shape": "hedge",
+   "species": "hawthorn",
+   "pos": [
+    302.4,
+    1157.75
+   ],
+   "along": "z",
+   "len": 162.5,
+   "depth": 1.4,
+   "h": 1.8
+  },
+  {
+   "id": "b_0_11_p16",
+   "kind": "plant",
+   "set": "wild",
+   "shape": "hedge",
+   "species": "hawthorn",
+   "pos": [
+    376.0,
+    1157.75
+   ],
+   "along": "z",
+   "len": 162.5,
+   "depth": 1.4,
+   "h": 1.8
+  },
+  {
+   "id": "b_0_11_p17",
+   "kind": "plant",
+   "set": "wild",
+   "shape": "hedge",
+   "species": "hawthorn",
+   "pos": [
+    192.0,
+    1239.0
+   ],
+   "along": "x",
+   "len": 368.0,
+   "depth": 1.4,
+   "h": 1.8
+  },
+  {
+   "id": "b_0_11_p18",
+   "kind": "fence",
+   "pos": [
+    47.8,
+    1071.9
+   ],
+   "set": "wild",
+   "len": 63.6,
+   "along": "x"
+  },
+  {
+   "id": "b_0_11_p19",
+   "kind": "fence",
+   "pos": [
+    121.4,
+    1071.9
+   ],
+   "set": "wild",
+   "len": 63.6,
+   "along": "x"
+  },
+  {
+   "id": "b_0_11_p20",
+   "kind": "fence",
+   "pos": [
+    195.0,
+    1071.9
+   ],
+   "set": "wild",
+   "len": 63.6,
+   "along": "x"
+  },
+  {
+   "id": "b_0_11_p21",
+   "kind": "fence",
+   "pos": [
+    268.6,
+    1071.9
+   ],
+   "set": "wild",
+   "len": 63.6,
+   "along": "x"
+  },
+  {
+   "id": "b_0_11_p22",
+   "kind": "fence",
+   "pos": [
+    342.2,
+    1071.9
+   ],
+   "set": "wild",
+   "len": 63.6,
+   "along": "x"
+  }
+ ]
+}

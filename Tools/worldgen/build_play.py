@@ -204,7 +204,7 @@ def walk_net(city, lots_):
     return dict(nodes=[[round(x, 2), round(z, 2)] for x, z in nodes], edges=edges, anchor=anchor)
 
 
-# ---- FURN-063 (furnishing levels): the estate's rules go to the slice with World/rules/furnishing.json as
+# ---- FURN-063 (furnishing levels): the estate's rules go to the slice with World/rules/furnishing_levels.json as
 # estate.furnishing, which estate.js (Estate.Market, Estate.furnish) and furnishing.js read. estate.Estate loads the same
 # file itself, so estate_checks' expected results include each day's furniture transactions and the levels.
 def estate_rules(w):
@@ -213,6 +213,22 @@ def estate_rules(w):
     R["furnishing"] = {k: v for k, v in fu.load_rules().items() if k not in ("note", "notes")}
     return R
 # ---- end FURN-063
+def builder_data(w, ds):
+    """The building designer's rules for the slice (BUILD-004 to BUILD-007, BUILD-016 to BUILD-019): the kit, the planning
+    rules, the stone and brick colours, and a fixed run of remodels with its results, for builder.js to reproduce; and the
+    furnishing rules (furnish.py, FURN-051, FURN-052, FURN-055) with their own fixed run."""
+    import builder
+    import furnish
+    import roomplan
+    script, fs, rs = builder.check_script(w, ds), furnish.check_script(), roomplan.check_script()
+    return dict(kit={k: v for k, v in w["building_kit"].items() if not k.endswith("note")},
+                planning={k: v for k, v in w["planning"].items() if k != "note"},
+                patterns={k: v["colors"] for k, v in w["surfaces"]["patterns"].items()},
+                checks=dict(script=script, want=builder.run_script(w, ds, script)),
+                furnish=dict(rules={k: v for k, v in w["furnishing"].items() if k != "note"},          # FURN-051, FURN-052, FURN-055
+                             checks=dict(script=fs, want=furnish.run_script(w["furnishing"], fs))),
+                room_plan=dict(rules={k: v for k, v in w["room_plan"].items() if k != "note"},           # BUILD-021 to BUILD-023
+                               checks=dict(script=rs, want=roomplan.run_script(w["room_plan"], rs))))
 
 
 def estate_checks(w, lots_):
@@ -232,6 +248,7 @@ def season_days(day, cal):
 
 def tree_rows(w, city, day):
     rows = []
+    crowns = {"round": 0, "cone": 1, "slim": 2}                 # how play.js draws the crown (vegetation.json "crown", WLD-056)
     for b in w["blocks"]:
         for t in b["trees"]:
             v = city.veg.tree(t, day)
@@ -239,7 +256,7 @@ def tree_rows(w, city, day):
                 continue
             c = v.get("color", [0.3, 0.33, 0.2])
             rows.append([t["pos"][0], t["pos"][1], round(v["radius"], 2), round(v["leaf"], 2), round(c[0], 3), round(c[1], 3), round(c[2], 3),
-                         int(v.get("blossom", 0)), int(v["state"] == "fallen")])
+                         int(v.get("blossom", 0)), int(v["state"] == "fallen"), crowns[city.veg.d["species"][t["species"]].get("crown", "round")]])
     return rows
 
 
@@ -290,9 +307,10 @@ def main(day=16):
     for b in w["blocks"]:
         for l in b["lots"]:
             if l["id"] in ds:
-                l["design"] = ds[l["id"]]
+                l["design"] = world.built(w, ds[l["id"]])     # with its ids made colours, finishes and sizes (BUILD-016)
+                l["dsg"] = ds[l["id"]]                         # and the design itself, which the remodel designer edits (BUILD-004)
     data = dict(
-        city=w["city"], blocks=[{k: b[k] for k in ("id", "grid", "template", "district", "origin", "size", "lots", "paths", "props", "span", "lanes") if k in b} for b in w["blocks"]],
+        city=w["city"], blocks=[{k: b[k] for k in ("id", "grid", "template", "district", "origin", "size", "lots", "paths", "props", "span", "lanes", "tracks") if k in b} for b in w["blocks"]],
         day=dict(index=day, weekday=info["weekday_name"], season=cal["seasons"][info["season"]], market=info["market"],
                  sunrise=cal["sunrise"][info["season"]], sunset=cal["sunset"][info["season"]],
                  weather=[citysim.weather(city.d, city.clock, day * 1440 + h * 60) for h in (3, 9, 15, 21)]),
@@ -314,7 +332,8 @@ def main(day=16):
         home_plans={k: v for k, v in rules_file("home_plans")["plans"].items()},   # FURN-060: the plans homes are furnished from
         dressing=world.dressing_today(w, day),          # WLD-034: what the boards show today, bunting on market days
         wear=wear(w, city, day),                        # CITY-077, CITY-080: coats, hoods and umbrellas
-        life=life(w, city, plan, acts))                   # money, shops, quests, the designer (ADR-0012)
+        life=dict(life(w, city, plan, acts), builder=builder_data(w, ds),   # money, shops, quests, the designers (ADR-0012, BUILD-004)
+                  settings={k: v for k, v in w["settings"].items() if k != "note"}))   # the game menu and its settings (UI-005 to UI-010)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         f.write("// Generated by Tools/worldgen/build_play.py from World/. Do not edit: change the data files and run it again.\n")

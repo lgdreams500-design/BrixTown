@@ -1,4 +1,4 @@
-"""Every designed house gets the approved plan and a colourway (ADR-0032, ADR-0033; FURN-060, BUILD-001).
+"""Every designed house gets the approved plan and a colourway (ADR-0032, ADR-0035; FURN-060, BUILD-001).
 
 For each house of plan "samples_19" in the communities:
   - house.style: its colourway, "a", "b" or "c" of its line (World/rules/house_styles.json), by a hash of the lot; picked

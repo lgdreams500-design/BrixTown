@@ -557,7 +557,7 @@ window.Houses = (() => {
   // Made for walking through: doorways 1 m wide where nothing stands in them, a straight stair up the side of the hall with a
   // rail round its well, and a solid floor, ceiling and walls everywhere, so the camera (play.js stepCamera) stays inside.
   // The plan, its rooms, doorways, windows, stair and furniture are data (World/rules/home_plans.json "house_12x9", approved
-  // by the owner from Tools/blender/house_interiors_21.py, ADR-0033), the outside colours too (World/rules/house_styles.json,
+  // by the owner from Tools/blender/house_interiors_21.py, ADR-0035), the outside colours too (World/rules/house_styles.json,
   // ADR-0032): the house's line (lot.house.furniture) and its colourway (lot.house.style), both given once in the map
   // (Tools/worldgen/add_houses_04.py). Which pieces stand here follows the household (FURN-063, furnishing.js).
   const HPLAN = (window.WASTED.home_plans || {}).house_12x9, HPH = HPLAN.house, HSTY = window.WASTED.house_styles;

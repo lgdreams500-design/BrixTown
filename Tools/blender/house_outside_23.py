@@ -1,5 +1,5 @@
 """Brix Town - house outside 23: the twelve approved colourways (ADR-0032) on the house at the town's own size, 12 x 9 m,
-with the windows and front door of the approved plan (ADR-0033; World/rules/home_plans.json "house_12x9"), so the
+with the windows and front door of the approved plan (ADR-0035; World/rules/home_plans.json "house_12x9"), so the
 outside matches the rooms behind it (look test).
 
 Run headless:

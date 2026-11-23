@@ -35,7 +35,7 @@ Screen-space ambient occlusion in `Prototype/play/play.js`, on by default at ful
   found the arms, torso and nearby walls all round and dimmed the whole figure (indoors the sleeves fell from 59 to 44 and
   the arms from 58 to 39 in grey level); people have their own shading and self-shadow. They are still in the depth
   picture, so they shade the floor and walls they stand by. Changed on the owner's request in chat on 2026-11-22.
-- Key **O**, or `?d_ao=0`, switches it off to compare. `?d_ao=2` shows the occlusion alone, for tuning; `?d_aoR=`,
+- Key **O** (since 2026-11-23 the simple picture, which also softens the picture and drops the local bounce and contact shade), or `?d_ao=0`, switches it off to compare. `?d_ao=2` shows the occlusion alone, for tuning; `?d_aoR=`,
   `?d_aoI=` and `?d_aoFar=` set the reach, strength and fade distance. Like the sun's shadows it is off below full
   quality (key Q, or a slow machine below 27 frames a second).
 - The hand-made shade of ADR-0018 and the outlet stays for now. It is tuned to read with this on; removing it, where this

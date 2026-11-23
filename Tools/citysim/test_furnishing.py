@@ -1,4 +1,4 @@
-"""How furnished residents' homes are (FURN-062, FURN-063; F-HOME-FURNISH level 3; ADR-0033).
+"""How furnished residents' homes are (FURN-062, FURN-063; F-HOME-FURNISH level 3; ADR-0035).
         python -m unittest test_furnishing -v
 
 Each test names the requirement it proves (docs/specs/domains/FURNITURE.md §2.4)."""

@@ -90,8 +90,8 @@
       "note": "Owner, 2026-11-22: \"1 Living garden\" for the first slice (asked for flowers and bushes in the parks). Later milestones not stated."
     },
     "F-BLD-DESIGN": {
-      "slice": 1,
-      "note": "Owner, 2026-11-22: \"Yes, suggested levels\" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated."
+      "slice": 2,
+      "note": "Owner, 2026-11-22: \"Yes, suggested levels\" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. Then on 2026-11-23, asked whether inner walls meant finishes per wall or the room plan (moving, adding and removing walls and doors, level 2): \"Both\"; read as level 2 for the first slice."
     },
     "F-MAP-PLOTS": {
       "slice": 0,
@@ -164,6 +164,22 @@
     "F-OBJ-CARRY": {
       "slice": 1,
       "note": "Owner, 2026-11-22: \"furnish level 2 and carry level 1\" (asked for the first slice, so delivery crews can carry furniture into the flat). Later milestones not stated."
+    },
+    "F-UI-MENU": {
+      "slice": 2,
+      "note": "Owner, 2026-11-23: \"Suggested levels\" (level 1 for the first slice), then the same day: \"now build the game menu level 2\". Later milestones not stated."
+    },
+    "F-UI-SETTINGS": {
+      "slice": 1,
+      "note": "Owner, 2026-11-23: \"Suggested levels\" (asked which levels the four menu features should have for the first slice). Later milestones not stated."
+    },
+    "F-INV-ITEMS": {
+      "slice": 1,
+      "note": "Owner, 2026-11-23: \"Suggested levels\" (asked which levels the four menu features should have for the first slice). Later milestones not stated."
+    },
+    "F-CHR-WARDROBE": {
+      "slice": 1,
+      "note": "Owner, 2026-11-23: \"Suggested levels\" (asked which levels the four menu features should have for the first slice). Later milestones not stated."
     }
   }
 }

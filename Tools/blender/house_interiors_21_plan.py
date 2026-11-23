@@ -228,7 +228,7 @@ put(U, Ld, "o_bust", 1.15, -3.85, 0.0, 4)
 put(U, Ld, "d_pendant", 0.25, -1.6, 0.0, 2)
 
 
-PLANS_NOTE = ("The plans homes are furnished from (FURN-060, FURN-061, ADR-0033): per plan the house (walls, doorways, windows, "
+PLANS_NOTE = ("The plans homes are furnished from (FURN-060, FURN-061, ADR-0035): per plan the house (walls, doorways, windows, "
               "stair, rooms; metres in the house's own frame, x across the front left to right seen from the street, y from the "
               "front to the back) and the pieces of furniture kits 17 and 18 in each room with their place, turn, lift and the "
               "furnishing level each first comes in at (1 Bare, 2 Basic, 3 Homely, 4 Full; a home shows its level and those "
@@ -348,7 +348,7 @@ if __name__ == "__main__":
                            windows=WINDOWS, front_door=FRONT_DOOR, rooms=ROOMS, spots=SPOTS, beds=BEDS_OF),
                 levels=LEVELS, items=[{k: v for k, v in it.items() if not k.startswith("_")} for it in ITEMS])
     json.dump(plan, open(os.path.join(DIR, "layout.json"), "w", encoding="utf-8"), indent=1)
-    if not errs:                                             # the approved plan for the game (ADR-0033, FURN-060)
+    if not errs:                                             # the approved plan for the game (ADR-0035, FURN-060)
         wp = os.path.join(ROOT, "World", "rules", "home_plans.json")
         world = json.load(open(wp, encoding="utf-8")) if os.path.exists(wp) else dict(note=PLANS_NOTE, plans={})
         world["note"] = PLANS_NOTE

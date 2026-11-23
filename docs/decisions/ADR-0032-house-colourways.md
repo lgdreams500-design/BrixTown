@@ -40,7 +40,7 @@ shutters, door, window frames and roof tiles; the line keeps its shape.
 | Curve | Dusty blue shutters, ochre door and frames, cool plaster | Cream shutters, terracotta door, warm plaster | Teal on pale plaster, brown roof |
 
 The exact values are kept in `World/rules/house_styles.json`, which `house_styles_20.py` reads. New reference: `Art/Reference/house_colourways.png` (the
-sheet). ART_DIRECTION gets §2.7 for houses.
+sheet). ART_DIRECTION gets §2.8 for houses.
 
 ## Consequences
 - `World/rules/house_styles.json` holds these twelve sets and the lines' shapes, read by the slice's `houses.js`, by

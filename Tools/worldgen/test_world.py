@@ -343,7 +343,11 @@ class TheDesigns(unittest.TestCase):
             self.assertEqual(world.js_hash(*keys), want, keys)
         K = W["building_kit"]
         d = self.D["b_0_0_l0"]
-        self.assertEqual(d["walls"]["plaster"], world.js_pick(K["plaster"], 0.5495072316844016))
+        lot = next(l for l in world.lots(W) if l["id"] == "b_0_0_l0")
+        raw = world.design_of(W, next(b for b in W["blocks"] if lot in b["lots"]), lot)
+        self.assertEqual(raw["walls"]["n"]["plaster"], world.js_pick(K["town"]["plaster"], 0.5495072316844016))   # the kit's own pick ...
+        self.assertEqual(d["walls"]["n"]["plaster"], (world.style_ids(W, lot.get("style")) or {}).get("plaster", raw["walls"]["n"]["plaster"]))   # ... unless the lot's approved colourway sets it (ADR-0036)
+        self.assertEqual(world.built(W, d)["walls"]["n"]["plaster"], K["colours"][d["walls"]["n"]["plaster"]]["rgb"])
         self.assertEqual(world.designs(W), self.D)                                   # the same every time
 
     def test_BUILD_003_every_choice_comes_from_the_kit(self):
@@ -351,12 +355,15 @@ class TheDesigns(unittest.TestCase):
         w = copy.deepcopy(W)
         ds = copy.deepcopy(self.D)
         d = ds["b_0_0_l0"]
-        d["walls"]["plaster"] = [1, 0, 1]
+        d["walls"]["s"]["plaster"] = [1, 0, 1]                                      # a colour by value, not by id (BUILD-016)
         d["roof"]["type"] = "dome"
-        d["walls"]["stone"]["pattern"] = "marble"
+        d["walls"]["e"]["stone"]["pattern"] = "marble"
+        d["inside"]["floors"][0] = "carpet"
         del ds["b_0_0_l1"]["ornament"]
+        del ds["b_0_0_l2"]["walls"]["w"]
         p = world.design_problems(w, ds)
-        for bit in ("plaster colour not in the kit", "roof type dome", "stone pattern not in surfaces.json", "design has no ornament"):
+        for bit in ("s facade's plaster colour not in the kit", "roof type dome", "e facade's stone pattern not in surfaces.json", "design has no ornament",
+                    "floor 0's finish not in the kit", "b_0_0_l2: no w facade"):
             self.assertTrue(any(bit in x for x in p), bit)
 
 
@@ -780,7 +787,7 @@ class TheTimings(unittest.TestCase):
 
 
 class TheHomes(unittest.TestCase):
-    """The houses' colourways (ADR-0032) and the plan homes are furnished from (ADR-0033)."""
+    """The houses' colourways (ADR-0032) and the plan homes are furnished from (ADR-0035)."""
     RULES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "World", "rules")
 
     @classmethod
@@ -818,7 +825,7 @@ class TheHomes(unittest.TestCase):
             self.assertEqual(next(l for l in self.houses if l["id"] == lid)["house"]["style"], "a")
 
     def test_FURN_060_row_houses_and_flats_have_a_plan(self):
-        """ADR-0034: every row house and court flat of 80 or 160 m2 is furnished from its plan (add_homes_01.py)."""
+        """ADR-0036: every row house and court flat of 80 or 160 m2 is furnished from its plan (add_homes_01.py)."""
         spots = self.plans["house_12x9"]["house"]["spots"]
         rows = [l for l in world.lots(W) if l.get("interior")]
         flats = [(l, q) for l in world.lots(W) for q in l.get("flats", []) if q.get("interior")]
@@ -877,6 +884,88 @@ class TheHomes(unittest.TestCase):
             n = [sum(1 for it in p["items"] if it["level"] <= lv) for lv in (1, 2, 3, 4)]
             self.assertTrue(0 < n[0] < n[1] < n[2] < n[3] == len(p["items"]), (name, n))
             self.assertEqual(sorted(int(k) for k in p["levels"]), [1, 2, 3, 4])
+class TheOpenGround(unittest.TestCase):
+    """WLD-055: the town wall is gone; WLD-056: the ground outside Old Town is filled with woods, commons, orchards,
+    fields, plots for sale and meadows, with no buildings (owner, 2026-11-24)."""
+    GREEN = ("woods", "common", "orchard", "fields", "plots", "meadow")
+    WILD = {"fence", "board", "peg", "log", "rock", "picnic", "haybale", "crop", "pond", "plant", "bench", "bin", "lamp"}
+
+    def blocks(self):
+        return [b for b in W["blocks"] if b["template"] in self.GREEN]
+
+    def test_WLD_055_the_town_wall_is_gone(self):
+        import os
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Prototype", "play", "play.js"), encoding="utf-8") as f:
+            js = f.read()
+        self.assertNotIn("wallBox", js)                                  # no wall, no gate towers, no gate names over an arch
+        self.assertIn("kerb", js)                                        # Old Town's paving ends at a kerb on the old line
+        self.assertEqual(len(W["roads"]["gates"]), 4)                    # the roads out of town are all still there
+
+    def test_WLD_056_every_cell_has_a_block(self):
+        g, seen = W["city"]["grid"], set()
+        for b in W["blocks"]:
+            for c in world.cells_of(b):
+                self.assertNotIn(tuple(c), seen)
+                seen.add(tuple(c))
+        bare = [(i, j) for i in range(g["columns"]) for j in range(g["rows"]) if (i, j) not in seen]
+        self.assertEqual(bare, [])
+
+    def test_WLD_056_the_open_ground_has_no_buildings(self):
+        bs = self.blocks()
+        self.assertEqual({b["template"] for b in bs}, set(self.GREEN))
+        for b in bs:
+            self.assertEqual(b["lots"], [], b["id"])
+            for p in b["props"]:
+                self.assertIn(p["kind"], self.WILD, p.get("id"))
+                self.assertEqual(p.get("set"), "wild", p.get("id"))
+        trees = sum(len(b["trees"]) for b in bs if b["template"] == "woods")
+        self.assertGreater(trees, 3000)                                   # the woods are dense
+
+    def test_WLD_056_every_tree_and_plant_is_known(self):
+        sp, pl = W["vegetation"]["species"], W["vegetation"]["plants"]
+        for b in self.blocks():
+            for t in b["trees"]:
+                self.assertIn(t["species"], sp, t["id"])
+            for p in b["props"]:
+                if p["kind"] == "plant":
+                    self.assertIn(p["species"], pl, p["id"])
+
+    def test_WLD_056_nothing_stands_on_a_road(self):
+        import add_green_01 as G
+        R = G.Roads(W["city"], W["roads"], [b for b in W["blocks"] if b["template"] not in self.GREEN])
+        for b in self.blocks():
+            for t in b["trees"]:
+                self.assertGreater(R.gap(*t["pos"]), 2.5, t["id"])
+            for p in b["props"]:
+                if p["kind"] in ("crop", "fence", "plant") and (p.get("size") or p.get("len")):
+                    continue                                              # fields and hedges are checked by their corners below
+                self.assertGreater(R.gap(*p["pos"]), 0.5, p["id"])
+            for p in b["props"]:
+                if p["kind"] == "crop":
+                    (x, z), (w, d) = p["pos"], p["size"]
+                    for cx, cz in ((x - w / 2, z - d / 2), (x + w / 2, z - d / 2), (x - w / 2, z + d / 2), (x + w / 2, z + d / 2), (x, z)):
+                        self.assertGreater(R.gap(cx, cz), 0.5, p["id"])
+
+    def test_WLD_056_plots_carry_a_for_sale_board_each(self):
+        for b in (b for b in self.blocks() if b["template"] == "plots"):
+            plots = [p for p in b["props"] if p["kind"] == "crop" and p["crop"] == "rough"]
+            boards = [p for p in b["props"] if p["kind"] == "board"]
+            self.assertGreater(len(plots), 4, b["id"])
+            self.assertEqual(len(boards), len(plots), b["id"])
+            self.assertTrue(all(p["text"] == "FOR SALE" for p in boards))
+
+    def test_WLD_056_the_generator_writes_what_is_there(self):
+        """The blocks are the files; add_green_01.py, run again, writes the same ones."""
+        import add_green_01 as G, json, os
+        city = W["city"]
+        roads = W["roads"]
+        others = [b for b in W["blocks"] if b["id"] not in {"b_%d_%d" % a[0] for a in G.AREAS}]
+        R = G.Roads(city, roads, others)
+        for cell, span, template, district in G.AREAS:
+            b = G.Block(city, cell, span, template, district, R)
+            getattr(b, template)()
+            with open(os.path.join(G.CITY, "blocks", b.id + ".json"), encoding="utf-8") as f:
+                self.assertEqual(json.load(f), json.loads(json.dumps(b.d)), b.id)
 
 
 if __name__ == "__main__":

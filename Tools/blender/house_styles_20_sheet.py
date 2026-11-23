@@ -34,7 +34,7 @@ H = TOP + 4 * (TH + CAP) + 3 * GAP + 20
 sheet = Image.new("RGB", (W, H), (246, 243, 238))
 d = ImageDraw.Draw(sheet)
 d.text((20, 16), ("House styles 20: four house lines, three colourways each (all twelve approved, ADR-0032)" if NAME == "house_styles_20" else
-                 "House outside 23: the twelve colourways on the house at 12 x 9 m with the plan's windows (ADR-0032, ADR-0033)"), font=font(24, True), fill=(43, 38, 34))
+                 "House outside 23: the twelve colourways on the house at 12 x 9 m with the plan's windows (ADR-0032, ADR-0035)"), font=font(24, True), fill=(43, 38, 34))
 for c, label in enumerate(("a  (as now)", "b", "c")):
     d.text((LEFT + c * (TW + GAP), TOP - 2), label, font=font(16), fill=(119, 107, 96))
 for r, (key, title) in enumerate(LINES):

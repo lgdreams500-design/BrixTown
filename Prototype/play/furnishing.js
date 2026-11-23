@@ -1,8 +1,8 @@
 "use strict";
-// How furnished each home in the slice is (FURN-062, FURN-063; F-HOME-FURNISH level 3; ADR-0033): 1 Bare, 2 Basic,
+// How furnished each home in the slice is (FURN-062, FURN-063; F-HOME-FURNISH level 3; ADR-0035): 1 Bare, 2 Basic,
 // 3 Homely, 4 Full. A port of Tools/citysim/furnishing.py; the rule itself lives in estate.js (Estate.furnish) so the
 // market's daily furniture transaction and what a house shows come from the same lines. Worked out from
-// World/rules/furnishing.json (packed in city_data.js as D.life.estate.furnishing), the household's daily wages and the
+// World/rules/furnishing_levels.json (packed in city_data.js as D.life.estate.furnishing), the household's daily wages and the
 // clock day, never ticked or stored. Load after estate.js. No DOM and none of play.js's globals here.
 //
 //   Furnishing.level(lotId, flatIndexOrNull, day)  -> 1..4

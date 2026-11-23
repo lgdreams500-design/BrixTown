@@ -60,6 +60,10 @@
     {
       "id": "life",
       "name": "Money, work and the player"
+    },
+    {
+      "id": "ui",
+      "name": "Menus and settings"
     }
   ],
   "pillars": {
@@ -2209,6 +2213,167 @@
       }
     },
     {
+      "id": "F-UI-MENU",
+      "area": "ui",
+      "title": "The game menu",
+      "why": "One place for everything about the player's life (money, belongings, homes, quests, the map, saving) instead of a key for each, and a way into the building designer from what you own.",
+      "pillars": [
+        2,
+        3
+      ],
+      "spec": [],
+      "levels": [
+        {
+          "name": "Keys only",
+          "what": "As now: a key for each panel (I money, J quests, P property, M map) and the keys listed along the bottom of the screen.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Menu of what exists",
+          "what": "The platform's menu control (Esc on a keyboard, Start or Menu on a gamepad, a menu button on touch) opens a menu over the dimmed game with tabs: Money, Journal, Properties (with Show on map, Remodel, Furnish, Sell and Let buttons), Map, Save (save now, last autosave, load, new game) and Help (the controls of the platform played on, which leave the bottom of the screen). The old shortcuts open their tab.",
+          "effort": "M",
+          "needs": {
+            "F-ECO-BANK": 1,
+            "F-QUEST": 1,
+            "F-PROP-ESTATE": 1
+          }
+        },
+        {
+          "name": "Every tab",
+          "what": "Also Me (name, look, job, standing with residents and shops), Wardrobe, Belongings, Storage and Settings; the map with filters and a waypoint; more than one save slot.",
+          "effort": "M",
+          "needs": {
+            "F-UI-SETTINGS": 1,
+            "F-INV-ITEMS": 1,
+            "F-CHR-WARDROBE": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-UI-SETTINGS",
+      "area": "ui",
+      "title": "Settings",
+      "why": "Players set the game to their machine and their taste: picture, sound, controls, what the screen shows. Settings belong to the device, not the save; their defaults are data. Controls follow the platform: keyboard and mouse, a gamepad, or touch each have their own mapping.",
+      "pillars": [
+        1
+      ],
+      "spec": [],
+      "levels": [
+        {
+          "name": "Keys only",
+          "what": "As now: O for the better or simple picture, N for sound; nothing else can be set.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Picture, sound, display, mouse",
+          "what": "Graphics: one switch for the better or simple picture and, under it, shadows, ambient occlusion, bounce light, contact shade and resolution; view distance, how many people have full bodies, field of view, the frame counter. Audio: master, music, street, voices, interface. Display: minimap, clock, money, names over residents, prompts, text size. Controls for the platform played on (keyboard and mouse, gamepad, touch), each with its own default mapping in data: sensitivity, invert, camera distance, first or third person; the Help tab shows that platform's controls. Kept on the device; defaults in World/rules/settings.json.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "Controls and accessibility",
+          "what": "Also remapping every action, per platform (keys, gamepad buttons; touch layouts); colour-blind-safe markers, reduced motion (no camera glides), hold or toggle; hints on or off; the starting clock speed.",
+          "effort": "M",
+          "needs": {}
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-INV-ITEMS",
+      "area": "life",
+      "title": "Belongings",
+      "why": "Everything the player owns that is not placed or stored in one list: what they carry and furniture waiting to be placed (FURN-050).",
+      "pillars": [
+        2,
+        3
+      ],
+      "spec": [
+        "PROP-001"
+      ],
+      "levels": [
+        {
+          "name": "Carried items only",
+          "what": "As now: the wallet panel lists the shop items the player carries.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "One list of belongings",
+          "what": "Carried items and unplaced furniture together, by kind, with what each is worth; furniture taken away in the designer goes here and is placed from here.",
+          "effort": "M",
+          "needs": {
+            "F-PROP-FURNISH": 1
+          }
+        },
+        {
+          "name": "Use, drop and limits",
+          "what": "Items can be used, given, dropped or sold from the list; how much can be carried is limited by size and weight; the rest must be stored or placed.",
+          "effort": "M",
+          "needs": {
+            "F-PROP-STORAGE": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-CHR-WARDROBE",
+      "area": "people",
+      "title": "Wardrobe and outfits",
+      "why": "Players change how they look after the character designer: clothes for the day, the season and the occasion.",
+      "pillars": [
+        2
+      ],
+      "spec": [],
+      "levels": [
+        {
+          "name": "Fixed look",
+          "what": "As now: the look made in the character designer is kept for good.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Saved outfits",
+          "what": "The player saves looks from the character designer's own choices (garments, colours, extras, hair) as named outfits and changes between them, free, from the menu.",
+          "effort": "S",
+          "needs": {
+            "F-CHR-DESIGN": 1
+          }
+        },
+        {
+          "name": "Clothes you own",
+          "what": "Garments are owned items bought in clothes shops through the ledger and kept in a wardrobe at home; you change at a wardrobe, a fitting room or home; clothes suit the weather (CITY-077 to CITY-080).",
+          "effort": "L",
+          "needs": {
+            "F-INV-ITEMS": 1,
+            "F-BLD-SHOP": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
       "id": "F-HOME-FURNISH",
       "area": "objects",
       "title": "How residents' homes are furnished",
@@ -2240,7 +2405,7 @@
         },
         {
           "name": "Four levels per home",
-          "what": "Each home is given one of four furnishing levels (Bare, Basic, Homely, Full) once, when it is made, and keeps it; each level adds pieces to the one before (ADR-0033).",
+          "what": "Each home is given one of four furnishing levels (Bare, Basic, Homely, Full) once, when it is made, and keeps it; each level adds pieces to the one before (ADR-0035).",
           "effort": "M",
           "needs": {
             "F-BLD-INSIDE": 3,
