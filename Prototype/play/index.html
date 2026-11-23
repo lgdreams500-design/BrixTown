@@ -76,7 +76,8 @@
   .ptab { width: 100%; border-collapse: collapse; font-size: 15px; }
   .ptab td { padding: 4px 6px; border-bottom: 1px solid rgba(217,207,182,.12); vertical-align: middle; }
   .ptab td:last-child { text-align: right; }
-  #life.side { left: auto; right: 16px; top: 16px; transform: none; width: min(430px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }   /* the building designer, beside the building */
+  body.designing #keys, body.designing #mapbox, body.designing #stats, body.designing #toast, body.designing #track, body.designing #prompt, body.designing #clock { display: none !important; }   /* the building designer: the building, the panel and nothing else */
+  #life.side { left: auto; right: 12px; top: 12px; transform: none; width: min(380px, calc(100vw - 24px)); max-height: calc(100vh - 24px); }   /* the building designer, beside the building */
   .dzrow { display: flex; align-items: center; gap: 10px; margin: 6px 0; flex-wrap: wrap; }
   .dzl { width: 118px; font-size: 14px; color: var(--dim); }
   .swatches { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }

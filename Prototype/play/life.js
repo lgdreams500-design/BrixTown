@@ -227,7 +227,7 @@ var Life = (() => {
     if (!panel) return;
     if (panel.kind === "remodel" && panel.lot && panel.draft !== panel.lot.dsg) window.wasted.repaint(panel.lot, Builder.built(panel.lot.dsg));   // not paid for: as it was
     if (panel.kind === "remodel" && panel.lot) for (const f of Object.keys(panel.lay)) if (panel.lay[f] !== panel.lay0[f]) window.wasted.furn.showLayout(panel.lot, +f, (furnishings[panel.lot.id] || {})[f] || null);
-    view = null; grab = null;
+    if (view) { view.leave = true; view.cut = null; } grab = null; document.body.classList.remove("designing"); document.getElementById("gl").style.cursor = "";
     panel = null; el("life").style.display = "none"; Sound.act("talk_close"); save();
   }
   function act(fn) {                                      // a button: do it, say what happened, redraw
@@ -571,17 +571,26 @@ var Life = (() => {
   // ---------------------------------------------------------------- the designer's view and the furniture in it (BUILD-020; FURN-051, FURN-052, FURN-055)
   const canFurnish = l => !!l.furn && !l.house && l.kind !== "furniture";
   function layNow(l, f) { return (furnishings[l.id] && furnishings[l.id][f]) || window.wasted.furn.townLayout(l, f); }   // the storey as it is now
-  function startView(l) {                                // above the building at the angle of an isometric drawing, the whole of it in sight
-    const [x0, z0, x1, z1] = l.rect, H = Math.min(l.H || 8, 18), r = Math.hypot(x1 - x0, z1 - z0) / 2 + H * .4;
-    view = { lot: l, yaw: cam.yaw, pitch: -.62, dist: clamp(r / Math.tan(.3) * .95, 9, 140), tx: (x0 + x1) / 2, tz: (z0 + z1) / 2, ty: Y_FLOOR + H * .4, storey: 0, cut: null, key: "" };
+  // The view (BUILD-020; play.js designCam): goal is where the camera is going, cur where it is. It starts at the player's own
+  // camera and glides up to frame the building from the front at three-quarters; each tab frames what it shows.
+  function startView(l) {
+    const side = l.design ? l.design.shell.side : l.furn ? l.furn[0] : "s", out = DOOR_DIR[side] || [0, 1];
+    const yaw = Math.atan2(-out[0], out[1]) + .62, back = { yaw: cam.yaw, pitch: cam.pitch, dist: Math.max(2, Math.hypot(cam.eye[0] - pl.x, cam.eye[1] - pl.y - 1.5, cam.eye[2] - pl.z)) };
+    const cur = view && view.leave ? view.cur : { yaw: back.yaw, pitch: back.pitch, dist: back.dist, tx: pl.x, ty: pl.y + 1.5, tz: pl.z, fov: .9 };
+    view = { lot: l, goal: Object.assign({}, cur, { yaw, fov: window.wasted.DESIGN_FOV }), cur, back: view && view.leave ? view.back : back, storey: 0, cut: null, key: "" };
+    document.body.classList.add("designing");
+  }
+  function frame3(P) {                                    // what the tab shows, framed: the whole building, or the storey cut open
+    const l = P.lot, [x0, z0, x1, z1] = l.rect, g = view.goal;
+    if (P.tab === "outside") { g.pitch = -.5; Object.assign(g, window.wasted.fitBox([x0, Y_FLOOR, z0, x1, (l.H || 8) + 2.5, z1], g.yaw, g.pitch)); return; }
+    const F = Storeys.floorY(P.storey); g.pitch = -.95; Object.assign(g, window.wasted.fitBox([x0 + .3, F, z0 + .3, x1 - .3, F + .6, z1 - .3], g.yaw, g.pitch, .97)); g.ty = F + .3;
   }
   function syncView(P) {                                 // the view follows the tab: the whole building outside; inside, the storey cut open
     if (!view) return; const key = P.tab === "outside" ? "out" : "in" + P.storey; if (view.key === key) return; view.key = key;
-    const l = P.lot, [x0, z0, x1, z1] = l.rect, H = Math.min(l.H || 8, 18);
-    if (P.tab === "outside") { view.cut = null; view.storey = 0; view.ty = Y_FLOOR + H * .4; return; }
-    const F = Storeys.floorY(P.storey); view.storey = P.storey; view.ty = F + 1;
-    view.cut = { rect: [x0 - .6, z0 - .6, x1 + .6, z1 + .6], shell: F + 1.25, room: Storeys.ceilY(P.storey) - .05 };
-    view.dist = Math.min(view.dist, clamp((Math.hypot(x1 - x0, z1 - z0) / 2 + 1) / Math.tan(.3), 8, 80));
+    const l = P.lot, [x0, z0, x1, z1] = l.rect;
+    if (P.tab === "outside") { view.cut = null; view.storey = 0; }
+    else { const F = Storeys.floorY(P.storey); view.storey = P.storey; view.cut = { rect: [x0 - .6, z0 - .6, x1 + .6, z1 + .6], shell: F + 1.25, room: Storeys.ceilY(P.storey) - .05 }; }
+    frame3(P);
   }
   function editPiece(P, id, ch, quiet) {                   // move, turn (ch) or take away (null) a piece of the storey in view
     const f = P.storey, lay = P.lay[f]; if (!lay) return;
@@ -592,37 +601,66 @@ var Life = (() => {
   }
   function addPiece(P, kind, R) {                          // a new piece where the view looks, on the grid, inside the room
     const f = P.storey, g = Furnish.rules().grid_m, sn = v => +(Math.round(v / g) * g).toFixed(2), pc = Furnish.rules().pieces[kind];
-    const x = sn(clamp(view.tx, R.room[0] + pc.size[0] / 2, R.room[2] - pc.size[0] / 2)), z = sn(clamp(view.tz, R.room[1] + pc.size[1] / 2, R.room[3] - pc.size[1] / 2));
+    const x = sn(clamp(view.goal.tx, R.room[0] + pc.size[0] / 2, R.room[2] - pc.size[0] / 2)), z = sn(clamp(view.goal.tz, R.room[1] + pc.size[1] / 2, R.room[3] - pc.size[1] / 2));
     const n = 1 + Math.max(0, ...P.lay[f].filter(p => /^k\d+$/.test(p.id)).map(p => +p.id.slice(1)));
     P.undo.push({ d: P.draft, lay: Object.assign({}, P.lay) });
     P.lay = Object.assign({}, P.lay, { [f]: P.lay[f].concat([Furnish.kitPiece(kind, "k" + n, x, z, 0, P.line)]) }); P.sel = "k" + n;
     window.wasted.furn.showLayout(P.lot, f, P.lay[f]); Sound.act("talk_choose"); draw();
   }
   let grab = null;
+  const canvas = () => document.getElementById("gl");
   function pointer(type, e, held) {                      // the mouse over the picture while the designer is open (play.js)
     const P = panel; if (!view || !P) return;
-    if (type === "wheel") { if (e.target && e.target.tagName === "CANVAS") view.dist = clamp(view.dist * (e.deltaY > 0 ? 1.12 : 1 / 1.12), 3, 150); return; }
+    const g = view.goal;
+    if (type === "wheel") { if (e.target && e.target.tagName === "CANVAS") g.dist = clamp(g.dist * (e.deltaY > 0 ? 1.12 : 1 / 1.12), 3, 150); return; }
     const FW = window.wasted.furn, fur = P.tab === "furnish" && P.lay[P.storey];
     const floorHit = (ray, F) => { if (ray.d[1] > -1e-4) return null; const t = (F - ray.o[1]) / ray.d[1]; return t > 0 ? [ray.o[0] + ray.d[0] * t, ray.o[2] + ray.d[2] * t] : null; };
+    const under = () => { const R = FW.roomFor(P.lot, P.storey), ray = window.wasted.rayAt(e.clientX, e.clientY); return ray ? { R, ray, p: FW.pickPiece(P.lay[P.storey], R.F, ray) } : null; };
     if (type === "down") {
-      grab = null; if (!fur || e.button !== 0) return;
-      const R = FW.roomFor(P.lot, P.storey), ray = window.wasted.rayAt(e.clientX, e.clientY); if (!ray) return;
-      const p = FW.pickPiece(P.lay[P.storey], R.F, ray), hit = floorHit(ray, R.F);
-      P.sel = p ? p.id : null; if (p && hit) grab = { id: p.id, dx: p.x - hit[0], dz: p.z - hit[1], F: R.F, moved: false };
-      draw(); return;
+      grab = null;
+      if (e.button === 2) { grab = { pan: true }; return; }
+      if (!fur || e.button !== 0) { grab = { turn: true }; return; }
+      const u = under(); if (!u) return; const hit = floorHit(u.ray, u.R.F);
+      const was = P.sel; P.sel = u.p ? u.p.id : null;
+      grab = u.p && hit ? { id: u.p.id, dx: u.p.x - hit[0], dz: u.p.z - hit[1], F: u.R.F, moved: false } : { turn: true };
+      canvas().style.cursor = u.p ? "grabbing" : "default";
+      if (was !== P.sel) draw(); return;
     }
     if (type === "move") {
-      if (!held) return;
-      if (grab) {
+      if (!held || !grab) {                                // hovering: the piece under the mouse is outlined, and the mouse says it can be moved
+        if (fur) { const u = under(), id = u && u.p ? u.p.id : null; P.hover = id; canvas().style.cursor = id ? "grab" : "default"; }
+        return;
+      }
+      if (grab.id) {
         const ray = window.wasted.rayAt(e.clientX, e.clientY), hit = ray && floorHit(ray, grab.F); if (!hit) return;
-        const g = Furnish.rules().grid_m, sn = v => +(Math.round(v / g) * g).toFixed(2), p = P.lay[P.storey].find(q => q.id === grab.id); if (!p) return;
+        const gm = Furnish.rules().grid_m, sn = v => +(Math.round(v / gm) * gm).toFixed(2), p = P.lay[P.storey].find(q => q.id === grab.id); if (!p) return;
         const x = sn(hit[0] + grab.dx), z = sn(hit[1] + grab.dz); if (x === p.x && z === p.z) return;
         if (!grab.moved) { P.undo.push({ d: P.draft, lay: Object.assign({}, P.lay) }); grab.moved = true; }
         editPiece(P, grab.id, { x, z }, true);
-      } else { view.yaw += e.movementX * .005; view.pitch = clamp(view.pitch - e.movementY * .004, -1.5, -.1); }
+      } else if (grab.pan) {                               // the right button slides the view across the ground
+        const k = g.dist * .0016, sy = Math.sin(g.yaw), cy = Math.cos(g.yaw), [x0, z0, x1, z1] = P.lot.rect;
+        g.tx = clamp(g.tx - (cy * e.movementX - sy * e.movementY) * k, x0 - 8, x1 + 8); g.tz = clamp(g.tz - (sy * e.movementX + cy * e.movementY) * k, z0 - 8, z1 + 8);
+      } else { g.yaw += e.movementX * .006; g.pitch = clamp(g.pitch - e.movementY * .005, -1.5, -.12); }
       return;
     }
-    if (type === "up") { if (grab && grab.moved) draw(); grab = null; }
+    if (type === "up") { if (grab && grab.moved) draw(); grab = null; if (fur) canvas().style.cursor = P.hover ? "grab" : "default"; }
+  }
+  function storeyBad(P) {                                // the pieces of the storey in view that its check finds wrong (for the red outline)
+    const f = P.storey, a = P.lay[f], b = P.lay0[f]; if (!a || a === b) return new Set();
+    if (P.badFor === a) return P.bad; const R = window.wasted.furn.roomFor(P.lot, f), old = new Set(Furnish.problems(R.room, R.keep, R.ceiling, b).map(q => q[0]));
+    P.bad = new Set(Furnish.problems(R.room, R.keep, R.ceiling, a).filter(q => !old.has(q[0])).flatMap(q => q[0].split("|").slice(0, -1))); P.badFor = a; return P.bad;
+  }
+  function designMarks() {                               // for play.js: outlines round the piece picked and the piece under the mouse
+    const P = panel; if (!view || !P || P.tab !== "furnish" || !P.lay[P.storey]) return [];
+    const lay = P.lay[P.storey], F = Storeys.floorY(P.storey), bad = storeyBad(P), out = [];
+    for (const p of lay) if (p.id === P.sel || (p.id === P.hover && !grab)) out.push({ p, F, sel: p.id === P.sel, bad: bad.has(p.id) });
+    for (const p of lay) if (p.id !== P.sel && bad.has(p.id)) out.push({ p, F, sel: false, bad: true });
+    return out;
+  }
+  function designTags() {                                // for play.js: the name of the piece picked, over it
+    const P = panel; if (!view || !P || P.tab !== "furnish" || !P.lay[P.storey]) return [];
+    const p = P.lay[P.storey].find(q => q.id === (P.sel || P.hover)); if (!p) return [];
+    return [{ x: p.x, y: Storeys.floorY(P.storey) + Math.min(p.h, 2) + .35, z: p.z, text: p.name + (storeyBad(P).has(p.id) ? " · can't stand here" : "") }];
   }
   function designKey(e) {                                // R turns the piece picked (Shift+R the other way), Delete takes it away
     const P = panel; if (!P || P.kind !== "remodel" || P.tab !== "furnish" || !P.sel) return false;
@@ -723,7 +761,7 @@ var Life = (() => {
     if (bad.length) console.error("economy.js does not match Tools/citysim/economy.py:\n  " + bad.join("\n  ")); else console.info("economy.js matches Tools/citysim/economy.py (self-test passed).");
   });
   return {
-    get on() { return !!panel; }, get designing() { return designing; }, get ready() { return ready; }, get view() { return view; }, pointer,
+    get on() { return !!panel; }, get designing() { return designing; }, get ready() { return ready; }, get view() { return view; }, pointer, designMarks, designTags, endView: () => { view = null; },
     go, frame, camera, mark, marks, boards, remodelTarget, remodel, conversation, allowed, chose, talkEnded, vars, key, counter, toast,
     panel: k => open(k, null), spin: dx => { spin += dx * .006; },
   };

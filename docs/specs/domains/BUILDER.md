@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-BUILDER
 title: Wasted — The building designer (remodel a building you own, or build a new one on an open plot)
-version: 0.6.0
+version: 0.6.1
 status: in-progress      # level 1 (remodel) accepted and built in the slice; level 2 and 3 rows proposed
 last_updated: 2026-11-23
 parent: docs/specs/GAME_SPEC.md        # extends §4.5 PROP; same ID rules; new prefix BUILD
@@ -107,9 +107,12 @@ Changing the outside needs the whole building; changing the inside needs only yo
 
 ### 2.6 The designer's view and furnishing (BUILD-020; FURN-051, FURN-052, FURN-055)
 
-- **The view.** While the designer is open the camera leaves the player and looks at the building from above, at the
-  angle of an isometric drawing (35° down) with a narrow lens, framed beside the panel. Drag the picture to turn round the
-  building and tilt, the wheel to come nearer, W A S D or the arrows to slide, Q and E to turn (`play.js` `designCam`).
+- **The view.** While the designer is open the camera leaves the player and glides up (and, on leaving, back down behind
+  the player) to look at the building from the front at three-quarters, 30° down, with a narrow lens, fitted to the part of
+  the picture the panel leaves; each tab frames what it shows (the whole building; the storey from 54° down). Drag turns
+  round the building and tilts, the right button slides, the wheel comes nearer, W A S D or the arrows slide, Q and E turn
+  (`play.js` `designCam`, `fitBox`). Only the building is drawn: other buildings, their floors, trees, street things and
+  people outside it are left out, with less haze; the map, the clock, the keys and the names over the street are hidden.
 - **Cut open.** On the *Inside* and *Furnish* tabs the storey being changed is cut open: inside the lot nothing above its
   ceiling is drawn (the roof, the storeys above, its own ceiling), and the walls, outer and inner, only to 1.25 m, so the
   rooms and what stands in them show from above; the furniture is drawn whole. The cut is a discard in the designer's
@@ -117,7 +120,9 @@ Changing the outside needs the whole building; changing the inside needs only yo
 - **Furnish** (a tab for a home whose storeys you hold; not the community houses yet): the pieces already in the
   storey can be picked with the mouse, dragged across the floor on the 5 cm grid, turned in 15° steps (R, Shift+R, or
   the buttons) and taken away (Delete). Pieces from `World/rules/furnishing.json` (43 of kit 17 and kit 18, by room, in
-  the four lines) are added where the view looks. The town's own pieces are found in the room as it is drawn: boxes
+  the four lines) are added where the view looks. The piece picked is outlined on the floor in glowing orange with its
+  corners standing up and its name over it; the piece under the mouse is outlined faintly and the mouse shows it can be
+  grabbed; a piece the check refuses is outlined in red ("can't stand here"). The town's own pieces are found in the room as it is drawn: boxes
   that touch are one piece, named from what was being drawn (bed, wardrobe, armchair...); what hangs on a wall or from
   the ceiling stays (ADR-0031).
 - **Checked and paid with the rest.** `Tools/citysim/furnish.py` (ported as `Furnish` in `builder.js`, self-tested at
@@ -255,6 +260,7 @@ Suggested: slice — designer 1, plots 0, construct 0; life depth — designer 2
 
 | Version | Date | Change |
 |---|---|---|
+| 0.6.1 | 2026-11-23 | The designer's view shows only the building, is fitted beside the panel and glides in and out; the piece picked, the piece under the mouse and a refused piece are outlined (§2.6). |
 | 0.6.0 | 2026-11-23 | BUILD-020 (accepted by the owner): the designer's view from above, turned and cut open (§2.6, ADR-0031). Furnishing in the designer (FURN-051, FURN-052, FURN-055; owner's pick: "Arrange + add, priced"): move, turn and take away the pieces in your home, add pieces from `World/rules/furnishing.json`, checked by `Tools/citysim/furnish.py` and paid with the remodel. |
 | 0.5.0 | 2026-11-23 | Step 3 done (§2.5): the remodel designer in the slice, E at your own building, live preview, priced, paid through the ledger, kept in the save; `builder.js` ports the rules and checks itself against `builder.check_script()`. A remodel is no longer refused for what was wrong with the building before it (a lot with no stair yet). BUILD-001 to BUILD-007 and BUILD-016 to BUILD-019 accepted by the owner. |
 | 0.4.0 | 2026-11-23 | BUILD-016 to BUILD-019: designs name choices by id (`colours`, `floor_finishes`; the town's picks kept by `town` lists) and `world.built()` resolves them for the slice; roof, tile, window, opening and ornament catalogues with names, look tests and status, offered through `builder.options`; walls per facade; inside walls and floors per storey, so per unit. Planning palettes added for Civic Row, the three malls, Northwood, Eastbrook and Southfield (stone and brick as they have today, the town's five plasters and five tiles). The slice's town is the same to the last vertex (mesh fingerprint checked against main, 2026-11-23). The community houses are not yet built from designs (§1.2). |

@@ -1667,7 +1667,7 @@ const TONE = `vec3 tone(vec3 v){                         // AgX with the "Medium
 float haze(float c){ return .64/(12.566*pow(1.36-1.2*c,1.5)); }`;   // how strongly haze scatters sunlight towards the eye (anisotropy 0.6)
 const MAIN_VS = `attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,uSM; varying vec3 vP,vN,vC,vS; varying float vF; invariant gl_Position;
 void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`;   // invariant: the depth-only pass and the lit pass land on the same depths
-const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF; uniform vec4 uCut; uniform float uCutY,uCutW;   // uCut, uCutY, uCutW: the building designer's cut (CUT, below)
+const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF; uniform vec4 uCut,uIso; uniform float uCutY,uCutW,uIsoY;   // the building designer's cut (CUT, below)
 uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform vec2 uNk; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
 uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY; uniform vec4 uSkyB; uniform vec2 uSkyH; uniform vec4 uRacks[9]; uniform int uRackN; uniform vec3 uRackY; uniform vec4 uTruss; uniform vec2 uTruss2; uniform vec4 uFeet[8]; uniform int uFeetN;
 uniform sampler2D uSSAOt; uniform vec3 uSSAO;              // ambient occlusion worked out from the screen's depth (aoProg below): 1/width, 1/height, strength (0: off)
@@ -1819,6 +1819,7 @@ vec4 pat(vec2 q,vec4 A,vec4 B){
 void main(){
 #ifdef CUT
   if(vP.x>uCut.x&&vP.x<uCut.z&&vP.z>uCut.y&&vP.z<uCut.w&&vP.y>(abs(vF-17.)<.5?min(uCutY,uCutW):uCutY)) discard;   // inner walls (material 17) as low as the outer ones
+  if((vP.x<uIso.x||vP.x>uIso.z||vP.z<uIso.y||vP.z>uIso.w)&&vP.y>uIsoY) discard;   // and nothing but the ground round the building
 #endif
   float f=vF; vec3 c=vC; vec3 n=normalize(vN); float skyP=clamp(length(vN)*2.-1.,0.,1.); vec3 tc=uCam-vP; float d=length(tc); vec3 vd=-tc/d;
   if(abs(c.x)>1.5){                                                        // a near person (people.js): the colour comes packed in one number, with two coordinates that stay on the cloth
@@ -1966,7 +1967,7 @@ void main(){
   gl_FragColor=vec4(tone(col*uExp),1.);
 }`;
 let main = program(MAIN_VS, MAIN_FS), signProg = program(MAIN_VS, "#define LETTERS\n" + MAIN_FS);   // only the painted names cut holes, so the town's shader keeps the early depth test
-const PRE_FS = "precision mediump float; varying highp vec3 vP; varying float vF; uniform vec4 uCut; uniform float uCutY,uCutW;\nvoid main(){\n#ifdef CUT\n  if(vP.x>uCut.x&&vP.x<uCut.z&&vP.z>uCut.y&&vP.z<uCut.w&&vP.y>(abs(vF-17.)<.5?min(uCutY,uCutW):uCutY)) discard;\n#endif\n  gl_FragColor=vec4(1.); }";
+const PRE_FS = "precision mediump float; varying highp vec3 vP; varying float vF; uniform vec4 uCut,uIso; uniform float uCutY,uCutW,uIsoY;\nvoid main(){\n#ifdef CUT\n  if(vP.x>uCut.x&&vP.x<uCut.z&&vP.z>uCut.y&&vP.z<uCut.w&&vP.y>(abs(vF-17.)<.5?min(uCutY,uCutW):uCutY)) discard;\n  if((vP.x<uIso.x||vP.x>uIso.z||vP.z<uIso.y||vP.z>uIso.w)&&vP.y>uIsoY) discard;\n#endif\n  gl_FragColor=vec4(1.); }";
 let pre = program(MAIN_VS, PRE_FS);       // depth only, laid first so each pixel is lit once
 const sky = program(`attribute vec2 aQ; varying vec2 vQ; void main(){ vQ=aQ; gl_Position=vec4(aQ,.9999,1.); }`,
 `precision highp float; varying vec2 vQ; uniform vec3 uR,uU,uF,uSun,uZen,uHor,uSunCol; uniform float uNight,uExp; uniform vec4 uCl; uniform vec2 uClOff,uClLit;   // uCl: cover, edge softness, size, shape phase
@@ -2036,7 +2037,7 @@ function cutPrograms(on) {
     depth: program(`attribute vec3 aP; attribute float aF; uniform mat4 uVP; varying highp vec3 vP; varying float vF; void main(){ vP=aP; vF=aF; gl_Position=uVP*vec4(aP,1.); }`, "#define CUT\n" + PRE_FS) };
   const P = on ? PROGC : PROG0; main = P.main; signProg = P.sign; pre = P.pre; depthProg = P.depth;
 }
-function cutU(pr, y) { if (CUT_NOW && pr.u.uCut) { gl.uniform4fv(pr.u.uCut, CUT_NOW.rect); gl.uniform1f(pr.u.uCutY, y == null ? CUT_NOW.shell : y); gl.uniform1f(pr.u.uCutW, CUT_NOW.shell); } }   // (the program must be in use)
+function cutU(pr, y) { if (CUT_NOW && pr.u.uCut) { gl.uniform4fv(pr.u.uCut, CUT_NOW.rect); gl.uniform1f(pr.u.uCutY, y == null ? CUT_NOW.shell : y); gl.uniform1f(pr.u.uCutW, CUT_NOW.shell); gl.uniform4fv(pr.u.uIso, CUT_NOW.iso); gl.uniform1f(pr.u.uIsoY, CUT_NOW.isoY); } }   // (the program must be in use)
 const cutY = ch => CUT_NOW && ch.lot === CUT_NOW.lot && ch.level !== undefined ? CUT_NOW.room : null;   // a room's own furniture, walls and ceiling: cut at its ceiling
 // Ambient occlusion from the screen (dial ao, key O; ADR-0028). The scene's depth is drawn at half size (aoDepth); for each pixel aoProg
 // rebuilds where it is and which way it faces from that depth, then looks at points round it within uAo.x metres: the more of them stand
@@ -2330,14 +2331,48 @@ function stepCamera(dt) {
 // The building designer's camera (BUILD-020): round the building from above, at the angle of an isometric drawing to start with.
 // Drag to turn round it and tilt, the wheel to come nearer, W A S D or the arrows to slide, Q and E to turn (life.js pointer).
 const DESIGN_FOV = .6;
+function designCut(v) {                                     // what the designer leaves out: everything round the building, and above the storey it looks into
+  if (v.leave) return null;                                 // going back to the player: the town as it is
+  const [x0, z0, x1, z1] = v.lot.rect, c = v.cut, M = .45;
+  return { lot: v.lot, rect: c ? c.rect : [x0, z0, x1, z1], shell: c ? c.shell : 1e4, room: c ? c.room : 1e4, iso: [x0 - M, z0 - M, x1 + M, z1 + M], isoY: Y_YARD + .02 };   // (the other lots' floors go too)
+}
+function freeView() {                                         // the part of the picture the panel leaves: its width in pixels, and the canvas
+  const pn = $("life"), pw = pn && pn.style.display !== "none" ? pn.offsetWidth + 16 : 0; return { pw, cw: cv.clientWidth, ch: cv.clientHeight };
+}
+function fitBox(box, yaw, pitch, room) {                            // the target and distance that frame a box [x0,y0,z0,x1,y1,z1] in the free part of the picture
+  const cp = Math.cos(pitch), f = [Math.sin(yaw) * cp, Math.sin(pitch), -Math.cos(yaw) * cp], r = [Math.cos(yaw), 0, Math.sin(yaw)];
+  const u = [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]], V = freeView();
+  const ty = Math.tan(DESIGN_FOV / 2) * (room || .86), tx = ty * Math.max(.4, V.cw - V.pw) / V.ch, c = [(box[0] + box[3]) / 2, (box[1] + box[4]) / 2, (box[2] + box[5]) / 2];
+  let d = 4;
+  for (let k = 0; k < 8; k++) {
+    const q = [(k & 1 ? box[3] : box[0]) - c[0], (k & 2 ? box[4] : box[1]) - c[1], (k & 4 ? box[5] : box[2]) - c[2]], dot = a => a[0] * q[0] + a[1] * q[1] + a[2] * q[2];
+    d = Math.max(d, Math.abs(dot(r)) / tx - dot(f), Math.abs(dot(u)) / ty - dot(f));
+  }
+  return { tx: c[0], ty: c[1], tz: c[2], dist: d };
+}
+// The building designer's camera (BUILD-020): v.goal is where it is going (set by life.js syncView and by the player's hand),
+// v.cur where it is; each frame it goes part of the way, so opening, changing tab and turning all glide.
 function designCam(dt) {
-  const v = Life.view, [x0, z0, x1, z1] = v.lot.rect;
-  v.yaw += ((keys.KeyQ ? 1 : 0) - (keys.KeyE ? 1 : 0)) * dt * 1.4;
-  const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0), s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0), sp = v.dist * .6 * dt, sy = Math.sin(v.yaw), cy = Math.cos(v.yaw);
-  v.tx = clamp(v.tx + (sy * f + cy * s) * sp, x0 - 8, x1 + 8); v.tz = clamp(v.tz + (-cy * f + sy * s) * sp, z0 - 8, z1 + 8);
-  const cp = Math.cos(v.pitch); cam.dir = [Math.sin(v.yaw) * cp, Math.sin(v.pitch), -Math.cos(v.yaw) * cp];
-  const pn = $("life"), pw = pn && pn.style.display !== "none" ? pn.offsetWidth + 16 : 0, sh = pw / cv.clientWidth * Math.tan(DESIGN_FOV / 2) * cv.clientWidth / cv.clientHeight * v.dist;   // the panel stands on the right: the building is framed in what is left
-  cam.eye = [v.tx - cam.dir[0] * v.dist + Math.cos(v.yaw) * sh, v.ty - cam.dir[1] * v.dist, v.tz - cam.dir[2] * v.dist + Math.sin(v.yaw) * sh]; cam.indoor = false; cam.close = false;
+  const v = Life.view, g = v.goal, c = v.cur, [x0, z0, x1, z1] = v.lot.rect;
+  g.yaw += ((keys.KeyQ ? 1 : 0) - (keys.KeyE ? 1 : 0)) * dt * 1.4;
+  const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0), s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0), sp = g.dist * .6 * dt, sy = Math.sin(g.yaw), cy = Math.cos(g.yaw);
+  g.tx = clamp(g.tx + (sy * f + cy * s) * sp, x0 - 8, x1 + 8); g.tz = clamp(g.tz + (-cy * f + sy * s) * sp, z0 - 8, z1 + 8);
+  if (v.leave) Object.assign(g, { yaw: v.back.yaw, pitch: v.back.pitch, dist: v.back.dist, tx: pl.x, ty: pl.y + 1.5, tz: pl.z, fov: .9 });   // the designer has closed: glide back behind the player
+  const k = 1 - Math.exp(-clamp(dt, 0, .1) * 7); let dy = g.yaw - c.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+  c.yaw += dy * k; for (const n of ["pitch", "dist", "tx", "ty", "tz", "fov"]) c[n] += (g[n] - c[n]) * k;
+  const cp = Math.cos(c.pitch); cam.dir = [Math.sin(c.yaw) * cp, Math.sin(c.pitch), -Math.cos(c.yaw) * cp];
+  const V = freeView(), sh = V.pw / V.cw * Math.tan(c.fov / 2) * V.cw / V.ch * c.dist;   // the panel stands on the right: the building is framed in what is left
+  cam.eye = [c.tx - cam.dir[0] * c.dist + Math.cos(c.yaw) * sh, c.ty - cam.dir[1] * c.dist, c.tz - cam.dir[2] * c.dist + Math.sin(c.yaw) * sh]; cam.indoor = false; cam.close = false;
+  cam.yaw = c.yaw;
+  if (v.leave && Math.abs(dy) < .02 && Math.abs(g.dist - c.dist) < .25 && Math.hypot(g.tx - c.tx, g.tz - c.tz) < .25 && Math.abs(g.fov - c.fov) < .01) { cam.pitch = c.pitch; Life.endView(); }   // home: the player's own camera again
+}
+function designMarks() {                                     // a glowing outline on the floor round the piece picked (and a faint one round the piece under the mouse)
+  for (const m of Life.designMarks ? Life.designMarks() : []) {
+    const p = m.p, Y = p.yaw * Math.PI / 180,  /* lit in its own colour (material 23, as a signal lamp) */ c = Math.cos(Y), sn = Math.sin(Y), e = .07, w = p.w + 2 * e, d = p.d + 2 * e, y = m.F + .012, t = m.sel ? .05 : .03;
+    const col = m.bad ? [.24, .025, .015] : m.sel ? [.2, .11, .035] : [.1, .1, .09], at = (u, v) => [p.x + c * u + sn * v, p.z - sn * u + c * v];
+    for (const sg of [-1, 1]) { const a = at(0, sg * d / 2), b = at(sg * w / 2, 0); dyn.ybox(a[0], y, a[1], w + t, .02, t, Y, col, 23); dyn.ybox(b[0], y, b[1], t, .02, d + t, Y, col, 23); }
+    if (m.sel) for (const [su, sv] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const q = at(su * w / 2, sv * d / 2); dyn.ybox(q[0], y, q[1], .09, Math.min(.5, p.h + .15), .09, Y, col, 23); }   // and its corners stand up, so it reads from any side
+  }
 }
 let RAY = null;                                              // the last frame's lens, for rayAt
 function rayAt(cx, cy) {                                     // the ray from the camera through a point on the screen (client pixels)
@@ -2419,6 +2454,7 @@ function hud(VP, W, H, tags) {
   const pr = $("prompt"); if (started && !Life.on && (target || pl.pose > 1)) { pr.style.display = "block"; pr.innerHTML = "<kbd>E</kbd>" + (pl.pose === 4 ? Cars.label() : pl.play ? "Get off" : pl.pose > 1 ? "Get up" : target.label); } else pr.style.display = "none";
   $("dot").style.display = started && cam.fp ? "block" : "none";
   g2.clearRect(0, 0, W, H); if (!started) return;
+  const designing = Life.view;
   const inLot = lotAt(pl.x, pl.z), sc = W / ui.clientWidth;
   const put = (x, y, z, text, alpha, size, font) => {
     const w = VP[3] * x + VP[7] * y + VP[11] * z + VP[15]; if (w < .3) return;
@@ -2427,6 +2463,7 @@ function hud(VP, W, H, tags) {
     g2.lineWidth = 4 * sc; g2.strokeStyle = "rgba(23,23,28,.85)"; g2.strokeText(text, sx, sy); g2.fillStyle = "#e6dcc3"; g2.fillText(text, sx, sy);
   };
   g2.textAlign = "center"; g2.lineJoin = "round";
+  if (designing) { for (const t of Life.designTags ? Life.designTags() : []) put(t.x, t.y, t.z, t.text, 1, 15, "600"); g2.globalAlpha = 1; return; }   // the building designer: the piece's name, nothing else
   for (const L of labels) {
     const d = Math.hypot(L.x - pl.x, L.z - pl.z); if (d > L.r) continue;
     if (L.indoor ? inLot !== L.lot : (inLot && pl.y < 6)) continue;
@@ -2490,6 +2527,7 @@ $("legend").innerHTML = Object.keys(KIND_WORD).map(k => `<div><i style="backgrou
 
 function begin() { Sound.start(); started = true; $("start").style.display = "none"; $("keys").style.display = "block"; if (cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } }
 $("go").addEventListener("click", () => Life.go(begin));   // carry on, or the character designer first (life.js)
+cv.addEventListener("contextmenu", e => { if (started && Life.view) e.preventDefault(); });   // the right button slides the designer's view
 cv.addEventListener("click", () => { if (started && !locked && !Talk.on && !Life.on && cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } });
 document.addEventListener("pointerlockchange", () => { locked = document.pointerLockElement === cv; });
 let drag = false; cv.addEventListener("mousedown", e => { drag = true; if (started && Life.view) Life.pointer("down", e); }); addEventListener("mouseup", e => { drag = false; if (started && Life.view) Life.pointer("up", e); });
@@ -2715,7 +2753,7 @@ function frame(now) {
   const m0 = clock.m; clock.m = (clock.m + dt / D.pace * clock.rate) % 1440; if (clock.m < m0) clock.day++;
   if (started && !Talk.on && !Life.on) { stepPlayer(dt); findTarget(); } else if (started && Talk.on) Talk.step(dt);   // a counter or the quest log (life.js) also holds the player still   // talking (conversations.js) holds the player still
   stepCamera(dt);
-  { const v = started && Life.view; CUT_NOW = v && v.cut ? Object.assign({ lot: v.lot }, v.cut) : null; cutPrograms(!!CUT_NOW); }   // the building designer (life.js)
+  { const v = started && Life.view; CUT_NOW = v ? designCut(v) : null; cutPrograms(!!CUT_NOW); }   // the building designer (life.js)
 
   // everyone's place right now; bodies only for those near the player
   Dodge.frame(now / 1000, pl);                             // is the player's car bearing down on anyone (dodge.js, CITY-070)
@@ -2760,6 +2798,7 @@ function frame(now) {
     People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.play ? pl.playPose : pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
       look: pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
   }
+  if (started && Life.view) designMarks();             // the building designer's picked piece (life.js)
   for (const [x, , T] of tramAt(clock.m)) Cars.tram(dyn, x, TRAM_Z, T, clock.m);   // the tram and the commuters on it (cars.js)
   stat.cars = Cars.draw(dyn, clock.m, near, reach);
   stat.signals = Roads.draw(dyn, clock.m, near, 220);     // the lit lamp of each traffic light (roads.js)
@@ -2774,7 +2813,7 @@ function frame(now) {
   }
 
   const Lt = lighting(clock.m), dials = window.wasted.dials; Lt.sunCol = mul3(Lt.sunCol, dials.sun); Lt.sky = mul3(Lt.sky, mix(dials.skyLow || dials.sky, dials.sky, smooth(.05, .5, Lt.dir[1]) * Lt.day)); Lt.ground = mul3(Lt.ground, dials.bounce);   // skyLow: the sky fill at dusk and night, which ADR-0007 left alone
-  Lt.fogD *= dials.haze; Lt.exp *= dials.exposure;
+  Lt.fogD *= dials.haze * (CUT_NOW ? .3 : 1); Lt.exp *= dials.exposure;   // (the building designer sees its building through less haze)
   const wm = dials.warm || 0; Lt.sunCol = [Lt.sunCol[0], Lt.sunCol[1] * (1 - .1 * wm), Lt.sunCol[2] * (1 - .26 * wm)]; Lt.sky = [Lt.sky[0] * (1 - .08 * wm), Lt.sky[1] * (1 - .04 * wm), Lt.sky[2]];   // a more golden sun against a deeper sky
   const Wx = weatherNow(clock.m), sun0 = Lt.sunCol, lum0 = sun0[0] * .3 + sun0[1] * .6 + sun0[2] * .1, lost = (1 - Wx.sun) * Lt.day;   // weather: cloud, rain and fog keep sunlight off the street and send some of it down as soft grey light
   Lt.sunCol = mul3(sun0, 1 - lost); Lt.sky = Lt.sky.map(v => v + lum0 * lost * SKY.overcast_fill); Lt.ground = mul3(Lt.ground, 1 - lost * .7); Lt.fogD *= Wx.haze; Lt.wet = Wx.wet; Lt.rain = Wx.rain;
@@ -2784,7 +2823,7 @@ function frame(now) {
   const vl = ((dials.veil || 0) + Wx.veil) * Lt.day * (1 - .45 * Wx.grey); Lt.fog = Lt.fog.map((v, i) => v + mix(sun0[i], lum0, Wx.grey) * vl); Lt.zen = Lt.zen.map((v, i) => v + sun0[i] * vl * .7);   // sunlight scattered all through the haze: a pale sky, and distance fades to it (W5)
   if (STUDIO) { Lt.dir = [-.45 / 1.0005, .74 / 1.0005, .5 / 1.0005]; Lt.sunCol = [3.2 / Math.PI, 3.2 / Math.PI * .82, 3.2 / Math.PI * .62]; Lt.sky = [.42 * .25, .55 * .25, .82 * .25];
     Lt.ground = [.004 + Lt.sunCol[0] * .1, .004 + Lt.sunCol[1] * .068, .005 + Lt.sunCol[2] * .042]; Lt.fogD = 0; Lt.fog = mul3(Lt.sky, 1.25); Lt.zen = mul3(Lt.sky, 1.5); Lt.exp = Math.pow(2, -.3); Lt.day = 1; Lt.night = 0; Lt.wet = 0; Lt.rain = 0; }
-  const view = M4.look(cam.eye, cam.dir), fov = STUDIO ? .27 : started && Life.view ? DESIGN_FOV : .9, asp = W / H, NEAR = cam.indoor && !cam.fp ? CAM_IN.near : .25, VP = M4.mul(M4.persp(fov, asp, NEAR, 3200), view.m), th = Math.tan(fov / 2); RAY = { e: cam.eye.slice(), f: cam.dir.slice(), r: view.r, u: view.u, th, asp };
+  const view = M4.look(cam.eye, cam.dir), fov = STUDIO ? .27 : started && Life.view ? Life.view.cur.fov : .9, asp = W / H, NEAR = cam.indoor && !cam.fp ? CAM_IN.near : .25, VP = M4.mul(M4.persp(fov, asp, NEAR, 3200), view.m), th = Math.tan(fov / 2); RAY = { e: cam.eye.slice(), f: cam.dir.slice(), r: view.r, u: view.u, th, asp };
   gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf); gl.bufferData(gl.ARRAY_BUFFER, dyn.a.subarray(0, dyn.n), gl.DYNAMIC_DRAW);
   let SM = M4.t(0, 0, 0), shOn = 0, giAt = [0, 0, 1], giK = 0;
   if (shFbo && quality > .6) {                              // shadows: draw the town from the light, around where the player looks
@@ -2933,7 +2972,7 @@ const LIGHTS = { reference: { sun: 1, sky: 1, bounce: 1, lanterns: 1, haze: 1, e
   golden: { sun: .62, sky: .9, bounce: 1.5, lanterns: 1, haze: .55, exposure: .7, warm: 1 } };   // golden: the kit light as first tuned (ADR-0007), kept for comparison (?light=golden)
 let lightName = LIGHTS[q.get("light")] ? q.get("light") : "kit";
 addEventListener("keydown", e => { if (e.code === "KeyL" && started && !e.repeat) { lightName = lightName === "kit" ? "reference" : "kit"; Object.assign(window.wasted.dials, { warm: 0, neutral: 0, veil: 0, skyLow: 0, gi: 0 }, LIGHTS[lightName]); } });
-window.wasted = { repaint, rayAt, furn: { townLayout, showLayout, layoutWorld, roomFor, pickPiece, SIZE: () => Furniture.SIZE }, dials: Object.assign({ gi: 0 }, LIGHTS[lightName], q.has("gi") ? { gi: +q.get("gi") } : {}), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, begin, setLook: L => { playerLook = L; }, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
+window.wasted = { repaint, rayAt, fitBox, DESIGN_FOV, furn: { townLayout, showLayout, layoutWorld, roomFor, pickPiece, SIZE: () => Furniture.SIZE }, dials: Object.assign({ gi: 0 }, LIGHTS[lightName], q.has("gi") ? { gi: +q.get("gi") } : {}), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, begin, setLook: L => { playerLook = L; }, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
 // sound (sound.js): which lots play music, where the fountains and gardens are
 Sound.init(LOTS, D.blocks.flatMap(b => b.props.filter(p => p.kind === "fountain").map(p => p.pos)),
   LOTS.filter(l => l.kind === "garden").map(l => [(l.rect[0] + l.rect[2]) / 2, (l.rect[1] + l.rect[3]) / 2]));
