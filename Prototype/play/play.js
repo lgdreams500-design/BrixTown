@@ -2188,7 +2188,7 @@ const spawn = D.city.spawn;
 const pl = { x: spawn.pos[0], y: 0, z: spawn.pos[1], vy: 0, yaw: yawOf(spawn.facing[0], spawn.facing[1]), pose: 0, ph: 0, moving: false, seat: null, onGround: true };
 const cam = { yaw: pl.yaw, pitch: -.04, dist: 4.4, fp: false, eye: [0, 0, 0], dir: [0, 0, -1] };
 const clock = { m: spawn.time ? (+spawn.time.slice(0, 2)) * 60 + (+spawn.time.slice(3)) : 8 * 60, rate: 1, day: 0 };   // day: game days since the character arrived (the bank settles by them, BANK-008)
-const keys = {}; let started = false, locked = false, showMap = false, bodies = 0, fps = 60, target = null, quality = 1, slow = 0;
+const keys = {}; let started = false, locked = false, showMap = false, bodies = 0, fps = 60, target = null, quality = 1, slow = 0, fast = 0, manualQ = false;
 const R = 0.32, TALL = 1.75;
 
 function pushOut(p) {
@@ -2424,7 +2424,7 @@ addEventListener("keydown", e => {
   if (e.code === "BracketRight") clock.rate = RATES[Math.min(RATES.length - 1, RATES.indexOf(clock.rate) + 1)];
   else if (e.code === "BracketLeft") clock.rate = RATES[Math.max(0, RATES.indexOf(clock.rate) - 1)];
   else if (e.code === "KeyT") { if (clock.m + 60 >= 1440) clock.day++; clock.m = (clock.m + 60) % 1440; Sound.act("hour"); }
-  else if (e.code === "KeyQ") quality = quality > .75 ? .5 : 1;
+  else if (e.code === "KeyQ") { quality = quality > .75 ? .5 : 1; manualQ = true; }   // Q: a fixed picture, no longer chased to 60 fps
 });
 addEventListener("keyup", e => { keys[e.code] = false; if (e.code === "KeyF") Sound.horn(false); });
 addEventListener("pointerdown", () => Sound.start());
@@ -2499,12 +2499,20 @@ function flatOf(l, x, z, y) {                                // which flat of bu
   return f + ":corridor";
 }
 const INDOOR_R = 90;                                         // how far the camera sees out of a window (frame)
+const FPS_GOAL = 60, Q_MIN = .65;                             // the frame rate the picture's sharpness is tuned to keep, and how soft it may go
+const LOD1_M = 28, LOD3_M = 45;                              // people nearer than LOD1_M get the mid body, beyond LOD3_M a figure of blocks (people.js far)
 const FULL_MAX = 3; let FULL = new Set();                   // the full-detail body (25,000 vertices, ~4 ms each) only for the nearest few
 const FAR_EVERY = 12, FAR_M = 60, FAR_CACHE = new Array(D.plan.length).fill(null); let FRAME_NO = 0;   // residents far from the player (frame)
 function frame(now) {
   People.setSun(STUDIO ? [-.45 / 1.0005, .74 / 1.0005, .5 / 1.0005] : lighting(clock.m).dir, cam.eye);   // for the shadows a body casts on itself (people.js)
   const dt = Math.min(.05, (now - last) / 1000); last = now; fps = mix(fps, 1 / Math.max(dt, 1e-3), .05);
-  if (fps < 27 && quality > .5 && !PIN_Q) { slow += dt; if (slow > 3) { quality = Math.max(.5, quality - .25); slow = 0; } } else slow = 0;      // a slow machine gets a softer picture, not a slow game
+  // aim for 60 frames a second: a little softer picture while frames run late, a little sharper again when there is room;
+  // never so soft that the shadows and the corner shade go (they need quality above .6)
+  if (!PIN_Q && !manualQ) {
+    if (fps < FPS_GOAL * .93) { slow += dt; fast = 0; if (slow > .75) { quality = Math.max(Q_MIN, quality - .1); slow = 0; } }
+    else if (fps > FPS_GOAL * .98) { fast += dt; slow = 0; if (fast > 4 && quality < 1) { quality = Math.min(1, quality + .05); fast = 0; } }
+    else slow = fast = 0;
+  }      // a slow machine gets a softer picture, not a slow game
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5) * quality, W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
   if (cv.width !== W || cv.height !== H) { cv.width = ui.width = W; cv.height = ui.height = H; }
   const m0 = clock.m; clock.m = (clock.m + dt / D.pace * clock.rate) % 1440; if (clock.m < m0) clock.day++;
@@ -2539,7 +2547,7 @@ function frame(now) {
       let da = yawOf(pl.x - r.x, pl.z - r.z) - r.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
       if (Math.abs(da) < 1.9) { const w = smooth(5.5, 3.2, d); lk = [clamp(-da * .6, -.85, .85) * w, 0]; }
     }
-    People.draw(dyn, r.x, r.y, r.z, r.yaw, L, r.pose, { ph: wet.ph !== undefined ? wet.ph : r.ph || 0, t: now / 1000, lod: dc < 13 && FULL.has(i) && !(r.inside && r.lot !== plLot) ? 0 : dc < 40 ? 1 : 2, fl: r.inside ? 10 : 14, look: lk, sleep: r.pose === 3, face: Talk.face(i), mod: r.mod || wet.mod, sig: r.sig || wet.sig, hood: wet.hood, umb: wet.umb });
+    People.draw(dyn, r.x, r.y, r.z, r.yaw, L, r.pose, { ph: wet.ph !== undefined ? wet.ph : r.ph || 0, t: now / 1000, lod: dc < 13 && FULL.has(i) && !(r.inside && r.lot !== plLot) ? 0 : dc < LOD1_M ? 1 : dc < LOD3_M ? 2 : 3, fl: r.inside ? 10 : 14, look: lk, sleep: r.pose === 3, face: Talk.face(i), mod: r.mod || wet.mod, sig: r.sig || wet.sig, hood: wet.hood, umb: wet.umb });
     if (started && d < 9 && Math.abs(r.y - pl.y) < 3) tags.push({ x: r.x, y: r.y + (r.pose === 2 ? 1.0 : r.pose === 3 ? .55 : 1.88) * L.S, z: r.z, d, text: D.residents[i].n + ", " + D.roles[D.residents[i].r] + " · " + (r.walking ? GOING[D.acts[r.act]] || "walking" : DOING[D.acts[r.act]] || D.acts[r.act]) });
     if (started && r.shout && d < D.dodge.tag_m) tags.push({ x: r.x, y: r.y + 2.18 * L.S, z: r.z, d, a: clamp((D.dodge.tag_m - d) / 4, 0, 1), size: 18, text: r.shout });   // telling the driver off (CITY-071)
     if (started) Talk.consider(i, r, d);

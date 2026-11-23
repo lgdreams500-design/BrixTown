@@ -277,7 +277,7 @@ var Cars = (() => {
   function seat(m, look, x, y, z, yaw, t) {              // one seated person; level of detail by distance to the camera
     const dc = Math.hypot(x - cam.eye[0], z - cam.eye[2]);
     if (dc > 70) return;
-    People.draw(m, x, y, z, yaw, look, 2, { ph: 0, t, lod: dc < 13 ? 0 : dc < 40 ? 1 : 2, fl: 14 });
+    People.draw(m, x, y, z, yaw, look, 2, { ph: 0, t, lod: dc < 13 ? 0 : dc < 28 ? 1 : dc < 45 ? 2 : 3, fl: 14 });
   }
 
   function draw(m, minute, near, reach) {                // every car within reach of the viewer, and whoever is in it

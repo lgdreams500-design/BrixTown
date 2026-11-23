@@ -308,7 +308,24 @@ const People = (() => {
   const player = () => ({ S: 1.68 / 1.72, W: .92 * 1.04, skin: [.62, .42, .30], hair: "long", hairC: [.28, .10, .05], eyes: [.14, .36, .20], g: "tee", top: K.teal, bottom: K.indigo, legs: "trousers", shoes: K.cream, scarf: K.ochre, sig: SIG.Springy, seed: 7 });
 
   // pose: 0 stand, 1 walk, 2 sit, 3 lie. o: { ph: cycle phase 0..1, t: seconds, lod: 0 near | 1 mid | 2 far, fl: material, look: [yaw, pitch] the head adds, sig: override, sleep }
+  // lod 3, far away (45 m and more): a figure of a few blocks in the person's own colours, legs striding when walking. At that
+  // distance it is a few pixels tall and reads the same as the full body, for a hundredth of the cost (the 60 fps work).
+  function far(ms, x, y, z, yaw, L, pose, ph, fl) {
+    const S = L.S, W = L.W, B = { 2: null }, legC = L.legs === "skirt" ? L.skin : L.bottom;
+    if (pose === 3) { ms.box(x - .22 * S, y + .05, z - .9 * S, x + .22 * S, y + .3, z + .8 * S, L.top, fl, B); return; }   // lying down
+    const sit = pose === 2, hip = sit ? .48 * S : .88 * S, top = hip + .5 * S, fx = Math.sin(yaw), fz = -Math.cos(yaw);   // the way they face (draw's -ey)
+    if (!sit) for (const e of [-1, 1]) {                                // two legs, a stride apart when walking
+      const sw = pose === 1 ? Math.sin(ph * 6.283) * .16 * e * S : 0, lx = x + fx * sw - fz * e * .07 * S, lz = z + fz * sw + fx * e * .07 * S;
+      ms.box(lx - .065 * S, y, lz - .065 * S, lx + .065 * S, y + hip, lz + .065 * S, legC, fl, B);
+    }
+    const w = .19 * W * S;
+    ms.box(x - w, y + hip, z - w, x + w, y + top, z + w, L.top, fl, B);                      // the body
+    ms.box(x - .1 * S, y + top + .04 * S, z - .1 * S, x + .1 * S, y + top + .3 * S, z + .1 * S, L.skin, fl, B);   // the head
+    ms.box(x - .11 * S, y + top + .22 * S, z - .11 * S, x + .11 * S, y + top + .33 * S, z + .11 * S, L.cap || L.hairC, fl, B);   // the hair
+  }
+
   function draw(ms, x, y, z, yaw, L, pose, o) {
+    if (o.lod === 3) return far(ms, x, y, z, yaw, L, pose, o.ph || 0, o.fl);
     const sig = o.sig || L.sig, g = geo(L.S), S = L.S, Sh = S * 1.22, W = L.W, T = 1.12 * S, lod = o.lod, fl = o.fl, t = o.t, sd = L.seed;
     const wd = wander(t, sd * .37), lk = o.look || [0, 0], hm = [wd[0] + lk[0], wd[1] + lk[1] + (o.face ? o.face.nod || 0 : 0), wd[2]];   // a speaker nods on stressed words (ANIM-006)
     TEX = lod < 2 ? 1 : 0; SKINREF = L.skin; OCC = null; OSKIP = 0; HEROSKIP = 0;
