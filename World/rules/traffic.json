@@ -52,6 +52,8 @@
  "outer_limit_kmh": 30.0,
  "outer_stop": 4.0,
  "outer_end_stop": 1.0,
+ "outer_bay_offset": 2.45,
+ "outer_stop_offset": 2.2,
  "outer_reach_m": 60.0,
  "driveway_shift": 4.5,
  "outer_bays": {

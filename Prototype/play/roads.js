@@ -91,7 +91,7 @@ const Roads = (() => {
       if (alongX) { world.flat(x - half, lo, x + half, hi, y, [.36, .34, .34], 20); for (const e of [lo, hi - .12]) world.flat(x - half, e, x + half, e + .12, y + .002, [.78, .62, .25], 9); }
       else { world.flat(lo, z - half, hi, z + half, y, [.36, .34, .34], 20); for (const e of [lo, hi - .12]) world.flat(e, z - half, e + .12, z + half, y + .002, [.78, .62, .25], 9); }
     }
-    const out = town ? 3.6 : 2.8, cx = x - uz * out, cz = z + ux * out;                   // the shelter, on the kerb side
+    const out = town ? 3.6 : 2.4, cx = x - uz * out, cz = z + ux * out;                   // the shelter, on the kerb side (outside: the verge before the fences)
     const g = town ? Y : typeof groundBase === "function" ? groundBase(cx, cz) : 0;
     const Pt = (a, w, yy) => [cx + ux * a - uz * w, yy, cz + uz * a + ux * w];
     Pt.n = (na, nw, ny) => [ux * na - uz * nw, ny, uz * na + ux * nw];

@@ -303,7 +303,8 @@ class Roads:
         return (p[0] + n[0] * out, p[1] + n[1] * out), u
 
     def _place_bay(self, bid, lid, s, kind, lot=None, grid=True):
-        pos, u = self._bay_on(lid, s, self.r["bay_offset"] - self.r["lane_offset"])
+        # outside the grid there are no lay-bys: a car parks on the roadway itself, against its edge (CITY-082)
+        pos, u = self._bay_on(lid, s, self.r["outer_bay_offset"] - self.r["lane_offset"])
         b = dict(id=bid, street=self.lanes[lid]["street"], lane=lid, s=s, pos=pos, u=u, kind=kind, lot=lot, outer=True)
         self.bays[bid] = b
         self.by_lane.setdefault(lid, []).append(bid)
@@ -386,7 +387,8 @@ class Roads:
                     if bid in self._grid.get(cell, []):
                         self._grid[cell].remove(bid)
             bid = "stop_%s_%s" % (st["id"], "a" if lid.endswith("+") else "b")
-            pos, u = self._bay_on(lid, s, r["bay_offset"] - r["lane_offset"])
+            off = r["bay_offset"] if sid in self.streets else r["outer_stop_offset"]   # a lay-by in town, the roadway's edge outside
+            pos, u = self._bay_on(lid, s, off - r["lane_offset"])
             b = dict(id=bid, street=sid, lane=lid, s=s, pos=pos, u=u, kind="stop", stop=st["id"], name=st["name"])
             self.bays[bid] = b
             self.stops[bid] = b

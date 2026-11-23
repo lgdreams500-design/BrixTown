@@ -54,6 +54,8 @@ windows, a timber-trussed roof with skylights, and a big painted sign and band i
 Inside, the showroom is lit warmly and evenly from skylights and hanging lanterns; room sets are three
 walls of plaster with a window and a lamp each, so furniture is seen as it would be at home. The
 warehouse hall has tall timber racks of boxes. No fluorescent white light, no shiny floors.
+Since ADR-0029 (proposed) the showroom floor shows sixteen sets in two rows back to back: kit 17's living room in each
+line and one room per kit 18 kit, furnished as `furniture_kit_18.py` renders it, with a painted route looping round them.
 
 ## 5. Questions for the owner
 

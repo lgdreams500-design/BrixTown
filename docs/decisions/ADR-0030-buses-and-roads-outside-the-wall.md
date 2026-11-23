@@ -17,7 +17,7 @@ the grid streets.
 1. **The roads outside the wall are worked out, not stored.** The traffic rules build lanes from roads.json `links` and
    the communities' block `lanes` each time they load: a road is split where another meets it, joined where one simply
    runs on into another, one lane each way along the winding line, give way where they meet, a turn at a dead end.
-   Driveways (one per house, beside its front path), kerbside bays for other places, and parking along the lanes are
+   A home bay for each house in front of it, on the roadway against its edge (the verge belongs to the garden fences), kerbside bays for other places, and parking along the lanes are
    placed from the lots and the rules. Nothing new is written into `World/` for this.
 2. **Buses are vehicles in the same day plan as cars.** A line in `World/<city>/transit.json` is a list of stops; the bus
    timetable allows the way at the speed limits plus a red light at every signalled junction, and a bus never leaves a
