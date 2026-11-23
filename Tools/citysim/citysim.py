@@ -412,6 +412,32 @@ class City:
             opts = ch["default"]
         return opts[int(rnd("pick", rid, day, idx) * len(opts))]
 
+    def _near_work(self, rid, where, place):
+        """The place of this kind nearest the resident's work (the same kinds as their own "near" table, among the places that
+        are anyone's nearest); home only when home is within near_work_home_max_m of work. Worked out, not stored."""
+        r = self.res[rid]
+        work = self.lots[r["work"]]["door"]
+        if where == "home":
+            mx = (self.d.get("near_work") or {}).get("home_max_m", 300.0)
+            if dist(self.lots[r["home"]]["door"], work) <= mx:
+                return place
+            where = "cafe"
+        if not hasattr(self, "_pools"):
+            self._pools = {}
+            for x in self.res.values():
+                for k, lid in (x.get("near") or {}).items():
+                    if lid in self.lots:
+                        self._pools.setdefault(k, set()).add(lid)
+            self._pools = {k: sorted(v) for k, v in self._pools.items()}
+            self._nw = {}
+        pool = self._pools.get(where)
+        if not pool:
+            return place
+        key = (r["work"], where)
+        if key not in self._nw:
+            self._nw[key] = min(pool, key=lambda lid: (dist(self.lots[lid]["door"], work), lid))
+        return self._nw[key]
+
     def blocks(self, rid, day):
         """[(start minute, activity, place id)] for one resident on one day. Starts are strictly increasing."""
         r = self.res[rid]
@@ -425,11 +451,13 @@ class City:
             tpl = role["market"]
         else:
             tpl = role["weekday"]
+        lo, hi = role.get("habit_min", (0, 0))           # CITY-096: their own habit, the same every day: earlier or later in the
+        habit = lo + rnd("habit", rid) * (hi - lo)         # role's window (an office's staff over three hours, a shop's rota over one)
         out = []
         for i, (start, act, where) in enumerate(tpl):
             m = hm(start)
             if i > 0:
-                m += r.get("offset", 0) * (0.5 if act in ("sleep",) else 1.0) + (rnd("jit", rid, day, i) * 2 - 1) * role["jitter"]
+                m += (r.get("offset", 0) + habit) * (0.5 if act in ("sleep",) else 1.0) + (rnd("jit", rid, day, i) * 2 - 1) * role["jitter"]
             end = hm(tpl[i + 1][0]) if i + 1 < len(tpl) else 1440
             if where == "rounds":
                 every = role["round_every"]
@@ -444,11 +472,14 @@ class City:
                 for k in range(max(1, int((end - hm(start)) // every))):
                     out.append((m + k * every, "tend", r.get("work") or r.get("near", {}).get("garden", "garden")))
                 continue
+            token = where
             if where in self.d["choices"]:
                 act2, where = self._pick(where, rid, day, i, hm(start))
                 act = act2
             # "cafe", "garden", "stop"... mean this resident's nearest one when the world gives them a "near" table
             place = r["home"] if where == "home" else r["work"] if where == "work" else r.get("near", {}).get(where, where)
+            if token in (self.d.get("near_work") or {}).get("tokens", ()) and r.get("work") in self.lots                     and i > 0 and tpl[i - 1][1] == "work":   # only between two spells at work
+                place = self._near_work(rid, where, place)   # CITY-096: lunch on a working day near work, not across town
             out.append((m, act, place))
         fixed = [out[0]]
         for b in out[1:]:                                       # keep order and a little room between starts
@@ -630,7 +661,7 @@ class City:
 
     # -- where is everyone? --
     def at(self, t):
-        """{resident id: dict(pos, act, place, state)} at minute t. state: inside | outside | walking | away."""
+        """{resident id: dict(pos, act, place, state)} at minute t. state: inside | outside | walking | away | driving | riding."""
         day, m = self.clock.split(t)
         plan = self.plan(day)
         out = {}
@@ -653,6 +684,8 @@ class City:
                 out[rid] = dict(pos=self._stroll_at(rid, day, s, m), act="stroll", place=s["place"], state="outside")
             elif kind == "drive":                         # in their car: where the car is (traffic.py)
                 out[rid] = dict(pos=self.traffic.car_at(payload, day, m)["pos"], act="drive", place=s["place"], state="driving", car=payload)
+            elif kind == "ride":                          # on a bus: where the bus is (traffic.py, CITY-092)
+                out[rid] = dict(pos=self.traffic.car_at(payload, day, m)["pos"], act="ride", place=s["place"], state="riding", bus=payload)
             else:
                 indoors = lot["kind"] not in ("garden", "market", "stop") and s["use"] is not None and \
                     lot["rect"][0] <= payload[0] <= lot["rect"][2] and lot["rect"][1] <= payload[1] <= lot["rect"][3]

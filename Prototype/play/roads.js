@@ -24,7 +24,7 @@ const Roads = (() => {
   const P = D.city.grid.pitch, cellOf = (x, z) => Math.floor(x / P) + "," + Math.floor(z / P);
   function cells() {                                             // block squares that hold any of it, so play.js can cull by square
     const k = new Set();
-    for (const [x, z] of R.crossings.concat(R.bays)) k.add(cellOf(x, z));
+    for (const [x, z] of R.crossings.concat(R.bays, R.stops || [])) k.add(cellOf(x, z));
     for (const [X, Z] of R.signals) for (const [dx, dz] of [[-11, 3.95], [11, -3.95], [-3.95, -11], [3.95, 11]]) k.add(cellOf(X + dx, Z + dz));
     return [...k];
   }
@@ -54,6 +54,7 @@ const Roads = (() => {
         world.flat(side > 0 ? hi - .1 : lo, z - L, side > 0 ? hi : lo + .1, z + L, y + .002, LINE, 9);
       }
     }
+    for (const st of R.stops || []) if (cellOf(st[0], st[1]) === cell) stop(world, Y, st);
     const metal = [.17, .18, .21], k0 = 12 - 1, kerb = HALF + .45;  // a pole on the right-hand kerb just before each stop line
     R.signals.forEach(([X, Z], k) => {
       for (const [ux, uz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {   // heading of the traffic the head faces
@@ -67,6 +68,40 @@ const Roads = (() => {
         heads.push([px - ux * .35, 0, pz - uz * .35, axis, k, ux, uz]);   // just proud of the head's face
       }
     });
+  }
+
+  // A bus stop (CITY-091): in a town street a lay-by as long as a bus with a painted box; on the kerb side a small shelter
+  // in the style of the tram's (wooden posts, a cream back, a roof in the colour of the first line that stops there, a
+  // bench) and a pole with a disc for every line. [x, z, along x, along z, town, [lines], name] from build_play.py.
+  const SHADES = { teal: [.20, .36, .37], terracotta: [.44, .24, .18], ochre: [.52, .40, .20], blue: [.30, .38, .52], olive: [.30, .33, .20], plum: [.30, .24, .34] };
+  function obox(m, P, a0, a1, w0, w1, y0, y1, col, f) {        // a box turned to the street: a along it, w across it (right +)
+    const q = (a, w, y) => P(a, w, y), n = (na, nw, ny) => P.n(na, nw, ny);
+    m.quad(q(a1, w0, y0), q(a1, w1, y0), q(a1, w1, y1), q(a1, w0, y1), col, f, n(1, 0, 0));
+    m.quad(q(a0, w0, y0), q(a0, w1, y0), q(a0, w1, y1), q(a0, w0, y1), col, f, n(-1, 0, 0));
+    m.quad(q(a0, w1, y0), q(a1, w1, y0), q(a1, w1, y1), q(a0, w1, y1), col, f, n(0, 1, 0));
+    m.quad(q(a0, w0, y0), q(a1, w0, y0), q(a1, w0, y1), q(a0, w0, y1), col, f, n(0, -1, 0));
+    m.quad(q(a0, w0, y1), q(a1, w0, y1), q(a1, w1, y1), q(a0, w1, y1), col, f, n(0, 0, 1));
+  }
+  function stop(world, Y, [x, z, ux, uz, town, lines]) {
+    const cols = (lines.length ? lines : [0]).map(k => SHADES[(R.lines[k] || {}).colour] || SHADES.teal);
+    const y = Y + .006, half = 6;
+    if (town) {                                                  // the lay-by: road setts in the pavement edge and a painted box
+      const alongX = Math.abs(ux) > .5, side = alongX ? Math.sign(z - Math.round(z / P) * P) : Math.sign(x - Math.round(x / P) * P);
+      const c = alongX ? Math.round(z / P) * P : Math.round(x / P) * P, a = c + side * HALF, b = c + side * (HALF + 2.4), lo = Math.min(a, b), hi = Math.max(a, b);
+      if (alongX) { world.flat(x - half, lo, x + half, hi, y, [.36, .34, .34], 20); for (const e of [lo, hi - .12]) world.flat(x - half, e, x + half, e + .12, y + .002, [.78, .62, .25], 9); }
+      else { world.flat(lo, z - half, hi, z + half, y, [.36, .34, .34], 20); for (const e of [lo, hi - .12]) world.flat(e, z - half, e + .12, z + half, y + .002, [.78, .62, .25], 9); }
+    }
+    const out = town ? 3.6 : 2.3, cx = x - uz * out, cz = z + ux * out;                   // the shelter, on the kerb side (outside: the verge before the fences)
+    const g = town ? Y : typeof groundBase === "function" ? groundBase(cx, cz) : 0;
+    const Pt = (a, w, yy) => [cx + ux * a - uz * w, yy, cz + uz * a + ux * w];
+    Pt.n = (na, nw, ny) => [ux * na - uz * nw, ny, uz * na + ux * nw];
+    const wood = [.24, .16, .11], cream = [.66, .61, .50], seat = [.34, .23, .15];
+    for (const a of [-1.7, 1.7]) obox(world, Pt, a - .07, a + .07, .55, .69, g, g + 2.45, wood, 9);   // posts at the back
+    obox(world, Pt, -1.7, 1.7, .6, .66, g + .8, g + 2.1, cream, 0);                                     // the back panel
+    obox(world, Pt, -2.0, 2.0, -.75, .8, g + 2.45, g + 2.58, cols[0], 0);                              // the roof
+    obox(world, Pt, -1.3, 1.3, .1, .5, g + .45, g + .52, seat, 9);                                     // the bench
+    obox(world, Pt, 2.6, 2.7, -.6, -.5, g, g + 2.7, [.17, .18, .21], 9);                               // the sign pole
+    cols.forEach((col, n) => obox(world, Pt, 2.5, 2.8, -.62, -.48, g + 2.25 - n * .32, g + 2.52 - n * .32, col, 0));   // a disc for each line
   }
 
   function draw(dyn, minute, near, reach) {

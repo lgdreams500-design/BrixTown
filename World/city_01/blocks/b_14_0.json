@@ -19,7 +19,7 @@
   {
    "id": "b_14_0_r0",
    "name": "Eastbrook Way",
-   "width": 7.0,
+   "width": 9.0,
    "points": [
     [
      1352.0,
@@ -611,7 +611,7 @@
   {
    "id": "b_14_0_r1",
    "name": "Mill Race",
-   "width": 7.0,
+   "width": 9.0,
    "points": [
     [
      1396.98,
@@ -703,7 +703,7 @@
   {
    "id": "b_14_0_r2",
    "name": "Heron Close",
-   "width": 7.0,
+   "width": 9.0,
    "points": [
     [
      1459.88,
@@ -823,7 +823,7 @@
   {
    "id": "b_14_0_r3",
    "name": "Sorrel Rise",
-   "width": 7.0,
+   "width": 9.0,
    "points": [
     [
      1484.38,
@@ -923,7 +923,7 @@
   {
    "id": "b_14_0_r4",
    "name": "Wagtail End",
-   "width": 7.0,
+   "width": 9.0,
    "points": [
     [
      1532.02,
@@ -1035,7 +1035,7 @@
   {
    "id": "b_14_0_r5",
    "name": "Ash Dell",
-   "width": 7.0,
+   "width": 9.0,
    "points": [
     [
      1554.81,
@@ -1111,7 +1111,7 @@
   {
    "id": "b_14_0_r6",
    "name": "Clover Bank",
-   "width": 7.0,
+   "width": 9.0,
    "points": [
     [
      1585.18,
@@ -1191,7 +1191,7 @@
   {
    "id": "b_14_0_r7",
    "name": "Fennel Close",
-   "width": 7.0,
+   "width": 9.0,
    "points": [
     [
      1712.85,
@@ -1311,7 +1311,7 @@
   {
    "id": "b_14_0_r8",
    "name": "Eastbrook Way",
-   "width": 7.0,
+   "width": 9.0,
    "points": [
     [
      1732.76,
@@ -1395,7 +1395,7 @@
   {
    "id": "b_14_0_r9",
    "name": "Mill Race",
-   "width": 7.0,
+   "width": 9.0,
    "points": [
     [
      1786.93,
@@ -1499,7 +1499,7 @@
   {
    "id": "b_14_0_r10",
    "name": "Heron Close",
-   "width": 7.0,
+   "width": 9.0,
    "points": [
     [
      1814.56,
@@ -2181,8 +2181,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.22,
+     -8.0,
+     6.73,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -2370,8 +2370,8 @@
     },
     "garden": [
      -7.5,
-     -8.98,
-     7.5,
+     -7.99,
+     6.94,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -2548,8 +2548,8 @@
      "roof_tone": 0
     },
     "garden": [
-     -7.5,
-     -9.0,
+     -6.97,
+     -8.0,
      7.5,
      8.0
     ],
@@ -2725,8 +2725,8 @@
      "roof_tone": 3
     },
     "garden": [
-     -7.17,
-     -9.0,
+     -6.67,
+     -8.0,
      7.5,
      8.0
     ],
@@ -2911,8 +2911,8 @@
     },
     "garden": [
      -7.5,
-     -8.93,
-     6.79,
+     -7.93,
+     6.78,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -3089,8 +3089,8 @@
      "roof_tone": 3
     },
     "garden": [
-     -7.5,
-     -9.0,
+     -7.01,
+     -8.0,
      7.5,
      8.0
     ],
@@ -3274,8 +3274,8 @@
      "roof_tone": 2
     },
     "garden": [
-     -7.5,
-     -9.0,
+     -7.08,
+     -8.0,
      7.5,
      8.0
     ],
@@ -3453,8 +3453,8 @@
      "roof_tone": 2
     },
     "garden": [
-     -7.3,
-     -9.0,
+     -6.84,
+     -8.0,
      7.5,
      8.0
     ],
@@ -3638,10 +3638,10 @@
      "roof_tone": 1
     },
     "garden": [
-     -7.48,
-     -8.64,
-     6.66,
-     7.73
+     -7.5,
+     -7.61,
+     6.7,
+     5.51
     ],
     "source": "Tools/blender/house_samples_19.py",
     "rooms": [
@@ -3825,8 +3825,8 @@
      "roof_tone": 2
     },
     "garden": [
-     -7.5,
-     -9.0,
+     -6.66,
+     -8.0,
      7.5,
      8.0
     ],
@@ -4013,8 +4013,8 @@
     },
     "garden": [
      -7.5,
-     -8.83,
-     7.05,
+     -7.83,
+     7.0,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -4207,8 +4207,8 @@
      "roof_tone": 3
     },
     "garden": [
-     -7.5,
-     -9.0,
+     -7.01,
+     -8.0,
      7.5,
      8.0
     ],
@@ -4388,8 +4388,8 @@
      "roof_tone": 0
     },
     "garden": [
-     -7.46,
-     -9.0,
+     -6.96,
+     -8.0,
      7.5,
      8.0
     ],
@@ -4590,8 +4590,8 @@
     },
     "garden": [
      -7.39,
-     -8.96,
-     7.03,
+     -7.96,
+     7.02,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -4789,7 +4789,7 @@
     },
     "garden": [
      -7.11,
-     -8.98,
+     -7.98,
      7.5,
      8.0
     ],
@@ -4969,8 +4969,8 @@
      "roof_tone": 1
     },
     "garden": [
-     -6.85,
-     -8.92,
+     -6.84,
+     -7.92,
      7.5,
      8.0
     ],
@@ -5154,9 +5154,9 @@
      "roof_tone": 0
     },
     "garden": [
-     -6.87,
-     -8.83,
-     7.49,
+     -6.84,
+     -7.82,
+     7.5,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -5341,8 +5341,8 @@
      "roof_tone": 3
     },
     "garden": [
-     -6.68,
-     -8.85,
+     -6.65,
+     -7.85,
      7.5,
      8.0
     ],
@@ -5528,8 +5528,8 @@
      "roof_tone": 1
     },
     "garden": [
-     -6.86,
-     -8.89,
+     -6.83,
+     -7.89,
      7.5,
      8.0
     ],
@@ -5732,8 +5732,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.34,
+     -8.0,
+     6.8,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -5914,8 +5914,8 @@
      "roof_tone": 0
     },
     "garden": [
-     -7.17,
-     -8.94,
+     -7.15,
+     -7.94,
      7.5,
      8.0
     ],
@@ -6115,8 +6115,8 @@
      "roof_tone": 0
     },
     "garden": [
-     -7.29,
-     -8.99,
+     -6.73,
+     -7.99,
      7.5,
      8.0
     ],
@@ -6307,8 +6307,8 @@
     },
     "garden": [
      -7.5,
-     -8.95,
-     6.99,
+     -7.95,
+     6.98,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -6502,8 +6502,8 @@
     },
     "garden": [
      -7.5,
-     -8.9,
-     6.74,
+     -7.9,
+     6.72,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -6690,8 +6690,8 @@
      "roof_tone": 3
     },
     "garden": [
-     -7.48,
-     -9.0,
+     -6.97,
+     -8.0,
      7.5,
      8.0
     ],
@@ -6877,8 +6877,8 @@
      "roof_tone": 2
     },
     "garden": [
-     -7.29,
-     -9.0,
+     -6.78,
+     -8.0,
      7.5,
      8.0
     ],
@@ -7073,8 +7073,8 @@
     },
     "garden": [
      -7.5,
-     -8.99,
-     7.33,
+     -7.99,
+     6.81,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -7262,8 +7262,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.33,
+     -8.0,
+     6.8,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -7440,8 +7440,8 @@
      "roof_tone": 0
     },
     "garden": [
-     -7.33,
-     -9.0,
+     -6.81,
+     -8.0,
      7.5,
      8.0
     ],
@@ -7642,7 +7642,7 @@
     },
     "garden": [
      -7.5,
-     -8.99,
+     -7.99,
      6.95,
      8.0
     ],
@@ -7824,8 +7824,8 @@
      "roof_tone": 2
     },
     "garden": [
-     -7.46,
-     -9.0,
+     -6.96,
+     -8.0,
      7.5,
      8.0
     ],
@@ -8026,8 +8026,8 @@
     },
     "garden": [
      -7.5,
-     -8.99,
-     7.47,
+     -8.0,
+     6.96,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -8216,8 +8216,8 @@
      "roof_tone": 4
     },
     "garden": [
-     -7.48,
-     -8.99,
+     -6.98,
+     -7.99,
      7.5,
      8.0
     ],
@@ -8396,8 +8396,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.38,
+     -8.0,
+     6.87,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -8573,7 +8573,7 @@
     },
     "garden": [
      -6.8,
-     -8.98,
+     -7.98,
      7.5,
      8.0
     ],
@@ -9134,8 +9134,8 @@
     },
     "garden": [
      -7.5,
-     -9.5,
-     7.5,
+     -8.92,
+     6.6,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -9327,8 +9327,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.34,
+     -8.0,
+     6.79,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -9531,8 +9531,8 @@
      "roof_tone": 1
     },
     "garden": [
-     -7.21,
-     -8.95,
+     -6.64,
+     -7.94,
      7.5,
      8.0
     ],
@@ -9739,8 +9739,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.41,
+     -8.0,
+     6.88,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -9929,8 +9929,8 @@
      "roof_tone": 0
     },
     "garden": [
-     -6.65,
-     -6.24,
+     -6.61,
+     -6.42,
      7.5,
      8.0
     ],
@@ -10501,8 +10501,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.5,
+     -8.0,
+     7.02,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -10695,8 +10695,8 @@
      "roof_tone": 4
     },
     "garden": [
-     -6.73,
-     -8.88,
+     -6.71,
+     -7.88,
      7.5,
      8.0
     ],
@@ -10893,8 +10893,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.5,
+     -8.0,
+     7.02,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -11081,8 +11081,8 @@
      "roof_tone": 1
     },
     "garden": [
-     -6.89,
-     -8.97,
+     -6.88,
+     -7.97,
      7.5,
      8.0
     ],
@@ -11277,8 +11277,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.19,
+     -8.0,
+     6.66,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -11465,8 +11465,8 @@
      "roof_tone": 1
     },
     "garden": [
-     -7.16,
-     -9.0,
+     -6.63,
+     -8.0,
      7.5,
      8.0
     ],
@@ -11865,8 +11865,8 @@
      "roof_tone": 3
     },
     "garden": [
-     -7.11,
-     -8.99,
+     -6.61,
+     -7.99,
      7.5,
      8.0
     ],
@@ -12056,10 +12056,10 @@
      "roof_tone": 3
     },
     "garden": [
-     -7.17,
-     -9.0,
+     -6.75,
+     -8.0,
      7.08,
-     5.26
+     5.39
     ],
     "source": "Tools/blender/house_samples_19.py",
     "rooms": [
@@ -12431,7 +12431,7 @@
     },
     "garden": [
      -7.5,
-     -8.98,
+     -7.98,
      7.09,
      8.0
     ],
@@ -12626,8 +12626,8 @@
     },
     "garden": [
      -7.5,
-     -8.98,
-     7.5,
+     -7.98,
+     6.98,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -12814,8 +12814,8 @@
      "roof_tone": 1
     },
     "garden": [
-     -7.5,
-     -9.0,
+     -6.98,
+     -8.0,
      7.5,
      8.0
     ],
@@ -13580,8 +13580,8 @@
      "roof_tone": 3
     },
     "garden": [
-     -7.5,
-     -8.99,
+     -6.96,
+     -7.99,
      7.5,
      8.0
     ],
@@ -13786,8 +13786,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.34,
+     -8.0,
+     6.83,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -13976,8 +13976,8 @@
      "roof_tone": 4
     },
     "garden": [
-     -7.36,
-     -8.99,
+     -6.85,
+     -7.99,
      7.5,
      8.0
     ],
@@ -14172,7 +14172,7 @@
     },
     "garden": [
      -7.5,
-     -9.0,
+     -8.0,
      7.07,
      8.0
     ],
@@ -14353,7 +14353,7 @@
     },
     "garden": [
      -7.08,
-     -8.99,
+     -7.99,
      7.5,
      8.0
     ],
@@ -14751,8 +14751,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.15,
+     -8.0,
+     6.62,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -14950,7 +14950,7 @@
     },
     "garden": [
      -7.1,
-     -8.98,
+     -7.98,
      7.5,
      8.0
     ],
@@ -15147,8 +15147,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.17,
+     -8.0,
+     6.65,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -15336,8 +15336,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.5,
+     -8.0,
+     7.0,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -15522,8 +15522,8 @@
      "roof_tone": 2
     },
     "garden": [
-     -7.5,
-     -8.99,
+     -6.96,
+     -7.99,
      7.5,
      8.0
     ],
@@ -15726,8 +15726,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.47,
+     -8.0,
+     6.95,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -15917,7 +15917,7 @@
     },
     "garden": [
      -6.97,
-     -8.99,
+     -7.99,
      7.5,
      8.0
     ],
@@ -16657,8 +16657,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.5,
+     -8.0,
+     7.0,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -16841,8 +16841,8 @@
      "roof_tone": 4
     },
     "garden": [
-     -6.91,
-     -8.98,
+     -6.9,
+     -7.98,
      7.5,
      8.0
     ],
@@ -17037,7 +17037,7 @@
     },
     "garden": [
      -7.5,
-     -9.0,
+     -8.0,
      7.13,
      8.0
     ],
@@ -17218,7 +17218,7 @@
     },
     "garden": [
      -7.1,
-     -9.0,
+     -8.0,
      7.5,
      8.0
     ],
@@ -17974,8 +17974,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.48,
+     -8.0,
+     6.94,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -18161,8 +18161,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.16,
+     -8.0,
+     6.67,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -18363,8 +18363,8 @@
      "roof_tone": 4
     },
     "garden": [
-     -7.08,
-     -8.96,
+     -7.07,
+     -7.96,
      7.5,
      8.0
     ],
@@ -18547,8 +18547,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.23,
+     -8.0,
+     6.71,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -18739,8 +18739,8 @@
      "roof_tone": 1
     },
     "garden": [
-     -7.16,
-     -8.97,
+     -6.62,
+     -7.98,
      7.5,
      8.0
     ],
@@ -18921,8 +18921,8 @@
     },
     "garden": [
      -7.5,
-     -9.0,
-     7.39,
+     -8.0,
+     6.87,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -19105,8 +19105,8 @@
      "roof_tone": 4
     },
     "garden": [
-     -7.34,
-     -8.99,
+     -6.81,
+     -7.99,
      7.5,
      8.0
     ],
@@ -19881,10 +19881,10 @@
      "roof_tone": 4
     },
     "garden": [
-     -7.25,
-     -9.0,
+     -6.6,
+     -6.5,
      7.5,
-     8.0
+     5.34
     ],
     "source": "Tools/blender/house_samples_19.py",
     "rooms": [
@@ -20087,8 +20087,8 @@
     },
     "garden": [
      -7.5,
-     -8.97,
-     7.15,
+     -7.97,
+     6.6,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -20277,8 +20277,8 @@
      "roof_tone": 3
     },
     "garden": [
-     -7.18,
-     -9.0,
+     -6.64,
+     -8.0,
      7.5,
      8.0
     ],
@@ -20465,8 +20465,8 @@
     },
     "garden": [
      -7.5,
-     -8.95,
-     7.01,
+     -7.95,
+     7.0,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -20651,8 +20651,8 @@
      "roof_tone": 0
     },
     "garden": [
-     -7.13,
-     -9.0,
+     -7.14,
+     -8.0,
      7.5,
      8.0
     ],
@@ -20831,8 +20831,8 @@
     },
     "garden": [
      -7.5,
-     -8.98,
-     7.39,
+     -7.98,
+     6.83,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -21031,8 +21031,8 @@
      "roof_tone": 4
     },
     "garden": [
-     -7.43,
-     -9.0,
+     -6.87,
+     -8.0,
      7.5,
      8.0
     ],
@@ -21223,8 +21223,8 @@
     },
     "garden": [
      -7.5,
-     -8.99,
-     7.24,
+     -7.99,
+     6.71,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -21409,8 +21409,8 @@
      "roof_tone": 0
     },
     "garden": [
-     -7.23,
-     -9.0,
+     -6.71,
+     -8.0,
      7.5,
      8.0
     ],
@@ -21596,8 +21596,8 @@
      "roof_tone": 3
     },
     "garden": [
-     -7.5,
-     -9.4,
+     -6.82,
+     -8.79,
      7.5,
      8.0
     ],
@@ -22178,8 +22178,8 @@
     },
     "garden": [
      -7.5,
-     -9.41,
-     7.5,
+     -8.79,
+     6.87,
      8.0
     ],
     "source": "Tools/blender/house_samples_19.py",
@@ -24850,8 +24850,8 @@
   {
    "kind": "lamp",
    "pos": [
-    1375.1,
-    164.71
+    1374.55,
+    163.88
    ],
    "set": "street",
    "id": "b_14_0_st0"
@@ -24859,8 +24859,8 @@
   {
    "kind": "lamp",
    "pos": [
-    1419.82,
-    137.42
+    1419.36,
+    136.54
    ],
    "set": "street",
    "id": "b_14_0_st1"
@@ -24868,8 +24868,8 @@
   {
    "kind": "lamp",
    "pos": [
-    1495.29,
-    126.64
+    1495.12,
+    127.63
    ],
    "set": "street",
    "id": "b_14_0_st2"
@@ -24877,8 +24877,8 @@
   {
    "kind": "lamp",
    "pos": [
-    1522.67,
-    125.46
+    1523.06,
+    124.54
    ],
    "set": "street",
    "id": "b_14_0_st3"
@@ -24886,8 +24886,8 @@
   {
    "kind": "lamp",
    "pos": [
-    1637.02,
-    189.74
+    1636.83,
+    190.72
    ],
    "set": "street",
    "id": "b_14_0_st4"
@@ -24895,8 +24895,8 @@
   {
    "kind": "lamp",
    "pos": [
-    1663.91,
-    184.09
+    1663.97,
+    183.09
    ],
    "set": "street",
    "id": "b_14_0_st5"
@@ -24904,41 +24904,36 @@
   {
    "kind": "lamp",
    "pos": [
-    1767.67,
-    181.13
+    1741.71,
+    191.06
    ],
    "set": "street",
    "id": "b_14_0_st6"
   },
   {
-   "kind": "bench",
+   "kind": "lamp",
    "pos": [
-    1447.83,
-    124.45
+    1767.71,
+    180.13
    ],
-   "along": "x",
    "set": "street",
    "id": "b_14_0_st7"
   },
   {
-   "kind": "bin",
+   "kind": "bench",
    "pos": [
-    1449.32,
-    123.88
+    1447.47,
+    123.52
    ],
    "along": "x",
-   "out": [
-    0,
-    -1
-   ],
    "set": "street",
    "id": "b_14_0_st8"
   },
   {
-   "kind": "planter",
+   "kind": "bin",
    "pos": [
-    1446.33,
-    125.02
+    1448.97,
+    122.95
    ],
    "along": "x",
    "out": [
@@ -24949,20 +24944,10 @@
    "id": "b_14_0_st9"
   },
   {
-   "kind": "bench",
+   "kind": "planter",
    "pos": [
-    1658.63,
-    192.75
-   ],
-   "along": "x",
-   "set": "street",
-   "id": "b_14_0_st10"
-  },
-  {
-   "kind": "bin",
-   "pos": [
-    1660.23,
-    192.87
+    1445.98,
+    124.09
    ],
    "along": "x",
    "out": [
@@ -24970,13 +24955,23 @@
     -1
    ],
    "set": "street",
+   "id": "b_14_0_st10"
+  },
+  {
+   "kind": "bench",
+   "pos": [
+    1658.56,
+    193.74
+   ],
+   "along": "x",
+   "set": "street",
    "id": "b_14_0_st11"
   },
   {
-   "kind": "planter",
+   "kind": "bin",
    "pos": [
-    1656.93,
-    192.61
+    1660.15,
+    193.87
    ],
    "along": "x",
    "out": [
@@ -24987,686 +24982,687 @@
    "id": "b_14_0_st12"
   },
   {
-   "kind": "plant",
+   "kind": "planter",
    "pos": [
-    1357.79,
-    186.2
+    1656.83,
+    193.6
    ],
-   "shape": "bush",
-   "species": "lavender",
-   "r": 0.97,
-   "seed": 2389,
+   "along": "x",
+   "out": [
+    0,
+    -1
+   ],
    "set": "street",
    "id": "b_14_0_st13"
   },
   {
    "kind": "plant",
    "pos": [
-    1362.75,
-    183.31
+    1358.27,
+    187.07
    ],
    "shape": "bush",
-   "species": "box",
-   "r": 0.9,
-   "seed": 8855,
+   "species": "lavender",
+   "r": 0.97,
+   "seed": 2389,
    "set": "street",
    "id": "b_14_0_st14"
   },
   {
    "kind": "plant",
    "pos": [
-    1371.67,
-    177.69
+    1363.26,
+    184.16
    ],
    "shape": "bush",
-   "species": "rose",
-   "r": 0.71,
-   "seed": 5573,
+   "species": "box",
+   "r": 0.9,
+   "seed": 8855,
    "set": "street",
    "id": "b_14_0_st15"
   },
   {
    "kind": "plant",
    "pos": [
-    1376.59,
-    174.49
+    1372.21,
+    178.53
    ],
    "shape": "bush",
    "species": "rose",
-   "r": 1.0,
-   "seed": 3762,
+   "r": 0.71,
+   "seed": 5573,
    "set": "street",
    "id": "b_14_0_st16"
   },
   {
    "kind": "plant",
    "pos": [
-    1381.62,
-    171.2
+    1377.13,
+    175.33
    ],
    "shape": "bush",
-   "species": "lavender",
-   "r": 0.94,
-   "seed": 6916,
+   "species": "rose",
+   "r": 1.0,
+   "seed": 3762,
    "set": "street",
    "id": "b_14_0_st17"
   },
   {
    "kind": "plant",
    "pos": [
-    1386.83,
-    167.82
+    1382.17,
+    172.04
    ],
    "shape": "bush",
-   "species": "rose",
-   "r": 0.78,
-   "seed": 143,
+   "species": "lavender",
+   "r": 0.94,
+   "seed": 6916,
    "set": "street",
    "id": "b_14_0_st18"
   },
   {
    "kind": "plant",
    "pos": [
-    1392.12,
-    164.4
+    1387.37,
+    168.66
    ],
    "shape": "bush",
-   "species": "hydrangea",
-   "r": 0.83,
-   "seed": 652,
+   "species": "rose",
+   "r": 0.78,
+   "seed": 143,
    "set": "street",
    "id": "b_14_0_st19"
   },
   {
    "kind": "plant",
    "pos": [
-    1408.15,
-    154.43
+    1392.66,
+    165.24
    ],
    "shape": "bush",
    "species": "hydrangea",
-   "r": 0.79,
-   "seed": 297,
+   "r": 0.83,
+   "seed": 652,
    "set": "street",
    "id": "b_14_0_st20"
   },
   {
    "kind": "plant",
    "pos": [
-    1412.42,
-    151.91
+    1408.66,
+    155.29
    ],
    "shape": "bush",
-   "species": "lavender",
-   "r": 1.0,
-   "seed": 7883,
+   "species": "hydrangea",
+   "r": 0.79,
+   "seed": 297,
    "set": "street",
    "id": "b_14_0_st21"
   },
   {
    "kind": "plant",
    "pos": [
-    1422.21,
-    146.37
+    1412.92,
+    152.77
    ],
    "shape": "bush",
-   "species": "box",
-   "r": 0.93,
-   "seed": 1839,
+   "species": "lavender",
+   "r": 1.0,
+   "seed": 7883,
    "set": "street",
    "id": "b_14_0_st22"
   },
   {
    "kind": "plant",
    "pos": [
-    1426.8,
-    143.91
+    1422.7,
+    147.24
    ],
    "shape": "bush",
-   "species": "lilac",
-   "r": 0.92,
-   "seed": 7454,
+   "species": "box",
+   "r": 0.93,
+   "seed": 1839,
    "set": "street",
    "id": "b_14_0_st23"
   },
   {
    "kind": "plant",
    "pos": [
-    1431.52,
-    141.48
+    1427.26,
+    144.79
    ],
    "shape": "bush",
-   "species": "box",
-   "r": 0.95,
-   "seed": 4314,
+   "species": "lilac",
+   "r": 0.92,
+   "seed": 7454,
    "set": "street",
    "id": "b_14_0_st24"
   },
   {
    "kind": "plant",
    "pos": [
-    1437.27,
-    138.71
+    1431.98,
+    142.38
    ],
    "shape": "bush",
    "species": "box",
-   "r": 0.8,
-   "seed": 8339,
+   "r": 0.95,
+   "seed": 4314,
    "set": "street",
    "id": "b_14_0_st25"
   },
   {
    "kind": "plant",
    "pos": [
-    1441.57,
-    136.75
+    1437.69,
+    139.62
    ],
    "shape": "bush",
-   "species": "hydrangea",
-   "r": 0.81,
-   "seed": 5037,
+   "species": "box",
+   "r": 0.8,
+   "seed": 8339,
    "set": "street",
    "id": "b_14_0_st26"
   },
   {
    "kind": "plant",
    "pos": [
-    1446.82,
-    134.52
+    1441.97,
+    137.67
    ],
    "shape": "bush",
    "species": "hydrangea",
-   "r": 0.84,
-   "seed": 7135,
+   "r": 0.81,
+   "seed": 5037,
    "set": "street",
    "id": "b_14_0_st27"
   },
   {
    "kind": "plant",
    "pos": [
-    1452.16,
-    132.43
+    1447.19,
+    135.45
    ],
    "shape": "bush",
    "species": "hydrangea",
-   "r": 0.95,
-   "seed": 7080,
+   "r": 0.84,
+   "seed": 7135,
    "set": "street",
    "id": "b_14_0_st28"
   },
   {
    "kind": "plant",
    "pos": [
-    1468.92,
-    127.47
+    1452.51,
+    133.37
    ],
    "shape": "bush",
    "species": "hydrangea",
-   "r": 0.85,
-   "seed": 2889,
+   "r": 0.95,
+   "seed": 7080,
    "set": "street",
    "id": "b_14_0_st29"
   },
   {
    "kind": "plant",
    "pos": [
-    1473.64,
-    126.59
+    1469.14,
+    128.44
    ],
    "shape": "bush",
-   "species": "rose",
-   "r": 0.94,
-   "seed": 7603,
+   "species": "hydrangea",
+   "r": 0.85,
+   "seed": 2889,
    "set": "street",
    "id": "b_14_0_st30"
   },
   {
    "kind": "plant",
    "pos": [
-    1479.66,
-    125.9
+    1473.78,
+    127.58
    ],
    "shape": "bush",
-   "species": "lavender",
-   "r": 0.84,
-   "seed": 4125,
+   "species": "rose",
+   "r": 0.94,
+   "seed": 7603,
    "set": "street",
    "id": "b_14_0_st31"
   },
   {
    "kind": "plant",
    "pos": [
-    1490.8,
-    126.03
+    1479.75,
+    126.89
    ],
    "shape": "bush",
-   "species": "box",
-   "r": 0.95,
-   "seed": 2776,
+   "species": "lavender",
+   "r": 0.84,
+   "seed": 4125,
    "set": "street",
    "id": "b_14_0_st32"
   },
   {
    "kind": "plant",
    "pos": [
-    1497.29,
-    126.99
+    1490.72,
+    127.03
    ],
    "shape": "bush",
-   "species": "hydrangea",
-   "r": 0.74,
-   "seed": 2580,
+   "species": "box",
+   "r": 0.95,
+   "seed": 2776,
    "set": "street",
    "id": "b_14_0_st33"
   },
   {
    "kind": "plant",
    "pos": [
-    1502.58,
-    128.18
+    1497.11,
+    127.98
    ],
    "shape": "bush",
-   "species": "rose",
-   "r": 0.68,
-   "seed": 6217,
+   "species": "hydrangea",
+   "r": 0.74,
+   "seed": 2580,
    "set": "street",
    "id": "b_14_0_st34"
   },
   {
    "kind": "plant",
    "pos": [
-    1508.38,
-    129.83
+    1502.33,
+    129.15
    ],
    "shape": "bush",
-   "species": "lilac",
-   "r": 0.88,
-   "seed": 7196,
+   "species": "rose",
+   "r": 0.68,
+   "seed": 6217,
    "set": "street",
    "id": "b_14_0_st35"
   },
   {
    "kind": "plant",
    "pos": [
-    1518.19,
-    133.36
+    1508.07,
+    130.78
    ],
    "shape": "bush",
    "species": "lilac",
-   "r": 0.98,
-   "seed": 4374,
+   "r": 0.88,
+   "seed": 7196,
    "set": "street",
    "id": "b_14_0_st36"
   },
   {
    "kind": "plant",
    "pos": [
-    1522.88,
-    135.31
+    1517.83,
+    134.29
    ],
    "shape": "bush",
-   "species": "rose",
-   "r": 0.9,
-   "seed": 7919,
+   "species": "lilac",
+   "r": 0.98,
+   "seed": 4374,
    "set": "street",
    "id": "b_14_0_st37"
   },
   {
    "kind": "plant",
    "pos": [
-    1537.66,
-    142.37
+    1522.48,
+    136.22
    ],
    "shape": "bush",
    "species": "rose",
-   "r": 0.82,
-   "seed": 7267,
+   "r": 0.9,
+   "seed": 7919,
    "set": "street",
    "id": "b_14_0_st38"
   },
   {
    "kind": "plant",
    "pos": [
-    1542.12,
-    144.7
+    1537.2,
+    143.26
    ],
    "shape": "bush",
-   "species": "hydrangea",
-   "r": 0.73,
-   "seed": 5549,
+   "species": "rose",
+   "r": 0.82,
+   "seed": 7267,
    "set": "street",
    "id": "b_14_0_st39"
   },
   {
    "kind": "plant",
    "pos": [
-    1547.38,
-    147.55
+    1541.65,
+    145.59
    ],
    "shape": "bush",
-   "species": "rose",
-   "r": 0.92,
-   "seed": 7203,
+   "species": "hydrangea",
+   "r": 0.73,
+   "seed": 5549,
    "set": "street",
    "id": "b_14_0_st40"
   },
   {
    "kind": "plant",
    "pos": [
-    1557.18,
-    153.03
+    1546.9,
+    148.42
    ],
    "shape": "bush",
-   "species": "box",
-   "r": 0.68,
-   "seed": 8928,
+   "species": "rose",
+   "r": 0.92,
+   "seed": 7203,
    "set": "street",
    "id": "b_14_0_st41"
   },
   {
    "kind": "plant",
    "pos": [
-    1562.24,
-    155.92
+    1556.69,
+    153.9
    ],
    "shape": "bush",
-   "species": "lilac",
-   "r": 0.75,
-   "seed": 9050,
+   "species": "box",
+   "r": 0.68,
+   "seed": 8928,
    "set": "street",
    "id": "b_14_0_st42"
   },
   {
    "kind": "plant",
    "pos": [
-    1567.44,
-    158.9
+    1561.74,
+    156.78
    ],
    "shape": "bush",
-   "species": "rose",
-   "r": 0.83,
-   "seed": 8824,
+   "species": "lilac",
+   "r": 0.75,
+   "seed": 9050,
    "set": "street",
    "id": "b_14_0_st43"
   },
   {
    "kind": "plant",
    "pos": [
-    1573.4,
-    162.31
+    1566.95,
+    159.77
    ],
    "shape": "bush",
-   "species": "box",
-   "r": 0.91,
-   "seed": 1746,
+   "species": "rose",
+   "r": 0.83,
+   "seed": 8824,
    "set": "street",
    "id": "b_14_0_st44"
   },
   {
    "kind": "plant",
    "pos": [
-    1589.23,
-    171.11
+    1572.91,
+    163.18
    ],
    "shape": "bush",
-   "species": "rose",
-   "r": 0.73,
-   "seed": 515,
+   "species": "box",
+   "r": 0.91,
+   "seed": 1746,
    "set": "street",
    "id": "b_14_0_st45"
   },
   {
    "kind": "plant",
    "pos": [
-    1594.92,
-    174.11
+    1588.75,
+    171.99
    ],
    "shape": "bush",
-   "species": "hydrangea",
-   "r": 0.86,
-   "seed": 3773,
+   "species": "rose",
+   "r": 0.73,
+   "seed": 515,
    "set": "street",
    "id": "b_14_0_st46"
   },
   {
    "kind": "plant",
    "pos": [
-    1599.36,
-    176.35
+    1594.47,
+    175.0
    ],
    "shape": "bush",
-   "species": "lilac",
-   "r": 0.96,
-   "seed": 4193,
+   "species": "hydrangea",
+   "r": 0.86,
+   "seed": 3773,
    "set": "street",
    "id": "b_14_0_st47"
   },
   {
    "kind": "plant",
    "pos": [
-    1605.06,
-    179.07
+    1598.92,
+    177.25
    ],
    "shape": "bush",
-   "species": "hydrangea",
+   "species": "lilac",
    "r": 0.96,
-   "seed": 6924,
+   "seed": 4193,
    "set": "street",
    "id": "b_14_0_st48"
   },
   {
    "kind": "plant",
    "pos": [
-    1609.96,
-    181.26
+    1604.63,
+    179.97
    ],
    "shape": "bush",
-   "species": "lavender",
-   "r": 0.73,
-   "seed": 1455,
+   "species": "hydrangea",
+   "r": 0.96,
+   "seed": 6924,
    "set": "street",
    "id": "b_14_0_st49"
   },
   {
    "kind": "plant",
    "pos": [
-    1614.88,
-    183.27
+    1609.57,
+    182.18
    ],
    "shape": "bush",
-   "species": "box",
-   "r": 0.75,
-   "seed": 4745,
+   "species": "lavender",
+   "r": 0.73,
+   "seed": 1455,
    "set": "street",
    "id": "b_14_0_st50"
   },
   {
    "kind": "plant",
    "pos": [
-    1620.37,
-    185.32
+    1614.51,
+    184.2
    ],
    "shape": "bush",
-   "species": "lavender",
-   "r": 0.84,
-   "seed": 2775,
+   "species": "box",
+   "r": 0.75,
+   "seed": 4745,
    "set": "street",
    "id": "b_14_0_st51"
   },
   {
    "kind": "plant",
    "pos": [
-    1627.02,
-    187.4
+    1620.03,
+    186.26
    ],
    "shape": "bush",
-   "species": "lilac",
-   "r": 0.95,
-   "seed": 7547,
+   "species": "lavender",
+   "r": 0.84,
+   "seed": 2775,
    "set": "street",
    "id": "b_14_0_st52"
   },
   {
    "kind": "plant",
    "pos": [
-    1633.14,
-    188.92
+    1626.74,
+    188.36
    ],
    "shape": "bush",
    "species": "lilac",
-   "r": 0.93,
-   "seed": 2303,
+   "r": 0.95,
+   "seed": 7547,
    "set": "street",
    "id": "b_14_0_st53"
   },
   {
    "kind": "plant",
    "pos": [
-    1639.39,
-    190.2
+    1632.93,
+    189.9
    ],
    "shape": "bush",
-   "species": "lavender",
-   "r": 0.85,
-   "seed": 5879,
+   "species": "lilac",
+   "r": 0.93,
+   "seed": 2303,
    "set": "street",
    "id": "b_14_0_st54"
   },
   {
    "kind": "plant",
    "pos": [
-    1644.81,
-    191.13
+    1639.2,
+    191.18
    ],
    "shape": "bush",
-   "species": "hydrangea",
-   "r": 1.0,
-   "seed": 7606,
+   "species": "lavender",
+   "r": 0.85,
+   "seed": 5879,
    "set": "street",
    "id": "b_14_0_st55"
   },
   {
    "kind": "plant",
    "pos": [
-    1651.24,
-    192.0
+    1644.67,
+    192.12
    ],
    "shape": "bush",
-   "species": "lilac",
-   "r": 0.79,
-   "seed": 5333,
+   "species": "hydrangea",
+   "r": 1.0,
+   "seed": 7606,
    "set": "street",
    "id": "b_14_0_st56"
   },
   {
    "kind": "plant",
    "pos": [
-    1662.99,
-    193.05
+    1651.12,
+    192.99
    ],
    "shape": "bush",
-   "species": "rose",
-   "r": 0.91,
-   "seed": 165,
+   "species": "lilac",
+   "r": 0.79,
+   "seed": 5333,
    "set": "street",
    "id": "b_14_0_st57"
   },
   {
    "kind": "plant",
    "pos": [
-    1669.01,
-    193.34
+    1662.93,
+    194.05
    ],
    "shape": "bush",
-   "species": "lavender",
-   "r": 0.72,
-   "seed": 3991,
+   "species": "rose",
+   "r": 0.91,
+   "seed": 165,
    "set": "street",
    "id": "b_14_0_st58"
   },
   {
    "kind": "plant",
    "pos": [
-    1674.73,
-    193.46
+    1668.97,
+    194.34
    ],
    "shape": "bush",
-   "species": "rose",
-   "r": 0.8,
-   "seed": 1301,
+   "species": "lavender",
+   "r": 0.72,
+   "seed": 3991,
    "set": "street",
    "id": "b_14_0_st59"
   },
   {
    "kind": "plant",
    "pos": [
-    1679.66,
-    193.45
+    1674.73,
+    194.46
    ],
    "shape": "bush",
-   "species": "lilac",
-   "r": 0.86,
-   "seed": 2767,
+   "species": "rose",
+   "r": 0.8,
+   "seed": 1301,
    "set": "street",
    "id": "b_14_0_st60"
   },
   {
    "kind": "plant",
    "pos": [
-    1684.64,
-    193.36
+    1679.67,
+    194.45
    ],
    "shape": "bush",
    "species": "lilac",
-   "r": 0.78,
-   "seed": 8994,
+   "r": 0.86,
+   "seed": 2767,
    "set": "street",
    "id": "b_14_0_st61"
   },
   {
    "kind": "plant",
    "pos": [
-    1690.89,
-    193.15
+    1684.66,
+    194.36
    ],
    "shape": "bush",
    "species": "lilac",
-   "r": 0.71,
-   "seed": 8544,
+   "r": 0.78,
+   "seed": 8994,
    "set": "street",
    "id": "b_14_0_st62"
   },
   {
    "kind": "plant",
    "pos": [
-    1701.08,
-    192.6
+    1690.93,
+    194.15
    ],
    "shape": "bush",
-   "species": "hydrangea",
-   "r": 0.88,
-   "seed": 7861,
+   "species": "lilac",
+   "r": 0.71,
+   "seed": 8544,
    "set": "street",
    "id": "b_14_0_st63"
   },
   {
    "kind": "plant",
    "pos": [
-    1708.06,
-    192.13
+    1701.14,
+    193.6
    ],
    "shape": "bush",
-   "species": "lilac",
-   "r": 0.77,
-   "seed": 2452,
+   "species": "hydrangea",
+   "r": 0.88,
+   "seed": 7861,
    "set": "street",
    "id": "b_14_0_st64"
   },
   {
    "kind": "plant",
    "pos": [
-    1720.15,
-    191.27
+    1720.22,
+    192.27
    ],
    "shape": "bush",
    "species": "rose",
@@ -25678,8 +25674,8 @@
   {
    "kind": "plant",
    "pos": [
-    1725.41,
-    190.91
+    1725.47,
+    191.91
    ],
    "shape": "bush",
    "species": "lilac",
@@ -25691,1444 +25687,1405 @@
   {
    "kind": "plant",
    "pos": [
-    1730.6,
-    190.59
-   ],
-   "shape": "bush",
-   "species": "rose",
-   "r": 0.85,
-   "seed": 8425,
-   "set": "street",
-   "id": "b_14_0_st67"
-  },
-  {
-   "kind": "plant",
-   "pos": [
-    1736.65,
-    190.27
+    1736.7,
+    191.27
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.67,
    "seed": 796,
    "set": "street",
-   "id": "b_14_0_st68"
+   "id": "b_14_0_st67"
   },
   {
    "kind": "plant",
    "pos": [
-    1743.15,
-    190.01
-   ],
-   "shape": "bush",
-   "species": "hydrangea",
-   "r": 0.93,
-   "seed": 6871,
-   "set": "street",
-   "id": "b_14_0_st69"
-  },
-  {
-   "kind": "plant",
-   "pos": [
-    1750.06,
-    189.86
+    1750.07,
+    190.86
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.72,
    "seed": 4775,
    "set": "street",
-   "id": "b_14_0_st70"
+   "id": "b_14_0_st68"
   },
   {
    "kind": "plant",
    "pos": [
-    1757.09,
-    189.87
+    1757.08,
+    190.87
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.84,
    "seed": 4028,
    "set": "street",
-   "id": "b_14_0_st71"
+   "id": "b_14_0_st69"
   },
   {
    "kind": "plant",
    "pos": [
-    1762.92,
-    189.99
+    1762.89,
+    190.99
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.81,
    "seed": 6586,
    "set": "street",
-   "id": "b_14_0_st72"
+   "id": "b_14_0_st70"
   },
   {
    "kind": "plant",
    "pos": [
-    1768.76,
-    190.17
+    1768.72,
+    191.17
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.69,
    "seed": 8886,
    "set": "street",
-   "id": "b_14_0_st73"
+   "id": "b_14_0_st71"
   },
   {
    "kind": "plant",
    "pos": [
-    1774.41,
-    190.37
+    1774.38,
+    191.37
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.95,
    "seed": 2204,
    "set": "street",
-   "id": "b_14_0_st74"
+   "id": "b_14_0_st72"
   },
   {
    "kind": "plant",
    "pos": [
-    1780.9,
-    190.61
+    1780.86,
+    191.61
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.8,
    "seed": 7850,
    "set": "street",
-   "id": "b_14_0_st75"
+   "id": "b_14_0_st73"
   },
   {
    "kind": "plant",
    "pos": [
-    1792.91,
-    191.09
-   ],
-   "shape": "bush",
-   "species": "box",
-   "r": 0.82,
-   "seed": 9238,
-   "set": "street",
-   "id": "b_14_0_st76"
-  },
-  {
-   "kind": "plant",
-   "pos": [
-    1799.64,
-    191.38
+    1799.6,
+    192.37
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.88,
    "seed": 5667,
    "set": "street",
-   "id": "b_14_0_st77"
+   "id": "b_14_0_st74"
   },
   {
    "kind": "plant",
    "pos": [
-    1806.68,
-    191.68
+    1806.63,
+    192.68
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.81,
    "seed": 1973,
    "set": "street",
-   "id": "b_14_0_st78"
+   "id": "b_14_0_st75"
   },
   {
    "kind": "plant",
    "pos": [
-    1824.45,
-    192.5
+    1824.4,
+    193.5
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.72,
    "seed": 4076,
    "set": "street",
-   "id": "b_14_0_st79"
+   "id": "b_14_0_st76"
   },
   {
    "kind": "plant",
    "pos": [
-    1831.57,
-    192.84
+    1831.52,
+    193.84
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.66,
    "seed": 9371,
    "set": "street",
-   "id": "b_14_0_st80"
+   "id": "b_14_0_st77"
   },
   {
    "kind": "plant",
    "pos": [
-    1842.99,
-    193.4
+    1842.95,
+    194.4
    ],
    "shape": "bush",
    "species": "rose",
    "r": 1.0,
    "seed": 7385,
    "set": "street",
-   "id": "b_14_0_st81"
+   "id": "b_14_0_st78"
   },
   {
    "kind": "plant",
    "pos": [
-    1849.01,
-    193.69
+    1848.96,
+    194.69
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.75,
    "seed": 9791,
    "set": "street",
-   "id": "b_14_0_st82"
+   "id": "b_14_0_st79"
   },
   {
    "kind": "plant",
    "pos": [
-    1856.0,
-    194.05
+    1855.95,
+    195.05
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.79,
    "seed": 7559,
    "set": "street",
-   "id": "b_14_0_st83"
+   "id": "b_14_0_st80"
   },
   {
    "kind": "plant",
    "pos": [
-    1867.6,
-    194.64
+    1867.55,
+    195.64
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.79,
    "seed": 700,
    "set": "street",
-   "id": "b_14_0_st84"
+   "id": "b_14_0_st81"
   },
   {
    "kind": "plant",
    "pos": [
-    1873.34,
-    194.93
+    1873.29,
+    195.93
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.76,
    "seed": 5736,
    "set": "street",
-   "id": "b_14_0_st85"
+   "id": "b_14_0_st82"
   },
   {
    "kind": "plant",
    "pos": [
-    1878.55,
-    195.2
+    1878.5,
+    196.19
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.74,
    "seed": 4279,
    "set": "street",
-   "id": "b_14_0_st86"
+   "id": "b_14_0_st83"
   },
   {
    "kind": "plant",
    "pos": [
-    1884.25,
-    195.49
+    1884.2,
+    196.49
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.66,
    "seed": 8624,
    "set": "street",
-   "id": "b_14_0_st87"
+   "id": "b_14_0_st84"
   },
   {
    "kind": "plant",
    "pos": [
-    1889.71,
-    195.77
+    1889.66,
+    196.77
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.94,
    "seed": 3168,
    "set": "street",
-   "id": "b_14_0_st88"
+   "id": "b_14_0_st85"
   },
   {
    "kind": "plant",
    "pos": [
-    1894.85,
-    196.04
+    1894.8,
+    197.04
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.81,
    "seed": 5448,
    "set": "street",
-   "id": "b_14_0_st89"
+   "id": "b_14_0_st86"
   },
   {
    "kind": "plant",
    "pos": [
-    1899.88,
-    196.29
+    1899.83,
+    197.29
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.67,
    "seed": 9941,
    "set": "street",
-   "id": "b_14_0_st90"
+   "id": "b_14_0_st87"
   },
   {
    "kind": "plant",
    "pos": [
-    1905.44,
-    196.57
+    1905.39,
+    197.57
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.81,
    "seed": 8600,
    "set": "street",
-   "id": "b_14_0_st91"
+   "id": "b_14_0_st88"
   },
   {
    "kind": "plant",
    "pos": [
-    1353.67,
-    178.19
+    1353.19,
+    177.32
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.72,
    "seed": 9707,
    "set": "street",
-   "id": "b_14_0_st92"
+   "id": "b_14_0_st89"
   },
   {
    "kind": "plant",
    "pos": [
-    1358.3,
-    175.48
+    1357.78,
+    174.62
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.85,
    "seed": 3140,
    "set": "street",
-   "id": "b_14_0_st93"
+   "id": "b_14_0_st90"
   },
   {
    "kind": "plant",
    "pos": [
-    1362.75,
-    172.71
+    1362.22,
+    171.86
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.66,
    "seed": 3381,
    "set": "street",
-   "id": "b_14_0_st94"
+   "id": "b_14_0_st91"
   },
   {
    "kind": "plant",
    "pos": [
-    1366.96,
-    170.02
+    1366.41,
+    169.18
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.75,
    "seed": 856,
    "set": "street",
-   "id": "b_14_0_st95"
+   "id": "b_14_0_st92"
   },
   {
    "kind": "plant",
    "pos": [
-    1371.85,
-    166.84
+    1371.3,
+    166.0
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.81,
    "seed": 3100,
    "set": "street",
-   "id": "b_14_0_st96"
+   "id": "b_14_0_st93"
   },
   {
    "kind": "plant",
    "pos": [
-    1386.14,
-    157.54
+    1385.6,
+    156.7
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.7,
    "seed": 3833,
    "set": "street",
-   "id": "b_14_0_st97"
+   "id": "b_14_0_st94"
   },
   {
    "kind": "plant",
    "pos": [
-    1391.64,
-    154.04
+    1391.11,
+    153.19
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.75,
    "seed": 52,
    "set": "street",
-   "id": "b_14_0_st98"
+   "id": "b_14_0_st95"
   },
   {
    "kind": "plant",
    "pos": [
-    1401.41,
-    147.99
+    1400.89,
+    147.13
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.71,
    "seed": 3830,
    "set": "street",
-   "id": "b_14_0_st99"
+   "id": "b_14_0_st96"
   },
   {
    "kind": "plant",
    "pos": [
-    1405.95,
-    145.27
+    1405.43,
+    144.41
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.85,
    "seed": 6455,
    "set": "street",
-   "id": "b_14_0_st100"
+   "id": "b_14_0_st97"
   },
   {
    "kind": "plant",
    "pos": [
-    1410.33,
-    142.71
+    1409.82,
+    141.85
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.99,
    "seed": 4728,
    "set": "street",
-   "id": "b_14_0_st101"
+   "id": "b_14_0_st98"
   },
   {
    "kind": "plant",
    "pos": [
-    1425.97,
-    134.21
+    1425.52,
+    133.32
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.84,
    "seed": 9121,
    "set": "street",
-   "id": "b_14_0_st102"
+   "id": "b_14_0_st99"
   },
   {
    "kind": "plant",
    "pos": [
-    1438.02,
-    128.48
+    1437.62,
+    127.56
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.94,
    "seed": 6878,
    "set": "street",
-   "id": "b_14_0_st103"
+   "id": "b_14_0_st100"
   },
   {
    "kind": "plant",
    "pos": [
-    1443.46,
-    126.17
+    1443.08,
+    125.24
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.98,
    "seed": 919,
    "set": "street",
-   "id": "b_14_0_st104"
+   "id": "b_14_0_st101"
   },
   {
    "kind": "plant",
    "pos": [
-    1466.94,
-    118.69
+    1466.71,
+    117.71
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.77,
    "seed": 3076,
    "set": "street",
-   "id": "b_14_0_st105"
+   "id": "b_14_0_st102"
   },
   {
    "kind": "plant",
    "pos": [
-    1472.47,
-    117.66
+    1472.34,
+    116.67
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.92,
    "seed": 954,
    "set": "street",
-   "id": "b_14_0_st106"
+   "id": "b_14_0_st103"
   },
   {
    "kind": "plant",
    "pos": [
-    1491.59,
-    117.07
+    1491.67,
+    116.07
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.85,
    "seed": 1903,
    "set": "street",
-   "id": "b_14_0_st107"
+   "id": "b_14_0_st104"
   },
   {
    "kind": "plant",
    "pos": [
-    1504.87,
-    119.48
+    1505.12,
+    118.51
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.77,
    "seed": 7198,
    "set": "street",
-   "id": "b_14_0_st108"
+   "id": "b_14_0_st105"
   },
   {
    "kind": "plant",
    "pos": [
-    1511.26,
-    121.3
+    1511.57,
+    120.35
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.66,
    "seed": 9360,
    "set": "street",
-   "id": "b_14_0_st109"
+   "id": "b_14_0_st106"
   },
   {
    "kind": "plant",
    "pos": [
-    1526.59,
-    127.11
+    1527.0,
+    126.2
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.92,
    "seed": 4422,
    "set": "street",
-   "id": "b_14_0_st110"
+   "id": "b_14_0_st107"
   },
   {
    "kind": "plant",
    "pos": [
-    1531.27,
-    129.21
+    1531.69,
+    128.31
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.72,
    "seed": 7373,
    "set": "street",
-   "id": "b_14_0_st111"
+   "id": "b_14_0_st108"
   },
   {
    "kind": "plant",
    "pos": [
-    1541.87,
-    134.42
+    1542.34,
+    133.53
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.98,
    "seed": 317,
    "set": "street",
-   "id": "b_14_0_st112"
+   "id": "b_14_0_st109"
   },
   {
    "kind": "plant",
    "pos": [
-    1546.42,
-    136.79
+    1546.89,
+    135.91
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.74,
    "seed": 3236,
    "set": "street",
-   "id": "b_14_0_st113"
+   "id": "b_14_0_st110"
   },
   {
    "kind": "plant",
    "pos": [
-    1561.61,
-    145.19
+    1562.1,
+    144.32
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.72,
    "seed": 1759,
    "set": "street",
-   "id": "b_14_0_st114"
+   "id": "b_14_0_st111"
   },
   {
    "kind": "plant",
    "pos": [
-    1566.68,
-    148.09
+    1567.18,
+    147.22
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.93,
    "seed": 766,
    "set": "street",
-   "id": "b_14_0_st115"
+   "id": "b_14_0_st112"
   },
   {
    "kind": "plant",
    "pos": [
-    1571.63,
-    150.92
+    1572.12,
+    150.05
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.97,
    "seed": 9674,
    "set": "street",
-   "id": "b_14_0_st116"
+   "id": "b_14_0_st113"
   },
   {
    "kind": "plant",
    "pos": [
-    1582.39,
-    157.06
+    1582.88,
+    156.19
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.84,
    "seed": 5813,
    "set": "street",
-   "id": "b_14_0_st117"
+   "id": "b_14_0_st114"
   },
   {
    "kind": "plant",
    "pos": [
-    1592.09,
-    162.43
+    1592.56,
+    161.55
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.89,
    "seed": 460,
    "set": "street",
-   "id": "b_14_0_st118"
+   "id": "b_14_0_st115"
   },
   {
    "kind": "plant",
    "pos": [
-    1597.33,
-    165.22
+    1597.79,
+    164.33
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.74,
    "seed": 5308,
    "set": "street",
-   "id": "b_14_0_st119"
+   "id": "b_14_0_st116"
   },
   {
    "kind": "plant",
    "pos": [
-    1603.1,
-    168.16
+    1603.54,
+    167.26
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.74,
    "seed": 6593,
    "set": "street",
-   "id": "b_14_0_st120"
+   "id": "b_14_0_st117"
   },
   {
    "kind": "plant",
    "pos": [
-    1609.43,
-    171.18
+    1609.84,
+    170.27
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.88,
    "seed": 1852,
    "set": "street",
-   "id": "b_14_0_st121"
+   "id": "b_14_0_st118"
   },
   {
    "kind": "plant",
    "pos": [
-    1620.42,
-    175.76
+    1620.76,
+    174.82
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.91,
    "seed": 6705,
    "set": "street",
-   "id": "b_14_0_st122"
+   "id": "b_14_0_st119"
   },
   {
    "kind": "plant",
    "pos": [
-    1624.96,
-    177.36
+    1625.27,
+    176.41
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.98,
    "seed": 4379,
    "set": "street",
-   "id": "b_14_0_st123"
+   "id": "b_14_0_st120"
   },
   {
    "kind": "plant",
    "pos": [
-    1630.23,
-    178.96
+    1630.47,
+    177.99
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.8,
    "seed": 324,
    "set": "street",
-   "id": "b_14_0_st124"
+   "id": "b_14_0_st121"
   },
   {
    "kind": "plant",
    "pos": [
-    1636.62,
-    180.47
+    1636.83,
+    179.49
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.77,
    "seed": 9284,
    "set": "street",
-   "id": "b_14_0_st125"
+   "id": "b_14_0_st122"
   },
   {
    "kind": "plant",
    "pos": [
-    1642.69,
-    181.65
+    1642.86,
+    180.66
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.94,
    "seed": 9355,
    "set": "street",
-   "id": "b_14_0_st126"
+   "id": "b_14_0_st123"
   },
   {
    "kind": "plant",
    "pos": [
-    1653.93,
-    183.26
+    1654.05,
+    182.27
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.72,
    "seed": 2656,
    "set": "street",
-   "id": "b_14_0_st127"
+   "id": "b_14_0_st124"
   },
   {
    "kind": "plant",
    "pos": [
-    1659.92,
-    183.82
+    1660.0,
+    182.82
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.97,
    "seed": 7306,
    "set": "street",
-   "id": "b_14_0_st128"
+   "id": "b_14_0_st125"
   },
   {
    "kind": "plant",
    "pos": [
-    1677.76,
-    184.47
+    1677.75,
+    183.47
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.98,
    "seed": 8706,
    "set": "street",
-   "id": "b_14_0_st129"
+   "id": "b_14_0_st126"
   },
   {
    "kind": "plant",
    "pos": [
-    1684.63,
-    184.36
+    1684.6,
+    183.36
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.99,
    "seed": 6994,
    "set": "street",
-   "id": "b_14_0_st130"
+   "id": "b_14_0_st127"
   },
   {
    "kind": "plant",
    "pos": [
-    1695.6,
-    183.91
+    1695.54,
+    182.91
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.96,
    "seed": 7206,
    "set": "street",
-   "id": "b_14_0_st131"
+   "id": "b_14_0_st128"
   },
   {
    "kind": "plant",
    "pos": [
-    1701.82,
-    183.53
+    1701.76,
+    182.53
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.84,
    "seed": 4765,
    "set": "street",
-   "id": "b_14_0_st132"
+   "id": "b_14_0_st129"
   },
   {
    "kind": "plant",
    "pos": [
-    1706.99,
-    183.18
+    1706.92,
+    182.18
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.83,
    "seed": 2810,
    "set": "street",
-   "id": "b_14_0_st133"
+   "id": "b_14_0_st130"
   },
   {
    "kind": "plant",
    "pos": [
-    1717.99,
-    182.4
+    1717.92,
+    181.41
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.94,
    "seed": 9795,
    "set": "street",
-   "id": "b_14_0_st134"
+   "id": "b_14_0_st131"
   },
   {
    "kind": "plant",
    "pos": [
-    1725.0,
-    181.92
+    1724.94,
+    180.92
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.86,
    "seed": 6082,
    "set": "street",
-   "id": "b_14_0_st135"
+   "id": "b_14_0_st132"
   },
   {
    "kind": "plant",
    "pos": [
-    1742.54,
-    181.03
+    1742.51,
+    180.03
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.82,
    "seed": 410,
    "set": "street",
-   "id": "b_14_0_st136"
+   "id": "b_14_0_st133"
   },
   {
    "kind": "plant",
    "pos": [
-    1749.67,
-    180.87
+    1749.66,
+    179.87
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.86,
    "seed": 8243,
    "set": "street",
-   "id": "b_14_0_st137"
+   "id": "b_14_0_st134"
   },
   {
    "kind": "plant",
    "pos": [
-    1756.82,
-    180.86
+    1756.83,
+    179.86
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.75,
    "seed": 1951,
    "set": "street",
-   "id": "b_14_0_st138"
+   "id": "b_14_0_st135"
   },
   {
    "kind": "plant",
    "pos": [
-    1762.87,
-    180.98
+    1762.9,
+    179.98
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.93,
    "seed": 1056,
    "set": "street",
-   "id": "b_14_0_st139"
+   "id": "b_14_0_st136"
   },
   {
    "kind": "plant",
    "pos": [
-    1774.41,
-    181.36
+    1774.44,
+    180.36
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.92,
    "seed": 4638,
    "set": "street",
-   "id": "b_14_0_st140"
+   "id": "b_14_0_st137"
   },
   {
    "kind": "plant",
    "pos": [
-    1780.87,
-    181.6
+    1780.91,
+    180.6
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.83,
    "seed": 2323,
    "set": "street",
-   "id": "b_14_0_st141"
+   "id": "b_14_0_st138"
   },
   {
    "kind": "plant",
    "pos": [
-    1792.85,
-    182.08
+    1792.89,
+    181.08
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.73,
    "seed": 3711,
    "set": "street",
-   "id": "b_14_0_st142"
+   "id": "b_14_0_st139"
   },
   {
    "kind": "plant",
    "pos": [
-    1799.6,
-    182.37
+    1799.64,
+    181.37
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.98,
    "seed": 7109,
    "set": "street",
-   "id": "b_14_0_st143"
+   "id": "b_14_0_st140"
   },
   {
    "kind": "plant",
    "pos": [
-    1806.6,
-    182.67
+    1806.64,
+    181.67
    ],
    "shape": "bush",
    "species": "rose",
    "r": 1.0,
    "seed": 2635,
    "set": "street",
-   "id": "b_14_0_st144"
+   "id": "b_14_0_st141"
   },
   {
    "kind": "plant",
    "pos": [
-    1824.52,
-    183.5
+    1824.57,
+    182.5
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.83,
    "seed": 4247,
    "set": "street",
-   "id": "b_14_0_st145"
+   "id": "b_14_0_st142"
   },
   {
    "kind": "plant",
    "pos": [
-    1831.18,
-    183.81
+    1831.23,
+    182.81
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.86,
    "seed": 2799,
    "set": "street",
-   "id": "b_14_0_st146"
+   "id": "b_14_0_st143"
   },
   {
    "kind": "plant",
    "pos": [
-    1841.57,
-    184.32
+    1841.62,
+    183.32
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.84,
    "seed": 5447,
    "set": "street",
-   "id": "b_14_0_st147"
+   "id": "b_14_0_st144"
   },
   {
    "kind": "plant",
    "pos": [
-    1848.4,
-    184.65
+    1848.45,
+    183.65
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.83,
    "seed": 3190,
    "set": "street",
-   "id": "b_14_0_st148"
+   "id": "b_14_0_st145"
   },
   {
    "kind": "plant",
    "pos": [
-    1854.26,
-    184.95
+    1854.31,
+    183.95
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.87,
    "seed": 7949,
    "set": "street",
-   "id": "b_14_0_st149"
+   "id": "b_14_0_st146"
   },
   {
    "kind": "plant",
    "pos": [
-    1866.19,
-    185.56
+    1866.24,
+    184.56
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.81,
    "seed": 2718,
    "set": "street",
-   "id": "b_14_0_st150"
+   "id": "b_14_0_st147"
   },
   {
    "kind": "plant",
    "pos": [
-    1871.18,
-    185.81
+    1871.23,
+    184.81
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.8,
    "seed": 8514,
    "set": "street",
-   "id": "b_14_0_st151"
+   "id": "b_14_0_st148"
   },
   {
    "kind": "plant",
    "pos": [
-    1877.84,
-    186.15
+    1877.89,
+    185.15
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.68,
    "seed": 5404,
    "set": "street",
-   "id": "b_14_0_st152"
+   "id": "b_14_0_st149"
   },
   {
    "kind": "plant",
    "pos": [
-    1884.61,
-    186.5
+    1884.66,
+    185.5
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.71,
    "seed": 2844,
    "set": "street",
-   "id": "b_14_0_st153"
+   "id": "b_14_0_st150"
   },
   {
    "kind": "plant",
    "pos": [
-    1890.09,
-    186.78
+    1890.14,
+    185.78
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.91,
    "seed": 7507,
    "set": "street",
-   "id": "b_14_0_st154"
+   "id": "b_14_0_st151"
   },
   {
    "kind": "plant",
    "pos": [
-    1895.23,
-    187.04
+    1895.28,
+    186.05
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.83,
    "seed": 7325,
    "set": "street",
-   "id": "b_14_0_st155"
+   "id": "b_14_0_st152"
   },
   {
    "kind": "plant",
    "pos": [
-    1900.25,
-    187.3
+    1900.3,
+    186.3
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.74,
    "seed": 1509,
    "set": "street",
-   "id": "b_14_0_st156"
+   "id": "b_14_0_st153"
   },
   {
    "kind": "plant",
    "pos": [
-    1905.78,
-    187.57
+    1905.82,
+    186.58
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.66,
    "seed": 8758,
    "set": "street",
-   "id": "b_14_0_st157"
+   "id": "b_14_0_st154"
   },
   {
    "kind": "lamp",
    "pos": [
-    1433.19,
-    199.16
+    1432.51,
+    199.89
    ],
    "set": "street",
-   "id": "b_14_0_st158"
+   "id": "b_14_0_st155"
   },
   {
    "kind": "plant",
    "pos": [
-    1400.86,
-    166.74
+    1400.13,
+    167.43
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.83,
    "seed": 255,
    "set": "street",
-   "id": "b_14_0_st159"
+   "id": "b_14_0_st156"
   },
   {
    "kind": "plant",
    "pos": [
-    1405.47,
-    171.66
+    1404.74,
+    172.34
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.76,
    "seed": 5188,
    "set": "street",
-   "id": "b_14_0_st160"
+   "id": "b_14_0_st157"
   },
   {
    "kind": "plant",
    "pos": [
-    1410.11,
-    176.54
+    1409.39,
+    177.23
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.84,
    "seed": 4803,
    "set": "street",
-   "id": "b_14_0_st161"
+   "id": "b_14_0_st158"
   },
   {
    "kind": "plant",
    "pos": [
-    1414.55,
-    181.13
+    1413.84,
+    181.83
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.67,
    "seed": 1697,
    "set": "street",
-   "id": "b_14_0_st162"
+   "id": "b_14_0_st159"
   },
   {
    "kind": "plant",
    "pos": [
-    1421.68,
-    188.23
+    1420.98,
+    188.95
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.94,
    "seed": 3380,
    "set": "street",
-   "id": "b_14_0_st163"
+   "id": "b_14_0_st160"
   },
   {
    "kind": "plant",
    "pos": [
-    1426.27,
-    192.64
+    1425.58,
+    193.36
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.75,
    "seed": 2834,
    "set": "street",
-   "id": "b_14_0_st164"
+   "id": "b_14_0_st161"
   },
   {
    "kind": "plant",
    "pos": [
-    1430.62,
-    196.75
+    1429.93,
+    197.48
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.99,
    "seed": 7725,
    "set": "street",
-   "id": "b_14_0_st165"
+   "id": "b_14_0_st162"
   },
   {
    "kind": "plant",
    "pos": [
-    1439.56,
-    205.1
+    1438.87,
+    205.84
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.97,
    "seed": 7942,
    "set": "street",
-   "id": "b_14_0_st166"
+   "id": "b_14_0_st163"
   },
   {
    "kind": "plant",
    "pos": [
-    1443.12,
-    208.42
+    1442.44,
+    209.15
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.82,
    "seed": 1708,
    "set": "street",
-   "id": "b_14_0_st167"
+   "id": "b_14_0_st164"
   },
   {
    "kind": "plant",
    "pos": [
-    1407.75,
-    160.94
+    1408.48,
+    160.25
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.8,
    "seed": 1750,
    "set": "street",
-   "id": "b_14_0_st168"
+   "id": "b_14_0_st165"
   },
   {
    "kind": "plant",
    "pos": [
-    1412.36,
-    165.84
+    1413.09,
+    165.16
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.94,
    "seed": 535,
    "set": "street",
-   "id": "b_14_0_st169"
+   "id": "b_14_0_st166"
   },
   {
    "kind": "plant",
    "pos": [
-    1416.93,
-    170.65
+    1417.65,
+    169.95
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.71,
    "seed": 4885,
    "set": "street",
-   "id": "b_14_0_st170"
+   "id": "b_14_0_st167"
   },
   {
    "kind": "plant",
    "pos": [
-    1421.38,
-    175.24
+    1422.1,
+    174.54
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.84,
    "seed": 2526,
    "set": "street",
-   "id": "b_14_0_st171"
+   "id": "b_14_0_st168"
   },
   {
    "kind": "plant",
    "pos": [
-    1424.82,
-    178.7
+    1425.52,
+    177.99
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.79,
    "seed": 9513,
    "set": "street",
-   "id": "b_14_0_st172"
+   "id": "b_14_0_st169"
   },
   {
    "kind": "plant",
    "pos": [
-    1428.34,
-    182.16
+    1429.04,
+    181.44
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.78,
    "seed": 4964,
    "set": "street",
-   "id": "b_14_0_st173"
+   "id": "b_14_0_st170"
   },
   {
    "kind": "plant",
    "pos": [
-    1432.89,
-    186.51
+    1433.57,
+    185.78
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.76,
    "seed": 9562,
    "set": "street",
-   "id": "b_14_0_st174"
+   "id": "b_14_0_st171"
   },
   {
    "kind": "plant",
    "pos": [
-    1441.73,
-    194.83
+    1442.41,
+    194.1
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.86,
    "seed": 3010,
    "set": "street",
-   "id": "b_14_0_st175"
+   "id": "b_14_0_st172"
   },
   {
    "kind": "plant",
    "pos": [
-    1446.78,
-    199.54
+    1447.46,
+    198.8
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.83,
    "seed": 5541,
    "set": "street",
-   "id": "b_14_0_st176"
+   "id": "b_14_0_st173"
   },
   {
    "kind": "bench",
    "pos": [
-    1481.9,
-    172.54
+    1482.82,
+    172.16
    ],
    "along": "z",
    "set": "street",
-   "id": "b_14_0_st177"
+   "id": "b_14_0_st174"
   },
   {
    "kind": "bin",
    "pos": [
-    1482.51,
-    174.02
+    1483.44,
+    173.63
    ],
    "along": "z",
    "out": [
@@ -27136,13 +27093,13 @@
     -1
    ],
    "set": "street",
-   "id": "b_14_0_st178"
+   "id": "b_14_0_st175"
   },
   {
    "kind": "planter",
    "pos": [
-    1481.32,
-    171.13
+    1482.25,
+    170.76
    ],
    "along": "z",
    "out": [
@@ -27150,699 +27107,686 @@
     -1
    ],
    "set": "street",
-   "id": "b_14_0_st179"
+   "id": "b_14_0_st176"
   },
   {
    "kind": "plant",
    "pos": [
-    1458.32,
-    134.3
+    1457.37,
+    134.62
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.99,
    "seed": 1148,
    "set": "street",
-   "id": "b_14_0_st180"
+   "id": "b_14_0_st177"
   },
   {
    "kind": "plant",
    "pos": [
-    1460.04,
-    139.31
+    1459.1,
+    139.63
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.78,
    "seed": 7983,
    "set": "street",
-   "id": "b_14_0_st181"
+   "id": "b_14_0_st178"
   },
   {
    "kind": "plant",
    "pos": [
-    1462.03,
-    145.04
+    1461.09,
+    145.37
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.84,
    "seed": 4934,
    "set": "street",
-   "id": "b_14_0_st182"
+   "id": "b_14_0_st179"
   },
   {
    "kind": "plant",
    "pos": [
-    1463.66,
-    149.66
+    1462.72,
+    150.0
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.83,
    "seed": 8651,
    "set": "street",
-   "id": "b_14_0_st183"
+   "id": "b_14_0_st180"
   },
   {
    "kind": "plant",
    "pos": [
-    1465.47,
-    154.74
+    1464.53,
+    155.07
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.7,
    "seed": 1353,
    "set": "street",
-   "id": "b_14_0_st184"
+   "id": "b_14_0_st181"
   },
   {
    "kind": "plant",
    "pos": [
-    1469.64,
-    166.02
+    1468.7,
+    166.38
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.81,
    "seed": 7805,
    "set": "street",
-   "id": "b_14_0_st185"
+   "id": "b_14_0_st182"
   },
   {
    "kind": "plant",
    "pos": [
-    1471.67,
-    171.24
+    1470.74,
+    171.62
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.77,
    "seed": 7036,
    "set": "street",
-   "id": "b_14_0_st186"
+   "id": "b_14_0_st183"
   },
   {
    "kind": "plant",
    "pos": [
-    1473.97,
-    176.91
+    1473.05,
+    177.3
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.91,
    "seed": 2954,
    "set": "street",
-   "id": "b_14_0_st187"
+   "id": "b_14_0_st184"
   },
   {
    "kind": "plant",
    "pos": [
-    1476.0,
-    181.69
+    1475.08,
+    182.09
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.9,
    "seed": 9739,
    "set": "street",
-   "id": "b_14_0_st188"
+   "id": "b_14_0_st185"
   },
   {
    "kind": "plant",
    "pos": [
-    1478.29,
-    186.96
+    1477.37,
+    187.36
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 1.0,
    "seed": 6474,
    "set": "street",
-   "id": "b_14_0_st189"
+   "id": "b_14_0_st186"
   },
   {
    "kind": "plant",
    "pos": [
-    1480.51,
-    191.97
+    1479.59,
+    192.38
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.69,
    "seed": 9403,
    "set": "street",
-   "id": "b_14_0_st190"
+   "id": "b_14_0_st187"
   },
   {
    "kind": "plant",
    "pos": [
-    1483.09,
-    197.71
+    1482.18,
+    198.12
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.84,
    "seed": 948,
    "set": "street",
-   "id": "b_14_0_st191"
+   "id": "b_14_0_st188"
   },
   {
    "kind": "plant",
    "pos": [
-    1485.67,
-    203.38
+    1484.76,
+    203.8
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.86,
    "seed": 5629,
    "set": "street",
-   "id": "b_14_0_st192"
+   "id": "b_14_0_st189"
   },
   {
    "kind": "plant",
    "pos": [
-    1487.88,
-    208.21
+    1486.97,
+    208.62
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.67,
    "seed": 6054,
    "set": "street",
-   "id": "b_14_0_st193"
+   "id": "b_14_0_st190"
   },
   {
    "kind": "plant",
    "pos": [
-    1495.87,
-    225.46
+    1494.97,
+    225.88
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.66,
    "seed": 5308,
    "set": "street",
-   "id": "b_14_0_st194"
+   "id": "b_14_0_st191"
   },
   {
    "kind": "plant",
    "pos": [
-    1467.17,
-    132.37
+    1468.12,
+    132.05
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.98,
    "seed": 7185,
    "set": "street",
-   "id": "b_14_0_st195"
+   "id": "b_14_0_st192"
   },
   {
    "kind": "plant",
    "pos": [
-    1468.98,
-    137.6
+    1469.92,
+    137.27
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.73,
    "seed": 7521,
    "set": "street",
-   "id": "b_14_0_st196"
+   "id": "b_14_0_st193"
   },
   {
    "kind": "plant",
    "pos": [
-    1471.02,
-    143.47
+    1471.96,
+    143.14
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.89,
    "seed": 7333,
    "set": "street",
-   "id": "b_14_0_st197"
+   "id": "b_14_0_st194"
   },
   {
    "kind": "plant",
    "pos": [
-    1472.73,
-    148.32
+    1473.68,
+    147.99
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.86,
    "seed": 2398,
    "set": "street",
-   "id": "b_14_0_st198"
+   "id": "b_14_0_st195"
   },
   {
    "kind": "plant",
    "pos": [
-    1474.79,
-    154.06
+    1475.73,
+    153.72
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.92,
    "seed": 7754,
    "set": "street",
-   "id": "b_14_0_st199"
+   "id": "b_14_0_st196"
   },
   {
    "kind": "plant",
    "pos": [
-    1478.53,
-    164.08
+    1479.47,
+    163.72
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.65,
    "seed": 7697,
    "set": "street",
-   "id": "b_14_0_st200"
+   "id": "b_14_0_st197"
   },
   {
    "kind": "plant",
    "pos": [
-    1480.37,
-    168.77
+    1481.3,
+    168.4
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.91,
    "seed": 1834,
    "set": "street",
-   "id": "b_14_0_st201"
+   "id": "b_14_0_st198"
   },
   {
    "kind": "plant",
    "pos": [
-    1485.1,
-    180.07
+    1486.02,
+    179.67
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.98,
    "seed": 136,
    "set": "street",
-   "id": "b_14_0_st202"
+   "id": "b_14_0_st199"
   },
   {
    "kind": "plant",
    "pos": [
-    1487.19,
-    184.85
+    1488.11,
+    184.45
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.89,
    "seed": 6040,
    "set": "street",
-   "id": "b_14_0_st203"
+   "id": "b_14_0_st200"
   },
   {
    "kind": "plant",
    "pos": [
-    1489.28,
-    189.54
+    1490.2,
+    189.13
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.66,
    "seed": 1554,
    "set": "street",
-   "id": "b_14_0_st204"
+   "id": "b_14_0_st201"
   },
   {
    "kind": "plant",
    "pos": [
-    1491.61,
-    194.71
+    1492.52,
+    194.3
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.71,
    "seed": 3846,
    "set": "street",
-   "id": "b_14_0_st205"
+   "id": "b_14_0_st202"
   },
   {
    "kind": "plant",
    "pos": [
-    1494.14,
-    200.26
-   ],
-   "shape": "bush",
-   "species": "lavender",
-   "r": 0.91,
-   "seed": 2470,
-   "set": "street",
-   "id": "b_14_0_st206"
-  },
-  {
-   "kind": "plant",
-   "pos": [
-    1501.36,
-    215.9
+    1502.26,
+    215.48
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.66,
    "seed": 9791,
    "set": "street",
-   "id": "b_14_0_st207"
+   "id": "b_14_0_st203"
   },
   {
    "kind": "plant",
    "pos": [
-    1503.83,
-    221.22
+    1504.74,
+    220.8
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.65,
    "seed": 8348,
    "set": "street",
-   "id": "b_14_0_st208"
+   "id": "b_14_0_st204"
   },
   {
    "kind": "lamp",
    "pos": [
-    1476.0,
-    65.36
+    1476.95,
+    65.06
+   ],
+   "set": "street",
+   "id": "b_14_0_st205"
+  },
+  {
+   "kind": "lamp",
+   "pos": [
+    1458.53,
+    43.63
+   ],
+   "set": "street",
+   "id": "b_14_0_st206"
+  },
+  {
+   "kind": "bench",
+   "pos": [
+    1479.52,
+    73.59
+   ],
+   "along": "z",
+   "set": "street",
+   "id": "b_14_0_st207"
+  },
+  {
+   "kind": "bin",
+   "pos": [
+    1479.07,
+    72.05
+   ],
+   "along": "z",
+   "out": [
+    0,
+    -1
+   ],
+   "set": "street",
+   "id": "b_14_0_st208"
+  },
+  {
+   "kind": "planter",
+   "pos": [
+    1479.97,
+    75.13
+   ],
+   "along": "z",
+   "out": [
+    0,
+    -1
    ],
    "set": "street",
    "id": "b_14_0_st209"
   },
   {
-   "kind": "lamp",
-   "pos": [
-    1459.48,
-    43.32
-   ],
-   "set": "street",
-   "id": "b_14_0_st210"
-  },
-  {
-   "kind": "bench",
-   "pos": [
-    1478.56,
-    73.87
-   ],
-   "along": "z",
-   "set": "street",
-   "id": "b_14_0_st211"
-  },
-  {
-   "kind": "bin",
-   "pos": [
-    1478.11,
-    72.33
-   ],
-   "along": "z",
-   "out": [
-    0,
-    -1
-   ],
-   "set": "street",
-   "id": "b_14_0_st212"
-  },
-  {
-   "kind": "planter",
-   "pos": [
-    1479.01,
-    75.4
-   ],
-   "along": "z",
-   "out": [
-    0,
-    -1
-   ],
-   "set": "street",
-   "id": "b_14_0_st213"
-  },
-  {
    "kind": "plant",
    "pos": [
-    1486.97,
-    110.78
+    1487.95,
+    110.6
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.84,
    "seed": 1476,
    "set": "street",
-   "id": "b_14_0_st214"
+   "id": "b_14_0_st210"
   },
   {
    "kind": "plant",
    "pos": [
-    1485.68,
-    104.08
+    1486.67,
+    103.89
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.99,
    "seed": 5436,
    "set": "street",
-   "id": "b_14_0_st215"
+   "id": "b_14_0_st211"
   },
   {
    "kind": "plant",
    "pos": [
-    1484.28,
-    97.13
+    1485.26,
+    96.93
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.97,
    "seed": 496,
    "set": "street",
-   "id": "b_14_0_st216"
+   "id": "b_14_0_st212"
   },
   {
    "kind": "plant",
    "pos": [
-    1482.8,
-    90.24
+    1483.78,
+    90.03
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.81,
    "seed": 1136,
    "set": "street",
-   "id": "b_14_0_st217"
+   "id": "b_14_0_st213"
   },
   {
    "kind": "plant",
    "pos": [
-    1479.88,
-    78.51
+    1480.84,
+    78.25
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.8,
    "seed": 2477,
    "set": "street",
-   "id": "b_14_0_st218"
+   "id": "b_14_0_st214"
   },
   {
    "kind": "plant",
    "pos": [
-    1474.28,
-    59.89
+    1475.24,
+    59.59
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.99,
    "seed": 733,
    "set": "street",
-   "id": "b_14_0_st219"
+   "id": "b_14_0_st215"
   },
   {
    "kind": "plant",
    "pos": [
-    1472.44,
-    54.1
+    1473.4,
+    53.8
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.91,
    "seed": 2114,
    "set": "street",
-   "id": "b_14_0_st220"
+   "id": "b_14_0_st216"
   },
   {
    "kind": "plant",
    "pos": [
-    1470.44,
-    47.93
+    1471.4,
+    47.62
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.95,
    "seed": 6261,
    "set": "street",
-   "id": "b_14_0_st221"
+   "id": "b_14_0_st217"
   },
   {
    "kind": "plant",
    "pos": [
-    1478.16,
-    112.63
+    1477.17,
+    112.82
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.73,
    "seed": 6560,
    "set": "street",
-   "id": "b_14_0_st222"
+   "id": "b_14_0_st218"
   },
   {
    "kind": "plant",
    "pos": [
-    1476.88,
-    105.96
+    1475.9,
+    106.15
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.84,
    "seed": 1684,
    "set": "street",
-   "id": "b_14_0_st223"
+   "id": "b_14_0_st219"
   },
   {
    "kind": "plant",
    "pos": [
-    1475.51,
-    99.15
+    1474.53,
+    99.35
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.74,
    "seed": 8895,
    "set": "street",
-   "id": "b_14_0_st224"
+   "id": "b_14_0_st220"
   },
   {
    "kind": "plant",
    "pos": [
-    1474.05,
-    92.35
+    1473.07,
+    92.56
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.86,
    "seed": 1262,
    "set": "street",
-   "id": "b_14_0_st225"
+   "id": "b_14_0_st221"
   },
   {
    "kind": "plant",
    "pos": [
-    1471.38,
-    81.56
+    1470.42,
+    81.82
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 1.0,
    "seed": 5312,
    "set": "street",
-   "id": "b_14_0_st226"
+   "id": "b_14_0_st222"
   },
   {
    "kind": "plant",
    "pos": [
-    1469.78,
-    75.9
+    1468.82,
+    76.18
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.76,
    "seed": 2059,
    "set": "street",
-   "id": "b_14_0_st227"
+   "id": "b_14_0_st223"
   },
   {
    "kind": "plant",
    "pos": [
-    1467.76,
-    69.18
+    1466.8,
+    69.47
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.65,
    "seed": 9728,
    "set": "street",
-   "id": "b_14_0_st228"
+   "id": "b_14_0_st224"
   },
   {
    "kind": "plant",
    "pos": [
-    1465.94,
-    63.37
+    1464.99,
+    63.67
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.78,
    "seed": 9640,
    "set": "street",
-   "id": "b_14_0_st229"
+   "id": "b_14_0_st225"
   },
   {
    "kind": "plant",
    "pos": [
-    1464.04,
-    57.39
+    1463.09,
+    57.69
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.71,
    "seed": 1595,
    "set": "street",
-   "id": "b_14_0_st230"
+   "id": "b_14_0_st226"
   },
   {
    "kind": "plant",
    "pos": [
-    1462.07,
-    51.27
+    1461.12,
+    51.58
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.75,
    "seed": 4499,
    "set": "street",
-   "id": "b_14_0_st231"
+   "id": "b_14_0_st227"
   },
   {
    "kind": "lamp",
    "pos": [
-    1523.05,
-    163.5
+    1523.95,
+    163.94
    ],
    "set": "street",
-   "id": "b_14_0_st232"
+   "id": "b_14_0_st228"
   },
   {
    "kind": "bench",
    "pos": [
-    1512.62,
-    164.41
+    1511.72,
+    163.97
    ],
    "along": "z",
    "set": "street",
-   "id": "b_14_0_st233"
+   "id": "b_14_0_st229"
   },
   {
    "kind": "bin",
    "pos": [
-    1511.92,
-    165.85
+    1511.02,
+    165.41
    ],
    "along": "z",
    "out": [
@@ -27850,13 +27794,13 @@
     -1
    ],
    "set": "street",
-   "id": "b_14_0_st234"
+   "id": "b_14_0_st230"
   },
   {
    "kind": "planter",
    "pos": [
-    1513.32,
-    162.97
+    1512.42,
+    162.53
    ],
    "along": "z",
    "out": [
@@ -27864,296 +27808,283 @@
     -1
    ],
    "set": "street",
-   "id": "b_14_0_st235"
+   "id": "b_14_0_st231"
   },
   {
    "kind": "plant",
    "pos": [
-    1524.45,
-    139.87
+    1523.55,
+    139.43
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.71,
    "seed": 2407,
    "set": "street",
-   "id": "b_14_0_st236"
+   "id": "b_14_0_st232"
   },
   {
    "kind": "plant",
    "pos": [
-    1521.39,
-    146.23
+    1520.49,
+    145.79
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.94,
    "seed": 5624,
    "set": "street",
-   "id": "b_14_0_st237"
+   "id": "b_14_0_st233"
   },
   {
    "kind": "plant",
    "pos": [
-    1518.8,
-    151.59
+    1517.9,
+    151.15
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.88,
    "seed": 5141,
    "set": "street",
-   "id": "b_14_0_st238"
+   "id": "b_14_0_st234"
   },
   {
    "kind": "plant",
    "pos": [
-    1516.32,
-    156.74
+    1515.42,
+    156.3
    ],
    "shape": "bush",
    "species": "rose",
    "r": 1.0,
    "seed": 4813,
    "set": "street",
-   "id": "b_14_0_st239"
+   "id": "b_14_0_st235"
   },
   {
    "kind": "plant",
    "pos": [
-    1509.1,
-    171.68
+    1508.2,
+    171.24
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.85,
    "seed": 3864,
    "set": "street",
-   "id": "b_14_0_st240"
+   "id": "b_14_0_st236"
   },
   {
    "kind": "plant",
    "pos": [
-    1507.01,
-    176.0
+    1506.11,
+    175.56
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.66,
    "seed": 2234,
    "set": "street",
-   "id": "b_14_0_st241"
+   "id": "b_14_0_st237"
   },
   {
    "kind": "plant",
    "pos": [
-    1502.39,
-    185.52
+    1501.49,
+    185.08
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.75,
    "seed": 419,
    "set": "street",
-   "id": "b_14_0_st242"
+   "id": "b_14_0_st238"
   },
   {
    "kind": "plant",
    "pos": [
-    1499.8,
-    190.83
+    1498.91,
+    190.39
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.99,
    "seed": 6542,
    "set": "street",
-   "id": "b_14_0_st243"
+   "id": "b_14_0_st239"
   },
   {
    "kind": "plant",
    "pos": [
-    1497.1,
-    196.37
+    1496.2,
+    195.94
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.75,
    "seed": 4936,
    "set": "street",
-   "id": "b_14_0_st244"
+   "id": "b_14_0_st240"
   },
   {
    "kind": "plant",
    "pos": [
-    1488.91,
-    213.19
+    1488.01,
+    212.76
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.75,
    "seed": 3040,
    "set": "street",
-   "id": "b_14_0_st245"
+   "id": "b_14_0_st241"
   },
   {
    "kind": "plant",
    "pos": [
-    1531.47,
-    146.05
+    1532.37,
+    146.48
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.99,
    "seed": 6502,
    "set": "street",
-   "id": "b_14_0_st246"
+   "id": "b_14_0_st242"
   },
   {
    "kind": "plant",
    "pos": [
-    1528.56,
-    152.09
+    1529.46,
+    152.52
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.9,
    "seed": 9937,
    "set": "street",
-   "id": "b_14_0_st247"
+   "id": "b_14_0_st243"
   },
   {
    "kind": "plant",
    "pos": [
-    1526.0,
-    157.38
+    1526.9,
+    157.82
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.75,
    "seed": 9086,
    "set": "street",
-   "id": "b_14_0_st248"
+   "id": "b_14_0_st244"
   },
   {
    "kind": "plant",
    "pos": [
-    1520.94,
-    167.88
+    1521.84,
+    168.32
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.88,
    "seed": 4758,
    "set": "street",
-   "id": "b_14_0_st249"
+   "id": "b_14_0_st245"
   },
   {
    "kind": "plant",
    "pos": [
-    1518.59,
-    172.74
+    1519.49,
+    173.18
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.73,
    "seed": 9441,
    "set": "street",
-   "id": "b_14_0_st250"
+   "id": "b_14_0_st246"
   },
   {
    "kind": "plant",
    "pos": [
-    1515.86,
-    178.37
+    1516.76,
+    178.8
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.73,
    "seed": 2010,
    "set": "street",
-   "id": "b_14_0_st251"
+   "id": "b_14_0_st247"
   },
   {
    "kind": "plant",
    "pos": [
-    1513.68,
-    182.88
+    1514.58,
+    183.32
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.76,
    "seed": 8024,
    "set": "street",
-   "id": "b_14_0_st252"
+   "id": "b_14_0_st248"
   },
   {
    "kind": "plant",
    "pos": [
-    1511.11,
-    188.16
+    1512.01,
+    188.6
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.86,
    "seed": 2169,
    "set": "street",
-   "id": "b_14_0_st253"
+   "id": "b_14_0_st249"
   },
   {
    "kind": "plant",
    "pos": [
-    1508.16,
-    194.22
+    1509.06,
+    194.66
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.72,
    "seed": 5592,
    "set": "street",
-   "id": "b_14_0_st254"
+   "id": "b_14_0_st250"
   },
   {
    "kind": "plant",
    "pos": [
-    1505.46,
-    199.78
+    1506.35,
+    200.21
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.82,
    "seed": 2554,
    "set": "street",
-   "id": "b_14_0_st255"
-  },
-  {
-   "kind": "plant",
-   "pos": [
-    1499.89,
-    211.19
-   ],
-   "shape": "bush",
-   "species": "hydrangea",
-   "r": 0.82,
-   "seed": 9236,
-   "set": "street",
-   "id": "b_14_0_st256"
+   "id": "b_14_0_st251"
   },
   {
    "kind": "bench",
    "pos": [
-    1559.95,
-    105.95
+    1558.98,
+    105.7
    ],
    "along": "z",
    "set": "street",
-   "id": "b_14_0_st257"
+   "id": "b_14_0_st252"
   },
   {
    "kind": "bin",
    "pos": [
-    1560.35,
-    104.4
+    1559.38,
+    104.15
    ],
    "along": "z",
    "out": [
@@ -28161,13 +28092,13 @@
     -1
    ],
    "set": "street",
-   "id": "b_14_0_st258"
+   "id": "b_14_0_st253"
   },
   {
    "kind": "planter",
    "pos": [
-    1559.55,
-    107.51
+    1558.58,
+    107.26
    ],
    "along": "z",
    "out": [
@@ -28175,409 +28106,409 @@
     -1
    ],
    "set": "street",
-   "id": "b_14_0_st259"
+   "id": "b_14_0_st254"
   },
   {
    "kind": "plant",
    "pos": [
-    1561.61,
-    137.17
+    1562.58,
+    137.39
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.7,
    "seed": 8279,
    "set": "street",
-   "id": "b_14_0_st260"
+   "id": "b_14_0_st255"
   },
   {
    "kind": "plant",
    "pos": [
-    1563.02,
-    131.15
+    1563.99,
+    131.38
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.83,
    "seed": 7009,
    "set": "street",
-   "id": "b_14_0_st261"
+   "id": "b_14_0_st256"
   },
   {
    "kind": "plant",
    "pos": [
-    1564.22,
-    126.11
+    1565.19,
+    126.34
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.75,
    "seed": 8686,
    "set": "street",
-   "id": "b_14_0_st262"
+   "id": "b_14_0_st257"
   },
   {
    "kind": "plant",
    "pos": [
-    1565.33,
-    121.46
+    1566.3,
+    121.7
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.95,
    "seed": 2217,
    "set": "street",
-   "id": "b_14_0_st263"
+   "id": "b_14_0_st258"
   },
   {
    "kind": "plant",
    "pos": [
-    1568.25,
-    109.82
+    1569.22,
+    110.06
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.9,
    "seed": 7675,
    "set": "street",
-   "id": "b_14_0_st264"
+   "id": "b_14_0_st259"
   },
   {
    "kind": "plant",
    "pos": [
-    1569.65,
-    104.39
+    1570.61,
+    104.64
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.72,
    "seed": 3856,
    "set": "street",
-   "id": "b_14_0_st265"
+   "id": "b_14_0_st260"
   },
   {
    "kind": "plant",
    "pos": [
-    1571.09,
-    98.82
+    1572.06,
+    99.07
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.95,
    "seed": 486,
    "set": "street",
-   "id": "b_14_0_st266"
+   "id": "b_14_0_st261"
   },
   {
    "kind": "plant",
    "pos": [
-    1552.84,
-    135.14
+    1551.86,
+    134.91
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.92,
    "seed": 8117,
    "set": "street",
-   "id": "b_14_0_st267"
+   "id": "b_14_0_st262"
   },
   {
    "kind": "plant",
    "pos": [
-    1554.26,
-    129.1
+    1553.28,
+    128.87
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.92,
    "seed": 2729,
    "set": "street",
-   "id": "b_14_0_st268"
+   "id": "b_14_0_st263"
   },
   {
    "kind": "plant",
    "pos": [
-    1555.46,
-    124.03
+    1554.49,
+    123.8
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.72,
    "seed": 6764,
    "set": "street",
-   "id": "b_14_0_st269"
+   "id": "b_14_0_st264"
   },
   {
    "kind": "plant",
    "pos": [
-    1556.59,
-    119.32
+    1555.62,
+    119.08
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.83,
    "seed": 848,
    "set": "street",
-   "id": "b_14_0_st270"
+   "id": "b_14_0_st265"
   },
   {
    "kind": "plant",
    "pos": [
-    1558.3,
-    112.44
+    1557.33,
+    112.19
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.84,
    "seed": 4854,
    "set": "street",
-   "id": "b_14_0_st271"
+   "id": "b_14_0_st266"
   },
   {
    "kind": "plant",
    "pos": [
-    1560.93,
-    102.14
+    1559.96,
+    101.89
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.93,
    "seed": 696,
    "set": "street",
-   "id": "b_14_0_st272"
+   "id": "b_14_0_st267"
   },
   {
    "kind": "plant",
    "pos": [
-    1562.37,
-    96.59
+    1561.4,
+    96.34
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.66,
    "seed": 4252,
    "set": "street",
-   "id": "b_14_0_st273"
+   "id": "b_14_0_st268"
   },
   {
    "kind": "plant",
    "pos": [
-    1575.05,
-    167.87
+    1574.33,
+    167.18
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.81,
    "seed": 5723,
    "set": "street",
-   "id": "b_14_0_st274"
+   "id": "b_14_0_st269"
   },
   {
    "kind": "plant",
    "pos": [
-    1570.23,
-    172.9
+    1569.51,
+    172.21
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.81,
    "seed": 2892,
    "set": "street",
-   "id": "b_14_0_st275"
+   "id": "b_14_0_st270"
   },
   {
    "kind": "plant",
    "pos": [
-    1566.24,
-    177.08
+    1565.51,
+    176.39
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.98,
    "seed": 9910,
    "set": "street",
-   "id": "b_14_0_st276"
+   "id": "b_14_0_st271"
   },
   {
    "kind": "plant",
    "pos": [
-    1562.75,
-    180.72
+    1562.02,
+    180.03
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.68,
    "seed": 8000,
    "set": "street",
-   "id": "b_14_0_st277"
+   "id": "b_14_0_st272"
   },
   {
    "kind": "plant",
    "pos": [
-    1559.41,
-    184.21
+    1558.69,
+    183.51
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.97,
    "seed": 395,
    "set": "street",
-   "id": "b_14_0_st278"
+   "id": "b_14_0_st273"
   },
   {
    "kind": "plant",
    "pos": [
-    1554.77,
-    189.03
+    1554.05,
+    188.34
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.88,
    "seed": 2045,
    "set": "street",
-   "id": "b_14_0_st279"
+   "id": "b_14_0_st274"
   },
   {
    "kind": "plant",
    "pos": [
-    1549.86,
-    194.16
+    1549.14,
+    193.46
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 1.0,
    "seed": 4066,
    "set": "street",
-   "id": "b_14_0_st280"
+   "id": "b_14_0_st275"
   },
   {
    "kind": "plant",
    "pos": [
-    1546.43,
-    197.73
+    1545.71,
+    197.04
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.79,
    "seed": 304,
    "set": "street",
-   "id": "b_14_0_st281"
+   "id": "b_14_0_st276"
   },
   {
    "kind": "plant",
    "pos": [
-    1582.82,
-    172.77
+    1583.55,
+    173.46
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.8,
    "seed": 5032,
    "set": "street",
-   "id": "b_14_0_st282"
+   "id": "b_14_0_st277"
   },
   {
    "kind": "plant",
    "pos": [
-    1575.01,
-    180.93
+    1575.73,
+    181.62
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.79,
    "seed": 7406,
    "set": "street",
-   "id": "b_14_0_st283"
+   "id": "b_14_0_st278"
   },
   {
    "kind": "plant",
    "pos": [
-    1571.43,
-    184.67
+    1572.15,
+    185.37
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.73,
    "seed": 8319,
    "set": "street",
-   "id": "b_14_0_st284"
+   "id": "b_14_0_st279"
   },
   {
    "kind": "plant",
    "pos": [
-    1567.41,
-    188.86
+    1568.13,
+    189.55
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.75,
    "seed": 5540,
    "set": "street",
-   "id": "b_14_0_st285"
+   "id": "b_14_0_st280"
   },
   {
    "kind": "plant",
    "pos": [
-    1559.21,
-    197.41
+    1559.93,
+    198.1
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.71,
    "seed": 1136,
    "set": "street",
-   "id": "b_14_0_st286"
+   "id": "b_14_0_st281"
   },
   {
    "kind": "plant",
    "pos": [
-    1554.76,
-    202.05
+    1555.48,
+    202.74
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.9,
    "seed": 1575,
    "set": "street",
-   "id": "b_14_0_st287"
+   "id": "b_14_0_st282"
   },
   {
    "kind": "plant",
    "pos": [
-    1545.31,
-    211.9
+    1546.03,
+    212.59
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.71,
    "seed": 6605,
    "set": "street",
-   "id": "b_14_0_st288"
+   "id": "b_14_0_st283"
   },
   {
    "kind": "lamp",
    "pos": [
-    1727.36,
-    267.95
+    1728.35,
+    267.8
    ],
    "set": "street",
-   "id": "b_14_0_st289"
+   "id": "b_14_0_st284"
   },
   {
    "kind": "bench",
    "pos": [
-    1722.08,
-    231.44
+    1723.07,
+    231.32
    ],
    "along": "z",
    "set": "street",
-   "id": "b_14_0_st290"
+   "id": "b_14_0_st285"
   },
   {
    "kind": "bin",
    "pos": [
-    1722.27,
-    232.98
+    1723.26,
+    232.85
    ],
    "along": "z",
    "out": [
@@ -28585,13 +28516,13 @@
     -1
    ],
    "set": "street",
-   "id": "b_14_0_st291"
+   "id": "b_14_0_st286"
   },
   {
    "kind": "planter",
    "pos": [
-    1721.89,
-    229.85
+    1722.88,
+    229.73
    ],
    "along": "z",
    "out": [
@@ -28599,357 +28530,357 @@
     -1
    ],
    "set": "street",
-   "id": "b_14_0_st292"
+   "id": "b_14_0_st287"
   },
   {
    "kind": "plant",
    "pos": [
-    1709.43,
-    198.16
+    1708.44,
+    198.26
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.68,
    "seed": 6394,
    "set": "street",
-   "id": "b_14_0_st293"
+   "id": "b_14_0_st288"
   },
   {
    "kind": "plant",
    "pos": [
-    1710.12,
-    205.12
+    1709.13,
+    205.22
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.7,
    "seed": 7269,
    "set": "street",
-   "id": "b_14_0_st294"
+   "id": "b_14_0_st289"
   },
   {
    "kind": "plant",
    "pos": [
-    1710.64,
-    210.17
+    1709.65,
+    210.27
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.8,
    "seed": 8041,
    "set": "street",
-   "id": "b_14_0_st295"
+   "id": "b_14_0_st290"
   },
   {
    "kind": "plant",
    "pos": [
-    1711.17,
-    215.2
+    1710.18,
+    215.31
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.79,
    "seed": 8164,
    "set": "street",
-   "id": "b_14_0_st296"
+   "id": "b_14_0_st291"
   },
   {
    "kind": "plant",
    "pos": [
-    1711.75,
-    220.55
+    1710.76,
+    220.66
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.83,
    "seed": 436,
    "set": "street",
-   "id": "b_14_0_st297"
+   "id": "b_14_0_st292"
   },
   {
    "kind": "plant",
    "pos": [
-    1712.53,
-    227.35
+    1711.53,
+    227.47
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.9,
    "seed": 1481,
    "set": "street",
-   "id": "b_14_0_st298"
+   "id": "b_14_0_st293"
   },
   {
    "kind": "plant",
    "pos": [
-    1713.2,
-    232.98
+    1712.21,
+    233.1
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.7,
    "seed": 8252,
    "set": "street",
-   "id": "b_14_0_st299"
+   "id": "b_14_0_st294"
   },
   {
    "kind": "plant",
    "pos": [
-    1713.95,
-    238.77
+    1712.96,
+    238.9
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.67,
    "seed": 7154,
    "set": "street",
-   "id": "b_14_0_st300"
+   "id": "b_14_0_st295"
   },
   {
    "kind": "plant",
    "pos": [
-    1714.78,
-    244.76
+    1713.78,
+    244.9
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.89,
    "seed": 5201,
    "set": "street",
-   "id": "b_14_0_st301"
+   "id": "b_14_0_st296"
   },
   {
    "kind": "plant",
    "pos": [
-    1715.62,
-    250.63
+    1714.63,
+    250.77
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.79,
    "seed": 6053,
    "set": "street",
-   "id": "b_14_0_st302"
+   "id": "b_14_0_st297"
   },
   {
    "kind": "plant",
    "pos": [
-    1716.63,
-    257.34
+    1715.64,
+    257.49
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.94,
    "seed": 7487,
    "set": "street",
-   "id": "b_14_0_st303"
+   "id": "b_14_0_st298"
   },
   {
    "kind": "plant",
    "pos": [
-    1718.68,
-    270.69
+    1717.69,
+    270.84
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.84,
    "seed": 9852,
    "set": "street",
-   "id": "b_14_0_st304"
+   "id": "b_14_0_st299"
   },
   {
    "kind": "plant",
    "pos": [
-    1719.63,
-    276.75
+    1718.64,
+    276.91
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.7,
    "seed": 2826,
    "set": "street",
-   "id": "b_14_0_st305"
+   "id": "b_14_0_st300"
   },
   {
    "kind": "plant",
    "pos": [
-    1721.54,
-    288.82
+    1720.55,
+    288.97
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.8,
    "seed": 8737,
    "set": "street",
-   "id": "b_14_0_st306"
+   "id": "b_14_0_st301"
   },
   {
    "kind": "plant",
    "pos": [
-    1718.28,
-    196.17
+    1719.27,
+    196.07
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.67,
    "seed": 757,
    "set": "street",
-   "id": "b_14_0_st307"
+   "id": "b_14_0_st302"
   },
   {
    "kind": "plant",
    "pos": [
-    1718.83,
-    201.78
+    1719.83,
+    201.68
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.89,
    "seed": 4169,
    "set": "street",
-   "id": "b_14_0_st308"
+   "id": "b_14_0_st303"
   },
   {
    "kind": "plant",
    "pos": [
-    1719.5,
-    208.31
+    1720.49,
+    208.2
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.8,
    "seed": 7950,
    "set": "street",
-   "id": "b_14_0_st309"
+   "id": "b_14_0_st304"
   },
   {
    "kind": "plant",
    "pos": [
-    1720.24,
-    215.38
+    1721.24,
+    215.27
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.94,
    "seed": 4066,
    "set": "street",
-   "id": "b_14_0_st310"
+   "id": "b_14_0_st305"
   },
   {
    "kind": "plant",
    "pos": [
-    1721.61,
-    227.57
+    1722.6,
+    227.46
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.9,
    "seed": 1181,
    "set": "street",
-   "id": "b_14_0_st311"
+   "id": "b_14_0_st306"
   },
   {
    "kind": "plant",
    "pos": [
-    1723.14,
-    239.59
+    1724.14,
+    239.46
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.71,
    "seed": 9105,
    "set": "street",
-   "id": "b_14_0_st312"
+   "id": "b_14_0_st307"
   },
   {
    "kind": "plant",
    "pos": [
-    1723.89,
-    244.97
+    1724.88,
+    244.83
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.99,
    "seed": 3764,
    "set": "street",
-   "id": "b_14_0_st313"
+   "id": "b_14_0_st308"
   },
   {
    "kind": "plant",
    "pos": [
-    1724.65,
-    250.14
+    1725.64,
+    250.0
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.82,
    "seed": 414,
    "set": "street",
-   "id": "b_14_0_st314"
+   "id": "b_14_0_st309"
   },
   {
    "kind": "plant",
    "pos": [
-    1725.65,
-    256.82
+    1726.64,
+    256.67
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.69,
    "seed": 3767,
    "set": "street",
-   "id": "b_14_0_st315"
+   "id": "b_14_0_st310"
   },
   {
    "kind": "plant",
    "pos": [
-    1728.48,
-    275.08
+    1729.46,
+    274.92
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.85,
    "seed": 6164,
    "set": "street",
-   "id": "b_14_0_st316"
+   "id": "b_14_0_st311"
   },
   {
    "kind": "plant",
    "pos": [
-    1730.38,
-    287.15
+    1731.37,
+    286.99
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.72,
    "seed": 1685,
    "set": "street",
-   "id": "b_14_0_st317"
+   "id": "b_14_0_st312"
   },
   {
    "kind": "lamp",
    "pos": [
-    1724.24,
-    156.89
+    1723.25,
+    157.03
    ],
    "set": "street",
-   "id": "b_14_0_st318"
+   "id": "b_14_0_st313"
   },
   {
    "kind": "bench",
    "pos": [
-    1721.92,
-    141.37
+    1720.94,
+    141.52
    ],
    "along": "z",
    "set": "street",
-   "id": "b_14_0_st319"
+   "id": "b_14_0_st314"
   },
   {
    "kind": "bin",
    "pos": [
-    1721.68,
-    139.79
+    1720.69,
+    139.94
    ],
    "along": "z",
    "out": [
@@ -28957,13 +28888,13 @@
     -1
    ],
    "set": "street",
-   "id": "b_14_0_st320"
+   "id": "b_14_0_st315"
   },
   {
    "kind": "planter",
    "pos": [
-    1722.17,
-    142.95
+    1721.18,
+    143.1
    ],
    "along": "z",
    "out": [
@@ -28971,831 +28902,853 @@
     -1
    ],
    "set": "street",
-   "id": "b_14_0_st321"
+   "id": "b_14_0_st316"
   },
   {
    "kind": "plant",
    "pos": [
-    1735.99,
-    176.27
+    1736.98,
+    176.13
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.85,
    "seed": 5909,
    "set": "street",
-   "id": "b_14_0_st322"
+   "id": "b_14_0_st317"
   },
   {
    "kind": "plant",
    "pos": [
-    1735.18,
-    170.29
+    1736.17,
+    170.16
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.76,
    "seed": 6203,
    "set": "street",
-   "id": "b_14_0_st323"
+   "id": "b_14_0_st318"
   },
   {
    "kind": "plant",
    "pos": [
-    1734.37,
-    164.3
+    1735.36,
+    164.16
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.74,
    "seed": 4179,
    "set": "street",
-   "id": "b_14_0_st324"
+   "id": "b_14_0_st319"
   },
   {
    "kind": "plant",
    "pos": [
-    1733.61,
-    158.87
+    1734.6,
+    158.74
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.94,
    "seed": 3467,
    "set": "street",
-   "id": "b_14_0_st325"
+   "id": "b_14_0_st320"
   },
   {
    "kind": "plant",
    "pos": [
-    1731.69,
-    145.7
+    1732.68,
+    145.55
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.87,
    "seed": 96,
    "set": "street",
-   "id": "b_14_0_st326"
+   "id": "b_14_0_st321"
   },
   {
    "kind": "plant",
    "pos": [
-    1730.62,
-    138.7
+    1731.61,
+    138.55
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.92,
    "seed": 4776,
    "set": "street",
-   "id": "b_14_0_st327"
+   "id": "b_14_0_st322"
   },
   {
    "kind": "plant",
    "pos": [
-    1729.73,
-    132.93
+    1730.72,
+    132.77
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.87,
    "seed": 2518,
    "set": "street",
-   "id": "b_14_0_st328"
+   "id": "b_14_0_st323"
   },
   {
    "kind": "plant",
    "pos": [
-    1727.75,
-    120.2
+    1728.73,
+    120.04
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.8,
    "seed": 3434,
    "set": "street",
-   "id": "b_14_0_st329"
+   "id": "b_14_0_st324"
   },
   {
    "kind": "plant",
    "pos": [
-    1727.04,
-    177.27
+    1726.05,
+    177.4
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.68,
    "seed": 8596,
    "set": "street",
-   "id": "b_14_0_st330"
+   "id": "b_14_0_st325"
   },
   {
    "kind": "plant",
    "pos": [
-    1726.24,
-    171.3
+    1725.24,
+    171.43
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.7,
    "seed": 661,
    "set": "street",
-   "id": "b_14_0_st331"
+   "id": "b_14_0_st326"
   },
   {
    "kind": "plant",
    "pos": [
-    1725.43,
-    165.35
+    1724.44,
+    165.49
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.95,
    "seed": 3563,
    "set": "street",
-   "id": "b_14_0_st332"
+   "id": "b_14_0_st327"
   },
   {
    "kind": "plant",
    "pos": [
-    1724.67,
-    159.92
+    1723.68,
+    160.06
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.81,
    "seed": 3309,
    "set": "street",
-   "id": "b_14_0_st333"
+   "id": "b_14_0_st328"
   },
   {
    "kind": "plant",
    "pos": [
-    1722.93,
-    147.98
+    1721.94,
+    148.13
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.86,
    "seed": 752,
    "set": "street",
-   "id": "b_14_0_st334"
+   "id": "b_14_0_st329"
   },
   {
    "kind": "plant",
    "pos": [
-    1720.85,
-    134.38
+    1719.86,
+    134.53
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.89,
    "seed": 9019,
    "set": "street",
-   "id": "b_14_0_st335"
+   "id": "b_14_0_st330"
   },
   {
    "kind": "plant",
    "pos": [
-    1718.87,
-    121.67
+    1717.88,
+    121.82
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.66,
    "seed": 9328,
    "set": "street",
-   "id": "b_14_0_st336"
+   "id": "b_14_0_st331"
   },
   {
    "kind": "lamp",
    "pos": [
-    1792.19,
-    216.16
+    1793.19,
+    216.13
    ],
    "set": "street",
-   "id": "b_14_0_st337"
+   "id": "b_14_0_st332"
+  },
+  {
+   "kind": "lamp",
+   "pos": [
+    1796.86,
+    267.72
+   ],
+   "set": "street",
+   "id": "b_14_0_st333"
   },
   {
    "kind": "plant",
    "pos": [
-    1782.65,
-    195.83
+    1781.65,
+    195.85
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.77,
    "seed": 6892,
    "set": "street",
-   "id": "b_14_0_st338"
+   "id": "b_14_0_st334"
   },
   {
    "kind": "plant",
    "pos": [
-    1782.97,
-    209.45
+    1781.97,
+    209.47
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.92,
    "seed": 2029,
    "set": "street",
-   "id": "b_14_0_st339"
+   "id": "b_14_0_st335"
   },
   {
    "kind": "plant",
    "pos": [
-    1783.18,
-    216.0
+    1782.18,
+    216.04
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.94,
    "seed": 2908,
    "set": "street",
-   "id": "b_14_0_st340"
+   "id": "b_14_0_st336"
   },
   {
    "kind": "plant",
    "pos": [
-    1783.72,
-    228.22
+    1782.72,
+    228.27
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.88,
    "seed": 186,
    "set": "street",
-   "id": "b_14_0_st341"
+   "id": "b_14_0_st337"
   },
   {
    "kind": "plant",
    "pos": [
-    1784.05,
-    233.76
+    1783.05,
+    233.82
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.92,
    "seed": 5403,
    "set": "street",
-   "id": "b_14_0_st342"
+   "id": "b_14_0_st338"
   },
   {
    "kind": "plant",
    "pos": [
-    1784.49,
-    239.93
+    1783.5,
+    240.01
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.93,
    "seed": 824,
    "set": "street",
-   "id": "b_14_0_st343"
+   "id": "b_14_0_st339"
   },
   {
    "kind": "plant",
    "pos": [
-    1785.01,
-    246.56
+    1784.02,
+    246.64
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.97,
    "seed": 5815,
    "set": "street",
-   "id": "b_14_0_st344"
+   "id": "b_14_0_st340"
   },
   {
    "kind": "plant",
    "pos": [
-    1785.53,
-    252.87
+    1784.53,
+    252.95
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.92,
    "seed": 8394,
    "set": "street",
-   "id": "b_14_0_st345"
+   "id": "b_14_0_st341"
   },
   {
    "kind": "plant",
    "pos": [
-    1786.07,
-    259.23
+    1785.08,
+    259.32
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.93,
    "seed": 1008,
    "set": "street",
-   "id": "b_14_0_st346"
+   "id": "b_14_0_st342"
   },
   {
    "kind": "plant",
    "pos": [
-    1786.66,
-    265.87
+    1785.66,
+    265.96
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.73,
    "seed": 9856,
    "set": "street",
-   "id": "b_14_0_st347"
+   "id": "b_14_0_st343"
   },
   {
    "kind": "plant",
    "pos": [
-    1787.09,
-    270.82
+    1786.09,
+    270.9
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.83,
    "seed": 4056,
    "set": "street",
-   "id": "b_14_0_st348"
+   "id": "b_14_0_st344"
   },
   {
    "kind": "plant",
    "pos": [
-    1791.67,
-    196.67
+    1792.67,
+    196.65
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.69,
    "seed": 4173,
    "set": "street",
-   "id": "b_14_0_st349"
+   "id": "b_14_0_st345"
   },
   {
    "kind": "plant",
    "pos": [
-    1791.77,
-    201.5
+    1792.77,
+    201.48
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.97,
    "seed": 9268,
    "set": "street",
-   "id": "b_14_0_st350"
+   "id": "b_14_0_st346"
   },
   {
    "kind": "plant",
    "pos": [
-    1791.95,
-    208.6
+    1792.95,
+    208.57
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.68,
    "seed": 2403,
    "set": "street",
-   "id": "b_14_0_st351"
+   "id": "b_14_0_st347"
   },
   {
    "kind": "plant",
    "pos": [
-    1792.63,
-    226.42
+    1793.63,
+    226.37
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.92,
    "seed": 1101,
    "set": "street",
-   "id": "b_14_0_st352"
+   "id": "b_14_0_st348"
   },
   {
    "kind": "plant",
    "pos": [
-    1792.93,
-    231.61
+    1793.93,
+    231.54
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.71,
    "seed": 1392,
    "set": "street",
-   "id": "b_14_0_st353"
+   "id": "b_14_0_st349"
   },
   {
    "kind": "plant",
    "pos": [
-    1793.3,
-    236.93
+    1794.29,
+    236.86
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.75,
    "seed": 571,
    "set": "street",
-   "id": "b_14_0_st354"
+   "id": "b_14_0_st350"
   },
   {
    "kind": "plant",
    "pos": [
-    1794.17,
-    248.16
+    1795.17,
+    248.08
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.9,
    "seed": 6539,
    "set": "street",
-   "id": "b_14_0_st355"
+   "id": "b_14_0_st351"
   },
   {
    "kind": "plant",
    "pos": [
-    1794.61,
-    253.39
+    1795.6,
+    253.31
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.83,
    "seed": 3518,
    "set": "street",
-   "id": "b_14_0_st356"
+   "id": "b_14_0_st352"
   },
   {
    "kind": "plant",
    "pos": [
-    1795.64,
-    265.24
+    1796.63,
+    265.15
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.75,
    "seed": 2034,
    "set": "street",
-   "id": "b_14_0_st357"
+   "id": "b_14_0_st353"
   },
   {
    "kind": "plant",
    "pos": [
-    1796.07,
-    270.18
+    1797.06,
+    270.09
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.88,
    "seed": 8389,
    "set": "street",
-   "id": "b_14_0_st358"
+   "id": "b_14_0_st354"
   },
   {
    "kind": "lamp",
    "pos": [
-    1817.51,
-    105.32
+    1816.51,
+    105.19
    ],
    "set": "street",
-   "id": "b_14_0_st359"
+   "id": "b_14_0_st355"
   },
   {
    "kind": "plant",
    "pos": [
-    1819.82,
-    176.78
+    1820.82,
+    176.84
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.97,
    "seed": 8675,
    "set": "street",
-   "id": "b_14_0_st360"
+   "id": "b_14_0_st356"
   },
   {
    "kind": "plant",
    "pos": [
-    1820.18,
-    171.57
+    1821.18,
+    171.64
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.76,
    "seed": 8318,
    "set": "street",
-   "id": "b_14_0_st361"
+   "id": "b_14_0_st357"
   },
   {
    "kind": "plant",
    "pos": [
-    1820.66,
-    164.64
+    1821.66,
+    164.71
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.82,
    "seed": 7056,
    "set": "street",
-   "id": "b_14_0_st362"
+   "id": "b_14_0_st358"
   },
   {
    "kind": "plant",
    "pos": [
-    1821.12,
-    158.39
+    1822.12,
+    158.46
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.8,
    "seed": 302,
    "set": "street",
-   "id": "b_14_0_st363"
+   "id": "b_14_0_st359"
   },
   {
    "kind": "plant",
    "pos": [
-    1822.01,
-    147.05
+    1823.01,
+    147.14
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.73,
    "seed": 6648,
    "set": "street",
-   "id": "b_14_0_st364"
+   "id": "b_14_0_st360"
   },
   {
    "kind": "plant",
    "pos": [
-    1822.58,
-    140.62
+    1823.58,
+    140.71
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.93,
    "seed": 4082,
    "set": "street",
-   "id": "b_14_0_st365"
+   "id": "b_14_0_st361"
   },
   {
    "kind": "plant",
    "pos": [
-    1823.07,
-    135.45
+    1824.07,
+    135.55
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.73,
    "seed": 5072,
    "set": "street",
-   "id": "b_14_0_st366"
+   "id": "b_14_0_st362"
   },
   {
    "kind": "plant",
    "pos": [
-    1824.19,
-    124.95
+    1825.19,
+    125.06
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.82,
    "seed": 3409,
    "set": "street",
-   "id": "b_14_0_st367"
+   "id": "b_14_0_st363"
   },
   {
    "kind": "plant",
    "pos": [
-    1824.83,
-    119.49
+    1825.83,
+    119.61
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.71,
    "seed": 5443,
    "set": "street",
-   "id": "b_14_0_st368"
+   "id": "b_14_0_st364"
   },
   {
    "kind": "plant",
    "pos": [
-    1826.54,
-    105.65
+    1827.53,
+    105.77
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.85,
    "seed": 3656,
    "set": "street",
-   "id": "b_14_0_st369"
+   "id": "b_14_0_st365"
   },
   {
    "kind": "plant",
    "pos": [
-    1827.43,
-    98.63
+    1828.42,
+    98.76
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.86,
    "seed": 8975,
    "set": "street",
-   "id": "b_14_0_st370"
+   "id": "b_14_0_st366"
   },
   {
    "kind": "plant",
    "pos": [
-    1828.98,
-    86.71
+    1829.97,
+    86.84
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.67,
    "seed": 1030,
    "set": "street",
-   "id": "b_14_0_st371"
+   "id": "b_14_0_st367"
   },
   {
    "kind": "plant",
    "pos": [
-    1829.65,
-    81.63
+    1830.64,
+    81.76
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.71,
    "seed": 7313,
    "set": "street",
-   "id": "b_14_0_st372"
+   "id": "b_14_0_st368"
   },
   {
    "kind": "plant",
    "pos": [
-    1830.47,
-    75.36
+    1831.46,
+    75.5
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.84,
    "seed": 9102,
    "set": "street",
-   "id": "b_14_0_st373"
+   "id": "b_14_0_st369"
   },
   {
    "kind": "plant",
    "pos": [
-    1811.17,
-    171.5
+    1809.81,
+    176.59
+   ],
+   "shape": "bush",
+   "species": "hydrangea",
+   "r": 0.74,
+   "seed": 8102,
+   "set": "street",
+   "id": "b_14_0_st370"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1810.17,
+    171.43
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.76,
    "seed": 3135,
    "set": "street",
-   "id": "b_14_0_st374"
+   "id": "b_14_0_st371"
   },
   {
    "kind": "plant",
    "pos": [
-    1811.66,
-    164.38
+    1810.66,
+    164.31
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.91,
    "seed": 1747,
    "set": "street",
-   "id": "b_14_0_st375"
+   "id": "b_14_0_st372"
   },
   {
    "kind": "plant",
    "pos": [
-    1812.17,
-    157.44
+    1811.17,
+    157.36
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.9,
    "seed": 9413,
    "set": "street",
-   "id": "b_14_0_st376"
+   "id": "b_14_0_st373"
   },
   {
    "kind": "plant",
    "pos": [
-    1813.07,
-    146.0
+    1812.08,
+    145.91
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.73,
    "seed": 2602,
    "set": "street",
-   "id": "b_14_0_st377"
+   "id": "b_14_0_st374"
   },
   {
    "kind": "plant",
    "pos": [
-    1813.6,
-    140.04
+    1812.6,
+    139.95
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.9,
    "seed": 5351,
    "set": "street",
-   "id": "b_14_0_st378"
+   "id": "b_14_0_st375"
   },
   {
    "kind": "plant",
    "pos": [
-    1814.09,
-    134.81
+    1813.1,
+    134.71
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.85,
    "seed": 3717,
    "set": "street",
-   "id": "b_14_0_st379"
+   "id": "b_14_0_st376"
   },
   {
    "kind": "plant",
    "pos": [
-    1815.22,
-    124.21
+    1814.23,
+    124.1
    ],
    "shape": "bush",
    "species": "hydrangea",
    "r": 0.99,
    "seed": 758,
    "set": "street",
-   "id": "b_14_0_st380"
+   "id": "b_14_0_st377"
   },
   {
    "kind": "plant",
    "pos": [
-    1815.87,
-    118.66
+    1814.87,
+    118.54
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.83,
    "seed": 9816,
    "set": "street",
-   "id": "b_14_0_st381"
+   "id": "b_14_0_st378"
   },
   {
    "kind": "plant",
    "pos": [
-    1818.47,
-    97.73
+    1817.48,
+    97.61
    ],
    "shape": "bush",
    "species": "lavender",
    "r": 0.71,
    "seed": 2688,
    "set": "street",
-   "id": "b_14_0_st382"
+   "id": "b_14_0_st379"
   },
   {
    "kind": "plant",
    "pos": [
-    1820.01,
-    85.85
+    1819.02,
+    85.72
    ],
    "shape": "bush",
    "species": "box",
    "r": 0.79,
    "seed": 6974,
    "set": "street",
-   "id": "b_14_0_st383"
+   "id": "b_14_0_st380"
   },
   {
    "kind": "plant",
    "pos": [
-    1820.68,
-    80.8
+    1819.69,
+    80.67
    ],
    "shape": "bush",
    "species": "lilac",
    "r": 0.81,
    "seed": 4274,
    "set": "street",
-   "id": "b_14_0_st384"
+   "id": "b_14_0_st381"
   },
   {
    "kind": "plant",
    "pos": [
-    1821.49,
-    74.62
+    1820.5,
+    74.49
    ],
    "shape": "bush",
    "species": "rose",
    "r": 0.8,
    "seed": 7783,
    "set": "street",
-   "id": "b_14_0_st385"
+   "id": "b_14_0_st382"
   }
  ]
 }

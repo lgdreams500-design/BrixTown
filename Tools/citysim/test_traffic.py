@@ -45,9 +45,14 @@ class TheRoads(unittest.TestCase):
 
 
 class TheCars(unittest.TestCase):
-    def test_about_the_right_share_of_households_has_a_car(self):     # CITY-044
-        homes = [h for h in CITY.mates]
-        self.assertAlmostEqual(len(T.cars) / len(homes), W["traffic"]["car_share"], delta=0.06)
+    def test_CITY_089_cars_by_kind_of_home(self):        # CITY-044, CITY-089: houses have a car, rows about half, flats few
+        no = set(W["traffic"]["no_drive_roles"])
+        owners = {c["home"] for c in T.cars.values()}
+        for kind, share in W["traffic"]["car_share"].items():
+            homes = [h for h in CITY.mates if CITY.home_kind.get(h, "flat") == kind and any(CITY.res[r]["role"] not in no for r in CITY.mates[h])]
+            if len(homes) < 20:
+                continue
+            self.assertAlmostEqual(sum(h in owners for h in homes) / len(homes), share, delta=0.1, msg=kind)
         for c in T.cars.values():
             self.assertNotIn(CITY.res[c["owner"]]["role"], W["traffic"]["no_drive_roles"])
 
@@ -76,7 +81,10 @@ class TheCars(unittest.TestCase):
 
     def test_short_tours_are_walked(self):                # CITY-044
         walking = world.simulation(W).plan(DAY)             # the same day with no cars
+        pooled = set(D["pooled"])                           # their car stays at home: they ride with a neighbour (CITY-094)
         for cid, car in T.cars.items():
+            if cid in pooled or cid in D["walked"]:
+                continue
             rid = car["owner"]
             legs = T.legs(rid, walking[rid])
             drives = sum(p[0] == "drive" for p in PLAN[rid])
@@ -128,8 +136,8 @@ class TheCars(unittest.TestCase):
             tr_out = outs[0]
             tr_in = next(tr for tr in trips if tr["kind"] == "in")
             g = R.gates[tr_out["gate"]]
-            self.assertEqual(tr_out["legs"][-1]["key"], g["out"])          # leaves through a gate ...
-            self.assertEqual(tr_in["legs"][0]["key"], g["back"])          # ... and comes back through the same one
+            self.assertIn(tr_out["legs"][-1]["key"], R.inn[g["id"]])       # leaves at a gate (from town or from outside) ...
+            self.assertIn(tr_in["legs"][0]["key"], R.out[g["id"]])        # ... and comes back at the same one
             self.assertLessEqual(tr_out["t1"] / T.pace, tram[0][1] + 0.5)   # through the gate by the time the tram would have gone
             self.assertGreaterEqual(tr_in["t0"] / T.pace, tram[0][2] - 1e-6)   # not back before the tram would have brought them
             mid = (tr_out["t1"] + tr_in["t0"]) / 2 / T.pace
@@ -223,10 +231,8 @@ class TheTraffic(unittest.TestCase):
     def test_cars_choose_the_quickest_route(self):        # CITY-046
         for trips in D["trips"].values():
             for tr in trips:
-                g = R.gates.get(tr["gate"]) if tr["gate"] else None
-                b0 = R.bays[tr["bay0"]] if tr["bay0"] else dict(lane=R.gates[tr["gate_in"] or tr["gate"]]["back"], s=0.0)
-                b1 = R.bays[tr["bay1"]] if tr["bay1"] else dict(lane=g["out"], s=R.lanes[g["out"]]["length"])
-                best = R.route(b0["lane"], b0["s"], b1["lane"], b1["s"])
+                (l0, s0), (l1, s1) = tr["start"], tr["end"]
+                best = R.route(l0, s0, l1, s1)
                 self.assertEqual([g["key"] for g in tr["legs"]], [g["key"] for g in best])
 
     def test_cars_wait_for_walkers_at_crossings(self):    # CITY-046
@@ -273,6 +279,8 @@ class TheTraffic(unittest.TestCase):
             if bay is not None:
                 held.setdefault(bay, []).append((t, 1440 * T.pace, cid))
         for bay, spans in held.items():
+            if bay in R.stops:                             # a bus stop: buses only, and two of a line may wait there (CITY-091)
+                continue
             spans.sort()
             for a, b in zip(spans, spans[1:]):
                 self.assertLessEqual(a[1], b[0] + 1e-6, (bay, a, b))
@@ -288,6 +296,114 @@ class TheTraffic(unittest.TestCase):
         self.assertTrue(0 < len(near) < len(cars))
         for cid in near:
             self.assertLessEqual(dist(cars[cid]["pos"], spot), W["traffic"]["car_load_m"])
+
+
+class TheOutskirtsAndBuses(unittest.TestCase):
+    def test_CITY_090_houses_outside_the_wall_drive_their_lanes(self):
+        house_cars = [c for c in T.cars.values() if CITY.home_kind.get(c["home"]) == "house"]
+        self.assertGreater(len(house_cars), 300)
+        drive = sum(R.bays[c["bay"]].get("kind") == "driveway" and R.bays[c["bay"]]["lot"] == c["home"] for c in house_cars)
+        self.assertGreater(drive / len(house_cars), 0.9)                 # parked on their own driveway
+        outer = sum(1 for c in house_cars for tr in D["trips"][c["id"]] for g in tr["legs"] if g["kind"] == "lane" and R.lanes[g["key"]].get("outer"))
+        self.assertGreater(outer, 1000)                                  # and they drive the lanes and links
+        through = sum(1 for c in house_cars for tr in D["trips"][c["id"]] if any(g["kind"] == "box" and g["junction"] in R.gates for g in tr["legs"]))
+        self.assertGreater(through, 200)                                 # into town through the gates
+        for jid, j in R.j.items():                                       # lanes outside meet with give way
+            if j.get("outer"):
+                self.assertEqual(j["control"], "give_way")
+
+    def test_CITY_091_buses_keep_to_their_lines(self):
+        b = W["traffic"]["buses"]
+        self.assertEqual(len(T.lines), len(W["transit"]["lines"]))
+        for vid, bus in T.buses.items():
+            L, legs, trips = T.lines[bus["line"]], T._bus_legs(vid), D["trips"][vid]
+            self.assertEqual(len(trips), len(legs), vid)                  # every run of the day done
+            for lg, tr in zip(legs, trips):
+                self.assertEqual(tr["bay1"], lg["bay"])                  # stop after stop, in the line's order
+                self.assertGreaterEqual(tr["t0"] / T.pace, lg["at"] - 1e-6)   # never away before its time
+            for a, c in zip(trips, trips[1:]):                           # and it waits its dwell at every stop
+                self.assertGreaterEqual(c["t0"] - a["t1"], b["dwell_s"] - 1e-6)
+            self.assertEqual(T.car_at(vid, DAY, 3 * 60)["state"], "away")  # not in service at night
+        for bid in R.stops:                                              # no car parks at a stop
+            self.assertNotIn(bid, {c["bay"] for c in T.cars.values()})
+            self.assertNotIn(bid, R.parking_near(R.stops[bid]["pos"], 5))
+
+    def test_CITY_092_residents_without_a_car_ride_the_bus(self):
+        rides, b = D["rides"], W["traffic"]["buses"]
+        self.assertGreater(len(rides), 1500)                             # long walks are ridden, not walked
+        owners = {c["owner"] for c in T.cars.values() if D["trips"][c["id"]]}   # at a wheel today
+        visits = T.bus_visits(D["trips"])
+        for r in rides:
+            self.assertNotIn(r["rid"], owners)
+            self.assertLessEqual(r["there"], r["walk_t"][1] + b["late_min"] + 1e-6)   # their day moves to the bus, a little
+            self.assertGreaterEqual(r["go"], r["walk_t"][0] - b["shift_min"] - 1e-6)
+            v = visits[r["bus"]]
+            self.assertTrue(any(bb == r["board"] and lv is not None and abs(lv / T.pace - r["t0"]) < 1e-6 for bb, _, lv in v))   # it leaves that stop then
+            self.assertTrue(any(bb == r["alight"] and ar is not None and abs(ar / T.pace - r["t1"]) < 1e-6 for bb, ar, _ in v))
+        for r in rides[:60]:                                             # on the bus they are where the bus is
+            m = (r["t0"] + r["t1"]) / 2
+            self.assertLess(dist(CITY.at(DAY * 1440 + m)[r["rid"]]["pos"], T.car_at(r["bus"], DAY, m)["pos"]), 1e-6)
+        for rid in {r["rid"] for r in rides}:                            # their days stay whole
+            for a, c in zip(PLAN[rid], PLAN[rid][1:]):
+                self.assertAlmostEqual(a[2], c[1], places=6)
+
+
+    def test_CITY_093_most_cars_parked_away_from_home_leave_the_street(self):
+        pa = W["traffic"]["park_away"]
+        away = stowed = 0
+        for cid, car in T.cars.items():
+            trips = D["trips"][cid]
+            for i, tr in enumerate(trips[:-1]):
+                if tr["bay1"] in (None, car["bay"]):
+                    continue
+                away += 1
+                st = T.stowed(cid, DAY, i)
+                if not st:
+                    continue
+                stowed += 1
+                mid = (st[0] + st[1]) / 2 / T.pace
+                self.assertEqual(T.car_at(cid, DAY, mid)["state"], "stowed")
+                self.assertEqual(T.car_at(cid, DAY, tr["t1"] / T.pace + 0.01)["state"], "parked")    # parks first, in sight
+                self.assertEqual(T.car_at(cid, DAY, trips[i + 1]["t0"] / T.pace - 0.01)["state"], "parked")   # back before the driver
+        self.assertGreater(away, 200)
+        self.assertAlmostEqual(stowed / away, pa["share"], delta=0.08)
+        for cid in T.owned(DAY)[:50]:                                    # never at home
+            self.assertEqual(T.car_at(cid, DAY, 3 * 60)["state"], "parked")
+
+
+    def test_CITY_094_neighbours_share_the_drive(self):
+        pl, pools = W["traffic"]["pool"], D["pools"]
+        self.assertGreater(len({x["car"] for x in pools}), 60)
+        seats = {}
+        for x in pools:
+            p, q = T.cars[x["car"]], T.cars[x["driver"]]
+            self.assertEqual(D["trips"][x["car"]], [])                      # the passenger's car stays at home all day
+            self.assertNotEqual(D["trips"][x["driver"]], [])
+            self.assertLessEqual(dist(CITY.lots[p["home"]]["door"], CITY.lots[q["home"]]["door"]), pl["reach_m"] + 1e-6)
+            self.assertLessEqual(abs(x["go"] - x["walk_t"][0]), pl["shift_min"] + 1e-6)
+            self.assertLessEqual(abs(x["there"] - x["walk_t"][1]), pl["shift_min"] + 1e-6)
+            m = (x["board"] + x["off"]) / 2                                 # in the car with the driver
+            here = CITY.at(DAY * 1440 + m)
+            self.assertEqual(here[x["rid"]]["state"], "riding")
+            self.assertLess(dist(here[x["rid"]]["pos"], here[q["owner"]]["pos"]), 1e-6)
+            seats.setdefault((x["driver"], x["half"]), set()).add(x["car"])
+        self.assertTrue(all(len(v) <= pl["seats"] for v in seats.values()))
+        for rid in {x["rid"] for x in pools}:
+            for a, c in zip(PLAN[rid], PLAN[rid][1:]):
+                self.assertAlmostEqual(a[2], c[1], places=6)
+
+
+    def test_CITY_095_cars_not_used_today_are_not_there(self):
+        idle = set(D["idle"])
+        self.assertGreater(len(idle), 100)
+        for cid in idle:
+            self.assertEqual(D["trips"][cid], [])
+            self.assertEqual(T.car_at(cid, DAY, 600)["state"], "none")
+            self.assertNotIn(cid, IDS)
+            self.assertFalse(any(p[0] == "drive" for p in PLAN[T.cars[cid]["owner"]]))
+        self.assertEqual(set(T.owned(DAY)), {c for c in T.cars if D["trips"][c]})
+        for x in D["pools"]:                                             # a passenger's car is not there; they ride with the neighbour
+            self.assertIn(x["car"], idle)
 
 
 class TheBusyDay(unittest.TestCase):
