@@ -5,7 +5,7 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 34 of 52 | 9 of 52 | 9 of 52 |
+| Decided | 38 of 52 | 9 of 52 | 9 of 52 |
 | Size of the plan (points) | 448 | 427 | 827 |
 | Size of the suggested plan | 128 | 387 | 795 |
 
@@ -46,7 +46,7 @@
 | **Reacting to the world** `F-NPC-REACT` | 1 Weather and night | undecided | undecided | Owner, 2026-11-22: asked for people to react to the weather (clothing, umbrellas in rain, running for cover when rain starts), then said "Level 1 for the slice". Later milestones not stated. |
 | **Getting out of the way of cars** `F-NPC-DODGE` | 2 Dodge and tell off | undecided | undecided | Owner, 2026-11-22: "Level 2 for slice" (residents dodge a car coming at them, then gesture and shout at the driver). Later milestones not stated. |
 | **Animals** `F-ANIMALS` | undecided | undecided | undecided |  |
-| **Wardrobe and outfits** `F-CHR-WARDROBE` | undecided | undecided | undecided |  |
+| **Wardrobe and outfits** `F-CHR-WARDROBE` | 1 Saved outfits | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (asked which levels the four menu features should have for the first slice). Later milestones not stated. |
 
 ## Things to use
 
@@ -97,14 +97,14 @@
 | **Furniture that belongs to the unit** `F-PROP-FURNISH` | 2 Arrange and trade ★ | undecided | undecided | Owner, 2026-11-22: "furnish level 2 and carry level 1" (asked for first-slice levels, needed by F-FURN-STORE level 2). Storage taken out to F-PROP-STORAGE, to be built later. Later milestones not stated. |
 | **Storage containers** `F-PROP-STORAGE` | undecided | undecided | undecided |  |
 | **Furniture company and outlets** `F-FURN-STORE` | 2 Several companies, living catalogue ★ | undecided | undecided | Owner, 2026-11-22: "level to for design and company and outlets" (asked for first-slice levels; read as level 2). Bought furniture is delivered to the flat by NPCs, unassembled or assembled, or the player takes an instant option into the inventory, then places it from the inventory or moves it to storage; "we will build storage container mechanics later". Later milestones not stated. Then: "for packed delivery, paid assemble as well as player can assemble, in future we can add a mini game where player can assemble the furniture based on the instructions" (mini-game proposed as F-FURN-ASSEMBLE, no pick). Then: "instant doesn't cost any money it's free for now". |
-| **Belongings** `F-INV-ITEMS` | undecided | undecided | undecided |  |
+| **Belongings** `F-INV-ITEMS` | 1 One list of belongings | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (asked which levels the four menu features should have for the first slice). Later milestones not stated. |
 
 ## Menus and settings
 
 | Feature | First slice | Life depth | Full game | Note |
 |---|---|---|---|---|
-| **The game menu** `F-UI-MENU` | undecided | undecided | undecided |  |
-| **Settings** `F-UI-SETTINGS` | undecided | undecided | undecided |  |
+| **The game menu** `F-UI-MENU` | 1 Menu of what exists | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (asked which levels the four menu features should have for the first slice). Later milestones not stated. |
+| **Settings** `F-UI-SETTINGS` | 1 Picture, sound, display, mouse | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (asked which levels the four menu features should have for the first slice). Later milestones not stated. |
 
 ## What each level means
 

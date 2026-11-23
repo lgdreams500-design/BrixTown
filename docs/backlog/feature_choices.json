@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "note": "The owner's level picks, stated by the owner in chat and recorded by agents (ADR-0008). A feature or milestone missing here is undecided. -1 means out of the game. After editing, run Tools/backlog.ps1.",
-  "updated": "2026-11-22",
+  "updated": "2026-11-23",
   "choices": {
     "F-MAP-CITY": {
       "slice": 1,
@@ -156,6 +156,22 @@
     "F-OBJ-CARRY": {
       "slice": 1,
       "note": "Owner, 2026-11-22: \"furnish level 2 and carry level 1\" (asked for the first slice, so delivery crews can carry furniture into the flat). Later milestones not stated."
+    },
+    "F-UI-MENU": {
+      "slice": 1,
+      "note": "Owner, 2026-11-23: \"Suggested levels\" (asked which levels the four menu features should have for the first slice). Later milestones not stated."
+    },
+    "F-UI-SETTINGS": {
+      "slice": 1,
+      "note": "Owner, 2026-11-23: \"Suggested levels\" (asked which levels the four menu features should have for the first slice). Later milestones not stated."
+    },
+    "F-INV-ITEMS": {
+      "slice": 1,
+      "note": "Owner, 2026-11-23: \"Suggested levels\" (asked which levels the four menu features should have for the first slice). Later milestones not stated."
+    },
+    "F-CHR-WARDROBE": {
+      "slice": 1,
+      "note": "Owner, 2026-11-23: \"Suggested levels\" (asked which levels the four menu features should have for the first slice). Later milestones not stated."
     }
   }
 }
