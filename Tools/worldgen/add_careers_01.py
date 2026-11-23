@@ -81,10 +81,13 @@ def main():
     for r in people:
         a = got.get(r["id"])
         r.pop("post", None)
+        r.pop("day_career", None)
         if a is None:
             r.pop("career", None)
             continue
         r["role"], r["career"], r["work"] = a["role"], a["career"], a["work"]
+        if a.get("day_career"):
+            r["day_career"] = a["day_career"]
         if a["post"] is not None:
             r["post"] = a["post"]
             staff[a["work"]].append((a["post"], a.get("unit"), r))
@@ -123,7 +126,7 @@ def main():
     d2 = lambda a, b: abs(a["door"][0] - b["door"][0]) + abs(a["door"][1] - b["door"][1])
     visitable = [l for l in lots if l["kind"] in ("shop", "food", "work", "health", "home", "utility") and l.get("enterable") and "plan" not in l]
     for r in people:
-        if r["role"] in ("courier", "utility"):
+        if r["role"] in ("courier", "utility", "binman"):
             if not r.get("rounds"):
                 h = byid[r["home"]]
                 close = sorted(visitable, key=lambda l: (d2(h, l), l["id"]))[:40]

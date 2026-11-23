@@ -1163,6 +1163,8 @@ def career_problems(w):
             out.append("%s: unknown career %s" % (r["id"], c))
         elif C[c]["role"] != r["role"] and r["role"] in R["reassign_roles"]:    # commuters and couriers keep their routine
             out.append("%s: career %s follows the %s routine, not %s" % (r["id"], c, C[c]["role"], r["role"]))
+        if r.get("day_career") is not None and r["day_career"] not in R.get("second_jobs", {}).get(c, {}):
+            out.append("%s: day career %s is not a second job of %s" % (r["id"], r["day_career"], c))
         if r.get("post") is not None:
             staff.setdefault(r.get("work"), []).append(r["post"])
     spots = {l["id"]: len(l["objects"].get("work", [])) for l in lots(w)}

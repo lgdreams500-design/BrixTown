@@ -15,7 +15,8 @@
   "student": "student",
   "utility": "utility worker",
   "child": "schoolchild",
-  "creative": "artist"
+  "creative": "artist",
+  "binman": "bin collector"
  },
  "rules": [
   { "conversation": "clinic", "roles": ["nurse"], "acts": ["work"], "walking": false },

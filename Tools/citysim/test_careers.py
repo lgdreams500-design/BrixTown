@@ -180,6 +180,37 @@ class OfficeWorkers(unittest.TestCase):
             self.assertLessEqual(in_town[g], max(round(share * n), mins[g]) + 1, g)
 
 
+class FewerCouriers(unittest.TestCase):
+    def test_CITY_087_couriers_and_postal_workers_are_few(self):
+        couriers = [r for r in RES if r["role"] == "courier"]
+        self.assertLessEqual(len(couriers), round(R["couriers_share"] * len(RES)) + 1)
+        self.assertGreater(len(couriers), 0)                                 # parcels still come
+        self.assertEqual(W["careers"]["couriers_share"], world._read(world.WORLD, "rules", "balance.json")["targets"]["residents"]["courier"])
+        for r in couriers:
+            self.assertIn(r["career"], R["courier_careers"])
+            self.assertTrue(r.get("rounds"), r["id"])
+
+
+class TwoJobs(unittest.TestCase):
+    def test_CITY_088_waste_collectors_collect_at_dawn_then_do_a_day_job(self):
+        city = world.simulation(W)
+        crew = [r for r in RES if r.get("career") == "waste_collector"]
+        self.assertGreater(len(crew), 0)
+        for r in crew:
+            self.assertEqual(r["role"], "binman")
+            self.assertIn(r["day_career"], R["second_jobs"]["waste_collector"])
+            self.assertEqual(careers.workplace_type(BYID[r["work"]], R, TMPL[r["work"]]), "waste_depot")
+            bl = city.blocks(r["id"], DAY)
+            collect = [m for m, a, p in bl if a == "collect"]
+            deliver = [m for m, a, p in bl if a == "deliver"]
+            self.assertTrue(collect and deliver, r["id"])
+            self.assertLess(min(collect), 6 * 60, r["id"])                       # out before six
+            self.assertLess(max(collect), min(deliver), r["id"])                 # bins first, then the day job
+            self.assertGreater(max(deliver), 13 * 60, r["id"])                   # the day job fills the day
+            first = next(a for m, a, p in bl if a not in ("sleep", "home"))
+            self.assertEqual(first, "work", r["id"])                             # they start at the depot
+
+
 class OwnPlaceAtWork(unittest.TestCase):
     def test_CITY_085_each_worker_stands_at_their_own_post(self):
         city = world.simulation(W)

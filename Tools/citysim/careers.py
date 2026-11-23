@@ -108,6 +108,7 @@ def assign(residents, lots, R, templates=None):
     templates: {lot id: block template}. Returns {resident id: dict(career, role, work, post)} where post is the
     resident's index among the staff of their workplace (their own place to work there, CITY-085), None at home.
 
+    0. Couriers beyond couriers_share of all residents work in town instead (CITY-087).
     1. Couriers and commuters who work outside town get a career from their weights.
     2. A share of those who work in town work from home (home_based, CITY-083).
     3. Every workplace's minimum posts are filled first, each by the nearest resident still free (so every place opens).
@@ -118,14 +119,20 @@ def assign(residents, lots, R, templates=None):
     C = R["careers"]
     byid = {l["id"]: l for l in lots}
     out = {}
+    # 0. couriers beyond their share of all residents work in town instead (the ones whose hash is highest)
+    couriers = sorted((r for r in residents if r["role"] == "courier"), key=lambda r: (rnd("courier_keep", r["id"]), r["id"]))
+    keep = int(round(R.get("couriers_share", 1.0) * len(residents)))
+    moved = {r["id"] for r in couriers[keep:]}
     for r in residents:
+        if r["id"] in moved:
+            continue
         if r["role"] == "courier":
             out[r["id"]] = dict(career=_weighted(R["courier_careers"], "courier", r["id"]), role="courier", work=r.get("work"), post=None)
         elif r["role"] in R.get("keep_roles", {}):
             out[r["id"]] = dict(career=R["keep_roles"][r["role"]], role=r["role"], work=r.get("work"), post=None)
         elif r["role"] == "commuter":
             out[r["id"]] = dict(career=_weighted(R["commuter_careers"], "commuter", r["id"]), role="commuter", work=r.get("work"), post=None)
-    workers = sorted((r for r in residents if r["role"] in R["reassign_roles"]), key=lambda r: r["id"])
+    workers = sorted((r for r in residents if r["role"] in R["reassign_roles"] or r["id"] in moved), key=lambda r: r["id"])
     n = len(workers)
     quota = {g: int(round(s * n)) for g, s in R["shares"].items()}
     # 2. home-based creatives: the ones whose hash is lowest, so the choice is stable
@@ -181,6 +188,8 @@ def assign(residents, lots, R, templates=None):
         for i, (k, rid) in enumerate(staff):
             c = p["posts"][k][0]
             out[rid] = dict(career=c, role=C[c]["role"], work=p["lot"]["id"], post=i, unit=p["posts"][k][1])
+            if c in R.get("second_jobs", {}):                    # CITY-088: a day job after the early shift
+                out[rid]["day_career"] = _weighted(R["second_jobs"][c], "day", rid)
     return out
 
 
@@ -216,6 +225,12 @@ def problems(R, roles):
     for t in R["mall_units"].values():
         if t not in R["staffing"]:
             out.append("mall unit type %s: no staffing" % t)
+    for k, ws in R.get("second_jobs", {}).items():
+        if k not in C:
+            out.append("second_jobs: unknown career %s" % k)
+        for d in ws:
+            if d not in C:
+                out.append("second_jobs %s: unknown day career %s" % (k, d))
     for name in ("home_based", "commuter_careers", "courier_careers"):
         for k in R[name]:
             if k not in C:

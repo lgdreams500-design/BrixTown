@@ -5,14 +5,16 @@
   "courier",
   "utility",
   "student",
-  "child"
+  "child",
+  "binman"
  ],
  "no_drive_acts": [
   "away",
   "stroll",
   "tend",
   "deliver",
-  "inspect"
+  "inspect",
+  "collect"
  ],
  "drive_min_m": 0.0,
  "gate_road_m": 80.0,

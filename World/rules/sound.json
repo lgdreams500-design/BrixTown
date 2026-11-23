@@ -87,6 +87,7 @@
    { "acts": ["work"], "every": [6, 15], "roles": ["nurse"], "sound": "beep" },
    { "acts": ["work", "tend"], "every": [2, 6], "roles": ["gardener"], "sound": "shears" },
    { "acts": ["deliver"], "every": [5, 12], "sound": "box" },
+   { "acts": ["collect"], "every": [4, 9], "sound": "box" },
    { "acts": ["work", "check"], "every": [3, 9], "roles": ["utility"], "sound": "wrench" },
    { "acts": ["bank"], "every": [6, 14], "sound": "stamp" },
    { "acts": ["read", "paper", "notices"], "every": [5, 12], "sound": "page" },

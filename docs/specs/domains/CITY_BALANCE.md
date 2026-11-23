@@ -107,9 +107,9 @@ Per district `[ASSUMPTION]`: Old Town and the Centre mostly flats and row houses
 | Children | 60 | 5 % | 14 % |
 | Students | 74 | 7 % | 8 % |
 | Elders | 209 | 18 % | 18 % |
-| Working in town | 457 | 40 % | 45 % |
+| Working in town | 457 | 40 % | 49 % (was 45 %) |
 | Commuters (work outside) | 251 | 22 % | 10 % |
-| Couriers | 83 | 7 % | 5 % |
+| Couriers | 83 | 7 % | 1 % (was 5 %; the owner, 2026-11-23, CITY-087) |
 
 Within the jobs in town, target share of job places `[ASSUMPTION]`: retail 18 %, food 12 %, office 24 %, making 14 %,
 health 8 %, education 7 %, culture 4 %, showrooms 3 %, utility and transport 6 %, parks 4 %.
