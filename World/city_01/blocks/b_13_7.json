@@ -81,7 +81,11 @@
    "storeys": [
     "main",
     "bedrooms"
-   ]
+   ],
+   "style": {
+    "group": "row_house",
+    "way": "b"
+   }
   },
   {
    "id": "b_13_7_l1",
@@ -160,7 +164,11 @@
    "storeys": [
     "main",
     "bedrooms"
-   ]
+   ],
+   "style": {
+    "group": "row_house",
+    "way": "b"
+   }
   },
   {
    "id": "b_13_7_l2",
@@ -231,7 +239,11 @@
     "main",
     "bedrooms",
     "bedrooms"
-   ]
+   ],
+   "style": {
+    "group": "row_house",
+    "way": "a"
+   }
   },
   {
    "id": "b_13_7_l3",
@@ -302,7 +314,11 @@
    "storeys": [
     "main",
     "bedrooms"
-   ]
+   ],
+   "style": {
+    "group": "row_house",
+    "way": "c"
+   }
   },
   {
    "id": "b_13_7_l4",
@@ -364,7 +380,11 @@
     "main",
     "bedrooms",
     "bedrooms"
-   ]
+   ],
+   "style": {
+    "group": "row_house",
+    "way": "a"
+   }
   },
   {
    "id": "b_13_7_l5",
@@ -443,7 +463,11 @@
    "storeys": [
     "main",
     "bedrooms"
-   ]
+   ],
+   "style": {
+    "group": "row_house",
+    "way": "b"
+   }
   },
   {
    "id": "b_13_7_l6",
@@ -514,7 +538,11 @@
     "main",
     "bedrooms",
     "bedrooms"
-   ]
+   ],
+   "style": {
+    "group": "row_house",
+    "way": "c"
+   }
   },
   {
    "id": "b_13_7_l7",
@@ -585,7 +613,11 @@
    "storeys": [
     "main",
     "bedrooms"
-   ]
+   ],
+   "style": {
+    "group": "row_house",
+    "way": "b"
+   }
   },
   {
    "id": "b_13_7_l8",
@@ -655,7 +687,11 @@
    "storeys": [
     "main",
     "bedrooms"
-   ]
+   ],
+   "style": {
+    "group": "row_house",
+    "way": "a"
+   }
   },
   {
    "id": "b_13_7_l9",
@@ -726,7 +762,11 @@
    "storeys": [
     "main",
     "bedrooms"
-   ]
+   ],
+   "style": {
+    "group": "row_house",
+    "way": "b"
+   }
   }
  ],
  "paths": [],

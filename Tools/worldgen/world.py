@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers", "building_styles"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -1305,11 +1305,64 @@ def design_of(w, b, l, surf=None):
                 circulation=dict(stair=l.get("stair"), lift=l.get("lift")))
 
 
+def style_colours(S, style):
+    """The colours of a building's approved colourway (World/rules/building_styles.json, ADR-0034), or None."""
+    if not style or not S or style.get("group") not in S["colourways"]:
+        return None
+    c = S["colourways"][style["group"]].get(style.get("way", "a"))
+    if not c:
+        return None
+    P = S["palette"]
+    out = {}
+    if c.get("wall") and c["wall"] != "stone":
+        out["plaster"] = list(S["plasters"][c["wall"]][1])
+    out["stone_walls"] = c.get("wall") == "stone"
+    if c.get("roof"):
+        lo, hi = S["roofs"][c["roof"]]
+        out["tiles"] = [round((a + b) / 2, 3) for a, b in zip(lo, hi)]
+    for part in ("shutter", "frame"):
+        if c.get(part):
+            out[part] = list(P[c[part]])
+    aw = [k for k in (c.get("awning") or []) if k != "cream"] or ([c["front"]] if c.get("front") else []) or ([c["door"]] if c.get("door") else [])
+    if aw:
+        out["accent"] = list(P[aw[0]])
+    st = S.get("stones", {}).get(c.get("stone") or "")
+    if st and st.get("mix"):
+        base = [0.52, 0.48, 0.43]                          # the light tone of Stone (ART_DIRECTION 2.3)
+        out["stone"] = [round(a + (b - a) * st["share"], 3) for a, b in zip(base, P[st["mix"]])]
+    return out
+
+
+def apply_style(d, w, l):
+    """A building's design with its approved colourway's colours in place of the kit's picks (ADR-0034)."""
+    c = style_colours(w.get("building_styles"), l.get("style"))
+    if not c:
+        return d
+    if "plaster" in c:
+        mx = w["building_kit"]["inner_mix"]
+        d["walls"]["plaster"] = c["plaster"]
+        d["walls"]["inner"] = [c["plaster"][k] + (mx["with"][k] - c["plaster"][k]) * mx["share"] for k in range(3)]
+    if c["stone_walls"]:
+        d["walls"]["stone_to_eaves"] = True
+    if "stone" in c:
+        d["walls"]["stone"]["color"] = c["stone"]
+    if "tiles" in c:
+        d["roof"]["tiles"] = c["tiles"]
+    if "shutter" in c:
+        d["openings"]["shutter_color"] = c["shutter"]
+    if "frame" in c:
+        d["openings"]["frame"] = c["frame"]
+    if "accent" in c:
+        d["openings"]["awning"] = c["accent"]
+    d["style"] = l["style"]
+    return d
+
+
 def designs(w):
     """Every building's design, by lot id (BUILD-001). Worked out from the data each time, never stored for the town's own
     buildings; a player's design, when there is one, will replace its building's entry."""
     surf = surfaces(w)
-    return {l["id"]: design_of(w, b, l, surf) for b in w["blocks"] for l in b["lots"] if l["kind"] not in OPEN_KINDS}
+    return {l["id"]: apply_style(design_of(w, b, l, surf), w, l) for b in w["blocks"] for l in b["lots"] if l["kind"] not in OPEN_KINDS}
 
 
 def design_problems(w, ds=None):
@@ -1317,6 +1370,11 @@ def design_problems(w, ds=None):
     K, out = w["building_kit"], []
     ds = ds or designs(w)
     tiles, plaster, accents = [tuple(c) for c in K["roof_tiles"]], [tuple(c) for c in K["plaster"]], [tuple(c) for c in K["accents"]]
+    S = w.get("building_styles")                             # the approved colourways' colours are the kit's too (ADR-0034)
+    if S:
+        plaster += [tuple(p[1]) for p in S["plasters"].values()]
+        tiles += [tuple(round((a + b) / 2, 3) for a, b in zip(*r)) for r in S["roofs"].values()]
+        accents += [tuple(v) for v in S["palette"].values()]
     for i, d in ds.items():
         for part in ("shell", "walls", "roof", "openings", "ornament", "inside", "circulation"):
             if part not in d:

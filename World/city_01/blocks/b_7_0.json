@@ -10091,6 +10091,10 @@
       "ground": 0.0
      }
     ]
+   },
+   "style": {
+    "group": "arcade_mall",
+    "way": "b"
    }
   }
  ],

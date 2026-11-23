@@ -839,7 +839,11 @@
       496.8
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "b"
+   }
   },
   {
    "id": "b_7_5_l1",
@@ -1672,7 +1676,11 @@
       496.8
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "a"
+   }
   },
   {
    "id": "b_7_5_l2",
@@ -1771,7 +1779,11 @@
    "storeys": [
     "main",
     "store"
-   ]
+   ],
+   "style": {
+    "group": "shop_front",
+    "way": "c"
+   }
   },
   {
    "id": "b_7_5_l3",
@@ -1894,7 +1906,11 @@
     "office",
     "office",
     "office"
-   ]
+   ],
+   "style": {
+    "group": "works",
+    "way": "c"
+   }
   },
   {
    "id": "b_7_5_l4",
@@ -2355,7 +2371,11 @@
       510.57
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "a"
+   }
   },
   {
    "id": "b_7_5_l5",
@@ -2482,6 +2502,10 @@
      2,
      2
     ]
+   },
+   "style": {
+    "group": "shop_front",
+    "way": "c"
    }
   },
   {
@@ -2597,7 +2621,11 @@
    "storeys": [
     "main",
     "store"
-   ]
+   ],
+   "style": {
+    "group": "cafe_front",
+    "way": "b"
+   }
   },
   {
    "id": "b_7_5_l7",
@@ -3206,7 +3234,11 @@
       536.77
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "a"
+   }
   },
   {
    "id": "b_7_5_l8",

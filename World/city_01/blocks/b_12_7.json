@@ -190,6 +190,10 @@
      1,
      2
     ]
+   },
+   "style": {
+    "group": "hospital",
+    "way": "b"
    }
   },
   {
@@ -297,7 +301,11 @@
     "main",
     "office",
     "office"
-   ]
+   ],
+   "style": {
+    "group": "works",
+    "way": "b"
+   }
   },
   {
    "id": "b_12_7_l2",
@@ -413,6 +421,10 @@
      0,
      0
     ]
+   },
+   "style": {
+    "group": "showroom",
+    "way": "c"
    }
   },
   {
@@ -1385,7 +1397,11 @@
       751.2
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "c"
+   }
   },
   {
    "id": "b_12_7_l4",
@@ -1488,7 +1504,11 @@
    "storeys": [
     "main",
     "store"
-   ]
+   ],
+   "style": {
+    "group": "cafe_front",
+    "way": "c"
+   }
   },
   {
    "id": "b_12_7_l5",
@@ -1948,7 +1968,11 @@
       737.43
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "a"
+   }
   },
   {
    "id": "b_12_7_l6",
@@ -2557,7 +2581,11 @@
       711.23
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "a"
+   }
   },
   {
    "id": "b_12_7_l7",
@@ -2694,6 +2722,10 @@
      3,
      3
     ]
+   },
+   "style": {
+    "group": "shop_front",
+    "way": "c"
    }
   },
   {

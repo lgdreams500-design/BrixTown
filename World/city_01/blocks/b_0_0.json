@@ -2107,6 +2107,10 @@
       231.38
      ]
     ]
+   },
+   "style": {
+    "group": "shop_front",
+    "way": "c"
    }
   },
   {
@@ -2162,6 +2166,10 @@
       231.38
      ]
     ]
+   },
+   "style": {
+    "group": "shop_front",
+    "way": "b"
    }
   },
   {
@@ -2238,7 +2246,11 @@
      ]
     ]
    },
-   "seats": 8
+   "seats": 8,
+   "style": {
+    "group": "cafe_front",
+    "way": "a"
+   }
   },
   {
    "id": "b_0_0_l3",
@@ -2293,6 +2305,10 @@
       231.38
      ]
     ]
+   },
+   "style": {
+    "group": "shop_front",
+    "way": "c"
    }
   },
   {
@@ -2348,6 +2364,10 @@
       230.9
      ]
     ]
+   },
+   "style": {
+    "group": "clinic",
+    "way": "b"
    }
   },
   {
@@ -2426,7 +2446,11 @@
     "school",
     "primary"
    ],
-   "staff": 10
+   "staff": 10,
+   "style": {
+    "group": "civic_stone",
+    "way": "b"
+   }
   },
   {
    "id": "b_0_0_l6",

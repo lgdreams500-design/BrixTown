@@ -220,6 +220,10 @@
      0,
      0
     ]
+   },
+   "style": {
+    "group": "showroom",
+    "way": "c"
    }
   },
   {
@@ -312,7 +316,11 @@
     "main",
     "office",
     "office"
-   ]
+   ],
+   "style": {
+    "group": "works",
+    "way": "a"
+   }
   },
   {
    "id": "b_8_9_l2",
@@ -1108,7 +1116,11 @@
       943.2
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "a"
+   }
   },
   {
    "id": "b_8_9_l3",
@@ -1733,7 +1745,11 @@
       943.2
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "b"
+   }
   },
   {
    "id": "b_8_9_l4",
@@ -1898,6 +1914,10 @@
      3,
      3
     ]
+   },
+   "style": {
+    "group": "cafe_front",
+    "way": "c"
    }
   },
   {
@@ -2507,7 +2527,11 @@
       929.43
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "a"
+   }
   },
   {
    "id": "b_8_9_l6",
@@ -2660,6 +2684,10 @@
      3,
      3
     ]
+   },
+   "style": {
+    "group": "shop_front",
+    "way": "c"
    }
   },
   {
@@ -3123,7 +3151,11 @@
       920.77
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "a"
+   }
   },
   {
    "id": "b_8_9_l8",

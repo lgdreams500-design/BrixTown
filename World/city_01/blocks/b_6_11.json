@@ -131,6 +131,10 @@
      1,
      0
     ]
+   },
+   "style": {
+    "group": "depot_hall",
+    "way": "a"
    }
   },
   {
@@ -167,7 +171,11 @@
    },
    "storeys": [
     "main"
-   ]
+   ],
+   "style": {
+    "group": "substation",
+    "way": "c"
+   }
   }
  ],
  "paths": [

@@ -3461,7 +3461,11 @@
       1002.2
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "tower_home",
+    "way": "a"
+   }
   },
   {
    "id": "b_7_10_l1",
@@ -3544,7 +3548,11 @@
    "seats": 6,
    "storeys": [
     "main"
-   ]
+   ],
+   "style": {
+    "group": "cafe_front",
+    "way": "b"
+   }
   },
   {
    "id": "b_7_10_l2",
@@ -3607,7 +3615,11 @@
    "customers": 3,
    "storeys": [
     "main"
-   ]
+   ],
+   "style": {
+    "group": "kiosk",
+    "way": "c"
+   }
   }
  ],
  "paths": [

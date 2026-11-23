@@ -172,7 +172,11 @@
     "main",
     "office",
     "office"
-   ]
+   ],
+   "style": {
+    "group": "works",
+    "way": "c"
+   }
   },
   {
    "id": "b_7_7_l1",
@@ -795,7 +799,11 @@
       688.8
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "b"
+   }
   },
   {
    "id": "b_7_7_l2",
@@ -950,6 +958,10 @@
      2,
      2
     ]
+   },
+   "style": {
+    "group": "shop_front",
+    "way": "c"
    }
   },
   {
@@ -1749,7 +1761,11 @@
       751.2
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "c"
+   }
   },
   {
    "id": "b_7_7_l4",
@@ -1894,6 +1910,10 @@
      3,
      3
     ]
+   },
+   "style": {
+    "group": "cafe_front",
+    "way": "c"
    }
   },
   {
@@ -1997,6 +2017,10 @@
      2,
      2
     ]
+   },
+   "style": {
+    "group": "shop_front",
+    "way": "a"
    }
   },
   {
@@ -2459,7 +2483,11 @@
       702.57
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "c"
+   }
   },
   {
    "id": "b_7_7_l7",
@@ -2567,7 +2595,11 @@
     "office",
     "office",
     "office"
-   ]
+   ],
+   "style": {
+    "group": "works",
+    "way": "b"
+   }
   },
   {
    "id": "b_7_7_l8",

@@ -367,6 +367,10 @@
      3,
      0
     ]
+   },
+   "style": {
+    "group": "hospital",
+    "way": "a"
    }
   }
  ],

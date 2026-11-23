@@ -188,7 +188,11 @@
    "storeys": [
     "main",
     "store"
-   ]
+   ],
+   "style": {
+    "group": "arcade_mall",
+    "way": "b"
+   }
   }
  ],
  "paths": [

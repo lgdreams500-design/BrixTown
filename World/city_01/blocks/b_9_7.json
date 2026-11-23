@@ -152,7 +152,11 @@
     "main",
     "office",
     "office"
-   ]
+   ],
+   "style": {
+    "group": "hall",
+    "way": "b"
+   }
   }
  ],
  "paths": [

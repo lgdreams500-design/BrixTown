@@ -81,7 +81,11 @@
    "storeys": [
     "main",
     "office"
-   ]
+   ],
+   "style": {
+    "group": "works",
+    "way": "b"
+   }
   },
   {
    "id": "b_7_6_l1",
@@ -152,7 +156,11 @@
    "storeys": [
     "main",
     "office"
-   ]
+   ],
+   "style": {
+    "group": "works",
+    "way": "b"
+   }
   },
   {
    "id": "b_7_6_l2",
@@ -724,7 +732,11 @@
       655.2
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "c"
+   }
   },
   {
    "id": "b_7_6_l3",
@@ -1519,7 +1531,11 @@
       655.2
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "a"
+   }
   },
   {
    "id": "b_7_6_l4",
@@ -2126,7 +2142,11 @@
       615.23
      ]
     }
-   ]
+   ],
+   "style": {
+    "group": "court_flats",
+    "way": "a"
+   }
   },
   {
    "id": "b_7_6_l5",
@@ -2205,6 +2225,10 @@
      0,
      1
     ]
+   },
+   "style": {
+    "group": "clinic",
+    "way": "b"
    }
   },
   {
@@ -2350,6 +2374,10 @@
      3,
      3
     ]
+   },
+   "style": {
+    "group": "cafe_front",
+    "way": "c"
    }
   },
   {
@@ -2441,7 +2469,11 @@
    "storeys": [
     "main",
     "store"
-   ]
+   ],
+   "style": {
+    "group": "shop_front",
+    "way": "b"
+   }
   },
   {
    "id": "b_7_6_l8",

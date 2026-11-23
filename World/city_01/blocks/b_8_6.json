@@ -1252,7 +1252,11 @@
     "office",
     "office",
     "office"
-   ]
+   ],
+   "style": {
+    "group": "tower_office",
+    "way": "b"
+   }
   },
   {
    "id": "b_8_6_l1",
@@ -1315,7 +1319,11 @@
    "seats": 6,
    "storeys": [
     "main"
-   ]
+   ],
+   "style": {
+    "group": "cafe_front",
+    "way": "a"
+   }
   },
   {
    "id": "b_8_6_l2",
@@ -1378,7 +1386,11 @@
    "customers": 3,
    "storeys": [
     "main"
-   ]
+   ],
+   "style": {
+    "group": "kiosk",
+    "way": "a"
+   }
   }
  ],
  "paths": [
