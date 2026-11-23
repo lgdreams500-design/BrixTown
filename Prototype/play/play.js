@@ -2520,7 +2520,8 @@ function gpuCollect() {
   }
   GT.pending = keep.slice(-40);
 }
-const FPS_GOAL = 60, Q_MIN = .65;                             // the frame rate the picture's sharpness is tuned to keep, and how soft it may go
+const FPS_GOAL = 60, Q_MIN = .65;
+const PRE_M = 90, AO_M = 70;                                  // the depth pre-pass and the corner shade draw only pieces this near (m)                             // the frame rate the picture's sharpness is tuned to keep, and how soft it may go
 const LOD1_M = 16, LOD3_M = 35;                              // people nearer than LOD1_M get the mid body, beyond LOD3_M a figure of blocks (people.js far)
 // A mid body is built every BODY_EVERY[1] frames and a far one every BODY_EVERY[2]; in between the last one is drawn again,
 // moved to where the person is now. Turning, a new pose, a new look or a new level of detail builds it again at once.
@@ -2701,7 +2702,10 @@ function frame(now) {
   // depth first, nearest pieces first: the costly light below then runs once for each pixel instead of for every hidden wall and room behind it
   gpuMark("depth");
   gl.colorMask(false, false, false, false); gl.useProgram(pre.p); gl.uniformMatrix4fv(pre.u.uVP, false, VP); if (pre.u.uSM) gl.uniformMatrix4fv(pre.u.uSM, false, SM);
-  attribs(pre, worldBuf); for (const pc of front) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
+  // only the near pieces: far away a surface is small and seldom hidden twice over, and drawing the whole town again costs
+  // more than it saves (60 fps work, the owner's ?perf=1 reading); the far pieces write their own depth when lit, below
+  const PRE2 = PRE_M * PRE_M, preN = front.filter(pc => pc.d2 < PRE2);
+  attribs(pre, worldBuf); for (const pc of preN) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
   for (const ch of nearD) drawMesh(ch.buf, ch.n, pre);
   // ambient occlusion (ADR-0028): the same things again, at half size into a depth picture, then the occlusion and its smoothing from it
   const aoK = (dials.ao == null ? 1 : dials.ao) * (quality > .6 ? 1 : 0), aw = Math.ceil(W / 2), ah = Math.ceil(H / 2), aoOn = aoK > 0 && aoTargets(aw, ah);
@@ -2709,7 +2713,7 @@ function frame(now) {
   if (aoOn) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, AO.dFbo); gl.viewport(0, 0, aw, ah); gl.depthMask(true); gl.clear(gl.DEPTH_BUFFER_BIT); gl.disable(gl.CULL_FACE);
     gl.useProgram(depthProg.p); gl.uniformMatrix4fv(depthProg.u.uVP, false, VP);
-    drawDepth(worldBuf, 0); for (const pc of front) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
+    drawDepth(worldBuf, 0); for (const pc of front) if (pc.d2 < AO_M * AO_M) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);   // the shade fades out by aoFar: only what is near
     for (const ch of nearD) drawDepth(ch.buf, ch.n); drawDepth(dynBuf, dyn.n / 10);   // people too, so an arm shades the body beside it
     gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.colorMask(true, true, true, true);
     const quad = pr => { gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const a = gl.getAttribLocation(pr.p, "aQ"); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
@@ -2757,7 +2761,8 @@ function frame(now) {
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, shTex); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, skyMap.tex);
   gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, txtTex); gl.activeTexture(gl.TEXTURE0);
   gpuMark("lit town");
-  lit(main); attribs(main, worldBuf); for (const pc of seen) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);   // in the order laid, so ties fall as before
+  lit(main); attribs(main, worldBuf); for (const pc of seen) if (pc.d2 < PRE2) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
+  gl.depthMask(true); for (const pc of seen) if (pc.d2 >= PRE2) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count); gl.depthMask(false);   // the far ones, writing their own depth   // in the order laid, so ties fall as before
   let drawnDetail = 0; for (const ch of nearD) { drawMesh(ch.buf, ch.n); drawnDetail += ch.n; }
   stat.detail = drawnDetail; stat.pieces = seen.length;
   gl.depthMask(true); lit(signProg); drawMesh(signBuf, signN, signProg); gl.useProgram(main.p);
