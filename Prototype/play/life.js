@@ -33,7 +33,24 @@ var Life = (() => {
   }
   function newGame(v) {
     fresh(); look = v; clock.day = 0;
-    E.advance(0, clock.m); Q.newGame(); M.start(); ready = true; lastMoney = E.totalMoney(); save();
+    E.advance(0, clock.m); Q.newGame(); M.start(); ready = true;
+    if (new URLSearchParams(location.search).has("rich")) testRich();
+    lastMoney = E.totalMoney(); save();
+  }
+  // ?rich=1, for trying the building designer (a test switch, not a game rule): a new game starts with Bx 5,000 more and owning
+  // the nearest house that can be remodelled, and you stand at its door. The money comes in through the ledger; the deed is given.
+  function testRich() {
+    E.L.post(E.day, E.minute, "Test money (?rich=1)", [["sys:start", -500000], ["p:cash", 500000]]);
+    let best = null, bd = 1e18;
+    for (const [n, ix] of M.byLot) {
+      const l = LOTS[n]; if (!l.dsg || !l.drawn || l.kind !== "home" || l.floors < 2) continue;
+      const d = (l.door[0] - pl.x) ** 2 + (l.door[1] - pl.z) ** 2; if (d < bd) { bd = d; best = n; }
+    }
+    if (best === null) return;
+    const l = LOTS[best], out = DOOR_DIR[l.design.shell.side];
+    for (const i of M.byLot.get(best)) M.owner[i] = "player";
+    pl.x = l.door[0] + out[0] * 1.6; pl.z = l.door[1] + out[1] * 1.6; pl.y = groundBase(pl.x, pl.z); pl.yaw = cam.yaw = Math.atan2(-out[0], out[1]);
+    toast("Test: you own " + l.name + " and have Bx 5,000 more. Press E at the door to remodel it.");
   }
   function readSave() { try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
   function save() {

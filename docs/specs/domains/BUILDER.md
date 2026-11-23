@@ -98,6 +98,8 @@ Changing the outside needs the whole building; changing the inside needs only yo
 - **The same rules in both.** `Prototype/play/builder.js` ports `options`, `check`, `cost` and `world.built()`; at load
   it runs `builder.check_script()`'s nine remodels and compares every result with the Python's (console: "builder.js
   matches Tools/citysim/builder.py").
+- **To try it:** open the slice with `?rich=1` (a test switch, not a rule): a new game starts with Bx 5,000 more, owning the
+  nearest house of two or more storeys, at its door.
 - **Not yet:** a remodelled shop's crates no longer break when hit (they are drawn with the building again, not as
   breakables); the camera does not frame the building for you; the community houses (§1.2) cannot be remodelled.
 
