@@ -2430,19 +2430,33 @@ function drawBase() {
   return { k, o };
 }
 let mapScale, people = [];
+const SHOP_KINDS = new Set(["shop", "food", "bank", "dealer", "library", "museum", "cinema", "furniture", "health"]);   // named on the big map when asked (UI-012)
+$("big").addEventListener("click", e => {                    // a click on the big map marks the place (again on the mark: cleared)
+  const b = $("big").getBoundingClientRect(), { k, o } = mapScale, x = (e.clientX - b.left) / b.width * 900 / k - o, z = (e.clientY - b.top) / b.height * 900 / k - o;
+  if (Life.markAt) Life.markAt(x, z);
+});
 function drawMaps() {
   const { k, o } = mapScale, mc = $("mini").getContext("2d"), S = 408, span = 230, z = S / span;
   mc.save(); mc.clearRect(0, 0, S, S); mc.beginPath(); mc.arc(S / 2, S / 2, S / 2, 0, 7); mc.clip();
   mc.fillStyle = "#3a3d2c"; mc.fillRect(0, 0, S, S);
   mc.drawImage(base, (pl.x + o - span / 2) * k, (pl.z + o - span / 2) * k, span * k, span * k, 0, 0, S, S);
-  mc.fillStyle = "#17171c"; for (const q of people) { const x = (q[0] - pl.x) * z + S / 2, y = (q[1] - pl.z) * z + S / 2; if (x > 0 && x < S && y > 0 && y < S) mc.fillRect(x - 2, y - 2, 4, 4); }
+  const MS = Life.mapSettings || { map_people: true, map_mine: true, map_shops: false };
+  if (MS.map_people) mc.fillStyle = "#17171c"; if (MS.map_people) for (const q of people) { const x = (q[0] - pl.x) * z + S / 2, y = (q[1] - pl.z) * z + S / 2; if (x > 0 && x < S && y > 0 && y < S) mc.fillRect(x - 2, y - 2, 4, 4); }
   const marks = Life.marks();                             // quest people and places (life.js, QST-005)
-  for (const [x0, z0, kind] of marks) { const x = clamp((x0 - pl.x) * z + S / 2, 12, S - 12), y = clamp((z0 - pl.z) * z + S / 2, 12, S - 12); mc.fillStyle = kind ? "#f0c35a" : "#9fd1c4"; mc.strokeStyle = "#17171c"; mc.lineWidth = 2; mc.beginPath(); mc.arc(x, y, 7, 0, 7); mc.fill(); mc.stroke(); }
+  for (const [x0, z0, kind] of marks) { const x = clamp((x0 - pl.x) * z + S / 2, 12, S - 12), y = clamp((z0 - pl.z) * z + S / 2, 12, S - 12); mc.fillStyle = kind === 2 ? "#f4e9d0" : kind ? "#f0c35a" : "#9fd1c4"; mc.strokeStyle = "#17171c"; mc.lineWidth = 2; mc.beginPath(); mc.arc(x, y, 7, 0, 7); mc.fill(); mc.stroke(); }
   mc.translate(S / 2, S / 2); mc.rotate(cam.yaw); mc.fillStyle = "#f0a35a"; mc.strokeStyle = "#17171c"; mc.lineWidth = 2; mc.beginPath(); mc.moveTo(0, -13); mc.lineTo(9, 10); mc.lineTo(0, 5); mc.lineTo(-9, 10); mc.closePath(); mc.fill(); mc.stroke(); mc.restore();
   if (!showMap) return;
   const bc = $("big").getContext("2d"); bc.drawImage(base, 0, 0);
-  bc.fillStyle = "#17171c"; for (const q of people) bc.fillRect((q[0] + o) * k - 1.5, (q[1] + o) * k - 1.5, 3, 3);
-  for (const [x, z0, kind] of marks) { bc.fillStyle = kind ? "#f0c35a" : "#9fd1c4"; bc.strokeStyle = "#17171c"; bc.lineWidth = 2; bc.beginPath(); bc.arc((x + o) * k, (z0 + o) * k, 8, 0, 7); bc.fill(); bc.stroke(); }
+  if (MS.map_mine) for (const n of Life.mine()) { const r = LOTS[n].rect; bc.strokeStyle = "#f0a35a"; bc.lineWidth = 3; bc.strokeRect((r[0] + o) * k - 2, (r[1] + o) * k - 2, (r[2] - r[0]) * k + 4, (r[3] - r[1]) * k + 4); }   // yours, outlined (UI-012)
+  if (MS.map_shops) { bc.font = "600 9px Bahnschrift, 'Segoe UI', sans-serif"; bc.textAlign = "center"; bc.lineWidth = 3; bc.strokeStyle = "rgba(23,23,28,.9)"; bc.fillStyle = "#f4e9d0";
+    const put = [], seen = new Set();                      // each name once, and none over another
+    for (const l of LOTS) { if (!SHOP_KINDS.has(l.kind) || !l.name || seen.has(l.name)) continue;
+      const x = ((l.rect[0] + l.rect[2]) / 2 + o) * k, y = ((l.rect[1] + l.rect[3]) / 2 + o) * k, w = bc.measureText(l.name).width / 2 + 2, r = [x - w, y - 8, x + w, y + 3];
+      if (put.some(q => q[0] < r[2] && r[0] < q[2] && q[1] < r[3] && r[1] < q[3])) continue;
+      put.push(r); seen.add(l.name); bc.strokeText(l.name, x, y); bc.fillText(l.name, x, y); } }
+  if (MS.map_people) { bc.fillStyle = "#17171c"; for (const q of people) bc.fillRect((q[0] + o) * k - 1.5, (q[1] + o) * k - 1.5, 3, 3); }
+  for (const [x, z0, kind] of marks) { if (kind === 2) { const X = (x + o) * k, Y = (z0 + o) * k; bc.fillStyle = "#f4e9d0"; bc.strokeStyle = "#17171c"; bc.lineWidth = 2; bc.beginPath(); bc.moveTo(X, Y - 11); bc.lineTo(X + 8, Y); bc.lineTo(X, Y + 11); bc.lineTo(X - 8, Y); bc.closePath(); bc.fill(); bc.stroke(); continue; }   // the mark: a diamond
+    bc.fillStyle = kind ? "#f0c35a" : "#9fd1c4"; bc.strokeStyle = "#17171c"; bc.lineWidth = 2; bc.beginPath(); bc.arc((x + o) * k, (z0 + o) * k, 8, 0, 7); bc.fill(); bc.stroke(); }
   bc.fillStyle = "#f0a35a"; bc.strokeStyle = "#17171c"; bc.lineWidth = 2; bc.beginPath(); bc.arc((pl.x + o) * k, (pl.z + o) * k, 7, 0, 7); bc.fill(); bc.stroke();
 }
 function segDist(x, z, a, b) {                              // distance from (x, z) to the segment a-b
@@ -2491,6 +2505,7 @@ function hud(VP, W, H, tags) {
     if (L.indoor ? inLot !== L.lot : (inLot && pl.y < 6)) continue;
     put(L.x, L.y, L.z, L.text, clamp((L.r - d) / (L.r * .35), 0, 1), d < 14 ? 19 : 16, "400");
   }
+  if (Life.waypointTag) Life.waypointTag(tags);           // the mark, with how far it is (UI-012)
   if (Life.boards) Life.boards(tags);                     // For Sale and To Let over the doors (life.js, PROP-023)
   for (const t of tags) put(t.x, t.y, t.z, t.text, t.a !== undefined ? t.a : clamp((9 - t.d) / 3, 0, 1), t.size || 14, "600");
   g2.globalAlpha = 1;
@@ -2578,6 +2593,7 @@ addEventListener("keydown", e => {
   else if (e.code === "KeyF" && pl.pose === 4 && !Cars.riding()) Sound.horn(true);   // no horn or radio from a bus seat
   else if (e.code === "KeyR" && pl.pose === 4 && !Cars.riding()) Sound.radio();
   else if (e.code === "KeyM") { Sound.act("map"); showMap = !showMap; $("bigmap").style.display = showMap ? "flex" : "none"; }
+  else if (e.code === "KeyC") Life.panel("me");             // who you are (UI-011)
   else if (e.code === "KeyH") Life.panel("help");        // the controls (UI-008)
   else if (e.code === "KeyG") Life.panel("belongings");  // what you own and carry (INV-001)
   else if (e.code === "KeyU") Life.panel("wardrobe");    // outfits (CHR-014)

@@ -55,10 +55,10 @@ var Life = (() => {
     pl.x = l.door[0] + out[0] * 1.6; pl.z = l.door[1] + out[1] * 1.6; pl.y = groundBase(pl.x, pl.z); pl.yaw = cam.yaw = Math.atan2(-out[0], out[1]);
     toast("Test: you own " + l.name + " and have Bx 5,000 more. Press E at the door to remodel it.");
   }
-  function readSave() { try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+  function readSave(k) { try { const s = localStorage.getItem(slotKey(k || slot)); return s ? JSON.parse(s) : null; } catch (e) { return null; } }   // a slot's save (UI-013)
   function save() {
     if (!ready || transient) return;                      // ?auto=1 (tests, screenshots) never overwrites a real save
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), estate: M.save(), remodels, plans, furnishings, outfits, belongings, at: Date.now() })); } catch (e) { }
+    try { localStorage.setItem(slotKey(slot), JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), estate: M.save(), remodels, plans, furnishings, outfits, belongings, at: Date.now() })); } catch (e) { }
     lastSave = performance.now();
   }
   function loadSave(s) {
@@ -324,7 +324,7 @@ var Life = (() => {
     }
     else if (P.kind === "agent" || P.kind === "property") { const t = estatePanel(P, body); title = t[0]; sub = t[1]; }
     else if (P.kind === "remodel") { const t = remodelPanel(P, body); title = t[0]; sub = t[1]; }
-    else if ({ belongings: 1, wardrobe: 1, settings: 1, save: 1, help: 1 }[P.kind]) { const t = { belongings: belongingsTab, wardrobe: wardrobeTab, settings: settingsTab, save: saveTab, help: helpTab }[P.kind](P, body); title = t[0]; sub = t[1]; }
+    else if ({ me: 1, belongings: 1, wardrobe: 1, storage: 1, settings: 1, save: 1, help: 1 }[P.kind]) { const t = { me: meTab, belongings: belongingsTab, wardrobe: wardrobeTab, storage: storageTab, settings: settingsTab, save: saveTab, help: helpTab }[P.kind](P, body); title = t[0]; sub = t[1]; }
     if (P.msg) body.prepend(h("p", { cls: "pmsg" }, P.msg));
     el("life-title").textContent = title; el("life-sub").textContent = sub;
   }
@@ -371,7 +371,7 @@ var Life = (() => {
   }
   function unitLot(i) { return M.units[i].lot; }
   function showOnMap(n) {                                // a waypoint at a building, and the map (UI-006)
-    const l = LOTS[n]; waypoint = { x: (l.rect[0] + l.rect[2]) / 2, z: (l.rect[1] + l.rect[3]) / 2, name: l.name };
+    const l = LOTS[n]; markAt((l.rect[0] + l.rect[2]) / 2, (l.rect[1] + l.rect[3]) / 2, l.name);
     close(); window.wasted.showMap(true); toast("Marked on the map: " + l.name + ". Esc or M closes the map.");
   }
   function designFrom(n, start) {                        // the building designer, from the menu, wherever you are (owner, 2026-11-23)
@@ -448,19 +448,6 @@ var Life = (() => {
       h("p", { cls: "dim" }, "Settings are kept on this device, not in your save."));
     return ["Settings", "Picture, sound, the screen and the controls"];
   }
-  function saveTab(P, body) {                             // UI-007: one slot
-    const s = readSave(), when = s && s.at ? new Date(s.at) : null, ago = when ? Math.round((Date.now() - when) / 60000) : null;
-    if (transient) body.append(h("p", { cls: "neg" }, "This is a trial run (?auto=1): nothing is saved."));
-    body.append(h("p", {}, when ? "Last saved " + when.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + (ago < 1 ? ", just now" : ", " + ago + " minute" + (ago === 1 ? "" : "s") + " ago") + ". The game also saves itself as you play." : "Not saved yet."),
-      h("div", { cls: "prow" }, btn("Save now", () => { save(); return transient ? "Nothing is saved in a trial run." : "Saved."; }, transient),
-        btn("Load the last save", () => { const t = readSave(); if (!t) throw new Econ.Refused("there is no save"); close(); loadSave(t); toast("Loaded the last save."); }, !s || transient)),
-      h("h3", {}, "Start over"),
-      h("div", { cls: "prow" }, P.confirm ? btn("Yes: delete the save and start a new character", () => { try { localStorage.removeItem(SAVE_KEY); } catch (e) { } location.reload(); })
-        : btn("New game", () => { P.confirm = true; }, transient),
-        btn("Back to the title", () => { save(); location.reload(); })),
-      P.confirm ? h("p", { cls: "neg" }, "A new game deletes this save. There is one save slot.") : null);
-    return ["Save", "One save, kept in this browser"];
-  }
   function helpTab(P, body) {                             // UI-008: the controls of the platform played on
     const here = platform(), pf = P.pf || here, PL = ST.platforms[pf];
     body.append(h("div", { cls: "prow" }, "Show for", ...Object.entries(ST.platforms).map(([k, x]) => h("button", { type: "button", cls: "chip" + (k === pf ? " on" : ""), on: { click: () => { P.pf = k; draw(); } } }, x.name + (k === here ? " (this one)" : "")))));
@@ -470,6 +457,64 @@ var Life = (() => {
       body.append(h("h3", {}, cname), tbl(acts.map(([a, x]) => [h("span", { cls: "keys" }, (PL.controls[a] || []).map(k => h("kbd", {}, k))), x.name])));
     }
     return ["Help", "The controls · H"];
+  }
+  // ---------------------------------------------------------------- the game menu, level 2 (UI-011 to UI-014): Me, Storage, the map's mark, save slots
+  function standing(v) { return v >= 30 ? "trusts you" : v >= 10 ? "likes you" : v > 0 ? "knows you" : v <= -30 ? "will not deal with you" : v <= -10 ? "distrusts you" : "is wary of you"; }
+  const an = w => (/^[aeiou]/.test(w) ? "an " : "a ") + w;
+  function meTab(P, body) {                              // UI-011: who you are, what you have, how the town sees you
+    const word = v => v ? v[0].toUpperCase() + v.slice(1) : "", G = DG.garment[look.garment] || look.garment, B = DG.bottom_type[look.bottom_type] || look.bottom_type;
+    const mine = M.owned(), value = mine.reduce((s, i) => s + M.value(i), 0), rents = Object.keys(M.tenancy).length, loan = E.loans.find(l => l.status === "active");
+    body.append(h("p", {}, h("b", {}, look.name), " · day " + (clock.day + 1) + " in " + D.city.name),
+      h("p", { cls: "dim" }, word(G) + " in " + look.top + ", " + B.toLowerCase() + " in " + look.bottom + ", " + look.shoes + " shoes" + (look.scarf ? ", " + an(look.scarf) + " scarf" : "") + (look.cap ? ", " + an(look.cap) + " cap" : "") + "."),
+      h("h3", {}, "What you have"), tbl([
+        ["Money", money(E.totalMoney()), btn("Money", () => menu("wallet"))],
+        ["Loans", loan ? money(E.loanOwed(loan)) : h("span", { cls: "dim" }, "none"), ""],
+        ["Property", h("span", {}, mine.length + " owned, worth about " + fmt(value) + (rents ? " · " + rents + " rented" : "")), btn("Properties", () => menu("property"))],
+        ["Belongings", h("span", {}, Object.values(E.inv).reduce((s, n) => s + n, 0) + " things carried · " + belongings.length + " pieces of furniture"), btn("Belongings", () => menu("belongings"))],
+        ["Wardrobe", h("span", {}, outfits.length + " outfit" + (outfits.length === 1 ? "" : "s")), btn("Wardrobe", () => menu("wardrobe"))]]),
+      h("h3", {}, "Work"), h("p", {}, Q.job ? QR.jobs.kinds[Q.job.kind].title + " (under way)" : "No job right now: ask people for work.", " ", h("span", { cls: "dim" }, (Q.jobs_done || []).length + " jobs done, " + Object.keys(Q.done).length + " quests finished")));
+    const people = Object.entries(E.rep).filter(([, v]) => v).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    body.append(h("h3", {}, "People"), people.length ? tbl(people.map(([rid, v]) => [D.residents[resIdx[rid]].n, DLR(rid), h("span", { cls: v > 0 ? "pos" : "neg" }, standing(v))]))
+      : h("p", { cls: "dim" }, "Nobody knows you yet. Talk to people; help them, and they remember."));
+    const shops = Object.keys(E.staff || {}).map(Number).map(n => [n, E.repWithLot(n)]).filter(([, v]) => v).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    if (shops.length) body.append(h("h3", {}, "Shops and places"), tbl(shops.map(([n, v]) => [lotName(n), h("span", { cls: v > 0 ? "pos" : "neg" }, v > 0 ? "prices a little lower for you" : "prices higher for you")])));
+    return ["Me", look.name + " · C"];
+  }
+  function storageTab(P, body) {                          // UI-014: storage containers come with F-PROP-STORAGE
+    body.append(h("p", {}, "You have no storage yet. Lockers and storage units (somewhere to keep furniture and things you are not using) come with storage containers, a feature not picked for this slice."),
+      h("p", { cls: "dim" }, "Until then, furniture you take out of a home is kept in your belongings, and placed again from the building designer."),
+      h("div", { cls: "prow" }, btn("Belongings", () => menu("belongings"))));
+    return ["Storage", "Lockers and storage units"];
+  }
+  function markAt(x, z, name) {                          // UI-012: a mark on the map (again on it: cleared)
+    if (waypoint && Math.hypot(waypoint.x - x, waypoint.z - z) < 6 && !name) { waypoint = null; toast("Mark cleared."); return; }
+    const l = window.wasted.lotAt(x, z, true); waypoint = { x, z, name: name || (l ? l.name : "Your mark") }; toast("Marked: " + waypoint.name + ".");
+  }
+  function waypointTag(tags) {                           // the mark in the street, with how far it is; reached, it goes
+    if (!waypoint || !settings || !settings.map.map_waypoint) return;
+    const d = Math.hypot(waypoint.x - pl.x, waypoint.z - pl.z);
+    if (d < 4) { toast("You are there: " + waypoint.name + "."); waypoint = null; return; }
+    tags.push({ x: waypoint.x, y: window.wasted.groundBase(waypoint.x, waypoint.z) + 3.2, z: waypoint.z, d, a: 1, size: 16, text: "◆ " + waypoint.name + " · " + (d < 1000 ? Math.round(d) + " m" : (d / 1000).toFixed(1) + " km") });
+  }
+  // UI-013: save slots. Slot 1 is the save the slice always had; the slot played last is the one Continue carries on.
+  const SLOTS = ST.save.slots, slotKey = k => k === 1 ? SAVE_KEY : SAVE_KEY + ".s" + k;
+  let slot = (() => { try { const k = +localStorage.getItem(SAVE_KEY + ".slot"); return k >= 1 && k <= SLOTS ? k : 1; } catch (e) { return 1; } })();
+  function useSlot(k) { slot = k; try { localStorage.setItem(SAVE_KEY + ".slot", String(k)); } catch (e) { } }
+  function saveTab(P, body) {                             // UI-007, UI-013
+    if (transient) body.append(h("p", { cls: "neg" }, "This is a trial run (?auto=1): nothing is saved."));
+    const rows = [];
+    for (let k = 1; k <= SLOTS; k++) {
+      const s = readSave(k), when = s && s.at ? new Date(s.at) : null;
+      const what = s ? h("span", {}, h("b", {}, s.look && s.look.name || "?"), h("span", { cls: "dim" }, " · day " + ((s.clock && s.clock.day) + 1) + " · saved " + when.toLocaleDateString([], { day: "numeric", month: "short" }) + " " + when.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))) : h("span", { cls: "dim" }, "Empty");
+      const acts = [btn(k === slot ? "Save now" : "Save here", () => { useSlot(k); save(); return transient ? "Nothing is saved in a trial run." : "Saved in slot " + k + "."; }, transient)];
+      if (s) acts.push(btn("Load", () => { useSlot(k); close(); loadSave(readSave(k)); toast("Loaded slot " + k + "."); }, transient));
+      if (P.confirm === k) acts.push(btn(s ? "Yes: delete it and start a new character here" : "Yes: start a new character here", () => { try { localStorage.removeItem(slotKey(k)); } catch (e) { } useSlot(k); location.reload(); }));
+      else acts.push(btn(s ? "New game here" : "New game", () => { P.confirm = k; }, transient));
+      rows.push([h("b", {}, "Slot " + k + (k === slot ? " (playing)" : "")), what, h("div", { cls: "prow" }, ...acts)]);
+    }
+    body.append(tbl(rows), h("p", { cls: "dim" }, "The game saves itself in the slot you are playing as you go. A new game in a slot that holds a save deletes it, so it asks twice."),
+      h("div", { cls: "prow" }, btn("Back to the title", () => { save(); location.reload(); })));
+    return ["Save", SLOTS + " save slots, kept in this browser"];
   }
   // ---------------------------------------------------------------- moving house (PROP-022) and the boards at the doors (PROP-023)
   // A resident whose household has moved keeps the day citysim planned, but lives at the new home: what they did at the
@@ -944,7 +989,7 @@ var Life = (() => {
     if (designKey(e)) { e.preventDefault(); return; }
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName) && (document.activeElement.type || "text") === "text";
     if (typing && e.code !== "Escape") return;
-    const tab = { KeyI: "wallet", KeyG: "belongings", KeyP: "property", KeyJ: "quests", KeyU: "wardrobe", KeyH: "help", KeyM: "map" }[e.code];
+    const tab = { KeyC: "me", KeyI: "wallet", KeyG: "belongings", KeyP: "property", KeyJ: "quests", KeyU: "wardrobe", KeyH: "help", KeyM: "map" }[e.code];
     if (tab && panel && (panel.menu || ["property", "wallet", "quests"].includes(panel.kind))) { e.preventDefault(); menu(tab); return; }
     if (e.code === "Escape" || (panel && ((e.code === "KeyB" && ["shop", "bank", "stall", "agent"].includes(panel.kind)) || (e.code === "KeyP" && panel.kind === "property") || (e.code === "KeyI" && panel.kind === "wallet") || (e.code === "KeyJ" && panel.kind === "quests")))) { e.preventDefault(); close(); }
   }
@@ -1005,7 +1050,9 @@ var Life = (() => {
   }
   function marks() {                                      // map positions of the markers
     const out = [];
-    if (waypoint) out.push([waypoint.x, waypoint.z, 1]);   // the place marked from Properties (UI-006)
+    const MS = settings ? settings.map : { map_waypoint: true, map_quests: true };   // (before the settings are read: as they start)
+    if (waypoint && MS.map_waypoint) out.push([waypoint.x, waypoint.z, 2]);   // the place marked (UI-006, UI-012)
+    if (!MS.map_quests) return out;
     for (const t of targets()) {
       if (t.i !== undefined) { const r = Talk.where(t.i, clock.m); if (r) out.push([r.x, r.z, t.offer ? 0 : 1]); }
       else if (t.lot !== undefined) { const l = LOTS[t.lot]; out.push([(l.rect[0] + l.rect[2]) / 2, (l.rect[1] + l.rect[3]) / 2, 1]); }
@@ -1030,7 +1077,8 @@ var Life = (() => {
     if (bad.length) console.error("economy.js does not match Tools/citysim/economy.py:\n  " + bad.join("\n  ")); else console.info("economy.js matches Tools/citysim/economy.py (self-test passed).");
   });
   return {
-    get on() { return !!panel; }, get designing() { return designing; }, get ready() { return ready; }, get view() { return view; }, pointer, designMarks, designTags, endView: () => { view = null; },
+    get on() { return !!panel; }, get designing() { return designing; }, get ready() { return ready; }, get view() { return view; }, pointer, designMarks, designTags, markAt, waypointTag, get mapSettings() { return settings ? settings.map : null; },
+    mine: () => ready && M ? [...new Set(M.owned().map(unitLot)).values()].concat(Object.keys(M.tenancy).map(i => unitLot(+i))) : [], endView: () => { view = null; },
     go, frame, camera, mark, marks, boards, remodelTarget, remodel, conversation, allowed, chose, talkEnded, vars, key, counter, toast,
     panel: k => menu(k), menu: () => menu(), setting, spin: dx => { spin += dx * .006; },
     get paused() { return !!(panel && panel.menu && ST.menu.pauses) || !!(view && !view.leave); },   // the menu, and the building designer, stop the clock

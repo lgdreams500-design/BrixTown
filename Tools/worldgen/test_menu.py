@@ -10,13 +10,23 @@ S = W["settings"]
 class TheMenu(unittest.TestCase):
     def test_UI_005_every_tab_opens_from_a_control_on_every_platform(self):
         ids = [t["id"] for t in S["menu"]["tabs"]]
-        for want in ("wallet", "belongings", "property", "quests", "wardrobe", "map", "settings", "save", "help"):
+        for want in ("me", "wallet", "belongings", "property", "quests", "wardrobe", "storage", "map", "settings", "save", "help"):   # (me and storage: level 2, UI-011, UI-014)
             self.assertIn(want, ids)
         for p, P in S["platforms"].items():
             for t in S["menu"]["tabs"]:
                 self.assertTrue(P["controls"].get(t["action"]), "%s: no control opens %s" % (p, t["name"]))
         self.assertTrue(S["menu"]["pauses"], "the menu pauses the clock while the slice is single-player (owner, 2026-11-23)")
-        self.assertEqual(S["save"]["slots"], 1, "one save slot at level 1 (owner, 2026-11-23)")
+
+
+    def test_UI_013_more_than_one_save_slot(self):
+        self.assertGreaterEqual(S["save"]["slots"], 3, "level 2: more than one save slot (owner, 2026-11-23: build the game menu level 2)")
+
+    def test_UI_012_the_map_has_filters_and_a_mark(self):
+        M = S["groups"]["map"]["settings"]
+        for k in ("map_people", "map_quests", "map_mine", "map_shops", "map_waypoint"):
+            self.assertEqual(M[k]["type"], "switch", k)
+        for p, P in S["platforms"].items():
+            self.assertTrue(P["controls"].get("mark"), "%s: nothing marks a place on the map" % p)
 
 
 class TheSettings(unittest.TestCase):

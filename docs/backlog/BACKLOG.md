@@ -6,7 +6,7 @@
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
 | Decided | 39 of 52 | 9 of 52 | 9 of 52 |
-| Size of the plan (points) | 484 | 427 | 827 |
+| Size of the plan (points) | 487 | 427 | 827 |
 | Size of the suggested plan | 128 | 387 | 795 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
@@ -105,7 +105,7 @@
 
 | Feature | First slice | Life depth | Full game | Note |
 |---|---|---|---|---|
-| **The game menu** `F-UI-MENU` | 1 Menu of what exists | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (asked which levels the four menu features should have for the first slice). Later milestones not stated. |
+| **The game menu** `F-UI-MENU` | 2 Every tab ★ | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (level 1 for the first slice), then the same day: "now build the game menu level 2". Later milestones not stated. |
 | **Settings** `F-UI-SETTINGS` | 1 Picture, sound, display, mouse | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (asked which levels the four menu features should have for the first slice). Later milestones not stated. |
 
 ## What each level means

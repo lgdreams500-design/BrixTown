@@ -3,11 +3,13 @@
   "menu": {
     "pauses": true,
     "tabs": [
+      { "id": "me", "name": "Me", "action": "me" },
       { "id": "wallet", "name": "Money", "action": "money" },
       { "id": "belongings", "name": "Belongings", "action": "belongings" },
       { "id": "property", "name": "Properties", "action": "property" },
       { "id": "quests", "name": "Journal", "action": "journal" },
       { "id": "wardrobe", "name": "Wardrobe", "action": "wardrobe" },
+      { "id": "storage", "name": "Storage", "action": "menu" },
       { "id": "map", "name": "Map", "action": "map" },
       { "id": "settings", "name": "Settings", "action": "menu" },
       { "id": "save", "name": "Save", "action": "menu" },
@@ -39,6 +41,16 @@
         "action": { "name": "Actions and the interface", "type": "range", "min": 0, "max": 100, "step": 5, "default": 100 }
       }
     },
+    "map": {
+      "name": "The map",
+      "settings": {
+        "map_people": { "name": "Residents on the map", "type": "switch", "default": true },
+        "map_quests": { "name": "Quests and people with something for you", "type": "switch", "default": true },
+        "map_mine": { "name": "Your buildings and places you rent", "type": "switch", "default": true },
+        "map_shops": { "name": "Names of shops, cafes and services", "type": "switch", "default": false },
+        "map_waypoint": { "name": "Your mark, and the way to it", "type": "switch", "default": true }
+      }
+    },
     "display": {
       "name": "On the screen",
       "settings": {
@@ -60,9 +72,11 @@
       }
     }
   },
-  "contexts": { "anywhere": "Anywhere", "foot": "On foot", "car": "In a car", "designer": "In the building designer", "test": "Trying things (the slice)" },
+  "contexts": { "map": "On the big map", "anywhere": "Anywhere", "foot": "On foot", "car": "In a car", "designer": "In the building designer", "test": "Trying things (the slice)" },
   "actions": {
     "menu": { "name": "The menu", "context": "anywhere" },
+    "me": { "name": "Me", "context": "anywhere" },
+    "mark": { "name": "Mark a place on the big map (again to clear it)", "context": "map" },
     "move": { "name": "Walk", "context": "foot" },
     "run": { "name": "Run", "context": "foot" },
     "jump": { "name": "Jump", "context": "foot" },
@@ -103,7 +117,7 @@
     "keyboard": {
       "name": "Keyboard and mouse",
       "controls": {
-        "menu": ["Esc"], "move": ["W", "A", "S", "D"], "run": ["Shift"], "jump": ["Space"], "look": ["Mouse"], "view": ["V"], "use": ["E"], "counter": ["B"],
+        "menu": ["Esc"], "me": ["C"], "mark": ["Click"], "move": ["W", "A", "S", "D"], "run": ["Shift"], "jump": ["Space"], "look": ["Mouse"], "view": ["V"], "use": ["E"], "counter": ["B"],
         "money": ["I"], "belongings": ["G"], "property": ["P"], "journal": ["J"], "wardrobe": ["U"], "map": ["M"], "help": ["H"], "sound": ["N"], "picture": ["O"],
         "clock": ["[", "]"], "hour": ["T"],
         "drive": ["W", "S"], "steer": ["A", "D"], "handbrake": ["Space"], "horn": ["F"], "radio": ["R"], "leave": ["E"],
@@ -114,7 +128,7 @@
     "gamepad": {
       "name": "Gamepad",
       "controls": {
-        "menu": ["Start"], "move": ["Left stick"], "run": ["Left stick press"], "jump": ["A"], "look": ["Right stick"], "view": ["Right stick press"], "use": ["X"], "counter": ["Y"],
+        "menu": ["Start"], "me": ["View + Left stick press"], "mark": ["A on the map"], "move": ["Left stick"], "run": ["Left stick press"], "jump": ["A"], "look": ["Right stick"], "view": ["Right stick press"], "use": ["X"], "counter": ["Y"],
         "money": ["D-pad left"], "belongings": ["D-pad right"], "property": ["D-pad up"], "journal": ["D-pad down"], "wardrobe": ["View + Y"], "map": ["View"], "help": ["View + Start"], "sound": ["View + B"], "picture": ["View + X"],
         "clock": ["View + LB", "View + RB"], "hour": ["View + A"],
         "drive": ["RT", "LT"], "steer": ["Left stick"], "handbrake": ["A"], "horn": ["Left stick press"], "radio": ["B"], "leave": ["X"],
@@ -125,7 +139,7 @@
     "touch": {
       "name": "Touch",
       "controls": {
-        "menu": ["Menu button"], "move": ["Left stick"], "run": ["Push the stick to its edge"], "jump": ["Jump button"], "look": ["Drag the right of the screen"], "view": ["View button"], "use": ["Use button"], "counter": ["Counter button"],
+        "menu": ["Menu button"], "me": ["Menu: Me"], "mark": ["Tap the map"], "move": ["Left stick"], "run": ["Push the stick to its edge"], "jump": ["Jump button"], "look": ["Drag the right of the screen"], "view": ["View button"], "use": ["Use button"], "counter": ["Counter button"],
         "money": ["Menu: Money"], "belongings": ["Menu: Belongings"], "property": ["Menu: Properties"], "journal": ["Menu: Journal"], "wardrobe": ["Menu: Wardrobe"], "map": ["Minimap"], "help": ["Menu: Help"], "sound": ["Menu: Settings: sound"], "picture": ["Menu: Settings: picture"],
         "clock": ["Clock button"], "hour": ["Menu: Settings: skip an hour"],
         "drive": ["Pedals"], "steer": ["Left stick"], "handbrake": ["Handbrake button"], "horn": ["Horn button"], "radio": ["Radio button"], "leave": ["Use button"],
@@ -134,6 +148,6 @@
       }
     }
   },
-  "save": { "slots": 1 },
+  "save": { "slots": 3 },
   "wardrobe": { "parts": ["hair", "hair_color", "garment", "top", "bottom_type", "bottom", "shoes", "scarf", "cap", "bag", "apron", "tash"], "max_outfits": 12 }
 }
