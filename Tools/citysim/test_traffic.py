@@ -235,10 +235,13 @@ class TheTraffic(unittest.TestCase):
                 best = R.route(l0, s0, l1, s1)
                 self.assertEqual([g["key"] for g in tr["legs"]], [g["key"] for g in best])
 
-    def test_cars_wait_for_walkers_at_crossings(self):    # CITY-046
+    def test_cars_wait_for_walkers_at_crossings(self):    # CITY-046, CITY-097
         crossers = D["crossers"]
         self.assertGreater(sum(len(v) for v in crossers.values()), 100)          # people do cross at the zebras
+        patience = W["traffic"]["crossing_patience_s"]
         for e in D["entries"]:
+            if e["control"] == "signals" or e["waited"] >= patience - 1e-6:
+                continue                                    # on green at the lights, or let through after waiting a while
             jid, a, b = e["key"]
             for lane in (a, b):
                 key = (R.lanes[lane]["street"], jid)
@@ -404,6 +407,38 @@ class TheOutskirtsAndBuses(unittest.TestCase):
         self.assertEqual(set(T.owned(DAY)), {c for c in T.cars if D["trips"][c]})
         for x in D["pools"]:                                             # a passenger's car is not there; they ride with the neighbour
             self.assertIn(x["car"], idle)
+
+
+class NoCarIsStuck(unittest.TestCase):
+    def test_CITY_097_no_car_is_held_at_a_junction_for_long(self):
+        r = W["traffic"]
+        cycle = 2 * (r["signals"]["green_s"] + r["signals"]["amber_s"] + r["signals"]["all_red_s"])
+        worst = 0.0
+        for v in D["trips"].values():
+            for tr in v:
+                run = 0
+                for a, b in zip(tr["d"], tr["d"][1:]):
+                    run = run + 1 if b - a < 1e-6 else 0
+                    worst = max(worst, run * T.step)
+        self.assertLessEqual(worst, cycle + r["crossing_patience_s"])      # a red light, or a zebra's wait, never more
+        self.assertTrue(all(tr["t1"] is not None for v in D["trips"].values() for tr in v))
+        for e in D["entries"]:
+            if e["control"] == "signals":
+                self.assertEqual(e["signal"], "green", e)                # and nobody goes on red to get there
+
+
+    def test_CITY_097_walkers_cross_at_the_lights_on_red(self):
+        rec = D["at_lights"]
+        self.assertGreater(len(rec), 1000)
+        def on_red(c):
+            return T.light_wait(DAY, c["key"][1], "ns" if c["key"][0].startswith("s_ns_") else "ew", c["t"], c["need"]) < .05
+        held = [c for c in rec if c["held"]]
+        self.assertGreater(len(held), 1000)
+        self.assertTrue(all(on_red(c) for c in held))                     # held for red, they cross on red
+        self.assertGreater(sum(on_red(c) for c in rec) / len(rec), .9)    # and nearly everyone crosses on red
+        for rid in {c["rid"] for c in held}:                              # their days stay whole
+            for a, b in zip(PLAN[rid], PLAN[rid][1:]):
+                self.assertAlmostEqual(a[2], b[1], places=6)
 
 
 class TheBusyDay(unittest.TestCase):
