@@ -51,6 +51,8 @@ Nothing to install; it runs from these files.
 ## A new game
 The first time, **Walk into town** opens the character designer; after that it offers to carry on with the saved character, or to make a new one (which starts afresh). The save is kept in the browser. `index.html?auto=1` skips the designer and never touches the save. The first quest, *New in town*, starts at once: meet Mei at the Tram Café. Money, prices, quests and jobs are data in `World/rules/economy.json`, `quests.json` and `designer.json`.
 
+Frame rate: the picture's sharpness follows the frame rate, aiming for 60 frames a second (a step softer while frames run late, sharper again with room to spare, never so soft that shadows go); **Q** fixes it by hand and `?quality=1` pins it. People far away are cheaper bodies: full detail for the player and the nearest resident within 5 m, a mid body to 16 m, a far body to 35 m, a figure of blocks beyond; mid and far bodies are built every second and third frame and moved in between. `index.html?perf=1` shows under the frame rate what each part of a frame costs on this machine: the script, and on the graphics card the shadows, the depth pass, the corner shade, the lit town and the people and cars.
+
 ## After changing the city
 ```
 cd Tools/worldgen
