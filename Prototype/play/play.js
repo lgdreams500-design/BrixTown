@@ -2291,15 +2291,16 @@ function stepCamera(dt) {
   const eyeH = pl.pose === 2 ? .72 : pl.pose === 3 ? .3 : 1.51 * playerLook.S;
   cutState();
   if (CUT.on) {                                            // in a house: the cutaway view, as in a building game, that never turns
-    if (!cam.cutaway) { cam.cutaway = { pitch: cam.pitch }; }
+    if (!cam.cutaway) { cam.cutaway = { pitch: cam.pitch, eased: true }; cam.blend = cam.eye ? { from: cam.eye.slice(), t: 0 } : null; }   // glide up from where the camera was
     cam.yaw = CUT.yaw; cam.pitch = CUT_CAM.pitch; cam.close = false; cam.indoor = false;
     const cp2 = Math.cos(cam.pitch), d = [Math.sin(cam.yaw) * cp2, Math.sin(cam.pitch), -Math.cos(cam.yaw) * cp2], t = [pl.x, pl.y + 1.0, pl.z];
     const want = [t[0] - d[0] * CUT_CAM.dist, t[1] - d[1] * CUT_CAM.dist, t[2] - d[2] * CUT_CAM.dist], k = Math.min(1, dt * CUT_CAM.follow);
-    cam.eye = cam.eye && cam.cutaway.eased ? cam.eye.map((v, i) => mix(v, want[i], k)) : want; cam.cutaway.eased = true;
+    if (cam.blend) { cam.blend.t = Math.min(1, cam.blend.t + dt / .6); const b = smooth(0, 1, cam.blend.t); cam.eye = cam.blend.from.map((v, i) => mix(v, want[i], b)); if (cam.blend.t >= 1) cam.blend = null; }
+    else cam.eye = cam.eye ? cam.eye.map((v, i) => mix(v, want[i], k)) : want;   // then follow the player softly
     const n = Math.hypot(t[0] - cam.eye[0], t[1] - cam.eye[1], t[2] - cam.eye[2]); cam.dir = [(t[0] - cam.eye[0]) / n, (t[1] - cam.eye[1]) / n, (t[2] - cam.eye[2]) / n];
     return;
   }
-  if (cam.cutaway) { cam.pitch = cam.cutaway.pitch; cam.cutaway = null; }   // out of the house: the camera as it was
+  if (cam.cutaway) { cam.pitch = cam.cutaway.pitch; cam.cutaway = null; cam.blend = { from: cam.eye.slice(), t: 0 }; }   // out of the house: the camera as it was, gliding back down
   cam.close = false; if (cam.fp) { cam.eye = [pl.x + Math.sin(cam.yaw) * .1, pl.y + eyeH, pl.z - Math.cos(cam.yaw) * .1]; return; }
   // Indoors (a house, a flat, a shop) rooms are 3 to 6 m across: the camera comes nearer, keeps further from walls, floors and
   // ceilings than its own near plane reaches (so it never sees through one), and eases back out instead of jumping.
@@ -2314,6 +2315,11 @@ function stepCamera(dt) {
   // the body is hidden once the camera is that close (frame); outdoors, as before
   if (cam.indoor) { const k = smooth(CAM_IN.close, CAM_IN.close + .5, camD); cam.eye = [mix(pl.x, t[0] - cam.dir[0] * camD, k), mix(pl.y + eyeH, t[1] - cam.dir[1] * camD, k), mix(pl.z, t[2] - cam.dir[2] * camD, k)]; }
   else cam.eye = cam.close ? [pl.x, pl.y + eyeH, pl.z] : [t[0] - cam.dir[0] * camD, t[1] - cam.dir[1] * camD, t[2] - cam.dir[2] * camD];
+  if (cam.blend) {                                         // just out of a house's cutaway view: glide from there to here in half a second
+    cam.blend.t = Math.min(1, cam.blend.t + dt / .5); const k = smooth(0, 1, cam.blend.t), f = cam.blend.from;
+    cam.eye = cam.eye.map((v, i) => mix(f[i], v, k)); if (cam.blend.t >= 1) cam.blend = null;
+    const n = Math.hypot(t[0] - cam.eye[0], t[1] - cam.eye[1], t[2] - cam.eye[2]); cam.dir = [(t[0] - cam.eye[0]) / n, (t[1] - cam.eye[1]) / n, (t[2] - cam.eye[2]) / n];
+  }
 }
 // the cutaway view in a house: from the street side, 54 degrees down, 8.5 m from the player's chest, following them softly
 const CUT_CAM = { pitch: -.95, dist: 8.5, follow: 6 };
