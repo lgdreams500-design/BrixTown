@@ -498,6 +498,10 @@ class City:
                     mates = self.mates.get(place, [])
                     s["slot"] = mates.index(rid) if rid in mates and mates.index(rid) < len(spots) else None
                     continue
+                post = self.res[rid].get("post")
+                if post is not None and place == self.res[rid].get("work") and post < len(spots):   # CITY-085: their own post
+                    s["slot"], free[post] = post, max(free[post], s["hold"])
+                    continue
                 first = int(rnd("seat", rid, place) * max(1, len(spots)))
                 for k in range(len(spots)):
                     j = (first + k) % len(spots)

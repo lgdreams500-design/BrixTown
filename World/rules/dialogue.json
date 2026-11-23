@@ -14,7 +14,8 @@
   "elder": "pensioner",
   "student": "student",
   "utility": "utility worker",
-  "child": "schoolchild"
+  "child": "schoolchild",
+  "creative": "artist"
  },
  "rules": [
   { "conversation": "clinic", "roles": ["nurse"], "acts": ["work"], "walking": false },

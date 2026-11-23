@@ -173,6 +173,12 @@ its band. Working residents took the nearest workplace with job places left; eac
 of its staff. New jobs use today's roles (teachers, firefighters and police are clerks and utility staff until roles of
 their own are added). Flats over shops are left to the property market.
 
+Then careers (2026-11-23, LIVING_CITY CITY-081 to CITY-086, `add_careers_01.py`): floor area still counts the jobs a
+building could hold, but the residents who work there now fill the posts of `World/rules/careers.json` (a café 3 to 5,
+a grocer 3 to 5, a works 3 to 21, an office tower about 200), group by group up to each group's share; the posts and
+job places they leave are the in-commuters'. Teachers, firefighters, police officers and 119 other careers now have
+names of their own; 8 % of those working in town work from home as artists, and office work is 39 % of them.
+
 ## 6. Requirements
 
 | ID | Requirement | Feature | Level | Priority | Status |

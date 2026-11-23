@@ -1,0 +1,1705 @@
+{
+ "note": "NPC careers and how many people work at each kind of place (LIVING_CITY CITY-081 to CITY-086; asked for by the owner on 2026-11-23). 'careers': every job a resident can have: a title, a group (for the shares) and the routine role in roles.json it follows. 'workplaces': how a lot is recognised as a type of workplace; the first rule that fits wins (its kind, and optionally a word in its name, a tag or its block template; 'outdoors' for an open place such as the market, staffed though it has no walls to enter). Mall units go by 'mall_units'. 'staffing': the posts each type of workplace has, each a career with a min and max number of people; a place's size moves it from min (gross floor area at or below small_m2) to max (at or above large_m2). Floor area is footprint x floors worked: 'ground' (shops and cafes, whose upper floors are flats), 'all', or 'unit' (a mall unit's own floor). Only ground-floor mall units take residents; a mall's other jobs go to in-commuters (CITY_BALANCE 2.2). 'keep_roles': roles whose residents keep their place and get this career. 'reassign_roles': the routine roles of residents who work in town and are given careers here (gardeners keep their gardens). 'shares': the share of residents working in town each group gets; posts beyond a group's share are left to in-commuters, so posts are a cap, not a number to fill. 'home_based': careers that work from home (group creative), with weights. 'commuter_careers' and 'courier_careers': weights for those who work outside town or on rounds. Every number is [ASSUMPTION] until the owner tunes it.",
+ "careers": {
+  "cafe_cashier": {
+   "title": "café cashier",
+   "group": "food",
+   "role": "cafe"
+  },
+  "barista": {
+   "title": "barista",
+   "group": "food",
+   "role": "cafe"
+  },
+  "table_attendant": {
+   "title": "table attendant",
+   "group": "food",
+   "role": "cafe"
+  },
+  "cook": {
+   "title": "cook",
+   "group": "food",
+   "role": "cafe"
+  },
+  "snack_bar_server": {
+   "title": "snack bar server",
+   "group": "food",
+   "role": "cafe"
+  },
+  "baker": {
+   "title": "baker",
+   "group": "food",
+   "role": "shopkeeper"
+  },
+  "bakery_assistant": {
+   "title": "bakery assistant",
+   "group": "food",
+   "role": "shopkeeper"
+  },
+  "school_cook": {
+   "title": "school cook",
+   "group": "food",
+   "role": "clerk"
+  },
+  "checkout_operator": {
+   "title": "checkout operator",
+   "group": "retail",
+   "role": "shopkeeper"
+  },
+  "stock_clerk": {
+   "title": "stock clerk",
+   "group": "retail",
+   "role": "shopkeeper"
+  },
+  "shop_floor_assistant": {
+   "title": "shop floor assistant",
+   "group": "retail",
+   "role": "shopkeeper"
+  },
+  "kiosk_keeper": {
+   "title": "kiosk keeper",
+   "group": "retail",
+   "role": "shopkeeper"
+  },
+  "sales_assistant": {
+   "title": "sales assistant",
+   "group": "retail",
+   "role": "shopkeeper"
+  },
+  "department_manager": {
+   "title": "department manager",
+   "group": "retail",
+   "role": "shopkeeper"
+  },
+  "visual_merchandiser": {
+   "title": "visual merchandiser",
+   "group": "retail",
+   "role": "shopkeeper"
+  },
+  "market_trader": {
+   "title": "market trader",
+   "group": "retail",
+   "role": "shopkeeper"
+  },
+  "pharmacy_assistant": {
+   "title": "pharmacy assistant",
+   "group": "retail",
+   "role": "shopkeeper"
+  },
+  "office_cleaner": {
+   "title": "office cleaner",
+   "group": "facilities",
+   "role": "clerk"
+  },
+  "building_security": {
+   "title": "building security",
+   "group": "facilities",
+   "role": "clerk"
+  },
+  "security_guard": {
+   "title": "security guard",
+   "group": "facilities",
+   "role": "shopkeeper"
+  },
+  "car_salesperson": {
+   "title": "car salesperson",
+   "group": "showrooms",
+   "role": "shopkeeper"
+  },
+  "service_advisor": {
+   "title": "service advisor",
+   "group": "showrooms",
+   "role": "shopkeeper"
+  },
+  "furniture_salesperson": {
+   "title": "furniture salesperson",
+   "group": "showrooms",
+   "role": "shopkeeper"
+  },
+  "warehouse_operative": {
+   "title": "warehouse operative",
+   "group": "showrooms",
+   "role": "shopkeeper"
+  },
+  "assembly_fitter": {
+   "title": "assembly fitter",
+   "group": "showrooms",
+   "role": "shopkeeper"
+  },
+  "machinist": {
+   "title": "machinist",
+   "group": "making",
+   "role": "maker"
+  },
+  "welder": {
+   "title": "welder",
+   "group": "making",
+   "role": "maker"
+  },
+  "carpenter": {
+   "title": "carpenter",
+   "group": "making",
+   "role": "maker"
+  },
+  "assembler": {
+   "title": "assembler",
+   "group": "making",
+   "role": "maker"
+  },
+  "quality_inspector": {
+   "title": "quality inspector",
+   "group": "making",
+   "role": "maker"
+  },
+  "forklift_driver": {
+   "title": "forklift driver",
+   "group": "making",
+   "role": "maker"
+  },
+  "works_foreman": {
+   "title": "works foreman",
+   "group": "making",
+   "role": "maker"
+  },
+  "mechanic": {
+   "title": "mechanic",
+   "group": "making",
+   "role": "maker"
+  },
+  "tailor": {
+   "title": "tailor",
+   "group": "making",
+   "role": "maker"
+  },
+  "printer": {
+   "title": "printer",
+   "group": "making",
+   "role": "maker"
+  },
+  "software_developer": {
+   "title": "software developer",
+   "group": "office",
+   "role": "clerk"
+  },
+  "data_analyst": {
+   "title": "data analyst",
+   "group": "office",
+   "role": "clerk"
+  },
+  "project_manager": {
+   "title": "project manager",
+   "group": "office",
+   "role": "clerk"
+  },
+  "accountant": {
+   "title": "accountant",
+   "group": "office",
+   "role": "clerk"
+  },
+  "hr_officer": {
+   "title": "HR officer",
+   "group": "office",
+   "role": "clerk"
+  },
+  "operations_analyst": {
+   "title": "operations analyst",
+   "group": "office",
+   "role": "clerk"
+  },
+  "customer_support_agent": {
+   "title": "customer support agent",
+   "group": "office",
+   "role": "clerk"
+  },
+  "it_support": {
+   "title": "IT support technician",
+   "group": "office",
+   "role": "clerk"
+  },
+  "receptionist": {
+   "title": "receptionist",
+   "group": "office",
+   "role": "clerk"
+  },
+  "office_administrator": {
+   "title": "office administrator",
+   "group": "office",
+   "role": "clerk"
+  },
+  "marketing_officer": {
+   "title": "marketing officer",
+   "group": "office",
+   "role": "clerk"
+  },
+  "insurance_underwriter": {
+   "title": "insurance underwriter",
+   "group": "office",
+   "role": "clerk"
+  },
+  "compliance_officer": {
+   "title": "compliance officer",
+   "group": "office",
+   "role": "clerk"
+  },
+  "payroll_clerk": {
+   "title": "payroll clerk",
+   "group": "office",
+   "role": "clerk"
+  },
+  "graphic_designer": {
+   "title": "graphic designer",
+   "group": "office",
+   "role": "clerk"
+  },
+  "investment_banker": {
+   "title": "investment banker",
+   "group": "office",
+   "role": "clerk"
+  },
+  "lawyer": {
+   "title": "lawyer",
+   "group": "office",
+   "role": "clerk"
+  },
+  "paralegal": {
+   "title": "paralegal",
+   "group": "office",
+   "role": "clerk"
+  },
+  "estate_agent": {
+   "title": "estate agent",
+   "group": "office",
+   "role": "clerk"
+  },
+  "property_manager": {
+   "title": "property manager",
+   "group": "office",
+   "role": "clerk"
+  },
+  "bank_teller": {
+   "title": "bank teller",
+   "group": "office",
+   "role": "clerk"
+  },
+  "loan_officer": {
+   "title": "loan officer",
+   "group": "office",
+   "role": "clerk"
+  },
+  "financial_advisor": {
+   "title": "financial advisor",
+   "group": "office",
+   "role": "clerk"
+  },
+  "branch_manager": {
+   "title": "branch manager",
+   "group": "office",
+   "role": "clerk"
+  },
+  "bank_operations_clerk": {
+   "title": "bank back-office clerk",
+   "group": "office",
+   "role": "clerk"
+  },
+  "civil_servant": {
+   "title": "civil servant",
+   "group": "office",
+   "role": "clerk"
+  },
+  "town_planner": {
+   "title": "town planner",
+   "group": "office",
+   "role": "clerk"
+  },
+  "records_clerk": {
+   "title": "records clerk",
+   "group": "office",
+   "role": "clerk"
+  },
+  "guild_secretary": {
+   "title": "guild secretary",
+   "group": "office",
+   "role": "clerk"
+  },
+  "doctor": {
+   "title": "doctor",
+   "group": "health",
+   "role": "nurse"
+  },
+  "nurse": {
+   "title": "nurse",
+   "group": "health",
+   "role": "nurse"
+  },
+  "surgeon": {
+   "title": "surgeon",
+   "group": "health",
+   "role": "nurse"
+  },
+  "paramedic": {
+   "title": "paramedic",
+   "group": "health",
+   "role": "nurse"
+  },
+  "care_assistant": {
+   "title": "care assistant",
+   "group": "health",
+   "role": "nurse"
+  },
+  "medical_receptionist": {
+   "title": "medical receptionist",
+   "group": "health",
+   "role": "nurse"
+  },
+  "pharmacist": {
+   "title": "pharmacist",
+   "group": "health",
+   "role": "nurse"
+  },
+  "hospital_porter": {
+   "title": "hospital porter",
+   "group": "health",
+   "role": "nurse"
+  },
+  "teacher": {
+   "title": "teacher",
+   "group": "education",
+   "role": "clerk"
+  },
+  "teaching_assistant": {
+   "title": "teaching assistant",
+   "group": "education",
+   "role": "clerk"
+  },
+  "head_teacher": {
+   "title": "head teacher",
+   "group": "education",
+   "role": "clerk"
+  },
+  "school_caretaker": {
+   "title": "school caretaker",
+   "group": "education",
+   "role": "clerk"
+  },
+  "librarian": {
+   "title": "librarian",
+   "group": "culture",
+   "role": "clerk"
+  },
+  "library_assistant": {
+   "title": "library assistant",
+   "group": "culture",
+   "role": "clerk"
+  },
+  "archivist": {
+   "title": "archivist",
+   "group": "culture",
+   "role": "clerk"
+  },
+  "curator": {
+   "title": "curator",
+   "group": "culture",
+   "role": "clerk"
+  },
+  "museum_guide": {
+   "title": "museum guide",
+   "group": "culture",
+   "role": "clerk"
+  },
+  "conservator": {
+   "title": "conservator",
+   "group": "culture",
+   "role": "clerk"
+  },
+  "museum_attendant": {
+   "title": "museum attendant",
+   "group": "culture",
+   "role": "clerk"
+  },
+  "ticket_seller": {
+   "title": "ticket seller",
+   "group": "culture",
+   "role": "cafe"
+  },
+  "projectionist": {
+   "title": "projectionist",
+   "group": "culture",
+   "role": "cafe"
+  },
+  "usher": {
+   "title": "usher",
+   "group": "culture",
+   "role": "cafe"
+  },
+  "electrician": {
+   "title": "electrician",
+   "group": "utility",
+   "role": "utility"
+  },
+  "plumber": {
+   "title": "plumber",
+   "group": "utility",
+   "role": "utility"
+  },
+  "maintenance_technician": {
+   "title": "maintenance technician",
+   "group": "utility",
+   "role": "utility"
+  },
+  "depot_supervisor": {
+   "title": "depot supervisor",
+   "group": "utility",
+   "role": "utility"
+  },
+  "power_technician": {
+   "title": "power technician",
+   "group": "utility",
+   "role": "utility"
+  },
+  "water_engineer": {
+   "title": "water engineer",
+   "group": "utility",
+   "role": "utility"
+  },
+  "plant_operator": {
+   "title": "plant operator",
+   "group": "utility",
+   "role": "utility"
+  },
+  "waste_collector": {
+   "title": "waste collector",
+   "group": "utility",
+   "role": "utility"
+  },
+  "recycling_sorter": {
+   "title": "recycling sorter",
+   "group": "utility",
+   "role": "utility"
+  },
+  "firefighter": {
+   "title": "firefighter",
+   "group": "services",
+   "role": "utility"
+  },
+  "fire_officer": {
+   "title": "fire officer",
+   "group": "services",
+   "role": "utility"
+  },
+  "dispatcher": {
+   "title": "dispatcher",
+   "group": "services",
+   "role": "clerk"
+  },
+  "police_officer": {
+   "title": "police officer",
+   "group": "services",
+   "role": "clerk"
+  },
+  "detective": {
+   "title": "detective",
+   "group": "services",
+   "role": "clerk"
+  },
+  "gardener": {
+   "title": "gardener",
+   "group": "parks",
+   "role": "gardener"
+  },
+  "courier": {
+   "title": "courier",
+   "group": "transport",
+   "role": "courier"
+  },
+  "postal_worker": {
+   "title": "postal worker",
+   "group": "transport",
+   "role": "courier"
+  },
+  "parcel_driver": {
+   "title": "parcel driver",
+   "group": "transport",
+   "role": "courier"
+  },
+  "painter": {
+   "title": "painter",
+   "group": "creative",
+   "role": "creative"
+  },
+  "musician": {
+   "title": "musician",
+   "group": "creative",
+   "role": "creative"
+  },
+  "composer": {
+   "title": "composer",
+   "group": "creative",
+   "role": "creative"
+  },
+  "novelist": {
+   "title": "novelist",
+   "group": "creative",
+   "role": "creative"
+  },
+  "poet": {
+   "title": "poet",
+   "group": "creative",
+   "role": "creative"
+  },
+  "illustrator": {
+   "title": "illustrator",
+   "group": "creative",
+   "role": "creative"
+  },
+  "sculptor": {
+   "title": "sculptor",
+   "group": "creative",
+   "role": "creative"
+  },
+  "songwriter": {
+   "title": "songwriter",
+   "group": "creative",
+   "role": "creative"
+  },
+  "screenwriter": {
+   "title": "screenwriter",
+   "group": "creative",
+   "role": "creative"
+  },
+  "potter": {
+   "title": "potter",
+   "group": "creative",
+   "role": "creative"
+  },
+  "photographer": {
+   "title": "photographer",
+   "group": "creative",
+   "role": "creative"
+  },
+  "game_designer": {
+   "title": "game designer",
+   "group": "creative",
+   "role": "creative"
+  },
+  "civil_engineer": {
+   "title": "civil engineer",
+   "group": "outside",
+   "role": "commuter"
+  },
+  "management_consultant": {
+   "title": "management consultant",
+   "group": "outside",
+   "role": "commuter"
+  },
+  "university_lecturer": {
+   "title": "university lecturer",
+   "group": "outside",
+   "role": "commuter"
+  },
+  "architect": {
+   "title": "architect",
+   "group": "outside",
+   "role": "commuter"
+  },
+  "journalist": {
+   "title": "journalist",
+   "group": "outside",
+   "role": "commuter"
+  },
+  "research_scientist": {
+   "title": "research scientist",
+   "group": "outside",
+   "role": "commuter"
+  }
+ },
+ "workplaces": [
+  {
+   "type": "furniture_outlet",
+   "kind": "furniture"
+  },
+  {
+   "type": "cafe",
+   "kind": "food"
+  },
+  {
+   "type": "bakery",
+   "kind": "shop",
+   "name_has": "Bakery"
+  },
+  {
+   "type": "kiosk",
+   "kind": "shop",
+   "name_has": "Kiosk"
+  },
+  {
+   "type": "arcade",
+   "kind": "shop",
+   "name_has": "Arcade"
+  },
+  {
+   "type": "grocer",
+   "kind": "shop"
+  },
+  {
+   "type": "market",
+   "kind": "market",
+   "outdoors": true
+  },
+  {
+   "type": "bank",
+   "kind": "bank"
+  },
+  {
+   "type": "office_tower",
+   "kind": "work",
+   "template": "towerO"
+  },
+  {
+   "type": "town_hall",
+   "kind": "work",
+   "name_has": "Town Hall"
+  },
+  {
+   "type": "guild_house",
+   "kind": "work",
+   "name_has": "Guild House"
+  },
+  {
+   "type": "works",
+   "kind": "work",
+   "name_has": "Works"
+  },
+  {
+   "type": "agency",
+   "kind": "work",
+   "name_has": "Homes"
+  },
+  {
+   "type": "agency",
+   "kind": "work",
+   "name_has": "Property"
+  },
+  {
+   "type": "office",
+   "kind": "work"
+  },
+  {
+   "type": "hospital",
+   "kind": "health",
+   "tag": "hospital"
+  },
+  {
+   "type": "hospital",
+   "kind": "health",
+   "name_has": "Hospital"
+  },
+  {
+   "type": "clinic",
+   "kind": "health"
+  },
+  {
+   "type": "school",
+   "kind": "school"
+  },
+  {
+   "type": "library",
+   "kind": "library"
+  },
+  {
+   "type": "museum",
+   "kind": "museum"
+  },
+  {
+   "type": "cinema",
+   "kind": "cinema"
+  },
+  {
+   "type": "dealer",
+   "kind": "dealer"
+  },
+  {
+   "type": "water_works",
+   "kind": "utility",
+   "name_has": "Water"
+  },
+  {
+   "type": "power_station",
+   "kind": "utility",
+   "name_has": "Power"
+  },
+  {
+   "type": "waste_depot",
+   "kind": "utility",
+   "name_has": "Waste"
+  },
+  {
+   "type": "substation",
+   "kind": "utility",
+   "name_has": "Substation"
+  },
+  {
+   "type": "depot",
+   "kind": "utility"
+  },
+  {
+   "type": "fire",
+   "kind": "fire"
+  },
+  {
+   "type": "police",
+   "kind": "police"
+  }
+ ],
+ "mall_units": {
+  "shop": "mall_shop",
+  "kiosk": "mall_kiosk",
+  "food": "mall_food",
+  "foodhall": "mall_foodhall",
+  "anchor": "mall_anchor"
+ },
+ "staffing": {
+  "cafe": {
+   "floors": "ground",
+   "small_m2": 200,
+   "large_m2": 600,
+   "posts": [
+    {
+     "career": "cafe_cashier",
+     "min": 1,
+     "max": 2
+    },
+    {
+     "career": "barista",
+     "min": 1,
+     "max": 2
+    },
+    {
+     "career": "table_attendant",
+     "min": 1,
+     "max": 1
+    }
+   ]
+  },
+  "bakery": {
+   "floors": "ground",
+   "small_m2": 120,
+   "large_m2": 600,
+   "posts": [
+    {
+     "career": "baker",
+     "min": 1,
+     "max": 2
+    },
+    {
+     "career": "bakery_assistant",
+     "min": 1,
+     "max": 2
+    }
+   ]
+  },
+  "kiosk": {
+   "floors": "ground",
+   "small_m2": 120,
+   "large_m2": 400,
+   "posts": [
+    {
+     "career": "kiosk_keeper",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "career": "shop_floor_assistant",
+     "min": 0,
+     "max": 1
+    }
+   ]
+  },
+  "grocer": {
+   "floors": "ground",
+   "small_m2": 150,
+   "large_m2": 600,
+   "posts": [
+    {
+     "career": "checkout_operator",
+     "min": 2,
+     "max": 3
+    },
+    {
+     "career": "stock_clerk",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "career": "shop_floor_assistant",
+     "min": 0,
+     "max": 1
+    }
+   ]
+  },
+  "arcade": {
+   "floors": "all",
+   "small_m2": 1000,
+   "large_m2": 6000,
+   "posts": [
+    {
+     "career": "sales_assistant",
+     "min": 2,
+     "max": 6
+    },
+    {
+     "career": "visual_merchandiser",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "career": "security_guard",
+     "min": 1,
+     "max": 2
+    }
+   ]
+  },
+  "market": {
+   "floors": "ground",
+   "small_m2": 500,
+   "large_m2": 2000,
+   "posts": [
+    {
+     "career": "market_trader",
+     "min": 1,
+     "max": 1
+    }
+   ]
+  },
+  "bank": {
+   "floors": "all",
+   "small_m2": 600,
+   "large_m2": 2000,
+   "posts": [
+    {
+     "career": "bank_teller",
+     "min": 2,
+     "max": 3
+    },
+    {
+     "career": "loan_officer",
+     "min": 1,
+     "max": 2
+    },
+    {
+     "career": "financial_advisor",
+     "min": 1,
+     "max": 2
+    },
+    {
+     "career": "branch_manager",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "career": "bank_operations_clerk",
+     "min": 1,
+     "max": 4
+    },
+    {
+     "career": "compliance_officer",
+     "min": 0,
+     "max": 1
+    }
+   ]
+  },
+  "office_tower": {
+   "floors": "all",
+   "small_m2": 4000,
+   "large_m2": 18000,
+   "posts": [
+    {
+     "career": "receptionist",
+     "min": 1,
+     "max": 2
+    },
+    {
+     "career": "software_developer",
+     "min": 12,
+     "max": 75
+    },
+    {
+     "career": "data_analyst",
+     "min": 4,
+     "max": 22
+    },
+    {
+     "career": "project_manager",
+     "min": 3,
+     "max": 12
+    },
+    {
+     "career": "accountant",
+     "min": 4,
+     "max": 18
+    },
+    {
+     "career": "operations_analyst",
+     "min": 3,
+     "max": 14
+    },
+    {
+     "career": "customer_support_agent",
+     "min": 4,
+     "max": 26
+    },
+    {
+     "career": "it_support",
+     "min": 2,
+     "max": 8
+    },
+    {
+     "career": "hr_officer",
+     "min": 1,
+     "max": 5
+    },
+    {
+     "career": "office_administrator",
+     "min": 2,
+     "max": 8
+    },
+    {
+     "career": "marketing_officer",
+     "min": 2,
+     "max": 8
+    },
+    {
+     "career": "insurance_underwriter",
+     "min": 2,
+     "max": 10
+    },
+    {
+     "career": "compliance_officer",
+     "min": 1,
+     "max": 4
+    },
+    {
+     "career": "payroll_clerk",
+     "min": 1,
+     "max": 4
+    },
+    {
+     "career": "graphic_designer",
+     "min": 1,
+     "max": 4
+    },
+    {
+     "career": "investment_banker",
+     "min": 1,
+     "max": 6
+    },
+    {
+     "career": "lawyer",
+     "min": 1,
+     "max": 6
+    },
+    {
+     "career": "office_cleaner",
+     "min": 1,
+     "max": 3
+    },
+    {
+     "career": "building_security",
+     "min": 1,
+     "max": 2
+    }
+   ]
+  },
+  "town_hall": {
+   "floors": "all",
+   "small_m2": 1000,
+   "large_m2": 6000,
+   "posts": [
+    {
+     "career": "receptionist",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "career": "civil_servant",
+     "min": 4,
+     "max": 12
+    },
+    {
+     "career": "town_planner",
+     "min": 1,
+     "max": 4
+    },
+    {
+     "career": "records_clerk",
+     "min": 1,
+     "max": 4
+    },
+    {
+     "career": "payroll_clerk",
+     "min": 1,
+     "max": 2
+    },
+    {
+     "career": "office_cleaner",
+     "min": 1,
+     "max": 1
+    }
+   ]
+  },
+  "guild_house": {
+   "floors": "all",
+   "small_m2": 500,
+   "large_m2": 2000,
+   "posts": [
+    {
+     "career": "guild_secretary",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "career": "office_administrator",
+     "min": 1,
+     "max": 2
+    },
+    {
+     "career": "accountant",
+     "min": 1,
+     "max": 2
+    },
+    {
+     "career": "records_clerk",
+     "min": 0,
+     "max": 2
+    }
+   ]
+  },
+  "agency": {
+   "floors": "all",
+   "small_m2": 800,
+   "large_m2": 2000,
+   "posts": [
+    {
+     "career": "receptionist",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "career": "estate_agent",
+     "min": 2,
+     "max": 4
+    },
+    {
+     "career": "property_manager",
+     "min": 1,
+     "max": 3
+    },
+    {
+     "career": "office_administrator",
+     "min": 1,
+     "max": 2
+    }
+   ]
+  },
+  "office": {
+   "floors": "all",
+   "small_m2": 800,
+   "large_m2": 2000,
+   "posts": [
+    {
+     "career": "receptionist",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "career": "lawyer",
+     "min": 2,
+     "max": 4
+    },
+    {
+     "career": "paralegal",
+     "min": 1,
+     "max": 3
+    },
+    {
+     "career": "accountant",
+     "min": 1,
+     "max": 2
+    },
+    {
+     "career": "office_administrator",
+     "min": 1,
+     "max": 2
+    }
+   ]
+  },
+  "works": {
+   "floors": "all",
+   "small_m2": 1000,
+   "large_m2": 2500,
+   "posts": [
+    {
+     "career": "works_foreman",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "career": "machinist",
+     "min": 1,
+     "max": 5
+    },
+    {
+     "career": "assembler",
+     "min": 1,
+     "max": 5
+    },
+    {
+     "career": "welder",
+     "min": 0,
+     "max": 3
+    },
+    {
+     "career": "carpenter",
+     "min": 0,
+     "max": 3
+    },
+    {
+     "career": "quality_inspector",
+     "min": 0,
+     "max": 2
+    },
+    {
+     "career": "forklift_driver",
+     "min": 0,
+     "max": 2
+    }
+   ]
+  },
+  "clinic": {
+   "floors": "all",
+   "small_m2": 130,
+   "large_m2": 2000,
+   "posts": [
+    {
+     "career": "medical_receptionist",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "career": "doctor",
+     "min": 1,
+     "max": 2
+    },
+    {
+     "career": "nurse",
+     "min": 1,
+     "max": 3
+    },
+    {
+     "career": "pharmacist",
+     "min": 0,
+     "max": 1
+    }
+   ]
+  },
+  "hospital": {
+   "floors": "all",
+   "small_m2": 1500,
+   "large_m2": 12000,
+   "posts": [
+    {
+     "career": "medical_receptionist",
+     "min": 1,
+     "max": 3
+    },
+    {
+     "career": "doctor",
+     "min": 3,
+     "max": 12
+    },
+    {
+     "career": "nurse",
+     "min": 6,
+     "max": 24
+    },
+    {
+     "career": "surgeon",
+     "min": 1,
+     "max": 4
+    },
+    {
+     "career": "paramedic",
+     "min": 2,
+     "max": 6
+    },
+    {
+     "career": "care_assistant",
+     "min": 2,
+     "max": 8
+    },
+    {
+     "career": "hospital_porter",
+     "min": 1,
+     "max": 3
+    }
+   ]
+  },
+  "school": {
+   "floors": "all",
+   "small_m2": 1500,
+   "large_m2": 3000,
+   "posts": [
+    {
+     "career": "head_teacher",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "career": "teacher",
+     "min": 4,
+     "max": 18
+    },
+    {
+     "career": "teaching_assistant",
+     "min": 2,
+     "max": 6
+    },
+    {
+     "career": "school_caretaker",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "career": "school_cook",
+     "min": 1,
+     "max": 2
+    }
+   ]
+  },
+  "library": {
+   "floors": "all",
+   "small_m2": 600,
+   "large_m2": 2000,
+   "posts": [
+    {
+     "career": "librarian",
+     "min": 1,
+     "max": 3
+    },
+    {
+     "career": "library_assistant",
+     "min": 1,
+     "max": 3
+    },
+    {
+     "career": "archivist",
+     "min": 0,
+     "max": 1
+    }
+   ]
+  },
+  "museum": {
+   "floors": "all",
+   "small_m2": 600,
+   "large_m2": 2000,
+   "posts": [
+    {
+     "career": "curator",
+     "min": 1,
+     "max": 2
+    },
+    {
+     "career": "museum_guide",
+     "min": 1,
+     "max": 3
+    },
+    {
+     "career": "conservator",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "career": "museum_attendant",
+     "min": 1,
+     "max": 2
+    }
+   ]
+  },
+  "cinema": {
+   "floors": "all",
+   "small_m2": 600,
+   "large_m2": 2000,
+   "posts": [
+    {
+     "career": "ticket_seller",
+     "min": 1,
+     "max": 2
+    },
+    {
+     "career": "projectionist",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "career": "usher",
+     "min": 1,
+     "max": 2
+    },
+    {
+     "career": "snack_bar_server",
+     "min": 1,
+     "max": 2
+    }
+   ]
+  },
+  "dealer": {
+   "floors": "all",
+   "small_m2": 600,
+   "large_m2": 2000,
+   "posts": [
+    {
+     "career": "car_salesperson",
+     "min": 2,
+     "max": 3
+    },
+    {
+     "career": "service_advisor",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "career": "mechanic",
+     "min": 1,
+     "max": 3
+    }
+   ]
+  },
+  "furniture_outlet": {
+   "floors": "all",
+   "small_m2": 2000,
+   "large_m2": 4000,
+   "posts": [
+    {
+     "career": "furniture_salesperson",
+     "min": 6,
+     "max": 6
+    },
+    {
+     "career": "snack_bar_server",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "career": "warehouse_operative",
+     "min": 3,
+     "max": 3
+    }
+   ]
+  },
+  "depot": {
+   "floors": "all",
+   "small_m2": 800,
+   "large_m2": 2000,
+   "posts": [
+    {
+     "career": "depot_supervisor",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "career": "electrician",
+     "min": 2,
+     "max": 4
+    },
+    {
+     "career": "plumber",
+     "min": 2,
+     "max": 4
+    },
+    {
+     "career": "maintenance_technician",
+     "min": 1,
+     "max": 3
+    }
+   ]
+  },
+  "substation": {
+   "floors": "all",
+   "small_m2": 300,
+   "large_m2": 1000,
+   "posts": [
+    {
+     "career": "power_technician",
+     "min": 1,
+     "max": 3
+    }
+   ]
+  },
+  "water_works": {
+   "floors": "all",
+   "small_m2": 1500,
+   "large_m2": 4000,
+   "posts": [
+    {
+     "career": "water_engineer",
+     "min": 3,
+     "max": 8
+    },
+    {
+     "career": "plant_operator",
+     "min": 2,
+     "max": 6
+    }
+   ]
+  },
+  "power_station": {
+   "floors": "all",
+   "small_m2": 1500,
+   "large_m2": 4000,
+   "posts": [
+    {
+     "career": "power_technician",
+     "min": 3,
+     "max": 8
+    },
+    {
+     "career": "plant_operator",
+     "min": 2,
+     "max": 6
+    }
+   ]
+  },
+  "waste_depot": {
+   "floors": "all",
+   "small_m2": 1500,
+   "large_m2": 4000,
+   "posts": [
+    {
+     "career": "waste_collector",
+     "min": 4,
+     "max": 12
+    },
+    {
+     "career": "recycling_sorter",
+     "min": 2,
+     "max": 6
+    }
+   ]
+  },
+  "fire": {
+   "floors": "all",
+   "small_m2": 500,
+   "large_m2": 2000,
+   "posts": [
+    {
+     "career": "fire_officer",
+     "min": 1,
+     "max": 2
+    },
+    {
+     "career": "firefighter",
+     "min": 8,
+     "max": 16
+    },
+    {
+     "career": "dispatcher",
+     "min": 1,
+     "max": 2
+    }
+   ]
+  },
+  "police": {
+   "floors": "all",
+   "small_m2": 500,
+   "large_m2": 2000,
+   "posts": [
+    {
+     "career": "detective",
+     "min": 1,
+     "max": 3
+    },
+    {
+     "career": "police_officer",
+     "min": 8,
+     "max": 14
+    },
+    {
+     "career": "dispatcher",
+     "min": 1,
+     "max": 2
+    }
+   ]
+  },
+  "mall_shop": {
+   "floors": "unit",
+   "small_m2": 60,
+   "large_m2": 400,
+   "posts": [
+    {
+     "career": "sales_assistant",
+     "min": 0,
+     "max": 2
+    },
+    {
+     "career": "stock_clerk",
+     "min": 0,
+     "max": 1
+    }
+   ]
+  },
+  "mall_kiosk": {
+   "floors": "unit",
+   "small_m2": 10,
+   "large_m2": 40,
+   "posts": [
+    {
+     "career": "kiosk_keeper",
+     "min": 0,
+     "max": 1
+    }
+   ]
+  },
+  "mall_food": {
+   "floors": "unit",
+   "small_m2": 60,
+   "large_m2": 400,
+   "posts": [
+    {
+     "career": "cafe_cashier",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "career": "cook",
+     "min": 0,
+     "max": 2
+    },
+    {
+     "career": "table_attendant",
+     "min": 0,
+     "max": 1
+    }
+   ]
+  },
+  "mall_foodhall": {
+   "floors": "unit",
+   "small_m2": 300,
+   "large_m2": 2000,
+   "posts": [
+    {
+     "career": "cafe_cashier",
+     "min": 0,
+     "max": 3
+    },
+    {
+     "career": "cook",
+     "min": 0,
+     "max": 6
+    },
+    {
+     "career": "table_attendant",
+     "min": 0,
+     "max": 2
+    }
+   ]
+  },
+  "mall_anchor": {
+   "floors": "unit",
+   "small_m2": 1000,
+   "large_m2": 8000,
+   "posts": [
+    {
+     "career": "department_manager",
+     "min": 0,
+     "max": 1
+    },
+    {
+     "career": "sales_assistant",
+     "min": 0,
+     "max": 10
+    },
+    {
+     "career": "visual_merchandiser",
+     "min": 0,
+     "max": 2
+    },
+    {
+     "career": "security_guard",
+     "min": 0,
+     "max": 2
+    }
+   ]
+  }
+ },
+ "reassign_roles": [
+  "shopkeeper",
+  "cafe",
+  "nurse",
+  "maker",
+  "clerk",
+  "utility",
+  "creative"
+ ],
+ "shares": {
+  "office": 0.39,
+  "retail": 0.158,
+  "food": 0.1,
+  "making": 0.105,
+  "health": 0.065,
+  "education": 0.028,
+  "culture": 0.009,
+  "showrooms": 0.007,
+  "utility": 0.029,
+  "services": 0.014,
+  "facilities": 0.015,
+  "creative": 0.08
+ },
+ "home_based": {
+  "painter": 3,
+  "musician": 3,
+  "composer": 1,
+  "novelist": 2,
+  "poet": 1,
+  "illustrator": 2,
+  "sculptor": 1,
+  "songwriter": 2,
+  "screenwriter": 1,
+  "potter": 1,
+  "photographer": 2,
+  "game_designer": 2
+ },
+ "commuter_careers": {
+  "software_developer": 14,
+  "accountant": 8,
+  "investment_banker": 6,
+  "lawyer": 5,
+  "management_consultant": 6,
+  "civil_engineer": 6,
+  "project_manager": 6,
+  "data_analyst": 6,
+  "operations_analyst": 6,
+  "university_lecturer": 5,
+  "architect": 4,
+  "journalist": 4,
+  "research_scientist": 5,
+  "customer_support_agent": 4,
+  "nurse": 4,
+  "doctor": 3,
+  "teacher": 4
+ },
+ "courier_careers": {
+  "courier": 5,
+  "postal_worker": 3,
+  "parcel_driver": 3
+ },
+ "targets": {
+  "careers_at_least": 50,
+  "office_share_of_workers_at_least": 0.3,
+  "home_based_share": [
+   0.05,
+   0.1
+  ]
+ },
+ "keep_roles": {
+  "gardener": "gardener"
+ }
+}
