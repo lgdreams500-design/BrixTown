@@ -329,6 +329,7 @@ const People = (() => {
   function draw(ms, x, y, z, yaw, L, pose, o) {
     if (o.lod === 3) return far(ms, x, y, z, yaw, L, pose, o.ph || 0, o.fl);
     const sig = o.sig || L.sig, g = geo(L.S), S = L.S, Sh = S * 1.22, W = L.W, T = 1.12 * S, lod = o.lod, fl = o.fl, t = o.t, sd = L.seed;
+    const ff = o.ff == null ? 1 : o.ff, midFace = lod === 1 || (lod === 2 && ff > .02);   // ff: how much of the face shows (play.js fades it in with distance)
     const wd = wander(t, sd * .37), lk = o.look || [0, 0], hm = [wd[0] + lk[0], wd[1] + lk[1] + (o.face ? o.face.nod || 0 : 0), wd[2]];   // a speaker nods on stressed words (ANIM-006)
     TEX = lod < 2 ? 1 : 0; SKINREF = L.skin; OCC = null; OSKIP = 0; HEROSKIP = 0;
     const P = pose === 1 ? walk(sig, g, W, o.ph, hm, o.mod) : pose === 2 ? sit(sig, g, W, t, hm, sd, o.mod) : stand(sig, g, W, t, pose === 3 ? [0, 0, 0] : hm, sd, o.mod);
@@ -411,11 +412,11 @@ const People = (() => {
     const blob = (a, b, cc, rx, ry, rz, col, nn, mm2, s2, opt) => ball(ms, H(a, b, cc), sc(hx, rx * Sh), sc(hy, ry * Sh), sc(hz, rz * Sh), nn, mm2, col, fl, s2 || sd, opt);
     OSKIP = 4; limb(ms, nk, add(hj, sc(hz, .03 * S)), .046 * T, .044 * T, nl, L.skin, fl, false, fwd, sd); OSKIP = 1 | HEROSKIP;
     const RX = .104, RY = .11, RZ = .14;                              // the head of character_face_05.py, an egg with a jaw and ears; a little longer than its 0.13 at the owner's word
-    blob(0, 0, 0, RX, RY, RZ, L.skin, lod === 0 ? 32 : lod === 1 ? 10 : 6, lod === 0 ? 26 : lod === 1 ? 7 : 4, 0, { taper: true });
+    blob(0, 0, 0, RX, RY, RZ, L.skin, lod === 0 ? 32 : midFace ? 10 : 6, lod === 0 ? 26 : midFace ? 7 : 4, 0, { taper: true });   // a head with a face keeps the mid divisions, so the face sits on it
     if (lod === 0) for (const e of [-1, 1]) blob(e * RX * .97, .012, -.012, .012, .022, .032, L.skin, 6, 4);
     // hair and hats are shells over the head with the face cut away (hair_cap() in character_test_02.py), so the fringe is a clean line
     OSKIP = 3;
-    const hn = lod === 0 ? 24 : lod === 1 ? 10 : 6, hm2 = lod === 0 ? 16 : lod === 1 ? 6 : 4, hairC = L.hairC, st = L.hair;
+    const hn = lod === 0 ? 24 : midFace ? 10 : 6, hm2 = lod === 0 ? 16 : midFace ? 6 : 4, hairC = L.hairC, st = L.hair;
     const shell = (b, cc, rx, ry, rz, col, keep, s2, hood) => blob(0, b, cc, rx, ry, rz, col, hn, hm2, s2, { keep, hood });
     if (o.hood) {                                                     // a coat's hood up in the rain (CITY-080): the long-hair shell, a size up, in the coat's colour
       shell(.016, .018, RX + (st === "afro" ? .06 : .036), RY + (st === "afro" ? .06 : .04), RZ + (st === "afro" ? .06 : .034), o.hood, (x, y, z) => !(z < -.85 || (y < -.28 && z < .44)), sd + 23, true);
@@ -485,23 +486,26 @@ const People = (() => {
       blob(0, -.1, -.053, .032 * fm.lips, .005, .0062, [.34, .13, .11], 10, 3);
       if (L.tash) blob(0, -.104, -.037, .024, .006, .007, hairC, 6, 3);
       PLAIN = false;
-    } else if (lod === 1) {                                           // the middle distance (to 16 m): the same face in few divisions, eyes,
+    } else if (midFace) {                                             // the middle distance (to 16 m): the same face in few divisions, eyes,
+      const fc = c => ff >= 1 ? c : [L.skin[0] + (c[0] - L.skin[0]) * ff, L.skin[1] + (c[1] - L.skin[1]) * ff, L.skin[2] + (c[2] - L.skin[2]) * ff];   // beyond 16 m faded into the skin
       const es = fm.eye_size * 1.15, ex = .043, ez = .008 * RZ / .13, ew = .0245 * es, eh = .021 * es * fm.eye_open, ir = .0155 * es;   // brows and lips where lod 0 has them
       const FS = (x, z, out) => { const zu = z / RZ, sj = jaw(zu); return [x, -RY * sj * Math.sqrt(Math.max(1 - (x / (RX * sj)) ** 2 - zu * zu, 0)) - out, z]; };
       const HR = p => add(hc, add(add(sc(hx, p[0] * Sh), sc(hy, p[1] * Sh)), sc(hz, p[2] * Sh)));
       PLAIN = true;
       for (const e of [-1, 1]) {
-        ball(ms, HR(FS(e * ex, ez, -.005)), sc(hx, ew * Sh), sc(hy, .011 * Sh), sc(hz, eh * Sh), 10, 6, [.78, .76, .72], fl, sd);   // the white
-        ball(ms, HR(FS(e * ex, ez - .001 * es, .0045)), sc(hx, ir * Sh), sc(hy, .002 * Sh), sc(hz, Math.min(ir, eh * .97) * Sh), 10, 4, L.eyes, fl, sd);   // the iris
-        ball(ms, HR(FS(e * ex, ez - .001 * es, .0058)), sc(hx, .0068 * es * Sh), sc(hy, .0015 * Sh), sc(hz, Math.min(.0068 * es, ir) * Sh), 8, 3, [.03, .02, .02], fl, sd);   // the pupil
-        ball(ms, HR(FS(e * ex, ez + eh * .95, -.002)), sc(hx, ew * 1.05 * Sh), sc(hy, .004 * Sh), sc(hz, .003 * Sh), 10, 3, [.03, .02, .02], fl, sd);   // the lash line
+        ball(ms, HR(FS(e * ex, ez, -.005)), sc(hx, ew * Sh), sc(hy, .011 * Sh), sc(hz, eh * Sh), 10, 6, fc([.78, .76, .72]), fl, sd);   // the white
+        ball(ms, HR(FS(e * ex, ez - .001 * es, .0045)), sc(hx, ir * Sh), sc(hy, .002 * Sh), sc(hz, Math.min(ir, eh * .97) * Sh), 10, 4, fc(L.eyes), fl, sd);   // the iris
+        ball(ms, HR(FS(e * ex, ez - .001 * es, .0058)), sc(hx, .0068 * es * Sh), sc(hy, .0015 * Sh), sc(hz, Math.min(.0068 * es, ir) * Sh), 8, 3, fc([.03, .02, .02]), fl, sd);   // the pupil
+        ball(ms, HR(FS(e * ex, ez + eh * .95, -.002)), sc(hx, ew * 1.05 * Sh), sc(hy, .004 * Sh), sc(hz, .003 * Sh), 10, 3, fc([.03, .02, .02]), fl, sd);   // the lash line
       }
       PLAIN = false;
       const by = (.008 + .0445 * Math.max(1, es * .9)) * RZ / .13 + fm.brow;
-      for (const e of [-1, 1]) limb(ms, HR(FS(e * (ex - .02), by, .0045)), HR(FS(e * (ex + .025), by + .004, .0045)), .0048 * Sh, .0032 * Sh, 6, sc(hairC, .6), fl, true, hy, sd);
+      for (const e of [-1, 1]) limb(ms, HR(FS(e * (ex - .02), by, .0045)), HR(FS(e * (ex + .025), by + .004, .0045)), .0048 * Sh, .0032 * Sh, 6, fc(sc(hairC, .6)), fl, true, hy, sd);
+      ball(ms, HR(FS(0, -.021 * RZ / .13, .003)), sc(hx, .0115 * fm.nose * .72 * Sh), sc(hy, .013 * fm.nose * .72 * Sh), sc(hz, .017 * fm.nose * .72 * Sh), 8, 5, L.skin, fl, sd);   // the nose, as lod 0 has it
       PLAIN = true;
-      blob(0, -.1, -.053, .032 * fm.lips, .005, .0062, [.34, .13, .11], 8, 3);
-      if (L.tash) blob(0, -.104, -.037, .024, .006, .007, hairC, 6, 3);
+      cheeks(blob, L, 6, 3, ff);
+      blob(0, -.1, -.053, .032 * fm.lips, .005, .0062, fc([.34, .13, .11]), 8, 3);
+      if (L.tash) blob(0, -.104, -.037, .024, .006, .007, fc(hairC), 6, 3);
       PLAIN = false;
     }
     TEX = tex0; OSKIP = 4;
@@ -525,9 +529,9 @@ const People = (() => {
   // opening, round, teeth 0 none | 1 upper | 2 both, tongue }, curve, brow_l, brow_r: [inner, outer], lid, squint, open, gaze: [x, z] },
   // mouth sizes already at the larger-than-life drawing scale. Lips are a ring; the dark inside, teeth and tongue sit in the plane
   // of the opening (CHARACTER_FACE §1 construction notes).
-  function cheeks(blob, L) {                                         // rosy cheeks (ADR-0010): a redder version of the person's own skin
+  function cheeks(blob, L, n = 10, m = 4, f = 1) {                                  // rosy cheeks (ADR-0010): a redder version of the person's own skin
     const c = L.cheek || (L.cheek = [Math.min(L.skin[0] * 1.1, .9), L.skin[1] * .66, L.skin[2] * .62]);
-    for (const e of [-1, 1]) blob(e * .056, -.0835, -.027, .0175, .0062, .0115, c, 10, 4);
+    for (const e of [-1, 1]) blob(e * .056, -.0835, -.027, .0175, .0062, .0115, f >= 1 ? c : c.map((v, k) => L.skin[k] + (v - L.skin[k]) * f), n, m);
   }
   const MOUTH = { lip: [.34, .13, .11], dark: [.11, .035, .035], teeth: [.9, .88, .82], tongue: [.62, .26, .26] };
   function face(blob, f, L, t, sd, lk, sleep) {
