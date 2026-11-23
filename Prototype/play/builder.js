@@ -215,3 +215,76 @@ var Builder = (() => {
   }
   return { FACADES, FACADE_NAME, remodel, changed, built, allowed, problems, measures, cost, options, check, selfTest, get };
 })();
+
+// Furnishing a home in the designer (FURN-051, FURN-052, FURN-055): Tools/citysim/furnish.py, ported. A layout is a list of
+// pieces {id, kind ("town" or a piece of World/rules/furnishing.json), name, w, d, h, x, z, yaw (degrees), rug, line}.
+// Furnish.selfTest() runs furnish.check_script() and compares every result with the Python's (D.life.builder.furnish.checks).
+var Furnish = (() => {
+  const X = () => window.WASTED.life.builder.furnish, F = () => X().rules, TOL = 1e-3;
+  function corners(p) {
+    const a = p.yaw * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+    return [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([u, v]) => { u = u * p.w / 2; v = v * p.d / 2; return [p.x + c * u + s * v, p.z - s * u + c * v]; });
+  }
+  function apart(A, B) {                                    // kept apart by a line along one of their edges
+    for (const P of [A, B]) for (let k = 0; k < P.length; k++) {
+      const ex = P[(k + 1) % P.length][0] - P[k][0], ez = P[(k + 1) % P.length][1] - P[k][1], n = Math.hypot(ex, ez); if (n < 1e-9) continue;
+      const nx = -ez / n, nz = ex / n, pa = A.map(([x, z]) => x * nx + z * nz), pb = B.map(([x, z]) => x * nx + z * nz);
+      if (Math.min(Math.max(...pa), Math.max(...pb)) - Math.max(Math.min(...pa), Math.min(...pb)) <= TOL) return true;
+    }
+    return false;
+  }
+  const rect = ([x0, z0, x1, z1]) => [[x0, z0], [x1, z0], [x1, z1], [x0, z1]], the = p => "the " + p.name.toLowerCase();
+  const sold = p => p.kind === "town" || p.kind in F().pieces;
+  function problems(room, keep, ceiling, pieces) {
+    const R = F(), g = R.grid_m, turn = R.turn_deg, out = [], say = (k, m) => out.push([k, m]);
+    for (const p of pieces) {
+      if (!sold(p)) { say(p.id + "|sold", "the " + p.kind + " is not sold here"); continue; }
+      if (p.kind !== "town" && !R.lines.includes(p.line)) say(p.id + "|line", the(p) + " has no line " + p.line);
+      if (Math.abs(p.yaw / turn - Math.round(p.yaw / turn)) > 1e-6) say(p.id + "|turn", the(p) + " is not turned in " + turn + " degree steps");
+      if (p.kind !== "town" && [p.x, p.z].some(v => Math.abs(v / g - Math.round(v / g)) > 1e-6)) say(p.id + "|grid", the(p) + " is off the " + Math.round(g * 100) + " cm grid");
+      const C = corners(p), xs = C.map(q => q[0]), zs = C.map(q => q[1]);
+      if (Math.min(...xs) < room[0] - TOL || Math.max(...xs) > room[2] + TOL || Math.min(...zs) < room[1] - TOL || Math.max(...zs) > room[3] + TOL) say(p.id + "|room", the(p) + " sticks out of the room");
+      if (p.h > ceiling + TOL) say(p.id + "|ceiling", the(p) + " does not fit under the ceiling");
+      if (!p.rug && keep.some(r => !apart(C, rect(r)))) say(p.id + "|keep", the(p) + " is in the way of the door or the stairs");
+    }
+    const stand = pieces.filter(p => !p.rug && sold(p));
+    for (let i = 0; i < stand.length; i++) for (let j = i + 1; j < stand.length; j++) { const a = stand[i], b = stand[j];
+      if (!apart(corners(a), corners(b))) say([a.id, b.id].sort().join("|") + "|clash", the(a) + " and " + the(b) + " stand in each other"); }
+    return out;
+  }
+  function cost(before, after) {
+    const was = new Map(before.map(p => [p.id, p])), now = new Set(after.map(p => p.id)), lines = [], P = F().pieces;
+    for (const p of after) { const o = was.get(p.id);
+      if (!o) lines.push(["Buy: " + p.name, 1, P[p.kind] ? P[p.kind].price : 0]);
+      else if (o.x !== p.x || o.z !== p.z || o.yaw !== p.yaw) lines.push(["Move: " + p.name, 1, 0]); }
+    for (const p of before) if (!now.has(p.id)) lines.push(["Take away: " + p.name, 1, 0]);
+    return [lines.reduce((s, l) => s + l[2], 0), lines];
+  }
+  function check(room, keep, ceiling, before, after, funds) {
+    const old = new Set(problems(room, keep, ceiling, before).map(q => q[0]));
+    const out = [...new Set(problems(room, keep, ceiling, after).filter(q => !old.has(q[0])).map(q => q[1]))], total = cost(before, after)[0];
+    if (funds != null && total > funds) out.push("you cannot pay " + Math.floor(total / 100) + "." + String(total % 100).padStart(2, "0") + " brix");
+    return out;
+  }
+  function kitPiece(kind, id, x, z, yaw, line) {
+    const P = F().pieces[kind] || { name: kind, size: [1, 1, 1] }, [w, d, h] = P.size;
+    return { id, kind, name: P.name, w, d, h, x, z, yaw, rug: false, line };
+  }
+  function apply(before, edit) {
+    const out = [];
+    for (const p of before) { if ((edit.remove || []).includes(p.id)) continue; const q = Object.assign({}, p);
+      if (edit.move && p.id in edit.move) [q.x, q.z, q.yaw] = edit.move[p.id]; out.push(q); }
+    for (const [id, kind, x, z, yaw, line] of edit.add || []) out.push(kitPiece(kind, id, x, z, yaw, line));
+    return out;
+  }
+  function selfTest(SIZE) {                                // the Python's fixed run, result for result; and the list's sizes as furniture.js draws them
+    const C = X().checks, S = C.script, bad = [];
+    S.cases.forEach(([ceiling, edit, funds], k) => {
+      const after = apply(S.before, edit), [total, lines] = cost(S.before, after), got = { problems: check(S.room, S.keep, ceiling, S.before, after, funds), total, lines }, want = C.want[k];
+      for (const key of Object.keys(want)) if (JSON.stringify(got[key]) !== JSON.stringify(want[key])) bad.push("furnish case " + k + " " + key + ": " + JSON.stringify(got[key]) + " should be " + JSON.stringify(want[key]));
+    });
+    if (SIZE) for (const [k, p] of Object.entries(F().pieces)) if (JSON.stringify(SIZE[k]) !== JSON.stringify(p.size)) bad.push("furnishing.json " + k + " size " + JSON.stringify(p.size) + " but furniture.js draws " + JSON.stringify(SIZE[k]));
+    return bad;
+  }
+  return { corners, problems, cost, check, kitPiece, apply, selfTest, rules: () => F() };
+})();

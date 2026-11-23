@@ -8,6 +8,8 @@ var Life = (() => {
   const D = window.WASTED, X = D.life, DG = X.designer, EC = X.economy, QR = X.quests, SAVE_KEY = "wasted.save.v1";
   const el = id => document.getElementById(id), fmt = Econ.fmt;
   let remodels = {};                                     // the player's remodelled buildings: lot id -> design (BUILD-004), kept in the save
+  let furnishings = {};                                  // the player's arranged storeys: lot id -> storey -> layout (FURN-051), kept in the save
+  let view = null;                                       // the building designer's camera while it is open (play.js designCam)
   let E = null, Q = null, M = null, look = null, transient = false, designing = false, panel = null, spin = 0, ready = false, lastSave = 0, toastT = 0, lastMoney = null, checkT = 0;
   const visits = {}; for (const k in X.visits) visits[k] = X.visits[k];
   const staff = {}; for (const k in X.staff) staff[k] = X.staff[k];
@@ -55,7 +57,7 @@ var Life = (() => {
   function readSave() { try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
   function save() {
     if (!ready || transient) return;                      // ?auto=1 (tests, screenshots) never overwrites a real save
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), estate: M.save(), remodels, at: Date.now() })); } catch (e) { }
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), estate: M.save(), remodels, furnishings, at: Date.now() })); } catch (e) { }
     lastSave = performance.now();
   }
   function loadSave(s) {
@@ -64,6 +66,9 @@ var Life = (() => {
     ready = true; lastMoney = E.totalMoney();
     remodels = s.remodels || {};
     for (const id of Object.keys(remodels)) { const l = LOTS.find(x => x.id === id); if (l && l.drawn) { l.dsg = remodels[id]; window.wasted.repaint(l, Builder.built(l.dsg)); } }
+    furnishings = s.furnishings || {};
+    for (const id of Object.keys(furnishings)) { const l = LOTS.find(x => x.id === id); if (!l || !canFurnish(l)) continue;
+      for (const f of Object.keys(furnishings[id])) { window.wasted.furn.showLayout(l, +f, furnishings[id][f]); window.wasted.furn.layoutWorld(l, +f); } }
   }
   function lookOk(v) {                                    // the same checks as world.look_problems()
     for (const k in DG.sliders) { const s = DG.sliders[k], x = v[k]; if (typeof x !== "number" || x < s.min - 1e-9 || x > s.max + 1e-9) return false; }
@@ -215,11 +220,14 @@ var Life = (() => {
     for (const k in keys) keys[k] = false; pl.moving = false;
     if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
     el("life").classList.toggle("side", kind === "remodel");   // the designer stands to one side, so the building shows
+    if (kind === "remodel") startView(LOTS[n]);
     el("life").style.display = "block"; Sound.act("talk_open"); draw();
   }
   function close() {
     if (!panel) return;
     if (panel.kind === "remodel" && panel.lot && panel.draft !== panel.lot.dsg) window.wasted.repaint(panel.lot, Builder.built(panel.lot.dsg));   // not paid for: as it was
+    if (panel.kind === "remodel" && panel.lot) for (const f of Object.keys(panel.lay)) if (panel.lay[f] !== panel.lay0[f]) window.wasted.furn.showLayout(panel.lot, +f, (furnishings[panel.lot.id] || {})[f] || null);
+    view = null; grab = null;
     panel = null; el("life").style.display = "none"; Sound.act("talk_close"); save();
   }
   function act(fn) {                                      // a button: do it, say what happened, redraw
@@ -481,18 +489,24 @@ var Life = (() => {
   function remodel(l) { open("remodel", LOTS.indexOf(l)); }
   function funds() { return E.L.balance("p:cash") + (E.accounts.includes("current") ? E.L.balance("p:current") : 0); }
   function remodelPanel(P, body) {
-    const l = LOTS[P.n], own = holding(P.n) || { floors: [] }, BF = Builder.FACADES, FN = Builder.FACADE_NAME;
-    if (!P.lot) Object.assign(P, { lot: l, draft: l.dsg, undo: [], tab: own.whole ? "outside" : "inside", facade: "*", storey: own.whole ? 0 : own.floors[0] });
+    const l = LOTS[P.n], own = holding(P.n) || { floors: [] }, BF = Builder.FACADES, FN = Builder.FACADE_NAME, FW = window.wasted.furn, FR = Furnish.rules();
+    const mine = own.whole ? [...Array(l.floors).keys()] : own.floors, furnishes = canFurnish(l);
+    if (!P.lot) Object.assign(P, { lot: l, draft: l.dsg, lay: {}, lay0: {}, undo: [], tab: own.whole ? "outside" : "inside", facade: "*", storey: mine[0], sel: null, room: Object.keys(FR.rooms)[0], line: FR.lines[0] });
     const d = P.draft, menu = Builder.options(l, l.dsg), K = X.builder.kit, pats = X.builder.patterns;
-    const show = () => window.wasted.repaint(l, Builder.built(P.draft));
-    const set = changes => { P.undo.push(P.draft); P.draft = Builder.remodel(P.draft, changes); show(); P.msg = ""; Sound.act("talk_choose"); draw(); };
+    if (P.tab === "furnish" && !P.lay[P.storey]) P.lay[P.storey] = P.lay0[P.storey] = layNow(l, P.storey);
+    const snap = () => ({ d: P.draft, lay: Object.assign({}, P.lay) });
+    const showAll = () => { window.wasted.repaint(l, Builder.built(P.draft)); for (const f of Object.keys(P.lay)) FW.showLayout(l, +f, P.lay[f]); };
+    const set = changes => { P.undo.push(snap()); P.draft = Builder.remodel(P.draft, changes); window.wasted.repaint(l, Builder.built(P.draft)); P.msg = ""; Sound.act("talk_choose"); draw(); };
     const css = c => "rgb(" + c.map(v => Math.round(Math.min(1, v * 1.25) * 255)).join(",") + ")";
     const pick = (o, cur, path, extra) => h("button", { type: "button", cls: "sw" + (o.rgb ? "" : " word") + (extra || "") + (JSON.stringify(cur) === JSON.stringify(o.id) ? " on" : ""), title: o.name, "aria-label": o.name,
       style: o.rgb ? "background-color:" + css(o.rgb) : "", on: { click: () => set(typeof path === "function" ? path(o) : { [path]: o.id }) } }, o.rgb ? "" : o.name);
     const swatches = (opts, cur, path, extra) => h("div", { cls: "swatches" }, opts.map(o => pick(o, cur, path, extra)));
     const choice = (label, ...kids) => h("div", { cls: "dzrow" }, h("span", { cls: "dzl" }, label), ...kids);
     const tab = (on, label, fn, dis) => h("button", { type: "button", cls: "pbtn" + (on ? "" : " off"), disabled: !!dis, on: { click: fn } }, label);
-    body.append(purseLine(), h("div", { cls: "prow" }, tab(P.tab === "outside", "Outside", () => { P.tab = "outside"; draw(); }, !own.whole), tab(P.tab === "inside", "Inside", () => { P.tab = "inside"; draw(); })));
+    const storeyName = f => f === 0 ? "Ground" : "Floor " + f;
+    const storeys = () => h("div", { cls: "prow" }, "Storey", ...mine.map(f => tab(P.storey === f, storeyName(f), () => { P.storey = f; P.sel = null; draw(); })));
+    body.append(purseLine(), h("div", { cls: "prow" }, tab(P.tab === "outside", "Outside", () => { P.tab = "outside"; draw(); }, !own.whole), tab(P.tab === "inside", "Inside", () => { P.tab = "inside"; draw(); }),
+      furnishes ? tab(P.tab === "furnish", "Furnish", () => { P.tab = "furnish"; draw(); }) : null));
     if (!own.whole) body.append(h("p", { cls: "dim" }, "You own part of this building: the outside needs all of it."));
     if (P.tab === "outside") {
       const cap = f => FN[f][0].toUpperCase() + FN[f].slice(1) + (f === d.shell.side ? " (front)" : "");
@@ -506,33 +520,116 @@ var Life = (() => {
       if (so && so.brick_to_eaves) body.append(choice("Brick to the eaves", swatches([{ id: true, name: "Yes" }, { id: false, name: "No" }], fa.brick_to_eaves, w + ".brick_to_eaves")));
       body.append(choice("Roof tiles", swatches(menu["roof.tiles"], d.roof.tiles, "roof.tiles")), choice("Window frames", swatches(menu["openings.frame"], d.openings.frame, "openings.frame")));
       if (menu["openings.shutters"]) {
-        body.append(choice("Shutters", swatches([{ id: true, name: "Yes" }, { id: false, name: "No" }], d.openings.shutters, "openings.shutters")));
+        body.append(choice("Shutters", swatches(menu["openings.shutters"], d.openings.shutters, "openings.shutters")));
         if (d.openings.shutters) body.append(choice("Shutter colour", swatches(menu["openings.shutter_color"], d.openings.shutter_color, "openings.shutter_color")));
       }
       for (const [p, label] of [["openings.balcony", "Balcony"], ["openings.keystones", "Keystones"], ["ornament.quoins", "Corner stones"], ["ornament.lantern", "Wall lantern"]])
-        if (menu[p]) body.append(choice(label, swatches([{ id: true, name: "Yes" }, { id: false, name: "No" }], Builder.get(d, p), p)));
-    } else {
-      const mine = own.whole ? [...Array(l.floors).keys()] : own.floors;
-      body.append(h("div", { cls: "prow" }, "Storey", ...mine.map(f => tab(P.storey === f, f === 0 ? "Ground" : "Floor " + f, () => { P.storey = f; draw(); }))));
+        if (menu[p]) body.append(choice(label, swatches(menu[p], Builder.get(d, p), p)));
+    } else if (P.tab === "inside") {
+      body.append(storeys());
       const f = P.storey, put = key => o => { const a = d.inside[key].slice(); a[f] = o.id; return { ["inside." + key]: a }; };
       const mix = c => c.map((v, k) => v + (K.inner_mix.with[k] - v) * K.inner_mix.share);
       body.append(choice("Walls", swatches(menu["inside.walls"].map(o => Object.assign({}, o, { rgb: mix(o.rgb) })), d.inside.walls[f], put("walls"))),
         choice("Floor", h("div", { cls: "swatches" }, menu["inside.floors"].map(o => pick(o, d.inside.floors[f], put("floors"), o.mat === 15 ? " boards" : " tiles")))));
+    } else {
+      body.append(storeys());
+      const f = P.storey, lay = P.lay[f], R = FW.roomFor(l, f), sel = lay.find(p => p.id === P.sel);
+      body.append(h("p", { cls: "dim" }, "Click a piece to pick it, drag it across the floor to move it. R turns it (Shift+R the other way), Delete takes it away."));
+      if (sel) body.append(h("div", { cls: "prow" }, h("b", {}, sel.name), tab(false, "Turn left", () => editPiece(P, sel.id, { yaw: sel.yaw + FR.turn_deg })), tab(false, "Turn right", () => editPiece(P, sel.id, { yaw: sel.yaw - FR.turn_deg })),
+        tab(false, "Take away", () => editPiece(P, sel.id, null)), tab(false, "Put down", () => { P.sel = null; draw(); })));
+      body.append(h("h3", {}, "Add a piece"), h("div", { cls: "prow" }, ...Object.keys(FR.rooms).map(r => tab(P.room === r, r[0].toUpperCase() + r.slice(1), () => { P.room = r; draw(); }))),
+        choice("Line", h("div", { cls: "swatches" }, FR.lines.map(x => h("button", { type: "button", cls: "sw word" + (P.line === x ? " on" : ""), on: { click: () => { P.line = x; draw(); } } }, (Outlet.LINES[x] || {}).label || x)))),
+        tbl(FR.rooms[P.room].map(k => [FR.pieces[k].name, h("span", { cls: "dim" }, FR.pieces[k].size.slice(0, 2).map(v => v.toFixed(2)).join(" × ") + " m"), money(FR.pieces[k].price),
+          h("button", { type: "button", cls: "pbtn", on: { click: () => addPiece(P, k, R) } }, "Add")])));
     }
-    const [total, lines] = Builder.cost(l, l.dsg, d), probs = d === l.dsg ? [] : Builder.check(l, l.dsg, d, own, funds());
+    const [rt, rl] = Builder.cost(l, l.dsg, d); let total = rt; const lines = rl.slice(), probs = d === l.dsg ? [] : Builder.check(l, l.dsg, d, own, null);
+    for (const f of Object.keys(P.lay)) { const b = P.lay0[f], a = P.lay[f]; if (a === b) continue;
+      const [t, ls] = Furnish.cost(b, a), R = FW.roomFor(l, +f); total += t;
+      for (const x of ls) lines.push([x[0] + (mine.length > 1 ? " (" + storeyName(+f).toLowerCase() + ")" : ""), x[1], x[2]]);
+      for (const m of Furnish.check(R.room, R.keep, R.ceiling, b, a, null)) probs.push(m + (mine.length > 1 ? " (" + storeyName(+f).toLowerCase() + ")" : "")); }
+    if (lines.length && total > funds()) probs.push("it costs " + fmt(total) + " and you have " + fmt(funds()));
     body.append(h("h3", {}, "The work"), lines.length
-      ? tbl(lines.map(([w, q, c]) => [w, h("span", { cls: "dim" }, /plaster|stone|brick|eaves|roof|floors|inside/i.test(w) ? q + " m²" : q === 1 ? "" : q + " windows"), money(c)]).concat([[h("b", {}, "Total"), "", money(total)]]))
+      ? tbl(lines.map(([w, q, c]) => [w, h("span", { cls: "dim" }, q === 1 ? "" : Number.isInteger(q) ? "× " + q : q + " m²"), money(c)]).concat([[h("b", {}, "Total"), "", money(total)]]))
       : h("p", { cls: "dim" }, "Pick something to change: it shows on the building at once. Nothing is paid until you build."));
     if (probs.length) body.append(h("p", { cls: "neg" }, probs.map(x => x[0].toUpperCase() + x.slice(1)).join(". ") + "."));
     body.append(h("div", { cls: "prow" },
       h("button", { type: "button", cls: "pbtn", disabled: !lines.length || probs.length > 0, on: { click: () => act(() => {
-        const bad = Builder.check(l, l.dsg, P.draft, own, funds()); if (bad.length) throw new Econ.Refused(bad[0]);
-        E.spend(total, "sys:builders", "Remodel: " + l.name); l.dsg = P.draft; remodels[l.id] = P.draft; P.undo = [];
-        return "Done: " + l.name + " is remodelled, for " + fmt(total) + ".";
-      }) } }, lines.length ? "Pay " + fmt(total) + " and build" : "Pay and build"),
-      tab(false, "Undo", () => { P.draft = P.undo.pop(); show(); draw(); }, !P.undo.length),
-      tab(false, "Start again", () => { P.undo.push(P.draft); P.draft = l.dsg; show(); draw(); }, d === l.dsg)));
+        if (probs.length) throw new Econ.Refused(probs[0]);
+        if (rt > 0) E.spend(rt, "sys:builders", "Remodel: " + l.name);
+        if (total - rt > 0) E.spend(total - rt, "sys:builders", "Furniture: " + l.name);
+        if (rl.length) remodels[l.id] = P.draft; l.dsg = P.draft;
+        for (const f of Object.keys(P.lay)) if (P.lay[f] !== P.lay0[f]) { (furnishings[l.id] = furnishings[l.id] || {})[f] = P.lay[f]; P.lay0[f] = P.lay[f]; FW.showLayout(l, +f, P.lay[f]); FW.layoutWorld(l, +f); }
+        P.undo = [];
+        return "Done: " + l.name + (total ? ", for " + fmt(total) : "") + ".";
+      }) } }, lines.length ? (total ? "Pay " + fmt(total) + " and build" : "Keep it like this") : "Pay and build"),
+      tab(false, "Undo", () => { const u = P.undo.pop(); P.draft = u.d; P.lay = u.lay; showAll(); draw(); }, !P.undo.length),
+      tab(false, "Start again", () => { P.undo.push(snap()); P.draft = l.dsg; P.lay = Object.assign({}, P.lay0); showAll(); draw(); }, d === l.dsg && Object.keys(P.lay).every(f => P.lay[f] === P.lay0[f]))));
+    body.append(h("p", { cls: "dim" }, "Drag the view to look round, the wheel to come nearer; W A S D slide, Q and E turn."));
+    syncView(P);
     return [l.name, own.whole ? "Remodel · Esc to leave it as it was" : "Your rooms · Esc to leave them as they were"];
+  }
+  // ---------------------------------------------------------------- the designer's view and the furniture in it (BUILD-020; FURN-051, FURN-052, FURN-055)
+  const canFurnish = l => !!l.furn && !l.house && l.kind !== "furniture";
+  function layNow(l, f) { return (furnishings[l.id] && furnishings[l.id][f]) || window.wasted.furn.townLayout(l, f); }   // the storey as it is now
+  function startView(l) {                                // above the building at the angle of an isometric drawing, the whole of it in sight
+    const [x0, z0, x1, z1] = l.rect, H = Math.min(l.H || 8, 18), r = Math.hypot(x1 - x0, z1 - z0) / 2 + H * .4;
+    view = { lot: l, yaw: cam.yaw, pitch: -.62, dist: clamp(r / Math.tan(.3) * .95, 9, 140), tx: (x0 + x1) / 2, tz: (z0 + z1) / 2, ty: Y_FLOOR + H * .4, storey: 0, cut: null, key: "" };
+  }
+  function syncView(P) {                                 // the view follows the tab: the whole building outside; inside, the storey cut open
+    if (!view) return; const key = P.tab === "outside" ? "out" : "in" + P.storey; if (view.key === key) return; view.key = key;
+    const l = P.lot, [x0, z0, x1, z1] = l.rect, H = Math.min(l.H || 8, 18);
+    if (P.tab === "outside") { view.cut = null; view.storey = 0; view.ty = Y_FLOOR + H * .4; return; }
+    const F = Storeys.floorY(P.storey); view.storey = P.storey; view.ty = F + 1;
+    view.cut = { rect: [x0 - .6, z0 - .6, x1 + .6, z1 + .6], shell: F + 1.25, room: Storeys.ceilY(P.storey) - .05 };
+    view.dist = Math.min(view.dist, clamp((Math.hypot(x1 - x0, z1 - z0) / 2 + 1) / Math.tan(.3), 8, 80));
+  }
+  function editPiece(P, id, ch, quiet) {                   // move, turn (ch) or take away (null) a piece of the storey in view
+    const f = P.storey, lay = P.lay[f]; if (!lay) return;
+    if (!quiet) P.undo.push({ d: P.draft, lay: Object.assign({}, P.lay) });
+    P.lay = Object.assign({}, P.lay, { [f]: ch ? lay.map(p => p.id === id ? Object.assign({}, p, ch, ch.yaw !== undefined ? { yaw: ((ch.yaw % 360) + 360) % 360 } : {}) : p) : lay.filter(p => p.id !== id) });
+    if (!ch) P.sel = null;
+    window.wasted.furn.showLayout(P.lot, f, P.lay[f]); if (!quiet) { Sound.act("talk_choose"); draw(); }
+  }
+  function addPiece(P, kind, R) {                          // a new piece where the view looks, on the grid, inside the room
+    const f = P.storey, g = Furnish.rules().grid_m, sn = v => +(Math.round(v / g) * g).toFixed(2), pc = Furnish.rules().pieces[kind];
+    const x = sn(clamp(view.tx, R.room[0] + pc.size[0] / 2, R.room[2] - pc.size[0] / 2)), z = sn(clamp(view.tz, R.room[1] + pc.size[1] / 2, R.room[3] - pc.size[1] / 2));
+    const n = 1 + Math.max(0, ...P.lay[f].filter(p => /^k\d+$/.test(p.id)).map(p => +p.id.slice(1)));
+    P.undo.push({ d: P.draft, lay: Object.assign({}, P.lay) });
+    P.lay = Object.assign({}, P.lay, { [f]: P.lay[f].concat([Furnish.kitPiece(kind, "k" + n, x, z, 0, P.line)]) }); P.sel = "k" + n;
+    window.wasted.furn.showLayout(P.lot, f, P.lay[f]); Sound.act("talk_choose"); draw();
+  }
+  let grab = null;
+  function pointer(type, e, held) {                      // the mouse over the picture while the designer is open (play.js)
+    const P = panel; if (!view || !P) return;
+    if (type === "wheel") { if (e.target && e.target.tagName === "CANVAS") view.dist = clamp(view.dist * (e.deltaY > 0 ? 1.12 : 1 / 1.12), 3, 150); return; }
+    const FW = window.wasted.furn, fur = P.tab === "furnish" && P.lay[P.storey];
+    const floorHit = (ray, F) => { if (ray.d[1] > -1e-4) return null; const t = (F - ray.o[1]) / ray.d[1]; return t > 0 ? [ray.o[0] + ray.d[0] * t, ray.o[2] + ray.d[2] * t] : null; };
+    if (type === "down") {
+      grab = null; if (!fur || e.button !== 0) return;
+      const R = FW.roomFor(P.lot, P.storey), ray = window.wasted.rayAt(e.clientX, e.clientY); if (!ray) return;
+      const p = FW.pickPiece(P.lay[P.storey], R.F, ray), hit = floorHit(ray, R.F);
+      P.sel = p ? p.id : null; if (p && hit) grab = { id: p.id, dx: p.x - hit[0], dz: p.z - hit[1], F: R.F, moved: false };
+      draw(); return;
+    }
+    if (type === "move") {
+      if (!held) return;
+      if (grab) {
+        const ray = window.wasted.rayAt(e.clientX, e.clientY), hit = ray && floorHit(ray, grab.F); if (!hit) return;
+        const g = Furnish.rules().grid_m, sn = v => +(Math.round(v / g) * g).toFixed(2), p = P.lay[P.storey].find(q => q.id === grab.id); if (!p) return;
+        const x = sn(hit[0] + grab.dx), z = sn(hit[1] + grab.dz); if (x === p.x && z === p.z) return;
+        if (!grab.moved) { P.undo.push({ d: P.draft, lay: Object.assign({}, P.lay) }); grab.moved = true; }
+        editPiece(P, grab.id, { x, z }, true);
+      } else { view.yaw += e.movementX * .005; view.pitch = clamp(view.pitch - e.movementY * .004, -1.5, -.1); }
+      return;
+    }
+    if (type === "up") { if (grab && grab.moved) draw(); grab = null; }
+  }
+  function designKey(e) {                                // R turns the piece picked (Shift+R the other way), Delete takes it away
+    const P = panel; if (!P || P.kind !== "remodel" || P.tab !== "furnish" || !P.sel) return false;
+    const p = (P.lay[P.storey] || []).find(q => q.id === P.sel); if (!p) return false;
+    if (e.code === "KeyR") { editPiece(P, p.id, { yaw: p.yaw + (e.shiftKey ? -1 : 1) * Furnish.rules().turn_deg }); return true; }
+    if (e.code === "Delete" || e.code === "Backspace") { editPiece(P, p.id, null); return true; }
+    return false;
   }
   const DLR = rid => { const r = D.residents[resIdx[rid]]; return D.dialogue.role_words[D.roles[r.r]] || D.roles[r.r]; };
   function fillJob(text, o) { const v = jobVars(o); return text.replace(/\{(\w+)\}/g, (_, k) => k in v ? v[k] : "{" + k + "}"); }
@@ -546,6 +643,7 @@ var Life = (() => {
     return null;
   }
   function key(e) {
+    if (designKey(e)) { e.preventDefault(); return; }
     if (e.code === "Escape" || (panel && ((e.code === "KeyB" && ["shop", "bank", "stall", "agent"].includes(panel.kind)) || (e.code === "KeyP" && panel.kind === "property") || (e.code === "KeyI" && panel.kind === "wallet") || (e.code === "KeyJ" && panel.kind === "quests")))) { e.preventDefault(); close(); }
   }
 
@@ -617,13 +715,15 @@ var Life = (() => {
     if (window.wasted) window.wasted.life = { get E() { return E; }, get Q() { return Q; }, get M() { return M; }, get look() { return look; }, selfTest: () => Econ.selfTest(X, LOTS), estateTest: () => Estate.selfTest(D, LOTS), save, newGame, readSave, loadSave, open, close, counter, get remodels() { return remodels; } };
     const badB = Builder.selfTest(LOTS);
     if (badB.length) console.error("builder.js does not match Tools/citysim/builder.py:\n  " + badB.join("\n  ")); else console.info("builder.js matches Tools/citysim/builder.py (self-test passed).");
+    const badF = Furnish.selfTest(Furniture.SIZE);
+    if (badF.length) console.error("builder.js Furnish does not match Tools/citysim/furnish.py:\n  " + badF.join("\n  ")); else console.info("builder.js Furnish matches Tools/citysim/furnish.py (self-test passed).");
     const badE = Estate.selfTest(D, LOTS);
     if (badE.length) console.error("estate.js does not match Tools/citysim/estate.py:\n  " + badE.join("\n  ")); else console.info("estate.js matches Tools/citysim/estate.py (self-test passed).");
     const bad = Econ.selfTest(X, LOTS);
     if (bad.length) console.error("economy.js does not match Tools/citysim/economy.py:\n  " + bad.join("\n  ")); else console.info("economy.js matches Tools/citysim/economy.py (self-test passed).");
   });
   return {
-    get on() { return !!panel; }, get designing() { return designing; }, get ready() { return ready; },
+    get on() { return !!panel; }, get designing() { return designing; }, get ready() { return ready; }, get view() { return view; }, pointer,
     go, frame, camera, mark, marks, boards, remodelTarget, remodel, conversation, allowed, chose, talkEnded, vars, key, counter, toast,
     panel: k => open(k, null), spin: dx => { spin += dx * .006; },
   };
