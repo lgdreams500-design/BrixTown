@@ -1,0 +1,116 @@
+{
+ "id": "b_15_8",
+ "grid": [
+  15,
+  8
+ ],
+ "template": "meadow",
+ "district": "Outlet Green",
+ "origin": [
+  1448.0,
+  776.0
+ ],
+ "size": 80.0,
+ "span": [
+  1,
+  1
+ ],
+ "lots": [],
+ "paths": [
+  [
+   [
+    1450.0,
+    854.0
+   ],
+   [
+    1526.0,
+    778.0
+   ]
+  ]
+ ],
+ "tracks": [],
+ "trees": [
+  {
+   "id": "b_15_8_t0",
+   "species": "plane",
+   "pos": [
+    1518.06,
+    822.9
+   ],
+   "planted": -705,
+   "seed": 67788
+  },
+  {
+   "id": "b_15_8_t1",
+   "species": "oak",
+   "pos": [
+    1475.67,
+    845.63
+   ],
+   "planted": -1118,
+   "seed": 568062
+  },
+  {
+   "id": "b_15_8_t2",
+   "species": "birch",
+   "pos": [
+    1498.23,
+    821.93
+   ],
+   "planted": -1092,
+   "seed": 357016
+  },
+  {
+   "id": "b_15_8_t3",
+   "species": "oak",
+   "pos": [
+    1516.32,
+    810.09
+   ],
+   "planted": -645,
+   "seed": 875648
+  },
+  {
+   "id": "b_15_8_t4",
+   "species": "birch",
+   "pos": [
+    1465.56,
+    819.79
+   ],
+   "planted": -1220,
+   "seed": 245962
+  },
+  {
+   "id": "b_15_8_t5",
+   "species": "plane",
+   "pos": [
+    1474.59,
+    792.34
+   ],
+   "planted": -932,
+   "seed": 455759
+  },
+  {
+   "id": "b_15_8_t6",
+   "species": "plane",
+   "pos": [
+    1460.38,
+    836.19
+   ],
+   "planted": -1082,
+   "seed": 209793
+  }
+ ],
+ "props": [
+  {
+   "id": "b_15_8_p0",
+   "kind": "bench",
+   "pos": [
+    1491.0,
+    819.0
+   ],
+   "set": "wild",
+   "along": "x"
+  }
+ ]
+}

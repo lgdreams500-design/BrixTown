@@ -872,6 +872,244 @@
     12,
     3
    ]
+  },
+  {
+   "id": "b_6_0",
+   "grid": [
+    6,
+    0
+   ],
+   "file": "blocks/b_6_0.json",
+   "template": "woods",
+   "district": "Mill Copse",
+   "span": [
+    1,
+    4
+   ]
+  },
+  {
+   "id": "b_13_0",
+   "grid": [
+    13,
+    0
+   ],
+   "file": "blocks/b_13_0.json",
+   "template": "woods",
+   "district": "Brook Copse",
+   "span": [
+    1,
+    4
+   ]
+  },
+  {
+   "id": "b_7_3",
+   "grid": [
+    7,
+    3
+   ],
+   "file": "blocks/b_7_3.json",
+   "template": "common",
+   "district": "Northgate Green",
+   "span": [
+    6,
+    1
+   ]
+  },
+  {
+   "id": "b_0_4",
+   "grid": [
+    0,
+    4
+   ],
+   "file": "blocks/b_0_4.json",
+   "template": "woods",
+   "district": "Westwood",
+   "span": [
+    1,
+    7
+   ]
+  },
+  {
+   "id": "b_1_4",
+   "grid": [
+    1,
+    4
+   ],
+   "file": "blocks/b_1_4.json",
+   "template": "orchard",
+   "district": "Westgate Orchard",
+   "span": [
+    3,
+    1
+   ]
+  },
+  {
+   "id": "b_4_4",
+   "grid": [
+    4,
+    4
+   ],
+   "file": "blocks/b_4_4.json",
+   "template": "common",
+   "district": "West Common",
+   "span": [
+    2,
+    3
+   ]
+  },
+  {
+   "id": "b_4_7",
+   "grid": [
+    4,
+    7
+   ],
+   "file": "blocks/b_4_7.json",
+   "template": "plots",
+   "district": "West Gate Plots",
+   "span": [
+    2,
+    4
+   ]
+  },
+  {
+   "id": "b_0_11",
+   "grid": [
+    0,
+    11
+   ],
+   "file": "blocks/b_0_11.json",
+   "template": "fields",
+   "district": "Mill Fields",
+   "span": [
+    4,
+    2
+   ]
+  },
+  {
+   "id": "b_0_13",
+   "grid": [
+    0,
+    13
+   ],
+   "file": "blocks/b_0_13.json",
+   "template": "woods",
+   "district": "Southwood",
+   "span": [
+    4,
+    3
+   ]
+  },
+  {
+   "id": "b_6_12",
+   "grid": [
+    6,
+    12
+   ],
+   "file": "blocks/b_6_12.json",
+   "template": "meadow",
+   "district": "Civic Green",
+   "span": [
+    1,
+    1
+   ]
+  },
+  {
+   "id": "b_14_4",
+   "grid": [
+    14,
+    4
+   ],
+   "file": "blocks/b_14_4.json",
+   "template": "common",
+   "district": "East Common",
+   "span": [
+    2,
+    4
+   ]
+  },
+  {
+   "id": "b_15_8",
+   "grid": [
+    15,
+    8
+   ],
+   "file": "blocks/b_15_8.json",
+   "template": "meadow",
+   "district": "Outlet Green",
+   "span": [
+    1,
+    1
+   ]
+  },
+  {
+   "id": "b_14_9",
+   "grid": [
+    14,
+    9
+   ],
+   "file": "blocks/b_14_9.json",
+   "template": "plots",
+   "district": "East Gate Plots",
+   "span": [
+    2,
+    4
+   ]
+  },
+  {
+   "id": "b_16_4",
+   "grid": [
+    16,
+    4
+   ],
+   "file": "blocks/b_16_4.json",
+   "template": "orchard",
+   "district": "Eastgate Orchard",
+   "span": [
+    3,
+    1
+   ]
+  },
+  {
+   "id": "b_19_4",
+   "grid": [
+    19,
+    4
+   ],
+   "file": "blocks/b_19_4.json",
+   "template": "woods",
+   "district": "Eastwood",
+   "span": [
+    1,
+    9
+   ]
+  },
+  {
+   "id": "b_16_11",
+   "grid": [
+    16,
+    11
+   ],
+   "file": "blocks/b_16_11.json",
+   "template": "fields",
+   "district": "Brook Farm",
+   "span": [
+    3,
+    2
+   ]
+  },
+  {
+   "id": "b_16_13",
+   "grid": [
+    16,
+    13
+   ],
+   "file": "blocks/b_16_13.json",
+   "template": "woods",
+   "district": "Hollow Wood",
+   "span": [
+    4,
+    3
+   ]
   }
  ],
  "wall": {
@@ -881,6 +1119,6 @@
    14,
    12
   ],
-  "note": "Old Town's town wall runs round grid lines i 6 to 14 and j 4 to 12 (cells 6-13 by 4-11). Streets named null have no blocks yet."
+  "note": "The line where Old Town's town wall stood (taken down, WLD-055): grid lines i 6 to 14 and j 4 to 12 (cells 6-13 by 4-11). Old Town's street grid ends here; beyond it the newer areas and open ground (WLD-056). Streets named null have no blocks yet."
  }
 }

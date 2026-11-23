@@ -1,5 +1,5 @@
 {
- "note": "Growth and leaf dates per species (day of a 48-day year).",
+ "note": "Growth and leaf dates per species (day of a 48-day year). crown: how the slice draws it (round, the default; cone; slim). evergreen: in leaf all year, its colour the summer one (WLD-056). Species after plum are first guesses [ASSUMPTION].",
  "species": {
   "plane": {
    "r_max": 6.5,
@@ -73,6 +73,105 @@
     0.38,
     0.24
    ]
+  },
+  "oak": {
+   "r_max": 6.0,
+   "rate": 0.12,
+   "shape": 1.3,
+   "life": [
+    60,
+    90
+   ],
+   "bud": 5,
+   "full": 10,
+   "turn": 28,
+   "bare": 36,
+   "autumn": [
+    0.5,
+    0.36,
+    0.14
+   ],
+   "summer": [
+    0.2,
+    0.3,
+    0.16
+   ]
+  },
+  "pine": {
+   "r_max": 3.0,
+   "rate": 0.2,
+   "shape": 1.2,
+   "life": [
+    50,
+    80
+   ],
+   "bud": 0,
+   "full": 1,
+   "turn": 47,
+   "bare": 48,
+   "autumn": [
+    0.12,
+    0.2,
+    0.13
+   ],
+   "summer": [
+    0.12,
+    0.2,
+    0.13
+   ],
+   "evergreen": true,
+   "crown": "cone"
+  },
+  "birch": {
+   "r_max": 4.2,
+   "rate": 0.35,
+   "shape": 1.3,
+   "life": [
+    30,
+    50
+   ],
+   "bud": 3,
+   "full": 7,
+   "turn": 25,
+   "bare": 32,
+   "autumn": [
+    0.7,
+    0.6,
+    0.18
+   ],
+   "summer": [
+    0.3,
+    0.4,
+    0.2
+   ],
+   "crown": "slim"
+  },
+  "apple": {
+   "r_max": 3.0,
+   "rate": 0.4,
+   "shape": 1.5,
+   "life": [
+    20,
+    30
+   ],
+   "bud": 3,
+   "full": 8,
+   "turn": 27,
+   "bare": 34,
+   "blossom": [
+    3,
+    7
+   ],
+   "autumn": [
+    0.5,
+    0.36,
+    0.16
+   ],
+   "summer": [
+    0.24,
+    0.36,
+    0.2
+   ]
   }
  },
  "flowers": {
@@ -108,34 +207,323 @@
  },
  "plants": {
   "note": "Garden plants (CITY-017, F-GARDEN level 1). Days are days of the 48-day year (spring 0-11, summer 12-23, autumn 24-35, winter 36-47). leaf: [bud, full, turn, bare], or none for evergreen; up: [comes up, gone] for plants that die back; bloom: [first, last] day in flower; spent_until: dry heads stand until this day; height: how tall it grows in a border or drift (m; shrubs and hedges take their size from the block file). Colours linear RGB, muted (ART_DIRECTION 2.3).",
-  "box": {"height": 0.7, "summer": [0.15, 0.24, 0.12], "winter": [0.14, 0.2, 0.13], "flush": [4, 10], "fresh": [0.27, 0.35, 0.15]},
-  "lilac": {"height": 2.2, "leaf": [3, 8, 26, 33], "summer": [0.23, 0.33, 0.17], "autumn": [0.5, 0.46, 0.2], "bloom": [4, 10], "bloom_color": [0.5, 0.38, 0.58]},
-  "hydrangea": {"height": 1.2, "leaf": [4, 9, 27, 34], "summer": [0.21, 0.32, 0.17], "autumn": [0.48, 0.34, 0.18], "bloom": [14, 26], "bloom_color": [0.46, 0.52, 0.68], "spent_color": [0.44, 0.34, 0.26], "spent_until": 42},
-  "rose": {"height": 0.65, "leaf": [3, 8, 28, 35], "summer": [0.19, 0.29, 0.15], "autumn": [0.4, 0.3, 0.15], "bloom": [11, 28], "bloom_color": [0.66, 0.26, 0.26]},
-  "lavender": {"height": 0.45, "summer": [0.27, 0.33, 0.24], "winter": [0.24, 0.28, 0.22], "bloom": [13, 24], "bloom_color": [0.42, 0.36, 0.6], "spent_color": [0.4, 0.36, 0.3], "spent_until": 30},
-  "daffodil": {"height": 0.32, "up": [1, 14], "summer": [0.25, 0.35, 0.16], "bloom": [2, 8], "bloom_color": [0.84, 0.7, 0.24]},
-  "tulip": {"height": 0.38, "up": [2, 16], "summer": [0.24, 0.34, 0.18], "bloom": [5, 13], "bloom_color": [0.72, 0.3, 0.28]},
-  "aster": {"height": 0.6, "up": [10, 40], "summer": [0.23, 0.33, 0.17], "bloom": [24, 36], "bloom_color": [0.56, 0.42, 0.66], "spent_color": [0.4, 0.34, 0.27], "spent_until": 40}
+  "box": {
+   "height": 0.7,
+   "summer": [
+    0.15,
+    0.24,
+    0.12
+   ],
+   "winter": [
+    0.14,
+    0.2,
+    0.13
+   ],
+   "flush": [
+    4,
+    10
+   ],
+   "fresh": [
+    0.27,
+    0.35,
+    0.15
+   ]
+  },
+  "lilac": {
+   "height": 2.2,
+   "leaf": [
+    3,
+    8,
+    26,
+    33
+   ],
+   "summer": [
+    0.23,
+    0.33,
+    0.17
+   ],
+   "autumn": [
+    0.5,
+    0.46,
+    0.2
+   ],
+   "bloom": [
+    4,
+    10
+   ],
+   "bloom_color": [
+    0.5,
+    0.38,
+    0.58
+   ]
+  },
+  "hydrangea": {
+   "height": 1.2,
+   "leaf": [
+    4,
+    9,
+    27,
+    34
+   ],
+   "summer": [
+    0.21,
+    0.32,
+    0.17
+   ],
+   "autumn": [
+    0.48,
+    0.34,
+    0.18
+   ],
+   "bloom": [
+    14,
+    26
+   ],
+   "bloom_color": [
+    0.46,
+    0.52,
+    0.68
+   ],
+   "spent_color": [
+    0.44,
+    0.34,
+    0.26
+   ],
+   "spent_until": 42
+  },
+  "rose": {
+   "height": 0.65,
+   "leaf": [
+    3,
+    8,
+    28,
+    35
+   ],
+   "summer": [
+    0.19,
+    0.29,
+    0.15
+   ],
+   "autumn": [
+    0.4,
+    0.3,
+    0.15
+   ],
+   "bloom": [
+    11,
+    28
+   ],
+   "bloom_color": [
+    0.66,
+    0.26,
+    0.26
+   ]
+  },
+  "lavender": {
+   "height": 0.45,
+   "summer": [
+    0.27,
+    0.33,
+    0.24
+   ],
+   "winter": [
+    0.24,
+    0.28,
+    0.22
+   ],
+   "bloom": [
+    13,
+    24
+   ],
+   "bloom_color": [
+    0.42,
+    0.36,
+    0.6
+   ],
+   "spent_color": [
+    0.4,
+    0.36,
+    0.3
+   ],
+   "spent_until": 30
+  },
+  "daffodil": {
+   "height": 0.32,
+   "up": [
+    1,
+    14
+   ],
+   "summer": [
+    0.25,
+    0.35,
+    0.16
+   ],
+   "bloom": [
+    2,
+    8
+   ],
+   "bloom_color": [
+    0.84,
+    0.7,
+    0.24
+   ]
+  },
+  "tulip": {
+   "height": 0.38,
+   "up": [
+    2,
+    16
+   ],
+   "summer": [
+    0.24,
+    0.34,
+    0.18
+   ],
+   "bloom": [
+    5,
+    13
+   ],
+   "bloom_color": [
+    0.72,
+    0.3,
+    0.28
+   ]
+  },
+  "aster": {
+   "height": 0.6,
+   "up": [
+    10,
+    40
+   ],
+   "summer": [
+    0.23,
+    0.33,
+    0.17
+   ],
+   "bloom": [
+    24,
+    36
+   ],
+   "bloom_color": [
+    0.56,
+    0.42,
+    0.66
+   ],
+   "spent_color": [
+    0.4,
+    0.34,
+    0.27
+   ],
+   "spent_until": 40
+  },
+  "holly": {
+   "height": 2.4,
+   "summer": [
+    0.1,
+    0.18,
+    0.1
+   ],
+   "winter": [
+    0.1,
+    0.17,
+    0.1
+   ]
+  },
+  "bracken": {
+   "height": 1.0,
+   "leaf": [
+    5,
+    10,
+    26,
+    33
+   ],
+   "summer": [
+    0.24,
+    0.34,
+    0.15
+   ],
+   "autumn": [
+    0.46,
+    0.3,
+    0.14
+   ]
+  },
+  "hawthorn": {
+   "height": 1.8,
+   "leaf": [
+    3,
+    7,
+    27,
+    34
+   ],
+   "summer": [
+    0.18,
+    0.28,
+    0.13
+   ],
+   "autumn": [
+    0.44,
+    0.24,
+    0.14
+   ],
+   "bloom": [
+    5,
+    9
+   ],
+   "bloom_color": [
+    0.82,
+    0.8,
+    0.74
+   ]
+  }
  },
  "lawn": {
   "note": "How grass looks in parks, gardens and the green between rows (look only, ART-001; drawn as material 24 in Prototype/play). Tones are linear RGB, muted as ART_DIRECTION 2.3 asks: lush shade, the base, sun-dried.",
   "tones": [
-   [0.18, 0.27, 0.13],
-   [0.29, 0.34, 0.19],
-   [0.42, 0.39, 0.21]
+   [
+    0.18,
+    0.27,
+    0.13
+   ],
+   [
+    0.29,
+    0.34,
+    0.19
+   ],
+   [
+    0.42,
+    0.39,
+    0.21
+   ]
   ],
   "patch_m": 8.0,
   "stripe_m": 2.2,
   "stripe": 0.06,
   "clover": 0.5,
   "daisies": 0.05,
-  "daisy_color": [0.72, 0.69, 0.58],
+  "daisy_color": [
+   0.72,
+   0.69,
+   0.58
+  ],
   "edge_m": 0.45,
-  "edge_color": [0.23, 0.31, 0.16],
+  "edge_color": [
+   0.23,
+   0.31,
+   0.16
+  ],
   "tufts_per_100m2": 7,
-  "tuft_color": [0.24, 0.32, 0.16],
+  "tuft_color": [
+   0.24,
+   0.32,
+   0.16
+  ],
   "tree_ring_m": 1.2,
-  "mulch_color": [0.2, 0.15, 0.11]
+  "mulch_color": [
+   0.2,
+   0.15,
+   0.11
+  ]
  },
  "replant_gap_days": 10,
  "fallen_days": 4
