@@ -2223,7 +2223,7 @@
         },
         {
           "name": "Menu of what exists",
-          "what": "Esc (or Tab) opens a menu over the dimmed game with tabs: Money, Journal, Properties (with Show on map, Remodel, Furnish, Sell and Let buttons), Map, Save (save now, last autosave, load, new game) and Help (the keys, which leave the bottom of the screen). The old keys open their tab.",
+          "what": "The platform's menu control (Esc on a keyboard, Start or Menu on a gamepad, a menu button on touch) opens a menu over the dimmed game with tabs: Money, Journal, Properties (with Show on map, Remodel, Furnish, Sell and Let buttons), Map, Save (save now, last autosave, load, new game) and Help (the controls of the platform played on, which leave the bottom of the screen). The old shortcuts open their tab.",
           "effort": "M",
           "needs": {
             "F-ECO-BANK": 1,
@@ -2252,7 +2252,7 @@
       "id": "F-UI-SETTINGS",
       "area": "ui",
       "title": "Settings",
-      "why": "Players set the game to their machine and their taste: picture, sound, controls, what the screen shows. Settings belong to the device, not the save; their defaults are data.",
+      "why": "Players set the game to their machine and their taste: picture, sound, controls, what the screen shows. Settings belong to the device, not the save; their defaults are data. Controls follow the platform: keyboard and mouse, a gamepad, or touch each have their own mapping.",
       "pillars": [
         1
       ],
@@ -2266,13 +2266,13 @@
         },
         {
           "name": "Picture, sound, display, mouse",
-          "what": "Graphics: one switch for the better or simple picture and, under it, shadows, ambient occlusion, bounce light, contact shade and resolution; view distance, how many people have full bodies, field of view, the frame counter. Audio: master, music, street, voices, interface. Display: minimap, clock, money, names over residents, prompts, text size. Mouse: sensitivity, invert, camera distance, first or third person. Kept on the device; defaults in World/rules/settings.json.",
+          "what": "Graphics: one switch for the better or simple picture and, under it, shadows, ambient occlusion, bounce light, contact shade and resolution; view distance, how many people have full bodies, field of view, the frame counter. Audio: master, music, street, voices, interface. Display: minimap, clock, money, names over residents, prompts, text size. Controls for the platform played on (keyboard and mouse, gamepad, touch), each with its own default mapping in data: sensitivity, invert, camera distance, first or third person; the Help tab shows that platform's controls. Kept on the device; defaults in World/rules/settings.json.",
           "effort": "M",
           "needs": {}
         },
         {
           "name": "Controls and accessibility",
-          "what": "Also rebinding every key; colour-blind-safe markers, reduced motion (no camera glides), hold or toggle; hints on or off; the starting clock speed.",
+          "what": "Also remapping every action, per platform (keys, gamepad buttons; touch layouts); colour-blind-safe markers, reduced motion (no camera glides), hold or toggle; hints on or off; the starting clock speed.",
           "effort": "M",
           "needs": {}
         }
