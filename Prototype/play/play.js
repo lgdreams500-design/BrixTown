@@ -2186,8 +2186,9 @@ const pl = { x: spawn.pos[0], y: 0, z: spawn.pos[1], vy: 0, yaw: yawOf(spawn.fac
 const cam = { yaw: pl.yaw, pitch: -.04, dist: 4.4, fp: false, eye: [0, 0, 0], dir: [0, 0, -1] };
 const clock = { m: spawn.time ? (+spawn.time.slice(0, 2)) * 60 + (+spawn.time.slice(3)) : 8 * 60, rate: 1, day: 0 };   // day: game days since the character arrived (the bank settles by them, BANK-008)
 const keys = {}; let started = false, locked = false, showMap = false, bodies = 0, fps = 60, target = null, quality = 1, slow = 0, simple = null;
-// O: the simple picture, one switch for what were three keys (Q softer picture, G flat shade, O corner shade): a softer picture with
-// the flat fill in place of local bounce and contact shade (ADR-0018) and no ambient occlusion (ADR-0028); O again puts them all back
+// O: the better or the simple picture, one switch for what were three keys (Q softer picture, G flat shade, O corner shade). Simple:
+// half resolution, no sun shadows, the flat fill in place of local bounce and contact shade (ADR-0018), no ambient occlusion (ADR-0028).
+// Better: all of them at once.
 function simplePicture(on) {
   const d = window.wasted && window.wasted.dials; if (!d) return;
   if (on && !simple) { simple = { gi: d.gi, ao: d.ao }; d.gi = 0; d.ao = 0; quality = .5; }
