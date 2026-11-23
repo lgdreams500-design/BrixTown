@@ -23,7 +23,7 @@ def r1(v):
 
 def routines(city, day, car_index):
     """Each resident's day as pieces: [t0, 0, x, z, act, use, inside, lot] stays, [t0, 1, act, x, z, ...] walks, [t0, 2] away,
-    [t0, 3, car] in their car (drawn as the car, see cars())."""
+    [t0, 3, vehicle] in their car or on a bus (drawn in the vehicle, see cars())."""
     lot_index = {l["id"]: n for n, l in enumerate(city.d["lots"])}
     acts = {a: n for n, a in enumerate(ACTS)}
     uses = {u: n for n, u in enumerate(USES)}
@@ -36,7 +36,7 @@ def routines(city, day, car_index):
             lot = city.lots[s["place"]]
             if kind == "away":
                 row.append([r1(t0), 2])
-            elif kind == "drive":
+            elif kind in ("drive", "ride"):                 # at the wheel of their car, or on a bus (CITY-084)
                 row.append([r1(t0), 3, car_index[payload]])
             elif kind == "move":
                 route = payload[0]
@@ -60,7 +60,7 @@ CAR_STEP_S = 1.0                     # real seconds between packed car positions
 
 
 def cars(city, day):
-    """Every vehicle's day for the slice (k: 0 car, 1 van): its home bay (none for a car passing through) and its trips, each a list of [x, z, hx, hz] every CAR_STEP_S real
+    """Every vehicle's day for the slice (k: 0 car, 1 van, 2 bus): its home bay (none for a car passing through) and its trips, each a list of [x, z, hx, hz] every CAR_STEP_S real
     seconds (Tools/citysim/traffic.py works them out). Pulling out of a bay and into one is eased over a few seconds here:
     the rules keep a car either in its bay or on its lane, the picture slides it between the two."""
     T = city.traffic
@@ -69,8 +69,9 @@ def cars(city, day):
 
     def bay(bid):
         b = R.bays[bid]
-        u = R.lanes[b["lane"]]["u"]
+        u = b.get("u") or R.lanes[b["lane"]]["u"]
         return [r1(b["pos"][0]), r1(b["pos"][1]), round(u[0], 2), round(u[1], 2)]
+    lines = sorted(T.lines)
 
     out, index = [], {}
     for n, cid in enumerate(T.ids(day)):                   # residents' cars, vans, and today's cars passing through
@@ -100,7 +101,10 @@ def cars(city, day):
             trips.append([round(tr["t0"] / T.pace, 3), round(tr["t1"] / T.pace, 3), bay(tr["bay1"]) if tr["bay1"] else None,
                           [round(v, 2) for q in pts for v in q]])
         home = T.home_bay(cid)
-        out.append(dict(home=bay(home) if home else None, trips=trips, k=1 if cid in T.vans else 0))
+        v = dict(home=bay(home) if home else None, trips=trips, k=2 if cid in T.buses else 1 if cid in T.vans else 0)
+        if cid in T.buses:                                 # a bus (CITY-083): which line, for its colours and its sign
+            v["l"] = lines.index(T.buses[cid]["line"])
+        out.append(v)
     return out, index, CAR_STEP_S / T.pace
 
 
@@ -115,13 +119,31 @@ def roads(city):
         return gates[street]["dir"][1] == 0 if street in gates else street.startswith("s_ew_")
     return dict(
         crossings=[[r1(c["pos"][0]), r1(c["pos"][1]), 1 if ew(c["street"]) else 0] for c in R.d["crossings"]],
-        bays=[[r1(b["pos"][0]), r1(b["pos"][1]), 1 if abs(R.lanes[b["lane"]]["u"][0]) > .5 else 0] for b in R.bays.values()],
+        bays=[[r1(b["pos"][0]), r1(b["pos"][1]), 1 if abs(R.lanes[b["lane"]]["u"][0]) > .5 else 0] for b in R.bays.values()
+              if not b.get("outer") and b.get("kind") != "stop"],   # lay-bys in the town's streets; driveways and kerbs outside have none
+        stops=stops(T),                                   # bus stops (CITY-083)
+        lines=[dict(name=T.lines[k]["name"], colour=T.lines[k].get("colour", "teal")) for k in sorted(T.lines)],
         signals=[[j["pos"][0], j["pos"][1], round(citysim.rnd("sig", j["id"]) * cycle, 3)] for j in R.d["junctions"] if j["control"] == "signals"],
         cycle={k: cyc[k] for k in ("green_s", "amber_s", "all_red_s")},
         width=T.r["crossing_width"], bay_length=T.r["bay_length"],
         gates=[[g["name"], R.j[g["junction"]]["pos"][0], R.j[g["junction"]]["pos"][1], g["dir"][0], g["dir"][1], g["length"]]   # roads out of town (CITY-068)
                for g in R.d.get("gates", [])],
         links=[dict(name=l["name"], width=l["width"], points=[[r1(p[0]), r1(p[1])] for p in l["points"]]) for l in R.d.get("links", [])])   # the roads out to the new areas
+
+
+def stops(T):
+    """Every bus stop for the slice: [x, z, along x, along z, town (1: a lay-by in a town street), [line indexes], name], one
+    per side of the street; the shelter stands on the kerb side, to the right of the way the bus goes."""
+    R, lines = T.roads, sorted(T.lines)
+    serves = {}
+    for k, lid in enumerate(lines):
+        for bid in T.lines[lid]["bays"]:
+            serves.setdefault(bid, set()).add(k)
+    out = []
+    for bid, b in sorted(R.stops.items()):
+        out.append([r1(b["pos"][0]), r1(b["pos"][1]), round(b["u"][0], 3), round(b["u"][1], 3), 0 if R.is_outer_bay(bid) else 1,
+                    sorted(serves.get(bid, ())), b["name"]])
+    return out
 
 
 def dialogue(w):

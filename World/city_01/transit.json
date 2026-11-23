@@ -1,0 +1,37 @@
+{
+ "note": "Bus lines of Old Town (CITY-083, F-VEH-TRANSIT level 2 'Network', owner 2026-11-23: keep the tram and add buses). Each stop is a point; the traffic rules (Tools/citysim/traffic.py) put a stop on both sides of the street nearest it and keep parked cars out of it. A line runs from its first stop to its last and back, leaving the first stop every every_min game minutes from first to last; how many buses that takes is worked out from the route. Times and frequencies are [ASSUMPTION] until tuned.",
+ "stops": [
+  {"id": "westgate_mall", "name": "Westgate Mall", "at": [373.9, 903.5]},
+  {"id": "west_gate", "name": "West Gate", "at": [530.0, 768.0]},
+  {"id": "baker_cooper", "name": "Baker Street (Cooper)", "at": [720.0, 768.0]},
+  {"id": "market_square", "name": "Market Square", "at": [912.0, 768.0]},
+  {"id": "baker_mill", "name": "Mill Street Hospital", "at": [1104.0, 768.0]},
+  {"id": "baker_garden", "name": "Baker Street (Garden)", "at": [1296.0, 768.0]},
+  {"id": "furniture_outlet", "name": "Furniture Outlet", "at": [1395.0, 768.0]},
+  {"id": "eastgate_mall", "name": "Eastgate Mall", "at": [1553.9, 890.9]},
+  {"id": "northwood", "name": "Northwood", "at": [291.0, 213.4]},
+  {"id": "northgate_mall", "name": "Northgate Mall", "at": [960.0, 292.0]},
+  {"id": "north_gate", "name": "North Gate", "at": [960.0, 340.0]},
+  {"id": "market_plum", "name": "Market Street (Plum)", "at": [960.0, 432.0]},
+  {"id": "lantern_arcade", "name": "Lantern Arcade", "at": [960.0, 624.0]},
+  {"id": "market_tram", "name": "Market Street (Tram)", "at": [960.0, 816.0]},
+  {"id": "market_quarry", "name": "Market Street (Quarry)", "at": [960.0, 1008.0]},
+  {"id": "south_gate", "name": "South Gate", "at": [960.0, 1190.0]},
+  {"id": "civic_row", "name": "Civic Row", "at": [1000.0, 1248.0]},
+  {"id": "southfield", "name": "Southfield", "at": [979.7, 1432.3]},
+  {"id": "eastbrook", "name": "Eastbrook", "at": [1661.7, 188.5]},
+  {"id": "weaver_linden", "name": "Weaver Street (Linden)", "at": [1152.0, 528.0]},
+  {"id": "weaver_fountain", "name": "Fountain Hospital", "at": [1152.0, 720.0]},
+  {"id": "weaver_tram", "name": "Weaver Street (Tram)", "at": [1152.0, 912.0]},
+  {"id": "weaver_depot", "name": "Weaver Street (Depot)", "at": [1152.0, 1104.0]},
+  {"id": "old_town_school", "name": "Old Town Secondary School", "at": [712.0, 1248.0]}
+ ],
+ "lines": [
+  {"id": "1", "name": "1 Westgate - Eastgate", "colour": "terracotta", "every_min": 15, "first": "06:00", "last": "22:00",
+   "stops": ["westgate_mall", "west_gate", "baker_cooper", "market_square", "baker_mill", "baker_garden", "furniture_outlet", "eastgate_mall"]},
+  {"id": "2", "name": "2 Northwood - Southfield", "colour": "teal", "every_min": 15, "first": "06:00", "last": "22:00",
+   "stops": ["northwood", "northgate_mall", "north_gate", "market_plum", "lantern_arcade", "market_tram", "market_quarry", "south_gate", "civic_row", "southfield"]},
+  {"id": "3", "name": "3 Eastbrook - Old Town School", "colour": "ochre", "every_min": 20, "first": "06:10", "last": "21:50",
+   "stops": ["eastbrook", "northgate_mall", "north_gate", "weaver_linden", "weaver_fountain", "weaver_tram", "weaver_depot", "south_gate", "old_town_school"]}
+ ]
+}

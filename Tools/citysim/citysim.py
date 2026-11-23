@@ -625,7 +625,7 @@ class City:
 
     # -- where is everyone? --
     def at(self, t):
-        """{resident id: dict(pos, act, place, state)} at minute t. state: inside | outside | walking | away."""
+        """{resident id: dict(pos, act, place, state)} at minute t. state: inside | outside | walking | away | driving | riding."""
         day, m = self.clock.split(t)
         plan = self.plan(day)
         out = {}
@@ -648,6 +648,8 @@ class City:
                 out[rid] = dict(pos=self._stroll_at(rid, day, s, m), act="stroll", place=s["place"], state="outside")
             elif kind == "drive":                         # in their car: where the car is (traffic.py)
                 out[rid] = dict(pos=self.traffic.car_at(payload, day, m)["pos"], act="drive", place=s["place"], state="driving", car=payload)
+            elif kind == "ride":                          # on a bus: where the bus is (traffic.py, CITY-084)
+                out[rid] = dict(pos=self.traffic.car_at(payload, day, m)["pos"], act="ride", place=s["place"], state="riding", bus=payload)
             else:
                 indoors = lot["kind"] not in ("garden", "market", "stop") and s["use"] is not None and \
                     lot["rect"][0] <= payload[0] <= lot["rect"][2] and lot["rect"][1] <= payload[1] <= lot["rect"][3]

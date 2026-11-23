@@ -1,6 +1,15 @@
 {
- "note": "Rules of the road and residents' cars (docs/specs/domains/LIVING_CITY.md 3.4, ADR-0009). All values are [ASSUMPTION] until tuned. Distances in metres, times in real seconds unless named _min. car_share 0.6 and drive_min_m 0 since the owner asked for busier streets (2026-11-22); vans (CITY-040) and through traffic (CITY-069) are per day from the seed. Residents' cars, vans and through traffic keep to 50 km/h on every street; the player's car goes up to 100 km/h (owner, 2026-11-22; limits were 30 and 40).",
- "car_share": 0.6,
+ "note": "Rules of the road and residents' cars (docs/specs/domains/LIVING_CITY.md 3.4, ADR-0009). All values are [ASSUMPTION] until tuned. Distances in metres, times in real seconds unless named _min. car_share 0.6 and drive_min_m 0 since the owner asked for busier streets (2026-11-22); vans (CITY-040) and through traffic (CITY-069) are per day from the seed. Residents' cars, vans and through traffic keep to 50 km/h on every street; the player's car goes up to 100 km/h (owner, 2026-11-22; limits were 30 and 40). Car ownership by home (CITY-081, owner 2026-11-23): independent houses own a car, row homes about half, flats in the centre mostly not (0.1 [ASSUMPTION]) and take the bus. Roads outside the wall (CITY-082): outer_* values. Buses (CITY-083, CITY-084): 'buses'; the lines and stops are World/<city>/transit.json.",
+ "car_share": {
+  "house": 1.0,
+  "row": 0.5,
+  "flat": 0.1
+ },
+ "home_kind": {
+  "community": "house",
+  "rows": "row",
+  "default": "flat"
+ },
  "no_drive_roles": [
   "courier",
   "utility",
@@ -15,6 +24,11 @@
   "inspect"
  ],
  "drive_min_m": 0.0,
+ "last_drive_min": 60.0,
+ "home_by_min": [
+  10.0,
+  30.0
+ ],
  "gate_road_m": 80.0,
  "gate_margin_s": 60.0,
  "gate_light_allowance": 1.0,
@@ -35,6 +49,22 @@
  "bay_clear_of_junction": 17.0,
  "bay_clear_of_lamp": 3.5,
  "bay_clear_of_front": 11.0,
+ "outer_limit_kmh": 30.0,
+ "outer_stop": 4.0,
+ "outer_end_stop": 1.0,
+ "outer_reach_m": 60.0,
+ "driveway_shift": 4.5,
+ "outer_bays": {
+  "mall": 24,
+  "shop": 6,
+  "food": 6,
+  "health": 4,
+  "school": 6,
+  "garden": 6,
+  "furniture": 8,
+  "default": 3
+ },
+ "lane_bay_every_m": 12.0,
  "signals_on_through": true,
  "stop_line": 12.0,
  "crossing_at": 10.0,
@@ -88,5 +118,19 @@
    1,
    0
   ]
+ },
+ "buses": {
+  "length": 11.0,
+  "dwell_s": 20.0,
+  "layover_min": 4.0,
+  "ride_min_m": 450.0,
+  "stop_reach_m": 300.0,
+  "board_margin_min": 1.0,
+  "walk_share_max": 0.6,
+  "no_ride_roles": [],
+  "day_end_min": 20.0,
+  "signal_s": 30.0,
+  "junction_s": 4.0,
+  "pull_s": 6.0
  }
 }

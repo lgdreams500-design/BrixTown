@@ -1274,6 +1274,9 @@ function prop(p, b) {
   if (BLOB_SIZE[p.kind]) { const [a, c] = BLOB_SIZE[p.kind], ax = p.along !== "z"; BLOBS.push([x, z, ax ? a : c, ax ? c : a]); }
   if (p.kind === "plant") return plant(p);                 // garden planting (CITY-017, WLD-040)
   if (p.kind === "carpark") return Outlet.carpark(p, b);   // the furniture outlet's car park (outlet.js)
+  if (p.kind === "paving") {                               // a paved forecourt where a mall's car park was (WLD-054)
+    const [w, d] = p.size; world.flat(x - w / 2, z - d / 2, x + w / 2, z + d / 2, g + .012, C.paving, 7); return;
+  }
   if (p.set === "dress" && Dress.prop(p, b)) return;      // street dressing (dressing.js, WLD-028)
   if (p.kind === "lantern") {                              // a wall lantern: glass on an iron arm, and the light it gives (watts as in the Blender scene)
     const o = p.out, lx = x + o[0] * .32, lz = z + o[1] * .32, h = p.height;
@@ -2393,8 +2396,8 @@ addEventListener("keydown", e => {
   else if (e.code === "KeyI") Life.panel("wallet");     // money and what you carry
   else if (e.code === "KeyJ") Life.panel("quests");     // the quest log
   else if (e.code === "KeyP") Life.panel("property");   // what you own and rent, and the building you stand in (life.js, estate.js)
-  else if (e.code === "KeyF" && pl.pose === 4) Sound.horn(true);
-  else if (e.code === "KeyR" && pl.pose === 4) Sound.radio();
+  else if (e.code === "KeyF" && pl.pose === 4 && !Cars.riding()) Sound.horn(true);   // no horn or radio from a bus seat
+  else if (e.code === "KeyR" && pl.pose === 4 && !Cars.riding()) Sound.radio();
   else if (e.code === "KeyM") { Sound.act("map"); showMap = !showMap; $("bigmap").style.display = showMap ? "flex" : "none"; }
   else if (e.code === "KeyH") $("keys").style.display = $("keys").style.display === "none" ? "block" : "none";
   else if (e.code.startsWith("Bracket")) Sound.act("clock");

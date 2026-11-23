@@ -692,5 +692,21 @@ class TheFurnitureOutlet(unittest.TestCase):
         self.assertTrue(all(r["near"].get("furniture") == l["id"] for r in W["residents"]))
 
 
+class TheMallCarParks(unittest.TestCase):
+    def test_WLD_054_small_car_parks_with_a_bus_stop(self):    # owner 2026-11-23: "Malls to ~1/4, bus stop"
+        import math
+        stops = {s["id"]: s["at"] for s in W["transit"]["stops"]}
+        served = {sid for ln in W["transit"]["lines"] for sid in ln["stops"]}
+        malls = [b for b in W["blocks"] if b.get("template") == "mall" and any(p["kind"] == "carpark" for p in b["props"])]
+        self.assertEqual(len(malls), 3)
+        for b in malls:
+            cp = next(p for p in b["props"] if p["kind"] == "carpark")
+            self.assertLessEqual(cp["cars"], 50, b["id"])                  # a quarter of what they had (160, 160, 200)
+            self.assertTrue(any(p["kind"] == "paving" for p in b["props"]), b["id"])
+            near = [sid for sid in served if math.dist(stops[sid], cp["pos"]) < 90]
+            self.assertTrue(near, b["id"])                                  # a bus stop at the car park
+        self.assertLessEqual(sum(p.get("cars", 0) for b in W["blocks"] for p in b["props"] if p["kind"] == "carpark"), 170)
+
+
 if __name__ == "__main__":
     unittest.main()

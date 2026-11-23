@@ -64,7 +64,7 @@ what is production-ready in the pinned engine version before PH1 work starts `[O
 ## 3. Requirements
 
 Status of all rows: `proposed`, except CITY-043 to CITY-049 and CITY-060 to CITY-067, which the owner
-accepted on 2026-11-22, and CITY-068 and CITY-069, which follow from the owner's answers the same day (Q-29; "both" for busier streets), and CITY-072 to CITY-076 (crash damage), from the owner's request and answers the same day. "Proven by" names the test in `Tools/citysim/test_citysim.py`, or for cars in `Tools/citysim/test_traffic.py`.
+accepted on 2026-11-22, and CITY-068 and CITY-069, which follow from the owner's answers the same day (Q-29; "both" for busier streets), and CITY-072 to CITY-076 (crash damage), from the owner's request and answers the same day, and CITY-081 to CITY-084 (cars by kind of home, the roads outside the wall, buses), from the owner's request and answers on 2026-11-23 (F-VEH-TRANSIT level 2 "Network", the tram kept). "Proven by" names the test in `Tools/citysim/test_citysim.py`, or for cars in `Tools/citysim/test_traffic.py`.
 
 ### 3.1 Map, lots and buildings
 
@@ -132,7 +132,10 @@ has the reasoning.
 | CITY-049 | Near a car or person that a player controls, resident cars shall slow, wait or stop instead of colliding; once clear, each shall rejoin its calculated timeline without speeding up past the limit. A delayed car catches up only by skipping its next stop; one more than 10 minutes `[ASSUMPTION]` behind is unloaded and placed back on its timeline out of sight (Q-25). | F-VEH-TRAFFIC | 2 | P0 | |
 | CITY-068 | A car owner who works out of town shall drive out through a town gate instead of taking the tram, leaving early enough to be through the gate when the tram would have left; while away the car is off the map; it comes back through the same gate when the tram would have brought them back, and drives on to their next place (Q-29). Commuters without a car keep the tram (CITY-041). | F-VEH-TRAFFIC | 2 | P1 | `test_commuters_with_a_car_drive_out_and_back` |
 | CITY-069 | Cars from elsewhere shall pass through town from one gate to another, a number each hour set in data, routed and queued like residents' cars and off the map before and after. | F-VEH-TRAFFIC | 2 | P1 | `test_through_traffic_crosses_town` |
-
+| CITY-081 | Whether a household has a car shall follow its kind of home (`car_share` in `traffic.json`, by `home_kind`): every independent house outside the wall has one, about half the row homes, and few flats in the centre (10 % `[ASSUMPTION]`); people with no car of their own walk or take the bus (CITY-084). Owner, 2026-11-23. | F-VEH-TRAFFIC | 2 | P0 | `test_CITY_081_cars_by_kind_of_home` |
+| CITY-082 | The roads outside the wall shall be part of the road network, worked out from the data (roads.json `links`, block `lanes`): one lane each way, give way where they meet, a turn at a turning circle or dead end, no junction where one road runs on into another. Each house there has a driveway beside its front path as its car's home bay; other places there have kerbside bays, and the communities' lanes have parking along them. Cars from outside drive in and out of town through the gates; a commuter from outside leaves the map at the gate. | F-VEH-TRAFFIC | 2 | P0 | `test_CITY_082_houses_outside_the_wall_drive_their_lanes` |
+| CITY-083 | Bus lines shall run on the road network from `World/<city>/transit.json`: each line out to its last stop and back, leaving its first stop every `every_min` minutes from `first` to `last` while a run can end before the day does; never leaving a stop before its timetabled time (which allows a red light at every signalled junction, `buses` in `traffic.json`), waiting its dwell at every stop, queuing and giving way like cars, with more room ahead and behind for its length. A stop is a bay on each side of the street that no car parks in. Buses are off the map outside service hours. | F-VEH-TRANSIT | 2 | P1 | `test_CITY_083_buses_keep_to_their_lines` |
+| CITY-084 | A resident with no car of their own whose walk is longer than `ride_min_m` shall take a bus instead when one gets them there by the time the walk would have, from a stop within `stop_reach_m` of where they are to one near where they go, and the two walks together are short beside the walk it replaces: they stay where they were a little longer, walk to the stop, wait, ride (their position is the bus's), and walk on. Players can ride a bus in the slice (E at a bus standing at a stop). | F-VEH-TRANSIT | 2 | P0 | `test_CITY_084_residents_without_a_car_ride_the_bus` |
 #### Cars players drive
 
 | ID | Requirement | Feature | Lvl | Pri | Proven by |
@@ -181,7 +184,9 @@ Numbers for cars, also `[ASSUMPTION]`, in `World/rules/traffic.json`:
 
 | Number | Value | Note |
 |---|---|---|
-| Households with a car | 60 % | CITY-044. Was 30 %; raised for busier streets (owner, 2026-11-22) |
+| Households with a car | houses 100 %, row homes 50 %, flats 10 % | CITY-081 (owner, 2026-11-23). Was 60 % of homes inside the wall, none outside |
+| Buses | 3 lines, every 15 or 20 minutes from about 06:00; 27 buses on day 16 | CITY-083, `transit.json`; the timetable allows a red light at each signalled junction (30 s) |
+| Bus rides | a walk of 450 m or more, stops within 300 m, the two walks at most 60 % of the walk | CITY-084 |
 | Shortest trip driven | 0 m | Car owners drive every errand (owner, 2026-11-22). Was 600, then 250 m (§5.1) |
 | Vans | 6, from the two depots, 3 rounds of 4 shops from 07:30, 6 min at each stop, 20 at the depot | CITY-040 |
 | Cars passing through | 0 to 8 an hour, most at 08:00 and 17:00 | CITY-069 |
@@ -242,6 +247,7 @@ up to 42 on the road at once, no overlap, no crossing movements in a box, nobody
 | 0.1.0 | 2026-11-21 | First version, with the city-in-a-box prototype and its tests. |
 | 0.2.0 | 2026-11-22 | Cars and real traffic drafted after the owner's picks (`F-VEH-DRIVE` 2, `F-VEH-TRAFFIC` 2 from the first slice): CITY-043 to CITY-049 for streets and residents' cars, CITY-060 to CITY-067 for cars players drive, car numbers in §4, Q-25 to Q-28, ADR-0009. All proposed. |
 | 0.2.1 | 2026-11-22 | Owner accepted CITY-043 to CITY-049, CITY-060 to CITY-067 and ADR-0009, and the suggested answers to Q-25 to Q-28, now written into CITY-049, CITY-060, CITY-064 and CITY-066. |
+| 0.4.0 | 2026-11-23 | Cars by kind of home, the roads outside the wall driven, buses (owner: "residents outside the core town living in independent house own the cars"; F-VEH-TRANSIT level 2, keep the tram; one PR): CITY-081 to CITY-084. 548 cars (415 houses, 121 row homes, 12 flats), 27 buses on 3 lines, about 300 bus rides and 4,600 vehicle trips on day 16. Fixes found on the way: a car enters a junction only with room beyond for its whole length and for any car already turning into that lane (no more gridlock with buses); a driver never leaves before their plan frees them; a household whose car would be out near midnight walks that day. |
 | 0.3.7 | 2026-11-22 | CITY-017 gardens (owner's pick, F-GARDEN level 1): garden plants (box, lilac, hydrangea, rose, lavender, daffodil, tulip, aster) look as their dates in `vegetation.json` "plants" say on any day, worked out by `Vegetation.plant()` with no stored state (`test_CITY_017_planting_follows_the_seasons`); something flowers every day from early spring to the end of autumn, the evergreens stay green in winter. Gardeners tend the new borders at places added to each garden's flowerbed places (`test_CITY_017_gardeners_tend_the_borders`). |
 | 0.3.6 | 2026-11-22 | Pavements, zebras, lights and bays (owner): people walk on pavement lines and cross on zebras, cars wait for them; signals at every junction of a through street; bays kept clear of things at the kerb and of shop fronts. §4 numbers. |
 | 0.3.5 | 2026-11-22 | CITY-072: things break at any speed, not only above 20 km/h (owner). |

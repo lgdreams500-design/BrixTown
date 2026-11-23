@@ -8,6 +8,10 @@
 // commuters who boarded the tram sit in it until it leaves the map (and on the way back, from the edge to their stop).
 // Cabins are open frames, no glass, so the people inside show.
 //
+// Buses (CITY-083, CITY-084, k 2 in D.cars) run their lines as traffic.py worked them out: a long soft box in the line's
+// colour with open windows, a driver from out of town, and the residents who ride it (piece kind 3 with the bus) on the
+// benches. The player can ride one too: E at a bus standing at a stop gets on, E again when it next stands at a stop gets off.
+//
 // The player can get into any parked car or van (E), drive it, and leave it anywhere. A car the player has moved stays
 // where it was left for the rest of the visit and no longer follows its owner's day. This is a stand-in for CITY-060 to
 // CITY-063 (buying your own car comes with money; resident cars do not yet stop for the player, CITY-049).
@@ -30,6 +34,9 @@ var Cars = (() => {
     { name: "pickup", L: 4.0, W: 1.70, seat: [.35, -.35], back: null },
     { name: "van", L: 4.6, W: 1.90, seat: [1.25, -.42], back: null },
   ];
+  const BUS = { name: "bus", L: 11.0, W: 2.5, seat: [4.5, -.72], seatY: .95, back: null, ca: 0 };
+  const LINES = (D.roads && D.roads.lines) || [];
+  const isBus = k => CARS[k].k === 2;
   const taken = new Map();                               // car -> where the player left it
   let drv = null, saved = null, PAINT = null, ROOF = null, byCar = null, riders = null;
   const people = new Map();                              // looks for people who are not residents: van drivers, visitors
@@ -43,13 +50,14 @@ var Cars = (() => {
       lods: md.lods.map(l => ({ p: Float32Array.from(l.p), n: Float32Array.from(l.n, v => v / 100), t: Uint8Array.from(l.t) })) };
   }
   const model = k => {
+    if (isBus(k)) return BUS;
     if (CM) return MESH[CARS[k].k === 1 ? "van" : (h => h < .4 ? "small" : h < .72 ? "estate" : "pickup")(hash(k, "model"))];
     return CARS[k].k === 1 ? MODELS[4] : MODELS[Math.floor(hash(k, "model") * 4)];
   };
   const dims = k => { const md = model(k); return [md.L, md.W, md.ca || 0]; };
 
   function at(k, m) {                                    // {x, z, hx, hz, moving} of car k at minute m, or null when out of town
-    if (drv && drv.k === k) return { x: drv.x, z: drv.z, hx: Math.cos(drv.a), hz: Math.sin(drv.a), moving: Math.abs(drv.v) > .2 };
+    if (drv && drv.k === k && !drv.ride) return { x: drv.x, z: drv.z, hx: Math.cos(drv.a), hz: Math.sin(drv.a), moving: Math.abs(drv.v) > .2 };
     if (taken.has(k)) return taken.get(k);
     const c = CARS[k]; let bay = c.home;
     for (const t of c.trips) {
@@ -112,7 +120,26 @@ var Cars = (() => {
     for (const s of two ? [-1, 1] : [-1]) box(F, a - .32, a - .2, s * Math.abs(w) - .24, s * Math.abs(w) + .24, y, y + .55, col);
   }
 
+  function busBody(m, c, k, y) {                        // a long soft box in its line's colour, open windows, benches inside
+    const F = frame(m, c), L = BUS.L, W = BUS.W, h = L / 2, w = W / 2, ln = LINES[CARS[k].l] || {};
+    const col = C[ln.colour] || C.teal, cream = C.cream, inside = [.24, .17, .12], trim = [.30, .29, .29];
+    soft(F, -h, h, -w, w, y + .36, y + 1.28, col, .16);                              // the lower body
+    box(F, -h + .05, h - .05, -w - .012, w + .012, y + 1.02, y + 1.14, cream);       // a cream band round it
+    for (let a = -h + .25; a <= h - .2; a += 1.55) pillars(F, a, a, w - .1, y + 1.28, y + 2.36, cream);   // window posts, both sides
+    box(F, -h, -h + .22, -w + .1, w - .1, y + 1.28, y + 2.36, col);                  // the back
+    box(F, h - .2, h, -w + .1, -w + .45, y + 1.28, y + 2.36, cream); box(F, h - .2, h, w - .45, w - .1, y + 1.28, y + 2.36, cream);   // the open front
+    soft(F, -h - .02, h + .02, -w - .02, w + .02, y + 2.34, y + 2.72, cream, .12);  // the roof
+    box(F, h - .06, h + .05, -w + .45, w - .45, y + 2.06, y + 2.3, [.86, .80, .64], 2);   // the destination board, lit
+    disc(F, h + .06, y + 2.18, -w + .3, .14, .06, "a", col);                          // the line's colour beside it
+    box(F, h - 1.0, h - .7, -w + .2, w - .2, y + 1.28, y + 1.42, inside);             // the dashboard
+    for (let a = -h + .9; a < h - 1.6; a += 1.1) for (const s of [-1, 1]) box(F, a - .25, a + .25, s * (w - .55) - .3, s * (w - .55) + .3, y + .95, y + 1.05, inside);   // benches
+    lamps(F, h - .02, y + .72, [-w + .4, w - .4], .17, cream); lamps(F, -h + .02, y + .7, [-w + .35, w - .35], .1, [.55, .25, .2]);
+    box(F, h - .08, h + .08, -w + .1, w - .1, y + .36, y + .5, trim); box(F, -h - .08, -h + .08, -w + .1, w - .1, y + .36, y + .5, trim);
+    wheels(F, y, L, W, .5, [h - 2.1, -h + 2.5]);
+  }
+
   function body(m, c, k, y) {
+    if (isBus(k)) return busBody(m, c, k, y);
     if (CM) return meshCar(m, c, k, y, model(k));
     if (!PAINT) { PAINT = [C.teal, C.terracotta, C.ochre, C.blue, C.olive, C.cream, C.plum, [.55, .40, .34], [.42, .47, .40]]; ROOF = [C.cream, [.74, .70, .62]]; }
     const md = model(k), r = (t) => hash(k, t), F = frame(m, c), L = md.L, W = md.W, h = L / 2, w = W / 2;
@@ -221,6 +248,14 @@ var Cars = (() => {
   }
   function occupants(k, c, minute) {                     // [[look, along, across]] of the people in car k now
     const md = model(k), out = [];
+    if (isBus(k)) {                                      // a bus: its driver, the residents riding it, and the player if on it
+      if (!byCar) drivers();
+      out.push([stranger("bus" + k, "utility"), md.seat[0], md.seat[1]]);
+      const on = (byCar.get(k) || []).filter(v => minute >= v[0] && minute < v[1]).map(v => looks[v[2]]);
+      if (drv && drv.k === k) on.unshift(playerLook);
+      on.slice(0, 14).forEach((look, n) => out.push([look, BUS.L / 2 - 2.3 - Math.floor(n / 2) * 1.1, (n % 2 ? 1 : -1) * (BUS.W / 2 - .55)]));
+      return out;
+    }
     if (drv && drv.k === k) return [[playerLook, md.seat[0], md.seat[1]]];
     if (taken.has(k)) return out;
     if (!byCar) drivers();
@@ -310,16 +345,24 @@ var Cars = (() => {
     if (drv || p.pose > 1) return null;
     let best = null;
     for (let k = 0; k < CARS.length; k++) {
-      const c = at(k, minute);
-      if (!c || c.moving || Math.abs(c.x - p.x) > 5 || Math.abs(c.z - p.z) > 5 || Math.abs(p.y - groundBase(c.x, c.z)) > 1.2) continue;
+      const c = at(k, minute), far = isBus(k) ? 8 : 5;
+      if (!c || c.moving || Math.abs(c.x - p.x) > far || Math.abs(c.z - p.z) > far || Math.abs(p.y - groundBase(c.x, c.z)) > 1.2) continue;
       const h = hits(c, k, p.x, p.z, 1.5); if (!h) continue;   // within arm's reach of the door
       const d = Math.hypot(c.x - p.x, c.z - p.z);
-      if (!best || d < best.d) best = { type: "car", label: CARS[k].k === 1 ? "Drive this van" : "Drive this car", k, d, x: c.x, z: c.z, y: groundBase(c.x, c.z) };
+      const label = isBus(k) ? "Ride the bus" + (LINES[CARS[k].l] ? " (" + LINES[CARS[k].l].name + ")" : "") : CARS[k].k === 1 ? "Drive this van" : "Drive this car";
+      if (!best || d < best.d) best = { type: "car", label, k, d, x: c.x, z: c.z, y: groundBase(c.x, c.z), ride: isBus(k) };
     }
     return best;
   }
   function enter(t, p, cam, minute) {
     const c = at(t.k, minute);
+    if (t.ride) {                                        // on the bus: a passenger, carried where it goes (CITY-084)
+      drv = { k: t.k, ride: true, x: c.x, z: c.z, a: Math.atan2(c.hz, c.hx), v: 0, c };
+      saved = { dist: cam.dist, fp: cam.fp };
+      cam.dist = Math.max(cam.dist, 11); cam.fp = false;
+      p.pose = 4; p.vy = 0;
+      return;
+    }
     drv = { k: t.k, x: c.x, z: c.z, a: Math.atan2(c.hz, c.hx), v: 0 };
     // out of the bay onto the road first, as residents' cars do: a sideways step down off the pavement, if there is room
     const g = groundBase(c.x, c.z);
@@ -333,6 +376,13 @@ var Cars = (() => {
   }
   function leave(p, cam) {
     if (!drv) return;
+    if (drv.ride) {                                      // off the bus only where it stands at a stop, on the kerb side
+      const c = drv.c; if (!c || c.moving) return;
+      const x = c.x + c.hx * 3.6 - c.hz * (BUS.W / 2 + .9), z = c.z + c.hz * 3.6 + c.hx * (BUS.W / 2 + .9);
+      p.x = x; p.z = z; p.y = groundBase(x, z); p.pose = 0; p.vy = 0; p.yaw = yawOf(c.hx, c.hz);
+      if (saved) { cam.dist = saved.dist; cam.fp = saved.fp; }
+      drv = null; return;
+    }
     const c = at(drv.k, 0), [L, W] = dims(drv.k);
     taken.set(drv.k, { x: c.x, z: c.z, hx: c.hx, hz: c.hz, moving: false });
     const y = groundBase(c.x, c.z) + .9;                 // out by the driver's door, else the other side, else the back
@@ -358,7 +408,16 @@ var Cars = (() => {
     }
     return true;
   }
+  function ride(p, cam, minute, dt) {                    // the player on a bus: where the bus is, in a seat near the front
+    const c = at(drv.k, minute);
+    if (!c) { drv.c = Object.assign({}, drv.c, { moving: false }); return leave(p, cam); }   // out of service: everybody off
+    drv.c = c; drv.x = c.x; drv.z = c.z; drv.a = Math.atan2(c.hz, c.hx);
+    const a = BUS.L / 2 - 2.3, w = -(BUS.W / 2 - .55);
+    p.x = c.x + c.hx * a - c.hz * w; p.z = c.z + c.hz * a + c.hx * w; p.y = groundBase(c.x, c.z); p.yaw = yawOf(c.hx, c.hz); p.moving = false;
+    let d = yawOf(c.hx, c.hz) - cam.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); if (c.moving) cam.yaw += d * Math.min(1, dt * 1.5);
+  }
   function drive(dt, keys, p, cam, minute) {             // one step of the player's car: W/S speed and brake, A/D steer, Space handbrake
+    if (drv.ride) return ride(p, cam, minute, dt);
     const up = keys.KeyW || keys.ArrowUp, down = keys.KeyS || keys.ArrowDown, steer = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
     let v = drv.v;
     if (up) v += (v < 0 ? 8 : 3.2 + 2.4 * Math.min(1, TOP / 28)) * dt;   // a faster car pulls harder
@@ -389,11 +448,12 @@ var Cars = (() => {
       if (drv && drv.k === k) continue;
       const c = at(k, minute); if (!c || !c.trip || Math.abs(c.x - x) > r || Math.abs(c.z - z) > r) continue;
       const c2 = at(k, minute + dm), v = c2 ? Math.hypot(c2.x - c.x, c2.z - c.z) / (dm * D.pace) : 0;
-      out.push({ x: c.x, z: c.z, v, van: CARS[k].k === 1 });
+      out.push({ x: c.x, z: c.z, v, van: CARS[k].k !== 0 });
     }
     return out;
   }
-  const label = () => "Get out · " + Math.round(Math.abs(drv ? drv.v : 0) * 3.6) + " km/h";
+  const label = () => drv && drv.ride ? (drv.c && drv.c.moving ? "On the bus · get off at the next stop" : "Get off the bus")
+    : "Get out · " + Math.round(Math.abs(drv ? drv.v : 0) * 3.6) + " km/h";
 
   function parked(m, x, z, yaw, seed, y) {               // a car left in a car park (the furniture outlet's, FURN-020): drawn once, into the
     if (!CM) return null;                                  // town's own mesh; one of the Soft box models, its colours from the seed
@@ -403,7 +463,8 @@ var Cars = (() => {
     return [md.L, md.W];
   }
 
-  return { at, draw, tram, push, target, enter, leave, drive, label, near, parked, speed: () => drv ? drv.v : 0, driving: () => !!drv, count: CARS.length, model: k => model(k).name,
+  return { at, draw, tram, push, target, enter, leave, drive, label, near, parked, speed: () => drv && !drv.ride ? drv.v : 0, driving: () => !!drv, riding: () => !!(drv && drv.ride),
+    count: CARS.length, model: k => model(k).name,
     debugFree: (x, z, a, m) => drv ? free(x, z, a, m) : null,
     debugPlace: (x, z, a) => { if (drv) Object.assign(drv, { x, z, a, v: 0 }); } };   // for tests: put the player's car somewhere
 })();

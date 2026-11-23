@@ -10642,6 +10642,1106 @@
    ],
    "planted": -539,
    "seed": 531305
+  },
+  {
+   "id": "b_7_0_t30",
+   "species": "plane",
+   "pos": [
+    708.0,
+    212.0
+   ],
+   "planted": -825,
+   "seed": 800543
+  },
+  {
+   "id": "b_7_0_t31",
+   "species": "plane",
+   "pos": [
+    724.0,
+    212.0
+   ],
+   "planted": -408,
+   "seed": 378737
+  },
+  {
+   "id": "b_7_0_t32",
+   "species": "plane",
+   "pos": [
+    740.0,
+    212.0
+   ],
+   "planted": -252,
+   "seed": 309982
+  },
+  {
+   "id": "b_7_0_t33",
+   "species": "plane",
+   "pos": [
+    756.0,
+    212.0
+   ],
+   "planted": -240,
+   "seed": 649436
+  },
+  {
+   "id": "b_7_0_t34",
+   "species": "plane",
+   "pos": [
+    772.0,
+    212.0
+   ],
+   "planted": -503,
+   "seed": 264994
+  },
+  {
+   "id": "b_7_0_t35",
+   "species": "plane",
+   "pos": [
+    788.0,
+    212.0
+   ],
+   "planted": -440,
+   "seed": 124530
+  },
+  {
+   "id": "b_7_0_t36",
+   "species": "plane",
+   "pos": [
+    804.0,
+    212.0
+   ],
+   "planted": -231,
+   "seed": 138493
+  },
+  {
+   "id": "b_7_0_t37",
+   "species": "plane",
+   "pos": [
+    820.0,
+    212.0
+   ],
+   "planted": -317,
+   "seed": 862357
+  },
+  {
+   "id": "b_7_0_t38",
+   "species": "plane",
+   "pos": [
+    836.0,
+    212.0
+   ],
+   "planted": -720,
+   "seed": 800595
+  },
+  {
+   "id": "b_7_0_t39",
+   "species": "plane",
+   "pos": [
+    852.0,
+    212.0
+   ],
+   "planted": -660,
+   "seed": 189507
+  },
+  {
+   "id": "b_7_0_t40",
+   "species": "plane",
+   "pos": [
+    868.0,
+    212.0
+   ],
+   "planted": -200,
+   "seed": 454081
+  },
+  {
+   "id": "b_7_0_t41",
+   "species": "plane",
+   "pos": [
+    716.0,
+    225.92
+   ],
+   "planted": -381,
+   "seed": 599627
+  },
+  {
+   "id": "b_7_0_t42",
+   "species": "plane",
+   "pos": [
+    732.0,
+    225.92
+   ],
+   "planted": -790,
+   "seed": 43679
+  },
+  {
+   "id": "b_7_0_t43",
+   "species": "plane",
+   "pos": [
+    748.0,
+    225.92
+   ],
+   "planted": -402,
+   "seed": 430898
+  },
+  {
+   "id": "b_7_0_t44",
+   "species": "plane",
+   "pos": [
+    764.0,
+    225.92
+   ],
+   "planted": -614,
+   "seed": 877756
+  },
+  {
+   "id": "b_7_0_t45",
+   "species": "plane",
+   "pos": [
+    780.0,
+    225.92
+   ],
+   "planted": -348,
+   "seed": 189783
+  },
+  {
+   "id": "b_7_0_t46",
+   "species": "plane",
+   "pos": [
+    796.0,
+    225.92
+   ],
+   "planted": -275,
+   "seed": 504357
+  },
+  {
+   "id": "b_7_0_t47",
+   "species": "plane",
+   "pos": [
+    812.0,
+    225.92
+   ],
+   "planted": -693,
+   "seed": 570664
+  },
+  {
+   "id": "b_7_0_t48",
+   "species": "plane",
+   "pos": [
+    828.0,
+    225.92
+   ],
+   "planted": -501,
+   "seed": 96260
+  },
+  {
+   "id": "b_7_0_t49",
+   "species": "plane",
+   "pos": [
+    844.0,
+    225.92
+   ],
+   "planted": -502,
+   "seed": 105031
+  },
+  {
+   "id": "b_7_0_t50",
+   "species": "plane",
+   "pos": [
+    860.0,
+    225.92
+   ],
+   "planted": -760,
+   "seed": 523439
+  },
+  {
+   "id": "b_7_0_t51",
+   "species": "plane",
+   "pos": [
+    876.0,
+    225.92
+   ],
+   "planted": -295,
+   "seed": 116918
+  },
+  {
+   "id": "b_7_0_t52",
+   "species": "plane",
+   "pos": [
+    708.0,
+    239.84
+   ],
+   "planted": -806,
+   "seed": 665801
+  },
+  {
+   "id": "b_7_0_t53",
+   "species": "plane",
+   "pos": [
+    724.0,
+    239.84
+   ],
+   "planted": -833,
+   "seed": 239703
+  },
+  {
+   "id": "b_7_0_t54",
+   "species": "plane",
+   "pos": [
+    740.0,
+    239.84
+   ],
+   "planted": -708,
+   "seed": 694342
+  },
+  {
+   "id": "b_7_0_t55",
+   "species": "plane",
+   "pos": [
+    756.0,
+    239.84
+   ],
+   "planted": -861,
+   "seed": 542898
+  },
+  {
+   "id": "b_7_0_t56",
+   "species": "plane",
+   "pos": [
+    772.0,
+    239.84
+   ],
+   "planted": -656,
+   "seed": 643721
+  },
+  {
+   "id": "b_7_0_t57",
+   "species": "plane",
+   "pos": [
+    788.0,
+    239.84
+   ],
+   "planted": -239,
+   "seed": 279131
+  },
+  {
+   "id": "b_7_0_t58",
+   "species": "plane",
+   "pos": [
+    804.0,
+    239.84
+   ],
+   "planted": -712,
+   "seed": 722749
+  },
+  {
+   "id": "b_7_0_t59",
+   "species": "plane",
+   "pos": [
+    820.0,
+    239.84
+   ],
+   "planted": -775,
+   "seed": 794859
+  },
+  {
+   "id": "b_7_0_t60",
+   "species": "plane",
+   "pos": [
+    836.0,
+    239.84
+   ],
+   "planted": -776,
+   "seed": 842837
+  },
+  {
+   "id": "b_7_0_t61",
+   "species": "plane",
+   "pos": [
+    852.0,
+    239.84
+   ],
+   "planted": -358,
+   "seed": 425786
+  },
+  {
+   "id": "b_7_0_t62",
+   "species": "plane",
+   "pos": [
+    868.0,
+    239.84
+   ],
+   "planted": -648,
+   "seed": 544465
+  },
+  {
+   "id": "b_7_0_t63",
+   "species": "plane",
+   "pos": [
+    716.0,
+    253.76
+   ],
+   "planted": -312,
+   "seed": 50686
+  },
+  {
+   "id": "b_7_0_t64",
+   "species": "plane",
+   "pos": [
+    732.0,
+    253.76
+   ],
+   "planted": -554,
+   "seed": 497376
+  },
+  {
+   "id": "b_7_0_t65",
+   "species": "plane",
+   "pos": [
+    748.0,
+    253.76
+   ],
+   "planted": -240,
+   "seed": 750015
+  },
+  {
+   "id": "b_7_0_t66",
+   "species": "plane",
+   "pos": [
+    764.0,
+    253.76
+   ],
+   "planted": -846,
+   "seed": 148709
+  },
+  {
+   "id": "b_7_0_t67",
+   "species": "plane",
+   "pos": [
+    780.0,
+    253.76
+   ],
+   "planted": -385,
+   "seed": 896901
+  },
+  {
+   "id": "b_7_0_t68",
+   "species": "plane",
+   "pos": [
+    796.0,
+    253.76
+   ],
+   "planted": -752,
+   "seed": 2787
+  },
+  {
+   "id": "b_7_0_t69",
+   "species": "plane",
+   "pos": [
+    812.0,
+    253.76
+   ],
+   "planted": -664,
+   "seed": 969088
+  },
+  {
+   "id": "b_7_0_t70",
+   "species": "plane",
+   "pos": [
+    828.0,
+    253.76
+   ],
+   "planted": -464,
+   "seed": 380355
+  },
+  {
+   "id": "b_7_0_t71",
+   "species": "plane",
+   "pos": [
+    844.0,
+    253.76
+   ],
+   "planted": -717,
+   "seed": 619902
+  },
+  {
+   "id": "b_7_0_t72",
+   "species": "plane",
+   "pos": [
+    860.0,
+    253.76
+   ],
+   "planted": -578,
+   "seed": 771227
+  },
+  {
+   "id": "b_7_0_t73",
+   "species": "plane",
+   "pos": [
+    876.0,
+    253.76
+   ],
+   "planted": -712,
+   "seed": 304739
+  },
+  {
+   "id": "b_7_0_t74",
+   "species": "plane",
+   "pos": [
+    708.0,
+    267.68
+   ],
+   "planted": -455,
+   "seed": 234731
+  },
+  {
+   "id": "b_7_0_t75",
+   "species": "plane",
+   "pos": [
+    724.0,
+    267.68
+   ],
+   "planted": -277,
+   "seed": 812562
+  },
+  {
+   "id": "b_7_0_t76",
+   "species": "plane",
+   "pos": [
+    740.0,
+    267.68
+   ],
+   "planted": -718,
+   "seed": 461572
+  },
+  {
+   "id": "b_7_0_t77",
+   "species": "plane",
+   "pos": [
+    756.0,
+    267.68
+   ],
+   "planted": -349,
+   "seed": 857505
+  },
+  {
+   "id": "b_7_0_t78",
+   "species": "plane",
+   "pos": [
+    772.0,
+    267.68
+   ],
+   "planted": -644,
+   "seed": 962917
+  },
+  {
+   "id": "b_7_0_t79",
+   "species": "plane",
+   "pos": [
+    788.0,
+    267.68
+   ],
+   "planted": -218,
+   "seed": 657352
+  },
+  {
+   "id": "b_7_0_t80",
+   "species": "plane",
+   "pos": [
+    804.0,
+    267.68
+   ],
+   "planted": -737,
+   "seed": 937685
+  },
+  {
+   "id": "b_7_0_t81",
+   "species": "plane",
+   "pos": [
+    820.0,
+    267.68
+   ],
+   "planted": -400,
+   "seed": 873567
+  },
+  {
+   "id": "b_7_0_t82",
+   "species": "plane",
+   "pos": [
+    836.0,
+    267.68
+   ],
+   "planted": -748,
+   "seed": 717894
+  },
+  {
+   "id": "b_7_0_t83",
+   "species": "plane",
+   "pos": [
+    852.0,
+    267.68
+   ],
+   "planted": -600,
+   "seed": 599302
+  },
+  {
+   "id": "b_7_0_t84",
+   "species": "plane",
+   "pos": [
+    868.0,
+    267.68
+   ],
+   "planted": -406,
+   "seed": 162234
+  },
+  {
+   "id": "b_7_0_t85",
+   "species": "plane",
+   "pos": [
+    1040.0,
+    212.0
+   ],
+   "planted": -673,
+   "seed": 32467
+  },
+  {
+   "id": "b_7_0_t86",
+   "species": "plane",
+   "pos": [
+    1056.0,
+    212.0
+   ],
+   "planted": -530,
+   "seed": 13583
+  },
+  {
+   "id": "b_7_0_t87",
+   "species": "plane",
+   "pos": [
+    1072.0,
+    212.0
+   ],
+   "planted": -756,
+   "seed": 435963
+  },
+  {
+   "id": "b_7_0_t88",
+   "species": "plane",
+   "pos": [
+    1088.0,
+    212.0
+   ],
+   "planted": -373,
+   "seed": 538034
+  },
+  {
+   "id": "b_7_0_t89",
+   "species": "plane",
+   "pos": [
+    1104.0,
+    212.0
+   ],
+   "planted": -210,
+   "seed": 941604
+  },
+  {
+   "id": "b_7_0_t90",
+   "species": "plane",
+   "pos": [
+    1120.0,
+    212.0
+   ],
+   "planted": -275,
+   "seed": 479419
+  },
+  {
+   "id": "b_7_0_t91",
+   "species": "plane",
+   "pos": [
+    1136.0,
+    212.0
+   ],
+   "planted": -455,
+   "seed": 659839
+  },
+  {
+   "id": "b_7_0_t92",
+   "species": "plane",
+   "pos": [
+    1152.0,
+    212.0
+   ],
+   "planted": -427,
+   "seed": 128956
+  },
+  {
+   "id": "b_7_0_t93",
+   "species": "plane",
+   "pos": [
+    1168.0,
+    212.0
+   ],
+   "planted": -413,
+   "seed": 213218
+  },
+  {
+   "id": "b_7_0_t94",
+   "species": "plane",
+   "pos": [
+    1184.0,
+    212.0
+   ],
+   "planted": -737,
+   "seed": 448762
+  },
+  {
+   "id": "b_7_0_t95",
+   "species": "plane",
+   "pos": [
+    1200.0,
+    212.0
+   ],
+   "planted": -750,
+   "seed": 972991
+  },
+  {
+   "id": "b_7_0_t96",
+   "species": "plane",
+   "pos": [
+    1048.0,
+    225.92
+   ],
+   "planted": -279,
+   "seed": 201559
+  },
+  {
+   "id": "b_7_0_t97",
+   "species": "plane",
+   "pos": [
+    1064.0,
+    225.92
+   ],
+   "planted": -475,
+   "seed": 311275
+  },
+  {
+   "id": "b_7_0_t98",
+   "species": "plane",
+   "pos": [
+    1080.0,
+    225.92
+   ],
+   "planted": -810,
+   "seed": 854189
+  },
+  {
+   "id": "b_7_0_t99",
+   "species": "plane",
+   "pos": [
+    1096.0,
+    225.92
+   ],
+   "planted": -821,
+   "seed": 172675
+  },
+  {
+   "id": "b_7_0_t100",
+   "species": "plane",
+   "pos": [
+    1112.0,
+    225.92
+   ],
+   "planted": -524,
+   "seed": 433697
+  },
+  {
+   "id": "b_7_0_t101",
+   "species": "plane",
+   "pos": [
+    1128.0,
+    225.92
+   ],
+   "planted": -347,
+   "seed": 625328
+  },
+  {
+   "id": "b_7_0_t102",
+   "species": "plane",
+   "pos": [
+    1144.0,
+    225.92
+   ],
+   "planted": -559,
+   "seed": 45375
+  },
+  {
+   "id": "b_7_0_t103",
+   "species": "plane",
+   "pos": [
+    1160.0,
+    225.92
+   ],
+   "planted": -224,
+   "seed": 163980
+  },
+  {
+   "id": "b_7_0_t104",
+   "species": "plane",
+   "pos": [
+    1176.0,
+    225.92
+   ],
+   "planted": -620,
+   "seed": 210969
+  },
+  {
+   "id": "b_7_0_t105",
+   "species": "plane",
+   "pos": [
+    1192.0,
+    225.92
+   ],
+   "planted": -767,
+   "seed": 399083
+  },
+  {
+   "id": "b_7_0_t106",
+   "species": "plane",
+   "pos": [
+    1208.0,
+    225.92
+   ],
+   "planted": -352,
+   "seed": 677177
+  },
+  {
+   "id": "b_7_0_t107",
+   "species": "plane",
+   "pos": [
+    1040.0,
+    239.84
+   ],
+   "planted": -699,
+   "seed": 644915
+  },
+  {
+   "id": "b_7_0_t108",
+   "species": "plane",
+   "pos": [
+    1056.0,
+    239.84
+   ],
+   "planted": -559,
+   "seed": 665416
+  },
+  {
+   "id": "b_7_0_t109",
+   "species": "plane",
+   "pos": [
+    1072.0,
+    239.84
+   ],
+   "planted": -756,
+   "seed": 314689
+  },
+  {
+   "id": "b_7_0_t110",
+   "species": "plane",
+   "pos": [
+    1088.0,
+    239.84
+   ],
+   "planted": -782,
+   "seed": 178739
+  },
+  {
+   "id": "b_7_0_t111",
+   "species": "plane",
+   "pos": [
+    1104.0,
+    239.84
+   ],
+   "planted": -553,
+   "seed": 375687
+  },
+  {
+   "id": "b_7_0_t112",
+   "species": "plane",
+   "pos": [
+    1120.0,
+    239.84
+   ],
+   "planted": -309,
+   "seed": 90356
+  },
+  {
+   "id": "b_7_0_t113",
+   "species": "plane",
+   "pos": [
+    1136.0,
+    239.84
+   ],
+   "planted": -530,
+   "seed": 420046
+  },
+  {
+   "id": "b_7_0_t114",
+   "species": "plane",
+   "pos": [
+    1152.0,
+    239.84
+   ],
+   "planted": -590,
+   "seed": 216118
+  },
+  {
+   "id": "b_7_0_t115",
+   "species": "plane",
+   "pos": [
+    1168.0,
+    239.84
+   ],
+   "planted": -714,
+   "seed": 974384
+  },
+  {
+   "id": "b_7_0_t116",
+   "species": "plane",
+   "pos": [
+    1184.0,
+    239.84
+   ],
+   "planted": -729,
+   "seed": 111151
+  },
+  {
+   "id": "b_7_0_t117",
+   "species": "plane",
+   "pos": [
+    1200.0,
+    239.84
+   ],
+   "planted": -805,
+   "seed": 841576
+  },
+  {
+   "id": "b_7_0_t118",
+   "species": "plane",
+   "pos": [
+    1048.0,
+    253.76
+   ],
+   "planted": -766,
+   "seed": 800341
+  },
+  {
+   "id": "b_7_0_t119",
+   "species": "plane",
+   "pos": [
+    1064.0,
+    253.76
+   ],
+   "planted": -282,
+   "seed": 457807
+  },
+  {
+   "id": "b_7_0_t120",
+   "species": "plane",
+   "pos": [
+    1080.0,
+    253.76
+   ],
+   "planted": -785,
+   "seed": 912152
+  },
+  {
+   "id": "b_7_0_t121",
+   "species": "plane",
+   "pos": [
+    1096.0,
+    253.76
+   ],
+   "planted": -318,
+   "seed": 471835
+  },
+  {
+   "id": "b_7_0_t122",
+   "species": "plane",
+   "pos": [
+    1112.0,
+    253.76
+   ],
+   "planted": -258,
+   "seed": 675467
+  },
+  {
+   "id": "b_7_0_t123",
+   "species": "plane",
+   "pos": [
+    1128.0,
+    253.76
+   ],
+   "planted": -491,
+   "seed": 467725
+  },
+  {
+   "id": "b_7_0_t124",
+   "species": "plane",
+   "pos": [
+    1144.0,
+    253.76
+   ],
+   "planted": -313,
+   "seed": 662651
+  },
+  {
+   "id": "b_7_0_t125",
+   "species": "plane",
+   "pos": [
+    1160.0,
+    253.76
+   ],
+   "planted": -460,
+   "seed": 857841
+  },
+  {
+   "id": "b_7_0_t126",
+   "species": "plane",
+   "pos": [
+    1176.0,
+    253.76
+   ],
+   "planted": -409,
+   "seed": 68856
+  },
+  {
+   "id": "b_7_0_t127",
+   "species": "plane",
+   "pos": [
+    1192.0,
+    253.76
+   ],
+   "planted": -771,
+   "seed": 593137
+  },
+  {
+   "id": "b_7_0_t128",
+   "species": "plane",
+   "pos": [
+    1208.0,
+    253.76
+   ],
+   "planted": -643,
+   "seed": 157367
+  },
+  {
+   "id": "b_7_0_t129",
+   "species": "plane",
+   "pos": [
+    1040.0,
+    267.68
+   ],
+   "planted": -721,
+   "seed": 18765
+  },
+  {
+   "id": "b_7_0_t130",
+   "species": "plane",
+   "pos": [
+    1056.0,
+    267.68
+   ],
+   "planted": -248,
+   "seed": 599152
+  },
+  {
+   "id": "b_7_0_t131",
+   "species": "plane",
+   "pos": [
+    1072.0,
+    267.68
+   ],
+   "planted": -193,
+   "seed": 586432
+  },
+  {
+   "id": "b_7_0_t132",
+   "species": "plane",
+   "pos": [
+    1088.0,
+    267.68
+   ],
+   "planted": -385,
+   "seed": 416884
+  },
+  {
+   "id": "b_7_0_t133",
+   "species": "plane",
+   "pos": [
+    1104.0,
+    267.68
+   ],
+   "planted": -613,
+   "seed": 139791
+  },
+  {
+   "id": "b_7_0_t134",
+   "species": "plane",
+   "pos": [
+    1120.0,
+    267.68
+   ],
+   "planted": -372,
+   "seed": 51369
+  },
+  {
+   "id": "b_7_0_t135",
+   "species": "plane",
+   "pos": [
+    1136.0,
+    267.68
+   ],
+   "planted": -697,
+   "seed": 686887
+  },
+  {
+   "id": "b_7_0_t136",
+   "species": "plane",
+   "pos": [
+    1152.0,
+    267.68
+   ],
+   "planted": -836,
+   "seed": 406143
+  },
+  {
+   "id": "b_7_0_t137",
+   "species": "plane",
+   "pos": [
+    1168.0,
+    267.68
+   ],
+   "planted": -614,
+   "seed": 942412
+  },
+  {
+   "id": "b_7_0_t138",
+   "species": "plane",
+   "pos": [
+    1184.0,
+    267.68
+   ],
+   "planted": -717,
+   "seed": 134884
+  },
+  {
+   "id": "b_7_0_t139",
+   "species": "plane",
+   "pos": [
+    1200.0,
+    267.68
+   ],
+   "planted": -417,
+   "seed": 505853
   }
  ],
  "props": [
@@ -10649,14 +11749,14 @@
    "kind": "carpark",
    "pos": [
     960.0,
-    240.0
+    258.0
    ],
    "size": [
-    520,
-    64
+    80,
+    28
    ],
-   "rows": 3,
-   "cars": 200
+   "rows": 4,
+   "cars": 50
   },
   {
    "kind": "lamp",
@@ -10894,6 +11994,17 @@
    "pos": [
     1244.0,
     248.0
+   ]
+  },
+  {
+   "kind": "paving",
+   "pos": [
+    960.0,
+    226.0
+   ],
+   "size": [
+    120.0,
+    32.0
    ]
   }
  ]
