@@ -19,6 +19,7 @@
   {"id": "south_gate", "name": "South Gate", "at": [960.0, 1190.0]},
   {"id": "civic_row", "name": "Civic Row", "at": [1000.0, 1248.0]},
   {"id": "southfield", "name": "Southfield", "at": [979.7, 1432.3]},
+  {"id": "southfield_east", "name": "Southfield East", "at": [1399.1, 1389.5]},
   {"id": "eastbrook", "name": "Eastbrook", "at": [1661.7, 188.5]},
   {"id": "weaver_linden", "name": "Weaver Street (Linden)", "at": [1152.0, 528.0]},
   {"id": "weaver_fountain", "name": "Fountain Hospital", "at": [1152.0, 720.0]},
@@ -30,7 +31,7 @@
   {"id": "1", "name": "1 Westgate - Eastgate", "colour": "terracotta", "every_min": 15, "first": "06:00", "last": "22:00",
    "stops": ["westgate_mall", "west_gate", "baker_cooper", "market_square", "baker_mill", "baker_garden", "furniture_outlet", "eastgate_mall"]},
   {"id": "2", "name": "2 Northwood - Southfield", "colour": "teal", "every_min": 15, "first": "06:00", "last": "22:00",
-   "stops": ["northwood", "northgate_mall", "north_gate", "market_plum", "lantern_arcade", "market_tram", "market_quarry", "south_gate", "civic_row", "southfield"]},
+   "stops": ["northwood", "northgate_mall", "north_gate", "market_plum", "lantern_arcade", "market_tram", "market_quarry", "south_gate", "civic_row", "southfield", "southfield_east"]},
   {"id": "3", "name": "3 Eastbrook - Old Town School", "colour": "ochre", "every_min": 20, "first": "06:10", "last": "21:50",
    "stops": ["eastbrook", "northgate_mall", "north_gate", "weaver_linden", "weaver_fountain", "weaver_tram", "weaver_depot", "south_gate", "old_town_school"]}
  ]

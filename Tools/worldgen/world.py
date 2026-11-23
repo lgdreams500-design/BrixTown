@@ -848,7 +848,7 @@ def sim_data(w):
     veg = w["vegetation"]
     return dict(name=w["city"]["name"], size=[n * P, g["rows"] * P], calendar=cal["calendar"], weather=cal["weather"], tram=cal["tram"],
                 streets=streets, lots=lots(w), residents=w["residents"], roles=w["roles"]["roles"], signatures=w["signatures"]["signatures"],
-                choices=dict(w["choices"]["choices"], rounds=[]), use=w["choices"]["use"], species=veg["species"], flowers=veg["flowers"], plants=veg.get("plants", {}),
+                choices=dict(w["choices"]["choices"], rounds=[]), use=w["choices"]["use"], near_work=w["choices"].get("near_work"), species=veg["species"], flowers=veg["flowers"], plants=veg.get("plants", {}),
                 replant_gap_days=veg["replant_gap_days"], fallen_days=veg["fallen_days"], trees=[t for b in w["blocks"] for t in b["trees"]], lamps=[], react=w.get("weather_react"))
 
 

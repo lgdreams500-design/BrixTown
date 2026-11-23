@@ -743,5 +743,40 @@ class TheMallCarParks(unittest.TestCase):
         self.assertLessEqual(sum(p.get("cars", 0) for b in W["blocks"] for p in b["props"] if p["kind"] == "carpark"), 170)
 
 
+class TheTimings(unittest.TestCase):
+    def test_CITY_096_habits_spread_the_day_and_lunch_is_near_work(self):   # owner 2026-11-23: spread timings over windows
+        import math
+        roles = W["roles"]["roles"]
+        by = {}
+        for r in W["residents"]:
+            b = CITY.blocks(r["id"], DAY)
+            if len(b) > 1:
+                by.setdefault(r["role"], []).append(b[1][0])            # when their day gets going
+        for role, starts in by.items():
+            lo, hi = roles[role]["habit_min"]
+            if len(starts) < 40:
+                continue
+            spread = max(starts) - min(starts)
+            if hi - lo >= 120:
+                self.assertGreater(spread, .8 * (hi - lo), role)          # an office's staff over about three hours
+            self.assertLess(spread, hi - lo + 2 * (roles[role]["jitter"] + 25) + 1, role)   # school and shops keep their hours
+        again = {r["id"]: CITY.blocks(r["id"], DAY + 7)[1][0] for r in W["residents"][:200] if len(CITY.blocks(r["id"], DAY)) > 1}
+        for r in W["residents"][:200]:
+            if r["id"] in again:                                         # a habit: about the same time a week later
+                self.assertLess(abs(again[r["id"]] - CITY.blocks(r["id"], DAY)[1][0]), 2 * roles[r["role"]]["jitter"] + 1)
+        lots = {l["id"]: l for l in world.lots(W)}
+        near, far = 0, 0
+        for r in W["residents"]:
+            if not r.get("work") or r["role"] != "clerk":
+                continue
+            b = CITY.blocks(r["id"], DAY)
+            for i in range(1, len(b) - 1):
+                if b[i][1] in ("eat", "shop") and b[i - 1][1] == "work" and b[i + 1][1] == "work" and b[i][2] in lots:
+                    d = math.dist(lots[b[i][2]]["door"], lots[r["work"]]["door"])
+                    near += d <= 400
+                    far += d > 400
+        self.assertGreater(near, 20 * max(far, 1))                       # lunch from work is near work
+
+
 if __name__ == "__main__":
     unittest.main()
