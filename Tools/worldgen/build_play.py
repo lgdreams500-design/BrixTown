@@ -241,7 +241,7 @@ def main(day=16):
     for b in w["blocks"]:
         for l in b["lots"]:
             if l["id"] in ds:
-                l["design"] = ds[l["id"]]
+                l["design"] = world.built(w, ds[l["id"]])     # with its ids made colours, finishes and sizes (BUILD-016)
     data = dict(
         city=w["city"], blocks=[{k: b[k] for k in ("id", "grid", "template", "district", "origin", "size", "lots", "paths", "props", "span", "lanes") if k in b} for b in w["blocks"]],
         day=dict(index=day, weekday=info["weekday_name"], season=cal["seasons"][info["season"]], market=info["market"],

@@ -100,13 +100,20 @@ window.Storeys = (() => {
   function shell(l, o) {
     const [x0, z0, x1, z1] = l.rect, t = D.storeys.wall, H = o.H, n = l.floors, G = stairOf(l);
     // the upper walls: four slabs, the outside as it was, plaster within (faces: 0 -x, 1 +x, 2 under, 3 top, 4 -z, 5 +z)
-    const bands = o.old ? [[GF, OLD_BASE, o.stoneC, o.stoneF], [OLD_BASE, H, o.upC, o.upF]] : [[GF, H, o.upC, o.upF]];
-    const inner = [o.inC, 17];
-    for (const [y0, y1, c, f] of bands) {
-      world.box(x0, y0, z0, x1, y1, z0 + t, c, f, { 5: inner, 2: null, 3: null });
-      world.box(x0, y0, z1 - t, x1, y1, z1, c, f, { 4: inner, 2: null, 3: null });
-      world.box(x0, y0, z0 + t, x0 + t, y1, z1 - t, c, f, { 1: inner, 4: null, 5: null, 2: null, 3: null });
-      world.box(x1 - t, y0, z0 + t, x1, y1, z1 - t, c, f, { 0: inner, 4: null, 5: null, 2: null, 3: null });
+    // each facade its own stone and plaster (o.fac, BUILD-018); inside, each storey its own colour (o.inners, BUILD-019): a wall is
+    // cut where its storeys' colours change, and only there, so a building of one colour is built exactly as before
+    const bands = s => { const F = o.fac[s]; return o.old ? [[GF, OLD_BASE, F.stoneC, F.stoneF], [OLD_BASE, H, F.upC, F.upF]] : [[GF, H, F.upC, F.upF]]; };
+    const spans = [];                                          // [y0, y1, inside colour] up the walls: floor f from ceilY(f - 1) to ceilY(f), the top one to the roof
+    for (let f = 1; f < n; f++) {
+      const c = (o.inners && o.inners[f]) || o.inC, a = ceilY(f - 1), b = f === n - 1 ? H : ceilY(f), last = spans[spans.length - 1];
+      if (last && last[2].every((v, k) => v === c[k])) last[1] = b; else spans.push([a, b, c]);
+    }
+    const wallsOf = { n: (y0, y1, c, f, inner) => world.box(x0, y0, z0, x1, y1, z0 + t, c, f, { 5: inner, 2: null, 3: null }),
+      s: (y0, y1, c, f, inner) => world.box(x0, y0, z1 - t, x1, y1, z1, c, f, { 4: inner, 2: null, 3: null }),
+      w: (y0, y1, c, f, inner) => world.box(x0, y0, z0 + t, x0 + t, y1, z1 - t, c, f, { 1: inner, 4: null, 5: null, 2: null, 3: null }),
+      e: (y0, y1, c, f, inner) => world.box(x1 - t, y0, z0 + t, x1, y1, z1 - t, c, f, { 0: inner, 4: null, 5: null, 2: null, 3: null }) };
+    for (let k = 0; k < (o.old ? 2 : 1); k++) for (const [i0, i1, ic] of spans) for (const s of "nswe") {
+      const [y0, y1, c, f] = bands(s)[k], a = Math.max(y0, i0), b = Math.min(y1, i1); if (b - a > .001) wallsOf[s](a, b, c, f, [ic, 17]);
     }
     solid(x0, GF, z0, x1, H, z0 + t); solid(x0, GF, z1 - t, x1, H, z1); solid(x0, GF, z0, x0 + t, H, z1); solid(x1 - t, GF, z0, x1, H, z1);
     world.box(x0, H - .2, z0, x1, H, z1, o.capC, 0, { 0: null, 1: null, 2: null, 4: null, 5: null, 3: [o.capC, 0] });   // the roof's underside is drawn from inside (build)

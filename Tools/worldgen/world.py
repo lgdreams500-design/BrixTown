@@ -6,7 +6,7 @@
     city = world.simulation(w)       # a citysim.City running the living-city rules over the whole map
     city = world.simulation(w, traffic=True)   # the same, with residents' cars on the roads (citysim/traffic.py)
 """
-import json, math, os, sys
+import copy, json, math, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 WORLD = os.path.normpath(os.path.join(HERE, "..", "..", "World"))
@@ -1198,11 +1198,16 @@ def special_kind(b, l):
     return None
 
 
+FACADES = ("n", "s", "e", "w")
+
+
 def design_of(w, b, l, surf=None):
     """A building's design (BUILD-001): everything about how it is built and finished, from World/rules/building_kit.json,
-    surfaces.json and storeys.json and the lot. The town's buildings get theirs from the rules here, picking from the kit by
-    the lot's id with the slice's hash, so each keeps the look it had; a player's design (the designer) is the same document."""
-    K, i = w["building_kit"], l["id"]
+    surfaces.json and storeys.json and the lot. The town's buildings get theirs from the rules here, picking from the kit's
+    'town' lists by the lot's id with the slice's hash, so each keeps the look it had; a player's design (the designer) is
+    the same document. Every choice is named by its id in the kit (BUILD-016); world.built() gives the colours and sizes.
+    Walls are chosen per facade (BUILD-018), inside walls and floors per storey (BUILD-019)."""
+    K, T, i = w["building_kit"], w["building_kit"]["town"], l["id"]
     x0, z0, x1, z1 = l["rect"]
     dx, dz = l["door"]
     side = "n" if abs(dz - z0) < .01 else "s" if abs(dz - z1) < .01 else "w" if abs(dx - x0) < .01 else "e"
@@ -1211,31 +1216,31 @@ def design_of(w, b, l, surf=None):
     H = max(n * 3 + .4, 3.2 + .4)
     old = b["district"] != "Outskirts" and not tower and H > 6
     sp = special_kind(b, l)
-    plaster = js_pick(K["plaster"], js_hash(i, 1))
-    mx = K["inner_mix"]
-    inner = [plaster[k] + (mx["with"][k] - plaster[k]) * mx["share"] for k in range(3)]   # (as the slice mixes it, unrounded)
+    plaster = js_pick(T["plaster"], js_hash(i, 1))
     s = (surf or surfaces(w))["lots"].get(i, {})
     pats = w["surfaces"]["patterns"]
-    stone = dict(pattern=list(pats)[s["wall"]] if "wall" in s else None, color=s.get("color"))
+    pattern = list(pats)[s["wall"]] if "wall" in s else None
+    col = s.get("color")
+    stone = dict(pattern=pattern, color=None if col is None else pats[pattern]["colors"].index(col))
     stone_up = sp == "office" or (b["template"] == "peri" and js_hash(i, "st") < K["odds"]["stone_to_eaves_old_quarter"])
+    facade = dict(plaster=plaster, stone=stone, stone_to_eaves=stone_up, brick_to_eaves=bool(s.get("upper")))
     flat = big or kind == "utility"
     along_x = x1 - x0 >= z1 - z0
     R = K["roofs"]["pitched"]
-    roof = dict(type="flat" if flat else "cornice" if old else "pitched", tiles=js_pick(K["roof_tiles"], js_hash(i, 2)),
+    roof = dict(type="flat" if flat else "cornice" if old else "pitched", tiles=js_pick(T["roof_tiles"], js_hash(i, 2)),
                 ridge="x" if along_x else "z", rise=min(R["rise_max"], (z1 - z0 if along_x else x1 - x0) * R["rise_share"]),
                 chimney=js_hash(i, "ch"))
     cls = "flats" if sp == "flats" else "tower" if tower else "old" if old else "plain"
-    win = K["windows"][cls]
     shut = (not tower or sp == "flats") and kind in ("home", "food", "shop") and (sp == "flats" or js_hash(i, "sh") < K["odds"]["shutters"])
     door_len = (x1 - x0) if side in "ns" else (z1 - z0)
     front = kind in ("shop", "food") and not tower
-    openings = dict(**{"class": cls}, width=win["width"], gap=win["gap"], tall=win["tall"], shutters=bool(shut),
-                    shutter_color=js_pick(K["shutters_old"] if old else K["accents"], js_hash(i, "shc")),
-                    frame=js_pick(K["frames"], js_hash(i, "fr")),
+    openings = dict(**{"class": cls}, shutters=bool(shut),
+                    shutter_color=js_pick(T["shutters_old"] if old else T["accents"], js_hash(i, "shc")),
+                    frame=js_pick(T["frames"], js_hash(i, "fr")),
                     balcony=js_hash(i, "bal") < K["odds"]["balcony"].get(kind, 0),
                     keystones=old or js_hash(i, "ks") < K["odds"]["keystones"],
                     shop_front=min(door_len - 2, K["shop_front_max"]) if front else 0,
-                    awning=js_pick(K["accents"], js_hash(i, 3)))
+                    awning=js_pick(T["accents"], js_hash(i, 3)))
     ornament = dict(quoins=not stone_up and not tower,
                     lantern=kind in ("shop", "food", "health") or big or js_hash(i, "lan") < K["odds"]["lantern"],
                     crates=kind in ("shop", "food") and js_hash(i, "cr") < K["odds"]["crates"])
@@ -1244,12 +1249,13 @@ def design_of(w, b, l, surf=None):
     for f in range(1, n):
         k2, sp2 = K["floor_uses"].get((l.get("storeys") or [None] * n)[f] or "rooms", K["floor_uses"]["rooms"])
         floors.append(F.get(sp2) or F.get(k2) or F["work"])
-    return dict(v=1, special=sp,
-                shell=dict(floors=n, height=H, side=side, door=[dx, dz], door_width=K["doors"]["big"] if big else K["doors"]["small"], big=big, old=old,
+    return dict(v=2, special=sp,
+                shell=dict(kind=kind, tower=tower, plan=(l.get("house") or {}).get("plan"), floors=n, height=H, side=side, door=[dx, dz],
+                           door_width=K["doors"]["big"] if big else K["doors"]["small"], big=big, old=old,
                            floor_levels=[storey_floor(f) for f in range(n)]),
-                walls=dict(plaster=plaster, inner=inner, stone=stone, stone_to_eaves=stone_up, brick_to_eaves=bool(s.get("upper"))),
+                walls={f: copy.deepcopy(facade) for f in FACADES},
                 roof=roof, openings=openings, ornament=ornament,
-                inside=dict(uses=l.get("storeys") or ["main"] * n, floors=floors),
+                inside=dict(uses=l.get("storeys") or ["main"] * n, floors=floors, walls=[plaster] * n),
                 circulation=dict(stair=l.get("stair"), lift=l.get("lift")))
 
 
@@ -1260,31 +1266,112 @@ def designs(w):
     return {l["id"]: design_of(w, b, l, surf) for b in w["blocks"] for l in b["lots"] if l["kind"] not in OPEN_KINDS}
 
 
+def colour(w, cid):
+    """The rgb of a colour id in the building kit."""
+    return list(w["building_kit"]["colours"][cid]["rgb"])
+
+
+def inner_colour(w, cid):
+    """An inside wall in plaster colour cid: mixed toward the kit's inner colour (as the slice mixes it, unrounded)."""
+    p, mx = colour(w, cid), w["building_kit"]["inner_mix"]
+    return [p[k] + (mx["with"][k] - p[k]) * mx["share"] for k in range(3)]
+
+
+def built(w, d):
+    """A design as the slice builds it (BUILD-002): every id turned into its colour, floor finish or window sizes. The
+    design stays the document; this is worked out from it each time."""
+    K, pats = w["building_kit"], w["surfaces"]["patterns"]
+    out = copy.deepcopy(d)
+    for f in FACADES:
+        fa = out["walls"][f]
+        fa["plaster"] = colour(w, fa["plaster"])
+        st = fa["stone"]
+        st["color"] = None if st["color"] is None else pats[st["pattern"]]["colors"][st["color"]]
+    out["roof"]["tiles"] = colour(w, d["roof"]["tiles"])
+    o = out["openings"]
+    for k in ("shutter_color", "frame", "awning"):
+        o[k] = colour(w, d["openings"][k])
+    win = K["windows"][o["class"]]
+    o.update(width=win["width"], gap=win["gap"], tall=win["tall"])
+    FF = K["floor_finishes"]
+    out["inside"]["floors"] = [[FF[x]["mat"], list(FF[x]["rgb"])] for x in d["inside"]["floors"]]
+    out["inside"]["walls"] = [inner_colour(w, x) for x in d["inside"]["walls"]]
+    return out
+
+
+def allowed(item, d):
+    """Whether a catalogue item (a roof, a window, an opening, an ornament) may go on the building of design d (BUILD-017):
+    approved, and its 'when' fits."""
+    if item.get("status") != "approved":
+        return False
+    wh, sh = item.get("when", {}), d["shell"]
+    if "big" in wh and wh["big"] != sh["big"]:
+        return False
+    if "old" in wh and wh["old"] != sh["old"]:
+        return False
+    if "tower" in wh and wh["tower"] != sh["tower"]:
+        return False
+    if "kinds" in wh and sh["kind"] not in wh["kinds"]:
+        return False
+    if "not_kinds" in wh and sh["kind"] in wh["not_kinds"]:
+        return False
+    if "specials" in wh and d.get("special") not in wh["specials"]:
+        return False
+    return True
+
+
 def design_problems(w, ds=None):
-    """Every rule a design must keep (BUILD-001, BUILD-003): all its parts there, every choice from the kit."""
+    """Every rule a design must keep (BUILD-001, BUILD-003, BUILD-016 to BUILD-019): all its parts there, every choice an
+    id from the kit, every facade and every storey given, every catalogue item approved and right for the building."""
     K, out = w["building_kit"], []
     ds = ds or designs(w)
-    tiles, plaster, accents = [tuple(c) for c in K["roof_tiles"]], [tuple(c) for c in K["plaster"]], [tuple(c) for c in K["accents"]]
+    cols, pats = K["colours"], w["surfaces"]["patterns"]
     for i, d in ds.items():
-        for part in ("shell", "walls", "roof", "openings", "ornament", "inside", "circulation"):
-            if part not in d:
-                out.append("%s: design has no %s" % (i, part))
-        if out:
+        bad = [part for part in ("shell", "walls", "roof", "openings", "ornament", "inside", "circulation") if part not in d]
+        out += ["%s: design has no %s" % (i, part) for part in bad]
+        if bad:
             continue
-        if tuple(d["walls"]["plaster"]) not in plaster:
-            out.append("%s: plaster colour not in the kit" % i)
-        if tuple(d["roof"]["tiles"]) not in tiles:
+        for f in FACADES:
+            fa = d["walls"].get(f)
+            if fa is None:
+                out.append("%s: no %s facade" % (i, f))
+                continue
+            if fa.get("plaster") not in K["plaster"]:
+                out.append("%s: %s facade's plaster colour not in the kit" % (i, f))
+            st = fa.get("stone", {})
+            if st.get("pattern") is not None:
+                if st["pattern"] not in pats:
+                    out.append("%s: %s facade's stone pattern not in surfaces.json" % (i, f))
+                elif st.get("color") is not None and not (isinstance(st["color"], int) and 0 <= st["color"] < len(pats[st["pattern"]]["colors"])):
+                    out.append("%s: %s facade's stone colour is not one %s comes in" % (i, f, st["pattern"]))
+        if d["roof"]["tiles"] not in K["roof_tiles"]:
             out.append("%s: roof tiles not in the kit" % i)
         if d["roof"]["type"] not in K["roofs"]:
             out.append("%s: roof type %s not in the kit" % (i, d["roof"]["type"]))
+        elif not allowed(K["roofs"][d["roof"]["type"]], d):
+            out.append("%s: a %s is not for this building" % (i, K["roofs"][d["roof"]["type"]]["name"].lower()))
         if d["openings"]["class"] not in K["windows"]:
             out.append("%s: window type not in the kit" % i)
-        if tuple(d["openings"]["awning"]) not in accents:
-            out.append("%s: awning colour not in the kit" % i)
-        if d["walls"]["stone"]["pattern"] is not None and d["walls"]["stone"]["pattern"] not in w["surfaces"]["patterns"]:
-            out.append("%s: stone pattern not in surfaces.json" % i)
-        if len(d["inside"]["floors"]) != d["shell"]["floors"] or len(d["inside"]["uses"]) != d["shell"]["floors"]:
-            out.append("%s: %d floors but %d finishes" % (i, d["shell"]["floors"], len(d["inside"]["floors"])))
-        if d["shell"]["floors"] >= 2 and not d["circulation"]["stair"]:
+        elif not allowed(K["windows"][d["openings"]["class"]], d):
+            out.append("%s: %s are not for this building" % (i, K["windows"][d["openings"]["class"]]["name"].lower()))
+        for k, lst in (("awning", "accents"), ("frame", "frames")):
+            if d["openings"][k] not in K[lst]:
+                out.append("%s: %s colour not in the kit" % (i, k))
+        if d["openings"]["shutter_color"] not in cols:
+            out.append("%s: shutter colour not in the kit" % i)
+        for part, cat in (("openings", "openings"), ("ornament", "ornaments")):
+            for k, v in d[part].items():
+                if v is True and k in K[cat] and K[cat][k].get("status") != "approved":
+                    out.append("%s: %s is not approved" % (i, K[cat][k]["name"].lower()))
+        n = d["shell"]["floors"]
+        if not (len(d["inside"]["floors"]) == len(d["inside"]["uses"]) == len(d["inside"]["walls"]) == n):
+            out.append("%s: %d floors but %d finishes" % (i, n, len(d["inside"]["floors"])))
+        for f, x in enumerate(d["inside"]["floors"]):
+            if x not in K["floor_finishes"] or x == "note":
+                out.append("%s: floor %d's finish not in the kit" % (i, f))
+        for f, x in enumerate(d["inside"]["walls"]):
+            if x not in K["plaster"]:
+                out.append("%s: floor %d's inside walls not a kit colour" % (i, f))
+        if n >= 2 and not d["circulation"]["stair"] and not d["shell"]["plan"]:      # a designed house has its plan's own stair (houses.js)
             out.append("%s: no stair in the design" % i)
     return out

@@ -60,8 +60,8 @@ const ACCENT = [C.ochre, C.terracotta, C.teal, C.blue, C.olive, C.plum];
 const SURF = D.surfaces || { patterns: [], lots: {}, blocks: {}, table: {} }, SURF_TYPE = { bond: 0, flemish: 1, rubble: 2, flags: 3, herringbone: 4, basket: 5 };
 const SURF_A = new Float32Array(64), SURF_B = new Float32Array(64);
 SURF.patterns.forEach((name, k) => { const t = SURF.table[name]; SURF_A.set([SURF_TYPE[t.type], t.unit[0], t.unit[1], t.joint], k * 4); SURF_B.set([t.vary || .8, t.bevel || 0, t.dome || 0, t.mortar || 0], k * 4); });
-function wallStone(l) {                                    // [colour, material] of a building's stone, and whether its upper storeys are that too
-  const st = l.design && l.design.walls;                  // from the building's design (BUILD-001)
+function wallStone(l, face) {                              // [colour, material] of a building's stone on one facade (its front if none), and whether its upper storeys are that too
+  const st = l.design && l.design.walls && l.design.walls[face || l.design.shell.side];   // from the building's design, per facade (BUILD-001, BUILD-018)
   if (st && st.stone.pattern) return [st.stone.color || C.stone, 30 + SURF.patterns.indexOf(st.stone.pattern), st.brick_to_eaves];
   const s = SURF.lots[l.id]; if (!s || s.wall === undefined) return [C.stone, 6, false];
   return [s.color || C.stone, 30 + s.wall, s.upper];
@@ -496,22 +496,25 @@ function building(l) {
   const side = Math.abs(dz - z0) < .01 ? "n" : Math.abs(dz - z1) < .01 ? "s" : Math.abs(dx - x0) < .01 ? "w" : "e";
   const Dz = l.design;                                    // the building's design: every choice below comes from it (world.py design_of, BUILD-001)
   const big = Dz.shell.big, dw = Dz.shell.door_width, dh = 2.4;
-  const wallC = Dz.walls.plaster, roofC = Dz.roof.tiles, accent = Dz.openings.awning, inC = Dz.walls.inner;
+  const wallC = Dz.walls[side].plaster, roofC = Dz.roof.tiles, accent = Dz.openings.awning, inC = Dz.inside.walls[0], inners = Dz.inside.walls;   // the front's plaster; inside walls per storey (BUILD-019)
+  const fac = {};                                         // each facade's stone or brick and what its upper storeys are (BUILD-018)
+  for (const s of "nswe") { const [c, f, all] = wallStone(l, s), up = Dz.walls[s].stone_to_eaves || all; fac[s] = { up, stoneC: c, stoneF: f, upC: up ? c : Dz.walls[s].plaster, upF: up ? f : 0, plaster: Dz.walls[s].plaster }; }
+  const faces = (c, f, o) => Object.assign({ 0: [fac.w[c], fac.w[f]], 1: [fac.e[c], fac.e[f]], 4: [fac.n[c], fac.n[f]], 5: [fac.s[c], fac.s[f]] }, o);   // box faces: 0 -x, 1 +x, 4 -z, 5 +z
   l.side = side; l.dw = dw; l.H = H;
   labels.push({ x: dx, y: 3.3, z: dz, text: l.name, lot: l, r: big ? 60 : 30 });
   if (l.kind === "furniture") return Outlet.build(l, side);   // the furniture outlet: a hall of its own (outlet.js, FURN-020)
   if (!l.enterable) {
-    const [sc0, sf0] = wallStone(l); world.box(x0, 0, z0, x1, H, z1, sc0, sf0); solid(x0, 0, z0, x1, H, z1);
+    const [sc0, sf0] = wallStone(l); world.box(x0, 0, z0, x1, H, z1, sc0, sf0, faces("stoneC", "stoneF")); solid(x0, 0, z0, x1, H, z1);
     const d = DOOR_DIR[side]; world.ybox(dx + d[0] * .03, Y_PAVE, dz + d[1] * .03, side === "n" || side === "s" ? 1.6 : .1, 2.3, side === "n" || side === "s" ? .1 : 1.6, 0, C.metal, 9);
     windows(l, wallC); return;
   }
   // ground floor: four stone walls with an open doorway, plaster inside
-  const [stoneC, stoneF, stoneAll] = wallStone(l);       // this building's stone or brick (surfaces.json)
-  const wall = (ax0, az0, ax1, az1, y0, inner) => { world.box(ax0, y0, az0, ax1, GF, az1, stoneC, stoneF, { [inner]: [inC, 17], 3: null, 2: y0 > 0 ? [C.stoneDark, 9] : null }); solid(ax0, y0, az0, ax1, GF, az1); };
+  const { stoneC, stoneF } = fac[side];                   // the front's stone or brick (surfaces.json)
+  const wall = (ax0, az0, ax1, az1, y0, inner, s) => { world.box(ax0, y0, az0, ax1, GF, az1, fac[s].stoneC, fac[s].stoneF, { [inner]: [inC, 17], 3: null, 2: y0 > 0 ? [C.stoneDark, 9] : null }); solid(ax0, y0, az0, ax1, GF, az1); };
   for (const s of "nswe") {
     const ns = s === "n" || s === "s", inner = { n: 5, s: 4, w: 1, e: 0 }[s];
     const a0 = ns ? x0 : z0 + t, a1 = ns ? x1 : z1 - t, f0 = s === "n" ? z0 : s === "s" ? z1 - t : s === "w" ? x0 : x1 - t;
-    const piece = (p, q, y0) => { if (q - p > .01) ns ? wall(p, f0, q, f0 + t, y0, inner) : wall(f0, p, f0 + t, q, y0, inner); };
+    const piece = (p, q, y0) => { if (q - p > .01) ns ? wall(p, f0, q, f0 + t, y0, inner, s) : wall(f0, p, f0 + t, q, y0, inner, s); };
     if (s !== side) { piece(a0, a1, 0); continue; }
     const dc = ns ? dx : dz;
     piece(a0, dc - dw / 2, 0); piece(dc + dw / 2, a1, 0); arch(ns, s, f0, dc, dw / 2, inC, detailFor(l));
@@ -520,18 +523,17 @@ function building(l) {
   const fl = Dz.inside.floors[0]; world.flat(x0 + t, z0 + t, x1 - t, z1 - t, Y_FLOOR, fl[1], fl[0]);
   const flatRoof = Dz.roof.type === "flat", old = Dz.shell.old, ceil = [mix3(inC, [1, 1, 1], .25), 18]; l.old = old;
   l.sp = Dz.special;
-  const stoneUp = Dz.walls.stone_to_eaves;                // most old houses are plaster over a stone storey, as in the building kit
   const front = Dz.openings.shop_front > 0, aw = Dz.openings.shop_front; l.aw = aw;
-  const upAll = stoneUp || stoneAll;                       // all-stone buildings, and the brick terraces brick to the eaves
-  if (l.stair) Storeys.shell(l, { H, old, stoneC, stoneF, upC: upAll ? stoneC : wallC, upF: upAll ? stoneF : 0, inC, capC: old || flatRoof ? C.stoneDark : roofC });   // hollow, every floor reachable (storeys.js)
+  const upAll = fac[side].up;                              // all-stone fronts, and the brick terraces brick to the eaves (most old houses are plaster over a stone storey)
+  if (l.stair) Storeys.shell(l, { H, old, fac, inners, inC, capC: old || flatRoof ? C.stoneDark : roofC });   // hollow, every floor reachable (storeys.js)
   else {
-    if (old) world.box(x0, GF, z0, x1, OLD_BASE, z1, stoneC, stoneF, { 2: ceil, 3: null });
-    world.box(x0, old ? OLD_BASE : GF, z0, x1, H, z1, upAll ? stoneC : wallC, upAll ? stoneF : 0, old ? { 3: [C.stoneDark, 0] } : { 2: ceil, 3: [flatRoof ? C.stoneDark : roofC, 0] });
+    if (old) world.box(x0, GF, z0, x1, OLD_BASE, z1, stoneC, stoneF, faces("stoneC", "stoneF", { 2: ceil, 3: null }));
+    world.box(x0, old ? OLD_BASE : GF, z0, x1, H, z1, upAll ? stoneC : wallC, upAll ? stoneF : 0, faces("upC", "upF", old ? { 3: [C.stoneDark, 0] } : { 2: ceil, 3: [flatRoof ? C.stoneDark : roofC, 0] }));
     solid(x0, GF, z0, x1, H, z1);
   }
   const dm = detailFor(l), ring = (x, y0, y1, ov) => world.box(x0 - ov, y0, z0 - ov, x1 + ov, y1, z1 + ov, C.stoneDark, 0, { 2: [mul3(C.stoneDark, .8), 0] });
   if (flatRoof) {                                        // a flat roof with a parapet you can walk on, a coping on top and a cornice below
-    for (const [a, b, c, d] of [[x0, z0, x1, z0 + .4], [x0, z1 - .4, x1, z1], [x0, z0 + .4, x0 + .4, z1 - .4], [x1 - .4, z0 + .4, x1, z1 - .4]]) { world.box(a, H, b, c, H + 1.1, d, wallC, 0); solid(a, H, b, c, H + 1.1, d); world.box(a - .06, H + 1.1, b - .06, c + .06, H + 1.24, d + .06, C.stoneDark, 0, { 2: [C.stoneDark, 0] }); }
+    for (const [a, b, c, d, s] of [[x0, z0, x1, z0 + .4, "n"], [x0, z1 - .4, x1, z1, "s"], [x0, z0 + .4, x0 + .4, z1 - .4, "w"], [x1 - .4, z0 + .4, x1, z1 - .4, "e"]]) { world.box(a, H, b, c, H + 1.1, d, fac[s].plaster, 0); solid(a, H, b, c, H + 1.1, d); world.box(a - .06, H + 1.1, b - .06, c + .06, H + 1.24, d + .06, C.stoneDark, 0, { 2: [C.stoneDark, 0] }); }
     ring(0, H - .3, H, .12);
   } else if (old) { world.box(x0 - .2, H, z0 - .2, x1 + .2, H + .4, z1 + .2, C.stoneDark, 0, { 2: [C.stoneDark, 0] }); ring(0, H - .24, H, .1); piers(l, dw); }
   else {                                                 // a pitched roof of barrel tiles, ridge along the long side, on corbels, with a chimney
@@ -541,7 +543,7 @@ function building(l) {
       const zc = (z0 + z1) / 2;
       world.quad([x0 - o, H, z0 - o], [x1 + o, H, z0 - o], [x1 + o, top, zc], [x0 - o, top, zc], roofC, 11, up);
       world.quad([x0 - o, H, z1 + o], [x1 + o, H, z1 + o], [x1 + o, top, zc], [x0 - o, top, zc], roofC, 11, up);
-      world.quad([x0, H, z0], [x0, H, z1], [x0, top, zc], [x0, top, zc], wallC, 0, [-1, 0, 0]); world.quad([x1, H, z0], [x1, H, z1], [x1, top, zc], [x1, top, zc], wallC, 0, [1, 0, 0]);
+      world.quad([x0, H, z0], [x0, H, z1], [x0, top, zc], [x0, top, zc], fac.w.plaster, 0, [-1, 0, 0]); world.quad([x1, H, z0], [x1, H, z1], [x1, top, zc], [x1, top, zc], fac.e.plaster, 0, [1, 0, 0]);
       world.box(x0 - o, top - .08, zc - .17, x1 + o, top + .16, zc + .17, mul3(roofC, .9), 11);
       for (const ez of [z0 - o, z1 + o]) world.box(x0 - o, H - .2, ez - .06, x1 + o, H + .02, ez + .06, C.wood, 0, { 2: [C.wood, 0] });
       for (const s of "ns") { const S = sideOf(l, s), n = Math.floor((x1 - x0) / .9); for (let k = 0; k < n; k++) { const c = x0 + (k + .5) * (x1 - x0) / n; fbox(dm, S, c - .09, c + .09, H - .3, H - .02, 0, .34, C.stoneDark, 0, true); } }
@@ -550,7 +552,7 @@ function building(l) {
       const xc = (x0 + x1) / 2;
       world.quad([x0 - o, H, z0 - o], [x0 - o, H, z1 + o], [xc, top, z1 + o], [xc, top, z0 - o], roofC, 11, up);
       world.quad([x1 + o, H, z0 - o], [x1 + o, H, z1 + o], [xc, top, z1 + o], [xc, top, z0 - o], roofC, 11, up);
-      world.quad([x0, H, z0], [x1, H, z0], [xc, top, z0], [xc, top, z0], wallC, 0, [0, 0, -1]); world.quad([x0, H, z1], [x1, H, z1], [xc, top, z1], [xc, top, z1], wallC, 0, [0, 0, 1]);
+      world.quad([x0, H, z0], [x1, H, z0], [xc, top, z0], [xc, top, z0], fac.n.plaster, 0, [0, 0, -1]); world.quad([x0, H, z1], [x1, H, z1], [xc, top, z1], [xc, top, z1], fac.s.plaster, 0, [0, 0, 1]);
       world.box(xc - .17, top - .08, z0 - o, xc + .17, top + .16, z1 + o, mul3(roofC, .9), 11);
       for (const ex of [x0 - o, x1 + o]) world.box(ex - .06, H - .2, z0 - o, ex + .06, H + .02, z1 + o, C.wood, 0, { 2: [C.wood, 0] });
       for (const s of "we") { const S = sideOf(l, s), n = Math.floor((z1 - z0) / .9); for (let k = 0; k < n; k++) { const c = z0 + (k + .5) * (z1 - z0) / n; fbox(dm, S, c - .09, c + .09, H - .3, H - .02, 0, .34, C.stoneDark, 0, true); } }
@@ -597,8 +599,8 @@ function building(l) {
     fbox(world, DS, a - .3, a + .3, 1.45, 2.05, 0, .05, C.teal, 0, true); fbox(world, DS, a - .05, a + .05, 1.55, 1.95, .05, .08, C.cream, 0); fbox(world, DS, a - .18, a + .18, 1.7, 1.8, .05, .08, C.cream, 0);
   }
   if (l.sp) special(l, { H, DS, dc, dw, dh, wallC, roofC });
-  l.furn = [side, accent, inC]; furnish(l, side, accent, inC);     // the room itself is drawn only when someone is near (rooms near the camera, below)
-  if (l.stair) for (let f = 1; f < l.floors; f++) furnish(l, side, accent, inC, null, f);   // and every floor above it: its places, uses and collisions
+  l.furn = [side, accent, inC, inners]; furnish(l, side, accent, inC);     // the room itself is drawn only when someone is near (rooms near the camera, below)
+  if (l.stair) for (let f = 1; f < l.floors; f++) furnish(l, side, accent, inners[f], null, f);   // and every floor above it, in its own inside colour: its places, uses and collisions
 }
 
 function arch(ns, s, f0, dc, r, inC, dm) {                // the wall over a doorway, cut to a round arch (W3), ringed with arch stones and a keystone
@@ -2483,7 +2485,7 @@ function nearRooms(eye) {
   if (cl) for (let f = Math.max(1, cf - 1); f <= Math.min(cl.floors - 1, cf + 1); f++) want.add(cl.id + "|" + f);
   for (const [k, e] of UPSTAIRS) if (!want.has(k)) { if (e.buf) gl.deleteBuffer(e.buf); if (e.ao) gl.deleteTexture(e.ao); UPSTAIRS.delete(k); }
   for (const k of want) if (!UPSTAIRS.has(k) && built < 2) {
-    const f = +k.split("|")[1], m = new Mesh(1 << 15); ROOM_REC = { lamps: [], foot: [] }; furnish(cl, cl.furn[0], cl.furn[1], cl.furn[2], m, f); built++;
+    const f = +k.split("|")[1], m = new Mesh(1 << 15); ROOM_REC = { lamps: [], foot: [] }; furnish(cl, cl.furn[0], cl.furn[1], cl.furn[3] ? cl.furn[3][f] : cl.furn[2], m, f); built++;
     Storeys.build(cl, f, m, cl.design ? cl.design.inside.floors[f] : floorMatOf(Storeys.proxy(cl, f))); const rec = ROOM_REC; ROOM_REC = null; UPSTAIRS.set(k, roomEntry(cl, m, rec, f));
   }
   const out = []; for (const r of ROOMS.values()) if (r.n) out.push(r); for (const r of UPSTAIRS.values()) if (r.n) out.push(r); return out;

@@ -1,9 +1,9 @@
 ---
 doc_id: WASTED-SPEC-BUILDER
 title: Wasted — The building designer (remodel a building you own, or build a new one on an open plot)
-version: 0.3.0
+version: 0.4.0
 status: draft            # a plan: every row proposed; levels and open questions wait for the owner
-last_updated: 2026-11-22
+last_updated: 2026-11-23
 parent: docs/specs/GAME_SPEC.md        # extends §4.5 PROP; same ID rules; new prefix BUILD
 related: docs/specs/domains/WORLD_MAP.md, docs/specs/domains/FURNITURE.md, docs/decisions/ADR-0017-stone-brick-and-paving-by-rules.md, docs/decisions/ADR-0021-every-floor-true-size.md, docs/decisions/ADR-0022-real-estate-market.md
 prototype: Tools/citysim/builder.py     # design checks, cost and construction schedule proved here first (to write)
@@ -60,6 +60,14 @@ on an empty plot; and creators (PH5) can later publish designs as templates with
 
 Everything above is a choice from a catalogue in data, and every catalogue item carries a price and a look that has been
 checked against the art direction. Nothing a player picks is free-form geometry until level 3.
+
+### 1.2 Not yet designs
+
+The 469 houses of the communities (Northwood, Eastbrook, Southfield) are built by `Prototype/play/houses.js` from their own
+plan and trim (`lot.house`: a plan from `Tools/blender/house_samples_19.py`, rooms, and trim with shutters, window boxes,
+keystones, a plaster index and a roof tone), not from their design. They have a design like every building, but the slice
+ignores it, and the designer cannot change them yet. Bringing them under the one design (their plan, rooms and trim as
+parts of it) is a follow-up to raise with the owner; until then `builder` leaves them out of its price checks.
 
 ## 2. What the player does
 
@@ -174,6 +182,10 @@ Suggested: slice — designer 1, plots 0, construct 0; life depth — designer 2
 | BUILD-013 | A confirmed design shall take game days to build, by its size; how far along it is shall be worked out from the clock (hoardings, scaffolding, then the building), never ticked. | F-BLD-CONSTRUCT | 1 | P1 | (to write) |
 | BUILD-014 | Builders (residents with that role) shall work on the site in their day, and materials shall arrive by van. | F-BLD-CONSTRUCT | 2 | P2 | (to write) |
 | BUILD-015 | Free-form footprints (L-shapes, courtyards, set-backs), bay windows and arcades; a design saved as a template; registered creators publishing designs for sale. | F-BLD-DESIGN | 3 | P1 | (to write) |
+| BUILD-016 | A design shall name every choice by its id in the building kit (named colours in `building_kit.json` `colours`, floor finishes, roof, window and part kinds), never by a raw value; each choice list offers each colour once, and the town's own picks keep their looks through the kit's `town` lists. `world.built()` turns a design's ids into what the slice builds with. | F-BLD-DESIGN | 1 | P0 | `test_BUILD_016_designs_name_their_choices_by_id` (Tools/citysim/test_builder.py) |
+| BUILD-017 | Roofs, tiles, windows, openings and ornaments shall be catalogues in data, each item with a name, the look test that shows it and a status; only `approved` items, and only those whose `when` fits the building, shall be offered (`builder.options`) or allowed in a design. A new kind of part joins as `proposed` with its look test and is approved by the owner (ADR-0004). | F-BLD-DESIGN | 1 | P0 | `test_BUILD_017_only_approved_parts_for_the_building` (Tools/citysim/test_builder.py) |
+| BUILD-018 | A building's outside walls shall be chosen per facade (north, south, east, west): plaster colour, stone or brick, and brick to the eaves; each facade is checked against the district's palette and charged by its own area. | F-BLD-DESIGN | 1 | P0 | `test_BUILD_018_walls_are_chosen_per_facade` (Tools/citysim/test_builder.py) |
+| BUILD-019 | Inside walls and floors shall be chosen per storey, so the owner of a unit (ADR-0022: one or more whole storeys) changes only their own unit's finishes; the designer takes the player's holding as the whole building, their units, or their storeys. | F-BLD-DESIGN | 1 | P0 | `test_BUILD_019_inside_finishes_per_unit` (Tools/citysim/test_builder.py) |
 
 ## 8. Open questions for the owner
 
@@ -191,6 +203,7 @@ Suggested: slice — designer 1, plots 0, construct 0; life depth — designer 2
 
 | Version | Date | Change |
 |---|---|---|
+| 0.4.0 | 2026-11-23 | BUILD-016 to BUILD-019: designs name choices by id (`colours`, `floor_finishes`; the town's picks kept by `town` lists) and `world.built()` resolves them for the slice; roof, tile, window, opening and ornament catalogues with names, look tests and status, offered through `builder.options`; walls per facade; inside walls and floors per storey, so per unit. Planning palettes added for Civic Row, the three malls, Northwood, Eastbrook and Southfield (stone and brick as they have today, the town's five plasters and five tiles). The slice's town is the same to the last vertex (mesh fingerprint checked against main, 2026-11-23). The community houses are not yet built from designs (§1.2). |
 | 0.3.0 | 2026-11-22 | Step 2 done: `Tools/citysim/builder.py` checks a remodel (what level 1 may change, who may change it, the kit, each district's palette from `World/rules/planning.json`, funds) and prices it line by line (`building_kit.json` `prices`): a full remodel of a typical house costs about 545 brix, 28% of its value; a repaint about 65 brix. Q-34 and Q-39 decided. The slice will need a port of `check` and `cost` (step 3), as the estate rules have. |
 | 0.2.0 | 2026-11-22 | Step 1 done: every building is a design (`world.design_of`, `designs`, `design_problems`; the kit in `World/rules/building_kit.json`); the slice builds from designs and the town is the same to the last vertex. |
 | 0.1.1 | 2026-11-22 | First-slice picks recorded: designer 1, plots 0, construction 0. |
