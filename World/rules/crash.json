@@ -1,5 +1,5 @@
 {
- "note": "Crash damage (docs/specs/domains/LIVING_CITY.md CITY-072 to CITY-076; F-VEH-CRASH level 2). What breaks, how it looks, and how repair crews mend it. All values are [ASSUMPTION] until tuned. Speeds in km/h or m/s as named, times in game minutes unless named _s, distances in metres.",
+ "note": "Crash damage (docs/specs/domains/LIVING_CITY.md CITY-072 to CITY-076; F-VEH-CRASH level 2). What breaks, how it looks, and how repair crews mend it. All values are [ASSUMPTION] until tuned. Speeds in km/h or m/s as named, times in game minutes unless named _s, distances in metres. Bushes and garden plants (prop kind plant), garden fences, walls and railings (fence) and garden hedges (hedge), one panel from post to post, break too (owner, 2026-11-23: make the bushes and fences destructible everywhere).",
  "break_kmh": 0.0,
  "kinds": {
   "lamp": {"how": "topple", "slow": 0.7, "work_min": 45},
@@ -16,6 +16,9 @@
   "stall": {"how": "shatter", "slow": 0.7, "work_min": 40},
   "flowerbed": {"how": "shatter", "slow": 0.8, "work_min": 30},
   "rack": {"how": "shatter", "slow": 0.85, "work_min": 20},
+  "plant": {"how": "shatter", "slow": 0.85, "work_min": 30},
+  "fence": {"how": "shatter", "slow": 0.75, "work_min": 30},
+  "hedge": {"how": "shatter", "slow": 0.7, "work_min": 45},
   "corner": {"how": "chip", "slow": 0.55, "work_min": 60}
  },
  "aliases": {"bikerack": "rack", "noticeboard": "board", "timetable": "board"},

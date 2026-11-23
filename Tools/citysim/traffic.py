@@ -230,7 +230,7 @@ class Roads:
         for nid, p in nodes:
             if nid not in self.j:
                 self.j[nid] = dict(id=nid, pos=p, control="give_way", outer=True)
-        stop, end_stop, off = r.get("outer_stop", 4.0), r.get("outer_end_stop", 1.0), r["lane_offset"]
+        stop, end_stop, off = r.get("outer_stop", 4.0), r.get("outer_end_stop", 1.0), r.get("outer_lane_offset", r["lane_offset"])
         for pc in pieces:
             self.outer_streets[pc["id"]] = pc
             pc["cum"] = lengths(pc["pts"])
@@ -245,7 +245,7 @@ class Roads:
                 lid = pc["id"] + ("+" if sign > 0 else "-")
                 u0, u1 = _unit(pts[0], pts[1]), _unit(pts[-2], pts[-1])
                 self.lanes[lid] = dict(id=lid, street=pc["id"], a=a, b=b, u=u0, u0=u0, u1=u1, n=(-u0[1], u0[0]), length=cum[-1], street_length=L,
-                                       start=pts[0], end=pts[-1], pts=pts, cum=cum, v=pc["v"], axis="ew" if abs(u1[0]) > 0.5 else "ns", outer=True)
+                                       start=pts[0], end=pts[-1], pts=pts, cum=cum, v=pc["v"], axis="ew" if abs(u1[0]) > 0.5 else "ns", outer=True, off=off)
                 self.out.setdefault(a, []).append(lid)
                 self.inn.setdefault(b, []).append(lid)
         self._oseg = {}                                   # outer road centre lines by 32 m cell, for "nearest road"
@@ -304,7 +304,7 @@ class Roads:
 
     def _place_bay(self, bid, lid, s, kind, lot=None, grid=True):
         # outside the grid there are no lay-bys: a car parks on the roadway itself, against its edge (CITY-082)
-        pos, u = self._bay_on(lid, s, self.r["outer_bay_offset"] - self.r["lane_offset"])
+        pos, u = self._bay_on(lid, s, self.r["outer_bay_offset"] - self.lanes[lid].get("off", self.r["lane_offset"]))
         b = dict(id=bid, street=self.lanes[lid]["street"], lane=lid, s=s, pos=pos, u=u, kind=kind, lot=lot, outer=True)
         self.bays[bid] = b
         self.by_lane.setdefault(lid, []).append(bid)
@@ -388,7 +388,7 @@ class Roads:
                         self._grid[cell].remove(bid)
             bid = "stop_%s_%s" % (st["id"], "a" if lid.endswith("+") else "b")
             off = r["bay_offset"] if sid in self.streets else r["outer_stop_offset"]   # a lay-by in town, the roadway's edge outside
-            pos, u = self._bay_on(lid, s, off - r["lane_offset"])
+            pos, u = self._bay_on(lid, s, off - self.lanes[lid].get("off", r["lane_offset"]))
             b = dict(id=bid, street=sid, lane=lid, s=s, pos=pos, u=u, kind="stop", stop=st["id"], name=st["name"])
             self.bays[bid] = b
             self.stops[bid] = b

@@ -730,24 +730,30 @@ window.Houses = (() => {
     // the fence, in the line's way, with a gate gap in front of the door
     const gate = [du - .75, du + .75];
     const runs = [["u", GF, GL, gate[0]], ["u", GF, gate[1], GR], ["u", GB, GL, GR], ["v", GL, GF, GB], ["v", GR, GF, GB]];
-    for (const [ax, at, a0, a1] of runs) {
+    for (const [ax, at, A0, A1] of runs) {
       const seg = (p, q, y0, y1, d, col, f, mm) => ax === "u" ? B(p, y0, at - d / 2, q, y1, at + d / 2, col, f, mm) : B(at - d / 2, y0, p, at + d / 2, y1, q, col, f, mm);
       const post = (p, y0, y1, d, col, f, mm) => seg(p - d / 2, p + d / 2, y0, y1, d, col, f, mm);
-      const L = a1 - a0, n = Math.max(1, Math.round(L / 2.2));
-      if (line === "plain") {                                   // a cream picket fence: posts, two rails, pickets
-        for (let k = 0; k <= n; k++) post(a0 + L * k / n, 0, 1.0, .1, C.cream);
-        for (const y of [.25, .75]) seg(a0, a1, y, y + .07, .05, C.cream);
-        for (let p = a0 + .12; p < a1 - .05; p += .3) post(p, 0, .92, .09, mul3(C.cream, .95), 9, dm);
-      } else if (line === "oldtown") {                          // a low wall of dressed stone with a cap
-        seg(a0, a1, 0, .8, .32, C.stone, 6, m); seg(a0 - .02, a1 + .02, .8, .92, .42, C.stoneDark, 6, m);
-      } else if (line === "workshop") {                         // iron railings on a stone plinth
-        seg(a0, a1, 0, .35, .3, C.stoneDark, 6, m); seg(a0, a1, .95, 1.0, .05, C.charcoal);
-        for (let p = a0 + .1; p < a1; p += .26) post(p, .35, 1.0, .035, C.charcoal, 9, dm);
-        for (let k = 0; k <= n; k++) post(a0 + L * k / n, .35, 1.12, .08, C.charcoal);
-      } else {                                                   // a clipped hedge, rounded on top in two steps
-        seg(a0, a1, 0, .95, .7, [.22, .32, .15], 9, m); seg(a0 + .05, a1 - .05, .95, 1.1, .55, [.26, .36, .17], 9, m);
+      const L = A1 - A0, n = Math.max(1, Math.round(L / 2.2));
+      // each panel from post to post is its own thing a car can break (smash.js; the owner, 2026-11-23: fences destructible)
+      for (let k = 0; k < n; k++) {
+        const a0 = A0 + L * k / n, a1 = A0 + L * (k + 1) / n, mid = (a0 + a1) / 2, w = ax === "u" ? Fr.P(-mid, 0, at) : Fr.P(-at, 0, mid);
+        Smash.wrap(line === "curve" ? "hedge" : "fence", w[0], w[2], () => {
+          if (line === "plain") {                               // a cream picket fence: posts, two rails, pickets
+            post(a0, 0, 1.0, .1, C.cream); if (k === n - 1) post(a1, 0, 1.0, .1, C.cream);
+            for (const y of [.25, .75]) seg(a0, a1, y, y + .07, .05, C.cream);
+            for (let p = a0 + .12; p < a1 - .05; p += .3) post(p, 0, .92, .09, mul3(C.cream, .95), 9, dm);
+          } else if (line === "oldtown") {                      // a low wall of dressed stone with a cap
+            seg(a0, a1, 0, .8, .32, C.stone, 6, m); seg(a0 - .02, a1 + .02, .8, .92, .42, C.stoneDark, 6, m);
+          } else if (line === "workshop") {                     // iron railings on a stone plinth
+            seg(a0, a1, 0, .35, .3, C.stoneDark, 6, m); seg(a0, a1, .95, 1.0, .05, C.charcoal);
+            for (let p = a0 + .1; p < a1; p += .26) post(p, .35, 1.0, .035, C.charcoal, 9, dm);
+            post(a0, .35, 1.12, .08, C.charcoal); if (k === n - 1) post(a1, .35, 1.12, .08, C.charcoal);
+          } else {                                               // a clipped hedge, rounded on top in two steps
+            seg(a0, a1, 0, .95, .7, [.22, .32, .15], 9, m); seg(a0 + .05, a1 - .05, .95, 1.1, .55, [.26, .36, .17], 9, m);
+          }
+          ax === "u" ? chain1(Fr, a0, at, a1, at, 0, 1.15, null, .15) : chain1(Fr, at, a0, at, a1, 0, 1.15, null, .15);
+        }, [dm]);
       }
-      ax === "u" ? chain1(Fr, a0, at, a1, at, 0, 1.15, null, .15) : chain1(Fr, at, a0, at, a1, 0, 1.15, null, .15);
     }
     for (const g of gate) {                                      // gate piers (or posts), the gate leaf open into the garden
       if (line === "oldtown") { B(g - .2, 0, GF - .2, g + .2, 1.15, GF + .2, C.stoneDark, 6); Y(g, 1.15, GF, .28, .26, .28, C.stone, 6); }
