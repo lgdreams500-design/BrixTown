@@ -28,6 +28,7 @@ var Sound = (() => {
 
   let ctx = null, on = true, ready = false;
   try { on = localStorage.getItem("wasted.sound") !== "off"; } catch (e) { }
+  const MIXK = { master: 1, music: 1, world: 1, voice: 1, action: 1 };   // the menu's shares of each level (mix)
   let master, meter, bus = {}, outside, outsideLP, noise, L = { x: 0, z: 0, yaw: 0, lot: null }, lots = [], fountains = [], gardens = [];
   const st = { engines: 0, trams: 0, murmur: 0, chat: 0, crowd: 0, acts: 0, laughs: 0, calls: 0, shouts: 0, greets: 0, place: null, radio: 0, mood: null, steps: 0, birds: 0, line: false, lastAct: null };
 
@@ -660,8 +661,12 @@ var Sound = (() => {
 
   return {
     init(L0, F0, G0) { lots = L0; fountains = F0; gardens = G0; },
-    start() { if (!ctx) { try { build(); } catch (e) { console.warn("sound off:", e); return; } } if (ctx.state === "suspended") ctx.resume(); },
-    toggle() { on = !on; try { localStorage.setItem("wasted.sound", on ? "on" : "off"); } catch (e) { } if (ctx) ramp(master.gain, on ? S.mix.master : 0, .05); return on; },
+    start() { if (!ctx) { try { build(); } catch (e) { console.warn("sound off:", e); return; } this.mix({}); } if (ctx.state === "suspended") ctx.resume(); },
+    toggle() { on = !on; try { localStorage.setItem("wasted.sound", on ? "on" : "off"); } catch (e) { } if (ctx) ramp(master.gain, on ? S.mix.master * MIXK.master : 0, .05); return on; },
+    mix(m, onNow) {                                      // the menu's sound settings (UI-009): a share of each bus's level from World/rules/sound.json, and on or off
+      Object.assign(MIXK, m); if (onNow !== undefined) on = !!onNow; if (!ctx) return;
+      master.gain.value = on ? S.mix.master * MIXK.master : 0; for (const k of ["world", "voice", "action"]) bus[k].gain.value = S.mix[k] * MIXK[k]; bus.music.gain.value = S.mix.music * MIXK.music;
+    },
     act, line, hush, frame, render,
     preview(style) {                                     // play one music style on its own (jukebox.html); null stops it
       if (!ready) return false;

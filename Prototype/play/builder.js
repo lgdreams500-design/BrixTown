@@ -252,17 +252,20 @@ var Furnish = (() => {
       if (!apart(corners(a), corners(b))) say([a.id, b.id].sort().join("|") + "|clash", the(a) + " and " + the(b) + " stand in each other"); }
     return out;
   }
-  function cost(before, after) {
-    const was = new Map(before.map(p => [p.id, p])), now = new Set(after.map(p => p.id)), lines = [], P = F().pieces;
+  function cost(before, after, belongings) {
+    const was = new Map(before.map(p => [p.id, p])), now = new Set(after.map(p => p.id)), lines = [], P = F().pieces, mine = new Set((belongings || []).map(b => b.id));
     for (const p of after) { const o = was.get(p.id);
-      if (!o) lines.push(["Buy: " + p.name, 1, P[p.kind] ? P[p.kind].price : 0]);
+      if (!o && mine.has(p.id)) lines.push(["Place: " + p.name, 1, 0]);
+      else if (!o) lines.push(["Buy: " + p.name, 1, P[p.kind] ? P[p.kind].price : 0]);
       else if (o.x !== p.x || o.z !== p.z || o.yaw !== p.yaw) lines.push(["Move: " + p.name, 1, 0]); }
-    for (const p of before) if (!now.has(p.id)) lines.push(["Take away: " + p.name, 1, 0]);
+    for (const p of before) if (!now.has(p.id)) lines.push(["To your belongings: " + p.name, 1, 0]);
     return [lines.reduce((s, l) => s + l[2], 0), lines];
   }
-  function check(room, keep, ceiling, before, after, funds) {
+  function check(room, keep, ceiling, before, after, funds, belongings) {
     const old = new Set(problems(room, keep, ceiling, before).map(q => q[0]));
-    const out = [...new Set(problems(room, keep, ceiling, after).filter(q => !old.has(q[0])).map(q => q[1]))], total = cost(before, after)[0];
+    const out = [...new Set(problems(room, keep, ceiling, after).filter(q => !old.has(q[0])).map(q => q[1]))], total = cost(before, after, belongings)[0];
+    const was = new Set(before.map(p => p.id)), mine = new Set((belongings || []).map(b => b.id));
+    for (const p of after) if (!was.has(p.id) && p.id.startsWith("b") && !mine.has(p.id)) out.push(the(p) + " is not among your belongings");
     if (funds != null && total > funds) out.push("you cannot pay " + Math.floor(total / 100) + "." + String(total % 100).padStart(2, "0") + " brix");
     return out;
   }
@@ -270,21 +273,34 @@ var Furnish = (() => {
     const P = F().pieces[kind] || { name: kind, size: [1, 1, 1] }, [w, d, h] = P.size;
     return { id, kind, name: P.name, w, d, h, x, z, yaw, rug: false, line };
   }
-  function apply(before, edit) {
+  function stow(before, after, belongings, where) {          // the belongings after a change (INV-001): less what was placed, with what was taken away
+    const now = new Set(after.map(p => p.id)), out = (belongings || []).filter(b => !now.has(b.id)), w = where || {};
+    for (const p of before) {
+      if (now.has(p.id)) continue;
+      const q = {}; for (const k of Object.keys(p)) if (!["x", "z", "yaw"].includes(k)) q[k] = p[k];
+      if (!p.id.startsWith("b")) { q.id = "b:" + (w.lot ?? "") + ":" + (w.level ?? "") + ":" + p.id; if (p.kind === "town" && !("from" in p)) q.from = Object.assign({}, w, { id: p.id }); }
+      out.push(q);
+    }
+    return out;
+  }
+  function apply(before, edit, belongings) {
     const out = [];
     for (const p of before) { if ((edit.remove || []).includes(p.id)) continue; const q = Object.assign({}, p);
       if (edit.move && p.id in edit.move) [q.x, q.z, q.yaw] = edit.move[p.id]; out.push(q); }
     for (const [id, kind, x, z, yaw, line] of edit.add || []) out.push(kitPiece(kind, id, x, z, yaw, line));
+    const mine = new Map((belongings || []).map(b => [b.id, b]));
+    for (const [bid, x, z, yaw] of edit.place || []) out.push(Object.assign({}, mine.get(bid) || { id: bid, kind: "town", name: "Piece", w: 1.0, d: 1.0, h: 1.0, rug: false }, { x, z, yaw }));
     return out;
   }
   function selfTest(SIZE) {                                // the Python's fixed run, result for result; and the list's sizes as furniture.js draws them
     const C = X().checks, S = C.script, bad = [];
     S.cases.forEach(([ceiling, edit, funds], k) => {
-      const after = apply(S.before, edit), [total, lines] = cost(S.before, after), got = { problems: check(S.room, S.keep, ceiling, S.before, after, funds), total, lines }, want = C.want[k];
+      const B = S.belongings, after = apply(S.before, edit, B), [total, lines] = cost(S.before, after, B);
+      const got = { problems: check(S.room, S.keep, ceiling, S.before, after, funds, B), total, lines, belongings: stow(S.before, after, B, S.where) }, want = C.want[k];
       for (const key of Object.keys(want)) if (JSON.stringify(got[key]) !== JSON.stringify(want[key])) bad.push("furnish case " + k + " " + key + ": " + JSON.stringify(got[key]) + " should be " + JSON.stringify(want[key]));
     });
     if (SIZE) for (const [k, p] of Object.entries(F().pieces)) if (JSON.stringify(SIZE[k]) !== JSON.stringify(p.size)) bad.push("furnishing.json " + k + " size " + JSON.stringify(p.size) + " but furniture.js draws " + JSON.stringify(SIZE[k]));
     return bad;
   }
-  return { corners, problems, cost, check, kitPiece, apply, selfTest, rules: () => F() };
+  return { corners, problems, cost, check, kitPiece, apply, stow, selfTest, rules: () => F() };
 })();

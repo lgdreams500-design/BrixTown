@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-FURNITURE
 title: Wasted — Furniture (designs, the furniture companies and their outlets, furniture in the home)
-version: 0.4.0
+version: 0.4.1
 status: draft            # every row proposed; the owner accepts
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.5 PROP; same ID rules; new prefix FURN
@@ -27,7 +27,7 @@ Every requirement names a **feature** and a **level** from `docs/backlog/feature
 > Milestones: first slice = PH1, life depth = PH3, full game = PH6. Undecided means ask.
 
 There is no Phase column: the owner's picks decide when. Priority says how much it matters once in
-scope. Status of every row: `proposed`, except FURN-020 and FURN-021: `accepted` (the owner asked for the outlet to be built, 2026-11-22; ADR-0027), and FURN-051, FURN-052 and FURN-055: `accepted` (the owner, 2026-11-23, picking "Arrange + add, priced" for furniture in the building designer: move, turn and take away the pieces in the home and add pieces from a priced list; BUILDER.md §2.6). Until the inventory (FURN-050) and buying at the outlet (FURN-025) are built, a piece is bought straight into place and a piece taken away is gone `[ASSUMPTION]`. "Proven by" names the test that is still to be written, in
+scope. Status of every row: `proposed`, except FURN-020 and FURN-021: `accepted` (the owner asked for the outlet to be built, 2026-11-22; ADR-0027), FURN-050 `accepted` (met for furniture by MENU.md INV-001, the owner's pick of `F-INV-ITEMS` 1, 2026-11-23), and FURN-051, FURN-052 and FURN-055: `accepted` (the owner, 2026-11-23, picking "Arrange + add, priced" for furniture in the building designer: move, turn and take away the pieces in the home and add pieces from a priced list; BUILDER.md §2.6). A piece taken away goes to the player's belongings and is placed from them (INV-001); until buying at the outlet (FURN-025) is built, a piece is bought straight into place `[ASSUMPTION]`. "Proven by" names the test that is still to be written, in
 `Tools/citysim/test_furniture.py` for rules and in a Blender look test for designs.
 
 Storage containers (`F-PROP-STORAGE`) and the assembly mini-game (`F-FURN-ASSEMBLE`) have no pick and
@@ -114,6 +114,7 @@ buy-back share. Every number `[ASSUMPTION]` until tuned in play.
 
 | Version | Date | Change |
 |---|---|---|
+| 0.4.1 | 2026-11-23 | FURN-050 accepted: pieces taken away in the designer go to the belongings (MENU.md INV-001) and are placed from there. |
 | 0.4.0 | 2026-11-23 | FURN-051, FURN-052, FURN-055 accepted and built in the slice's building designer (BUILDER.md §2.6, ADR-0031): `World/rules/furnishing.json` (43 pieces with sizes and prices), `Tools/citysim/furnish.py` and `test_furnish.py`, ported as `Furnish` in `Prototype/play/builder.js`. |
 | 0.1.0 | 2026-11-22 | First draft from the owner's request and picks (`F-FURN-ITEMS` 2, `F-FURN-STORE` 2, `F-PROP-FURNISH` 2, `F-OBJ-CARRY` 1): FURN-001 to 008, 020 to 035, 050 to 057; Q-30 to Q-32. All proposed. |
 | 0.3.0 | 2026-11-22 | The owner asked for at least ten more furniture kits and more kinds of objects and decoration: look test `furniture_kit_18.py` (twelve kits, 78 base pieces in the four lines; renders in `Art/StyleTests/furniture_kit_18/`, not approved). FURN-001 gains a hall room. |

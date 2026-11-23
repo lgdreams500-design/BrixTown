@@ -133,8 +133,10 @@ Changing the outside needs the whole building; changing the inside needs only yo
   (`Furniture: ...` to `sys:builders`).
 - **Kept** in the save (`furnishings`, lot id to storey to layout); a kept layout moves its pieces' collisions and places
   to sit and lie with them, and an added sofa, bed or chair can be sat or lain on.
-- **Not yet:** pieces taken away are gone (no inventory yet, FURN-050) and bought pieces are bought straight into place
-  (not at the outlet, FURN-025); inner walls between rooms are not checked, so a piece may be pushed into one; residents
+- **Belongings** (MENU.md INV-001): a piece taken away goes to the player's belongings, and *From your belongings* places
+  it again, free, on any storey of any home of theirs (a town piece is drawn from where it came from).
+- **From the menu:** Properties has **Remodel** and **Furnish** for each building you own, wherever you are (MENU.md UI-006).
+- **Not yet:** bought pieces are bought straight into place (not at the outlet, FURN-025); inner walls between rooms are not checked, so a piece may be pushed into one; residents
   who live there still sit where the town's chairs were.
 
 ### 2.2 Build new (level 2)

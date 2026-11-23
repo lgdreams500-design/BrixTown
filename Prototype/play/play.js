@@ -2226,10 +2226,21 @@ const keys = {}; let started = false, locked = false, showMap = false, bodies = 
 // O: the better or the simple picture, one switch for what were three keys (Q softer picture, G flat shade, O corner shade). Simple:
 // half resolution, no sun shadows, the flat fill in place of local bounce and contact shade (ADR-0018), no ambient occlusion (ADR-0028).
 // Better: all of them at once.
-function simplePicture(on) {
-  const d = window.wasted && window.wasted.dials; if (!d) return;
-  if (on && !simple) { simple = { gi: d.gi, ao: d.ao }; d.gi = 0; d.ao = 0; quality = .5; }
-  else if (!on && simple) { d.gi = simple.gi; d.ao = simple.ao; simple = null; quality = 1; }
+const SET = { shadows: true, names: true, prompts: true, look: .0024, invert: false, fov: .9 };   // what the settings say (applySettings)
+let BASE_DIALS = null;
+function applySettings(G) {                                 // the menu's settings (life.js, World/rules/settings.json, UI-009), each time one changes
+  const g = G.graphics, d = window.wasted && window.wasted.dials; if (!d) return;
+  if (!BASE_DIALS) BASE_DIALS = { gi: d.gi, ao: d.ao == null ? 1 : d.ao };
+  SET.shadows = g.shadows; d.ao = g.ambient_occlusion ? BASE_DIALS.ao : 0; d.gi = g.bounce ? BASE_DIALS.gi : 0;
+  if (!PIN_Q) quality = g.resolution === "soft" ? .5 : 1;
+  simple = g.picture === "simple" ? {} : null;
+  FULL_MAX = g.full_bodies; SET.fov = g.field_of_view * Math.PI / 180;
+  const D2 = G.display, show = (id, on) => { const e = $(id); if (e) e.classList.toggle("set-off", !on); };
+  show("stats", g.frame_counter); show("mapbox", D2.minimap); show("clock", D2.clock); show("purse", D2.money); SET.names = D2.names; SET.prompts = D2.prompts;
+  document.documentElement.style.setProperty("--ui-zoom", D2.text_size / 100);
+  const C2 = G.controls; SET.look = .0024 * C2.sensitivity / 100; SET.invert = C2.invert; cam.dist = C2.camera_distance;
+  if (!SET.fpDone) { SET.fpDone = true; cam.fp = C2.first_person; }
+  Sound.mix({ master: G.audio.master / 100, music: G.audio.music / 100, world: G.audio.world / 100, voice: G.audio.voice / 100, action: G.audio.action / 100 }, G.audio.sound);
 }
 const R = 0.32, TALL = 1.75;
 
@@ -2451,7 +2462,7 @@ function hud(VP, W, H, tags) {
   $("date").textContent = (Life.ready ? "Day " + (clock.day + 1) + " · " : "") + D.day.weekday + " · " + (D.day.trying ? "trying " : "") + D.day.season + (wxTry ? " · trying " + wxTry : { cloud: " · cloudy", rain: " · rain", fog: " · fog" }[weatherNow(clock.m).kind] || "") + (D.day.market ? " · market day" : "") + (clock.rate !== 1 ? "  (clock ×" + clock.rate + ")" : "");
   const [a, b] = placeName(); $("place").textContent = a; $("sub").textContent = b;
   $("stats").innerHTML = bodies + " of " + D.residents.length + " residents have bodies<br>" + Math.round(fps) + " frames a second" + (simple ? " · simple picture" : quality < 1 ? " · soft picture" : "");
-  const pr = $("prompt"); if (started && !Life.on && (target || pl.pose > 1)) { pr.style.display = "block"; pr.innerHTML = "<kbd>E</kbd>" + (pl.pose === 4 ? Cars.label() : pl.play ? "Get off" : pl.pose > 1 ? "Get up" : target.label); } else pr.style.display = "none";
+  const pr = $("prompt"); if (started && !Life.on && SET.prompts && (target || pl.pose > 1)) { pr.style.display = "block"; pr.innerHTML = "<kbd>E</kbd>" + (pl.pose === 4 ? Cars.label() : pl.play ? "Get off" : pl.pose > 1 ? "Get up" : target.label); } else pr.style.display = "none";
   $("dot").style.display = started && cam.fp ? "block" : "none";
   g2.clearRect(0, 0, W, H); if (!started) return;
   const designing = Life.view;
@@ -2529,9 +2540,9 @@ function begin() { Sound.start(); started = true; $("start").style.display = "no
 $("go").addEventListener("click", () => Life.go(begin));   // carry on, or the character designer first (life.js)
 cv.addEventListener("contextmenu", e => { if (started && Life.view) e.preventDefault(); });   // the right button slides the designer's view
 cv.addEventListener("click", () => { if (started && !locked && !Talk.on && !Life.on && cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } });
-document.addEventListener("pointerlockchange", () => { locked = document.pointerLockElement === cv; });
+document.addEventListener("pointerlockchange", () => { locked = document.pointerLockElement === cv; if (!locked && started && !Life.on && !Talk.on && !Life.view && !showMap && document.hasFocus()) Life.menu(); });   // Esc while the mouse is held: the browser lets it go, and the menu opens (UI-005)
 let drag = false; cv.addEventListener("mousedown", e => { drag = true; if (started && Life.view) Life.pointer("down", e); }); addEventListener("mouseup", e => { drag = false; if (started && Life.view) Life.pointer("up", e); });
-addEventListener("mousemove", e => { if (Life.designing && drag) return Life.spin(e.movementX); if (started && Life.view) return Life.pointer("move", e, drag); if (!started || !(locked || drag)) return; cam.yaw += e.movementX * .0024; cam.pitch = clamp(cam.pitch - e.movementY * .0024, -1.35, 1.35); });
+addEventListener("mousemove", e => { if (Life.designing && drag) return Life.spin(e.movementX); if (started && Life.view) return Life.pointer("move", e, drag); if (!started || !(locked || drag)) return; cam.yaw += e.movementX * SET.look; cam.pitch = clamp(cam.pitch - e.movementY * SET.look * (SET.invert ? -1 : 1), -1.35, 1.35); });
 addEventListener("wheel", e => { if (started && Life.view) return Life.pointer("wheel", e); cam.dist = clamp(cam.dist + Math.sign(e.deltaY) * .6, 2.2, 14); });
 const RATES = [1, 5, 20, 100];
 addEventListener("keydown", e => {
@@ -2540,11 +2551,12 @@ addEventListener("keydown", e => {
   if (!started) { if (e.code === "Enter" && !Life.designing && document.activeElement === document.body) Life.go(begin); return; }
   if (Life.on && Life.view && /^(Key[WASDQE]|Arrow)/.test(e.code) && !/^(INPUT|SELECT|TEXTAREA)$/.test((document.activeElement || {}).tagName)) { keys[e.code] = true; e.preventDefault(); return; }   // the designer's camera (designCam)
   if (Life.on) { Life.key(e); return; }                  // a counter or the quest log is open: Esc closes it (life.js)
+  if (e.code === "Escape" && !Talk.on) { if (showMap) { showMap = false; $("bigmap").style.display = "none"; } else Life.menu(); return; }   // the game menu (UI-005)
   if (Talk.on) { Talk.key(e); return; }                  // number keys answer, Esc leaves
   if (e.repeat) return; keys[e.code] = true;
   if (e.code === "KeyV") cam.fp = !cam.fp;
   else if (e.code === "KeyE") interact();
-  else if (e.code === "KeyN") Sound.toggle();
+  else if (e.code === "KeyN") Life.setting("audio", "sound");
   else if (e.code === "KeyB" && pl.pose !== 4) Life.counter();   // buy, sell, bank or stall where you stand (life.js)
   else if (e.code === "KeyI") Life.panel("wallet");     // money and what you carry
   else if (e.code === "KeyJ") Life.panel("quests");     // the quest log
@@ -2552,12 +2564,14 @@ addEventListener("keydown", e => {
   else if (e.code === "KeyF" && pl.pose === 4) Sound.horn(true);
   else if (e.code === "KeyR" && pl.pose === 4) Sound.radio();
   else if (e.code === "KeyM") { Sound.act("map"); showMap = !showMap; $("bigmap").style.display = showMap ? "flex" : "none"; }
-  else if (e.code === "KeyH") $("keys").style.display = $("keys").style.display === "none" ? "block" : "none";
+  else if (e.code === "KeyH") Life.panel("help");        // the controls (UI-008)
+  else if (e.code === "KeyG") Life.panel("belongings");  // what you own and carry (INV-001)
+  else if (e.code === "KeyU") Life.panel("wardrobe");    // outfits (CHR-014)
   else if (e.code.startsWith("Bracket")) Sound.act("clock");
   if (e.code === "BracketRight") clock.rate = RATES[Math.min(RATES.length - 1, RATES.indexOf(clock.rate) + 1)];
   else if (e.code === "BracketLeft") clock.rate = RATES[Math.max(0, RATES.indexOf(clock.rate) - 1)];
   else if (e.code === "KeyT") { if (clock.m + 60 >= 1440) clock.day++; clock.m = (clock.m + 60) % 1440; Sound.act("hour"); }
-  else if (e.code === "KeyO") simplePicture(!simple);
+  else if (e.code === "KeyO") Life.setting("graphics", "picture");   // better or simple picture: all its parts at once
 });
 addEventListener("keyup", e => { keys[e.code] = false; if (e.code === "KeyF") Sound.horn(false); });
 addEventListener("pointerdown", () => Sound.start());
@@ -2611,6 +2625,7 @@ function roomAO(l, foot) {
 // from the designer) is drawn from those pieces, moved and turned, and the pieces of World/rules/furnishing.json (furniture.js).
 class RecMesh extends Mesh { constructor() { super(1 << 16); this.recs = []; this.deep = 0; } }
 for (const k of ["quad", "box", "obox", "ybox", "flat"]) RecMesh.prototype[k] = function (...a) { const s0 = this.n; this.deep++; Mesh.prototype[k].apply(this, a); this.deep--; if (!this.deep && this.n > s0) this.recs.push([s0, this.n, PIECE_TAG]); };
+const LOT_BY_ID = new Map(LOTS.map(l => [l.id, l]));
 const furnArgs = (l, level) => [l, l.furn[0], l.furn[1], level ? (l.furn[3] ? l.furn[3][level] : l.furn[2]) : l.furn[2]];
 function townPieces(l, level) {
   const K = l.townP || (l.townP = {}); if (K[level]) return K[level];
@@ -2642,12 +2657,12 @@ function townPieces(l, level) {
 }
 const layoutOf = p => ({ id: p.id, kind: p.kind, name: p.name, w: p.w, d: p.d, h: p.h, x: p.x, z: p.z, yaw: p.yaw, rug: !!p.rug, line: p.line });
 function townLayout(l, level) { return townPieces(l, level).pieces.map(layoutOf); }   // a storey as the town furnished it, as a layout
-function putVerts(m, v, p, c0) {                             // a town piece's boxes, moved from where the town put it (c0) to p, turned by p.yaw
+function putVerts(m, v, p, c0, dy) {                         // a town piece's boxes, moved from where the town put it (c0) to p, turned by p.yaw (dy: to another floor)
   while (m.n + v.length > m.a.length) { const b = new Float32Array(m.a.length * 2); b.set(m.a); m.a = b; }
   const a = m.a, Y = (p.yaw || 0) * Math.PI / 180, c = Math.cos(Y), sn = Math.sin(Y); let o = m.n;
   for (let i = 0; i < v.length; i += 10, o += 10) {
     const dx = v[i] - c0[0], dz = v[i + 2] - c0[1], nx = v[i + 3], nz = v[i + 5];
-    a[o] = p.x + c * dx + sn * dz; a[o + 1] = v[i + 1]; a[o + 2] = p.z - sn * dx + c * dz; a[o + 3] = c * nx + sn * nz; a[o + 4] = v[i + 4]; a[o + 5] = -sn * nx + c * nz;
+    a[o] = p.x + c * dx + sn * dz; a[o + 1] = v[i + 1] + (dy || 0); a[o + 2] = p.z - sn * dx + c * dz; a[o + 3] = c * nx + sn * nz; a[o + 4] = v[i + 4]; a[o + 5] = -sn * nx + c * nz;
     a[o + 6] = v[i + 6]; a[o + 7] = v[i + 7]; a[o + 8] = v[i + 8]; a[o + 9] = v[i + 9];
   }
   m.n = o;
@@ -2663,7 +2678,8 @@ function furnishRoom(l, level, m) {
   for (const v of T.fixed) putVerts(m, v, { x: 0, z: 0, yaw: 0 }, [0, 0]);
   if (ROOM_REC) ROOM_REC.lamps.push(...T.lamps);
   for (const p of lay) {
-    const t = p.kind === "town" && byId.get(p.id); if (t) putVerts(m, t.v, p, t.c); else if (p.kind !== "town") drawKit(m, p, T.F, hash(l.id, p.id));
+    const src = p.from && LOT_BY_ID.get(p.from.lot), S2 = src && src.furn && townPieces(src, p.from.level), t = p.kind === "town" && (p.from ? S2 && S2.pieces.find(q => q.id === p.from.id) : byId.get(p.id));
+    if (t) putVerts(m, t.v, p, t.c, p.from ? T.F - S2.F : 0); else if (p.kind !== "town") drawKit(m, p, T.F, hash(l.id, p.id));
     if (ROOM_REC && !p.rug) { const C = Furnish.corners(p), xs = C.map(q => q[0]), zs = C.map(q => q[1]); ROOM_REC.foot.push([(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...zs) + Math.max(...zs)) / 2, (Math.max(...xs) - Math.min(...xs)) / 2, (Math.max(...zs) - Math.min(...zs)) / 2, 1]); }
   }
 }
@@ -2742,7 +2758,7 @@ function flatOf(l, x, z, y) {                                // which flat of bu
   return f + ":corridor";
 }
 const INDOOR_R = 90;                                         // how far the camera sees out of a window (frame)
-const FULL_MAX = 3; let FULL = new Set();                   // the full-detail body (25,000 vertices, ~4 ms each) only for the nearest few
+let FULL_MAX = 3, FULL = new Set();                   // the full-detail body (25,000 vertices, ~4 ms each) only for the nearest few
 const FAR_EVERY = 12, FAR_M = 60, FAR_CACHE = new Array(D.plan.length).fill(null); let FRAME_NO = 0;   // residents far from the player (frame)
 function frame(now) {
   People.setSun(STUDIO ? [-.45 / 1.0005, .74 / 1.0005, .5 / 1.0005] : lighting(clock.m).dir, cam.eye);   // for the shadows a body casts on itself (people.js)
@@ -2750,7 +2766,7 @@ function frame(now) {
   if (fps < 27 && quality > .5 && !PIN_Q) { slow += dt; if (slow > 3) { quality = Math.max(.5, quality - .25); slow = 0; } } else slow = 0;      // a slow machine gets a softer picture, not a slow game
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5) * quality, W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
   if (cv.width !== W || cv.height !== H) { cv.width = ui.width = W; cv.height = ui.height = H; }
-  const m0 = clock.m; clock.m = (clock.m + dt / D.pace * clock.rate) % 1440; if (clock.m < m0) clock.day++;
+  const m0 = clock.m; clock.m = (clock.m + (Life.paused ? 0 : dt / D.pace * clock.rate)) % 1440; if (clock.m < m0) clock.day++;   // the menu stops the clock (UI-005)
   if (started && !Talk.on && !Life.on) { stepPlayer(dt); findTarget(); } else if (started && Talk.on) Talk.step(dt);   // a counter or the quest log (life.js) also holds the player still   // talking (conversations.js) holds the player still
   stepCamera(dt);
   { const v = started && Life.view; CUT_NOW = v ? designCut(v) : null; cutPrograms(!!CUT_NOW); }   // the building designer (life.js)
@@ -2784,7 +2800,7 @@ function frame(now) {
       if (Math.abs(da) < 1.9) { const w = smooth(5.5, 3.2, d); lk = [clamp(-da * .6, -.85, .85) * w, 0]; }
     }
     People.draw(dyn, r.x, r.y, r.z, r.yaw, L, r.pose, { ph: wet.ph !== undefined ? wet.ph : r.ph || 0, t: now / 1000, lod: dc < 13 && FULL.has(i) && !(r.inside && r.lot !== plLot) ? 0 : dc < 40 ? 1 : 2, fl: r.inside ? 10 : 14, look: lk, sleep: r.pose === 3, face: Talk.face(i), mod: r.mod || wet.mod, sig: r.sig || wet.sig, hood: wet.hood, umb: wet.umb });
-    if (started && d < 9 && Math.abs(r.y - pl.y) < 3) tags.push({ x: r.x, y: r.y + (r.pose === 2 ? 1.0 : r.pose === 3 ? .55 : 1.88) * L.S, z: r.z, d, text: D.residents[i].n + ", " + D.roles[D.residents[i].r] + " · " + (r.walking ? GOING[D.acts[r.act]] || "walking" : DOING[D.acts[r.act]] || D.acts[r.act]) });
+    if (started && SET.names && d < 9 && Math.abs(r.y - pl.y) < 3) tags.push({ x: r.x, y: r.y + (r.pose === 2 ? 1.0 : r.pose === 3 ? .55 : 1.88) * L.S, z: r.z, d, text: D.residents[i].n + ", " + D.roles[D.residents[i].r] + " · " + (r.walking ? GOING[D.acts[r.act]] || "walking" : DOING[D.acts[r.act]] || D.acts[r.act]) });
     if (started && r.shout && d < D.dodge.tag_m) tags.push({ x: r.x, y: r.y + 2.18 * L.S, z: r.z, d, a: clamp((D.dodge.tag_m - d) / 4, 0, 1), size: 18, text: r.shout });   // telling the driver off (CITY-071)
     if (started) Talk.consider(i, r, d);
     if (started) Life.mark(i, r, d, L, tags);             // someone with a quest or a job for the player (life.js, QST-005)
@@ -2823,10 +2839,10 @@ function frame(now) {
   const vl = ((dials.veil || 0) + Wx.veil) * Lt.day * (1 - .45 * Wx.grey); Lt.fog = Lt.fog.map((v, i) => v + mix(sun0[i], lum0, Wx.grey) * vl); Lt.zen = Lt.zen.map((v, i) => v + sun0[i] * vl * .7);   // sunlight scattered all through the haze: a pale sky, and distance fades to it (W5)
   if (STUDIO) { Lt.dir = [-.45 / 1.0005, .74 / 1.0005, .5 / 1.0005]; Lt.sunCol = [3.2 / Math.PI, 3.2 / Math.PI * .82, 3.2 / Math.PI * .62]; Lt.sky = [.42 * .25, .55 * .25, .82 * .25];
     Lt.ground = [.004 + Lt.sunCol[0] * .1, .004 + Lt.sunCol[1] * .068, .005 + Lt.sunCol[2] * .042]; Lt.fogD = 0; Lt.fog = mul3(Lt.sky, 1.25); Lt.zen = mul3(Lt.sky, 1.5); Lt.exp = Math.pow(2, -.3); Lt.day = 1; Lt.night = 0; Lt.wet = 0; Lt.rain = 0; }
-  const view = M4.look(cam.eye, cam.dir), fov = STUDIO ? .27 : started && Life.view ? Life.view.cur.fov : .9, asp = W / H, NEAR = cam.indoor && !cam.fp ? CAM_IN.near : .25, VP = M4.mul(M4.persp(fov, asp, NEAR, 3200), view.m), th = Math.tan(fov / 2); RAY = { e: cam.eye.slice(), f: cam.dir.slice(), r: view.r, u: view.u, th, asp };
+  const view = M4.look(cam.eye, cam.dir), fov = STUDIO ? .27 : started && Life.view ? Life.view.cur.fov : SET.fov, asp = W / H, NEAR = cam.indoor && !cam.fp ? CAM_IN.near : .25, VP = M4.mul(M4.persp(fov, asp, NEAR, 3200), view.m), th = Math.tan(fov / 2); RAY = { e: cam.eye.slice(), f: cam.dir.slice(), r: view.r, u: view.u, th, asp };
   gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf); gl.bufferData(gl.ARRAY_BUFFER, dyn.a.subarray(0, dyn.n), gl.DYNAMIC_DRAW);
   let SM = M4.t(0, 0, 0), shOn = 0, giAt = [0, 0, 1], giK = 0;
-  if (shFbo && quality > .6) {                              // shadows: draw the town from the light, around where the player looks
+  if (shFbo && quality > .6 && SET.shadows) {                              // shadows: draw the town from the light, around where the player looks
     const R = 70, tex = 2 * R / SH, f = [-Lt.dir[0], -Lt.dir[1], -Lt.dir[2]], lv0 = M4.look([0, 0, 0], f), dot3 = (p, q) => p[0] * q[0] + p[1] * q[1] + p[2] * q[2];
     let foc = [near[0] + cam.dir[0] * 28, 0, near[1] + cam.dir[2] * 28]; const ox = dot3(foc, lv0.r) % tex, oy = dot3(foc, lv0.u) % tex;
     foc = [foc[0] - lv0.r[0] * ox - lv0.u[0] * oy, foc[1] - lv0.r[1] * ox - lv0.u[1] * oy, foc[2] - lv0.r[2] * ox - lv0.u[2] * oy];   // move in whole texels so shadows do not crawl
@@ -2972,7 +2988,7 @@ const LIGHTS = { reference: { sun: 1, sky: 1, bounce: 1, lanterns: 1, haze: 1, e
   golden: { sun: .62, sky: .9, bounce: 1.5, lanterns: 1, haze: .55, exposure: .7, warm: 1 } };   // golden: the kit light as first tuned (ADR-0007), kept for comparison (?light=golden)
 let lightName = LIGHTS[q.get("light")] ? q.get("light") : "kit";
 addEventListener("keydown", e => { if (e.code === "KeyL" && started && !e.repeat) { lightName = lightName === "kit" ? "reference" : "kit"; Object.assign(window.wasted.dials, { warm: 0, neutral: 0, veil: 0, skyLow: 0, gi: 0 }, LIGHTS[lightName]); } });
-window.wasted = { repaint, rayAt, fitBox, DESIGN_FOV, furn: { townLayout, showLayout, layoutWorld, roomFor, pickPiece, SIZE: () => Furniture.SIZE }, dials: Object.assign({ gi: 0 }, LIGHTS[lightName], q.has("gi") ? { gi: +q.get("gi") } : {}), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, begin, setLook: L => { playerLook = L; }, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
+window.wasted = { repaint, rayAt, fitBox, DESIGN_FOV, applySettings, showMap: on => { showMap = on; $("bigmap").style.display = on ? "flex" : "none"; }, furn: { townLayout, showLayout, layoutWorld, roomFor, pickPiece, SIZE: () => Furniture.SIZE }, dials: Object.assign({ gi: 0 }, LIGHTS[lightName], q.has("gi") ? { gi: +q.get("gi") } : {}), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, begin, setLook: L => { playerLook = L; }, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
 // sound (sound.js): which lots play music, where the fountains and gardens are
 Sound.init(LOTS, D.blocks.flatMap(b => b.props.filter(p => p.kind === "fountain").map(p => p.pos)),
   LOTS.filter(l => l.kind === "garden").map(l => [(l.rect[0] + l.rect[2]) / 2, (l.rect[1] + l.rect[3]) / 2]));

@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "furnishing"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "furnishing", "settings"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -1374,4 +1374,75 @@ def design_problems(w, ds=None):
                 out.append("%s: floor %d's inside walls not a kit colour" % (i, f))
         if n >= 2 and not d["circulation"]["stair"] and not d["shell"]["plan"]:      # a designed house has its plan's own stair (houses.js)
             out.append("%s: no stair in the design" % i)
+    return out
+
+
+def settings_problems(w):
+    """Every rule World/rules/settings.json must keep (UI-005, UI-008 to UI-010): each setting's default fits its type and
+    range; every menu tab names an action; every platform binds every action, and no control does two things where both
+    can happen (within one context, or in a context and anywhere)."""
+    S, out = w["settings"], []
+    for g, G in S["groups"].items():
+        for k, s in G["settings"].items():
+            t, d = s.get("type"), s.get("default")
+            if t == "switch" and not isinstance(d, bool):
+                out.append("setting %s.%s: a switch's default is yes or no" % (g, k))
+            elif t == "choice" and d not in s.get("options", {}):
+                out.append("setting %s.%s: default %s is not one of its options" % (g, k, d))
+            elif t == "range":
+                lo, hi, st = s.get("min"), s.get("max"), s.get("step")
+                if not all(isinstance(x, (int, float)) and not isinstance(x, bool) for x in (lo, hi, st, d)) or not lo <= d <= hi or st <= 0:
+                    out.append("setting %s.%s: a range needs min <= default <= max and a step" % (g, k))
+                elif abs((d - lo) / st - round((d - lo) / st)) > 1e-6:
+                    out.append("setting %s.%s: default %s is not on its steps" % (g, k, d))
+            elif t not in ("switch", "choice", "range"):
+                out.append("setting %s.%s: no type %s" % (g, k, t))
+            if not s.get("name"):
+                out.append("setting %s.%s has no name" % (g, k))
+    A, C = S["actions"], S["contexts"]
+    for a, x in A.items():
+        if x.get("context") not in C:
+            out.append("action %s: no context %s" % (a, x.get("context")))
+    for t in S["menu"]["tabs"]:
+        if t["action"] not in A:
+            out.append("menu tab %s: no action %s" % (t["id"], t["action"]))
+    for p, P in S["platforms"].items():
+        got = P["controls"]
+        for a in A:
+            if not got.get(a):
+                out.append("%s: nothing does %s" % (p, a))
+        for a in got:
+            if a not in A:
+                out.append("%s: %s is not an action" % (p, a))
+        by = {}
+        for a, ks in got.items():
+            if a not in A:
+                continue
+            for k in ks:
+                by.setdefault(k, []).append(a)
+        for k, acts in sorted(by.items()):
+            ctx = [A[a]["context"] for a in acts]
+            clash = len(ctx) != len(set(ctx)) or ("anywhere" in ctx and len(ctx) > 1)
+            if clash:
+                out.append("%s: %s does %s" % (p, k, " and ".join(acts)))
+    if S["save"]["slots"] < 1:
+        out.append("save: at least one slot")
+    return out
+
+
+def outfit_problems(w, outfit):
+    """What is wrong with one outfit of the wardrobe (CHR-014): only the parts settings.json `wardrobe.parts` names, each one
+    the character designer offers (World/rules/designer.json), and a name."""
+    d, parts, out = w["designer"], w["settings"]["wardrobe"]["parts"], []
+    for k in outfit:
+        if k != "name" and k not in parts:
+            out.append("an outfit cannot change %s" % k)
+    for k in parts:
+        if k not in outfit:
+            out.append("the outfit has no %s" % k)
+    full = dict(d["default"], **outfit)
+    full["name"] = d["default"]["name"]
+    out += [p for p in look_problems(d, full) if p.split(" ")[0] in parts]
+    if not isinstance(outfit.get("name"), str) or not 0 < len(outfit["name"].strip()) <= d["name"]["max"]:
+        out.append("an outfit needs a name of 1 to %d letters" % d["name"]["max"])
     return out

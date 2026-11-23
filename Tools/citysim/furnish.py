@@ -10,13 +10,18 @@ furnished), or the id of a piece from World/rules/furnishing.json `pieces` (with
 are the middle of the piece in metres, yaw its turn in degrees: u across the piece goes to (cos, -sin), v from its front
 to its back to (sin, cos), as the slice's M4.ry. A rug lies on the floor and other pieces may stand on it.
 
-    problems = furnish.check(F, room, keep, ceiling, before, after, funds)   # [] when the new layout may be kept
-    total, lines = furnish.cost(F, before, after)                           # chips, and what each change costs
+    problems = furnish.check(F, room, keep, ceiling, before, after, funds, belongings)   # [] when the new layout may be kept
+    total, lines = furnish.cost(F, before, after, belongings)                           # chips, and what each change costs
+    belongings = furnish.stow(before, after, belongings, where)                         # what the player holds afterwards
 
 `room` is the storey's floor inside its walls [x0, z0, x1, z1]; `keep` the rectangles that must stay clear (the way in
 from the door, the stairwell: storeys.json keep_clear); `ceiling` the height under the ceiling. As for a remodel, a
 layout is refused only for what the change makes wrong, never for what was already so. Moving, turning and taking away
 are free; an added piece costs its price. Nothing is stored or ticked here.
+
+Belongings (INV-001, FURN-050): the pieces the player owns that are not placed. A piece taken away goes to the belongings
+(a town piece remembers where it came from, so it can be drawn anywhere: {"lot", "level", "id"}); a piece placed from the
+belongings keeps its id ("b:lot:level:t3") and costs nothing.
 """
 import math
 
@@ -91,30 +96,58 @@ def problems(F, room, keep, ceiling, pieces):
     return out
 
 
-def cost(F, before, after):
-    """What the change costs: an added piece its price; moving, turning and taking away nothing. Lines [what, 1, chips]."""
+def cost(F, before, after, belongings=()):
+    """What the change costs: an added piece its price; placing one from the belongings, moving, turning and taking away
+    nothing. Lines [what, 1, chips]."""
     was = {p["id"]: p for p in before}
     now = {p["id"] for p in after}
+    mine = {b["id"] for b in belongings}
     lines = []
     for p in after:
         o = was.get(p["id"])
-        if o is None:
+        if o is None and p["id"] in mine:
+            lines.append(["Place: " + p["name"], 1, 0])
+        elif o is None:
             lines.append(["Buy: " + p["name"], 1, F["pieces"][p["kind"]]["price"] if p["kind"] in F["pieces"] else 0])
         elif (o["x"], o["z"], o["yaw"]) != (p["x"], p["z"], p["yaw"]):
             lines.append(["Move: " + p["name"], 1, 0])
     for p in before:
         if p["id"] not in now:
-            lines.append(["Take away: " + p["name"], 1, 0])
+            lines.append(["To your belongings: " + p["name"], 1, 0])
     return sum(c for _, _, c in lines), lines
 
 
-def check(F, room, keep, ceiling, before, after, funds=None):
-    """[] when the new layout may be kept: nothing it makes wrong (FURN-051, FURN-055), and the player can pay."""
+def check(F, room, keep, ceiling, before, after, funds=None, belongings=()):
+    """[] when the new layout may be kept: nothing it makes wrong (FURN-051, FURN-055), every piece placed from the
+    belongings is one of them (INV-001), and the player can pay."""
     old = {k for k, _ in problems(F, room, keep, ceiling, before)}
     out = list(dict.fromkeys(m for k, m in problems(F, room, keep, ceiling, after) if k not in old))
-    total = cost(F, before, after)[0]
+    was, mine = {p["id"] for p in before}, {b["id"] for b in belongings}
+    for p in after:
+        if p["id"] not in was and p["id"].startswith("b") and p["id"] not in mine:
+            out.append("%s is not among your belongings" % _the(p))
+    total = cost(F, before, after, belongings)[0]
     if funds is not None and total > funds:
         out.append("you cannot pay %d.%02d brix" % (total // 100, total % 100))
+    return out
+
+
+def stow(before, after, belongings, where=None):
+    """The belongings after a change: less what was placed from them, with what was taken away. A piece taken away gets the
+    id "b:lot:level:its id" from `where` it was ({"lot", "level"}), so ids never clash between homes, and a town piece
+    remembers where it came from so it can be drawn anywhere."""
+    now = {p["id"] for p in after}
+    out = [b for b in belongings if b["id"] not in now]
+    w = where or {}
+    for p in before:
+        if p["id"] in now:
+            continue
+        q = {k: v for k, v in p.items() if k not in ("x", "z", "yaw")}
+        if not p["id"].startswith("b"):
+            q["id"] = "b:%s:%s:%s" % (w.get("lot", ""), w.get("level", ""), p["id"])
+            if p["kind"] == "town" and "from" not in p:
+                q["from"] = dict(where or {}, id=p["id"])
+        out.append(q)
     return out
 
 
@@ -125,8 +158,9 @@ def kit_piece(F, kind, pid, x, z, yaw, line):
     return {"id": pid, "kind": kind, "name": P["name"], "w": w, "d": d, "h": h, "x": x, "z": z, "yaw": yaw, "rug": False, "line": line}
 
 
-def apply(F, before, edit):
-    """A layout changed by an edit {"move": {id: [x, z, yaw]}, "remove": [ids], "add": [[id, kind, x, z, yaw, line]]}."""
+def apply(F, before, edit, belongings=()):
+    """A layout changed by an edit {"move": {id: [x, z, yaw]}, "remove": [ids], "add": [[id, kind, x, z, yaw, line]],
+    "place": [[belonging id, x, z, yaw]]}."""
     out = []
     for p in before:
         if p["id"] in edit.get("remove", []):
@@ -137,12 +171,17 @@ def apply(F, before, edit):
         out.append(q)
     for pid, kind, x, z, yaw, line in edit.get("add", []):
         out.append(kit_piece(F, kind, pid, x, z, yaw, line))
+    mine = {b["id"]: b for b in belongings}
+    for bid, x, z, yaw in edit.get("place", []):
+        b = mine.get(bid) or {"id": bid, "kind": "town", "name": "Piece", "w": 1.0, "d": 1.0, "h": 1.0, "rug": False}
+        out.append(dict(b, x=x, z=z, yaw=yaw))
     return out
 
 
 def check_script():
     """A fixed run for the slice's port (Prototype/play/builder.js Furnish) to reproduce exactly: one room 6 by 5 m with
-    a way in from the door, a bed, a wardrobe and a rug, and [ceiling, edit, funds] for each case."""
+    a way in from the door, a bed, a wardrobe and a rug, what the player holds (a sofa), and [ceiling, edit, funds] for
+    each case."""
     room, keep = [0.0, 0.0, 6.0, 5.0], [[2.5, 0.0, 3.5, 1.2]]
     before = [
         {"id": "t0", "kind": "town", "name": "Bed", "w": 1.0, "d": 2.0, "h": 0.98, "x": 1.0, "z": 3.0, "yaw": 0, "rug": False},
@@ -163,14 +202,21 @@ def check_script():
         [2.0, {"add": [["k1", "k17:wardrobe", 5.0, 1.5, 270, "workshop"]]}, None],
         [2.6, {"add": [["k1", "k17:armchair", 4.0, 2.0, 45, "oldtown"]], "move": {"t0": [0.5, 3.0, 0]}, "remove": ["t2"]}, 500000],
     ]
-    return dict(room=room, keep=keep, before=before, cases=cases)
+    cases += [
+        [2.6, {"place": [["b:b_old_l2:1:k1", 3.0, 2.5, 90]]}, None],
+        [2.6, {"place": [["b:nowhere:0:k9", 3.0, 2.5, 0]]}, None],
+        [2.6, {"remove": ["t1", "t2"], "place": [["b:b_old_l2:1:k1", 4.5, 4.5, 0]]}, None],
+    ]
+    belongings = [{"id": "b:b_old_l2:1:k1", "kind": "k17:sofa", "name": "Sofa", "w": 2.0, "d": 0.92, "h": 1.0, "rug": False, "line": "plain"}]
+    return dict(room=room, keep=keep, before=before, cases=cases, belongings=belongings, where={"lot": "b_test_l0", "level": 0})
 
 
 def run_script(F, script):
     """Each case of check_script: the problems, the cost and its lines."""
-    out = []
+    out, B = [], script["belongings"]
     for ceiling, edit, funds in script["cases"]:
-        after = apply(F, script["before"], edit)
-        total, lines = cost(F, script["before"], after)
-        out.append(dict(problems=check(F, script["room"], script["keep"], ceiling, script["before"], after, funds), total=total, lines=lines))
+        after = apply(F, script["before"], edit, B)
+        total, lines = cost(F, script["before"], after, B)
+        out.append(dict(problems=check(F, script["room"], script["keep"], ceiling, script["before"], after, funds, B), total=total, lines=lines,
+                        belongings=stow(script["before"], after, B, script["where"])))
     return out

@@ -73,7 +73,7 @@ class Paying(unittest.TestCase):
     def test_FURN_052_taking_away_and_moving_are_free_buying_is_priced(self):
         total, lines = furnish.cost(F, BEFORE, after({"remove": ["t1"], "move": {"t0": [1.5, 3.0, 0]}}))
         self.assertEqual(total, 0)
-        self.assertEqual(lines, [["Move: Bed", 1, 0], ["Take away: Wardrobe", 1, 0]])
+        self.assertEqual(lines, [["Move: Bed", 1, 0], ["To your belongings: Wardrobe", 1, 0]])
         total, lines = furnish.cost(F, BEFORE, after({"add": [["k1", "k17:sofa", 3.0, 2.5, 0, "curve"]]}))
         self.assertEqual(total, F["pieces"]["k17:sofa"]["price"])
         self.assertEqual(check({"add": [["k1", "k17:sofa", 3.0, 2.5, 0, "curve"]]}, funds=total - 1), ["you cannot pay %d.%02d brix" % (total // 100, total % 100)])
@@ -85,6 +85,32 @@ class TheSlicePort(unittest.TestCase):
         want = furnish.run_script(F, S)
         self.assertEqual(len(want), len(S["cases"]))
         self.assertTrue(any(r["problems"] for r in want) and any(not r["problems"] for r in want))
+
+
+class Belongings(unittest.TestCase):
+    MINE = S["belongings"]
+    WHERE = S["where"]
+
+    def test_INV_001_taken_away_goes_to_belongings_and_back(self):
+        after_ = furnish.apply(F, BEFORE, {"remove": ["t1"]}, self.MINE)
+        held = furnish.stow(BEFORE, after_, self.MINE, self.WHERE)
+        ids = [b["id"] for b in held]
+        self.assertIn("b:b_test_l0:0:t1", ids, "the wardrobe is kept, named by where it was")
+        ward = next(b for b in held if b["id"] == "b:b_test_l0:0:t1")
+        self.assertEqual(ward["from"], {"lot": "b_test_l0", "level": 0, "id": "t1"}, "a town piece remembers where it came from")
+        self.assertNotIn("x", ward)
+        # and placed again, here or anywhere: free, and gone from the belongings
+        back = furnish.apply(F, after_, {"place": [["b:b_test_l0:0:t1", 4.5, 4.65, 0]]}, held)
+        self.assertEqual(furnish.cost(F, after_, back, held), (0, [["Place: Wardrobe", 1, 0]]))
+        self.assertEqual(furnish.check(F, ROOM, KEEP, 2.6, after_, back, 0, held), [])
+        self.assertEqual([b["id"] for b in furnish.stow(after_, back, held, self.WHERE)], ["b:b_old_l2:1:k1"])
+
+    def test_INV_001_only_what_you_hold_can_be_placed(self):
+        bad = furnish.apply(F, BEFORE, {"place": [["b:nowhere:0:k9", 3.0, 2.5, 0]]}, self.MINE)
+        self.assertEqual(furnish.check(F, ROOM, KEEP, 2.6, BEFORE, bad, None, self.MINE), ["the piece is not among your belongings"])
+        ok = furnish.apply(F, BEFORE, {"place": [["b:b_old_l2:1:k1", 3.0, 2.5, 90]]}, self.MINE)
+        self.assertEqual(furnish.check(F, ROOM, KEEP, 2.6, BEFORE, ok, 0, self.MINE), [], "placing what you hold costs nothing")
+        self.assertEqual(furnish.stow(BEFORE, ok, self.MINE, self.WHERE), [])
 
 
 if __name__ == "__main__":

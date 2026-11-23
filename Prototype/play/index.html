@@ -76,6 +76,17 @@
   .ptab { width: 100%; border-collapse: collapse; font-size: 15px; }
   .ptab td { padding: 4px 6px; border-bottom: 1px solid rgba(217,207,182,.12); vertical-align: middle; }
   .ptab td:last-child { text-align: right; }
+  #life.menu { width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }   /* the game menu (UI-005) */
+  #life.menu.side { width: min(420px, calc(100vw - 24px)); }
+  .mrail { display: flex; flex-wrap: wrap; gap: 4px; margin: -4px 0 12px; padding-bottom: 10px; border-bottom: 1px solid rgba(217,207,182,.18); }
+  .mtab { font: 600 13px var(--data); color: var(--dim); background: none; border: 1px solid transparent; border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+  .mtab:hover { color: var(--cream); background: rgba(217,207,182,.08); }
+  .mtab.on { color: var(--ink); background: var(--lantern); }
+  .mtab:focus-visible { outline: 2px solid var(--cream); outline-offset: 2px; }
+  .dzl.wide { width: 210px; }
+  .keys kbd { margin-right: 4px; }
+  .set-off { display: none !important; }   /* hidden in Settings: On the screen */
+  #life, #talk, #toast, #prompt, #purse, #clock, #counter, #track { zoom: var(--ui-zoom, 1); }
   body.designing #keys, body.designing #mapbox, body.designing #stats, body.designing #toast, body.designing #track, body.designing #prompt, body.designing #clock { display: none !important; }   /* the building designer: the building, the panel and nothing else */
   #life.side { left: auto; right: 12px; top: 12px; transform: none; width: min(380px, calc(100vw - 24px)); max-height: calc(100vh - 24px); }   /* the building designer, beside the building */
   .dzrow { display: flex; align-items: center; gap: 10px; margin: 6px 0; flex-wrap: wrap; }
