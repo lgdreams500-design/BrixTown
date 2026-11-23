@@ -326,14 +326,14 @@ class TheOutskirtsAndBuses(unittest.TestCase):
             self.assertNotIn(bid, R.parking_near(R.stops[bid]["pos"], 5))
 
     def test_CITY_084_residents_without_a_car_ride_the_bus(self):
-        rides = D["rides"]
-        self.assertGreater(len(rides), 100)
+        rides, b = D["rides"], W["traffic"]["buses"]
+        self.assertGreater(len(rides), 1500)                             # long walks are ridden, not walked
         owners = {c["owner"] for c in T.cars.values()}
         visits = T.bus_visits(D["trips"])
         for r in rides:
             self.assertNotIn(r["rid"], owners)
-            self.assertLessEqual(r["there"], r["walk_t"][1] + 1e-6)      # there by the time the walk would have been
-            self.assertGreaterEqual(r["go"], r["walk_t"][0] - 1e-6)
+            self.assertLessEqual(r["there"], r["walk_t"][1] + b["late_min"] + 1e-6)   # their day moves to the bus, a little
+            self.assertGreaterEqual(r["go"], r["walk_t"][0] - b["shift_min"] - 1e-6)
             v = visits[r["bus"]]
             self.assertTrue(any(bb == r["board"] and lv is not None and abs(lv / T.pace - r["t0"]) < 1e-6 for bb, _, lv in v))   # it leaves that stop then
             self.assertTrue(any(bb == r["alight"] and ar is not None and abs(ar / T.pace - r["t1"]) < 1e-6 for bb, ar, _ in v))
@@ -343,6 +343,29 @@ class TheOutskirtsAndBuses(unittest.TestCase):
         for rid in {r["rid"] for r in rides}:                            # their days stay whole
             for a, c in zip(PLAN[rid], PLAN[rid][1:]):
                 self.assertAlmostEqual(a[2], c[1], places=6)
+
+
+    def test_CITY_085_most_cars_parked_away_from_home_leave_the_street(self):
+        pa = W["traffic"]["park_away"]
+        away = stowed = 0
+        for cid, car in T.cars.items():
+            trips = D["trips"][cid]
+            for i, tr in enumerate(trips[:-1]):
+                if tr["bay1"] in (None, car["bay"]):
+                    continue
+                away += 1
+                st = T.stowed(cid, DAY, i)
+                if not st:
+                    continue
+                stowed += 1
+                mid = (st[0] + st[1]) / 2 / T.pace
+                self.assertEqual(T.car_at(cid, DAY, mid)["state"], "stowed")
+                self.assertEqual(T.car_at(cid, DAY, tr["t1"] / T.pace + 0.01)["state"], "parked")    # parks first, in sight
+                self.assertEqual(T.car_at(cid, DAY, trips[i + 1]["t0"] / T.pace - 0.01)["state"], "parked")   # back before the driver
+        self.assertGreater(away, 200)
+        self.assertAlmostEqual(stowed / away, pa["share"], delta=0.08)
+        for cid, car in list(T.cars.items())[:50]:                       # never at home
+            self.assertEqual(T.car_at(cid, DAY, 3 * 60)["state"], "parked")
 
 
 class TheBusyDay(unittest.TestCase):

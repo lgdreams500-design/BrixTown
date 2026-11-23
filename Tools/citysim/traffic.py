@@ -877,8 +877,8 @@ class Traffic:
 
     def _riders(self, plan, trips):
         """A resident with no car of their own whose walk is longer than ride_min_m walks to a stop instead, waits, rides
-        and walks on, if a bus gets them there by the time the walk would have, the two walks are short beside the walk
-        it replaces, and it leaves the stop after they reach it. They stay where they were a little longer instead."""
+        and walks on, when the two walks are short beside the walk it replaces and a bus fits: their day may move to the
+        bus, setting off up to shift_min early and arriving up to late_min late, the least change winning (CITY-084)."""
         b = self.r["buses"]
         if not self.buses:
             return []
@@ -924,54 +924,70 @@ class Traffic:
             i = 0
             while i < len(pieces):
                 p = pieces[i]
-                if not (p[0] == "move" and 0 < i < len(pieces) - 1 and pieces[i - 1][0] == "stay" and pieces[i + 1][0] == "stay"
-                        and p[3][1][-1] >= b["ride_min_m"]):
+                if not (p[0] == "move" and 0 < i < len(pieces) - 1 and p[3][1][-1] >= b["ride_min_m"]):
                     out.append(p)
                     i += 1
                     continue
                 kind, t0, t1, (route, cum, vv), s = p
                 frm, to = pieces[i - 1][4]["place"], s["place"]
                 best = None
+                # CITY-084: they may set off up to shift_min early (their stay before is cut short) and arrive up to late_min
+                # late (the stay after starts later), to fit a bus; the least change to their day wins
+                # straight on from another walk (they were late) they board the first bus after they reach the stop; straight
+                # on into another walk they must be off by the time it starts, and wait there if early
+                prev_stay, next_stay = out[-1][0] == "stay", pieces[i + 1][0] == "stay"
+                lo = max(out[-1][1] + b["min_stay_min"], t0 - b["shift_min"]) if prev_stay else t0
+                hi = min(t1 + b["late_min"], pieces[i + 1][2] - b["min_stay_min"]) if next_stay else t1
                 for A in near(frm):
                     for B in near(to):
                         opts = pairs.get((A, B))
                         if not opts or A == B:
                             continue
-                        for leave, arrive, vid, ba, bb in reversed(opts):
-                            if arrive / pace > t1:
+                        walks = {}
+                        for leave, arrive, vid, ba, bb in opts:
+                            if leave / pace < lo or arrive / pace > hi:
                                 continue
-                            rA = self.walk(frm, route[0], ba)[:-1]
-                            rB = self.walk(to, route[-1], bb, to_bay=False)[1:]
-                            wA, wB = lengths(rA)[-1], lengths(rB)[-1]
+                            if (ba, bb) not in walks:
+                                rA = self.walk(frm, route[0], ba)[:-1]
+                                rB = self.walk(to, route[-1], bb, to_bay=False)[1:]
+                                walks[(ba, bb)] = (rA, rB, lengths(rA)[-1], lengths(rB)[-1])
+                            rA, rB, wA, wB = walks[(ba, bb)]
                             if wA + wB > b["walk_share_max"] * cum[-1]:
-                                break
+                                continue
                             go = leave / pace - margin - wA / v
                             there = arrive / pace + wB / v
-                            if go < t0 or there > t1:
-                                if go < t0:
-                                    break                 # every earlier bus leaves earlier still
+                            if go < lo or there > hi:
                                 continue
-                            if best is None or (go, -there) > (best[0], -best[1]):
-                                best = (go, there, leave / pace, arrive / pace, vid, rA, rB, ba, bb)
-                            break
+                            if not prev_stay:
+                                go = t0                           # walking on at once, the wait is at the stop
+                            cost = max(0.0, t0 - go) + 2 * max(0.0, there - t1)   # minutes their day moves
+                            key = (cost, -go)
+                            if best is None or key < best[-1]:
+                                best = (go, there, leave / pace, arrive / pace, vid, rA, rB, ba, bb, key)
                 if best is None:
                     out.append(p)
                     i += 1
                     continue
-                go, there, dep, arr, vid, rA, rB, ba, bb = best
-                last = out[-1]
-                out[-1] = (last[0], last[1], go, last[3], last[4])      # stay a little longer where they were
+                go, there, dep, arr, vid, rA, rB, ba, bb, _ = best
+                if prev_stay:
+                    last = out[-1]
+                    out[-1] = (last[0], last[1], go, last[3], last[4])  # stay a little longer or shorter where they were
                 cA, cB = lengths(rA), lengths(rB)
                 reach_t = go + cA[-1] / v
                 out.append(("move", go, reach_t, (rA, cA, v), s))
                 out.append(("stay", reach_t, dep, rA[-1], dict(s, act="wait", use=None, slot=None, alt=None)))
                 out.append(("ride", dep, arr, vid, s))
                 out.append(("move", arr, there, (rB, cB, v), s))
-                nxt = pieces[i + 1]
-                out.append((nxt[0], there, nxt[2], nxt[3], nxt[4]))  # there early: the stay starts sooner
                 rides.append(dict(rid=rid, bus=vid, board=ba, alight=bb, t0=dep, t1=arr, walk=cum[-1], walk_t=(t0, t1), go=go, there=there))
                 changed = True
-                i += 2
+                if next_stay:
+                    nxt = pieces[i + 1]
+                    out.append((nxt[0], there, nxt[2], nxt[3], nxt[4]))  # the stay there starts when they arrive
+                    i += 2
+                else:
+                    if there < t1 - 1e-9:                      # early for the next walk: wait where the bus left them
+                        out.append(("stay", there, t1, rB[-1], dict(s, act="wait", use=None, slot=None, alt=None)))
+                    i += 1
             if changed:
                 plan[rid] = out
         return rides
@@ -1385,6 +1401,21 @@ class Traffic:
                 self.city.plan(day)
         return self._days[day]
 
+    def stowed(self, cid, day, i):
+        """CITY-085: a resident's car parked away from home after trip i is taken off the street, for a share of such stays
+        (park_away.share, by the seed), from a little after the driver has left it to a little before they come back to
+        it. (real seconds from, to) or None. The bay stays theirs; only nothing is drawn there."""
+        pa = self.r.get("park_away")
+        if not pa or cid not in self.cars:
+            return None
+        trips = self._day(day)["trips"].get(cid, [])
+        if i + 1 >= len(trips) or trips[i]["t1"] is None or trips[i]["bay1"] in (None, self.cars[cid]["bay"]):
+            return None
+        if rnd("stow", cid, day, i) >= pa["share"]:
+            return None
+        a, z = trips[i]["t1"] + pa["after_min"] * self.pace, trips[i + 1]["t0"] - pa["before_min"] * self.pace
+        return (a, z) if z > a else None
+
     def _parked(self, bid):
         b = self.roads.bays[bid]
         return dict(pos=b["pos"], heading=b.get("u") or self.roads.lanes[b["lane"]]["u"], state="parked", bay=b["id"], leg=None)
@@ -1408,6 +1439,9 @@ class Traffic:
         if tr["t1"] is not None and t >= tr["t1"]:
             if lay is not None and i == len(trips) - 1 and t >= tr["t1"] + lay:   # the day's last run done: out of service
                 return dict(pos=None, heading=None, state="away", bay=None, leg=None)
+            st = self.stowed(cid, day, i)
+            if st and st[0] <= t < st[1]:                  # parked off the street until the driver comes back (CITY-085)
+                return dict(pos=None, heading=None, state="stowed", bay=tr["bay1"], leg=None)
             return self._parked(tr["bay1"])
         f = (t - tr["t0"]) / self.step
         n = int(f)

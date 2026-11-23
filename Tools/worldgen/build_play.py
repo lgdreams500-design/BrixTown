@@ -77,7 +77,7 @@ def cars(city, day):
     for n, cid in enumerate(T.ids(day)):                   # residents' cars, vans, and today's cars passing through
         index[cid] = n
         trips = []
-        for tr in D["trips"][cid]:
+        for ti, tr in enumerate(D["trips"][cid]):
             pts, t = [], tr["t0"]
             while t < tr["t1"] - 1e-6:
                 c = T.car_at(cid, day, t / T.pace)
@@ -98,8 +98,9 @@ def cars(city, day):
                     f = f * f * (3 - 2 * f)
                     pts[i][0] += (bp[0] - pts[i][0]) * f
                     pts[i][1] += (bp[1] - pts[i][1]) * f
+            st = T.stowed(cid, day, ti)                    # CITY-085: off the street while parked, [from, to] in minutes
             trips.append([round(tr["t0"] / T.pace, 3), round(tr["t1"] / T.pace, 3), bay(tr["bay1"]) if tr["bay1"] else None,
-                          [round(v, 2) for q in pts for v in q]])
+                          [round(v, 2) for q in pts for v in q]] + ([[round(st[0] / T.pace, 3), round(st[1] / T.pace, 3)]] if st else []))
         home = T.home_bay(cid)
         v = dict(home=bay(home) if home else None, trips=trips, k=2 if cid in T.buses else 1 if cid in T.vans else 0)
         if cid in T.buses:                                 # a bus (CITY-083): which line, for its colours and its sign

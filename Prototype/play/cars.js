@@ -70,6 +70,7 @@ var Cars = (() => {
         return { x: p[a] + (p[b] - p[a]) * g, z: p[a + 1] + (p[b + 1] - p[a + 1]) * g, hx: hx / l, hz: hz / l, moving: Math.hypot(p[b] - p[a], p[b + 1] - p[a + 1]) > .05, trip: true };
       }
       bay = t[2];
+      if (t[4] && m >= t[4][0] && m < t[4][1]) return null;   // parked off the street until its driver comes back (CITY-085)
     }
     return bay ? { x: bay[0], z: bay[1], hx: bay[2], hz: bay[3], moving: false } : null;
   }

@@ -126,14 +126,22 @@
   "length": 11.0,
   "dwell_s": 20.0,
   "layover_min": 4.0,
-  "ride_min_m": 450.0,
-  "stop_reach_m": 300.0,
+  "ride_min_m": 400.0,
+  "stop_reach_m": 400.0,
   "board_margin_min": 1.0,
-  "walk_share_max": 0.6,
+  "walk_share_max": 0.75,
   "no_ride_roles": [],
   "day_end_min": 20.0,
   "signal_s": 30.0,
   "junction_s": 4.0,
-  "pull_s": 6.0
+  "pull_s": 6.0,
+  "shift_min": 30.0,
+  "late_min": 10.0,
+  "min_stay_min": 2.0
+ },
+ "park_away": {
+  "share": 0.6,
+  "after_min": 2.0,
+  "before_min": 1.0
  }
 }
