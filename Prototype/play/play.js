@@ -2204,7 +2204,9 @@ function nightSky(m) {
 // ?studio=1: one standing person under the light and camera of the reference lineup (Tools/blender/character_face_05.py, sheets()), to compare
 // the slice's people with character_lineup.png without the town's own light in the way. Sun from the front left at 48 degrees, strength 3.2 in
 // (1, 0.82, 0.62); a flat sky of (0.42, 0.55, 0.82) at 0.25; two 60 W lanterns by the wall behind; no haze; exposure -0.3; a 60 mm lens from 9.6 m.
-const STUDIO = new URLSearchParams(location.search).has("studio"), STUDIO_AT = [OX + 300.5, OZ + 186.6], STUDIO_WHO = Math.max(0, (+new URLSearchParams(location.search).get("studio") || 1) - 1);   // ?studio=2 shows the second person of the lineup, and so on
+const STUDIO = new URLSearchParams(location.search).has("studio"), STUDIO_AT = new URLSearchParams(location.search).has("sx") ? [+new URLSearchParams(location.search).get("sx"), +new URLSearchParams(location.search).get("sz")] : [OX + 300.5, OZ + 186.6],   // &sx=&sz= stands the studio somewhere else, e.g. an open square for ?at= shots
+      STUDIO_WHO = Math.max(0, (+new URLSearchParams(location.search).get("studio") || 1) - 1);   // ?studio=2 shows the second person of the lineup, and so on
+let STUDIO_M = +new URLSearchParams(location.search).get("at") || 0, STUDIO_FF = new URLSearchParams(location.search).has("ff") ? +new URLSearchParams(location.search).get("ff") : null;   // ?studio&at=20: the camera 20 m away at eye height, the person drawn as the town draws them there (face fading, LOD)
 const LINEUP = STUDIO || new URLSearchParams(location.search).has("lineup") ? People.cast() : null;
 function lighting(m) {                                       // the reference recipe (sun 14 W/m2, sky 0.35, haze) carried through the day
   const rise = D.day.sunrise * 60, set = D.day.sunset * 60, day = smooth(0, 1, Math.min((m - (rise - 30)) / 60, ((set + 30) - m) / 60));
@@ -2321,7 +2323,7 @@ function findTarget0() {
   if (!target) target = Life.remodelTarget();            // at the door of a building you own, or in your rooms: remodel it (life.js)
 }
 function stepCamera(dt) {
-  if (STUDIO) { const gy = groundBase(STUDIO_AT[0], STUDIO_AT[1]), near = new URLSearchParams(location.search).has("face"), D9 = near ? (+new URLSearchParams(location.search).get("face") >= 2 ? 1.25 : 2.6) : 9.6, ch = near ? 1.5 : 1.25, d = [0, (near ? 1.5 : .97) - ch, -D9], n = Math.hypot(d[0], d[1], d[2]); cam.fp = true; cam.eye = [STUDIO_AT[0], gy + ch, STUDIO_AT[1] + D9]; cam.dir = d.map(v => v / n); return; }   // &face=1: the same lens brought up to the head
+  if (STUDIO) { const gy = groundBase(STUDIO_AT[0], STUDIO_AT[1]), near = new URLSearchParams(location.search).has("face"), D9 = STUDIO_M || (near ? (+new URLSearchParams(location.search).get("face") >= 2 ? 1.25 : 2.6) : 9.6), ch = STUDIO_M ? 1.6 : near ? 1.5 : 1.25, d = [0, (STUDIO_M ? 1.5 : near ? 1.5 : .97) - ch, -D9], n = Math.hypot(d[0], d[1], d[2]); cam.fp = true; cam.eye = [STUDIO_AT[0], gy + ch, STUDIO_AT[1] + D9]; cam.dir = d.map(v => v / n); return; }   // &face=1: the same lens brought up to the head
   const cp = Math.cos(cam.pitch); cam.dir = [Math.sin(cam.yaw) * cp, Math.sin(cam.pitch), -Math.cos(cam.yaw) * cp];
   if (!started && Life.designing) return Life.camera();  // the character designer turns round the player (life.js)
   if (started && Life.view) return designCam(dt);         // the building designer looks at the building from above (life.js)
@@ -2826,7 +2828,7 @@ function gpuCollect() {
 }
 const FPS_GOAL = 60, Q_MIN = .65;
 const PRE_M = 90, AO_M = 70;                                  // the depth pre-pass and the corner shade draw only pieces this near (m)                             // the frame rate the picture's sharpness is tuned to keep, and how soft it may go
-const LOD1_M = 16, LOD3_M = 35;                              // people nearer than LOD1_M get the mid body, beyond LOD3_M a figure of blocks (people.js far)
+const LOD1_M = 16, LOD3_M = 35, FACE_OUT_M = 30;   // the face: whole to LOD1_M, then fading into the skin until it is gone at FACE_OUT_M, so it never pops in                              // people nearer than LOD1_M get the mid body, beyond LOD3_M a figure of blocks (people.js far)
 // A mid body is built every BODY_EVERY[1] frames and a far one every BODY_EVERY[2]; in between the last one is drawn again,
 // moved to where the person is now. Turning, a new pose, a new look or a new level of detail builds it again at once.
 const BODY_EVERY = [1, 2, 3, 1], BODIES = new Map();
@@ -2900,7 +2902,7 @@ function frame(now) {
     const lod = dc < FULL_M && FULL.has(i) && !(r.inside && r.lot !== plLot) ? 0 : dc < LOD1_M ? 1 : dc < LOD3_M ? 2 : 3;
     if (!reuseBody(i, r, lod, L)) {                          // the same body as a frame or two ago, moved to where they are now (60 fps work)
       const n0 = dyn.n;
-      People.draw(dyn, r.x, r.y, r.z, r.yaw, L, r.pose, { ph: wet.ph !== undefined ? wet.ph : r.ph || 0, t: now / 1000, lod, fl: r.inside ? 10 : 14, look: lk, sleep: r.pose === 3, face: Talk.face(i), mod: r.mod || wet.mod, sig: r.sig || wet.sig, hood: wet.hood, umb: wet.umb });
+      People.draw(dyn, r.x, r.y, r.z, r.yaw, L, r.pose, { ph: wet.ph !== undefined ? wet.ph : r.ph || 0, t: now / 1000, lod, ff: clamp((FACE_OUT_M - dc) / (FACE_OUT_M - LOD1_M), 0, 1), fl: r.inside ? 10 : 14, look: lk, sleep: r.pose === 3, face: Talk.face(i), mod: r.mod || wet.mod, sig: r.sig || wet.sig, hood: wet.hood, umb: wet.umb });
       keepBody(i, r, lod, L, n0);
     }
     if (started && SET.names && d < 9 && Math.abs(r.y - pl.y) < 3) tags.push({ x: r.x, y: r.y + (r.pose === 2 ? 1.0 : r.pose === 3 ? .55 : 1.88) * L.S, z: r.z, d, text: D.residents[i].n + ", " + (D.residents[i].c || D.roles[D.residents[i].r]) + " · " + (r.walking ? GOING[D.acts[r.act]] || "walking" : DOING[D.acts[r.act]] || D.acts[r.act]) });
@@ -2911,7 +2913,7 @@ function frame(now) {
   FULL = new Set(near13.sort((a, b) => a[0] - b[0]).slice(0, FULL_MAX).map(e => e[1]));   // next frame's full-detail bodies
   if (started && !DZ) Talk.pick();                               // the nearest resident in reach can be talked to (E)
   if (started) Life.frame(dt);                            // money, quests and jobs move on with the clock (life.js)
-  if (LINEUP) LINEUP.forEach((L, k) => { if (STUDIO && k !== STUDIO_WHO) return; const lx = STUDIO ? STUDIO_AT[0] : OX + 300.5 + k * 1.1; People.draw(dyn, lx, groundBase(lx, OZ + 186.6), OZ + 186.6, Math.PI, L, 0, { ph: 0, t: now / 1000, lod: 0, fl: 14, mod: STUDIO ? { arms: [[1, 0, 4, 0], [1, 0, 4, 0]] } : null }); });   // in the studio the arms hang straight, as in the reference   // ?lineup=1: the six people of character_lineup.png in a row on Linden Street, to compare with it
+  if (LINEUP) LINEUP.forEach((L, k) => { if (STUDIO && k !== STUDIO_WHO) return; const lx = STUDIO ? STUDIO_AT[0] : OX + 300.5 + k * 1.1; const lz = STUDIO ? STUDIO_AT[1] : OZ + 186.6; People.draw(dyn, lx, groundBase(lx, lz), lz, Math.PI, L, 0, { ph: 0, t: now / 1000, lod: !STUDIO_M || STUDIO_M < FULL_M ? 0 : STUDIO_M < LOD1_M ? 1 : STUDIO_M < LOD3_M ? 2 : 3, ff: STUDIO_FF != null ? STUDIO_FF : clamp((FACE_OUT_M - (STUDIO_M || 0)) / (FACE_OUT_M - LOD1_M), 0, 1), fl: 14, mod: STUDIO ? { arms: [[1, 0, 4, 0], [1, 0, 4, 0]] } : null }); });   // in the studio the arms hang straight, as in the reference   // ?lineup=1: the six people of character_lineup.png in a row on Linden Street, to compare with it
   if ((started || Life.designing) && !cam.fp && !cam.close && pl.pose !== 4) {   // not while in a car; and in the designer, to see who you are making
     let da = cam.yaw - pl.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
     People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.play ? pl.playPose : pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
@@ -2942,7 +2944,7 @@ function frame(now) {
   const vl = ((dials.veil || 0) + Wx.veil) * Lt.day * (1 - .45 * Wx.grey); Lt.fog = Lt.fog.map((v, i) => v + mix(sun0[i], lum0, Wx.grey) * vl); Lt.zen = Lt.zen.map((v, i) => v + sun0[i] * vl * .7);   // sunlight scattered all through the haze: a pale sky, and distance fades to it (W5)
   if (STUDIO) { Lt.dir = [-.45 / 1.0005, .74 / 1.0005, .5 / 1.0005]; Lt.sunCol = [3.2 / Math.PI, 3.2 / Math.PI * .82, 3.2 / Math.PI * .62]; Lt.sky = [.42 * .25, .55 * .25, .82 * .25];
     Lt.ground = [.004 + Lt.sunCol[0] * .1, .004 + Lt.sunCol[1] * .068, .005 + Lt.sunCol[2] * .042]; Lt.fogD = 0; Lt.fog = mul3(Lt.sky, 1.25); Lt.zen = mul3(Lt.sky, 1.5); Lt.exp = Math.pow(2, -.3); Lt.day = 1; Lt.night = 0; Lt.wet = 0; Lt.rain = 0; }
-  const view = M4.look(cam.eye, cam.dir), fov = STUDIO ? .27 : started && Life.view ? Life.view.cur.fov : SET.fov, asp = W / H, NEAR = cam.indoor && !cam.fp ? CAM_IN.near : .25, VP = M4.mul(M4.persp(fov, asp, NEAR, 3200), view.m), th = Math.tan(fov / 2); RAY = { e: cam.eye.slice(), f: cam.dir.slice(), r: view.r, u: view.u, th, asp };
+  const view = M4.look(cam.eye, cam.dir), fov = STUDIO && !STUDIO_M ? .27 : started && Life.view ? Life.view.cur.fov : SET.fov, asp = W / H, NEAR = cam.indoor && !cam.fp ? CAM_IN.near : .25, VP = M4.mul(M4.persp(fov, asp, NEAR, 3200), view.m), th = Math.tan(fov / 2); RAY = { e: cam.eye.slice(), f: cam.dir.slice(), r: view.r, u: view.u, th, asp };
   gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf); gl.bufferData(gl.ARRAY_BUFFER, dyn.a.subarray(0, dyn.n), gl.DYNAMIC_DRAW);
   let SM = M4.t(0, 0, 0), shOn = 0, giAt = [0, 0, 1], giK = 0;
   gpuMark("shadows");
