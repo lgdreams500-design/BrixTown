@@ -172,13 +172,16 @@ def builder_data(w, ds):
     furnishing rules (furnish.py, FURN-051, FURN-052, FURN-055) with their own fixed run."""
     import builder
     import furnish
-    script, fs = builder.check_script(w, ds), furnish.check_script()
+    import roomplan
+    script, fs, rs = builder.check_script(w, ds), furnish.check_script(), roomplan.check_script()
     return dict(kit={k: v for k, v in w["building_kit"].items() if not k.endswith("note")},
                 planning={k: v for k, v in w["planning"].items() if k != "note"},
                 patterns={k: v["colors"] for k, v in w["surfaces"]["patterns"].items()},
                 checks=dict(script=script, want=builder.run_script(w, ds, script)),
                 furnish=dict(rules={k: v for k, v in w["furnishing"].items() if k != "note"},          # FURN-051, FURN-052, FURN-055
-                             checks=dict(script=fs, want=furnish.run_script(w["furnishing"], fs))))
+                             checks=dict(script=fs, want=furnish.run_script(w["furnishing"], fs))),
+                room_plan=dict(rules={k: v for k, v in w["room_plan"].items() if k != "note"},           # BUILD-021 to BUILD-023
+                               checks=dict(script=rs, want=roomplan.run_script(w["room_plan"], rs))))
 
 
 def estate_checks(w, lots_):

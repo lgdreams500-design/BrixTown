@@ -89,7 +89,8 @@
     "leave": { "name": "Get out", "context": "car" },
     "orbit": { "name": "Turn round the building and tilt", "context": "designer" },
     "pan": { "name": "Slide the view", "context": "designer" },
-    "zoom": { "name": "Come nearer", "context": "designer" },
+    "zoom": { "name": "Come nearer, towards the mouse", "context": "designer" },
+    "centre": { "name": "Look at that spot", "context": "designer" },
     "spin": { "name": "Turn the view", "context": "designer" },
     "pick": { "name": "Pick and move a piece", "context": "designer" },
     "turn": { "name": "Turn the piece", "context": "designer" },
@@ -106,7 +107,7 @@
         "money": ["I"], "belongings": ["G"], "property": ["P"], "journal": ["J"], "wardrobe": ["U"], "map": ["M"], "help": ["H"], "sound": ["N"], "picture": ["O"],
         "clock": ["[", "]"], "hour": ["T"],
         "drive": ["W", "S"], "steer": ["A", "D"], "handbrake": ["Space"], "horn": ["F"], "radio": ["R"], "leave": ["E"],
-        "orbit": ["Left drag"], "pan": ["Right drag", "W", "A", "S", "D"], "zoom": ["Wheel"], "spin": ["Q", "E"], "pick": ["Left click"], "turn": ["R"], "away": ["Delete"],
+        "orbit": ["Left drag"], "pan": ["Right drag", "Middle drag", "Shift + drag", "W", "A", "S", "D"], "centre": ["Double click"], "zoom": ["Wheel"], "spin": ["Q", "E"], "pick": ["Left click"], "turn": ["R"], "away": ["Delete"],
         "light": ["L"], "weather": ["K"], "season": ["Y"]
       }
     },
@@ -117,7 +118,7 @@
         "money": ["D-pad left"], "belongings": ["D-pad right"], "property": ["D-pad up"], "journal": ["D-pad down"], "wardrobe": ["View + Y"], "map": ["View"], "help": ["View + Start"], "sound": ["View + B"], "picture": ["View + X"],
         "clock": ["View + LB", "View + RB"], "hour": ["View + A"],
         "drive": ["RT", "LT"], "steer": ["Left stick"], "handbrake": ["A"], "horn": ["Left stick press"], "radio": ["B"], "leave": ["X"],
-        "orbit": ["Right stick"], "pan": ["Left stick"], "zoom": ["LT", "RT"], "spin": ["LB", "RB"], "pick": ["A"], "turn": ["Y"], "away": ["B"],
+        "orbit": ["Right stick"], "pan": ["Left stick"], "centre": ["Right stick press"], "zoom": ["LT", "RT"], "spin": ["LB", "RB"], "pick": ["A"], "turn": ["Y"], "away": ["B"],
         "light": ["View + D-pad left"], "weather": ["View + D-pad up"], "season": ["View + D-pad right"]
       }
     },
@@ -128,7 +129,7 @@
         "money": ["Menu: Money"], "belongings": ["Menu: Belongings"], "property": ["Menu: Properties"], "journal": ["Menu: Journal"], "wardrobe": ["Menu: Wardrobe"], "map": ["Minimap"], "help": ["Menu: Help"], "sound": ["Menu: Settings: sound"], "picture": ["Menu: Settings: picture"],
         "clock": ["Clock button"], "hour": ["Menu: Settings: skip an hour"],
         "drive": ["Pedals"], "steer": ["Left stick"], "handbrake": ["Handbrake button"], "horn": ["Horn button"], "radio": ["Radio button"], "leave": ["Use button"],
-        "orbit": ["One finger drag"], "pan": ["Two finger drag"], "zoom": ["Pinch"], "spin": ["Two finger twist"], "pick": ["Tap and drag"], "turn": ["Turn button"], "away": ["Take away button"],
+        "orbit": ["One finger drag"], "pan": ["Two finger drag"], "centre": ["Double tap"], "zoom": ["Pinch"], "spin": ["Two finger twist"], "pick": ["Tap and drag"], "turn": ["Turn button"], "away": ["Take away button"],
         "light": ["Menu: Help: earlier light"], "weather": ["Menu: Help: try the weather"], "season": ["Menu: Help: next season"]
       }
     }

@@ -94,6 +94,58 @@ window.Storeys = (() => {
     }
     parts.set(l, out); return out;
   }
+  // ------------------------------------------------------------ the room plan (BUILD-021, BUILD-022): a storey's inner walls as data
+  // planOf(l, f): the plan the town gave a storey, from its flats' walls (a straight run of wall with at most one doorway is one
+  // wall). A storey the player has planned has l.plan[f] (life.js); wallsOf gives what to draw and to bump into either way.
+  function planOf(l, f) {
+    const PT = partitions(l), segs = PT && PT[f] ? PT[f].walls : [], runs = new Map(), out = [];
+    for (const [ax, fix, a0, a1, door] of segs) { const k = ax + ":" + fix.toFixed(3); if (!runs.has(k)) runs.set(k, []); runs.get(k).push([a0, a1, door]); }
+    for (const [k, list] of runs) {
+      const [ax, fx] = k.split(":"), fix = +fx; list.sort((p, q) => p[0] - q[0]);
+      let run = null; const flush = () => { if (!run) return; const doors = run.doors;
+        if (doors.length <= 1) out.push({ ax, fix, a0: run.a0, a1: run.a1, door: doors.length ? doors[0] : null });
+        else { let a = run.a0; doors.forEach((d, i) => { const b = i + 1 < doors.length ? (d + doors[i + 1]) / 2 : run.a1; out.push({ ax, fix, a0: a, a1: b, door: d }); a = b; }); }
+        run = null; };
+      for (const [a0, a1, door] of list) {
+        if (run && a0 - run.a1 > .02) flush();
+        if (!run) run = { a0, a1, doors: [] }; run.a1 = Math.max(run.a1, a1); if (door) run.doors.push(+((a0 + a1) / 2).toFixed(3));
+      }
+      flush();
+    }
+    return out.map((w, i) => Object.assign({ id: "w" + (i + 1), colour: null }, w, { fix: +w.fix.toFixed(3), a0: +w.a0.toFixed(3), a1: +w.a1.toFixed(3) }));
+  }
+  const PLASTER = [.8, .76, .68];
+  function wallColour(id) {                                 // a kit colour for an inner wall, mixed as the inside walls are (building_kit inner_mix)
+    const K = window.WASTED.life.builder.kit, c = K.colours[id]; if (!c) return PLASTER;
+    return c.rgb.map((v, k) => v + (K.inner_mix.with[k] - v) * K.inner_mix.share);
+  }
+  function wallsOf(l, f) {                                  // [ax, fix, a0, a1, doorway, colour] to draw and to bump into
+    if (!(l.plan && l.plan[f])) { const PT = partitions(l); return PT && PT[f] ? PT[f].walls.map(w => w.concat([PLASTER])) : []; }
+    const out = [];
+    for (const w of l.plan[f]) {
+      const c = w.colour ? wallColour(w.colour) : PLASTER;
+      if (w.door === null) { out.push([w.ax, w.fix, w.a0, w.a1, false, c]); continue; }
+      const g0 = w.door - DOOR_W / 2, g1 = w.door + DOOR_W / 2;
+      if (g0 - w.a0 > .02) out.push([w.ax, w.fix, w.a0, g0, false, c]); out.push([w.ax, w.fix, g0, g1, true, c]); if (w.a1 - g1 > .02) out.push([w.ax, w.fix, g1, w.a1, false, c]);
+    }
+    return out;
+  }
+  function walls(l, f, m) {                                 // one storey's inner walls, door frames round each doorway
+    const y = floorY(f), cy = ceilY(f), frame = [.36, .24, .15];
+    for (const [ax, fix, a0, a1, door, c] of wallsOf(l, f)) {
+      if (door) {
+        m.box(...wallBox(ax, fix, a0, a1, y + DOOR_H, cy), c, 17);
+        for (const e of [a0, a1]) m.box(...wallBox(ax, fix, e - .05, e + .05, y, y + DOOR_H + .08), frame, 19);   // posts
+        m.box(...wallBox(ax, fix, a0 - .05, a1 + .05, y + DOOR_H, y + DOOR_H + .08), frame, 19);                     // lintel
+      } else m.box(...wallBox(ax, fix, a0, a1, y, cy), c, 17);
+    }
+  }
+  function resolid(l) {                                     // the inner walls kept as planned: the load's are taken away, the plan's put in
+    for (const [i0, i1] of [l.partSol || [0, 0]].concat(l.planSol ? [[l.planSol[0], l.planSol[1]]] : [])) for (let i = i0; i < i1; i++) { solids[i][1] = solids[i][4] = -999; }
+    const s0 = solids.length;
+    for (let f = 0; f < l.floors; f++) for (const [ax, fix, a0, a1, door] of wallsOf(l, f)) solid(...wallBox(ax, fix, a0, a1, door ? floorY(f) + DOOR_H : floorY(f), ceilY(f)));
+    l.planSol = [s0, solids.length];
+  }
   const wallBox = (ax, fix, a0, a1, y0, y1) => ax === "x" ? [a0, y0, fix - PART / 2, a1, y1, fix + PART / 2] : [fix - PART / 2, y0, a0, fix + PART / 2, y1, a1];
 
   // ------------------------------------------------------------ the shell, at load: walls from the first floor up, slabs, stairs, lift
@@ -120,12 +172,13 @@ window.Storeys = (() => {
     solid(x0, H - .2, z0, x1, H, z1);
     // floor slabs 1 .. n-1, open over the flight that comes up through them
     for (let f = 1; f < n; f++) slab(l, floorY(f) - .2, floorY(f), G && G.hole(f), (a, b, c, d) => solid(a, floorY(f) - .2, b, c, floorY(f), d));
-    const PT = partitions(l);                                  // the flats' walls on every floor: solid, but for their doorways
+    const PT = partitions(l), ps0 = solids.length;           // the flats' walls on every floor: solid, but for their doorways
     if (PT) PT.forEach(({ walls, rooms }, f) => {
       const y0 = floorY(f), y1 = ceilY(f);
       for (const [ax, fix, a0, a1, door] of walls) { const b = wallBox(ax, fix, a0, a1, door ? y0 + DOOR_H : y0, y1); solid(...b); }
       for (const q of rooms) if (q.door && q.name !== "Store") labels.push({ x: q.door[0], y: y0 + 2.4, z: q.door[1], text: q.name, lot: l, r: 5, indoor: true });
     });
+    l.partSol = [ps0, solids.length];                        // (resolid: a planned storey takes these away)
     if (!G) return;
     // the flights: steps you can climb, solid down to the floor they stand on; the spine wall between the flights; a rail at each hole
     for (let f = 0; f < n - 1; f++) {
@@ -173,17 +226,7 @@ window.Storeys = (() => {
         for (let v = F.lane[0] + .1; v < F.lane[1]; v += .25) G.box(m, u - .015, u + .015, v - .015, v + .015, y, y + .92, RAIL, 19);
       }
     }
-    const PT = partitions(l);                                  // this floor's flat walls, door frames and the number by each door
-    if (PT && PT[f]) {
-      const plaster = [.8, .76, .68], frame = [.36, .24, .15];
-      for (const [ax, fix, a0, a1, door] of PT[f].walls) {
-        if (door) {
-          m.box(...wallBox(ax, fix, a0, a1, y + DOOR_H, cy), plaster, 17);
-          for (const e of [a0, a1]) m.box(...wallBox(ax, fix, e - .05, e + .05, y, y + DOOR_H + .08), frame, 19);   // posts
-          m.box(...wallBox(ax, fix, a0 - .05, a1 + .05, y + DOOR_H, y + DOOR_H + .08), frame, 19);                     // lintel
-        } else m.box(...wallBox(ax, fix, a0, a1, y, cy), plaster, 17);
-      }
-    }
+    walls(l, f, m);                                          // this floor's inner walls: the town's, or the owner's plan (BUILD-021)
     if (l.lift) {                                            // the shaft's front on this floor: steel doors, a lit button
       const [bx, bz] = l.lift, ix = bx < (l.rect[0] + l.rect[2]) / 2 ? 1 : -1, steel = [.42, .44, .46];
       m.box(bx - 1.1, y, bz - 1.1, bx + 1.1, cy, bz + 1.1, [.62, .6, .56], 17);
@@ -242,5 +285,5 @@ window.Storeys = (() => {
     };
   }
 
-  return { floorY, ceilY, levelAt, objectsOn, proxy, stairOf, shell, build, fill, keepOut, partitions, USE_AS };
+  return { floorY, ceilY, levelAt, objectsOn, proxy, stairOf, shell, build, fill, keepOut, partitions, planOf, wallsOf, walls, resolid, USE_AS, DOOR_W };
 })();

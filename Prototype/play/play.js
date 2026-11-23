@@ -2367,7 +2367,7 @@ function designCam(dt) {
   const v = Life.view, g = v.goal, c = v.cur, [x0, z0, x1, z1] = v.lot.rect;
   g.yaw += ((keys.KeyQ ? 1 : 0) - (keys.KeyE ? 1 : 0)) * dt * 1.4;
   const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0), s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0), sp = g.dist * .6 * dt, sy = Math.sin(g.yaw), cy = Math.cos(g.yaw);
-  g.tx = clamp(g.tx + (sy * f + cy * s) * sp, x0 - 8, x1 + 8); g.tz = clamp(g.tz + (-cy * f + sy * s) * sp, z0 - 8, z1 + 8);
+  g.tx = clamp(g.tx + (sy * f + cy * s) * sp, x0 - 20, x1 + 20); g.tz = clamp(g.tz + (-cy * f + sy * s) * sp, z0 - 20, z1 + 20);
   if (v.leave) Object.assign(g, { yaw: v.back.yaw, pitch: v.back.pitch, dist: v.back.dist, tx: pl.x, ty: pl.y + 1.5, tz: pl.z, fov: .9 });   // the designer has closed: glide back behind the player
   const k = 1 - Math.exp(-clamp(dt, 0, .1) * 7); let dy = g.yaw - c.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
   c.yaw += dy * k; for (const n of ["pitch", "dist", "tx", "ty", "tz", "fov"]) c[n] += (g[n] - c[n]) * k;
@@ -2547,7 +2547,8 @@ $("go").addEventListener("click", () => Life.go(begin));   // carry on, or the c
 cv.addEventListener("contextmenu", e => { if (started && Life.view) e.preventDefault(); });   // the right button slides the designer's view
 cv.addEventListener("click", () => { if (started && !locked && !Talk.on && !Life.on && cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } });
 document.addEventListener("pointerlockchange", () => { locked = document.pointerLockElement === cv; if (!locked && started && !Life.on && !Talk.on && !Life.view && !showMap && document.hasFocus()) Life.menu(); });   // Esc while the mouse is held: the browser lets it go, and the menu opens (UI-005)
-let drag = false; cv.addEventListener("mousedown", e => { drag = true; if (started && Life.view) Life.pointer("down", e); }); addEventListener("mouseup", e => { drag = false; if (started && Life.view) Life.pointer("up", e); });
+let drag = false; cv.addEventListener("mousedown", e => { drag = true; if (started && Life.view) { if (e.button === 1) e.preventDefault(); Life.pointer("down", e); } });
+cv.addEventListener("dblclick", e => { if (started && Life.view) Life.pointer("dbl", e); });   // the designer: look at that spot addEventListener("mouseup", e => { drag = false; if (started && Life.view) Life.pointer("up", e); });
 addEventListener("mousemove", e => { if (Life.designing && drag) return Life.spin(e.movementX); if (started && Life.view) return Life.pointer("move", e, drag); if (!started || !(locked || drag)) return; cam.yaw += e.movementX * SET.look; cam.pitch = clamp(cam.pitch - e.movementY * SET.look * (SET.invert ? -1 : 1), -1.35, 1.35); });
 addEventListener("wheel", e => { if (started && Life.view) return Life.pointer("wheel", e); cam.dist = clamp(cam.dist + Math.sign(e.deltaY) * .6, 2.2, 14); });
 const RATES = [1, 5, 20, 100];
@@ -2694,7 +2695,23 @@ function roomFor(l, level) {                                 // the floor of a s
   if (!level) { const d = DOOR_DIR[l.design ? l.design.shell.side : l.furn[0]], [dx, dz] = l.door, w = (l.dw || 1.2) / 2 + .2, L = 2.2;
     const ax = dx - d[0] * L, az = dz - d[1] * L; keep.push([Math.min(dx, ax) - (d[0] ? 0 : w), Math.min(dz, az) - (d[1] ? 0 : w), Math.max(dx, ax) + (d[0] ? 0 : w), Math.max(dz, az) + (d[1] ? 0 : w)]); }
   if (SG) { const a = SG.P(SG.u0 - .3, Math.min(SG.v0, SG.v1) - .3, 0), b = SG.P(SG.u1 + .3, Math.max(SG.v0, SG.v1) + .3, 0); keep.push([Math.min(a[0], b[0]), Math.min(a[2], b[2]), Math.max(a[0], b[0]), Math.max(a[2], b[2])]); }
-  return { room: [x0 + t, z0 + t, x1 - t, z1 - t], keep, ceiling: Storeys.ceilY(level) - F, F };
+  const entries = [];
+  if (!level) { const d = DOOR_DIR[l.design ? l.design.shell.side : l.furn[0]]; entries.push([l.door[0] - d[0] * .6, l.door[1] - d[1] * .6]); }
+  else if (SG) { const Fl = SG.flight(level - 1), v = (Fl.lane[0] + Fl.lane[1]) / 2, p = SG.P(Fl.ut + Fl.dir * .5, v, 0); entries.push([p[0], p[2]]); }
+  if (SG && level < l.floors - 1) entries.push(SG.footAt(level));
+  return { room: [x0 + t, z0 + t, x1 - t, z1 - t], keep, ceiling: Storeys.ceilY(level) - F, F, entries };
+}
+function showPlan(l, level, plan) {                         // draw a storey's inner walls from a plan (null: as the town built them); its room mesh is built again
+  (l.plan = l.plan || {})[level] = plan; if (!plan) delete l.plan[level];
+  for (const [k, e] of [...ROOMS].concat([...UPSTAIRS])) if (level ? k === l.id + "|" + level : k === l) { if (e.buf) gl.deleteBuffer(e.buf); if (e.ao) gl.deleteTexture(e.ao); ROOMS.delete(k); UPSTAIRS.delete(k); }
+}
+function pickWall(l, level, plan, ray) {                      // the wall under the mouse, from the floor to the designer's cut
+  const F = Storeys.floorY(level), top = F + 1.25; let best = null, bt = 1e9;
+  for (const w of plan) { const b = RoomPlan.box(w), lo = [b[0], F, b[1]], hi = [b[2], top, b[3]]; let t0 = 0, t1 = 1e9;
+    for (let k = 0; k < 3; k++) { const o = ray.o[k], d = ray.d[k]; if (Math.abs(d) < 1e-9) { if (o < lo[k] || o > hi[k]) { t0 = 2e9; break; } continue; }
+      let a = (lo[k] - o) / d, c = (hi[k] - o) / d; if (a > c) [a, c] = [c, a]; t0 = Math.max(t0, a); t1 = Math.min(t1, c); }
+    if (t0 <= t1 && t0 < bt) { bt = t0; best = w; } }
+  return best;
 }
 function showLayout(l, level, lay) {                          // draw a storey from a layout (null: as the town furnished it); its room mesh is built again
   (l.layout = l.layout || {})[level] = lay; if (!lay) delete l.layout[level];
@@ -2743,6 +2760,7 @@ function nearRooms(eye) {
     if (!have && dd < 40 && built < 2) {
       const m = new Mesh(1 << 15); ROOM_REC = { lamps: [], foot: [] }; if (l.house) Houses.inside(l, m, ROOM_REC); else furnishRoom(l, 0, m); built++;
       if (l.stair) Storeys.build(l, 0, m, floorMatOf(l));    // the stair up and the ceiling with its opening
+      else if (l.plan && l.plan[0]) Storeys.walls(l, 0, m);  // a one-storey building's walls, as its owner planned them (BUILD-021)
       const rec = ROOM_REC; ROOM_REC = null;
       ROOMS.set(l, roomEntry(l, m, rec, 0));
     } else if (have && dd > 70) { if (have.buf) gl.deleteBuffer(have.buf); if (have.ao) gl.deleteTexture(have.ao); ROOMS.delete(l); }
@@ -2998,7 +3016,7 @@ const LIGHTS = { reference: { sun: 1, sky: 1, bounce: 1, lanterns: 1, haze: 1, e
   golden: { sun: .62, sky: .9, bounce: 1.5, lanterns: 1, haze: .55, exposure: .7, warm: 1 } };   // golden: the kit light as first tuned (ADR-0007), kept for comparison (?light=golden)
 let lightName = LIGHTS[q.get("light")] ? q.get("light") : "kit";
 addEventListener("keydown", e => { if (e.code === "KeyL" && started && !e.repeat) { lightName = lightName === "kit" ? "reference" : "kit"; Object.assign(window.wasted.dials, { warm: 0, neutral: 0, veil: 0, skyLow: 0, gi: 0 }, LIGHTS[lightName]); } });
-window.wasted = { repaint, rayAt, fitBox, DESIGN_FOV, applySettings, showMap: on => { showMap = on; $("bigmap").style.display = on ? "flex" : "none"; }, furn: { townLayout, showLayout, layoutWorld, roomFor, pickPiece, SIZE: () => Furniture.SIZE }, dials: Object.assign({ gi: 0 }, LIGHTS[lightName], q.has("gi") ? { gi: +q.get("gi") } : {}), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, begin, setLook: L => { playerLook = L; }, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
+window.wasted = { repaint, rayAt, fitBox, DESIGN_FOV, applySettings, showMap: on => { showMap = on; $("bigmap").style.display = on ? "flex" : "none"; }, furn: { townLayout, showLayout, layoutWorld, roomFor, pickPiece, showPlan, pickWall, SIZE: () => Furniture.SIZE }, dials: Object.assign({ gi: 0 }, LIGHTS[lightName], q.has("gi") ? { gi: +q.get("gi") } : {}), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, begin, setLook: L => { playerLook = L; }, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
 // sound (sound.js): which lots play music, where the fountains and gardens are
 Sound.init(LOTS, D.blocks.flatMap(b => b.props.filter(p => p.kind === "fountain").map(p => p.pos)),
   LOTS.filter(l => l.kind === "garden").map(l => [(l.rect[0] + l.rect[2]) / 2, (l.rect[1] + l.rect[3]) / 2]));

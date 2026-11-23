@@ -8,6 +8,7 @@ var Life = (() => {
   const D = window.WASTED, X = D.life, DG = X.designer, EC = X.economy, QR = X.quests, SAVE_KEY = "wasted.save.v1";
   const el = id => document.getElementById(id), fmt = Econ.fmt;
   let remodels = {};                                     // the player's remodelled buildings: lot id -> design (BUILD-004), kept in the save
+  let plans = {};                                        // the player's room plans: lot id -> storey -> walls (BUILD-021), kept in the save
   let furnishings = {};                                  // the player's arranged storeys: lot id -> storey -> layout (FURN-051), kept in the save
   let view = null;                                       // the building designer's camera while it is open (play.js designCam)
   let E = null, Q = null, M = null, look = null, transient = false, designing = false, panel = null, spin = 0, ready = false, lastSave = 0, toastT = 0, lastMoney = null, checkT = 0;
@@ -34,7 +35,7 @@ var Life = (() => {
     M = new Estate.Market(X.estate, E, LOTS, Estate.residentsOf(D, LOTS));   // the real estate market (PROP-009 to PROP-021)
   }
   function newGame(v) {
-    fresh(); look = v; clock.day = 0; outfits = []; belongings = []; waypoint = null;
+    fresh(); look = v; clock.day = 0; outfits = []; belongings = []; waypoint = null; plans = {};
     E.advance(0, clock.m); Q.newGame(); M.start(); ready = true;
     if (new URLSearchParams(location.search).has("rich")) testRich();
     lastMoney = E.totalMoney(); save();
@@ -57,7 +58,7 @@ var Life = (() => {
   function readSave() { try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
   function save() {
     if (!ready || transient) return;                      // ?auto=1 (tests, screenshots) never overwrites a real save
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), estate: M.save(), remodels, furnishings, outfits, belongings, at: Date.now() })); } catch (e) { }
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), estate: M.save(), remodels, plans, furnishings, outfits, belongings, at: Date.now() })); } catch (e) { }
     lastSave = performance.now();
   }
   function loadSave(s) {
@@ -67,6 +68,8 @@ var Life = (() => {
     remodels = s.remodels || {};
     for (const id of Object.keys(remodels)) { const l = LOTS.find(x => x.id === id); if (l && l.drawn) { l.dsg = remodels[id]; window.wasted.repaint(l, Builder.built(l.dsg)); } }
     outfits = s.outfits || []; belongings = s.belongings || []; waypoint = null;
+    plans = s.plans || {};
+    for (const id of Object.keys(plans)) { const l = LOTS.find(x => x.id === id); if (!l) continue; for (const f of Object.keys(plans[id])) window.wasted.furn.showPlan(l, +f, plans[id][f]); Storeys.resolid(l); }
     furnishings = s.furnishings || {};
     for (const id of Object.keys(furnishings)) { const l = LOTS.find(x => x.id === id); if (!l || !canFurnish(l)) continue;
       for (const f of Object.keys(furnishings[id])) { window.wasted.furn.showLayout(l, +f, furnishings[id][f]); window.wasted.furn.layoutWorld(l, +f); } }
@@ -227,6 +230,7 @@ var Life = (() => {
   function close() {
     if (!panel) return;
     if (panel.kind === "remodel" && panel.lot && panel.draft !== panel.lot.dsg) window.wasted.repaint(panel.lot, Builder.built(panel.lot.dsg));   // not paid for: as it was
+    if (panel.kind === "remodel" && panel.lot) for (const f of Object.keys(panel.plan || {})) if (panel.plan[f] !== panel.plan0[f]) window.wasted.furn.showPlan(panel.lot, +f, (plans[panel.lot.id] || {})[f] || null);
     if (panel.kind === "remodel" && panel.lot) for (const f of Object.keys(panel.lay)) if (panel.lay[f] !== panel.lay0[f]) window.wasted.furn.showLayout(panel.lot, +f, (furnishings[panel.lot.id] || {})[f] || null);
     if (view) { view.leave = true; view.cut = null; } grab = null; document.body.classList.remove("designing"); document.getElementById("gl").style.cursor = "";
     const back = panel.back; panel = null; el("life").style.display = "none"; el("life").classList.remove("menu", "side"); Sound.act("talk_close"); save();
@@ -637,12 +641,12 @@ var Life = (() => {
   function remodelPanel(P, body) {
     const l = LOTS[P.n], own = holding(P.n) || { floors: [] }, BF = Builder.FACADES, FN = Builder.FACADE_NAME, FW = window.wasted.furn, FR = Furnish.rules();
     const mine = own.whole ? [...Array(l.floors).keys()] : own.floors, furnishes = canFurnish(l);
-    if (!P.lot) Object.assign(P, { lot: l, draft: l.dsg, lay: {}, lay0: {}, undo: [], tab: designStart === "furnish" && furnishes ? "furnish" : own.whole ? "outside" : "inside", facade: "*", storey: mine[0], sel: null, room: Object.keys(FR.rooms)[0], line: FR.lines[0] });
+    if (!P.lot) Object.assign(P, { lot: l, draft: l.dsg, lay: {}, lay0: {}, plan: {}, plan0: {}, undo: [], tab: designStart === "furnish" && furnishes ? "furnish" : own.whole ? "outside" : "inside", facade: "*", storey: mine[0], sel: null, room: Object.keys(FR.rooms)[0], line: FR.lines[0] });
     designStart = null;
     const d = P.draft, menu = Builder.options(l, l.dsg), K = X.builder.kit, pats = X.builder.patterns;
     if (P.tab === "furnish" && !P.lay[P.storey]) P.lay[P.storey] = P.lay0[P.storey] = layNow(l, P.storey);
-    const snap = () => ({ d: P.draft, lay: Object.assign({}, P.lay) });
-    const showAll = () => { window.wasted.repaint(l, Builder.built(P.draft)); for (const f of Object.keys(P.lay)) FW.showLayout(l, +f, P.lay[f]); };
+    const snap = () => snapOf(P);
+    const showAll = () => { window.wasted.repaint(l, Builder.built(P.draft)); for (const f of Object.keys(P.plan)) FW.showPlan(l, +f, P.plan[f]); for (const f of Object.keys(P.lay)) FW.showLayout(l, +f, P.lay[f]); };
     const set = changes => { P.undo.push(snap()); P.draft = Builder.remodel(P.draft, changes); window.wasted.repaint(l, Builder.built(P.draft)); P.msg = ""; Sound.act("talk_choose"); draw(); };
     const css = c => "rgb(" + c.map(v => Math.round(Math.min(1, v * 1.25) * 255)).join(",") + ")";
     const pick = (o, cur, path, extra) => h("button", { type: "button", cls: "sw" + (o.rgb ? "" : " word") + (extra || "") + (JSON.stringify(cur) === JSON.stringify(o.id) ? " on" : ""), title: o.name, "aria-label": o.name,
@@ -678,6 +682,19 @@ var Life = (() => {
       const mix = c => c.map((v, k) => v + (K.inner_mix.with[k] - v) * K.inner_mix.share);
       body.append(choice("Walls", swatches(menu["inside.walls"].map(o => Object.assign({}, o, { rgb: mix(o.rgb) })), d.inside.walls[f], put("walls"))),
         choice("Floor", h("div", { cls: "swatches" }, menu["inside.floors"].map(o => pick(o, d.inside.floors[f], put("floors"), o.mat === 15 ? " boards" : " tiles")))));
+      if (!P.plan[f]) P.plan[f] = P.plan0[f] = planNow(l, f);   // the room plan (BUILD-021, BUILD-022)
+      const plan = P.plan[f], w = plan.find(x => x.id === P.wsel), Rp = FW.roomFor(l, f);
+      body.append(h("h3", {}, "Rooms"), h("p", { cls: "dim" }, "Click an inner wall to pick it, drag it to move it. Every room must be reached from the way in, and the stairs kept clear."));
+      if (w) {
+        const opts = [{ id: null, name: "As the storey" }].concat(menu["inside.walls"].map(o => Object.assign({}, o, { rgb: mix(o.rgb) })));
+        body.append(h("div", { cls: "prow" }, h("b", {}, "Wall, " + (w.a1 - w.a0).toFixed(2) + " m"),
+          tab(false, w.door === null ? "Add a doorway" : "Close the doorway", () => editWall(P, w.id, { door: w.door === null ? gridded((w.a0 + w.a1) / 2) : null })),
+          tab(false, "Longer", () => editWall(P, w.id, grow(w, .5, Rp))), tab(false, "Shorter", () => editWall(P, w.id, grow(w, -.5, Rp)), w.a1 - w.a0 < 1.1),
+          tab(false, "Take down", () => editWall(P, w.id, null)), tab(false, "Put down", () => { P.wsel = null; draw(); })),
+          choice("Its colour", h("div", { cls: "swatches" }, opts.map(o => h("button", { type: "button", cls: "sw" + (o.rgb ? "" : " word") + (w.colour === o.id ? " on" : ""), title: o.name, "aria-label": o.name,
+            style: o.rgb ? "background-color:" + css(o.rgb) : "", on: { click: () => editWall(P, w.id, { colour: o.id }) } }, o.rgb ? "" : o.name)))));
+      }
+      body.append(h("div", { cls: "prow" }, tab(false, "Add a wall east to west", () => addWall(P, "x", Rp)), tab(false, "Add a wall north to south", () => addWall(P, "z", Rp))));
     } else {
       body.append(storeys());
       const f = P.storey, lay = P.lay[f], R = FW.roomFor(l, f), sel = lay.find(p => p.id === P.sel);
@@ -693,13 +710,18 @@ var Life = (() => {
           h("button", { type: "button", cls: "pbtn", on: { click: () => addPiece(P, k, R) } }, "Add")])));
     }
     const [rt, rl] = Builder.cost(l, l.dsg, d); let total = rt; const lines = rl.slice(), probs = d === l.dsg ? [] : Builder.check(l, l.dsg, d, own, null);
+    const colours = menu["inside.walls"].map(o => o.id), tag = f => mine.length > 1 ? " (" + storeyName(+f).toLowerCase() + ")" : "";
+    for (const f of Object.keys(P.plan)) { const b = P.plan0[f], a = P.plan[f]; if (a === b) continue;   // the room plans (BUILD-021 to BUILD-023)
+      const R = FW.roomFor(l, +f), ent = R.entries.length ? R.entries : [[(R.room[0] + R.room[2]) / 2, (R.room[1] + R.room[3]) / 2]], [t, ls] = RoomPlan.cost(b, a, R.ceiling); total += t;
+      for (const x of ls) lines.push([x[0] + tag(f), x[1], x[2]]);
+      for (const m of RoomPlan.check(R.room, R.keep, ent, R.ceiling, colours, b, a, null)) probs.push(m + tag(f)); }
     for (const f of Object.keys(P.lay)) { const b = P.lay0[f], a = P.lay[f]; if (a === b) continue;
       const pool = poolOf(P), [t, ls] = Furnish.cost(b, a, pool), R = FW.roomFor(l, +f); total += t;
       for (const x of ls) lines.push([x[0] + (mine.length > 1 ? " (" + storeyName(+f).toLowerCase() + ")" : ""), x[1], x[2]]);
       for (const m of Furnish.check(R.room, R.keep, R.ceiling, b, a, null, pool)) probs.push(m + (mine.length > 1 ? " (" + storeyName(+f).toLowerCase() + ")" : "")); }
     if (lines.length && total > funds()) probs.push("it costs " + fmt(total) + " and you have " + fmt(funds()));
     body.append(h("h3", {}, "The work"), lines.length
-      ? tbl(lines.map(([w, q, c]) => [w, h("span", { cls: "dim" }, q === 1 ? "" : Number.isInteger(q) ? "× " + q : q + " m²"), money(c)]).concat([[h("b", {}, "Total"), "", money(total)]]))
+      ? tbl(lines.map(([w, q, c]) => [w, h("span", { cls: "dim" }, q === 1 ? "" : Number.isInteger(q) && !/wall/i.test(w) ? "× " + q : q + " m²"), money(c)]).concat([[h("b", {}, "Total"), "", money(total)]]))
       : h("p", { cls: "dim" }, "Pick something to change: it shows on the building at once. Nothing is paid until you build."));
     if (probs.length) body.append(h("p", { cls: "neg" }, probs.map(x => x[0].toUpperCase() + x.slice(1)).join(". ") + "."));
     body.append(h("div", { cls: "prow" },
@@ -709,13 +731,15 @@ var Life = (() => {
         if (total - rt > 0) E.spend(total - rt, "sys:builders", "Furniture: " + l.name);
         if (rl.length) remodels[l.id] = P.draft; l.dsg = P.draft;
         belongings = heldNow(P);
+        let walled = false; for (const f of Object.keys(P.plan)) if (P.plan[f] !== P.plan0[f]) { (plans[l.id] = plans[l.id] || {})[f] = P.plan[f]; P.plan0[f] = P.plan[f]; FW.showPlan(l, +f, P.plan[f]); walled = true; }
+        if (walled) Storeys.resolid(l);                  // the new walls are solid, the old ones gone
         for (const f of Object.keys(P.lay)) if (P.lay[f] !== P.lay0[f]) { (furnishings[l.id] = furnishings[l.id] || {})[f] = P.lay[f]; P.lay0[f] = P.lay[f]; FW.showLayout(l, +f, P.lay[f]); FW.layoutWorld(l, +f); }
         P.undo = [];
         return "Done: " + l.name + (total ? ", for " + fmt(total) : "") + ".";
       }) } }, lines.length ? (total ? "Pay " + fmt(total) + " and build" : "Keep it like this") : "Pay and build"),
-      tab(false, "Undo", () => { const u = P.undo.pop(); P.draft = u.d; P.lay = u.lay; showAll(); draw(); }, !P.undo.length),
-      tab(false, "Start again", () => { P.undo.push(snap()); P.draft = l.dsg; P.lay = Object.assign({}, P.lay0); showAll(); draw(); }, d === l.dsg && Object.keys(P.lay).every(f => P.lay[f] === P.lay0[f]))));
-    body.append(h("p", { cls: "dim" }, "Drag the view to look round, the wheel to come nearer; W A S D slide, Q and E turn."));
+      tab(false, "Undo", () => { const u = P.undo.pop(); P.draft = u.d; P.lay = u.lay; P.plan = u.plan || P.plan; showAll(); draw(); }, !P.undo.length),
+      tab(false, "Start again", () => { P.undo.push(snap()); P.draft = l.dsg; P.lay = Object.assign({}, P.lay0); P.plan = Object.assign({}, P.plan0); showAll(); draw(); }, d === l.dsg && Object.keys(P.lay).every(f => P.lay[f] === P.lay0[f]) && Object.keys(P.plan).every(f => P.plan[f] === P.plan0[f]))));
+    body.append(h("p", { cls: "dim" }, "Drag the view to look round; right drag, middle drag or Shift+drag slides it; the wheel comes nearer where the mouse is; double click looks at a spot; W A S D slide, Q and E turn."));
     syncView(P);
     return [l.name, own.whole ? "Remodel · Esc to leave it as it was" : "Your rooms · Esc to leave them as they were"];
   }
@@ -745,7 +769,7 @@ var Life = (() => {
   }
   function editPiece(P, id, ch, quiet) {                   // move, turn (ch) or take away (null) a piece of the storey in view
     const f = P.storey, lay = P.lay[f]; if (!lay) return;
-    if (!quiet) P.undo.push({ d: P.draft, lay: Object.assign({}, P.lay) });
+    if (!quiet) P.undo.push(snapOf(P));
     P.lay = Object.assign({}, P.lay, { [f]: ch ? lay.map(p => p.id === id ? Object.assign({}, p, ch, ch.yaw !== undefined ? { yaw: ((ch.yaw % 360) + 360) % 360 } : {}) : p) : lay.filter(p => p.id !== id) });
     if (!ch) P.sel = null;
     window.wasted.furn.showLayout(P.lot, f, P.lay[f]); if (!quiet) { Sound.act("talk_choose"); draw(); }
@@ -755,7 +779,7 @@ var Life = (() => {
     const x = sn(clamp(view.goal.tx, R.room[0] + pc.size[0] / 2, R.room[2] - pc.size[0] / 2)), z = sn(clamp(view.goal.tz, R.room[1] + pc.size[1] / 2, R.room[3] - pc.size[1] / 2));
     const here = P.lot.id + ":" + f, ks = P.lay[f].map(p => p.id).concat(poolOf(P).map(b => b.id.split(":").slice(1, 3).join(":") === here ? b.id.split(":")[3] : ""));
     const n = 1 + Math.max(0, ...ks.filter(i => /^k\d+$/.test(i)).map(i => +i.slice(1)));   // (never an id a belonging from this storey has)
-    P.undo.push({ d: P.draft, lay: Object.assign({}, P.lay) });
+    P.undo.push(snapOf(P));
     P.lay = Object.assign({}, P.lay, { [f]: P.lay[f].concat([Furnish.kitPiece(kind, "k" + n, x, z, 0, P.line)]) }); P.sel = "k" + n;
     window.wasted.furn.showLayout(P.lot, f, P.lay[f]); Sound.act("talk_choose"); draw();
   }
@@ -768,22 +792,59 @@ var Life = (() => {
   function placeHeld(P, b, R) {                          // a piece from the belongings where the view looks, on the grid, inside the room
     const f = P.storey, g = Furnish.rules().grid_m, sn = v => +(Math.round(v / g) * g).toFixed(2);
     const x = sn(clamp(view.goal.tx, R.room[0] + b.w / 2, R.room[2] - b.w / 2)), z = sn(clamp(view.goal.tz, R.room[1] + b.d / 2, R.room[3] - b.d / 2));
-    P.undo.push({ d: P.draft, lay: Object.assign({}, P.lay) });
+    P.undo.push(snapOf(P));
     P.lay = Object.assign({}, P.lay, { [f]: P.lay[f].concat([Object.assign({}, b, { x, z, yaw: 0 })]) }); P.sel = b.id;
     window.wasted.furn.showLayout(P.lot, f, P.lay[f]); Sound.act("talk_choose"); draw();
+  }
+  const snapOf = P => ({ d: P.draft, lay: Object.assign({}, P.lay), plan: Object.assign({}, P.plan) });
+  function planNow(l, f) { return (plans[l.id] && plans[l.id][f]) || Storeys.planOf(l, f); }   // a storey's walls as they are now
+  const gridded = v => { const g = RoomPlan.rules().grid_m; return +(Math.round(v / g) * g).toFixed(2); };
+  function grow(w, d, R) {                               // a wall half a metre longer (or shorter) at each end, inside the room
+    const [lo, hi] = w.ax === "x" ? [R.room[0], R.room[2]] : [R.room[1], R.room[3]];
+    return { a0: gridded(Math.max(lo, w.a0 - d / 2)), a1: gridded(Math.min(hi, w.a1 + d / 2)) };
+  }
+  function editWall(P, id, ch, quiet) {                  // change (ch) or take down (null) a wall of the storey in view
+    const f = P.storey, plan = P.plan[f]; if (!plan) return;
+    if (!quiet) P.undo.push(snapOf(P));
+    P.plan = Object.assign({}, P.plan, { [f]: ch ? plan.map(w => w.id === id ? Object.assign({}, w, ch) : w) : plan.filter(w => w.id !== id) });
+    if (!ch) P.wsel = null;
+    window.wasted.furn.showPlan(P.lot, f, P.plan[f]); if (!quiet) { Sound.act("talk_choose"); draw(); }
+  }
+  function addWall(P, ax, R) {                           // a new 3 m wall where the view looks
+    const f = P.storey, plan = P.plan[f], g = view.goal, [lo, hi, flo, fhi] = ax === "x" ? [R.room[0], R.room[2], R.room[1], R.room[3]] : [R.room[1], R.room[3], R.room[0], R.room[2]];
+    const c = ax === "x" ? g.tx : g.tz, fix = gridded(clamp(ax === "x" ? g.tz : g.tx, flo + .5, fhi - .5)), a0 = gridded(clamp(c - 1.5, lo, hi - 3)), a1 = gridded(Math.min(hi, a0 + 3));
+    const n = 1 + Math.max(0, ...plan.map(w => /^w\d+$/.test(w.id) ? +w.id.slice(1) : 0));
+    P.undo.push(snapOf(P));
+    P.plan = Object.assign({}, P.plan, { [f]: plan.concat([{ id: "w" + n, ax, fix, a0, a1, door: null, colour: null }]) }); P.wsel = "w" + n;
+    window.wasted.furn.showPlan(P.lot, f, P.plan[f]); Sound.act("talk_choose"); draw();
   }
   let grab = null;
   const canvas = () => document.getElementById("gl");
   function pointer(type, e, held) {                      // the mouse over the picture while the designer is open (play.js)
     const P = panel; if (!view || !P) return;
     const g = view.goal;
-    if (type === "wheel") { if (e.target && e.target.tagName === "CANVAS") g.dist = clamp(g.dist * (e.deltaY > 0 ? 1.12 : 1 / 1.12), 3, 150); return; }
+    const [lx0, lz0, lx1, lz1] = P.lot.rect, R2 = 20;      // the view goes 20 m beyond the building at most
+    const ground = () => view.cut ? Storeys.floorY(view.storey) : Y_FLOOR;
+    const hitAt = ev => { const ray = window.wasted.rayAt(ev.clientX, ev.clientY); if (!ray || ray.d[1] > -1e-4) return null; const t = (ground() - ray.o[1]) / ray.d[1]; return t > 0 ? [ray.o[0] + ray.d[0] * t, ray.o[2] + ray.d[2] * t] : null; };
+    const aim = (x, z) => { g.tx = clamp(x, lx0 - R2, lx1 + R2); g.tz = clamp(z, lz0 - R2, lz1 + R2); };
+    if (type === "wheel") {                              // nearer or further, towards the point under the mouse
+      if (!(e.target && e.target.tagName === "CANVAS")) return;
+      const f = e.deltaY > 0 ? 1.15 : 1 / 1.15, d = clamp(g.dist * f, 2, 160), k = d / g.dist, p = hitAt(e);
+      if (p && p[0] > lx0 - R2 && p[0] < lx1 + R2 && p[1] > lz0 - R2 && p[1] < lz1 + R2) aim(p[0] + (g.tx - p[0]) * k, p[1] + (g.tz - p[1]) * k); g.dist = d; return;   // (not towards the far distance)
+    }
+    if (type === "dbl") { const p = hitAt(e); if (p) aim(p[0], p[1]); return; }   // double click: look at that spot
     const FW = window.wasted.furn, fur = P.tab === "furnish" && P.lay[P.storey];
     const floorHit = (ray, F) => { if (ray.d[1] > -1e-4) return null; const t = (F - ray.o[1]) / ray.d[1]; return t > 0 ? [ray.o[0] + ray.d[0] * t, ray.o[2] + ray.d[2] * t] : null; };
     const under = () => { const R = FW.roomFor(P.lot, P.storey), ray = window.wasted.rayAt(e.clientX, e.clientY); return ray ? { R, ray, p: FW.pickPiece(P.lay[P.storey], R.F, ray) } : null; };
     if (type === "down") {
       grab = null;
-      if (e.button === 2) { grab = { pan: true }; return; }
+      if (e.button === 2 || e.button === 1 || (e.button === 0 && e.shiftKey)) { grab = { pan: true }; return; }   // the right or middle button, or Shift, slides the view
+      if (P.tab === "inside" && e.button === 0 && P.plan[P.storey]) {   // an inner wall: pick it, and drag it across the floor
+        const R = FW.roomFor(P.lot, P.storey), ray = window.wasted.rayAt(e.clientX, e.clientY); if (!ray) return;
+        const w = FW.pickWall(P.lot, P.storey, P.plan[P.storey], ray), hit = floorHit(ray, R.F), was = P.wsel; P.wsel = w ? w.id : null;
+        grab = w && hit ? { wall: w.id, off: w.fix - (w.ax === "x" ? hit[1] : hit[0]), F: R.F, R, moved: false } : { turn: true };
+        canvas().style.cursor = w ? "grabbing" : "default"; if (was !== P.wsel) draw(); return;
+      }
       if (!fur || e.button !== 0) { grab = { turn: true }; return; }
       const u = under(); if (!u) return; const hit = floorHit(u.ray, u.R.F);
       const was = P.sel; P.sel = u.p ? u.p.id : null;
@@ -793,19 +854,27 @@ var Life = (() => {
     }
     if (type === "move") {
       if (!held || !grab) {                                // hovering: the piece under the mouse is outlined, and the mouse says it can be moved
+        if (P.tab === "inside" && P.plan[P.storey]) { const ray = window.wasted.rayAt(e.clientX, e.clientY), w = ray && FW.pickWall(P.lot, P.storey, P.plan[P.storey], ray); P.whover = w ? w.id : null; canvas().style.cursor = w ? "grab" : "default"; return; }
         if (fur) { const u = under(), id = u && u.p ? u.p.id : null; P.hover = id; canvas().style.cursor = id ? "grab" : "default"; }
         return;
+      }
+      if (grab.wall) {                                     // a wall slides across, along the grid, inside the room
+        const ray = window.wasted.rayAt(e.clientX, e.clientY), hit = ray && floorHit(ray, grab.F); if (!hit) return;
+        const w = P.plan[P.storey].find(q => q.id === grab.wall); if (!w) return;
+        const [flo, fhi] = w.ax === "x" ? [grab.R.room[1], grab.R.room[3]] : [grab.R.room[0], grab.R.room[2]], fix = gridded(clamp((w.ax === "x" ? hit[1] : hit[0]) + grab.off, flo + .2, fhi - .2));
+        if (fix === w.fix) return; if (!grab.moved) { P.undo.push(snapOf(P)); grab.moved = true; }
+        editWall(P, w.id, { fix }, true); return;
       }
       if (grab.id) {
         const ray = window.wasted.rayAt(e.clientX, e.clientY), hit = ray && floorHit(ray, grab.F); if (!hit) return;
         const gm = Furnish.rules().grid_m, sn = v => +(Math.round(v / gm) * gm).toFixed(2), p = P.lay[P.storey].find(q => q.id === grab.id); if (!p) return;
         const x = sn(hit[0] + grab.dx), z = sn(hit[1] + grab.dz); if (x === p.x && z === p.z) return;
-        if (!grab.moved) { P.undo.push({ d: P.draft, lay: Object.assign({}, P.lay) }); grab.moved = true; }
+        if (!grab.moved) { P.undo.push(snapOf(P)); grab.moved = true; }
         editPiece(P, grab.id, { x, z }, true);
       } else if (grab.pan) {                               // the right button slides the view across the ground
         const k = g.dist * .0016, sy = Math.sin(g.yaw), cy = Math.cos(g.yaw), [x0, z0, x1, z1] = P.lot.rect;
-        g.tx = clamp(g.tx - (cy * e.movementX - sy * e.movementY) * k, x0 - 8, x1 + 8); g.tz = clamp(g.tz - (sy * e.movementX + cy * e.movementY) * k, z0 - 8, z1 + 8);
-      } else { g.yaw += e.movementX * .006; g.pitch = clamp(g.pitch - e.movementY * .005, -1.5, -.12); }
+        aim(g.tx - (cy * e.movementX - sy * e.movementY) * k, g.tz - (sy * e.movementX + cy * e.movementY) * k);
+      } else { g.yaw += e.movementX * .006; g.pitch = clamp(g.pitch - e.movementY * .005, -1.55, -.04); }
       return;
     }
     if (type === "up") { if (grab && grab.moved) draw(); grab = null; if (fur) canvas().style.cursor = P.hover ? "grab" : "default"; }
@@ -816,7 +885,13 @@ var Life = (() => {
     P.bad = new Set(Furnish.problems(R.room, R.keep, R.ceiling, a).filter(q => !old.has(q[0])).flatMap(q => q[0].split("|").slice(0, -1))); P.badFor = a; return P.bad;
   }
   function designMarks() {                               // for play.js: outlines round the piece picked and the piece under the mouse
-    const P = panel; if (!view || !P || P.tab !== "furnish" || !P.lay[P.storey]) return [];
+    const P = panel; if (!view || !P) return [];
+    if (P.tab === "inside" && P.plan && P.plan[P.storey]) {   // and round the wall picked and the wall under the mouse
+      const F = Storeys.floorY(P.storey), out = [];
+      for (const w of P.plan[P.storey]) if (w.id === P.wsel || (w.id === P.whover && !grab)) { const b = RoomPlan.box(w); out.push({ p: { x: (b[0] + b[2]) / 2, z: (b[1] + b[3]) / 2, w: b[2] - b[0], d: b[3] - b[1], h: 1.2, yaw: 0 }, F, sel: w.id === P.wsel, bad: false }); }
+      return out;
+    }
+    if (P.tab !== "furnish" || !P.lay[P.storey]) return [];
     const lay = P.lay[P.storey], F = Storeys.floorY(P.storey), bad = storeyBad(P), out = [];
     for (const p of lay) if (p.id === P.sel || (p.id === P.hover && !grab)) out.push({ p, F, sel: p.id === P.sel, bad: bad.has(p.id) });
     for (const p of lay) if (p.id !== P.sel && bad.has(p.id)) out.push({ p, F, sel: false, bad: true });
@@ -925,6 +1000,8 @@ var Life = (() => {
     el("keys").innerHTML = '<div><kbd>Esc</kbd> menu <kbd>H</kbd> controls <kbd>E</kbd> use</div>';
     const badB = Builder.selfTest(LOTS);
     if (badB.length) console.error("builder.js does not match Tools/citysim/builder.py:\n  " + badB.join("\n  ")); else console.info("builder.js matches Tools/citysim/builder.py (self-test passed).");
+    const badR = RoomPlan.selfTest();
+    if (badR.length) console.error("builder.js RoomPlan does not match Tools/citysim/roomplan.py:\n  " + badR.join("\n  ")); else console.info("builder.js RoomPlan matches Tools/citysim/roomplan.py (self-test passed).");
     const badF = Furnish.selfTest(Furniture.SIZE);
     if (badF.length) console.error("builder.js Furnish does not match Tools/citysim/furnish.py:\n  " + badF.join("\n  ")); else console.info("builder.js Furnish matches Tools/citysim/furnish.py (self-test passed).");
     const badE = Estate.selfTest(D, LOTS);

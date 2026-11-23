@@ -304,3 +304,88 @@ var Furnish = (() => {
   }
   return { corners, problems, cost, check, kitPiece, apply, stow, selfTest, rules: () => F() };
 })();
+
+// The room plan of a storey (BUILD-021 to BUILD-023): Tools/citysim/roomplan.py, ported. A wall is {id, ax ("x" or "z"),
+// fix, a0, a1, door (its doorway's middle, or null), colour (a kit colour id, or null)}. RoomPlan.selfTest() runs
+// roomplan.check_script() and compares every result with the Python's (D.life.builder.room_plan.checks).
+var RoomPlan = (() => {
+  const X = () => window.WASTED.life.builder.room_plan, P = () => X().rules, TOL = 1e-6;
+  const q2 = x => Math.floor(x * 100 + .5) / 100, chips = x => Math.floor(x + .5);
+  function box(w) { const h = P().thick / 2; return w.ax === "x" ? [w.a0, w.fix - h, w.a1, w.fix + h] : [w.fix - h, w.a0, w.fix + h, w.a1]; }
+  const meet = (a, b) => a[0] < b[2] - TOL && b[0] < a[2] - TOL && a[1] < b[3] - TOL && b[1] < a[3] - TOL;
+  function blocked(room, walls) {
+    const R = P(), c = R.cell, h = R.thick / 2 + c / 2, nx = Math.floor((room[2] - room[0]) / c + TOL), nz = Math.floor((room[3] - room[1]) / c + TOL), out = new Set();
+    for (const w of walls) for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
+      const x = room[0] + (i + .5) * c, z = room[1] + (j + .5) * c, along = w.ax === "x" ? x : z, across = w.ax === "x" ? z : x;
+      if (Math.abs(across - w.fix) < h - TOL && along > w.a0 - c / 2 && along < w.a1 + c / 2)
+        if (w.door === null || Math.abs(along - w.door) > R.door_w / 2 - c / 2 + TOL) out.add(i * 100000 + j);
+    }
+    return [nx, nz, out];
+  }
+  function reach(room, walls, entries) {
+    const c = P().cell, [nx, nz, bl] = blocked(room, walls), K = (i, j) => i * 100000 + j;
+    const cell = p => [Math.min(nx - 1, Math.max(0, Math.floor((p[0] - room[0]) / c))), Math.min(nz - 1, Math.max(0, Math.floor((p[1] - room[1]) / c)))];
+    const st = cell(entries[0]), seen = new Set(), nb = (i, j) => [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]];
+    if (!bl.has(K(...st))) { const todo = [st]; seen.add(K(...st));
+      while (todo.length) { const [i, j] = todo.pop(); for (const [a, b] of nb(i, j)) if (a >= 0 && a < nx && b >= 0 && b < nz && !bl.has(K(a, b)) && !seen.has(K(a, b))) { seen.add(K(a, b)); todo.push([a, b]); } } }
+    const got = entries.map(p => seen.has(K(...cell(p)))), left = new Set(), pockets = [];
+    for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) if (!bl.has(K(i, j)) && !seen.has(K(i, j))) left.add(K(i, j));
+    while (left.size) { const a = left.values().next().value; left.delete(a); const todo = [[Math.floor(a / 100000), a % 100000]]; let n = 1;
+      while (todo.length) { const [i, j] = todo.pop(); for (const [x, y] of nb(i, j)) if (left.has(K(x, y))) { left.delete(K(x, y)); todo.push([x, y]); n++; } }
+      pockets.push(Math.round(n * c * c * 10000) / 10000); }
+    return [got, pockets.sort((p, q) => q - p)];
+  }
+  function problems(room, keep, entries, colours, walls) {
+    const R = P(), g = R.grid_m, out = [], say = (k, m) => out.push([k, m]);
+    for (const w of walls) {
+      const k = w.id + "|";
+      if (w.ax !== "x" && w.ax !== "z") { say(k + "ax", "a wall must run along x or z"); continue; }
+      if (w.a1 - w.a0 < R.min_len - TOL) say(k + "short", "a wall is shorter than " + R.min_len.toFixed(1) + " m");
+      if ([w.fix, w.a0, w.a1].concat(w.door !== null ? [w.door] : []).some(v => Math.abs(v / g - Math.round(v / g)) > 1e-6)) say(k + "grid", "a wall is off the " + Math.round(g * 100) + " cm grid");
+      const [lo, hi, flo, fhi] = w.ax === "x" ? [room[0], room[2], room[1], room[3]] : [room[1], room[3], room[0], room[2]];
+      if (w.a0 < lo - TOL || w.a1 > hi + TOL || !(flo + TOL < w.fix && w.fix < fhi - TOL)) say(k + "room", "a wall runs out of the room");
+      if (w.door !== null && !(w.a0 + R.door_w / 2 + R.door_margin - TOL <= w.door && w.door <= w.a1 - R.door_w / 2 - R.door_margin + TOL)) say(k + "door", "a doorway does not fit in its wall");
+      if (w.colour !== null && !colours.includes(w.colour)) say(k + "colour", "that wall colour is not one of the district's");
+      if (keep.some(r => meet(box(w), r))) say(k + "keep", "a wall stands in the way of the door or the stairs");
+    }
+    const ok = walls.filter(w => w.ax === "x" || w.ax === "z");
+    for (let i = 0; i < ok.length; i++) for (let j = i + 1; j < ok.length; j++) if (meet(box(ok[i]), box(ok[j])) && ok[i].ax === ok[j].ax) say([ok[i].id, ok[j].id].sort().join("|") + "|clash", "two walls stand in each other");
+    const [got, pockets] = reach(room, ok, entries);
+    if (!got.slice(1).every(Boolean)) say("reach|stairs", "the stairs cannot be reached from the way in");
+    if (!got[0]) say("reach|door", "a wall stands where you come in");
+    if (pockets.some(a => a >= R.pocket_m2 - TOL)) say("reach|room", "a room cannot be reached from the way in");
+    return out;
+  }
+  function cost(before, after, height) {
+    const R = P().prices, was = new Map(before.map(w => [w.id, w])), now = new Set(after.map(w => w.id)), lines = [], area = w => q2((w.a1 - w.a0) * height);
+    for (const w of after) {
+      const o = was.get(w.id);
+      if (!o) { lines.push(["New wall", area(w), chips(area(w) * R.wall_m2)]); if (w.door !== null) lines.push(["New doorway", 1, R.doorway]); if (w.colour !== null) lines.push(["Paint a wall", q2(area(w) * 2), chips(area(w) * 2 * R.paint_m2)]); continue; }
+      if (o.ax !== w.ax || o.fix !== w.fix || o.a0 !== w.a0 || o.a1 !== w.a1) lines.push(["Move a wall", area(w), chips(area(w) * R.move_m2)]);
+      if (o.door !== w.door) lines.push(w.door !== null ? ["New doorway", 1, R.doorway] : ["Close a doorway", 1, R.close_doorway]);
+      if (o.colour !== w.colour) lines.push(["Paint a wall", q2(area(w) * 2), chips(area(w) * 2 * R.paint_m2)]);
+    }
+    for (const w of before) if (!now.has(w.id)) lines.push(["Take down a wall", area(w), chips(area(w) * R.take_down_m2)]);
+    return [lines.reduce((s, l) => s + l[2], 0), lines];
+  }
+  function check(room, keep, entries, height, colours, before, after, funds) {
+    const old = new Set(problems(room, keep, entries, colours, before).map(q => q[0]));
+    const out = [...new Set(problems(room, keep, entries, colours, after).filter(q => !old.has(q[0])).map(q => q[1]))], total = cost(before, after, height)[0];
+    if (funds != null && total > funds) out.push("you cannot pay " + Math.floor(total / 100) + "." + String(total % 100).padStart(2, "0") + " brix");
+    return out;
+  }
+  function apply(before, edit) {
+    const out = [];
+    for (const w of before) { if ((edit.remove || []).includes(w.id)) continue; out.push(Object.assign({}, w, (edit.set || {})[w.id] || {})); }
+    return out.concat((edit.add || []).map(w => Object.assign({}, w)));
+  }
+  function selfTest() {
+    const C = X().checks, S = C.script, bad = [];
+    S.cases.forEach(([edit, funds], k) => {
+      const after = apply(S.before, edit), [total, lines] = cost(S.before, after, S.height), got = { problems: check(S.room, S.keep, S.entries, S.height, S.colours, S.before, after, funds), total, lines }, want = C.want[k];
+      for (const key of Object.keys(want)) if (JSON.stringify(got[key]) !== JSON.stringify(want[key])) bad.push("room plan case " + k + " " + key + ": " + JSON.stringify(got[key]) + " should be " + JSON.stringify(want[key]));
+    });
+    return bad;
+  }
+  return { box, reach, problems, cost, check, apply, selfTest, rules: () => P() };
+})();

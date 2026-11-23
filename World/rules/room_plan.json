@@ -1,0 +1,11 @@
+{
+  "note": "The room plan of a storey in the building designer (BUILD-021 to BUILD-023; F-BLD-DESIGN level 2; docs/specs/domains/BUILDER.md section 2.7). Inner walls are straight, along x or z, 0.12 m thick, on a 5 cm grid, at least 0.6 m long, with at most one doorway 1.0 m wide. Rules: Tools/citysim/roomplan.py, ported to Prototype/play/builder.js (RoomPlan). Every room must be reached from the way in: the floor is laid out in 0.25 m cells and any part of it of 1 m2 or more that cannot be walked to is refused. Prices are chips (100 chips = 1 brix) per m2 of one side of a wall, by the storey's height; every price is a first guess for play-testing [ASSUMPTION].",
+  "grid_m": 0.05,
+  "min_len": 0.6,
+  "thick": 0.12,
+  "door_w": 1.0,
+  "door_margin": 0.1,
+  "cell": 0.25,
+  "pocket_m2": 1.0,
+  "prices": { "wall_m2": 120, "take_down_m2": 60, "move_m2": 150, "doorway": 1500, "close_doorway": 600, "paint_m2": 24 }
+}

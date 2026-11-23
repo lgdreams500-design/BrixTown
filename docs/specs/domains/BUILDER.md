@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-BUILDER
 title: Wasted — The building designer (remodel a building you own, or build a new one on an open plot)
-version: 0.6.1
+version: 0.7.0
 status: in-progress      # level 1 (remodel) accepted and built in the slice; level 2 and 3 rows proposed
 last_updated: 2026-11-23
 parent: docs/specs/GAME_SPEC.md        # extends §4.5 PROP; same ID rules; new prefix BUILD
@@ -23,7 +23,7 @@ Every requirement names a **feature** and a **level** from `docs/backlog/feature
 phase only if the owner's pick for that feature at that milestone is at or above its level
 (`docs/backlog/feature_choices.json`). Milestones: first slice = PH1, life depth = PH3, full game = PH6. Undecided means
 ask. Priority says how much a row matters once in scope. Status: BUILD-001 to BUILD-007 and BUILD-016 to BUILD-019 `accepted`
-(the owner, 2026-11-23, after the plan for the remodel designer in the slice: "then continue"); BUILD-020 `accepted` (the owner,
+(the owner, 2026-11-23, after the plan for the remodel designer in the slice: "then continue"); BUILD-021 to BUILD-023 `accepted` (the owner, 2026-11-23, asked whether inner walls meant finishes per wall or the room plan: "Both", so `F-BLD-DESIGN` is at level 2 for the first slice); BUILD-020 `accepted` (the owner,
 2026-11-23: "i thought on clicking E you would take me to an isometric view of the house with ability to move camera to see
 the preview for changes"); every other row `proposed`.
 
@@ -111,7 +111,8 @@ Changing the outside needs the whole building; changing the inside needs only yo
   the player) to look at the building from the front at three-quarters, 30° down, with a narrow lens, fitted to the part of
   the picture the panel leaves; each tab frames what it shows (the whole building; the storey from 54° down). Drag turns
   round the building and tilts, the right button slides, the wheel comes nearer, W A S D or the arrows slide, Q and E turn
-  (`play.js` `designCam`, `fitBox`). Only the building is drawn: other buildings, their floors, trees, street things and
+  (`play.js` `designCam`, `fitBox`); the middle button or Shift+drag slide it too, the wheel comes nearer towards the point under
+  the mouse, a double click looks at a spot, and the view may go 20 m beyond the building, down nearly to the ground. Only the building is drawn: other buildings, their floors, trees, street things and
   people outside it are left out, with less haze; the map, the clock, the keys and the names over the street are hidden.
 - **Cut open.** On the *Inside* and *Furnish* tabs the storey being changed is cut open: inside the lot nothing above its
   ceiling is drawn (the roof, the storeys above, its own ceiling), and the walls, outer and inner, only to 1.25 m, so the
@@ -138,6 +139,26 @@ Changing the outside needs the whole building; changing the inside needs only yo
 - **From the menu:** Properties has **Remodel** and **Furnish** for each building you own, wherever you are (MENU.md UI-006).
 - **Not yet:** bought pieces are bought straight into place (not at the outlet, FURN-025); inner walls between rooms are not checked, so a piece may be pushed into one; residents
   who live there still sit where the town's chairs were.
+
+### 2.7 The room plan (BUILD-021 to BUILD-023; level 2)
+
+- **The walls are data.** A storey's inner walls are a plan: straight walls along x or z, each with at most one doorway and
+  its own colour (`World/rules/room_plan.json`; `Storeys.planOf` turns the flats' walls the town built into one). A storey
+  with a plan of the player's is drawn and bumped into from it (`Storeys.wallsOf`, `walls`, `resolid`).
+- **On the Inside tab**, under the storey's wall colour and floor: click an inner wall to pick it (outlined like a piece of
+  furniture), drag it across the floor on the 5 cm grid; add or close its doorway, make it half a metre longer or shorter,
+  take it down, paint it any of the district's inside colours or "as the storey"; add a new 3 m wall east to west or north
+  to south where the view looks.
+- **Checked** by `Tools/citysim/roomplan.py` (ported as `RoomPlan` in `builder.js`, self-tested at load): walls at least
+  0.6 m long, on the grid, inside the storey, not in each other, a doorway that fits; never in the way of the door or the
+  stairs; and every room reached from the way in (the floor in 0.25 m cells: any part of 1 m² or more that cannot be walked
+  to is refused, as are stairs that cannot be reached). Only what the change makes wrong is refused.
+- **Priced** by the area of one side of each wall at the storey's height: new, moved and taken down walls, doorways opened
+  and closed, paint on both faces; paid with the rest of the work. Kept in the save (`plans`).
+- **While designing** only the building lives: the clock stands still, nobody else is worked out, there is no traffic,
+  and the building's rooms, relief and people are drawn as near wherever the camera is.
+- **Not yet:** the flats stay the estate's units as they were (a wall moved between two flats does not change what is sold
+  or let); furniture is not checked against inner walls; windows are not checked for lived-in rooms.
 
 ### 2.2 Build new (level 2)
 
@@ -244,6 +265,9 @@ Suggested: slice — designer 1, plots 0, construct 0; life depth — designer 2
 | BUILD-017 | Roofs, tiles, windows, openings and ornaments shall be catalogues in data, each item with a name, the look test that shows it and a status; only `approved` items, and only those whose `when` fits the building, shall be offered (`builder.options`) or allowed in a design. A new kind of part joins as `proposed` with its look test and is approved by the owner (ADR-0004). | F-BLD-DESIGN | 1 | P0 | `test_BUILD_017_only_approved_parts_for_the_building` (Tools/citysim/test_builder.py) |
 | BUILD-018 | A building's outside walls shall be chosen per facade (north, south, east, west): plaster colour, stone or brick, and brick to the eaves; each facade is checked against the district's palette and charged by its own area. | F-BLD-DESIGN | 1 | P0 | `test_BUILD_018_walls_are_chosen_per_facade` (Tools/citysim/test_builder.py) |
 | BUILD-020 | While the designer is open its camera shall show the building from above (at first at the angle of an isometric drawing) and turn round it, tilt, come nearer and slide at the player's hand; inside, the storey being changed shall be cut open (nothing above its ceiling, its walls drawn low) so its rooms and furniture show, and every change shows there at once. | F-BLD-DESIGN | 1 | P1 | slice: `designCam`, the cut (to write as an engine test) |
+| BUILD-021 | A storey's inner walls shall be a plan in data that its owner may change in the designer: move a wall, add one, take one down, open or close its doorway; walls straight on the grid, never in the way of the door or the stairs, and every room reached from the way in. | F-BLD-DESIGN | 2 | P0 | `test_BUILD_021_walls_move_come_and_go`, `test_BUILD_021_every_room_is_reached_and_the_stairs_kept_clear`, `test_BUILD_021_reach_finds_closed_rooms` (Tools/citysim/test_roomplan.py) |
+| BUILD-022 | Each inner wall shall have its own colour from the district's inside colours, or the storey's own. | F-BLD-DESIGN | 2 | P1 | `test_BUILD_022_each_wall_its_own_colour_from_the_district` |
+| BUILD-023 | Changes to the room plan shall be priced line by line by wall area and doorway, checked with the rest of the work, and paid through the ledger. | F-BLD-DESIGN | 2 | P0 | `test_BUILD_023_priced_line_by_line_and_paid_or_refused`, `test_BUILD_023_a_fixed_run_for_the_slice` |
 | BUILD-019 | Inside walls and floors shall be chosen per storey, so the owner of a unit (ADR-0022: one or more whole storeys) changes only their own unit's finishes; the designer takes the player's holding as the whole building, their units, or their storeys. | F-BLD-DESIGN | 1 | P0 | `test_BUILD_019_inside_finishes_per_unit` (Tools/citysim/test_builder.py) |
 
 ## 8. Open questions for the owner
@@ -262,6 +286,7 @@ Suggested: slice — designer 1, plots 0, construct 0; life depth — designer 2
 
 | Version | Date | Change |
 |---|---|---|
+| 0.7.0 | 2026-11-23 | `F-BLD-DESIGN` level 2 for the first slice (owner: "Both"); BUILD-021 to BUILD-023 accepted and built: the room plan (§2.7). While designing, only the building lives and is drawn as near; the view slides with the middle button or Shift, zooms towards the mouse, and a double click looks at a spot. |
 | 0.6.1 | 2026-11-23 | The designer's view shows only the building, is fitted beside the panel and glides in and out; the piece picked, the piece under the mouse and a refused piece are outlined (§2.6). |
 | 0.6.0 | 2026-11-23 | BUILD-020 (accepted by the owner): the designer's view from above, turned and cut open (§2.6, ADR-0031). Furnishing in the designer (FURN-051, FURN-052, FURN-055; owner's pick: "Arrange + add, priced"): move, turn and take away the pieces in your home, add pieces from `World/rules/furnishing.json`, checked by `Tools/citysim/furnish.py` and paid with the remodel. |
 | 0.5.0 | 2026-11-23 | Step 3 done (§2.5): the remodel designer in the slice, E at your own building, live preview, priced, paid through the ledger, kept in the save; `builder.js` ports the rules and checks itself against `builder.check_script()`. A remodel is no longer refused for what was wrong with the building before it (a lot with no stair yet). BUILD-001 to BUILD-007 and BUILD-016 to BUILD-019 accepted by the owner. |
