@@ -2128,8 +2128,6 @@ addEventListener("keydown", e => { if (e.code === "KeyY" && !e.repeat && started
   u.set("season", names[(names.indexOf(D.day.season) + 1) % names.length]); u.set("auto", "1");
   for (const [k, v] of [["x", pl.x], ["z", pl.z], ["y", pl.y], ["yaw", cam.yaw], ["pitch", cam.pitch], ["t", clock.m]]) u.set(k, (+v).toFixed(2));
   location.search = u.toString(); } });
-addEventListener("keydown", e => { if (e.code === "KeyG" && !e.repeat && window.wasted) window.wasted.dials.gi = window.wasted.dials.gi ? 0 : 1; });
-addEventListener("keydown", e => { if (e.code === "KeyO" && !e.repeat && window.wasted) window.wasted.dials.ao = window.wasted.dials.ao === 0 ? 1 : 0; });   // O: ambient occlusion off and on (ADR-0028); ?d_ao=0 starts without it   // G: local bounce and contact shade off and on, to compare with the flat fill it replaced
 addEventListener("keydown", e => { if (e.code === "KeyK" && !e.repeat) { const order = [null, "clear", "cloud", "rain", "fog"]; wxTry = order[(order.indexOf(wxTry) + 1) % order.length]; } });
 const WX_KIND = i => wxTry || (SKY.clouds.follow_weather && (D.day.weather || [])[((i % 4) + 4) % 4]) || "clear";
 function weatherNow(m) {
@@ -2187,7 +2185,14 @@ const spawn = D.city.spawn;
 const pl = { x: spawn.pos[0], y: 0, z: spawn.pos[1], vy: 0, yaw: yawOf(spawn.facing[0], spawn.facing[1]), pose: 0, ph: 0, moving: false, seat: null, onGround: true };
 const cam = { yaw: pl.yaw, pitch: -.04, dist: 4.4, fp: false, eye: [0, 0, 0], dir: [0, 0, -1] };
 const clock = { m: spawn.time ? (+spawn.time.slice(0, 2)) * 60 + (+spawn.time.slice(3)) : 8 * 60, rate: 1, day: 0 };   // day: game days since the character arrived (the bank settles by them, BANK-008)
-const keys = {}; let started = false, locked = false, showMap = false, bodies = 0, fps = 60, target = null, quality = 1, slow = 0;
+const keys = {}; let started = false, locked = false, showMap = false, bodies = 0, fps = 60, target = null, quality = 1, slow = 0, simple = null;
+// Q: the simple picture, one switch for what were three keys (Q softer picture, G flat shade, O corner shade): a softer picture with
+// the flat fill in place of local bounce and contact shade (ADR-0018) and no ambient occlusion (ADR-0028); Q again puts them all back
+function simplePicture(on) {
+  const d = window.wasted && window.wasted.dials; if (!d) return;
+  if (on && !simple) { simple = { gi: d.gi, ao: d.ao }; d.gi = 0; d.ao = 0; quality = .5; }
+  else if (!on && simple) { d.gi = simple.gi; d.ao = simple.ao; simple = null; quality = 1; }
+}
 const R = 0.32, TALL = 1.75;
 
 function pushOut(p) {
@@ -2352,7 +2357,7 @@ function hud(VP, W, H, tags) {
   $("time").textContent = hhmm(clock.m);
   $("date").textContent = (Life.ready ? "Day " + (clock.day + 1) + " · " : "") + D.day.weekday + " · " + (D.day.trying ? "trying " : "") + D.day.season + (wxTry ? " · trying " + wxTry : { cloud: " · cloudy", rain: " · rain", fog: " · fog" }[weatherNow(clock.m).kind] || "") + (D.day.market ? " · market day" : "") + (clock.rate !== 1 ? "  (clock ×" + clock.rate + ")" : "");
   const [a, b] = placeName(); $("place").textContent = a; $("sub").textContent = b;
-  $("stats").innerHTML = bodies + " of " + D.residents.length + " residents have bodies<br>" + Math.round(fps) + " frames a second" + (quality < 1 ? " · soft picture" : "");
+  $("stats").innerHTML = bodies + " of " + D.residents.length + " residents have bodies<br>" + Math.round(fps) + " frames a second" + (simple ? " · simple picture" : quality < 1 ? " · soft picture" : "");
   const pr = $("prompt"); if (started && (target || pl.pose > 1)) { pr.style.display = "block"; pr.innerHTML = "<kbd>E</kbd>" + (pl.pose === 4 ? Cars.label() : pl.play ? "Get off" : pl.pose > 1 ? "Get up" : target.label); } else pr.style.display = "none";
   $("dot").style.display = started && cam.fp ? "block" : "none";
   g2.clearRect(0, 0, W, H); if (!started) return;
@@ -2423,7 +2428,7 @@ addEventListener("keydown", e => {
   if (e.code === "BracketRight") clock.rate = RATES[Math.min(RATES.length - 1, RATES.indexOf(clock.rate) + 1)];
   else if (e.code === "BracketLeft") clock.rate = RATES[Math.max(0, RATES.indexOf(clock.rate) - 1)];
   else if (e.code === "KeyT") { if (clock.m + 60 >= 1440) clock.day++; clock.m = (clock.m + 60) % 1440; Sound.act("hour"); }
-  else if (e.code === "KeyQ") quality = quality > .75 ? .5 : 1;
+  else if (e.code === "KeyQ") simplePicture(!simple);
 });
 addEventListener("keyup", e => { keys[e.code] = false; if (e.code === "KeyF") Sound.horn(false); });
 addEventListener("pointerdown", () => Sound.start());
