@@ -120,6 +120,9 @@ class Roads:
         self._grid = {}                                   # bays by 32 m cell, for "nearest bay"
         for bid, b in self.bays.items():
             self._grid.setdefault((int(b["pos"][0] // 32), int(b["pos"][1] // 32)), []).append(bid)
+        self._obst = {}                                   # street things and trees by 8 m cell: [x, z, r] (CITY-091: stops keep clear)
+        for o in data.get("obstacles", []):
+            self._obst.setdefault((int(o[0] // 8), int(o[1] // 8)), []).append(o)
         self.stops, self.by_lot = {}, {}                  # bus stops (CITY-091): bays only buses use; driveways by lot
         for st in data.get("stops", []):
             self.add_stop(st)
@@ -362,6 +365,34 @@ class Roads:
                 break
         return made
 
+    def _stop_blocked(self, lid, s, town):
+        """Does a bus standing at s, or its shelter on the kerb, stand on a street thing or a tree? (bus: its length by its
+        width; shelter: buses.shelter_out_m from the stop, as roads.js draws it)."""
+        r, b = self.r, self.r["buses"]
+        off = r["bay_offset"] if town else r["outer_stop_offset"]
+        pos, u = self._bay_on(lid, s, off - self.lanes[lid].get("off", r["lane_offset"]))
+        n = (-u[1], u[0])
+        sh = b["shelter_out_m"][0 if town else 1]
+        cx, cz = int(pos[0] // 8), int(pos[1] // 8)
+        for i in range(cx - 2, cx + 3):
+            for j in range(cz - 2, cz + 3):
+                for x, z, rad in self._obst.get((i, j), ()):
+                    dx, dz = x - pos[0], z - pos[1]
+                    a, c = dx * u[0] + dz * u[1], dx * n[0] + dz * n[1]
+                    if abs(a) < b["length"] / 2 + .3 + rad and abs(c) < 1.3 + rad:
+                        return True                          # under the bus
+                    if -2.3 - rad < a < 3.0 + rad and sh - .9 - rad < c < sh + .9 + rad:
+                        return True                          # under the shelter or its sign
+        return False
+
+    def _clear_stop(self, lid, s, town):
+        L, half, reach = self.lanes[lid]["length"], self.r["buses"]["length"] / 2, self.r["buses"]["stop_slide_m"]
+        for k in range(0, 2 * int(reach) + 1):
+            ss = s + (k + 1) // 2 * (1 if k % 2 else -1)
+            if half <= ss <= L - half and not self._stop_blocked(lid, ss, town):
+                return ss
+        return s
+
     def add_stop(self, st):
         """CITY-091: a bus stop on both sides of the street nearest st["at"]; parking bays it covers are taken out."""
         r = self.r
@@ -378,6 +409,7 @@ class Roads:
             s, d = self.project(lid, p)
             L = self.lanes[lid]["length"]
             s = max(r["buses"]["length"] / 2, min(L - r["buses"]["length"] / 2, s))
+            s = self._clear_stop(lid, s, sid in self.streets)  # off any lamp, rack, bin, tree or arch, as near the point as it can
             for bid in list(self.by_lane.get(lid, [])):    # no parking where the bus pulls in
                 b = self.bays[bid]
                 if abs(b["s"] - s) < half:

@@ -862,6 +862,9 @@ def road_data(w):
                            for b in w["blocks"] for l in b["lots"]
                            if l["id"] not in inside and l["kind"] not in ("market", "stop")]
     roads["stops"] = list((w.get("transit") or {}).get("stops", []))
+    size = w["traffic"]["buses"].get("obstacle_m", {})          # what a bus stop must keep clear of: street things and trees
+    roads["obstacles"] = [[p["pos"][0], p["pos"][1], size.get(p["kind"], size.get("default", .5))] for b in w["blocks"] for p in b["props"]
+                          if "pos" in p and p["kind"] not in size.get("ignore", [])] +                          [[t["pos"][0], t["pos"][1], size.get("tree", 1.0)] for b in w["blocks"] for t in b["trees"]]
     return roads
 
 
