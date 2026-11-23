@@ -1,0 +1,139 @@
+{
+  "note": "The game menu and its settings (docs/specs/domains/MENU.md UI-005 to UI-010; F-UI-MENU 1, F-UI-SETTINGS 1). Settings belong to the device, not the save: the slice keeps them in the browser apart from the save. Each setting: a type (switch, choice, range), its default and, for a range, min, max and step. Controls are per platform (UI-010): keyboard and mouse, gamepad, touch; each action is bound once per context, and 'anywhere' actions may not share a control with any context. The slice is played on keyboard and mouse; the gamepad and touch mappings are the defaults for when those platforms come (UI-004, PH3). Checked by world.settings_problems().",
+  "menu": {
+    "pauses": true,
+    "tabs": [
+      { "id": "wallet", "name": "Money", "action": "money" },
+      { "id": "belongings", "name": "Belongings", "action": "belongings" },
+      { "id": "property", "name": "Properties", "action": "property" },
+      { "id": "quests", "name": "Journal", "action": "journal" },
+      { "id": "wardrobe", "name": "Wardrobe", "action": "wardrobe" },
+      { "id": "map", "name": "Map", "action": "map" },
+      { "id": "settings", "name": "Settings", "action": "menu" },
+      { "id": "save", "name": "Save", "action": "menu" },
+      { "id": "help", "name": "Help", "action": "help" }
+    ]
+  },
+  "groups": {
+    "graphics": {
+      "name": "Picture",
+      "settings": {
+        "picture": { "name": "Picture", "type": "choice", "options": { "better": "Better", "simple": "Simple" }, "default": "better", "note": "sets the five below at once (O)" },
+        "shadows": { "name": "Sun shadows", "type": "switch", "default": true },
+        "ambient_occlusion": { "name": "Ambient occlusion", "type": "switch", "default": true },
+        "bounce": { "name": "Bounce light and contact shade", "type": "switch", "default": true },
+        "resolution": { "name": "Resolution", "type": "choice", "options": { "auto": "Keep 60 frames a second", "full": "Full", "soft": "Soft (half)" }, "default": "auto" },
+        "full_bodies": { "name": "People with full bodies", "type": "range", "min": 0, "max": 6, "step": 1, "default": 1 },
+        "field_of_view": { "name": "Field of view (degrees)", "type": "range", "min": 40, "max": 80, "step": 1, "default": 52 },
+        "frame_counter": { "name": "Frame counter", "type": "switch", "default": false }
+      }
+    },
+    "audio": {
+      "name": "Sound",
+      "settings": {
+        "sound": { "name": "Sound (N)", "type": "switch", "default": true },
+        "master": { "name": "All sound", "type": "range", "min": 0, "max": 100, "step": 5, "default": 100 },
+        "music": { "name": "Music", "type": "range", "min": 0, "max": 100, "step": 5, "default": 100 },
+        "world": { "name": "Street and weather", "type": "range", "min": 0, "max": 100, "step": 5, "default": 100 },
+        "voice": { "name": "Voices", "type": "range", "min": 0, "max": 100, "step": 5, "default": 100 },
+        "action": { "name": "Actions and the interface", "type": "range", "min": 0, "max": 100, "step": 5, "default": 100 }
+      }
+    },
+    "display": {
+      "name": "On the screen",
+      "settings": {
+        "minimap": { "name": "Minimap", "type": "switch", "default": true },
+        "clock": { "name": "Clock, place and day", "type": "switch", "default": true },
+        "money": { "name": "Money", "type": "switch", "default": true },
+        "names": { "name": "Names over residents", "type": "switch", "default": true },
+        "prompts": { "name": "What E does", "type": "switch", "default": true },
+        "text_size": { "name": "Text size (%)", "type": "range", "min": 80, "max": 140, "step": 10, "default": 100 }
+      }
+    },
+    "controls": {
+      "name": "Controls",
+      "settings": {
+        "sensitivity": { "name": "Look sensitivity (%)", "type": "range", "min": 25, "max": 300, "step": 25, "default": 100 },
+        "invert": { "name": "Invert looking up and down", "type": "switch", "default": false },
+        "camera_distance": { "name": "Camera distance (m)", "type": "range", "min": 2.2, "max": 8, "step": 0.2, "default": 4.4 },
+        "first_person": { "name": "Start in first person", "type": "switch", "default": false }
+      }
+    }
+  },
+  "contexts": { "anywhere": "Anywhere", "foot": "On foot", "car": "In a car", "designer": "In the building designer", "test": "Trying things (the slice)" },
+  "actions": {
+    "menu": { "name": "The menu", "context": "anywhere" },
+    "move": { "name": "Walk", "context": "foot" },
+    "run": { "name": "Run", "context": "foot" },
+    "jump": { "name": "Jump", "context": "foot" },
+    "look": { "name": "Look round", "context": "foot" },
+    "view": { "name": "First or third person", "context": "foot" },
+    "use": { "name": "Use, talk, get into a parked car, remodel your building", "context": "foot" },
+    "counter": { "name": "Buy, sell, bank", "context": "foot" },
+    "money": { "name": "Money", "context": "anywhere" },
+    "belongings": { "name": "Belongings", "context": "anywhere" },
+    "property": { "name": "Properties", "context": "anywhere" },
+    "journal": { "name": "Journal", "context": "anywhere" },
+    "wardrobe": { "name": "Wardrobe", "context": "anywhere" },
+    "map": { "name": "Map", "context": "anywhere" },
+    "help": { "name": "Help", "context": "anywhere" },
+    "sound": { "name": "Sound on or off", "context": "anywhere" },
+    "picture": { "name": "Better or simple picture", "context": "anywhere" },
+    "clock": { "name": "Slow or speed the clock", "context": "anywhere" },
+    "hour": { "name": "Skip an hour", "context": "anywhere" },
+    "drive": { "name": "Drive and brake", "context": "car" },
+    "steer": { "name": "Steer", "context": "car" },
+    "handbrake": { "name": "Handbrake", "context": "car" },
+    "horn": { "name": "Horn", "context": "car" },
+    "radio": { "name": "Radio", "context": "car" },
+    "leave": { "name": "Get out", "context": "car" },
+    "orbit": { "name": "Turn round the building and tilt", "context": "designer" },
+    "pan": { "name": "Slide the view", "context": "designer" },
+    "zoom": { "name": "Come nearer, towards the mouse", "context": "designer" },
+    "centre": { "name": "Look at that spot", "context": "designer" },
+    "spin": { "name": "Turn the view", "context": "designer" },
+    "pick": { "name": "Pick and move a piece", "context": "designer" },
+    "turn": { "name": "Turn the piece", "context": "designer" },
+    "away": { "name": "Take the piece away", "context": "designer" },
+    "light": { "name": "Earlier light", "context": "test" },
+    "weather": { "name": "Try the weather", "context": "test" },
+    "season": { "name": "Try the next season", "context": "test" }
+  },
+  "platforms": {
+    "keyboard": {
+      "name": "Keyboard and mouse",
+      "controls": {
+        "menu": ["Esc"], "move": ["W", "A", "S", "D"], "run": ["Shift"], "jump": ["Space"], "look": ["Mouse"], "view": ["V"], "use": ["E"], "counter": ["B"],
+        "money": ["I"], "belongings": ["G"], "property": ["P"], "journal": ["J"], "wardrobe": ["U"], "map": ["M"], "help": ["H"], "sound": ["N"], "picture": ["O"],
+        "clock": ["[", "]"], "hour": ["T"],
+        "drive": ["W", "S"], "steer": ["A", "D"], "handbrake": ["Space"], "horn": ["F"], "radio": ["R"], "leave": ["E"],
+        "orbit": ["Left drag"], "pan": ["Right drag", "Middle drag", "Shift + drag", "W", "A", "S", "D"], "centre": ["Double click"], "zoom": ["Wheel"], "spin": ["Q", "E"], "pick": ["Left click"], "turn": ["R"], "away": ["Delete"],
+        "light": ["L"], "weather": ["K"], "season": ["Y"]
+      }
+    },
+    "gamepad": {
+      "name": "Gamepad",
+      "controls": {
+        "menu": ["Start"], "move": ["Left stick"], "run": ["Left stick press"], "jump": ["A"], "look": ["Right stick"], "view": ["Right stick press"], "use": ["X"], "counter": ["Y"],
+        "money": ["D-pad left"], "belongings": ["D-pad right"], "property": ["D-pad up"], "journal": ["D-pad down"], "wardrobe": ["View + Y"], "map": ["View"], "help": ["View + Start"], "sound": ["View + B"], "picture": ["View + X"],
+        "clock": ["View + LB", "View + RB"], "hour": ["View + A"],
+        "drive": ["RT", "LT"], "steer": ["Left stick"], "handbrake": ["A"], "horn": ["Left stick press"], "radio": ["B"], "leave": ["X"],
+        "orbit": ["Right stick"], "pan": ["Left stick"], "centre": ["Right stick press"], "zoom": ["LT", "RT"], "spin": ["LB", "RB"], "pick": ["A"], "turn": ["Y"], "away": ["B"],
+        "light": ["View + D-pad left"], "weather": ["View + D-pad up"], "season": ["View + D-pad right"]
+      }
+    },
+    "touch": {
+      "name": "Touch",
+      "controls": {
+        "menu": ["Menu button"], "move": ["Left stick"], "run": ["Push the stick to its edge"], "jump": ["Jump button"], "look": ["Drag the right of the screen"], "view": ["View button"], "use": ["Use button"], "counter": ["Counter button"],
+        "money": ["Menu: Money"], "belongings": ["Menu: Belongings"], "property": ["Menu: Properties"], "journal": ["Menu: Journal"], "wardrobe": ["Menu: Wardrobe"], "map": ["Minimap"], "help": ["Menu: Help"], "sound": ["Menu: Settings: sound"], "picture": ["Menu: Settings: picture"],
+        "clock": ["Clock button"], "hour": ["Menu: Settings: skip an hour"],
+        "drive": ["Pedals"], "steer": ["Left stick"], "handbrake": ["Handbrake button"], "horn": ["Horn button"], "radio": ["Radio button"], "leave": ["Use button"],
+        "orbit": ["One finger drag"], "pan": ["Two finger drag"], "centre": ["Double tap"], "zoom": ["Pinch"], "spin": ["Two finger twist"], "pick": ["Tap and drag"], "turn": ["Turn button"], "away": ["Take away button"],
+        "light": ["Menu: Help: earlier light"], "weather": ["Menu: Help: try the weather"], "season": ["Menu: Help: next season"]
+      }
+    }
+  },
+  "save": { "slots": 1 },
+  "wardrobe": { "parts": ["hair", "hair_color", "garment", "top", "bottom_type", "bottom", "shoes", "scarf", "cap", "bag", "apron", "tash"], "max_outfits": 12 }
+}

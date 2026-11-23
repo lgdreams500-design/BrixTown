@@ -76,6 +76,29 @@
   .ptab { width: 100%; border-collapse: collapse; font-size: 15px; }
   .ptab td { padding: 4px 6px; border-bottom: 1px solid rgba(217,207,182,.12); vertical-align: middle; }
   .ptab td:last-child { text-align: right; }
+  #life.menu { width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }   /* the game menu (UI-005) */
+  #life.menu.side { width: min(420px, calc(100vw - 24px)); }
+  .mrail { display: flex; flex-wrap: wrap; gap: 4px; margin: -4px 0 12px; padding-bottom: 10px; border-bottom: 1px solid rgba(217,207,182,.18); }
+  .mtab { font: 600 13px var(--data); color: var(--dim); background: none; border: 1px solid transparent; border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+  .mtab:hover { color: var(--cream); background: rgba(217,207,182,.08); }
+  .mtab.on { color: var(--ink); background: var(--lantern); }
+  .mtab:focus-visible { outline: 2px solid var(--cream); outline-offset: 2px; }
+  .dzl.wide { width: 210px; }
+  .keys kbd { margin-right: 4px; }
+  .set-off { display: none !important; }   /* hidden in Settings: On the screen */
+  #life, #talk, #toast, #prompt, #purse, #clock, #counter, #track { zoom: var(--ui-zoom, 1); }
+  body.designing #keys, body.designing #mapbox, body.designing #stats, body.designing #toast, body.designing #track, body.designing #prompt, body.designing #clock { display: none !important; }   /* the building designer: the building, the panel and nothing else */
+  #life.side { left: auto; right: 12px; top: 12px; transform: none; width: min(380px, calc(100vw - 24px)); max-height: calc(100vh - 24px); }   /* the building designer, beside the building */
+  .dzrow { display: flex; align-items: center; gap: 10px; margin: 6px 0; flex-wrap: wrap; }
+  .dzl { width: 118px; font-size: 14px; color: var(--dim); }
+  .swatches { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+  .sw { width: 30px; height: 30px; border-radius: 5px; border: 2px solid rgba(217,207,182,.25); cursor: pointer; padding: 0; }
+  .sw.word { width: auto; height: 30px; padding: 0 10px; font: 600 13px var(--data); color: var(--cream); background: rgba(217,207,182,.12); }
+  .sw.boards { background-image: repeating-linear-gradient(90deg, rgba(0,0,0,.25) 0 1px, transparent 1px 9px); }
+  .sw.tiles { background-image: linear-gradient(rgba(0,0,0,.2) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.2) 1px, transparent 1px); background-size: 10px 10px; }
+  .sw.on { border-color: var(--lantern); box-shadow: 0 0 0 2px var(--lantern); }
+  .pbtn.off { background: rgba(217,207,182,.14); color: var(--cream); }
+  .pbtn:disabled { opacity: .45; cursor: default; }
   .pbtn { font: 600 14px var(--data); color: var(--ink); background: var(--lantern); border: 0; border-radius: 4px; padding: 5px 12px; cursor: pointer; }
   .pbtn:hover { background: #f6b673; } .pbtn:disabled { background: #6b6558; cursor: default; }
   .pbtn:focus-visible, #life select:focus-visible, #life input:focus-visible { outline: 2px solid var(--cream); outline-offset: 2px; }
@@ -128,7 +151,7 @@
 <div class="hud" id="keys">
   <span><kbd>W A S D</kbd>walk</span><span><kbd>Shift</kbd>run</span><span><kbd>Space</kbd>jump</span><span><kbd>V</kbd>first or third person</span><span><kbd>E</kbd>use, talk, get into a parked car</span><span><kbd>B</kbd>buy, sell, bank</span><span><kbd>I</kbd>money and things</span><span><kbd>J</kbd>quests</span><span><kbd>P</kbd>property</span><br>
   <span>In a car: <kbd>W</kbd><kbd>S</kbd>drive and brake</span><span><kbd>A</kbd><kbd>D</kbd>steer</span><span><kbd>Space</kbd>handbrake</span><span><kbd>F</kbd>horn</span><span><kbd>R</kbd>radio</span><span><kbd>E</kbd>get out</span><br>
-  <span><kbd>[</kbd><kbd>]</kbd>slow or speed the clock</span><span><kbd>T</kbd>skip an hour</span><span><kbd>M</kbd>map</span><span><kbd>N</kbd>sound</span><span><kbd>Q</kbd>softer picture</span><span><kbd>L</kbd>earlier light</span><span><kbd>G</kbd>flat shade, as before</span><span><kbd>O</kbd>corner shade off and on</span><span><kbd>K</kbd>try the weather</span><span><kbd>Y</kbd>try the next season</span><span><kbd>H</kbd>hide these</span>
+  <span><kbd>[</kbd><kbd>]</kbd>slow or speed the clock</span><span><kbd>T</kbd>skip an hour</span><span><kbd>M</kbd>map</span><span><kbd>N</kbd>sound</span><span><kbd>O</kbd>better or simple picture</span><span><kbd>L</kbd>earlier light</span><span><kbd>K</kbd>try the weather</span><span><kbd>Y</kbd>try the next season</span><span><kbd>H</kbd>hide these</span>
 </div>
 <div id="bigmap"><canvas id="big" width="900" height="900"></canvas><div id="legend"></div></div>
 <div id="talk" role="dialog" aria-label="Conversation">
@@ -195,6 +218,7 @@
 <script src="dodge.js"></script>
 <script src="economy.js"></script>
 <script src="estate.js"></script>   <!-- the real estate market (PROP-009 to PROP-021) -->
+<script src="builder.js"></script>   <!-- the building designer's rules (BUILD-004 to BUILD-007, BUILD-016 to BUILD-019) -->
 <script src="life.js"></script>
 <script>
   // conversations.js comes before play.js: play.js starts drawing as soon as it has run, so everything it calls must be here first.

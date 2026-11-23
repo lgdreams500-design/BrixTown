@@ -342,7 +342,8 @@ class TheDesigns(unittest.TestCase):
             self.assertEqual(world.js_hash(*keys), want, keys)
         K = W["building_kit"]
         d = self.D["b_0_0_l0"]
-        self.assertEqual(d["walls"]["plaster"], world.js_pick(K["plaster"], 0.5495072316844016))
+        self.assertEqual(d["walls"]["n"]["plaster"], world.js_pick(K["town"]["plaster"], 0.5495072316844016))
+        self.assertEqual(world.built(W, d)["walls"]["n"]["plaster"], K["colours"][d["walls"]["n"]["plaster"]]["rgb"])
         self.assertEqual(world.designs(W), self.D)                                   # the same every time
 
     def test_BUILD_003_every_choice_comes_from_the_kit(self):
@@ -350,12 +351,15 @@ class TheDesigns(unittest.TestCase):
         w = copy.deepcopy(W)
         ds = copy.deepcopy(self.D)
         d = ds["b_0_0_l0"]
-        d["walls"]["plaster"] = [1, 0, 1]
+        d["walls"]["s"]["plaster"] = [1, 0, 1]                                      # a colour by value, not by id (BUILD-016)
         d["roof"]["type"] = "dome"
-        d["walls"]["stone"]["pattern"] = "marble"
+        d["walls"]["e"]["stone"]["pattern"] = "marble"
+        d["inside"]["floors"][0] = "carpet"
         del ds["b_0_0_l1"]["ornament"]
+        del ds["b_0_0_l2"]["walls"]["w"]
         p = world.design_problems(w, ds)
-        for bit in ("plaster colour not in the kit", "roof type dome", "stone pattern not in surfaces.json", "design has no ornament"):
+        for bit in ("s facade's plaster colour not in the kit", "roof type dome", "e facade's stone pattern not in surfaces.json", "design has no ornament",
+                    "floor 0's finish not in the kit", "b_0_0_l2: no w facade"):
             self.assertTrue(any(bit in x for x in p), bit)
 
 

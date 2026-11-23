@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-FURNITURE
 title: Wasted — Furniture (designs, the furniture companies and their outlets, furniture in the home)
-version: 0.3.0
+version: 0.4.1
 status: draft            # every row proposed; the owner accepts
 last_updated: 2026-11-22
 parent: docs/specs/GAME_SPEC.md        # extends §4.5 PROP; same ID rules; new prefix FURN
@@ -27,7 +27,7 @@ Every requirement names a **feature** and a **level** from `docs/backlog/feature
 > Milestones: first slice = PH1, life depth = PH3, full game = PH6. Undecided means ask.
 
 There is no Phase column: the owner's picks decide when. Priority says how much it matters once in
-scope. Status of every row: `proposed`, except FURN-020 and FURN-021: `accepted` (the owner asked for the outlet to be built, 2026-11-22; ADR-0027). "Proven by" names the test that is still to be written, in
+scope. Status of every row: `proposed`, except FURN-020 and FURN-021: `accepted` (the owner asked for the outlet to be built, 2026-11-22; ADR-0027), FURN-050 `accepted` (met for furniture by MENU.md INV-001, the owner's pick of `F-INV-ITEMS` 1, 2026-11-23), and FURN-051, FURN-052 and FURN-055: `accepted` (the owner, 2026-11-23, picking "Arrange + add, priced" for furniture in the building designer: move, turn and take away the pieces in the home and add pieces from a priced list; BUILDER.md §2.6). A piece taken away goes to the player's belongings and is placed from them (INV-001); until buying at the outlet (FURN-025) is built, a piece is bought straight into place `[ASSUMPTION]`. "Proven by" names the test that is still to be written, in
 `Tools/citysim/test_furniture.py` for rules and in a Blender look test for designs.
 
 Storage containers (`F-PROP-STORAGE`) and the assembly mini-game (`F-FURN-ASSEMBLE`) have no pick and
@@ -87,11 +87,11 @@ are not in this file; the owner said both come later.
 | ID | Requirement | Feature | Lvl | Pri | Proven by |
 |---|---|---|---|---|---|
 | FURN-050 | Pieces the player owns that are not placed or on their way shall be in the player's inventory, with no limit `[ASSUMPTION]` until storage containers exist (`F-PROP-STORAGE`). The inventory survives closing the slice (QST-008). | F-PROP-FURNISH | 1 | P0 | `test_FURN_050_one_place` |
-| FURN-051 | The player shall place a piece from the inventory into a unit they own or rent: it snaps to the grid, must not overlap walls or other pieces, must leave doors and stairs clear (`keep_clear` in `storeys.json`), and must fit under the ceiling. Once placed it is recorded against that unit. | F-PROP-FURNISH | 1 | P0 | `test_FURN_051_placing` |
-| FURN-052 | The player shall pick a placed piece back up into the inventory, in a unit they own or rent. | F-PROP-FURNISH | 1 | P0 | `test_FURN_050_one_place` |
+| FURN-051 | The player shall place a piece from the inventory into a unit they own or rent: it snaps to the grid, must not overlap walls or other pieces, must leave doors and stairs clear (`keep_clear` in `storeys.json`), and must fit under the ceiling. Once placed it is recorded against that unit. | F-PROP-FURNISH | 1 | P0 | `test_FURN_051_placing` (Tools/citysim/test_furnish.py) |
+| FURN-052 | The player shall pick a placed piece back up into the inventory, in a unit they own or rent. | F-PROP-FURNISH | 1 | P0 | `test_FURN_052_taking_away_and_moving_are_free_buying_is_priced` (Tools/citysim/test_furnish.py; the inventory half with FURN-050) |
 | FURN-053 | Selling or losing a unit (sale, repossession, PROP-017, PROP-019) shall include every piece still placed in it, and their value counts toward the price (PROP-011). When a player who rents moves out or is evicted (PROP-013), their placed pieces go back to their inventory `[ASSUMPTION]`. | F-PROP-FURNISH | 1 | P0 | `test_FURN_053_sold_with_unit` |
 | FURN-054 | Placed pieces with places to sit, lie or use shall become interaction points (CITY-030) for the player and for the residents who live in or visit the unit. | F-PROP-FURNISH | 1 | P1 | `test_FURN_054_points` |
-| FURN-055 | The player shall move and turn placed pieces freely (turns in 15° steps `[ASSUMPTION]`), hang wall pieces on walls and stand small pieces on others; the layout is saved and, from PH2, visitors see it. | F-PROP-FURNISH | 2 | P0 | `test_FURN_051_placing` |
+| FURN-055 | The player shall move and turn placed pieces freely (turns in 15° steps `[ASSUMPTION]`), hang wall pieces on walls and stand small pieces on others; the layout is saved and, from PH2, visitors see it. | F-PROP-FURNISH | 2 | P0 | `test_FURN_051_placing`, `test_FURN_055_turns_in_steps_and_the_footprint_turns_with_it` (Tools/citysim/test_furnish.py) |
 | FURN-056 | Each piece shall have a condition worked out from its age and how much it is used (from the clock and the routines), shown in the stages of FURN-008, lowering what it sells for. | F-PROP-FURNISH | 2 | P2 | `test_FURN_056_wear` |
 | FURN-057 | The player carrying a piece shall walk slower by its size, and only pieces one person can carry are carried; bigger ones are moved in place (FURN-055) or by a crew. | F-OBJ-CARRY | 1 | P2 | engine test |
 
@@ -114,6 +114,8 @@ buy-back share. Every number `[ASSUMPTION]` until tuned in play.
 
 | Version | Date | Change |
 |---|---|---|
+| 0.4.1 | 2026-11-23 | FURN-050 accepted: pieces taken away in the designer go to the belongings (MENU.md INV-001) and are placed from there. |
+| 0.4.0 | 2026-11-23 | FURN-051, FURN-052, FURN-055 accepted and built in the slice's building designer (BUILDER.md §2.6, ADR-0031): `World/rules/furnishing.json` (43 pieces with sizes and prices), `Tools/citysim/furnish.py` and `test_furnish.py`, ported as `Furnish` in `Prototype/play/builder.js`. |
 | 0.1.0 | 2026-11-22 | First draft from the owner's request and picks (`F-FURN-ITEMS` 2, `F-FURN-STORE` 2, `F-PROP-FURNISH` 2, `F-OBJ-CARRY` 1): FURN-001 to 008, 020 to 035, 050 to 057; Q-30 to Q-32. All proposed. |
 | 0.3.0 | 2026-11-22 | The owner asked for at least ten more furniture kits and more kinds of objects and decoration: look test `furniture_kit_18.py` (twelve kits, 78 base pieces in the four lines; renders in `Art/StyleTests/furniture_kit_18/`, not approved). FURN-001 gains a hall room. |
 | 0.2.0 | 2026-11-22 | The outlet built outside the East Gate (owner's request; Q-30 decided; ADR-0027): FURN-020 and FURN-021 accepted, with tests. FURN-003 and FURN-005 point at the approved look (ADR-0026). |

@@ -5,12 +5,13 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 35 of 48 | 9 of 48 | 9 of 48 |
-| Size of the plan (points) | 454 | 408 | 800 |
-| Size of the suggested plan | 118 | 368 | 768 |
+| Decided | 39 of 52 | 9 of 52 | 9 of 52 |
+| Size of the plan (points) | 484 | 427 | 827 |
+| Size of the suggested plan | 128 | 387 | 795 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
+- F-BLD-DESIGN at First slice needs F-MAP-PLOTS at level 1 (picked 0)
 - F-GARDEN at First slice needs F-VEG-LEAF at level 1 (undecided)
 - F-VEH-TRANSIT at First slice needs F-MAP-CITY at level 2 (picked 1)
 - F-SKY at First slice needs F-TIME-DAY at level 1 (undecided)
@@ -22,7 +23,7 @@
 | **City layout** `F-MAP-CITY` | 1 A district ★ | 1 A district | 2 Whole city | A district from the first slice (so cars fit), whole city in the full game (owner, 2026-11-22). |
 | **Lots and building records** `F-MAP-LOTS` | 1 Registry | 1 Registry | 1 Registry ★ | Registry at every milestone (owner, 2026-11-22). |
 | **Going inside buildings** `F-BLD-INSIDE` | 3 Every floor, true size ★ | undecided | undecided | Owner, 2026-11-22: "3: Every floor, true size" (all buildings accessible inside, stairs to every level, inside the same size as outside), with "Stairs and a lift" in the towers and "Residents too" (beds and desks upstairs). Later milestones not stated. |
-| **Building designer** `F-BLD-DESIGN` | 1 Remodel | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. |
+| **Building designer** `F-BLD-DESIGN` | 2 Build new ★ | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. Then on 2026-11-23, asked whether inner walls meant finishes per wall or the room plan (moving, adding and removing walls and doors, level 2): "Both"; read as level 2 for the first slice. |
 | **Open plots** `F-MAP-PLOTS` | 0 None | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. |
 | **From design to building** `F-BLD-CONSTRUCT` | 0 Instant | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. |
 | **Shops and market** `F-BLD-SHOP` | 2 Stock and prices ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Stock and prices" for the first slice. Later milestones not stated. |
@@ -47,6 +48,7 @@
 | **Reacting to the world** `F-NPC-REACT` | 1 Weather and night | undecided | undecided | Owner, 2026-11-22: asked for people to react to the weather (clothing, umbrellas in rain, running for cover when rain starts), then said "Level 1 for the slice". Later milestones not stated. |
 | **Getting out of the way of cars** `F-NPC-DODGE` | 2 Dodge and tell off | undecided | undecided | Owner, 2026-11-22: "Level 2 for slice" (residents dodge a car coming at them, then gesture and shout at the driver). Later milestones not stated. |
 | **Animals** `F-ANIMALS` | undecided | undecided | undecided |  |
+| **Wardrobe and outfits** `F-CHR-WARDROBE` | 1 Saved outfits | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (asked which levels the four menu features should have for the first slice). Later milestones not stated. |
 
 ## Things to use
 
@@ -97,6 +99,14 @@
 | **Furniture that belongs to the unit** `F-PROP-FURNISH` | 2 Arrange and trade ★ | undecided | undecided | Owner, 2026-11-22: "furnish level 2 and carry level 1" (asked for first-slice levels, needed by F-FURN-STORE level 2). Storage taken out to F-PROP-STORAGE, to be built later. Later milestones not stated. |
 | **Storage containers** `F-PROP-STORAGE` | undecided | undecided | undecided |  |
 | **Furniture company and outlets** `F-FURN-STORE` | 2 Several companies, living catalogue ★ | undecided | undecided | Owner, 2026-11-22: "level to for design and company and outlets" (asked for first-slice levels; read as level 2). Bought furniture is delivered to the flat by NPCs, unassembled or assembled, or the player takes an instant option into the inventory, then places it from the inventory or moves it to storage; "we will build storage container mechanics later". Later milestones not stated. Then: "for packed delivery, paid assemble as well as player can assemble, in future we can add a mini game where player can assemble the furniture based on the instructions" (mini-game proposed as F-FURN-ASSEMBLE, no pick). Then: "instant doesn't cost any money it's free for now". |
+| **Belongings** `F-INV-ITEMS` | 1 One list of belongings | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (asked which levels the four menu features should have for the first slice). Later milestones not stated. |
+
+## Menus and settings
+
+| Feature | First slice | Life depth | Full game | Note |
+|---|---|---|---|---|
+| **The game menu** `F-UI-MENU` | 1 Menu of what exists | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (asked which levels the four menu features should have for the first slice). Later milestones not stated. |
+| **Settings** `F-UI-SETTINGS` | 1 Picture, sound, display, mouse | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (asked which levels the four menu features should have for the first slice). Later milestones not stated. |
 
 ## What each level means
 
@@ -341,3 +351,23 @@
 - 0 Timed action: The player assembles a boxed piece with one action that takes a set time from data; the boxes turn into the piece. Size S.
 - 1 Follow the instructions: A mini-game: the boxes open into labelled parts and fixings, and the player follows the instruction sheet step by step to fit them together. Mistakes show (a wobble, a part left over) and can be undone. Size L.
 - 2 Every piece its own build: Every flat-pack piece in the catalogue has its own steps made from data; help from a friend makes it faster in multiplayer; a well-built piece wears more slowly. Size L.
+
+**The game menu** (`F-UI-MENU`). One place for everything about the player's life (money, belongings, homes, quests, the map, saving) instead of a key for each, and a way into the building designer from what you own.
+- 0 Keys only: As now: a key for each panel (I money, J quests, P property, M map) and the keys listed along the bottom of the screen. Size -.
+- 1 Menu of what exists: The platform's menu control (Esc on a keyboard, Start or Menu on a gamepad, a menu button on touch) opens a menu over the dimmed game with tabs: Money, Journal, Properties (with Show on map, Remodel, Furnish, Sell and Let buttons), Map, Save (save now, last autosave, load, new game) and Help (the controls of the platform played on, which leave the bottom of the screen). The old shortcuts open their tab. Size M.
+- 2 Every tab: Also Me (name, look, job, standing with residents and shops), Wardrobe, Belongings, Storage and Settings; the map with filters and a waypoint; more than one save slot. Size M.
+
+**Settings** (`F-UI-SETTINGS`). Players set the game to their machine and their taste: picture, sound, controls, what the screen shows. Settings belong to the device, not the save; their defaults are data. Controls follow the platform: keyboard and mouse, a gamepad, or touch each have their own mapping.
+- 0 Keys only: As now: O for the better or simple picture, N for sound; nothing else can be set. Size -.
+- 1 Picture, sound, display, mouse: Graphics: one switch for the better or simple picture and, under it, shadows, ambient occlusion, bounce light, contact shade and resolution; view distance, how many people have full bodies, field of view, the frame counter. Audio: master, music, street, voices, interface. Display: minimap, clock, money, names over residents, prompts, text size. Controls for the platform played on (keyboard and mouse, gamepad, touch), each with its own default mapping in data: sensitivity, invert, camera distance, first or third person; the Help tab shows that platform's controls. Kept on the device; defaults in World/rules/settings.json. Size M.
+- 2 Controls and accessibility: Also remapping every action, per platform (keys, gamepad buttons; touch layouts); colour-blind-safe markers, reduced motion (no camera glides), hold or toggle; hints on or off; the starting clock speed. Size M.
+
+**Belongings** (`F-INV-ITEMS`). Everything the player owns that is not placed or stored in one list: what they carry and furniture waiting to be placed (FURN-050).
+- 0 Carried items only: As now: the wallet panel lists the shop items the player carries. Size -.
+- 1 One list of belongings: Carried items and unplaced furniture together, by kind, with what each is worth; furniture taken away in the designer goes here and is placed from here. Size M.
+- 2 Use, drop and limits: Items can be used, given, dropped or sold from the list; how much can be carried is limited by size and weight; the rest must be stored or placed. Size M.
+
+**Wardrobe and outfits** (`F-CHR-WARDROBE`). Players change how they look after the character designer: clothes for the day, the season and the occasion.
+- 0 Fixed look: As now: the look made in the character designer is kept for good. Size -.
+- 1 Saved outfits: The player saves looks from the character designer's own choices (garments, colours, extras, hair) as named outfits and changes between them, free, from the menu. Size S.
+- 2 Clothes you own: Garments are owned items bought in clothes shops through the ledger and kept in a wardrobe at home; you change at a wardrobe, a fitting room or home; clothes suit the weather (CITY-077 to CITY-080). Size L.

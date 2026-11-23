@@ -24,7 +24,7 @@ already blocked correctly), with the bounce off the shaded wall falls to 0.22 an
 | Real global illumination (probes, traced or baked) | Closest to the reference | Far more work; belongs in the Unreal build |
 
 ## Decision
-Shown first as a trial and now the default in the kit daylight (`gi: 1` in `LIGHTS.kit`). Key G, or `?gi=0`, switches it
+Shown first as a trial and now the default in the kit daylight (`gi: 1` in `LIGHTS.kit`). Key G (since 2026-11-23 key O, the simple picture, with the ambient occlusion), or `?gi=0`, switches it
 off to compare with the flat fill it replaced:
 - **Sun-on-ground map.** Each frame, after the sun's shadow picture, a 128 × 128 map of the 96 m round the camera records
   which ground the sun reaches. The lit pass reads it blurred. A wall takes the ground in front of it (1.5 m and 4.5 m
