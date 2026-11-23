@@ -16,7 +16,7 @@ two behind; behind the stair is a WC (ground) or bathroom (upstairs). A flat's f
 the flat's door near its left end (as in flats[].door) and no windows; its rooms open off a hall along that wall and
 look out of the back.
 
-Every piece gets the furnishing level it first comes in at (ADR-0033):
+Every piece gets the furnishing level it first comes in at (ADR-0035):
     1 Bare      beds for the household, a sofa, a table to eat at, the kitchen and bathroom
     2 Basic     storage and comfort: wardrobes, bedside tables, armchairs, desks, lamps
     3 Homely    rugs, shelves, television, pictures, hall furniture
@@ -662,7 +662,7 @@ if __name__ == "__main__":
         for e in errs: print("    ", e)
         total += len(errs)
     print("%d problems" % total)
-    if not total:                                            # the approved plans for the game (ADR-0034, FURN-060)
+    if not total:                                            # the approved plans for the game (ADR-0036, FURN-060)
         wp = os.path.join(ROOT, "World", "rules", "home_plans.json")
         world = json.load(open(wp, encoding="utf-8"))
         for p in build():

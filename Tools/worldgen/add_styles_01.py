@@ -1,4 +1,4 @@
-"""Every building that is not a designed house gets its approved colourway (ADR-0034; BUILD-001).
+"""Every building that is not a designed house gets its approved colourway (ADR-0036; BUILD-001).
 
 For each such lot: lot.style = {"group": <its group in World/rules/building_styles.json>, "way": "a" | "b" | "c"}, the
 group from its build type (Tools/worldgen/draw_builds.py classify()) and the colourway by a hash of the lot, picked once

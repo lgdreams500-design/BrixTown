@@ -1,5 +1,5 @@
 ---
-adr: ADR-0033
+adr: ADR-0035
 title: The house plan at the town's size and four furnishing levels
 status: accepted          # owner in chat on 2026-11-23, shown house interiors look test 21: "Approve as rendered"
 date: 2026-11-23

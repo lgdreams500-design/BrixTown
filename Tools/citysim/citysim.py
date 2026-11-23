@@ -213,6 +213,9 @@ class Vegetation:
         if day >= end:
             return dict(state="fallen", radius=radius, leaf=0.0, age=age, generation=g)
         doy = day % yd
+        if sp.get("evergreen"):                            # a pine: in leaf all year, the same green (WLD-056)
+            return dict(state="growing", radius=radius, leaf=1.0, turn=0.0, blossom=0.0, color=list(sp["summer"]), age=age,
+                        ground=0.0, autumn=sp["autumn"], generation=g)
         leaf = min(1.0, max(0.0, (doy - sp["bud"]) / float(sp["full"] - sp["bud"])))
         turn = min(1.0, max(0.0, (doy - sp["turn"]) / 4.0))
         drop = min(1.0, max(0.0, (doy - sp["turn"] - 2) / float(sp["bare"] - sp["turn"] - 2)))

@@ -1,0 +1,3721 @@
+{
+ "id": "b_1_4",
+ "grid": [
+  1,
+  4
+ ],
+ "template": "orchard",
+ "district": "Westgate Orchard",
+ "origin": [
+  104.0,
+  392.0
+ ],
+ "size": 80.0,
+ "span": [
+  3,
+  1
+ ],
+ "lots": [],
+ "paths": [
+  [
+   [
+    240.0,
+    471.0
+   ],
+   [
+    240.0,
+    432.0
+   ]
+  ]
+ ],
+ "tracks": [],
+ "trees": [
+  {
+   "id": "b_1_4_t0",
+   "species": "apple",
+   "pos": [
+    112.24,
+    399.94
+   ],
+   "planted": -691,
+   "seed": 323322
+  },
+  {
+   "id": "b_1_4_t1",
+   "species": "apple",
+   "pos": [
+    111.93,
+    407.0
+   ],
+   "planted": -668,
+   "seed": 649322
+  },
+  {
+   "id": "b_1_4_t2",
+   "species": "apple",
+   "pos": [
+    111.78,
+    414.0
+   ],
+   "planted": -332,
+   "seed": 566433
+  },
+  {
+   "id": "b_1_4_t3",
+   "species": "apple",
+   "pos": [
+    111.89,
+    421.0
+   ],
+   "planted": -385,
+   "seed": 286770
+  },
+  {
+   "id": "b_1_4_t4",
+   "species": "apple",
+   "pos": [
+    112.04,
+    427.88
+   ],
+   "planted": -424,
+   "seed": 167308
+  },
+  {
+   "id": "b_1_4_t5",
+   "species": "apple",
+   "pos": [
+    112.22,
+    435.08
+   ],
+   "planted": -327,
+   "seed": 209970
+  },
+  {
+   "id": "b_1_4_t6",
+   "species": "apple",
+   "pos": [
+    111.85,
+    442.14
+   ],
+   "planted": -682,
+   "seed": 573967
+  },
+  {
+   "id": "b_1_4_t7",
+   "species": "apple",
+   "pos": [
+    112.03,
+    448.84
+   ],
+   "planted": -483,
+   "seed": 727370
+  },
+  {
+   "id": "b_1_4_t8",
+   "species": "apple",
+   "pos": [
+    112.18,
+    456.06
+   ],
+   "planted": -700,
+   "seed": 950564
+  },
+  {
+   "id": "b_1_4_t9",
+   "species": "apple",
+   "pos": [
+    112.06,
+    463.11
+   ],
+   "planted": -559,
+   "seed": 96490
+  },
+  {
+   "id": "b_1_4_t10",
+   "species": "apple",
+   "pos": [
+    118.72,
+    399.81
+   ],
+   "planted": -502,
+   "seed": 110239
+  },
+  {
+   "id": "b_1_4_t11",
+   "species": "apple",
+   "pos": [
+    118.93,
+    407.03
+   ],
+   "planted": -431,
+   "seed": 523211
+  },
+  {
+   "id": "b_1_4_t12",
+   "species": "apple",
+   "pos": [
+    119.27,
+    414.27
+   ],
+   "planted": -668,
+   "seed": 154728
+  },
+  {
+   "id": "b_1_4_t13",
+   "species": "apple",
+   "pos": [
+    118.82,
+    420.92
+   ],
+   "planted": -344,
+   "seed": 117918
+  },
+  {
+   "id": "b_1_4_t14",
+   "species": "apple",
+   "pos": [
+    118.8,
+    427.92
+   ],
+   "planted": -661,
+   "seed": 894100
+  },
+  {
+   "id": "b_1_4_t15",
+   "species": "apple",
+   "pos": [
+    119.0,
+    434.89
+   ],
+   "planted": -347,
+   "seed": 536343
+  },
+  {
+   "id": "b_1_4_t16",
+   "species": "apple",
+   "pos": [
+    119.22,
+    441.89
+   ],
+   "planted": -725,
+   "seed": 752155
+  },
+  {
+   "id": "b_1_4_t17",
+   "species": "apple",
+   "pos": [
+    118.91,
+    448.79
+   ],
+   "planted": -526,
+   "seed": 110127
+  },
+  {
+   "id": "b_1_4_t18",
+   "species": "apple",
+   "pos": [
+    118.78,
+    455.85
+   ],
+   "planted": -500,
+   "seed": 64960
+  },
+  {
+   "id": "b_1_4_t19",
+   "species": "apple",
+   "pos": [
+    119.28,
+    462.95
+   ],
+   "planted": -610,
+   "seed": 860858
+  },
+  {
+   "id": "b_1_4_t20",
+   "species": "apple",
+   "pos": [
+    126.11,
+    399.9
+   ],
+   "planted": -558,
+   "seed": 25809
+  },
+  {
+   "id": "b_1_4_t21",
+   "species": "apple",
+   "pos": [
+    126.04,
+    407.05
+   ],
+   "planted": -319,
+   "seed": 87288
+  },
+  {
+   "id": "b_1_4_t22",
+   "species": "apple",
+   "pos": [
+    126.08,
+    413.87
+   ],
+   "planted": -709,
+   "seed": 352662
+  },
+  {
+   "id": "b_1_4_t23",
+   "species": "apple",
+   "pos": [
+    126.19,
+    420.7
+   ],
+   "planted": -648,
+   "seed": 34771
+  },
+  {
+   "id": "b_1_4_t24",
+   "species": "apple",
+   "pos": [
+    126.24,
+    428.22
+   ],
+   "planted": -633,
+   "seed": 797665
+  },
+  {
+   "id": "b_1_4_t25",
+   "species": "apple",
+   "pos": [
+    125.94,
+    435.07
+   ],
+   "planted": -461,
+   "seed": 178071
+  },
+  {
+   "id": "b_1_4_t26",
+   "species": "apple",
+   "pos": [
+    125.75,
+    442.13
+   ],
+   "planted": -474,
+   "seed": 539618
+  },
+  {
+   "id": "b_1_4_t27",
+   "species": "apple",
+   "pos": [
+    126.06,
+    449.14
+   ],
+   "planted": -725,
+   "seed": 996500
+  },
+  {
+   "id": "b_1_4_t28",
+   "species": "apple",
+   "pos": [
+    125.72,
+    455.8
+   ],
+   "planted": -587,
+   "seed": 941481
+  },
+  {
+   "id": "b_1_4_t29",
+   "species": "apple",
+   "pos": [
+    125.9,
+    462.91
+   ],
+   "planted": -583,
+   "seed": 396095
+  },
+  {
+   "id": "b_1_4_t30",
+   "species": "plum",
+   "pos": [
+    132.82,
+    400.04
+   ],
+   "planted": -390,
+   "seed": 30589
+  },
+  {
+   "id": "b_1_4_t31",
+   "species": "plum",
+   "pos": [
+    133.29,
+    406.85
+   ],
+   "planted": -688,
+   "seed": 410699
+  },
+  {
+   "id": "b_1_4_t32",
+   "species": "plum",
+   "pos": [
+    132.88,
+    413.76
+   ],
+   "planted": -540,
+   "seed": 667881
+  },
+  {
+   "id": "b_1_4_t33",
+   "species": "plum",
+   "pos": [
+    133.27,
+    421.12
+   ],
+   "planted": -590,
+   "seed": 626178
+  },
+  {
+   "id": "b_1_4_t34",
+   "species": "plum",
+   "pos": [
+    132.94,
+    427.93
+   ],
+   "planted": -734,
+   "seed": 973520
+  },
+  {
+   "id": "b_1_4_t35",
+   "species": "plum",
+   "pos": [
+    132.81,
+    434.87
+   ],
+   "planted": -562,
+   "seed": 860141
+  },
+  {
+   "id": "b_1_4_t36",
+   "species": "plum",
+   "pos": [
+    133.01,
+    441.92
+   ],
+   "planted": -554,
+   "seed": 179086
+  },
+  {
+   "id": "b_1_4_t37",
+   "species": "plum",
+   "pos": [
+    132.95,
+    449.25
+   ],
+   "planted": -463,
+   "seed": 952294
+  },
+  {
+   "id": "b_1_4_t38",
+   "species": "plum",
+   "pos": [
+    133.16,
+    456.21
+   ],
+   "planted": -478,
+   "seed": 850867
+  },
+  {
+   "id": "b_1_4_t39",
+   "species": "plum",
+   "pos": [
+    132.7,
+    463.1
+   ],
+   "planted": -470,
+   "seed": 206893
+  },
+  {
+   "id": "b_1_4_t40",
+   "species": "plum",
+   "pos": [
+    140.25,
+    399.91
+   ],
+   "planted": -573,
+   "seed": 622923
+  },
+  {
+   "id": "b_1_4_t41",
+   "species": "plum",
+   "pos": [
+    140.23,
+    407.13
+   ],
+   "planted": -496,
+   "seed": 715617
+  },
+  {
+   "id": "b_1_4_t42",
+   "species": "plum",
+   "pos": [
+    139.8,
+    413.92
+   ],
+   "planted": -325,
+   "seed": 273462
+  },
+  {
+   "id": "b_1_4_t43",
+   "species": "plum",
+   "pos": [
+    140.02,
+    420.7
+   ],
+   "planted": -433,
+   "seed": 730442
+  },
+  {
+   "id": "b_1_4_t44",
+   "species": "plum",
+   "pos": [
+    140.07,
+    427.86
+   ],
+   "planted": -682,
+   "seed": 32655
+  },
+  {
+   "id": "b_1_4_t45",
+   "species": "plum",
+   "pos": [
+    139.97,
+    434.7
+   ],
+   "planted": -430,
+   "seed": 177149
+  },
+  {
+   "id": "b_1_4_t46",
+   "species": "plum",
+   "pos": [
+    140.24,
+    441.71
+   ],
+   "planted": -581,
+   "seed": 816366
+  },
+  {
+   "id": "b_1_4_t47",
+   "species": "plum",
+   "pos": [
+    140.09,
+    449.12
+   ],
+   "planted": -320,
+   "seed": 678840
+  },
+  {
+   "id": "b_1_4_t48",
+   "species": "plum",
+   "pos": [
+    139.92,
+    455.78
+   ],
+   "planted": -659,
+   "seed": 631158
+  },
+  {
+   "id": "b_1_4_t49",
+   "species": "plum",
+   "pos": [
+    139.81,
+    463.05
+   ],
+   "planted": -535,
+   "seed": 703217
+  },
+  {
+   "id": "b_1_4_t50",
+   "species": "plum",
+   "pos": [
+    147.05,
+    399.86
+   ],
+   "planted": -400,
+   "seed": 919540
+  },
+  {
+   "id": "b_1_4_t51",
+   "species": "plum",
+   "pos": [
+    147.1,
+    406.91
+   ],
+   "planted": -515,
+   "seed": 957968
+  },
+  {
+   "id": "b_1_4_t52",
+   "species": "plum",
+   "pos": [
+    147.1,
+    414.11
+   ],
+   "planted": -746,
+   "seed": 102421
+  },
+  {
+   "id": "b_1_4_t53",
+   "species": "plum",
+   "pos": [
+    147.2,
+    420.95
+   ],
+   "planted": -402,
+   "seed": 317888
+  },
+  {
+   "id": "b_1_4_t54",
+   "species": "plum",
+   "pos": [
+    146.95,
+    427.75
+   ],
+   "planted": -378,
+   "seed": 303031
+  },
+  {
+   "id": "b_1_4_t55",
+   "species": "plum",
+   "pos": [
+    146.97,
+    435.0
+   ],
+   "planted": -322,
+   "seed": 22032
+  },
+  {
+   "id": "b_1_4_t56",
+   "species": "plum",
+   "pos": [
+    147.05,
+    441.83
+   ],
+   "planted": -357,
+   "seed": 982972
+  },
+  {
+   "id": "b_1_4_t57",
+   "species": "plum",
+   "pos": [
+    147.23,
+    449.25
+   ],
+   "planted": -588,
+   "seed": 537980
+  },
+  {
+   "id": "b_1_4_t58",
+   "species": "plum",
+   "pos": [
+    146.73,
+    456.24
+   ],
+   "planted": -349,
+   "seed": 826753
+  },
+  {
+   "id": "b_1_4_t59",
+   "species": "plum",
+   "pos": [
+    147.0,
+    463.29
+   ],
+   "planted": -405,
+   "seed": 369559
+  },
+  {
+   "id": "b_1_4_t60",
+   "species": "apple",
+   "pos": [
+    154.27,
+    400.02
+   ],
+   "planted": -749,
+   "seed": 943937
+  },
+  {
+   "id": "b_1_4_t61",
+   "species": "apple",
+   "pos": [
+    153.87,
+    407.1
+   ],
+   "planted": -718,
+   "seed": 582096
+  },
+  {
+   "id": "b_1_4_t62",
+   "species": "apple",
+   "pos": [
+    154.25,
+    413.8
+   ],
+   "planted": -433,
+   "seed": 841923
+  },
+  {
+   "id": "b_1_4_t63",
+   "species": "apple",
+   "pos": [
+    154.24,
+    420.88
+   ],
+   "planted": -612,
+   "seed": 448980
+  },
+  {
+   "id": "b_1_4_t64",
+   "species": "apple",
+   "pos": [
+    154.08,
+    428.16
+   ],
+   "planted": -725,
+   "seed": 671138
+  },
+  {
+   "id": "b_1_4_t65",
+   "species": "apple",
+   "pos": [
+    153.75,
+    434.77
+   ],
+   "planted": -530,
+   "seed": 647497
+  },
+  {
+   "id": "b_1_4_t66",
+   "species": "apple",
+   "pos": [
+    153.85,
+    442.22
+   ],
+   "planted": -622,
+   "seed": 888374
+  },
+  {
+   "id": "b_1_4_t67",
+   "species": "apple",
+   "pos": [
+    153.85,
+    449.25
+   ],
+   "planted": -502,
+   "seed": 367111
+  },
+  {
+   "id": "b_1_4_t68",
+   "species": "apple",
+   "pos": [
+    153.89,
+    456.07
+   ],
+   "planted": -612,
+   "seed": 955729
+  },
+  {
+   "id": "b_1_4_t69",
+   "species": "apple",
+   "pos": [
+    153.82,
+    463.18
+   ],
+   "planted": -288,
+   "seed": 845505
+  },
+  {
+   "id": "b_1_4_t70",
+   "species": "apple",
+   "pos": [
+    161.13,
+    400.14
+   ],
+   "planted": -584,
+   "seed": 694515
+  },
+  {
+   "id": "b_1_4_t71",
+   "species": "apple",
+   "pos": [
+    161.23,
+    407.27
+   ],
+   "planted": -366,
+   "seed": 267155
+  },
+  {
+   "id": "b_1_4_t72",
+   "species": "apple",
+   "pos": [
+    160.73,
+    413.84
+   ],
+   "planted": -754,
+   "seed": 94914
+  },
+  {
+   "id": "b_1_4_t73",
+   "species": "apple",
+   "pos": [
+    161.04,
+    421.09
+   ],
+   "planted": -752,
+   "seed": 955237
+  },
+  {
+   "id": "b_1_4_t74",
+   "species": "apple",
+   "pos": [
+    161.08,
+    428.11
+   ],
+   "planted": -360,
+   "seed": 908458
+  },
+  {
+   "id": "b_1_4_t75",
+   "species": "apple",
+   "pos": [
+    160.74,
+    434.87
+   ],
+   "planted": -705,
+   "seed": 608303
+  },
+  {
+   "id": "b_1_4_t76",
+   "species": "apple",
+   "pos": [
+    160.92,
+    441.7
+   ],
+   "planted": -511,
+   "seed": 855403
+  },
+  {
+   "id": "b_1_4_t77",
+   "species": "apple",
+   "pos": [
+    160.91,
+    449.19
+   ],
+   "planted": -758,
+   "seed": 414635
+  },
+  {
+   "id": "b_1_4_t78",
+   "species": "apple",
+   "pos": [
+    160.73,
+    455.73
+   ],
+   "planted": -591,
+   "seed": 991064
+  },
+  {
+   "id": "b_1_4_t79",
+   "species": "apple",
+   "pos": [
+    161.27,
+    463.03
+   ],
+   "planted": -513,
+   "seed": 321716
+  },
+  {
+   "id": "b_1_4_t80",
+   "species": "apple",
+   "pos": [
+    167.77,
+    400.22
+   ],
+   "planted": -600,
+   "seed": 239519
+  },
+  {
+   "id": "b_1_4_t81",
+   "species": "apple",
+   "pos": [
+    167.88,
+    407.0
+   ],
+   "planted": -529,
+   "seed": 810666
+  },
+  {
+   "id": "b_1_4_t82",
+   "species": "apple",
+   "pos": [
+    167.85,
+    414.17
+   ],
+   "planted": -559,
+   "seed": 832647
+  },
+  {
+   "id": "b_1_4_t83",
+   "species": "apple",
+   "pos": [
+    167.8,
+    421.15
+   ],
+   "planted": -612,
+   "seed": 760167
+  },
+  {
+   "id": "b_1_4_t84",
+   "species": "apple",
+   "pos": [
+    168.09,
+    428.1
+   ],
+   "planted": -551,
+   "seed": 812436
+  },
+  {
+   "id": "b_1_4_t85",
+   "species": "apple",
+   "pos": [
+    168.24,
+    435.21
+   ],
+   "planted": -576,
+   "seed": 517476
+  },
+  {
+   "id": "b_1_4_t86",
+   "species": "apple",
+   "pos": [
+    168.01,
+    442.06
+   ],
+   "planted": -476,
+   "seed": 529429
+  },
+  {
+   "id": "b_1_4_t87",
+   "species": "apple",
+   "pos": [
+    168.14,
+    448.95
+   ],
+   "planted": -605,
+   "seed": 920537
+  },
+  {
+   "id": "b_1_4_t88",
+   "species": "apple",
+   "pos": [
+    168.1,
+    455.83
+   ],
+   "planted": -551,
+   "seed": 63232
+  },
+  {
+   "id": "b_1_4_t89",
+   "species": "apple",
+   "pos": [
+    167.73,
+    463.17
+   ],
+   "planted": -642,
+   "seed": 418149
+  },
+  {
+   "id": "b_1_4_t90",
+   "species": "plum",
+   "pos": [
+    174.8,
+    399.82
+   ],
+   "planted": -311,
+   "seed": 843231
+  },
+  {
+   "id": "b_1_4_t91",
+   "species": "plum",
+   "pos": [
+    174.75,
+    406.92
+   ],
+   "planted": -379,
+   "seed": 164453
+  },
+  {
+   "id": "b_1_4_t92",
+   "species": "plum",
+   "pos": [
+    174.95,
+    413.91
+   ],
+   "planted": -617,
+   "seed": 137322
+  },
+  {
+   "id": "b_1_4_t93",
+   "species": "plum",
+   "pos": [
+    175.26,
+    420.94
+   ],
+   "planted": -627,
+   "seed": 501088
+  },
+  {
+   "id": "b_1_4_t94",
+   "species": "plum",
+   "pos": [
+    175.07,
+    428.28
+   ],
+   "planted": -523,
+   "seed": 934331
+  },
+  {
+   "id": "b_1_4_t95",
+   "species": "plum",
+   "pos": [
+    175.12,
+    435.19
+   ],
+   "planted": -393,
+   "seed": 670490
+  },
+  {
+   "id": "b_1_4_t96",
+   "species": "plum",
+   "pos": [
+    175.22,
+    442.23
+   ],
+   "planted": -349,
+   "seed": 583293
+  },
+  {
+   "id": "b_1_4_t97",
+   "species": "plum",
+   "pos": [
+    174.86,
+    449.12
+   ],
+   "planted": -715,
+   "seed": 517596
+  },
+  {
+   "id": "b_1_4_t98",
+   "species": "plum",
+   "pos": [
+    174.79,
+    455.75
+   ],
+   "planted": -659,
+   "seed": 895076
+  },
+  {
+   "id": "b_1_4_t99",
+   "species": "plum",
+   "pos": [
+    174.94,
+    463.17
+   ],
+   "planted": -474,
+   "seed": 183013
+  },
+  {
+   "id": "b_1_4_t100",
+   "species": "plum",
+   "pos": [
+    181.76,
+    400.06
+   ],
+   "planted": -352,
+   "seed": 94858
+  },
+  {
+   "id": "b_1_4_t101",
+   "species": "plum",
+   "pos": [
+    181.93,
+    406.82
+   ],
+   "planted": -507,
+   "seed": 912766
+  },
+  {
+   "id": "b_1_4_t102",
+   "species": "plum",
+   "pos": [
+    181.95,
+    414.26
+   ],
+   "planted": -569,
+   "seed": 315687
+  },
+  {
+   "id": "b_1_4_t103",
+   "species": "plum",
+   "pos": [
+    182.26,
+    421.01
+   ],
+   "planted": -428,
+   "seed": 600817
+  },
+  {
+   "id": "b_1_4_t104",
+   "species": "plum",
+   "pos": [
+    182.0,
+    427.71
+   ],
+   "planted": -519,
+   "seed": 291792
+  },
+  {
+   "id": "b_1_4_t105",
+   "species": "plum",
+   "pos": [
+    181.81,
+    435.0
+   ],
+   "planted": -308,
+   "seed": 288516
+  },
+  {
+   "id": "b_1_4_t106",
+   "species": "plum",
+   "pos": [
+    181.92,
+    442.24
+   ],
+   "planted": -396,
+   "seed": 254330
+  },
+  {
+   "id": "b_1_4_t107",
+   "species": "plum",
+   "pos": [
+    182.09,
+    449.05
+   ],
+   "planted": -354,
+   "seed": 602583
+  },
+  {
+   "id": "b_1_4_t108",
+   "species": "plum",
+   "pos": [
+    181.91,
+    455.97
+   ],
+   "planted": -711,
+   "seed": 490828
+  },
+  {
+   "id": "b_1_4_t109",
+   "species": "plum",
+   "pos": [
+    181.98,
+    463.18
+   ],
+   "planted": -529,
+   "seed": 146213
+  },
+  {
+   "id": "b_1_4_t110",
+   "species": "plum",
+   "pos": [
+    188.78,
+    400.23
+   ],
+   "planted": -576,
+   "seed": 939048
+  },
+  {
+   "id": "b_1_4_t111",
+   "species": "plum",
+   "pos": [
+    189.17,
+    406.96
+   ],
+   "planted": -474,
+   "seed": 773111
+  },
+  {
+   "id": "b_1_4_t112",
+   "species": "plum",
+   "pos": [
+    189.1,
+    413.84
+   ],
+   "planted": -721,
+   "seed": 611174
+  },
+  {
+   "id": "b_1_4_t113",
+   "species": "plum",
+   "pos": [
+    189.14,
+    421.1
+   ],
+   "planted": -750,
+   "seed": 856848
+  },
+  {
+   "id": "b_1_4_t114",
+   "species": "plum",
+   "pos": [
+    189.12,
+    428.01
+   ],
+   "planted": -295,
+   "seed": 606848
+  },
+  {
+   "id": "b_1_4_t115",
+   "species": "plum",
+   "pos": [
+    188.87,
+    434.81
+   ],
+   "planted": -381,
+   "seed": 793754
+  },
+  {
+   "id": "b_1_4_t116",
+   "species": "plum",
+   "pos": [
+    188.92,
+    441.74
+   ],
+   "planted": -372,
+   "seed": 437924
+  },
+  {
+   "id": "b_1_4_t117",
+   "species": "plum",
+   "pos": [
+    189.02,
+    448.91
+   ],
+   "planted": -541,
+   "seed": 74065
+  },
+  {
+   "id": "b_1_4_t118",
+   "species": "plum",
+   "pos": [
+    188.97,
+    455.88
+   ],
+   "planted": -740,
+   "seed": 35996
+  },
+  {
+   "id": "b_1_4_t119",
+   "species": "plum",
+   "pos": [
+    188.89,
+    463.17
+   ],
+   "planted": -427,
+   "seed": 341079
+  },
+  {
+   "id": "b_1_4_t120",
+   "species": "apple",
+   "pos": [
+    195.92,
+    399.95
+   ],
+   "planted": -761,
+   "seed": 526009
+  },
+  {
+   "id": "b_1_4_t121",
+   "species": "apple",
+   "pos": [
+    196.12,
+    407.19
+   ],
+   "planted": -304,
+   "seed": 543116
+  },
+  {
+   "id": "b_1_4_t122",
+   "species": "apple",
+   "pos": [
+    195.73,
+    414.15
+   ],
+   "planted": -657,
+   "seed": 123184
+  },
+  {
+   "id": "b_1_4_t123",
+   "species": "apple",
+   "pos": [
+    196.29,
+    421.06
+   ],
+   "planted": -707,
+   "seed": 786656
+  },
+  {
+   "id": "b_1_4_t124",
+   "species": "apple",
+   "pos": [
+    196.02,
+    428.26
+   ],
+   "planted": -639,
+   "seed": 442823
+  },
+  {
+   "id": "b_1_4_t125",
+   "species": "apple",
+   "pos": [
+    196.14,
+    435.07
+   ],
+   "planted": -386,
+   "seed": 103022
+  },
+  {
+   "id": "b_1_4_t126",
+   "species": "apple",
+   "pos": [
+    196.21,
+    441.86
+   ],
+   "planted": -696,
+   "seed": 730505
+  },
+  {
+   "id": "b_1_4_t127",
+   "species": "apple",
+   "pos": [
+    196.08,
+    448.93
+   ],
+   "planted": -591,
+   "seed": 820129
+  },
+  {
+   "id": "b_1_4_t128",
+   "species": "apple",
+   "pos": [
+    195.78,
+    455.94
+   ],
+   "planted": -510,
+   "seed": 166969
+  },
+  {
+   "id": "b_1_4_t129",
+   "species": "apple",
+   "pos": [
+    195.97,
+    462.72
+   ],
+   "planted": -688,
+   "seed": 867123
+  },
+  {
+   "id": "b_1_4_t130",
+   "species": "apple",
+   "pos": [
+    202.76,
+    399.94
+   ],
+   "planted": -346,
+   "seed": 402318
+  },
+  {
+   "id": "b_1_4_t131",
+   "species": "apple",
+   "pos": [
+    203.11,
+    406.71
+   ],
+   "planted": -528,
+   "seed": 891741
+  },
+  {
+   "id": "b_1_4_t132",
+   "species": "apple",
+   "pos": [
+    203.06,
+    414.03
+   ],
+   "planted": -569,
+   "seed": 90971
+  },
+  {
+   "id": "b_1_4_t133",
+   "species": "apple",
+   "pos": [
+    202.94,
+    421.13
+   ],
+   "planted": -584,
+   "seed": 106017
+  },
+  {
+   "id": "b_1_4_t134",
+   "species": "apple",
+   "pos": [
+    202.83,
+    427.72
+   ],
+   "planted": -689,
+   "seed": 407422
+  },
+  {
+   "id": "b_1_4_t135",
+   "species": "apple",
+   "pos": [
+    202.75,
+    434.8
+   ],
+   "planted": -627,
+   "seed": 990779
+  },
+  {
+   "id": "b_1_4_t136",
+   "species": "apple",
+   "pos": [
+    203.29,
+    441.89
+   ],
+   "planted": -491,
+   "seed": 540519
+  },
+  {
+   "id": "b_1_4_t137",
+   "species": "apple",
+   "pos": [
+    202.79,
+    448.88
+   ],
+   "planted": -750,
+   "seed": 89115
+  },
+  {
+   "id": "b_1_4_t138",
+   "species": "apple",
+   "pos": [
+    202.91,
+    455.99
+   ],
+   "planted": -684,
+   "seed": 890883
+  },
+  {
+   "id": "b_1_4_t139",
+   "species": "apple",
+   "pos": [
+    203.23,
+    463.03
+   ],
+   "planted": -750,
+   "seed": 621591
+  },
+  {
+   "id": "b_1_4_t140",
+   "species": "apple",
+   "pos": [
+    209.95,
+    399.77
+   ],
+   "planted": -547,
+   "seed": 264576
+  },
+  {
+   "id": "b_1_4_t141",
+   "species": "apple",
+   "pos": [
+    210.17,
+    406.76
+   ],
+   "planted": -475,
+   "seed": 433885
+  },
+  {
+   "id": "b_1_4_t142",
+   "species": "apple",
+   "pos": [
+    210.28,
+    413.93
+   ],
+   "planted": -509,
+   "seed": 986463
+  },
+  {
+   "id": "b_1_4_t143",
+   "species": "apple",
+   "pos": [
+    210.26,
+    420.87
+   ],
+   "planted": -396,
+   "seed": 707062
+  },
+  {
+   "id": "b_1_4_t144",
+   "species": "apple",
+   "pos": [
+    209.81,
+    428.02
+   ],
+   "planted": -408,
+   "seed": 377037
+  },
+  {
+   "id": "b_1_4_t145",
+   "species": "apple",
+   "pos": [
+    209.93,
+    435.02
+   ],
+   "planted": -750,
+   "seed": 946796
+  },
+  {
+   "id": "b_1_4_t146",
+   "species": "apple",
+   "pos": [
+    210.24,
+    441.82
+   ],
+   "planted": -742,
+   "seed": 738744
+  },
+  {
+   "id": "b_1_4_t147",
+   "species": "apple",
+   "pos": [
+    210.03,
+    448.94
+   ],
+   "planted": -732,
+   "seed": 533254
+  },
+  {
+   "id": "b_1_4_t148",
+   "species": "apple",
+   "pos": [
+    209.98,
+    456.09
+   ],
+   "planted": -479,
+   "seed": 401517
+  },
+  {
+   "id": "b_1_4_t149",
+   "species": "apple",
+   "pos": [
+    209.9,
+    463.18
+   ],
+   "planted": -319,
+   "seed": 821906
+  },
+  {
+   "id": "b_1_4_t150",
+   "species": "plum",
+   "pos": [
+    217.26,
+    400.3
+   ],
+   "planted": -757,
+   "seed": 423022
+  },
+  {
+   "id": "b_1_4_t151",
+   "species": "plum",
+   "pos": [
+    217.17,
+    406.87
+   ],
+   "planted": -612,
+   "seed": 467976
+  },
+  {
+   "id": "b_1_4_t152",
+   "species": "plum",
+   "pos": [
+    217.19,
+    413.94
+   ],
+   "planted": -714,
+   "seed": 389303
+  },
+  {
+   "id": "b_1_4_t153",
+   "species": "plum",
+   "pos": [
+    216.9,
+    420.74
+   ],
+   "planted": -629,
+   "seed": 479464
+  },
+  {
+   "id": "b_1_4_t154",
+   "species": "plum",
+   "pos": [
+    217.09,
+    428.1
+   ],
+   "planted": -450,
+   "seed": 929558
+  },
+  {
+   "id": "b_1_4_t155",
+   "species": "plum",
+   "pos": [
+    216.76,
+    434.94
+   ],
+   "planted": -412,
+   "seed": 5481
+  },
+  {
+   "id": "b_1_4_t156",
+   "species": "plum",
+   "pos": [
+    217.19,
+    441.78
+   ],
+   "planted": -620,
+   "seed": 666765
+  },
+  {
+   "id": "b_1_4_t157",
+   "species": "plum",
+   "pos": [
+    217.0,
+    449.05
+   ],
+   "planted": -608,
+   "seed": 779943
+  },
+  {
+   "id": "b_1_4_t158",
+   "species": "plum",
+   "pos": [
+    217.05,
+    456.12
+   ],
+   "planted": -495,
+   "seed": 77852
+  },
+  {
+   "id": "b_1_4_t159",
+   "species": "plum",
+   "pos": [
+    217.01,
+    463.3
+   ],
+   "planted": -474,
+   "seed": 513156
+  },
+  {
+   "id": "b_1_4_t160",
+   "species": "plum",
+   "pos": [
+    224.0,
+    400.24
+   ],
+   "planted": -737,
+   "seed": 477431
+  },
+  {
+   "id": "b_1_4_t161",
+   "species": "plum",
+   "pos": [
+    223.78,
+    407.26
+   ],
+   "planted": -710,
+   "seed": 622031
+  },
+  {
+   "id": "b_1_4_t162",
+   "species": "plum",
+   "pos": [
+    224.05,
+    414.04
+   ],
+   "planted": -591,
+   "seed": 238180
+  },
+  {
+   "id": "b_1_4_t163",
+   "species": "plum",
+   "pos": [
+    223.86,
+    420.97
+   ],
+   "planted": -354,
+   "seed": 860712
+  },
+  {
+   "id": "b_1_4_t164",
+   "species": "plum",
+   "pos": [
+    223.78,
+    428.12
+   ],
+   "planted": -564,
+   "seed": 31619
+  },
+  {
+   "id": "b_1_4_t165",
+   "species": "plum",
+   "pos": [
+    224.27,
+    435.1
+   ],
+   "planted": -583,
+   "seed": 243399
+  },
+  {
+   "id": "b_1_4_t166",
+   "species": "plum",
+   "pos": [
+    223.89,
+    442.29
+   ],
+   "planted": -309,
+   "seed": 10091
+  },
+  {
+   "id": "b_1_4_t167",
+   "species": "plum",
+   "pos": [
+    223.85,
+    448.99
+   ],
+   "planted": -721,
+   "seed": 611176
+  },
+  {
+   "id": "b_1_4_t168",
+   "species": "plum",
+   "pos": [
+    223.87,
+    456.28
+   ],
+   "planted": -376,
+   "seed": 527770
+  },
+  {
+   "id": "b_1_4_t169",
+   "species": "plum",
+   "pos": [
+    224.28,
+    462.86
+   ],
+   "planted": -385,
+   "seed": 145551
+  },
+  {
+   "id": "b_1_4_t170",
+   "species": "plum",
+   "pos": [
+    230.94,
+    399.99
+   ],
+   "planted": -538,
+   "seed": 885203
+  },
+  {
+   "id": "b_1_4_t171",
+   "species": "plum",
+   "pos": [
+    230.85,
+    407.28
+   ],
+   "planted": -334,
+   "seed": 367823
+  },
+  {
+   "id": "b_1_4_t172",
+   "species": "plum",
+   "pos": [
+    231.15,
+    413.83
+   ],
+   "planted": -687,
+   "seed": 983769
+  },
+  {
+   "id": "b_1_4_t173",
+   "species": "plum",
+   "pos": [
+    231.22,
+    421.04
+   ],
+   "planted": -529,
+   "seed": 703995
+  },
+  {
+   "id": "b_1_4_t174",
+   "species": "plum",
+   "pos": [
+    230.86,
+    427.84
+   ],
+   "planted": -319,
+   "seed": 468327
+  },
+  {
+   "id": "b_1_4_t175",
+   "species": "plum",
+   "pos": [
+    231.29,
+    434.91
+   ],
+   "planted": -373,
+   "seed": 616130
+  },
+  {
+   "id": "b_1_4_t176",
+   "species": "plum",
+   "pos": [
+    231.12,
+    441.86
+   ],
+   "planted": -565,
+   "seed": 662201
+  },
+  {
+   "id": "b_1_4_t177",
+   "species": "plum",
+   "pos": [
+    230.86,
+    448.92
+   ],
+   "planted": -454,
+   "seed": 782573
+  },
+  {
+   "id": "b_1_4_t178",
+   "species": "plum",
+   "pos": [
+    230.91,
+    456.06
+   ],
+   "planted": -606,
+   "seed": 158817
+  },
+  {
+   "id": "b_1_4_t179",
+   "species": "plum",
+   "pos": [
+    231.11,
+    463.17
+   ],
+   "planted": -559,
+   "seed": 146402
+  },
+  {
+   "id": "b_1_4_t180",
+   "species": "apple",
+   "pos": [
+    244.92,
+    400.09
+   ],
+   "planted": -638,
+   "seed": 511138
+  },
+  {
+   "id": "b_1_4_t181",
+   "species": "apple",
+   "pos": [
+    245.26,
+    406.97
+   ],
+   "planted": -357,
+   "seed": 258752
+  },
+  {
+   "id": "b_1_4_t182",
+   "species": "apple",
+   "pos": [
+    245.17,
+    414.11
+   ],
+   "planted": -484,
+   "seed": 115145
+  },
+  {
+   "id": "b_1_4_t183",
+   "species": "apple",
+   "pos": [
+    245.21,
+    420.77
+   ],
+   "planted": -568,
+   "seed": 520305
+  },
+  {
+   "id": "b_1_4_t184",
+   "species": "apple",
+   "pos": [
+    244.72,
+    427.72
+   ],
+   "planted": -676,
+   "seed": 151075
+  },
+  {
+   "id": "b_1_4_t185",
+   "species": "apple",
+   "pos": [
+    245.12,
+    435.08
+   ],
+   "planted": -547,
+   "seed": 386818
+  },
+  {
+   "id": "b_1_4_t186",
+   "species": "apple",
+   "pos": [
+    244.96,
+    442.08
+   ],
+   "planted": -605,
+   "seed": 613644
+  },
+  {
+   "id": "b_1_4_t187",
+   "species": "apple",
+   "pos": [
+    245.2,
+    448.95
+   ],
+   "planted": -545,
+   "seed": 196168
+  },
+  {
+   "id": "b_1_4_t188",
+   "species": "apple",
+   "pos": [
+    245.24,
+    456.23
+   ],
+   "planted": -534,
+   "seed": 193259
+  },
+  {
+   "id": "b_1_4_t189",
+   "species": "apple",
+   "pos": [
+    244.75,
+    462.93
+   ],
+   "planted": -360,
+   "seed": 640780
+  },
+  {
+   "id": "b_1_4_t190",
+   "species": "apple",
+   "pos": [
+    252.24,
+    399.76
+   ],
+   "planted": -478,
+   "seed": 674220
+  },
+  {
+   "id": "b_1_4_t191",
+   "species": "apple",
+   "pos": [
+    252.22,
+    406.76
+   ],
+   "planted": -343,
+   "seed": 987931
+  },
+  {
+   "id": "b_1_4_t192",
+   "species": "apple",
+   "pos": [
+    252.23,
+    413.79
+   ],
+   "planted": -482,
+   "seed": 802693
+  },
+  {
+   "id": "b_1_4_t193",
+   "species": "apple",
+   "pos": [
+    251.75,
+    420.86
+   ],
+   "planted": -441,
+   "seed": 359388
+  },
+  {
+   "id": "b_1_4_t194",
+   "species": "apple",
+   "pos": [
+    251.93,
+    428.09
+   ],
+   "planted": -363,
+   "seed": 457661
+  },
+  {
+   "id": "b_1_4_t195",
+   "species": "apple",
+   "pos": [
+    252.11,
+    434.89
+   ],
+   "planted": -723,
+   "seed": 835258
+  },
+  {
+   "id": "b_1_4_t196",
+   "species": "apple",
+   "pos": [
+    252.18,
+    442.28
+   ],
+   "planted": -488,
+   "seed": 146046
+  },
+  {
+   "id": "b_1_4_t197",
+   "species": "apple",
+   "pos": [
+    252.15,
+    448.72
+   ],
+   "planted": -478,
+   "seed": 32225
+  },
+  {
+   "id": "b_1_4_t198",
+   "species": "apple",
+   "pos": [
+    252.01,
+    456.09
+   ],
+   "planted": -451,
+   "seed": 547729
+  },
+  {
+   "id": "b_1_4_t199",
+   "species": "apple",
+   "pos": [
+    251.7,
+    463.11
+   ],
+   "planted": -525,
+   "seed": 628520
+  },
+  {
+   "id": "b_1_4_t200",
+   "species": "plum",
+   "pos": [
+    258.73,
+    399.96
+   ],
+   "planted": -692,
+   "seed": 448186
+  },
+  {
+   "id": "b_1_4_t201",
+   "species": "plum",
+   "pos": [
+    259.21,
+    406.85
+   ],
+   "planted": -527,
+   "seed": 254119
+  },
+  {
+   "id": "b_1_4_t202",
+   "species": "plum",
+   "pos": [
+    259.16,
+    413.72
+   ],
+   "planted": -320,
+   "seed": 369624
+  },
+  {
+   "id": "b_1_4_t203",
+   "species": "plum",
+   "pos": [
+    259.07,
+    420.83
+   ],
+   "planted": -372,
+   "seed": 311165
+  },
+  {
+   "id": "b_1_4_t204",
+   "species": "plum",
+   "pos": [
+    259.21,
+    427.89
+   ],
+   "planted": -444,
+   "seed": 184271
+  },
+  {
+   "id": "b_1_4_t205",
+   "species": "plum",
+   "pos": [
+    259.06,
+    434.9
+   ],
+   "planted": -647,
+   "seed": 960228
+  },
+  {
+   "id": "b_1_4_t206",
+   "species": "plum",
+   "pos": [
+    258.77,
+    442.09
+   ],
+   "planted": -460,
+   "seed": 581872
+  },
+  {
+   "id": "b_1_4_t207",
+   "species": "plum",
+   "pos": [
+    259.2,
+    449.11
+   ],
+   "planted": -654,
+   "seed": 529610
+  },
+  {
+   "id": "b_1_4_t208",
+   "species": "plum",
+   "pos": [
+    259.12,
+    455.88
+   ],
+   "planted": -728,
+   "seed": 503408
+  },
+  {
+   "id": "b_1_4_t209",
+   "species": "plum",
+   "pos": [
+    258.9,
+    462.85
+   ],
+   "planted": -744,
+   "seed": 876420
+  },
+  {
+   "id": "b_1_4_t210",
+   "species": "plum",
+   "pos": [
+    265.94,
+    399.91
+   ],
+   "planted": -335,
+   "seed": 691986
+  },
+  {
+   "id": "b_1_4_t211",
+   "species": "plum",
+   "pos": [
+    265.77,
+    407.11
+   ],
+   "planted": -725,
+   "seed": 966275
+  },
+  {
+   "id": "b_1_4_t212",
+   "species": "plum",
+   "pos": [
+    265.88,
+    414.23
+   ],
+   "planted": -767,
+   "seed": 438464
+  },
+  {
+   "id": "b_1_4_t213",
+   "species": "plum",
+   "pos": [
+    265.85,
+    421.08
+   ],
+   "planted": -683,
+   "seed": 879810
+  },
+  {
+   "id": "b_1_4_t214",
+   "species": "plum",
+   "pos": [
+    266.25,
+    427.82
+   ],
+   "planted": -521,
+   "seed": 348700
+  },
+  {
+   "id": "b_1_4_t215",
+   "species": "plum",
+   "pos": [
+    265.89,
+    435.13
+   ],
+   "planted": -649,
+   "seed": 773561
+  },
+  {
+   "id": "b_1_4_t216",
+   "species": "plum",
+   "pos": [
+    266.13,
+    442.01
+   ],
+   "planted": -360,
+   "seed": 309254
+  },
+  {
+   "id": "b_1_4_t217",
+   "species": "plum",
+   "pos": [
+    265.76,
+    449.17
+   ],
+   "planted": -293,
+   "seed": 639105
+  },
+  {
+   "id": "b_1_4_t218",
+   "species": "plum",
+   "pos": [
+    266.07,
+    455.78
+   ],
+   "planted": -333,
+   "seed": 852270
+  },
+  {
+   "id": "b_1_4_t219",
+   "species": "plum",
+   "pos": [
+    265.71,
+    462.91
+   ],
+   "planted": -488,
+   "seed": 655123
+  },
+  {
+   "id": "b_1_4_t220",
+   "species": "plum",
+   "pos": [
+    272.81,
+    400.22
+   ],
+   "planted": -350,
+   "seed": 915101
+  },
+  {
+   "id": "b_1_4_t221",
+   "species": "plum",
+   "pos": [
+    273.09,
+    407.28
+   ],
+   "planted": -621,
+   "seed": 449634
+  },
+  {
+   "id": "b_1_4_t222",
+   "species": "plum",
+   "pos": [
+    273.15,
+    414.15
+   ],
+   "planted": -576,
+   "seed": 885008
+  },
+  {
+   "id": "b_1_4_t223",
+   "species": "plum",
+   "pos": [
+    273.28,
+    421.15
+   ],
+   "planted": -306,
+   "seed": 133518
+  },
+  {
+   "id": "b_1_4_t224",
+   "species": "plum",
+   "pos": [
+    272.8,
+    428.15
+   ],
+   "planted": -340,
+   "seed": 312895
+  },
+  {
+   "id": "b_1_4_t225",
+   "species": "plum",
+   "pos": [
+    273.23,
+    434.83
+   ],
+   "planted": -609,
+   "seed": 545529
+  },
+  {
+   "id": "b_1_4_t226",
+   "species": "plum",
+   "pos": [
+    272.95,
+    442.15
+   ],
+   "planted": -672,
+   "seed": 353223
+  },
+  {
+   "id": "b_1_4_t227",
+   "species": "plum",
+   "pos": [
+    273.08,
+    449.17
+   ],
+   "planted": -519,
+   "seed": 469633
+  },
+  {
+   "id": "b_1_4_t228",
+   "species": "plum",
+   "pos": [
+    273.12,
+    455.79
+   ],
+   "planted": -736,
+   "seed": 927753
+  },
+  {
+   "id": "b_1_4_t229",
+   "species": "plum",
+   "pos": [
+    273.26,
+    463.14
+   ],
+   "planted": -676,
+   "seed": 19758
+  },
+  {
+   "id": "b_1_4_t230",
+   "species": "apple",
+   "pos": [
+    279.98,
+    400.21
+   ],
+   "planted": -352,
+   "seed": 74149
+  },
+  {
+   "id": "b_1_4_t231",
+   "species": "apple",
+   "pos": [
+    280.25,
+    407.28
+   ],
+   "planted": -452,
+   "seed": 466539
+  },
+  {
+   "id": "b_1_4_t232",
+   "species": "apple",
+   "pos": [
+    280.16,
+    413.94
+   ],
+   "planted": -612,
+   "seed": 303950
+  },
+  {
+   "id": "b_1_4_t233",
+   "species": "apple",
+   "pos": [
+    280.02,
+    421.0
+   ],
+   "planted": -582,
+   "seed": 897621
+  },
+  {
+   "id": "b_1_4_t234",
+   "species": "apple",
+   "pos": [
+    279.93,
+    428.26
+   ],
+   "planted": -396,
+   "seed": 185231
+  },
+  {
+   "id": "b_1_4_t235",
+   "species": "apple",
+   "pos": [
+    279.77,
+    434.92
+   ],
+   "planted": -293,
+   "seed": 847337
+  },
+  {
+   "id": "b_1_4_t236",
+   "species": "apple",
+   "pos": [
+    280.08,
+    441.94
+   ],
+   "planted": -687,
+   "seed": 535971
+  },
+  {
+   "id": "b_1_4_t237",
+   "species": "apple",
+   "pos": [
+    280.13,
+    448.84
+   ],
+   "planted": -532,
+   "seed": 898372
+  },
+  {
+   "id": "b_1_4_t238",
+   "species": "apple",
+   "pos": [
+    280.23,
+    456.15
+   ],
+   "planted": -375,
+   "seed": 245869
+  },
+  {
+   "id": "b_1_4_t239",
+   "species": "apple",
+   "pos": [
+    280.25,
+    462.8
+   ],
+   "planted": -728,
+   "seed": 345806
+  },
+  {
+   "id": "b_1_4_t240",
+   "species": "apple",
+   "pos": [
+    286.85,
+    399.96
+   ],
+   "planted": -353,
+   "seed": 274644
+  },
+  {
+   "id": "b_1_4_t241",
+   "species": "apple",
+   "pos": [
+    287.17,
+    406.97
+   ],
+   "planted": -521,
+   "seed": 495860
+  },
+  {
+   "id": "b_1_4_t242",
+   "species": "apple",
+   "pos": [
+    286.77,
+    413.73
+   ],
+   "planted": -569,
+   "seed": 404821
+  },
+  {
+   "id": "b_1_4_t243",
+   "species": "apple",
+   "pos": [
+    287.17,
+    421.0
+   ],
+   "planted": -692,
+   "seed": 560136
+  },
+  {
+   "id": "b_1_4_t244",
+   "species": "apple",
+   "pos": [
+    287.2,
+    428.03
+   ],
+   "planted": -732,
+   "seed": 677434
+  },
+  {
+   "id": "b_1_4_t245",
+   "species": "apple",
+   "pos": [
+    287.19,
+    435.02
+   ],
+   "planted": -484,
+   "seed": 996247
+  },
+  {
+   "id": "b_1_4_t246",
+   "species": "apple",
+   "pos": [
+    287.13,
+    442.11
+   ],
+   "planted": -527,
+   "seed": 868975
+  },
+  {
+   "id": "b_1_4_t247",
+   "species": "apple",
+   "pos": [
+    286.98,
+    448.9
+   ],
+   "planted": -766,
+   "seed": 835604
+  },
+  {
+   "id": "b_1_4_t248",
+   "species": "apple",
+   "pos": [
+    287.02,
+    456.18
+   ],
+   "planted": -448,
+   "seed": 810206
+  },
+  {
+   "id": "b_1_4_t249",
+   "species": "apple",
+   "pos": [
+    286.89,
+    462.76
+   ],
+   "planted": -706,
+   "seed": 36532
+  },
+  {
+   "id": "b_1_4_t250",
+   "species": "apple",
+   "pos": [
+    294.04,
+    400.13
+   ],
+   "planted": -757,
+   "seed": 397727
+  },
+  {
+   "id": "b_1_4_t251",
+   "species": "apple",
+   "pos": [
+    294.09,
+    407.23
+   ],
+   "planted": -748,
+   "seed": 578032
+  },
+  {
+   "id": "b_1_4_t252",
+   "species": "apple",
+   "pos": [
+    293.99,
+    413.85
+   ],
+   "planted": -347,
+   "seed": 288066
+  },
+  {
+   "id": "b_1_4_t253",
+   "species": "apple",
+   "pos": [
+    293.91,
+    420.74
+   ],
+   "planted": -510,
+   "seed": 565544
+  },
+  {
+   "id": "b_1_4_t254",
+   "species": "apple",
+   "pos": [
+    294.12,
+    427.77
+   ],
+   "planted": -391,
+   "seed": 339168
+  },
+  {
+   "id": "b_1_4_t255",
+   "species": "apple",
+   "pos": [
+    294.02,
+    435.07
+   ],
+   "planted": -441,
+   "seed": 632407
+  },
+  {
+   "id": "b_1_4_t256",
+   "species": "apple",
+   "pos": [
+    294.11,
+    442.12
+   ],
+   "planted": -523,
+   "seed": 359152
+  },
+  {
+   "id": "b_1_4_t257",
+   "species": "apple",
+   "pos": [
+    294.05,
+    448.81
+   ],
+   "planted": -431,
+   "seed": 568507
+  },
+  {
+   "id": "b_1_4_t258",
+   "species": "apple",
+   "pos": [
+    293.88,
+    456.1
+   ],
+   "planted": -450,
+   "seed": 359883
+  },
+  {
+   "id": "b_1_4_t259",
+   "species": "apple",
+   "pos": [
+    293.95,
+    463.0
+   ],
+   "planted": -435,
+   "seed": 103888
+  },
+  {
+   "id": "b_1_4_t260",
+   "species": "plum",
+   "pos": [
+    301.09,
+    399.91
+   ],
+   "planted": -481,
+   "seed": 247383
+  },
+  {
+   "id": "b_1_4_t261",
+   "species": "plum",
+   "pos": [
+    301.0,
+    406.88
+   ],
+   "planted": -398,
+   "seed": 756794
+  },
+  {
+   "id": "b_1_4_t262",
+   "species": "plum",
+   "pos": [
+    301.24,
+    414.25
+   ],
+   "planted": -576,
+   "seed": 650332
+  },
+  {
+   "id": "b_1_4_t263",
+   "species": "plum",
+   "pos": [
+    301.02,
+    420.73
+   ],
+   "planted": -743,
+   "seed": 980739
+  },
+  {
+   "id": "b_1_4_t264",
+   "species": "plum",
+   "pos": [
+    301.26,
+    428.05
+   ],
+   "planted": -560,
+   "seed": 521562
+  },
+  {
+   "id": "b_1_4_t265",
+   "species": "plum",
+   "pos": [
+    301.14,
+    434.9
+   ],
+   "planted": -336,
+   "seed": 485052
+  },
+  {
+   "id": "b_1_4_t266",
+   "species": "plum",
+   "pos": [
+    300.81,
+    442.0
+   ],
+   "planted": -501,
+   "seed": 481606
+  },
+  {
+   "id": "b_1_4_t267",
+   "species": "plum",
+   "pos": [
+    301.29,
+    448.96
+   ],
+   "planted": -641,
+   "seed": 103482
+  },
+  {
+   "id": "b_1_4_t268",
+   "species": "plum",
+   "pos": [
+    301.02,
+    456.03
+   ],
+   "planted": -439,
+   "seed": 273756
+  },
+  {
+   "id": "b_1_4_t269",
+   "species": "plum",
+   "pos": [
+    301.2,
+    462.94
+   ],
+   "planted": -421,
+   "seed": 745352
+  },
+  {
+   "id": "b_1_4_t270",
+   "species": "plum",
+   "pos": [
+    307.94,
+    400.01
+   ],
+   "planted": -392,
+   "seed": 248229
+  },
+  {
+   "id": "b_1_4_t271",
+   "species": "plum",
+   "pos": [
+    307.83,
+    406.94
+   ],
+   "planted": -594,
+   "seed": 229963
+  },
+  {
+   "id": "b_1_4_t272",
+   "species": "plum",
+   "pos": [
+    308.02,
+    413.98
+   ],
+   "planted": -469,
+   "seed": 75710
+  },
+  {
+   "id": "b_1_4_t273",
+   "species": "plum",
+   "pos": [
+    308.08,
+    421.25
+   ],
+   "planted": -711,
+   "seed": 267503
+  },
+  {
+   "id": "b_1_4_t274",
+   "species": "plum",
+   "pos": [
+    307.78,
+    428.26
+   ],
+   "planted": -464,
+   "seed": 540856
+  },
+  {
+   "id": "b_1_4_t275",
+   "species": "plum",
+   "pos": [
+    307.84,
+    434.86
+   ],
+   "planted": -422,
+   "seed": 5826
+  },
+  {
+   "id": "b_1_4_t276",
+   "species": "plum",
+   "pos": [
+    307.97,
+    442.09
+   ],
+   "planted": -467,
+   "seed": 439228
+  },
+  {
+   "id": "b_1_4_t277",
+   "species": "plum",
+   "pos": [
+    307.74,
+    448.95
+   ],
+   "planted": -755,
+   "seed": 379570
+  },
+  {
+   "id": "b_1_4_t278",
+   "species": "plum",
+   "pos": [
+    307.72,
+    456.02
+   ],
+   "planted": -425,
+   "seed": 340006
+  },
+  {
+   "id": "b_1_4_t279",
+   "species": "plum",
+   "pos": [
+    308.23,
+    462.85
+   ],
+   "planted": -400,
+   "seed": 51888
+  },
+  {
+   "id": "b_1_4_t280",
+   "species": "plum",
+   "pos": [
+    315.0,
+    400.2
+   ],
+   "planted": -631,
+   "seed": 307210
+  },
+  {
+   "id": "b_1_4_t281",
+   "species": "plum",
+   "pos": [
+    314.81,
+    407.29
+   ],
+   "planted": -495,
+   "seed": 604356
+  },
+  {
+   "id": "b_1_4_t282",
+   "species": "plum",
+   "pos": [
+    315.28,
+    414.27
+   ],
+   "planted": -585,
+   "seed": 909510
+  },
+  {
+   "id": "b_1_4_t283",
+   "species": "plum",
+   "pos": [
+    314.71,
+    420.87
+   ],
+   "planted": -695,
+   "seed": 2188
+  },
+  {
+   "id": "b_1_4_t284",
+   "species": "plum",
+   "pos": [
+    315.03,
+    427.95
+   ],
+   "planted": -707,
+   "seed": 740547
+  },
+  {
+   "id": "b_1_4_t285",
+   "species": "plum",
+   "pos": [
+    315.08,
+    435.27
+   ],
+   "planted": -298,
+   "seed": 823028
+  },
+  {
+   "id": "b_1_4_t286",
+   "species": "plum",
+   "pos": [
+    314.81,
+    442.01
+   ],
+   "planted": -544,
+   "seed": 374986
+  },
+  {
+   "id": "b_1_4_t287",
+   "species": "plum",
+   "pos": [
+    314.71,
+    448.92
+   ],
+   "planted": -445,
+   "seed": 131703
+  },
+  {
+   "id": "b_1_4_t288",
+   "species": "plum",
+   "pos": [
+    314.84,
+    456.22
+   ],
+   "planted": -704,
+   "seed": 638422
+  },
+  {
+   "id": "b_1_4_t289",
+   "species": "plum",
+   "pos": [
+    315.25,
+    462.76
+   ],
+   "planted": -708,
+   "seed": 528719
+  },
+  {
+   "id": "b_1_4_t290",
+   "species": "apple",
+   "pos": [
+    321.78,
+    400.24
+   ],
+   "planted": -518,
+   "seed": 889811
+  },
+  {
+   "id": "b_1_4_t291",
+   "species": "apple",
+   "pos": [
+    322.24,
+    407.22
+   ],
+   "planted": -684,
+   "seed": 897977
+  },
+  {
+   "id": "b_1_4_t292",
+   "species": "apple",
+   "pos": [
+    322.24,
+    414.19
+   ],
+   "planted": -519,
+   "seed": 834773
+  },
+  {
+   "id": "b_1_4_t293",
+   "species": "apple",
+   "pos": [
+    321.72,
+    421.24
+   ],
+   "planted": -298,
+   "seed": 800474
+  },
+  {
+   "id": "b_1_4_t294",
+   "species": "apple",
+   "pos": [
+    321.9,
+    428.08
+   ],
+   "planted": -570,
+   "seed": 626980
+  },
+  {
+   "id": "b_1_4_t295",
+   "species": "apple",
+   "pos": [
+    322.07,
+    434.72
+   ],
+   "planted": -407,
+   "seed": 89974
+  },
+  {
+   "id": "b_1_4_t296",
+   "species": "apple",
+   "pos": [
+    322.25,
+    442.02
+   ],
+   "planted": -483,
+   "seed": 381711
+  },
+  {
+   "id": "b_1_4_t297",
+   "species": "apple",
+   "pos": [
+    322.15,
+    449.13
+   ],
+   "planted": -559,
+   "seed": 931576
+  },
+  {
+   "id": "b_1_4_t298",
+   "species": "apple",
+   "pos": [
+    322.27,
+    455.87
+   ],
+   "planted": -651,
+   "seed": 948830
+  },
+  {
+   "id": "b_1_4_t299",
+   "species": "apple",
+   "pos": [
+    322.24,
+    462.95
+   ],
+   "planted": -575,
+   "seed": 360450
+  },
+  {
+   "id": "b_1_4_t300",
+   "species": "apple",
+   "pos": [
+    328.77,
+    399.93
+   ],
+   "planted": -478,
+   "seed": 948211
+  },
+  {
+   "id": "b_1_4_t301",
+   "species": "apple",
+   "pos": [
+    329.11,
+    406.81
+   ],
+   "planted": -511,
+   "seed": 66423
+  },
+  {
+   "id": "b_1_4_t302",
+   "species": "apple",
+   "pos": [
+    328.86,
+    413.76
+   ],
+   "planted": -493,
+   "seed": 992185
+  },
+  {
+   "id": "b_1_4_t303",
+   "species": "apple",
+   "pos": [
+    329.2,
+    420.73
+   ],
+   "planted": -444,
+   "seed": 575703
+  },
+  {
+   "id": "b_1_4_t304",
+   "species": "apple",
+   "pos": [
+    329.22,
+    428.28
+   ],
+   "planted": -404,
+   "seed": 16803
+  },
+  {
+   "id": "b_1_4_t305",
+   "species": "apple",
+   "pos": [
+    328.72,
+    434.88
+   ],
+   "planted": -699,
+   "seed": 292492
+  },
+  {
+   "id": "b_1_4_t306",
+   "species": "apple",
+   "pos": [
+    329.06,
+    442.16
+   ],
+   "planted": -314,
+   "seed": 269436
+  },
+  {
+   "id": "b_1_4_t307",
+   "species": "apple",
+   "pos": [
+    329.28,
+    448.86
+   ],
+   "planted": -670,
+   "seed": 518013
+  },
+  {
+   "id": "b_1_4_t308",
+   "species": "apple",
+   "pos": [
+    329.1,
+    455.9
+   ],
+   "planted": -602,
+   "seed": 485174
+  },
+  {
+   "id": "b_1_4_t309",
+   "species": "apple",
+   "pos": [
+    329.05,
+    462.91
+   ],
+   "planted": -745,
+   "seed": 179994
+  },
+  {
+   "id": "b_1_4_t310",
+   "species": "apple",
+   "pos": [
+    335.99,
+    399.78
+   ],
+   "planted": -633,
+   "seed": 999080
+  },
+  {
+   "id": "b_1_4_t311",
+   "species": "apple",
+   "pos": [
+    335.71,
+    407.05
+   ],
+   "planted": -656,
+   "seed": 523586
+  },
+  {
+   "id": "b_1_4_t312",
+   "species": "apple",
+   "pos": [
+    335.75,
+    413.95
+   ],
+   "planted": -380,
+   "seed": 739600
+  },
+  {
+   "id": "b_1_4_t313",
+   "species": "apple",
+   "pos": [
+    335.73,
+    420.96
+   ],
+   "planted": -644,
+   "seed": 957674
+  },
+  {
+   "id": "b_1_4_t314",
+   "species": "apple",
+   "pos": [
+    335.7,
+    428.06
+   ],
+   "planted": -366,
+   "seed": 270956
+  },
+  {
+   "id": "b_1_4_t315",
+   "species": "apple",
+   "pos": [
+    335.89,
+    435.24
+   ],
+   "planted": -331,
+   "seed": 16809
+  },
+  {
+   "id": "b_1_4_t316",
+   "species": "apple",
+   "pos": [
+    335.99,
+    441.74
+   ],
+   "planted": -580,
+   "seed": 275956
+  },
+  {
+   "id": "b_1_4_t317",
+   "species": "apple",
+   "pos": [
+    336.27,
+    449.08
+   ],
+   "planted": -306,
+   "seed": 72732
+  },
+  {
+   "id": "b_1_4_t318",
+   "species": "apple",
+   "pos": [
+    335.76,
+    455.85
+   ],
+   "planted": -366,
+   "seed": 314425
+  },
+  {
+   "id": "b_1_4_t319",
+   "species": "apple",
+   "pos": [
+    335.92,
+    463.21
+   ],
+   "planted": -390,
+   "seed": 14741
+  },
+  {
+   "id": "b_1_4_t320",
+   "species": "plum",
+   "pos": [
+    342.89,
+    400.15
+   ],
+   "planted": -372,
+   "seed": 241403
+  },
+  {
+   "id": "b_1_4_t321",
+   "species": "plum",
+   "pos": [
+    342.75,
+    406.86
+   ],
+   "planted": -308,
+   "seed": 205735
+  },
+  {
+   "id": "b_1_4_t322",
+   "species": "plum",
+   "pos": [
+    343.08,
+    413.87
+   ],
+   "planted": -767,
+   "seed": 841264
+  },
+  {
+   "id": "b_1_4_t323",
+   "species": "plum",
+   "pos": [
+    343.28,
+    421.29
+   ],
+   "planted": -342,
+   "seed": 734389
+  },
+  {
+   "id": "b_1_4_t324",
+   "species": "plum",
+   "pos": [
+    343.2,
+    428.27
+   ],
+   "planted": -338,
+   "seed": 77265
+  },
+  {
+   "id": "b_1_4_t325",
+   "species": "plum",
+   "pos": [
+    342.92,
+    434.84
+   ],
+   "planted": -541,
+   "seed": 251077
+  },
+  {
+   "id": "b_1_4_t326",
+   "species": "plum",
+   "pos": [
+    342.84,
+    441.99
+   ],
+   "planted": -320,
+   "seed": 54576
+  },
+  {
+   "id": "b_1_4_t327",
+   "species": "plum",
+   "pos": [
+    342.97,
+    449.1
+   ],
+   "planted": -449,
+   "seed": 168726
+  },
+  {
+   "id": "b_1_4_t328",
+   "species": "plum",
+   "pos": [
+    343.15,
+    456.11
+   ],
+   "planted": -375,
+   "seed": 929790
+  },
+  {
+   "id": "b_1_4_t329",
+   "species": "plum",
+   "pos": [
+    343.1,
+    463.23
+   ],
+   "planted": -585,
+   "seed": 124137
+  },
+  {
+   "id": "b_1_4_t330",
+   "species": "plum",
+   "pos": [
+    350.07,
+    400.08
+   ],
+   "planted": -686,
+   "seed": 103505
+  },
+  {
+   "id": "b_1_4_t331",
+   "species": "plum",
+   "pos": [
+    350.09,
+    406.82
+   ],
+   "planted": -747,
+   "seed": 4465
+  },
+  {
+   "id": "b_1_4_t332",
+   "species": "plum",
+   "pos": [
+    350.24,
+    413.77
+   ],
+   "planted": -625,
+   "seed": 581187
+  },
+  {
+   "id": "b_1_4_t333",
+   "species": "plum",
+   "pos": [
+    349.8,
+    421.11
+   ],
+   "planted": -305,
+   "seed": 249988
+  },
+  {
+   "id": "b_1_4_t334",
+   "species": "plum",
+   "pos": [
+    350.2,
+    427.88
+   ],
+   "planted": -293,
+   "seed": 49126
+  },
+  {
+   "id": "b_1_4_t335",
+   "species": "plum",
+   "pos": [
+    350.23,
+    435.13
+   ],
+   "planted": -589,
+   "seed": 110332
+  },
+  {
+   "id": "b_1_4_t336",
+   "species": "plum",
+   "pos": [
+    350.3,
+    441.71
+   ],
+   "planted": -377,
+   "seed": 270239
+  },
+  {
+   "id": "b_1_4_t337",
+   "species": "plum",
+   "pos": [
+    349.9,
+    448.76
+   ],
+   "planted": -753,
+   "seed": 909594
+  },
+  {
+   "id": "b_1_4_t338",
+   "species": "plum",
+   "pos": [
+    349.9,
+    456.04
+   ],
+   "planted": -454,
+   "seed": 345604
+  },
+  {
+   "id": "b_1_4_t339",
+   "species": "plum",
+   "pos": [
+    350.18,
+    462.72
+   ],
+   "planted": -291,
+   "seed": 935928
+  },
+  {
+   "id": "b_1_4_t340",
+   "species": "plum",
+   "pos": [
+    356.86,
+    400.27
+   ],
+   "planted": -640,
+   "seed": 505534
+  },
+  {
+   "id": "b_1_4_t341",
+   "species": "plum",
+   "pos": [
+    357.26,
+    406.81
+   ],
+   "planted": -425,
+   "seed": 634102
+  },
+  {
+   "id": "b_1_4_t342",
+   "species": "plum",
+   "pos": [
+    357.16,
+    413.86
+   ],
+   "planted": -432,
+   "seed": 651844
+  },
+  {
+   "id": "b_1_4_t343",
+   "species": "plum",
+   "pos": [
+    356.98,
+    421.03
+   ],
+   "planted": -345,
+   "seed": 986696
+  },
+  {
+   "id": "b_1_4_t344",
+   "species": "plum",
+   "pos": [
+    356.82,
+    427.91
+   ],
+   "planted": -372,
+   "seed": 81741
+  },
+  {
+   "id": "b_1_4_t345",
+   "species": "plum",
+   "pos": [
+    357.15,
+    435.04
+   ],
+   "planted": -614,
+   "seed": 920962
+  },
+  {
+   "id": "b_1_4_t346",
+   "species": "plum",
+   "pos": [
+    356.79,
+    441.91
+   ],
+   "planted": -390,
+   "seed": 352307
+  },
+  {
+   "id": "b_1_4_t347",
+   "species": "plum",
+   "pos": [
+    356.95,
+    448.74
+   ],
+   "planted": -473,
+   "seed": 515207
+  },
+  {
+   "id": "b_1_4_t348",
+   "species": "plum",
+   "pos": [
+    356.82,
+    456.24
+   ],
+   "planted": -680,
+   "seed": 924331
+  },
+  {
+   "id": "b_1_4_t349",
+   "species": "plum",
+   "pos": [
+    356.9,
+    462.82
+   ],
+   "planted": -699,
+   "seed": 941813
+  },
+  {
+   "id": "b_1_4_t350",
+   "species": "apple",
+   "pos": [
+    364.02,
+    399.96
+   ],
+   "planted": -569,
+   "seed": 285672
+  },
+  {
+   "id": "b_1_4_t351",
+   "species": "apple",
+   "pos": [
+    364.29,
+    406.72
+   ],
+   "planted": -749,
+   "seed": 248460
+  },
+  {
+   "id": "b_1_4_t352",
+   "species": "apple",
+   "pos": [
+    363.75,
+    413.7
+   ],
+   "planted": -496,
+   "seed": 728936
+  },
+  {
+   "id": "b_1_4_t353",
+   "species": "apple",
+   "pos": [
+    363.71,
+    420.9
+   ],
+   "planted": -344,
+   "seed": 244750
+  },
+  {
+   "id": "b_1_4_t354",
+   "species": "apple",
+   "pos": [
+    364.29,
+    427.91
+   ],
+   "planted": -624,
+   "seed": 383697
+  },
+  {
+   "id": "b_1_4_t355",
+   "species": "apple",
+   "pos": [
+    363.79,
+    435.14
+   ],
+   "planted": -683,
+   "seed": 271636
+  },
+  {
+   "id": "b_1_4_t356",
+   "species": "apple",
+   "pos": [
+    363.92,
+    441.79
+   ],
+   "planted": -710,
+   "seed": 552099
+  },
+  {
+   "id": "b_1_4_t357",
+   "species": "apple",
+   "pos": [
+    363.71,
+    448.8
+   ],
+   "planted": -557,
+   "seed": 950290
+  },
+  {
+   "id": "b_1_4_t358",
+   "species": "apple",
+   "pos": [
+    364.18,
+    456.05
+   ],
+   "planted": -393,
+   "seed": 28995
+  },
+  {
+   "id": "b_1_4_t359",
+   "species": "apple",
+   "pos": [
+    363.96,
+    463.21
+   ],
+   "planted": -646,
+   "seed": 52270
+  }
+ ],
+ "props": [
+  {
+   "id": "b_1_4_p0",
+   "kind": "plant",
+   "set": "wild",
+   "shape": "hedge",
+   "species": "box",
+   "pos": [
+    240.0,
+    394.0
+   ],
+   "along": "x",
+   "len": 268.0,
+   "depth": 1.0,
+   "h": 1.4
+  },
+  {
+   "id": "b_1_4_p1",
+   "kind": "plant",
+   "set": "wild",
+   "shape": "hedge",
+   "species": "box",
+   "pos": [
+    172.0,
+    470.0
+   ],
+   "along": "x",
+   "len": 132.0,
+   "depth": 1.0,
+   "h": 1.4
+  },
+  {
+   "id": "b_1_4_p2",
+   "kind": "plant",
+   "set": "wild",
+   "shape": "hedge",
+   "species": "box",
+   "pos": [
+    308.0,
+    470.0
+   ],
+   "along": "x",
+   "len": 132.0,
+   "depth": 1.0,
+   "h": 1.4
+  },
+  {
+   "id": "b_1_4_p3",
+   "kind": "plant",
+   "set": "wild",
+   "shape": "hedge",
+   "species": "box",
+   "pos": [
+    106.0,
+    432.0
+   ],
+   "along": "z",
+   "len": 76.0,
+   "depth": 1.0,
+   "h": 1.4
+  },
+  {
+   "id": "b_1_4_p4",
+   "kind": "plant",
+   "set": "wild",
+   "shape": "hedge",
+   "species": "box",
+   "pos": [
+    374.0,
+    432.0
+   ],
+   "along": "z",
+   "len": 76.0,
+   "depth": 1.0,
+   "h": 1.4
+  },
+  {
+   "id": "b_1_4_p5",
+   "kind": "bench",
+   "pos": [
+    243.5,
+    438.0
+   ],
+   "set": "wild",
+   "along": "z"
+  }
+ ]
+}

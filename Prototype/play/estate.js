@@ -15,7 +15,7 @@ var Estate = (() => {
   const centre = l => [(l.rect[0] + l.rect[2]) / 2, (l.rect[1] + l.rect[3]) / 2];
 
   // ---------------------------------------------------------------- furnishing levels (FURN-062, FURN-063): a port of
-  // Tools/citysim/furnishing.py. Worked out from World/rules/furnishing.json (packed as R.furnishing), a household's
+  // Tools/citysim/furnishing.py. Worked out from World/rules/furnishing_levels.json (packed as R.furnishing), a household's
   // daily wages and the clock day, never ticked or stored; every household counts from day 0 and takes its furniture
   // with it when it moves. furnishing.js reads it by lot for the houses.
   const furnish = {
@@ -76,7 +76,7 @@ var Estate = (() => {
   class Market {
     constructor(R, econ, lots, residents, F) {
       this.R = R; this.E = econ; this.lots = lots;
-      this.F = F || R.furnishing || null;                 // FURN-063: World/rules/furnishing.json (build_play.py packs it)
+      this.F = F || R.furnishing || null;                 // FURN-063: World/rules/furnishing_levels.json (build_play.py packs it)
       this.units = carve(R, lots, residents);
       this.byId = {}; this.byLot = new Map();
       this.units.forEach((u, i) => { this.byId[u.id] = i; if (!this.byLot.has(u.lot)) this.byLot.set(u.lot, []); this.byLot.get(u.lot).push(i); });

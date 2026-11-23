@@ -1,10 +1,10 @@
-"""How furnished a resident household's home is (FURN-062, FURN-063; F-HOME-FURNISH level 3; ADR-0033).
+"""How furnished a resident household's home is (FURN-062, FURN-063; F-HOME-FURNISH level 3; ADR-0035).
 
 Four levels, 1 Bare, 2 Basic, 3 Homely, 4 Full, each adding pieces to the one before (World/rules/home_plans.json says
 which pieces come in at which level). Which level a household's home shows is worked out from data and the clock day,
 never ticked or stored (docs/specs/domains/LIVING_CITY.md §1):
 
-- it starts at the level of the highest band in World/rules/furnishing.json start_bands its daily wages reach;
+- it starts at the level of the highest band in World/rules/furnishing_levels.json start_bands its daily wages reach;
 - each day since it moved in it sets aside save_bp of its daily wages; savings at the start of day d are
   per_day x (d - moved_in);
 - it rises a level each time its savings reach the cost of the steps it has bought so far plus the next one
@@ -21,7 +21,7 @@ Standard library only.
 import json
 import os
 
-RULES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "World", "rules", "furnishing.json")
+RULES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "World", "rules", "furnishing_levels.json")
 
 
 def load_rules(path=RULES):
@@ -78,7 +78,7 @@ def name(F, lv):
 
 
 def problems(F):
-    """Every rule World/rules/furnishing.json must keep."""
+    """Every rule World/rules/furnishing_levels.json must keep."""
     out = []
 
     def whole(v, lo=0):

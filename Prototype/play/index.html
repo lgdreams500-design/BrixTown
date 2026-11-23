@@ -76,6 +76,87 @@
   .ptab { width: 100%; border-collapse: collapse; font-size: 15px; }
   .ptab td { padding: 4px 6px; border-bottom: 1px solid rgba(217,207,182,.12); vertical-align: middle; }
   .ptab td:last-child { text-align: right; }
+  /* the game menu: Painted signs (ADR-0033, UI-015, UI-016; life.js menuShell). The whole screen; each page a painted board in its own colour. */
+  #life.menu { inset: 0; left: 0; top: 0; transform: none; width: auto; max-height: none; border: 0; border-radius: 0; padding: 14px 16px; background: none; overflow: hidden; }
+  #veil { position: fixed; inset: 0; display: none; background: rgba(18,18,26,.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); mask-repeat: no-repeat; -webkit-mask-repeat: no-repeat; mask-composite: exclude; -webkit-mask-composite: xor; }   /* the dark veil over the game, with a hole where your own face shows (UI-017) */
+  #gl { transform-origin: 50% 50%; }
+  body.menuing #ui, body.menuing .hud:not(#toast) { visibility: hidden; }   /* the street's own lettering steps aside */
+  #life.menu.side { inset: 0; left: 0; right: 0; top: 0; transform: none; width: auto; max-height: none; background: linear-gradient(to bottom, rgba(18,18,26,.8) 0, rgba(18,18,26,.8) 58px, rgba(18,18,26,0) 96px); backdrop-filter: none; -webkit-backdrop-filter: none; pointer-events: none; }   /* the wardrobe: you show beside it */
+  #life.menu.side .mtop > *, #life.menu.side .mstrip, #life.menu.side .mpage { pointer-events: auto; }
+  #life.menu #life-head, #life.menu #life-hint { display: none; }
+  #life.menu #life-body { height: 100%; }
+  .mshell { --text: #e8dfc9; --mdim: #a8a293; --mline: rgba(217,207,182,.12); --mline2: rgba(217,207,182,.3); height: 100%; max-width: 1240px; margin: 0 auto; display: grid; grid-template-rows: auto minmax(0, 1fr); color: var(--text); }
+  .mic { display: flex; flex: none; }
+  .mface { display: flex; flex: none; overflow: hidden; } .mface svg { display: block; }
+  .mlive.on svg { visibility: hidden; }   /* the real face shows through instead of the drawn one */
+  .mtop { display: flex; align-items: center; gap: 12px; padding: 2px 4px 12px; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+  .mwho { display: flex; gap: 10px; align-items: center; } .mwho .mface { width: 42px; height: 42px; border-radius: 50%; box-shadow: 0 0 0 2px #e8dfc9; }
+  .mwho b { font: 400 22px/1.1 var(--name); display: block; } .mwho span { font-size: 12px; color: var(--mdim); }
+  .mstatus { margin-left: auto; display: flex; gap: 8px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .mstatus span { padding: 4px 11px; border-radius: 14px; background: rgba(20,20,28,.6); box-shadow: inset 0 0 0 1px var(--mline); font-weight: 600; font-size: 14px; text-shadow: none; }
+  .mback { font: 600 14px var(--data); color: #20212b; background: #e8dfc9; border: 0; border-radius: 9px; padding: 7px 14px 8px; cursor: pointer; box-shadow: inset 0 -2px 0 rgba(0,0,0,.2); }
+  .mback:hover { background: #f4ecd9; }
+  .mhub { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: 1fr 1fr .62fr; gap: 12px; min-height: 0; }
+  .mtile { position: relative; text-align: left; font-family: var(--data); color: var(--ink); background-color: var(--col); background-image: var(--mottle-t); border: 0; border-radius: 16px; padding: 16px 18px; cursor: pointer; overflow: hidden; min-height: 0;
+    box-shadow: inset 0 -5px 0 rgba(0,0,0,.2), inset 0 0 0 2px rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.35); display: flex; flex-direction: column; transition: transform .12s; }
+  .mtile:hover { transform: translateY(-3px); } .mtile:active { transform: translateY(1px); }
+  .mtile .tn { font: 400 27px/1.05 var(--name); margin-top: auto; }
+  .mtile .tf { font: 600 15px var(--data); margin-top: 4px; font-variant-numeric: tabular-nums; } .mtile .ts { font-size: 13px; opacity: .8; min-height: 1.3em; }
+  .mtile em, .mph em { font: 600 12px var(--data); font-style: normal; border: 1.5px solid currentColor; border-bottom-width: 3px; border-radius: 6px; padding: 0 6px; opacity: .75; }
+  .mtile em { position: absolute; right: 14px; top: 14px; }
+  .mtile.tall { grid-row: span 2; } .mtile .mbig { margin: 22px 0 10px; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+  .mtile .mbig { container-type: size; } .mtile .mbig .mface { width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); border-radius: 18px; } .mtile .mbig svg { width: 100%; height: 100%; }
+  .mtile:has(.mlive.on) { background-color: transparent; background-image: none; } .mtile .mlive.on { box-shadow: 0 0 0 2000px var(--col), inset 0 0 0 2px rgba(0,0,0,.25); }
+  .mtile:has(.mlive.on)::after { content: ""; position: absolute; inset: 0; background-image: var(--mottle-t); pointer-events: none; }
+  .mtile.small { flex-direction: row; align-items: center; gap: 12px; } .mtile.small .tn { margin: 0; font-size: 22px; } .mtile.small .ts { min-height: 0; }
+  .msec { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 12px; min-height: 0; }
+  #life.menu.side .msec { grid-template-columns: 62px minmax(0, 1fr) minmax(0, 460px); } #life.menu.side .mpage { grid-column: 3; }
+  .mstrip { display: flex; flex-direction: column; gap: 5px; min-height: 0; }
+  .mstrip button { flex: 0 1 46px; min-height: 30px; border: 0; border-radius: 12px; color: var(--ink); background-color: var(--col); background-image: var(--mottle-d); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 -3px 0 rgba(0,0,0,.2); opacity: .6; }
+  .mstrip button:hover { opacity: .9; } .mstrip button.on { opacity: 1; box-shadow: inset 0 -3px 0 rgba(0,0,0,.2), 0 0 0 2px #e8dfc9; }
+  .mstrip .all { background: rgba(40,40,52,.9); color: #e8dfc9; opacity: 1; }
+  .mpage { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; border-radius: 18px; overflow: hidden; background: var(--mottle-d), #20212b; box-shadow: 0 10px 40px rgba(0,0,0,.45); }
+  .mph { display: flex; align-items: center; gap: 14px; padding: 14px 22px 16px; color: var(--sec-ink); background-color: var(--sec); background-image: var(--mottle-t); box-shadow: inset 0 -4px 0 rgba(0,0,0,.18); }
+  .mph h1 { font: 400 32px/1.1 var(--name); margin: 0; } #life .mph p { font-size: 14px; opacity: .85; margin: 2px 0 0; } .mph em { margin-left: auto; opacity: .8; padding: 1px 7px; }
+  .pb { overflow: auto; padding: 16px 18px 4px; columns: 2 360px; column-gap: 14px; scrollbar-width: thin; scrollbar-color: var(--mline2) transparent; }
+  .pb.one { columns: auto; }
+  .pb > .bare { margin: 0 0 14px; column-span: all; } .pb > .pmsg { column-span: all; margin: 0 0 14px; border-radius: 10px; padding: 8px 12px; }
+  .mcard { break-inside: avoid; background-color: #2a2b36; background-image: var(--mottle-d); border: 1px solid var(--mline); border-radius: 14px; padding: 13px 16px; margin: 0 0 14px; box-shadow: inset 0 -3px 0 rgba(0,0,0,.2); }
+  #life .mcard > h3:first-child { margin-top: 0; } #life .mcard > :last-child { margin-bottom: 0; }
+  .mshell .dim, #life .mshell h3 { color: var(--mdim); }
+  .mshell .pbtn { color: var(--sec-ink); background: var(--sec); border-radius: 9px; padding: 6px 13px 7px; box-shadow: inset 0 -2px 0 rgba(0,0,0,.2); }
+  .mshell .pbtn:hover { background: var(--sec); filter: brightness(1.1); }
+  .mshell .pbtn + .pbtn, .mshell .pbtn.quiet { color: var(--text); background: rgba(217,207,182,.07); box-shadow: inset 0 0 0 1.5px var(--mline2); }
+  .mshell .pbtn.risk { color: #ea947e; background: none; box-shadow: inset 0 0 0 1.5px currentColor; }
+  .mshell .pbtn:disabled { opacity: .42; filter: none; }
+  .mshell .chip { font-weight: 600; font-size: 13px; background: rgba(217,207,182,.07); border: 0; box-shadow: inset 0 0 0 1.5px var(--mline2); border-radius: 16px; padding: 5px 12px; }
+  .mshell .chip.on { color: var(--sec-ink); background: var(--sec); box-shadow: none; }
+  .mshell .sw.on { border-color: #e8dfc9; box-shadow: 0 0 0 2px var(--sec); }
+  .mshell input[type=range] { accent-color: var(--sec); }
+  #life .mshell select, #life .mshell input[type=text], #life .mshell input[type=number] { background: #383947; border-radius: 6px; }
+  .mshell .dzrow { grid-template-columns: minmax(150px, 280px) 1fr; padding: 5px 0; margin: 0; border-bottom: 1px solid var(--mline); } .mshell .dzrow:last-child { border-bottom: 0; }
+  .mshell .dzl.wide { width: auto; color: var(--text); font-size: 15px; }
+  #life.menu.side .dzrow { grid-template-columns: 96px 1fr; border-bottom: 0; }
+  .mshell .ptab td { padding: 7px 6px; border-bottom-color: var(--mline); } .mshell .ptab tr:last-child td { border-bottom: 0; }
+  .mshell .qline { margin: 0; padding: 9px 0; border-bottom: 1px solid var(--mline); } .mshell .qline:last-child { border-bottom: 0; }
+  .mshell .keys kbd { font: 600 12px var(--data); color: #e8dfc9; border: 1.5px solid rgba(217,207,182,.5); border-bottom-width: 3px; border-radius: 6px; padding: 1px 7px; }
+  @media (max-width: 760px) { .mhub { grid-template-columns: 1fr 1fr; grid-template-rows: none; grid-auto-rows: minmax(110px, auto); overflow: auto; } .mtile.tall { grid-row: auto; } .mtile .mbig { display: none; } .mstatus span:first-child { display: none; } }
+  .dzl.wide { width: 210px; }
+  .keys kbd { margin-right: 4px; }
+  .set-off { display: none !important; }   /* hidden in Settings: On the screen */
+  #life, #talk, #toast, #prompt, #purse, #clock, #counter, #track { zoom: var(--ui-zoom, 1); }
+  body.designing #keys, body.designing #mapbox, body.designing #stats, body.designing #toast, body.designing #track, body.designing #prompt, body.designing #clock { display: none !important; }   /* the building designer: the building, the panel and nothing else */
+  #life.side { left: auto; right: 12px; top: 12px; transform: none; width: min(380px, calc(100vw - 24px)); max-height: calc(100vh - 24px); }   /* the building designer, beside the building */
+  .dzrow { display: flex; align-items: center; gap: 10px; margin: 6px 0; flex-wrap: wrap; }
+  .dzl { width: 118px; font-size: 14px; color: var(--dim); }
+  .swatches { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+  .sw { width: 30px; height: 30px; border-radius: 5px; border: 2px solid rgba(217,207,182,.25); cursor: pointer; padding: 0; }
+  .sw.word { width: auto; height: 30px; padding: 0 10px; font: 600 13px var(--data); color: var(--cream); background: rgba(217,207,182,.12); }
+  .sw.boards { background-image: repeating-linear-gradient(90deg, rgba(0,0,0,.25) 0 1px, transparent 1px 9px); }
+  .sw.tiles { background-image: linear-gradient(rgba(0,0,0,.2) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.2) 1px, transparent 1px); background-size: 10px 10px; }
+  .sw.on { border-color: var(--lantern); box-shadow: 0 0 0 2px var(--lantern); }
+  .pbtn.off { background: rgba(217,207,182,.14); color: var(--cream); }
+  .pbtn:disabled { opacity: .45; cursor: default; }
   .pbtn { font: 600 14px var(--data); color: var(--ink); background: var(--lantern); border: 0; border-radius: 4px; padding: 5px 12px; cursor: pointer; }
   .pbtn:hover { background: #f6b673; } .pbtn:disabled { background: #6b6558; cursor: default; }
   .pbtn:focus-visible, #life select:focus-visible, #life input:focus-visible { outline: 2px solid var(--cream); outline-offset: 2px; }
@@ -128,7 +209,7 @@
 <div class="hud" id="keys">
   <span><kbd>W A S D</kbd>walk</span><span><kbd>Shift</kbd>run</span><span><kbd>Space</kbd>jump</span><span><kbd>V</kbd>first or third person</span><span><kbd>E</kbd>use, talk, get into a parked car</span><span><kbd>B</kbd>buy, sell, bank</span><span><kbd>I</kbd>money and things</span><span><kbd>J</kbd>quests</span><span><kbd>P</kbd>property</span><br>
   <span>In a car: <kbd>W</kbd><kbd>S</kbd>drive and brake</span><span><kbd>A</kbd><kbd>D</kbd>steer</span><span><kbd>Space</kbd>handbrake</span><span><kbd>F</kbd>horn</span><span><kbd>R</kbd>radio</span><span><kbd>E</kbd>get out</span><br>
-  <span><kbd>[</kbd><kbd>]</kbd>slow or speed the clock</span><span><kbd>T</kbd>skip an hour</span><span><kbd>M</kbd>map</span><span><kbd>N</kbd>sound</span><span><kbd>Q</kbd>softer picture</span><span><kbd>L</kbd>earlier light</span><span><kbd>G</kbd>flat shade, as before</span><span><kbd>O</kbd>corner shade off and on</span><span><kbd>K</kbd>try the weather</span><span><kbd>Y</kbd>try the next season</span><span><kbd>H</kbd>hide these</span>
+  <span><kbd>[</kbd><kbd>]</kbd>slow or speed the clock</span><span><kbd>T</kbd>skip an hour</span><span><kbd>M</kbd>map</span><span><kbd>N</kbd>sound</span><span><kbd>O</kbd>better or simple picture</span><span><kbd>L</kbd>earlier light</span><span><kbd>K</kbd>try the weather</span><span><kbd>Y</kbd>try the next season</span><span><kbd>H</kbd>hide these</span>
 </div>
 <div id="bigmap"><canvas id="big" width="900" height="900"></canvas><div id="legend"></div></div>
 <div id="talk" role="dialog" aria-label="Conversation">
@@ -137,6 +218,7 @@
   <ol id="talk-opts"></ol>
   <div id="talk-hint"><kbd>1</kbd>to<kbd style="margin-left:6px">9</kbd>or click to answer · <kbd style="margin-left:6px">Esc</kbd>leave</div>
 </div>
+<div id="veil"></div>
 <div id="life" role="dialog" aria-label="Counter">
   <div id="life-head"><span id="life-title"></span><span id="life-sub"></span></div>
   <div id="life-body"></div>
@@ -196,6 +278,7 @@
 <script src="economy.js"></script>
 <script src="estate.js"></script>   <!-- the real estate market (PROP-009 to PROP-021) -->
 <script src="furnishing.js"></script>   <!-- furnishing levels of residents' homes (FURN-062, FURN-063) -->
+<script src="builder.js"></script>   <!-- the building designer's rules (BUILD-004 to BUILD-007, BUILD-016 to BUILD-019) -->
 <script src="life.js"></script>
 <script>
   // conversations.js comes before play.js: play.js starts drawing as soon as it has run, so everything it calls must be here first.
@@ -213,7 +296,7 @@
     console.warn("cars.js did not load: residents' cars are not drawn.");
   }
   if (!window.Life) {                                    // and for economy.js and life.js: no money or quests, but the town runs
-    window.Life = { on: false, designing: false, ready: false, go: b => b(), frame() { }, camera() { }, mark() { }, marks: () => [], conversation: (i, c) => c, allowed: () => true, chose() { }, talkEnded() { }, vars: () => ({}), key() { }, counter() { }, panel() { }, toast() { }, spin() { } };
+    window.Life = { on: false, live: false, liveCam: () => false, designing: false, ready: false, go: b => b(), frame() { }, camera() { }, mark() { }, marks: () => [], conversation: (i, c) => c, allowed: () => true, chose() { }, talkEnded() { }, vars: () => ({}), key() { }, counter() { }, panel() { }, toast() { }, spin() { } };
     console.warn("life.js did not load: money, quests and the designer are off.");
   }
   if (!window.Sound) {                                   // and for sound.js: a silent town
@@ -228,7 +311,7 @@
 <script src="houses.js"></script>
 <script src="outlet.js"></script>   <!-- the furniture outlet outside the East Gate (FURN-020) -->
 <script src="furniture.js"></script>   <!-- furniture kit 18 as boxes, for the houses (FURN-001) -->
-<script src="bench.js"></script>   <!-- the look bench: index.html?bench (ADR-0032, ADR-0033); does nothing otherwise -->
+<script src="bench.js"></script>   <!-- the look bench: index.html?bench (ADR-0032, ADR-0035); does nothing otherwise -->
 <script src="play.js"></script>
 </body>
 </html>

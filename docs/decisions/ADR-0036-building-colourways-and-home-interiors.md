@@ -1,13 +1,13 @@
 ---
-adr: ADR-0034
+adr: ADR-0036
 title: Colourways for every other building, and the row houses and flats furnished at four levels
 status: accepted          # owner in chat on 2026-11-24, shown look tests building_styles_22, home_interiors_22 and house_outside_23: "Approve all"
 date: 2026-11-24
-relates_to: [BUILD-001, BUILD-002, BUILD-003, F-HOME-FURNISH, FURN-060, FURN-061, FURN-062, FURN-063, ADR-0004, ADR-0032, ADR-0033]
+relates_to: [BUILD-001, BUILD-002, BUILD-003, F-HOME-FURNISH, FURN-060, FURN-061, FURN-062, FURN-063, ADR-0004, ADR-0032, ADR-0035]
 ---
 
 ## Context
-After approving the house colourways (ADR-0032) and the house plan with its furnishing levels (ADR-0033), the owner asked
+After approving the house colourways (ADR-0032) and the house plan with its furnishing levels (ADR-0035), the owner asked
 for the same for the other building types, "Colourways and interiors", and to review them in Blender as for the houses.
 Three look tests were made:
 - `Tools/blender/building_styles_22.py`: every build type that is not a designed house (44 types in 17 groups: row house,
@@ -16,7 +16,7 @@ Three look tests were made:
   group in three colourways; sheets `Art/StyleTests/building_styles_22/sheet_1..3.png`.
 - `Tools/blender/home_interiors_22.py` with `home_interiors_22_plan.py`: plans for the three row-house types
   (14 x 12 m on 2 and 3 storeys, 12 x 16 m on 2) and the 80 m2 and 160 m2 court flats, furnished in each line at the
-  four levels of ADR-0033 and checked as the house was (every piece in its room, none overlapping, doorways, front door,
+  four levels of ADR-0035 and checked as the house was (every piece in its room, none overlapping, doorways, front door,
   stair and its foot and top clear, nothing tall in front of a window, every room reached, the largest household's beds
   at Bare); sheets `Art/StyleTests/home_interiors_22/sheet_<type>.png`.
 - `Tools/blender/house_outside_23.py`: the twelve house colourways on the house at 12 x 9 m with the plan's windows.
@@ -45,7 +45,7 @@ All of it, as rendered:
 
 ## Consequences
 - Which colourway a building gets, and which plan a home is furnished from, are picked once when it is made and kept in
-  its lot, as for the houses (ADR-0032, ADR-0033); its furnishing level follows its household (FURN-063).
+  its lot, as for the houses (ADR-0032, ADR-0035); its furnishing level follows its household (FURN-063).
 - The slice does not draw these yet: the town's buildings still take their colours from the kit by a hash of the lot
   (`play.js` `building()`), and row houses and flats are furnished by `play.js` `furnish()` and `layout()`. Moving them
   to `building_styles.json` and `home_plans.json` is the next step.

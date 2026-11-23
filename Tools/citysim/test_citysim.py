@@ -110,6 +110,25 @@ class World(unittest.TestCase):
         self.assertEqual(C.veg.tree(plum, 48 + 3)["blossom"], 1.0)
         self.assertEqual(C.veg.tree(plum, 48 + 20)["blossom"], 0.0)
 
+    def test_WLD_056_pines_stay_green_and_woods_trees_leaf(self):
+        """WLD-056: the woods' trees (World/rules/vegetation.json): a pine keeps its needles and colour all year; oak and
+        birch leaf and drop like the town's trees; apple blossoms in spring."""
+        import json, os
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "World", "rules", "vegetation.json"), encoding="utf-8") as f:
+            v = json.load(f)
+        veg = cs.Vegetation(v, C.clock)
+        pine = dict(species="pine", planted=-48 * 20, seed=7)
+        looks = [veg.tree(pine, 48 * 3 + d) for d in range(48)]
+        self.assertTrue(all(t["leaf"] == 1.0 and t["color"] == v["species"]["pine"]["summer"] for t in looks))
+        self.assertEqual(v["species"]["pine"]["crown"], "cone")
+        for sp in ("oak", "birch"):
+            t = dict(species=sp, planted=-48 * 20, seed=3)
+            self.assertEqual(veg.tree(t, 48 * 3 + 42)["leaf"], 0.0)
+            self.assertEqual(veg.tree(t, 48 * 3 + 18)["leaf"], 1.0)
+        apple = dict(species="apple", planted=-48 * 6, seed=5)
+        self.assertEqual(veg.tree(apple, 48 * 3 + 5)["blossom"], 1.0)
+        self.assertEqual(veg.tree(apple, 48 * 3 + 20)["blossom"], 0.0)
+
     def test_CITY_017_planting_follows_the_seasons(self):
         """CITY-017: garden plants (World/rules/vegetation.json) bulbs and lilac in spring, roses, lavender and hydrangea in
         summer, asters and dry heads in autumn; in winter the deciduous shrubs are bare, the bulbs gone, the evergreens

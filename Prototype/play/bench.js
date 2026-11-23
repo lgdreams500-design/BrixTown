@@ -1,5 +1,5 @@
 "use strict";
-/* The look bench (ADR-0032, ADR-0033): one designed house of the slice on its own, to try its line, colourway, colours and
+/* The look bench (ADR-0032, ADR-0035): one designed house of the slice on its own, to try its line, colourway, colours and
    furnishing level and see them as the game draws them. Open index.html?bench (or ?bench=<lot id>); the panel's choices
    go into the page's address and the page loads again with them, so what you see is the real build of the house, a few
    seconds after each change. Nothing is saved: "Copy colourway" puts the colourway as JSON on the clipboard, to paste into
