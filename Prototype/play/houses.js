@@ -556,61 +556,58 @@ window.Houses = (() => {
   // space opens the middle of each room.
   // Made for walking through: doorways 1 m wide where nothing stands in them, a straight stair up the side of the hall with a
   // rail round its well, and a solid floor, ceiling and walls everywhere, so the camera (play.js stepCamera) stays inside.
+  // The plan, its rooms, doorways, windows, stair and furniture are data (World/rules/home_plans.json "house_12x9", approved
+  // by the owner from Tools/blender/house_interiors_21.py, ADR-0035), the outside colours too (World/rules/house_styles.json,
+  // ADR-0032): the house's line (lot.house.furniture) and its colourway (lot.house.style), both given once in the map
+  // (Tools/worldgen/add_houses_04.py). Which pieces stand here follows the household (FURN-063, furnishing.js).
+  const HPLAN = (window.WASTED.home_plans || {}).house_12x9, HPH = HPLAN.house, HSTY = window.WASTED.house_styles;
   const HU = 6, HV = 4.5, S0 = .3, SF = 3.3, S1 = S0 + SF, SE = S0 + 2 * SF, SK0 = S1 - .2, SK1 = SE - .05, SW = .32, SI = HU - SW, SJ = HV - SW;
-  const SA = -1.2, SB = 1.5, SM = .6, SPITCH = 24 * Math.PI / 180, SEAVE = .55;
-  // Blender (10 x 8 m) to this house: within each room a point keeps its distance to the nearer of the room's two walls
+  const SA = HPH.XA, SB = HPH.XB, SM = HPH.YM, SPITCH = 24 * Math.PI / 180, SEAVE = .55, SDH = .45;   // SDH: half a doorway
+  // the plan (inner faces of 0.25 m walls) to this house (0.32 m walls): within each room a point keeps its distance to the
+  // nearer of the room's two walls; the partitions stand where the plan has them
   const mapA = (x, o, n) => { if (x <= o[0]) return n[0] + x - o[0]; for (let i = 0; i + 1 < o.length; i++) if (x <= o[i + 1]) return x - o[i] <= o[i + 1] - x ? n[i] + x - o[i] : n[i + 1] - (o[i + 1] - x); return n[n.length - 1] + x - o[o.length - 1]; };
-  const mu = u => +mapA(u, [-4.68, -1, 1.2, 4.68], [-SI, SA, SB, SI]).toFixed(3), mv = v => +mapA(v, [-3.68, .5, 3.68], [-SJ, SM, SJ]).toFixed(3);
-  const SWELL = [SB - .06 - 1.0, SB - .06, .3, SJ], SOFF = SJ - 1.1;   // the stair against the hall's right wall; off it to the left at the top
-  const SWIN = { front: [[mu(-3.3), 1.3], [mu(3.1), 1.3]], back: [[mu(-2.4), 1.1], [mu(3.6), 1.1]], left: [[mv(-.4), .9], [mv(2.4), 1.0]], right: [[mv(-3.1), 1.0], [mv(2.3), 1.0]] };
-  const SFRONT_DOOR = [mu(.1), 1.2, 2.4];
-  // doorways [wall axis, line, centre]: the hall to each room; living room to kitchen; dining room to bathroom (the stair stands
-  // along the hall's right wall, so the rooms behind it are reached from the room in front); upstairs the same round the landing
-  // (checked: nothing stands within 0.9 m of a doorway on either side; the living room and kitchen share no door, the armchair
-  // stands where one would be)
-  const SDOORS = { 0: [["x", SA, -.75], ["x", SA, mv(1.4)], ["x", SB, mv(-1.8)], ["y", SM, mu(4.2)]],
-                   1: [["x", SA, -.75], ["x", SA, mv(1.4)], ["x", SB, mv(-1.8)], ["y", SM, 3.7]] };
-  const SROOMS = [["Living room", 0, -SI, -SJ, SA, SM], ["Kitchen", 0, -SI, SM, SA, SJ], ["Hall", 0, SA, -SJ, SB, SJ], ["Dining room", 0, SB, -SJ, SI, SM],
-                  ["Bathroom", 0, SB, SM, SI, SJ], ["Main bedroom", 1, -SI, -SJ, SA, SM], ["Study", 1, -SI, SM, SA, SJ], ["Landing", 1, SA, -SJ, SB, SJ],
-                  ["Children's room", 1, SB, -SJ, SI, SM], ["Guest room", 1, SB, SM, SI, SJ]];
-  // the outside, per line: the town's plaster or stone, the line's shutters and door (as the renders)
-  const SLOOK = { plain: { wall: [.68, .63, .55], shutter: [.2, .36, .37], door: [.2, .36, .37], quoins: false, boxes: false, roof: [.44, .24, .18] },
-                  oldtown: { wall: [.7, .58, .46], shutter: [.44, .24, .18], door: [.45, .17, .12], quoins: true, boxes: true, roof: [.44, .24, .18] },
-                  workshop: { wall: [.56, .53, .5], stone: true, shutter: [.36, .24, .15], door: [.36, .24, .15], quoins: false, boxes: false, roof: [.32, .19, .14] },
-                  curve: { wall: [.7, .66, .58], shutter: [.3, .38, .52], door: [.52, .4, .2], quoins: false, boxes: true, roof: [.47, .28, .2] } };
-  // the furniture: [floor (+ a lift), piece, Blender x, y, yaw, rule]. Rule "E": every house has it (what a home needs: seats,
-  // a table, the kitchen run, the bathroom, a bed for each resident, a wardrobe, lamps). "kids": with three or more residents (the
-  // bunk room). "guest": with five. Any other rule names a group of extras that a house has or has not, by a hash of the lot, so
-  // no two houses have every piece and the rooms keep their space.
+  const PI0 = HPH.W1 - HPH.T, PJ0 = HPH.D1 - HPH.T;
+  const mu = u => +mapA(u, [-PI0, SA, SB, PI0], [-SI, SA, SB, SI]).toFixed(3), mv = v => +mapA(v, [-PJ0, SM, PJ0], [-SJ, SM, SJ]).toFixed(3);
+  const SWELL = [SB - PART / 2 - (HPH.stair[1] - HPH.stair[0]), SB - PART / 2, mv(HPH.stair[2]), SJ], SOFF = SJ - 1.1;   // the stair against the hall's right wall; off it to the left at the top
+  const SWIN = { front: [], back: [], left: [], right: [] };
+  for (const [side, c, w] of HPH.windows) SWIN[side].push([side === "front" || side === "back" ? mu(c) : mv(c), w]);
+  const SFRONT_DOOR = [mu((HPH.front_door[0] + HPH.front_door[1]) / 2), HPH.front_door[1] - HPH.front_door[0], 2.4];
+  // doorways [wall axis, line, centre], each 0.9 m wide, where the plan's check keeps 0.9 m clear on both sides
+  const doorS = ([ax, at, c]) => [ax, ax === "x" ? (Math.abs(at - HPH.XA) < 1e-6 ? SA : SB) : SM, ax === "x" ? mv(c) : mu(c)];
+  const SDOORS = { 0: HPH.doors.ground.map(doorS), 1: HPH.doors.upstairs.map(doorS) };
+  const SROOMS = [];
+  for (const [storey, f] of [["ground", 0], ["upstairs", 1]]) for (const [name, r] of Object.entries(HPH.rooms[storey])) SROOMS.push([name, f, mu(r[0]), mv(r[2]), mu(r[1]), mv(r[3])]);
+  // the furniture: every piece of the plan with its floor, place, turn, lift and the furnishing level it comes in at
   const P2 = Math.PI / 2, PI = Math.PI;
-  const SFURN = [
-    [0, "k17:sofa", -1.57, -1.8, -P2, "E"], [0, "k17:armchair", -3.3, -.05, 0, "E"], [0, "k17:coffee", -3.0, -1.8, P2, "E"], [0, "k17:rug", -3.0, -1.8, P2, "E"],
-    [0, "k17:floor_lamp", -4.35, -.1, 0, "E"], [0, "l_fireplace", -4.55, -1.8, P2, "fire"], [0, "o_painting", -4.73, -1.8, P2, "fire"],
-    [0, "k17:bookcase", -4.58, -3.2, P2, "books"], [0, "l_tv", -1.75, -3.52, PI, "tv"], [0, "o_floorplant", -1.45, -.1, 0, "plant"],
-    [0, "k_counter", -3.85, 3.45, 0, "E"], [0, "k_sink", -2.4, 3.45, 0, "E"], [0, "k_stove", -1.475, 3.44, 0, "E"], [0, "k_fridge", -4.42, 1.3, P2, "E"],
-    [0, "k_wall", -3.85, 3.58, 0, "cupboards"], [0, "k17:dining", -2.8, 1.8, 0, "E"], [0, "d_pendant", -2.8, 1.8, 0, "E"],
-    [0, "h_coatstand", .8, -3.3, 0, "E"], [0, "h_shoebench", -.76, -2.6, P2, "shoes"], [0, "h_console", -.77, .35, P2, "console"], [0, "h_mirror", -.92, .35, P2, "console"],
-    [0, "d_pendant", .1, -1.8, 0, "E"],
-    [0, "k17:dining", 3.0, -1.7, 0, "E"], [0, "d_pendant", 3.0, -1.7, 0, "E"], [0, "d_sideboard", 2.6, .2, 0, "sideboard"], [.91, "o_candles", 2.9, .2, 0, "sideboard"],
-    [0, "o_painting", 2.6, .42, 0, "pictures"], [0, "d_dresser", 4.51, -1.5, -P2, "dresser"], [0, "d_display", 1.47, -3.2, P2, "display"],
-    [0, "b_bath", 4.31, 2.3, -P2, "E"], [0, "b_toilet", 1.8, 3.43, 0, "E"], [0, "b_basin", 2.6, 3.5, 0, "E"], [0, "b_mirror", 2.6, 3.67, 0, "E"],
-    [0, "b_rail", 1.5, 1.6, P2, "towels"], [0, "d_pendant", 3.0, 2.2, 0, "E"],
-    [1, "k17:bed", -2.9, -.68, 0, "E"], [1, "k17:bedside", -4.1, .23, 0, "E"], [1, "k17:bedside", -1.65, .23, 0, "E"], [1, "k17:wardrobe", -4.45, -1.5, P2, "E"],
-    [1, "r_chest", -2.0, -3.5, PI, "chest"], [1, "k17:rug", -2.9, -1.4, 0, "bedrug"], [1, "o_painting", -2.9, .42, 0, "pictures"],
-    [1, "c_bunk", 4.2, -.6, 0, "kids"], [1, "c_toyshelf", 2.3, .26, 0, "kids"], [1, "c_toychest", 1.5, -3.2, P2, "toys"], [1, "k17:rug", 2.9, -1.6, 0, "kids"],
-    [1, "d_pendant", 3.0, -1.8, 0, "E"],
-    [1, "s_desk", -2.4, 3.41, 0, "E"], [1, "s_chair", -2.4, 2.75, PI, "E"], [1.75, "s_lamp", -2.85, 3.5, 0, "E"], [1, "s_shelving", -4.55, 1.35, P2, "shelves"],
-    [1, "k17:armchair", -3.0, 1.4, -P2 - .4, "reading"], [1, "k17:floor_lamp", -3.8, 1.8, 0, "E"],
-    [1, "r_single", 4.15, 2.65, 0, "guest"], [1, "k17:bedside", 3.35, 3.54, 0, "guest"], [1, "r_vanity", 2.2, 3.51, 0, "vanity"], [1, "o_floorplant", 1.6, 1.1, 0, "plant"],
-    [1, "d_pendant", -.4, -1.8, 0, "E"], [1, "d_pendant", 3.0, 2.2, 0, "E"],
-  ].map(([f, kind, x, y, th, rule]) => [f, kind, mu(x), mv(y), th, rule]);
-  function furnS(l) {                                         // the pieces this house has
-    const n = ((l.objects || {}).bed || []).length;
-    return SFURN.filter(([, , , , , rule]) => rule === "E" || (rule === "kids" ? n >= 3 : rule === "guest" ? n >= 5 : hash(l.id, "extra", rule) < .45));
+  const SFURN = HPLAN.items.map((it, i) => ({ i, f: it.storey === "upstairs" ? 1 : 0, kind: it.piece, x: mu(it.x), y: mv(it.y), th: it.yaw, lift: it.lift || 0, level: it.level }));
+  const BEDS_OF = new Set(HPH.beds), SEAT_KINDS = new Set(["k17:sofa", "k17:dining", "k17:armchair"]);
+  // pieces hung on a wall or from the ceiling: their box in the piece's own frame [x0, x1, y0, y1, z0, z1] (sizes measured by
+  // Tools/blender/furniture_sizes_21.py), for the camera only
+  const CAM_ONLY = { k_wall: [-.6, .6, -.24, .17, 1.35, 2.21], d_pendant: [-.3, .3, -.3, .3, 2.0, 3.0], h_hooks: [-.61, .57, -.28, .08, 1.5, 1.91],
+                     h_mirror: [-.36, .36, -.14, .05, 1.0, 2.12], b_mirror: [-.3, .3, -.14, .08, 1.1, 2.01], o_painting: [-.51, .51, -.02, .05, 1.2, 1.94],
+                     s_pinboard: [-.55, .55, -.04, .03, .9, 1.85], o_clock: [-.21, .21, -.07, .03, 1.6, 2.21], o_wallshelf: [-.5, .5, -.21, .01, 1.3, 1.72] };
+  function levelS(l) {                                        // the household's furnishing level today (FURN-063)
+    if (window.Bench && Bench.level && Bench.lot === l.id) return Bench.level;   // the look bench (bench.js) tries a level
+    if (window.Furnishing) return Furnishing.level(l.id, null);   // the market's own day (estate.js)
+    return 4;
   }
-  // where people sleep and sit (the lot's objects hold the same points): x, y in this house, height, facing x, y
-  const SBEDS = [[mu(-3.3), mv(-.6), .62, 0, 1], [mu(-2.5), mv(-.6), .62, 0, 1], [mu(4.2), mv(-.6), .5, 0, 1], [mu(4.2), mv(-.6), 1.45, 0, 1], [mu(4.15), mv(2.65), .62, 0, 1]];
-  const SSEATS = [[mu(-1.75), mv(-2.3), .45, -1, 0], [mu(-1.75), mv(-1.3), .45, -1, 0], [mu(-3.3), mv(-.25), .45, 0, -1], [mu(-2.8), mv(1.1), .45, 0, 1], [mu(-2.8), mv(2.5), .45, 0, -1]];
+  function furnS(l) {                                         // the pieces this house has: its level and below, and a bed for each resident
+    const L = levelS(l); let need = ((l.objects || {}).bed || []).length;
+    const keep = new Set();
+    for (const it of SFURN) if (BEDS_OF.has(it.kind) && need > 0) { keep.add(it); need -= (HPH.spots[it.kind] || []).length; }
+    return SFURN.filter(it => it.level <= L || keep.has(it));
+  }
+  // where people lie and sit, on the pieces this house has: x, y in this house, height, facing x, y (the lot's objects hold
+  // the same points, add_houses_04.py)
+  function spotsS(l, kinds) {
+    const out = [];
+    for (const it of furnS(l)) {
+      if (!kinds.has(it.kind)) continue;
+      const c = Math.cos(it.th), s = Math.sin(it.th), it0 = HPLAN.items[it.i];
+      for (const [x, y, z, fx, fy] of HPH.spots[it.kind]) out.push([mu(it0.x + x * c - y * s), mv(it0.y + x * s + y * c), z, fx * c - fy * s, fx * s + fy * c]);
+    }
+    return out;
+  }
   function stepsS() { const out = [], n = 16, [x0, x1, y0, y1] = SWELL; for (let k = 0; k < n; k++) out.push([x0, y0 + (y1 - y0) * k / n, x1, y0 + (y1 - y0) * (k + 1) / n, S0 + SF * (k + 1) / n]); return out; }
   // a wall's pieces round its holes [a0, a1, z0, z1], as boxes along axis ax ("u": along u at v c0..c1; "v": along v at u c0..c1)
   function holedS(put, a0, a1, z0, z1, holes) {
@@ -626,13 +623,12 @@ window.Houses = (() => {
                           ...(side === "front" ? [[SFRONT_DOOR[0] - SFRONT_DOOR[1] / 2, SFRONT_DOOR[0] + SFRONT_DOOR[1] / 2, S0, S0 + SFRONT_DOOR[2]]] : [])];
   // the four faces: [axis along, outer line, outward sign]
   const SFACES = { front: ["u", -HV, -1], back: ["u", HV, 1], left: ["v", -HU, -1], right: ["v", HU, 1] };
-  function lineS(l) { return SLOOK[l.house.furniture] ? l.house.furniture : "oldtown"; }
-  function lookS(l) {                                         // the line's outside, varied by the lot's trim: shutter and door colour,
-    const base = SLOOK[lineS(l)], tr = l.house.trim || {}, lk = Object.assign({}, base);   // a shade of plaster, a tone of roof tiles
-    if (!base.stone) lk.wall = mix3(base.wall, PLASTER[(tr.plaster || 0) % PLASTER.length], .5);
-    if (tr.shutter_color && SH[tr.shutter_color] && lineS(l) !== "workshop") { lk.shutter = SH[tr.shutter_color]; lk.door = mix3(SH[tr.shutter_color], [.45, .17, .12], .4); }
-    lk.roof = mix3(base.roof, ROOF[(tr.roof_tone || 0) % ROOF.length], .4);
-    if (tr.window_boxes === false) lk.boxes = false;
+  function lineS(l) { return HSTY.lines[l.house.furniture] ? l.house.furniture : "oldtown"; }
+  function lookS(l) {                                         // the line's shape and its colourway's colours (house_styles.json)
+    const line = lineS(l), L = HSTY.lines[line], ways = HSTY.colourways[line], w = ways[l.house.style] || ways.a, P = HSTY.palette;
+    const lk = { stone: L.stone, quoins: L.quoins, boxes: L.boxes, wall: w.wall === "stone" ? [.56, .53, .5] : HSTY.plasters[w.wall][1],
+                 shutter: P[w.shutter], door: P[w.door], frame: P[w.frame], roof: mix3(HSTY.roofs[w.roof][0], HSTY.roofs[w.roof][1], .5) };
+    if ((l.house.trim || {}).window_boxes === false) lk.boxes = false;
     return lk;
   }
 
@@ -647,7 +643,7 @@ window.Houses = (() => {
       const out = d => line + o * d;
       for (const [a, w] of SWIN[side]) for (const [z0, z1, box] of [[S0 + .95, S0 + 2.55, false], [S1 + .8, S1 + 2.25, lk.boxes && side !== "back"]]) {
         wb(ax, a - w / 2, z0, out(-.2), a + w / 2, z1, out(-.17), GLASS, 4);                                            // glass, deep in the reveal
-        wb(ax, a - .035, z0, out(-.22), a + .035, z1, out(-.12), CREAM_F, 9, dm); wb(ax, a - w / 2, z0 + (z1 - z0) * .68, out(-.22), a + w / 2, z0 + (z1 - z0) * .68 + .07, out(-.12), CREAM_F, 9, dm);   // glazing bars (the frame is the stone surround's)
+        wb(ax, a - .035, z0, out(-.22), a + .035, z1, out(-.12), lk.frame, 9, dm); wb(ax, a - w / 2, z0 + (z1 - z0) * .68, out(-.22), a + w / 2, z0 + (z1 - z0) * .68 + .07, out(-.12), lk.frame, 9, dm);   // glazing bars (the frame is the stone surround's)
         wb(ax, a - w / 2 - .22, z0 - .15, out(-.05), a + w / 2 + .22, z0, out(.17), STONE_L, 6, dm);                       // sill
         for (const e of [a - w / 2 - .17, a + w / 2]) wb(ax, e, z0, out(-.05), e + .17, z1, out(.06), STONE_L, 6, dm);     // stone surround
         wb(ax, a - w / 2 - .24, z1, out(-.05), a + w / 2 + .24, z1 + .24, out(.09), STONE_L, 6, dm);
@@ -700,12 +696,26 @@ window.Houses = (() => {
       const gaps = SDOORS[f].filter(d => d[0] === ax && d[1] === at && d[2] > a0 && d[2] < a1).map(d => ax === "x" ? [at, d[2]] : [d[2], at]);
       ax === "x" ? chain1(Fr, at, a0, at, a1, f ? S1 : S0, f ? SK1 : SK0, gaps, .12) : chain1(Fr, a0, at, a1, at, f ? S1 : S0, f ? SK1 : SK0, gaps, .12);
     }
-    for (const [u0, v0, u1, v1, top] of stepsS()) grid1(Fr, u0, v0, u1, v1, 0, top, .6);
+    { const n0 = solids.length;                               // the steps: stood on, never a wall in the way (play.js pushOut)
+      for (const [u0, v0, u1, v1, top] of stepsS()) grid1(Fr, u0, v0, u1, v1, 0, top, .6);
+      for (let k = n0; k < solids.length; k++) solids[k].stair = true;
+      // under the open side of the stair a wall that follows its slope, 0.45 m below each step: it keeps people on the hall
+      // floor from walking in under the stair, and is never in the way of anyone on the steps
+      for (const [u0, v0, u1, v1, top] of stepsS()) if (top - .45 > S0 + .5) grid1(Fr, u0 - .04, v0, u0 + .02, v1, 0, top - .45, .6); }
     chain1(Fr, wx0, wy0, wx0, SOFF, S1, S1 + 1, null, .06); chain1(Fr, wx0, wy0, wx1, wy0, S1, S1 + 1, null, .06);   // open past SOFF: the way off the top step
-    furnS(l).forEach(([f, kind, x, y, th]) => {
-      const sz = Furniture.SIZE[kind]; if (!sz || f % 1) return;
+    furnS(l).forEach(({ f, kind, x, y, th, lift }) => {
+      const sz = Furniture.SIZE[kind]; if (!sz || lift) return;
       const q = Math.round(th / P2) % 2 !== 0 && Math.abs(Math.abs(th) - P2) < .2, w = q ? sz[1] : sz[0], d = q ? sz[0] : sz[1], y0 = f ? S1 : S0;
       grid1(Fr, x - w / 2 + .05, y - d / 2 + .05, x + w / 2 - .05, y + d / 2 - .05, y0, y0 + Math.max(sz[2], .9), .6);
+    });
+    // what hangs on the walls and from the ceilings, for the camera only (play.js camBlocked), so it draws in before it
+    // would pass into a wall cupboard or a lamp shade; people walk under them
+    furnS(l).forEach(({ f, kind, x, y, th }) => {
+      const b = CAM_ONLY[kind]; if (!b) return;
+      const c = Math.cos(th), sn = Math.sin(th), pts = [[b[0], b[2]], [b[1], b[2]], [b[1], b[3]], [b[0], b[3]]].map(([a, bb]) => [x + a * c - bb * sn, y + a * sn + bb * c]);
+      const y0 = f ? S1 : S0, n0 = solids.length;
+      grid1(Fr, Math.min(...pts.map(p => p[0])), Math.min(...pts.map(p => p[1])), Math.max(...pts.map(p => p[0])), Math.max(...pts.map(p => p[1])), y0 + b[4], y0 + b[5], .6);
+      for (let k = n0; k < solids.length; k++) solids[k].cam = true;
     });
     gardenS(l, Fr, lk);
     placesS(l, Fr);
@@ -810,6 +820,7 @@ window.Houses = (() => {
     const o = l.objects || {}, loc = (x, z) => { const dx = x - Fr.cx, dz = z - Fr.cz; return [-(dx * Fr.c + dz * Fr.s), -dx * Fr.s + dz * Fr.c]; };   // world to Blender x, y
     const near = (list, x, z) => { const [u, v] = loc(x, z); return list.reduce((b, p) => Math.hypot(p[0] - u, p[1] - v) < Math.hypot(b[0] - u, b[1] - v) ? p : b); };
     const seen = new Set();
+    const SBEDS = spotsS(l, BEDS_OF), SSEATS = spotsS(l, SEAT_KINDS);
     (o.bed || []).forEach(([x, z]) => {
       let b = near(SBEDS, x, z); if (seen.has(b)) b = SBEDS.find(p => !seen.has(p) && Math.hypot(p[0] - b[0], p[1] - b[1]) < .1) || b; seen.add(b);
       const d = Fr.N(-b[3], b[4]), yaw = yawOf(-d[0], -d[2]);
@@ -828,12 +839,11 @@ window.Houses = (() => {
     // floors and ceilings, the slab between the storeys (open over the stair)
     for (const [name, f, u0, v0, u1, v1] of SROOMS) {
       const wet = /Kitchen|Bathroom/.test(name), y = f ? S1 : S0, col = wet ? tiles : boards, fc = wet ? 16 : 15;
-      const parts = f && name === "Landing" ? [[u0, v0, wx0, v1], [wx0, v0, u1, wy0], [wx1, wy0, u1, v1]] : [[u0, v0, u1, v1]];
-      for (const [a, b, c, d] of parts) {
-        qd1(m, Fr, [a, y + .005, b], [c, y + .005, b], [c, y + .005, d], [a, y + .005, d], col, fc);
-        if (!f) qd1(m, Fr, [a, SK0 - .005, d], [c, SK0 - .005, d], [c, SK0 - .005, b], [a, SK0 - .005, b], ceil, 18, "down");
-      }
-      if (!f && name === "Hall") qd1(m, Fr, [wx0, SK0 - .005, wy0], [wx1, SK0 - .005, wy0], [wx1, SK0 - .005, -SJ], [wx0, SK0 - .005, -SJ], ceil, 18, "down");
+      // the hall and landing go round the stair well: the landing's floor and the hall's ceiling stop at it, so the stair is open
+      // to the floor above
+      const well = (f && name === "Landing") || (!f && name === "Hall"), round = [[u0, v0, wx0, v1], [wx0, v0, u1, wy0], [wx1, wy0, u1, v1]].filter(([a, b, c, d]) => c - a > .01 && d - b > .01);
+      for (const [a, b, c, d] of f && name === "Landing" ? round : [[u0, v0, u1, v1]]) qd1(m, Fr, [a, y + .005, b], [c, y + .005, b], [c, y + .005, d], [a, y + .005, d], col, fc);
+      if (!f) for (const [a, b, c, d] of well ? round : [[u0, v0, u1, v1]]) qd1(m, Fr, [a, SK0 - .005, d], [c, SK0 - .005, d], [c, SK0 - .005, b], [a, SK0 - .005, b], ceil, 18, "down");
     }
     for (const [a, b, c, d] of [[-SI, -SJ, wx0, SJ], [wx1, -SJ, SI, SJ], [wx0, -SJ, wx1, wy0]]) R(a, SK0, b, c, S1, d, plasterIn, 17);
     qd1(m, Fr, [-SI, SK1, SJ], [SI, SK1, SJ], [SI, SK1, -SJ], [-SI, SK1, -SJ], ceil, 18, "down");
@@ -848,8 +858,8 @@ window.Houses = (() => {
       const seg = (p, q, ya, yb2) => { if (q - p < .02) return; ax === "x" ? R(at - PART / 2, ya, p, at + PART / 2, yb2, q, plasterIn, 17) : R(p, ya, at - PART / 2, q, yb2, at + PART / 2, plasterIn, 17); };
       let a = a0;
       for (const c of cuts) {
-        seg(a, c - .5, y0, y1); seg(c - .5, c + .5, y0 + DOOR_H, y1); a = c + .5;
-        for (const e of [c - .5, c + .5]) ax === "x" ? R(at - .08, y0, e - .05, at + .08, y0 + DOOR_H + .08, e + .05, wood) : R(e - .05, y0, at - .08, e + .05, y0 + DOOR_H + .08, at + .08, wood);
+        seg(a, c - SDH, y0, y1); seg(c - SDH, c + SDH, y0 + DOOR_H, y1); a = c + SDH;
+        for (const e of [c - SDH, c + SDH]) ax === "x" ? R(at - .08, y0, e - .05, at + .08, y0 + DOOR_H + .08, e + .05, wood) : R(e - .05, y0, at - .08, e + .05, y0 + DOOR_H + .08, at + .08, wood);
       }
       seg(a, a1, y0, y1);
     }
@@ -866,14 +876,14 @@ window.Houses = (() => {
     R(wx0 - .035, S1 + .95, wy0, wx0 + .035, S1 + 1.0, SOFF, wood); R(wx0, S1 + .95, wy0 - .035, wx1, S1 + 1.0, wy0 + .035, wood);
     // the furniture, in the house's line (furniture.js)
     const Lf = Outlet.LINES[lineS(l)] || Outlet.LINES.oldtown;
-    furnS(l).forEach(([f, kind, x, y, th], i) => {
-      const y0 = (Math.floor(f) ? S1 : S0) + (f % 1 ? (f % 1) : 0) * (Math.floor(f) ? 1 : 1), c = Math.cos(th), sn = Math.sin(th);
+    furnS(l).forEach(({ f, kind, x, y, th, lift, i }) => {
+      const y0 = (f ? S1 : S0) + lift, c = Math.cos(th), sn = Math.sin(th);
       const Q = (a, yy, b, sa, sy, sb, col, fm, yaw) => yb1(m, Fr, x + a * c - b * sn, y0 + yy, y + a * sn + b * c, sa, sy, sb, -(th + (yaw || 0)), col, fm || 19);
       Furniture.draw(kind, Q, Lf, hash(l.id, "furn", i));
     });
     if (rec) for (const [name, f, u0, v0, u1, v1] of SROOMS) { const p = Fr.P(-(u0 + u1) / 2, (f ? SK1 : SK0) - .4, (v0 + v1) / 2); rec.lamps.push([p[0], p[1], p[2], 1.1]); }
   }
 
-  const samples = { SFURN, SDOORS, SWELL, mu, mv };   // for the doorway check in the browser (tests)
+  const samples = { SFURN, SDOORS, SWELL, mu, mv, furnS, levelS };   // for the doorway check in the browser (tests)
   return { samples, outside: l => l.house.plan === "samples_19" ? outsideS(l) : outside(l), inside: (l, m, rec) => l.house.plan === "samples_19" ? insideS(l, m, rec) : inside(l, m, rec), frame };
 })();

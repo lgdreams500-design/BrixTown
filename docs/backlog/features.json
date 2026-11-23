@@ -2372,6 +2372,62 @@
         "depth": 1,
         "full": 2
       }
+    },
+    {
+      "id": "F-HOME-FURNISH",
+      "area": "objects",
+      "title": "How residents' homes are furnished",
+      "why": "Homes should differ: a household just starting out has the bare essentials, one that has lived well for years has every piece of every set.",
+      "pillars": [
+        1,
+        2
+      ],
+      "spec": [
+        "FURN-060",
+        "FURN-061",
+        "FURN-062",
+        "FURN-063"
+      ],
+      "levels": [
+        {
+          "name": "As built",
+          "what": "Homes are furnished as the slice does now: the same few pieces in every house, extras by a hash of the lot.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "One level for all",
+          "what": "Every home is furnished the same: every piece of its line's sets in the rooms of its plan.",
+          "effort": "S",
+          "needs": {
+            "F-BLD-INSIDE": 3
+          }
+        },
+        {
+          "name": "Four levels per home",
+          "what": "Each home is given one of four furnishing levels (Bare, Basic, Homely, Full) once, when it is made, and keeps it; each level adds pieces to the one before (ADR-0035).",
+          "effort": "M",
+          "needs": {
+            "F-BLD-INSIDE": 3,
+            "F-FURN-ITEMS": 1
+          }
+        },
+        {
+          "name": "Follows the household",
+          "what": "A household's level is worked out from its income and how long it has lived there, from data and the world clock (never ticked or stored): it starts from its income band and moves up a level each time its savings for furniture reach the next level's cost.",
+          "effort": "L",
+          "needs": {
+            "F-BLD-INSIDE": 3,
+            "F-FURN-ITEMS": 1,
+            "F-PROP-ESTATE": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 2,
+        "depth": 3,
+        "full": 3
+      }
     }
   ]
 }

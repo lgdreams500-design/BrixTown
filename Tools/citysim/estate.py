@@ -18,6 +18,7 @@ Standard library only.
 import copy
 import math
 
+import furnishing as fu
 from economy import Refused, hash01
 
 PLAYER = ("p:cash", "p:current", "p:savings")
@@ -107,8 +108,9 @@ class Estate:
     """The town's buildings and units, their owners and tenants, the companies, and the player's deeds, tenancies and
     mortgages. Works on an economy.Economy and its ledger; settles each day the economy settles."""
 
-    def __init__(self, rules, econ, lots, residents):
+    def __init__(self, rules, econ, lots, residents, furnish=None):
         self.R = rules
+        self.F = furnish or rules.get("furnishing") or fu.load_rules()   # FURN-063: World/rules/furnishing_levels.json
         self.E = econ
         self.lots = lots
         self.units = carve(rules, lots, residents)
@@ -298,6 +300,7 @@ class Estate:
         sales = self._market(d)
         self._mortgages(d)
         self._companies(d)
+        spent += self._furnishing(d)                        # FURN-063, before the town spends what is left over
         spent += self._town_spend(d)
         self.history.append([d, self.town_index(), self.L.supply(), sales, earned, spent])
         self.history = self.history[-self.R["history_days"]:]
@@ -598,6 +601,30 @@ class Estate:
                 pay = over * c["dividend_bp"] // 10000
                 if pay:
                     self.L.post(d, 1440, "%s pays a dividend" % c["name"], [(a, -pay), ("sys:dividends", pay)])
+
+    def level_of(self, i, d=None):
+        """FURN-062, FURN-063: the furnishing level (1..4) unit i shows on day d (today if None): a household's from its
+        wages and the day; an unseen lodger's and an empty home's from data."""
+        d = self.E.day if d is None else d
+        t = self.tenant[i]
+        if t == "hh" and self.members[i]:
+            return fu.level(self.F, self.wage[i], d)
+        return self.F["lodger_level"] if t == "lodger" else self.F["empty_level"]
+
+    def _furnishing(self, d):
+        """FURN-063: each household whose level rises today pays that step's cost from the residents' account to
+        sys:spend, one transaction each (until FURN-034 has residents buy from the companies). Nothing is kept: the
+        level is worked out from the wages and the day. If the account cannot cover it all, it pays what it holds."""
+        paid = 0
+        for i in range(len(self.units)):
+            if self.tenant[i] != "hh" or not self.members[i]:
+                continue
+            a, b, c = fu.rise(self.F, self.wage[i], d)
+            c = min(c, self.L.balance(TOWN))
+            if c > 0:
+                self.L.post(d, 1440, "Furniture for %s (%s)" % (self.name(i), fu.name(self.F, b)), [(TOWN, -c), ("sys:spend", c)])
+                paid += c
+        return paid
 
     def _town_spend(self, d):
         """PROP-018: the town spends what it holds beyond a few days of its earnings."""
@@ -923,4 +950,5 @@ def run_script(est, ops):
                 owner=[o for o in est.owner], tenant=[t for t in est.tenant], idx=dict(sorted(est.idx.items())),
                 history=est.history, mortgages=[[m["status"], m["paid"], m["fees"], m["missed"]] for m in est.mortgages],
                 listing={k: est.listing[k]["price"] for k in sorted(est.listing, key=int)}, units=len(est.units), mine=mine,
-                moves=est.moves, beds=sum(u["beds"] for u in est.units))
+                moves=est.moves, beds=sum(u["beds"] for u in est.units),
+                levels=[sum(1 for i in range(len(est.units)) if est.tenant[i] == "hh" and est.level_of(i) == k) for k in range(1, 5)])

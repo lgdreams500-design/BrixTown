@@ -246,7 +246,11 @@
    "storeys": [
     "main",
     "store"
-   ]
+   ],
+   "style": {
+    "group": "cafe_front",
+    "way": "a"
+   }
   },
   {
    "id": "b_9_8_l2",
@@ -312,7 +316,11 @@
    "storeys": [
     "main",
     "store"
-   ]
+   ],
+   "style": {
+    "group": "shop_front",
+    "way": "a"
+   }
   },
   {
    "id": "b_9_8_l3",
@@ -431,7 +439,11 @@
    "storeys": [
     "main",
     "store"
-   ]
+   ],
+   "style": {
+    "group": "cafe_front",
+    "way": "b"
+   }
   },
   {
    "id": "b_9_8_l4",
@@ -558,7 +570,11 @@
     "main",
     "office",
     "office"
-   ]
+   ],
+   "style": {
+    "group": "guild",
+    "way": "b"
+   }
   },
   {
    "id": "b_9_8_l5",

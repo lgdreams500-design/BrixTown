@@ -1,0 +1,522 @@
+{
+ "house": {
+  "key": "flat_80",
+  "title": "Flat of 80 m2 (11.68 x 6.85 m)",
+  "W0": -5.84,
+  "W1": 5.84,
+  "D0": -3.425,
+  "D1": 3.425,
+  "T": 0.25,
+  "TP": 0.12,
+  "H": 3.0,
+  "floors": [
+   "flat"
+  ],
+  "stair": null,
+  "stair_kind": {},
+  "front_door": [
+   -5.34,
+   -4.34
+  ],
+  "partitions": {
+   "flat": [
+    [
+     "y",
+     -1.865,
+     -5.59,
+     5.59
+    ],
+    [
+     "x",
+     -1.41,
+     -1.8649999999999998,
+     3.175
+    ],
+    [
+     "x",
+     0.61,
+     -1.8649999999999998,
+     3.175
+    ],
+    [
+     "x",
+     3.58,
+     -1.8649999999999998,
+     3.175
+    ]
+   ]
+  },
+  "doors": {
+   "flat": [
+    [
+     "y",
+     -1.865,
+     -1.99
+    ],
+    [
+     "y",
+     -1.865,
+     -0.85
+    ],
+    [
+     "y",
+     -1.865,
+     1.17
+    ],
+    [
+     "y",
+     -1.865,
+     4.14
+    ]
+   ]
+  },
+  "windows": {
+   "flat": [
+    [
+     "back",
+     -3.53,
+     1.2
+    ],
+    [
+     "back",
+     -0.4,
+     0.9
+    ],
+    [
+     "back",
+     2.095,
+     1.2
+    ],
+    [
+     "back",
+     4.615,
+     0.9
+    ]
+   ]
+  },
+  "rooms": {
+   "flat": {
+    "Hall": [
+     -5.59,
+     5.59,
+     -3.175,
+     -1.925
+    ],
+    "Living room": [
+     -5.59,
+     -1.47,
+     -1.805,
+     3.175
+    ],
+    "Bathroom": [
+     -1.35,
+     0.55,
+     -1.805,
+     3.175
+    ],
+    "Main bedroom": [
+     0.67,
+     3.52,
+     -1.805,
+     3.175
+    ],
+    "Bedroom": [
+     3.64,
+     5.59,
+     -1.805,
+     3.175
+    ]
+   }
+  },
+  "beds": 2,
+  "lot": "court flats (e.g. b_10_5_l0 Plum Court, flats[].rect 11.68 x 6.85 and 23.36 x 6.85, door 1 m from the left end)"
+ },
+ "levels": {
+  "1": "Bare",
+  "2": "Basic",
+  "3": "Homely",
+  "4": "Full"
+ },
+ "items": [
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "k_fridge",
+   "x": -5.195,
+   "y": -1.375,
+   "yaw": 1.5708,
+   "level": 1,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "k_counter",
+   "x": -5.225,
+   "y": -0.05,
+   "yaw": 1.5708,
+   "level": 1,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "k_sink",
+   "x": -5.225,
+   "y": 1.48,
+   "yaw": 1.5708,
+   "level": 1,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "k_stove",
+   "x": -5.23,
+   "y": 2.48,
+   "yaw": 1.5708,
+   "level": 1,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "k_wall",
+   "x": -5.385,
+   "y": -0.045,
+   "yaw": 1.5708,
+   "level": 2,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "k_wall",
+   "x": -5.385,
+   "y": 1.495,
+   "yaw": 1.5708,
+   "level": 3,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "k17:dining",
+   "x": -3.59,
+   "y": 0.095,
+   "yaw": 0.0,
+   "level": 1,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "d_pendant",
+   "x": -3.59,
+   "y": 0.095,
+   "yaw": 0.0,
+   "level": 2,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "o_fruit",
+   "x": -3.59,
+   "y": 0.095,
+   "yaw": 0.0,
+   "level": 4,
+   "lift": 0.76
+  },
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "k17:sofa",
+   "x": -2.84,
+   "y": 2.665,
+   "yaw": 0.0,
+   "level": 1,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "k17:coffee",
+   "x": -2.84,
+   "y": 1.575,
+   "yaw": 0.0,
+   "level": 3,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "k17:rug",
+   "x": -2.84,
+   "y": 1.745,
+   "yaw": 0.0,
+   "level": 4,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "l_tv",
+   "x": -1.76,
+   "y": -0.055,
+   "yaw": -1.5708,
+   "level": 3,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "o_painting",
+   "x": -1.57,
+   "y": 1.195,
+   "yaw": -1.5708,
+   "level": 4,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "k17:floor_lamp",
+   "x": -4.39,
+   "y": 2.875,
+   "yaw": 0.0,
+   "level": 2,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Living room",
+   "piece": "d_pendant",
+   "x": -2.84,
+   "y": 1.875,
+   "yaw": 0.0,
+   "level": 2,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Bathroom",
+   "piece": "b_bath",
+   "x": -0.4,
+   "y": 2.695,
+   "yaw": 0.0,
+   "level": 1,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Bathroom",
+   "piece": "b_basin",
+   "x": 0.27,
+   "y": 1.575,
+   "yaw": -1.5708,
+   "level": 1,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Bathroom",
+   "piece": "b_mirror",
+   "x": 0.435,
+   "y": 1.575,
+   "yaw": -1.5708,
+   "level": 2,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Bathroom",
+   "piece": "b_toilet",
+   "x": -0.98,
+   "y": 1.775,
+   "yaw": 1.5708,
+   "level": 1,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Bathroom",
+   "piece": "b_rail",
+   "x": 0.36,
+   "y": 0.575,
+   "yaw": -1.5708,
+   "level": 2,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Bathroom",
+   "piece": "d_pendant",
+   "x": -0.4,
+   "y": 0.685,
+   "yaw": 0.0,
+   "level": 2,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Main bedroom",
+   "piece": "k17:bed",
+   "x": 2.35,
+   "y": 0.935,
+   "yaw": -1.5708,
+   "level": 1,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Main bedroom",
+   "piece": "k17:bedside",
+   "x": 3.265,
+   "y": 2.085,
+   "yaw": -1.5708,
+   "level": 2,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Main bedroom",
+   "piece": "k17:bedside",
+   "x": 3.265,
+   "y": -0.215,
+   "yaw": -1.5708,
+   "level": 2,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Main bedroom",
+   "piece": "k17:wardrobe",
+   "x": 2.87,
+   "y": -1.435,
+   "yaw": 3.1416,
+   "level": 2,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Main bedroom",
+   "piece": "o_painting",
+   "x": 3.42,
+   "y": 0.935,
+   "yaw": -1.5708,
+   "level": 4,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Main bedroom",
+   "piece": "r_blanket",
+   "x": 0.97,
+   "y": 0.935,
+   "yaw": -1.5708,
+   "level": 4,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Main bedroom",
+   "piece": "d_pendant",
+   "x": 2.095,
+   "y": 0.935,
+   "yaw": 0.0,
+   "level": 2,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Bedroom",
+   "piece": "r_single",
+   "x": 5.03,
+   "y": 1.715,
+   "yaw": 0.0,
+   "level": 1,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Bedroom",
+   "piece": "k17:bedside",
+   "x": 4.18,
+   "y": 2.615,
+   "yaw": 0.0,
+   "level": 2,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Bedroom",
+   "piece": "k17:wardrobe",
+   "x": 4.01,
+   "y": -0.305,
+   "yaw": 1.5708,
+   "level": 2,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Bedroom",
+   "piece": "o_painting",
+   "x": 5.49,
+   "y": -0.715,
+   "yaw": -1.5708,
+   "level": 4,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Bedroom",
+   "piece": "d_pendant",
+   "x": 4.615,
+   "y": 0.685,
+   "yaw": 0.0,
+   "level": 2,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Hall",
+   "piece": "h_coatstand",
+   "x": -3.99,
+   "y": -2.855,
+   "yaw": 0.0,
+   "level": 3,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Hall",
+   "piece": "h_umbrella",
+   "x": -3.39,
+   "y": -2.975,
+   "yaw": 0.0,
+   "level": 4,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Hall",
+   "piece": "d_pendant",
+   "x": -2.795,
+   "y": -2.55,
+   "yaw": 0.0,
+   "level": 2,
+   "lift": 0.0
+  },
+  {
+   "storey": "flat",
+   "room": "Hall",
+   "piece": "d_pendant",
+   "x": 2.795,
+   "y": -2.55,
+   "yaw": 0.0,
+   "level": 2,
+   "lift": 0.0
+  }
+ ]
+}

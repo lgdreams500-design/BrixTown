@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers", "furnishing", "settings", "room_plan"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers", "furnishing", "settings", "room_plan", "building_styles"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -1314,11 +1314,67 @@ def design_of(w, b, l, surf=None):
                 circulation=dict(stair=l.get("stair"), lift=l.get("lift")))
 
 
+def kit_id(K, rgb):
+    """The building kit's id of a colour, matched by its rgb (Tools/worldgen/add_kit_colours_01.py put every colourway
+    colour into the kit)."""
+    for cid, v in K["colours"].items():
+        if all(abs(a - b) < .02 for a, b in zip(v["rgb"], rgb)):
+            return cid
+    return None
+
+
+def style_ids(w, style):
+    """A building's approved colourway (World/rules/building_styles.json, ADR-0036) as building kit ids, or None."""
+    S, K = w.get("building_styles"), w["building_kit"]
+    if not style or not S or style.get("group") not in S["colourways"]:
+        return None
+    c = S["colourways"][style["group"]].get(style.get("way", "a"))
+    if not c:
+        return None
+    P, out = S["palette"], dict(stone_walls=c.get("wall") == "stone")
+    if c.get("wall") and c["wall"] != "stone":
+        out["plaster"] = kit_id(K, S["plasters"][c["wall"]][1])
+    if c.get("roof"):
+        lo, hi = S["roofs"][c["roof"]]
+        out["tiles"] = kit_id(K, [(a + b) / 2 for a, b in zip(lo, hi)])
+    for part in ("shutter", "frame"):
+        if c.get(part):
+            out[part] = kit_id(K, P[c[part]])
+    aw = [k for k in (c.get("awning") or []) if k != "cream"] or ([c["front"]] if c.get("front") else [])   # the awning's colour, or a shop front's
+    if aw:
+        out["accent"] = kit_id(K, P[aw[0]])
+    return {k: v for k, v in out.items() if v is not None}
+
+
+def apply_style(d, w, l):
+    """A building's design (v2: colours by kit id, walls per facade) in its approved colourway instead of the kit's picks
+    by hash (ADR-0036). The sandstone and pale stone mixes of building_styles.json are not stone colours of surfaces.json
+    yet: such buildings keep the kit's stone."""
+    c = style_ids(w, l.get("style"))
+    if not c:
+        return d
+    for f in FACADES:
+        fa = d["walls"][f]
+        if "plaster" in c:
+            fa["plaster"] = c["plaster"]
+        if c["stone_walls"]:
+            fa["stone_to_eaves"] = True
+    if "plaster" in c:
+        d["inside"]["walls"] = [c["plaster"]] * len(d["inside"]["walls"])
+    if "tiles" in c:
+        d["roof"]["tiles"] = c["tiles"]
+    for part, key in (("shutter", "shutter_color"), ("frame", "frame"), ("accent", "awning")):
+        if part in c:
+            d["openings"][key] = c[part]
+    d["style"] = dict(l["style"])
+    return d
+
+
 def designs(w):
     """Every building's design, by lot id (BUILD-001). Worked out from the data each time, never stored for the town's own
     buildings; a player's design, when there is one, will replace its building's entry."""
     surf = surfaces(w)
-    return {l["id"]: design_of(w, b, l, surf) for b in w["blocks"] for l in b["lots"] if l["kind"] not in OPEN_KINDS}
+    return {l["id"]: apply_style(design_of(w, b, l, surf), w, l) for b in w["blocks"] for l in b["lots"] if l["kind"] not in OPEN_KINDS}
 
 
 def colour(w, cid):

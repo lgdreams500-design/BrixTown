@@ -1,4 +1,5 @@
 """Checks on the city data in World/ and on the living-city rules running over it.   python -m unittest test_world"""
+import os
 import unittest
 
 import world
@@ -342,7 +343,10 @@ class TheDesigns(unittest.TestCase):
             self.assertEqual(world.js_hash(*keys), want, keys)
         K = W["building_kit"]
         d = self.D["b_0_0_l0"]
-        self.assertEqual(d["walls"]["n"]["plaster"], world.js_pick(K["town"]["plaster"], 0.5495072316844016))
+        lot = next(l for l in world.lots(W) if l["id"] == "b_0_0_l0")
+        raw = world.design_of(W, next(b for b in W["blocks"] if lot in b["lots"]), lot)
+        self.assertEqual(raw["walls"]["n"]["plaster"], world.js_pick(K["town"]["plaster"], 0.5495072316844016))   # the kit's own pick ...
+        self.assertEqual(d["walls"]["n"]["plaster"], (world.style_ids(W, lot.get("style")) or {}).get("plaster", raw["walls"]["n"]["plaster"]))   # ... unless the lot's approved colourway sets it (ADR-0036)
         self.assertEqual(world.built(W, d)["walls"]["n"]["plaster"], K["colours"][d["walls"]["n"]["plaster"]]["rgb"])
         self.assertEqual(world.designs(W), self.D)                                   # the same every time
 
@@ -782,6 +786,104 @@ class TheTimings(unittest.TestCase):
         self.assertGreater(near, 20 * max(far, 1))                       # lunch from work is near work
 
 
+class TheHomes(unittest.TestCase):
+    """The houses' colourways (ADR-0032) and the plan homes are furnished from (ADR-0035)."""
+    RULES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "World", "rules")
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        cls.styles = json.load(open(os.path.join(cls.RULES, "house_styles.json"), encoding="utf-8"))
+        cls.plans = json.load(open(os.path.join(cls.RULES, "home_plans.json"), encoding="utf-8"))["plans"]
+        cls.houses = [l for l in world.lots(W) if l.get("house", {}).get("plan") == "samples_19"]
+
+    def test_BUILD_003_house_colourways_come_from_the_palette(self):
+        S = self.styles
+        art = open(os.path.join(self.RULES, "..", "..", "docs", "art", "ART_DIRECTION.md"), encoding="utf-8").read()
+        for name, rgb in S["palette"].items():
+            self.assertIn("(%.2f, %.2f, %.2f)" % tuple(rgb), art, name)        # every accent is a palette entry of section 2.3
+        for line, ways in S["colourways"].items():
+            self.assertIn(line, S["lines"])
+            self.assertEqual(sorted(ways), ["a", "b", "c"], line)
+            for w, c in ways.items():
+                self.assertTrue(c["wall"] == "stone" if S["lines"][line]["stone"] else c["wall"] in S["plasters"], (line, w))
+                for part in ("shutter", "door", "frame"):
+                    self.assertIn(c[part], S["palette"], (line, w, part))
+                self.assertIn(c["roof"], S["roofs"], (line, w))
+
+    def test_FURN_060_every_home_has_a_plan(self):
+        self.assertEqual(len(self.houses), 469)
+        spots = self.plans["house_12x9"]["house"]["spots"]
+        beds = sum(len(spots[it["piece"]]) for it in self.plans["house_12x9"]["items"] if it["piece"] in self.plans["house_12x9"]["house"]["beds"])
+        for l in self.houses:
+            h = l["house"]
+            self.assertIn(h.get("interior"), self.plans, l["id"])
+            self.assertIn(h.get("style"), self.styles["colourways"][h["furniture"]], l["id"])
+            self.assertEqual(len(h["rooms"]), 10, l["id"])
+            self.assertLessEqual(len(l["objects"]["bed"]), beds, l["id"])     # a bed for every resident
+        for lid in ("b_0_0_l7", "b_0_0_l9", "b_0_0_l12", "b_0_0_l13"):     # the houses the owner reviewed keep the line as drawn
+            self.assertEqual(next(l for l in self.houses if l["id"] == lid)["house"]["style"], "a")
+
+    def test_FURN_060_row_houses_and_flats_have_a_plan(self):
+        """ADR-0036: every row house and court flat of 80 or 160 m2 is furnished from its plan (add_homes_01.py)."""
+        spots = self.plans["house_12x9"]["house"]["spots"]
+        rows = [l for l in world.lots(W) if l.get("interior")]
+        flats = [(l, q) for l in world.lots(W) for q in l.get("flats", []) if q.get("interior")]
+        self.assertEqual(len(rows), 250)
+        self.assertEqual(len(flats), 653)
+        for l in rows:
+            p = self.plans[l["interior"]]
+            self.assertEqual(len(p["house"]["floors"]), l["floors"], l["id"])
+            self.assertEqual(l["stair"]["kind"], "straight", l["id"])
+            beds = sum(len(spots[i["piece"]]) for i in p["items"] if i["piece"] in ("k17:bed", "c_bunk", "r_single"))
+            self.assertLessEqual(len(l["objects"]["bed"]), beds, l["id"])          # a bed for every resident
+            self.assertTrue(all(f >= 1 for f in l["levels"]["bed"]), l["id"])     # the beds are upstairs
+        for l, q in flats:
+            self.assertIn(q["interior"], ("flat_80", "flat_160"), q["id"])
+            self.assertFalse(l.get("tower"), q["id"])
+
+    def test_FURN_061_plans_keep_clear(self):
+        import importlib.util
+        p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "blender", "house_interiors_21_plan.py")
+        spec = importlib.util.spec_from_file_location("house_interiors_21_plan", p)
+        plan = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(plan)
+        self.assertEqual(plan.check(), [])
+        stored = self.plans["house_12x9"]["items"]
+        self.assertEqual([(i["piece"], i["x"], i["y"], i["level"]) for i in stored],
+                         [(i["piece"], i["x"], i["y"], i["level"]) for i in plan.ITEMS])   # the game's plan is the checked one
+
+    def test_BUILD_003_building_colourways_come_from_the_palette(self):
+        import json
+        S = json.load(open(os.path.join(self.RULES, "building_styles.json"), encoding="utf-8"))
+        names = {**S["palette"], **S["plasters"], **S.get("stones", {}), **S["roofs"], "stone": None}
+        for group, ways in S["colourways"].items():
+            self.assertIn(group, S["groups"])
+            self.assertEqual(sorted(ways), ["a", "b", "c"], group)
+            for w, c in ways.items():
+                for part, v in c.items():
+                    if part != "name":
+                        for one in (v if isinstance(v, list) else [v]):       # an awning is a pair of stripes
+                            self.assertIn(one, names, (group, w, part))
+        self.assertTrue(set(S["types"].values()) <= set(S["groups"]))
+
+    def test_FURN_061_every_home_plan_keeps_clear(self):
+        import importlib.util, sys
+        here = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "blender")
+        sys.path.insert(0, here)
+        spec = importlib.util.spec_from_file_location("home_interiors_22_plan", os.path.join(here, "home_interiors_22_plan.py"))
+        plan = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(plan)
+        for p in plan.build():
+            self.assertEqual(p.check(), [], p.key)
+            self.assertEqual([(i["piece"], i["x"], i["y"], i["level"]) for i in self.plans[p.key]["items"]],
+                             [(i["piece"], i["x"], i["y"], i["level"]) for i in p.items], p.key)   # the game's plan is the checked one
+
+    def test_FURN_062_levels_add_up(self):
+        for name, p in self.plans.items():
+            n = [sum(1 for it in p["items"] if it["level"] <= lv) for lv in (1, 2, 3, 4)]
+            self.assertTrue(0 < n[0] < n[1] < n[2] < n[3] == len(p["items"]), (name, n))
+            self.assertEqual(sorted(int(k) for k in p["levels"]), [1, 2, 3, 4])
 class TheOpenGround(unittest.TestCase):
     """WLD-055: the town wall is gone; WLD-056: the ground outside Old Town is filled with woods, commons, orchards,
     fields, plots for sale and meadows, with no buildings (owner, 2026-11-24)."""
