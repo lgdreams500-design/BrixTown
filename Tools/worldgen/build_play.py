@@ -235,6 +235,7 @@ def season_days(day, cal):
 
 def tree_rows(w, city, day):
     rows = []
+    crowns = {"round": 0, "cone": 1, "slim": 2}                 # how play.js draws the crown (vegetation.json "crown", WLD-056)
     for b in w["blocks"]:
         for t in b["trees"]:
             v = city.veg.tree(t, day)
@@ -242,7 +243,7 @@ def tree_rows(w, city, day):
                 continue
             c = v.get("color", [0.3, 0.33, 0.2])
             rows.append([t["pos"][0], t["pos"][1], round(v["radius"], 2), round(v["leaf"], 2), round(c[0], 3), round(c[1], 3), round(c[2], 3),
-                         int(v.get("blossom", 0)), int(v["state"] == "fallen")])
+                         int(v.get("blossom", 0)), int(v["state"] == "fallen"), crowns[city.veg.d["species"][t["species"]].get("crown", "round")]])
     return rows
 
 
@@ -296,7 +297,7 @@ def main(day=16):
                 l["design"] = world.built(w, ds[l["id"]])     # with its ids made colours, finishes and sizes (BUILD-016)
                 l["dsg"] = ds[l["id"]]                         # and the design itself, which the remodel designer edits (BUILD-004)
     data = dict(
-        city=w["city"], blocks=[{k: b[k] for k in ("id", "grid", "template", "district", "origin", "size", "lots", "paths", "props", "span", "lanes") if k in b} for b in w["blocks"]],
+        city=w["city"], blocks=[{k: b[k] for k in ("id", "grid", "template", "district", "origin", "size", "lots", "paths", "props", "span", "lanes", "tracks") if k in b} for b in w["blocks"]],
         day=dict(index=day, weekday=info["weekday_name"], season=cal["seasons"][info["season"]], market=info["market"],
                  sunrise=cal["sunrise"][info["season"]], sunset=cal["sunset"][info["season"]],
                  weather=[citysim.weather(city.d, city.clock, day * 1440 + h * 60) for h in (3, 9, 15, 21)]),

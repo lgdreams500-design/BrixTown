@@ -5,9 +5,12 @@
 "use strict";
 const D = window.WASTED;
 const G = D.city.grid, P = G.pitch, SW = G.street_width, CITY_X = G.columns * P, CITY_Z = G.rows * P, CITY = Math.max(CITY_X, CITY_Z);
-// Old Town inside its wall (city.json "wall": grid lines i0, j0, i1, j1); beyond it the city's newer areas, on open ground
+// Old Town's street grid ends where its wall stood (city.json "wall": grid lines i0, j0, i1, j1; the wall is gone, WLD-055);
+// beyond it the city's newer areas and the open ground: woods, commons, orchards, fields, plots and meadows (WLD-056)
+const GREEN_KINDS = { woods: 1, common: 1, orchard: 1, fields: 1, plots: 1, meadow: 1 };
 const WALL = (D.city.wall && D.city.wall.cells) || [0, 0, G.columns, G.rows], OX = WALL[0] * P, OZ = WALL[1] * P, OX1 = WALL[2] * P, OZ1 = WALL[3] * P;
 const inTown = (x, z) => x > OX - SW / 2 && z > OZ - SW / 2 && x < OX1 + SW / 2 && z < OZ1 + SW / 2;
+const Y_WILD = -0.03;                                  // the open ground beyond Old Town: under the roads (0), over the fields (-0.05)
 const Y_PAVE = 0.12, Y_YARD = 0.16, Y_GRASS = 0.15, Y_PATH = 0.18, Y_FLOOR = 0.2, GF = 3.2;
 const OLD_BASE = 3.55;                                      // the old quarters' stone storey: one floor, plaster above (building_kit_07: 3.4 m)
 const PAVE = 4.5;                                        // pavement width round every block
@@ -179,6 +182,7 @@ function groundBase(x, z) {                              // height of the ground
     const l = lotAt(x, z); if (l && l.enterable) return Y_FLOOR;
     if (there.lanes) return 0;                             // a community: houses on open ground along its lanes
     const [bx, bz] = there.origin, [ex, ez] = there.ext;
+    if (GREEN_KINDS[there.template]) return x > bx && z > bz && x < bx + ex && z < bz + ez ? Y_WILD : 0;   // open ground: just under the roads that cross it
     if (x > bx && z > bz && x < bx + ex && z < bz + ez) return Y_YARD;
     return x > bx - PAVE && z > bz - PAVE && x < bx + ex + PAVE && z < bz + ez + PAVE ? Y_PAVE : 0;
   }
@@ -226,10 +230,11 @@ function fbox(m, S, a0, a1, y0, y1, d0, d1, c, f, under, all) { // a box on a wa
   S.ns ? m.box(a0, y0, lo, a1, y1, hi, c, f, o) : m.box(lo, y0, a0, hi, y1, a1, c, f, o);
 }
 // Painted names: every sign's name is drawn once into a 4 x 32 grid of cells; a lettering quad carries (u, v, cell + share of the cell the name fills).
-const TXT = document.createElement("canvas"); TXT.width = TXT.height = 2048; const txt = TXT.getContext("2d"), TXT_CELL = new Map();
+const TXT = document.createElement("canvas"); TXT.width = 2048; TXT.height = 4096;   // 4 names a row, 64 rows (the town alone fills 128)
+ const txt = TXT.getContext("2d"), TXT_CELL = new Map();
 function nameCell(name) {
   if (TXT_CELL.has(name)) return TXT_CELL.get(name);
-  const i = TXT_CELL.size; if (i >= 128) return null;
+  const i = TXT_CELL.size; if (i >= 256) return null;
   let px = 46; txt.font = `600 ${px}px Georgia, 'Times New Roman', serif`; let tw = txt.measureText(name).width;
   if (tw > 490) { px = Math.floor(px * 490 / tw); txt.font = `600 ${px}px Georgia, 'Times New Roman', serif`; tw = txt.measureText(name).width; }
   txt.fillStyle = "#fff"; txt.textAlign = "center"; txt.textBaseline = "middle"; txt.fillText(name, (i % 4) * 512 + 256, Math.floor(i / 4) * 64 + 34);
@@ -1245,7 +1250,7 @@ function room(l, side, F, dm, occ, R, accent, fab, chair, table, B, hard) {
 // A lawn (ART-001): the grass itself in material 24, a band of longer, darker grass along its edges, and tufts that the
 // mower missed, most of them near the edges and none on a path or under something standing on the grass.
 function lawn(x0, z0, x1, z1, y, c, b, tufts) {
-  world.flat(x0, z0, x1, z1, y, c, 24); LAWNS.push([x0, z0, x1, z1]);
+  world.flat(x0, z0, x1, z1, y, c, 24); LAWNS.push([x0, z0, x1, z1, y]);
   const e = LAWN.edge_m, ec = mul3(LAWN.edge_color, c[1] / LAWN.tones[1][1]), ye = y + .006;
   world.flat(x0, z0, x1, z0 + e, ye, ec, 24); world.flat(x0, z1 - e, x1, z1, ye, ec, 24);
   world.flat(x0, z0 + e, x0 + e, z1 - e, ye, ec, 24); world.flat(x1 - e, z0 + e, x1, z1 - e, ye, ec, 24);
@@ -1271,8 +1276,8 @@ function lawn(x0, z0, x1, z1, y, c, b, tufts) {
   }
 }
 function treeRing(x, z, g) {                               // a ring of bare earth and mulch round a trunk standing in a lawn
-  if (!LAWNS.some(([a, b2, c, d]) => x > a + .5 && x < c - .5 && z > b2 + .5 && z < d - .5)) return;
-  const R = LAWN.tree_ring_m * (.85 + .3 * hash(x, z, "ring")), y = Math.max(g, Y_GRASS) + .03, N = 9;
+  const lw = LAWNS.find(([a, b2, c, d]) => x > a + .5 && x < c - .5 && z > b2 + .5 && z < d - .5); if (!lw) return;
+  const R = LAWN.tree_ring_m * (.85 + .3 * hash(x, z, "ring")), y = (lw[4] === Y_WILD ? Y_WILD : Math.max(g, Y_GRASS)) + .03, N = 9;   // on the lawn it lies on
   for (let k = 0; k < N; k++) {
     const a0 = k / N * 6.283, a1 = (k + 1) / N * 6.283, r0 = R * (.9 + .2 * hash(x, z, k)), r1 = R * (.9 + .2 * hash(x, z, (k + 1) % N));
     world.quad([x, y, z], [x + Math.cos(a1) * r1, y, z + Math.sin(a1) * r1], [x + Math.cos(a0) * r0, y, z + Math.sin(a0) * r0], [x, y, z], mul3(LAWN.mulch_color, .9 + .2 * hash(k, x)), 0, [0, 1, 0]);
@@ -1299,8 +1304,75 @@ function openLot(l) {
   }
 }
 
+// ---------------------------------------------------------------- the open ground beyond Old Town (WLD-056)
+// Blocks of woods, commons, orchards, fields, building plots and meadows (Tools/worldgen/add_green_01.py): no lots, no
+// buildings; their ground, tracks and the props only they use are drawn here. Their props are in set "wild".
+const BOARD = [.12, .2, .16], WOOD_FLOOR = [.19, .2, .12], GRAVEL = [.44, .4, .33], FENCE = [.4, .3, .2], STRAW = [.62, .52, .3];
+const CROP = { wheat: [.52, .45, .22], barley: [.48, .45, .27], furrow: [.24, .18, .13], pasture: [.27, .34, .17], cabbage: [.19, .29, .17], rough: [.33, .36, .2] };
+function greenGround(b) {
+  const [bx, bz] = b.origin, [SX, SZ] = b.ext;
+  if (b.template === "woods") {                             // leaf litter under the trees, in patches of a few tones
+    world.flat(bx, bz, bx + SX, bz + SZ, Y_WILD, WOOD_FLOOR, 0);
+    for (let i = 0; i < SX / 16; i++) for (let j = 0; j < SZ / 16; j++) if (hash(b.id, i, j, "lit") < .45) {
+      const x = bx + i * 16 + 4 * hash(i, j, b.id), z = bz + j * 16 + 4 * hash(j, i, b.id), w = 6 + 8 * hash(b.id, j, i);
+      world.flat(x, z, Math.min(bx + SX, x + w), Math.min(bz + SZ, z + w * (.6 + .6 * hash(i, b.id, j))), Y_WILD + .004, mul3(WOOD_FLOOR, hash(i, j, "tn") < .5 ? 1.25 : .82), 0);
+    }
+  } else lawn(bx, bz, bx + SX, bz + SZ, Y_WILD, b.template === "fields" ? mul3(C.grass, .92) : C.grass, b, b.template === "meadow");
+  for (const t of b.tracks || []) ribbon(world, t.points, t.width, Y_WILD + .015, GRAVEL, 0);
+}
+function wildProp(p) {                                      // the things only the open ground has; false for anything else
+  const [x, z] = p.pos, g = groundBase(x, z), k = p.kind;
+  if (k === "fence") {                                       // post and two rails
+    const ax = p.along === "x", L = p.len, n = Math.max(1, Math.round(L / 3));
+    for (let i = 0; i <= n; i++) { const t = -L / 2 + L * i / n, px = ax ? x + t : x, pz = ax ? z : z + t; world.box(px - .07, g, pz - .07, px + .07, g + 1.15, pz + .07, FENCE, 0); }
+    for (const h of [.55, 1.0]) ax ? world.box(x - L / 2, g + h, z - .03, x + L / 2, g + h + .1, z + .03, mul3(FENCE, 1.1), 0) : world.box(x - .03, g + h, z - L / 2, x + .03, g + h + .1, z + L / 2, mul3(FENCE, 1.1), 0);
+    ax ? solid(x - L / 2, g, z - .1, x + L / 2, g + 1.1, z + .1) : solid(x - .1, g, z - L / 2, x + .1, g + 1.1, z + L / 2);
+  } else if (k === "board") {                                // a "For sale" board on two posts, facing the track
+    const [fx, fz] = p.face, ax = fz !== 0, w = 1.7;
+    for (const s of [-.75, .75]) { const px = x + (ax ? s : 0), pz = z + (ax ? 0 : s); world.box(px - .06, g, pz - .06, px + .06, g + 2.1, pz + .06, FENCE, 0); }
+    ax ? world.box(x - w / 2, g + 1.1, z - .04, x + w / 2, g + 2.0, z + .04, BOARD, 0) : world.box(x - .04, g + 1.1, z - w / 2, x + .04, g + 2.0, z + w / 2, BOARD, 0);
+    ax ? world.box(x - w / 2, g + 1.0, z - .05, x + w / 2, g + 1.1, z + .05, C.terracotta, 0) : world.box(x - .05, g + 1.0, z - w / 2, x + .05, g + 1.1, z + w / 2, C.terracotta, 0);
+    const cell = nameCell(p.text || "FOR SALE"); if (cell) lettering(signs, [x + fx * .06, g + 1.55, z + fz * .06], [fx, 0, fz], .2, cell);
+    solid(x - .8, g, z - .8, x + .8, g + 2, z + .8);
+  } else if (k === "peg") {                                  // a survey peg with a painted top at each corner of a plot
+    world.box(x - .05, g, z - .05, x + .05, g + .5, z + .05, FENCE, 0); world.box(x - .055, g + .4, z - .055, x + .055, g + .52, z + .055, C.ochre, 0);
+  } else if (k === "log") {                                  // a fallen trunk, lying where it fell
+    const d = .45 + .1 * hash(p.id, "d");
+    world.ybox(x, g, z, p.len || 3, d, d, p.yaw || 0, [.36, .29, .22], 0); world.ybox(x, g + d, z, (p.len || 3) * .9, .05, d * .7, p.yaw || 0, [.3, .34, .18], 0);   // moss along its top
+  } else if (k === "rock") {
+    const r = p.r || .8, sd = p.seed || 1;
+    world.ybox(x, g - .05, z, r * 1.6, r * .7, r * 1.2, sd, mul3(C.stone, .85 + .2 * hash(sd, "c")), 6); world.ybox(x, g - .05, z, r * 1.1, r, r * .9, sd + .8, mul3(C.stone, .95), 6);
+    solid(x - r * .7, g, z - r * .7, x + r * .7, g + r * .9, z + r * .7);
+  } else if (k === "picnic") {                               // a timber table with a bench along each side
+    const yaw = p.yaw || 0, c = Math.cos(yaw), s = Math.sin(yaw), W = [.5, .34, .18];
+    world.ybox(x, g + .72, z, 2.0, .06, .8, yaw, W, 0); world.ybox(x, g, z, .12, .72, .7, yaw, mul3(W, .8), 0);
+    for (const o of [-.75, .75]) world.ybox(x - s * o, g + .42, z + c * o, 2.0, .05, .3, yaw, W, 0);
+    solid(x - 1.1, g, z - 1.1, x + 1.1, g + .78, z + 1.1);
+  } else if (k === "haybale") {                              // bales in twos, one on top of the other now and then
+    const yaw = p.yaw || 0, two = hash(p.id, "up") < .3;
+    world.ybox(x, g, z, 1.2, .8, .9, yaw, STRAW, 0); if (two) world.ybox(x, g + .8, z, 1.2, .8, .9, yaw + .2, mul3(STRAW, 1.08), 0);
+    solid(x - .7, g, z - .7, x + .7, g + (two ? 1.6 : .8), z + .7);
+  } else if (k === "crop") {                                 // a field: what grows in it, in rows along it
+    const [w, d] = p.size, x0 = x - w / 2, z0 = z - d / 2, col = CROP[p.crop] || CROP.rough, y = Y_WILD + .012;
+    world.flat(x0, z0, x0 + w, z0 + d, y, p.crop === "furrow" || p.crop === "cabbage" ? CROP.furrow : col, 0);
+    if (p.crop === "wheat" || p.crop === "barley") {        // the standing crop: a level top just under waist height, a little uneven
+      for (let i = 0; i < w / 6; i++) { const a = x0 + i * 6, c = Math.min(x0 + w, a + 6); world.box(a, y, z0, c, y + .75 + .08 * hash(p.id, i), z0 + d, mul3(col, .92 + .16 * hash(i, p.id)), 0); }
+    } else if (p.crop === "furrow" || p.crop === "cabbage") {   // ridges of earth, or rows of cabbages along them
+      for (let a = x0 + .6; a < x0 + w - .3; a += 1.3) world.box(a - .3, y, z0, a + .3, y + (p.crop === "cabbage" ? .32 : .14), z0 + d, p.crop === "cabbage" ? mul3(CROP.cabbage, .9 + .2 * hash(a, p.id)) : mul3(CROP.furrow, 1.15), 0);
+    } else if (p.crop === "rough") world.flat(x0 + 1, z0 + 1, x0 + w - 1, z0 + d - 1, y + .003, mul3(col, 1.08), 0);   // mown inside its fence
+  } else if (k === "pond") {                                 // still water in a ring of reeds
+    const r = p.r, y = Y_WILD + .01;
+    disc(world, p.pos, r + 1.2, y, mul3(C.soil, 1.2), 0); disc(world, p.pos, r, y + .01, C.water, 0);
+    for (let i = 0; i < r * 2.2; i++) { const a = i / (r * 2.2) * 6.283 + hash(p.id, i) * .3, rr = r + .2 + .6 * hash(i, p.id); if (hash(p.id, i, "gap") < .3) continue; for (let q = 0; q < 4; q++) world.ybox(x + Math.cos(a) * rr + (hash(i, q, "rx") - .5) * .5, y, z + Math.sin(a) * rr + (hash(q, i, "rz") - .5) * .5, .06, .8 + .7 * hash(i, q, "h"), .06, a + q, mul3([.3, .38, .18], .85 + .3 * hash(q, i)), 0); }   // a clump of reeds
+    solid(x - r * .7, 0, z - r * .7, x + r * .7, 1, z + r * .7);
+  } else return false;
+  return true;
+}
+
 function prop(p, b) {
   const [x, z] = p.pos, g = groundBase(x, z);
+  if (p.set === "wild" && wildProp(p)) return;             // the open ground's own things (WLD-056)
+  if (p.set === "wild" && p.kind === "bin" && Dress.prop(p, b)) return;
   if (BLOB_SIZE[p.kind]) { const [a, c] = BLOB_SIZE[p.kind], ax = p.along !== "z"; BLOBS.push([x, z, ax ? a : c, ax ? c : a]); }
   if (p.kind === "plant") return plant(p);                 // garden planting (CITY-017, WLD-040)
   if (p.kind === "carpark") return Outlet.carpark(p, b);   // the furniture outlet's car park (outlet.js)
@@ -1421,7 +1493,7 @@ function plantClump(px, y, pz, st, sc, seed) {             // one plant in a bor
     world.ybox(px + ox, y + h * (.7 + .25 * hash(seed, i)), pz + oz, s, s * (st.height < .42 ? 1.2 : .9), s, Math.PI / 4 + i, mul3(fl, .85 + .3 * hash(seed, i, "f")), 0); }
 }
 function plant(p) {
-  const [x, z] = p.pos, y = Math.max(groundBase(x, z), Y_GRASS) + .03, sd = p.seed || hash(x, z) * 9999;
+  const [x, z] = p.pos, y = (p.set === "wild" ? Y_WILD : Math.max(groundBase(x, z), Y_GRASS)) + .03, sd = p.seed || hash(x, z) * 9999;   // the open ground lies lower (WLD-056)
   if (p.shape === "hedge") {                               // clipped box: sections a little uneven in height and tone, the top paler where it catches the sun
     const st = PLANTS[p.species]; if (!st) return;
     const ax = p.along === "x", L = p.len, dep = p.depth, n = Math.max(1, Math.round(L / 1.3));
@@ -1461,14 +1533,29 @@ function plant(p) {
   }
 }
 
-function tree(t) {                                         // a pale trunk and a faceted crown, like the tree in the reference square
-  const [x, z, r, leaf, cr, cg, cb, blossom, fallen] = t, g = groundBase(x, z), w = clamp(.09 + r * .03, .11, .25), h = 1.3 + r * .75, bark = [.46, .38, .3];
-  treeRing(x, z, g);
+function tree(t, lite) {                                   // a pale trunk and a faceted crown, like the tree in the reference square
+  // t[9], the crown (vegetation.json "crown"): 0 round, 1 a pine's cone, 2 a birch's slim crown on a white trunk. A tree in
+  // the woods is drawn `lite`, with fewer facets: there are thousands and they stand close (WLD-056).
+  const [x, z, r, leaf, cr, cg, cb, blossom, fallen] = t, crown = t[9] || 0, g = groundBase(x, z), w = clamp(.09 + r * .03, .11, .25) * (crown === 2 ? .8 : 1);
+  const h = crown === 1 ? 1.1 + r * .35 : crown === 2 ? 1.6 + r * 1.05 : 1.3 + r * .75, bark = crown === 2 ? [.7, .68, .62] : crown === 1 ? [.4, .3, .24] : [.46, .38, .3];
+  if (!lite) treeRing(x, z, g);
   if (fallen) { world.ybox(x + h / 2, g, z, h, w * 2, w * 2, hash(x, z) * 6.28, bark, 0); return; }
   world.box(x - w, g, z - w, x + w, g + h + r * .3, z + w, bark, 0); solid(x - w, g, z - w, x + w, g + h, z + w);
+  if (crown === 2) world.box(x - w - .005, g + h * .3, z - w - .005, x + w + .005, g + h * .34, z + w + .005, [.2, .19, .18], 0);   // a dark band in the bark
   if (leaf <= .05) return;
-  const base = blossom ? [.7, .52, .55] : mix3([cr, cg, cb], [.32, .42, .22], .5), R = r * (.8 + .2 * leaf), cy = g + h + R * .5, N = 7, M = 5, ring = [];
-  for (let k = 0; k <= M; k++) { const f = -1.2 + (Math.PI / 2 + 1.2) * k / M, row = []; for (let i = 0; i < N; i++) { const a = i / N * 6.2832 + k * .45, rr = R * (.8 + .4 * hash(x, z, k, i)) * (k === M ? 0 : Math.cos(f)); row.push([x + Math.cos(a) * rr, cy + Math.sin(f) * R * .92 * (k === M ? 1 : .85 + .3 * hash(z, x, k, i)), z + Math.sin(a) * rr]); } ring.push(row); }
+  if (crown === 1) {                                       // tiers of faceted cones, narrowing to the top; evergreen
+    const base = mix3([cr, cg, cb], [.16, .24, .15], .4), N = lite ? 5 : 7, T = lite ? 2 : 3, H = r * 3.1;
+    for (let k = 0; k < T; k++) {
+      const y0 = g + h + H * k / (T + .6), Rk = r * (1.05 - .3 * k), apex = [x, y0 + H * .62, z], ring = [];
+      for (let i = 0; i < N; i++) { const a = i / N * 6.2832 + k * .7 + hash(x, z, k) , rr = Rk * (.85 + .3 * hash(x, z, k, i)); ring.push([x + Math.cos(a) * rr, y0 - .15 * Rk, z + Math.sin(a) * rr]); }
+      for (let i = 0; i < N; i++) { const a = ring[i], b2 = ring[(i + 1) % N], mid = [(a[0] + b2[0]) / 2 - x, Rk * .5, (a[2] + b2[2]) / 2 - z]; world.quad(a, b2, apex, apex, mul3(base, .7 + .5 * hash(x, k, i) + .08 * k), 0, mid); }
+      for (let i = 0; i < N; i++) world.quad(ring[i], [x, y0 + .2, z], ring[(i + 1) % N], ring[(i + 1) % N], mul3(base, .55), 0, [0, -1, 0]);
+    }
+    return;
+  }
+  const base = blossom ? [.7, .52, .55] : mix3([cr, cg, cb], [.32, .42, .22], .5), R = r * (.8 + .2 * leaf) * (crown === 2 ? .62 : 1), sy = crown === 2 ? 1.7 : 1;
+  const cy = g + h + R * .5 * sy, N = lite ? 5 : 7, M = lite ? 3 : 5, ring = [];
+  for (let k = 0; k <= M; k++) { const f = -1.2 + (Math.PI / 2 + 1.2) * k / M, row = []; for (let i = 0; i < N; i++) { const a = i / N * 6.2832 + k * .45, rr = R * (.8 + .4 * hash(x, z, k, i)) * (k === M ? 0 : Math.cos(f)); row.push([x + Math.cos(a) * rr, cy + Math.sin(f) * R * .92 * sy * (k === M ? 1 : .85 + .3 * hash(z, x, k, i)), z + Math.sin(a) * rr]); } ring.push(row); }
   for (let k = 0; k < M; k++) for (let i = 0; i < N; i++) {
     const j = (i + 1) % N, a = ring[k][i], b2 = ring[k][j], c = ring[k + 1][j], d = ring[k + 1][i], mid = [(a[0] + c[0]) / 2 - x, (a[1] + c[1]) / 2 - cy, (a[2] + c[2]) / 2 - z], col = mul3(base, .72 + .55 * hash(x, k, i) + .06 * k);
     world.quad(a, b2, c, c, col, 0, mid); if (k < M - 1) world.quad(a, c, d, d, col, 0, mid);
@@ -1542,44 +1629,38 @@ function buildWorld() {
   const far = 2500;                                        // fields everywhere, the town's paved streets inside the wall
   world.flat(-far, -far, CITY_X + far, CITY_Z + far, -.05, C.field, 0);
   world.flat(OX - E - 2, OZ - E - 2, OX1 + E + 2, OZ1 + E + 2, 0, C.road, 20);
-  // the town wall, with a gate where the tram comes through
-  const W0 = OX - E - 1.5, W1 = OX1 + E + 1.5, V0 = OZ - E - 1.5, V1 = OZ1 + E + 1.5, th = 3, gh = 7.5;
-  const wallBox = (a, b, c, d, y0) => { world.box(a, y0 || 0, b, c, gh, d, C.stone, 6, y0 ? { 2: [C.stoneDark, 9] } : null); solid(a, y0 || 0, b, c, gh, d); occl.push([a, b, c, d, gh]); };
-  // Every road out of town has a gate in the wall (CITY-068; the furniture outlet lies beyond the East Gate, FURN-020): an
-  // opening as wide as the street, a stone band over it with the gate's name, a tower each side, the road on through the
-  // fields. The tram's arch can be walked through too. Each side of the wall is a run with its openings cut out of it.
-  const GATE_W = 8, GATE_H = 5.2, GATES = (D.roads || {}).gates || [];
-  for (const [side, a, c, r0, r1] of [["n", V0 - th, V0, W0 - th, W1 + th], ["s", V1, V1 + th, W0 - th, W1 + th], ["w", W0 - th, W0, V0, V1], ["e", W1, W1 + th, V0, V1]]) {
-    const alongZ = side === "w" || side === "e", out = { n: [0, -1], s: [0, 1], w: [-1, 0], e: [1, 0] }[side];
-    const run = (p0, p1, y0) => { if (p1 - p0 > .01) alongZ ? wallBox(a, p0, c, p1, y0) : wallBox(p0, a, p1, c, y0); };
-    const cuts = alongZ ? [[TRAM_Z - 3.4, TRAM_Z + 3.4, 4.6, null]] : [];
-    for (const g of GATES) if (g[3] === out[0] && g[4] === out[1]) { const m = alongZ ? g[2] : g[1]; cuts.push([m - GATE_W, m + GATE_W, GATE_H, g]); }
-    cuts.sort((p, q) => p[0] - q[0]); let at = r0;
-    for (const [p0, p1, h, g] of cuts) {
-      run(at, p0); run(p0, p1, h); at = p1;
-      if (!g) continue;
-      const mid = (a + c) / 2, face = side === "w" || side === "n" ? a - .04 : c + .04, m = (p0 + p1) / 2;
-      for (const t of [p0 - 2.6, p1 + 2.6]) { const b = alongZ ? [mid - 2.6, t - 2.6, mid + 2.6, t + 2.6] : [t - 2.6, mid - 2.6, t + 2.6, mid + 2.6]; world.box(b[0], 0, b[1], b[2], gh + 2.4, b[3], C.stone, 6); solid(b[0], 0, b[1], b[2], gh + 2.4, b[3]); }
-      const cell = nameCell(g[0]); if (cell) lettering(signs, alongZ ? [face, (h + gh) / 2, m] : [m, (h + gh) / 2, face], [out[0], 0, out[1]], .8, cell);
-      const end = (alongZ ? g[1] : g[2]) + (alongZ ? g[3] : g[4]) * g[5], f0 = Math.min(face, end), f1 = Math.max(face, end);
-      alongZ ? world.flat(f0, m - 3.5, f1, m + 3.5, 0, C.road, 20) : world.flat(m - 3.5, f0, m + 3.5, f1, 0, C.road, 20);   // the road out, through the fields
+  // The town wall has been taken down (WLD-055): Old Town's paving ends at a stone kerb along the line where it stood, and
+  // every road out of town (CITY-068; the furniture outlet lies beyond the East Gate, FURN-020) runs on from there across
+  // the open ground. The kerb has openings for the roads and the tram rails; the green beyond it is the blocks' (WLD-056).
+  const K0 = OX - E - 2, K1 = OX1 + E + 2, L0 = OZ - E - 2, L1 = OZ1 + E + 2, GATES = (D.roads || {}).gates || [];
+  for (const [side, a, r0, r1] of [["n", L0, K0, K1], ["s", L1, K0, K1], ["w", K0, L0, L1], ["e", K1, L0, L1]]) {
+    const alongZ = side === "w" || side === "e", out = { n: [0, -1], s: [0, 1], w: [-1, 0], e: [1, 0] }[side], o = out[0] + out[1];
+    const cuts = alongZ ? [[TRAM_Z - 3.4, TRAM_Z + 3.4]] : [];
+    for (const g of GATES) if (g[3] === out[0] && g[4] === out[1]) {
+      const m = alongZ ? g[2] : g[1]; cuts.push([m - 3.5, m + 3.5]);
+      const end = (alongZ ? g[1] : g[2]) + (alongZ ? g[3] : g[4]) * g[5], f0 = Math.min(a, end), f1 = Math.max(a, end);
+      alongZ ? world.flat(f0, m - 3.5, f1, m + 3.5, 0, C.road, 20) : world.flat(m - 3.5, f0, m + 3.5, f1, 0, C.road, 20);   // the road out, across the open ground
     }
-    run(at, r1);
+    cuts.sort((p, q) => p[0] - q[0]); let at = r0;
+    const kerb = (p0, p1) => { if (p1 - p0 < .01) return; const k0 = Math.min(a, a - o * .3), k1 = Math.max(a, a - o * .3); alongZ ? world.box(k0, 0, p0, k1, .14, p1, C.stone, 6) : world.box(p0, 0, k0, p1, .14, k1, C.stone, 6); };
+    for (const [p0, p1] of cuts) { kerb(at, p0); at = p1; }
+    kerb(at, r1);
   }
-  for (const cx of [W0 - th / 2, W1 + th / 2]) for (const cz of [V0 - th / 2, V1 + th / 2]) world.box(cx - 3.5, 0, cz - 3.5, cx + 3.5, gh + 3, cz + 3.5, C.stone, 6);
   for (const s of [-.72, .72]) world.box(OX - E - 40, 0, TRAM_Z + s - .05, OX1 + E + 40, .04, TRAM_Z + s + .05, C.metal, 9);
   for (const ln of (D.roads || {}).links || []) ribbon(world, ln.points, ln.width, .02, C.road, 20);   // the roads out to the new areas
-  RANGES.push([0, world.n, true]);                        // fields, town paving, wall and rails: laid first, under everything
+  RANGES.push([0, world.n, true]);                        // fields, town paving, kerb and rails: laid first, under everything
   for (const b of D.blocks) {
     const [bx, bz] = b.origin, S = b.size, [SX, SZ] = b.ext, b0 = world.n;
     if (b.lanes) {                                          // a community: its lanes and turning circles on the open ground
       for (const ln of b.lanes) { ribbon(world, ln.points, ln.width, .02, C.road, 20); if (ln.end === "turning") disc(world, ln.points[ln.points.length - 1], ln.width, .021, C.road, 20); }
-    } else {
+    } else if (GREEN_KINDS[b.template]) greenGround(b);     // open ground: grass, woodland floor, tracks (WLD-056)
+    else {
       const [pc, pf] = groundOf(b.id, C.pave, true); world.box(bx - PAVE, 0, bz - PAVE, bx + SX + PAVE, Y_PAVE, bz + SZ + PAVE, pc, pf);   // paving by surfaces.json
     }
     if (b.template === "rows") lawn(bx + 2, bz + 16.5, bx + S - 2, bz + S - 16.5, Y_GRASS, C.grass, b);
     if (b.template === "park") lawn(bx + 1, bz + 1, bx + SX - 1, bz + SZ - 1, Y_GRASS, C.grass, b, true);
     for (const [p, q] of b.paths) {                      // footpaths, kept inside the block and its pavement
+      if (GREEN_KINDS[b.template]) { ribbon(world, [p, q], b.template === "woods" ? 1.4 : 2.0, Y_WILD + .02, b.template === "woods" ? [.3, .25, .19] : C.path, 0); continue; }   // paths over open ground: earth in the woods, plain gravel elsewhere
       if (b.lanes || (p[0] !== q[0] && p[1] !== q[1])) { ribbon(world, [p, q], 1.6, b.lanes ? .03 : Y_PATH, C.path, 21); continue; }   // a slanting path: a strip along it
       const lo = [bx - PAVE, bz - PAVE], hi = [bx + SX + PAVE, bz + SZ + PAVE];
       const a = [clamp(Math.min(p[0], q[0]), lo[0], hi[0]), clamp(Math.min(p[1], q[1]), lo[1], hi[1])], c = [clamp(Math.max(p[0], q[0]), lo[0], hi[0]), clamp(Math.max(p[1], q[1]), lo[1], hi[1])];
@@ -1597,7 +1678,11 @@ function buildWorld() {
   }
   const byCell = new Map();                                // trees touch nothing they could tie with, so they are grouped by block square
   for (const t of D.trees) { const k = Math.floor(t[0] / P) + "," + Math.floor(t[1] / P); if (!byCell.has(k)) byCell.set(k, []); byCell.get(k).push(t); }
-  for (const ts of byCell.values()) { const t0 = world.n; ts.forEach(t => Smash.wrap(t[8] ? "log" : "tree", t[0], t[1], () => tree(t))); RANGES.push([t0, world.n, false]); }
+  for (const ts of byCell.values()) {                     // trees in the woods: lite, and no car gets in among them to break them
+    const t0 = world.n;
+    ts.forEach(t => { const bk = blockOf(t[0], t[1]); bk && bk.template === "woods" ? tree(t, true) : Smash.wrap(t[8] ? "log" : "tree", t[0], t[1], () => tree(t)); });
+    RANGES.push([t0, world.n, false]);
+  }
   for (const k of Roads.cells()) { const r0 = world.n; Roads.build(world, Y_PAVE, k); RANGES.push([r0, world.n, false]); }   // zebras, parking bays, traffic lights (roads.js)
 }
 
@@ -1848,7 +1933,7 @@ void main(){
   }
 #ifdef LETTERS
   if(f>12.5&&f<13.5){                                                     // painted lettering: vC is (across, up, cell + share of the cell)
-    float id=floor(c.z), tw=fract(c.z); vec2 uv=vec2((mod(id,4.)+.5+(c.x-.5)*tw)/4.,(floor(id/4.)+1.-c.y)/32.);
+    float id=floor(c.z), tw=fract(c.z); vec2 uv=vec2((mod(id,4.)+.5+(c.x-.5)*tw)/4.,(floor(id/4.)+1.-c.y)/64.);
     if(texture2D(uTxt,uv).a<.5) discard; c=vec3(.70,.64,.52); f=0.; }
 #endif
   if(!emis){
@@ -2472,11 +2557,11 @@ function placeName() {
   if (pl.y > 6 && l) return [l.name, "On the roof, " + Math.round(pl.y) + " m up"];
   if (l && !isOpen(l)) return [l.name, "Inside"];
   if (l && l.kind !== "stop") return [l.name, b ? b.district : ""];
-  if (!inTown(pl.x, pl.z)) {                               // beyond the wall: the road you are on, or the area you are in
+  if (!inTown(pl.x, pl.z)) {                               // beyond Old Town: the road you are on, or the area you are in
     const near = (pts, w) => pts.some((q, n) => n && segDist(pl.x, pl.z, pts[n - 1], q) < w / 2 + 2);
-    for (const ln of (D.roads || {}).links || []) if (near(ln.points, ln.width)) return [ln.name, b ? b.district : "Outside the walls"];
+    for (const ln of (D.roads || {}).links || []) if (near(ln.points, ln.width)) return [ln.name, b ? b.district : "Open country"];
     if (b && b.lanes) for (const ln of b.lanes) if (near(ln.points, ln.width)) return [ln.name, b.district];
-    return b ? [b.district, ""] : ["Outside the walls", ""];
+    return b ? [b.district, GREEN_KINDS[b.template] ? { woods: "Woods", common: "Common", orchard: "Orchard", fields: "Farmland", plots: "Building plots for sale", meadow: "Green" }[b.template] : ""] : ["Open country", ""];
   }
   const i = Math.floor(pl.x / P), j = Math.floor(pl.z / P), u = pl.x - i * P, v = pl.z - j * P, ns = D.city.streets.north_south, ew = D.city.streets.east_west;
   const du = Math.min(u, P - u), dv = Math.min(v, P - v);
