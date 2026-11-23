@@ -107,9 +107,9 @@ Per district `[ASSUMPTION]`: Old Town and the Centre mostly flats and row houses
 | Children | 60 | 5 % | 14 % |
 | Students | 74 | 7 % | 8 % |
 | Elders | 209 | 18 % | 18 % |
-| Working in town | 457 | 40 % | 45 % |
+| Working in town | 457 | 40 % | 49 % (was 45 %) |
 | Commuters (work outside) | 251 | 22 % | 10 % |
-| Couriers | 83 | 7 % | 5 % |
+| Couriers | 83 | 7 % | 1 % (was 5 %; the owner, 2026-11-23, CITY-087) |
 
 Within the jobs in town, target share of job places `[ASSUMPTION]`: retail 18 %, food 12 %, office 24 %, making 14 %,
 health 8 %, education 7 %, culture 4 %, showrooms 3 %, utility and transport 6 %, parks 4 %.
@@ -172,6 +172,12 @@ all (households fit their beds, so a little under the 4,389 the homes hold at th
 its band. Working residents took the nearest workplace with job places left; each workplace has a place to work for each
 of its staff. New jobs use today's roles (teachers, firefighters and police are clerks and utility staff until roles of
 their own are added). Flats over shops are left to the property market.
+
+Then careers (2026-11-23, LIVING_CITY CITY-081 to CITY-086, `add_careers_01.py`): floor area still counts the jobs a
+building could hold, but the residents who work there now fill the posts of `World/rules/careers.json` (a café 3 to 5,
+a grocer 3 to 5, a works 3 to 21, an office tower about 200), group by group up to each group's share; the posts and
+job places they leave are the in-commuters'. Teachers, firefighters, police officers and 119 other careers now have
+names of their own; 8 % of those working in town work from home as artists, and office work is 39 % of them.
 
 ## 6. Requirements
 

@@ -341,7 +341,7 @@ var Life = (() => {
     window.wasted.applySettings(settings);
   }
   function okSetting(s, v) { return s.type === "switch" ? typeof v === "boolean" : s.type === "choice" ? v in s.options : typeof v === "number" && v >= s.min - 1e-9 && v <= s.max + 1e-9; }
-  const PICTURE = { shadows: [true, false], ambient_occlusion: [true, false], bounce: [true, false], resolution: ["full", "soft"] };   // better, simple
+  const PICTURE = { shadows: [true, false], ambient_occlusion: [true, false], bounce: [true, false], resolution: ["auto", "soft"] };   // better, simple
   function setting(g, k, v) {                            // change one setting (no value: a switch flips, a choice goes to the next)
     const s = ST.groups[g].settings[k], cur = settings[g][k];
     if (v === undefined) v = s.type === "switch" ? !cur : s.type === "choice" ? (o => o[(o.indexOf(cur) + 1) % o.length])(Object.keys(s.options)) : cur;

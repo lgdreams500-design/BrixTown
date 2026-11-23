@@ -22,6 +22,8 @@ data file; nothing is stepped frame by frame.
 | `estate.py` | The real estate market (ADR-0022, PROP-009 to PROP-023): every building carved into units, owners (the town, several companies, households, businesses, the player), buying, selling, renting, letting, block price indices, upkeep and tax, mortgages, settled day by day on `economy.py`'s ledger. Standard library only. |
 | `test_estate.py` | 37 tests named after PROP and BANK requirements, including the balance targets in `World/rules/estate.json`. `python -m unittest test_estate -v` |
 | `render_traffic.py` | Writes an HTML page that plays a day of traffic: `python render_traffic.py traffic_day.html` |
+| `careers.py` | NPC careers and staffing (CITY-081 to CITY-086): each workplace's posts from `World/rules/careers.json`, and who does which job, worked out from homes, lots and rules. Standard library only. |
+| `test_careers.py` | 15 tests over the whole starting city: 50+ careers, café and grocer staff counts, posts as caps, artists at home, office share, own post at work, same answer in any order. `python -m unittest test_careers -v` |
 | `repairs.py` | Repair crews mending crash damage: when each broken thing is mended, worked out from the damage list and `World/rules/crash.json` (CITY-075). Standard library only. |
 | `test_repairs.py` | 8 tests: everything mended, one job at a time at walking pace, working hours only, same answer in any order. |
 

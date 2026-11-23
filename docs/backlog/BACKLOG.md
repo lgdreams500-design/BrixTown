@@ -5,14 +5,15 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 38 of 52 | 9 of 52 | 9 of 52 |
-| Size of the plan (points) | 468 | 427 | 827 |
+| Decided | 39 of 52 | 9 of 52 | 9 of 52 |
+| Size of the plan (points) | 484 | 427 | 827 |
 | Size of the suggested plan | 128 | 387 | 795 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
 - F-BLD-DESIGN at First slice needs F-MAP-PLOTS at level 1 (picked 0)
 - F-GARDEN at First slice needs F-VEG-LEAF at level 1 (undecided)
+- F-VEH-TRANSIT at First slice needs F-MAP-CITY at level 2 (picked 1)
 - F-SKY at First slice needs F-TIME-DAY at level 1 (undecided)
 
 ## City and buildings
@@ -63,7 +64,7 @@
 | Feature | First slice | Life depth | Full game | Note |
 |---|---|---|---|---|
 | **Traffic** `F-VEH-TRAFFIC` | 2 Real traffic ★ | 2 Real traffic ★ | 2 Real traffic ★ | Owner, 2026-11-22: residents have their cars as part of their routine, from the first slice. Cars need this level. |
-| **Tram or bus** `F-VEH-TRANSIT` | undecided | undecided | undecided |  |
+| **Tram or bus** `F-VEH-TRANSIT` | 2 Network ★ | undecided | undecided | Owner, 2026-11-23: "Level 2: Network" for buses; keep the tram and add buses. Residents of independent houses own the cars; those in the central flats mostly don't and use public transport. Depth and full not picked yet. |
 | **Driving yourself** `F-VEH-DRIVE` | 2 Cars ★ | 2 Cars ★ | 2 Cars ★ | Owner, 2026-11-22: walking, and drivable cars, from the first slice. |
 | **Crash damage** `F-VEH-CRASH` | 2 Broken until mended ★ | undecided | undecided | Owner, 2026-11-22: objects on the pavements, trees and building corners destructible when driving, with a breaking animation; "Until a worker fixes it", "Fast hits break", residents "Yes, they shout". Later milestones not stated. Then the same day: "remove speed requirement for the damage, it should damage at any speed". |
 

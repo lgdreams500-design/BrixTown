@@ -3,6 +3,10 @@
   "note": "The owner's level picks, stated by the owner in chat and recorded by agents (ADR-0008). A feature or milestone missing here is undecided. -1 means out of the game. After editing, run Tools/backlog.ps1.",
   "updated": "2026-11-23",
   "choices": {
+    "F-VEH-TRANSIT": {
+      "slice": 2,
+      "note": "Owner, 2026-11-23: \"Level 2: Network\" for buses; keep the tram and add buses. Residents of independent houses own the cars; those in the central flats mostly don't and use public transport. Depth and full not picked yet."
+    },
     "F-MAP-CITY": {
       "slice": 1,
       "depth": 1,

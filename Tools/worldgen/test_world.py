@@ -731,5 +731,56 @@ class TheFurnitureOutlet(unittest.TestCase):
         self.assertLessEqual(cp["pos"][1] + cp["size"][1] / 2, b["origin"][1] + b["size"])  # and in its block
 
 
+class TheMallCarParks(unittest.TestCase):
+    def test_WLD_054_small_car_parks_with_a_bus_stop(self):    # owner 2026-11-23: "Malls to ~1/4, bus stop"
+        import math
+        stops = {s["id"]: s["at"] for s in W["transit"]["stops"]}
+        served = {sid for ln in W["transit"]["lines"] for sid in ln["stops"]}
+        malls = [b for b in W["blocks"] if b.get("template") == "mall" and any(p["kind"] == "carpark" for p in b["props"])]
+        self.assertEqual(len(malls), 3)
+        for b in malls:
+            cp = next(p for p in b["props"] if p["kind"] == "carpark")
+            self.assertLessEqual(cp["cars"], 50, b["id"])                  # a quarter of what they had (160, 160, 200)
+            self.assertTrue(any(p["kind"] == "paving" for p in b["props"]), b["id"])
+            near = [sid for sid in served if math.dist(stops[sid], cp["pos"]) < 90]
+            self.assertTrue(near, b["id"])                                  # a bus stop at the car park
+        self.assertLessEqual(sum(p.get("cars", 0) for b in W["blocks"] for p in b["props"] if p["kind"] == "carpark"), 170)
+
+
+class TheTimings(unittest.TestCase):
+    def test_CITY_096_habits_spread_the_day_and_lunch_is_near_work(self):   # owner 2026-11-23: spread timings over windows
+        import math
+        roles = W["roles"]["roles"]
+        by = {}
+        for r in W["residents"]:
+            b = CITY.blocks(r["id"], DAY)
+            if len(b) > 1:
+                by.setdefault(r["role"], []).append(b[1][0])            # when their day gets going
+        for role, starts in by.items():
+            lo, hi = roles[role]["habit_min"]
+            if len(starts) < 40:
+                continue
+            spread = max(starts) - min(starts)
+            if hi - lo >= 120:
+                self.assertGreater(spread, .8 * (hi - lo), role)          # an office's staff over about three hours
+            self.assertLess(spread, hi - lo + 2 * (roles[role]["jitter"] + 25) + 1, role)   # school and shops keep their hours
+        again = {r["id"]: CITY.blocks(r["id"], DAY + 7)[1][0] for r in W["residents"][:200] if len(CITY.blocks(r["id"], DAY)) > 1}
+        for r in W["residents"][:200]:
+            if r["id"] in again:                                         # a habit: about the same time a week later
+                self.assertLess(abs(again[r["id"]] - CITY.blocks(r["id"], DAY)[1][0]), 2 * roles[r["role"]]["jitter"] + 1)
+        lots = {l["id"]: l for l in world.lots(W)}
+        near, far = 0, 0
+        for r in W["residents"]:
+            if not r.get("work") or r["role"] != "clerk":
+                continue
+            b = CITY.blocks(r["id"], DAY)
+            for i in range(1, len(b) - 1):
+                if b[i][1] in ("eat", "shop") and b[i - 1][1] == "work" and b[i + 1][1] == "work" and b[i][2] in lots:
+                    d = math.dist(lots[b[i][2]]["door"], lots[r["work"]]["door"])
+                    near += d <= 400
+                    far += d > 400
+        self.assertGreater(near, 20 * max(far, 1))                       # lunch from work is near work
+
+
 if __name__ == "__main__":
     unittest.main()

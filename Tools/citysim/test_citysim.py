@@ -211,7 +211,8 @@ class Weather(unittest.TestCase):
             caught = [rid for rid, s in now.items() if s["pos"] and s["state"] != "walking" and C.lots[s["place"]]["kind"] in R["open_kinds"] and s["act"] not in R["stay_out"]]
             self.assertEqual(caught, [], "still out in the open at minute %d" % m)
         under = C.at(day * 1440 + 1110)
-        self.assertGreater(sum(1 for rid in out if under[rid]["act"] == "shelter"), len(out) / 3)
+        # under cover: under an awning, or already indoors (with habits spread over the day, CITY-096, more of them were due home anyway)
+        self.assertGreater(sum(1 for rid in out if under[rid]["act"] == "shelter" or under[rid]["state"] == "inside"), len(out) / 3)
         self.assertEqual(C.at(day * 1440 + 1100), world_city_again().at(day * 1440 + 1100))     # CITY-022 still holds
 
     def test_CITY_078_back_out_when_the_rain_stops(self):

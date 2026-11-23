@@ -22,8 +22,8 @@
         "shadows": { "name": "Sun shadows", "type": "switch", "default": true },
         "ambient_occlusion": { "name": "Ambient occlusion", "type": "switch", "default": true },
         "bounce": { "name": "Bounce light and contact shade", "type": "switch", "default": true },
-        "resolution": { "name": "Resolution", "type": "choice", "options": { "full": "Full", "soft": "Soft (half)" }, "default": "full" },
-        "full_bodies": { "name": "People with full bodies", "type": "range", "min": 0, "max": 6, "step": 1, "default": 3 },
+        "resolution": { "name": "Resolution", "type": "choice", "options": { "auto": "Keep 60 frames a second", "full": "Full", "soft": "Soft (half)" }, "default": "auto" },
+        "full_bodies": { "name": "People with full bodies", "type": "range", "min": 0, "max": 6, "step": 1, "default": 1 },
         "field_of_view": { "name": "Field of view (degrees)", "type": "range", "min": 40, "max": 80, "step": 1, "default": 52 },
         "frame_counter": { "name": "Frame counter", "type": "switch", "default": false }
       }

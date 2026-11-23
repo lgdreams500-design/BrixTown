@@ -25,10 +25,12 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "furnishing", "settings", "room_plan"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers", "furnishing", "settings", "room_plan"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
+    transit = os.path.join(base, "transit.json")       # bus lines and stops (CITY-091)
+    w["transit"] = _read(transit) if os.path.exists(transit) else None
     return w
 
 
@@ -126,6 +128,7 @@ def validate(w):
                 out.append("%s: %s points at a lot that does not exist (%s)" % (r["id"], key, v))
         if r["role"] not in w["roles"]["roles"]:
             out.append("%s: unknown role %s" % (r["id"], r["role"]))
+    out += career_problems(w)
     if not out:                                        # every door must be reachable on foot from every other
         c = simulation(w)
         dd, _ = c.net._from(next(iter(c.anchor.values())))
@@ -845,19 +848,38 @@ def sim_data(w):
     veg = w["vegetation"]
     return dict(name=w["city"]["name"], size=[n * P, g["rows"] * P], calendar=cal["calendar"], weather=cal["weather"], tram=cal["tram"],
                 streets=streets, lots=lots(w), residents=w["residents"], roles=w["roles"]["roles"], signatures=w["signatures"]["signatures"],
-                choices=dict(w["choices"]["choices"], rounds=[]), use=w["choices"]["use"], species=veg["species"], flowers=veg["flowers"], plants=veg.get("plants", {}),
+                choices=dict(w["choices"]["choices"], rounds=[]), use=w["choices"]["use"], near_work=w["choices"].get("near_work"), species=veg["species"], flowers=veg["flowers"], plants=veg.get("plants", {}),
                 replant_gap_days=veg["replant_gap_days"], fallen_days=veg["fallen_days"], trees=[t for b in w["blocks"] for t in b["trees"]], lamps=[], react=w.get("weather_react"))
+
+
+def road_data(w):
+    """roads.json with what the traffic rules work out from the rest of the map (CITY-090, CITY-091): the communities'
+    lanes, the places outside the wall that need a driveway or kerbside bays, and the bus stops (transit.json)."""
+    roads = dict(w["roads"])
+    inside = {l["id"] for l in lots_inside(w)}
+    roads["outer_lanes"] = [ln for b in w["blocks"] for ln in b.get("lanes", [])]
+    roads["outer_lots"] = [dict(id=l["id"], kind=l["kind"], door=l["door"], bays_kind="mall" if b.get("template") == "mall" else l["kind"])
+                           for b in w["blocks"] for l in b["lots"]
+                           if l["id"] not in inside and l["kind"] not in ("market", "stop")]
+    roads["stops"] = list((w.get("transit") or {}).get("stops", []))
+    return roads
+
+
+def home_kinds(w):
+    """CITY-089: what kind of home each home lot is, from its block's template (traffic.json "home_kind"): house, row or flat."""
+    by = w["traffic"].get("home_kind", {})
+    return {l["id"]: by.get(b.get("template"), by.get("default", "flat")) for b in w["blocks"] for l in b["lots"] if l["kind"] == "home"}
 
 
 def simulation(w, traffic=False):
     """The living-city rules over the whole map. With traffic=True, residents who own a car drive their longer
-    trips (LIVING_CITY CITY-043 to CITY-049). The playable slice does not draw cars yet, so it stays off by default."""
+    trips (LIVING_CITY CITY-043 to CITY-049), and buses run their lines (CITY-091, CITY-092)."""
     import citysim
     city = citysim.City(data=sim_data(w))
     if traffic:
         import traffic as tr
-        city.car_homes = {l["id"] for l in lots_inside(w)}             # only households inside the wall keep a car for now
-        tr.Traffic(city, w["roads"], w["traffic"])
+        city.home_kind = home_kinds(w)
+        tr.Traffic(city, road_data(w), w["traffic"], w.get("transit"))
     return city
 
 
@@ -1142,6 +1164,36 @@ def storey_problems(w):
                 out.append("%s: %d floors and no lift" % (where, n))
         elif l.get("levels"):
             out.append("%s: one floor but places upstairs" % where)
+    return out
+
+
+def career_problems(w):
+    """Every rule careers.json must keep, and every resident's career (CITY-081 to CITY-086)."""
+    import careers
+    R = w["careers"]
+    out = careers.problems(R, w["roles"]["roles"])
+    C = R["careers"]
+    staff = {}
+    for r in w["residents"]:
+        c = r.get("career")
+        if c is None:
+            if r["role"] not in ("child", "student", "elder"):
+                out.append("%s: a %s with no career" % (r["id"], r["role"]))
+            continue
+        if c not in C:
+            out.append("%s: unknown career %s" % (r["id"], c))
+        elif C[c]["role"] != r["role"] and r["role"] in R["reassign_roles"]:    # commuters and couriers keep their routine
+            out.append("%s: career %s follows the %s routine, not %s" % (r["id"], c, C[c]["role"], r["role"]))
+        if r.get("day_career") is not None and r["day_career"] not in R.get("second_jobs", {}).get(c, {}):
+            out.append("%s: day career %s is not a second job of %s" % (r["id"], r["day_career"], c))
+        if r.get("post") is not None:
+            staff.setdefault(r.get("work"), []).append(r["post"])
+    spots = {l["id"]: len(l["objects"].get("work", [])) for l in lots(w)}
+    for lid, ps in staff.items():
+        if sorted(ps) != list(range(len(ps))):
+            out.append("%s: its staff's posts are not 0 to %d" % (lid, len(ps) - 1))
+        if len(ps) > spots.get(lid, 0):
+            out.append("%s: %d staff and %d places to work" % (lid, len(ps), spots.get(lid, 0)))
     return out
 
 

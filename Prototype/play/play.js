@@ -1304,6 +1304,9 @@ function prop(p, b) {
   if (BLOB_SIZE[p.kind]) { const [a, c] = BLOB_SIZE[p.kind], ax = p.along !== "z"; BLOBS.push([x, z, ax ? a : c, ax ? c : a]); }
   if (p.kind === "plant") return plant(p);                 // garden planting (CITY-017, WLD-040)
   if (p.kind === "carpark") return Outlet.carpark(p, b);   // the furniture outlet's car park (outlet.js)
+  if (p.kind === "paving") {                               // a paved forecourt where a mall's car park was (WLD-054)
+    const [w, d] = p.size; world.flat(x - w / 2, z - d / 2, x + w / 2, z + d / 2, g + .012, C.paving, 7); return;
+  }
   if (p.set === "dress" && Dress.prop(p, b)) return;      // street dressing (dressing.js, WLD-028)
   if (p.kind === "lantern") {                              // a wall lantern: glass on an iron arm, and the light it gives (watts as in the Blender scene)
     const o = p.out, lx = x + o[0] * .32, lz = z + o[1] * .32, h = p.height;
@@ -1621,12 +1624,12 @@ function resident(i, m) {                                // where resident i is 
   const t1 = k + 1 < row.length ? row[k + 1][0] : 1440, n = p.c.length, L = p.c[n - 1], d = clamp((m - p[0]) / Math.max(t1 - p[0], 1e-6), 0, 1) * L;
   const a = along(p, d), b = along(p, Math.min(L, d + 2)), c = along(p, Math.max(0, d - 2));
   let dx = b[0] - c[0], dz = b[1] - c[1]; const len = Math.hypot(dx, dz) || 1; dx /= len; dz /= len;
-  const lane = n >= 4 ? (hash(i, "lane") * 2 - 1) * .6 * clamp(Math.min(d - p.c[1], p.c[n - 2] - d) / 5, 0, 1) : 0;   // a little to one side of the pavement line, never at a door (CITY-043)
+  const lane = n >= 4 ? (hash(i, "lane") * 2 - 1) * 1.0 * clamp(Math.min(d - p.c[1], p.c[n - 2] - d) / 5, 0, 1) : 0;   // a little to one side of the pavement line, never at a door (CITY-043)
   const x = a[0] - dz * lane, z = a[1] + dx * lane;
   return { x, z, y: groundBase(x, z), yaw: yawOf(dx, dz), pose: 1, act: p[2], inside: 0, walking: true, ph: (d / People.stepLength(looks[i].sig, looks[i].S)) % 1 };
 }
-const DOING = { read: "reading at the library", view: "looking round the museum", watch: "at the pictures", bank: "at the bank", browse: "looking at cars", sleep: "asleep", home: "at home", work: "at work", eat: "eating", shop: "shopping", rest: "resting", sell: "selling at the market", wait: "waiting for the tram", visit: "at the clinic", tend: "tending the garden", deliver: "making a delivery", stroll: "out for a stroll", arrive: "back from town", eat_home: "eating at home", check: "on a round", inspect: "on a round", away: "waiting for the tram", shelter: "sheltering from the rain" };
-const GOING = { read: "going to the library", view: "going to the museum", watch: "going to the pictures", bank: "going to the bank", browse: "going to look at cars", sleep: "heading home", home: "heading home", eat_home: "heading home", work: "on the way to work", eat: "going to eat", shop: "going shopping", rest: "going for a sit down", sell: "on the way to the market", wait: "heading for the tram", away: "heading for the tram", visit: "going to the clinic", tend: "going to the garden", deliver: "out on a delivery", stroll: "out for a stroll", shelter: "running for cover" };
+const DOING = { cross: "waiting to cross", create: "working on their art at home", collect: "collecting the bins", read: "reading at the library", view: "looking round the museum", watch: "at the pictures", bank: "at the bank", browse: "looking at cars", sleep: "asleep", home: "at home", work: "at work", eat: "eating", shop: "shopping", rest: "resting", sell: "selling at the market", wait: "waiting for the tram", visit: "at the clinic", tend: "tending the garden", deliver: "making a delivery", stroll: "out for a stroll", arrive: "back from town", eat_home: "eating at home", check: "on a round", inspect: "on a round", away: "waiting for the tram", shelter: "sheltering from the rain" };
+const GOING = { cross: "on their way", create: "heading home to work", collect: "on the bin round", read: "going to the library", view: "going to the museum", watch: "going to the pictures", bank: "going to the bank", browse: "going to look at cars", sleep: "heading home", home: "heading home", eat_home: "heading home", work: "on the way to work", eat: "going to eat", shop: "going shopping", rest: "going for a sit down", sell: "on the way to the market", wait: "heading for the tram", away: "heading for the tram", visit: "going to the clinic", tend: "going to the garden", deliver: "out on a delivery", stroll: "out for a stroll", shelter: "running for cover" };
 
 function tramAt(m) {                                     // every tram on the map now: [x, stopped]
   const tr = D.tram, t0 = (+tr.first.slice(0, 2)) * 60 + (+tr.first.slice(3)), tl = (+tr.last.slice(0, 2)) * 60 + (+tr.last.slice(3)), v = tr.speed * D.pace, dw = tr.dwell, out = [];
@@ -1961,7 +1964,7 @@ void main(){
           float hh=h3(vec3(id,21.)), ph=fract(uTime*(1.2+hh)+hh*9.), rg=smoothstep(.07,0.,abs(length(o)-ph*.26))*(1.-ph)*(1.-ph)*step(hh,uWet.w*.6);
           col+=refl*(rg*(.1+.35*pud)*(1.-d/26.)); } } }
   }
-  col=mix(col,uFog+uSunCol*(4.4*haze(dot(vd,uSun)))*airLit(vd,d),fog*(emis?.5:1.)*(1.-.85*inside));   // haze glows where the sun reaches it; little haze indoors
+  col=mix(col,uFog+uSunCol*(4.4*haze(dot(vd,uSun)))*(fog>.01?airLit(vd,d):1.),fog*(emis?.5:1.)*(1.-.85*inside));   // the shafts only where there is haze to show them (60 fps work)   // haze glows where the sun reaches it; little haze indoors
   float glow=0.; for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 q=uLamp[i].xyz-uCam; float b=dot(q,vd), h=sqrt(max(dot(q,q)-b*b,.02)); glow+=uLamp[i].w*(atan((d-b)/h)+atan(b/h))/h; }
   col+=vec3(1.,.62,.32)*(glow*min(uFogD,.007)*1.6*uNk.y);                 // every lantern glows in the haze around it (no more than in a thick haze, or rain and fog turn the night orange); uNk.y: less in clear night air (WLD-042)
   gl_FragColor=vec4(tone(col*uExp),1.);
@@ -2222,7 +2225,7 @@ const spawn = D.city.spawn;
 const pl = { x: spawn.pos[0], y: 0, z: spawn.pos[1], vy: 0, yaw: yawOf(spawn.facing[0], spawn.facing[1]), pose: 0, ph: 0, moving: false, seat: null, onGround: true };
 const cam = { yaw: pl.yaw, pitch: -.04, dist: 4.4, fp: false, eye: [0, 0, 0], dir: [0, 0, -1] };
 const clock = { m: spawn.time ? (+spawn.time.slice(0, 2)) * 60 + (+spawn.time.slice(3)) : 8 * 60, rate: 1, day: 0 };   // day: game days since the character arrived (the bank settles by them, BANK-008)
-const keys = {}; let started = false, locked = false, showMap = false, bodies = 0, fps = 60, target = null, quality = 1, slow = 0, simple = null;
+const keys = {}; let started = false, locked = false, showMap = false, bodies = 0, fps = 60, target = null, quality = 1, slow = 0, fast = 0, manualQ = false, simple = null;
 // O: the better or the simple picture, one switch for what were three keys (Q softer picture, G flat shade, O corner shade). Simple:
 // half resolution, no sun shadows, the flat fill in place of local bounce and contact shade (ADR-0018), no ambient occlusion (ADR-0028).
 // Better: all of them at once.
@@ -2232,7 +2235,7 @@ function applySettings(G) {                                 // the menu's settin
   const g = G.graphics, d = window.wasted && window.wasted.dials; if (!d) return;
   if (!BASE_DIALS) BASE_DIALS = { gi: d.gi, ao: d.ao == null ? 1 : d.ao };
   SET.shadows = g.shadows; d.ao = g.ambient_occlusion ? BASE_DIALS.ao : 0; d.gi = g.bounce ? BASE_DIALS.gi : 0;
-  if (!PIN_Q) quality = g.resolution === "soft" ? .5 : 1;
+  if (!PIN_Q) { manualQ = g.resolution !== "auto"; if (manualQ) quality = g.resolution === "soft" ? .5 : 1; }   // auto: the sharpness chases 60 frames a second
   simple = g.picture === "simple" ? {} : null;
   FULL_MAX = g.full_bodies; SET.fov = g.field_of_view * Math.PI / 180;
   const D2 = G.display, show = (id, on) => { const e = $(id); if (e) e.classList.toggle("set-off", !on); };
@@ -2468,6 +2471,8 @@ function hud(VP, W, H, tags) {
   $("date").textContent = (Life.ready ? "Day " + (clock.day + 1) + " · " : "") + D.day.weekday + " · " + (D.day.trying ? "trying " : "") + D.day.season + (wxTry ? " · trying " + wxTry : { cloud: " · cloudy", rain: " · rain", fog: " · fog" }[weatherNow(clock.m).kind] || "") + (D.day.market ? " · market day" : "") + (clock.rate !== 1 ? "  (clock ×" + clock.rate + ")" : "");
   const [a, b] = placeName(); $("place").textContent = a; $("sub").textContent = b;
   $("stats").innerHTML = bodies + " of " + D.residents.length + " residents have bodies<br>" + Math.round(fps) + " frames a second" + (simple ? " · simple picture" : quality < 1 ? " · soft picture" : "");
+  if (PERF) $("stats").innerHTML += "<br>script " + GT.cpu.toFixed(1) + " ms · picture " + Math.round(quality * 100) + "% " + cv.width + "×" + cv.height +
+    (TQ ? Object.entries(GT.ms).map(([k, v]) => "<br>" + k + " " + v.toFixed(1) + " ms").join("") : "<br>(this browser gives no graphics timings)");
   const pr = $("prompt"); if (started && !Life.on && SET.prompts && (target || pl.pose > 1)) { pr.style.display = "block"; pr.innerHTML = "<kbd>E</kbd>" + (pl.pose === 4 ? Cars.label() : pl.play ? "Get off" : pl.pose > 1 ? "Get up" : target.label); } else pr.style.display = "none";
   $("dot").style.display = started && cam.fp ? "block" : "none";
   g2.clearRect(0, 0, W, H); if (!started) return;
@@ -2498,7 +2503,7 @@ const worldBuf = buffer(world, gl.STATIC_DRAW), worldN = world.n / 10, skyMap = 
 const pieces = RANGES.filter(r => r[1] > r[0]).map(([s, e, town]) => ({ first: s / 10, count: (e - s) / 10, town, box: boxOf(world.a, s, e) }));
 Smash.prepare();                                         // breakable things keep their own copy of their triangles (smash.js)
 world.a = null;
-const chunks = [...DETAIL.values()].map(m => { const c = { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, cx: m.cx, cz: m.cz, r: m.r || DETAIL_R, box: boxOf(m.a, 0, m.n) }; m.a = null; return c; });
+const chunks = [...DETAIL.values()].map(m => { const c = { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, cx: m.cx, cz: m.cz, r: m.r || DETAIL_R, box: boxOf(m.a, 0, m.n) }; m.glbuf = c.buf; m.a = null; return c; });
 const signBuf = buffer(signs, gl.STATIC_DRAW), signN = signs.n / 10; signs.a = null;
 // A remodelled building drawn again (BUILD-004, BUILD-005): its triangles from the load are blanked in the town and near-only meshes,
 // and it is built once more from its new design into a mesh of its own, drawn with the near relief. Only its looks change (a remodel
@@ -2570,8 +2575,8 @@ addEventListener("keydown", e => {
   else if (e.code === "KeyI") Life.panel("wallet");     // money and what you carry
   else if (e.code === "KeyJ") Life.panel("quests");     // the quest log
   else if (e.code === "KeyP") Life.panel("property");   // what you own and rent, and the building you stand in (life.js, estate.js)
-  else if (e.code === "KeyF" && pl.pose === 4) Sound.horn(true);
-  else if (e.code === "KeyR" && pl.pose === 4) Sound.radio();
+  else if (e.code === "KeyF" && pl.pose === 4 && !Cars.riding()) Sound.horn(true);   // no horn or radio from a bus seat
+  else if (e.code === "KeyR" && pl.pose === 4 && !Cars.riding()) Sound.radio();
   else if (e.code === "KeyM") { Sound.act("map"); showMap = !showMap; $("bigmap").style.display = showMap ? "flex" : "none"; }
   else if (e.code === "KeyH") Life.panel("help");        // the controls (UI-008)
   else if (e.code === "KeyG") Life.panel("belongings");  // what you own and carry (INV-001)
@@ -2784,12 +2789,59 @@ function flatOf(l, x, z, y) {                                // which flat of bu
   return f + ":corridor";
 }
 const INDOOR_R = 90;                                         // how far the camera sees out of a window (frame)
-let FULL_MAX = 3, FULL = new Set();                   // the full-detail body (25,000 vertices, ~4 ms each) only for the nearest few
+// ?perf=1: what each part of a frame costs on this machine, under the frame rate: the script, and on the graphics card each
+// pass (EXT_disjoint_timer_query, where the browser has it), smoothed over a few frames
+const PERF = new URLSearchParams(location.search).has("perf"), TQ = PERF ? gl.getExtension("EXT_disjoint_timer_query") : null, GT = { pending: [], ms: {}, cur: null, q: null, cpu: 0 };
+function gpuMark(name) {
+  if (!TQ) return;
+  if (GT.cur) { TQ.endQueryEXT(TQ.TIME_ELAPSED_EXT); GT.pending.push([GT.cur, GT.q]); GT.cur = null; }
+  if (!name) return;
+  GT.q = TQ.createQueryEXT(); TQ.beginQueryEXT(TQ.TIME_ELAPSED_EXT, GT.q); GT.cur = name;
+}
+function gpuCollect() {
+  if (!TQ) return;
+  const disjoint = gl.getParameter(TQ.GPU_DISJOINT_EXT), keep = [];
+  for (const [n, q] of GT.pending) {
+    if (!TQ.getQueryObjectEXT(q, TQ.QUERY_RESULT_AVAILABLE_EXT)) { keep.push([n, q]); continue; }
+    if (!disjoint) GT.ms[n] = mix(GT.ms[n] || 0, TQ.getQueryObjectEXT(q, TQ.QUERY_RESULT_EXT) / 1e6, .1);
+    TQ.deleteQueryEXT(q);
+  }
+  GT.pending = keep.slice(-40);
+}
+const FPS_GOAL = 60, Q_MIN = .65;
+const PRE_M = 90, AO_M = 70;                                  // the depth pre-pass and the corner shade draw only pieces this near (m)                             // the frame rate the picture's sharpness is tuned to keep, and how soft it may go
+const LOD1_M = 16, LOD3_M = 35;                              // people nearer than LOD1_M get the mid body, beyond LOD3_M a figure of blocks (people.js far)
+// A mid body is built every BODY_EVERY[1] frames and a far one every BODY_EVERY[2]; in between the last one is drawn again,
+// moved to where the person is now. Turning, a new pose, a new look or a new level of detail builds it again at once.
+const BODY_EVERY = [1, 2, 3, 1], BODIES = new Map();
+function reuseBody(i, r, lod, L) {
+  const b = BODIES.get(i);
+  if (!b || BODY_EVERY[lod] < 2 || b.lod !== lod || b.pose !== r.pose || b.L !== L || Math.abs(b.yaw - r.yaw) > 1e-3 || FRAME_NO - b.f >= BODY_EVERY[lod]) return false;
+  const v = b.v, need = v.length;
+  if (dyn.n + need > dyn.a.length) { const a = new Float32Array(Math.max(dyn.a.length * 2, dyn.n + need + 60)); a.set(dyn.a); dyn.a = a; }
+  const A = dyn.a, dx = r.x - b.x, dy = r.y - b.y, dz = r.z - b.z;
+  A.set(v, dyn.n);
+  if (dx || dy || dz) for (let k = dyn.n; k < dyn.n + need; k += 10) { A[k] += dx; A[k + 1] += dy; A[k + 2] += dz; }
+  dyn.n += need;
+  return true;
+}
+function keepBody(i, r, lod, L, n0) {
+  if (BODY_EVERY[lod] < 2) { BODIES.delete(i); return; }
+  BODIES.set(i, { f: FRAME_NO, lod, pose: r.pose, L, yaw: r.yaw, x: r.x, y: r.y, z: r.z, v: dyn.a.slice(n0, dyn.n) });
+}
+let FULL_MAX = 1, FULL = new Set(); const FULL_M = 5;                   // the full-detail body (25,000 vertices, ~4 ms each) only for the nearest few
 const FAR_EVERY = 12, FAR_M = 60, FAR_CACHE = new Array(D.plan.length).fill(null); let FRAME_NO = 0;   // residents far from the player (frame)
 function frame(now) {
+  const cpu0 = performance.now(); gpuCollect();
   People.setSun(STUDIO ? [-.45 / 1.0005, .74 / 1.0005, .5 / 1.0005] : lighting(clock.m).dir, cam.eye);   // for the shadows a body casts on itself (people.js)
   const dt = Math.min(.05, (now - last) / 1000); last = now; fps = mix(fps, 1 / Math.max(dt, 1e-3), .05);
-  if (fps < 27 && quality > .5 && !PIN_Q) { slow += dt; if (slow > 3) { quality = Math.max(.5, quality - .25); slow = 0; } } else slow = 0;      // a slow machine gets a softer picture, not a slow game
+  // aim for 60 frames a second: a little softer picture while frames run late, a little sharper again when there is room;
+  // never so soft that the shadows and the corner shade go (they need quality above .6)
+  if (!PIN_Q && !manualQ) {
+    if (fps < FPS_GOAL * .93) { slow += dt; fast = 0; if (slow > .75) { quality = Math.max(Q_MIN, quality - .1); slow = 0; } }
+    else if (fps > FPS_GOAL * .98) { fast += dt; slow = 0; if (fast > 4 && quality < 1) { quality = Math.min(1, quality + .05); fast = 0; } }
+    else slow = fast = 0;
+  }      // a slow machine gets a softer picture, not a slow game
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5) * quality, W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
   if (cv.width !== W || cv.height !== H) { cv.width = ui.width = W; cv.height = ui.height = H; }
   const m0 = clock.m; clock.m = (clock.m + (Life.paused ? 0 : dt / D.pace * clock.rate)) % 1440; if (clock.m < m0) clock.day++;   // the menu stops the clock (UI-005)
@@ -2824,13 +2876,18 @@ function frame(now) {
     bodies++;
     const wet = Wet.apply(i, r, looks[i], clock.m), L = wet.L || looks[i], dc = Math.hypot(r.x - cam.eye[0], r.z - cam.eye[2]); let lk = null;
     if (r.inside && plIn && r.lot !== plLot) continue;      // from indoors, people inside other buildings are behind two walls
-    if (dc < 13) near13.push([dc, i]);   // a coat, an umbrella or a hood, a hurried walk (wet.js, CITY-077 to CITY-080)
+    if (dc < FULL_M) near13.push([dc, i]);   // a coat, an umbrella or a hood, a hurried walk (wet.js, CITY-077 to CITY-080)
     if (started && r.pose !== 3 && d < 5.5 && Math.abs(r.y - pl.y) < 2) {          // someone near turns to look: eyes first, head part of the way (M4)
       let da = yawOf(pl.x - r.x, pl.z - r.z) - r.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
       if (Math.abs(da) < 1.9) { const w = smooth(5.5, 3.2, d); lk = [clamp(-da * .6, -.85, .85) * w, 0]; }
     }
-    People.draw(dyn, r.x, r.y, r.z, r.yaw, L, r.pose, { ph: wet.ph !== undefined ? wet.ph : r.ph || 0, t: now / 1000, lod: dc < 13 && FULL.has(i) && !(r.inside && r.lot !== plLot) ? 0 : dc < 40 ? 1 : 2, fl: r.inside ? 10 : 14, look: lk, sleep: r.pose === 3, face: Talk.face(i), mod: r.mod || wet.mod, sig: r.sig || wet.sig, hood: wet.hood, umb: wet.umb });
-    if (started && SET.names && d < 9 && Math.abs(r.y - pl.y) < 3) tags.push({ x: r.x, y: r.y + (r.pose === 2 ? 1.0 : r.pose === 3 ? .55 : 1.88) * L.S, z: r.z, d, text: D.residents[i].n + ", " + D.roles[D.residents[i].r] + " · " + (r.walking ? GOING[D.acts[r.act]] || "walking" : DOING[D.acts[r.act]] || D.acts[r.act]) });
+    const lod = dc < FULL_M && FULL.has(i) && !(r.inside && r.lot !== plLot) ? 0 : dc < LOD1_M ? 1 : dc < LOD3_M ? 2 : 3;
+    if (!reuseBody(i, r, lod, L)) {                          // the same body as a frame or two ago, moved to where they are now (60 fps work)
+      const n0 = dyn.n;
+      People.draw(dyn, r.x, r.y, r.z, r.yaw, L, r.pose, { ph: wet.ph !== undefined ? wet.ph : r.ph || 0, t: now / 1000, lod, fl: r.inside ? 10 : 14, look: lk, sleep: r.pose === 3, face: Talk.face(i), mod: r.mod || wet.mod, sig: r.sig || wet.sig, hood: wet.hood, umb: wet.umb });
+      keepBody(i, r, lod, L, n0);
+    }
+    if (started && SET.names && d < 9 && Math.abs(r.y - pl.y) < 3) tags.push({ x: r.x, y: r.y + (r.pose === 2 ? 1.0 : r.pose === 3 ? .55 : 1.88) * L.S, z: r.z, d, text: D.residents[i].n + ", " + (D.residents[i].c || D.roles[D.residents[i].r]) + " · " + (r.walking ? GOING[D.acts[r.act]] || "walking" : DOING[D.acts[r.act]] || D.acts[r.act]) });
     if (started && r.shout && d < D.dodge.tag_m) tags.push({ x: r.x, y: r.y + 2.18 * L.S, z: r.z, d, a: clamp((D.dodge.tag_m - d) / 4, 0, 1), size: 18, text: r.shout });   // telling the driver off (CITY-071)
     if (started) Talk.consider(i, r, d);
     if (started) Life.mark(i, r, d, L, tags);             // someone with a quest or a job for the player (life.js, QST-005)
@@ -2872,6 +2929,7 @@ function frame(now) {
   const view = M4.look(cam.eye, cam.dir), fov = STUDIO ? .27 : started && Life.view ? Life.view.cur.fov : SET.fov, asp = W / H, NEAR = cam.indoor && !cam.fp ? CAM_IN.near : .25, VP = M4.mul(M4.persp(fov, asp, NEAR, 3200), view.m), th = Math.tan(fov / 2); RAY = { e: cam.eye.slice(), f: cam.dir.slice(), r: view.r, u: view.u, th, asp };
   gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf); gl.bufferData(gl.ARRAY_BUFFER, dyn.a.subarray(0, dyn.n), gl.DYNAMIC_DRAW);
   let SM = M4.t(0, 0, 0), shOn = 0, giAt = [0, 0, 1], giK = 0;
+  gpuMark("shadows");
   if (shFbo && quality > .6 && SET.shadows) {                              // shadows: draw the town from the light, around where the player looks
     const R = 70, tex = 2 * R / SH, f = [-Lt.dir[0], -Lt.dir[1], -Lt.dir[2]], lv0 = M4.look([0, 0, 0], f), dot3 = (p, q) => p[0] * q[0] + p[1] * q[1] + p[2] * q[2];
     let foc = DZ ? [near[0], 0, near[1]] : [near[0] + cam.dir[0] * 28, 0, near[1] + cam.dir[2] * 28]; const ox = dot3(foc, lv0.r) % tex, oy = dot3(foc, lv0.u) % tex;
@@ -2901,6 +2959,7 @@ function frame(now) {
   pickL.sort((p, q) => p[0] - q[0]); let lampN = Math.min(12, pickL.length);
   for (let k = 0; k < Math.min(12, pickL.length); k++) { const [d2, l] = pickL[k]; lamp.set([l[0], l[1], l[2], l[3] * 3 * (l[4] ? 1 + Lt.night : 2 * Lt.night) * dials.lanterns * smooth(5600, 3000, d2)], k * 4); }
   if (STUDIO) { const gy = groundBase(STUDIO_AT[0], STUDIO_AT[1]); lamp.fill(0); lamp.set([STUDIO_AT[0] - 1, gy + 2.75, STUDIO_AT[1] - .95, 1.5], 0); lamp.set([STUDIO_AT[0] + 5.6, gy + 2.75, STUDIO_AT[1] - .95, 1.5], 4); lampN = 2; }   // the reference's two 60 W lanterns by the wall
+  gpuMark("sky");
   gl.viewport(0, 0, W, H); gl.clear(gl.DEPTH_BUFFER_BIT);
   gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE); gl.depthMask(false);
   gl.useProgram(sky.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const aq = gl.getAttribLocation(sky.p, "aQ"); gl.enableVertexAttribArray(aq); gl.vertexAttribPointer(aq, 2, gl.FLOAT, false, 0, 0);
@@ -2935,15 +2994,20 @@ function frame(now) {
   for (const pc of seen) pc.d2 = boxD2(pc.box, cam.eye); for (const ch of nearD) ch.d2 = boxD2(ch.box, cam.eye);
   const front = seen.slice().sort((p, q) => p.d2 - q.d2); nearD.sort((p, q) => p.d2 - q.d2);
   // depth first, nearest pieces first: the costly light below then runs once for each pixel instead of for every hidden wall and room behind it
+  gpuMark("depth");
   gl.colorMask(false, false, false, false); gl.useProgram(pre.p); gl.uniformMatrix4fv(pre.u.uVP, false, VP); cutU(pre); if (pre.u.uSM) gl.uniformMatrix4fv(pre.u.uSM, false, SM);
-  attribs(pre, worldBuf); for (const pc of front) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
+  // only the near pieces: far away a surface is small and seldom hidden twice over, and drawing the whole town again costs
+  // more than it saves (60 fps work, the owner's ?perf=1 reading); the far pieces write their own depth when lit, below
+  const PRE2 = PRE_M * PRE_M, preN = front.filter(pc => pc.d2 < PRE2);
+  attribs(pre, worldBuf); for (const pc of preN) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
   for (const ch of nearD) { if (CUT_NOW) cutU(pre, cutY(ch)); drawMesh(ch.buf, ch.n, pre); }
   // ambient occlusion (ADR-0028): the same things again, at half size into a depth picture, then the occlusion and its smoothing from it
   const aoK = (dials.ao == null ? 1 : dials.ao) * (quality > .6 ? 1 : 0), aw = Math.ceil(W / 2), ah = Math.ceil(H / 2), aoOn = aoK > 0 && aoTargets(aw, ah);
+  gpuMark("corner shade");
   if (aoOn) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, AO.dFbo); gl.viewport(0, 0, aw, ah); gl.depthMask(true); gl.clear(gl.DEPTH_BUFFER_BIT); gl.disable(gl.CULL_FACE);
     gl.useProgram(depthProg.p); gl.uniformMatrix4fv(depthProg.u.uVP, false, VP); cutU(depthProg);
-    drawDepth(worldBuf, 0); for (const pc of front) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
+    drawDepth(worldBuf, 0); for (const pc of front) if (pc.d2 < AO_M * AO_M) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);   // the shade fades out by aoFar: only what is near
     for (const ch of nearD) { if (CUT_NOW) cutU(depthProg, cutY(ch)); drawDepth(ch.buf, ch.n); } if (CUT_NOW) cutU(depthProg, CUT_NOW.room); drawDepth(dynBuf, dyn.n / 10);   // people too, so an arm shades the body beside it
     gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.colorMask(true, true, true, true);
     const quad = pr => { gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const a = gl.getAttribLocation(pr.p, "aQ"); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
@@ -2990,10 +3054,13 @@ function frame(now) {
   gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, inRoom ? inRoom.ao : skyMap.tex);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, shTex); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, skyMap.tex);
   gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, txtTex); gl.activeTexture(gl.TEXTURE0);
-  lit(main); cutU(main); attribs(main, worldBuf); for (const pc of seen) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);   // in the order laid, so ties fall as before
+  gpuMark("lit town");
+  lit(main); cutU(main); attribs(main, worldBuf); for (const pc of seen) if (pc.d2 < PRE2) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
+  gl.depthMask(true); for (const pc of seen) if (pc.d2 >= PRE2) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count); gl.depthMask(false);   // the far ones, writing their own depth; in the order laid, so ties fall as before
   let drawnDetail = 0; for (const ch of nearD) { if (CUT_NOW) cutU(main, cutY(ch)); drawMesh(ch.buf, ch.n); drawnDetail += ch.n; }
   stat.detail = drawnDetail; stat.pieces = seen.length;
   gl.depthMask(true); lit(signProg); cutU(signProg); drawMesh(signBuf, signN, signProg); gl.useProgram(main.p); if (CUT_NOW) cutU(main, CUT_NOW.room);
+  gpuMark("people and cars");
   gl.disable(gl.CULL_FACE); drawMesh(dynBuf, dyn.n / 10);   // people are closed soft forms; either side of a face may show
   if (Lt.rain > .01 && !(cam.eye[1] < 6 && lotAt(cam.eye[0], cam.eye[2]))) {   // rain over the picture, unless the camera is under a roof
     gl.useProgram(rainProg.p); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); const ar = gl.getAttribLocation(rainProg.p, "aQ"); gl.enableVertexAttribArray(ar); gl.vertexAttribPointer(ar, 2, gl.FLOAT, false, 0, 0);
@@ -3003,7 +3070,9 @@ function frame(now) {
     gl.uniform3fv(rainProg.u.uRr, mul3(view.r, th * asp)); gl.uniform3fv(rainProg.u.uRu, mul3(view.u, th)); gl.uniform3fv(rainProg.u.uRf, cam.dir);
     gl.drawArrays(gl.TRIANGLES, 0, 3); gl.disable(gl.BLEND); gl.enable(gl.DEPTH_TEST);
   }
+  gpuMark(null);
   hud(VP, W, H, tags); drawMaps();
+  if (PERF) GT.cpu = mix(GT.cpu, performance.now() - cpu0, .1);
   requestAnimationFrame(frame);
 }
 // for tests and screenshots: index.html?auto=1&x=..&z=..&yaw=..&pitch=..&t=..&fp=1

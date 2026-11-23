@@ -29,16 +29,19 @@ var Smash = (() => {
   const sm = (a, b, v) => { const t = Math.max(0, Math.min(1, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
 
   // ---- while the town is built ----
-  function wrap(kind, x, z, fn) {
+  // `more`: other meshes the thing also draws into (the near-only detail meshes of a garden fence's pickets and bars)
+  function wrap(kind, x, z, fn, more) {
     const k = depth === 0 ? kindOf(kind) : null;           // inside another breakable (crates on a stall): part of it
     if (!k) { fn(); return; }
     depth++;
-    const s = world.n, so = solids.length, li = lights.length, us = uses.length;
+    const meshes = [world].concat(more || []).filter((m, i, a) => a.indexOf(m) === i), starts = meshes.map(m => m.n);
+    const so = solids.length, li = lights.length, us = uses.length;
     try { fn(); } finally { depth--; }
-    if (world.n <= s) return;
+    const parts = meshes.map((m, i) => ({ m, s: starts[i], e: m.n })).filter(p => p.e > p.s);
+    if (!parts.length) return;
     let id = k + "@" + x.toFixed(1) + "," + z.toFixed(1), n = 2;
     while (byId.has(id)) id = k + "@" + x.toFixed(1) + "," + z.toFixed(1) + "#" + n++;
-    const b = { id, kind: k, x, z, s, e: world.n, sol: [so, solids.length], li: [li, lights.length], us: [us, uses.length], broken: false };
+    const b = { id, kind: k, x, z, parts, sol: [so, solids.length], li: [li, lights.length], us: [us, uses.length], broken: false };
     list.push(b); byId.set(id, b);
   }
 
@@ -48,14 +51,17 @@ var Smash = (() => {
     prepared = true;
     if (!R) return;
     for (const b of list) {
-      const A = world.a, g = groundBase(b.x, b.z);
+      const g = groundBase(b.x, b.z);
+      for (const p of b.parts) {                          // its own triangles in each mesh, and the same shrunk to a point under the ground
+        p.orig = p.m.a.slice(p.s, p.e); p.gone = p.orig.slice();
+        for (let i = 0; i < p.gone.length; i += 10) { p.gone[i] = b.x; p.gone[i + 1] = -60; p.gone[i + 2] = b.z; }
+      }
+      const A = b.parts.length === 1 ? b.parts[0].orig : (() => { const o = new Float32Array(b.parts.reduce((n, p) => n + p.orig.length, 0)); let k = 0; for (const p of b.parts) { o.set(p.orig, k); k += p.orig.length; } return o; })();
       let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9, top = g;
-      for (let i = b.s; i < b.e; i += 10) top = Math.max(top, A[i + 1]);
+      for (let i = 0; i < A.length; i += 10) top = Math.max(top, A[i + 1]);
       for (let pass = 0; pass < 2 && x0 > x1; pass++)       // its footprint near the ground (a tree's trunk, not its crown)
-        for (let i = b.s; i < b.e; i += 10) if (pass || A[i + 1] < g + 1.3) { x0 = Math.min(x0, A[i]); x1 = Math.max(x1, A[i]); z0 = Math.min(z0, A[i + 2]); z1 = Math.max(z1, A[i + 2]); }
-      const orig = A.slice(b.s, b.e), gone = orig.slice();
-      for (let i = 0; i < gone.length; i += 10) { gone[i] = b.x; gone[i + 1] = -60; gone[i + 2] = b.z; }   // every triangle shrunk to a point under the ground
-      Object.assign(b, { g, top, box: [x0, z0, x1, z1], orig, gone });
+        for (let i = 0; i < A.length; i += 10) if (pass || A[i + 1] < g + 1.3) { x0 = Math.min(x0, A[i]); x1 = Math.max(x1, A[i]); z0 = Math.min(z0, A[i + 2]); z1 = Math.max(z1, A[i + 2]); }
+      Object.assign(b, { g, top, box: [x0, z0, x1, z1], orig: A });
       for (let a = Math.floor(x0 / G); a <= Math.floor(x1 / G); a++) for (let c = Math.floor(z0 / G); c <= Math.floor(z1 / G); c++) {
         const key = a + "," + c; if (!grid.has(key)) grid.set(key, []); grid.get(key).push(b);
       }
@@ -106,11 +112,16 @@ var Smash = (() => {
   function save() { try { localStorage.setItem(KEY, JSON.stringify(damage)); } catch (e) { } }
 
   // ---- switching a thing off and on ----
-  function upload(b, data) { gl.bindBuffer(gl.ARRAY_BUFFER, worldBuf); gl.bufferSubData(gl.ARRAY_BUFFER, b.s * 4, data); }
+  function upload(b, which) {                              // every part of it, in its own mesh's buffer on the graphics card
+    for (const p of b.parts) {
+      const buf = p.m === world ? worldBuf : p.m.glbuf; if (!buf) continue;
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferSubData(gl.ARRAY_BUFFER, p.s * 4, p[which]);
+    }
+  }
   function off(b) {
     if (b.broken) return;
     b.broken = true;
-    upload(b, b.gone);
+    upload(b, "gone");
     b.solids = []; for (let i = b.sol[0]; i < b.sol[1]; i++) { b.solids.push(solids[i].slice()); solids[i][1] = solids[i][4] = -1e9; }
     b.lights = []; for (let i = b.li[0]; i < b.li[1]; i++) { b.lights.push(lights[i][3]); lights[i][3] = 0; }
     for (let i = b.us[0]; i < b.us[1]; i++) uses[i].y += 1000;
@@ -118,7 +129,7 @@ var Smash = (() => {
   function on(b) {
     if (!b.broken) return;
     b.broken = false;
-    upload(b, b.orig);
+    upload(b, "orig");
     for (let i = b.sol[0]; i < b.sol[1]; i++) solids[i].splice(0, 6, ...b.solids[i - b.sol[0]]);
     for (let i = b.li[0]; i < b.li[1]; i++) lights[i][3] = b.lights[i - b.li[0]];
     for (let i = b.us[0]; i < b.us[1]; i++) uses[i].y -= 1000;

@@ -63,7 +63,7 @@
   "note": "Simple interest like the bank's loans: total = principal + principal x rate x term. Paid in equal daily instalments from the current account at each day's end, the first at the end of the day after the purchase; the last instalment takes what is left. On default the bank sells the unit to a company at the forced bid, clears the debt from the proceeds and pays the rest to the player."
  },
  "town": {
-  "wages": { "commuter": 5500, "maker": 5000, "courier": 4500, "cafe": 4500, "shopkeeper": 5000, "clerk": 5500, "nurse": 6000, "gardener": 4500, "utility": 5000, "elder": 3000, "student": 1500, "child": 0 },
+  "wages": { "commuter": 5500, "maker": 5000, "courier": 4500, "cafe": 4500, "shopkeeper": 5000, "clerk": 5500, "nurse": 6000, "gardener": 4500, "utility": 5000, "elder": 3000, "student": 1500, "child": 0, "creative": 4500, "binman": 6000 },
   "firm_cover_bp": 14000,
   "lodger_cover_bp": 15000,
   "pool_days": 3,

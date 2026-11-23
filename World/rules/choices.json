@@ -1,5 +1,5 @@
 {
- "note": "Where a token like 'lunch' can lead. 'cafe', 'grocer', 'garden', 'market', 'stop', 'clinic' mean the resident's nearest one. 'bank', 'library', 'museum', 'cinema', 'dealer' likewise (Tools/worldgen/add_places_01.py). 'playground', 'noticeboard', 'kiosk' likewise, and 'play' is the children's list (Tools/worldgen/add_dressing_01.py). 'furniture' likewise: the furniture outlet (Tools/worldgen/add_outlet_01.py).",
+ "note": "Where a token like 'lunch' can lead. 'cafe', 'grocer', 'garden', 'market', 'stop', 'clinic' mean the resident's nearest one. 'bank', 'library', 'museum', 'cinema', 'dealer' likewise (Tools/worldgen/add_places_01.py). 'playground', 'noticeboard', 'kiosk' likewise, and 'play' is the children's list (Tools/worldgen/add_dressing_01.py). 'furniture' likewise: the furniture outlet (Tools/worldgen/add_outlet_01.py). lunch near_work: on a working day lunch is taken near work (the nearest café, grocer or market to the workplace), and at home only when home is within near_work_home_max_m of work (CITY-096, owner 2026-11-23) [ASSUMPTION].",
  "choices": {
   "lunch": {
    "default": [
@@ -319,6 +319,12 @@
     ]
    ]
   }
+ },
+ "near_work": {
+  "tokens": [
+   "lunch"
+  ],
+  "home_max_m": 300.0
  },
  "use": {
   "sleep": "bed",

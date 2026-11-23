@@ -700,7 +700,12 @@
       "spec": [
         "CITY-003",
         "CITY-006",
-        "CITY-020"
+        "CITY-020",
+        "CITY-081",
+        "CITY-082",
+        "CITY-084",
+        "CITY-086",
+        "CITY-087"
       ],
       "levels": [
         {
@@ -744,7 +749,9 @@
         "CITY-003",
         "CITY-021",
         "CITY-022",
-        "CITY-028"
+        "CITY-028",
+        "CITY-083",
+        "CITY-088"
       ],
       "levels": [
         {
@@ -1079,7 +1086,8 @@
         "CITY-030",
         "CITY-031",
         "CITY-033",
-        "CITY-034"
+        "CITY-034",
+        "CITY-085"
       ],
       "levels": [
         {
