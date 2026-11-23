@@ -260,8 +260,14 @@ var Cars = (() => {
     if (drv && drv.k === k) return [[playerLook, md.seat[0], md.seat[1]]];
     if (taken.has(k)) return out;
     if (!byCar) drivers();
-    const iv = (byCar.get(k) || []).find(v => minute >= v[0] && minute < v[1]);
-    if (iv) { out.push([looks[iv[2]], md.seat[0], md.seat[1]]); return out; }
+    const ins = (byCar.get(k) || []).filter(v => minute >= v[0] && minute < v[1]);
+    if (ins.length) {                                    // the owner at the wheel, neighbours sharing the ride beside and behind (CITY-086)
+      const own = CARS[k].o, wheel = ins.find(v => v[2] === own) || ins[0];
+      out.push([looks[wheel[2]], md.seat[0], md.seat[1]]);
+      const seats = [[md.seat[0], -md.seat[1]]].concat(md.back != null ? [[md.back, md.seat[1]], [md.back, -md.seat[1]]] : []);
+      ins.filter(v => v !== wheel).slice(0, seats.length).forEach((v, n) => out.push([looks[v[2]], seats[n][0], seats[n][1]]));
+      return out;
+    }
     if (CARS[k].home && CARS[k].k !== 1) return out;     // a resident's car with nobody in it
     if (!c.trip) return out;                             // a van parked at a stop: the driver is out delivering
     out.push([stranger("drv" + k, CARS[k].k === 1 ? "courier" : "commuter"), md.seat[0], md.seat[1]]);

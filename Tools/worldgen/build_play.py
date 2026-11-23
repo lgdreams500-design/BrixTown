@@ -57,6 +57,7 @@ def routines(city, day, car_index):
 
 
 CAR_STEP_S = 1.0                     # real seconds between packed car positions
+EASE_M = 6.0                         # metres over which a car slides between its bay and its lane
 
 
 def cars(city, day):
@@ -73,6 +74,7 @@ def cars(city, day):
         return [r1(b["pos"][0]), r1(b["pos"][1]), round(u[0], 2), round(u[1], 2)]
     lines = sorted(T.lines)
 
+    res_index = {r["id"]: n for n, r in enumerate(city.d["residents"])}
     out, index = [], {}
     for n, cid in enumerate(T.ids(day)):                   # residents' cars, vans, and today's cars passing through
         index[cid] = n
@@ -86,18 +88,25 @@ def cars(city, day):
             last = tr["legs"][-1]
             p, h = R.point(last, last["s1"])
             pts.append([p[0], p[1], h[0], h[1]])
-            ease = 4                                       # samples to slide between bay and lane
+            # into and out of a bay: slide sideways over the last (first) EASE_M metres of the way, never along it, so
+            # the car stays exactly where the rules put it on its lane and never runs up on the car ahead
             for end, bid in ((0, tr["bay0"]), (-1, tr["bay1"])):
                 if bid is None:
                     continue
-                bp = R.bays[bid]["pos"]
-                k = len(pts)
-                for j in range(min(ease, k)):
-                    i = j if end == 0 else k - 1 - j
-                    f = 1 - j / ease
+                bp, q = R.bays[bid]["pos"], pts[end]
+                ox, oz = bp[0] - q[0], bp[1] - q[1]           # the bay's offset from the lane where the car leaves or joins it
+                hx, hz = q[2], q[3]
+                along = ox * hx + oz * hz
+                ox, oz = ox - hx * along, oz - hz * along      # its sideways part only
+                order = range(len(pts)) if end == 0 else range(len(pts) - 1, -1, -1)
+                for i in order:
+                    gone = abs((pts[i][0] - q[0]) * hx + (pts[i][1] - q[1]) * hz)
+                    if gone >= EASE_M:
+                        break
+                    f = 1 - gone / EASE_M
                     f = f * f * (3 - 2 * f)
-                    pts[i][0] += (bp[0] - pts[i][0]) * f
-                    pts[i][1] += (bp[1] - pts[i][1]) * f
+                    pts[i][0] += ox * f
+                    pts[i][1] += oz * f
             st = T.stowed(cid, day, ti)                    # CITY-085: off the street while parked, [from, to] in minutes
             trips.append([round(tr["t0"] / T.pace, 3), round(tr["t1"] / T.pace, 3), bay(tr["bay1"]) if tr["bay1"] else None,
                           [round(v, 2) for q in pts for v in q]] + ([[round(st[0] / T.pace, 3), round(st[1] / T.pace, 3)]] if st else []))
@@ -105,6 +114,8 @@ def cars(city, day):
         v = dict(home=bay(home) if home else None, trips=trips, k=2 if cid in T.buses else 1 if cid in T.vans else 0)
         if cid in T.buses:                                 # a bus (CITY-083): which line, for its colours and its sign
             v["l"] = lines.index(T.buses[cid]["line"])
+        if cid in T.cars:                                  # whose car: the one at the wheel; anyone else in it is a passenger (CITY-086)
+            v["o"] = res_index[T.cars[cid]["owner"]]
         out.append(v)
     return out, index, CAR_STEP_S / T.pace
 

@@ -143,5 +143,13 @@
   "share": 0.6,
   "after_min": 2.0,
   "before_min": 1.0
+ },
+ "pool": {
+  "reach_m": 300.0,
+  "dest_m": 300.0,
+  "window_min": 30.0,
+  "seats": 3,
+  "shift_min": 45.0,
+  "min_stay_min": 2.0
  }
 }

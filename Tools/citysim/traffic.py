@@ -571,7 +571,13 @@ class Traffic:
         return self.vehicle(vid)["bay"]
 
     def ids(self, day):
-        return sorted(set(self.cars) | set(self.vans) | set(self.buses) | set(self._day(day)["trips"]))
+        d = self._day(day)
+        return sorted((set(self.cars) | set(self.vans) | set(self.buses) | set(d["trips"])) - set(d.get("idle", ())))
+
+    def owned(self, day):
+        """CITY-087: the cars households have on a day: only those someone drives that day. A car that would stand all day
+        (its household walks, takes the bus or rides with a neighbour) is not on the map and not theirs that day."""
+        return sorted(set(self.cars) - set(self._day(day).get("idle", ())))
 
     def ext(self, vid):
         """How much longer than a car a vehicle is at each end: buses keep further from what is ahead and behind."""
@@ -833,22 +839,34 @@ class Traffic:
             lg = self.legs(car["owner"], plan[car["owner"]])
             if lg:
                 legs[car["id"]] = lg
-        legs.update(self._fleet_legs(day))
+        own = dict(legs)
+        pools = self._pools(legs)                         # CITY-086: neighbours who share the drive to work and home
+        fleet = self._fleet_legs(day)
         self._crossers = self.crossings_in_use(plan)
-        walked = set()
         home_by, drop_after = (1440.0 - self.r["home_by_min"][0]) * self.pace, (1440.0 - self.r["home_by_min"][1]) * self.pace
         def done_at(v):
             return max([tr["t1"] if tr["t1"] is not None else 1e18 for tr in v] or [0.0])
-        for _ in range(6):                                # a household whose car would be out near midnight walks today
-            run = {cid: [dict(x) for x in lg] for cid, lg in legs.items() if cid not in walked}
-            trips, assigned, boxes, entries = self._simulate(day, run)
-            ends = {cid: done_at(v) for cid, v in trips.items() if cid in self.cars}
-            if all(e <= home_by for e in ends.values()):
-                break
-            walked |= {cid for cid, e in ends.items() if e > drop_after}
+        def plan_cars(pools):
+            legs = {cid: lg for cid, lg in own.items() if cid not in pools}   # a passenger's car stays at home today
+            legs.update(fleet)
+            walked = set()
+            for _ in range(6):                            # a household whose car would be out near midnight walks today
+                run = {cid: [dict(x) for x in lg] for cid, lg in legs.items() if cid not in walked}
+                res = self._simulate(day, run)
+                ends = {cid: done_at(v) for cid, v in res[0].items() if cid in self.cars}
+                if all(e <= home_by for e in ends.values()):
+                    break
+                walked |= {cid for cid, e in ends.items() if e > drop_after}
+            return run, res, walked
+        run, (trips, assigned, boxes, entries), walked = plan_cars(pools)
+        fits = {x["car"] for x in self._pool_rewrite({self.cars[p]["owner"]: plan[self.cars[p]["owner"]] for p in pools}, pools, run)}
+        if set(pools) - fits:                             # a household whose shared ride fits neither way keeps its own car
+            pools = {p: q for p, q in pools.items() if p in fits}
+            run, (trips, assigned, boxes, entries), walked = plan_cars(pools)
         legs = run
         trips.update({cid: [] for cid in walked})
-        self._days[day] = dict(trips=trips, assigned=assigned, boxes=boxes, entries=entries, crossers=self._crossers, walked=sorted(walked))
+        idle = sorted(cid for cid in self.cars if not trips.get(cid))   # CITY-087: never driven today: no car today
+        self._days[day] = dict(trips=trips, assigned=assigned, boxes=boxes, entries=entries, crossers=self._crossers, walked=sorted(walked), idle=idle)
         if len(self._days) > 12:
             self._days.pop(next(iter(self._days)))
         for cid, lg in legs.items():
@@ -856,8 +874,96 @@ class Traffic:
                 continue                                  # vans and passing cars have no driver among the residents
             rid = self.cars[cid]["owner"]
             plan[rid] = self._rewrite(rid, plan[rid], lg, trips[cid])
-        self._days[day]["rides"] = self._riders(plan, trips)
+        self._days[day]["pools"] = self._pool_rewrite(plan, pools, legs)
+        self._days[day]["pooled"] = sorted(pools)          # every car left at home for a shared ride, whichever halves fitted
+        drivers = {self.cars[c]["owner"] for c in legs if c in self.cars}
+        self._days[day]["rides"] = self._riders(plan, trips, drivers)
         return plan
+
+    # -- car pooling (CITY-086) --
+    def _commute(self, cid, lg):
+        """(first leg, last leg) of a car day that leaves home in the town and comes home from the town, else None."""
+        home = self.cars[cid]["home"]
+        if not lg or lg[0]["kind"] != "town" or lg[-1]["kind"] != "town" or lg[0]["frm"] != home or lg[-1]["to"] != home:
+            return None
+        return lg[0], lg[-1]
+
+    def _pools(self, legs):
+        """Who rides with whom today: a car owner whose neighbour (homes within pool.reach_m) drives off in the morning to
+        near where they are going (pool.dest_m) at about the same time (pool.window_min), and home in the evening from near
+        where they will be, at about the same time, rides with them both ways, up to pool.seats a car. By the seed's order
+        of homes, the same on every machine. {passenger car: driver car}."""
+        pl = self.r.get("pool")
+        if not pl:
+            return {}
+        door = lambda lot: self.city.lots[lot]["door"]
+        com = {cid: c for cid, c in ((cid, self._commute(cid, lg)) for cid, lg in legs.items() if cid in self.cars) if c}
+        ids = sorted(com, key=lambda c: (rnd("pool", c), c))
+        pools, seats, drivers = {}, {}, set()
+        for p in ids:
+            if p in drivers:
+                continue
+            a0, a1 = com[p]
+            for q in ids:
+                if q == p or q in pools or seats.get(q, 0) >= pl["seats"]:
+                    continue
+                b0, b1 = com[q]
+                if dist(door(self.cars[p]["home"]), door(self.cars[q]["home"])) > pl["reach_m"]:
+                    continue
+                if abs(a0["target"] - b0["target"]) > pl["window_min"] or abs(a1["target"] - b1["target"]) > pl["window_min"]:
+                    continue
+                if dist(door(a0["to"]), door(b0["to"])) > pl["dest_m"] or dist(door(a1["frm"]), door(b1["frm"])) > pl["dest_m"]:
+                    continue
+                pools[p] = q
+                seats[q] = seats.get(q, 0) + 1
+                drivers.add(q)
+                break
+        return pools
+
+    def _pool_rewrite(self, plan, pools, run):
+        """Each passenger's morning and evening walks become: walk to the driver's car by the time the driver gets in, ride,
+        walk on from where it parks. Their stays move to fit (at most pool.shift_min). A half that cannot fit, or a driver
+        who walks today, leaves that walk as it was (a bus may take it)."""
+        pl, out = self.r.get("pool") or {}, []
+        for p, q in sorted(pools.items()):
+            rid = self.cars[p]["owner"]
+            if q not in run:
+                continue
+            pieces = list(plan[rid])
+            v = self.city.speed(rid) * self.pace
+            moves = [i for i, x in enumerate(pieces) if x[0] == "move"]
+            home = self.cars[p]["home"]
+            first = next((i for i in moves if pieces[i - 1][4]["place"] == home and pieces[i][4]["place"] != home), None) if moves else None
+            last = next((i for i in reversed(moves) if pieces[i][4]["place"] == home and pieces[i - 1][4]["place"] != home), None) if moves else None
+            for half, i, qlg in (("evening", last, run[q][-1]), ("morning", first, run[q][0])):   # the later first: indexes stay good
+                if i is None or not (0 < i < len(pieces) - 1) or "get_out" not in qlg:
+                    continue
+                prev_stay, next_stay = pieces[i - 1][0] == "stay", pieces[i + 1][0] == "stay"   # as for the bus (CITY-084)
+                kind, t0, t1, (route, cum, vv), s = pieces[i]
+                frm = pieces[i - 1][4]["place"]
+                rA = self.walk(frm, route[0], qlg["bay0"])
+                rB = self.walk(s["place"], route[-1], qlg["bay1"], to_bay=False)
+                cA, cB = lengths(rA), lengths(rB)
+                board, off = qlg["board"], qlg["get_out"]
+                go, there = board - cA[-1] / v, off + cB[-1] / v
+                lo = pieces[i - 1][1] + pl["min_stay_min"] if prev_stay else t0
+                hi = pieces[i + 1][2] - pl["min_stay_min"] if next_stay else t1
+                if go < lo or there > hi or abs(go - t0) > pl["shift_min"] or abs(there - t1) > pl["shift_min"]:
+                    continue
+                prev, nxt = pieces[i - 1], pieces[i + 1]
+                new = [("move", go, board, (rA, cA, v), s), ("ride", board, off, q, s), ("move", off, there, (rB, cB, v), s)]
+                if prev_stay:
+                    new.insert(0, (prev[0], prev[1], go, prev[3], prev[4]))
+                elif go > t0 + 1e-9:                          # walked here: wait where they are for the walk to the car
+                    new.insert(0, ("stay", t0, go, route[0], dict(s, act="wait", use=None, slot=None, alt=None)))
+                if next_stay:
+                    new.append((nxt[0], there, nxt[2], nxt[3], nxt[4]))
+                elif there < t1 - 1e-9:                       # early for the walk after: wait there
+                    new.append(("stay", there, t1, route[-1], dict(s, act="wait", use=None, slot=None, alt=None)))
+                pieces[i - 1 if prev_stay else i:i + 2 if next_stay else i + 1] = new
+                out.append(dict(rid=rid, car=p, driver=q, half=half, board=board, off=off, walk_t=(t0, t1), go=go, there=there))
+            plan[rid] = pieces
+        return out
 
     # -- riding the bus (CITY-084) --
     def bus_visits(self, trips):
@@ -875,7 +981,7 @@ class Traffic:
             out[vid] = v
         return out
 
-    def _riders(self, plan, trips):
+    def _riders(self, plan, trips, drivers=None):
         """A resident with no car of their own whose walk is longer than ride_min_m walks to a stop instead, waits, rides
         and walks on, when the two walks are short beside the walk it replaces and a bus fits: their day may move to the
         bus, setting off up to shift_min early and arriving up to late_min late, the least change winning (CITY-084)."""
@@ -911,7 +1017,7 @@ class Traffic:
             door = self.city.lots[place]["door"]
             return [sid for sid in names if min(dist(door, R.stops[x]["pos"]) for x in stop_pos[sid]) <= reach]
 
-        owners = {c["owner"] for c in self.cars.values()}
+        owners = drivers if drivers is not None else {c["owner"] for c in self.cars.values()}   # those at a wheel today
         no = set(b.get("no_ride_roles", []))
         margin = b["board_margin_min"]
         rides = []
@@ -1154,7 +1260,7 @@ class Traffic:
             for other in in_box.get(jid, {}).values():
                 if other["key"] == bx["key"]:
                     continue
-                if not (bx["straight"] and other["straight"] and bx["axis"] == other["axis"]):
+                if not (bx["straight"] and other["straight"] and bx["axis"] == other["axis"] and bx["into"] != other["into"]):   # never two merging into one lane
                     return False
             room = occ.get(bx["into"], {})
             coming = [oc for jb in in_box.values() for oc, ob in jb.items() if ob["into"] == bx["into"] and oc != cid]
@@ -1228,7 +1334,7 @@ class Traffic:
             for g in route:
                 starts.append(starts[-1] + g["s1"] - g["s0"])
             trip = dict(leg=k, t0=t, bay0=at_bay[cid], bay1=dest, legs=route, starts=starts, d=[0.0], t1=None, gate=lg.get("gate"), gate_in=lg.get("gate_in"), kind=lg["kind"],
-                        start=(bay0["lane"], bay0["s"]), end=(b1["lane"], b1["s"]))
+                        start=(bay0["lane"], bay0["s"]), end=(b1["lane"], b1["s"]), board=lg.get("board"))
             at_bay[cid] = None
             if lg["kind"] == "in":
                 lg["t_in"] = t / pace
@@ -1277,6 +1383,11 @@ class Traffic:
                     look = starts[kk + 1] - d
                     if look > 80:
                         break
+                if g["kind"] == "lane" and k + 1 < len(legs_):  # anyone just gone into the junction off this lane, whichever way: a bus's tail is still here
+                    for oc, obx in in_box.get(legs_[k + 1]["junction"], {}).items():
+                        if oc != cid and obx["frm"] == g["key"] and oc in snap.get(obx["key"], {}):
+                            there = starts[k + 1] + snap[obx["key"]][oc] - self.ext(oc)
+                            ahead = there if ahead is None else min(ahead, there)
                 if ahead is not None:
                     cap = min(cap, ahead - sp - self.ext(cid))
                 # the stop line: may this car enter the next junction box?
@@ -1413,7 +1524,11 @@ class Traffic:
             return None
         if rnd("stow", cid, day, i) >= pa["share"]:
             return None
-        a, z = trips[i]["t1"] + pa["after_min"] * self.pace, trips[i + 1]["t0"] - pa["before_min"] * self.pace
+        a = trips[i]["t1"] + self.r["park_s"] + pa["after_min"] * self.pace   # after the driver has got out and gone
+        z = trips[i + 1]["t0"] - self.r["board_s"]       # before the driver gets back in (they may sit a while before pulling out)
+        if trips[i + 1].get("board") is not None:
+            z = min(z, trips[i + 1]["board"] * self.pace)
+        z -= pa["before_min"] * self.pace
         return (a, z) if z > a else None
 
     def _parked(self, bid):
@@ -1423,6 +1538,8 @@ class Traffic:
     def car_at(self, cid, day, minute):
         """dict(pos, heading, state, bay, leg) for one car at a game minute of a day. state: parked | moving | waiting."""
         d = self._day(day)
+        if cid in d.get("idle", ()):                       # CITY-087: no car today
+            return dict(pos=None, heading=None, state="none", bay=None, leg=None)
         t = minute * self.pace
         trips = d["trips"].get(cid, [])
         i = bisect.bisect_right([tr["t0"] for tr in trips], t) - 1
