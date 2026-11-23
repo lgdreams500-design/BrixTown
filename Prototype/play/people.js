@@ -281,6 +281,8 @@ const People = (() => {
     gardener: { g: "tunic", top: ["olive"], bottom: ["brown"], cap: ["ochre"], hair: ["short", "side"], shoes: ["brown"], h: [1.64, 1.8], b: [1, 1.12] },
     child: { g: "tee", top: ["teal", "ochre", "terra", "cream", "blue", "plum"], bottom: ["indigo", "olive", "blue", "brown"], shorts: .55, skirt: .25, hair: ["short", "bob", "afro", "long", "bun"], shoes: ["cream", "brown"], h: [1.12, 1.45], b: [.8, .92] },   // WLD-032
     utility: { g: "long", top: ["charcoal"], bottom: ["indigo"], cap: ["ochre"], hair: ["short"], shoes: ["black"], h: [1.66, 1.82], b: [1, 1.12] },
+    binman: { g: "long", top: ["olive", "ochre"], bottom: ["charcoal"], cap: ["ochre"], hair: ["short", "side", "bun"], shoes: ["black"], h: [1.64, 1.84], b: [1, 1.14] },   // CITY-088: bins at dawn, parcels by day
+    creative: { g: "tee", top: ["plum", "ochre", "teal", "terra", "cream"], bottom: ["indigo", "olive", "charcoal"], scarf: ["ochre", "terra", "plum"], scarfP: .45, bag: .35, hair: ["long", "afro", "bun", "side", "bob"], shoes: ["brown", "cream"], h: [1.6, 1.8], b: [.9, 1.06] },   // CITY-083: works from home
   };
   function look(id, role, sigName) {
     const R = ROLE[role] || ROLE.commuter, r = k => hash(id, k), pk = (list, k) => K[list[Math.min(list.length - 1, Math.floor(r(k) * list.length))]];

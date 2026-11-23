@@ -8,7 +8,7 @@
 // commuters who boarded the tram sit in it until it leaves the map (and on the way back, from the edge to their stop).
 // Cabins are open frames, no glass, so the people inside show.
 //
-// Buses (CITY-083, CITY-084, k 2 in D.cars) run their lines as traffic.py worked them out: a long soft box in the line's
+// Buses (CITY-091, CITY-092, k 2 in D.cars) run their lines as traffic.py worked them out: a long soft box in the line's
 // colour with open windows, a driver from out of town, and the residents who ride it (piece kind 3 with the bus) on the
 // benches. The player can ride one too: E at a bus standing at a stop gets on, E again when it next stands at a stop gets off.
 //
@@ -70,7 +70,7 @@ var Cars = (() => {
         return { x: p[a] + (p[b] - p[a]) * g, z: p[a + 1] + (p[b + 1] - p[a + 1]) * g, hx: hx / l, hz: hz / l, moving: Math.hypot(p[b] - p[a], p[b + 1] - p[a + 1]) > .05, trip: true };
       }
       bay = t[2];
-      if (t[4] && m >= t[4][0] && m < t[4][1]) return null;   // parked off the street until its driver comes back (CITY-085)
+      if (t[4] && m >= t[4][0] && m < t[4][1]) return null;   // parked off the street until its driver comes back (CITY-093)
     }
     return bay ? { x: bay[0], z: bay[1], hx: bay[2], hz: bay[3], moving: false } : null;
   }
@@ -261,7 +261,7 @@ var Cars = (() => {
     if (taken.has(k)) return out;
     if (!byCar) drivers();
     const ins = (byCar.get(k) || []).filter(v => minute >= v[0] && minute < v[1]);
-    if (ins.length) {                                    // the owner at the wheel, neighbours sharing the ride beside and behind (CITY-086)
+    if (ins.length) {                                    // the owner at the wheel, neighbours sharing the ride beside and behind (CITY-094)
       const own = CARS[k].o, wheel = ins.find(v => v[2] === own) || ins[0];
       out.push([looks[wheel[2]], md.seat[0], md.seat[1]]);
       const seats = [[md.seat[0], -md.seat[1]]].concat(md.back != null ? [[md.back, md.seat[1]], [md.back, -md.seat[1]]] : []);
@@ -363,7 +363,7 @@ var Cars = (() => {
   }
   function enter(t, p, cam, minute) {
     const c = at(t.k, minute);
-    if (t.ride) {                                        // on the bus: a passenger, carried where it goes (CITY-084)
+    if (t.ride) {                                        // on the bus: a passenger, carried where it goes (CITY-092)
       drv = { k: t.k, ride: true, x: c.x, z: c.z, a: Math.atan2(c.hz, c.hx), v: 0, c };
       saved = { dist: cam.dist, fp: cam.fp };
       cam.dist = Math.max(cam.dist, 11); cam.fp = false;

@@ -13,7 +13,7 @@ import citysim
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.normpath(os.path.join(HERE, "..", "..", "Prototype", "play", "city_data.js"))
 OUT_SEASONS = os.path.join(os.path.dirname(OUT), "city_seasons.js")
-ACTS = ["sleep", "home", "work", "eat", "shop", "rest", "sell", "wait", "visit", "tend", "deliver", "stroll", "walk", "arrive", "eat_home", "check", "shelter"]
+ACTS = ["sleep", "home", "work", "eat", "shop", "rest", "sell", "wait", "visit", "tend", "deliver", "collect", "stroll", "walk", "arrive", "eat_home", "check", "shelter"]
 USES = ["bed", "room", "work", "seat", "customer", "bench", "stall", "wait", "chair", "flowerbed", "rim"]
 
 
@@ -36,7 +36,7 @@ def routines(city, day, car_index):
             lot = city.lots[s["place"]]
             if kind == "away":
                 row.append([r1(t0), 2])
-            elif kind in ("drive", "ride"):                 # at the wheel of their car, or on a bus (CITY-084)
+            elif kind in ("drive", "ride"):                 # at the wheel of their car, or on a bus (CITY-092)
                 row.append([r1(t0), 3, car_index[payload]])
             elif kind == "move":
                 route = payload[0]
@@ -107,14 +107,14 @@ def cars(city, day):
                     f = f * f * (3 - 2 * f)
                     pts[i][0] += ox * f
                     pts[i][1] += oz * f
-            st = T.stowed(cid, day, ti)                    # CITY-085: off the street while parked, [from, to] in minutes
+            st = T.stowed(cid, day, ti)                    # CITY-093: off the street while parked, [from, to] in minutes
             trips.append([round(tr["t0"] / T.pace, 3), round(tr["t1"] / T.pace, 3), bay(tr["bay1"]) if tr["bay1"] else None,
                           [round(v, 2) for q in pts for v in q]] + ([[round(st[0] / T.pace, 3), round(st[1] / T.pace, 3)]] if st else []))
         home = T.home_bay(cid)
         v = dict(home=bay(home) if home else None, trips=trips, k=2 if cid in T.buses else 1 if cid in T.vans else 0)
-        if cid in T.buses:                                 # a bus (CITY-083): which line, for its colours and its sign
+        if cid in T.buses:                                 # a bus (CITY-091): which line, for its colours and its sign
             v["l"] = lines.index(T.buses[cid]["line"])
-        if cid in T.cars:                                  # whose car: the one at the wheel; anyone else in it is a passenger (CITY-086)
+        if cid in T.cars:                                  # whose car: the one at the wheel; anyone else in it is a passenger (CITY-094)
             v["o"] = res_index[T.cars[cid]["owner"]]
         out.append(v)
     return out, index, CAR_STEP_S / T.pace
@@ -133,7 +133,7 @@ def roads(city):
         crossings=[[r1(c["pos"][0]), r1(c["pos"][1]), 1 if ew(c["street"]) else 0] for c in R.d["crossings"]],
         bays=[[r1(b["pos"][0]), r1(b["pos"][1]), 1 if abs(R.lanes[b["lane"]]["u"][0]) > .5 else 0] for b in R.bays.values()
               if not b.get("outer") and b.get("kind") != "stop"],   # lay-bys in the town's streets; driveways and kerbs outside have none
-        stops=stops(T),                                   # bus stops (CITY-083)
+        stops=stops(T),                                   # bus stops (CITY-091)
         lines=[dict(name=T.lines[k]["name"], colour=T.lines[k].get("colour", "teal")) for k in sorted(T.lines)],
         signals=[[j["pos"][0], j["pos"][1], round(citysim.rnd("sig", j["id"]) * cycle, 3)] for j in R.d["junctions"] if j["control"] == "signals"],
         cycle={k: cyc[k] for k in ("green_s", "amber_s", "all_red_s")},
@@ -284,7 +284,8 @@ def main(day=16):
         pace=city.pace, acts=acts, uses=USES, roles=roles,
         role_color={k: v["color"] for k, v in w["roles"]["roles"].items()},
         role_sig={k: v["sig"] for k, v in w["roles"]["roles"].items()}, signatures=w["signatures"]["signatures"],
-        residents=[dict(n=r["name"], r=roles.index(r["role"]), id=r["id"], h=lot_at[r["home"]], w=lot_at[r["work"]] if r["work"] else -1) for r in w["residents"]],
+        residents=[dict(n=r["name"], r=roles.index(r["role"]), id=r["id"], h=lot_at[r["home"]], w=lot_at[r["work"]] if r["work"] else -1,
+                        **({"c": w["careers"]["careers"][r["career"]]["title"] + (" and " + w["careers"]["careers"][r["day_career"]]["title"] if r.get("day_career") else "")} if r.get("career") else {})) for r in w["residents"]],   # CITY-081
         plan=plan, trees=trees, flowers=flower_row(w, city, day), plants=world.plants_today(w, city, day),   # CITY-017: the garden plants today
         lawn={k: v for k, v in w["vegetation"]["lawn"].items() if k != "note"},   # ART-001: how the grass looks
         tram=w["calendar"]["tram"], dialogue=dialogue(w), speech={k: v for k, v in w["speech"].items() if k != "note"}, crash={k: v for k, v in w["crash"].items() if k != "note"},

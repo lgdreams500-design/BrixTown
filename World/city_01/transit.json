@@ -1,5 +1,5 @@
 {
- "note": "Bus lines of Old Town (CITY-083, F-VEH-TRANSIT level 2 'Network', owner 2026-11-23: keep the tram and add buses). Each stop is a point; the traffic rules (Tools/citysim/traffic.py) put a stop on both sides of the street nearest it and keep parked cars out of it. A line runs from its first stop to its last and back, leaving the first stop every every_min game minutes from first to last; how many buses that takes is worked out from the route. Times and frequencies are [ASSUMPTION] until tuned.",
+ "note": "Bus lines of Old Town (CITY-091, F-VEH-TRANSIT level 2 'Network', owner 2026-11-23: keep the tram and add buses). Each stop is a point; the traffic rules (Tools/citysim/traffic.py) put a stop on both sides of the street nearest it and keep parked cars out of it. A line runs from its first stop to its last and back, leaving the first stop every every_min game minutes from first to last; how many buses that takes is worked out from the route. Times and frequencies are [ASSUMPTION] until tuned.",
  "stops": [
   {"id": "westgate_mall", "name": "Westgate Mall", "at": [373.9, 903.5]},
   {"id": "west_gate", "name": "West Gate", "at": [530.0, 768.0]},

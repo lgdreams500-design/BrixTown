@@ -70,7 +70,7 @@ const Roads = (() => {
     });
   }
 
-  // A bus stop (CITY-083): in a town street a lay-by as long as a bus with a painted box; on the kerb side a small shelter
+  // A bus stop (CITY-091): in a town street a lay-by as long as a bus with a painted box; on the kerb side a small shelter
   // in the style of the tram's (wooden posts, a cream back, a roof in the colour of the first line that stops there, a
   // bench) and a pole with a disc for every line. [x, z, along x, along z, town, [lines], name] from build_play.py.
   const SHADES = { teal: [.20, .36, .37], terracotta: [.44, .24, .18], ochre: [.52, .40, .20], blue: [.30, .38, .52], olive: [.30, .33, .20], plum: [.30, .24, .34] };

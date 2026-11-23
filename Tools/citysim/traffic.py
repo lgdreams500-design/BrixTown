@@ -120,10 +120,10 @@ class Roads:
         self._grid = {}                                   # bays by 32 m cell, for "nearest bay"
         for bid, b in self.bays.items():
             self._grid.setdefault((int(b["pos"][0] // 32), int(b["pos"][1] // 32)), []).append(bid)
-        self.stops, self.by_lot = {}, {}                  # bus stops (CITY-083): bays only buses use; driveways by lot
+        self.stops, self.by_lot = {}, {}                  # bus stops (CITY-091): bays only buses use; driveways by lot
         for st in data.get("stops", []):
             self.add_stop(st)
-        for l in data.get("outer_lots", []):              # driveways and kerbside bays outside the wall (CITY-082)
+        for l in data.get("outer_lots", []):              # driveways and kerbside bays outside the wall (CITY-090)
             self.add_lot_bays(l)
         every = rules.get("lane_bay_every_m")             # and parking along the communities' own lanes, clear of driveways
         lane_ids = {ln["id"] for ln in data.get("outer_lanes", [])}
@@ -140,7 +140,7 @@ class Roads:
                     k += 1
                 s += every
 
-    # -- the roads outside the wall (CITY-082): the links out of the gates and the communities' lanes --
+    # -- the roads outside the wall (CITY-090): the links out of the gates and the communities' lanes --
     def _outer(self, links, lanes):
         """The roads out of the gates (roads.json "links") and the lanes of the communities (block "lanes") as lanes of
         the network: winding, one lane each way, give way where they meet, turning at a turning circle or dead end.
@@ -303,7 +303,7 @@ class Roads:
         return (p[0] + n[0] * out, p[1] + n[1] * out), u
 
     def _place_bay(self, bid, lid, s, kind, lot=None, grid=True):
-        # outside the grid there are no lay-bys: a car parks on the roadway itself, against its edge (CITY-082)
+        # outside the grid there are no lay-bys: a car parks on the roadway itself, against its edge (CITY-090)
         pos, u = self._bay_on(lid, s, self.r["outer_bay_offset"] - self.lanes[lid].get("off", self.r["lane_offset"]))
         b = dict(id=bid, street=self.lanes[lid]["street"], lane=lid, s=s, pos=pos, u=u, kind=kind, lot=lot, outer=True)
         self.bays[bid] = b
@@ -332,7 +332,7 @@ class Roads:
         return best[0], best[1]
 
     def add_lot_bays(self, lot):
-        """CITY-082: a house outside the wall has a driveway beside its front path; any other place there has a few bays
+        """CITY-090: a house outside the wall has a driveway beside its front path; any other place there has a few bays
         by the kerb nearest its door (`outer_bays` per kind in traffic.json). Only for doors with no town bay in reach."""
         r = self.r
         if any(not self.bays[b].get("outer") for b in self.bays_near(lot["door"], r["bay_reach_m"])):
@@ -363,7 +363,7 @@ class Roads:
         return made
 
     def add_stop(self, st):
-        """CITY-083: a bus stop on both sides of the street nearest st["at"]; parking bays it covers are taken out."""
+        """CITY-091: a bus stop on both sides of the street nearest st["at"]; parking bays it covers are taken out."""
         r = self.r
         p = tuple(st["at"])
         best = None
@@ -400,7 +400,7 @@ class Roads:
         """Lanes a car on `lid` may turn into at its end junction. No U-turns."""
         lane = self.lanes[lid]
         out = [o for o in self.out.get(lane["b"], []) if self.lanes[o]["street"] != lane["street"]]
-        if not out and lane.get("outer"):                 # a turning circle or the end of a lane: turn round (CITY-082)
+        if not out and lane.get("outer"):                 # a turning circle or the end of a lane: turn round (CITY-090)
             back = lane["street"] + ("-" if lid.endswith("+") else "+")
             out = [back] if back in self.lanes else []
         return out
@@ -473,7 +473,7 @@ class Roads:
         return [bid for d, bid in sorted(out)]
 
     def parking_near(self, p, reach):
-        """Bays a visitor may park in near p, nearest first: not someone's driveway (CITY-082)."""
+        """Bays a visitor may park in near p, nearest first: not someone's driveway (CITY-090)."""
         return [b for b in self.bays_near(p, reach) if self.bays[b].get("kind") != "driveway"]
 
     def is_outer_bay(self, bid):
@@ -508,7 +508,7 @@ class Roads:
             arms.setdefault(lane["a"], set()).add(lane["street"])
         crossings = {(c["street"], c["junction"]) for c in self.d["crossings"]}
         for jid, j in self.j.items():
-            if j.get("outer"):                             # outside the wall: lanes meet with give way, no zebras (CITY-082)
+            if j.get("outer"):                             # outside the wall: lanes meet with give way, no zebras (CITY-090)
                 continue
             n = len(arms.get(jid, ()))
             if n >= 3 and j["control"] not in ("signals", "priority", "give_way"):
@@ -575,7 +575,7 @@ class Traffic:
         return sorted((set(self.cars) | set(self.vans) | set(self.buses) | set(d["trips"])) - set(d.get("idle", ())))
 
     def owned(self, day):
-        """CITY-087: the cars households have on a day: only those someone drives that day. A car that would stand all day
+        """CITY-095: the cars households have on a day: only those someone drives that day. A car that would stand all day
         (its household walks, takes the bus or rides with a neighbour) is not on the map and not theirs that day."""
         return sorted(set(self.cars) - set(self._day(day).get("idle", ())))
 
@@ -583,7 +583,7 @@ class Traffic:
         """How much longer than a car a vehicle is at each end: buses keep further from what is ahead and behind."""
         return (self.r["buses"]["length"] - self.r["car_length"]) / 2 if vid in self.buses else 0.0
 
-    # -- buses (CITY-083): lines out and back on a timetable, from World/<city>/transit.json --
+    # -- buses (CITY-091): lines out and back on a timetable, from World/<city>/transit.json --
     def _buses(self):
         R, b = self.roads, self.r.get("buses", {})
         self.lines, buses = {}, {}
@@ -684,7 +684,7 @@ class Traffic:
 
     # -- who has a car --
     def share(self, home):
-        """CITY-081: the chance a household has a car, by the kind of home (traffic.json car_share; one number for all)."""
+        """CITY-089: the chance a household has a car, by the kind of home (traffic.json car_share; one number for all)."""
         sh = self.r["car_share"]
         if isinstance(sh, (int, float)):
             return float(sh)
@@ -703,7 +703,7 @@ class Traffic:
             if getattr(self.city, "car_homes", None) is not None and home not in self.city.car_homes:
                 continue                                       # a home the road network does not reach yet
             door = self.city.lots[home]["door"]
-            own = R.by_lot.get(home, [])                       # the house's own driveway first (CITY-082)
+            own = R.by_lot.get(home, [])                       # the house's own driveway first (CITY-090)
             bay = next((b for b in own + R.parking_near(door, 10 * self.r["bay_reach_m"]) if b not in taken), None)
             if bay is None:
                 continue
@@ -730,7 +730,7 @@ class Traffic:
 
     def _kerb(self, bid):
         """The point on the pavement beside a bay (its own side of the street), and the walking nodes either side of it.
-        Off the town grid (CITY-082) people walk along the lanes themselves: the nearest walking node is both."""
+        Off the town grid (CITY-090) people walk along the lanes themselves: the nearest walking node is both."""
         b = self.roads.bays[bid]
         if self.roads.is_outer_bay(bid):
             n = self._near_node(b["pos"])
@@ -840,7 +840,7 @@ class Traffic:
             if lg:
                 legs[car["id"]] = lg
         own = dict(legs)
-        pools = self._pools(legs)                         # CITY-086: neighbours who share the drive to work and home
+        pools = self._pools(legs)                         # CITY-094: neighbours who share the drive to work and home
         fleet = self._fleet_legs(day)
         self._crossers = self.crossings_in_use(plan)
         home_by, drop_after = (1440.0 - self.r["home_by_min"][0]) * self.pace, (1440.0 - self.r["home_by_min"][1]) * self.pace
@@ -865,7 +865,7 @@ class Traffic:
             run, (trips, assigned, boxes, entries), walked = plan_cars(pools)
         legs = run
         trips.update({cid: [] for cid in walked})
-        idle = sorted(cid for cid in self.cars if not trips.get(cid))   # CITY-087: never driven today: no car today
+        idle = sorted(cid for cid in self.cars if not trips.get(cid))   # CITY-095: never driven today: no car today
         self._days[day] = dict(trips=trips, assigned=assigned, boxes=boxes, entries=entries, crossers=self._crossers, walked=sorted(walked), idle=idle)
         if len(self._days) > 12:
             self._days.pop(next(iter(self._days)))
@@ -880,7 +880,7 @@ class Traffic:
         self._days[day]["rides"] = self._riders(plan, trips, drivers)
         return plan
 
-    # -- car pooling (CITY-086) --
+    # -- car pooling (CITY-094) --
     def _commute(self, cid, lg):
         """(first leg, last leg) of a car day that leaves home in the town and comes home from the town, else None."""
         home = self.cars[cid]["home"]
@@ -938,7 +938,7 @@ class Traffic:
             for half, i, qlg in (("evening", last, run[q][-1]), ("morning", first, run[q][0])):   # the later first: indexes stay good
                 if i is None or not (0 < i < len(pieces) - 1) or "get_out" not in qlg:
                     continue
-                prev_stay, next_stay = pieces[i - 1][0] == "stay", pieces[i + 1][0] == "stay"   # as for the bus (CITY-084)
+                prev_stay, next_stay = pieces[i - 1][0] == "stay", pieces[i + 1][0] == "stay"   # as for the bus (CITY-092)
                 kind, t0, t1, (route, cum, vv), s = pieces[i]
                 frm = pieces[i - 1][4]["place"]
                 rA = self.walk(frm, route[0], qlg["bay0"])
@@ -965,7 +965,7 @@ class Traffic:
             plan[rid] = pieces
         return out
 
-    # -- riding the bus (CITY-084) --
+    # -- riding the bus (CITY-092) --
     def bus_visits(self, trips):
         """Each bus's stops today, in order: (stop bay, arrives, leaves) in real seconds; None where it does not."""
         out = {}
@@ -984,7 +984,7 @@ class Traffic:
     def _riders(self, plan, trips, drivers=None):
         """A resident with no car of their own whose walk is longer than ride_min_m walks to a stop instead, waits, rides
         and walks on, when the two walks are short beside the walk it replaces and a bus fits: their day may move to the
-        bus, setting off up to shift_min early and arriving up to late_min late, the least change winning (CITY-084)."""
+        bus, setting off up to shift_min early and arriving up to late_min late, the least change winning (CITY-092)."""
         b = self.r["buses"]
         if not self.buses:
             return []
@@ -1037,7 +1037,7 @@ class Traffic:
                 kind, t0, t1, (route, cum, vv), s = p
                 frm, to = pieces[i - 1][4]["place"], s["place"]
                 best = None
-                # CITY-084: they may set off up to shift_min early (their stay before is cut short) and arrive up to late_min
+                # CITY-092: they may set off up to shift_min early (their stay before is cut short) and arrive up to late_min
                 # late (the stay after starts later), to fit a bus; the least change to their day wins
                 # straight on from another walk (they were late) they board the first bus after they reach the stop; straight
                 # on into another walk they must be off by the time it starts, and wait there if early
@@ -1150,7 +1150,7 @@ class Traffic:
 
     def exit_of(self, bay0, gate):
         """The lane a car from bay0 leaves the map on at a gate: the gate road out of town from inside the wall, or the
-        road in from the communities for a car from outside it (CITY-082); off the map at the gate's far end either way."""
+        road in from the communities for a car from outside it (CITY-090); off the map at the gate's far end either way."""
         R = self.roads
         lanes = sorted(R.inn.get(gate, []))
         return min(lanes, key=lambda l: (self._est_to(bay0, l, R.lanes[l]["length"]), l))
@@ -1513,7 +1513,7 @@ class Traffic:
         return self._days[day]
 
     def stowed(self, cid, day, i):
-        """CITY-085: a resident's car parked away from home after trip i is taken off the street, for a share of such stays
+        """CITY-093: a resident's car parked away from home after trip i is taken off the street, for a share of such stays
         (park_away.share, by the seed), from a little after the driver has left it to a little before they come back to
         it. (real seconds from, to) or None. The bay stays theirs; only nothing is drawn there."""
         pa = self.r.get("park_away")
@@ -1538,7 +1538,7 @@ class Traffic:
     def car_at(self, cid, day, minute):
         """dict(pos, heading, state, bay, leg) for one car at a game minute of a day. state: parked | moving | waiting."""
         d = self._day(day)
-        if cid in d.get("idle", ()):                       # CITY-087: no car today
+        if cid in d.get("idle", ()):                       # CITY-095: no car today
             return dict(pos=None, heading=None, state="none", bay=None, leg=None)
         t = minute * self.pace
         trips = d["trips"].get(cid, [])
@@ -1557,7 +1557,7 @@ class Traffic:
             if lay is not None and i == len(trips) - 1 and t >= tr["t1"] + lay:   # the day's last run done: out of service
                 return dict(pos=None, heading=None, state="away", bay=None, leg=None)
             st = self.stowed(cid, day, i)
-            if st and st[0] <= t < st[1]:                  # parked off the street until the driver comes back (CITY-085)
+            if st and st[0] <= t < st[1]:                  # parked off the street until the driver comes back (CITY-093)
                 return dict(pos=None, heading=None, state="stowed", bay=tr["bay1"], leg=None)
             return self._parked(tr["bay1"])
         f = (t - tr["t0"]) / self.step

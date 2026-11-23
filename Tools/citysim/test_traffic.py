@@ -45,7 +45,7 @@ class TheRoads(unittest.TestCase):
 
 
 class TheCars(unittest.TestCase):
-    def test_CITY_081_cars_by_kind_of_home(self):        # CITY-044, CITY-081: houses have a car, rows about half, flats few
+    def test_CITY_089_cars_by_kind_of_home(self):        # CITY-044, CITY-089: houses have a car, rows about half, flats few
         no = set(W["traffic"]["no_drive_roles"])
         owners = {c["home"] for c in T.cars.values()}
         for kind, share in W["traffic"]["car_share"].items():
@@ -81,7 +81,7 @@ class TheCars(unittest.TestCase):
 
     def test_short_tours_are_walked(self):                # CITY-044
         walking = world.simulation(W).plan(DAY)             # the same day with no cars
-        pooled = set(D["pooled"])                           # their car stays at home: they ride with a neighbour (CITY-086)
+        pooled = set(D["pooled"])                           # their car stays at home: they ride with a neighbour (CITY-094)
         for cid, car in T.cars.items():
             if cid in pooled or cid in D["walked"]:
                 continue
@@ -279,7 +279,7 @@ class TheTraffic(unittest.TestCase):
             if bay is not None:
                 held.setdefault(bay, []).append((t, 1440 * T.pace, cid))
         for bay, spans in held.items():
-            if bay in R.stops:                             # a bus stop: buses only, and two of a line may wait there (CITY-083)
+            if bay in R.stops:                             # a bus stop: buses only, and two of a line may wait there (CITY-091)
                 continue
             spans.sort()
             for a, b in zip(spans, spans[1:]):
@@ -299,7 +299,7 @@ class TheTraffic(unittest.TestCase):
 
 
 class TheOutskirtsAndBuses(unittest.TestCase):
-    def test_CITY_082_houses_outside_the_wall_drive_their_lanes(self):
+    def test_CITY_090_houses_outside_the_wall_drive_their_lanes(self):
         house_cars = [c for c in T.cars.values() if CITY.home_kind.get(c["home"]) == "house"]
         self.assertGreater(len(house_cars), 300)
         drive = sum(R.bays[c["bay"]].get("kind") == "driveway" and R.bays[c["bay"]]["lot"] == c["home"] for c in house_cars)
@@ -312,7 +312,7 @@ class TheOutskirtsAndBuses(unittest.TestCase):
             if j.get("outer"):
                 self.assertEqual(j["control"], "give_way")
 
-    def test_CITY_083_buses_keep_to_their_lines(self):
+    def test_CITY_091_buses_keep_to_their_lines(self):
         b = W["traffic"]["buses"]
         self.assertEqual(len(T.lines), len(W["transit"]["lines"]))
         for vid, bus in T.buses.items():
@@ -328,7 +328,7 @@ class TheOutskirtsAndBuses(unittest.TestCase):
             self.assertNotIn(bid, {c["bay"] for c in T.cars.values()})
             self.assertNotIn(bid, R.parking_near(R.stops[bid]["pos"], 5))
 
-    def test_CITY_084_residents_without_a_car_ride_the_bus(self):
+    def test_CITY_092_residents_without_a_car_ride_the_bus(self):
         rides, b = D["rides"], W["traffic"]["buses"]
         self.assertGreater(len(rides), 1500)                             # long walks are ridden, not walked
         owners = {c["owner"] for c in T.cars.values() if D["trips"][c["id"]]}   # at a wheel today
@@ -348,7 +348,7 @@ class TheOutskirtsAndBuses(unittest.TestCase):
                 self.assertAlmostEqual(a[2], c[1], places=6)
 
 
-    def test_CITY_085_most_cars_parked_away_from_home_leave_the_street(self):
+    def test_CITY_093_most_cars_parked_away_from_home_leave_the_street(self):
         pa = W["traffic"]["park_away"]
         away = stowed = 0
         for cid, car in T.cars.items():
@@ -371,7 +371,7 @@ class TheOutskirtsAndBuses(unittest.TestCase):
             self.assertEqual(T.car_at(cid, DAY, 3 * 60)["state"], "parked")
 
 
-    def test_CITY_086_neighbours_share_the_drive(self):
+    def test_CITY_094_neighbours_share_the_drive(self):
         pl, pools = W["traffic"]["pool"], D["pools"]
         self.assertGreater(len({x["car"] for x in pools}), 60)
         seats = {}
@@ -393,7 +393,7 @@ class TheOutskirtsAndBuses(unittest.TestCase):
                 self.assertAlmostEqual(a[2], c[1], places=6)
 
 
-    def test_CITY_087_cars_not_used_today_are_not_there(self):
+    def test_CITY_095_cars_not_used_today_are_not_there(self):
         idle = set(D["idle"])
         self.assertGreater(len(idle), 100)
         for cid in idle:

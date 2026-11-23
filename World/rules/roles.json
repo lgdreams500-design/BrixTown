@@ -1,5 +1,5 @@
 {
- "note": "How each role spends a day. Times are HH:MM; places are 'home', 'work', a choice list name from choices.json, or 'rounds'.",
+ "note": "How each role spends a day. Times are HH:MM; places are 'home', 'work', a choice list name from choices.json, or 'rounds'. 'creative' is for residents whose career works from home (CITY-083): they 'create' (paint, play, write) at home. 'binman' (CITY-088) has two jobs: the bin round from the waste depot at dawn ('collect' on rounds), then a day job on courier rounds ('deliver'). A rounds entry's act names the round; 'rounds' means the role's round_act.",
  "roles": {
   "shopkeeper": {
    "color": [
@@ -1083,6 +1083,209 @@
     ],
     [
      "20:30",
+     "sleep",
+     "home"
+    ]
+   ]
+  },
+  "creative": {
+   "color": [
+    0.5,
+    0.38,
+    0.62
+   ],
+   "sig": "Easy",
+   "jitter": 15,
+   "weekday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "07:40",
+     "home",
+     "home"
+    ],
+    [
+     "09:15",
+     "create",
+     "home"
+    ],
+    [
+     "12:45",
+     "eat",
+     "lunch"
+    ],
+    [
+     "13:50",
+     "create",
+     "home"
+    ],
+    [
+     "16:40",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "18:40",
+     "home",
+     "home"
+    ],
+    [
+     "20:30",
+     "create",
+     "home"
+    ],
+    [
+     "22:15",
+     "home",
+     "home"
+    ],
+    [
+     "23:40",
+     "sleep",
+     "home"
+    ]
+   ],
+   "weekend": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "09:00",
+     "home",
+     "home"
+    ],
+    [
+     "10:30",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "12:45",
+     "eat",
+     "lunch"
+    ],
+    [
+     "14:00",
+     "create",
+     "home"
+    ],
+    [
+     "17:00",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "19:00",
+     "home",
+     "home"
+    ],
+    [
+     "23:45",
+     "sleep",
+     "home"
+    ]
+   ]
+  },
+  "binman": {
+   "color": [
+    0.42,
+    0.48,
+    0.22
+   ],
+   "sig": "Hurried",
+   "jitter": 5,
+   "round_every": 11,
+   "round_act": "deliver",
+   "weekday": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "04:40",
+     "home",
+     "home"
+    ],
+    [
+     "05:10",
+     "work",
+     "work"
+    ],
+    [
+     "05:30",
+     "collect",
+     "rounds"
+    ],
+    [
+     "08:40",
+     "work",
+     "work"
+    ],
+    [
+     "09:05",
+     "eat",
+     "lunch"
+    ],
+    [
+     "09:40",
+     "deliver",
+     "rounds"
+    ],
+    [
+     "15:10",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "17:00",
+     "home",
+     "home"
+    ],
+    [
+     "21:15",
+     "sleep",
+     "home"
+    ]
+   ],
+   "weekend": [
+    [
+     "00:00",
+     "sleep",
+     "home"
+    ],
+    [
+     "08:30",
+     "home",
+     "home"
+    ],
+    [
+     "10:30",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "12:45",
+     "eat",
+     "lunch"
+    ],
+    [
+     "14:00",
+     "leisure",
+     "leisure"
+    ],
+    [
+     "17:30",
+     "home",
+     "home"
+    ],
+    [
+     "22:00",
      "sleep",
      "home"
     ]

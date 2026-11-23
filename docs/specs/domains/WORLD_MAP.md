@@ -61,7 +61,7 @@ World/
     city.json            name, seed, grid, street names, spawn point, list of block files
     residents.json       every resident: home, role, workplace, nearest amenities
     roads.json           junctions and their control, streets with speed limits, parking bays, crossings, town gates (CITY-043, CITY-068)
-    transit.json         bus stops and lines: stops in order, how often, first and last (CITY-083)
+    transit.json         bus stops and lines: stops in order, how often, first and last (CITY-091)
     blocks/b_<i>_<j>.json   one file per block
 ```
 
@@ -128,7 +128,7 @@ café, grocer, garden, market, stop and clinic), and for couriers and utility wo
 | WLD-051 | Buildings of `lift_from_floors` storeys or more (the towers) shall also have a lift that goes up or down a floor, to the ground, to the top floor and to the roof (owner, Q-23: "Stairs and a lift"). | F-BLD-INSIDE | 3 | P1 | `test_WLD_051_towers_have_a_lift` |
 | WLD-052 | Inside shall be the size seen from outside: the ground floor at 0.2 m with its ceiling at 3.2 m, floor f at 3f + 0.4 m under a 0.2 m slab, the top ceiling meeting the roof at floors × 3 + 0.4 m, behind the same windows; each floor furnished for what `storeys` says it is (bedrooms, flats, offices, storerooms, wards, galleries, stacks, plant rooms). | F-BLD-INSIDE | 3 | P1 | `test_WLD_052_inside_is_the_size_of_outside` |
 | WLD-053 | Residents shall use the upper floors: beds in houses and flats are upstairs (`levels`), and half the desks in offices; no two floors have a place at the same spot on the plan. | F-BLD-INSIDE | 3 | P1 | `test_WLD_053_residents_sleep_upstairs` |
-| WLD-054 | Each mall shall have a small car park, about a quarter of the cars it had (40, 40 and 50 instead of 160, 160 and 200), a paved forecourt at its door, trees where the rest of the car park was, and a bus stop beside it (CITY-083). Owner, 2026-11-23: "Malls to ~1/4, bus stop"; done by `Tools/worldgen/shrink_carparks_01.py`. | F-MAP-CITY | 1 | P1 | `test_WLD_054_small_car_parks_with_a_bus_stop` |
+| WLD-054 | Each mall shall have a small car park, about a quarter of the cars it had (40, 40 and 50 instead of 160, 160 and 200), a paved forecourt at its door, trees where the rest of the car park was, and a bus stop beside it (CITY-091). Owner, 2026-11-23: "Malls to ~1/4, bus stop"; done by `Tools/worldgen/shrink_carparks_01.py`. | F-MAP-CITY | 1 | P1 | `test_WLD_054_small_car_parks_with_a_bus_stop` |
 | CITY-050 | At least 95% of buildings shall be enterable through an open door, with the places inside taken from the lot's `objects`. | F-BLD-INSIDE | 2 | P0 | `test_nearly_every_building_can_be_entered` |
 | CITY-051 | Residents shall use the same doors and the same places inside as the player. | F-BLD-INSIDE | 2 | P0 | Slice: residents sit, work and sleep at the listed places |
 | CITY-052 | A resident shall leave early enough to arrive on time; one who is late skips the stop they have missed and walks on. Nobody speeds up. | F-NPC-ROUTINE | 1 | P0 | `test_most_walks_arrive_on_time`, `test_the_day_has_no_gaps…` |
@@ -351,5 +351,5 @@ keep a timetable with several stops in it. Something has to give `[OPEN: Q-21]`.
 | 0.5.15 | 2026-11-22 | The player can play on the playgrounds (WLD-041, owner's request; F-OBJ-POINTS level 1, shared places): swings, seesaws, slides, sandpits and climbing frames, a place a child is on not offered. The second seesaw in each park now rocks under children too (its plank only listened to the first one's places). |
 | 0.5.16 | 2026-11-22 | Night sky and night light (WLD-042, ADR-0023), at the owner's request and approved by the owner: stars and the Milky Way that turn with the clock, a moon with phases and its own light, weather deciding how much shows; lanterns no longer flatten the street at night. |
 | 0.5.17 | 2026-11-22 | Sun and moon paths by season (WLD-043, ADR-0024), at the owner's request: the sun rises north-east and climbs to 75° in summer, rises south-east and stays at 25° in winter, always at the calendar's times; the moon follows its own path. |
-| 0.5.18 | 2026-11-23 | Mall car parks shrunk to a quarter with a forecourt, trees and a bus stop (WLD-054). Bus lines and stops in `World/city_01/transit.json` (CITY-083); the slice draws the buses, their riders and a shelter at every stop, and the player can ride one. |
+| 0.5.18 | 2026-11-23 | Mall car parks shrunk to a quarter with a forecourt, trees and a bus stop (WLD-054). Bus lines and stops in `World/city_01/transit.json` (CITY-091); the slice draws the buses, their riders and a shelter at every stop, and the player can ride one. |
 | 0.5.19 | 2026-11-23 | The communities' lanes widened from 7 m to 9 m (owner: "make the roads wider near the independent houses"), by `Tools/worldgen/widen_lanes_01.py`; the gardens (`add_houses_03.py`) and the street dressing (`add_lanes_dressing_01.py`) run again from the new edges. Every house keeps its 2 m verge and a garden of 150 m2 or more. |

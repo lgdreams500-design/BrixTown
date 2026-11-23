@@ -435,8 +435,9 @@ class City:
                 every = role["round_every"]
                 n = max(1, int((end - hm(start)) // every))
                 stops = r.get("rounds") or self.d["choices"]["rounds"]
+                ract = role["round_act"] if act == "rounds" else act        # a role may do two kinds of round (CITY-088)
                 for k in range(n):
-                    out.append((m + k * every, role["round_act"], stops[int(rnd("stop", rid, day, i, k) * len(stops))]))
+                    out.append((m + k * every, ract, stops[int(rnd("stop", rid, day, i, k) * len(stops))]))
                 continue
             if act == "tend":
                 every = role["round_every"]
@@ -456,7 +457,7 @@ class City:
 
     def _use(self, act, place):
         u = self.d["use"]
-        if act in ("deliver", "inspect", "stroll"):
+        if act in ("deliver", "inspect", "stroll", "collect"):
             return None
         if self.lots[place]["kind"] == "home":
             return u["sleep"] if act == "sleep" else u["home"]
@@ -497,6 +498,10 @@ class City:
                 if home:                               # everyone has their own bed and room
                     mates = self.mates.get(place, [])
                     s["slot"] = mates.index(rid) if rid in mates and mates.index(rid) < len(spots) else None
+                    continue
+                post = self.res[rid].get("post")
+                if post is not None and place == self.res[rid].get("work") and post < len(spots):   # CITY-085: their own post
+                    s["slot"], free[post] = post, max(free[post], s["hold"])
                     continue
                 first = int(rnd("seat", rid, place) * max(1, len(spots)))
                 for k in range(len(spots)):
@@ -648,7 +653,7 @@ class City:
                 out[rid] = dict(pos=self._stroll_at(rid, day, s, m), act="stroll", place=s["place"], state="outside")
             elif kind == "drive":                         # in their car: where the car is (traffic.py)
                 out[rid] = dict(pos=self.traffic.car_at(payload, day, m)["pos"], act="drive", place=s["place"], state="driving", car=payload)
-            elif kind == "ride":                          # on a bus: where the bus is (traffic.py, CITY-084)
+            elif kind == "ride":                          # on a bus: where the bus is (traffic.py, CITY-092)
                 out[rid] = dict(pos=self.traffic.car_at(payload, day, m)["pos"], act="ride", place=s["place"], state="riding", bus=payload)
             else:
                 indoors = lot["kind"] not in ("garden", "market", "stop") and s["use"] is not None and \
