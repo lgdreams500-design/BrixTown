@@ -2,8 +2,11 @@
 tree, plant, prop, field or pond), drawn from World/ as the data has it. Bare stretches glow; the hotter, the further
 you can walk there without passing anything. Use it to pick which spaces need filling.
 
-Run:  python empty_space_map.py [out.png]      (default Art/StyleTests/empty_space_24/heat.png)
-Also prints the biggest empty patches (spots 15 m or more from anything), largest first, with the area they lie in.
+Run:  python empty_space_map.py [out.png]               the whole city (default Art/StyleTests/empty_space_24/heat.png)
+      python empty_space_map.py --centre [out.png]      Old Town only, inside the old wall line (heat_centre.png), finer
+      (1 m), on a shorter scale (full heat at 20 m), and counting only what stands on the ground and the roadways: bare
+      pavement, squares, yards, lawns and footpaths count as empty, since that is where things could go.
+Also prints the biggest empty patches (spots 15 m, in the centre 8 m, or more from anything), largest first, with the area they lie in.
 Reads the data only; writes nothing back to World/.
 """
 import json, math, os, sys
@@ -12,7 +15,9 @@ from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
-OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "Art", "StyleTests", "empty_space_24", "heat.png")
+CENTRE = "--centre" in sys.argv
+ARGS = [a for a in sys.argv[1:] if a != "--centre"]
+OUT = ARGS[0] if ARGS else os.path.join(ROOT, "Art", "StyleTests", "empty_space_24", "heat_centre.png" if CENTRE else "heat.png")
 CITY = os.path.join(ROOT, "World", "city_01")
 jl = lambda p: json.load(open(p, encoding="utf-8"))
 city, roads = jl(os.path.join(CITY, "city.json")), jl(os.path.join(CITY, "roads.json"))
@@ -20,13 +25,16 @@ veg = jl(os.path.join(ROOT, "World", "rules", "vegetation.json"))
 blocks = [jl(os.path.join(CITY, e["file"])) for e in city["blocks"]]
 G = city["grid"]; P, SW = G["pitch"], G["street_width"]
 W_M, H_M = G["columns"] * P, G["rows"] * P                     # the city's grid, in metres
-M = 2.0                                                          # metres a pixel
-MARGIN = 96                                                      # shown round the grid, dimmed (the fields beyond the map)
+M = 1.0 if CENTRE else 2.0                                       # metres a pixel
+MARGIN = 24 if CENTRE else 96                                    # shown round the region, dimmed
 OPEN = ("garden", "market", "stop")
-NEAR, FAR = 6.0, 40.0                                            # no colour nearer than NEAR m to something; full heat at FAR m
+NEAR, FAR = (3.0, 20.0) if CENTRE else (6.0, 40.0)                # no colour nearer than NEAR m to something; full heat at FAR m
+HOT, MIN_AREA = (8, 60) if CENTRE else (15, 400)                  # a patch: spots HOT m or more from anything, of MIN_AREA m2 or more
+wl0 = city["wall"]["cells"]
+RX0, RZ0, RX1, RZ1 = (wl0[0] * P - SW / 2, wl0[1] * P - SW / 2, wl0[2] * P + SW / 2, wl0[3] * P + SW / 2) if CENTRE else (0, 0, W_M, H_M)
 
-X0, Z0 = -MARGIN, -MARGIN
-NX, NZ = int((W_M + 2 * MARGIN) / M), int((H_M + 2 * MARGIN) / M)
+X0, Z0 = RX0 - MARGIN, RZ0 - MARGIN
+NX, NZ = int((RX1 - RX0 + 2 * MARGIN) / M), int((RZ1 - RZ0 + 2 * MARGIN) / M)
 occ = Image.new("L", (NX, NZ), 0); d = ImageDraw.Draw(occ)
 T = lambda x, z: ((x - X0) / M, (z - Z0) / M)
 
@@ -64,15 +72,15 @@ names = []                                                       # (x0, z0, x1, 
 for b in blocks:
     sp = b.get("span", [1, 1]); ox, oz = b["origin"]
     ex, ez = b["size"] + (sp[0] - 1) * P, b["size"] + (sp[1] - 1) * P
-    names.append((ox, oz, ox + ex, oz + ez, b["district"], b["template"]))
+    names.append((ox, oz, ox + ex, oz + ez, b["district"] + " " + b["id"], b["template"]))
     for ln in b.get("lanes", []):
         line(ln["points"], ln["width"])
         if ln.get("end") == "turning":
             disc(*ln["points"][-1], ln["width"])
     for t in b.get("tracks", []):
-        line(t["points"], t["width"])
+        if not CENTRE: line(t["points"], t["width"])
     for p, q in b["paths"]:
-        line([p, q], 1.6)
+        if not CENTRE: line([p, q], 1.6)                         # in the centre a bare path is ground to fill
     for l in b["lots"]:
         if l["kind"] in OPEN:
             continue
@@ -127,7 +135,7 @@ idx = t * (len(ramp) - 1); i0 = np.floor(idx).astype(int).clip(0, len(ramp) - 2)
 heat = ramp[i0] * (1 - f) + ramp[i0 + 1] * f
 alpha = (np.where(dist > NEAR, 0.35 + 0.6 * t, 0.0))[..., None]
 pic = base * (1 - alpha) + heat * alpha
-gx0, gz0 = int(-X0 / M), int(-Z0 / M); gx1, gz1 = int((W_M - X0) / M), int((H_M - Z0) / M)
+gx0, gz0 = int((RX0 - X0) / M), int((RZ0 - Z0) / M); gx1, gz1 = int((RX1 - X0) / M), int((RZ1 - Z0) / M)
 outside = np.ones((NZ, NX), bool); outside[gz0:gz1, gx0:gx1] = False
 pic[outside] = pic[outside] * 0.45 + 30
 img = Image.fromarray(pic.clip(0, 255).astype(np.uint8))
@@ -139,15 +147,15 @@ try:
 except OSError:
     font = small = ImageFont.load_default()
 TT = lambda x, z: ((x - X0) / M * S, (z - Z0) / M * S)
-for i in range(G["columns"] + 1):
-    dr.text((TT(i * P + 36, -60)), str(i), fill=(230, 230, 220), font=small)
-for j in range(G["rows"] + 1):
-    dr.text((TT(-70, j * P + 40)), str(j), fill=(230, 230, 220), font=small)
+for i in range(int(RX0 // P), int(RX1 // P) + 1):
+    if RX0 <= i * P + 40 <= RX1: dr.text((TT(i * P + 40, RZ0 - MARGIN * .7)), str(i), fill=(230, 230, 220), font=small)
+for j in range(int(RZ0 // P), int(RZ1 // P) + 1):
+    if RZ0 <= j * P + 40 <= RZ1: dr.text((TT(RX0 - MARGIN * .8, j * P + 40)), str(j), fill=(230, 230, 220), font=small)
 
-# patches: spots 15 m or more from anything, joined where they touch (on a 4 m grid), largest first
+# patches: spots HOT m or more from anything, joined where they touch (on a 4 m grid), largest first
 cell = 2
 small_d = dist[::cell, ::cell]
-hot = small_d >= 15
+hot = small_d >= HOT
 hot &= ~outside[::cell, ::cell]                                  # only on the map grid: the fields beyond it are not counted
 seen = np.zeros_like(hot)
 patches = []
@@ -166,25 +174,26 @@ for zz in range(hot.shape[0]):
         pa, pc = max(pts, key=lambda q: small_d[q[0], q[1]])    # the emptiest spot: where the number goes
         mx, mz = pc * cell * M + X0, pa * cell * M + Z0
         peak = small_d[pa, pc]
-        inside = 0 <= mx <= W_M and 0 <= mz <= H_M
-        where = next((f"{n[4]} ({n[5]})" for n in names if n[0] - 8 <= mx <= n[2] + 8 and n[1] - 8 <= mz <= n[3] + 8), "open field between blocks" if inside else "beyond the map grid")
+        inside = RX0 <= mx <= RX1 and RZ0 <= mz <= RZ1
+        where = next((f"{n[4]} ({n[5]})" for n in names if n[0] - 8 <= mx <= n[2] + 8 and n[1] - 8 <= mz <= n[3] + 8), ("a street or square" if CENTRE else "open field between blocks") if inside else "beyond the map grid")
         patches.append(dict(area=len(pts) * (cell * M) ** 2, x=mx, z=mz, peak=peak, where=where, inside=inside,
                             cellxy=(int(mx // P), int(mz // P))))
 patches.sort(key=lambda p: -p["area"])
-inner = [p for p in patches if p["inside"] and p["area"] >= 400]
+inner = [p for p in patches if p["inside"] and p["area"] >= MIN_AREA]
 for n, p in enumerate(inner[:30], 1):
     x, y = TT(p["x"], p["z"])
     dr.ellipse([x - 13, y - 13, x + 13, y + 13], fill=(20, 20, 24), outline=(255, 240, 200), width=2)
     w = dr.textlength(str(n), font=font); dr.text((x - w / 2, y - 9), str(n), fill=(255, 240, 200), font=font)
 # legend
+big = Image.new("RGB", (img.width, img.height + 120), (25, 25, 28)); big.paste(img, (0, 0)); img = big; dr = ImageDraw.Draw(img)   # the legend below the map
 lx, ly = 12, img.height - 110
-dr.rectangle([lx - 6, ly - 8, lx + 330, ly + 100], fill=(25, 25, 28))
+dr.rectangle([lx - 6, ly - 8, lx + 400, ly + 100], fill=(25, 25, 28))
 for k in range(200):
     tt = k / 199; ii = min(int(tt * 3), 2); ff = tt * 3 - ii; c = ramp[ii] * (1 - ff) + ramp[ii + 1] * ff
     dr.line([(lx + k, ly + 30), (lx + k, ly + 48)], fill=tuple(int(v) for v in c))
-dr.text((lx, ly), "Empty ground: metres to the nearest thing", fill=(240, 235, 220), font=font)
+dr.text((lx, ly), "Empty ground in Old Town: metres to the nearest thing" if CENTRE else "Empty ground: metres to the nearest thing", fill=(240, 235, 220), font=font)
 dr.text((lx, ly + 52), f"{NEAR:.0f} m", fill=(220, 220, 210), font=small); dr.text((lx + 175, ly + 52), f"{FAR:.0f}+ m", fill=(220, 220, 210), font=small)
-dr.text((lx, ly + 72), "dark grey: built, paved or planted   numbers: patches below", fill=(200, 200, 190), font=small)
+dr.text((lx, ly + 72), ("dark grey: buildings, roadway, trees, plants and street things   numbers: patches listed" if CENTRE else "dark grey: built, paved or planted   numbers: patches listed"), fill=(200, 200, 190), font=small)
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 img.save(OUT)
 print("wrote", os.path.relpath(OUT, ROOT), img.size)
