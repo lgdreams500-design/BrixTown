@@ -373,11 +373,16 @@ var Life = (() => {
   function designFrom(n, start) {                        // the building designer, from the menu, wherever you are (owner, 2026-11-23)
     const back = panel && panel.menu ? panel.kind : null; if (panel) { panel.back = null; close(); } designStart = start; open("remodel", n); panel.back = back;
   }
-  function propertyButtons(i) {                          // for each of your units: find it, remodel or redecorate it, furnish it
-    const n = unitLot(i), l = LOTS[n], own = holding(n), out = [btn("Show on map", () => showOnMap(n))];
-    if (own && l.dsg && l.drawn) out.push(btn(own.whole ? "Remodel" : "Redecorate", () => designFrom(n, null)));
-    if (own && l.dsg && l.drawn && canFurnish(l)) out.push(btn("Furnish", () => designFrom(n, "furnish")));
-    return out;
+  function buildingsTab(body) {                          // UI-006: each building you own once, with Remodel and Furnish wherever you are
+    const lots = [...new Set(M.owned().map(unitLot))];
+    body.append(h("h3", {}, "Your buildings"));
+    if (!lots.length) { body.append(h("p", { cls: "dim" }, "You own no building yet, so there is nothing to remodel. Buy one: stand in it and press P, or see an estate agent. (To try the designer: open the slice with ?rich=1.)")); return; }
+    for (const n of lots) {
+      const l = LOTS[n], own = holding(n), why = l.house ? "the community houses cannot be remodelled yet" : !l.dsg ? "this building has no design yet" : !l.drawn ? "this building is not drawn in the slice" : "";
+      const fwhy = why || (!canFurnish(l) ? "this kind of building is not furnished" : "");
+      body.append(h("div", { cls: "qline" }, h("b", {}, l.name), h("p", { cls: "dim" }, (own.whole ? "The whole building" : "Your rooms on " + own.floors.map(f => f ? "floor " + f : "the ground floor").join(", ")) + (why ? " · " + why : "")),
+        h("div", { cls: "prow" }, btn(own.whole ? "Remodel" : "Redecorate your rooms", () => designFrom(n, null), !!why), btn("Furnish", () => designFrom(n, "furnish"), !!fwhy), btn("Show on map", () => showOnMap(n)))));
+    }
   }
   function belongingsTab(P, body) {                       // INV-001: what you carry and the furniture not placed, in one list
     const inv = Object.keys(E.inv).sort(), FR = Furnish.rules();
@@ -588,6 +593,7 @@ var Life = (() => {
       body.append(h("h3", {}, "To let"), free.length ? tbl(free.map(i => unitRow(i, agent))) : h("p", { cls: "dim" }, "Nothing empty just now."));
     }
     const mine = M.owned();
+    if (!agent) buildingsTab(body);                       // Remodel, Furnish and Show on map, first (UI-006)
     body.append(h("h3", {}, "Your property"));
     if (!mine.length) body.append(h("p", { cls: "dim" }, "You own nothing yet."));
     for (const i of mine) {
@@ -599,7 +605,7 @@ var Life = (() => {
         h("p", { cls: "dim" }, m2(i) + " · worth about " + fmt(M.value(i)) + " · " + tenantText(i) + " · upkeep and tax " + fmt(M.costOf(i)) + "/day" + (ls ? " · listed at " + fmt(ls.price) : "") + (owed ? " · " + fmt(owed) + " unpaid!" : "")),
         h("div", { cls: "prow" }, "Rent Bx", rent, h("span", { cls: "dim" }, "a day (market " + fmt(M.marketRent(i)) + ")"),
           btn("Set", () => { M.setRent(i, Math.round(+rent.value * 100), true); return "Rent set; offered to tenants."; }),
-          btn(M.to_let[i] ? "Stop letting" : "Offer to let", () => { M.to_let[i] = !M.to_let[i]; })), h("div", { cls: "prow" }, ...row), h("div", { cls: "prow" }, ...propertyButtons(i))));
+          btn(M.to_let[i] ? "Stop letting" : "Offer to let", () => { M.to_let[i] = !M.to_let[i]; })), h("div", { cls: "prow" }, ...row)));
     }
     const ten = Object.keys(M.tenancy).map(Number);
     if (ten.length) body.append(h("h3", {}, "Places you rent"), tbl(ten.map(i => [M.name(i), money(M.tenancy[String(i)].rent), h("span", { cls: "dim" }, "a day" + (M.tenancy[String(i)].missed ? ", " + M.tenancy[String(i)].missed + " unpaid" : "")), btn("Move out", () => { M.leave(i); return "You have moved out."; })])));

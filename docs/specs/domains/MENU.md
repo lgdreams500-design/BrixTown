@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-MENU
 title: Brix Town — The game menu (money, belongings, properties, journal, wardrobe, map, settings, save, help)
-version: 0.1.0
+version: 0.1.1
 status: in-progress      # level 1 of each feature accepted and built in the slice
 last_updated: 2026-11-23
 parent: docs/specs/GAME_SPEC.md        # extends §UI (UI-001 to UI-004); same ID rules; UI, INV and CHR rows
@@ -31,7 +31,7 @@ UI-002 (an in-game phone as the hub, PH3) is where this menu goes later; the tab
 |---|---|---|
 | Money | Cash, accounts, loans, the statement | I |
 | Belongings | What you carry and the furniture not placed (INV-001) | G |
-| Properties | What you own and rent; for each unit you own **Show on map**, **Remodel** (or **Redecorate**), **Furnish**, and sell and let as before | P |
+| Properties | First *Your buildings*: each building you own once, with **Remodel** (or **Redecorate your rooms**), **Furnish** and **Show on map**; a button that cannot be used yet is greyed out with the reason (a community house, a building with no design), and with nothing owned it says how to buy one. Then what you own and rent, to sell and let, as before | P |
 | Journal | Quests under way, on offer, finished; people you know | J |
 | Wardrobe | What you wear, changed for free; outfits saved by name | U |
 | Map | The town's big map, with a mark at a place shown from Properties | M |
@@ -78,4 +78,5 @@ clothes as bought items kept in a wardrobe at home (F-CHR-WARDROBE 2).
 
 | Version | Date | Change |
 |---|---|---|
+| 0.1.1 | 2026-11-23 | Properties opens with *Your buildings*, where Remodel is always shown (greyed out with the reason when it cannot be used). |
 | 0.1.0 | 2026-11-23 | First version, from the owner's request and picks; built in the slice (`life.js` menu, `play.js` applySettings, `World/rules/settings.json`). |
