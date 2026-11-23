@@ -1061,7 +1061,7 @@ class Traffic:
                             if wA + wB > b["walk_share_max"] * cum[-1]:
                                 continue
                             go = leave / pace - margin - wA / v
-                            there = arrive / pace + wB / v
+                            there = arrive / pace + b["alight_spread_min"] + (wB + b["wait_spread_m"]) / v   # room to step off in turn
                             if go < lo or there > hi:
                                 continue
                             if not prev_stay:
@@ -1078,12 +1078,25 @@ class Traffic:
                 if prev_stay:
                     last = out[-1]
                     out[-1] = (last[0], last[1], go, last[3], last[4])  # stay a little longer or shorter where they were
+                # nobody waits on one spot or gets off all at once: each waits somewhere along the stop, and steps off in turn
+                def spot(bid, p, key):
+                    u = R.bays[bid]["u"]; n = (-u[1], u[0])          # along the street, and away from the road
+                    a = (rnd("stop_a", rid, key, round(dep, 2)) - .5) * 2 * b["wait_spread_m"]
+                    c = rnd("stop_b", rid, key, round(dep, 2)) * b["wait_back_m"]
+                    return (p[0] + u[0] * a + n[0] * c, p[1] + u[1] * a + n[1] * c)
+                rA = rA + [spot(ba, rA[-1], "on")]
+                rB = [spot(bb, rB[0], "off")] + rB
                 cA, cB = lengths(rA), lengths(rB)
                 reach_t = go + cA[-1] / v
+                off = rnd("stop_off", rid, round(dep, 2)) * b["alight_spread_min"]
+                off = max(0.0, min(off, hi - arr - cB[-1] / v))
+                there = arr + off + cB[-1] / v
                 out.append(("move", go, reach_t, (rA, cA, v), s))
                 out.append(("stay", reach_t, dep, rA[-1], dict(s, act="wait", use=None, slot=None, alt=None)))
                 out.append(("ride", dep, arr, vid, s))
-                out.append(("move", arr, there, (rB, cB, v), s))
+                if off > 1e-9:
+                    out.append(("stay", arr, arr + off, rB[0], dict(s, act="wait", use=None, slot=None, alt=None)))   # stepping off in turn
+                out.append(("move", arr + off, there, (rB, cB, v), s))
                 rides.append(dict(rid=rid, bus=vid, board=ba, alight=bb, t0=dep, t1=arr, walk=cum[-1], walk_t=(t0, t1), go=go, there=there))
                 changed = True
                 if next_stay:

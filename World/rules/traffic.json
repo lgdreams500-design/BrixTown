@@ -139,7 +139,10 @@
   "pull_s": 6.0,
   "shift_min": 30.0,
   "late_min": 10.0,
-  "min_stay_min": 2.0
+  "min_stay_min": 2.0,
+  "wait_spread_m": 4.0,
+  "wait_back_m": 1.0,
+  "alight_spread_min": 0.8
  },
  "park_away": {
   "share": 0.6,

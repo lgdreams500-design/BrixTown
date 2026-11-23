@@ -1601,7 +1601,7 @@ function resident(i, m) {                                // where resident i is 
   const t1 = k + 1 < row.length ? row[k + 1][0] : 1440, n = p.c.length, L = p.c[n - 1], d = clamp((m - p[0]) / Math.max(t1 - p[0], 1e-6), 0, 1) * L;
   const a = along(p, d), b = along(p, Math.min(L, d + 2)), c = along(p, Math.max(0, d - 2));
   let dx = b[0] - c[0], dz = b[1] - c[1]; const len = Math.hypot(dx, dz) || 1; dx /= len; dz /= len;
-  const lane = n >= 4 ? (hash(i, "lane") * 2 - 1) * .6 * clamp(Math.min(d - p.c[1], p.c[n - 2] - d) / 5, 0, 1) : 0;   // a little to one side of the pavement line, never at a door (CITY-043)
+  const lane = n >= 4 ? (hash(i, "lane") * 2 - 1) * 1.0 * clamp(Math.min(d - p.c[1], p.c[n - 2] - d) / 5, 0, 1) : 0;   // a little to one side of the pavement line, never at a door (CITY-043)
   const x = a[0] - dz * lane, z = a[1] + dx * lane;
   return { x, z, y: groundBase(x, z), yaw: yawOf(dx, dz), pose: 1, act: p[2], inside: 0, walking: true, ph: (d / People.stepLength(looks[i].sig, looks[i].S)) % 1 };
 }
