@@ -1,8 +1,8 @@
 ---
 doc_id: WASTED-SPEC-BUILDER
 title: Wasted — The building designer (remodel a building you own, or build a new one on an open plot)
-version: 0.4.0
-status: draft            # a plan: every row proposed; levels and open questions wait for the owner
+version: 0.5.0
+status: in-progress      # level 1 (remodel) accepted and built in the slice; level 2 and 3 rows proposed
 last_updated: 2026-11-23
 parent: docs/specs/GAME_SPEC.md        # extends §4.5 PROP; same ID rules; new prefix BUILD
 related: docs/specs/domains/WORLD_MAP.md, docs/specs/domains/FURNITURE.md, docs/decisions/ADR-0017-stone-brick-and-paving-by-rules.md, docs/decisions/ADR-0021-every-floor-true-size.md, docs/decisions/ADR-0022-real-estate-market.md
@@ -22,7 +22,8 @@ the requirements, and what the owner has to decide first.
 Every requirement names a **feature** and a **level** from `docs/backlog/features.json`. A requirement is in scope for a
 phase only if the owner's pick for that feature at that milestone is at or above its level
 (`docs/backlog/feature_choices.json`). Milestones: first slice = PH1, life depth = PH3, full game = PH6. Undecided means
-ask. Priority says how much a row matters once in scope. Status of every row: `proposed`.
+ask. Priority says how much a row matters once in scope. Status: BUILD-001 to BUILD-007 and BUILD-016 to BUILD-019 `accepted`
+(the owner, 2026-11-23, after the plan for the remodel designer in the slice: "then continue"); every other row `proposed`.
 
 Three features are proposed for this (§6): `F-BLD-DESIGN` (the designer), `F-MAP-PLOTS` (open plots to build on) and
 `F-BLD-CONSTRUCT` (how a design becomes a building). Picked for the first slice by the owner on 2026-11-22 ("Yes, suggested levels"): designer level 1 (remodel), open plots level 0, construction level 0 (instant). So BUILD-001 to BUILD-007 are in scope for the slice; building new, plots and timed construction wait for later milestones.
@@ -80,6 +81,25 @@ parts of it) is a follow-up to raise with the owner; until then `builder` leaves
 4. Confirm: pay through the ledger; the work is done (instantly, or over days: `F-BLD-CONSTRUCT`).
 
 Changing the outside needs the whole building; changing the inside needs only your unit (ADR-0022 units).
+
+### 2.5 The remodel designer in the slice (step 3)
+
+- **Getting in.** At the door of a building you own, or inside it, the prompt reads **E: Remodel** (the whole building) or
+  **E: Redecorate your rooms** (some of its units). Ownership comes from the estate market (`estate.js`, P to buy).
+- **The panel** stands to the right so the building shows. *Outside* (whole building only): walls for all sides or one facade
+  (plaster, stone or brick and its colour, brick to the eaves), roof tiles, window frames, shutters and their colour,
+  balcony, keystones, corner stones, wall lantern. *Inside*: for each storey you hold, wall colour and floor finish.
+  Only what `Builder.options()` offers for that building and district is shown.
+- **Every pick shows on the building at once** (`play.js` `repaint`: the building's triangles from the load are blanked
+  and it is built again from the draft into a mesh of its own), with the work priced line by line, Undo and Start again.
+- **Pay and build** checks the draft as `builder.py` does and pays through the ledger (`p:cash`, then the current
+  account, to `sys:builders`); construction is instant (`F-BLD-CONSTRUCT` level 0). **Esc** leaves it as it was.
+- **Kept** in the save (`remodels`, lot id to design) and drawn again on Continue.
+- **The same rules in both.** `Prototype/play/builder.js` ports `options`, `check`, `cost` and `world.built()`; at load
+  it runs `builder.check_script()`'s nine remodels and compares every result with the Python's (console: "builder.js
+  matches Tools/citysim/builder.py").
+- **Not yet:** a remodelled shop's crates no longer break when hit (they are drawn with the building again, not as
+  breakables); the camera does not frame the building for you; the community houses (§1.2) cannot be remodelled.
 
 ### 2.2 Build new (level 2)
 
@@ -146,7 +166,7 @@ Each step ends in something to see or play, as the feature process asks (prove t
 |---|---|---|---|
 | 1 | **Buildings as designs**: write each town building's design from the rules (`Tools/worldgen`), and make the slice build from designs. Nothing changes on screen. | §1: one model for all | — |
 | 2 | **The checker and the price list** in Python (`Tools/citysim/builder.py`), with tests: fits, planning, reachable, stairs, rooms, cost | §3, §4 | Step 1 |
-| 3 | **Remodel in the slice**: finishes outside and in, on a building you own, paid through the ledger | Level 1 | Steps 1, 2; `F-PROP-ESTATE` |
+| 3 | **Remodel in the slice** (done 2026-11-23, §2.5): finishes outside and in, on a building you own, paid through the ledger | Level 1 | Steps 1, 2; `F-PROP-ESTATE` |
 | 4 | **Open plots**: some lots empty and for sale; clearing one you own | `F-MAP-PLOTS` 1 | — |
 | 5 | **Build new in the slice**: shell, facades, roof, stairs and lift, rooms; construction | Level 2 | Steps 2 to 4 |
 | 6 | **Unreal**: a building actor built from a design out of the modular kit (Blender parts), and the designer UI | PH-level build | Steps 1 to 5 |
@@ -203,6 +223,7 @@ Suggested: slice — designer 1, plots 0, construct 0; life depth — designer 2
 
 | Version | Date | Change |
 |---|---|---|
+| 0.5.0 | 2026-11-23 | Step 3 done (§2.5): the remodel designer in the slice, E at your own building, live preview, priced, paid through the ledger, kept in the save; `builder.js` ports the rules and checks itself against `builder.check_script()`. A remodel is no longer refused for what was wrong with the building before it (a lot with no stair yet). BUILD-001 to BUILD-007 and BUILD-016 to BUILD-019 accepted by the owner. |
 | 0.4.0 | 2026-11-23 | BUILD-016 to BUILD-019: designs name choices by id (`colours`, `floor_finishes`; the town's picks kept by `town` lists) and `world.built()` resolves them for the slice; roof, tile, window, opening and ornament catalogues with names, look tests and status, offered through `builder.options`; walls per facade; inside walls and floors per storey, so per unit. Planning palettes added for Civic Row, the three malls, Northwood, Eastbrook and Southfield (stone and brick as they have today, the town's five plasters and five tiles). The slice's town is the same to the last vertex (mesh fingerprint checked against main, 2026-11-23). The community houses are not yet built from designs (§1.2). |
 | 0.3.0 | 2026-11-22 | Step 2 done: `Tools/citysim/builder.py` checks a remodel (what level 1 may change, who may change it, the kit, each district's palette from `World/rules/planning.json`, funds) and prices it line by line (`building_kit.json` `prices`): a full remodel of a typical house costs about 545 brix, 28% of its value; a repaint about 65 brix. Q-34 and Q-39 decided. The slice will need a port of `check` and `cost` (step 3), as the estate rules have. |
 | 0.2.0 | 2026-11-22 | Step 1 done: every building is a design (`world.design_of`, `designs`, `design_problems`; the kit in `World/rules/building_kit.json`); the slice builds from designs and the town is the same to the last vertex. |

@@ -126,7 +126,9 @@ const FACES = [
 
 // ---------------------------------------------------------------- things you can bump into and things you can use
 const solids = [], cells = new Map(), CELL = 8, uses = [], labels = [], lights = [], occl = [];
+let REPAINT = false;                                       // while a remodelled building is drawn again (repaint): geometry only, nothing it does at load
 function solid(x0, y0, z0, x1, y1, z1) {
+  if (REPAINT) return;
   const i = solids.length; solids.push([x0, y0, z0, x1, y1, z1]);
   for (let a = Math.floor(x0 / CELL); a <= Math.floor(x1 / CELL); a++) for (let b = Math.floor(z0 / CELL); b <= Math.floor(z1 / CELL); b++) {
     const k = (a + 512) * 4096 + b + 512; let l = cells.get(k); if (!l) cells.set(k, l = []); l.push(i);
@@ -201,6 +203,10 @@ const DETAIL = new Map(), DETAIL_R = 115;
 function detailOf(b) { let m = DETAIL.get(b.id); if (!m) { m = new Mesh(1 << 17); m.cx = b.origin[0] + b.size / 2; m.cz = b.origin[1] + b.size / 2; DETAIL.set(b.id, m); } return m; }
 // A lot's small parts: in a block that spans several cells (a community, a mall site) one near-only mesh per 40 m square, centred
 // on it, so the parts show when the camera is near the lot and not only near the block's first cell
+function detailKey(l) {                                    // which near-only mesh a lot's small parts go into (detailFor), without making it
+  const b = l.block, [ci, cj] = b.span || [1, 1]; if (ci * cj === 1) return b.id;
+  return b.id + ":" + Math.floor((l.rect[0] + l.rect[2]) / 2 / 40) + "," + Math.floor((l.rect[1] + l.rect[3]) / 2 / 40);
+}
 function detailFor(l) {
   const b = l.block, [ci, cj] = b.span || [1, 1]; if (ci * cj === 1) return detailOf(b);
   const x = (l.rect[0] + l.rect[2]) / 2, z = (l.rect[1] + l.rect[3]) / 2, i = Math.floor(x / 40), j = Math.floor(z / 40), k = b.id + ":" + i + "," + j;
@@ -491,6 +497,10 @@ function special(l, ctx) {
   }
 }
 
+function buildingAt(l) {                                  // a building, and where its triangles lie, so a remodel can draw it again (repaint)
+  const w0 = world.n, k = detailKey(l), d0 = DETAIL.has(k) ? DETAIL.get(k).n : 0; building(l);
+  l.drawn = { w: [w0, world.n], k, d: [d0, DETAIL.has(k) ? DETAIL.get(k).n : 0] };
+}
 function building(l) {
   const [x0, z0, x1, z1] = l.rect, t = 0.35, H = Math.max(l.floors * 3 + 0.4, GF + 0.4), [dx, dz] = l.door;
   const side = Math.abs(dz - z0) < .01 ? "n" : Math.abs(dz - z1) < .01 ? "s" : Math.abs(dx - x0) < .01 ? "w" : "e";
@@ -599,7 +609,8 @@ function building(l) {
     fbox(world, DS, a - .3, a + .3, 1.45, 2.05, 0, .05, C.teal, 0, true); fbox(world, DS, a - .05, a + .05, 1.55, 1.95, .05, .08, C.cream, 0); fbox(world, DS, a - .18, a + .18, 1.7, 1.8, .05, .08, C.cream, 0);
   }
   if (l.sp) special(l, { H, DS, dc, dw, dh, wallC, roofC });
-  l.furn = [side, accent, inC, inners]; furnish(l, side, accent, inC);     // the room itself is drawn only when someone is near (rooms near the camera, below)
+  l.furn = [side, accent, inC, inners]; if (REPAINT) return;   // a repaint keeps the places, uses and collisions laid at load
+  furnish(l, side, accent, inC);                          // the room itself is drawn only when someone is near (rooms near the camera, below)
   if (l.stair) for (let f = 1; f < l.floors; f++) furnish(l, side, accent, inners[f], null, f);   // and every floor above it, in its own inside colour: its places, uses and collisions
 }
 
@@ -1561,7 +1572,7 @@ function buildWorld() {
       const a = [clamp(Math.min(p[0], q[0]), lo[0], hi[0]), clamp(Math.min(p[1], q[1]), lo[1], hi[1])], c = [clamp(Math.max(p[0], q[0]), lo[0], hi[0]), clamp(Math.max(p[1], q[1]), lo[1], hi[1])];
       world.flat(a[0] - 1, a[1] - 1, c[0] + 1, c[1] + 1, Y_PATH + (p[0] === q[0] ? .005 : 0), C.path, 21);
     }
-    for (const l of b.lots) isOpen(l) ? openLot(l) : l.house || l.angle ? turnedHouse(l) : l.plan ? mallShell(l) : building(l);   // a designed house even when it is not turned
+    for (const l of b.lots) isOpen(l) ? openLot(l) : l.house || l.angle ? turnedHouse(l) : l.plan ? mallShell(l) : buildingAt(l);   // a designed house even when it is not turned
     if (b.template === "peri") {                           // cloth strung across the streets of the old quarters
       const up = blockAt.get(b.grid[0] + "," + (b.grid[1] - 1)), left = blockAt.get((b.grid[0] - 1) + "," + b.grid[1]);
       if (up && up.template === "peri") for (const u of [20, 60]) if (hash(b.id, "bn", u) < .55) banner(bx + u, bz - SW, bx + u, bz, b.id + u);
@@ -2250,6 +2261,7 @@ function interact() {
   if (pl.pose > 1) { keys.Space = true; stepPlayer(0); keys.Space = false; return; }
   if (!target || Talk.on) return;
   if (target.type === "talk") return Talk.open(target);
+  if (target.type === "remodel") return Life.remodel(target.lot);   // the building designer (life.js, BUILD-004)
   if (target.type === "car") { Sound.car("in"); return Cars.enter(target, pl, cam, clock.m); }   // into a parked car (cars.js)
   if (target.type === "play") { pl.play = { sp: target.sp, t0: performance.now() / 1000 }; pl.pose = 2; pl.playPose = 0; pl.vy = 0; pl.seat = null; Sound.act(target.sp.use === "climb" ? "jump" : "sit"); return; }   // a go on the playground (WLD-041)
   if (target.type === "lift") {
@@ -2266,6 +2278,7 @@ function findTarget0() {
   if (pl.pose > 1) return;
   for (const u of uses) { if (Math.abs(u.x - pl.x) > 2 || Math.abs(u.z - pl.z) > 2 || Math.abs(u.y - pl.y) > 1.2 || (u.type === "play" && Dress.takenBy(u))) continue; const d = Math.hypot(u.x - pl.x, u.z - pl.z); if (d < best) { best = d; target = u; } }
   if (!target) target = Cars.target(pl, clock.m);        // a parked car to drive (cars.js)
+  if (!target) target = Life.remodelTarget();            // at the door of a building you own, or in your rooms: remodel it (life.js)
 }
 function stepCamera(dt) {
   if (STUDIO) { const gy = groundBase(STUDIO_AT[0], STUDIO_AT[1]), near = new URLSearchParams(location.search).has("face"), D9 = near ? (+new URLSearchParams(location.search).get("face") >= 2 ? 1.25 : 2.6) : 9.6, ch = near ? 1.5 : 1.25, d = [0, (near ? 1.5 : .97) - ch, -D9], n = Math.hypot(d[0], d[1], d[2]); cam.fp = true; cam.eye = [STUDIO_AT[0], gy + ch, STUDIO_AT[1] + D9]; cam.dir = d.map(v => v / n); return; }   // &face=1: the same lens brought up to the head
@@ -2359,7 +2372,7 @@ function hud(VP, W, H, tags) {
   $("date").textContent = (Life.ready ? "Day " + (clock.day + 1) + " · " : "") + D.day.weekday + " · " + (D.day.trying ? "trying " : "") + D.day.season + (wxTry ? " · trying " + wxTry : { cloud: " · cloudy", rain: " · rain", fog: " · fog" }[weatherNow(clock.m).kind] || "") + (D.day.market ? " · market day" : "") + (clock.rate !== 1 ? "  (clock ×" + clock.rate + ")" : "");
   const [a, b] = placeName(); $("place").textContent = a; $("sub").textContent = b;
   $("stats").innerHTML = bodies + " of " + D.residents.length + " residents have bodies<br>" + Math.round(fps) + " frames a second" + (simple ? " · simple picture" : quality < 1 ? " · soft picture" : "");
-  const pr = $("prompt"); if (started && (target || pl.pose > 1)) { pr.style.display = "block"; pr.innerHTML = "<kbd>E</kbd>" + (pl.pose === 4 ? Cars.label() : pl.play ? "Get off" : pl.pose > 1 ? "Get up" : target.label); } else pr.style.display = "none";
+  const pr = $("prompt"); if (started && !Life.on && (target || pl.pose > 1)) { pr.style.display = "block"; pr.innerHTML = "<kbd>E</kbd>" + (pl.pose === 4 ? Cars.label() : pl.play ? "Get off" : pl.pose > 1 ? "Get up" : target.label); } else pr.style.display = "none";
   $("dot").style.display = started && cam.fp ? "block" : "none";
   g2.clearRect(0, 0, W, H); if (!started) return;
   const inLot = lotAt(pl.x, pl.z), sc = W / ui.clientWidth;
@@ -2389,6 +2402,38 @@ Smash.prepare();                                         // breakable things kee
 world.a = null;
 const chunks = [...DETAIL.values()].map(m => { const c = { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, cx: m.cx, cz: m.cz, r: m.r || DETAIL_R, box: boxOf(m.a, 0, m.n) }; m.a = null; return c; });
 const signBuf = buffer(signs, gl.STATIC_DRAW), signN = signs.n / 10; signs.a = null;
+// A remodelled building drawn again (BUILD-004, BUILD-005): its triangles from the load are blanked in the town and near-only meshes,
+// and it is built once more from its new design into a mesh of its own, drawn with the near relief. Only its looks change (a remodel
+// keeps the shell), so its collisions, places, uses, labels and lights from the load stay as they are and are not laid again.
+function repaint(l, design) {
+  const at = l.drawn, dm = at && DETAIL.get(at.k); if (!at) return false;
+  if (!l.blanked) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, worldBuf); gl.bufferSubData(gl.ARRAY_BUFFER, at.w[0] * 4, new Float32Array(at.w[1] - at.w[0]));
+    if (dm && dm.glbuf && at.d[1] > at.d[0]) { gl.bindBuffer(gl.ARRAY_BUFFER, dm.glbuf); gl.bufferSubData(gl.ARRAY_BUFFER, at.d[0] * 4, new Float32Array(at.d[1] - at.d[0])); }
+    l.blanked = true;
+  }
+  const keep = { wa: world.a, wn: world.n, sa: signs.a, sn: signs.n, da: dm && dm.a, dn: dm && dm.n, wrap: Smash.wrap,
+    n: [labels.length, lights.length, uses.length, BLOBS.length, occl.length] }, part = new Mesh(1 << 16);
+  world.a = new Float32Array(1 << 16); world.n = 0; signs.a = new Float32Array(1 << 12); signs.n = 0;
+  if (dm) { dm.a = new Float32Array(1 << 14); dm.n = 0; }
+  l.design = design; l.inWin = []; l.inWinUp = []; REPAINT = true; Smash.wrap = (k, x, z, fn) => fn();
+  try { building(l); }
+  finally {
+    REPAINT = false; Smash.wrap = keep.wrap;
+    const pieces2 = [world.a.subarray(0, world.n)].concat(dm ? [dm.a.subarray(0, dm.n)] : []);
+    part.a = new Float32Array(pieces2.reduce((s, x) => s + x.length, 0)); let o = 0; for (const x of pieces2) { part.a.set(x, o); o += x.length; } part.n = o;
+    world.a = keep.wa; world.n = keep.wn; signs.a = keep.sa; signs.n = keep.sn; if (dm) { dm.a = keep.da; dm.n = keep.dn; }
+    [labels, lights, uses, BLOBS, occl].forEach((arr, i) => { arr.length = keep.n[i]; });
+  }
+  if (l.overlay) { gl.deleteBuffer(l.overlay.buf); chunks.splice(chunks.indexOf(l.overlay), 1); }
+  const [x0, z0, x1, z1] = l.rect;
+  l.overlay = { buf: buffer(part, gl.STATIC_DRAW), n: part.n / 10, cx: (x0 + x1) / 2, cz: (z0 + z1) / 2, r: 3000, box: boxOf(part.a, 0, part.n) };
+  chunks.push(l.overlay);
+  for (const [k, e] of [...ROOMS].concat([...UPSTAIRS])) if (k === l || (typeof k === "string" && k.startsWith(l.id + "|"))) {   // its rooms are furnished again, in the new colours
+    if (e.buf) gl.deleteBuffer(e.buf); if (e.ao) gl.deleteTexture(e.ao); ROOMS.delete(k); UPSTAIRS.delete(k);
+  }
+  return true;
+}
 const detailN = chunks.reduce((s, c) => s + c.n, 0);
 const txtTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, txtTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, TXT); gl.generateMipmap(gl.TEXTURE_2D);
 for (const [kk, vv] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, kk, vv);
@@ -2732,7 +2777,7 @@ const LIGHTS = { reference: { sun: 1, sky: 1, bounce: 1, lanterns: 1, haze: 1, e
   golden: { sun: .62, sky: .9, bounce: 1.5, lanterns: 1, haze: .55, exposure: .7, warm: 1 } };   // golden: the kit light as first tuned (ADR-0007), kept for comparison (?light=golden)
 let lightName = LIGHTS[q.get("light")] ? q.get("light") : "kit";
 addEventListener("keydown", e => { if (e.code === "KeyL" && started && !e.repeat) { lightName = lightName === "kit" ? "reference" : "kit"; Object.assign(window.wasted.dials, { warm: 0, neutral: 0, veil: 0, skyLow: 0, gi: 0 }, LIGHTS[lightName]); } });
-window.wasted = { dials: Object.assign({ gi: 0 }, LIGHTS[lightName], q.has("gi") ? { gi: +q.get("gi") } : {}), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, begin, setLook: L => { playerLook = L; }, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
+window.wasted = { repaint, dials: Object.assign({ gi: 0 }, LIGHTS[lightName], q.has("gi") ? { gi: +q.get("gi") } : {}), light: () => lightName, pl, cam, clock, keys, uses, solids, labels, interact, resident, groundBase, lotAt, tramAt, begin, setLook: L => { playerLook = L; }, step: secs => { for (let k = 0; k < secs * 60; k++) stepPlayer(1 / 60); findTarget(); }, stats: () => ({ verts: worldN, detailVerts: detailN, detailDrawn: stat.detail, rooms: ROOMS.size, pieces: pieces.length, piecesDrawn: stat.pieces, solids: solids.length, uses: uses.length, bodies, cars: stat.cars, fps, people: people.length, target: target && target.label }) };
 // sound (sound.js): which lots play music, where the fountains and gardens are
 Sound.init(LOTS, D.blocks.flatMap(b => b.props.filter(p => p.kind === "fountain").map(p => p.pos)),
   LOTS.filter(l => l.kind === "garden").map(l => [(l.rect[0] + l.rect[2]) / 2, (l.rect[1] + l.rect[3]) / 2]));

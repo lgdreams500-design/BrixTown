@@ -144,10 +144,11 @@ def cost(w, lot_id, old, new):
     if has("ornament.lantern") and new["ornament"]["lantern"]:
         add("A wall lantern", 1, P["lantern"])
     s = lambda k: "s" if k > 1 else ""
-    floors = [f for f in range(M["floors"]) if old["inside"]["floors"][f] != new["inside"]["floors"][f]]
+    storeys = range(min(len(old["inside"]["floors"]), len(new["inside"]["floors"])))         # a remodel keeps the storeys; a design that changes them is refused by check()
+    floors = [f for f in storeys if old["inside"]["floors"][f] != new["inside"]["floors"][f]]
     if floors:
         add("New floors (%d storey%s)" % (len(floors), s(len(floors))), M["floor_m2"] * len(floors), P["floor_m2"])
-    walls = [f for f in range(M["floors"]) if old["inside"]["walls"][f] != new["inside"]["walls"][f]]
+    walls = [f for f in storeys if old["inside"]["walls"][f] != new["inside"]["walls"][f]]
     if walls:
         add("Repaint inside (%d storey%s)" % (len(walls), s(len(walls))), M["floor_m2"] * len(walls), P["inner_m2"])
     if lines:
@@ -215,7 +216,8 @@ def check(w, lot_id, old, new, owner, funds=None):
         if (old["inside"]["floors"][f] != new["inside"]["floors"][f] or old["inside"]["walls"][f] != new["inside"]["walls"][f]) and f not in held:
             out.append("floor %d is not yours to change" % f)
     # every choice from the kit, and from this district's palette (Q-34)
-    out += [x.split(": ", 1)[1] for x in world.design_problems(w, {lot_id: new})]
+    before = set(world.design_problems(w, {lot_id: old}))   # what was wrong already is not this remodel's doing (a lot with no stair yet)
+    out += [x.split(": ", 1)[1] for x in world.design_problems(w, {lot_id: new}) if x not in before]
     pal = PL["districts"].get(b["district"])
     if pal is None:
         out.append("no planning palette for %s" % b["district"])
@@ -251,7 +253,7 @@ def check(w, lot_id, old, new, owner, funds=None):
         total, _ = cost(w, lot_id, old, new)
         if total > funds:
             out.append("it costs %s brix and you have %s" % (total / 100, funds / 100))
-    return out
+    return list(dict.fromkeys(out))                   # each problem once, though four facades share it
 
 
 def _get(d, path):
@@ -272,3 +274,50 @@ def remodel(old, **changes):
         for n in nodes:
             n[last] = copy.deepcopy(v)
     return new
+
+
+def check_script(w, ds):
+    """A fixed run of remodels for the slice's port (Prototype/play/builder.js) to reproduce exactly (BUILD-005 to BUILD-007,
+    BUILD-016 to BUILD-019): [lot id, {dotted path: value}, owner, funds]. Lots are chosen from the data so the run follows the
+    town as it changes."""
+    import world
+    lots = {l["id"]: (b, l) for b in w["blocks"] for l in b["lots"]}
+    K = w["building_kit"]
+
+    def pick(district, floors=2, plain=True, kind="home"):
+        return next(i for i, (b, l) in lots.items() if i in ds and b["district"] == district and l["kind"] == kind and l["floors"] >= floors
+                    and not civic(w, b, l) and not l.get("house") and not ds[i]["shell"]["plan"]
+                    and (not plain or not any(ds[i]["walls"][f]["stone_to_eaves"] or ds[i]["walls"][f]["brick_to_eaves"] for f in FACADES)))
+    out_, old = pick("Outskirts"), pick("Old Town")
+    d, o = ds[out_], ds[old]
+    other = lambda lst, v: next(x for x in lst if x != v)
+    side = d["shell"]["side"]
+    whole = {"whole": True}
+    return [
+        [out_, {"walls.*.plaster": other(K["plaster"], d["walls"]["n"]["plaster"]), "roof.tiles": other(K["roof_tiles"], d["roof"]["tiles"])}, whole, None],
+        [out_, {"walls.%s.plaster" % side: other(K["plaster"], d["walls"][side]["plaster"])}, {"floors": [1]}, None],
+        [out_, {"walls.%s.stone" % side: {"pattern": "brick_flemish", "color": 1}, "walls.%s.brick_to_eaves" % side: True, "openings.balcony": not d["openings"]["balcony"]}, whole, None],
+        [out_, {"walls.*.stone": {"pattern": "rubble", "color": None}, "ornament.quoins": not d["ornament"]["quoins"]}, whole, None],
+        [out_, {"inside.walls": [other(K["plaster"], x) if f == 1 else x for f, x in enumerate(d["inside"]["walls"])],
+                "inside.floors": [("sand_tiles" if x != "sand_tiles" else "dark_boards") if f == 1 else x for f, x in enumerate(d["inside"]["floors"])]}, {"floors": [1]}, None],
+        [out_, {"inside.floors": ["red_tiles"] * len(d["inside"]["floors"])}, {"floors": [1]}, None],
+        [old, {"openings.frame": other(K["frames"], o["openings"]["frame"]), "openings.shutter_color": "plum", "openings.shutters": True}, whole, None],
+        [old, {"walls.*.plaster": other(K["plaster"], o["walls"]["n"]["plaster"]), "ornament.lantern": not o["ornament"]["lantern"], "openings.keystones": not o["openings"]["keystones"]}, whole, 5000],
+        [old, {"shell.floors": 9}, whole, None],
+    ]
+
+
+def run_script(w, ds, script):
+    """Each remodel of check_script: what is offered (ids by part), the problems, the cost and its lines, and the built walls of
+    the new design's front, for the slice to match."""
+    import world
+    out = []
+    for lot_id, changes, owner, funds in script:
+        old = ds[lot_id]
+        new = remodel(old, **changes)
+        total, lines = cost(w, lot_id, old, new)
+        menu = options(w, lot_id, old)
+        bt = world.built(w, new)
+        out.append(dict(options={k: [o["id"] for o in v] for k, v in sorted(menu.items())}, problems=check(w, lot_id, old, new, owner, funds),
+                        total=total, lines=[list(x) for x in lines], front=bt["walls"][old["shell"]["side"]], inside=bt["inside"]))
+    return out

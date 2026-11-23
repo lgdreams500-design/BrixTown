@@ -7,6 +7,7 @@
 var Life = (() => {
   const D = window.WASTED, X = D.life, DG = X.designer, EC = X.economy, QR = X.quests, SAVE_KEY = "wasted.save.v1";
   const el = id => document.getElementById(id), fmt = Econ.fmt;
+  let remodels = {};                                     // the player's remodelled buildings: lot id -> design (BUILD-004), kept in the save
   let E = null, Q = null, M = null, look = null, transient = false, designing = false, panel = null, spin = 0, ready = false, lastSave = 0, toastT = 0, lastMoney = null, checkT = 0;
   const visits = {}; for (const k in X.visits) visits[k] = X.visits[k];
   const staff = {}; for (const k in X.staff) staff[k] = X.staff[k];
@@ -37,13 +38,15 @@ var Life = (() => {
   function readSave() { try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
   function save() {
     if (!ready || transient) return;                      // ?auto=1 (tests, screenshots) never overwrites a real save
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), estate: M.save(), at: Date.now() })); } catch (e) { }
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), estate: M.save(), remodels, at: Date.now() })); } catch (e) { }
     lastSave = performance.now();
   }
   function loadSave(s) {
     fresh(); E.load(s.econ); Q.load(s.quests); if (s.estate) M.load(s.estate); else M.start(); look = s.look;
     Object.assign(pl, s.pl); pl.pose = 0; pl.vy = 0; cam.yaw = pl.yaw; clock.day = s.clock.day; clock.m = s.clock.m;
     ready = true; lastMoney = E.totalMoney();
+    remodels = s.remodels || {};
+    for (const id of Object.keys(remodels)) { const l = LOTS.find(x => x.id === id); if (l && l.drawn) { l.dsg = remodels[id]; window.wasted.repaint(l, Builder.built(l.dsg)); } }
   }
   function lookOk(v) {                                    // the same checks as world.look_problems()
     for (const k in DG.sliders) { const s = DG.sliders[k], x = v[k]; if (typeof x !== "number" || x < s.min - 1e-9 || x > s.max + 1e-9) return false; }
@@ -194,9 +197,14 @@ var Life = (() => {
     panel = { kind, n, msg: "" };
     for (const k in keys) keys[k] = false; pl.moving = false;
     if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
+    el("life").classList.toggle("side", kind === "remodel");   // the designer stands to one side, so the building shows
     el("life").style.display = "block"; Sound.act("talk_open"); draw();
   }
-  function close() { if (!panel) return; panel = null; el("life").style.display = "none"; Sound.act("talk_close"); save(); }
+  function close() {
+    if (!panel) return;
+    if (panel.kind === "remodel" && panel.lot && panel.draft !== panel.lot.dsg) window.wasted.repaint(panel.lot, Builder.built(panel.lot.dsg));   // not paid for: as it was
+    panel = null; el("life").style.display = "none"; Sound.act("talk_close"); save();
+  }
   function act(fn) {                                      // a button: do it, say what happened, redraw
     try { const r = fn(); panel.msg = typeof r === "string" ? r : ""; Sound.act("talk_choose"); } catch (e) { if (!(e instanceof Econ.Refused)) throw e; panel.msg = "Refused: " + e.message + "."; }
     save(); draw();
@@ -285,6 +293,7 @@ var Life = (() => {
       if (reps.length) body.append(h("h3", {}, "People you know"), tbl(reps.map(([rid, v]) => [D.residents[resIdx[rid]].n, DLR(rid), h("span", { cls: v > 0 ? "pos" : "neg" }, (v > 0 ? "+" : "") + v)])));
     }
     else if (P.kind === "agent" || P.kind === "property") { const t = estatePanel(P, body); title = t[0]; sub = t[1]; }
+    else if (P.kind === "remodel") { const t = remodelPanel(P, body); title = t[0]; sub = t[1]; }
     if (P.msg) body.prepend(h("p", { cls: "pmsg" }, P.msg));
     el("life-title").textContent = title; el("life-sub").textContent = sub;
   }
@@ -435,6 +444,79 @@ var Life = (() => {
     if (sales.length) body.append(h("h3", {}, "Lately sold"), tbl(sales.map(([d, i, p, , b]) => [M.name(i), money(p), h("span", { cls: "dim" }, "day " + (d + 1) + " to " + who(b))])));
     return agent ? [M.cos[agent].name, "Estate agents · buy, sell and rent anywhere in town"] : ["Property", "What you own and rent · P to close"];
   }
+  // ---------------------------------------------------------------- the building designer: remodel (BUILD-004 to BUILD-007, BUILD-016 to BUILD-019)
+  // E at the door of a building you own, or inside your unit. Every choice comes from Builder.options() (the kit and the district's
+  // palette); each one is shown on the building at once (play.js repaint) with its price; Pay checks it as builder.py does and pays
+  // through the ledger. Outside needs the whole building; inside, the storeys of the units you own.
+  function holding(n) {                                   // what the player holds in lot n: {whole} or {floors}, or null
+    const ix = M && M.byLot.get(n); if (!ix) return null;
+    const mine = ix.filter(i => M.owner[i] === "player"); if (!mine.length) return null;
+    return mine.length === ix.length ? { whole: true } : { floors: [...new Set(mine.flatMap(i => M.units[i].floors))].sort((a, b) => a - b) };
+  }
+  function remodelTarget() {
+    if (!ready || panel || pl.pose > 1) return null;
+    let l = lotAt(pl.x, pl.z, true);
+    if (!l || !l.dsg) { l = null; for (const c of LOTS) if (c.dsg && c.drawn && Math.abs(c.door[0] - pl.x) < 2.2 && Math.abs(c.door[1] - pl.z) < 2.2) { l = c; break; } }
+    if (!l || !l.dsg || !l.drawn) return null;
+    const n = LOTS.indexOf(l), own = holding(n); if (!own) return null;
+    return { type: "remodel", x: pl.x, z: pl.z, y: pl.y, lot: l, label: (own.whole ? "Remodel " : "Redecorate your rooms in ") + l.name };
+  }
+  function remodel(l) { open("remodel", LOTS.indexOf(l)); }
+  function funds() { return E.L.balance("p:cash") + (E.accounts.includes("current") ? E.L.balance("p:current") : 0); }
+  function remodelPanel(P, body) {
+    const l = LOTS[P.n], own = holding(P.n) || { floors: [] }, BF = Builder.FACADES, FN = Builder.FACADE_NAME;
+    if (!P.lot) Object.assign(P, { lot: l, draft: l.dsg, undo: [], tab: own.whole ? "outside" : "inside", facade: "*", storey: own.whole ? 0 : own.floors[0] });
+    const d = P.draft, menu = Builder.options(l, l.dsg), K = X.builder.kit, pats = X.builder.patterns;
+    const show = () => window.wasted.repaint(l, Builder.built(P.draft));
+    const set = changes => { P.undo.push(P.draft); P.draft = Builder.remodel(P.draft, changes); show(); P.msg = ""; Sound.act("talk_choose"); draw(); };
+    const css = c => "rgb(" + c.map(v => Math.round(Math.min(1, v * 1.25) * 255)).join(",") + ")";
+    const pick = (o, cur, path, extra) => h("button", { type: "button", cls: "sw" + (o.rgb ? "" : " word") + (extra || "") + (JSON.stringify(cur) === JSON.stringify(o.id) ? " on" : ""), title: o.name, "aria-label": o.name,
+      style: o.rgb ? "background-color:" + css(o.rgb) : "", on: { click: () => set(typeof path === "function" ? path(o) : { [path]: o.id }) } }, o.rgb ? "" : o.name);
+    const swatches = (opts, cur, path, extra) => h("div", { cls: "swatches" }, opts.map(o => pick(o, cur, path, extra)));
+    const choice = (label, ...kids) => h("div", { cls: "dzrow" }, h("span", { cls: "dzl" }, label), ...kids);
+    const tab = (on, label, fn, dis) => h("button", { type: "button", cls: "pbtn" + (on ? "" : " off"), disabled: !!dis, on: { click: fn } }, label);
+    body.append(purseLine(), h("div", { cls: "prow" }, tab(P.tab === "outside", "Outside", () => { P.tab = "outside"; draw(); }, !own.whole), tab(P.tab === "inside", "Inside", () => { P.tab = "inside"; draw(); })));
+    if (!own.whole) body.append(h("p", { cls: "dim" }, "You own part of this building: the outside needs all of it."));
+    if (P.tab === "outside") {
+      const cap = f => FN[f][0].toUpperCase() + FN[f].slice(1) + (f === d.shell.side ? " (front)" : "");
+      body.append(h("div", { cls: "prow" }, "Walls", ...["*"].concat(BF).map(f => tab(P.facade === f, f === "*" ? "All sides" : cap(f), () => { P.facade = f; draw(); }))));
+      const fa = d.walls[P.facade === "*" ? d.shell.side : P.facade], w = "walls." + P.facade;
+      body.append(choice("Plaster", swatches(menu["walls.*.plaster"], fa.plaster, w + ".plaster")));
+      body.append(choice("Stone or brick", swatches(menu["walls.*.stone"], fa.stone.pattern,
+        o => Object.assign({ [w + ".stone"]: { pattern: o.id, color: o.colors.find(c => c !== null) ?? null } }, o.brick_to_eaves ? {} : { [w + ".brick_to_eaves"]: false }))));
+      const so = menu["walls.*.stone"].find(o => o.id === fa.stone.pattern);
+      if (so && so.colors.length > 1) body.append(choice("Its colour", swatches(so.colors.map((c, k) => ({ id: c, name: c === null ? "The town's stone" : so.name + " " + (k + 1), rgb: c === null ? [.55, .52, .47] : pats[so.id][k] })), fa.stone.color, w + ".stone.color")));
+      if (so && so.brick_to_eaves) body.append(choice("Brick to the eaves", swatches([{ id: true, name: "Yes" }, { id: false, name: "No" }], fa.brick_to_eaves, w + ".brick_to_eaves")));
+      body.append(choice("Roof tiles", swatches(menu["roof.tiles"], d.roof.tiles, "roof.tiles")), choice("Window frames", swatches(menu["openings.frame"], d.openings.frame, "openings.frame")));
+      if (menu["openings.shutters"]) {
+        body.append(choice("Shutters", swatches([{ id: true, name: "Yes" }, { id: false, name: "No" }], d.openings.shutters, "openings.shutters")));
+        if (d.openings.shutters) body.append(choice("Shutter colour", swatches(menu["openings.shutter_color"], d.openings.shutter_color, "openings.shutter_color")));
+      }
+      for (const [p, label] of [["openings.balcony", "Balcony"], ["openings.keystones", "Keystones"], ["ornament.quoins", "Corner stones"], ["ornament.lantern", "Wall lantern"]])
+        if (menu[p]) body.append(choice(label, swatches([{ id: true, name: "Yes" }, { id: false, name: "No" }], Builder.get(d, p), p)));
+    } else {
+      const mine = own.whole ? [...Array(l.floors).keys()] : own.floors;
+      body.append(h("div", { cls: "prow" }, "Storey", ...mine.map(f => tab(P.storey === f, f === 0 ? "Ground" : "Floor " + f, () => { P.storey = f; draw(); }))));
+      const f = P.storey, put = key => o => { const a = d.inside[key].slice(); a[f] = o.id; return { ["inside." + key]: a }; };
+      const mix = c => c.map((v, k) => v + (K.inner_mix.with[k] - v) * K.inner_mix.share);
+      body.append(choice("Walls", swatches(menu["inside.walls"].map(o => Object.assign({}, o, { rgb: mix(o.rgb) })), d.inside.walls[f], put("walls"))),
+        choice("Floor", h("div", { cls: "swatches" }, menu["inside.floors"].map(o => pick(o, d.inside.floors[f], put("floors"), o.mat === 15 ? " boards" : " tiles")))));
+    }
+    const [total, lines] = Builder.cost(l, l.dsg, d), probs = d === l.dsg ? [] : Builder.check(l, l.dsg, d, own, funds());
+    body.append(h("h3", {}, "The work"), lines.length
+      ? tbl(lines.map(([w, q, c]) => [w, h("span", { cls: "dim" }, /plaster|stone|brick|eaves|roof|floors|inside/i.test(w) ? q + " m²" : q === 1 ? "" : q + " windows"), money(c)]).concat([[h("b", {}, "Total"), "", money(total)]]))
+      : h("p", { cls: "dim" }, "Pick something to change: it shows on the building at once. Nothing is paid until you build."));
+    if (probs.length) body.append(h("p", { cls: "neg" }, probs.map(x => x[0].toUpperCase() + x.slice(1)).join(". ") + "."));
+    body.append(h("div", { cls: "prow" },
+      h("button", { type: "button", cls: "pbtn", disabled: !lines.length || probs.length > 0, on: { click: () => act(() => {
+        const bad = Builder.check(l, l.dsg, P.draft, own, funds()); if (bad.length) throw new Econ.Refused(bad[0]);
+        E.spend(total, "sys:builders", "Remodel: " + l.name); l.dsg = P.draft; remodels[l.id] = P.draft; P.undo = [];
+        return "Done: " + l.name + " is remodelled, for " + fmt(total) + ".";
+      }) } }, lines.length ? "Pay " + fmt(total) + " and build" : "Pay and build"),
+      tab(false, "Undo", () => { P.draft = P.undo.pop(); show(); draw(); }, !P.undo.length),
+      tab(false, "Start again", () => { P.undo.push(P.draft); P.draft = l.dsg; show(); draw(); }, d === l.dsg)));
+    return [l.name, own.whole ? "Remodel · Esc to leave it as it was" : "Your rooms · Esc to leave them as they were"];
+  }
   const DLR = rid => { const r = D.residents[resIdx[rid]]; return D.dialogue.role_words[D.roles[r.r]] || D.roles[r.r]; };
   function fillJob(text, o) { const v = jobVars(o); return text.replace(/\{(\w+)\}/g, (_, k) => k in v ? v[k] : "{" + k + "}"); }
   function where(goal) {                                  // QST-005: where the person to see is right now
@@ -515,7 +597,9 @@ var Life = (() => {
   }
   addEventListener("beforeunload", save);
   addEventListener("load", () => {
-    if (window.wasted) window.wasted.life = { get E() { return E; }, get Q() { return Q; }, get M() { return M; }, get look() { return look; }, selfTest: () => Econ.selfTest(X, LOTS), estateTest: () => Estate.selfTest(D, LOTS), save, newGame, readSave, open, close, counter };
+    if (window.wasted) window.wasted.life = { get E() { return E; }, get Q() { return Q; }, get M() { return M; }, get look() { return look; }, selfTest: () => Econ.selfTest(X, LOTS), estateTest: () => Estate.selfTest(D, LOTS), save, newGame, readSave, loadSave, open, close, counter, get remodels() { return remodels; } };
+    const badB = Builder.selfTest(LOTS);
+    if (badB.length) console.error("builder.js does not match Tools/citysim/builder.py:\n  " + badB.join("\n  ")); else console.info("builder.js matches Tools/citysim/builder.py (self-test passed).");
     const badE = Estate.selfTest(D, LOTS);
     if (badE.length) console.error("estate.js does not match Tools/citysim/estate.py:\n  " + badE.join("\n  ")); else console.info("estate.js matches Tools/citysim/estate.py (self-test passed).");
     const bad = Econ.selfTest(X, LOTS);
@@ -523,7 +607,7 @@ var Life = (() => {
   });
   return {
     get on() { return !!panel; }, get designing() { return designing; }, get ready() { return ready; },
-    go, frame, camera, mark, marks, boards, conversation, allowed, chose, talkEnded, vars, key, counter, toast,
+    go, frame, camera, mark, marks, boards, remodelTarget, remodel, conversation, allowed, chose, talkEnded, vars, key, counter, toast,
     panel: k => open(k, null), spin: dx => { spin += dx * .006; },
   };
 })();

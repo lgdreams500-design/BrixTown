@@ -202,5 +202,17 @@ class TheCost(unittest.TestCase):
         self.assertTrue(40 <= statistics.median(repaints) <= 90, statistics.median(repaints))
 
 
+class TheSlicePort(unittest.TestCase):
+    def test_BUILD_005_a_fixed_run_for_the_slice(self):
+        # Prototype/play/builder.js reproduces this run at load (its self-test); here: the run covers allowed and refused remodels
+        run = builder.run_script(W, D, builder.check_script(W, D))
+        self.assertEqual(len(run), 9)
+        self.assertEqual(run[0]["problems"], [])
+        self.assertIn("changing the outside needs the whole building", run[1]["problems"])
+        self.assertTrue(any("it costs" in p for p in run[7]["problems"]))
+        self.assertTrue(all(r["total"] == sum(c for _, _, c in r["lines"]) for r in run))
+        self.assertEqual(len(run[3]["problems"]), len(set(run[3]["problems"])))
+
+
 if __name__ == "__main__":
     unittest.main()

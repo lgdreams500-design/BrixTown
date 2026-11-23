@@ -76,6 +76,17 @@
   .ptab { width: 100%; border-collapse: collapse; font-size: 15px; }
   .ptab td { padding: 4px 6px; border-bottom: 1px solid rgba(217,207,182,.12); vertical-align: middle; }
   .ptab td:last-child { text-align: right; }
+  #life.side { left: auto; right: 16px; top: 16px; transform: none; width: min(430px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }   /* the building designer, beside the building */
+  .dzrow { display: flex; align-items: center; gap: 10px; margin: 6px 0; flex-wrap: wrap; }
+  .dzl { width: 118px; font-size: 14px; color: var(--dim); }
+  .swatches { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+  .sw { width: 30px; height: 30px; border-radius: 5px; border: 2px solid rgba(217,207,182,.25); cursor: pointer; padding: 0; }
+  .sw.word { width: auto; height: 30px; padding: 0 10px; font: 600 13px var(--data); color: var(--cream); background: rgba(217,207,182,.12); }
+  .sw.boards { background-image: repeating-linear-gradient(90deg, rgba(0,0,0,.25) 0 1px, transparent 1px 9px); }
+  .sw.tiles { background-image: linear-gradient(rgba(0,0,0,.2) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.2) 1px, transparent 1px); background-size: 10px 10px; }
+  .sw.on { border-color: var(--lantern); box-shadow: 0 0 0 2px var(--lantern); }
+  .pbtn.off { background: rgba(217,207,182,.14); color: var(--cream); }
+  .pbtn:disabled { opacity: .45; cursor: default; }
   .pbtn { font: 600 14px var(--data); color: var(--ink); background: var(--lantern); border: 0; border-radius: 4px; padding: 5px 12px; cursor: pointer; }
   .pbtn:hover { background: #f6b673; } .pbtn:disabled { background: #6b6558; cursor: default; }
   .pbtn:focus-visible, #life select:focus-visible, #life input:focus-visible { outline: 2px solid var(--cream); outline-offset: 2px; }
@@ -195,6 +206,7 @@
 <script src="dodge.js"></script>
 <script src="economy.js"></script>
 <script src="estate.js"></script>   <!-- the real estate market (PROP-009 to PROP-021) -->
+<script src="builder.js"></script>   <!-- the building designer's rules (BUILD-004 to BUILD-007, BUILD-016 to BUILD-019) -->
 <script src="life.js"></script>
 <script>
   // conversations.js comes before play.js: play.js starts drawing as soon as it has run, so everything it calls must be here first.
