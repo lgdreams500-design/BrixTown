@@ -483,6 +483,24 @@ const People = (() => {
       blob(0, -.1, -.053, .032 * fm.lips, .005, .0062, [.34, .13, .11], 10, 3);
       if (L.tash) blob(0, -.104, -.037, .024, .006, .007, hairC, 6, 3);
       PLAIN = false;
+    } else if (lod === 1) {                                           // the middle distance (to 16 m): the same face in few divisions, eyes,
+      const es = fm.eye_size * 1.15, ex = .043, ez = .008 * RZ / .13, ew = .0245 * es, eh = .021 * es * fm.eye_open, ir = .0155 * es;   // brows and lips where lod 0 has them
+      const FS = (x, z, out) => { const zu = z / RZ, sj = jaw(zu); return [x, -RY * sj * Math.sqrt(Math.max(1 - (x / (RX * sj)) ** 2 - zu * zu, 0)) - out, z]; };
+      const HR = p => add(hc, add(add(sc(hx, p[0] * Sh), sc(hy, p[1] * Sh)), sc(hz, p[2] * Sh)));
+      PLAIN = true;
+      for (const e of [-1, 1]) {
+        ball(ms, HR(FS(e * ex, ez, -.005)), sc(hx, ew * Sh), sc(hy, .011 * Sh), sc(hz, eh * Sh), 10, 6, [.78, .76, .72], fl, sd);   // the white
+        ball(ms, HR(FS(e * ex, ez - .001 * es, .0045)), sc(hx, ir * Sh), sc(hy, .002 * Sh), sc(hz, Math.min(ir, eh * .97) * Sh), 10, 4, L.eyes, fl, sd);   // the iris
+        ball(ms, HR(FS(e * ex, ez - .001 * es, .0058)), sc(hx, .0068 * es * Sh), sc(hy, .0015 * Sh), sc(hz, Math.min(.0068 * es, ir) * Sh), 8, 3, [.03, .02, .02], fl, sd);   // the pupil
+        ball(ms, HR(FS(e * ex, ez + eh * .95, -.002)), sc(hx, ew * 1.05 * Sh), sc(hy, .004 * Sh), sc(hz, .003 * Sh), 10, 3, [.03, .02, .02], fl, sd);   // the lash line
+      }
+      PLAIN = false;
+      const by = (.008 + .0445 * Math.max(1, es * .9)) * RZ / .13 + fm.brow;
+      for (const e of [-1, 1]) limb(ms, HR(FS(e * (ex - .02), by, .0045)), HR(FS(e * (ex + .025), by + .004, .0045)), .0048 * Sh, .0032 * Sh, 6, sc(hairC, .6), fl, true, hy, sd);
+      PLAIN = true;
+      blob(0, -.1, -.053, .032 * fm.lips, .005, .0062, [.34, .13, .11], 8, 3);
+      if (L.tash) blob(0, -.104, -.037, .024, .006, .007, hairC, 6, 3);
+      PLAIN = false;
     }
     TEX = tex0; OSKIP = 4;
     // what the role wears on top (C5)
