@@ -2548,8 +2548,10 @@ cv.addEventListener("contextmenu", e => { if (started && Life.view) e.preventDef
 cv.addEventListener("click", () => { if (started && !locked && !Talk.on && !Life.on && cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } });
 document.addEventListener("pointerlockchange", () => { locked = document.pointerLockElement === cv; if (!locked && started && !Life.on && !Talk.on && !Life.view && !showMap && document.hasFocus()) Life.menu(); });   // Esc while the mouse is held: the browser lets it go, and the menu opens (UI-005)
 let drag = false; cv.addEventListener("mousedown", e => { drag = true; if (started && Life.view) { if (e.button === 1) e.preventDefault(); Life.pointer("down", e); } });
-cv.addEventListener("dblclick", e => { if (started && Life.view) Life.pointer("dbl", e); });   // the designer: look at that spot addEventListener("mouseup", e => { drag = false; if (started && Life.view) Life.pointer("up", e); });
-addEventListener("mousemove", e => { if (Life.designing && drag) return Life.spin(e.movementX); if (started && Life.view) return Life.pointer("move", e, drag); if (!started || !(locked || drag)) return; cam.yaw += e.movementX * SET.look; cam.pitch = clamp(cam.pitch - e.movementY * SET.look * (SET.invert ? -1 : 1), -1.35, 1.35); });
+cv.addEventListener("dblclick", e => { if (started && Life.view) Life.pointer("dbl", e); });   // the designer: look at that spot
+addEventListener("mouseup", e => { drag = false; if (started && Life.view) Life.pointer("up", e); });
+addEventListener("mousemove", e => { if (drag && e.buttons === 0) { drag = false; if (started && Life.view) Life.pointer("up", e); }   // a button let go outside the window
+  if (Life.designing && drag) return Life.spin(e.movementX); if (started && Life.view) return Life.pointer("move", e, drag); if (!started || !(locked || drag)) return; cam.yaw += e.movementX * SET.look; cam.pitch = clamp(cam.pitch - e.movementY * SET.look * (SET.invert ? -1 : 1), -1.35, 1.35); });
 addEventListener("wheel", e => { if (started && Life.view) return Life.pointer("wheel", e); cam.dist = clamp(cam.dist + Math.sign(e.deltaY) * .6, 2.2, 14); });
 const RATES = [1, 5, 20, 100];
 addEventListener("keydown", e => {
