@@ -684,11 +684,12 @@ var Life = (() => {
         choice("Floor", h("div", { cls: "swatches" }, menu["inside.floors"].map(o => pick(o, d.inside.floors[f], put("floors"), o.mat === 15 ? " boards" : " tiles")))));
       if (!P.plan[f]) P.plan[f] = P.plan0[f] = planNow(l, f);   // the room plan (BUILD-021, BUILD-022)
       const plan = P.plan[f], w = plan.find(x => x.id === P.wsel), Rp = FW.roomFor(l, f);
-      body.append(h("h3", {}, "Rooms"), h("p", { cls: "dim" }, "Click an inner wall to pick it, drag it to move it. Every room must be reached from the way in, and the stairs kept clear."));
+      body.append(h("h3", {}, "Rooms"), h("p", { cls: "dim" }, "Click an inner wall to pick it, drag it to move it either way: its ends catch on the walls they meet. Fit between walls stretches it from wall to wall. Every room must be reached from the way in, and the stairs kept clear."));
       if (w) {
         const opts = [{ id: null, name: "As the storey" }].concat(menu["inside.walls"].map(o => Object.assign({}, o, { rgb: mix(o.rgb) })));
         body.append(h("div", { cls: "prow" }, h("b", {}, "Wall, " + (w.a1 - w.a0).toFixed(2) + " m"),
           tab(false, w.door === null ? "Add a doorway" : "Close the doorway", () => editWall(P, w.id, { door: w.door === null ? gridded((w.a0 + w.a1) / 2) : null })),
+          tab(false, "Fit between walls", () => editWall(P, w.id, fitWall(w, plan, Rp))),
           tab(false, "Longer", () => editWall(P, w.id, grow(w, .5, Rp))), tab(false, "Shorter", () => editWall(P, w.id, grow(w, -.5, Rp)), w.a1 - w.a0 < 1.1),
           tab(false, "Take down", () => editWall(P, w.id, null)), tab(false, "Put down", () => { P.wsel = null; draw(); })),
           choice("Its colour", h("div", { cls: "swatches" }, opts.map(o => h("button", { type: "button", cls: "sw" + (o.rgb ? "" : " word") + (w.colour === o.id ? " on" : ""), title: o.name, "aria-label": o.name,
@@ -799,9 +800,21 @@ var Life = (() => {
   const snapOf = P => ({ d: P.draft, lay: Object.assign({}, P.lay), plan: Object.assign({}, P.plan) });
   function planNow(l, f) { return (plans[l.id] && plans[l.id][f]) || Storeys.planOf(l, f); }   // a storey's walls as they are now
   const gridded = v => { const g = RoomPlan.rules().grid_m; return +(Math.round(v / g) * g).toFixed(2); };
+  const gridUp = v => { const g = RoomPlan.rules().grid_m; return +(Math.ceil(v / g - 1e-6) * g).toFixed(2); }, gridDown = v => { const g = RoomPlan.rules().grid_m; return +(Math.floor(v / g + 1e-6) * g).toFixed(2); };
   function grow(w, d, R) {                               // a wall half a metre longer (or shorter) at each end, inside the room
     const [lo, hi] = w.ax === "x" ? [R.room[0], R.room[2]] : [R.room[1], R.room[3]];
     return { a0: gridded(Math.max(lo, w.a0 - d / 2)), a1: gridded(Math.min(hi, w.a1 + d / 2)) };
+  }
+  function wallStops(plan, w, fix, lo, hi) {            // where a wall's ends can stop on its line: the room's sides and every wall across it
+    const out = [lo, hi];
+    for (const q of plan) if (q.id !== w.id && q.ax !== w.ax && q.a0 - .01 <= fix && fix <= q.a1 + .01) out.push(q.fix);
+    return out.sort((a, b) => a - b);
+  }
+  function fitWall(w, plan, R) {                          // a wall stretched to the nearest wall (or side of the room) at each end
+    const [lo, hi] = w.ax === "x" ? [R.room[0], R.room[2]] : [R.room[1], R.room[3]], c = (w.a0 + w.a1) / 2, st = wallStops(plan, w, w.fix, lo, hi);
+    const a0 = gridUp(Math.max(...st.filter(v => v < c - .3))), a1 = gridDown(Math.min(...st.filter(v => v > c + .3)));   // (on the grid, never past the stop)
+    const D = RoomPlan.rules(), door = w.door === null ? null : gridded(clamp(w.door, a0 + D.door_w / 2 + D.door_margin, a1 - D.door_w / 2 - D.door_margin));
+    return { a0, a1, door };
   }
   function editWall(P, id, ch, quiet) {                  // change (ch) or take down (null) a wall of the storey in view
     const f = P.storey, plan = P.plan[f]; if (!plan) return;
@@ -842,7 +855,7 @@ var Life = (() => {
       if (P.tab === "inside" && e.button === 0 && P.plan[P.storey]) {   // an inner wall: pick it, and drag it across the floor
         const R = FW.roomFor(P.lot, P.storey), ray = window.wasted.rayAt(e.clientX, e.clientY); if (!ray) return;
         const w = FW.pickWall(P.lot, P.storey, P.plan[P.storey], ray), hit = floorHit(ray, R.F), was = P.wsel; P.wsel = w ? w.id : null;
-        grab = w && hit ? { wall: w.id, off: w.fix - (w.ax === "x" ? hit[1] : hit[0]), F: R.F, R, moved: false } : { turn: true };
+        grab = w && hit ? { wall: w.id, off: w.fix - (w.ax === "x" ? hit[1] : hit[0]), offA: w.a0 - (w.ax === "x" ? hit[0] : hit[1]), F: R.F, R, moved: false } : { turn: true };
         canvas().style.cursor = w ? "grabbing" : "default"; if (was !== P.wsel) draw(); return;
       }
       if (!fur || e.button !== 0) { grab = { turn: true }; return; }
@@ -858,12 +871,19 @@ var Life = (() => {
         if (fur) { const u = under(), id = u && u.p ? u.p.id : null; P.hover = id; canvas().style.cursor = id ? "grab" : "default"; }
         return;
       }
-      if (grab.wall) {                                     // a wall slides across, along the grid, inside the room
+      if (grab.wall) {                                     // a wall follows the mouse, across and along, on the grid, inside the room; its ends catch on walls
         const ray = window.wasted.rayAt(e.clientX, e.clientY), hit = ray && floorHit(ray, grab.F); if (!hit) return;
-        const w = P.plan[P.storey].find(q => q.id === grab.wall); if (!w) return;
-        const [flo, fhi] = w.ax === "x" ? [grab.R.room[1], grab.R.room[3]] : [grab.R.room[0], grab.R.room[2]], fix = gridded(clamp((w.ax === "x" ? hit[1] : hit[0]) + grab.off, flo + .2, fhi - .2));
-        if (fix === w.fix) return; if (!grab.moved) { P.undo.push(snapOf(P)); grab.moved = true; }
-        editWall(P, w.id, { fix }, true); return;
+        const plan = P.plan[P.storey], w = plan.find(q => q.id === grab.wall); if (!w) return;
+        const x = w.ax === "x", [flo, fhi] = x ? [grab.R.room[1], grab.R.room[3]] : [grab.R.room[0], grab.R.room[2]], [lo, hi] = x ? [grab.R.room[0], grab.R.room[2]] : [grab.R.room[1], grab.R.room[3]];
+        const fix = gridded(clamp((x ? hit[1] : hit[0]) + grab.off, flo + .2, fhi - .2)), len = w.a1 - w.a0;
+        let a0 = gridded(clamp((x ? hit[0] : hit[1]) + grab.offA, lo, hi - len));
+        const stops = wallStops(plan, w, fix, lo, hi), SNAP = .3;
+        const s0 = stops.find(c => Math.abs(a0 - c) < SNAP), s1 = stops.find(c => Math.abs(a0 + len - c) < SNAP);
+        if (s0 !== undefined) a0 = gridUp(s0); else if (s1 !== undefined) a0 = gridDown(s1) - len;
+        a0 = gridded(clamp(a0, gridUp(lo), gridDown(hi) - len));
+        const a1 = gridded(a0 + len), d = a0 - w.a0;
+        if (fix === w.fix && a0 === w.a0) return; if (!grab.moved) { P.undo.push(snapOf(P)); grab.moved = true; }
+        editWall(P, w.id, { fix, a0, a1, door: w.door === null ? null : gridded(w.door + d) }, true); return;
       }
       if (grab.id) {
         const ray = window.wasted.rayAt(e.clientX, e.clientY), hit = ray && floorHit(ray, grab.F); if (!hit) return;

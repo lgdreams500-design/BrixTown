@@ -146,7 +146,8 @@ Changing the outside needs the whole building; changing the inside needs only yo
   its own colour (`World/rules/room_plan.json`; `Storeys.planOf` turns the flats' walls the town built into one). A storey
   with a plan of the player's is drawn and bumped into from it (`Storeys.wallsOf`, `walls`, `resolid`).
 - **On the Inside tab**, under the storey's wall colour and floor: click an inner wall to pick it (outlined like a piece of
-  furniture), drag it across the floor on the 5 cm grid; add or close its doorway, make it half a metre longer or shorter,
+  furniture), drag it across the floor or along its own length on the 5 cm grid, its ends catching on the walls they meet
+  (within 0.3 m); **Fit between walls** stretches it to the nearest wall or side of the storey at each end; add or close its doorway, make it half a metre longer or shorter,
   take it down, paint it any of the district's inside colours or "as the storey"; add a new 3 m wall east to west or north
   to south where the view looks.
 - **Checked** by `Tools/citysim/roomplan.py` (ported as `RoomPlan` in `builder.js`, self-tested at load): walls at least
