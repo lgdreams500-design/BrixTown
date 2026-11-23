@@ -2327,6 +2327,7 @@ function stepCamera(dt) {
   const cp = Math.cos(cam.pitch); cam.dir = [Math.sin(cam.yaw) * cp, Math.sin(cam.pitch), -Math.cos(cam.yaw) * cp];
   if (!started && Life.designing) return Life.camera();  // the character designer turns round the player (life.js)
   if (started && Life.view) return designCam(dt);         // the building designer looks at the building from above (life.js)
+  if (started && Life.liveCam()) { cam.close = false; return; }   // the menu looks the player in the face, or at all of them in the wardrobe (life.js, UI-017)
   if (!started) {                                        // before play: a slow turn above Market Square
     const a = performance.now() / 16000, c = [OX + 3 * P + P / 2, 0, OZ + 4 * P + P / 2]; cam.eye = [c[0] + Math.sin(a) * 105, 46, c[2] + Math.cos(a) * 105];
     const d = [c[0] - cam.eye[0], 6 - cam.eye[1], c[2] - cam.eye[2]], n = Math.hypot(d[0], d[1], d[2]); cam.dir = d.map(v => v / n); return;
@@ -2914,10 +2915,10 @@ function frame(now) {
   if (started && !DZ) Talk.pick();                               // the nearest resident in reach can be talked to (E)
   if (started) Life.frame(dt);                            // money, quests and jobs move on with the clock (life.js)
   if (LINEUP) LINEUP.forEach((L, k) => { if (STUDIO && k !== STUDIO_WHO) return; const lx = STUDIO ? STUDIO_AT[0] : OX + 300.5 + k * 1.1; const lz = STUDIO ? STUDIO_AT[1] : OZ + 186.6; People.draw(dyn, lx, groundBase(lx, lz), lz, Math.PI, L, 0, { ph: 0, t: now / 1000, lod: !STUDIO_M || STUDIO_M < FULL_M ? 0 : STUDIO_M < LOD1_M ? 1 : STUDIO_M < LOD3_M ? 2 : 3, ff: STUDIO_FF != null ? STUDIO_FF : clamp((FACE_OUT_M - (STUDIO_M || 0)) / (FACE_OUT_M - LOD1_M), 0, 1), fl: 14, mod: STUDIO ? { arms: [[1, 0, 4, 0], [1, 0, 4, 0]] } : null }); });   // in the studio the arms hang straight, as in the reference   // ?lineup=1: the six people of character_lineup.png in a row on Linden Street, to compare with it
-  if ((started || Life.designing) && !cam.fp && !cam.close && pl.pose !== 4) {   // not while in a car; and in the designer, to see who you are making
+  if ((started || Life.designing) && (!cam.fp || Life.live) && !cam.close && pl.pose !== 4) {   // not while in a car; and in the designer, to see who you are making
     let da = cam.yaw - pl.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
     People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.play ? pl.playPose : pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
-      look: pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
+      look: Life.live ? [0, 0] : pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
   }
   if (started && Life.view) designMarks();             // the building designer's picked piece (life.js)
   if (!DZ) for (const [x, , T] of tramAt(clock.m)) Cars.tram(dyn, x, TRAM_Z, T, clock.m);   // the tram and the commuters on it (cars.js)

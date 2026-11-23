@@ -1,11 +1,11 @@
 ---
 doc_id: WASTED-ART-DIRECTION
 title: Brix Town — Art direction (locked look)
-version: 1.5.0
-status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22, interiors and furniture on 2026-11-22
-last_updated: 2026-11-22
+version: 1.6.0
+status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22, interiors and furniture on 2026-11-22, the menu's look on 2026-11-23
+last_updated: 2026-11-23
 relates_to: [FURN-003, ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
-decision: docs/decisions/ADR-0004-art-direction.md, docs/decisions/ADR-0007-warmer-kit-light.md, docs/decisions/ADR-0013-kit-light-measured.md, docs/decisions/ADR-0026-interior-and-furniture-look.md
+decision: docs/decisions/ADR-0004-art-direction.md, docs/decisions/ADR-0007-warmer-kit-light.md, docs/decisions/ADR-0013-kit-light-measured.md, docs/decisions/ADR-0026-interior-and-furniture-look.md, docs/decisions/ADR-0033-menu-look-painted-signs.md
 ---
 
 # Brix Town — Art direction
@@ -127,6 +127,25 @@ how the renders get their look (and what the slice and Unreal must do to match i
 | I8 | **Wear shows**: used pieces have paler edges and stronger mottling, worn ones a sagging cushion and a chipped corner. | Three stages side by side (not yet rendered). |
 | I9 | **Boxes belong too**: flat-pack boxes are mottled cardboard (Cream ↔ Ochre) with the company's painted band. | A stack reads as one company's. |
 
+### 2.7 The interface — "Painted signs" (ADR-0033)
+
+Reference: sample C of look test 19, `Art/StyleTests/menu_look_19/index.html` (a page, not a render: open it in a browser),
+as built in the slice's menu. It covers the game menu; the counters, the conversation box and the building designer have
+not been brought to it yet.
+
+| # | Rule | Check |
+|---|---|---|
+| U1 | **Boards, not windows**: each part of the player's life is a painted board in one accent of the palette (§2.3) as it looks in shade, with cream lettering (dark on Lantern). A page keeps its board's colour in its header and its main buttons. | Two pages are told apart by colour alone. |
+| U2 | **Matte and mottled** (W1): boards and cards carry the same blotchy two-tone paint as the walls. No gloss, no gradients that read as shine, no glow. | No highlight on any board. |
+| U3 | **Chunky and soft** (W3): corners rounded 9 to 18 px, a darker lower edge for thickness, no hairline frames. | No sharp corner on the screen. |
+| U4 | **Dusk behind**: the game is veiled dark and blurred, the boards are the colour (W4, W6). Body cards are dark stone with cream text. | The menu reads the same over morning, midday, dusk and night. |
+| U5 | **Two voices**: names and headings in the serif (Constantia), figures and controls in the sans (Bahnschrift); money in tabular figures. | No third typeface. |
+| U6 | **One main action**: in a row one button is filled in the page's colour, the others outlined; what cannot be undone is outlined in red. | Never two filled buttons side by side. |
+
+Board colours (sRGB, board then lettering), in `World/rules/settings.json` `menu.colours`: Lantern `#e0964e`/`#1c1b21`,
+Ochre `#a8843f`, Terracotta `#a35a44`, Teal `#3f7273`, Dusty blue `#55698c`, Plum `#6c5578`, Olive `#6b7245`,
+Brown `#77583f`, Stone `#6a6871` (all with `#fbf3e0`), and the quiet board `#3b3c4a`/`#e8dfc9`.
+
 ## 3. Characters — option B "Soft"
 
 ### 3.1 In one sentence
@@ -186,7 +205,8 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | Item | Where tracked |
 |---|---|
 | How production character models are made | Q-15 |
-| Vegetation, UI style | not started (vehicles: §2.5, interiors and furniture: §2.6) |
+| Vegetation | not started (vehicles: §2.5, interiors and furniture: §2.6, the interface: §2.7) |
+| The interface outside the menu (counters, conversation box, building designer, the lettering over the game) | still the earlier dark-box look; whether they follow §2.7 is for the owner to say |
 | More furniture kits and decoration (kitchen, bathroom, dining, study, children, hallway, garden, shop, café, bedroom, living, decoration) | not approved; renders of `Tools/blender/furniture_kit_18.py` in `Art/StyleTests/furniture_kit_18/` for the owner to choose from |
 | Wear stages (I8) | not yet rendered. (The furniture outlet's look, `Art/StyleTests/furniture_kit_17/showroom.png`, was approved by the owner's request to build it, ADR-0027.) |
 | Night (after dusk) and bad-weather looks | night: approved in the slice (ADR-0023, owner 2026-11-22), no reference image yet; pictures in `Art/StyleTests/night_sky_15/`. Rain, fog and overcast: approved in the slice (ADR-0016), no rule or reference image yet; must follow W5–W7 |
@@ -204,3 +224,4 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | 1.3.1 | 2026-11-22 | §2.4: the slice's kit light retuned towards the measured colours of the reference street (ADR-0013). No rule or reference changed. |
 | 1.4.0 | 2026-11-22 | Vehicles: the owner switched to A "Soft box" after playing with the Classic cars (ADR-0015): §2.5 rewritten, new reference `vehicles_soft_box.png`. |
 | 1.5.0 | 2026-11-22 | Interiors and furniture: the owner chose all four style lines from furniture look test 17 (ADR-0026): §2.6 rules I1-I9, references `furniture_lines.png` and `interior_room_daylight.png`. |
+| 1.6.0 | 2026-11-23 | The interface: the owner chose "C, Painted signs" from menu look test 19 (ADR-0033): §2.7 rules U1-U6. |

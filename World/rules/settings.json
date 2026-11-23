@@ -1,19 +1,29 @@
 {
-  "note": "The game menu and its settings (docs/specs/domains/MENU.md UI-005 to UI-010; F-UI-MENU 1, F-UI-SETTINGS 1). Settings belong to the device, not the save: the slice keeps them in the browser apart from the save. Each setting: a type (switch, choice, range), its default and, for a range, min, max and step. Controls are per platform (UI-010): keyboard and mouse, gamepad, touch; each action is bound once per context, and 'anywhere' actions may not share a control with any context. The slice is played on keyboard and mouse; the gamepad and touch mappings are the defaults for when those platforms come (UI-004, PH3). Checked by world.settings_problems().",
+  "note": "The game menu and its settings (docs/specs/domains/MENU.md UI-005 to UI-010; F-UI-MENU 1, F-UI-SETTINGS 1). Settings belong to the device, not the save: the slice keeps them in the browser apart from the save. Each setting: a type (switch, choice, range), its default and, for a range, min, max and step. Controls are per platform (UI-010): keyboard and mouse, gamepad, touch; each action is bound once per context, and 'anywhere' actions may not share a control with any context. The slice is played on keyboard and mouse; the gamepad and touch mappings are the defaults for when those platforms come (UI-004, PH3). The menu's look is Painted signs (ADR-0033, UI-015, UI-016): its home screen shows every tab as a painted board, in the order given here; each tab has a group (You, Town, Game), a colour from menu.colours (board colour, lettering colour; the accents of ART_DIRECTION 2.3 as they look in shade) and may be a tall or a small board; small boards of the Game group are painted in the quiet colour. Checked by world.settings_problems().",
   "menu": {
     "pauses": true,
+    "live": { "note": "The player themself in the menu (UI-017): the camera stands face_d metres in front of the face, face_y of their height up, and the window shows face_m metres; in the wardrobe it looks at body_y of their height from far enough that body_m metres fill body_fill of the screen's height. Heights and metres are for a person 1.72 m tall.", "face_d": 1.2, "face_y": 1.46, "face_m": 0.66, "body_y": 0.98, "body_m": 1.9, "body_fill": 0.7 },
+    "groups": [
+      { "id": "you", "name": "You" },
+      { "id": "town", "name": "Town" },
+      { "id": "game", "name": "Game" }
+    ],
+    "colours": {
+      "lantern": ["#e0964e", "#1c1b21"], "ochre": ["#a8843f", "#fbf3e0"], "terracotta": ["#a35a44", "#fbf3e0"], "teal": ["#3f7273", "#fbf3e0"], "blue": ["#55698c", "#fbf3e0"],
+      "plum": ["#6c5578", "#fbf3e0"], "olive": ["#6b7245", "#fbf3e0"], "brown": ["#77583f", "#fbf3e0"], "stone": ["#6a6871", "#fbf3e0"], "quiet": ["#3b3c4a", "#e8dfc9"]
+    },
     "tabs": [
-      { "id": "me", "name": "Me", "action": "me" },
-      { "id": "wallet", "name": "Money", "action": "money" },
-      { "id": "belongings", "name": "Belongings", "action": "belongings" },
-      { "id": "property", "name": "Properties", "action": "property" },
-      { "id": "quests", "name": "Journal", "action": "journal" },
-      { "id": "wardrobe", "name": "Wardrobe", "action": "wardrobe" },
-      { "id": "storage", "name": "Storage", "action": "menu" },
-      { "id": "map", "name": "Map", "action": "map" },
-      { "id": "settings", "name": "Settings", "action": "menu" },
-      { "id": "save", "name": "Save", "action": "menu" },
-      { "id": "help", "name": "Help", "action": "help" }
+      { "id": "me", "name": "Me", "action": "me", "group": "you", "colour": "lantern", "board": "tall" },
+      { "id": "wallet", "name": "Money", "action": "money", "group": "you", "colour": "ochre" },
+      { "id": "quests", "name": "Journal", "action": "journal", "group": "town", "colour": "teal" },
+      { "id": "property", "name": "Properties", "action": "property", "group": "town", "colour": "terracotta" },
+      { "id": "belongings", "name": "Belongings", "action": "belongings", "group": "you", "colour": "brown" },
+      { "id": "wardrobe", "name": "Wardrobe", "action": "wardrobe", "group": "you", "colour": "plum" },
+      { "id": "map", "name": "Map", "action": "map", "group": "town", "colour": "blue" },
+      { "id": "storage", "name": "Storage", "action": "menu", "group": "town", "colour": "olive", "board": "small" },
+      { "id": "settings", "name": "Settings", "action": "menu", "group": "game", "colour": "stone", "board": "small" },
+      { "id": "save", "name": "Save", "action": "menu", "group": "game", "colour": "stone", "board": "small" },
+      { "id": "help", "name": "Help", "action": "help", "group": "game", "colour": "stone", "board": "small" }
     ]
   },
   "groups": {
