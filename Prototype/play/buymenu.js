@@ -120,14 +120,16 @@ var BuyMenu = (() => {
       light *= mix(.7, 1., smoothstep(0., .22, (vO.y - uLo) / uH));
       vec3 c = 1. - exp(-col * light * 1.25);
       gl_FragColor = vec4(pow(c, vec3(1. / 2.2)), 1.); }`;
-  function setup() {                                        // the hidden canvas and its program; false when the machine gives no WebGL
-    if (dead) return false; if (gl && !gl.isContextLost()) return true;
+  function setup() {                                        // the hidden canvas and its program; false when the machine gives no WebGL, or has taken it away for now
+    if (dead) return false;
     try {
       if (!glc) { glc = document.createElement("canvas"); glc.width = glc.height = R().picture.most_px;
-        glc.addEventListener("webglcontextlost", e => { e.preventDefault(); gl = null; for (const m of meshes.values()) if (m) m.buf = null; });
-        glc.addEventListener("webglcontextrestored", () => { for (const v of views) v.dirty = true; }); }
-      gl = glc.getContext("webgl", { alpha: true, antialias: true, premultipliedAlpha: true, preserveDrawingBuffer: true });
-      if (!gl) { dead = true; return false; }
+        glc.addEventListener("webglcontextlost", e => { e.preventDefault(); prog = null; for (const m of meshes.values()) if (m) m.buf = null; });   // the browser took it: wait, the pictures already made stay
+        glc.addEventListener("webglcontextrestored", () => { for (const v of views) v.dirty = true; });
+        gl = glc.getContext("webgl", { alpha: true, antialias: true, premultipliedAlpha: true, preserveDrawingBuffer: true });
+        if (!gl) { dead = true; return false; } }
+      if (gl.isContextLost()) return false;
+      if (prog) return true;
       const sh = (t, s) => { const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; };
       prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog); gl.useProgram(prog);
       U = {}; for (const n of ["uVP", "uR", "uCen", "uGrain", "uLo", "uH"]) U[n] = gl.getUniformLocation(prog, n);
@@ -135,7 +137,7 @@ var BuyMenu = (() => {
       gl.enable(gl.DEPTH_TEST); gl.enable(gl.SCISSOR_TEST); gl.clearColor(0, 0, 0, 0);
       for (const m of meshes.values()) if (m) m.buf = null;
       return true;
-    } catch (err) { console.warn("Buy menu: no pictures of the goods (WebGL).", err); dead = true; gl = null; return false; }
+    } catch (err) { console.warn("Buy menu: no pictures of the goods (WebGL).", err); dead = true; prog = null; return false; }
   }
   function shot(m, W, H, yaw, zoom) {                       // draw mesh m into the corner of the hidden canvas; returns where its foot stands in the picture
     const P = R().picture, FOV = P.fov_deg * Math.PI / 180, pitch = P.pitch_deg * Math.PI / 180;
@@ -163,7 +165,8 @@ var BuyMenu = (() => {
     views.push(v); return v;
   }
   function paint(v) {
-    const most = R().picture.most_px, dpr = Math.min(2, window.devicePixelRatio || 1), W = Math.min(most, Math.round(v.cv.clientWidth * dpr)), H = Math.min(most, Math.round(v.cv.clientHeight * dpr));
+    const most = R().picture.most_px, dpr = Math.min(2, window.devicePixelRatio || 1), box = v.cv.getBoundingClientRect();   // (the size on the screen: the text size setting zooms the panel)
+    const W = Math.min(most, Math.round(box.width * dpr)), H = Math.min(most, Math.round(box.height * dpr));
     if (W < 4 || H < 4 || !v.mesh || !setup()) return;
     if (v.cv.width !== W || v.cv.height !== H) { v.cv.width = W; v.cv.height = H; }
     const g = shot(v.mesh, W, H, v.yaw, v.zoom), c = v.ctx;
@@ -185,7 +188,8 @@ var BuyMenu = (() => {
     for (const v of views) if (v.cv.isConnected) paint(v);
     if (!running && views.length) { running = true; last = performance.now(); requestAnimationFrame(frame); }
   }
-  addEventListener("resize", () => { for (const v of views) v.dirty = true; const g = live[0]; if (g && g.opts.redraw && narrowAt(g.opts) !== g.narrow) g.opts.redraw(); });
+  addEventListener("resize", () => { for (const v of views) v.dirty = true; const g = live[0];
+    if (g && g.root.isConnected && g.opts.redraw && g.opts.narrow === undefined && g.opts.measure && (g.opts.measure() < R().narrow_px) !== g.narrow) g.opts.redraw(); });
 
   // ---------------------------------------------------------------- the grid
   const ICON = {
@@ -200,20 +204,26 @@ var BuyMenu = (() => {
   const dot = goes => R().goes[goes] ? h("span", { cls: "bm-dot", style: board(goes), title: R().goes[goes].name, html: ICON[goes] || "" }) : null;
   const chosen = new Map(), scrolls = new Map();            // by grid: the thing chosen, how far its list is scrolled
   const held = new Map(), last1 = new Map();                // by grid: the thing turned by hand, the thing last shown large
+  const clicked = { id: "", t: 0 };                         // the cell clicked last, and when
   let live = [];                                            // the grids on the page now
-  const narrowAt = o => o.narrow !== undefined ? !!o.narrow : ((typeof o.width === "function" ? o.width() : o.width) || R().wide.panel_px) < R().narrow_px;
+  const narrowAt = o => o.narrow !== undefined ? !!o.narrow : (o.width || R().wide.panel_px) < R().narrow_px;
   const sizeWords = e => e.size ? e.size.map(v => Math.round(v * 100)).join(" × ") + " cm" : null;
-  function clear() { views = []; live = []; }
+  let hadFocus = false;                                     // a cell had the keyboard when the panel was last emptied: the chosen cell gets it back
+  function clear() { const at = document.activeElement; hadFocus = !!(at && at.classList && at.classList.contains("bm-cell")); views = []; live = []; }
   // opts: { id, things: [{ id, name, price (chips, or null), goes, left (a number, or null when it never runs out), state: "ok" | "out" | "short",
   //   short (chips missing), size ([w, d, h] in metres, or null), line (a furniture line), band (a colour of the rules, for a stand-in) }],
-  //   verb ("Buy"), fmt (chips to words), restock ("06:00"), width (px the panel has now, or a function that says), narrow (to force a layout), keys (it answers BuyMenu.key),
+  //   verb ("Buy"), fmt (chips to words), restock ("06:00"), width (px the panel has, read before it is emptied), measure (() => that width now, for when the window changes), narrow (to force a layout), keys (it answers BuyMenu.key),
   //   leftWords (n => words), stockLabel, priceLabel, buy (thing => ...), redraw () }
   function grid(opts) {
     const B = R(), narrow = narrowAt(opts), things = opts.things, fmt = opts.fmt, verb = opts.verb || "Buy";
     if (!things.length) return h("p", { cls: "dim" }, opts.empty || "Nothing here.");
     let pick = things.find(e => e.id === chosen.get(opts.id)); if (!pick) { pick = things.find(e => e.state !== "out") || things[0]; chosen.set(opts.id, pick.id); }
-    const g = { id: opts.id, opts, narrow, things, root: null, focus: !!(document.activeElement && document.activeElement.classList && document.activeElement.classList.contains("bm-cell")) };
-    const choose = e => { chosen.set(opts.id, e.id); if (opts.redraw) opts.redraw(); };
+    const g = { id: opts.id, opts, narrow, things, root: null, focus: hadFocus };
+    // A click chooses; a second click on the same thing soon after buys it. (Not the browser's double click: choosing redraws
+    // the panel, so the second click lands on a new cell.)
+    const click = e => { const now = performance.now(), twice = clicked.id === opts.id + ":" + e.id && now - clicked.t < 450; clicked.id = twice ? "" : opts.id + ":" + e.id; clicked.t = now;
+      if (twice) { if (e.state === "ok") opts.buy(e); return; }
+      if (chosen.get(opts.id) !== e.id) { chosen.set(opts.id, e.id); if (opts.redraw) opts.redraw(); } };
     const price = e => e.price === null ? h("span", { cls: "dim" }, "no price yet") : h("span", { cls: "money" + (e.state === "short" ? " neg" : "") }, fmt(e.price));
     const leftWords = e => e.left === null ? null : e.state === "out" ? h("span", { cls: "neg" }, "sold out" + (opts.restock ? ", back at " + opts.restock : ""))
       : h("span", { cls: e.left === 1 && !opts.leftWords ? "bm-last" : "dim" }, opts.leftWords ? opts.leftWords(e.left) : e.left + " left");
@@ -222,7 +232,7 @@ var BuyMenu = (() => {
     const stage = (e, key, turns, extra) => { const m = meshOf(e), v = m && !dead ? view(key, e, turns) : null;
       return [h("div", { cls: "bm-stage" }, v ? v.cv : h("div", { cls: "bm-glyph", html: ICON[e.goes] || ICON.carry }), e.state === "out" ? h("span", { cls: "bm-flag" }, "Sold out") : null, extra || null), v]; };
     const cell = (e, kids, turns, extra) => h("button", { type: "button", cls: "bm-cell" + (e.id === pick.id ? " sel" : "") + (e.state === "out" ? " out" : ""), "data-id": e.id, title: e.name, "aria-pressed": e.id === pick.id ? "true" : "false",
-      on: { click: () => choose(e), dblclick: () => { if (e.state === "ok") opts.buy(e); } } }, stage(e, opts.id + ":" + e.id, turns, extra)[0], kids);
+      on: { click: () => click(e) } }, stage(e, opts.id + ":" + e.id, turns, extra)[0], kids);
     const list = h("div", { cls: "bm-list", on: { scroll: ev => scrolls.set(opts.id, ev.currentTarget.scrollTop) } });
     if (narrow) {
       list.style.setProperty("--bm-cols", B.narrow.columns); list.style.maxHeight = B.narrow.list_px + "px";

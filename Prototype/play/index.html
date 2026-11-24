@@ -93,7 +93,7 @@
   .ptab td { padding: 4px 6px; border-bottom: 1px solid rgba(217,207,182,.12); vertical-align: middle; }
   .ptab td:last-child { text-align: right; }
   /* buy menus that show their goods as objects (UI-020; buymenu.js; look test 33, layouts B and D) */
-  #life.wide { width: min(var(--bm-panel, 960px), calc(100vw - 32px)); }
+  #life.wide { width: min(var(--bm-panel, 960px), calc((100vw - 32px) / var(--ui-zoom, 1))); }   /* (the text size setting zooms the panel: it still fits the window) */
   .bm { margin-top: 6px; } .bm-tabs { margin: 10px 0 4px; }
   .bm-wide { display: grid; grid-template-columns: minmax(0, 1fr) var(--bm-show, 320px); gap: 16px; align-items: start; }
   .bm-list { display: grid; gap: 9px; overflow: auto; padding: 3px; align-content: start; }

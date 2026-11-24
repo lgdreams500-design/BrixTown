@@ -2962,7 +2962,8 @@ cv.addEventListener("dblclick", e => { if (started && Life.view) Life.pointer("d
 addEventListener("mouseup", e => { drag = false; if (started && Life.view) Life.pointer("up", e); });
 addEventListener("mousemove", e => { if (drag && e.buttons === 0) { drag = false; if (started && Life.view) Life.pointer("up", e); }   // a button let go outside the window
   if (Life.designing && drag) return Life.spin(e.movementX); if (started && Life.view) return Life.pointer("move", e, drag); if (!started || !(locked || drag)) return; cam.yaw += e.movementX * SET.look; cam.pitch = clamp(cam.pitch - e.movementY * SET.look * (SET.invert ? -1 : 1), -1.35, 1.35); });
-addEventListener("wheel", e => { if (showMap) return; if (started && Life.view) return Life.pointer("wheel", e); cam.dist = clamp(cam.dist + Math.sign(e.deltaY) * .6, 2.2, 14); });
+addEventListener("wheel", e => { if (showMap) return; if (started && Life.view) return Life.pointer("wheel", e); if (Life.on) return;   // a counter or the menu is open: the wheel scrolls it, the camera stays
+  cam.dist = clamp(cam.dist + Math.sign(e.deltaY) * .6, 2.2, 14); });
 const RATES = [1, 5, 20, 100];
 addEventListener("keydown", e => {
   if (e.code === "Space" || e.code.startsWith("Arrow")) e.preventDefault();

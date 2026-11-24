@@ -63,6 +63,20 @@ class TheBuyMenus(unittest.TestCase):
         self.assertIn("BuyMenu.key(e)", life)                                    # arrows choose, Enter buys
         self.assertIn("BuyMenu.selfTest()", life)                                # and the page checks itself against this file's rules
 
+    def test_UI_020_the_grid_and_the_designer_keep_out_of_each_others_way(self):
+        # Found in play, 2026-11-24: "Cannot read properties of undefined (reading 'rect')" whenever the mouse moved after the
+        # designer closed with the menu or a counter already open (its view still gliding home); the wheel over a piece's
+        # picture zoomed the designer's view; choosing a piece threw the panel back to its top.
+        life, play, menu = read("life.js"), read("play.js"), read("buymenu.js")
+        pointer = life.split("function pointer(type, e, held) {")[1].split("\n")[1]
+        for guard in ("!view", "view.leave", 'P.kind !== "remodel"', "!P.lot"):
+            self.assertIn(guard, pointer)                                        # the designer's mouse is only the designer's
+        self.assertIn("if (e.target !== canvas()) return;", life)                # the wheel steers the view over the town's picture only
+        self.assertNotIn('tagName === "CANVAS"', life)                           # (a cell's picture is a canvas too)
+        self.assertIn('return Life.pointer("wheel", e); if (Life.on) return;', play)   # a panel's wheel is the panel's: the camera stays
+        self.assertIn('el("life").scrollTop = lifeTop', life)                    # a panel is redrawn where it was
+        self.assertNotIn("dblclick", menu)                                       # a second click buys: the first one redrew the cell
+
     def test_UI_021_every_thing_for_sale_shows_an_object_or_a_stand_in(self):
         text = read("goods_models.js")
         models = json.loads(text[text.index("window.GOODS_MODELS = ") + len("window.GOODS_MODELS = "):text.rstrip().rindex(";")])["models"]
