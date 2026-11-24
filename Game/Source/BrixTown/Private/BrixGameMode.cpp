@@ -21,6 +21,7 @@
 #include "Misc/CommandLine.h"
 #include "Misc/Paths.h"
 #include "TimerManager.h"
+#include "RHI.h"
 #include "UnrealClient.h"
 
 using BrixUnits::ToWorld;
@@ -120,7 +121,7 @@ void ABrixGameMode::StartPlay()
 		FTimerHandle H;
 		GetWorldTimerManager().SetTimer(H, this, &ABrixGameMode::ShootAndQuit, ShotDelaySeconds, false);
 		FTimerHandle M;   // the frame rate is counted over the second half of the wait, after start-up work has settled
-		GetWorldTimerManager().SetTimer(M, [this]() { MarkFrame = GFrameCounter; MarkSeconds = FPlatformTime::Seconds(); }, ShotDelaySeconds * 0.5f, false);
+		GetWorldTimerManager().SetTimer(M, [this]() { MarkFrame = GFrameCounter; MarkSeconds = FPlatformTime::Seconds(); if (People) People->ResetTickTime(); }, ShotDelaySeconds * 0.5f, false);
 	}
 }
 
@@ -220,7 +221,9 @@ void ABrixGameMode::ShootAndQuit()
 	FScreenshotRequest::RequestScreenshot(Shot, false, false);
 	const double Secs = FPlatformTime::Seconds() - MarkSeconds;
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: %.1f frames a second over the last %.0f s before the screenshot"), Secs > 0 ? (GFrameCounter - MarkFrame) / Secs : 0.0, Secs);
-	if (People) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents with a body at %02d:%02d"), People->Shown(), (int32)ClockMinute() / 60, (int32)ClockMinute() % 60);
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: at the shot the game thread took %.1f ms, the render thread %.1f ms, the GPU %.1f ms"),
+		FPlatformTime::ToMilliseconds(GGameThreadTime), FPlatformTime::ToMilliseconds(GRenderThreadTime), FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()));
+	if (People) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents with a body at %02d:%02d, %.2f ms a frame working them out"), People->Shown(), (int32)ClockMinute() / 60, (int32)ClockMinute() % 60, People->TickMs());
 	FTimerHandle H;
 	GetWorldTimerManager().SetTimer(H, []() { FPlatformMisc::RequestExit(false); }, 3.f, false);
 }

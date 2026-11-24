@@ -1,0 +1,107 @@
+"""The slice's people for the Unreal build (ART-004, ANIM-001, ANIM-002).
+
+Runs Prototype/play/people.js itself in headless Edge (this machine has no Node) and writes two files:
+  Game/Data/people.json             the tables people.js draws from: movement signatures, the palette, skins, hair and
+                                    eye colours, what each role wears. BrixWorld's BrixPeople reads them, so the Unreal
+                                    people are dressed and walk from the same numbers as the slice's.
+  Tests/values/people_city_01.json  looks of a dozen residents and bodies drawn by people.js draw() (vertex counts and
+                                    sampled vertex positions, the far figures' boxes): the test
+                                    ART004_people_are_drawn_as_the_slice_draws_them checks the C++ port against them.
+
+people.js stays the source while the slice is kept (ADR-0045): run this again after changing it.
+  python Tools/unreal/people_values.py
+"""
+import html
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
+PEOPLE_JS = os.path.join(ROOT, "Prototype", "play", "people.js")
+DAY = os.path.join(ROOT, "Game", "Data", "day.json")
+OUT_DATA = os.path.join(ROOT, "Game", "Data", "people.json")
+OUT_VALUES = os.path.join(ROOT, "Tests", "values", "people_city_01.json")
+EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+
+HARNESS = r"""
+try {
+const CASES = %CASES%;
+setSun([-.45 / 1.0005, .74 / 1.0005, .5 / 1.0005], [0, 1.6, 6]);   // the studio sun of play.js (its self-shadow only changes shading, not shape)
+const out = { tables: { base: BASE, signatures: {}, palette: K, skins: SKINS, hairs: HAIRS, eyes: EYES, roles: ROLE },
+  looks: [], bodies: [] };
+for (const [k, v] of Object.entries(SIG)) { const s = Object.assign({}, v); delete s.name; out.tables.signatures[k] = s; }
+const sigName = s => Object.keys(SIG).find(k => SIG[k] === s);
+const plain = L => { const o = Object.assign({}, L); o.sig = sigName(L.sig); delete o.cheek; return o; };
+const looks = CASES.looks.map(([i, role, sig]) => look(i, role, sig));
+looks.forEach((L, k) => out.looks.push(Object.assign({ i: CASES.looks[k][0], role: CASES.looks[k][1], sigName: CASES.looks[k][2] }, plain(L))));
+for (const c of CASES.bodies) {
+  const ms = { a: new Float32Array(1 << 20), n: 0, boxes: [], box(x0, y0, z0, x1, y1, z1, col) { this.boxes.push([x0, y0, z0, x1, y1, z1, col[0], col[1], col[2]]); } };
+  const L = looks[c.look];
+  draw(ms, c.x, c.y, c.z, c.yaw, L, c.pose, { ph: c.ph, t: c.t, lod: c.lod, ff: c.ff, fl: 14 });
+  const nv = ms.n / 10, step = Math.max(1, Math.floor(nv / 240)), pts = [];
+  for (let v = 0; v < nv; v += step) pts.push([v, ms.a[v * 10], ms.a[v * 10 + 1], ms.a[v * 10 + 2]]);
+  out.bodies.push(Object.assign({}, c, { vertices: nv, samples: pts, boxes: ms.boxes }));
+}
+document.getElementById("out").textContent = "@@" + JSON.stringify(out) + "@@";
+} catch (e) { document.getElementById("out").textContent = "@@" + JSON.stringify({ error: String(e.stack || e) }) + "@@"; }
+"""
+
+
+def main():
+    src = open(PEOPLE_JS, encoding="utf-8").read()
+    ret = "return { SIG, look,"
+    if ret not in src:
+        sys.exit("people.js: its closing return line has changed; update people_values.py")
+    # the tables are private to people.js: hand them out too, and run the harness inside its closure
+    day = json.load(open(DAY, encoding="utf-8"))
+    roles, sig_of = day["roles"], day.get("role_sig", {})
+    looks = []
+    for i in range(12):
+        r = day["residents"][i]
+        looks.append([i, r.get("u") or roles[r["r"]], sig_of.get(roles[r["r"]], "Easy")])
+    for role in ("shopkeeper", "courier", "elder", "child", "cafe", "binman"):   # every garment, apron, cap, bag, scarf
+        looks.append([1000 + len(looks), role, "Springy"])
+    looks.append([7, "commuter", "Hurried"])
+    looks.append([3, "creative", "Careful"])
+    bodies = []
+    for k in range(len(looks)):
+        for lod in (0, 1, 2, 3):
+            bodies.append(dict(look=k, x=1.5, y=0.12, z=-2.0, yaw=0.7 + 0.3 * k, pose=1, ph=(0.13 + 0.17 * k) % 1, t=5.0 + k, lod=lod, ff=0.6))
+        bodies.append(dict(look=k, x=0.0, y=0.0, z=0.0, yaw=0.0, pose=0, ph=0.0, t=2.0 + 0.7 * k, lod=1 if k % 2 else 0, ff=1.0))
+    cases = json.dumps(dict(looks=looks, bodies=bodies))
+    patched = src.replace(ret, HARNESS.replace("%CASES%", cases) + ret, 1)
+    # people.js takes hash() from play.js: the same function, cut from play.js
+    play = open(os.path.join(ROOT, "Prototype", "play", "play.js"), encoding="utf-8").read()
+    h = re.search(r"^function hash\(\) \{.*?^\}\n", play, re.S | re.M)
+    if not h:
+        sys.exit("play.js: hash() not found; update people_values.py")
+    page = "<!doctype html><meta charset=utf-8><pre id=out></pre><script>\n" + h.group(0) + patched + "\n</script>"
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "people_values.html")
+        open(path, "w", encoding="utf-8").write(page)
+        run = subprocess.run([EDGE, "--headless=new", "--user-data-dir=" + os.path.join(tmp, "edge"), "--no-first-run",
+                              "--virtual-time-budget=20000", "--dump-dom", "file:///" + path.replace("\\", "/")],
+                             capture_output=True, text=True, encoding="utf-8", stdin=subprocess.DEVNULL, timeout=180)
+    m = re.search(r"<pre id=\"out\">@@(.*?)@@</pre>", run.stdout, re.S)
+    if not m:
+        sys.exit("Edge gave no values:\n" + run.stdout[-2000:] + run.stderr[-2000:])
+    out = json.loads(html.unescape(m.group(1)))
+    if "error" in out:
+        sys.exit("people.js failed in Edge: " + out["error"])
+    tables = dict(note="Generated by Tools/unreal/people_values.py from Prototype/play/people.js. Do not edit: change people.js and run it again.",
+                  **out["tables"])
+    with open(OUT_DATA, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(tables, f, indent=1, ensure_ascii=False)
+    os.makedirs(os.path.dirname(OUT_VALUES), exist_ok=True)
+    with open(OUT_VALUES, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(dict(note="Generated by Tools/unreal/people_values.py: people.js look() and draw() for the test ART004_people_are_drawn_as_the_slice_draws_them.",
+                       looks=out["looks"], bodies=out["bodies"]), f, separators=(",", ":"))
+    print("wrote %s and %s: %d looks, %d bodies" % (os.path.relpath(OUT_DATA, ROOT), os.path.relpath(OUT_VALUES, ROOT), len(out["looks"]), len(out["bodies"])))
+
+
+if __name__ == "__main__":
+    main()

@@ -40,6 +40,8 @@ struct BRIXWORLD_API FBrixDay
 	TArray<FString> Acts, Roles;
 	TArray<FString> Ids, Names;
 	TArray<int32> Role;
+	TArray<FString> Wear;                    // a job's own clothes, as a role name (CITY-105); empty for the role's own
+	TMap<FString, FString> RoleSig;          // each role's walk (a movement signature's name)
 	TArray<TArray<FPiece>> Plan;             // per resident, in time order
 
 	int32 Num() const { return Plan.Num(); }
