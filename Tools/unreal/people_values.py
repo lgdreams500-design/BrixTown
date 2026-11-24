@@ -2,7 +2,7 @@
 
 Runs Prototype/play/people.js itself in headless Edge (this machine has no Node) and writes two files:
   Game/Data/people.json             the tables people.js draws from: movement signatures, the palette, skins, hair and
-                                    eye colours, what each role wears. BrixWorld's BrixPeople reads them, so the Unreal
+                                    eye colours, what each role wears, the player's look. BrixWorld's BrixPeople reads them, so the Unreal
                                     people are dressed and walk from the same numbers as the slice's.
   Tests/values/people_city_01.json  looks of a dozen residents and bodies drawn by people.js draw() (vertex counts and
                                     sampled vertex positions, the far figures' boxes): the test
@@ -36,7 +36,9 @@ const out = { tables: { base: BASE, signatures: {}, palette: K, skins: SKINS, ha
 for (const [k, v] of Object.entries(SIG)) { const s = Object.assign({}, v); delete s.name; out.tables.signatures[k] = s; }
 const sigName = s => Object.keys(SIG).find(k => SIG[k] === s);
 const plain = L => { const o = Object.assign({}, L); o.sig = sigName(L.sig); delete o.cheek; return o; };
+
 const looks = CASES.looks.map(([i, role, sig]) => look(i, role, sig));
+out.tables.player = plain(player());   // the player until the designed character replaces it (CHR-001)
 looks.forEach((L, k) => out.looks.push(Object.assign({ i: CASES.looks[k][0], role: CASES.looks[k][1], sigName: CASES.looks[k][2] }, plain(L))));
 for (const c of CASES.bodies) {
   const ms = { a: new Float32Array(1 << 20), n: 0, boxes: [], box(x0, y0, z0, x1, y1, z1, col) { this.boxes.push([x0, y0, z0, x1, y1, z1, col[0], col[1], col[2]]); } };

@@ -10,6 +10,10 @@ struct FBrixDay;
 class UMaterialInterface;
 class UProceduralMeshComponent;
 
+// A body from BrixBody (the slice's frame, metres) into M's one section, in Unreal's frame and centimetres. Had: the
+// vertices the section had (it is updated in place when the count is the same). Returns the vertices it has now.
+BRIXTOWN_API int32 BrixBodyToMesh(UProceduralMeshComponent* M, const FBrixBodyMesh& Body, int32 Had, bool bFlip, UMaterialInterface* Material);
+
 // The town's residents, where their routine puts them at the clock's minute (CITY-021, CITY-022): worked out each frame
 // from the day (Game/Data/day.json) and the clock, never stepped or stored. Only those out of doors within ShowDistance of
 // the player are drawn (CITY-024), up to MaxBodies. They are the slice's option B people (ART-004), dressed by their role

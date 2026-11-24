@@ -30,18 +30,6 @@ struct BRIXWORLD_API FBrixRoleWear
 	FVector2D Height = FVector2D(1.6, 1.8), Build = FVector2D(.9, 1.1);
 };
 
-struct BRIXWORLD_API FBrixPeopleRules
-{
-	TMap<FString, FBrixSignature> Signatures;
-	TMap<FString, FVector3f> Palette;
-	TArray<FVector3f> Skins, Hairs, Eyes;
-	TMap<FString, FBrixRoleWear> Roles;
-	const FBrixSignature& Sig(const FString& Name) const;
-};
-
-// Reads Game/Data/people.json. On failure returns false and says why.
-BRIXWORLD_API bool LoadBrixPeopleRules(const FString& Path, FBrixPeopleRules& Out, FString& OutError);
-
 // One person's look (people.js look()): sizes, colours, clothes, the walk.
 struct BRIXWORLD_API FBrixLook
 {
@@ -54,6 +42,19 @@ struct BRIXWORLD_API FBrixLook
 	int32 Seed = 0;
 	double FaceW = 1, EyeSize = 1, EyeOpen = 1, Brow = 0, Nose = 1, Lips = 1;   // the face controls at rest (people.js FM0)
 };
+
+struct BRIXWORLD_API FBrixPeopleRules
+{
+	TMap<FString, FBrixSignature> Signatures;
+	TMap<FString, FVector3f> Palette;
+	TArray<FVector3f> Skins, Hairs, Eyes;
+	TMap<FString, FBrixRoleWear> Roles;
+	FBrixLook Player;                           // the player's look (people.js player()) until the designed character (CHR-001)
+	const FBrixSignature& Sig(const FString& Name) const;
+};
+
+// Reads Game/Data/people.json. On failure returns false and says why.
+BRIXWORLD_API bool LoadBrixPeopleRules(const FString& Path, FBrixPeopleRules& Out, FString& OutError);
 
 // Resident Id's look: their role's clothes (a job's own where it has them, CITY-105) and their role's walk.
 BRIXWORLD_API FBrixLook BrixLookOf(const FBrixPeopleRules& Rules, int32 Id, const FString& Role, const FString& SigName);
