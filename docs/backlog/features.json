@@ -406,7 +406,8 @@
       "spec": [
         "CITY-014",
         "WLD-066",
-        "WLD-067"
+        "WLD-067",
+        "WLD-068"
       ],
       "levels": [
         {
@@ -799,7 +800,8 @@
         "CITY-022",
         "CITY-028",
         "CITY-083",
-        "CITY-088"
+        "CITY-088",
+        "CITY-106"
       ],
       "levels": [
         {

@@ -136,7 +136,7 @@ def validate(w):
     if w.get("roads") and not out:
         import traffic
         out += traffic.Roads(w["roads"], w["traffic"]).problems(lots_inside(w))   # cars drive inside the wall for now
-    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + mall_goods_problems(w) + estate_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w) + react_problems(w) + achievement_problems(w)
+    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + mall_goods_problems(w) + mall_visit_problems(w) + estate_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w) + react_problems(w) + achievement_problems(w)
     kinds = {l["kind"] for l in lots(w)}
     for need in ("home", "shop", "food", "work", "health", "garden", "market", "stop", "utility"):
         if need not in kinds:
@@ -760,6 +760,36 @@ def economy_problems(w, acts=None):
     return out
 
 
+def mall_visit_problems(w):
+    """Every rule the visits to a mall must keep (CITY-106, World/rules/choices.json 'mall'): opening hours in order
+    and within the day, something to do instead for every list that sends people to the mall, and the mall a modest
+    share of each such list."""
+    C, out = w["choices"], []
+    M = C.get("mall")
+    lists = {t: [o for opts in c.values() for o in opts] for t, c in C["choices"].items()}
+    sends = [t for t, L in lists.items() if any(o[1] == "mall" for o in L)]
+    if not M:
+        return ["choices.json: lists send people to the mall but 'mall' gives no hours"] if sends else []
+    try:
+        a, b = [int(M[k][:2]) * 60 + int(M[k][3:]) for k in ("open", "last_in")]
+        if not 5 * 60 <= a < b <= 22 * 60:
+            out.append("choices.json mall: open must be before last_in, between 05:00 and 22:00")
+    except Exception:
+        out.append("choices.json mall: open and last_in must be HH:MM")
+    for t in sends:
+        e = (M.get("else") or {}).get(t)
+        if not (isinstance(e, list) and len(e) == 2 and e[1] != "mall"):
+            out.append("choices.json mall: nothing to do instead for %s" % t)
+        for kind, opts in C["choices"][t].items():
+            n = sum(1 for o in opts if o[1] == "mall")
+            if n and n * 4 > len(opts):
+                out.append("choices.json: more than a quarter of %s (%s) goes to the mall" % (t, kind))
+            for o in opts:
+                if o[1] == "mall" and o[0] not in ("shop", "eat"):
+                    out.append("choices.json: at the mall people shop or eat, not %s" % o[0])
+    return out
+
+
 def mall_goods_problems(w):
     """Every rule World/rules/mall_goods.json must keep (ECO-013, ECO-014): every kind of outlet has enough to sell, every
     good has a name, a whole price in chips and somewhere to go, a good for the home is a piece of furnishing.json with
@@ -1074,7 +1104,7 @@ def sim_data(w):
     veg = w["vegetation"]
     return dict(name=w["city"]["name"], size=[n * P, g["rows"] * P], calendar=cal["calendar"], weather=cal["weather"], tram=cal["tram"],
                 streets=streets, lots=lots(w), residents=w["residents"], roles=w["roles"]["roles"], signatures=w["signatures"]["signatures"],
-                choices=dict(w["choices"]["choices"], rounds=[]), use=w["choices"]["use"], near_work=w["choices"].get("near_work"), species=veg["species"], flowers=veg["flowers"], plants=veg.get("plants", {}),
+                choices=dict(w["choices"]["choices"], rounds=[]), use=w["choices"]["use"], near_work=w["choices"].get("near_work"), mall=w["choices"].get("mall"), species=veg["species"], flowers=veg["flowers"], plants=veg.get("plants", {}),
                 replant_gap_days=veg["replant_gap_days"], fallen_days=veg["fallen_days"], trees=[t for b in w["blocks"] for t in b["trees"]], lamps=[], react=w.get("weather_react"))
 
 
