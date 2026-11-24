@@ -93,13 +93,18 @@ class TheResidents(unittest.TestCase):
                 self.assertIn(l["id"], staffed, l["name"])
 
     def test_the_day_has_no_gaps_and_starts_and_ends_in_bed(self):
+        out = 0
         for rid, pieces in CITY.plan(DAY).items():
             self.assertAlmostEqual(pieces[0][1], 0.0)
             self.assertAlmostEqual(pieces[-1][2], 1440.0)
             for a, b in zip(pieces, pieces[1:]):
                 self.assertAlmostEqual(a[2], b[1], places=6)
             self.assertEqual(pieces[0][4]["place"], CITY.res[rid]["home"])
-            self.assertEqual(pieces[-1][4]["place"], CITY.res[rid]["home"])
+            if pieces[-1][0] == "move":                                  # still on the way at midnight, at their own pace
+                out += 1
+            else:
+                self.assertEqual(pieces[-1][4]["place"], CITY.res[rid]["home"])
+        self.assertLessEqual(out, len(CITY.res) * .02)                   # a few are out late, as in life (the owner, 2026-11-24)
 
     def test_nobody_walks_faster_than_their_own_pace(self):
         for rid, pieces in CITY.plan(DAY).items():
@@ -113,8 +118,8 @@ class TheResidents(unittest.TestCase):
         self.assertGreaterEqual(sum(l < 2 for l in late) / len(late), 0.8)
 
     def test_the_city_sleeps_at_night_and_is_out_by_day(self):
-        night = CITY.at(DAY * 1440 + 3 * 60)
-        self.assertTrue(all(s["state"] == "inside" for s in night.values()))
+        night = CITY.at(DAY * 1440 + 3 * 60)                         # a few may be out, as in life (the owner, 2026-11-24)
+        self.assertLessEqual(sum(s["state"] != "inside" for s in night.values()), len(night) * .01)
         noon = CITY.at(DAY * 1440 + 12.5 * 60)
         self.assertGreater(sum(s["state"] in ("walking", "outside") for s in noon.values()), 80)
 

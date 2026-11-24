@@ -53,7 +53,7 @@ def routines(city, day, car_index):
             else:
                 x, z = payload
                 x0, z0, x1, z1 = lot["rect"]
-                inside = int(lot["kind"] not in world.OPEN_KINDS and s["use"] is not None and x0 <= x <= x1 and z0 <= z <= z1)
+                inside = int(lot["kind"] not in world.OPEN_KINDS and s["use"] is not None and citysim.in_lot(lot, x, z))   # a turned house in its own frame
                 act = "wait" if s["act"] in ("away", "arrive") else s["act"]
                 use = uses.get(s["use"], -1) if s.get("slot") is not None else -1
                 lv = (lot.get("levels") or {}).get(s["use"]) if s.get("slot") is not None else None
