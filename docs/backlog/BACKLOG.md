@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 41 of 53 | 9 of 53 | 9 of 53 |
-| Size of the plan (points) | 528 | 440 | 840 |
-| Size of the suggested plan | 133 | 400 | 808 |
+| Decided | 41 of 54 | 9 of 54 | 9 of 54 |
+| Size of the plan (points) | 529 | 444 | 844 |
+| Size of the suggested plan | 134 | 404 | 812 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -29,6 +29,7 @@
 | **From design to building** `F-BLD-CONSTRUCT` | 0 Instant | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. |
 | **Shops and market** `F-BLD-SHOP` | 2 Stock and prices ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Stock and prices" for the first slice. Later milestones not stated. |
 | **Mall** `F-BLD-MALL` | 2 Full mall ★ | undecided | undecided | Owner, 2026-11-24: asked "Shall I record the Mall feature at level 2 (Full mall) for the first slice?" after Eastgate Mall's shell and three-floor inside were built (ADR-0037, ADR-0038), answered "Yes, level 2". Later milestones not stated. |
+| **Mall rides** `F-BLD-RIDES` | undecided | undecided | undecided |  |
 | **Hospital and clinic** `F-BLD-HOSPITAL` | undecided | undecided | undecided |  |
 | **Bank, showroom, library, museum, cinema** `F-BLD-CIVIC` | 1 Places to visit | undecided | undecided | Owner, 2026-11-22: "Places to visit (Recommended)" for the bank, car showroom, library, museum, cinema and a second hospital and mall, made from existing lots. Later milestones not stated. |
 | **Workplaces** `F-BLD-WORK` | undecided | undecided | undecided |  |
@@ -153,6 +154,11 @@
 - 0 None: No mall; shops are on the street. Size -.
 - 1 Arcade: One covered arcade with four shops and seating. Size L.
 - 2 Full mall: Several floors, many shops, events and crowds. Size XL.
+
+**Mall rides** (`F-BLD-RIDES`). Something to do at the mall besides shopping: a carousel and coin rides.
+- 0 None: No rides. Size -.
+- 1 To sit on: A carousel and coin rides that stand still; the player can sit on them. Size S.
+- 2 Rides that turn: The carousel turns and the coin rides rock, with music; a go costs a coin; children queue for them. Size M.
 
 **Hospital and clinic** (`F-BLD-HOSPITAL`). Where health is restored.
 - 0 A door: A clinic front you cannot enter. Size S.

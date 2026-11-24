@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "note": "The outlets of a mall whose inside is built (WLD-063, ADR-0039): which kinds there are, what stands in each, what they are called, and how many of each a floor gets. Tools/worldgen/mall_inside_01.py gives every unit with a front one of these and copies the kinds into the lot's plan; Prototype/play/outlets.js draws them. Every name, count and mix here is a first guess [ASSUMPTION]. The words for what stands in an outlet are the ones outlets.js knows: on a wall 'rail', 'shelves:<what>', 'guitars', 'screens', 'menu', 'mirror', 'rackets', 'cabinets', 'posters', 'servery'; on the floor 'table:<what>', 'roundrack', 'bin', 'bench', 'amps', 'drums', 'keyboard', 'glasscase', 'cafetable', 'hockey', 'claw', 'buckets', 'plinth:<thing>'; in the window 'mannequins', 'stack:<what>', 'plinth:<thing>', 'screen', 'guitarstand', 'plants'. <what> is one of folded, boxes, books, shoes, balls, pots, jars, gadgets, plush, bread, bottles, lamps; <thing> one of bear, blocks, vase, cone, plant, rocket, cake.",
+  "depth": {"least": 4.2, "most": 9.0},
+  "kinds": {
+    "clothes": {
+      "label": "Clothes", "trade": "shop", "sign": "terracotta", "floor": "boards",
+      "names": ["Thimble & Thread", "Larkspur", "Marlow & Finch", "The Linen Press", "Hartley's", "Juniper Lane"],
+      "walls": ["rail", "shelves:folded", "rail"], "middle": ["roundrack", "table:folded"], "window": ["mannequins", "mannequins"]
+    },
+    "shoes": {
+      "label": "Shoes", "trade": "shop", "sign": "plum", "floor": "boards",
+      "names": ["Cobble & Lace", "Two Left Feet", "Bramley Shoes", "The Last Word"],
+      "walls": ["shelves:shoes", "shelves:shoes", "mirror"], "middle": ["bench", "bench"], "window": ["stack:shoes", "plinth:plant"]
+    },
+    "toys": {
+      "label": "Toys", "trade": "shop", "sign": "ochre", "floor": "tiles",
+      "names": ["Pocket Rocket", "The Toy Cupboard", "Bobbin's Toys", "Hobbyhorse"],
+      "walls": ["shelves:boxes", "shelves:plush", "shelves:boxes"], "middle": ["bin", "table:boxes"], "window": ["plinth:bear", "plinth:blocks"]
+    },
+    "electronics": {
+      "label": "Electronics", "trade": "shop", "sign": "blue", "floor": "tiles",
+      "names": ["Volt & Wire", "Brightside", "Kestrel Electric", "Switch"],
+      "walls": ["shelves:gadgets", "screens", "shelves:gadgets"], "middle": ["table:gadgets", "table:gadgets"], "window": ["screen", "stack:boxes"]
+    },
+    "music": {
+      "label": "Guitars", "trade": "shop", "sign": "olive", "floor": "boards",
+      "names": ["Six Strings", "The Fret Shop", "Old Town Music", "Capo"],
+      "walls": ["guitars", "guitars", "shelves:boxes"], "middle": ["amps", "drums", "keyboard"], "window": ["guitarstand", "plinth:plant"]
+    },
+    "books": {
+      "label": "Books", "trade": "shop", "sign": "teal", "floor": "boards",
+      "names": ["The Dog-Eared Page", "Quill & Candle", "Pennywhistle Books", "Marginalia"],
+      "walls": ["shelves:books", "shelves:books", "shelves:books"], "middle": ["table:books", "bench"], "window": ["stack:books", "plinth:plant"]
+    },
+    "sports": {
+      "label": "Sports", "trade": "shop", "sign": "blue", "floor": "tiles",
+      "names": ["Fair Play", "The Long Jump", "Peloton", "Home Ground"],
+      "walls": ["shelves:balls", "rackets", "shelves:shoes"], "middle": ["table:boxes", "bench"], "window": ["mannequins", "stack:boxes"]
+    },
+    "jewellery": {
+      "label": "Jewellery", "trade": "shop", "sign": "plum", "floor": "tiles",
+      "names": ["Magpie", "Silver & Thistle", "The Gilt Edge"],
+      "walls": ["posters", "mirror", "posters"], "middle": ["glasscase", "glasscase"], "window": ["plinth:vase", "plinth:vase"]
+    },
+    "home": {
+      "label": "Home", "trade": "shop", "sign": "olive", "floor": "boards",
+      "names": ["Hearth & Hall", "The Lamp Room", "Potter's Yard", "Nook"],
+      "walls": ["shelves:pots", "shelves:lamps", "shelves:jars"], "middle": ["table:pots", "plinth:vase"], "window": ["plinth:vase", "plinth:plant"]
+    },
+    "gifts": {
+      "label": "Flowers", "trade": "shop", "sign": "terracotta", "floor": "tiles",
+      "names": ["Stem & Ribbon", "The Posy Shop", "Wild Fennel", "Tuppence"],
+      "walls": ["shelves:jars", "shelves:boxes", "shelves:pots"], "middle": ["buckets", "buckets"], "window": ["plants", "plants"]
+    },
+    "arcade": {
+      "label": "Arcade", "trade": "shop", "sign": "plum", "floor": "tiles",
+      "names": ["Penny Arcade", "High Score", "The Coin Drop", "Wonderland Games"],
+      "walls": ["cabinets", "cabinets", "cabinets"], "middle": ["hockey", "claw"], "window": ["plinth:rocket", "plinth:bear"]
+    },
+    "cafe": {
+      "label": "Cafe", "trade": "food", "sign": "terracotta", "floor": "boards",
+      "names": ["The Copper Kettle", "Elevenses", "Bean & Bough", "Saucer"],
+      "walls": ["shelves:jars", "servery", "posters"], "middle": ["cafetable", "cafetable", "cafetable"], "window": ["plinth:cake", "plants"]
+    },
+    "bakery": {
+      "label": "Bakery", "trade": "food", "sign": "ochre", "floor": "tiles",
+      "names": ["Crumb", "The Proving Room", "Butter Lane"],
+      "walls": ["shelves:bread", "servery", "shelves:bread"], "middle": ["table:bread", "cafetable"], "window": ["plinth:cake", "stack:boxes"]
+    },
+    "icecream": {
+      "label": "Ice cream", "trade": "food", "sign": "teal", "floor": "tiles",
+      "names": ["Two Scoops", "The Frosty Spoon", "Sundae Best"],
+      "walls": ["posters", "servery", "posters"], "middle": ["cafetable", "cafetable"], "window": ["plinth:cone", "plinth:cone"]
+    },
+    "juice": {
+      "label": "Juice", "trade": "food", "sign": "olive", "floor": "tiles",
+      "names": ["Pip & Peel", "The Press"],
+      "walls": ["shelves:bottles", "servery", "posters"], "middle": ["cafetable", "cafetable"], "window": ["plants", "stack:boxes"]
+    },
+    "burger": {
+      "label": "Burgers", "trade": "food", "sign": "terracotta", "floor": "tiles",
+      "names": ["Stack House", "The Griddle", "Big Tom's", "Patty & Bun"],
+      "walls": ["posters", "servery", "posters"], "middle": ["cafetable", "cafetable", "cafetable"], "window": ["plants", "plants"]
+    },
+    "noodles": {
+      "label": "Noodles", "trade": "food", "sign": "blue", "floor": "boards",
+      "names": ["Slurp", "The Long Noodle", "Steam & Bowl", "Wok Lane"],
+      "walls": ["shelves:bottles", "servery", "posters"], "middle": ["cafetable", "cafetable", "cafetable"], "window": ["plants", "plinth:plant"]
+    },
+    "pizza": {
+      "label": "Pizza", "trade": "food", "sign": "ochre", "floor": "tiles",
+      "names": ["Slice of the Old Town", "Wood & Flame", "Dough Boy"],
+      "walls": ["posters", "servery", "shelves:bottles"], "middle": ["cafetable", "cafetable", "cafetable"], "window": ["plants", "plinth:plant"]
+    }
+  },
+  "mix": [
+    {"shop": {"clothes": 14, "shoes": 6, "electronics": 6, "jewellery": 5, "books": 5, "gifts": 5, "home": 5, "sports": 5, "toys": 4, "music": 4}, "food": {"cafe": 1}},
+    {"shop": {"clothes": 10, "toys": 8, "sports": 7, "music": 6, "books": 6, "home": 6, "shoes": 5, "electronics": 5}, "food": {"cafe": 3, "bakery": 3, "icecream": 3, "juice": 2}},
+    {"shop": {"arcade": 8, "clothes": 8, "toys": 6, "electronics": 6, "music": 4, "books": 4, "sports": 4, "gifts": 3, "shoes": 3}, "food": {"burger": 4, "noodles": 4, "pizza": 3, "icecream": 3, "cafe": 2, "bakery": 2}}
+  ],
+  "rides": {
+    "note": "On the court floor: a carousel where the north garden was, and three coin rides for small children before it. They stand still and can be sat on; rides that turn are a feature of their own (F-BLD-RIDES, proposed).",
+    "carousel": {"along": -74.0, "r": 5.5, "horses": 10},
+    "coin": [{"kind": "rocket", "across": -7.0, "along": -57.0}, {"kind": "pony", "across": 0.0, "along": -56.0}, {"kind": "car", "across": 7.0, "along": -57.0}]
+  }
+}
