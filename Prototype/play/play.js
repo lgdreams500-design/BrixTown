@@ -2551,20 +2551,18 @@ function boardKey() {
   const K = Boards.kind(); pl.bdB = 0;
   Sound.act(on ? "jump" : "stand"); Life.toast(on ? K.name + ": W to " + (K.push ? "push" : "go") + ", S to brake, Y to pick it up." : K.name + " in your hand.");
 }
-// Riding: the board's speed (boards.js) along a heading that turns towards where W A S D point. Only W speeds it up: let go of W
-// and it glides, whatever else is held (A and D only steer); keys against the heading brake. A manual board speeds up only while
-// a foot pushes it (W held: the push goes round, pl.ph), and the push stops the moment W is let go; the powered boards go by
-// themselves while W is held and the rider just stands. No walking on a board. A knock against a wall or a
-// car loses the speed into it.
+// Riding: the board's speed (boards.js) along the rider's heading. A and D turn the rider, and the camera swings round behind
+// them as it does behind a car (cars.js), more slowly the faster the board goes; W speeds it up the way they face, S brakes.
+// Only W speeds it up: let go of W and it glides. A manual board speeds up only while a foot pushes it (W held: the push goes
+// round, pl.ph), and the push stops the moment W is let go; the powered boards go by themselves while W is held and the rider
+// just stands. No walking on a board. A knock against a wall or a car loses the speed into it.
 function stepBoard(dt, f, s) {
-  const K = Boards.kind(), sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw), ix = sy * f + cy * s, iz = -cy * f + sy * s, il = Math.hypot(ix, iz);
+  const K = Boards.kind();
   if (pl.bdH === undefined) pl.bdH = pl.yaw;
-  let go = false, back = false;
-  if (il > 0) {
-    const want = yawOf(ix, iz); let dy = want - pl.bdH; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
-    if (Math.abs(dy) > 2.3 && Boards.v > .5) back = true;  // keys against the heading: brake
-    else { go = f > 0; const v0 = Boards.v, rate = Boards.R.turn_rate / (1 + v0 / 15); pl.bdH += Math.sign(dy) * Math.min(Math.abs(dy), (v0 < 1 ? 20 : rate) * dt); }
-  }
+  const go = f > 0, back = f < 0, v0 = Boards.v;
+  if (s) pl.bdH += s * Boards.R.turn_rate / (1 + v0 / 15) * dt;   // D turns right, A left (the heading's yaw grows clockwise)
+  if (cam.fp) cam.yaw = pl.bdH;
+  else { let d = pl.bdH - cam.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); cam.yaw += d * Math.min(1, dt * Boards.R.cam_follow); }   // the camera comes round behind
   const pushing = K.push && go;
   pl.bdB = (pl.bdB || 0) + ((pushing ? 1 : 0) - (pl.bdB || 0)) * Math.min(1, dt * (pushing ? 7 : 14));   // into the push, and straight back to standing when W is let go
   if (pushing) pl.ph = (pl.ph + Boards.R.push_per_s * dt) % 1; else pl.ph = 0;   // the push goes round only while W is held

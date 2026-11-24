@@ -517,7 +517,7 @@ var Life = (() => {
     const sk = Boards.owned(), inUse = Boards.kind();      // CITY-100: the skateboards you own, and which one Y carries or gets on
     body.append(h("h3", {}, "Skateboards"), sk.length ? tbl(sk.map(k => { const K = Boards.R.kinds[k], mine = inUse && inUse.id === k;
       return [K.name, h("span", { cls: "dim" }, "up to " + K.top_kmh + " km/h" + (K.push ? ", pushed with a foot" : "") + (mine ? (Boards.riding ? " · riding it" : " · in your hand") : "")),
-        mine ? h("span", { cls: "dim" }, "In use") : btn("Use this", () => { const was = Boards.riding; if (was) Boards.toggle(); Boards.use(k); if (was) Boards.toggle(); save(); menu("belongings"); })]; }))
+        mine ? h("span", { cls: "dim" }, "In use") : btn("Use this", () => { const was = Boards.riding; if (was) Boards.toggle(); Boards.use(k); if (was) Boards.toggle(); return "Now using the " + K.name.toLowerCase() + "."; })]; }))
       : h("p", { cls: "dim" }, "None yet. The skate store is coming."));
     if (sk.length) body.append(h("p", { cls: "dim" }, "Y takes the board in use from your hand and gets on it, and picks it up again."));
     return ["Belongings", "What you own and carry · G"];
