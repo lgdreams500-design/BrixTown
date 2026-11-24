@@ -1,5 +1,6 @@
 #include "BrixPeople.h"
 
+#include "BrixCars.h"
 #include "BrixCity.h"
 #include "BrixDay.h"
 #include "BrixGameMode.h"
@@ -71,9 +72,10 @@ ABrixPeople::ABrixPeople()
 	if (!People.Object) UE_LOG(LogTemp, Warning, TEXT("Brix Town: /Game/People/M_People is missing (run Tools/unreal/make_people_material.py); the people are grey"));
 }
 
-void ABrixPeople::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay)
+void ABrixPeople::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, TSharedPtr<FBrixTraffic> InTraffic)
 {
 	Day = InDay;
+	Traffic = InTraffic;
 	for (const FBrixBlock& B : City.Blocks) Paving.Add(FBox2D(B.Origin, B.Origin + B.Extent));
 	const int32 Seated = SeatBrixDay(*Day, City);   // benches and fountain rims (CITY-017)
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: %d of the day's stays are on a seat"), Seated);
@@ -89,6 +91,20 @@ void ABrixPeople::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay)
 		Looks.Add(BrixLookOf(Rules, i, Day->Wear.IsValidIndex(i) && !Day->Wear[i].IsEmpty() ? Day->Wear[i] : RoleName, Sig ? *Sig : FString(TEXT("Easy"))));
 	}
 	while (RebuildEvery.Num() < 3) RebuildEvery.Add(RebuildEvery.Num() + 1);
+	// people from out of town in the vehicles: the same person every time (C7), by the vehicle (the slice numbers them as it
+	// meets them; here by the vehicle, so the same van always has the same driver)
+	if (Traffic)
+		for (int32 k = 0; k < Traffic->Num(); ++k)
+		{
+			const FBrixVehicle& V = Traffic->Vehicles[k];
+			auto Who = [&](const FString& Key, const TCHAR* RoleName)
+			{
+				const FString* Sig = Day->RoleSig.Find(RoleName);
+				return BrixLookOf(Rules, 200000 + k * 7 + (int32)(BrixSliceHash({ Key, TEXT("who") }) * 5), RoleName, Sig ? *Sig : FString(TEXT("Easy")));
+			};
+			Drivers.Add(Who((V.Kind == 2 ? TEXT("bus") : TEXT("drv")) + FString::FromInt(k), V.Kind == 2 ? TEXT("utility") : V.Kind == 1 ? TEXT("courier") : TEXT("commuter")));
+			Passengers.Add(Who(TEXT("pas") + FString::FromInt(k), TEXT("elder")));
+		}
 	// a pool of mesh bodies, all out of sight until the clock places someone in them
 	for (int32 s = 0; s < MaxMeshBodies; ++s)
 	{
@@ -127,15 +143,19 @@ void ABrixPeople::Tick(float DeltaSeconds)
 
 	// everyone out of doors within reach, nearest first
 	// worked out for everyone at once on the task threads (CITY-022: from the day and the minute alone)
-	struct FNear { int32 i; double D; FVector2D P; float Up; double Yaw; int32 Pose; double Phase; };
+	// i: who (a resident, or 1,000,000 + 2 a vehicle + 0 or 1 for someone from out of town in it), the slot's key
+	struct FNear { int32 i; double D; FVector2D P; float Up; double Yaw; int32 Pose; double Phase; const FBrixLook* L; TOptional<double> Floor; bool bDriving; };
 	const double Reach2 = (double)ShowDistance * ShowDistance;
 	TArray<FNear> All;
 	All.SetNumUninitialized(Day->Num());
+	TArray<int32> InVehicle;
+	InVehicle.Init(-1, Day->Num());
 	ParallelFor(Day->Num(), [&](int32 i)
 	{
 		All[i].i = -1;
 		const TOptional<FBrixWhere> W = Day->Where(i, Minute);
-		if (!W || W->bInside) return;
+		if (!W) { InVehicle[i] = Day->VehicleAt(i, Minute); return; }
+		if (W->bInside) return;
 		// a little to one side of the pavement's line, never at a door (the slice's lane, CITY-043)
 		FVector2D P = W->Pos;
 		if (W->bWalking) P += FVector2D(-W->Heading.Y, W->Heading.X) * Lane[i] * LaneWidth * FMath::Clamp(FMath::Min(W->WalkDone, W->WalkLeft) / 5.f, 0.f, 1.f);
@@ -144,10 +164,70 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		const FBrixLook& L = Looks[i];
 		const double Phase = W->bWalking ? FMath::Fmod(W->Along / BrixStepLength(Rules.Sig(L.SigName), L.S), 1.0) : 0.0;
 		// the slice's yaw: a body faces (sin yaw, -cos yaw)
-		All[i] = { i, FMath::Sqrt(D2), P, W->SeatUp >= 0.f ? W->SeatUp : GroundAt(P) + (W->Floor > 0 ? W->Floor * 3.f : 0.f), FMath::Atan2(W->Heading.X, -W->Heading.Y), W->Pose, Phase };
+		All[i] = { i, FMath::Sqrt(D2), P, W->SeatUp >= 0.f ? W->SeatUp : GroundAt(P) + (W->Floor > 0 ? W->Floor * 3.f : 0.f), FMath::Atan2(W->Heading.X, -W->Heading.Y), W->Pose, Phase, &L, {}, false };
 	});
 	TArray<FNear> Near;
 	for (const FNear& A : All) if (A.i >= 0) Near.Add(A);
+	// whoever rides in a vehicle near enough (cars.js occupants() and seat()): its owner at the wheel and neighbours sharing
+	// the ride beside and behind (CITY-094), a bus's driver and riders on its benches, someone from out of town in a van or a
+	// car passing through; seated as low as their head needs under the roof, feet along the floor, hands on the wheel
+	if (Traffic)
+	{
+		TMap<int32, TArray<int32>> ByCar;
+		for (int32 i = 0; i < InVehicle.Num(); ++i) if (InVehicle[i] >= 0) ByCar.FindOrAdd(InVehicle[i]).Add(i);
+		const double Ride2 = (double)RideDistance * RideDistance;
+		for (int32 k = 0; k < Traffic->Num(); ++k)
+		{
+			const TOptional<FBrixCarAt> C = Traffic->At(k, Minute);
+			if (!C || FVector2D::DistSquared(C->Pos, Here) > Ride2) continue;
+			const FBrixVehicle& V = Traffic->Vehicles[k];
+			const bool bBus = V.Kind == 2;
+			const FBrixCarModel* Md = Traffic->ModelOf(k);
+			if (!bBus && !Md) continue;
+			struct FOcc { const FBrixLook* L; int32 Key; float A, Wd; };
+			TArray<FOcc> Occ;
+			const TArray<int32>* Ins = ByCar.Find(k);
+			if (bBus)
+			{
+				const float L = 11.f, W = 2.5f;
+				Occ.Add({ &Drivers[k], 1000000 + 2 * k, 4.5f, -.72f });
+				if (Ins) for (int32 n = 0; n < FMath::Min(14, Ins->Num()); ++n)
+					Occ.Add({ &Looks[(*Ins)[n]], (*Ins)[n], L / 2 - 2.3f - (n / 2) * 1.1f, (n % 2 ? 1.f : -1.f) * (W / 2 - .55f) });
+			}
+			else if (Ins && Ins->Num())
+			{
+				const int32 Wheel = Ins->Contains(V.Owner) ? V.Owner : (*Ins)[0];
+				Occ.Add({ &Looks[Wheel], Wheel, Md->Seat.X, Md->Seat.Y });
+				TArray<FVector2f> Seats = { FVector2f(Md->Seat.X, -Md->Seat.Y) };
+				if (Md->Back) { Seats.Add(FVector2f(*Md->Back, Md->Seat.Y)); Seats.Add(FVector2f(*Md->Back, -Md->Seat.Y)); }
+				int32 n = 0;
+				for (const int32 r : *Ins) if (r != Wheel && n < Seats.Num()) { Occ.Add({ &Looks[r], r, Seats[n].X, Seats[n].Y }); ++n; }
+			}
+			else if (!(V.Home && V.Kind != 1) && C->bTrip)   // a van out delivering or a car passing through: its own driver
+			{
+				Occ.Add({ &Drivers[k], 1000000 + 2 * k, Md->Seat.X, Md->Seat.Y });
+				if (V.Kind != 1 && BrixSliceHash({ FString::FromInt(k), TEXT("pass") }) < .45) Occ.Add({ &Passengers[k], 1000000 + 2 * k + 1, Md->Seat.X, -Md->Seat.Y });
+			}
+			const float SeatY0 = bBus ? .95f : Md->SeatY;
+			const double Yaw = FMath::Atan2(C->Heading.X, -C->Heading.Y);
+			for (int32 n = 0; n < Occ.Num(); ++n)
+			{
+				const FOcc& O = Occ[n];
+				const FVector2D P = C->Pos + C->Heading * O.A + FVector2D(-C->Heading.Y, C->Heading.X) * O.Wd;
+				FNear R{ O.Key, FVector2D::Distance(P, Here), P, 0.f, Yaw, 2, 0.0, O.L, {}, false };
+				if (bBus) R.Up = SeatY0;
+				else
+				{
+					const float Roof = Md->Roof ? *Md->Roof : 1.56f, Head = (O.L->Cap ? 1.06f : O.L->Hair == TEXT("afro") ? 1.12f : O.L->Hair == TEXT("bun") ? 1.06f : 1.04f) * (float)O.L->S;
+					const float Sy = FMath::Min(SeatY0, Roof - .05f - Head), Floor = Md->Floor ? *Md->Floor + .03f : .3f;
+					R.Up = Sy;
+					R.Floor = Floor - Sy;
+					R.bDriving = n == 0;
+				}
+				Near.Add(R);
+			}
+		}
+	}
 	const double T1 = FPlatformTime::Seconds();
 	Near.Sort([](const FNear& A, const FNear& B) { return A.D < B.D; });
 	if (Near.Num() > MaxBodies) Near.SetNum(MaxBodies);
@@ -199,8 +279,10 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	for (int32 n = 0; n < Near.Num(); ++n)
 	{
 		const FNear& P = Near[n];
-		const FBrixLook& L = Looks[P.i];
+		const FBrixLook& L = *P.L;
 		FBrixDrawOptions O;
+		O.Floor = P.Floor;
+		O.bDriving = P.bDriving;
 		O.Pose = P.Pose;
 		O.Phase = P.Phase;
 		O.Seconds = Seconds;

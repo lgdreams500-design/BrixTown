@@ -86,12 +86,6 @@ void ABrixGameMode::StartPlay()
 	{
 		ABrixTownActor* Town = GetWorld()->SpawnActor<ABrixTownActor>();
 		Town->Build(*City);
-		if (Today)
-		{
-			People = GetWorld()->SpawnActor<ABrixPeople>();
-			People->Start(*City, Today);
-			UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents, their day %d (%s, %s)"), Today->Num(), Today->Day, *Today->Weekday, *Today->Season);
-		}
 		Traffic = MakeShared<FBrixTraffic>();
 		FString CarError;
 		const FString Data = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data")));
@@ -102,6 +96,12 @@ void ABrixGameMode::StartPlay()
 			UE_LOG(LogTemp, Display, TEXT("Brix Town: %d vehicles today"), Traffic->Num());
 		}
 		else UE_LOG(LogTemp, Warning, TEXT("Brix Town: no vehicles (%s); run Tools/worldgen/build_play.py"), *CarError);
+		if (Today)
+		{
+			People = GetWorld()->SpawnActor<ABrixPeople>();
+			People->Start(*City, Today, Cars ? Traffic : nullptr);
+			UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents, their day %d (%s, %s)"), Today->Num(), Today->Day, *Today->Weekday, *Today->Season);
+		}
 	}
 	SpawnLight();
 	Super::StartPlay();

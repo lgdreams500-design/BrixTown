@@ -43,7 +43,8 @@ looks.forEach((L, k) => out.looks.push(Object.assign({ i: CASES.looks[k][0], rol
 for (const c of CASES.bodies) {
   const ms = { a: new Float32Array(1 << 20), n: 0, boxes: [], box(x0, y0, z0, x1, y1, z1, col) { this.boxes.push([x0, y0, z0, x1, y1, z1, col[0], col[1], col[2]]); } };
   const L = looks[c.look];
-  draw(ms, c.x, c.y, c.z, c.yaw, L, c.pose, { ph: c.ph, t: c.t, lod: c.lod, ff: c.ff, fl: 14 });
+  draw(ms, c.x, c.y, c.z, c.yaw, L, c.pose, { ph: c.ph, t: c.t, lod: c.lod, ff: c.ff, fl: 14,
+    mod: c.floor != null ? { floor: c.floor, arms: c.driver ? [[1, 58, 10, 48], [1, 58, 10, 48]] : null } : null });   // in a car (cars.js seat())
   const nv = ms.n / 10, step = Math.max(1, Math.floor(nv / 240)), pts = [];
   for (let v = 0; v < nv; v += step) pts.push([v, ms.a[v * 10], ms.a[v * 10 + 1], ms.a[v * 10 + 2]]);
   out.bodies.push(Object.assign({}, c, { vertices: nv, samples: pts, boxes: ms.boxes }));
@@ -75,6 +76,7 @@ def main():
             bodies.append(dict(look=k, x=1.5, y=0.12, z=-2.0, yaw=0.7 + 0.3 * k, pose=1, ph=(0.13 + 0.17 * k) % 1, t=5.0 + k, lod=lod, ff=0.6))
         bodies.append(dict(look=k, x=0.0, y=0.0, z=0.0, yaw=0.0, pose=0, ph=0.0, t=2.0 + 0.7 * k, lod=1 if k % 2 else 0, ff=1.0))
         bodies.append(dict(look=k, x=-3.0, y=0.62, z=1.0, yaw=2.0 - 0.2 * k, pose=2, ph=0.0, t=3.0 + 0.4 * k, lod=k % 4, ff=0.8))   # on a bench (CITY-017)
+        bodies.append(dict(look=k, x=4.0, y=0.6, z=-1.0, yaw=0.3 * k, pose=2, ph=0.0, t=1.0 + 0.3 * k, lod=k % 3, ff=1.0, floor=-0.45, driver=k % 2 == 0))   # in a car (CITY-040)
     cases = json.dumps(dict(looks=looks, bodies=bodies))
     patched = src.replace(ret, HARNESS.replace("%CASES%", cases) + ret, 1)
     # people.js takes hash() from play.js: the same function, cut from play.js

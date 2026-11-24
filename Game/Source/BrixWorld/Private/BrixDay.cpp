@@ -66,6 +66,7 @@ bool LoadBrixDay(const FString& Path, FBrixDay& Out, FString& OutError)
 				const double Turn = BrixSliceHash({ FString::FromInt(Out.Plan.Num() - 1), FString::FromInt(Row.Num() - 1) }) * 6.28;   // the slice: hash(i, k) * 6.28
 				P.Facing = FVector2D(FMath::Cos(Turn), FMath::Sin(Turn));
 			}
+			else if (P.Kind == 3 && A.Num() > 2) P.Vehicle = (int32)A[2]->AsNumber();
 			else if (P.Kind == 1)
 			{
 				P.Act = (int32)A[2]->AsNumber();
@@ -87,6 +88,15 @@ namespace
 		const float F = P.Cum[k] > P.Cum[k - 1] ? (D - P.Cum[k - 1]) / (P.Cum[k] - P.Cum[k - 1]) : 0.f;
 		return FMath::Lerp(P.Route[k - 1], P.Route[k], FMath::Clamp(F, 0.f, 1.f));
 	}
+}
+
+int32 FBrixDay::VehicleAt(int32 Resident, double Minute) const
+{
+	if (!Plan.IsValidIndex(Resident) || Plan[Resident].Num() == 0) return -1;
+	const TArray<FPiece>& Row = Plan[Resident];
+	int32 Lo = 0, Hi = Row.Num() - 1;
+	while (Lo < Hi) { const int32 Mid = (Lo + Hi + 1) >> 1; if (Row[Mid].T0 <= Minute) Lo = Mid; else Hi = Mid - 1; }
+	return Row[Lo].Kind == 3 ? Row[Lo].Vehicle : -1;
 }
 
 TOptional<FBrixWhere> FBrixDay::Where(int32 Resident, double Minute) const

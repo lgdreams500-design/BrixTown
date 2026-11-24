@@ -32,6 +32,7 @@ struct BRIXWORLD_API FBrixCarAt
 	FVector2D Pos = FVector2D::ZeroVector;
 	FVector2D Heading = FVector2D(1, 0);
 	bool bMoving = false;
+	bool bTrip = false;                      // on a trip (moving or waiting), not parked
 };
 
 // One Soft box model: its triangles as exported, each tagged with the part it belongs to (body, roof, tyre, ...).
@@ -44,6 +45,7 @@ struct BRIXWORLD_API FBrixCarModel
 	TOptional<float> Back;                   // a back-seat row, along
 	FVector4f Box = FVector4f(0, 0, 0, 0);   // along from, to; across from, to
 	TArray<FLod> Lods;                       // near, far
+	TOptional<float> Roof, Floor;            // the underside of the roof over the seats, the body's bottom under the feet (cars.js)
 };
 
 struct BRIXWORLD_API FBrixTraffic

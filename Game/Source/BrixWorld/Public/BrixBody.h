@@ -82,6 +82,8 @@ struct BRIXWORLD_API FBrixDrawOptions
 	double Seconds = 0;      // time, for breathing, blinking and the head's wander
 	int32 Lod = 1;           // 0 full (the nearest few), 1 to 16 m, 2 to 35 m; 3 a far figure of boxes
 	double FaceFade = 1;     // at lod 2, how much of the face still shows (0 none)
+	TOptional<double> Floor; // sitting in a car: the floor this far below the seat, the feet out along it (people.js mod.floor)
+	bool bDriving = false;   // sitting at a wheel: the hands up on it (cars.js seat(): arms [1, 58, 10, 48])
 };
 
 // people.js draw() for poses 0 to 2: appends the body to Out (lods 0 to 2) or its boxes to OutBoxes (lod 3).
