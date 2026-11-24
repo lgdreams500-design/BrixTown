@@ -111,13 +111,13 @@ Only the owner picks levels. Nothing was recorded in `feature_choices.json` for 
   shelf. They are marked `small` in the data for that rule.
 - Not measured: frame rate. Nothing in stage 1 adds to the town's mesh; stage 3 adds a counter to 129 more outlets (a
   few boxes each) and up to 201 people in the mall by day.
-- Stage 3: the keepers follow their role's day as every shopkeeper and cafe worker does, and walk in from about 850 m
-  away. Measured on day 16 (a Wednesday): of the mall's 201 staff, 20 are in at 07:00, 86 at 07:30, 149 at 08:00 and 198
-  at 10:30; they leave from about 18:00. Shop owners do not work on Sundays; food outlet owners work every day. An
-  outlet sells whether or not its keeper is in, as street shops do.
-- Stage 3: **at lunch the mall empties of its keepers.** They go to eat in town as every shopkeeper does: at 13:00,
-  171 of the 201 are out walking to or from lunch and 30 are in the mall; by 15:10, 158 are back. Eating at the mall
-  is stage 4, and should keep them there.
+- Stage 3: the keepers follow their role's day as every shopkeeper and cafe worker does, and come in from about 850 m
+  away. Counted in the slice's day (day 16, a Wednesday), of the mall's 201 staff: 164 are in at 08:00, 198 at 10:30,
+  167 at 16:00 and none at 20:00. Shop owners do not work on Sundays; food outlet owners work every day. An outlet
+  sells whether or not its keeper is in, as street shops do.
+- Stage 3: **at lunch most of the keepers are out.** They go to eat in town as every shopkeeper does: at 13:00 in the
+  slice 69 of the 201 are in the mall, 107 are walking and 25 are somewhere else (in the rules' own run, where nobody
+  drives or rides, 30 are in and 171 walking). Eating at the mall is stage 4, and should keep them there.
 - Stage 3: guards and janitors stand at their places and carry nothing; they do not walk rounds or clean.
 - Stage 3: the four corner stores have none of the town's residents in them (each group's share is used up).
 - No automated test drives the page. The rule's port is checked by the page's self-test; the prompt, the panel, the
