@@ -29,6 +29,20 @@ namespace
 		return Out;
 	}
 
+	// The slice's hash() (play.js): the same strings give the same number in 0..1, so a garden gets the same extras here
+	// as in the browser slice.
+	double SliceHash(std::initializer_list<FString> Parts)
+	{
+		uint32 h = 2166136261u;
+		for (const FString& S : Parts)
+		{
+			for (TCHAR Ch : S) { h ^= (uint32)Ch; h *= 16777619u; }
+			h ^= 124u; h *= 16777619u;
+		}
+		h ^= h >> 15; h *= 2246822519u; h ^= h >> 13; h *= 3266489917u; h ^= h >> 16;
+		return (double)h / 4294967296.0;
+	}
+
 	// Slots that take the instance's own colour; the rest are fixed (SlotColours).
 	bool IsOwnSlot(const FName S) { return S == TEXT("frame") || S == TEXT("shutter") || S == TEXT("door") || S == TEXT("roof") || S == TEXT("stripe"); }
 }
@@ -448,6 +462,7 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			if (UStaticMesh* Pot = Kit(TEXT("SM_Kit_Cylinder"), Cylinder))
 				for (float Dv : { -0.17f, 0.17f })
 					Add(Group(Pot, true), FTransform(FQuat::Identity, At(FVector2D(-Hu + 0.3f, -1.8f + Dv), Top + 0.12f + 0.225f), FVector(0.18f, 0.18f, 0.45f)), RoofColour);
+			BuildGarden(L, *Plan, *Hs, H);
 			if (Hs->bQuoins)
 				for (const FVector2D Cn : { FVector2D(-Hu, -Hv), FVector2D(Hu, -Hv), FVector2D(-Hu, Hv), FVector2D(Hu, Hv) })
 				{
@@ -473,6 +488,168 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 		Box(StoneColour * 0.8f, FVector2D::ZeroVector, H + ParapetHeight, H + ParapetHeight + CopingHeight, 0.0, S.X + 0.12f, S.Y + 0.12f);
 	}
 	++Buildings;
+}
+
+// The garden round a designed house (houses.js gardenS(); owner 2026-11-23): a lawn fenced in the line's way with a gate
+// in line with the front door, a stone path, planters at the door, a letterbox and a tree; and, by the slice's hash of the
+// lot, some of a bench, a bistro table with a parasol, a lounger, a washing line, a flowerbed, a woodpile, a shed. Laid in
+// the house's own frame (u across the front, v from front to back, metres from its centre), as the slice lays it.
+void ABrixTownActor::BuildGarden(const FBrixLot& L, const FBrixHousePlan& Plan, const FBrixHouseLook& Hs, float HouseTop)
+{
+	const FVector2D C = L.Centre();
+	const double Ang = FMath::DegreesToRadians(L.AngleDeg), Ca = FMath::Cos(Ang), Sa = FMath::Sin(Ang);
+	auto At = [&](float U, float V, float Up) { return ToWorld(FVector2D(C.X + U * Ca - V * Sa, C.Y + U * Sa + V * Ca), BlockSlabHeight + Up); };
+	UStaticMesh* BoxMesh = Kit(TEXT("SM_Kit_Box"), Cube);
+	UInstancedStaticMeshComponent* Solid = Group(BoxMesh, true);
+	UInstancedStaticMeshComponent* Fine = Group(BoxMesh, false, GardenCullDistance);
+	auto Lin = [](float R, float G, float Bl) { return FLinearColor(R, G, Bl); };
+	const FLinearColor Cream = Lin(.66f, .61f, .50f), Stone = Lin(.52f, .48f, .43f), StoneDark = Lin(.37f, .34f, .32f), Charcoal = Lin(.09f, .09f, .11f);
+	const FLinearColor Wood = Lin(.34f, .23f, .15f), Brown = Lin(.24f, .16f, .11f), Terra = Lin(.44f, .24f, .18f), Teal = Lin(.20f, .36f, .37f);
+	const FLinearColor Blue = Lin(.30f, .38f, .52f), Plum = Lin(.30f, .24f, .34f), Ochre = Lin(.52f, .40f, .20f), Soil = Lin(.2f, .15f, .11f), Path = Lin(.48f, .44f, .38f);
+	const FLinearColor Leaf = Lin(.26f, .38f, .20f), LeafLight = Lin(.40f, .48f, .24f), LeafDark = Lin(.24f, .36f, .2f), Lawn = Lin(.29f, .34f, .19f);
+	const FLinearColor Door(Hs.Door.X, Hs.Door.Y, Hs.Door.Z), Shut(Hs.Shutter.X, Hs.Shutter.Y, Hs.Shutter.Z), RoofC(Hs.Roof.X, Hs.Roof.Y, Hs.Roof.Z);
+	// B: a box from corner to corner in the house's frame (bx1); Y: a box of a size on the ground at a point, turned (yb1)
+	auto B = [&](bool bFine, const FLinearColor& Col, float U0, float Y0, float V0, float U1, float Y1, float V1)
+	{
+		Add(bFine ? Fine : Solid, FTransform(FQuat(FVector::UpVector, Ang), At((U0 + U1) / 2, (V0 + V1) / 2, (Y0 + Y1) / 2),
+			FVector(FMath::Abs(U1 - U0), FMath::Abs(V1 - V0), FMath::Abs(Y1 - Y0))), Col);
+	};
+	auto Y = [&](bool bFine, const FLinearColor& Col, float U, float Y0, float V, float Su, float Sy, float Sv, float Yaw = 0.f)
+	{
+		Add(bFine ? Fine : Solid, FTransform(FQuat(FVector::UpVector, Ang + Yaw), At(U, V, Y0 + Sy / 2), FVector(Su, Sv, Sy)), Col);
+	};
+	auto Has = [&](const TCHAR* K) { return SliceHash({ L.Id, TEXT("garden"), K }) < 0.5; };
+
+	const float HU = Plan.HalfU, HV = Plan.HalfV, S0 = HousePlinth, Du = Plan.DoorAt;
+	const float GL = Hs.Garden.X, GF = Hs.Garden.Y, GR = Hs.Garden.Z, GB = Hs.Garden.W;
+	const float Front = -HV - GF, Back = GB - HV, Right = GR - HU;
+	const FString& Line = Hs.Line;
+	// the lawn, a shade fresher than the common ground, and the path of stone slabs from the gate to the door step
+	B(false, Lawn, GL, 0.f, GF, GR, 0.03f, GB);
+	int32 k = 0;
+	for (float V = GF + 0.2f; V < -HV - 0.7f; V += 0.75f, ++k) B(false, Path, Du - 0.55f + (k % 2) * 0.08f, 0.03f, V, Du + 0.55f + (k % 2) * 0.08f, 0.06f, V + 0.6f);
+	// the fence, in the line's way, with a gate gap in front of the door
+	const float Gate0 = Du - 0.75f, Gate1 = Du + 0.75f;
+	struct FRun { bool bU; float At, A0, A1; };
+	const FRun Runs[5] = { { true, GF, GL, Gate0 }, { true, GF, Gate1, GR }, { true, GB, GL, GR }, { false, GL, GF, GB }, { false, GR, GF, GB } };
+	for (const FRun& R : Runs)
+	{
+		auto Seg = [&](bool bFine, const FLinearColor& Col, float P, float Q, float Y0, float Y1, float D)
+		{
+			if (R.bU) B(bFine, Col, P, Y0, R.At - D / 2, Q, Y1, R.At + D / 2);
+			else B(bFine, Col, R.At - D / 2, Y0, P, R.At + D / 2, Y1, Q);
+		};
+		auto Post = [&](bool bFine, const FLinearColor& Col, float P, float Y0, float Y1, float D) { Seg(bFine, Col, P - D / 2, P + D / 2, Y0, Y1, D); };
+		const float Len = R.A1 - R.A0;
+		const int32 N = FMath::Max(1, FMath::RoundToInt(Len / 2.2f));
+		for (int32 i = 0; i < N; ++i)
+		{
+			const float A0 = R.A0 + Len * i / N, A1 = R.A0 + Len * (i + 1) / N;
+			if (Line == TEXT("plain"))                     // a cream picket fence: posts, two rails, pickets
+			{
+				Post(false, Cream, A0, 0.f, 1.0f, 0.1f);
+				if (i == N - 1) Post(false, Cream, A1, 0.f, 1.0f, 0.1f);
+				for (float Yr : { 0.25f, 0.75f }) Seg(true, Cream, A0, A1, Yr, Yr + 0.07f, 0.05f);
+				for (float P = A0 + 0.12f; P < A1 - 0.05f; P += 0.3f) Post(true, Cream * 0.95f, P, 0.f, 0.92f, 0.09f);
+			}
+			else if (Line == TEXT("oldtown"))              // a low wall of dressed stone with a cap
+			{
+				Seg(false, Stone, A0, A1, 0.f, 0.8f, 0.32f);
+				Seg(false, StoneDark, A0 - 0.02f, A1 + 0.02f, 0.8f, 0.92f, 0.42f);
+			}
+			else if (Line == TEXT("workshop"))             // iron railings on a stone plinth
+			{
+				Seg(false, StoneDark, A0, A1, 0.f, 0.35f, 0.3f);
+				Seg(true, Charcoal, A0, A1, 0.95f, 1.0f, 0.05f);
+				for (float P = A0 + 0.1f; P < A1; P += 0.26f) Post(true, Charcoal, P, 0.35f, 1.0f, 0.035f);
+				Post(false, Charcoal, A0, 0.35f, 1.12f, 0.08f);
+				if (i == N - 1) Post(false, Charcoal, A1, 0.35f, 1.12f, 0.08f);
+			}
+			else                                           // a clipped hedge, rounded on top in two steps
+			{
+				Seg(false, Lin(.22f, .32f, .15f), A0, A1, 0.f, 0.95f, 0.7f);
+				Seg(false, Lin(.26f, .36f, .17f), A0 + 0.05f, A1 - 0.05f, 0.95f, 1.1f, 0.55f);
+			}
+		}
+	}
+	for (float G : { Gate0, Gate1 })                       // gate piers (or posts)
+	{
+		if (Line == TEXT("oldtown")) { B(false, StoneDark, G - 0.2f, 0.f, GF - 0.2f, G + 0.2f, 1.15f, GF + 0.2f); Y(false, Stone, G, 1.15f, GF, 0.28f, 0.26f, 0.28f); }
+		else B(false, Line == TEXT("plain") ? Cream : Line == TEXT("curve") ? Wood : Charcoal, G - 0.07f, 0.f, GF - 0.07f, G + 0.07f, 1.2f, GF + 0.07f);
+	}
+	B(true, Line == TEXT("workshop") ? Charcoal : Line == TEXT("plain") ? Cream : Wood, Gate0 + 0.05f, 0.08f, GF + 0.05f, Gate0 + 0.11f, 0.95f, GF + 0.75f);   // the gate, open
+	// the letterbox on a post by the gate, planters each side of the door, a tree in a front corner
+	Y(true, Wood, Gate1 + 0.55f, 0.f, GF + 0.3f, 0.08f, 1.0f, 0.08f);
+	Y(true, Door, Gate1 + 0.55f, 1.0f, GF + 0.3f, 0.4f, 0.28f, 0.3f);
+	Y(true, Cream, Gate1 + 0.55f, 1.12f, GF + 0.14f, 0.26f, 0.14f, 0.04f);
+	for (float Sd : { -1.f, 1.f }) { const float U = Du + Sd * 1.2f; Y(false, Terra, U, 0.f, -HV - 0.45f, 0.5f, 0.45f, 0.5f); Y(true, Leaf, U, 0.45f, -HV - 0.45f, 0.5f, 0.35f, 0.5f); }
+	const bool bTreeRight = Has(TEXT("treeSide"));
+	const float Tu = bTreeRight ? GR - 2.2f : GL + 2.2f, Tv = GF + 2.6f;
+	if (Front > 3.5f)
+	{
+		Y(false, Wood, Tu, 0.f, Tv, 0.26f, 2.4f, 0.26f);
+		for (int32 q = 0; q < 5; ++q)
+			Y(false, q % 2 ? LeafDark : LeafLight, Tu + FMath::Cos(q * 1.3f) * 0.7f, 2.2f + (q % 3) * 0.4f, Tv + FMath::Sin(q * 1.3f) * 0.7f, 1.6f, 1.3f, 1.6f, q * 0.4f);
+	}
+	// the extras: each in some gardens and not others
+	if (Has(TEXT("bench")) && Front > 3.0f)
+	{
+		const float U = bTreeRight ? GL + 2.75f : GR - 2.75f, V = GF + 2.2f;
+		Y(false, Wood, U, 0.f, V, 1.5f, 0.45f, 0.55f, PI); Y(false, Wood, U, 0.45f, V + 0.25f, 1.5f, 0.45f, 0.06f, PI);
+	}
+	const bool bBistro = Has(TEXT("bistro")) && Back > 2.8f;
+	if (bBistro)
+	{
+		const float U = GR - 2.4f, V = HV + 2.2f;
+		Y(false, Charcoal, U, 0.f, V, 0.6f, 0.72f, 0.6f); Y(false, Door, U, 0.72f, V, 0.7f, 0.04f, 0.7f);
+		for (float Sd : { -1.f, 1.f }) { Y(false, Charcoal, U + Sd * 0.65f, 0.f, V, 0.42f, 0.45f, 0.42f); Y(true, Wood, U + Sd * 0.65f, 0.45f, V, 0.42f, 0.04f, 0.42f); }
+		Y(true, Wood, U, 0.f, V, 0.05f, 2.3f, 0.05f); Y(true, Line == TEXT("plain") ? Cream : Shut, U, 2.0f, V, 2.2f, 0.3f, 2.2f, PI / 4);
+	}
+	if (Has(TEXT("lounger")) && Back > 2.9f) { const float U = GL + 1.4f, V = HV + 1.8f; Y(false, Wood, U, 0.f, V, 0.65f, 0.35f, 1.9f); Y(true, Shut, U, 0.35f, V + 0.3f, 0.6f, 0.1f, 1.3f); }
+	if (Has(TEXT("washing")) && Back > 2.2f)
+	{
+		for (float U : { -1.5f, 2.5f }) Y(false, Wood, U, 0.f, GB - 1.5f, 0.08f, 1.9f, 0.08f);
+		B(true, Charcoal, -1.5f, 1.85f, GB - 1.52f, 2.5f, 1.87f, GB - 1.48f);
+		const FLinearColor Wash[4] = { Cream, Blue, Terra, Cream };
+		for (int32 q = 0; q < 4; ++q) Y(true, Wash[q], -1.0f + q * 0.95f, 1.25f, GB - 1.5f, 0.55f, 0.6f, 0.03f);
+	}
+	if (Has(TEXT("flowers")) && Front > 2.5f)
+	{
+		const float U = Du - 3.4f, V = GF + 1.4f;
+		B(false, Soil, U - 1.6f, 0.f, V - 0.45f, U + 1.6f, 0.22f, V + 0.45f);
+		const FLinearColor Bloom[4] = { Terra, Cream, Plum, Ochre };
+		for (int32 q = 0; q < 9; ++q) Y(true, Bloom[q % 4], U - 1.4f + q * 0.35f, 0.22f, V + (q % 2 ? 0.18f : -0.18f), 0.22f, 0.25f, 0.22f);
+	}
+	if (Has(TEXT("woodpile")) && Right > 1.1f) { const float U = GR - 0.6f, V = 1.5f; B(false, Brown, U - 0.35f, 0.f, V - 1.0f, U + 0.35f, 1.1f, V + 1.0f); B(false, Wood, U - 0.45f, 1.1f, V - 1.1f, U + 0.45f, 1.18f, V + 1.1f); }
+	// the everyday things of a home outside: dustbins and a recycling crate, the doormat, the house number, the door lamp
+	const FLinearColor Iron(.2f, .21f, .22f), Lid(.26f, .27f, .28f);
+	for (float U : { 4.75f, 5.45f }) { Y(false, Iron, U, 0.f, -HV - 0.5f, 0.55f, 0.85f, 0.55f); Y(true, Lid, U, 0.85f, -HV - 0.5f, 0.62f, 0.06f, 0.62f); }
+	Y(false, Lin(.2f, .34f, .3f), 5.1f, 0.f, -HV - 1.15f, 0.6f, 0.3f, 0.42f); Y(true, Cream, 5.0f, 0.3f, -HV - 1.15f, 0.3f, 0.08f, 0.25f);
+	B(true, Lin(.36f, .26f, .16f), Du - 0.45f, S0, -HV - 0.5f, Du + 0.45f, S0 + 0.02f, -HV - 0.1f);
+	B(true, Line == TEXT("workshop") ? Cream : Charcoal, Du + 0.78f, S0 + 1.7f, -HV - 0.03f, Du + 1.02f, S0 + 1.9f, -HV);
+	B(true, Line == TEXT("workshop") ? Charcoal : Cream, Du + 0.85f, S0 + 1.76f, -HV - 0.04f, Du + 0.95f, S0 + 1.84f, -HV - 0.03f);
+	B(true, Charcoal, Du - 1.0f, S0 + 2.0f, -HV - 0.2f, Du - 0.82f, S0 + 2.32f, -HV);
+	B(true, Lin(1.0f, .8f, .5f), Du - 0.98f, S0 + 2.05f, -HV - 0.18f, Du - 0.84f, S0 + 2.27f, -HV - 0.02f);
+	if (Has(TEXT("parcel"))) { Y(true, Lin(.58f, .48f, .32f), Du + 0.45f, S0, -HV - 0.35f, 0.4f, 0.3f, 0.32f, 0.3f); Y(true, Teal, Du + 0.45f, S0 + 0.3f, -HV - 0.35f, 0.4f, 0.02f, 0.08f, 0.3f); }
+	if (Has(TEXT("milk"))) for (int32 q = 0; q < 2; ++q) Y(true, Cream, Du - 0.5f + q * 0.12f, S0, -HV - 0.3f, 0.08f, 0.24f, 0.08f);
+	if (Has(TEXT("birdbath")) && Front > 3.3f) { Y(false, Stone, 2.6f, 0.f, -7.0f, 0.2f, 0.8f, 0.2f); Y(false, Stone, 2.6f, 0.8f, -7.0f, 0.7f, 0.12f, 0.7f); Y(true, Lin(.3f, .4f, .45f), 2.6f, 0.9f, -7.0f, 0.5f, 0.03f, 0.5f); }
+	if (Back > 1.3f)                                       // the compost bin
+	{
+		const float U = GL + 0.75f, V = GB - 0.75f;
+		B(false, Wood, U - 0.5f, 0.f, V - 0.5f, U + 0.5f, 0.9f, V + 0.5f);
+		for (int32 q = 0; q < 4; ++q) B(true, Brown, U - 0.52f, 0.1f + q * 0.2f, V - 0.52f, U + 0.52f, 0.16f + q * 0.2f, V - 0.5f);
+	}
+	{ const float V = 3.3f; B(true, Lin(.2f, .34f, .3f), HU, 0.5f, V - 0.25f, HU + 0.12f, 1.0f, V + 0.25f); Y(true, Lin(.3f, .4f, .25f), HU + 0.2f, 0.5f, V, 0.1f, 0.5f, 0.5f); }   // a hose reel on the side wall
+	if (!bBistro && Has(TEXT("shed")) && Back > 2.6f)      // a garden shed in the back corner, its roof two slopes
+	{
+		const float U0 = GR - 2.4f, U1 = GR - 0.4f, V0 = GB - 2.4f, V1 = GB - 0.4f, Hh = 2.1f;
+		B(false, Line == TEXT("plain") ? Cream : Line == TEXT("workshop") ? Lin(.3f, .22f, .15f) : Wood, U0, 0.f, V0, U1, Hh, V1);
+		B(true, Door, U0 + 0.7f, 0.f, V0 - 0.02f, U1 - 0.7f, 1.9f, V0);
+		if (UStaticMesh* Wedge = Kit(TEXT("SM_Kit_RoofWedge")))
+			Add(Group(Wedge, true), FTransform(FQuat(FVector::UpVector, Ang), At((U0 + U1) / 2, V1 + 0.15f, Hh), FVector(U1 - U0 + 0.3f, V1 - V0 + 0.3f, 0.5f)), RoofC);
+		if (Has(TEXT("can"))) Y(true, Teal, U0 - 0.4f, 0.f, V0 + 0.3f, 0.3f, 0.28f, 0.18f);
+	}
+	else if (Has(TEXT("can")) && Right > 0.6f) Y(true, Teal, GR - 0.35f, 0.f, 3.0f, 0.3f, 0.28f, 0.18f);
 }
 
 void ABrixTownActor::Build(const FBrixCity& City)

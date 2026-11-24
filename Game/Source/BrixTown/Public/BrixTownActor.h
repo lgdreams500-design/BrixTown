@@ -74,6 +74,7 @@ public:
 	UPROPERTY(Config) float ChimneyAt = 0.7f;          // an old-district roof's chimney: share of the ridge from its start (kit tile_roof())
 	UPROPERTY(Config) float ChimneyEnds = 0.9f;        // elsewhere two, this far in from the ends
 	UPROPERTY(Config) float ChimneyBack = 1.0f;        // m behind the ridge (1.2 outside the old districts)
+	UPROPERTY(Config) float GardenCullDistance = 150.f;   // m; a garden's small things (pickets, railings, bins) fade out beyond this
 	UPROPERTY(Config) float HousePlinth = 0.3f;        // a designed house (houses.js outsideS): its ground floor's height
 	UPROPERTY(Config) float HouseStorey = 3.3f;        // and each storey
 	UPROPERTY(Config) FLinearColor HouseTrimStone = FLinearColor(0.62f, 0.58f, 0.52f);   // its sills, surrounds, string course
@@ -114,6 +115,7 @@ private:
 	UMaterialInstanceDynamic* Fixed(const FLinearColor& C);
 	UMaterialInstanceDynamic* Own();
 	void BuildLot(const FBrixLot& L, const FBrixBlock& B);
+	void BuildGarden(const FBrixLot& L, const struct FBrixHousePlan& Plan, const struct FBrixHouseLook& Hs, float HouseTop);
 	UStaticMesh* Kit(const TCHAR* Name, UStaticMesh* Fallback = nullptr);
 	void Name(const FString& Text, const FVector& At, double YawRad, float Size, float MaxWidth, bool bFaceAlong = false);
 

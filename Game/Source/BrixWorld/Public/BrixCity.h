@@ -43,6 +43,7 @@ struct BRIXWORLD_API FBrixHouseLook
 	bool bStone = false, bQuoins = false, bBoxes = false, bArches = false, bHood = false;
 	FVector3f Wall = FVector3f(0.56f, 0.53f, 0.50f);   // the plaster's light tone, or the line's stone
 	FVector3f Shutter = FVector3f::ZeroVector, Door = FVector3f::ZeroVector, Frame = FVector3f::ZeroVector, Roof = FVector3f::ZeroVector;
+	FVector4f Garden = FVector4f(-7.5f, -9.5f, 7.5f, 8.0f);   // lot.house.garden: its left, front, right, back (u, v from the house's centre)
 };
 
 // A window of a house plan (World/rules/home_plans.json): which face, where along it in the built house (metres from the
