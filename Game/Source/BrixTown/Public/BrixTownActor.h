@@ -69,6 +69,10 @@ public:
 	UPROPERTY(Config) TArray<float> CafeTableAt;       // a cafe's tables, metres from the front's start
 	UPROPERTY(Config) FLinearColor LetterColour = FLinearColor(0.70f, 0.64f, 0.50f);
 	UPROPERTY(Config) float NameSize = 0.52f;          // m, the shop's name on its fascia (kit text size)
+	UPROPERTY(Config) float HousePlinth = 0.3f;        // a designed house (houses.js outsideS): its ground floor's height
+	UPROPERTY(Config) float HouseStorey = 3.3f;        // and each storey
+	UPROPERTY(Config) FLinearColor HouseTrimStone = FLinearColor(0.62f, 0.58f, 0.52f);   // its sills, surrounds, string course
+	UPROPERTY(Config) FLinearColor QuoinStone = FLinearColor(0.66f, 0.63f, 0.57f);
 	UPROPERTY(Config) float TreeTrunkHeight = 3.f;
 	UPROPERTY(Config) float TreeTrunkWidth = 0.35f;
 	UPROPERTY(Config) float TreeCrownWidth = 4.f;
@@ -91,7 +95,7 @@ public:
 	UPROPERTY(Config) FLinearColor CrownColour = FLinearColor(0.30f, 0.33f, 0.20f);
 
 private:
-	struct FOpening { float S, Z0, W, H; UStaticMesh* Mesh; UStaticMesh* Shutters; const FLinearColor* Paint; float MeshZ = -1.f; };   // MeshZ < 0: the piece sits at Z0
+	struct FOpening { float S, Z0, W, H; UStaticMesh* Mesh; UStaticMesh* Shutters; const FLinearColor* Paint; float MeshZ = -1.f; float SX = 1.f, SZ = 1.f; };   // MeshZ < 0: the piece sits at Z0; SX, SZ stretch it
 	struct FLook { FLinearColor Colour; FVector4f A = FVector4f(-1, 0, 0, 0), B = FVector4f(0, 0, 0, 0); };   // A.x < 0: painted plaster
 	struct FPending { TArray<FTransform> At; TArray<FLook> Look; };
 

@@ -29,6 +29,14 @@ The whole town is 15 groups of instances, one per mesh, each instance carrying i
 the owner's laptop at High it runs at 63-66 fps, as fast as the grey-box (ADR-0046). The binaries are lockable in LFS
 (ADR-0002): `git lfs lock <file>` before running the scripts that remake them.
 
+## Designed houses (ADR-0032, ADR-0035)
+The 469 designed houses (lot.house) are built as the slice builds them (houses.js outsideS): the 12 x 9 m house of
+`World/rules/home_plans.json` (house_12x9), two 3.3 m storeys on a 0.3 m plinth, its nine windows and front door where
+the plan has them, shutters open at every window, a string course between the storeys, a 24 degree roof with the
+chimney and its two pots on the left gable; and the line's trim and its colourway from `World/rules/house_styles.json`:
+plaster or ashlar walls, shutters, door, frames and roof in the colourway's colours, quoins on the Old Town line, window
+boxes on Old Town and Curve, an arched door on Curve. Test `ART001_every_house_has_its_line_and_colourway`.
+
 ## Shopfronts, cafe fronts and balconies
 On the street front of every shop of two storeys or more, the kit's shopfront(): one opening across the ground storey,
 teal pilasters on stone plinths about every 2.2 m, lit display panes over a stall riser, a glazed door in the middle, a
@@ -63,7 +71,7 @@ Paths below are for this machine (`docs/setup/DEV_ENVIRONMENT.md`); run from the
 "C:\Users\leena\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe" "%CD%\Game\BrixTown.uproject" -game -windowed -ResX=1600 -ResY=900
 "C:\Users\leena\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "%CD%\Game\BrixTown.uproject" -ExecCmds="Automation RunTests BrixTown.World; Quit" -unattended -nullrhi -nosplash
 ```
-The first is the build, the second plays it, the third runs the tests. Without `-game` the second opens the editor; press
+The first is the build (add `-NoHotReloadFromIDE` when the game is running from another copy of the project: Live Coding there otherwise stops the build), the second plays it, the third runs the tests. Without `-game` the second opens the editor; press
 Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/full/path/shot.png` (a screenshot after
 12 s, then quit) and optionally `-BrixCam=x,z,height,yaw,pitch` (metres and degrees, the data's frame, yaw 0 = east).
 
@@ -74,3 +82,4 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD022_every_lot_is_sound` | WLD-022 |
 | `BrixTown.World.WLD022_broken_lots_are_caught` | WLD-022 |
 | `BrixTown.World.WLD038_surfaces_match_the_rules` | WLD-038, WLD-039 |
+| `BrixTown.World.ART001_every_house_has_its_line_and_colourway` | ART-001 (ADR-0032, ADR-0035) |

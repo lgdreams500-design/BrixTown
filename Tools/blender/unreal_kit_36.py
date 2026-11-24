@@ -175,6 +175,14 @@ def cafe_table(K, rng):                      # one of cafe_front()'s tables with
     ellipsoid("Cup", Vector((tx + 0.1, ty - 0.05, 0.82)), (0.045, 0.045, 0.04), MATS["cream"])
 
 
+def window_box(K, rng):                      # window()'s flower box under a 1.1 m window, z = 0 at the sill
+    w = KIT["win_w"]
+    x0, x1 = -w / 2, w / 2
+    K.block("terra", x0 - 0.05, x1 + 0.05, -0.42, -0.16, 0.0, 0.26, 0.03)
+    for k in range(3):
+        blob("Plant", x0 + (k + 0.5) * w / 3, -0.3, 0.36, 0.2 + rng.uniform(0, 0.06), MATS["plant"] if k % 2 else MATS["leaf_light"])
+
+
 def balcony_piece(K, rng):                   # balcony(): z = 0 at the floor; the opening is 1.2 x 2.3 from 0.15 up
     balcony(K, rng, 0.0, 0.0, T, LOOK)
 
@@ -202,6 +210,7 @@ PIECES = {
     "SM_Kit_BladeSign": (blade_sign, None),
     "SM_Kit_CafeTable": (cafe_table, None),
     "SM_Kit_Balcony": (balcony_piece, (1.2, 2.3)),
+    "SM_Kit_WindowBox": (window_box, None),
 }
 
 

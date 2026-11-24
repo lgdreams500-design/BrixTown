@@ -125,4 +125,37 @@ bool FWLD038_SurfacesMatchTheRules::RunTest(const FString&)
 	return Wrong == 0;
 }
 
+// ART-001, ADR-0032, ADR-0035: every designed house is built to a plan the game knows, in its line and its colourway
+// (house_styles.json): the colours it is given are the colourway's, never the generic building's.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FART001_HousesHaveTheirColourways, "BrixTown.World.ART001_every_house_has_its_line_and_colourway",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FART001_HousesHaveTheirColourways::RunTest(const FString&)
+{
+	FBrixCity City;
+	FString Error;
+	if (!TestTrue(TEXT("the starting city loads: ") + Error, LoadBrixCity(StartingCityDir(), City, Error))) return false;
+	const FBrixHousePlan* Plan = City.HousePlans.Find(TEXT("house_12x9"));
+	if (!TestNotNull(TEXT("the 12 x 9 m house plan is read"), Plan)) return false;
+	TestEqual(TEXT("its nine windows"), Plan->Windows.Num(), 9);
+	TestTrue(TEXT("its door on the front"), Plan->DoorWidth > 0.5f && FMath::Abs(Plan->DoorAt) < Plan->HalfU);
+	int32 Houses = 0, Bad = 0;
+	TSet<FString> Ways;
+	for (const FBrixBlock& B : City.Blocks)
+		for (const FBrixLot& L : B.Lots)
+		{
+			if (!L.House.IsSet()) continue;
+			++Houses;
+			const FBrixHouseLook& H = L.House.GetValue();
+			Ways.Add(H.Line + TEXT("/") + H.Style);
+			if (H.Shutter.IsNearlyZero() || H.Door.IsNearlyZero() || H.Frame.IsNearlyZero() || H.Roof.IsNearlyZero() || H.Wall.IsNearlyZero())
+			{
+				AddError(L.Id + TEXT(": a colour of its colourway is missing (") + H.Line + TEXT(" ") + H.Style + TEXT(")"));
+				++Bad;
+			}
+		}
+	TestTrue(TEXT("the city has designed houses"), Houses > 0);
+	TestEqual(TEXT("all twelve colourways are in use"), Ways.Num(), 12);
+	return Bad == 0;
+}
+
 #endif
