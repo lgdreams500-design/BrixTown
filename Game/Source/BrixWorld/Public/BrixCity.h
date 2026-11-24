@@ -35,6 +35,33 @@ struct BRIXWORLD_API FBrixSurfaceRule
 	TArray<TPair<FString, double>> Weights;      // sorted by name, as Python's sorted()
 };
 
+// A designed house's line and colourway (lot.house; World/rules/house_styles.json, ADR-0032), resolved to the colours and
+// trim the house is built with (houses.js lookS()).
+struct BRIXWORLD_API FBrixHouseLook
+{
+	FString Plan, Line, Style;
+	bool bStone = false, bQuoins = false, bBoxes = false, bArches = false, bHood = false;
+	FVector3f Wall = FVector3f(0.56f, 0.53f, 0.50f);   // the plaster's light tone, or the line's stone
+	FVector3f Shutter = FVector3f::ZeroVector, Door = FVector3f::ZeroVector, Frame = FVector3f::ZeroVector, Roof = FVector3f::ZeroVector;
+};
+
+// A window of a house plan (World/rules/home_plans.json): which face, where along it in the built house (metres from the
+// house's centre, u across the front or v from front to back), how wide.
+struct BRIXWORLD_API FBrixPlanWindow
+{
+	FString Side;      // front, back, left, right
+	float At = 0.f, Width = 1.f;
+};
+
+// The outside of a designed house's plan (houses.js: the plan's 0.25 m walls mapped to the house's 0.32 m ones)
+struct BRIXWORLD_API FBrixHousePlan
+{
+	FString Name;
+	float HalfU = 6.f, HalfV = 4.5f;     // the house is 2 HalfU across the front, 2 HalfV deep
+	float DoorAt = 0.f, DoorWidth = 1.f;
+	TArray<FBrixPlanWindow> Windows;
+};
+
 struct BRIXWORLD_API FBrixLot
 {
 	FString Id;
@@ -49,6 +76,7 @@ struct BRIXWORLD_API FBrixLot
 	TArray<FString> Tags;
 	TMap<FString, FString> OwnSurface;       // the lot's 'surface' field: slot -> pattern, beats the rules
 	FBrixSurface Surface;                    // a building's wall, or an open lot's ground (none for a garden)
+	TOptional<FBrixHouseLook> House;         // a designed house (lot.house): its plan, line and colourway
 
 	FVector2D Centre() const { return (Min + Max) * 0.5; }
 	FVector2D Size() const { return Max - Min; }
@@ -91,6 +119,7 @@ struct BRIXWORLD_API FBrixCity
 	TArray<FBrixBlock> Blocks;
 	TArray<FBrixPattern> Patterns;          // in the order of surfaces.json
 	TMap<FString, TArray<FBrixSurfaceRule>> SurfaceRules;   // slot -> rules, first match wins
+	TMap<FString, FBrixHousePlan> HousePlans;  // World/rules/home_plans.json, the plans designed houses are built to
 
 	int32 NumLots() const;
 	int32 FindPattern(const FString& Name) const;

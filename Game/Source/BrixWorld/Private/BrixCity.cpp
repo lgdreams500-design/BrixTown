@@ -133,6 +133,93 @@ namespace
 
 	// world.surfaces(): the colour a surface takes from its pattern's list, and for a wall whether it runs to the eaves
 	FBrixSurface Choose(const FBrixCity& City, int32 Pattern, const FString& Id, bool bWall);
+
+	FVector3f Rgb(const TSharedPtr<FJsonValue>& V)
+	{
+		if (!V.IsValid() || V->Type != EJson::Array) return FVector3f::ZeroVector;
+		const TArray<TSharedPtr<FJsonValue>>& A = V->AsArray();
+		return A.Num() >= 3 ? FVector3f((float)A[0]->AsNumber(), (float)A[1]->AsNumber(), (float)A[2]->AsNumber()) : FVector3f::ZeroVector;
+	}
+
+	// houses.js mapA(): a point of the plan (inner faces of its 0.25 m walls) moved into the built house (0.32 m walls):
+	// within each room it keeps its distance to the nearer of the room's two walls
+	float MapA(float X, const TArray<float>& O, const TArray<float>& N)
+	{
+		if (X <= O[0]) return N[0] + X - O[0];
+		for (int32 i = 0; i + 1 < O.Num(); ++i)
+			if (X <= O[i + 1]) return X - O[i] <= O[i + 1] - X ? N[i] + X - O[i] : N[i + 1] - (O[i + 1] - X);
+		return N.Last() + X - O.Last();
+	}
+
+	// home_plans.json: each plan's outside, as houses.js builds it (walls WallT deep; only house_12x9 has a front door)
+	bool ReadHousePlans(const FString& Path, FBrixCity& City, FString& OutError)
+	{
+		TSharedPtr<FJsonObject> Root;
+		if (!ReadJson(Path, Root, OutError)) return false;
+		const TSharedPtr<FJsonObject>* Plans = nullptr;
+		if (!Root->TryGetObjectField(TEXT("plans"), Plans)) return true;
+		const float WallT = 0.32f;
+		for (const auto& KV : (*Plans)->Values)
+		{
+			const TSharedPtr<FJsonObject>* House = nullptr;
+			if (!KV.Value->AsObject()->TryGetObjectField(TEXT("house"), House)) continue;
+			const TSharedPtr<FJsonObject>& Hs = *House;
+			if (!Hs->HasField(TEXT("front_door")) || !Hs->HasField(TEXT("windows"))) continue;
+			FBrixHousePlan P;
+			P.Name = FString(KV.Key.ToView());
+			P.HalfU = (float)Num(Hs, TEXT("W1"), 6.0);
+			P.HalfV = (float)Num(Hs, TEXT("D1"), 4.5);
+			const float T = (float)Num(Hs, TEXT("T"), 0.25), XA = (float)Num(Hs, TEXT("XA")), XB = (float)Num(Hs, TEXT("XB")), YM = (float)Num(Hs, TEXT("YM"));
+			const float PI0 = P.HalfU - T, PJ0 = P.HalfV - T, SI = P.HalfU - WallT, SJ = P.HalfV - WallT;
+			auto Mu = [&](float U) { return MapA(U, { -PI0, XA, XB, PI0 }, { -SI, XA, XB, SI }); };
+			auto Mv = [&](float V) { return MapA(V, { -PJ0, YM, PJ0 }, { -SJ, YM, SJ }); };
+			const FVector2D Door = Vec2(Hs, TEXT("front_door"));
+			P.DoorAt = Mu((float)(Door.X + Door.Y) / 2);
+			P.DoorWidth = (float)(Door.Y - Door.X);
+			for (const TSharedPtr<FJsonValue>& W : Hs->GetArrayField(TEXT("windows")))
+			{
+				const TArray<TSharedPtr<FJsonValue>>& A = W->AsArray();
+				FBrixPlanWindow Win;
+				Win.Side = A[0]->AsString();
+				const float C = (float)A[1]->AsNumber();
+				Win.At = (Win.Side == TEXT("front") || Win.Side == TEXT("back")) ? Mu(C) : Mv(C);
+				Win.Width = (float)A[2]->AsNumber();
+				P.Windows.Add(Win);
+			}
+			City.HousePlans.Add(P.Name, P);
+		}
+		return true;
+	}
+
+	// houses.js lookS(): a house's line and colourway (house_styles.json) to its colours and trim
+	TOptional<FBrixHouseLook> HouseLook(const TSharedPtr<FJsonObject>& Styles, const TSharedPtr<FJsonObject>& House)
+	{
+		FBrixHouseLook K;
+		K.Plan = Str(House, TEXT("plan"));
+		K.Line = Str(House, TEXT("furniture"));
+		K.Style = Str(House, TEXT("style"));
+		const TSharedPtr<FJsonObject> Lines = Styles->GetObjectField(TEXT("lines")), Ways = Styles->GetObjectField(TEXT("colourways"));
+		if (!Lines->HasField(K.Line)) K.Line = TEXT("oldtown");
+		const TSharedPtr<FJsonObject> Line = Lines->GetObjectField(K.Line), LineWays = Ways->GetObjectField(K.Line);
+		const TSharedPtr<FJsonObject> W = LineWays->HasField(K.Style) ? LineWays->GetObjectField(K.Style) : LineWays->GetObjectField(TEXT("a"));
+		Line->TryGetBoolField(TEXT("stone"), K.bStone);
+		Line->TryGetBoolField(TEXT("quoins"), K.bQuoins);
+		Line->TryGetBoolField(TEXT("boxes"), K.bBoxes);
+		Line->TryGetBoolField(TEXT("arches"), K.bArches);
+		Line->TryGetBoolField(TEXT("hood"), K.bHood);
+		const TSharedPtr<FJsonObject> Pal = Styles->GetObjectField(TEXT("palette"));
+		const FString Wall = Str(W, TEXT("wall"));
+		if (Wall != TEXT("stone")) K.Wall = Rgb(Styles->GetObjectField(TEXT("plasters"))->GetArrayField(Wall)[1]);
+		K.Shutter = Rgb(Pal->TryGetField(Str(W, TEXT("shutter"))));
+		K.Door = Rgb(Pal->TryGetField(Str(W, TEXT("door"))));
+		K.Frame = Rgb(Pal->TryGetField(Str(W, TEXT("frame"))));
+		const TArray<TSharedPtr<FJsonValue>>& R = Styles->GetObjectField(TEXT("roofs"))->GetArrayField(Str(W, TEXT("roof")));
+		K.Roof = (Rgb(R[0]) + Rgb(R[1])) * 0.5f;
+		const TSharedPtr<FJsonObject>* Trim = nullptr;
+		bool bBoxes = true;
+		if (House->TryGetObjectField(TEXT("trim"), Trim) && (*Trim)->TryGetBoolField(TEXT("window_boxes"), bBoxes) && !bBoxes) K.bBoxes = false;
+		return K;
+	}
 }
 
 int32 FBrixPattern::TypeIndex() const
@@ -237,6 +324,12 @@ bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError)
 		OutCity.SpawnTime = Str(*Spawn, TEXT("time"));
 	}
 
+	// the rules sit beside the city, where city.json's "rules" points
+	const FString RulesDir = FPaths::Combine(CityDir, Root->HasField(TEXT("rules")) ? Str(Root, TEXT("rules")) : FString(TEXT("../rules")));
+	TSharedPtr<FJsonObject> HouseStyles;
+	if (!ReadJson(FPaths::Combine(RulesDir, TEXT("house_styles.json")), HouseStyles, OutError)) return false;
+	if (!ReadHousePlans(FPaths::Combine(RulesDir, TEXT("home_plans.json")), OutCity, OutError)) return false;
+
 	const TArray<TSharedPtr<FJsonValue>>* BlockList = nullptr;
 	if (!Root->TryGetArrayField(TEXT("blocks"), BlockList))
 	{
@@ -279,6 +372,8 @@ bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError)
 				L->TryGetBoolField(TEXT("enterable"), Lot.bEnterable);
 				Lot.Tags = Strings(L, TEXT("tags"));
 				Lot.OwnSurface = OwnSurface(L);
+				const TSharedPtr<FJsonObject>* House = nullptr;
+				if (L->TryGetObjectField(TEXT("house"), House) && HouseStyles.IsValid()) Lot.House = HouseLook(HouseStyles, *House);
 			}
 		}
 		const TArray<TSharedPtr<FJsonValue>>* Trees = nullptr;
@@ -295,8 +390,7 @@ bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError)
 			}
 		}
 	}
-	// stone, brick and paving (ADR-0017): the rules sit beside the city, where city.json's "rules" points
-	const FString RulesDir = FPaths::Combine(CityDir, Root->HasField(TEXT("rules")) ? Str(Root, TEXT("rules")) : FString(TEXT("../rules")));
+	// stone, brick and paving (ADR-0017)
 	if (!ReadSurfaces(FPaths::Combine(RulesDir, TEXT("surfaces.json")), OutCity, OutError)) return false;
 	for (FBrixBlock& B : OutCity.Blocks)
 	{
@@ -329,6 +423,8 @@ TArray<FString> CheckBrixCity(const FBrixCity& City)
 			if (L.Size().X <= 0 || L.Size().Y <= 0) Problems.Add(Where + TEXT(": footprint has no area"));
 			if (L.Door.IsZero()) Problems.Add(Where + TEXT(": no door"));
 			if (!L.IsOpen() && L.Floors < 1) Problems.Add(Where + TEXT(": a building with no floors"));
+			if (L.House.IsSet() && !City.HousePlans.Contains(L.House->Plan == TEXT("samples_19") ? FString(TEXT("house_12x9")) : L.House->Plan))
+				Problems.Add(Where + TEXT(": a designed house with a plan the game does not know (") + L.House->Plan + TEXT(")"));
 		}
 	}
 	return Problems;

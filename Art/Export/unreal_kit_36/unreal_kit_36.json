@@ -452,5 +452,24 @@
    0.32,
    2.71
   ]
+ },
+ "SM_Kit_WindowBox": {
+  "opening": null,
+  "slots": [
+   "leaf_light",
+   "plant",
+   "terra"
+  ],
+  "tris": 348,
+  "min": [
+   -0.6,
+   -0.557,
+   0.0
+  ],
+  "max": [
+   0.6,
+   -0.043,
+   0.586
+  ]
  }
 }

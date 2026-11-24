@@ -153,23 +153,34 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 	FRandomStream Rng((int32)GetTypeHash(L.Id));
 	const float t = WallThickness;
 	const int32 Floors = FMath::Max(1, L.Floors);
-	const float H = Floors * StoreyHeight;
+	// a designed house (lot.house; houses.js outsideS): its plan's size, windows and door, its line's trim, its colourway
+	const FBrixHouseLook* Hs = L.House.IsSet() ? &L.House.GetValue() : nullptr;
+	const FBrixHousePlan* Plan = Hs && CityData ? CityData->HousePlans.Find(Hs->Plan == TEXT("samples_19") ? FString(TEXT("house_12x9")) : Hs->Plan) : nullptr;
+	const bool bHouse = Plan != nullptr;
+	auto Lin = [](const FVector3f& V) { return FLinearColor(V.X, V.Y, V.Z); };
+	const float S0 = HousePlinth, S1 = HousePlinth + HouseStorey;
+	const float H = bHouse ? HousePlinth + 2 * HouseStorey : Floors * StoreyHeight;
 	const bool bOld = B.District != TEXT("Outskirts");
 	const bool bCivic = L.Kind == TEXT("health") || L.Kind == TEXT("work");
 	const bool bFood = L.Kind == TEXT("food"), bShop = L.Kind == TEXT("shop");
 	const bool bShutters = L.Kind == TEXT("home") || bFood || bShop;
-	const float StoneTo = (bCivic || L.Surface.bUpper) ? H : (StoneBaseDistricts.Contains(B.District) ? FMath::Min(StoneBaseHeight, H) : 0.f);
-	const FLook Stone = Surface(L.Surface, TownStone);   // the lot's wall pattern (ADR-0017)
-	const FLinearColor Plaster = PlasterColours.Num() ? PlasterColours[Rng.RandHelper(PlasterColours.Num())] : FLinearColor(0.57f, 0.53f, 0.475f);
-	const FLinearColor Frame = FrameColours.Num() ? FrameColours[Rng.RandHelper(FrameColours.Num())] : FLinearColor::White;
-	const FLinearColor Shutter = ShutterColours.Num() ? ShutterColours[Rng.RandHelper(ShutterColours.Num())] : FLinearColor::White;
-	const FLinearColor DoorPaint = DoorColours.Num() ? DoorColours[Rng.RandHelper(DoorColours.Num())] : FLinearColor::White;
+	const float StoneTo = bHouse ? (Hs->bStone ? H : 0.f)
+		: (bCivic || L.Surface.bUpper) ? H : (StoneBaseDistricts.Contains(B.District) ? FMath::Min(StoneBaseHeight, H) : 0.f);
+	FBrixSurface HouseStone;                              // a stone line's walls: ashlar in the line's stone (outsideS)
+	if (bHouse) { HouseStone.Pattern = CityData->FindPattern(TEXT("ashlar")); HouseStone.Color = Hs->Wall; }
+	const FLook Stone = Surface(bHouse ? HouseStone : L.Surface, TownStone);   // the lot's wall pattern (ADR-0017)
+	FLinearColor Plaster = PlasterColours.Num() ? PlasterColours[Rng.RandHelper(PlasterColours.Num())] : FLinearColor(0.57f, 0.53f, 0.475f);
+	FLinearColor Frame = FrameColours.Num() ? FrameColours[Rng.RandHelper(FrameColours.Num())] : FLinearColor::White;
+	FLinearColor Shutter = ShutterColours.Num() ? ShutterColours[Rng.RandHelper(ShutterColours.Num())] : FLinearColor::White;
+	FLinearColor DoorPaint = DoorColours.Num() ? DoorColours[Rng.RandHelper(DoorColours.Num())] : FLinearColor::White;
+	FLinearColor Roof = RoofColour;
+	if (bHouse) { Plaster = Lin(Hs->Wall); Frame = Lin(Hs->Frame); Shutter = Lin(Hs->Shutter); DoorPaint = Lin(Hs->Door); Roof = Lin(Hs->Roof); }   // the colourway (ADR-0032)
 	FLinearColor Dark = StoneColour * 0.7f;
 	for (const FBrixSlotColour& F : SlotColours) if (F.Slot == TEXT("stone_dark")) Dark = F.Colour;
 
 	UStaticMesh* BoxMesh = Kit(TEXT("SM_Kit_Box"), Cube);
 	UInstancedStaticMeshComponent* Boxes = Group(BoxMesh, true);
-	const FVector2D C = L.Centre(), S = L.Size();
+	const FVector2D C = L.Centre(), S = bHouse ? FVector2D(2 * Plan->HalfU, 2 * Plan->HalfV) : L.Size();
 	const double Ang = FMath::DegreesToRadians(L.AngleDeg), Ca = FMath::Cos(Ang), Sa = FMath::Sin(Ang);
 	const float Base = BlockSlabHeight;
 	auto At = [&](const FVector2D& Local, float Up) { return ToWorld(FVector2D(C.X + Local.X * Ca - Local.Y * Sa, C.Y + Local.X * Sa + Local.Y * Ca), Base + Up); };
@@ -208,10 +219,33 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 		TArray<FOpening> Ops;
 		// the street front of a shop or a cafe, as the kit's shopfront() and cafe_front() build it (two storeys and more:
 		// the fascia and the awning reach above the ground floor)
-		const bool bShopFront = bShop && k == DoorSide && Floors >= 2 && F.Len >= 4.f;
-		const bool bCafeFront = bFood && bOld && k == DoorSide && Floors >= 2;
+		const bool bShopFront = !bHouse && bShop && k == DoorSide && Floors >= 2 && F.Len >= 4.f;
+		const bool bCafeFront = !bHouse && bFood && bOld && k == DoorSide && Floors >= 2;
 		float LastBay = F.Len / 2;
-		if (F.Len >= MinFacadeForOpenings)
+		TArray<FVector> FlowerBoxes;                     // a house's window boxes: (along, height, stretch)
+		if (bHouse)
+		{
+			// the plan's windows on this face, both storeys, shutters open on each (outsideS); the front door on the front
+			static const TCHAR* Sides[4] = { TEXT("front"), TEXT("back"), TEXT("left"), TEXT("right") };
+			auto AlongOf = [&](const FVector2D& P) { return (float)FVector2D::DotProduct(P - F.Mid, Along); };
+			for (const FBrixPlanWindow& W : Plan->Windows)
+			{
+				if (W.Side != Sides[k]) continue;
+				const FVector2D P = k < 2 ? FVector2D(W.At, F.Mid.Y) : FVector2D(F.Mid.X, W.At);
+				const float Sx = AlongOf(P), Stretch = W.Width / 1.1f;
+				Ops.Add({ Sx, S0 + 0.95f, W.Width, 1.6f, Kit(TEXT("SM_Kit_WinUp")), Kit(TEXT("SM_Kit_Shutters160")), &Frame, -1.f, Stretch, 1.f });
+				Ops.Add({ Sx, S1 + 0.8f, W.Width, 1.45f, Kit(TEXT("SM_Kit_WinTop")), Kit(TEXT("SM_Kit_Shutters145")), &Frame, -1.f, Stretch, 1.f });
+				if (Hs->bBoxes && k != 1) FlowerBoxes.Add(FVector(Sx, S1 + 0.8f, Stretch));
+			}
+			if (k == 0)
+			{
+				const float Sx = AlongOf(FVector2D(Plan->DoorAt, F.Mid.Y));
+				const bool bArch = Hs->bArches;
+				Ops.Add({ Sx, S0, Plan->DoorWidth, 2.4f, Kit(bArch ? TEXT("SM_Kit_DoorArch") : TEXT("SM_Kit_DoorPlain")), nullptr, &DoorPaint, -1.f,
+					Plan->DoorWidth / 1.3f, 2.4f / (bArch ? 2.5f : 2.3f) });
+			}
+		}
+		else if (F.Len >= MinFacadeForOpenings)
 		{
 			const int32 Nb = FMath::Max(1, FMath::RoundToInt(F.Len / Bay));
 			int32 DoorBay = -1;
@@ -297,13 +331,21 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			for (float T : CafeTableAt) if (-F.Len / 2 + T < F.Len / 2 - 1.f) Piece(TEXT("SM_Kit_CafeTable"), -F.Len / 2 + T, 0.f, FVector::OneVector, FLinearColor::Gray, ShutterCullDistance);
 		}
 
+		for (const FVector& Fb : FlowerBoxes) Piece(TEXT("SM_Kit_WindowBox"), Fb.X, Fb.Y, FVector(Fb.Z, 1, 1), FLinearColor::Gray, ShutterCullDistance);
+		if (bHouse)
+		{
+			// a house's plinth and its string course between the storeys, in the light stone of its sills (outsideS)
+			Box(Dark, OnWall(0.f, 0.03f), 0.f, S0 + 0.3f, Yaw, F.Len + 0.1f, 0.06f);
+			Box(HouseTrimStone, OnWall(0.f, 0.06f), S1 - 0.1f, S1 + 0.15f, Yaw, F.Len + 0.18f, 0.12f);
+		}
+
 		// the pieces
 		for (const FOpening& O : Ops)
 		{
 			if (!O.Mesh) continue;
-			const FTransform Tr(FQuat(FVector::UpVector, Yaw + Ang), At(OnWall(O.S, 0.f), O.MeshZ >= 0.f ? O.MeshZ : O.Z0));
+			const FTransform Tr(FQuat(FVector::UpVector, Yaw + Ang), At(OnWall(O.S, 0.f), O.MeshZ >= 0.f ? O.MeshZ : O.Z0), FVector(O.SX, 1, O.SZ));
 			Add(Group(O.Mesh, false, OpeningCullDistance), Tr, *O.Paint);
-			if (O.Shutters) Add(Group(O.Shutters, false, ShutterCullDistance), Tr, Shutter);
+			if (O.Shutters) Add(Group(O.Shutters, false, ShutterCullDistance), FTransform(Tr.GetRotation(), Tr.GetLocation(), FVector(O.SX, 1, 1)), Shutter);
 			++Openings;
 		}
 
@@ -340,7 +382,7 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 		}
 		for (const FRun& R : Open) Close(R);
 		// the string course over a stone ground storey
-		if (StoneTo > 0.f && StoneTo < H - 0.5f) Box(Dark, OnWall(0.f, BandDepth / 2), StoneTo, StoneTo + BandHeight, Yaw, F.Len + 2 * BandDepth, BandDepth);
+		if (!bHouse && StoneTo > 0.f && StoneTo < H - 0.5f) Box(Dark, OnWall(0.f, BandDepth / 2), StoneTo, StoneTo + BandHeight, Yaw, F.Len + 2 * BandDepth, BandDepth);
 	}
 
 	// the roof: tiles on homes and shops, and on everything outside the old districts; a parapet on the rest (kit)
@@ -362,7 +404,29 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			const FVector2D Mid = Yax * (Side * Half / 2);
 			const float Zc = H + Rise - Half / 2 * FMath::Tan(P) + RoofThickness / 2 / FMath::Cos(P);
 			const FQuat Q = FQuat(FVector::UpVector, RYaw + Ang) * FQuat(FVector::ForwardVector, -Side * P);
-			Add(Boxes, FTransform(Q, At(Mid, Zc), FVector(Lr + 2 * RoofSideOverhang, Ls, RoofThickness)), RoofColour);
+			Add(Boxes, FTransform(Q, At(Mid, Zc), FVector(Lr + 2 * RoofSideOverhang, Ls, RoofThickness)), Roof);
+		}
+		if (bHouse)
+		{
+			// the chimney on the left gable with two pots (outsideS), and quoins up the corners on a line that has them
+			const float Top = H + (D / 2 + Eave) * FMath::Tan(P) + 0.9f, Hu = Plan->HalfU, Hv = Plan->HalfV;
+			if (Hs->bStone) BoxLook(Stone, FVector2D(-Hu + 0.3f, -1.8f), H - 0.5f, Top, 0.0, 0.7f, 0.6f);
+			else Box(Dark, FVector2D(-Hu + 0.3f, -1.8f), H - 0.5f, Top, 0.0, 0.7f, 0.6f);
+			Box(Dark, FVector2D(-Hu + 0.3f, -1.8f), Top, Top + 0.12f, 0.0, 0.9f, 0.8f);
+			if (UStaticMesh* Pot = Kit(TEXT("SM_Kit_Cylinder"), Cylinder))
+				for (float Dv : { -0.17f, 0.17f })
+					Add(Group(Pot, true), FTransform(FQuat::Identity, At(FVector2D(-Hu + 0.3f, -1.8f + Dv), Top + 0.12f + 0.225f), FVector(0.18f, 0.18f, 0.45f)), RoofColour);
+			if (Hs->bQuoins)
+				for (const FVector2D Cn : { FVector2D(-Hu, -Hv), FVector2D(Hu, -Hv), FVector2D(-Hu, Hv), FVector2D(Hu, Hv) })
+				{
+					const float Su = FMath::Sign(Cn.X), Sv = FMath::Sign(Cn.Y);
+					for (int32 q = 0; S0 + 0.3f + q * 0.5f + 0.45f < H; ++q)
+					{
+						const float Z0 = S0 + 0.3f + q * 0.5f, La = q % 2 ? 0.3f : 0.55f, Lb = q % 2 ? 0.55f : 0.3f;
+						Box(QuoinStone, FVector2D(Cn.X - Su * La / 2 + Su * 0.02f, Cn.Y + Sv * 0.02f), Z0, Z0 + 0.45f, 0.0, La + 0.04f, 0.04f);
+						Box(QuoinStone, FVector2D(Cn.X + Su * 0.02f, Cn.Y - Sv * Lb / 2 + Sv * 0.02f), Z0, Z0 + 0.45f, 0.0, 0.04f, Lb + 0.04f);
+					}
+				}
 		}
 	}
 	else
