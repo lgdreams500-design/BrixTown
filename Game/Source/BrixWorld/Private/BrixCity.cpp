@@ -3,6 +3,7 @@
 #include "Dom/JsonObject.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Misc/SecureHash.h"
 #include "Modules/ModuleManager.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
@@ -48,6 +49,152 @@ namespace
 		double V = Default;
 		Obj->TryGetNumberField(Field, V);
 		return V;
+	}
+
+	TArray<FString> Strings(const TSharedPtr<FJsonObject>& Obj, const TCHAR* Field)
+	{
+		TArray<FString> Out;
+		Obj->TryGetStringArrayField(Field, Out);
+		return Out;
+	}
+
+	// A 'surface' field: {"wall": "rubble", ...}
+	TMap<FString, FString> OwnSurface(const TSharedPtr<FJsonObject>& Obj)
+	{
+		TMap<FString, FString> Out;
+		const TSharedPtr<FJsonObject>* S = nullptr;
+		if (Obj->TryGetObjectField(TEXT("surface"), S))
+			for (const auto& KV : (*S)->Values) Out.Add(FString(KV.Key.ToView()), KV.Value->AsString());
+		return Out;
+	}
+
+	// World/rules/surfaces.json into the city's patterns and rules (ADR-0017)
+	bool ReadSurfaces(const FString& Path, FBrixCity& City, FString& OutError)
+	{
+		TSharedPtr<FJsonObject> S;
+		if (!ReadJson(Path, S, OutError)) return false;
+		const TSharedPtr<FJsonObject>* Pats = nullptr;
+		if (S->TryGetObjectField(TEXT("patterns"), Pats))
+		{
+			for (const auto& KV : (*Pats)->Values)
+			{
+				const TSharedPtr<FJsonObject> P = KV.Value->AsObject();
+				FBrixPattern& Pt = City.Patterns.AddDefaulted_GetRef();
+				Pt.Name = FString(KV.Key.ToView());
+				Pt.For = Str(P, TEXT("for"));
+				Pt.Type = Str(P, TEXT("type"));
+				Pt.Unit = Vec2(P, TEXT("unit"));
+				Pt.Joint = (float)Num(P, TEXT("joint"), 0.02);
+				Pt.Vary = (float)Num(P, TEXT("vary"), 0.8);
+				Pt.Bevel = (float)Num(P, TEXT("bevel"));
+				Pt.Dome = (float)Num(P, TEXT("dome"));
+				Pt.Mortar = (float)Num(P, TEXT("mortar"));
+				Pt.Upper = (float)Num(P, TEXT("upper"));
+				const TArray<TSharedPtr<FJsonValue>>* Cols = nullptr;
+				if (P->TryGetArrayField(TEXT("colors"), Cols))
+					for (const TSharedPtr<FJsonValue>& C : *Cols)
+					{
+						if (C->Type == EJson::String) { Pt.Colors.Add(TOptional<FVector3f>()); continue; }
+						const TArray<TSharedPtr<FJsonValue>>& A = C->AsArray();
+						Pt.Colors.Add(FVector3f((float)A[0]->AsNumber(), (float)A[1]->AsNumber(), (float)A[2]->AsNumber()));
+					}
+			}
+		}
+		const TSharedPtr<FJsonObject>* Rules = nullptr;
+		if (S->TryGetObjectField(TEXT("rules"), Rules))
+		{
+			for (const auto& KV : (*Rules)->Values)
+			{
+				TArray<FBrixSurfaceRule>& List = City.SurfaceRules.Add(FString(KV.Key.ToView()));
+				for (const TSharedPtr<FJsonValue>& RV : KV.Value->AsArray())
+				{
+					const TSharedPtr<FJsonObject> R = RV->AsObject();
+					FBrixSurfaceRule& Rule = List.AddDefaulted_GetRef();
+					const TSharedPtr<FJsonObject>* If = nullptr;
+					if (R->TryGetObjectField(TEXT("if"), If))
+						for (const auto& C : (*If)->Values)
+						{
+							TArray<FString> Want;
+							for (const TSharedPtr<FJsonValue>& W : C.Value->AsArray()) Want.Add(W->AsString());
+							Rule.If.Add(FString(C.Key.ToView()), Want);
+						}
+					const TSharedPtr<FJsonValue> Use = R->TryGetField(TEXT("use"));
+					if (Use.IsValid() && Use->Type == EJson::String) Rule.Use = Use->AsString();
+					else if (Use.IsValid())
+					{
+						for (const auto& W : Use->AsObject()->Values) Rule.Weights.Add(TPair<FString, double>(FString(W.Key.ToView()), W.Value->AsNumber()));
+						Rule.Weights.Sort([](const TPair<FString, double>& A, const TPair<FString, double>& B) { return A.Key.Compare(B.Key, ESearchCase::CaseSensitive) < 0; });
+					}
+				}
+			}
+		}
+		return true;
+	}
+
+	// world.surfaces(): the colour a surface takes from its pattern's list, and for a wall whether it runs to the eaves
+	FBrixSurface Choose(const FBrixCity& City, int32 Pattern, const FString& Id, bool bWall);
+}
+
+int32 FBrixPattern::TypeIndex() const
+{
+	static const TCHAR* Types[] = { TEXT("bond"), TEXT("flemish"), TEXT("rubble"), TEXT("flags"), TEXT("herringbone"), TEXT("basket") };
+	for (int32 i = 0; i < 6; ++i) if (Type == Types[i]) return i;
+	return 0;
+}
+
+int32 FBrixCity::FindPattern(const FString& PatternName) const
+{
+	return Patterns.IndexOfByPredicate([&](const FBrixPattern& P) { return P.Name == PatternName; });
+}
+
+double BrixSurfaceHash(const TArray<FString>& Parts)
+{
+	const FString Hex = FMD5::HashAnsiString(*FString::Join(Parts, TEXT("|")));
+	return (double)FParse::HexNumber64(*Hex.Left(8)) / (double)0xFFFFFFFFull;
+}
+
+int32 PickBrixSurface(const FBrixCity& City, const FString& Slot, const FBrixBlock& Block, const FBrixLot* Lot)
+{
+	if (const FString* Own = (Lot ? Lot->OwnSurface : Block.OwnSurface).Find(Slot)) return City.FindPattern(*Own);
+	const TArray<FBrixSurfaceRule>* Rules = City.SurfaceRules.Find(Slot);
+	if (!Rules) return INDEX_NONE;
+	for (const FBrixSurfaceRule& R : *Rules)
+	{
+		bool bFits = true;
+		for (const auto& C : R.If)
+		{
+			TArray<FString> Got;
+			if (C.Key == TEXT("template")) Got.Add(Block.Template);
+			else if (C.Key == TEXT("district")) Got.Add(Block.District);
+			else if (!Lot) { bFits = false; break; }
+			else if (C.Key == TEXT("tags")) Got = Lot->Tags;
+			else if (C.Key == TEXT("kind")) Got.Add(Lot->Kind);
+			else if (C.Key == TEXT("name")) Got.Add(Lot->Name);
+			else if (C.Key == TEXT("id")) Got.Add(Lot->Id);
+			if (!Got.ContainsByPredicate([&](const FString& G) { return C.Value.Contains(G); })) { bFits = false; break; }
+		}
+		if (!bFits) continue;
+		if (!R.Use.IsEmpty()) return City.FindPattern(R.Use);
+		double Total = 0, Sum = 0;
+		for (const auto& W : R.Weights) Sum += W.Value;
+		const double Roll = BrixSurfaceHash({ Lot ? Lot->Id : Block.Id, Slot }) * Sum;
+		for (const auto& W : R.Weights) { Total += W.Value; if (Roll < Total) return City.FindPattern(W.Key); }
+		return R.Weights.Num() ? City.FindPattern(R.Weights.Last().Key) : INDEX_NONE;
+	}
+	return INDEX_NONE;
+}
+
+namespace
+{
+	FBrixSurface Choose(const FBrixCity& City, int32 Pattern, const FString& Id, bool bWall)
+	{
+		FBrixSurface S;
+		S.Pattern = Pattern;
+		if (!City.Patterns.IsValidIndex(Pattern)) return S;
+		const FBrixPattern& P = City.Patterns[Pattern];
+		if (P.Colors.Num()) S.Color = P.Colors[(int32)(BrixSurfaceHash({ Id, TEXT("colour") }) * P.Colors.Num()) % P.Colors.Num()];
+		S.bUpper = bWall && P.Upper > 0.f && BrixSurfaceHash({ Id, TEXT("upper") }) < P.Upper;
+		return S;
 	}
 }
 
@@ -111,6 +258,7 @@ bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError)
 		FVector2D Span = Vec2(B, TEXT("span"));
 		if (Span.IsZero()) Span = FVector2D(1, 1);
 		Block.Extent = FVector2D(Size + (Span.X - 1) * OutCity.Pitch, Size + (Span.Y - 1) * OutCity.Pitch);
+		Block.OwnSurface = OwnSurface(B);
 
 		const TArray<TSharedPtr<FJsonValue>>* Lots = nullptr;
 		if (B->TryGetArrayField(TEXT("lots"), Lots))
@@ -129,6 +277,8 @@ bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError)
 				Lot.Floors = (int32)Num(L, TEXT("floors"));
 				Lot.AngleDeg = (float)Num(L, TEXT("angle"));
 				L->TryGetBoolField(TEXT("enterable"), Lot.bEnterable);
+				Lot.Tags = Strings(L, TEXT("tags"));
+				Lot.OwnSurface = OwnSurface(L);
 			}
 		}
 		const TArray<TSharedPtr<FJsonValue>>* Trees = nullptr;
@@ -143,6 +293,19 @@ bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError)
 				Tree.Species = Str(T, TEXT("species"));
 				Tree.Pos = Vec2(T, TEXT("pos"));
 			}
+		}
+	}
+	// stone, brick and paving (ADR-0017): the rules sit beside the city, where city.json's "rules" points
+	const FString RulesDir = FPaths::Combine(CityDir, Root->HasField(TEXT("rules")) ? Str(Root, TEXT("rules")) : FString(TEXT("../rules")));
+	if (!ReadSurfaces(FPaths::Combine(RulesDir, TEXT("surfaces.json")), OutCity, OutError)) return false;
+	for (FBrixBlock& B : OutCity.Blocks)
+	{
+		B.Pavement = Choose(OutCity, PickBrixSurface(OutCity, TEXT("pavement"), B, nullptr), B.Id, false);
+		for (FBrixLot& L : B.Lots)
+		{
+			if (L.Kind == TEXT("garden")) continue;
+			const bool bOpen = L.IsOpen();
+			L.Surface = Choose(OutCity, PickBrixSurface(OutCity, bOpen ? TEXT("ground") : TEXT("wall"), B, &L), L.Id, !bOpen);
 		}
 	}
 	return true;

@@ -84,9 +84,9 @@ UInstancedStaticMeshComponent* ABrixTownActor::Group(UStaticMesh* Mesh, bool bCo
 	UInstancedStaticMeshComponent* G = NewObject<UInstancedStaticMeshComponent>(this, *Key);
 	G->SetupAttachment(RootComponent);
 	G->SetStaticMesh(Mesh);
-	G->NumCustomDataFloats = 3;
 	const bool bPlain = !Mesh->GetName().StartsWith(TEXT("SM_Kit_")) || Mesh->GetName() == TEXT("SM_Kit_Box")
 		|| Mesh->GetName() == TEXT("SM_Kit_Cylinder") || Mesh->GetName() == TEXT("SM_Kit_Sphere") || Mesh->GetName() == TEXT("SM_Kit_RoofWedge");
+	G->NumCustomDataFloats = Mesh->GetName() == TEXT("SM_Kit_Box") || Mesh == Cube ? 11 : 3;   // the box: colour and pattern
 	const TArray<FStaticMaterial>& Slots = Mesh->GetStaticMaterials();
 	for (int32 i = 0; i < Slots.Num(); ++i)
 	{
@@ -106,9 +106,28 @@ UInstancedStaticMeshComponent* ABrixTownActor::Group(UStaticMesh* Mesh, bool bCo
 
 void ABrixTownActor::Add(UInstancedStaticMeshComponent* G, const FTransform& At, const FLinearColor& C)
 {
+	FLook L;
+	L.Colour = C;
+	Add(G, At, L);
+}
+
+void ABrixTownActor::Add(UInstancedStaticMeshComponent* G, const FTransform& At, const FLook& Look)
+{
 	FPending& P = Pending.FindOrAdd(G);
 	P.At.Add(At);
-	P.Colour.Add(C);
+	P.Look.Add(Look);
+}
+
+// A surface's pattern (World/rules/surfaces.json, picked by BrixWorld as world.surfaces() does) as the material reads it
+ABrixTownActor::FLook ABrixTownActor::Surface(const FBrixSurface& S, const FLinearColor& Town) const
+{
+	FLook L;
+	L.Colour = S.Color.IsSet() ? FLinearColor(S.Color->X, S.Color->Y, S.Color->Z) : Town;
+	if (!CityData || !CityData->Patterns.IsValidIndex(S.Pattern)) { L.A = FVector4f(-1, 0, 0, 0); return L; }
+	const FBrixPattern& P = CityData->Patterns[S.Pattern];
+	L.A = FVector4f((float)P.TypeIndex(), (float)P.Unit.X, (float)P.Unit.Y, P.Joint);
+	L.B = FVector4f(P.Vary, P.Bevel, P.Dome, P.Mortar);
+	return L;
 }
 
 void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
@@ -121,7 +140,8 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 	const bool bCivic = L.Kind == TEXT("health") || L.Kind == TEXT("work");
 	const bool bFood = L.Kind == TEXT("food"), bShop = L.Kind == TEXT("shop");
 	const bool bShutters = L.Kind == TEXT("home") || bFood || bShop;
-	const float StoneTo = bCivic ? H : (StoneBaseDistricts.Contains(B.District) ? FMath::Min(StoneBaseHeight, H) : 0.f);
+	const float StoneTo = (bCivic || L.Surface.bUpper) ? H : (StoneBaseDistricts.Contains(B.District) ? FMath::Min(StoneBaseHeight, H) : 0.f);
+	const FLook Stone = Surface(L.Surface, TownStone);   // the lot's wall pattern (ADR-0017)
 	const FLinearColor Plaster = PlasterColours.Num() ? PlasterColours[Rng.RandHelper(PlasterColours.Num())] : FLinearColor(0.57f, 0.53f, 0.475f);
 	const FLinearColor Frame = FrameColours.Num() ? FrameColours[Rng.RandHelper(FrameColours.Num())] : FLinearColor::White;
 	const FLinearColor Shutter = ShutterColours.Num() ? ShutterColours[Rng.RandHelper(ShutterColours.Num())] : FLinearColor::White;
@@ -135,13 +155,20 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 	const double Ang = FMath::DegreesToRadians(L.AngleDeg), Ca = FMath::Cos(Ang), Sa = FMath::Sin(Ang);
 	const float Base = BlockSlabHeight;
 	auto At = [&](const FVector2D& Local, float Up) { return ToWorld(FVector2D(C.X + Local.X * Ca - Local.Y * Sa, C.Y + Local.X * Sa + Local.Y * Ca), Base + Up); };
+	auto BoxLook = [&](const FLook& Look, const FVector2D& Local, float Z0, float Z1, double YawRad, float Len, float Dep)
+	{
+		Add(Boxes, FTransform(FQuat(FVector::UpVector, YawRad + Ang), At(Local, (Z0 + Z1) * 0.5f), FVector(Len, Dep, Z1 - Z0)), Look);
+	};
 	auto Box = [&](const FLinearColor& Col, const FVector2D& Local, float Z0, float Z1, double YawRad, float Len, float Dep)
 	{
-		Add(Boxes, FTransform(FQuat(FVector::UpVector, YawRad + Ang), At(Local, (Z0 + Z1) * 0.5f), FVector(Len, Dep, Z1 - Z0)), Col);
+		FLook Look;
+		Look.Colour = Col;
+		BoxLook(Look, Local, Z0, Z1, YawRad, Len, Dep);
 	};
 
 	// the core, set back by the wall's depth all round (the kit's "core": what the reveals look into)
-	Box(Plaster, FVector2D::ZeroVector, 0.f, H, 0.0, S.X - 2 * t, S.Y - 2 * t);
+	if (StoneTo >= H) BoxLook(Stone, FVector2D::ZeroVector, 0.f, H, 0.0, S.X - 2 * t, S.Y - 2 * t);
+	else Box(Plaster, FVector2D::ZeroVector, 0.f, H, 0.0, S.X - 2 * t, S.Y - 2 * t);
 
 	// which facade has the door: the edge of the footprint nearest the lot's door
 	const FVector2D DL((L.Door.X - C.X) * Ca + (L.Door.Y - C.Y) * Sa, -(L.Door.X - C.X) * Sa + (L.Door.Y - C.Y) * Ca);
@@ -215,7 +242,11 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 		Breaks.Sort();
 		struct FRun { FVector2f Span; float Z0, Z1; bool bStone; };
 		TArray<FRun> Open;
-		auto Close = [&](const FRun& R) { Box(R.bStone ? StoneColour : Plaster, OnWall((R.Span.X + R.Span.Y) / 2, -t / 2), R.Z0, R.Z1, Yaw, R.Span.Y - R.Span.X, t); };
+		auto Close = [&](const FRun& R)
+		{
+			if (R.bStone) BoxLook(Stone, OnWall((R.Span.X + R.Span.Y) / 2, -t / 2), R.Z0, R.Z1, Yaw, R.Span.Y - R.Span.X, t);
+			else Box(Plaster, OnWall((R.Span.X + R.Span.Y) / 2, -t / 2), R.Z0, R.Z1, Yaw, R.Span.Y - R.Span.X, t);
+		};
 		for (int32 b = 0; b + 1 < Breaks.Num(); ++b)
 		{
 			const float Za = Breaks[b], Zb = Breaks[b + 1];
@@ -262,11 +293,12 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 	}
 	else
 	{
-		const FLinearColor Top = bCivic ? StoneColour : Plaster;
-		Box(Top, FVector2D(0, -S.Y / 2 + t / 2), H, H + ParapetHeight, 0.0, S.X, t);
-		Box(Top, FVector2D(0, S.Y / 2 - t / 2), H, H + ParapetHeight, 0.0, S.X, t);
-		Box(Top, FVector2D(-S.X / 2 + t / 2, 0), H, H + ParapetHeight, 0.0, t, S.Y - 2 * t);
-		Box(Top, FVector2D(S.X / 2 - t / 2, 0), H, H + ParapetHeight, 0.0, t, S.Y - 2 * t);
+		FLook Top;
+		if (StoneTo >= H) Top = Stone; else Top.Colour = Plaster;
+		BoxLook(Top, FVector2D(0, -S.Y / 2 + t / 2), H, H + ParapetHeight, 0.0, S.X, t);
+		BoxLook(Top, FVector2D(0, S.Y / 2 - t / 2), H, H + ParapetHeight, 0.0, S.X, t);
+		BoxLook(Top, FVector2D(-S.X / 2 + t / 2, 0), H, H + ParapetHeight, 0.0, t, S.Y - 2 * t);
+		BoxLook(Top, FVector2D(S.X / 2 - t / 2, 0), H, H + ParapetHeight, 0.0, t, S.Y - 2 * t);
 		// the coping is a full slab: the roof inside the parapet is not seen from the street
 		Box(StoneColour * 0.8f, FVector2D::ZeroVector, H + ParapetHeight, H + ParapetHeight + CopingHeight, 0.0, S.X + 0.12f, S.Y + 0.12f);
 	}
@@ -275,21 +307,29 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 
 void ABrixTownActor::Build(const FBrixCity& City)
 {
+	CityData = &City;
 	UInstancedStaticMeshComponent* Boxes = Group(Kit(TEXT("SM_Kit_Box"), Cube), true);
 	UInstancedStaticMeshComponent* Trunks = Group(Kit(TEXT("SM_Kit_Cylinder"), Cylinder), true);
 	UInstancedStaticMeshComponent* Crowns = Group(Kit(TEXT("SM_Kit_Sphere"), Sphere), false);
 	const FVector2D MapSize(City.Columns * City.Pitch, City.Rows * City.Pitch);
-	Add(Boxes, FTransform(FQuat::Identity, ToWorld(MapSize * 0.5, -0.5f), FVector(MapSize.X, MapSize.Y, 1.f)), GroundColour);
+	FLook Road;   // the streets: setts in courses (slice material 20)
+	Road.Colour = RoadColour;
+	Road.A = FVector4f(RoadPatternA);
+	Road.B = FVector4f(RoadPatternB);
+	Add(Boxes, FTransform(FQuat::Identity, ToWorld(MapSize * 0.5, -0.5f), FVector(MapSize.X, MapSize.Y, 1.f)), Road);
 	for (const FBrixBlock& B : City.Blocks)
 	{
 		const bool bGreen = GreenTemplates.Contains(B.Template);
-		Add(Boxes, FTransform(FQuat::Identity, ToWorld(B.Origin + B.Extent * 0.5, BlockSlabHeight * 0.5f), FVector(B.Extent.X, B.Extent.Y, BlockSlabHeight)), bGreen ? GreenColour : BlockColour);
+		const FTransform Slab(FQuat::Identity, ToWorld(B.Origin + B.Extent * 0.5, BlockSlabHeight * 0.5f), FVector(B.Extent.X, B.Extent.Y, BlockSlabHeight));
+		if (bGreen) Add(Boxes, Slab, GreenColour);
+		else Add(Boxes, Slab, Surface(B.Pavement, TownPave));   // the block's paving (ADR-0017)
 		for (const FBrixLot& L : B.Lots)
 		{
 			if (L.IsOpen())
 			{
-				if (L.Kind == TEXT("garden"))
-					Add(Boxes, FTransform(FQuat(FVector::UpVector, FMath::DegreesToRadians(L.AngleDeg)), ToWorld(L.Centre(), BlockSlabHeight + 0.02f), FVector(L.Size().X, L.Size().Y, 0.04f)), GreenColour);
+				const FTransform Top(FQuat(FVector::UpVector, FMath::DegreesToRadians(L.AngleDeg)), ToWorld(L.Centre(), BlockSlabHeight + 0.02f), FVector(L.Size().X, L.Size().Y, 0.04f));
+				if (L.Kind == TEXT("garden")) Add(Boxes, Top, GreenColour);
+				else Add(Boxes, Top, Surface(L.Surface, TownPave));   // the market's setts, a tram stop's slabs
 				continue;
 			}
 			BuildLot(L, B);
@@ -307,15 +347,18 @@ void ABrixTownActor::Build(const FBrixCity& City)
 		UInstancedStaticMeshComponent* G = P.Key;
 		const int32 First = G->GetInstanceCount();
 		G->AddInstances(P.Value.At, false);
-		for (int32 i = 0; i < P.Value.Colour.Num(); ++i)
+		const bool bPattern = G->NumCustomDataFloats >= 11;
+		for (int32 i = 0; i < P.Value.Look.Num(); ++i)
 		{
-			const FLinearColor& Col = P.Value.Colour[i];
-			G->SetCustomData(First + i, { Col.R, Col.G, Col.B }, false);
+			const FLook& L = P.Value.Look[i];
+			if (bPattern) G->SetCustomData(First + i, { L.Colour.R, L.Colour.G, L.Colour.B, L.A.X, L.A.Y, L.A.Z, L.A.W, L.B.X, L.B.Y, L.B.Z, L.B.W }, false);
+			else G->SetCustomData(First + i, { L.Colour.R, L.Colour.G, L.Colour.B }, false);
 		}
 		G->MarkRenderStateDirty();
 		Instances += P.Value.At.Num();
 	}
 	Pending.Empty();
+	CityData = nullptr;
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: built %s from data: %d blocks, %d buildings, %d openings, %d instances in %d groups"),
 		*City.Name, City.Blocks.Num(), Buildings, Openings, Instances, Parts.Num());
 }
