@@ -1,4 +1,4 @@
-# ADR-0040: Buying at each outlet of the mall, and what the outlets sell
+# ADR-0041: Buying at each outlet of the mall, and what the outlets sell
 
 Date: 2026-11-24. Status: accepted for building (owner's request in chat, 2026-11-24). F-BLD-MALL and F-BLD-SHOP are picked
 at level 2 for the first slice; F-CHR-WARDROBE, F-INV-ITEMS and F-NPC-POP stay at level 1 (see "Levels" below).
@@ -22,7 +22,7 @@ shop and eat. This record is written with stage 1 and is added to as the others 
 
 1. **Each outlet is its own counter.** Standing in an outlet's room, on any floor, the player is offered "Buy at
    <the outlet's name>" and B opens that outlet's own goods. Out on the walks there is no counter: B says to walk into an
-   outlet. The mall is no longer bought from as one shop (ECO-013, WLD-065). Westgate and Northgate have no inside and
+   outlet. The mall is no longer bought from as one shop (ECO-013, WLD-066). Westgate and Northgate have no inside and
    are bought from as before.
 2. **The catalogue is data.** `World/rules/mall_goods.json` lists, for each of the 18 kinds of outlet, the goods that
    kind deals in (7 to 25 of them; 174 goods in all, with a few of the town's own items such as bread, coffee and the
@@ -74,4 +74,4 @@ Only the owner picks levels. Nothing was recorded in `feature_choices.json` for 
 - No automated test drives the page. The rule's port is checked by the page's self-test; the prompt, the panel, the
   wardrobe and placing a bought guitar were tried by hand in the slice.
 
-Pictures: `Art/StyleTests/mall_shopping_28/`.
+Pictures: `Art/StyleTests/mall_shopping_30/`.

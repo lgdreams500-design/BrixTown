@@ -200,7 +200,7 @@ const Outlets = (() => {
     else if (q.kind === "rocket") { T.prism(T.round(x, z, .34, .34, 10), F + .28, F + 1.5, [.78, .75, .68], [.78, .75, .68], 19, 19); T.blob(x, F + 1.62, z, .36, red, key); for (const s of [-1, 1]) m.box(x + s * .36 - .05, F + .28, z - .18, x + s * .36 + .05, F + .75, z + .18, red, 19); o.use(x, F + .9, z + .42, "sit", "Sit on the rocket", Math.PI); }
     else { m.box(x - .62, F + .4, z - .34, x + .62, F + .78, z + .34, red, 19); m.box(x - .28, F + .78, z - .3, x + .3, F + 1.08, z + .3, cream, 19); for (const sx of [-.42, .42]) for (const sz of [-.36, .36]) m.box(x + sx - .14, F + .28, z + sz - .05, x + sx + .14, F + .56, z + sz + .05, DARK, 19); o.use(x, F + .8, z, "sit", "Sit in the car", Math.PI / 2); }
   }
-  // The outlet a point is in (WLD-065): its room from the front line to its back wall, on its own floor. l.outletRooms is filled as the
+  // The outlet a point is in (WLD-066): its room from the front line to its back wall, on its own floor. l.outletRooms is filled as the
   // fronts are drawn; a room is {id, name, kind, level, fy (its floor), x, z (the start of its front), t (along the front), n (out
   // of the room), a0, a1 (its side walls, metres along), D (its depth)}.
   function at(l, x, y, z) {

@@ -1,9 +1,9 @@
-# Mall shopping 28: buying at each outlet (ADR-0040)
+# Mall shopping 30: buying at each outlet (ADR-0041)
 
 Pictures from the playable slice (`Prototype/play/index.html?auto=1&rich=1`), taken from the page's own picture; the
 preview window was hidden, so the lettering over the game (the prompt and the panel) is not in them.
 
-## Stage 1: buying and the catalogue (WLD-065, ECO-013, ECO-014, FURN-064, CHR-016)
+## Stage 1: buying and the catalogue (WLD-066, ECO-013, ECO-014, FURN-064, CHR-016)
 
 - `stage1_at_the_counter_in_six_strings.jpg`: the player in the guitar shop Six Strings on the ground floor, wearing the
   ochre T-shirt bought at Thimble & Thread. Standing here the prompt reads "B  Buy at Six Strings".

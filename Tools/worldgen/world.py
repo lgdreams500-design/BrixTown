@@ -318,7 +318,7 @@ def sky_problems(w):
         out.append("sky: rain.slant should be a number")
     if num(r.get("dry_minutes")) and r["dry_minutes"] > 360:
         out.append("sky: rain.dry_minutes should be at most 360 (one weather slot)")
-    return out + night_sky_problems(w)
+    return out + night_sky_problems(w) + planet_problems(w)
 
 
 def night_sky_problems(w):
@@ -374,6 +374,75 @@ def sun_heights(w):
     for s, name in enumerate(cal["seasons"]):
         half = (cal["sunset"][s] - cal["sunrise"][s]) / 24 * math.pi
         out[name] = None if not 0 < half < math.pi or math.tan(la) == 0 else math.degrees(math.atan(-math.cos(half) / math.tan(la)))
+    return out
+
+
+def planet_place(w):
+    """WLD-065: where the planet hangs in the town's sky, as a direction (east +x, up +y, south +z), from sky.json planet.azimuth
+    (degrees from north through east) and planet.elevation, as Prototype/play/play.js places it."""
+    p = w["sky"]["planet"]
+    az, el = math.radians(p["azimuth"]), math.radians(p["elevation"])
+    return (math.sin(az) * math.cos(el), math.sin(el), -math.cos(az) * math.cos(el))
+
+
+def sun_place(w, season, hour_angle):
+    """Where the sun is in a season at an hour angle (radians, 0 at the middle of the calendar's day, growing westward), seen from
+    sky.json night.latitude: the same direction play.js skyAt() gives."""
+    la, dec = math.radians(w["sky"]["night"]["latitude"]), math.radians(sun_heights(w)[season])
+    cd, sd, ch = math.cos(dec), math.sin(dec), math.cos(hour_angle)
+    return (-cd * math.sin(hour_angle), cd * ch * math.cos(la) + sd * math.sin(la), cd * ch * math.sin(la) - sd * math.cos(la))
+
+
+def planet_sun_angle(w, season, hour_angle):
+    """WLD-065: the angle in radians between the sun and the planet's centre, seen from the town."""
+    return math.acos(max(-1.0, min(1.0, sum(a * b for a, b in zip(planet_place(w), sun_place(w, season, hour_angle))))))
+
+
+def planet_lit(w, season, hour_angle):
+    """WLD-065: the share of the planet's face in sunlight, 0 new to 1 full, worked out from where the sun is and nothing else."""
+    return (1 - math.cos(planet_sun_angle(w, season, hour_angle))) / 2
+
+
+def planet_sun_gap(w):
+    """WLD-065: for each season, the nearest the sun comes to the planet's centre on its whole path round the sky, in radians."""
+    return {name: min(planet_sun_angle(w, name, 2 * math.pi * k / 1440) for k in range(1440))
+            for name, dec in sun_heights(w).items() if dec is not None}
+
+
+def planet_problems(w):
+    """Every rule the planet in World/rules/sky.json must keep (WLD-065). A sky with no planet is allowed."""
+    p, out = w["sky"].get("planet"), []
+    if p is None:
+        return out
+    if not isinstance(p, dict):
+        return ["sky: planet should be a set of numbers"]
+    num = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
+    if not isinstance(p.get("show"), bool):
+        out.append("sky: planet.show should be true or false")
+    ranges = (("azimuth", 0, 360), ("elevation", 5, 85), ("size", .02, .35), ("lean", -90, 90), ("tilt", -30, 30), ("spin_hours", 1, 1000),
+              ("night", 0, 5), ("by_day", 0, .5), ("clouds", 0, 1), ("towns", 0, 2))
+    for k, lo, hi in ranges:
+        if not (num(p.get(k)) and lo <= p[k] <= hi):
+            out.append("sky: planet.%s missing or not from %s to %s" % (k, lo, hi))
+    r = p.get("rings")
+    if r is not None:
+        if not (isinstance(r, dict) and all(num(r.get(k)) for k in ("inner", "outer", "gap", "opacity"))):
+            out.append("sky: planet.rings should have inner, outer, gap and opacity")
+        else:
+            if not 1.05 <= r["inner"] < r["outer"] <= 4:
+                out.append("sky: planet.rings should lie outside the planet, inner edge inside outer edge")
+            elif not r["inner"] < r["gap"] < r["outer"]:
+                out.append("sky: planet.rings.gap should lie between the rings' edges")
+            if not 0 <= r["opacity"] <= 1:
+                out.append("sky: planet.rings.opacity should be from 0 to 1")
+    if out or not num(w["sky"].get("night", {}).get("latitude")):
+        return out
+    if math.radians(p["elevation"]) - p["size"] < math.radians(3):
+        out.append("sky: the whole planet should stand clear of the horizon")
+    clear = p["size"] * 1.25 + w["sky"]["night"].get("paths", {}).get("sun_size", 0)
+    for season, gap in planet_sun_gap(w).items():
+        if gap < clear:
+            out.append("sky: in %s the sun would pass behind the planet (%.0f degrees from its centre)" % (season, math.degrees(gap)))
     return out
 
 

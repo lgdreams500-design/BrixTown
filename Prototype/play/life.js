@@ -209,7 +209,7 @@ var Life = (() => {
 
   // ---------------------------------------------------------------- panels: B counter, I wallet, J quest log
   function lotHere() { if (pl.y > 6) return null; const l = lotAt(pl.x, pl.z, true); return l ? LOTS.indexOf(l) : null; }
-  // The outlet of a mall the player stands in, on whichever floor (WLD-065, ECO-013): {n: the mall's lot, r: its room (outlets.js)}
+  // The outlet of a mall the player stands in, on whichever floor (WLD-066, ECO-013): {n: the mall's lot, r: its room (outlets.js)}
   function outletHere() {
     if (typeof Outlets === "undefined") return null;
     const l = lotAt(pl.x, pl.z, true); if (!l || !l.outletRooms) return null;
@@ -1167,7 +1167,7 @@ var Life = (() => {
     if (tr.dataset.k !== key) { tr.dataset.k = key; tr.textContent = ""; for (const [a, b] of lines) tr.append(h("div", { cls: "trk" }, h("b", {}, a), h("span", {}, b))); }
     tr.style.display = lines.length && !Talk.on ? "block" : "none";
     const n = lotHere(), hint = el("counter");
-    const oh = outletHere();                              // in a mall each outlet has its own counter (WLD-065); out on its walks there is none
+    const oh = outletHere();                              // in a mall each outlet has its own counter (WLD-066); out on its walks there is none
     const what = oh ? "Buy at " + oh.r.name : n === null || n < 0 ? null : n === E.bankLot ? "Bank counter" : n === E.marketLot ? "Your market stall" : LOTS[n] && M.office[LOTS[n].id] ? "Estate agent: " + M.cos[M.office[LOTS[n].id]].name : E.shopKind(n) && !E.outlets[n] ? "Buy and sell at " + lotName(n) : null;
     const bt = !what && n !== null && n >= 0 && M.byLot.has(n) ? boardText(n) : null;   // PROP-023: what is on the market here
     if (what && !panel && !Talk.on && pl.pose !== 4) { hint.style.display = "block"; hint.innerHTML = "<kbd>B</kbd>" + what; }
