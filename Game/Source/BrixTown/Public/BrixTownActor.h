@@ -73,13 +73,18 @@ public:
 	UPROPERTY(Config) FLinearColor CrownColour = FLinearColor(0.30f, 0.33f, 0.20f);
 
 private:
-	struct FOpening { float S, Z0, W, H; UStaticMesh* Mesh; UStaticMesh* Shutters; };
+	struct FOpening { float S, Z0, W, H; UStaticMesh* Mesh; UStaticMesh* Shutters; const FLinearColor* Paint; };
+	struct FPending { TArray<FTransform> At; TArray<FLinearColor> Colour; };
 
-	UInstancedStaticMeshComponent* Layer(const FString& Key, UStaticMesh* Mesh, const FLinearColor& Colour, bool bCollide = true);
-	UInstancedStaticMeshComponent* PieceLayer(UStaticMesh* Mesh, int32 Frame, int32 Shutter, int32 Door, float CullM);
-	UMaterialInstanceDynamic* Colour(const FLinearColor& C);
+	// One group of instances per mesh (ADR-0046): each instance carries its own colour (custom data 0..2), so the
+	// whole town is a handful of groups. A slot named frame, shutter, door or roof, and every slot of the plain shapes,
+	// takes the instance's colour; the other slots (glass, stone, iron) are fixed from SlotColours.
+	UInstancedStaticMeshComponent* Group(UStaticMesh* Mesh, bool bCollide, float CullM = 0.f);
+	void Add(UInstancedStaticMeshComponent* G, const FTransform& At, const FLinearColor& C);
+	UMaterialInstanceDynamic* Fixed(const FLinearColor& C);
+	UMaterialInstanceDynamic* Own();
 	void BuildLot(const FBrixLot& L, const FBrixBlock& B);
-	UStaticMesh* Kit(const TCHAR* Name);
+	UStaticMesh* Kit(const TCHAR* Name, UStaticMesh* Fallback = nullptr);
 
 	UPROPERTY() TObjectPtr<UStaticMesh> Cube;
 	UPROPERTY() TObjectPtr<UStaticMesh> Cylinder;
@@ -88,6 +93,7 @@ private:
 	UPROPERTY() TMap<FString, TObjectPtr<UInstancedStaticMeshComponent>> Parts;
 	UPROPERTY() TMap<FString, TObjectPtr<UStaticMesh>> KitMeshes;
 	UPROPERTY() TMap<uint32, TObjectPtr<UMaterialInstanceDynamic>> Colours;
-	TMap<FString, TArray<FTransform>> Pending;   // instances gathered per layer, added in one go
+	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> OwnColour;
+	TMap<UInstancedStaticMeshComponent*, FPending> Pending;   // instances gathered per group, added in one go
 	int32 Buildings = 0, Openings = 0;
 };

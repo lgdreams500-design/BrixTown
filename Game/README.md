@@ -24,8 +24,10 @@ between real openings, bays of 3.2 m on every facade, the lot's own door, a ston
 Centre, all-stone clinics and workplaces, a tiled gable roof on homes and shops (a parapet on the rest). The windows,
 doors and shutters are the kit's own pieces: `Tools/blender/unreal_kit_36.py` makes them (Blender, headless) into
 `Art/Export/unreal_kit_36/`, and `Tools/unreal/import_building_kit.py` imports them into `/Game/Kit` with Nanite. Run
-both again after changing a piece. On the owner's laptop at High this costs about 22 fps against 63 for the grey-box:
-too many separate objects, not pixels (ADR-0046); the next step is fewer, larger ones.
+both again after changing a piece, and `Tools/unreal/make_greybox_material.py` before them after changing the material.
+The whole town is 15 groups of instances, one per mesh, each instance carrying its own colour, all through Nanite: on
+the owner's laptop at High it runs at 63-66 fps, as fast as the grey-box (ADR-0046). The binaries are lockable in LFS
+(ADR-0002): `git lfs lock <file>` before running the scripts that remake them.
 
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is

@@ -30,8 +30,10 @@ storey in the old districts, a tiled gable roof or a parapet. The kit's numbers 
 ## Consequences
 - The look stays the kit's (ADR-0004); the walls still lack the kit's stone courses and mottled plaster, which need an
   Unreal material (next).
-- Cost on the owner's laptop, High quality: 63 fps grey-box, about 22 fps with the pieces (170,000 instances in 383
-  groups). Half the screen resolution gains almost nothing, so the cost is the number of objects, not pixels: one group
-  per piece with its colour per instance, and fewer wall pieces, should win most of it back. Not to be merged as the
-  default until that is done or the owner accepts the cost.
+- Cost on the owner's laptop, High quality: 63 fps grey-box; the first version with the pieces ran at about 22 fps
+  (170,000 instances in 383 groups, one per piece and colour). Half the screen resolution gained almost nothing, so the
+  cost was the number of objects, not pixels. Now each mesh is one group whose instances carry their own colour
+  (M_Greybox reads it from per-instance custom data), walls, cores, roofs and trees use Nanite copies of the engine's
+  shapes, and a wall piece that runs unchanged through several bands is one taller piece: 15 groups, 165,000
+  instances, 63-66 fps, the same picture.
 - Turned designed houses (ADR-0032, ADR-0035) use the same generic layout for now, not their own plans and colourways.

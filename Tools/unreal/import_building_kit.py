@@ -31,6 +31,11 @@ for path in sorted(glob.glob(os.path.join(SOURCE, "SM_Kit_*.glb"))):
     t.save = False
     tasks.append(t)
 unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks(tasks)
+# the engine's 1 m shapes, copied so they can draw with Nanite like the pieces: walls, cores and roofs are boxes,
+# trees a cylinder and a sphere
+for src, dst in (("/Engine/BasicShapes/Cube", "SM_Kit_Box"), ("/Engine/BasicShapes/Cylinder", "SM_Kit_Cylinder"),
+                 ("/Engine/BasicShapes/Sphere", "SM_Kit_Sphere")):
+    assets.duplicate_asset(src, DEST + "/" + dst)
 
 for name in assets.list_assets(DEST, recursive=True, include_folder=False):
     a = unreal.load_asset(name)
@@ -42,7 +47,7 @@ for name in assets.list_assets(DEST, recursive=True, include_folder=False):
             a.set_material(i, greybox)
         # Nanite: thousands of windows and shutters across the town are drawn at the detail the screen needs
         nanite = a.get_editor_property("nanite_settings")
-        nanite.enabled = base != "SM_Kit_RoofWedge"
+        nanite.enabled = True
         a.set_editor_property("nanite_settings", nanite)
         lo, hi = a.get_bounding_box().min, a.get_bounding_box().max
         unreal.log_warning("Brix kit: %s slots %s box (%.0f %.0f %.0f)..(%.0f %.0f %.0f) cm" % (
