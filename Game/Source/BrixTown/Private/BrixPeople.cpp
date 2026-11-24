@@ -9,6 +9,7 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Async/ParallelFor.h"
 #include "Misc/Paths.h"
 #include "ProceduralMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
@@ -16,14 +17,12 @@
 using BrixUnits::ToWorld;
 using BrixUnits::CmPerM;
 
-int32 BrixBodyToMesh(UProceduralMeshComponent* M, const FBrixBodyMesh& Body, int32 Had, bool bFlip, UMaterialInterface* Material)
+void FBrixMeshArrays::From(const FBrixBodyMesh& Body, bool bFlip)
 {
 	const int32 Num = Body.Pos.Num();
-	TArray<FVector> V, N;
-	TArray<FLinearColor> C;
-	V.SetNumUninitialized(Num);
-	N.SetNumUninitialized(Num);
-	C.SetNumUninitialized(Num);
+	V.SetNumUninitialized(Num, EAllowShrinking::No);
+	N.SetNumUninitialized(Num, EAllowShrinking::No);
+	C.SetNumUninitialized(Num, EAllowShrinking::No);
 	for (int32 k = 0; k < Num; ++k)   // the slice's frame (x east, y up, z south, metres) to Unreal's
 	{
 		const FVector3f& Q = Body.Pos[k];
@@ -33,18 +32,30 @@ int32 BrixBodyToMesh(UProceduralMeshComponent* M, const FBrixBodyMesh& Body, int
 		N[k] = FVector(Nn.X, Nn.Z, Nn.Y);
 		C[k] = FLinearColor(Cc.X, Cc.Y, Cc.Z, 1.f);
 	}
+	Tri = Body.Index;
+	if (bFlip) for (int32 k = 0; k + 2 < Tri.Num(); k += 3) Swap(Tri[k + 1], Tri[k + 2]);
+}
+
+int32 FBrixMeshArrays::Upload(UProceduralMeshComponent* M, int32 Had, UMaterialInterface* Material) const
+{
 	static const TArray<FVector2D> NoUV;
 	static const TArray<FProcMeshTangent> NoTangents;
-	if (Num != Had)   // a new count (another detail, a blink): the section is made anew, otherwise updated in place
+	// the same shape at the same detail always comes out in the same order, so the same count of indices is the same
+	// triangles: the section is updated in place; a new count (another detail, a blink) makes it anew
+	if (Tri.Num() != Had)
 	{
-		TArray<int32> Tri;
-		Tri.SetNumUninitialized(Num);
-		for (int32 k = 0; k + 2 < Num; k += 3) { Tri[k] = k; Tri[k + 1] = bFlip ? k + 2 : k + 1; Tri[k + 2] = bFlip ? k + 1 : k + 2; }
 		M->CreateMeshSection_LinearColor(0, V, Tri, N, NoUV, C, NoTangents, false, false);
 		M->SetMaterial(0, Material);
 	}
 	else M->UpdateMeshSection_LinearColor(0, V, N, NoUV, C, NoTangents, false);
-	return Num;
+	return Tri.Num();
+}
+
+int32 BrixBodyToMesh(UProceduralMeshComponent* M, const FBrixBodyMesh& Body, int32 Had, bool bFlip, UMaterialInterface* Material)
+{
+	FBrixMeshArrays A;
+	A.From(Body, bFlip);
+	return A.Upload(M, Had, Material);
 }
 
 ABrixPeople::ABrixPeople()
@@ -113,23 +124,29 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	const double Minute = Mode->ClockMinute(), Seconds = GetWorld()->GetTimeSeconds();
 
 	// everyone out of doors within reach, nearest first
+	// worked out for everyone at once on the task threads (CITY-022: from the day and the minute alone)
 	struct FNear { int32 i; double D; FVector2D P; float Up; double Yaw; int32 Pose; double Phase; };
-	TArray<FNear> Near;
 	const double Reach2 = (double)ShowDistance * ShowDistance;
-	for (int32 i = 0; i < Day->Num(); ++i)
+	TArray<FNear> All;
+	All.SetNumUninitialized(Day->Num());
+	ParallelFor(Day->Num(), [&](int32 i)
 	{
+		All[i].i = -1;
 		const TOptional<FBrixWhere> W = Day->Where(i, Minute);
-		if (!W || W->bInside) continue;
+		if (!W || W->bInside) return;
 		// a little to one side of the pavement's line, never at a door (the slice's lane, CITY-043)
 		FVector2D P = W->Pos;
 		if (W->bWalking) P += FVector2D(-W->Heading.Y, W->Heading.X) * Lane[i] * LaneWidth * FMath::Clamp(FMath::Min(W->WalkDone, W->WalkLeft) / 5.f, 0.f, 1.f);
 		const double D2 = FVector2D::DistSquared(P, Here);
-		if (D2 >= Reach2) continue;
+		if (D2 >= Reach2) return;
 		const FBrixLook& L = Looks[i];
 		const double Phase = W->bWalking ? FMath::Fmod(W->Along / BrixStepLength(Rules.Sig(L.SigName), L.S), 1.0) : 0.0;
 		// the slice's yaw: a body faces (sin yaw, -cos yaw)
-		Near.Add({ i, FMath::Sqrt(D2), P, GroundAt(P) + (W->Floor > 0 ? W->Floor * 3.f : 0.f), FMath::Atan2(W->Heading.X, -W->Heading.Y), W->bWalking ? 1 : 0, Phase });
-	}
+		All[i] = { i, FMath::Sqrt(D2), P, GroundAt(P) + (W->Floor > 0 ? W->Floor * 3.f : 0.f), FMath::Atan2(W->Heading.X, -W->Heading.Y), W->bWalking ? 1 : 0, Phase };
+	});
+	TArray<FNear> Near;
+	for (const FNear& A : All) if (A.i >= 0) Near.Add(A);
+	const double T1 = FPlatformTime::Seconds();
 	Near.Sort([](const FNear& A, const FNear& B) { return A.D < B.D; });
 	if (Near.Num() > MaxBodies) Near.SetNum(MaxBodies);
 
@@ -174,12 +191,9 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	for (int32 s = 0; s < Slots.Num(); ++s)
 		if (!Kept[s] && Slots[s].Resident >= 0) { Slots[s] = FSlot(); Meshes[s]->SetVisibility(false); }
 
-	TArray<FVector> V, N;
-	TArray<FLinearColor> C;
-	TArray<int32> Tri;
-	const TArray<FVector2D> NoUV;
-	const TArray<FProcMeshTangent> NoTangents;
 	BoxScratch.Reset();
+	struct FJob { int32 Slot; const FBrixLook* L; FBrixDrawOptions O; };
+	TArray<FJob> Jobs;
 	for (int32 n = 0; n < Near.Num(); ++n)
 	{
 		const FNear& P = Near[n];
@@ -199,20 +213,36 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		const int32 s = SlotFor[n];
 		if (s < 0) continue;
 		FSlot& Slot = Slots[s];
+		if (Slot.Lod != O.Lod || ++Slot.Age >= RebuildEvery[FMath::Clamp(O.Lod, 0, 2)] || Slot.Verts == 0) Jobs.Add({ s, &L, O });
 		UProceduralMeshComponent* M = Meshes[s];
-		const bool bRebuild = Slot.Lod != O.Lod || ++Slot.Age >= RebuildEvery[FMath::Clamp(O.Lod, 0, 2)] || Slot.Verts == 0;
-		if (bRebuild)
-		{
-			// the body as people.js draws it facing yaw 0 at the origin, in Unreal's centimetres; the component turns and places it
-			Scratch.Reset();
-			DrawBrixPerson(Rules, L, FVector::ZeroVector, 0.0, O, Scratch);
-			Slot.Verts = BrixBodyToMesh(M, Scratch, Slot.Verts, bFlipWinding, BodyMaterial);
-			Slot.Lod = O.Lod;
-			Slot.Age = 0;
-		}
 		M->SetWorldLocationAndRotation(ToWorld(P.P, P.Up), FRotator(0.0, FMath::RadiansToDegrees(P.Yaw), 0.0));
 		M->SetVisibility(true);
 	}
+	const double T2 = FPlatformTime::Seconds();
+	// the bodies due a rebuild, built at once on the task threads (the body as people.js draws it facing yaw 0 at the origin,
+	// in Unreal's centimetres; its component turns and places it), then handed to their meshes here
+	if (Built.Num() < Slots.Num()) Built.SetNum(Slots.Num());
+	ParallelFor(Jobs.Num(), [&](int32 j)
+	{
+		FBuilt& B = Built[Jobs[j].Slot];
+		B.Body.Reset();
+		DrawBrixPerson(Rules, *Jobs[j].L, FVector::ZeroVector, 0.0, Jobs[j].O, B.Body);
+		B.Arrays.From(B.Body, bFlipWinding);
+	});
+	const double T3 = FPlatformTime::Seconds();
+	for (const FJob& J : Jobs)
+	{
+		FSlot& Slot = Slots[J.Slot];
+		Slot.Verts = Built[J.Slot].Arrays.Upload(Meshes[J.Slot], Slot.Verts, BodyMaterial);
+		Slot.Lod = J.O.Lod;
+		Slot.Age = 0;
+	}
+	const double T4 = FPlatformTime::Seconds();
+	TArray<FVector> V, N;
+	TArray<FLinearColor> C;
+	TArray<int32> Tri;
+	const TArray<FVector2D> NoUV;
+	const TArray<FProcMeshTangent> NoTangents;
 	// the far figures: six faces a box, in the room the mesh has (the rest folded to a point), so the mesh is updated in place
 	// and made anew only when the room grows or shrinks by a step of 32 figures
 	const int32 Step = 32 * 5, Cap = FMath::Max(Step, (BoxScratch.Num() + Step - 1) / Step * Step);
@@ -254,6 +284,8 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	}
 	else Figures->UpdateMeshSection_LinearColor(0, V, N, NoUV, C, NoTangents, false);
 	LastShown = Near.Num();
-	TickSeconds += FPlatformTime::Seconds() - T0;
+	const double T5 = FPlatformTime::Seconds();
+	Parts[0] += T1 - T0; Parts[1] += T2 - T1; Parts[2] += T3 - T2; Parts[3] += T4 - T3; Parts[4] += T5 - T4;
+	TickSeconds += T5 - T0;
 	++TickFrames;
 }

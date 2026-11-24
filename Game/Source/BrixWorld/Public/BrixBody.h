@@ -59,12 +59,14 @@ BRIXWORLD_API bool LoadBrixPeopleRules(const FString& Path, FBrixPeopleRules& Ou
 // Resident Id's look: their role's clothes (a job's own where it has them, CITY-105) and their role's walk.
 BRIXWORLD_API FBrixLook BrixLookOf(const FBrixPeopleRules& Rules, int32 Id, const FString& Role, const FString& SigName);
 
-// A body as triangles, three vertices each (as people.js writes them), with a normal and a colour per vertex.
+// A body as indexed triangles: each lofted form's ring points once, with a normal and a colour each, and three indices a
+// triangle. Expanded (Pos[Index[k]] for each k) it is the triangle list people.js writes, three vertices a triangle.
 struct BRIXWORLD_API FBrixBodyMesh
 {
 	TArray<FVector3f> Pos, Normal;
 	TArray<FVector3f> Colour;
-	void Reset() { Pos.Reset(); Normal.Reset(); Colour.Reset(); }
+	TArray<int32> Index;
+	void Reset() { Pos.Reset(); Normal.Reset(); Colour.Reset(); Index.Reset(); }
 };
 
 // A far figure's box (people.js far()): corners and colour, not turned.

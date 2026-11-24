@@ -80,9 +80,9 @@ bool FART004_PeopleAreTheSlices::RunTest(const FString&)
 		DrawBrixPerson(Rules, Looks[k], FVector(B->GetNumberField(TEXT("x")), B->GetNumberField(TEXT("y")), B->GetNumberField(TEXT("z"))), B->GetNumberField(TEXT("yaw")), O, Mesh, &Boxes);
 		const FString What = FString::Printf(TEXT("look %d, pose %d, lod %d"), k, O.Pose, O.Lod);
 		++Bodies;
-		if (Mesh.Pos.Num() != (int32)B->GetNumberField(TEXT("vertices")))
+		if (Mesh.Index.Num() != (int32)B->GetNumberField(TEXT("vertices")))
 		{
-			AddError(FString::Printf(TEXT("%s: %d vertices, people.js draws %d"), *What, Mesh.Pos.Num(), (int32)B->GetNumberField(TEXT("vertices"))));
+			AddError(FString::Printf(TEXT("%s: %d vertices, people.js draws %d"), *What, Mesh.Index.Num(), (int32)B->GetNumberField(TEXT("vertices"))));
 			++Wrong;
 			continue;
 		}
@@ -91,7 +91,7 @@ bool FART004_PeopleAreTheSlices::RunTest(const FString&)
 		{
 			const TArray<TSharedPtr<FJsonValue>>& S = SV->AsArray();
 			const FVector3f E((float)S[1]->AsNumber(), (float)S[2]->AsNumber(), (float)S[3]->AsNumber());
-			Worst = FMath::Max(Worst, (double)FVector3f::Distance(Mesh.Pos[(int32)S[0]->AsNumber()], E));
+			Worst = FMath::Max(Worst, (double)FVector3f::Distance(Mesh.Pos[Mesh.Index[(int32)S[0]->AsNumber()]], E));   // the k-th vertex of people.js's triangle list
 		}
 		if (Worst > 1e-3) { AddError(FString::Printf(TEXT("%s: a vertex %.4f m from where people.js puts it"), *What, Worst)); ++Wrong; }
 		const TArray<TSharedPtr<FJsonValue>>& WB = B->GetArrayField(TEXT("boxes"));
