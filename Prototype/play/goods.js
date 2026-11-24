@@ -3,10 +3,12 @@
 // house like guitar, books etc."). A good for the home is a piece of World/rules/furnishing.json (`from: "mall"`): bought at an
 // outlet it goes to the belongings, and is placed in a home from the building designer's Furnish tab like any other piece.
 //
-// Goods.draw(kind, Q, seed) draws one through Q(u, y, v, su, sy, sv, col, f, yaw), as furniture.js draws its pieces: u across,
-// y up from the floor (a box's bottom), v from its front (-) to its back (+). Each is a few plain boxes in the town's muted
-// colours, fitted inside the piece's size from the rules; they are the stand-ins until the Blender objects are exported
-// (Tools/blender, the next stage), as the box cars stood in for the car models. Loaded after furniture.js.
+// Goods.put(mesh, kind, x, y, z, yaw, seed, lod) draws one as it was made in Blender (FURN-065): Tools/blender/mall_goods_31.py
+// writes goods_models.js, each good twice, near (lod 0, for a home) and far (lod 1, for an outlet's window), in the town's
+// muted colours; the two colours a model leaves open (accent0, accent1) are chosen by the seed, so two guitars differ.
+// Without that file Goods.draw(kind, Q, seed) stands in, as the box cars stood in for the car models: a few plain boxes
+// through Q(u, y, v, su, sy, sv, col, f, yaw), as furniture.js draws its pieces: u across, y up from the floor (a box's
+// bottom), v from its front (-) to its back (+), fitted inside the piece's size from the rules. Loaded after furniture.js.
 var Goods = (() => {
   const WOOD = [.5, .36, .22], WOOD_D = [.3, .2, .12], DARK = [.12, .11, .11], IRON = [.1, .1, .11], CREAM = [.78, .72, .6], PAPER = [.82, .78, .68];
   const TERRA = [.5, .25, .19], OCHRE = [.6, .46, .2], TEAL = [.2, .37, .38], BLUE = [.28, .38, .52], OLIVE = [.33, .37, .2], PLUM = [.36, .26, .38];
@@ -98,6 +100,24 @@ var Goods = (() => {
   const SIZE = {};
   function sizes() { const P = rules(); for (const k of Object.keys(D)) if (P[k]) SIZE[k] = P[k].size; return SIZE; }
   function draw(kind, Q, seed) { const fn = D[kind]; if (!fn) return false; const s = rules()[kind].size; fn(Q, s[0], s[1], s[2], seed); return true; }
-  return { draw, sizes, SIZE, has: k => k in D };
+  // ---- the goods as made in Blender: points in millimetres (u across, y up, v front to back), normals x100, a colour to each point
+  const GM = window.GOODS_MODELS || null, ACCENTS = [TERRA, TEAL, OCHRE, PLUM, BLUE, OLIVE], PALC = GM ? GM.palette.map(p => p[1]) : [];
+  const A0 = GM ? GM.palette.findIndex(p => p[0] === "accent0") : -1, A1 = GM ? GM.palette.findIndex(p => p[0] === "accent1") : -1;
+  const stats = { near: 0, far: 0, triangles: 0 };            // how many were drawn, and what they cost
+  function put(m, kind, x, y, z, yaw, seed, lod) {            // standing at (x, y, z), turned by yaw: its +v (its back) runs towards (sin yaw, cos yaw)
+    const M = GM && GM.models[kind]; if (!M) return false;
+    const L = M.lods[lod ? 1 : 0], p = L.p, n = L.n, c = L.c, ix = L.i, cs = Math.cos(yaw), sn = Math.sin(yaw), k0 = Math.floor(rnd(seed, "a0") * 6) % 6;
+    const a0 = ACCENTS[k0], a1 = ACCENTS[(k0 + 1 + Math.floor(rnd(seed, "a1") * 5) % 5) % 6];
+    while (m.n + ix.length * 10 > m.a.length) { const b = new Float32Array(m.a.length * 2); b.set(m.a); m.a = b; }
+    const a = m.a; let o = m.n;
+    for (let k = 0; k < ix.length; k++, o += 10) {
+      const q = ix[k], i = q * 3, u = p[i] * .001, v = p[i + 2] * .001, nu = n[i] * .01, nv = n[i + 2] * .01, col = c[q] === A0 ? a0 : c[q] === A1 ? a1 : PALC[c[q]];
+      a[o] = x + cs * u + sn * v; a[o + 1] = y + p[i + 1] * .001; a[o + 2] = z - sn * u + cs * v;
+      a[o + 3] = cs * nu + sn * nv; a[o + 4] = n[i + 1] * .01; a[o + 5] = -sn * nu + cs * nv;
+      a[o + 6] = col[0]; a[o + 7] = col[1]; a[o + 8] = col[2]; a[o + 9] = 19;
+    }
+    m.n = o; stats[lod ? "far" : "near"]++; stats.triangles += ix.length / 3; return true;
+  }
+  return { draw, sizes, SIZE, has: k => k in D, put, model: k => (GM && GM.models[k]) || null, stats };
 })();
 Object.assign(Furniture.SIZE, Goods.sizes());   // so a placed good is walked round like any piece, and the list's sizes are checked (Furnish.selfTest)

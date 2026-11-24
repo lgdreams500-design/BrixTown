@@ -28,6 +28,7 @@ of the ones before it, so keep the folder together.
 | `car_kit_09.py` | First car look test (CITY-067): three directions with curves instead of boxes, A soft box, B pebble, C classic, each a small car, an estate and a van, with a person for scale. Runs headless through the Store launcher: `blender-launcher.exe -b --factory-startup --python car_kit_09.py`. The owner chose C, Classic (ADR-0011), then A, Soft box (ADR-0015). |
 | `car_export_10.py` | Builds on car kit 09: exports the Classic cars (and a classic pickup) as low-poly meshes, near and far, with parts tagged for colours and extras, into `Prototype/play/car_models.js`. |
 | `car_export_11.py` | Builds on car export 10: exports the Soft box cars (ADR-0015), with a Soft box pickup, into `Prototype/play/car_models.js`. Keeps the bodies, wheels and lamps whole and thins only the small parts. This is the one the slice uses now. |
+| `mall_goods_31.py` | Builds on furniture kit 17 (and the car export's file format): the 49 goods for the home that Eastgate Mall's outlets sell (FURN-065), each made of a few light shapes, near and far, into `Prototype/play/goods_models.js`; also the `.blend`, a `.glb` in `Art/Export/mall_goods_31/` and sheets in `Art/StyleTests/mall_goods_31/`. Set `WASTED_ROOT` to the checkout to write into |
 
 `paint_filter.py` is the painterly filter that was tried and rejected.
 

@@ -57,6 +57,54 @@ class TheList(unittest.TestCase):
         self.assertTrue(rug["rug"])
         self.assertEqual(furnish.check(F, room, keep, 2.6, [], [placed, rug], 0, [mine, rug]), [])
 
+    def test_FURN_065_every_good_for_the_home_has_an_object_made_in_blender_that_fits_its_size(self):
+        # the owner, 2026-11-24: "use blender to create the objects, some of these object can be placed in the house like guitar, books etc."
+        import copy, json
+        here = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(here, "..", "..", "Prototype", "play", "goods_models.js"), encoding="utf-8") as f:
+            text = f.read()
+        M = json.loads(text[text.index("window.GOODS_MODELS = ") + len("window.GOODS_MODELS = "):text.rstrip().rindex(";")])
+        self.assertIn("Tools/blender/mall_goods_31.py", M["note"])                # made by the script, not by hand
+        self.assertTrue(os.path.exists(os.path.join(here, "..", "blender", "mall_goods_31.py")))
+        mall = {k: p for k, p in F["pieces"].items() if p.get("from") == "mall"}
+        self.assertEqual(set(M["models"]), set(mall))                             # one for every good that goes to a home, and no others
+        names = [k for k, _ in M["palette"]]
+        self.assertTrue({"accent0", "accent1"} <= set(names))                     # the two colours a piece is given by its seed
+        for k, c in M["palette"]:
+            self.assertTrue(all(0.02 <= v <= 0.85 for v in c), k)                 # the town's muted colours: nothing pure black, white or bright
+        near, far = M["most"]
+        self.assertLessEqual(near, 600)
+        self.assertLess(far, near)
+        total = [0, 0]
+        for k, m in M["models"].items():
+            w, d, h = mall[k]["size"]
+            self.assertEqual(m["size"], mall[k]["size"], k)                       # made for the size the rules give it today
+            self.assertEqual(len(m["lods"]), 2, k)                                # near, for a home; far, the lighter make
+            for lod, L in enumerate(m["lods"]):
+                n = len(L["i"]) // 3
+                total[lod] += n
+                self.assertEqual(n, m["t"][lod], k)
+                self.assertTrue(12 <= n <= (near, far)[lod], (k, lod, n))
+                self.assertEqual(len(L["p"]), len(L["n"]), k)
+                self.assertEqual(len(L["p"]), 3 * len(L["c"]), k)
+                self.assertTrue(all(0 <= i < len(L["c"]) for i in L["i"]), k)
+                self.assertTrue(all(0 <= c < len(names) for c in L["c"]), k)
+                us, ys, vs = L["p"][0::3], L["p"][1::3], L["p"][2::3]             # millimetres: u across, y up, v front to back
+                self.assertTrue(max(us) <= w * 500 + 3 and min(us) >= -w * 500 - 3, (k, lod, min(us), max(us)))
+                self.assertTrue(max(vs) <= d * 500 + 3 and min(vs) >= -d * 500 - 3, (k, lod, min(vs), max(vs)))
+                self.assertTrue(min(ys) >= -3 and max(ys) <= h * 1000 + 3, (k, lod, min(ys), max(ys)))
+                self.assertLessEqual(min(ys), 20, k)                              # it stands on the floor
+                self.assertGreaterEqual(max(ys), h * 1000 * 0.45, k)              # and is about as tall as the rules say
+                for j in range(0, len(L["n"]), 3):
+                    self.assertAlmostEqual(sum(v * v for v in L["n"][j:j + 3]) ** 0.5, 100, delta=4)
+            self.assertLessEqual(m["t"][1], m["t"][0], k)                         # the far make is the lighter one (a rug is as light as it gets)
+        self.assertLess(total[0] / len(mall), 350)                                # light on average: chunky and few (ART_DIRECTION 2.2)
+        self.assertLess(total[1] / len(mall), 140)
+        self.assertIn(W["mall_goods"]["display"]["detail"], ("near", "far"))      # which make stands in the outlets is data
+        bad = copy.deepcopy(W)
+        bad["mall_goods"]["display"]["detail"] = "huge"
+        self.assertTrue(any("display.detail" in x for x in world.mall_goods_problems(bad)))
+
 
 class Placing(unittest.TestCase):
     def test_FURN_051_placing(self):

@@ -228,11 +228,7 @@ var Econ = (() => {
     // ---- a mall's outlets (ECO-013, ECO-014): economy.py, rule for rule
     good(g) { const G = this.G.goods[g]; if (G) return G; const I = this.R.items[g]; return { name: I.name, price: I.price, goes: I.sell ? "carry" : "eat" }; }
     outletSells(n, u) {
-      const U = this.outlets[n][u]; if (U.sells) return U.sells;
-      const L = this.G.sells[U.kind] || [], k = this.G.per_outlet;
-      if (L.length <= k) return (U.sells = L.slice());
-      const keep = new Set(L.map(g => [hash01(u, g, "range"), g]).sort((a, b) => a[0] - b[0] || (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0)).slice(0, k).map(x => x[1]));
-      return (U.sells = L.filter(g => keep.has(g)));
+      const U = this.outlets[n][u]; return U.sells || (U.sells = outletRange(this.G, u, U.kind));
     }
     outletResidentBuys(n, u, day = this.day, minute = this.minute) {
       const ids = Object.keys(this.outlets[n]), S = this.outletSells(n, u), rd = this.restock(day, minute), r0 = this.R.stock.restock_minute, c = {};
@@ -457,11 +453,17 @@ var Econ = (() => {
     return { results, balances, tx: E.L.tx.length, supply: E.L.supply(), inv, sold: E.stall_sold_total, loans: E.loans.map(l => [l.status, l.paid, l.fees, l.missed]), prices, clothes: sorted(E.clothes), homeware: sorted(E.homeware), outlets,
       hashes: [["a"], [1, 2, "b"], ["r0504", 16, "job"], [523, 3, 117, "buy"]].map(x => hash01(...x)) };
   }
+  function outletRange(G, u, kind) {                       // what outlet u of that kind sells (economy.py outlet_sells): also read by outlets.js, to stand the goods in its window
+    const L = G.sells[kind] || [], k = G.per_outlet;
+    if (L.length <= k) return L.slice();
+    const keep = new Set(L.map(g => [hash01(u, g, "range"), g]).sort((a, b) => a[0] - b[0] || (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0)).slice(0, k).map(x => x[1]));
+    return L.filter(g => keep.has(g));
+  }
   function selfTest(life, lots) {
     const C = life.checks, got = runScript(new Economy(life.economy, lots, life.visits, life.staff, life.goods), C.script, C.shops), want = C.want, bad = [];
     for (const k of ["results", "balances", "tx", "supply", "inv", "sold", "loans", "prices", "clothes", "homeware", "outlets"]) if (JSON.stringify(got[k]) !== JSON.stringify(want[k])) bad.push(k + ": " + JSON.stringify(got[k]) + " should be " + JSON.stringify(want[k]));
     got.hashes.forEach((h, n) => { if (Math.abs(h - want.hashes[n]) > 1e-11) bad.push("hash " + n + ": " + h + " should be " + want.hashes[n]); });
     return bad;
   }
-  return { PLAYER, hash01, fmt, Refused, Ledger, Economy, Quests, runScript, selfTest, inWindow, centre };
+  return { PLAYER, hash01, fmt, Refused, Ledger, Economy, Quests, runScript, selfTest, inWindow, centre, outletRange };
 })();

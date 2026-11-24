@@ -65,10 +65,23 @@ const Outlets = (() => {
     quad([S.at(a0, fy + 3.5, 0), S.at(a1, fy + 3.5, 0), S.at(a1, fy + 3.5, -.02), S.at(a0, fy + 3.5, -.02)], T.dark, 3, [0, -1, 0]);
     if (o.name) o.name(u.name || spec.label, S.at(mid, fy + 4.0, .15), face, .5);
     const zones = [[a0 + .12, mid - door / 2 - .15], [mid + door / 2 + .15, a1 - .12]];
+    // The goods for the home this outlet sells stand in it, as they were made in Blender (goods.js, FURN-065): on its two window
+    // plinths, facing the walk, and the ones too deep for a plinth on the floor inside. What is seen here is what B sells here.
+    const cat = window.WASTED && window.WASTED.life && window.WASTED.life.goods, canShow = cat && u.outlet && typeof Econ !== "undefined" && typeof Goods !== "undefined";
+    const sold = canShow ? [...new Set(Econ.outletRange(cat, u.id, u.outlet).map(g => (cat.goods[g] || {}).piece).filter(k => k && Goods.model(k)))] : [];
+    const yawIn = Math.atan2(-S.n[0], -S.n[1]), inZone = [[], []], onFloor = [], used = [0, 0], GAP = .3;
+    for (const kd of sold) { const s = Goods.model(kd).size; let put = false;
+      if (s[1] <= .95) for (const i of used[0] <= used[1] ? [0, 1] : [1, 0]) { const len = zones[i][1] - zones[i][0] - .5; if (!put && len >= 1.2 && used[i] + s[0] <= len) { inZone[i].push(kd); used[i] += s[0] + GAP; put = true; } }   // the emptier window first, so both are dressed
+      if (!put && s[0] <= 1.9) onFloor.push(kd); }
+    const far = cat && (cat.display || {}).detail === "far" ? 1 : 0;   // which make of each object stands here (mall_goods.json display.detail)
+    const stood = (kd, a, v, y) => { const p = P(a, 0, v); return Goods.put(m, kd, p[0], y, p[2], yawIn, seed + kd, far); };
     zones.forEach((z, i) => { const len = z[1] - z[0], c = (z[0] + z[1]) / 2; if (len < 1.2) return;
       bx(c, .6, fy, len, .4, .95, [.7, .66, .58]); T.solidAlong(xz(z[0] + .3, .6), xz(z[1] - .3, .6), fy, fy + 1.3, .5);
       for (const a of z) bx(a, .08, fy, .09, 3.42, .09, C.metal); bx(c, .08, fy + 2.75, len, .07, .07, C.metal);
-      inWindow(z, (spec.window || [])[i] || "plants", "w" + i); });
+      if (!inZone[i].length) { inWindow(z, (spec.window || [])[i] || "plants", "w" + i); return; }
+      let a = c - (used[i] - GAP) / 2; for (const kd of inZone[i]) { const s = Goods.model(kd).size; stood(kd, a + s[0] / 2, .6, fy + .4); a += s[0] + GAP; } });
+    [[a0 + 1.9, 2.5], [a1 - 1.9, 2.5], [a0 + 1.9, 4.7], [a1 - 1.9, 4.7]].slice(0, D >= 6 ? 4 : 2).forEach(([a, v], i) => { const kd = onFloor[i]; if (!kd) return;
+      const s = Goods.model(kd).size; stood(kd, a, v, fy + .006); if (s[2] > .1) block(a, v, Math.max(s[0], s[1]) * .4, Math.min(s[2], 1.4)); });
 
     // ---- what stands in it
     function items(W, q0, q1, r, y, what, key, cap) {             // a row of goods along a shelf or a table
