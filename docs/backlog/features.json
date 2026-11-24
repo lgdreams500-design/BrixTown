@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-11-23",
+  "updated": "2026-11-24",
   "note": "The feature backlog. Maintained by the team and AI agents. The owner's picks live in feature_choices.json, never here.",
   "milestones": [
     {
@@ -358,7 +358,9 @@
         "PROP-008",
         "ECO-005",
         "ECO-010",
-        "ECO-011"
+        "ECO-011",
+        "ECO-013",
+        "ECO-014"
       ],
       "levels": [
         {
@@ -402,7 +404,8 @@
         3
       ],
       "spec": [
-        "CITY-014"
+        "CITY-014",
+        "WLD-065"
       ],
       "levels": [
         {
@@ -2018,7 +2021,8 @@
         "FURN-053",
         "FURN-054",
         "FURN-055",
-        "FURN-056"
+        "FURN-056",
+        "FURN-064"
       ],
       "levels": [
         {
@@ -2384,7 +2388,11 @@
       "pillars": [
         2
       ],
-      "spec": [],
+      "spec": [
+        "CHR-014",
+        "CHR-015",
+        "CHR-016"
+      ],
       "levels": [
         {
           "name": "Fixed look",

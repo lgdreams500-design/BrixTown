@@ -29,7 +29,7 @@ var Life = (() => {
   // ---------------------------------------------------------------- game state
   function residentsForQuests() { return D.residents.map(r => ({ id: r.id, name: r.n, role: D.roles[r.r], home: LOTS[r.h] ? LOTS[r.h].id : null, work: r.w >= 0 ? LOTS[r.w].id : null })); }
   function fresh() {
-    E = new Econ.Economy(EC, LOTS, visits, staff);
+    E = new Econ.Economy(EC, LOTS, visits, staff, X.goods);   // with what the mall's outlets sell (ECO-013)
     Q = new Econ.Quests(QR, E, residentsForQuests(), LOTS);
     Q.onNote = text => toast(text);
     M = new Estate.Market(X.estate, E, LOTS, Estate.residentsOf(D, LOTS));   // the real estate market (PROP-009 to PROP-021)
@@ -157,7 +157,7 @@ var Life = (() => {
   function jobVars(o) {
     if (!o) return {};
     const K = QR.jobs.kinds[o.kind], dl = o.deadline !== undefined ? o.deadline : (clock.day * 1440 + clock.m + o.hours * 60);
-    return { pay: fmt(o.pay), hours: String(o.hours), by: hhmm(dl % 1440), minutes: String(o.minutes || K.minutes || ""), item: o.item ? EC.items[o.item].name.toLowerCase() : "",
+    return { pay: fmt(o.pay), hours: String(o.hours), by: hhmm(dl % 1440), minutes: String(o.minutes || K.minutes || ""), item: o.item ? E.items[o.item].name.toLowerCase() : "",
       from: o.kind === "parcel" ? lotName(o.frm) : D.residents[o.giver].n, to: o.to !== undefined ? lotName(o.to) : "" };
   }
   function conversation(i, base) {
@@ -209,7 +209,18 @@ var Life = (() => {
 
   // ---------------------------------------------------------------- panels: B counter, I wallet, J quest log
   function lotHere() { if (pl.y > 6) return null; const l = lotAt(pl.x, pl.z, true); return l ? LOTS.indexOf(l) : null; }
+  // The outlet of a mall the player stands in, on whichever floor (WLD-065, ECO-013): {n: the mall's lot, r: its room (outlets.js)}
+  function outletHere() {
+    if (typeof Outlets === "undefined") return null;
+    const l = lotAt(pl.x, pl.z, true); if (!l || !l.outletRooms) return null;
+    const r = Outlets.at(l, pl.x, pl.y, pl.z), n = LOTS.indexOf(l);
+    return r && E.outlets[n] && E.outlets[n][r.id] ? { n, r } : null;
+  }
+  const mallHere = () => { const l = lotAt(pl.x, pl.z, true), n = l ? LOTS.indexOf(l) : -1; return n >= 0 && E.outlets[n] ? n : null; };
   function counter(n) {
+    const oh = outletHere(), mall = n === undefined || n === null ? mallHere() : (E.outlets[n] ? n : null);
+    if (oh && (mall === null || mall === oh.n)) return open("outlet", oh.n, oh.r.id);   // each outlet has its own counter
+    if (mall !== null) return toast("Walk into one of " + lotName(mall) + "'s outlets to buy there: each has its own goods.");
     if (n === undefined || n === null) n = lotHere();
     if (n === null || n < 0) return toast("No counter here. Shops, cafés, the bank and the market square have one.");
     if (n === E.bankLot) return open("bank", n);
@@ -218,9 +229,9 @@ var Life = (() => {
     if (E.shopKind(n)) return open("shop", n);
     toast("No counter here. Shops, cafés, the bank and the market square have one.");
   }
-  function open(kind, n) {
+  function open(kind, n, u) {
     if (panel && panel.kind === kind) return close();
-    panel = { kind, n, msg: "" };
+    panel = { kind, n, msg: "" }; if (u) panel.u = u;       // u: the outlet of a mall (ECO-013)
     for (const k in keys) keys[k] = false; pl.moving = false;
     if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
     el("life").classList.toggle("side", kind === "remodel");   // the designer stands to one side, so the building shows
@@ -241,6 +252,12 @@ var Life = (() => {
     save(); draw();
   }
   const money = c => h("span", { cls: "money" }, fmt(c));
+  const GOES = { carry: "to carry", eat: "to eat", home: "for the home", wear: "to wear" };
+  function buyAt(P, g) {                                  // buy one thing at an outlet; a thing for the home becomes a belonging to place (ECO-014, FURN-064)
+    const p = E.buyAt(P.n, P.u, g), G = E.good(g);
+    if (G.goes === "home") { const R = Furnish.rules().pieces[G.piece], [w, d, hh] = R.size; belongings.push({ id: "b:mall:" + E.L.tx.length, kind: G.piece, name: R.name, w, d, h: hh, rug: !!R.rug, line: "plain" }); }
+    return "Bought " + G.name.toLowerCase() + " for " + fmt(p) + (G.goes === "home" ? ". It is with your belongings (G), to place at home." : G.goes === "wear" ? ". It is in your wardrobe (U)." : ".");
+  }
   const btn = (label, fn, dis, cls) => h("button", { type: "button", cls: "pbtn" + (cls ? " " + cls : ""), disabled: !!dis, on: { click: () => act(fn) } }, label);
   const tbl = rows => h("table", { cls: "ptab" }, h("tbody", {}, rows.map(r => h("tr", {}, r.map(c => h("td", {}, c))))));
   function purseLine() { return h("p", { cls: "purse" }, "Cash ", money(E.L.balance("p:cash")), E.accounts.includes("current") ? [" · Current ", money(E.L.balance("p:current"))] : null, E.accounts.includes("savings") ? [" · Savings ", money(E.L.balance("p:savings"))] : null); }
@@ -256,11 +273,18 @@ var Life = (() => {
     let title = "", sub = "";
     if (P.kind === "shop") {
       const k = E.shopKind(P.n), S = EC.shops[k]; title = lotName(P.n); sub = S.name + " · restocks at " + hhmm(EC.stock.restock_minute);
-      body.append(purseLine(), h("h3", {}, "Buy"), tbl(S.sells.map(it => [EC.items[it].name, h("span", { cls: "dim" }, E.stock(P.n, it) + " left"), money(E.price(P.n, it)),
-        btn("Buy", () => { const p = E.buy(P.n, it); return "Bought " + EC.items[it].name.toLowerCase() + " for " + fmt(p) + "."; }, E.stock(P.n, it) < 1)])));
+      body.append(purseLine(), h("h3", {}, "Buy"), tbl(S.sells.map(it => [E.items[it].name, h("span", { cls: "dim" }, E.stock(P.n, it) + " left"), money(E.price(P.n, it)),
+        btn("Buy", () => { const p = E.buy(P.n, it); return "Bought " + E.items[it].name.toLowerCase() + " for " + fmt(p) + "."; }, E.stock(P.n, it) < 1)])));
       const mine = Object.keys(E.inv).filter(it => E.offer(P.n, it) > 0);
-      body.append(h("h3", {}, "Sell"), mine.length ? tbl(mine.map(it => [EC.items[it].name, h("span", { cls: "dim" }, "you have " + E.inv[it]), money(E.offer(P.n, it)),
+      body.append(h("h3", {}, "Sell"), mine.length ? tbl(mine.map(it => [E.items[it].name, h("span", { cls: "dim" }, "you have " + E.inv[it]), money(E.offer(P.n, it)),
         btn("Sell", () => { const p = E.sell(P.n, it); return "Sold for " + fmt(p) + "."; })])) : h("p", { cls: "dim" }, S.buys.length ? "Nothing you carry is wanted here." : "Cafés do not buy anything."));
+      const r = E.repWithLot(P.n); if (r) body.append(h("p", { cls: "dim" }, r > 0 ? "They know you here: prices are a little lower." : "They don't trust you here: prices are higher."));
+    } else if (P.kind === "outlet") {                       // one outlet of a mall: its own goods, stock and prices (ECO-013, ECO-014)
+      const U = E.outlets[P.n][P.u], S = E.outletSells(P.n, P.u), K = ((LOTS[P.n].plan || {}).outlets || {})[U.kind] || {};
+      title = U.name; sub = (K.label || "Outlet") + " · " + lotName(P.n) + (U.level ? ", floor " + U.level : ", ground floor") + " · restocks at " + hhmm(EC.stock.restock_minute);
+      body.append(purseLine(), h("h3", {}, "Buy"), tbl(S.map(g => { const G = E.good(g), left = E.outletStock(P.n, P.u, g);
+        return [G.name, h("span", { cls: "dim" }, GOES[G.goes]), h("span", { cls: "dim" }, left + " left"), money(E.outletPrice(P.n, P.u, g)), btn("Buy", () => buyAt(P, g), left < 1)]; })));
+      body.append(h("p", { cls: "dim" }, "Things for the home go to your belongings (G): place them from the Furnish tab of the building designer, in any home of yours. Clothes go to your wardrobe (U). Outlets do not buy things back; what you carry can be sold on your market stall."));
       const r = E.repWithLot(P.n); if (r) body.append(h("p", { cls: "dim" }, r > 0 ? "They know you here: prices are a little lower." : "They don't trust you here: prices are higher."));
     } else if (P.kind === "bank") {
       const B = EC.bank, C = B.loan; title = lotName(P.n); sub = "Accounts, savings and loans";
@@ -293,12 +317,12 @@ var Life = (() => {
       if (!E.stall) body.append(h("p", {}, "Rent a stall for today: " + fmt(S.rent) + ". Set out up to " + S.slots + " things at your own prices; what is left comes home at midnight."), btn("Rent a stall for today", () => { E.rentStall(); Q.check(ctx()); return "The stall is yours until midnight."; }));
       else {
         const st = E.stall;
-        body.append(h("h3", {}, "On your stall"), st.slots.length ? tbl(st.slots.map((s, k) => [EC.items[s.item].name, money(s.price), s.sold ? h("span", { cls: "pos" }, "sold") : btn("Take back", () => { E.takeBack(k); })])) : h("p", { cls: "dim" }, "Nothing yet."));
-        const can = Object.keys(E.inv).filter(it => !EC.items[it].quest && EC.items[it].price > 0);
+        body.append(h("h3", {}, "On your stall"), st.slots.length ? tbl(st.slots.map((s, k) => [E.items[s.item].name, money(s.price), s.sold ? h("span", { cls: "pos" }, "sold") : btn("Take back", () => { E.takeBack(k); })])) : h("p", { cls: "dim" }, "Nothing yet."));
+        const can = Object.keys(E.inv).filter(it => !E.items[it].quest && E.items[it].price > 0);
         if (can.length && st.slots.length < S.slots) {
-          const pick = h("select", { "aria-label": "Item" }, can.map(it => h("option", { value: it }, EC.items[it].name + " (" + E.inv[it] + ")")));
+          const pick = h("select", { "aria-label": "Item" }, can.map(it => h("option", { value: it }, E.items[it].name + " (" + E.inv[it] + ")")));
           const pr = h("input", { type: "number", min: "0.01", step: "0.01", cls: "amt", "aria-label": "Price in brix" }), hint = h("span", { cls: "dim" });
-          const usual = () => { pr.value = (EC.items[pick.value].price / 100).toFixed(2); hint.textContent = "usually " + fmt(EC.items[pick.value].price); }; pick.onchange = usual; usual();
+          const usual = () => { pr.value = (E.items[pick.value].price / 100).toFixed(2); hint.textContent = "usually " + fmt(E.items[pick.value].price); }; pick.onchange = usual; usual();
           body.append(h("div", { cls: "prow" }, "Set out", pick, "at Bx", pr, btn("Set out", () => { E.setOut(pick.value, Math.round(+pr.value * 100)); }), hint),
             h("p", { cls: "dim" }, "Cheaper than usual sells fast; dearer sells slowly."));
         } else if (!can.length) body.append(h("p", { cls: "dim" }, "You have nothing to sell. Buy cheap at a shop, sell dear here."));
@@ -507,8 +531,8 @@ var Life = (() => {
   }
   function belongingsTab(P, body) {                       // INV-001: what you carry and the furniture not placed, in one list
     const inv = Object.keys(E.inv).sort(), FR = Furnish.rules();
-    body.append(h("h3", {}, "You carry"), inv.length ? tbl(inv.map(it => [EC.items[it].name, "× " + E.inv[it], money(EC.items[it].price * E.inv[it])])) : h("p", { cls: "dim" }, "Nothing."));
-    body.append(h("h3", {}, "Furniture"), belongings.length ? tbl(belongings.map(b => [b.name + (b.line ? " (" + ((Outlet.LINES[b.line] || {}).label || b.line) + ")" : ""),
+    body.append(h("h3", {}, "You carry"), inv.length ? tbl(inv.map(it => [E.items[it].name, "× " + E.inv[it], money(E.items[it].price * E.inv[it])])) : h("p", { cls: "dim" }, "Nothing."));
+    body.append(h("h3", {}, "Furniture"), belongings.length ? tbl(belongings.map(b => [b.name + (b.line && !(FR.pieces[b.kind] || {}).from ? " (" + ((Outlet.LINES[b.line] || {}).label || b.line) + ")" : ""),   // (a good from the mall has no line)
       h("span", { cls: "dim" }, b.w.toFixed(2) + " × " + b.d.toFixed(2) + " m" + (b.from ? " · from " + ((LOTS.find(l => l.id === b.from.lot) || {}).name || "a home") : "")),
       b.kind !== "town" && FR.pieces[b.kind] ? money(FR.pieces[b.kind].price) : ""]))
       : h("p", { cls: "dim" }, "None. A piece you take away in the building designer comes here, and you place it again from its Furnish tab, in any home of yours."));
@@ -540,6 +564,12 @@ var Life = (() => {
       const k = outfits.findIndex(x => x.name === o.name); if (k < 0 && outfits.length >= ST.wardrobe.max_outfits) throw new Econ.Refused("the wardrobe holds " + ST.wardrobe.max_outfits + " outfits");
       if (k >= 0) outfits[k] = o; else outfits.push(o); return "Saved as " + o.name + ".";
     })));
+    const own = Object.keys(E.clothes).sort((a, b) => E.good(a).name < E.good(b).name ? -1 : 1);   // ECO-014: clothes bought at the mall's outlets
+    const partWords = P => Object.entries(P).map(([k, v]) => k === "garment" ? DG.garment[v] : k === "bottom_type" ? DG.bottom_type[v] : k === "bag" ? DG.extras.bag : null).filter(x => x).join(", ");
+    const wearing = G => Object.entries(G.parts).every(([k, v]) => look[k] === v);
+    body.append(h("h3", {}, "Clothes you own"), own.length ? tbl(own.map(g => { const G = E.good(g); return [h("b", {}, G.name), h("span", { cls: "dim" }, (E.clothes[g] > 1 ? "× " + E.clothes[g] + " · " : "") + partWords(G.parts)),
+      wearing(G) ? h("span", { cls: "pos" }, "on") : btn("Put on", () => { Object.assign(look, G.parts); applyLook(); return "You put on the " + G.name.toLowerCase() + "."; })]; }))
+      : h("p", { cls: "dim" }, "None yet. Clothes and shoes bought at the mall's outlets are kept here."));
     body.append(h("h3", {}, "What you wear"),
       row("Hair", chips("hair", hairNames)), row("Hair colour", h("div", { cls: "swatches" }, DG.hair_color.map((c, n) => h("button", { type: "button", cls: "sw" + (look.hair_color === n ? " on" : ""), style: "background:" + rgb(c), on: { click: () => set("hair_color", n) } })))),
       row("Top", chips("garment", DG.garment)), row("", pal("top")), row("Bottom", chips("bottom_type", DG.bottom_type)), row("", pal("bottom")), row("Shoes", pal("shoes")),
@@ -1137,7 +1167,8 @@ var Life = (() => {
     if (tr.dataset.k !== key) { tr.dataset.k = key; tr.textContent = ""; for (const [a, b] of lines) tr.append(h("div", { cls: "trk" }, h("b", {}, a), h("span", {}, b))); }
     tr.style.display = lines.length && !Talk.on ? "block" : "none";
     const n = lotHere(), hint = el("counter");
-    const what = n === null || n < 0 ? null : n === E.bankLot ? "Bank counter" : n === E.marketLot ? "Your market stall" : LOTS[n] && M.office[LOTS[n].id] ? "Estate agent: " + M.cos[M.office[LOTS[n].id]].name : E.shopKind(n) ? "Buy and sell at " + lotName(n) : null;
+    const oh = outletHere();                              // in a mall each outlet has its own counter (WLD-065); out on its walks there is none
+    const what = oh ? "Buy at " + oh.r.name : n === null || n < 0 ? null : n === E.bankLot ? "Bank counter" : n === E.marketLot ? "Your market stall" : LOTS[n] && M.office[LOTS[n].id] ? "Estate agent: " + M.cos[M.office[LOTS[n].id]].name : E.shopKind(n) && !E.outlets[n] ? "Buy and sell at " + lotName(n) : null;
     const bt = !what && n !== null && n >= 0 && M.byLot.has(n) ? boardText(n) : null;   // PROP-023: what is on the market here
     if (what && !panel && !Talk.on && pl.pose !== 4) { hint.style.display = "block"; hint.innerHTML = "<kbd>B</kbd>" + what; }
     else if (bt && !panel && !Talk.on && pl.pose !== 4) { hint.style.display = "block"; hint.innerHTML = "<kbd>P</kbd>" + bt + ": see the prices"; }

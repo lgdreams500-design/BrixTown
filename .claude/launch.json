@@ -70,6 +70,20 @@
         "8843"
       ],
       "port": 8843
+    },
+    {
+      "name": "play-mall-shopping",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "Tools/serve_play.ps1",
+        "-Port",
+        "8852"
+      ],
+      "port": 8852
     }
   ]
 }

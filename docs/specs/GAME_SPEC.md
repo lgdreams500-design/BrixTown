@@ -1,9 +1,9 @@
 ---
 spec_id: WASTED-SPEC
 title: Brix Town — Game Specification
-version: 0.5.6
+version: 0.5.7
 status: draft            # draft | reviewed | approved
-last_updated: 2026-11-22
+last_updated: 2026-11-24
 owner: project-owner
 engine: Unreal Engine 5.8
 dcc: Blender 5.2 LTS       # 5.3 is what is installed and was used for all look tests; see Q-16
@@ -308,6 +308,8 @@ The economy is the system most likely to break the game if built loosely, so it 
 | ECO-012 | Every economy number (starting money, prices, stock, rates, fees, terms, rewards) shall be data in `World/rules/economy.json` and `World/rules/quests.json`, checked before use. Asked for by the owner on 2026-11-22. | P0 | PH1 | in-progress |
 | BANK-007 | At the bank the player shall open accounts and move money between cash, current and savings; a payment that would take an account below zero is refused, never partly made. `F-ECO-BANK` level 2. Asked for by the owner on 2026-11-22. | P0 | PH1 | in-progress |
 | BANK-008 | Interest, loan repayments, late fees and default for every game day that has passed shall be worked out in day order when the game next looks at the accounts, each as its own ledger transaction dated at the day's end; nothing is ticked (TECH-004). On default the bank repossesses the player's items, valued at their sell price toward the debt, and refuses new loans. `F-ECO-BANK` level 2. Asked for by the owner on 2026-11-22. | P0 | PH1 | in-progress |
+| ECO-013 | In a mall whose inside is built the player shall buy at each outlet, not at the mall as one shop: an outlet sells a data number of the goods its kind deals in, chosen for that outlet by a fixed hash, holds its own stock of each (worked out from its restock time, the residents' visits to the mall and the player's purchases there; not ticked), and asks a price that follows that stock as a street shop's does (ECO-005, ECO-010). A purchase is one ledger transaction into the mall's till that names the outlet; it is refused whole if it cannot be paid, if the outlet does not sell the good or if it is sold out. Outlets buy nothing back. `F-BLD-SHOP` level 2, `F-BLD-MALL` level 2. Asked for by the owner on 2026-11-24 (ADR-0040). | P0 | PH1 | in-progress |
+| ECO-014 | What the outlets sell shall be data (`World/rules/mall_goods.json`), checked before use: for every kind of outlet a range of goods, each with a name, a price in whole chips and where it goes when bought: carried; eaten (food and drink, carried as a cafe's is until needs exist); for the home (a piece of `furnishing.json` that goes to the belongings and is placed from the Furnish tab, FURN-064); or to wear (kept for the wardrobe, CHR-016). `F-BLD-SHOP` level 2. Asked for by the owner on 2026-11-24 (ADR-0040). | P1 | PH1 | in-progress |
 
 ---
 
@@ -429,6 +431,7 @@ specs and validation tools that creators will later use, so the UGC pipeline is 
 | ADR-0006 | Body motion: one skeleton, movement signatures, independent layers (Q-17 still open) | accepted |
 | ADR-0007 | Daylight: the softer, warmer "kit" light replaces the reference light as the default (amends ADR-0004) | accepted |
 | ADR-0012 | Money, shops, quests and the designer in the slice: one ledger, settled by the day; stock, stall sales and daily jobs calculated from the clock and routines | proposed |
+| ADR-0040 | Buying at each outlet of the mall; what the outlets sell and where each good goes (home, wardrobe, carried) | accepted |
 
 ADR-0001 to ADR-0003 are reserved numbers; their files are written when the decision is taken.
 
@@ -500,3 +503,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.5.4 | 2026-11-22 | Furniture in the first slice, from the owner's request and picks (`F-FURN-ITEMS` 2, `F-FURN-STORE` 2, `F-PROP-FURNISH` 2, `F-OBJ-CARRY` 1): new domain spec `docs/specs/domains/FURNITURE.md` (FURN-001 onward, all proposed; Q-30 to Q-32), new prefix `FURN`; PROP-003 moved to PH1. Interior style drafted for approval in `docs/art/INTERIOR_STYLE.md`. |
 | 0.5.5 | 2026-11-22 | The game is called **Brix Town** (owner); "Wasted" was a working title. Q-13 decided. ADR-0025. |
 | 0.5.6 | 2026-11-22 | Real estate, the missing pieces (owner's request): residents move house (PROP-022, now PH1 in progress), For Sale and To Let boards and the agents' names on their offices (PROP-023), beds in empty flats. |
+| 0.5.7 | 2026-11-24 | Buying at each outlet of Eastgate Mall (owner's request; ADR-0040): ECO-013 (each outlet its own goods, stock and price, paid through the ledger) and ECO-014 (the outlets' catalogue as data, and where each good goes: carried, eaten, for the home, to wear). Detail in the domain specs: WLD-065, FURN-064, CHR-016. No level was picked for this; F-CHR-WARDROBE, F-INV-ITEMS and F-NPC-POP stay at 1. |
