@@ -1,0 +1,266 @@
+{
+ "SM_Kit_WinUp": {
+  "opening": [
+   1.1,
+   1.6
+  ],
+  "slots": [
+   "stone_dark",
+   "stone_a",
+   "glass",
+   "frame"
+  ],
+  "tris": 1200,
+  "min": [
+   -0.79,
+   -0.17,
+   -0.15
+  ],
+  "max": [
+   0.79,
+   0.32,
+   1.9
+  ]
+ },
+ "SM_Kit_WinTop": {
+  "opening": [
+   1.1,
+   1.45
+  ],
+  "slots": [
+   "stone_dark",
+   "stone_a",
+   "glass",
+   "frame"
+  ],
+  "tris": 1200,
+  "min": [
+   -0.79,
+   -0.17,
+   -0.15
+  ],
+  "max": [
+   0.79,
+   0.32,
+   1.75
+  ]
+ },
+ "SM_Kit_WinPlain": {
+  "opening": [
+   1.1,
+   1.6
+  ],
+  "slots": [
+   "stone_dark",
+   "glass",
+   "frame"
+  ],
+  "tris": 768,
+  "min": [
+   -0.77,
+   -0.17,
+   -0.15
+  ],
+  "max": [
+   0.77,
+   0.32,
+   1.6
+  ]
+ },
+ "SM_Kit_WinArch": {
+  "opening": [
+   1.1,
+   1.75
+  ],
+  "slots": [
+   "stone_dark",
+   "glass",
+   "frame",
+   "stone_a",
+   "stone_c"
+  ],
+  "tris": 1832,
+  "min": [
+   -0.904,
+   -0.17,
+   -0.15
+  ],
+  "max": [
+   0.904,
+   0.32,
+   2.22
+  ]
+ },
+ "SM_Kit_WinCafe": {
+  "opening": [
+   2.0,
+   2.45
+  ],
+  "slots": [
+   "stone_dark",
+   "lit",
+   "frame",
+   "stone_a",
+   "stone_c",
+   "wood"
+  ],
+  "tris": 2372,
+  "min": [
+   -1.404,
+   -0.17,
+   -0.55
+  ],
+  "max": [
+   1.404,
+   0.32,
+   2.97
+  ]
+ },
+ "SM_Kit_WinCivic": {
+  "opening": [
+   1.25,
+   1.65
+  ],
+  "slots": [
+   "stone_dark",
+   "glass",
+   "frame",
+   "stone_a",
+   "stone_c"
+  ],
+  "tris": 1832,
+  "min": [
+   -0.981,
+   -0.17,
+   -0.15
+  ],
+  "max": [
+   0.981,
+   0.32,
+   2.12
+  ]
+ },
+ "SM_Kit_DoorArch": {
+  "opening": [
+   1.3,
+   2.5
+  ],
+  "slots": [
+   "door",
+   "glass",
+   "iron",
+   "stone_dark",
+   "stone_a",
+   "stone_c"
+  ],
+  "tris": 1932,
+  "min": [
+   -1.057,
+   -0.55,
+   0.0
+  ],
+  "max": [
+   1.057,
+   0.32,
+   3.02
+  ]
+ },
+ "SM_Kit_DoorPlain": {
+  "opening": [
+   1.3,
+   2.3
+  ],
+  "slots": [
+   "stone_dark",
+   "door",
+   "iron"
+  ],
+  "tris": 1656,
+  "min": [
+   -1.1,
+   -0.6,
+   0.0
+  ],
+  "max": [
+   1.1,
+   0.3,
+   2.76
+  ]
+ },
+ "SM_Kit_DoorCivic": {
+  "opening": [
+   1.5,
+   2.6
+  ],
+  "slots": [
+   "door",
+   "glass",
+   "iron",
+   "stone_dark",
+   "stone_a",
+   "stone_c"
+  ],
+  "tris": 2364,
+  "min": [
+   -1.154,
+   -0.55,
+   0.0
+  ],
+  "max": [
+   1.154,
+   0.32,
+   3.12
+  ]
+ },
+ "SM_Kit_Shutters160": {
+  "opening": null,
+  "slots": [
+   "shutter"
+  ],
+  "tris": 3672,
+  "min": [
+   -1.3,
+   -0.095,
+   0.0
+  ],
+  "max": [
+   1.3,
+   -0.015,
+   1.6
+  ]
+ },
+ "SM_Kit_Shutters145": {
+  "opening": null,
+  "slots": [
+   "shutter"
+  ],
+  "tris": 3456,
+  "min": [
+   -1.3,
+   -0.095,
+   0.0
+  ],
+  "max": [
+   1.3,
+   -0.015,
+   1.45
+  ]
+ },
+ "SM_Kit_RoofWedge": {
+  "opening": null,
+  "slots": [
+   "roof"
+  ],
+  "tris": 8,
+  "min": [
+   -0.5,
+   0.0,
+   0.0
+  ],
+  "max": [
+   0.5,
+   1.0,
+   1.0
+  ]
+ }
+}
