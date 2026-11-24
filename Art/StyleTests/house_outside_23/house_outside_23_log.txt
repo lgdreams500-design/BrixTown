@@ -1,0 +1,26 @@
+00:04:35 Blender 5.3.0
+00:04:51 plain_a rendered in 12.2s (326 objects)
+00:04:51 plain_a: Teal on cool plaster
+00:05:06 plain_b rendered in 12.0s (326 objects)
+00:05:06 plain_b: Dusty blue on pale plaster, slate roof
+00:05:36 plain_c rendered in 26.3s (326 objects)
+00:05:36 plain_c: Olive on warm plaster, brown roof
+00:06:07 oldtown_a rendered in 25.7s (353 objects)
+00:06:07 oldtown_a: Terracotta on warm plaster
+00:06:43 oldtown_b rendered in 27.4s (353 objects)
+00:06:43 oldtown_b: Ochre on ochre-washed plaster
+00:07:04 oldtown_c rendered in 16.0s (353 objects)
+00:07:04 oldtown_c: Plum on cool plaster, dark roof
+00:07:34 workshop_a rendered in 16.9s (323 objects)
+00:07:34 workshop_a: Brown wood on stone, dark roof
+00:08:09 workshop_b rendered in 29.7s (323 objects)
+00:08:09 workshop_b: Teal on stone, terracotta roof
+00:08:44 workshop_c rendered in 24.9s (323 objects)
+00:08:44 workshop_c: Dusty blue on stone, slate roof
+00:09:19 curve_a rendered in 25.6s (375 objects)
+00:09:19 curve_a: Dusty blue and ochre on cool plaster
+00:09:52 curve_b rendered in 24.5s (375 objects)
+00:09:52 curve_b: Cream and terracotta on warm plaster
+00:10:23 curve_c rendered in 23.4s (375 objects)
+00:10:23 curve_c: Teal and cream on pale plaster
+00:10:23 DONE

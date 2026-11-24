@@ -1,0 +1,279 @@
+{
+ "terrace_14x12_2": {
+  "frame": "cream",
+  "shutter": "wood_red",
+  "door": "wood_red",
+  "wall": "warm"
+ },
+ "terrace_14x12_3": {
+  "frame": "cream",
+  "shutter": "ochre",
+  "door": "wood_red",
+  "wall": "warm"
+ },
+ "terrace_12x16_2": {
+  "frame": "cream",
+  "shutter": "teal",
+  "door": "wood_red",
+  "wall": "warm"
+ },
+ "flats_16x22": {
+  "frame": "wood",
+  "shutter": "ochre",
+  "door": "wood",
+  "wall": "warm"
+ },
+ "flats_16x38": {
+  "frame": "wood",
+  "shutter": "wood_red",
+  "door": "wood",
+  "wall": "warm"
+ },
+ "tower_home": {
+  "frame": "cream",
+  "shutter": "teal",
+  "awning": [
+   "teal",
+   "cream"
+  ],
+  "wall": "warm",
+  "door": "wood_red"
+ },
+ "shop_16x22": {
+  "awning": [
+   "cream",
+   "terracotta"
+  ],
+  "frame": "teal",
+  "shutter": "wood_red",
+  "wall": "cool"
+ },
+ "shop_16x38": {
+  "awning": [
+   "cream",
+   "terracotta"
+  ],
+  "frame": "cream",
+  "shutter": "ochre",
+  "wall": "cool"
+ },
+ "market_shop": {
+  "awning": [
+   "cream",
+   "terracotta"
+  ],
+  "frame": "teal",
+  "shutter": "dusty_blue",
+  "wall": "warm"
+ },
+ "community_shop": {
+  "awning": [
+   "cream",
+   "terracotta"
+  ],
+  "wall": "warm"
+ },
+ "food_16x22": {
+  "frame": "teal",
+  "door": "wood",
+  "shutter": "teal",
+  "wall": "cool",
+  "awning": [
+   "terracotta",
+   "cream"
+  ]
+ },
+ "food_16x38": {
+  "frame": "teal",
+  "door": "teal",
+  "shutter": "ochre",
+  "wall": "cool",
+  "awning": [
+   "terracotta",
+   "cream"
+  ]
+ },
+ "market_cafe": {
+  "frame": "cream",
+  "door": "wood_red",
+  "shutter": "dusty_blue",
+  "wall": "cool",
+  "awning": [
+   "terracotta",
+   "cream"
+  ]
+ },
+ "community_cafe": {
+  "frame": "cream",
+  "door": "teal",
+  "wall": "cool",
+  "awning": [
+   "terracotta",
+   "cream"
+  ]
+ },
+ "plaza_cafe": {
+  "frame": "cream",
+  "door": "wood",
+  "wall": "warm",
+  "awning": [
+   "terracotta",
+   "cream"
+  ]
+ },
+ "kiosk": {
+  "kiosk_roof": "teal"
+ },
+ "work_16x22": {
+  "frame": "wood",
+  "wall": "warm",
+  "door": "wood"
+ },
+ "work_16x38": {
+  "frame": "wood",
+  "wall": "warm",
+  "door": "wood"
+ },
+ "works": {
+  "frame": "wood",
+  "wall": "warm",
+  "door": "wood"
+ },
+ "tower_office": {
+  "frame": "wood",
+  "door": "wood"
+ },
+ "health_16x22": {
+  "frame": "wood",
+  "door": "wood"
+ },
+ "health_16x38": {
+  "frame": "wood",
+  "door": "wood"
+ },
+ "community_clinic": {
+  "frame": "wood",
+  "door": "wood"
+ },
+ "hospital_b_11_8_l0": {
+  "frame": "cream",
+  "wall": "cool",
+  "door": "teal"
+ },
+ "hospital_b_12_7_l0": {
+  "frame": "cream",
+  "wall": "cool",
+  "door": "teal"
+ },
+ "bank": {
+  "frame": "cream",
+  "door": "wood"
+ },
+ "library": {
+  "frame": "wood",
+  "door": "wood"
+ },
+ "museum": {
+  "frame": "wood",
+  "door": "wood"
+ },
+ "police": {
+  "frame": "teal",
+  "door": "wood"
+ },
+ "school_primary": {
+  "frame": "cream",
+  "door": "wood"
+ },
+ "school_secondary": {
+  "frame": "teal",
+  "door": "wood"
+ },
+ "cinema": {
+  "awning": [
+   "cream",
+   "terracotta"
+  ],
+  "frame": "wood",
+  "shutter": "teal",
+  "wall": "warm"
+ },
+ "dealer": {
+  "awning": [
+   "cream",
+   "terracotta"
+  ],
+  "frame": "wood",
+  "shutter": "teal",
+  "wall": "warm"
+ },
+ "furniture": {
+  "awning": [
+   "cream",
+   "terracotta"
+  ],
+  "wall": "warm"
+ },
+ "hall": {
+  "frame": "wood",
+  "door": "wood"
+ },
+ "guild": {
+  "frame": "wood",
+  "shutter": "wood_red",
+  "door": "wood_red"
+ },
+ "arcade_b_10_6_l0": {
+  "frame": "teal",
+  "awning": [
+   "teal",
+   "cream"
+  ],
+  "door": "wood"
+ },
+ "arcade_b_12_8_l0": {
+  "frame": "teal",
+  "awning": [
+   "teal",
+   "cream"
+  ],
+  "door": "wood_red"
+ },
+ "mall_b_1_5_l0": {
+  "frame": "teal",
+  "awning": [
+   "teal",
+   "cream"
+  ],
+  "door": "wood"
+ },
+ "mall_b_16_5_l0": {
+  "frame": "teal",
+  "awning": [
+   "teal",
+   "cream"
+  ],
+  "door": "wood"
+ },
+ "mall_b_7_0_l0": {
+  "frame": "teal",
+  "awning": [
+   "teal",
+   "cream"
+  ],
+  "door": "teal"
+ },
+ "depot": {
+  "frame": "teal",
+  "door": "teal"
+ },
+ "fire": {
+  "frame": "teal",
+  "door": "teal"
+ },
+ "substation": {
+  "frame": "wood",
+  "door": "wood_red",
+  "wall": "cool"
+ }
+}

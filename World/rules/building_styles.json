@@ -1,0 +1,902 @@
+{
+ "note": "The colourways of every building that is not a designed house (ADR-0036; BUILD-001 to BUILD-003), approved by the owner from look test building_styles_22 (\"Approve all\", 2026-11-24). A group is one design of the town kit (Tools/blender/building_kit_07.py, building_kit_08.py) shared by the build types listed in 'types' (the type keys of Tools/worldgen/draw_builds.py); a colourway sets its walls (plaster pair or stone), shutters, door, frames, roof and, for shop and cafe fronts, the awning and sign. 'a' is each group as the kit drew it before. Colours are palette entries of docs/art/ART_DIRECTION.md 2.3, mixes of two, or the kit's own tones (ADR-0004). Which colourway a building gets is picked once, when it is made, and kept in its lot. Read by the Blender scripts and, once the slice draws the other buildings from it, by Prototype/play/play.js. Earlier note of the look test: DRAFT for the owner to choose from (look test building_styles_22, not approved; not World/ data). Colourways for every build type that is not a house, in the shape of World/rules/house_styles.json. A group is one design of the town kit (Tools/blender/building_kit_07.py and building_kit_08.py) shared by several build types of Tools/worldgen/draw_builds.py; its first type is the one rendered. A colourway sets the walls (a plaster pair, or the kit's stone), the stone tone, the shutters, door, window frames, roof tiles and, where the design has them, the awning stripes and the painted shop front or sign board. Colours are linear RGB from the palette of docs/art/ART_DIRECTION.md section 2.3 or tones of World/rules/building_kit.json (wood, wood_red, sign_teal are the kit's own); stones are the kit's stone or the kit's stone mixed with one palette colour; roofs are the tile pairs of house_styles.json. Colourway a is the type as the kit draws it today. A role a colourway leaves out stays as in a.",
+ "palette": {
+  "ochre": [
+   0.52,
+   0.4,
+   0.2
+  ],
+  "terracotta": [
+   0.44,
+   0.24,
+   0.18
+  ],
+  "teal": [
+   0.2,
+   0.36,
+   0.37
+  ],
+  "cream": [
+   0.66,
+   0.61,
+   0.5
+  ],
+  "dusty_blue": [
+   0.3,
+   0.38,
+   0.52
+  ],
+  "brown": [
+   0.24,
+   0.16,
+   0.11
+  ],
+  "olive": [
+   0.3,
+   0.33,
+   0.2
+  ],
+  "plum": [
+   0.3,
+   0.24,
+   0.34
+  ],
+  "charcoal": [
+   0.09,
+   0.09,
+   0.11
+  ],
+  "indigo": [
+   0.1,
+   0.14,
+   0.24
+  ],
+  "wood": [
+   0.3,
+   0.2,
+   0.13
+  ],
+  "wood_red": [
+   0.42,
+   0.18,
+   0.14
+  ],
+  "sign_teal": [
+   0.16,
+   0.3,
+   0.31
+  ]
+ },
+ "plasters": {
+  "cool": [
+   [
+    0.46,
+    0.43,
+    0.4
+   ],
+   [
+    0.68,
+    0.63,
+    0.55
+   ]
+  ],
+  "warm": [
+   [
+    0.5,
+    0.4,
+    0.33
+   ],
+   [
+    0.7,
+    0.58,
+    0.46
+   ]
+  ],
+  "pale": [
+   [
+    0.54,
+    0.51,
+    0.46
+   ],
+   [
+    0.74,
+    0.7,
+    0.62
+   ]
+  ],
+  "ochre_wash": [
+   [
+    0.52,
+    0.44,
+    0.32
+   ],
+   [
+    0.7,
+    0.6,
+    0.44
+   ]
+  ]
+ },
+ "stones": {
+  "kit": {
+   "note": "the kit's three close stone tones as drawn (stone_a, stone_b, stone_c)"
+  },
+  "sandstone": {
+   "note": "the kit's stone mixed with Ochre",
+   "mix": "ochre",
+   "share": 0.3
+  },
+  "pale_stone": {
+   "note": "the kit's stone mixed with Cream",
+   "mix": "cream",
+   "share": 0.35
+  }
+ },
+ "roofs": {
+  "terracotta": [
+   [
+    0.34,
+    0.18,
+    0.13
+   ],
+   [
+    0.52,
+    0.3,
+    0.2
+   ]
+  ],
+  "brown": [
+   [
+    0.2,
+    0.15,
+    0.1
+   ],
+   [
+    0.34,
+    0.26,
+    0.18
+   ]
+  ],
+  "dark": [
+   [
+    0.13,
+    0.08,
+    0.06
+   ],
+   [
+    0.25,
+    0.15,
+    0.11
+   ]
+  ],
+  "slate": [
+   [
+    0.16,
+    0.16,
+    0.2
+   ],
+   [
+    0.28,
+    0.28,
+    0.33
+   ]
+  ]
+ },
+ "groups": {
+  "row_house": {
+   "title": "Row house",
+   "design": "building_kit_07 building()",
+   "sample": "terrace_14x12_2",
+   "types": [
+    "terrace_14x12_2",
+    "terrace_14x12_3",
+    "terrace_12x16_2"
+   ]
+  },
+  "court_flats": {
+   "title": "Court flats",
+   "design": "building_kit_07 building()",
+   "sample": "flats_16x22",
+   "types": [
+    "flats_16x22",
+    "flats_16x38"
+   ]
+  },
+  "tower_home": {
+   "title": "Residential tower",
+   "design": "building_kit_08 flats_tower()",
+   "sample": "tower_home",
+   "types": [
+    "tower_home"
+   ]
+  },
+  "shop_front": {
+   "title": "Shop: court, market and community",
+   "design": "building_kit_07 building()",
+   "sample": "shop_16x22",
+   "types": [
+    "shop_16x22",
+    "shop_16x38",
+    "market_shop",
+    "community_shop"
+   ]
+  },
+  "cafe_front": {
+   "title": "Cafe: court, market, community and plaza",
+   "design": "building_kit_07 building()",
+   "sample": "food_16x22",
+   "types": [
+    "food_16x22",
+    "food_16x38",
+    "market_cafe",
+    "community_cafe",
+    "plaza_cafe"
+   ]
+  },
+  "kiosk": {
+   "title": "Plaza kiosk",
+   "design": "building_kit_08 plaza kiosk (office_tower)",
+   "sample": "kiosk",
+   "types": [
+    "kiosk"
+   ]
+  },
+  "works": {
+   "title": "Workshop and works",
+   "design": "building_kit_08 workshop()",
+   "sample": "work_16x22",
+   "types": [
+    "work_16x22",
+    "work_16x38",
+    "works"
+   ]
+  },
+  "tower_office": {
+   "title": "Office tower",
+   "design": "building_kit_08 office_tower()",
+   "sample": "tower_office",
+   "types": [
+    "tower_office"
+   ]
+  },
+  "clinic": {
+   "title": "Clinic: court and community",
+   "design": "building_kit_07 building()",
+   "sample": "health_16x22",
+   "types": [
+    "health_16x22",
+    "health_16x38",
+    "community_clinic"
+   ]
+  },
+  "hospital": {
+   "title": "Hospital",
+   "design": "building_kit_08 hospital()",
+   "sample": "hospital_b_11_8_l0",
+   "types": [
+    "hospital_b_11_8_l0",
+    "hospital_b_12_7_l0"
+   ]
+  },
+  "civic_stone": {
+   "title": "Civic stone building",
+   "design": "building_kit_07 building() as kind 'work'",
+   "sample": "bank",
+   "types": [
+    "bank",
+    "library",
+    "museum",
+    "police",
+    "school_primary",
+    "school_secondary"
+   ]
+  },
+  "showroom": {
+   "title": "Showroom front: cinema, car dealer, furniture outlet",
+   "design": "building_kit_07 building() as kind 'shop', no crates",
+   "sample": "cinema",
+   "types": [
+    "cinema",
+    "dealer",
+    "furniture"
+   ]
+  },
+  "hall": {
+   "title": "Town Hall",
+   "design": "building_kit_08 town_hall()",
+   "sample": "hall",
+   "types": [
+    "hall"
+   ]
+  },
+  "guild": {
+   "title": "Guild House",
+   "design": "building_kit_08 guild_house()",
+   "sample": "guild",
+   "types": [
+    "guild"
+   ]
+  },
+  "arcade_mall": {
+   "title": "Arcade and mall",
+   "design": "building_kit_08 lantern_arcade()",
+   "sample": "arcade_b_10_6_l0",
+   "types": [
+    "arcade_b_10_6_l0",
+    "arcade_b_12_8_l0",
+    "mall_b_1_5_l0",
+    "mall_b_16_5_l0",
+    "mall_b_7_0_l0"
+   ]
+  },
+  "depot_hall": {
+   "title": "Depot hall: depot and fire station",
+   "design": "building_kit_08 tram_depot()",
+   "sample": "depot",
+   "types": [
+    "depot",
+    "fire"
+   ]
+  },
+  "substation": {
+   "title": "Substation",
+   "design": "building_kit_07 building()",
+   "sample": "substation",
+   "types": [
+    "substation"
+   ]
+  }
+ },
+ "colourways": {
+  "row_house": {
+   "a": {
+    "name": "As the kit draws it now: wood red shutters, wood red door, cream frames, warm plaster",
+    "wall": "warm",
+    "shutter": "wood_red",
+    "door": "wood_red",
+    "frame": "cream",
+    "roof": "terracotta"
+   },
+   "b": {
+    "name": "Teal on pale plaster, slate roof",
+    "wall": "pale",
+    "shutter": "teal",
+    "door": "teal",
+    "frame": "cream",
+    "roof": "slate"
+   },
+   "c": {
+    "name": "Olive on ochre-washed plaster, brown roof",
+    "wall": "ochre_wash",
+    "shutter": "olive",
+    "door": "brown",
+    "frame": "cream",
+    "roof": "brown"
+   }
+  },
+  "court_flats": {
+   "a": {
+    "name": "As the kit draws it now: ochre shutters, wood door, wood frames, warm plaster",
+    "wall": "warm",
+    "shutter": "ochre",
+    "door": "wood",
+    "frame": "wood",
+    "roof": "terracotta"
+   },
+   "b": {
+    "name": "Dusty blue on cool plaster",
+    "wall": "cool",
+    "shutter": "dusty_blue",
+    "door": "dusty_blue",
+    "frame": "cream",
+    "roof": "terracotta"
+   },
+   "c": {
+    "name": "Plum on pale plaster, dark roof",
+    "wall": "pale",
+    "shutter": "plum",
+    "door": "plum",
+    "frame": "cream",
+    "roof": "dark"
+   }
+  },
+  "tower_home": {
+   "a": {
+    "name": "As the kit draws it now: teal shutters, wood red door, cream frames, teal and cream awning, warm plaster",
+    "wall": "warm",
+    "shutter": "teal",
+    "door": "wood_red",
+    "frame": "cream",
+    "roof": "terracotta",
+    "awning": [
+     "teal",
+     "cream"
+    ]
+   },
+   "b": {
+    "name": "Terracotta on warm plaster, dark roof",
+    "wall": "warm",
+    "shutter": "terracotta",
+    "door": "terracotta",
+    "frame": "cream",
+    "roof": "dark",
+    "awning": [
+     "terracotta",
+     "cream"
+    ]
+   },
+   "c": {
+    "name": "Dusty blue on pale plaster, slate roof",
+    "wall": "pale",
+    "shutter": "dusty_blue",
+    "door": "dusty_blue",
+    "frame": "cream",
+    "roof": "slate",
+    "awning": [
+     "dusty_blue",
+     "cream"
+    ]
+   }
+  },
+  "shop_front": {
+   "a": {
+    "name": "As the kit draws it now: wood red shutters, teal frames, cream and terracotta awning, cool plaster",
+    "wall": "cool",
+    "shutter": "wood_red",
+    "frame": "teal",
+    "roof": "terracotta",
+    "awning": [
+     "cream",
+     "terracotta"
+    ],
+    "front": "sign_teal"
+   },
+   "b": {
+    "name": "Brown front and olive awning on pale plaster",
+    "wall": "pale",
+    "shutter": "olive",
+    "door": "brown",
+    "frame": "cream",
+    "roof": "brown",
+    "front": "brown",
+    "awning": [
+     "olive",
+     "cream"
+    ]
+   },
+   "c": {
+    "name": "Plum front and ochre awning on ochre-washed plaster",
+    "wall": "ochre_wash",
+    "shutter": "plum",
+    "door": "plum",
+    "frame": "cream",
+    "roof": "terracotta",
+    "front": "plum",
+    "awning": [
+     "ochre",
+     "cream"
+    ]
+   }
+  },
+  "cafe_front": {
+   "a": {
+    "name": "As the kit draws it now: teal shutters, wood door, teal frames, terracotta and cream awning, cool plaster",
+    "wall": "cool",
+    "shutter": "teal",
+    "door": "wood",
+    "frame": "teal",
+    "awning": [
+     "terracotta",
+     "cream"
+    ]
+   },
+   "b": {
+    "name": "Dusty blue awning on pale plaster",
+    "wall": "pale",
+    "shutter": "dusty_blue",
+    "door": "dusty_blue",
+    "frame": "cream",
+    "roof": "slate",
+    "front": "dusty_blue",
+    "awning": [
+     "dusty_blue",
+     "cream"
+    ]
+   },
+   "c": {
+    "name": "Ochre awning on warm plaster",
+    "wall": "warm",
+    "shutter": "ochre",
+    "door": "brown",
+    "frame": "brown",
+    "roof": "terracotta",
+    "front": "brown",
+    "awning": [
+     "ochre",
+     "cream"
+    ]
+   }
+  },
+  "kiosk": {
+   "a": {
+    "name": "As the kit draws it now: teal roof, teal sign board",
+    "front": "sign_teal",
+    "kiosk_roof": "teal"
+   },
+   "b": {
+    "name": "Terracotta roof, brown board",
+    "frame": "cream",
+    "shutter": "cream",
+    "door": "brown",
+    "kiosk_roof": "terracotta",
+    "front": "brown"
+   },
+   "c": {
+    "name": "Dusty blue roof, cream board",
+    "frame": "cream",
+    "shutter": "cream",
+    "door": "dusty_blue",
+    "kiosk_roof": "dusty_blue",
+    "front": "indigo"
+   }
+  },
+  "works": {
+   "a": {
+    "name": "As the kit draws it now: wood door, wood frames, warm plaster",
+    "wall": "warm",
+    "door": "wood",
+    "frame": "wood",
+    "roof": "terracotta"
+   },
+   "b": {
+    "name": "Teal doors on cool plaster, slate roof",
+    "wall": "cool",
+    "shutter": "teal",
+    "door": "teal",
+    "frame": "cream",
+    "roof": "slate"
+   },
+   "c": {
+    "name": "Olive doors on ochre-washed plaster, brown roof",
+    "wall": "ochre_wash",
+    "shutter": "olive",
+    "door": "olive",
+    "frame": "cream",
+    "roof": "brown"
+   }
+  },
+  "tower_office": {
+   "a": {
+    "name": "As the kit draws it now: wood door, wood frames, kit stone",
+    "wall": "stone",
+    "stone": "kit",
+    "door": "wood",
+    "frame": "wood",
+    "roof": "terracotta"
+   },
+   "b": {
+    "name": "Pale stone, cream frames, teal door, slate crown",
+    "stone": "pale_stone",
+    "frame": "cream",
+    "shutter": "cream",
+    "door": "teal",
+    "roof": "slate"
+   },
+   "c": {
+    "name": "Sandstone, brown frames, red door, dark crown",
+    "stone": "sandstone",
+    "frame": "brown",
+    "shutter": "brown",
+    "door": "wood_red",
+    "roof": "dark"
+   }
+  },
+  "clinic": {
+   "a": {
+    "name": "As the kit draws it now: wood door, wood frames, kit stone",
+    "wall": "stone",
+    "stone": "kit",
+    "door": "wood",
+    "frame": "wood",
+    "front": "sign_teal"
+   },
+   "b": {
+    "name": "Pale stone, teal door, dusty blue sign",
+    "stone": "pale_stone",
+    "frame": "cream",
+    "shutter": "cream",
+    "door": "teal",
+    "front": "dusty_blue"
+   },
+   "c": {
+    "name": "Sandstone, brown door, olive sign",
+    "stone": "sandstone",
+    "frame": "cream",
+    "shutter": "cream",
+    "door": "brown",
+    "front": "olive"
+   }
+  },
+  "hospital": {
+   "a": {
+    "name": "As the kit draws it now: teal door, cream frames, cool plaster",
+    "wall": "cool",
+    "door": "teal",
+    "frame": "cream",
+    "front": "sign_teal"
+   },
+   "b": {
+    "name": "Warm plaster, dusty blue door and board",
+    "wall": "warm",
+    "frame": "cream",
+    "shutter": "cream",
+    "door": "dusty_blue",
+    "front": "dusty_blue"
+   },
+   "c": {
+    "name": "Pale plaster on pale stone, brown door, olive board",
+    "wall": "pale",
+    "stone": "pale_stone",
+    "frame": "cream",
+    "shutter": "cream",
+    "door": "brown",
+    "front": "olive"
+   }
+  },
+  "civic_stone": {
+   "a": {
+    "name": "As the kit draws it now: wood door, cream frames, kit stone",
+    "wall": "stone",
+    "stone": "kit",
+    "door": "wood",
+    "frame": "cream"
+   },
+   "b": {
+    "name": "Pale stone, cream frames, teal door",
+    "stone": "pale_stone",
+    "frame": "cream",
+    "shutter": "cream",
+    "door": "teal"
+   },
+   "c": {
+    "name": "Sandstone, brown frames, red door",
+    "stone": "sandstone",
+    "frame": "brown",
+    "shutter": "brown",
+    "door": "wood_red"
+   }
+  },
+  "showroom": {
+   "a": {
+    "name": "As the kit draws it now: teal shutters, wood frames, cream and terracotta awning, warm plaster",
+    "wall": "warm",
+    "shutter": "teal",
+    "frame": "wood",
+    "roof": "terracotta",
+    "awning": [
+     "cream",
+     "terracotta"
+    ],
+    "front": "sign_teal"
+   },
+   "b": {
+    "name": "Indigo front, dusty blue awning, pale plaster, slate roof",
+    "wall": "pale",
+    "shutter": "dusty_blue",
+    "door": "indigo",
+    "frame": "cream",
+    "roof": "slate",
+    "front": "indigo",
+    "awning": [
+     "dusty_blue",
+     "cream"
+    ]
+   },
+   "c": {
+    "name": "Plum front, terracotta awning, warm plaster",
+    "wall": "warm",
+    "shutter": "plum",
+    "door": "plum",
+    "frame": "cream",
+    "roof": "terracotta",
+    "front": "plum",
+    "awning": [
+     "terracotta",
+     "cream"
+    ]
+   }
+  },
+  "hall": {
+   "a": {
+    "name": "As the kit draws it now: wood door, wood frames, kit stone",
+    "wall": "stone",
+    "stone": "kit",
+    "door": "wood",
+    "frame": "wood",
+    "roof": "terracotta"
+   },
+   "b": {
+    "name": "Pale stone, teal doors, slate tower roof",
+    "stone": "pale_stone",
+    "frame": "cream",
+    "shutter": "cream",
+    "door": "teal",
+    "roof": "slate"
+   },
+   "c": {
+    "name": "Sandstone, red doors, dark tower roof",
+    "stone": "sandstone",
+    "frame": "brown",
+    "shutter": "brown",
+    "door": "wood_red",
+    "roof": "dark"
+   }
+  },
+  "guild": {
+   "a": {
+    "name": "As the kit draws it now: wood red shutters, wood red door, wood frames, kit stone",
+    "wall": "stone",
+    "stone": "kit",
+    "shutter": "wood_red",
+    "door": "wood_red",
+    "frame": "wood",
+    "roof": "terracotta"
+   },
+   "b": {
+    "name": "Teal shutters and door on pale stone, slate roofs",
+    "stone": "pale_stone",
+    "frame": "cream",
+    "shutter": "teal",
+    "door": "teal",
+    "roof": "slate"
+   },
+   "c": {
+    "name": "Ochre shutters on sandstone, brown door, dark roofs",
+    "stone": "sandstone",
+    "frame": "brown",
+    "shutter": "ochre",
+    "door": "brown",
+    "roof": "dark"
+   }
+  },
+  "arcade_mall": {
+   "a": {
+    "name": "As the kit draws it now: wood door, teal frames, teal and cream awning, kit stone",
+    "wall": "stone",
+    "stone": "kit",
+    "door": "wood",
+    "frame": "teal",
+    "awning": [
+     "teal",
+     "cream"
+    ]
+   },
+   "b": {
+    "name": "Dusty blue frames and awnings, pale stone",
+    "stone": "pale_stone",
+    "wall": "pale",
+    "frame": "dusty_blue",
+    "shutter": "dusty_blue",
+    "door": "dusty_blue",
+    "front": "dusty_blue",
+    "awning": [
+     "dusty_blue",
+     "cream"
+    ]
+   },
+   "c": {
+    "name": "Brown frames, terracotta awnings, sandstone",
+    "stone": "sandstone",
+    "wall": "warm",
+    "frame": "brown",
+    "shutter": "brown",
+    "door": "brown",
+    "front": "brown",
+    "awning": [
+     "terracotta",
+     "cream"
+    ]
+   }
+  },
+  "depot_hall": {
+   "a": {
+    "name": "As the kit draws it now: teal door, teal frames, kit stone",
+    "wall": "stone",
+    "stone": "kit",
+    "door": "teal",
+    "frame": "teal",
+    "roof": "terracotta",
+    "depot_doors": "teal"
+   },
+   "b": {
+    "name": "Olive doors, pale stone, slate roofs",
+    "stone": "pale_stone",
+    "frame": "olive",
+    "shutter": "olive",
+    "door": "olive",
+    "depot_doors": "olive",
+    "roof": "slate"
+   },
+   "c": {
+    "name": "Terracotta doors, sandstone, dark roofs",
+    "stone": "sandstone",
+    "frame": "brown",
+    "shutter": "brown",
+    "door": "terracotta",
+    "depot_doors": "terracotta",
+    "roof": "dark"
+   }
+  },
+  "substation": {
+   "a": {
+    "name": "As the kit draws it now: wood red door, wood frames, cool plaster",
+    "wall": "cool",
+    "door": "wood_red",
+    "frame": "wood",
+    "roof": "terracotta"
+   },
+   "b": {
+    "name": "Teal door on pale plaster, slate roof",
+    "wall": "pale",
+    "shutter": "teal",
+    "door": "teal",
+    "frame": "cream",
+    "roof": "slate"
+   },
+   "c": {
+    "name": "Olive door on ochre-washed plaster, brown roof",
+    "wall": "ochre_wash",
+    "shutter": "olive",
+    "door": "olive",
+    "frame": "cream",
+    "roof": "brown"
+   }
+  }
+ },
+ "types": {
+  "terrace_14x12_2": "row_house",
+  "terrace_14x12_3": "row_house",
+  "terrace_12x16_2": "row_house",
+  "flats_16x22": "court_flats",
+  "flats_16x38": "court_flats",
+  "tower_home": "tower_home",
+  "shop_16x22": "shop_front",
+  "shop_16x38": "shop_front",
+  "market_shop": "shop_front",
+  "community_shop": "shop_front",
+  "food_16x22": "cafe_front",
+  "food_16x38": "cafe_front",
+  "market_cafe": "cafe_front",
+  "community_cafe": "cafe_front",
+  "plaza_cafe": "cafe_front",
+  "kiosk": "kiosk",
+  "work_16x22": "works",
+  "work_16x38": "works",
+  "works": "works",
+  "tower_office": "tower_office",
+  "health_16x22": "clinic",
+  "health_16x38": "clinic",
+  "community_clinic": "clinic",
+  "hospital_b_11_8_l0": "hospital",
+  "hospital_b_12_7_l0": "hospital",
+  "bank": "civic_stone",
+  "library": "civic_stone",
+  "museum": "civic_stone",
+  "police": "civic_stone",
+  "school_primary": "civic_stone",
+  "school_secondary": "civic_stone",
+  "cinema": "showroom",
+  "dealer": "showroom",
+  "furniture": "showroom",
+  "hall": "hall",
+  "guild": "guild",
+  "arcade_b_10_6_l0": "arcade_mall",
+  "arcade_b_12_8_l0": "arcade_mall",
+  "mall_b_1_5_l0": "arcade_mall",
+  "mall_b_16_5_l0": "arcade_mall",
+  "mall_b_7_0_l0": "arcade_mall",
+  "depot": "depot_hall",
+  "fire": "depot_hall",
+  "substation": "substation"
+ }
+}

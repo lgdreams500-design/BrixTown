@@ -27,7 +27,7 @@ Every requirement names a **feature** and a **level** from `docs/backlog/feature
 > Milestones: first slice = PH1, life depth = PH3, full game = PH6. Undecided means ask.
 
 There is no Phase column: the owner's picks decide when. Priority says how much it matters once in
-scope. Status of every row: `proposed`, except FURN-020 and FURN-021: `accepted` (the owner asked for the outlet to be built, 2026-11-22; ADR-0027), FURN-050 `accepted` (met for furniture by MENU.md INV-001, the owner's pick of `F-INV-ITEMS` 1, 2026-11-23), and FURN-051, FURN-052 and FURN-055: `accepted` (the owner, 2026-11-23, picking "Arrange + add, priced" for furniture in the building designer: move, turn and take away the pieces in the home and add pieces from a priced list; BUILDER.md §2.6). A piece taken away goes to the player's belongings and is placed from them (INV-001); until buying at the outlet (FURN-025) is built, a piece is bought straight into place `[ASSUMPTION]`. "Proven by" names the test that is still to be written, in
+scope. Status of every row: `proposed`, except FURN-020 and FURN-021: `accepted` (the owner asked for the outlet to be built, 2026-11-22; ADR-0027), FURN-050 `accepted` (met for furniture by MENU.md INV-001, the owner's pick of `F-INV-ITEMS` 1, 2026-11-23), and FURN-051, FURN-052 and FURN-055: `accepted` (the owner, 2026-11-23, picking "Arrange + add, priced" for furniture in the building designer: move, turn and take away the pieces in the home and add pieces from a priced list; BUILDER.md §2.6). A piece taken away goes to the player's belongings and is placed from them (INV-001); until buying at the outlet (FURN-025) is built, a piece is bought straight into place `[ASSUMPTION]`; and FURN-060 to FURN-063: `accepted` (the owner approved the house plan and its four furnishing levels and picked F-HOME-FURNISH level 3, 2026-11-23; ADR-0035). "Proven by" names the test that is still to be written, in
 `Tools/citysim/test_furniture.py` for rules and in a Blender look test for designs.
 
 Storage containers (`F-PROP-STORAGE`) and the assembly mini-game (`F-FURN-ASSEMBLE`) have no pick and
@@ -95,6 +95,15 @@ are not in this file; the owner said both come later.
 | FURN-056 | Each piece shall have a condition worked out from its age and how much it is used (from the clock and the routines), shown in the stages of FURN-008, lowering what it sells for. | F-PROP-FURNISH | 2 | P2 | `test_FURN_056_wear` |
 | FURN-057 | The player carrying a piece shall walk slower by its size, and only pieces one person can carry are carried; bigger ones are moved in place (FURN-055) or by a crew. | F-OBJ-CARRY | 1 | P2 | engine test |
 
+### 2.4 How residents' homes are furnished — `F-HOME-FURNISH` (ADR-0035)
+
+| ID | Requirement | Feature | Lvl | Pri | Proven by |
+|---|---|---|---|---|---|
+| FURN-060 | Every home shall be furnished from data: the plan of its type (rooms, doorways, windows, stair) and each room's pieces with their places and the furnishing level each first comes in at, in `World/rules/home_plans.json`; the home's line (FURN-005) decides which version of each piece stands there. | F-HOME-FURNISH | 1 | P1 | `test_FURN_060_every_home_has_a_plan` |
+| FURN-061 | Every plan shall be checked: each piece inside its room, no two floor pieces in each other, doorways, the front door, stairs and lift kept clear, and nothing taller than the sill in front of a window. | F-HOME-FURNISH | 1 | P1 | `test_FURN_061_plans_keep_clear` |
+| FURN-062 | There shall be four furnishing levels, Bare, Basic, Homely and Full, each adding pieces to the one before; a home shows the pieces of its level and those below. | F-HOME-FURNISH | 2 | P1 | `test_FURN_062_levels_add_up` |
+| FURN-063 | A household's furnishing level shall be worked out from data and the world clock, never ticked or stored: it starts from a level set by the household's daily wages (bands in `World/rules/furnishing_levels.json`) and rises a level each time its furniture savings, a share of its wages for each day since it moved in, reach the next level's cost; on the day a level rises that cost moves from the residents' account to `sys:spend` in one ledger transaction (until FURN-034 has residents buy from the companies). | F-HOME-FURNISH | 3 | P1 | `test_FURN_063_level_follows_the_household` |
+
 ## 3. Data
 
 `World/rules/furniture.json` (to write): kit parts, base pieces, finishes, colours, catalogue items,
@@ -115,7 +124,7 @@ buy-back share. Every number `[ASSUMPTION]` until tuned in play.
 | Version | Date | Change |
 |---|---|---|
 | 0.4.1 | 2026-11-23 | FURN-050 accepted: pieces taken away in the designer go to the belongings (MENU.md INV-001) and are placed from there. |
-| 0.4.0 | 2026-11-23 | FURN-051, FURN-052, FURN-055 accepted and built in the slice's building designer (BUILDER.md §2.6, ADR-0031): `World/rules/furnishing.json` (43 pieces with sizes and prices), `Tools/citysim/furnish.py` and `test_furnish.py`, ported as `Furnish` in `Prototype/play/builder.js`. |
+| 0.4.0 | 2026-11-23 | FURN-051, FURN-052, FURN-055 accepted and built in the slice's building designer (BUILDER.md §2.6, ADR-0031): `World/rules/furnishing_levels.json` (43 pieces with sizes and prices), `Tools/citysim/furnish.py` and `test_furnish.py`, ported as `Furnish` in `Prototype/play/builder.js`. |
 | 0.1.0 | 2026-11-22 | First draft from the owner's request and picks (`F-FURN-ITEMS` 2, `F-FURN-STORE` 2, `F-PROP-FURNISH` 2, `F-OBJ-CARRY` 1): FURN-001 to 008, 020 to 035, 050 to 057; Q-30 to Q-32. All proposed. |
 | 0.3.0 | 2026-11-22 | The owner asked for at least ten more furniture kits and more kinds of objects and decoration: look test `furniture_kit_18.py` (twelve kits, 78 base pieces in the four lines; renders in `Art/StyleTests/furniture_kit_18/`, not approved). FURN-001 gains a hall room. |
 | 0.2.0 | 2026-11-22 | The outlet built outside the East Gate (owner's request; Q-30 decided; ADR-0027): FURN-020 and FURN-021 accepted, with tests. FURN-003 and FURN-005 point at the approved look (ADR-0026). |

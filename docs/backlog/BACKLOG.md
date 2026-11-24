@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 40 of 52 | 9 of 52 | 9 of 52 |
-| Size of the plan (points) | 515 | 427 | 827 |
-| Size of the suggested plan | 128 | 387 | 795 |
+| Decided | 41 of 53 | 9 of 53 | 9 of 53 |
+| Size of the plan (points) | 528 | 440 | 840 |
+| Size of the suggested plan | 133 | 400 | 808 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -28,7 +28,7 @@
 | **Open plots** `F-MAP-PLOTS` | 0 None | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. |
 | **From design to building** `F-BLD-CONSTRUCT` | 0 Instant | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. |
 | **Shops and market** `F-BLD-SHOP` | 2 Stock and prices ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Stock and prices" for the first slice. Later milestones not stated. |
-| **Mall** `F-BLD-MALL` | 2 Full mall ★ | undecided | undecided | Owner, 2026-11-24: asked "Shall I record the Mall feature at level 2 (Full mall) for the first slice?" after Eastgate Mall's shell and three-floor inside were built (ADR-0035, ADR-0036), answered "Yes, level 2". Later milestones not stated. |
+| **Mall** `F-BLD-MALL` | 2 Full mall ★ | undecided | undecided | Owner, 2026-11-24: asked "Shall I record the Mall feature at level 2 (Full mall) for the first slice?" after Eastgate Mall's shell and three-floor inside were built (ADR-0037, ADR-0038), answered "Yes, level 2". Later milestones not stated. |
 | **Hospital and clinic** `F-BLD-HOSPITAL` | undecided | undecided | undecided |  |
 | **Bank, showroom, library, museum, cinema** `F-BLD-CIVIC` | 1 Places to visit | undecided | undecided | Owner, 2026-11-22: "Places to visit (Recommended)" for the bank, car showroom, library, museum, cinema and a second hospital and mall, made from existing lots. Later milestones not stated. |
 | **Workplaces** `F-BLD-WORK` | undecided | undecided | undecided |  |
@@ -59,6 +59,7 @@
 | **Carrying and moving things** `F-OBJ-CARRY` | 1 Residents carry ★ | undecided | undecided | Owner, 2026-11-22: "furnish level 2 and carry level 1" (asked for the first slice, so delivery crews can carry furniture into the flat). Later milestones not stated. |
 | **Furniture designs** `F-FURN-ITEMS` | 2 Large range ★ | undecided | undecided | Owner, 2026-11-22: "level to for design and company and outlets" (asked for first-slice levels; read as level 2). Bought furniture is delivered to the flat by NPCs, unassembled or assembled, or the player takes an instant option into the inventory, then places it from the inventory or moves it to storage; "we will build storage container mechanics later". Later milestones not stated. |
 | **Assembling flat-pack furniture** `F-FURN-ASSEMBLE` | undecided | undecided | undecided |  |
+| **How residents' homes are furnished** `F-HOME-FURNISH` | 3 Follows the household ★ | undecided | undecided | Owner, 2026-11-23: "3 Follows the household" (asked which level for furnishing variety, after approving house interiors look test 21). Later milestones not stated. |
 
 ## Vehicles
 
@@ -372,3 +373,9 @@
 - 0 Fixed look: As now: the look made in the character designer is kept for good. Size -.
 - 1 Saved outfits: The player saves looks from the character designer's own choices (garments, colours, extras, hair) as named outfits and changes between them, free, from the menu. Size S.
 - 2 Clothes you own: Garments are owned items bought in clothes shops through the ledger and kept in a wardrobe at home; you change at a wardrobe, a fitting room or home; clothes suit the weather (CITY-077 to CITY-080). Size L.
+
+**How residents' homes are furnished** (`F-HOME-FURNISH`). Homes should differ: a household just starting out has the bare essentials, one that has lived well for years has every piece of every set.
+- 0 As built: Homes are furnished as the slice does now: the same few pieces in every house, extras by a hash of the lot. Size S.
+- 1 One level for all: Every home is furnished the same: every piece of its line's sets in the rooms of its plan. Size S.
+- 2 Four levels per home: Each home is given one of four furnishing levels (Bare, Basic, Homely, Full) once, when it is made, and keeps it; each level adds pieces to the one before (ADR-0035). Size M.
+- 3 Follows the household: A household's level is worked out from its income and how long it has lived there, from data and the world clock (never ticked or stored): it starts from its income band and moves up a level each time its savings for furniture reach the next level's cost. Size L.

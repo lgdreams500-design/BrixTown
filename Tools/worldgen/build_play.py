@@ -17,6 +17,10 @@ ACTS = ["sleep", "home", "work", "eat", "shop", "rest", "sell", "wait", "visit",
 USES = ["bed", "room", "work", "seat", "customer", "bench", "stall", "wait", "chair", "flowerbed", "rim"]
 
 
+def rules_file(name):                                    # a rules file world.load() does not read (yet)
+    return json.load(open(os.path.join(HERE, "..", "..", "World", "rules", name + ".json"), encoding="utf-8"))
+
+
 def r1(v):
     return round(v, 1)
 
@@ -186,7 +190,7 @@ def life(w, city, plan, acts):
                 designer={k: v for k, v in w["designer"].items() if k != "note"},
                 visits={str(k): [[t, i] for t, i in v] for k, v in visits.items()}, visit_acts=visit_acts,
                 staff={str(k): v for k, v in staff.items()}, checks=dict(script=script, shops=shops, want=want),
-                estate={k: v for k, v in w["estate"].items() if k != "note"}, estate_checks=estate_checks(w, lots_),
+                estate=estate_rules(w), estate_checks=estate_checks(w, lots_),
                 walk_net=walk_net(city, lots_))
 
 
@@ -200,6 +204,15 @@ def walk_net(city, lots_):
     return dict(nodes=[[round(x, 2), round(z, 2)] for x, z in nodes], edges=edges, anchor=anchor)
 
 
+# ---- FURN-063 (furnishing levels): the estate's rules go to the slice with World/rules/furnishing_levels.json as
+# estate.furnishing, which estate.js (Estate.Market, Estate.furnish) and furnishing.js read. estate.Estate loads the same
+# file itself, so estate_checks' expected results include each day's furniture transactions and the levels.
+def estate_rules(w):
+    import furnishing as fu
+    R = {k: v for k, v in w["estate"].items() if k != "note"}
+    R["furnishing"] = {k: v for k, v in fu.load_rules().items() if k not in ("note", "notes")}
+    return R
+# ---- end FURN-063
 def builder_data(w, ds):
     """The building designer's rules for the slice (BUILD-004 to BUILD-007, BUILD-016 to BUILD-019): the kit, the planning
     rules, the stone and brick colours, and a fixed run of remodels with its results, for builder.js to reproduce; and the
@@ -315,6 +328,8 @@ def main(day=16):
         dodge={k: v for k, v in w["dodge"].items() if k != "note"},   # CITY-070, CITY-071: getting out of the way of cars
         surfaces=dict(world.surfaces(w), table=w["surfaces"]["patterns"]),   # WLD-039: which stone, brick and paving where
         storeys={k: v for k, v in w["storeys"].items() if k != "note"},   # WLD-050: floor heights, stairs and lifts
+        house_styles={k: v for k, v in rules_file("house_styles").items() if k != "note"},   # ADR-0032: the house lines' colourways
+        home_plans={k: v for k, v in rules_file("home_plans")["plans"].items()},   # FURN-060: the plans homes are furnished from
         dressing=world.dressing_today(w, day),          # WLD-034: what the boards show today, bunting on market days
         wear=wear(w, city, day),                        # CITY-077, CITY-080: coats, hoods and umbrellas
         life=dict(life(w, city, plan, acts), builder=builder_data(w, ds),   # money, shops, quests, the designers (ADR-0012, BUILD-004)

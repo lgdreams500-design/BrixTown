@@ -1,11 +1,11 @@
-# ADR-0036: Eastgate Mall's inside, designed afresh for its shell
+# ADR-0038: Eastgate Mall's inside, designed afresh for its shell
 
 Date: 2026-11-24. Status: accepted (owner's request in chat, 2026-11-24). Afterwards the owner picked F-BLD-MALL at
 level 2 (Full mall) for the first slice ("Yes, level 2"); its events and crowds need F-NPC-POP at level 2, which is at 1.
 
 ## Context
 
-After the shell of ADR-0035 the owner found the mall still shut ("there are no entries to the mall"), sent three
+After the shell of ADR-0037 the owner found the mall still shut ("there are no entries to the mall"), sent three
 pictures of mall interiors (curved white galleries round a planted court under a glazed roof, crossing moving stairs),
 and said: "ignore the old mall and use new interiors as now we have ribbon walls and four pierced domes etc. start
 interiors fresh as this is new design. I gave the reference photos but feel free to come with ideas that fit this new
@@ -49,7 +49,7 @@ white with strip lights.
    its voids, in 2 m squares, with a smooth strip and a parapet along each void.
 7. **The town's materials indoors.** Plaster, tiles and wood in room materials, lit as rooms are; lit windows for shop
    fronts and for the line of light under each parapet; lanterns hanging under the galleries and in the egg halls. Seen
-   from inside, an egg shows the sky through its openings (a new material, 27). No gloss and no white: as ADR-0035.
+   from inside, an egg shows the sky through its openings (a new material, 27). No gloss and no white: as ADR-0037.
 8. **Not built here.** Going into single shops and buying in them, visitors (no resident has the mall as a place to
    shop or eat, and crowds need F-NPC-POP at level 2; it is at 1), lifts, stairs that move, events.
 

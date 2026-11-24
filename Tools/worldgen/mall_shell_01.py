@@ -1,4 +1,4 @@
-"""Eastgate Mall's shell (WLD-057, ADR-0035). The owner, 2026-11-24, with a photograph of a mall of flowing white bands
+"""Eastgate Mall's shell (WLD-057, ADR-0037). The owner, 2026-11-24, with a photograph of a mall of flowing white bands
 and big golden pierced domes: "there are 3 malls in this world and they ... are big rectangle boxes. would you be able
 design one of these like attached pic?"
 

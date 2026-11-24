@@ -14,6 +14,26 @@ var Estate = (() => {
   const blockOf = id => id.slice(0, id.lastIndexOf("_l"));
   const centre = l => [(l.rect[0] + l.rect[2]) / 2, (l.rect[1] + l.rect[3]) / 2];
 
+  // ---------------------------------------------------------------- furnishing levels (FURN-062, FURN-063): a port of
+  // Tools/citysim/furnishing.py. Worked out from World/rules/furnishing_levels.json (packed as R.furnishing), a household's
+  // daily wages and the clock day, never ticked or stored; every household counts from day 0 and takes its furniture
+  // with it when it moves. furnishing.js reads it by lot for the houses.
+  const furnish = {
+    top: F => F.levels.length,
+    start(F, wage) { let lv = 1; for (const b of F.start_bands) if (wage >= b.from_wage) lv = Math.max(lv, b.level); return lv; },
+    perDay: (F, wage) => idiv(wage * F.save_bp, 10000),
+    after(F, wage, days) {
+      let lv = furnish.start(F, wage), spent = 0;
+      const saved = furnish.perDay(F, wage) * Math.max(0, days);
+      while (lv < F.levels.length && saved >= spent + F.step_cost[lv - 1]) { spent += F.step_cost[lv - 1]; lv++; }
+      return lv;
+    },
+    level: (F, wage, day, movedIn) => furnish.after(F, wage, day - (movedIn || 0)),
+    costBetween(F, lo, hi) { let c = 0; for (let k = lo; k < hi; k++) c += F.step_cost[k - 1]; return c; },
+    rise(F, wage, day, movedIn) { const a = furnish.level(F, wage, day - 1, movedIn), b = furnish.level(F, wage, day, movedIn); return [a, b, furnish.costBetween(F, a, b)]; },
+    name: (F, lv) => F.levels[lv - 1],
+  };
+
   function carve(R, lots, residents) {                    // PROP-009
     const byHome = new Map();
     for (const r of residents) if (r.home) { if (!byHome.has(r.home)) byHome.set(r.home, []); byHome.get(r.home).push(r); }
@@ -54,8 +74,9 @@ var Estate = (() => {
   }
 
   class Market {
-    constructor(R, econ, lots, residents) {
+    constructor(R, econ, lots, residents, F) {
       this.R = R; this.E = econ; this.lots = lots;
+      this.F = F || R.furnishing || null;                 // FURN-063: World/rules/furnishing_levels.json (build_play.py packs it)
       this.units = carve(R, lots, residents);
       this.byId = {}; this.byLot = new Map();
       this.units.forEach((u, i) => { this.byId[u.id] = i; if (!this.byLot.has(u.lot)) this.byLot.set(u.lot, []); this.byLot.get(u.lot).push(i); });
@@ -169,6 +190,7 @@ var Estate = (() => {
       const sales = this.market(d);
       this.mortgageDays(d);
       this.companies(d);
+      spent += this.furnishing(d);                        // FURN-063, before the town spends what is left over
       spent += this.townSpend(d);
       this.history.push([d, this.townIndex(), this.L.supply(), sales, earned, spent]);
       this.history = this.history.slice(-this.R.history_days);
@@ -366,6 +388,23 @@ var Estate = (() => {
         const a = "co:" + c.id, over = this.L.balance(a) - c.cap;
         if (over > 0) { const pay = idiv(over * c.dividend_bp, 10000); if (pay) this.L.post(d, 1440, c.name + " pays a dividend", [[a, -pay], ["sys:dividends", pay]]); }
       }
+    }
+    levelOf(i, d) {                                       // FURN-062, FURN-063: the furnishing level unit i shows on day d
+      if (d === undefined || d === null) d = this.E.day;
+      const F = this.F, t = this.tenant[i];
+      if (!F) return 1;
+      if (t === "hh" && this.members[i].length) return furnish.level(F, this.wage[i], d);
+      return t === "lodger" ? F.lodger_level : F.empty_level;
+    }
+    furnishing(d) {                                       // FURN-063: a rise's cost, residents' account to sys:spend
+      const F = this.F; let paid = 0;
+      if (!F) return 0;
+      for (let i = 0; i < this.units.length; i++) {
+        if (this.tenant[i] !== "hh" || !this.members[i].length) continue;
+        const [, b, cost] = furnish.rise(F, this.wage[i], d), c = Math.min(cost, this.L.balance(TOWN));
+        if (c > 0) { this.L.post(d, 1440, "Furniture for " + this.name(i) + " (" + furnish.name(F, b) + ")", [[TOWN, -c], ["sys:spend", c]]); paid += c; }
+      }
+      return paid;
     }
     townSpend(d) {
       const T = this.R.town, over = this.L.balance(TOWN) - T.pool_days * this.income;
@@ -582,15 +621,16 @@ var Estate = (() => {
     const listing = {}; for (const k of Object.keys(est.listing).sort((x, y) => x - y)) listing[k] = est.listing[k].price;
     return { results, balances, tx: E.L.tx.length, supply: E.L.supply(), owner: est.owner.slice(), tenant: est.tenant.slice(), idx, history: est.history,
       mortgages: est.mortgages.map(m => [m.status, m.paid, m.fees, m.missed]), listing, units: est.units.length, mine,
-      moves: est.moves, beds: est.units.reduce((a, u) => a + u.beds, 0) };
+      moves: est.moves, beds: est.units.reduce((a, u) => a + u.beds, 0),
+      levels: [1, 2, 3, 4].map(k => est.units.filter((u, i) => est.tenant[i] === "hh" && est.levelOf(i) === k).length) };
   }
   function residentsOf(D, lots) { return D.residents.map(r => ({ id: r.id, role: D.roles[r.r], home: lots[r.h] ? lots[r.h].id : null })); }
   function selfTest(D, lots) {
     const X = D.life, C = X.estate_checks, E = new Econ.Economy(X.economy, lots, {}, {});
     const got = runScript(new Market(X.estate, E, lots, residentsOf(D, lots)), C.script), want = C.want, bad = [];
-    for (const k of ["results", "balances", "tx", "supply", "owner", "tenant", "idx", "history", "mortgages", "listing", "units", "mine", "moves", "beds"])
+    for (const k of ["results", "balances", "tx", "supply", "owner", "tenant", "idx", "history", "mortgages", "listing", "units", "mine", "moves", "beds", "levels"])
       if (JSON.stringify(got[k]) !== JSON.stringify(want[k])) bad.push(k + ": " + JSON.stringify(got[k]).slice(0, 300) + " should be " + JSON.stringify(want[k]).slice(0, 300));
     return bad;
   }
-  return { Market, carve, runScript, selfTest, residentsOf, TOWN };
+  return { Market, carve, runScript, selfTest, residentsOf, TOWN, furnish };
 })();

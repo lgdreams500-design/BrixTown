@@ -1,4 +1,4 @@
-"""Eastgate Mall's inside, designed afresh for its new shell (WLD-058 to WLD-061, ADR-0036). The owner, 2026-11-24, after
+"""Eastgate Mall's inside, designed afresh for its new shell (WLD-058 to WLD-061, ADR-0038). The owner, 2026-11-24, after
 the ribbon walls and pierced eggs of mall_shell_01.py: "ignore the old mall and use new interiors as now we have ribbon
 walls and four pierced domes etc. start interiors fresh as this is new design ... feel free to come with ideas that fit
 this new design language for this mall."

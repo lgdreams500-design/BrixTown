@@ -1,0 +1,47 @@
+{
+ "note": "The house lines and their colourways (ADR-0032; BUILD-001 to BUILD-003). A line is a house's shape (Tools/blender/house_samples_19.py): which trim it has. A colourway is its colours: walls (a plaster pair, or the line's stone), shutters, door, window frames and roof tiles. Colours are linear RGB from the palette of docs/art/ART_DIRECTION.md section 2.3 (named in 'palette') or mixes of two; roofs are tile pairs from building_kit.json roof_tiles. Every house is given a line and a colourway once, when it is made (Tools/worldgen/add_houses_04.py), and keeps them in its lot (house.furniture, house.style); loading the game never changes them. Read by Prototype/play/houses.js, by the Blender scripts (house_styles_20.py and after) and later by Unreal, so a colour is changed here and nowhere else.",
+ "palette": {
+  "ochre": [0.52, 0.40, 0.20], "terracotta": [0.44, 0.24, 0.18], "teal": [0.20, 0.36, 0.37], "cream": [0.66, 0.61, 0.50],
+  "dusty_blue": [0.30, 0.38, 0.52], "brown": [0.24, 0.16, 0.11], "olive": [0.30, 0.33, 0.20], "plum": [0.30, 0.24, 0.34]
+ },
+ "plasters": {
+  "cool": [[0.46, 0.43, 0.40], [0.68, 0.63, 0.55]],
+  "warm": [[0.50, 0.40, 0.33], [0.70, 0.58, 0.46]],
+  "pale": [[0.54, 0.51, 0.46], [0.74, 0.70, 0.62]],
+  "ochre_wash": [[0.52, 0.44, 0.32], [0.70, 0.60, 0.44]]
+ },
+ "roofs": {
+  "terracotta": [[0.34, 0.18, 0.13], [0.52, 0.30, 0.20]],
+  "brown": [[0.20, 0.15, 0.10], [0.34, 0.26, 0.18]],
+  "dark": [[0.13, 0.08, 0.06], [0.25, 0.15, 0.11]],
+  "slate": [[0.16, 0.16, 0.20], [0.28, 0.28, 0.33]]
+ },
+ "lines": {
+  "plain":    {"name": "Plain",    "stone": false, "quoins": false, "arches": false, "hood": false, "band": 1, "boxes": false},
+  "oldtown":  {"name": "Old Town", "stone": false, "quoins": true,  "arches": false, "hood": true,  "band": 2, "boxes": true},
+  "workshop": {"name": "Workshop", "stone": true,  "quoins": false, "arches": false, "hood": false, "band": 2, "boxes": false},
+  "curve":    {"name": "Curve",    "stone": false, "quoins": false, "arches": true,  "hood": false, "band": 1, "boxes": true}
+ },
+ "colourways": {
+  "plain": {
+   "a": {"name": "Teal on cool plaster", "wall": "cool", "shutter": "teal", "door": "teal", "frame": "cream", "roof": "terracotta"},
+   "b": {"name": "Dusty blue on pale plaster, slate roof", "wall": "pale", "shutter": "dusty_blue", "door": "dusty_blue", "frame": "cream", "roof": "slate"},
+   "c": {"name": "Olive on warm plaster, brown roof", "wall": "warm", "shutter": "olive", "door": "brown", "frame": "cream", "roof": "brown"}
+  },
+  "oldtown": {
+   "a": {"name": "Terracotta on warm plaster", "wall": "warm", "shutter": "terracotta", "door": "terracotta", "frame": "brown", "roof": "terracotta"},
+   "b": {"name": "Ochre on ochre-washed plaster", "wall": "ochre_wash", "shutter": "ochre", "door": "brown", "frame": "brown", "roof": "terracotta"},
+   "c": {"name": "Plum on cool plaster, dark roof", "wall": "cool", "shutter": "plum", "door": "plum", "frame": "cream", "roof": "dark"}
+  },
+  "workshop": {
+   "a": {"name": "Brown wood on stone, dark roof", "wall": "stone", "shutter": "brown", "door": "brown", "frame": "cream", "roof": "dark"},
+   "b": {"name": "Teal on stone, terracotta roof", "wall": "stone", "shutter": "teal", "door": "teal", "frame": "cream", "roof": "terracotta"},
+   "c": {"name": "Dusty blue on stone, slate roof", "wall": "stone", "shutter": "dusty_blue", "door": "brown", "frame": "cream", "roof": "slate"}
+  },
+  "curve": {
+   "a": {"name": "Dusty blue and ochre on cool plaster", "wall": "cool", "shutter": "dusty_blue", "door": "ochre", "frame": "ochre", "roof": "terracotta"},
+   "b": {"name": "Cream and terracotta on warm plaster", "wall": "warm", "shutter": "cream", "door": "terracotta", "frame": "cream", "roof": "terracotta"},
+   "c": {"name": "Teal and cream on pale plaster", "wall": "pale", "shutter": "teal", "door": "teal", "frame": "cream", "roof": "brown"}
+  }
+ }
+}

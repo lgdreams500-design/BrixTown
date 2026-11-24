@@ -22497,6 +22497,10 @@
       "height": 8.5
      }
     ]
+   },
+   "style": {
+    "group": "arcade_mall",
+    "way": "b"
    }
   }
  ],

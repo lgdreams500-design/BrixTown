@@ -1,0 +1,181 @@
+00:02:48 Blender 5.3.0, only ('row_14x12_2_plain_4_ground', 'row_14x12_3_oldtown_4_first', 'flat_80_curve_4_flat', 'flat_160_workshop_4_flat', 'row_16x12_2_plain_4_upstairs')
+00:02:48 row_14x12_2: 14.00 x 12.00 m, floors ['ground', 'upstairs'], 104 pieces at full
+00:03:04 row_14x12_2_plain_4_ground rendered in 15.5s (916 objects)
+00:03:04 row_14x12_3: 14.00 x 12.00 m, floors ['ground', 'first', 'second'], 145 pieces at full
+00:03:22 row_14x12_3_oldtown_4_first rendered in 16.8s (867 objects)
+00:03:22 row_16x12_2: 16.00 x 12.00 m, floors ['ground', 'upstairs'], 101 pieces at full
+00:03:40 row_16x12_2_plain_4_upstairs rendered in 17.4s (563 objects)
+00:03:40 flat_80: 11.68 x 6.85 m, floors ['flat'], 39 pieces at full
+00:03:58 flat_80_curve_4_flat rendered in 18.1s (434 objects)
+00:03:58 flat_160: 23.36 x 6.85 m, floors ['flat'], 58 pieces at full
+00:04:22 flat_160_workshop_4_flat rendered in 22.6s (888 objects)
+00:04:22 DONE
+00:05:09 Blender 5.3.0, only ('row_16x12_2_curve_4_ground', 'flat_160_plain_1_flat', 'flat_80_oldtown_2_flat')
+00:05:09 row_14x12_2: 14.00 x 12.00 m, floors ['ground', 'upstairs'], 104 pieces at full
+00:05:09 row_14x12_3: 14.00 x 12.00 m, floors ['ground', 'first', 'second'], 145 pieces at full
+00:05:09 row_16x12_2: 16.00 x 12.00 m, floors ['ground', 'upstairs'], 101 pieces at full
+00:05:39 row_16x12_2_curve_4_ground rendered in 29.9s (924 objects)
+00:05:39 flat_80: 11.68 x 6.85 m, floors ['flat'], 38 pieces at full
+00:06:11 flat_80_oldtown_2_flat rendered in 31.4s (555 objects)
+00:06:11 flat_160: 23.36 x 6.85 m, floors ['flat'], 57 pieces at full
+00:06:43 flat_160_plain_1_flat rendered in 31.2s (236 objects)
+00:06:43 DONE
+00:07:39 Blender 5.3.0, only ('row_14x12_2',)
+00:07:39 row_14x12_2: 14.00 x 12.00 m, floors ['ground', 'upstairs'], 104 pieces at full
+00:08:13 row_14x12_2_plain_1_ground rendered in 34.0s (218 objects)
+00:08:45 row_14x12_2_plain_2_ground rendered in 31.9s (388 objects)
+00:09:19 row_14x12_2_plain_3_ground rendered in 33.1s (637 objects)
+00:09:52 row_14x12_2_plain_4_ground rendered in 32.7s (916 objects)
+00:10:23 row_14x12_2_plain_4_upstairs rendered in 29.6s (701 objects)
+00:10:40 row_14x12_2_oldtown_1_ground rendered in 16.2s (316 objects)
+00:10:59 row_14x12_2_oldtown_2_ground rendered in 18.4s (638 objects)
+00:11:19 row_14x12_2_oldtown_3_ground rendered in 18.7s (945 objects)
+00:11:40 row_14x12_2_oldtown_4_ground rendered in 19.5s (1275 objects)
+00:12:02 row_14x12_2_oldtown_4_upstairs rendered in 20.3s (985 objects)
+00:12:19 row_14x12_2_workshop_1_ground rendered in 16.9s (258 objects)
+00:12:39 row_14x12_2_workshop_2_ground rendered in 18.7s (495 objects)
+00:12:59 row_14x12_2_workshop_3_ground rendered in 19.6s (803 objects)
+00:13:19 row_14x12_2_workshop_4_ground rendered in 18.5s (1083 objects)
+00:13:49 row_14x12_2_workshop_4_upstairs rendered in 29.0s (791 objects)
+00:14:19 row_14x12_2_curve_1_ground rendered in 29.8s (214 objects)
+00:14:50 row_14x12_2_curve_2_ground rendered in 29.6s (373 objects)
+00:15:19 row_14x12_2_curve_3_ground rendered in 27.5s (621 objects)
+00:15:40 row_14x12_2_curve_4_ground rendered in 19.2s (888 objects)
+00:16:01 row_14x12_2_curve_4_upstairs rendered in 19.7s (660 objects)
+00:16:01 row_14x12_3: 14.00 x 12.00 m, floors ['ground', 'first', 'second'], 145 pieces at full
+00:16:01 row_16x12_2: 16.00 x 12.00 m, floors ['ground', 'upstairs'], 103 pieces at full
+00:16:01 flat_80: 11.68 x 6.85 m, floors ['flat'], 38 pieces at full
+00:16:01 flat_160: 23.36 x 6.85 m, floors ['flat'], 57 pieces at full
+00:16:01 DONE
+00:16:17 Blender 5.3.0, only ('row_14x12_3_plain', 'row_14x12_3_oldtown')
+00:16:17 row_14x12_2: 14.00 x 12.00 m, floors ['ground', 'upstairs'], 104 pieces at full
+00:16:17 row_14x12_3: 14.00 x 12.00 m, floors ['ground', 'first', 'second'], 145 pieces at full
+00:16:45 row_14x12_3_plain_1_ground rendered in 27.0s (218 objects)
+00:17:16 row_14x12_3_plain_2_ground rendered in 30.9s (371 objects)
+00:17:37 row_14x12_3_plain_3_ground rendered in 19.9s (653 objects)
+00:18:01 row_14x12_3_plain_4_ground rendered in 23.3s (946 objects)
+00:18:31 row_14x12_3_plain_4_first rendered in 29.9s (562 objects)
+00:19:08 row_14x12_3_plain_4_second rendered in 36.0s (668 objects)
+00:19:40 row_14x12_3_oldtown_1_ground rendered in 29.7s (316 objects)
+00:20:12 row_14x12_3_oldtown_2_ground rendered in 30.5s (606 objects)
+00:20:53 row_14x12_3_oldtown_3_ground rendered in 37.9s (958 objects)
+00:21:34 row_14x12_3_oldtown_4_ground rendered in 37.4s (1304 objects)
+00:22:12 row_14x12_3_oldtown_4_first rendered in 34.4s (867 objects)
+00:22:46 row_14x12_3_oldtown_4_second rendered in 30.5s (939 objects)
+00:22:46 row_16x12_2: 16.00 x 12.00 m, floors ['ground', 'upstairs'], 103 pieces at full
+00:22:46 flat_80: 11.68 x 6.85 m, floors ['flat'], 38 pieces at full
+00:22:46 flat_160: 23.36 x 6.85 m, floors ['flat'], 57 pieces at full
+00:22:46 DONE
+00:22:50 Blender 5.3.0, only ('row_14x12_3_workshop', 'row_14x12_3_curve')
+00:22:50 row_14x12_2: 14.00 x 12.00 m, floors ['ground', 'upstairs'], 104 pieces at full
+00:22:50 row_14x12_3: 14.00 x 12.00 m, floors ['ground', 'first', 'second'], 145 pieces at full
+00:23:42 row_14x12_3_workshop_1_ground rendered in 51.9s (258 objects)
+00:24:35 row_14x12_3_workshop_2_ground rendered in 52.1s (476 objects)
+00:25:30 row_14x12_3_workshop_3_ground rendered in 53.9s (816 objects)
+00:26:26 row_14x12_3_workshop_4_ground rendered in 54.4s (1110 objects)
+00:27:20 row_14x12_3_workshop_4_first rendered in 53.4s (668 objects)
+00:28:15 row_14x12_3_workshop_4_second rendered in 53.5s (738 objects)
+00:29:09 row_14x12_3_curve_1_ground rendered in 52.6s (214 objects)
+00:30:05 row_14x12_3_curve_2_ground rendered in 54.8s (356 objects)
+00:31:05 row_14x12_3_curve_3_ground rendered in 58.0s (641 objects)
+00:31:55 row_14x12_3_curve_4_ground rendered in 46.6s (924 objects)
+00:32:47 row_14x12_3_curve_4_first rendered in 49.6s (544 objects)
+00:33:21 row_14x12_3_curve_4_second rendered in 32.7s (615 objects)
+00:33:21 row_16x12_2: 16.00 x 12.00 m, floors ['ground', 'upstairs'], 103 pieces at full
+00:33:21 flat_80: 11.68 x 6.85 m, floors ['flat'], 38 pieces at full
+00:33:21 flat_160: 23.36 x 6.85 m, floors ['flat'], 57 pieces at full
+00:33:21 DONE
+00:33:32 Blender 5.3.0, only ('row_16x12_2_plain', 'row_16x12_2_oldtown')
+00:33:32 row_14x12_2: 14.00 x 12.00 m, floors ['ground', 'upstairs'], 104 pieces at full
+00:33:32 row_14x12_3: 14.00 x 12.00 m, floors ['ground', 'first', 'second'], 145 pieces at full
+00:33:32 row_16x12_2: 16.00 x 12.00 m, floors ['ground', 'upstairs'], 103 pieces at full
+00:34:02 row_16x12_2_plain_1_ground rendered in 29.5s (218 objects)
+00:34:33 row_16x12_2_plain_2_ground rendered in 30.3s (371 objects)
+00:35:05 row_16x12_2_plain_3_ground rendered in 32.1s (653 objects)
+00:35:44 row_16x12_2_plain_4_ground rendered in 37.0s (946 objects)
+00:36:19 row_16x12_2_plain_4_upstairs rendered in 34.6s (628 objects)
+00:36:52 row_16x12_2_oldtown_1_ground rendered in 32.3s (316 objects)
+00:37:14 row_16x12_2_oldtown_2_ground rendered in 20.3s (606 objects)
+00:37:56 row_16x12_2_oldtown_3_ground rendered in 40.2s (958 objects)
+00:38:39 row_16x12_2_oldtown_4_ground rendered in 38.6s (1304 objects)
+00:39:19 row_16x12_2_oldtown_4_upstairs rendered in 36.9s (915 objects)
+00:39:19 flat_80: 11.68 x 6.85 m, floors ['flat'], 38 pieces at full
+00:39:19 flat_160: 23.36 x 6.85 m, floors ['flat'], 57 pieces at full
+00:39:19 DONE
+00:39:27 Blender 5.3.0, only ('row_16x12_2_workshop', 'row_16x12_2_curve')
+00:39:27 row_14x12_2: 14.00 x 12.00 m, floors ['ground', 'upstairs'], 104 pieces at full
+00:39:27 row_14x12_3: 14.00 x 12.00 m, floors ['ground', 'first', 'second'], 145 pieces at full
+00:39:27 row_16x12_2: 16.00 x 12.00 m, floors ['ground', 'upstairs'], 103 pieces at full
+00:40:00 row_16x12_2_workshop_1_ground rendered in 32.3s (258 objects)
+00:40:41 row_16x12_2_workshop_2_ground rendered in 39.6s (476 objects)
+00:41:41 row_16x12_2_workshop_3_ground rendered in 58.9s (816 objects)
+00:42:38 row_16x12_2_workshop_4_ground rendered in 55.5s (1110 objects)
+00:43:31 row_16x12_2_workshop_4_upstairs rendered in 52.3s (723 objects)
+00:44:23 row_16x12_2_curve_1_ground rendered in 51.2s (214 objects)
+00:45:22 row_16x12_2_curve_2_ground rendered in 57.0s (356 objects)
+00:46:12 row_16x12_2_curve_3_ground rendered in 48.7s (641 objects)
+00:47:10 row_16x12_2_curve_4_ground rendered in 55.9s (924 objects)
+00:48:02 row_16x12_2_curve_4_upstairs rendered in 49.2s (586 objects)
+00:48:02 flat_80: 11.68 x 6.85 m, floors ['flat'], 38 pieces at full
+00:48:02 flat_160: 23.36 x 6.85 m, floors ['flat'], 57 pieces at full
+00:48:02 DONE
+00:48:07 Blender 5.3.0, only ('flat_80_plain', 'flat_80_oldtown')
+00:48:07 row_14x12_2: 14.00 x 12.00 m, floors ['ground', 'upstairs'], 104 pieces at full
+00:48:07 row_14x12_3: 14.00 x 12.00 m, floors ['ground', 'first', 'second'], 145 pieces at full
+00:48:07 row_16x12_2: 16.00 x 12.00 m, floors ['ground', 'upstairs'], 103 pieces at full
+00:48:07 flat_80: 11.68 x 6.85 m, floors ['flat'], 38 pieces at full
+00:49:05 flat_80_plain_1_flat rendered in 58.0s (213 objects)
+00:49:58 flat_80_plain_2_flat rendered in 51.9s (321 objects)
+00:50:53 flat_80_plain_3_flat rendered in 54.5s (372 objects)
+00:51:28 flat_80_plain_4_flat rendered in 35.2s (444 objects)
+00:51:57 flat_80_oldtown_1_flat rendered in 27.8s (342 objects)
+00:52:30 flat_80_oldtown_2_flat rendered in 31.8s (555 objects)
+00:53:05 flat_80_oldtown_3_flat rendered in 33.9s (634 objects)
+00:53:37 flat_80_oldtown_4_flat rendered in 30.9s (729 objects)
+00:53:37 flat_160: 23.36 x 6.85 m, floors ['flat'], 57 pieces at full
+00:53:37 DONE
+00:53:43 Blender 5.3.0, only ('flat_80_workshop', 'flat_80_curve')
+00:53:43 row_14x12_2: 14.00 x 12.00 m, floors ['ground', 'upstairs'], 104 pieces at full
+00:53:44 row_14x12_3: 14.00 x 12.00 m, floors ['ground', 'first', 'second'], 145 pieces at full
+00:53:44 row_16x12_2: 16.00 x 12.00 m, floors ['ground', 'upstairs'], 103 pieces at full
+00:53:44 flat_80: 11.68 x 6.85 m, floors ['flat'], 38 pieces at full
+00:54:12 flat_80_workshop_1_flat rendered in 28.5s (272 objects)
+00:54:34 flat_80_workshop_2_flat rendered in 20.7s (436 objects)
+00:55:08 flat_80_workshop_3_flat rendered in 33.5s (531 objects)
+00:55:40 flat_80_workshop_4_flat rendered in 32.0s (610 objects)
+00:56:27 flat_80_curve_1_flat rendered in 46.0s (208 objects)
+00:57:20 flat_80_curve_2_flat rendered in 52.4s (319 objects)
+00:57:58 flat_80_curve_3_flat rendered in 36.3s (368 objects)
+00:58:20 flat_80_curve_4_flat rendered in 21.5s (430 objects)
+00:58:20 flat_160: 23.36 x 6.85 m, floors ['flat'], 57 pieces at full
+00:58:20 DONE
+00:58:27 Blender 5.3.0, only ('flat_160_plain', 'flat_160_oldtown')
+00:58:27 row_14x12_2: 14.00 x 12.00 m, floors ['ground', 'upstairs'], 104 pieces at full
+00:58:27 row_14x12_3: 14.00 x 12.00 m, floors ['ground', 'first', 'second'], 145 pieces at full
+00:58:27 row_16x12_2: 16.00 x 12.00 m, floors ['ground', 'upstairs'], 103 pieces at full
+00:58:27 flat_80: 11.68 x 6.85 m, floors ['flat'], 38 pieces at full
+00:58:27 flat_160: 23.36 x 6.85 m, floors ['flat'], 57 pieces at full
+00:58:53 flat_160_plain_1_flat rendered in 25.6s (236 objects)
+00:59:25 flat_160_plain_2_flat rendered in 31.7s (394 objects)
+00:59:57 flat_160_plain_3_flat rendered in 31.6s (537 objects)
+01:00:27 flat_160_plain_4_flat rendered in 29.4s (685 objects)
+01:00:43 flat_160_oldtown_1_flat rendered in 15.8s (380 objects)
+01:01:03 flat_160_oldtown_2_flat rendered in 19.5s (706 objects)
+01:01:37 flat_160_oldtown_3_flat rendered in 31.1s (886 objects)
+01:02:11 flat_160_oldtown_4_flat rendered in 30.4s (1069 objects)
+01:02:11 DONE
+01:02:15 Blender 5.3.0, only ('flat_160_workshop', 'flat_160_curve')
+01:02:15 row_14x12_2: 14.00 x 12.00 m, floors ['ground', 'upstairs'], 104 pieces at full
+01:02:15 row_14x12_3: 14.00 x 12.00 m, floors ['ground', 'first', 'second'], 145 pieces at full
+01:02:15 row_16x12_2: 16.00 x 12.00 m, floors ['ground', 'upstairs'], 103 pieces at full
+01:02:15 flat_80: 11.68 x 6.85 m, floors ['flat'], 38 pieces at full
+01:02:15 flat_160: 23.36 x 6.85 m, floors ['flat'], 57 pieces at full
+01:02:31 flat_160_workshop_1_flat rendered in 16.1s (302 objects)
+01:02:49 flat_160_workshop_2_flat rendered in 17.9s (531 objects)
+01:03:07 flat_160_workshop_3_flat rendered in 17.2s (734 objects)
+01:03:24 flat_160_workshop_4_flat rendered in 17.1s (883 objects)
+01:03:41 flat_160_curve_1_flat rendered in 16.0s (231 objects)
+01:03:59 flat_160_curve_2_flat rendered in 18.5s (391 objects)
+01:04:20 flat_160_curve_3_flat rendered in 19.6s (536 objects)
+01:04:43 flat_160_curve_4_flat rendered in 23.0s (661 objects)
+01:04:43 DONE

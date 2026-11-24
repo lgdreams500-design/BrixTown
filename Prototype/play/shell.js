@@ -1,5 +1,5 @@
 "use strict";
-// A mall's sculpted shell (WORLD_MAP WLD-057, ADR-0035; the owner, 2026-11-24, from a photograph of a mall of flowing white
+// A mall's sculpted shell (WORLD_MAP WLD-057, ADR-0037; the owner, 2026-11-24, from a photograph of a mall of flowing white
 // bands and golden pierced domes). Where it stands, how high and where it is lifted is data: the lot's `shell` in the block
 // file (World/city_01/blocks/b_16_5.json, made by Tools/worldgen/mall_shell_01.py). This file only draws it, in the town's
 // own materials (ART_DIRECTION 2.2: matte and mottled, chunky and soft, the muted palette, lanterns at dusk):

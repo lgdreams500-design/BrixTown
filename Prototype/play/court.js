@@ -1,5 +1,5 @@
 "use strict";
-// Eastgate Mall's inside (WORLD_MAP WLD-058 to WLD-061, ADR-0036; the owner, 2026-11-24: "start interiors fresh as this is new
+// Eastgate Mall's inside (WORLD_MAP WLD-058 to WLD-061, ADR-0038; the owner, 2026-11-24: "start interiors fresh as this is new
 // design"). What is where is data: the lot's `plan` (concept "court") in World/city_01/blocks/b_16_5.json, made by
 // Tools/worldgen/mall_inside_01.py. This file only draws it and makes it walkable, in the shell's language and the town's
 // materials (ART_DIRECTION 2.2 and 2.6: matte, chunky and soft, the muted palette, lanterns and lit windows):

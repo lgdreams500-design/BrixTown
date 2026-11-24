@@ -1,4 +1,4 @@
-# ADR-0035: Eastgate Mall's sculpted shell, in the town's own materials
+# ADR-0037: Eastgate Mall's sculpted shell, in the town's own materials
 
 Date: 2026-11-24. Status: accepted for the form (owner's request in chat, 2026-11-24, with a photograph); the materials
 are the locked look, built in the slice for the owner to react to.
@@ -59,4 +59,4 @@ and soft with round arches (W3), and lanterns carry the scene at dusk (W6).
 
 Points 2 and 6 were overtaken: the owner asked for entrances and a new inside ("start interiors fresh as this is new
 design"). The hall's rect, door and floors stand; its `plan` was replaced and its wall opened under each arch. See
-ADR-0036.
+ADR-0038.
