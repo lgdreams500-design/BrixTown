@@ -91,6 +91,17 @@ character (CHR-001) comes over. At High on this laptop: 53 to 55 frames a second
 the morning school rush of some 150 and in a garden with 46 (the same as with none: the GPU is the limit), the people
 taking 1.3 to 3.6 ms of the game thread.
 
+## Vehicles (CITY-040, CITY-091; ADR-0015)
+Every car, van and bus of the day is where `Tools/citysim/traffic.py` puts it at the clock's minute: `Game/Data/cars.json`
+(the same trips as the slice's, written by `build_play.py`) read by `BrixWorld/BrixCars`, a port of the slice's
+`Cars.at()` with traffic.py's bus layovers; `CITY040_vehicles_are_where_the_traffic_puts_them` checks 66 vehicles at
+eight minutes against traffic.py (parked to 0.1 m; on the move to 4 m, the sideways ease into a lay-by). Cars and vans
+are the Soft box models of `Tools/blender/car_export_11.py` (copied to `Game/Data/car_models.json` by `build_play.py`) in
+the slice's paints, roof loads and spares; buses the slice's long soft box in their line's colour. Within 45 m the near
+model, to 160 m the light one; each is a procedural mesh built once and moved. Nobody sits in them yet (drivers and
+riders), cars do not yet give way to the player, and the player cannot drive. 51.5 frames a second at High on a street
+with 32 vehicles drawn.
+
 ## Street furniture (WLD-028)
 Each block's props are drawn as the slice draws them (play.js prop(), dressing.js), boxes in the palette's colours:
 lamps, benches, bins, bollards, planters, postboxes, bike racks, phone boxes, wall lanterns, flowerbeds, fountains,
@@ -129,3 +140,4 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY022_residents_are_where_their_routine_puts_them` | CITY-022 |
 | `BrixTown.World.ART004_people_are_drawn_as_the_slice_draws_them` | ART-004, ANIM-001, ANIM-002 |
 | `BrixTown.World.CITY017_residents_sit_on_garden_benches` | CITY-017 |
+| `BrixTown.World.CITY040_vehicles_are_where_the_traffic_puts_them` | CITY-040 |

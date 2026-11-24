@@ -49,6 +49,8 @@ private:
 	TSharedPtr<FBrixCity> City;
 	TSharedPtr<struct FBrixDay> Today;           // the residents' routines (Game/Data/day.json)
 	UPROPERTY() TObjectPtr<class ABrixPeople> People;
+	TSharedPtr<struct FBrixTraffic> Traffic;     // the day's vehicles (Game/Data/cars.json)
+	UPROPERTY() TObjectPtr<class ABrixCars> Cars;
 	UPROPERTY() TObjectPtr<class ADirectionalLight> SunActor;
 	UPROPERTY() TObjectPtr<class USkyLightComponent> SkyFill;
 	UPROPERTY() TObjectPtr<class UExponentialHeightFogComponent> HazeFog;
