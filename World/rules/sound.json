@@ -117,6 +117,44 @@
   "radio":       { "kind": "tick",  "hz": 700,  "len": 0.06, "gain": 0.2 }
  },
 
+ "rewards": {
+  "note": "Money coming in (SND-019 to SND-021), as the owner chose from Prototype/play/feedback_samples.html on 2026-11-24: Q1 'Lantern bells' for a quest or job reward and I1 'Till and bell' for bank interest. Notes are MIDI numbers. A voice is a struck tone built from partials [times the note's pitch, share of its level, share of its length]. quest: the fanfare is [seconds after the start, steps above the root]; each coin taken rings one step higher up the scale, never past top_step; the last one to reach the purse rings the chord an octave up and a shimmer above it. achievement: see its own note. interest: a drawer thud, a tick for each coin, then the end notes [seconds, note, level, seconds long]. ledger says which transactions count: a reward is paid from reward_from, interest from interest_from with a memo that starts with interest_memo (Tools/citysim/economy.py). coins is how it looks: how many coins for an amount (minor units, [at least, coins]), how they spring out (metres and seconds: thrown up from from_m to land on a ring round the player, ring_m is the inner and outer ring; they bounce, then stand hover_m off the ground), and how they are taken (a lift of lift_s, then a swoop in of pull_s, one every pull_gap_s round the ring).",
+  "gain": 1,
+  "room": { "send_gain": 0.2, "delays": [0.11, 0.17], "feedback": 0.36, "lowpass_hz": 3400 },
+  "voices": {
+   "bell": { "octave": 0, "attack": 0.004, "len": 1.1, "partials": [[1, 1, 1], [2.76, 0.26, 0.45], [5.4, 0.09, 0.18]] },
+   "harp": { "octave": 0, "attack": 0.003, "len": 0.9, "wave": "triangle", "partials": [[1, 1.15, 1], [2, 0.3, 0.5], [3, 0.08, 0.25]] },
+   "box":  { "octave": 1, "attack": 0.001, "len": 0.7, "partials": [[1, 0.9, 1], [4.02, 0.14, 0.2]], "click_hz": 5200, "click_gain": 0.25 }
+  },
+  "quest": {
+   "voice": "bell", "root": 74, "scale": [0, 2, 4, 7, 9], "top_step": 9,
+   "fanfare": [[0, 0], [0.09, 4], [0.18, 7], [0.3, 12]], "fanfare_gain": 0.16, "fanfare_len": 1.2,
+   "take_gain": 0.12, "take_len": 0.5,
+   "chord": [0, 7, 12, 16], "chord_gain": 0.12, "chord_len": 2,
+   "shimmer": [0, 4, 7, 12, 16, 19], "shimmer_gain": 0.05, "shimmer_gap": 0.045, "shimmer_len": 0.5,
+   "pop": { "hz": [260, 620], "len": 0.09, "gain": 0.1 },
+   "clink": { "hz": [3300, 4200], "len": 0.06, "gain": 0.035 }
+  },
+  "interest": {
+   "voice": "box", "root": 79, "scale": [0, 2, 4, 7, 9], "tick_gain": 0.1, "tick_len": 0.25,
+   "thud": { "hz": 140, "len": 0.14, "gain": 0.2, "noise_hz": 380, "noise_gain": 0.3 },
+   "end_voice": "bell", "end": [[0, 88, 0.2, 1.6], [0.01, 76, 0.08, 1.2]]
+  },
+  "achievement": {
+   "note": "SND-021, the owner's choice A1 'Town fanfare': a harp sweep up (each note a little louder), a wide bell chord, then three high twinkles. at is seconds after the start.",
+   "sweep":   { "voice": "harp", "notes": [62, 64, 66, 69, 71, 74, 76, 78, 81, 83], "gap": 0.04, "gain": 0.09, "gain_step": 0.006, "len": 0.7 },
+   "chord":   { "voice": "bell", "at": 0.46, "notes": [62, 69, 74, 78, 81], "gain": 0.13, "len": 2.4 },
+   "twinkle": { "voice": "box", "at": 0.9, "gap": 0.13, "notes": [81, 86, 90], "gain": 0.08, "len": 0.6 }
+  },
+  "ledger": { "reward_from": "sys:rewards", "interest_from": "bank:vault", "interest_memo": "Interest" },
+  "coins": {
+   "reward_tiers": [[0, 5], [5000, 8], [15000, 12], [40000, 18]],
+   "start_s": 0.38, "gap_s": 0.035, "from_m": 1.05, "ring_m": [1.0, 1.7], "up_mps": [4.2, 5.6], "fall_mps2": 15, "bounce": 0.42, "size_m": 0.07, "hover_m": 0.3,
+   "pull_after_s": 1.5, "pull_gap_s": 0.07, "lift_s": 0.14, "pull_s": 0.34, "fly_s": 0.45,
+   "interest_coins": 6, "interest_start_s": 0.55, "interest_gap_s": 0.13, "interest_fly_s": 0.38, "slip_s": 2.2
+  }
+ },
+
  "music": {
   "score": {
    "gain": 0.5, "talk_duck": 0.25, "source_duck": 0.1,

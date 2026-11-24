@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brix Town: reward feedback samples</title>
+<style>
+  /* Samples for the owner to choose from: sounds and animations for quest rewards, bank interest and achievements.
+     Nothing here is in the game yet. The chosen ones move into World/rules/sound.json, sound.js and life.js. */
+  :root {
+    --ink: #17171c; --panel: #212128; --line: #34343d; --cream: #d9cfb6; --dim: #a79f8c; --lantern: #f0a35a; --teal: #6fa3a2; --coin: #f0c35a;
+    --name: Constantia, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    --data: Bahnschrift, "Segoe UI", "Trebuchet MS", sans-serif;
+  }
+  html, body { margin: 0; background: var(--ink); color: var(--cream); font-family: var(--data); }
+  main { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-family: var(--name); font-weight: normal; font-size: 32px; margin: 0 0 6px; }
+  p.lede { color: var(--dim); margin: 0 0 16px; line-height: 1.5; }
+  h2 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); margin: 26px 0 10px; font-weight: 600; }
+  #stagewrap { position: sticky; top: 0; z-index: 5; background: var(--ink); padding: 8px 0 10px; }
+  #stage { position: relative; height: 340px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #2a2622; }
+  #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #fx { z-index: 3; }
+  #purse { position: absolute; right: 14px; top: 12px; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 7px 14px 7px 10px; background: rgba(23,23,28,.78); border-radius: 20px; font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; transform-origin: 80% 50%; }
+  #purse svg { width: 22px; height: 22px; fill: none; stroke: var(--coin); stroke-width: 1.6; }
+  #purse.glow { box-shadow: 0 0 0 1px rgba(240,195,90,.8), 0 0 22px rgba(240,195,90,.55); transition: box-shadow .15s; }
+  #purse { transition: box-shadow .9s; }
+  #delta { position: absolute; right: 18px; top: 52px; z-index: 2; font-size: 16px; font-weight: 600; opacity: 0; transition: opacity .5s, transform .5s; transform: translateY(-6px); font-variant-numeric: tabular-nums; }
+  #delta.on { opacity: 1; transform: none; } #delta.pos { color: #a8d08d; } #delta.neg { color: #e08a7a; }
+  #tag { position: absolute; right: 14px; top: 82px; z-index: 2; padding: 6px 12px; background: #d9cfb6; color: var(--ink); border-radius: 6px; font-size: 14px; opacity: 0; transform: translateX(30px); transition: opacity .35s, transform .35s cubic-bezier(.2,1.4,.4,1); }
+  #tag b { font-family: var(--name); font-weight: 400; font-size: 16px; display: block; }
+  #tag.on { opacity: 1; transform: none; }
+  #toast { position: absolute; left: 50%; top: 12%; z-index: 2; transform: translateX(-50%); text-align: center; font-size: 15px; padding: 8px 18px; background: rgba(23,23,28,.78); border-radius: 6px; opacity: 0; transition: opacity .4s; white-space: nowrap; }
+  #toast b { display: block; font-family: var(--name); font-weight: 400; font-size: 22px; color: var(--coin); }
+  #toast.on { opacity: 1; }
+  #banner { position: absolute; left: 50%; top: 16px; z-index: 2; display: flex; gap: 14px; align-items: center; padding: 12px 22px 12px 14px; background: #c9a24a; color: var(--ink); border-radius: 14px; box-shadow: 0 6px 0 rgba(0,0,0,.25); transform: translate(-50%, -160%) rotate(-2deg); transition: transform .55s cubic-bezier(.2,1.5,.4,1); white-space: nowrap; }
+  #banner.on { transform: translate(-50%, 0) rotate(-1deg); }
+  #banner svg { width: 40px; height: 40px; flex: none; }
+  #banner small { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; opacity: .75; }
+  #banner b { font-family: var(--name); font-weight: 400; font-size: 24px; }
+  @media (max-width: 640px) { #banner { top: 58px; } }
+  .bar { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 13px; color: var(--dim); flex-wrap: wrap; }
+  .bar button { font: inherit; color: var(--cream); background: transparent; border: 1px solid var(--line); border-radius: 16px; padding: 5px 12px; cursor: pointer; }
+  .bar button.on { border-color: var(--lantern); color: var(--lantern); }
+  .track { display: flex; gap: 14px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
+  .track.on { border-color: var(--lantern); }
+  button.play { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--lantern); background: transparent; color: var(--lantern); font-size: 16px; cursor: pointer; }
+  .track.on button.play { background: var(--lantern); color: var(--ink); }
+  .what { flex: 1; min-width: 0; }
+  .title { font-family: var(--name); font-size: 19px; }
+  .how { font-size: 13px; color: var(--dim); margin-top: 4px; line-height: 1.45; }
+  .num { font-size: 13px; color: var(--teal); font-variant-numeric: tabular-nums; flex: none; font-weight: 600; }
+  #note { font-size: 13px; color: var(--dim); margin-top: 22px; line-height: 1.5; }
+  #err { color: var(--lantern); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Reward feedback samples</h1>
+  <p class="lede">Sounds and animations for money and achievements, to choose from. Press a sample to play it on the stage. The figure and the street are stand-ins; the coins, the purse and the sounds are what is being shown. Turn your sound on.</p>
+  <div id="stagewrap">
+    <div id="stage">
+      <canvas id="bg"></canvas><canvas id="fx"></canvas>
+      <div id="purse"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="7" rx="7" ry="3"/><path d="M5 7v5c0 1.7 3.1 3 7 3s7-1.3 7-3V7"/><path d="M5 12v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5"/></svg><span id="amount">Bx 1,240</span></div>
+      <div id="delta"></div>
+      <div id="tag"><b>Savings interest</b>Old Town Bank, end of day</div>
+      <div id="toast"><b>Quest complete</b><span id="toast-line">A parcel for the baker</span></div>
+      <div id="banner"><svg viewBox="0 0 40 40"><path d="M13 3h14l-4 13h-6z" fill="#8a4a3a"/><circle cx="20" cy="25" r="11" fill="#f0c35a" stroke="#17171c" stroke-width="2"/><path d="M20 18l2.1 4.4 4.8.6-3.5 3.3.9 4.7-4.3-2.3-4.3 2.3.9-4.7-3.5-3.3 4.8-.6z" fill="#17171c"/></svg><div><small>Achievement</small><b id="banner-name">A home of your own</b></div></div>
+    </div>
+    <div class="bar"><span>Quest reward size:</span><button id="small" class="on" type="button">Small, Bx 50</button><button id="big" type="button">Big, Bx 400</button></div>
+  </div>
+  <div id="list"></div>
+  <p id="note">Tell Claude in chat which ones you approve by their number (for example "Q1, I2, A1"), and what to change in the others. The chosen sounds then become data in <code>World/rules/sound.json</code> and the animations go into the playable slice.</p>
+  <p id="err"></p>
+</main>
+<script>
+(function () {
+  "use strict";
+  const $ = id => document.getElementById(id), fmt = n => "Bx " + Math.round(n).toLocaleString("en-US");
+  const hz = m => 440 * Math.pow(2, (m - 69) / 12), rnd = (a, b) => a + Math.random() * (b - a);
+
+  // ---------------------------------------------------------------- sound: every sample is made here, live
+  const AC = window.AudioContext || window.webkitAudioContext; let ctx = null, out = null, wet = null, noise = null;
+  function audio() {
+    if (!AC) { $("err").textContent = "Sound could not start in this browser."; return false; }
+    if (ctx) { if (ctx.state === "suspended") ctx.resume(); return true; }
+    ctx = new AC(); out = ctx.createGain(); out.gain.value = .55;
+    const comp = ctx.createDynamicsCompressor(); out.connect(comp); comp.connect(ctx.destination);
+    wet = ctx.createGain(); wet.gain.value = .2;                       // a small bright room, so the bells ring on
+    const d1 = ctx.createDelay(1), d2 = ctx.createDelay(1), fb = ctx.createGain(), lp = ctx.createBiquadFilter();
+    d1.delayTime.value = .11; d2.delayTime.value = .17; fb.gain.value = .36; lp.type = "lowpass"; lp.frequency.value = 3400;
+    wet.connect(d1); d1.connect(d2); d2.connect(lp); lp.connect(fb); fb.connect(d1); d1.connect(out); d2.connect(out);
+    noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate); const ch = noise.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+    return true;
+  }
+  function tone(t, f, type, peak, att, len, f2) {
+    const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + att + len * .6);
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(peak, t + att); g.gain.exponentialRampToValueAtTime(.0001, t + att + len);
+    o.connect(g); g.connect(out); g.connect(wet); o.start(t); o.stop(t + att + len + .05);
+  }
+  function puff(t, type, f, q, peak, att, len) {
+    const s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(); s.buffer = noise; s.loop = true; fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(peak, t + att); g.gain.exponentialRampToValueAtTime(.0001, t + att + len);
+    s.connect(fl); fl.connect(g); g.connect(out); s.start(t, Math.random()); s.stop(t + att + len + .05);
+  }
+  const VOICE = {
+    bell: (t, m, v, len) => { const f = hz(m); len = len || 1.1; tone(t, f, "sine", v, .004, len); tone(t, f * 2.76, "sine", v * .26, .002, len * .45); tone(t, f * 5.4, "sine", v * .09, .001, len * .18); },
+    harp: (t, m, v, len) => { const f = hz(m); len = len || .9; tone(t, f, "triangle", v * 1.15, .003, len); tone(t, f * 2, "sine", v * .3, .002, len * .5); tone(t, f * 3, "sine", v * .08, .002, len * .25); },
+    box: (t, m, v, len) => { const f = hz(m + 12); len = len || .7; tone(t, f, "sine", v * .9, .001, len); tone(t, f * 4.02, "sine", v * .14, .001, len * .2); puff(t, "bandpass", 5200, 3, v * .25, .001, .02); },
+  };
+  const now = () => ctx.currentTime + .02;
+  const play = fn => { if (ctx) fn(now()); };
+  const pop = t => { tone(t, 260, "sine", .1, .004, .09, 620); };                                        // a coin springing out
+  const clink = t => { tone(t, rnd(3300, 4200), "sine", .035, .001, .06); };                             // a coin touching the ground
+  const shimmer = (t, m, voice) => { for (let i = 0; i < 6; i++) VOICE[voice](t + i * .045, m + [0, 4, 7, 12, 16, 19][i], .05, .5); };
+
+  // ---------------------------------------------------------------- the samples
+  const PENT = [0, 2, 4, 7, 9], MAJ = [0, 2, 4, 5, 7, 9, 11];
+  const QUEST = [
+    { n: "Q1", name: "Lantern bells", voice: "bell", root: 74, scale: PENT, fanfare: [[0, 0], [.09, 4], [.18, 7], [.3, 12]], chord: [0, 7, 12, 16],
+      how: "Four glass bells rise as the quest ends. Each coin collected rings one note higher; the last one lands on a ringing chord." },
+    { n: "Q2", name: "Harp flourish", voice: "harp", root: 67, scale: PENT, fanfare: [[0, 0], [.045, 2], [.09, 4], [.135, 7], [.18, 9], [.225, 12], [.27, 14], [.33, 16]], chord: [0, 4, 7, 12, 16],
+      how: "A quick harp run upward as the quest ends, warmer and lower. Coins pluck up the scale; a full harp chord at the end." },
+    { n: "Q3", name: "Music box", voice: "box", root: 72, scale: MAJ, fanfare: [[0, 0], [.12, 4], [.24, 7], [.36, 4], [.48, 12]], chord: [0, 4, 7, 12],
+      how: "A five-note music-box tune as the quest ends, small and toy-like. Coins tick up a major scale; a bright little chord at the end." },
+  ];
+  const INTEREST = [
+    { n: "I1", name: "Till and bell", how: "A soft drawer thud, coins ticking into the purse one by one, then a single clear bell as the purse glows.",
+      intro: t => { puff(t, "lowpass", 380, 1, .3, .004, .12); tone(t, 140, "sine", .2, .004, .14); }, tick: (t, i) => VOICE.box(t, 79 + PENT[i % 5] + 12 * Math.floor(i / 5), .1, .25),
+      end: t => { VOICE.bell(t, 88, .2, 1.6); VOICE.bell(t + .01, 76, .08, 1.2); } },
+    { n: "I2", name: "Rising drops", how: "No till. Six harp notes rise like drops into the purse, ending on a gentle two-note chime.",
+      intro: () => { }, tick: (t, i) => VOICE.harp(t, 69 + PENT[i % 5] + 12 * Math.floor(i / 5), .13, .6),
+      end: t => { VOICE.bell(t, 81, .14, 1.2); VOICE.bell(t + .14, 86, .16, 1.6); } },
+  ];
+  const ACHIEVE = [
+    { n: "A1", name: "Town fanfare", how: "A harp sweep up into a wide bell chord, then three high twinkles. The biggest sound of the set, for rare moments.",
+      sound: t => { for (let i = 0; i < 10; i++) VOICE.harp(t + i * .04, 62 + [0, 2, 4, 7, 9, 12, 14, 16, 19, 21][i], .09 + i * .006, .7); for (const m of [62, 69, 74, 78, 81]) VOICE.bell(t + .46, m, .13, 2.4);
+        [93, 98, 102].forEach((m, i) => VOICE.box(t + .9 + i * .13, m - 12, .08, .6)); } },
+    { n: "A2", name: "Three bells", how: "Three slow bells climbing over one deep bell, like the town clock marking the moment. Calmer than the fanfare.",
+      sound: t => { VOICE.bell(t, 50, .16, 3); [81, 86, 90].forEach((m, i) => VOICE.bell(t + i * .17, m, .17, 2.2 - i * .2)); } },
+  ];
+  const SPEND = { n: "S1", name: "Money spent", how: "For contrast: two soft falling plucks and a quiet slide when money leaves the purse. No coins, no glow.",
+    sound: t => { VOICE.harp(t, 74, .13, .4); VOICE.harp(t + .1, 69, .11, .5); puff(t, "bandpass", 2400, 1.2, .05, .02, .16); } };
+
+  // ---------------------------------------------------------------- the stage
+  const stage = $("stage"), bg = $("bg"), fx = $("fx"), g = fx.getContext("2d"); let W = 0, H = 0, ground = 0, cx = 0;
+  let coins = [], flies = [], sparks = [], timeline = [], clock = 0, shown = 1240, bump = 0, hop = -1, big = false, run = 0;
+  const at = e => { const r = e.getBoundingClientRect(), s = stage.getBoundingClientRect(); return { x: r.left - s.left + r.width / 2, y: r.top - s.top + r.height / 2 }; };
+  const later = (dt, fn) => timeline.push({ t: clock + dt, fn, run });
+  function size() {
+    const dpr = window.devicePixelRatio || 1; W = stage.clientWidth; H = stage.clientHeight; ground = H * .8; cx = W * .4;
+    for (const c of [bg, fx]) { c.width = W * dpr; c.height = H * dpr; c.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0); }
+    const b = bg.getContext("2d"), sky = b.createLinearGradient(0, 0, 0, ground);                      // a plaster wall at lantern time, and paving
+    sky.addColorStop(0, "#3a3340"); sky.addColorStop(1, "#6b5647"); b.fillStyle = sky; b.fillRect(0, 0, W, ground);
+    b.fillStyle = "#b98f5e"; b.fillRect(W * .08, ground - 150, W * .5, 150); b.fillStyle = "#cfa873"; b.fillRect(W * .62, ground - 110, W * .3, 110);
+    b.fillStyle = "#3b2f2a"; b.fillRect(W * .14, ground - 96, 46, 96); b.fillStyle = "#f0a35a"; b.fillRect(W * .7, ground - 84, 34, 44);
+    b.fillStyle = "#54493f"; b.fillRect(0, ground, W, H - ground); b.strokeStyle = "rgba(0,0,0,.18)";
+    for (let x = -40; x < W; x += 58) { b.beginPath(); b.moveTo(x, ground); b.lineTo(x + 30, H); b.stroke(); }
+  }
+  function figure(lift) {                                                                               // a stand-in for the player
+    g.fillStyle = "rgba(0,0,0,.3)"; g.beginPath(); g.ellipse(cx, ground + 4, 26 - lift * .2, 7, 0, 0, 7); g.fill();
+    const y = ground - lift; g.fillStyle = "#3d4a5c"; g.fillRect(cx - 13, y - 44, 11, 44); g.fillRect(cx + 2, y - 44, 11, 44);
+    g.fillStyle = "#6fa3a2"; g.beginPath(); g.roundRect(cx - 19, y - 98, 38, 60, 12); g.fill();
+    g.fillStyle = "#e8b48c"; g.beginPath(); g.arc(cx, y - 116, 19, 0, 7); g.fill(); g.fillStyle = "#5a3a28"; g.beginPath(); g.arc(cx, y - 121, 19, Math.PI, 0); g.fill();
+  }
+  function coin(x, y, r, spin) {
+    const rx = Math.max(1.5, r * Math.abs(Math.cos(spin)));
+    g.fillStyle = "#b9862e"; g.beginPath(); g.ellipse(x, y + 1.5, rx, r, 0, 0, 7); g.fill();
+    g.fillStyle = "#f0c35a"; g.beginPath(); g.ellipse(x, y, rx, r, 0, 0, 7); g.fill();
+    g.fillStyle = "#fbe3a0"; g.beginPath(); g.ellipse(x - rx * .25, y - r * .3, rx * .35, r * .3, 0, 0, 7); g.fill();
+  }
+  function spark(x, y, n, speed) { for (let i = 0; i < n; i++) { const a = rnd(0, 6.283), v = rnd(.3, 1) * speed; sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - speed * .3, t: 0, life: rnd(.4, .9) }); } }
+  function credit(v, last, onLast) { shown += v; bump = 1; if (last) onLast(); }
+
+  function frame(ms) {                                                                                  // real time in steps of 1/60 s, so a slow screen plays at the right speed
+    let left = Math.min(.5, (ms - (frame.last || ms)) / 1000); frame.last = ms;
+    do { const dt = Math.min(1 / 60, left); left -= dt; step(dt); } while (left > 1e-4);
+    requestAnimationFrame(frame);
+  }
+  function step(dt) {
+    clock += dt;
+    for (const e of timeline.filter(e => e.t <= clock)) if (e.run === run) e.fn(); timeline = timeline.filter(e => e.t > clock);
+    g.clearRect(0, 0, W, H);
+    let lift = 0; if (hop >= 0) { hop += dt; lift = Math.max(0, Math.sin(Math.min(1, hop / .42) * Math.PI)) * 26; if (hop > .42) hop = -1; }
+    figure(lift);
+    const chest = { x: cx, y: ground - 70 };
+    for (const c of coins) {
+      c.age += dt; c.spin += c.vs * dt;
+      if (c.age < c.pullAt) {                                                                           // sprung out: fall, bounce, settle
+        c.vy += 1150 * dt; c.x += c.vx * dt; c.y += c.vy * dt;
+        if (c.y > ground - 6) { c.y = ground - 6; if (c.vy > 120 && !c.hit) { c.hit = 1; play(clink); } c.vy *= -.42; c.vx *= .6; c.vs *= .7; }
+        if (c.x < 12 || c.x > W - 12) c.vx *= -.6;
+      } else {                                                                                          // then drawn in to the player
+        c.pull += dt; const dx = chest.x - c.x, dy = chest.y - c.y, d = Math.hypot(dx, dy), v = (160 + 2600 * c.pull) * dt;
+        if (d < Math.max(16, v)) { c.done = true; c.take(); } else { c.x += dx / d * v; c.y += dy / d * v; c.vs = 14; }
+      }
+      if (!c.done) coin(c.x, c.y, 8, c.spin);
+    }
+    coins = coins.filter(c => !c.done);
+    for (const f of flies) {                                                                            // what flies to the purse
+      f.t += dt / f.len; const k = Math.min(1, f.t), e = k * k * (3 - 2 * k), mx = (f.x0 + f.x1) / 2 + f.bend, my = Math.min(f.y0, f.y1) - 50;
+      const x = (1 - e) * (1 - e) * f.x0 + 2 * e * (1 - e) * mx + e * e * f.x1, y = (1 - e) * (1 - e) * f.y0 + 2 * e * (1 - e) * my + e * e * f.y1;
+      if (f.coin) coin(x, y, 6, clock * 12 + f.x0); else { g.fillStyle = "rgba(240,195,90,.35)"; g.beginPath(); g.arc(x, y, 9, 0, 7); g.fill(); g.fillStyle = "#fbe3a0"; g.beginPath(); g.arc(x, y, 3.5, 0, 7); g.fill(); }
+      if (k >= 1) { f.done = true; f.land(); }
+    }
+    flies = flies.filter(f => !f.done);
+    for (const s of sparks) { s.t += dt; s.vy += 300 * dt; s.x += s.vx * dt; s.y += s.vy * dt; const a = 1 - s.t / s.life; if (a > 0) { g.fillStyle = "rgba(251,227,160," + a.toFixed(2) + ")"; g.fillRect(s.x - 1.5, s.y - 1.5, 3, 3); } }
+    sparks = sparks.filter(s => s.t < s.life);
+    bump = Math.max(0, bump - dt * 5); $("amount").textContent = fmt(shown); $("purse").style.transform = "scale(" + (1 + bump * .13).toFixed(3) + ")";
+  }
+
+  function reset() { run++; coins = []; flies = []; timeline = []; for (const id of ["tag", "toast", "banner", "delta"]) $(id).classList.remove("on"); $("purse").classList.remove("glow"); shown = Math.round(shown); }
+  function delta(v) { const d = $("delta"); d.textContent = (v > 0 ? "+" : "−") + fmt(Math.abs(v)); d.className = (v > 0 ? "pos" : "neg") + " on"; later(2.4, () => d.classList.remove("on")); }
+  function glow() { $("purse").classList.add("glow"); later(.5, () => $("purse").classList.remove("glow")); }
+
+  function quest(s) {                                                                                   // coins spring out, lie a moment, are drawn in, and fly to the purse
+    const amount = big ? 400 : 50, n = big ? 18 : 8, start = shown, purse = at($("amount")), note = i => s.root + 12 * Math.floor(i / s.scale.length) + s.scale[i % s.scale.length];
+    let got = 0, landed = 0;
+    play(t => s.fanfare.forEach(([d, st]) => VOICE[s.voice](t + d, s.root + st, .16, 1.2)));
+    $("toast").classList.add("on"); later(2.6, () => $("toast").classList.remove("on")); hop = 0;
+    for (let i = 0; i < n; i++) later(.38 + i * .03, () => {
+      if (i % 2 === 0) play(pop);
+      const dir = Math.random() < .5 ? -1 : 1;
+      coins.push({ x: cx, y: ground - 80, vx: dir * rnd(50, big ? 250 : 170), vy: -rnd(300, 480), spin: rnd(0, 6), vs: rnd(8, 16), age: 0, pull: 0, pullAt: 1.15 + i * .055, hit: 0,
+        take: () => {
+          const step = Math.round(got * Math.min(1, 9 / (n - 1))); got++; play(t => VOICE[s.voice](t, note(step), .12, .5)); spark(cx, ground - 70, 4, 90);
+          flies.push({ x0: cx, y0: ground - 70, x1: purse.x, y1: purse.y, bend: rnd(-30, 30), t: 0, len: .45, land: () => credit(amount / n, ++landed === n, () => {
+            shown = start + amount; play(t => { s.chord.forEach(st => VOICE[s.voice](t, s.root + 12 + st, .12, 2)); shimmer(t + .08, s.root + 24, s.voice); }); spark(purse.x, purse.y, 16, 150); glow(); delta(amount);
+          }) });
+        } });
+    });
+  }
+  function interest(s) {                                                                                // a slip from the bank slides out under the purse and pays coins up into it
+    const amount = 12, n = 6, start = shown, purse = at($("amount")); let landed = 0;
+    $("tag").classList.add("on"); later(.3, () => play(s.intro));
+    for (let i = 0; i < n; i++) later(.55 + i * .13, () => { const from = at($("tag")); flies.push({ x0: from.x - 40 + i * 12, y0: from.y, x1: purse.x, y1: purse.y, bend: -34, t: 0, len: .38, coin: true,
+      land: () => { play(t => s.tick(t, i)); credit(amount / n, ++landed === n, () => { shown = start + amount; later(.12, () => { play(s.end); spark(purse.x, purse.y, 12, 120); glow(); delta(amount); }); later(2.2, () => $("tag").classList.remove("on")); }); } }); });
+  }
+  function achieve(s) { play(s.sound); $("banner").classList.add("on"); later(.5, () => { const b = at($("banner")); for (let i = 0; i < 5; i++) spark(b.x + rnd(-120, 120), b.y + rnd(-10, 20), 8, 170); }); later(3.6, () => $("banner").classList.remove("on")); }
+  function spend(s) { play(s.sound); shown -= 35; bump = -.5; delta(-35); }
+
+  // ---------------------------------------------------------------- the list
+  const list = $("list"); let lit = null;
+  const groups = [["Quest reward: coins spring out, are collected, and fly to the purse", QUEST, quest, 4.2], ["Bank interest: paid into the purse", INTEREST, interest, 3.6],
+    ["Achievement", ACHIEVE, achieve, 3.8], ["Money out", [SPEND], spend, 1.2]];
+  const byNum = {};
+  for (const [title, items, fn, secs] of groups) {
+    const h = document.createElement("h2"); h.textContent = title; list.appendChild(h);
+    for (const s of items) {
+      const row = document.createElement("div"); row.className = "track";
+      row.innerHTML = '<button class="play" type="button">▶</button><div class="what"><div class="title"></div><div class="how"></div></div><div class="num"></div>';
+      row.querySelector(".title").textContent = s.name; row.querySelector(".how").textContent = s.how; row.querySelector(".num").textContent = s.n; row.querySelector("button").setAttribute("aria-label", "Play " + s.n + " " + s.name);
+      const go = () => { audio(); reset(); if (lit) lit.classList.remove("on"); lit = row; row.classList.add("on"); fn(s); later(secs + (fn === quest && big ? .8 : 0), () => row.classList.remove("on")); };
+      row.querySelector("button").addEventListener("click", go); byNum[s.n] = go; list.appendChild(row);
+    }
+  }
+  const pick = b => { big = b; $("big").classList.toggle("on", b); $("small").classList.toggle("on", !b); };
+  $("small").addEventListener("click", () => pick(false)); $("big").addEventListener("click", () => pick(true));
+  window.addEventListener("resize", size); size(); requestAnimationFrame(frame);
+  window.samples = { play: n => byNum[n](), big: pick, state: () => ({ shown, coins: coins.length, flies: flies.length, run }) };
+})();
+</script>
+</body>
+</html>

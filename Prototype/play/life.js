@@ -11,7 +11,7 @@ var Life = (() => {
   let plans = {};                                        // the player's room plans: lot id -> storey -> walls (BUILD-021), kept in the save
   let furnishings = {};                                  // the player's arranged storeys: lot id -> storey -> layout (FURN-051), kept in the save
   let view = null;                                       // the building designer's camera while it is open (play.js designCam)
-  let E = null, Q = null, M = null, look = null, transient = false, designing = false, panel = null, spin = 0, ready = false, lastSave = 0, toastT = 0, lastMoney = null, checkT = 0;
+  let E = null, Q = null, M = null, look = null, transient = false, designing = false, panel = null, spin = 0, ready = false, lastSave = 0, toastT = 0, lastMoney = null, checkT = 0, feats = {};
   const visits = {}; for (const k in X.visits) visits[k] = X.visits[k];
   const staff = {}; for (const k in X.staff) staff[k] = X.staff[k];
   const resIdx = {}; D.residents.forEach((r, i) => resIdx[r.id] = i);
@@ -38,7 +38,7 @@ var Life = (() => {
     fresh(); look = v; clock.day = 0; outfits = []; belongings = []; waypoint = null; plans = {};
     E.advance(0, clock.m); Q.newGame(); M.start(); ready = true;
     if (new URLSearchParams(location.search).has("rich")) testRich();
-    lastMoney = E.totalMoney(); save();
+    feats = {}; lastMoney = E.totalMoney(); Rewards.reset(E.L.tx.length); save();
   }
   // ?rich=1, for trying the building designer (a test switch, not a game rule): a new game starts with Bx 5,000 more and owning
   // the nearest house that can be remodelled, and you stand at its door. The money comes in through the ledger; the deed is given.
@@ -58,13 +58,13 @@ var Life = (() => {
   function readSave(k) { try { const s = localStorage.getItem(slotKey(k || slot)); return s ? JSON.parse(s) : null; } catch (e) { return null; } }   // a slot's save (UI-013)
   function save() {
     if (!ready || transient) return;                      // ?auto=1 (tests, screenshots) never overwrites a real save
-    try { localStorage.setItem(slotKey(slot), JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), estate: M.save(), remodels, plans, furnishings, outfits, belongings, at: Date.now() })); } catch (e) { }
+    try { localStorage.setItem(slotKey(slot), JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), estate: M.save(), remodels, plans, furnishings, outfits, belongings, feats, at: Date.now() })); } catch (e) { }
     lastSave = performance.now();
   }
   function loadSave(s) {
     fresh(); E.load(s.econ); Q.load(s.quests); if (s.estate) M.load(s.estate); else M.start(); look = s.look;
     Object.assign(pl, s.pl); pl.pose = 0; pl.vy = 0; cam.yaw = pl.yaw; clock.day = s.clock.day; clock.m = s.clock.m;
-    ready = true; lastMoney = E.totalMoney();
+    ready = true; lastMoney = E.totalMoney(); Rewards.reset(E.L.tx.length); feats = s.feats || {};
     remodels = s.remodels || {};
     for (const id of Object.keys(remodels)) { const l = LOTS.find(x => x.id === id); if (l && l.drawn) { l.dsg = remodels[id]; window.wasted.repaint(l, Builder.built(l.dsg)); } }
     outfits = s.outfits || []; belongings = s.belongings || []; waypoint = null;
@@ -590,6 +590,9 @@ var Life = (() => {
         ["Belongings", h("span", {}, Object.values(E.inv).reduce((s, n) => s + n, 0) + " things carried · " + belongings.length + " pieces of furniture"), btn("Belongings", () => menu("belongings"))],
         ["Wardrobe", h("span", {}, outfits.length + " outfit" + (outfits.length === 1 ? "" : "s")), btn("Wardrobe", () => menu("wardrobe"))]]),
       h("h3", {}, "Work"), h("p", {}, Q.job ? QR.jobs.kinds[Q.job.kind].title + " (under way)" : "No job right now: ask people for work.", " ", h("span", { cls: "dim" }, (Q.jobs_done || []).length + " jobs done, " + Object.keys(Q.done).length + " quests finished")));
+    const all = Achievements.list(), got = all.filter(a => a.id in feats);   // UI-019: earned ones first with their day, the rest still to do
+    body.append(h("h3", {}, "Achievements · " + got.length + " of " + all.length), h("table", { cls: "feats" }, got.concat(all.filter(a => !(a.id in feats))).map(a =>
+      h("tr", { cls: a.id in feats ? "" : "todo" }, h("td", {}, a.name), h("td", {}, a.line), h("td", { cls: "dim" }, a.id in feats ? "day " + (feats[a.id] + 1) : "")))));
     const people = Object.entries(E.rep).filter(([, v]) => v).sort((a, b) => b[1] - a[1]).slice(0, 8);
     body.append(h("h3", {}, "People"), people.length ? tbl(people.map(([rid, v]) => [D.residents[resIdx[rid]].n, DLR(rid), h("span", { cls: v > 0 ? "pos" : "neg" }, standing(v))]))
       : h("p", { cls: "dim" }, "Nobody knows you yet. Talk to people; help them, and they remember."));
@@ -1118,9 +1121,10 @@ var Life = (() => {
     if (clock.day < E.day || (clock.day === E.day && clock.m < E.minute)) { clock.day = E.day; clock.m = E.minute; }   // the clock only goes forward
     E.advance(clock.day, clock.m);
     rehome();                                             // residents who moved house live at the new home (PROP-022)
-    if (performance.now() - checkT > 250) { checkT = performance.now(); Q.check(ctx()); }   // four times a second, however slow the frames
-    const tm = E.totalMoney();
-    if (lastMoney !== null && tm !== lastMoney) { const d = tm - lastMoney; el("purse-delta").textContent = (d > 0 ? "+" : "") + fmt(d); el("purse-delta").className = d > 0 ? "pos" : "neg"; el("purse-delta").style.opacity = 1; setTimeout(() => el("purse-delta").style.opacity = 0, 2200); if (panel) draw(); }
+    if (performance.now() - checkT > 250) { checkT = performance.now(); Q.check(ctx()); for (const id of Achievements.award(Achievements.facts(E, Q, M), feats, clock.day)) Rewards.achieve(Achievements.get(id)); }   // four times a second, however slow the frames
+    const tm = E.totalMoney(), delta = d => { el("purse-delta").textContent = (d > 0 ? "+" : "") + fmt(d); el("purse-delta").className = d > 0 ? "pos" : "neg"; el("purse-delta").style.opacity = 1; setTimeout(() => el("purse-delta").style.opacity = 0, 2200); };
+    const shown = Rewards.frame(dt, E.L.tx, pl, delta);   // rewards and interest: coins first, their "+" when the last one lands (SND-019, SND-020)
+    if (lastMoney !== null && tm !== lastMoney) { if (tm - lastMoney !== shown) delta(tm - lastMoney - shown); if (panel) draw(); }
     lastMoney = tm;
     if ((toastT -= dt) <= 0) el("toast").style.opacity = 0;
     hud();
@@ -1128,8 +1132,8 @@ var Life = (() => {
   }
   function hud() {
     el("purse").style.display = "block";
-    el("purse-cash").textContent = fmt(E.L.balance("p:cash"));
-    el("purse-bank").textContent = E.accounts.length ? " · bank " + fmt(E.L.balance("p:current") + E.L.balance("p:savings")) : "";
+    el("purse-cash").textContent = fmt(E.L.balance("p:cash") - Rewards.held.cash);   // coins still on their way are not counted yet (rewards.js)
+    el("purse-bank").textContent = E.accounts.length ? " · bank " + fmt(E.L.balance("p:current") + E.L.balance("p:savings") - Rewards.held.bank) : "";
     const tr = el("track"), lines = [];
     for (const qid of Object.keys(Q.active).slice(0, 3)) lines.push([QR.quests[qid].title, Q.stage(qid).log]);
     if (Q.job) { const left = Q.job.deadline - (clock.day * 1440 + clock.m); lines.push([QR.jobs.kinds[Q.job.kind].title + " · " + Math.floor(left / 60) + "h " + String(Math.floor(left % 60)).padStart(2, "0") + "m left", fillJob(QR.jobs.kinds[Q.job.kind].log, Q.job)]); }
@@ -1190,6 +1194,10 @@ var Life = (() => {
     if (badF.length) console.error("builder.js Furnish does not match Tools/citysim/furnish.py:\n  " + badF.join("\n  ")); else console.info("builder.js Furnish matches Tools/citysim/furnish.py (self-test passed).");
     const badE = Estate.selfTest(D, LOTS);
     if (badE.length) console.error("estate.js does not match Tools/citysim/estate.py:\n  " + badE.join("\n  ")); else console.info("estate.js matches Tools/citysim/estate.py (self-test passed).");
+    const badA = Achievements.selfTest();
+    if (badA.length) console.error("achievements.js does not match Tools/citysim/achievements.py:\n  " + badA.join("\n  ")); else console.info("achievements.js matches Tools/citysim/achievements.py (self-test passed).");
+    const badW = Rewards.selfTest();
+    if (badW.length) console.error("rewards.js does not match Tools/worldgen/world.py:\n  " + badW.join("\n  ")); else console.info("rewards.js matches Tools/worldgen/world.py (self-test passed).");
     const bad = Econ.selfTest(X, LOTS);
     if (bad.length) console.error("economy.js does not match Tools/citysim/economy.py:\n  " + bad.join("\n  ")); else console.info("economy.js matches Tools/citysim/economy.py (self-test passed).");
   });
