@@ -121,10 +121,10 @@ const People = (() => {
   function ride(sig, g, W, t, hm, seed, rd) {
     const P = blank(), b = rd.push || 0, h = rd.h, S = g.S, br = Math.sin(t * 1.3 + seed);
     const a = rad(78) * (1 - b) + rad(14) * b, Rp = Rz(a), n0 = mv(Rp, [1, 0, 0]), ph = rd.ph || 0;
-    const pel = [0, -.02 * S * b, g.pelz + h - .055 * S * (1 - b) - (.17 * S + h) * b + .003 * br];   // pushing, the knee on the board bends so the other foot reaches the ground
+    const pel = [0, -.02 * S * b, g.pelz + h - .055 * S * (1 - b) - (.06 * S + h) * b + .003 * br];   // pushing, the knee on the board bends so the other foot reaches the ground
     const on = ph < .55, s = on ? ph / .55 : (ph - .55) / .45;   // the push foot: on the ground pushing, then lifted back
-    const py = on ? -.1 * S + .42 * S * s : .32 * S - .42 * S * (s - Math.sin(TAU * s) / TAU), pz = g.ankz + (on ? 0 : .07 * S * Math.sin(Math.PI * s));
-    const back = [mix0(0, .17 * S, b), mix0(.2 * S, py, b), mix0(g.ankz + h, pz, b)], front = [0, -.2 * S - .02 * S * b, g.ankz + h];
+    const py = on ? -.06 * S + .32 * S * s : .26 * S - .32 * S * (s - Math.sin(TAU * s) / TAU), pz = g.ankz + (on ? 0 : .07 * S * Math.sin(Math.PI * s));
+    const back = [mix0(0, .12 * S, b), mix0(.2 * S, py, b), mix0(g.ankz + h, pz, b)], front = [0, -.2 * S - .02 * S * b, g.ankz + h];
     leg(P, 0, g, add(pel, mv(Rp, [g.hipx, 0, g.hipdz])), back, n0, 0, a * (1 - b) + rad(6) * b);
     leg(P, 1, g, add(pel, mv(Rp, [-g.hipx, 0, g.hipdz])), front, n0, 0, a * (1 - b) + rad(10) * b);
     const arms = [[12 - 4 * b, 22 - 10 * b, 24], [12 - 4 * b, 22 - 10 * b, 24]], chest = [-a * .25, rad(6) + rad(8) * b + .004 * br, 0];

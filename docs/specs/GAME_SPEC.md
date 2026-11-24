@@ -1,9 +1,9 @@
 ---
 spec_id: WASTED-SPEC
 title: Brix Town — Game Specification
-version: 0.5.6
+version: 0.5.7
 status: draft            # draft | reviewed | approved
-last_updated: 2026-11-22
+last_updated: 2026-11-24
 owner: project-owner
 engine: Unreal Engine 5.8
 dcc: Blender 5.2 LTS       # 5.3 is what is installed and was used for all look tests; see Q-16
@@ -263,6 +263,9 @@ wording check; they are `in-progress` because the owner asked for the work.
 | SND-016 | Residents together shall talk in turns: one speaks a wordless phrase that falls to an end or rises to a question, another replies, then a pause; now and then someone laughs (children more often). Where many are gathered a crowd hum shall rise. Quiet places (library, museum, cinema, bedrooms) have no chatter. A passer-by sometimes says hello to the player; a resident who dodges the player's car shouts (CITY-071). | F-SND-WORLD | 1 | P1 | PH1 | in-progress | `test_SND_016_talk_is_turns_and_quiet_places_stay_quiet` |
 | SND-017 | People's movements shall be heard: steps louder when running and lighter and higher for children, on stone, wood or grass; a sound when a resident sits, lies down or gets up. Children's voices are higher, elders' lower. | F-SND-WORLD | 1 | P1 | PH1 | in-progress | `test_SND_017_children_sound_lighter` |
 | SND-018 | Residents and the player shall speak their dialogue lines aloud in natural voices (ADR-0019), with the text still shown. Each resident speaks in a voice from their role's pool in `World/rules/voices.json`, always the same one; the player in the player voice. Each line is spoken in its mood. Blanks are joined from pieces voiced for every value the speaker can use; a typed player name other than the default is a short pause. A resident's next line waits for the player's spoken answer. | F-NPC-TALK | 1 | P1 | PH1 | in-progress | `test_SND_018_every_role_has_voices`, `test_SND_018_every_line_can_be_spoken`, `test_SND_018_the_owners_picks_are_kept` |
+| SND-019 | When a quest or a job pays the player, coins shall spring out around the character, lie a moment, be drawn back in and fly to the money shown on screen, which counts up as they land; a short fanfare shall play, each coin taken shall ring one note higher, and the last shall ring a chord. A bigger reward springs more coins (tiers in data). Which ledger transactions count is worked out from the ledger (paid from the rewards account, QST-004); nothing but the ledger moves money. Chosen by the owner from `Prototype/play/feedback_samples.html` on 2026-11-24 (sample Q1). ADR-0043. | F-UI-REWARD | 1 | P1 | PH1 | in-progress | `test_SND_019_a_reward_springs_coins_by_its_size`, `test_SND_019_broken_reward_rules_are_caught`, `test_SND_019_a_quest_reward_is_what_the_player_is_shown` |
+| SND-020 | When the bank pays interest (BANK-001, BANK-008) a slip shall slide out by the money shown on screen and pay coins into the bank balance, with a drawer thud, a tick for each coin and a bell as the balance glows. Several accounts, or several days settled at once, are shown once for the whole amount. Chosen by the owner on 2026-11-24 (sample I1). ADR-0043. | F-UI-REWARD | 1 | P1 | PH1 | in-progress | `test_SND_020_interest_is_shown_once_for_all_accounts`, `test_SND_020_the_banks_interest_is_what_the_player_is_shown` |
+| SND-021 | When an achievement is earned (QST-009) a painted banner with its name shall drop in at the top of the screen with sparkles and a fanfare (a harp sweep, a wide bell chord, three twinkles), stay a few seconds (data) and leave. Several earned together are shown one after another; none is shown while a menu covers the screen, it waits. Chosen by the owner on 2026-11-24 (sample A1). ADR-0043. | F-UI-REWARD | 2 | P1 | PH1 | in-progress | `test_SND_019_broken_reward_rules_are_caught` |
 
 ### 4.9 Quests — `QST`
 
@@ -280,6 +283,7 @@ From the owner's pick of `F-QUEST` level 2 for the first slice (2026-11-22). Rul
 | QST-006 | Residents shall offer repeatable daily jobs (deliveries, shopping, a shift at their work). Which resident offers which job on which day, and what it pays, shall be calculated from the day and the data, not stored. One job at a time; a job has a time limit and failing it costs reputation. | P1 | PH1 | in-progress |
 | QST-007 | The player shall have a reputation with each resident from −100 to 100, changed by quest endings and jobs. It changes that resident's shop prices (within data bounds) and whether they offer jobs. | P1 | PH1 | in-progress |
 | QST-008 | The character, money, items, quest progress and reputation shall survive closing and reopening the slice, and a new game shall start clean. In the slice this is a save in the browser; from PH2 it is server-side (CORE-003, ACC-003). | P0 | PH1 | in-progress |
+| QST-009 | The player shall earn named achievements, each once and kept. Achievements are data: a name, a line saying how it is earned, and a fact about the player with the number it must reach. The facts (quests finished, jobs paid, savings, loans paid back, stall sales, homes rented and owned, money in all) shall be worked out from the ledger, the quests, the loans and the property market, not counted up as the game runs; only which were earned and on which day is kept, with the save (QST-008). What is earned stays earned if the fact later falls. `F-UI-REWARD` level 2, picked by the owner on 2026-11-24; names and numbers `[ASSUMPTION]`. | P1 | PH1 | in-progress |
 
 ---
 
@@ -500,3 +504,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.5.4 | 2026-11-22 | Furniture in the first slice, from the owner's request and picks (`F-FURN-ITEMS` 2, `F-FURN-STORE` 2, `F-PROP-FURNISH` 2, `F-OBJ-CARRY` 1): new domain spec `docs/specs/domains/FURNITURE.md` (FURN-001 onward, all proposed; Q-30 to Q-32), new prefix `FURN`; PROP-003 moved to PH1. Interior style drafted for approval in `docs/art/INTERIOR_STYLE.md`. |
 | 0.5.5 | 2026-11-22 | The game is called **Brix Town** (owner); "Wasted" was a working title. Q-13 decided. ADR-0025. |
 | 0.5.6 | 2026-11-22 | Real estate, the missing pieces (owner's request): residents move house (PROP-022, now PH1 in progress), For Sale and To Let boards and the agents' names on their offices (PROP-023), beds in empty flats. |
+| 0.5.7 | 2026-11-24 | Reward feedback (owner's request, samples Q1 and I1 chosen in chat): SND-019 coins and bells when a quest or job pays, SND-020 the bank's interest slip. New feature `F-UI-REWARD`, picked at level 2 for the first slice ("Level 2, achievements"): QST-009 achievements earned from facts and kept, SND-021 their banner and fanfare (sample A1), UI-019 the list on the Me tab. ADR-0043. |
