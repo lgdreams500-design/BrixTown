@@ -318,7 +318,7 @@ def sky_problems(w):
         out.append("sky: rain.slant should be a number")
     if num(r.get("dry_minutes")) and r["dry_minutes"] > 360:
         out.append("sky: rain.dry_minutes should be at most 360 (one weather slot)")
-    return out + night_sky_problems(w)
+    return out + night_sky_problems(w) + planet_problems(w)
 
 
 def night_sky_problems(w):
@@ -458,6 +458,75 @@ def reward_sound_problems(s):
             out.append("sound: rewards.coins.%s should be above 0" % k)
     if not 0 <= c["bounce"] < 1:
         out.append("sound: rewards.coins.bounce should be from 0 to under 1")
+    return out
+
+
+def planet_place(w):
+    """WLD-065: where the planet hangs in the town's sky, as a direction (east +x, up +y, south +z), from sky.json planet.azimuth
+    (degrees from north through east) and planet.elevation, as Prototype/play/play.js places it."""
+    p = w["sky"]["planet"]
+    az, el = math.radians(p["azimuth"]), math.radians(p["elevation"])
+    return (math.sin(az) * math.cos(el), math.sin(el), -math.cos(az) * math.cos(el))
+
+
+def sun_place(w, season, hour_angle):
+    """Where the sun is in a season at an hour angle (radians, 0 at the middle of the calendar's day, growing westward), seen from
+    sky.json night.latitude: the same direction play.js skyAt() gives."""
+    la, dec = math.radians(w["sky"]["night"]["latitude"]), math.radians(sun_heights(w)[season])
+    cd, sd, ch = math.cos(dec), math.sin(dec), math.cos(hour_angle)
+    return (-cd * math.sin(hour_angle), cd * ch * math.cos(la) + sd * math.sin(la), cd * ch * math.sin(la) - sd * math.cos(la))
+
+
+def planet_sun_angle(w, season, hour_angle):
+    """WLD-065: the angle in radians between the sun and the planet's centre, seen from the town."""
+    return math.acos(max(-1.0, min(1.0, sum(a * b for a, b in zip(planet_place(w), sun_place(w, season, hour_angle))))))
+
+
+def planet_lit(w, season, hour_angle):
+    """WLD-065: the share of the planet's face in sunlight, 0 new to 1 full, worked out from where the sun is and nothing else."""
+    return (1 - math.cos(planet_sun_angle(w, season, hour_angle))) / 2
+
+
+def planet_sun_gap(w):
+    """WLD-065: for each season, the nearest the sun comes to the planet's centre on its whole path round the sky, in radians."""
+    return {name: min(planet_sun_angle(w, name, 2 * math.pi * k / 1440) for k in range(1440))
+            for name, dec in sun_heights(w).items() if dec is not None}
+
+
+def planet_problems(w):
+    """Every rule the planet in World/rules/sky.json must keep (WLD-065). A sky with no planet is allowed."""
+    p, out = w["sky"].get("planet"), []
+    if p is None:
+        return out
+    if not isinstance(p, dict):
+        return ["sky: planet should be a set of numbers"]
+    num = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
+    if not isinstance(p.get("show"), bool):
+        out.append("sky: planet.show should be true or false")
+    ranges = (("azimuth", 0, 360), ("elevation", 5, 85), ("size", .02, .35), ("lean", -90, 90), ("tilt", -30, 30), ("spin_hours", 1, 1000),
+              ("night", 0, 5), ("by_day", 0, .5), ("clouds", 0, 1), ("towns", 0, 2))
+    for k, lo, hi in ranges:
+        if not (num(p.get(k)) and lo <= p[k] <= hi):
+            out.append("sky: planet.%s missing or not from %s to %s" % (k, lo, hi))
+    r = p.get("rings")
+    if r is not None:
+        if not (isinstance(r, dict) and all(num(r.get(k)) for k in ("inner", "outer", "gap", "opacity"))):
+            out.append("sky: planet.rings should have inner, outer, gap and opacity")
+        else:
+            if not 1.05 <= r["inner"] < r["outer"] <= 4:
+                out.append("sky: planet.rings should lie outside the planet, inner edge inside outer edge")
+            elif not r["inner"] < r["gap"] < r["outer"]:
+                out.append("sky: planet.rings.gap should lie between the rings' edges")
+            if not 0 <= r["opacity"] <= 1:
+                out.append("sky: planet.rings.opacity should be from 0 to 1")
+    if out or not num(w["sky"].get("night", {}).get("latitude")):
+        return out
+    if math.radians(p["elevation"]) - p["size"] < math.radians(3):
+        out.append("sky: the whole planet should stand clear of the horizon")
+    clear = p["size"] * 1.25 + w["sky"]["night"].get("paths", {}).get("sun_size", 0)
+    for season, gap in planet_sun_gap(w).items():
+        if gap < clear:
+            out.append("sky: in %s the sun would pass behind the planet (%.0f degrees from its centre)" % (season, math.degrees(gap)))
     return out
 
 
@@ -1201,6 +1270,12 @@ def storey_floor(f):
     return 0.2 if f == 0 else 3.0 * f + 0.4
 
 
+def house_stair(l):
+    """A designed house (BUILD-001, ADR-0035) has its stair in its plan: it rises from the hall, up to the rooms above."""
+    rooms = (l.get("house") or {}).get("rooms", [])
+    return any(r["name"] == "Hall" and r["floor"] == 0 for r in rooms) and {r["floor"] for r in rooms} >= set(range(l["floors"]))
+
+
 def storey_problems(w):
     """Every rule the floors, stairs, lifts and upstairs places in the block files must keep (WLD-050, WLD-051)."""
     S, out = w["storeys"], []
@@ -1216,20 +1291,23 @@ def storey_problems(w):
             out.append("%s: %d storeys named for %d floors" % (where, len(l.get("storeys", [])), n))
         x0, z0, x1, z1 = l["rect"]
         if n >= 2:
-            s = l.get("stair")
-            if not s:
+            s, r = l.get("stair"), None
+            if not s and house_stair(l):                     # a designed house: its stair rises in the hall of its plan
+                pass                                         # (houses.js), not in a stairwell from add_storeys_01.py
+            elif not s:
                 out.append("%s: %d floors and no stair" % (where, n))
                 continue
-            r = s["rect"]
-            if not (x0 + S["wall"] - .01 <= r[0] < r[2] <= x1 - S["wall"] + .01 and z0 + S["wall"] - .01 <= r[1] < r[3] <= z1 - S["wall"] + .01):
-                out.append("%s: stair is not inside the walls" % where)
-            long_, short = (r[2] - r[0], r[3] - r[1]) if s["axis"] == "x" else (r[3] - r[1], r[2] - r[0])
-            if long_ < need_l - .02 or short < need_w - .02:                  # (sizes are kept to the centimetre)
-                out.append("%s: stairwell %.1f by %.1f is too small" % (where, long_, short))
-            if s["wall"] == side_of_door(l):
-                out.append("%s: stair against the door's wall" % where)
-            if s["wall"] == {"n": "s", "s": "n", "w": "e", "e": "w"}[side_of_door(l)]:
-                out.append("%s: stair against the back wall, where counters stand" % where)
+            else:
+                r = s["rect"]
+                if not (x0 + S["wall"] - .01 <= r[0] < r[2] <= x1 - S["wall"] + .01 and z0 + S["wall"] - .01 <= r[1] < r[3] <= z1 - S["wall"] + .01):
+                    out.append("%s: stair is not inside the walls" % where)
+                long_, short = (r[2] - r[0], r[3] - r[1]) if s["axis"] == "x" else (r[3] - r[1], r[2] - r[0])
+                if long_ < need_l - .02 or short < need_w - .02:              # (sizes are kept to the centimetre)
+                    out.append("%s: stairwell %.1f by %.1f is too small" % (where, long_, short))
+                if s["wall"] == side_of_door(l):
+                    out.append("%s: stair against the door's wall" % where)
+                if s["wall"] == {"n": "s", "s": "n", "w": "e", "e": "w"}[side_of_door(l)]:
+                    out.append("%s: stair against the back wall, where counters stand" % where)
             lv = l.get("levels", {})
             for k, v in l["objects"].items():
                 levels = lv.get(k, [0] * len(v))
@@ -1239,15 +1317,13 @@ def storey_problems(w):
                 for p, f in zip(v, levels):
                     if not 0 <= f < n:
                         out.append("%s: a %s on floor %d of %d" % (where, k, f, n))
+                    if r is None:
+                        continue
                     dx, dz = max(r[0] - p[0], 0, p[0] - r[2]), max(r[1] - p[1], 0, p[1] - r[3])
                     if f > 0 and math.hypot(dx, dz) < 1.0:
                         out.append("%s: a %s upstairs stands in the stairwell" % (where, k))
-            spots = {}
-            for k, v in l["objects"].items():                # the slice finds a resident's place by where it is on the plan
-                for p, f in zip(v, lv.get(k, [0] * len(v))):
-                    spots.setdefault((round(p[0], 1), round(p[1], 1)), set()).add(f)
-            if any(len(fs) > 1 for fs in spots.values()):
-                out.append("%s: places on two floors at the same spot" % where)
+            # (places on different floors may share a spot on the plan, as stacked flats and offices do: a stay upstairs
+            # carries its floor, build_play.routines, and the slice finds the place by where it is and that floor, WLD-053)
             if n >= S["lift_from_floors"] and not l.get("lift"):
                 out.append("%s: %d floors and no lift" % (where, n))
         elif l.get("levels"):

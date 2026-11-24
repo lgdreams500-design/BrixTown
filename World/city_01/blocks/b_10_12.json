@@ -157,6 +157,21 @@
    "style": {
     "group": "civic_stone",
     "way": "a"
+   },
+   "storeys": [
+    "main",
+    "rooms"
+   ],
+   "stair": {
+    "rect": [
+     1020.3,
+     1214.65,
+     1022.65,
+     1221.55
+    ],
+    "axis": "z",
+    "wall": "e",
+    "up0": -1
    }
   }
  ],

@@ -8,6 +8,12 @@ W = world.load()
 CITY = world.simulation(W)
 DAY = 16
 LOTS = world.lots(W)
+
+
+def old_town(lots):
+    """The lots inside the line where Old Town's wall stood (city.json "wall", WLD-055)."""
+    P, (i0, j0, i1, j1) = W["city"]["grid"]["pitch"], W["city"]["wall"]["cells"]
+    return [l for l in lots if i0 * P <= l["rect"][0] and l["rect"][2] <= i1 * P and j0 * P <= l["rect"][1] and l["rect"][3] <= j1 * P]
 BUILDINGS = [l for l in LOTS if l["kind"] not in world.OPEN_KINDS]
 
 
@@ -16,11 +22,16 @@ class TheMap(unittest.TestCase):
         self.assertEqual(world.validate(W), [])
 
     def test_eight_by_eight_blocks_each_cell_once(self):
-        g = W["city"]["grid"]
-        self.assertEqual((g["columns"], g["rows"]), (8, 8))
-        inside = [b for b in W["blocks"] if b["district"] != "Outside the walls"]
-        self.assertEqual(sorted(tuple(b["grid"]) for b in inside), [(i, j) for i in range(8) for j in range(8)])
-        self.assertEqual(len({tuple(b["grid"]) for b in W["blocks"]}), len(W["blocks"]))   # blocks outside the walls too (FURN-020)
+        """WLD-024: Old Town is 8x8 one-cell blocks inside the line where its wall stood (city.json "wall"); since the
+        remodel (WLD-020, WLD-021) the map round it is 20x16, and every cell of it is in exactly one block (WLD-056)."""
+        g, (i0, j0, i1, j1) = W["city"]["grid"], W["city"]["wall"]["cells"]
+        self.assertEqual((i1 - i0, j1 - j0), (8, 8))
+        cells = lambda b: [(b["grid"][0] + a, b["grid"][1] + c) for a in range(b.get("span", [1, 1])[0]) for c in range(b.get("span", [1, 1])[1])]
+        inside = [b for b in W["blocks"] if any(i0 <= i < i1 and j0 <= j < j1 for i, j in cells(b))]
+        self.assertTrue(all(b.get("span", [1, 1]) == [1, 1] for b in inside), "Old Town's blocks are one cell each")
+        self.assertEqual(sorted(tuple(b["grid"]) for b in inside), [(i, j) for i in range(i0, i1) for j in range(j0, j1)])
+        every = [c for b in W["blocks"] for c in cells(b)]
+        self.assertEqual(sorted(every), [(i, j) for i in range(g["columns"]) for j in range(g["rows"])])   # each cell once
 
     def test_key_amenities_exist(self):
         names = {l["name"] for l in LOTS}
@@ -82,13 +93,18 @@ class TheResidents(unittest.TestCase):
                 self.assertIn(l["id"], staffed, l["name"])
 
     def test_the_day_has_no_gaps_and_starts_and_ends_in_bed(self):
+        out = 0
         for rid, pieces in CITY.plan(DAY).items():
             self.assertAlmostEqual(pieces[0][1], 0.0)
             self.assertAlmostEqual(pieces[-1][2], 1440.0)
             for a, b in zip(pieces, pieces[1:]):
                 self.assertAlmostEqual(a[2], b[1], places=6)
             self.assertEqual(pieces[0][4]["place"], CITY.res[rid]["home"])
-            self.assertEqual(pieces[-1][4]["place"], CITY.res[rid]["home"])
+            if pieces[-1][0] == "move":                                  # still on the way at midnight, at their own pace
+                out += 1
+            else:
+                self.assertEqual(pieces[-1][4]["place"], CITY.res[rid]["home"])
+        self.assertLessEqual(out, len(CITY.res) * .02)                   # a few are out late, as in life (the owner, 2026-11-24)
 
     def test_nobody_walks_faster_than_their_own_pace(self):
         for rid, pieces in CITY.plan(DAY).items():
@@ -102,8 +118,8 @@ class TheResidents(unittest.TestCase):
         self.assertGreaterEqual(sum(l < 2 for l in late) / len(late), 0.8)
 
     def test_the_city_sleeps_at_night_and_is_out_by_day(self):
-        night = CITY.at(DAY * 1440 + 3 * 60)
-        self.assertTrue(all(s["state"] == "inside" for s in night.values()))
+        night = CITY.at(DAY * 1440 + 3 * 60)                         # a few may be out, as in life (the owner, 2026-11-24)
+        self.assertLessEqual(sum(s["state"] != "inside" for s in night.values()), len(night) * .01)
         noon = CITY.at(DAY * 1440 + 12.5 * 60)
         self.assertGreater(sum(s["state"] in ("walking", "outside") for s in noon.values()), 80)
 
@@ -132,7 +148,7 @@ class TheDressing(unittest.TestCase):
         self.assertTrue(any("outside its block" in x for x in p))
 
     def test_WLD_029_parks_courts_and_squares(self):
-        parks = [l for l in LOTS if l["name"].endswith(" Park")]
+        parks = [l for l in old_town(LOTS) if l["name"].endswith(" Park")]     # the four big parks are Old Town's (Town Park is newer)
         self.assertEqual(len(parks), 4)
         for l in parks:
             for k in world.PLAY_USES + ("notice",):
@@ -141,7 +157,7 @@ class TheDressing(unittest.TestCase):
             self.assertEqual(self.count(k), 4, k)
         self.assertEqual(self.count("seesaw"), 8)
         self.assertEqual(self.count("bandstand"), 1)
-        courts = [l for l in LOTS if l["kind"] == "garden" and not l["name"].endswith(" Park")]
+        courts = [l for l in old_town(LOTS) if l["kind"] == "garden" and not l["name"].endswith(" Park")]
         pieces = [p for p in self.PROPS if p["kind"] in ("sundial", "well", "pergola", "statue")]
         self.assertGreaterEqual(len(pieces), len(courts) + 1)                   # one in each court, and the Town Hall's statue
         market = next(l for l in LOTS if l["kind"] == "market")
@@ -185,7 +201,8 @@ class TheDressing(unittest.TestCase):
         self.assertGreaterEqual(self.count("advert"), 15)
         self.assertGreaterEqual(self.count("hoarding"), 3)
         homes = [l for l in LOTS if l["kind"] == "home"]
-        self.assertTrue(.3 < sum(bool(l.get("window_boxes")) for l in homes) / len(homes) < .6)
+        boxes = lambda l: l.get("window_boxes") or (l.get("house") or {}).get("trim", {}).get("window_boxes")   # a designed house: in its trim
+        self.assertTrue(.3 < sum(bool(boxes(l)) for l in homes) / len(homes) < .6)
 
     def test_WLD_031_streets(self):
         for k, least in (("bin", 64), ("planter", 40), ("bikerack", 20), ("postbox", 10), ("phonebox", 3), ("bollard", 256)):
@@ -194,7 +211,8 @@ class TheDressing(unittest.TestCase):
 
     def test_WLD_032_children_play_after_school(self):
         kids = [r for r in W["residents"] if r["role"] == "child"]
-        self.assertEqual(len(kids), 60)
+        B = world._read(world.WORLD, "rules", "balance.json")["targets"]          # since BAL-004: the share the balance asks for
+        self.assertLessEqual(abs(len(kids) / len(W["residents"]) - B["residents"]["child"]), B["residents"]["child"] * B["band"])
         self.assertEqual(len({r["near"]["playground"] for r in kids}), 4)
         self.assertIn("child", W["traffic"]["no_drive_roles"])
         state = CITY.at(DAY * 1440 + 16.5 * 60)
@@ -293,7 +311,7 @@ class TheStoreys(unittest.TestCase):
             self.assertTrue(l["enterable"], l["id"])
             self.assertEqual(len(l["storeys"]), l["floors"], l["id"])
             if l["floors"] >= 2:
-                self.assertIn("stair", l, l["id"])
+                self.assertTrue("stair" in l or world.house_stair(l), l["id"])   # a designed house's stair is in its plan
 
     def test_WLD_051_towers_have_a_lift(self):
         towers = [l for l in BUILDINGS if l.get("tower")]
@@ -318,11 +336,30 @@ class TheStoreys(unittest.TestCase):
             l = lots_[s["place"]]
             if l["kind"] == "home" and l["floors"] >= 2 and s.get("use") == "bed" and s.get("slot") is not None:
                 total += 1
-                up += l["levels"]["bed"][s["slot"]] >= 1
+                f = l["levels"]["bed"][s["slot"]]
+                flat = next((q for q in l.get("flats", []) if s["slot"] in q["beds"]), None)   # flats on every floor (BAL-006):
+                up += f == flat["floor"] if flat else f >= 1                                  # the bed is on its own flat's floor
         self.assertGreater(total, 500)
         self.assertEqual(up, total)
         offices = [l for l in LOTS if l["kind"] == "work" and l["floors"] >= 2 and l["objects"].get("work")]
         self.assertTrue(any(f >= 1 for l in offices for f in l.get("levels", {}).get("work", [])))
+
+    def test_WLD_053_a_stay_upstairs_carries_its_floor(self):
+        """Stacked flats and offices have places at the same spot on each floor, so the slice's day plan gives a stay
+        upstairs its floor (build_play.routines) and the slice finds the place by spot and floor (play.js resident)."""
+        import collections, build_play
+        plan, acts = build_play.routines(CITY, DAY, collections.defaultdict(int))
+        lots_, seen = CITY.d["lots"], 0
+        for row in plan:
+            for p in row:
+                if p[1] != 0 or p[5] < 0:
+                    continue
+                l, use = lots_[p[7]], build_play.USES[p[5]]
+                floors = {f for q, f in zip(l["objects"].get(use, []), (l.get("levels") or {}).get(use, [])) if abs(q[0] - p[2]) < .2 and abs(q[1] - p[3]) < .2}
+                f = p[8] if len(p) > 8 else 0
+                self.assertTrue(f in floors or (not floors and f == 0), (l["id"], use, p[2], p[3], f, floors))
+                seen += len(floors) > 1
+        self.assertGreater(seen, 100)                                    # stays at a spot used on more than one floor
 
 
 class TheDesigns(unittest.TestCase):
@@ -510,6 +547,37 @@ class TheSky(unittest.TestCase):
         bad["sky"]["night"]["paths"]["sun_lift"] = 0.5
         del bad["sky"]["night"]["paths"]["moon_tilt"]
         self.assertEqual(len(world.night_sky_problems(bad)), 2)
+
+    def test_WLD_065_the_planet_hangs_in_one_place_clear_of_the_sun(self):
+        import math
+        self.assertEqual(world.planet_problems(W), [])
+        p = W["sky"]["planet"]
+        seasons = W["calendar"]["calendar"]["seasons"]
+        gaps = world.planet_sun_gap(W)
+        self.assertEqual(set(gaps), set(seasons))
+        self.assertGreater(min(gaps.values()), p["size"])                 # the sun never goes behind it, in any season
+        self.assertGreater(math.radians(p["elevation"]), p["size"])       # all of it is above the horizon, always
+        self.assertLessEqual(p["by_day"], .5)                             # by day it is only just there
+        self.assertGreater(p["night"], 0)                                 # and after dark it comes out
+        for name in seasons:                                              # its phase is the sun's doing: it waxes and wanes through each day
+            lit = [world.planet_lit(W, name, 2 * math.pi * k / 96) for k in range(96)]
+            self.assertTrue(all(0 <= v <= 1 for v in lit))
+            self.assertGreater(max(lit) - min(lit), .4)
+            self.assertAlmostEqual(min(lit), (1 - math.cos(min(world.planet_sun_angle(W, name, 2 * math.pi * k / 96) for k in range(96)))) / 2)
+
+    def test_WLD_065_a_broken_planet_is_caught(self):
+        import copy
+        bad = copy.deepcopy(W)
+        bad["sky"]["planet"].update(azimuth=180, elevation=50)            # due south on the sky's equator: the autumn sun goes straight behind it, the spring sun clips it
+        self.assertEqual(len(world.planet_problems(bad)), 2)
+        bad = copy.deepcopy(W)
+        del bad["sky"]["planet"]["spin_hours"]
+        bad["sky"]["planet"]["by_day"] = 2                                # out of range
+        bad["sky"]["planet"]["rings"]["outer"] = 1.2                      # inside the inner edge
+        self.assertEqual(len(world.planet_problems(bad)), 3)
+        bad = copy.deepcopy(W)
+        del bad["sky"]["planet"]                                          # a sky with no planet is still a sky
+        self.assertEqual(world.sky_problems(bad), [])
 
     def test_WLD_010_the_slice_can_show_every_season(self):
         """The season key (Y) of the slice: one look for each season, on the same day of the season as the built day."""
@@ -713,12 +781,13 @@ class TheFurnitureOutlet(unittest.TestCase):
     def test_FURN_020_outlet_outside_the_walls(self):
         l, P = self.outlet(), W["city"]["grid"]["pitch"]
         x0, z0, x1, z1 = l["rect"]
-        self.assertGreater(x0, W["city"]["grid"]["columns"] * P + 9.5)          # beyond East Wall Street and the wall
+        east = W["city"]["wall"]["cells"][2] * P                                  # the line where the east wall stood (WLD-055)
+        self.assertGreater(x0, east + 9.5)                                          # beyond East Wall Street and that line
         self.assertGreaterEqual((x1 - x0) * (z1 - z0), 2000)                      # huge: a big hall
         self.assertTrue(l["enterable"])
         self.assertEqual(l["door"][1], z0)                                         # its door faces the gate road
         gate = next(g for g in W["roads"]["gates"] if g["id"] == "gate_east")
-        self.assertGreaterEqual(W["city"]["grid"]["columns"] * P + gate["length"], x1)   # the road runs past it
+        self.assertGreaterEqual(east + gate["length"], x1)                         # the road runs past it
         for k in ("work", "customer", "seat"):
             self.assertTrue(l["objects"][k], k)
         staff = [r for r in W["residents"] if r.get("work") == l["id"]]

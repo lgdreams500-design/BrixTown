@@ -22,7 +22,7 @@ Nothing to install; it runs from these files.
 | `cast_voices.html` | The cast's voice samples the owner chose from, with each voice in every mood |
 | `jukebox.html` | Every music track (score, café, shop, busker, radio), played on its own by `sound.js` so it can be heard and approved |
 | `people.js` | The people: option B bodies and faces, built part for part as `Tools/blender/character_face_05.py` builds the reference lineup, and the walk from the movement signatures. `index.html?lineup=1` stands the six reference people in a row on Linden Street to compare; `?studio=1` (to `6`) shows one of them under the light and camera of the reference lineup |
-| (sky) | The sky and its clouds are drawn by `play.js` from `World/rules/sky.json`: blue overhead, hazy horizon, clouds placed by the world clock (ADR-0014); cloud, rain and fog follow the day's weather (ADR-0016) |
+| (sky) | The sky and its clouds are drawn by `play.js` from `World/rules/sky.json`: blue overhead, hazy horizon, clouds placed by the world clock (ADR-0014); cloud, rain and fog follow the day's weather (ADR-0016); the planet the town's moon goes round hangs in the north-east, pale by day and out at night (WLD-065, ADR-0040; `sky.json` "planet", `show: false` takes it out) |
 | `city_seasons.js` | How each season looks, for the Y key: daylight hours, weather, trees and flowers on the same day of each season. Generated: do not edit |
 | `city_data.js` | The city and one day of everyone's routine, packed from `World/`. Generated: do not edit |
 
