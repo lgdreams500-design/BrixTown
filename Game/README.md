@@ -55,6 +55,14 @@ checks every lot and block against `Tests/values/surfaces_city_01.json` (run `py
 `Tools/worldgen` after changing the rules). M_Greybox draws them with the slice's own code, ported to
 `Tools/unreal/greybox_surface.hlsl`; each box carries its pattern in its custom data.
 
+## The clock and the sun (ADR-0024, WLD-043)
+The game starts on day 16 (the slice's built day, a summer Wednesday) at the city's spawn time (07:20) and runs at the
+calendar's pace (`real_seconds_per_minute`, 10 s a game minute). The sun is worked out from the clock every frame, never
+stored: its place for the season at latitude 40 (World/rules/calendar.json, sky.json; a port of world.sun_place(),
+checked by `WLD043_the_sun_follows_the_calendar`), its light from no lower than `sun_lift`, a dawn red as it sinks, the
+calendar's hour of dawn and dusk; the sky's fill and the haze's glow go down with the day. `-BrixDay=` and
+`-BrixTime=hh:mm` start elsewhere in the year or the day.
+
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
 black. At Epic quality the town runs at about 36 frames a second, at High about 63 with the same shade, at Medium about 86
@@ -83,3 +91,4 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD022_broken_lots_are_caught` | WLD-022 |
 | `BrixTown.World.WLD038_surfaces_match_the_rules` | WLD-038, WLD-039 |
 | `BrixTown.World.ART001_every_house_has_its_line_and_colourway` | ART-001 (ADR-0032, ADR-0035) |
+| `BrixTown.World.WLD043_the_sun_follows_the_calendar` | WLD-043 (ADR-0024) |

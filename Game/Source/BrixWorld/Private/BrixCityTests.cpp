@@ -158,4 +158,47 @@ bool FART001_HousesHaveTheirColourways::RunTest(const FString&)
 	return Bad == 0;
 }
 
+// WLD-043 (ADR-0024): the sun follows the calendar. Its season for a day, its height for each season and its place at the
+// hours of a day are those the Python works out (world.sun_heights(), world.sun_place(); Tests/values/sun_city_01.json).
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWLD043_TheSunFollowsTheCalendar, "BrixTown.World.WLD043_the_sun_follows_the_calendar",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FWLD043_TheSunFollowsTheCalendar::RunTest(const FString&)
+{
+	FBrixCity City;
+	FString Error;
+	if (!TestTrue(TEXT("the starting city loads: ") + Error, LoadBrixCity(StartingCityDir(), City, Error))) return false;
+	FString Text;
+	const FString Values = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../Tests/values/sun_city_01.json")));
+	if (!TestTrue(TEXT("the test values are there: ") + Values, FFileHelper::LoadFileToString(Text, *Values))) return false;
+	TSharedPtr<FJsonObject> Want;
+	if (!TestTrue(TEXT("the test values are JSON"), FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Want) && Want.IsValid())) return false;
+	const FBrixSky& S = City.Sky;
+	int32 Wrong = 0;
+	for (const auto& KV : Want->GetObjectField(TEXT("season_of_day"))->Values)
+	{
+		const int32 Day = FCString::Atoi(*FString(KV.Key.ToView()));
+		if (S.Seasons[S.SeasonOf(Day)] != KV.Value->AsString()) { AddError(FString::Printf(TEXT("day %d: %s, the calendar says %s"), Day, *S.Seasons[S.SeasonOf(Day)], *KV.Value->AsString())); ++Wrong; }
+	}
+	for (const auto& KV : Want->GetObjectField(TEXT("seasons"))->Values)
+	{
+		const FString Name(KV.Key.ToView());
+		const int32 Season = S.Seasons.IndexOfByKey(Name);
+		if (Season == INDEX_NONE) { AddError(Name + TEXT(": no such season")); ++Wrong; continue; }
+		const TSharedPtr<FJsonObject> W = KV.Value->AsObject();
+		if (FMath::Abs(FMath::RadiansToDegrees(S.Declination(Season)) - W->GetNumberField(TEXT("declination"))) > 1e-6)
+		{
+			AddError(Name + TEXT(": the sun's height differs from the Python's")); ++Wrong;
+		}
+		for (const auto& P : W->GetObjectField(TEXT("places"))->Values)
+		{
+			const double Minute = FCString::Atod(*FString(P.Key.ToView()));
+			const TArray<TSharedPtr<FJsonValue>>& A = P.Value->AsArray();
+			const FVector3d Got = S.SunPlace(Season, S.HourAngle(Season, Minute)), Exp(A[0]->AsNumber(), A[1]->AsNumber(), A[2]->AsNumber());
+			if (!Got.Equals(Exp, 1e-6)) { AddError(FString::Printf(TEXT("%s at minute %.0f: the sun at %s, the Python says %s"), *Name, Minute, *Got.ToString(), *Exp.ToString())); ++Wrong; }
+		}
+	}
+	TestEqual(TEXT("places of the sun that differ from the Python's"), Wrong, 0);
+	return Wrong == 0;
+}
+
 #endif

@@ -105,6 +105,24 @@ struct BRIXWORLD_API FBrixBlock
 	FBrixSurface Pavement;
 };
 
+// The calendar and the sky the sun is worked out from (World/rules/calendar.json, sky.json; ADR-0024, WLD-043). Nothing
+// about the sun is stored or ticked: its place follows from the day and the minute.
+struct BRIXWORLD_API FBrixSky
+{
+	TArray<FString> Seasons;
+	TArray<float> Sunrise, Sunset;     // hours, per season
+	int32 DaysPerSeason = 12;
+	float RealSecondsPerMinute = 10.f; // the clock's pace (WLD-026)
+	float LatitudeDeg = 40.f;          // sky.json night.latitude
+	float SunLift = 0.08f;             // the light comes from no lower than this (paths.sun_lift)
+
+	int32 SeasonOf(int32 Day) const;   // citysim clock.info(): (day mod year) // days per season
+	double Declination(int32 Season) const;                 // radians; world.sun_heights()
+	double HourAngle(int32 Season, double Minute) const;    // radians, 0 at the middle of the calendar's day (play.js sunHour())
+	FVector3d SunPlace(int32 Season, double HourAngle) const;   // east +x, up +y, south +z; world.sun_place()
+	double Daylight(int32 Season, double Minute) const;     // 0 at night to 1 in full day, an hour of dawn and dusk (play.js lighting())
+};
+
 struct BRIXWORLD_API FBrixCity
 {
 	FString Id;
@@ -121,6 +139,7 @@ struct BRIXWORLD_API FBrixCity
 	TArray<FBrixPattern> Patterns;          // in the order of surfaces.json
 	TMap<FString, TArray<FBrixSurfaceRule>> SurfaceRules;   // slot -> rules, first match wins
 	TMap<FString, FBrixHousePlan> HousePlans;  // World/rules/home_plans.json, the plans designed houses are built to
+	FBrixSky Sky;
 
 	int32 NumLots() const;
 	int32 FindPattern(const FString& Name) const;

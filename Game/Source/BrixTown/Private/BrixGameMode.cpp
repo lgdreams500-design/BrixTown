@@ -26,6 +26,7 @@ using BrixUnits::ToWorld;
 ABrixGameMode::ABrixGameMode()
 {
 	DefaultPawnClass = ABrixCharacter::StaticClass();
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void ABrixGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
@@ -41,6 +42,13 @@ void ABrixGameMode::InitGame(const FString& MapName, const FString& Options, FSt
 		return;
 	}
 	for (const FString& Problem : CheckBrixCity(*City)) UE_LOG(LogTemp, Warning, TEXT("Brix Town data: %s"), *Problem);
+	// the clock: the city's spawn time on StartDay, or what the command line asks for
+	Day = StartDay;
+	FParse::Value(FCommandLine::Get(), TEXT("BrixDay="), Day);
+	FString Time = City->SpawnTime;
+	FParse::Value(FCommandLine::Get(), TEXT("BrixTime="), Time);
+	FString Hh, Mm;
+	if (Time.Split(TEXT(":"), &Hh, &Mm)) StartMinute = FCString::Atoi(*Hh) * 60.0 + FCString::Atoi(*Mm);
 }
 
 AActor* ABrixGameMode::ChoosePlayerStart_Implementation(AController* Player)
@@ -101,9 +109,9 @@ void ABrixGameMode::StartPlay()
 void ABrixGameMode::SpawnLight()
 {
 	// Lights are set up before they are first registered (deferred spawn): a sky light made movable and real-time after
-	// registering keeps its first, empty capture and leaves the shade black.
+	// registering keeps its first, empty capture and leaves the shade black. The sun is then turned by the clock (UpdateSun).
 	UWorld* W = GetWorld();
-	const FTransform SunAt(FRotator(SunPitch, SunYaw, 0.f));
+	const FTransform SunAt(FRotator(-30.f, 180.f, 0.f));
 	ADirectionalLight* Sun = W->SpawnActorDeferred<ADirectionalLight>(ADirectionalLight::StaticClass(), SunAt);
 	UDirectionalLightComponent* SunLight = CastChecked<UDirectionalLightComponent>(Sun->GetLightComponent());
 	SunLight->Mobility = EComponentMobility::Movable;
@@ -111,6 +119,14 @@ void ABrixGameMode::SpawnLight()
 	SunLight->LightColor = SunColour.ToFColor(true);
 	SunLight->bAtmosphereSunLight = true;
 	Sun->FinishSpawning(SunAt);
+	SunActor = Sun;
+	StartSeconds = W->GetTimeSeconds();
+	UpdateSun();
+	if (City)
+	{
+		const FBrixSky& S = City->Sky;
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: day %d (%s), %02d:%02d"), Day, *S.Seasons[S.SeasonOf(Day)], (int32)StartMinute / 60, (int32)StartMinute % 60);
+	}
 
 	ASkyAtmosphere* Atmosphere = W->SpawnActor<ASkyAtmosphere>();
 	USkyAtmosphereComponent* Air = Atmosphere->GetComponent();
@@ -121,6 +137,7 @@ void ABrixGameMode::SpawnLight()
 	SkyLight->bRealTimeCapture = true;
 	SkyLight->Intensity = SkyLightIntensity;
 	Sky->FinishSpawning(FTransform::Identity);
+	SkyFill = SkyLight;
 	SkyLight->RecaptureSky();
 	FTimerHandle H;   // once the sky has been drawn: capture it again, and say what the sky light holds
 	GetWorldTimerManager().SetTimer(H, [SkyLight]()
@@ -134,6 +151,43 @@ void ABrixGameMode::SpawnLight()
 	Haze->GetComponent()->SetFogDensity(HazeDensity);
 	Haze->GetComponent()->SetFogHeightFalloff(HazeFalloff);
 	Haze->GetComponent()->SetFogInscatteringColor(HazeColour);
+	HazeFog = Haze->GetComponent();
+	UpdateSun();
+}
+
+void ABrixGameMode::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	UpdateSun();
+}
+
+// The sun where the calendar puts it for this minute of this day (WLD-043, ADR-0024; play.js lighting()): worked out from the
+// clock each frame, never stored. Its light comes from no lower than sun_lift; it reddens as it sinks; it fades through the
+// calendar's hour of dawn and dusk.
+void ABrixGameMode::UpdateSun()
+{
+	if (!SunActor || !City) return;
+	const FBrixSky& S = City->Sky;
+	const double Elapsed = GetWorld()->GetTimeSeconds() - StartSeconds;
+	const double Minutes = StartMinute + Elapsed / FMath::Max(0.01, (double)S.RealSecondsPerMinute) * ClockRate;
+	const int32 Today = Day + (int32)FMath::Floor(Minutes / 1440.0);
+	const double Minute = FMath::Fmod(Minutes, 1440.0);
+	const int32 Season = S.SeasonOf(Today);
+	FVector3d P = S.SunPlace(Season, S.HourAngle(Season, Minute));      // east +x, up +y, south +z
+	P.Y = FMath::Max(P.Y, (double)S.SunLift);
+	P.Normalize();
+	const FVector ToSun(P.X, P.Z, P.Y);                                  // in Unreal: x east, y south, z up
+	UDirectionalLightComponent* Light = CastChecked<UDirectionalLightComponent>(SunActor->GetLightComponent());
+	SunActor->SetActorRotation((-ToSun).Rotation());
+	const float Low = FMath::SmoothStep(0.05f, 0.5f, (float)P.Y);
+	Light->SetLightColor(FMath::Lerp(SunDawnColour, SunColour, Low));
+	const float Light01 = (float)S.Daylight(Season, Minute);
+	Light->SetIntensity(SunLux * Light01);
+	// the sky's fill and the haze's glow go down with the day, and the haze takes the low sun's colour (lighting(): fog and sky
+	// mix towards the night's as the day goes)
+	const float Fill = FMath::Lerp(NightFill, 1.f, Light01);
+	if (SkyFill) SkyFill->SetIntensity(SkyLightIntensity * Fill);
+	if (HazeFog) HazeFog->SetFogInscatteringColor(HazeColour * Fill * FMath::Lerp(SunDawnColour, FLinearColor::White, Low));
 }
 
 void ABrixGameMode::ShootAndQuit()
