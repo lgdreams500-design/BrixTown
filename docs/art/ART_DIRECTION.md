@@ -1,9 +1,9 @@
 ---
 doc_id: WASTED-ART-DIRECTION
 title: Brix Town — Art direction (locked look)
-version: 1.6.0
+version: 1.6.1
 status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22, interiors and furniture on 2026-11-22, the menu's look on 2026-11-23
-last_updated: 2026-11-23
+last_updated: 2026-11-24
 relates_to: [FURN-003, ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
 decision: docs/decisions/ADR-0004-art-direction.md, docs/decisions/ADR-0007-warmer-kit-light.md, docs/decisions/ADR-0013-kit-light-measured.md, docs/decisions/ADR-0026-interior-and-furniture-look.md, docs/decisions/ADR-0033-menu-look-painted-signs.md
 ---
@@ -211,6 +211,7 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | Wear stages (I8) | not yet rendered. (The furniture outlet's look, `Art/StyleTests/furniture_kit_17/showroom.png`, was approved by the owner's request to build it, ADR-0027.) |
 | Night (after dusk) and bad-weather looks | night: approved in the slice (ADR-0023, owner 2026-11-22), no reference image yet; pictures in `Art/StyleTests/night_sky_15/`. Rain, fog and overcast: approved in the slice (ADR-0016), no rule or reference image yet; must follow W5–W7 |
 | The sky: blue overhead with drifting clouds | approved in the slice (ADR-0014); not in the reference renders, still needs a rule and a reference image |
+| Big modern buildings outside Old Town (Eastgate Mall's ribbon walls and pierced eggs) | built in the slice at the owner's request, in the locked materials: mottled plaster, ochre and cream, lantern light (ADR-0035). No rule or reference image yet. The photograph it follows is glossy white metal and gold; going that way would change the look (W1, W4) and needs the owner's word and a new ADR |
 | Whether the iris should be smaller than in `face_expressions.png` | owner to say |
 | How the look is achieved in Unreal on modest hardware (haze, soft light) | PH1 task |
 
@@ -225,3 +226,4 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | 1.4.0 | 2026-11-22 | Vehicles: the owner switched to A "Soft box" after playing with the Classic cars (ADR-0015): §2.5 rewritten, new reference `vehicles_soft_box.png`. |
 | 1.5.0 | 2026-11-22 | Interiors and furniture: the owner chose all four style lines from furniture look test 17 (ADR-0026): §2.6 rules I1-I9, references `furniture_lines.png` and `interior_room_daylight.png`. |
 | 1.6.0 | 2026-11-23 | The interface: the owner chose "C, Painted signs" from menu look test 19 (ADR-0033): §2.7 rules U1-U6. |
+| 1.6.1 | 2026-11-24 | §5: Eastgate Mall's sculpted shell noted as built in the locked materials, with no rule or reference image yet (ADR-0035). No rule or reference changed. |

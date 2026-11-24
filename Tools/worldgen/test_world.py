@@ -866,5 +866,214 @@ class TheOpenGround(unittest.TestCase):
                 self.assertEqual(json.load(f), json.loads(json.dumps(b.d)), b.id)
 
 
+class TheMallShell(unittest.TestCase):
+    def test_WLD_057_eastgate_has_a_ribbon_skin_and_an_egg_over_each_corner_store(self):   # owner 2026-11-24, from a photograph
+        import math
+        b = next(b for b in W["blocks"] if b["district"] == "Eastgate Mall")
+        l = next(l for l in b["lots"] if "mall" in l.get("tags", []))
+        sh, (x0, z0, x1, z1) = l["shell"], l["rect"]
+        self.assertEqual(sh["style"], "ribbon")
+        H, pitch = l["floors"] * l["plan"]["storey_height"], W["city"]["grid"]["pitch"]
+        bx0, bz0 = b["origin"]
+        bx1 = bx0 + b["size"] + (b["span"][0] - 1) * pitch
+        paving = next(p for p in b["props"] if p["kind"] == "paving")
+        south = paving["pos"][1] - paving["size"][1] / 2                      # the forecourt starts here; the shell stops short of it
+        tones = ("ochre", "cream", "terracotta", "teal", "plaster")           # the palette names the slice knows (shell.js)
+        on_hall = lambda x, z: (min(max(x, x0), x1), min(max(z, z0), z1))     # the nearest point of the hall's wall
+        in_egg = lambda d, x, y, z: ((x - d["pos"][0]) / d["radii"][0]) ** 2 + ((y - d["centre"]) / d["radii"][1]) ** 2 + ((z - d["pos"][1]) / d["radii"][2]) ** 2 < 1
+        pts, eggs = sh["skin"]["points"], sh["domes"]
+        self.assertGreater(len(pts), 100)
+        for i, (x, z, bottom, top) in enumerate(pts):
+            self.assertLessEqual(math.dist((x, z), pts[(i + 1) % len(pts)][:2]), 3.5, i)       # one closed line, no gaps
+            self.assertGreaterEqual(math.dist((x, z), on_hall(x, z)), 2.0, i)                  # outside the hall all the way round
+            self.assertTrue(bx0 < x < bx1 and bz0 < z < south, (x, z))                         # inside its block, short of the forecourt
+            self.assertGreaterEqual(top - bottom, 4.0, i)
+            self.assertTrue(top >= H + 1 or in_egg_any(eggs, in_egg, *on_hall(x, z), H + .5), (x, z, top))   # the hall's box never shows over the skin
+            for d in eggs:
+                self.assertGreater(math.hypot((x - d["pos"][0]) / d["radii"][0], (z - d["pos"][1]) / d["radii"][2]), 1.0, i)   # the skin stands outside every egg
+        self.assertTrue(all(c in tones for c in sh["skin"]["colors"]))
+        self.assertGreaterEqual(sh["skin"]["bands"], 8)
+        dx, dz = l["door"]                                                    # the door is under an arch high enough to walk in under
+        at_door = [p for p in pts if abs(p[0] - dx) < 8 and p[1] > z1]
+        self.assertTrue(at_door and all(p[2] >= 6 for p in at_door))
+        self.assertTrue(any(a["at"] == [dx, dz] for a in sh["arches"]))
+        for a in sh["arches"]:                                                # each arch listed is in the line: lifted where it says
+            lifted = [p[2] for p in pts if math.dist(on_hall(p[0], p[1]), a["at"]) < a["width"] / 4]
+            self.assertTrue(lifted and min(lifted) > a["height"] * .6, a)
+        units = {u["id"]: u for u in l["plan"]["levels"][0]["units"]}
+        self.assertEqual(len(eggs), 4)
+        self.assertEqual(len({d["over"] for d in eggs}), 4)
+        for d in eggs:                                                        # an egg over each corner store, in the block, well above the hall
+            u, (rx, ry, rz) = units[d["over"]], d["radii"]
+            self.assertEqual(u["kind"], "anchor")
+            self.assertTrue(u["rect"][0] < d["pos"][0] < u["rect"][2] and u["rect"][1] < d["pos"][1] < u["rect"][3], d)
+            self.assertTrue(bx0 <= d["pos"][0] - rx and d["pos"][0] + rx <= bx1 and bz0 <= d["pos"][1] - rz and d["pos"][1] + rz <= south, d)
+            self.assertGreater(d["centre"] + ry, H + 8)
+            self.assertIn(d["color"], tones)
+            self.assertGreaterEqual(d["cells"], 40)
+        rl, court = sh["roof_light"], l["plan"]["levels"][1]["voids"][0]      # the roof light stands on the roof, over the open court
+        self.assertEqual(rl["base"], H)
+        self.assertIn(rl["color"], tones)
+        cxs, czs = [q[0] for q in court], [q[1] for q in court]
+        self.assertTrue(min(cxs) <= rl["pos"][0] <= max(cxs) and min(czs) <= rl["pos"][1] <= max(czs))
+        self.assertTrue(x0 < rl["pos"][0] - rl["radii"][0] and rl["pos"][0] + rl["radii"][0] < x1 and z0 < rl["pos"][1] - rl["radii"][2] and rl["pos"][1] + rl["radii"][2] < z1)
+
+    def test_WLD_057_the_script_gives_the_shell_in_the_block_file(self):       # the data is what mall_shell_01.py works out, not edited by hand
+        import mall_shell_01 as M
+        b = next(b for b in W["blocks"] if b["district"] == "Eastgate Mall")
+        l = next(l for l in b["lots"] if "mall" in l.get("tags", []))
+        self.assertEqual(M.shell(b, {k: v for k, v in l.items() if k != "shell"}, M.PLAN[b["id"]], W["city"]["grid"]["pitch"]), l["shell"])
+
+
+class TheMallInside(unittest.TestCase):                                        # owner 2026-11-24: "start interiors fresh as this is new design"
+    def setUp(self):
+        import mall_inside_01 as M
+        self.M = M
+        self.b = next(b for b in W["blocks"] if b["district"] == "Eastgate Mall")
+        self.l = next(l for l in self.b["lots"] if "mall" in l.get("tags", []))
+        self.p, self.sh = self.l["plan"], self.l["shell"]
+        self.ground = self.p["levels"][0]
+
+    def on_floor(self, k, x, z):
+        L = self.p["levels"][k]
+        on_bridge = any(self.M.inside(q, x, z) for q in L["bridges"])
+        return on_bridge or (any(self.M.inside(q, x, z) for q in L["walks"]) and not any(self.M.inside(q, x, z) for q in L["voids"]))
+
+    def test_WLD_058_an_entrance_under_every_arch_and_a_walk_from_each_to_the_court(self):
+        x0, z0, x1, z1 = self.l["rect"]
+        self.assertEqual(self.p["concept"], "court")
+        ents = self.p["entrances"]
+        self.assertEqual(sorted(e["side"] for e in ents), ["e", "n", "s", "w"])
+        arches = {a["side"]: a for a in self.sh["arches"]}
+        for e in ents:
+            self.assertEqual(e["at"], arches[e["side"]]["at"])                     # the opening is where the shell is lifted
+            self.assertLess(e["width"], arches[e["side"]]["width"])
+            self.assertGreaterEqual(e["width"], 8)
+            x, z = e["at"]
+            self.assertTrue(abs(x - x0) < .01 or abs(x - x1) < .01 or abs(z - z0) < .01 or abs(z - z1) < .01)   # in the hall's wall
+            ix, iz = min(max(x, x0 + 2), x1 - 2), min(max(z, z0 + 2), z1 - 2)
+            self.assertTrue(self.on_floor(0, ix, iz), e)                           # and a walk begins just inside it
+        self.assertIn(self.l["door"], [e["at"] for e in ents])                     # the lot's door is one of them
+        court = self.ground["walks"][0]
+        cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+        self.assertTrue(self.M.inside(court, cx, cz))
+        halls = self.p["halls"]
+        for w in self.ground["walks"][1:]:                                         # every other walk meets the court, or is an egg hall met by a walk that does
+            meets = any(self.M.inside(court, x, z) for x, z in w)
+            is_hall = any(all(abs(((x - h["pos"][0]) ** 2 + (z - h["pos"][1]) ** 2) ** .5 - h["r"]) < .05 for x, z in w) for h in halls)
+            self.assertTrue(meets or is_hall, w[:2])
+        for h in halls:
+            self.assertTrue(any(self.M.inside(court, *w[0]) and any(((x - h["pos"][0]) ** 2 + (z - h["pos"][1]) ** 2) ** .5 < h["r"] for x, z in w) for w in self.ground["walks"][1:] if len(w) == 4), h)
+
+    def test_WLD_059_a_round_hall_under_each_egg_with_its_staff_inside(self):
+        x0, z0, x1, z1 = self.l["rect"]
+        units = {u["id"]: u for u in self.ground["units"]}
+        halls = self.p["halls"]
+        self.assertEqual(sorted(h["dome"] for h in halls), [0, 1, 2, 3])
+        for h in halls:
+            d, (x, z), r = self.sh["domes"][h["dome"]], h["pos"], h["r"]
+            self.assertEqual(h["pos"], d["pos"])                                   # under its egg's middle
+            self.assertEqual(d["over"], h["unit"])
+            self.assertGreaterEqual(r, 12)
+            self.assertTrue(x0 < x - r and x + r < x1 and z0 < z - r and z + r < z1)   # inside the hall's walls
+            self.assertLess(r, min(d["radii"][0], d["radii"][2]))                  # and narrower than the egg above it
+            u = units[h["unit"]]
+            self.assertEqual(u["kind"], "anchor")
+            self.assertEqual(len(u["stand"]), 6)
+            for sx, sz in u["stand"]:
+                self.assertLess(((sx - x) ** 2 + (sz - z) ** 2) ** .5, r - 2)
+
+    def test_WLD_060_a_court_open_to_the_roof_light_with_bridges_and_moving_stairs(self):
+        import math
+        x0, z0, x1, z1 = self.l["rect"]
+        cx, cz, st = (x0 + x1) / 2, (z0 + z1) / 2, self.p["storey_height"]
+        self.assertEqual(len(self.p["levels"]), self.l["floors"])
+        v1, v2, roof, rl = self.p["levels"][1]["voids"][0], self.p["levels"][2]["voids"][0], self.p["roof"]["opening"], self.sh["roof_light"]
+        for v in (v1, v2, roof):
+            self.assertTrue(self.M.inside(v, cx, cz))
+        self.assertTrue(all(self.M.inside(v2, x, z) for x, z in v1))               # the court opens as it rises
+        self.assertTrue(all(self.M.inside(roof, x, z) for x, z in v2))
+        self.assertTrue(all(((x - rl["pos"][0]) / rl["radii"][0]) ** 2 + ((z - rl["pos"][1]) / rl["radii"][2]) ** 2 < 1 for x, z in roof))   # and the roof's opening is under the roof light
+        for k in (1, 2):
+            L = self.p["levels"][k]
+            self.assertEqual(len(L["bridges"]), 2)
+            for b in L["bridges"]:
+                xs, zs = [q[0] for q in b], [q[1] for q in b]
+                mz = (min(zs) + max(zs)) / 2
+                self.assertTrue(self.M.inside(L["voids"][0], (min(xs) + max(xs)) / 2, mz))            # it crosses the opening
+                for ex in (min(xs) + .3, max(xs) - .3):                                              # and both its ends rest on the gallery
+                    self.assertTrue(any(self.M.inside(q, ex, mz) for q in L["walks"]) and not self.M.inside(L["voids"][0], ex, mz), (k, ex, mz))
+            self.assertTrue(any(len(r) > 20 for r in L["rails"]))                  # a parapet all round the opening
+        ramps = self.p["ramps"]
+        self.assertEqual(sorted((r["from"], r["to"]) for r in ramps), [(0, 1), (0, 1), (1, 2), (1, 2)])
+        for r in ramps:
+            run = math.dist(r["a"], r["b"])
+            self.assertLessEqual(st / run, math.tan(math.radians(30)))             # no steeper than a moving stair
+            self.assertTrue(self.on_floor(r["from"], *r["a"]) or any(abs(r["a"][1] - z) < .01 for b in self.p["levels"][r["from"]]["bridges"] for _, z in b), r)
+            self.assertTrue(any(abs(r["b"][1] - z) < .01 and min(q[0] for q in b) < r["b"][0] < max(q[0] for q in b) for b in self.p["levels"][r["to"]]["bridges"] for _, z in b), r)   # it lands on a bridge's edge
+        for f in self.p["fountains"]:
+            self.assertTrue(self.on_floor(f["level"], *f["pos"]))
+        for g in self.p["gardens"]:
+            self.assertTrue(self.on_floor(0, *g["pos"]) and all(self.on_floor(0, t[0], t[1]) for t in g["trees"]))
+
+    def test_WLD_062_a_lift_in_each_side_concourse_and_moving_stairs_wide_enough_to_run_both_ways(self):
+        import math
+        x0, z0, x1, z1 = self.l["rect"]
+        cx, lifts = (x0 + x1) / 2, self.p["lifts"]
+        self.assertEqual(sorted(q["pos"][0] < cx for q in lifts), [False, True])   # one each side of the court
+        for q in lifts:
+            (x, z), r, t = q["pos"], q["r"], math.radians(q["door"])
+            fx, fz = math.sin(t), -math.cos(t)
+            self.assertLess(abs(x + fx * 20 - cx), abs(x - cx))                    # its door faces the court
+            for L in self.p["levels"]:                                             # on every floor: on a walk, clear of the opening, room before its door and a way past on both sides
+                for px, pz in ((x, z), (x + fx * (r + 1.3), z + fz * (r + 1.3)), (x - fz * (r + 2.5), z + fx * (r + 2.5)), (x + fz * (r + 2.5), z - fx * (r + 2.5))):
+                    self.assertTrue(any(self.M.inside(w, px, pz) for w in L["walks"]), (L["level"], px, pz))
+                    self.assertFalse(any(self.M.inside(v, px, pz) for v in L["voids"]), (L["level"], px, pz))
+            for u in self.p["levels"][0]["units"]:                                 # nothing stands in it: no kiosk, bench, visitor or member of staff
+                if u["kind"] == "kiosk":
+                    self.assertGreater(math.dist(((u["rect"][0] + u["rect"][2]) / 2, (u["rect"][1] + u["rect"][3]) / 2), (x, z)), r + 4)
+            for p in [b["pos"] for b in self.p["benches"]] + self.l["objects"]["customer"] + self.l["objects"]["seat"] + self.l["objects"]["work"]:
+                self.assertGreater(math.dist(p[:2], (x, z)), r + .6, p)
+        for r in self.p["ramps"]:                                                  # two flights side by side, one up and one down
+            self.assertGreaterEqual(r["width"], 4.0)
+
+    def test_WLD_061_shops_on_every_walk_and_the_ground_floor_keeps_its_jobs(self):
+        import json, os, sys
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "citysim"))
+        import careers
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "World", "rules", "careers.json"), encoding="utf-8") as f:
+            R = json.load(f)
+        posts = careers.posts(self.l, R, "mall")
+        self.assertEqual(len(posts), 206)                                          # as the old ground floor had, so nobody's work changed
+        by_unit = {}
+        for _, u in posts:
+            by_unit[u] = by_unit.get(u, 0) + 1
+        units = {u["id"]: u for u in self.ground["units"]}
+        self.assertEqual({u: len(units[u]["stand"]) for u in by_unit}, by_unit)    # a place to stand for every post
+        self.assertEqual(sorted(by_unit.values()), [3] * 58 + [4] * 2 + [6] * 4)
+        stands = {tuple(s) for u in self.ground["units"] for s in u.get("stand", [])}
+        self.assertTrue(all(tuple(w) in stands for w in self.l["objects"]["work"]))
+        self.assertEqual(self.l["staff"], len(self.l["objects"]["work"]))
+        for L in self.p["levels"]:
+            ids = {u["id"] for u in L["units"]}
+            self.assertGreaterEqual(len(L["fronts"]), 50)
+            self.assertTrue(all(fr["unit"] in ids for fr in L["fronts"]))
+            self.assertTrue(all(u["kind"] in R["mall_units"] for u in L["units"]))
+            shops = [self.M.corners(u) for u in L["units"] if u["kind"] != "anchor"]
+            self.assertFalse(any(self.M.overlap(a, b) for i, a in enumerate(shops) for b in shops[i + 1:]))   # no two shops on the same ground
+        for kind in ("customer", "seat"):
+            self.assertTrue(all(self.on_floor(0, x, z) for x, z in self.l["objects"][kind]), kind)
+
+    def test_WLD_058_the_script_gives_the_plan_in_the_block_file(self):         # the data is what mall_inside_01.py works out, not edited by hand
+        plan, places = self.M.design(self.l, self.sh)
+        self.assertEqual(plan, self.l["plan"])
+        self.assertEqual(places["customer"], self.l["objects"]["customer"])
+        self.assertEqual(places["seat"], self.l["objects"]["seat"])
+
+
+def in_egg_any(eggs, inside, x, z, y):
+    return any(inside(d, x, y, z) for d in eggs)
+
+
 if __name__ == "__main__":
     unittest.main()

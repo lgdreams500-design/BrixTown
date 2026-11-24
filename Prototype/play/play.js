@@ -82,11 +82,15 @@ const BLOB_SIZE = { bench: [1, .27], bin: [.32, .32], planter: [.5, .5], postbox
 const KIND_CSS = { school: "#d8b74a", fire: "#b8443a", police: "#4a5a9a", home: "#b59a7c", shop: "#c79a45", food: "#b0614a", work: "#6f86ab", health: "#d9d3c2", utility: "#4b4b55", garden: "#6f8650", market: "#d8c9a3", stop: "#6fa3a2", bank: "#8c7a3c", dealer: "#5a7f8f", library: "#7a5c8f", museum: "#a08a6a", furniture: "#a8744a", cinema: "#8f3c4a" };
 const KIND_WORD = { school: "Schools", fire: "Fire station", police: "Police station", home: "Homes", shop: "Shops", food: "Cafés", work: "Workplaces", health: "Clinics and hospital", utility: "Utilities", garden: "Gardens and parks", market: "Market Square", stop: "Tram stops", bank: "Bank", dealer: "Car showroom", library: "Library", museum: "Museum", cinema: "Cinema", furniture: "Furniture outlet" };
 
+const SHELL_TONES = (typeof Shell !== "undefined" ? Shell.TONES : ["ochre", "cream", "terracotta", "teal", "plaster"]).map(n => n === "plaster" ? PLASTER[0] : C[n]);   // a mall's shell names its colours (shell.js); the shader holds them in this order
 // ---------------------------------------------------------------- mesh: position 3, normal 3, colour 3, material 1
 // materials: 0 plaster (mottled) · 1 lit window · 2 lamp · 3 indoor surface · 4 dark window · 6 stone blocks · 7 paving · 8 light pool · 9 plain · 10 person indoors
 //            11 barrel roof tiles · 12 louvred shutter (both shade their own relief, after Tools/blender/building_kit_07.py) · 14 person outdoors
 //            20 road setts · 21 cobbled footpath (7 paving also draws the kerb along each pavement's edge)
 //            15 floorboards · 16 floor tiles · 17 panelled room wall · 18 beamed ceiling (rooms: warm room light, little haze)
+//            25 pierced shell: a lattice of openings, dark by day and lantern-lit at night; vC is (round, down, openings round + 1000 x tone)
+//            26 ribbon wall: plaster bands with a dark joint under each, lit at night; vC is (band / 64, -, tone + 8 x second tone) (shell.js, WLD-057)
+//            27 pierced shell seen from inside: as 25, the sky through its openings (court.js, WLD-059)
 class Mesh {
   constructor(n) { this.a = new Float32Array(n || 1 << 16); this.n = 0; }
   reset() { this.n = 0; }
@@ -121,6 +125,16 @@ class Mesh {
   }
   ybox(cx, y0, cz, sx, sy, sz, yaw, c, f) { this.obox(M4.mul(M4.t(cx, y0, cz), M4.ry(yaw)), 0, sy / 2, 0, sx, sy, sz, c, f); }
   flat(x0, z0, x1, z1, y, c, f) { this.quad([x0, y, z0], [x0, y, z1], [x1, y, z1], [x1, y, z0], c, f, [0, 1, 0]); }
+  quadN(p, nr, cs, f) {                                    // a quad of a curved surface: its own normal and colour at each corner; it faces the way its normals point
+    const ax = p[1][0] - p[0][0], ay = p[1][1] - p[0][1], az = p[1][2] - p[0][2], bx = p[2][0] - p[0][0], by = p[2][1] - p[0][1], bz = p[2][2] - p[0][2];
+    const cx = p[3][0] - p[0][0], cy = p[3][1] - p[0][1], cz = p[3][2] - p[0][2];
+    const gx = ay * bz - az * by + by * cz - bz * cy, gy = az * bx - ax * bz + bz * cx - bx * cz, gz = ax * by - ay * bx + bx * cy - by * cx;   // both triangles' facing, so a quad with two corners together still has one
+    const mx = nr[0][0] + nr[1][0] + nr[2][0] + nr[3][0], my = nr[0][1] + nr[1][1] + nr[2][1] + nr[3][1], mz = nr[0][2] + nr[1][2] + nr[2][2] + nr[3][2];
+    const ix = gx * mx + gy * my + gz * mz < 0 ? QUV1 : QUV0;
+    if (this.n + 60 > this.a.length) { const b = new Float32Array(this.a.length * 2); b.set(this.a); this.a = b; }
+    const a = this.a;
+    for (let k = 0; k < 6; k++) { const q = ix[k], P = p[q], N = nr[q], c = cs[q], i = this.n; a[i] = P[0]; a[i + 1] = P[1]; a[i + 2] = P[2]; a[i + 3] = N[0]; a[i + 4] = N[1]; a[i + 5] = N[2]; a[i + 6] = c[0]; a[i + 7] = c[1]; a[i + 8] = c[2]; a[i + 9] = f; this.n = i + 10; }
+  }
 }
 const QUV0 = [0, 1, 2, 0, 2, 3], QUV1 = [0, 3, 2, 0, 2, 1];
 const FACES = [
@@ -194,7 +208,7 @@ function groundBase(x, z) {                              // height of the ground
 const spot = (lot, x, z, pose, yaw, h) => lot.spots.push({ x, z, pose, yaw, h });       // how a resident holds themselves at a place
 const use = (x, y, z, type, label, yaw, extra) => uses.push(Object.assign({ x, y, z, type, label, yaw: yaw || 0 }, extra));
 const spotAt = (...a) => spot(...a), useAt = (...a) => use(...a);   // furnish() shadows these with no-ops when it only draws
-const NULL_MESH = { box() { }, quad() { }, obox() { }, ybox() { }, flat() { } };   // geometry that goes nowhere (the load-time pass of a room)
+const NULL_MESH = { box() { }, quad() { }, obox() { }, ybox() { }, flat() { }, quadN() { } };   // geometry that goes nowhere (the load-time pass of a room)
 let PIECE_TAG = null;                                    // what furnish() is drawing just now, so the designer can name the piece (townPieces)
 const PIECE_WORD = { wardrobe: "Wardrobe", bookcase: "Bookcase", dresser: "Dresser", fireplace: "Fireplace", sideboard: "Sideboard", plant: "Plant", sofa: "Sofa", bench: "Bench",
   filing: "Filing cabinet", lockers: "Lockers", crates: "Crates", barrels: "Barrels", workbench: "Workbench", machine: "Machine", medcab: "Medicine cabinet", sink: "Sink", bottles: "Shelf of bottles",
@@ -1598,29 +1612,49 @@ function turnedHouse(l) {
   for (let k = -hd; k < hd; k += 1) for (const u of [-hw, hw]) { const p = T(u, 0, k + .5); solid(p[0] - .45, 0, p[2] - .45, p[0] + .45, H, p[2] + .45); }
 }
 
+let courtLight = null;                                     // a court mall's roof light and egg halls, for the room light (court.js)
 function mallShell(l) {
   // A mall from outside, until its floors (lot.plan, Tools/worldgen/malls_01.py) are built inside: a stone plinth, plastered walls
   // as high as its storeys, a big window to every 12 m bay of every floor, a cornice, a glass roof light along its length, and the
   // entrance under a canopy at its door. Some two thousand vertices, where the general building() gives a front this long an old
   // town's detail along every metre (1.5 to 1.9 million). Closed for now: its walls are solid all round.
   const [x0, z0, x1, z1] = l.rect, H = (l.plan.storey_height || 6) * (l.floors || 3), wallC = pick(PLASTER, hash(l.id, "mall")), glass = [.1, .12, .14];
+  const sh = l.shell && typeof Shell !== "undefined" && Shell.can(l.shell) ? l.shell : null;   // a sculpted shell round the hall (WLD-057): the hall keeps its box, and shows only under the shell's arches
   l.H = H;
+  if (sh && typeof Court !== "undefined" && Court.can(l)) {   // a mall with its inside built (WLD-058): its wall is open at its entrances, and court.js draws all that is in it
+    const o = { mesh: world, solid, lights, occl, C, tones: SHELL_TONES, accent: ACCENT, hash, F: Y_FLOOR, wall: wallC, inside: [.74, .7, .62], floor: [.74, .71, .64], spot: (x, z, pose, yaw, h) => spot(l, x, z, pose, yaw, h), use,
+      name: (text, ctr, n, h) => { const cell = nameCell(text); if (cell) lettering(signs, ctr, n, h, cell); } };
+    courtLight = Court.light(l);
+    Court.hall(o, l); Shell.draw(o, l); Court.draw(o, l); return;
+  }
   world.box(x0, 0, z0, x1, .6, z1, C.stone, 6);
   world.box(x0 + .2, .6, z0 + .2, x1 - .2, H, z1 - .2, wallC, 0);
-  world.box(x0 - .4, H, z0 - .4, x1 + .4, H + .7, z1 + .4, C.stoneDark, 0);
-  if (!l.open_air) { const alongX = x1 - x0 > z1 - z0, w = alongX ? (z1 - z0) / 6 : (x1 - x0) / 6, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+  if (!sh) world.box(x0 - .4, H, z0 - .4, x1 + .4, H + .7, z1 + .4, C.stoneDark, 0);
+  if (!l.open_air && !sh) { const alongX = x1 - x0 > z1 - z0, w = alongX ? (z1 - z0) / 6 : (x1 - x0) / 6, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
     alongX ? world.box(x0 + 20, H + .7, cz - w, x1 - 20, H + 3.2, cz + w, [.55, .64, .7], 4) : world.box(cx - w, H + .7, z0 + 20, cx + w, H + 3.2, z1 - 20, [.55, .64, .7], 4); }
   const st = l.plan.storey_height || 6;
   for (const [s, fix, a0, a1, out] of [["n", z0, x0, x1, -1], ["s", z1, x0, x1, 1], ["w", x0, z0, z1, -1], ["e", x1, z0, z1, 1]]) {
     const ns = s === "n" || s === "s", f = fix + out * .22, n = Math.max(1, Math.floor((a1 - a0) / 12));
     for (let k = 0; k < n; k++) for (let fl = 0; fl < (l.floors || 3); fl++) {
       const u0 = a0 + (a1 - a0) * (k + .15) / n, u1 = a0 + (a1 - a0) * (k + .85) / n, y0 = fl * st + 1.4, y1 = fl * st + st - .9;
+      if (sh) {                                             // behind the shell: only the bays under an arch, as lit shop fronts
+        const um = (u0 + u1) / 2, ar = sh.arches.find(a => a.side === s && Math.abs(um - a.at[ns ? 0 : 1]) < a.width / 2 - 2 && y0 < a.height - 2);
+        if (!ar || (!fl && Math.abs(um - l.door[ns ? 0 : 1]) < 9 && Math.abs(fix - l.door[ns ? 1 : 0]) < .01)) continue;   // and not across the entrance
+        const c = [0, 0, .96 + .03 * hash(l.id, s, k, fl)];
+        ns ? world.quad([u0, y0, f], [u1, y0, f], [u1, y1, f], [u0, y1, f], c, 1, [0, 0, out], true) : world.quad([f, y0, u0], [f, y0, u1], [f, y1, u1], [f, y1, u0], c, 1, [out, 0, 0], true);
+        continue;
+      }
       ns ? world.quad([u0, y0, f], [u1, y0, f], [u1, y1, f], [u0, y1, f], glass, 4, [0, 0, out]) : world.quad([f, y0, u0], [f, y0, u1], [f, y1, u1], [f, y1, u0], glass, 4, [out, 0, 0]);
     }
     ns ? solid(x0, 0, fix - .3, x1, H, fix + .3) : solid(fix - .3, 0, z0, fix + .3, H, z1);
   }
   const [dx, dz] = l.door, ns = Math.abs(dz - z0) < .01 || Math.abs(dz - z1) < .01, o = Math.abs(dz - z0) < .01 ? -1 : Math.abs(dz - z1) < .01 ? 1 : Math.abs(dx - x0) < .01 ? -1 : 1;
+  if (sh) for (let k = 0; k < 4; k++) {                    // the entrance under the shell's arch: four tall glazed doors, lit
+    const u0 = (ns ? dx : dz) - 8 + k * 4 + .15, u1 = u0 + 3.7, g = (ns ? dz : dx) + o * .26, c = [0, 0, .965 + .008 * k];
+    ns ? world.quad([u0, .62, g], [u1, .62, g], [u1, 5.5, g], [u0, 5.5, g], c, 1, [0, 0, o], true) : world.quad([g, .62, u0], [g, .62, u1], [g, 5.5, u1], [g, 5.5, u0], c, 1, [o, 0, 0], true);
+  } else
   ns ? world.box(dx - 8, 0, dz + o * .25 - .05, dx + 8, 5.5, dz + o * .25 + .05, glass, 4) : world.box(dx + o * .25 - .05, 0, dz - 8, dx + o * .25 + .05, 5.5, dz + 8, glass, 4);   // the entrance
+  if (sh) { Shell.draw({ mesh: world, solid, lights, occl, C, tones: SHELL_TONES }, l); return; }   // the arch over the door is its canopy
   ns ? world.box(dx - 10, 5.6, Math.min(dz, dz + o * 5), dx + 10, 6.1, Math.max(dz, dz + o * 5), C.stoneDark, 0) : world.box(Math.min(dx, dx + o * 5), 5.6, dz - 10, Math.max(dx, dx + o * 5), 6.1, dz + 10, C.stoneDark, 0);   // its canopy
 }
 
@@ -1743,7 +1777,13 @@ function program(vs, fs) {
 }
 const NOISE = `float h3(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719)))*43758.5453); }
 float ns(vec3 p){ vec3 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
-  return mix(mix(mix(h3(i),h3(i+vec3(1,0,0)),f.x), mix(h3(i+vec3(0,1,0)),h3(i+vec3(1,1,0)),f.x), f.y), mix(mix(h3(i+vec3(0,0,1)),h3(i+vec3(1,0,1)),f.x), mix(h3(i+vec3(0,1,1)),h3(i+vec3(1,1,1)),f.x), f.y), f.z); }`;
+  return mix(mix(mix(h3(i),h3(i+vec3(1,0,0)),f.x), mix(h3(i+vec3(0,1,0)),h3(i+vec3(1,1,0)),f.x), f.y), mix(mix(h3(i+vec3(0,0,1)),h3(i+vec3(1,0,1)),f.x), mix(h3(i+vec3(0,1,1)),h3(i+vec3(1,1,1)),f.x), f.y), f.z); }
+// The same noise with its lattice wrapped every 256 cells. Far from the map's origin h3() is given numbers too big for a float to
+// hold exactly, two cells no longer agree on the corner they share, and the blotches turn to blocks and steps (seen in Eastgate
+// Mall, 1,700 m east). Wrapped, the numbers stay small. Used for the mall's indoor plaster only: elsewhere the town is as it was.
+float h3w(vec3 i){ return h3(mod(i,256.)); }
+float nsW(vec3 p){ vec3 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
+  return mix(mix(mix(h3w(i),h3w(i+vec3(1,0,0)),f.x), mix(h3w(i+vec3(0,1,0)),h3w(i+vec3(1,1,0)),f.x), f.y), mix(mix(h3w(i+vec3(0,0,1)),h3w(i+vec3(1,0,1)),f.x), mix(h3w(i+vec3(0,1,1)),h3w(i+vec3(1,1,1)),f.x), f.y), f.z); }`;
 // Light, haze, materials and tone follow the numbers in Tools/blender/style_test_02.py, the script behind the reference image.
 const TONE = `vec3 tone(vec3 v){                         // AgX with the "Medium High Contrast" look, as the renders use (fitted curve)
   v=mat3(.842479062253094,.0423282422610123,.0423756549057051,.0784335999999992,.878468636469772,.0784336,.0792237451477643,.0791661274605434,.879142973793104)*v;
@@ -1757,7 +1797,7 @@ const MAIN_VS = `attribute vec3 aP,aN,aC; attribute float aF; uniform mat4 uVP,u
 void main(){ vP=aP; vN=aN; vC=aC; vF=aF; vec4 s=uSM*vec4(aP+aN*.08,1.); vS=s.xyz*.5+.5; gl_Position=uVP*vec4(aP,1.); }`;   // invariant: the depth-only pass and the lit pass land on the same depths
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF; uniform vec4 uCut,uIso; uniform float uCutY,uCutW,uIsoY;   // the building designer's cut (CUT, below)
 uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform vec2 uNk; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
-uniform vec4 uRoomL[16], uRoomR; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY; uniform vec4 uSkyB; uniform vec2 uSkyH; uniform vec4 uRacks[9]; uniform int uRackN; uniform vec3 uRackY; uniform vec4 uTruss; uniform vec2 uTruss2; uniform vec4 uFeet[8]; uniform int uFeetN;
+uniform vec4 uRoomL[16], uRoomR, uCourtR, uCourtE, uCourtH[4]; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY; uniform vec4 uSkyB; uniform vec2 uSkyH; uniform vec4 uRacks[9]; uniform int uRackN; uniform vec3 uRackY; uniform vec4 uTruss; uniform vec2 uTruss2; uniform vec4 uFeet[8]; uniform int uFeetN;
 uniform sampler2D uSSAOt; uniform vec3 uSSAO;              // ambient occlusion worked out from the screen's depth (aoProg below): 1/width, 1/height, strength (0: off)
 uniform sampler2D uGi; uniform vec4 uGiM, uBlob[16]; uniform int uBlobN; uniform vec3 uPf;
 uniform vec3 uHZ[4], uHNo[4], uHBr[4], uHSt; uniform vec4 uHLk[4];
@@ -1783,6 +1823,10 @@ vec3 roomLight(vec3 n,float person){
   vec3 hemi=mix(uGround,uSky,n.y*.5+.5);
   bool here=vP.x>uRoomR.x-.05&&vP.x<uRoomR.z+.05&&vP.z>uRoomR.y-.05&&vP.z<uRoomR.w+.05&&vP.y>uRoomY.x-.25&&vP.y<uRoomY.y+.25;
   float sky=here?uRoomY.z:1.;                              // a hall under skylights sees more of the day (outlet.js: the lot's "skylight")
+  if(!here&&uCourtE.z>0.&&vP.x>uCourtR.x&&vP.x<uCourtR.z&&vP.z>uCourtR.y&&vP.z<uCourtR.w){   // a court mall (court.js, WLD-060): daylight under its roof light and
+    vec2 q=vP.xz-uCourtE.xy; float e=length(q/uCourtE.zw), open=smoothstep(14.,-6.,length(q)*(1.-1./max(e,.01)));   // in its egg halls, less of it back under the galleries
+    for(int i=0;i<4;i++) open=max(open,smoothstep(1.12,.5,length(vP.xz-uCourtH[i].xy)/max(uCourtH[i].z,1.)));
+    sky=1.+1.5*open*(n.y<-.5?.4:1.); }
   if(here&&sky>1.&&uSkyH.y>0.){ float ff=skyFF(n);                      // as much more as it sees of the skylights;
     if(person>.5) ff=max(ff,.2+.6*(n.y*.5+.5));                           // a person in the aisles keeps most of it on top and less below, so they are
     sky=1.+(sky-1.)*clamp(ff,0.,1.4); }                                   // not lost in the shade under the solid roof (as in showroom.png)
@@ -1871,6 +1915,7 @@ float airLit(vec3 dir,float dist){                // how much of the air between
 vec3 paint(vec3 c2,vec3 r,float v){               // the painted() material: dark tone, a mid tone and a warm highlight blotched together (W1)
   vec3 c1=c2*r, mid=(c1+c2)*vec3(.48,.465,.53), hi=c2*vec3(1.12,1.04,.92);
   return v<.45?mix(c1,mid,v/.45):(v<.86?mix(mid,hi,(v-.45)/.41):mix(hi,c2,(v-.86)/.14)); }
+vec3 shellTone(float k){ return k<.5?${v3(SHELL_TONES[0])}:k<1.5?${v3(SHELL_TONES[1])}:k<2.5?${v3(SHELL_TONES[2])}:k<3.5?${v3(SHELL_TONES[3])}:${v3(SHELL_TONES[4])}; }   // the colours a mall's shell may name (shell.js)
 // One stone, brick or paving pattern (ADR-0017): returns (joint 0..1, the stone's own number 0..1, relief -1..1) at q, in metres
 // along the surface. Types: 0 bond (ashlar, running brick, slabs, setts), 1 Flemish bond, 2 coursed rubble, 3 flagstones,
 // 4 herringbone, 5 basket weave.
@@ -1917,7 +1962,9 @@ void main(){
   float hh=45., dy=vP.y-uCam.y; float k=abs(dy)>.05?(exp(-uCam.y/hh)-exp(-vP.y/hh))/(dy/hh):exp(-uCam.y/hh);
   float fog=1.-exp(-d*uFogD*max(k,0.));
   float blot=clamp((ns(vP*.9)*.6+ns(vP*2.7+7.)*.4-.5)*2.2+.5,0.,1.), nearK=1.-min(1.,d/70.);
-  vec3 col; bool emis=false; float inside=0.;
+  if((f>26.5&&f<27.5)||(f>2.5&&f<3.5&&uCourtE.z>0.&&vP.x>uCourtR.x-1.&&vP.x<uCourtR.z+1.&&vP.z>uCourtR.y-1.&&vP.z<uCourtR.w+1.))   // a court mall's indoor plaster (court.js): see nsW
+    blot=clamp((nsW(vP*.9)*.6+nsW(vP*2.7+7.)*.4-.5)*2.2+.5,0.,1.);
+  vec3 col; bool emis=false; float inside=0., glowM=0.;
   float wetG=((f>6.5&&f<7.5)||(f>19.5&&f<21.5)||f>29.5)?step(.5,n.y):0.;          // paving, road and footpaths go dark and shine a little when wet (WLD-037)
   if((f>.5&&f<1.5)||(f>3.5&&f<4.5)){                                      // a window: vC is (across, up, seed)
     vec2 uv=c.xy; float bx=min(uv.x,1.-uv.x);
@@ -1931,6 +1978,12 @@ void main(){
       if(abs(g.x-.5)<.035||abs(g.y-.6)<.03) col=vec3(.3,.2,.13)*(uSky+uSunCol*.03+.004);   // glazing bars
       emis=true; }
   }
+  if(f>26.5&&f<27.5){                                                     // a pierced shell seen from inside (WLD-059, court.js): the sky through its openings by day, the lattice in the hall's own light
+    float kd=floor(c.z/1000.+.01), N=c.z-kd*1000.; vec2 g=vec2(c.x+c.y,c.x-c.y)*N, fr=abs(fract(g)-.5);
+    float k2=1.-smoothstep(150.,480.,d), hole=mix(.36,1.-smoothstep(.27,.33,max(fr.x,fr.y)),k2);
+    float ring=smoothstep(.016,.019,c.y)*(1.-smoothstep(.028,.033,c.y)); hole=(c.y<.024?1.:hole)*(1.-ring);   // at the crown, where the lattice would pinch to slivers: a round eye open to the sky, in a plain ring
+    vec3 lat=paint(shellTone(kd),vec3(.69,.69,.73),mix(blot,.6,ring))*(uSky*.9+uGround*.5+vec3(.2,.15,.1)*(.5+.9*uNight));
+    col=mix(lat,(uFog*1.3+uSky*1.9+uSunCol*.05)*(1.-.85*uNight),hole); emis=true; inside=1.; }
 #ifdef LETTERS
   if(f>12.5&&f<13.5){                                                     // painted lettering: vC is (across, up, cell + share of the cell)
     float id=floor(c.z), tw=fract(c.z); vec2 uv=vec2((mod(id,4.)+.5+(c.x-.5)*tw)/4.,(floor(id/4.)+1.-c.y)/64.);
@@ -1938,6 +1991,16 @@ void main(){
 #endif
   if(!emis){
     if(f<.5) c=paint(c,vec3(.69,.69,.73),blot)*(.92+.16*ns(vP*.13));
+    else if(f>24.5&&f<25.5){ float kd=floor(c.z/1000.+.01), N=c.z-kd*1000.; vec2 g=vec2(c.x+c.y,c.x-c.y)*N, fr=abs(fract(g)-.5);   // a pierced shell (WLD-057): diamond openings in a lattice, none at the crown
+      float k2=1.-smoothstep(150.,480.,d), open=smoothstep(.05,.1,c.y), m=max(fr.x,fr.y), t1=h3(vec3(floor(g),31.));
+      float hole=mix(.36,1.-smoothstep(.27,.33,m),k2)*open, lip=smoothstep(.33,.4,m)*(1.-smoothstep(.4,.5,m));   // far off the openings blur into their share of the surface
+      c=paint(shellTone(kd),vec3(.69,.69,.73),blot)*(.92+.16*ns(vP*.13))*(1.+.1*lip*k2*open)*(1.-.8*hole);   // matte and mottled (W1); each opening a dark reveal by day
+      glowM=hole*(.5+.9*t1*k2)*uNight*1.5; }                                 // and a lantern behind it at night (W6)
+    else if(f>25.5&&f<26.5){ float b=c.x*64., id=floor(b), fr=fract(b), k2=1.-smoothstep(170.,520.,d), t1=h3(vec3(id,c.z,37.));   // a ribbon wall (WLD-057): plaster bands lapped one over the next
+      float k1=floor(c.z/8.+.01), jo=mix(.09,1.-smoothstep(.055,.095,fr),k2);   // the joint under each band's lip
+      float bev=(.1*(1.-smoothstep(.095,.26,fr))*step(.095,fr)-.13*smoothstep(.8,1.,fr))*k2;   // the lip catches the light, the band below it lies in its shade
+      c=paint(mix(shellTone(c.z-k1*8.),shellTone(k1),step(.5,t1)),vec3(.69,.69,.73),blot)*(.92+.16*ns(vP*.13))*(.95+.1*fract(t1*7.3))*(1.+bev)*(1.-.7*jo);
+      glowM=jo*(.55+.6*fract(t1*3.7))*uNight*1.2; }                          // lit along every joint at night
     else if(f>5.5&&f<6.5){ float u=abs(n.x)>.5?vP.z:vP.x; float row=floor(vP.y/.5); float uu=u+.5*mod(row,2.); float t1=h3(vec3(floor(uu),row,3.));
       float fy=fract(vP.y/.5), fx=fract(uu), wall=abs(1.-abs(n.y));
       float j=max(smoothstep(.945,.965,fy),smoothstep(.972,.984,fx))*wall;                 // blocks 1 m by 0.5 m with thin dark joints (W2)
@@ -2001,12 +2064,14 @@ void main(){
     else if(f>17.5&&f<18.5){ float bx=fract(vP.x/1.4);                                // a ceiling: dark timber beams across plaster
       c=bx<.16?vec3(.24,.16,.1)*(.85+.3*ns(vP*2.)):paint(c,vec3(.88),blot); }
     else if(f>18.5&&f<19.5) c*=.93+.14*ns(vP*5.);                         // room furniture: plain, a little grain
+    else if(f>27.5&&f<28.5){ float s=fract((c.x-c.y*uTime*.7)/.4);       // moving stairs (court.js): dark ribbed treads 0.4 m deep, a pale nose to each, running up or down (vC: metres along, which way, metres across)
+      c=mix(vec3(.2,.2,.22),vec3(.52,.47,.34),smoothstep(.9,.93,s))*(.86+.14*step(.5,fract(c.z*16.)))*(1.-.5*smoothstep(.06,0.,s)); }
     if(f>1.5&&f<2.5){ col=vec3(1.,.55,.22)*6.; emis=true; }                // lantern glass: emission strength 6
     else if(f>22.5&&f<23.5){ col=c*5.; emis=true; }                         // a signal lamp, lit in its own colour (roads.js)
     else {
       vec3 hemi=mix(uGround,uSky,n.y*.5+.5), light, sunL=vec3(0.);
       if(f>2.5&&f<3.5){ light=roomLight(n,0.); sunL=gRoomSun; c=paint(c,vec3(.76),blot); inside=1.; }
-      else if(f>14.5&&f<19.5){ light=roomLight(n,0.); sunL=gRoomSun; inside=1.; }   // room surfaces and furniture (roomLight above)
+      else if((f>14.5&&f<19.5)||(f>27.5&&f<28.5)){ light=roomLight(n,0.); sunL=gRoomSun; inside=1.; }   // room surfaces and furniture (roomLight above)
       else if(f>9.5&&f<10.5){ float up=n.y*.5+.5, dn=max(-n.y,0.), pm;  // a person indoors: the room's light, more from above so the body keeps its form
         if(uSkyH.y>0.){                                                     // under skylights, as outdoors under the sky: brightest towards the nearest
           vec3 key=normalize(vec3(clamp(vP.x,uSkyB.x,uSkyB.z),uSkyH.x,clamp(vP.z,uSkyB.y,uSkyB.w))-vP);   // part of the openings, darker on what faces down
@@ -2037,7 +2102,7 @@ void main(){
                                                                             // they have their own shading. They still cast it on the floor and walls round them.
                                                                             // Corners, creases and what stands close together see less
         vec3 dl=min(sunL,light); light=dl+(light-dl)*o; }                  // of the sky and the light bounced round: ambient occlusion darkens that, not the direct sun (ADR-0028)
-      col=c*light*(1.-wetG*uWet.x);
+      col=c*light*(1.-wetG*uWet.x)+vec3(1.,.58,.26)*glowM;                  // glowM: the lit openings and joints of a mall's shell
       if(uSSAO.z>1.5) col=vec3(aoV*aoV)*1.2;                                // ?d_ao=2: the occlusion alone, for tuning
       if(f>13.5&&f<14.5) col*=1.-.93*smoothstep(.1,.42,dot(n,vd));           // the inside of a hair shell or a hat, seen past the face, is in its own shade
       if(f>13.5&&f<14.5&&uPf.z>0.){ float fr=pow(1.-abs(dot(-vd,n)),4.);   // people: the faint sheen every surface has in the renders, strongest at a glancing angle. It lifts dark cloth and cools it with the sky
@@ -2371,6 +2436,7 @@ function stepPlayer(dt) {
   if (cam.fp) pl.yaw = cam.yaw;
   for (const [x, stopped] of tramAt(clock.m)) if (Math.abs(pl.x - x) < 6.4 && Math.abs(pl.z - TRAM_Z) < 1.6 && pl.y < 3) pl.z = TRAM_Z + (pl.z < TRAM_Z ? -1.6 : 1.6);
   Cars.push(pl, clock.m);                                  // nor through a car (cars.js)
+  if (typeof Court !== "undefined" && Court.carry(pl, dt)) { pushOut(pl); pushOut(pl); }   // moving stairs carry whoever stands on them (court.js)
   const g = floorAt(pl.x, pl.z, pl.y);
   if (keys.Space && pl.onGround) { pl.vy = 4.8; pl.onGround = false; Sound.act("jump"); }
   if (!pl.onGround || pl.y > g + .01) {
@@ -2593,6 +2659,7 @@ function segDist(x, z, a, b) {                              // distance from (x,
 function placeName() {
   const l = lotAt(pl.x, pl.z, true), b = blockOf(pl.x, pl.z);
   if (l && !isOpen(l) && l.stair && pl.y < l.H - .1) { const f = Storeys.levelAt(l, pl.y + .3); return [l.name, f ? "Floor " + f + ((l.storeys || [])[f] ? ", " + l.storeys[f] : "") : "Inside, ground floor"]; }   // which floor (storeys.js)
+  if (l && l.plan && l.plan.entrances && pl.y < l.H - .1) return [l.name, pl.y > 2 ? "Floor " + Math.round(pl.y / l.plan.storey_height) : "Ground floor"];   // a mall with its inside built (court.js): storeys of its own height
   if (pl.y > 6 && l) return [l.name, "On the roof, " + Math.round(pl.y) + " m up"];
   if (l && !isOpen(l)) return [l.name, "Inside"];
   if (l && l.kind !== "stop") return [l.name, b ? b.district : ""];
@@ -3189,6 +3256,7 @@ function frame(now) {
     const tr = sb && inRoom.lot.truss;                         // the hall's trusses and wall thickness, for its corner shade
     if (tr) { gl.uniform4fv(u.uTruss, tr); gl.uniform2f(u.uTruss2, inRoom.lot.wallT || 0, 0); } else gl.uniform4f(u.uTruss, 0, 0, 0, 0);
     gl.uniform3f(u.uRoomY, inRoom ? inRoom.y0 : Y_FLOOR, inRoom ? inRoom.y1 : GF, inRoom ? inRoom.lot.skylight || 1 : 1);   // the floor the camera is on (storeys.js)
+    if (courtLight && u.uCourtE) { gl.uniform4fv(u.uCourtR, courtLight.rect); gl.uniform4fv(u.uCourtE, courtLight.eye); gl.uniform4fv(u["uCourtH[0]"], courtLight.halls.flat()); }
   };
   const blob = new Float32Array(64); let blobN = 0;         // the 16 pieces of street furniture nearest the camera shade the ground under them (trial light)
   if (giK > 0) { const near2 = []; for (const b of BLOBS) { const d2 = (b[0] - cam.eye[0]) ** 2 + (b[1] - cam.eye[2]) ** 2; if (d2 < 1600) near2.push([d2, b]); }

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "note": "The owner's level picks, stated by the owner in chat and recorded by agents (ADR-0008). A feature or milestone missing here is undecided. -1 means out of the game. After editing, run Tools/backlog.ps1.",
-  "updated": "2026-11-23",
+  "updated": "2026-11-24",
   "choices": {
     "F-VEH-TRANSIT": {
       "slice": 2,
@@ -176,6 +176,10 @@
     "F-CHR-WARDROBE": {
       "slice": 1,
       "note": "Owner, 2026-11-23: \"Suggested levels\" (asked which levels the four menu features should have for the first slice). Later milestones not stated."
+    },
+    "F-BLD-MALL": {
+      "slice": 2,
+      "note": "Owner, 2026-11-24: asked \"Shall I record the Mall feature at level 2 (Full mall) for the first slice?\" after Eastgate Mall's shell and three-floor inside were built (ADR-0035, ADR-0036), answered \"Yes, level 2\". Later milestones not stated."
     }
   }
 }

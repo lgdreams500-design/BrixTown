@@ -5,13 +5,14 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 39 of 52 | 9 of 52 | 9 of 52 |
-| Size of the plan (points) | 487 | 427 | 827 |
+| Decided | 40 of 52 | 9 of 52 | 9 of 52 |
+| Size of the plan (points) | 515 | 427 | 827 |
 | Size of the suggested plan | 128 | 387 | 795 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
 - F-BLD-DESIGN at First slice needs F-MAP-PLOTS at level 1 (picked 0)
+- F-BLD-MALL at First slice needs F-NPC-POP at level 2 (picked 1)
 - F-GARDEN at First slice needs F-VEG-LEAF at level 1 (undecided)
 - F-VEH-TRANSIT at First slice needs F-MAP-CITY at level 2 (picked 1)
 - F-SKY at First slice needs F-TIME-DAY at level 1 (undecided)
@@ -27,7 +28,7 @@
 | **Open plots** `F-MAP-PLOTS` | 0 None | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. |
 | **From design to building** `F-BLD-CONSTRUCT` | 0 Instant | undecided | undecided | Owner, 2026-11-22: "Yes, suggested levels" for the first slice (building designer plan, docs/specs/domains/BUILDER.md). Later milestones not stated. |
 | **Shops and market** `F-BLD-SHOP` | 2 Stock and prices ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Stock and prices" for the first slice. Later milestones not stated. |
-| **Mall** `F-BLD-MALL` | undecided | undecided | undecided |  |
+| **Mall** `F-BLD-MALL` | 2 Full mall ★ | undecided | undecided | Owner, 2026-11-24: asked "Shall I record the Mall feature at level 2 (Full mall) for the first slice?" after Eastgate Mall's shell and three-floor inside were built (ADR-0035, ADR-0036), answered "Yes, level 2". Later milestones not stated. |
 | **Hospital and clinic** `F-BLD-HOSPITAL` | undecided | undecided | undecided |  |
 | **Bank, showroom, library, museum, cinema** `F-BLD-CIVIC` | 1 Places to visit | undecided | undecided | Owner, 2026-11-22: "Places to visit (Recommended)" for the bank, car showroom, library, museum, cinema and a second hospital and mall, made from existing lots. Later milestones not stated. |
 | **Workplaces** `F-BLD-WORK` | undecided | undecided | undecided |  |
