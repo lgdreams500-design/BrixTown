@@ -18,6 +18,14 @@ The starting city at the slice's sizes: a box for each building (its footprint, 
 the sun low in the east, sky, haze, Lumen. You walk it from the city's spawn with the slice's keys: W A S D, mouse,
 Shift to run, Space to jump. No residents, cars, interiors, money or sound yet.
 
+## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
+Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
+black. At Epic quality the town runs at about 36 frames a second, at High about 63 with the same shade, at Medium about 86
+but without Lumen. On this laptop use High (`scalability 2` in the console, or `-ExecCmds="scalability 2"`). The light
+follows the kit daylight (ADR-0007): a shaded wall on a wide street measures (161, 151, 135) against (159, 151, 146) in
+`Art/Reference/world_street_kit_light.png`. The first run after a change of shader settings compiles shaders for minutes
+and runs at a few frames a second; that is not the game's speed.
+
 ## Build, run, test
 Paths below are for this machine (`docs/setup/DEV_ENVIRONMENT.md`); run from the repository root.
 

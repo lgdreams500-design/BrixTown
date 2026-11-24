@@ -93,6 +93,8 @@ void ABrixGameMode::StartPlay()
 	{
 		FTimerHandle H;
 		GetWorldTimerManager().SetTimer(H, this, &ABrixGameMode::ShootAndQuit, ShotDelaySeconds, false);
+		FTimerHandle M;   // the frame rate is counted over the second half of the wait, after start-up work has settled
+		GetWorldTimerManager().SetTimer(M, [this]() { MarkFrame = GFrameCounter; MarkSeconds = FPlatformTime::Seconds(); }, ShotDelaySeconds * 0.5f, false);
 	}
 }
 
@@ -106,10 +108,13 @@ void ABrixGameMode::SpawnLight()
 	UDirectionalLightComponent* SunLight = CastChecked<UDirectionalLightComponent>(Sun->GetLightComponent());
 	SunLight->Mobility = EComponentMobility::Movable;
 	SunLight->Intensity = SunLux;
+	SunLight->LightColor = SunColour.ToFColor(true);
 	SunLight->bAtmosphereSunLight = true;
 	Sun->FinishSpawning(SunAt);
 
-	W->SpawnActor<ASkyAtmosphere>();
+	ASkyAtmosphere* Atmosphere = W->SpawnActor<ASkyAtmosphere>();
+	USkyAtmosphereComponent* Air = Atmosphere->GetComponent();
+	Air->SetMieScatteringScale(Air->MieScatteringScale * SkyHaziness);
 	ASkyLight* Sky = W->SpawnActorDeferred<ASkyLight>(ASkyLight::StaticClass(), FTransform::Identity);
 	USkyLightComponent* SkyLight = Sky->GetLightComponent();
 	SkyLight->Mobility = EComponentMobility::Movable;
@@ -127,6 +132,8 @@ void ABrixGameMode::SpawnLight()
 
 	AExponentialHeightFog* Haze = W->SpawnActor<AExponentialHeightFog>();
 	Haze->GetComponent()->SetFogDensity(HazeDensity);
+	Haze->GetComponent()->SetFogHeightFalloff(HazeFalloff);
+	Haze->GetComponent()->SetFogInscatteringColor(HazeColour);
 }
 
 void ABrixGameMode::ShootAndQuit()
@@ -134,6 +141,8 @@ void ABrixGameMode::ShootAndQuit()
 	FString Shot;
 	FParse::Value(FCommandLine::Get(), TEXT("BrixShot="), Shot);
 	FScreenshotRequest::RequestScreenshot(Shot, false, false);
+	const double Secs = FPlatformTime::Seconds() - MarkSeconds;
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: %.1f frames a second over the last %.0f s before the screenshot"), Secs > 0 ? (GFrameCounter - MarkFrame) / Secs : 0.0, Secs);
 	FTimerHandle H;
 	GetWorldTimerManager().SetTimer(H, []() { FPlatformMisc::RequestExit(false); }, 3.f, false);
 }
