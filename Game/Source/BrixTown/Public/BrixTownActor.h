@@ -69,6 +69,11 @@ public:
 	UPROPERTY(Config) TArray<float> CafeTableAt;       // a cafe's tables, metres from the front's start
 	UPROPERTY(Config) FLinearColor LetterColour = FLinearColor(0.70f, 0.64f, 0.50f);
 	UPROPERTY(Config) float NameSize = 0.52f;          // m, the shop's name on its fascia (kit text size)
+	UPROPERTY(Config) float BladeNameSize = 0.17f;     // m, a cafe's name on both faces of its blade sign (kit cafe_front())
+	UPROPERTY(Config) FLinearColor IronColour = FLinearColor(0.10f, 0.10f, 0.11f);
+	UPROPERTY(Config) float ChimneyAt = 0.7f;          // an old-district roof's chimney: share of the ridge from its start (kit tile_roof())
+	UPROPERTY(Config) float ChimneyEnds = 0.9f;        // elsewhere two, this far in from the ends
+	UPROPERTY(Config) float ChimneyBack = 1.0f;        // m behind the ridge (1.2 outside the old districts)
 	UPROPERTY(Config) float HousePlinth = 0.3f;        // a designed house (houses.js outsideS): its ground floor's height
 	UPROPERTY(Config) float HouseStorey = 3.3f;        // and each storey
 	UPROPERTY(Config) FLinearColor HouseTrimStone = FLinearColor(0.62f, 0.58f, 0.52f);   // its sills, surrounds, string course
@@ -110,7 +115,7 @@ private:
 	UMaterialInstanceDynamic* Own();
 	void BuildLot(const FBrixLot& L, const FBrixBlock& B);
 	UStaticMesh* Kit(const TCHAR* Name, UStaticMesh* Fallback = nullptr);
-	void Name(const FString& Text, const FVector& At, double YawRad, float Size, float MaxWidth);
+	void Name(const FString& Text, const FVector& At, double YawRad, float Size, float MaxWidth, bool bFaceAlong = false);
 
 	UPROPERTY() TObjectPtr<UStaticMesh> Cube;
 	UPROPERTY() TObjectPtr<UStaticMesh> Cylinder;

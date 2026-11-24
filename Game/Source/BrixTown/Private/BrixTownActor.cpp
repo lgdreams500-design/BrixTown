@@ -106,7 +106,7 @@ UInstancedStaticMeshComponent* ABrixTownActor::Group(UStaticMesh* Mesh, bool bCo
 }
 
 // A painted name: on a shop's fascia (kit text()), shrunk to fit the fascia
-void ABrixTownActor::Name(const FString& Text, const FVector& At, double YawRad, float Size, float MaxWidth)
+void ABrixTownActor::Name(const FString& Text, const FVector& At, double YawRad, float Size, float MaxWidth, bool bFaceAlong)
 {
 	UTextRenderComponent* T = NewObject<UTextRenderComponent>(this);
 	T->SetupAttachment(RootComponent);
@@ -116,7 +116,8 @@ void ABrixTownActor::Name(const FString& Text, const FVector& At, double YawRad,
 	T->SetTextRenderColor(LetterColour.ToFColor(true));
 	const float Wide = Text.Len() * Size * 0.55f;            // about the engine font's width
 	T->SetWorldSize(Size * FMath::Min(1.f, MaxWidth / FMath::Max(Wide, 0.01f)) * CmPerM);
-	T->SetWorldLocationAndRotation(At, FQuat(FVector::UpVector, YawRad + HALF_PI));   // a text faces its +x: turned to face out
+	// a text faces its +x: turned to face out of the wall, or along it (a blade sign's faces)
+	T->SetWorldLocationAndRotation(At, FQuat(FVector::UpVector, YawRad + (bFaceAlong ? 0.0 : HALF_PI)));
 	T->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	T->RegisterComponent();
 	AddInstanceComponent(T);
@@ -327,11 +328,24 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 		{
 			// kit cafe_front(): an awning over the arches, a blade sign at the corner, tables on the pavement
 			Awning(-F.Len / 2 + 0.3f, LastBay - 0.9f, CafeAwningZ, CafeAwningOut, 1);
-			Piece(TEXT("SM_Kit_BladeSign"), F.Len / 2 - 0.35f, 0.f, FVector::OneVector, FLinearColor::Gray, OpeningCullDistance);
+			const float Sx = F.Len / 2 - 0.35f;
+			Piece(TEXT("SM_Kit_BladeSign"), Sx, 0.f, FVector::OneVector, FLinearColor::Gray, OpeningCullDistance);
+			for (int32 Side : { -1, 1 })                    // the cafe's name on both faces of the board (kit text(), 0.17 m)
+				Name(L.Name, At(OnWall(Sx + Side * 0.06f, 0.7f), 3.45f), Yaw + Ang + (Side < 0 ? PI : 0.0), BladeNameSize, 0.9f, true);
 			for (float T : CafeTableAt) if (-F.Len / 2 + T < F.Len / 2 - 1.f) Piece(TEXT("SM_Kit_CafeTable"), -F.Len / 2 + T, 0.f, FVector::OneVector, FLinearColor::Gray, ShutterCullDistance);
 		}
 
 		for (const FVector& Fb : FlowerBoxes) Piece(TEXT("SM_Kit_WindowBox"), Fb.X, Fb.Y, FVector(Fb.Z, 1, 1), FLinearColor::Gray, ShutterCullDistance);
+		if (!bHouse && k == DoorSide && F.Len >= MinFacadeForOpenings)
+		{
+			// kit drainpipe(): an iron pipe down the front's end, its hopper under the eaves, its shoe, a bracket every 1.9 m
+			const float Sx = F.Len / 2 - 0.2f;
+			if (UStaticMesh* Pipe = Kit(TEXT("SM_Kit_Cylinder"), Cylinder))
+				Add(Group(Pipe, true), FTransform(Face, At(OnWall(Sx, 0.14f), H / 2), FVector(0.11f, 0.11f, H - 0.3f)), IronColour);
+			Box(IronColour, OnWall(Sx, 0.15f), H - 0.4f, H - 0.12f, Yaw, 0.26f, 0.3f);
+			Box(IronColour, OnWall(Sx, 0.24f), 0.f, 0.18f, Yaw, 0.16f, 0.36f);
+			for (float Z = 0.9f; Z < H - 0.6f; Z += 1.9f) Box(IronColour, OnWall(Sx, 0.09f), Z, Z + 0.05f, Yaw, 0.16f, 0.22f);
+		}
 		if (bHouse)
 		{
 			// a house's plinth and its string course between the storeys, in the light stone of its sills (outsideS)
@@ -405,6 +419,24 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			const float Zc = H + Rise - Half / 2 * FMath::Tan(P) + RoofThickness / 2 / FMath::Cos(P);
 			const FQuat Q = FQuat(FVector::UpVector, RYaw + Ang) * FQuat(FVector::ForwardVector, -Side * P);
 			Add(Boxes, FTransform(Q, At(Mid, Zc), FVector(Lr + 2 * RoofSideOverhang, Ls, RoofThickness)), Roof);
+		}
+		if (!bHouse)
+		{
+			// kit tile_roof(): a stack in the gable's plaster from the eaves to 1.1 m over the ridge, a stone cap, two pots;
+			// one at 70 % of the ridge in the old districts, two near the ends elsewhere
+			const FVector2D Xax(FMath::Cos(RYaw), FMath::Sin(RYaw));
+			const float Back = bOld ? ChimneyBack : ChimneyBack + 0.2f, Ridge = H + Rise;
+			TArray<float> Along;
+			if (bOld) Along.Add(-Lr / 2 + Lr * ChimneyAt); else { Along.Add(-Lr / 2 + ChimneyEnds); Along.Add(Lr / 2 - ChimneyEnds); }
+			for (float A : Along)
+			{
+				const FVector2D Cn = Xax * A + Yax * Back;
+				Box(Plaster, Cn, H, Ridge + 1.1f, RYaw, 0.76f, 0.64f);
+				Box(Dark, Cn, Ridge + 1.1f, Ridge + 1.26f, RYaw, 0.96f, 0.84f);
+				if (UStaticMesh* Pot = Kit(TEXT("SM_Kit_Cylinder"), Cylinder))
+					for (float Dx : { -0.17f, 0.17f })
+						Add(Group(Pot, true), FTransform(FQuat::Identity, At(Cn + Xax * Dx, Ridge + 1.26f + 0.24f), FVector(0.19f, 0.19f, 0.48f)), RoofColour);
+			}
 		}
 		if (bHouse)
 		{
