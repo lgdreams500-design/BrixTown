@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers", "furnishing", "settings", "room_plan", "building_styles", "mall_outlets", "mall_goods", "achievements", "boards"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers", "furnishing", "settings", "room_plan", "building_styles", "mall_outlets", "mall_goods", "achievements", "boards", "buy_menu"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -136,7 +136,7 @@ def validate(w):
     if w.get("roads") and not out:
         import traffic
         out += traffic.Roads(w["roads"], w["traffic"]).problems(lots_inside(w))   # cars drive inside the wall for now
-    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + mall_goods_problems(w) + mall_visit_problems(w) + estate_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w) + react_problems(w) + achievement_problems(w)
+    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + mall_goods_problems(w) + buy_menu_problems(w) + mall_visit_problems(w) + estate_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w) + react_problems(w) + achievement_problems(w)
     kinds = {l["kind"] for l in lots(w)}
     for need in ("home", "shop", "food", "work", "health", "garden", "market", "stop", "utility"):
         if need not in kinds:
@@ -1836,4 +1836,133 @@ def outfit_problems(w, outfit):
     out += [p for p in look_problems(d, full) if p.split(" ")[0] in parts]
     if not isinstance(outfit.get("name"), str) or not 0 < len(outfit["name"].strip()) <= d["name"]["max"]:
         out.append("an outfit needs a name of 1 to %d letters" % d["name"]["max"])
+    return out
+
+
+# ---- UI-020, UI-021 (buy menus show what is for sale as objects; ADR-0044): World/rules/buy_menu.json. buy_menu_shows
+# says what a thing shows, buy_menu_problems what the file must keep. Prototype/play/buymenu.js does the same in the slice,
+# and its self-test compares with buy_menu_checks (packed by build_play.py).
+def buy_menu_shows(w, thing):
+    """What a thing for sale shows in a buy menu: ["piece", id] (its own object: a piece of furniture, or a mall good for
+    the home, drawn as it is in a home) or ["shape", name, colour] (a stand-in of buy_menu.json; colour is the designer's
+    palette name of the clothing's own colour, or None). None for a thing nobody sells."""
+    B, goods, items, pieces = w["buy_menu"], w["mall_goods"]["goods"], w["economy"]["items"], w["furnishing"]["pieces"]
+    S = B["stand_in"]
+    if thing in pieces and thing not in goods and thing not in items:
+        return ["piece", thing]
+    G = goods.get(thing)
+    if G and G["goes"] == "home":
+        return ["piece", G["piece"]]
+    if thing in S["things"]:
+        return ["shape", S["things"][thing], None]
+    if G and G["goes"] == "wear":
+        for part, shape, colour in S["wear"]:
+            if G.get("parts", {}).get(part):
+                return ["shape", shape, G["parts"].get(colour) if colour else None]
+        return None
+    if G or thing in items:
+        return ["shape", S["goes"].get(G["goes"] if G else "carry"), None]
+    return None
+
+
+def buy_menu_things(w):
+    """Every thing a buy menu can show: the mall's goods, the town's items that are for sale, the designer's pieces."""
+    items = [k for k, v in w["economy"]["items"].items() if not v.get("quest")]
+    rooms = [k for r in w["furnishing"]["rooms"].values() for k in r]
+    return list(w["mall_goods"]["goods"]) + items + rooms
+
+
+def buy_menu_checks(w):
+    return {t: buy_menu_shows(w, t) for t in buy_menu_things(w)}
+
+
+def buy_menu_problems(w):
+    """Every rule World/rules/buy_menu.json must keep (UI-020, UI-021): the two layouts have room for what they show, every
+    place a thing can go has its words and a mark the menu can paint, every stand-in is a few small boxes in colours
+    the file names, and every thing for sale shows an object or a stand-in."""
+    B, out = w["buy_menu"], []
+    num = lambda v, lo, hi: type(v) in (int, float) and lo <= v <= hi
+    W, N, P = B.get("wide") or {}, B.get("narrow") or {}, B.get("picture") or {}
+    for k, lo, hi in (("panel_px", 620, 1400), ("cell_px", 80, 200), ("stage_px", 60, 200), ("show_px", 220, 480), ("show_stage_px", 160, 480), ("list_px", 200, 900)):
+        if not num(W.get(k), lo, hi):
+            out.append("buy menu: wide.%s must be %d to %d" % (k, lo, hi))
+    for k, lo, hi in (("panel_px", 300, 620), ("columns", 3, 6), ("cell_min_px", 48, 120), ("list_px", 160, 900)):
+        if not num(N.get(k), lo, hi):
+            out.append("buy menu: narrow.%s must be %d to %d" % (k, lo, hi))
+    for k, lo, hi in (("fov_deg", 10, 60), ("pitch_deg", 0, 45), ("start_deg", -90, 90), ("turn_s", 4, 120), ("drag_deg_px", .1, 3), ("stand_in_fill", .4, 1), ("most_px", 256, 2048)):
+        if not num(P.get(k), lo, hi):
+            out.append("buy menu: picture.%s must be %s to %s" % (k, lo, hi))
+    if out:
+        return out
+    if type(N["columns"]) is not int:
+        out.append("buy menu: narrow.columns must be a whole number")
+    if not num(B.get("narrow_px"), N["panel_px"] + 1, W["panel_px"] - 1):
+        out.append("buy menu: narrow_px must lie between the narrow and the wide panel")
+    pad, gap = 46, 6                                        # the panel's own padding and the space between cells, as the page lays them out
+    if N["columns"] * N["cell_min_px"] + (N["columns"] - 1) * gap > N["panel_px"] - pad:
+        out.append("buy menu: %d cells of %d px do not fit a narrow panel of %d px" % (N["columns"], N["cell_min_px"], N["panel_px"]))
+    if W["panel_px"] - pad - W["show_px"] - 16 < 3 * W["cell_px"] + 2 * 9:
+        out.append("buy menu: the wide panel has no room for three cells beside the showcase")
+    if W["stage_px"] > W["cell_px"] or W["show_stage_px"] > W["show_px"]:
+        out.append("buy menu: a picture is wider than the cell it stands in")
+    boards = w["settings"]["menu"]["colours"]
+    want = set(w["mall_goods"]["goes"]) | {"place"}
+    for g in sorted(want - set(B["goes"])):
+        out.append("buy menu: no words for where a thing goes: %s" % g)
+    for g, G in B["goes"].items():
+        if not all(isinstance(G.get(k), str) and G[k].strip() for k in ("name", "to")):
+            out.append("buy menu: goes.%s needs a name and where it goes to" % g)
+        if G.get("colour") not in boards:
+            out.append("buy menu: goes.%s has no board colour %s" % (g, G.get("colour")))
+    cols = B["colours"]
+    for k, c in cols.items():
+        if not (isinstance(c, list) and len(c) == 3 and all(num(v, 0.02, 0.85) for v in c)):
+            out.append("buy menu: colour %s must be three numbers from 0.02 to 0.85 (the town's muted colours)" % k)
+    for k in w["economy"]["shops"]:
+        if B["bands"].get(k) not in cols:
+            out.append("buy menu: no band colour for the %s" % k)
+    for k, K in w["mall_outlets"]["kinds"].items():
+        if K.get("sign") not in cols:
+            out.append("buy menu: no colour %s for the sign of %s outlets" % (K.get("sign"), k))
+    for name, boxes in B["shapes"].items():
+        if not isinstance(boxes, list) or not boxes:
+            out.append("buy menu: shape %s has no boxes" % name)
+            continue
+        for b in boxes:
+            ok = isinstance(b, list) and 7 <= len(b) <= 9 and all(num(v, -1, 1) for v in b[:6]) and all(v > 0 for v in b[3:6])
+            if not ok:
+                out.append("buy menu: shape %s has a box that is not [across, up, back, width, height, depth, colour, shade, turn]" % name)
+                continue
+            if b[6] not in cols and b[6] not in ("band", "own"):
+                out.append("buy menu: shape %s uses colour %s, which the file does not name" % (name, b[6]))
+            if len(b) > 7 and not num(b[7], .3, 1.2):
+                out.append("buy menu: shape %s has a shade outside 0.3 to 1.2" % name)
+            if b[1] < 0 or b[1] + b[4] > .5 or abs(b[0]) + b[3] / 2 > .3 or abs(b[2]) + b[5] / 2 > .3:
+                out.append("buy menu: shape %s is bigger than a stand-in may be (0.6 m across, 0.5 m high)" % name)
+    S, parts, palette = B["stand_in"], w["settings"]["wardrobe"]["parts"], w["designer"]["palette"]
+    for g in ("carry", "eat"):
+        if S["goes"].get(g) not in B["shapes"]:
+            out.append("buy menu: no stand-in for things to %s" % g)
+    for row in S["wear"]:
+        if not (isinstance(row, list) and len(row) == 3 and row[0] in parts and row[1] in B["shapes"] and (row[2] is None or row[2] in parts)):
+            out.append("buy menu: stand_in.wear row %s is not [part of the look, shape, part that gives the colour]" % (row,))
+    known = set(w["mall_goods"]["goods"]) | set(w["economy"]["items"])
+    for t, shape in S["things"].items():
+        if t not in known:
+            out.append("buy menu: stand-in for %s, which is neither a good nor an item" % t)
+        if shape not in B["shapes"]:
+            out.append("buy menu: %s shows %s, which is no shape" % (t, shape))
+    if out:
+        return out
+    pieces = w["furnishing"]["pieces"]
+    for t in buy_menu_things(w):
+        s = buy_menu_shows(w, t)
+        if not s or not s[1]:
+            out.append("buy menu: %s shows nothing" % t)
+        elif s[0] == "piece" and s[1] not in pieces:
+            out.append("buy menu: %s shows the piece %s, which the furnishing list does not have" % (t, s[1]))
+        elif s[0] == "shape" and s[2] is not None and s[2] not in palette:
+            out.append("buy menu: %s has the colour %s, which the designer's palette does not have" % (t, s[2]))
+        elif s[0] == "shape" and s[2] is None and any(b[6] == "own" for b in B["shapes"][s[1]]):
+            out.append("buy menu: %s shows %s, which needs a colour of its own" % (t, s[1]))
     return out

@@ -236,6 +236,8 @@ var Life = (() => {
     for (const k in keys) keys[k] = false; pl.moving = false;
     if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
     el("life").classList.toggle("side", kind === "remodel");   // the designer stands to one side, so the building shows
+    el("life").classList.toggle("wide", kind === "shop" || kind === "outlet");   // a counter shows its goods as objects, the chosen one large beside them (UI-020)
+    el("life").style.setProperty("--bm-panel", BM.wide.panel_px + "px");
     if (kind === "remodel") startView(LOTS[n]);
     el("life").style.display = "block"; Sound.act("talk_open"); draw();
   }
@@ -245,7 +247,7 @@ var Life = (() => {
     if (panel.kind === "remodel" && panel.lot) for (const f of Object.keys(panel.plan || {})) if (panel.plan[f] !== panel.plan0[f]) window.wasted.furn.showPlan(panel.lot, +f, (plans[panel.lot.id] || {})[f] || null);
     if (panel.kind === "remodel" && panel.lot) for (const f of Object.keys(panel.lay)) if (panel.lay[f] !== panel.lay0[f]) window.wasted.furn.showLayout(panel.lot, +f, (furnishings[panel.lot.id] || {})[f] || null);
     if (view) { view.leave = true; view.cut = null; } grab = null; document.body.classList.remove("designing"); document.getElementById("gl").style.cursor = "";
-    const back = panel.back; panel = null; el("life").style.display = "none"; el("life").classList.remove("menu", "side"); placeLive(); Sound.act("talk_close"); save();
+    const back = panel.back; panel = null; el("life").style.display = "none"; el("life").classList.remove("menu", "side", "wide"); BuyMenu.clear(); placeLive(); Sound.act("talk_close"); save();
     if (back) menu(back);                                 // the designer was opened from the menu: back to it
   }
   function act(fn) {                                      // a button: do it, say what happened, redraw
@@ -253,13 +255,20 @@ var Life = (() => {
     save(); draw();
   }
   const money = c => h("span", { cls: "money" }, fmt(c));
-  const GOES = { carry: "to carry", eat: "to eat", home: "for the home", wear: "to wear" };
   function buyAt(P, g) {                                  // buy one thing at an outlet; a thing for the home becomes a belonging to place (ECO-014, FURN-064)
     const p = E.buyAt(P.n, P.u, g), G = E.good(g);
     if (G.goes === "home") { const R = Furnish.rules().pieces[G.piece], [w, d, hh] = R.size; belongings.push({ id: "b:mall:" + E.L.tx.length, kind: G.piece, name: R.name, w, d, h: hh, rug: !!R.rug, line: "plain" }); }
     return "Bought " + G.name.toLowerCase() + " for " + fmt(p) + (G.goes === "home" ? ". It is with your belongings (G), to place at home." : G.goes === "wear" ? ". It is in your wardrobe (U)." : ".");
   }
   const btn = (label, fn, dis, cls) => h("button", { type: "button", cls: "pbtn" + (cls ? " " + cls : ""), disabled: !!dis, on: { click: () => act(fn) } }, label);
+  // Buy menus show what is for sale as objects (UI-020, UI-021; buymenu.js, World/rules/buy_menu.json). ware: one thing of a
+  // counter, with whether it can be bought now (sold out, or dearer than the cash and current account together, as spend pays);
+  // wares: the grid of them. A shop's own things are carried; what cannot be sold on and comes in a bag or a cup is to eat.
+  const BM = X.buy_menu.rules;
+  const ware = (id, name, price, goes, left, band, more) => Object.assign({ id, name, price, goes, left, band, state: left !== null && left < 1 ? "out" : price > funds() ? "short" : "ok", short: Math.max(0, price - funds()) }, more);
+  let bodyW = 0;                                          // the panel's width, read by draw() before it empties the panel
+  const wares = (id, things, o) => BuyMenu.grid(Object.assign({ id, things, fmt, width: bodyW, measure: () => el("life-body").clientWidth, restock: hhmm(EC.stock.restock_minute), keys: true, redraw: draw }, o));
+  const shopGoes = it => !E.items[it].sell && (BuyMenu.shows(it) || [])[1] !== BM.stand_in.goes.carry ? "eat" : "carry";
   const tbl = rows => h("table", { cls: "ptab" }, h("tbody", {}, rows.map(r => h("tr", {}, r.map(c => h("td", {}, c))))));
   function purseLine() { return h("p", { cls: "purse" }, "Cash ", money(E.L.balance("p:cash")), E.accounts.includes("current") ? [" · Current ", money(E.L.balance("p:current"))] : null, E.accounts.includes("savings") ? [" · Savings ", money(E.L.balance("p:savings"))] : null); }
   function statement(n) {
@@ -269,22 +278,29 @@ var Life = (() => {
   }
   function draw() {
     if (!panel) return;
+    BuyMenu.clear();                                       // the pictures of the last drawing go with it (buymenu.js)
+    const lifeTop = panel.shown ? el("life").scrollTop : 0; bodyW = el("life-body").clientWidth;   // where the panel was scrolled to, and its width, before it is emptied
     const P = panel, host = el("life-body"), was = host.querySelector(".pb"), at = was && was.dataset.kind === P.kind ? was.scrollTop : 0; host.textContent = "";
     const body = P.menu ? h("div", { cls: "pb" + (ONE_COLUMN[P.kind] ? " one" : "") }) : host;   // the game menu draws its page inside its shell (UI-015)
     let title = "", sub = "";
     if (P.kind === "shop") {
       const k = E.shopKind(P.n), S = EC.shops[k]; title = lotName(P.n); sub = S.name + " · restocks at " + hhmm(EC.stock.restock_minute);
-      body.append(purseLine(), h("h3", {}, "Buy"), tbl(S.sells.map(it => [E.items[it].name, h("span", { cls: "dim" }, E.stock(P.n, it) + " left"), money(E.price(P.n, it)),
-        btn("Buy", () => { const p = E.buy(P.n, it); return "Bought " + E.items[it].name.toLowerCase() + " for " + fmt(p) + "."; }, E.stock(P.n, it) < 1)])));
-      const mine = Object.keys(E.inv).filter(it => E.offer(P.n, it) > 0);
-      body.append(h("h3", {}, "Sell"), mine.length ? tbl(mine.map(it => [E.items[it].name, h("span", { cls: "dim" }, "you have " + E.inv[it]), money(E.offer(P.n, it)),
-        btn("Sell", () => { const p = E.sell(P.n, it); return "Sold for " + fmt(p) + "."; })])) : h("p", { cls: "dim" }, S.buys.length ? "Nothing you carry is wanted here." : "Cafés do not buy anything."));
+      const mine = Object.keys(E.inv).filter(it => E.offer(P.n, it) > 0), selling = P.side === "sell" && S.buys.length > 0, band = BM.bands[k];
+      const side = (on, label, to) => h("button", { type: "button", cls: "pbtn" + (on ? "" : " off"), on: { click: () => { P.side = to; P.msg = ""; draw(); } } }, label);
+      body.append(purseLine());                             // the goods as objects, the chosen one large beside them (UI-020); selling uses the same cells
+      if (S.buys.length) body.append(h("div", { cls: "prow bm-tabs" }, side(!selling, "Buy", "buy"), side(selling, "Sell" + (mine.length ? " (" + mine.length + ")" : ""), "sell")));
+      else body.append(h("h3", {}, "Buy"));
+      if (!selling) body.append(wares("shop:" + P.n + ":buy", S.sells.map(it => ware(it, E.items[it].name, E.price(P.n, it), shopGoes(it), E.stock(P.n, it), band)),
+        { buy: e => act(() => { const p = E.buy(P.n, e.id); return "Bought " + e.name.toLowerCase() + " for " + fmt(p) + "."; }) }));
+      else body.append(wares("shop:" + P.n + ":sell", mine.map(it => ({ id: it, name: E.items[it].name, price: E.offer(P.n, it), goes: null, left: E.inv[it], state: "ok", band })),
+        { verb: "Sell", stockLabel: "You have", priceLabel: "They pay", leftWords: n => "you have " + n, empty: "Nothing you carry is wanted here.", buy: e => act(() => { const p = E.sell(P.n, e.id); return "Sold for " + fmt(p) + "."; }) }));
+      if (!S.buys.length) body.append(h("p", { cls: "dim" }, "Cafés do not buy anything."));
       const r = E.repWithLot(P.n); if (r) body.append(h("p", { cls: "dim" }, r > 0 ? "They know you here: prices are a little lower." : "They don't trust you here: prices are higher."));
     } else if (P.kind === "outlet") {                       // one outlet of a mall: its own goods, stock and prices (ECO-013, ECO-014)
       const U = E.outlets[P.n][P.u], S = E.outletSells(P.n, P.u), K = ((LOTS[P.n].plan || {}).outlets || {})[U.kind] || {};
       title = U.name; sub = (K.label || "Outlet") + " · " + lotName(P.n) + (U.level ? ", floor " + U.level : ", ground floor") + " · restocks at " + hhmm(EC.stock.restock_minute);
-      body.append(purseLine(), h("h3", {}, "Buy"), tbl(S.map(g => { const G = E.good(g), left = E.outletStock(P.n, P.u, g);
-        return [G.name, h("span", { cls: "dim" }, GOES[G.goes]), h("span", { cls: "dim" }, left + " left"), money(E.outletPrice(P.n, P.u, g)), btn("Buy", () => buyAt(P, g), left < 1)]; })));
+      body.append(purseLine(), h("h3", {}, "Buy"), wares("outlet:" + P.n + ":" + P.u, S.map(g => { const G = E.good(g), piece = G.goes === "home" ? Furnish.rules().pieces[G.piece] : null;   // (UI-020)
+        return ware(g, G.name, E.outletPrice(P.n, P.u, g), G.goes, E.outletStock(P.n, P.u, g), K.sign in BM.colours ? K.sign : BM.bands.mall, { size: piece ? piece.size : null }); }), { buy: e => act(() => buyAt(P, e.id)) }));
       body.append(h("p", { cls: "dim" }, "Things for the home go to your belongings (G): place them from the Furnish tab of the building designer, in any home of yours. Clothes go to your wardrobe (U). Outlets do not buy things back; what you carry can be sold on your market stall."));
       const r = E.repWithLot(P.n); if (r) body.append(h("p", { cls: "dim" }, r > 0 ? "They know you here: prices are a little lower." : "They don't trust you here: prices are higher."));
     } else if (P.kind === "bank") {
@@ -353,7 +369,9 @@ var Life = (() => {
     if (P.menu) cards(body);
     if (P.msg) body.prepend(h("p", { cls: "pmsg" }, P.msg));
     if (P.menu) { body.dataset.kind = P.kind; host.append(menuShell(P, body, title, sub.replace(/ · [A-Z]$/, ""))); body.scrollTop = at; }
+    P.shown = true; el("life").scrollTop = lifeTop;       // redrawn in place: choosing a thing or a piece does not jump the panel to its top
     el("life-title").textContent = P.menu ? "" : title; el("life-sub").textContent = P.menu ? "" : sub;
+    el("life-hint").innerHTML = (P.kind === "shop" || P.kind === "outlet" ? "<kbd>← → ↑ ↓</kbd>choose <kbd>Enter</kbd>" + (P.kind === "shop" && P.side === "sell" ? "sell" : "buy") + " " : "") + "<kbd>Esc</kbd>close";
     placeLive();
   }
   // ---------------------------------------------------------------- the game menu (UI-005 to UI-010, INV-001, CHR-014, CHR-015; docs/specs/domains/MENU.md)
@@ -909,8 +927,8 @@ var Life = (() => {
         h("button", { type: "button", cls: "pbtn", on: { click: () => placeHeld(P, b, R) } }, "Place")])));
       body.append(h("h3", {}, "Add a piece"), h("div", { cls: "prow" }, ...Object.keys(FR.rooms).map(r => tab(P.room === r, r[0].toUpperCase() + r.slice(1), () => { P.room = r; draw(); }))),
         choice("Line", h("div", { cls: "swatches" }, FR.lines.map(x => h("button", { type: "button", cls: "sw word" + (P.line === x ? " on" : ""), on: { click: () => { P.line = x; draw(); } } }, (Outlet.LINES[x] || {}).label || x)))),
-        tbl(FR.rooms[P.room].map(k => [FR.pieces[k].name, h("span", { cls: "dim" }, FR.pieces[k].size.slice(0, 2).map(v => v.toFixed(2)).join(" × ") + " m"), money(FR.pieces[k].price),
-          h("button", { type: "button", cls: "pbtn", on: { click: () => addPiece(P, k, R) } }, "Add")])));
+        BuyMenu.grid({ id: "furnish", verb: "Add", fmt, width: bodyW, measure: () => el("life-body").clientWidth, redraw: draw, buy: e => addPiece(P, e.id, R),   // the pieces as objects in the chosen line, small cells (UI-020)
+          things: FR.rooms[P.room].map(k => ({ id: k, name: FR.pieces[k].name, price: FR.pieces[k].price, goes: "place", left: null, state: "ok", size: FR.pieces[k].size, line: P.line })) }));
     }
     const [rt, rl] = Builder.cost(l, l.dsg, d); let total = rt; const lines = rl.slice(), probs = d === l.dsg ? [] : Builder.check(l, l.dsg, d, own, null);
     const colours = menu["inside.walls"].map(o => o.id), tag = f => mine.length > 1 ? " (" + storeyName(+f).toLowerCase() + ")" : "";
@@ -1036,14 +1054,14 @@ var Life = (() => {
   let grab = null;
   const canvas = () => document.getElementById("gl");
   function pointer(type, e, held) {                      // the mouse over the picture while the designer is open (play.js)
-    const P = panel; if (!view || !P) return;
+    const P = panel; if (!view || view.leave || !P || P.kind !== "remodel" || !P.lot) return;   // not while the view glides home after the designer closed: the menu or a counter may be open by then
     const g = view.goal;
     const [lx0, lz0, lx1, lz1] = P.lot.rect, R2 = 20;      // the view goes 20 m beyond the building at most
     const ground = () => view.cut ? Storeys.floorY(view.storey) : Y_FLOOR;
     const hitAt = ev => { const ray = window.wasted.rayAt(ev.clientX, ev.clientY); if (!ray || ray.d[1] > -1e-4) return null; const t = (ground() - ray.o[1]) / ray.d[1]; return t > 0 ? [ray.o[0] + ray.d[0] * t, ray.o[2] + ray.d[2] * t] : null; };
     const aim = (x, z) => { g.tx = clamp(x, lx0 - R2, lx1 + R2); g.tz = clamp(z, lz0 - R2, lz1 + R2); };
     if (type === "wheel") {                              // nearer or further, towards the point under the mouse
-      if (!(e.target && e.target.tagName === "CANVAS")) return;
+      if (e.target !== canvas()) return;                   // over the town's picture only: the panel's own pictures (the pieces to add) scroll with the panel
       const f = e.deltaY > 0 ? 1.15 : 1 / 1.15, d = clamp(g.dist * f, 2, 160), k = d / g.dist, p = hitAt(e);
       if (p && p[0] > lx0 - R2 && p[0] < lx1 + R2 && p[1] > lz0 - R2 && p[1] < lz1 + R2) aim(p[0] + (g.tx - p[0]) * k, p[1] + (g.tz - p[1]) * k); g.dist = d; return;   // (not towards the far distance)
     }
@@ -1107,7 +1125,7 @@ var Life = (() => {
     P.bad = new Set(Furnish.problems(R.room, R.keep, R.ceiling, a).filter(q => !old.has(q[0])).flatMap(q => q[0].split("|").slice(0, -1))); P.badFor = a; return P.bad;
   }
   function designMarks() {                               // for play.js: outlines round the piece picked and the piece under the mouse
-    const P = panel; if (!view || !P) return [];
+    const P = panel; if (!view || !P || P.kind !== "remodel" || !P.lot) return [];
     if (P.tab === "inside" && P.plan && P.plan[P.storey]) {   // and round the wall picked and the wall under the mouse
       const F = Storeys.floorY(P.storey), out = [];
       for (const w of P.plan[P.storey]) if (w.id === P.wsel || (w.id === P.whover && !grab)) { const b = RoomPlan.box(w); out.push({ p: { x: (b[0] + b[2]) / 2, z: (b[1] + b[3]) / 2, w: b[2] - b[0], d: b[3] - b[1], h: 1.2, yaw: 0 }, F, sel: w.id === P.wsel, bad: false }); }
@@ -1120,7 +1138,7 @@ var Life = (() => {
     return out;
   }
   function designTags() {                                // for play.js: the name of the piece picked, over it
-    const P = panel; if (!view || !P || P.tab !== "furnish" || !P.lay[P.storey]) return [];
+    const P = panel; if (!view || !P || P.kind !== "remodel" || P.tab !== "furnish" || !P.lay || !P.lay[P.storey]) return [];
     const p = P.lay[P.storey].find(q => q.id === (P.sel || P.hover)); if (!p) return [];
     return [{ x: p.x, y: Storeys.floorY(P.storey) + Math.min(p.h, 2) + .35, z: p.z, text: p.name + (storeyBad(P).has(p.id) ? " · can't stand here" : "") }];
   }
@@ -1144,6 +1162,7 @@ var Life = (() => {
   }
   function key(e) {
     if (designKey(e)) { e.preventDefault(); return; }
+    if (panel && (panel.kind === "shop" || panel.kind === "outlet") && BuyMenu.key(e)) { e.preventDefault(); return; }   // arrows choose a thing, Enter buys it (UI-020)
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName) && (document.activeElement.type || "text") === "text";
     if (typing && e.code !== "Escape") return;
     const tab = { KeyC: "me", KeyI: "wallet", KeyG: "belongings", KeyP: "property", KeyJ: "quests", KeyU: "wardrobe", KeyH: "help", KeyM: "map" }[e.code];
@@ -1236,6 +1255,8 @@ var Life = (() => {
     if (badA.length) console.error("achievements.js does not match Tools/citysim/achievements.py:\n  " + badA.join("\n  ")); else console.info("achievements.js matches Tools/citysim/achievements.py (self-test passed).");
     const badW = Rewards.selfTest();
     if (badW.length) console.error("rewards.js does not match Tools/worldgen/world.py:\n  " + badW.join("\n  ")); else console.info("rewards.js matches Tools/worldgen/world.py (self-test passed).");
+    const badM = BuyMenu.selfTest();
+    if (badM.length) console.error("buymenu.js does not match Tools/worldgen/world.py:\n  " + badM.join("\n  ")); else console.info("buymenu.js matches Tools/worldgen/world.py (self-test passed).");
     const bad = Econ.selfTest(X, LOTS);
     if (bad.length) console.error("economy.js does not match Tools/citysim/economy.py:\n  " + bad.join("\n  ")); else console.info("economy.js matches Tools/citysim/economy.py (self-test passed).");
   });
