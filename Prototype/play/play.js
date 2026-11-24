@@ -2162,7 +2162,7 @@ void main(){
   col+=vec3(1.,.62,.32)*(glow*min(uFogD,.007)*1.6*uNk.y);                 // every lantern glows in the haze around it (no more than in a thick haze, or rain and fog turn the night orange); uNk.y: less in clear night air (WLD-042)
   gl_FragColor=vec4(tone(col*uExp),1.);
 }`;
-let main = program(MAIN_VS, MAIN_FS), signProg = program(MAIN_VS, "#define LETTERS\n" + MAIN_FS);   // only the painted names cut holes, so the town's shader keeps the early depth test
+let main = program(MAIN_VS, MAIN_FS),signProg = program(MAIN_VS, "#define LETTERS\n" + MAIN_FS);   // only the painted names cut holes, so the town's shader keeps the early depth test
 const PRE_FS = "precision mediump float; varying highp vec3 vP; varying float vF; uniform vec4 uCut,uIso; uniform float uCutY,uCutW,uIsoY;\nvoid main(){\n#ifdef CUT\n  if(vP.x>uCut.x&&vP.x<uCut.z&&vP.z>uCut.y&&vP.z<uCut.w&&vP.y>(abs(vF-17.)<.5?min(uCutY,uCutW):uCutY)) discard;\n  if((vP.x<uIso.x||vP.x>uIso.z||vP.z<uIso.y||vP.z>uIso.w)&&vP.y>uIsoY) discard;\n#endif\n  gl_FragColor=vec4(1.); }";
 let pre = program(MAIN_VS, PRE_FS);       // depth only, laid first so each pixel is lit once
 const mainCut = program(MAIN_VS, "#define HOUSECUT\n" + MAIN_FS);   // the same three with the house cut away (CUT_GLSL), used only for what is round that house
@@ -2906,6 +2906,38 @@ buildWorld(); Dress.init();                              // which play spot is o
 if (RANGES[RANGES.length - 1][1] !== world.n) fail("World pieces do not cover the whole town mesh.");
 const worldBuf = buffer(world, gl.STATIC_DRAW), worldN = world.n / 10, skyMap = bakeSky();
 const pieces = RANGES.filter(r => r[1] > r[0]).map(([s, e, town]) => ({ first: s / 10, count: (e - s) / 10, town, box: boxOf(world.a, s, e) }));
+// Far copies of the town (TECH-008, 60 fps work): measured on 2026-11-24, nine tenths of the triangles the lit town drew lay
+// more than 200 m off, where the haze takes most of them. Each copy leaves out the faces smaller than `size` metres (the square
+// root of twice a triangle's area): window boxes, frames, sills, reveals, flowers, tufts, two or three pixels at that distance.
+// A piece whose nearest point is past `m` metres is drawn from the copy. Seen over the whole town from above the roofs, the
+// copies change under 0.01 % of the pixels; dropping faces under 0.3 m and 1 m instead changed 0.4 %, too many. The copies keep the town mesh's order, so a write to
+// the town mesh (a smash, a remodel) reaches them through worldWrite(). The dial far = 0 (?d_far=0) draws everything in full, to compare.
+const FAR_LOD = [{ m: 150, size: .2 }, { m: 350, size: .6 }];
+const farLod = (() => {
+  const a = world.a, T = world.n / 30, sz = new Float32Array(T);
+  for (let t = 0, i = 0; t < T; t++, i += 30) {
+    const ax = a[i + 10] - a[i], ay = a[i + 11] - a[i + 1], az = a[i + 12] - a[i + 2], bx = a[i + 20] - a[i], by = a[i + 21] - a[i + 1], bz = a[i + 22] - a[i + 2];
+    sz[t] = Math.sqrt(Math.hypot(ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx)); }
+  return FAR_LOD.map(L => {
+    const before = new Uint32Array(T + 1); let k = 0;           // before[t]: how many of the town's triangles ahead of t the copy keeps
+    for (let t = 0; t < T; t++) { before[t] = k; if (sz[t] >= L.size) k++; } before[T] = k;
+    const m = { a: new Float32Array(k * 30), n: k * 30 };
+    for (let t = 0, j = 0; t < T; t++) if (sz[t] >= L.size) { m.a.set(a.subarray(t * 30, t * 30 + 30), j); j += 30; }
+    return { m2: L.m * L.m, before, buf: buffer(m, gl.STATIC_DRAW), n: k * 3 };
+  });
+})();
+for (const pc of pieces) pc.far = farLod.map(F => { const t0 = pc.first / 3, t1 = (pc.first + pc.count) / 3; return [F.before[t0] * 3, (F.before[t1] - F.before[t0]) * 3]; });
+function worldWrite(s, data) {                            // change the town mesh from float s on, and its far copies with it (whole triangles)
+  gl.bindBuffer(gl.ARRAY_BUFFER, worldBuf); gl.bufferSubData(gl.ARRAY_BUFFER, s * 4, data);
+  if (s % 30 || data.length % 30) { if (farLod.length) console.warn("worldWrite: not whole triangles; the far town is not changed"); return; }
+  const t0 = s / 30, t1 = (s + data.length) / 30;
+  for (const F of farLod) {
+    const k0 = F.before[t0], k1 = F.before[t1]; if (k1 === k0) continue;
+    const out = new Float32Array((k1 - k0) * 30);
+    for (let t = t0, j = 0; t < t1; t++) if (F.before[t + 1] > F.before[t]) { out.set(data.subarray((t - t0) * 30, (t - t0) * 30 + 30), j); j += 30; }
+    gl.bindBuffer(gl.ARRAY_BUFFER, F.buf); gl.bufferSubData(gl.ARRAY_BUFFER, k0 * 120, out);
+  }
+}
 Smash.prepare();                                         // breakable things keep their own copy of their triangles (smash.js)
 world.a = null;
 const chunks = [...DETAIL.values()].map(m => { const c = { buf: buffer(m, gl.STATIC_DRAW), n: m.n / 10, cx: m.cx, cz: m.cz, r: m.r || DETAIL_R, box: boxOf(m.a, 0, m.n) }; m.glbuf = c.buf; m.a = null; return c; });
@@ -2916,7 +2948,7 @@ const signBuf = buffer(signs, gl.STATIC_DRAW), signN = signs.n / 10; signs.a = n
 function repaint(l, design) {
   const at = l.drawn, dm = at && DETAIL.get(at.k); if (!at) return false;
   if (!l.blanked) {
-    gl.bindBuffer(gl.ARRAY_BUFFER, worldBuf); gl.bufferSubData(gl.ARRAY_BUFFER, at.w[0] * 4, new Float32Array(at.w[1] - at.w[0]));
+    worldWrite(at.w[0], new Float32Array(at.w[1] - at.w[0]));
     if (dm && dm.glbuf && at.d[1] > at.d[0]) { gl.bindBuffer(gl.ARRAY_BUFFER, dm.glbuf); gl.bufferSubData(gl.ARRAY_BUFFER, at.d[0] * 4, new Float32Array(at.d[1] - at.d[0])); }
     l.blanked = true;
   }
@@ -3485,7 +3517,12 @@ function frame(now) {
   gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, txtTex); gl.activeTexture(gl.TEXTURE0);
   gpuMark("lit town");
   lit(main); cutU(main); attribs(main, worldBuf); for (const pc of seen) if (pc.d2 < PRE2 && !cutHit(pc.box)) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count);
-  gl.depthMask(true); for (const pc of seen) if (pc.d2 >= PRE2 && !cutHit(pc.box)) gl.drawArrays(gl.TRIANGLES, pc.first, pc.count); gl.depthMask(false);   // the far ones, writing their own depth; in the order laid, so ties fall as before
+  gl.depthMask(true); let farAt = -1;                      // the far ones, writing their own depth; in the order laid, so ties fall as before
+  for (const pc of seen) if (pc.d2 >= PRE2 && !cutHit(pc.box)) {
+    let L = -1; if (!pc.town && dials.far !== 0) for (let k = farLod.length - 1; k >= 0; k--) if (pc.d2 >= farLod[k].m2) { L = k; break; }   // past 150 m, 350 m: a far copy
+    if (L !== farAt) { attribs(main, L < 0 ? worldBuf : farLod[L].buf); farAt = L; }
+    const r = L < 0 ? [pc.first, pc.count] : pc.far[L]; if (r[1]) gl.drawArrays(gl.TRIANGLES, r[0], r[1]); }
+  if (farAt !== -1) attribs(main, worldBuf); gl.depthMask(false);
   let drawnDetail = 0; for (const ch of nearD) if (!cutHit(ch.box)) { if (CUT_NOW) cutU(main, cutY(ch)); drawMesh(ch.buf, ch.n); drawnDetail += ch.n; }
   if (CUT.on) {                                            // round the house the player is in: the same, cut away (CUT_GLSL)
     lit(mainCut); attribs(mainCut, worldBuf);
