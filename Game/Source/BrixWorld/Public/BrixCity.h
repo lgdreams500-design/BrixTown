@@ -78,6 +78,7 @@ struct BRIXWORLD_API FBrixLot
 	TMap<FString, FString> OwnSurface;       // the lot's 'surface' field: slot -> pattern, beats the rules
 	FBrixSurface Surface;                    // a building's wall, or an open lot's ground (none for a garden)
 	TOptional<FBrixHouseLook> House;         // a designed house (lot.house): its plan, line and colourway
+	TMap<FString, TArray<FVector2D>> Objects; // the lot's places by kind (lot.objects: a garden's bench seats, a fountain's rim, ...)
 
 	FVector2D Centre() const { return (Min + Max) * 0.5; }
 	FVector2D Size() const { return Max - Min; }
@@ -92,6 +93,18 @@ struct BRIXWORLD_API FBrixTree
 	FVector2D Pos = FVector2D::ZeroVector;
 };
 
+// A thing standing in the street or a garden (a block's 'props': lamps, benches, bins, fountains, ...), as the data has it.
+struct BRIXWORLD_API FBrixProp
+{
+	FString Id, Kind, Set;
+	FVector2D Pos = FVector2D::ZeroVector;
+	FString Along;                           // "x" or "z": the way a bench, rack or planter runs
+	FVector2D Out = FVector2D::ZeroVector;   // the way it faces out (a wall lantern, a postbox)
+	float R = 0.f, Height = 0.f, Face = 0.f; // a fountain's radius, a lantern's height, a stall's side (+1 or -1)
+	bool bGrand = false, bBig = false;
+	int32 Color = 0;
+};
+
 struct BRIXWORLD_API FBrixBlock
 {
 	FString Id;
@@ -101,6 +114,7 @@ struct BRIXWORLD_API FBrixBlock
 	FVector2D Extent = FVector2D::ZeroVector;   // size, over every grid cell it spans
 	TArray<FBrixLot> Lots;
 	TArray<FBrixTree> Trees;
+	TArray<FBrixProp> Props;
 	TMap<FString, FString> OwnSurface;
 	FBrixSurface Pavement;
 };

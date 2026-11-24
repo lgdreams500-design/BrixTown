@@ -428,6 +428,19 @@ bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError)
 				L->TryGetBoolField(TEXT("enterable"), Lot.bEnterable);
 				Lot.Tags = Strings(L, TEXT("tags"));
 				Lot.OwnSurface = OwnSurface(L);
+				const TSharedPtr<FJsonObject>* Objs = nullptr;
+				if (L->TryGetObjectField(TEXT("objects"), Objs))
+					for (const auto& KV : (*Objs)->Values)
+					{
+						TArray<FVector2D>& At = Lot.Objects.Add(FString(KV.Key));
+						const TArray<TSharedPtr<FJsonValue>>* Pts = nullptr;
+						if (KV.Value->TryGetArray(Pts))
+							for (const TSharedPtr<FJsonValue>& PV : *Pts)
+							{
+								const TArray<TSharedPtr<FJsonValue>>* XY = nullptr;
+								if (PV->TryGetArray(XY) && XY->Num() >= 2) At.Add(FVector2D((*XY)[0]->AsNumber(), (*XY)[1]->AsNumber()));
+							}
+					}
 				const TSharedPtr<FJsonObject>* House = nullptr;
 				if (L->TryGetObjectField(TEXT("house"), House) && HouseStyles.IsValid()) Lot.House = HouseLook(HouseStyles, *House);
 			}
@@ -443,6 +456,29 @@ bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError)
 				Tree.Id = Str(T, TEXT("id"));
 				Tree.Species = Str(T, TEXT("species"));
 				Tree.Pos = Vec2(T, TEXT("pos"));
+			}
+		}
+		const TArray<TSharedPtr<FJsonValue>>* Props = nullptr;
+		if (B->TryGetArrayField(TEXT("props"), Props))
+		{
+			for (const TSharedPtr<FJsonValue>& PV : *Props)
+			{
+				const TSharedPtr<FJsonObject> P = PV->AsObject();
+				if (!P.IsValid()) continue;
+				FBrixProp& Prop = Block.Props.AddDefaulted_GetRef();
+				Prop.Id = Str(P, TEXT("id"));
+				Prop.Kind = Str(P, TEXT("kind"));
+				Prop.Set = Str(P, TEXT("set"));
+				Prop.Pos = Vec2(P, TEXT("pos"));
+				Prop.Out = Vec2(P, TEXT("out"));
+				P->TryGetStringField(TEXT("along"), Prop.Along);
+				Prop.R = (float)Num(P, TEXT("r"));
+				Prop.Height = (float)Num(P, TEXT("height"));
+				double F = 0;
+				if (P->TryGetNumberField(TEXT("face"), F)) Prop.Face = (float)F;
+				P->TryGetBoolField(TEXT("grand"), Prop.bGrand);
+				P->TryGetBoolField(TEXT("big"), Prop.bBig);
+				Prop.Color = (int32)Num(P, TEXT("color"));
 			}
 		}
 	}

@@ -77,14 +77,14 @@ struct BRIXWORLD_API FBrixFarBox
 
 struct BRIXWORLD_API FBrixDrawOptions
 {
-	int32 Pose = 0;          // 0 standing, 1 walking
+	int32 Pose = 0;          // 0 standing, 1 walking, 2 sitting (the origin is then the seat's top)
 	double Phase = 0;        // the walk's cycle, 0..1
 	double Seconds = 0;      // time, for breathing, blinking and the head's wander
 	int32 Lod = 1;           // 0 full (the nearest few), 1 to 16 m, 2 to 35 m; 3 a far figure of boxes
 	double FaceFade = 1;     // at lod 2, how much of the face still shows (0 none)
 };
 
-// people.js draw() for poses 0 and 1: appends the body to Out (lods 0 to 2) or its boxes to OutBoxes (lod 3).
+// people.js draw() for poses 0 to 2: appends the body to Out (lods 0 to 2) or its boxes to OutBoxes (lod 3).
 BRIXWORLD_API void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVector& At, double Yaw,
 	const FBrixDrawOptions& O, FBrixBodyMesh& Out, TArray<FBrixFarBox>* OutBoxes = nullptr);
 

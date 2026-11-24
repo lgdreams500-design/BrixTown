@@ -77,14 +77,25 @@ same tables as the slice: `Game/Data/people.json`, written from people.js by `To
 changing people.js; it runs people.js itself in headless Edge). Bodies are built from code as the slice builds them, at
 its distances: the nearest within 5 m at full detail with a blinking face, to 16 m a body with a face, to 35 m a simpler
 body whose face is gone by 30 m, and further out a figure of a few blocks. `ART004_people_are_drawn_as_the_slice_draws_them`
-checks the port against people.js: the same looks, and bodies with the same vertices to within 1 mm. Each body is a
-procedural mesh rebuilt every one to three frames and moved every frame; the far figures are one mesh updated in place
-(moving instanced boxes every frame cost 8 ms of the render thread). Their material is `/Game/People/M_People` (the
-vertex colour, matte), made by `Tools/unreal/make_people_material.py`. Standing residents stand; sitting, talking faces,
-umbrellas and boards are not brought over yet. The player is the slice's player too (people.js player(), in people.json) at full detail, walking
-by their signature and running by the slice's Run, until the designed character (CHR-001) comes over. At High on this laptop: 54.5 frames a second on a street with 32
-residents near (the same as with none), 49 to 52 in the morning school rush of some 150 (the people take 9 to 11 ms of
-the game thread there).
+checks the port against people.js: the same looks, and bodies (walking, standing and sitting) with the same triangles to
+within 1 mm. Each body is a procedural mesh of shared vertices (a sixth of the slice's loose triangles, whose upload cost
+6 ms in a crowd), rebuilt every one to three frames and moved every frame; where everyone is and the bodies due a rebuild
+are worked out on the task threads, only the uploads on the game thread. The far figures are one mesh updated in place
+(moving instanced boxes every frame cost 8 ms of the render thread). A test shot logs the people's time by part. Their
+material is `/Game/People/M_People` (the vertex colour, matte), made by `Tools/unreal/make_people_material.py`.
+Residents at a garden's bench seats and fountain rims sit there, facing the garden's middle or out of the fountain
+(CITY-017, found as the slice finds them: `SeatBrixDay`, checked by `CITY017_residents_sit_on_garden_benches`); others
+stand. Talking faces, umbrellas and boards are not brought over yet. The player is the slice's player too (people.js
+player(), in people.json) at full detail, walking by their signature and running by the slice's Run, until the designed
+character (CHR-001) comes over. At High on this laptop: 53 to 55 frames a second on a street with 32 residents near, in
+the morning school rush of some 150 and in a garden with 46 (the same as with none: the GPU is the limit), the people
+taking 1.3 to 3.6 ms of the game thread.
+
+## Street furniture (WLD-028)
+Each block's props are drawn as the slice draws them (play.js prop(), dressing.js), boxes in the palette's colours:
+lamps, benches, bins, bollards, planters, postboxes, bike racks, phone boxes, wall lanterns, flowerbeds, fountains,
+market stalls, tram shelters, water towers and wells. Garden planting, playgrounds, arches, adverts and the open ground's
+own things are not brought over yet, and the lamps do not light at night yet.
 
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
@@ -117,3 +128,4 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD043_the_sun_follows_the_calendar` | WLD-043 (ADR-0024) |
 | `BrixTown.World.CITY022_residents_are_where_their_routine_puts_them` | CITY-022 |
 | `BrixTown.World.ART004_people_are_drawn_as_the_slice_draws_them` | ART-004, ANIM-001, ANIM-002 |
+| `BrixTown.World.CITY017_residents_sit_on_garden_benches` | CITY-017 |

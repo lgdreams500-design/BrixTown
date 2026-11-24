@@ -343,6 +343,23 @@ namespace
 		return P;
 	}
 
+	FPose sit(const FBrixSignature&, const FGeo& g, double W, double t, const double hm[3], double seed)   // on a chair or bench; the origin is the seat top
+	{
+		FPose P;
+		const FVector pel(0, 0, .095 * g.S - g.hipdz);
+		for (int k = 0; k < 2; ++k)
+		{
+			const double side = k ? -1 : 1;
+			const FVector hip = pel + FVector(side * g.hipx, 0, g.hipdz);
+			leg(P, k, g, hip, hip + FVector(side * .035 * g.S, -g.L1 * .97, -g.L2 * .98), FVector(1, 0, 0), 0, side * rad(8));   // thighs level, shins down
+		}
+		const double arms[2][3] = { { 26, 6, 62 }, { 26, 6, 62 } };
+		const double chest[3] = { 0, rad(4) + .004 * FMath::Sin(t * 1.3 + seed), 0 };
+		const double head[3] = { hm[0], rad(4) + hm[1], hm[2] };
+		upper(P, g, W, pel, M3::I(), chest, arms, head);
+		return P;
+	}
+
 	// ---- shapes: lofted rings with smooth normals, so forms read as soft
 	struct FRing { FVector c, u, v; };
 	using FKeep = TFunctionRef<bool(double, double, double)>;
@@ -463,18 +480,19 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 		if (!OutBoxes) return;
 		const double S = L.S, W = L.W;
 		const FVector3f legC = L.Legs == TEXT("skirt") ? L.Skin : L.Bottom;
-		const double hip = .88 * S, top = hip + .5 * S, fx = FMath::Sin(yaw), fz = -FMath::Cos(yaw);
+		const bool bSit = pose == 2;   // sitting, the origin is the seat top: the body starts there
+		const double hip = bSit ? .2 * S : .88 * S, top = hip + .5 * S, fx = FMath::Sin(yaw), fz = -FMath::Cos(yaw);
 		auto box = [&](double x0, double y0, double z0, double x1, double y1, double z1, const FVector3f& c)
 		{
 			OutBoxes->Add({ FVector3f((float)x0, (float)y0, (float)z0), FVector3f((float)x1, (float)y1, (float)z1), c });
 		};
-		for (const double e : { -1.0, 1.0 })
+		if (!bSit) for (const double e : { -1.0, 1.0 })
 		{
 			const double sw = pose == 1 ? FMath::Sin(o.Phase * 6.283) * .16 * e * S : 0, lx = x + fx * sw - fz * e * .07 * S, lz = z + fz * sw + fx * e * .07 * S;
 			box(lx - .065 * S, y, lz - .065 * S, lx + .065 * S, y + hip, lz + .065 * S, legC);
 		}
 		const double w = .19 * W * S;
-		box(x - w, y + hip, z - w, x + w, y + top, z + w, L.Top);
+		box(x - w, y + (bSit ? .02 * S : hip), z - w, x + w, y + top, z + w, L.Top);
 		box(x - .1 * S, y + top + .04 * S, z - .1 * S, x + .1 * S, y + top + .3 * S, z + .1 * S, L.Skin);
 		box(x - .11 * S, y + top + .22 * S, z - .11 * S, x + .11 * S, y + top + .33 * S, z + .11 * S, L.Cap ? *L.Cap : L.HairC);
 		return;
@@ -487,7 +505,8 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	const bool midFace = lod == 1 || (lod == 2 && ff > .02);
 	double hm[3];
 	wander(t, sd * .37, hm);
-	const FPose P = pose == 1 ? walk(sig, g, W, o.Phase, hm) : stand(sig, g, W, t, hm, sd);
+	const FPose P = pose == 1 ? walk(sig, g, W, o.Phase, hm) : pose == 2 ? sit(sig, g, W, t, hm, sd) : stand(sig, g, W, t, hm, sd);
+	auto hem = [&](double zz) { return pose == 2 ? FMath::Max(zz, -.06) : zz; };   // seated, a hem ends at the seat instead of hanging through it
 	// where the character's axes point in the world (standing: x left, y back, z up)
 	const double c = FMath::Cos(yaw), s = FMath::Sin(yaw);
 	const FVector ex(-c, 0, -s), ey(-s, 0, c), ez(0, 1, 0), O(x, y, z);
@@ -540,14 +559,14 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	const bool coat = L.Garment == TEXT("coat"), tunic = L.Garment == TEXT("tunic");
 	auto topR = [&](double zz) { return tunic ? (.19 * W + (chest - .19 * W) * (zz + .1235) / .545) : (.142 * W + (chest - .142 * W) * (zz - .088) / .3334); };
 	const double SK[4] = { coat ? -.5 : -.44, coat ? .21 * W : .225 * W, coat ? .4214 : tunic ? 0 : .2, coat ? chest - .004 : tunic ? topR(0) - .012 : topR(.2) - .012 };
-	if (kind == TEXT("skirt")) capsule(SK[0], SK[1], SK[2], SK[3], flat, .28, L.Bottom, 0, 0, 0, swing * .3, true);
+	if (kind == TEXT("skirt")) capsule(hem(SK[0]), SK[1], SK[2], SK[3], flat, .28, L.Bottom, 0, 0, 0, swing * .3, true);
 	const FVector3f outer = L.Top;
 	if (coat)
 	{
-		capsule(kind == TEXT("skirt") ? -.29 : -.33, .218 * W, .431, chest + .014, flat * 1.06, .25, L.Top, .006, .006, 0, swing * .3, true);
+		capsule(hem(kind == TEXT("skirt") ? -.29 : -.33), .218 * W, .431, chest + .014, flat * 1.06, .25, L.Top, .006, .006, 0, swing * .3, true);
 		ms.ball(sp + tz * (.387 * S), tx * (.085 * T), ty * (.08 * T), tz * (.035 * S), n, 4, L.Top);   // the collar
 	}
-	else if (tunic) capsule(-.1235, .19 * W, .4214, chest, flat, .28, L.Top, 0, 0, 0, swing * .18, true);
+	else if (tunic) capsule(hem(-.1235), .19 * W, .4214, chest, flat, .28, L.Top, 0, 0, 0, swing * .18, true);
 	else capsule(.088, .142 * W, .4214, chest, flat, .28, L.Top, 0, 0, 0, 0, true);
 	// the yoke: a rounded bar across the shoulders that the arms hang from
 	const FVector sh0 = Wp(P.sh[0]), sh1 = Wp(P.sh[1]);
@@ -680,9 +699,9 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	// across: [front, back] depth in S.
 	struct FLayer { double z0, r0, z1, r1, fl, cap, yo, sw; };
 	TArray<FLayer> layers;
-	if (kind == TEXT("skirt")) layers.Add({ SK[0], SK[1], SK[2], SK[3], flat, .28, 0, swing * .3 });
-	if (coat) layers.Add({ kind == TEXT("skirt") ? -.29 : -.33, .218 * W, .431, chest + .014, flat * 1.06, .25, .006, swing * .3 });
-	else if (tunic) layers.Add({ -.1235, .19 * W, .4214, chest, flat, .28, 0, swing * .18 });
+	if (kind == TEXT("skirt")) layers.Add({ hem(SK[0]), SK[1], SK[2], SK[3], flat, .28, 0, swing * .3 });
+	if (coat) layers.Add({ hem(kind == TEXT("skirt") ? -.29 : -.33), .218 * W, .431, chest + .014, flat * 1.06, .25, .006, swing * .3 });
+	else if (tunic) layers.Add({ hem(-.1235), .19 * W, .4214, chest, flat, .28, 0, swing * .18 });
 	else layers.Add({ .088, .142 * W, .4214, chest, flat, .28, 0, 0 });
 	auto wear = [&](double zz, double xx)
 	{
@@ -705,7 +724,7 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	// the apron: a flat bib from the chest to the thigh, hung so it clears the clothes and the legs as they swing forward
 	bool bApY = false;
 	double ay0 = 0, ay1 = 0;
-	const double AZ0 = -.2565, AZ1 = .2842;
+	const double AZ0 = pose == 2 ? .08 : -.2565, AZ1 = .2842;   // seated, the apron stops at the lap
 	auto apD = [&](double zz) { return (.118 + (.1 - .118) * (zz - AZ0) / (AZ1 - AZ0)) * W * .26; };
 	auto apY = [&](double zz) { return ay0 + (ay1 - ay0) * cl((zz - AZ0) / (AZ1 - AZ0), 0, 1); };
 	if (L.Apron && lt2)

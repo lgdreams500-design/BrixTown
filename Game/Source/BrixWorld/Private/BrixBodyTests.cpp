@@ -1,6 +1,8 @@
 // ART-004, ANIM-001, ANIM-002: the people of the Unreal build are the slice's. Run headless with the other tests:
 //   UnrealEditor-Cmd.exe Game/BrixTown.uproject -ExecCmds="Automation RunTests BrixTown.World; Quit" -unattended -nullrhi
 #include "BrixBody.h"
+#include "BrixCity.h"
+#include "BrixDay.h"
 
 #include "Dom/JsonObject.h"
 #include "Misc/AutomationTest.h"
@@ -105,6 +107,46 @@ bool FART004_PeopleAreTheSlices::RunTest(const FString&)
 		if (!bBoxes) { AddError(What + TEXT(": not the far figure people.js draws")); ++Wrong; }
 	}
 	TestTrue(TEXT("looks and bodies were checked"), Looks.Num() > 10 && Bodies > 40);
+	return Wrong == 0;
+}
+
+
+// CITY-017: residents use a garden's benches. The day's stays at a garden's bench seats and fountain rims are found as the
+// slice finds them (play.js resident(), openLot()) and sat on: each such stay is inside its garden (so the lots are read in
+// the slice's order), on a seat a bench's height up, facing along a street's axes towards the garden's middle (a bench) or
+// out of the fountain (a rim); and some of the day's stays are seated.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY017_ResidentsSitOnGardenBenches, "BrixTown.World.CITY017_residents_sit_on_garden_benches",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FCITY017_ResidentsSitOnGardenBenches::RunTest(const FString&)
+{
+	FBrixCity City;
+	FBrixDay Day;
+	FString Error;
+	const FString CityDir = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/city_01")));
+	if (!TestTrue(TEXT("the city loads: ") + Error, LoadBrixCity(CityDir, City, Error))) return false;
+	if (!TestTrue(TEXT("the day loads: ") + Error, LoadBrixDay(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/day.json"))), Day, Error))) return false;
+	const int32 Seated = SeatBrixDay(Day, City);
+	TArray<const FBrixLot*> Lots;
+	for (const FBrixBlock& B : City.Blocks) for (const FBrixLot& L : B.Lots) Lots.Add(&L);
+	int32 Wrong = 0, Checked = 0;
+	for (int32 i = 0; i < Day.Num(); ++i)
+		for (const FBrixDay::FPiece& P : Day.Plan[i])
+		{
+			if (P.Kind != 0 || P.Pose != 2) continue;
+			++Checked;
+			const FBrixLot* L = Lots.IsValidIndex(P.Lot) ? Lots[P.Lot] : nullptr;
+			const bool bIn = L && L->Kind == TEXT("garden") && P.Pos.X >= L->Min.X - .5 && P.Pos.X <= L->Max.X + .5 && P.Pos.Y >= L->Min.Y - .5 && P.Pos.Y <= L->Max.Y + .5;
+			const bool bUp = P.SeatUp > .5f && P.SeatUp < .7f;
+			const FVector2D ToMid = L ? L->Centre() - P.Pos : FVector2D::ZeroVector;
+			const bool bFace = FMath::IsNearlyEqual(P.Facing.Size(), 1.0, 1e-3) && (FVector2D::DotProduct(P.Facing, ToMid) > 0 || FVector2D::DotProduct(P.Facing, -ToMid) > .99 * ToMid.Size());
+			if (!bIn || !bUp || !bFace)
+			{
+				if (Wrong < 10) AddError(FString::Printf(TEXT("%s: a seat at (%.1f, %.1f) %s"), *Day.Ids[i], P.Pos.X, P.Pos.Y, !bIn ? TEXT("not in its garden") : !bUp ? TEXT("not a seat's height up") : TEXT("facing neither the middle nor out of the rim")));
+				++Wrong;
+			}
+		}
+	TestEqual(TEXT("every seat counted once"), Checked, Seated);
+	TestTrue(TEXT("some of the day's stays are on a garden seat"), Seated > 20);
 	return Wrong == 0;
 }
 

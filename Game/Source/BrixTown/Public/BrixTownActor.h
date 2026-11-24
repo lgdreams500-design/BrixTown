@@ -116,6 +116,7 @@ private:
 	UMaterialInstanceDynamic* Own();
 	void BuildLot(const FBrixLot& L, const FBrixBlock& B);
 	void BuildGarden(const FBrixLot& L, const struct FBrixHousePlan& Plan, const struct FBrixHouseLook& Hs, float HouseTop);
+	void BuildProp(const struct FBrixProp& P, const struct FBrixBlock& B);
 	UStaticMesh* Kit(const TCHAR* Name, UStaticMesh* Fallback = nullptr);
 	void Name(const FString& Text, const FVector& At, double YawRad, float Size, float MaxWidth, bool bFaceAlong = false);
 

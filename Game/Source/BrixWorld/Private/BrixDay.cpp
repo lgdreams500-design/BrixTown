@@ -1,5 +1,7 @@
 #include "BrixDay.h"
 
+#include "BrixCity.h"
+
 #include "Dom/JsonObject.h"
 #include "Misc/FileHelper.h"
 #include "Serialization/JsonReader.h"
@@ -57,6 +59,7 @@ bool LoadBrixDay(const FString& Path, FBrixDay& Out, FString& OutError)
 			{
 				P.Pos = FVector2D(A[2]->AsNumber(), A[3]->AsNumber());
 				P.Act = (int32)A[4]->AsNumber();
+				P.Use = (int32)A[5]->AsNumber();
 				P.bInside = A[6]->AsNumber() != 0;
 				P.Lot = (int32)A[7]->AsNumber();
 				P.Floor = A.Num() > 8 ? (int32)A[8]->AsNumber() : 0;
@@ -102,6 +105,8 @@ TOptional<FBrixWhere> FBrixDay::Where(int32 Resident, double Minute) const
 		W.bInside = P.bInside;
 		W.Floor = P.Floor;
 		W.Heading = P.Facing;
+		W.Pose = P.Pose;
+		W.SeatUp = P.SeatUp;
 		return W;
 	}
 	if (P.Route.Num() < 2) { W.Pos = P.Route.Num() ? P.Route[0] : FVector2D::ZeroVector; return W; }
@@ -112,8 +117,52 @@ TOptional<FBrixWhere> FBrixDay::Where(int32 Resident, double Minute) const
 	const FVector2D Way = Ahead - Behind;
 	W.Heading = Way.IsNearlyZero() ? FVector2D(1, 0) : Way.GetSafeNormal();
 	W.bWalking = true;
+	W.Pose = 1;
 	W.Along = D;
 	W.WalkDone = D - (P.Cum.Num() > 1 ? P.Cum[1] : 0.f);
 	W.WalkLeft = (P.Cum.Num() > 1 ? P.Cum[P.Cum.Num() - 2] : (float)L) - D;
 	return W;
+}
+
+int32 SeatBrixDay(FBrixDay& Day, const FBrixCity& City)
+{
+	// the slice's heights (play.js Y_YARD) and its facing: yaw 0 faces north, (sin yaw, -cos yaw)
+	constexpr float YardUp = 0.16f;
+	TArray<const FBrixLot*> Lots;
+	for (const FBrixBlock& B : City.Blocks) for (const FBrixLot& L : B.Lots) Lots.Add(&L);
+	struct FSpot { FVector2D At; uint8 Pose; FVector2D Face; float Up; };
+	TArray<TArray<FSpot>> Spots;
+	Spots.SetNum(Lots.Num());
+	for (int32 i = 0; i < Lots.Num(); ++i)
+	{
+		const FBrixLot& L = *Lots[i];
+		const FVector2D C = L.Centre();
+		auto Of = [&](const TCHAR* K) { const TArray<FVector2D>* A = L.Objects.Find(K); return A ? *A : TArray<FVector2D>(); };
+		if (L.Kind == TEXT("garden"))
+		{
+			for (const FVector2D& P : Of(TEXT("bench")))   // facing the garden's middle along the way the bench is further out
+				Spots[i].Add({ P, 2, FMath::Abs(P.Y - C.Y) > FMath::Abs(P.X - C.X) ? FVector2D(0, FMath::Sign(C.Y - P.Y)) : FVector2D(FMath::Sign(C.X - P.X), 0), YardUp + .46f });
+			for (const FVector2D& P : Of(TEXT("rim")))     // on a fountain's rim, facing out
+				Spots[i].Add({ P, 2, (P - C).GetSafeNormal(), YardUp + .5f });
+			for (const FVector2D& P : Of(TEXT("flowerbed"))) Spots[i].Add({ P, 0, FVector2D(0, -1), -1.f });
+		}
+		else if (L.Kind == TEXT("market"))
+			for (const FVector2D& P : Of(TEXT("stall"))) Spots[i].Add({ P, 0, FVector2D(0, P.Y < C.Y ? 1 : -1), -1.f });
+	}
+	int32 Seated = 0;
+	for (TArray<FBrixDay::FPiece>& Row : Day.Plan)
+		for (FBrixDay::FPiece& P : Row)
+		{
+			if (P.Kind != 0 || P.bInside || P.Use < 0 || !Spots.IsValidIndex(P.Lot)) continue;
+			for (const FSpot& S : Spots[P.Lot])
+				if (FMath::Abs(S.At.X - P.Pos.X) < .2 && FMath::Abs(S.At.Y - P.Pos.Y) < .2)
+				{
+					P.Pose = S.Pose;
+					P.SeatUp = S.Up;
+					if (!S.Face.IsNearlyZero()) P.Facing = S.Face;
+					if (S.Pose == 2) ++Seated;
+					break;
+				}
+		}
+	return Seated;
 }
