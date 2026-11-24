@@ -153,9 +153,10 @@ def main():
     stairs = lifts = cleared = 0
     for path, b in blocks:
         for l in b["lots"]:
-            if l["kind"] in ("garden", "market", "stop"):
+            if l["kind"] in ("garden", "market", "stop") or l.get("house"):   # a designed house has its stair and floors in its plan
                 continue
-            l.pop("storeys", None)                              # a stair, lift or place once put stays where it is on later runs
+            # (storeys is written again in place below, so a run changes nothing in a lot it has seen; a stair, lift or place
+            # once put stays where it is on later runs)
             if not l["enterable"]:
                 l["enterable"] = True
                 l["objects"].setdefault("work", [[round((l["rect"][0] + l["rect"][2]) / 2, 2), round((l["rect"][1] + l["rect"][3]) / 2, 2)]])
