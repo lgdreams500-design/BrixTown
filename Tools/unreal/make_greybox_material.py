@@ -9,6 +9,7 @@ Run from the repository root (the engine path is this machine's, docs/setup/DEV_
   "C:\\Users\\leena\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe" "%CD%\\Game\\BrixTown.uproject"
       -run=pythonscript -script="%CD%\\Tools\\unreal\\make_greybox_material.py" -unattended -nullrhi -nosplash
 """
+import os
 import unreal
 
 PATH, NAME = "/Game/Greybox", "M_Greybox"
@@ -49,7 +50,50 @@ pick = lib.create_material_expression(mat, unreal.MaterialExpressionLinearInterp
 lib.connect_material_expressions(colour, "", pick, "A")
 lib.connect_material_expressions(rgb, "", pick, "B")
 lib.connect_material_expressions(switch, "", pick, "Alpha")
-lib.connect_material_property(pick, "", unreal.MaterialProperty.MP_BASE_COLOR)
+
+
+def vec4(first, x, y, default0):
+    """Custom data first..first+3 as one float4; the first one's default (no custom data) is default0."""
+    parts = []
+    for i in range(4):
+        c = lib.create_material_expression(mat, unreal.MaterialExpressionPerInstanceCustomData, x, y + i * 100)
+        c.set_editor_property("data_index", first + i)
+        if i == 0:
+            c.set_editor_property("const_default_value", default0)
+        parts.append(c)
+    ab = lib.create_material_expression(mat, unreal.MaterialExpressionAppendVector, x + 180, y)
+    lib.connect_material_expressions(parts[0], "", ab, "A")
+    lib.connect_material_expressions(parts[1], "", ab, "B")
+    abc = lib.create_material_expression(mat, unreal.MaterialExpressionAppendVector, x + 330, y + 60)
+    lib.connect_material_expressions(ab, "", abc, "A")
+    lib.connect_material_expressions(parts[2], "", abc, "B")
+    abcd = lib.create_material_expression(mat, unreal.MaterialExpressionAppendVector, x + 480, y + 120)
+    lib.connect_material_expressions(abc, "", abcd, "A")
+    lib.connect_material_expressions(parts[3], "", abcd, "B")
+    return abcd
+
+
+# The surface: stone, brick, paving or painted plaster, by the slice's own rules (greybox_surface.hlsl, ADR-0017).
+# Custom data 3..6 = (type, unit w, unit h, joint), 7..10 = (vary, bevel, dome, mortar); with none, type is -1: plaster.
+p0 = vec4(3, -1500, 500, -1.0)
+p1 = vec4(7, -1500, 950, 0.0)
+pos = lib.create_material_expression(mat, unreal.MaterialExpressionWorldPosition, -600, 450)
+nrm = lib.create_material_expression(mat, unreal.MaterialExpressionVertexNormalWS, -600, 560)
+cam = lib.create_material_expression(mat, unreal.MaterialExpressionCameraPositionWS, -600, 660)
+surface = lib.create_material_expression(mat, unreal.MaterialExpressionCustom, 0, 300)
+code = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "greybox_surface.hlsl"), encoding="utf-8").read()
+surface.set_editor_property("code", code)
+surface.set_editor_property("output_type", unreal.CustomMaterialOutputType.CMOT_FLOAT3)
+surface.set_editor_property("description", "Brix surface")
+ins = []
+for n in ("Pos", "N", "Base", "P0", "P1", "Cam"):
+    ci = unreal.CustomInput()
+    ci.set_editor_property("input_name", n)
+    ins.append(ci)
+surface.set_editor_property("inputs", ins)
+for src, name in ((pos, "Pos"), (nrm, "N"), (pick, "Base"), (p0, "P0"), (p1, "P1"), (cam, "Cam")):
+    lib.connect_material_expressions(src, "", surface, name)
+lib.connect_material_property(surface, "", unreal.MaterialProperty.MP_BASE_COLOR)
 
 rough = lib.create_material_expression(mat, unreal.MaterialExpressionConstant, -300, 220)
 rough.set_editor_property("r", ROUGHNESS)

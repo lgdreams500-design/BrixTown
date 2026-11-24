@@ -2,9 +2,12 @@
 //   UnrealEditor-Cmd.exe Game/BrixTown.uproject -ExecCmds="Automation RunTests BrixTown.World; Quit" -unattended -nullrhi
 #include "BrixCity.h"
 
+#include "Dom/JsonObject.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -68,6 +71,58 @@ bool FWLD022_BrokenLotsAreCaught::RunTest(const FString&)
 	B.Lots.Append({ Twin, NoDoor, NoFloors, Garden });
 	TestEqual(TEXT("three broken lots, three problems"), CheckBrixCity(City).Num(), 3);
 	return true;
+}
+
+// WLD-038, WLD-039: stone, brick and paving by the rules of World/rules/surfaces.json (ADR-0017). The C++ port of
+// world.surfaces() picks, for every lot and block, the same pattern, colour and "to the eaves" as the Python does
+// (Tests/values/surfaces_city_01.json, written by Tools/worldgen/unreal_test_values.py).
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWLD038_SurfacesMatchTheRules, "BrixTown.World.WLD038_surfaces_match_the_rules",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FWLD038_SurfacesMatchTheRules::RunTest(const FString&)
+{
+	FBrixCity City;
+	FString Error;
+	if (!TestTrue(TEXT("the starting city loads: ") + Error, LoadBrixCity(StartingCityDir(), City, Error))) return false;
+	FString Text;
+	const FString Values = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../Tests/values/surfaces_city_01.json")));
+	if (!TestTrue(TEXT("the test values are there: ") + Values, FFileHelper::LoadFileToString(Text, *Values))) return false;
+	TSharedPtr<FJsonObject> Want;
+	if (!TestTrue(TEXT("the test values are JSON"), FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Want) && Want.IsValid())) return false;
+
+	auto Same = [&](const FString& What, const FBrixSurface& Got, const TSharedPtr<FJsonObject>& W, const TCHAR* Slot)
+	{
+		const FString Name = City.Patterns.IsValidIndex(Got.Pattern) ? City.Patterns[Got.Pattern].Name : TEXT("(none)");
+		const FString WantName = W->GetStringField(Slot);
+		if (Name != WantName) { AddError(FString::Printf(TEXT("%s: %s, the rules say %s"), *What, *Name, *WantName)); return false; }
+		const TArray<TSharedPtr<FJsonValue>>* C = nullptr;
+		const bool bWantColour = W->TryGetArrayField(TEXT("color"), C);
+		if (bWantColour != Got.Color.IsSet() || (bWantColour && !FVector3f((float)(*C)[0]->AsNumber(), (float)(*C)[1]->AsNumber(), (float)(*C)[2]->AsNumber()).Equals(Got.Color.GetValue(), 1e-4f)))
+		{
+			AddError(What + TEXT(": a different colour from the rules"));
+			return false;
+		}
+		bool bUpper = false;
+		if (W->TryGetBoolField(TEXT("upper"), bUpper) && bUpper != Got.bUpper) { AddError(What + TEXT(": to the eaves or not differs")); return false; }
+		return true;
+	};
+	int32 Checked = 0, Wrong = 0;
+	const TSharedPtr<FJsonObject> Lots = Want->GetObjectField(TEXT("lots")), Blocks = Want->GetObjectField(TEXT("blocks"));
+	for (const FBrixBlock& B : City.Blocks)
+	{
+		if (Blocks->HasField(B.Id)) { ++Checked; if (!Same(B.Id, B.Pavement, Blocks->GetObjectField(B.Id), TEXT("pavement"))) ++Wrong; }
+		else { AddError(B.Id + TEXT(": no test value")); ++Wrong; }
+		for (const FBrixLot& L : B.Lots)
+		{
+			if (L.Kind == TEXT("garden")) continue;
+			if (!Lots->HasField(L.Id)) { AddError(L.Id + TEXT(": no test value")); ++Wrong; continue; }
+			const TSharedPtr<FJsonObject> W = Lots->GetObjectField(L.Id);
+			++Checked;
+			if (!Same(L.Id, L.Surface, W, L.IsOpen() ? TEXT("ground") : TEXT("wall"))) ++Wrong;
+		}
+	}
+	TestEqual(TEXT("every lot and block checked"), Checked, Lots->Values.Num() + Blocks->Values.Num());
+	TestEqual(TEXT("surfaces that differ from the rules"), Wrong, 0);
+	return Wrong == 0;
 }
 
 #endif

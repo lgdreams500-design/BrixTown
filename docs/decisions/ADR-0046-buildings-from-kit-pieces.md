@@ -28,8 +28,10 @@ wall's depth, front walls between real openings, bays of 3.2 m on every facade, 
 storey in the old districts, a tiled gable roof or a parapet. The kit's numbers and the palette are in DefaultGame.ini.
 
 ## Consequences
-- The look stays the kit's (ADR-0004); the walls still lack the kit's stone courses and mottled plaster, which need an
-  Unreal material (next).
+- The look stays the kit's (ADR-0004). Walls, pavements, streets and open ground take their stone, brick and paving from
+  World/rules/surfaces.json as the slice does (ADR-0017): BrixWorld picks each surface's pattern as world.surfaces()
+  does (test WLD038 checks every lot and block against the Python), and M_Greybox draws it with the slice's own pattern
+  and painted-plaster code ported to HLSL (Tools/unreal/greybox_surface.hlsl). About 5 fps of cost (61 at High).
 - Cost on the owner's laptop, High quality: 63 fps grey-box; the first version with the pieces ran at about 22 fps
   (170,000 instances in 383 groups, one per piece and colour). Half the screen resolution gained almost nothing, so the
   cost was the number of objects, not pixels. Now each mesh is one group whose instances carry their own colour

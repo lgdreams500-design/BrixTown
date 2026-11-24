@@ -7,6 +7,8 @@
 struct FBrixCity;
 struct FBrixLot;
 struct FBrixBlock;
+struct FBrixPattern;
+struct FBrixSurface;
 class UInstancedStaticMeshComponent;
 class UMaterialInstanceDynamic;
 class UStaticMesh;
@@ -69,18 +71,26 @@ public:
 	UPROPERTY(Config) TArray<FLinearColor> ShutterColours;  // teal, wood red, ochre, dusty blue
 	UPROPERTY(Config) TArray<FLinearColor> DoorColours;     // wood red, wood, teal
 	UPROPERTY(Config) TArray<FBrixSlotColour> SlotColours;  // the fixed slots: stone_dark, stone_a, glass, iron, ...
+	UPROPERTY(Config) FLinearColor TownStone = FLinearColor(0.52f, 0.48f, 0.43f);   // a pattern's "stone" colour (slice C.stone)
+	UPROPERTY(Config) FLinearColor TownPave = FLinearColor(0.46f, 0.42f, 0.37f);    // a pattern's "pave" colour (slice C.pave)
+	UPROPERTY(Config) FLinearColor RoadColour = FLinearColor(0.36f, 0.34f, 0.34f);
+	UPROPERTY(Config) FVector4 RoadPatternA = FVector4(0, 0.24, 0.15, 0.012);        // the street's setts: type, unit w, unit h, joint
+	UPROPERTY(Config) FVector4 RoadPatternB = FVector4(0.7, 0, 0.1, 0);               // vary, bevel, dome, mortar
 	UPROPERTY(Config) FLinearColor TrunkColour = FLinearColor(0.24f, 0.16f, 0.11f);
 	UPROPERTY(Config) FLinearColor CrownColour = FLinearColor(0.30f, 0.33f, 0.20f);
 
 private:
 	struct FOpening { float S, Z0, W, H; UStaticMesh* Mesh; UStaticMesh* Shutters; const FLinearColor* Paint; };
-	struct FPending { TArray<FTransform> At; TArray<FLinearColor> Colour; };
+	struct FLook { FLinearColor Colour; FVector4f A = FVector4f(-1, 0, 0, 0), B = FVector4f(0, 0, 0, 0); };   // A.x < 0: painted plaster
+	struct FPending { TArray<FTransform> At; TArray<FLook> Look; };
 
 	// One group of instances per mesh (ADR-0046): each instance carries its own colour (custom data 0..2), so the
 	// whole town is a handful of groups. A slot named frame, shutter, door or roof, and every slot of the plain shapes,
 	// takes the instance's colour; the other slots (glass, stone, iron) are fixed from SlotColours.
 	UInstancedStaticMeshComponent* Group(UStaticMesh* Mesh, bool bCollide, float CullM = 0.f);
 	void Add(UInstancedStaticMeshComponent* G, const FTransform& At, const FLinearColor& C);
+	void Add(UInstancedStaticMeshComponent* G, const FTransform& At, const FLook& Look);
+	FLook Surface(const FBrixSurface& S, const FLinearColor& Town) const;
 	UMaterialInstanceDynamic* Fixed(const FLinearColor& C);
 	UMaterialInstanceDynamic* Own();
 	void BuildLot(const FBrixLot& L, const FBrixBlock& B);
@@ -95,5 +105,6 @@ private:
 	UPROPERTY() TMap<uint32, TObjectPtr<UMaterialInstanceDynamic>> Colours;
 	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> OwnColour;
 	TMap<UInstancedStaticMeshComponent*, FPending> Pending;   // instances gathered per group, added in one go
+	const FBrixCity* CityData = nullptr;
 	int32 Buildings = 0, Openings = 0;
 };

@@ -29,6 +29,15 @@ The whole town is 15 groups of instances, one per mesh, each instance carrying i
 the owner's laptop at High it runs at 63-66 fps, as fast as the grey-box (ADR-0046). The binaries are lockable in LFS
 (ADR-0002): `git lfs lock <file>` before running the scripts that remake them.
 
+## Stone, brick, paving and plaster (ADR-0017)
+Every wall, pavement, street and open lot is drawn with the pattern World/rules/surfaces.json gives it: coursed rubble
+in the old quarter, brick in the terraces (about half to the eaves), rusticated stone on civic buildings, ashlar
+elsewhere; flagstones, slabs, herringbone and basket weave underfoot; setts in the streets; mottled two-tone plaster on
+the upper storeys. BrixWorld picks the patterns as `world.surfaces()` does; the test `WLD038_surfaces_match_the_rules`
+checks every lot and block against `Tests/values/surfaces_city_01.json` (run `python unreal_test_values.py` in
+`Tools/worldgen` after changing the rules). M_Greybox draws them with the slice's own code, ported to
+`Tools/unreal/greybox_surface.hlsl`; each box carries its pattern in its custom data.
+
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
 black. At Epic quality the town runs at about 36 frames a second, at High about 63 with the same shade, at Medium about 86
@@ -55,3 +64,4 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD020_city_loads_from_data` | WLD-020 |
 | `BrixTown.World.WLD022_every_lot_is_sound` | WLD-022 |
 | `BrixTown.World.WLD022_broken_lots_are_caught` | WLD-022 |
+| `BrixTown.World.WLD038_surfaces_match_the_rules` | WLD-038, WLD-039 |

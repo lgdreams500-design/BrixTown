@@ -5,6 +5,36 @@
 // The city as the files in World/ describe it (docs/specs/domains/WORLD_MAP.md). Units are those of the data: metres,
 // x east, z south, angles in degrees. Nothing here knows what is in the map (WLD-020); it only reads what the files say.
 
+// One stone, brick or paving pattern of World/rules/surfaces.json (ADR-0017).
+struct BRIXWORLD_API FBrixPattern
+{
+	FString Name;
+	FString For;                 // "wall" or "pavement"
+	FString Type;                // bond, flemish, rubble, flags, herringbone, basket
+	FVector2D Unit = FVector2D(1, 0.5);
+	float Joint = 0.02f, Vary = 0.8f, Bevel = 0.f, Dome = 0.f, Mortar = 0.f, Upper = 0.f;
+	TArray<TOptional<FVector3f>> Colors;   // unset: the town's own stone or paving
+	int32 TypeIndex() const;     // the slice's numbering: bond 0, flemish 1, rubble 2, flags 3, herringbone 4, basket 5
+};
+
+// What one surface uses (world.surfaces()): a pattern, its colour (unset: the town's own), and for a wall whether the
+// pattern runs on up the plaster storeys to the eaves.
+struct BRIXWORLD_API FBrixSurface
+{
+	int32 Pattern = INDEX_NONE;  // into FBrixCity::Patterns
+	TOptional<FVector3f> Color;
+	bool bUpper = false;
+};
+
+// One rule of surfaces.json: if every field named matches (template, district, kind, name, tags...), use one pattern or
+// pick among several by weight.
+struct BRIXWORLD_API FBrixSurfaceRule
+{
+	TMap<FString, TArray<FString>> If;
+	FString Use;                                 // one pattern, or empty when Weights is used
+	TArray<TPair<FString, double>> Weights;      // sorted by name, as Python's sorted()
+};
+
 struct BRIXWORLD_API FBrixLot
 {
 	FString Id;
@@ -16,6 +46,9 @@ struct BRIXWORLD_API FBrixLot
 	int32 Floors = 0;
 	float AngleDeg = 0.f;                    // turned about the footprint's centre
 	bool bEnterable = false;
+	TArray<FString> Tags;
+	TMap<FString, FString> OwnSurface;       // the lot's 'surface' field: slot -> pattern, beats the rules
+	FBrixSurface Surface;                    // a building's wall, or an open lot's ground (none for a garden)
 
 	FVector2D Centre() const { return (Min + Max) * 0.5; }
 	FVector2D Size() const { return Max - Min; }
@@ -39,6 +72,8 @@ struct BRIXWORLD_API FBrixBlock
 	FVector2D Extent = FVector2D::ZeroVector;   // size, over every grid cell it spans
 	TArray<FBrixLot> Lots;
 	TArray<FBrixTree> Trees;
+	TMap<FString, FString> OwnSurface;
+	FBrixSurface Pavement;
 };
 
 struct BRIXWORLD_API FBrixCity
@@ -54,13 +89,23 @@ struct BRIXWORLD_API FBrixCity
 	FVector2D SpawnFacing = FVector2D(1, 0);
 	FString SpawnTime;
 	TArray<FBrixBlock> Blocks;
+	TArray<FBrixPattern> Patterns;          // in the order of surfaces.json
+	TMap<FString, TArray<FBrixSurfaceRule>> SurfaceRules;   // slot -> rules, first match wins
 
 	int32 NumLots() const;
+	int32 FindPattern(const FString& Name) const;
 	int32 NumTrees() const;
 };
 
 // Reads <CityDir>/city.json and every block file it lists. On failure returns false and says why in OutError.
 BRIXWORLD_API bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError);
+
+// The pattern one slot ("wall", "pavement", "ground") of a block (Lot null) or lot uses, by the rules of
+// World/rules/surfaces.json or the surface's own 'surface' field: a port of world.surface_pick() (ADR-0017). LoadBrixCity
+// fills every lot's Surface and every block's Pavement with it; this is exposed for tests.
+BRIXWORLD_API int32 PickBrixSurface(const FBrixCity& City, const FString& Slot, const FBrixBlock& Block, const FBrixLot* Lot);
+// world._surface_hash(): the first 8 hex digits of the MD5 of the parts joined by "|", as a number in 0..1.
+BRIXWORLD_API double BrixSurfaceHash(const TArray<FString>& Parts);
 
 // Checks what the game relies on (WLD-022): every lot has a unique id, a kind, a name, a footprint with area, a door,
 // and a building at least one floor high unless it is open ground. Returns the problems found (empty when sound).
