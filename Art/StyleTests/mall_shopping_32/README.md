@@ -46,3 +46,19 @@ floor; 189 outlets with a counter. The floor plans with every place marked are i
 
 Not in these pictures: the mall at lunch or on a Sunday, when the shop owners are out; nobody carries a broom or a
 radio; the frame rate was not measured.
+
+## Stage 4: residents who come to shop and eat (CITY-106, WLD-068)
+
+Whole pictures of the page on a working day.
+
+- `stage4_a_student_shopping_at_pip_and_peel_floor_1.jpg`: 16:40, a student before the counter of a juice bar on floor
+  1, its owner behind it.
+- `stage4_two_eating_at_saucer_floor_1.jpg`: 16:40, two students at a table of a cafe on floor 1, on the chairs the
+  slice draws.
+- `stage4_shop_owners_at_lunch_in_elevenses.jpg`: 13:05, shop owners eating at the tables of a ground-floor cafe; its
+  own keeper is at the counter. The player stands in the way.
+
+Counted in the page on that day: at 13:00, 199 of the mall's 201 staff in it and 106 sitting at tables; at 16:40, 20
+visitors shopping and 7 eating, on all three floors; at 10:00 and at 19:30, no visitors.
+
+Not in these pictures: a Saturday or a Sunday; anybody walking inside the mall (nobody does).

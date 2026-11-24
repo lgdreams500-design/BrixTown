@@ -22,7 +22,9 @@ The idea, in the shell's own language (flowing ribbons, eggs, round arches, lant
                     a low garden; from those bridges two more climb outwards over the next atria to the upper floor
   shops             a front on every stretch of wall along the court, the concourses and the slanting walks
 
-It replaces the lot's `plan` (malls_01.py, concept "loop") and its `customer` and `seat` places; the lot's rect, door,
+It replaces the lot's `plan` (malls_01.py, concept "loop") and its `customer` and `seat` places (with the floor of each
+in the lot's `levels`: the 80 and 32 on the court floor as before, and since CITY-106 two before the counter of every
+outlet and a chair at every table of the food outlets, on every floor); the lot's rect, door,
 floors and tags stay. The ground floor keeps its four big stores of 3,600 m2, its 58 deep shops and two cafes, in the same
 order of kinds. Every outlet, on every floor, has one keeper (CITY-105; the owner, 2026-11-24: "one person per outlet is
 good enough"), who stands behind its counter (`stand`); the mall's guards and janitors have their own places (`staff`).
@@ -57,6 +59,9 @@ The plan keeps the old keys and adds some:
                      stands in each, copied from World/rules/mall_outlets.json; a unit with a front names its kind (`outlet`)
   outlet_depth       {least, most}: how deep an outlet's room is drawn, metres in from its front
   rides              [{kind, pos, r?, horses?}]: a carousel and coin rides on the court floor
+  places             {customer: [{level, pos, yaw}], seat: [{level, pos, yaw}]}: the visitors' places inside the outlets
+                     (WLD-068): two before each counter, facing it; at a food outlet a chair on each side of each of
+                     its tables, facing the table. They are also in the lot's `objects`, after the court floor's own
   staff              {career: [{level, pos, yaw}]}: where those who look after the whole mall stand (CITY-105), as many of
                      each career as World/rules/careers.json `mall_staff.whole_mall` says: a guard inside each way in
                      and by a lift on each upper floor, janitors on the court floor and the galleries; yaw in degrees,
@@ -271,6 +276,41 @@ def whole_mall_staff(plan, places, cx, cz, rect):
         out[career] = [put(level, p, look) for level, p, look in wanted[:n]]
     assert not want, "no places are worked out for %s" % sorted(want)
     return out
+
+
+def visitor_places(plan):
+    """Where visitors stand and sit inside the outlets (WLD-068, CITY-106), on every floor: two before each counter,
+    and the four chairs of each cafe table the slice draws in a food outlet (outlets.js: the tables stand 5 m in, at
+    27, 73 and 50 hundredths of the room's width; a chair 0.8 m from the table's middle on each side)."""
+    customer, seat = [], []
+    depth = plan["outlet_depth"]
+    for L in plan["levels"]:
+        byid = {u["id"]: u for u in L["units"]}
+        for f in L["fronts"]:
+            u = byid[f["unit"]]
+            if not u.get("outlet"):
+                continue
+            a, b = f["a"], f["b"]
+            Lf = math.dist(a, b)
+            tx, tz = (b[0] - a[0]) / Lf, (b[1] - a[1]) / Lf
+            ix, iz = -tz, tx
+            if (u["stand"][0][0] - a[0]) * ix + (u["stand"][0][1] - a[1]) * iz < 0:
+                ix, iz = -ix, -iz                                    # into the room
+            at = lambda al, v: pt((a[0] + tx * al + ix * v, a[1] + tz * al + iz * v))
+            face = lambda dx, dz: round(math.degrees(math.atan2(dx, -dz)), 1)
+            for da in (-0.8, 0.8):                                   # before the counter, which is 2.2 m in
+                customer.append(dict(level=L["level"], pos=at(Lf / 2 + da, 1.6), yaw=face(ix, iz)))
+            D = max(depth["least"], min(depth["most"], u["rect"][3] - u["rect"][1] - 0.2))
+            if u["kind"] != "food" or D < 6:
+                continue
+            a0, a1 = 0.9, Lf - 0.9
+            for slot, kind in zip((0.27, 0.73, 0.5), plan["outlets"][u["outlet"]]["middle"][:3]):
+                if kind.split(":")[0] != "cafetable":
+                    continue
+                ta, tv = a0 + (a1 - a0) * slot, 5.0
+                for q, r in ((0.8, 0), (-0.8, 0), (0, 0.8), (0, -0.8)):
+                    seat.append(dict(level=L["level"], pos=at(ta + q, tv + r), yaw=face(-(tx * q + ix * r), -(tz * q + iz * r))))
+    return dict(customer=customer, seat=seat)
 
 
 def outlets(plan, cx, cz):
@@ -571,7 +611,10 @@ def design(lot, shell):
     assert len(customer) >= CUSTOMERS and len(seat) >= SEATS
     places = dict(customer=customer[:CUSTOMERS], seat=seat[:SEATS])
     plan["staff"] = whole_mall_staff(plan, places, cx, cz, lot["rect"])
-    return plan, places
+    plan["places"] = visitor_places(plan)
+    floors = {k: [0] * len(v) + [q["level"] for q in plan["places"][k]] for k, v in places.items()}
+    places = {k: v + [q["pos"] for q in plan["places"][k]] for k, v in places.items()}
+    return plan, places, floors
 
 
 def draw(lot, plan, folder):
@@ -651,9 +694,10 @@ def run(draw_too=False):
     with open(path, encoding="utf-8") as f:
         b = json.load(f)
     lot = next(l for l in b["lots"] if "mall" in l.get("tags", []) and l.get("shell"))
-    plan, places = design(lot, lot["shell"])
+    plan, places, floors = design(lot, lot["shell"])
     lot["plan"] = plan
     lot["objects"].update(places)                                    # `work` is add_careers_01.py's to write
+    lot.setdefault("levels", {}).update(floors)                      # the floor of each visitor's place
     lot["customers"], lot["seats"] = len(places["customer"]), len(places["seat"])
     with open(path, "w", encoding="utf-8") as f:
         json.dump(b, f, ensure_ascii=False, indent=1)
