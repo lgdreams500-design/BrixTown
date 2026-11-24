@@ -1,7 +1,7 @@
 ---
 spec_id: WASTED-SPEC
 title: Brix Town — Game Specification
-version: 0.5.13
+version: 0.5.14
 status: draft            # draft | reviewed | approved
 last_updated: 2026-11-24
 owner: project-owner
@@ -436,6 +436,7 @@ specs and validation tools that creators will later use, so the UGC pipeline is 
 | ADR-0007 | Daylight: the softer, warmer "kit" light replaces the reference light as the default (amends ADR-0004) | accepted |
 | ADR-0012 | Money, shops, quests and the designer in the slice: one ledger, settled by the day; stock, stall sales and daily jobs calculated from the clock and routines | proposed |
 | ADR-0041 | Buying at each outlet of the mall; what the outlets sell and where each good goes (home, wardrobe, carried); the goods as objects made in Blender; a keeper in every outlet, guards and janitors for the mall; residents who visit it | accepted |
+| ADR-0045 | The browser slice is frozen once the Unreal build catches up (the owner says when); rules are still proved in Python first, feel is prototyped in Unreal after the freeze | accepted |
 
 ADR-0001 to ADR-0003 are reserved numbers; their files are written when the decision is taken.
 
@@ -514,3 +515,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.5.11 | 2026-11-24 | Residents visit Eastgate Mall to shop and eat, and its staff eat there (owner's request; ADR-0041): CITY-106 in LIVING_CITY, WLD-068 in WORLD_MAP. No resident was added and no level was picked. |
 | 0.5.12 | 2026-11-24 | Buy menus show what is for sale as objects in a grid, the chosen one large beside it, small cells in a narrow panel (owner's request and choice of look test 33; ADR-0044): UI-020 and UI-021 in MENU. `F-UI-SHOP` proposed, and picked by the owner at level 1 for the first slice. |
 | 0.5.13 | 2026-11-24 | The Unreal project begins (owner: "let's try our slice in ue 5"): TECH-001 to TECH-003 accepted. Q-01 decided, Git with Git LFS (owner: "Yes, Git LFS"; ADR-0002); ASSET-001 accepted. |
+| 0.5.14 | 2026-11-24 | ADR-0045 (owner: "freeze the slice once unreal catches up"): the browser slice stays the main game until the Unreal build has what it has for the first slice, then is frozen as a reference. |
