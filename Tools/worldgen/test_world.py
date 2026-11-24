@@ -1090,15 +1090,29 @@ class TheMallInside(unittest.TestCase):                                        #
         x0, z0, x1, z1 = self.l["rect"]
         cx, cz, st = (x0 + x1) / 2, (z0 + z1) / 2, self.p["storey_height"]
         self.assertEqual(len(self.p["levels"]), self.l["floors"])
-        v1, v2, roof, rl = self.p["levels"][1]["voids"][0], self.p["levels"][2]["voids"][0], self.p["roof"]["opening"], self.sh["roof_light"]
-        for v in (v1, v2, roof):
+        v1, v2, eyes, rl = self.p["levels"][1]["voids"][0], self.p["levels"][2]["voids"][0], self.p["roof"]["openings"], self.sh["roof_light"]
+        court, lobe = self.p["levels"][1]["walks"][0], self.M.LOBE
+        span = lambda v, dz: (min(x for x, z in v if abs(z - cz - dz) < 2), max(x for x, z in v if abs(z - cz - dz) < 2))
+        for v in (v1, v2):
             self.assertTrue(self.M.inside(v, cx, cz))
-        self.assertTrue(all(self.M.inside(v2, x, z) for x, z in v1))               # the court opens as it rises
-        self.assertTrue(all(self.M.inside(roof, x, z) for x, z in v2))
-        self.assertTrue(all(((x - rl["pos"][0]) / rl["radii"][0]) ** 2 + ((z - rl["pos"][1]) / rl["radii"][2]) ** 2 < 1 for x, z in roof))   # and the roof's opening is under the roof light
+            self.assertTrue(all(self.M.inside(court, x, z) for x, z in v))         # a gallery all round it
+            wide = {dz: span(v, dz)[1] - span(v, dz)[0] for dz in (-2 * lobe, -1.5 * lobe, -lobe, -.5 * lobe, 0, .5 * lobe, lobe, 1.5 * lobe, 2 * lobe)}
+            for dz in (-1.5 * lobe, -.5 * lobe, .5 * lobe, 1.5 * lobe):            # a chain of round atria: at each pinch the opening is far narrower than at the atria either side
+                self.assertLess(wide[dz], .75 * min(wide[dz - .5 * lobe], wide[dz + .5 * lobe]), dz)
+        for dz in (-1.5 * lobe, -.5 * lobe, .5 * lobe, 1.5 * lobe):                # the two floors sway opposite ways: at a pinch one floor's gallery juts out over the other's
+            m1, m2 = sum(span(v1, dz)) / 2 - cx, sum(span(v2, dz)) / 2 - cx
+            self.assertLess(m1 * m2, 0, dz)
+            self.assertGreater(abs(m1 - m2), 6, dz)
+        self.assertEqual(len(eyes), 5)                                             # a round skylight over each atrium, under the roof light
+        for e in eyes:
+            ex, ez = sum(x for x, _ in e) / len(e), sum(z for _, z in e) / len(e)
+            self.assertTrue(self.M.inside(v2, ex, ez) and abs(ex - cx) < .1 and min(abs(ez - cz - k * lobe) for k in (-2, -1, 0, 1, 2)) < .1)
+            self.assertTrue(all(((x - rl["pos"][0]) / rl["radii"][0]) ** 2 + ((z - rl["pos"][1]) / rl["radii"][2]) ** 2 < 1 for x, z in e))
+        for q in self.p["planters"]:                                               # the planters stand on the galleries, clear of the edge
+            self.assertTrue(self.on_floor(q["level"], *q["pos"]) and all(math.dist(q["pos"], p) > q["r"] + 2.5 for p in self.p["levels"][q["level"]]["voids"][0]), q)
         for k in (1, 2):
             L = self.p["levels"][k]
-            self.assertEqual(len(L["bridges"]), 2)
+            self.assertEqual(len(L["bridges"]), 4)                                # one at every pinch
             for b in L["bridges"]:
                 xs, zs = [q[0] for q in b], [q[1] for q in b]
                 mz = (min(zs) + max(zs)) / 2
@@ -1138,6 +1152,10 @@ class TheMallInside(unittest.TestCase):                                        #
                 self.assertGreater(math.dist(p[:2], (x, z)), r + .6, p)
         for r in self.p["ramps"]:                                                  # two flights side by side, one up and one down
             self.assertGreaterEqual(r["width"], 4.0)
+        a, b = [r for r in self.p["ramps"] if r["from"] == 0]                      # the two from the court floor cross: side by side, running opposite ways over the same stretch
+        self.assertLess((a["b"][1] - a["a"][1]) * (b["b"][1] - b["a"][1]), 0)
+        self.assertAlmostEqual(a["a"][1], b["b"][1], delta=.1)
+        self.assertGreaterEqual(abs(a["a"][0] - b["a"][0]), a["width"])
 
     def test_WLD_061_shops_on_every_walk_and_the_ground_floor_keeps_its_jobs(self):
         import json, os, sys

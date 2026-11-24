@@ -81,7 +81,8 @@ const Court = (() => {
 
   function draw(o, l) {
     const m = o.mesh, P = l.plan, st = P.storey_height, F = o.F, H = l.H, C = o.C, [x0, z0, x1, z1] = l.rect;
-    const cream = mul(C.cream, 1.2), plaster = o.tones[4], floorC = o.floor, ceilC = mul(plaster, 1.14), dark = C.stoneDark, wood = C.wood, lit = s => [.3, .4, s];
+    const cream = mul(C.cream, 1.2), plaster = o.tones[4], floorC = mul(o.floor, 1.1), shopCeil = mul(plaster, 1.14), dark = C.stoneDark, wood = C.wood, lit = s => [.3, .4, s];
+    const fascia = mul(C.brown, .74), ceilC = mul(C.brown, .98), leafC = [.27, .37, .18];   // the ribbons along every edge and the ceilings are dark, as timber; floors pale and shop fronts bright (the owner's picture, in the town's own tones)
     const flat = (a, b, c, d, y, col, f, up) => m.quad([a[0], y, a[1]], [b[0], y, b[1]], [c[0], y, c[1]], [d[0], y, d[1]], col, f, [0, up, 0]);
     const wallQ = (S, u0, u1, y0, y1, d, col, f, uv) => m.quad(S.at(u0, y0, d), S.at(u1, y0, d), S.at(u1, y1, d), S.at(u0, y1, d), col, f, [S.n[0], 0, S.n[1]], uv);
     const boxQ = (S, u0, u1, y0, y1, d0, d1, col, f) => {   // a block standing against (or in front of) a wall
@@ -104,7 +105,7 @@ const Court = (() => {
         j ? m.quad(p[0], p[1], p[2], p[3], tone, 19, [cx, cy, cz]) : m.quad(p[3], p[2], p[1], p[0], tone, 19, [cx, cy, cz]);   // at the top the first two corners are one point: start from the others
       }
     };
-    const tree = (x, z, y, species, seed) => { const h = species === "birch" ? 5.2 : 4.2, r = species === "birch" ? 2.1 : 2.9, leaf = species === "birch" ? [.33, .4, .2] : [.24, .33, .17];
+    const tree = (x, z, y, species, seed, size) => { const k = size || 1, h = (species === "birch" ? 5.2 : 4.2) * k, r = (species === "birch" ? 2.1 : 2.9) * k, leaf = species === "birch" ? [.33, .4, .2] : [.24, .33, .17];
       m.box(x - .16, y, z - .16, x + .16, y + h, z + .16, species === "birch" ? [.6, .58, .52] : C.brown, 19); o.solid(x - .2, y, z - .2, x + .2, y + h, z + .2);
       blob(x, y + h + r * .35, z, r, leaf, seed); blob(x + r * .5, y + h - .3, z + r * .3, r * .62, leaf, seed + "b"); blob(x - r * .45, y + h - .1, z - r * .35, r * .58, leaf, seed + "c"); };
 
@@ -130,6 +131,8 @@ const Court = (() => {
         for (let i = 0; i < n; i++) {
           const j = (i + 1) % n, a = v[i], b = v[j], a2 = [a[0] + out[i][0] * W, a[1] + out[i][1] * W], b2 = [b[0] + out[j][0] * W, b[1] + out[j][1] * W];
           flat(a, b, b2, a2, fy + .006, floorC, 16, 1); flat(a, b, b2, a2, fy - T, ceilC, 3, -1);
+          for (const [d, w] of [[1.2, .2], [2.4, .12]]) {           // lines of light in the ceiling, following the edge
+            const p = (q, oo, dd) => [q[0] + oo[0] * dd, q[1] + oo[1] * dd]; flat(p(a, out[i], d), p(b, out[j], d), p(b, out[j], d + w), p(a, out[i], d + w), fy - T - .012, lit(.97), 1, -1); }
           for (const f of [.17, .5, .83]) for (const r of [.4, 1.3, 2.2, 3.1]) { const x = a[0] + (b[0] - a[0]) * f + (out[i][0] + out[j][0]) / 2 * r, z = a[1] + (b[1] - a[1]) * f + (out[i][1] + out[j][1]) / 2 * r; o.solid(x - .95, fy - T, z - .95, x + .95, fy, z + .95); }
         }
       }
@@ -138,12 +141,13 @@ const Court = (() => {
         const S = frame(a, b, voidSide), y0 = fy - T - .4, y1 = fy + RAIL, back = [-S.n[0], 0, -S.n[1]];
         const bk = (e, y) => { const nE = e ? nB : nA, p = S.at(e ? S.L : 0, y, 0); if (!nE) return S.at(e ? S.L : 0, y, -.3);   // its back at an end: where it meets the next length's (nA, nB: the way out at that joint)
           const q = .3 / Math.max(.5, nE[0] * S.n[0] + nE[1] * S.n[1]); return [p[0] - nE[0] * q, y, p[2] - nE[1] * q]; };
-        m.quad(bk(0, y0), bk(1, y0), bk(1, fy - T), bk(0, fy - T), cream, 3, back);
-        for (const [on, e, sg] of [[endA, 0, -1], [endB, 1, 1]]) if (on) m.quad(S.at(e * S.L, y0, 0), bk(e, y0), bk(e, y1), S.at(e * S.L, y1, 0), cream, 3, [S.t[0] * sg, 0, S.t[1] * sg]);
-        wallQ(S, 0, S.L, y0, y1, 0, cream, 3); wallQ(S, 0, S.L, fy - T - .32, fy - T - .16, .03, lit(.97), 1); wallQ(S, 0, S.L, fy + .52, fy + .58, .02, mul(cream, .55), 3);
-        m.quad(S.at(0, y1, 0), S.at(S.L, y1, 0), bk(1, y1), bk(0, y1), plaster, 3, [0, 1, 0]);
+        const yf = fy + .3;                                    // the dark fascia runs from under the slab to just over the floor line; a pale upstand above it
+        m.quad(bk(0, y0), bk(1, y0), bk(1, fy - T), bk(0, fy - T), fascia, 3, back);
+        for (const [on, e, sg] of [[endA, 0, -1], [endB, 1, 1]]) if (on) { m.quad(S.at(e * S.L, y0, 0), bk(e, y0), bk(e, yf), S.at(e * S.L, yf, 0), fascia, 3, [S.t[0] * sg, 0, S.t[1] * sg]); m.quad(S.at(e * S.L, yf, 0), bk(e, yf), bk(e, y1), S.at(e * S.L, y1, 0), cream, 3, [S.t[0] * sg, 0, S.t[1] * sg]); }
+        wallQ(S, 0, S.L, y0, yf, 0, fascia, 3); wallQ(S, 0, S.L, yf, y1, 0, cream, 3); wallQ(S, 0, S.L, y0 + .06, y0 + .3, .03, lit(.97), 1);
+        m.quad(S.at(0, y1, .04), S.at(S.L, y1, .04), bk(1, y1), bk(0, y1), wood, 19, [0, 1, 0]); wallQ(S, 0, S.L, y1 - .07, y1, .04, wood, 19);
         m.quad(bk(0, fy), bk(1, fy), bk(1, y1), bk(0, y1), plaster, 3, back);
-        m.quad(S.at(0, y0, 0), S.at(S.L, y0, 0), bk(1, y0), bk(0, y0), cream, 3, [0, -1, 0]);
+        m.quad(S.at(0, y0, 0), S.at(S.L, y0, 0), bk(1, y0), bk(0, y0), fascia, 3, [0, -1, 0]);
         solidAlong([S.mx - S.t[0] * S.L / 2 - S.n[0] * .15, S.mz - S.t[1] * S.L / 2 - S.n[1] * .15], [S.mx + S.t[0] * S.L / 2 - S.n[0] * .15, S.mz + S.t[1] * S.L / 2 - S.n[1] * .15], fy, fy + RAIL, .3);
       };
       for (const rl of L.rails) {
@@ -151,6 +155,12 @@ const Court = (() => {
         const sn = Array.from({ length: n }, (_, i) => frame(rl[i], rl[i + 1], toVoid).n), gone = Array.from({ length: n }, (_, i) => inBridge((rl[i][0] + rl[i + 1][0]) / 2, (rl[i][1] + rl[i + 1][1]) / 2));
         const joint = (i, j) => { if (j < 0 || j >= n) { if (!shut) return null; j = (j + n) % n; } const x = sn[i][0] + sn[j][0], z = sn[i][1] + sn[j][1], q = Math.hypot(x, z); return gone[j] || q < .2 ? null : [x / q, z / q]; };   // the way out at the joint of lengths i and j; null where the ribbon ends
         for (let i = 0; i < n; i++) if (!gone[i]) { const nA = joint(i, i - 1), nB = joint(i, i + 1); parapet(rl[i], rl[i + 1], toVoid, !nA, !nB, nA, nB); }
+        if (shut && n > 40) { let run = 3 + 5 * o.hash(l.id, k, "green");   // plants in troughs on the parapet, trailing down over the fascia (the owner's picture)
+          for (let i = 0; i < n; i++) { const a = rl[i], b = rl[i + 1], len = Math.hypot(b[0] - a[0], b[1] - a[1]); run -= len; if (run > 0 || gone[i]) continue; run = 6.5 + 5 * o.hash(l.id, k, i, "gap");
+            const x = (a[0] + b[0]) / 2 + sn[i][0] * .05, z = (a[1] + b[1]) / 2 + sn[i][1] * .05, tx = (b[0] - a[0]) / len, tz = (b[1] - a[1]) / len, big = o.hash(l.id, k, i, "big");
+            for (const u of [-.7, 0, .7]) blob(x + tx * u, fy + RAIL + .22, z + tz * u, .5 + .22 * o.hash(l.id, k, i, u), leafC, l.id + k + "," + i + u);
+            for (let s = 0; s < 6; s++) { const u = -1.1 + 2.2 * o.hash(l.id, k, i, s, "u"), drop = .5 + (1.3 + big * 1.4) * o.hash(l.id, k, i, s, "d"), px = x + tx * u + sn[i][0] * .14, pz = z + tz * u + sn[i][1] * .14;
+              m.box(px - .09, fy + RAIL - drop, pz - .09, px + .09, fy + RAIL + .1, pz + .09, mul(leafC, .8 + .4 * o.hash(l.id, k, i, s, "c")), 19); } } }
       }
       for (const br of L.bridges) {                             // a bridge: its slab, and a parapet along each side, open where a moving stair lands
         const q = boxOf(br); flat([q[0], q[1]], [q[0], q[3]], [q[2], q[3]], [q[2], q[1]], fy + .008, floorC, 16, 1); flat([q[0], q[1]], [q[0], q[3]], [q[2], q[3]], [q[2], q[1]], fy - T, ceilC, 3, -1); o.solid(q[0], fy - T, q[1], q[2], fy, q[3]);
@@ -172,7 +182,7 @@ const Court = (() => {
           const D = 6.5, back = mul(acc, .55);
           wallQ(S, .9, Lf - .9, fy, fy + 3.5, -D, back, 3);
           m.quad(S.at(.9, fy, 0), S.at(.9, fy, -D), S.at(.9, fy + 3.5, -D), S.at(.9, fy + 3.5, 0), plaster, 3, [S.t[0], 0, S.t[1]]); m.quad(S.at(Lf - .9, fy, 0), S.at(Lf - .9, fy, -D), S.at(Lf - .9, fy + 3.5, -D), S.at(Lf - .9, fy + 3.5, 0), plaster, 3, [-S.t[0], 0, -S.t[1]]);
-          m.quad(S.at(.9, fy + 3.5, 0), S.at(Lf - .9, fy + 3.5, 0), S.at(Lf - .9, fy + 3.5, -D), S.at(.9, fy + 3.5, -D), ceilC, 3, [0, -1, 0]);
+          m.quad(S.at(.9, fy + 3.5, 0), S.at(Lf - .9, fy + 3.5, 0), S.at(Lf - .9, fy + 3.5, -D), S.at(.9, fy + 3.5, -D), shopCeil, 3, [0, -1, 0]);
           m.quad(S.at(.9, fy + .004, 0), S.at(Lf - .9, fy + .004, 0), S.at(Lf - .9, fy + .004, -D), S.at(.9, fy + .004, -D), mul(wood, 1.15), 15, [0, 1, 0]);
           boxQ(S, 2.4, Lf - 2.4, fy, fy + 1.0, -2.9, -2.2, wood, 19); solidAlong(S.at(2.4, 0, -2.55).filter((_, i) => i !== 1), S.at(Lf - 2.4, 0, -2.55).filter((_, i) => i !== 1), fy, fy + 1.0, .4);
           for (let i = 0; i < 3; i++) { const u0 = 1.6 + i * (Lf - 3.2) / 3; boxQ(S, u0, u0 + (Lf - 3.2) / 3 - .5, fy + .3, fy + 2.7, -D, -D + .5, mul(wood, .9), 19); wallQ(S, u0 + .2, u0 + (Lf - 3.2) / 3 - .7, fy + 1.0, fy + 2.4, -D + .52, food ? C.ochre : acc, 19); }
@@ -198,14 +208,15 @@ const Court = (() => {
     });
 
     // ---- the roof: solid round the court's opening and the egg halls' eyes, with a rim under the roof light
-    const hole = P.roof.opening, hb = boxOf(hole), roofCell = (x, z) => !(x > hb[0] - 1.5 && x < hb[2] + 1.5 && z > hb[1] - 1.5 && z < hb[3] + 1.5 && (inPoly(hole, x, z) || edgeDist(hole, x, z) < 1.4)) && !P.halls.some(h => Math.hypot(x - h.pos[0], z - h.pos[1]) < h.r + 1.2);
+    const eyes = P.roof.openings.map(e => [e, boxOf(e)]), RIM = 1.5;   // a round skylight over each atrium: a deep dark rim, a ring of light in it
+    const roofCell = (x, z) => !eyes.some(([e, b]) => x > b[0] - 1.5 && x < b[2] + 1.5 && z > b[1] - 1.5 && z < b[3] + 1.5 && (inPoly(e, x, z) || edgeDist(e, x, z) < 1.4)) && !P.halls.some(h => Math.hypot(x - h.pos[0], z - h.pos[1]) < h.r + 1.2);
     raster(l.rect, roofCell, (xa, za, xb, zb) => { flat([xa, za], [xa, zb], [xb, zb], [xb, za], H, mul(cream, .86), 0, 1); flat([xa, za], [xa, zb], [xb, zb], [xb, za], H - T, ceilC, 3, -1); });
-    { const out = outward(hole), n = hole.length;
-      for (let i = 0; i < n; i++) { const j = (i + 1) % n, a = hole[i], b = hole[j], a2 = [a[0] + out[i][0] * 2.9, a[1] + out[i][1] * 2.9], b2 = [b[0] + out[j][0] * 2.9, b[1] + out[j][1] * 2.9];
+    for (const [e, hb] of eyes) { const out = outward(e), n = e.length, mid = [(hb[0] + hb[2]) / 2, (hb[1] + hb[3]) / 2];
+      for (let i = 0; i < n; i++) { const j = (i + 1) % n, a = e[i], b = e[j], a2 = [a[0] + out[i][0] * 2.9, a[1] + out[i][1] * 2.9], b2 = [b[0] + out[j][0] * 2.9, b[1] + out[j][1] * 2.9], a3 = [a[0] + out[i][0] * .35, a[1] + out[i][1] * .35], b3 = [b[0] + out[j][0] * .35, b[1] + out[j][1] * .35];
         flat(a, b, b2, a2, H - T - .004, ceilC, 3, -1); flat(a, b, b2, a2, H + .004, mul(cream, .86), 0, 1);
-        const S = frame(a, b, [(hb[0] + hb[2]) / 2, (hb[1] + hb[3]) / 2]); wallQ(S, 0, S.L, H - T - .9, H + .3, 0, cream, 3); wallQ(S, 0, S.L, H - T - .8, H - T - .64, .03, lit(.97), 1);
-        m.quad(S.at(0, H - T - .9, -.3), S.at(S.L, H - T - .9, -.3), S.at(S.L, H - T, -.3), S.at(0, H - T, -.3), cream, 3, [-S.n[0], 0, -S.n[1]]);
-        m.quad(S.at(0, H - T - .9, 0), S.at(S.L, H - T - .9, 0), S.at(S.L, H - T - .9, -.3), S.at(0, H - T - .9, -.3), cream, 3, [0, -1, 0]); } }
+        const S = frame(a, b, mid); wallQ(S, 0, S.L, H - T - RIM, H + .3, 0, fascia, 3); wallQ(S, 0, S.L, H - T - RIM + .12, H - T - RIM + .36, .03, lit(.97), 1);
+        m.quad([a3[0], H - T - RIM, a3[1]], [b3[0], H - T - RIM, b3[1]], [b3[0], H - T, b3[1]], [a3[0], H - T, a3[1]], fascia, 3, [-S.n[0], 0, -S.n[1]]);   // its back and its underside, so it is closed
+        m.quad([a[0], H - T - RIM, a[1]], [b[0], H - T - RIM, b[1]], [b3[0], H - T - RIM, b3[1]], [a3[0], H - T - RIM, a3[1]], fascia, 3, [0, -1, 0]); } }
 
     // ---- moving stairs: a slope with a parapet each side, walked up as thirty low steps
     for (const r of P.ramps) {
@@ -222,11 +233,11 @@ const Court = (() => {
       m.quad(pt(0, -hw, -T), pt(0, hw, -T), pt(1, hw, -T), pt(1, -hw, -T), ceilC, 3, [0, -1, 0]);
       moving.push({ a: r.a, t, s, Lr, ya, yb, hw, v: STAIR_V * Lr / Ls });
       for (const sg of [-1, 1]) {
-        m.quad(pt(0, sg * hw, -T), pt(1, sg * hw, -T), pt(1, sg * hw, RAIL), pt(0, sg * hw, RAIL), cream, 3, [s[0] * sg, 0, s[1] * sg]);
+        m.quad(pt(0, sg * hw, -T), pt(1, sg * hw, -T), pt(1, sg * hw, RAIL), pt(0, sg * hw, RAIL), fascia, 3, [s[0] * sg, 0, s[1] * sg]);   // dark outside, as the galleries' fascias: the stairs cross the atrium as two ribbons
         m.quad(pt(0, sg * (hw + .02), -T + .04), pt(1, sg * (hw + .02), -T + .04), pt(1, sg * (hw + .02), -T + .2), pt(0, sg * (hw + .02), -T + .2), lit(.97), 1, [s[0] * sg, 0, s[1] * sg]);
-        for (const f of [0, 1]) m.quad(pt(f, sg * hw, -T), pt(f, sg * (hw - .3), -T), pt(f, sg * (hw - .3), RAIL), pt(f, sg * hw, RAIL), cream, 3, [t[0] * (f ? 1 : -1), 0, t[1] * (f ? 1 : -1)]);
+        for (const f of [0, 1]) m.quad(pt(f, sg * hw, -T), pt(f, sg * (hw - .3), -T), pt(f, sg * (hw - .3), RAIL), pt(f, sg * hw, RAIL), fascia, 3, [t[0] * (f ? 1 : -1), 0, t[1] * (f ? 1 : -1)]);
         m.quad(pt(0, sg * (hw - .3), 0), pt(1, sg * (hw - .3), 0), pt(1, sg * (hw - .3), RAIL), pt(0, sg * (hw - .3), RAIL), plaster, 3, [-s[0] * sg, 0, -s[1] * sg]);
-        m.quad(pt(0, sg * hw, RAIL), pt(1, sg * hw, RAIL), pt(1, sg * (hw - .3), RAIL), pt(0, sg * (hw - .3), RAIL), plaster, 3, [0, 1, 0]);
+        m.quad(pt(0, sg * hw, RAIL), pt(1, sg * hw, RAIL), pt(1, sg * (hw - .3), RAIL), pt(0, sg * (hw - .3), RAIL), wood, 19, [0, 1, 0]);
       }
       const N = 30;
       for (let i = 0; i < N; i++) {
@@ -276,7 +287,13 @@ const Court = (() => {
       for (let i = 0; i < 20; i++) { const a = 6.2832 * i / 20; o.solid(x + r * Math.cos(a) - .8, F, z + r * Math.sin(a) - .8, x + r * Math.cos(a) + .8, F + .75, z + r * Math.sin(a) + .8); } }
     for (const g of P.gardens) { const [x, z] = g.pos;
       prism(round(x, z, g.r[0], g.r[1], 28), F, F + .42, C.stone, [.25, .33, .2], 3, 19);
-      g.trees.forEach((t, i) => tree(t[0], t[1], F + .42, t[2], x + "," + z + i)); }
+      g.trees.forEach((t, i) => tree(t[0], t[1], F + .42, t[2], x + "," + z + i));
+      if (g.low) for (let i = 0; i < 16; i++) { const a = 6.2832 * o.hash(x, z, i, "a"), d = Math.sqrt(o.hash(x, z, i, "d")) * .8; blob(x + g.r[0] * d * Math.cos(a), F + .42 + .35, z + g.r[1] * d * Math.sin(a), .7 + .5 * o.hash(x, z, i, "r"), leafC, "low" + i); }   // shrubs only, where the stairs cross overhead
+      for (let i = 0; i < 28; i++) { const a = 6.2832 * i / 28; o.solid(x + (g.r[0] - .5) * Math.cos(a) - .6, F, z + (g.r[1] - .5) * Math.sin(a) - .6, x + (g.r[0] - .5) * Math.cos(a) + .6, F + (g.low ? 1.2 : .42), z + (g.r[1] - .5) * Math.sin(a) + .6); } }
+    for (const q of P.planters || []) { const [x, z] = q.pos, y = q.level * st;   // a round planter on a gallery, a small tree in it
+      prism(round(x, z, q.r, q.r, 16), y, y + .6, fascia, [.2, .15, .11], 3, 19); prism(round(x, z, q.r + .12, q.r + .12, 16), y + .5, y + .62, wood, wood, 19, 19);
+      for (let i = 0; i < 8; i++) { const a = 6.2832 * i / 8; o.solid(x + q.r * .6 * Math.cos(a) - .75, y, z + q.r * .6 * Math.sin(a) - .75, x + q.r * .6 * Math.cos(a) + .75, y + 1.0, z + q.r * .6 * Math.sin(a) + .75); }
+      tree(x, z, y + .6, q.tree, "pl" + x + z, .5); blob(x + .9, y + .85, z - .5, .55, leafC, "pa" + x + z); blob(x - .8, y + .8, z + .7, .5, leafC, "pb" + x + z); }
     for (const b of P.benches) { const yaw = b.yaw * Math.PI / 180, [x, z] = b.pos, fx = Math.sin(yaw), fz = -Math.cos(yaw);
       m.ybox(x, F + .3, z, 1.9, .16, .55, -yaw, wood, 19); m.ybox(x - fx * .3, F + .46, z - fz * .3, 1.9, .5, .1, -yaw, wood, 19);
       for (const sgn of [-.8, .8]) m.ybox(x + fz * sgn * -1, F, z + fx * sgn, .12, .3, .5, -yaw, C.metal, 19);
@@ -288,7 +305,7 @@ const Court = (() => {
     const under = st - T;                                       // lanterns under the lower gallery, round the court and down each concourse
     for (const e of P.entrances) { const ns = e.side === "n" || e.side === "s", sg = e.side === "n" || e.side === "w" ? 1 : -1;
       for (let d = 10; d < 70; d += 15) lantern(e.at[0] + (ns ? 0 : sg * d), F + 3.9, e.at[1] + (ns ? sg * d : 0), F + under, .55); }
-    { const v = P.levels[1].voids[0], out = outward(v); for (let i = 0; i < v.length; i += 6) lantern(v[i][0] + out[i][0] * 6, F + 3.9, v[i][1] + out[i][1] * 6, F + under, .55); }
+    { const v = P.levels[1].voids[0], out = outward(v); for (let i = 0; i < v.length; i += 11) lantern(v[i][0] + out[i][0] * 7.5, F + 3.9, v[i][1] + out[i][1] * 7.5, F + under, .55); }
 
     // ---- where the staff stand: behind their counter, facing the walk; in an egg hall facing its middle
     for (const u of P.levels[0].units) for (const s of u.stand || []) {
@@ -305,6 +322,6 @@ const Court = (() => {
     return false;
   }
   // what the room light needs to know of a court mall (play.js): where the sky comes in
-  const light = l => { const b = boxOf(l.plan.roof.opening); return { rect: l.rect, eye: [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2, (b[2] - b[0]) / 2, (b[3] - b[1]) / 2], halls: l.plan.halls.slice(0, 4).map(h => [h.pos[0], h.pos[1], h.r, 0]) }; };
+  const light = l => { const b = boxOf(l.plan.levels[l.plan.levels.length - 1].voids[0]); return { rect: l.rect, eye: [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2, (b[2] - b[0]) / 2, (b[3] - b[1]) / 2], halls: l.plan.halls.slice(0, 4).map(h => [h.pos[0], h.pos[1], h.r, 0]) }; };
   return { can: l => !!(l.plan && l.plan.concept === "court" && l.shell && l.plan.entrances), hall, draw, carry, light };
 })();

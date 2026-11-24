@@ -1,19 +1,25 @@
-"""Eastgate Mall's inside, designed afresh for its new shell (WLD-058 to WLD-061, ADR-0038). The owner, 2026-11-24, after
+"""Eastgate Mall's inside, designed afresh for its new shell (WLD-058 to WLD-062, ADR-0038). The owner, 2026-11-24, after
 the ribbon walls and pierced eggs of mall_shell_01.py: "ignore the old mall and use new interiors as now we have ribbon
 walls and four pierced domes etc. start interiors fresh as this is new design ... feel free to come with ideas that fit
-this new design language for this mall."
+this new design language for this mall." And of the first inside, one long plain oval: "inside is not at all like the
+curvy reference i gave" (a picture of an atrium of dark ribbon galleries that swell and pinch, moving stairs crossing
+over a garden, a round skylight in a dark ceiling, plants hanging from the edges).
 
 The idea, in the shell's own language (flowing ribbons, eggs, round arches, lantern light):
 
-  the Great Court   a long oval court under the roof light, open through all three floors. Round it on each upper floor a
-                    gallery whose edge is a ribbon that wanders; the upper gallery stands further back than the lower,
-                    so the court opens as it rises. On its floor a fountain and gardens with trees and benches.
+  the Great Court   a long court under the roof light, open through all three floors as a chain of five round atria.
+                    Round it on each upper floor a gallery whose edge swells out round each atrium and pinches in
+                    between them, and sways from side to side, the two floors opposite ways: at each pinch one floor's
+                    gallery juts out over the other's. A round skylight in the roof over each atrium. On the court
+                    floor two fountains and gardens with trees that rise through the atria; small trees in planters
+                    on the galleries.
   four concourses   one from each arch of the shell straight to the court, so the mall has an entrance on every side
   four egg halls    under each egg a round hall, open from its floor up into the egg: the big store of that corner
                     (Food Market, Cinema, Department Store, Fashion House), reached by a slanting walk from the court.
                     On the upper floors that walk ends in a balcony looking into the hall.
-  the cascades      in each half of the court a bridge crosses on each upper floor, and moving stairs climb from the
-                    court floor to the lower bridge and on to the upper one
+  the crossing      a bridge crosses at every pinch, on both upper floors. In the middle atrium two moving stairs
+                    climb from the court floor to the lower bridges, one northwards and one southwards, crossing over
+                    a low garden; from those bridges two more climb outwards over the next atria to the upper floor
   shops             a front on every stretch of wall along the court, the concourses and the slanting walks
 
 It replaces the lot's `plan` (malls_01.py, concept "loop") and its `customer` and `seat` places; the lot's rect, door,
@@ -43,12 +49,15 @@ The plan keeps the old keys and adds some:
   fountains          [{pos, r, level}]
   gardens            [{pos, r: [rx, rz], trees: [[x, z, species], ...]}]: planted beds on the court floor
   benches            [{pos, yaw}]: yaw in degrees, the way the sitter faces (0 north, 90 east)
-  roof               {opening: polygon}: the hole in the roof under the roof light
+  planters           [{level, pos, r, tree}]: round planters on the upper floors, a small tree in each
+  roof               {openings: [polygon, ...]}: the round skylights, holes in the roof under the roof light
 Every size and count here is a first guess [ASSUMPTION].
 
 Run:   python mall_inside_01.py           (works the inside out again and writes it over the old one)
        python mall_inside_01.py --draw    (also draws the three floors into Art/StyleTests/mall_inside_26/)
-Then:  python add_careers_01.py, python mall_shell_01.py, python -m unittest test_world, python build_play.py
+Then:  python mall_shell_01.py, python -m unittest test_world, python build_play.py
+(Not add_careers_01.py: the lot's `work` places already stand at the `stand` of each unit, and on today's blocks that
+script gives hundreds of residents other work. Run it only when careers are to be dealt again.)
 """
 import json, math, os, sys
 
@@ -59,8 +68,11 @@ BID = "b_16_5"
 
 STOREY, LEVELS = 6.0, 3
 COURT = (46.0, 96.0)                      # the line of shop fronts round the court: half-sizes east-west, north-south
-VOIDS = {1: (31.0, 81.0, 0.045, 5, 0.6), 2: (37.0, 87.0, 0.035, 5, 2.4)}   # the opening in each upper floor: half-sizes, how far its edge wanders, how many times round, where it starts
-ROOF = (41.5, 91.5)                       # the opening in the roof, inside the roof light's foot
+LOBE = 36.0                               # the court is a chain of round atria this far apart along its length: at 0, 36 and 72 m either way, with a pinch between each two
+VOIDS = {1: dict(wide=24.0, narrow=10.0, long=86.0, sway=5.0),      # the opening in each upper floor: its half-width at an atrium and at a pinch,
+         2: dict(wide=28.0, narrow=13.0, long=90.0, sway=-4.5)}     # its half-length, and how far its pinches sway east (+) then west along the court
+EYES = ((0.0, 15.0), (36.0, 14.0), (72.0, 12.0))                    # the round skylights: how far along the court from the middle (both ways), and their radius
+PLANTER = (9.0, 5.5, 2.0)                 # planters on the galleries: this far along from a pinch, this far back from the edge, and their radius
 LIFT = (30.0, 1.9)                                         # a lift's middle this far in from a side entrance, and its shaft's radius
 CONCOURSE = {"s": 10.0, "n": 8.0, "w": 9.0, "e": 8.0}    # half-widths of the walks in from the arches
 INTO_COURT = 0.72                         # the concourses and slanting walks start this share of the way out from the middle
@@ -74,7 +86,8 @@ SMALL_M2 = 138.0                          # a shop under 145 m2 has no staff of 
 UPPER = (21.0, 16.0, 12.0, 9.0, 6.0)      # depths tried for a shop on the upper floors
 STAFFED = 60                              # ground-floor units with staff, and which of them are cafes: as the old ground floor had
 CAFES = (11, 39)
-BRIDGE = (36.0, 3.5, 13.0)                # the cascades: how far from the middle the lower bridge crosses, its half-width, the run of a moving stair
+BRIDGE = 3.5                              # a bridge's half-width; one crosses at every pinch
+CROSS = 2.4                               # the two moving stairs that cross in the middle atrium run this far either side of the court's middle line
 RAMP_W = 4.4
 ANCHORS = {"sw": "Food Market", "se": "Cinema", "nw": "Department Store", "ne": "Fashion House"}
 STEP = 1.0                                # metres between samples along an edge
@@ -105,6 +118,20 @@ def ellipse(cx, cz, a, b, n=96, wave=0.0, times=0, phase=0.0):
         s = 1 + wave * math.sin(times * t + phase)
         out.append((cx + a * s * math.cos(t), cz + b * s * math.sin(t)))
     return out
+
+
+def lobed(cx, cz, wide, narrow, long, sway, n=110):
+    """The edge of a floor's opening: a chain of round atria LOBE apart with a pinch between each two, swaying from side to side."""
+    def half(z):
+        u = min(1.0, abs(z) / long)
+        return math.sqrt(max(0.0, 1 - u ** 4)) * (narrow + (wide - narrow) * (0.5 + 0.5 * math.cos(2 * math.pi * z / LOBE)))
+    east, west = [], []
+    for k in range(n + 1):
+        z = long * math.sin(math.pi * (k / n - 0.5))
+        s = sway * math.sin(math.pi * z / LOBE)
+        east.append((cx + s + half(z), cz + z))
+        west.append((cx + s - half(z), cz + z))
+    return east + west[-2:0:-1]
 
 
 def band(p, q, h):
@@ -227,7 +254,7 @@ def design(lot, shell):
             return (0, (math.atan2(mid[0] - cx, mid[1] - cz)) % (2 * math.pi))
         return (1 + "snwe".index(which) if kind == "conc" else 6, math.dist(mid, (cx, cz)))
 
-    levels, nid = [], [len(halls)]
+    levels, nid, planters = [], [len(halls)], []
 
     def new_id():
         nid[0] += 1
@@ -334,22 +361,31 @@ def design(lot, shell):
                     walls.append(dict(kind="drum", line=cur))
         voids, bridges = [], []
         if level:
-            a, b, wave, times, phase = VOIDS[level]
-            v = ellipse(cx, cz, a, b, 120, wave, times, phase)
+            v = lobed(cx, cz, **VOIDS[level])
             voids.append([pt(p) for p in v])
             rails.append(v + [v[0]])
-            for half in (-1, 1):                                    # the bridges of the cascades: the upper one a moving stair's run further out
-                bz = cz + half * (BRIDGE[0] + (level - 1) * (BRIDGE[2] + 2 * BRIDGE[1]))
-                reach = max(abs(p[0] - cx) for p in v if abs(p[1] - bz) < BRIDGE[1] + 3) + 1.0
-                bridges.append([pt(p) for p in ((cx - reach, bz - BRIDGE[1]), (cx + reach, bz - BRIDGE[1]), (cx + reach, bz + BRIDGE[1]), (cx - reach, bz + BRIDGE[1]))])
+            for off in (-1.5, -0.5, 0.5, 1.5):                      # a bridge at every pinch, from one gallery to the other
+                bz = cz + off * LOBE
+                near = [q[0] for q in v if abs(q[1] - bz) < BRIDGE + 3]
+                xa, xb = min(near) - 1.0, max(near) + 1.0
+                bridges.append([pt(q) for q in ((xa, bz - BRIDGE), (xb, bz - BRIDGE), (xb, bz + BRIDGE), (xa, bz + BRIDGE))])
+            for off in (-1.5, -0.5, 0.5, 1.5):                      # and a planter with a small tree on each gallery by each pinch
+                pz = cz + off * LOBE + (PLANTER[0] if abs(off) < 1 else -PLANTER[0]) * (1 if off > 0 else -1)
+                near = [q[0] for q in v if abs(q[1] - pz) < 2.6]
+                for px, way in ((min(near) - PLANTER[1], -1), (max(near) + PLANTER[1], 1)):
+                    while min(math.dist((px, pz), q) for q in v) < PLANTER[1]:   # where the edge runs slantwise, further back, to keep that much floor before it
+                        px += way * 0.5
+                    assert inside(court, px + way * (PLANTER[2] + 3.0), pz) and not inside(v, px, pz), (level, px, pz)
+                    planters.append(dict(level=level, pos=pt((px, pz)), r=PLANTER[2], tree="birch" if (len(planters) + level) % 2 else "linden"))
         levels.append(dict(level=level, units=units, walks=[[pt(p) for p in q] for q in walk_polys], voids=voids, bridges=bridges, fronts=fronts,
                            walls=[dict(kind=w["kind"], line=[pt(p) for p in w["line"]]) for w in walls], rails=[[pt(p) for p in rl] for rl in rails]))
 
     ramps = []
-    for half in (-1, 1):                                            # moving stairs: court floor to the lower bridge, lower bridge to the upper
-        zb = cz + half * BRIDGE[0]
-        ramps.append({"from": 0, "to": 1, "a": pt((cx, zb - half * (BRIDGE[2] + BRIDGE[1]))), "b": pt((cx, zb - half * BRIDGE[1])), "width": RAMP_W})
-        ramps.append({"from": 1, "to": 2, "a": pt((cx, zb + half * BRIDGE[1])), "b": pt((cx, zb + half * (BRIDGE[1] + BRIDGE[2]))), "width": RAMP_W})
+    near, far = 0.5 * LOBE - BRIDGE, 1.5 * LOBE - BRIDGE              # the inner edges of the bridges at the first and second pinches
+    for sg in (-1, 1):                                              # two moving stairs cross in the middle atrium: each from the court floor under one bridge up to the other
+        ramps.append({"from": 0, "to": 1, "a": pt((cx - sg * CROSS, cz + sg * near)), "b": pt((cx - sg * CROSS, cz - sg * near)), "width": RAMP_W})
+    for sg in (-1, 1):                                              # and from the far side of each of those bridges one climbs outwards, over the next atrium, to the upper floor
+        ramps.append({"from": 1, "to": 2, "a": pt((cx, cz + sg * (near + 2 * BRIDGE))), "b": pt((cx, cz + sg * far)), "width": RAMP_W})
     gardens, benches = [], []
     for half in (-1, 1):                                            # a garden beyond each cascade, trees in it, benches round it facing out
         gx, gz, rx, rz = cx, cz + half * 74.0, 12.0, 8.0
@@ -358,11 +394,12 @@ def design(lot, shell):
         for i in range(8):
             t = 2 * math.pi * (i + 0.5) / 8
             benches.append(dict(pos=pt((gx + (rx + 1.2) * math.cos(t), gz + (rz + 1.2) * math.sin(t))), yaw=round(math.degrees(math.atan2(math.cos(t), -math.sin(t))), 1)))
-    for sx in (-1, 1):                                              # and two small gardens beside the fountain
-        gx, gz = cx + sx * 21.0, cz
-        gardens.append(dict(pos=pt((gx, gz)), r=[5.0, 8.0], trees=[[r2(gx), r2(gz), "linden"]]))
+    for sx in (-1, 1):                                              # two small gardens either side of the crossing stairs, a tree in each rising through the middle atrium
+        gx, gz = cx + sx * 15.0, cz
+        gardens.append(dict(pos=pt((gx, gz)), r=[4.5, 8.0], trees=[[r2(gx), r2(gz - 3.0), "linden"], [r2(gx), r2(gz + 3.5), "birch"]]))
         for sz in (-1, 1):
             benches.append(dict(pos=pt((gx, gz + sz * 9.4)), yaw=180.0 if sz > 0 else 0.0))
+    gardens.append(dict(pos=pt((cx, cz)), r=[7.2, 10.0], trees=[], low=True))   # and a low one under them, where there is no headroom to walk
     ground = levels[0]["units"]
     for kx, kz in [(sx * 30.0, sz * 44.0) for sx in (-1, 1) for sz in (-1, 1)] + [(sx * 22.0, sz * 60.0) for sx in (-1, 1) for sz in (-1, 1)]:
         ground.append(dict(id=new_id(), name="%s 0.%02d" % (short, len(ground) + 1), kind="kiosk", rect=[r2(cx + kx - 2), r2(cz + kz - 2), r2(cx + kx + 2), r2(cz + kz + 2)], angle=0))
@@ -370,8 +407,9 @@ def design(lot, shell):
     plan = dict(concept="court", storey_height=STOREY, levels=levels,
                 entrances=[dict(side=s, at=arches[s]["at"], width=2 * CONCOURSE[s] - 4.0) for s in "snwe"],
                 halls=[dict(unit=h["unit"], pos=pt(h["pos"]), r=h["r"], dome=h["dome"]) for h in halls],
-                ramps=ramps, lifts=lifts, fountains=[dict(pos=pt((cx, cz)), r=7.0, level=0)], gardens=gardens, benches=benches,
-                roof=dict(opening=[pt(p) for p in ellipse(cx, cz, *ROOF, 96)]))
+                ramps=ramps, lifts=lifts, fountains=[dict(pos=pt((cx, cz + sg * LOBE)), r=6.0, level=0) for sg in (-1, 1)], gardens=gardens, benches=benches,
+                planters=planters,
+                roof=dict(openings=[[pt(p) for p in ellipse(cx, cz + sg * off, r, r, 48)] for off, r in EYES for sg in ((1,) if not off else (-1, 1))]))
 
     # where visitors stand and sit: before the shop fronts and the kiosks and round the fountain; on the benches
     byid = {u["id"]: u for u in ground}
@@ -438,6 +476,13 @@ def draw(lot, plan, folder):
             d.line([T(p) for p in w["line"]], fill=(168, 132, 64) if w["kind"] == "drum" else (40, 36, 36), width=3)
         for rl in L["rails"]:
             d.line([T(p) for p in rl], fill=(250, 250, 250), width=2)
+        for q in plan["planters"]:
+            if q["level"] == L["level"]:
+                p, r = q["pos"], q["r"]
+                d.ellipse([T((p[0] - r, p[1] - r)), T((p[0] + r, p[1] + r))], fill=(104, 128, 84), outline=(60, 50, 44))
+        if L["level"] == LEVELS - 1:
+            for e in plan["roof"]["openings"]:
+                d.line([T(q) for q in e + [e[0]]], fill=(250, 240, 150), width=2)
         for q in plan["lifts"]:
             p, r = q["pos"], q["r"]
             d.ellipse([T((p[0] - r, p[1] - r)), T((p[0] + r, p[1] + r))], fill=(236, 226, 200), outline=(60, 50, 44))

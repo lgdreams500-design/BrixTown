@@ -109,3 +109,47 @@ has the same blocks as the mall's had.
 
 Checked in the slice: carried up and down all four moving stairs; both lifts land on a floor at 6 m and 12 m; the
 balconies in the egg halls hold; no errors in the console by day or at night.
+
+## Later again: the court made curvy
+
+With the work above done the owner looked at it against the first interior picture and said: "inside is not at all like
+the curvy reference i gave". They were right. The court was one oval 62 m by 162 m with an edge that wandered by a metre
+or two, all in pale plaster: at that size nothing read as a curve, and nothing as a ribbon. The picture is a compact
+atrium of dark galleries that swell and pinch, floor over floor, moving stairs crossing over a garden, a round skylight
+in a dark ceiling, and plants hanging from the edges.
+
+Decision 1 above is changed to this (WLD-060 restated; numbers in `mall_inside_01.py`, all [ASSUMPTION]):
+
+1. **A chain of five round atria.** Each upper floor's opening is 36 m lobes joined by pinches: 48 m across at an
+   atrium and 20 m at a pinch on floor 1, 56 m and 26 m on floor 2. The pinches sway 5 m east then west along the court,
+   the two floors opposite ways, so at each pinch one gallery juts some 9 m out over the other. This replaces "the
+   upper gallery stands further back": the floors now cross over each other, as in the picture.
+2. **Dark ribbons, dark ceilings, a pale floor.** Every edge is a dark fascia (the town's own brown) from under the slab
+   to just over the floor line, a line of light under it, a pale upstand and a timber cap above. Ceilings are the same
+   dark tone with two lines of light following each edge. Bridges and the moving stairs' sides are ribbons too. This is
+   the picture's contrast in the locked matte materials: no gloss, no glass balustrades (the mesh has no see-through
+   faces), no new colours.
+3. **Crossing stairs.** Two moving stairs in the middle atrium, side by side and running opposite ways, each from the
+   court floor under one bridge up to the other: seen from the galleries they cross. A low garden of shrubs lies under
+   them, where there is no headroom. From the far side of each of those bridges another climbs outwards over the next
+   atrium to the upper floor.
+4. **A bridge at every pinch** on both floors (eight; there were four).
+5. **Five round skylights** in the roof, one over each atrium (15, 14 and 12 m radius), each with a rim 1.5 m deep and a
+   ring of light, in a dark ceiling; the roof light's lattice is seen through them. (`plan.roof.openings`; it was one
+   opening the size of the court.)
+6. **Greenery.** Trees in the court's gardens rise through the atria; sixteen round planters with small trees stand on
+   the galleries by the pinches (`plan.planters`); troughs of plants sit on the parapets every 7 to 12 m and trail down
+   over the fascias. The two fountains moved to the atria either side of the middle.
+
+Unchanged: the ground floor's units and their staff (the same 206 posts), the concourses, the egg halls, the lifts, the
+shop fronts. The line of shop fronts round the court is still a plain oval; curving that would move the ground-floor
+shops and so the jobs.
+
+`add_careers_01.py` is no longer run after `mall_inside_01.py`: on the blocks as merged from main it deals hundreds of
+residents other work. The lot's `work` places already stand at each unit's `stand`.
+
+Not done, and the owner's to ask for: gloss or glass like the picture's; shop fronts that follow the curves; a
+reference image and a rule in ART_DIRECTION.md for big modern interiors (section 5 still lists it as undecided).
+
+Pictures: `Art/StyleTests/mall_inside_26/curvy_*.jpg` and the three plans. The other pictures there are of the first
+inside, kept as the rejected try.
