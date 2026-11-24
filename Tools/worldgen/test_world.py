@@ -1361,21 +1361,104 @@ class TheMallInside(unittest.TestCase):                                        #
                 if q is not r:
                     self.assertGreater(math.dist(q["pos"], (x, z)), rad + q.get("r", 1.2) + .5, r)
 
-    def test_WLD_061_shops_on_every_walk_and_the_ground_floor_keeps_its_jobs(self):
+    def test_WLD_066_every_outlet_has_a_room_of_its_own_to_buy_in(self):
+        # the owner, 2026-11-24: "add B or Buy separately at each outlet, instead of showing it for entire mall"
+        import collections, math
+        seen, depth = {}, self.p["outlet_depth"]
+        for L in self.p["levels"]:
+            fronts = collections.Counter(f["unit"] for f in L["fronts"])
+            for u in L["units"]:
+                if not u.get("outlet"):
+                    self.assertNotIn(u["id"], fronts, u["id"])               # only outlets have fronts
+                    continue
+                self.assertNotIn(u["id"], seen, "an outlet's id is its own on every floor")
+                seen[u["id"]] = L["level"]
+                self.assertEqual(fronts[u["id"]], 1, u["id"])                # one front, so one room and one counter
+                self.assertTrue(u["name"].strip(), u["id"])                  # the prompt names it
+                f = next(f for f in L["fronts"] if f["unit"] == u["id"])
+                self.assertGreaterEqual(math.dist(f["a"], f["b"]) - 1.8, 2.0, u["id"])   # between its piers, room to stand in
+                self.assertGreaterEqual(depth["least"], 4.0)
+        self.assertEqual(len(seen), 189)
+        self.assertEqual(sorted(set(seen.values())), [0, 1, 2])              # on every floor
+        self.assertEqual(world.mall_goods_problems(W), [])                   # and every kind has goods to sell (ECO-014)
+        for kind in {u["outlet"] for L in self.p["levels"] for u in L["units"] if u.get("outlet")}:
+            self.assertGreaterEqual(len(W["mall_goods"]["sells"][kind]), 6, kind)
+
+    def careers_rules(self):
         import json, os, sys
         sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "citysim"))
         import careers
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "World", "rules", "careers.json"), encoding="utf-8") as f:
-            R = json.load(f)
+            return careers, json.load(f)
+
+    def test_WLD_067_a_keeper_stands_in_every_outlet_and_guards_and_janitors_on_every_floor(self):
+        # the owner, 2026-11-24: "one person per outlet is good enough. few security, ganitors etc, can be added to handle entire Mall"
+        import math
+        careers, R = self.careers_rules()
+        M, p, l = self.M, self.p, self.l
+        outs = careers.mall_outlets(l)
+        self.assertEqual(len(outs), 189)
+        places = []                                                                # (place, floor): everywhere someone stands or sits
+        for L in p["levels"]:
+            fronts = {f["unit"]: f for f in L["fronts"]}
+            for u in L["units"]:
+                if not u.get("outlet"):
+                    continue
+                self.assertEqual(len(u["stand"]), 1, u["id"])                      # one keeper to each outlet
+                s, f = u["stand"][0], fronts[u["id"]]
+                mid = ((f["a"][0] + f["b"][0]) / 2, (f["a"][1] + f["b"][1]) / 2)
+                self.assertAlmostEqual(M.seg_dist(s, f["a"], f["b"]), 3.2, delta=0.05, msg=u["id"])   # behind the counter the slice draws 2.2 to 2.9 m in
+                self.assertLess(math.dist(s, mid), 3.4, u["id"])                   # and at its middle, not at an end of it
+                self.assertFalse(any(M.inside(w, *s) for w in L["walks"]), u["id"])   # in the outlet, not out on the walk
+                places.append((tuple(s), L["level"]))
+        whole = p["staff"]
+        self.assertEqual({c: len(v) for c, v in whole.items()}, {w["career"]: w["count"] for w in R["mall_staff"]["whole_mall"]})
+        for career, v in whole.items():
+            self.assertEqual({q["level"] for q in v}, {0, 1, 2}, career)           # guards and janitors on every floor
+            for q in v:
+                L, s = p["levels"][q["level"]], q["pos"]
+                self.assertTrue(any(M.inside(w, *s) for w in L["walks"]) and not any(M.inside(b, *s) for b in L["bridges"]), (career, q))   # on the floor, not on a bridge
+                for void in L["voids"]:
+                    self.assertFalse(M.inside(void, *s), (career, q))
+                    self.assertGreater(min(M.seg_dist(s, void[i], void[(i + 1) % len(void)]) for i in range(len(void))), 1.5, (career, q))   # clear of the rail
+                self.assertTrue(all(M.seg_dist(s, f["a"], f["b"]) > 2.3 for f in L["fronts"]), (career, q))   # not in anyone's doorway
+                self.assertFalse(any(M.inside(M.corners(u), *s) for u in L["units"] if u["kind"] != "anchor"), (career, q))
+                self.assertTrue(all(M.seg_dist(s, r["a"], r["b"]) > r["width"] / 2 + 1.9 for r in p["ramps"] if q["level"] in (r["from"], r["to"])), (career, q))   # clear of the moving stairs
+                self.assertTrue(-180 <= q["yaw"] <= 180)
+                places.append((tuple(s), q["level"]))
+        guards = whole["security_guard"]
+        for e in p["entrances"]:                                                   # a guard inside each way in
+            self.assertTrue(any(q["level"] == 0 and math.dist(q["pos"], e["at"]) < 16 for q in guards), e["side"])
+        places += [(tuple(s), 0) for u in self.ground["units"] if u["kind"] == "anchor" for s in u["stand"]]
+        places += [(tuple(s), 0) for k in ("customer", "seat") for s in l["objects"][k][:len(l["objects"][k]) - len(p["places"][k])]]   # the court floor's own (those inside the outlets: WLD-068)
+        for i, (a, ka) in enumerate(places):                                       # no two places at one spot on the plan, on any floors: the slice tells floors apart by where a place is
+            for b, kb in places[i + 1:]:
+                self.assertGreater(max(abs(a[0] - b[0]), abs(a[1] - b[1])), 0.3, (a, ka, b, kb))
+        # the places to work are those: each keeper's, in the order of the outlets, then the guards' and the janitors'
+        first = len(careers.minimum(l, R, "mall"))
+        want = [u["stand"][0] for u in outs] + [q["pos"] for w in R["mall_staff"]["whole_mall"] for q in whole[w["career"]]]
+        self.assertEqual(first, len(want))
+        self.assertEqual(l["objects"]["work"][:first], want)
+        floor = {u["id"]: L["level"] for L in p["levels"] for u in L["units"] if u.get("outlet")}
+        self.assertEqual(l["levels"]["work"][:first], [floor[u["id"]] for u in outs] + [q["level"] for w in R["mall_staff"]["whole_mall"] for q in whole[w["career"]]])
+        self.assertEqual(len(l["levels"]["work"]), len(l["objects"]["work"]))
+        staff = [r for r in W["residents"] if r.get("work") == l["id"]]
+        self.assertGreaterEqual(len(staff), first)                                 # and a resident holds every one of them
+        self.assertEqual(sorted(r["post"] for r in staff)[:first], list(range(first)))
+
+    def test_WLD_061_shops_on_every_walk_and_a_place_to_stand_for_every_post(self):
+        careers, R = self.careers_rules()
         posts = careers.posts(self.l, R, "mall")
-        self.assertEqual(len(posts), 206)                                          # as the old ground floor had, so nobody's work changed
+        self.assertEqual(len(posts), 189 + 12 + 24)                                # a keeper to each outlet, six guards and six janitors (CITY-105), and the four big stores' six each
         by_unit = {}
         for _, u in posts:
             by_unit[u] = by_unit.get(u, 0) + 1
-        units = {u["id"]: u for u in self.ground["units"]}
-        self.assertEqual({u: len(units[u]["stand"]) for u in by_unit}, by_unit)    # a place to stand for every post
-        self.assertEqual(sorted(by_unit.values()), [3] * 58 + [4] * 2 + [6] * 4)
-        stands = {tuple(s) for u in self.ground["units"] for s in u.get("stand", [])}
+        units = {u["id"]: u for L in self.p["levels"] for u in L["units"]}
+        whole = by_unit.pop(None)
+        self.assertEqual(whole, sum(len(v) for v in self.p["staff"].values()))     # a place to stand for every post
+        self.assertEqual({u: len(units[u]["stand"]) for u in by_unit}, by_unit)
+        self.assertEqual(sorted(by_unit.values()), [1] * 189 + [6] * 4)
+        stands = {tuple(s) for u in units.values() for s in u.get("stand", [])} | {tuple(q["pos"]) for v in self.p["staff"].values() for q in v}
         self.assertTrue(all(tuple(w) in stands for w in self.l["objects"]["work"]))
         self.assertEqual(self.l["staff"], len(self.l["objects"]["work"]))
         for L in self.p["levels"]:
@@ -1385,11 +1468,56 @@ class TheMallInside(unittest.TestCase):                                        #
             self.assertTrue(all(u["kind"] in R["mall_units"] for u in L["units"]))
             shops = [self.M.corners(u) for u in L["units"] if u["kind"] != "anchor"]
             self.assertFalse(any(self.M.overlap(a, b) for i, a in enumerate(shops) for b in shops[i + 1:]))   # no two shops on the same ground
-        for kind in ("customer", "seat"):
-            self.assertTrue(all(self.on_floor(0, x, z) for x, z in self.l["objects"][kind]), kind)
+        for kind in ("customer", "seat"):                                          # the court floor's own places are on its walks (those inside the outlets: WLD-068)
+            on_court = [p for p, f in zip(self.l["objects"][kind], self.l["levels"][kind]) if f == 0 and list(p) not in [q["pos"] for q in self.p["places"][kind]]]
+            self.assertEqual(len(on_court), {"customer": 80, "seat": 32}[kind])
+            self.assertTrue(all(self.on_floor(0, x, z) for x, z in on_court), kind)
+
+    def test_WLD_068_visitors_have_places_in_every_outlet_and_at_the_food_outlets_tables(self):
+        # the owner, 2026-11-24: "update population to come to mall"
+        import collections, math
+        M, p, l = self.M, self.p, self.l
+        places = p["places"]
+        outs = [(u, L) for L in p["levels"] for u in L["units"] if u.get("outlet")]
+        self.assertEqual(len(places["customer"]), 2 * len(outs))                   # two before every counter
+        fronts = {f["unit"]: f for L in p["levels"] for f in L["fronts"]}
+        seen = {}
+        for q in places["customer"]:
+            L = p["levels"][q["level"]]
+            u = min((u for u in L["units"] if u.get("outlet")), key=lambda u: math.dist(u["stand"][0], q["pos"]))
+            f = fronts[u["id"]]
+            seen[u["id"]] = seen.get(u["id"], 0) + 1
+            self.assertAlmostEqual(M.seg_dist(q["pos"], f["a"], f["b"]), 1.6, delta=0.05, msg=u["id"])   # inside the room, before the counter 2.2 m in
+            self.assertLess(math.dist(q["pos"], u["stand"][0]), 2.6, u["id"])     # and near the keeper behind it
+            t = math.radians(q["yaw"])                                             # facing the keeper's side of the counter
+            self.assertGreater(math.sin(t) * (u["stand"][0][0] - q["pos"][0]) - math.cos(t) * (u["stand"][0][1] - q["pos"][1]), 1.0, u["id"])
+            self.assertFalse(any(M.inside(w, *q["pos"]) for w in L["walks"]), u["id"])
+        self.assertEqual(set(seen.values()), {2})
+        self.assertEqual(len(seen), len(outs))
+        food = [(u, L) for u, L in outs if u["kind"] == "food"]
+        tables = sum(sum(1 for k in p["outlets"][u["outlet"]]["middle"][:3] if k.split(":")[0] == "cafetable") for u, L in food)
+        self.assertEqual(len(places["seat"]), 4 * tables)                          # a chair on each side of every table the slice draws
+        self.assertGreaterEqual(len(places["seat"]), 200)                          # room for the mall's own 200 at lunch
+        for q in places["seat"]:
+            L = p["levels"][q["level"]]
+            u = min((u for u in L["units"] if u.get("outlet") and u["kind"] == "food"), key=lambda u: math.dist(u["stand"][0], q["pos"]))
+            f = fronts[u["id"]]
+            self.assertTrue(4.1 <= M.seg_dist(q["pos"], f["a"], f["b"]) <= 5.9, (u["id"], q))   # round the tables 5 m in
+            self.assertTrue(-180 <= q["yaw"] <= 180)
+        for kind in ("customer", "seat"):                                          # they are the lot's places, after the court floor's own, each with its floor
+            n = len(places[kind])
+            self.assertEqual(l["objects"][kind][-n:], [q["pos"] for q in places[kind]])
+            self.assertEqual(l["levels"][kind][-n:], [q["level"] for q in places[kind]])
+            self.assertEqual(len(l["levels"][kind]), len(l["objects"][kind]))
+            self.assertEqual({q["level"] for q in places[kind]}, {0, 1, 2})
+            on = collections.Counter()                                             # no two on one floor at one spot (floors may share a spot: WLD-053)
+            for pos, f in zip(l["objects"][kind], l["levels"][kind]):
+                on[(round(pos[0], 1), round(pos[1], 1), f)] += 1
+            self.assertEqual(max(on.values()), 1, kind)
+        self.assertEqual((l["customers"], l["seats"]), (len(l["objects"]["customer"]), len(l["objects"]["seat"])))
 
     def test_WLD_058_the_script_gives_the_plan_in_the_block_file(self):         # the data is what mall_inside_01.py works out, not edited by hand
-        plan, places = self.M.design(self.l, self.sh)
+        plan, places, floors = self.M.design(self.l, self.sh)
         self.assertEqual(plan, self.l["plan"])
         self.assertEqual(places["customer"], self.l["objects"]["customer"])
         self.assertEqual(places["seat"], self.l["objects"]["seat"])

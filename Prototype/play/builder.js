@@ -265,13 +265,14 @@ var Furnish = (() => {
     const old = new Set(problems(room, keep, ceiling, before).map(q => q[0]));
     const out = [...new Set(problems(room, keep, ceiling, after).filter(q => !old.has(q[0])).map(q => q[1]))], total = cost(before, after, belongings)[0];
     const was = new Set(before.map(p => p.id)), mine = new Set((belongings || []).map(b => b.id));
-    for (const p of after) if (!was.has(p.id) && p.id.startsWith("b") && !mine.has(p.id)) out.push(the(p) + " is not among your belongings");
+    for (const p of after) { if (!was.has(p.id) && p.id.startsWith("b") && !mine.has(p.id)) out.push(the(p) + " is not among your belongings");
+      else if (!was.has(p.id) && !p.id.startsWith("b") && (F().pieces[p.kind] || {}).from) out.push(the(p) + " is sold at the " + F().pieces[p.kind].from + ", not here"); }   // FURN-064
     if (funds != null && total > funds) out.push("you cannot pay " + Math.floor(total / 100) + "." + String(total % 100).padStart(2, "0") + " brix");
     return out;
   }
   function kitPiece(kind, id, x, z, yaw, line) {
     const P = F().pieces[kind] || { name: kind, size: [1, 1, 1] }, [w, d, h] = P.size;
-    return { id, kind, name: P.name, w, d, h, x, z, yaw, rug: false, line };
+    return { id, kind, name: P.name, w, d, h, x, z, yaw, rug: !!P.rug, line };
   }
   function stow(before, after, belongings, where) {          // the belongings after a change (INV-001): less what was placed, with what was taken away
     const now = new Set(after.map(p => p.id)), out = (belongings || []).filter(b => !now.has(b.id)), w = where || {};

@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-MENU
 title: Brix Town — The game menu (money, belongings, properties, journal, wardrobe, map, settings, save, help)
-version: 0.3.1
+version: 0.3.3
 status: in-progress      # F-UI-MENU level 2, the others level 1, accepted and built in the slice
 last_updated: 2026-11-24
 parent: docs/specs/GAME_SPEC.md        # extends §UI (UI-001 to UI-004); same ID rules; UI, INV and CHR rows
@@ -37,7 +37,7 @@ Then, still that day, the owner asked to improve the menu's look and feel and ho
 | Belongings | What you carry and the furniture not placed (INV-001) | G |
 | Properties | First *Your buildings*: each building you own once, with **Remodel** (or **Redecorate your rooms**), **Furnish** and **Show on map**; a button that cannot be used yet is greyed out with the reason (a community house, a building with no design), and with nothing owned it says how to buy one. Then what you own and rent, to sell and let, as before | P |
 | Journal | Quests under way, on offer, finished; people you know | J |
-| Wardrobe | What you wear, changed for free; outfits saved by name | U |
+| Wardrobe | What you wear, changed for free; outfits saved by name; the clothes you own, bought at the mall's outlets, to put on (CHR-016) | U |
 | Storage | Lockers and storage units, when `F-PROP-STORAGE` is picked; until then it says so and points to Belongings (UI-014) | |
 | Map | The town's big map. A click marks a place (again on it: cleared), as does Show on map; the mark shows on both maps and in the street with how far it is, and goes when you get there. Filters in Settings: residents, quests, your buildings (outlined), names of shops and services, the mark (UI-012) | M |
 | Settings | Picture, sound, what the screen shows, controls (UI-009) | |
@@ -99,6 +99,7 @@ with a keyboard and mouse; the other two are its defaults for when they come (UI
 | UI-019 | The Me tab shall list the achievements (QST-009): those earned first, each with the day it was earned, then those still to earn, dimmed, each with how it is earned; and how many of all are earned. | F-UI-REWARD | 2 | P1 | accepted | Slice: `meTab` in `life.js` |
 | CHR-014 | The player shall change what they wear (hair, clothes, their colours, extras; never the body) at any time, free, from the choices of the character designer. | F-CHR-WARDROBE | 1 | P0 | accepted | `test_CHR_014_an_outfit_is_only_clothes_and_hair_the_designer_offers` |
 | CHR-015 | The player shall save what they wear as a named outfit (up to a number in data), change into one and forget one; outfits are kept in the save. | F-CHR-WARDROBE | 1 | P1 | accepted | `test_CHR_015_the_wardrobe_holds_a_few_outfits` |
+| CHR-016 | Clothes bought at an outlet (ECO-014) shall be kept as owned and listed in the wardrobe as *Clothes you own*; putting one on sets the parts of the look it names (a garment and its colour, a bottom, shoes, a scarf, a cap, a bag) and nothing else, each a value the character designer offers. Owned clothes are kept in the save. This is the part of `F-CHR-WARDROBE` level 2 the owner asked for on 2026-11-24 ("some like clothes will be made available in wardrobe"); the pick stays at level 1, so changing is still free and anywhere, with no wardrobe at home. | F-CHR-WARDROBE | 2 | P1 | in-progress | `test_CHR_016_*` (Tools/citysim/test_economy.py) |
 
 FURN-050 (the inventory) is met by INV-001 for furniture.
 
@@ -114,6 +115,7 @@ following a quest, a dot on a board with something new): not proposed in the bac
 
 | Version | Date | Change |
 |---|---|---|
+| 0.3.3 | 2026-11-24 | CHR-016: clothes bought at the mall's outlets are listed in the wardrobe and can be put on (owner's request; ADR-0041). Belongings lists what is bought for the home and carried from the outlets as it does everything else. `F-CHR-WARDROBE` stays picked at 1. |
 | 0.3.2 | 2026-11-24 | Achievements on the Me tab (UI-019), from the owner's pick of `F-UI-REWARD` level 2. |
 | 0.3.1 | 2026-11-24 | The big map shows the outskirts and every tree, the player as an arrow, and zooms and pans (UI-018; owner's request). |
 | 0.3.0 | 2026-11-23 | The menu's look and organisation (owner: "C, Painted signs", ADR-0033): §1.1, UI-015, UI-016. On 2026-11-24 the owner added: the real face, live, and the whole character in the wardrobe (UI-017). |

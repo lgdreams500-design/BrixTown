@@ -129,6 +129,128 @@ class TheStaffing(unittest.TestCase):
         self.assertLessEqual(sum(careers.head_count(spec, (spec["small_m2"] + spec["large_m2"]) / 2)), sum(big))
 
 
+def mini_mall():
+    """mini_city() with a small mall of outlets by the second home: two shops on the ground floor, a food outlet
+    upstairs, a corner store and a kiosk; one guard and one janitor for the whole of it."""
+    people, lots, rules = mini_city()
+    size = dict(anchor=(80, 45), kiosk=(3, 3))                              # a corner store of 3,600 m2; a kiosk too small for staff
+    unit = lambda i, kind, x, **kw: dict(id=i, name=i, kind=kind, rect=[x, 0, x + size.get(kind, (16, 9))[0], size.get(kind, (16, 9))[1]], angle=0, **kw)
+    mall = dict(id="m", kind="shop", name="Test Mall", rect=[400, 0, 520, 120], door=[460, 120], floors=2, enterable=True, objects={}, tags=["mall"],
+                plan=dict(levels=[dict(level=0, units=[unit("a", "anchor", 400), unit("s1", "shop", 420, outlet="books"), unit("s2", "shop", 440, outlet="toys"), unit("k", "kiosk", 460)]),
+                                  dict(level=1, units=[unit("a", "anchor", 400), unit("f1", "food", 420, outlet="cafe")])]))
+    rules["mall_staff"] = dict(keeper=dict(shop="shop_owner", food="food_outlet_owner"),
+                               whole_mall=[dict(career="security_guard", count=1), dict(career="janitor", count=1)])
+    return people, lots + [mall], rules, mall
+
+
+class TheMallsStaff(unittest.TestCase):
+    """CITY-105 (the owner, 2026-11-24): "some taking career as shop owners at the mall outlets, i think one person per
+    outlet is good enough. few security, ganitors etc, can be added to handle entire Mall"."""
+
+    def test_CITY_105_one_keeper_to_each_outlet_on_every_floor_and_a_few_for_the_whole_mall(self):
+        people, lots, rules, mall = mini_mall()
+        ps = careers.posts(mall, rules)
+        self.assertEqual(ps[:5], [("shop_owner", "s1"), ("shop_owner", "s2"), ("food_outlet_owner", "f1"), ("security_guard", None), ("janitor", None)])
+        self.assertEqual(careers.minimum(mall, rules), [0, 1, 2, 3, 4])      # all of them are filled before anyone else is placed
+        self.assertEqual([u["id"] for u in careers.mall_outlets(mall)], ["s1", "s2", "f1"])
+        self.assertTrue(len(ps) > 5 and all(u == "a" for _, u in ps[5:]))    # then the corner store's, by its floor area, as a cap; the kiosk is too small
+        self.assertNotIn("s1", [u for _, u in ps[5:]])                       # an outlet has its one keeper and no more
+        rules["mall_staff"]["whole_mall"][0]["count"] = 3
+        self.assertEqual(collections.Counter(c for c, u in careers.posts(mall, rules) if u is None), {"security_guard": 3, "janitor": 1})
+
+    def test_CITY_105_every_outlet_gets_its_keeper_before_anyone_else_is_placed(self):
+        people, lots, rules, mall = mini_mall()
+        people += [dict(id="x%02d" % k, role="clerk", home="h2", work=None) for k in range(6)]
+        a = careers.assign(people, lots, rules)
+        at = {v["unit"]: (rid, v["career"]) for rid, v in a.items() if v["work"] == "m"}
+        self.assertEqual({u: c for u, (_, c) in at.items()}, {"s1": "shop_owner", "s2": "shop_owner", "f1": "food_outlet_owner", None: at[None][1]})
+        staff = sorted((v["post"], v["career"], rid) for rid, v in a.items() if v["work"] == "m")
+        self.assertEqual([c for _, c, _ in staff], ["shop_owner", "shop_owner", "food_outlet_owner", "security_guard", "janitor"])   # their posts are in the order of posts()
+        self.assertTrue(all(people_by_id(people)[rid]["home"] == "h2" for _, _, rid in staff))   # the nearest residents take them
+        rules["shares"] = dict(rules["shares"], retail=0.0, food=0.0, facilities=0.0, office=1.0)
+        lots.append(dict(id="o", kind="work", name="Test Office", rect=[0, 100, 40, 140], door=[20, 100], floors=4, enterable=True, objects={}))
+        b = careers.assign(people, lots, rules)
+        self.assertEqual(sum(1 for v in b.values() if v["work"] == "m"), 5)  # filled whatever the shares say: they are the mall's minimum
+        self.assertEqual(careers.assign(list(reversed(people)), list(reversed(lots)), rules), b)
+
+    def test_CITY_105_a_mall_without_outlets_is_staffed_as_before(self):
+        people, lots, rules, mall = mini_mall()
+        for L in mall["plan"]["levels"]:
+            for u in L["units"]:
+                u.pop("outlet", None)
+        ps = careers.posts(mall, rules)
+        self.assertEqual(careers.minimum(mall, rules), [])
+        self.assertTrue(ps and all(c not in ("shop_owner", "food_outlet_owner", "janitor") for c, _ in ps))
+        self.assertEqual({u for _, u in ps}, {"a"})                           # ground-floor units by their floor area; these shops are too small for staff
+        for l in LOTS:                                                       # and the town's other malls are so
+            if "plan" in l and not careers.mall_outlets(l):
+                self.assertEqual(careers.minimum(l, R, TMPL[l["id"]]), [], l["name"])
+                self.assertFalse({c for c, _ in careers.posts(l, R, TMPL[l["id"]])} & {"shop_owner", "food_outlet_owner", "janitor"}, l["name"])
+
+    def test_CITY_105_the_rule_is_checked(self):
+        self.assertEqual(careers.problems(R, W["roles"]["roles"]), [])
+        bad = copy.deepcopy(R)
+        bad["mall_staff"]["keeper"]["food"] = "astronaut"
+        bad["mall_staff"]["whole_mall"][0]["count"] = -1
+        got = careers.problems(bad, W["roles"]["roles"])
+        self.assertTrue(any("keeper of a food outlet" in p for p in got), got)
+        self.assertTrue(any("whole count" in p for p in got), got)
+        for k in ("shop_owner", "food_outlet_owner", "janitor", "security_guard"):
+            self.assertIn(k, C)
+        self.assertEqual(C["shop_owner"]["title"], "shop owner")              # the owner's own words for the career
+
+    def test_CITY_105_guards_and_janitors_wear_the_clothes_of_the_job(self):
+        import re
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Prototype", "play", "people.js"), encoding="utf-8") as f:
+            drawn = set(re.findall(r"^    (\w+): \{ g: ", f.read(), re.M))        # the clothes the slice knows how to draw
+        self.assertEqual((C["security_guard"]["wear"], C["janitor"]["wear"]), ("guard", "janitor"))
+        for k, c in C.items():
+            if "wear" in c:
+                self.assertIn(c["wear"], drawn, k)
+        bad = copy.deepcopy(R)
+        bad["careers"]["janitor"]["wear"] = ""
+        self.assertTrue(any("wear must name" in p for p in careers.problems(bad, W["roles"]["roles"])))
+
+    def test_CITY_105_eastgate_has_a_keeper_in_every_outlet_and_its_guards_and_janitors(self):
+        mall = next(l for l in LOTS if careers.mall_outlets(l))
+        outs = careers.mall_outlets(mall)
+        self.assertEqual(len(outs), 189)
+        ps = careers.posts(mall, R, TMPL[mall["id"]])
+        first = careers.minimum(mall, R, TMPL[mall["id"]])
+        whole = collections.Counter(c for c, u in ps if u is None)
+        self.assertEqual(dict(whole), {w["career"]: w["count"] for w in R["mall_staff"]["whole_mall"]})
+        self.assertTrue(2 <= whole["security_guard"] <= 12 and 2 <= whole["janitor"] <= 12)   # "few"
+        staff = sorted((r["post"], r) for r in RES if r.get("work") == mall["id"])
+        self.assertEqual([p for p, _ in staff[:len(first)]], first)          # every one of those posts is held by a resident
+        for (k, r), (career, unit) in zip(staff, ps):
+            self.assertEqual(r["career"], career, r["id"])
+        keepers = [r for k, r in staff[:len(outs)]]
+        self.assertEqual(len({r["id"] for r in keepers}), 189)               # one person to each outlet
+        for r, u in zip(keepers, outs):
+            self.assertEqual(r["career"], R["mall_staff"]["keeper"][u["kind"]], u["id"])
+            self.assertEqual(r["role"], C[r["career"]]["role"], r["id"])
+            self.assertEqual(mall["objects"]["work"][r["post"]], u["stand"][0], u["id"])   # and stands in it, behind its counter
+        self.assertEqual(mall["staff"], len(staff))
+
+    def test_CITY_105_the_keepers_are_at_their_counters_in_the_working_day(self):
+        city = world.simulation(W)
+        mall = next(l for l in LOTS if careers.mall_outlets(l))
+        outs = careers.mall_outlets(mall)
+        staff = {r["post"]: r for r in RES if r.get("work") == mall["id"]}
+        now = city.at(DAY * 1440 + 10 * 60 + 30)                              # half past ten on a working day
+        there = 0
+        for k, u in enumerate(outs):
+            st = now[staff[k]["id"]]
+            if st["act"] == "work" and st["place"] == mall["id"] and st["state"] == "inside":
+                there += 1
+                self.assertLess(abs(st["pos"][0] - u["stand"][0][0]) + abs(st["pos"][1] - u["stand"][0][1]), 0.05, u["id"])
+        self.assertGreaterEqual(there, 180)                                  # all but a few who are on their way
+
+
+def people_by_id(people):
+    return {p["id"]: p for p in people}
+
+
 class WorkingFromHome(unittest.TestCase):
     def test_CITY_083_artists_work_from_home(self):
         artists = [r for r in RES if r.get("career") and C[r["career"]]["group"] == "creative"]

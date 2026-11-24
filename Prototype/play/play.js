@@ -1629,6 +1629,7 @@ function mallShell(l) {
     const o = { mesh: world, solid, lights, occl, C, tones: SHELL_TONES, accent: ACCENT, hash, F: Y_FLOOR, wall: wallC, inside: [.74, .7, .62], floor: [.74, .71, .64], spot: (x, z, pose, yaw, h) => spot(l, x, z, pose, yaw, h), use,
       name: (text, ctr, n, h) => { const cell = nameCell(text); if (cell) lettering(signs, ctr, n, h, cell, 29); } };   // an outlet's name, lit, on its sign band
     courtLight = Court.light(l);
+    l.stair = null;                                        // its floors, moving stairs and lifts are court.js's own: the stairwell its block file names (for the world's checks, WLD-050) is not built, and the hall is not furnished floor by floor as a building with one is
     Court.hall(o, l); Shell.draw(o, l); Court.draw(o, l); return;
   }
   world.box(x0, 0, z0, x1, .6, z1, C.stone, 6);
@@ -1725,7 +1726,7 @@ function buildWorld() {
 }
 
 // ---------------------------------------------------------------- people
-const looks = D.residents.map((r, i) => People.look(i, D.roles[r.r], D.role_sig[D.roles[r.r]]));
+const looks = D.residents.map((r, i) => People.look(i, r.u || D.roles[r.r], D.role_sig[D.roles[r.r]]));   // (r.u: clothes of the job itself, where it has its own: a guard, a janitor; CITY-105)
 let playerLook = People.player();                  // the designed character replaces this (life.js, CHR-001)
 
 function pieceAt(row, m) { let lo = 0, hi = row.length - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (row[mid][0] <= m) lo = mid; else hi = mid - 1; } return lo; }
@@ -1740,7 +1741,7 @@ function resident(i, m) {                                // where resident i is 
   if (p[1] === 2 || p[1] === 3) return null;                 // away by tram or out of town, or in their car (cars.js draws the car)
   if (p[1] === 0) {
     if (!p.s) {                                              // the place there on the stay's floor (p[8], upstairs only): stacked flats share a plan (WLD-053)
-      const lot = LOTS[p[7]], want = Storeys.floorY(p[8] || 0); p.s = STAND; let bd = 1e9;
+      const lot = LOTS[p[7]], want = lot.plan && lot.plan.storey_height ? (p[8] || 0) * lot.plan.storey_height : Storeys.floorY(p[8] || 0); p.s = STAND; let bd = 1e9;   // (a mall's floors are its own storey height apart, WLD-068)
       if (p[5] >= 0) for (const s of lot.spots) if (Math.abs(s.x - p[2]) < .2 && Math.abs(s.z - p[3]) < .2 && Math.abs(s.h - want) < bd) { bd = Math.abs(s.h - want); p.s = s; }
     }
     const s = p.s;
@@ -3089,6 +3090,7 @@ function putVerts(m, v, p, c0, dy) {                         // a town piece's b
 }
 function drawKit(m, p, F, seed) {                            // a piece from the list, as furniture.js draws it, in its line
   const Y = p.yaw * Math.PI / 180, c = Math.cos(Y), sn = Math.sin(Y), L = Outlet.LINES[p.line] || Outlet.LINES.plain;
+  if (typeof Goods !== "undefined" && Goods.put(m, p.kind, p.x, F, p.z, Y, seed, 0)) return;   // a good from the mall, as it was made in Blender (goods.js, FURN-065)
   Furniture.draw(p.kind, (u, y, v, su, sy, sv, col, f, yw) => m.ybox(p.x + c * u + sn * v, F + y, p.z - sn * u + c * v, su, sy, sv, Y - (yw || 0), col, f || 19), L, seed);
 }
 function furnishRoom(l, level, m) {

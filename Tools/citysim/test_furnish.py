@@ -25,7 +25,8 @@ class TheList(unittest.TestCase):
     def test_FURN_051_every_piece_on_the_list_is_sized_named_priced_and_in_a_room(self):
         self.assertTrue(F["pieces"])
         rooms = [k for ks in F["rooms"].values() for k in ks]
-        self.assertEqual(sorted(rooms), sorted(F["pieces"]), "every piece in exactly one room of the list")
+        here = [k for k, p in F["pieces"].items() if not p.get("from")]          # FURN-064: pieces sold elsewhere are in no room
+        self.assertEqual(sorted(rooms), sorted(here), "every piece sold here in exactly one room of the list")
         for k, p in F["pieces"].items():
             self.assertTrue(p["name"], k)
             self.assertEqual(len(p["size"]), 3, k)
@@ -34,6 +35,75 @@ class TheList(unittest.TestCase):
             self.assertGreater(p["price"], 0, k)
         self.assertEqual(F["turn_deg"], 15)          # FURN-055: turns in 15 degree steps [ASSUMPTION]
         self.assertAlmostEqual(F["grid_m"], 0.05)    # FURN-001: the 5 cm grid
+
+
+    def test_FURN_064_a_piece_sold_at_the_mall_is_placed_from_the_belongings_and_not_bought_here(self):
+        mall = {k: p for k, p in F["pieces"].items() if p.get("from") == "mall"}
+        self.assertIn("g_guitar", mall)                                           # the owner's examples: a guitar, books
+        self.assertIn("g_bookstack", mall)
+        rooms = {k for ks in F["rooms"].values() for k in ks}
+        self.assertFalse(rooms & set(mall))                                       # the designer's list does not offer them
+        room, keep = [0.0, 0.0, 6.0, 5.0], []
+        new = furnish.kit_piece(F, "g_guitar", "n1", 2.0, 2.0, 0, "plain")       # added as if bought in the designer: refused
+        self.assertIn("the acoustic guitar is sold at the mall, not here", furnish.check(F, room, keep, 2.6, [], [new], 10 ** 9))
+        mine = dict(furnish.kit_piece(F, "g_guitar", "b:mall:1", 0, 0, 0, "plain"))
+        placed = dict(mine, x=2.0, z=2.0)                                         # the one in the belongings: placed, and free
+        self.assertEqual(furnish.check(F, room, keep, 2.6, [], [placed], 0, [mine]), [])
+        self.assertEqual(furnish.cost(F, [], [placed], [mine])[0], 0)
+        self.assertEqual(furnish.stow([], [placed], [mine]), [])                  # and it has left the belongings
+        back = furnish.stow([placed], [], [])                                     # taken away again, it is a belonging once more
+        self.assertEqual([b["kind"] for b in back], ["g_guitar"])
+        rug = furnish.kit_piece(F, "g_rug", "b:mall:2", 2.0, 2.0, 0, "plain")    # a rug bought at the mall lies under other pieces
+        self.assertTrue(rug["rug"])
+        self.assertEqual(furnish.check(F, room, keep, 2.6, [], [placed, rug], 0, [mine, rug]), [])
+
+    def test_FURN_065_every_good_for_the_home_has_an_object_made_in_blender_that_fits_its_size(self):
+        # the owner, 2026-11-24: "use blender to create the objects, some of these object can be placed in the house like guitar, books etc."
+        import copy, json
+        here = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(here, "..", "..", "Prototype", "play", "goods_models.js"), encoding="utf-8") as f:
+            text = f.read()
+        M = json.loads(text[text.index("window.GOODS_MODELS = ") + len("window.GOODS_MODELS = "):text.rstrip().rindex(";")])
+        self.assertIn("Tools/blender/mall_goods_31.py", M["note"])                # made by the script, not by hand
+        self.assertTrue(os.path.exists(os.path.join(here, "..", "blender", "mall_goods_31.py")))
+        mall = {k: p for k, p in F["pieces"].items() if p.get("from") == "mall"}
+        self.assertEqual(set(M["models"]), set(mall))                             # one for every good that goes to a home, and no others
+        names = [k for k, _ in M["palette"]]
+        self.assertTrue({"accent0", "accent1"} <= set(names))                     # the two colours a piece is given by its seed
+        for k, c in M["palette"]:
+            self.assertTrue(all(0.02 <= v <= 0.85 for v in c), k)                 # the town's muted colours: nothing pure black, white or bright
+        near, far = M["most"]
+        self.assertLessEqual(near, 600)
+        self.assertLess(far, near)
+        total = [0, 0]
+        for k, m in M["models"].items():
+            w, d, h = mall[k]["size"]
+            self.assertEqual(m["size"], mall[k]["size"], k)                       # made for the size the rules give it today
+            self.assertEqual(len(m["lods"]), 2, k)                                # near, for a home; far, the lighter make
+            for lod, L in enumerate(m["lods"]):
+                n = len(L["i"]) // 3
+                total[lod] += n
+                self.assertEqual(n, m["t"][lod], k)
+                self.assertTrue(12 <= n <= (near, far)[lod], (k, lod, n))
+                self.assertEqual(len(L["p"]), len(L["n"]), k)
+                self.assertEqual(len(L["p"]), 3 * len(L["c"]), k)
+                self.assertTrue(all(0 <= i < len(L["c"]) for i in L["i"]), k)
+                self.assertTrue(all(0 <= c < len(names) for c in L["c"]), k)
+                us, ys, vs = L["p"][0::3], L["p"][1::3], L["p"][2::3]             # millimetres: u across, y up, v front to back
+                self.assertTrue(max(us) <= w * 500 + 3 and min(us) >= -w * 500 - 3, (k, lod, min(us), max(us)))
+                self.assertTrue(max(vs) <= d * 500 + 3 and min(vs) >= -d * 500 - 3, (k, lod, min(vs), max(vs)))
+                self.assertTrue(min(ys) >= -3 and max(ys) <= h * 1000 + 3, (k, lod, min(ys), max(ys)))
+                self.assertLessEqual(min(ys), 20, k)                              # it stands on the floor
+                self.assertGreaterEqual(max(ys), h * 1000 * 0.45, k)              # and is about as tall as the rules say
+                for j in range(0, len(L["n"]), 3):
+                    self.assertAlmostEqual(sum(v * v for v in L["n"][j:j + 3]) ** 0.5, 100, delta=4)
+            self.assertLessEqual(m["t"][1], m["t"][0], k)                         # the far make is the lighter one (a rug is as light as it gets)
+        self.assertLess(total[0] / len(mall), 350)                                # light on average: chunky and few (ART_DIRECTION 2.2)
+        self.assertLess(total[1] / len(mall), 140)
+        self.assertIn(W["mall_goods"]["display"]["detail"], ("near", "far"))      # which make stands in the outlets is data
+        bad = copy.deepcopy(W)
+        bad["mall_goods"]["display"]["detail"] = "huge"
+        self.assertTrue(any("display.detail" in x for x in world.mall_goods_problems(bad)))
 
 
 class Placing(unittest.TestCase):

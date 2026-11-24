@@ -102,6 +102,7 @@ const Court = (() => {
   }
 
   function draw(o, l) {
+    l.outletRooms = [];                                       // each outlet's room, for buying in it (outlets.js Outlets.at, WLD-066)
     const m = o.mesh, P = l.plan, st = P.storey_height, F = o.F, H = l.H, C = o.C, [x0, z0, x1, z1] = l.rect;
     const cream = mul(C.cream, 1.2), plaster = o.tones[4], floorC = mul(o.floor, 1.1), shopCeil = mul(plaster, 1.14), dark = C.stoneDark, wood = C.wood, lit = s => [.3, .4, s];
     const fascia = mul(C.brown, .74), ceilC = mul(C.brown, .98), leafC = [.27, .37, .18];   // the ribbons along every edge and the ceilings are dark, as timber; floors pale and shop fronts bright (the owner's picture, in the town's own tones)
@@ -193,10 +194,10 @@ const Court = (() => {
         }
       }
       // ---- walls and shop fronts
-      const open = new Set(), units = {}; L.units.forEach(u => { units[u.id] = u; if (!k && u.stand && u.kind !== "anchor" && (l.objects.work || []).some(w => u.stand.some(s => Math.abs(s[0] - w[0]) < .3 && Math.abs(s[1] - w[1]) < .3))) open.add(u.id); });
+      const open = new Set(), units = {}; L.units.forEach(u => { units[u.id] = u; if (u.outlet && u.stand && (l.objects.work || []).some(w => u.stand.some(s => Math.abs(s[0] - w[0]) < .3 && Math.abs(s[1] - w[1]) < .3))) open.add(u.id); });
       for (const fr of L.fronts) {                             // every front is an outlet of some kind, with its room and what is sold in it (outlets.js, WLD-063)
         const S = frame(fr.a, fr.b, R.walk), u = units[fr.unit];
-        Outlets.front({ m, o, C, S, u, fy, top, k, T, lamp: (x, y, z, w) => lamps.push([x, y, z, w]), Lf: S.L, staffed: open.has(u.id), spec: (P.outlets || {})[u.outlet], depth: P.outlet_depth, blob, prism, round, wallQ, boxQ, solidAlong, plaster, dark, wood, shopCeil, floorC });
+        Outlets.front({ m, o, C, S, u, fy, top, k, T, lamp: (x, y, z, w) => lamps.push([x, y, z, w]), Lf: S.L, rooms: l.outletRooms, staffed: open.has(u.id), spec: (P.outlets || {})[u.outlet], depth: P.outlet_depth, blob, prism, round, wallQ, boxQ, solidAlong, plaster, dark, wood, shopCeil, floorC });
       }
       for (const w of L.walls) for (let i = 0; i < w.line.length - 1; i++) {
         const a = w.line[i], b = w.line[i + 1], drum = w.kind === "drum", hh = drum ? P.halls.reduce((p, h) => Math.hypot(h.pos[0] - a[0], h.pos[1] - a[1]) < Math.hypot(p.pos[0] - a[0], p.pos[1] - a[1]) ? h : p) : null;
@@ -299,7 +300,8 @@ const Court = (() => {
     for (const b of P.benches) { const yaw = b.yaw * Math.PI / 180, [x, z] = b.pos, fx = Math.sin(yaw), fz = -Math.cos(yaw);
       m.ybox(x, F + .3, z, 1.9, .16, .55, -yaw, wood, 19); m.ybox(x - fx * .3, F + .46, z - fz * .3, 1.9, .5, .1, -yaw, wood, 19);
       for (const sgn of [-.8, .8]) m.ybox(x + fz * sgn * -1, F, z + fx * sgn, .12, .3, .5, -yaw, C.metal, 19);
-      o.solid(x - .6, F, z - .6, x + .6, F + .46, z + .6); o.use(x, F + .47, z, "sit", "Sit on the bench", yaw); }
+      o.solid(x - .6, F, z - .6, x + .6, F + .46, z + .6); o.use(x, F + .47, z, "sit", "Sit on the bench", yaw);
+      for (const sd of [-.45, .45]) o.spot(+(x + Math.cos(yaw) * sd).toFixed(2), +(z + Math.sin(yaw) * sd).toFixed(2), 2, yaw, F + .46); }   // its two places, for residents who sit to eat or rest (the lot's `seat`)
     for (const u of P.levels[0].units) if (u.kind === "kiosk") { const [a, b, c, d] = u.rect, acc = o.accent[Math.floor(o.hash(u.id, "k") * o.accent.length)];
       m.box(a, F, b, c, F + 1.05, d, wood, 19); m.box(a - .3, F + 2.7, b - .3, c + .3, F + 2.95, d + .3, acc, 19, { 2: [mul(acc, .7), 19] });
       for (const [x, z] of [[a, b], [c, b], [a, d], [c, d]]) m.box(x - .08, F + 1.05, z - .08, x + .08, F + 2.7, z + .08, C.metal, 19);
@@ -309,11 +311,17 @@ const Court = (() => {
       for (let d = 10; d < 70; d += 15) lantern(e.at[0] + (ns ? 0 : sg * d), F + 3.9, e.at[1] + (ns ? sg * d : 0), F + under, .55); }
     { const v = P.levels[1].voids[0], out = outward(v); for (let i = 0; i < v.length; i += 11) lantern(v[i][0] + out[i][0] * 7.5, F + 3.9, v[i][1] + out[i][1] * 7.5, F + under, .55); }
 
-    // ---- where the staff stand: behind their counter, facing the walk; in an egg hall facing its middle
-    for (const u of P.levels[0].units) for (const s of u.stand || []) {
-      const h = u.kind === "anchor" ? P.halls.find(q => q.unit === u.id) : null;
-      o.spot(s[0], s[1], 0, h ? Math.atan2(h.pos[0] - s[0], -(h.pos[1] - s[1])) : (u.angle || 0) * Math.PI / 180, F);
-    }
+    // ---- where the staff stand: a keeper behind the counter of every outlet on every floor, facing the walk (CITY-105); in an egg hall
+    // facing its middle; and the guards and janitors of the whole mall at their own places (plan.staff)
+    P.levels.forEach((L, k) => { for (const u of L.units) { if (k && !u.outlet) continue;          // (a big store is one unit on every floor: its staff are on the ground)
+      for (const s of u.stand || []) {
+        const h = u.kind === "anchor" ? P.halls.find(q => q.unit === u.id) : null;
+        o.spot(s[0], s[1], 0, h ? Math.atan2(h.pos[0] - s[0], -(h.pos[1] - s[1])) : (u.angle || 0) * Math.PI / 180, k ? k * st : F);
+      } } });
+    for (const c in P.staff || {}) for (const q of P.staff[c]) o.spot(q.pos[0], q.pos[1], 0, q.yaw * Math.PI / 180, q.level ? q.level * st : F);
+    // ---- and the visitors' places inside the outlets (WLD-068, CITY-106): standing before a counter, sitting at a food outlet's table
+    for (const q of (P.places || {}).customer || []) o.spot(q.pos[0], q.pos[1], 0, q.yaw * Math.PI / 180, q.level ? q.level * st : F);
+    for (const q of (P.places || {}).seat || []) o.spot(q.pos[0], q.pos[1], 2, q.yaw * Math.PI / 180, (q.level ? q.level * st : F) + .45);
   }
   function carry(p, dt) {                                   // someone standing on moving stairs is carried: up on the right-hand flight, down on the left
     for (const r of moving) {

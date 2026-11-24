@@ -358,7 +358,9 @@
         "PROP-008",
         "ECO-005",
         "ECO-010",
-        "ECO-011"
+        "ECO-011",
+        "ECO-013",
+        "ECO-014"
       ],
       "levels": [
         {
@@ -402,7 +404,10 @@
         3
       ],
       "spec": [
-        "CITY-014"
+        "CITY-014",
+        "WLD-066",
+        "WLD-067",
+        "WLD-068"
       ],
       "levels": [
         {
@@ -748,7 +753,8 @@
         "CITY-082",
         "CITY-084",
         "CITY-086",
-        "CITY-087"
+        "CITY-087",
+        "CITY-105"
       ],
       "levels": [
         {
@@ -794,7 +800,8 @@
         "CITY-022",
         "CITY-028",
         "CITY-083",
-        "CITY-088"
+        "CITY-088",
+        "CITY-106"
       ],
       "levels": [
         {
@@ -2018,7 +2025,8 @@
         "FURN-053",
         "FURN-054",
         "FURN-055",
-        "FURN-056"
+        "FURN-056",
+        "FURN-064"
       ],
       "levels": [
         {
@@ -2113,7 +2121,8 @@
         "FURN-005",
         "FURN-006",
         "FURN-007",
-        "FURN-008"
+        "FURN-008",
+        "FURN-065"
       ],
       "levels": [
         {
@@ -2384,7 +2393,11 @@
       "pillars": [
         2
       ],
-      "spec": [],
+      "spec": [
+        "CHR-014",
+        "CHR-015",
+        "CHR-016"
+      ],
       "levels": [
         {
           "name": "Fixed look",

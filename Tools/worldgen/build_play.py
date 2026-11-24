@@ -185,12 +185,13 @@ def life(w, city, plan, acts):
     for r in w["residents"]:
         if r["work"]:
             staff.setdefault(at[r["work"]], []).append(r["id"])
-    probe = ec.Economy(e, lots_, visits, staff)
+    goods = {k: v for k, v in w["mall_goods"].items() if k != "note"}                 # what a mall's outlets sell (ECO-013, ECO-014)
+    probe = ec.Economy(e, lots_, visits, staff, goods)
     shops = {k: next(n for n in range(len(lots_)) if probe.shop_kind(n) == k) for k in ("grocer", "kiosk", "arcade")}
-    script = ec.check_script()
-    want = ec.run_script(ec.Economy(e, lots_, visits, staff), script, shops)
+    script = ec.check_script() + ec.outlet_script(probe)
+    want = ec.run_script(ec.Economy(e, lots_, visits, staff, goods), script, shops)
     return dict(economy={k: v for k, v in e.items() if k != "note"}, quests={k: v for k, v in w["quests"].items() if k != "note"},
-                designer={k: v for k, v in w["designer"].items() if k != "note"},
+                designer={k: v for k, v in w["designer"].items() if k != "note"}, goods=goods,
                 visits={str(k): [[t, i] for t, i in v] for k, v in visits.items()}, visit_acts=visit_acts,
                 staff={str(k): v for k, v in staff.items()}, checks=dict(script=script, shops=shops, want=want), reward_checks=reward_checks(w), achievements=achievement_rules(w),
                 estate=estate_rules(w), estate_checks=estate_checks(w, lots_),
@@ -340,7 +341,8 @@ def main(day=16):
         role_color={k: v["color"] for k, v in w["roles"]["roles"].items()},
         role_sig={k: v["sig"] for k, v in w["roles"]["roles"].items()}, signatures=w["signatures"]["signatures"],
         residents=[dict(n=r["name"], r=roles.index(r["role"]), id=r["id"], h=lot_at[r["home"]], w=lot_at[r["work"]] if r["work"] else -1,
-                        **({"c": w["careers"]["careers"][r["career"]]["title"] + (" and " + w["careers"]["careers"][r["day_career"]]["title"] if r.get("day_career") else "")} if r.get("career") else {})) for r in w["residents"]],   # CITY-081
+                        **({"c": w["careers"]["careers"][r["career"]]["title"] + (" and " + w["careers"]["careers"][r["day_career"]]["title"] if r.get("day_career") else "")} if r.get("career") else {}),
+                        **({"u": w["careers"]["careers"][r["career"]]["wear"]} if r.get("career") and w["careers"]["careers"][r["career"]].get("wear") else {})) for r in w["residents"]],   # CITY-081; u: the job's own clothes (CITY-105)
         plan=plan, trees=trees, flowers=flower_row(w, city, day), plants=world.plants_today(w, city, day),   # CITY-017: the garden plants today
         lawn={k: v for k, v in w["vegetation"]["lawn"].items() if k != "note"},   # ART-001: how the grass looks
         tram=w["calendar"]["tram"], dialogue=dialogue(w), speech={k: v for k, v in w["speech"].items() if k != "note"}, crash={k: v for k, v in w["crash"].items() if k != "note"},

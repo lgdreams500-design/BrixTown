@@ -22,11 +22,13 @@ The idea, in the shell's own language (flowing ribbons, eggs, round arches, lant
                     a low garden; from those bridges two more climb outwards over the next atria to the upper floor
   shops             a front on every stretch of wall along the court, the concourses and the slanting walks
 
-It replaces the lot's `plan` (malls_01.py, concept "loop") and its `customer` and `seat` places; the lot's rect, door,
-floors and tags stay. The ground floor keeps the same jobs as before, so that nobody's work changes (careers.posts counts
-them from the ground floor's units): four big stores of 3,600 m2, 58 shops and two cafes big enough for a full staff, in
-the same order of kinds; every other ground-floor unit is too small to have staff of its own. Run add_careers_01.py
-afterwards: it moves the staff to where their units now are (`stand`).
+It replaces the lot's `plan` (malls_01.py, concept "loop") and its `customer` and `seat` places (with the floor of each
+in the lot's `levels`: the 80 and 32 on the court floor as before, and since CITY-106 two before the counter of every
+outlet and a chair at every table of the food outlets, on every floor); the lot's rect, door,
+floors and tags stay. The ground floor keeps its four big stores of 3,600 m2, its 58 deep shops and two cafes, in the same
+order of kinds. Every outlet, on every floor, has one keeper (CITY-105; the owner, 2026-11-24: "one person per outlet is
+good enough"), who stands behind its counter (`stand`); the mall's guards and janitors have their own places (`staff`).
+Run add_careers_01.py afterwards: it puts the staff where their units are.
 
 The plan keeps the old keys and adds some:
 
@@ -34,7 +36,9 @@ The plan keeps the old keys and adds some:
   storey_height      metres from one floor to the next
   levels[]           {level, units, walks, voids, bridges, fronts, walls, rails}
     units            [{id, name, kind, rect, angle, stand?}]  kind: shop, food, anchor, kiosk; rect and angle as a lot's
-                     (it faces (sin, -cos) of its angle); stand: where its staff stand, one [x, z] each
+                     (it faces (sin, -cos) of its angle); stand: where its staff stand, one [x, z] each: an outlet's
+                     one keeper behind its counter, a big store's six round its hall. No two stands, on any floors,
+                     are at the same place on the plan (the slice tells floors apart by where a place is)
     walks            polygons people walk on (they overlap; the floor is all of them together)
     voids            polygons open to the floor below
     bridges          polygons that cross a void
@@ -55,14 +59,21 @@ The plan keeps the old keys and adds some:
                      stands in each, copied from World/rules/mall_outlets.json; a unit with a front names its kind (`outlet`)
   outlet_depth       {least, most}: how deep an outlet's room is drawn, metres in from its front
   rides              [{kind, pos, r?, horses?}]: a carousel and coin rides on the court floor
+  places             {customer: [{level, pos, yaw}], seat: [{level, pos, yaw}]}: the visitors' places inside the outlets
+                     (WLD-068): two before each counter, facing it; at a food outlet a chair on each side of each of
+                     its tables, facing the table. They are also in the lot's `objects`, after the court floor's own
+  staff              {career: [{level, pos, yaw}]}: where those who look after the whole mall stand (CITY-105), as many of
+                     each career as World/rules/careers.json `mall_staff.whole_mall` says: a guard inside each way in
+                     and by a lift on each upper floor, janitors on the court floor and the galleries; yaw in degrees,
+                     the way they face (0 north, 90 east)
   roof               {openings: [polygon, ...]}: the round skylights, holes in the roof under the roof light
 Every size and count here is a first guess [ASSUMPTION].
 
 Run:   python mall_inside_01.py           (works the inside out again and writes it over the old one)
        python mall_inside_01.py --draw    (also draws the three floors into Art/StyleTests/mall_inside_26/)
 Then:  python mall_shell_01.py, python -m unittest test_world, python build_play.py
-(Not add_careers_01.py: the lot's `work` places already stand at the `stand` of each unit, and on today's blocks that
-script gives hundreds of residents other work. Run it only when careers are to be dealt again.)
+(add_careers_01.py only when careers are to be dealt again: it gives residents other work wherever doors have moved
+since it was last run. The lot's `work` places are its to write; they stand at these `stand` and `staff` places.)
 """
 import json, math, os, sys
 
@@ -70,6 +81,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 CITY = os.path.normpath(os.path.join(HERE, "..", "..", "World", "city_01"))
 BLOCKS = os.path.join(CITY, "blocks")
 OUTLETS = os.path.normpath(os.path.join(HERE, "..", "..", "World", "rules", "mall_outlets.json"))   # the kinds of outlet, what stands in each, their names, the mix per floor
+CAREERS = os.path.normpath(os.path.join(HERE, "..", "..", "World", "rules", "careers.json"))        # how many guards and janitors the mall has (mall_staff)
 BID = "b_16_5"
 
 STOREY, LEVELS = 6.0, 3
@@ -186,6 +198,121 @@ def along(run, s):
     return run[-1]
 
 
+def seg_dist(p, a, b):
+    """How far p is from the stretch a-b."""
+    dx, dz = b[0] - a[0], b[1] - a[1]
+    L2 = dx * dx + dz * dz
+    t = 0.0 if L2 == 0 else max(0.0, min(1.0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / L2))
+    return math.dist(p, (a[0] + dx * t, a[1] + dz * t))
+
+
+def whole_mall_staff(plan, places, cx, cz, rect):
+    """Where the guards and janitors of the whole mall stand (CITY-105): each on open floor of their level, clear of the
+    shop fronts, the openings and their rails, the stairs, lifts, planters, gardens, fountains, benches, rides and kiosks,
+    and of every other place someone stands or sits. Each is put at the first clear spot round the place wanted."""
+    with open(CAREERS, encoding="utf-8") as f:
+        want = {w["career"]: w["count"] for w in json.load(f)["mall_staff"]["whole_mall"]}
+    stood = [tuple(s) for L in plan["levels"] for u in L["units"] for s in u.get("stand", [])]
+    stood += [tuple(p) for k in ("customer", "seat") for p in places[k]]
+
+    def clear(level, p):
+        L = plan["levels"][level]
+        if not any(inside(w, p[0], p[1]) for w in L["walks"]) or any(inside(b, p[0], p[1]) for b in L["bridges"]):
+            return False
+        for v in L["voids"]:
+            if inside(v, p[0], p[1]) or min(seg_dist(p, v[i], v[(i + 1) % len(v)]) for i in range(len(v))) < 1.6:
+                return False
+        if any(inside(corners(u), p[0], p[1]) for u in L["units"] if u["kind"] != "anchor"):
+            return False
+        if any(math.dist(p, h["pos"]) < h["r"] + 1.0 for h in plan["halls"]):
+            return False
+        if any(seg_dist(p, f["a"], f["b"]) < 2.4 for f in L["fronts"]) or any(seg_dist(p, w["line"][i], w["line"][i + 1]) < 0.9 for w in L["walls"] for i in range(len(w["line"]) - 1)):
+            return False
+        if any(seg_dist(p, r["a"], r["b"]) < r["width"] / 2 + 2.0 for r in plan["ramps"] if level in (r["from"], r["to"])):
+            return False
+        if any(math.dist(p, q["pos"]) < q["r"] + 0.9 for q in plan["lifts"]) or any(math.dist(p, q["pos"]) < q["r"] + 0.8 for q in plan["planters"] if q["level"] == level):
+            return False
+        if level == 0:
+            if any(((p[0] - g["pos"][0]) / (g["r"][0] + 1.2)) ** 2 + ((p[1] - g["pos"][1]) / (g["r"][1] + 1.2)) ** 2 < 1 for g in plan["gardens"]):
+                return False
+            if any(math.dist(p, f["pos"]) < f["r"] + 1.2 for f in plan["fountains"]) or any(math.dist(p, b["pos"]) < 1.8 for b in plan["benches"]):
+                return False
+            if any(math.dist(p, q["pos"]) < q.get("r", 1.2) + 1.4 for q in plan["rides"]):
+                return False
+            if any(u["rect"][0] - 1.4 < p[0] < u["rect"][2] + 1.4 and u["rect"][1] - 1.4 < p[1] < u["rect"][3] + 1.4 for u in L["units"] if u["kind"] == "kiosk"):
+                return False
+        return rect[0] + 1 < p[0] < rect[2] - 1 and rect[1] + 1 < p[1] < rect[3] - 1 and all(math.dist(p, q) > 1.2 for q in stood)
+
+    def put(level, p, look):
+        for ring in range(0, 17):                                   # the place wanted, then rings round it half a metre apart
+            for i in range(max(1, ring * 6)):
+                t = 2 * math.pi * i / max(1, ring * 6)
+                q = pt((p[0] + 0.5 * ring * math.cos(t), p[1] + 0.5 * ring * math.sin(t)))
+                if clear(level, q):
+                    stood.append(tuple(q))
+                    return dict(level=level, pos=q, yaw=round(math.degrees(math.atan2(look[0] - q[0], -(look[1] - q[1]))), 1))
+        raise AssertionError("no clear floor for a member of staff near %r on floor %d" % (p, level))
+
+    x0, z0, x1, z1 = rect
+    inward = {"s": (0, -1), "n": (0, 1), "w": (1, 0), "e": (-1, 0)}
+    guards = []
+    for e in plan["entrances"]:                                     # a guard inside each way in, to one side of it, looking down the concourse
+        (ix, iz), h = inward[e["side"]], e["width"] / 2 - 1.0
+        guards.append((0, (e["at"][0] + ix * 7.0 - iz * h, e["at"][1] + iz * 7.0 + ix * h), (cx, cz)))
+    for level, q in [(1, plan["lifts"][0]), (2, plan["lifts"][1]), (1, plan["lifts"][1]), (2, plan["lifts"][0])]:   # and by a lift on each upper floor
+        t = math.radians(q["door"])
+        guards.append((level, (q["pos"][0] + math.sin(t) * (q["r"] + 2.4), q["pos"][1] - math.cos(t) * (q["r"] + 2.4) + 3.0), (cx, cz)))
+    guards += [(0, (cx + sx * 20.0, cz + sz * 30.0), (cx, cz)) for sx in (-1, 1) for sz in (-1, 1)]                 # more of them walk the court floor
+    janitors = [(0, (f["pos"][0] + (f["r"] + 3.0) * sg, f["pos"][1]), f["pos"]) for f, sg in zip(plan["fountains"], (1, -1))]   # janitors: by each fountain,
+    for level in range(1, len(plan["levels"])):                     # and by a planter at each end of each gallery floor, on opposite sides
+        ps = [q for q in plan["planters"] if q["level"] == level]
+        for q in (min(ps, key=lambda q: (q["pos"][1], q["pos"][0])), max(ps, key=lambda q: (q["pos"][1], q["pos"][0]))):
+            janitors.append((level, (q["pos"][0], q["pos"][1] + (q["r"] + 1.6) * (1 if q["pos"][1] < cz else -1)), q["pos"]))
+    janitors += [(0, (cx + sx * 26.0, cz + sz * 14.0), (cx, cz)) for sx in (-1, 1) for sz in (-1, 1)]
+    out = {}
+    for career, wanted in (("security_guard", guards), ("janitor", janitors)):
+        n = want.pop(career, 0)
+        assert n <= len(wanted), "places are worked out for %d of %s at most, not %d" % (len(wanted), career, n)
+        out[career] = [put(level, p, look) for level, p, look in wanted[:n]]
+    assert not want, "no places are worked out for %s" % sorted(want)
+    return out
+
+
+def visitor_places(plan):
+    """Where visitors stand and sit inside the outlets (WLD-068, CITY-106), on every floor: two before each counter,
+    and the four chairs of each cafe table the slice draws in a food outlet (outlets.js: the tables stand 5 m in, at
+    27, 73 and 50 hundredths of the room's width; a chair 0.8 m from the table's middle on each side)."""
+    customer, seat = [], []
+    depth = plan["outlet_depth"]
+    for L in plan["levels"]:
+        byid = {u["id"]: u for u in L["units"]}
+        for f in L["fronts"]:
+            u = byid[f["unit"]]
+            if not u.get("outlet"):
+                continue
+            a, b = f["a"], f["b"]
+            Lf = math.dist(a, b)
+            tx, tz = (b[0] - a[0]) / Lf, (b[1] - a[1]) / Lf
+            ix, iz = -tz, tx
+            if (u["stand"][0][0] - a[0]) * ix + (u["stand"][0][1] - a[1]) * iz < 0:
+                ix, iz = -ix, -iz                                    # into the room
+            at = lambda al, v: pt((a[0] + tx * al + ix * v, a[1] + tz * al + iz * v))
+            face = lambda dx, dz: round(math.degrees(math.atan2(dx, -dz)), 1)
+            for da in (-0.8, 0.8):                                   # before the counter, which is 2.2 m in
+                customer.append(dict(level=L["level"], pos=at(Lf / 2 + da, 1.6), yaw=face(ix, iz)))
+            D = max(depth["least"], min(depth["most"], u["rect"][3] - u["rect"][1] - 0.2))
+            if u["kind"] != "food" or D < 6:
+                continue
+            a0, a1 = 0.9, Lf - 0.9
+            for slot, kind in zip((0.27, 0.73, 0.5), plan["outlets"][u["outlet"]]["middle"][:3]):
+                if kind.split(":")[0] != "cafetable":
+                    continue
+                ta, tv = a0 + (a1 - a0) * slot, 5.0
+                for q, r in ((0.8, 0), (-0.8, 0), (0, 0.8), (0, -0.8)):
+                    seat.append(dict(level=L["level"], pos=at(ta + q, tv + r), yaw=face(-(tx * q + ix * r), -(tz * q + iz * r))))
+    return dict(customer=customer, seat=seat)
+
+
 def outlets(plan, cx, cz):
     """Every unit with a front becomes an outlet of some kind, with a name (WLD-063): so many of each kind on each floor as
     World/rules/mall_outlets.json says, like kinds spread apart. The kinds used, and the rides on the court floor, go into the plan."""
@@ -293,7 +420,18 @@ def design(lot, shell):
             return (0, (math.atan2(mid[0] - cx, mid[1] - cz)) % (2 * math.pi))
         return (1 + "snwe".index(which) if kind == "conc" else 6, math.dist(mid, (cx, cz)))
 
-    levels, nid, planters = [], [len(halls)], []
+    levels, nid, planters, stood = [], [len(halls)], [], []
+
+    def keeper(c):
+        """Where an outlet's one keeper stands: behind its counter, 3.2 m in from the middle of its front; a little along
+        the counter where a keeper on another floor already stands at that place on the plan."""
+        (mx, mz), (ox, oz) = c["mid"], c["out"]
+        for s in (0.0, 0.5, -0.5, 0.9, -0.9):
+            p = pt((mx + ox * 3.2 - oz * s, mz + oz * 3.2 + ox * s))
+            if all(math.dist(p, q) > 0.45 for q in stood):
+                stood.append(p)
+                return [p]
+        raise AssertionError("no place of its own for the keeper at %r" % (c["mid"],))
 
     def new_id():
         nid[0] += 1
@@ -304,6 +442,7 @@ def design(lot, shell):
         px, pz = h["pos"]
         stand = [pt((px + 0.5 * h["r"] * math.cos(0.3 + math.pi * j / 3), pz + 0.5 * h["r"] * math.sin(0.3 + math.pi * j / 3))) for j in range(6)]
         anchors.append(dict(id="%s_u%d" % (bid, i), name=h["name"], kind="anchor", rect=[r2(v) for v in h["rect"]], angle=0, stand=stand))
+        stood += stand
         h["unit"] = anchors[-1]["id"]
     for level in range(LEVELS):
         shapes, runs = edges(level)
@@ -378,9 +517,7 @@ def design(lot, shell):
             else:
                 food = (level == 2 and c["kind"] == "court") or n % 6 == 3
             u.update(id=new_id(), name="%s %d.%02d" % (short, level, len(units) + 1), kind="food" if food else "shop")
-            if staffed:                                              # behind a counter 3 m in from the front
-                (mx, mz), (ox, oz), m = c["mid"], c["out"], 4 if food else 3
-                u["stand"] = [pt((mx + ox * 3.2 - oz * (i - (m - 1) / 2) * 2.2, mz + oz * 3.2 + ox * (i - (m - 1) / 2) * 2.2)) for i in range(m)]
+            u["stand"] = keeper(c)                                   # one keeper to every outlet, on every floor (CITY-105)
             units.append(u)
             fronts.append(dict(unit=u["id"], a=pt(c["a"]), b=pt(c["b"])))
         if level:                                                   # the drums of the egg halls rise through the upper floors, open where a balcony comes in
@@ -472,7 +609,12 @@ def design(lot, shell):
         for s in (-0.45, 0.45):
             seat.append(pt((b["pos"][0] + math.cos(t) * s, b["pos"][1] + math.sin(t) * s)))
     assert len(customer) >= CUSTOMERS and len(seat) >= SEATS
-    return plan, dict(customer=customer[:CUSTOMERS], seat=seat[:SEATS])
+    places = dict(customer=customer[:CUSTOMERS], seat=seat[:SEATS])
+    plan["staff"] = whole_mall_staff(plan, places, cx, cz, lot["rect"])
+    plan["places"] = visitor_places(plan)
+    floors = {k: [0] * len(v) + [q["level"] for q in plan["places"][k]] for k, v in places.items()}
+    places = {k: v + [q["pos"] for q in plan["places"][k]] for k, v in places.items()}
+    return plan, places, floors
 
 
 def draw(lot, plan, folder):
@@ -510,8 +652,12 @@ def draw(lot, plan, folder):
         for u in L["units"]:
             if u["kind"] != "anchor":
                 d.polygon([T(p) for p in corners(u)], fill=kinds[u["kind"]], outline=(60, 50, 44))
-            for p in u.get("stand", []) if L["level"] == 0 else []:
+            for p in u.get("stand", []) if L["level"] == 0 or u.get("outlet") else []:
                 d.ellipse([T((p[0] - .7, p[1] - .7)), T((p[0] + .7, p[1] + .7))], fill=(60, 90, 200))
+        for career, col in (("security_guard", (40, 40, 60)), ("janitor", (60, 150, 90))):
+            for q in plan.get("staff", {}).get(career, []):
+                if q["level"] == L["level"]:
+                    d.ellipse([T((q["pos"][0] - 1.1, q["pos"][1] - 1.1)), T((q["pos"][0] + 1.1, q["pos"][1] + 1.1))], fill=col, outline=(250, 250, 250))
         for f in L["fronts"]:
             d.line([T(f["a"]), T(f["b"])], fill=(255, 190, 90), width=3)
         for w in L["walls"]:
@@ -548,9 +694,10 @@ def run(draw_too=False):
     with open(path, encoding="utf-8") as f:
         b = json.load(f)
     lot = next(l for l in b["lots"] if "mall" in l.get("tags", []) and l.get("shell"))
-    plan, places = design(lot, lot["shell"])
+    plan, places, floors = design(lot, lot["shell"])
     lot["plan"] = plan
     lot["objects"].update(places)                                    # `work` is add_careers_01.py's to write
+    lot.setdefault("levels", {}).update(floors)                      # the floor of each visitor's place
     lot["customers"], lot["seats"] = len(places["customer"]), len(places["seat"])
     with open(path, "w", encoding="utf-8") as f:
         json.dump(b, f, ensure_ascii=False, indent=1)

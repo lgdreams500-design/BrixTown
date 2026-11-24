@@ -26,6 +26,7 @@ const Outlets = (() => {
     const th = Math.atan2(-S.t[1], S.t[0]), turn = (-S.n[0] * Math.sin(th) - S.n[1] * Math.cos(th)) > 0 ? 1 : -1;   // turn: which way a box's own depth runs, into the room or out of it
     const depth = T.depth || { least: 4.2, most: 9 }, D = Math.max(depth.least, Math.min(depth.most, u.rect[3] - u.rect[1] - .2));
     const a0 = .9, a1 = Lf - .9, mid = Lf / 2, door = Math.min(3.4, (a1 - a0) * .28), staffed = T.staffed, food = spec.trade === "food";
+    if (T.rooms) { const p0 = S.at(0, 0, 0); T.rooms.push({ id: u.id, name: u.name || spec.label, kind: u.outlet, level: k, fy, x: p0[0], z: p0[2], t: S.t, n: S.n, a0, a1, D }); }   // where it is, for Outlets.at
     const P = (a, y, v) => S.at(a, y, -v);                      // a metres along the front, v metres into the room
     const xz = (a, v) => { const p = P(a, 0, v); return [p[0], p[2]]; };
     const rnd = (...q) => o.hash(seed, ...q), good = (...q) => GOODS[Math.floor(rnd(...q) * GOODS.length) % GOODS.length];
@@ -64,10 +65,23 @@ const Outlets = (() => {
     quad([S.at(a0, fy + 3.5, 0), S.at(a1, fy + 3.5, 0), S.at(a1, fy + 3.5, -.02), S.at(a0, fy + 3.5, -.02)], T.dark, 3, [0, -1, 0]);
     if (o.name) o.name(u.name || spec.label, S.at(mid, fy + 4.0, .15), face, .5);
     const zones = [[a0 + .12, mid - door / 2 - .15], [mid + door / 2 + .15, a1 - .12]];
+    // The goods for the home this outlet sells stand in it, as they were made in Blender (goods.js, FURN-065): on its two window
+    // plinths, facing the walk, and the ones too deep for a plinth on the floor inside. What is seen here is what B sells here.
+    const cat = window.WASTED && window.WASTED.life && window.WASTED.life.goods, canShow = cat && u.outlet && typeof Econ !== "undefined" && typeof Goods !== "undefined";
+    const sold = canShow ? [...new Set(Econ.outletRange(cat, u.id, u.outlet).map(g => (cat.goods[g] || {}).piece).filter(k => k && Goods.model(k)))] : [];
+    const yawIn = Math.atan2(-S.n[0], -S.n[1]), inZone = [[], []], onFloor = [], used = [0, 0], GAP = .3;
+    for (const kd of sold) { const s = Goods.model(kd).size; let put = false;
+      if (s[1] <= .95) for (const i of used[0] <= used[1] ? [0, 1] : [1, 0]) { const len = zones[i][1] - zones[i][0] - .5; if (!put && len >= 1.2 && used[i] + s[0] <= len) { inZone[i].push(kd); used[i] += s[0] + GAP; put = true; } }   // the emptier window first, so both are dressed
+      if (!put && s[0] <= 1.9) onFloor.push(kd); }
+    const far = cat && (cat.display || {}).detail === "far" ? 1 : 0;   // which make of each object stands here (mall_goods.json display.detail)
+    const stood = (kd, a, v, y) => { const p = P(a, 0, v); return Goods.put(m, kd, p[0], y, p[2], yawIn, seed + kd, far); };
     zones.forEach((z, i) => { const len = z[1] - z[0], c = (z[0] + z[1]) / 2; if (len < 1.2) return;
       bx(c, .6, fy, len, .4, .95, [.7, .66, .58]); T.solidAlong(xz(z[0] + .3, .6), xz(z[1] - .3, .6), fy, fy + 1.3, .5);
       for (const a of z) bx(a, .08, fy, .09, 3.42, .09, C.metal); bx(c, .08, fy + 2.75, len, .07, .07, C.metal);
-      inWindow(z, (spec.window || [])[i] || "plants", "w" + i); });
+      if (!inZone[i].length) { inWindow(z, (spec.window || [])[i] || "plants", "w" + i); return; }
+      let a = c - (used[i] - GAP) / 2; for (const kd of inZone[i]) { const s = Goods.model(kd).size; stood(kd, a + s[0] / 2, .6, fy + .4); a += s[0] + GAP; } });
+    [[a0 + 1.9, 2.5], [a1 - 1.9, 2.5], [a0 + 1.9, 4.7], [a1 - 1.9, 4.7]].slice(0, D >= 6 ? 4 : 2).forEach(([a, v], i) => { const kd = onFloor[i]; if (!kd) return;
+      const s = Goods.model(kd).size; stood(kd, a, v, fy + .006); if (s[2] > .1) block(a, v, Math.max(s[0], s[1]) * .4, Math.min(s[2], 1.4)); });
 
     // ---- what stands in it
     function items(W, q0, q1, r, y, what, key, cap) {             // a row of goods along a shelf or a table
@@ -159,10 +173,10 @@ const Outlets = (() => {
     onWall({ a0: a0 + .75, v0: D, da: 1, dv: 0, na: 0, nv: -1, len: a1 - a0 - 1.5 }, walls[1] || "posters", "B");
     onWall({ a0: a1, v0, da: 0, dv: 1, na: -1, nv: 0, len: D - v0 - .15, side: true }, walls[2] || "posters", "R");
     if (staffed) {                                              // where its staff serve: a counter 2.2 m in, with a till; a lit case on it where food is sold
-      const half = Math.min(mid - 2.4, 1.1 * ((u.stand || []).length - 1) + 1.1);   // as long as its staff stand wide, so there is a broad way past it at each end
+      const half = Math.min(mid - 2.4, food ? 2.3 : 1.6);       // its one keeper's counter (CITY-105): room for the till, and the lit case where food is sold; a broad way past it at each end
       T.boxQ(S, mid - half, mid + half, fy, fy + 1.0, -2.9, -2.2, T.wood, 19); T.solidAlong(xz(mid - half, 2.55), xz(mid + half, 2.55), fy, fy + 1.0, .4);
       bx(mid + half - .5, 2.55, fy + 1.0, .4, .3, .34, DARK); bx(mid + half - .5, 2.47, fy + 1.3, .34, .22, .03, SCREEN, 1);
-      if (food) bx(mid - half + 1.3, 2.55, fy + 1.0, 2.2, .34, .5, GLOW, 1);
+      if (food) bx(mid - half + .9, 2.55, fy + 1.0, 1.6, .34, .5, GLOW, 1);   // (to one side of where the keeper stands)
     }
     if (D >= 6) {
       const servery = walls[1] === "servery", vA = staffed ? 5.0 : Math.max(3.4, D * .44), vB = Math.min(D - 2.0, vA + 2.4), slots = [[.27, vA], [.73, vA], [.5, servery || staffed ? vA : vB]];
@@ -199,5 +213,16 @@ const Outlets = (() => {
     else if (q.kind === "rocket") { T.prism(T.round(x, z, .34, .34, 10), F + .28, F + 1.5, [.78, .75, .68], [.78, .75, .68], 19, 19); T.blob(x, F + 1.62, z, .36, red, key); for (const s of [-1, 1]) m.box(x + s * .36 - .05, F + .28, z - .18, x + s * .36 + .05, F + .75, z + .18, red, 19); o.use(x, F + .9, z + .42, "sit", "Sit on the rocket", Math.PI); }
     else { m.box(x - .62, F + .4, z - .34, x + .62, F + .78, z + .34, red, 19); m.box(x - .28, F + .78, z - .3, x + .3, F + 1.08, z + .3, cream, 19); for (const sx of [-.42, .42]) for (const sz of [-.36, .36]) m.box(x + sx - .14, F + .28, z + sz - .05, x + sx + .14, F + .56, z + sz + .05, DARK, 19); o.use(x, F + .8, z, "sit", "Sit in the car", Math.PI / 2); }
   }
-  return { front, ride };
+  // The outlet a point is in (WLD-066): its room from the front line to its back wall, on its own floor. l.outletRooms is filled as the
+  // fronts are drawn; a room is {id, name, kind, level, fy (its floor), x, z (the start of its front), t (along the front), n (out
+  // of the room), a0, a1 (its side walls, metres along), D (its depth)}.
+  function at(l, x, y, z) {
+    for (const r of l.outletRooms || []) {
+      if (y < r.fy - .6 || y > r.fy + 3.3) continue;
+      const dx = x - r.x, dz = z - r.z, a = dx * r.t[0] + dz * r.t[1], v = -(dx * r.n[0] + dz * r.n[1]);
+      if (a >= r.a0 && a <= r.a1 && v >= -.2 && v <= r.D) return r;
+    }
+    return null;
+  }
+  return { front, ride, at };
 })();

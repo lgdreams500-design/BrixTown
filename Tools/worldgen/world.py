@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers", "furnishing", "settings", "room_plan", "building_styles", "achievements", "boards"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers", "furnishing", "settings", "room_plan", "building_styles", "mall_outlets", "mall_goods", "achievements", "boards"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -136,7 +136,7 @@ def validate(w):
     if w.get("roads") and not out:
         import traffic
         out += traffic.Roads(w["roads"], w["traffic"]).problems(lots_inside(w))   # cars drive inside the wall for now
-    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + estate_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w) + react_problems(w) + achievement_problems(w)
+    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + mall_goods_problems(w) + mall_visit_problems(w) + estate_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w) + react_problems(w) + achievement_problems(w)
     kinds = {l["kind"] for l in lots(w)}
     for need in ("home", "shop", "food", "work", "health", "garden", "market", "stop", "utility"):
         if need not in kinds:
@@ -760,6 +760,108 @@ def economy_problems(w, acts=None):
     return out
 
 
+def mall_visit_problems(w):
+    """Every rule the visits to a mall must keep (CITY-106, World/rules/choices.json 'mall'): opening hours in order
+    and within the day, something to do instead for every list that sends people to the mall, and the mall a modest
+    share of each such list."""
+    C, out = w["choices"], []
+    M = C.get("mall")
+    lists = {t: [o for opts in c.values() for o in opts] for t, c in C["choices"].items()}
+    sends = [t for t, L in lists.items() if any(o[1] == "mall" for o in L)]
+    if not M:
+        return ["choices.json: lists send people to the mall but 'mall' gives no hours"] if sends else []
+    try:
+        a, b = [int(M[k][:2]) * 60 + int(M[k][3:]) for k in ("open", "last_in")]
+        if not 5 * 60 <= a < b <= 22 * 60:
+            out.append("choices.json mall: open must be before last_in, between 05:00 and 22:00")
+    except Exception:
+        out.append("choices.json mall: open and last_in must be HH:MM")
+    for t in sends:
+        e = (M.get("else") or {}).get(t)
+        if not (isinstance(e, list) and len(e) == 2 and e[1] != "mall"):
+            out.append("choices.json mall: nothing to do instead for %s" % t)
+        for kind, opts in C["choices"][t].items():
+            n = sum(1 for o in opts if o[1] == "mall")
+            if n and n * 4 > len(opts):
+                out.append("choices.json: more than a quarter of %s (%s) goes to the mall" % (t, kind))
+            for o in opts:
+                if o[1] == "mall" and o[0] not in ("shop", "eat"):
+                    out.append("choices.json: at the mall people shop or eat, not %s" % o[0])
+    return out
+
+
+def mall_goods_problems(w):
+    """Every rule World/rules/mall_goods.json must keep (ECO-013, ECO-014): every kind of outlet has enough to sell, every
+    good has a name, a whole price in chips and somewhere to go, a good for the home is a piece of furnishing.json with
+    the same name and price, clothes set only parts of the look the wardrobe may change, to values the designer offers,
+    and no good takes the id of one of the town's items."""
+    g, e, out = w["mall_goods"], w["economy"], []
+    goods, items, pieces = g["goods"], e["items"], w["furnishing"]["pieces"]
+    parts = w["settings"]["wardrobe"]["parts"]
+    if type(g.get("per_outlet")) is not int or g["per_outlet"] < 4:
+        out.append("mall goods: per_outlet must be a whole number of at least 4")
+    if type((g.get("stock") or {}).get("target")) is not int or g["stock"]["target"] < 1:
+        out.append("mall goods: stock.target must be a whole number of at least 1")
+    if (g.get("display") or {}).get("detail") not in ("near", "far"):
+        out.append("mall goods: display.detail must be near or far")
+    for kind in w["mall_outlets"]["kinds"]:
+        L = g["sells"].get(kind, [])
+        if len(L) < 6:
+            out.append("mall goods: %s outlets have only %d things to sell; want at least 6" % (kind, len(L)))
+    used = set()
+    for kind, L in g["sells"].items():
+        if kind not in w["mall_outlets"]["kinds"]:
+            out.append("mall goods: sells for %s, which is no kind of outlet" % kind)
+        if len(set(L)) != len(L):
+            out.append("mall goods: %s lists a good twice" % kind)
+        for x in L:
+            used.add(x)
+            if x not in goods and x not in items:
+                out.append("mall goods: %s sells %s, which is neither a good nor an item" % (kind, x))
+            elif x in items and (items[x].get("quest") or items[x]["price"] <= 0):
+                out.append("mall goods: %s sells %s, which is not for sale" % (kind, x))
+    names = {}
+    for k, G in goods.items():
+        if k in items:
+            out.append("mall goods: %s is already one of the town's items" % k)
+        if k not in used:
+            out.append("mall goods: nothing sells %s" % k)
+        if not isinstance(G.get("name"), str) or not G["name"].strip():
+            out.append("mall goods: %s has no name" % k)
+        elif G["name"] in names:
+            out.append("mall goods: %s and %s have the same name" % (names[G["name"]], k))
+        else:
+            names[G["name"]] = k
+        if type(G.get("price")) is not int or G["price"] <= 0:
+            out.append("mall goods: %s: the price must be whole chips above zero" % k)
+        goes = G.get("goes")
+        if goes not in g["goes"]:
+            out.append("mall goods: %s goes nowhere (%s)" % (k, goes))
+        if goes == "home":
+            P = pieces.get(G.get("piece"))
+            if not P:
+                out.append("mall goods: %s is for the home but %s is no piece of furnishing.json" % (k, G.get("piece")))
+            elif P["name"] != G["name"] or P["price"] != G["price"]:
+                out.append("mall goods: %s and its piece %s disagree on name or price" % (k, G["piece"]))
+        elif "piece" in G:
+            out.append("mall goods: %s has a piece but does not go home" % k)
+        if goes == "wear":
+            P = G.get("parts") or {}
+            if not P:
+                out.append("mall goods: %s is to wear but sets no part of the look" % k)
+            for q in P:
+                if q not in parts:
+                    out.append("mall goods: %s sets %s, which the wardrobe cannot change" % (k, q))
+            full = dict(w["designer"]["default"], **P)
+            out += ["mall goods: %s: %s" % (k, p) for p in look_problems(w["designer"], full) if p.split(" ")[0] in P]
+        elif "parts" in G:
+            out.append("mall goods: %s has parts but is not to wear" % k)
+    for k, P in pieces.items():
+        if P.get("from") == "mall" and not any(G.get("piece") == k for G in goods.values()):
+            out.append("mall goods: the piece %s is from the mall but nothing sells it" % k)
+    return out
+
+
 def estate_problems(w):
     """Every rule World/rules/estate.json must keep (PROP-009 to PROP-021, F-PROP-ESTATE level 2)."""
     R, out = w["estate"], []
@@ -1002,7 +1104,7 @@ def sim_data(w):
     veg = w["vegetation"]
     return dict(name=w["city"]["name"], size=[n * P, g["rows"] * P], calendar=cal["calendar"], weather=cal["weather"], tram=cal["tram"],
                 streets=streets, lots=lots(w), residents=w["residents"], roles=w["roles"]["roles"], signatures=w["signatures"]["signatures"],
-                choices=dict(w["choices"]["choices"], rounds=[]), use=w["choices"]["use"], near_work=w["choices"].get("near_work"), species=veg["species"], flowers=veg["flowers"], plants=veg.get("plants", {}),
+                choices=dict(w["choices"]["choices"], rounds=[]), use=w["choices"]["use"], near_work=w["choices"].get("near_work"), mall=w["choices"].get("mall"), species=veg["species"], flowers=veg["flowers"], plants=veg.get("plants", {}),
                 replant_gap_days=veg["replant_gap_days"], fallen_days=veg["fallen_days"], trees=[t for b in w["blocks"] for t in b["trees"]], lamps=[], react=w.get("weather_react"))
 
 

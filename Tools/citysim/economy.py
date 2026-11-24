@@ -114,18 +114,44 @@ def visits_from_packed(plan, acts, visit_acts):
     return out
 
 
+def outlets_of(lot):
+    """The outlets of a lot whose inside is planned (a mall, WLD-063): [{id, name, kind, level}] in the plan's order.
+    An outlet is a unit with a kind from World/rules/mall_outlets.json (`outlet`)."""
+    out = []
+    for lv in (lot.get("plan") or {}).get("levels", ()):
+        for u in lv["units"]:
+            if u.get("outlet"):
+                out.append(dict(id=u["id"], name=u.get("name") or u["outlet"], kind=u["outlet"], level=lv["level"]))
+    return out
+
+
 class Economy:
     """One player's money, items, accounts, loans and stall in one town, with the town's shop tills and bank vault."""
 
-    def __init__(self, rules, lots, visits, staff=None):
-        """rules: World/rules/economy.json. lots: the town's lots in packed order ({id, kind, name}). visits: from
-        visits_from_packed(). staff: {lot index: [resident ids who work there]} for reputation prices (QST-007)."""
+    def __init__(self, rules, lots, visits, staff=None, goods=None):
+        """rules: World/rules/economy.json. lots: the town's lots in packed order ({id, kind, name}; a mall's `plan` gives
+        its outlets). visits: from visits_from_packed(). staff: {lot index: [resident ids who work there]} for reputation
+        prices (QST-007). goods: World/rules/mall_goods.json, what a mall's outlets sell (ECO-013, ECO-014); without it
+        a mall is bought from as one shop, as before."""
         self.R = rules
         self.lots = lots
         self.lot_index = {l["id"]: n for n, l in enumerate(lots)}
         self.visits = visits
         self.staff = staff or {}
         self.items = rules["items"]
+        self.G = goods
+        self.outlets = {}                      # lot index -> {unit id: {id, name, kind, level}}, in plan order (ECO-013)
+        self.clothes = {}                      # good id -> how many: bought clothes, for the wardrobe (ECO-014)
+        self.homeware = {}                     # good id -> how many bought for the home (each one is a belonging to place)
+        if goods:
+            self.items = dict(rules["items"])  # what is carried: the town's items and the outlets' goods that are carried or eaten
+            for g, G in goods["goods"].items():
+                if G["goes"] in ("carry", "eat"):
+                    self.items[g] = dict(name=G["name"], price=G["price"], sell=G["goes"] == "carry")
+            for n, l in enumerate(lots):
+                us = outlets_of(l)
+                if us:
+                    self.outlets[n] = {u["id"]: u for u in us}
         self.L = Ledger()
         self.day, self.minute = 0, 0
         self.settled = 0                       # the next day to settle
@@ -391,6 +417,8 @@ class Economy:
 
     def buy(self, n, item):
         k = self.shop_kind(n)
+        if n in self.outlets:                               # ECO-013: a mall with outlets sells at each of them, not as one shop
+            raise Refused("buy at one of its outlets")
         if not k or item not in self.R["shops"][k]["sells"]:
             raise Refused("this shop does not sell that")
         if self.stock(n, item) < 1:
@@ -414,6 +442,81 @@ class Economy:
         self.take_item(item)
         if item in self.R["shops"][self.shop_kind(n)]["sells"]:
             self._trade(n, item, 1)
+        return p
+
+    # ---------------------------------------------------------------- a mall's outlets (ECO-013, ECO-014)
+    def good(self, g):
+        """A good an outlet sells: {name, price, goes} and, by where it goes, its `piece` or `parts`. An id that is one
+        of the town's items (bread, the novel) is carried, or eaten when no shop buys it back."""
+        G = self.G["goods"].get(g)
+        if G:
+            return G
+        I = self.R["items"][g]
+        return dict(name=I["name"], price=I["price"], goes="carry" if I["sell"] else "eat")
+
+    def outlet_sells(self, n, u):
+        """What outlet u of lot n sells, in the catalogue's order: per_outlet goods of its kind's list, the ones a fixed
+        hash of the outlet and the good puts first, so two outlets of a kind differ and one outlet never changes."""
+        L = self.G["sells"].get(self.outlets[n][u]["kind"], [])
+        k = self.G["per_outlet"]
+        if len(L) <= k:
+            return list(L)
+        keep = set(sorted(L, key=lambda g: (hash01(u, g, "range"), g))[:k])
+        return [g for g in L if g in keep]
+
+    def outlet_resident_buys(self, n, u, day=None, minute=None):
+        """{good: how many} residents have bought at outlet u since the latest restock: each of their visits to the mall
+        (from their routine) is one thing bought at one outlet, both chosen by a fixed hash (ECO-010, per outlet)."""
+        day = self.day if day is None else day
+        minute = self.minute if minute is None else minute
+        ids = list(self.outlets[n])
+        S = self.outlet_sells(n, u)
+        rd, r0 = self.restock(day, minute), self.R["stock"]["restock_minute"]
+        spans = [(rd, r0, minute if rd == day else 1440)] + ([(day, 0, minute)] if rd < day else [])
+        c = {}
+        if not S:
+            return c
+        for d, a, b in spans:
+            for t, i in self.visits.get(n, ()):
+                if a <= t <= b and ids[int(hash01(i, d, n, "outlet") * len(ids))] == u:
+                    g = S[int(hash01(i, d, u, "buy") * len(S))]
+                    c[g] = c.get(g, 0) + 1
+        return c
+
+    def outlet_stock(self, n, u, g):
+        if n not in self.outlets or u not in self.outlets[n] or g not in self.outlet_sells(n, u):
+            return 0
+        bought = self.trades.get("%d|%d|%s" % (n, self.restock(), u), {}).get(g, [0, 0])[0]
+        return max(0, self.G["stock"]["target"] - self.outlet_resident_buys(n, u).get(g, 0) - bought)
+
+    def outlet_price(self, n, u, g):
+        """What outlet u asks for good g now, in chips: its usual price by its stock and by what the mall's staff think of
+        the player, exactly as a street shop's (ECO-005, QST-007)."""
+        P, T, Q = self.R["price"], self.G["stock"]["target"], self.R["reputation"]
+        f = max(P["min_bp"], min(P["max_bp"], 10000 + P["slope_bp"] * (T - self.outlet_stock(n, u, g)) // T))
+        r = self.rep_with_lot(n)
+        mod = 10000 - Q["discount_bp_at_max"] * r // Q["max"] if r >= 0 else 10000 + Q["markup_bp_at_min"] * r // Q["min"]
+        return max(1, (self.good(g)["price"] * f * mod + 50000000) // 100000000)
+
+    def buy_at(self, n, u, g):
+        """Buy good g at outlet u of lot n (ECO-013). Paid into the mall's till through the ledger; then the good goes
+        where its kind goes (ECO-014): carried, to the wardrobe, or to the belongings as a piece for the home."""
+        if n not in self.outlets or u not in self.outlets[n]:
+            raise Refused("no such outlet")
+        if g not in self.outlet_sells(n, u):
+            raise Refused("this outlet does not sell that")
+        if self.outlet_stock(n, u, g) < 1:
+            raise Refused("sold out")
+        G, p = self.good(g), self.outlet_price(n, u, g)
+        self.spend(p, "till:%s" % self.lots[n]["id"], "%s, %s" % (G["name"], self.outlets[n][u]["name"]))
+        t = self.trades.setdefault("%d|%d|%s" % (n, self.restock(), u), {}).setdefault(g, [0, 0])
+        t[0] += 1
+        if G["goes"] == "wear":
+            self.clothes[g] = self.clothes.get(g, 0) + 1
+        elif G["goes"] == "home":
+            self.homeware[g] = self.homeware.get(g, 0) + 1
+        else:
+            self.give_item(g)
         return p
 
     # ---------------------------------------------------------------- the market stall (PROP-008)
@@ -470,7 +573,7 @@ class Economy:
     def save(self):
         return copy.deepcopy(dict(tx=self.L.tx, day=self.day, minute=self.minute, settled=self.settled, inv=self.inv, accounts=self.accounts,
                                   welcomed=self.welcomed, loans=self.loans, barred=self.barred, trades=self.trades, rep=self.rep, stall=self.stall,
-                                  stall_sold_total=self.stall_sold_total))
+                                  stall_sold_total=self.stall_sold_total, clothes=self.clothes, homeware=self.homeware))
 
     def load(self, s):
         s = copy.deepcopy(s)
@@ -491,6 +594,29 @@ def check_script():
         ["rent"], ["setout", "map", 250], ["setout", "hat", 2600], ["advance", 1, 1000],
         ["advance", 4, 700], ["move", "p:savings", "p:cash", 500], ["advance", 6, 400],
     ]
+
+
+def outlet_script(econ):
+    """More of the fixed run, for a town whose mall has outlets (ECO-013): at the first outlet of each of five kinds (food,
+    clothes, music, things for the home), buy the first thing of each way of going that it sells, then try something
+    it does not sell, and last an outlet that is not there. Appended to check_script()."""
+    ops = []
+    for n in sorted(econ.outlets):
+        seen = set()
+        for u, U in econ.outlets[n].items():
+            if U["kind"] in seen or U["kind"] not in ("burger", "cafe", "clothes", "music", "home"):
+                continue
+            seen.add(U["kind"])
+            done = set()
+            for g in econ.outlet_sells(n, u):
+                goes = econ.good(g)["goes"]
+                if goes not in done:
+                    done.add(goes)
+                    ops.append(["buyat", n, u, g])
+            ops.append(["buyat", n, u, "newspaper"])
+        ops.append(["buyat", n, "no_such_unit", "bread"])
+        break
+    return ops
 
 
 def run_script(econ, ops, shops):
@@ -517,6 +643,8 @@ def run_script(econ, ops, shops):
                 econ.rent_stall()
             elif name == "setout":
                 econ.set_out(a[0], a[1])
+            elif name == "buyat":
+                econ.buy_at(a[0], a[1], a[2])
             out.append("ok")
         except Refused as e:
             out.append("refused")
@@ -524,4 +652,7 @@ def run_script(econ, ops, shops):
                 tx=len(econ.L.tx), supply=econ.L.supply(), inv=dict(sorted(econ.inv.items())), sold=econ.stall_sold_total,
                 loans=[[l["status"], l["paid"], l["fees"], l["missed"]] for l in econ.loans],
                 prices={k: econ.price(n, econ.R["shops"][k]["sells"][0]) for k, n in sorted(shops.items())},
+                clothes=dict(sorted(econ.clothes.items())), homeware=dict(sorted(econ.homeware.items())),
+                outlets=[[n, u, econ.outlet_sells(n, u), [econ.outlet_stock(n, u, g) for g in econ.outlet_sells(n, u)],
+                          [econ.outlet_price(n, u, g) for g in econ.outlet_sells(n, u)]] for n in sorted(econ.outlets) for u in list(econ.outlets[n])[:12]],
                 hashes=[round(hash01(*x), 12) for x in (("a",), (1, 2, "b"), ("r0504", 16, "job"), (523, 3, 117, "buy"))])

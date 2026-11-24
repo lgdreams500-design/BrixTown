@@ -1,9 +1,9 @@
 ---
 doc_id: WASTED-SPEC-FURNITURE
 title: Wasted — Furniture (designs, the furniture companies and their outlets, furniture in the home)
-version: 0.4.1
+version: 0.4.3
 status: draft            # every row proposed; the owner accepts
-last_updated: 2026-11-22
+last_updated: 2026-11-24
 parent: docs/specs/GAME_SPEC.md        # extends §4.5 PROP; same ID rules; new prefix FURN
 related: docs/specs/domains/WORLD_MAP.md, docs/specs/domains/LIVING_CITY.md, docs/art/INTERIOR_STYLE.md
 prototype: Tools/citysim/               # delivery, stock and money rules proved here first (to write)
@@ -94,6 +94,8 @@ are not in this file; the owner said both come later.
 | FURN-055 | The player shall move and turn placed pieces freely (turns in 15° steps `[ASSUMPTION]`), hang wall pieces on walls and stand small pieces on others; the layout is saved and, from PH2, visitors see it. | F-PROP-FURNISH | 2 | P0 | `test_FURN_051_placing`, `test_FURN_055_turns_in_steps_and_the_footprint_turns_with_it` (Tools/citysim/test_furnish.py) |
 | FURN-056 | Each piece shall have a condition worked out from its age and how much it is used (from the clock and the routines), shown in the stages of FURN-008, lowering what it sells for. | F-PROP-FURNISH | 2 | P2 | `test_FURN_056_wear` |
 | FURN-057 | The player carrying a piece shall walk slower by its size, and only pieces one person can carry are carried; bigger ones are moved in place (FURN-055) or by a crew. | F-OBJ-CARRY | 1 | P2 | engine test |
+| FURN-064 | A piece of the list may be sold elsewhere (`from`, such as the mall's goods for the home: guitars, books, lamps, plants, toys, a television): it has a size, a name and a price like any piece and is in no room of the designer's list; the designer does not sell it, and refuses one that is added as if bought there. Bought at its outlet (ECO-014) it is a belonging, placed, moved and taken away like any other (FURN-051, INV-001); one marked `rug` lies flat under other pieces. | F-PROP-FURNISH | 2 | P1 | `test_FURN_064_*` (Tools/citysim/test_furnish.py) |
+| FURN-065 | Every piece sold at the mall (FURN-064) shall have an object made in Blender by a script in `Tools/blender/` (`mall_goods_31.py`, which builds on the furniture kit's materials, daylight and render settings): chunky, matte, in the town's muted colours (ADR-0004), fitting inside the size the rules give the piece, in two makes: near, at most 600 triangles, and far, at most 180. The script writes the objects for the slice (`Prototype/play/goods_models.js`), a `.blend` under `Art/Source/`, a `.glb` under `Art/Export/` and pictures under `Art/StyleTests/mall_goods_31/`. In the slice a placed piece is drawn from its object, two of its colours chosen by the piece's seed, and the boxes of `goods.js` stand in only where the file is missing. The goods for the home an outlet sells stand in that outlet, on its window plinths and its floor, as the same objects (which make is data: `mall_goods.json` `display.detail`). Asked for by the owner on 2026-11-24: "use blender to create the objects, some of these object can be placed in the house like guitar, books etc." (ADR-0041). | F-FURN-ITEMS | 2 | P1 | `test_FURN_065_*` (Tools/citysim/test_furnish.py) |
 
 ### 2.4 How residents' homes are furnished — `F-HOME-FURNISH` (ADR-0035)
 
@@ -123,6 +125,8 @@ buy-back share. Every number `[ASSUMPTION]` until tuned in play.
 
 | Version | Date | Change |
 |---|---|---|
+| 0.4.3 | 2026-11-24 | FURN-065: the mall's 49 goods for the home are objects made in Blender (`Tools/blender/mall_goods_31.py`, ADR-0041; the owner: "use blender to create the objects, some of these object can be placed in the house like guitar, books etc."). 284 triangles each on average in the near make, 112 in the far. The slice draws a placed good from its object, and each outlet shows the goods it sells: 464 objects stand in 112 of the 189 outlets, 134,674 triangles, 0.40 million points, 3.0 % of the town's mesh. |
+| 0.4.2 | 2026-11-24 | FURN-064: pieces sold elsewhere. The mall's 49 goods for the home are pieces of `furnishing.json` (`from: "mall"`), bought at an outlet (ECO-014, ADR-0041) and placed from the belongings; the designer does not sell them. Drawn in the slice by `goods.js`. |
 | 0.4.1 | 2026-11-23 | FURN-050 accepted: pieces taken away in the designer go to the belongings (MENU.md INV-001) and are placed from there. |
 | 0.4.0 | 2026-11-23 | FURN-051, FURN-052, FURN-055 accepted and built in the slice's building designer (BUILDER.md §2.6, ADR-0031): `World/rules/furnishing_levels.json` (43 pieces with sizes and prices), `Tools/citysim/furnish.py` and `test_furnish.py`, ported as `Furnish` in `Prototype/play/builder.js`. |
 | 0.1.0 | 2026-11-22 | First draft from the owner's request and picks (`F-FURN-ITEMS` 2, `F-FURN-STORE` 2, `F-PROP-FURNISH` 2, `F-OBJ-CARRY` 1): FURN-001 to 008, 020 to 035, 050 to 057; Q-30 to Q-32. All proposed. |
