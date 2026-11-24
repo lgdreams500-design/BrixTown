@@ -9,7 +9,8 @@
 //   floors        everything the plan's walks cover, less its voids, in 2 m squares; a smooth strip along each void's edge.
 //                 Upper floors are slabs you stand on; under each is the ceiling of the floor below
 //   parapets      a plaster ribbon along every edge where a floor stops, with a line of light under it
-//   shop fronts   lit windows, a sign band in an accent colour; a shop whose staff are in today is open, with a counter
+//   shop fronts   every one an outlet: its front, its room and what is sold in it are outlets.js's; where its staff are in
+//                 today there is a counter
 //   the cascades  bridges across the court and moving stairs (walked up as low steps) from the court floor to each
 //   egg halls     a round drum under each egg, open into it; from inside an egg shows the sky through its openings
 //   the court     a fountain, gardens with trees, benches, kiosks, hanging lanterns
@@ -19,6 +20,7 @@
 const Court = (() => {
   const T = .5, G = 2, DOOR_H = 5.2, RAIL = 1.1, STAIR_V = .7;   // STAIR_V: how fast the moving stairs run, metres a second along their slope (the shader's material 28 moves the treads as fast)
   const moving = [];                                        // the moving stairs, for carry()
+  const lamps = [];                                         // every lantern and shop light [x, y, z, strength], for the pools of light the room light lays under the nearest of them
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const mul = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
   const inPoly = (p, x, z) => { let h = false; for (let i = 0, j = p.length - 1; i < p.length; j = i++) { const a = p[i], b = p[j]; if ((a[1] > z) !== (b[1] > z) && x < a[0] + (z - a[1]) * (b[0] - a[0]) / (b[1] - a[1])) h = !h; } return h; };
@@ -110,7 +112,7 @@ const Court = (() => {
       m.quad(S.at(u0, y0, d0), S.at(u0, y0, d1), S.at(u0, y1, d1), S.at(u0, y1, d0), col, f, [-S.t[0], 0, -S.t[1]]); m.quad(S.at(u1, y0, d0), S.at(u1, y0, d1), S.at(u1, y1, d1), S.at(u1, y1, d0), col, f, [S.t[0], 0, S.t[1]]);
     };
     const solidAlong = (a, b, y0, y1, r) => { const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(L / 1.1)); for (let i = 0; i < n; i++) { const f = (i + .5) / n, x = a[0] + (b[0] - a[0]) * f, z = a[1] + (b[1] - a[1]) * f; o.solid(x - r, y0, z - r, x + r, y1, z + r); } };
-    const lantern = (x, y, z, top, s) => { m.box(x - .04, y + s, z - .04, x + .04, top, z + .04, C.metal, 19); m.box(x - s / 2, y, z - s / 2, x + s / 2, y + s, z + s / 2, C.lantern, 2, { 2: [C.lantern, 2] }); };   // (no street light from them: the hall has its own light, and a lantern's glow in the air would veil the whole court)
+    const lantern = (x, y, z, top, s) => { m.box(x - .04, y + s, z - .04, x + .04, top, z + .04, C.metal, 19); m.box(x - s / 2, y, z - s / 2, x + s / 2, y + s, z + s / 2, C.lantern, 2, { 2: [C.lantern, 2] }); lamps.push([x, y - .1, z, 30]); };   // (no street light from them: the hall has its own light, and a lantern's glow in the air would veil the whole court)
     const prism = (pts, y0, y1, colS, colT, fS, fT) => {       // a closed line pushed up into a solid shape with a flat top
       const out = outward(pts), n = pts.length, cx = pts.reduce((s, p) => s + p[0], 0) / n, cz = pts.reduce((s, p) => s + p[1], 0) / n;
       for (let i = 0; i < n; i++) { const a = pts[i], b = pts[(i + 1) % n]; m.quad([a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], y1, b[1]], [a[0], y1, a[1]], colS, fS, [out[i][0] + out[(i + 1) % n][0], 0, out[i][1] + out[(i + 1) % n][1]]); m.quad([cx, y1, cz], [a[0], y1, a[1]], [b[0], y1, b[1]], [cx, y1, cz], colT, fT, [0, 1, 0]); }
@@ -192,30 +194,9 @@ const Court = (() => {
       }
       // ---- walls and shop fronts
       const open = new Set(), units = {}; L.units.forEach(u => { units[u.id] = u; if (!k && u.stand && u.kind !== "anchor" && (l.objects.work || []).some(w => u.stand.some(s => Math.abs(s[0] - w[0]) < .3 && Math.abs(s[1] - w[1]) < .3))) open.add(u.id); });
-      for (const fr of L.fronts) {
-        const S = frame(fr.a, fr.b, R.walk), u = units[fr.unit], acc = o.accent[Math.floor(o.hash(u.id, "sign") * o.accent.length)], Lf = S.L, food = u.kind === "food";
-        boxQ(S, 0, .9, fy, top, 0, .18, plaster, 3); boxQ(S, Lf - .9, Lf, fy, top, 0, .18, plaster, 3);                       // a pier each side
-        wallQ(S, .9, Lf - .9, fy + 3.5, fy + 4.4, .1, food ? mul(C.terracotta, 1.1) : acc, 3); wallQ(S, .9, Lf - .9, fy + 4.4, top, .02, plaster, 3);   // the sign band, the wall above it
-        m.quad(S.at(.9, fy + 3.5, 0), S.at(Lf - .9, fy + 3.5, 0), S.at(Lf - .9, fy + 3.5, .1), S.at(.9, fy + 3.5, .1), dark, 3, [0, -1, 0]);
-        solidAlong(S.at(0, 0, 0).filter((_, i) => i !== 1), S.at(.9, 0, 0).filter((_, i) => i !== 1), fy, top, .45); solidAlong(S.at(Lf - .9, 0, 0).filter((_, i) => i !== 1), S.at(Lf, 0, 0).filter((_, i) => i !== 1), fy, top, .45);
-        if (open.has(u.id)) {                                   // open today: you look in over the counter at whoever is serving
-          const D = 6.5, back = mul(acc, .55);
-          wallQ(S, .9, Lf - .9, fy, fy + 3.5, -D, back, 3);
-          m.quad(S.at(.9, fy, 0), S.at(.9, fy, -D), S.at(.9, fy + 3.5, -D), S.at(.9, fy + 3.5, 0), plaster, 3, [S.t[0], 0, S.t[1]]); m.quad(S.at(Lf - .9, fy, 0), S.at(Lf - .9, fy, -D), S.at(Lf - .9, fy + 3.5, -D), S.at(Lf - .9, fy + 3.5, 0), plaster, 3, [-S.t[0], 0, -S.t[1]]);
-          m.quad(S.at(.9, fy + 3.5, 0), S.at(Lf - .9, fy + 3.5, 0), S.at(Lf - .9, fy + 3.5, -D), S.at(.9, fy + 3.5, -D), shopCeil, 3, [0, -1, 0]);
-          m.quad(S.at(.9, fy + .004, 0), S.at(Lf - .9, fy + .004, 0), S.at(Lf - .9, fy + .004, -D), S.at(.9, fy + .004, -D), mul(wood, 1.15), 15, [0, 1, 0]);
-          boxQ(S, 2.4, Lf - 2.4, fy, fy + 1.0, -2.9, -2.2, wood, 19); solidAlong(S.at(2.4, 0, -2.55).filter((_, i) => i !== 1), S.at(Lf - 2.4, 0, -2.55).filter((_, i) => i !== 1), fy, fy + 1.0, .4);
-          for (let i = 0; i < 3; i++) { const u0 = 1.6 + i * (Lf - 3.2) / 3; boxQ(S, u0, u0 + (Lf - 3.2) / 3 - .5, fy + .3, fy + 2.7, -D, -D + .5, mul(wood, .9), 19); wallQ(S, u0 + .2, u0 + (Lf - 3.2) / 3 - .7, fy + 1.0, fy + 2.4, -D + .52, food ? C.ochre : acc, 19); }
-          const lp = S.at(Lf / 2, fy + 2.7, -3.6); m.box(lp[0] - .2, lp[1], lp[2] - .2, lp[0] + .2, lp[1] + .4, lp[2] + .2, C.lantern, 2, { 2: [C.lantern, 2] });
-          solidAlong(S.at(.9, 0, -D).filter((_, i) => i !== 1), S.at(Lf - .9, 0, -D).filter((_, i) => i !== 1), fy, top, .45);
-          for (const uu of [.9, Lf - .9]) solidAlong(S.at(uu, 0, -.6).filter((_, i) => i !== 1), S.at(uu, 0, -D).filter((_, i) => i !== 1), fy, top, .45);
-        } else {                                                // shut, or upstairs: lit windows over a low wall, a door in the middle
-          const n = Math.max(1, Math.round((Lf - 1.8) / 4.4)), w = (Lf - 1.8) / n, door = Math.floor(n / 2);
-          wallQ(S, .9, Lf - .9, fy, fy + 3.5, 0, plaster, 3);       // the wall the windows are set in: nothing shows between them
-          wallQ(S, .9, Lf - .9, fy, fy + .45, .06, dark, 3);
-          for (let i = 0; i < n; i++) wallQ(S, .9 + i * w + .1, .9 + (i + 1) * w - .1, fy + (i === door ? .05 : .45), fy + 3.5, .04, [0, 0, (i === door ? .958 : .97) + .02 * o.hash(u.id, i)], 1, true);
-          solidAlong(S.at(.9, 0, 0).filter((_, i) => i !== 1), S.at(Lf - .9, 0, 0).filter((_, i) => i !== 1), fy, top, .45);
-        }
+      for (const fr of L.fronts) {                             // every front is an outlet of some kind, with its room and what is sold in it (outlets.js, WLD-063)
+        const S = frame(fr.a, fr.b, R.walk), u = units[fr.unit];
+        Outlets.front({ m, o, C, S, u, fy, top, k, T, lamp: (x, y, z, w) => lamps.push([x, y, z, w]), Lf: S.L, staffed: open.has(u.id), spec: (P.outlets || {})[u.outlet], depth: P.outlet_depth, blob, prism, round, wallQ, boxQ, solidAlong, plaster, dark, wood, shopCeil, floorC });
       }
       for (const w of L.walls) for (let i = 0; i < w.line.length - 1; i++) {
         const a = w.line[i], b = w.line[i + 1], drum = w.kind === "drum", hh = drum ? P.halls.reduce((p, h) => Math.hypot(h.pos[0] - a[0], h.pos[1] - a[1]) < Math.hypot(p.pos[0] - a[0], p.pos[1] - a[1]) ? h : p) : null;
@@ -314,6 +295,7 @@ const Court = (() => {
       prism(round(x, z, q.r, q.r, 16), y, y + .6, fascia, [.2, .15, .11], 3, 19); prism(round(x, z, q.r + .12, q.r + .12, 16), y + .5, y + .62, wood, wood, 19, 19);
       for (let i = 0; i < 8; i++) { const a = 6.2832 * i / 8; o.solid(x + q.r * .6 * Math.cos(a) - .75, y, z + q.r * .6 * Math.sin(a) - .75, x + q.r * .6 * Math.cos(a) + .75, y + 1.0, z + q.r * .6 * Math.sin(a) + .75); }
       tree(x, z, y + .6, q.tree, "pl" + x + z, .5); blob(x + .9, y + .85, z - .5, .55, leafC, "pa" + x + z); blob(x - .8, y + .8, z + .7, .5, leafC, "pb" + x + z); }
+    for (const q of P.rides || []) Outlets.ride({ m, o, C, F, blob, prism, round }, q);   // the carousel and the coin rides (outlets.js)
     for (const b of P.benches) { const yaw = b.yaw * Math.PI / 180, [x, z] = b.pos, fx = Math.sin(yaw), fz = -Math.cos(yaw);
       m.ybox(x, F + .3, z, 1.9, .16, .55, -yaw, wood, 19); m.ybox(x - fx * .3, F + .46, z - fz * .3, 1.9, .5, .1, -yaw, wood, 19);
       for (const sgn of [-.8, .8]) m.ybox(x + fz * sgn * -1, F, z + fx * sgn, .12, .3, .5, -yaw, C.metal, 19);
@@ -342,6 +324,7 @@ const Court = (() => {
     return false;
   }
   // what the room light needs to know of a court mall (play.js): where the sky comes in
-  const light = l => { const b = boxOf(l.plan.levels[l.plan.levels.length - 1].voids[0]); return { rect: l.rect, eye: [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2, (b[2] - b[0]) / 2, (b[3] - b[1]) / 2], halls: l.plan.halls.slice(0, 4).map(h => [h.pos[0], h.pos[1], h.r, 0]) }; };
+  const light = l => { const b = boxOf(l.plan.levels[l.plan.levels.length - 1].voids[0]), c = l.plan.court || { lobe: 36, voids: {} }, v = k => { const q = c.voids[k]; return q ? [q.wide, q.narrow, q.long, q.sway] : [0, 0, 1, 0]; };
+    return { lamps, k: [(l.rect[0] + l.rect[2]) / 2, (l.rect[1] + l.rect[3]) / 2, c.lobe, l.H], v1: v(1), v2: v(2), eyes: l.plan.roof.openings.slice(0, 5).map(e => { const q = boxOf(e); return [(q[0] + q[2]) / 2, (q[1] + q[3]) / 2, (q[2] - q[0]) / 2, 0]; }), rect: l.rect, eye: [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2, (b[2] - b[0]) / 2, (b[3] - b[1]) / 2], halls: l.plan.halls.slice(0, 4).map(h => [h.pos[0], h.pos[1], h.r, 0]) }; };
   return { can: l => !!(l.plan && l.plan.concept === "court" && l.shell && l.plan.entrances), hall, draw, carry, light };
 })();
