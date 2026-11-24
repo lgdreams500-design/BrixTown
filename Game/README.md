@@ -63,6 +63,14 @@ checked by `WLD043_the_sun_follows_the_calendar`), its light from no lower than 
 calendar's hour of dawn and dusk; the sky's fill and the haze's glow go down with the day. `-BrixDay=` and
 `-BrixTime=hh:mm` start elsewhere in the year or the day.
 
+## Residents (CITY-021, CITY-022, CITY-024)
+All 3,984 residents follow the built day's routines: `Game/Data/day.json`, written by `Tools/worldgen/build_play.py` in
+the same run as the slice's city_data.js (the same day, day 16), so after changing World/ run build_play.py as before.
+Where anyone is follows from the day and the clock each frame (a port of the slice's resident(), checked against citysim
+City.at() by `CITY022_residents_are_where_their_routine_puts_them`): at their place, or walking their route at even speed
+a little to one side of the pavement's line. Only the nearest, out of doors and within 90 m, have a body, up to 400 at once.
+The bodies are stand-ins (a body in a palette colour, a head, a bob as they walk) until the option B people come over.
+
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
 black. At Epic quality the town runs at about 36 frames a second, at High about 63 with the same shade, at Medium about 86
@@ -92,3 +100,4 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD038_surfaces_match_the_rules` | WLD-038, WLD-039 |
 | `BrixTown.World.ART001_every_house_has_its_line_and_colourway` | ART-001 (ADR-0032, ADR-0035) |
 | `BrixTown.World.WLD043_the_sun_follows_the_calendar` | WLD-043 (ADR-0024) |
+| `BrixTown.World.CITY022_residents_are_where_their_routine_puts_them` | CITY-022 |

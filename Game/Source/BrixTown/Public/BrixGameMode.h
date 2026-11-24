@@ -22,8 +22,12 @@ public:
 	virtual void StartPlay() override;
 	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 	virtual void Tick(float DeltaSeconds) override;
+	// the clock: minutes since midnight of StartDay (past 1440 on the days after); everything that moves with time reads it
+	double ClockMinutes() const;
+	double ClockMinute() const { return FMath::Fmod(ClockMinutes(), 1440.0); }
 
 	UPROPERTY(Config) FString CityDir = TEXT("../World/city_01");   // from the project folder (Game/)
+	UPROPERTY(Config) FString DayFile = TEXT("Data/day.json");      // the residents' day, written by Tools/worldgen/build_play.py
 	UPROPERTY(Config) int32 StartDay = 16;        // the day the game starts on (the slice is built for day 16); its time is the city's spawn time
 	UPROPERTY(Config) float ClockRate = 1.f;      // times the calendar's pace (real_seconds_per_minute)
 	UPROPERTY(Config) float SunLux = 8.f;         // in full day
@@ -43,6 +47,8 @@ private:
 	void ShootAndQuit();
 
 	TSharedPtr<FBrixCity> City;
+	TSharedPtr<struct FBrixDay> Today;           // the residents' routines (Game/Data/day.json)
+	UPROPERTY() TObjectPtr<class ABrixPeople> People;
 	UPROPERTY() TObjectPtr<class ADirectionalLight> SunActor;
 	UPROPERTY() TObjectPtr<class USkyLightComponent> SkyFill;
 	UPROPERTY() TObjectPtr<class UExponentialHeightFogComponent> HazeFog;
