@@ -257,7 +257,8 @@ window.Dress = (() => {
   // ------------------------------------------------------------ residents: children with what they play on, readers at their board
   const yawTo = (fx, fz, tx, tz) => yawOf(tx - fx, tz - fz);
   function apply(i, r, t) {
-    if (!r || r.walking) return r;
+    if (r && r.walking) return keepOut(r);
+    if (!r) return r;
     const act = D.acts[r.act];
     if (act === "notices" || act === "paper") {                // face the board or the kiosk
       let best = null, bd = 6; for (const q of boards) { const d = Math.hypot(q.x - r.x, q.z - r.z); if (d < bd) { bd = d; best = q; } }
@@ -274,7 +275,7 @@ window.Dress = (() => {
       const T = motion.slide_cycle_s, e = (((t / T) + sp.k / 4 + hash(i, "sl") * .1) % 1) * T, c = .26 * T, dn = .14 * T;
       const go = slideAt(pc, e, c, dn); if (go) return Object.assign(r, still, go);
       const e2 = e - (c + SLIDE_TOP_S + dn);
-      if (e2 < .5) return Object.assign(r, still, { x: pc.x + 2.4, z: pc.z, y: g, yaw: yawOf(1, 0), pose: 0 });
+      if (e2 < .5) return Object.assign(r, still, { x: pc.x + SLIDE_OFF, z: pc.z, y: g, yaw: yawOf(1, 0), pose: 0 });
       const w = walkPath(backTo(pc), Math.min(1, (e2 - .5) / Math.max(.5, T - (c + SLIDE_TOP_S + dn + .5))));
       return Object.assign(r, still, { x: w.x, z: w.z, y: g, yaw: w.yaw, pose: 1, walking: true, ph: (w.d / People.stepLength(L.sig, L.S)) % 1 });
     }
@@ -286,9 +287,23 @@ window.Dress = (() => {
     return r;
   }
 
+  // Anyone on foot is kept out of the climbing frame and the slide: the day plan's walks go round them (citysim round_boxes,
+  // the lots' keep_out), and a walk the traffic rules made (to a bus or a car) that still cuts through is nudged to the edge.
+  let KEEP = null;
+  function keepOut(r) {
+    if (!KEEP) KEEP = pieces.filter(pc => pc.kind === "climb" || pc.kind === "slide").map(pc => pc.kind === "climb"
+      ? [pc.x - 1.05, pc.z - 1.05, pc.x + 1.05, pc.z + 1.05] : [pc.x - 2.0, pc.z - .4, pc.x + 2.6, pc.z + .4]);
+    for (const [x0, z0, x1, z1] of KEEP) {
+      if (r.x <= x0 || r.x >= x1 || r.z <= z0 || r.z >= z1 || r.y > groundBase(r.x, r.z) + .5) continue;
+      const d = [r.x - x0, x1 - r.x, r.z - z0, z1 - r.z], k = d.indexOf(Math.min(...d));
+      if (k === 0) r.x = x0; else if (k === 1) r.x = x1; else if (k === 2) r.z = z0; else r.z = z1;
+    }
+    return r;
+  }
+
   // ------------------------------------------------------------ where a body goes on each piece (children and the player alike)
   // A sitting body's origin is the seat top under the hips (people.js sit()), so each is put on the surface it sits on.
-  const SWING_L = 1.84, SEAT_TOP = .025, PLANK_TOP = .035, FRAME_H = 1.0, OUTSIDE = .16, LADDER = -2.13, DECK = 1.58, SLIDE_TOP_S = .95;
+  const SWING_L = 1.84, SEAT_TOP = .025, PLANK_TOP = .035, FRAME_H = 1.0, OUTSIDE = .16, LADDER = -2.13, DECK = 1.58, SLIDE_TOP_S = .95, SLIDE_OFF = 2.9;   // SLIDE_OFF: standing up past the chute's end block
   function onSwing(pc, k, th) {                              // on the seat: it hangs SWING_L under the beam and turns with the chains (draw)
     return { x: pc.x + (k - (pc.n - 1) / 2) * 1.1, z: pc.z + Math.sin(th) * SWING_L, y: pc.g + 2.36 - Math.cos(th) * SWING_L + SEAT_TOP, yaw: yawOf(0, 1), pose: 2 };
   }
@@ -311,7 +326,7 @@ window.Dress = (() => {
     const a = pc.x - 1.15, b = pc.x + 2.1; if (px <= a) return pc.g + DECK;
     return pc.g + mix(1.55, .32, Math.min(1, (px - a) / (b - a))) + .05;
   }
-  const backTo = pc => pc.back || (pc.back = [[pc.x + 2.4, pc.z], [pc.x + .5, pc.z + 1.0], [pc.x - 2.6, pc.z + .8], [pc.x - 2.8, pc.z + .25], [pc.x + LADDER, pc.z]]);   // round the side, to the ladder's foot facing it
+  const backTo = pc => pc.back || (pc.back = [[pc.x + SLIDE_OFF, pc.z], [pc.x + SLIDE_OFF, pc.z + .8], [pc.x + .5, pc.z + 1.0], [pc.x - 2.6, pc.z + .8], [pc.x - 2.8, pc.z + .25], [pc.x + LADDER, pc.z]]);   // round the side, to the ladder's foot facing it
   function walkPath(pts, q) {                                // the point q of the way along a path, its heading and the distance walked
     if (!pts.len) { pts.len = [0]; for (let k = 1; k < pts.length; k++) pts.len.push(pts.len[k - 1] + Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1])); }
     const d = q * pts.len[pts.len.length - 1]; let k = 1; while (k < pts.length - 1 && pts.len[k] < d) k++;
@@ -346,7 +361,7 @@ window.Dress = (() => {
     }
     if (u === "seesaw") return onSeesaw(pc, sp.sx < pc.x ? -1 : 1, seesawAngle(pc, t));
     if (u === "slide") return slideAt(pc, e, motion.player_slide_climb_s, motion.player_slide_down_s)   // up the ladder, down the chute, off at the bottom: one go
-      || { x: pc.x + 2.6, z: pc.z, y: g, yaw: yawOf(1, 0), pose: 0, done: true };
+      || { x: pc.x + SLIDE_OFF, z: pc.z, y: g, yaw: yawOf(1, 0), pose: 0, done: true };
     if (u === "sandpit") return { x: sp.sx, z: sp.sz, y: g + .3, yaw: yawOf(pc.x - sp.sx, pc.z - sp.sz), pose: 2 };
     if (u === "climb") return frameAt(pc, 1, -.45, (e / motion.player_climb_cycle_s) % 1);   // up and down the side the use point is on, beside the children
     return { x: sp.sx, z: sp.sz, y: g, yaw: 0, pose: 0, done: true };
