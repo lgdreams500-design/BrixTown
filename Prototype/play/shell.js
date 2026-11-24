@@ -9,8 +9,8 @@
 //                joints between the ribbons are dark by day and lit at night (material 26)
 //   the eggs     an ochre egg over each corner store and a cream half egg over the court, pierced by a lattice of diamond
 //                openings: dark reveals by day, lanterns behind them at night (material 25)
-//   the arches   under each, the hall's own front as lit shop windows (play.js mallShell), the underside of the skin, and
-//                lanterns hanging from it
+//   the arches   under each, the underside of the skin and lanterns hanging from it; where the mall has its inside built, a
+//                porch of ribbon walls sweeping in to the way in (court.js), otherwise the hall's own front (play.js mallShell)
 //
 // The hall inside keeps its box, its door and its walls you cannot walk through; the skin adds its own.
 const Shell = (() => {
@@ -92,8 +92,9 @@ const Shell = (() => {
   function lanterns(o, l, sh) {                             // three lanterns hang under each arch, between the skin and the hall's front (W6)
     for (const a of sh.arches) {
       const out = OUT[a.side], along = [Math.abs(out[1]), Math.abs(out[0])];
-      for (const f of [-.27, 0, .27]) {
-        const x = a.at[0] + out[0] * 6 + along[0] * f * a.width, z = a.at[1] + out[1] * 6 + along[1] * f * a.width, top = a.height * Math.sqrt(1 - 4 * f * f), y = Math.max(4.2, top - 2.6);
+      const way = ((l.plan || {}).entrances || []).find(q => q.side === a.side), k = way ? .3 * way.width / a.width : .27;   // where there is a porch (court.js) they hang inside it, before the opening
+      for (const f of [-k, 0, k]) {
+        const x = a.at[0] + out[0] * 7 + along[0] * f * a.width, z = a.at[1] + out[1] * 7 + along[1] * f * a.width, top = a.height * Math.sqrt(1 - 4 * f * f), y = Math.max(4.2, top - 2.6);
         o.mesh.box(x - .05, y + .7, z - .05, x + .05, top, z + .05, o.C.metal, 9);
         o.mesh.box(x - .34, y, z - .34, x + .34, y + .7, z + .34, o.C.lantern, 2);
         o.mesh.box(x - .42, y + .7, z - .42, x + .42, y + .82, z + .42, o.C.metal, 9);

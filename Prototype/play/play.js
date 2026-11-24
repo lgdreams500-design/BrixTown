@@ -1626,8 +1626,7 @@ function mallShell(l) {
   const sh = l.shell && typeof Shell !== "undefined" && Shell.can(l.shell) ? l.shell : null;   // a sculpted shell round the hall (WLD-057): the hall keeps its box, and shows only under the shell's arches
   l.H = H;
   if (sh && typeof Court !== "undefined" && Court.can(l)) {   // a mall with its inside built (WLD-058): its wall is open at its entrances, and court.js draws all that is in it
-    const o = { mesh: world, solid, lights, occl, C, tones: SHELL_TONES, accent: ACCENT, hash, F: Y_FLOOR, wall: wallC, inside: [.74, .7, .62], floor: [.74, .71, .64], spot: (x, z, pose, yaw, h) => spot(l, x, z, pose, yaw, h), use,
-      name: (text, ctr, n, h) => { const cell = nameCell(text); if (cell) lettering(signs, ctr, n, h, cell); } };
+    const o = { mesh: world, solid, lights, occl, C, tones: SHELL_TONES, accent: ACCENT, hash, F: Y_FLOOR, wall: wallC, inside: [.74, .7, .62], floor: [.74, .71, .64], spot: (x, z, pose, yaw, h) => spot(l, x, z, pose, yaw, h), use };
     courtLight = Court.light(l);
     Court.hall(o, l); Shell.draw(o, l); Court.draw(o, l); return;
   }

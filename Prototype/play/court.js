@@ -4,7 +4,8 @@
 // Tools/worldgen/mall_inside_01.py. This file only draws it and makes it walkable, in the shell's language and the town's
 // materials (ART_DIRECTION 2.2 and 2.6: matte, chunky and soft, the muted palette, lanterns and lit windows):
 //
-//   the hall      its own wall, open at an entrance under each arch of the shell (shell.js)
+//   the hall      its own wall, open at an entrance under each arch of the shell (shell.js); under the arch a porch of ribbon
+//                 walls sweeping in to an arched opening, so the hall's wall is not seen from outside
 //   floors        everything the plan's walks cover, less its voids, in 2 m squares; a smooth strip along each void's edge.
 //                 Upper floors are slabs you stand on; under each is the ceiling of the floor below
 //   parapets      a plaster ribbon along every edge where a floor stops, with a line of light under it
@@ -61,19 +62,38 @@ const Court = (() => {
         ns ? o.solid(u0, y0, fix - t, u1, y1, fix + t) : o.solid(fix - t, y0, u0, fix + t, y1, u1);
       };
       if (!e) { piece(a0, a1, 0, H); continue; }
-      piece(a0, c - hw, 0, H); piece(c + hw, a1, 0, H); piece(c - hw, c + hw, DOOR_H, H);
-      for (const sg of [-1, 1]) { const u = c + sg * hw; m.quad(at(u, 0, -.2), at(u, 0, .3), at(u, DOOR_H, .3), at(u, DOOR_H, -.2), o.C.stoneDark, 3, ns ? [-sg, 0, 0] : [0, 0, -sg]); }   // the opening's sides, its head, its sill
-      m.quad(at(c - hw, DOOR_H, -.2), at(c + hw, DOOR_H, -.2), at(c + hw, DOOR_H, .3), at(c - hw, DOOR_H, .3), o.C.stoneDark, 3, [0, -1, 0]);
-      face(c - 5.5, c + 5.5, DOOR_H + .25, DOOR_H + 1.45, .24, o.C.teal, 0, 1); o.name(l.name || "Eastgate Mall", at(c, DOOR_H + .85, .27), dir(1), .62);   // its name on a painted band over the opening
-      m.quad(at(c - hw, F, -.2), at(c + hw, F, -.2), at(c + hw, F, .32), at(c - hw, F, .32), o.floor, 16, [0, 1, 0]);
-      for (const sg of [-1, 1]) for (let j = 0; j < 2; j++) {   // glazed doors standing open, two leaves each side
-        const u = c + sg * (hw - .15 - j * 2.2); m.quad(at(u, F, .32), at(u, F, 2.4), at(u, 4.4, 2.4), at(u, 4.4, .32), [0, 0, .97], 1, ns ? [-sg, 0, 0] : [0, 0, -sg], true);
-        m.quad(at(u, F, 2.4), at(u, F, .32), at(u, 4.4, .32), at(u, 4.4, 2.4), [0, 0, .97], 1, ns ? [sg, 0, 0] : [0, 0, sg], true);
+      // The way in is a porch in the shell's own language, not the hall's flat front (the owner, 2026-11-24, of that front's windows, name
+      // band and doors: "these look so bad, can we remove those and improve the entrance?"). Under the arch two ribbon walls sweep in from
+      // where the arch springs to the sides of the opening, so none of the hall's wall shows; the opening has a low arched head, ribbons
+      // over it up to the arch, and a line of light round it. No door leaves: it stands open.
+      piece(a0, c - hw, 0, H); piece(c + hw, a1, 0, H);
+      const sk = l.shell.skin, tone = name => Math.max(0, Shell.TONES.indexOf(name)), kz = tone(sk.colors[0]) + 8 * tone(sk.colors[1] || sk.colors[0]), glow = [.3, .4, .97], SPRING = 3.3, N = 14;
+      const openTop = u => SPRING + (DOOR_H + .1 - SPRING) * Math.sqrt(Math.max(0, 1 - 4 * (u - c) * (u - c) / (e.width * e.width)));
+      const lift = !arch ? [] : sk.points.filter(q => q[2] > .02).map(q => ns ? [q[0], (q[1] - fix) * out, q[2]] : [q[1], (q[0] - fix) * out, q[2]]).filter(q => q[1] > 0 && Math.abs(q[0] - c) < arch.width / 2 + 6).sort((p, q) => p[0] - q[0]);   // the skin where it is lifted over this arch: along the wall, out from it, how high
+      const roofAt = u => { const n = lift.length; if (!n) return H; if (u <= lift[0][0]) return lift[0][2]; if (u >= lift[n - 1][0]) return lift[n - 1][2];
+        for (let i = 1; i < n; i++) if (u <= lift[i][0]) { const p = lift[i - 1], q = lift[i]; return p[2] + (q[2] - p[2]) * (u - p[0]) / (q[0] - p[0] || 1); } return H; };
+      const up = u => Math.min(H, roofAt(u)) + .05, band = y => [y / 64, 0, kz];                                   // ribbons 1 m deep, level, on every face of the porch
+      for (let i = 0; i < N; i++) {                             // over the opening: its arched head, the ribbons above it, the hall's wall inside
+        const u0 = c - hw + e.width * i / N, u1 = c - hw + e.width * (i + 1) / N, y0 = openTop(u0), y1 = openTop(u1), r0 = up(u0), r1 = up(u1);
+        m.quad(at(u0, y0, -.2), at(u1, y1, -.2), at(u1, H, -.2), at(u0, H, -.2), o.inside, 3, dir(-1));
+        m.quadN([at(u0, y0, .3), at(u1, y1, .3), at(u1, r1, .3), at(u0, r0, .3)], [dir(1), dir(1), dir(1), dir(1)], [band(y0), band(y1), band(r1), band(r0)], 26);
+        m.quad(at(u0, y0, -.2), at(u1, y1, -.2), at(u1, y1, .3), at(u0, y0, .3), o.C.stoneDark, 3, [0, -1, 0]);
+        m.quad(at(u0, y0, .33), at(u1, y1, .33), at(u1, y1 + .22, .33), at(u0, y0 + .22, .33), glow, 1, dir(1));
+        const ym = Math.min(y0, y1); ns ? o.solid(u0, ym, fix - t, u1, H, fix + t) : o.solid(fix - t, ym, u0, fix + t, H, u1);
       }
-      if (arch) for (let u = c - arch.width / 2 + 4; u < c + arch.width / 2 - 4; u += 6) for (let fl = 0; fl < 2; fl++) {   // lit windows either side of the opening and over it, under the arch
-        const top = arch.height * Math.sqrt(Math.max(0, 1 - 4 * (u + 2.5 - c) * (u + 2.5 - c) / (arch.width * arch.width))), y0 = fl * st + (fl ? .8 : 1.2), y1 = Math.min(fl * st + st - 1, top - 1.2);
-        if (y1 - y0 < 1.6 || (!fl && u + 5 > c - hw - .6 && u < c + hw + .6)) continue;
-        face(u, u + 5, y0, y1, .23, [0, 0, .96 + .03 * o.hash(l.id, s, u, fl)], 1, 1, true);
+      for (const sg of [-1, 1]) { const u = c + sg * hw, inw = ns ? [-sg, 0, 0] : [0, 0, -sg];                    // the opening's sides, a line of light up each
+        m.quad(at(u, 0, -.2), at(u, 0, .3), at(u, SPRING, .3), at(u, SPRING, -.2), o.C.stoneDark, 3, inw);
+        m.quad(at(u - sg * .02, F, .06), at(u - sg * .02, F, .28), at(u - sg * .02, SPRING, .28), at(u - sg * .02, SPRING, .06), glow, 1, inw); }
+      m.quad(at(c - hw, F, -.2), at(c + hw, F, -.2), at(c + hw, F, .32), at(c - hw, F, .32), o.floor, 16, [0, 1, 0]);
+      if (lift.length > 2) for (const sg of [-1, 1]) {          // the two ribbon walls: from the opening's side straight out, then round to where the arch comes down
+        const end = sg < 0 ? lift[0] : lift[lift.length - 1], M = 18, pts = [];
+        for (let i = 0; i <= M; i++) { const a = Math.PI / 2 * i / M, u = c + sg * hw + (end[0] - c - sg * hw) * (1 - Math.cos(a)); pts.push([u, .3 + (end[1] - .3) * Math.sin(a), Math.max(.05, up(u))]); }
+        const nrm = pts.map((_, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(M, i + 1)], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; let nu = -(b[1] - a[1]) / L, nd = (b[0] - a[0]) / L; if (sg < 0) { nu = -nu; nd = -nd; }   // towards the porch
+          return ns ? [nu, 0, nd * out] : [nd * out, 0, nu]; });
+        for (let i = 0; i < M; i++) { const p = pts[i], q = pts[i + 1];
+          m.quadN([at(p[0], 0, p[1]), at(q[0], 0, q[1]), at(q[0], q[2], q[1]), at(p[0], p[2], p[1])], [nrm[i], nrm[i + 1], nrm[i + 1], nrm[i]], [band(0), band(0), band(q[2]), band(p[2])], 26);
+          const k2 = Math.max(1, Math.ceil(Math.hypot(q[0] - p[0], q[1] - p[1]) / 1.0));
+          for (let j = 0; j < k2; j++) { const f = (j + .5) / k2, w = at(p[0] + (q[0] - p[0]) * f, 0, p[1] + (q[1] - p[1]) * f), top = p[2] + (q[2] - p[2]) * f; if (top > .4) o.solid(w[0] - .6, 0, w[2] - .6, w[0] + .6, top, w[2] + .6); } }
       }
       for (let fl = 1; fl < l.floors; fl++) for (const sg of [-1, 1]) face(c + sg * 3.4 - 2.6, c + sg * 3.4 + 2.6, fl * st + 1, fl * st + 4.4, -.23, [0, 0, .97], 1, -1, true);   // the end of each upper concourse: tall lit windows
     }

@@ -79,3 +79,22 @@ the maps to show "the malls real curvy outline rather than the rectangle".
 - Not done: `Tools/worldgen/draw_map.py` (the map page) still fails before it reaches the malls, as on main.
 
 Picture: `Art/StyleTests/mall_shell_25/eastgate_on_the_map.jpg`.
+
+## Later again: the ways in
+
+Told that the hall's flat wall still showed under each arch, with its windows, name band and doors, the owner said:
+"yeah, these look so bad, can we remove those and improve the entrance?"
+
+- Each way in is now a porch in the shell's own language. Under the arch two ribbon walls leave the sides of the opening
+  straight out from the hall and curve round to where the arch comes down to the ground, so the porch narrows like a
+  horn to the opening and none of the hall's wall is seen from outside. The walls rise to the underside of the skin.
+- The opening has a low arched head, 3.3 m at its sides and 5.3 m at its crown (the floor above is at 6 m), ribbons over
+  it up to the arch, and a line of light round it. It stands open: no door leaves.
+- The punched windows, the painted name band and the glazed door leaves are gone. The mall's name is no longer on the
+  building; the place name on screen still gives it.
+- The three lanterns under each arch hang inside the porch, before the opening.
+- The ribbon walls are solid; the corners of the old front behind them cannot be reached.
+- This is drawn by `Court.hall` (court.js), for a mall whose inside is built. The other two malls keep the plain front of
+  `mallShell`.
+
+Pictures: `Art/StyleTests/mall_shell_25/entrance_porch_day.jpg`, `entrance_porch_night.jpg`, `entrance_porch_close.jpg`.
