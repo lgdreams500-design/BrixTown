@@ -176,7 +176,7 @@ game's progression: manual (fast, 50 km/h), electric (very fast, 100 km/h) and N
 starts with the electric pair. The same day: the store and buying come in a later change; this change brings the models,
 skating and the requirements for the store and buying only, and `?auto=1` gives all three kinds with the electric pair in use
 and Y switching between holding the skates and wearing them. Kinds, speeds and colours are data in `World/rules/skates.json`
-(ADR-0042). No level is picked for `F-VEH-SKATES` yet.
+(ADR-0042). The owner picked `F-VEH-SKATES` level 2 for the first slice the same day; the store and buying are still to be built.
 
 | ID | Requirement | Feature | Lvl | Pri | Proven by |
 |---|---|---|---|---|---|

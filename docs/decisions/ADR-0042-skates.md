@@ -31,4 +31,4 @@ the electric pair in use, and a key switches between holding the skates and wear
 
 ## Consequences
 - In the engine, skating is a movement mode of the character, server-authoritative (CITY-104).
-- `F-VEH-SKATES` is proposed with three levels; the owner has not picked one yet.
+- The owner picked `F-VEH-SKATES` level 2 ("Skate store and tiers") for the first slice on 2026-11-24; CITY-102 and CITY-103 are still to be built.

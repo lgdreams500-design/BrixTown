@@ -5,7 +5,7 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 41 of 55 | 9 of 55 | 9 of 55 |
+| Decided | 42 of 55 | 9 of 55 | 9 of 55 |
 | Size of the plan (points) | 541 | 456 | 856 |
 | Size of the suggested plan | 146 | 416 | 824 |
 
@@ -70,7 +70,7 @@
 | **Tram or bus** `F-VEH-TRANSIT` | 2 Network ★ | undecided | undecided | Owner, 2026-11-23: "Level 2: Network" for buses; keep the tram and add buses. Residents of independent houses own the cars; those in the central flats mostly don't and use public transport. Depth and full not picked yet. |
 | **Driving yourself** `F-VEH-DRIVE` | 2 Cars ★ | 2 Cars ★ | 2 Cars ★ | Owner, 2026-11-22: walking, and drivable cars, from the first slice. |
 | **Crash damage** `F-VEH-CRASH` | 2 Broken until mended ★ | undecided | undecided | Owner, 2026-11-22: objects on the pavements, trees and building corners destructible when driving, with a breaking animation; "Until a worker fixes it", "Fast hits break", residents "Yes, they shout". Later milestones not stated. Then the same day: "remove speed requirement for the damage, it should damage at any speed". |
-| **Skates** `F-VEH-SKATES` | undecided | undecided | undecided |  |
+| **Skates** `F-VEH-SKATES` | 2 Skate store and tiers | undecided | undecided | Owner, 2026-11-24: "Level 2 for slice" (asked which level for skates after the models, Y to carry or wear and the store requirements were built, PR #28). The skate store and buying (CITY-102, CITY-103) are to be added separately. Later milestones not stated. |
 
 ## Nature and time
 
