@@ -3,6 +3,8 @@
 #include "BrixCharacter.h"
 #include "BrixCity.h"
 #include "BrixDay.h"
+#include "BrixCars.h"
+#include "BrixCarsActor.h"
 #include "BrixPeople.h"
 #include "BrixTownActor.h"
 #include "BrixUnits.h"
@@ -90,6 +92,16 @@ void ABrixGameMode::StartPlay()
 			People->Start(*City, Today);
 			UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents, their day %d (%s, %s)"), Today->Num(), Today->Day, *Today->Weekday, *Today->Season);
 		}
+		Traffic = MakeShared<FBrixTraffic>();
+		FString CarError;
+		const FString Data = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data")));
+		if (LoadBrixTraffic(FPaths::Combine(Data, TEXT("cars.json")), FPaths::Combine(Data, TEXT("car_models.json")), *Traffic, CarError))
+		{
+			Cars = GetWorld()->SpawnActor<ABrixCars>();
+			Cars->Start(Traffic);
+			UE_LOG(LogTemp, Display, TEXT("Brix Town: %d vehicles today"), Traffic->Num());
+		}
+		else UE_LOG(LogTemp, Warning, TEXT("Brix Town: no vehicles (%s); run Tools/worldgen/build_play.py"), *CarError);
 	}
 	SpawnLight();
 	Super::StartPlay();
@@ -223,6 +235,7 @@ void ABrixGameMode::ShootAndQuit()
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: %.1f frames a second over the last %.0f s before the screenshot"), Secs > 0 ? (GFrameCounter - MarkFrame) / Secs : 0.0, Secs);
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: at the shot the game thread took %.1f ms, the render thread %.1f ms, the GPU %.1f ms"),
 		FPlatformTime::ToMilliseconds(GGameThreadTime), FPlatformTime::ToMilliseconds(GRenderThreadTime), FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()));
+	if (Cars) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d vehicles drawn"), Cars->Shown());
 	if (People) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents with a body at %02d:%02d, %.2f ms a frame working them out (%s)"), People->Shown(), (int32)ClockMinute() / 60, (int32)ClockMinute() % 60, People->TickMs(), *People->TickParts());
 	FTimerHandle H;
 	GetWorldTimerManager().SetTimer(H, []() { FPlatformMisc::RequestExit(false); }, 3.f, false);
