@@ -215,6 +215,9 @@ namespace
 		K.Frame = Rgb(Pal->TryGetField(Str(W, TEXT("frame"))));
 		const TArray<TSharedPtr<FJsonValue>>& R = Styles->GetObjectField(TEXT("roofs"))->GetArrayField(Str(W, TEXT("roof")));
 		K.Roof = (Rgb(R[0]) + Rgb(R[1])) * 0.5f;
+		const TArray<TSharedPtr<FJsonValue>>* Garden = nullptr;
+		if (House->TryGetArrayField(TEXT("garden"), Garden) && Garden->Num() == 4)
+			K.Garden = FVector4f((float)(*Garden)[0]->AsNumber(), (float)(*Garden)[1]->AsNumber(), (float)(*Garden)[2]->AsNumber(), (float)(*Garden)[3]->AsNumber());
 		const TSharedPtr<FJsonObject>* Trim = nullptr;
 		bool bBoxes = true;
 		if (House->TryGetObjectField(TEXT("trim"), Trim) && (*Trim)->TryGetBoolField(TEXT("window_boxes"), bBoxes) && !bBoxes) K.bBoxes = false;
