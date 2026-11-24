@@ -270,6 +270,40 @@ class Vegetation:
         return dict(size=size, leaf=leaf * (1.0 if size > 0 else 0.0), color=color, bloom=bloom, spent=spent)
 
 
+def _crosses(a, b, r):
+    """Does the segment a-b pass through the inside of box r = [x0, z0, x1, z1]? (Liang-Barsky; touching an edge is not.)"""
+    t0, t1, dx, dz = 0.0, 1.0, b[0] - a[0], b[1] - a[1]
+    for p, q in ((-dx, a[0] - r[0]), (dx, r[2] - a[0]), (-dz, a[1] - r[1]), (dz, r[3] - a[1])):
+        if abs(p) < 1e-12:
+            if q <= 0:
+                return False
+            continue
+        t = q / p
+        if p < 0:
+            t0 = max(t0, t)
+        else:
+            t1 = min(t1, t)
+    return t1 - t0 > 1e-6
+
+
+def round_boxes(route, boxes, margin=0.2):
+    """The route with a detour by the corners of each box a leg would pass through (a leg starting or ending inside one is
+    left alone): the shortest way round, by one corner or two."""
+    out = [route[0]]
+    for b in route[1:]:
+        for r in boxes:
+            a, inner = out[-1], [r[0] + .01, r[1] + .01, r[2] - .01, r[3] - .01]
+            if not _crosses(a, b, inner) or any(inner[0] < p[0] < inner[2] and inner[1] < p[1] < inner[3] for p in (a, b)):
+                continue
+            c = [(r[0] - margin, r[1] - margin), (r[2] + margin, r[1] - margin), (r[2] + margin, r[3] + margin), (r[0] - margin, r[3] + margin)]
+            ways = [[c[i]] for i in range(4)] + [[c[i], c[(i + d) % 4]] for i in range(4) for d in (1, 3)]
+            ok = [w for w in ways if all(not _crosses(p, q, inner) for p, q in zip([a] + w, w + [b]))]
+            if ok:
+                out += min(ok, key=lambda w: sum(dist(p, q) for p, q in zip([a] + w, w + [b])))
+        out.append(b)
+    return out
+
+
 # ---- the city ----------------------------------------------------------------------------------------
 class City:
     def __init__(self, path=None, data=None):
@@ -606,6 +640,13 @@ class City:
             p, _ = self.net.path(self.anchor[cur["place"]], self.anchor[nxt["place"]])
             route = [pos] + p
         route = route + [target]
+        if not hasattr(self, "_keep"):                  # the play pieces (lots' keep_out), which every walk goes round (WLD-041)
+            self._keep = [r for l in self.lots.values() for r in l.get("keep_out", [])]
+        if self._keep:
+            lo = (min(p[0] for p in route), min(p[1] for p in route), max(p[0] for p in route), max(p[1] for p in route))
+            near = [r for r in self._keep if r[0] < lo[2] and r[2] > lo[0] and r[1] < lo[3] and r[3] > lo[1]]
+            if near:
+                route = round_boxes(route, near)
         return [route[0]] + [p for i, p in enumerate(route[1:]) if dist(p, route[i]) > 1e-6]
 
     def _timeline(self, rid, day, ss):
