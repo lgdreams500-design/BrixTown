@@ -100,6 +100,20 @@ bool LoadBrixPeopleRules(const FString& Path, FBrixPeopleRules& Out, FString& Ou
 			R.Build = Range(O, TEXT("b"), R.Build);
 			Out.Roles.Add(FString(KV.Key), R);
 		}
+	const TSharedPtr<FJsonObject>* Pl;
+	if (Root->TryGetObjectField(TEXT("player"), Pl))   // a look as people.js writes one: sizes, colours, names
+	{
+		const TSharedPtr<FJsonObject>& O = *Pl;
+		FBrixLook& L = Out.Player;
+		auto C = [&](const TCHAR* K, FVector3f& Into) { const TArray<TSharedPtr<FJsonValue>>* A; if (O->TryGetArrayField(K, A)) Into = Vec3(*A); };
+		auto Opt = [&](const TCHAR* K, TOptional<FVector3f>& Into) { const TArray<TSharedPtr<FJsonValue>>* A; if (O->TryGetArrayField(K, A)) Into = Vec3(*A); };
+		L.S = Num(O, TEXT("S"), 1); L.W = Num(O, TEXT("W"), 1);
+		C(TEXT("skin"), L.Skin); C(TEXT("hairC"), L.HairC); C(TEXT("eyes"), L.Eyes); C(TEXT("top"), L.Top); C(TEXT("bottom"), L.Bottom); C(TEXT("shoes"), L.Shoes);
+		Opt(TEXT("apron"), L.Apron); Opt(TEXT("cap"), L.Cap); Opt(TEXT("scarf"), L.Scarf);
+		O->TryGetStringField(TEXT("hair"), L.Hair); O->TryGetStringField(TEXT("g"), L.Garment); O->TryGetStringField(TEXT("legs"), L.Legs); O->TryGetStringField(TEXT("sig"), L.SigName);
+		O->TryGetBoolField(TEXT("bag"), L.bBag); O->TryGetBoolField(TEXT("tash"), L.bTash);
+		L.Seed = (int32)Num(O, TEXT("seed"));
+	}
 	if (!Out.Signatures.Num() || !Out.Roles.Num() || !Out.Skins.Num()) { OutError = Path + TEXT(" has no signatures, roles or skins"); return false; }
 	return true;
 }

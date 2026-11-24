@@ -16,6 +16,37 @@
 using BrixUnits::ToWorld;
 using BrixUnits::CmPerM;
 
+int32 BrixBodyToMesh(UProceduralMeshComponent* M, const FBrixBodyMesh& Body, int32 Had, bool bFlip, UMaterialInterface* Material)
+{
+	const int32 Num = Body.Pos.Num();
+	TArray<FVector> V, N;
+	TArray<FLinearColor> C;
+	V.SetNumUninitialized(Num);
+	N.SetNumUninitialized(Num);
+	C.SetNumUninitialized(Num);
+	for (int32 k = 0; k < Num; ++k)   // the slice's frame (x east, y up, z south, metres) to Unreal's
+	{
+		const FVector3f& Q = Body.Pos[k];
+		const FVector3f& Nn = Body.Normal[k];
+		const FVector3f& Cc = Body.Colour[k];
+		V[k] = FVector(Q.X, Q.Z, Q.Y) * CmPerM;
+		N[k] = FVector(Nn.X, Nn.Z, Nn.Y);
+		C[k] = FLinearColor(Cc.X, Cc.Y, Cc.Z, 1.f);
+	}
+	static const TArray<FVector2D> NoUV;
+	static const TArray<FProcMeshTangent> NoTangents;
+	if (Num != Had)   // a new count (another detail, a blink): the section is made anew, otherwise updated in place
+	{
+		TArray<int32> Tri;
+		Tri.SetNumUninitialized(Num);
+		for (int32 k = 0; k + 2 < Num; k += 3) { Tri[k] = k; Tri[k + 1] = bFlip ? k + 2 : k + 1; Tri[k + 2] = bFlip ? k + 1 : k + 2; }
+		M->CreateMeshSection_LinearColor(0, V, Tri, N, NoUV, C, NoTangents, false, false);
+		M->SetMaterial(0, Material);
+	}
+	else M->UpdateMeshSection_LinearColor(0, V, N, NoUV, C, NoTangents, false);
+	return Num;
+}
+
 ABrixPeople::ABrixPeople()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -175,33 +206,7 @@ void ABrixPeople::Tick(float DeltaSeconds)
 			// the body as people.js draws it facing yaw 0 at the origin, in Unreal's centimetres; the component turns and places it
 			Scratch.Reset();
 			DrawBrixPerson(Rules, L, FVector::ZeroVector, 0.0, O, Scratch);
-			const int32 Num = Scratch.Pos.Num();
-			V.SetNumUninitialized(Num, EAllowShrinking::No);
-			N.SetNumUninitialized(Num, EAllowShrinking::No);
-			C.SetNumUninitialized(Num, EAllowShrinking::No);
-			for (int32 k = 0; k < Num; ++k)
-			{
-				const FVector3f& Q = Scratch.Pos[k];
-				const FVector3f& Nn = Scratch.Normal[k];
-				const FVector3f& Cc = Scratch.Colour[k];
-				V[k] = FVector(Q.X, Q.Z, Q.Y) * CmPerM;
-				N[k] = FVector(Nn.X, Nn.Z, Nn.Y);
-				C[k] = FLinearColor(Cc.X, Cc.Y, Cc.Z, 1.f);
-			}
-			if (Num != Slot.Verts)
-			{
-				Tri.SetNumUninitialized(Num, EAllowShrinking::No);
-				for (int32 k = 0; k + 2 < Num; k += 3)
-				{
-					Tri[k] = k;
-					Tri[k + 1] = bFlipWinding ? k + 2 : k + 1;
-					Tri[k + 2] = bFlipWinding ? k + 1 : k + 2;
-				}
-				M->CreateMeshSection_LinearColor(0, V, Tri, N, NoUV, C, NoTangents, false, false);
-				M->SetMaterial(0, BodyMaterial);
-			}
-			else M->UpdateMeshSection_LinearColor(0, V, N, NoUV, C, NoTangents, false);
-			Slot.Verts = Num;
+			Slot.Verts = BrixBodyToMesh(M, Scratch, Slot.Verts, bFlipWinding, BodyMaterial);
 			Slot.Lod = O.Lod;
 			Slot.Age = 0;
 		}

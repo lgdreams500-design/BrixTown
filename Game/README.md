@@ -81,7 +81,8 @@ checks the port against people.js: the same looks, and bodies with the same vert
 procedural mesh rebuilt every one to three frames and moved every frame; the far figures are one mesh updated in place
 (moving instanced boxes every frame cost 8 ms of the render thread). Their material is `/Game/People/M_People` (the
 vertex colour, matte), made by `Tools/unreal/make_people_material.py`. Standing residents stand; sitting, talking faces,
-umbrellas and boards are not brought over yet. At High on this laptop: 54.5 frames a second on a street with 32
+umbrellas and boards are not brought over yet. The player is the slice's player too (people.js player(), in people.json) at full detail, walking
+by their signature and running by the slice's Run, until the designed character (CHR-001) comes over. At High on this laptop: 54.5 frames a second on a street with 32
 residents near (the same as with none), 49 to 52 in the morning school rush of some 150 (the people take 9 to 11 ms of
 the game thread there).
 

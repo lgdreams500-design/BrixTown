@@ -1,20 +1,20 @@
 #include "BrixCharacter.h"
 
+#include "BrixPeople.h"
 #include "BrixUnits.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/StaticMeshComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
-#include "Engine/StaticMesh.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "InputModifiers.h"
-#include "Materials/MaterialInstanceDynamic.h"
+#include "Misc/Paths.h"
+#include "ProceduralMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
 
 using BrixUnits::CmPerM;
@@ -33,22 +33,14 @@ ABrixCharacter::ABrixCharacter()
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(Boom, USpringArmComponent::SocketName);
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMesh(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
-	Body = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Body"));
-	Body->SetupAttachment(RootComponent);
-	Body->SetStaticMesh(CylinderMesh.Object);
-	Body->SetRelativeLocation(FVector(0, 0, -20));        // feet at the capsule's bottom (-85), shoulders at +45
-	Body->SetRelativeScale3D(FVector(0.42f, 0.32f, 1.3f));
-	Body->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	Head = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Head"));
-	Head->SetupAttachment(RootComponent);
-	Head->SetStaticMesh(SphereMesh.Object);
-	Head->SetRelativeLocation(FVector(0, 0, 62));
-	Head->SetRelativeScale3D(FVector(0.27f));
-	Head->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	static ConstructorHelpers::FObjectFinder<UMaterialInterface> GreyboxMat(TEXT("/Game/Greybox/M_Greybox.M_Greybox"));
-	Greybox = GreyboxMat.Object;
+	PrimaryActorTick.bCanEverTick = true;
+	Person = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("Person"));
+	Person->SetupAttachment(RootComponent);
+	Person->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// feet at the capsule's bottom; the body is drawn facing the slice's yaw 0 (Unreal's -Y), turned to face the actor's +X
+	Person->SetRelativeLocationAndRotation(FVector(0, 0, -85), FRotator(0, 90, 0));
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> PeopleMat(TEXT("/Game/People/M_People.M_People"));
+	BodyMaterial = PeopleMat.Object;
 }
 
 void ABrixCharacter::BeginPlay()
@@ -57,10 +49,9 @@ void ABrixCharacter::BeginPlay()
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed * CmPerM;
 	Boom->TargetArmLength = CameraDistance * CmPerM;
 	Boom->SocketOffset = FVector(0, 0, CameraHeight * CmPerM);
-	for (auto [Part, Colour] : { TPair<UStaticMeshComponent*, FLinearColor>(Body, BodyColour), TPair<UStaticMeshComponent*, FLinearColor>(Head, HeadColour) })
-	{
-		if (UMaterialInstanceDynamic* Mat = Part->CreateDynamicMaterialInstance(0, Greybox)) Mat->SetVectorParameterValue(TEXT("Color"), Colour);
-	}
+	FString Error;
+	if (!LoadBrixPeopleRules(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/people.json"))), Rules, Error))
+		UE_LOG(LogTemp, Error, TEXT("Brix Town: %s"), *Error);
 }
 
 void ABrixCharacter::MakeInput()
@@ -141,3 +132,22 @@ void ABrixCharacter::Look(const FInputActionValue& Value)
 
 void ABrixCharacter::StartRun() { GetCharacterMovement()->MaxWalkSpeed = RunSpeed * CmPerM; }
 void ABrixCharacter::StopRun() { GetCharacterMovement()->MaxWalkSpeed = WalkSpeed * CmPerM; }
+
+void ABrixCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	if (!Rules.Roles.Num()) return;
+	// the slice's stepPlayer(): the phase runs on with the distance covered, by the Run signature when running
+	const double Speed = GetVelocity().Size2D() / CmPerM;
+	FBrixLook L = Rules.Player;
+	if (Speed > (WalkSpeed + RunSpeed) * 0.5) L.SigName = TEXT("Run");
+	Phase = FMath::Fmod(Phase + Speed * DeltaSeconds / BrixStepLength(Rules.Sig(L.SigName), L.S), 1.0);
+	FBrixDrawOptions O;
+	O.Pose = Speed > 0.1 ? 1 : 0;
+	O.Phase = Phase;
+	O.Seconds = GetWorld()->GetTimeSeconds();
+	O.Lod = 0;
+	Scratch.Reset();
+	DrawBrixPerson(Rules, L, FVector::ZeroVector, 0.0, O, Scratch);
+	Verts = BrixBodyToMesh(Person, Scratch, Verts, false, BodyMaterial);
+}
