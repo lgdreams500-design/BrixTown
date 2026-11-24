@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-MENU
 title: Brix Town — The game menu (money, belongings, properties, journal, wardrobe, map, settings, save, help)
-version: 0.3.2
+version: 0.3.3
 status: in-progress      # F-UI-MENU level 2, the others level 1, accepted and built in the slice
 last_updated: 2026-11-24
 parent: docs/specs/GAME_SPEC.md        # extends §UI (UI-001 to UI-004); same ID rules; UI, INV and CHR rows
@@ -96,6 +96,7 @@ with a keyboard and mouse; the other two are its defaults for when they come (UI
 | UI-016 | Each page shall have a board colour and a lettering colour from data, taken from the town's palette, with the lettering readable on the board (contrast at least 3 to 1); a page's header and main buttons use them. | F-UI-MENU | 2 | P1 | accepted | `test_UI_016_every_tab_has_a_board_colour_that_can_be_read` |
 | UI-017 | Where the menu shows the player it shall show the character themself, live (the face on the Me board and in the top bar; the whole character, from the front, in the wardrobe), not a drawing; a drawing may stand in only when the character cannot be framed. | F-UI-MENU | 2 | P1 | accepted | `test_UI_017_the_menu_shows_the_player_themself`; slice |
 | UI-018 | The big map (M, and the menu's Map page) shall show the town as it is now, the open ground outside Old Town included (woods, commons and ponds, orchards, fields and their crops, plots for sale, paths, tracks and the roads out of town; WLD-056), with every tree; show the player as an arrow pointing the way they look; and zoom about the pointer with the wheel (1 to 6 times, + and - about the middle, 0 or the middle button for the whole town) and move when dragged, a drag never setting a mark. Owner, 2026-11-24. | F-UI-MENU | 2 | P1 | accepted | Slice: `drawBase`, `drawMaps` in `play.js` |
+| UI-019 | The Me tab shall list the achievements (QST-009): those earned first, each with the day it was earned, then those still to earn, dimmed, each with how it is earned; and how many of all are earned. | F-UI-REWARD | 2 | P1 | accepted | Slice: `meTab` in `life.js` |
 | CHR-014 | The player shall change what they wear (hair, clothes, their colours, extras; never the body) at any time, free, from the choices of the character designer. | F-CHR-WARDROBE | 1 | P0 | accepted | `test_CHR_014_an_outfit_is_only_clothes_and_hair_the_designer_offers` |
 | CHR-015 | The player shall save what they wear as a named outfit (up to a number in data), change into one and forget one; outfits are kept in the save. | F-CHR-WARDROBE | 1 | P1 | accepted | `test_CHR_015_the_wardrobe_holds_a_few_outfits` |
 | CHR-016 | Clothes bought at an outlet (ECO-014) shall be kept as owned and listed in the wardrobe as *Clothes you own*; putting one on sets the parts of the look it names (a garment and its colour, a bottom, shoes, a scarf, a cap, a bag) and nothing else, each a value the character designer offers. Owned clothes are kept in the save. This is the part of `F-CHR-WARDROBE` level 2 the owner asked for on 2026-11-24 ("some like clothes will be made available in wardrobe"); the pick stays at level 1, so changing is still free and anywhere, with no wardrobe at home. | F-CHR-WARDROBE | 2 | P1 | in-progress | `test_CHR_016_*` (Tools/citysim/test_economy.py) |
@@ -114,7 +115,8 @@ following a quest, a dot on a board with something new): not proposed in the bac
 
 | Version | Date | Change |
 |---|---|---|
-| 0.3.2 | 2026-11-24 | CHR-016: clothes bought at the mall's outlets are listed in the wardrobe and can be put on (owner's request; ADR-0041). Belongings lists what is bought for the home and carried from the outlets as it does everything else. `F-CHR-WARDROBE` stays picked at 1. |
+| 0.3.3 | 2026-11-24 | CHR-016: clothes bought at the mall's outlets are listed in the wardrobe and can be put on (owner's request; ADR-0041). Belongings lists what is bought for the home and carried from the outlets as it does everything else. `F-CHR-WARDROBE` stays picked at 1. |
+| 0.3.2 | 2026-11-24 | Achievements on the Me tab (UI-019), from the owner's pick of `F-UI-REWARD` level 2. |
 | 0.3.1 | 2026-11-24 | The big map shows the outskirts and every tree, the player as an arrow, and zooms and pans (UI-018; owner's request). |
 | 0.3.0 | 2026-11-23 | The menu's look and organisation (owner: "C, Painted signs", ADR-0033): §1.1, UI-015, UI-016. On 2026-11-24 the owner added: the real face, live, and the whole character in the wardrobe (UI-017). |
 | 0.2.0 | 2026-11-23 | `F-UI-MENU` level 2 (owner: "now build the game menu level 2"): UI-011 to UI-014, the Me and Storage tabs, the map's mark and filters, three save slots. |

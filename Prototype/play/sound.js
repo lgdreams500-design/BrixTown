@@ -15,7 +15,7 @@ var Sound = (() => {
   const D = window.WASTED, S = D.sound;
   if (!S || !(window.AudioContext || window.webkitAudioContext)) {
     const no = () => { };
-    return { start: no, toggle: no, act: no, line: no, hush: no, frame: no, horn: no, radio: no, car: no, init: no, preview: () => false, state: () => ({ on: false, reason: S ? "no Web Audio" : "no sound data" }) };
+    return { start: no, toggle: no, act: no, reward: no, line: no, hush: no, frame: no, horn: no, radio: no, car: no, init: no, preview: () => false, state: () => ({ on: false, reason: S ? "no Web Audio" : "no sound data" }) };
   }
   const H = S.hearing, MU = S.music, V = S.vehicles, A = S.ambience, FS = S.footsteps, VO = S.voices;
   const hm = s => (+s.slice(0, 2)) * 60 + (+s.slice(3));
@@ -30,7 +30,7 @@ var Sound = (() => {
   try { on = localStorage.getItem("wasted.sound") !== "off"; } catch (e) { }
   const MIXK = { master: 1, music: 1, world: 1, voice: 1, action: 1 };   // the menu's shares of each level (mix)
   let master, meter, bus = {}, outside, outsideLP, noise, L = { x: 0, z: 0, yaw: 0, lot: null }, lots = [], fountains = [], gardens = [];
-  const st = { engines: 0, trams: 0, murmur: 0, chat: 0, crowd: 0, acts: 0, laughs: 0, calls: 0, shouts: 0, greets: 0, place: null, radio: 0, mood: null, steps: 0, birds: 0, line: false, lastAct: null };
+  const st = { engines: 0, trams: 0, murmur: 0, chat: 0, crowd: 0, acts: 0, laughs: 0, calls: 0, shouts: 0, greets: 0, place: null, radio: 0, mood: null, steps: 0, birds: 0, line: false, lastAct: null, rewards: 0 };
 
   // ---- the graph
   function build() {
@@ -116,6 +116,41 @@ var Sound = (() => {
   function act(name, x, z) {                             // an action sound, here or out in the world
     if (!ready || !S.actions[name]) return; st.lastAct = name;
     const d = once(bus.action, x, z, 30); if (d) recipe(S.actions[name], d);
+  }
+
+  // ---- money coming in (SND-019, SND-020): the bells of a reward and the till of the bank's interest, from S.rewards.
+  // The notes ring on in a small bright room of their own (two delays that feed each other), on the action bus.
+  const RW = S.rewards; let rwOut = null;
+  function rewardOut() {
+    if (rwOut) return rwOut;
+    const R = RW.room, send = gainOf(R.send_gain), d1 = ctx.createDelay(1), d2 = ctx.createDelay(1), fb = gainOf(R.feedback), lp = filt("lowpass", R.lowpass_hz);
+    d1.delayTime.value = R.delays[0]; d2.delayTime.value = R.delays[1];
+    rwOut = gainOf(RW.gain); rwOut.connect(bus.action); rwOut.connect(send); chain(send, d1, d2, lp, fb, d1); d1.connect(bus.action); d2.connect(bus.action);
+    return rwOut;
+  }
+  function struck(voice, t, midi, gain, len) {           // one note of a reward voice: each partial with its own level and length
+    const v = RW.voices[voice], f = mtof(midi + 12 * (v.octave || 0)), g = rewardOut(); len = len || v.len;
+    for (const [ratio, level, part] of v.partials) { const o = ctx.createOscillator(), e = ctx.createGain(); o.frequency.value = f * ratio; if (ratio === 1 && v.wave) o.type = v.wave; chain(o, e, g); env(e, t, v.attack, gain * level, len * part); o.start(t); o.stop(t + v.attack + len * part + .1); }
+    if (v.click_hz) burst(g, t, "bandpass", v.click_hz, 3, gain * v.click_gain, .001, .02);
+  }
+  const stepOf = (s, k) => s.root + 12 * Math.floor(k / s.scale.length) + s.scale[k % s.scale.length];
+  function reward(what, i, n) {                          // what: quest_start, coin_out, coin_land, coin_take (i of n), quest_end, interest_start, interest_coin (i), interest_end, achievement
+    if (!ready || !RW) return; st.lastAct = "reward:" + what; st.rewards++;
+    const t = now() + .02, q = RW.quest, b = RW.interest, g = rewardOut();
+    if (what === "quest_start") for (const [d, up] of q.fanfare) struck(q.voice, t + d, q.root + up, q.fanfare_gain, q.fanfare_len);
+    else if (what === "coin_out") { const o = ctx.createOscillator(), e = ctx.createGain(); o.frequency.setValueAtTime(q.pop.hz[0], t); o.frequency.exponentialRampToValueAtTime(q.pop.hz[1], t + q.pop.len * .6); chain(o, e, g); env(e, t, .004, q.pop.gain, q.pop.len); o.start(t); o.stop(t + q.pop.len + .1); }
+    else if (what === "coin_land") ping(g, t, rnd(q.clink.hz[0], q.clink.hz[1]), q.clink.gain, q.clink.len);
+    else if (what === "coin_take") struck(q.voice, t, stepOf(q, Math.round(i * Math.min(1, q.top_step / Math.max(1, n - 1)))), q.take_gain, q.take_len);
+    else if (what === "quest_end") { for (const up of q.chord) struck(q.voice, t, q.root + 12 + up, q.chord_gain, q.chord_len); q.shimmer.forEach((up, k) => struck(q.voice, t + .08 + k * q.shimmer_gap, q.root + 24 + up, q.shimmer_gain, q.shimmer_len)); }
+    else if (what === "interest_start") { burst(g, t, "lowpass", b.thud.noise_hz, 1, b.thud.noise_gain, .004, b.thud.len); ping(g, t, b.thud.hz, b.thud.gain, b.thud.len); }
+    else if (what === "interest_coin") struck(b.voice, t, stepOf(b, i), b.tick_gain, b.tick_len);
+    else if (what === "interest_end") for (const [d, midi, level, len] of b.end) struck(b.end_voice, t + d, midi, level, len);
+    else if (what === "achievement") {                   // SND-021: a harp sweep, a wide bell chord, three twinkles
+      const a = RW.achievement, s = a.sweep, c = a.chord, w = a.twinkle;
+      s.notes.forEach((m, k) => struck(s.voice, t + k * s.gap, m, s.gain + k * s.gain_step, s.len));
+      for (const m of c.notes) struck(c.voice, t + c.at, m, c.gain, c.len);
+      w.notes.forEach((m, k) => struck(w.voice, t + w.at + k * w.gap, m, w.gain, w.len));
+    }
   }
 
   // ---- instruments for the music (SND-010 to SND-012)
@@ -667,7 +702,7 @@ var Sound = (() => {
       Object.assign(MIXK, m); if (onNow !== undefined) on = !!onNow; if (!ctx) return;
       master.gain.value = on ? S.mix.master * MIXK.master : 0; for (const k of ["world", "voice", "action"]) bus[k].gain.value = S.mix[k] * MIXK[k]; bus.music.gain.value = S.mix.music * MIXK.music;
     },
-    act, line, hush, frame, render,
+    act, reward, line, hush, frame, render,
     preview(style) {                                     // play one music style on its own (jukebox.html); null stops it
       if (!ready) return false;
       if (pv) { const o = pv; o.b.fade(0, .15); clearInterval(o.timer); setTimeout(() => o.b.out.disconnect(), 800); pv = null; }

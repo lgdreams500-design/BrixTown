@@ -1,4 +1,4 @@
-# Mall shopping 30: buying at each outlet (ADR-0041)
+# Mall shopping 32: buying at each outlet (ADR-0041)
 
 Pictures from the playable slice (`Prototype/play/index.html?auto=1&rich=1`), taken from the page's own picture; the
 preview window was hidden, so the lettering over the game (the prompt and the panel) is not in them.

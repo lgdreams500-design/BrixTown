@@ -9,6 +9,7 @@ import world                                               # noqa: E402
 import build_play                                          # noqa: E402
 import economy as ec                                       # noqa: E402
 import quests as qs                                        # noqa: E402
+import achievements as ach                                 # noqa: E402
 
 W = world.load()
 CITY = world.simulation(W)
@@ -381,6 +382,18 @@ class TheBank(unittest.TestCase):
         e.move("p:savings", "p:cash", 1000)
         self.assertEqual(e.L.balance("p:savings"), 0)
 
+    def test_SND_020_the_banks_interest_is_what_the_player_is_shown(self):
+        e, q = player()
+        e.open_account("current")
+        e.open_account("savings")
+        e.move("p:current", "p:savings", 2000)
+        before, n = e.L.balance("p:current") + e.L.balance("p:savings"), len(e.L.tx)
+        e.advance(3, 10)                                    # three days settled at once: one showing, for all of it
+        shown = world.reward_events(W["sound"], e.L.tx[n:])
+        self.assertEqual([x["kind"] for x in shown], ["interest"])
+        self.assertGreater(shown[0]["amount"], 0)
+        self.assertEqual(shown[0]["amount"], e.L.balance("p:current") + e.L.balance("p:savings") - before)
+
     def test_BANK_001_savings_earn_interest_each_day(self):
         e, q = player()
         e.open_account("current")
@@ -604,6 +617,16 @@ class TheQuests(unittest.TestCase):
             self.assertTrue(k == first or W["quests"]["quests"][k]["needs"], k)
         self.assertEqual(q.offers("r0518"), [])             # not offered until the first is done
 
+    def test_SND_019_a_quest_reward_is_what_the_player_is_shown(self):
+        first = W["quests"]["first"]
+        ending, E = next((k, v) for k, v in W["quests"]["quests"][first]["endings"].items() if v.get("pay"))
+        e, q = player()
+        n = len(e.L.tx)
+        play_to(self, e, q, first, ending)
+        shown = [x for x in world.reward_events(W["sound"], e.L.tx[n:]) if x["kind"] == "reward"]
+        self.assertEqual(sum(x["amount"] for x in shown), E["pay"])
+        self.assertTrue(all(x["coins"] >= 1 for x in shown))
+
     def test_QST_003_every_starter_line_branches_and_QST_004_pays_through_the_ledger(self):
         for qid, Q in W["quests"]["quests"].items():
             if not Q.get("starter"):
@@ -689,6 +712,56 @@ class TheJobs(unittest.TestCase):
         self.assertEqual(e.total_money(), before + R["items"][shop["item"]]["price"] + shop["pay"])
         self.assertGreaterEqual(R["items"][shop["item"]]["price"] + shop["pay"], spent)
         invariant(self, e)
+
+
+class TheAchievements(unittest.TestCase):
+    A = W["achievements"]
+
+    def test_QST_009_achievement_data_is_sound(self):
+        self.assertEqual(world.achievement_problems(W), [])
+        self.assertGreaterEqual(len(self.A["list"]), 6)
+
+    def test_QST_009_broken_achievements_are_caught(self):
+        w = copy.deepcopy(W)
+        L = w["achievements"]["list"]
+        L[0]["when"]["fact"] = "dragons_slain"
+        L[1]["when"]["at_least"] = 0
+        L[2]["id"] = L[3]["id"]
+        L[4]["name"] = " "
+        p = world.achievement_problems(w)
+        for bit in ("unknown fact: 'dragons_slain'", "whole number of at least 1", "used twice", "has no name"):
+            self.assertTrue(any(bit in x for x in p), bit)
+
+    def test_QST_009_a_new_player_has_earned_nothing(self):
+        e, q = player()
+        self.assertEqual(ach.newly(self.A, ach.facts(self.A, e, q), {}), [])
+
+    def test_QST_009_the_first_quest_earns_an_achievement_once(self):
+        first = W["quests"]["first"]
+        e, q = player()
+        have = {}
+        play_to(self, e, q, first, next(iter(W["quests"]["quests"][first]["endings"])))
+        got = ach.award(self.A, ach.facts(self.A, e, q), have, e.day)
+        self.assertIn("first_quest", got)
+        self.assertEqual(have["first_quest"], e.day)
+        self.assertEqual(ach.award(self.A, ach.facts(self.A, e, q), have, e.day + 1), [])   # not earned twice
+        self.assertEqual(have["first_quest"], e.day)
+
+    def test_QST_009_a_paid_job_counts_and_a_quest_reward_does_not(self):
+        e, q = player()
+        f0 = ach.facts(self.A, e, q)
+        e.L.post(e.day, e.minute, "Reward: A parcel", [("sys:rewards", -500), ("p:cash", 500)])
+        self.assertEqual(ach.facts(self.A, e, q)["jobs_paid"], f0["jobs_paid"])
+        e.L.post(e.day, e.minute, "Job: A delivery", [("sys:rewards", -500), ("p:cash", 500)])
+        self.assertEqual(ach.facts(self.A, e, q)["jobs_paid"], f0["jobs_paid"] + 1)
+
+    def test_QST_009_what_is_earned_is_kept(self):
+        s = ach.check_script(self.A)
+        self.assertEqual(s["want"][0], [])
+        self.assertIn("first_quest", s["want"][1])
+        self.assertEqual(s["want"][-1], [])                                  # the facts fall back to nothing: nothing new, nothing lost
+        self.assertEqual(sorted(s["have"]), sorted(a["id"] for a in self.A["list"]))   # the script earns every one
+        self.assertEqual(len([i for w_ in s["want"] for i in w_]), len(self.A["list"]))  # each exactly once
 
 
 class TheDesigner(unittest.TestCase):

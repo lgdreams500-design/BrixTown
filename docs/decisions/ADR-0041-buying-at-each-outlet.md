@@ -74,4 +74,4 @@ Only the owner picks levels. Nothing was recorded in `feature_choices.json` for 
 - No automated test drives the page. The rule's port is checked by the page's self-test; the prompt, the panel, the
   wardrobe and placing a bought guitar were tried by hand in the slice.
 
-Pictures: `Art/StyleTests/mall_shopping_30/`.
+Pictures: `Art/StyleTests/mall_shopping_32/`.

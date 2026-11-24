@@ -2479,6 +2479,52 @@
         "depth": 3,
         "full": 3
       }
+    },
+    {
+      "id": "F-UI-REWARD",
+      "area": "ui",
+      "title": "Reward feedback",
+      "why": "Earning money should feel good and be noticed: the player sees and hears it arrive instead of a number changing in the corner.",
+      "pillars": [
+        2
+      ],
+      "spec": [
+        "SND-019",
+        "SND-020",
+        "SND-021",
+        "QST-009",
+        "UI-019"
+      ],
+      "levels": [
+        {
+          "name": "Number only",
+          "what": "As before: the purse number changes and the amount shows beside it for a moment.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Coins and chimes",
+          "what": "A quest or job reward springs coins out around the player; they are drawn back in and fly to the purse, each ringing a note higher, and the purse counts up and glows (sample Q1, Lantern bells). The bank's interest slides a slip out under the purse and pays coins into the bank balance with a till and a bell (sample I1). Sounds and timings are data.",
+          "effort": "S",
+          "needs": {
+            "F-QUEST": 1,
+            "F-SND-ACTION": 0
+          }
+        },
+        {
+          "name": "Achievements",
+          "what": "Also named achievements for first and rare moments (a first home, a first job done, a loan paid off), listed as data: a painted-sign banner drops in with sparkles and a fanfare (sample A1, Town fanfare), and the menu lists the ones earned. Kept in the save.",
+          "effort": "M",
+          "needs": {
+            "F-UI-MENU": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 2,
+        "full": 2
+      }
     }
   ]
 }
