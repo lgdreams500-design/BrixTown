@@ -22,13 +22,14 @@ Check Epic's hardware and software specification page for UE 5.8 for exact figur
 | GPU | Intel integrated graphics only, no discrete card | **Weak point.** The editor will run, but Lumen, Nanite and large scenes will be slow. Use scalability settings at Medium or lower, and treat this laptop as below the game's eventual minimum spec. |
 | App control | System Information reports "App Control for Business policy: Enforced" | Watch for Windows blocking locally compiled, unsigned game binaries once C++ work starts. |
 
-### Install status (2026-11-21)
+### Install status (2026-11-24)
 | Tool | Status |
 |---|---|
 | Blender | Installed from the Microsoft Store: version 5.3 (the Store has no 5.2 LTS listing; it auto-updates). |
-| Epic Games Launcher | Installed from the Microsoft Store; waiting for Epic account sign-in. |
-| Unreal Engine 5.8 | Not yet installed (needs the sign-in above). |
-| Visual Studio, Git, Git LFS | Not yet installed. |
+| Epic Games Launcher | Installed and signed in. |
+| Unreal Engine 5.8 | **5.8.4** (launcher build, changelist 58902052) in `C:\Users\leena\Epic Games\UE_5.8`, 29 GB. This install has no project templates folder, so the project is set up by hand (`Game/README.md`). |
+| Visual Studio | **Visual Studio Professional 2026** (18.12) with the Game development with C++ workload and MSVC. |
+| Git, Git LFS | Git 2.56.1 and Git LFS 3.8.1; the LFS hooks are installed in the repository. Version control is Git with LFS (ADR-0002). |
 
 ## 2. Install order
 | # | Step | Notes | Done |
