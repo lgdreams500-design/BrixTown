@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 42 of 56 | 9 of 56 | 9 of 56 |
-| Size of the plan (points) | 536 | 451 | 871 |
-| Size of the suggested plan | 138 | 411 | 839 |
+| Decided | 43 of 57 | 9 of 57 | 9 of 57 |
+| Size of the plan (points) | 548 | 463 | 883 |
+| Size of the suggested plan | 150 | 423 | 851 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -70,6 +70,7 @@
 | **Tram or bus** `F-VEH-TRANSIT` | 2 Network ★ | undecided | undecided | Owner, 2026-11-23: "Level 2: Network" for buses; keep the tram and add buses. Residents of independent houses own the cars; those in the central flats mostly don't and use public transport. Depth and full not picked yet. |
 | **Driving yourself** `F-VEH-DRIVE` | 2 Cars ★ | 2 Cars ★ | 2 Cars ★ | Owner, 2026-11-22: walking, and drivable cars, from the first slice. |
 | **Crash damage** `F-VEH-CRASH` | 2 Broken until mended ★ | undecided | undecided | Owner, 2026-11-22: objects on the pavements, trees and building corners destructible when driving, with a breaking animation; "Until a worker fixes it", "Fast hits break", residents "Yes, they shout". Later milestones not stated. Then the same day: "remove speed requirement for the damage, it should damage at any speed". |
+| **Skateboards** `F-VEH-SKATES` | 2 Skate store and tiers | undecided | undecided | Owner, 2026-11-24: "Level 2 for slice" (asked which level for skates after the models, Y to carry or wear and the store requirements were built, PR #28). Then the same day the owner had the skates made skateboards; the pick stands. The skate store and buying (CITY-102, CITY-103) are to be added separately. Later milestones not stated. |
 
 ## Nature and time
 
@@ -397,3 +398,8 @@
 - 0 A list: As before: a table of names with what is left, a price and a Buy button on each row. Size -.
 - 1 Objects in a grid: Every counter (shops, cafes, a mall's outlets) and the building designer's list of pieces show the things as objects in a grid, the chosen one large and turning beside it with its details and one button (small cells in a narrow panel). A thing with no object of its own shows a stand-in: a parcel, a paper bag, a cup, folded cloth in the clothing's own colour. Size M.
 - 2 Every thing its own object: Every carried and eaten thing has its own object made in Blender (about 100), clothes are shown worn on the player before buying, furniture shows its Blender piece, and several things can be put in a basket and paid for at once. Size XL.
+
+**Skateboards** (`F-VEH-SKATES`). A fast way to cross town, and something to save up for: better skateboards from the skate store as the player earns money.
+- 0 Skate store window: A skate store in town with boards on show; residents ride past now and then. The player cannot ride. Size S.
+- 1 Boards to ride: Skateboards the player owns (manual 50, electric 100, Neon Boost 250 km/h) are carried in the hand and got on or off with one key (Y); no walk on a board: the manual board is pushed with one foot while W is held, the powered boards are ridden standing; glides, brakes and steers, slower indoors. Given in tests (?auto=1) until the store. Size M.
+- 2 Skate store and tiers: Buy skateboards at the skate store with money through the ledger: manual (50 km/h), electric (100 km/h), Neon Boost (250 km/h); owned boards are belongings, a faster board bought becomes the one in use; speeds and prices are data. Size L.

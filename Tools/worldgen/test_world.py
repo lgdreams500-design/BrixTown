@@ -772,6 +772,37 @@ class GettingOutOfTheWay(unittest.TestCase):
 
 
 
+class Skateboards(unittest.TestCase):
+    """CITY-098 to CITY-100: the kinds of skateboard, their speeds and sizes, and what ?auto=1 gives the player (World/rules/boards.json)."""
+    R = W["boards"]
+
+    def test_CITY_098_board_kinds_and_speeds(self):
+        k = self.R["kinds"]
+        self.assertEqual({n: k[n]["top_kmh"] for n in k}, {"manual": 50, "electric": 100, "neon_boost": 250})   # the owner, 2026-11-24
+        self.assertEqual(self.R["order"], ["manual", "electric", "neon_boost"])
+        tops = [k[n]["top_kmh"] for n in self.R["order"]]
+        self.assertEqual(tops, sorted(tops))                                 # each step up the store is faster
+        for n, v in k.items():
+            for f in ("accel_kmh_s", "glide_kmh_s", "brake_kmh_s"):
+                self.assertGreater(v[f], 0, n + " " + f)
+            self.assertLess(v["glide_kmh_s"], v["brake_kmh_s"], n)           # letting go glides; pulling back stops sooner
+            self.assertLess(v["top_kmh"] / v["accel_kmh_s"], 10, n)          # top speed in under ten seconds
+            self.assertTrue(0.6 <= v["deck_m"] <= 1.2 and 0.15 <= v["width_m"] <= 0.3 and 0.06 <= v["top_m"] <= 0.2, n)   # a skateboard's size
+            self.assertLess(v["wheelbase_m"], v["deck_m"], n); self.assertLess(v["track_m"], v["width_m"], n); self.assertLess(v["wheel_m"], v["top_m"], n)   # wheels under the deck
+            for c in ("deck", "grip", "truck", "wheel"):
+                self.assertEqual(len(v[c]), 3, n + " " + c)
+            self.assertEqual(v["push"], not v["powered"], n)                 # the owner: a foot pushes the manual board only
+        self.assertLess(self.R["indoor_top_kmh"], min(tops))                 # indoors nobody goes at full speed
+        self.assertEqual(self.R["mall_top_kmh"], 30)                         # the owner, 2026-11-24: 30 km/h inside the mall
+        self.assertLess(self.R["indoor_top_kmh"], self.R["mall_top_kmh"])
+        self.assertTrue(0 < self.R["turn_rate"] <= 6 and 0 < self.R["cam_follow"], "A and D turn the rider, the camera follows")
+
+    def test_CITY_100_auto_owns_all_and_rides_electric(self):
+        self.assertEqual(sorted(self.R["auto_owned"]), sorted(self.R["kinds"]))
+        self.assertEqual(self.R["auto_equipped"], "electric")               # the owner, 2026-11-24: ?auto=1 loads the electric board
+
+
+
 class TheFurnitureOutlet(unittest.TestCase):
     """FURNITURE FURN-020, FURN-021: the huge outlet outside the East Gate (Q-30, Tools/worldgen/add_outlet_01.py)."""
 

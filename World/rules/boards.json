@@ -1,0 +1,155 @@
+{
+ "note": "Skateboards (F-VEH-SKATES; LIVING_CITY CITY-098 to CITY-104). The owner, 2026-11-24, first asked for skates, then the same day had them made skateboards: the manual board is pushed along with one foot while W is held, the electric and Neon Boost boards are ridden standing still. Each kind: top speed (km/h, the owner's), how fast it gets there, how it glides and brakes, whether a foot pushes it, its size (metres: deck length and width, height of the deck top above the ground, wheelbase, track, wheel diameter; measured from look test 35) and colours (linear RGB 0-1, from look test 35, Tools/blender/skateboards_35.py). Prices come with the store (CITY-102, CITY-103). All but the top speeds are [ASSUMPTION]. turn_rate: how fast A and D turn the rider standing still (radians a second), slower at speed (divided by 1 + speed in m/s / 15); cam_follow: how fast the camera comes round behind. indoor_top_kmh: the limit inside buildings; mall_top_kmh: inside a mall (the owner, 2026-11-24: \"allow 30 km/h inside the mall\").",
+ "kinds": {
+  "manual": {
+   "name": "Manual board",
+   "top_kmh": 50,
+   "accel_kmh_s": 12,
+   "glide_kmh_s": 6,
+   "brake_kmh_s": 40,
+   "powered": false,
+   "push": true,
+   "deck_m": 0.8,
+   "width_m": 0.21,
+   "top_m": 0.103,
+   "deck": [
+    0.52,
+    0.4,
+    0.2
+   ],
+   "grip": [
+    0.24,
+    0.16,
+    0.11
+   ],
+   "truck": [
+    0.58,
+    0.56,
+    0.52
+   ],
+   "wheel": [
+    0.52,
+    0.4,
+    0.2
+   ],
+   "glow": null,
+   "wheelbase_m": 0.38,
+   "track_m": 0.166,
+   "wheel_m": 0.062
+  },
+  "electric": {
+   "name": "Electric board",
+   "top_kmh": 100,
+   "accel_kmh_s": 30,
+   "glide_kmh_s": 8,
+   "brake_kmh_s": 60,
+   "powered": true,
+   "push": false,
+   "deck_m": 0.98,
+   "width_m": 0.25,
+   "top_m": 0.123,
+   "deck": [
+    0.2,
+    0.36,
+    0.37
+   ],
+   "grip": [
+    0.09,
+    0.09,
+    0.11
+   ],
+   "truck": [
+    0.58,
+    0.56,
+    0.52
+   ],
+   "wheel": [
+    0.09,
+    0.09,
+    0.11
+   ],
+   "glow": null,
+   "battery": [
+    0.09,
+    0.09,
+    0.11
+   ],
+   "band": [
+    0.52,
+    0.4,
+    0.2
+   ],
+   "light": [
+    0.3,
+    1.0,
+    0.45
+   ],
+   "wheelbase_m": 0.66,
+   "track_m": 0.196,
+   "wheel_m": 0.09
+  },
+  "neon_boost": {
+   "name": "Neon Boost board",
+   "top_kmh": 250,
+   "accel_kmh_s": 70,
+   "glide_kmh_s": 10,
+   "brake_kmh_s": 90,
+   "powered": true,
+   "push": false,
+   "deck_m": 0.96,
+   "width_m": 0.24,
+   "top_m": 0.132,
+   "deck": [
+    0.1,
+    0.14,
+    0.24
+   ],
+   "grip": [
+    0.09,
+    0.09,
+    0.11
+   ],
+   "truck": [
+    0.1,
+    0.1,
+    0.11
+   ],
+   "wheel": [
+    0.02,
+    0.55,
+    1.0
+   ],
+   "glow": [
+    0.02,
+    0.55,
+    1.0
+   ],
+   "boost": true,
+   "core": [
+    1.0,
+    0.55,
+    0.22
+   ],
+   "wheelbase_m": 0.62,
+   "track_m": 0.192,
+   "wheel_m": 0.1
+  }
+ },
+ "order": [
+  "manual",
+  "electric",
+  "neon_boost"
+ ],
+ "auto_owned": [
+  "manual",
+  "electric",
+  "neon_boost"
+ ],
+ "auto_equipped": "electric",
+ "indoor_top_kmh": 8,
+ "mall_top_kmh": 30,
+ "push_m": 2.2,
+ "push_per_s": 1.3,
+ "turn_rate": 3.0,
+ "cam_follow": 3.0
+}

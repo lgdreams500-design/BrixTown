@@ -121,7 +121,8 @@
     "away": { "name": "Take the piece away", "context": "designer" },
     "light": { "name": "Earlier light", "context": "test" },
     "weather": { "name": "Try the weather", "context": "test" },
-    "season": { "name": "Try the next season", "context": "test" }
+    "season": { "name": "Try the next season", "context": "test" },
+    "board": { "name": "Skateboard: carry it or get on", "context": "foot" }
   },
   "platforms": {
     "keyboard": {
@@ -132,7 +133,7 @@
         "clock": ["[", "]"], "hour": ["T"],
         "drive": ["W", "S"], "steer": ["A", "D"], "handbrake": ["Space"], "horn": ["F"], "radio": ["R"], "leave": ["E"],
         "orbit": ["Left drag"], "pan": ["Right drag", "Middle drag", "Shift + drag", "W", "A", "S", "D"], "centre": ["Double click"], "zoom": ["Wheel"], "spin": ["Q", "E"], "pick": ["Left click"], "turn": ["R"], "away": ["Delete"],
-        "light": ["L"], "weather": ["K"], "season": ["Y"]
+        "light": ["L"], "weather": ["K"], "season": ["F9"], "board": ["Y"]
       }
     },
     "gamepad": {
@@ -143,7 +144,7 @@
         "clock": ["View + LB", "View + RB"], "hour": ["View + A"],
         "drive": ["RT", "LT"], "steer": ["Left stick"], "handbrake": ["A"], "horn": ["Left stick press"], "radio": ["B"], "leave": ["X"],
         "orbit": ["Right stick"], "pan": ["Left stick"], "centre": ["Right stick press"], "zoom": ["LT", "RT"], "spin": ["LB", "RB"], "pick": ["A"], "turn": ["Y"], "away": ["B"],
-        "light": ["View + D-pad left"], "weather": ["View + D-pad up"], "season": ["View + D-pad right"]
+        "light": ["View + D-pad left"], "weather": ["View + D-pad up"], "season": ["View + D-pad right"], "board": ["RB"]
       }
     },
     "touch": {
@@ -154,7 +155,7 @@
         "clock": ["Clock button"], "hour": ["Menu: Settings: skip an hour"],
         "drive": ["Pedals"], "steer": ["Left stick"], "handbrake": ["Handbrake button"], "horn": ["Horn button"], "radio": ["Radio button"], "leave": ["Use button"],
         "orbit": ["One finger drag"], "pan": ["Two finger drag"], "centre": ["Double tap"], "zoom": ["Pinch"], "spin": ["Two finger twist"], "pick": ["Tap and drag"], "turn": ["Turn button"], "away": ["Take away button"],
-        "light": ["Menu: Help: earlier light"], "weather": ["Menu: Help: try the weather"], "season": ["Menu: Help: next season"]
+        "light": ["Menu: Help: earlier light"], "weather": ["Menu: Help: try the weather"], "season": ["Menu: Help: next season"], "board": ["Board button"]
       }
     }
   },

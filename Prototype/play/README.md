@@ -23,6 +23,7 @@ Nothing to install; it runs from these files.
 | `voices.js`, `audio/voices/` | Spoken dialogue (SND-018): every line voiced in advance by `Tools/voice/make_dialogue_voices.py`, in each speaker's voice from `World/rules/voices.json` and in the line's mood. You speak your answers too |
 | `cast_voices.html` | The cast's voice samples the owner chose from, with each voice in every mood |
 | `jukebox.html` | Every music track (score, café, shop, busker, radio), played on its own by `sound.js` so it can be heard and approved |
+| `boards.js` | Skateboards (CITY-098 to CITY-100): which kinds the player owns, the board in use, carried or ridden, and the speed rule from `World/rules/boards.json`; `people.js` draws the riding pose (the manual board's push) and the board underfoot or in the hand |
 | `people.js` | The people: option B bodies and faces, built part for part as `Tools/blender/character_face_05.py` builds the reference lineup, and the walk from the movement signatures. `index.html?lineup=1` stands the six reference people in a row on Linden Street to compare; `?studio=1` (to `6`) shows one of them under the light and camera of the reference lineup |
 | (sky) | The sky and its clouds are drawn by `play.js` from `World/rules/sky.json`: blue overhead, hazy horizon, clouds placed by the world clock (ADR-0014); cloud, rain and fog follow the day's weather (ADR-0016); the planet the town's moon goes round hangs in the north-east, pale by day and out at night (WLD-065, ADR-0040; `sky.json` "planet", `show: false` takes it out) |
 | `city_seasons.js` | How each season looks, for the Y key: daylight hours, weather, trees and flowers on the same day of each season. Generated: do not edit |
@@ -34,6 +35,7 @@ Nothing to install; it runs from these files.
 | W A S D, mouse | Walk and look (click the picture to capture the mouse, Esc to let go) |
 | Shift | Run |
 | Space | Jump |
+| Y | Skateboard (CITY-099): get on the board in your hand, or step off and pick it up. No walk on a board: W goes (the manual board only while a foot pushes it, the electric and Neon Boost boards by themselves), the keys steer, letting go glides, S brakes; the board and the speed show above the prompt. `?auto=1` owns all three kinds (manual 50, electric 100, Neon Boost 250 km/h) with the electric board in use; Belongings (G) picks another. `?auto=1&studio=2&board=manual&push=1&turn=90` shows a reference person on a board from the side (`electric`, `neon_boost`; `&carry=1` with it in the hand) |
 | V | Switch between third and first person |
 | Mouse wheel | Move the third-person camera in or out |
 | E | Sit, lie down, get up, ride a lift, talk to the resident in front of you |
@@ -45,7 +47,7 @@ Nothing to install; it runs from these files.
 | F, R | In a car: horn; car radio (three music stations, two podcasts with captions, then off) |
 | N | Sound on or off (remembered) |
 | [ and ] | Slow or speed the clock (×1, ×5, ×20, ×100) |
-| Y | Try the next season: spring, summer, autumn, winter. The page loads again in the same spot at the same hour, without touching the save. Daylight hours, that season's weather, trees and flowers change; everyone's routine, the cars and the notice boards stay those of the built day. `?season=Winter` starts with one |
+| F9 | Try the next season: spring, summer, autumn, winter. The page loads again in the same spot at the same hour, without touching the save. Daylight hours, that season's weather, trees and flowers change; everyone's routine, the cars and the notice boards stay those of the built day. `?season=Winter` starts with one |
 | G | Switch off the bounced light and contact shade (ADR-0018) to see the flat shade the slice had before; press again to bring them back. `?gi=0` starts without them |
 | O | Switch off the corner shade worked out from the screen's depth (ambient occlusion, ADR-0028); press again to bring it back. `?d_ao=0` starts without it, `?d_ao=2` shows it alone |
 | K | Try the weather: steps through clear, cloud, rain and fog, then back to the day's own weather. For looking only; the day itself does not change. `?weather=rain` starts with one |
