@@ -1,12 +1,12 @@
 ---
 doc_id: WASTED-SPEC-MENU
 title: Brix Town — The game menu (money, belongings, properties, journal, wardrobe, map, settings, save, help)
-version: 0.3.3
+version: 0.3.4
 status: in-progress      # F-UI-MENU level 2, the others level 1, accepted and built in the slice
 last_updated: 2026-11-24
 parent: docs/specs/GAME_SPEC.md        # extends §UI (UI-001 to UI-004); same ID rules; UI, INV and CHR rows
-related: docs/specs/domains/BUILDER.md, docs/specs/domains/FURNITURE.md, docs/decisions/ADR-0031-designer-view-and-furniture-from-the-room.md
-prototype: Tools/worldgen/world.py settings_problems, outfit_problems; Tools/citysim/furnish.py stow
+related: docs/specs/domains/BUILDER.md, docs/specs/domains/FURNITURE.md, docs/decisions/ADR-0031-designer-view-and-furniture-from-the-room.md, docs/decisions/ADR-0044-buy-menus-show-objects.md
+prototype: Tools/worldgen/world.py settings_problems, outfit_problems, buy_menu_shows, buy_menu_problems; Tools/citysim/furnish.py stow
 scope_source: docs/backlog/feature_choices.json
 ---
 
@@ -67,6 +67,29 @@ The camera's distances are data (`menu.live`).
 Opened from the menu, the building designer goes back to the menu when it closes. The list of keys along the bottom of
 the screen is gone: a hint says Esc opens the menu and H shows the controls.
 
+### 1.2 Buy menus: the goods as objects (ADR-0044)
+
+Not a page of the menu, but the same rows: the counters where the player buys, and the building designer's list of
+pieces. The owner asked (2026-11-24) to "improve all the buy menus (game wide) by showing full 3rd model of object in a
+grid layout instead of a long list of text with buy btn", saw four layouts (look test 33, `Art/StyleTests/buy_menu_33/`)
+and chose "B, and D when narrow".
+
+| Where | What it shows | Layout |
+|---|---|---|
+| A shop's or café's counter (B) | What it sells; on a second tab what it buys from the player, with what it pays | B; D in a small window |
+| An outlet of a mall (B) | The outlet's goods, each with where it goes: home, wardrobe, carried, eaten | B; D in a small window |
+| The building designer, Furnish, *Add a piece* | The pieces of the chosen room in the chosen line | D (the side panel is narrow) |
+
+**B, counter and showcase**: a grid of the things, each an object with its price and a mark for where it goes; beside
+it the chosen thing large, turning, to turn by hand, with its name, where it goes, its size, what is left, its price and
+one button. **D, compact grid**: small cells four across with a count and the mark; the chosen thing in a strip below
+with its button. A click or the arrows choose; the button, Enter or a double click buys. Sold out: greyed under a band.
+Too dear for the purse: the price in red with how much is short.
+
+A thing shows its own object where one is made (the mall's 49 goods for the home; furniture), else a stand-in that is
+plainly packaging or cloth: a parcel with the seller's band, a paper bag, a cup, a case, folded cloth in the clothing's
+own colour. All of it is data: `World/rules/buy_menu.json`.
+
 ## 2. Settings and controls
 
 All in `World/rules/settings.json`, kept on the device apart from the save. *Picture* sets sun shadows, ambient
@@ -100,6 +123,8 @@ with a keyboard and mouse; the other two are its defaults for when they come (UI
 | CHR-014 | The player shall change what they wear (hair, clothes, their colours, extras; never the body) at any time, free, from the choices of the character designer. | F-CHR-WARDROBE | 1 | P0 | accepted | `test_CHR_014_an_outfit_is_only_clothes_and_hair_the_designer_offers` |
 | CHR-015 | The player shall save what they wear as a named outfit (up to a number in data), change into one and forget one; outfits are kept in the save. | F-CHR-WARDROBE | 1 | P1 | accepted | `test_CHR_015_the_wardrobe_holds_a_few_outfits` |
 | CHR-016 | Clothes bought at an outlet (ECO-014) shall be kept as owned and listed in the wardrobe as *Clothes you own*; putting one on sets the parts of the look it names (a garment and its colour, a bottom, shoes, a scarf, a cap, a bag) and nothing else, each a value the character designer offers. Owned clothes are kept in the save. This is the part of `F-CHR-WARDROBE` level 2 the owner asked for on 2026-11-24 ("some like clothes will be made available in wardrobe"); the pick stays at level 1, so changing is still free and anywhere, with no wardrobe at home. | F-CHR-WARDROBE | 2 | P1 | in-progress | `test_CHR_016_*` (Tools/citysim/test_economy.py) |
+| UI-020 | Wherever the player buys things (a shop's or café's counter, an outlet of a mall, the building designer's list of pieces to add) the things shall be shown as objects in a grid, not as a list of names: each cell draws the thing with its price and a mark for where it goes, and the chosen thing is shown large, turning, to be turned by hand, with its name, where it goes, its size, what is left and its price in words and the one button that buys it. In a panel narrower than a width in data the cells are small, four across `[ASSUMPTION]`, and the chosen thing is described in a strip under them. A thing that is sold out, or dearer than the player can pay, shows it and cannot be bought. At a counter the arrows choose and Enter buys; what a shop buys from the player is shown the same way. Sizes, words and marks are data (`World/rules/buy_menu.json`). Owner, 2026-11-24: "B, and D when narrow" (look test 33, ADR-0044). | F-UI-SHOP | 1 | P1 | accepted | `test_UI_020_both_layouts_have_room_for_what_they_show`, `test_UI_020_every_place_a_thing_goes_has_its_words_and_a_mark_that_reads`, `test_UI_020_every_counter_of_the_slice_uses_the_grid` (Tools/worldgen/test_buy_menu.py); slice |
+| UI-021 | What a thing shows in a buy menu shall be worked out from data and checked before use: its own object where one is made (a mall good for the home, FURN-065; a piece of furniture), else a stand-in the rules name for the thing, for the part of the look a piece of clothing sets (in the clothing's own colour) or for where the thing goes. Every thing for sale shows one or the other; a stand-in is small, in the town's colours, and never passed off as the thing. | F-UI-SHOP | 1 | P1 | accepted | `test_UI_021_every_thing_for_sale_shows_an_object_or_a_stand_in`, `test_UI_021_clothes_show_their_own_colour`, `test_UI_021_a_stand_in_is_small_and_in_the_towns_colours`, `test_UI_021_a_bad_buy_menu_is_caught`, `test_UI_021_the_slice_gets_the_rules_and_the_answers_to_check_itself`; the page's self-test (`BuyMenu.selfTest`) |
 
 FURN-050 (the inventory) is met by INV-001 for furniture.
 
@@ -108,6 +133,8 @@ FURN-050 (the inventory) is met by INV-001 for furniture.
 Remapping controls, gamepad and touch play, colour-blind markers and reduced motion (F-UI-SETTINGS 2); using, giving and dropping things, carrying limits (F-INV-ITEMS 2);
 clothes as bought items kept in a wardrobe at home (F-CHR-WARDROBE 2). Storage containers themselves (F-PROP-STORAGE).
 The Painted signs look for the counters (shop, bank, stall, estate agent), the conversation box and the building designer.
+An object of its own for every carried and eaten thing, clothes shown worn before buying, a basket (F-UI-SHOP 2, not picked);
+the estate agent's list and the belongings as objects.
 The additions shown as "proposed" in look test 19 (a Today card, a week of money in and out, a filter on Belongings,
 following a quest, a dot on a board with something new): not proposed in the backlog yet.
 
@@ -115,6 +142,7 @@ following a quest, a dot on a board with something new): not proposed in the bac
 
 | Version | Date | Change |
 |---|---|---|
+| 0.3.4 | 2026-11-24 | Buy menus show what is for sale as objects (owner: "B, and D when narrow" of look test 33; ADR-0044): §1.2, UI-020, UI-021, at the counters of shops, cafés and the mall's outlets and in the designer's list of pieces. `F-UI-SHOP` proposed; no level was picked for it. |
 | 0.3.3 | 2026-11-24 | CHR-016: clothes bought at the mall's outlets are listed in the wardrobe and can be put on (owner's request; ADR-0041). Belongings lists what is bought for the home and carried from the outlets as it does everything else. `F-CHR-WARDROBE` stays picked at 1. |
 | 0.3.2 | 2026-11-24 | Achievements on the Me tab (UI-019), from the owner's pick of `F-UI-REWARD` level 2. |
 | 0.3.1 | 2026-11-24 | The big map shows the outskirts and every tree, the player as an arrow, and zooms and pans (UI-018; owner's request). |

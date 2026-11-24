@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brix Town: a buy menu in the slice (look test 33)</title>
+<!--
+  For pictures of the buy menus as built (UI-020): shows the playable slice with one counter open.
+  Serve the checkout's root (the "buy-menu-look" entry of .claude/launch.json) and open
+    /Art/StyleTests/buy_menu_33/in_the_slice.html?open=shop:grocer | shop:arcade | shop:cafe | outlet:music | outlet:clothes | furnish
+  &side=sell shows what a shop buys (after buying two things there); &pick=3 chooses the fourth thing.
+  It starts a throwaway game (?auto=1), so nothing is saved.
+-->
+<style>html, body { margin: 0; height: 100%; background: #17171c; } iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; }</style>
+</head>
+<body>
+<iframe id="f"></iframe>
+<script>
+"use strict";
+const q = new URLSearchParams(location.search), [kind, which] = (q.get("open") || "shop:grocer").split(":"), f = document.getElementById("f");
+f.src = "../../../Prototype/play/index.html?auto=1&t=630&rate=0" + (kind === "furnish" ? "&rich=1" : "");
+const wait = setInterval(() => {
+  const w = f.contentWindow, L = w && w.wasted && w.wasted.life; if (!L || !L.E) return;
+  clearInterval(wait); setTimeout(() => show(w, L), 4000);   // once the welcome money has landed in the purse
+}, 200);
+function show(w, L) {
+  const E = L.E, d = w.document, later = (fn, ms) => setTimeout(fn, ms || 80);
+  d.head.appendChild(Object.assign(d.createElement("style"), { textContent: "#purse-cash, #purse-bank { transform: none !important; }" }));   // a headless browser leaves the purse's pop at its largest
+  if (kind === "shop") {
+    let n = null; for (let i = 0; i < E.lots.length; i++) if (E.shopKind(i) === which && !E.outlets[i]) { n = i; break; }
+    L.open("shop", n);
+    if (q.get("side") === "sell") later(() => { d.querySelector(".bm-show .bm-buy").click(); later(() => { d.querySelectorAll(".bm-cell")[2].click(); later(() => { d.querySelector(".bm-show .bm-buy").click(); later(() => d.querySelectorAll(".bm-tabs button")[1].click()); }); }); });
+  } else if (kind === "outlet") {
+    let at = null; for (const n in E.outlets) for (const u in E.outlets[n]) if (!at && E.outlets[n][u].kind === which) at = [+n, u];
+    L.open("outlet", at[0], at[1]);
+  } else {
+    let lot = null; for (const [n, ix] of L.M.byLot) if (ix.some(i => L.M.owner[i] === "player")) lot = n;
+    L.open("remodel", lot);
+    later(() => { const b = [...d.querySelectorAll("#life button")].find(x => x.textContent === "Furnish"); if (b) b.click(); }, 300);
+  }
+  if (q.has("pick")) later(() => { const c = d.querySelectorAll(".bm-cell")[+q.get("pick")]; if (c) c.click(); }, 700);
+}
+</script>
+</body>
+</html>

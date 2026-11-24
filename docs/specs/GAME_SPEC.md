@@ -1,7 +1,7 @@
 ---
 spec_id: WASTED-SPEC
 title: Brix Town — Game Specification
-version: 0.5.11
+version: 0.5.12
 status: draft            # draft | reviewed | approved
 last_updated: 2026-11-24
 owner: project-owner
@@ -512,3 +512,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.5.9 | 2026-11-24 | Staff for Eastgate Mall (owner's request; ADR-0041): one keeper in every outlet, six guards and six janitors for the whole mall. Detail in the domain specs: CITY-105 (LIVING_CITY), WLD-067 (WORLD_MAP). Careers were dealt again: 636 residents have another workplace. No level was picked for this. |
 | 0.5.10 | 2026-11-24 | The mall's goods for the home are objects made in Blender (owner's request; ADR-0041): FURN-065 in FURNITURE. A placed guitar, bookstack or television is drawn from its object, and each outlet shows the goods it sells. No level was picked for this. |
 | 0.5.11 | 2026-11-24 | Residents visit Eastgate Mall to shop and eat, and its staff eat there (owner's request; ADR-0041): CITY-106 in LIVING_CITY, WLD-068 in WORLD_MAP. No resident was added and no level was picked. |
+| 0.5.12 | 2026-11-24 | Buy menus show what is for sale as objects in a grid, the chosen one large beside it, small cells in a narrow panel (owner's request and choice of look test 33; ADR-0044): UI-020 and UI-021 in MENU. `F-UI-SHOP` proposed; no level was picked for it. |

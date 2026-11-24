@@ -1,0 +1,46 @@
+{
+ "schema": 1,
+ "note": "How a buy menu shows what is for sale (UI-020, UI-021; ADR-0044; the owner, 2026-11-24: \"improve all the buy menus (game wide) by showing full 3rd model of object in a grid layout instead of a long list of text with buy btn\", then of look test 33: \"B, and D when narrow\"). Used by the counters of shops, cafes and a mall's outlets and by the building designer's list of pieces (Prototype/play/buymenu.js); checked by world.buy_menu_problems. 'wide' is layout B (a grid of objects, the chosen one large beside it), 'narrow' layout D (small cells, the chosen one described in a strip); a panel narrower than narrow_px shows the narrow one. Sizes in pixels at text size 1. 'goes': the words and the mark for where a bought thing goes (the mark's colour is a board colour of settings.json menu.colours). A thing shows its own object where one is made (a mall good for the home, a piece of furniture); every other thing shows a stand-in: 'stand_in.things' names one for a thing by its id, 'stand_in.wear' by the part of the look a piece of clothing sets (part, shape, the part that gives its colour), 'stand_in.goes' by where it goes. 'shapes': each stand-in as boxes [across, up from the floor, front(-) to back(+), width, height, depth, colour, shade, turned by degrees], metres, the way furniture.js draws; colour is one of 'colours' (linear RGB, ART_DIRECTION 2.3), 'band' (the seller's colour: a mall outlet's sign, else 'bands' by the kind of shop) or 'own' (the colour of the clothing itself). Every number here is a first guess [ASSUMPTION].",
+ "narrow_px": 560,
+ "wide": { "panel_px": 960, "cell_px": 112, "stage_px": 96, "show_px": 320, "show_stage_px": 250, "list_px": 470 },
+ "narrow": { "panel_px": 380, "columns": 4, "cell_min_px": 64, "list_px": 372 },
+ "picture": { "fov_deg": 24, "pitch_deg": 17, "start_deg": -34, "turn_s": 16, "drag_deg_px": 0.7, "stand_in_fill": 0.8, "most_px": 720 },
+ "goes": {
+  "home": { "name": "For the home", "colour": "teal", "to": "your belongings (G), to place at home" },
+  "wear": { "name": "To wear", "colour": "plum", "to": "your wardrobe (U)" },
+  "carry": { "name": "To carry", "colour": "ochre", "to": "what you carry (G)" },
+  "eat": { "name": "To eat", "colour": "terracotta", "to": "what you carry (G)" },
+  "place": { "name": "Into the room", "colour": "stone", "to": "the room, where you look" }
+ },
+ "colours": {
+  "card": [0.58, 0.48, 0.32], "paper": [0.74, 0.68, 0.56], "paper_dark": [0.60, 0.54, 0.43], "dark": [0.12, 0.11, 0.11], "string": [0.30, 0.20, 0.12],
+  "brass": [0.62, 0.50, 0.24], "leather": [0.30, 0.19, 0.12], "leather_dark": [0.24, 0.15, 0.10],
+  "ochre": [0.52, 0.40, 0.20], "terracotta": [0.44, 0.24, 0.18], "teal": [0.20, 0.36, 0.37], "blue": [0.30, 0.38, 0.52], "olive": [0.30, 0.33, 0.20], "plum": [0.30, 0.24, 0.34],
+  "cream": [0.66, 0.61, 0.50]
+ },
+ "bands": { "grocer": "olive", "kiosk": "blue", "arcade": "plum", "bakery": "ochre", "mall": "ochre", "cafe": "terracotta" },
+ "shapes": {
+  "parcel": [[0, 0, 0, 0.30, 0.17, 0.22, "card"], [0, 0, 0, 0.304, 0.172, 0.06, "band"], [0, 0.001, 0, 0.018, 0.174, 0.224, "string"], [0.06, 0.17, 0, 0.09, 0.012, 0.05, "paper"]],
+  "case": [[0, 0, 0, 0.14, 0.05, 0.10, "band"], [0, 0.05, 0, 0.146, 0.022, 0.106, "band", 0.8], [0, 0.055, -0.054, 0.03, 0.012, 0.006, "brass"]],
+  "bag": [[0, 0, 0, 0.20, 0.25, 0.12, "paper"], [0, 0.25, 0, 0.20, 0.045, 0.03, "paper_dark"], [0, 0.08, -0.062, 0.12, 0.09, 0.004, "band"]],
+  "cup": [[0, 0, 0, 0.073, 0.12, 0.073, "paper"], [0, 0, 0, 0.073, 0.12, 0.073, "paper", 1, 45], [0, 0.035, 0, 0.077, 0.05, 0.077, "band"], [0, 0.035, 0, 0.077, 0.05, 0.077, "band", 1, 45],
+          [0, 0.12, 0, 0.082, 0.014, 0.082, "dark"], [0, 0.12, 0, 0.082, 0.014, 0.082, "dark", 1, 45], [0.012, 0.134, 0, 0.008, 0.06, 0.008, "paper_dark"]],
+  "top": [[0, 0, 0, 0.36, 0.05, 0.28, "own"], [0, 0.05, 0.005, 0.35, 0.045, 0.27, "own", 0.9], [0, 0.095, -0.085, 0.13, 0.012, 0.07, "own", 0.78]],
+  "bottom": [[0, 0, 0, 0.30, 0.06, 0.40, "own"], [0, 0.06, 0.02, 0.29, 0.05, 0.34, "own", 0.9], [0, 0.11, -0.13, 0.29, 0.012, 0.04, "own", 0.75]],
+  "shoes": [[-0.07, 0, 0, 0.10, 0.028, 0.28, "dark"], [-0.07, 0.028, 0.05, 0.094, 0.095, 0.17, "own"], [-0.07, 0.028, -0.085, 0.094, 0.055, 0.10, "own", 0.9],
+            [0.07, 0, 0, 0.10, 0.028, 0.28, "dark"], [0.07, 0.028, 0.05, 0.094, 0.095, 0.17, "own"], [0.07, 0.028, -0.085, 0.094, 0.055, 0.10, "own", 0.9]],
+  "scarf": [[0, 0, 0, 0.146, 0.11, 0.146, "own"], [0, 0, 0, 0.146, 0.11, 0.146, "own", 1, 45], [0.12, 0, 0.01, 0.14, 0.03, 0.10, "own", 0.88]],
+  "cap": [[0, 0, 0.02, 0.172, 0.10, 0.172, "own"], [0, 0, 0.02, 0.172, 0.10, 0.172, "own", 1, 45], [0, 0, -0.12, 0.16, 0.02, 0.10, "own", 0.82], [0, 0.10, 0.02, 0.03, 0.015, 0.03, "own", 0.7]],
+  "satchel": [[0, 0, 0, 0.32, 0.24, 0.10, "leather"], [0, 0.11, -0.055, 0.32, 0.13, 0.012, "leather_dark"], [0, 0.13, -0.064, 0.04, 0.04, 0.008, "brass"], [0, 0.24, 0, 0.20, 0.012, 0.025, "leather_dark"]]
+ },
+ "stand_in": {
+  "goes": { "carry": "parcel", "eat": "bag" },
+  "wear": [["garment", "top", "top"], ["bottom_type", "bottom", "bottom"], ["shoes", "shoes", "shoes"], ["scarf", "scarf", "scarf"], ["cap", "cap", "cap"], ["bag", "satchel", null]],
+  "things": {
+   "coffee": "cup", "cake": "bag", "sandwich": "bag", "bread": "bag", "apples": "bag", "sweets": "bag",
+   "cf_tea": "cup", "cf_hotchoc": "cup", "cf_soup": "cup", "nd_tea": "cup", "nd_soup": "cup", "bg_cola": "cup", "ic_shake": "cup",
+   "ju_orange": "cup", "ju_apple": "cup", "ju_berry": "cup", "ju_green": "cup", "ju_lemonade": "cup", "ju_carrot": "cup", "ju_fruitcup": "cup",
+   "jw_ring": "case", "jw_gold_ring": "case", "jw_necklace": "case", "jw_pendant": "case", "jw_bracelet": "case", "jw_earrings": "case", "jw_watch": "case", "jw_brooch": "case", "jw_cufflinks": "case"
+  }
+ }
+}

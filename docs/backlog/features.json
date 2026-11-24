@@ -2530,6 +2530,50 @@
         "depth": 2,
         "full": 2
       }
+    },
+    {
+      "id": "F-UI-SHOP",
+      "area": "ui",
+      "title": "Buy menus that show the goods",
+      "why": "Buying is choosing a thing, not a line of text: the player sees what they are about to own, the same object that will stand in their home.",
+      "pillars": [
+        2,
+        3
+      ],
+      "spec": [
+        "UI-020",
+        "UI-021"
+      ],
+      "levels": [
+        {
+          "name": "A list",
+          "what": "As before: a table of names with what is left, a price and a Buy button on each row.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Objects in a grid",
+          "what": "Every counter (shops, cafes, a mall's outlets) and the building designer's list of pieces show the things as objects in a grid, the chosen one large and turning beside it with its details and one button (small cells in a narrow panel). A thing with no object of its own shows a stand-in: a parcel, a paper bag, a cup, folded cloth in the clothing's own colour.",
+          "effort": "M",
+          "needs": {
+            "F-BLD-SHOP": 1
+          }
+        },
+        {
+          "name": "Every thing its own object",
+          "what": "Every carried and eaten thing has its own object made in Blender (about 100), clothes are shown worn on the player before buying, furniture shows its Blender piece, and several things can be put in a basket and paid for at once.",
+          "effort": "XL",
+          "needs": {
+            "F-BLD-SHOP": 1,
+            "F-CHR-WARDROBE": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
     }
   ]
 }

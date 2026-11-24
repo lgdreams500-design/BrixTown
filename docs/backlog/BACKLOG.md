@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 42 of 55 | 9 of 55 | 9 of 55 |
-| Size of the plan (points) | 533 | 448 | 848 |
-| Size of the suggested plan | 135 | 408 | 816 |
+| Decided | 42 of 56 | 9 of 56 | 9 of 56 |
+| Size of the plan (points) | 536 | 451 | 871 |
+| Size of the suggested plan | 138 | 411 | 839 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -111,6 +111,7 @@
 | **The game menu** `F-UI-MENU` | 2 Every tab ★ | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (level 1 for the first slice), then the same day: "now build the game menu level 2". Later milestones not stated. |
 | **Settings** `F-UI-SETTINGS` | 1 Picture, sound, display, mouse | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (asked which levels the four menu features should have for the first slice). Later milestones not stated. |
 | **Reward feedback** `F-UI-REWARD` | 2 Achievements ★ | undecided | undecided | Owner, 2026-11-24: asked "Which level do you pick for Reward feedback (F-UI-REWARD) in the first slice?" after the coins and chimes were built (ADR-0043), answered "Level 2, achievements". Later milestones not stated. |
+| **Buy menus that show the goods** `F-UI-SHOP` | undecided | undecided | undecided |  |
 
 ## What each level means
 
@@ -391,3 +392,8 @@
 - 0 Number only: As before: the purse number changes and the amount shows beside it for a moment. Size -.
 - 1 Coins and chimes: A quest or job reward springs coins out around the player; they are drawn back in and fly to the purse, each ringing a note higher, and the purse counts up and glows (sample Q1, Lantern bells). The bank's interest slides a slip out under the purse and pays coins into the bank balance with a till and a bell (sample I1). Sounds and timings are data. Size S.
 - 2 Achievements: Also named achievements for first and rare moments (a first home, a first job done, a loan paid off), listed as data: a painted-sign banner drops in with sparkles and a fanfare (sample A1, Town fanfare), and the menu lists the ones earned. Kept in the save. Size M.
+
+**Buy menus that show the goods** (`F-UI-SHOP`). Buying is choosing a thing, not a line of text: the player sees what they are about to own, the same object that will stand in their home.
+- 0 A list: As before: a table of names with what is left, a price and a Buy button on each row. Size -.
+- 1 Objects in a grid: Every counter (shops, cafes, a mall's outlets) and the building designer's list of pieces show the things as objects in a grid, the chosen one large and turning beside it with its details and one button (small cells in a narrow panel). A thing with no object of its own shows a stand-in: a parcel, a paper bag, a cup, folded cloth in the clothing's own colour. Size M.
+- 2 Every thing its own object: Every carried and eaten thing has its own object made in Blender (about 100), clothes are shown worn on the player before buying, furniture shows its Blender piece, and several things can be put in a basket and paid for at once. Size XL.
