@@ -2165,9 +2165,26 @@ const mainCut = program(MAIN_VS, "#define HOUSECUT\n" + MAIN_FS);   // the same 
 const preCut = program(MAIN_VS, `precision highp float; varying vec3 vP; ${CUT_GLSL} void main(){ if(cutAway(vP)) discard; gl_FragColor=vec4(1.); }`);       // depth only, laid first so each pixel is lit once
 const sky = program(`attribute vec2 aQ; varying vec2 vQ; void main(){ vQ=aQ; gl_Position=vec4(aQ,.9999,1.); }`,
 `precision highp float; varying vec2 vQ; uniform vec3 uR,uU,uF,uSun,uZen,uHor,uSunCol; uniform float uNight,uExp; uniform vec4 uCl; uniform vec2 uClOff,uClLit;   // uCl: cover, edge softness, size, shape phase
+uniform vec3 uPl,uPlA,uPlB; uniform vec4 uPlN,uPlL,uPlR; uniform float uPlSee;   // the planet (WLD-065): uPlSee how much of it the weather lets through; uPl where it hangs, uPlA its axis, uPlB a line across its equator; uPlN its distance in planet radii (0: no planet), its turn, the cosine of how far from its centre anything of it shows, a pixel's size; uPlL its brightness at night and by day, its towns' lamps, its cloud; uPlR its rings (inner, outer, gap, opacity)
 uniform mat3 uCel; uniform vec3 uMoon,uSunT,uCity,uMw; uniform vec4 uSt,uMn; uniform float uT,uMoonDay,uSunR,uGlare;   // night (WLD-042): uSt stars (seen, density, twinkle, pixel size), uMn moon (lit share, size, brightness, dims stars), uMw Milky Way (brightness, width, dust)
 ${NOISE}
 ${TONE}
+// The planet the town's moon goes round (WLD-065, ADR-0040; first drawn in Art/StyleTests/moon_view_28): a living world of seas, land, cloud and ice, with rings.
+float plF(vec3 p){ float a=.5, s=0.; for(int i=0;i<5;i++){ s+=a*ns(p); p=p*2.03+vec3(7.1,3.3,5.7); a*=.5; } return s; }
+vec3 plSpun(vec3 n,float turn){ float c=cos(turn), s=sin(turn); vec2 e=vec2(dot(n,uPlB),dot(n,cross(uPlA,uPlB))); return vec3(e.x*c-e.y*s,e.x*s+e.y*c,dot(n,uPlA)); }   // a point on it, in its own turning frame
+vec3 plLand(vec3 p,out float land,out float ice){                        // seas, green and dry land, cold country, ice at the poles
+  float hgt=plF(p*1.7+3.), dry=plF(p*3.1+11.), lat=abs(p.z);
+  land=smoothstep(.505,.525,hgt); ice=smoothstep(.80,.86,lat+.16*(dry-.5)+.1*land);
+  vec3 sea=mix(vec3(.025,.075,.17),vec3(.06,.20,.25),smoothstep(.43,.505,hgt));           // deep water, paler over the shelves
+  vec3 bare=mix(vec3(.46,.36,.21),vec3(.42,.25,.17),smoothstep(.4,.6,plF(p*6.)));         // ochre and terracotta
+  vec3 ground=mix(mix(vec3(.09,.18,.07),vec3(.22,.26,.12),dry),bare,smoothstep(.45,.62,dry*.6+.5*exp(-pow((lat-.3)/.14,2.))));   // deserts keep to their own latitudes
+  ground=mix(ground,vec3(.30,.29,.24),smoothstep(.55,.8,lat)); ground=mix(ground,vec3(.37,.34,.31),smoothstep(.6,.68,hgt));     // tundra; high ground
+  return mix(mix(sea,ground,land),vec3(.80,.82,.84),ice); }
+float plCloud(vec3 p){ float w=plF(vec3(p.xy*2.6,p.z*5.));               // its weather: drawn out along the latitudes, curled by a second layer of noise
+  return smoothstep(.65-.3*uPlL.w,.87-.3*uPlL.w,plF(vec3(p.xy*3.,p.z*6.)+1.7*vec3(w,w*.7,0.)+20.)+.05*cos(p.z*9.)); }
+float plRing(float r){ float g=uPlR.z;                                    // how much of the light the rings stop, by distance from the planet's centre
+  return smoothstep(uPlR.x,uPlR.x+.05,r)*(1.-smoothstep(uPlR.y-.05,uPlR.y,r))*(1.-.9*smoothstep(g-.035,g-.015,r)*(1.-smoothstep(g+.015,g+.035,r)))*(.3+.7*ns(vec3(r*31.,1.3,7.7)))*mix(.3,1.,smoothstep(uPlR.x+.1,uPlR.x+.23,r))*uPlR.w; }
+vec3 plOver(vec3 c,vec3 l,float al){ return mix(c+l*al*uPlL.y,mix(c,c*.5+l*uPlL.x,al),uNight); }   // by day its light is only added to the blue, so it is just there and its dark part is sky; at night it stands in front of the stars
 void main(){ vec3 d=normalize(uF+vQ.x*uR+vQ.y*uU); float s=dot(d,uSun), p=haze(s); float hz=(1.-.85*uNight)*(1.-uGlare*smoothstep(.94,.9996,s)); vec3 c=mix(uHor+uSunCol*(4.4*p*hz),uZen+uSunCol*(.9*p*hz),pow(clamp(d.y,0.,1.),.5));   // hz: moonlight lights the air far less than sunlight; near the sun the glare eases (uGlare) so its disc can be seen
   float a=0.; vec3 cloud=vec3(0.);
   if(d.y>.015&&uCl.x>0.){                                                  // clouds (WLD-035): soft heaps on a flat layer overhead, lit from the sun's side, lost in the haze towards the horizon
@@ -2198,6 +2215,26 @@ void main(){ vec3 d=normalize(uF+vQ.x*uR+vQ.y*uU); float s=dot(d,uSun), p=haze(s
     float md=1.-uMn.w*uMn.x*(.6+.4*pow(max(mo,0.),6.));                     // a bright moon washes the stars out, most of all round itself
     c+=st*uSt.x*ext*md*uNight*(1.-a);
     c+=vec3(.75,.82,1.)*uMn.x*uMn.z*.06*(pow(max(mo,0.),900.)*3.+pow(max(mo,0.),60.)*.6)*uNight*(1.+a); }   // a halo round the moon, wider in cloud
+  if(uPlN.x>0.&&dot(d,uPl)>uPlN.z&&d.y>-.01){                              // the planet (WLD-065): a lit ball far bigger than the moon, its phase from where the sun is, behind the moon and the clouds
+    vec3 C=uPl*uPlN.x; float pb=dot(d,C), hh=uPlN.x*uPlN.x-pb*pb, ph=sqrt(max(hh,0.)), aa=uPlN.w*uPlN.x*1.2;
+    float cov=1.-smoothstep(1.-aa,1.+aa,ph), tP=pb-sqrt(max(1.-hh,0.)), see=(1.-.9*a)*smoothstep(-.01,.04,d.y)*uPlSee;
+    float tr=dot(C,uPlA)/dot(d,uPlA), ra=0.; vec3 rc=vec3(0.);
+    if(tr>0.&&uPlR.w>0.){ vec3 q=d*tr-C; float ql=dot(q,uSunT); ra=plRing(length(q))*see;   // the rings: lit from our side or lit through from the other, the planet's shadow across them
+      rc=vec3(.70,.67,.62)*(dot(uSunT,uPlA)*dot(C,uPlA)<0.?1.:.32)*(ql<0.?smoothstep(.96,1.04,length(q-ql*uSunT)):1.); }
+    bool front=cov>0.&&tr>0.&&tr<tP;
+    if(!front) c=plOver(c,rc,ra);
+    if(cov>0.){ vec3 n=normalize(d*tP-C); float ndl=dot(n,uSunT), mu=max(dot(n,-d),0.), land, ice;
+      float lit=smoothstep(-.08,.2,ndl)*(.2+.8*max(ndl,0.)), rs=-dot(n,uPlA)/dot(uSunT,uPlA);
+      if(rs>0.&&uPlR.w>0.) lit*=1.-.6*plRing(length(n+uSunT*rs));           // the rings' shadow on its land and sea
+      vec3 e=plSpun(n,uPlN.y), al=plLand(e,land,ice); float cl=plCloud(plSpun(n,uPlN.y*.97));   // its weather drifts a little against its ground
+      float glint=pow(max(dot(n,normalize(uSunT-d)),0.),70.)*(1.-land)*(1.-ice)*(1.-cl)*step(0.,ndl);   // the sun on its sea
+      vec3 pc=mix(al,vec3(.82,.82,.80),cl)*1.25*lit*(.6+.4*sqrt(mu))+vec3(1.,.93,.8)*1.6*glint;
+      pc=mix(pc,vec3(.28,.45,.80)*1.3*lit,.1+.6*pow(1.-mu,2.5));            // its air: a blue veil, thickest at the edge
+      pc+=vec3(.9,.42,.2)*.05*smoothstep(-.05,.03,ndl)*(1.-smoothstep(.03,.14,ndl));   // and a warm line where its day ends
+      pc+=vec3(1.,.62,.28)*uPlL.z*smoothstep(.62,.8,ns(e*95.))*smoothstep(.45,.6,ns(e*8.+5.))*land*(1.-ice)*(1.-.85*cl)*(1.-smoothstep(-.14,0.,ndl))*uNight;   // lamps of its towns on its dark side
+      c=plOver(c,pc,cov*see); }
+    c+=vec3(.35,.55,.95)*.7*exp(-max(ph-1.,0.)/.012)*(1.-cov)*see*smoothstep(-.25,.35,dot(normalize(d*pb-C),uSunT))*mix(uPlL.y,uPlL.x,uNight);   // its air seen edge on, blue on the sunlit limb
+    if(front) c=plOver(c,rc,ra); }
   { float mo=dot(d,uMoon), rr=length(d-uMoon*mo)/uMn.y;                   // the moon (WLD-043): a lit ball, its phase from where the sun is, its seas a little darker; by day a pale shape in the blue
     if(mo>0.&&rr<1.2&&d.y>-.01){ vec3 q=(d-uMoon*mo)/uMn.y, N=q-uMoon*sqrt(max(1.-dot(q,q),0.));
       float lit=smoothstep(-.06,.12,dot(N,uSunT)), sea=.72+.28*smoothstep(.62,.38,ns(N*2.6+5.)*.7+ns(N*6.)*.3), edge=smoothstep(1.,.93,rr)*(1.-.85*a);
@@ -2378,6 +2415,16 @@ function weatherNow(m) {
 // so a winter full moon rides high and a summer one stays low. The stars turn round the pole with the same clock.
 const NIGHT = SKY.night, TAU = 2 * Math.PI;
 const LAT = NIGHT.latitude * Math.PI / 180, POLE = [0, Math.sin(LAT), -Math.cos(LAT)], MERID = [0, Math.cos(LAT), Math.sin(LAT)];   // the pole, low in the north; the equator crosses the south at 90 - latitude
+// The planet (WLD-065, sky.json "planet"): the town stands on a moon that keeps one face to its planet, so the planet hangs at one place
+// in the sky, never rising or setting, and only its phase changes, with where the sun is. Its axis, and so its rings, from lean and tilt.
+const PLN = SKY.planet && SKY.planet.show ? (() => {
+  const p = SKY.planet, r = Math.PI / 180, az = p.azimuth * r, el = p.elevation * r, nrm = v => { const n = Math.hypot(v[0], v[1], v[2]); return v.map(q => q / n); };
+  const cr = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]], ad = (a, ka, b, kb) => [a[0] * ka + b[0] * kb, a[1] * ka + b[1] * kb, a[2] * ka + b[2] * kb];
+  const dir = [Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)], right = nrm(cr(dir, [0, 1, 0])), up = nrm(ad([0, 1, 0], 1, dir, -dir[1]));   // east is +x, south +z, as for the sun
+  const along = ad(right, Math.cos(p.lean * r), up, Math.sin(p.lean * r)), axis = nrm(ad(cr(dir, along), Math.cos(p.tilt * r), dir, Math.sin(p.tilt * r)));
+  const dist = 1 / Math.sin(p.size), reach = p.rings ? p.rings.outer + .05 : 1.06;   // dist: how far off its centre is, in planet radii; reach: how far out anything of it shows
+  return { dir, axis, b1: nrm(cr(axis, dir)), dist, lim: Math.sqrt(Math.max(0, 1 - (reach / dist) ** 2)) };
+})() : null;
 function skyAt(H, dec) {                                   // where a body is at hour angle H (0 when due south, growing westward) and declination dec
   const cd = Math.cos(dec), sd = Math.sin(dec), ch = Math.cos(H);
   return [-cd * Math.sin(H), cd * ch * MERID[1] + sd * POLE[1], cd * ch * MERID[2] + sd * POLE[2]];   // east is +x, south +z
@@ -3283,6 +3330,11 @@ function frame(now) {
     gl.uniform4f(sky.u.uSt, N.stars.brightness * Wx.stars, N.stars.density, N.stars.twinkle, 2 * th / H); gl.uniform4f(sky.u.uMn, Nt.lit * Nt.up, N.moon.size, N.moon.glow * Wx.sun + .15, N.moon.dims_stars);
     gl.uniform3f(sky.u.uMw, N.milky_way.brightness * Wx.stars, N.milky_way.width, N.milky_way.dust); gl.uniform1f(sky.u.uT, now / 1000 % 600);
     gl.uniform1f(sky.u.uMoonDay, NIGHT.paths.moon_by_day * Nt.up * Wx.sun); gl.uniform1f(sky.u.uSunR, NIGHT.paths.sun_size); gl.uniform1f(sky.u.uGlare, NIGHT.paths.sun_glare_ease); }
+  if (PLN) { const p = SKY.planet, g = p.rings || { inner: 2, outer: 2.1, gap: 2.05, opacity: 0 }, seen = mix(Wx.sun, Wx.stars, Lt.night);   // the planet (WLD-065): its turn from the clock, how much of it shows from the weather
+    gl.uniform3fv(sky.u.uPl, PLN.dir); gl.uniform3fv(sky.u.uPlA, PLN.axis); gl.uniform3fv(sky.u.uPlB, PLN.b1);
+    gl.uniform4f(sky.u.uPlN, PLN.dist, ((clock.day * 1440 + clock.m) / (p.spin_hours * 60) % 1) * TAU, PLN.lim, 2 * th / H);
+    gl.uniform4f(sky.u.uPlL, p.night, p.by_day, p.towns, p.clouds); gl.uniform1f(sky.u.uPlSee, seen); gl.uniform4f(sky.u.uPlR, g.inner, g.outer, g.gap, g.opacity); }
+  else gl.uniform4f(sky.u.uPlN, 0, 0, 2, 0);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.enable(gl.CULL_FACE); gl.depthMask(true);   // on a tie the layer laid later (the upper one) wins
   // From indoors the city is seen only through the windows: the pieces within INDOOR_R of the camera, and the whole-town one (ground,
