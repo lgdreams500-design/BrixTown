@@ -1,9 +1,9 @@
-"""Brix Town - skates 31: three pairs of skates for the skate store, a look test (game progression; look test).
+"""Brix Town - skates 34: three pairs of skates for the skate store, a look test (game progression; look test).
 
 Run inside Blender (Python console):
-    exec(compile(open("C:/Projects/Wasted/Tools/blender/skates_31.py").read(), "skates_31.py", "exec"))
+    exec(compile(open("C:/Projects/Wasted/Tools/blender/skates_34.py").read(), "skates_34.py", "exec"))
 or headless:
-    blender-launcher.exe -b --factory-startup --python C:/Projects/Wasted/Tools/blender/skates_31.py
+    blender-launcher.exe -b --factory-startup --python C:/Projects/Wasted/Tools/blender/skates_34.py
 Quick checks: WASTED_ONLY=sheet,worn WASTED_SAMPLES=24 WASTED_SCALE=50
 From another checkout: WASTED_ROOT=C:/Projects/Wasted-skates (where renders and the .blend go; the helpers are read
 from there too when it has them).
@@ -21,7 +21,7 @@ the ankle joint, SK_<Model>_L_foot_l / SK_<Model>_R_foot_r (CHARACTER_MOTION 2: 
 The rounded parts are superellipsoids on low UV spheres, so they stay soft (W3) at a few hundred triangles each.
 Sized for a 1.72 m person in option B (the shoe is 0.30 m long); the empty scales with the character.
 
-Renders go to Art/StyleTests/skates_31/:
+Renders go to Art/StyleTests/skates_34/:
     sheet.png        the three pairs side by side on turntables, labelled
     turnaround.png   each left skate from four sides
     manual.png, electric.png, neon.png   a close-up of each pair
@@ -41,7 +41,7 @@ _k = open(_H + "car_kit_09.py", encoding="utf-8").read()
 _k = _k[:_k.rstrip().rfind("\nmain()")]
 exec(compile(_k, "car_kit_09_helpers", "exec"), globals())                 # kit_mats(), sun_and_sky(), camera(), configure()
 
-NAME = "skates_31"
+NAME = "skates_34"
 OUT = ROOT + "/Art/StyleTests"
 SRC = ROOT + "/Art/Source/StyleTests"
 OUT_DIR = OUT + "/" + NAME

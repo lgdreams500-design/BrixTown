@@ -19,7 +19,7 @@ Neon Boost nose: a bullet, narrowing to 58 % of the width at the tip. Electric: 
 Rider (Courier, 1.78 m): pushing, hips 0.044 m lower than standing, front leg reach 0.82, back leg 1.00 of full length.
 Rider on Electric: hips 0.053 m above standing (deck top less a 0.07 m knee bend), legs at 0.93 of full length.
 Rider on Neon Boost: hips 0.062 m above standing (deck top less a 0.07 m knee bend), legs at 0.93 of full length.
-For scale: a Soft box car in the slice is about 3200 triangles near (car_export_11); a skate of look test 31
+For scale: a Soft box car in the slice is about 3200 triangles near (car_export_11); a skate of look test 34
 was 1460 to 1772.
 
 == Colours (linear RGB) ==

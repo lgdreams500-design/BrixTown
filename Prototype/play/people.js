@@ -352,7 +352,7 @@ const People = (() => {
     ms.box(x - .11 * S, y + top + .22 * S, z - .11 * S, x + .11 * S, y + top + .33 * S, z + .11 * S, L.cap || L.hairC, fl, B);   // the hair
   }
 
-  // A skateboard (CITY-098, CITY-099; the look of Tools/blender/skateboards_32.py): a rounded deck with its kicktails up, grip
+  // A skateboard (CITY-098, CITY-099; the look of Tools/blender/skateboards_35.py): a rounded deck with its kicktails up, grip
   // on top, two trucks and four wheels; the electric board a battery box under the deck and a status light, the Neon Boost glowing
   // wheels, a glowing strip under the deck edge and a booster at the tail. C: the middle of the deck's top; f: nose-forward,
   // up: the deck's normal, side: across; K: the kind (deck_m, width_m, top_m and the colours, World/rules/boards.json).

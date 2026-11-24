@@ -1,15 +1,15 @@
-"""Brix Town - skateboards 32: the skate store's three tiers as skateboards, a look test (game progression; look test).
+"""Brix Town - skateboards 35: the skate store's three tiers as skateboards, a look test (game progression; look test).
 
 Run inside Blender (Python console):
-    exec(compile(open("C:/Projects/Wasted/Tools/blender/skateboards_32.py").read(), "skateboards_32.py", "exec"))
+    exec(compile(open("C:/Projects/Wasted/Tools/blender/skateboards_35.py").read(), "skateboards_35.py", "exec"))
 or headless:
-    blender-launcher.exe -b --factory-startup --python C:/Projects/Wasted/Tools/blender/skateboards_32.py
+    blender-launcher.exe -b --factory-startup --python C:/Projects/Wasted/Tools/blender/skateboards_35.py
 Quick checks: WASTED_ONLY=sheet,ride_manual WASTED_SAMPLES=24 WASTED_SCALE=50
 From another checkout: WASTED_ROOT=C:/Projects/Wasted-skates (where renders and the .blend go; the helpers are read
 from there too when it has them).
 
-Builds on skates_31.py (and through it car_kit_09.py and character_face_05.py): its soft low-poly parts, its palette and
-glow colours, the kit daylight (ADR-0007) and the option B people. The owner saw the three pairs of skates of look test 31
+Builds on skates_34.py (and through it car_kit_09.py and character_face_05.py): its soft low-poly parts, its palette and
+glow colours, the kit daylight (ADR-0007) and the option B people. The owner saw the three pairs of skates of look test 34
 and asked for skateboards instead; the tiers, top speeds and colours carry over:
 
     Manual      50 km/h   a classic wooden street board: popsicle deck with nose and tail kicks, grip, ochre wheels
@@ -21,7 +21,7 @@ on top of the grip, x along the board (nose +x), z up. The far model SB_<Model>_
 true size (not scaled with the rider). The rider's legs are re-solved to stand on the deck (feet first, CHARACTER_MOTION
 M5): the body itself is the option B person, unchanged.
 
-Renders go to Art/StyleTests/skateboards_32/:
+Renders go to Art/StyleTests/skateboards_35/:
     sheet.png                      the three boards on turntables, labelled with top speeds
     manual.png, electric.png, neon.png   a close-up of each, upright and a second one upside down to show what is under it
     ride_manual.png                the Courier pushing the Manual board along with the right foot
@@ -34,12 +34,12 @@ import bpy, bmesh, math, random, os, time, traceback
 from mathutils import Vector, Euler, Matrix
 
 ROOT = os.environ.get("WASTED_ROOT", "C:/Projects/Wasted").replace("\\", "/").rstrip("/")
-_H = ROOT + "/Tools/blender/" if os.path.exists(ROOT + "/Tools/blender/skates_31.py") else "C:/Projects/Wasted/Tools/blender/"
-_s = open(_H + "skates_31.py", encoding="utf-8").read()
+_H = ROOT + "/Tools/blender/" if os.path.exists(ROOT + "/Tools/blender/skates_34.py") else "C:/Projects/Wasted/Tools/blender/"
+_s = open(_H + "skates_34.py", encoding="utf-8").read()
 _s = _s[:_s.rstrip().rfind("\nmain()")]
-exec(compile(_s, "skates_31_helpers", "exec"), globals())   # sq(), rbox(), rcyl(), ring(), Skate, PAL, GLOW, text(), dusk()
+exec(compile(_s, "skates_34_helpers", "exec"), globals())   # sq(), rbox(), rcyl(), ring(), Skate, PAL, GLOW, text(), dusk()
 
-NAME = "skateboards_32"
+NAME = "skateboards_35"
 OUT = ROOT + "/Art/StyleTests"
 SRC = ROOT + "/Art/Source/StyleTests"
 OUT_DIR = OUT + "/" + NAME
@@ -553,7 +553,7 @@ def write_notes(boards, facts):
         oz, reach = facts["ride_" + model]
         note("Rider on %s: hips %.3f m above standing (deck top less a %.2f m knee bend), legs at %.2f of full length."
              % (LABEL[model], oz, SPEC[model]["top"] - oz, reach[1]))
-    note("For scale: a Soft box car in the slice is about 3200 triangles near (car_export_11); a skate of look test 31\n"
+    note("For scale: a Soft box car in the slice is about 3200 triangles near (car_export_11); a skate of look test 34\n"
          "was 1460 to 1772.")
     note("\n== Colours (linear RGB) ==")
     for model, speed in MODELS:
