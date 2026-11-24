@@ -100,6 +100,22 @@
         "8852"
       ],
       "port": 8852
+    },
+    {
+      "name": "buy-menu-look",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "Tools/serve_play.ps1",
+        "-Root",
+        ".",
+        "-Port",
+        "8861"
+      ],
+      "port": 8861
     }
   ]
 }
