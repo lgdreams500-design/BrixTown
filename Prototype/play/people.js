@@ -396,7 +396,11 @@ const People = (() => {
     // only as deep as the legs, so from behind no seat stands out over them with a crease round where they leave it
     // the garment: a tee or long top to the waist, a tunic to the thigh, a skirt under either, a coat over it all
     const hem = z => pose === 2 ? Math.max(z, -.06) : z;           // seated, a hem ends at the seat instead of hanging down through it (and out under a car)
-    if (kind === "skirt") capsule(hem(L.g === "coat" ? -.5 : -.44), (L.g === "coat" ? .21 : .225) * W, .4214, chest - .004, flat, .28, L.bottom, sd + 9, 0, 0, 0, swing * .3, true);
+    // a skirt under a tee or a tunic goes up only a little past its hem, and inside it (drawn to the chest, it stood out through
+    // a tunic's front); under a coat, as before
+    const topR = z => L.g === "tunic" ? (.19 * W + (chest - .19 * W) * (z + .1235) / .545) : (.142 * W + (chest - .142 * W) * (z - .088) / .3334);
+    const SK = L.g === "coat" ? [-.5, .21 * W, .4214, chest - .004] : L.g === "tunic" ? [-.44, .225 * W, 0, topR(0) - .012] : [-.44, .225 * W, .2, topR(.2) - .012];
+    if (kind === "skirt") capsule(hem(SK[0]), SK[1], SK[2], SK[3], flat, .28, L.bottom, sd + 9, 0, 0, 0, swing * .3, true);
     const coat = L.g === "coat", outer = L.top;
     if (coat) { capsule(hem(kind === "skirt" ? -.29 : -.33), .218 * W, .431, chest + .014, flat * 1.06, .25, L.top, sd, .006, .006, 0, swing * .3, true);
       ball(ms, add(sp, sc(tz, .387 * S)), sc(tx, .085 * T), sc(ty, .08 * T), sc(tz, .035 * S), n, 4, L.top, fl, sd + 14); }   // the collar
@@ -520,7 +524,7 @@ const People = (() => {
     // capsules' units: S above the hips below .1, along the chest above) and x across: [front, back] depth in S. Without it the apron
     // sat inside a coat, its straps and the bag strap ran straight through the chest, and the scarf's tail sank into a coat.
     const layers = [];                                                // [z0, r0, z1, r1, flat, cap, back offset, sway]: as the capsules above
-    if (kind === "skirt") layers.push([hem(coat ? -.5 : -.44), (coat ? .21 : .225) * W, .4214, chest - .004, flat, .28, 0, swing * .3]);
+    if (kind === "skirt") layers.push([hem(SK[0]), SK[1], SK[2], SK[3], flat, .28, 0, swing * .3]);
     if (coat) layers.push([hem(kind === "skirt" ? -.29 : -.33), .218 * W, .431, chest + .014, flat * 1.06, .25, .006, swing * .3]);
     else if (L.g === "tunic") layers.push([hem(-.1235), .19 * W, .4214, chest, flat, .28, 0, swing * .18]);
     else layers.push([.088, .142 * W, .4214, chest, flat, .28, 0, 0]);
@@ -565,21 +569,30 @@ const People = (() => {
       if (scarfY && z > SZ0 - .01 && z < SZ1 && Math.abs(x - .042) < .045) f = Math.max(f, -scarfY(z) + .012);
       return f;
     };
-    // the scarf tail hangs straight from the wrap: the line from its top, inside the wrap, that clears the chest all the way
-    // down (a line from the collar to the hem alone cut through the bust, so only its end showed)
-    const SZ0 = apY ? AZ1 + .035 : .2893, SZ1 = .5, sNeed = z => -(wear(z, .042)[0] + .016);   // its middle, just off the front
-    let scarfY = null;
+    const yokeF = z => Math.sqrt(Math.max(0, (.052 * 1.12) ** 2 - (z - .436) ** 2));   // the front of the yoke, the round bar across the shoulders
+    // the scarf tail lies on the chest: a thin flat strip from under the wrap down the front, in short pieces that each follow
+    // the chest's curve (one straight piece either cut through the bust or stood out from it like a stick, its top under the chin)
+    const SZ0 = apY ? AZ1 + .035 : .2893, SZ1 = .47, sNeed = z => -(Math.max(wear(z, .042)[0], yokeF(z)) + .012);   // its middle, just off the front
+    let scarfY = null, scarfSegs = [];
     if (L.scarf && lod < 2) {
-      let y1 = 1; for (let z = .39; z <= .46; z += .01) y1 = Math.min(y1, sNeed(z));   // its top at the front of the upper chest, up into the wrap
-      let y0 = sNeed(SZ0);
-      for (let z = SZ0 + .02; z < SZ1 - .01; z += .02) { const q = (z - SZ0) / (SZ1 - SZ0); y0 = Math.min(y0, (sNeed(z) - y1 * q) / (1 - q)); }
-      y0 = Math.max(y0, y1 - .06);                                    // hanging, not standing out
-      scarfY = z => y0 + (y1 - y0) * cl((z - SZ0) / (SZ1 - SZ0), 0, 1);
+      const n = 4, zs = [...Array(n + 1)].map((_, k) => SZ0 + (SZ1 - SZ0) * k / n);
+      for (let k = 0; k < n; k++) {                                   // each piece's ends on the chest, moved out as far as its middle needs
+        const a = zs[k], b = zs[k + 1], ya = sNeed(a), yb = sNeed(b), ex = Math.max(0, (ya + yb) / 2 - sNeed((a + b) / 2));
+        scarfSegs.push([a, b, ya - ex, yb - ex]);
+      }
+      scarfY = z => { const g = scarfSegs.find(q => z <= q[1]) || scarfSegs[scarfSegs.length - 1]; return g[2] + (g[3] - g[2]) * cl((z - g[0]) / (g[1] - g[0]), 0, 1); };
     }
     if (L.scarf) {                                                    // a wrap round the neck and a flat tail down the front of the chest
       const big = coat ? 1.15 : 1;                                    // over a coat's collar
       ball(ms, add(nk, sc(tz, .049 * S)), sc(tx, .088 * T * big), sc(ty, .084 * T * big), sc(tz, .04 * S), hn, 4, L.scarf, fl, sd + 5);
-      if (scarfY) capsule(SZ0, .034, SZ1, .03, .35, .4, L.scarf, sd + 5, scarfY(SZ0), scarfY(SZ1), .042);   // over an apron it ends above the bib
+      if (scarfSegs.length) {                                         // one strip through the pieces' ends (over an apron it ends above the bib)
+        const pts = [[scarfSegs[0][0], scarfSegs[0][2]], ...scarfSegs.map((q, k) => [q[1], Math.min(q[3], k + 1 < scarfSegs.length ? scarfSegs[k + 1][2] : q[3])])];
+        const r = .029, fl2 = .25, rings = [], ring = (z, y, k) => rings.push([add(sp, add(add(sc(tz, (z - .098) * S), sc(ty, y * S)), sc(tx, .042 * S))), sc(tx, r * k * S), sc(ty, r * fl2 * k * S)]);
+        ring(pts[0][0] - r * .37, pts[0][1], .3); ring(pts[0][0] - r * .2, pts[0][1], .82);
+        for (const [z, y] of pts) ring(z, y, 1);
+        const e = pts[pts.length - 1]; ring(e[0] + r * .2, e[1], .82); ring(e[0] + r * .37, e[1], .3);
+        loft(ms, rings, n, L.scarf, fl, null, sd + 5);
+      }
     }
     if (L.bag && lod < 2) {                                           // the bag at the left hip, its strap over the right shoulder, lying on whatever is worn
       const bg = add(pel, add(sc(px, .225 * S), sc(py, -.1 * T))), sr = .012;
