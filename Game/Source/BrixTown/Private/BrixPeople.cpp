@@ -75,6 +75,8 @@ void ABrixPeople::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay)
 {
 	Day = InDay;
 	for (const FBrixBlock& B : City.Blocks) Paving.Add(FBox2D(B.Origin, B.Origin + B.Extent));
+	const int32 Seated = SeatBrixDay(*Day, City);   // benches and fountain rims (CITY-017)
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: %d of the day's stays are on a seat"), Seated);
 	FString Error;
 	const FString Path = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/people.json")));
 	if (!LoadBrixPeopleRules(Path, Rules, Error)) UE_LOG(LogTemp, Error, TEXT("Brix Town: %s"), *Error);
@@ -142,7 +144,7 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		const FBrixLook& L = Looks[i];
 		const double Phase = W->bWalking ? FMath::Fmod(W->Along / BrixStepLength(Rules.Sig(L.SigName), L.S), 1.0) : 0.0;
 		// the slice's yaw: a body faces (sin yaw, -cos yaw)
-		All[i] = { i, FMath::Sqrt(D2), P, GroundAt(P) + (W->Floor > 0 ? W->Floor * 3.f : 0.f), FMath::Atan2(W->Heading.X, -W->Heading.Y), W->bWalking ? 1 : 0, Phase };
+		All[i] = { i, FMath::Sqrt(D2), P, W->SeatUp >= 0.f ? W->SeatUp : GroundAt(P) + (W->Floor > 0 ? W->Floor * 3.f : 0.f), FMath::Atan2(W->Heading.X, -W->Heading.Y), W->Pose, Phase };
 	});
 	TArray<FNear> Near;
 	for (const FNear& A : All) if (A.i >= 0) Near.Add(A);

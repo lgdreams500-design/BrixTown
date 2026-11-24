@@ -27,7 +27,8 @@ face, posed by the movement signatures (a port of `Tools/blender/motion_lib.py`)
   the motion (`foot`, `pelvis`, `baseHeight`, `leg`, `upper`, `walk`, `stand`), the shapes (`loft`, `limb`, `tube`,
   `ball`) and `draw()` with the face at rest and the far figures (`far()`), with people.js's names kept so the two can be
   read side by side. Left out: the slice's own self-shadowing and texture marks (Unreal's light and materials do that) and
-  the poses residents out of doors do not take yet (sitting, lying, boards, umbrellas, hoods, talking faces).
+  the poses residents out of doors do not take yet (lying, boards, umbrellas, hoods, talking faces); sitting came
+  with the garden benches (CITY-017).
 - **The numbers are people.js's**, written to `Game/Data/people.json` by `Tools/unreal/people_values.py`, which runs
   people.js itself in headless Edge. While the slice is kept (ADR-0045) people.js is the source; after its freeze
   people.json is.
@@ -44,7 +45,8 @@ face, posed by the movement signatures (a port of `Tools/blender/motion_lib.py`)
 ## Consequences
 - The town's people look like `Art/Reference/character_lineup.png` and walk as in `motion_walks.mp4`, the same as in the
   slice, with no new art made.
-- At High on the owner's laptop a street with 32 residents near runs at 54.5 frames a second (the same as with none); the
-  morning school rush of about 150 runs at 49 to 52, with the people taking 9 to 11 ms of the game thread. Moving that
-  work off the game thread, or fewer rebuilds, is the next step if it matters.
+- At High on the owner's laptop a street with 32 residents near and the morning school rush of about 150 both run at
+  53 to 54.5 frames a second, the same as with no people (the GPU is the limit). The people take 1.3 and 3.6 ms of the
+  game thread: where everyone is and the bodies' building run on the task threads, and the bodies are shared vertices
+  (PR #48).
 - people.js and BrixBody must be changed together while the slice lives; the test catches a difference.

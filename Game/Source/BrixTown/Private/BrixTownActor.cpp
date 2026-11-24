@@ -686,6 +686,7 @@ void ABrixTownActor::Build(const FBrixCity& City)
 			Add(Trunks, FTransform(FQuat::Identity, ToWorld(T.Pos, TreeTrunkHeight * 0.5f), FVector(TreeTrunkWidth, TreeTrunkWidth, TreeTrunkHeight)), TrunkColour);
 			Add(Crowns, FTransform(FQuat::Identity, ToWorld(T.Pos, TreeTrunkHeight + TreeCrownWidth * 0.4f), FVector(TreeCrownWidth)), CrownColour);
 		}
+		for (const FBrixProp& P : B.Props) BuildProp(P, B);
 	}
 	// Scales are in metres: the shapes and the kit's pieces are 1 m to a unit of scale, so a scale is a size.
 	int32 Instances = 0;
@@ -709,4 +710,148 @@ void ABrixTownActor::Build(const FBrixCity& City)
 	CityData = nullptr;
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: built %s from data: %d blocks, %d buildings, %d openings, %d instances in %d groups"),
 		*City.Name, City.Blocks.Num(), Buildings, Openings, Instances, Parts.Num());
+}
+
+// A block's street furniture (its 'props'), as the slice draws it (play.js prop(), dressing.js prop()): boxes in the
+// palette's colours, the same sizes. Lamps, benches, bins, bollards, planters, postboxes, bike racks, phone boxes, wall
+// lanterns, flowerbeds, fountains, market stalls, tram shelters, water towers and wells. Garden planting, playgrounds,
+// arches, adverts and the open ground's own things are not brought over yet.
+void ABrixTownActor::BuildProp(const FBrixProp& P, const FBrixBlock& Blk)
+{
+	UStaticMesh* BoxMesh = Kit(TEXT("SM_Kit_Box"), Cube);
+	UInstancedStaticMeshComponent* Solid = Group(BoxMesh, true);
+	UInstancedStaticMeshComponent* Fine = Group(BoxMesh, false, GardenCullDistance);
+	auto Lin = [](float R, float G, float Bl) { return FLinearColor(R, G, Bl); };
+	// the slice's colours (play.js C, dressing.js)
+	const FLinearColor Stone = Lin(.52f, .48f, .43f), StoneDark = Lin(.37f, .34f, .32f), Metal = Lin(.17f, .18f, .21f), Lantern = Lin(1.f, .55f, .22f);
+	const FLinearColor Water = Lin(.2f, .32f, .38f), Soil = Lin(.2f, .15f, .11f), Olive = Lin(.30f, .33f, .20f), Brown = Lin(.24f, .16f, .11f);
+	const FLinearColor Wood = Lin(.5f, .32f, .16f), Iron = Lin(.17f, .18f, .21f), Red = Lin(.58f, .12f, .1f), Green = Lin(.16f, .3f, .22f);
+	const FLinearColor Teal = Lin(.20f, .36f, .37f), Cream = Lin(.66f, .61f, .50f), Ochre = Lin(.52f, .40f, .20f), Terra = Lin(.44f, .24f, .18f), Plum = Lin(.30f, .24f, .34f);
+	const float x = P.Pos.X, z = P.Pos.Y;
+	// the ground there: the block's paving, an open lot's surface a little above it
+	float g = BlockSlabHeight;
+	for (const FBrixLot& L : Blk.Lots)
+		if (L.IsOpen() && x >= L.Min.X && x <= L.Max.X && z >= L.Min.Y && z <= L.Max.Y) { g += 0.04f; break; }
+	// box: corner to corner in the slice's frame (x, up, z); ybox: a size standing at a point, turned
+	auto box = [&](float x0, float y0, float z0, float x1, float y1, float z1, const FLinearColor& C, bool bFine = false)
+	{
+		Add(bFine ? Fine : Solid, FTransform(FQuat::Identity, ToWorld(FVector2D((x0 + x1) / 2, (z0 + z1) / 2), (y0 + y1) / 2),
+			FVector(FMath::Abs(x1 - x0), FMath::Abs(z1 - z0), FMath::Abs(y1 - y0))), C);
+	};
+	auto ybox = [&](float cx, float y0, float cz, float w, float h, float d, float Yaw, const FLinearColor& C, bool bFine = false)
+	{
+		Add(bFine ? Fine : Solid, FTransform(FQuat(FVector::UpVector, -Yaw), ToWorld(FVector2D(cx, cz), y0 + h / 2), FVector(w, d, h)), C);
+	};
+	auto H = [&](const TCHAR* K, int32 Q) { return (float)SliceHash({ P.Id + FString::SanitizeFloat(x + z), FString::FromInt(Q), K }); };
+	const FString& k = P.Kind;
+	const bool ax = P.Along != TEXT("z");
+	const float Oct = UE_PI / 8;
+	if (k == TEXT("lamp"))   // a lantern on a post
+	{
+		box(x - .17f, g, z - .17f, x + .17f, g + .55f, z + .17f, StoneDark); box(x - .08f, g + .55f, z - .08f, x + .08f, g + 3.3f, z + .08f, Metal);
+		box(x - .2f, g + 3.3f, z - .2f, x + .2f, g + 3.78f, z + .2f, Lantern, true); box(x - .27f, g + 3.78f, z - .27f, x + .27f, g + 3.88f, z + .27f, Metal, true);
+	}
+	else if (k == TEXT("bench"))   // a wooden slab on two stone blocks
+	{
+		const bool bx = P.Along == TEXT("x");
+		box(x - (bx ? 1 : .27f), g + .36f, z - (bx ? .27f : 1), x + (bx ? 1 : .27f), g + .47f, z + (bx ? .27f : 1), Wood);
+		for (const float sd : { -.68f, .68f })
+			box(x + (bx ? sd : 0) - (bx ? .15f : .22f), g, z + (bx ? 0 : sd) - (bx ? .22f : .15f), x + (bx ? sd : 0) + (bx ? .15f : .22f), g + .36f, z + (bx ? 0 : sd) + (bx ? .22f : .15f), Stone);
+	}
+	else if (k == TEXT("bin"))
+	{
+		ybox(x, g, z, .42f, .82f, .42f, Oct, Green); ybox(x, g + .82f, z, .5f, .08f, .5f, Oct, Green * .8f, true); box(x - .12f, g + .9f, z - .12f, x + .12f, g + .95f, z + .12f, Iron, true);
+	}
+	else if (k == TEXT("bollard"))
+	{
+		ybox(x, g, z, .2f, .78f, .2f, Oct, Iron); ybox(x, g + .78f, z, .24f, .08f, .24f, Oct, Iron, true);
+	}
+	else if (k == TEXT("postbox"))   // a red pillar box
+	{
+		ybox(x, g, z, .46f, 1.15f, .46f, Oct, Red); ybox(x, g + 1.15f, z, .52f, .12f, .52f, Oct, Red * .85f, true); ybox(x, g + 1.27f, z, .3f, .08f, .3f, Oct, Red * .85f, true);
+	}
+	else if (k == TEXT("planter"))
+	{
+		const float h = P.bBig ? .75f : .48f, sz = P.bBig ? .7f : .45f;
+		box(x - sz, g, z - sz, x + sz, g + h, z + sz, P.bBig ? Stone : Wood); box(x - sz + .08f, g + h, z - sz + .08f, x + sz - .08f, g + h + .01f, z + sz - .08f, Soil, true);
+		for (int32 q = 0; q < 4; ++q) ybox(x + (q % 2 - .5f) * sz * .9f, g + h, z + (q / 2 - .5f) * sz * .9f, sz * .8f, .3f + .35f * H(TEXT("pl"), q), sz * .8f, H(TEXT("py"), q) * 3, Olive * (.9f + .3f * H(TEXT("pc"), q)), true);
+	}
+	else if (k == TEXT("bikerack"))   // three hoops
+	{
+		for (int32 q = -1; q <= 1; ++q)
+		{
+			const float cx = x + (ax ? q * .8f : 0), cz = z + (ax ? 0 : q * .8f);
+			for (const float sd : { -.32f, .32f }) box(cx + (ax ? 0 : sd) - .03f, g, cz + (ax ? sd : 0) - .03f, cx + (ax ? 0 : sd) + .03f, g + .8f, cz + (ax ? sd : 0) + .03f, Iron, true);
+			box(cx - (ax ? .03f : .35f), g + .8f, cz - (ax ? .35f : .03f), cx + (ax ? .03f : .35f), g + .86f, cz + (ax ? .35f : .03f), Iron, true);
+		}
+	}
+	else if (k == TEXT("phonebox"))   // a red telephone box with glazed sides and a crown
+	{
+		box(x - .5f, g, z - .5f, x + .5f, g + .15f, z + .5f, Red);
+		for (const float sx : { -.45f, .45f }) for (const float sz : { -.45f, .45f }) box(x + sx - .06f, g, z + sz - .06f, x + sx + .06f, g + 2.35f, z + sz + .06f, Red);
+		box(x - .43f, g + .15f, z - .43f, x + .43f, g + .85f, z + .43f, Red);
+		box(x - .44f, g + .85f, z - .44f, x + .44f, g + 2.05f, z + .44f, Lin(.36f, .44f, .48f));
+		box(x - .55f, g + 2.35f, z - .55f, x + .55f, g + 2.6f, z + .55f, Red); ybox(x, g + 2.6f, z, .9f, .14f, .9f, 0, Red * .9f, true);
+	}
+	else if (k == TEXT("lantern"))   // a wall lantern: glass on an iron arm
+	{
+		const float lx = x + P.Out.X * .32f, lz = z + P.Out.Y * .32f, h = P.Height;
+		box(FMath::Min(x, lx) - .03f, h + .28f, FMath::Min(z, lz) - .03f, FMath::Max(x, lx) + .03f, h + .33f, FMath::Max(z, lz) + .03f, Metal, true);
+		box(lx - .11f, h - .12f, lz - .11f, lx + .11f, h + .26f, lz + .11f, Lantern, true); box(lx - .15f, h + .26f, lz - .15f, lx + .15f, h + .31f, lz + .15f, Metal, true);
+	}
+	else if (k == TEXT("flowerbed"))
+	{
+		box(x - 1.3f, g, z - 1.3f, x + 1.3f, g + .3f, z + 1.3f, Stone); box(x - 1.08f, g + .3f, z - 1.08f, x + 1.08f, g + .32f, z + 1.08f, Soil, true);
+		for (int32 q = 0; q < 16; ++q)
+		{
+			const float fx = x - .82f + (q % 4) * .55f, fz = z - .82f + (q / 4) * .55f, hh = .2f + .25f * H(TEXT("fh"), q);
+			box(fx - .13f, g + .32f, fz - .13f, fx + .13f, g + .32f + hh, fz + .13f, Olive * (.9f + .3f * H(TEXT("fc"), q)), true);
+		}
+	}
+	else if (k == TEXT("fountain"))   // an eight-sided basin with a bowl on a column
+	{
+		const float R = P.R * 1.36f, r2 = R - .42f, Seg = 2 * R * FMath::Sin(UE_PI / 8) + .05f;
+		for (int32 q = 0; q < 8; ++q)
+		{
+			const float a = (q + .5f) * UE_PI / 4 + .3927f, mr = (R + r2) / 2 * FMath::Cos(UE_PI / 8);
+			Add(Solid, FTransform(FQuat(FVector::UpVector, a), ToWorld(FVector2D(x + FMath::Cos(a) * mr, z + FMath::Sin(a) * mr), g + .275f), FVector(R - r2, Seg, .55f)), Stone);
+		}
+		for (const float a : { .3927f, .3927f + UE_PI / 4 })
+			Add(Fine, FTransform(FQuat(FVector::UpVector, a), ToWorld(FVector2D(x, z), g + .39f), FVector(2 * r2 * FMath::Cos(UE_PI / 8), 2 * r2 * FMath::Cos(UE_PI / 8), .02f)), Water);
+		box(x - .28f, g + .4f, z - .28f, x + .28f, g + 1.5f, z + .28f, Stone); box(x - .75f, g + 1.5f, z - .75f, x + .75f, g + 1.72f, z + .75f, Stone);
+		box(x - .7f, g + 1.68f, z - .7f, x + .7f, g + 1.73f, z + .7f, Water, true); box(x - .16f, g + 1.72f, z - .16f, x + .16f, g + 2.05f, z + .16f, Stone, true);
+		if (P.bGrand)   // a second bowl higher up and a bronze figure
+		{
+			const FLinearColor Bz = Lin(.3f, .42f, .36f);
+			box(x - .2f, g + 2.05f, z - .2f, x + .2f, g + 2.9f, z + .2f, Stone); box(x - .5f, g + 2.9f, z - .5f, x + .5f, g + 3.05f, z + .5f, Stone);
+			box(x - .14f, g + 3.05f, z - .1f, x + .14f, g + 3.55f, z + .1f, Bz, true); box(x - .18f, g + 3.5f, z - .13f, x + .18f, g + 3.95f, z + .13f, Bz, true); ybox(x, g + 3.95f, z, .17f, .2f, .17f, UE_PI / 4, Bz, true);
+		}
+	}
+	else if (k == TEXT("stall"))   // a market stall: counter, goods, posts and an awning in an accent
+	{
+		const float f = P.Face != 0.f ? P.Face : 1.f, tz = z + f * 1.1f;
+		const FLinearColor Accent[6] = { Teal, Ochre, Terra, Cream, Plum, Lin(.30f, .38f, .52f) };
+		const FLinearColor Col = Accent[P.Color % 6];
+		box(x - 1.2f, g, tz - .4f, x + 1.2f, g + .9f, tz + .4f, Wood);
+		const FLinearColor Goods[5] = { Ochre, Terra, Olive, Cream, Plum };
+		for (int32 q = 0; q < 5; ++q) box(x - 1.05f + q * .45f, g + .9f, tz - .25f, x - .75f + q * .45f, g + 1.04f + .12f * H(TEXT("sg"), q), tz + .25f, Goods[(int32)(H(TEXT("sc"), q) * 5) % 5], true);
+		for (const float sx : { -1.4f, 1.4f }) for (const float sz : { -.7f, 1.9f }) box(x + sx - .06f, g, z + f * sz - .06f, x + sx + .06f, g + 2.5f, z + f * sz + .06f, Brown, true);
+		box(x - 1.65f, g + 2.5f, FMath::Min(z - f * .95f, z + f * 2.15f), x + 1.65f, g + 2.64f, FMath::Max(z - f * .95f, z + f * 2.15f), Col);
+	}
+	else if (k == TEXT("shelter"))   // the tram stop's shelter
+	{
+		for (const float sx : { -6.f, -2.f, 2.f, 6.f }) box(x + sx - .08f, g, z - 1.26f, x + sx + .08f, g + 2.6f, z - 1.1f, Brown);
+		box(x - 6.4f, g + 2.6f, z - 1.4f, x + 6.4f, g + 2.74f, z + 1.3f, Teal); box(x - 6.f, g + .9f, z - 1.24f, x + 6.f, g + 2.2f, z - 1.14f, Cream);
+	}
+	else if (k == TEXT("watertower"))
+	{
+		for (const float sx : { -2.f, 2.f }) for (const float sz : { -2.f, 2.f }) box(x + sx - .2f, g, z + sz - .2f, x + sx + .2f, g + 9, z + sz + .2f, Brown);
+		box(x - 2.8f, g + 9, z - 2.8f, x + 2.8f, g + 13, z + 2.8f, Wood); box(x - 3, g + 13, z - 3, x + 3, g + 13.3f, z + 3, Metal);
+	}
+	else if (k == TEXT("well"))   // a round stone well with a little roof
+	{
+		ybox(x, g, z, 1.7f, .8f, 1.7f, Oct, Stone); ybox(x, g + .79f, z, 1.3f, .02f, 1.3f, Oct, Water, true);
+		for (const float sx : { -.75f, .75f }) box(x + sx - .06f, g + .8f, z - .06f, x + sx + .06f, g + 2.2f, z + .06f, Wood, true);
+		box(x - 1.f, g + 2.2f, z - .6f, x + 1.f, g + 2.35f, z + .6f, Terra);
+	}
 }

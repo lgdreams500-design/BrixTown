@@ -74,6 +74,7 @@ def main():
         for lod in (0, 1, 2, 3):
             bodies.append(dict(look=k, x=1.5, y=0.12, z=-2.0, yaw=0.7 + 0.3 * k, pose=1, ph=(0.13 + 0.17 * k) % 1, t=5.0 + k, lod=lod, ff=0.6))
         bodies.append(dict(look=k, x=0.0, y=0.0, z=0.0, yaw=0.0, pose=0, ph=0.0, t=2.0 + 0.7 * k, lod=1 if k % 2 else 0, ff=1.0))
+        bodies.append(dict(look=k, x=-3.0, y=0.62, z=1.0, yaw=2.0 - 0.2 * k, pose=2, ph=0.0, t=3.0 + 0.4 * k, lod=k % 4, ff=0.8))   # on a bench (CITY-017)
     cases = json.dumps(dict(looks=looks, bodies=bodies))
     patched = src.replace(ret, HARNESS.replace("%CASES%", cases) + ret, 1)
     # people.js takes hash() from play.js: the same function, cut from play.js
