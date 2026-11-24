@@ -2661,6 +2661,15 @@ function drawBase(cv = base) {
     else { c.fillStyle = b.template === "park" ? "#5d7343" : "#77705f"; c.fillRect((b.origin[0] + o - 2) * k, (b.origin[1] + o - 2) * k, (b.ext[0] + 4) * k, (b.ext[1] + 4) * k); }
     for (const l of b.lots) {
       c.fillStyle = KIND_CSS[l.kind] || "#999"; const r = l.rect, cx = (r[0] + r[2]) / 2, cz = (r[1] + r[3]) / 2;
+      if (l.shell && l.shell.skin) {                         // a building with a sculpted shell (WLD-057): its real outline, its eggs and its roof light, not the rectangle of its hall
+        const X = v => (v + o) * k, sh = l.shell, egg = (d, fill) => { c.fillStyle = fill; c.beginPath(); c.ellipse(X(d.pos[0]), X(d.pos[1]), d.radii[0] * k, d.radii[2] * k, 0, 0, 7); c.fill(); c.stroke(); };
+        c.save(); c.strokeStyle = "#5e5647"; c.lineWidth = Math.max(1, 1.2 * k); c.beginPath(); sh.skin.points.forEach((q, n) => n ? c.lineTo(X(q[0]), X(q[1])) : c.moveTo(X(q[0]), X(q[1]))); c.closePath(); c.fill(); c.stroke();
+        if (sh.roof_light) egg(sh.roof_light, "#cfc5a8"); for (const d of sh.domes || []) egg(d, "#b08f48");
+        c.strokeStyle = "#f3e7c6"; c.lineWidth = Math.max(1.5, 2.5 * k); c.lineCap = "butt";   // and a light mark at each way in
+        for (const a of sh.arches || []) { const ns = a.side === "n" || a.side === "s", out = a.side === "n" || a.side === "w" ? -1 : 1, i = sh.skin.points.reduce((best, q, n) => Math.hypot(q[0] - a.at[0] - (ns ? 0 : out * 14), q[1] - a.at[1] - (ns ? out * 14 : 0)) < Math.hypot(sh.skin.points[best][0] - a.at[0] - (ns ? 0 : out * 14), sh.skin.points[best][1] - a.at[1] - (ns ? out * 14 : 0)) ? n : best, 0), q = sh.skin.points[i];
+          c.beginPath(); c.moveTo(X(q[0] - (ns ? a.width / 2 : 0)), X(q[1] - (ns ? 0 : a.width / 2))); c.lineTo(X(q[0] + (ns ? a.width / 2 : 0)), X(q[1] + (ns ? 0 : a.width / 2))); c.stroke(); }
+        c.restore(); continue;
+      }
       c.save(); c.translate((cx + o) * k, (cz + o) * k); if (l.angle) c.rotate(l.angle * Math.PI / 180); c.fillRect((r[0] - cx) * k, (r[1] - cz) * k, (r[2] - r[0]) * k, (r[3] - r[1]) * k); c.restore();
     }
   }

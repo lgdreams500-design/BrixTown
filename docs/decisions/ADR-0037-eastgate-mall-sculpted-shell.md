@@ -60,3 +60,22 @@ and soft with round arches (W3), and lanterns carry the scene at dusk (W6).
 Points 2 and 6 were overtaken: the owner asked for entrances and a new inside ("start interiors fresh as this is new
 design"). The hall's rect, door and floors stand; its `plan` was replaced and its wall opened under each arch. See
 ADR-0038.
+
+## Later: the space behind the skin, and the maps
+
+The owner sent a picture from between the skin and the hall ("why there is a square box around the mall?") and asked for
+the maps to show "the malls real curvy outline rather than the rectangle".
+
+- The hall is still the rectangular building it was (decision above): the skin stands 5 to 18 m outside it, and the hall's
+  own wall is meant to be seen only under the four arches, as the entrance fronts. The space between the two is not for
+  going into. On foot it could not be reached, but a car could: at the low end of each arch the walls began where the
+  skin had begun to lift, 1.2 m up, and a car is tested 0.7 m up. From in there the skin, drawn on its outer side only,
+  was not seen at all, so the town showed through it and the hall's plain wall stood alone.
+- Now the arch ends are solid from the ground; the skin has a back in plain plaster and the lid from its top to the
+  hall's roof an underside, so if anyone does get in it is a closed passage.
+- The small map and the big map draw a building that has a `shell` by its skin's line, with its eggs, its roof light
+  and a light mark at each arch (`drawBase` in play.js), not by its `rect`. The outline is a rounded oblong with gentle
+  waves, because that is the skin's line; the eggs are what make the mall curvy from above.
+- Not done: `Tools/worldgen/draw_map.py` (the map page) still fails before it reaches the malls, as on main.
+
+Picture: `Art/StyleTests/mall_shell_25/eastgate_on_the_map.jpg`.

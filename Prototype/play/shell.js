@@ -19,6 +19,7 @@ const Shell = (() => {
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
   const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const neg = v => [-v[0], -v[1], -v[2]];
   const norm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
   const SEC = 12;                                          // steps up the skin
   const OUT = { n: [0, -1], s: [0, 1], w: [-1, 0], e: [1, 0] };
@@ -48,8 +49,10 @@ const Shell = (() => {
       for (let j = 0; j < SEC; j++) {
         const ca = [j / SEC * sk.bands / 64, 0, kz], cb = [(j + 1) / SEC * sk.bands / 64, 0, kz];
         m.quadN([grid[i][j], grid[i1][j], grid[i1][j + 1], grid[i][j + 1]], [nrm[i][j], nrm[i1][j], nrm[i1][j + 1], nrm[i][j + 1]], [ca, ca, cb, cb], 26);
+        m.quadN([grid[i][j], grid[i1][j], grid[i1][j + 1], grid[i][j + 1]], [neg(nrm[i][j]), neg(nrm[i1][j]), neg(nrm[i1][j + 1]), neg(nrm[i][j + 1])], [soffit, soffit, soffit, soffit], 0);   // its back, plain plaster: the space between the skin and the hall is not for walking in, but nothing may be seen through from there
       }
       m.quad(grid[i][SEC], grid[i1][SEC], [qb[0], H, qb[1]], [qa[0], H, qa[1]], lid, 0, [0, 1, 0]);   // from the skin's top edge back to the hall's roof
+      m.quad(grid[i][SEC], grid[i1][SEC], [qb[0], H, qb[1]], [qa[0], H, qa[1]], soffit, 0, [0, -1, 0]);   // and that lid's underside
       if (A[2] > .02 || B[2] > .02) {                       // under an arch: the underside, from the skin's lifted edge back to the hall's wall (seen from either side)
         const p = [[A[0], A[2], A[1]], [B[0], B[2], B[1]], [qb[0], B[2], qb[1]], [qa[0], A[2], qa[1]]];
         m.quad(p[0], p[1], p[2], p[3], soffit, 0); m.quad(p[3], p[2], p[1], p[0], soffit, 0);
@@ -58,8 +61,8 @@ const Shell = (() => {
       for (let s = 0; s < k; s++) {
         const f = (s + .5) / k, x = A[0] + (B[0] - A[0]) * f, z = A[1] + (B[1] - A[1]) * f, b = A[2] + (B[2] - A[2]) * f, t = A[3] + (B[3] - A[3]) * f;
         if (b > 2.6) continue;
-        o.solid(x - .7, b, z - .7, x + .7, t, z + .7);
-        if (b > .02) { const qx = clamp(x, x0, x1), qz = clamp(z, z0, z1), d = Math.hypot(qx - x, qz - z); for (let r = 1.2; r < d; r += 1.2) o.solid(x + (qx - x) * r / d - .7, b, z + (qz - z) * r / d - .7, x + (qx - x) * r / d + .7, t, z + (qz - z) * r / d + .7); }
+        o.solid(x - .7, 0, z - .7, x + .7, t, z + .7);        // from the ground up, also where the skin has begun to lift: a car is tested 0.7 m up, and would slip under
+        if (b > .02) { const qx = clamp(x, x0, x1), qz = clamp(z, z0, z1), d = Math.hypot(qx - x, qz - z); for (let r = 1.2; r < d; r += 1.2) o.solid(x + (qx - x) * r / d - .7, 0, z + (qz - z) * r / d - .7, x + (qx - x) * r / d + .7, t, z + (qz - z) * r / d + .7); }
       }
     }
     const xs = pts.map(p => p[0]), zs = pts.map(p => p[1]);
