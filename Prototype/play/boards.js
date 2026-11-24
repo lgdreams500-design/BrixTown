@@ -6,10 +6,11 @@ const Boards = (() => {
   const R = window.WASTED.boards, MS = 1 / 3.6;           // km/h to m/s
   let own = [], kind = null, riding = false, v = 0;
   const K = () => kind ? Object.assign({ id: kind }, R.kinds[kind]) : null;
-  // CITY-099: the speed after dt seconds. W speeds up to the kind's top speed (a lower one indoors), letting go glides to a stop,
-  // pulling back brakes; going faster than allowed (just come indoors) brakes down to it.
-  function step(dt, go, back, indoor) {
-    const k = R.kinds[kind], top = (indoor ? Math.min(R.indoor_top_kmh, k.top_kmh) : k.top_kmh) * MS;
+  // CITY-099: the speed after dt seconds. W speeds up to the kind's top speed, or the limit where the rider is (cap, km/h: inside
+  // a building, a higher one inside a mall), letting go glides to a stop, pulling back brakes; going faster than allowed (just come
+  // indoors) brakes down to it.
+  function step(dt, go, back, cap) {
+    const k = R.kinds[kind], top = (cap != null ? Math.min(cap, k.top_kmh) : k.top_kmh) * MS;
     if (v > top) v = Math.max(top, v - k.brake_kmh_s * MS * dt);
     else if (go && !back) v = Math.min(top, v + k.accel_kmh_s * MS * dt);
     else v = Math.max(0, v - (back ? k.brake_kmh_s : k.glide_kmh_s) * MS * dt);

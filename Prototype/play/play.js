@@ -2566,7 +2566,7 @@ function stepBoard(dt, f, s) {
   const pushing = K.push && go;
   pl.bdB = (pl.bdB || 0) + ((pushing ? 1 : 0) - (pl.bdB || 0)) * Math.min(1, dt * (pushing ? 7 : 14));   // into the push, and straight back to standing when W is let go
   if (pushing) pl.ph = (pl.ph + Boards.R.push_per_s * dt) % 1; else pl.ph = 0;   // the push goes round only while W is held
-  const inL = lotAt(pl.x, pl.z), indoor = !!(inL && !isOpen(inL) && inL.H && pl.y < inL.H - .2), v = Boards.step(dt, go, back, indoor);
+  const inL = lotAt(pl.x, pl.z), indoor = !!(inL && !isOpen(inL) && inL.H && pl.y < inL.H - .2), v = Boards.step(dt, go, back, indoor ? ((inL.tags || []).includes("mall") ? Boards.R.mall_top_kmh : Boards.R.indoor_top_kmh) : null);   // slower indoors, less so in a mall's long halls (a lot tagged "mall")
   pl.moving = false;                                       // no walk on a board
   if (v > 0) {
     const vx = Math.sin(pl.bdH) * v, vz = -Math.cos(pl.bdH) * v, n = Math.max(1, Math.ceil(v * dt / .15)), x0 = pl.x, z0 = pl.z;

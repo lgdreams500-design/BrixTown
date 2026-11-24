@@ -793,6 +793,8 @@ class Skateboards(unittest.TestCase):
                 self.assertEqual(len(v[c]), 3, n + " " + c)
             self.assertEqual(v["push"], not v["powered"], n)                 # the owner: a foot pushes the manual board only
         self.assertLess(self.R["indoor_top_kmh"], min(tops))                 # indoors nobody goes at full speed
+        self.assertEqual(self.R["mall_top_kmh"], 30)                         # the owner, 2026-11-24: 30 km/h inside the mall
+        self.assertLess(self.R["indoor_top_kmh"], self.R["mall_top_kmh"])
         self.assertTrue(0 < self.R["turn_rate"] <= 6 and 0 < self.R["cam_follow"], "A and D turn the rider, the camera follows")
 
     def test_CITY_100_auto_owns_all_and_rides_electric(self):
