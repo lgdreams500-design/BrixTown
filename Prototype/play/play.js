@@ -3179,7 +3179,7 @@ function nearRooms(eye) {
     } else if (have && dd > 70) { if (have.buf) gl.deleteBuffer(have.buf); if (have.ao) gl.deleteTexture(have.ao); ROOMS.delete(l); }
   }
   const [cl, cf] = camFloor(), want = new Set();
-  if (cl) for (let f = Math.max(1, cf - 1); f <= Math.min(cl.floors - 1, cf + 1); f++) want.add(cl.id + "|" + f);
+  if (cl && cl.furn) for (let f = Math.max(1, cf - 1); f <= Math.min(cl.floors - 1, cf + 1); f++) want.add(cl.id + "|" + f);   // as on the ground floor, only buildings furnished here: a court mall's inside is court.js's (entering Eastgate Mall threw in furnArgs)
   for (const [k, e] of UPSTAIRS) if (!want.has(k)) { if (e.buf) gl.deleteBuffer(e.buf); if (e.ao) gl.deleteTexture(e.ao); UPSTAIRS.delete(k); }
   for (const k of want) if (!UPSTAIRS.has(k) && built < 2) {
     const f = +k.split("|")[1], m = new Mesh(1 << 15); ROOM_REC = { lamps: [], foot: [] }; furnishRoom(cl, f, m); built++;
