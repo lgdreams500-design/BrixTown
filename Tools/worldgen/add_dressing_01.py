@@ -72,6 +72,12 @@ def add(b, kind, pos, **kw):
 
 
 # ---------------------------------------------------------------- parks
+# Where the children walk to: never inside a piece (they walked through the slide's tower and into the climbing frame).
+SLIDE_SPOTS = lambda x, z: [[x - 2.5, z], [x - 2.45, z + .8], [x - 2.45, z - .8], [x - 2.5, z + 1.5]]
+CLIMB_SPOTS = lambda x, z: [[x - 1.16, z - .55], [x + 1.16, z + .55], [x - .55, z + 1.16], [x + .55, z - 1.16]]   # faces -x, +x, +z, -z
+KEEP_OUT = lambda cx, cz, sx, sz: [[cx - 1.05, cz - 1.05, cx + 1.05, cz + 1.05], [sx - 2.0, sz - .4, sx + 2.6, sz + .4]]   # the frame; the slide, ladder to chute end
+
+
 def playground(b, lot, room):
     """Swings, slide, seesaw, sandpit and climbing frame on soft ground, in whichever quarter of the park is clear."""
     x0, z0, x1, z1 = lot["rect"]
@@ -88,20 +94,21 @@ def playground(b, lot, room):
     for k in range(4):
         spots["swing"].append([px - 4.5 + (k - 1.5) * 1.1, pz - 2.8])
     add(b, "slide", (px + 4.5, pz - 2.8), along="x")                                 # ladder at -x, chute down to +x; the rest queue
-    spots["slide"] += [[px + 2.9, pz - 2.8], [px + 2.4, pz - 1.9], [px + 2.0, pz - 1.4], [px + 3.4, pz - 1.7]]
+    spots["slide"] += SLIDE_SPOTS(px + 4.5, pz - 2.8)                              # a queue at the ladder's foot, clear of its tower
     for v in (1.9, 4.1):
         add(b, "seesaw", (px - 4.5, pz + v), along="x")
         spots["seesaw"] += [[px - 6.2, pz + v], [px - 2.8, pz + v]]
     add(b, "sandpit", (px + 4.5, pz + 2.8), w=4.0)
     spots["sandpit"] += [[px + 3.5, pz + 1.9], [px + 5.5, pz + 1.9], [px + 3.5, pz + 3.7], [px + 5.5, pz + 3.7], [px + 4.5, pz + 1.7], [px + 4.5, pz + 3.9]]
     add(b, "climber", (px, pz - 2.8))
-    spots["climb"] += [[px - .55, pz - 3.35], [px + .55, pz - 2.25], [px - .55, pz - 2.25], [px + .55, pz - 3.35]]
+    spots["climb"] += CLIMB_SPOTS(px, pz - 2.8)                                    # one on the outside of each face (dressing.js frameAt)
     add(b, "bench", (px, pz + 5.4), along="x")                                       # for the grown-ups watching
     for u in (-7, -3.5, 0, 3.5, 7):
         for v in (-5, -2.5, 0, 2.5, 5):
             room.take(px + u, pz + v, 1.2)
     for k, v in spots.items():
         lot["objects"][k] = [[round(a, 2), round(c, 2)] for a, c in v]
+    lot["keep_out"] = [[round(q, 2) for q in r] for r in KEEP_OUT(px, pz - 2.8, px + 4.5, pz - 2.8)]   # walks go round these (citysim)
     return px, pz
 
 

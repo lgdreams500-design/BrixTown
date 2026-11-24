@@ -254,10 +254,10 @@ function nameCell(name) {
   txt.fillStyle = "#fff"; txt.textAlign = "center"; txt.textBaseline = "middle"; txt.fillText(name, (i % 4) * 512 + 256, Math.floor(i / 4) * 64 + 34);
   const cell = { i, tw: Math.min(.99, (tw + 8) / 512) }; TXT_CELL.set(name, cell); return cell;
 }
-function lettering(m, ctr, n, h, cell) {                    // the name on a sign face whose outward normal is n, letters h tall; r is the reader's right, (-n) x up
+function lettering(m, ctr, n, h, cell, f = 13) {              // f 29: the same letters lit from within (a mall's outlets)                    // the name on a sign face whose outward normal is n, letters h tall; r is the reader's right, (-n) x up
   const r = [n[2], 0, -n[0]], w = h * 8 * cell.tw * (64 / 46) * .82, hh = h * (64 / 46) * .82;   // r = (-n) x up
   const P = (sr, su) => [ctr[0] + r[0] * sr * w / 2, ctr[1] + su * hh / 2, ctr[2] + r[2] * sr * w / 2];
-  m.quad(P(-1, -1), P(1, -1), P(1, 1), P(-1, 1), [0, 0, cell.i + cell.tw], 13, n, true);
+  m.quad(P(-1, -1), P(1, -1), P(1, 1), P(-1, 1), [0, 0, cell.i + cell.tw], f, n, true);
   return w;
 }
 function chimney(x, z, y0, top, wallC) {
@@ -1626,7 +1626,8 @@ function mallShell(l) {
   const sh = l.shell && typeof Shell !== "undefined" && Shell.can(l.shell) ? l.shell : null;   // a sculpted shell round the hall (WLD-057): the hall keeps its box, and shows only under the shell's arches
   l.H = H;
   if (sh && typeof Court !== "undefined" && Court.can(l)) {   // a mall with its inside built (WLD-058): its wall is open at its entrances, and court.js draws all that is in it
-    const o = { mesh: world, solid, lights, occl, C, tones: SHELL_TONES, accent: ACCENT, hash, F: Y_FLOOR, wall: wallC, inside: [.74, .7, .62], floor: [.74, .71, .64], spot: (x, z, pose, yaw, h) => spot(l, x, z, pose, yaw, h), use };
+    const o = { mesh: world, solid, lights, occl, C, tones: SHELL_TONES, accent: ACCENT, hash, F: Y_FLOOR, wall: wallC, inside: [.74, .7, .62], floor: [.74, .71, .64], spot: (x, z, pose, yaw, h) => spot(l, x, z, pose, yaw, h), use,
+      name: (text, ctr, n, h) => { const cell = nameCell(text); if (cell) lettering(signs, ctr, n, h, cell, 29); } };   // an outlet's name, lit, on its sign band
     courtLight = Court.light(l);
     Court.hall(o, l); Shell.draw(o, l); Court.draw(o, l); return;
   }
@@ -1811,7 +1812,7 @@ bool cutAway(vec3 p){ if(uCutB.x<=0.) return false; vec2 d=p.xz-uCutA.xy; float 
   if(abs(u)>uCutB.x||v<uCutB.y||v>uCutB.z) return false; float al=dot(p.xz-uCutC.zw,uCutC.xy); return p.y>uCutB.w+clamp(2.05+.5*al,.95,2.7); }`;
 const MAIN_FS = `precision highp float; varying vec3 vP,vN,vC,vS; varying float vF; uniform vec4 uCut,uIso; uniform float uCutY,uCutW,uIsoY;   // the building designer's cut (CUT, below)
 uniform vec3 uSun,uSunCol,uSky,uGround,uFog,uCam,uAOm; uniform vec4 uWet; uniform vec2 uNk; uniform float uNight,uFogD,uExp,uShOn,uTime; uniform sampler2D uSh,uAO,uTxt; uniform vec4 uLamp[12]; uniform int uLampN; uniform mat4 uSM;
-uniform vec4 uRoomL[16], uRoomR, uCourtR, uCourtE, uCourtH[4]; uniform int uRoomLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY; uniform vec4 uSkyB; uniform vec2 uSkyH; uniform vec4 uRacks[9]; uniform int uRackN; uniform vec3 uRackY; uniform vec4 uTruss; uniform vec2 uTruss2; uniform vec4 uFeet[8]; uniform int uFeetN;
+uniform vec4 uRoomL[16], uRoomR, uCourtR, uCourtE, uCourtH[4], uCourtK, uCourtV1, uCourtV2, uCourtEye[5], uCourtL[32]; uniform int uRoomLN, uCourtLN; uniform sampler2D uRoomAO; uniform vec3 uRoomY; uniform vec4 uSkyB; uniform vec2 uSkyH; uniform vec4 uRacks[9]; uniform int uRackN; uniform vec3 uRackY; uniform vec4 uTruss; uniform vec2 uTruss2; uniform vec4 uFeet[8]; uniform int uFeetN;
 uniform sampler2D uSSAOt; uniform vec3 uSSAO;              // ambient occlusion worked out from the screen's depth (aoProg below): 1/width, 1/height, strength (0: off)
 uniform sampler2D uGi; uniform vec4 uGiM, uBlob[16]; uniform int uBlobN; uniform vec3 uPf;
 uniform vec3 uHZ[4], uHNo[4], uHBr[4], uHSt; uniform vec4 uHLk[4];
@@ -1832,15 +1833,30 @@ float skyFF(vec3 n){
     vec3 L=vec3(mix(uSkyB.x,uSkyB.z,(float(i)+.5)/6.),uSkyH.x,mix(uSkyB.y,uSkyB.w,(float(j)+.5)/3.))-vP; float d2=dot(L,L);
     e+=max(dot(n,L),0.)*max(L.y,0.)/(d2*d2); }
   return e*uSkyH.y; }
+// A court mall (court.js, WLD-064): how much of a point at one of its upper floors' height is open to the floor below (v: the opening's
+// half-width at an atrium and at a pinch, its half-length, its sway; uCourtK: the court's middle, the atria's spacing, the roof's height).
+float gCourt;                                              // 1 where roomLight() found the point inside a court mall
+float courtVoid(vec4 v,vec2 p){ float z=p.y-uCourtK.y, u=min(1.,abs(z)/v.z), h=sqrt(max(0.,1.-u*u*u*u))*(v.y+(v.x-v.y)*(.5+.5*cos(6.28319*z/uCourtK.z)));
+  return smoothstep(h+.5,h-.5,abs(p.x-uCourtK.x-v.w*sin(3.14159*z/uCourtK.z))); }
 vec3 roomLight(vec3 n,float person){
   float day=1.-uNight, y=vP.y-uRoomY.x;                    // height above the floor the camera is on (storeys.js); other floors read the same way
+  vec3 courtSun=vec3(0.); gCourt=0.;
   vec3 hemi=mix(uGround,uSky,n.y*.5+.5);
   bool here=vP.x>uRoomR.x-.05&&vP.x<uRoomR.z+.05&&vP.z>uRoomR.y-.05&&vP.z<uRoomR.w+.05&&vP.y>uRoomY.x-.25&&vP.y<uRoomY.y+.25;
   float sky=here?uRoomY.z:1.;                              // a hall under skylights sees more of the day (outlet.js: the lot's "skylight")
   if(!here&&uCourtE.z>0.&&vP.x>uCourtR.x&&vP.x<uCourtR.z&&vP.z>uCourtR.y&&vP.z<uCourtR.w){   // a court mall (court.js, WLD-060): daylight under its roof light and
     vec2 q=vP.xz-uCourtE.xy; float e=length(q/uCourtE.zw), open=smoothstep(14.,-6.,length(q)*(1.-1./max(e,.01)));   // in its egg halls, less of it back under the galleries
     for(int i=0;i<4;i++) open=max(open,smoothstep(1.12,.5,length(vP.xz-uCourtH[i].xy)/max(uCourtH[i].z,1.)));
-    sky=1.+1.5*open*(n.y<-.5?.4:1.); }
+    sky=mix(.55,3.1,open*(n.y<-.5?.4:1.)); gCourt=1.;   // dim back under the galleries, bright under the skylights
+    float ndl=dot(n,uSun);                                   // the sun through the round skylights: a patch for each, with the lattice's shadow in it, falling
+    if(uSun.y>.06&&ndl>0.&&uCourtK.w>0.){                    // through the openings of the floors above; it moves through the day as the sun does
+      vec2 hit=vP.xz+uSun.xz*((uCourtK.w-vP.y)/uSun.y); float eye=0., st=uCourtK.w/3.;
+      for(int i=0;i<5;i++) eye=max(eye,smoothstep(uCourtEye[i].z+.4,uCourtEye[i].z-.4,length(hit-uCourtEye[i].xy)));
+      if(eye>0.){
+        if(vP.y<2.*st-.2) eye*=courtVoid(uCourtV2,vP.xz+uSun.xz*((2.*st-vP.y)/uSun.y));
+        if(vP.y<st-.2) eye*=courtVoid(uCourtV1,vP.xz+uSun.xz*((st-vP.y)/uSun.y));
+        vec2 g=vec2(hit.x+hit.y,hit.x-hit.y)/2.6, fr=abs(fract(g)-.5); eye*=1.-.82*smoothstep(.33,.43,max(fr.x,fr.y));   // the lattice's bars
+        courtSun=uSunCol*vec3(1.,.93,.8)*(.8*ndl*eye*day); } } }
   if(here&&sky>1.&&uSkyH.y>0.){ float ff=skyFF(n);                      // as much more as it sees of the skylights;
     if(person>.5) ff=max(ff,.2+.6*(n.y*.5+.5));                           // a person in the aisles keeps most of it on top and less below, so they are
     sky=1.+(sky-1.)*clamp(ff,0.,1.4); }                                   // not lost in the shade under the solid roof (as in showroom.png)
@@ -1881,10 +1897,16 @@ vec3 roomLight(vec3 n,float person){
       if(abs(n.x)>.5&&tx<.02&&top<uTruss.w+.05) ao*=.5+.5*smoothstep(0.,uTruss.w,top);   // a truss's sides: darker up into the roof
       if(abs(n.z)>.5&&onWall&&top<uTruss.w+.6) ao*=.6+.4*smoothstep(0.,.9,max(tx,0.));        // a wall where a truss meets it
     }
+  } else if(gCourt>.5){                                    // a court mall: an even light far from the eye, and near it a pool under each of the nearest lanterns and shop lights
+    lamps=vec3(mix(.12,.36,smoothstep(26.,44.,length(uCam.xz-vP.xz))))*(1.+.9*uNight)*(.82+.16*n.y);   // (a little more of it at night, when no daylight helps)   // (beyond the reach of the lights counted here, their share as an even light)
+    for(int i=0;i<32;i++){ if(i>=uCourtLN) break; vec3 L=uCourtL[i].xyz-vP; float d2=dot(L,L), nl=dot(n,L*inversesqrt(d2)), w=uCourtL[i].w;
+      lamps+=(w<0.?vec3(1.,1.26,1.7):vec3(1.))*(abs(w)*(max(nl,0.)*.86+.14*(.5+.5*nl))/(d2*(.35+.06*d2)+.6)); }   // w < 0: a shop's own light, whiter than a lantern's
+    if(abs(n.y)<.5&&person<.5) ao*=.7+.3*smoothstep(0.,.9,mod(vP.y+.02,uCourtK.w/3.));   // walls, and what stands on a floor, darken down to it
   } else lamps=vec3(.55)*(.82+.16*n.y);
   vec3 sun=vec3(0.);                                       // a hall under skylights: the sun comes in through the openings in the roof and lays
   if(here&&uRoomY.z>1.){ float ndl=max(dot(n,uSun),0.);    // patches on the floor, with the shadows of the trusses, sets, racks, furniture and people (INTERIOR_STYLE R2)
     if(ndl>0.) sun=uSunCol*ndl*shadow()*day*(.6+.4*ao); }
+  if(!here) sun=courtSun;
   gRoomSun=sun;
   return (amb+lamps*vec3(1.,.74,.48)*.85)*ao+sun;
 }
@@ -1974,7 +1996,7 @@ void main(){
 #ifdef HOUSECUT
   if(cutAway(vP)) discard;   // the house the player is in, cut away (CUT_GLSL)
 #endif
-  float f=vF; vec3 c=vC; vec3 n=normalize(vN); float skyP=clamp(length(vN)*2.-1.,0.,1.); vec3 tc=uCam-vP; float d=length(tc); vec3 vd=-tc/d;
+  gCourt=0.; float f=vF; vec3 c=vC; vec3 n=normalize(vN); float skyP=clamp(length(vN)*2.-1.,0.,1.); vec3 tc=uCam-vP; float d=length(tc); vec3 vd=-tc/d;
   if(abs(c.x)>1.5){                                                        // a near person (people.js): the colour comes packed in one number, with two coordinates that stay on the cloth
     float p=abs(c.x), k=c.x>0.?1.:.3; vec2 q=c.yz; vec3 e=clamp((vec3(floor(p/65536.),floor(mod(p,65536.)/256.),mod(p,256.))-64.)/127.,0.,1.); c=e*e;
     float m1=ns(vec3(q*8.,1.))*.6+ns(vec3(q*21.,5.))*.4, fib=ns(vec3(q.x*150.+m1*4.,q.y*46.,3.))*.55+ns(vec3(q.x*60.,q.y*190.+m1*3.,7.))*.45;   // soft two-tone blotches, and fine fibres across them
@@ -2005,9 +2027,9 @@ void main(){
     vec3 lat=paint(shellTone(kd),vec3(.69,.69,.73),mix(blot,.6,ring))*(uSky*.9+uGround*.5+vec3(.2,.15,.1)*(.5+.9*uNight));
     col=mix(lat,(uFog*1.3+uSky*1.9+uSunCol*.05)*(1.-.85*uNight),hole); emis=true; inside=1.; }
 #ifdef LETTERS
-  if(f>12.5&&f<13.5){                                                     // painted lettering: vC is (across, up, cell + share of the cell)
+  if((f>12.5&&f<13.5)||(f>28.5&&f<29.5)){                                 // painted lettering: vC is (across, up, cell + share of the cell); material 29: the same, lit from within (a mall's outlets, outlets.js)
     float id=floor(c.z), tw=fract(c.z); vec2 uv=vec2((mod(id,4.)+.5+(c.x-.5)*tw)/4.,(floor(id/4.)+1.-c.y)/64.);
-    if(texture2D(uTxt,uv).a<.5) discard; c=vec3(.70,.64,.52); f=0.; }
+    if(texture2D(uTxt,uv).a<.5) discard; if(f>20.){ c=vec3(.19,.18,.155); f=23.; } else { c=vec3(.70,.64,.52); f=0.; } }
 #endif
   if(!emis){
     if(f<.5) c=paint(c,vec3(.69,.69,.73),blot)*(.92+.16*ns(vP*.13));
@@ -2134,7 +2156,7 @@ void main(){
           float hh=h3(vec3(id,21.)), ph=fract(uTime*(1.2+hh)+hh*9.), rg=smoothstep(.07,0.,abs(length(o)-ph*.26))*(1.-ph)*(1.-ph)*step(hh,uWet.w*.6);
           col+=refl*(rg*(.1+.35*pud)*(1.-d/26.)); } } }
   }
-  col=mix(col,uFog+uSunCol*(4.4*haze(dot(vd,uSun)))*(fog>.01?airLit(vd,d):1.),fog*(emis?.5:1.)*(1.-.85*inside));   // the shafts only where there is haze to show them (60 fps work)   // haze glows where the sun reaches it; little haze indoors
+  col=mix(col,uFog+uSunCol*(4.4*haze(dot(vd,uSun)))*(fog>.01?airLit(vd,d):1.),fog*(emis?.5:1.)*(1.-.85*inside-.11*gCourt));   // the shafts only where there is haze to show them (60 fps work)   // haze glows where the sun reaches it; little haze indoors
   float glow=0.; for(int i=0;i<12;i++){ if(i>=uLampN) break; vec3 q=uLamp[i].xyz-uCam; float b=dot(q,vd), h=sqrt(max(dot(q,q)-b*b,.02)); glow+=uLamp[i].w*(atan((d-b)/h)+atan(b/h))/h; }
   col+=vec3(1.,.62,.32)*(glow*min(uFogD,.007)*1.6*uNk.y);                 // every lantern glows in the haze around it (no more than in a thick haze, or rain and fog turn the night orange); uNk.y: less in clear night air (WLD-042)
   gl_FragColor=vec4(tone(col*uExp),1.);
@@ -2443,7 +2465,7 @@ function stepPlayer(dt) {
   if (pl.play) {                                           // on a swing, slide, seesaw, sandpit or climbing frame (dressing.js, WLD-041)
     const r = Dress.playerAt(pl.play, performance.now() / 1000);
     if (f || s || keys.Space || r.done) return offPlay(r.done ? [r.x, r.z] : null);
-    pl.x = r.x; pl.y = r.y; pl.z = r.z; pl.yaw = r.yaw; pl.playPose = r.pose; if (r.ph !== undefined) pl.ph = r.ph;
+    pl.x = r.x; pl.y = r.y; pl.z = r.z; pl.yaw = r.yaw; pl.playPose = r.pose; pl.playSig = r.sig || null; pl.playMod = r.mod || null; if (r.ph !== undefined) pl.ph = r.ph;   // climbing: its own steps and hands
     if (cam.fp) cam.yaw = r.yaw; return;
   }
   if (pl.pose > 1) { if (f || s || keys.Space) { Sound.act("stand"); pl.pose = 0; pl.y = floorAt(pl.x, pl.z, pl.y); if (pl.seat) { pl.x = pl.seat.ox; pl.z = pl.seat.oz; } pl.seat = null; } else return; }
@@ -3191,7 +3213,7 @@ function frame(now) {
   if ((started || Life.designing) && (!cam.fp || Life.live) && !cam.close && pl.pose !== 4) {   // not while in a car; and in the designer, to see who you are making
     let da = cam.yaw - pl.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
     People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.play ? pl.playPose : pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
-      look: Life.live ? [0, 0] : pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
+      look: Life.live ? [0, 0] : pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.play ? pl.playSig : pl.moving && pl.run ? People.SIG.Run : null, mod: pl.play ? pl.playMod : null });
   }
   if (started && Life.view) designMarks();             // the building designer's picked piece (life.js)
   if (!DZ) for (const [x, , T] of tramAt(clock.m)) Cars.tram(dyn, x, TRAM_Z, T, clock.m);   // the tram and the commuters on it (cars.js)
@@ -3277,7 +3299,12 @@ function frame(now) {
   for (const rm of rooms) { if (!rm.ao) continue; const [a0, b0, a1, b1] = rm.lot.rect, e = Math.hypot(Math.max(a0 - cam.eye[0], 0, cam.eye[0] - a1), Math.max(b0 - cam.eye[2], 0, cam.eye[2] - b1)) + (camL ? (rm.lot === camL && rm.level === camF ? 0 : 99) : (rm.level || cam.eye[1] > (rm.lot.hall_height || GF) + 1 ? 99 : 0)); if (e < best) { best = e; inRoom = rm; } }
   const roomL = new Float32Array(64); let roomLN = 0;
   if (inRoom) { const ls = inRoom.lamps.map(q => [(q[0] - cam.eye[0]) ** 2 + (q[2] - cam.eye[2]) ** 2, q]).sort((p, q) => p[0] - q[0]);
-    for (; roomLN < Math.min(16, ls.length); roomLN++) { const q = ls[roomLN][1]; roomL.set([q[0], q[1], q[2], q[3] * dials.lanterns * (.75 + .5 * Lt.night)], roomLN * 4); } }   // furnished rooms of the buildings close by   // near relief: blocks within reach and in view
+    for (; roomLN < Math.min(16, ls.length); roomLN++) { const q = ls[roomLN][1]; roomL.set([q[0], q[1], q[2], q[3] * dials.lanterns * (.75 + .5 * Lt.night)], roomLN * 4); } }
+  const courtL = new Float32Array(128); let courtLN = 0;
+  if (courtLight && cam.eye[0] > courtLight.rect[0] - 60 && cam.eye[0] < courtLight.rect[2] + 60 && cam.eye[2] > courtLight.rect[1] - 60 && cam.eye[2] < courtLight.rect[3] + 60) {   // in or by a court mall: the 32 nearest of its lights on the eye's own floor, each fading out by 44 m so none comes or goes at a stroke
+    const R = 44, ls = []; for (const q of courtLight.lamps) { if (Math.abs(q[1] - cam.eye[1] - 1.2) > 4.2) continue; const d = Math.hypot(q[0] - cam.eye[0], q[2] - cam.eye[2]); if (d < R) ls.push([d, q]); }
+    ls.sort((p, q) => p[0] - q[0]);
+    for (; courtLN < Math.min(32, ls.length); courtLN++) { const [d, q] = ls[courtLN]; courtL.set([q[0], q[1], q[2], q[3] * Math.min(1, (R - d) / (R * .4)) * dials.lanterns * (.8 + .45 * Lt.night)], courtLN * 4); } }   // furnished rooms of the buildings close by   // near relief: blocks within reach and in view
   if (inRoom && inRoom.lot.skylight > 1) {                  // a hall under skylights (one storey): the player and the 7 nearest people in it shade the floor at their feet
     const [a0, b0, a1, b1] = inRoom.lot.rect, fs = people.filter(p => p[0] > a0 && p[0] < a1 && p[1] > b0 && p[1] < b1);
     fs.sort((p, q) => Math.hypot(p[0] - cam.eye[0], p[1] - cam.eye[2]) - Math.hypot(q[0] - cam.eye[0], q[1] - cam.eye[2]));
@@ -3344,7 +3371,9 @@ function frame(now) {
     const tr = sb && inRoom.lot.truss;                         // the hall's trusses and wall thickness, for its corner shade
     if (tr) { gl.uniform4fv(u.uTruss, tr); gl.uniform2f(u.uTruss2, inRoom.lot.wallT || 0, 0); } else gl.uniform4f(u.uTruss, 0, 0, 0, 0);
     gl.uniform3f(u.uRoomY, inRoom ? inRoom.y0 : Y_FLOOR, inRoom ? inRoom.y1 : GF, inRoom ? inRoom.lot.skylight || 1 : 1);   // the floor the camera is on (storeys.js)
-    if (courtLight && u.uCourtE) { gl.uniform4fv(u.uCourtR, courtLight.rect); gl.uniform4fv(u.uCourtE, courtLight.eye); gl.uniform4fv(u["uCourtH[0]"], courtLight.halls.flat()); }
+    if (courtLight && u.uCourtE) { gl.uniform4fv(u.uCourtR, courtLight.rect); gl.uniform4fv(u.uCourtE, courtLight.eye); gl.uniform4fv(u["uCourtH[0]"], courtLight.halls.flat());
+      gl.uniform4fv(u.uCourtK, courtLight.k); gl.uniform4fv(u.uCourtV1, courtLight.v1); gl.uniform4fv(u.uCourtV2, courtLight.v2); if (u["uCourtEye[0]"]) gl.uniform4fv(u["uCourtEye[0]"], courtLight.eyes.flat());
+      if (u["uCourtL[0]"]) { gl.uniform4fv(u["uCourtL[0]"], courtL); gl.uniform1i(u.uCourtLN, courtLN); } }
   };
   const blob = new Float32Array(64); let blobN = 0;         // the 16 pieces of street furniture nearest the camera shade the ground under them (trial light)
   if (giK > 0) { const near2 = []; for (const b of BLOBS) { const d2 = (b[0] - cam.eye[0]) ** 2 + (b[1] - cam.eye[2]) ** 2; if (d2 < 1600) near2.push([d2, b]); }

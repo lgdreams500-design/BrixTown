@@ -48,6 +48,20 @@ var Cars = (() => {
     const [a0, a1, w0, w1] = md.box;
     MESH[key] = { name: key, L: a1 - a0, W: w1 - w0, ca: (a0 + a1) / 2, seat: md.seat, seatY: md.seat_y, back: md.back,
       lods: md.lods.map(l => ({ p: Float32Array.from(l.p), n: Float32Array.from(l.n, v => v / 100), t: Uint8Array.from(l.t) })) };
+    const M = MESH[key], seats = [[md.seat[0], md.seat[1]], [md.seat[0], -md.seat[1]]].concat(md.back != null ? [[md.back, md.seat[1]], [md.back, -md.seat[1]]] : []);
+    M.roof = Math.min(...seats.map(([a, w]) => hitY(M.lods[0], a, w, md.seat_y + .45, 1)).filter(v => v != null));   // the underside of the roof over the seats
+    M.floor = hitY(M.lods[0], md.seat[0] + .4, md.seat[1], md.seat_y, -1);                    // and the bottom of the body under the feet
+  }
+  function hitY(l, a, w, from, dir) {                    // the nearest face of the mesh straight above (dir 1) or below (-1) the point (a, w) at height from
+    const p = l.p; let best = dir > 0 ? 9 : -9;
+    for (let j = 0; j < p.length; j += 9) {
+      const d = (p[j + 3] - p[j]) * (p[j + 7] - p[j + 1]) - (p[j + 6] - p[j]) * (p[j + 4] - p[j + 1]); if (Math.abs(d) < 1e-9) continue;
+      const u = ((a - p[j]) * (p[j + 7] - p[j + 1]) - (p[j + 6] - p[j]) * (w - p[j + 1])) / d, v = ((p[j + 3] - p[j]) * (w - p[j + 1]) - (a - p[j]) * (p[j + 4] - p[j + 1])) / d;
+      if (u < 0 || v < 0 || u + v > 1) continue;
+      const y = p[j + 2] + u * (p[j + 5] - p[j + 2]) + v * (p[j + 8] - p[j + 2]);
+      if (dir > 0 ? y > from && y < best : y < from && y > best) best = y;
+    }
+    return Math.abs(best) === 9 ? null : best;
   }
   const model = k => {
     if (isBus(k)) return BUS;
@@ -274,10 +288,17 @@ var Cars = (() => {
     if (CARS[k].k !== 1 && hash(k, "pass") < .45) out.push([stranger("pas" + k, "elder"), md.seat[0], -md.seat[1]]);
     return out;
   }
-  function seat(m, look, x, y, z, yaw, t) {              // one seated person; level of detail by distance to the camera
+  // A seated head is 1.04 S above the seat (people.js sit(); more under an afro, a bun or a cap), but the Soft box cars seat everyone
+  // at 0.78 m under a roof at 1.56 to 1.75 m: most heads went through it. So a rider sits as low as their head needs, with the
+  // legs out along the floor instead of down through it, and the driver's hands up on the wheel.
+  const HEAD = { afro: 1.12, bun: 1.06 }, ROOF_GAP = .05;
+  function seat(m, look, x, y, z, yaw, t, md, seatY, driver) {   // one seated person at y + seatY in car model md (none: the tram); detail by distance
     const dc = Math.hypot(x - cam.eye[0], z - cam.eye[2]);
     if (dc > 70) return;
-    People.draw(m, x, y, z, yaw, look, 2, { ph: 0, t, lod: dc < 13 ? 0 : dc < 16 ? 1 : dc < 35 ? 2 : 3, fl: 14 });
+    const car = md && md !== BUS, roof = !car ? Infinity : md.roof != null ? md.roof : 1.56, head = (look.cap ? 1.06 : HEAD[look.hair] || 1.04) * look.S;
+    const sy = Math.min(seatY || 0, roof - ROOF_GAP - head), floor = car && md.floor != null ? md.floor + .03 : .3;   // (the box cars' roofs are at 1.56 m)
+    People.draw(m, x, y + sy, z, yaw, look, 2, { ph: 0, t, lod: dc < 13 ? 0 : dc < 16 ? 1 : dc < 35 ? 2 : 3, fl: 14,
+      mod: car ? { floor: floor - sy, arms: driver ? [[1, 58, 10, 48], [1, 58, 10, 48]] : null } : null });
   }
 
   function draw(m, minute, near, reach) {                // every car within reach of the viewer, and whoever is in it
@@ -287,8 +308,8 @@ var Cars = (() => {
       if (!c || Math.hypot(c.x - near[0], c.z - near[1]) > reach + 40) continue;
       const y = groundBase(c.x, c.z);
       body(m, c, k, y);
-      const md = model(k), yaw = yawOf(c.hx, c.hz), sy = y + (md.seatY || (CARS[k].k === 1 ? .72 : .66));
-      for (const [look, a, w] of occupants(k, c, minute)) seat(m, look, c.x + c.hx * a - c.hz * w, sy, c.z + c.hz * a + c.hx * w, yaw, t);
+      const md = model(k), yaw = yawOf(c.hx, c.hz), sy = md.seatY || (CARS[k].k === 1 ? .72 : .66);
+      occupants(k, c, minute).forEach(([look, a, w], n) => seat(m, look, c.x + c.hx * a - c.hz * w, y, c.z + c.hz * a + c.hx * w, yaw, t, md, sy, n === 0));
       n++;
     }
     return n;
