@@ -26,7 +26,8 @@ def r1(v):
 
 
 def routines(city, day, car_index):
-    """Each resident's day as pieces: [t0, 0, x, z, act, use, inside, lot] stays, [t0, 1, act, x, z, ...] walks, [t0, 2] away,
+    """Each resident's day as pieces: [t0, 0, x, z, act, use, inside, lot(, floor)] stays (floor only for a place upstairs:
+    stacked flats and offices have places at the same spot on each floor, WLD-053), [t0, 1, act, x, z, ...] walks, [t0, 2] away,
     [t0, 3, vehicle] in their car or on a bus (drawn in the vehicle, see cars())."""
     lot_index = {l["id"]: n for n, l in enumerate(city.d["lots"])}
     acts = {a: n for n, a in enumerate(ACTS)}
@@ -52,10 +53,12 @@ def routines(city, day, car_index):
             else:
                 x, z = payload
                 x0, z0, x1, z1 = lot["rect"]
-                inside = int(lot["kind"] not in world.OPEN_KINDS and s["use"] is not None and x0 <= x <= x1 and z0 <= z <= z1)
+                inside = int(lot["kind"] not in world.OPEN_KINDS and s["use"] is not None and citysim.in_lot(lot, x, z))   # a turned house in its own frame
                 act = "wait" if s["act"] in ("away", "arrive") else s["act"]
                 use = uses.get(s["use"], -1) if s.get("slot") is not None else -1
-                row.append([r1(t0), 0, r1(x), r1(z), acts.setdefault(act, len(acts)), use, inside, lot_index[s["place"]]])
+                lv = (lot.get("levels") or {}).get(s["use"]) if s.get("slot") is not None else None
+                floor = lv[s["slot"]] if lv else 0
+                row.append([r1(t0), 0, r1(x), r1(z), acts.setdefault(act, len(acts)), use, inside, lot_index[s["place"]]] + ([floor] if floor else []))
         out.append(row)
     return out, sorted(acts, key=acts.get)
 

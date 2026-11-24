@@ -14,6 +14,8 @@ What each kind looks like on a day comes from World/rules/vegetation.json "plant
 gardener tends the borders: a place to stand at each is added to the lot's "flowerbed" places (choices.json: tend).
 
 Run from Tools/worldgen:   py add_garden_01.py
+                           py add_garden_01.py --new   plants only the gardens with nothing planted yet (gardens added
+                                                       since, such as the remodel's), leaving the others as they are
 Then:                      py -m unittest test_world ;  py build_play.py
 """
 import math, os
@@ -172,6 +174,8 @@ def plant_grounds(b, lot):
     S = b["size"]
     n = dict(bush=0, drift=0)
     band = (lot["rect"][0] - ox - 4.0) / 2 + .5                           # the middle of the band, in from the block's edge
+    if band < 2.0:                                                        # the garden fills the block (Town Park): no outer lawn
+        return n
     for side in "nswe":
         for t in (11.0, 21.0, S - 21.0, S - 11.0):
             x, z = {"n": (ox + t, oz + band), "s": (ox + t, oz + S - band), "w": (ox + band, oz + t), "e": (ox + S - band, oz + t)}[side]
@@ -195,7 +199,7 @@ def plant_grounds(b, lot):
     return n
 
 
-def main():
+def main(only_new=False):
     city = jload(os.path.join(CITY, "city.json"))
     blocks = []
     for e in city["blocks"]:
@@ -203,6 +207,8 @@ def main():
         blocks.append((p, jload(p)))
     total = dict(gardens=0, hedge=0, border=0, bush=0, drift=0)
     for _, b in blocks:                                                   # take away what an earlier run added
+        if only_new:
+            break
         b["props"] = [p for p in b["props"] if p.get("set") != SET]
         for l in b["lots"]:
             if "tend_borders" in l:
@@ -210,7 +216,7 @@ def main():
                 l.pop("tend_borders")
     for _, b in blocks:
         for l in b["lots"]:
-            if l["kind"] == "garden":
+            if l["kind"] == "garden" and not (only_new and "tend_borders" in l):   # a planted garden keeps its tend_borders
                 n = plant_garden(b, l, l["name"].endswith(" Park"))
                 if b["template"] == "park" and l["name"].endswith(" Park"):
                     for k, v in plant_grounds(b, l).items():
@@ -224,4 +230,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(only_new="--new" in sys.argv)

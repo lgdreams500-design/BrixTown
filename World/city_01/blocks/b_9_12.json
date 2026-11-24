@@ -119,7 +119,10 @@
    "style": {
     "group": "depot_hall",
     "way": "b"
-   }
+   },
+   "storeys": [
+    "main"
+   ]
   }
  ],
  "paths": [

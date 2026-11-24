@@ -2937,6 +2937,22 @@
    "style": {
     "group": "arcade_mall",
     "way": "c"
+   },
+   "storeys": [
+    "main",
+    "store",
+    "rooms"
+   ],
+   "stair": {
+    "rect": [
+     160.35,
+     840.65,
+     162.7,
+     847.55
+    ],
+    "axis": "z",
+    "wall": "w",
+    "up0": -1
    }
   }
  ],
