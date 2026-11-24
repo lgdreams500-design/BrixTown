@@ -1,5 +1,5 @@
 {
- "note": "NPC careers and how many people work at each kind of place (LIVING_CITY CITY-081 to CITY-086; asked for by the owner on 2026-11-23). 'careers': every job a resident can have: a title, a group (for the shares) and the routine role in roles.json it follows. 'workplaces': how a lot is recognised as a type of workplace; the first rule that fits wins (its kind, and optionally a word in its name, a tag or its block template; 'outdoors' for an open place such as the market, staffed though it has no walls to enter). Mall units go by 'mall_units'. 'staffing': the posts each type of workplace has, each a career with a min and max number of people; a place's size moves it from min (gross floor area at or below small_m2) to max (at or above large_m2). Floor area is footprint x floors worked: 'ground' (shops and cafes, whose upper floors are flats), 'all', or 'unit' (a mall unit's own floor). Only ground-floor mall units take residents; a mall's other jobs go to in-commuters (CITY_BALANCE 2.2). 'keep_roles': roles whose residents keep their place and get this career. 'reassign_roles': the routine roles of residents who work in town and are given careers here (gardeners keep their gardens). 'shares': the share of residents working in town each group gets; posts beyond a group's share are left to in-commuters, so posts are a cap, not a number to fill. 'home_based': careers that work from home (group creative), with weights. 'couriers_share': couriers and postal workers as a share of all residents (the owner, 2026-11-23: far fewer); the rest work in town (CITY-087), and balance.json's courier target matches it. 'second_jobs': careers whose people also have a day job, with weights for it (the owner, 2026-11-23: waste collectors collect at dawn, then work as couriers; CITY-088). 'commuter_careers' and 'courier_careers': weights for those who work outside town or on rounds. Every number is [ASSUMPTION] until the owner tunes it.",
+ "note": "NPC careers and how many people work at each kind of place (LIVING_CITY CITY-081 to CITY-086; asked for by the owner on 2026-11-23). 'careers': every job a resident can have: a title, a group (for the shares) and the routine role in roles.json it follows; 'wear', where the job has clothes of its own that are not its routine role's (a guard's dark uniform and cap, a janitor's overalls; ART_DIRECTION C5), names them. 'workplaces': how a lot is recognised as a type of workplace; the first rule that fits wins (its kind, and optionally a word in its name, a tag or its block template; 'outdoors' for an open place such as the market, staffed though it has no walls to enter). Mall units go by 'mall_units'. 'staffing': the posts each type of workplace has, each a career with a min and max number of people; a place's size moves it from min (gross floor area at or below small_m2) to max (at or above large_m2). Floor area is footprint x floors worked: 'ground' (shops and cafes, whose upper floors are flats), 'all', or 'unit' (a mall unit's own floor). Only ground-floor mall units take residents; a mall's other jobs go to in-commuters (CITY_BALANCE 2.2). 'mall_staff' (CITY-105, the owner on 2026-11-24: 'one person per outlet is good enough. few security, ganitors etc, can be added to handle entire Mall'): in a mall whose units are outlets (a unit with a front and a kind of outlet, on any floor) each outlet has one keeper, of the career 'keeper' gives its trade, and the mall has the 'whole_mall' posts besides, so many of each career; every one of these posts is filled by a resident before anyone else in town is placed (they are the mall's minimum), so no outlet stands empty. Such a mall's units that are not outlets (its corner stores, its kiosks) still go by 'mall_units', ground floor only, as a cap. The counts are a first guess [ASSUMPTION]. 'keep_roles': roles whose residents keep their place and get this career. 'reassign_roles': the routine roles of residents who work in town and are given careers here (gardeners keep their gardens). 'shares': the share of residents working in town each group gets; posts beyond a group's share are left to in-commuters, so posts are a cap, not a number to fill. 'home_based': careers that work from home (group creative), with weights. 'couriers_share': couriers and postal workers as a share of all residents (the owner, 2026-11-23: far fewer); the rest work in town (CITY-087), and balance.json's courier target matches it. 'second_jobs': careers whose people also have a day job, with weights for it (the owner, 2026-11-23: waste collectors collect at dawn, then work as couriers; CITY-088). 'commuter_careers' and 'courier_careers': weights for those who work outside town or on rounds. Every number is [ASSUMPTION] until the owner tunes it.",
  "careers": {
   "cafe_cashier": {
    "title": "café cashier",
@@ -99,7 +99,24 @@
   "security_guard": {
    "title": "security guard",
    "group": "facilities",
+   "role": "shopkeeper",
+   "wear": "guard"
+  },
+  "janitor": {
+   "title": "janitor",
+   "group": "facilities",
+   "role": "shopkeeper",
+   "wear": "janitor"
+  },
+  "shop_owner": {
+   "title": "shop owner",
+   "group": "retail",
    "role": "shopkeeper"
+  },
+  "food_outlet_owner": {
+   "title": "food outlet owner",
+   "group": "food",
+   "role": "cafe"
   },
   "car_salesperson": {
    "title": "car salesperson",
@@ -756,6 +773,22 @@
   "food": "mall_food",
   "foodhall": "mall_foodhall",
   "anchor": "mall_anchor"
+ },
+ "mall_staff": {
+  "keeper": {
+   "shop": "shop_owner",
+   "food": "food_outlet_owner"
+  },
+  "whole_mall": [
+   {
+    "career": "security_guard",
+    "count": 6
+   },
+   {
+    "career": "janitor",
+    "count": 6
+   }
+  ]
  },
  "staffing": {
   "cafe": {

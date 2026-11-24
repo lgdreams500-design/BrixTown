@@ -1,7 +1,7 @@
 ---
 spec_id: WASTED-SPEC
 title: Brix Town — Game Specification
-version: 0.5.8
+version: 0.5.9
 status: draft            # draft | reviewed | approved
 last_updated: 2026-11-24
 owner: project-owner
@@ -435,7 +435,7 @@ specs and validation tools that creators will later use, so the UGC pipeline is 
 | ADR-0006 | Body motion: one skeleton, movement signatures, independent layers (Q-17 still open) | accepted |
 | ADR-0007 | Daylight: the softer, warmer "kit" light replaces the reference light as the default (amends ADR-0004) | accepted |
 | ADR-0012 | Money, shops, quests and the designer in the slice: one ledger, settled by the day; stock, stall sales and daily jobs calculated from the clock and routines | proposed |
-| ADR-0041 | Buying at each outlet of the mall; what the outlets sell and where each good goes (home, wardrobe, carried) | accepted |
+| ADR-0041 | Buying at each outlet of the mall; what the outlets sell and where each good goes (home, wardrobe, carried); a keeper in every outlet, guards and janitors for the mall | accepted |
 
 ADR-0001 to ADR-0003 are reserved numbers; their files are written when the decision is taken.
 
@@ -509,3 +509,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.5.6 | 2026-11-22 | Real estate, the missing pieces (owner's request): residents move house (PROP-022, now PH1 in progress), For Sale and To Let boards and the agents' names on their offices (PROP-023), beds in empty flats. |
 | 0.5.7 | 2026-11-24 | Reward feedback (owner's request, samples Q1 and I1 chosen in chat): SND-019 coins and bells when a quest or job pays, SND-020 the bank's interest slip. New feature `F-UI-REWARD`, picked at level 2 for the first slice ("Level 2, achievements"): QST-009 achievements earned from facts and kept, SND-021 their banner and fanfare (sample A1), UI-019 the list on the Me tab. ADR-0043. |
 | 0.5.8 | 2026-11-24 | Buying at each outlet of Eastgate Mall (owner's request; ADR-0041): ECO-013 (each outlet its own goods, stock and price, paid through the ledger) and ECO-014 (the outlets' catalogue as data, and where each good goes: carried, eaten, for the home, to wear). Detail in the domain specs: WLD-066, FURN-064, CHR-016. No level was picked for this; F-CHR-WARDROBE, F-INV-ITEMS and F-NPC-POP stay at 1. |
+| 0.5.9 | 2026-11-24 | Staff for Eastgate Mall (owner's request; ADR-0041): one keeper in every outlet, six guards and six janitors for the whole mall. Detail in the domain specs: CITY-105 (LIVING_CITY), WLD-067 (WORLD_MAP). Careers were dealt again: 636 residents have another workplace. No level was picked for this. |

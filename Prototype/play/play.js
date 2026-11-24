@@ -1726,7 +1726,7 @@ function buildWorld() {
 }
 
 // ---------------------------------------------------------------- people
-const looks = D.residents.map((r, i) => People.look(i, D.roles[r.r], D.role_sig[D.roles[r.r]]));
+const looks = D.residents.map((r, i) => People.look(i, r.u || D.roles[r.r], D.role_sig[D.roles[r.r]]));   // (r.u: clothes of the job itself, where it has its own: a guard, a janitor; CITY-105)
 let playerLook = People.player();                  // the designed character replaces this (life.js, CHR-001)
 
 function pieceAt(row, m) { let lo = 0, hi = row.length - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (row[mid][0] <= m) lo = mid; else hi = mid - 1; } return lo; }

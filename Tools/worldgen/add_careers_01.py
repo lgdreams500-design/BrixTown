@@ -7,7 +7,9 @@ script only writes what they answer into the city:
               from home) and their post there (their own place to work, CITY-085); couriers, commuters and gardeners
               get a career and keep everything else
   places      a workplace with more staff than places to work gets more, spread over its floors clear of its stair, as
-              add_households_01.py does; a mall's places to work are in its ground-floor units, each staffed unit its own
+              add_households_01.py does; a mall's places to work are in its units, each staffed unit its own: an
+              outlet's keeper at its `stand` on whichever floor it is, and those who look after the whole mall at the
+              plan's `staff` places (CITY-105); the floor of each is in the lot's `levels.work`
   staff       a lot that records its staff count ('staff') is set to the residents who work there
   rounds      anyone who now has a utility routine and no rounds gets twelve places among the forty nearest
 Ids, homes, names and everything else stay. Running it again gives the same city.
@@ -96,10 +98,21 @@ def main():
         l = byid[lid]
         ss.sort(key=lambda x: x[0])
         if "plan" in l:                                          # a mall: staff stand in their own units
-            units = {u["id"]: u for u in l["plan"]["levels"][0]["units"]}
+            units, floor = {}, {}
+            for L in l["plan"]["levels"]:                         # a big store has one id on every floor: its staff are on the ground
+                for u in L["units"]:
+                    units.setdefault(u["id"], u)
+                    floor.setdefault(u["id"], L["level"])
             per_unit = collections.Counter(u for _, u, _ in ss)
-            seen, spots = collections.Counter(), []
-            for _, u, _ in ss:
+            seen, spots, lv = collections.Counter(), [], []
+            for _, u, r in ss:
+                if u is None:                                    # the whole mall's own: guards, janitors (CITY-105)
+                    q = l["plan"]["staff"][r["career"]][seen[r["career"]]]
+                    seen[r["career"]] += 1
+                    spots.append([round(q["pos"][0], 2), round(q["pos"][1], 2)])
+                    lv.append(q["level"])
+                    continue
+                lv.append(floor[u])
                 x0, z0, x1, z1 = units[u]["rect"]
                 n, i = per_unit[u], seen[u]
                 seen[u] += 1
@@ -110,6 +123,8 @@ def main():
                 step = min(1.2, (x1 - x0 - 1.4) / max(1, n))
                 spots.append([round((x0 + x1) / 2 + (i - (n - 1) / 2) * step, 2), round(z0 + (z1 - z0) * 0.4, 2)])
             l["objects"]["work"] = spots
+            if any(lv):
+                l.setdefault("levels", {})["work"] = lv
         else:
             have = l["objects"].setdefault("work", [])
             if len(ss) > len(have):

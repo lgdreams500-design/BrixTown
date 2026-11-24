@@ -287,6 +287,8 @@ const People = (() => {
     child: { g: "tee", top: ["teal", "ochre", "terra", "cream", "blue", "plum"], bottom: ["indigo", "olive", "blue", "brown"], shorts: .55, skirt: .25, hair: ["short", "bob", "afro", "long", "bun"], shoes: ["cream", "brown"], h: [1.12, 1.45], b: [.8, .92] },   // WLD-032
     utility: { g: "long", top: ["charcoal"], bottom: ["indigo"], cap: ["ochre"], hair: ["short"], shoes: ["black"], h: [1.66, 1.82], b: [1, 1.12] },
     binman: { g: "long", top: ["olive", "ochre"], bottom: ["charcoal"], cap: ["ochre"], hair: ["short", "side", "bun"], shoes: ["black"], h: [1.64, 1.84], b: [1, 1.14] },   // CITY-088: bins at dawn, parcels by day
+    guard: { g: "long", top: ["indigo"], bottom: ["charcoal"], cap: ["charcoal"], hair: ["short", "side", "bun"], shoes: ["black"], h: [1.68, 1.84], b: [1, 1.14], tash: .3 },   // CITY-105: a job's own clothes (careers.json 'wear'): a guard's dark uniform and cap,
+    janitor: { g: "long", top: ["teal"], bottom: ["teal"], cap: ["sand"], hair: ["short", "side", "bun", "bob"], shoes: ["brown"], h: [1.6, 1.8], b: [.94, 1.12] },   // a janitor's overalls, one colour from collar to ankle
     creative: { g: "tee", top: ["plum", "ochre", "teal", "terra", "cream"], bottom: ["indigo", "olive", "charcoal"], scarf: ["ochre", "terra", "plum"], scarfP: .45, bag: .35, hair: ["long", "afro", "bun", "side", "bob"], shoes: ["brown", "cream"], h: [1.6, 1.8], b: [.9, 1.06] },   // CITY-083: works from home
   };
   function look(id, role, sigName) {

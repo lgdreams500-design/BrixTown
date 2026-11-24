@@ -160,10 +160,10 @@ const Outlets = (() => {
     onWall({ a0: a0 + .75, v0: D, da: 1, dv: 0, na: 0, nv: -1, len: a1 - a0 - 1.5 }, walls[1] || "posters", "B");
     onWall({ a0: a1, v0, da: 0, dv: 1, na: -1, nv: 0, len: D - v0 - .15, side: true }, walls[2] || "posters", "R");
     if (staffed) {                                              // where its staff serve: a counter 2.2 m in, with a till; a lit case on it where food is sold
-      const half = Math.min(mid - 2.4, 1.1 * ((u.stand || []).length - 1) + 1.1);   // as long as its staff stand wide, so there is a broad way past it at each end
+      const half = Math.min(mid - 2.4, food ? 2.3 : 1.6);       // its one keeper's counter (CITY-105): room for the till, and the lit case where food is sold; a broad way past it at each end
       T.boxQ(S, mid - half, mid + half, fy, fy + 1.0, -2.9, -2.2, T.wood, 19); T.solidAlong(xz(mid - half, 2.55), xz(mid + half, 2.55), fy, fy + 1.0, .4);
       bx(mid + half - .5, 2.55, fy + 1.0, .4, .3, .34, DARK); bx(mid + half - .5, 2.47, fy + 1.3, .34, .22, .03, SCREEN, 1);
-      if (food) bx(mid - half + 1.3, 2.55, fy + 1.0, 2.2, .34, .5, GLOW, 1);
+      if (food) bx(mid - half + .9, 2.55, fy + 1.0, 1.6, .34, .5, GLOW, 1);   // (to one side of where the keeper stands)
     }
     if (D >= 6) {
       const servery = walls[1] === "servery", vA = staffed ? 5.0 : Math.max(3.4, D * .44), vB = Math.min(D - 2.0, vA + 2.4), slots = [[.27, vA], [.73, vA], [.5, servery || staffed ? vA : vB]];
