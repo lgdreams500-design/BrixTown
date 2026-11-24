@@ -2471,6 +2471,54 @@
         "depth": 3,
         "full": 3
       }
+    },
+    {
+      "id": "F-VEH-SKATES",
+      "area": "vehicles",
+      "title": "Skates",
+      "why": "A fast way to cross town on foot, and something to save up for: better skates from the skate store as the player earns money.",
+      "pillars": [
+        2,
+        3
+      ],
+      "spec": [
+        "CITY-098",
+        "CITY-099",
+        "CITY-100",
+        "CITY-101",
+        "CITY-102",
+        "CITY-103",
+        "CITY-104",
+        "Q-40"
+      ],
+      "levels": [
+        {
+          "name": "Skate store window",
+          "what": "A skate store in town with skates on show; residents skate past now and then. The player cannot skate.",
+          "effort": "S",
+          "needs": {}
+        },
+        {
+          "name": "Skates to wear",
+          "what": "Skates the player owns (manual 50, electric 100, Neon Boost 250 km/h) are carried in the hand and put on or taken off with one key (Y); skating glides, brakes and steers, slower indoors. Given in tests (?auto=1) until the store.",
+          "effort": "M",
+          "needs": {}
+        },
+        {
+          "name": "Skate store and tiers",
+          "what": "Buy skates at the skate store with money through the ledger: manual (50 km/h), electric (100 km/h), Neon Boost (250 km/h); owned skates are belongings, the best owned pair goes on with the key, speeds and prices are data.",
+          "effort": "L",
+          "needs": {
+            "F-BLD-SHOP": 2,
+            "F-INV-ITEMS": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 2,
+        "depth": 2,
+        "full": 2
+      }
     }
   ]
 }

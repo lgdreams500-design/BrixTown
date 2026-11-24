@@ -23,6 +23,7 @@
   #mini { position: static; width: 204px; height: 204px; border-radius: 50%; border: 2px solid rgba(217,207,182,.55); background: #24242b; }
   #stats { margin-top: 8px; font-size: 13px; line-height: 1.5; color: var(--cream); text-align: center; font-variant-numeric: tabular-nums; }
   #prompt { left: 50%; bottom: 96px; transform: translateX(-50%); font-size: 18px; padding: 8px 16px; background: rgba(23,23,28,.72); border-radius: 6px; display: none; }
+  #skatebar { left: 50%; bottom: 140px; transform: translateX(-50%); font-size: 15px; padding: 5px 12px; background: rgba(23,23,28,.6); border-radius: 6px; display: none; font-family: var(--data); }   /* skates worn: which pair and how fast (CITY-099) */
   #prompt kbd, #keys kbd { font-family: var(--data); font-size: .85em; padding: 1px 7px; border: 1px solid rgba(240,163,90,.6); border-radius: 4px; margin-right: 6px; color: var(--lantern); }
   #keys { left: 14px; bottom: 12px; font-size: 13px; color: var(--cream); line-height: 1.9; background: rgba(23,23,28,.62); border-radius: 6px; padding: 6px 12px; text-shadow: none; display: none; }
   #keys span { margin-right: 14px; white-space: nowrap; }
@@ -145,7 +146,7 @@
   .keys kbd { margin-right: 4px; }
   .set-off { display: none !important; }   /* hidden in Settings: On the screen */
   #life, #talk, #toast, #prompt, #purse, #clock, #counter, #track { zoom: var(--ui-zoom, 1); }
-  body.designing #keys, body.designing #mapbox, body.designing #stats, body.designing #toast, body.designing #track, body.designing #prompt, body.designing #clock { display: none !important; }   /* the building designer: the building, the panel and nothing else */
+  body.designing #keys, body.designing #mapbox, body.designing #stats, body.designing #toast, body.designing #track, body.designing #prompt, body.designing #skatebar, body.designing #clock { display: none !important; }   /* the building designer: the building, the panel and nothing else */
   #life.side { left: auto; right: 12px; top: 12px; transform: none; width: min(380px, calc(100vw - 24px)); max-height: calc(100vh - 24px); }   /* the building designer, beside the building */
   .dzrow { display: flex; align-items: center; gap: 10px; margin: 6px 0; flex-wrap: wrap; }
   .dzl { width: 118px; font-size: 14px; color: var(--dim); }
@@ -205,11 +206,12 @@
 <div class="hud" id="counter"></div>
 <div class="hud" id="mapbox"><canvas id="mini" width="408" height="408"></canvas><div id="stats"></div></div>
 <div class="hud" id="prompt"></div>
+<div class="hud" id="skatebar"></div>
 <div class="hud" id="dot"></div>
 <div class="hud" id="keys">
-  <span><kbd>W A S D</kbd>walk</span><span><kbd>Shift</kbd>run</span><span><kbd>Space</kbd>jump</span><span><kbd>V</kbd>first or third person</span><span><kbd>E</kbd>use, talk, get into a parked car</span><span><kbd>B</kbd>buy, sell, bank</span><span><kbd>I</kbd>money and things</span><span><kbd>J</kbd>quests</span><span><kbd>P</kbd>property</span><br>
+  <span><kbd>W A S D</kbd>walk</span><span><kbd>Shift</kbd>run</span><span><kbd>Space</kbd>jump</span><span><kbd>Y</kbd>skates: carry or put on</span><span><kbd>V</kbd>first or third person</span><span><kbd>E</kbd>use, talk, get into a parked car</span><span><kbd>B</kbd>buy, sell, bank</span><span><kbd>I</kbd>money and things</span><span><kbd>J</kbd>quests</span><span><kbd>P</kbd>property</span><br>
   <span>In a car: <kbd>W</kbd><kbd>S</kbd>drive and brake</span><span><kbd>A</kbd><kbd>D</kbd>steer</span><span><kbd>Space</kbd>handbrake</span><span><kbd>F</kbd>horn</span><span><kbd>R</kbd>radio</span><span><kbd>E</kbd>get out</span><br>
-  <span><kbd>[</kbd><kbd>]</kbd>slow or speed the clock</span><span><kbd>T</kbd>skip an hour</span><span><kbd>M</kbd>map</span><span><kbd>N</kbd>sound</span><span><kbd>O</kbd>better or simple picture</span><span><kbd>L</kbd>earlier light</span><span><kbd>K</kbd>try the weather</span><span><kbd>Y</kbd>try the next season</span><span><kbd>H</kbd>hide these</span>
+  <span><kbd>[</kbd><kbd>]</kbd>slow or speed the clock</span><span><kbd>T</kbd>skip an hour</span><span><kbd>M</kbd>map</span><span><kbd>N</kbd>sound</span><span><kbd>O</kbd>better or simple picture</span><span><kbd>L</kbd>earlier light</span><span><kbd>K</kbd>try the weather</span><span><kbd>F9</kbd>try the next season</span><span><kbd>H</kbd>hide these</span>
 </div>
 <div id="bigmap"><canvas id="big" width="900" height="900"></canvas><div id="legend"></div></div>
 <div id="talk" role="dialog" aria-label="Conversation">
@@ -266,6 +268,7 @@
 })();
 </script>
 <script src="people.js"></script>
+<script src="skates.js"></script>   <!-- skates to carry and wear (CITY-098 to CITY-101) -->
 <script src="conversations.js"></script>
 <script src="car_models.js"></script>
 <script src="cars.js"></script>

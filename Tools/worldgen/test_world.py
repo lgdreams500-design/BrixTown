@@ -737,6 +737,32 @@ class GettingOutOfTheWay(unittest.TestCase):
 
 
 
+class Skates(unittest.TestCase):
+    """CITY-098 to CITY-100: the kinds of skates, their speeds, and what ?auto=1 gives the player (World/rules/skates.json)."""
+    R = W["skates"]
+
+    def test_CITY_098_skate_kinds_and_speeds(self):
+        k = self.R["kinds"]
+        self.assertEqual({n: k[n]["top_kmh"] for n in k}, {"manual": 50, "electric": 100, "neon_boost": 250})   # the owner, 2026-11-24
+        self.assertEqual(self.R["order"], ["manual", "electric", "neon_boost"])
+        tops = [k[n]["top_kmh"] for n in self.R["order"]]
+        self.assertEqual(tops, sorted(tops))                                 # each step up the store is faster
+        for n, v in k.items():
+            for f in ("accel_kmh_s", "glide_kmh_s", "brake_kmh_s"):
+                self.assertGreater(v[f], 0, n + " " + f)
+            self.assertLess(v["glide_kmh_s"], v["brake_kmh_s"], n)           # letting go glides; pulling back stops sooner
+            self.assertLess(v["top_kmh"] / v["accel_kmh_s"], 10, n)          # top speed in under ten seconds
+            for c in ("boot", "trim", "frame", "wheel"):
+                self.assertEqual(len(v[c]), 3, n + " " + c)
+            self.assertEqual(v["powered"], v["glow"] is not None, n)         # only the powered skates light up
+        self.assertLess(self.R["indoor_top_kmh"], min(tops))                 # indoors nobody goes at full speed
+
+    def test_CITY_100_auto_owns_all_and_wears_electric(self):
+        self.assertEqual(sorted(self.R["auto_owned"]), sorted(self.R["kinds"]))
+        self.assertEqual(self.R["auto_equipped"], "electric")               # the owner, 2026-11-24: ?auto=1 loads the electric skates
+
+
+
 class TheFurnitureOutlet(unittest.TestCase):
     """FURNITURE FURN-020, FURN-021: the huge outlet outside the East Gate (Q-30, Tools/worldgen/add_outlet_01.py)."""
 

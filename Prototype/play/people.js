@@ -332,6 +332,27 @@ const People = (() => {
     ms.box(x - .11 * S, y + top + .22 * S, z - .11 * S, x + .11 * S, y + top + .33 * S, z + .11 * S, L.cap || L.hairC, fl, B);   // the hair
   }
 
+  // A skate (CITY-098, CITY-099; the look of Tools/blender/skates_30.py): a high boot round the shoe with a cuff to the ankle, a frame
+  // under the sole and four inline wheels; powered skates light their wheels and a strip on the cuff, the Neon Boost a nozzle behind
+  // the heel. he: the heel at the sole, f: toes-forward, up, side: unit axes; an: the ankle the cuff reaches; K: the kind's colours.
+  // Worn skates stand the wearer LIFT higher (play.js lifts the body by it).
+  const LIFT = .085;
+  function skate(ms, he, f, up, side, K, S, T, lod, fl, sd, an, k) {
+    const at = (a, u) => add(add(he, sc(f, a * T)), sc(up, u * S)), seg = lod === 0 ? 10 : 6, rg = lod === 0 ? 6 : 4, glow = K.glow;
+    OSKIP = 0;
+    ball(ms, at(.105, .012), sc(side, .062 * T), sc(f, .135 * T), sc(up, .058 * T), seg, rg, K.boot, fl, sd + 50);   // the boot round the foot
+    limb(ms, at(.03, .02), add(an, sc(up, .07 * S)), .066 * T, .06 * T, lod === 0 ? 10 : 6, K.boot, fl, lod === 0, f, sd + 51);   // the cuff up the ankle
+    ball(ms, add(an, sc(up, .085 * S)), sc(side, .064 * T), sc(f, .062 * T), sc(up, .014 * S), seg, 3, glow || K.trim, fl, sd + 52);   // the cuff's rim
+    ball(ms, at(.2, .03), sc(side, .05 * T), sc(f, .05 * T), sc(up, .03 * T), seg, rg, K.trim, fl, sd + 53);   // the toe cap
+    limb(ms, at(-.01, -.035), at(.23, -.035), .022 * S, .022 * S, 5, K.frame, fl, lod === 0, f, sd + 54);   // the frame
+    for (let i = 0; i < 4; i++) { const c = at(-.005 + i * .075, -LIFT + .034);
+      ball(ms, c, sc(side, .013 * S), sc(f, .034 * S), sc(up, .034 * S), lod === 0 ? 10 : 6, rg, K.wheel, fl, sd + 55 + i);
+      if (lod === 0) ball(ms, add(c, sc(side, (k ? 1 : -1) * .012 * S)), sc(side, .004 * S), sc(f, .014 * S), sc(up, .014 * S), 6, 3, K.frame, fl, sd); }   // the hubs
+    if (K.powered && lod === 0) ball(ms, at(.1, -.012), sc(side, .034 * T), sc(f, .07 * T), sc(up, .014 * S), 8, 3, K.frame, fl, sd + 60);   // the battery under the boot
+    if (K.powered && lod === 0) ball(ms, at(.01, -.012), sc(side, .012 * S), sc(f, .012 * S), sc(up, .008 * S), 6, 3, glow, fl, sd + 61);   // the status light
+    if (glow && K.boost && lod < 2) { limb(ms, at(-.03, .02), at(-.1, .03), .028 * S, .036 * S, 8, K.frame, fl, true, f, sd + 62);
+      ball(ms, at(-.105, .03), sc(side, .026 * S), sc(f, .006 * S), sc(up, .026 * S), 8, 3, glow, fl, sd + 63); }   // the Neon Boost's nozzle
+  }
   function draw(ms, x, y, z, yaw, L, pose, o) {
     if (o.lod === 3) return far(ms, x, y, z, yaw, L, pose, o.ph || 0, o.fl);
     const sig = o.sig || L.sig, g = geo(L.S), S = L.S, Sh = S * 1.22, W = L.W, T = 1.12 * S, lod = o.lod, fl = o.fl, t = o.t, sd = L.seed;
@@ -386,6 +407,8 @@ const People = (() => {
       if (kind === "shorts") limb(ms, hip, add(hip, sc(sub(kn, hip), .82)), .092 * T, .086 * T, nl, L.bottom, fl, lod < 2, fwd, sd + k + 2);
       const he = Wp(P.heel[k]), to = Wp(P.toe[k]), f = unit(sub(to, he)), up0 = Wd([0, 0, 1]), side = unit(cross(f, up0)), up = cross(side, f);
       ball(ms, add(add(he, sc(f, .105 * T)), sc(up, .004 * S)), sc(side, .05 * T), sc(f, .12 * T), sc(up, .045 * T), lod === 0 ? 10 : 6, lod === 0 ? 6 : 4, L.shoes, fl, sd + k + 4);
+
+      if (o.skates && o.skates.worn) skate(ms, he, f, up, side, o.skates.kind, S, T, lod, fl, sd + k, an, k);   // skates on (CITY-099)
     }
     const tx = Wd(mv(P.Rt, [1, 0, 0])), ty = Wd(mv(P.Rt, [0, 1, 0])), tz = Wd(mv(P.Rt, [0, 0, 1])), px = Wd(mv(P.Rp, [1, 0, 0])), py = Wd(mv(P.Rp, [0, 1, 0])), pz = Wd(mv(P.Rp, [0, 0, 1]));
     const pel = Wp(P.pel), sp = Wp(P.spine), swing = Math.abs(P.an[0][1] - P.an[1][1]);
@@ -415,6 +438,12 @@ const People = (() => {
       tube(ms, [a, b, w], [.052 * T, .0435 * T, .035 * T], nl, long ? outer : L.skin, fl, fwd, sd + k + 6, lod < 2, lod < 2);
       if (!long) limb(ms, a, add(a, sc(sub(b, a), .875)), .057 * T, .052 * T, nl, L.top, fl, lod < 2, fwd, sd + k + 8);
       if (lod < 2) ball(ms, add(w, sc(dir, .058 * S)), sc(tx, .03 * T), sc(ty, .042 * T), sc(dir, .055 * T), 8, 5, L.skin, fl, sd);
+    }
+    if (o.skates && !o.skates.worn) {                               // skates carried (CITY-099): the pair hangs by its laces from the right hand, toes forward
+      const w = Wp(P.wr[1]), dn = Wd([0, 0, -1]), fw = unit(sub(fwd, sc(dn, dot(fwd, dn)))), sx = cross(fw, Wd([0, 0, 1]));
+      OSKIP = 0; limb(ms, add(w, sc(dn, .03 * S)), add(w, sc(dn, .1 * S)), .006 * S, .006 * S, 4, o.skates.kind.trim, fl, false, fwd, sd);   // the laces
+      for (const e of [-1, 1]) { const top = add(add(w, sc(dn, .12 * S)), sc(sx, e * .045 * S));
+        skate(ms, add(add(top, sc(dn, .2 * S)), sc(fw, -.11 * S)), fw, Wd([0, 0, 1]), sx, o.skates.kind, S, T, lod, fl, sd + 40 + e, add(top, sc(dn, .02 * S)), e > 0 ? 1 : 0); }
     }
     // neck and head
     const fm = L.fm || FM0, hx = sc(Wd(mv(P.Rh, [1, 0, 0])), fm.face_w), hy = Wd(mv(P.Rh, [0, 1, 0])), hz = Wd(mv(P.Rh, [0, 0, 1])), nk = Wp(P.neck), hj = Wp(P.headJ), hc = add(hj, sc(hz, .156 * Sh));   // the head's centre, where character_face_05.py puts it
@@ -652,5 +681,5 @@ const People = (() => {
     }
     if (L.tash) blob(0, -.104, -.037 + Math.max(0, oh - .002) * .4, .024, .006, .007, L.hairC, 6, 3);
   }
-  return { SIG, look, player, design, draw, stepLength, cast, setSun, hero: () => HERO, colour: n => K[n] };
+  return { SIG, look, player, design, draw, stepLength, cast, setSun, hero: () => HERO, colour: n => K[n], SKATE_LIFT: LIFT };
 })();

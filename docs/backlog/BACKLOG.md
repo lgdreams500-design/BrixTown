@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 41 of 54 | 9 of 54 | 9 of 54 |
-| Size of the plan (points) | 529 | 444 | 844 |
-| Size of the suggested plan | 134 | 404 | 812 |
+| Decided | 41 of 55 | 9 of 55 | 9 of 55 |
+| Size of the plan (points) | 541 | 456 | 856 |
+| Size of the suggested plan | 146 | 416 | 824 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -70,6 +70,7 @@
 | **Tram or bus** `F-VEH-TRANSIT` | 2 Network ★ | undecided | undecided | Owner, 2026-11-23: "Level 2: Network" for buses; keep the tram and add buses. Residents of independent houses own the cars; those in the central flats mostly don't and use public transport. Depth and full not picked yet. |
 | **Driving yourself** `F-VEH-DRIVE` | 2 Cars ★ | 2 Cars ★ | 2 Cars ★ | Owner, 2026-11-22: walking, and drivable cars, from the first slice. |
 | **Crash damage** `F-VEH-CRASH` | 2 Broken until mended ★ | undecided | undecided | Owner, 2026-11-22: objects on the pavements, trees and building corners destructible when driving, with a breaking animation; "Until a worker fixes it", "Fast hits break", residents "Yes, they shout". Later milestones not stated. Then the same day: "remove speed requirement for the damage, it should damage at any speed". |
+| **Skates** `F-VEH-SKATES` | undecided | undecided | undecided |  |
 
 ## Nature and time
 
@@ -385,3 +386,8 @@
 - 1 One level for all: Every home is furnished the same: every piece of its line's sets in the rooms of its plan. Size S.
 - 2 Four levels per home: Each home is given one of four furnishing levels (Bare, Basic, Homely, Full) once, when it is made, and keeps it; each level adds pieces to the one before (ADR-0035). Size M.
 - 3 Follows the household: A household's level is worked out from its income and how long it has lived there, from data and the world clock (never ticked or stored): it starts from its income band and moves up a level each time its savings for furniture reach the next level's cost. Size L.
+
+**Skates** (`F-VEH-SKATES`). A fast way to cross town on foot, and something to save up for: better skates from the skate store as the player earns money.
+- 0 Skate store window: A skate store in town with skates on show; residents skate past now and then. The player cannot skate. Size S.
+- 1 Skates to wear: Skates the player owns (manual 50, electric 100, Neon Boost 250 km/h) are carried in the hand and put on or taken off with one key (Y); skating glides, brakes and steers, slower indoors. Given in tests (?auto=1) until the store. Size M.
+- 2 Skate store and tiers: Buy skates at the skate store with money through the ledger: manual (50 km/h), electric (100 km/h), Neon Boost (250 km/h); owned skates are belongings, the best owned pair goes on with the key, speeds and prices are data. Size L.

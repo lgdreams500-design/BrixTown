@@ -1,0 +1,24 @@
+{
+ "note": "Skates (F-VEH-SKATES; LIVING_CITY CITY-098 to CITY-104). Each kind of skate the player can own: its top speed (km/h, the owner's numbers of 2026-11-24), how fast it gets there and how it slows when you stop pushing, and its colours (matched to the look test Tools/blender/skates_30.py). Prices for the skate store are not set yet (CITY-102, CITY-103, store and buying come in a later change). Times in seconds, speeds in km/h, colours linear RGB 0-1.",
+ "kinds": {
+  "manual": {
+   "name": "Manual skates", "top_kmh": 50, "accel_kmh_s": 12, "glide_kmh_s": 6, "brake_kmh_s": 40, "powered": false,
+   "boot": [0.46, 0.27, 0.18], "trim": [0.86, 0.78, 0.62], "frame": [0.32, 0.33, 0.35], "wheel": [0.88, 0.84, 0.72], "glow": null
+  },
+  "electric": {
+   "name": "Electric skates", "top_kmh": 100, "accel_kmh_s": 30, "glide_kmh_s": 8, "brake_kmh_s": 60, "powered": true,
+   "boot": [0.20, 0.34, 0.52], "trim": [0.92, 0.92, 0.90], "frame": [0.18, 0.19, 0.21], "wheel": [0.15, 0.15, 0.16], "glow": [0.35, 0.85, 1.0]
+  },
+  "neon_boost": {
+   "name": "Neon Boost skates", "top_kmh": 250, "accel_kmh_s": 70, "glide_kmh_s": 10, "brake_kmh_s": 90, "powered": true,
+   "boot": [0.16, 0.12, 0.24], "trim": [1.0, 0.36, 0.72], "frame": [0.12, 0.12, 0.14], "wheel": [0.25, 1.0, 0.75], "glow": [1.0, 0.3, 0.8]
+  }
+ },
+ "order": ["manual", "electric", "neon_boost"],
+ "auto_owned": ["manual", "electric", "neon_boost"],
+ "auto_equipped": "electric",
+ "indoor_top_kmh": 8,
+ "stroke_m": 2.4,
+ "turn_rate": 4.0,
+ "carry": "right_hand"
+}

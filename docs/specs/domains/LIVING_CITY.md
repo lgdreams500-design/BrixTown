@@ -1,9 +1,9 @@
 ---
 doc_id: WASTED-SPEC-LIVING-CITY
 title: Brix Town — Living city (map, residents, things to use, vehicles, seasons and plants)
-version: 0.4.2
+version: 0.5.9
 status: draft
-last_updated: 2026-11-23
+last_updated: 2026-11-24
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
 prototype: Tools/citysim/               # rules and tests with no engine; careers in careers.py, test_careers.py
 scope_source: docs/backlog/feature_choices.json
@@ -169,6 +169,25 @@ has the reasoning.
 | CITY-075 | A repair crew from the nearest depot shall mend each damaged thing, in the order the damage happened, within working hours (07:00 to 19:00 `[ASSUMPTION]`), walking there at their own pace and working a time set per kind; then the thing is whole again. When each thing is mended is calculated from the damage list and the rules alone, the same on every machine. | F-VEH-CRASH | 2 | P1 | `test_repairs` |
 | CITY-076 | Residents outdoors within 18 m `[ASSUMPTION]` who see something smashed shall turn to it, throw up their arms and shout at the driver (as CITY-071). | F-VEH-CRASH | 2 | P2 | Slice |
 
+#### Skates
+
+The owner, 2026-11-24: skates the character puts on with Y, three kinds bought with money at a skate store as part of the
+game's progression: manual (fast, 50 km/h), electric (very fast, 100 km/h) and Neon Boost (super fast, 250 km/h); `?auto=1`
+starts with the electric pair. The same day: the store and buying come in a later change; this change brings the models,
+skating and the requirements for the store and buying only, and `?auto=1` gives all three kinds with the electric pair in use
+and Y switching between holding the skates and wearing them. Kinds, speeds and colours are data in `World/rules/skates.json`
+(ADR-0042). No level is picked for `F-VEH-SKATES` yet.
+
+| ID | Requirement | Feature | Lvl | Pri | Proven by |
+|---|---|---|---|---|---|
+| CITY-098 | There shall be three kinds of skates, as data: manual (top speed 50 km/h), electric (100 km/h) and Neon Boost (250 km/h), each with how fast it gets to its top speed, how it glides when you stop pushing and how hard it brakes, and its colours. Each kind up the store is faster than the one before. | F-VEH-SKATES | 1 | P0 | `test_CITY_098_skate_kinds_and_speeds` |
+| CITY-099 | A character with skates shall hold the pair in use in the hand and, with one key (Y on a keyboard, RB on a gamepad), put them on, and with the same key take them off into the hand again. Worn skates stand the character a wheel higher. On skates W A S D push the character up to the kind's top speed along a heading that turns towards the keys, more slowly the faster they go; letting go glides to a stop; keys against the heading brake. Indoors no kind goes faster than 8 km/h `[ASSUMPTION]`. Running into a wall or a car loses the speed into it. Not on a seat, in a car or on the playground. | F-VEH-SKATES | 1 | P1 | Slice (`index.html?auto=1`, Y) |
+| CITY-100 | Skates a character owns shall be among their belongings (INV-001): each kind with its top speed, the pair in use marked, and any other owned pair can be made the one in use. They are saved with the game. `?auto=1` (tests, trials) shall give every kind, with the electric pair in use; a new game has none until the skate store (CITY-102). | F-VEH-SKATES | 1 | P1 | `test_CITY_100_auto_owns_all_and_wears_electric`; slice |
+| CITY-101 | Every skate model shall match the art direction (ART-001): a look test in `Tools/blender/` comes before any production model. The slice draws each kind in the colours of that look test. | F-VEH-SKATES | 1 | P1 | Look test `Tools/blender/skates_30.py`; slice `index.html?auto=1&studio=2&skates=electric` |
+| CITY-102 | A skate store shall be a place in town (a shop lot, as CITY-060 does for the car dealer) that stocks the three kinds, with a price for each in data in minor units `[ASSUMPTION]`, cheapest to dearest in the order of CITY-098, so better skates are a goal to save up for. The kinds stand on show and can be looked at before buying. | F-VEH-SKATES | 2 | P0 | Not built |
+| CITY-103 | A character shall buy skates at the skate store's counter, paid through the ledger (ECO-002), with ownership recorded on the server (PROP-001); a kind already owned is not sold twice. The bought pair goes to their belongings (CITY-100) and becomes the pair in use if it is faster than the one they had. Whether skates can be sold back is `[OPEN: Q-40]`. | F-VEH-SKATES | 2 | P0 | Not built |
+| CITY-104 | Skating shall be server-authoritative: the client sends inputs only; the server moves the character and puts back one moving faster than the kind in use allows, or skating on a kind they do not own. | F-VEH-SKATES | 1 | P0 | Engine test `CITY-104` |
+
 ### 3.5 Seasons, weather and plants
 
 | ID | Requirement | Feature | Lvl | Pri | Proven by |
@@ -223,6 +242,7 @@ Numbers for cars, also `[ASSUMPTION]`, in `World/rules/traffic.json`:
 | Traffic lights | At every junction on a through street (17), not only where two cross (`signals_on_through`) | CITY-046. Owner, 2026-11-22 |
 | Parking bays | 1,387 bays marked in the kerb edge, each clear of anything standing there (lamps, bins, bollards, trees) and 11 m clear of a shop or cafe door (`bay_clear_of_front`); were 2,280 | CITY-043. Owner, 2026-11-22: cars stood among things on the pavement |
 | Car load distance | 120 m | CITY-048 |
+| Skates | Manual 50, electric 100, Neon Boost 250 km/h top speed (the owner, 2026-11-24); they get there at 12, 30 and 70 km/h a second, glide down at 6 to 10 and brake at 40 to 90 km/h a second; 8 km/h indoors (`World/rules/skates.json`) | CITY-098, CITY-099 |
 
 ## 5. What the prototype does not cover
 
@@ -267,10 +287,12 @@ up to 42 on the road at once, no overlap, no crossing movements in a box, nobody
 | Q-27 | What happens when a car hits a person, and do cars take damage? | **DECIDED 2026-11-22:** nobody is hurt: people are pushed aside and the car stops. Cars take no damage until a later level. |
 | Q-29 | Should commuters who own a car drive out of town instead of taking the tram, and should some errands go beyond the nearest shop or café? | **DECIDED 2026-11-22** (owner: "drive out"), now CITY-068: car-owning commuters drive out through a town gate on the wall streets; the tram stays for everyone else. Errands stay nearest. |
 | Q-28 | Do cars need fuel, and what do they cost to keep? | **DECIDED 2026-11-22:** no fuel; a small weekly upkeep through the ledger, from PH4 with the other recurring costs (PROP-006). |
+| Q-40 | Can skates be sold back, and for how much? | A sold-back pair would let players trade up and get some money back. | Suggested: no selling back in the first slice; skates are kept. Undecided. |
 
 ## 7. Change log
 | Version | Date | Change |
 |---|---|---|
+| 0.5.9 | 2026-11-24 | Skates (`F-VEH-SKATES`, proposed in `features.json`, no level picked): CITY-098 to CITY-104 and Q-40 from the owner's request; kinds and speeds in `World/rules/skates.json` (ADR-0042). CITY-098 to CITY-101 in the slice; the store and buying (CITY-102, CITY-103) are written, not built. All proposed. |
 | 0.1.0 | 2026-11-21 | First version, with the city-in-a-box prototype and its tests. |
 | 0.2.0 | 2026-11-22 | Cars and real traffic drafted after the owner's picks (`F-VEH-DRIVE` 2, `F-VEH-TRAFFIC` 2 from the first slice): CITY-043 to CITY-049 for streets and residents' cars, CITY-060 to CITY-067 for cars players drive, car numbers in §4, Q-25 to Q-28, ADR-0009. All proposed. |
 | 0.2.1 | 2026-11-22 | Owner accepted CITY-043 to CITY-049, CITY-060 to CITY-067 and ADR-0009, and the suggested answers to Q-25 to Q-28, now written into CITY-049, CITY-060, CITY-064 and CITY-066. |
