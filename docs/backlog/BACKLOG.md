@@ -5,7 +5,7 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 43 of 57 | 9 of 57 | 9 of 57 |
+| Decided | 44 of 57 | 9 of 57 | 9 of 57 |
 | Size of the plan (points) | 548 | 463 | 883 |
 | Size of the suggested plan | 150 | 423 | 851 |
 
@@ -112,7 +112,7 @@
 | **The game menu** `F-UI-MENU` | 2 Every tab ★ | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (level 1 for the first slice), then the same day: "now build the game menu level 2". Later milestones not stated. |
 | **Settings** `F-UI-SETTINGS` | 1 Picture, sound, display, mouse | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (asked which levels the four menu features should have for the first slice). Later milestones not stated. |
 | **Reward feedback** `F-UI-REWARD` | 2 Achievements ★ | undecided | undecided | Owner, 2026-11-24: asked "Which level do you pick for Reward feedback (F-UI-REWARD) in the first slice?" after the coins and chimes were built (ADR-0043), answered "Level 2, achievements". Later milestones not stated. |
-| **Buy menus that show the goods** `F-UI-SHOP` | undecided | undecided | undecided |  |
+| **Buy menus that show the goods** `F-UI-SHOP` | 1 Objects in a grid | undecided | undecided | Owner, 2026-11-24: asked "Record F-UI-SHOP at level 1 (objects in a grid) for the first slice?" after the buy menus were built to the owner's choice of look test 33, "B, and D when narrow" (ADR-0044), answered "Yes, level 1". Later milestones not stated. |
 
 ## What each level means
 

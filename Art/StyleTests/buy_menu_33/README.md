@@ -58,6 +58,7 @@ eaten); arrows choose, Enter buys, Esc closes; a click chooses, a double click b
 
 ## Decided, and not
 
-Decided: layout B at the counters, D where the panel is narrow; goods with no object show a stand-in (ADR-0044).
-Not decided: a level for the feature (`F-UI-SHOP`, proposed); an object of its own for each carried and eaten thing;
+Decided: layout B at the counters, D where the panel is narrow; goods with no object show a stand-in (ADR-0044);
+`F-UI-SHOP` at level 1 for the first slice (owner, 2026-11-24).
+Not decided: later milestones; an object of its own for each carried and eaten thing;
 whether counters move to the "Painted signs" look of the menu (ART_DIRECTION 2.7).

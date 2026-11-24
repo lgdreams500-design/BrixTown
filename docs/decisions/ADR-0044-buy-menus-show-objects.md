@@ -1,7 +1,7 @@
 # ADR-0044: Buy menus show what is for sale as objects
 
-Date: 2026-11-24. Status: accepted for building (owner's request and choice in chat, 2026-11-24). No level is picked for
-the proposed feature `F-UI-SHOP` (see "Levels" below).
+Date: 2026-11-24. Status: accepted for building (owner's request and choice in chat, 2026-11-24). `F-UI-SHOP` is
+picked at level 1 for the first slice (see "Levels" below).
 
 ## Context
 
@@ -53,7 +53,9 @@ beside it), C "Shelves" and D "Compact grid" (small cells for a narrow panel). T
 
 `F-UI-SHOP` "Buy menus that show the goods" is proposed in `docs/backlog/features.json`: 0 a list (as before), 1 objects
 in a grid with stand-ins (this record), 2 every thing its own object. The owner asked for this to be built and chose its
-layout, but named no level, so none is recorded in `feature_choices.json`.
+layout without naming a level; asked once it was built ("Record F-UI-SHOP at level 1 (objects in a grid) for the first
+slice?") the owner answered "Yes, level 1", and that is recorded in `feature_choices.json`. Later milestones are not
+stated.
 
 ## Consequences
 

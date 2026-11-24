@@ -2,7 +2,7 @@
 doc_id: WASTED-SPEC-MENU
 title: Brix Town — The game menu (money, belongings, properties, journal, wardrobe, map, settings, save, help)
 version: 0.3.4
-status: in-progress      # F-UI-MENU level 2, the others level 1, accepted and built in the slice
+status: in-progress      # F-UI-MENU level 2, the others (F-UI-SHOP among them) level 1, accepted and built in the slice
 last_updated: 2026-11-24
 parent: docs/specs/GAME_SPEC.md        # extends §UI (UI-001 to UI-004); same ID rules; UI, INV and CHR rows
 related: docs/specs/domains/BUILDER.md, docs/specs/domains/FURNITURE.md, docs/decisions/ADR-0031-designer-view-and-furniture-from-the-room.md, docs/decisions/ADR-0044-buy-menus-show-objects.md
@@ -133,7 +133,7 @@ FURN-050 (the inventory) is met by INV-001 for furniture.
 Remapping controls, gamepad and touch play, colour-blind markers and reduced motion (F-UI-SETTINGS 2); using, giving and dropping things, carrying limits (F-INV-ITEMS 2);
 clothes as bought items kept in a wardrobe at home (F-CHR-WARDROBE 2). Storage containers themselves (F-PROP-STORAGE).
 The Painted signs look for the counters (shop, bank, stall, estate agent), the conversation box and the building designer.
-An object of its own for every carried and eaten thing, clothes shown worn before buying, a basket (F-UI-SHOP 2, not picked);
+An object of its own for every carried and eaten thing, clothes shown worn before buying, a basket (F-UI-SHOP 2; the pick is 1);
 the estate agent's list and the belongings as objects.
 The additions shown as "proposed" in look test 19 (a Today card, a week of money in and out, a filter on Belongings,
 following a quest, a dot on a board with something new): not proposed in the backlog yet.
@@ -142,7 +142,7 @@ following a quest, a dot on a board with something new): not proposed in the bac
 
 | Version | Date | Change |
 |---|---|---|
-| 0.3.4 | 2026-11-24 | Buy menus show what is for sale as objects (owner: "B, and D when narrow" of look test 33; ADR-0044): §1.2, UI-020, UI-021, at the counters of shops, cafés and the mall's outlets and in the designer's list of pieces. `F-UI-SHOP` proposed; no level was picked for it. |
+| 0.3.4 | 2026-11-24 | Buy menus show what is for sale as objects (owner: "B, and D when narrow" of look test 33; ADR-0044): §1.2, UI-020, UI-021, at the counters of shops, cafés and the mall's outlets and in the designer's list of pieces. `F-UI-SHOP` proposed, and picked by the owner at level 1 for the first slice once it was built ("Yes, level 1"). |
 | 0.3.3 | 2026-11-24 | CHR-016: clothes bought at the mall's outlets are listed in the wardrobe and can be put on (owner's request; ADR-0041). Belongings lists what is bought for the home and carried from the outlets as it does everything else. `F-CHR-WARDROBE` stays picked at 1. |
 | 0.3.2 | 2026-11-24 | Achievements on the Me tab (UI-019), from the owner's pick of `F-UI-REWARD` level 2. |
 | 0.3.1 | 2026-11-24 | The big map shows the outskirts and every tree, the player as an arrow, and zooms and pans (UI-018; owner's request). |

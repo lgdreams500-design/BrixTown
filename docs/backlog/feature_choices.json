@@ -192,6 +192,10 @@
     "F-UI-REWARD": {
       "slice": 2,
       "note": "Owner, 2026-11-24: asked \"Which level do you pick for Reward feedback (F-UI-REWARD) in the first slice?\" after the coins and chimes were built (ADR-0043), answered \"Level 2, achievements\". Later milestones not stated."
+    },
+    "F-UI-SHOP": {
+      "slice": 1,
+      "note": "Owner, 2026-11-24: asked \"Record F-UI-SHOP at level 1 (objects in a grid) for the first slice?\" after the buy menus were built to the owner's choice of look test 33, \"B, and D when narrow\" (ADR-0044), answered \"Yes, level 1\". Later milestones not stated."
     }
   }
 }
