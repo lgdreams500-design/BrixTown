@@ -548,6 +548,37 @@ class TheSky(unittest.TestCase):
         del bad["sky"]["night"]["paths"]["moon_tilt"]
         self.assertEqual(len(world.night_sky_problems(bad)), 2)
 
+    def test_WLD_065_the_planet_hangs_in_one_place_clear_of_the_sun(self):
+        import math
+        self.assertEqual(world.planet_problems(W), [])
+        p = W["sky"]["planet"]
+        seasons = W["calendar"]["calendar"]["seasons"]
+        gaps = world.planet_sun_gap(W)
+        self.assertEqual(set(gaps), set(seasons))
+        self.assertGreater(min(gaps.values()), p["size"])                 # the sun never goes behind it, in any season
+        self.assertGreater(math.radians(p["elevation"]), p["size"])       # all of it is above the horizon, always
+        self.assertLessEqual(p["by_day"], .5)                             # by day it is only just there
+        self.assertGreater(p["night"], 0)                                 # and after dark it comes out
+        for name in seasons:                                              # its phase is the sun's doing: it waxes and wanes through each day
+            lit = [world.planet_lit(W, name, 2 * math.pi * k / 96) for k in range(96)]
+            self.assertTrue(all(0 <= v <= 1 for v in lit))
+            self.assertGreater(max(lit) - min(lit), .4)
+            self.assertAlmostEqual(min(lit), (1 - math.cos(min(world.planet_sun_angle(W, name, 2 * math.pi * k / 96) for k in range(96)))) / 2)
+
+    def test_WLD_065_a_broken_planet_is_caught(self):
+        import copy
+        bad = copy.deepcopy(W)
+        bad["sky"]["planet"].update(azimuth=180, elevation=50)            # due south on the sky's equator: the autumn sun goes straight behind it, the spring sun clips it
+        self.assertEqual(len(world.planet_problems(bad)), 2)
+        bad = copy.deepcopy(W)
+        del bad["sky"]["planet"]["spin_hours"]
+        bad["sky"]["planet"]["by_day"] = 2                                # out of range
+        bad["sky"]["planet"]["rings"]["outer"] = 1.2                      # inside the inner edge
+        self.assertEqual(len(world.planet_problems(bad)), 3)
+        bad = copy.deepcopy(W)
+        del bad["sky"]["planet"]                                          # a sky with no planet is still a sky
+        self.assertEqual(world.sky_problems(bad), [])
+
     def test_WLD_010_the_slice_can_show_every_season(self):
         """The season key (Y) of the slice: one look for each season, on the same day of the season as the built day."""
         import build_play
