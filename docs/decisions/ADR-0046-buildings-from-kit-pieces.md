@@ -38,4 +38,7 @@ storey in the old districts, a tiled gable roof or a parapet. The kit's numbers 
   (M_Greybox reads it from per-instance custom data), walls, cores, roofs and trees use Nanite copies of the engine's
   shapes, and a wall piece that runs unchanged through several bands is one taller piece: 15 groups, 165,000
   instances, 63-66 fps, the same picture.
+- Shopfronts, cafe fronts and balconies follow the kit's shopfront(), cafe_front() and balcony() the same way: units
+  made by the kit's builders and stretched to each front in Unreal (about 172,000 instances in 25 groups; 60-65 fps at
+  High on the owner's laptop).
 - Turned designed houses (ADR-0032, ADR-0035) use the same generic layout for now, not their own plans and colourways.

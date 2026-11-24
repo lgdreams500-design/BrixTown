@@ -3,6 +3,7 @@
 #include "BrixCity.h"
 #include "BrixUnits.h"
 #include "Components/InstancedStaticMeshComponent.h"
+#include "Components/TextRenderComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UObject/ConstructorHelpers.h"
@@ -29,7 +30,7 @@ namespace
 	}
 
 	// Slots that take the instance's own colour; the rest are fixed (SlotColours).
-	bool IsOwnSlot(const FName S) { return S == TEXT("frame") || S == TEXT("shutter") || S == TEXT("door") || S == TEXT("roof"); }
+	bool IsOwnSlot(const FName S) { return S == TEXT("frame") || S == TEXT("shutter") || S == TEXT("door") || S == TEXT("roof") || S == TEXT("stripe"); }
 }
 
 ABrixTownActor::ABrixTownActor()
@@ -102,6 +103,23 @@ UInstancedStaticMeshComponent* ABrixTownActor::Group(UStaticMesh* Mesh, bool bCo
 	AddInstanceComponent(G);
 	Parts.Add(Key, G);
 	return G;
+}
+
+// A painted name: on a shop's fascia (kit text()), shrunk to fit the fascia
+void ABrixTownActor::Name(const FString& Text, const FVector& At, double YawRad, float Size, float MaxWidth)
+{
+	UTextRenderComponent* T = NewObject<UTextRenderComponent>(this);
+	T->SetupAttachment(RootComponent);
+	T->SetText(FText::FromString(Text));
+	T->SetHorizontalAlignment(EHTA_Center);
+	T->SetVerticalAlignment(EVRTA_TextCenter);
+	T->SetTextRenderColor(LetterColour.ToFColor(true));
+	const float Wide = Text.Len() * Size * 0.55f;            // about the engine font's width
+	T->SetWorldSize(Size * FMath::Min(1.f, MaxWidth / FMath::Max(Wide, 0.01f)) * CmPerM);
+	T->SetWorldLocationAndRotation(At, FQuat(FVector::UpVector, YawRad + HALF_PI));   // a text faces its +x: turned to face out
+	T->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	T->RegisterComponent();
+	AddInstanceComponent(T);
 }
 
 void ABrixTownActor::Add(UInstancedStaticMeshComponent* G, const FTransform& At, const FLinearColor& C)
@@ -188,6 +206,11 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 		auto OnWall = [&](float Sx, float Out) { return F.Mid + Along * Sx + F.Normal * Out; };
 
 		TArray<FOpening> Ops;
+		// the street front of a shop or a cafe, as the kit's shopfront() and cafe_front() build it (two storeys and more:
+		// the fascia and the awning reach above the ground floor)
+		const bool bShopFront = bShop && k == DoorSide && Floors >= 2 && F.Len >= 4.f;
+		const bool bCafeFront = bFood && bOld && k == DoorSide && Floors >= 2;
+		float LastBay = F.Len / 2;
 		if (F.Len >= MinFacadeForOpenings)
 		{
 			const int32 Nb = FMath::Max(1, FMath::RoundToInt(F.Len / Bay));
@@ -201,8 +224,10 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			for (int32 i = 0; i < Nb; ++i)
 			{
 				const float Si = -F.Len / 2 + (i + 0.5f) * F.Len / Nb;
+				LastBay = Si;
 				// ground storey, as the kit's building() picks it by kind and district
-				if (i == DoorBay)
+				if (bShopFront) {}                             // the shopfront below takes the whole ground storey
+				else if (i == DoorBay)
 				{
 					if (bCivic) Ops.Add({ Si, 0.f, 1.5f, 2.6f, Kit(TEXT("SM_Kit_DoorCivic")), nullptr, &DoorPaint });
 					else if (bOld) Ops.Add({ Si, 0.f, 1.3f, 2.5f, Kit(TEXT("SM_Kit_DoorArch")), nullptr, &DoorPaint });
@@ -216,6 +241,11 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 				for (int32 f = 1; f < Floors; ++f)
 				{
 					const bool bTop = f == Floors - 1;
+					if (bCafeFront && f == 1 && i == Nb / 2 && Nb >= 3)     // a French window on a balcony (kit balcony())
+					{
+						Ops.Add({ Si, f * StoreyHeight + 0.15f, 1.2f, 2.3f, Kit(TEXT("SM_Kit_Balcony")), nullptr, &Frame, f * StoreyHeight });
+						continue;
+					}
 					UStaticMesh* W = bTop ? Kit(TEXT("SM_Kit_WinTop")) : (bOld ? Kit(TEXT("SM_Kit_WinUp")) : Kit(TEXT("SM_Kit_WinPlain")));
 					UStaticMesh* Sh = bShutters && Rng.FRand() < ShutterShare ? Kit(bTop ? TEXT("SM_Kit_Shutters145") : TEXT("SM_Kit_Shutters160")) : nullptr;
 					Ops.Add({ Si, f * StoreyHeight + UpperSill, 1.1f, bTop ? 1.45f : 1.6f, W, Sh, &Frame });
@@ -223,11 +253,55 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			}
 		}
 
+		const FQuat Face(FVector::UpVector, Yaw + Ang);
+		auto Piece = [&](const TCHAR* Mesh, float Sx, float Z, const FVector& Scale, const FLinearColor& Col, float CullM)
+		{
+			if (UStaticMesh* M = Kit(Mesh)) Add(Group(M, false, CullM), FTransform(Face, At(OnWall(Sx, 0.f), Z), Scale), Col);
+		};
+		auto Awning = [&](float S0, float S1, float Z, float Out, int32 FirstColour)
+		{
+			if (S1 - S0 < 1.f || !AwningColours.Num()) return;
+			const int32 N = FMath::Max(4, (int32)((S1 - S0) / AwningStrip));
+			const float Wd = (S1 - S0) / N, Reach = Out / AwningOut;
+			for (int32 i = 0; i < N; ++i)
+				Piece(TEXT("SM_Kit_AwningStrip"), S0 + (i + 0.5f) * Wd, Z, FVector(Wd / AwningStrip, Reach, Reach), AwningColours[(i + FirstColour) % AwningColours.Num()], OpeningCullDistance);
+			for (float Sx : { S0 + 0.1f, S1 - 0.1f }) Piece(TEXT("SM_Kit_AwningArm"), Sx, Z, FVector(1, Reach, Reach), FLinearColor::Black, ShutterCullDistance);
+		};
+		if (bShopFront)
+		{
+			// kit shopfront(): one opening across the ground storey, piers every ShopPane metres, panes, the door in the
+			// middle, the fascia with the shop's name, a striped awning, crates of produce on the pavement
+			const float X0 = -F.Len / 2, X1 = F.Len / 2, Wd = F.Len;
+			Ops.Add({ 0.f, 0.f, Wd - 0.8f, ShopTop, nullptr, nullptr, &Frame });
+			const int32 N = FMath::Max(3, FMath::RoundToInt((Wd - 0.8f) / ShopPane));
+			for (int32 i = 0; i <= N; ++i) Piece(TEXT("SM_Kit_ShopPier"), X0 + 0.4f + i * (Wd - 0.8f) / N, 0.f, FVector::OneVector, FLinearColor::Gray, OpeningCullDistance);
+			for (int32 i = 0; i < N; ++i)
+			{
+				const float A = X0 + 0.4f + i * (Wd - 0.8f) / N + ShopPier / 2, B2 = X0 + 0.4f + (i + 1) * (Wd - 0.8f) / N - ShopPier / 2;
+				Piece(i == N / 2 ? TEXT("SM_Kit_ShopDoor") : TEXT("SM_Kit_ShopPane"), (A + B2) / 2, 0.f, FVector(B2 - A, 1, 1), FLinearColor::Gray, OpeningCullDistance);
+			}
+			Piece(TEXT("SM_Kit_ShopFascia"), 0.f, 0.f, FVector(Wd - 0.5f, 1, 1), FLinearColor::Gray, OpeningCullDistance);
+			Name(L.Name, At(OnWall(0.f, 0.25f), (2.55f + ShopTop) / 2 + 0.02f), Yaw + Ang, NameSize, Wd - 1.2f);
+			Awning(X0 + 0.6f, X1 - 0.6f, AwningZ, AwningOut, 0);
+			for (int32 i = 0; i < CrateAt.Num(); ++i)
+			{
+				const float Sx = i < CrateAt.Num() / 2 ? X0 + CrateAt[i] : X1 - CrateAt[i];
+				if (Sx > X0 + 0.5f && Sx < X1 - 0.5f) Piece(TEXT("SM_Kit_ProduceCrate"), Sx, 0.f, FVector::OneVector, FLinearColor::Gray, ShutterCullDistance);
+			}
+		}
+		if (bCafeFront)
+		{
+			// kit cafe_front(): an awning over the arches, a blade sign at the corner, tables on the pavement
+			Awning(-F.Len / 2 + 0.3f, LastBay - 0.9f, CafeAwningZ, CafeAwningOut, 1);
+			Piece(TEXT("SM_Kit_BladeSign"), F.Len / 2 - 0.35f, 0.f, FVector::OneVector, FLinearColor::Gray, OpeningCullDistance);
+			for (float T : CafeTableAt) if (-F.Len / 2 + T < F.Len / 2 - 1.f) Piece(TEXT("SM_Kit_CafeTable"), -F.Len / 2 + T, 0.f, FVector::OneVector, FLinearColor::Gray, ShutterCullDistance);
+		}
+
 		// the pieces
 		for (const FOpening& O : Ops)
 		{
 			if (!O.Mesh) continue;
-			const FTransform Tr(FQuat(FVector::UpVector, Yaw + Ang), At(OnWall(O.S, 0.f), O.Z0));
+			const FTransform Tr(FQuat(FVector::UpVector, Yaw + Ang), At(OnWall(O.S, 0.f), O.MeshZ >= 0.f ? O.MeshZ : O.Z0));
 			Add(Group(O.Mesh, false, OpeningCullDistance), Tr, *O.Paint);
 			if (O.Shutters) Add(Group(O.Shutters, false, ShutterCullDistance), Tr, Shutter);
 			++Openings;

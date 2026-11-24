@@ -29,6 +29,15 @@ The whole town is 15 groups of instances, one per mesh, each instance carrying i
 the owner's laptop at High it runs at 63-66 fps, as fast as the grey-box (ADR-0046). The binaries are lockable in LFS
 (ADR-0002): `git lfs lock <file>` before running the scripts that remake them.
 
+## Shopfronts, cafe fronts and balconies
+On the street front of every shop of two storeys or more, the kit's shopfront(): one opening across the ground storey,
+teal pilasters on stone plinths about every 2.2 m, lit display panes over a stall riser, a glazed door in the middle, a
+fascia with the shop's name, a striped awning and crates of produce on the pavement. On every old-town cafe of two
+storeys or more, cafe_front(): a striped awning over the arches, a blade sign at the corner, tables and chairs on the
+pavement, and a French window on a balcony over the middle bay (balcony(); the kit puts balconies on cafes only). The
+pieces are units the game stretches to each front (a pane, the door bay, a metre of fascia, an awning strip); the
+numbers are in DefaultGame.ini.
+
 ## Stone, brick, paving and plaster (ADR-0017)
 Every wall, pavement, street and open lot is drawn with the pattern World/rules/surfaces.json gives it: coursed rubble
 in the old quarter, brick in the terraces (about half to the eaves), rusticated stone on civic buildings, ashlar

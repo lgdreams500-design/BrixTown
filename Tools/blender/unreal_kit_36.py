@@ -36,6 +36,7 @@ class Mats(dict):
 
 
 MATS = Mats()
+K_M = MATS                                   # the kit's builders that make plants and produce look materials up here
 
 
 def win_up(K, rng):
@@ -93,6 +94,91 @@ def roof_wedge(K, rng):                     # 1 m each way: scaled in Unreal to 
     K.prism("roof", [(0.0, 0.0), (1.0, 0.0), (0.5, 1.0)], -0.5, 0.5)
 
 
+# ---- shopfronts, cafe fronts and balconies (kit shopfront(), awning(), cafe_front(), balcony()) --------------------
+# A shopfront is laid in Unreal from units, as shopfront() lays them along the facade: a pier at each division, a pane or
+# the door between two piers (1 m wide here, stretched to the gap), a fascia (1 m, stretched to the front), awning strips.
+PW = 0.32                                    # shopfront() pilaster width
+SHOP_TOP = 3.45
+
+
+def shop_pier(K, rng):                       # at x = 0: the pilaster and its stone plinth
+    K.block("sign", -PW / 2, PW / 2, -0.16, T, 0.0, 2.55, 0.02)
+    K.block("stone_dark", -PW / 2 - 0.04, PW / 2 + 0.04, -0.2, T, 0.0, 0.3)
+
+
+def shop_pane(K, rng):                       # one pane between piers, x -0.5..0.5: riser, sill, lit glass, mullion, transom
+    a, b = -0.5, 0.5
+    K.block("sign", a, b, -0.06, T, 0.0, 0.7, 0.015)
+    K.block("stone_dark", a - 0.02, b + 0.02, -0.12, T, 0.7, 0.78)
+    K.block("lit", a, b, T - 0.08, T - 0.04, 0.78, 2.55, 0)
+    K.block("sign", -0.03, 0.03, T - 0.12, T - 0.06, 0.78, 2.55, 0.008)
+    K.block("sign", a, b, T - 0.12, T - 0.06, 2.0, 2.05, 0.008)
+
+
+def shop_door(K, rng):                       # the door bay between piers, x -0.5..0.5
+    a, b = -0.5, 0.5
+    K.block("glass", a, b, T - 0.15, T - 0.1, 0.0, 2.55, 0)
+    for k in range(3):
+        K.block("sign", a + k * (b - a) / 3, a + (k + 1) * (b - a) / 3, T - 0.2, T - 0.12, 0.0, 0.9, 0.012)
+    K.block("sign", a, b, T - 0.2, T - 0.12, 1.9, 1.98, 0.01)
+    K.block("glass", a, b, T - 0.26, T - 0.2, 0.9, 2.3, 0)
+    K.block("sign", a, b, T - 0.3, T - 0.2, 2.3, 2.55, 0.01)
+
+
+def shop_fascia(K, rng):                     # 1 m of fascia and its stone cornice, stretched to the front
+    K.block("sign", -0.5, 0.5, -0.22, T, 2.55, SHOP_TOP, 0.03)
+    K.block("stone_dark", -0.5, 0.5, -0.3, T, SHOP_TOP, SHOP_TOP + 0.12)
+
+
+AWN_W, AWN_OUT = 0.45, 1.5                   # one strip of awning() at the shop's reach; Unreal stretches it to others
+
+
+def awning_strip(K, rng):                    # top edge at z = 0 against the wall; slot "stripe" takes the strip's colour
+    p = math.radians(20)
+    L = AWN_OUT / math.cos(p)
+    K.cube("stripe", (0, -AWN_OUT / 2, -AWN_OUT * math.tan(p) / 2), (AWN_W, L, 0.05), rot=(p, 0, 0), bevel=0.01)
+    K.cube("stripe", (0, -AWN_OUT - 0.02, -AWN_OUT * math.tan(p) - 0.15), (AWN_W, 0.05, 0.3), bevel=0.01)
+
+
+def awning_arm(K, rng):                      # an iron arm under an awning's end
+    p = math.radians(20)
+    L = AWN_OUT / math.cos(p)
+    K.cube("iron", (0, -AWN_OUT / 2, -AWN_OUT * math.tan(p) / 2 - 0.06), (0.04, L, 0.04), rot=(p, 0, 0), bevel=0)
+
+
+def produce_crate(K, rng):                   # one of shopfront()'s crates of produce on the pavement, at x = 0
+    K.block("wood", -0.42, 0.42, -1.35, -0.65, 0.0, 0.55, 0.025)
+    K.block("wood", -0.42, 0.42, -1.2, -0.62, 0.55, 0.85, 0.025)
+    for p in range(4):
+        ellipsoid("Produce", Vector((-0.24 + (p % 2) * 0.48 * 0.98, -1.18 + (p // 2) * 0.32, 0.6 + (p // 2) * 0.3)),
+                  (0.14, 0.13, 0.11), MATS[("terra", "ochre", "plant", "leaf_light")[p % 4]])
+
+
+def blade_sign(K, rng):                      # cafe_front()'s blade sign on its bracket, at x = 0, heights as the kit's
+    K.block("iron", -0.03, 0.03, -1.25, 0.02, 3.95, 4.02, 0)
+    K.block("iron", -0.025, 0.025, -0.08, 0.0, 3.0, 4.02, 0)
+    K.block("sign", -0.05, 0.05, -1.2, -0.2, 3.05, 3.85, 0.02)
+
+
+def cafe_table(K, rng):                      # one of cafe_front()'s tables with two chairs, 2.6 m out from the wall
+    tx, ty = 0.0, -2.6
+    K.cyl("iron", (tx, ty, 0.36), "z", 0.04, 0.72, segs=10)
+    K.cyl("iron", (tx, ty, 0.02), "z", 0.22, 0.04, segs=14)
+    K.cyl("wood", (tx, ty, 0.75), "z", 0.38, 0.05, segs=20)
+    for dx in (-0.62, 0.62):
+        cx = tx + dx
+        K.block("wood", cx - 0.21, cx + 0.21, ty - 0.21, ty + 0.21, 0.42, 0.47, 0.012)
+        K.block("wood", cx + (0.17 if dx > 0 else -0.21), cx + (0.21 if dx > 0 else -0.17), ty - 0.21, ty + 0.21, 0.47, 0.88, 0.01)
+        for lx in (-0.17, 0.17):
+            for ly in (-0.17, 0.17):
+                K.block("wood", cx + lx - 0.02, cx + lx + 0.02, ty + ly - 0.02, ty + ly + 0.02, 0.0, 0.42, 0)
+    ellipsoid("Cup", Vector((tx + 0.1, ty - 0.05, 0.82)), (0.045, 0.045, 0.04), MATS["cream"])
+
+
+def balcony_piece(K, rng):                   # balcony(): z = 0 at the floor; the opening is 1.2 x 2.3 from 0.15 up
+    balcony(K, rng, 0.0, 0.0, T, LOOK)
+
+
 PIECES = {
     "SM_Kit_WinUp": (win_up, (KIT["win_w"], KIT["win_h"])),
     "SM_Kit_WinTop": (win_top, (KIT["win_w"], KIT["top_win_h"])),
@@ -106,6 +192,16 @@ PIECES = {
     "SM_Kit_Shutters160": (shutters(KIT["win_h"]), None),
     "SM_Kit_Shutters145": (shutters(KIT["top_win_h"]), None),
     "SM_Kit_RoofWedge": (roof_wedge, None),
+    "SM_Kit_ShopPier": (shop_pier, None),
+    "SM_Kit_ShopPane": (shop_pane, None),
+    "SM_Kit_ShopDoor": (shop_door, None),
+    "SM_Kit_ShopFascia": (shop_fascia, None),
+    "SM_Kit_AwningStrip": (awning_strip, None),
+    "SM_Kit_AwningArm": (awning_arm, None),
+    "SM_Kit_ProduceCrate": (produce_crate, None),
+    "SM_Kit_BladeSign": (blade_sign, None),
+    "SM_Kit_CafeTable": (cafe_table, None),
+    "SM_Kit_Balcony": (balcony_piece, (1.2, 2.3)),
 }
 
 
@@ -145,8 +241,10 @@ def main():
     for name, (make, opening) in PIECES.items():
         try:
             K = Kit(name)
+            before = set(bpy.context.scene.objects)
             make(K, random.Random(36))
-            ob = one_mesh(name, K.flush(MATS))
+            K.flush(MATS)
+            ob = one_mesh(name, [o for o in bpy.context.scene.objects if o not in before])   # with blob()s and ellipsoid()s
             for o in bpy.context.scene.objects:
                 o.select_set(o == ob)
             bpy.context.view_layer.objects.active = ob
