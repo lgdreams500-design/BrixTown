@@ -7,6 +7,7 @@
 
 struct FBrixCity;
 struct FBrixDay;
+struct FBrixTraffic;
 class UMaterialInterface;
 class UProceduralMeshComponent;
 
@@ -38,7 +39,7 @@ class BRIXTOWN_API ABrixPeople : public AActor
 
 public:
 	ABrixPeople();
-	void Start(const FBrixCity& InCity, TSharedPtr<FBrixDay> InDay);
+	void Start(const FBrixCity& InCity, TSharedPtr<FBrixDay> InDay, TSharedPtr<FBrixTraffic> InTraffic = nullptr);
 	virtual void Tick(float DeltaSeconds) override;
 
 	UPROPERTY(Config) float ShowDistance = 90.f;    // m; residents further from the player are not drawn (CITY-024)
@@ -52,6 +53,7 @@ public:
 	UPROPERTY(Config) int32 MaxMeshBodies = 48;     // bodies built as meshes at once; the rest of those within NearDistance are blocks
 	UPROPERTY(Config) TArray<int32> RebuildEvery;   // frames between rebuilding a body, by detail (0 full, 1, 2); moved every frame
 	UPROPERTY(Config) bool bFlipWinding = false;    // the triangles' turn as Unreal culls them
+	UPROPERTY(Config) float RideDistance = 70.f;    // m: people in vehicles are drawn this near (cars.js seat())
 
 	int32 Shown() const { return LastShown; }
 	double TickMs() const { return TickFrames ? TickSeconds * 1000.0 / TickFrames : 0.0; }   // the people's own time a frame, on average
@@ -68,6 +70,8 @@ private:
 	TSharedPtr<FBrixDay> Day;
 	FBrixPeopleRules Rules;
 	TArray<FBrixLook> Looks;            // each resident's, from their role (people.js look()), worked out once
+	TSharedPtr<FBrixTraffic> Traffic;   // the day's vehicles, for whoever rides in them (CITY-040, CITY-094)
+	TArray<FBrixLook> Drivers, Passengers;   // per vehicle: someone from out of town at its wheel, and beside them (cars.js stranger())
 	TArray<FBox2D> Paving;              // the blocks' paving, a step above the street
 	float Slab = 0.12f;
 	TArray<float> Lane;                 // each resident's own, from the slice's hash

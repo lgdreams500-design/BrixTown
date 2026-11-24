@@ -98,8 +98,11 @@ Every car, van and bus of the day is where `Tools/citysim/traffic.py` puts it at
 eight minutes against traffic.py (parked to 0.1 m; on the move to 4 m, the sideways ease into a lay-by). Cars and vans
 are the Soft box models of `Tools/blender/car_export_11.py` (copied to `Game/Data/car_models.json` by `build_play.py`) in
 the slice's paints, roof loads and spares; buses the slice's long soft box in their line's colour. Within 45 m the near
-model, to 160 m the light one; each is a procedural mesh built once and moved. Nobody sits in them yet (drivers and
-riders), cars do not yet give way to the player, and the player cannot drive. 51.5 frames a second at High on a street
+model, to 160 m the light one; each is a procedural mesh built once and moved. Within 70 m whoever rides in them sits
+there as in the slice (cars.js occupants(), seat()): the resident whose car it is at the wheel and neighbours sharing the
+ride beside and behind (CITY-094), a bus's driver and its riders on the benches, someone from out of town in a van or a
+car passing through; as low as the head needs under the roof, feet along the floor, hands on the wheel. Cars do not yet
+give way to the player, and the player cannot drive. 51.5 frames a second at High on a street
 with 32 vehicles drawn.
 
 ## Street furniture (WLD-028)

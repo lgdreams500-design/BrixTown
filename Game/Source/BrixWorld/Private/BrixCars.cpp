@@ -15,6 +15,23 @@ namespace
 		if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Out) || !Out.IsValid()) { OutError = Path + TEXT(" is not valid JSON"); return false; }
 		return true;
 	}
+	// the nearest face of the mesh straight above (Dir 1) or below (-1) the point (a, w) from height From (cars.js hitY())
+	TOptional<float> HitY(const FBrixCarModel::FLod& L, float a, float w, float From, int32 Dir)
+	{
+		float Best = Dir > 0 ? 9.f : -9.f;
+		for (int32 j = 0; j + 2 < L.P.Num(); j += 3)
+		{
+			const FVector3f& A = L.P[j]; const FVector3f& B = L.P[j + 1]; const FVector3f& C = L.P[j + 2];
+			const float d = (B.X - A.X) * (C.Y - A.Y) - (C.X - A.X) * (B.Y - A.Y);
+			if (FMath::Abs(d) < 1e-9f) continue;
+			const float u = ((a - A.X) * (C.Y - A.Y) - (C.X - A.X) * (w - A.Y)) / d, v = ((B.X - A.X) * (w - A.Y) - (a - A.X) * (B.Y - A.Y)) / d;
+			if (u < 0 || v < 0 || u + v > 1) continue;
+			const float y = A.Z + u * (B.Z - A.Z) + v * (C.Z - A.Z);
+			if (Dir > 0 ? (y > From && y < Best) : (y < From && y > Best)) Best = y;
+		}
+		if (FMath::Abs(Best) == 9.f) return {};
+		return Best;
+	}
 	TOptional<FVector4f> Bay(const TSharedPtr<FJsonValue>& V)
 	{
 		const TArray<TSharedPtr<FJsonValue>>* A = nullptr;
@@ -82,6 +99,14 @@ bool LoadBrixTraffic(const FString& CarsPath, const FString& ModelsPath, FBrixTr
 			}
 			for (const TSharedPtr<FJsonValue>& T : L->GetArrayField(TEXT("t"))) Lod.Part.Add((uint8)T->AsNumber());
 		}
+		if (Md.Lods.Num())   // the roof over every seat, and the floor under the driver's feet
+		{
+			TArray<FVector2f> Seats = { Md.Seat, FVector2f(Md.Seat.X, -Md.Seat.Y) };
+			if (Md.Back) { Seats.Add(FVector2f(*Md.Back, Md.Seat.Y)); Seats.Add(FVector2f(*Md.Back, -Md.Seat.Y)); }
+			for (const FVector2f& S : Seats)
+				if (const TOptional<float> Y = HitY(Md.Lods[0], S.X, S.Y, Md.SeatY + .45f, 1)) Md.Roof = Md.Roof ? FMath::Min(*Md.Roof, *Y) : *Y;
+			Md.Floor = HitY(Md.Lods[0], Md.Seat.X + .4f, Md.Seat.Y, Md.SeatY, -1);
+		}
 	}
 	if (!Out.Vehicles.Num() || !Out.Models.Num()) { OutError = TEXT("no vehicles or no car models"); return false; }
 	return true;
@@ -109,7 +134,7 @@ TOptional<FBrixCarAt> FBrixTraffic::At(int32 k, double m) const
 			const TArray<FVector4f>& P = T.Pts;
 			const int32 n = P.Num();
 			if (n == 0) return {};
-			if (n < 2) { FBrixCarAt A = Parked(P[0]); A.bMoving = true; return A; }
+			if (n < 2) { FBrixCarAt A = Parked(P[0]); A.bMoving = A.bTrip = true; return A; }
 			const double f = FMath::Min((double)(n - 1), FMath::Max(0.0, (m - T.T0) / Step));
 			const int32 j = FMath::Min(n - 2, (int32)FMath::FloorToDouble(f));
 			const float g = (float)(f - j);
@@ -119,6 +144,7 @@ TOptional<FBrixCarAt> FBrixTraffic::At(int32 k, double m) const
 			const FVector2D H(FMath::Lerp(a.Z, b.Z, g), FMath::Lerp(a.W, b.W, g));
 			A.Heading = H.IsNearlyZero() ? FVector2D(1, 0) : H.GetSafeNormal();
 			A.bMoving = FVector2D(b.X - a.X, b.Y - a.Y).Size() > .05;
+			A.bTrip = true;
 			return A;
 		}
 		BayNow = T.Bay1;

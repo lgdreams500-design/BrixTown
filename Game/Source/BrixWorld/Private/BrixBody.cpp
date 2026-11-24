@@ -343,7 +343,7 @@ namespace
 		return P;
 	}
 
-	FPose sit(const FBrixSignature&, const FGeo& g, double W, double t, const double hm[3], double seed)   // on a chair or bench; the origin is the seat top
+	FPose sit(const FBrixSignature&, const FGeo& g, double W, double t, const double hm[3], double seed, const FBrixDrawOptions& md)   // on a chair or bench; the origin is the seat top
 	{
 		FPose P;
 		const FVector pel(0, 0, .095 * g.S - g.hipdz);
@@ -351,9 +351,16 @@ namespace
 		{
 			const double side = k ? -1 : 1;
 			const FVector hip = pel + FVector(side * g.hipx, 0, g.hipdz);
-			leg(P, k, g, hip, hip + FVector(side * .035 * g.S, -g.L1 * .97, -g.L2 * .98), FVector(1, 0, 0), 0, side * rad(8));   // thighs level, shins down
+			FVector ft = hip + FVector(side * .035 * g.S, -g.L1 * .97, -g.L2 * .98);   // on a chair: thighs level, shins down
+			if (md.Floor)   // in a car: feet out along the floor, never through it
+			{
+				const double dn = FMath::Min(g.L2 * .98, FMath::Max(.04 * g.S, hip.Z - g.ankz - *md.Floor)), fw = FMath::Sqrt(FMath::Max(0.0, FMath::Square(.93 * (g.L1 + g.L2)) - dn * dn));
+				ft = hip + FVector(side * .05 * g.S, -fw, -dn);
+			}
+			leg(P, k, g, hip, ft, FVector(1, 0, 0), 0, side * rad(8));
 		}
-		const double arms[2][3] = { { 26, 6, 62 }, { 26, 6, 62 } };
+		double arms[2][3] = { { 26, 6, 62 }, { 26, 6, 62 } };
+		if (md.bDriving) for (int k = 0; k < 2; ++k) { arms[k][0] = 58; arms[k][1] = 10; arms[k][2] = 48; }   // people.js gesture() at weight 1
 		const double chest[3] = { 0, rad(4) + .004 * FMath::Sin(t * 1.3 + seed), 0 };
 		const double head[3] = { hm[0], rad(4) + hm[1], hm[2] };
 		upper(P, g, W, pel, M3::I(), chest, arms, head);
@@ -505,7 +512,7 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	const bool midFace = lod == 1 || (lod == 2 && ff > .02);
 	double hm[3];
 	wander(t, sd * .37, hm);
-	const FPose P = pose == 1 ? walk(sig, g, W, o.Phase, hm) : pose == 2 ? sit(sig, g, W, t, hm, sd) : stand(sig, g, W, t, hm, sd);
+	const FPose P = pose == 1 ? walk(sig, g, W, o.Phase, hm) : pose == 2 ? sit(sig, g, W, t, hm, sd, o) : stand(sig, g, W, t, hm, sd);
 	auto hem = [&](double zz) { return pose == 2 ? FMath::Max(zz, -.06) : zz; };   // seated, a hem ends at the seat instead of hanging through it
 	// where the character's axes point in the world (standing: x left, y back, z up)
 	const double c = FMath::Cos(yaw), s = FMath::Sin(yaw);

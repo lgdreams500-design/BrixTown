@@ -77,6 +77,9 @@ bool FART004_PeopleAreTheSlices::RunTest(const FString&)
 		O.Seconds = B->GetNumberField(TEXT("t"));
 		O.Lod = (int32)B->GetNumberField(TEXT("lod"));
 		O.FaceFade = B->GetNumberField(TEXT("ff"));
+		double Floor = 0;
+		if (B->TryGetNumberField(TEXT("floor"), Floor)) O.Floor = Floor;
+		B->TryGetBoolField(TEXT("driver"), O.bDriving);
 		Mesh.Reset();
 		Boxes.Reset();
 		DrawBrixPerson(Rules, Looks[k], FVector(B->GetNumberField(TEXT("x")), B->GetNumberField(TEXT("y")), B->GetNumberField(TEXT("z"))), B->GetNumberField(TEXT("yaw")), O, Mesh, &Boxes);

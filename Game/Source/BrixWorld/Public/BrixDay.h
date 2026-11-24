@@ -33,6 +33,7 @@ struct BRIXWORLD_API FBrixDay
 		bool bInside = false;
 		int32 Lot = -1, Floor = 0;
 		FVector2D Facing = FVector2D(1, 0);  // a stay's facing (the slice: hash(i, k) turns), worked out once on loading
+		int32 Vehicle = -1;                  // in a vehicle (kind 3): which, into Game/Data/cars.json
 		int32 Use = -1;                      // a stay at a place (the slice: p[5] >= 0), not just anywhere on the lot
 		uint8 Pose = 0;                      // a stay at an open lot's place: 2 on a seat (SeatBrixDay)
 		float SeatUp = -1.f;
@@ -52,6 +53,8 @@ struct BRIXWORLD_API FBrixDay
 	int32 Num() const { return Plan.Num(); }
 	// Where resident i is at minute m of the day; unset when they are away or in a vehicle.
 	TOptional<FBrixWhere> Where(int32 Resident, double Minute) const;
+	// The vehicle resident i is in at minute m (driving, a passenger, on a bus), or -1.
+	int32 VehicleAt(int32 Resident, double Minute) const;
 };
 
 struct FBrixCity;
