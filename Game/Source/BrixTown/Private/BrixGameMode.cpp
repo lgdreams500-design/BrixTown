@@ -2,6 +2,8 @@
 
 #include "BrixCharacter.h"
 #include "BrixCity.h"
+#include "BrixDay.h"
+#include "BrixPeople.h"
 #include "BrixTownActor.h"
 #include "BrixUnits.h"
 #include "Camera/CameraActor.h"
@@ -49,6 +51,16 @@ void ABrixGameMode::InitGame(const FString& MapName, const FString& Options, FSt
 	FParse::Value(FCommandLine::Get(), TEXT("BrixTime="), Time);
 	FString Hh, Mm;
 	if (Time.Split(TEXT(":"), &Hh, &Mm)) StartMinute = FCString::Atoi(*Hh) * 60.0 + FCString::Atoi(*Mm);
+	// the residents' day: the same day the slice is built for
+	Today = MakeShared<FBrixDay>();
+	FString DayError;
+	if (!LoadBrixDay(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), DayFile)), *Today, DayError))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Brix Town: no residents (%s): run Tools/worldgen/build_play.py"), *DayError);
+		Today.Reset();
+	}
+	else if (Today->Day != Day)
+		UE_LOG(LogTemp, Warning, TEXT("Brix Town: the residents' routines are for day %d, the clock is on day %d"), Today->Day, Day);
 }
 
 AActor* ABrixGameMode::ChoosePlayerStart_Implementation(AController* Player)
@@ -71,6 +83,12 @@ void ABrixGameMode::StartPlay()
 	{
 		ABrixTownActor* Town = GetWorld()->SpawnActor<ABrixTownActor>();
 		Town->Build(*City);
+		if (Today)
+		{
+			People = GetWorld()->SpawnActor<ABrixPeople>();
+			People->Start(*City, Today);
+			UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents, their day %d (%s, %s)"), Today->Num(), Today->Day, *Today->Weekday, *Today->Season);
+		}
 	}
 	SpawnLight();
 	Super::StartPlay();
@@ -155,6 +173,12 @@ void ABrixGameMode::SpawnLight()
 	UpdateSun();
 }
 
+double ABrixGameMode::ClockMinutes() const
+{
+	const float Pace = City ? City->Sky.RealSecondsPerMinute : 10.f;
+	return StartMinute + (GetWorld()->GetTimeSeconds() - StartSeconds) / FMath::Max(0.01, (double)Pace) * ClockRate;
+}
+
 void ABrixGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -168,11 +192,10 @@ void ABrixGameMode::UpdateSun()
 {
 	if (!SunActor || !City) return;
 	const FBrixSky& S = City->Sky;
-	const double Elapsed = GetWorld()->GetTimeSeconds() - StartSeconds;
-	const double Minutes = StartMinute + Elapsed / FMath::Max(0.01, (double)S.RealSecondsPerMinute) * ClockRate;
-	const int32 Today = Day + (int32)FMath::Floor(Minutes / 1440.0);
+	const double Minutes = ClockMinutes();
+	const int32 DayNow = Day + (int32)FMath::Floor(Minutes / 1440.0);
 	const double Minute = FMath::Fmod(Minutes, 1440.0);
-	const int32 Season = S.SeasonOf(Today);
+	const int32 Season = S.SeasonOf(DayNow);
 	FVector3d P = S.SunPlace(Season, S.HourAngle(Season, Minute));      // east +x, up +y, south +z
 	P.Y = FMath::Max(P.Y, (double)S.SunLift);
 	P.Normalize();
@@ -197,6 +220,7 @@ void ABrixGameMode::ShootAndQuit()
 	FScreenshotRequest::RequestScreenshot(Shot, false, false);
 	const double Secs = FPlatformTime::Seconds() - MarkSeconds;
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: %.1f frames a second over the last %.0f s before the screenshot"), Secs > 0 ? (GFrameCounter - MarkFrame) / Secs : 0.0, Secs);
+	if (People) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents with a body at %02d:%02d"), People->Shown(), (int32)ClockMinute() / 60, (int32)ClockMinute() % 60);
 	FTimerHandle H;
 	GetWorldTimerManager().SetTimer(H, []() { FPlatformMisc::RequestExit(false); }, 3.f, false);
 }

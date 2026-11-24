@@ -1,6 +1,7 @@
 // Automation tests for the map as data. Run headless:
 //   UnrealEditor-Cmd.exe Game/BrixTown.uproject -ExecCmds="Automation RunTests BrixTown.World; Quit" -unattended -nullrhi
 #include "BrixCity.h"
+#include "BrixDay.h"
 
 #include "Dom/JsonObject.h"
 #include "Misc/AutomationTest.h"
@@ -198,6 +199,56 @@ bool FWLD043_TheSunFollowsTheCalendar::RunTest(const FString&)
 		}
 	}
 	TestEqual(TEXT("places of the sun that differ from the Python's"), Wrong, 0);
+	return Wrong == 0;
+}
+
+// CITY-022: a resident's position at any time follows from the resident, the world time and data alone. The day the game
+// reads (Game/Data/day.json) puts every sampled resident where citysim City.at() does (Tests/values/residents_city_01.json):
+// away or in a vehicle when it says so, otherwise at its position, to the data's rounding: at a place within 0.08 m (each
+// coordinate is rounded to 0.1 m); on a walk within 2 m (each piece's start is rounded to 0.1 game minute, and at walking
+// pace a game minute is some 14 m; strolls are sampled each minute). A wrong piece or route is tens of metres out.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY022_ResidentsFollowTheirRoutine, "BrixTown.World.CITY022_residents_are_where_their_routine_puts_them",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FCITY022_ResidentsFollowTheirRoutine::RunTest(const FString&)
+{
+	FBrixDay Day;
+	FString Error;
+	const FString DayPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/day.json")));
+	if (!TestTrue(TEXT("the day loads: ") + Error, LoadBrixDay(DayPath, Day, Error))) return false;
+	FString Text;
+	const FString Values = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../Tests/values/residents_city_01.json")));
+	if (!TestTrue(TEXT("the test values are there: ") + Values, FFileHelper::LoadFileToString(Text, *Values))) return false;
+	TSharedPtr<FJsonObject> Want;
+	if (!TestTrue(TEXT("the test values are JSON"), FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Want) && Want.IsValid())) return false;
+	TestEqual(TEXT("the same day"), Day.Day, (int32)Want->GetNumberField(TEXT("day")));
+	int32 Checked = 0, Wrong = 0;
+	for (const auto& MV : Want->GetObjectField(TEXT("at"))->Values)
+	{
+		const double Minute = FCString::Atod(*FString(MV.Key.ToView()));
+		for (const auto& RV : MV.Value->AsObject()->Values)
+		{
+			const FString Id(RV.Key.ToView());
+			const int32 i = Day.Ids.IndexOfByKey(Id);
+			if (i == INDEX_NONE) { AddError(Id + TEXT(": not in the day")); ++Wrong; continue; }
+			const TSharedPtr<FJsonObject> W = RV.Value->AsObject();
+			const TOptional<FBrixWhere> Got = Day.Where(i, Minute);
+			const TArray<TSharedPtr<FJsonValue>>* Pos = nullptr;
+			const bool bSeen = W->TryGetArrayField(TEXT("pos"), Pos) && Pos->Num() == 2;
+			++Checked;
+			if (bSeen != Got.IsSet())
+			{
+				AddError(FString::Printf(TEXT("%s at minute %.0f: %s, the routine says %s"), *Id, Minute, Got.IsSet() ? TEXT("in the town") : TEXT("not in the town"), *W->GetStringField(TEXT("state"))));
+				++Wrong;
+				continue;
+			}
+			if (!bSeen) continue;
+			const FVector2D Exp((*Pos)[0]->AsNumber(), (*Pos)[1]->AsNumber());
+			const double Off = FVector2D::Distance(Got->Pos, Exp), Room = Got->bWalking ? 2.0 : 0.08;
+			if (Off > Room) { AddError(FString::Printf(TEXT("%s at minute %.0f (%s): %.2f m from where the routine puts them"), *Id, Minute, *W->GetStringField(TEXT("state")), Off)); ++Wrong; }
+		}
+	}
+	TestTrue(TEXT("residents checked"), Checked > 100);
+	TestEqual(TEXT("residents not where their routine puts them"), Wrong, 0);
 	return Wrong == 0;
 }
 
