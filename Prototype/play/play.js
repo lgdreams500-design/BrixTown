@@ -2462,7 +2462,7 @@ function stepPlayer(dt) {
   if (pl.play) {                                           // on a swing, slide, seesaw, sandpit or climbing frame (dressing.js, WLD-041)
     const r = Dress.playerAt(pl.play, performance.now() / 1000);
     if (f || s || keys.Space || r.done) return offPlay(r.done ? [r.x, r.z] : null);
-    pl.x = r.x; pl.y = r.y; pl.z = r.z; pl.yaw = r.yaw; pl.playPose = r.pose; if (r.ph !== undefined) pl.ph = r.ph;
+    pl.x = r.x; pl.y = r.y; pl.z = r.z; pl.yaw = r.yaw; pl.playPose = r.pose; pl.playSig = r.sig || null; pl.playMod = r.mod || null; if (r.ph !== undefined) pl.ph = r.ph;   // climbing: its own steps and hands
     if (cam.fp) cam.yaw = r.yaw; return;
   }
   if (pl.pose > 1) { if (f || s || keys.Space) { Sound.act("stand"); pl.pose = 0; pl.y = floorAt(pl.x, pl.z, pl.y); if (pl.seat) { pl.x = pl.seat.ox; pl.z = pl.seat.oz; } pl.seat = null; } else return; }
@@ -3210,7 +3210,7 @@ function frame(now) {
   if ((started || Life.designing) && (!cam.fp || Life.live) && !cam.close && pl.pose !== 4) {   // not while in a car; and in the designer, to see who you are making
     let da = cam.yaw - pl.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
     People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.play ? pl.playPose : pl.pose > 1 ? pl.pose : pl.moving ? 1 : 0, { ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
-      look: Life.live ? [0, 0] : pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.moving && pl.run ? People.SIG.Run : null });
+      look: Life.live ? [0, 0] : pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.play ? pl.playSig : pl.moving && pl.run ? People.SIG.Run : null, mod: pl.play ? pl.playMod : null });
   }
   if (started && Life.view) designMarks();             // the building designer's picked piece (life.js)
   if (!DZ) for (const [x, , T] of tramAt(clock.m)) Cars.tram(dyn, x, TRAM_Z, T, clock.m);   // the tram and the commuters on it (cars.js)
