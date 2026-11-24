@@ -22,7 +22,8 @@
   "seesaw_period_s": 3.4,
   "seesaw_angle_deg": 14,
   "slide_cycle_s": 9.0,
-  "climb_bob_s": 6.0,
+  "climb_cycle_s": 8.0,
+  "player_climb_cycle_s": 6.0,
   "player_swing_build_s": 3.0,
   "player_slide_climb_s": 2.6,
   "player_slide_down_s": 1.3

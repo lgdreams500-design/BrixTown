@@ -9,9 +9,18 @@ window.Dress = (() => {
   const PLAY = ["swing", "slide", "seesaw", "sandpit", "climb"];
   const RUBBER = [.5, .28, .22], SAND = [.72, .62, .44], WOOD = [.5, .32, .16], IRON = [.17, .18, .21], RED = [.58, .12, .1], GREEN = [.16, .3, .22];
   const BRONZE = [.3, .42, .36], PAINT = () => [C.teal, C.ochre, C.terracotta, C.blue];
-  const pieces = [], bySpot = new Map(), boards = [];
+  const pieces = [], bySpot = new Map(), boards = [], grid = new Map();
   let motion = null, busy = new Set();
   const key = (x, z) => Math.round(x * 5) + "," + Math.round(z * 5);
+  // The day plan keeps places to a tenth of a metre, so a child is near their spot, not on it: find the spot within 0.3 m
+  // (the closest two spots of one piece are 0.5 m apart). A key alone missed half the swing seats and most climbing places.
+  const cell = (x, z) => Math.floor(x) + "," + Math.floor(z);
+  function spotAt(x, z) {
+    let best = null, bd = .3;
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (const sp of grid.get(cell(x + a, z + b)) || []) {
+      const d = Math.hypot(sp.sx - x, sp.sz - z); if (d < bd) { bd = d; best = sp; } }
+    return best;
+  }
   const dir = p => p.out ? p.out : p.along === "z" ? [1, 0] : [0, 1];
   const sideOf = o => o[1] < 0 ? "n" : o[1] > 0 ? "s" : o[0] < 0 ? "w" : "e";
   const post = (x, g, z, h, w, c, f) => world.box(x - w, g, z - w, x + w, g + h, z + w, c, f === undefined ? 9 : f);
@@ -57,7 +66,7 @@ window.Dress = (() => {
       for (const v of [-.3, .3]) { world.box(x - 1.95, g, z + v - .04, x - 1.85, g + 2.3, z + v + .04, IRON, 9); world.box(x - 1.25, g, z + v - .04, x - 1.15, g + 2.3, z + v + .04, IRON, 9); }
       for (let r = .3; r < 1.6; r += .3) world.box(x - 1.95, g + r, z - .3, x - 1.85, g + r + .04, z + .3, IRON, 9);
       world.box(x - 1.95, g + 1.5, z - .36, x - 1.15, g + 1.58, z + .36, col, 0, { 2: [mul3(col, .7), 0] });
-      world.box(x - 1.95, g + 2.2, z - .32, x - 1.15, g + 2.26, z + .32, IRON, 9);
+      for (const v of [-.3, .3]) world.box(x - 1.95, g + 2.2, z + v - .03, x - 1.15, g + 2.26, z + v + .03, IRON, 9);   // a rail each side: open above, so a child stands up in it
       const top = [x - 1.15, g + 1.55], bot = [x + 2.1, g + .32], L = Math.hypot(bot[0] - top[0], bot[1] - top[1]), ang = Math.atan2(top[1] - bot[1], bot[0] - top[0]);
       const m = M4.mul(M4.mul(M4.t((top[0] + bot[0]) / 2, (top[1] + bot[1]) / 2, z), M4.ry(0)), M4.rz(-ang));
       world.obox(m, 0, 0, 0, L, .05, .5, [.72, .72, .74], 9);
@@ -218,12 +227,12 @@ window.Dress = (() => {
 
   // ------------------------------------------------------------ after the town is built: which spot belongs to which piece
   function init() {
-    motion = Object.assign({ swing_period_s: 2.9, swing_angle_deg: 32, seesaw_period_s: 3.4, seesaw_angle_deg: 14, slide_cycle_s: 9, climb_bob_s: 6,
-      player_swing_build_s: 3, player_slide_climb_s: 2.6, player_slide_down_s: 1.3 }, D.dressing ? D.dressing.motion : {});
+    motion = Object.assign({ swing_period_s: 2.9, swing_angle_deg: 32, seesaw_period_s: 3.4, seesaw_angle_deg: 14, slide_cycle_s: 9, climb_cycle_s: 8,
+      player_swing_build_s: 3, player_slide_climb_s: 2.6, player_slide_down_s: 1.3, player_climb_cycle_s: 6 }, D.dressing ? D.dressing.motion : {});
     for (const l of LOTS) for (const u of PLAY) for (const [k, s] of ((l.objects || {})[u] || []).entries()) {
       let best = null, bd = 1e9;
       for (const pc of pieces) { if (pc.kind !== u) continue; const d = Math.hypot(pc.x - s[0], pc.z - s[1]); if (d < bd) { bd = d; best = pc; } }
-      if (best && bd < 8) bySpot.set(key(s[0], s[1]), { pc: best, k, sx: s[0], sz: s[1], use: u });
+      if (best && bd < 8) { const sp = { pc: best, k, sx: s[0], sz: s[1], use: u }; bySpot.set(key(s[0], s[1]), sp); const c = cell(s[0], s[1]); grid.set(c, (grid.get(c) || []).concat([sp])); }
     }
     // the player can have a go too (WLD-041, F-OBJ-POINTS level 1: residents and players share the places): a use point at
     // each swing seat and seesaw end, one at the foot of each slide's ladder and by each climbing frame, two at each sandpit
@@ -255,32 +264,67 @@ window.Dress = (() => {
       if (best) r.yaw = yawTo(r.x, r.z, best.x, best.z); return r;
     }
     if (!PLAY.includes(act)) return r;
-    const sp = bySpot.get(key(r.x, r.z)); if (!sp) return r;
-    const pc = sp.pc, g = pc.g, ph = hash(i, "play") * 6.283;
+    const sp = spotAt(r.x, r.z); if (!sp) return r;
+    const pc = sp.pc, g = pc.g, L = looks[i];
     busy.add(pc.p.id + ":" + sp.k); busy.add(pc.p.id); busy.add(key(sp.sx, sp.sz));   // the seat moves, and the player cannot take this place
-    if (pc.kind === "swing") {
-      const th = swingAngle(pc, sp.k, t), a = (sp.k - (pc.n - 1) / 2) * 1.1, L = 1.85;
-      return Object.assign(r, { x: pc.x + a, z: pc.z + Math.sin(th) * L, y: g + 2.36 - Math.cos(th) * L + .04, yaw: yawOf(0, 1), pose: 2 });
+    const still = { sig: null, mod: null };
+    if (pc.kind === "swing") return Object.assign(r, still, onSwing(pc, sp.k, swingAngle(pc, sp.k, t)));
+    if (pc.kind === "seesaw") return Object.assign(r, still, onSeesaw(pc, sp.sx < pc.x ? -1 : 1, seesawAngle(pc, t)));
+    if (pc.kind === "slide") {                                 // up the ladder, down the chute, round the back to the ladder again
+      const T = motion.slide_cycle_s, e = (((t / T) + sp.k / 4 + hash(i, "sl") * .1) % 1) * T, c = .26 * T, dn = .14 * T;
+      const go = slideAt(pc, e, c, dn); if (go) return Object.assign(r, still, go);
+      const e2 = e - (c + SLIDE_TOP_S + dn);
+      if (e2 < .5) return Object.assign(r, still, { x: pc.x + 2.4, z: pc.z, y: g, yaw: yawOf(1, 0), pose: 0 });
+      const w = walkPath(backTo(pc), Math.min(1, (e2 - .5) / Math.max(.5, T - (c + SLIDE_TOP_S + dn + .5))));
+      return Object.assign(r, still, { x: w.x, z: w.z, y: g, yaw: w.yaw, pose: 1, walking: true, ph: (w.d / People.stepLength(L.sig, L.S)) % 1 });
     }
-    if (pc.kind === "seesaw") {
-      const s = sp.sx < pc.x ? -1 : 1, phi = seesawAngle(pc, t);
-      return Object.assign(r, { x: pc.x + s * 1.6, z: pc.z, y: g + .52 + s * 1.6 * Math.sin(phi) + .06, yaw: yawOf(-s, 0), pose: 2 });
-    }
-    if (pc.kind === "slide") {
-      const T = motion.slide_cycle_s, u = ((t / T) + sp.k / 4 + hash(i, "sl") * .1) % 1, x = pc.x, z = pc.z;
-      if (u < .3) { const q = u / .3; return Object.assign(r, { x: x - 1.55, z, y: g + q * 1.55, yaw: yawOf(1, 0), pose: 1, walking: true, ph: (t * 1.7) % 1 }); }
-      if (u < .38) return Object.assign(r, { x: x - 1.25, z, y: g + 1.6, yaw: yawOf(1, 0), pose: 2 });
-      if (u < .52) { const q = (u - .38) / .14, e = q * q; return Object.assign(r, { x: mix(x - 1.15, x + 2.1, e), z, y: mix(g + 1.6, g + .36, e), yaw: yawOf(1, 0), pose: 2 }); }
-      if (u < .6) return Object.assign(r, { x: x + 2.4, z, y: g, yaw: yawOf(1, 0), pose: 0 });
-      const q = (u - .6) / .4, px = mix(x + 2.4, x - 1.9, q), pz = z + .9 * Math.sin(Math.PI * q);
-      return Object.assign(r, { x: px, z: pz, y: g, yaw: yawOf(-1, Math.cos(Math.PI * q) * .6), pose: 1, walking: true, ph: (t * 1.7) % 1 });
-    }
-    if (pc.kind === "sandpit") return Object.assign(r, { y: g + .3, yaw: yawTo(r.x, r.z, pc.x, pc.z), pose: 2 });
-    if (pc.kind === "climb") {
-      const b = Math.sin(t * 6.283 / motion.climb_bob_s + ph);
-      return Object.assign(r, { y: g + .9 + .06 * b, yaw: r.yaw + .5 * Math.sin(t * .3 + ph), pose: 0 });
+    if (pc.kind === "sandpit") return Object.assign(r, still, { y: g + .3, yaw: yawTo(r.x, r.z, pc.x, pc.z), pose: 2 });
+    if (pc.kind === "climb") {                                 // on the outside of the frame, each child on their own side
+      const face = sp.k % 4, [tx, tz] = side(face), lat = clamp((sp.sx - pc.x) * tx + (sp.sz - pc.z) * tz, -.6, .6);
+      return Object.assign(r, still, frameAt(pc, face, lat, ((t / motion.climb_cycle_s) + hash(i, "cl")) % 1));
     }
     return r;
+  }
+
+  // ------------------------------------------------------------ where a body goes on each piece (children and the player alike)
+  // A sitting body's origin is the seat top under the hips (people.js sit()), so each is put on the surface it sits on.
+  const SWING_L = 1.84, SEAT_TOP = .025, PLANK_TOP = .035, FRAME_H = 1.0, OUTSIDE = .16, LADDER = -2.13, DECK = 1.58, SLIDE_TOP_S = .95;
+  function onSwing(pc, k, th) {                              // on the seat: it hangs SWING_L under the beam and turns with the chains (draw)
+    return { x: pc.x + (k - (pc.n - 1) / 2) * 1.1, z: pc.z + Math.sin(th) * SWING_L, y: pc.g + 2.36 - Math.cos(th) * SWING_L + SEAT_TOP, yaw: yawOf(0, 1), pose: 2 };
+  }
+  function onSeesaw(pc, s, phi) {                            // on the plank 1.6 m out, behind the handle, facing the middle
+    return { x: pc.x + s * 1.6 * Math.cos(phi), z: pc.z, y: pc.g + .52 + s * 1.6 * Math.sin(phi) + PLANK_TOP, yaw: yawOf(-s, 0), pose: 2, mod: { straddle: true } };   // a leg each side, not through it as it tips
+  }
+  let CLIMB = null;                                          // a walk made into climbing: short steps, knees high, no sway
+  const climbSig = () => CLIMB || (CLIMB = Object.assign({}, People.SIG.Careful, { name: "Climb", stride: .14, duty: .5, fore: .5, bounce: 0, sway: 0, hip_yaw: 0,
+    hip_roll: 0, counter: 0, lift: .24, lean: 3, head_pitch: -12, head_bob: 0, toe_out: 3, width: .8 }));
+  const reach = (ph, up) => { const s = Math.sin(ph * 6.283) * 18; return { arms: [[1, up + s, 10, 30], [1, up - s, 10, 30]] }; };   // hands up on the rungs, one then the other
+  function slideAt(pc, e, c, dn) {                           // e seconds into a go: up the ladder (c s), onto the top, sit, down the chute (dn s); null after
+    const x = pc.x, z = pc.z, g = pc.g, f = yawOf(1, 0);
+    if (e < c) { const q = e / c, ph = (q * 5) % 1; return { x: x + LADDER, z, y: g + q * 1.5, yaw: f, pose: 1, ph, sig: climbSig(), mod: reach(ph, 150) }; }
+    e -= c; if (e < .45) { const q = e / .45; return { x: mix(x + LADDER, x - 1.55, q), z, y: g + mix(1.5, DECK, Math.min(1, q * 2)), yaw: f, pose: 1, ph: q * .5 }; }
+    e -= .45; if (e < SLIDE_TOP_S - .45) return { x: x - 1.3, z, y: g + DECK, yaw: f, pose: 2 };
+    e -= SLIDE_TOP_S - .45; if (e < dn) { const q = e / dn, px = mix(x - 1.3, x + 2.1, q * q); return { x: px, z, y: chuteY(pc, px), yaw: f, pose: 2 }; }
+    return null;
+  }
+  function chuteY(pc, px) {                                  // the top of the chute (prop) under a slider
+    const a = pc.x - 1.15, b = pc.x + 2.1; if (px <= a) return pc.g + DECK;
+    return pc.g + mix(1.55, .32, Math.min(1, (px - a) / (b - a))) + .05;
+  }
+  const backTo = pc => pc.back || (pc.back = [[pc.x + 2.4, pc.z], [pc.x + .5, pc.z + 1.0], [pc.x - 2.6, pc.z + .8], [pc.x - 2.8, pc.z + .25], [pc.x + LADDER, pc.z]]);   // round the side, to the ladder's foot facing it
+  function walkPath(pts, q) {                                // the point q of the way along a path, its heading and the distance walked
+    if (!pts.len) { pts.len = [0]; for (let k = 1; k < pts.length; k++) pts.len.push(pts.len[k - 1] + Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1])); }
+    const d = q * pts.len[pts.len.length - 1]; let k = 1; while (k < pts.length - 1 && pts.len[k] < d) k++;
+    const a = pts[k - 1], b = pts[k], f = clamp((d - pts.len[k - 1]) / ((pts.len[k] - pts.len[k - 1]) || 1), 0, 1);
+    return { x: mix(a[0], b[0], f), z: mix(a[1], b[1], f), yaw: yawOf(b[0] - a[0], b[1] - a[1]), d };
+  }
+  const FACES = [[-1, 0], [1, 0], [0, 1], [0, -1]], side = f => [-FACES[f][1], FACES[f][0]];
+  function frameAt(pc, face, lat, u) {                       // u of the way through a go on the frame: up the outside, a look over the top, down, a rest
+    const [nx, nz] = FACES[face], [tx, tz] = side(face), d = FRAME_H + OUTSIDE, at = { x: pc.x + nx * d + tx * lat, z: pc.z + nz * d + tz * lat, yaw: yawOf(-nx, -nz) };
+    if (u < .3) { const q = u / .3, ph = (q * 4) % 1; return Object.assign(at, { y: pc.g + q * 1.1, pose: 1, ph, sig: climbSig(), mod: reach(ph, 150) }); }
+    if (u < .6) return Object.assign(at, { y: pc.g + 1.1, pose: 0, mod: { arms: [[1, 45, 12, 15], [1, 45, 12, 15]] } });   // feet on the middle bar, hands on the top one
+    if (u < .85) { const q = (u - .6) / .25, ph = (1 - q) * 4 % 1; return Object.assign(at, { y: pc.g + (1 - q) * 1.1, pose: 1, ph, sig: climbSig(), mod: reach(ph, 150) }); }
+    return Object.assign(at, { y: pc.g, pose: 0 });
   }
   function swingAngle(pc, k, t) {
     const A = motion.swing_angle_deg * Math.PI / 180 * (.75 + .25 * hash(pc.p.id, k));
@@ -296,20 +340,15 @@ window.Dress = (() => {
     const sp = st.sp, pc = sp.pc, g = pc.g, e = t - st.t0, u = sp.use;
     busy.add(pc.p.id); busy.add(pc.p.id + ":" + sp.k);
     if (u === "swing") {                                     // still at first, swinging higher as they pump
-      const th = swingAngle(pc, sp.k, t) * Math.min(1, e / motion.player_swing_build_s), a = (sp.k - (pc.n - 1) / 2) * 1.1, L = 1.85;
+      const th = swingAngle(pc, sp.k, t) * Math.min(1, e / motion.player_swing_build_s);
       swingOf.set(pc.p.id + ":" + sp.k, th);
-      return { x: pc.x + a, z: pc.z + Math.sin(th) * L, y: g + 2.36 - Math.cos(th) * L + .04, yaw: yawOf(0, 1), pose: 2 };
+      return onSwing(pc, sp.k, th);
     }
-    if (u === "seesaw") { const s = sp.sx < pc.x ? -1 : 1, phi = seesawAngle(pc, t); return { x: pc.x + s * 1.6, z: pc.z, y: g + .52 + s * 1.6 * Math.sin(phi) + .06, yaw: yawOf(-s, 0), pose: 2 }; }
-    if (u === "slide") {                                     // up the ladder, a moment at the top, down the chute, off at the bottom: one go
-      const c = motion.player_slide_climb_s, dn = motion.player_slide_down_s, x = pc.x, z = pc.z;
-      if (e < c) return { x: x - 1.55, z, y: g + e / c * 1.55, yaw: yawOf(1, 0), pose: 1, ph: (t * 1.7) % 1 };
-      if (e < c + .5) return { x: x - 1.25, z, y: g + 1.6, yaw: yawOf(1, 0), pose: 2 };
-      if (e < c + .5 + dn) { const q = (e - c - .5) / dn, k = q * q; return { x: mix(x - 1.15, x + 2.1, k), z, y: mix(g + 1.6, g + .36, k), yaw: yawOf(1, 0), pose: 2 }; }
-      return { x: x + 2.6, z, y: g, yaw: yawOf(1, 0), pose: 0, done: true };
-    }
+    if (u === "seesaw") return onSeesaw(pc, sp.sx < pc.x ? -1 : 1, seesawAngle(pc, t));
+    if (u === "slide") return slideAt(pc, e, motion.player_slide_climb_s, motion.player_slide_down_s)   // up the ladder, down the chute, off at the bottom: one go
+      || { x: pc.x + 2.6, z: pc.z, y: g, yaw: yawOf(1, 0), pose: 0, done: true };
     if (u === "sandpit") return { x: sp.sx, z: sp.sz, y: g + .3, yaw: yawOf(pc.x - sp.sx, pc.z - sp.sz), pose: 2 };
-    if (u === "climb") return { x: pc.x + .35, z: pc.z, y: g + .9 + .04 * Math.sin(e * 1.3), yaw: yawOf(1, 0) + .4 * Math.sin(e * .35), pose: 0 };
+    if (u === "climb") return frameAt(pc, 1, -.45, (e / motion.player_climb_cycle_s) % 1);   // up and down the side the use point is on, beside the children
     return { x: sp.sx, z: sp.sz, y: g, yaw: 0, pose: 0, done: true };
   }
   function playerOff(st) {                                   // where the player steps off to
@@ -327,7 +366,7 @@ window.Dress = (() => {
       if (Math.abs(pc.x - eye[0]) > 70 || Math.abs(pc.z - eye[2]) > 70) continue;
       if (pc.kind === "swing") for (let k = 0; k < pc.n; k++) {
         const own = swingOf.get(pc.p.id + ":" + k), on = busy.has(pc.p.id + ":" + k), th = own !== undefined ? own : on ? swingAngle(pc, k, t) : .04 * Math.sin(t * .9 + k), a = pc.x + (k - (pc.n - 1) / 2) * 1.1;
-        const m = M4.mul(M4.mul(M4.t(a, pc.g + 2.36, pc.z), M4.rx(th)), M4.t(0, 0, 0));
+        const m = M4.mul(M4.t(a, pc.g + 2.36, pc.z), M4.rx(-th));   // rx(-th) swings the seat towards +z as th grows, as onSwing() moves the rider
         for (const s of [-.2, .2]) dyn.obox(m, s, -.9, 0, .02, 1.8, .02, IRON, 9);
         dyn.obox(m, 0, -1.84, 0, .48, .05, .2, [.18, .14, .1], 0);
       }
