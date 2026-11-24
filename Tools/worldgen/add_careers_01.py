@@ -103,6 +103,10 @@ def main():
                 x0, z0, x1, z1 = units[u]["rect"]
                 n, i = per_unit[u], seen[u]
                 seen[u] += 1
+                at = units[u].get("stand")                       # a unit may say where its staff stand: behind its counter, at its stalls
+                if at and i < len(at):
+                    spots.append([round(at[i][0], 2), round(at[i][1], 2)])
+                    continue
                 step = min(1.2, (x1 - x0 - 1.4) / max(1, n))
                 spots.append([round((x0 + x1) / 2 + (i - (n - 1) / 2) * step, 2), round(z0 + (z1 - z0) * 0.4, 2)])
             l["objects"]["work"] = spots
