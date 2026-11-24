@@ -310,7 +310,7 @@ const Court = (() => {
       for (let d = 10; d < 70; d += 15) lantern(e.at[0] + (ns ? 0 : sg * d), F + 3.9, e.at[1] + (ns ? sg * d : 0), F + under, .55); }
     { const v = P.levels[1].voids[0], out = outward(v); for (let i = 0; i < v.length; i += 11) lantern(v[i][0] + out[i][0] * 7.5, F + 3.9, v[i][1] + out[i][1] * 7.5, F + under, .55); }
 
-    // ---- where the staff stand: a keeper behind the counter of every outlet on every floor, facing the walk (CITY-098); in an egg hall
+    // ---- where the staff stand: a keeper behind the counter of every outlet on every floor, facing the walk (CITY-105); in an egg hall
     // facing its middle; and the guards and janitors of the whole mall at their own places (plan.staff)
     P.levels.forEach((L, k) => { for (const u of L.units) { if (k && !u.outlet) continue;          // (a big store is one unit on every floor: its staff are on the ground)
       for (const s of u.stand || []) {

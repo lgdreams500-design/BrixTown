@@ -9,7 +9,7 @@ script only writes what they answer into the city:
   places      a workplace with more staff than places to work gets more, spread over its floors clear of its stair, as
               add_households_01.py does; a mall's places to work are in its units, each staffed unit its own: an
               outlet's keeper at its `stand` on whichever floor it is, and those who look after the whole mall at the
-              plan's `staff` places (CITY-098); the floor of each is in the lot's `levels.work`
+              plan's `staff` places (CITY-105); the floor of each is in the lot's `levels.work`
   staff       a lot that records its staff count ('staff') is set to the residents who work there
   rounds      anyone who now has a utility routine and no rounds gets twelve places among the forty nearest
 Ids, homes, names and everything else stay. Running it again gives the same city.
@@ -106,7 +106,7 @@ def main():
             per_unit = collections.Counter(u for _, u, _ in ss)
             seen, spots, lv = collections.Counter(), [], []
             for _, u, r in ss:
-                if u is None:                                    # the whole mall's own: guards, janitors (CITY-098)
+                if u is None:                                    # the whole mall's own: guards, janitors (CITY-105)
                     q = l["plan"]["staff"][r["career"]][seen[r["career"]]]
                     seen[r["career"]] += 1
                     spots.append([round(q["pos"][0], 2), round(q["pos"][1], 2)])

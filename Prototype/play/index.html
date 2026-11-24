@@ -58,6 +58,21 @@
   #purse-cash { font-weight: 600; color: var(--cream); }
   #purse-bank { color: var(--dim); }
   #purse-delta { margin-left: 10px; font-weight: 600; opacity: 0; transition: opacity .6s; }
+  /* money coming in (rewards.js, SND-019, SND-020): the purse swells and glows as coins land; the bank's slip slides out under it */
+  #purse-cash, #purse-bank { display: inline-block; white-space: pre; transform-origin: 0 60%; transition: text-shadow .9s, color .9s; }
+  #purse-cash.glow, #purse-bank.glow { color: #fbe3a0; text-shadow: 0 0 14px rgba(240,195,90,.95), 0 1px 2px rgba(0,0,0,.75); transition: text-shadow .15s, color .15s; }
+  #slip { position: absolute; left: 0; top: 100%; margin-top: 8px; padding: 6px 12px; background: #d9cfb6; color: var(--ink); border-radius: 6px; font-size: 13px; text-shadow: none; white-space: nowrap; opacity: 0; transform: translateX(-24px); transition: opacity .35s, transform .35s cubic-bezier(.2,1.4,.4,1); }
+  #slip b { display: block; font-family: var(--name); font-weight: 400; font-size: 16px; }
+  #slip.on { opacity: 1; transform: none; }
+  /* an achievement (rewards.js, QST-009, SND-021): a painted sign drops in from the top */
+  #feat { left: 50%; top: 18px; z-index: 6; display: flex; gap: 14px; align-items: center; padding: 12px 22px 12px 14px; background: #c9a24a; color: var(--ink); text-shadow: none; border-radius: 14px; box-shadow: 0 6px 0 rgba(0,0,0,.25); white-space: nowrap; transform: translate(-50%, -180%) rotate(-2deg); transition: transform .55s cubic-bezier(.2,1.5,.4,1); zoom: var(--ui-zoom, 1); }
+  #feat.on { transform: translate(-50%, 0) rotate(-1deg); }
+  #feat svg { width: 40px; height: 40px; flex: none; }
+  #feat small { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; opacity: .75; }
+  #feat b { display: block; font-family: var(--name); font-weight: 400; font-size: 24px; line-height: 1.15; }
+  #feat span { font-size: 13px; opacity: .8; }
+  @media (max-width: 760px) { #feat { top: 64px; } #feat b { font-size: 19px; } }
+  .feats td:first-child { font-family: var(--name); font-size: 16px; } .feats tr.todo td { opacity: .45; }
   .pos { color: #9fd1a0; } .neg { color: #e9907a; } .dim { color: var(--dim); }
   #track { right: 18px; top: 270px; width: 260px; font-size: 13px; line-height: 1.4; display: none; }
   .trk { background: rgba(23,23,28,.62); border-radius: 6px; padding: 7px 10px; margin-bottom: 6px; border-left: 3px solid #f0c35a; }
@@ -199,7 +214,8 @@
   <div id="place"></div>
   <div id="sub"></div>
 </div>
-<div class="hud" id="purse"><span id="purse-cash"></span><span id="purse-bank"></span><span id="purse-delta"></span></div>
+<div class="hud" id="feat"><svg viewBox="0 0 40 40"><path d="M13 3h14l-4 13h-6z" fill="#8a4a3a"/><circle cx="20" cy="25" r="11" fill="#f0c35a" stroke="#17171c" stroke-width="2"/><path d="M20 18l2.1 4.4 4.8.6-3.5 3.3.9 4.7-4.3-2.3-4.3 2.3.9-4.7-3.5-3.3 4.8-.6z" fill="#17171c"/></svg><div><small>Achievement</small><b id="feat-name"></b><span id="feat-line"></span></div></div>
+<div class="hud" id="purse"><span id="purse-cash"></span><span id="purse-bank"></span><span id="purse-delta"></span><div id="slip"><b>Interest from the bank</b><span id="slip-what"></span></div></div>
 <div class="hud" id="track" aria-live="polite"></div>
 <div class="hud" id="toast" aria-live="polite"></div>
 <div class="hud" id="counter"></div>
@@ -275,7 +291,9 @@
 <script src="audio/voices/index.js"></script>   <!-- every dialogue line, spoken (SND-018); made by Tools/voice/make_dialogue_voices.py -->
 <script src="voices.js"></script>
 <script src="dodge.js"></script>
+<script src="rewards.js"></script>   <!-- coins and chimes when money comes in (SND-019, SND-020) -->
 <script src="economy.js"></script>
+<script src="achievements.js"></script>   <!-- named moments, earned once and kept (QST-009) -->
 <script src="estate.js"></script>   <!-- the real estate market (PROP-009 to PROP-021) -->
 <script src="furnishing.js"></script>   <!-- furnishing levels of residents' homes (FURN-062, FURN-063) -->
 <script src="builder.js"></script>   <!-- the building designer's rules (BUILD-004 to BUILD-007, BUILD-016 to BUILD-019) -->
@@ -317,6 +335,7 @@
 <script src="goods_models.js"></script>   <!-- the mall's goods as made in Blender (Tools/blender/mall_goods_31.py, FURN-065) -->
 <script src="goods.js"></script>   <!-- the mall's goods for the home, as pieces to place (ECO-014, FURN-064) -->
 <script src="homes.js"></script>   <!-- the row houses and court flats furnished from their plans (ADR-0036) -->
+<script src="dev.js"></script>   <!-- dev mode: index.html?dev, a bar of buttons that play each piece of feedback; does nothing otherwise -->
 <script src="bench.js"></script>   <!-- the look bench: index.html?bench (ADR-0032, ADR-0035); does nothing otherwise -->
 <script src="play.js"></script>
 </body>

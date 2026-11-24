@@ -24,7 +24,7 @@ The idea, in the shell's own language (flowing ribbons, eggs, round arches, lant
 
 It replaces the lot's `plan` (malls_01.py, concept "loop") and its `customer` and `seat` places; the lot's rect, door,
 floors and tags stay. The ground floor keeps its four big stores of 3,600 m2, its 58 deep shops and two cafes, in the same
-order of kinds. Every outlet, on every floor, has one keeper (CITY-098; the owner, 2026-11-24: "one person per outlet is
+order of kinds. Every outlet, on every floor, has one keeper (CITY-105; the owner, 2026-11-24: "one person per outlet is
 good enough"), who stands behind its counter (`stand`); the mall's guards and janitors have their own places (`staff`).
 Run add_careers_01.py afterwards: it puts the staff where their units are.
 
@@ -57,7 +57,7 @@ The plan keeps the old keys and adds some:
                      stands in each, copied from World/rules/mall_outlets.json; a unit with a front names its kind (`outlet`)
   outlet_depth       {least, most}: how deep an outlet's room is drawn, metres in from its front
   rides              [{kind, pos, r?, horses?}]: a carousel and coin rides on the court floor
-  staff              {career: [{level, pos, yaw}]}: where those who look after the whole mall stand (CITY-098), as many of
+  staff              {career: [{level, pos, yaw}]}: where those who look after the whole mall stand (CITY-105), as many of
                      each career as World/rules/careers.json `mall_staff.whole_mall` says: a guard inside each way in
                      and by a lift on each upper floor, janitors on the court floor and the galleries; yaw in degrees,
                      the way they face (0 north, 90 east)
@@ -202,7 +202,7 @@ def seg_dist(p, a, b):
 
 
 def whole_mall_staff(plan, places, cx, cz, rect):
-    """Where the guards and janitors of the whole mall stand (CITY-098): each on open floor of their level, clear of the
+    """Where the guards and janitors of the whole mall stand (CITY-105): each on open floor of their level, clear of the
     shop fronts, the openings and their rails, the stairs, lifts, planters, gardens, fountains, benches, rides and kiosks,
     and of every other place someone stands or sits. Each is put at the first clear spot round the place wanted."""
     with open(CAREERS, encoding="utf-8") as f:
@@ -477,7 +477,7 @@ def design(lot, shell):
             else:
                 food = (level == 2 and c["kind"] == "court") or n % 6 == 3
             u.update(id=new_id(), name="%s %d.%02d" % (short, level, len(units) + 1), kind="food" if food else "shop")
-            u["stand"] = keeper(c)                                   # one keeper to every outlet, on every floor (CITY-098)
+            u["stand"] = keeper(c)                                   # one keeper to every outlet, on every floor (CITY-105)
             units.append(u)
             fronts.append(dict(unit=u["id"], a=pt(c["a"]), b=pt(c["b"])))
         if level:                                                   # the drums of the egg halls rise through the upper floors, open where a balcony comes in

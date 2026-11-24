@@ -46,11 +46,36 @@ shop and eat. This record is written with stage 1 and is added to as the others 
    `test_economy.TheOutlets`, and ported line for line to `Prototype/play/economy.js`; the page's self-test now runs
    outlet purchases too and compares them with Python's.
 
+## Decision (stage 2: the goods as objects made in Blender)
+
+Written 2026-11-24, after stages 1 and 3.
+
+1. **One script makes all 49** (FURN-065): `Tools/blender/mall_goods_31.py`, run headless, building on
+   `furniture_kit_17.py` (its painted matte materials, the kit daylight of ADR-0007, its camera and render settings and
+   the person for scale) and on the car export's way out to the slice. Each good is one short function made of a few
+   light shapes: box, cylinder, ball, rod, a turned shape (vases, lamps, pots) and a slab cut to an outline (guitar
+   bodies, rockers, a roof). Each fits inside the size the rules give its piece; the script refuses to write the file
+   if one does not.
+2. **Two makes of each**: near, for a home (at most 600 triangles; 284 on average), and far, a lighter one (at most
+   180; 112 on average). The far ones are trimmed by hand in the script, not thinned by the machine.
+3. **Colours**: the slice's own muted palette, 23 colours. Two of them (`accent0`, `accent1`) are left open in a model
+   and chosen in the slice by the piece's seed, so two guitars or two rugs differ.
+4. **In a home** a placed good is drawn from its object (`Goods.put`, called where the designer's layouts are drawn).
+   The boxes of stage 1 stay in `goods.js` and stand in only if `goods_models.js` is missing.
+5. **In an outlet** the goods for the home that outlet sells stand in it as the same objects: on its two window
+   plinths, facing the walk, and the ones too deep for a plinth (a drum kit, an exercise bike, a rug) on the floor
+   inside. What is seen in an outlet is what B sells there. 112 of the 189 outlets sell such goods.
+6. **Which make stands in the outlets is data** (`World/rules/mall_goods.json` `display.detail`). It is `near`: the
+   far ones looked too crude at arm's length from a shop window. Measured in the slice: 464 objects,
+   134,674 triangles, 0.40 million points, 3.0 % of the town's mesh. `far` would cost about 40 % of that.
+7. **For the engine**: `Art/Export/mall_goods_31/mall_goods_31.glb` holds the near objects, one object each, and
+   `Art/Source/StyleTests/mall_goods_31.blend` every mesh.
+
 ## Decision (stage 3: a keeper in every outlet, guards and janitors)
 
 Written 2026-11-24, after the owner was told that it would give 639 residents other work and answered "Yes, re-deal".
 
-1. **One keeper to each outlet, on every floor** (CITY-098). In a mall whose units are outlets, `careers.posts` gives
+1. **One keeper to each outlet, on every floor** (CITY-105). In a mall whose units are outlets, `careers.posts` gives
    each outlet one post: `shop_owner` ("shop owner", the owner's words) for a shop, `food_outlet_owner` for a food
    outlet. The 206 posts the ground floor had kept from the old plan (three to a shop, four to a cafe) are gone.
 2. **A few for the whole mall**: six security guards and six janitors (`mall_staff.whole_mall` in
@@ -109,6 +134,11 @@ Only the owner picks levels. Nothing was recorded in `feature_choices.json` for 
   Blender objects; what stands on an outlet's shelves is still ADR-0039's fixtures, not yet the goods it sells.
 - Small things (a lamp, a stack of books) stand on the floor when placed: pieces cannot yet be put on a table or a
   shelf. They are marked `small` in the data for that rule.
+- Stage 2: the things an outlet sells that are carried, eaten or worn (strings, a burger, a shirt) have no objects;
+  its shelves, rails and counters still show ADR-0039's fixtures for those. Nothing is drawn in the player's hand.
+- Stage 2: an outlet's display does not change as it sells out; a sold-out guitar still stands in the window.
+- Stage 2: the objects have no textures and no moving parts, and a television or lamp does not light up.
+- Stage 2: the pictures are of the objects alone and of the slice; the look has not been approved by the owner.
 - Not measured: frame rate. Nothing in stage 1 adds to the town's mesh; stage 3 adds a counter to 129 more outlets (a
   few boxes each) and up to 201 people in the mall by day.
 - Stage 3: the keepers follow their role's day as every shopkeeper and cafe worker does, and come in from about 850 m
@@ -123,4 +153,4 @@ Only the owner picks levels. Nothing was recorded in `feature_choices.json` for 
 - No automated test drives the page. The rule's port is checked by the page's self-test; the prompt, the panel, the
   wardrobe and placing a bought guitar were tried by hand in the slice.
 
-Pictures: `Art/StyleTests/mall_shopping_30/`.
+Pictures: `Art/StyleTests/mall_shopping_32/`.

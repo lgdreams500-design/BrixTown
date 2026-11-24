@@ -613,6 +613,41 @@ class TheSounds(unittest.TestCase):
         for k in world.SOUND_ACTIONS:
             self.assertIn(k, self.S["actions"])
 
+    def test_SND_019_a_reward_springs_coins_by_its_size(self):
+        self.assertEqual(world.reward_sound_problems(self.S), [])
+        counts = [world.reward_coins(self.S, a) for a in (1, 4999, 5000, 14999, 15000, 40000, 10 ** 7)]
+        self.assertEqual(counts, sorted(counts))                            # a bigger reward never has fewer coins
+        self.assertGreater(counts[-1], counts[0])
+        tx = [(0, 1, 600, "Reward: A parcel", (("sys:rewards", -5000), ("p:cash", 5000))),
+              (1, 1, 610, "Sold bread", (("shop:1", -200), ("p:cash", 200))),               # a sale is not a reward
+              (2, 1, 620, "Loan L1 paid out", (("bank:vault", -9000), ("p:current", 9000))),   # nor is a loan
+              (3, 1, 630, "Transfer", (("p:cash", -100), ("p:current", 100)))]
+        self.assertEqual(world.reward_events(self.S, tx), [{"kind": "reward", "amount": 5000, "coins": world.reward_coins(self.S, 5000), "memo": "Reward: A parcel"}])
+
+    def test_SND_020_interest_is_shown_once_for_all_accounts(self):
+        tx = [(0, 1, 1440, "Interest, current account", (("bank:vault", -12), ("p:current", 12))),
+              (1, 1, 1440, "Interest, savings account", (("bank:vault", -30), ("p:savings", 30))),
+              (2, 2, 1440, "Interest, savings account", (("bank:vault", -31), ("p:savings", 31)))]
+        self.assertEqual(world.reward_events(self.S, tx), [{"kind": "interest", "amount": 73, "accounts": ["p:current", "p:savings"]}])
+        self.assertEqual(world.reward_events(self.S, []), [])
+
+    def test_SND_019_broken_reward_rules_are_caught(self):
+        import copy
+        s = copy.deepcopy(self.S)
+        r = s["rewards"]
+        r["quest"]["voice"] = "gong"
+        r["achievement"]["chord"]["notes"] = []
+        r["voices"]["box"]["partials"] = [[1, 0]]
+        r["coins"]["reward_tiers"] = [[100, 5], [50, 3]]
+        r["coins"]["bounce"] = 1.5
+        r["interest"]["end"] = []
+        del r["ledger"]["interest_memo"]
+        p = world.reward_sound_problems(s)
+        for bit in ("not a reward voice: gong", "achievement.chord", "reward voice box", "reward_tiers", "bounce", "interest end note", "interest_memo"):
+            self.assertTrue(any(bit in x for x in p), bit)
+        del s["rewards"]
+        self.assertTrue(any("no rewards" in x for x in world.reward_sound_problems(s)))
+
     def test_SND_011_cafes_shops_and_the_market_play_music(self):
         kinds = {l["kind"] for l in LOTS}
         for k in ("food", "shop", "market"):
@@ -1383,7 +1418,7 @@ class TheMallInside(unittest.TestCase):                                        #
     def test_WLD_061_shops_on_every_walk_and_a_place_to_stand_for_every_post(self):
         careers, R = self.careers_rules()
         posts = careers.posts(self.l, R, "mall")
-        self.assertEqual(len(posts), 189 + 12 + 24)                                # a keeper to each outlet, six guards and six janitors (CITY-098), and the four big stores' six each
+        self.assertEqual(len(posts), 189 + 12 + 24)                                # a keeper to each outlet, six guards and six janitors (CITY-105), and the four big stores' six each
         by_unit = {}
         for _, u in posts:
             by_unit[u] = by_unit.get(u, 0) + 1
