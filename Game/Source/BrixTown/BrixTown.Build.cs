@@ -6,6 +6,7 @@ public class BrixTown : ModuleRules
 	public BrixTown(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "BrixWorld" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "ProceduralMeshComponent", "BrixWorld" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "RenderCore", "RHI" });   // the frame's thread and GPU times, logged with a test shot
 	}
 }

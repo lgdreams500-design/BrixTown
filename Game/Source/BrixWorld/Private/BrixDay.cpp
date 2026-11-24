@@ -35,7 +35,13 @@ bool LoadBrixDay(const FString& Path, FBrixDay& Out, FString& OutError)
 		Out.Ids.Add(O->GetStringField(TEXT("id")));
 		Out.Names.Add(O->GetStringField(TEXT("n")));
 		Out.Role.Add((int32)O->GetNumberField(TEXT("r")));
+		FString U;
+		O->TryGetStringField(TEXT("u"), U);
+		Out.Wear.Add(U);
 	}
+	const TSharedPtr<FJsonObject>* Sigs;
+	if (Root->TryGetObjectField(TEXT("role_sig"), Sigs))
+		for (const auto& KV : (*Sigs)->Values) Out.RoleSig.Add(FString(KV.Key), KV.Value->AsString());
 	// the pieces, as build_play.py routines() writes them: [t0, 0, x, z, act, use, inside, lot(, floor)] a stay,
 	// [t0, 1, act, x, z, x, z, ...] a walk, [t0, 2] away, [t0, 3, vehicle] in a car or on a bus
 	for (const TSharedPtr<FJsonValue>& RowV : Root->GetArrayField(TEXT("plan")))

@@ -437,6 +437,7 @@ specs and validation tools that creators will later use, so the UGC pipeline is 
 | ADR-0012 | Money, shops, quests and the designer in the slice: one ledger, settled by the day; stock, stall sales and daily jobs calculated from the clock and routines | proposed |
 | ADR-0041 | Buying at each outlet of the mall; what the outlets sell and where each good goes (home, wardrobe, carried); the goods as objects made in Blender; a keeper in every outlet, guards and janitors for the mall; residents who visit it | accepted |
 | ADR-0045 | The browser slice is frozen once the Unreal build catches up (the owner says when); rules are still proved in Python first, feel is prototyped in Unreal after the freeze | accepted |
+| ADR-0047 | Unreal's people are the slice's option B people, built from code by a checked port of people.js until Q-15 and Q-17 are decided | proposed |
 
 ADR-0001 to ADR-0003 are reserved numbers; their files are written when the decision is taken.
 

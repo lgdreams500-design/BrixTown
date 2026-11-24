@@ -16,7 +16,7 @@ starts on the engine's empty map and the game mode builds the town from `World/`
 The starting city at the slice's sizes: a box for each building (its footprint, turned by its `angle`; `floors` × 3 m +
 0.4 m high, at least 3.6 m), a slab for each block (green for parks and open ground), a trunk and crown for each tree,
 the sun low in the east, sky, haze, Lumen. You walk it from the city's spawn with the slice's keys: W A S D, mouse,
-Shift to run, Space to jump. No residents, cars, interiors, money or sound yet.
+Shift to run, Space to jump. No cars, interiors, money or sound yet.
 
 ## Buildings (ADR-0046)
 Each building is laid as the Blender building kit lays it: a core set back by the wall's depth (0.32 m), front walls
@@ -69,7 +69,21 @@ the same run as the slice's city_data.js (the same day, day 16), so after changi
 Where anyone is follows from the day and the clock each frame (a port of the slice's resident(), checked against citysim
 City.at() by `CITY022_residents_are_where_their_routine_puts_them`): at their place, or walking their route at even speed
 a little to one side of the pavement's line. Only the nearest, out of doors and within 90 m, have a body, up to 400 at once.
-The bodies are stand-ins (a body in a palette colour, a head, a bob as they walk) until the option B people come over.
+
+## People (ART-004, ANIM-001, ANIM-002; ADR-0047)
+The residents are the slice's option B people: `BrixWorld/BrixBody` is a port of `Prototype/play/people.js`. Each is
+dressed by their role (a job's own clothes where it has them) and walks by their role's movement signature, from the
+same tables as the slice: `Game/Data/people.json`, written from people.js by `Tools/unreal/people_values.py` (run it after
+changing people.js; it runs people.js itself in headless Edge). Bodies are built from code as the slice builds them, at
+its distances: the nearest within 5 m at full detail with a blinking face, to 16 m a body with a face, to 35 m a simpler
+body whose face is gone by 30 m, and further out a figure of a few blocks. `ART004_people_are_drawn_as_the_slice_draws_them`
+checks the port against people.js: the same looks, and bodies with the same vertices to within 1 mm. Each body is a
+procedural mesh rebuilt every one to three frames and moved every frame; the far figures are one mesh updated in place
+(moving instanced boxes every frame cost 8 ms of the render thread). Their material is `/Game/People/M_People` (the
+vertex colour, matte), made by `Tools/unreal/make_people_material.py`. Standing residents stand; sitting, talking faces,
+umbrellas and boards are not brought over yet. At High on this laptop: 54.5 frames a second on a street with 32
+residents near (the same as with none), 49 to 52 in the morning school rush of some 150 (the people take 9 to 11 ms of
+the game thread there).
 
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
@@ -101,3 +115,4 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.ART001_every_house_has_its_line_and_colourway` | ART-001 (ADR-0032, ADR-0035) |
 | `BrixTown.World.WLD043_the_sun_follows_the_calendar` | WLD-043 (ADR-0024) |
 | `BrixTown.World.CITY022_residents_are_where_their_routine_puts_them` | CITY-022 |
+| `BrixTown.World.ART004_people_are_drawn_as_the_slice_draws_them` | ART-004, ANIM-001, ANIM-002 |
