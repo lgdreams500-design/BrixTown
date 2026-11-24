@@ -10,8 +10,19 @@ struct FBrixDay;
 class UMaterialInterface;
 class UProceduralMeshComponent;
 
+// A body in Unreal's frame and centimetres, ready for a procedural mesh: made on any thread, uploaded on the game thread.
+struct BRIXTOWN_API FBrixMeshArrays
+{
+	TArray<FVector> V, N;
+	TArray<FLinearColor> C;
+	TArray<int32> Tri;
+	void From(const FBrixBodyMesh& Body, bool bFlip);
+	// into M's one section (updated in place when it had as many vertices); returns the vertices it has now
+	int32 Upload(UProceduralMeshComponent* M, int32 Had, UMaterialInterface* Material) const;
+};
+
 // A body from BrixBody (the slice's frame, metres) into M's one section, in Unreal's frame and centimetres. Had: the
-// vertices the section had (it is updated in place when the count is the same). Returns the vertices it has now.
+// triangles' indices the section had (it is updated in place when the count is the same). Returns what it has now.
 BRIXTOWN_API int32 BrixBodyToMesh(UProceduralMeshComponent* M, const FBrixBodyMesh& Body, int32 Had, bool bFlip, UMaterialInterface* Material);
 
 // The town's residents, where their routine puts them at the clock's minute (CITY-021, CITY-022): worked out each frame
@@ -44,7 +55,9 @@ public:
 
 	int32 Shown() const { return LastShown; }
 	double TickMs() const { return TickFrames ? TickSeconds * 1000.0 / TickFrames : 0.0; }   // the people's own time a frame, on average
-	void ResetTickTime() { TickSeconds = 0; TickFrames = 0; }
+	void ResetTickTime() { TickSeconds = 0; TickFrames = 0; for (double& P : Parts) P = 0; }
+	// the time a frame by part: where everyone is, placing and the far figures' boxes, building bodies, uploading them, the far mesh
+	FString TickParts() const { return TickFrames ? FString::Printf(TEXT("where %.2f, place %.2f, build %.2f, upload %.2f, far %.2f ms"), Parts[0] * 1e3 / TickFrames, Parts[1] * 1e3 / TickFrames, Parts[2] * 1e3 / TickFrames, Parts[3] * 1e3 / TickFrames, Parts[4] * 1e3 / TickFrames) : FString(); }
 
 private:
 	float GroundAt(const FVector2D& P) const;
@@ -61,9 +74,11 @@ private:
 	struct FSlot { int32 Resident = -1; int32 Lod = -1; int32 Verts = 0; int32 Age = 0; };
 	TArray<FSlot> Slots;
 	FBrixBodyMesh Scratch;
+	struct FBuilt { FBrixBodyMesh Body; FBrixMeshArrays Arrays; };
+	TArray<FBuilt> Built;               // per slot: the body last built for it
 	TArray<FBrixFarBox> BoxScratch;
 	int32 FigureCap = 0;                // boxes the far figures' mesh has room for (grows and shrinks in steps, so it is mostly updated in place)
 	int32 Frame = 0, LastShown = 0;
-	double TickSeconds = 0;
+	double TickSeconds = 0, Parts[5] = { 0, 0, 0, 0, 0 };
 	int32 TickFrames = 0;
 };

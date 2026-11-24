@@ -3,6 +3,7 @@
 #include "BrixDay.h"
 #include "Dom/JsonObject.h"
 #include "Misc/FileHelper.h"
+#include "Misc/ScopeLock.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 
@@ -220,10 +221,14 @@ namespace
 		return { FVector(sig.Sway * g.S * FMath::Sin(TAU * (ph - .06)), 0, base - sig.Bounce * g.S * FMath::Cos(2 * TAU * (ph - .045))), mm(Rz(yaw), Ry(roll)), yaw, roll };
 	}
 	TMap<FString, double>& BaseCache() { static TMap<FString, double> C; return C; }
+	FCriticalSection& BaseLock() { static FCriticalSection L; return L; }   // bodies are built on several threads at once
 	double baseHeight(const FBrixSignature& sig, const FGeo& g, double total)   // hip height that lets the planted leg reach the ground through the step
 	{
 		const FString Key = sig.Name + TEXT("|") + FString::Printf(TEXT("%.2f"), g.S);   // people.js keys it so too (sig.name | S.toFixed(2))
-		if (const double* Found = BaseCache().Find(Key)) return *Found;
+		{
+			FScopeLock Lock(&BaseLock());
+			if (const double* Found = BaseCache().Find(Key)) return *Found;
+		}
 		double best = 1e9;
 		const double lmax = g.leg * .9975;
 		for (int32 i = 0; i < 64; ++i)
@@ -241,8 +246,9 @@ namespace
 				best = FMath::Min(best, t.P.Z + FMath::Sqrt(FMath::Max(lmax * lmax - dx * dx - dy * dy, 1e-6)) - hip.Z);
 			}
 		}
-		BaseCache().Add(Key, best);
-		return best;
+		FScopeLock Lock(&BaseLock());
+		BaseCache().FindOrAdd(Key, best);   // a thread that got there first keeps its own: the same number
+		return BaseCache()[Key];
 	}
 
 	struct FPose
@@ -373,12 +379,14 @@ namespace
 					N[k * n + i] = nn * (dot(nn, N[k * n + i]) < 0 ? -1 / l : 1 / l);
 				}
 			}
+			const int32 First = Out.Pos.Num();
+			for (int32 o = 0; o < m * n; ++o) { Out.Pos.Add(FVector3f(P[o])); Out.Normal.Add(FVector3f(N[o])); Out.Colour.Add(col); }
 			for (int32 k = 0; k < m - 1; ++k)
 				for (int32 i = 0; i < n; ++i)
 				{
 					if (bMask && !mask(k, i)) continue;
 					const int32 j = (i + 1) % n, Q[6] = { k * n + i, k * n + j, (k + 1) * n + j, k * n + i, (k + 1) * n + j, (k + 1) * n + i };
-					for (int32 o : Q) { Out.Pos.Add(FVector3f(P[o])); Out.Normal.Add(FVector3f(N[o])); Out.Colour.Add(col); }
+					for (int32 o : Q) Out.Index.Add(First + o);
 				}
 		}
 		void loft(const TArray<FRing>& rings, int32 n, const FVector3f& col, const FVector* ctr = nullptr)
@@ -444,7 +452,7 @@ namespace
 	FVector3f scc(const FVector3f& c, double k) { return c * (float)k; }
 }
 
-void ResetBrixWalkHeights() { BaseCache().Reset(); }
+void ResetBrixWalkHeights() { FScopeLock Lock(&BaseLock()); BaseCache().Reset(); }
 
 void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVector& At, double yaw, const FBrixDrawOptions& o, FBrixBodyMesh& Out, TArray<FBrixFarBox>* OutBoxes)
 {

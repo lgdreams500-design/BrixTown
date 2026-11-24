@@ -223,7 +223,7 @@ void ABrixGameMode::ShootAndQuit()
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: %.1f frames a second over the last %.0f s before the screenshot"), Secs > 0 ? (GFrameCounter - MarkFrame) / Secs : 0.0, Secs);
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: at the shot the game thread took %.1f ms, the render thread %.1f ms, the GPU %.1f ms"),
 		FPlatformTime::ToMilliseconds(GGameThreadTime), FPlatformTime::ToMilliseconds(GRenderThreadTime), FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()));
-	if (People) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents with a body at %02d:%02d, %.2f ms a frame working them out"), People->Shown(), (int32)ClockMinute() / 60, (int32)ClockMinute() % 60, People->TickMs());
+	if (People) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents with a body at %02d:%02d, %.2f ms a frame working them out (%s)"), People->Shown(), (int32)ClockMinute() / 60, (int32)ClockMinute() % 60, People->TickMs(), *People->TickParts());
 	FTimerHandle H;
 	GetWorldTimerManager().SetTimer(H, []() { FPlatformMisc::RequestExit(false); }, 3.f, false);
 }
