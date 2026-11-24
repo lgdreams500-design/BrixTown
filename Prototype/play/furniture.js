@@ -627,6 +627,7 @@ var Furniture = (() => {
     if (k17) return k17(Q);
     const fn = D[NAMES[kind] || kind];
     if (fn) fn(Q, L, seed);
+    else if (typeof Goods !== "undefined") Goods.draw(kind, Q, seed);   // a good from the mall (goods.js, FURN-064)
   }
   return { draw, NAMES, SIZE, SEAT };
 })();

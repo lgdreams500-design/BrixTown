@@ -1629,6 +1629,7 @@ function mallShell(l) {
     const o = { mesh: world, solid, lights, occl, C, tones: SHELL_TONES, accent: ACCENT, hash, F: Y_FLOOR, wall: wallC, inside: [.74, .7, .62], floor: [.74, .71, .64], spot: (x, z, pose, yaw, h) => spot(l, x, z, pose, yaw, h), use,
       name: (text, ctr, n, h) => { const cell = nameCell(text); if (cell) lettering(signs, ctr, n, h, cell, 29); } };   // an outlet's name, lit, on its sign band
     courtLight = Court.light(l);
+    l.stair = null;                                        // its floors, moving stairs and lifts are court.js's own: the stairwell its block file names (for the world's checks, WLD-050) is not built, and the hall is not furnished floor by floor as a building with one is
     Court.hall(o, l); Shell.draw(o, l); Court.draw(o, l); return;
   }
   world.box(x0, 0, z0, x1, .6, z1, C.stone, 6);

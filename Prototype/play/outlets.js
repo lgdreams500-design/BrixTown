@@ -26,6 +26,7 @@ const Outlets = (() => {
     const th = Math.atan2(-S.t[1], S.t[0]), turn = (-S.n[0] * Math.sin(th) - S.n[1] * Math.cos(th)) > 0 ? 1 : -1;   // turn: which way a box's own depth runs, into the room or out of it
     const depth = T.depth || { least: 4.2, most: 9 }, D = Math.max(depth.least, Math.min(depth.most, u.rect[3] - u.rect[1] - .2));
     const a0 = .9, a1 = Lf - .9, mid = Lf / 2, door = Math.min(3.4, (a1 - a0) * .28), staffed = T.staffed, food = spec.trade === "food";
+    if (T.rooms) { const p0 = S.at(0, 0, 0); T.rooms.push({ id: u.id, name: u.name || spec.label, kind: u.outlet, level: k, fy, x: p0[0], z: p0[2], t: S.t, n: S.n, a0, a1, D }); }   // where it is, for Outlets.at
     const P = (a, y, v) => S.at(a, y, -v);                      // a metres along the front, v metres into the room
     const xz = (a, v) => { const p = P(a, 0, v); return [p[0], p[2]]; };
     const rnd = (...q) => o.hash(seed, ...q), good = (...q) => GOODS[Math.floor(rnd(...q) * GOODS.length) % GOODS.length];
@@ -199,5 +200,16 @@ const Outlets = (() => {
     else if (q.kind === "rocket") { T.prism(T.round(x, z, .34, .34, 10), F + .28, F + 1.5, [.78, .75, .68], [.78, .75, .68], 19, 19); T.blob(x, F + 1.62, z, .36, red, key); for (const s of [-1, 1]) m.box(x + s * .36 - .05, F + .28, z - .18, x + s * .36 + .05, F + .75, z + .18, red, 19); o.use(x, F + .9, z + .42, "sit", "Sit on the rocket", Math.PI); }
     else { m.box(x - .62, F + .4, z - .34, x + .62, F + .78, z + .34, red, 19); m.box(x - .28, F + .78, z - .3, x + .3, F + 1.08, z + .3, cream, 19); for (const sx of [-.42, .42]) for (const sz of [-.36, .36]) m.box(x + sx - .14, F + .28, z + sz - .05, x + sx + .14, F + .56, z + sz + .05, DARK, 19); o.use(x, F + .8, z, "sit", "Sit in the car", Math.PI / 2); }
   }
-  return { front, ride };
+  // The outlet a point is in (WLD-066): its room from the front line to its back wall, on its own floor. l.outletRooms is filled as the
+  // fronts are drawn; a room is {id, name, kind, level, fy (its floor), x, z (the start of its front), t (along the front), n (out
+  // of the room), a0, a1 (its side walls, metres along), D (its depth)}.
+  function at(l, x, y, z) {
+    for (const r of l.outletRooms || []) {
+      if (y < r.fy - .6 || y > r.fy + 3.3) continue;
+      const dx = x - r.x, dz = z - r.z, a = dx * r.t[0] + dz * r.t[1], v = -(dx * r.n[0] + dz * r.n[1]);
+      if (a >= r.a0 && a <= r.a1 && v >= -.2 && v <= r.D) return r;
+    }
+    return null;
+  }
+  return { front, ride, at };
 })();

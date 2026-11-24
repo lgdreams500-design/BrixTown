@@ -1330,6 +1330,29 @@ class TheMallInside(unittest.TestCase):                                        #
                 if q is not r:
                     self.assertGreater(math.dist(q["pos"], (x, z)), rad + q.get("r", 1.2) + .5, r)
 
+    def test_WLD_066_every_outlet_has_a_room_of_its_own_to_buy_in(self):
+        # the owner, 2026-11-24: "add B or Buy separately at each outlet, instead of showing it for entire mall"
+        import collections, math
+        seen, depth = {}, self.p["outlet_depth"]
+        for L in self.p["levels"]:
+            fronts = collections.Counter(f["unit"] for f in L["fronts"])
+            for u in L["units"]:
+                if not u.get("outlet"):
+                    self.assertNotIn(u["id"], fronts, u["id"])               # only outlets have fronts
+                    continue
+                self.assertNotIn(u["id"], seen, "an outlet's id is its own on every floor")
+                seen[u["id"]] = L["level"]
+                self.assertEqual(fronts[u["id"]], 1, u["id"])                # one front, so one room and one counter
+                self.assertTrue(u["name"].strip(), u["id"])                  # the prompt names it
+                f = next(f for f in L["fronts"] if f["unit"] == u["id"])
+                self.assertGreaterEqual(math.dist(f["a"], f["b"]) - 1.8, 2.0, u["id"])   # between its piers, room to stand in
+                self.assertGreaterEqual(depth["least"], 4.0)
+        self.assertEqual(len(seen), 189)
+        self.assertEqual(sorted(set(seen.values())), [0, 1, 2])              # on every floor
+        self.assertEqual(world.mall_goods_problems(W), [])                   # and every kind has goods to sell (ECO-014)
+        for kind in {u["outlet"] for L in self.p["levels"] for u in L["units"] if u.get("outlet")}:
+            self.assertGreaterEqual(len(W["mall_goods"]["sells"][kind]), 6, kind)
+
     def test_WLD_061_shops_on_every_walk_and_the_ground_floor_keeps_its_jobs(self):
         import json, os, sys
         sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "citysim"))

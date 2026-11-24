@@ -52,10 +52,21 @@ var Econ = (() => {
     }
   }
 
+  function outletsOf(l) {                                 // the outlets of a lot whose inside is planned (a mall): economy.outlets_of
+    const out = [];
+    for (const lv of (l.plan && l.plan.levels) || []) for (const u of lv.units) if (u.outlet) out.push({ id: u.id, name: u.name || u.outlet, kind: u.outlet, level: lv.level });
+    return out;
+  }
   class Economy {
-    constructor(R, lots, visits, staff) {
+    constructor(R, lots, visits, staff, goods) {
       this.R = R; this.lots = lots; this.lotIndex = {}; lots.forEach((l, n) => this.lotIndex[l.id] = n);
       this.visits = visits; this.staff = staff || {}; this.items = R.items;
+      this.G = goods || null; this.outlets = {}; this.clothes = {}; this.homeware = {};   // a mall's outlets and what was bought at them (ECO-013, ECO-014)
+      if (goods) {
+        this.items = Object.assign({}, R.items);
+        for (const g in goods.goods) { const G = goods.goods[g]; if (G.goes === "carry" || G.goes === "eat") this.items[g] = { name: G.name, price: G.price, sell: G.goes === "carry" }; }
+        lots.forEach((l, n) => { const us = outletsOf(l); if (us.length) { this.outlets[n] = {}; for (const u of us) this.outlets[n][u.id] = u; } });
+      }
       this.L = new Ledger(); this.day = 0; this.minute = 0; this.settled = 0;
       this.inv = {}; this.accounts = []; this.welcomed = false; this.loans = []; this.barred = false; this.trades = {}; this.rep = {};
       this.stall = null; this.stall_sold_total = 0;
@@ -197,6 +208,7 @@ var Econ = (() => {
     }
     trade(n, item, k) { const key = n + "|" + this.restock(), t = this.trades[key] || (this.trades[key] = {}); (t[item] || (t[item] = [0, 0]))[k]++; }
     buy(n, item) {
+      if (n in this.outlets) no("buy at one of its outlets");   // ECO-013: a mall with outlets sells at each of them
       const k = this.kinds[n]; if (!k || !this.R.shops[k].sells.includes(item)) no("this shop does not sell that");
       if (this.stock(n, item) < 1) no("sold out");
       const p = this.price(n, item);
@@ -211,6 +223,45 @@ var Econ = (() => {
       this.L.post(this.day, this.minute, "Sold " + this.items[item].name.toLowerCase() + ", " + this.lots[n].name, [[till, -p], ["p:cash", p]]);
       this.takeItem(item);
       if (this.R.shops[this.kinds[n]].sells.includes(item)) this.trade(n, item, 1);
+      return p;
+    }
+    // ---- a mall's outlets (ECO-013, ECO-014): economy.py, rule for rule
+    good(g) { const G = this.G.goods[g]; if (G) return G; const I = this.R.items[g]; return { name: I.name, price: I.price, goes: I.sell ? "carry" : "eat" }; }
+    outletSells(n, u) {
+      const U = this.outlets[n][u]; if (U.sells) return U.sells;
+      const L = this.G.sells[U.kind] || [], k = this.G.per_outlet;
+      if (L.length <= k) return (U.sells = L.slice());
+      const keep = new Set(L.map(g => [hash01(u, g, "range"), g]).sort((a, b) => a[0] - b[0] || (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0)).slice(0, k).map(x => x[1]));
+      return (U.sells = L.filter(g => keep.has(g)));
+    }
+    outletResidentBuys(n, u, day = this.day, minute = this.minute) {
+      const ids = Object.keys(this.outlets[n]), S = this.outletSells(n, u), rd = this.restock(day, minute), r0 = this.R.stock.restock_minute, c = {};
+      if (!S.length) return c;
+      const spans = [[rd, r0, rd === day ? minute : 1440]].concat(rd < day ? [[day, 0, minute]] : []);
+      for (const [d, a, b] of spans) for (const [t, i] of this.visits[n] || []) if (a <= t && t <= b && ids[fl(hash01(i, d, n, "outlet") * ids.length)] === u) { const g = S[fl(hash01(i, d, u, "buy") * S.length)]; c[g] = (c[g] || 0) + 1; }
+      return c;
+    }
+    outletStock(n, u, g) {
+      if (!(n in this.outlets) || !(u in this.outlets[n]) || !this.outletSells(n, u).includes(g)) return 0;
+      const b = ((this.trades[n + "|" + this.restock() + "|" + u] || {})[g] || [0, 0])[0];
+      return Math.max(0, this.G.stock.target - (this.outletResidentBuys(n, u)[g] || 0) - b);
+    }
+    outletPrice(n, u, g) {
+      const P = this.R.price, T = this.G.stock.target, Q = this.R.reputation, r = this.repWithLot(n);
+      const f = Math.max(P.min_bp, Math.min(P.max_bp, 10000 + fl(P.slope_bp * (T - this.outletStock(n, u, g)) / T)));
+      const mod = r >= 0 ? 10000 - fl(Q.discount_bp_at_max * r / Q.max) : 10000 + fl(Q.markup_bp_at_min * r / Q.min);
+      return Math.max(1, fl((this.good(g).price * f * mod + 5e7) / 1e8));
+    }
+    buyAt(n, u, g) {
+      if (!(n in this.outlets) || !(u in this.outlets[n])) no("no such outlet");
+      if (!this.outletSells(n, u).includes(g)) no("this outlet does not sell that");
+      if (this.outletStock(n, u, g) < 1) no("sold out");
+      const G = this.good(g), p = this.outletPrice(n, u, g);
+      this.spend(p, "till:" + this.lots[n].id, G.name + ", " + this.outlets[n][u].name);
+      const key = n + "|" + this.restock() + "|" + u, t = this.trades[key] || (this.trades[key] = {}); (t[g] || (t[g] = [0, 0]))[0]++;
+      if (G.goes === "wear") this.clothes[g] = (this.clothes[g] || 0) + 1;
+      else if (G.goes === "home") this.homeware[g] = (this.homeware[g] || 0) + 1;
+      else this.giveItem(g);
       return p;
     }
     // ---- the market stall (PROP-008)
@@ -241,7 +292,7 @@ var Econ = (() => {
       st.done = Math.max(st.done, minute);
     }
     // ---- saving (QST-008)
-    save() { return clone({ tx: this.L.tx, day: this.day, minute: this.minute, settled: this.settled, inv: this.inv, accounts: this.accounts, welcomed: this.welcomed, loans: this.loans, barred: this.barred, trades: this.trades, rep: this.rep, stall: this.stall, stall_sold_total: this.stall_sold_total }); }
+    save() { return clone({ tx: this.L.tx, day: this.day, minute: this.minute, settled: this.settled, inv: this.inv, accounts: this.accounts, welcomed: this.welcomed, loans: this.loans, barred: this.barred, trades: this.trades, rep: this.rep, stall: this.stall, stall_sold_total: this.stall_sold_total, clothes: this.clothes, homeware: this.homeware }); }
     load(s) {
       s = clone(s); this.L = new Ledger();
       for (const [, day, minute, memo, lines] of s.tx) this.L.post(day, minute, memo, lines);   // balances worked out again from the ledger
@@ -394,18 +445,21 @@ var Econ = (() => {
         else if (name === "loan") E.takeLoan(a[0], a[1]);
         else if (name === "rent") E.rentStall();
         else if (name === "setout") E.setOut(a[0], a[1]);
+        else if (name === "buyat") E.buyAt(a[0], a[1], a[2]);
         results.push("ok");
       } catch (e) { if (!(e instanceof Refused)) throw e; results.push("refused"); }
     }
     const balances = {}; for (const a of PLAYER.concat(["bank:vault", "sys:fees", "sys:residents"])) balances[a] = E.L.balance(a);
     const inv = {}; for (const k of Object.keys(E.inv).sort()) inv[k] = E.inv[k];
     const prices = {}; for (const k of Object.keys(shops).sort()) prices[k] = E.price(shops[k], E.R.shops[k].sells[0]);
-    return { results, balances, tx: E.L.tx.length, supply: E.L.supply(), inv, sold: E.stall_sold_total, loans: E.loans.map(l => [l.status, l.paid, l.fees, l.missed]), prices,
+    const sorted = o => { const r = {}; for (const k of Object.keys(o).sort()) r[k] = o[k]; return r; };
+    const outlets = []; for (const n of Object.keys(E.outlets).map(Number).sort((a, b) => a - b)) for (const u of Object.keys(E.outlets[n]).slice(0, 12)) { const S = E.outletSells(n, u); outlets.push([n, u, S, S.map(g => E.outletStock(n, u, g)), S.map(g => E.outletPrice(n, u, g))]); }
+    return { results, balances, tx: E.L.tx.length, supply: E.L.supply(), inv, sold: E.stall_sold_total, loans: E.loans.map(l => [l.status, l.paid, l.fees, l.missed]), prices, clothes: sorted(E.clothes), homeware: sorted(E.homeware), outlets,
       hashes: [["a"], [1, 2, "b"], ["r0504", 16, "job"], [523, 3, 117, "buy"]].map(x => hash01(...x)) };
   }
   function selfTest(life, lots) {
-    const C = life.checks, got = runScript(new Economy(life.economy, lots, life.visits, life.staff), C.script, C.shops), want = C.want, bad = [];
-    for (const k of ["results", "balances", "tx", "supply", "inv", "sold", "loans", "prices"]) if (JSON.stringify(got[k]) !== JSON.stringify(want[k])) bad.push(k + ": " + JSON.stringify(got[k]) + " should be " + JSON.stringify(want[k]));
+    const C = life.checks, got = runScript(new Economy(life.economy, lots, life.visits, life.staff, life.goods), C.script, C.shops), want = C.want, bad = [];
+    for (const k of ["results", "balances", "tx", "supply", "inv", "sold", "loans", "prices", "clothes", "homeware", "outlets"]) if (JSON.stringify(got[k]) !== JSON.stringify(want[k])) bad.push(k + ": " + JSON.stringify(got[k]) + " should be " + JSON.stringify(want[k]));
     got.hashes.forEach((h, n) => { if (Math.abs(h - want.hashes[n]) > 1e-11) bad.push("hash " + n + ": " + h + " should be " + want.hashes[n]); });
     return bad;
   }

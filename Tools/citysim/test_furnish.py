@@ -25,7 +25,8 @@ class TheList(unittest.TestCase):
     def test_FURN_051_every_piece_on_the_list_is_sized_named_priced_and_in_a_room(self):
         self.assertTrue(F["pieces"])
         rooms = [k for ks in F["rooms"].values() for k in ks]
-        self.assertEqual(sorted(rooms), sorted(F["pieces"]), "every piece in exactly one room of the list")
+        here = [k for k, p in F["pieces"].items() if not p.get("from")]          # FURN-064: pieces sold elsewhere are in no room
+        self.assertEqual(sorted(rooms), sorted(here), "every piece sold here in exactly one room of the list")
         for k, p in F["pieces"].items():
             self.assertTrue(p["name"], k)
             self.assertEqual(len(p["size"]), 3, k)
@@ -34,6 +35,27 @@ class TheList(unittest.TestCase):
             self.assertGreater(p["price"], 0, k)
         self.assertEqual(F["turn_deg"], 15)          # FURN-055: turns in 15 degree steps [ASSUMPTION]
         self.assertAlmostEqual(F["grid_m"], 0.05)    # FURN-001: the 5 cm grid
+
+
+    def test_FURN_064_a_piece_sold_at_the_mall_is_placed_from_the_belongings_and_not_bought_here(self):
+        mall = {k: p for k, p in F["pieces"].items() if p.get("from") == "mall"}
+        self.assertIn("g_guitar", mall)                                           # the owner's examples: a guitar, books
+        self.assertIn("g_bookstack", mall)
+        rooms = {k for ks in F["rooms"].values() for k in ks}
+        self.assertFalse(rooms & set(mall))                                       # the designer's list does not offer them
+        room, keep = [0.0, 0.0, 6.0, 5.0], []
+        new = furnish.kit_piece(F, "g_guitar", "n1", 2.0, 2.0, 0, "plain")       # added as if bought in the designer: refused
+        self.assertIn("the acoustic guitar is sold at the mall, not here", furnish.check(F, room, keep, 2.6, [], [new], 10 ** 9))
+        mine = dict(furnish.kit_piece(F, "g_guitar", "b:mall:1", 0, 0, 0, "plain"))
+        placed = dict(mine, x=2.0, z=2.0)                                         # the one in the belongings: placed, and free
+        self.assertEqual(furnish.check(F, room, keep, 2.6, [], [placed], 0, [mine]), [])
+        self.assertEqual(furnish.cost(F, [], [placed], [mine])[0], 0)
+        self.assertEqual(furnish.stow([], [placed], [mine]), [])                  # and it has left the belongings
+        back = furnish.stow([placed], [], [])                                     # taken away again, it is a belonging once more
+        self.assertEqual([b["kind"] for b in back], ["g_guitar"])
+        rug = furnish.kit_piece(F, "g_rug", "b:mall:2", 2.0, 2.0, 0, "plain")    # a rug bought at the mall lies under other pieces
+        self.assertTrue(rug["rug"])
+        self.assertEqual(furnish.check(F, room, keep, 2.6, [], [placed, rug], 0, [mine, rug]), [])
 
 
 class Placing(unittest.TestCase):

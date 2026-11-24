@@ -25,8 +25,11 @@ for r in W["residents"]:
 RESIDENTS = W["residents"]
 
 
+GOODS = W["mall_goods"]
+
+
 def town():
-    return ec.Economy(R, LOTS, VISITS, STAFF)
+    return ec.Economy(R, LOTS, VISITS, STAFF, GOODS)
 
 
 def player(start=True):
@@ -189,6 +192,180 @@ class TheShops(unittest.TestCase):
         self.assertGreater(bad, base)
 
 
+class TheOutlets(unittest.TestCase):
+    """Buying at each outlet of a mall (the owner, 2026-11-24: "add B or Buy separately at each outlet, instead of showing
+    it for entire mall. each outlets should have buyable products in it with decent catalog")."""
+
+    def setUp(self):
+        self.e, self.q = player()
+        self.e.L.post(0, 440, "Test money", [("sys:start", -5000000), ("p:cash", 5000000)])
+        self.n = LOT["b_16_5_l0"]
+        self.us = self.e.outlets[self.n]
+
+    def first(self, kind, goes=None):
+        """The first outlet of a kind (that sells something going `goes`), and that thing."""
+        for u, U in self.us.items():
+            if U["kind"] == kind:
+                for g in self.e.outlet_sells(self.n, u):
+                    if goes is None or self.e.good(g)["goes"] == goes:
+                        return u, g
+        raise AssertionError("no %s outlet sells anything that goes %s" % (kind, goes))
+
+    def test_ECO_013_every_outlet_sells_its_own_goods(self):
+        e, n = self.e, self.n
+        self.assertEqual(len(self.us), 189)                                 # every outlet of the mall, on all three floors
+        self.assertEqual(len({U["level"] for U in self.us.values()}), 3)
+        ranges = collections.defaultdict(set)
+        for u, U in self.us.items():
+            S = e.outlet_sells(n, u)
+            self.assertGreaterEqual(len(S), 6, U)                           # a decent range in each
+            self.assertLessEqual(len(S), GOODS["per_outlet"], U)
+            self.assertTrue(set(S) <= set(GOODS["sells"][U["kind"]]), U)    # of its own kind's goods
+            self.assertEqual(S, e.outlet_sells(n, u))                       # and the same every time it is asked
+            ranges[U["kind"]].add(tuple(S))
+        self.assertGreater(len(ranges["clothes"]), 5)                       # two clothes shops are not the same shop
+        with self.assertRaises(ec.Refused):                                 # the mall is no longer one counter
+            e.buy(n, "hat")
+        u, g = self.first("music")
+        other = next(x for x in GOODS["sells"]["burger"] if x not in e.outlet_sells(n, u))
+        with self.assertRaises(ec.Refused):                                 # a guitar shop sells no burgers
+            e.buy_at(n, u, other)
+        with self.assertRaises(ec.Refused):
+            e.buy_at(n, "b_16_5_u0", g)                                     # a corner store is not an outlet
+        with self.assertRaises(ec.Refused):
+            e.buy_at(GROCER, u, g)                                          # nor is a street shop
+
+    def test_ECO_013_buying_is_paid_through_the_ledger_into_the_malls_till(self):
+        e, n = self.e, self.n
+        u, g = self.first("books")
+        till, cash, tx = e.L.balance("till:b_16_5_l0"), e.L.balance("p:cash"), len(e.L.tx)
+        p = e.buy_at(n, u, g)
+        self.assertIs(type(p), int)
+        self.assertEqual(e.L.balance("till:b_16_5_l0"), till + p)
+        self.assertEqual(e.L.balance("p:cash"), cash - p)
+        self.assertEqual(len(e.L.tx), tx + 1)
+        self.assertIn(self.us[u]["name"], e.L.tx[-1][3])                     # the statement names the outlet
+        invariant(self, e)
+        poor, _ = player()                                                   # not enough money: refused whole, nothing given
+        dear_u, dear = self.first("music", "home")
+        self.assertGreater(poor.outlet_price(n, dear_u, dear), poor.total_money())
+        with self.assertRaises(ec.Refused):
+            poor.buy_at(n, dear_u, dear)
+        self.assertEqual((poor.homeware, poor.inv, poor.clothes), ({}, {}, {}))
+        invariant(self, poor)
+
+    def test_ECO_013_stock_and_price_are_each_outlets_own(self):
+        e, n = self.e, self.n
+        u, g = self.first("toys")
+        T = GOODS["stock"]["target"]
+        e.advance(0, 1439)
+        left = e.outlet_stock(n, u, g)
+        self.assertEqual(left, max(0, T - e.outlet_resident_buys(n, u).get(g, 0)))
+        visits = [(t, i) for t, i in VISITS.get(n, ()) if t >= R["stock"]["restock_minute"]]
+        sold = sum(sum(e.outlet_resident_buys(n, x).values()) for x in self.us)
+        self.assertEqual(sold, len(visits))                                  # each visit to the mall buys one thing at one outlet
+        v, h = next((x, y) for x, U in self.us.items() if U["kind"] == "toys" and x != u for y in e.outlet_sells(n, x)[:1])
+        before, prices = e.outlet_stock(n, v, h), []
+        while e.outlet_stock(n, u, g):
+            prices.append(e.outlet_price(n, u, g))
+            e.buy_at(n, u, g)
+        self.assertEqual(prices, sorted(prices))                             # dearer as the shelf empties
+        if len(prices) > 1:
+            self.assertLess(prices[0], prices[-1])
+        self.assertEqual(e.outlet_stock(n, v, h), before)                    # the other toy shop's shelf is untouched
+        with self.assertRaises(ec.Refused):
+            e.buy_at(n, u, g)                                                # sold out
+        P = R["price"]
+        base = e.good(g)["price"]
+        self.assertTrue(all(base * P["min_bp"] // 10000 - 1 <= p <= base * P["max_bp"] // 10000 + 1 for p in prices))
+        e.advance(1, R["stock"]["restock_minute"])                           # and full again after the restock
+        self.assertEqual(e.outlet_stock(n, u, g), T - e.outlet_resident_buys(n, u).get(g, 0))
+        self.assertGreater(e.outlet_stock(n, u, g), 0)
+
+    def test_ECO_014_what_is_bought_goes_where_it_belongs(self):
+        e, n = self.e, self.n
+        u, g = self.first("music", "home")                                   # a guitar goes to the home
+        e.buy_at(n, u, g)
+        self.assertEqual(e.homeware, {g: 1})
+        self.assertIn(GOODS["goods"][g]["piece"], W["furnishing"]["pieces"])
+        u, g = self.first("clothes", "wear")                                 # a shirt to the wardrobe
+        e.buy_at(n, u, g)
+        e.buy_at(n, u, g)
+        self.assertEqual(e.clothes, {g: 2})
+        u, g = self.first("burger", "eat")                                   # a burger is carried, and no shop buys it back
+        e.buy_at(n, u, g)
+        self.assertEqual(e.inv, {g: 1})
+        self.assertFalse(e.items[g]["sell"])
+        u, g2 = self.first("jewellery", "carry")                             # a ring is carried, and can be set out on a stall
+        e.buy_at(n, u, g2)
+        self.assertEqual(e.inv, {g: 1, g2: 1})
+        self.assertTrue(e.items[g2]["sell"])
+        e.rent_stall()
+        e.set_out(g2, e.items[g2]["price"])
+        self.assertEqual(e.inv, {g: 1})
+        invariant(self, e)
+
+    def test_ECO_014_the_catalogue_covers_every_kind_and_every_way_of_going(self):
+        kinds = W["mall_outlets"]["kinds"]
+        self.assertEqual(set(GOODS["sells"]), set(kinds))                   # all eighteen kinds of outlet
+        e = town()
+        goes = collections.Counter(e.good(g)["goes"] for L in GOODS["sells"].values() for g in set(L))
+        for way in ("carry", "eat", "home", "wear"):
+            self.assertGreater(goes[way], 15, way)
+        for kind, K in kinds.items():                                        # food outlets sell food; nothing else does
+            ways = {e.good(g)["goes"] for g in GOODS["sells"][kind]}
+            if K["trade"] == "food":
+                self.assertTrue(ways <= {"eat", "carry"}, kind)
+                self.assertIn("eat", ways, kind)
+        for kind, way in (("music", "home"), ("books", "home"), ("toys", "home"), ("electronics", "home"), ("home", "home"),
+                          ("gifts", "home"), ("clothes", "wear"), ("shoes", "wear"), ("sports", "wear")):
+            self.assertIn(way, {e.good(g)["goes"] for g in GOODS["sells"][kind]}, kind)
+        names = [e.good(g)["name"] for g in GOODS["sells"]["music"]]
+        self.assertTrue(any("guitar" in x.lower() for x in names))          # the owner's own examples: a guitar, books
+        self.assertTrue(any(e.good(g)["goes"] == "home" for g in GOODS["sells"]["books"]))
+
+    def test_ECO_014_the_catalogue_is_checked(self):
+        self.assertEqual(world.mall_goods_problems(W), [])
+        w = copy.deepcopy(W)
+        G = w["mall_goods"]
+        G["goods"]["gt_acoustic"]["price"] = 99.5
+        G["goods"]["tee_teal"]["parts"] = {"top": "neon", "height": 2.0}
+        G["goods"]["toy_bear"]["piece"] = "g_unicorn"
+        G["goods"]["bg_burger"]["goes"] = "away"
+        G["sells"]["pizza"] = ["pz_slice", "moon_cheese"]
+        G["goods"]["bread"] = dict(name="Bread again", price=100, goes="eat")
+        p = world.mall_goods_problems(w)
+        for bit in ("gt_acoustic: the price", "neon", "sets height", "g_unicorn", "bg_burger goes nowhere", "moon_cheese", "pizza outlets have only",
+                    "bread is already"):
+            self.assertTrue(any(bit in x for x in p), bit)
+
+    def test_CHR_016_bought_clothes_are_kept_for_the_wardrobe_and_set_only_what_it_may_change(self):
+        e, n = self.e, self.n
+        parts = set(W["settings"]["wardrobe"]["parts"])
+        wear = {g: G for g, G in GOODS["goods"].items() if G["goes"] == "wear"}
+        self.assertGreater(len(wear), 30)
+        for g, G in wear.items():                                            # putting one on gives a look the designer allows
+            self.assertTrue(set(G["parts"]) <= parts, g)
+            look = dict(W["designer"]["default"], **G["parts"])
+            self.assertEqual(world.look_problems(W["designer"], look), [], g)
+        kinds = {k for k, L in GOODS["sells"].items() if any(x in wear for x in L)}
+        self.assertTrue({"clothes", "shoes", "sports"} <= kinds)             # clothes, shoes and sports shops sell things to wear
+        u, g = self.first("shoes", "wear")
+        e.buy_at(n, u, g)
+        self.assertEqual(e.clothes, {g: 1})                                  # owned, not carried: it is in the wardrobe
+        self.assertEqual(e.inv, {})
+
+    def test_QST_008_what_was_bought_is_kept_in_the_save(self):
+        e, n = self.e, self.n
+        for kind, way in (("music", "home"), ("clothes", "wear"), ("cafe", "eat")):
+            e.buy_at(n, *self.first(kind, way))
+        e2 = town()
+        e2.load(json.loads(json.dumps(e.save())))
+        self.assertEqual((e2.homeware, e2.clothes, e2.inv), (e.homeware, e.clothes, e.inv))
+        u, g = self.first("music", "home")
+        self.assertEqual(e2.outlet_stock(n, u, g), e.outlet_stock(n, u, g))  # the shelf remembers what was taken
+
+
 class TheBank(unittest.TestCase):
     def test_BANK_007_accounts_and_transfers(self):
         e, q = player()
@@ -334,9 +511,14 @@ class TheSave(unittest.TestCase):
         self.assertEqual(e.inv, e2.inv)
 
     def test_check_script_runs(self):
-        out = ec.run_script(town(), ec.check_script(), dict(grocer=GROCER, kiosk=KIOSK, arcade=ARCADE))
+        script = ec.check_script() + ec.outlet_script(town())
+        out = ec.run_script(town(), script, dict(grocer=GROCER, kiosk=KIOSK, arcade=ARCADE))
         self.assertTrue(all(r in ("ok", "refused") for r in out["results"]))
         self.assertGreater(out["results"].count("ok"), 15)
+        at = [r for op, r in zip(script, out["results"]) if op[0] == "buyat"]   # the outlets' part of the run buys and is refused
+        self.assertIn("ok", at)
+        self.assertIn("refused", at)
+        self.assertEqual(len(out["outlets"]), 12)
 
 
 def path_to(nodes, start, want):

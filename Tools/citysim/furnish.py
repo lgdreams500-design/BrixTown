@@ -126,6 +126,8 @@ def check(F, room, keep, ceiling, before, after, funds=None, belongings=()):
     for p in after:
         if p["id"] not in was and p["id"].startswith("b") and p["id"] not in mine:
             out.append("%s is not among your belongings" % _the(p))
+        elif p["id"] not in was and not p["id"].startswith("b") and F["pieces"].get(p["kind"], {}).get("from"):
+            out.append("%s is sold at the %s, not here" % (_the(p), F["pieces"][p["kind"]]["from"]))     # FURN-064
     total = cost(F, before, after, belongings)[0]
     if funds is not None and total > funds:
         out.append("you cannot pay %d.%02d brix" % (total // 100, total % 100))
@@ -155,7 +157,7 @@ def kit_piece(F, kind, pid, x, z, yaw, line):
     """A piece from the list, placed: its name and size from the data."""
     P = F["pieces"].get(kind, {"name": kind, "size": [1, 1, 1]})
     w, d, h = P["size"]
-    return {"id": pid, "kind": kind, "name": P["name"], "w": w, "d": d, "h": h, "x": x, "z": z, "yaw": yaw, "rug": False, "line": line}
+    return {"id": pid, "kind": kind, "name": P["name"], "w": w, "d": d, "h": h, "x": x, "z": z, "yaw": yaw, "rug": bool(P.get("rug")), "line": line}
 
 
 def apply(F, before, edit, belongings=()):

@@ -102,6 +102,7 @@ const Court = (() => {
   }
 
   function draw(o, l) {
+    l.outletRooms = [];                                       // each outlet's room, for buying in it (outlets.js Outlets.at, WLD-066)
     const m = o.mesh, P = l.plan, st = P.storey_height, F = o.F, H = l.H, C = o.C, [x0, z0, x1, z1] = l.rect;
     const cream = mul(C.cream, 1.2), plaster = o.tones[4], floorC = mul(o.floor, 1.1), shopCeil = mul(plaster, 1.14), dark = C.stoneDark, wood = C.wood, lit = s => [.3, .4, s];
     const fascia = mul(C.brown, .74), ceilC = mul(C.brown, .98), leafC = [.27, .37, .18];   // the ribbons along every edge and the ceilings are dark, as timber; floors pale and shop fronts bright (the owner's picture, in the town's own tones)
@@ -196,7 +197,7 @@ const Court = (() => {
       const open = new Set(), units = {}; L.units.forEach(u => { units[u.id] = u; if (!k && u.stand && u.kind !== "anchor" && (l.objects.work || []).some(w => u.stand.some(s => Math.abs(s[0] - w[0]) < .3 && Math.abs(s[1] - w[1]) < .3))) open.add(u.id); });
       for (const fr of L.fronts) {                             // every front is an outlet of some kind, with its room and what is sold in it (outlets.js, WLD-063)
         const S = frame(fr.a, fr.b, R.walk), u = units[fr.unit];
-        Outlets.front({ m, o, C, S, u, fy, top, k, T, lamp: (x, y, z, w) => lamps.push([x, y, z, w]), Lf: S.L, staffed: open.has(u.id), spec: (P.outlets || {})[u.outlet], depth: P.outlet_depth, blob, prism, round, wallQ, boxQ, solidAlong, plaster, dark, wood, shopCeil, floorC });
+        Outlets.front({ m, o, C, S, u, fy, top, k, T, lamp: (x, y, z, w) => lamps.push([x, y, z, w]), Lf: S.L, rooms: l.outletRooms, staffed: open.has(u.id), spec: (P.outlets || {})[u.outlet], depth: P.outlet_depth, blob, prism, round, wallQ, boxQ, solidAlong, plaster, dark, wood, shopCeil, floorC });
       }
       for (const w of L.walls) for (let i = 0; i < w.line.length - 1; i++) {
         const a = w.line[i], b = w.line[i + 1], drum = w.kind === "drum", hh = drum ? P.halls.reduce((p, h) => Math.hypot(h.pos[0] - a[0], h.pos[1] - a[1]) < Math.hypot(p.pos[0] - a[0], p.pos[1] - a[1]) ? h : p) : null;
