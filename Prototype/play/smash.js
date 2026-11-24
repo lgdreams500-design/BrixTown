@@ -114,7 +114,8 @@ var Smash = (() => {
   // ---- switching a thing off and on ----
   function upload(b, which) {                              // every part of it, in its own mesh's buffer on the graphics card
     for (const p of b.parts) {
-      const buf = p.m === world ? worldBuf : p.m.glbuf; if (!buf) continue;
+      if (p.m === world) { worldWrite(p.s, p[which]); continue; }   // the town mesh and its far copies (play.js)
+      const buf = p.m.glbuf; if (!buf) continue;
       gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferSubData(gl.ARRAY_BUFFER, p.s * 4, p[which]);
     }
   }
