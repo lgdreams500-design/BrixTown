@@ -18,6 +18,15 @@ The starting city at the slice's sizes: a box for each building (its footprint, 
 the sun low in the east, sky, haze, Lumen. You walk it from the city's spawn with the slice's keys: W A S D, mouse,
 Shift to run, Space to jump. No residents, cars, interiors, money or sound yet.
 
+## Buildings (ADR-0046)
+Each building is laid as the Blender building kit lays it: a core set back by the wall's depth (0.32 m), front walls
+between real openings, bays of 3.2 m on every facade, the lot's own door, a stone ground storey in Old Town and the
+Centre, all-stone clinics and workplaces, a tiled gable roof on homes and shops (a parapet on the rest). The windows,
+doors and shutters are the kit's own pieces: `Tools/blender/unreal_kit_36.py` makes them (Blender, headless) into
+`Art/Export/unreal_kit_36/`, and `Tools/unreal/import_building_kit.py` imports them into `/Game/Kit` with Nanite. Run
+both again after changing a piece. On the owner's laptop at High this costs about 22 fps against 63 for the grey-box:
+too many separate objects, not pixels (ADR-0046); the next step is fewer, larger ones.
+
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
 black. At Epic quality the town runs at about 36 frames a second, at High about 63 with the same shade, at Medium about 86

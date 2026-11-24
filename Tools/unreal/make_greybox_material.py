@@ -30,4 +30,4 @@ lib.connect_material_property(rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
 
 lib.recompile_material(mat)
 unreal.EditorAssetLibrary.save_asset(full, only_if_is_dirty=False)
-unreal.log(f"Brix Town: made {full}")
+unreal.log_warning(f"Brix Town: made {full}")
