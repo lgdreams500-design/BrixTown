@@ -262,5 +262,195 @@
    1.0,
    1.0
   ]
+ },
+ "SM_Kit_ShopPier": {
+  "opening": null,
+  "slots": [
+   "sign",
+   "stone_dark"
+  ],
+  "tris": 216,
+  "min": [
+   -0.2,
+   -0.2,
+   0.0
+  ],
+  "max": [
+   0.2,
+   0.32,
+   2.55
+  ]
+ },
+ "SM_Kit_ShopPane": {
+  "opening": null,
+  "slots": [
+   "sign",
+   "stone_dark",
+   "lit"
+  ],
+  "tris": 444,
+  "min": [
+   -0.52,
+   -0.12,
+   0.0
+  ],
+  "max": [
+   0.52,
+   0.32,
+   2.55
+  ]
+ },
+ "SM_Kit_ShopDoor": {
+  "opening": null,
+  "slots": [
+   "glass",
+   "sign"
+  ],
+  "tris": 564,
+  "min": [
+   -0.5,
+   0.02,
+   0.0
+  ],
+  "max": [
+   0.5,
+   0.22,
+   2.55
+  ]
+ },
+ "SM_Kit_ShopFascia": {
+  "opening": null,
+  "slots": [
+   "sign",
+   "stone_dark"
+  ],
+  "tris": 216,
+  "min": [
+   -0.5,
+   -0.3,
+   2.55
+  ],
+  "max": [
+   0.5,
+   0.32,
+   3.57
+  ]
+ },
+ "SM_Kit_AwningStrip": {
+  "opening": null,
+  "slots": [
+   "stripe"
+  ],
+  "tris": 216,
+  "min": [
+   -0.225,
+   -1.545,
+   -0.846
+  ],
+  "max": [
+   0.225,
+   0.005,
+   0.02
+  ]
+ },
+ "SM_Kit_AwningArm": {
+  "opening": null,
+  "slots": [
+   "iron"
+  ],
+  "tris": 12,
+  "min": [
+   -0.02,
+   -1.507,
+   -0.625
+  ],
+  "max": [
+   0.02,
+   0.007,
+   -0.041
+  ]
+ },
+ "SM_Kit_ProduceCrate": {
+  "opening": null,
+  "slots": [
+   "terra",
+   "ochre",
+   "plant",
+   "leaf_light",
+   "wood"
+  ],
+  "tris": 3096,
+  "min": [
+   -0.42,
+   -1.35,
+   0.0
+  ],
+  "max": [
+   0.42,
+   -0.62,
+   1.01
+  ]
+ },
+ "SM_Kit_BladeSign": {
+  "opening": null,
+  "slots": [
+   "iron",
+   "sign"
+  ],
+  "tris": 132,
+  "min": [
+   -0.05,
+   -1.25,
+   3.0
+  ],
+  "max": [
+   0.05,
+   0.02,
+   4.02
+  ]
+ },
+ "SM_Kit_CafeTable": {
+  "opening": null,
+  "slots": [
+   "cream",
+   "iron",
+   "wood"
+  ],
+  "tris": 1412,
+  "min": [
+   -0.83,
+   -2.98,
+   0.0
+  ],
+  "max": [
+   0.83,
+   -2.22,
+   0.88
+  ]
+ },
+ "SM_Kit_Balcony": {
+  "opening": [
+   1.2,
+   2.3
+  ],
+  "slots": [
+   "plant",
+   "stone_dark",
+   "glass",
+   "frame",
+   "iron",
+   "terra"
+  ],
+  "tris": 1508,
+  "min": [
+   -1.1,
+   -0.85,
+   -0.55
+  ],
+  "max": [
+   1.1,
+   0.32,
+   2.71
+  ]
  }
 }

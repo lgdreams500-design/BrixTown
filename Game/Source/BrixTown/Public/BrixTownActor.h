@@ -58,6 +58,17 @@ public:
 	UPROPERTY(Config) float ShutterShare = 0.75f;       // kit shutter_share (homes, cafes and shops only)
 	UPROPERTY(Config) float ShutterCullDistance = 180.f; // m; shutters fade out beyond this
 	UPROPERTY(Config) float OpeningCullDistance = 450.f; // m; windows and doors fade out beyond this
+	UPROPERTY(Config) float ShopTop = 3.45f;           // kit SHOP_TOP: the shopfront's opening and the fascia's top
+	UPROPERTY(Config) float ShopPier = 0.32f;          // kit shopfront() pilaster width
+	UPROPERTY(Config) float ShopPane = 2.2f;           // target spacing of the piers
+	UPROPERTY(Config) float AwningZ = 2.5f, AwningOut = 1.5f;          // a shop's awning (kit shopfront())
+	UPROPERTY(Config) float CafeAwningZ = 3.35f, CafeAwningOut = 1.7f; // a cafe's awning over the arches (kit cafe_front())
+	UPROPERTY(Config) float AwningStrip = 0.45f;       // kit awning(): width of one striped strip
+	UPROPERTY(Config) TArray<FLinearColor> AwningColours;   // the two stripes: cream, terracotta
+	UPROPERTY(Config) TArray<float> CrateAt;           // a shop's produce crates, metres from each end of the front
+	UPROPERTY(Config) TArray<float> CafeTableAt;       // a cafe's tables, metres from the front's start
+	UPROPERTY(Config) FLinearColor LetterColour = FLinearColor(0.70f, 0.64f, 0.50f);
+	UPROPERTY(Config) float NameSize = 0.52f;          // m, the shop's name on its fascia (kit text size)
 	UPROPERTY(Config) float TreeTrunkHeight = 3.f;
 	UPROPERTY(Config) float TreeTrunkWidth = 0.35f;
 	UPROPERTY(Config) float TreeCrownWidth = 4.f;
@@ -80,7 +91,7 @@ public:
 	UPROPERTY(Config) FLinearColor CrownColour = FLinearColor(0.30f, 0.33f, 0.20f);
 
 private:
-	struct FOpening { float S, Z0, W, H; UStaticMesh* Mesh; UStaticMesh* Shutters; const FLinearColor* Paint; };
+	struct FOpening { float S, Z0, W, H; UStaticMesh* Mesh; UStaticMesh* Shutters; const FLinearColor* Paint; float MeshZ = -1.f; };   // MeshZ < 0: the piece sits at Z0
 	struct FLook { FLinearColor Colour; FVector4f A = FVector4f(-1, 0, 0, 0), B = FVector4f(0, 0, 0, 0); };   // A.x < 0: painted plaster
 	struct FPending { TArray<FTransform> At; TArray<FLook> Look; };
 
@@ -95,6 +106,7 @@ private:
 	UMaterialInstanceDynamic* Own();
 	void BuildLot(const FBrixLot& L, const FBrixBlock& B);
 	UStaticMesh* Kit(const TCHAR* Name, UStaticMesh* Fallback = nullptr);
+	void Name(const FString& Text, const FVector& At, double YawRad, float Size, float MaxWidth);
 
 	UPROPERTY() TObjectPtr<UStaticMesh> Cube;
 	UPROPERTY() TObjectPtr<UStaticMesh> Cylinder;
