@@ -74,7 +74,8 @@ def vec4(first, x, y, default0):
 
 
 # The surface: stone, brick, paving or painted plaster, by the slice's own rules (greybox_surface.hlsl, ADR-0017).
-# Custom data 3..6 = (type, unit w, unit h, joint), 7..10 = (vary, bevel, dome, mortar); with none, type is -1: plaster.
+# Custom data 3..6 = (type, unit w, unit h, joint), 7..10 = (vary, bevel, dome, mortar), 11 = turn; with none, type is -1:
+# plaster.
 p0 = vec4(3, -1500, 500, -1.0)
 p1 = vec4(7, -1500, 950, 0.0)
 pos = lib.create_material_expression(mat, unreal.MaterialExpressionWorldPosition, -600, 450)
@@ -86,12 +87,14 @@ surface.set_editor_property("code", code)
 surface.set_editor_property("output_type", unreal.CustomMaterialOutputType.CMOT_FLOAT3)
 surface.set_editor_property("description", "Brix surface")
 ins = []
-for n in ("Pos", "N", "Base", "P0", "P1", "Cam"):
+yaw = lib.create_material_expression(mat, unreal.MaterialExpressionPerInstanceCustomData, -600, 760)
+yaw.set_editor_property("data_index", 11)        # the box's own turn (radians); 0 without custom data
+for n in ("Pos", "N", "Base", "P0", "P1", "Cam", "Yaw"):
     ci = unreal.CustomInput()
     ci.set_editor_property("input_name", n)
     ins.append(ci)
 surface.set_editor_property("inputs", ins)
-for src, name in ((pos, "Pos"), (nrm, "N"), (pick, "Base"), (p0, "P0"), (p1, "P1"), (cam, "Cam")):
+for src, name in ((pos, "Pos"), (nrm, "N"), (pick, "Base"), (p0, "P0"), (p1, "P1"), (cam, "Cam"), (yaw, "Yaw")):
     lib.connect_material_expressions(src, "", surface, name)
 lib.connect_material_property(surface, "", unreal.MaterialProperty.MP_BASE_COLOR)
 

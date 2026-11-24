@@ -2,7 +2,8 @@
 // paving and painted plaster (Prototype/play/play.js: NOISE, paint(), pat(), material 30+), ported line for line from
 // GLSL so a wall in Unreal reads as it does in the slice (ART-001 W1, W2; ADR-0017).
 // Inputs: Pos, Cam (world, centimetres), N (world normal), Base (the surface's colour), P0 = (type, unit w, unit h,
-// joint) and P1 = (vary, bevel, dome, mortar) of the surface's pattern; type < 0 means painted plaster (no pattern).
+// joint) and P1 = (vary, bevel, dome, mortar) of the surface's pattern; type < 0 means painted plaster (no pattern);
+// Yaw, the surface's own turn (radians), so a turned building's courses run along its walls, not the map's axes.
 // Units inside are metres, axes Unreal's (x, y across the ground, z up); the slice's y-up is swapped back below.
 struct BrixWall
 {
@@ -79,14 +80,16 @@ struct BrixWall
 		float sh = e.z <= min(min(e.x, e.y), e.w) ? 1.0 : (e.w <= min(e.x, e.y) ? 0.0 : 0.45);
 		return float4(j, id, bev, sh);
 	}
-	float3 Run(float3 PosCm, float3 N, float3 Base, float4 A, float4 B, float3 CamCm)
+	float3 Run(float3 PosCm, float3 N, float3 Base, float4 A, float4 B, float3 CamCm, float Yaw)
 	{
 		float3 P = PosCm * 0.01, Pn = float3(P.x, P.z, P.y);          // Pn: the slice's frame (y up) for its noise
 		float d = length(CamCm * 0.01 - P), nearK = 1.0 - min(1.0, d / 70.0);
 		float blot = clamp((ns(Pn * 0.9) * 0.6 + ns(Pn * 2.7 + 7.0) * 0.4 - 0.5) * 2.2 + 0.5, 0.0, 1.0);
 		if (A.x < -0.5) return paint(Base, float3(0.69, 0.69, 0.73), blot) * (0.92 + 0.16 * ns(Pn * 0.13));   // painted plaster
-		float wall = 1.0 - abs(N.z);
-		float2 q = wall > 0.5 ? float2(abs(N.x) > 0.5 ? P.y : P.x, P.z) : P.xy;
+		float wall = 1.0 - abs(N.z), cy = cos(Yaw), sy = sin(Yaw);
+		float2 al = float2(cy, sy), ac = float2(-sy, cy);            // the surface's own two directions across the ground
+		// a wall: along whichever of them lies in it, and up; the ground: both (the slice used the map's axes, Yaw 0)
+		float2 q = wall > 0.5 ? float2(abs(dot(N.xy, al)) > 0.5 ? dot(P.xy, ac) : dot(P.xy, al), P.z) : float2(dot(P.xy, al), dot(P.xy, ac));
 		float4 r = pat(q, A, B);
 		float fade = 1.0 - min(1.0, d / (A.y < 0.3 ? 45.0 : 110.0));                // small bricks fade to their colour sooner
 		float3 c = Base, c1 = c * float3(0.52, 0.54, 0.70);
@@ -98,4 +101,4 @@ struct BrixWall
 	}
 };
 BrixWall W;
-return W.Run(Pos, N, Base, P0, P1, Cam);
+return W.Run(Pos, N, Base, P0, P1, Cam, Yaw);

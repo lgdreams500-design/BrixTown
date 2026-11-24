@@ -87,7 +87,7 @@ UInstancedStaticMeshComponent* ABrixTownActor::Group(UStaticMesh* Mesh, bool bCo
 	G->SetStaticMesh(Mesh);
 	const bool bPlain = !Mesh->GetName().StartsWith(TEXT("SM_Kit_")) || Mesh->GetName() == TEXT("SM_Kit_Box")
 		|| Mesh->GetName() == TEXT("SM_Kit_Cylinder") || Mesh->GetName() == TEXT("SM_Kit_Sphere") || Mesh->GetName() == TEXT("SM_Kit_RoofWedge");
-	G->NumCustomDataFloats = Mesh->GetName() == TEXT("SM_Kit_Box") || Mesh == Cube ? 11 : 3;   // the box: colour and pattern
+	G->NumCustomDataFloats = Mesh->GetName() == TEXT("SM_Kit_Box") || Mesh == Cube ? 12 : 3;   // the box: colour, pattern, its turn
 	const TArray<FStaticMaterial>& Slots = Mesh->GetStaticMaterials();
 	for (int32 i = 0; i < Slots.Num(); ++i)
 	{
@@ -485,11 +485,12 @@ void ABrixTownActor::Build(const FBrixCity& City)
 		UInstancedStaticMeshComponent* G = P.Key;
 		const int32 First = G->GetInstanceCount();
 		G->AddInstances(P.Value.At, false);
-		const bool bPattern = G->NumCustomDataFloats >= 11;
+		const bool bPattern = G->NumCustomDataFloats >= 12;
 		for (int32 i = 0; i < P.Value.Look.Num(); ++i)
 		{
 			const FLook& L = P.Value.Look[i];
-			if (bPattern) G->SetCustomData(First + i, { L.Colour.R, L.Colour.G, L.Colour.B, L.A.X, L.A.Y, L.A.Z, L.A.W, L.B.X, L.B.Y, L.B.Z, L.B.W }, false);
+			const float Turn = FMath::DegreesToRadians((float)P.Value.At[i].GetRotation().Rotator().Yaw);   // the courses run along the box
+			if (bPattern) G->SetCustomData(First + i, { L.Colour.R, L.Colour.G, L.Colour.B, L.A.X, L.A.Y, L.A.Z, L.A.W, L.B.X, L.B.Y, L.B.Z, L.B.W, Turn }, false);
 			else G->SetCustomData(First + i, { L.Colour.R, L.Colour.G, L.Colour.B }, false);
 		}
 		G->MarkRenderStateDirty();
