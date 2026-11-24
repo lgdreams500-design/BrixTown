@@ -2854,6 +2854,10 @@ function hud(VP, W, H, tags) {
   if (Life.boards) Life.boards(tags);                     // For Sale and To Let over the doors (life.js, PROP-023)
   for (const t of tags) put(t.x, t.y, t.z, t.text, t.a !== undefined ? t.a : clamp((9 - t.d) / 3, 0, 1), t.size || 14, "600");
   g2.globalAlpha = 1;
+  if (window.Rewards) Rewards.draw(g2, (x, y, z) => {    // coins of a reward, where they are in the town (rewards.js, SND-019)
+    const w = VP[3] * x + VP[7] * y + VP[11] * z + VP[15]; if (w < .3) return null;
+    return [((VP[0] * x + VP[4] * y + VP[8] * z + VP[12]) / w * .5 + .5) * W, (1 - ((VP[1] * x + VP[5] * y + VP[9] * z + VP[13]) / w * .5 + .5)) * H, Math.hypot(VP[1], VP[5], VP[9]) * .5 * H / w];
+  }, sc);
 }
 
 // ---------------------------------------------------------------- start up
@@ -2911,7 +2915,7 @@ function begin() { Sound.start(); started = true; $("start").style.display = "no
 $("go").addEventListener("click", () => Life.go(begin));   // carry on, or the character designer first (life.js)
 cv.addEventListener("contextmenu", e => { if (started && Life.view) e.preventDefault(); });   // the right button slides the designer's view
 cv.addEventListener("click", () => { if (started && !locked && !Talk.on && !Life.on && cv.requestPointerLock) { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } });
-document.addEventListener("pointerlockchange", () => { locked = document.pointerLockElement === cv; if (!locked && started && !Life.on && !Talk.on && !Life.view && !showMap && document.hasFocus()) Life.menu(); });   // Esc while the mouse is held: the browser lets it go, and the menu opens (UI-005)
+document.addEventListener("pointerlockchange", () => { locked = document.pointerLockElement === cv; if (!locked && started && !Life.on && !Talk.on && !Life.view && !showMap && !(window.Dev && Dev.free) && document.hasFocus()) Life.menu(); });   // Esc while the mouse is held: the browser lets it go, and the menu opens (UI-005)
 let drag = false; cv.addEventListener("mousedown", e => { drag = true; if (started && Life.view) { if (e.button === 1) e.preventDefault(); Life.pointer("down", e); } });
 cv.addEventListener("dblclick", e => { if (started && Life.view) Life.pointer("dbl", e); });   // the designer: look at that spot
 addEventListener("mouseup", e => { drag = false; if (started && Life.view) Life.pointer("up", e); });

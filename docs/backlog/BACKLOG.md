@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 41 of 54 | 9 of 54 | 9 of 54 |
-| Size of the plan (points) | 529 | 444 | 844 |
-| Size of the suggested plan | 134 | 404 | 812 |
+| Decided | 42 of 55 | 9 of 55 | 9 of 55 |
+| Size of the plan (points) | 533 | 448 | 848 |
+| Size of the suggested plan | 135 | 408 | 816 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -110,6 +110,7 @@
 |---|---|---|---|---|
 | **The game menu** `F-UI-MENU` | 2 Every tab ★ | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (level 1 for the first slice), then the same day: "now build the game menu level 2". Later milestones not stated. |
 | **Settings** `F-UI-SETTINGS` | 1 Picture, sound, display, mouse | undecided | undecided | Owner, 2026-11-23: "Suggested levels" (asked which levels the four menu features should have for the first slice). Later milestones not stated. |
+| **Reward feedback** `F-UI-REWARD` | 2 Achievements ★ | undecided | undecided | Owner, 2026-11-24: asked "Which level do you pick for Reward feedback (F-UI-REWARD) in the first slice?" after the coins and chimes were built (ADR-0043), answered "Level 2, achievements". Later milestones not stated. |
 
 ## What each level means
 
@@ -385,3 +386,8 @@
 - 1 One level for all: Every home is furnished the same: every piece of its line's sets in the rooms of its plan. Size S.
 - 2 Four levels per home: Each home is given one of four furnishing levels (Bare, Basic, Homely, Full) once, when it is made, and keeps it; each level adds pieces to the one before (ADR-0035). Size M.
 - 3 Follows the household: A household's level is worked out from its income and how long it has lived there, from data and the world clock (never ticked or stored): it starts from its income band and moves up a level each time its savings for furniture reach the next level's cost. Size L.
+
+**Reward feedback** (`F-UI-REWARD`). Earning money should feel good and be noticed: the player sees and hears it arrive instead of a number changing in the corner.
+- 0 Number only: As before: the purse number changes and the amount shows beside it for a moment. Size -.
+- 1 Coins and chimes: A quest or job reward springs coins out around the player; they are drawn back in and fly to the purse, each ringing a note higher, and the purse counts up and glows (sample Q1, Lantern bells). The bank's interest slides a slip out under the purse and pays coins into the bank balance with a till and a bell (sample I1). Sounds and timings are data. Size S.
+- 2 Achievements: Also named achievements for first and rare moments (a first home, a first job done, a loan paid off), listed as data: a painted-sign banner drops in with sparkles and a fanfare (sample A1, Town fanfare), and the menu lists the ones earned. Kept in the save. Size M.
