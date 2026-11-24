@@ -1,7 +1,7 @@
 ---
 spec_id: WASTED-SPEC
 title: Brix Town — Game Specification
-version: 0.5.12
+version: 0.5.13
 status: draft            # draft | reviewed | approved
 last_updated: 2026-11-24
 owner: project-owner
@@ -370,9 +370,9 @@ specs and validation tools that creators will later use, so the UGC pipeline is 
 
 | ID | Requirement | Pri | Phase | Status |
 |---|---|---|---|---|
-| TECH-001 | Engine: Unreal Engine 5.8, one pinned version for the whole team; upgrades are a planned task with an ADR. | P0 | PH0 | proposed |
-| TECH-002 | Gameplay systems shall be C++ modules with data assets for tuning; Blueprints for content wiring and UI only. | P0 | PH0 | proposed |
-| TECH-003 | Each gameplay domain (Needs, Careers, Economy, World…) shall be its own module or plugin with a public interface and no circular dependencies. | P0 | PH0 | proposed |
+| TECH-001 | Engine: Unreal Engine 5.8, one pinned version for the whole team; upgrades are a planned task with an ADR. | P0 | PH0 | accepted |
+| TECH-002 | Gameplay systems shall be C++ modules with data assets for tuning; Blueprints for content wiring and UI only. | P0 | PH0 | accepted |
+| TECH-003 | Each gameplay domain (Needs, Careers, Economy, World…) shall be its own module or plugin with a public interface and no circular dependencies. | P0 | PH0 | accepted |
 | TECH-004 | Simulation logic (economy, needs math, vegetation growth, weather) shall be engine-light, deterministic given a seed and clock, and runnable in headless tests. | P0 | PH1 | proposed |
 | TECH-005 | Tunable values shall live in data (data assets, tables, config), never as literals in code. | P0 | PH1 | proposed |
 | TECH-006 | The city shall use world streaming (World Partition) so memory and replication cost scale with nearby content, not city size. | P0 | PH1 | proposed |
@@ -390,7 +390,7 @@ specs and validation tools that creators will later use, so the UGC pipeline is 
 
 | ID | Requirement | Pri | Phase | Status |
 |---|---|---|---|---|
-| ASSET-001 | All code, engine assets and DCC source files shall be under version control with large-file support and **file locking for binary assets**. Tool choice is `[OPEN: Q-01]`. | P0 | PH0 | proposed |
+| ASSET-001 | All code, engine assets and DCC source files shall be under version control with large-file support and **file locking for binary assets**: Git with Git LFS, binaries lockable (ADR-0002). | P0 | PH0 | accepted |
 | ASSET-002 | Blender source files live in `Art/Source/`; exported files in `Art/Export/`; imported engine assets in `Game/Content/`. Each engine asset is traceable to its source file. | P0 | PH0 | proposed |
 | ASSET-003 | Naming shall follow `docs/standards/` (prefix by type: `SM_`, `SK_`, `M_`, `MI_`, `T_`, `BP_`, `DA_`, `WBP_`…). | P0 | PH0 | proposed |
 | ASSET-004 | Blender-to-Unreal export shall be a scripted, repeatable step (scale, axes, naming, LODs), not manual settings. | P1 | PH1 | proposed |
@@ -428,7 +428,7 @@ specs and validation tools that creators will later use, so the UGC pipeline is 
 | ADR | Decision | Status |
 |---|---|---|
 | ADR-0001 | Engine and DCC versions: UE 5.8, Blender 5.2 LTS (Blender pin under review, Q-16) | proposed |
-| ADR-0002 | Version control tool (see Q-01) | open |
+| ADR-0002 | Version control: Git with Git LFS, Unreal and Blender binaries lockable (Q-01) | accepted |
 | ADR-0003 | Backend stack (see Q-02) | open |
 | ADR-0004 | Art direction: old-town world, option B "Soft" characters, no painterly filter | accepted |
 | ADR-0005 | One shared face control set; lip sync from mouth shapes | accepted |
@@ -445,7 +445,7 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 
 | ID | Question | Why it matters | Default if unanswered |
 |---|---|---|---|
-| Q-01 | Git + Git LFS, or Perforce? | Unreal assets are large binaries that cannot be merged. | Git + LFS with locking while solo; revisit when a second artist joins. |
+| Q-01 | Git + Git LFS, or Perforce? | Unreal assets are large binaries that cannot be merged. | **DECIDED 2026-11-24:** Git + Git LFS with locking (owner; ADR-0002). Revisit when a second artist joins. |
 | Q-02 | Backend stack and hosting? | Shapes accounts, ledger, UGC delivery. | Decide at start of PH2; PostgreSQL for the ledger. |
 | Q-03 | Currency name? | Flavour. | **DECIDED 2026-11-21:** brix (`Bx`), 100 chips = 1 brix. Starting amounts are a balance task for PH1. |
 | Q-04 | Real money: is currency purchasable? can creators cash out? | Triggers payments, tax, consumer and gambling law. | **DECIDED 2026-11-21:** in-game currency only; no real-money purchase or cash-out. |
@@ -513,3 +513,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.5.10 | 2026-11-24 | The mall's goods for the home are objects made in Blender (owner's request; ADR-0041): FURN-065 in FURNITURE. A placed guitar, bookstack or television is drawn from its object, and each outlet shows the goods it sells. No level was picked for this. |
 | 0.5.11 | 2026-11-24 | Residents visit Eastgate Mall to shop and eat, and its staff eat there (owner's request; ADR-0041): CITY-106 in LIVING_CITY, WLD-068 in WORLD_MAP. No resident was added and no level was picked. |
 | 0.5.12 | 2026-11-24 | Buy menus show what is for sale as objects in a grid, the chosen one large beside it, small cells in a narrow panel (owner's request and choice of look test 33; ADR-0044): UI-020 and UI-021 in MENU. `F-UI-SHOP` proposed, and picked by the owner at level 1 for the first slice. |
+| 0.5.13 | 2026-11-24 | The Unreal project begins (owner: "let's try our slice in ue 5"): TECH-001 to TECH-003 accepted. Q-01 decided, Git with Git LFS (owner: "Yes, Git LFS"; ADR-0002); ASSET-001 accepted. |
