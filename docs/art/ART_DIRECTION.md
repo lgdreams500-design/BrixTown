@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-ART-DIRECTION
 title: Brix Town — Art direction (locked look)
-version: 1.9.0
+version: 1.9.1
 status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22, interiors and furniture on 2026-11-22, the menu's look on 2026-11-23, the house colourways and the house plan with its furnishing levels on 2026-11-23, every other building's colourways and the row houses and flats inside on 2026-11-24
 last_updated: 2026-11-24
 relates_to: [FURN-003, ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
@@ -242,6 +242,7 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | Wear stages (I8) | not yet rendered. (The furniture outlet's look, `Art/StyleTests/furniture_kit_17/showroom.png`, was approved by the owner's request to build it, ADR-0027.) |
 | Night (after dusk) and bad-weather looks | night: approved in the slice (ADR-0023, owner 2026-11-22), no reference image yet; pictures in `Art/StyleTests/night_sky_15/`. Rain, fog and overcast: approved in the slice (ADR-0016), no rule or reference image yet; must follow W5–W7 |
 | The sky: blue overhead with drifting clouds | approved in the slice (ADR-0014); not in the reference renders, still needs a rule and a reference image |
+| Big modern buildings outside Old Town (Eastgate Mall's ribbon walls and pierced eggs) | built in the slice at the owner's request, in the locked materials: mottled plaster, ochre and cream, lantern light (ADR-0037). No rule or reference image yet. The photograph it follows is glossy white metal and gold; going that way would change the look (W1, W4) and needs the owner's word and a new ADR |
 | Whether the iris should be smaller than in `face_expressions.png` | owner to say |
 | How the look is achieved in Unreal on modest hardware (haze, soft light) | PH1 task |
 
@@ -259,3 +260,4 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | 1.7.0 | 2026-11-23 | Houses: the owner approved all twelve colourways of house styles look test 20 (ADR-0032): §2.8, reference `house_colourways.png`. |
 | 1.8.0 | 2026-11-23 | Houses inside: the owner approved house interiors look test 21 (ADR-0035): §2.8, references `house_interior_ground.png` and `house_interior_upstairs.png`. |
 | 1.9.0 | 2026-11-24 | Every other building's colourways and the row houses and flats inside: the owner approved look tests building_styles_22, home_interiors_22 and house_outside_23 (ADR-0036): §2.9 and nine references. |
+| 1.9.1 | 2026-11-24 | §5: Eastgate Mall's sculpted shell noted as built in the locked materials, with no rule or reference image yet (ADR-0037). No rule or reference changed. |
