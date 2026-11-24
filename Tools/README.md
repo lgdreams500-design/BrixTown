@@ -28,6 +28,7 @@ of the ones before it, so keep the folder together.
 | `car_kit_09.py` | First car look test (CITY-067): three directions with curves instead of boxes, A soft box, B pebble, C classic, each a small car, an estate and a van, with a person for scale. Runs headless through the Store launcher: `blender-launcher.exe -b --factory-startup --python car_kit_09.py`. The owner chose C, Classic (ADR-0011), then A, Soft box (ADR-0015). |
 | `car_export_10.py` | Builds on car kit 09: exports the Classic cars (and a classic pickup) as low-poly meshes, near and far, with parts tagged for colours and extras, into `Prototype/play/car_models.js`. |
 | `car_export_11.py` | Builds on car export 10: exports the Soft box cars (ADR-0015), with a Soft box pickup, into `Prototype/play/car_models.js`. Keeps the bodies, wheels and lamps whole and thins only the small parts. This is the one the slice uses now. |
+| `skates_30.py` | Skates look test 30, builds on car kit 09 and character face 05: the skate store's three pairs (Manual quad, Electric inline with hub motors and a battery, Neon Boost with glowing wheels and a booster), each skate one low-poly mesh on an empty at `foot_l` / `foot_r`, with a far model. Renders a labelled sheet, a turnaround, close-ups, the pairs worn by the Courier and a dusk look at the neon into `Art/StyleTests/skates_30/`. Not yet approved. |
 
 `paint_filter.py` is the painterly filter that was tried and rejected.
 
