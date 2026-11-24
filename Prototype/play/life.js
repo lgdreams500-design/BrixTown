@@ -690,8 +690,8 @@ var Life = (() => {
   function spotIn(OL, NL, x, z, floors, m) {              // the same kind of place in the new home, on its floors
     for (const t in OL.objects || {}) {
       const j = OL.objects[t].findIndex(q => Math.abs(q[0] - x) < .25 && Math.abs(q[1] - z) < .25); if (j < 0) continue;
-      const lv = (NL.levels || {})[t], opts = ((NL.objects || {})[t] || []).filter((_, n) => floors.includes(lv ? lv[n] : 0));
-      if (opts.length) return opts[m % opts.length].slice();
+      const lv = (NL.levels || {})[t], opts = ((NL.objects || {})[t] || []).map((q, n) => [q[0], q[1], lv ? lv[n] : 0]).filter(q => floors.includes(q[2]));
+      if (opts.length) return opts[m % opts.length];                // with its floor, for resident() (WLD-053)
       break;
     }
     const [a0, b0, a1, b1] = OL.rect, [c0, d0, c1, d1] = NL.rect;
@@ -699,7 +699,7 @@ var Life = (() => {
   }
   function planFrom(i, nl, unit, m) {
     const old = HOME0[i], OL = LOTS[old], NL = LOTS[nl], row = ORIG[i].map(p => p.slice()), moved = new Set();
-    row.forEach((p, k) => { if (p[1] === 0 && p[7] === old) { const q = spotIn(OL, NL, p[2], p[3], unit.floors, m); p[2] = q[0]; p[3] = q[1]; p[7] = nl; moved.add(k); } });
+    row.forEach((p, k) => { if (p[1] === 0 && p[7] === old) { const q = spotIn(OL, NL, p[2], p[3], unit.floors, m); p[2] = q[0]; p[3] = q[1]; p[7] = nl; p.length = 8; if (q[2]) p[8] = q[2]; p.s = null; moved.add(k); } });
     row.forEach((p, k) => {
       if (p[1] !== 1 || p[2] === STROLL) return;
       const a = k > 0 && row[k - 1][1] === 0 ? k - 1 : -1, b = k + 1 < row.length && row[k + 1][1] === 0 ? k + 1 : -1;

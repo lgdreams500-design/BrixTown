@@ -1739,7 +1739,10 @@ function resident(i, m) {                                // where resident i is 
   const row = D.plan[i], k = pieceAt(row, m), p = row[k];
   if (p[1] === 2 || p[1] === 3) return null;                 // away by tram or out of town, or in their car (cars.js draws the car)
   if (p[1] === 0) {
-    if (!p.s) { const lot = LOTS[p[7]]; p.s = STAND; if (p[5] >= 0) for (const s of lot.spots) if (Math.abs(s.x - p[2]) < .2 && Math.abs(s.z - p[3]) < .2) { p.s = s; break; } }
+    if (!p.s) {                                              // the place there on the stay's floor (p[8], upstairs only): stacked flats share a plan (WLD-053)
+      const lot = LOTS[p[7]], want = Storeys.floorY(p[8] || 0); p.s = STAND; let bd = 1e9;
+      if (p[5] >= 0) for (const s of lot.spots) if (Math.abs(s.x - p[2]) < .2 && Math.abs(s.z - p[3]) < .2 && Math.abs(s.h - want) < bd) { bd = Math.abs(s.h - want); p.s = s; }
+    }
     const s = p.s;
     return { x: p[2], z: p[3], y: s === STAND ? groundBase(p[2], p[3]) : s.h, yaw: s === STAND ? hash(i, k) * 6.28 : s.yaw, pose: s.pose, act: p[4], inside: p[6], lot: LOTS[p[7]] };
   }

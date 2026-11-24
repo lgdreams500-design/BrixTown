@@ -1255,6 +1255,12 @@ def storey_floor(f):
     return 0.2 if f == 0 else 3.0 * f + 0.4
 
 
+def house_stair(l):
+    """A designed house (BUILD-001, ADR-0035) has its stair in its plan: it rises from the hall, up to the rooms above."""
+    rooms = (l.get("house") or {}).get("rooms", [])
+    return any(r["name"] == "Hall" and r["floor"] == 0 for r in rooms) and {r["floor"] for r in rooms} >= set(range(l["floors"]))
+
+
 def storey_problems(w):
     """Every rule the floors, stairs, lifts and upstairs places in the block files must keep (WLD-050, WLD-051)."""
     S, out = w["storeys"], []
@@ -1270,20 +1276,23 @@ def storey_problems(w):
             out.append("%s: %d storeys named for %d floors" % (where, len(l.get("storeys", [])), n))
         x0, z0, x1, z1 = l["rect"]
         if n >= 2:
-            s = l.get("stair")
-            if not s:
+            s, r = l.get("stair"), None
+            if not s and house_stair(l):                     # a designed house: its stair rises in the hall of its plan
+                pass                                         # (houses.js), not in a stairwell from add_storeys_01.py
+            elif not s:
                 out.append("%s: %d floors and no stair" % (where, n))
                 continue
-            r = s["rect"]
-            if not (x0 + S["wall"] - .01 <= r[0] < r[2] <= x1 - S["wall"] + .01 and z0 + S["wall"] - .01 <= r[1] < r[3] <= z1 - S["wall"] + .01):
-                out.append("%s: stair is not inside the walls" % where)
-            long_, short = (r[2] - r[0], r[3] - r[1]) if s["axis"] == "x" else (r[3] - r[1], r[2] - r[0])
-            if long_ < need_l - .02 or short < need_w - .02:                  # (sizes are kept to the centimetre)
-                out.append("%s: stairwell %.1f by %.1f is too small" % (where, long_, short))
-            if s["wall"] == side_of_door(l):
-                out.append("%s: stair against the door's wall" % where)
-            if s["wall"] == {"n": "s", "s": "n", "w": "e", "e": "w"}[side_of_door(l)]:
-                out.append("%s: stair against the back wall, where counters stand" % where)
+            else:
+                r = s["rect"]
+                if not (x0 + S["wall"] - .01 <= r[0] < r[2] <= x1 - S["wall"] + .01 and z0 + S["wall"] - .01 <= r[1] < r[3] <= z1 - S["wall"] + .01):
+                    out.append("%s: stair is not inside the walls" % where)
+                long_, short = (r[2] - r[0], r[3] - r[1]) if s["axis"] == "x" else (r[3] - r[1], r[2] - r[0])
+                if long_ < need_l - .02 or short < need_w - .02:              # (sizes are kept to the centimetre)
+                    out.append("%s: stairwell %.1f by %.1f is too small" % (where, long_, short))
+                if s["wall"] == side_of_door(l):
+                    out.append("%s: stair against the door's wall" % where)
+                if s["wall"] == {"n": "s", "s": "n", "w": "e", "e": "w"}[side_of_door(l)]:
+                    out.append("%s: stair against the back wall, where counters stand" % where)
             lv = l.get("levels", {})
             for k, v in l["objects"].items():
                 levels = lv.get(k, [0] * len(v))
@@ -1293,15 +1302,13 @@ def storey_problems(w):
                 for p, f in zip(v, levels):
                     if not 0 <= f < n:
                         out.append("%s: a %s on floor %d of %d" % (where, k, f, n))
+                    if r is None:
+                        continue
                     dx, dz = max(r[0] - p[0], 0, p[0] - r[2]), max(r[1] - p[1], 0, p[1] - r[3])
                     if f > 0 and math.hypot(dx, dz) < 1.0:
                         out.append("%s: a %s upstairs stands in the stairwell" % (where, k))
-            spots = {}
-            for k, v in l["objects"].items():                # the slice finds a resident's place by where it is on the plan
-                for p, f in zip(v, lv.get(k, [0] * len(v))):
-                    spots.setdefault((round(p[0], 1), round(p[1], 1)), set()).add(f)
-            if any(len(fs) > 1 for fs in spots.values()):
-                out.append("%s: places on two floors at the same spot" % where)
+            # (places on different floors may share a spot on the plan, as stacked flats and offices do: a stay upstairs
+            # carries its floor, build_play.routines, and the slice finds the place by where it is and that floor, WLD-053)
             if n >= S["lift_from_floors"] and not l.get("lift"):
                 out.append("%s: %d floors and no lift" % (where, n))
         elif l.get("levels"):

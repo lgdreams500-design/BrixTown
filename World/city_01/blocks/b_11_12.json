@@ -197,6 +197,21 @@
    "style": {
     "group": "works",
     "way": "a"
+   },
+   "storeys": [
+    "main",
+    "plant"
+   ],
+   "stair": {
+    "rect": [
+     1072.35,
+     1212.65,
+     1074.7,
+     1219.55
+    ],
+    "axis": "z",
+    "wall": "w",
+    "up0": -1
    }
   },
   {
@@ -380,6 +395,21 @@
    "style": {
     "group": "works",
     "way": "c"
+   },
+   "storeys": [
+    "main",
+    "plant"
+   ],
+   "stair": {
+    "rect": [
+     1128.35,
+     1212.65,
+     1130.7,
+     1219.55
+    ],
+    "axis": "z",
+    "wall": "w",
+    "up0": -1
    }
   },
   {
@@ -563,6 +593,21 @@
    "style": {
     "group": "works",
     "way": "a"
+   },
+   "storeys": [
+    "main",
+    "plant"
+   ],
+   "stair": {
+    "rect": [
+     1184.35,
+     1212.65,
+     1186.7,
+     1219.55
+    ],
+    "axis": "z",
+    "wall": "w",
+    "up0": -1
    }
   }
  ],
