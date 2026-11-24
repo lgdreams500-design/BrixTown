@@ -1,5 +1,5 @@
 {
- "note": "Where a token like 'lunch' can lead. 'cafe', 'grocer', 'garden', 'market', 'stop', 'clinic' mean the resident's nearest one. 'bank', 'library', 'museum', 'cinema', 'dealer' likewise (Tools/worldgen/add_places_01.py). 'playground', 'noticeboard', 'kiosk' likewise, and 'play' is the children's list (Tools/worldgen/add_dressing_01.py). 'furniture' likewise: the furniture outlet (Tools/worldgen/add_outlet_01.py). lunch near_work: on a working day lunch is taken near work (the nearest café, grocer or market to the workplace), and at home only when home is within near_work_home_max_m of work (CITY-096, owner 2026-11-23) [ASSUMPTION].",
+ "note": "Where a token like 'lunch' can lead. 'cafe', 'grocer', 'garden', 'market', 'stop', 'clinic' mean the resident's nearest one. 'bank', 'library', 'museum', 'cinema', 'dealer' likewise (Tools/worldgen/add_places_01.py). 'playground', 'noticeboard', 'kiosk' likewise, and 'play' is the children's list (Tools/worldgen/add_dressing_01.py). 'furniture' likewise: the furniture outlet (Tools/worldgen/add_outlet_01.py). lunch near_work: on a working day lunch is taken near work (the nearest café, grocer or market to the workplace), and at home only when home is within near_work_home_max_m of work (CITY-096, owner 2026-11-23) [ASSUMPTION]. 'mall' (CITY-106; the owner, 2026-11-24: 'update population to come to mall'): the place 'mall' in a list is the mall with outlets nearest the resident's home, where they 'shop' at a place before a counter or 'eat' at a table. It is gone to only when the resident's own start of that part of the day is between 'open' and 'last_in' (so they are served before the keepers go home); and only when that part of their day is long enough to walk there, stay 'stay_min' minutes and walk home; otherwise they do what 'else' says for that list. 'shops_shut_sunday': on a Sunday its shop owners are at home like the town's shopkeepers, so nobody goes there to shop, only to eat at its food outlets, which are kept. 'staff_eat_in': those who work at such a mall eat their lunch at its tables and do not leave it. The shares (3 of the 24 ways to spend free time, 1 of 9 shopping trips, 1 of 13 on a rainy day) and the hours are first guesses [ASSUMPTION].",
  "choices": {
   "lunch": {
    "default": [
@@ -46,8 +46,28 @@
      "cafe"
     ],
     [
+     "shop",
+     "mall"
+    ],
+    [
+     "home",
+     "home"
+    ],
+    [
+     "rest",
+     "garden"
+    ],
+    [
      "stroll",
      "garden"
+    ],
+    [
+     "eat",
+     "cafe"
+    ],
+    [
+     "shop",
+     "mall"
     ],
     [
      "home",
@@ -70,28 +90,8 @@
      "garden"
     ],
     [
-     "home",
-     "home"
-    ],
-    [
-     "rest",
-     "garden"
-    ],
-    [
-     "stroll",
-     "garden"
-    ],
-    [
      "eat",
-     "cafe"
-    ],
-    [
-     "stroll",
-     "garden"
-    ],
-    [
-     "home",
-     "home"
+     "mall"
     ],
     [
      "rest",
@@ -146,8 +146,8 @@
      "cafe"
     ],
     [
-     "home",
-     "home"
+     "shop",
+     "mall"
     ],
     [
      "home",
@@ -215,7 +215,7 @@
     ],
     [
      "shop",
-     "grocer"
+     "mall"
     ],
     [
      "browse",
@@ -325,6 +325,23 @@
    "lunch"
   ],
   "home_max_m": 300.0
+ },
+ "mall": {
+  "open": "09:30",
+  "last_in": "17:45",
+  "else": {
+   "leisure": [
+    "stroll",
+    "garden"
+   ],
+   "shopping": [
+    "shop",
+    "grocer"
+   ]
+  },
+  "staff_eat_in": true,
+  "stay_min": 25,
+  "shops_shut_sunday": true
  },
  "use": {
   "sleep": "bed",

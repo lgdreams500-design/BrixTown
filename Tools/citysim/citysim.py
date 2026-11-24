@@ -461,6 +461,49 @@ class City:
             opts = ch["default"]
         return opts[int(rnd("pick", rid, day, idx) * len(opts))]
 
+    def _mall(self, rid):
+        """The mall with outlets nearest the resident's home, or None in a town without one (CITY-106). Worked out."""
+        malls = self._mall_ids()
+        home = self.res[rid]["home"]
+        if home not in self._mall_of:
+            door = self.lots[home]["door"]
+            self._mall_of[home] = min(malls, key=lambda lid: (dist(self.lots[lid]["door"], door), lid)) if malls else None
+        return self._mall_of[home]
+
+    def _worth_it(self, rid, mall, frm, minutes):
+        """True if there is time to walk to the mall from where the resident is and stay 'stay_min' there within this
+        part of their day (CITY-106): nobody sets out only to turn round at the door. With 'home_in_time' the walk home
+        must fit in it too."""
+        if not hasattr(self, "_way"):
+            self._way = {}
+        M = self.d.get("mall") or {}
+        v = self.speed(rid) * self.pace
+        need = float(M.get("stay_min", 0))
+        for a in (frm, self.res[rid]["home"]) if M.get("home_in_time") else (frm,):
+            if a not in self.anchor:
+                continue
+            if (a, mall) not in self._way:
+                self._way[(a, mall)] = self.net.path(self.anchor[a], self.anchor[mall])[1]
+            need += self._way[(a, mall)] / v
+        return need <= minutes
+
+    def _mall_ids(self):
+        """The malls with outlets, by id. Nobody is walked through one: its floors, stairs and walls are its own, so a
+        resident is at its door and then at their place in it (CITY-106)."""
+        if not hasattr(self, "_malls"):
+            self._malls = sorted(lid for lid, l in self.lots.items() if self._has_outlets(l))
+            self._mall_of = {}
+        return self._malls
+
+    @staticmethod
+    def _has_outlets(lot):
+        return any(u.get("outlet") for L in (lot.get("plan") or {}).get("levels", []) for u in L["units"])
+
+    def _eats_in(self, lid):
+        """True where the staff eat their lunch at work: a mall with outlets and tables (CITY-106)."""
+        lot = self.lots[lid]
+        return bool((self.d.get("mall") or {}).get("staff_eat_in")) and self._has_outlets(lot) and bool(lot["objects"].get(self.d["use"]["eat"]))
+
     def _near_work(self, rid, where, place):
         """The place of this kind nearest the resident's work (the same kinds as their own "near" table, among the places that
         are anyone's nearest); home only when home is within near_work_home_max_m of work. Worked out, not stored."""
@@ -525,10 +568,20 @@ class City:
             if where in self.d["choices"]:
                 act2, where = self._pick(where, rid, day, i, hm(start))
                 act = act2
+            if where == "mall":                                  # CITY-106: the mall, in its hours; else what the rules say instead
+                M, mall = self.d.get("mall") or {}, self._mall(rid)
+                shut = act == "shop" and info["sunday"] and M.get("shops_shut_sunday")   # its shop owners keep the town's Sunday; its food outlets are kept
+                if mall is not None and M and not shut and hm(M["open"]) <= m <= hm(M["last_in"]) and self._worth_it(rid, mall, out[-1][2] if out else r["home"], end - hm(start)):
+                    where = mall
+                else:
+                    act, where = (M.get("else") or {}).get(token, ("home", "home"))
             # "cafe", "garden", "stop"... mean this resident's nearest one when the world gives them a "near" table
             place = r["home"] if where == "home" else r["work"] if where == "work" else r.get("near", {}).get(where, where)
             if token in (self.d.get("near_work") or {}).get("tokens", ()) and r.get("work") in self.lots                     and i > 0 and tpl[i - 1][1] == "work":   # only between two spells at work
-                place = self._near_work(rid, where, place)   # CITY-096: lunch on a working day near work, not across town
+                if self._eats_in(r["work"]):                 # CITY-106: a mall's own staff eat at its tables
+                    act, place = "eat", r["work"]
+                else:
+                    place = self._near_work(rid, where, place)   # CITY-096: lunch on a working day near work, not across town
             out.append((m, act, place))
         fixed = [out[0]]
         for b in out[1:]:                                       # keep order and a little room between starts
@@ -650,8 +703,12 @@ class City:
             route = [pos]
         else:
             p, _ = self.net.path(self.anchor[cur["place"]], self.anchor[nxt["place"]])
-            route = [pos] + p
-        route = route + [target]
+            route = p if cur["place"] in self._mall_ids() else [pos] + p   # out of a mall: from its door (CITY-106)
+        if nxt["place"] in self._mall_ids():            # into a mall, or from one place in it to another: no walk inside it
+            if len(route) == 1:
+                return route
+        else:
+            route = route + [target]
         if not hasattr(self, "_keep"):                  # the play pieces (lots' keep_out), which every walk goes round (WLD-041)
             self._keep = [r for l in self.lots.values() for r in l.get("keep_out", [])]
         if self._keep:

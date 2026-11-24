@@ -110,6 +110,34 @@ What it did to the town, measured against `main` of 2026-11-24:
   take more than two minutes longer than planned (half of them over 35 minutes). That was already so for the 70 who
   worked there.
 
+## Decision (stage 4: residents who come to shop and eat)
+
+Written 2026-11-24, last of the four.
+
+1. **The mall is one more place the town's routines may choose** (CITY-106). `World/rules/choices.json` names it in the
+   lists residents already choose from: 3 of the 24 ways to spend free time (two to shop, one to eat), 1 of the 9
+   shopping trips, 1 of the 13 things done on a rainy day. Each took the place of a stroll, staying at home or a trip
+   to the grocer, so everyone else's day is as it was. It is the mall with outlets nearest the resident's home.
+2. **Only when it makes sense.** A resident goes when their own start of that part of the day is within the mall's
+   hours (09:30 to 17:45, so they are served before the keepers go home), when there is time to walk there and stay
+   25 minutes, and, to shop, on a day its shop owners work. On a Sunday people come only to eat: the food outlets are
+   kept every day. Otherwise they do what the list says instead.
+3. **The mall's staff eat at the mall.** Lunch for those who work there is at its tables, not in town.
+4. **Places** (WLD-068): two before every outlet's counter and the chairs of every food outlet's tables, on all three
+   floors: 458 places to stand and 332 to sit.
+5. **Nobody is walked through the mall.** The city's rules walk people in a straight line from a door to their place,
+   which in a hall 240 m by 340 m on three floors meant long walks through shop walls. A resident is now at the
+   mall's door and then at their place in it.
+6. **Nobody is added.** These are the town's 3,984 residents (`F-NPC-POP` stays at 1).
+
+What it gives, measured over the starting city with cars and buses running:
+
+- Wednesday: 68 visits, 23 in the mall at the busiest half hour. Friday: 96 visits, 38 at the busiest. Saturday: 162 visits, 52 at the busiest.
+  Sunday: 80 visits, 49 at the busiest, all to eat.
+- At 13:00 on a working day 199 of the mall's 201 staff are in it and 106 of them sit at its tables; 69 were in it
+  before this.
+- Walks that arrive on time (Q-21): 79.0 % (78.9 % before this stage, 79.9 % on main, 80 % wanted).
+
 ## Levels
 
 Only the owner picks levels. Nothing was recorded in `feature_choices.json` for this work.
@@ -150,6 +178,13 @@ Only the owner picks levels. Nothing was recorded in `feature_choices.json` for 
   drives or rides, 30 are in and 171 walking). Eating at the mall is stage 4, and should keep them there.
 - Stage 3: guards and janitors stand at their places and carry nothing; they do not walk rounds or clean.
 - Stage 3: the four corner stores have none of the town's residents in them (each group's share is used up).
+- Stage 4: **the mall is thinly visited on working days.** It stands about 850 m outside Old Town, a walk of half an
+  hour and more each way, so only long free afternoons reach it. A fuller mall needs more people (`F-NPC-POP` 2,
+  the owner's to pick), a mall-goers' bus, or longer opening into the evening with keepers on a later shift.
+- Stage 4: a visitor's place is any free one; it is not tied to the outlet the economy says they bought at.
+- Stage 4: nobody walks about inside the mall, queues or carries a bag; arriving, a resident appears at their place.
+- Stage 4: on a Sunday afternoon the food outlets' owners take their break at 15:00 while people are eating there.
+- Stage 4: Westgate and Northgate have no outlets and are not visited by this rule.
 - No automated test drives the page. The rule's port is checked by the page's self-test; the prompt, the panel, the
   wardrobe and placing a bought guitar were tried by hand in the slice.
 

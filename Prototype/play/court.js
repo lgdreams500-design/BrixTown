@@ -300,7 +300,8 @@ const Court = (() => {
     for (const b of P.benches) { const yaw = b.yaw * Math.PI / 180, [x, z] = b.pos, fx = Math.sin(yaw), fz = -Math.cos(yaw);
       m.ybox(x, F + .3, z, 1.9, .16, .55, -yaw, wood, 19); m.ybox(x - fx * .3, F + .46, z - fz * .3, 1.9, .5, .1, -yaw, wood, 19);
       for (const sgn of [-.8, .8]) m.ybox(x + fz * sgn * -1, F, z + fx * sgn, .12, .3, .5, -yaw, C.metal, 19);
-      o.solid(x - .6, F, z - .6, x + .6, F + .46, z + .6); o.use(x, F + .47, z, "sit", "Sit on the bench", yaw); }
+      o.solid(x - .6, F, z - .6, x + .6, F + .46, z + .6); o.use(x, F + .47, z, "sit", "Sit on the bench", yaw);
+      for (const sd of [-.45, .45]) o.spot(+(x + Math.cos(yaw) * sd).toFixed(2), +(z + Math.sin(yaw) * sd).toFixed(2), 2, yaw, F + .46); }   // its two places, for residents who sit to eat or rest (the lot's `seat`)
     for (const u of P.levels[0].units) if (u.kind === "kiosk") { const [a, b, c, d] = u.rect, acc = o.accent[Math.floor(o.hash(u.id, "k") * o.accent.length)];
       m.box(a, F, b, c, F + 1.05, d, wood, 19); m.box(a - .3, F + 2.7, b - .3, c + .3, F + 2.95, d + .3, acc, 19, { 2: [mul(acc, .7), 19] });
       for (const [x, z] of [[a, b], [c, b], [a, d], [c, d]]) m.box(x - .08, F + 1.05, z - .08, x + .08, F + 2.7, z + .08, C.metal, 19);
@@ -318,6 +319,9 @@ const Court = (() => {
         o.spot(s[0], s[1], 0, h ? Math.atan2(h.pos[0] - s[0], -(h.pos[1] - s[1])) : (u.angle || 0) * Math.PI / 180, k ? k * st : F);
       } } });
     for (const c in P.staff || {}) for (const q of P.staff[c]) o.spot(q.pos[0], q.pos[1], 0, q.yaw * Math.PI / 180, q.level ? q.level * st : F);
+    // ---- and the visitors' places inside the outlets (WLD-068, CITY-106): standing before a counter, sitting at a food outlet's table
+    for (const q of (P.places || {}).customer || []) o.spot(q.pos[0], q.pos[1], 0, q.yaw * Math.PI / 180, q.level ? q.level * st : F);
+    for (const q of (P.places || {}).seat || []) o.spot(q.pos[0], q.pos[1], 2, q.yaw * Math.PI / 180, (q.level ? q.level * st : F) + .45);
   }
   function carry(p, dt) {                                   // someone standing on moving stairs is carried: up on the right-hand flight, down on the left
     for (const r of moving) {
