@@ -350,6 +350,7 @@ def main(day=16):
         roads=roads(city),                                # zebras, lay-bys and traffic lights (CITY-043, CITY-045)
         sky={k: v for k, v in w["sky"].items() if k != "note"},   # WLD-035, WLD-036: the sky and its clouds
         dodge={k: v for k, v in w["dodge"].items() if k != "note"},   # CITY-070, CITY-071: getting out of the way of cars
+        boards={k: v for k, v in w["boards"].items() if k != "note"},   # CITY-098 to CITY-101: skateboards to carry and ride
         surfaces=dict(world.surfaces(w), table=w["surfaces"]["patterns"]),   # WLD-039: which stone, brick and paving where
         storeys={k: v for k, v in w["storeys"].items() if k != "note"},   # WLD-050: floor heights, stairs and lifts
         house_styles={k: v for k, v in rules_file("house_styles").items() if k != "note"},   # ADR-0032: the house lines' colourways

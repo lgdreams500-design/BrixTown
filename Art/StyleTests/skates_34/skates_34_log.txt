@@ -1,0 +1,60 @@
+18:01:48 Blender 5.3.0
+18:01:49 scene built: 281 objects in 1.0s
+
+== Models (one mesh per skate, origin at the ankle empty; triangles after triangulation) ==
+Manual     50 km/h   SK_Manual_L 1460 tris, SK_Manual_R 1460 tris, pair 2920 (far model _LOD1: 644 a skate, pair 1288); materials 7; 0.152 x 0.337 x 0.304 m (w x l x h); ankle empty SK_Manual_L_foot_l at 0.161 m above the ground
+Electric   100 km/h  SK_Electric_L 1704 tris, SK_Electric_R 1704 tris, pair 3408 (far model _LOD1: 700 a skate, pair 1400); materials 7; 0.155 x 0.362 x 0.334 m (w x l x h); ankle empty SK_Electric_L_foot_l at 0.172 m above the ground
+Neon Boost 250 km/h  SK_NeonBoost_L 1772 tris, SK_NeonBoost_R 1772 tris, pair 3544 (far model _LOD1: 762 a skate, pair 1524); materials 7; 0.148 x 0.477 x 0.304 m (w x l x h); ankle empty SK_NeonBoost_L_foot_l at 0.184 m above the ground
+For scale: a Soft box car in the slice is about 3200 triangles near (car_export_11).
+
+== Colours (linear RGB) ==
+Manual     Cream (0.66, 0.61, 0.5); Brown (0.24, 0.16, 0.11); Ochre (0.52, 0.4, 0.2); Terracotta (0.44, 0.24, 0.18); Iron (kit) (0.1, 0.1, 0.11); Hub grey (car kit) (0.58, 0.56, 0.52); lining (near black) (0.05, 0.04, 0.04)
+Electric   Teal (0.2, 0.36, 0.37); Charcoal (0.09, 0.09, 0.11); Ochre (0.52, 0.4, 0.2); Cream (0.66, 0.61, 0.5); Hub grey (car kit) (0.58, 0.56, 0.52); lining (near black) (0.05, 0.04, 0.04); status green (new) (0.3, 1.0, 0.45) emissive 3.0
+Neon Boost Indigo (0.1, 0.14, 0.24); Plum (0.3, 0.24, 0.34); Charcoal (0.09, 0.09, 0.11); Iron (kit) (0.1, 0.1, 0.11); lining (near black) (0.05, 0.04, 0.04); neon cyan (new) (0.02, 0.55, 1.0) emissive 2.0; Lantern (1.0, 0.55, 0.22) emissive 6.0
+
+== What was built ==
+Manual (50 km/h): a classic quad roller skate, the plainest and the most old-town. Cream boot with a brown padded
+  collar, a tongue with three brown laces, a brown sole and heel, a dark iron plate and trucks, four fat ochre wheels
+  with pale hubs, a terracotta toe stop. Reads as sturdy and a little retro; quad wheels make it the widest stance.
+Electric (100 km/h): an inline skate. Teal shell boot and cuff, charcoal liner rim, a strap with a cream buckle on the
+  outer side, a pale grey frame on two mounts, four charcoal wheels. The two rear wheels are hub motors: ochre drums
+  that stand out through both sides of the frame, with cream caps. A charcoal battery pack with an ochre band sits on
+  the heel, a cable runs down to the motors, and a small green status light (emissive) sits on its outer corner.
+Neon Boost (250 km/h): a long inline racing frame (0.46 m, the longest), four large wheels whose tyres glow neon cyan,
+  a neon welt round the sole, neon stripes on the frame rails and boot sides and a neon rim on the low cuff. Indigo
+  boot, charcoal cuff and frame. A booster nozzle on the heel: a dark iron can with a plum lip and a glowing Lantern
+  core, aimed a little down. Glow is plain emission (no bloom or post-process, W8); neon_dusk.png shows it at dusk.
+
+Every skate is one mesh with a few material slots and no modifiers, origin at the ankle, parented to an empty named
+SK_<Model>_<L|R>_foot_<l|r> with a custom property bone = foot_l / foot_r (CHARACTER_MOTION 2). The far model
+SK_<Model>_<L|R>_LOD1 (same parts, about half the segments) is in the .blend, hidden. The boot replaces the shoe:
+in worn.png the character's shoes are hidden and the body is lifted by the skate's height (Manual 9.4 cm, Electric
+10.6 cm, Neon Boost 11.8 cm), so the faster skates make the wearer a little taller. Sized for a 1.72 m person in
+option B; the Courier (1.78 m) wears them scaled with the body (the empty is scaled, as a socket on foot_l would be).
+
+== Choices for the owner ==
+1. Manual as a quad (four wheels in two pairs) rather than an inline. It gives the three tiers three different
+   silhouettes (quad, inline with motors, long racing frame with booster), but quads are not what a street skater
+   would pick for speed. Say if Manual should be a plain inline instead.
+2. New colours outside the palette: the neon cyan (0.02, 0.55, 1.0) and the status green (0.30, 1.0, 0.45) are new;
+   the booster core uses the Lantern colour. In daylight the neon reads pale ice-blue (AgX); at dusk it is strong.
+   Neon could instead be a player-chosen colour, or warm (Lantern orange or a rose) to sit closer to the old town.
+3. Neon Boost boot colours: indigo and charcoal keep the glow the star but make the boot itself the plainest of the
+   three by day. Plum was tried for the cuff and read lilac-grey; a terracotta or ochre accent is another option.
+4. Lift: wearing skates raises the character 9 to 12 cm. Truthful, but the slice's collision, doorways and camera
+   would see it. The alternative is to sink the boot round the foot and keep the eye height.
+5. Triangles: about 1,450 to 1,800 a skate near, 650 to 760 far; a pair costs about one Soft box car. Fine for the
+   player; for many skating NPCs in the slice the far model (or fewer wheel segments) would be the one to use.
+6. Not decided here: how the motors and booster animate (wheel spin, a flame flicker, the status light colour for
+   battery level), sounds, and whether the store sells colourways of each tier (the materials are already slots).
+
+18:01:49 saved .blend
+18:02:37 sheet rendered in 47.6s
+18:03:14 manual rendered in 36.8s
+18:03:52 electric rendered in 38.0s
+18:04:32 neon rendered in 40.5s
+18:05:36 turnaround rendered in 63.4s
+18:06:14 worn rendered in 38.2s
+18:06:49 worn_feet rendered in 34.8s
+18:07:38 neon_dusk rendered in 49.8s
+18:07:38 DONE

@@ -114,6 +114,24 @@ const People = (() => {
     upper(P, g, W, pel, I3, chest, arms, [hm[0], rad(sig.head_pitch * .5) + hm[1], hm[2]]);
     return P;
   }
+  // On a board (CITY-099): side-on to the way of travel, feet across the deck either side of its middle, knees a little bent, arms
+  // out a little for balance, the head turned to look ahead. rd.push (0 to 1) blends to the push of a manual board: turned to face
+  // ahead, the front foot along the deck by the front truck and the back foot down on the ground beside it, pushing back from in
+  // front of the back truck to behind the tail and lifted back through the air (rd.ph, 0 to 1 a push). rd.h: the deck top's height.
+  function ride(sig, g, W, t, hm, seed, rd) {
+    const P = blank(), b = rd.push || 0, h = rd.h, S = g.S, br = Math.sin(t * 1.3 + seed);
+    const a = rad(78) * (1 - b) + rad(14) * b, Rp = Rz(a), n0 = mv(Rp, [1, 0, 0]), ph = rd.ph || 0;
+    const pel = [0, -.02 * S * b, g.pelz + h - .055 * S * (1 - b) - (.06 * S + h) * b + .003 * br];   // pushing, the knee on the board bends so the other foot reaches the ground
+    const on = ph < .55, s = on ? ph / .55 : (ph - .55) / .45;   // the push foot: on the ground pushing, then lifted back
+    const py = on ? -.06 * S + .32 * S * s : .26 * S - .32 * S * (s - Math.sin(TAU * s) / TAU), pz = g.ankz + (on ? 0 : .07 * S * Math.sin(Math.PI * s));
+    const back = [mix0(0, .12 * S, b), mix0(.2 * S, py, b), mix0(g.ankz + h, pz, b)], front = [0, -.2 * S - .02 * S * b, g.ankz + h];
+    leg(P, 0, g, add(pel, mv(Rp, [g.hipx, 0, g.hipdz])), back, n0, 0, a * (1 - b) + rad(6) * b);
+    leg(P, 1, g, add(pel, mv(Rp, [-g.hipx, 0, g.hipdz])), front, n0, 0, a * (1 - b) + rad(10) * b);
+    const arms = [[12 - 4 * b, 22 - 10 * b, 24], [12 - 4 * b, 22 - 10 * b, 24]], chest = [-a * .25, rad(6) + rad(8) * b + .004 * br, 0];
+    upper(P, g, W, pel, Rp, chest, arms, [hm[0], rad(4) + hm[1], hm[2]]);   // the head is held in space: it keeps looking ahead
+    return P;
+  }
+  const mix0 = (x, y, t) => x + (y - x) * t;
   function sit(sig, g, W, t, hm, seed, md) {                            // origin is the seat top
     const P = blank(), pel = [0, 0, .095 * g.S - g.hipdz];
     for (const [k, side] of [[0, 1], [1, -1]]) {
@@ -334,13 +352,36 @@ const People = (() => {
     ms.box(x - .11 * S, y + top + .22 * S, z - .11 * S, x + .11 * S, y + top + .33 * S, z + .11 * S, L.cap || L.hairC, fl, B);   // the hair
   }
 
+  // A skateboard (CITY-098, CITY-099; the look of Tools/blender/skateboards_35.py): a rounded deck with its kicktails up, grip
+  // on top, two trucks and four wheels; the electric board a battery box under the deck and a status light, the Neon Boost glowing
+  // wheels, a glowing strip under the deck edge and a booster at the tail. C: the middle of the deck's top; f: nose-forward,
+  // up: the deck's normal, side: across; K: the kind (deck_m, width_m, top_m and the colours, World/rules/boards.json).
+  function board(ms, C, f, up, side, K, lod, fl, sd) {
+    const Lh = K.deck_m / 2, Wh = K.width_m / 2, th = .012, wr = K.wheel_m / 2, at = (a, b, u) => add(add(add(C, sc(f, a)), sc(side, b)), sc(up, u));
+    const seg = lod === 0 ? 12 : 6, rg = lod === 0 ? 4 : 3, glow = K.glow;
+    OSKIP = 0;
+    ball(ms, at(0, 0, -th), sc(side, Wh), sc(f, Lh * .82), sc(up, th), seg, rg, K.deck, fl, sd);   // the deck
+    for (const e of [-1, 1]) ball(ms, add(at(e * Lh * .8, 0, -th + .012), sc(up, 0)), sc(side, Wh * .92), sc(f, Lh * .24), add(sc(up, th), sc(f, e * th * 2.2)), seg, rg, K.deck, fl, sd + 1);   // nose and tail, kicked up
+    ball(ms, at(0, 0, -th * .2), sc(side, Wh * .9), sc(f, Lh * .78), sc(up, th * .35), seg, rg, K.grip, fl, sd + 2);   // the grip
+    const tz = -(K.top_m - wr - th * 2), wb = K.wheelbase_m / 2;
+    for (const e of [-1, 1]) {
+      ball(ms, at(e * wb, 0, (tz - th * 2) / 2 - th), sc(side, Wh * .35), sc(f, .03), sc(up, Math.abs(tz) / 2), 6, 3, K.truck, fl, sd + 3);   // the truck
+      for (const g of [-1, 1]) ball(ms, at(e * wb, g * K.track_m / 2, -K.top_m + wr), sc(side, wr * .5), sc(f, wr), sc(up, wr), lod === 0 ? 10 : 6, rg, K.wheel, fl, sd + 4 + g);   // the wheels
+    }
+    if (K.battery && lod < 2) { ball(ms, at(0, 0, -th * 2 - .022), sc(side, Wh * .6), sc(f, Lh * .45), sc(up, .022), 8, 3, K.battery, fl, sd + 6);   // the battery box
+      if (K.band) ball(ms, at(0, 0, -th * 2 - .022), sc(side, Wh * .62), sc(f, .02), sc(up, .023), 8, 3, K.band, fl, sd + 7);
+      if (K.light) ball(ms, at(Lh * .3, Wh * .6, -th * 2 - .015), sc(side, .008), sc(f, .008), sc(up, .008), 6, 3, K.light, fl, sd + 8); }
+    if (glow && lod < 2) ball(ms, at(0, 0, -th * 2.3), sc(side, Wh * 1.02), sc(f, Lh * .84), sc(up, .004), seg, 3, glow, fl, sd + 9);   // the strip of light under the edge
+    if (K.boost && lod < 2) { limb(ms, at(-Lh * .9, 0, .01), at(-Lh * 1.02, 0, .02), .026, .032, 8, K.truck, fl, true, f, sd + 10);
+      ball(ms, at(-Lh * 1.03, 0, .02), sc(side, .022), sc(f, .005), sc(up, .022), 8, 3, K.core || glow, fl, sd + 11); }   // the booster
+  }
   function draw(ms, x, y, z, yaw, L, pose, o) {
     if (o.lod === 3) return far(ms, x, y, z, yaw, L, pose, o.ph || 0, o.fl);
     const sig = o.sig || L.sig, g = geo(L.S), S = L.S, Sh = S * 1.22, W = L.W, T = 1.12 * S, lod = o.lod, fl = o.fl, t = o.t, sd = L.seed;
     const ff = o.ff == null ? 1 : o.ff, midFace = lod === 1 || (lod === 2 && ff > .02);   // ff: how much of the face shows (play.js fades it in with distance)
     const wd = wander(t, sd * .37), lk = o.look || [0, 0], hm = [wd[0] + lk[0], wd[1] + lk[1] + (o.face ? o.face.nod || 0 : 0), wd[2]];   // a speaker nods on stressed words (ANIM-006)
     TEX = lod < 2 ? 1 : 0; SKINREF = L.skin; OCC = null; OSKIP = 0; HEROSKIP = 0;
-    const P = pose === 1 ? walk(sig, g, W, o.ph, hm, o.mod) : pose === 2 ? sit(sig, g, W, t, hm, sd, o.mod) : stand(sig, g, W, t, pose === 3 ? [0, 0, 0] : hm, sd, o.mod);
+    const P = pose === 5 ? ride(sig, g, W, t, hm, sd, o.ride) : pose === 1 ? walk(sig, g, W, o.ph, hm, o.mod) : pose === 2 ? sit(sig, g, W, t, hm, sd, o.mod) : stand(sig, g, W, t, pose === 3 ? [0, 0, 0] : hm, sd, o.mod);
     // where the character's axes point in the world: standing (x left, y back, z up) or lying on the back, head to +z
     const c = Math.cos(yaw), s = Math.sin(yaw), ex = pose === 3 ? [-1, 0, 0] : [-c, 0, -s], ey = pose === 3 ? [0, -1, 0] : [-s, 0, c], ez = pose === 3 ? [0, 0, 1] : [0, 1, 0];
     const O = pose === 3 ? [x, y + .1 * S, z - .86 * S] : [x, y, z];
@@ -388,6 +429,7 @@ const People = (() => {
       if (kind === "shorts") limb(ms, hip, add(hip, sc(sub(kn, hip), .82)), .092 * T, .086 * T, nl, L.bottom, fl, lod < 2, fwd, sd + k + 2);
       const he = Wp(P.heel[k]), to = Wp(P.toe[k]), f = unit(sub(to, he)), up0 = Wd([0, 0, 1]), side = unit(cross(f, up0)), up = cross(side, f);
       ball(ms, add(add(he, sc(f, .105 * T)), sc(up, .004 * S)), sc(side, .05 * T), sc(f, .12 * T), sc(up, .045 * T), lod === 0 ? 10 : 6, lod === 0 ? 6 : 4, L.shoes, fl, sd + k + 4);
+
     }
     const tx = Wd(mv(P.Rt, [1, 0, 0])), ty = Wd(mv(P.Rt, [0, 1, 0])), tz = Wd(mv(P.Rt, [0, 0, 1])), px = Wd(mv(P.Rp, [1, 0, 0])), py = Wd(mv(P.Rp, [0, 1, 0])), pz = Wd(mv(P.Rp, [0, 0, 1]));
     const pel = Wp(P.pel), sp = Wp(P.spine), swing = Math.abs(P.an[0][1] - P.an[1][1]);
@@ -417,6 +459,13 @@ const People = (() => {
       tube(ms, [a, b, w], [.052 * T, .0435 * T, .035 * T], nl, long ? outer : L.skin, fl, fwd, sd + k + 6, lod < 2, lod < 2);
       if (!long) limb(ms, a, add(a, sc(sub(b, a), .875)), .057 * T, .052 * T, nl, L.top, fl, lod < 2, fwd, sd + k + 8);
       if (lod < 2) ball(ms, add(w, sc(dir, .058 * S)), sc(tx, .03 * T), sc(ty, .042 * T), sc(dir, .055 * T), 8, 5, L.skin, fl, sd);
+    }
+    if (o.board && o.board.carry) {                                 // a board carried (CITY-099): held by its edge in the right hand, deck upright, wheels out
+      const w = Wp(P.wr[1]), dn = Wd([0, 0, -1]), fw = unit(sub(fwd, sc(dn, dot(fwd, dn)))), out = cross(Wd([0, 0, 1]), fw), K = o.board.kind;
+      board(ms, add(add(w, sc(dn, K.width_m / 2 - .01)), sc(out, .02)), fw, out, Wd([0, 0, 1]), K, lod, fl, sd + 40);
+    }
+    if (o.board && !o.board.carry) {                               // a board ridden (CITY-099): under the feet along the way of travel
+      const K = o.board.kind; board(ms, Wp([0, 0, K.top_m]), Wd([0, -1, 0]), Wd([0, 0, 1]), Wd([1, 0, 0]), K, lod, fl, sd + 40);
     }
     // neck and head
     const fm = L.fm || FM0, hx = sc(Wd(mv(P.Rh, [1, 0, 0])), fm.face_w), hy = Wd(mv(P.Rh, [0, 1, 0])), hz = Wd(mv(P.Rh, [0, 0, 1])), nk = Wp(P.neck), hj = Wp(P.headJ), hc = add(hj, sc(hz, .156 * Sh));   // the head's centre, where character_face_05.py puts it

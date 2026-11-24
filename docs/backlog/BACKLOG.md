@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 42 of 55 | 9 of 55 | 9 of 55 |
-| Size of the plan (points) | 533 | 448 | 848 |
-| Size of the suggested plan | 135 | 408 | 816 |
+| Decided | 43 of 56 | 9 of 56 | 9 of 56 |
+| Size of the plan (points) | 545 | 460 | 860 |
+| Size of the suggested plan | 147 | 420 | 828 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -70,6 +70,7 @@
 | **Tram or bus** `F-VEH-TRANSIT` | 2 Network ★ | undecided | undecided | Owner, 2026-11-23: "Level 2: Network" for buses; keep the tram and add buses. Residents of independent houses own the cars; those in the central flats mostly don't and use public transport. Depth and full not picked yet. |
 | **Driving yourself** `F-VEH-DRIVE` | 2 Cars ★ | 2 Cars ★ | 2 Cars ★ | Owner, 2026-11-22: walking, and drivable cars, from the first slice. |
 | **Crash damage** `F-VEH-CRASH` | 2 Broken until mended ★ | undecided | undecided | Owner, 2026-11-22: objects on the pavements, trees and building corners destructible when driving, with a breaking animation; "Until a worker fixes it", "Fast hits break", residents "Yes, they shout". Later milestones not stated. Then the same day: "remove speed requirement for the damage, it should damage at any speed". |
+| **Skateboards** `F-VEH-SKATES` | 2 Skate store and tiers | undecided | undecided | Owner, 2026-11-24: "Level 2 for slice" (asked which level for skates after the models, Y to carry or wear and the store requirements were built, PR #28). Then the same day the owner had the skates made skateboards; the pick stands. The skate store and buying (CITY-102, CITY-103) are to be added separately. Later milestones not stated. |
 
 ## Nature and time
 
@@ -391,3 +392,8 @@
 - 0 Number only: As before: the purse number changes and the amount shows beside it for a moment. Size -.
 - 1 Coins and chimes: A quest or job reward springs coins out around the player; they are drawn back in and fly to the purse, each ringing a note higher, and the purse counts up and glows (sample Q1, Lantern bells). The bank's interest slides a slip out under the purse and pays coins into the bank balance with a till and a bell (sample I1). Sounds and timings are data. Size S.
 - 2 Achievements: Also named achievements for first and rare moments (a first home, a first job done, a loan paid off), listed as data: a painted-sign banner drops in with sparkles and a fanfare (sample A1, Town fanfare), and the menu lists the ones earned. Kept in the save. Size M.
+
+**Skateboards** (`F-VEH-SKATES`). A fast way to cross town, and something to save up for: better skateboards from the skate store as the player earns money.
+- 0 Skate store window: A skate store in town with boards on show; residents ride past now and then. The player cannot ride. Size S.
+- 1 Boards to ride: Skateboards the player owns (manual 50, electric 100, Neon Boost 250 km/h) are carried in the hand and got on or off with one key (Y); no walk on a board: the manual board is pushed with one foot while W is held, the powered boards are ridden standing; glides, brakes and steers, slower indoors. Given in tests (?auto=1) until the store. Size M.
+- 2 Skate store and tiers: Buy skateboards at the skate store with money through the ledger: manual (50 km/h), electric (100 km/h), Neon Boost (250 km/h); owned boards are belongings, a faster board bought becomes the one in use; speeds and prices are data. Size L.

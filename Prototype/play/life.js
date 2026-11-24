@@ -36,6 +36,7 @@ var Life = (() => {
   }
   function newGame(v) {
     fresh(); look = v; clock.day = 0; outfits = []; belongings = []; waypoint = null; plans = {};
+    if (transient) Boards.give(Boards.R.auto_owned, Boards.R.auto_equipped); else Boards.give([]);   // CITY-100: ?auto=1 has every board, the electric one in use; a real game none until the skate store
     E.advance(0, clock.m); Q.newGame(); M.start(); ready = true;
     if (new URLSearchParams(location.search).has("rich")) testRich();
     feats = {}; lastMoney = E.totalMoney(); Rewards.reset(E.L.tx.length); save();
@@ -58,7 +59,7 @@ var Life = (() => {
   function readSave(k) { try { const s = localStorage.getItem(slotKey(k || slot)); return s ? JSON.parse(s) : null; } catch (e) { return null; } }   // a slot's save (UI-013)
   function save() {
     if (!ready || transient) return;                      // ?auto=1 (tests, screenshots) never overwrites a real save
-    try { localStorage.setItem(slotKey(slot), JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), estate: M.save(), remodels, plans, furnishings, outfits, belongings, feats, at: Date.now() })); } catch (e) { }
+    try { localStorage.setItem(slotKey(slot), JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), estate: M.save(), remodels, plans, furnishings, outfits, belongings, feats, boards: Boards.save(), at: Date.now() })); } catch (e) { }
     lastSave = performance.now();
   }
   function loadSave(s) {
@@ -67,7 +68,7 @@ var Life = (() => {
     ready = true; lastMoney = E.totalMoney(); Rewards.reset(E.L.tx.length); feats = s.feats || {};
     remodels = s.remodels || {};
     for (const id of Object.keys(remodels)) { const l = LOTS.find(x => x.id === id); if (l && l.drawn) { l.dsg = remodels[id]; window.wasted.repaint(l, Builder.built(l.dsg)); } }
-    outfits = s.outfits || []; belongings = s.belongings || []; waypoint = null;
+    outfits = s.outfits || []; belongings = s.belongings || []; waypoint = null; Boards.load(s.boards);   // CITY-100
     plans = s.plans || {};
     for (const id of Object.keys(plans)) { const l = LOTS.find(x => x.id === id); if (!l) continue; for (const f of Object.keys(plans[id])) window.wasted.furn.showPlan(l, +f, plans[id][f]); Storeys.resolid(l); }
     furnishings = s.furnishings || {};
@@ -537,6 +538,12 @@ var Life = (() => {
       b.kind !== "town" && FR.pieces[b.kind] ? money(FR.pieces[b.kind].price) : ""]))
       : h("p", { cls: "dim" }, "None. A piece you take away in the building designer comes here, and you place it again from its Furnish tab, in any home of yours."));
     if (belongings.length) body.append(h("p", { cls: "dim" }, "Place these from the Furnish tab of the building designer (Properties, Furnish), in any home of yours."));
+    const sk = Boards.owned(), inUse = Boards.kind();      // CITY-100: the skateboards you own, and which one Y carries or gets on
+    body.append(h("h3", {}, "Skateboards"), sk.length ? tbl(sk.map(k => { const K = Boards.R.kinds[k], mine = inUse && inUse.id === k;
+      return [K.name, h("span", { cls: "dim" }, "up to " + K.top_kmh + " km/h" + (K.push ? ", pushed with a foot" : "") + (mine ? (Boards.riding ? " · riding it" : " · in your hand") : "")),
+        mine ? h("span", { cls: "dim" }, "In use") : btn("Use this", () => { const was = Boards.riding; if (was) Boards.toggle(); Boards.use(k); if (was) Boards.toggle(); return "Now using the " + K.name.toLowerCase() + "."; })]; }))
+      : h("p", { cls: "dim" }, "None yet. The skate store is coming."));
+    if (sk.length) body.append(h("p", { cls: "dim" }, "Y takes the board in use from your hand and gets on it, and picks it up again."));
     return ["Belongings", "What you own and carry · G"];
   }
   const WPARTS = ST.wardrobe.parts;
