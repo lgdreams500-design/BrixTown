@@ -1,4 +1,4 @@
-# Mall shopping 30: buying at each outlet (ADR-0041)
+# Mall shopping 32: buying at each outlet (ADR-0041)
 
 Pictures from the playable slice (`Prototype/play/index.html?auto=1&rich=1`), taken from the page's own picture; the
 preview window was hidden, so the lettering over the game (the prompt and the panel) is not in them.
@@ -26,7 +26,7 @@ a T-shirt, a burger, a stack of novels and a rug; "Put on" in the wardrobe; plac
 Furnish tab (it cost nothing and left the belongings). The goods for the home are a few plain boxes each until the
 Blender objects of stage 2.
 
-## Stage 3: a keeper in every outlet, guards and janitors (CITY-098, WLD-067)
+## Stage 3: a keeper in every outlet, guards and janitors (CITY-105, WLD-067)
 
 Whole pictures of the page at 10:30 on a working day, lettering included (the name over a head is the slice's own:
 name, career, what they are doing).

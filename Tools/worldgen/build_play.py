@@ -193,7 +193,7 @@ def life(w, city, plan, acts):
     return dict(economy={k: v for k, v in e.items() if k != "note"}, quests={k: v for k, v in w["quests"].items() if k != "note"},
                 designer={k: v for k, v in w["designer"].items() if k != "note"}, goods=goods,
                 visits={str(k): [[t, i] for t, i in v] for k, v in visits.items()}, visit_acts=visit_acts,
-                staff={str(k): v for k, v in staff.items()}, checks=dict(script=script, shops=shops, want=want),
+                staff={str(k): v for k, v in staff.items()}, checks=dict(script=script, shops=shops, want=want), reward_checks=reward_checks(w), achievements=achievement_rules(w),
                 estate=estate_rules(w), estate_checks=estate_checks(w, lots_),
                 walk_net=walk_net(city, lots_))
 
@@ -233,6 +233,25 @@ def builder_data(w, ds):
                              checks=dict(script=fs, want=furnish.run_script(w["furnishing"], fs))),
                 room_plan=dict(rules={k: v for k, v in w["room_plan"].items() if k != "note"},           # BUILD-021 to BUILD-023
                                checks=dict(script=rs, want=roomplan.run_script(w["room_plan"], rs))))
+
+
+def achievement_rules(w):
+    """The achievements (QST-009) and a fixed run of facts with what is earned, for achievements.js to check itself against."""
+    import achievements
+    r = {k: v for k, v in w["achievements"].items() if k != "note"}
+    return dict(r, checks=achievements.check_script(r))
+
+
+def reward_checks(w):
+    """A few ledger transactions and what the player is shown for them (SND-019, SND-020), for rewards.js to check itself against."""
+    tx = [[0, 1, 600, "Reward: A parcel for the baker", [["sys:rewards", -5000], ["p:cash", 5000]]],
+          [1, 1, 700, "Job: A delivery", [["sys:rewards", -45000], ["p:cash", 45000]]],
+          [2, 1, 1440, "Interest, current account", [["bank:vault", -12], ["p:current", 12]]],
+          [3, 1, 1440, "Interest, savings account", [["bank:vault", -30], ["p:savings", 30]]],
+          [4, 2, 10, "Loan L1 paid out", [["bank:vault", -100000], ["p:current", 100000]]],
+          [5, 2, 20, "Transfer", [["p:cash", -100], ["p:current", 100]]],
+          [6, 2, 30, "Sold bread, the grocer", [["shop:1", -200], ["p:cash", 200]]]]
+    return dict(tx=tx, want=world.reward_events(w["sound"], tx))
 
 
 def estate_checks(w, lots_):
@@ -323,7 +342,7 @@ def main(day=16):
         role_sig={k: v["sig"] for k, v in w["roles"]["roles"].items()}, signatures=w["signatures"]["signatures"],
         residents=[dict(n=r["name"], r=roles.index(r["role"]), id=r["id"], h=lot_at[r["home"]], w=lot_at[r["work"]] if r["work"] else -1,
                         **({"c": w["careers"]["careers"][r["career"]]["title"] + (" and " + w["careers"]["careers"][r["day_career"]]["title"] if r.get("day_career") else "")} if r.get("career") else {}),
-                        **({"u": w["careers"]["careers"][r["career"]]["wear"]} if r.get("career") and w["careers"]["careers"][r["career"]].get("wear") else {})) for r in w["residents"]],   # CITY-081; u: the job's own clothes (CITY-098)
+                        **({"u": w["careers"]["careers"][r["career"]]["wear"]} if r.get("career") and w["careers"]["careers"][r["career"]].get("wear") else {})) for r in w["residents"]],   # CITY-081; u: the job's own clothes (CITY-105)
         plan=plan, trees=trees, flowers=flower_row(w, city, day), plants=world.plants_today(w, city, day),   # CITY-017: the garden plants today
         lawn={k: v for k, v in w["vegetation"]["lawn"].items() if k != "note"},   # ART-001: how the grass looks
         tram=w["calendar"]["tram"], dialogue=dialogue(w), speech={k: v for k, v in w["speech"].items() if k != "note"}, crash={k: v for k, v in w["crash"].items() if k != "note"},

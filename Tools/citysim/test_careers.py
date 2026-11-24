@@ -144,10 +144,10 @@ def mini_mall():
 
 
 class TheMallsStaff(unittest.TestCase):
-    """CITY-098 (the owner, 2026-11-24): "some taking career as shop owners at the mall outlets, i think one person per
+    """CITY-105 (the owner, 2026-11-24): "some taking career as shop owners at the mall outlets, i think one person per
     outlet is good enough. few security, ganitors etc, can be added to handle entire Mall"."""
 
-    def test_CITY_098_one_keeper_to_each_outlet_on_every_floor_and_a_few_for_the_whole_mall(self):
+    def test_CITY_105_one_keeper_to_each_outlet_on_every_floor_and_a_few_for_the_whole_mall(self):
         people, lots, rules, mall = mini_mall()
         ps = careers.posts(mall, rules)
         self.assertEqual(ps[:5], [("shop_owner", "s1"), ("shop_owner", "s2"), ("food_outlet_owner", "f1"), ("security_guard", None), ("janitor", None)])
@@ -158,7 +158,7 @@ class TheMallsStaff(unittest.TestCase):
         rules["mall_staff"]["whole_mall"][0]["count"] = 3
         self.assertEqual(collections.Counter(c for c, u in careers.posts(mall, rules) if u is None), {"security_guard": 3, "janitor": 1})
 
-    def test_CITY_098_every_outlet_gets_its_keeper_before_anyone_else_is_placed(self):
+    def test_CITY_105_every_outlet_gets_its_keeper_before_anyone_else_is_placed(self):
         people, lots, rules, mall = mini_mall()
         people += [dict(id="x%02d" % k, role="clerk", home="h2", work=None) for k in range(6)]
         a = careers.assign(people, lots, rules)
@@ -173,7 +173,7 @@ class TheMallsStaff(unittest.TestCase):
         self.assertEqual(sum(1 for v in b.values() if v["work"] == "m"), 5)  # filled whatever the shares say: they are the mall's minimum
         self.assertEqual(careers.assign(list(reversed(people)), list(reversed(lots)), rules), b)
 
-    def test_CITY_098_a_mall_without_outlets_is_staffed_as_before(self):
+    def test_CITY_105_a_mall_without_outlets_is_staffed_as_before(self):
         people, lots, rules, mall = mini_mall()
         for L in mall["plan"]["levels"]:
             for u in L["units"]:
@@ -187,7 +187,7 @@ class TheMallsStaff(unittest.TestCase):
                 self.assertEqual(careers.minimum(l, R, TMPL[l["id"]]), [], l["name"])
                 self.assertFalse({c for c, _ in careers.posts(l, R, TMPL[l["id"]])} & {"shop_owner", "food_outlet_owner", "janitor"}, l["name"])
 
-    def test_CITY_098_the_rule_is_checked(self):
+    def test_CITY_105_the_rule_is_checked(self):
         self.assertEqual(careers.problems(R, W["roles"]["roles"]), [])
         bad = copy.deepcopy(R)
         bad["mall_staff"]["keeper"]["food"] = "astronaut"
@@ -199,7 +199,7 @@ class TheMallsStaff(unittest.TestCase):
             self.assertIn(k, C)
         self.assertEqual(C["shop_owner"]["title"], "shop owner")              # the owner's own words for the career
 
-    def test_CITY_098_guards_and_janitors_wear_the_clothes_of_the_job(self):
+    def test_CITY_105_guards_and_janitors_wear_the_clothes_of_the_job(self):
         import re
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Prototype", "play", "people.js"), encoding="utf-8") as f:
             drawn = set(re.findall(r"^    (\w+): \{ g: ", f.read(), re.M))        # the clothes the slice knows how to draw
@@ -211,7 +211,7 @@ class TheMallsStaff(unittest.TestCase):
         bad["careers"]["janitor"]["wear"] = ""
         self.assertTrue(any("wear must name" in p for p in careers.problems(bad, W["roles"]["roles"])))
 
-    def test_CITY_098_eastgate_has_a_keeper_in_every_outlet_and_its_guards_and_janitors(self):
+    def test_CITY_105_eastgate_has_a_keeper_in_every_outlet_and_its_guards_and_janitors(self):
         mall = next(l for l in LOTS if careers.mall_outlets(l))
         outs = careers.mall_outlets(mall)
         self.assertEqual(len(outs), 189)
@@ -232,7 +232,7 @@ class TheMallsStaff(unittest.TestCase):
             self.assertEqual(mall["objects"]["work"][r["post"]], u["stand"][0], u["id"])   # and stands in it, behind its counter
         self.assertEqual(mall["staff"], len(staff))
 
-    def test_CITY_098_the_keepers_are_at_their_counters_in_the_working_day(self):
+    def test_CITY_105_the_keepers_are_at_their_counters_in_the_working_day(self):
         city = world.simulation(W)
         mall = next(l for l in LOTS if careers.mall_outlets(l))
         outs = careers.mall_outlets(mall)

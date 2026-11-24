@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers", "furnishing", "settings", "room_plan", "building_styles", "mall_outlets", "mall_goods"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers", "furnishing", "settings", "room_plan", "building_styles", "mall_outlets", "mall_goods", "achievements"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -136,7 +136,7 @@ def validate(w):
     if w.get("roads") and not out:
         import traffic
         out += traffic.Roads(w["roads"], w["traffic"]).problems(lots_inside(w))   # cars drive inside the wall for now
-    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + mall_goods_problems(w) + estate_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w) + react_problems(w)
+    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + mall_goods_problems(w) + estate_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w) + react_problems(w) + achievement_problems(w)
     kinds = {l["kind"] for l in lots(w)}
     for need in ("home", "shop", "food", "work", "health", "garden", "market", "stop", "utility"):
         if need not in kinds:
@@ -377,6 +377,90 @@ def sun_heights(w):
     return out
 
 
+def achievement_problems(w):
+    """Every rule World/rules/achievements.json must keep (QST-009); the rules themselves are Tools/citysim/achievements.py."""
+    import achievements
+    return achievements.problems(w["achievements"])
+
+
+def reward_coins(s, amount):
+    """How many coins spring out for a reward of `amount` minor units (SND-019): the last tier the amount reaches."""
+    n = 0
+    for least, coins in s["rewards"]["coins"]["reward_tiers"]:
+        if amount >= least:
+            n = coins
+    return n
+
+
+def reward_events(s, tx):
+    """What the player is shown for new ledger transactions (SND-019, SND-020): rewards paid to the player from the
+    rewards account, each with its coins, and all the interest paid by the bank as one. tx: [id, day, minute, memo, lines].
+    The same rule as Prototype/play/rewards.js."""
+    lg, out, interest = s["rewards"]["ledger"], [], {}
+    for t in tx:
+        memo, lines = t[3], t[4]
+        got = {a: v for a, v in lines if a.startswith("p:") and v > 0}
+        paid = sum(got.values())
+        if not paid:
+            continue
+        if any(a == lg["reward_from"] and v < 0 for a, v in lines):
+            out.append({"kind": "reward", "amount": paid, "coins": reward_coins(s, paid), "memo": memo})
+        elif memo.startswith(lg["interest_memo"]) and any(a == lg["interest_from"] and v < 0 for a, v in lines):
+            for a, v in got.items():
+                interest[a] = interest.get(a, 0) + v
+    if interest:
+        out.append({"kind": "interest", "amount": sum(interest.values()), "accounts": sorted(interest)})
+    return out
+
+
+def reward_sound_problems(s):
+    """Every rule the reward sounds and coins in World/rules/sound.json must keep (SND-019, SND-020)."""
+    r, out = s.get("rewards"), []
+    if not r:
+        return ["sound: no rewards (the sounds and coins for money coming in)"]
+    num = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
+    for name, v in r["voices"].items():
+        if not v["partials"] or any(len(p) != 3 or not all(num(x) and x > 0 for x in p) for p in v["partials"]):
+            out.append("sound: reward voice %s needs partials of [pitch, level, length], all above 0" % name)
+    for part, keys in (("quest", ("voice",)), ("interest", ("voice", "end_voice"))):
+        for k in keys:
+            if r[part][k] not in r["voices"]:
+                out.append("sound: rewards.%s.%s is not a reward voice: %s" % (part, k, r[part][k]))
+        if not r[part]["scale"] or r[part]["scale"][0] != 0:
+            out.append("sound: rewards.%s.scale must start on the root (0)" % part)
+        if not 36 <= r[part]["root"] <= 96:
+            out.append("sound: rewards.%s.root should be a MIDI note from 36 to 96" % part)
+    for part in ("sweep", "chord", "twinkle"):
+        a = r.get("achievement", {}).get(part)
+        if not a or not a.get("notes") or a.get("voice") not in r["voices"] or not a.get("len", 0) > 0:
+            out.append("sound: rewards.achievement.%s needs notes, a length and a reward voice" % part)
+    q = r["quest"]
+    if not q["fanfare"] or not q["chord"]:
+        out.append("sound: the quest reward needs a fanfare and a chord")
+    if any(len(n) != 2 or n[0] < 0 for n in q["fanfare"]):
+        out.append("sound: each fanfare note is [seconds, steps above the root]")
+    if any(len(n) != 4 or n[0] < 0 or not 0 <= n[2] <= 1 or n[3] <= 0 for n in r["interest"]["end"]) or not r["interest"]["end"]:
+        out.append("sound: each interest end note is [seconds, note, level from 0 to 1, seconds long]")
+    for k in ("reward_from", "interest_from", "interest_memo"):
+        if not r["ledger"].get(k):
+            out.append("sound: rewards.ledger.%s is missing" % k)
+    c = r["coins"]
+    t = c["reward_tiers"]
+    if not t or t[0][0] != 0 or any(b[0] <= a[0] or b[1] < a[1] for a, b in zip(t, t[1:])) or any(not 1 <= n <= 40 for _, n in t):
+        out.append("sound: rewards.coins.reward_tiers must start at 0 and rise, with 1 to 40 coins each")
+    if not 1 <= c["interest_coins"] <= 40:
+        out.append("sound: rewards.coins.interest_coins should be from 1 to 40")
+    for k in ("ring_m", "up_mps"):
+        if len(c[k]) != 2 or c[k][0] <= 0 or c[k][1] < c[k][0]:
+            out.append("sound: rewards.coins.%s should be [least, most], above 0" % k)
+    for k in ("start_s", "gap_s", "from_m", "fall_mps2", "size_m", "hover_m", "pull_after_s", "pull_gap_s", "lift_s", "pull_s", "fly_s", "interest_start_s", "interest_gap_s", "interest_fly_s", "slip_s"):
+        if not (num(c.get(k)) and c[k] > 0):
+            out.append("sound: rewards.coins.%s should be above 0" % k)
+    if not 0 <= c["bounce"] < 1:
+        out.append("sound: rewards.coins.bounce should be from 0 to under 1")
+    return out
+
+
 def planet_place(w):
     """WLD-065: where the planet hangs in the town's sky, as a direction (east +x, up +y, south +z), from sky.json planet.azimuth
     (degrees from north through east) and planet.elevation, as Prototype/play/play.js places it."""
@@ -481,6 +565,7 @@ def sound_problems(w, acts=None):
             out.append("sound: no sound for the action %s" % name)
         elif r["kind"] not in SOUND_KINDS:
             out.append("sound: action %s has an unknown kind %s" % (name, r["kind"]))
+    out += reward_sound_problems(s)
     shapes = w["speech"]["shapes"]
     for sh in s["voices"]["shapes"]:
         if sh not in shapes:

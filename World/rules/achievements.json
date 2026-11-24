@@ -1,0 +1,17 @@
+{
+ "note": "Achievements (QST-009, F-UI-REWARD level 2): named moments in the player's life, each earned once and kept. An achievement is earned the first time a fact about the player reaches a number; the facts are worked out from the ledger, the quests and the property market (Tools/citysim/achievements.py), never counted up separately. job_memo is how a job's payment begins in the ledger (Tools/citysim/quests.py). Names, lines and numbers are [ASSUMPTION]: the owner may reword and retune them. banner_s is how long the banner stays; several earned together are shown one after another.",
+ "job_memo": "Job:",
+ "banner_s": 3.6,
+ "list": [
+  { "id": "first_quest",  "name": "A friend in town",      "line": "Finish a quest for someone in town.",       "when": { "fact": "quests_done",  "at_least": 1 } },
+  { "id": "four_quests",  "name": "Part of the town",      "line": "Finish four quests.",                       "when": { "fact": "quests_done",  "at_least": 4 } },
+  { "id": "first_job",    "name": "An honest day's work",  "line": "Get paid for a job.",                       "when": { "fact": "jobs_paid",    "at_least": 1 } },
+  { "id": "ten_jobs",     "name": "Someone to rely on",    "line": "Get paid for ten jobs.",                    "when": { "fact": "jobs_paid",    "at_least": 10 } },
+  { "id": "saver",        "name": "Something put by",      "line": "Have Bx 100 in a savings account.",         "when": { "fact": "savings",      "at_least": 10000 } },
+  { "id": "debt_free",    "name": "Debt free",             "line": "Pay a loan back in full.",                  "when": { "fact": "loans_repaid", "at_least": 1 } },
+  { "id": "stallholder",  "name": "Open for business",     "line": "Sell something from your market stall.",    "when": { "fact": "stall_sold",   "at_least": 1 } },
+  { "id": "tenant",       "name": "A key of your own",     "line": "Rent a place to live.",                     "when": { "fact": "homes_rented", "at_least": 1 } },
+  { "id": "home_owner",   "name": "A home of your own",    "line": "Buy a property.",                           "when": { "fact": "homes_owned",  "at_least": 1 } },
+  { "id": "thousand",     "name": "A thousand to your name", "line": "Have Bx 1,000 in all.",                   "when": { "fact": "money",        "at_least": 100000 } }
+ ]
+}

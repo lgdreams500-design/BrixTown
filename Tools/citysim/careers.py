@@ -4,7 +4,7 @@ All the numbers are in World/rules/careers.json. Standard library only. Nothing 
 worked out once from the residents' homes, the lots and the rules, and gives the same answer on every machine.
 
     workplace_type(lot, R, template)  -> the staffing type of a lot, or None
-    mall_outlets(lot)                 -> the outlets of a mall, floor by floor (CITY-098)
+    mall_outlets(lot)                 -> the outlets of a mall, floor by floor (CITY-105)
     posts(lot, R, template)           -> [(career, unit id or None)], in the order of the type's posts
     assign(residents, lots, R, templates) -> {resident id: dict(career, role, work, post)}
     problems(R, roles)                -> what is wrong with the rules, in plain words
@@ -64,13 +64,13 @@ def floor_area(lot, spec, template=None):
 
 
 def mall_outlets(lot):
-    """The outlets of a mall: its units with a kind of outlet, on every floor, in the plan's order (CITY-098)."""
+    """The outlets of a mall: its units with a kind of outlet, on every floor, in the plan's order (CITY-105)."""
     return [u for L in lot.get("plan", {}).get("levels", []) for u in L["units"] if u.get("outlet")]
 
 
 def _mall_first(lot, R):
     """The posts of a mall of outlets that are always filled: one keeper to each outlet, then those who look after the
-    whole mall (guards, janitors), who have no unit (CITY-098)."""
+    whole mall (guards, janitors), who have no unit (CITY-105)."""
     outs = mall_outlets(lot)
     if not outs:
         return []
@@ -98,7 +98,7 @@ def posts(lot, R, template=None):
 
 def minimum(lot, R, template=None):
     """The posts a workplace cannot open without (each post's min), as indices into posts(). In a mall of outlets:
-    every keeper and everyone who looks after the whole mall, so that no outlet stands empty (CITY-098)."""
+    every keeper and everyone who looks after the whole mall, so that no outlet stands empty (CITY-105)."""
     if "plan" in lot:
         return list(range(len(_mall_first(lot, R))))
     t = workplace_type(lot, R, template)
@@ -247,7 +247,7 @@ def problems(R, roles):
         if t not in R["staffing"]:
             out.append("mall unit type %s: no staffing" % t)
     M = R.get("mall_staff") or {}
-    for trade in ("shop", "food"):                                # CITY-098: a keeper's career for each trade of outlet
+    for trade in ("shop", "food"):                                # CITY-105: a keeper's career for each trade of outlet
         if (M.get("keeper") or {}).get(trade) not in C:
             out.append("mall_staff: no known career for the keeper of a %s outlet" % trade)
     for w in M.get("whole_mall") or []:

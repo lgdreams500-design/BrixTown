@@ -50,7 +50,7 @@ shop and eat. This record is written with stage 1 and is added to as the others 
 
 Written 2026-11-24, after the owner was told that it would give 639 residents other work and answered "Yes, re-deal".
 
-1. **One keeper to each outlet, on every floor** (CITY-098). In a mall whose units are outlets, `careers.posts` gives
+1. **One keeper to each outlet, on every floor** (CITY-105). In a mall whose units are outlets, `careers.posts` gives
    each outlet one post: `shop_owner` ("shop owner", the owner's words) for a shop, `food_outlet_owner` for a food
    outlet. The 206 posts the ground floor had kept from the old plan (three to a shop, four to a cafe) are gone.
 2. **A few for the whole mall**: six security guards and six janitors (`mall_staff.whole_mall` in
@@ -123,4 +123,4 @@ Only the owner picks levels. Nothing was recorded in `feature_choices.json` for 
 - No automated test drives the page. The rule's port is checked by the page's self-test; the prompt, the panel, the
   wardrobe and placing a bought guitar were tried by hand in the slice.
 
-Pictures: `Art/StyleTests/mall_shopping_30/`.
+Pictures: `Art/StyleTests/mall_shopping_32/`.
