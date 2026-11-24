@@ -225,6 +225,37 @@ namespace
 	}
 }
 
+int32 FBrixSky::SeasonOf(int32 Day) const
+{
+	const int32 Year = FMath::Max(1, Seasons.Num() * DaysPerSeason);
+	return ((Day % Year + Year) % Year) / FMath::Max(1, DaysPerSeason);
+}
+
+double FBrixSky::Declination(int32 Season) const
+{
+	const double Half = (Sunset[Season] - Sunrise[Season]) / 24.0 * UE_DOUBLE_PI, La = FMath::DegreesToRadians((double)LatitudeDeg);
+	return FMath::Atan(-FMath::Cos(Half) / FMath::Tan(La));
+}
+
+double FBrixSky::HourAngle(int32 Season, double Minute) const
+{
+	return (Minute - (Sunrise[Season] + Sunset[Season]) * 30.0) / 1440.0 * UE_DOUBLE_TWO_PI;
+}
+
+FVector3d FBrixSky::SunPlace(int32 Season, double H) const
+{
+	const double La = FMath::DegreesToRadians((double)LatitudeDeg), Dec = Declination(Season);
+	const double Cd = FMath::Cos(Dec), Sd = FMath::Sin(Dec), Ch = FMath::Cos(H);
+	return FVector3d(-Cd * FMath::Sin(H), Cd * Ch * FMath::Cos(La) + Sd * FMath::Sin(La), Cd * Ch * FMath::Sin(La) - Sd * FMath::Cos(La));
+}
+
+double FBrixSky::Daylight(int32 Season, double Minute) const
+{
+	const double Rise = Sunrise[Season] * 60.0, Set = Sunset[Season] * 60.0;
+	const double X = FMath::Clamp(FMath::Min((Minute - (Rise - 30.0)) / 60.0, ((Set + 30.0) - Minute) / 60.0), 0.0, 1.0);
+	return X * X * (3.0 - 2.0 * X);                       // smoothstep, as the slice's smooth(0, 1, .)
+}
+
 int32 FBrixPattern::TypeIndex() const
 {
 	static const TCHAR* Types[] = { TEXT("bond"), TEXT("flemish"), TEXT("rubble"), TEXT("flags"), TEXT("herringbone"), TEXT("basket") };
@@ -332,6 +363,28 @@ bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError)
 	TSharedPtr<FJsonObject> HouseStyles;
 	if (!ReadJson(FPaths::Combine(RulesDir, TEXT("house_styles.json")), HouseStyles, OutError)) return false;
 	if (!ReadHousePlans(FPaths::Combine(RulesDir, TEXT("home_plans.json")), OutCity, OutError)) return false;
+	{
+		// the calendar and the sky (ADR-0024)
+		TSharedPtr<FJsonObject> Cal, Sky;
+		if (!ReadJson(FPaths::Combine(RulesDir, TEXT("calendar.json")), Cal, OutError)) return false;
+		if (!ReadJson(FPaths::Combine(RulesDir, TEXT("sky.json")), Sky, OutError)) return false;
+		const TSharedPtr<FJsonObject> C = Cal->GetObjectField(TEXT("calendar"));
+		FBrixSky& S = OutCity.Sky;
+		S.Seasons = Strings(C, TEXT("seasons"));
+		for (const TSharedPtr<FJsonValue>& V : C->GetArrayField(TEXT("sunrise"))) S.Sunrise.Add((float)V->AsNumber());
+		for (const TSharedPtr<FJsonValue>& V : C->GetArrayField(TEXT("sunset"))) S.Sunset.Add((float)V->AsNumber());
+		S.DaysPerSeason = (int32)Num(C, TEXT("days_per_season"), 12);
+		S.RealSecondsPerMinute = (float)Num(C, TEXT("real_seconds_per_minute"), 10);
+		const TSharedPtr<FJsonObject> N = Sky->GetObjectField(TEXT("night"));
+		S.LatitudeDeg = (float)Num(N, TEXT("latitude"), 40);
+		const TSharedPtr<FJsonObject>* Paths = nullptr;
+		if (N->TryGetObjectField(TEXT("paths"), Paths)) S.SunLift = (float)Num(*Paths, TEXT("sun_lift"), 0.08);
+		if (S.Seasons.Num() == 0 || S.Sunrise.Num() != S.Seasons.Num() || S.Sunset.Num() != S.Seasons.Num())
+		{
+			OutError = TEXT("calendar.json: seasons, sunrise and sunset do not match");
+			return false;
+		}
+	}
 
 	const TArray<TSharedPtr<FJsonValue>>* BlockList = nullptr;
 	if (!Root->TryGetArrayField(TEXT("blocks"), BlockList))
