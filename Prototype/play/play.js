@@ -2395,7 +2395,7 @@ function cloudCover(m) {
 // What the weather does to the light right now (WLD-037): each part blended across the edges of the six-hour slots, like the cover.
 // wet: how wet the paving is, 1 while it rains and drying for rain.dry_minutes after a wet slot ends. All of it from the clock.
 let wxTry = new URLSearchParams(location.search).get("weather"); if (!SKY.weather[wxTry]) wxTry = null;   // for looking at the weather: K steps through the day's own weather, clear, cloud, rain and fog; ?weather=rain starts with one
-addEventListener("keydown", e => { if (e.code === "F9" && !e.repeat && started && window.WASTED_SEASONS) { e.preventDefault();   // F9: the next season (it was Y until Y became the skates key, 2026-11-24), by loading the page again in the same spot at the same hour
+addEventListener("keydown", e => { if (e.code === "F9" && !e.repeat && started && window.WASTED_SEASONS) { e.preventDefault();   // F9: the next season (it was Y until Y became the skateboard key, 2026-11-24), by loading the page again in the same spot at the same hour
   const names = Object.keys(window.WASTED_SEASONS), u = new URLSearchParams(location.search);
   u.set("season", names[(names.indexOf(D.day.season) + 1) % names.length]); u.set("auto", "1");
   for (const [k, v] of [["x", pl.x], ["z", pl.z], ["y", pl.y], ["yaw", cam.yaw], ["pitch", cam.pitch], ["t", clock.m]]) u.set(k, (+v).toFixed(2));
@@ -2450,8 +2450,9 @@ const STUDIO = new URLSearchParams(location.search).has("studio"), STUDIO_AT = n
       STUDIO_WHO = Math.max(0, (+new URLSearchParams(location.search).get("studio") || 1) - 1);   // ?studio=2 shows the second person of the lineup, and so on
 let STUDIO_M = +new URLSearchParams(location.search).get("at") || 0, STUDIO_FF = new URLSearchParams(location.search).has("ff") ? +new URLSearchParams(location.search).get("ff") : null;   // ?studio&at=20: the camera 20 m away at eye height, the person drawn as the town draws them there (face fading, LOD)
 const LINEUP = STUDIO || new URLSearchParams(location.search).has("lineup") ? People.cast() : null;
-// ?lineup=1&skates=electric (or manual, neon_boost; add &carry=1 for the pair in the hand): the lineup in skates, to look at them (CITY-101)
-const LINE_SK = (() => { const q2 = new URLSearchParams(location.search), k = q2.get("skates"), R = window.WASTED.skates; return R && R.kinds[k] ? { kind: Object.assign({ id: k, boost: k === "neon_boost" }, R.kinds[k]), worn: !q2.has("carry") } : null; })();
+// ?lineup=1&board=electric (or manual, neon_boost): the lineup riding that skateboard, to look at it (CITY-101); &push=1 shows the
+// manual board's push going round, &carry=1 the board in the hand, &turn=90 turns the person (degrees) to see it from the side
+const LINE_SK = (() => { const q2 = new URLSearchParams(location.search), k = q2.get("board"), R = window.WASTED.boards; return R && R.kinds[k] ? { kind: Object.assign({ id: k }, R.kinds[k]), carry: q2.has("carry"), push: q2.has("push") ? 1 : 0, turn: +(q2.get("turn") || 0) * Math.PI / 180 } : null; })();
 function lighting(m) {                                       // the reference recipe (sun 14 W/m2, sky 0.35, haze) carried through the day
   const rise = D.day.sunrise * 60, set = D.day.sunset * 60, day = smooth(0, 1, Math.min((m - (rise - 30)) / 60, ((set + 30) - m) / 60));
   const unit = v => { const n = Math.hypot(v[0], v[1], v[2]); return v.map(q => q / n); }, Nt = nightSky(m), st = Nt.sun;   // the sun on its path for the season (WLD-043)
@@ -2521,7 +2522,7 @@ function stepPlayer(dt) {
   const run = keys.ShiftLeft || keys.ShiftRight, sp = run ? 4.2 : 1.6, sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
   let vx = sy * f + cy * s, vz = -cy * f + sy * s; const l = Math.hypot(vx, vz);
   pl.moving = l > 0;
-  if (Skates.worn) stepSkates(dt, f, s);                  // on skates (CITY-099)
+  if (Boards.riding) stepBoard(dt, f, s);                 // on a skateboard (CITY-099)
   else if (l > 0) {
     vx *= sp / l; vz *= sp / l;
     const n = Math.max(1, Math.ceil(sp * dt / .15));
@@ -2541,35 +2542,41 @@ function stepPlayer(dt) {
     if (pl.y <= g) { pl.y = g; pl.vy = 0; pl.onGround = true; } else pl.onGround = false;
   } else { pl.y = mix(pl.y, g, Math.min(1, dt * 18)); pl.onGround = true; }
 }
-// Skates (CITY-099): Y takes the pair in use from the hand onto the feet and back. Not in a car, on a seat or on the playground.
-function skatesKey() {
+// Skateboards (CITY-099): Y takes the board in use from the hand and gets on it, and picks it up again. Not in a car, on a seat or
+// on the playground.
+function boardKey() {
   if (pl.pose > 1 || pl.play) return;
-  const on = Skates.toggle();
-  if (on === null) return Life.toast("You have no skates yet. The skate store is coming.");
-  Sound.act(on ? "sit" : "stand"); Life.toast(on ? Skates.kind().name + " on: W to push, S to brake, Y to carry them again." : Skates.kind().name + " in your hand.");
+  const on = Boards.toggle();
+  if (on === null) return Life.toast("You have no skateboard yet. The skate store is coming.");
+  const K = Boards.kind(); pl.bdB = 0;
+  Sound.act(on ? "jump" : "stand"); Life.toast(on ? K.name + ": W to " + (K.push ? "push" : "go") + ", S to brake, Y to pick it up." : K.name + " in your hand.");
 }
-// Skating: the pair's speed (skates.js) along a heading that turns towards where W A S D point, gliding on when nothing is pressed;
-// pulling back (the keys pointing against the heading) brakes. A knock against a wall or a car loses the speed into it.
-function stepSkates(dt, f, s) {
-  const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw), ix = sy * f + cy * s, iz = -cy * f + sy * s, il = Math.hypot(ix, iz);
-  if (pl.skH === undefined) pl.skH = pl.yaw;
-  let push = false, back = false;
+// Riding: the board's speed (boards.js) along a heading that turns towards where W A S D point, gliding on when nothing is pressed;
+// keys against the heading brake. A manual board speeds up only while a foot pushes it (W held: the push goes round, pl.ph); the
+// powered boards go by themselves while W is held and the rider just stands. No walking on a board. A knock against a wall or a
+// car loses the speed into it.
+function stepBoard(dt, f, s) {
+  const K = Boards.kind(), sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw), ix = sy * f + cy * s, iz = -cy * f + sy * s, il = Math.hypot(ix, iz);
+  if (pl.bdH === undefined) pl.bdH = pl.yaw;
+  let go = false, back = false;
   if (il > 0) {
-    const want = yawOf(ix, iz); let dy = want - pl.skH; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
-    if (Math.abs(dy) > 2.3 && Skates.v > .5) back = true;  // keys against the heading: brake
-    else { push = true; const v0 = Skates.v, rate = Skates.R.turn_rate / (1 + v0 / 15); pl.skH += Math.sign(dy) * Math.min(Math.abs(dy), (v0 < 1 ? 20 : rate) * dt); }
+    const want = yawOf(ix, iz); let dy = want - pl.bdH; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+    if (Math.abs(dy) > 2.3 && Boards.v > .5) back = true;  // keys against the heading: brake
+    else { go = true; const v0 = Boards.v, rate = Boards.R.turn_rate / (1 + v0 / 15); pl.bdH += Math.sign(dy) * Math.min(Math.abs(dy), (v0 < 1 ? 20 : rate) * dt); }
   }
-  const inL = lotAt(pl.x, pl.z), indoor = !!(inL && !isOpen(inL) && inL.H && pl.y < inL.H - .2), v = Skates.step(dt, push, back, indoor);
-  pl.moving = v > .05 || push;
+  const pushing = K.push && go;
+  pl.bdB = (pl.bdB || 0) + ((pushing ? 1 : 0) - (pl.bdB || 0)) * Math.min(1, dt * 7);   // into the push and back to standing on the board
+  if (pushing || (K.push && pl.ph > 0 && pl.ph < .97 && pl.bdB > .05)) pl.ph = (pl.ph + Boards.R.push_per_s * dt) % 1; else if (!K.push) pl.ph = 0;   // a push finishes its swing
+  const inL = lotAt(pl.x, pl.z), indoor = !!(inL && !isOpen(inL) && inL.H && pl.y < inL.H - .2), v = Boards.step(dt, go, back, indoor);
+  pl.moving = false;                                       // no walk on a board
   if (v > 0) {
-    const vx = Math.sin(pl.skH) * v, vz = -Math.cos(pl.skH) * v, n = Math.max(1, Math.ceil(v * dt / .15)), x0 = pl.x, z0 = pl.z;
+    const vx = Math.sin(pl.bdH) * v, vz = -Math.cos(pl.bdH) * v, n = Math.max(1, Math.ceil(v * dt / .15)), x0 = pl.x, z0 = pl.z;
     for (let k = 0; k < n; k++) { pl.x += vx * dt / n; pl.z += vz * dt / n; pushOut(pl); pushOut(pl); }
     const went = Math.hypot(pl.x - x0, pl.z - z0), meant = v * dt;
-    if (meant > .001 && went < meant * .7) Skates.slow(Math.max(0, went / meant));   // ran into something
+    if (meant > .001 && went < meant * .7) Boards.slow(Math.max(0, went / meant));   // ran into something
   }
-  let dy = pl.skH - pl.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); pl.yaw += dy * Math.min(1, dt * 12);
-  pl.run = false; if (push) pl.ph = (pl.ph + Math.min(Skates.v / Skates.R.stroke_m, 1.4) * dt) % 1;   // a stroke of the legs while pushing; gliding stands still
-  pl.skPush = push;
+  let dy = pl.bdH - pl.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); pl.yaw += dy * Math.min(1, dt * 12);
+  pl.run = false;
 }
 function offPlay(at) {                                     // step off what you were playing on, beside it
   const [x, z] = at || Dress.playerOff(pl.play); pl.play = null; pl.pose = 0; pl.x = x; pl.z = z; pl.y = floorAt(x, z, 1); pl.vy = 0; pl.onGround = true; Sound.act("stand");
@@ -2865,7 +2872,7 @@ function hud(VP, W, H, tags) {
   $("stats").innerHTML = bodies + " of " + D.residents.length + " residents have bodies<br>" + Math.round(fps) + " frames a second" + (simple ? " · simple picture" : quality < 1 ? " · soft picture" : "");
   if (PERF) $("stats").innerHTML += "<br>script " + GT.cpu.toFixed(1) + " ms · picture " + Math.round(quality * 100) + "% " + cv.width + "×" + cv.height +
     (TQ ? Object.entries(GT.ms).map(([k, v]) => "<br>" + k + " " + v.toFixed(1) + " ms").join("") : "<br>(this browser gives no graphics timings)");
-  const sb = $("skatebar"); if (started && !Life.on && Skates.worn && pl.pose < 2) { sb.style.display = "block"; sb.textContent = Skates.kind().name + " · " + Math.round(Skates.v * 3.6) + " of " + Skates.kind().top_kmh + " km/h"; } else sb.style.display = "none";   // CITY-099
+  const sb = $("boardbar"); if (started && !Life.on && Boards.riding && pl.pose < 2) { sb.style.display = "block"; sb.textContent = Boards.kind().name + " · " + Math.round(Boards.v * 3.6) + " of " + Boards.kind().top_kmh + " km/h"; } else sb.style.display = "none";   // CITY-099
   const pr = $("prompt"); if (started && !Life.on && SET.prompts && (target || pl.pose > 1)) { pr.style.display = "block"; pr.innerHTML = "<kbd>E</kbd>" + (pl.pose === 4 ? Cars.label() : pl.play ? "Get off" : pl.pose > 1 ? "Get up" : target.label); } else pr.style.display = "none";
   $("dot").style.display = started && cam.fp ? "block" : "none";
   g2.clearRect(0, 0, W, H); if (!started) return;
@@ -2976,7 +2983,7 @@ addEventListener("keydown", e => {
   else if (e.code === "KeyH") Life.panel("help");        // the controls (UI-008)
   else if (e.code === "KeyG") Life.panel("belongings");  // what you own and carry (INV-001)
   else if (e.code === "KeyU") Life.panel("wardrobe");    // outfits (CHR-014)
-  else if (e.code === "KeyY") skatesKey();             // skates: from the hand onto the feet and back (CITY-099)
+  else if (e.code === "KeyY") boardKey();              // the skateboard: from the hand onto it and back (CITY-099)
   else if (e.code.startsWith("Bracket")) Sound.act("clock");
   if (e.code === "BracketRight") clock.rate = RATES[Math.min(RATES.length - 1, RATES.indexOf(clock.rate) + 1)];
   else if (e.code === "BracketLeft") clock.rate = RATES[Math.max(0, RATES.indexOf(clock.rate) - 1)];
@@ -3291,11 +3298,11 @@ function frame(now) {
   FULL = new Set(near13.sort((a, b) => a[0] - b[0]).slice(0, FULL_MAX).map(e => e[1]));   // next frame's full-detail bodies
   if (started && !DZ) Talk.pick();                               // the nearest resident in reach can be talked to (E)
   if (started) Life.frame(dt);                            // money, quests and jobs move on with the clock (life.js)
-  if (LINEUP) LINEUP.forEach((L, k) => { if (STUDIO && k !== STUDIO_WHO) return; const lx = STUDIO ? STUDIO_AT[0] : OX + 300.5 + k * 1.1; const lz = STUDIO ? STUDIO_AT[1] : OZ + 186.6; People.draw(dyn, lx, groundBase(lx, lz) + (LINE_SK && LINE_SK.worn ? People.SKATE_LIFT * L.S : 0), lz, Math.PI, L, 0, { skates: LINE_SK, ph: 0, t: now / 1000, lod: !STUDIO_M || STUDIO_M < FULL_M ? 0 : STUDIO_M < LOD1_M ? 1 : STUDIO_M < LOD3_M ? 2 : 3, ff: STUDIO_FF != null ? STUDIO_FF : clamp((FACE_OUT_M - (STUDIO_M || 0)) / (FACE_OUT_M - LOD1_M), 0, 1), fl: 14, mod: STUDIO ? { arms: [[1, 0, 4, 0], [1, 0, 4, 0]] } : null }); });   // in the studio the arms hang straight, as in the reference   // ?lineup=1: the six people of character_lineup.png in a row on Linden Street, to compare with it
+  if (LINEUP) LINEUP.forEach((L, k) => { if (STUDIO && k !== STUDIO_WHO) return; const lx = STUDIO ? STUDIO_AT[0] : OX + 300.5 + k * 1.1; const lz = STUDIO ? STUDIO_AT[1] : OZ + 186.6; People.draw(dyn, lx, groundBase(lx, lz), lz, Math.PI + (LINE_SK ? LINE_SK.turn : 0), L, LINE_SK && !LINE_SK.carry ? 5 : 0, { board: LINE_SK, ride: LINE_SK && !LINE_SK.carry ? { h: LINE_SK.kind.top_m, push: LINE_SK.push, ph: (now / 1000 * .8) % 1 } : null, ph: 0, t: now / 1000, lod: !STUDIO_M || STUDIO_M < FULL_M ? 0 : STUDIO_M < LOD1_M ? 1 : STUDIO_M < LOD3_M ? 2 : 3, ff: STUDIO_FF != null ? STUDIO_FF : clamp((FACE_OUT_M - (STUDIO_M || 0)) / (FACE_OUT_M - LOD1_M), 0, 1), fl: 14, mod: STUDIO ? { arms: [[1, 0, 4, 0], [1, 0, 4, 0]] } : null }); });   // in the studio the arms hang straight, as in the reference   // ?lineup=1: the six people of character_lineup.png in a row on Linden Street, to compare with it
   if ((started || Life.designing) && (!cam.fp || Life.live) && !cam.close && pl.pose !== 4) {   // not while in a car; and in the designer, to see who you are making
     let da = cam.yaw - pl.yaw; da = Math.atan2(Math.sin(da), Math.cos(da));
-    const skW = Skates.worn && !pl.play && pl.pose < 2, skK = Skates.kind(), skO = skK && !pl.play && pl.pose < 2 ? { kind: skK, worn: skW } : null;   // skates on the feet or in the hand (CITY-099)
-    People.draw(dyn, pl.x, pl.y + (skW ? People.SKATE_LIFT * playerLook.S : 0), pl.z, pl.yaw, playerLook, pl.play ? pl.playPose : pl.pose > 1 ? pl.pose : pl.moving && (!skW || pl.skPush) ? 1 : 0, { skates: skO, ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
+    const bK = !pl.play && pl.pose < 2 ? Boards.kind() : null, bR = bK && Boards.riding;   // the skateboard ridden or in the hand (CITY-099)
+    People.draw(dyn, pl.x, pl.y, pl.z, pl.yaw, playerLook, pl.play ? pl.playPose : pl.pose > 1 ? pl.pose : bR ? 5 : pl.moving ? 1 : 0, { board: bK ? { kind: bK, carry: !bR } : null, ride: bR ? { h: bK.top_m, push: pl.bdB || 0, ph: pl.ph } : null, ph: pl.ph, t: now / 1000, lod: 0, fl: lotAt(pl.x, pl.z) && pl.y < 6 ? 10 : 14,
       look: Life.live ? [0, 0] : pl.pose === 3 ? null : [clamp(-da, -1, 1) * .7, clamp(-cam.pitch, -.5, .5) * .5], sig: pl.play ? pl.playSig : pl.moving && pl.run ? People.SIG.Run : null, mod: pl.play ? pl.playMod : null });
   }
   if (started && Life.view) designMarks();             // the building designer's picked piece (life.js)

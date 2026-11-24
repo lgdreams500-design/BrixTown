@@ -2475,8 +2475,8 @@
     {
       "id": "F-VEH-SKATES",
       "area": "vehicles",
-      "title": "Skates",
-      "why": "A fast way to cross town on foot, and something to save up for: better skates from the skate store as the player earns money.",
+      "title": "Skateboards",
+      "why": "A fast way to cross town, and something to save up for: better skateboards from the skate store as the player earns money.",
       "pillars": [
         2,
         3
@@ -2494,19 +2494,19 @@
       "levels": [
         {
           "name": "Skate store window",
-          "what": "A skate store in town with skates on show; residents skate past now and then. The player cannot skate.",
+          "what": "A skate store in town with boards on show; residents ride past now and then. The player cannot ride.",
           "effort": "S",
           "needs": {}
         },
         {
-          "name": "Skates to wear",
-          "what": "Skates the player owns (manual 50, electric 100, Neon Boost 250 km/h) are carried in the hand and put on or taken off with one key (Y); skating glides, brakes and steers, slower indoors. Given in tests (?auto=1) until the store.",
+          "name": "Boards to ride",
+          "what": "Skateboards the player owns (manual 50, electric 100, Neon Boost 250 km/h) are carried in the hand and got on or off with one key (Y); no walk on a board: the manual board is pushed with one foot while W is held, the powered boards are ridden standing; glides, brakes and steers, slower indoors. Given in tests (?auto=1) until the store.",
           "effort": "M",
           "needs": {}
         },
         {
           "name": "Skate store and tiers",
-          "what": "Buy skates at the skate store with money through the ledger: manual (50 km/h), electric (100 km/h), Neon Boost (250 km/h); owned skates are belongings, the best owned pair goes on with the key, speeds and prices are data.",
+          "what": "Buy skateboards at the skate store with money through the ledger: manual (50 km/h), electric (100 km/h), Neon Boost (250 km/h); owned boards are belongings, a faster board bought becomes the one in use; speeds and prices are data.",
           "effort": "L",
           "needs": {
             "F-BLD-SHOP": 2,

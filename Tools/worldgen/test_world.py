@@ -737,11 +737,11 @@ class GettingOutOfTheWay(unittest.TestCase):
 
 
 
-class Skates(unittest.TestCase):
-    """CITY-098 to CITY-100: the kinds of skates, their speeds, and what ?auto=1 gives the player (World/rules/skates.json)."""
-    R = W["skates"]
+class Skateboards(unittest.TestCase):
+    """CITY-098 to CITY-100: the kinds of skateboard, their speeds and sizes, and what ?auto=1 gives the player (World/rules/boards.json)."""
+    R = W["boards"]
 
-    def test_CITY_098_skate_kinds_and_speeds(self):
+    def test_CITY_098_board_kinds_and_speeds(self):
         k = self.R["kinds"]
         self.assertEqual({n: k[n]["top_kmh"] for n in k}, {"manual": 50, "electric": 100, "neon_boost": 250})   # the owner, 2026-11-24
         self.assertEqual(self.R["order"], ["manual", "electric", "neon_boost"])
@@ -752,14 +752,15 @@ class Skates(unittest.TestCase):
                 self.assertGreater(v[f], 0, n + " " + f)
             self.assertLess(v["glide_kmh_s"], v["brake_kmh_s"], n)           # letting go glides; pulling back stops sooner
             self.assertLess(v["top_kmh"] / v["accel_kmh_s"], 10, n)          # top speed in under ten seconds
-            for c in ("boot", "trim", "frame", "wheel"):
+            self.assertTrue(0.6 <= v["deck_m"] <= 1.2 and 0.15 <= v["width_m"] <= 0.3 and 0.06 <= v["top_m"] <= 0.2, n)   # a skateboard's size
+            for c in ("deck", "grip", "truck", "wheel"):
                 self.assertEqual(len(v[c]), 3, n + " " + c)
-            self.assertEqual(v["powered"], v["glow"] is not None, n)         # only the powered skates light up
+            self.assertEqual(v["push"], not v["powered"], n)                 # the owner: a foot pushes the manual board only
         self.assertLess(self.R["indoor_top_kmh"], min(tops))                 # indoors nobody goes at full speed
 
-    def test_CITY_100_auto_owns_all_and_wears_electric(self):
+    def test_CITY_100_auto_owns_all_and_rides_electric(self):
         self.assertEqual(sorted(self.R["auto_owned"]), sorted(self.R["kinds"]))
-        self.assertEqual(self.R["auto_equipped"], "electric")               # the owner, 2026-11-24: ?auto=1 loads the electric skates
+        self.assertEqual(self.R["auto_equipped"], "electric")               # the owner, 2026-11-24: ?auto=1 loads the electric board
 
 
 
