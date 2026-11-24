@@ -114,7 +114,7 @@ following a quest, a dot on a board with something new): not proposed in the bac
 
 | Version | Date | Change |
 |---|---|---|
-| 0.3.2 | 2026-11-24 | CHR-016: clothes bought at the mall's outlets are listed in the wardrobe and can be put on (owner's request; ADR-0040). Belongings lists what is bought for the home and carried from the outlets as it does everything else. `F-CHR-WARDROBE` stays picked at 1. |
+| 0.3.2 | 2026-11-24 | CHR-016: clothes bought at the mall's outlets are listed in the wardrobe and can be put on (owner's request; ADR-0041). Belongings lists what is bought for the home and carried from the outlets as it does everything else. `F-CHR-WARDROBE` stays picked at 1. |
 | 0.3.1 | 2026-11-24 | The big map shows the outskirts and every tree, the player as an arrow, and zooms and pans (UI-018; owner's request). |
 | 0.3.0 | 2026-11-23 | The menu's look and organisation (owner: "C, Painted signs", ADR-0033): §1.1, UI-015, UI-016. On 2026-11-24 the owner added: the real face, live, and the whole character in the wardrobe (UI-017). |
 | 0.2.0 | 2026-11-23 | `F-UI-MENU` level 2 (owner: "now build the game menu level 2"): UI-011 to UI-014, the Me and Storage tabs, the map's mark and filters, three save slots. |

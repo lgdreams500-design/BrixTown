@@ -1,5 +1,5 @@
 "use strict";
-// The mall's goods for the home (ECO-014, FURN-064; ADR-0040; the owner, 2026-11-24: "some of these object can be placed in the
+// The mall's goods for the home (ECO-014, FURN-064; ADR-0041; the owner, 2026-11-24: "some of these object can be placed in the
 // house like guitar, books etc."). A good for the home is a piece of World/rules/furnishing.json (`from: "mall"`): bought at an
 // outlet it goes to the belongings, and is placed in a home from the building designer's Furnish tab like any other piece.
 //

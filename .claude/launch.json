@@ -72,6 +72,22 @@
       "port": 8843
     },
     {
+      "name": "moon-view",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "Tools/serve_play.ps1",
+        "-Root",
+        ".",
+        "-Port",
+        "8827"
+      ],
+      "port": 8827
+    },
+    {
       "name": "play-mall-shopping",
       "runtimeExecutable": "powershell",
       "runtimeArgs": [

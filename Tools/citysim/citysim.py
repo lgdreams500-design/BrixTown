@@ -270,6 +270,18 @@ class Vegetation:
         return dict(size=size, leaf=leaf * (1.0 if size > 0 else 0.0), color=color, bloom=bloom, spent=spent)
 
 
+def in_lot(lot, x, z):
+    """Is (x, z) within the lot's walls? A turned lot ("angle": the designed houses) stands turned about the middle of its
+    rect, which gives its own width and depth (Tools/worldgen/add_houses_04.py frame()), so it is tested in that frame."""
+    x0, z0, x1, z1 = lot["rect"]
+    a = lot.get("angle")
+    if not a:
+        return x0 <= x <= x1 and z0 <= z <= z1
+    t = math.radians(a)
+    c, s, dx, dz = math.cos(t), math.sin(t), x - (x0 + x1) / 2, z - (z0 + z1) / 2
+    return abs(dx * c + dz * s) <= (x1 - x0) / 2 and abs(dz * c - dx * s) <= (z1 - z0) / 2
+
+
 def _crosses(a, b, r):
     """Does the segment a-b pass through the inside of box r = [x0, z0, x1, z1]? (Liang-Barsky; touching an edge is not.)"""
     t0, t1, dx, dz = 0.0, 1.0, b[0] - a[0], b[1] - a[1]
@@ -696,7 +708,14 @@ class City:
                 target = self._spot(rid, day, nxt)
                 route = self._route(pos, cur, nxt, target)
             cum = lengths(route)
-            t_arr = min(dep + cum[-1] / (v * self.pace_in_rain(rid, day, dep, rush)), max(dep, 1439.5))   # the day closes at midnight with everyone where they sleep
+            vv = v * self.pace_in_rain(rid, day, dep, rush)
+            t_arr = dep + cum[-1] / vv
+            if t_arr > 1440.0 and cum[-1] > 1e-6:      # not home by midnight: still on the way when the day ends, at their own
+                d = max(0.0, 1440.0 - dep) * vv          # pace, instead of hurrying to bed (a few people are out late, as in life;
+                k = bisect.bisect_right(cum, d)          # the owner, 2026-11-24: "it's ok if they stay out")
+                part = [tuple(q) for q in route[:k]] + [along(route, cum, d)]
+                pieces.append(("move", dep, 1440.0, (part, lengths(part), vv), nxt))
+                break
             if cum[-1] > 1e-6:
                 pieces.append(("move", dep, t_arr, (route, cum, cum[-1] / max(t_arr - dep, 1e-6)), nxt))
             nxt["t_in"] = t_arr
@@ -731,8 +750,7 @@ class City:
             elif kind == "ride":                          # on a bus: where the bus is (traffic.py, CITY-092)
                 out[rid] = dict(pos=self.traffic.car_at(payload, day, m)["pos"], act="ride", place=s["place"], state="riding", bus=payload)
             else:
-                indoors = lot["kind"] not in ("garden", "market", "stop") and s["use"] is not None and \
-                    lot["rect"][0] <= payload[0] <= lot["rect"][2] and lot["rect"][1] <= payload[1] <= lot["rect"][3]
+                indoors = lot["kind"] not in ("garden", "market", "stop") and s["use"] is not None and in_lot(lot, payload[0], payload[1])
                 act = "wait" if s["act"] in ("away", "arrive") else s["act"]
                 out[rid] = dict(pos=payload, act=act, place=s["place"], state="inside" if indoors else "outside", slot=s.get("slot"), use=s["use"])
         if self.react:                                   # umbrella, hood or nothing, out in the rain (CITY-080)

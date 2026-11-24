@@ -102,7 +102,7 @@ const Court = (() => {
   }
 
   function draw(o, l) {
-    l.outletRooms = [];                                       // each outlet's room, for buying in it (outlets.js Outlets.at, WLD-065)
+    l.outletRooms = [];                                       // each outlet's room, for buying in it (outlets.js Outlets.at, WLD-066)
     const m = o.mesh, P = l.plan, st = P.storey_height, F = o.F, H = l.H, C = o.C, [x0, z0, x1, z1] = l.rect;
     const cream = mul(C.cream, 1.2), plaster = o.tones[4], floorC = mul(o.floor, 1.1), shopCeil = mul(plaster, 1.14), dark = C.stoneDark, wood = C.wood, lit = s => [.3, .4, s];
     const fascia = mul(C.brown, .74), ceilC = mul(C.brown, .98), leafC = [.27, .37, .18];   // the ribbons along every edge and the ceilings are dark, as timber; floors pale and shop fronts bright (the owner's picture, in the town's own tones)

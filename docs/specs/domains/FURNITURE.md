@@ -124,7 +124,7 @@ buy-back share. Every number `[ASSUMPTION]` until tuned in play.
 
 | Version | Date | Change |
 |---|---|---|
-| 0.4.2 | 2026-11-24 | FURN-064: pieces sold elsewhere. The mall's 49 goods for the home are pieces of `furnishing.json` (`from: "mall"`), bought at an outlet (ECO-014, ADR-0040) and placed from the belongings; the designer does not sell them. Drawn in the slice by `goods.js`. |
+| 0.4.2 | 2026-11-24 | FURN-064: pieces sold elsewhere. The mall's 49 goods for the home are pieces of `furnishing.json` (`from: "mall"`), bought at an outlet (ECO-014, ADR-0041) and placed from the belongings; the designer does not sell them. Drawn in the slice by `goods.js`. |
 | 0.4.1 | 2026-11-23 | FURN-050 accepted: pieces taken away in the designer go to the belongings (MENU.md INV-001) and are placed from there. |
 | 0.4.0 | 2026-11-23 | FURN-051, FURN-052, FURN-055 accepted and built in the slice's building designer (BUILDER.md §2.6, ADR-0031): `World/rules/furnishing_levels.json` (43 pieces with sizes and prices), `Tools/citysim/furnish.py` and `test_furnish.py`, ported as `Furnish` in `Prototype/play/builder.js`. |
 | 0.1.0 | 2026-11-22 | First draft from the owner's request and picks (`F-FURN-ITEMS` 2, `F-FURN-STORE` 2, `F-PROP-FURNISH` 2, `F-OBJ-CARRY` 1): FURN-001 to 008, 020 to 035, 050 to 057; Q-30 to Q-32. All proposed. |

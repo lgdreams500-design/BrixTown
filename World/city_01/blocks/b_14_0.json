@@ -1687,7 +1687,10 @@
    "style": {
     "group": "shop_front",
     "way": "c"
-   }
+   },
+   "storeys": [
+    "main"
+   ]
   },
   {
    "id": "b_14_0_l1",
@@ -1746,7 +1749,10 @@
    "style": {
     "group": "shop_front",
     "way": "a"
-   }
+   },
+   "storeys": [
+    "main"
+   ]
   },
   {
    "id": "b_14_0_l2",
@@ -1826,7 +1832,10 @@
    "style": {
     "group": "cafe_front",
     "way": "b"
-   }
+   },
+   "storeys": [
+    "main"
+   ]
   },
   {
    "id": "b_14_0_l3",
@@ -1885,7 +1894,10 @@
    "style": {
     "group": "shop_front",
     "way": "a"
-   }
+   },
+   "storeys": [
+    "main"
+   ]
   },
   {
    "id": "b_14_0_l4",
@@ -1944,7 +1956,10 @@
    "style": {
     "group": "clinic",
     "way": "b"
-   }
+   },
+   "storeys": [
+    "main"
+   ]
   },
   {
    "id": "b_14_0_l5",
@@ -2026,6 +2041,21 @@
    "style": {
     "group": "civic_stone",
     "way": "c"
+   },
+   "storeys": [
+    "main",
+    "rooms"
+   ],
+   "stair": {
+    "rect": [
+     1627.64,
+     223.6,
+     1629.99,
+     230.5
+    ],
+    "axis": "z",
+    "wall": "w",
+    "up0": 1
    }
   },
   {
@@ -2095,6 +2125,38 @@
      [
       1618,
       340
+     ],
+     [
+      1588.42,
+      294.45
+     ],
+     [
+      1619.55,
+      294.45
+     ],
+     [
+      1588.42,
+      353.55
+     ],
+     [
+      1619.55,
+      353.55
+     ],
+     [
+      1574.45,
+      308.43
+     ],
+     [
+      1574.45,
+      339.43
+     ],
+     [
+      1633.55,
+      308.43
+     ],
+     [
+      1633.55,
+      339.43
      ]
     ],
     "work": [
@@ -2132,6 +2194,40 @@
     [
      1578.0,
      350.0
+    ]
+   ],
+   "tend_borders": [
+    [
+     1588.42,
+     294.45
+    ],
+    [
+     1619.55,
+     294.45
+    ],
+    [
+     1588.42,
+     353.55
+    ],
+    [
+     1619.55,
+     353.55
+    ],
+    [
+     1574.45,
+     308.43
+    ],
+    [
+     1574.45,
+     339.43
+    ],
+    [
+     1633.55,
+     308.43
+    ],
+    [
+     1633.55,
+     339.43
     ]
    ]
   },
@@ -29985,6 +30081,448 @@
    "seed": 7783,
    "set": "street",
    "id": "b_14_0_st382"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1588.42,
+    292.57
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 27.5,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_14_0_g0"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1619.55,
+    292.57
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 27.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_14_0_g1"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1588.42,
+    293.45
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "lavender"
+   ],
+   "along": "x",
+   "len": 27.25,
+   "depth": 0.9,
+   "seed": 4590,
+   "id": "b_14_0_g2"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1619.55,
+    293.45
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "lavender"
+   ],
+   "along": "x",
+   "len": 27.0,
+   "depth": 0.9,
+   "seed": 3771,
+   "id": "b_14_0_g3"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1588.42,
+    355.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 27.5,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_14_0_g4"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1619.55,
+    355.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "x",
+   "len": 27.25,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_14_0_g5"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1588.42,
+    354.55
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "aster"
+   ],
+   "along": "x",
+   "len": 27.25,
+   "depth": 0.9,
+   "seed": 9531,
+   "id": "b_14_0_g6"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1619.55,
+    354.55
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "aster"
+   ],
+   "along": "x",
+   "len": 27.0,
+   "depth": 0.9,
+   "seed": 9729,
+   "id": "b_14_0_g7"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1572.58,
+    308.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 27.5,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_14_0_g8"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1572.58,
+    339.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 27.5,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_14_0_g9"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1573.45,
+    308.43
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "lavender"
+   ],
+   "along": "z",
+   "len": 27.25,
+   "depth": 0.9,
+   "seed": 919,
+   "id": "b_14_0_g10"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1573.45,
+    339.43
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "tulip",
+    "lavender"
+   ],
+   "along": "z",
+   "len": 27.25,
+   "depth": 0.9,
+   "seed": 9181,
+   "id": "b_14_0_g11"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1635.42,
+    308.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 27.5,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_14_0_g12"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1635.42,
+    339.43
+   ],
+   "set": "garden",
+   "shape": "hedge",
+   "species": "box",
+   "along": "z",
+   "len": 27.5,
+   "depth": 0.55,
+   "h": 0.62,
+   "id": "b_14_0_g13"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1634.55,
+    308.43
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "daffodil",
+    "rose"
+   ],
+   "along": "z",
+   "len": 27.25,
+   "depth": 0.9,
+   "seed": 7624,
+   "id": "b_14_0_g14"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1634.55,
+    339.43
+   ],
+   "set": "garden",
+   "shape": "border",
+   "species": [
+    "daffodil",
+    "rose"
+   ],
+   "along": "z",
+   "len": 27.25,
+   "depth": 0.9,
+   "seed": 7664,
+   "id": "b_14_0_g15"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1573.3,
+    293.3
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "hydrangea",
+   "r": 0.93,
+   "seed": 9121,
+   "id": "b_14_0_g16"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1634.7,
+    293.3
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "hydrangea",
+   "r": 1.02,
+   "seed": 2742,
+   "id": "b_14_0_g17"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1573.3,
+    354.7
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "hydrangea",
+   "r": 0.97,
+   "seed": 402,
+   "id": "b_14_0_g18"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1634.7,
+    354.7
+   ],
+   "set": "garden",
+   "shape": "bush",
+   "species": "lilac",
+   "r": 1.06,
+   "seed": 9291,
+   "id": "b_14_0_g19"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1596.83,
+    308.0
+   ],
+   "set": "garden",
+   "shape": "drift",
+   "species": "daffodil",
+   "r": 2.06,
+   "hole": 1.3,
+   "seed": 3410,
+   "id": "b_14_0_g20"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1594.84,
+    346.03
+   ],
+   "set": "garden",
+   "shape": "drift",
+   "species": "daffodil",
+   "r": 2.36,
+   "hole": 1.3,
+   "seed": 2268,
+   "id": "b_14_0_g21"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1594.91,
+    305.79
+   ],
+   "set": "garden",
+   "shape": "drift",
+   "species": "daffodil",
+   "r": 2.23,
+   "hole": 1.3,
+   "seed": 5813,
+   "id": "b_14_0_g22"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1601.34,
+    343.74
+   ],
+   "set": "garden",
+   "shape": "drift",
+   "species": "daffodil",
+   "r": 2.32,
+   "hole": 1.3,
+   "seed": 8741,
+   "id": "b_14_0_g23"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1594.94,
+    344.16
+   ],
+   "set": "garden",
+   "shape": "drift",
+   "species": "daffodil",
+   "r": 2.01,
+   "hole": 1.3,
+   "seed": 4281,
+   "id": "b_14_0_g24"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1582.82,
+    324.95
+   ],
+   "set": "garden",
+   "shape": "drift",
+   "species": "daffodil",
+   "r": 2.12,
+   "hole": 1.3,
+   "seed": 5126,
+   "id": "b_14_0_g25"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1605.96,
+    303.15
+   ],
+   "set": "garden",
+   "shape": "drift",
+   "species": "daffodil",
+   "r": 2.55,
+   "hole": 1.3,
+   "seed": 6017,
+   "id": "b_14_0_g26"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1585.32,
+    309.57
+   ],
+   "set": "garden",
+   "shape": "drift",
+   "species": "daffodil",
+   "r": 2.02,
+   "hole": 1.3,
+   "seed": 8245,
+   "id": "b_14_0_g27"
+  },
+  {
+   "kind": "plant",
+   "pos": [
+    1610.51,
+    302.22
+   ],
+   "set": "garden",
+   "shape": "drift",
+   "species": "daffodil",
+   "r": 2.43,
+   "hole": 1.3,
+   "seed": 9500,
+   "id": "b_14_0_g28"
   }
  ]
 }
