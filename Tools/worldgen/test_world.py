@@ -1188,6 +1188,75 @@ class TheMallInside(unittest.TestCase):                                        #
         self.assertAlmostEqual(a["a"][1], b["b"][1], delta=.1)
         self.assertGreaterEqual(abs(a["a"][0] - b["a"][0]), a["width"])
 
+    def test_WLD_064_the_plan_gives_the_light_what_it_needs_of_the_openings(self):
+        import math
+        x0, z0, x1, z1 = self.l["rect"]
+        cx, cz, c = (x0 + x1) / 2, (z0 + z1) / 2, self.p["court"]
+        self.assertEqual(c["lobe"], self.M.LOBE)
+        for k in (1, 2):                                                          # the numbers say the same opening as the polygon drawn from them: the slice works the sun's way through them from the numbers
+            v, poly = c["voids"][str(k)], self.p["levels"][k]["voids"][0]
+            def half(z):
+                u = min(1.0, abs(z) / v["long"])
+                return math.sqrt(max(0.0, 1 - u ** 4)) * (v["narrow"] + (v["wide"] - v["narrow"]) * (0.5 + 0.5 * math.cos(2 * math.pi * z / c["lobe"])))
+            for dz in range(-80, 81, 4):
+                for dx in range(-40, 41, 4):
+                    off = abs(dx - v["sway"] * math.sin(math.pi * dz / c["lobe"])) - half(dz)
+                    if abs(off) > 0.6:                                             # (clear of the edge, where the polygon's straight lengths differ a little)
+                        self.assertEqual(self.M.inside(poly, cx + dx, cz + dz), off < 0, (k, dx, dz))
+        self.assertEqual(len(self.p["roof"]["openings"]), 5)                       # the slice's light counts five skylights
+
+    def test_WLD_063_every_front_is_an_outlet_from_the_catalogue_and_the_rides_stand_clear(self):
+        import json, math, os
+        with open(self.M.OUTLETS, encoding="utf-8") as f:
+            cat = json.load(f)
+        walls = {"rail", "shelves", "guitars", "screens", "menu", "mirror", "rackets", "cabinets", "posters", "servery"}
+        middle = {"table", "roundrack", "bin", "bench", "amps", "drums", "keyboard", "glasscase", "cafetable", "hockey", "claw", "buckets", "plinth"}
+        window = {"mannequins", "stack", "plinth", "screen", "guitarstand", "plants"}
+        what = {"folded", "boxes", "books", "shoes", "balls", "pots", "jars", "gadgets", "plush", "bread", "bottles", "lamps"}
+        things = {"bear", "blocks", "vase", "cone", "plant", "rocket", "cake"}
+        for kind, k in cat["kinds"].items():                                      # the catalogue uses only words the slice can draw
+            self.assertIn(k["trade"], ("shop", "food"), kind)
+            self.assertEqual(len(k["walls"]), 3, kind)
+            for words, known in ((k["walls"], walls), (k["middle"], middle), (k["window"], window)):
+                for w in words:
+                    name, _, sub = w.partition(":")
+                    self.assertIn(name, known, (kind, w))
+                    if sub:
+                        self.assertIn(sub, things if name == "plinth" else what, (kind, w))
+        names, kinds = set(), set()
+        for L in self.p["levels"]:
+            byid = {u["id"]: u for u in L["units"]}
+            row = [byid[f["unit"]] for f in L["fronts"]]
+            for u in row:                                                          # every unit with a front is an outlet of a kind that trades as it does, with one of that kind's names
+                k = cat["kinds"][u["outlet"]]
+                self.assertEqual(k["trade"], u["kind"], u["id"])
+                self.assertIn(u["name"], k["names"], u["id"])
+                self.assertIn(u["outlet"], self.p["outlets"])
+                names.add(u["name"])
+                kinds.add(u["outlet"])
+            for a, b in zip(row, row[1:]):
+                self.assertNotEqual(a["outlet"], b["outlet"], (a["id"], b["id"]))   # no two of a kind next door
+        self.assertLessEqual(len(names), 100)                                      # the slice has room for so many painted names
+        for wanted in ("clothes", "toys", "electronics", "shoes", "music", "arcade", "cafe", "burger"):   # what the owner asked for is there
+            self.assertIn(wanted, kinds)
+        rides = self.p["rides"]
+        self.assertEqual([r["kind"] for r in rides].count("carousel"), 1)
+        for r in rides:                                                            # the rides stand on the court floor, clear of gardens, fountains, benches, kiosks and each other
+            x, z, rad = r["pos"][0], r["pos"][1], r.get("r", 1.2)
+            self.assertTrue(self.on_floor(0, x, z), r)
+            for g in self.p["gardens"]:
+                self.assertGreater(math.dist(g["pos"], (x, z)), rad + max(g["r"]), r)
+            for f in self.p["fountains"]:
+                self.assertGreater(math.dist(f["pos"], (x, z)), rad + f["r"] + 1, r)
+            for b in self.p["benches"]:
+                self.assertGreater(math.dist(b["pos"], (x, z)), rad + 1.0, r)
+            for u in self.p["levels"][0]["units"]:
+                if u["kind"] == "kiosk":
+                    self.assertGreater(math.dist(((u["rect"][0] + u["rect"][2]) / 2, (u["rect"][1] + u["rect"][3]) / 2), (x, z)), rad + 3.5, r)
+            for q in rides:
+                if q is not r:
+                    self.assertGreater(math.dist(q["pos"], (x, z)), rad + q.get("r", 1.2) + .5, r)
+
     def test_WLD_061_shops_on_every_walk_and_the_ground_floor_keeps_its_jobs(self):
         import json, os, sys
         sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "citysim"))

@@ -1,7 +1,7 @@
 # The planet in the town's sky (WLD-065, ADR-0040)
 
 Approved by the owner as the planet's look in the town's sky, 2026-11-24 ("Yes, keep it"), after asking to see the planet of
-`Art/StyleTests/moon_view_27/` in the game.
+`Art/StyleTests/moon_view_28/` in the game.
 
 The slice in summer, clear weather, in the yard at the centre of Old Town, looking north-east and up. Taken in
 `Prototype/play/index.html` at 1280 × 800 and saved at 800 × 500.

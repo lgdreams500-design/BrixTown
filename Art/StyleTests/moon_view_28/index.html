@@ -36,7 +36,7 @@
 <div id="err"></div>
 <script src="../../../Prototype/play/people.js"></script>
 <script>
-/* Brix Town look experiment 27: someone standing on a moon, looking up at the planet the moon goes round: a living world
+/* Brix Town look experiment 28: someone standing on a moon, looking up at the planet the moon goes round: a living world
    of seas, land, cloud and ice, far bigger in the sky than any moon is from the town.
    Not part of the game: no requirement asks for it. Plain WebGL 2, no libraries. The person is one of the game's own (people.js, drawn at
    full detail); the palette is the world's (ART_DIRECTION §2.3): muted, warm, matte and mottled.
@@ -253,7 +253,7 @@ precision highp float; uniform float uK; out vec4 o; void main(){ o=vec4(vec3(uK
 const cv = document.getElementById("c"), gl = cv.getContext("webgl2", { antialias: true, stencil: true, alpha: false });
 const fail = msg => { const e = document.getElementById("err"); e.style.display = "flex"; e.textContent = msg; throw new Error(msg); };
 if (!gl) fail("This page needs WebGL 2. Open it in a current Edge or Chrome.");
-if (typeof People === "undefined") fail("The people could not be loaded: open this page from its place in the project (Art/StyleTests/moon_view_27/), so it can find Prototype/play/people.js.");
+if (typeof People === "undefined") fail("The people could not be loaded: open this page from its place in the project (Art/StyleTests/moon_view_28/), so it can find Prototype/play/people.js.");
 function program(vs, fs) {
   const p = gl.createProgram();
   for (const [t, src] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s);

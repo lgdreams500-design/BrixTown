@@ -8,7 +8,7 @@ relates_to: [WLD-042, WLD-043, WLD-065, ADR-0004, ADR-0014, ADR-0023, ADR-0024]
 
 ## Context
 The owner asked for a picture of someone standing on a moon and looking up at the planet it goes round
-(`Art/StyleTests/moon_view_27/`), and shaped it over five rounds: a habitable planet, not a gas one; with rings; the moon has
+(`Art/StyleTests/moon_view_28/`), and shaped it over five rounds: a habitable planet, not a gas one; with rings; the moon has
 air, so by day the planet should barely show; at night the part of it the sun reaches should be seen. The owner then asked to
 add this planet to the game to see how it looks. That makes the world the town stands on a moon of this planet.
 
@@ -30,7 +30,7 @@ add this planet to the game to see how it looks. That makes the world the town s
 - By day it is a pale shape in the blue (`by_day`), its dark part plain sky; after dusk it comes out (`night`, 1.0), with the lamps
   of its towns on its dark side. A fainter night (`night` 0.3) was tried at the owner's request and turned down: "faded is not
   looking good". Cloud passes in front of it; rain and fog hide it as they hide the stars.
-- Its look is the one the owner shaped in `moon_view_27`: seas, green and dry land, tundra, ice at the poles, drifting cloud,
+- Its look is the one the owner shaped in `moon_view_28`: seas, green and dry land, tundra, ice at the poles, drifting cloud,
   a blue rim of air, pale rings with one gap, the rings' shadow on the planet and the planet's on the rings. Colours keep to
   the world's muted palette (ADR-0004).
 - `planet_problems()` checks the numbers and that the sun never comes within the planet's disc in any season:
@@ -44,4 +44,4 @@ add this planet to the game to see how it looks. That makes the world the town s
   the approved night look (ADR-0023) and is left for the owner to ask for.
 - The planet in the sky has no air of the town's between it and the eye beyond the fade by day: it is not hazed towards the
   horizon as the far town is. At 32° up this does not show.
-- Pictures are in `Art/StyleTests/planet_sky_28/`. The Unreal build can use the same numbers.
+- Pictures are in `Art/StyleTests/planet_sky_29/`. The Unreal build can use the same numbers.

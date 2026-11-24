@@ -50,6 +50,11 @@ The plan keeps the old keys and adds some:
   gardens            [{pos, r: [rx, rz], trees: [[x, z, species], ...]}]: planted beds on the court floor
   benches            [{pos, yaw}]: yaw in degrees, the way the sitter faces (0 north, 90 east)
   planters           [{level, pos, r, tree}]: round planters on the upper floors, a small tree in each
+  court              {lobe, voids: {level: {wide, narrow, long, sway}}}: the numbers the openings were drawn from
+  outlets            {kind: {label, trade, sign, floor, walls, middle, window}}: the kinds of outlet in this mall and what
+                     stands in each, copied from World/rules/mall_outlets.json; a unit with a front names its kind (`outlet`)
+  outlet_depth       {least, most}: how deep an outlet's room is drawn, metres in from its front
+  rides              [{kind, pos, r?, horses?}]: a carousel and coin rides on the court floor
   roof               {openings: [polygon, ...]}: the round skylights, holes in the roof under the roof light
 Every size and count here is a first guess [ASSUMPTION].
 
@@ -64,6 +69,7 @@ import json, math, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 CITY = os.path.normpath(os.path.join(HERE, "..", "..", "World", "city_01"))
 BLOCKS = os.path.join(CITY, "blocks")
+OUTLETS = os.path.normpath(os.path.join(HERE, "..", "..", "World", "rules", "mall_outlets.json"))   # the kinds of outlet, what stands in each, their names, the mix per floor
 BID = "b_16_5"
 
 STOREY, LEVELS = 6.0, 3
@@ -178,6 +184,39 @@ def along(run, s):
             return (run[i][0] + (run[i + 1][0] - run[i][0]) * f, run[i][1] + (run[i + 1][1] - run[i][1]) * f)
         acc += d
     return run[-1]
+
+
+def outlets(plan, cx, cz):
+    """Every unit with a front becomes an outlet of some kind, with a name (WLD-063): so many of each kind on each floor as
+    World/rules/mall_outlets.json says, like kinds spread apart. The kinds used, and the rides on the court floor, go into the plan."""
+    with open(OUTLETS, encoding="utf-8") as f:
+        cat = json.load(f)
+    named, used = {}, {}
+    for L in plan["levels"]:
+        byid = {u["id"]: u for u in L["units"]}
+        mix = cat["mix"][min(L["level"], len(cat["mix"]) - 1)]
+        for trade in ("shop", "food"):
+            ids = [f["unit"] for f in L["fronts"] if byid[f["unit"]]["kind"] == trade]
+            want = mix[trade]
+            share = {k: len(ids) * w / sum(want.values()) for k, w in want.items()}
+            n = {k: int(v) for k, v in share.items()}
+            for k in sorted(share, key=lambda k: n[k] - share[k])[:len(ids) - sum(n.values())]:   # the largest remainders take what is left over
+                n[k] += 1
+            bag = [k for k in want for _ in range(n[k])]
+            order = sorted(range(len(bag)), key=lambda j: (j * 0.6180339887) % 1)      # each kind strung evenly along the walk
+            for uid, j in zip(ids, order):
+                kind = bag[j]
+                assert cat["kinds"][kind]["trade"] == trade, kind
+                names = cat["kinds"][kind]["names"]
+                byid[uid]["outlet"], byid[uid]["name"] = kind, names[named.get(kind, 0) % len(names)]
+                named[kind] = named.get(kind, 0) + 1
+                used[kind] = {k: cat["kinds"][kind][k] for k in ("label", "trade", "sign", "floor", "walls", "middle", "window")}
+    plan["outlets"], plan["outlet_depth"] = used, cat["depth"]
+    c = cat["rides"]["carousel"]
+    rides = [dict(kind="carousel", pos=pt((cx, cz + c["along"])), r=c["r"], horses=c["horses"])]
+    rides += [dict(kind=q["kind"], pos=pt((cx + q["across"], cz + q["along"]))) for q in cat["rides"]["coin"]]
+    plan["rides"] = rides
+    plan["gardens"] = [g for g in plan["gardens"] if math.dist(g["pos"], rides[0]["pos"]) > c["r"] + 2]   # the carousel stands where the north garden was; its ring of benches stays
 
 
 def design(lot, shell):
@@ -409,7 +448,10 @@ def design(lot, shell):
                 halls=[dict(unit=h["unit"], pos=pt(h["pos"]), r=h["r"], dome=h["dome"]) for h in halls],
                 ramps=ramps, lifts=lifts, fountains=[dict(pos=pt((cx, cz + sg * LOBE)), r=6.0, level=0) for sg in (-1, 1)], gardens=gardens, benches=benches,
                 planters=planters,
+                court=dict(lobe=LOBE, voids={str(k): VOIDS[k] for k in sorted(VOIDS)}),   # the openings' own numbers, for the light that falls through them
                 roof=dict(openings=[[pt(p) for p in ellipse(cx, cz + sg * off, r, r, 48)] for off, r in EYES for sg in ((1,) if not off else (-1, 1))]))
+
+    outlets(plan, cx, cz)
 
     # where visitors stand and sit: before the shop fronts and the kiosks and round the fountain; on the benches
     byid = {u["id"]: u for u in ground}
@@ -483,6 +525,10 @@ def draw(lot, plan, folder):
         if L["level"] == LEVELS - 1:
             for e in plan["roof"]["openings"]:
                 d.line([T(q) for q in e + [e[0]]], fill=(250, 240, 150), width=2)
+        if L["level"] == 0:
+            for q in plan["rides"]:
+                p, r = q["pos"], q.get("r", 1.2)
+                d.ellipse([T((p[0] - r, p[1] - r)), T((p[0] + r, p[1] + r))], fill=(200, 120, 150), outline=(60, 50, 44))
         for q in plan["lifts"]:
             p, r = q["pos"], q["r"]
             d.ellipse([T((p[0] - r, p[1] - r)), T((p[0] + r, p[1] + r))], fill=(236, 226, 200), outline=(60, 50, 44))

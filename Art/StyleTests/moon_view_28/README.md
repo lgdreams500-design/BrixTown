@@ -1,15 +1,15 @@
-# The view from a moon (look experiment 27)
+# The view from a moon (look experiment 28)
 
 Someone standing on a moon, head back, looking up at the planet the moon goes round: a living world of
 seas, land, cloud and ice, with rings, huge in the sky. Made at the owner's request as a picture to look at (first with a banded,
 ringed gas planet; the owner asked for a habitable one instead, then for its rings back, then for the moon to have air). The page itself is not part of the game. The owner then asked to see the planet in the game: that is WLD-065 (ADR-0040,
-`Art/StyleTests/planet_sky_28/`), which draws the same planet in the slice's sky. For this page nothing in `World/`,
+`Art/StyleTests/planet_sky_29/`), which draws the same planet in the slice's sky. For this page nothing in `World/`,
 `Prototype/play/` or the specs changed.
 
 `index.html` is the view itself, in plain WebGL 2. The person is one of the town's own, drawn by
 `Prototype/play/people.js`, so the page has to stay at this place in the project to find that file. Open it in Edge
 or Chrome (double-click), or start the `moon-view` server from `.claude/launch.json` and open
-`http://localhost:8827/Art/StyleTests/moon_view_27/index.html`.
+`http://localhost:8827/Art/StyleTests/moon_view_28/index.html`.
 
 Everything is worked out from one number, where the moon is on its orbit:
 

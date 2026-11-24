@@ -436,6 +436,49 @@
       }
     },
     {
+      "id": "F-BLD-RIDES",
+      "area": "map",
+      "title": "Mall rides",
+      "why": "Something to do at the mall besides shopping: a carousel and coin rides.",
+      "pillars": [
+        1,
+        3
+      ],
+      "spec": [
+        "WLD-063"
+      ],
+      "levels": [
+        {
+          "name": "None",
+          "what": "No rides.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "To sit on",
+          "what": "A carousel and coin rides that stand still; the player can sit on them.",
+          "effort": "S",
+          "needs": {
+            "F-BLD-MALL": 2
+          }
+        },
+        {
+          "name": "Rides that turn",
+          "what": "The carousel turns and the coin rides rock, with music; a go costs a coin; children queue for them.",
+          "effort": "M",
+          "needs": {
+            "F-BLD-MALL": 2,
+            "F-NPC-POP": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 2,
+        "full": 2
+      }
+    },
+    {
       "id": "F-BLD-HOSPITAL",
       "area": "map",
       "title": "Hospital and clinic",
