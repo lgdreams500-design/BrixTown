@@ -1,0 +1,84 @@
+18:47:56 Blender 5.3.0
+18:47:57 scene built: 354 objects in 0.9s
+
+== Models (one mesh per board, origin at the deck's centre on top of the grip; triangles after triangulation) ==
+Manual     50 km/h   SB_Manual 1346 tris (far model SB_Manual_LOD1 750); materials 6; bounding box 0.799 x 0.210 x 0.164 m (l x w x h)
+Electric   100 km/h  SB_Electric 1666 tris (far model SB_Electric_LOD1 882); materials 7; bounding box 0.979 x 0.266 x 0.158 m (l x w x h)
+Neon Boost 250 km/h  SB_NeonBoost 1650 tris (far model SB_NeonBoost_LOD1 896); materials 6; bounding box 0.967 x 0.240 x 0.173 m (l x w x h)
+
+== Dimensions for the browser slice (metres; x along the board, nose +x) ==
+board      length  width   deck deck top wheelbase wheel d wheel w  track  kicks
+Manual      0.800  0.210  0.022    0.103     0.380   0.062   0.036  0.166 nose 0.060 / tail 0.055
+Electric    0.980  0.250  0.026    0.123     0.660   0.090   0.050  0.196 nose 0.022 / tail 0.034
+Neon Boost  0.960  0.240  0.024    0.132     0.620   0.100   0.044  0.192 nose 0.030 / tail 0.040
+length, width: the deck. deck: its thickness. deck top: grip above the ground at the centre (the origin).
+wheelbase: front to rear axle. track: left to right wheel centres. kicks: how far nose and tail rise above
+the flat middle; they start Manual 0.235, Electric 0.330, Neon Boost 0.300 m from the centre.
+Neon Boost nose: a bullet, narrowing to 58 % of the width at the tip. Electric: battery box 0.420 x 0.170 x
+0.042 m under the deck. Neon Boost: booster can 0.074 m across, 0.120 m long, under the tail at x = -0.415.
+Rider (Courier, 1.78 m): pushing, hips 0.044 m lower than standing, front leg reach 0.82, back leg 1.00 of full length.
+Rider on Electric: hips 0.053 m above standing (deck top less a 0.07 m knee bend), legs at 0.93 of full length.
+Rider on Neon Boost: hips 0.062 m above standing (deck top less a 0.07 m knee bend), legs at 0.93 of full length.
+For scale: a Soft box car in the slice is about 3200 triangles near (car_export_11); a skate of look test 31
+was 1460 to 1772.
+
+== Colours (linear RGB) ==
+Manual     Brown (0.24, 0.16, 0.11); Cream (0.66, 0.61, 0.5); Ochre (0.52, 0.4, 0.2); Terracotta (0.44, 0.24, 0.18); Hub grey (car kit) (0.58, 0.56, 0.52); Iron (kit) (0.1, 0.1, 0.11)
+Electric   Charcoal (0.09, 0.09, 0.11); Teal (0.2, 0.36, 0.37); Ochre (0.52, 0.4, 0.2); Hub grey (car kit) (0.58, 0.56, 0.52); Iron (kit) (0.1, 0.1, 0.11); Cream (0.66, 0.61, 0.5); status green (new) (0.3, 1.0, 0.45) emissive 3.0
+Neon Boost Charcoal (0.09, 0.09, 0.11); Indigo (0.1, 0.14, 0.24); neon cyan (new) (0.02, 0.55, 1.0) emissive 2.0; Plum (0.3, 0.24, 0.34); Iron (kit) (0.1, 0.1, 0.11); Lantern (1.0, 0.55, 0.22) emissive 6.0
+
+== What was built ==
+Manual (50 km/h): a classic wooden street skateboard, the plainest and the most old-town. A popsicle deck with round
+  nose and tail kicked up, a little concave, a warm brown grip on top inside a narrow cream border, ochre ply edges,
+  a cream underside with one terracotta stripe down the middle. Pale grey trucks on dark iron baseplates with
+  terracotta bushings, four fat ochre wheels with pale hubs. ride_manual.png: the rider pushes it along, the left
+  (front) foot on the deck just behind the front truck, turned a little across, the right foot down behind pushing.
+Electric (100 km/h): a longer, wider cruiser deck in teal with a charcoal grip and teal border, a gentle kick at the
+  tail only. Under the deck between the trucks a charcoal battery box with an ochre band and a small green status
+  light (emissive) on its front corner. Bigger charcoal wheels; the two rear wheels are hub motors, ochre drums with
+  cream caps that stand out on both sides of the tyre (as on the electric skates). Grey trucks with ochre bushings.
+  The rider stands still on it: sideways stance, both feet across the deck.
+Neon Boost (250 km/h): the most striking. An indigo deck with a bullet-shaped nose that narrows to the front, a
+  charcoal grip in an indigo border, and the lower half of the deck edge glowing neon cyan all the way round. Four
+  large wheels whose tyres glow cyan on indigo hubs, an underglow strip under the deck that lights the ground, charcoal
+  trucks with plum bushings. Under the tail, between the rear wheels, a booster nozzle: a dark iron can with a plum lip
+  and a Lantern-glow core, aimed back and a little down. Glow is plain emission (no bloom or post-process, W8);
+  neon_dusk.png shows it at dusk. The rider stands still on it, as on the Electric.
+
+Every board is one mesh with a few material slots and no modifiers: SB_Manual, SB_Electric, SB_NeonBoost, origin at
+the centre of the deck on top of the grip (x along the board, nose +x, z up), so the rider's feet stand at z = 0 and
+the board sits on the ground when its origin is at 'deck top' above it. The far model SB_<Model>_LOD1 (same parts,
+about half the segments) is in the .blend, hidden. The deck is a loft of soft rounded sections (no thin planes, W3):
+thicker than a real deck (2.2 to 2.6 cm against about 1.2 cm) so it reads chunky. Boards are true size and are not
+scaled with the rider; the Courier (1.78 m) rides them. Riders' legs are solved to the deck (feet first, M5): the hips
+drop a little and the knees bend; the rest of the body is the option B person unchanged, so arms hang relaxed and the
+head faces the camera. In the game a board would ride on root (it is not on a bone) while ridden and on hand_r when
+carried (carry.png: held by the middle of its edge, deck upright, wheels out).
+
+== Choices for the owner ==
+1. Push pose: the brief's "front foot across the board" is followed only part way: the front foot is turned about
+   35 degrees from the travel direction, because a foot fully across while the hips face forward twists the leg.
+   Real skaters push with the front foot pointing nearly forward and turn it across once rolling. Say which you want.
+2. Stance: regular (left foot to the nose). Goofy is a mirror; it could be a player setting.
+3. Deck shapes: Manual a popsicle (both ends kicked, for tricks), Electric a cruiser (tail kick only, longer, wider),
+   Neon Boost a bullet nose (the only board with a pointed end) so it reads fastest by shape as well as glow.
+4. New colours outside the palette, as for the skates: neon cyan (0.02, 0.55, 1.0) and status green (0.30, 1.0, 0.45);
+   the booster core is the Lantern colour. In daylight the cyan reads pale ice-blue (AgX); at dusk it is strong.
+5. Deck thickness: chunky 2.2 to 2.6 cm (W3) against 1.2 cm on a real deck. Thinner would look truer but turn to a
+   thin plane at street distance.
+6. The rider's height: standing on a board raises the feet 10 to 13 cm (deck top). The slice would see that, as it
+   did with the skates' 9 to 12 cm.
+7. Not decided here: how the wheels, motors and booster animate (wheel spin, a booster flicker, the status light for
+   battery level), how the push cycle and getting on and off look, sounds, and colourways (materials are slots).
+
+18:47:57 saved .blend
+18:48:34 sheet rendered in 37.2s
+18:49:17 manual rendered in 42.9s
+18:50:04 electric rendered in 46.3s
+18:50:52 neon rendered in 48.5s
+18:51:38 ride_manual rendered in 45.8s
+18:52:23 ride_electric rendered in 44.9s
+18:52:57 ride_neon rendered in 34.5s
+18:53:34 carry rendered in 37.2s
+18:54:13 neon_dusk rendered in 38.2s
+18:54:13 DONE

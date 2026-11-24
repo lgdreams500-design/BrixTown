@@ -788,6 +788,7 @@ class Skateboards(unittest.TestCase):
             self.assertLess(v["glide_kmh_s"], v["brake_kmh_s"], n)           # letting go glides; pulling back stops sooner
             self.assertLess(v["top_kmh"] / v["accel_kmh_s"], 10, n)          # top speed in under ten seconds
             self.assertTrue(0.6 <= v["deck_m"] <= 1.2 and 0.15 <= v["width_m"] <= 0.3 and 0.06 <= v["top_m"] <= 0.2, n)   # a skateboard's size
+            self.assertLess(v["wheelbase_m"], v["deck_m"], n); self.assertLess(v["track_m"], v["width_m"], n); self.assertLess(v["wheel_m"], v["top_m"], n)   # wheels under the deck
             for c in ("deck", "grip", "truck", "wheel"):
                 self.assertEqual(len(v[c]), 3, n + " " + c)
             self.assertEqual(v["push"], not v["powered"], n)                 # the owner: a foot pushes the manual board only

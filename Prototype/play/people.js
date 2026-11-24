@@ -355,16 +355,16 @@ const People = (() => {
   // wheels, a glowing strip under the deck edge and a booster at the tail. C: the middle of the deck's top; f: nose-forward,
   // up: the deck's normal, side: across; K: the kind (deck_m, width_m, top_m and the colours, World/rules/boards.json).
   function board(ms, C, f, up, side, K, lod, fl, sd) {
-    const Lh = K.deck_m / 2, Wh = K.width_m / 2, th = .014, wr = .028, at = (a, b, u) => add(add(add(C, sc(f, a)), sc(side, b)), sc(up, u));
+    const Lh = K.deck_m / 2, Wh = K.width_m / 2, th = .012, wr = K.wheel_m / 2, at = (a, b, u) => add(add(add(C, sc(f, a)), sc(side, b)), sc(up, u));
     const seg = lod === 0 ? 12 : 6, rg = lod === 0 ? 4 : 3, glow = K.glow;
     OSKIP = 0;
     ball(ms, at(0, 0, -th), sc(side, Wh), sc(f, Lh * .82), sc(up, th), seg, rg, K.deck, fl, sd);   // the deck
     for (const e of [-1, 1]) ball(ms, add(at(e * Lh * .8, 0, -th + .012), sc(up, 0)), sc(side, Wh * .92), sc(f, Lh * .24), add(sc(up, th), sc(f, e * th * 2.2)), seg, rg, K.deck, fl, sd + 1);   // nose and tail, kicked up
     ball(ms, at(0, 0, -th * .2), sc(side, Wh * .9), sc(f, Lh * .78), sc(up, th * .35), seg, rg, K.grip, fl, sd + 2);   // the grip
-    const tz = -(K.top_m - wr - th * 2), wb = Lh * .62;
+    const tz = -(K.top_m - wr - th * 2), wb = K.wheelbase_m / 2;
     for (const e of [-1, 1]) {
       ball(ms, at(e * wb, 0, (tz - th * 2) / 2 - th), sc(side, Wh * .35), sc(f, .03), sc(up, Math.abs(tz) / 2), 6, 3, K.truck, fl, sd + 3);   // the truck
-      for (const g of [-1, 1]) ball(ms, at(e * wb, g * Wh * .8, -K.top_m + wr), sc(side, .022), sc(f, wr), sc(up, wr), lod === 0 ? 10 : 6, rg, K.wheel, fl, sd + 4 + g);   // the wheels
+      for (const g of [-1, 1]) ball(ms, at(e * wb, g * K.track_m / 2, -K.top_m + wr), sc(side, wr * .5), sc(f, wr), sc(up, wr), lod === 0 ? 10 : 6, rg, K.wheel, fl, sd + 4 + g);   // the wheels
     }
     if (K.battery && lod < 2) { ball(ms, at(0, 0, -th * 2 - .022), sc(side, Wh * .6), sc(f, Lh * .45), sc(up, .022), 8, 3, K.battery, fl, sd + 6);   // the battery box
       if (K.band) ball(ms, at(0, 0, -th * 2 - .022), sc(side, Wh * .62), sc(f, .02), sc(up, .023), 8, 3, K.band, fl, sd + 7);
