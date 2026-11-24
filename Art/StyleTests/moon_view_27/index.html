@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brix Town: the view from a moon</title>
+<style>
+  :root {
+    --ink: #17171c; --cream: #d9cfb6; --dim: #a79f8c; --lantern: #f0a35a;
+    --name: Constantia, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    --data: Bahnschrift, "Segoe UI", "Trebuchet MS", sans-serif;
+  }
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: var(--cream); font-family: var(--data); }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  canvas.drag { cursor: grabbing; }
+  .hud { position: fixed; text-shadow: 0 1px 2px rgba(0,0,0,.8); user-select: none; }
+  #head { left: 22px; top: 16px; pointer-events: none; }
+  #title { font-family: var(--name); font-size: 24px; }
+  #sub { margin-top: 4px; font-size: 14px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  #bar { left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 7px 14px; background: rgba(23,23,28,.66); border-radius: 6px; font-size: 13px; text-shadow: none; max-width: calc(100vw - 28px); box-sizing: border-box; }
+  #bar button { font: inherit; color: var(--lantern); background: none; border: 1px solid rgba(240,163,90,.6); border-radius: 4px; padding: 2px 10px; cursor: pointer; min-width: 62px; }
+  #bar input[type=range] { width: min(38vw, 420px); accent-color: var(--lantern); }
+  #bar label, #bar span { white-space: nowrap; cursor: pointer; }
+  #bar input[type=checkbox] { accent-color: var(--lantern); vertical-align: -2px; }
+  #keys { right: 18px; top: 18px; font-size: 13px; color: var(--dim); text-align: right; line-height: 1.7; pointer-events: none; }
+  #keys kbd { font-family: var(--data); font-size: .9em; padding: 1px 6px; border: 1px solid rgba(240,163,90,.6); border-radius: 4px; color: var(--lantern); }
+  #err { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 24px; text-align: center; font-size: 16px; }
+  @media (max-width: 720px) { #keys { display: none; } }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud" id="head"><div id="title">The view from a moon</div><div id="sub"></div></div>
+<div class="hud" id="keys">Drag to look round &middot; wheel to step back<br><kbd>Space</kbd> stop the clock &middot; <kbd>A</kbd> air &middot; <kbd>1</kbd>&ndash;<kbd>6</kbd> who stands there &middot; <kbd>H</kbd> hide</div>
+<div class="hud" id="bar"><button id="play">Pause</button><span>One orbit</span><input id="orbit" type="range" min="0" max="1000" value="0" aria-label="Where the moon is on its orbit"><label><input id="air" type="checkbox"> Air</label></div>
+<div id="err"></div>
+<script src="../../../Prototype/play/people.js"></script>
+<script>
+/* Brix Town look experiment 27: someone standing on a moon, looking up at the planet the moon goes round: a living world
+   of seas, land, cloud and ice, far bigger in the sky than any moon is from the town.
+   Not part of the game: no requirement asks for it. Plain WebGL 2, no libraries. The person is one of the game's own (people.js, drawn at
+   full detail); the palette is the world's (ART_DIRECTION §2.3): muted, warm, matte and mottled.
+   Everything is worked out from one number, where the moon is on its orbit:
+   - the moon always shows the planet the same face, so the planet hangs in one place in the sky and never rises or sets;
+   - the sun and the stars go round once an orbit, so the planet runs through its phases, and once an orbit the sun passes behind it.
+   The moon has air (A switches it off): a blue sky by day, in which the planet is only just there; the planet comes out as the sun goes. */
+"use strict";
+const Q = new URLSearchParams(location.search), TAU = 2 * Math.PI, rad = d => d * Math.PI / 180;
+const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], sc = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const norm = a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), mix3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t], sstep = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }, mix = (a, b, t) => a + (b - a) * t;
+
+// ---------------------------------------------------------------- the sky's geometry (y is up, the person faces -z)
+const PLANET_EL = rad(28), PLANET_R = rad(15);                     // how high the planet hangs, and its radius as seen from here
+const PD = [0, Math.sin(PLANET_EL), -Math.cos(PLANET_EL)];           // towards the planet
+const UPT = norm(sub([0, 1, 0], sc(PD, PD[1])));                     // "up" across the planet's face
+const PATH = rad(35);                                                // how steeply the sun's path crosses the sky
+const T = norm(add(sc([1, 0, 0], Math.cos(PATH)), sc(UPT, Math.sin(PATH))));
+const W = cross(PD, T);                                              // the axis the sky turns round
+const AXIS_TIP = rad(10);                                            // how far the planet's north pole, and so its rings, are tipped towards us
+const AX = norm(add(sc(W, Math.cos(AXIS_TIP)), sc(PD, Math.sin(AXIS_TIP))));   // the planet's axis; it turns round this, and its rings lie across it
+const B1 = norm(cross(AX, PD)), B2 = cross(AX, B1);
+const DIST = 1 / Math.sin(PLANET_R);                                 // distance to the planet's centre, in planet radii
+const sunDir = th => norm(add(sc(PD, Math.cos(th)), sc(T, Math.sin(th))));
+const rotAbout = (w, a) => { const c = Math.cos(a), s = Math.sin(a), k = 1 - c, [x, y, z] = w;   // column-major, for a mat3 uniform
+  return [c + x * x * k, y * x * k + z * s, z * x * k - y * s, x * y * k - z * s, c + y * y * k, z * y * k + x * s, x * z * k + y * s, y * z * k - x * s, c + z * z * k]; };
+
+// ---------------------------------------------------------------- the ground: a cratered plain that falls away to a near horizon
+const MOON_R = 250000;                                               // a small world: the horizon is under a kilometre off
+function rng(seed) { return () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const h2 = (i, j) => { let h = Math.imul(i, 374761393) + Math.imul(j, 668265263) | 0; h = Math.imul(h ^ h >>> 13, 1274126177); return ((h ^ h >>> 16) >>> 0) / 4294967296; };
+function vn(x, z) { const i = Math.floor(x), j = Math.floor(z), fx = x - i, fz = z - j, u = fx * fx * (3 - 2 * fx), v = fz * fz * (3 - 2 * fz);
+  return mix(mix(h2(i, j), h2(i + 1, j), u), mix(h2(i, j + 1), h2(i + 1, j + 1), u), v); }
+const CRATERS = [];
+{ const r = rng(27);
+  const put = (n, r0, r1, d0, d1) => { for (let k = 0, tries = 0; k < n && tries < n * 20; tries++) { const R = r0 + (r1 - r0) * r() * r(), d = d0 + (d1 - d0) * Math.sqrt(r()), a = r() * TAU;
+    if (d - 2.2 * R < 7.5) continue; CRATERS.push([d * Math.sin(a), d * Math.cos(a), R]); k++; } };
+  put(14, 80, 360, 300, 5200); put(70, 6, 46, 40, 820); put(60, .8, 3.6, 9, 72);
+  CRATERS.push([-64, -150, 38], [22, -58, 9]); }                    // two in front, to give the middle distance something to hold
+function height(x, z) {
+  const r = Math.hypot(x, z), near = sstep(6, 34, r);                // the ground the person stands on is flat, so a shadow can lie on it
+  let h = (vn(x / 900, z / 900) - .5) * 60 * sstep(60, 600, r) + (vn(x / 160 + 5, z / 160 + 5) - .5) * 9 * sstep(20, 200, r)
+        + (vn(x / 28 + 9, z / 28) - .5) * 1.2 * near + (vn(x / 4 + 3, z / 4 + 1) - .5) * .12 * near;
+  for (const [cx, cz, R] of CRATERS) { const d = Math.hypot(x - cx, z - cz) / R; if (d > 2.2) continue;
+    const e = (d - 1) / .22; h += R * .05 * Math.exp(-e * e) - (d < 1 ? R * .2 * (1 - d * d) : 0); }
+  return h - r * r / (2 * MOON_R);
+}
+function buildGround() {
+  const NR = 150, NS = 256, v = new Float32Array(NR * NS * 6), idx = new Uint32Array((NR - 1) * NS * 6);
+  for (let i = 0; i < NR; i++) { const r = 4 * (Math.pow(1.05, i) - 1);
+    for (let j = 0; j < NS; j++) { const a = TAU * j / NS, x = r * Math.sin(a), z = r * Math.cos(a), o = (i * NS + j) * 6; v[o] = x; v[o + 1] = height(x, z); v[o + 2] = z; } }
+  const P = (i, j) => { const o = (clamp(i, 0, NR - 1) * NS + (j + NS) % NS) * 6; return [v[o], v[o + 1], v[o + 2]]; };
+  for (let i = 0; i < NR; i++) for (let j = 0; j < NS; j++) {         // each normal from the four points round it
+    let n = i === 0 ? [0, 1, 0] : norm(cross(sub(P(i, j + 1), P(i, j - 1)), sub(P(i + 1, j), P(i - 1, j)))); if (n[1] < 0) n = sc(n, -1);
+    const o = (i * NS + j) * 6; v[o + 3] = n[0]; v[o + 4] = n[1]; v[o + 5] = n[2]; }
+  let q = 0;
+  for (let i = 0; i < NR - 1; i++) for (let j = 0; j < NS; j++) { const a = i * NS + j, b = i * NS + (j + 1) % NS, c = a + NS, d = b + NS; idx[q++] = a; idx[q++] = b; idx[q++] = d; idx[q++] = a; idx[q++] = d; idx[q++] = c; }
+  return { v, idx };
+}
+function buildRocks() {                                               // boulders: lumpy, soft-edged (W3). Each vertex: place, normal, the height of the ground under the rock
+  const r = rng(5), out = [], NA = 9, NB = 6;
+  const rock = (cx, cz, s, base) => {
+    const sx = s * (.8 + .5 * r()), sy = s * (.5 + .35 * r()), sz = s * (.8 + .5 * r()), seed = Math.floor(r() * 1000), ctr = [cx, base + sy * .55, cz];
+    const pt = (i, j) => { const la = Math.PI * (j / NB - .5), lo = TAU * (i % NA) / NA, k = j === 0 || j === NB ? 1 : .78 + .44 * h2(i % NA + seed, j * 7 + seed);
+      return [cx + sx * k * Math.cos(la) * Math.cos(lo), base + sy * .55 + sy * k * Math.sin(la), cz + sz * k * Math.cos(la) * Math.sin(lo)]; };
+    for (let j = 0; j < NB; j++) for (let i = 0; i < NA; i++) { const a = pt(i, j), b = pt(i + 1, j), c = pt(i + 1, j + 1), d = pt(i, j + 1);
+      for (const tri of [[a, b, c], [a, c, d]]) { let fn = cross(sub(tri[1], tri[0]), sub(tri[2], tri[0])); if (Math.hypot(fn[0], fn[1], fn[2]) < 1e-9) continue; fn = norm(fn);
+        if (dot(fn, sub(tri[0], ctr)) < 0 && dot(fn, sub(tri[2], ctr)) < 0) fn = sc(fn, -1);
+        for (const p of tri) { const n = norm(add(sc(fn, .55), sc(norm(sub(p, ctr)), .45))); out.push(p[0], p[1], p[2], n[0], n[1], n[2], base); } } }
+  };
+  for (let k = 0; k < 46; ) { const near = k < 12, d = near ? 2.4 + 6 * r() : 9 + 60 * r() * r(), a = r() * TAU, x = d * Math.sin(a), z = d * Math.cos(a);
+    if (z > .5 && Math.abs(x) < 3 && d < 9) continue;                 // keep the ground between the person and the first camera clear
+    const s = near ? .1 + .3 * r() * r() : .25 + 1.3 * r() * r(); rock(x, z, s, height(x, z) - s * .12); k++; }
+  return new Float32Array(out);
+}
+
+// ---------------------------------------------------------------- shaders
+const COMMON = `#version 300 es
+precision highp float;
+float h1(float n){ return fract(sin(n*127.1)*43758.5453); }
+float h3(vec3 p){ p=fract(p*vec3(.1031,.1030,.0973)); p+=dot(p,p.yxz+33.33); return fract((p.x+p.y)*p.z); }
+float n1(float x){ float i=floor(x), f=fract(x); f=f*f*(3.-2.*f); return mix(h1(i),h1(i+1.),f); }
+float n3(vec3 x){ vec3 i=floor(x), f=fract(x); f=f*f*(3.-2.*f);
+  return mix(mix(mix(h3(i),h3(i+vec3(1,0,0)),f.x),mix(h3(i+vec3(0,1,0)),h3(i+vec3(1,1,0)),f.x),f.y),
+             mix(mix(h3(i+vec3(0,0,1)),h3(i+vec3(1,0,1)),f.x),mix(h3(i+vec3(0,1,1)),h3(i+vec3(1,1,1)),f.x),f.y),f.z); }
+float n2(vec2 x){ return n3(vec3(x,3.7)); }
+vec3 tone(vec3 c){ c=max(c,0.); c=c*(2.51*c+.03)/(c*(2.43*c+.59)+.14); return pow(clamp(c,0.,1.),vec3(1./2.2)); }
+`;
+const SKY_VS = `#version 300 es
+in vec2 aP; out vec2 vN; void main(){ vN=aP; gl_Position=vec4(aP,1.,1.); }`;
+const SKY_FS = COMMON + `
+in vec2 vN; out vec4 o;
+uniform vec3 uR,uU,uF,uPd,uA,uB1,uB2,uL,uMoon;
+uniform vec2 uTan; uniform mat3 uStar;
+uniform float uD,uSpin,uExp,uAir,uDay,uBehind,uStars,uT;
+const float SUN_R=.0062;                                             // the sun's disc: a little smaller than from the town
+float fbm(vec3 p){ float a=.5, s=0.; for(int i=0;i<5;i++){ s+=a*n3(p); p=p*2.03+vec3(7.1,3.3,5.7); a*=.5; } return s; }
+vec3 spun(vec3 n,float turn){ float c=cos(turn), s=sin(turn); vec2 e=vec2(dot(n,uB1),dot(n,uB2)); return vec3(e.x*c-e.y*s,e.x*s+e.y*c,dot(n,uA)); }   // a point on the planet, in the planet's own turning frame
+vec3 surface(vec3 p,out float land,out float ice){                   // a living world: seas, green and dry land, cold country, ice at the poles
+  float hgt=fbm(p*1.7+3.), dry=fbm(p*3.1+11.), lat=abs(p.z);
+  land=smoothstep(.505,.525,hgt); ice=smoothstep(.80,.86,lat+.16*(dry-.5)+.1*land);
+  vec3 sea=mix(vec3(.025,.075,.17),vec3(.06,.20,.25),smoothstep(.43,.505,hgt));          // deep water, paler over the shelves
+  vec3 green=mix(vec3(.09,.18,.07),vec3(.22,.26,.12),dry);
+  vec3 bare=mix(vec3(.46,.36,.21),vec3(.42,.25,.17),smoothstep(.4,.6,fbm(p*6.)));        // ochre and terracotta
+  vec3 ground=mix(green,bare,smoothstep(.45,.62,dry*.6+.5*exp(-pow((lat-.3)/.14,2.))));  // deserts keep to their own latitudes
+  ground=mix(ground,vec3(.30,.29,.24),smoothstep(.55,.8,lat)); ground=mix(ground,vec3(.37,.34,.31),smoothstep(.6,.68,hgt));   // tundra; high ground
+  return mix(mix(sea,ground,land),vec3(.80,.82,.84),ice); }
+float ring(float r){                                                 // how much of the light the rings stop, by distance from the planet's centre
+  float e=smoothstep(1.45,1.5,r)*(1.-smoothstep(2.02,2.07,r));
+  float gap=1.-.9*smoothstep(1.80,1.82,r)*(1.-smoothstep(1.85,1.87,r));
+  return e*gap*(.3+.7*n1(r*31.))*mix(.3,1.,smoothstep(1.55,1.68,r))*.9; }
+float clouds(vec3 p){ float w=fbm(vec3(p.xy*2.6,p.z*5.));            // weather: drawn out along the latitudes, curled by a second layer of noise
+  return smoothstep(.5,.72,fbm(vec3(p.xy*3.,p.z*6.)+1.7*vec3(w,w*.7,0.)+20.)+.05*cos(p.z*9.)); }
+vec3 stars(vec3 d){
+  vec3 c=vec3(0.);
+  for(int k=0;k<2;k++){ float sc=k==0?230.:95.; vec3 p=d*sc, i=floor(p); float h=h3(i+float(k)*17.);
+    if(h<(k==0?.07:.035)){ vec3 q=i+.25+.5*vec3(h3(i+1.3),h3(i+2.7),h3(i+4.1)); float b=h3(i+9.1); b=b*b*(k==0?.5:1.6)+.04;
+      float tw=1.-uAir*.5*(.5+.5*sin(uT*(3.+9.*b)+h*90.));
+      c+=mix(vec3(1.,.85,.7),vec3(.75,.85,1.),h3(i+5.5))*b*tw*smoothstep(k==0?.3:.24,0.,length(p-q)); } }
+  float band=exp(-pow(dot(d,normalize(vec3(.35,.5,.79)))/.2,2.));    // the galaxy's band, with dust lanes
+  c+=vec3(.75,.8,1.)*.017*band*(.35+n3(d*5.)*.9)*smoothstep(.75,.3,n3(d*11.+7.)*band);
+  return c; }
+void main(){
+  vec3 d=normalize(uF+vN.x*uTan.x*uR+vN.y*uTan.y*uU);
+  vec3 col=stars(uStar*d)*uStars;
+  float ang=acos(clamp(dot(d,uL),-1.,1.));
+  col+=vec3(1.,.95,.86)*(smoothstep(SUN_R*1.12,SUN_R*.9,ang)*60.+.9*exp(-ang*42.)+.1*exp(-ang*8.)*(1.+9.*uAir*uDay));
+  vec3 C=uPd*uD; float b=dot(d,C), hh=uD*uD-b*b, h=sqrt(max(hh,0.)), aa=fwidth(h)*1.2;
+  float cov=b>0.?1.-smoothstep(1.-aa,1.+aa,h):0., tP=b-sqrt(max(1.-hh,0.));
+  // the rings: ice and dust round the planet's middle
+  float tr=dot(C,uA)/dot(d,uA), ra=0.; vec3 rc=vec3(0.);
+  if(tr>0.){ vec3 q=d*tr-C; float ql=dot(q,uL);
+    ra=ring(length(q));
+    float shade=ql<0.?smoothstep(.96,1.04,length(q-ql*uL)):1.;       // the planet's shadow across them
+    float side=dot(uL,uA)*dot(C,uA)<0.?1.:.32;                       // lit from our side, or lit through from the other
+    rc=vec3(.70,.67,.62)*1.05*side*shade+vec3(.004,.005,.008); }
+  bool ringFront=cov>0.&&tr>0.&&tr<tP;
+  if(!ringFront) col=mix(col,rc,ra);
+  // the little moon that shares the planet
+  vec3 M=uMoon; float bm=dot(d,M), mh=sqrt(max(dot(M,M)-bm*bm,0.)), ma=fwidth(mh)*1.2, mcov=bm>0.?1.-smoothstep(.075-ma,.075+ma,mh):0.;
+  float tM=bm-sqrt(max(.075*.075-mh*mh,0.)); vec3 mc=vec3(0.);
+  if(mcov>0.){ vec3 nm=normalize(d*tM-M), qm=M-C; float qlm=dot(qm,uL), sh=qlm<0.?smoothstep(.95,1.05,length(qm-qlm*uL)):1.;
+    mc=vec3(.50,.47,.43)*2.2*pow(max(dot(nm,uL),0.),.8)*sh*(.8+.4*n3(nm*6.))+vec3(.004); }
+  bool moonFront=cov<=0.||tM<tP;
+  if(!moonFront) col=mix(col,mc,mcov);
+  // the planet
+  if(cov>0.){ vec3 n=normalize(d*tP-C); float ndl=dot(n,uL), mu=max(dot(n,-d),0.), land, ice;
+    float lit=smoothstep(-.08,.2,ndl)*(.2+.8*max(ndl,0.));
+    float rs=-dot(n,uA)/dot(uL,uA); if(rs>0.) lit*=1.-.6*ring(length(n+uL*rs));   // the rings' shadow on the land and sea
+    vec3 p=spun(n,uSpin), a=surface(p,land,ice); float cl=clouds(spun(n,uSpin*.97));          // the weather drifts a little against the ground
+    float glint=pow(max(dot(n,normalize(uL-d)),0.),70.)*(1.-land)*(1.-ice)*(1.-cl)*step(0.,ndl);   // the sun on the sea
+    vec3 pc=mix(a,vec3(.82,.82,.80),cl)*1.25*lit*(.6+.4*sqrt(mu))+vec3(1.,.93,.8)*1.6*glint;
+    pc=mix(pc,vec3(.28,.45,.80)*1.3*lit,.1+.6*pow(1.-mu,2.5));                               // its air: a blue veil, thickest at the edge
+    pc+=vec3(.9,.42,.2)*.05*smoothstep(-.05,.03,ndl)*(1.-smoothstep(.03,.14,ndl));            // and a warm line where day ends
+    float town=smoothstep(.62,.8,n3(p*95.))*smoothstep(.45,.6,n3(p*8.+5.))*land*(1.-ice)*(1.-.85*cl);
+    pc+=vec3(1.,.62,.28)*.45*town*(1.-smoothstep(-.14,.0,ndl))*(1.-uAir*uDay)+vec3(.003,.004,.007);         // lamps of its towns on the night side
+    col=mix(col,pc,cov); }
+  // its air, seen edge on: blue on the sunlit limb, and a red ring of sunsets when the sun is behind it
+  vec3 nl=normalize(d*b-C); float g=b>0.?exp(-max(h-1.,0.)/.012)*(1.-cov):0.;
+  col+=vec3(.35,.55,.95)*.7*g*smoothstep(-.25,.35,dot(nl,uL));
+  col+=vec3(1.,.42,.16)*2.2*g*uBehind*(.35+.65*smoothstep(.2,1.,dot(nl,normalize(uL-uPd*dot(uL,uPd)+1e-4*uR))));
+  if(ringFront) col=mix(col,rc,ra);
+  if(moonFront) col=mix(col,mc,mcov);
+  // the moon's own air: by day a bright blue sky that all but hides the planet, as the town's moon is pale by day; warm low down towards a low sun
+  if(uAir>0.){ float up=max(d.y,0.); vec3 sky=mix(vec3(.46,.50,.52),vec3(.07,.17,.42),pow(up,.45))*uDay*1.2;
+    float low=1.-smoothstep(-.05,.3,uL.y);
+    sky=mix(sky,vec3(.85,.42,.18)*uDay*1.1,low*pow(1.-up,5.)*(.3+.7*max(dot(normalize(d.xz+1e-5),normalize(uL.xz+1e-5)),0.)));
+    col=col*(1.-.86*uAir*uDay)+(sky+vec3(.008,.011,.022))*uAir; }
+  o=vec4(tone(col*uExp),1.);
+}`;
+const LIT = `
+uniform vec3 uL,uPd,uSun,uShine,uFill,uEye; uniform float uExp,uAir,uDay;
+vec3 hazed(vec3 c,vec3 p){ if(uAir<=0.) return c; float f=1.-exp(-length(p-uEye)/1400.); return mix(c,vec3(.46,.50,.52)*uDay*1.2+vec3(.008,.011,.022),f*uAir); }
+`;
+const GROUND_VS = `#version 300 es
+layout(location=0) in vec3 aP; layout(location=1) in vec3 aN; uniform mat4 uVP; out vec3 vP,vNr;
+void main(){ vP=aP; vNr=aN; gl_Position=uVP*vec4(aP,1.); }`;
+const GROUND_FS = COMMON + LIT + `
+in vec3 vP,vNr; out vec4 o; uniform float uTint;
+void main(){
+  vec3 n=normalize(vNr); float dist=length(vP-uEye), fade=exp(-dist/22.);
+  vec2 x=vP.xz*8.+7.; float g0=n2(x); n=normalize(n+vec3(g0-n2(x+vec2(.4,0.)),0.,g0-n2(x+vec2(0.,.4)))*.6*fade);   // the grain of the dust, close to
+  float m1=n2(vP.xz*.9), m2=n2(vP.xz*.11+3.), m3=n2(vP.xz*.012+9.);
+  vec3 a=mix(vec3(.25,.232,.213),vec3(.33,.305,.275),smoothstep(.35,.65,m1));      // two close tones blotched together (W1)
+  a*=.84+.32*m2; a=mix(a,a*vec3(.6,.63,.7),smoothstep(.5,.75,m3)*.7); a*=uTint;   // and wide darker plains
+  vec3 light=uSun*pow(max(dot(n,uL),0.),.75)+uShine*max(dot(n,uPd)*.8+.2,0.)+uFill*(.6+.4*n.y)+vec3(.0015,.002,.003);
+  o=vec4(tone(hazed(a*light,vP)*uExp),1.);
+}`;
+const BODY_VS = `#version 300 es
+layout(location=0) in vec3 aP; layout(location=1) in vec3 aN; layout(location=2) in vec3 aC; layout(location=3) in float aF;
+uniform mat4 uVP; out vec3 vP,vNr,vC; out vec2 vUv; out float vAo,vSv,vTex;
+void main(){
+  float nl=max(length(aN),1e-4); vNr=aN/nl; vAo=clamp(nl*2.-1.,0.,1.); vSv=clamp(1.-(14.-aF)/.4,0.,1.);   // people.js: the normal's length is how open a point is to the sky, the material how much sun it sees
+  if(abs(aC.x)>2.){ float pk=abs(aC.x); vec3 e=(vec3(floor(pk/65536.),mod(floor(pk/256.),256.),mod(pk,256.))-64.)/127.; vC=e*e; vUv=aC.yz; vTex=1.; }   // cloth and skin: the colour packed into one number, then the weave's place
+  else { vC=aC; vUv=vec2(0.); vTex=0.; }
+  vP=aP; gl_Position=uVP*vec4(aP,1.); }`;
+const BODY_FS = COMMON + LIT + `
+in vec3 vP,vNr,vC; in vec2 vUv; in float vAo,vSv,vTex; out vec4 o; uniform vec3 uBounce;
+void main(){
+  // the sun at .65: set by eye against character_lineup.png, so cloth and skin keep the tones they have in the town
+  vec3 n=normalize(vNr), a=vC*(vTex>.5?.9+.2*n2(vUv*34.):1.);         // matte and mottled, like the town's cloth (C2)
+  vec3 light=uSun*.65*max(dot(n,uL),0.)*vSv+(uShine*max(dot(n,uPd)*.7+.3,0.)+uShine*.12+uFill*(.55+.45*n.y)+uBounce*max(.5-.5*n.y,0.)+vec3(.002,.003,.004))*vAo;
+  o=vec4(tone(hazed(a*light,vP)*uExp),1.);
+}`;
+const SHADOW_VS = `#version 300 es
+layout(location=0) in vec3 aP; layout(location=1) in float aBase; uniform mat4 uVP; uniform vec3 uL;
+void main(){ float y=aBase+.02, s=max(aP.y-y,0.)/max(uL.y,.02); gl_Position=uVP*vec4(aP.x-uL.x*s,y,aP.z-uL.z*s,1.); }`;   // each point slid along the sunlight to the ground
+const SHADOW_FS = `#version 300 es
+precision highp float; uniform float uK; out vec4 o; void main(){ o=vec4(vec3(uK),1.); }`;
+
+// ---------------------------------------------------------------- set up
+const cv = document.getElementById("c"), gl = cv.getContext("webgl2", { antialias: true, stencil: true, alpha: false });
+const fail = msg => { const e = document.getElementById("err"); e.style.display = "flex"; e.textContent = msg; throw new Error(msg); };
+if (!gl) fail("This page needs WebGL 2. Open it in a current Edge or Chrome.");
+if (typeof People === "undefined") fail("The people could not be loaded: open this page from its place in the project (Art/StyleTests/moon_view_27/), so it can find Prototype/play/people.js.");
+function program(vs, fs) {
+  const p = gl.createProgram();
+  for (const [t, src] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) fail("Shader: " + gl.getShaderInfoLog(s)); gl.attachShader(p, s); }
+  gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) fail("Link: " + gl.getProgramInfoLog(p));
+  const u = {}; for (let i = 0, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); i < n; i++) { const a = gl.getActiveUniform(p, i); u[a.name] = gl.getUniformLocation(p, a.name); }
+  return { p, u };
+}
+const sky = program(SKY_VS, SKY_FS), ground = program(GROUND_VS, GROUND_FS), body = program(BODY_VS, BODY_FS), shadow = program(SHADOW_VS, SHADOW_FS);
+const buf = (target, data, usage) => { const b = gl.createBuffer(); gl.bindBuffer(target, b); gl.bufferData(target, data, usage || gl.STATIC_DRAW); return b; };
+const quadBuf = buf(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]));
+const G = buildGround(), groundBuf = buf(gl.ARRAY_BUFFER, G.v), groundIdx = buf(gl.ELEMENT_ARRAY_BUFFER, G.idx);
+const ROCKS = buildRocks(), rockBuf = buf(gl.ARRAY_BUFFER, ROCKS);
+const bodyMesh = { a: new Float32Array(1 << 20), n: 0, box() {} }, bodyBuf = gl.createBuffer();
+const attribs = list => { for (let i = 0; i < 4; i++) gl.disableVertexAttribArray(i); for (const [loc, size, stride, off] of list) { gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, gl.FLOAT, false, stride, off); } };
+
+// ---------------------------------------------------------------- the clock, the camera, the keys
+const START = 105 / 360;                                             // a low sun from behind the right shoulder, the planet two-thirds lit
+let orbit = Q.has("t") ? +Q.get("t") : START, playing = !Q.has("pause"), air = Q.get("air") !== "0", who = clamp((+Q.get("who") || 1) - 1, 0, 5);
+const PERIOD = 420, SUN_I = 2.2;                                                  // seconds of looking for one orbit
+const cam = { yaw: Q.has("yaw") ? +Q.get("yaw") : .3, tilt: Q.has("tilt") ? +Q.get("tilt") : rad(13.5), dist: Q.has("dist") ? +Q.get("dist") : 3.8 };
+const CAST = People.cast(), slider = document.getElementById("orbit"), playBtn = document.getElementById("play"), airBox = document.getElementById("air"), subEl = document.getElementById("sub");
+const setPlaying = p => { playing = p; playBtn.textContent = p ? "Pause" : "Play"; };
+setPlaying(playing); airBox.checked = air;
+playBtn.onclick = () => setPlaying(!playing);
+airBox.onchange = () => { air = airBox.checked; };
+slider.oninput = () => { orbit = slider.value / 1000; };
+let dragging = null;
+cv.addEventListener("pointerdown", e => { dragging = [e.clientX, e.clientY]; cv.setPointerCapture(e.pointerId); cv.classList.add("drag"); });
+cv.addEventListener("pointermove", e => { if (!dragging) return; cam.yaw -= (e.clientX - dragging[0]) * .005; cam.tilt = clamp(cam.tilt + (e.clientY - dragging[1]) * .004, rad(-25), rad(80)); dragging = [e.clientX, e.clientY]; });
+const drop = () => { dragging = null; cv.classList.remove("drag"); };
+cv.addEventListener("pointerup", drop); cv.addEventListener("pointercancel", drop);
+cv.addEventListener("wheel", e => { e.preventDefault(); cam.dist = clamp(cam.dist * Math.exp(e.deltaY * .001), 1.6, 60); }, { passive: false });
+addEventListener("keydown", e => {
+  if (e.target === slider && e.code !== "Space") return;
+  if (e.code === "Space") { e.preventDefault(); setPlaying(!playing); }
+  else if (e.key === "a" || e.key === "A") { air = !air; airBox.checked = air; }
+  else if (e.key === "h" || e.key === "H") for (const id of ["head", "keys", "bar"]) { const s = document.getElementById(id).style; s.visibility = s.visibility === "hidden" ? "" : "hidden"; }
+  else if (e.key >= "1" && e.key <= "6") who = +e.key - 1;
+});
+
+// ---------------------------------------------------------------- a frame
+function persp(fy, asp, n, f) { const t = 1 / Math.tan(fy / 2); return [t / asp, 0, 0, 0, 0, t, 0, 0, 0, 0, (f + n) / (n - f), -1, 0, 0, 2 * f * n / (n - f), 0]; }
+function view(eye, r, u, f) { return [r[0], u[0], -f[0], 0, r[1], u[1], -f[1], 0, r[2], u[2], -f[2], 0, -dot(r, eye), -dot(u, eye), dot(f, eye), 1]; }
+function mul4(a, b) { const o = new Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) o[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3]; return o; }
+const FOV = rad(62);
+let last = performance.now(), shown = "";
+function frame(now) {
+  const dt = Math.min(.1, (now - last) / 1000); last = now;
+  if (playing && !dragging) orbit = (orbit + dt / PERIOD) % 1;
+  if (document.activeElement !== slider || playing) slider.value = Math.round(orbit * 1000);
+  const w = Math.round(cv.clientWidth * Math.min(devicePixelRatio || 1, 2)), h = Math.round(cv.clientHeight * Math.min(devicePixelRatio || 1, 2));
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  gl.viewport(0, 0, w, h);
+
+  // where everything is, from the one number
+  const th = orbit * TAU, L = sunDir(th), lit = (1 - Math.cos(th)) / 2;                       // lit: the share of the planet's face in sunlight
+  const sep = Math.acos(clamp(dot(L, PD), -1, 1)), seen = sstep(PLANET_R - .008, PLANET_R + .008, sep);   // the sun hidden behind the planet
+  const up = sstep(-.012, .012, L[1]), day = seen * up;
+  const glow = air ? seen * sstep(-.14, .06, L[1]) : day, fillSky = sc([.10, .15, .24], air ? glow : 0);   // with air the sky stays light a while after sunset, and lights the shade
+  const behind = (1 - sstep(PLANET_R * .7, PLANET_R * 1.15, sep));
+  const exposure = mix(2.2, 1, day), skyExposure = mix(1.1, 1, day);        // eyes open up at night for the ground, far less for the bright planet
+  const sun = sc([1, .96, .9], SUN_I * day), shine = sc(mix3([.46, .56, .70], [1, .5, .25], behind), .26 * lit + .03 * behind);   // the planet's light: blue-white; red from the ring of sunsets
+  const phi = 2.9 * th + 1, moon = add(sc(PD, DIST), add(sc(B1, 3.1 * Math.cos(phi)), sc(B2, 3.1 * Math.sin(phi))));
+
+  // the camera: behind the person, low, looking up past them
+  const person = CAST[who], eyeY = .55 + .06 * cam.dist, eye = [cam.dist * Math.sin(cam.yaw), eyeY, cam.dist * Math.cos(cam.yaw)];
+  const vy = cam.yaw + Math.PI - .2, f = [Math.sin(vy) * Math.cos(cam.tilt), Math.sin(cam.tilt), Math.cos(vy) * Math.cos(cam.tilt)];
+  const r = norm(cross(f, [0, 1, 0])), u = cross(r, f), asp = w / h, tan = Math.tan(FOV / 2);
+  const VP = mul4(persp(FOV, asp, .1, 30000), view(eye, r, u, f));
+
+  gl.clearColor(0, 0, 0, 1); gl.clearStencil(0); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+  // the sky
+  gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.useProgram(sky.p);
+  gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf); attribs([[0, 2, 8, 0]]);
+  let U = sky.u;
+  gl.uniform3fv(U.uR, r); gl.uniform3fv(U.uU, u); gl.uniform3fv(U.uF, f); gl.uniform3fv(U.uPd, PD); gl.uniform3fv(U.uA, AX); gl.uniform3fv(U.uB1, B1); gl.uniform3fv(U.uB2, B2);
+  gl.uniform3fv(U.uL, L); gl.uniform3fv(U.uMoon, moon); gl.uniform2f(U.uTan, tan * asp, tan); gl.uniformMatrix3fv(U.uStar, false, rotAbout(W, -th));
+  gl.uniform1f(U.uD, DIST); gl.uniform1f(U.uSpin, th * 7); gl.uniform1f(U.uExp, skyExposure); gl.uniform1f(U.uAir, air ? 1 : 0); gl.uniform1f(U.uDay, glow); gl.uniform1f(U.uBehind, behind);
+  gl.uniform1f(U.uStars, (air ? 1 - .97 * glow : 1) * mix(1.9, 1.2, day)); gl.uniform1f(U.uT, now / 1000);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  // the ground and the rocks
+  gl.enable(gl.DEPTH_TEST); gl.depthMask(true);
+  const light = P => { gl.uniform3fv(P.u.uL, L); gl.uniform3fv(P.u.uPd, PD); gl.uniform3fv(P.u.uSun, sun); gl.uniform3fv(P.u.uShine, shine); gl.uniform3fv(P.u.uFill, fillSky); gl.uniform3fv(P.u.uEye, eye);
+    gl.uniform1f(P.u.uExp, exposure); gl.uniform1f(P.u.uAir, air ? 1 : 0); gl.uniform1f(P.u.uDay, glow); gl.uniformMatrix4fv(P.u.uVP, false, VP); };
+  gl.useProgram(ground.p); light(ground); gl.uniform1f(ground.u.uTint, 1);
+  gl.bindBuffer(gl.ARRAY_BUFFER, groundBuf); attribs([[0, 3, 24, 0], [1, 3, 24, 12]]); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, groundIdx);
+  gl.drawElements(gl.TRIANGLES, G.idx.length, gl.UNSIGNED_INT, 0);
+  gl.uniform1f(ground.u.uTint, .8); gl.bindBuffer(gl.ARRAY_BUFFER, rockBuf); attribs([[0, 3, 28, 0], [1, 3, 28, 12]]); gl.drawArrays(gl.TRIANGLES, 0, ROCKS.length / 7);
+  // the person: one of the town's own, head back, looking up at the planet
+  bodyMesh.n = 0; People.setSun(L[1] > .02 ? L : PD, eye);
+  People.draw(bodyMesh, 0, 0, 0, 0, person, 0, { ph: 0, t: now / 1000, lod: 0, ff: 1, fl: 14, look: [0, -rad(30)], mod: { chest: [-7, 0], arms: [[1, 0, 4, 6], [1, 0, 4, 6]] } });
+  gl.useProgram(body.p); light(body); gl.uniform3fv(body.u.uBounce, sc([.29, .27, .24], SUN_I * day * Math.max(L[1], 0) * .5));
+  gl.bindBuffer(gl.ARRAY_BUFFER, bodyBuf); gl.bufferData(gl.ARRAY_BUFFER, bodyMesh.a.subarray(0, bodyMesh.n), gl.DYNAMIC_DRAW);
+  attribs([[0, 3, 40, 0], [1, 3, 40, 12], [2, 3, 40, 24], [3, 1, 40, 36]]); gl.drawArrays(gl.TRIANGLES, 0, bodyMesh.n / 10);
+  // shadows: only the sky's light (when there is air) and the planet's reach into them
+  if (day > .01 && L[1] > .02) {
+    const sunLit = SUN_I * day * Math.pow(L[1], .75), fill = .26 * lit * .58 + .003 + (air ? .16 * glow : 0), k = Math.pow(fill / (sunLit + fill), 1 / 2.2);
+    gl.useProgram(shadow.p); gl.uniformMatrix4fv(shadow.u.uVP, false, VP); gl.uniform3fv(shadow.u.uL, L); gl.uniform1f(shadow.u.uK, mix(1, k, sstep(.02, .07, L[1])));
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ZERO, gl.SRC_COLOR); gl.depthMask(false);
+    gl.enable(gl.STENCIL_TEST); gl.stencilFunc(gl.EQUAL, 0, 255); gl.stencilOp(gl.KEEP, gl.KEEP, gl.INCR);   // each bit of ground darkened once, however many shapes shade it
+    gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-1, -1);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bodyBuf); attribs([[0, 3, 40, 0]]); gl.vertexAttrib1f(1, 0); gl.drawArrays(gl.TRIANGLES, 0, bodyMesh.n / 10);
+    gl.bindBuffer(gl.ARRAY_BUFFER, rockBuf); attribs([[0, 3, 28, 0], [1, 1, 28, 24]]); gl.drawArrays(gl.TRIANGLES, 0, ROCKS.length / 7);
+    gl.disable(gl.POLYGON_OFFSET_FILL); gl.disable(gl.STENCIL_TEST); gl.disable(gl.BLEND); gl.depthMask(true);
+  }
+
+  const el = Math.asin(clamp(L[1], -1, 1)) * 180 / Math.PI;
+  const text = `The planet ${Math.round(lit * 100)}% lit · ` + (up > .5 && seen < .5 ? "the sun behind the planet" : el > 0 ? `the sun ${Math.round(el)}° up` : "night, by the planet's light");
+  if (text !== shown) { shown = text; subEl.textContent = text; }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
