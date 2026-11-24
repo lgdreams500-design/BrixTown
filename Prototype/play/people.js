@@ -562,15 +562,24 @@ const People = (() => {
     const over = (z, x) => {                                          // the outside at the front, apron and scarf tail included
       let f = wear(z, x)[0];
       if (apY && z > AZ0 - .02 && z < AZ1 + .02 && Math.abs(x) < .118 * W) f = Math.max(f, -apY(z) + apD(z));
-      if (L.scarf && lod < 2 && z > (apY ? AZ1 + .03 : .28) && z < .47 && Math.abs(x - .042) < .045) f = Math.max(f, scarfF(z) + .012);
+      if (scarfY && z > SZ0 - .01 && z < SZ1 && Math.abs(x - .042) < .045) f = Math.max(f, -scarfY(z) + .012);
       return f;
     };
-    const scarfF = z => wear(z, .042)[0] + (z > .44 ? 0 : .016);          // the scarf tail's middle, just off the front
+    // the scarf tail hangs straight from the wrap: the line from its top, inside the wrap, that clears the chest all the way
+    // down (a line from the collar to the hem alone cut through the bust, so only its end showed)
+    const SZ0 = apY ? AZ1 + .035 : .2893, SZ1 = .5, sNeed = z => -(wear(z, .042)[0] + .016);   // its middle, just off the front
+    let scarfY = null;
+    if (L.scarf && lod < 2) {
+      let y1 = 1; for (let z = .39; z <= .46; z += .01) y1 = Math.min(y1, sNeed(z));   // its top at the front of the upper chest, up into the wrap
+      let y0 = sNeed(SZ0);
+      for (let z = SZ0 + .02; z < SZ1 - .01; z += .02) { const q = (z - SZ0) / (SZ1 - SZ0); y0 = Math.min(y0, (sNeed(z) - y1 * q) / (1 - q)); }
+      y0 = Math.max(y0, y1 - .06);                                    // hanging, not standing out
+      scarfY = z => y0 + (y1 - y0) * cl((z - SZ0) / (SZ1 - SZ0), 0, 1);
+    }
     if (L.scarf) {                                                    // a wrap round the neck and a flat tail down the front of the chest
       const big = coat ? 1.15 : 1;                                    // over a coat's collar
       ball(ms, add(nk, sc(tz, .049 * S)), sc(tx, .088 * T * big), sc(ty, .084 * T * big), sc(tz, .04 * S), hn, 4, L.scarf, fl, sd + 5);
-      if (lod < 2) { const z0 = apY ? AZ1 + .035 : .2893;              // over an apron, the tail ends above the bib instead of standing out over it
-        capsule(z0, .034, .4637, .03, .35, .4, L.scarf, sd + 5, -scarfF(z0), -scarfF(.4637), .042); }
+      if (scarfY) capsule(SZ0, .034, SZ1, .03, .35, .4, L.scarf, sd + 5, scarfY(SZ0), scarfY(SZ1), .042);   // over an apron it ends above the bib
     }
     if (L.bag && lod < 2) {                                           // the bag at the left hip, its strap over the right shoulder, lying on whatever is worn
       const bg = add(pel, add(sc(px, .225 * S), sc(py, -.1 * T))), sr = .012;
