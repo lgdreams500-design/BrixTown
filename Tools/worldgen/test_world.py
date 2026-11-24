@@ -1249,21 +1249,81 @@ class TheMallInside(unittest.TestCase):                                        #
         for kind in {u["outlet"] for L in self.p["levels"] for u in L["units"] if u.get("outlet")}:
             self.assertGreaterEqual(len(W["mall_goods"]["sells"][kind]), 6, kind)
 
-    def test_WLD_061_shops_on_every_walk_and_the_ground_floor_keeps_its_jobs(self):
+    def careers_rules(self):
         import json, os, sys
         sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "citysim"))
         import careers
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "World", "rules", "careers.json"), encoding="utf-8") as f:
-            R = json.load(f)
+            return careers, json.load(f)
+
+    def test_WLD_066_a_keeper_stands_in_every_outlet_and_guards_and_janitors_on_every_floor(self):
+        # the owner, 2026-11-24: "one person per outlet is good enough. few security, ganitors etc, can be added to handle entire Mall"
+        import math
+        careers, R = self.careers_rules()
+        M, p, l = self.M, self.p, self.l
+        outs = careers.mall_outlets(l)
+        self.assertEqual(len(outs), 189)
+        places = []                                                                # (place, floor): everywhere someone stands or sits
+        for L in p["levels"]:
+            fronts = {f["unit"]: f for f in L["fronts"]}
+            for u in L["units"]:
+                if not u.get("outlet"):
+                    continue
+                self.assertEqual(len(u["stand"]), 1, u["id"])                      # one keeper to each outlet
+                s, f = u["stand"][0], fronts[u["id"]]
+                mid = ((f["a"][0] + f["b"][0]) / 2, (f["a"][1] + f["b"][1]) / 2)
+                self.assertAlmostEqual(M.seg_dist(s, f["a"], f["b"]), 3.2, delta=0.05, msg=u["id"])   # behind the counter the slice draws 2.2 to 2.9 m in
+                self.assertLess(math.dist(s, mid), 3.4, u["id"])                   # and at its middle, not at an end of it
+                self.assertFalse(any(M.inside(w, *s) for w in L["walks"]), u["id"])   # in the outlet, not out on the walk
+                places.append((tuple(s), L["level"]))
+        whole = p["staff"]
+        self.assertEqual({c: len(v) for c, v in whole.items()}, {w["career"]: w["count"] for w in R["mall_staff"]["whole_mall"]})
+        for career, v in whole.items():
+            self.assertEqual({q["level"] for q in v}, {0, 1, 2}, career)           # guards and janitors on every floor
+            for q in v:
+                L, s = p["levels"][q["level"]], q["pos"]
+                self.assertTrue(any(M.inside(w, *s) for w in L["walks"]) and not any(M.inside(b, *s) for b in L["bridges"]), (career, q))   # on the floor, not on a bridge
+                for void in L["voids"]:
+                    self.assertFalse(M.inside(void, *s), (career, q))
+                    self.assertGreater(min(M.seg_dist(s, void[i], void[(i + 1) % len(void)]) for i in range(len(void))), 1.5, (career, q))   # clear of the rail
+                self.assertTrue(all(M.seg_dist(s, f["a"], f["b"]) > 2.3 for f in L["fronts"]), (career, q))   # not in anyone's doorway
+                self.assertFalse(any(M.inside(M.corners(u), *s) for u in L["units"] if u["kind"] != "anchor"), (career, q))
+                self.assertTrue(all(M.seg_dist(s, r["a"], r["b"]) > r["width"] / 2 + 1.9 for r in p["ramps"] if q["level"] in (r["from"], r["to"])), (career, q))   # clear of the moving stairs
+                self.assertTrue(-180 <= q["yaw"] <= 180)
+                places.append((tuple(s), q["level"]))
+        guards = whole["security_guard"]
+        for e in p["entrances"]:                                                   # a guard inside each way in
+            self.assertTrue(any(q["level"] == 0 and math.dist(q["pos"], e["at"]) < 16 for q in guards), e["side"])
+        places += [(tuple(s), 0) for u in self.ground["units"] if u["kind"] == "anchor" for s in u["stand"]]
+        places += [(tuple(s), 0) for k in ("customer", "seat") for s in l["objects"][k]]
+        for i, (a, ka) in enumerate(places):                                       # no two places at one spot on the plan, on any floors: the slice tells floors apart by where a place is
+            for b, kb in places[i + 1:]:
+                self.assertGreater(max(abs(a[0] - b[0]), abs(a[1] - b[1])), 0.3, (a, ka, b, kb))
+        # the places to work are those: each keeper's, in the order of the outlets, then the guards' and the janitors'
+        first = len(careers.minimum(l, R, "mall"))
+        want = [u["stand"][0] for u in outs] + [q["pos"] for w in R["mall_staff"]["whole_mall"] for q in whole[w["career"]]]
+        self.assertEqual(first, len(want))
+        self.assertEqual(l["objects"]["work"][:first], want)
+        floor = {u["id"]: L["level"] for L in p["levels"] for u in L["units"] if u.get("outlet")}
+        self.assertEqual(l["levels"]["work"][:first], [floor[u["id"]] for u in outs] + [q["level"] for w in R["mall_staff"]["whole_mall"] for q in whole[w["career"]]])
+        self.assertEqual(len(l["levels"]["work"]), len(l["objects"]["work"]))
+        staff = [r for r in W["residents"] if r.get("work") == l["id"]]
+        self.assertGreaterEqual(len(staff), first)                                 # and a resident holds every one of them
+        self.assertEqual(sorted(r["post"] for r in staff)[:first], list(range(first)))
+
+    def test_WLD_061_shops_on_every_walk_and_a_place_to_stand_for_every_post(self):
+        careers, R = self.careers_rules()
         posts = careers.posts(self.l, R, "mall")
-        self.assertEqual(len(posts), 206)                                          # as the old ground floor had, so nobody's work changed
+        self.assertEqual(len(posts), 189 + 12 + 24)                                # a keeper to each outlet, six guards and six janitors (CITY-098), and the four big stores' six each
         by_unit = {}
         for _, u in posts:
             by_unit[u] = by_unit.get(u, 0) + 1
-        units = {u["id"]: u for u in self.ground["units"]}
-        self.assertEqual({u: len(units[u]["stand"]) for u in by_unit}, by_unit)    # a place to stand for every post
-        self.assertEqual(sorted(by_unit.values()), [3] * 58 + [4] * 2 + [6] * 4)
-        stands = {tuple(s) for u in self.ground["units"] for s in u.get("stand", [])}
+        units = {u["id"]: u for L in self.p["levels"] for u in L["units"]}
+        whole = by_unit.pop(None)
+        self.assertEqual(whole, sum(len(v) for v in self.p["staff"].values()))     # a place to stand for every post
+        self.assertEqual({u: len(units[u]["stand"]) for u in by_unit}, by_unit)
+        self.assertEqual(sorted(by_unit.values()), [1] * 189 + [6] * 4)
+        stands = {tuple(s) for u in units.values() for s in u.get("stand", [])} | {tuple(q["pos"]) for v in self.p["staff"].values() for q in v}
         self.assertTrue(all(tuple(w) in stands for w in self.l["objects"]["work"]))
         self.assertEqual(self.l["staff"], len(self.l["objects"]["work"]))
         for L in self.p["levels"]:

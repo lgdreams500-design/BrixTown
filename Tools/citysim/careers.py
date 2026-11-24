@@ -4,6 +4,7 @@ All the numbers are in World/rules/careers.json. Standard library only. Nothing 
 worked out once from the residents' homes, the lots and the rules, and gives the same answer on every machine.
 
     workplace_type(lot, R, template)  -> the staffing type of a lot, or None
+    mall_outlets(lot)                 -> the outlets of a mall, floor by floor (CITY-098)
     posts(lot, R, template)           -> [(career, unit id or None)], in the order of the type's posts
     assign(residents, lots, R, templates) -> {resident id: dict(career, role, work, post)}
     problems(R, roles)                -> what is wrong with the rules, in plain words
@@ -62,12 +63,29 @@ def floor_area(lot, spec, template=None):
     return area(lot["rect"]) * floors
 
 
+def mall_outlets(lot):
+    """The outlets of a mall: its units with a kind of outlet, on every floor, in the plan's order (CITY-098)."""
+    return [u for L in lot.get("plan", {}).get("levels", []) for u in L["units"] if u.get("outlet")]
+
+
+def _mall_first(lot, R):
+    """The posts of a mall of outlets that are always filled: one keeper to each outlet, then those who look after the
+    whole mall (guards, janitors), who have no unit (CITY-098)."""
+    outs = mall_outlets(lot)
+    if not outs:
+        return []
+    M = R["mall_staff"]
+    return [(M["keeper"][u["kind"]], u["id"]) for u in outs] + [(w["career"], None) for w in M["whole_mall"] for _ in range(w["count"])]
+
+
 def posts(lot, R, template=None):
-    """Every post a workplace has, as (career, unit id): a mall's ground-floor units each have their own posts."""
+    """Every post a workplace has, as (career, unit id). A mall's ground-floor units each have their own posts; in a mall
+    of outlets each outlet on every floor has one keeper and the mall has its own few posts besides (unit None), and
+    only its other units (corner stores, kiosks) go by their floor area."""
     if "plan" in lot:
-        out = []
+        out = _mall_first(lot, R)
         for u in lot["plan"]["levels"][0]["units"]:
-            t = R["mall_units"].get(u["kind"])
+            t = None if u.get("outlet") else R["mall_units"].get(u["kind"])
             if t:
                 out += _post_list(R["staffing"][t], area(u["rect"]), u["id"])
         return out
@@ -79,9 +97,10 @@ def posts(lot, R, template=None):
 
 
 def minimum(lot, R, template=None):
-    """The posts a workplace cannot open without (each post's min), as indices into posts()."""
+    """The posts a workplace cannot open without (each post's min), as indices into posts(). In a mall of outlets:
+    every keeper and everyone who looks after the whole mall, so that no outlet stands empty (CITY-098)."""
     if "plan" in lot:
-        return []
+        return list(range(len(_mall_first(lot, R))))
     t = workplace_type(lot, R, template)
     if not t:
         return []
@@ -205,6 +224,8 @@ def problems(R, roles):
             out.append("career %s: unknown group %s" % (k, c.get("group")))
         if not c.get("title"):
             out.append("career %s: no title" % k)
+        if "wear" in c and not (isinstance(c["wear"], str) and c["wear"]):
+            out.append("career %s: wear must name the clothes of the job" % k)
     if len(C) < R["targets"]["careers_at_least"]:
         out.append("only %d careers; want at least %d" % (len(C), R["targets"]["careers_at_least"]))
     if abs(sum(R["shares"].values()) - 1.0) > 0.005:
@@ -225,6 +246,15 @@ def problems(R, roles):
     for t in R["mall_units"].values():
         if t not in R["staffing"]:
             out.append("mall unit type %s: no staffing" % t)
+    M = R.get("mall_staff") or {}
+    for trade in ("shop", "food"):                                # CITY-098: a keeper's career for each trade of outlet
+        if (M.get("keeper") or {}).get(trade) not in C:
+            out.append("mall_staff: no known career for the keeper of a %s outlet" % trade)
+    for w in M.get("whole_mall") or []:
+        if w.get("career") not in C:
+            out.append("mall_staff: unknown career %s" % w.get("career"))
+        if not (isinstance(w.get("count"), int) and w["count"] >= 0):
+            out.append("mall_staff: %s needs a whole count of 0 or more" % w.get("career"))
     for k, ws in R.get("second_jobs", {}).items():
         if k not in C:
             out.append("second_jobs: unknown career %s" % k)

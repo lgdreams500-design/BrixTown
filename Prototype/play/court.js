@@ -194,7 +194,7 @@ const Court = (() => {
         }
       }
       // ---- walls and shop fronts
-      const open = new Set(), units = {}; L.units.forEach(u => { units[u.id] = u; if (!k && u.stand && u.kind !== "anchor" && (l.objects.work || []).some(w => u.stand.some(s => Math.abs(s[0] - w[0]) < .3 && Math.abs(s[1] - w[1]) < .3))) open.add(u.id); });
+      const open = new Set(), units = {}; L.units.forEach(u => { units[u.id] = u; if (u.outlet && u.stand && (l.objects.work || []).some(w => u.stand.some(s => Math.abs(s[0] - w[0]) < .3 && Math.abs(s[1] - w[1]) < .3))) open.add(u.id); });
       for (const fr of L.fronts) {                             // every front is an outlet of some kind, with its room and what is sold in it (outlets.js, WLD-063)
         const S = frame(fr.a, fr.b, R.walk), u = units[fr.unit];
         Outlets.front({ m, o, C, S, u, fy, top, k, T, lamp: (x, y, z, w) => lamps.push([x, y, z, w]), Lf: S.L, rooms: l.outletRooms, staffed: open.has(u.id), spec: (P.outlets || {})[u.outlet], depth: P.outlet_depth, blob, prism, round, wallQ, boxQ, solidAlong, plaster, dark, wood, shopCeil, floorC });
@@ -310,11 +310,14 @@ const Court = (() => {
       for (let d = 10; d < 70; d += 15) lantern(e.at[0] + (ns ? 0 : sg * d), F + 3.9, e.at[1] + (ns ? sg * d : 0), F + under, .55); }
     { const v = P.levels[1].voids[0], out = outward(v); for (let i = 0; i < v.length; i += 11) lantern(v[i][0] + out[i][0] * 7.5, F + 3.9, v[i][1] + out[i][1] * 7.5, F + under, .55); }
 
-    // ---- where the staff stand: behind their counter, facing the walk; in an egg hall facing its middle
-    for (const u of P.levels[0].units) for (const s of u.stand || []) {
-      const h = u.kind === "anchor" ? P.halls.find(q => q.unit === u.id) : null;
-      o.spot(s[0], s[1], 0, h ? Math.atan2(h.pos[0] - s[0], -(h.pos[1] - s[1])) : (u.angle || 0) * Math.PI / 180, F);
-    }
+    // ---- where the staff stand: a keeper behind the counter of every outlet on every floor, facing the walk (CITY-098); in an egg hall
+    // facing its middle; and the guards and janitors of the whole mall at their own places (plan.staff)
+    P.levels.forEach((L, k) => { for (const u of L.units) { if (k && !u.outlet) continue;          // (a big store is one unit on every floor: its staff are on the ground)
+      for (const s of u.stand || []) {
+        const h = u.kind === "anchor" ? P.halls.find(q => q.unit === u.id) : null;
+        o.spot(s[0], s[1], 0, h ? Math.atan2(h.pos[0] - s[0], -(h.pos[1] - s[1])) : (u.angle || 0) * Math.PI / 180, k ? k * st : F);
+      } } });
+    for (const c in P.staff || {}) for (const q of P.staff[c]) o.spot(q.pos[0], q.pos[1], 0, q.yaw * Math.PI / 180, q.level ? q.level * st : F);
   }
   function carry(p, dt) {                                   // someone standing on moving stairs is carried: up on the right-hand flight, down on the left
     for (const r of moving) {
