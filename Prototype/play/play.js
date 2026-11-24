@@ -3045,6 +3045,7 @@ function putVerts(m, v, p, c0, dy) {                         // a town piece's b
 }
 function drawKit(m, p, F, seed) {                            // a piece from the list, as furniture.js draws it, in its line
   const Y = p.yaw * Math.PI / 180, c = Math.cos(Y), sn = Math.sin(Y), L = Outlet.LINES[p.line] || Outlet.LINES.plain;
+  if (typeof Goods !== "undefined" && Goods.put(m, p.kind, p.x, F, p.z, Y, seed, 0)) return;   // a good from the mall, as it was made in Blender (goods.js, FURN-065)
   Furniture.draw(p.kind, (u, y, v, su, sy, sv, col, f, yw) => m.ybox(p.x + c * u + sn * v, F + y, p.z - sn * u + c * v, su, sy, sv, Y - (yw || 0), col, f || 19), L, seed);
 }
 function furnishRoom(l, level, m) {

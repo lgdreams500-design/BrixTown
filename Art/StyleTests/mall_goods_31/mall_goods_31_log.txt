@@ -1,0 +1,108 @@
+18:39:03 Blender 5.3.0
+18:39:03 g_alarmclock lod 0: 220 triangles (220 as made), 268 points
+18:39:03 g_alarmclock lod 1: 124 triangles (124 as made), 156 points
+18:39:03 g_amp lod 0: 240 triangles (240 as made), 336 points
+18:39:03 g_amp lod 1: 96 triangles (96 as made), 192 points
+18:39:03 g_atlas lod 0: 212 triangles (212 as made), 196 points
+18:39:03 g_atlas lod 1: 92 triangles (92 as made), 168 points
+18:39:03 g_bear lod 0: 464 triangles (464 as made), 348 points
+18:39:03 g_bear lod 1: 152 triangles (152 as made), 118 points
+18:39:03 g_blocks lod 0: 336 triangles (336 as made), 200 points
+18:39:03 g_blocks lod 1: 104 triangles (104 as made), 192 points
+18:39:03 g_bookrow lod 0: 440 triangles (440 as made), 240 points
+18:39:03 g_bookrow lod 1: 120 triangles (120 as made), 240 points
+18:39:03 g_bookstack lod 0: 120 triangles (120 as made), 240 points
+18:39:03 g_bookstack lod 1: 60 triangles (60 as made), 120 points
+18:39:03 g_cactus lod 0: 240 triangles (240 as made), 210 points
+18:39:04 g_cactus lod 1: 116 triangles (116 as made), 118 points
+18:39:04 g_candlesticks lod 0: 320 triangles (320 as made), 336 points
+18:39:04 g_candlesticks lod 1: 116 triangles (116 as made), 168 points
+18:39:04 g_computer lod 0: 212 triangles (212 as made), 168 points
+18:39:04 g_computer lod 1: 84 triangles (84 as made), 168 points
+18:39:04 g_console lod 0: 220 triangles (220 as made), 240 points
+18:39:04 g_console lod 1: 60 triangles (60 as made), 120 points
+18:39:04 g_cushions lod 0: 148 triangles (148 as made), 98 points
+18:39:04 g_cushions lod 1: 36 triangles (36 as made), 72 points
+18:39:04 g_desklamp lod 0: 146 triangles (146 as made), 209 points
+18:39:04 g_desklamp lod 1: 82 triangles (82 as made), 101 points
+18:39:04 g_dollhouse lod 0: 180 triangles (180 as made), 234 points
+18:39:04 g_dollhouse lod 1: 116 triangles (116 as made), 234 points
+18:39:04 g_drums lod 0: 548 triangles (548 as made), 770 points
+18:39:04 g_drums lod 1: 156 triangles (156 as made), 258 points
+18:39:04 g_exercisebike lod 0: 432 triangles (432 as made), 432 points
+18:39:04 g_exercisebike lod 1: 124 triangles (124 as made), 224 points
+18:39:04 g_fern lod 0: 248 triangles (248 as made), 412 points
+18:39:04 g_fern lod 1: 152 triangles (152 as made), 256 points
+18:39:04 g_figtree lod 0: 284 triangles (284 as made), 508 points
+18:39:04 g_figtree lod 1: 160 triangles (160 as made), 296 points
+18:39:04 g_floorvase lod 0: 136 triangles (136 as made), 90 points
+18:39:04 g_floorvase lod 1: 56 triangles (56 as made), 36 points
+18:39:04 g_flowervase lod 0: 360 triangles (360 as made), 368 points
+18:39:04 g_flowervase lod 1: 140 triangles (140 as made), 168 points
+18:39:04 g_football lod 0: 320 triangles (320 as made), 222 points
+18:39:04 g_football lod 1: 80 triangles (80 as made), 67 points
+18:39:04 g_globe lod 0: 212 triangles (212 as made), 288 points
+18:39:04 g_globe lod 1: 80 triangles (80 as made), 86 points
+18:39:04 g_guitar lod 0: 348 triangles (348 as made), 504 points
+18:39:04 g_guitar lod 1: 120 triangles (120 as made), 208 points
+18:39:04 g_guitar_bass lod 0: 256 triangles (256 as made), 464 points
+18:39:04 g_guitar_bass lod 1: 92 triangles (92 as made), 170 points
+18:39:04 g_guitar_electric lod 0: 256 triangles (256 as made), 464 points
+18:39:04 g_guitar_electric lod 1: 92 triangles (92 as made), 170 points
+18:39:04 g_jars lod 0: 400 triangles (400 as made), 392 points
+18:39:04 g_jars lod 1: 128 triangles (128 as made), 240 points
+18:39:04 g_jewelbox lod 0: 176 triangles (176 as made), 200 points
+18:39:04 g_jewelbox lod 1: 112 triangles (112 as made), 136 points
+18:39:04 g_keyboard lod 0: 284 triangles (284 as made), 504 points
+18:39:04 g_keyboard lod 1: 92 triangles (92 as made), 198 points
+18:39:04 g_mantelclock lod 0: 184 triangles (184 as made), 204 points
+18:39:04 g_mantelclock lod 1: 96 triangles (96 as made), 124 points
+18:39:04 g_mat lod 0: 68 triangles (68 as made), 72 points
+18:39:04 g_mat lod 1: 36 triangles (36 as made), 72 points
+18:39:04 g_mirror lod 0: 276 triangles (276 as made), 248 points
+18:39:04 g_mirror lod 1: 116 triangles (116 as made), 188 points
+18:39:04 g_pots lod 0: 224 triangles (224 as made), 270 points
+18:39:04 g_pots lod 1: 148 triangles (148 as made), 184 points
+18:39:04 g_rabbit lod 0: 364 triangles (364 as made), 364 points
+18:39:04 g_rabbit lod 1: 136 triangles (136 as made), 116 points
+18:39:04 g_rackets lod 0: 528 triangles (528 as made), 568 points
+18:39:04 g_rackets lod 1: 168 triangles (168 as made), 282 points
+18:39:04 g_radio lod 0: 224 triangles (224 as made), 280 points
+18:39:04 g_radio lod 1: 104 triangles (104 as made), 192 points
+18:39:04 g_recordplayer lod 0: 304 triangles (304 as made), 416 points
+18:39:04 g_recordplayer lod 1: 120 triangles (120 as made), 178 points
+18:39:04 g_rocket lod 0: 234 triangles (234 as made), 253 points
+18:39:04 g_rocket lod 1: 142 triangles (142 as made), 169 points
+18:39:04 g_rockinghorse lod 0: 456 triangles (456 as made), 584 points
+18:39:04 g_rockinghorse lod 1: 144 triangles (144 as made), 260 points
+18:39:04 g_rug lod 0: 84 triangles (84 as made), 168 points
+18:39:04 g_rug lod 1: 84 triangles (84 as made), 168 points
+18:39:04 g_speakers lod 0: 368 triangles (368 as made), 360 points
+18:39:04 g_speakers lod 1: 128 triangles (128 as made), 192 points
+18:39:04 g_tablelamp lod 0: 144 triangles (144 as made), 134 points
+18:39:04 g_tablelamp lod 1: 72 triangles (72 as made), 66 points
+18:39:04 g_tabletop lod 0: 176 triangles (176 as made), 332 points
+18:39:04 g_tabletop lod 1: 140 triangles (140 as made), 240 points
+18:39:04 g_train lod 0: 540 triangles (540 as made), 800 points
+18:39:04 g_train lod 1: 176 triangles (176 as made), 336 points
+18:39:04 g_trough lod 0: 516 triangles (516 as made), 816 points
+18:39:04 g_trough lod 1: 160 triangles (160 as made), 256 points
+18:39:04 g_tv lod 0: 380 triangles (380 as made), 432 points
+18:39:04 g_tv lod 1: 132 triangles (132 as made), 276 points
+18:39:04 g_ukulele lod 0: 324 triangles (324 as made), 456 points
+18:39:04 g_ukulele lod 1: 120 triangles (120 as made), 208 points
+18:39:04 g_vase lod 0: 116 triangles (116 as made), 80 points
+18:39:04 g_vase lod 1: 44 triangles (44 as made), 36 points
+18:39:04 g_violin lod 0: 324 triangles (324 as made), 532 points
+18:39:04 g_violin lod 1: 132 triangles (132 as made), 232 points
+18:39:04 g_weights lod 0: 352 triangles (352 as made), 466 points
+18:39:04 g_weights lod 1: 164 triangles (164 as made), 306 points
+18:39:04 49 goods. near: 13944 triangles in all, 284 on average, 548 most. far: 5504 in all, 112 on average, 176 most
+18:39:04 wrote C:/Projects/Wasted/.claude/worktrees/mall-shopping-7db369/Prototype/play/goods_models.js (784 KB)
+18:39:05 wrote C:/Projects/Wasted/.claude/worktrees/mall-shopping-7db369/Art/Export/mall_goods_31/mall_goods_31.glb (577 KB)
+18:40:18 sheet_1 rendered in 72.5s (58 objects)
+18:41:26 sheet_2 rendered in 67.4s (58 objects)
+18:42:13 sheet_3 rendered in 47.4s (56 objects)
+18:43:07 sheet_far rendered in 53.9s (89 objects)
+18:43:07 saved .blend
+18:43:07 DONE in 244s

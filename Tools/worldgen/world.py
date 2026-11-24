@@ -687,6 +687,8 @@ def mall_goods_problems(w):
         out.append("mall goods: per_outlet must be a whole number of at least 4")
     if type((g.get("stock") or {}).get("target")) is not int or g["stock"]["target"] < 1:
         out.append("mall goods: stock.target must be a whole number of at least 1")
+    if (g.get("display") or {}).get("detail") not in ("near", "far"):
+        out.append("mall goods: display.detail must be near or far")
     for kind in w["mall_outlets"]["kinds"]:
         L = g["sells"].get(kind, [])
         if len(L) < 6:

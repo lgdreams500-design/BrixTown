@@ -1,0 +1,204 @@
+{
+ "most": [
+  600,
+  180
+ ],
+ "triangles": {
+  "g_alarmclock": [
+   220,
+   124
+  ],
+  "g_amp": [
+   240,
+   96
+  ],
+  "g_atlas": [
+   212,
+   92
+  ],
+  "g_bear": [
+   464,
+   152
+  ],
+  "g_blocks": [
+   336,
+   104
+  ],
+  "g_bookrow": [
+   440,
+   120
+  ],
+  "g_bookstack": [
+   120,
+   60
+  ],
+  "g_cactus": [
+   240,
+   116
+  ],
+  "g_candlesticks": [
+   320,
+   116
+  ],
+  "g_computer": [
+   212,
+   84
+  ],
+  "g_console": [
+   220,
+   60
+  ],
+  "g_cushions": [
+   148,
+   36
+  ],
+  "g_desklamp": [
+   146,
+   82
+  ],
+  "g_dollhouse": [
+   180,
+   116
+  ],
+  "g_drums": [
+   548,
+   156
+  ],
+  "g_exercisebike": [
+   432,
+   124
+  ],
+  "g_fern": [
+   248,
+   152
+  ],
+  "g_figtree": [
+   284,
+   160
+  ],
+  "g_floorvase": [
+   136,
+   56
+  ],
+  "g_flowervase": [
+   360,
+   140
+  ],
+  "g_football": [
+   320,
+   80
+  ],
+  "g_globe": [
+   212,
+   80
+  ],
+  "g_guitar": [
+   348,
+   120
+  ],
+  "g_guitar_bass": [
+   256,
+   92
+  ],
+  "g_guitar_electric": [
+   256,
+   92
+  ],
+  "g_jars": [
+   400,
+   128
+  ],
+  "g_jewelbox": [
+   176,
+   112
+  ],
+  "g_keyboard": [
+   284,
+   92
+  ],
+  "g_mantelclock": [
+   184,
+   96
+  ],
+  "g_mat": [
+   68,
+   36
+  ],
+  "g_mirror": [
+   276,
+   116
+  ],
+  "g_pots": [
+   224,
+   148
+  ],
+  "g_rabbit": [
+   364,
+   136
+  ],
+  "g_rackets": [
+   528,
+   168
+  ],
+  "g_radio": [
+   224,
+   104
+  ],
+  "g_recordplayer": [
+   304,
+   120
+  ],
+  "g_rocket": [
+   234,
+   142
+  ],
+  "g_rockinghorse": [
+   456,
+   144
+  ],
+  "g_rug": [
+   84,
+   84
+  ],
+  "g_speakers": [
+   368,
+   128
+  ],
+  "g_tablelamp": [
+   144,
+   72
+  ],
+  "g_tabletop": [
+   176,
+   140
+  ],
+  "g_train": [
+   540,
+   176
+  ],
+  "g_trough": [
+   516,
+   160
+  ],
+  "g_tv": [
+   380,
+   132
+  ],
+  "g_ukulele": [
+   324,
+   120
+  ],
+  "g_vase": [
+   116,
+   44
+  ],
+  "g_violin": [
+   324,
+   132
+  ],
+  "g_weights": [
+   352,
+   164
+  ]
+ }
+}
