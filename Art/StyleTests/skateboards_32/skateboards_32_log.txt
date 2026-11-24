@@ -1,5 +1,5 @@
-18:47:56 Blender 5.3.0
-18:47:57 scene built: 354 objects in 0.9s
+19:06:23 Blender 5.3.0
+19:06:24 scene built: 354 objects in 0.9s
 
 == Models (one mesh per board, origin at the deck's centre on top of the grip; triangles after triangulation) ==
 Manual     50 km/h   SB_Manual 1346 tris (far model SB_Manual_LOD1 750); materials 6; bounding box 0.799 x 0.210 x 0.164 m (l x w x h)
@@ -32,7 +32,7 @@ Manual (50 km/h): a classic wooden street skateboard, the plainest and the most 
   nose and tail kicked up, a little concave, a warm brown grip on top inside a narrow cream border, ochre ply edges,
   a cream underside with one terracotta stripe down the middle. Pale grey trucks on dark iron baseplates with
   terracotta bushings, four fat ochre wheels with pale hubs. ride_manual.png: the rider pushes it along, the left
-  (front) foot on the deck just behind the front truck, turned a little across, the right foot down behind pushing.
+  (front) foot on the deck just behind the front truck, pointing forward (the owner's choice), the right foot down behind pushing.
 Electric (100 km/h): a longer, wider cruiser deck in teal with a charcoal grip and teal border, a gentle kick at the
   tail only. Under the deck between the trucks a charcoal battery box with an ochre band and a small green status
   light (emissive) on its front corner. Bigger charcoal wheels; the two rear wheels are hub motors, ochre drums with
@@ -56,9 +56,8 @@ head faces the camera. In the game a board would ride on root (it is not on a bo
 carried (carry.png: held by the middle of its edge, deck upright, wheels out).
 
 == Choices for the owner ==
-1. Push pose: the brief's "front foot across the board" is followed only part way: the front foot is turned about
-   35 degrees from the travel direction, because a foot fully across while the hips face forward twists the leg.
-   Real skaters push with the front foot pointing nearly forward and turn it across once rolling. Say which you want.
+1. Push pose: decided by the owner, 2026-11-24, "Foot forward to push": while pushing, the front foot points forward
+   along the board (8 degrees off); it turns across only in the riding stance.
 2. Stance: regular (left foot to the nose). Goofy is a mirror; it could be a player setting.
 3. Deck shapes: Manual a popsicle (both ends kicked, for tricks), Electric a cruiser (tail kick only, longer, wider),
    Neon Boost a bullet nose (the only board with a pointed end) so it reads fastest by shape as well as glow.
@@ -71,14 +70,14 @@ carried (carry.png: held by the middle of its edge, deck upright, wheels out).
 7. Not decided here: how the wheels, motors and booster animate (wheel spin, a booster flicker, the status light for
    battery level), how the push cycle and getting on and off look, sounds, and colourways (materials are slots).
 
-18:47:57 saved .blend
-18:48:34 sheet rendered in 37.2s
-18:49:17 manual rendered in 42.9s
-18:50:04 electric rendered in 46.3s
-18:50:52 neon rendered in 48.5s
-18:51:38 ride_manual rendered in 45.8s
-18:52:23 ride_electric rendered in 44.9s
-18:52:57 ride_neon rendered in 34.5s
-18:53:34 carry rendered in 37.2s
-18:54:13 neon_dusk rendered in 38.2s
-18:54:13 DONE
+19:06:24 saved .blend
+19:06:52 sheet rendered in 27.7s
+19:07:18 manual rendered in 25.8s
+19:07:45 electric rendered in 27.5s
+19:08:13 neon rendered in 28.3s
+19:08:41 ride_manual rendered in 27.3s
+19:09:09 ride_electric rendered in 28.4s
+19:09:38 ride_neon rendered in 28.8s
+19:10:39 carry rendered in 60.9s
+19:11:22 neon_dusk rendered in 43.4s
+19:11:22 DONE

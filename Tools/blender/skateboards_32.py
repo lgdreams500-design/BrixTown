@@ -81,7 +81,7 @@ Manual (50 km/h): a classic wooden street skateboard, the plainest and the most 
   nose and tail kicked up, a little concave, a warm brown grip on top inside a narrow cream border, ochre ply edges,
   a cream underside with one terracotta stripe down the middle. Pale grey trucks on dark iron baseplates with
   terracotta bushings, four fat ochre wheels with pale hubs. ride_manual.png: the rider pushes it along, the left
-  (front) foot on the deck just behind the front truck, turned a little across, the right foot down behind pushing.
+  (front) foot on the deck just behind the front truck, pointing forward (the owner's choice), the right foot down behind pushing.
 Electric (100 km/h): a longer, wider cruiser deck in teal with a charcoal grip and teal border, a gentle kick at the
   tail only. Under the deck between the trucks a charcoal battery box with an ochre band and a small green status
   light (emissive) on its front corner. Bigger charcoal wheels; the two rear wheels are hub motors, ochre drums with
@@ -107,9 +107,8 @@ carried (carry.png: held by the middle of its edge, deck upright, wheels out).
 
 CHOICES = """
 == Choices for the owner ==
-1. Push pose: the brief's "front foot across the board" is followed only part way: the front foot is turned about
-   35 degrees from the travel direction, because a foot fully across while the hips face forward twists the leg.
-   Real skaters push with the front foot pointing nearly forward and turn it across once rolling. Say which you want.
+1. Push pose: decided by the owner, 2026-11-24, "Foot forward to push": while pushing, the front foot points forward
+   along the board (8 degrees off); it turns across only in the riding stance.
 2. Stance: regular (left foot to the nose). Goofy is a mirror; it could be a player setting.
 3. Deck shapes: Manual a popsicle (both ends kicked, for tricks), Electric a cruiser (tail kick only, longer, wider),
    Neon Boost a bullet nose (the only board with a pointed end) so it reads fastest by shape as well as glow.
@@ -413,7 +412,7 @@ def rider_push(src, X, yaw):
     dxy = math.hypot(back.x - hipb.x, back.y - hipb.y)
     oz = min(top - 0.08, math.sqrt((Lt * 0.995) ** 2 - dxy ** 2) + back.z - 0.90 * LEGK * S)
     sp, objs = courier("Push", oz)                           # the whole body lowered by oz, legs solved below
-    yaw_front = math.radians(-35)                            # toes turned a little across, toward the toe side
+    yaw_front = math.radians(-8)                             # the owner, 2026-11-24: "Foot forward to push" (was -35, turned across)
     feet = {1: ((bx, front_y + 0.04 * S, top + ankle_h(S)), yaw_front, (0.25, -1.0, 0.0)),
             -1: (tuple(back), 0.0, (0.0, -1.0, 0.0))}
     reach = solve_legs(sp, objs, oz, feet)
