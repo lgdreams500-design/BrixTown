@@ -25,8 +25,12 @@ public:
 	UPROPERTY(Config) float SunPitch = -18.f;     // degrees; the morning sun of the spawn (07:20), low in the east
 	UPROPERTY(Config) float SunYaw = 200.f;       // degrees; the way the light travels (0 = east)
 	UPROPERTY(Config) float SunLux = 8.f;
-	UPROPERTY(Config) float SkyLightIntensity = 1.f;
+	UPROPERTY(Config) FLinearColor SunColour = FLinearColor(1.f, 0.86f, 0.68f);   // ART_DIRECTION 2.4, kit daylight
+	UPROPERTY(Config) float SkyLightIntensity = 1.f;  // the sky's fill in shade (with Lumen, also what it bounces)
 	UPROPERTY(Config) float HazeDensity = 0.02f;
+	UPROPERTY(Config) float HazeFalloff = 0.2f;       // how fast the haze thins with height
+	UPROPERTY(Config) FLinearColor HazeColour = FLinearColor(0.45f, 0.45f, 0.45f);
+	UPROPERTY(Config) float SkyHaziness = 1.f;        // the sky's Mie scattering, x the engine's: higher is paler, greyer
 	UPROPERTY(Config) float ShotDelaySeconds = 12.f;
 
 private:
@@ -34,6 +38,8 @@ private:
 	void ShootAndQuit();
 
 	TSharedPtr<FBrixCity> City;
+	uint64 MarkFrame = 0;
+	double MarkSeconds = 0.0;
 	UPROPERTY() TObjectPtr<AActor> Start;
 	UPROPERTY() TObjectPtr<AActor> Eye;
 };
