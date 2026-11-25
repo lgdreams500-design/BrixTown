@@ -1,6 +1,8 @@
 #include "BrixMall.h"
 
 #include "BrixDay.h"
+#include "BrixEconomy.h"
+#include "BrixGoods.h"
 #include "BrixStreets.h"
 
 #include "Dom/JsonObject.h"
@@ -321,6 +323,7 @@ namespace
 		void Light(double x, double y, double z, double a, double b) { New(FBrixMallCall::Light).A.Append({ x, y, z, a, b }); }
 		void Occl(double a, double b, double c, double d, double e, double f) { New(FBrixMallCall::Occl).A.Append({ a, b, c, d, e, f }); }
 		void Name(const FString& Text, const V3& ctr, const V3& n, double h) { FBrixMallCall& q = New(FBrixMallCall::Name); q.A.Append({ ctr.X, ctr.Y, ctr.Z, n.X, n.Y, n.Z, h }); q.Text = Text; }
+		void Good(const FString& Piece, double x, double y, double z, double yaw, const FString& Seed, int32 lod) { FBrixMallCall& q = New(FBrixMallCall::Good); q.A.Append({ x, y, z, yaw, (double)lod }); q.Text = Piece + TEXT("|") + Seed; }
 	};
 
 	// a wall from a to b that faces `into` (court.js frame())
@@ -364,6 +367,7 @@ namespace
 		const FLotData& L;
 		FOut& o;
 		FBrixMall& M;
+		const FBrixMallGoods* Goods = nullptr;   // what the outlets sell, to stand in their windows (FURN-065)
 		const double T = .5, G = 2, DOOR_H = 5.2, RAIL = 1.1, STAIR_V = .7, F = .2;
 		V3 Wall, Inside = V3(.74, .7, .62), FloorIn = V3(.74, .71, .64);
 		V3 cream, plaster, floorC, shopCeil, dark, wood, fascia, ceilC, leafC = V3(.27, .37, .18);
@@ -860,6 +864,34 @@ namespace
 		quad(S.At(a0, fy + 3.5, 0), S.At(a1, fy + 3.5, 0), S.At(a1, fy + 3.5, -.02), S.At(a0, fy + 3.5, -.02), dark, 3, V3(0, -1, 0));
 		o.Name(u.Name.IsEmpty() ? spec.Label : u.Name, S.At(mid, fy + 4.0, .15), face, .5);
 		const double zones[2][2] = { { a0 + .12, mid - door / 2 - .15 }, { mid + door / 2 + .15, a1 - .12 } };
+		// The goods for the home this outlet sells stand in it, as they were made in Blender (goods.js, FURN-065): on its two window
+		// plinths, facing the walk, and the ones too deep for a plinth on the floor inside. What is seen here is what B sells here.
+		TArray<FString> sold;
+		if (Goods && Goods->Rules && Goods->Models && Goods->Rules->bGoods && !u.Outlet.IsEmpty())
+			for (const FString& g : FBrixEconomy::OutletRange(*Goods->Rules, u.Id, u.Outlet))
+				if (const FBrixEconomyRules::FGood* Gd = Goods->Rules->Goods.Find(g))
+					if (!Gd->Piece.IsEmpty() && Goods->Models->Find(Gd->Piece)) sold.AddUnique(Gd->Piece);
+		auto sizeOf = [&](const FString& kd) { return Goods->Models->Find(kd)->Size; };
+		const double yawIn = std::atan2(-S.n.X, -S.n.Y), GAP = .3;
+		TArray<FString> inZone[2], onFloor;
+		double used[2] = { 0, 0 };
+		for (const FString& kd : sold)
+		{
+			const FVector3d s = sizeOf(kd);
+			bool put = false;
+			if (s.Y <= .95)
+			{
+				const int32 first = used[0] <= used[1] ? 0 : 1;   // the emptier window first, so both are dressed
+				for (const int32 i : { first, 1 - first })
+				{
+					const double len = zones[i][1] - zones[i][0] - .5;
+					if (!put && len >= 1.2 && used[i] + s.X <= len) { inZone[i].Add(kd); used[i] += s.X + GAP; put = true; }
+				}
+			}
+			if (!put && s.X <= 1.9) onFloor.Add(kd);
+		}
+		const int32 farLod = Goods && Goods->Rules && Goods->Rules->GoodsDetail == TEXT("far") ? 1 : 0;   // which make of each object stands here (mall_goods.json display.detail)
+		auto stood = [&](const FString& kd, double a, double v, double y) { const V3 p = P(a, 0, v); o.Good(kd, p.X, y, p.Z, yawIn, seed + kd, farLod); };
 
 		// ---- what stands in it
 		TFunction<void(const FW&, double, double, double, double, const FString&, const FString&, int32)> items;
@@ -945,7 +977,20 @@ namespace
 			bx(c, .6, fy, len, .4, .95, V3(.7, .66, .58)); SolidAlong(xz(zA + .3, .6), xz(zB - .3, .6), fy, fy + 1.3, .5);
 			for (const double a : { zA, zB }) bx(a, .08, fy, .09, 3.42, .09, Metal);
 			bx(c, .08, fy + 2.75, len, .07, .07, Metal);
-			inWindow(zA, zB, spec.Window.IsValidIndex(i) && !spec.Window[i].IsEmpty() ? spec.Window[i] : FString(TEXT("plants")), TEXT("w") + J(i));
+			if (!inZone[i].Num()) { inWindow(zA, zB, spec.Window.IsValidIndex(i) && !spec.Window[i].IsEmpty() ? spec.Window[i] : FString(TEXT("plants")), TEXT("w") + J(i)); continue; }
+			double a = c - (used[i] - GAP) / 2;
+			for (const FString& kd : inZone[i]) { const FVector3d s = sizeOf(kd); stood(kd, a + s.X / 2, .6, fy + .4); a += s.X + GAP; }
+		}
+		{
+			const double spots[4][2] = { { a0 + 1.9, 2.5 }, { a1 - 1.9, 2.5 }, { a0 + 1.9, 4.7 }, { a1 - 1.9, 4.7 } };
+			for (int32 i = 0; i < (D >= 6 ? 4 : 2) && i < onFloor.Num(); ++i)
+			{
+				const FString& kd = onFloor[i];
+				const FVector3d s = sizeOf(kd);
+				const double a = spots[i][0], v = spots[i][1];
+				stood(kd, a, v, fy + .006);
+				if (s.Z > .1) block(a, v, FMath::Max(s.X, s.Y) * .4, FMath::Min(s.Z, 1.4));
+			}
 		}
 
 		auto onWall = [&](const FW& W, const FString& kind, const FString& key)   // what stands against one wall
@@ -1582,7 +1627,7 @@ bool BrixMallCan(const FJsonObject& Lot)
 		&& (*S)->TryGetStringField(TEXT("style"), Style) && Style == TEXT("ribbon") && (*S)->TryGetObjectField(TEXT("skin"), Skin) && (*Skin)->TryGetArrayField(TEXT("points"), Pts) && Pts->Num() > 8;
 }
 
-bool BuildBrixMall(const FJsonObject& Lot, FBrixMall& Out, FString& OutError)
+bool BuildBrixMall(const FJsonObject& Lot, FBrixMall& Out, FString& OutError, const FBrixMallGoods* Goods)
 {
 	if (!BrixMallCan(Lot)) { OutError = TEXT("not a mall with its inside built"); return false; }
 	FLotData L;
@@ -1595,6 +1640,7 @@ bool BuildBrixMall(const FJsonObject& Lot, FBrixMall& Out, FString& OutError)
 	Out.Calls.Reserve(200000);
 	FOut o(Out);
 	FBuild B(L, o, Out);
+	B.Goods = Goods;
 	Out.F = B.F;
 	for (const TPair<FString, FSpec>& K : L.Outlets) { Out.KindLabel.Add(K.Key, K.Value.Label); Out.KindSign.Add(K.Key, K.Value.Sign); }
 	B.Hall();
@@ -1606,7 +1652,7 @@ bool BuildBrixMall(const FJsonObject& Lot, FBrixMall& Out, FString& OutError)
 	return true;
 }
 
-bool LoadBrixMall(const FString& CityDir, FBrixMall& Out, FString& OutError)
+bool LoadBrixMall(const FString& CityDir, FBrixMall& Out, FString& OutError, const FBrixMallGoods* Goods)
 {
 	FString Text;
 	if (!FFileHelper::LoadFileToString(Text, *FPaths::Combine(CityDir, TEXT("city.json")))) { OutError = TEXT("no city.json in ") + CityDir; return false; }
@@ -1622,7 +1668,7 @@ bool LoadBrixMall(const FString& CityDir, FBrixMall& Out, FString& OutError)
 		TSharedPtr<FJsonObject> Blk;
 		if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(BText), Blk) || !Blk) continue;
 		for (const TSharedPtr<FJsonValue>& LV : Blk->GetArrayField(TEXT("lots")))
-			if (BrixMallCan(*LV->AsObject())) return BuildBrixMall(*LV->AsObject(), Out, OutError);
+			if (BrixMallCan(*LV->AsObject())) return BuildBrixMall(*LV->AsObject(), Out, OutError, Goods);
 	}
 	OutError = TEXT("no mall with its inside built in the block files");
 	return false;

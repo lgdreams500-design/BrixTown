@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 
 class FJsonObject;
+struct FBrixGoodsModels;
 struct FBrixBodyMesh;
 
 // Buy menus that show what is for sale as objects (UI-020, UI-021; ADR-0044): what each thing shows, and the stand-ins as
@@ -62,11 +63,18 @@ struct BRIXWORLD_API FBrixBuyMenuRules
 	TMap<FString, FGood> Goods;                       // mall_goods.json's goods
 	TMap<FString, TArray<FBrixIconPath>> Icons;       // where a thing goes -> its mark in a dot or a chip (buymenu.js ICON)
 
+	TSharedPtr<const FBrixGoodsModels> Models;        // the mall's goods as made in Blender (Game/Data/goods_models.json, FURN-065)
+
 	FBrixShows Shows(const FString& Thing) const;
 	// A stand-in as boxes: Band is the seller's colour, Own the clothing's (buymenu.js shapeMesh()).
 	FBrixThingMesh ShapeMesh(const FString& Shape, const FLinearColor& Band, const FLinearColor& Own) const;
-	// The mesh for a thing at a counter: its stand-in (a piece's own object is not brought over yet: none).
+	// A mall good for the home as it was made in Blender, near, in its piece's own colours (buymenu.js modelMesh()); empty
+	// when there is no model of it.
+	FBrixThingMesh ModelMesh(const FString& Piece) const;
+	// The mesh for a thing at a counter (buymenu.js meshOf()): a piece with a model shows its model, a stand-in its boxes;
+	// a piece of furniture without a model is not brought over yet: none.
 	TOptional<FBrixThingMesh> MeshFor(const FString& Thing, const FString& BandColour) const;
+	static void Finish(FBrixThingMesh& M);
 };
 
 // A mesh drawn as people.js draws (a skateboard on show in the skate store, CITY-102) as a buy menu's thing: its triangles,

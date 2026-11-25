@@ -11,6 +11,7 @@ class UMaterialInstanceDynamic;
 class UMaterialInterface;
 class UPointLightComponent;
 class UStaticMesh;
+struct FBrixGoodsModels;
 
 // Eastgate Mall, inside and out, as the slice builds it (WLD-057 to WLD-068; ADR-0038, ADR-0039, ADR-0041): its sculpted
 // shell of ribbons and pierced eggs, the hall's wall open at its four porches, three floors round the court with their
@@ -38,6 +39,7 @@ public:
 	// The outlet room a point (Unreal cm) is in (outlets.js at(), WLD-066), or null
 	const FBrixOutletRoom* OutletAt(const FVector& WorldCm) const;
 	int32 Triangles() const { return Tris; }
+	TSharedPtr<const FBrixGoodsModels> GoodsModels;     // the goods' models, for the outlets' windows (set before Start; FURN-065)
 
 	UPROPERTY(Config) float CellMetres = 40.f;           // the faces are cut into squares this wide, so what is out of view is not drawn
 	UPROPERTY(Config) float LitGlow = 2.5f;              // the lit panels' glow (the slice's material 1)

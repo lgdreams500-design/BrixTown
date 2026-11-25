@@ -2,6 +2,8 @@
 // run in headless Edge (Tools/unreal/mall_values.py) give the values in Tests/values/mall_city_01.json.
 #include "BrixMall.h"
 #include "BrixDay.h"
+#include "BrixEconomy.h"
+#include "BrixGoods.h"
 
 #include "Dom/JsonObject.h"
 #include "Misc/AutomationTest.h"
@@ -16,10 +18,24 @@ namespace
 {
 	FString MallRoot(const TCHAR* Rel) { return FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), Rel)); }
 
+	// what the outlets sell and the goods' models, as the slice has them with its life data (FURN-065)
+	bool LoadMallGoods(FAutomationTestBase& T, FBrixLifeData& Life, FBrixGoodsModels& Models)
+	{
+		FString Error;
+		if (!T.TestTrue(TEXT("life.json loads (build_play.py): ") + Error, LoadBrixLife(MallRoot(TEXT("Data/life.json")), Life, Error))) return false;
+		return T.TestTrue(TEXT("the goods' models load (Game/Data/goods_models.json, build_play.py): ") + Error, LoadBrixGoodsModels(MallRoot(TEXT("Data/goods_models.json")), Models, Error));
+	}
+
 	bool LoadMallCase(FAutomationTestBase& T, FBrixMall& M, TSharedPtr<FJsonObject>& Values)
 	{
 		FString Error, Text;
-		if (!T.TestTrue(TEXT("Eastgate Mall is built from its block file: ") + Error, LoadBrixMall(MallRoot(TEXT("../World/city_01")), M, Error))) return false;
+		FBrixLifeData Life;
+		FBrixGoodsModels Models;
+		if (!LoadMallGoods(T, Life, Models)) return false;
+		FBrixMallGoods Goods;
+		Goods.Rules = &Life.Rules;
+		Goods.Models = &Models;
+		if (!T.TestTrue(TEXT("Eastgate Mall is built from its block file: ") + Error, LoadBrixMall(MallRoot(TEXT("../World/city_01")), M, Error, &Goods))) return false;
 		if (!T.TestTrue(TEXT("the slice's values are there (run Tools/unreal/mall_values.py)"), FFileHelper::LoadFileToString(Text, *MallRoot(TEXT("../Tests/values/mall_city_01.json"))))) return false;
 		return T.TestTrue(TEXT("the slice's values read"), FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Values) && Values.IsValid());
 	}
@@ -126,6 +142,72 @@ bool FWLD058EastgateIsBuilt::RunTest(const FString& Parameters)
 			if (!Near(M.Lamps[i].X, Lp[0]->AsNumber()) || !Near(M.Lamps[i].Y, Lp[1]->AsNumber()) || !Near(M.Lamps[i].Z, Lp[2]->AsNumber()) || !Near(M.Lamps[i].W, Lp[3]->AsNumber()))
 			{ AddError(FString::Printf(TEXT("lamp %d is not where the slice has it"), i)); break; }
 		}
+	return true;
+}
+
+// FURN-065: each outlet's goods for the home stand in its windows and on its floor as the objects made in Blender, as the
+// slice stands them (outlets.js front() with its life data), and each is laid with the triangles goods.js put() lays
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFURN065OutletsShowTheirGoods, "BrixTown.World.FURN065_outlets_show_the_goods_they_sell",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FFURN065OutletsShowTheirGoods::RunTest(const FString& Parameters)
+{
+	FBrixMall M;
+	TSharedPtr<FJsonObject> V;
+	if (!LoadMallCase(*this, M, V)) return false;
+	FBrixLifeData Life;
+	FBrixGoodsModels Models;
+	if (!LoadMallGoods(*this, Life, Models)) return false;
+	TestEqual(TEXT("the mall's 49 goods for the home have their models"), Models.Models.Num(), 49);
+	for (const TPair<FString, FBrixGoodsModel>& G : Models.Models)
+	{
+		if (G.Value.Lods[0].I.Num() / 3 > 600 || G.Value.Lods[1].I.Num() / 3 > 180) AddError(G.Key + TEXT(": more triangles than mall_goods_31.py allows"));
+		if (G.Value.Lods[0].I.Num() < 3 * 12) AddError(G.Key + TEXT(": hardly a model"));
+	}
+	// every good stood is one the outlet it stands in sells, near (display.detail), facing out of its room
+	TSet<FString> Outlets;
+	int32 Stood = 0;
+	for (const FBrixMallCall& C : M.Calls)
+	{
+		if (C.Kind != FBrixMallCall::Good) continue;
+		++Stood;
+		FString Piece, Seed;
+		if (!C.Text.Split(TEXT("|"), &Piece, &Seed) || !Models.Find(Piece)) { AddError(TEXT("a good with no model: ") + C.Text); continue; }
+		if (C.A[4] != 0) AddError(C.Text + TEXT(": the far make, where mall_goods.json says near"));
+		const FBrixOutletRoom* R = BrixOutletAt(M, C.A[0], C.A[1] + .3, C.A[2]);
+		if (!R) { AddError(C.Text + TEXT(": not in an outlet's room")); continue; }
+		if (Seed != R->Id + Piece) AddError(C.Text + TEXT(": not seeded by its outlet"));
+		bool bSells = false;
+		for (const FString& G : FBrixEconomy::OutletRange(Life.Rules, R->Id, R->Kind))
+			if (const FBrixEconomyRules::FGood* Gd = Life.Rules.Goods.Find(G)) bSells |= Gd->Piece == Piece;
+		if (!bSells) AddError(C.Text + TEXT(": ") + R->Name + TEXT(" does not sell it"));
+		if (FMath::Abs(FMath::Sin(C.A[3]) + R->N.X) > 1e-9 || FMath::Abs(FMath::Cos(C.A[3]) + R->N.Y) > 1e-9) AddError(C.Text + TEXT(": not facing the walk"));
+		Outlets.Add(R->Id);
+	}
+	TestEqual(TEXT("goods in the windows and on the floors, as the slice has them"), Stood, (int32)V->GetArrayField(TEXT("kinds"))[FBrixMallCall::Good]->AsNumber());
+	TestTrue(TEXT("over a hundred outlets show their goods"), Outlets.Num() > 100);
+	// the triangles of the first good of six kinds, against goods.js put() (Float32 in the slice)
+	const TArray<TSharedPtr<FJsonValue>>& Puts = V->GetArrayField(TEXT("puts"));
+	TestEqual(TEXT("goods.js laid six kinds"), Puts.Num(), 6);
+	for (const TSharedPtr<FJsonValue>& PV : Puts)
+	{
+		const TSharedPtr<FJsonObject> Pu = PV->AsObject();
+		const FString Kind = Pu->GetStringField(TEXT("kind"));
+		const FBrixGoodsModel* G = Models.Find(Kind);
+		if (!G) { AddError(Kind + TEXT(": no model")); continue; }
+		const TArray<TSharedPtr<FJsonValue>>& At = Pu->GetArrayField(TEXT("at"));
+		const TArray<TSharedPtr<FJsonValue>>& A = Pu->GetArrayField(TEXT("a"));
+		TArray<FVector3d> P;
+		TArray<FVector3f> N, Cl;
+		BrixGoodPut(Models, *G, At[0]->AsNumber(), At[1]->AsNumber(), At[2]->AsNumber(), At[3]->AsNumber(), Pu->GetStringField(TEXT("seed")), (int32)At[4]->AsNumber(), P, N, Cl);
+		if (!TestEqual(Kind + TEXT(": corners laid"), P.Num() * 10, A.Num())) continue;
+		for (int32 k = 0; k < P.Num(); ++k)
+		{
+			const double Got[9] = { P[k].X, P[k].Y, P[k].Z, N[k].X, N[k].Y, N[k].Z, Cl[k].X, Cl[k].Y, Cl[k].Z };
+			bool bBad = false;
+			for (int32 j = 0; j < 9 && !bBad; ++j) bBad = !Near(Got[j], A[k * 10 + j]->AsNumber(), 2e-6);
+			if (bBad) { AddError(FString::Printf(TEXT("%s: corner %d is not where goods.js lays it"), *Kind, k)); break; }
+		}
+	}
 	return true;
 }
 

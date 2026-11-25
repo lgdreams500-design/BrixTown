@@ -2,6 +2,7 @@
 // for every thing a menu can show (Game/Data/life.json buy_menu.checks); every stand-in it names can be drawn.
 #include "BrixBuyMenu.h"
 #include "BrixEconomy.h"
+#include "BrixGoods.h"
 
 #include "Dom/JsonObject.h"
 #include "Misc/AutomationTest.h"
@@ -18,7 +19,10 @@ bool FUI021_ThingsShowWhatPythonSays::RunTest(const FString&)
 	FString Error;
 	if (!TestTrue(TEXT("life.json loads: ") + Error, LoadBrixLife(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/life.json"))), Life, Error))) return false;
 	if (!TestTrue(TEXT("the buy menu's rules load: ") + Error, LoadBrixBuyMenu(Life.Json, B, Error))) return false;
-	int32 Checked = 0, Drawn = 0;
+	TSharedPtr<FBrixGoodsModels> Models = MakeShared<FBrixGoodsModels>();
+	if (!TestTrue(TEXT("the goods' models load (Game/Data/goods_models.json): ") + Error, LoadBrixGoodsModels(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/goods_models.json"))), *Models, Error))) return false;
+	B.Models = Models;
+	int32 Checked = 0, Drawn = 0, Modelled = 0;
 	for (const auto& V : Life.Json->GetObjectField(TEXT("buy_menu"))->GetObjectField(TEXT("checks"))->Values)
 	{
 		const FString Thing(V.Key.ToView());
@@ -29,6 +33,19 @@ bool FUI021_ThingsShowWhatPythonSays::RunTest(const FString&)
 		else for (const auto& X : V.Value->AsArray()) Want += (Want.IsEmpty() ? TEXT("") : TEXT(" ")) + (X->IsNull() ? FString(TEXT("null")) : X->AsString());
 		if (Got != Want) AddError(FString::Printf(TEXT("%s shows %s, Python says %s"), *Thing, *Got, *Want));
 		++Checked;
+		if (S.Kind == TEXT("piece") && Models->Find(S.Name))   // a good with its model shows the model (FURN-065; buymenu.js meshOf())
+		{
+			const TOptional<FBrixThingMesh> M = B.MeshFor(Thing, TEXT("olive"));
+			const FBrixGoodsModel& G = *Models->Find(S.Name);
+			if (!M || M->bStandIn || M->Num() != G.Lods[0].I.Num() / 3) AddError(Thing + TEXT(": does not show its model ") + S.Name);
+			else
+			{
+				++Modelled;
+				const FVector3f Fit = M->Hi - M->Lo;   // within its size (u across, v front to back, y up), as mall_goods_31.py made it
+				if (Fit.X > G.Size.X + .004 || Fit.Z > G.Size.Y + .004 || Fit.Y > G.Size.Z + .004) AddError(FString::Printf(TEXT("%s: %.3f x %.3f x %.3f m, bigger than its size"), *Thing, Fit.X, Fit.Z, Fit.Y));
+				if (M->Lo.Y < -.004f || M->Lo.Y > .01f) AddError(Thing + TEXT(": its model does not stand on the floor"));
+			}
+		}
 		if (S.Kind == TEXT("shape"))
 		{
 			const TOptional<FBrixThingMesh> M = B.MeshFor(Thing, TEXT("olive"));
@@ -42,6 +59,12 @@ bool FUI021_ThingsShowWhatPythonSays::RunTest(const FString&)
 	}
 	TestTrue(TEXT("every thing a menu can show was checked"), Checked > 200);
 	TestTrue(TEXT("stand-ins drawn"), Drawn > 100);
+	TestEqual(TEXT("the mall's goods for the home shown as their models"), Modelled, 49);
+	// two colours of a model are the piece's own (buymenu.js: hash(piece, "a0"), hash(piece, "a1")): never the same two
+	const FBrixThingMesh Guitar = B.ModelMesh(TEXT("g_guitar"));
+	TestTrue(TEXT("the guitar is drawn from its model"), Guitar.Num() > 100 && !Guitar.bStandIn);
+	const TArray<FVector3f> Cg = Models->Colours(TEXT("g_guitar"));
+	TestTrue(TEXT("its two open colours differ"), Models->A0 >= 0 && Models->A1 >= 0 && !Cg[Models->A0].Equals(Cg[Models->A1]));
 	// a parcel is four boxes, twelve triangles each (buy_menu.json shapes)
 	const FBrixThingMesh Parcel = B.ShapeMesh(TEXT("parcel"), FLinearColor::Red, FLinearColor::White);
 	TestEqual(TEXT("a parcel's triangles"), Parcel.Num(), 4 * 12);

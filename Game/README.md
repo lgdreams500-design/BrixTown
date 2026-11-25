@@ -81,7 +81,7 @@ storeys and their stairs, residents indoors.
 
 ## Eastgate Mall (WLD-057 to WLD-063, WLD-066 to WLD-068; ADR-0037 to ADR-0039, ADR-0041)
 Eastgate Mall (lot `b_16_5_l0`) is built inside and out as the slice builds it (court.js, shell.js, outlets.js; play.js
-mallShell()): `BrixWorld/BrixMall` is the port, giving the same 185,841 drawing calls with the same numbers (its hash() fed
+mallShell()): `BrixWorld/BrixMall` is the port, giving the same 176,797 drawing calls with the same numbers (its hash() fed
 the same strings, Math.hypot as V8 sums it), from the lot's `plan` and `shell` in `World/city_01/blocks/b_16_5.json`. Outside:
 the skin of plaster ribbons swelling and curling in, lifted off the ground in an arch on each side; the four ochre pierced eggs
 and the cream roof light. Under each arch a porch of ribbon walls sweeps in to the arched opening in the hall's wall, with its
@@ -103,7 +103,7 @@ its foot, down on the left) and lift them onto each step as it comes; E at a lif
 between the ground and the top, as at the towers. The four lanterns and shop lights nearest the camera on its floor give real
 light (`NearLights`); the haze is off indoors and the town's sounds are muffled (RoomAt). Only the mall whose plan is a court
 with its entrances is built so (`BrixMallCan`): Westgate (`b_1_5_l0`) and Northgate (`b_7_0_l0`) stay the town's solid boxes,
-as the owner asked. Tests: `WLD058_eastgate_is_built_as_the_slice_builds_it` (every call against the slice's, in 465 runs of
+as the owner asked. Tests: `WLD058_eastgate_is_built_as_the_slice_builds_it` (every call against the slice's, in 442 runs of
 400 with a checksum each and 9,600 calls one by one, the signs' words, the 249 lamps; `Tools/unreal/mall_values.py` runs the
 slice's code in headless Edge into `Tests/values/mall_city_01.json`: run it after changing court.js, shell.js, outlets.js or the
 block file), `WLD066_every_outlet_has_its_room`, `WLD062_moving_stairs_carry_and_lifts_go_between_floors`,
@@ -125,8 +125,17 @@ Thread) stands the player in it and opens its counter. `-BrixInside=b_16_5_l0` s
 `-BrixWalkIn=b_16_5_l0` walks them in, `-BrixLift=b_16_5_l0` rides the west lift to the top floor, `-BrixNoMall` builds it as
 the town's box again. At High: 28 to 44 frames a second inside, 21 riding the moving stairs (noisy: other sessions were running
 Unreal). Not yet: sitting on the benches and rides, the ribbon wall's lit joints and the openings' lanterns at night, the
-moving stairs' treads moving, the goods for the home in the outlets' windows (the stand-ins stand there, as in the slice without
-its life data), and the shell's lanterns' light outside.
+moving stairs' treads moving, and the shell's lanterns' light outside.
+The goods for the home each outlet sells stand in it as they were made in Blender (FURN-065; outlets.js front() with the
+slice's life data, goods.js put()): on its two window plinths facing the walk, and those too deep for a plinth on its floor
+inside, 464 of them in 112 of the 189 outlets; where an outlet sells none the window keeps its stand-ins. What it sells is
+the economy's `OutletRange` (World/rules/mall_goods.json in life.json), which make is `display.detail` (near). The models
+are `Tools/blender/mall_goods_31.py`'s, copied from `Prototype/play/goods_models.js` to `Game/Data/goods_models.json` by
+`build_play.py` and read by `BrixWorld/BrixGoods` (`LoadBrixGoodsModels`, `BrixGoodPut`, a port of goods.js put(): the
+two open colours by the seed, so two guitars differ); `ABrixMall` lays each in the room's light. `mall_values.py` now runs
+the slice with that life data (run `build_play.py` first) and records each good as a call of its own (kind 14,
+`FBrixMallCall::Good`). Test `FURN065_outlets_show_the_goods_they_sell` (each good in the room of an outlet that sells it,
+facing out, near; the triangles of six as goods.js lays them). Shot: `Art/StyleTests/unreal_mall_goods_41/`.
 
 ## The furniture outlet (FURN-020, FURN-021; ADR-0027)
 The furniture outlet outside the East Gate (lot `b_14_8_l0`) is built as the slice builds it (outlet.js; play.js building()
@@ -691,7 +700,9 @@ of where it goes; the showcase turns it slowly (drag to turn it by hand) with it
 its price, and the one button. Sold out is greyed under a band; a thing dearer than cash and the current account together
 has its price in red with how much is short. A click chooses, a second click soon after buys; the arrow keys choose and
 Enter buys. What each thing shows is world.buy_menu_shows (`BrixWorld/BrixBuyMenu`, checked for all 236 things by
-`UI021_every_thing_shows_what_python_says`); the stand-ins (a parcel in the seller's band, a paper bag, a cup, a case, folded
+`UI021_every_thing_shows_what_python_says`). A mall good for the home shows its own model, made in Blender (FURN-065;
+buymenu.js modelMesh(): `FBrixBuyMenuRules::ModelMesh`, its two open colours by the piece, each corner lit by its own
+normal), checked for all 49 by the same test; the stand-ins (a parcel in the seller's band, a paper bag, a cup, a case, folded
 cloth in the clothing's colour) are the boxes of World/rules/buy_menu.json, drawn by `SBrixThing` with Slate's own
 triangles, lit as the slice's shader lights them. At the market square B opens the player's stall: rent it for the day,
 set out up to six things at the player's own prices, take them back; residents coming to the market buy as the rules say,
@@ -700,7 +711,7 @@ Eastgate Mall). Each cell's dot and the chip beside "Goes to" carry the mark of 
 a cup, a chair), as in the slice: build_play.py reads the marks from buymenu.js ICON into life.json, `BrixIconCoverage`
 paints each once from its paths (filled by the nonzero rule, the handles stroked) and the dot or chip draws it in its board
 colour's lettering (`UI020_dots_and_chips_show_the_slices_marks`). Not yet: the narrow layout D (for the building designer),
-a good's own Blender model in place of its stand-in, and a resident behind each counter. To see one in a test shot:
+a piece of furniture's own object in the menu (the slice draws it from furniture.js boxes), and a resident behind each counter. To see one in a test shot:
 `-BrixCounter=grocer "-BrixLife=buy,grocer,bread"` (a shop's kind or lot id), or `-BrixCounter=market
 "-BrixLife=buy,grocer,jam;rent;setout,jam,250"`.
 
@@ -923,7 +934,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.SND009_every_sound_has_its_recording` | SND-009 |
 | `BrixTown.World.SND002_engines_sound_as_the_slice_hears_them` | SND-002, SND-009 |
 | `BrixTown.World.SND004_the_tram_sounds_as_the_slice_hears_it` | SND-004 |
-| `BrixTown.World.UI021_every_thing_shows_what_python_says` | UI-020, UI-021 |
+| `BrixTown.World.UI021_every_thing_shows_what_python_says` | UI-020, UI-021, FURN-065 |
 | `BrixTown.World.UI020_dots_and_chips_show_the_slices_marks` | UI-020 |
 | `BrixTown.World.SND001_the_town_sounds_by_time_of_day` | SND-001 |
 | `BrixTown.World.SND007_outside_is_muffled_indoors` | SND-007 |
@@ -959,6 +970,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD056_every_tree_is_drawn_as_the_slice_draws_it` | WLD-056 |
 | `BrixTown.World.CITY043_the_road_markings_and_signals_are_drawn_as_the_slice_draws_them` | CITY-043, CITY-045, CITY-091 |
 | `BrixTown.World.WLD058_eastgate_is_built_as_the_slice_builds_it` | WLD-057 to WLD-061, WLD-063, WLD-067, WLD-068 |
+| `BrixTown.World.FURN065_outlets_show_the_goods_they_sell` | FURN-065 |
 | `BrixTown.World.WLD058_only_eastgate_has_an_inside` | WLD-058 |
 | `BrixTown.World.WLD062_moving_stairs_carry_and_lifts_go_between_floors` | WLD-062 |
 | `BrixTown.World.WLD066_every_outlet_has_its_room` | WLD-066 |
