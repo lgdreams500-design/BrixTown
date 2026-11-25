@@ -1,8 +1,9 @@
-#include "BrixGameMode.h"
+﻿#include "BrixGameMode.h"
 
 #include "BrixCharacter.h"
 #include "BrixCity.h"
 #include "BrixDay.h"
+#include "BrixInside.h"
 #include "BrixCars.h"
 #include "BrixCarsActor.h"
 #include "BrixLamps.h"
@@ -13,6 +14,7 @@
 #include "BrixTownActor.h"
 #include "BrixUnits.h"
 #include "Camera/CameraActor.h"
+#include "Camera/PlayerCameraManager.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Components/ExponentialHeightFogComponent.h"
 #include "Components/SkyAtmosphereComponent.h"
@@ -90,7 +92,34 @@ void ABrixGameMode::StartPlay()
 	if (City)
 	{
 		ABrixTownActor* Town = GetWorld()->SpawnActor<ABrixTownActor>();
+		Insides = MakeShared<FBrixInsides>();
+		FString InsideError;
+		if (FParse::Param(FCommandLine::Get(), TEXT("BrixShut"))) { InsideError = TEXT("-BrixShut"); Insides.Reset(); }   // to compare: every building solid, as before
+		else if (LoadBrixInside(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/inside.json"))), *Insides, InsideError))
+			Town->Insides = Insides.Get();
+		if (!Town->Insides) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: the buildings are shut (%s)"), *InsideError); Insides.Reset(); }
 		Town->Build(*City);
+		TownActor = Town;
+		// the inside of every hollow building, to know when the camera is indoors (CITY-013)
+		int32 Lk = 0;
+		for (const FBrixBlock& B : City->Blocks)
+			for (const FBrixLot& L : B.Lots)
+			{
+				const FBrixInside* In = Insides && Insides->Lots.IsValidIndex(Lk) && Insides->Lots[Lk].IsSet() ? &Insides->Lots[Lk].GetValue() : nullptr;
+				if (In && BrixIsHollow(L, In))
+				{
+					FRoom R;
+					R.Lot = Lk;
+					R.Centre = L.Centre();
+					const double A = FMath::DegreesToRadians(L.AngleDeg);
+					R.Cos = FMath::Cos(A); R.Sin = FMath::Sin(A);
+					const FVector2D Size = L.House.IsSet() ? FVector2D(12, 9) : L.Size();   // a designed house: its plan (house_12x9)
+					R.Half = Size / 2 - FVector2D(0.3, 0.3);
+					R.Top = Town->BlockSlabHeight + Town->StoreyHeight * FMath::Max(1, L.Floors);
+					Rooms.Add(R);
+				}
+				++Lk;
+			}
 		GetWorld()->SpawnActor<ABrixLamps>()->Start(Town);   // the lamps light at night (WLD-028)
 		Traffic = MakeShared<FBrixTraffic>();
 		FString CarError;
@@ -217,14 +246,49 @@ void ABrixGameMode::StartPlay()
 			UE_LOG(LogTemp, Display, TEXT("Brix Town: the counter at %s: %s"), *CounterAt, Life->OpenCounterAt(CounterAt) ? TEXT("open") : TEXT("not there"));
 		}, ShotDelaySeconds / 3, false);
 	}
+	// -BrixInside=<lot> / -BrixWalkIn=<lot>: to see inside a building without anyone at the keys (CITY-013)
+	FString InLot;
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixInside="), InLot)) PutInside(InLot, false);
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixWalkIn="), InLot)) PutInside(InLot, true);
 	FString Shot;
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixShot="), Shot))
 	{
 		FTimerHandle H;
 		GetWorldTimerManager().SetTimer(H, this, &ABrixGameMode::ShootAndQuit, ShotDelaySeconds, false);
+		// a test shot is not played: the mouse and keys of whoever is at this machine do not move it
+		FTimerHandle K;
+		GetWorldTimerManager().SetTimer(K, [this]()
+		{
+			if (APlayerController* PC = GetWorld()->GetFirstPlayerController()) { PC->SetIgnoreLookInput(true); PC->SetIgnoreMoveInput(true); }
+		}, 0.2f, false);
 		FTimerHandle M;   // the frame rate is counted over the second half of the wait, after start-up work has settled
 		GetWorldTimerManager().SetTimer(M, [this]() { MarkFrame = GFrameCounter; MarkSeconds = FPlatformTime::Seconds(); if (People) People->ResetTickTime(); }, ShotDelaySeconds * 0.5f, false);
 	}
+}
+
+void ABrixGameMode::PutInside(const FString& LotId, bool bWalk)
+{
+	if (!City) return;
+	const FBrixLot* Found = nullptr;
+	const FBrixBlock* In = nullptr;
+	for (const FBrixBlock& B : City->Blocks) for (const FBrixLot& L : B.Lots) if (L.Id == LotId) { Found = &L; In = &B; }
+	if (!Found) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: no lot %s to go into"), *LotId); return; }
+	const FBrixDoorway Dw = BrixDoorwayOf(*City, *Found, In->District, FBrixDoorRules::FromConfig());
+	const FVector2D Inward = -Dw.Out;
+	const float Deep = (float)FMath::Min(Found->Size().X, Found->Size().Y);
+	const FVector2D Inside = Dw.Centre + Inward * FMath::Clamp(Deep * 0.45f, 1.5f, 5.f);
+	const FVector2D From = bWalk ? Dw.Centre - Inward * 3.0 : Inside;
+	const FRotator Facing(0.f, FMath::RadiansToDegrees(FMath::Atan2(Inward.Y, Inward.X)), 0.f);
+	FTimerHandle H;
+	GetWorldTimerManager().SetTimer(H, [this, From, Inside, Facing, bWalk, LotId]()
+	{
+		APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);
+		if (!Me) return;
+		Me->SetActorLocationAndRotation(ToWorld(From, 1.f), Facing, false, nullptr, ETeleportType::TeleportPhysics);
+		if (APlayerController* PC = GetWorld()->GetFirstPlayerController()) PC->SetControlRotation(FRotator(-12.f, Facing.Yaw, 0.f));
+		if (bWalk) { WalkTo = Inside; WalkFrom = From; WalkLot = LotId; }
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: the player is %s %s"), bWalk ? TEXT("at the door of") : TEXT("inside"), *LotId);
+	}, 0.5f, false);
 }
 
 void ABrixGameMode::SpawnLight()
@@ -286,6 +350,25 @@ void ABrixGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	UpdateSun();
+	if (WalkTo)   // -BrixWalkIn: walking the player in through the doorway, as if W were held toward the room
+	{
+		APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);
+		if (!Me) return;
+		const FVector2D Here(Me->GetActorLocation().X / BrixUnits::CmPerM, Me->GetActorLocation().Y / BrixUnits::CmPerM);
+		const FVector2D To = *WalkTo - Here;
+		WalkSeconds += DeltaSeconds;
+		if (To.Size() < 0.4)
+		{
+			UE_LOG(LogTemp, Display, TEXT("Brix Town: walked in through the doorway of %s in %.1f s"), *WalkLot, WalkSeconds);
+			WalkTo.Reset();
+		}
+		else if (WalkSeconds > 12.f)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Brix Town: could not walk into %s: stopped %.2f m short, %.2f m from the start"), *WalkLot, To.Size(), (Here - WalkFrom).Size());
+			WalkTo.Reset();
+		}
+		else Me->AddMovementInput(FVector(To.GetSafeNormal(), 0.0), 1.f, true);   // forced: a test shot ignores the keys
+	}
 }
 
 // The sun where the calendar puts it for this minute of this day (WLD-043, ADR-0024; play.js lighting()): worked out from the
@@ -315,6 +398,26 @@ void ABrixGameMode::UpdateSun()
 	const float Fill = FMath::Lerp(NightFill, 1.f, Light01);
 	if (SkyFill) SkyFill->SetIntensity(SkyLightIntensity * Fill);
 	if (HazeFog) HazeFog->SetFogInscatteringColor(HazeColour * Fill * FMath::Lerp(SunDawnColour, FLinearColor::White, Low));
+	// little haze indoors (play.js: the fog is cut by 0.85 inside): the height fog is not shut out by walls
+	if (HazeFog)
+	{
+		const APlayerCameraManager* Cam = UGameplayStatics::GetPlayerCameraManager(this, 0);
+		const bool bIndoors = Cam && RoomAt(Cam->GetCameraLocation()) != INDEX_NONE;
+		HazeFog->SetFogDensity(HazeDensity * (bIndoors ? IndoorHaze : 1.f));
+	}
+}
+
+int32 ABrixGameMode::RoomAt(const FVector& WorldCm) const
+{
+	const FVector2D P(WorldCm.X / BrixUnits::CmPerM, WorldCm.Y / BrixUnits::CmPerM);
+	const float Up = (float)(WorldCm.Z / BrixUnits::CmPerM);
+	for (int32 i = 0; i < Rooms.Num(); ++i)
+	{
+		const FRoom& R = Rooms[i];
+		const FVector2D D = P - R.Centre, L(D.X * R.Cos + D.Y * R.Sin, -D.X * R.Sin + D.Y * R.Cos);
+		if (FMath::Abs(L.X) < R.Half.X && FMath::Abs(L.Y) < R.Half.Y && Up < R.Top) return R.Lot;
+	}
+	return INDEX_NONE;
 }
 
 void ABrixGameMode::ShootAndQuit()
@@ -326,6 +429,13 @@ void ABrixGameMode::ShootAndQuit()
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: %.1f frames a second over the last %.0f s before the screenshot"), Secs > 0 ? (GFrameCounter - MarkFrame) / Secs : 0.0, Secs);
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: at the shot the game thread took %.1f ms, the render thread %.1f ms, the GPU %.1f ms"),
 		FPlatformTime::ToMilliseconds(GGameThreadTime), FPlatformTime::ToMilliseconds(GRenderThreadTime), FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()));
+	if (const APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0))
+	{
+		const int32 Room = RoomAt(Me->GetActorLocation());
+		FString Where = TEXT("out of doors");
+		if (Room != INDEX_NONE && Insides && Insides->Lots.IsValidIndex(Room) && Insides->Lots[Room].IsSet()) Where = TEXT("inside ") + Insides->Lots[Room]->Id;
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: the player is at (%.1f, %.1f) %.2f m up, %s"), Me->GetActorLocation().X / 100, Me->GetActorLocation().Y / 100, Me->GetActorLocation().Z / 100 - 0.85, *Where);
+	}
 	if (Cars) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d vehicles drawn"), Cars->Shown());
 	if (Cars && Cars->Driving().K >= 0) UE_LOG(LogTemp, Display, TEXT("Brix Town: the player's car at (%.1f, %.1f) going %.1f m/s"), Cars->Driving().X, Cars->Driving().Z, Cars->Driving().V);
 	if (People) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents with a body at %02d:%02d, %.2f ms a frame working them out (%s)"), People->Shown(), (int32)ClockMinute() / 60, (int32)ClockMinute() % 60, People->TickMs(), *People->TickParts());

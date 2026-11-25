@@ -6,6 +6,8 @@ The meshes are binary and kept in Git LFS (ADR-0002); this script is how they ar
 Run from the repository root (engine path as in docs/setup/DEV_ENVIRONMENT.md):
   UnrealEditor-Cmd.exe "%CD%\\Game\\BrixTown.uproject" -run=pythonscript -script="%CD%\\Tools\\unreal\\import_building_kit.py"
       -unattended -nullrhi -nosplash
+With BRIX_KIT_ONLY=SM_Kit_A,SM_Kit_B set, only those pieces are imported (added or replaced) and the rest of /Game/Kit is
+left as it is, so only their files change (lock them first if they exist: git lfs lock).
 """
 import glob
 import os
@@ -16,13 +18,16 @@ SOURCE = os.path.join(ROOT, "Art", "Export", "unreal_kit_36")
 DEST = "/Game/Kit"
 GREYBOX = "/Game/Greybox/M_Greybox"
 
+ONLY = [n for n in os.environ.get("BRIX_KIT_ONLY", "").split(",") if n]
 assets = unreal.EditorAssetLibrary
-if assets.does_directory_exist(DEST):
+if assets.does_directory_exist(DEST) and not ONLY:
     assets.delete_directory(DEST)
 greybox = unreal.load_asset(GREYBOX)
 
 tasks = []
 for path in sorted(glob.glob(os.path.join(SOURCE, "SM_Kit_*.glb"))):
+    if ONLY and os.path.splitext(os.path.basename(path))[0] not in ONLY:
+        continue
     t = unreal.AssetImportTask()
     t.filename = path
     t.destination_path = DEST
@@ -35,13 +40,14 @@ unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks(tasks)
 # trees a cylinder and a sphere
 for src, dst in (("/Engine/BasicShapes/Cube", "SM_Kit_Box"), ("/Engine/BasicShapes/Cylinder", "SM_Kit_Cylinder"),
                  ("/Engine/BasicShapes/Sphere", "SM_Kit_Sphere")):
-    assets.duplicate_asset(src, DEST + "/" + dst)
+    if not ONLY:
+        assets.duplicate_asset(src, DEST + "/" + dst)
 
 for name in assets.list_assets(DEST, recursive=True, include_folder=False):
     a = unreal.load_asset(name)
     if isinstance(a, unreal.StaticMesh):
         base = os.path.splitext(os.path.basename(a.get_path_name().split(".")[0]))[0]
-        if not base.startswith("SM_Kit_"):
+        if not base.startswith("SM_Kit_") or (ONLY and base not in ONLY):
             continue
         for i, slot in enumerate(a.static_materials):
             a.set_material(i, greybox)
@@ -56,6 +62,8 @@ for name in assets.list_assets(DEST, recursive=True, include_folder=False):
 
 # the materials and textures the importer made are not used: remove them so only the meshes are kept
 for name in assets.list_assets(DEST, recursive=True, include_folder=False):
+    if ONLY and not any("/" + n + "/" in name or name.split(".")[0].endswith("/" + n) for n in ONLY):
+        continue
     a = unreal.load_asset(name)
     if not isinstance(a, unreal.StaticMesh):
         assets.delete_asset(name)

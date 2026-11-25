@@ -29,6 +29,23 @@ The whole town is 15 groups of instances, one per mesh, each instance carrying i
 the owner's laptop at High it runs at 63-66 fps, as fast as the grey-box (ADR-0046). The binaries are lockable in LFS
 (ADR-0002): `git lfs lock <file>` before running the scripts that remake them.
 
+## Going inside (CITY-013; ADR-0048)
+959 of the 965 enterable buildings can be walked into (all but the furniture outlet's hall and the malls), as the slice
+builds them (play.js building()): the ground storey is hollow behind its kit walls, with a floor in the storey's finish
+(boards or flags), the walls plastered inside in its colour and a ceiling; above it the core is still solid. The way in is
+the kit's own door standing open (`SM_Kit_DoorPlainOpen`, `DoorArchOpen`, `DoorCivicOpen`, `ShopDoorOpen`, made by
+unreal_kit_36.py: `WASTED_ONLY=<pieces>` makes just those, `BRIX_KIT_ONLY=<pieces>` imports just those) at the lot's door,
+where the residents go in: `BrixWorld/BrixInside` works it out (`BrixDoorwayOf`), with each lot's inside from
+`Game/Data/inside.json` (the design's floors and walls per storey, the stair, lift, storeys, levels, flats and planned
+rooms; written by `build_play.py`). Windows have unseen boxes in them, so only the doorway lets you through; on a hollow
+storey their glass is clear (`/Game/Greybox/M_Clear`, `Tools/unreal/make_clear_material.py`), so the room looks out and
+the sun comes in. The haze is turned down while the camera is indoors (`IndoorHaze`). The owner approved this light on
+2026-11-25. `-BrixInside=<lot id>` puts the player in a building, `-BrixWalkIn=<lot id>` walks them in through its
+doorway (the log says how long it took), `-BrixShut` builds every building solid as before; a test shot ignores the keys
+and mouse of whoever is at the machine and logs where the player is. A street at High: 46.7 to 48.6 fps, 45.8 to 49.5
+with `-BrixShut` (noisy: other sessions were running Unreal); 50 fps inside a row house. Not yet: furniture, the upper
+storeys and their stairs, residents indoors.
+
 ## Designed houses (ADR-0032, ADR-0035)
 The 469 designed houses (lot.house) are built as the slice builds them (houses.js outsideS): the 12 x 9 m house of
 `World/rules/home_plans.json` (house_12x9), two 3.3 m storeys on a 0.3 m plinth, its nine windows and front door where
@@ -264,6 +281,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD043_the_sun_follows_the_calendar` | WLD-043 (ADR-0024) |
 | `BrixTown.World.CITY022_residents_are_where_their_routine_puts_them` | CITY-022 |
 | `BrixTown.World.ART004_people_are_drawn_as_the_slice_draws_them` | ART-004, ANIM-001, ANIM-002 |
+| `BrixTown.World.CITY013_every_enterable_building_has_a_doorway` | CITY-013 (ADR-0048) |
 | `BrixTown.World.CITY017_residents_sit_on_garden_benches` | CITY-017 |
 | `BrixTown.World.CITY040_vehicles_are_where_the_traffic_puts_them` | CITY-040 |
 | `BrixTown.World.CITY041_trams_are_where_the_timetable_puts_them` | CITY-041 |

@@ -9,6 +9,7 @@ struct FBrixLot;
 struct FBrixBlock;
 struct FBrixPattern;
 struct FBrixSurface;
+struct FBrixInsides;
 class UInstancedStaticMeshComponent;
 class UMaterialInstanceDynamic;
 class UStaticMesh;
@@ -34,6 +35,9 @@ class BRIXTOWN_API ABrixTownActor : public AActor
 public:
 	ABrixTownActor();
 	void Build(const FBrixCity& City);
+	// What is inside the buildings (Game/Data/inside.json; CITY-013): set before Build to make the enterable ones hollow,
+	// with an open doorway, a floor, plastered walls and a ceiling
+	const FBrixInsides* Insides = nullptr;
 	// Where the lamps' and wall lanterns' light comes from (the slice's lights: x, height, z in metres and a strength), and
 	// their glass, which glows by night (ABrixLamps sets its material's Glow).
 	TArray<FVector4f> LampLights;
@@ -83,6 +87,14 @@ public:
 	UPROPERTY(Config) float HouseStorey = 3.3f;        // and each storey
 	UPROPERTY(Config) FLinearColor HouseTrimStone = FLinearColor(0.62f, 0.58f, 0.52f);   // its sills, surrounds, string course
 	UPROPERTY(Config) FLinearColor QuoinStone = FLinearColor(0.66f, 0.63f, 0.57f);
+	UPROPERTY(Config) float InsideFloor = 0.08f;       // CITY-013: the ground floor's top above the block's paving (slice Y_FLOOR 0.2)
+	UPROPERTY(Config) float CeilingDrop = 0.12f;       // a storey's ceiling this far under the next storey's line (its slab's underside)
+	UPROPERTY(Config) float LiningDepth = 0.02f;       // the plaster inside the walls
+	UPROPERTY(Config) float CeilingWhite = 0.25f;
+	UPROPERTY(Config) FVector4 FloorBoardsA = FVector4(0, 1.2, 0.16, 0.005);   // a boarded floor: pattern type, unit, joint (as RoadPatternA)
+	UPROPERTY(Config) FVector4 FloorBoardsB = FVector4(0.35, 0, 0, 0);
+	UPROPERTY(Config) FVector4 FloorFlagsA = FVector4(3, 0.6, 0.6, 0.008);    // a stone floor: flags
+	UPROPERTY(Config) FVector4 FloorFlagsB = FVector4(0.5, 0.01, 0, 0.3);      // a ceiling is its storey's wall colour this much toward white (play.js building())
 	UPROPERTY(Config) float TreeTrunkHeight = 3.f;
 	UPROPERTY(Config) float TreeTrunkWidth = 0.35f;
 	UPROPERTY(Config) float TreeCrownWidth = 4.f;
@@ -105,14 +117,14 @@ public:
 	UPROPERTY(Config) FLinearColor CrownColour = FLinearColor(0.30f, 0.33f, 0.20f);
 
 private:
-	struct FOpening { float S, Z0, W, H; UStaticMesh* Mesh; UStaticMesh* Shutters; const FLinearColor* Paint; float MeshZ = -1.f; float SX = 1.f, SZ = 1.f; };   // MeshZ < 0: the piece sits at Z0; SX, SZ stretch it
+	struct FOpening { float S, Z0, W, H; UStaticMesh* Mesh; UStaticMesh* Shutters; const FLinearColor* Paint; float MeshZ = -1.f; float SX = 1.f, SZ = 1.f; bool bDoorway = false; };   // MeshZ < 0: the piece sits at Z0; SX, SZ stretch it; bDoorway: the open way in
 	struct FLook { FLinearColor Colour; FVector4f A = FVector4f(-1, 0, 0, 0), B = FVector4f(0, 0, 0, 0); };   // A.x < 0: painted plaster
 	struct FPending { TArray<FTransform> At; TArray<FLook> Look; };
 
 	// One group of instances per mesh (ADR-0046): each instance carries its own colour (custom data 0..2), so the
 	// whole town is a handful of groups. A slot named frame, shutter, door or roof, and every slot of the plain shapes,
 	// takes the instance's colour; the other slots (glass, stone, iron) are fixed from SlotColours.
-	UInstancedStaticMeshComponent* Group(UStaticMesh* Mesh, bool bCollide, float CullM = 0.f);
+	UInstancedStaticMeshComponent* Group(UStaticMesh* Mesh, bool bCollide, float CullM = 0.f, bool bClear = false);
 	void Add(UInstancedStaticMeshComponent* G, const FTransform& At, const FLinearColor& C);
 	void Add(UInstancedStaticMeshComponent* G, const FTransform& At, const FLook& Look);
 	FLook Surface(const FBrixSurface& S, const FLinearColor& Town) const;
@@ -134,6 +146,11 @@ private:
 	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> OwnColour;
 	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Glass;
 	UInstancedStaticMeshComponent* GlassGroup();
+	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Blockers;
+	UInstancedStaticMeshComponent* BlockerGroup();
+	UPROPERTY() TObjectPtr<UMaterialInterface> ClearGlass;   // /Game/Greybox/M_Clear: a hollow storey's window glass   // unseen boxes in an enterable building's windows: only its doorway lets you through
+	int32 LotIndex = 0;                             // the lot being built, in the city's order (the slice's LOTS)
+	int32 Hollow = 0;
 	TMap<UInstancedStaticMeshComponent*, FPending> Pending;   // instances gathered per group, added in one go
 	const FBrixCity* CityData = nullptr;
 	int32 Buildings = 0, Openings = 0;

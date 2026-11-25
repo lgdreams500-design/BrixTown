@@ -81,6 +81,65 @@ def door_civic(K, rng):
     voussoirs(K, rng, 0, 2.6 - 0.75, 0.75, T, ring=0.4)
 
 
+# ---- open doors (CITY-013): the same doors, standing open into the building so the player and residents walk in -------
+def door_open(K, rng, cx, w, h, t, look, arch=False, steps=1, hood=False):
+    """building_kit_07 door() with its leaf swung in against the reveal, hinged on the left (x0) at the wall's back: the
+    stone frame, the steps and the hood are as door() makes them, and the whole opening is clear (an arched door's
+    opening up to its crown: the arch stands open, its voussoirs round it)."""
+    x0, x1 = cx - w / 2, cx + w / 2
+    dm = look["door"]
+    dy = t - 0.12
+    if arch:
+        rect_top = h - w / 2                 # the leaf's square top at the arch's spring; the arch itself stands open
+    else:
+        rect_top = h
+        K.block("stone_dark", x0 - 0.2, x0, -0.07, 0.05, 0, h)
+        K.block("stone_dark", x1, x1 + 0.2, -0.07, 0.05, 0, h)
+        K.block("stone_dark", x0 - 0.28, x1 + 0.28, -0.1, 0.05, h, h + 0.3)
+    # the boarded leaf, turned in: its planks run from the hinge (y = t) into the room, its rails on the face toward the opening
+    lw = w - 0.04
+    n = max(4, int(lw / 0.19))
+    hx0, hx1 = x0 + 0.01, x0 + 0.11
+    for i in range(n):
+        K.block(dm, hx0, hx1, t + i * lw / n, t + (i + 1) * lw / n, 0.02, rect_top, 0.014)
+    for zr in (0.45, rect_top - 0.5):
+        K.block(dm, hx1, hx1 + 0.04, t + 0.05, t + lw - 0.05, zr - 0.07, zr + 0.07, 0.012)
+    K.cyl("iron", (hx1 + 0.07, t + lw * 0.82, 1.05), "x", 0.035, 0.08, segs=10)
+    for s in range(steps):
+        K.block("stone_dark", x0 - 0.3 + 0.15 * s, x1 + 0.3 - 0.15 * s, -0.55 + 0.25 * s, t - 0.1, 0.0 + 0.16 * s, 0.16 + 0.16 * s)
+    if hood:
+        K.block("stone_dark", x0 - 0.45, x1 + 0.45, -0.6, 0.05, h + 0.32, h + 0.46)
+        for sx in (x0 - 0.3, x1 + 0.3):
+            K.cube("stone_dark", (sx, -0.25, h + 0.15), (0.16, 0.5, 0.34), bevel=0.03)
+
+
+def door_arch_open(K, rng):
+    door_open(K, rng, 0, KIT["door_w"], 2.5, T, LOOK, arch=True)
+    voussoirs(K, rng, 0, 2.5 - KIT["door_w"] / 2, KIT["door_w"] / 2, T, ring=0.4)
+
+
+def door_plain_open(K, rng):
+    door_open(K, rng, 0, KIT["door_w"], KIT["door_h"], T, LOOK, arch=False, hood=True)
+
+
+def door_civic_open(K, rng):
+    door_open(K, rng, 0, 1.5, 2.6, T, LOOK, arch=True, steps=2)
+    voussoirs(K, rng, 0, 2.6 - 0.75, 0.75, T, ring=0.4)
+
+
+def shop_door_open(K, rng):                  # the shopfront's door bay (shop_door()) with its glazed leaf swung in, x -0.5..0.5
+    a, b = -0.5, 0.5
+    K.block("glass", a, b, T - 0.26, T - 0.2, 2.3, 2.55, 0)
+    K.block("sign", a, b, T - 0.3, T - 0.2, 2.3, 2.55, 0.01)
+    # the leaf, turned in on its hinge at x = a: a frame round two panes, 0.08 thick, 0.96 long into the shop
+    hx0, hx1, L = a + 0.01, a + 0.09, 0.96
+    K.block("sign", hx0, hx1, T, T + L, 0.0, 0.9, 0.012)
+    K.block("glass", hx0 + 0.02, hx1 - 0.02, T + 0.06, T + L - 0.06, 0.9, 2.22, 0)
+    for y0, y1 in ((T, T + 0.06), (T + L - 0.06, T + L)):
+        K.block("sign", hx0, hx1, y0, y1, 0.9, 2.3, 0.008)
+    K.block("sign", hx0, hx1, T, T + L, 2.22, 2.3, 0.008)
+
+
 def shutters(h):
     def make(K, rng):                       # a pair of shutters open flat against the wall, as window() lays them
         w = KIT["win_w"]
@@ -197,6 +256,10 @@ PIECES = {
     "SM_Kit_DoorArch": (door_arch, (KIT["door_w"], 2.5)),
     "SM_Kit_DoorPlain": (door_plain, (KIT["door_w"], KIT["door_h"])),
     "SM_Kit_DoorCivic": (door_civic, (1.5, 2.6)),
+    "SM_Kit_DoorArchOpen": (door_arch_open, (KIT["door_w"], 2.5)),
+    "SM_Kit_DoorPlainOpen": (door_plain_open, (KIT["door_w"], KIT["door_h"])),
+    "SM_Kit_DoorCivicOpen": (door_civic_open, (1.5, 2.6)),
+    "SM_Kit_ShopDoorOpen": (shop_door_open, None),
     "SM_Kit_Shutters160": (shutters(KIT["win_h"]), None),
     "SM_Kit_Shutters145": (shutters(KIT["top_win_h"]), None),
     "SM_Kit_RoofWedge": (roof_wedge, None),
@@ -247,7 +310,10 @@ def main():
     clear_scene()
     COL = bpy.context.scene.collection
     sizes = {}
+    only = [n for n in os.environ.get("WASTED_ONLY", "").split(",") if n]   # e.g. WASTED_ONLY=SM_Kit_DoorPlainOpen: just these
     for name, (make, opening) in PIECES.items():
+        if only and name not in only:
+            continue
         try:
             K = Kit(name)
             before = set(bpy.context.scene.objects)
@@ -267,6 +333,8 @@ def main():
             bpy.data.objects.remove(ob, do_unlink=True)
         except Exception:
             log("FAILED %s:\n%s" % (name, traceback.format_exc()))
+    if only and os.path.exists(EXPORT + "/" + NAME + ".json"):         # keep the other pieces' entries
+        sizes = dict(json.load(open(EXPORT + "/" + NAME + ".json")), **sizes)
     json.dump(sizes, open(EXPORT + "/" + NAME + ".json", "w"), indent=1)
     log("DONE")
 

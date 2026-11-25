@@ -471,5 +471,93 @@
    -0.043,
    0.586
   ]
+ },
+ "SM_Kit_DoorArchOpen": {
+  "opening": [
+   1.3,
+   2.5
+  ],
+  "slots": [
+   "door",
+   "iron",
+   "stone_dark",
+   "stone_a",
+   "stone_c"
+  ],
+  "tris": 1764,
+  "min": [
+   -1.057,
+   -0.55,
+   0.0
+  ],
+  "max": [
+   1.057,
+   1.58,
+   3.02
+  ]
+ },
+ "SM_Kit_DoorPlainOpen": {
+  "opening": [
+   1.3,
+   2.3
+  ],
+  "slots": [
+   "stone_dark",
+   "door",
+   "iron"
+  ],
+  "tris": 1656,
+  "min": [
+   -1.1,
+   -0.6,
+   0.0
+  ],
+  "max": [
+   1.1,
+   1.58,
+   2.76
+  ]
+ },
+ "SM_Kit_DoorCivicOpen": {
+  "opening": [
+   1.5,
+   2.6
+  ],
+  "slots": [
+   "door",
+   "iron",
+   "stone_dark",
+   "stone_a",
+   "stone_c"
+  ],
+  "tris": 2196,
+  "min": [
+   -1.154,
+   -0.55,
+   0.0
+  ],
+  "max": [
+   1.154,
+   1.78,
+   3.12
+  ]
+ },
+ "SM_Kit_ShopDoorOpen": {
+  "opening": null,
+  "slots": [
+   "glass",
+   "sign"
+  ],
+  "tris": 564,
+  "min": [
+   -0.5,
+   0.02,
+   0.0
+  ],
+  "max": [
+   0.5,
+   1.28,
+   2.55
+  ]
  }
 }

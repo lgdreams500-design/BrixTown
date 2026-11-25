@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
@@ -12,6 +12,9 @@ struct FBrixCity;
 //   -BrixCam=<x>,<z>,<height>,<yaw>,<pitch>   look from there instead of the player (metres, degrees; yaw 0 = east)
 //   -BrixDay=<day> -BrixTime=<hh:mm>           start on another day or at another time (the sun follows)
 //   -BrixCounter=bank (with -BrixLife=<ops>)   stand at a counter and open it (ABrixLife)
+//   -BrixInside=<lot id>              put the player inside that building, a way in from its doorway, facing in (CITY-013)
+//   -BrixWalkIn=<lot id>              put the player outside that building's doorway and walk them in through it
+//   -BrixShut                         every building solid, as before the insides (to compare frame rates)
 UCLASS(Config = Game)
 class BRIXTOWN_API ABrixGameMode : public AGameModeBase
 {
@@ -45,6 +48,9 @@ public:
 	UPROPERTY(Config) FLinearColor HazeColour = FLinearColor(0.45f, 0.45f, 0.45f);
 	UPROPERTY(Config) float SkyHaziness = 1.f;        // the sky's Mie scattering, x the engine's: higher is paler, greyer
 	UPROPERTY(Config) float ShotDelaySeconds = 12.f;
+	UPROPERTY(Config) float IndoorHaze = 0.f;        // the haze's density indoors, as a share of the street's (CITY-013)
+	// the lot (in the city's order) whose inside a point is in, or INDEX_NONE (CITY-013)
+	int32 RoomAt(const FVector& WorldCm) const;
 
 private:
 	void SpawnLight();
@@ -54,7 +60,16 @@ private:
 	TSharedPtr<FBrixCity> City;
 	TSharedPtr<struct FBrixDay> Today;           // the residents' routines (Game/Data/day.json)
 	UPROPERTY() TObjectPtr<class ABrixPeople> People;
+	UPROPERTY() TObjectPtr<class ABrixTownActor> TownActor;
 	TSharedPtr<struct FBrixTraffic> Traffic;     // the day's vehicles (Game/Data/cars.json)
+	TSharedPtr<struct FBrixInsides> Insides;     // what is inside the buildings (Game/Data/inside.json; CITY-013)
+	void PutInside(const FString& LotId, bool bWalk);
+	struct FRoom { int32 Lot = -1; FVector2D Centre = FVector2D::ZeroVector, Half = FVector2D::ZeroVector; double Cos = 1, Sin = 0; float Top = 3.f; };
+	TArray<FRoom> Rooms;                         // every hollow building's inside, for RoomAt
+	TOptional<FVector2D> WalkTo;                 // -BrixWalkIn: where the player is walked to, and from where
+	FVector2D WalkFrom = FVector2D::ZeroVector;
+	FString WalkLot;
+	float WalkSeconds = 0.f;
 	UPROPERTY() TObjectPtr<class ADirectionalLight> SunActor;
 	UPROPERTY() TObjectPtr<class USkyLightComponent> SkyFill;
 	UPROPERTY() TObjectPtr<class UExponentialHeightFogComponent> HazeFog;
