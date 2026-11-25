@@ -517,7 +517,16 @@ and hang still (a seat stirring in the breeze, a plank down at one end) when not
 (no instances moved). Motion from World/rules/dressing.json "motion" (in `Game/Data/streets.json`). `BrixWorld/BrixPlay`
 is the port (pieces, places, apply(), keepOut(), draw()), checked against dressing.js itself by
 `WLD032_children_play_as_the_slice_puts_them` (the 28 pieces' shapes, 352 children at four moments, the moving parts after
-each, walkers kept out; `Tools/unreal/streets_values.py`). Not yet: the player having a go (WLD-041).
+each, walkers kept out; `Tools/unreal/streets_values.py`).
+
+The player can have a go too (WLD-041, F-OBJ-POINTS 1): at a swing seat, a seesaw end, the foot of a slide's ladder, by a
+climbing frame or in a sandpit (48 places, one person each but the slide and the frame), E offers it ("Have a go on the
+swing", ...) when it is nearer than anyone to talk to or a car, and no child is on it. On a swing they sit still at first
+and swing higher over `player_swing_build_s` with the seat going with them; on a seesaw they rock it; on a slide they climb
+the ladder, sit at the top, slide down and get off at the bottom; on the frame they climb up and down its side; in the
+sandpit they sit facing its middle. E, Space or moving gets off, beside the piece (dressing.js playerAt(), playerOff(),
+takenBy(); play.js interact(), stepPlayer()). Checked in the same test: every place, the player's pose at eight moments of a
+go there, and where they step off. `-BrixPlay=<n>` has a go at the n-th place a third into a test shot's wait.
 
 ## Money and the bank (ECO-001 to ECO-003, ECO-009, ECO-012, BANK-001, BANK-002, BANK-007, BANK-008; ADR-0012)
 Money is the slice's (economy.js, a port of `Tools/citysim/economy.py`): `BrixWorld/BrixEconomy` holds one ledger of
@@ -534,8 +543,9 @@ the clock, so interest, instalments and fees are settled for each midnight passe
 the purse at the top left (cash, and the bank's two accounts together once one is open) with a "+" or "-" beside it when
 it changes; at the bank's door (`CounterReach`) or inside it, B opens its counter in the slice's dark panel: open
 accounts, move money (a payment that would take an account below zero is refused, never partly made), borrow and repay,
-and the statement, newest first; I opens the money page (purse, loan, statement). Esc closes either. The money is kept in the save (below). Not yet:
-the game menu's Money page in its painted-sign look. To see the bank in a test shot:
+and the statement, newest first; I opens the money page (purse, loan, statement). Esc closes either. The game menu's Money
+page (the accounts, a loan owed, the statement) is drawn in Lamplight, the look that took the place of the slice's painted
+signs in this build (ADR-0049; `-BrixMenu=wallet` to see it). The money is kept in the save (below). To see the bank in a test shot:
 `-BrixCounter=bank "-BrixLife=open,current;open,savings;move,p:current,p:savings,1000;loan,5000,3"` (ops as
 economy.check_script() writes them, arguments by commas).
 
@@ -611,8 +621,12 @@ Enter buys. What each thing shows is world.buy_menu_shows (`BrixWorld/BrixBuyMen
 cloth in the clothing's colour) are the boxes of World/rules/buy_menu.json, drawn by `SBrixThing` with Slate's own
 triangles, lit as the slice's shader lights them. At the market square B opens the player's stall: rent it for the day,
 set out up to six things at the player's own prices, take them back; residents coming to the market buy as the rules say,
-paid through the ledger, and what is left comes home at midnight. Eastgate Mall's outlets each have their own counter (see Eastgate Mall). Not yet: the narrow layout D (for the building designer), the icons in the dots and chips, a
-good's own Blender model in place of its stand-in, and a resident behind each counter. To see one in a test shot:
+paid through the ledger, and what is left comes home at midnight. Eastgate Mall's outlets each have their own counter (see
+Eastgate Mall). Each cell's dot and the chip beside "Goes to" carry the mark of where the thing goes (a house, a top, a bag,
+a cup, a chair), as in the slice: build_play.py reads the marks from buymenu.js ICON into life.json, `BrixIconCoverage`
+paints each once from its paths (filled by the nonzero rule, the handles stroked) and the dot or chip draws it in its board
+colour's lettering (`UI020_dots_and_chips_show_the_slices_marks`). Not yet: the narrow layout D (for the building designer),
+a good's own Blender model in place of its stand-in, and a resident behind each counter. To see one in a test shot:
 `-BrixCounter=grocer "-BrixLife=buy,grocer,bread"` (a shop's kind or lot id), or `-BrixCounter=market
 "-BrixLife=buy,grocer,jam;rent;setout,jam,250"`.
 
@@ -636,8 +650,8 @@ comes with a slip under the purse and its coins fly up into the bank balance. Ac
 facts worked out from the ledger and the quests (`QST009_achievements_are_earned_as_python_says`), each once, its painted
 banner dropping in at the top, one at a time and not over a panel. Their sounds are played by `ABrixSound` (see Sound): `ABrixLife::OnRewardSound`
 is broadcast with sound.js's names (quest_start, coin_out, coin_land, coin_take, quest_end, interest_start,
-interest_coin, interest_end, achievement). The markers over people's heads and on the maps are under The maps. Quests are kept in the save. Not yet: the
-Me page's list of achievements, the stamped coin face. To see a reward in a test shot: `-BrixLifeLead=1.15
+interest_coin, interest_end, achievement). The markers over people's heads and on the maps are under The maps. Quests are kept in the save. The game menu's Me page
+lists the achievements, those earned first with the day of each, then those still to earn (UI-019; `-BrixMenu=me`). To see a reward in a test shot: `-BrixLifeLead=1.15
 "-BrixLife=act,new_in_town,r0504,stage:bank;open,current;check;buy,grocer,bread;check;act,new_in_town,r0504,take:bread|end:gift"`
 (the ops that many seconds before the shot); to see a quest talk, `-BrixTime=15:12 -BrixTalk=504 "-BrixAnswers=1,1"`.
 
@@ -814,6 +828,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.SND002_engines_sound_as_the_slice_hears_them` | SND-002, SND-009 |
 | `BrixTown.World.SND004_the_tram_sounds_as_the_slice_hears_it` | SND-004 |
 | `BrixTown.World.UI021_every_thing_shows_what_python_says` | UI-020, UI-021 |
+| `BrixTown.World.UI020_dots_and_chips_show_the_slices_marks` | UI-020 |
 | `BrixTown.World.SND001_the_town_sounds_by_time_of_day` | SND-001 |
 | `BrixTown.World.SND007_outside_is_muffled_indoors` | SND-007 |
 | `BrixTown.World.SND010_the_score_changes_through_the_day` | SND-010, SND-011, SND-012 |
@@ -840,7 +855,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY100_auto_owns_all_and_rides_electric` | CITY-100 |
 | `BrixTown.World.CITY017_every_plant_is_drawn_as_the_slice_draws_it` | CITY-017, WLD-040 |
 | `BrixTown.World.WLD056_the_open_ground_is_drawn_as_the_slice_draws_it` | WLD-056, ART-001 |
-| `BrixTown.World.WLD032_children_play_as_the_slice_puts_them` | WLD-032 |
+| `BrixTown.World.WLD032_children_play_as_the_slice_puts_them` | WLD-032, WLD-041 |
 | `BrixTown.World.WLD028_the_street_dressing_is_drawn_as_the_slice_draws_it` | WLD-028, WLD-031, WLD-034 |
 | `BrixTown.World.WLD056_every_tree_is_drawn_as_the_slice_draws_it` | WLD-056 |
 | `BrixTown.World.CITY043_the_road_markings_and_signals_are_drawn_as_the_slice_draws_them` | CITY-043, CITY-045, CITY-091 |

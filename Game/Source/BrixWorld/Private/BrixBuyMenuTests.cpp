@@ -49,4 +49,48 @@ bool FUI021_ThingsShowWhatPythonSays::RunTest(const FString&)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FUI020_DotAndChipIcons, "BrixTown.World.UI020_dots_and_chips_show_the_slices_marks",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FUI020_DotAndChipIcons::RunTest(const FString&)
+{
+	FBrixLifeData Life;
+	FBrixBuyMenuRules B;
+	FString Error;
+	if (!TestTrue(TEXT("life.json loads: ") + Error, LoadBrixLife(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/life.json"))), Life, Error))) return false;
+	if (!TestTrue(TEXT("the buy menu's rules load: ") + Error, LoadBrixBuyMenu(Life.Json, B, Error))) return false;
+	for (const auto& G : B.Goes)   // every place a thing goes has its mark, as buymenu.js ICON has one for each
+		if (!B.Icons.Contains(G.Key)) AddError(TEXT("no mark for ") + G.Key);
+	TestEqual(TEXT("the marks of buymenu.js"), B.Icons.Num(), 5);
+	const int32 Px = 32;
+	auto At = [Px](const TArray<float>& C, float x, float y) { return C[FMath::Clamp((int32)(y / 16.f * Px), 0, Px - 1) * Px + FMath::Clamp((int32)(x / 16.f * Px), 0, Px - 1)]; };
+	// points inside and outside each mark, read off its path in buymenu.js (16 units across)
+	struct FPt { const TCHAR* Mark; float X, Y; bool bIn; const TCHAR* What; };
+	const FPt Pts[] = {
+		{ TEXT("home"), 8, 4, true, TEXT("the roof") }, { TEXT("home"), 5, 12, true, TEXT("the wall") }, { TEXT("home"), 8, 12.5f, false, TEXT("the door") }, { TEXT("home"), 1.5f, 1.5f, false, TEXT("the sky") },
+		{ TEXT("wear"), 8, 10, true, TEXT("the body") }, { TEXT("wear"), 2.2f, 4.8f, true, TEXT("a sleeve") }, { TEXT("wear"), 8, 2.5f, false, TEXT("the neck") }, { TEXT("wear"), 2, 12, false, TEXT("under a sleeve") },
+		{ TEXT("carry"), 8, 10, true, TEXT("the bag") }, { TEXT("carry"), 8, 3, true, TEXT("the top of the handle") }, { TEXT("carry"), 8, 4.6f, false, TEXT("inside the handle") }, { TEXT("carry"), 1, 2, false, TEXT("beside it") },
+		{ TEXT("eat"), 7, 9, true, TEXT("the cup") }, { TEXT("eat"), 14, 7.7f, true, TEXT("the handle") }, { TEXT("eat"), 12.6f, 7.7f, false, TEXT("inside the handle") }, { TEXT("eat"), 7, 2, false, TEXT("over the cup") },
+		{ TEXT("place"), 3.5f, 5, true, TEXT("the back") }, { TEXT("place"), 8, 9.5f, true, TEXT("the seat") }, { TEXT("place"), 8, 5, false, TEXT("over the seat") }, { TEXT("place"), 8, 13, false, TEXT("between the legs") },
+	};
+	for (const FPt& P : Pts)
+	{
+		const TArray<FBrixIconPath>* I = B.Icons.Find(P.Mark);
+		if (!I) continue;
+		const TArray<float> C = BrixIconCoverage(*I, Px);
+		const float V = At(C, P.X, P.Y);
+		if (P.bIn ? V < .75f : V > .25f) AddError(FString::Printf(TEXT("%s: %s (%.1f, %.1f) is %.2f covered"), P.Mark, P.What, P.X, P.Y, V));
+	}
+	// the outlines: the house is one closed ring of eleven corners and back to the first; the bag's handle one open curve
+	const TArray<TArray<FVector2f>> House = BrixIconOutlines(B.Icons.FindRef(TEXT("home")).Num() ? B.Icons[TEXT("home")][0].D : FString());
+	TestEqual(TEXT("the house is one ring"), House.Num(), 1);
+	if (House.Num()) { TestEqual(TEXT("of eleven corners, closed"), House[0].Num(), 12); TestTrue(TEXT("back to its start"), House[0][0].Equals(House[0].Last())); }
+	if (const TArray<FBrixIconPath>* Bag = B.Icons.Find(TEXT("carry")); Bag && Bag->Num() == 2)
+	{
+		TestEqual(TEXT("the handle is stroked 1.6 wide"), (*Bag)[1].Stroke, 1.6f);
+		const TArray<TArray<FVector2f>> H = BrixIconOutlines((*Bag)[1].D);
+		TestTrue(TEXT("the handle's curve peaks at y 3 over x 8"), H.Num() == 1 && H[0].ContainsByPredicate([](const FVector2f& P) { return P.Equals(FVector2f(8, 3), .01f); }));
+	}
+	return true;
+}
+
 #endif
