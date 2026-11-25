@@ -1,0 +1,157 @@
+{
+ "id": "dinner_mei", "group": "romance", "act": "M2", "title": "The End of the Line", "rank": "Courting Mei: dinner",
+ "giver": "mei", "next": "question_mei",
+ "needs": ["done:lunch_mei:went_well|nice_enough", "rep:mei:45"],
+ "hook": "Once Mei's regard reaches 45, she tells you, and then everyone else, that she has a whole evening off tomorrow.",
+ "summary": "Mei's first whole evening off since the tram was last painted. Dinner, and then the last tram out to the end of the line, which she has read on the front of eleven thousand trams and never seen. On the way she tells you the one piece of news she has told nobody.",
+ "theme": "Can the one who looks after everybody let herself be looked after?",
+ "start": "evening",
+ "stages": [
+  {"id": "evening", "title": "A whole evening", "kind": "talk", "with": "mei",
+   "goal": "Talk to Mei at the Tram Café",
+   "log": "Mei has tomorrow evening off. A whole one. She wants to know where you are taking her.",
+   "start": "p1",
+   "starts": [{"need": ["again:dinner_mei"], "node": "p_again"}],
+   "nodes": {
+    "p_again": {"who": "mei", "mood": "happy", "say": "You left me with thirty tables and took the bus home. I have decided to find it funny. I've another evening off. Where are you taking me this time?",
+     "options": [
+      {"text": "The end of the line. I promised.", "next": "p_line", "need": ["flag:promised_line"]},
+      {"text": "The food hall at Northgate. Somebody else carries the plates for once.", "next": "p_hall"},
+      {"text": "Where would you like to go?", "next": "p_choose", "need": ["done:lunch_mei:went_well"], "act": ["rep:mei:+5"]},
+      {"text": "Where would you like to go?", "next": "p_choose2", "need": ["done:lunch_mei:nice_enough"], "act": ["rep:mei:+5"]}
+     ]},
+    "p1": {"who": "mei", "mood": "happy", "say": "Tomorrow. I've got tomorrow evening off. A whole one. I've not had a whole evening since the tram was last painted. Where are you taking me?",
+     "options": [
+      {"text": "The end of the line. I promised.", "next": "p_line", "need": ["flag:promised_line"]},
+      {"text": "The food hall at Northgate. Somebody else carries the plates for once.", "next": "p_hall"},
+      {"text": "Where would you like to go?", "next": "p_choose", "need": ["done:lunch_mei:went_well"], "act": ["rep:mei:+5"]},
+      {"text": "Where would you like to go?", "next": "p_choose2", "need": ["done:lunch_mei:nice_enough"], "act": ["rep:mei:+5"]}
+     ]},
+    "p_line": {"who": "mei", "mood": "happy", "say": "You remembered. I've told half the café you'd forget. Bring supper in a basket. We'll take the last tram out and see what's there.",
+     "options": [{"text": "Supper and the last tram.", "next": null, "act": ["flag:dinner_line", "stage:tram"]}]},
+    "p_choose": {"who": "mei", "mood": "surprised", "say": "You're doing it again. Asking. I'll never get used to it. The end of the line. Bring supper in a basket; we'll take the last tram out.",
+     "options": [{"text": "Supper and the last tram.", "next": null, "act": ["flag:dinner_line", "stage:tram"]}]},
+    "p_choose2": {"who": "mei", "mood": "surprised", "say": "Where would I like to go. You're asking me. You didn't, at lunch; I noticed. The end of the line. It says so on the front of every tram I've ever served, and I've never seen what's there. I'd like it to be a field. Bring supper in a basket.",
+     "options": [{"text": "Supper and the last tram.", "next": null, "act": ["flag:dinner_line", "stage:tram"]}]},
+    "p_hall": {"who": "mei", "mood": "thinking", "say": "Northgate. With the lights, and the music in the ceiling. I've never eaten anywhere I didn't know who washed the cups. All right. Go on, then. Impress me.",
+     "options": [{"text": "Seven o'clock.", "next": null, "act": ["stage:hall"]}]}
+   }},
+
+  {"id": "hall", "title": "Thirty tables, one waiter", "kind": "talk", "with": "mei", "optional": true,
+   "goal": "Dinner at the Northgate Mall food hall, seven o'clock",
+   "log": "The food hall at Northgate Mall. Seven o'clock. Somebody else is supposed to carry the plates tonight.",
+   "scene": "Thirty tables, one waiter, and a tray rack nobody has cleared since six. Mei sits with her hands in her lap for almost a full minute.",
+   "start": "h1",
+   "nodes": {
+    "h1": {"who": "mei", "mood": "thinking", "say": "He's on his own. That boy. Thirty tables, and he's stacking the cups wrong; they'll go over. I'll only be a second.",
+     "options": [
+      {"text": "Sit down, Mei. You're off tonight. Let somebody bring you something.", "next": "h_sit"},
+      {"text": "Come on, then. I'll take the trays, you take the tables.", "next": "h_help"},
+      {"text": "We came here to eat. Can't you leave it alone for one evening?", "next": "h_sulk"}
+     ]},
+    "h_sit": {"who": "mei", "mood": "sad", "say": "I don't know how. That's the stupid part. When somebody else carries the plates, I feel as if I've stolen something.",
+     "options": [{"text": "You've carried enough for the whole line. Sit. I'll watch the cups for you.", "next": "h_sit2"}]},
+    "h_sit2": {"who": "mei", "mood": "happy", "dir": "She sits. It takes her until the soup to stop watching the waiter, and until the bread to say so.", "say": "This is nice. Being the table. I didn't know it was nice. Don't tell the café.",
+     "options": [{"text": "There's still a last tram.", "next": null, "act": ["rep:mei:+8", "flag:mei_sat", "stage:tram"]}]},
+    "h_help": {"who": "mei", "mood": "happy", "say": "You'd clear tables on an evening out? You're as bad as I am. Right. Trays to the rack, cups in stacks, and smile; they tip better.",
+     "options": [{"text": "(Clear thirty tables. Eat standing up, laughing.)", "next": "h_help2"}]},
+    "h_help2": {"who": "mei", "mood": "happy", "say": "Best dinner I've ever had, and I had it leaning on a tray rack. The boy gave us a free pudding. Come on. There's still a last tram.",
+     "options": [{"text": "The last tram.", "next": null, "act": ["rep:mei:+5", "stage:tram"]}]},
+    "h_sulk": {"who": "mei", "mood": "angry", "say": "No. I can't. That's who you asked out. I'll be two minutes, and you can decide whether you still want to be here when I'm back.",
+     "options": [
+      {"text": "I'm sorry. Go on. I'll keep your soup warm.", "next": "h_sorry"},
+      {"text": "(Leave her to it. Take the bus home alone.)", "next": null, "act": ["end:long_way_home"]}
+     ]},
+    "h_sorry": {"who": "mei", "mood": "neutral", "say": "Apology accepted. Mostly. The soup's cold, and that's on you. There's a last tram, if you still want it.",
+     "options": [{"text": "I still want it.", "next": null, "act": ["rep:mei:-5", "flag:sulked", "stage:tram"]}]}
+   }},
+
+  {"id": "tram", "title": "The last tram out", "kind": "talk", "with": "mei",
+   "goal": "Ride the last tram out with Mei",
+   "log": "The last tram out of Market Square. It says END OF THE LINE on the front.",
+   "scene": "The tram is nearly empty. The town goes by backwards in the window. Mei has both hands round the rail and is reading every stop aloud as if it were news.",
+   "start": "t1",
+   "starts": [{"need": ["done:lunch_mei:nice_enough", "!flag:dinner_line"], "node": "t1_wish"}],
+   "nodes": {
+    "t1": {"who": "mei", "mood": "happy", "say": "That was the last stop I know. One stop past it, and I'm a tourist!",
+     "options": [{"text": "What's it like, being a tourist?", "next": "t2"}]},
+    "t1_wish": {"who": "mei", "mood": "happy", "say": "That was the last stop I know. One stop past it, and I'm a tourist! It says END OF THE LINE on the front of every tram I have ever served, and I've never seen what's there. A depot, probably. I'd like it to be a field.",
+     "options": [{"text": "What's it like, being a tourist?", "next": "t2"}]},
+    "t2": {"who": "mei", "mood": "thinking", "say": "Quiet. Nobody out here knows I'm the one who knows everything. Can I tell you a thing? A real one. Not news.",
+     "options": [
+      {"text": "Tell me.", "next": "t3", "need": ["done:lunch_mei:went_well"]},
+      {"text": "Tell me.", "next": "t3b", "need": ["done:lunch_mei:nice_enough", "!flag:dinner_line"]},
+      {"text": "Tell me.", "next": "t3c", "need": ["done:lunch_mei:nice_enough", "flag:dinner_line"]}
+     ]},
+    "t3": {"who": "mei", "mood": "sad", "say": "Everybody tells me things. All day, the whole line. And nobody asks me anything, because I'm the one behind the counter, and a counter doesn't have a life. You asked. I've been cross with you about it all week, because I didn't know what to do with it.",
+     "options": [{"text": "What's the real thing, then?", "next": "t4"}]},
+    "t3b": {"who": "mei", "mood": "sad", "say": "Everybody tells me things. All day, the whole line. And nobody asks me anything. You didn't either, at lunch. I talked for twenty minutes and you let me. I noticed. I'm saying so because I'd like you to ask me something now.",
+     "options": [{"text": "What's the real thing, then?", "next": "t4"}]},
+    "t3c": {"who": "mei", "mood": "sad", "say": "Everybody tells me things. All day, the whole line. And nobody asks me anything. You did, yesterday. Late, but you did. I've been cross with you about it since, because I didn't know what to do with it.",
+     "options": [{"text": "What's the real thing, then?", "next": "t4"}]},
+    "t4": {"who": "mei", "mood": "thinking", "say": "Old Bram's selling up. The café. He's offered me the lease first, and Linden Bank will lend on it. I've told four hundred people their own business this week, and not one of them mine. I can run a counter. I don't know if I can own one.",
+     "options": [
+      {"text": "Take it. You've run that café for five years. He only held the keys.", "next": "t_take", "act": ["flag:mei_takes_cafe"]},
+      {"text": "Do the sums first. I'll sit with you while you do them.", "next": "t_sums"},
+      {"text": "What do you want, Mei?", "next": "t_want", "act": ["rep:mei:+5"]}
+     ]},
+    "t_take": {"who": "mei", "mood": "happy", "say": "He did only hold the keys. Oh, I'm going to say that to his face. Kindly. All right. I'll take it. I've said it to a person now. It's real.",
+     "options": [{"text": "(The tram slows. End of the line.)", "next": null, "act": ["stage:field"]}]},
+    "t_sums": {"who": "mei", "mood": "happy", "say": "You'd sit there while I do sums. That's worse than the tram. That's nearly a proposal. Don't panic. I said nearly.",
+     "options": [{"text": "(The tram slows. End of the line.)", "next": null, "act": ["stage:field"]}]},
+    "t_want": {"who": "mei", "mood": "happy", "say": "The café. I want the café. I've wanted it since I learned the till. There. You asked, and I've said it to a person, and now it's real.",
+     "options": [{"text": "(The tram slows. End of the line.)", "next": null, "act": ["flag:mei_takes_cafe", "stage:field"]}]}
+   }},
+
+  {"id": "field", "title": "What's there", "kind": "talk", "with": "mei",
+   "goal": "Get off at the end of the line",
+   "log": "The end of the line. The last tram back leaves in a quarter of an hour.",
+   "scene": "The end of the line is a depot: a row of dark trams, ticking as they cool. And behind the depot fence, a field running down to the brook, with the whole of Old Town lit up beyond it.",
+   "start": "e1",
+   "nodes": {
+    "e1": {"who": "mei", "mood": "surprised", "say": "It's a depot. And a field. It's both. I didn't know it was allowed to be both.",
+     "options": [
+      {"text": "Supper's in the basket.", "next": "e_supper", "need": ["flag:dinner_line", "flag:lunch_ends"]},
+      {"text": "Supper's in the basket.", "next": "e_supper2", "need": ["flag:dinner_line", "!flag:lunch_ends"]},
+      {"text": "Worth the ride?", "next": "e_worth"}
+     ]},
+    "e_supper": {"who": "mei", "mood": "happy", "say": "Cheese and pickle, on the ends. On the fence of a tram depot. I am going to describe this to so many people.",
+     "options": [{"text": "All of it?", "next": "e2"}]},
+    "e_supper2": {"who": "mei", "mood": "happy", "say": "Bread and cheese, on the fence of a tram depot. I am going to describe this to so many people.",
+     "options": [{"text": "All of it?", "next": "e2"}]},
+    "e_worth": {"who": "mei", "mood": "happy", "say": "Worth every stop. I am going to describe this to so many people.",
+     "options": [{"text": "All of it?", "next": "e2"}]},
+    "e2": {"who": "mei", "mood": "thinking", "dir": "She is quiet for a whole minute, which you have never once seen.", "say": "No. Not this bit. That's how you'll know it mattered. Everything else I tell. This I'm keeping.",
+     "options": [
+      {"text": "(Take her hand.)", "next": "e3"},
+      {"text": "Then I'll keep it too.", "next": "e3"}
+     ]},
+    "e3": {"who": "mei", "mood": "happy", "say": "Right. The last tram back's in four minutes, and tomorrow the whole town will know we're walking out, because I'll have told them myself. I'd rather they heard it right.",
+     "options": [
+      {"text": "Tell them at five past twelve. I'll bring the bread.", "next": null, "need": ["!flag:sulked"], "act": ["end:the_field"]},
+      {"text": "Tell them at five past twelve. I'll bring the bread.", "next": null, "need": ["flag:sulked"], "act": ["end:good_evening"]}
+     ]}
+   }}
+ ],
+ "endings": [
+  {"id": "the_field", "title": "A depot and a field", "log": "Mei saw the end of the line. She told the whole town about the evening, except for one minute of it, which she kept.",
+   "pay": 0, "rep": {"mei": 25}, "flags": ["mei_steady"],
+   "ripples": [
+    "By morning the town knows, from Mei herself. Olu has opinions. Noor says “Hm”, the high one.",
+    "Her regard is now near or past the 75 the question needs. Any gap is made up with shifts at the café.",
+    "If she is taking the café, she is about to become your equal on the square: a counter of her own beside your oven."
+   ],
+   "unlocks": "Walking out with Mei. The question opens at regard 75."},
+  {"id": "good_evening", "title": "A good evening, mostly", "log": "The soup was cold and that was on you. The field was still a field.",
+   "pay": 0, "rep": {"mei": 12}, "flags": ["mei_steady"],
+   "ripples": [
+    "You are still walking out. Her regard is some way short of the 75 the question needs; it has to be made up the slow way.",
+    "She tells the story of the cold soup. Often. With affection, by the third telling."
+   ],
+   "unlocks": "Walking out with Mei. The question opens at regard 75."},
+  {"id": "long_way_home", "retake": true, "title": "The bus home", "log": "You took the bus home alone. Mei cleared thirty tables and came back with the waiter's thanks.",
+   "pay": 0, "rep": {"mei": -12}, "flags": [],
+   "ripples": ["She does not tell this one. You can ask for another evening when her regard has recovered."],
+   "unlocks": "Nothing. The evening can be asked for again."}
+ ]
+}

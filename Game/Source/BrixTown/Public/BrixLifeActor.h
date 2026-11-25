@@ -65,7 +65,8 @@ public:
 	// conversations (life.js conversation(), allowed(), chose(), talkEnded(), vars(); ABrixTalk calls these)
 	FBrixDialogue::FConversation Conversation(int32 Resident, const FBrixDialogue::FConversation& Base);
 	bool Allowed(const FBrixDialogue::FOption& O) const;
-	void Chose(int32 Resident, const FBrixDialogue::FOption& O);
+	void Chose(int32 Resident, const FBrixDialogue::FOption& O);   // Resident -1: an answer in a scene
+	FBrixDialogue::FConversation StageTalk(const FString& Qid) const;   // a quest stage's lines as a talk: its first line, who says what (QST-011, QST-012)
 	void TalkEnded();
 	TMap<FString, FString> TalkVars() const;
 	FBrixQuests* Quests() const { return Q.Get(); }
@@ -290,6 +291,8 @@ private:
 	UPROPERTY(Config) float DesignTurnDeg = 36.f;    // and turned that far from the front (builder: designCam's .62 rad)
 	TSharedPtr<FBrixDay> Day;
 	TOptional<FBrixJob> Offered;          // the job offered in the talk under way (life.js _offer)
+	void PlayScene();                     // opens the scene of a quest stage whose place the player is at (QST-012)
+	FString SceneSeen;                    // the scene last opened ("quest:stage"), so leaving it unanswered does not open it again until the player has gone and come back
 	int32 PendingCounter = -1;            // a resident whose counter opens when the talk ends (an answer's act "shop")
 	float CheckLeft = 0.f;
 	FBrixRewardRules RewardRules;

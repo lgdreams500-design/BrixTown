@@ -1,0 +1,154 @@
+{
+ "people": [
+  {"id": "noor", "name": "Noor", "status": "new", "age": 58, "color": "#a8752a",
+   "career": "Master baker, owner of the Stone Oven", "career_id": "baker",
+   "place": "The Stone Oven Bakery, Baker Street, Old Town. Lives in the back rooms. (Proposed new shop: there is no bakery inside the old wall today; the three that exist are out in Northwood, Eastbrook and Southfield.)",
+   "quote": "Flour, water, salt, time. Everything else is vanity.",
+   "voice": "Short sentences. Never two words where one will do. Compliments so dry you notice them an hour later. Counts everything: change, loaves, people. She says very little, until the one night at the crock when she says it all.",
+   "wants": "The bread to outlive her without changing by one grain.",
+   "hides": "Her hands. The order book has been in someone else's writing for weeks.",
+   "story": [
+    "Fourth keeper of the Stone Oven and of the Mother, the sourdough culture her great-grandmother Ilse started the week the town wall came down. Noor took over at twenty-four when her own mother's hands gave out, and has opened at four every morning since, excepting one morning the town still discusses.",
+    "Six years ago her younger brother Tam wanted to put the family name over six counters in six towns. She said the oven doesn't travel. He left for Eastgate Mall on a Tuesday; she opened on time. They have not spoken since, and she has walked past his counter exactly once, on the far side. She tests every new pair of hands the same way: she sends the first basket out one loaf short, and waits to hear what they do about it."
+   ],
+   "ties": [["tam", "rift", "brother; six years of silence"], ["pip", "work", "her apprentice"], ["oda", "friend", "her miller for forty years"], ["vera", "friend", "tenant upstairs, oldest customer"], ["mei", "trade", "the Tram Café's standing order"], ["olu", "trade", "shelf bread, and a nine-year bet"]]},
+
+  {"id": "tam", "name": "Tam", "status": "new", "age": 49, "color": "#2f7e74",
+   "career": "Owner of Crumb & Co, Eastgate Mall", "career_id": "food_outlet_owner",
+   "place": "A counter in Eastgate Mall, where two outlets are already named Crumb; a flat in the Centre he mostly sleeps in.",
+   "quote": "My sister counts the change twice. I count the customers. One of us is winning. Neither of us is happy.",
+   "voice": "Fast, warm, always selling something, mostly himself. Jokes to keep the talk off the one subject. Goes quiet exactly once per scene, and that line is the true one.",
+   "wants": "To be let back in without having to ask.",
+   "hides": "A jam jar in the back fridge, labelled MUM, fed every day for six years.",
+   "story": [
+    "The younger half of the Stone Oven, once. He wanted the bakery to grow; his sister wanted it to stay true. Both were right, so he left, and took a cutting of the Mother in a jam jar without asking. He has kept it alive ever since in the back of a mall unit that smells of cinnamon spray. The mall's rules forbid him to bake with it.",
+    "Every Saturday he pays a courier, in cash, no name, to bring him one seeded loaf from the Stone Oven. He has not eaten his own bread on a Saturday in six years."
+   ],
+   "ties": [["noor", "rift", "sister; the door he can't knock on"], ["abe", "secret", "the Saturday loaf"], ["pip", "secret", "offered them a job at double the wage"]]},
+
+  {"id": "pip", "name": "Pip", "status": "new", "age": 19, "color": "#b5536b",
+   "career": "Bakery assistant at the Stone Oven; pastry", "career_id": "bakery_assistant",
+   "place": "A rented room over Tram Street. At the bakery by five. Usually.",
+   "quote": "I wrote a song about crumb structure. There's a key change where the dough knocks back.",
+   "voice": "Talks in first drafts. Blurts the thing everyone else was carefully not saying, then apologises to the room in general. More honest when something is on fire.",
+   "wants": "To be good at one thing and to be told so, once, out loud.",
+   "hides": "Tam's job offer, which they haven't refused. Being wanted is new.",
+   "story": [
+    "Hired for pastry and kept for heart. Hands like a surgeon with laminated dough, and entirely unable to wake up: their alarm is the sound of the barrow on the cobbles. Writes songs at night and busks exactly once a year, at the Town Fair, with their eyes shut.",
+    "Pip watches how the new hand treats them on the first morning more closely than anyone realises. It decides, three quests later, how they meet you at the fountain: still listening, or already leaving."
+   ],
+   "ties": [["noor", "work", "apprenticed to; terrified of; devoted to"], ["tam", "secret", "the offer they carry around like a hot tray"]]},
+
+  {"id": "oda", "name": "Oda", "status": "new", "age": 61, "color": "#53678f",
+   "career": "Miller of the last stone mill in the valley", "career_id": "miller (proposed)",
+   "place": "The mill house at Mill Fields, west of the old wall, where Mill Street gets its name.",
+   "quote": "A stone talks while it's cutting right. This one's been mumbling for a year now.",
+   "voice": "Slow and exact, with pauses that aren't empty. Talks about machines as if they were livestock and about people as if they were weather.",
+   "wants": "The stones to bite again.",
+   "hides": "That she has known for a year what the mumbling means, and couldn't face the tools.",
+   "story": [
+    "Everything else is rollers and silos out past the ring road. Oda's flour is why the Stone Oven's bread tastes of somewhere, and she and Noor have argued about grind and grist, fondly, for forty years.",
+    "Her husband Marek dressed the stones: recut the furrows that make a millstone bite. He died two years ago. His tools and pattern book went to the museum because she could not have them in the house, and the stones have been going dull ever since."
+   ],
+   "ties": [["noor", "friend", "miller and baker"], ["len", "trade", "only her stones can take his wheat"], ["suvi", "trade", "buys Brook Farm's grain, for now"], ["jai", "quest", "he keeps Marek's tools"]]},
+
+  {"id": "suvi", "name": "Suvi", "status": "new", "age": 34, "color": "#4b8a52",
+   "career": "Runs Brook Farm", "career_id": "farmer (proposed)",
+   "place": "Brook Farm, the fields past the east wall line.",
+   "quote": "Heritage doesn't pay the vet. A contract pays the vet.",
+   "voice": "Brisk, numerate, tired of being cast as the villain for doing arithmetic. Softens only when her father isn't watching.",
+   "wants": "One certain number in a year of guesses.",
+   "hides": "She can still name every field the way her father taught her, and it would cost her to stop.",
+   "story": [
+    "Came home when her father's knee went and found the books held together by habit. Valley Provisions, the mall's supplier, has offered one flat price for the whole harvest, every year. It is the first certain number she has seen since she came back.",
+    "The sticking point is four acres of Old Wall Red, her father's wheat. The silo men call it contamination. Her father calls it the farm. Suvi is not wrong, and the quest never pretends she is."
+   ],
+   "ties": [["len", "family", "father; the argument at the kitchen table"], ["oda", "trade", "sells grain to the mill"]]},
+
+  {"id": "len", "name": "Len", "status": "new", "age": 74, "color": "#6e7a3a",
+   "career": "Grower of Old Wall Red; retired in name only", "career_id": "farmer (proposed)",
+   "place": "Brook Farm. Refuses the good chair.",
+   "quote": "Forty years I've grown wheat on the wall's bones. You can't put that in a silo. It won't go.",
+   "voice": "Biblical cadence. Gets quieter as he gets more certain. Calls the wheat “she”.",
+   "wants": "Somebody young to say the Red is worth it, so he doesn't have to be the only one.",
+   "hides": "He knows the farm needs the contract.",
+   "story": [
+    "He brought the Old Wall Red back from one forgotten sack of an old wheat, and sowed it on the rubble line where the east wall stood, in soil full of mortar that drains like nothing else in the valley. The grain is hard and old-fashioned and awkward in a roller mill, and it makes bread you remember three days after eating it."
+   ],
+   "ties": [["suvi", "family", "daughter; proud of her, fighting her"], ["oda", "trade", "his miller"]]},
+
+  {"id": "vera", "name": "Vera", "status": "new", "age": 66, "color": "#8a4f86",
+   "career": "Retired school cook; judge of the Town Fair", "career_id": "school_cook (retired)",
+   "place": "The flat above the Stone Oven. Her armchair faces the flue, because the warmth comes up.",
+   "quote": "I've eaten this town's bread for sixty years. I know what it was before it was clever.",
+   "voice": "Tart, theatrical, precise. Hands down verdicts like a judge who has seen everything and acquitted almost nothing.",
+   "wants": "To taste the Town Oven's bread once more before she forgets it.",
+   "hides": "She feeds half the street's cats, and she is afraid her tasting memory is going.",
+   "story": [
+    "Cooked for the school for thirty-nine years, so half the town grew up on her dinners and still stands straighter when she looks at them. At eight years old she queued at the Town Oven by the fountain with the family's brass token in her mitten, the winter before it closed. She is the last person who can say from memory what that bread was like.",
+    "Her verdict at the fair is short, and the town quotes it until the next one."
+   ],
+   "ties": [["noor", "friend", "her landlady, more or less"], ["jai", "friend", "argues with him about what belongs in a drawer"], ["eli", "work", "he provides the stage; she commands it"]]},
+
+  {"id": "mei", "name": "Mei", "status": "live", "resident": "r0504", "age": 27, "color": "#c0543c",
+   "career": "Café hand at the Tram Café", "career_id": "cafe",
+   "place": "The Tram Café, Market Square.",
+   "quote": "Only when the tram's in! You'll get used to it.",
+   "voice": "Already in the game: the player's first friend. Warm, quick, tells everyone everything, which makes her the town's switchboard.",
+   "wants": "To ride the tram to the end of the line, once, with somebody who asks where she would like to go.",
+   "hides": "Everybody tells Mei things. Nobody asks her anything. And old Bram has offered her the café's lease, and she has told nobody.",
+   "story": ["Your neighbour from New in town. The Tram Café takes the Stone Oven's biggest standing order, so she and Noor trade in nods going back years. If you gave her the bread, she vouches for you at the bakery door, and later she is one of the two buyers who can save the Old Wall Red.",
+    "Added for the courting line: Mei has sold coffee to the whole tram line for five years and never ridden it past Market Square. She grew up in a flat with three cousins and a wall thin enough to hear the timetable through, and watched her mother marry on love and a Tuesday wage. She can be courted once you are on the morning round and her regard reaches 25. What wins her is being asked a question and listened to."],
+   "ties": [["noor", "trade", "twelve loaves before the first tram"]]},
+
+  {"id": "abe", "name": "Abe", "status": "live", "resident": "r0518", "color": "#c07f1f",
+   "career": "Courier", "career_id": "courier",
+   "place": "Everywhere. Ask him, he'll tell you.",
+   "quote": "Three rounds and one pair of legs.",
+   "voice": "Already in the game: gave you your first round. Cheerful, and discreet to a fault, which is the plot point.",
+   "story": ["Has carried one seeded loaf from the Stone Oven to Eastgate Mall every Saturday for six years, paid in cash by a man he is too professional to name. It is the only delivery he has never been late for. If you have worked his rounds since Errand runner, you can work out for yourself where that loaf goes."],
+   "ties": [["tam", "secret", "the Saturday loaf"], ["noor", "trade", "her deliveries; she doesn't ask"]]},
+
+  {"id": "jai", "name": "Jai", "status": "live", "resident": "r1714", "color": "#5560a8",
+   "career": "Keeper at the Old Town Museum", "career_id": "curator",
+   "place": "Old Town Museum, by Market Square.",
+   "quote": "Worth more than this building's roof. Please, it's ours.",
+   "voice": "Already in the game: the rare book. Earnest and rule-bound; melts for anyone who cares about an object's story. Paperwork is how he loves things.",
+   "story": ["Keeps the brass bread tokens, a bakery crock given in grief, and a stone-dresser's tools he accepted from a widow because refusing felt cruel. The baker's career keeps asking him to choose between the paperwork and the point of it. If you kept his rare book in Errand runner, he has not forgotten, and the museum doors are heavier for you."],
+   "ties": [["noor", "quest", "holds her mother's crock, OT-112"], ["oda", "quest", "holds Marek's tools"], ["vera", "friend", "his best and worst visitor"]]},
+
+  {"id": "olu", "name": "Olu", "status": "live", "resident": "r0408", "color": "#3e7d4f",
+   "career": "Shopkeeper at Market Grocer", "career_id": "shopkeeper",
+   "place": "Market Grocer, behind the square.",
+   "quote": "If you find out, tell me first. I've got a bet on with the baker.",
+   "voice": "Already in the game: the night gardener. Loves news the way other people love money.",
+   "story": ["Shopkeepers in the slice already joke about having a bet on with the baker. This career gives Olu a real one: nine years ago he bet Noor a sweet roll she couldn't go a year without a day off. It has rolled over, unpaid, ever since."],
+   "ties": [["noor", "trade", "six loaves for the shelf"]]},
+
+  {"id": "eli", "name": "Eli", "status": "live", "resident": "r0497", "color": "#5c6670",
+   "career": "Clerk and market seller; runs the Town Fair", "career_id": "clerk",
+   "place": "Market Square, most days.",
+   "quote": "Buy cheap, sell dear, and the market crowd does the rest.",
+   "voice": "Already in the game: taught you the stall. Organises things nobody asked him to organise, and does it well.",
+   "story": ["Runs the fair with a clipboard and a rope line, both brought from home. He guards the bake-off's rules mostly so that Vera has something official to overrule."],
+   "ties": [["vera", "work", "judge and clerk of the fair"]]},
+
+  {"id": "hari", "name": "Hari", "status": "live", "resident": "r0410", "color": "#5e8c50",
+   "career": "Gardener at the Tram Court garden", "career_id": "gardener",
+   "place": "Tram Court garden; after dark, ask the fountain.",
+   "quote": "The council cut the flower money this year, so... I plant them at night.",
+   "voice": "Already in the game: the night gardener himself. Shy, generous, happiest mid-sentence about soil.",
+   "story": ["Grows rosemary along the garden's south bed. If you kept his secret or helped him plant, he brings a bundle to the fair for your loaf. If you told Olu, he doesn't."],
+   "ties": [["noor", "trade", "rosemary, which he gives to almost nobody else"]]}
+ ],
+ "map": {
+  "noor": [450, 320], "tam": [730, 220], "pip": [480, 490], "vera": [290, 170], "oda": [180, 350],
+  "suvi": [90, 520], "len": [260, 540], "mei": [710, 440], "abe": [840, 340], "jai": [560, 90],
+  "olu": [640, 580], "eli": [110, 90], "hari": [350, 600]
+ },
+ "edge_labels": {
+  "noor|tam": "estranged siblings", "noor|pip": "apprentice", "noor|oda": "miller and baker", "noor|vera": "upstairs tenant",
+  "jai|noor": "her mother's crock", "jai|oda": "Marek's tools", "jai|vera": "the token drawer", "abe|tam": "the Saturday loaf",
+  "pip|tam": "a job offer", "len|suvi": "father and daughter", "eli|vera": "clerk and judge"
+ }
+}

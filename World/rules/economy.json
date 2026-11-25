@@ -50,7 +50,16 @@
   "sandwich": { "name": "Sandwich",            "price": 450,  "sell": false },
   "parcel":   { "name": "Parcel",              "price": 0,    "sell": false, "quest": true },
   "trowel":   { "name": "Trowel marked \"H.\"", "price": 0,   "sell": false, "quest": true },
-  "rare_book":{ "name": "Rare first edition",  "price": 6000, "sell": true, "quest": true }
+  "rare_book":{ "name": "Rare first edition",  "price": 6000, "sell": true, "quest": true },
+  "breakfast_loaf":    { "name": "Breakfast loaf",          "price": 0, "sell": false, "quest": true },
+  "side_door_key":     { "name": "Side-door key",           "price": 0, "sell": false, "quest": true },
+  "form_d7":           { "name": "Form D-7",                "price": 0, "sell": false, "quest": true },
+  "old_crock":         { "name": "The Stone Oven crock",    "price": 0, "sell": false, "quest": true },
+  "rye_flour":         { "name": "Stone-ground rye",        "price": 0, "sell": false, "quest": true },
+  "mother_cutting":    { "name": "Jar of the Mother",       "price": 0, "sell": false, "quest": true },
+  "proofing_room_key": { "name": "Proofing-room key",       "price": 0, "sell": false, "quest": true },
+  "marek_tools":       { "name": "Marek's dressing tools",  "price": 0, "sell": false, "quest": true },
+  "fair_token":        { "name": "Fair token forty-one",    "price": 0, "sell": false, "quest": true }
  },
  "shops": {
   "grocer": { "name": "Grocer", "match": { "kind": "shop", "name_has": "Grocer" }, "sells": ["bread", "apples", "milk", "cheese", "jam", "flowers", "seeds"], "buys": ["bread", "apples", "milk", "cheese", "jam", "flowers", "seeds"], "till": 40000 },

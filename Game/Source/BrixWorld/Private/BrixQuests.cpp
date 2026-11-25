@@ -25,6 +25,8 @@ namespace
 			FBrixDialogue::FNode& Node = Out.Add(FString(K.Key.ToView()));
 			Node.Say = Str(Nd, TEXT("say"));
 			if (Nd->HasField(TEXT("mood"))) Node.Mood = Str(Nd, TEXT("mood"));
+			Node.Who = Str(Nd, TEXT("who"));   // another resident, or "scene" (QST-012)
+			Node.Dir = Str(Nd, TEXT("dir"));
 			for (const auto& Ov : Nd->GetArrayField(TEXT("options")))
 			{
 				const TSharedPtr<FJsonObject> Op = Ov->AsObject();
@@ -39,6 +41,7 @@ namespace
 		return Out;
 	}
 	FString S(int32 V) { return FString::FromInt(V); }
+	void SortNames(TArray<FString>& A) { A.Sort([](const FString& X, const FString& Y) { return X.Compare(Y, ESearchCase::CaseSensitive) < 0; }); }   // as Python sorts them
 	bool InWindow(double M, double A, double B) { return A <= B ? A <= M && M < B : M >= A || M < B; }
 }
 
@@ -58,17 +61,22 @@ bool LoadBrixQuests(const TSharedPtr<FJsonObject>& J, FBrixQuestRules& Out, TArr
 		L.Title = Str(O, TEXT("title")); L.Summary = Str(O, TEXT("summary")); L.Giver = Str(O, TEXT("giver")); L.Start = Str(O, TEXT("start"));
 		O->TryGetBoolField(TEXT("starter"), L.bStarter);
 		L.Needs = Strs(O, TEXT("needs"));
+		L.Need = Strs(O, TEXT("need"));
+		L.Line = Str(O, TEXT("line")); L.Rank = Str(O, TEXT("rank"));
 		for (const auto& Sk : O->GetObjectField(TEXT("stages"))->Values)
 		{
 			const TSharedPtr<FJsonObject> So = Sk.Value->AsObject();
 			FBrixQuestStage& St = L.Stages.Add(FString(Sk.Key.ToView()));
 			St.Log = Str(So, TEXT("log")); St.Start = Str(So, TEXT("start")); St.Then = Str(So, TEXT("then"));
 			St.Nodes = Nodes(So, L.Id);
+			const TArray<TSharedPtr<FJsonValue>>* Alts = nullptr;
+			if (So->TryGetArrayField(TEXT("starts"), Alts))
+				for (const auto& Av : *Alts) { const TSharedPtr<FJsonObject> Ao = Av->AsObject(); St.Starts.Add({ Strs(Ao, TEXT("need")), Str(Ao, TEXT("node")) }); }
 			const TSharedPtr<FJsonObject>* Od = nullptr;
 			if (So->TryGetObjectField(TEXT("on_done"), Od)) { St.OnDoneGive = Strs(*Od, TEXT("give")); St.OnDoneTake = Strs(*Od, TEXT("take")); }
 			const TSharedPtr<FJsonObject> G = So->GetObjectField(TEXT("goal"));
 			FBrixGoal& Gl = St.Goal;
-			for (const TCHAR* Kind : { TEXT("go"), TEXT("near"), TEXT("have"), TEXT("bank"), TEXT("money"), TEXT("stall"), TEXT("stall_sold"), TEXT("talk") })
+			for (const TCHAR* Kind : { TEXT("go"), TEXT("near"), TEXT("have"), TEXT("bank"), TEXT("money"), TEXT("stall"), TEXT("stall_sold"), TEXT("home"), TEXT("talk") })
 				if (G->HasField(Kind)) { Gl.Kind = Kind; break; }   // goal_met()'s order
 			if (Gl.Kind == TEXT("near")) { const auto& A = G->GetArrayField(TEXT("near")); Gl.Near = FVector2D(A[0]->AsNumber(), A[1]->AsNumber()); Gl.R = Num(G, TEXT("r")); }
 			else if (Gl.Kind == TEXT("money") || Gl.Kind == TEXT("stall_sold")) Gl.Number = Num(G, *Gl.Kind);
@@ -84,10 +92,15 @@ bool LoadBrixQuests(const TSharedPtr<FJsonObject>& J, FBrixQuestRules& Out, TArr
 			En.Give = Strs(Eo, TEXT("give")); En.Take = Strs(Eo, TEXT("take"));
 			const TSharedPtr<FJsonObject>* R = nullptr;
 			if (Eo->TryGetObjectField(TEXT("rep"), R)) for (const auto& Rv : (*R)->Values) En.Rep.Add({ FString(Rv.Key.ToView()), (int32)Rv.Value->AsNumber() });
+			En.Flags = Strs(Eo, TEXT("flags"));
+			Eo->TryGetBoolField(TEXT("retake"), En.bRetake);
 		}
 		const TSharedPtr<FJsonObject>* Of = nullptr;
 		if (O->TryGetObjectField(TEXT("offer"), Of)) { L.OfferLine = Str(*Of, TEXT("line")); L.OfferStart = Str(*Of, TEXT("start")); L.OfferNodes = Nodes(*Of, L.Id); }
 	}
+	const TArray<TSharedPtr<FJsonValue>>* Ex = nullptr;
+	if (Q->TryGetArrayField(TEXT("exclusive"), Ex))
+		for (const auto& Gv : *Ex) { TArray<FString>& G = Out.Exclusive.AddDefaulted_GetRef(); for (const auto& Fv : Gv->AsArray()) G.Add(Fv->AsString()); }
 	const TSharedPtr<FJsonObject> Jb = Q->GetObjectField(TEXT("jobs"));
 	Out.MinRep = (int32)Num(Jb, TEXT("min_rep"), -20);
 	for (const auto& K : Jb->GetObjectField(TEXT("kinds"))->Values)
@@ -112,6 +125,12 @@ bool LoadBrixQuests(const TSharedPtr<FJsonObject>& J, FBrixQuestRules& Out, TArr
 	for (const FBrixQuestLine& L : Out.Quests)
 	{
 		if (!L.Stages.Contains(L.Start)) { OutError = L.Id + TEXT(" starts at a stage it does not have"); return false; }
+		if (L.Opens() && L.Stages[L.Start].Goal.Value != L.Giver) { OutError = L.Id + TEXT(": a line with no offer starts with a talk with its giver"); return false; }
+		for (const auto& St : L.Stages)
+		{
+			for (const FBrixQuestStage::FStartAlt& A : St.Value.Starts) if (!St.Value.Nodes.Contains(A.Node)) { OutError = L.Id + TEXT(": no first line ") + A.Node; return false; }
+			if (St.Value.Nodes.Num() && !St.Value.Nodes.Contains(St.Value.Start)) { OutError = L.Id + TEXT(": no first line ") + St.Value.Start; return false; }
+		}
 		for (const auto& St : L.Stages)
 			if (!St.Value.Then.IsEmpty() && !St.Value.Then.StartsWith(TEXT("end:")) && !L.Stages.Contains(St.Value.Then.Mid(6))) { OutError = L.Id + TEXT(": no stage ") + St.Value.Then; return false; }
 	}
@@ -173,7 +192,24 @@ bool FBrixQuests::Start(const FString& Qid)
 {
 	const FBrixQuestLine* L = Q.Find(Qid);
 	if (!L) return No(TEXT("no such quest"));
-	if (ActiveOf(Qid) || DoneWith(Qid)) return No(TEXT("already taken"));
+	const bool bDone = DoneWith(Qid) != nullptr;
+	if (ActiveOf(Qid) || (bDone && !Retakes(Qid))) return No(TEXT("already taken"));
+	if (bDone)   // taken again: it starts clean (QST-013)
+	{
+		Again.AddUnique(Qid);
+		for (const auto& St : L->Stages)
+			for (const auto& Nd : St.Value.Nodes)
+				for (const FBrixDialogue::FOption& O : Nd.Value.Options)
+					for (const FString& A : O.Act)
+					{
+						FString K, V;
+						if (!A.Split(TEXT(":"), &K, &V)) continue;
+						if (K == TEXT("flag")) Flags.Remove(V);
+						else if (K == TEXT("give")) { const int32 N = E.Inv.FindRef(V); if (N > 0) E.TakeItem(V, N); }
+					}
+		if (const TMap<FString, int32>* Gave = Awarded.Find(Qid)) for (const auto& G : *Gave) RepAdd(G.Key, -G.Value);
+	}
+	Awarded.Add(Qid, TMap<FString, int32>());
 	Active.Add({ Qid, FActive() });
 	Note(TEXT("Started: ") + L->Title);
 	return Goto(Qid, TEXT("stage:") + L->Start);
@@ -204,10 +240,10 @@ TArray<FString> FBrixQuests::Offers(const FString& Rid) const
 	TArray<FString> Out;
 	for (const FBrixQuestLine& L : Q.Quests)
 	{
-		if (L.Giver != Rid || L.Giver.IsEmpty() || ActiveOf(L.Id) || DoneWith(L.Id)) continue;
+		if (L.Giver != Rid || L.Giver.IsEmpty() || ActiveOf(L.Id) || (DoneWith(L.Id) && !Retakes(L.Id))) continue;
 		bool bOk = true;
 		for (const FString& N : L.Needs) bOk &= Met(N);
-		if (bOk) Out.Add(L.Id);
+		if (bOk && NeedOk(L.Need)) Out.Add(L.Id);
 	}
 	return Out;
 }
@@ -227,14 +263,66 @@ bool FBrixQuests::NeedOk(const TArray<FString>& Need) const
 		if (bNeg) X.RightChopInline(1);
 		FString K, V;
 		X.Split(TEXT(":"), &K, &V);
-		const bool bOk = K == TEXT("have") ? E.Inv.FindRef(V) > 0 : E.TotalMoney() >= FCString::Atoi64(*V);
+		bool bOk = false;
+		if (K == TEXT("have")) bOk = E.Inv.FindRef(V) > 0;
+		else if (K == TEXT("money")) bOk = E.TotalMoney() >= FCString::Atoi64(*V);
+		else if (K == TEXT("flag")) bOk = Flags.Contains(V);   // QST-010
+		else if (K == TEXT("rep")) { FString Who, N; V.Split(TEXT(":"), &Who, &N); bOk = Rep(Who) >= FCString::Atoi(*N); }
+		else if (K == TEXT("done"))
+		{
+			FString Qn, Ends;
+			V.Split(TEXT(":"), &Qn, &Ends);
+			TArray<FString> Any;
+			Ends.ParseIntoArray(Any, TEXT("|"));
+			const FString* D = DoneWith(Qn);
+			bOk = D && (Ends == TEXT("*") || Any.Contains(*D));
+		}
+		else if (K == TEXT("home")) bOk = OwnsHome && OwnsHome();
+		else if (K == TEXT("again")) bOk = Again.Contains(V);
 		if (bOk == bNeg) return false;
 	}
 	return true;
 }
 
+bool FBrixQuests::Retakes(const FString& Qid) const
+{
+	const FString* D = DoneWith(Qid);
+	const FBrixQuestLine* L = D ? Q.Find(Qid) : nullptr;
+	const FBrixQuestEnding* En = L ? L->Endings.Find(*D) : nullptr;
+	return En && En->bRetake;
+}
+
+TArray<FString> FBrixQuests::Scenes(const FCtx& C) const
+{
+	TArray<FString> Out;
+	for (const auto& A : Active) { const FBrixQuestStage* St = Stage(A.Key); if (St && St->Nodes.Num() && St->Goal.Kind != TEXT("talk") && GoalMet(A.Key, C)) Out.Add(A.Key); }
+	return Out;
+}
+
+FString FBrixQuests::FirstLine(const FString& Qid) const
+{
+	const FBrixQuestStage* St = Stage(Qid);
+	if (!St) return FString();
+	for (const FBrixQuestStage::FStartAlt& A : St->Starts) if (NeedOk(A.Need)) return A.Node;
+	return St->Start;
+}
+
+TArray<int32> FBrixQuests::Replies(const FString& Qid, const FString& Nid) const
+{
+	TArray<int32> Out;
+	const FBrixQuestStage* St = Stage(Qid);
+	const FBrixDialogue::FNode* N = St ? St->Nodes.Find(Nid) : nullptr;
+	if (N) for (int32 k = 0; k < N->Options.Num(); ++k) if (NeedOk(N->Options[k].Need)) Out.Add(k);
+	return Out;
+}
+
 bool FBrixQuests::Act(const FString& Qid, const TArray<FString>& Acts, const FString& Rid)
 {
+	int64 Cost = 0;   // refused whole if it costs more than is held
+	for (const FString& A : Acts) if (A.StartsWith(TEXT("charge:"))) Cost += FCString::Atoi64(*A.Mid(7));
+	if (Cost && E.L.Balance(TEXT("p:cash")) + E.L.Balance(TEXT("p:current")) < Cost) return No(TEXT("not enough money"));
+	const FBrixQuestLine* L = Q.Find(Qid);
+	const FString Title = L ? L->Title : FString();
 	for (const FString& A : Acts)
 	{
 		FString K, V;
@@ -244,7 +332,19 @@ bool FBrixQuests::Act(const FString& Qid, const TArray<FString>& Acts, const FSt
 		else if (K == TEXT("stage") || K == TEXT("end")) bOk = Goto(Qid, A);
 		else if (K == TEXT("give")) bOk = E.GiveItem(V);
 		else if (K == TEXT("take")) bOk = E.TakeItem(V);
-		else if (K == TEXT("rep")) RepAdd(Rid, FCString::Atoi(*V));
+		else if (K == TEXT("rep"))   // with the one spoken to, or with somebody named
+		{
+			FString Who = Rid, N = V;
+			int32 Colon = INDEX_NONE;
+			if (V.FindLastChar(TEXT(':'), Colon)) { Who = V.Left(Colon); N = V.Mid(Colon + 1); }
+			const int32 Amount = FCString::Atoi(*N);
+			RepAdd(Who, Amount);
+			Awarded.FindOrAdd(Qid).FindOrAdd(Who) += Amount;
+		}
+		else if (K == TEXT("flag")) { if (!Flags.Contains(V)) { Flags.Add(V); SortNames(Flags); } }
+		else if (K == TEXT("unflag")) Flags.Remove(V);
+		else if (K == TEXT("pay")) { const int64 N = FCString::Atoi64(*V); E.L.Post(E.Day, E.Minute, TEXT("Reward: ") + Title, { { TEXT("sys:rewards"), -N }, { TEXT("p:cash"), N } }, Why); }   // QST-004
+		else if (K == TEXT("charge")) bOk = E.Spend(FCString::Atoi64(*V), TEXT("sys:residents"), Title);
 		if (!bOk) return false;   // refused: the acts after it are not done (the slice's throw)
 	}
 	return true;
@@ -260,8 +360,12 @@ bool FBrixQuests::End(const FString& Qid, const FString& Eid)
 	for (const FString& It : En->Give) E.GiveItem(It);
 	for (const FString& It : En->Take) if (E.Inv.FindRef(It)) E.TakeItem(It);
 	for (const auto& R : En->Rep) RepAdd(R.Key, R.Value);
+	for (const FString& F : En->Flags) Flags.AddUnique(F);
+	SortNames(Flags);
 	Active.RemoveAll([&](const TPair<FString, FActive>& A) { return A.Key == Qid; });
-	Done.Add({ Qid, Eid });
+	bool bWas = false;   // taken again: its ending changes where it stands
+	for (auto& D : Done) if (D.Key == Qid) { D.Value = Eid; bWas = true; }
+	if (!bWas) Done.Add({ Qid, Eid });
 	Note(TEXT("Finished: ") + L->Title + TEXT(". ") + En->Log);
 	return true;
 }
@@ -279,6 +383,7 @@ bool FBrixQuests::GoalMet(const FString& Qid, const FCtx& C) const
 	if (G.Kind == TEXT("money")) return E.TotalMoney() >= (int64)G.Number;
 	if (G.Kind == TEXT("stall")) return E.Stall.IsSet();
 	if (G.Kind == TEXT("stall_sold")) return E.StallSoldTotal - A->Since >= (int32)G.Number;
+	if (G.Kind == TEXT("home")) return OwnsHome && OwnsHome();
 	return false;
 }
 
@@ -293,7 +398,7 @@ void FBrixQuests::Check(const FCtx& C)
 		for (const FString& Qid : Ids)
 		{
 			const FBrixQuestStage* St = Stage(Qid);
-			if (!St || St->Goal.Kind == TEXT("talk") || !GoalMet(Qid, C)) continue;
+			if (!St || St->Goal.Kind == TEXT("talk") || St->Nodes.Num() || !GoalMet(Qid, C)) continue;   // talks and scenes move on by what is said
 			for (const FString& It : St->OnDoneGive) E.GiveItem(It);
 			for (const FString& It : St->OnDoneTake) E.TakeItem(It);
 			Goto(Qid, St->Then);

@@ -833,6 +833,297 @@ class TheAchievements(unittest.TestCase):
         self.assertEqual(len([i for w_ in s["want"] for i in w_]), len(self.A["list"]))  # each exactly once
 
 
+STORY = W["quests"]["quests"]
+BAKER = [k for k, v in STORY.items() if v.get("line") == "baker"]              # the career's lines, in order
+COURTING = [k for k, v in STORY.items() if v.get("line") == "romance"]
+CAST = W["story_cast"]["cast"]
+
+
+def savings(e, n):
+    """Stand-in for money earned: n chips into the player's cash, through the ledger."""
+    e.L.post(e.day, e.minute, "Earned", [("sys:residents", -n), ("p:cash", n)])
+
+
+def story_play(t, rng, e, q, qid, home):
+    """One play of a story line through the rules, a random open reply each time. Returns its ending."""
+    q.start(qid)
+    for _ in range(600):
+        if qid not in q.active:
+            return q.done[qid]
+        st, sid = q.stage(qid), q.active[qid]["stage"]
+        g = st["goal"]
+        ctx = dict(lot=g.get("go"), pos=tuple(g["near"]) if "near" in g else None, minute=g.get("from", e.minute))
+        if "nodes" not in st:                               # be there, own the home, have the money
+            if "home" in g:
+                home[0] = True
+            if "money" in g and e.total_money() < g["money"]:
+                savings(e, g["money"] - e.total_money())
+            q.check(ctx)
+            t.assertNotEqual(q.active.get(qid, {}).get("stage"), sid, (qid, sid))
+            continue
+        rid = g.get("talk")
+        t.assertIn(qid, q.talking_to(rid) if rid else q.scenes(ctx), (qid, sid))
+        nid = q.first_line(qid)
+        for _ in range(200):
+            nd = st["nodes"][nid]
+            open_ = q.replies(qid, nid)
+            t.assertTrue(open_, "%s.%s.%s: no reply is open (%s)" % (qid, sid, nid, q.flags))
+            going = [n for n in open_ if nd["options"][n]["next"] or any(a.startswith(("stage:", "end:")) for a in nd["options"][n].get("act", []))]
+            o = nd["options"][rng.choice(going or open_)]   # prefer replies that go somewhere: a player does not dither at the door
+            q.act(qid, o.get("act", []), rid)
+            if o["next"] is None or any(a.startswith(("stage:", "end:")) for a in o.get("act", [])):
+                break
+            nid = o["next"]
+    t.fail("%s: a play-through never finished" % qid)
+
+
+def story_attempt(t, rng, e, q, qid, home, reached):
+    """Takes a line as the game would, and again while it ends in a way that lets it be taken again. Returns the last ending."""
+    Q = STORY[qid]
+    for n in range(8):
+        if n and qid == "question_mei":                      # between two askings some players go and get the house or the savings
+            if rng.random() < 0.5:
+                home[0] = True
+            if rng.random() < 0.5:
+                savings(e, 15000)
+        for x in Q.get("need", []):                          # stand-in for shifts, rounds and gifts: the regard the line asks for
+            if x.startswith("rep:"):
+                _, who, lvl = x.split(":")
+                e.rep[who] = max(e.rep.get(who, 0), int(lvl))
+        if qid not in q.offers(Q["giver"]):
+            return None
+        end = story_play(t, rng, e, q, qid, home)
+        reached.setdefault(qid, set()).add(end)
+        for group in W["quests"]["exclusive"]:
+            both = [f for f in group if f in q.flags]
+            t.assertLessEqual(len(both), 1, "%s, ending %s: %s are all true" % (qid, end, both))
+        if not Q["endings"][end].get("retake"):
+            return end
+    return None
+
+
+def story_player(rng):
+    """A player with the starter lines behind them, each ended one of its ways."""
+    e, q = player()
+    home = [False]
+    q.owns_home = lambda: home[0]
+    q.done["new_in_town"] = rng.choice(list(STORY["new_in_town"]["endings"]))
+    del q.active["new_in_town"]
+    if rng.random() < 0.8:
+        q.done["errand_runner"] = rng.choice(list(STORY["errand_runner"]["endings"]))
+        if rng.random() < 0.7:
+            q.done["own_stall"] = rng.choice(list(STORY["own_stall"]["endings"]))
+    if rng.random() < 0.7:
+        q.done["night_gardener"] = rng.choice(list(STORY["night_gardener"]["endings"]))
+    return e, q, home
+
+
+def story_court(t, rng, e, q, home, reached):
+    for qid in COURTING:
+        if qid == "question_mei":                            # some players have the house, the savings or both before they ask
+            roll = rng.random()
+            if roll < 0.4:
+                home[0] = True
+            if 0.25 < roll < 0.6:
+                savings(e, 15000)
+        if story_attempt(t, rng, e, q, qid, home, reached) is None:
+            return
+
+
+class TheStory(unittest.TestCase):
+    def test_QST_010_the_game_data_is_what_the_approved_writing_gives(self):
+        import story
+        self.assertTrue(story.up_to_date(), "run python story.py in Tools/citysim")
+        self.assertEqual(len(BAKER), 5)
+        self.assertEqual(len(COURTING), 4)
+
+    def test_QST_010_what_the_player_did_is_remembered_and_asked_about(self):
+        e, q = player()
+        q.done["new_in_town"] = "gift"
+        del q.active["new_in_town"]
+        noor, qid = CAST["noor"], "four_oclock_door"
+        q.start(qid)
+        q.act(qid, ["flag:noticed_hands", "flag:counted_first", "stage:verdict"], noor)
+        self.assertEqual(q.flags, ["counted_first", "noticed_hands"])
+        v1 = STORY[qid]["stages"]["verdict"]["nodes"]["v1"]["options"]
+        open_ = [v1[n].get("need") for n in q.replies(qid, "v1")]
+        self.assertEqual(open_, [["flag:counted_first"]])   # only the reply for what was done, and none of the others
+        q.act(qid, ["unflag:noticed_hands"], noor)
+        self.assertIn(["!flag:noticed_hands"], [v1[n].get("need") for n in q.replies(qid, "v1")])
+        q.act(qid, ["end:hired_wary"], noor)                 # an ending leaves facts behind too
+        self.assertIn("noor_wary", q.flags)
+        for need, want in (("done:four_oclock_door:hired_clean|hired_wary", True), ("done:four_oclock_door:turned_away", False), ("done:four_oclock_door:*", True),
+                           ("!done:market_day:*", True), ("rep:%s:1" % noor, True), ("rep:%s:99" % noor, False), ("home:owned", False), ("!home:owned", True),
+                           ("have:side_door_key", True), ("!money:999999", True), ("again:four_oclock_door", False)):
+            self.assertEqual(q.need_ok([need]), want, need)
+        blob = json.loads(json.dumps(q.save()))              # QST-008: the facts are part of the save
+        e2 = town()
+        q2 = qs.Quests(W["quests"], e2, RESIDENTS, LOTS)
+        q2.load(blob)
+        self.assertEqual((q2.flags, q2.again, q2.awarded), (q.flags, q.again, q.awarded))
+
+    def test_QST_010_broken_story_data_is_caught(self):
+        w = copy.deepcopy(W)
+        Q = w["quests"]["quests"]
+        S = Q["four_oclock_door"]["stages"]
+        S["verdict"]["nodes"]["v1"]["options"][0]["need"] = ["flag:never_set_anywhere"]
+        S["card"]["nodes"]["n1"]["who"] = "r9999"
+        S["count"]["nodes"]["c1"]["options"][4]["need"] = []
+        del S["verdict"]["nodes"]["v1"]["covered"]
+        S["card"]["starts"][0]["node"] = "nowhere"
+        S["count"]["nodes"]["c1"]["options"][1]["act"].append("rep:5")
+        S["morning"]["nodes"][S["morning"]["start"]]["options"][0]["need"] = ["rep:nobody:5"]
+        Q["lunch_mei"]["need"].append("done:four_oclock_door:no_such_ending")
+        w["quests"]["exclusive"].append(["made_up_fact"])
+        p = world.quest_problems(w)
+        for bit in ("never_set_anywhere", "no resident r9999", "must need that money", "verdict.v1: every reply has a condition", "nowhere", "rep:nobody:5",
+                    "no_such_ending", "made_up_fact", "nobody is spoken to in a scene"):
+            self.assertTrue(any(bit in x for x in p), bit)
+
+    def test_QST_011_a_story_line_opens_by_talking_to_its_giver_and_its_first_line_depends(self):
+        e, q = player()
+        noor, mei = CAST["noor"], CAST["mei"]
+        self.assertEqual(q.offers(noor), [])                 # not before the first starter line is done
+        q.done["new_in_town"] = "thanks"
+        del q.active["new_in_town"]
+        self.assertEqual(q.offers(noor), ["four_oclock_door"])
+        self.assertTrue(q.opens("four_oclock_door"))
+        self.assertFalse(q.opens("errand_runner"))           # a starter line still has its offer talk
+        q.start("four_oclock_door")
+        self.assertEqual(q.talking_to(noor), ["four_oclock_door"])
+        self.assertEqual(q.first_line("four_oclock_door"), "n1")
+        n1 = STORY["four_oclock_door"]["stages"]["card"]["nodes"]["n1"]["options"]
+        self.assertNotIn(["done:new_in_town:gift"], [n1[n].get("need") for n in q.replies("four_oclock_door", "n1")])   # Mei did not send this player
+        q.act("four_oclock_door", ["end:hired_clean"], noor)
+        self.assertEqual(q.offers(noor), ["feeding_the_mother"])
+        self.assertEqual(q.offers(mei), [])                  # QST-015: lunch needs her regard as well
+        e.rep[mei] = 25
+        self.assertEqual(q.offers(mei), ["lunch_mei"])
+        q.flags.append("end_crumb")                          # a player who went to the mall is met with another first line
+        q.start("lunch_mei")
+        self.assertEqual(q.first_line("lunch_mei"), "a1_gone")
+
+    def test_QST_012_scenes_play_at_their_place_and_several_people_speak(self):
+        e, q = player()
+        q.done["new_in_town"] = "gift"
+        del q.active["new_in_town"]
+        qid = "four_oclock_door"
+        q.start(qid)
+        q.act(qid, ["stage:dawn"], CAST["noor"])
+        g = STORY[qid]["stages"]["dawn"]["goal"]
+        q.check(dict(lot=None, pos=tuple(g["near"]), minute=g["to"] + 60))
+        self.assertEqual(q.active[qid]["stage"], "dawn")     # the side door, but not at that hour
+        q.check(dict(lot=None, pos=tuple(g["near"]), minute=g["from"] + 5))
+        self.assertEqual(q.active[qid]["stage"], "morning")
+        q.act(qid, ["give:breakfast_loaf", "stage:count"], CAST["noor"])
+        there = dict(lot=STORY[qid]["stages"]["count"]["goal"]["go"], pos=None, minute=400)
+        self.assertEqual(q.scenes(dict(lot=None, pos=None, minute=400)), [])
+        self.assertEqual(q.scenes(there), [qid])
+        q.check(there)
+        self.assertEqual(q.active[qid]["stage"], "count")    # being there does not move it on: the player chooses
+        self.assertEqual(q.talking_to(CAST["noor"]), [])
+        c1 = STORY[qid]["stages"]["count"]["nodes"]["c1"]
+        self.assertEqual(c1["who"], "scene")
+        self.assertNotIn("mood", c1)
+        e.L.post(e.day, e.minute, "Spent", [("p:cash", -e.L.balance("p:cash")), ("sys:residents", e.L.balance("p:cash"))])
+        self.assertNotIn(4, q.replies(qid, "c1"))            # the mall's loaf costs money the player no longer has
+        with self.assertRaises(ec.Refused):
+            q.act(qid, ["charge:400", "flag:mall_loaf"], None)
+        self.assertNotIn("mall_loaf", q.flags)               # refused whole
+        q.act(qid, ["take:breakfast_loaf", "flag:gave_own_loaf", "stage:cafe"], None)
+        self.assertEqual(q.talking_to(CAST["mei"]), [qid])
+        speakers = {nd.get("who") for Q in STORY.values() for st in Q["stages"].values() for nd in st.get("nodes", {}).values()} - {None, "scene"}
+        self.assertGreaterEqual(len(speakers), 5)            # others join a talk: Pip, Vera, Len...
+        self.assertTrue(any(nd.get("dir") for Q in STORY.values() for st in Q["stages"].values() for nd in st.get("nodes", {}).values()))
+
+    def test_QST_013_a_line_that_ended_badly_can_be_taken_again_and_starts_clean(self):
+        e, q = player()
+        q.done["new_in_town"] = "gift"
+        del q.active["new_in_town"]
+        noor, pip, qid = CAST["noor"], CAST["pip"], "four_oclock_door"
+        q.start(qid)
+        q.act(qid, ["flag:pip_reported", "rep:%s:-10" % pip, "rep:4", "give:breakfast_loaf", "end:turned_away"], noor)
+        cost = STORY[qid]["endings"]["turned_away"]["rep"]
+        self.assertEqual((q.rep(pip), q.rep(noor)), (-10 + cost.get(pip, 0), 4 + cost.get(noor, 0)))
+        self.assertTrue(q.retakes(qid))
+        self.assertEqual(q.offers(noor), [qid])              # she will see you again
+        self.assertFalse(q.need_ok(["again:" + qid]))
+        q.start(qid)
+        self.assertTrue(q.need_ok(["again:" + qid]))
+        self.assertEqual(q.first_line(qid), "n_again")
+        self.assertNotIn("pip_reported", q.flags)            # what its replies left is cleared
+        self.assertNotIn("breakfast_loaf", e.inv)
+        self.assertEqual((q.rep(pip), q.rep(noor)), (cost.get(pip, 0), cost.get(noor, 0)))   # what its replies gave is taken back; what the ending cost stays
+        q.act(qid, ["end:hired_clean"], noor)
+        self.assertFalse(q.retakes(qid))
+        self.assertEqual(q.offers(noor), ["feeding_the_mother"])
+        with self.assertRaises(ec.Refused):
+            q.start(qid)
+
+    def test_QST_014_the_baker_career_plays_to_every_ending_and_QST_015_courting_to_a_wedding(self):
+        import random
+        rng = random.Random(20261125)
+        reached, weddings = {}, 0
+        for run in range(1500):
+            e, q, home = story_player(rng)
+            rewards = e.L.balance("sys:rewards")
+            court_after = rng.randrange(len(BAKER))          # courting can begin after any quest of the career
+            for n, qid in enumerate(BAKER):
+                if story_attempt(self, rng, e, q, qid, home, reached) is None:
+                    break
+                if n == court_after:
+                    story_court(self, rng, e, q, home, reached)
+            if q.done.get("question_mei") == "yes":          # QST-015: she says yes only to a home and 150 Bx put by
+                self.assertTrue(home[0])
+                weddings += "the_wedding" in q.done
+            if "the_wedding" in q.done:
+                self.assertEqual(q.done.get("question_mei"), "yes")
+            self.assertGreaterEqual(rewards, e.L.balance("sys:rewards"))
+            if run % 50 == 0:
+                invariant(self, e)                           # QST-004: every chip of it through the ledger
+        for qid in BAKER + COURTING:
+            self.assertEqual(reached.get(qid, set()), set(STORY[qid]["endings"]), qid)
+        self.assertGreater(weddings, 20)
+
+    def test_QST_010_the_recorded_play_for_unreal_is_a_whole_game(self):
+        e = town()
+        out = build_play.story_run(e, qs.Quests(W["quests"], e, RESIDENTS, LOTS), W, dict(grocer=GROCER, kiosk=KIOSK, arcade=ARCADE))
+        want = out["want"]
+        self.assertNotIn("refused", want["results"])
+        self.assertEqual(len(out["script"]), len(want["results"]))
+        self.assertTrue(want["again"])                       # a line taken again is in it (QST-013)
+        self.assertEqual(want["done"]["question_mei"], "yes")
+        self.assertIn("the_wedding", want["done"])           # QST-015
+        self.assertEqual(set(BAKER) - set(want["done"]), set())   # QST-014: the career to its last line
+        self.assertEqual(want["active"], {})
+        invariant(self, e)
+
+    def test_QST_015_the_question_needs_a_home_and_savings(self):
+        e, q = player()
+        mei, qid = CAST["mei"], "question_mei"
+        home = [False]
+        q.owns_home = lambda: home[0]
+        q.done.update(new_in_town="gift", four_oclock_door="hired_clean", lunch_mei="went_well", dinner_mei="the_field")
+        del q.active["new_in_town"]
+        e.rep[mei] = 74
+        self.assertEqual(q.offers(mei), [])
+        e.rep[mei] = 75
+        self.assertEqual(q.offers(mei), [qid])
+        q.start(qid)
+        self.assertEqual(q.first_line(qid), "q1")
+        q.act(qid, ["stage:home"], mei)
+        q.check(dict(lot=None, pos=None, minute=e.minute))
+        self.assertEqual(q.active[qid]["stage"], "home")     # no home yet
+        home[0] = True
+        q.check(dict(lot=None, pos=None, minute=e.minute))
+        self.assertEqual(q.active[qid]["stage"], "savings")  # a home, but not the 150 Bx
+        savings(e, STORY[qid]["stages"]["savings"]["goal"]["money"])
+        q.check(dict(lot=None, pos=None, minute=e.minute))
+        self.assertEqual(q.active[qid]["stage"], "door")
+        self.assertEqual(q.talking_to(mei), [qid])
+        self.assertEqual(STORY["the_wedding"]["need"], ["done:question_mei:yes"])
+
+
 class TheDesigner(unittest.TestCase):
     def test_CHR_013_designer_data_is_sound(self):
         self.assertEqual(world.designer_problems(W), [])

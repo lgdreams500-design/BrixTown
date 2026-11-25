@@ -1,0 +1,277 @@
+{
+ "id": "market_day", "group": "baker", "act": "IV", "title": "Market Day", "rank": "Baker",
+ "giver": "eli", "needs": ["done:stone_ground:*"],
+ "hook": "The Town Fair. Eli has had the Stone Oven's entry form filled in for weeks.",
+ "summary": "One loaf per bakery, on the table by nine, and Vera's verdict is final. Everything you did before is in the loaf: whether the Mother lived, what the flour is, whose favour is baked into it. Then the mall's proving van dies in the square with forty minutes to go, and the only hot oven in walking distance is yours.",
+ "theme": "Is winning the point, or is the bread?",
+ "start": "entry",
+ "stages": [
+  {"id": "entry", "title": "The entry form", "kind": "talk", "with": "eli",
+   "goal": "See Eli on Market Square about the bake-off",
+   "log": "Eli is running the Town Fair from a clipboard on Market Square. The Stone Oven enters every year. This year the form has your name on it.",
+   "start": "e1",
+   "nodes": {
+    "e1": {"who": "eli", "mood": "happy", "say": "The Stone Oven's entry! I had the form filled in before you got here. I have had it filled in for weeks.",
+     "options": [
+      {"text": "What are the rules?", "next": "e2"},
+      {"text": "Who's judging?", "next": "e3"}
+     ]},
+    "e2": {"who": "eli", "mood": "neutral", "say": "One loaf per bakery. On the table by nine. The judges' word is final. And no arguing with Vera. That last one isn't a rule. It's advice.",
+     "options": [{"text": "Who's judging, besides Vera?", "next": "e3"}]},
+    "e3": {"who": "eli", "mood": "thinking", "say": "Vera, as always. Jai from the museum, who brings the prize. And one name out of the hat: this year, Olu. The prize is a year's loan of an original Town Oven token. Brass. Number forty-one.",
+     "options": [{"text": "Who else has entered?", "next": "e4"}]},
+    "e4": {"who": "eli", "mood": "neutral", "say": "Northwood, Eastbrook, Southfield. And Crumb and Co. First time the mall has ever entered. He signed the form himself. Looked like a man signing for a parcel he wasn't sure he'd ordered.",
+     "options": [{"text": "The mall's entering.", "next": null, "act": ["stage:loaf"]}]}
+   }},
+
+  {"id": "loaf", "title": "One loaf", "kind": "talk", "with": "noor",
+   "goal": "Decide the fair loaf with Noor",
+   "log": "One loaf, and the whole town tastes it. Noor wants to see you at the bench.",
+   "start": "l1",
+   "nodes": {
+    "l1": {"who": "noor", "mood": "neutral", "dir": "She has both hands flat on the bench, and she is looking at them.", "say": "You're shaping the fair loaf. One loaf, and the whole town tastes it. What do we send?",
+     "options": [
+      {"text": "Why me? It's your bakery.", "next": "l_why", "need": ["!flag:asked_why_me"]},
+      {"text": "The plain wall loaf. Flour, water, salt, time.", "next": "l_wall", "act": ["flag:loaf_wall"]},
+      {"text": "The seeded Saturday loaf.", "next": "l_seeded", "need": ["!flag:noor_knows"], "act": ["flag:loaf_seeded"]},
+      {"text": "The seeded Saturday loaf.", "next": "l_seeded_known", "need": ["flag:noor_knows"], "act": ["flag:loaf_seeded"]},
+      {"text": "Rosemary. Hari handed a bundle over the garden wall.", "next": "l_rosemary", "need": ["done:night_gardener:kept|helped"], "act": ["flag:loaf_rosemary"]},
+      {"text": "Pip's six-strand plait. Let them see what these hands can do.", "next": "l_plait", "act": ["flag:loaf_plait"]}
+     ]},
+    "l_why": {"who": "noor", "mood": "neutral", "say": "Because a fair loaf is shaped in one go, and mine don't go in one go any more. That's all you're getting. Choose.",
+     "options": [{"text": "(Choose the loaf.)", "next": "l1", "act": ["flag:asked_why_me"]}]},
+    "l_wall": {"who": "noor", "mood": "happy", "say": "The Town Oven's loaf. The one Vera queued for. It's the hardest thing we make, because there is nowhere to stand behind it. Good.",
+     "options": [{"text": "(Shape it. Prove it. Carry it to the square.)", "next": null, "act": ["stage:fair"]}]},
+    "l_seeded": {"who": "noor", "mood": "neutral", "say": "The seeded. Sells itself every Saturday. Safe. I've nothing against safe. Safe pays the flour bill.",
+     "options": [{"text": "(Shape it. Prove it. Carry it to the square.)", "next": null, "act": ["stage:fair"]}]},
+    "l_seeded_known": {"who": "noor", "mood": "thinking", "say": "The Saturday loaf. His loaf. You'd put that on the table in front of him. Hm. Yes. Let him taste in public what he's been buying in secret.",
+     "options": [{"text": "(Shape it. Prove it. Carry it to the square.)", "next": null, "act": ["stage:fair"]}]},
+    "l_rosemary": {"who": "noor", "mood": "surprised", "say": "Hari's rosemary? He gives that to nobody. What did you do for him? No. Don't tell me. A loaf with a favour baked into it. Vera will like that, and she'll know.",
+     "options": [{"text": "(Shape it. Prove it. Carry it to the square.)", "next": null, "act": ["stage:fair"]}]},
+    "l_plait": {"who": "noor", "mood": "neutral", "say": "A plait. It will look like a wedding and taste as if the effort went into the looking. Pip will be thrilled. It's your loaf.",
+     "options": [{"text": "(Shape it. Prove it. Carry it to the square.)", "next": null, "act": ["stage:fair"]}]}
+   }},
+
+  {"id": "fair", "title": "Forty minutes", "kind": "talk", "with": "tam",
+   "goal": "Take the loaf to the fair on Market Square",
+   "log": "The Town Fair. Bunting on the arches, a rope line, a busker tuning up. Entries on the table by nine.",
+   "scene": "At the far end of the square stands a white van with CRUMB & CO on its side and its back doors open. No hum. A man in a clean apron is standing very still in front of a rack of slowly collapsing dough.",
+   "start": "a1",
+   "nodes": {
+    "a1": {"who": "tam", "mood": "sad", "say": "Generator's dead. The proving van's cold, the oven's cold, and my entry has forty minutes before it's a pancake. Tell me you've come to gloat. I'd respect a gloat.",
+     "options": [
+      {"text": "Use our oven. It's two hundred metres away and it's hot.", "next": "a_share"},
+      {"text": "Noor would say it herself. Use ours.", "next": "a_noor", "need": ["flag:noor_knows"]},
+      {"text": "The oven's hot. Twenty brix for forty minutes.", "next": "a_sell"},
+      {"text": "That's the fair. Everyone brings their own fire.", "next": "a_refuse"}
+     ]},
+    "a_share": {"who": "tam", "mood": "surprised", "say": "Her oven. You're offering me my sister's oven. Does she know you're giving away her fire?",
+     "options": [{"text": "It's a fair. Nobody should lose to a generator.", "next": "a_walk", "act": ["flag:oven_shared", "rep:tam:+15"]}]},
+    "a_noor": {"who": "tam", "mood": "surprised", "say": "She'd say that? Noor? “Use ours”? Say it again, slowly. I want to remember the wording.",
+     "options": [{"text": "“Use ours.” Two words. She'd count them.", "next": "a_walk", "act": ["flag:oven_shared", "rep:tam:+15"]}]},
+    "a_sell": {"who": "tam", "mood": "thinking", "say": "Twenty brix, for my own mother's oven. That is the most Eastgate thing anyone on Baker Street has ever said. I'm almost proud. Done.",
+     "options": [{"text": "(Take the twenty.)", "next": "a_walk", "act": ["pay:2000", "flag:oven_sold", "rep:tam:-5"]}]},
+    "a_refuse": {"who": "tam", "mood": "neutral", "say": "Her words, near enough. Six years ago, different subject. Fair enough. Eli! Scratch Crumb and Co.",
+     "options": [{"text": "(Carry your loaf to the table.)", "next": null, "act": ["flag:oven_refused", "rep:tam:-15", "stage:pip"]}]},
+    "a_walk": {"who": "scene", "say": "He carries the tray up Baker Street himself. At the side door he stops, as if the step were higher than he remembered. The oven takes his loaf the way it takes everything: without comment.",
+     "options": [
+      {"text": "(Wait with him by the oven.)", "next": "a_wait", "need": ["!flag:tam_secret"]},
+      {"text": "(Wait with him by the oven.)", "next": "a_slip", "need": ["flag:tam_secret", "!flag:noor_knows", "flag:cutting_secret", "flag:oven_shared"]},
+      {"text": "(Wait with him by the oven.)", "next": "a_wait", "need": ["flag:tam_secret", "!flag:noor_knows", "!flag:cutting_secret"]},
+      {"text": "(Wait with him by the oven.)", "next": "a_wait", "need": ["flag:tam_secret", "!flag:noor_knows", "flag:cutting_secret", "!flag:oven_shared"]}
+     ]},
+    "a_wait": {"who": "tam", "mood": "sad", "dir": "Noor stays at the bench with her back to you both. She does not turn round. She does not leave, either.", "say": "Same smell. I'd forgotten it has a smell. You'd think a man who runs a bakery would remember what one smells like.",
+     "options": [
+      {"text": "(Tam is looking at you.)", "next": "a_promise", "need": ["flag:broke_promise", "!flag:mother_lost"]},
+      {"text": "(Forty minutes. Then back to the square.)", "next": null, "act": ["stage:pip"]}
+     ]},
+    "a_promise": {"who": "tam", "mood": "thinking", "say": "You told her. You promised me you wouldn't, and you told her that same night. I was angry for a week. Then the Saturday loaf came round on the books, with my name on the order. Don't ever keep a promise to me again.",
+     "options": [{"text": "(Forty minutes. Then back to the square.)", "next": null, "act": ["stage:pip"]}]},
+    "a_slip": {"who": "tam", "mood": "happy", "dir": "Noor has come to the proofing room door. He hasn't seen her.", "say": "First the jar, and now the oven. I'm running up a bill with you. At this rate I'll owe you a bakery.",
+     "options": [
+      {"text": "Tam. Not here.", "next": "a_slip_stop"},
+      {"text": "(Let him finish.)", "next": "a_slip_out"}
+     ]},
+    "a_slip_stop": {"who": "tam", "mood": "surprised", "dir": "He follows your eyes to the doorway. Noor looks at the two of you, then at the oven, and goes back to the bench.", "say": "Right. Yes. The oven. Lovely oven.",
+     "options": [{"text": "(Forty minutes. Then back to the square.)", "next": null, "act": ["stage:pip"]}]},
+    "a_slip_out": {"who": "noor", "mood": "neutral", "dir": "From the doorway.", "say": "What jar?",
+     "options": [{"text": "(Tell her. All of it.)", "next": "a_slip_out2"}]},
+    "a_slip_out2": {"who": "noor", "mood": "sad", "say": "All this time. You let me think it was the rye, all this time. And you. You fed her six years, and then sent a stranger to my door with her instead of your own two feet. Get that loaf to the square. We'll not do this in front of the oven.",
+     "options": [{"text": "(Back to the square.)", "next": null, "act": ["flag:noor_knows", "flag:secret_out", "unflag:tam_secret", "rep:noor:-15", "stage:pip"]}]}
+   }},
+
+  {"id": "pip", "title": "One song, eyes shut", "kind": "talk", "with": "pip",
+   "goal": "Find Pip by the fountain before the judging",
+   "log": "Pip busks once a year, at the fair, with their eyes shut. They are by the fountain with a guitar, not playing it.",
+   "start": "k1",
+   "starts": [{"need": ["flag:pip_reported"], "node": "k_cold"}],
+   "nodes": {
+    "k1": {"who": "pip", "mood": "thinking", "say": "I'm on after the judging. One song, eyes shut, it's fine, I do it every year. And Tam asked me again. This morning. Double the wage, and he wants an answer today, and I haven't got one.",
+     "options": [
+      {"text": "What do you want, Pip?", "next": "k2"},
+      {"text": "Stay. The Oven needs you.", "next": "k_needs"},
+      {"text": "Take it. It's good money.", "next": "k_go"}
+     ]},
+    "k2": {"who": "pip", "mood": "sad", "say": "I want Noor to say I'm good. Once. Out loud. She says “hm”. I've learned to live on “hm”. Tam says “brilliant” about everything, so it's worth nothing. Sorry. That came out more finished than I meant it.",
+     "options": [
+      {"text": "You're good, Pip. I'm saying it. Out loud.", "next": "k_stay"},
+      {"text": "Then go where somebody says it.", "next": "k_go2"}
+     ]},
+    "k_needs": {"who": "pip", "mood": "neutral", "say": "Needs. Not wants. You sound like her.",
+     "options": [
+      {"text": "You're good, Pip. That's the part she doesn't say.", "next": "k_stay"},
+      {"text": "It's your choice to make.", "next": "k_go"}
+     ]},
+    "k_stay": {"who": "pip", "mood": "happy", "say": "Oh. Right. I'm going to pretend I've got flour in my eye. I'll tell Tam no. Nicely. I'll write him a song about it.",
+     "options": [{"text": "(Leave them to tune up.)", "next": null, "act": ["flag:pip_stays", "rep:pip:+15", "stage:judging"]}]},
+    "k_go": {"who": "pip", "mood": "neutral", "say": "Yeah. It is. Good money, and somebody who wants me. I'll tell Noor after the fair.",
+     "options": [{"text": "(Leave them to tune up.)", "next": null, "act": ["flag:pip_leaves", "rep:pip:-5", "stage:judging"]}]},
+    "k_go2": {"who": "pip", "mood": "neutral", "say": "Yeah. Maybe that's all it is. Somewhere that says it. I'll tell Noor after the fair.",
+     "options": [{"text": "(Leave them to tune up.)", "next": null, "act": ["flag:pip_leaves", "rep:pip:-5", "stage:judging"]}]},
+    "k_cold": {"who": "pip", "mood": "neutral", "say": "I'm taking Tam's job. I wanted you to hear it from me, and not as a report.",
+     "options": [
+      {"text": "I was wrong, that first morning. I'm sorry, Pip.", "next": "k_cold2"},
+      {"text": "That's your choice to make.", "next": null, "act": ["flag:pip_leaves", "stage:judging"]}
+     ]},
+    "k_cold2": {"who": "pip", "mood": "thinking", "say": "That's late. That's really late. But it's out loud, and nobody at the Oven says anything out loud. I'll stay a while longer. Then we'll see what you are.",
+     "options": [{"text": "(Leave them to tune up.)", "next": null, "act": ["flag:pip_stays", "rep:pip:+10", "stage:judging"]}]}
+   }},
+
+  {"id": "judging", "title": "The verdict", "kind": "talk", "with": "vera",
+   "goal": "Stand at the judging table",
+   "log": "Nine o'clock. Vera tears each loaf rather than cutting it. Jai holds token forty-one in a white glove. Olu is enjoying himself enormously.",
+   "start": "j_good",
+   "starts": [
+    {"need": ["flag:mother_lost"], "node": "j_nowhere"},
+    {"need": ["flag:loaf_plait"], "node": "j_plait"},
+    {"need": ["flag:stones_dressed", "flag:red_saved"], "node": "j_great"},
+    {"need": ["flag:stones_dressed", "flag:red_split"], "node": "j_great"}
+   ],
+   "nodes": {
+    "j_great": {"who": "vera", "mood": "happy", "dir": "She tears the loaf and is quiet for longer than Eli's schedule allows.", "say": "That is the wall wheat, through a stone that's cutting true. I have not tasted this since I had to stand on a box to see over the counter.",
+     "options": [
+      {"text": "(Wait.)", "next": "hub_great", "need": ["!flag:mother_joined"]},
+      {"text": "(Wait.)", "next": "round_great", "need": ["flag:mother_joined"]}
+     ]},
+    "j_good": {"who": "vera", "mood": "thinking", "dir": "She tears the loaf and chews with her eyes shut.", "say": "Good bread. Honest bread. The Mother's in it; I'd know her in the dark. But the flour is only doing its job. I taste a bakery that has had a hard year.",
+     "options": [
+      {"text": "(Wait.)", "next": "hub_rest", "need": ["!flag:mother_joined"]},
+      {"text": "(Wait.)", "next": "round_rest", "need": ["flag:mother_joined"]}
+     ]},
+    "j_plait": {"who": "vera", "mood": "neutral", "say": "Six strands. Very handsome. I am sixty-six years old and I have never yet eaten a photograph. The crumb underneath is good. It deserved less scaffolding.",
+     "options": [
+      {"text": "(Wait.)", "next": "hub_rest", "need": ["!flag:mother_joined"]},
+      {"text": "(Wait.)", "next": "round_rest", "need": ["flag:mother_joined"]}
+     ]},
+    "j_nowhere": {"who": "vera", "mood": "sad", "say": "This is good bread. It is good bread from nowhere. Where is she? What happened to the Mother?",
+     "options": [
+      {"text": "We lost her the night the power went.", "next": "j_nowhere2", "need": ["!flag:scalded"]},
+      {"text": "I killed her. Hot water, at four in the morning.", "next": "j_nowhere2", "need": ["flag:scalded"]}
+     ]},
+    "j_nowhere2": {"who": "vera", "mood": "sad", "say": "Then I have outlived her. I did not expect to be saying that at a bake-off. Stand up straight, child. It isn't a judgement. It's a condolence.",
+     "options": [{"text": "(Stand up straight.)", "next": "hub_rest"}]},
+    "round_great": {"who": "vera", "mood": "thinking", "say": "And the Mother. She's rounder. She has been somewhere. There are six years of somebody else's kitchen in this. Whose?",
+     "options": [
+      {"text": "Her brother's. It's no secret on Baker Street.", "next": "hub_great", "need": ["flag:noor_knows"]},
+      {"text": "Tam's. He kept a cutting alive. Noor didn't know. She does now.", "next": "hub_great", "need": ["!flag:noor_knows"], "act": ["flag:noor_knows", "flag:secret_out", "unflag:tam_secret", "rep:noor:-10"]},
+      {"text": "You'd have to ask the Mother.", "next": "hub_great", "need": ["!flag:noor_knows"]}
+     ]},
+    "round_rest": {"who": "vera", "mood": "thinking", "say": "And the Mother. She's rounder. She has been somewhere. There are six years of somebody else's kitchen in this. Whose?",
+     "options": [
+      {"text": "Her brother's. It's no secret on Baker Street.", "next": "hub_rest", "need": ["flag:noor_knows"]},
+      {"text": "Tam's. He kept a cutting alive. Noor didn't know. She does now.", "next": "hub_rest", "need": ["!flag:noor_knows"], "act": ["flag:noor_knows", "flag:secret_out", "unflag:tam_secret", "rep:noor:-10"]},
+      {"text": "You'd have to ask the Mother.", "next": "hub_rest", "need": ["!flag:noor_knows"]}
+     ]},
+    "hub_great": {"who": "scene", "say": "Jai holds up the white glove. The square waits on Vera.",
+     "options": [
+      {"text": "(Olu leans over and whispers something to Vera.)", "next": "white_great", "need": ["flag:mall_loaf", "!flag:white_aired"]},
+      {"text": "(Vera turns the plain loaf over in her hands.)", "next": "plain_great", "need": ["flag:loaf_wall", "!flag:plain_aired"]},
+      {"text": "(Vera holds the crumb to her nose.)", "next": "herb_great", "need": ["flag:loaf_rosemary", "!flag:herb_aired"]},
+      {"text": "(Tam is staring at your loaf.)", "next": "seed_great", "need": ["flag:loaf_seeded", "!flag:seed_aired", "!flag:oven_refused"]},
+      {"text": "(The verdict.)", "next": "vd_two", "need": ["flag:oven_shared"]},
+      {"text": "(The verdict.)", "next": "vd_receipt", "need": ["flag:oven_sold"]},
+      {"text": "(The verdict.)", "next": "vd_cold_win", "need": ["flag:oven_refused"]}
+     ]},
+    "hub_rest": {"who": "scene", "say": "Jai holds up the white glove. The square waits on Vera.",
+     "options": [
+      {"text": "(Olu leans over and whispers something to Vera.)", "next": "white_rest", "need": ["flag:mall_loaf", "!flag:white_aired"]},
+      {"text": "(Vera turns the plain loaf over in her hands.)", "next": "plain_rest", "need": ["flag:loaf_wall", "!flag:plain_aired"]},
+      {"text": "(Vera holds the crumb to her nose.)", "next": "herb_rest", "need": ["flag:loaf_rosemary", "!flag:herb_aired"]},
+      {"text": "(Tam is staring at your loaf.)", "next": "seed_rest", "need": ["flag:loaf_seeded", "!flag:seed_aired", "!flag:oven_refused"]},
+      {"text": "(The verdict.)", "next": "vd_lost_well", "need": ["flag:oven_shared"]},
+      {"text": "(The verdict.)", "next": "vd_sold_lost", "need": ["flag:oven_sold"]},
+      {"text": "(The verdict.)", "next": "vd_lost_cold", "need": ["flag:oven_refused"]}
+     ]},
+    "white_great": {"who": "vera", "mood": "surprised", "say": "A mall loaf? In the Stone Oven's basket? On your first morning? And she kept you on. Then either you are very good or she is getting soft. I have just tasted which.",
+     "options": [{"text": "(Wish for the ground to open.)", "next": "hub_great", "act": ["flag:white_aired"]}]},
+    "white_rest": {"who": "vera", "mood": "surprised", "say": "A mall loaf? In the Stone Oven's basket? On your first morning? And she kept you on. Then either you are very good or she is getting soft. I have just tasted which.",
+     "options": [{"text": "(Wish for the ground to open.)", "next": "hub_rest", "act": ["flag:white_aired"]}]},
+    "plain_great": {"who": "vera", "mood": "thinking", "say": "Plain. No seeds, no plait, nowhere to stand behind it. That is the Town Oven's own loaf, and it takes nerve to put it on a table. I can taste the nerve.",
+     "options": [{"text": "(Wait.)", "next": "hub_great", "act": ["flag:plain_aired", "rep:vera:+5"]}]},
+    "plain_rest": {"who": "vera", "mood": "thinking", "say": "Plain. No seeds, no plait, nowhere to stand behind it. That is the Town Oven's own loaf, and it takes nerve to put it on a table. I can taste the nerve.",
+     "options": [{"text": "(Wait.)", "next": "hub_rest", "act": ["flag:plain_aired", "rep:vera:+5"]}]},
+    "herb_great": {"who": "vera", "mood": "happy", "say": "Rosemary. From the south bed at Tram Court; I'd know it anywhere. Hari gives that to almost nobody. Somebody has been kind to that man. I shall count it.",
+     "options": [{"text": "(Wait.)", "next": "hub_great", "act": ["flag:herb_aired", "rep:vera:+5", "rep:hari:+5"]}]},
+    "seed_great": {"who": "tam", "mood": "surprised", "say": "That's the Saturday loaf. You've entered the Saturday loaf. Against me. I have eaten that loaf every week for six years. I know exactly how good it is.",
+     "options": [{"text": "(Wait.)", "next": "hub_great", "act": ["flag:seed_aired"]}]},
+    "herb_rest": {"who": "vera", "mood": "happy", "say": "Rosemary. From the south bed at Tram Court; I'd know it anywhere. Hari gives that to almost nobody. Somebody has been kind to that man. I shall count it.",
+     "options": [{"text": "(Wait.)", "next": "hub_rest", "act": ["flag:herb_aired", "rep:vera:+5", "rep:hari:+5"]}]},
+    "seed_rest": {"who": "tam", "mood": "surprised", "say": "That's the Saturday loaf. You've entered the Saturday loaf. Against me. I have eaten that loaf every week for six years. I know exactly how good it is.",
+     "options": [{"text": "(Wait.)", "next": "hub_rest", "act": ["flag:seed_aired"]}]},
+    "vd_two": {"who": "vera", "mood": "happy", "say": "The token goes to the Stone Oven. And I am told the mall's loaf came out of the same fire this morning. Best thing in it, the fire. Number forty-one, to the bread with two bakers behind it.",
+     "options": [{"text": "(Take the token. Find Tam's face in the crowd.)", "next": null, "act": ["end:two_bakers"]}]},
+    "vd_receipt": {"who": "vera", "mood": "neutral", "say": "The token goes to the Stone Oven. Best loaf on the table. I'm also told its oven was let by the hour this morning. I judge bread, not landlords. Number forty-one.",
+     "options": [{"text": "(Take the token.)", "next": null, "act": ["end:won_cold"]}]},
+    "vd_cold_win": {"who": "vera", "mood": "neutral", "say": "The token goes to the Stone Oven. Best loaf at the fair. I notice it was also the only fire at the fair. Number forty-one. Wear it lightly.",
+     "options": [{"text": "(Take the token.)", "next": null, "act": ["end:won_cold"]}]},
+    "vd_lost_well": {"who": "vera", "mood": "thinking", "say": "The token goes to Crumb and Co. I never thought to say it. It was baked in the Stone Oven's fire, by a man that fire trained, and it is the best loaf here. The Oven lost today. I don't believe it lost anything that matters.",
+     "options": [{"text": "(Clap. Mean it.)", "next": null, "act": ["end:lost_well"]}]},
+    "vd_sold_lost": {"who": "vera", "mood": "neutral", "say": "The token goes to Crumb and Co, baked in an oven hired for twenty brix. Beaten by your own tenant. There is a proverb in that, and I shan't be the one to write it.",
+     "options": [{"text": "(Clap. It costs you.)", "next": null, "act": ["end:tenant"]}]},
+    "vd_lost_cold": {"who": "vera", "mood": "angry", "say": "The token goes to Northwood, for a perfectly decent cob. One bakery's van died and the other's door stayed shut. I fed half this square at five years old, on one bench, with one jug between them. Evidently it wore off.",
+     "options": [{"text": "(Stand there and take it.)", "next": null, "act": ["end:lost_cold"]}]}
+   }}
+ ],
+ "endings": [
+  {"id": "two_bakers", "title": "The bread with two bakers", "log": "Token forty-one came home to the Stone Oven, and the mall's loaf was baked in the same fire. Vera's sentence will be quoted until the next fair.",
+   "pay": 3500, "rep": {"noor": 15, "tam": 15, "vera": 10}, "give": ["fair_token"], "flags": ["token_won"],
+   "ripples": [
+    "The shared oven is the door Tam walks through in the last quest. Without it, the Long Table cannot happen.",
+    "Orders double. Olu wants a second shelf, and the Tram Café wants twenty loaves where it had twelve.",
+    "Whatever Pip decided by the fountain, they play their song to a full square."
+   ],
+   "unlocks": "Rank: Baker. The fair token, for a year. Repeatable job: the Saturday stall."},
+  {"id": "won_cold", "title": "Won, to a quiet square", "log": "Best loaf at the fair. The applause was polite. Vera noticed whose fire was the only fire.",
+   "pay": 3000, "rep": {"noor": 5, "tam": -10, "vera": -5}, "give": ["fair_token"], "flags": ["token_won"],
+   "ripples": [
+    "If you kept the door shut: you hold the token, and in the last quest Tam comes to the alley with a job offer.",
+    "If you hired the oven out: you hold the token and his twenty brix.",
+    "Either way the Long Table is closed: it needs the oven shared."
+   ],
+   "unlocks": "Rank: Baker. The fair token, for a year. Repeatable job: the Saturday stall."},
+  {"id": "lost_well", "title": "Lost well", "log": "Tam's loaf, baked in the Stone Oven's fire, took the token. The Oven lost the fair and won the town.",
+   "pay": 1500, "rep": {"noor": 10, "tam": 20, "vera": 10}, "flags": ["token_tam"],
+   "ripples": [
+    "Tam cannot bear to keep the token. In the last quest he brings it to the alley in a paper bag, unless the Mother was lost, when he comes about that.",
+    "The whole square saw whose door opened. Orders rise anyway.",
+    "Noor says nothing about losing. She gives you the first slice of the next morning's batch, which is how she says it."
+   ],
+   "unlocks": "Rank: Baker. Repeatable job: the Saturday stall."},
+  {"id": "tenant", "title": "Beaten by your tenant", "log": "Tam's loaf took the token, baked in an oven you charged him twenty brix to use.",
+   "pay": 500, "rep": {"vera": -5}, "flags": ["token_tam"],
+   "ripples": [
+    "Tam still cannot bear to keep the token, and brings it to the alley in the last quest, unless the Mother was lost, when he comes about that.",
+    "The Long Table is closed: it needs the oven shared, not hired."
+   ],
+   "unlocks": "Rank: Baker. Repeatable job: the Saturday stall."},
+  {"id": "lost_cold", "title": "Nobody's fair", "log": "The token went elsewhere, and Vera had a sentence for it. It will be quoted until the next fair.",
+   "pay": 500, "rep": {"noor": -5, "vera": -10}, "flags": ["token_lost"],
+   "ripples": [
+    "The Oven keeps its regulars and gains nobody.",
+    "If you kept the door shut, Tam comes to the alley in the last quest with a job offer, unless the Mother was lost.",
+    "In the last quest the partnership needs real standing with Noor; this ending does not help.",
+    "Eli quietly adds a line to next year's rules about sharing ovens. It has your initials beside it."
+   ],
+   "unlocks": "Rank: Baker, by seniority. Repeatable job: the Saturday stall."}
+ ]
+}

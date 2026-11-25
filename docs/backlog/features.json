@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-11-24",
+  "updated": "2026-11-25",
   "note": "The feature backlog. Maintained by the team and AI agents. The owner's picks live in feature_choices.json, never here.",
   "milestones": [
     {
@@ -1899,6 +1899,96 @@
       "suggested": {
         "slice": 1,
         "depth": 2,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-QUEST-STORY",
+      "area": "life",
+      "title": "A career's story",
+      "why": "A reason to keep a job: people who remember what you did, and a town that ends differently for it.",
+      "pillars": [
+        1,
+        2
+      ],
+      "spec": [
+        "QST-010",
+        "QST-011",
+        "QST-012",
+        "QST-013",
+        "QST-014"
+      ],
+      "levels": [
+        {
+          "name": "None",
+          "what": "Only the starter quest lines.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "One career",
+          "what": "The Baker career: five story lines whose choices are remembered and change later lines, several people in a talk, scenes, lines that can be taken again; every ending reachable. Written and approved in the Quest Atlas.",
+          "effort": "XL",
+          "needs": {
+            "F-QUEST": 2,
+            "F-NPC-TALK": 1
+          }
+        },
+        {
+          "name": "Every career",
+          "what": "A story for each career sketched in the Atlas (courier, grocer, gardener, curator, market clerk, miller), their people and choices crossing.",
+          "effort": "XL",
+          "needs": {
+            "F-NPC-ROUTINE": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-COURT",
+      "area": "life",
+      "title": "Courting and marriage",
+      "why": "Somebody to come home to, and a reason to buy the home.",
+      "pillars": [
+        1,
+        2
+      ],
+      "spec": [
+        "QST-015"
+      ],
+      "levels": [
+        {
+          "name": "None",
+          "what": "Residents are friends at most.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "One courtship",
+          "what": "Courting Mei: a lunch, a dinner and the question open as her regard rises; she says yes only to a home owned and money put by; a wedding on Market Square ends the line.",
+          "effort": "L",
+          "needs": {
+            "F-QUEST-STORY": 1,
+            "F-PROP-ESTATE": 2
+          }
+        },
+        {
+          "name": "A life after",
+          "what": "After the wedding: a shared household, children, a fortune and what is left to them (the Atlas's end-game sketch); more than one resident can be courted.",
+          "effort": "XL",
+          "needs": {
+            "F-NPC-ROUTINE": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
         "full": 2
       }
     },

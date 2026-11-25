@@ -1,0 +1,299 @@
+{
+ "id": "four_oclock_door", "group": "baker", "act": "I", "title": "The Four O'Clock Door", "rank": "Dough Hand",
+ "giver": "noor", "needs": ["done:new_in_town:*"],
+ "hook": "A card in the Stone Oven's window. If you gave Mei the bread in New in town, she sends you.",
+ "summary": "Noor needs a pair of hands that can wake. The interview is a dawn, a dropped tray, and a basket she has sent out one loaf short on purpose.",
+ "theme": "What do you do when you come up short, and who do you tell?",
+ "start": "card",
+ "stages": [
+  {"id": "card", "title": "The card in the window", "kind": "talk", "with": "noor",
+   "goal": "Talk to Noor at the Stone Oven, Baker Street",
+   "log": "A card in the bakery window: “WANTED: a pair of hands that can wake. Enquire within. Early.”",
+   "scene": "The shelves are already bare, but the whole street still smells of it. Behind the counter a woman is cleaning a scale that is visibly clean.",
+   "start": "n1",
+   "starts": [{"need": ["again:four_oclock_door"], "node": "n_again"}],
+   "nodes": {
+    "n_again": {"who": "noor", "mood": "neutral", "say": "You again. The card's still in the window, I notice. Same morning, same basket, same test. I don't change a test because somebody failed it. Four o'clock. Side door.",
+     "options": [
+      {"text": "Four o'clock.", "next": null, "act": ["stage:dawn"]},
+      {"text": "I'll think about it.", "next": null}
+     ]},
+    "n1": {"who": "noor", "mood": "neutral", "say": "We're closed. We've been closed since the bread ran out, which was ten past nine. The card says early.",
+     "options": [
+      {"text": "The card says you need a pair of hands.", "next": "n2"},
+      {"text": "When exactly is early?", "next": "early"},
+      {"text": "You sell out by nine and you want more help?", "next": "cheek"},
+      {"text": "Mei at the Tram Café sent me.", "next": "mei", "need": ["done:new_in_town:gift", "!flag:mei_vouched"]}
+     ]},
+    "n2": {"who": "noor", "mood": "thinking", "say": "Everyone has hands. I need ones that show up. The last pair came attached to a nice boy and a phone. The phone showed up more.",
+     "options": [
+      {"text": "What happened to him?", "next": "lastone"},
+      {"text": "Mine show up.", "next": "early"}
+     ]},
+    "lastone": {"who": "noor", "mood": "neutral", "say": "The mall happened. Shiny counter, nine o'clock start, music in the ceiling. He's happier. His bread isn't.",
+     "options": [
+      {"text": "I'm not here for the music.", "next": "early"},
+      {"text": "Nine o'clock doesn't sound unreasonable.", "next": "nine"}
+     ]},
+    "nine": {"who": "noor", "mood": "neutral", "say": "No. It sounds comfortable. Bread doesn't rise on comfortable. The mall is four hundred metres that way.",
+     "options": [
+      {"text": "Four o'clock it is, then.", "next": "early"},
+      {"text": "I'll think about it.", "next": null}
+     ]},
+    "mei": {"who": "noor", "mood": "surprised", "say": "Mei doesn't send me people. She sends me orders and gossip, in that order. She says you gave her your own loaf. That's either foolish or promising.",
+     "options": [
+      {"text": "Both, probably.", "next": "early", "act": ["rep:noor:+5", "flag:mei_vouched"]},
+      {"text": "It was just bread.", "next": "justbread", "act": ["flag:mei_vouched"]}
+     ]},
+    "justbread": {"who": "noor", "mood": "neutral", "say": "No such thing. That's the first wrong thing you've said. Say the rest after four tomorrow.",
+     "options": [{"text": "Understood.", "next": "early"}]},
+    "cheek": {"who": "noor", "mood": "surprised", "say": "It's not more I want. It's the same, done right, with two of us standing up. You've a tongue on you. The oven doesn't care about tongues.",
+     "options": [
+      {"text": "What does it care about?", "next": "early"},
+      {"text": "Noted. When do I start?", "next": "early"}
+     ]},
+    "early": {"who": "noor", "mood": "neutral", "say": "Four. The oven doesn't do lie-ins. Side door, in the alley. Knock like you mean it. If you're awake, you'll do.",
+     "options": [
+      {"text": "I'll be there.", "next": null, "act": ["stage:dawn"]},
+      {"text": "Four in the morning?", "next": "four"}
+     ]},
+    "four": {"who": "noor", "mood": "thinking", "say": "There's another four? The mall's pastry counter opens at nine, I'm told. Perhaps that's more your hour.",
+     "options": [
+      {"text": "I said I'll be there.", "next": null, "act": ["stage:dawn"]},
+      {"text": "Honestly? It might be.", "next": null}
+     ]}
+   }},
+
+  {"id": "dawn", "title": "Knock like you mean it", "kind": "near",
+   "goal": "Be at the bakery's side door between 03:50 and 04:20",
+   "log": "Be at the Stone Oven's side door between 03:50 and 04:20. The front is for customers. Bakers use the alley.",
+   "scene": "The town at four: one lit window on Baker Street, the fountain talking to itself, your own footsteps going ahead of you. The side door opens before you knock twice. “Hm,” says Noor, which you will learn is a compliment.",
+   "then": "stage:morning"},
+
+  {"id": "morning", "title": "First morning", "kind": "talk", "with": "noor",
+   "goal": "Work the dawn shift, and deal with what Pip drops",
+   "log": "Coat on the hook, hands under the tap. Knead what you're given. Don't touch the jar on the top shelf.",
+   "start": "f1",
+   "nodes": {
+    "f1": {"who": "noor", "mood": "neutral", "say": "Coat on the hook. Hands under the tap. You knead what I give you, you weigh what you shape, and you don't touch the jar on the top shelf.",
+     "options": [
+      {"text": "What's in the jar?", "next": "crock"},
+      {"text": "Right.", "next": "teach"}
+     ]},
+    "crock": {"who": "noor", "mood": "neutral", "say": "Tomorrow.",
+     "options": [
+      {"text": "That's it? “Tomorrow”?", "next": "crock2"},
+      {"text": "Right.", "next": "teach"}
+     ]},
+    "crock2": {"who": "noor", "mood": "thinking", "say": "Everything in this room is flour, water, salt and time. The jar is mostly time. You get the time when you've earned the flour.",
+     "options": [{"text": "Fair enough.", "next": "teach"}]},
+    "teach": {"who": "noor", "mood": "neutral", "say": "Shoulders, not wrists. The dough can tell when you're lying. Push it away like you mean it. Fold it back like you're sorry. Again.",
+     "options": [{"text": "(Keep kneading.)", "next": "cellar"}]},
+    "cellar": {"who": "scene", "say": "Ten past five. Noor goes down to the cellar for salt. Ninety seconds later the side door bangs and Pip arrives at a dead run, coat half on, and catches the proving rack with one elbow. A tray of seeded loaves, proved all night, goes face down on the flags.",
+     "options": [{"text": "(Look at the tray. Look at Pip.)", "next": "pip1"}]},
+    "pip1": {"who": "pip", "mood": "surprised", "say": "No, no, no. The seeded batch. Those took all night. She'll turn me into rusks. You didn't see this. Did you see this?",
+     "options": [
+      {"text": "Reshape them, fast. I'll watch the stairs.", "next": "cover", "act": ["flag:pip_covered"]},
+      {"text": "We tell her. Now. Both of us, together.", "next": "together", "act": ["flag:pip_together"]},
+      {"text": "(Call down the stairs.) Noor! Tray down!", "next": "report", "act": ["flag:pip_reported"]}
+     ]},
+    "cover": {"who": "pip", "mood": "thinking", "say": "You'd do that? For me? Right. Watch the stairs. They'll bake flat, but market-day people don't look. They just want the seeds.",
+     "options": [{"text": "Hurry.", "next": "cover2"}]},
+    "cover2": {"who": "pip", "mood": "sad", "say": "Thanks. I owe you one. I'm already carrying one I owe. They stack, apparently.",
+     "options": [
+      {"text": "What's the one you're carrying?", "next": "cover3"},
+      {"text": "Shape faster. Talk later.", "next": "hm", "act": ["rep:pip:+10"]}
+     ]},
+    "cover3": {"who": "pip", "mood": "surprised", "say": "Nothing. Nobody. Ask me when something's on fire. I'm more honest when something's on fire.",
+     "options": [{"text": "I'll hold you to that.", "next": "hm", "act": ["rep:pip:+10"]}]},
+    "hm": {"who": "noor", "mood": "neutral", "dir": "She comes back up with the salt and looks at the seeded trays for one second longer than necessary.", "say": "Hm.",
+     "options": [{"text": "(Keep kneading. Very attentively.)", "next": "barrow"}]},
+    "together": {"who": "pip", "mood": "surprised", "say": "Together? Nobody says together in a kitchen. It's always one person's fault. That's what kitchens are for.",
+     "options": [{"text": "Not this one. Come on.", "next": "together2"}]},
+    "together2": {"who": "noor", "mood": "neutral", "dir": "She looks at the tray, then at the two of you standing shoulder to shoulder like a court martial.", "say": "Burns get shown, not hidden. Same with trays. Reshape, prove again, and the pair of you owe me an hour of pastry. {player}. You said “we”. Noted.",
+     "options": [{"text": "Yes, chef.", "next": "barrow", "act": ["rep:noor:+8", "rep:pip:+10"]}]},
+    "report": {"who": "noor", "mood": "neutral", "dir": "She comes up slowly, looks at the tray, then at Pip for a long moment, then at you.", "say": "Thank you for the report.",
+     "options": [{"text": "It seemed like you should know.", "next": "report2"}]},
+    "report2": {"who": "pip", "mood": "sad", "say": "No, it's fine. It's fine. Welcome to the Stone Oven. Mind the rack. It bites.",
+     "options": [{"text": "(Help reshape. Say nothing.)", "next": "barrow", "act": ["rep:noor:+3", "rep:pip:-10"]}]},
+    "barrow": {"who": "noor", "mood": "neutral", "dir": "Half past six. She loads the barrow herself, then tucks a smaller, darker loaf into your coat pocket. One seeded loaf in brown paper stays behind on the rack, with a chalk cross on it and no name.", "say": "Twelve for the Tram Café. Six for Market Grocer. Before the seven o'clock tram. That one's yours. Breakfast. Don't eat it walking.",
+     "options": [{"text": "Yes, chef.", "next": null, "act": ["give:breakfast_loaf", "stage:count"]}]}
+   }},
+
+  {"id": "count", "title": "Seventeen", "kind": "moment",
+   "goal": "Push the barrow to Market Square before the seven o'clock tram",
+   "log": "The morning round: twelve to the Tram Café, six to Market Grocer. The barrow pulls left. Everyone's barrow pulls left, Pip says. It's the cobbles.",
+   "start": "c1",
+   "nodes": {
+    "c1": {"who": "scene", "say": "Halfway down Baker Street you count the barrow, because she told you to weigh what you shape, and a count is a kind of weighing. Seventeen. The café's twelve and the grocer's six make eighteen. Nobody is watching. The tram is due in nine minutes.",
+     "options": [
+      {"text": "My breakfast loaf makes eighteen.", "next": null, "need": ["have:breakfast_loaf"], "act": ["take:breakfast_loaf", "flag:gave_own_loaf", "stage:cafe"]},
+      {"text": "Go back and tell Noor the count is wrong.", "next": "back", "act": ["flag:counted_first"]},
+      {"text": "The café gets its twelve. The grocer gets five and an apology.", "next": null, "act": ["flag:shorted_olu", "stage:cafe"]},
+      {"text": "The grocer gets his six. The café gets eleven and an apology.", "next": null, "act": ["flag:shorted_mei", "stage:cafe"]},
+      {"text": "The mall sells bread. Nobody needs to know.", "next": "mall", "need": ["money:400"], "act": ["charge:400", "flag:mall_loaf"]}
+     ]},
+    "back": {"who": "noor", "mood": "thinking", "dir": "She is waiting at the side door with the eighteenth loaf already in her hand.", "say": "You counted. Good. You are also now eleven minutes behind the tram. Run.",
+     "options": [{"text": "(Run.)", "next": null, "act": ["rep:noor:+5", "stage:cafe"]}]},
+    "mall": {"who": "scene", "say": "Eastgate Mall, at a run. One counter has its shutters half up. A man with a retail smile sells you a white loaf that is warm, even, and smells of nothing at all. “Emergency?” he says. “We get a lot of emergencies.” You tuck it among the grocer's six.",
+     "options": [{"text": "(Back to the barrow.)", "next": null, "act": ["flag:met_tam_early", "stage:cafe"]}]}
+   }},
+
+  {"id": "cafe", "title": "The Tram Café's twelve", "kind": "talk", "with": "mei",
+   "goal": "Deliver to Mei at the Tram Café",
+   "log": "First drop: the Tram Café, Market Square. Mei counts everything twice, fast.",
+   "start": "m_full",
+   "starts": [
+    {"need": ["flag:gave_own_loaf"], "node": "m_gift"},
+    {"need": ["flag:counted_first"], "node": "m_late"},
+    {"need": ["flag:shorted_mei"], "node": "m_short"},
+    {"need": ["flag:mall_loaf"], "node": "m_mall"}
+   ],
+   "nodes": {
+    "m_full": {"who": "mei", "mood": "happy", "say": "Twelve, warm, and before the tram! The Oven's found a barrow that can tell the time. How is she? Is she being nice? Don't answer that. She's never nice. She's better than nice.",
+     "options": [
+      {"text": "She's exact.", "next": null, "act": ["stage:grocer"]},
+      {"text": "Better than nice. That's about it.", "next": null, "act": ["stage:grocer"]}
+     ]},
+    "m_mall": {"who": "mei", "mood": "surprised", "say": "Twelve, warm, and only just. The tram has been in two minutes and they were starting to circle. Where have you been? Don't answer. Go. The grocer's waiting.",
+     "options": [{"text": "(On to Market Grocer.)", "next": null, "act": ["stage:grocer"]}]},
+    "m_gift": {"who": "mei", "mood": "surprised", "say": "Twelve! Warm! And hang on. One of these is darker. That's a baker's own loaf. That's your breakfast, isn't it?",
+     "options": [
+      {"text": "It makes the dozen.", "next": "m_gift2", "need": ["done:new_in_town:gift"]},
+      {"text": "It makes the dozen.", "next": "m_gift2b", "need": ["!done:new_in_town:gift"]},
+      {"text": "A loaf is a loaf, Mei.", "next": "m_gift2", "need": ["done:new_in_town:gift"]},
+      {"text": "A loaf is a loaf, Mei.", "next": "m_gift2b", "need": ["!done:new_in_town:gift"]}
+     ]},
+    "m_gift2": {"who": "mei", "mood": "happy", "say": "That's twice now. The bread thing. You know that's twice? I'm telling Noor. Loudly. While she pretends not to listen.",
+     "options": [{"text": "She'll pretend beautifully.", "next": null, "act": ["rep:mei:+10", "stage:grocer"]}]},
+    "m_gift2b": {"who": "mei", "mood": "happy", "say": "You put your own breakfast in my basket. Nobody does that. I'm telling Noor. Loudly. While she pretends not to listen.",
+     "options": [{"text": "She'll pretend beautifully.", "next": null, "act": ["rep:mei:+10", "stage:grocer"]}]},
+    "m_late": {"who": "mei", "mood": "angry", "say": "Eleven minutes! I have had a tram full of people looking at an empty basket for eleven minutes. Do you know what a tram full of people looks like?",
+     "options": [{"text": "The count was short. I went back for the twelfth.", "next": "m_late2"}]},
+    "m_late2": {"who": "mei", "mood": "thinking", "say": "You went back. Most would have handed me eleven and a face. Fine. Forgiven. Mostly. Go, the grocer's waiting.",
+     "options": [{"text": "(On to Market Grocer.)", "next": null, "act": ["stage:grocer"]}]},
+    "m_short": {"who": "mei", "mood": "neutral", "say": "Eleven. The order's twelve.",
+     "options": [
+      {"text": "It's eleven today. My count, my fault. I'm sorry.", "next": "m_short2"},
+      {"text": "Noor's count, actually.", "next": "m_short3"}
+     ]},
+    "m_short2": {"who": "mei", "mood": "happy", "say": "Honest and short. Like my favourite people. The tram crowd will take what's here and argue with the air about the rest. Go on.",
+     "options": [{"text": "(On to Market Grocer.)", "next": null, "act": ["rep:mei:+3", "stage:grocer"]}]},
+    "m_short3": {"who": "mei", "mood": "thinking", "say": "Blaming Noor's arithmetic. Brave. Wrong, I expect, but brave. Go on.",
+     "options": [{"text": "(On to Market Grocer.)", "next": null, "act": ["rep:mei:-5", "flag:blamed_noor", "stage:grocer"]}]}
+   }},
+
+  {"id": "grocer", "title": "Market Grocer's six", "kind": "talk", "with": "olu",
+   "goal": "Deliver to Olu at Market Grocer",
+   "log": "Second drop: Market Grocer, behind the square. Olu weighs every loaf in his hand, and every piece of news.",
+   "start": "o_full",
+   "starts": [
+    {"need": ["flag:shorted_olu"], "node": "o_short"},
+    {"need": ["flag:mall_loaf"], "node": "o_mall"}
+   ],
+   "nodes": {
+    "o_full": {"who": "olu", "mood": "happy", "say": "Six on the nail, still warm. Tell Noor the bet stands. She'll know.",
+     "options": [
+      {"text": "What bet?", "next": "o_bet"},
+      {"text": "I'll tell her.", "next": null, "act": ["stage:verdict"]}
+     ]},
+    "o_bet": {"who": "olu", "mood": "happy", "say": "Nine years ago I bet her a sweet roll she couldn't go one year without a day off. Nine years that bet has rolled over. The interest alone is a bakery.",
+     "options": [{"text": "I'll pass it on.", "next": null, "act": ["flag:knows_bet", "stage:verdict"]}]},
+    "o_short": {"who": "olu", "mood": "angry", "say": "Five. The café gets her twelve and I get five and, what, a story?",
+     "options": [
+      {"text": "Five and an apology. The short count is mine.", "next": "o_short2"},
+      {"text": "The tram crowd couldn't wait.", "next": "o_short3"}
+     ]},
+    "o_short2": {"who": "olu", "mood": "thinking", "say": "A story with an apology in it. I can sell that. It'll cost you, mind. I'll be telling it for a week.",
+     "options": [{"text": "A week's fair.", "next": null, "act": ["rep:olu:-5", "stage:verdict"]}]},
+    "o_short3": {"who": "olu", "mood": "angry", "say": "And my shelf can? My shelf has feelings. Tell Noor the bet stands, and tell her I counted.",
+     "options": [{"text": "(Leave him to it.)", "next": null, "act": ["rep:olu:-10", "stage:verdict"]}]},
+    "o_mall": {"who": "olu", "mood": "happy", "dir": "He lifts the loaves out one at a time. At the fifth he stops, turns it over, and looks at you for exactly as long as it takes to decide to say nothing.", "say": "Six. On time. Tell Noor the bet stands.",
+     "options": [{"text": "(Leave, faster than necessary.)", "next": null, "act": ["stage:verdict"]}]}
+   }},
+
+  {"id": "verdict", "title": "The count", "kind": "talk", "with": "noor",
+   "goal": "Report back to Noor",
+   "log": "Back to Baker Street. Noor is at the counter with the order book open.",
+   "start": "v1",
+   "nodes": {
+    "v1": {"who": "noor", "mood": "neutral", "dir": "The order book lies open between you. The recent entries are in a rounder hand than the pages before.", "say": "The round. Tell me.",
+     "options": [
+      {"text": "We were one short. I put my own loaf in.", "next": "v_gift", "need": ["flag:gave_own_loaf"]},
+      {"text": "I counted, and I came back. You know the rest.", "next": "v_count", "need": ["flag:counted_first"]},
+      {"text": "One short. I shorted the grocer.", "next": "v_short", "need": ["flag:shorted_olu"]},
+      {"text": "One short. I shorted the café.", "next": "v_short", "need": ["flag:shorted_mei"]},
+      {"text": "The count was short. I bought a mall loaf to cover it.", "next": "v_confess", "need": ["flag:mall_loaf"]},
+      {"text": "Everything delivered. Full count.", "next": "v_lie", "need": ["flag:mall_loaf"]},
+      {"text": "Whose writing is that in the order book?", "next": "v_book", "need": ["!flag:noticed_hands"]}
+     ]},
+    "v_book": {"who": "noor", "mood": "neutral", "say": "Pip's. Pip keeps the book these days. My pen and I are not speaking. The round.",
+     "options": [{"text": "(Give your report.)", "next": "v1", "act": ["flag:noticed_hands"]}]},
+    "v_gift": {"who": "noor", "mood": "neutral", "say": "I know. I shorted the basket myself. Eighteen owed, seventeen sent. You could have blamed me, blamed Pip, or bought your way out. You gave away your breakfast.",
+     "options": [
+      {"text": "You shorted it on purpose?", "next": "v_why"},
+      {"text": "It seemed like the job.", "next": "v_key"}
+     ]},
+    "v_why": {"who": "noor", "mood": "thinking", "say": "I short every first basket. It's the cheapest honest look at a person that money can buy. One loaf.",
+     "options": [{"text": "And what did you see?", "next": "v_key"}]},
+    "v_count": {"who": "noor", "mood": "neutral", "say": "You did. Eleven minutes late and one count right. A count you check is yours. A count you don't is mine, and I am tired of carrying everybody's.",
+     "options": [{"text": "It won't need carrying again.", "next": "v_key"}]},
+    "v_short": {"who": "noor", "mood": "thinking", "say": "And you told them so? To their face?",
+     "options": [
+      {"text": "To their face.", "next": "v_short2", "need": ["!flag:blamed_noor"]},
+      {"text": "To their face. More or less.", "next": "v_short_blame", "need": ["flag:blamed_noor"]}
+     ]},
+    "v_short2": {"who": "noor", "mood": "neutral", "say": "Then here is the lesson, free. There was no right one to short. Olu's shelf is money, Mei's tram is noise, and both of them are mine. I shorted the basket myself. I wanted to hear whether you would tell me which.",
+     "options": [{"text": "Now you've heard.", "next": "v_key", "act": ["rep:noor:-5"]}]},
+    "v_short_blame": {"who": "noor", "mood": "neutral", "say": "More or less. Mei tells me you said it was my count. It was. You didn't know that when you said it. Side door key. It works until it doesn't.",
+     "options": [{"text": "Understood.", "next": null, "act": ["rep:noor:-5", "end:hired_wary"]}]},
+    "v_confess": {"who": "noor", "mood": "neutral", "dir": "She reaches under the counter and sets a loaf between you. White. Even. Olu brought it round an hour ago.", "say": "I know. Olu has a good eye and a better mouth. This rose in a steel tray, in a warm cupboard, four hundred metres from my oven. And it wore my basket to do it.",
+     "options": [
+      {"text": "I panicked. It won't happen again.", "next": "v_wary"},
+      {"text": "Nobody went short. Isn't that the job?", "next": "v_brazen"}
+     ]},
+    "v_lie": {"who": "noor", "mood": "angry", "dir": "She reaches under the counter and sets a loaf between you. White. Even.", "say": "Full count. Then explain this one. Olu brought it round an hour ago. It rose in a steel tray, in a warm cupboard, and it wore my basket.",
+     "options": [
+      {"text": "I'm sorry. I should have told you first.", "next": "v_wary_lie"},
+      {"text": "The order was filled, wasn't it?", "next": "v_brazen"}
+     ]},
+    "v_wary_lie": {"who": "noor", "mood": "neutral", "say": "Yes. You should. Wrong twice before breakfast: once at the mall, and once to my face. Side door key. It works until it doesn't.",
+     "options": [{"text": "Understood.", "next": null, "act": ["rep:noor:-15", "end:hired_wary"]}]},
+    "v_wary": {"who": "noor", "mood": "neutral", "say": "No, it won't. Because from now on you'll count. Side door key. It works until it doesn't. Understand me?",
+     "options": [{"text": "Understood.", "next": null, "act": ["rep:noor:-5", "end:hired_wary"]}]},
+    "v_brazen": {"who": "noor", "mood": "angry", "say": "The job is the bread. Go and fill orders somewhere that can't taste the difference. The mall's hiring. Tell them I sent you. They'll enjoy that.",
+     "options": [{"text": "(There is nothing to say.)", "next": null, "act": ["end:turned_away"]}]},
+    "v_key": {"who": "noor", "mood": "happy", "dir": "She pushes a dark loaf across the counter, the twin of the one in your pocket this morning, and sets a key beside it as if it were a teaspoon.", "say": "Sit. Eat. Side door. There are three of those keys in the world. Four o'clock tomorrow. Don't be early. Early people are as much trouble as late ones.",
+     "options": [
+      {"text": "About the seeded batch this morning...", "next": "v_pip", "need": ["flag:pip_covered"]},
+      {"text": "Thank you, Noor.", "next": null, "act": ["end:hired_clean"]}
+     ]},
+    "v_pip": {"who": "noor", "mood": "thinking", "say": "Rose flat. Reshaped in a hurry. Seeds pressed on after. I counted the trays before the cellar and after. You covered for someone you had known a minute. That's a kind heart and a cheap one. Today was your one blind eye. Spend the next one better.",
+     "options": [{"text": "Yes, chef.", "next": null, "act": ["end:hired_clean"]}]}
+   }}
+ ],
+ "endings": [
+  {"id": "hired_clean", "title": "Hired, clean", "log": "Noor handed you the side-door key as if it were nothing. There are three in the world.",
+   "pay": 1200, "rep": {"noor": 15}, "give": ["side_door_key"], "flags": [],
+   "ripples": [
+    "You start the career high in Noor's regard. That matters at the very end: both names on the door needs 40.",
+    "If you covered for Pip, it is already priced in. She counted the trays.",
+    "How you treated Pip this morning decides how Pip meets you at the fountain, three quests on: still listening, or already leaving."
+   ],
+   "unlocks": "Rank: Dough Hand. Repeatable job: the morning round."},
+  {"id": "hired_wary", "title": "Hired, on watch", "log": "The key, but not the nod. Noor is counting you now, the way she counts the change.",
+   "pay": 800, "rep": {"noor": 5}, "give": ["side_door_key"], "flags": ["noor_wary"],
+   "ripples": [
+    "You start the career low in Noor's regard. Both names on the door needs 40 at the end, so the difference has to be made up.",
+    "If you bought the mall loaf, the man who sold it was Tam. He remembers a face, and says so in Feeding the Mother.",
+    "If you bought the mall loaf, Olu may whisper it to Vera at the fair's judging table."
+   ],
+   "unlocks": "Rank: Dough Hand. Repeatable job: the morning round."},
+  {"id": "turned_away", "retake": true, "title": "The door stays shut", "log": "“Go and fill orders somewhere that can't taste the difference.” The card stays in the window. You can knock again tomorrow.",
+   "pay": 0, "rep": {"noor": -10}, "flags": [],
+   "ripples": [
+    "The quest line can be taken again from the card. It starts clean: the first attempt's morning is forgotten, except by Noor, whose regard stays ten lower."
+   ],
+   "unlocks": "Nothing yet."}
+ ]
+}
