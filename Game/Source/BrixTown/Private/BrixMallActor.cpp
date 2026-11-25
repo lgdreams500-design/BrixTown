@@ -390,6 +390,7 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 	PeopleLight->LightColor = LightColour.ToFColor(true);
 	PeopleLight->CastShadows = false;
 	PeopleLight->bAtmosphereSunLight = false;
+	PeopleLight->ForwardShadingPriority = -2;   // never the one light of the sky for clear glass and the fog (the engine warns across the picture when two could be)
 	PeopleLight->bAffectsWorld = true;
 	PeopleLight->LightingChannels.bChannel0 = false;
 	PeopleLight->LightingChannels.bChannel1 = true;
@@ -454,7 +455,7 @@ void ABrixMall::Tick(float DeltaSeconds)
 		{
 			const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
 			PeopleLevel = FMath::FInterpConstantTo(PeopleLevel, Contains(Cam->GetCameraLocation()) ? 1.f : 0.f, DeltaSeconds, 2.f);
-			const float Lux = PeopleLux * PeopleLevel * FMath::Lerp(1.f, PeopleLuxDay, Mode ? FMath::Clamp(Mode->Daylight, 0.f, 1.f) : 1.f);
+			const float Lux = PeopleLux * PeopleLevel * FMath::Lerp(1.f, PeopleLuxDay, Mode ? FMath::SmoothStep(.5f, 1.f, Mode->Daylight) : 1.f);   // the day's light comes in only with the sun well up: at dusk people were dim again
 			if (!FMath::IsNearlyEqual(PeopleLight->Intensity, Lux, .01f)) PeopleLight->SetIntensity(Lux);
 			if (PeopleLight->IsVisible() != (Lux > 0.f)) PeopleLight->SetVisibility(Lux > 0.f);
 			if (Lux > 0.f) PeopleLight->SetWorldRotation(FRotator(-50.f, Cam->GetCameraRotation().Yaw, 0.f));
