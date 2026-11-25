@@ -1,5 +1,6 @@
 #include "BrixSoundActor.h"
 
+#include "BrixCars.h"
 #include "BrixCarsActor.h"
 #include "BrixCharacter.h"
 #include "BrixCity.h"
@@ -7,6 +8,7 @@
 #include "BrixGameMode.h"
 #include "BrixPeople.h"
 #include "BrixUnits.h"
+#include "Components/AudioComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -23,10 +25,13 @@ ABrixSound::ABrixSound()
 	PrimaryActorTick.TickGroup = TG_PostUpdateWork;   // after the people and the player have moved this frame
 }
 
-void ABrixSound::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, ABrixPeople* InPeople)
+void ABrixSound::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, ABrixPeople* InPeople, TSharedPtr<FBrixTraffic> InTraffic)
 {
 	Day = InDay;
 	People = InPeople;
+	Traffic = InTraffic;
+	Tram = City.Tram;
+	Pace = City.Sky.RealSecondsPerMinute;
 	FString Error;
 	if (!LoadBrixSoundRules(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), RulesFile)), Rules, Error))
 	{
@@ -35,7 +40,6 @@ void ABrixSound::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, ABrixP
 	}
 	const FString Dir = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), SoundDir));
 	TMap<FString, FBrixClipInfo> Index;
-	TArray<double> EngineHz;
 	if (!LoadBrixSoundIndex(FPaths::Combine(Dir, TEXT("index.json")), Index, EngineHz, Error))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Brix Town: no sound (%s); run Tools/unreal/sound_values.py"), *Error);
@@ -69,6 +73,12 @@ void ABrixSound::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, ABrixP
 	Placed = NewObject<USoundAttenuation>(this);
 	Placed->Attenuation.bAttenuate = false;   // the slice's own fall-off (BrixHear) is in each sound's volume
 	Placed->Attenuation.bSpatialize = true;
+	if (EngineHz.Num() != 2) EngineHz = { 36, 76 };
+	for (int32 k = 0; k < Rules.EngineVoices; ++k) { CarLo.Add(MakeLoop(TEXT("engine_lo"), true)); CarHi.Add(MakeLoop(TEXT("engine_hi"), true)); }
+	MineLo = MakeLoop(TEXT("engine_lo"), false);
+	MineHi = MakeLoop(TEXT("engine_hi"), false);
+	Skid = MakeLoop(TEXT("car_skid"), false);
+	for (int32 k = 0; k < 2; ++k) { Hum[k] = MakeLoop(TEXT("tram_hum"), true); Whine[k] = MakeLoop(TEXT("tram_whine"), true); Rumble[k] = MakeLoop(TEXT("tram_rumble"), true); }
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: %d sounds recorded from the slice (%.1f MB)"), Clips.Num(), Bytes / 1048576.0);
 }
 
@@ -133,6 +143,104 @@ void ABrixSound::Play(const FBrixSoundEvent& E, double Bus)
 	Played.FindOrAdd(E.Sound)++;
 }
 
+ABrixSound::FLoop ABrixSound::MakeLoop(const FString& Name, bool bPlaced)
+{
+	FLoop L;
+	L.Clip = Clips.FindRef(Name);
+	L.bPlaced = bPlaced;
+	if (!L.Clip) UE_LOG(LogTemp, Warning, TEXT("Brix Town: no recording %s; run Tools/unreal/sound_values.py"), *Name);
+	return L;
+}
+
+void ABrixSound::SetLoop(FLoop& L, double Vol, double Pitch, const FVector2D& Pos)
+{
+	if (!L.Clip) return;
+	UAudioComponent* C = LoopComps.IsValidIndex(L.Comp) ? LoopComps[L.Comp].Get() : nullptr;
+	if (Vol < 1e-4)   // out of hearing: stopped, so it takes no voice
+	{
+		if (C && C->IsPlaying()) C->Stop();
+		return;
+	}
+	if (!C)
+	{
+		C = NewObject<UAudioComponent>(this);
+		C->bAutoActivate = false;
+		C->bAutoDestroy = false;
+		C->bAllowSpatialization = L.bPlaced;
+		if (L.bPlaced) C->AttenuationSettings = Placed;
+		C->RegisterComponent();
+		L.Comp = LoopComps.Add(C);
+	}
+	if (L.bPlaced) C->SetWorldLocation(ToWorld(Pos, SourceUp));
+	C->SetVolumeMultiplier((float)(Vol * Rules.Master * Rules.World / L.Clip->Scale));
+	C->SetPitchMultiplier((float)FMath::Clamp(Pitch, .4, 2.0));
+	if (!C->IsPlaying())
+	{
+		C->SetSound(MakeWave(L.Clip));   // a fresh wave each time it starts, its queue full from the loop's start
+		C->Play();
+	}
+	const FString* Name = Clips.FindKey(L.Clip);
+	if (Name) LoopTime.FindOrAdd(*Name) += GetWorld()->GetDeltaSeconds();
+}
+
+void ABrixSound::Engine(FLoop& Lo, FLoop& Hi, double Hz, double Vol, const FVector2D& Pos)
+{
+	// sound.js pitches one voice; here two recordings at a low and a high note share it, each pitched to the note, so the
+	// timbre stays near the slice's (its filter does not move with the pitch) across the whole range
+	const double W = FMath::Clamp((Hz - EngineHz[0]) / (EngineHz[1] - EngineHz[0]), 0.0, 1.0);
+	SetLoop(Lo, Vol * FMath::Cos(W * HALF_PI), Hz / EngineHz[0], Pos);
+	SetLoop(Hi, Vol * FMath::Sin(W * HALF_PI), Hz / EngineHz[1], Pos);
+}
+
+void ABrixSound::Vehicles(double Now, const FVector2D& Here)
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Mode) return;
+	const double Minute = Mode->ClockMinute(), SecondsPerMinute = Pace / FMath::Max(.001f, Mode->ClockRate);
+	const ABrixCars::FDrive* Drive = Mode->Cars ? &Mode->Cars->Driving() : nullptr;
+	// the cars on a trip near, with their speed (cars.js near()); the car the player drives is their own; a bus they ride is heard as any other
+	CarsHeard.Reset();
+	if (Traffic)
+		for (int32 k = 0; k < Traffic->Num(); ++k)
+		{
+			if (Drive && Drive->K == k && !Drive->bRide) continue;
+			const TOptional<FBrixCarAt> C = Traffic->At(k, Minute);
+			if (!C || !C->bTrip || FMath::Abs(C->Pos.X - Here.X) > CarsNear || FMath::Abs(C->Pos.Y - Here.Y) > CarsNear) continue;
+			const double Dm = .02;
+			const TOptional<FBrixCarAt> C2 = Traffic->At(k, Minute + Dm);
+			CarsHeard.Add({ C->Pos, C2 ? FVector2D::Distance(C2->Pos, C->Pos) / (Dm * SecondsPerMinute) : 0.0, Traffic->Vehicles[k].Kind != 0 });
+		}
+	FBrixDriveHeard D;
+	const bool bDriving = Drive && Drive->K >= 0 && !Drive->bRide;
+	if (bDriving)
+		if (const ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+		{
+			D.V = Drive->V;
+			D.bGas = Me->DriveKeys().Y > 0;
+			D.bBrake = Me->Handbrake() || (Me->DriveKeys().Y < 0 && Drive->V > 0);
+		}
+	EngineSounds.Frame(Rules, CarsHeard, Here, bDriving ? &D : nullptr, Now, Events);
+	for (int32 k = 0; k < EngineSounds.Pool.Num() && k < CarLo.Num(); ++k)
+	{
+		const FBrixEngineVoice& V = EngineSounds.Pool[k];
+		Engine(CarLo[k], CarHi[k], V.Hz, V.bOn ? V.Gain * BrixHear(Rules, Here, 0, V.Pos, V.Far).X : 0, V.Pos);
+	}
+	Engine(MineLo, MineHi, EngineSounds.Mine.Hz, EngineSounds.Mine.Gain, Here);
+	SetLoop(Skid, EngineSounds.Skid, 1, Here);
+	// the trams
+	TramsHeard.Reset();
+	for (const FBrixTram::FAt& T : Tram.At(Minute)) TramsHeard.Add({ T.X, T.bStopped, T.Run });
+	TramSounds.Frame(Rules, TramsHeard, Tram.Z, Here, Now, Events);
+	for (int32 k = 0; k < 2; ++k)
+	{
+		const FBrixTramVoice& V = TramSounds.Voices[k];
+		const double A = V.bOn ? V.Gain * BrixHear(Rules, Here, 0, V.Pos, V.Far).X : 0;
+		SetLoop(Hum[k], A, 1, V.Pos);
+		SetLoop(Whine[k], A * V.Whine, V.WhineHz / Rules.WhineHz, V.Pos);
+		SetLoop(Rumble[k], A * V.Rumble, 1, V.Pos);
+	}
+}
+
 void ABrixSound::Tick(float Dt)
 {
 	Super::Tick(Dt);
@@ -171,19 +279,25 @@ void ABrixSound::Tick(float Dt)
 		}
 		PeopleSounds.Frame(Rules, Heard, Here, Now, Events);
 	}
-	for (const FBrixSoundEvent& E : Events) Play(E, E.Sound.StartsWith(TEXT("act_")) ? Rules.Action : Rules.World);
+	// engines and the trams (SND-002, SND-004, SND-009)
+	Vehicles(Now, Here);
+	for (const FBrixSoundEvent& E : Events) Play(E, E.Sound.StartsWith(TEXT("act_")) || E.Sound == TEXT("car_bump") ? Rules.Action : Rules.World);
 	if (Now > LogAt) { LogAt = Now + 10; LogPlayed(TEXT("so far")); }
 }
 
 void ABrixSound::LogPlayed(const TCHAR* When)
 {
-	if (!Played.Num()) return;
 	TArray<FString> Names;
 	Played.GetKeys(Names);
 	Names.Sort();
 	FString S;
 	for (const FString& N : Names) S += FString::Printf(TEXT("%s%s %d"), S.IsEmpty() ? TEXT("") : TEXT(", "), *N, Played[N]);
-	UE_LOG(LogTemp, Display, TEXT("Brix Town: sounds played %s: %s"), When, *S);
+	if (S.Len()) UE_LOG(LogTemp, Display, TEXT("Brix Town: sounds played %s: %s"), When, *S);
+	LoopTime.GetKeys(Names);
+	Names.Sort();
+	S.Reset();
+	for (const FString& N : Names) S += FString::Printf(TEXT("%s%s %.1f s"), S.IsEmpty() ? TEXT("") : TEXT(", "), *N, LoopTime[N]);
+	if (S.Len()) UE_LOG(LogTemp, Display, TEXT("Brix Town: loops heard %s: %s"), When, *S);
 }
 
 void ABrixSound::EndPlay(const EEndPlayReason::Type Reason)

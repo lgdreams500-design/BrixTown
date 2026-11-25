@@ -167,6 +167,122 @@ bool FSND003_ThePlayersSteps::RunTest(const FString&)
 	return true;
 }
 
+// Engines (SND-002) and the player's car (SND-009): eight cars around the listener, one coming into reach, one idling,
+// one faster than the top note, vans among them, and the player getting in, waiting for the engine to start, speeding
+// up, braking hard and being stopped short, run through sound.js engines() and the port: each frame the same cars get the
+// six voices, nearest first, with the same pitch, tyres and level; the player's car the same pitch, level and skid, and
+// the bump at the same moment.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSND002_EnginesAsTheSlice, "BrixTown.World.SND002_engines_sound_as_the_slice_hears_them",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FSND002_EnginesAsTheSlice::RunTest(const FString&)
+{
+	FBrixSoundRules R;
+	if (!LoadRules(*this, R)) return false;
+	const TSharedPtr<FJsonObject> V = LoadValues(*this);
+	if (!V) return false;
+	const TArray<TSharedPtr<FJsonValue>>& Frames = V->GetObjectField(TEXT("cases"))->GetArrayField(TEXT("engines"));
+	const TArray<TSharedPtr<FJsonValue>>& Want = V->GetObjectField(TEXT("trace"))->GetArrayField(TEXT("engines"));
+	if (!TestEqual(TEXT("a trace for every frame"), Want.Num(), Frames.Num())) return false;
+	FBrixEngineSounds S;
+	int32 Wrong = 0, Voices = 0, Bumps = 0, Skids = 0;
+	auto Near = [](double A, const TSharedPtr<FJsonValue>& B) { return FMath::IsNearlyEqual(A, B->AsNumber(), 2e-6); };
+	for (int32 f = 0; f < Frames.Num(); ++f)
+	{
+		const TSharedPtr<FJsonObject> F = Frames[f]->AsObject();
+		TArray<FBrixCarHeard> Cars;
+		for (const TSharedPtr<FJsonValue>& C : F->GetArrayField(TEXT("cars")))
+		{
+			const TSharedPtr<FJsonObject> O = C->AsObject();
+			Cars.Add({ FVector2D(O->GetNumberField(TEXT("x")), O->GetNumberField(TEXT("z"))), O->GetNumberField(TEXT("v")), O->GetBoolField(TEXT("van")) });
+		}
+		FBrixDriveHeard D;
+		const TSharedPtr<FJsonObject>* DO = nullptr;
+		const bool bDrive = F->TryGetObjectField(TEXT("drive"), DO);
+		if (bDrive) { D.V = (*DO)->GetNumberField(TEXT("v")); D.bGas = (*DO)->GetBoolField(TEXT("gas")); D.bBrake = (*DO)->GetBoolField(TEXT("brake")); }
+		TArray<FBrixSoundEvent> Got;
+		S.Frame(R, Cars, FVector2D::ZeroVector, bDrive ? &D : nullptr, F->GetNumberField(TEXT("t")), Got);
+		const TSharedPtr<FJsonObject> W = Want[f]->AsObject();
+		const TArray<TSharedPtr<FJsonValue>>& Pool = W->GetArrayField(TEXT("pool"));
+		bool bSame = Pool.Num() == S.Pool.Num();
+		for (int32 k = 0; bSame && k < Pool.Num(); ++k)
+		{
+			const FBrixEngineVoice& G = S.Pool[k];
+			if (Pool[k]->IsNull()) { bSame = !G.bOn; continue; }
+			const TArray<TSharedPtr<FJsonValue>>& E = Pool[k]->AsArray();
+			bSame = G.bOn && Near(G.Hz, E[0]) && Near(G.Tyres, E[1]) && Near(G.Gain, E[2]) && Near(G.Far, E[3]);
+			++Voices;
+		}
+		const TArray<TSharedPtr<FJsonValue>>& M = W->GetArrayField(TEXT("mine"));
+		bSame = bSame && Near(S.Mine.Hz, M[0]) && Near(S.Mine.Tyres, M[1]) && Near(S.Mine.Gain, M[2]) && Near(S.Skid, M[3]);
+		const TArray<TSharedPtr<FJsonValue>>& Ev = W->GetArrayField(TEXT("events"));
+		bSame = bSame && Ev.Num() == Got.Num();
+		for (int32 k = 0; bSame && k < Ev.Num(); ++k) bSame = Got[k].Sound == TEXT("car_bump") && FMath::IsNearlyEqual(Ev[k]->AsArray()[4]->AsNumber(), R.BumpGain);
+		Bumps += Got.Num();
+		Skids += S.Skid > 0;
+		if (!bSame && ++Wrong <= 5)
+			AddError(FString::Printf(TEXT("frame %d differs from sound.js: the player's car %.4f Hz, level %.4f, skid %.3f; %d sounds"), f, S.Mine.Hz, S.Mine.Gain, S.Skid, Got.Num()));
+	}
+	AddInfo(FString::Printf(TEXT("%d frames: %d engine voices, %d frames skidding, %d bumps"), Frames.Num(), Voices, Skids, Bumps));
+	TestTrue(TEXT("the scripted moments have voices, a skid and a bump"), Voices > 500 && Skids > 0 && Bumps == 1);
+	TestEqual(TEXT("frames that differ from sound.js"), Wrong, 0);
+	return true;
+}
+
+// The tram (SND-004): a tram pulling away, running, stopping and leaving again, one passing the other way, one standing
+// at a stop out of hearing, run through sound.js trams() and the port: each frame the same two trams are heard with the
+// same level, whine pitch and share and rumble, and the bell rings at the same moments, as loud.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSND004_TheTramAsTheSlice, "BrixTown.World.SND004_the_tram_sounds_as_the_slice_hears_it",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FSND004_TheTramAsTheSlice::RunTest(const FString&)
+{
+	FBrixSoundRules R;
+	if (!LoadRules(*this, R)) return false;
+	const TSharedPtr<FJsonObject> V = LoadValues(*this);
+	if (!V) return false;
+	const TArray<TSharedPtr<FJsonValue>>& Frames = V->GetObjectField(TEXT("cases"))->GetArrayField(TEXT("trams"));
+	const TArray<TSharedPtr<FJsonValue>>& Want = V->GetObjectField(TEXT("trace"))->GetArrayField(TEXT("trams"));
+	if (!TestEqual(TEXT("a trace for every frame"), Want.Num(), Frames.Num())) return false;
+	FBrixTramSounds S;
+	int32 Wrong = 0, Bells = 0, Whining = 0;
+	auto Near = [](double A, const TSharedPtr<FJsonValue>& B) { return FMath::IsNearlyEqual(A, B->AsNumber(), 2e-6); };
+	for (int32 f = 0; f < Frames.Num(); ++f)
+	{
+		const TSharedPtr<FJsonObject> F = Frames[f]->AsObject();
+		const double Z = F->GetNumberField(TEXT("tz"));
+		TArray<FBrixTramHeard> Trams;
+		for (const TSharedPtr<FJsonValue>& T : F->GetArrayField(TEXT("list")))
+		{
+			const TArray<TSharedPtr<FJsonValue>>& A = T->AsArray();
+			Trams.Add({ A[0]->AsNumber(), A[1]->AsBool(), A[2]->AsNumber() });
+		}
+		TArray<FBrixSoundEvent> Got;
+		S.Frame(R, Trams, Z, FVector2D::ZeroVector, F->GetNumberField(TEXT("t")), Got);
+		Got.RemoveAll([&](const FBrixSoundEvent& E) { return BrixHear(R, FVector2D::ZeroVector, 0, E.Pos, E.Far).X < .004; });   // too faint to start (once())
+		const TSharedPtr<FJsonObject> W = Want[f]->AsObject();
+		const TArray<TSharedPtr<FJsonValue>>& Vo = W->GetArrayField(TEXT("voices"));
+		bool bSame = Vo.Num() == 2;
+		for (int32 k = 0; bSame && k < 2; ++k)
+		{
+			const FBrixTramVoice& G = S.Voices[k];
+			if (Vo[k]->IsNull()) { bSame = !G.bOn; continue; }
+			const TArray<TSharedPtr<FJsonValue>>& E = Vo[k]->AsArray();
+			bSame = G.bOn && Near(G.Gain, E[0]) && Near(G.Far, E[1]) && Near(G.WhineHz, E[2]) && Near(G.Whine, E[3]) && Near(G.Rumble, E[4]);
+			Whining += G.Whine > 0;
+		}
+		const TArray<TSharedPtr<FJsonValue>>& Ev = W->GetArrayField(TEXT("events"));
+		bSame = bSame && Ev.Num() == Got.Num();
+		for (int32 k = 0; bSame && k < Ev.Num(); ++k)
+			bSame = Got[k].Sound == TEXT("tram_bell") && Near(BrixHear(R, FVector2D::ZeroVector, 0, Got[k].Pos, Got[k].Far).X, Ev[k]->AsArray()[5]);
+		Bells += Got.Num();
+		if (!bSame && ++Wrong <= 5)
+			AddError(FString::Printf(TEXT("frame %d differs from sound.js: level %.4f whine %.2f Hz %.4f rumble %.4f; %d bells"), f, S.Voices[0].Gain, S.Voices[0].WhineHz, S.Voices[0].Whine, S.Voices[0].Rumble, Got.Num()));
+	}
+	AddInfo(FString::Printf(TEXT("%d frames: %d bells, %d voice-frames whining"), Frames.Num(), Bells, Whining));
+	TestTrue(TEXT("the scripted moments ring the bell as it stops and leaves"), Bells == 2 && Whining > 50);
+	TestEqual(TEXT("frames that differ from sound.js"), Wrong, 0);
+	return true;
+}
+
 // Every sound has its recording (SND-009): the recordings of Game/Data/sounds (Tools/unreal/sound_values.py) are all
 // there, read as 16-bit WAV at the index's rate and length, loops among them; every action of sound.json has one, every
 // surface's steps for adults and children, and the pose sounds.
@@ -201,6 +317,10 @@ bool FSND009_EverySoundIsRecorded::RunTest(const FString&)
 	for (const FString& Su : R.Surfaces) for (const TCHAR* Who : { TEXT("_adult_0"), TEXT("_child_0") }) TestTrue(TEXT("steps on ") + Su, Clips.Contains(TEXT("step_") + Su + Who));
 	for (const FString* P : { &R.PoseSit, &R.PoseStand, &R.PoseLie }) TestTrue(TEXT("a resident's ") + *P, Clips.Contains(TEXT("person_") + *P));
 	TestTrue(TEXT("a hard landing"), Clips.Contains(TEXT("act_land")));
+	for (const TCHAR* L : { TEXT("engine_lo"), TEXT("engine_hi"), TEXT("tram_hum"), TEXT("tram_whine"), TEXT("tram_rumble"), TEXT("car_skid") })
+		TestTrue(FString(TEXT("a loop: ")) + L, Clips.Contains(L) && Clips[L].bLoop);
+	for (const TCHAR* O : { TEXT("tram_bell"), TEXT("car_bump") }) TestTrue(FString(TEXT("a one-shot: ")) + O, Clips.Contains(O) && !Clips[O].bLoop);
+	TestTrue(TEXT("the engine loops' two pitches"), EngineHz.Num() == 2 && EngineHz[0] < EngineHz[1]);
 	AddInfo(FString::Printf(TEXT("%d recordings, %.1f s in all"), Clips.Num(), Seconds));
 	// a WAV that is not one is refused
 	TArray<uint8> Junk, Pcm;

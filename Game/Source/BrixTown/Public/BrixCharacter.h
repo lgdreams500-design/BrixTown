@@ -45,6 +45,8 @@ public:
 	void TestPress() { TalkKey(); }
 	FVector2D TestHold = FVector2D::ZeroVector;
 	double WalkPhase() const { return Phase; }   // the walk's cycle, 0..1: a step at each half (the sound's steps, SND-003)
+	FVector2D DriveKeys() const { return DriveUsed; }   // this frame's steer and throttle while driving (the engine's sound, SND-009)
+	bool Handbrake() const { return bHandbrake; }
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void PawnClientRestart() override;
@@ -89,5 +91,6 @@ private:
 	bool bPanel = false;
 	bool bDriving = false, bHandbrake = false;
 	FVector2D DriveIn = FVector2D::ZeroVector;   // this frame's W/S and A/D while driving
+	FVector2D DriveUsed = FVector2D::ZeroVector; // what the car was given this frame (DriveIn is cleared once used)
 	float ArmBefore = 0.f;
 };

@@ -21,6 +21,12 @@ struct BRIXWORLD_API FBrixSoundRules
 	// people (SND-017)
 	double PeopleFar = 18, RunLouder = 1.5, ChildSofter = .7, ChildPitch = 1.3;
 	FString PoseSit = TEXT("sit"), PoseStand = TEXT("stand"), PoseLie = TEXT("lie");
+	// engines (SND-002) and the player's car (SND-009)
+	double IdleHz = 30, HzPerMps = 3.6, MaxHz = 95, EngineGain = .16, EngineFar = 70, VanPitch = .8, TyresGain = .05;
+	int32 EngineVoices = 6;
+	double CarGain = .2, StartLen = .8, SkidMps = 5, SkidGain = .18, BumpGain = .4;
+	// the tram (SND-004)
+	double HumHz = 48, WhineHz = 380, TramGain = .3, TramFar = 140, BellFar = 160;
 };
 
 // Reads World/rules/sound.json. On failure returns false and says why.
@@ -82,6 +88,46 @@ private:
 	int32 LastHalf = -1;
 	bool bLast = false, bPrevGround = true;
 	double PrevVz = 0;
+};
+
+// A car near the listener on a trip (cars.js near()): where it is, its speed in m/s, a van (or bus) or a car.
+struct BRIXWORLD_API FBrixCarHeard { FVector2D Pos = FVector2D::ZeroVector; double V = 0; bool bVan = false; };
+// An engine's voice this frame: the pitch of its note (Hz), its tyres' share, its level before hearing and its reach.
+struct BRIXWORLD_API FBrixEngineVoice { bool bOn = false; FVector2D Pos = FVector2D::ZeroVector; double Hz = 0, Tyres = 0, Gain = 0, Far = 0; };
+// The car the player drives this frame: its speed (m/s, back is negative), the throttle down, braking.
+struct BRIXWORLD_API FBrixDriveHeard { double V = 0; bool bGas = false, bBrake = false; };
+
+// Engines (SND-002, SND-009; sound.js engines()): a few voices given to the nearest cars on a trip within reach, each
+// pitched by its speed (vans lower) and louder moving; the player's own car with its start-up, its pitch with speed and
+// the throttle, a skid when braking hard and a bump when it is stopped short.
+class BRIXWORLD_API FBrixEngineSounds
+{
+public:
+	TArray<FBrixEngineVoice> Pool;       // the nearest cars, nearest first
+	FBrixEngineVoice Mine;               // the player's car (Gain 0 when not driving)
+	double Skid = 0;                     // the skid's level
+	void Frame(const FBrixSoundRules& R, const TArray<FBrixCarHeard>& Cars, const FVector2D& Here, const FBrixDriveHeard* Drive, double Now, TArray<FBrixSoundEvent>& Out);
+
+private:
+	TOptional<double> Since, PrevV;
+};
+
+// A tram on the line this frame (FBrixTram::At): how far along, standing at a stop, which run.
+struct BRIXWORLD_API FBrixTramHeard { double X = 0; bool bStopped = false; double Run = 0; };
+// A tram's voice: its level before hearing (the hum's), the whine's pitch and share, the rumble's share.
+struct BRIXWORLD_API FBrixTramVoice { bool bOn = false; FVector2D Pos = FVector2D::ZeroVector; double Gain = 0, Far = 0, WhineHz = 0, Whine = 0, Rumble = 0; };
+
+// The tram (SND-004; sound.js trams()): two voices for the nearest trams, a hum always, a whine rising with its speed and
+// a rumble while it moves; two bell notes when one stops and when it leaves. Its speed is from where it was a moment ago.
+class BRIXWORLD_API FBrixTramSounds
+{
+public:
+	FBrixTramVoice Voices[2];
+	void Frame(const FBrixSoundRules& R, const TArray<FBrixTramHeard>& Trams, double Z, const FVector2D& Here, double Now, TArray<FBrixSoundEvent>& Out);
+
+private:
+	struct FSeen { double Run = 0, X = 0, T = 0; bool bStopped = false; };
+	TArray<FSeen> Seen;                  // in the order first seen, as sound.js's Map
 };
 
 // A recording in Game/Data/sounds/index.json.

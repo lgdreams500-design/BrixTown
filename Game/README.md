@@ -165,7 +165,7 @@ stall counters, saving, the game menu's Money page in its painted-sign look. To 
 `-BrixCounter=bank "-BrixLife=open,current;open,savings;move,p:current,p:savings,1000;loan,5000,3"` (ops as
 economy.check_script() writes them, arguments by commas).
 
-## Sound (SND-003, SND-007, SND-009, SND-017)
+## Sound (SND-002 to SND-004, SND-007, SND-009, SND-017)
 The slice makes its sounds live with Web Audio (`Prototype/play/sound.js`, from `World/rules/sound.json`); the Unreal
 build plays recordings of those same sounds. `Tools/unreal/sound_values.py` runs sound.js itself in headless Edge (over
 its DevTools socket) and renders its own sound-making functions into an OfflineAudioContext: `Game/Data/sounds/*.wav`
@@ -178,8 +178,15 @@ only pans the sound from where it is. The same script traces sound.js's own logi
 for recorders) into `Tests/values/sound_city_01.json`, and the SND tests check the port against it.
 So far: the player's steps in time with their walk (louder running) and a thud on a hard landing; the steps of the
 residents within 9 m, at most six a frame, on stone, on grass in a garden (wood indoors, when people are seen indoors),
-louder running, lighter and higher for children; the sound of a resident sitting down or getting up within 10 m. A test
-shot logs how many of each sound were played (`sounds played in all: ...`). Not yet: being muffled indoors.
+louder running, lighter and higher for children; the sound of a resident sitting down or getting up within 10 m. The
+engines of the six nearest cars on a trip within 70 m, each from where it is, its note rising with its speed (vans and
+buses lower) and louder moving; the car the player drives, its engine starting, its note with speed and the throttle,
+a skid braking hard above 5 m/s and a bump when it is stopped short. sound.js pitches one voice; here two recordings of
+it, at 36 and 76 Hz, share the note and are each pitched to it, so the timbre stays the slice's across the range. The two
+nearest trams hum, whine higher and rumble as they go faster, and ring their bell as they stop and as they leave. A
+continuous sound is a loop that plays only while it can be heard (it is stopped, and takes no voice, when it cannot). A
+test shot logs how many of each sound were played and how long each loop was heard (`sounds played in all: ...`,
+`loops heard in all: ...`). Not yet: being muffled indoors.
 
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
@@ -225,3 +232,5 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.SND003_the_players_steps_and_landings` | SND-003 |
 | `BrixTown.World.SND007_sounds_are_heard_from_where_they_are` | SND-007 |
 | `BrixTown.World.SND009_every_sound_has_its_recording` | SND-009 |
+| `BrixTown.World.SND002_engines_sound_as_the_slice_hears_them` | SND-002, SND-009 |
+| `BrixTown.World.SND004_the_tram_sounds_as_the_slice_hears_it` | SND-004 |
