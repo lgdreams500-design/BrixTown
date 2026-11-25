@@ -41,6 +41,8 @@ public:
 	// A counter or the money page opens (life.js open()): the player stands, the mouse is free; and closes.
 	void BeginPanel();
 	void EndPanel();
+	// the settings that move the camera and the look (UI-009): metres behind, degrees of view, the mouse's speed, up-down turned
+	void SetView(float CameraM, float FovDeg, float LookSpeed, bool bInvertY);
 	// for test shots: press E as a player would, and hold W/S and A/D (x steer, y throttle)
 	void TestPress() { TalkKey(); }
 	FVector2D TestHold = FVector2D::ZeroVector;
@@ -63,6 +65,7 @@ private:
 	void CounterKey();               // B: the counter here (life.js counter())
 	void WalletKey();                // I: the money page
 	void QuestsKey();                // J: the quest log
+	void MenuPageKey(const FInputActionInstance& Instance);   // C, G, P, U, M, H: a page of the menu
 	void ChooseKey(const FInputActionInstance& Instance);   // the arrows and Enter at a shop's counter (UI-020)
 	class ABrixLife* Life() const;
 	void JumpKey();                  // Space: a jump on foot, the handbrake in a car
@@ -89,6 +92,10 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UInputAction> CounterAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> WalletAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> QuestsAction;
+	UPROPERTY(Transient) TArray<TObjectPtr<UInputAction>> PageActions;
+	TArray<FString> PageNames;
+	float LookScale = 1.f;
+	bool bInvertLook = false;
 	UPROPERTY(Transient) TArray<TObjectPtr<UInputAction>> ChooseActions;   // left, right, up, down, Enter
 	UPROPERTY(Transient) TArray<TObjectPtr<UInputAction>> AnswerActions;
 	bool bTalking = false;

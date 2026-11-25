@@ -303,6 +303,28 @@ Me page's list of achievements, the stamped coin face. To see a reward in a test
 "-BrixLife=act,new_in_town,r0504,stage:bank;open,current;check;buy,grocer,bread;check;act,new_in_town,r0504,take:bread|end:gift"`
 (the ops that many seconds before the shot); to see a quest talk, `-BrixTime=15:12 -BrixTalk=504 "-BrixAnswers=1,1"`.
 
+## The game menu and settings (UI-005 to UI-016, UI-019; F-UI-MENU 2, F-UI-SETTINGS 1; ADR-0049)
+Esc opens the game menu on its home (Esc again, or Back to town, closes it; Esc first closes a counter or a talk); C, I, G,
+P, J, U, M and H open a page directly, as World/rules/settings.json binds them, and its key again goes back to town. While
+it is open the clock stands still (the game is paused; `menu.pauses`). The pages are settings.json's, in its groups You,
+Town and Game, each in its colour: Me (what you have, the achievements earned first with their day then those still to
+earn, people you know), Money (accounts, statement), Belongings (what is carried, each drawn on its plinth), Journal (the
+quest log), Settings (one group at a time), Save, Help (the keyboard's controls by where they work, from settings.json);
+Properties, Wardrobe, Storage and Map say what they wait for (the property market, the character designer,
+F-PROP-STORAGE, the big map), and Save shows its three slots but cannot save yet (QST-008). The settings are
+`BrixWorld/BrixSettings`: settings.json checked by world.settings_problems()'s rules (`UI009_settings_are_valid`,
+`UI009_a_bad_setting_is_caught`, `UI008_every_platform_maps_every_action`, `UI010_no_control_does_two_things`,
+`UI005_every_tab_opens_from_a_control_on_every_platform`), the player's values kept on the device in
+`Saved/BrixTown/settings.json`, not in a save, and taking effect at once: sun shadows, ambient occlusion, bounce light,
+resolution and the Picture choice that sets them together, field of view, the frame counter, sound on or off and its
+level, text size, look speed, invert and camera distance. Names over residents, the minimap, first person and the
+separate sound levels are kept for when those come. The menu, the counters and the buy menu are in "Lamplight"
+(ADR-0049, proposed on the owner's word, `BrixLook.h`): cards of warm dark stone with round corners and a thick lower edge,
+the town dimmed behind, each page's colour as its lintel and mark, lantern-orange main buttons, prices on paper tags, the
+goods on plinths in a pool of lantern light. Shots: `Art/StyleTests/lamplight_menu_36/`. To see a page in a test shot:
+`-BrixMenu=<home|me|wallet|quests|belongings|settings|help|...>` (and `-BrixSettingsGroup=<n>`); the shot is taken by the
+menu itself, since the paused game's timers stop.
+
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
 black. At Epic quality the town runs at about 36 frames a second, at High about 63 with the same shade, at Medium about 86
@@ -364,3 +386,8 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.QST001_quests_run_as_the_python_does` | QST-001 to QST-007 |
 | `BrixTown.World.QST009_achievements_are_earned_as_python_says` | QST-009 |
 | `BrixTown.World.SND019_money_coming_in_is_shown_as_python_says` | SND-019, SND-020 |
+| `BrixTown.World.UI005_every_tab_opens_from_a_control_on_every_platform` | UI-005, UI-013, UI-015 |
+| `BrixTown.World.UI008_every_platform_maps_every_action` | UI-008 |
+| `BrixTown.World.UI009_settings_are_valid` | UI-009 |
+| `BrixTown.World.UI009_a_bad_setting_is_caught` | UI-009 |
+| `BrixTown.World.UI010_no_control_does_two_things` | UI-010 |
