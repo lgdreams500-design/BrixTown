@@ -517,6 +517,20 @@ class TheSky(unittest.TestCase):
         self.assertEqual(mid(720 + dry)["wet"], 0.0)       # ... and dry in dry_minutes
         self.assertEqual(world.weather_now(W, ["clear"] * 4, 600, trying="rain")["kind"], "rain")
 
+    def test_WLD_036_clouds_drift_with_the_clock_and_follow_the_weather(self):
+        c = W["sky"]["clouds"]
+        day = ["clear", "rain", "cloud", "fog"]
+        now = lambda m, d=16: world.clouds_now(W, day, d, m)
+        self.assertEqual(now(180)["cover"], c["cover"]["clear"])
+        self.assertEqual(now(540)["cover"], c["cover"]["rain"])
+        self.assertAlmostEqual(now(360)["cover"], (c["cover"]["clear"] + c["cover"]["rain"]) / 2)
+        a, b = now(600), now(610)                          # ten minutes on, carried downwind by wind x speed x 10
+        self.assertAlmostEqual(b["offset"][0] - a["offset"][0], c["wind"][0] * c["speed"] * 10)
+        self.assertAlmostEqual(b["offset"][1] - a["offset"][1], c["wind"][1] * c["speed"] * 10)
+        self.assertGreater(b["phase"], a["phase"])        # and their shapes change slowly
+        self.assertEqual(now(600), now(600))               # the same clock, the same sky
+        self.assertNotEqual(now(600, 16)["offset"], now(600, 17)["offset"])
+
     def test_WLD_037_broken_weather_is_caught(self):
         import copy
         bad = copy.deepcopy(W)

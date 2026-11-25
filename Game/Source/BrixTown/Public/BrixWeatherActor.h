@@ -27,7 +27,14 @@ public:
 	void Start(const FBrixCity& City, ABrixTownActor* InTown);
 	virtual void Tick(float DeltaSeconds) override;
 
-	UPROPERTY(Config) int32 MaxDrops = 3000;          // drops at full rain
+	UPROPERTY(Config) int32 MaxDrops = 3500;          // drops at full rain
+	UPROPERTY(Config) float SplashReach = 7.f;        // m: drops this near throw up a splash where they land ...
+	UPROPERTY(Config) float SplashSeconds = 0.16f;    // ... for this long
+	UPROPERTY(Config) float CloudDome = 6000.f;       // m: the dome the clouds are drawn on (the haze softens them towards the horizon)
+	UPROPERTY(Config) float CloudBrightness = 1.f;    // their light, to the picture's exposure
+	UPROPERTY(Config) FLinearColor CloudZenith = FLinearColor(0.30f, 0.42f, 0.60f);    // the sky's colour overhead and at the horizon that
+	UPROPERTY(Config) FLinearColor CloudHorizon = FLinearColor(0.72f, 0.74f, 0.76f);   // their shade takes ...
+	UPROPERTY(Config) FLinearColor CloudGrey = FLinearColor(0.55f, 0.56f, 0.58f);      // ... and under a grey sky
 	UPROPERTY(Config) float NearDrops = 1.6f;         // m: the rings' inner and outer edge round the camera (ADR-0016)
 	UPROPERTY(Config) float FarDrops = 11.f;
 	UPROPERTY(Config) float DropWidth = 0.012f;       // m
@@ -48,10 +55,16 @@ private:
 	struct FRoof { FVector2D C, Half; double Cos, Sin; };
 	TArray<FRoof> Roofs;
 	TMultiMap<FIntPoint, int32> RoofGrid;              // 16 m cells
-	struct FDrop { float A, R, Phase, Speed; };
+	struct FDrop { float A, R, Phase, Speed, Len, Bri; };
+	int32 SplashDrops = 0;
+	TArray<FBox2D> Paving;
+	int32 StartDay = 16;
 	TArray<FDrop> Drops;
 	UPROPERTY() TObjectPtr<UProceduralMeshComponent> Rain;
 	UPROPERTY() TObjectPtr<UMaterialInterface> RainMaterial;
-	float LastWet = -1.f;
+	float LastWet = -1.f, LastRip = -1.f;
+	UPROPERTY() TObjectPtr<UProceduralMeshComponent> Clouds;
+	UPROPERTY() TObjectPtr<class UMaterialInstanceDynamic> CloudMat;
+	UPROPERTY() TObjectPtr<class ADirectionalLight> SunLight;
 	int32 RainTris = -1;
 };

@@ -856,7 +856,7 @@ void ABrixTownActor::Wrap(const FString& Kind, const FVector2D& Pos, float Groun
 	Breakables.Add(MoveTemp(B));
 }
 
-void ABrixTownActor::SetWet(float Dark, float Sheen, float Puddles)
+void ABrixTownActor::SetWet(float Dark, float Sheen, float Puddles, float Ripples)
 {
 	TArray<UMaterialInstanceDynamic*> All;
 	if (OwnColour) All.Add(OwnColour);
@@ -866,6 +866,7 @@ void ABrixTownActor::SetWet(float Dark, float Sheen, float Puddles)
 		M->SetScalarParameterValue(TEXT("WetDark"), Dark);
 		M->SetScalarParameterValue(TEXT("WetSheen"), Sheen);
 		M->SetScalarParameterValue(TEXT("Puddles"), Puddles);
+		M->SetScalarParameterValue(TEXT("Ripples"), Ripples);
 	}
 }
 

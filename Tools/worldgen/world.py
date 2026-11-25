@@ -287,6 +287,27 @@ def weather_now(w, day_weather, m, trying=None):
     return out
 
 
+def clouds_now(w, day_weather, day, m, trying=None):
+    """WLD-035, WLD-036 (ADR-0014): the clouds at minute m of a day whose six-hour slots are `day_weather`: how much sky
+    they cover (clouds.cover for each kind of weather, blended across the slots' edges over blend_minutes), where the wind
+    has carried them (wind times speed times the minutes since day 0, wrapped at 512 noise cells) and the phase of their
+    shapes (change times the same minutes). Worked out from the clock alone; the Unreal build's BrixCloudsNow is checked
+    against it."""
+    c = w["sky"]["clouds"]
+    kind = lambda i: trying or (c["follow_weather"] and day_weather[i % 4]) or "clear"
+    s = int(m // 360)
+    into, b = m - s * 360, c["blend_minutes"]
+    v = lambda i: c["cover"][kind(i)]
+    if into < b:
+        cover = v(s - 1) + (v(s) - v(s - 1)) * (.5 + .5 * into / b)
+    elif into > 360 - b:
+        cover = v(s) + (v(s + 1) - v(s)) * (.5 * (into - (360 - b)) / b)
+    else:
+        cover = v(s)
+    t = day * 1440 + m
+    return dict(cover=cover, offset=[(c["wind"][0] * c["speed"] * t) % 512, (c["wind"][1] * c["speed"] * t) % 512], phase=(c["change"] * t) % 512)
+
+
 def sky_problems(w):
     """Every rule World/rules/sky.json must keep (WLD-035, WLD-036)."""
     s, out = w["sky"], []
