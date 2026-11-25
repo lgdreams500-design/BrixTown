@@ -71,6 +71,12 @@ public:
 	// framed in the part of the screen PanelShare (of its width, from the left) leaves free; the body drawn as time passes
 	void SetDesignView(bool bOn, double SpinDeg, float PanelShare, bool bTakeKeys = true, float CameraM = 0.f);   // CameraM: metres off (times height / 1.72), 0 for DesignCameraM   // bTakeKeys: the game's keys do nothing meanwhile
 	bool IsDesigning() const { return bDesigning; }
+	// On the playground (WLD-041; play.js interact(), stepPlayer(), offPlay()): E at a swing seat, seesaw end, slide's ladder,
+	// sandpit or climbing frame has a go there; E, Space or moving gets off, beside it (a slide's go ends at its bottom)
+	bool IsPlaying() const { return PlayUse != INDEX_NONE; }
+	void StartPlay(int32 Use);
+	void StopPlay(bool bAtEnd = false);
+	void TestPlay(int32 Use);   // -BrixPlay=<n>: a test shot has a go at the n-th place
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void PawnClientRestart() override;
@@ -140,4 +146,9 @@ private:
 	float DesignM = 0.f;
 	float DesignShare = 0.f;
 	FVector BoomOffsetBefore = FVector::ZeroVector;
+	class ABrixPeople* People() const;
+	int32 PlayUse = INDEX_NONE;
+	double PlayT0 = 0;
+	bool bPlayOff = false;           // moving or Space while on it: off at the next frame
+	FVector2D PlayEnd = FVector2D::ZeroVector;
 };

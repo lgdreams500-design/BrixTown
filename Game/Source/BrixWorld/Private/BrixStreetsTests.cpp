@@ -276,6 +276,31 @@ bool FWLD032_ChildrenPlay::RunTest(const FString&)
 		if (FMath::Abs(Yaw - R[3]->AsNumber()) > 1e-9 && ++Bad <= 12) AddError(FString::Printf(TEXT("a reader at %.1f, %.1f faces %.4f; the slice %.4f"), R[0]->AsNumber(), R[1]->AsNumber(), Yaw, R[3]->AsNumber()));
 	}
 	TestTrue(TEXT("readers turn to the boards and kiosks"), Turned > 20);
+	// WLD-041: the player's places and their go at each, as playerAt() and playerOff() have them
+	const TArray<TSharedPtr<FJsonValue>>& Pl = C.Values->GetArrayField(TEXT("player"));
+	if (TestEqual(TEXT("places for the player to have a go (48 when written)"), Play.PlayerUses.Num(), Pl.Num()))
+		for (int32 u = 0; u < Pl.Num(); ++u)
+		{
+			const TArray<TSharedPtr<FJsonValue>>& R = Pl[u]->AsArray();
+			const FBrixPlay::FPlayerUse& Us = Play.PlayerUses[u];
+			auto Near = [](double a, const TSharedPtr<FJsonValue>& b) { return FMath::Abs(a - b->AsNumber()) < 1e-9; };
+			if ((!Near(Us.X, R[0]) || !Near(Us.Z, R[1]) || !Near(Us.Y, R[2]) || !Near(Us.Yaw, R[3]) || Us.Label != R[4]->AsString()) && ++Bad <= 12) { AddError(FString::Printf(TEXT("place %d (%s) is not where the slice has it"), u, *Us.Label)); continue; }
+			static const double At[8] = { .2, 1.1, 2.0, 2.9, 3.4, 4.1, 5.6, 9.3 };
+			const TArray<TSharedPtr<FJsonValue>>& Go = R[5]->AsArray();
+			for (int32 j = 0; j < 8; ++j)
+			{
+				const FBrixPlayPose O = Play.PlayerAt(u, 10, 10 + At[j]);
+				const TArray<TSharedPtr<FJsonValue>>& W = Go[j]->AsArray();
+				bool bOk = Near(O.X, W[0]) && Near(O.Z, W[1]) && Near(O.Y, W[2]) && Near(O.Yaw, W[3]) && O.Pose == (int32)W[4]->AsNumber() && O.bDone == W[6]->AsBool()
+					&& (W[5]->IsNull() || Near(O.Phase, W[5])) && O.bClimb == (W[7]->Type == EJson::String) && O.bStraddle == (W[8]->AsNumber() != 0);
+				if (W[9]->Type == EJson::Array) for (int32 a = 0; a < 2; ++a) { const TArray<TSharedPtr<FJsonValue>>& Ar = W[9]->AsArray()[a]->AsArray(); bOk &= O.Arms[a].IsSet(); if (O.Arms[a]) for (int32 q = 0; q < 4; ++q) bOk &= Near((*O.Arms[a])[q], Ar[q]); }
+				else bOk &= !O.Arms[0] && !O.Arms[1];
+				if (!bOk && ++Bad <= 12) AddError(FString::Printf(TEXT("place %d (%s), %.1f s into a go: at %.3f, %.3f, %.3f pose %d; the slice %.3f, %.3f, %.3f pose %d"), u, *Us.Label, At[j], O.X, O.Z, O.Y, O.Pose,
+					W[0]->AsNumber(), W[1]->AsNumber(), W[2]->AsNumber(), (int32)W[4]->AsNumber()));
+			}
+			const FVector2D Off = Play.PlayerOff(u);
+			if ((!Near(Off.X, R[6]->AsArray()[0]) || !Near(Off.Y, R[6]->AsArray()[1])) && ++Bad <= 12) AddError(FString::Printf(TEXT("place %d steps off elsewhere than the slice"), u));
+		}
 	TestEqual(TEXT("played otherwise than in the slice"), Bad, 0);
 	return true;
 }
