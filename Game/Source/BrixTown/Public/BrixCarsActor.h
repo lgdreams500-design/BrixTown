@@ -59,7 +59,7 @@ private:
 	UPROPERTY() TArray<TObjectPtr<UProceduralMeshComponent>> Trams;
 	FDrive Drive;
 	TArray<FBox2D> Paving;              // the blocks' paving: a car leaving its bay steps down off it onto the road
-	bool Free(double X, double Z, double A) const;
+	bool Free(double X, double Z, double A, bool* bWall = nullptr) const;   // bWall: what stopped it was a wall or a street thing
 	int32 Frame = 0, LastShown = 0;
 	double LastMinute = -1;
 	int32 LastHeld = 0;             // the clock last frame, for giving way (CITY-049)

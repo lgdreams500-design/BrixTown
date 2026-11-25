@@ -81,6 +81,7 @@ public:
 	UPROPERTY(Config) float ShoutGap = 1.5f;         // m: of shouters closer than this, only the nearest's shout is shown
 	int32 Dodging() const { return Dodge.Live(); }
 	int32 DodgeLogged = 0;
+	TArray<FBrixLook> CrewLooks;        // the repair crews' two looks (smash.js crewLook)
 	double TickMs() const { return TickFrames ? TickSeconds * 1000.0 / TickFrames : 0.0; }   // the people's own time a frame, on average
 	void ResetTickTime() { TickSeconds = 0; TickFrames = 0; for (double& P : Parts) P = 0; }
 	// the time a frame by part: where everyone is, placing and the far figures' boxes, building bodies, uploading them, the far mesh

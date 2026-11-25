@@ -56,7 +56,7 @@ void ABrixLamps::Tick(float DeltaSeconds)
 	for (int32 i = 0; i < All.Num(); ++i)
 	{
 		const float D2 = FMath::Square(All[i].X - (float)Eye.X) + FMath::Square(All[i].Z - (float)Eye.Y);
-		if (D2 < 120.f * 120.f) Near.Add({ D2, i });
+		if (D2 < 120.f * 120.f && All[i].W > 0) Near.Add({ D2, i });   // a broken lamp is out (CITY-073)
 	}
 	Near.Sort([](const TPair<float, int32>& A, const TPair<float, int32>& B) { return A.Key < B.Key; });
 	for (int32 k = 0; k < Lights.Num(); ++k)

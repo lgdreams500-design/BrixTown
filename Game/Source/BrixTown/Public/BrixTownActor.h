@@ -14,6 +14,20 @@ class UInstancedStaticMeshComponent;
 class UMaterialInstanceDynamic;
 class UStaticMesh;
 
+// A street thing or a tree a car can break (CITY-072; smash.js wrap()): what it is, where it stands, the instances it is
+// drawn with (so it can be hidden while broken and shown again when mended), its light and its footprint near the ground.
+struct FBrixBreakable
+{
+	FString Kind, PropKind;             // crash.json's name for it, and the prop's own
+	FVector2D Pos = FVector2D::ZeroVector;
+	float Ground = 0.f, Top = 0.f;      // m
+	FBox2D Box = FBox2D(ForceInit);     // its footprint near the ground (a tree's trunk, not its crown)
+	struct FPart { class UInstancedStaticMeshComponent* G = nullptr; int32 Index = -1; FTransform At; FLinearColor Colour; bool bPlaced = false; };
+	TArray<FPart> Parts;
+	int32 Light = -1;                   // its entry in LampLights
+	bool bBroken = false;
+};
+
 // The colour of one material slot of the building kit's pieces (slot names as in Tools/blender/unreal_kit_36.py).
 USTRUCT()
 struct FBrixSlotColour
@@ -41,6 +55,10 @@ public:
 	// Where the lamps' and wall lanterns' light comes from (the slice's lights: x, height, z in metres and a strength), and
 	// their glass, which glows by night (ABrixLamps sets its material's Glow).
 	TArray<FVector4f> LampLights;
+	// Everything a car can break, by the rules' kinds (CITY-072): filled while building when Breakable is set
+	TArray<FBrixBreakable> Breakables;
+	TSet<FString> Breakable;            // the prop kinds to keep handles for (set before Build)
+	void SetBroken(int32 b, bool bBroken);   // hide it (its solids and its light too) or show it again
 	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> GlassMat;
 
 	UPROPERTY(Config) float StoreyHeight = 3.f;         // m a floor (WORLD_MAP; kit floor_h)
@@ -152,6 +170,8 @@ private:
 	int32 LotIndex = 0;                             // the lot being built, in the city's order (the slice's LOTS)
 	int32 Hollow = 0;
 	TMap<UInstancedStaticMeshComponent*, FPending> Pending;   // instances gathered per group, added in one go
+	FBrixBreakable* Wrapping = nullptr; // the breakable being built: Add() notes its instances (smash.js wrap())
+	void Wrap(const FString& Kind, const FVector2D& Pos, float Ground, TFunctionRef<void()> Fn);
 	const FBrixCity* CityData = nullptr;
 	int32 Buildings = 0, Openings = 0;
 };

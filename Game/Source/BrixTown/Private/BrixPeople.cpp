@@ -15,6 +15,7 @@
 #include "Misc/Paths.h"
 #include "ProceduralMeshComponent.h"
 #include "BrixCarsActor.h"
+#include "BrixCrashActor.h"
 #include "Components/TextRenderComponent.h"
 #include "WorldCollision.h"
 #include "UObject/ConstructorHelpers.h"
@@ -95,6 +96,10 @@ void ABrixPeople::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, TShar
 		Looks.Add(BrixLookOf(Rules, i, Day->Wear.IsValidIndex(i) && !Day->Wear[i].IsEmpty() ? Day->Wear[i] : RoleName, Sig ? *Sig : FString(TEXT("Easy"))));
 	}
 	while (RebuildEvery.Num() < 3) RebuildEvery.Add(RebuildEvery.Num() + 1);
+	{   // the repair crews (smash.js crewLook): two people of the utility role, walking as it walks
+		const FString* Sig = Day->RoleSig.Find(TEXT("utility"));
+		for (int32 c = 0; c < 2; ++c) CrewLooks.Add(BrixLookOf(Rules, 310000 + c * 17, TEXT("utility"), Sig ? *Sig : FString(TEXT("Easy"))));
+	}
 	{   // out of the way of the player's car (CITY-070, CITY-071)
 		FString DodgeError;
 		const FString DodgeRules = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/rules/dodge.json")));
@@ -250,6 +255,37 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		}
 		if (Dodge.Live() > DodgeLogged) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents getting out of the way of the player's car"), Dodge.Live());
 		DodgeLogged = Dodge.Live();
+	}
+	// residents near something the player's car smashed turn to it and shout (CITY-076, smash.js apply()); the repair crews
+	// at work, crouched over what they mend (smash.js worker())
+	if (const ABrixCrash* Crash = Mode->Crash.Get())
+	{
+		if (Crash->Recent.Num())
+			for (FNear& A : Near)
+			{
+				if (A.Extra >= 0 || A.Pose == 2) continue;   // dodging already, or sitting
+				const ABrixCrash::FRecent* S = nullptr;
+				for (const ABrixCrash::FRecent& E : Crash->Recent) if (FVector2D::Distance(E.P, A.P) < Crash->Rules().ReactM && Seconds - E.T < Crash->Rules().ReactS) S = &E;
+				FBrixDodged Out;
+				if (!S || !BrixCrashReact(Crash->Rules(), A.i, A.P, S->P.X, S->P.Y, Seconds - S->T, S->T, Seconds, Out)) continue;
+				A.Yaw = Out.Yaw; A.Pose = 0; A.Phase = 0;
+				A.Extra = Extras.Add(Out);
+			}
+		for (int32 k = 0; k < Crash->Workers.Num() && CrewLooks.Num() == 2; ++k)
+		{
+			const ABrixCrash::FWorker& W = Crash->Workers[k];
+			const double D = FVector2D::Distance(W.P, Here);
+			if (D > ShowDistance) continue;
+			FBrixDodged Out;
+			const double w = FMath::Sin(Seconds * 5 + W.K) * 20;
+			Out.Arms[0] = FVector4d(1, 60 + w, 20, 70);
+			Out.Arms[1] = FVector4d(1, 60 - w, 20, 70);
+			Out.Chest = FVector2D(24, 0);
+			const FVector2D To = W.Toward - W.P;
+			FNear N{ 2000000 + k, D, W.P, GroundAt(W.P), FMath::Atan2(To.X, -To.Y), 0, 0.0, &CrewLooks[W.K % 2], {}, false };
+			N.Extra = Extras.Add(Out);
+			Near.Add(N);
+		}
 	}
 	// the one to talk to: the nearest to the player (not the camera) within reach, on their level
 	Cand = FCandidate();

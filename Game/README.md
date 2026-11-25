@@ -137,12 +137,11 @@ ride beside and behind (CITY-094), a bus's driver and its riders on the benches,
 car passing through; as low as the head needs under the roof, feet along the floor, hands on the wheel. The player can drive
 any parked car or van (a stand-in for CITY-061, as the slice's cars.js): E beside it gets in (it steps out of its bay
 onto the road first), W/S speed and brake, A/D steer, Space the handbrake, up to the top speed of World/rules/traffic.json;
-a wall, a street thing or another car stops it and it rolls back a little; the camera swings round behind; E gets out by
+a street thing or a tree in the way breaks (CITY-072); a wall or another car stops it and it rolls back a little; the camera swings round behind; E gets out by
 the driver's door, and the car stays where it was left for the rest of the visit. E offers whichever is nearer, a car to
 drive or someone to talk to. A bus can be ridden (CITY-092): E at a bus
 standing at a stop gets on, a seat near the front, carried along its line with its driver and riders, the camera behind;
-E gets off when it next stands at a stop (and everyone gets off when it leaves service). Not yet: breaking street things
-(CITY-072, CITY-073) and riding the tram. To see a drive in a test shot: `-BrixDrive=<vehicle> "-BrixHold=steer,throttle"`. 51.5 frames a second at High on a street
+E gets off when it next stands at a stop (and everyone gets off when it leaves service). Not yet: riding the tram. To see a drive in a test shot: `-BrixDrive=<vehicle> "-BrixHold=steer,throttle"`. 51.5 frames a second at High on a street
 with 32 vehicles drawn.
 
 ## Getting out of the way, and giving way (CITY-070, CITY-071, CITY-049)
@@ -161,6 +160,25 @@ minutes behind with no player within 160 m is put back on its timeline. `CITY049
 stands someone in the road in front of cars of the day and checks they stop short, wait, and are back on their timeline
 after their next stop. At High, 36 to 49 frames a second driving into a crowd in the morning rush, 53 with two cars
 queued behind the player's (noisy: other sessions were running Unreal on the same laptop).
+
+## Crash damage (CITY-072 to CITY-076)
+As in the slice (smash.js; `BrixWorld/BrixCrash` and `ABrixCrash`, numbers in World/rules/crash.json): the player's car
+breaks the street things and trees it hits, at any speed. Lamps, trees, post boxes, telephone boxes, bollards and boards
+topple the way they were hit and lie there; benches, bins, planters, bike racks, flowerbeds and market stalls burst into
+pieces in their own colours that fly, bounce and settle as rubble; a building corner it hits loses chips of stone and
+shows its rough core. The car loses its share of speed. A broken thing's instances are folded away (each prop and tree
+keeps the indices of its instances: `ABrixTownActor::Breakables`), with its solids and, for a lamp, its light. What
+broke, where and when is kept in `Game/Saved/BrixDamage.json` (CITY-074) and is there on the next visit; when each
+thing is mended is worked out from that list alone by repairs.py's rule (CITY-075): a crew from the nearest of the
+seven depots comes in working hours, works crouched at it, and then it is whole again; within 12 m of the player a tag
+says when the crew comes or will be done. Residents within 18 m of a smash turn to it, throw up their arms and shout
+(CITY-076). `-BrixWhole` starts with everything mended; `-BrixAim=x,z` turns a car taken with `-BrixDrive=` towards a
+point. Tests: `CITY072_street_things_break_as_the_rules_say`, `CITY074_damage_is_kept`,
+`CITY075_repair_crews_mend_as_repairs_py_does` (against repairs.py, `Tests/values/repairs_city_01.json`),
+`CITY076_residents_shout_at_a_smash`. Not yet: café tables and crates, garden plants, fences, walls, railings and
+hedges (not drawn in Unreal yet), a broken bench still being sat on, and a server keeping the list for every player. At
+High, 38 to 54 frames a second while breaking a post box, a planter and a bin and with two crews at work (noisy: other
+sessions were running Unreal).
 
 ## The tram (CITY-041)
 Trams run along Tram Street to the timetable of World/rules/calendar.json, stopping at its three stops: a port of the
@@ -312,6 +330,10 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY041_trams_are_where_the_timetable_puts_them` | CITY-041 |
 | `BrixTown.World.CITY049_resident_cars_give_way_to_the_player` | CITY-049 |
 | `BrixTown.World.CITY070_residents_dodge_and_scold_as_the_slice_does` | CITY-070, CITY-071 |
+| `BrixTown.World.CITY072_street_things_break_as_the_rules_say` | CITY-072, CITY-073 |
+| `BrixTown.World.CITY074_damage_is_kept` | CITY-074 |
+| `BrixTown.World.CITY075_repair_crews_mend_as_repairs_py_does` | CITY-075 |
+| `BrixTown.World.CITY076_residents_shout_at_a_smash` | CITY-076 |
 | `BrixTown.World.CITY007_every_conversation_is_sound` | CITY-007 |
 | `BrixTown.World.CHR009_lines_are_mouthed_as_the_slice_mouths_them` | CHR-009 |
 | `BrixTown.World.SND018_lines_are_voiced` | SND-018 |
