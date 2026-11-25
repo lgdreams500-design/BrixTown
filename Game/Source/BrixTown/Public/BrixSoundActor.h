@@ -30,6 +30,11 @@ struct FBrixTraffic;
 // radio's music stations (R while driving). While the player is in a building what is outside is muffled and the room
 // has its tone (SND-007). Continuous sounds are loops that play only while they can be heard. The long recordings (the
 // music, the rewards) are Ogg Vorbis, read with the engine's own decoder.
+// What the residents near do and say (SND-006, SND-015, SND-016): the sounds of what each is doing, sellers calling,
+// people together taking turns to talk in wordless syllables and laughing, a crowd's hum, a passer-by's hello, a shout
+// at the player's car, each syllable a recording of the slice's voice at the nearest of four pitches, pitched the rest of
+// the way. The radio's podcasts (SND-014), their hosts voiced the same way over the show's bed, with a caption; the
+// horn (F while driving).
 // N turns all sound off and on (SND-013), remembered between visits in the user's settings (GameUserSettings.ini).
 // -BrixSoundToggle turns it off and on again during a test shot, to check the key's work in the log; -BrixRadio=<k> has the
 // car radio on its k-th station (with -BrixDrive).
@@ -71,6 +76,14 @@ private:
 	// Vol: the slice's level for the listener, before the mix; Lowpass: Hz, 0 for none
 	void SetLoop(FLoop& L, double Vol, double Pitch, const FVector2D& Pos, double Lowpass = 0);
 	void Music(double Dt, const FVector2D& Here);
+	// a syllable to be said: when (the world's seconds), where, which mouth shape at which pitch; bRadio: through the radio
+	struct FPendingSyllable { double At = 0; FVector2D Pos = FVector2D::ZeroVector; double Far = 30; FBrixSyllable S; bool bRadio = false; };
+	TArray<FPendingSyllable> Pending;
+	void Say(const FBrixVoiceOut& V, double Now, bool bRadio);
+	void PlaySyllable(const FPendingSyllable& P, const FVector2D& Here);
+	void Radio(double Now, bool bDriving);   // the podcast on air, its caption
+	void OffAir();
+	void BuildCaption();
 	void OnReward(const FString& What, int32 I, int32 N);
 	void Engine(FLoop& Lo, FLoop& Hi, double Hz, double Vol, const FVector2D& Pos);   // an engine's note from the two recordings
 	void Vehicles(double Now, const FVector2D& Here);
@@ -94,6 +107,17 @@ private:
 	TArray<FBrixMusicLot> MusicLots;
 	bool bMarketDay = false, bRewardsBound = false;
 	int32 Station = 0;                   // the car radio: 0 off, k the k-th station of sound.json
+	FBrixPeopleTalk PeopleTalk;
+	FBrixSpeech Speech;                  // how a line is mouthed (World/rules/speech.json), for shouts and the podcasts' hosts
+	bool bSpeech = false;
+	TArray<double> SylHz, SylLen;        // the pitches and lengths the syllables were recorded at
+	FLoop CrowdL, HornL;
+	FString OnAir;                       // the podcast part on air
+	FString CaptionHead, CaptionText;    // the radio's caption (sound.js caption()); hidden when CaptionHead is empty
+	double CaptionUntil = 0;             // a music station's name shows a moment; a podcast's caption stays
+	TSharedPtr<class SWidget> CaptionBox;
+	int32 Spoken = 0;                    // syllables said, for the log
+	bool bTestHorn = false;              // -BrixHorn: the horn held in a test shot
 	FString WasMood, WasPlace;
 	// what the interface and the player were doing last frame, for the sounds of a change
 	bool bWasTalking = false, bWasRiding = false, bOn = true;

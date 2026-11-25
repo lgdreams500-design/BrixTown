@@ -61,7 +61,7 @@ bool LoadBrixSoundRules(const FString& Path, FBrixSoundRules& Out, FString& OutE
 	Num(*E, TEXT("far"), Out.EngineFar); Num(*E, TEXT("van_pitch"), Out.VanPitch); Num(*E, TEXT("tyres_gain"), Out.TyresGain);
 	double Voices = Out.EngineVoices; Num(*E, TEXT("voices"), Voices); Out.EngineVoices = (int32)Voices;
 	Num(*Pl, TEXT("gain"), Out.CarGain); Num(*Pl, TEXT("start_len"), Out.StartLen); Num(*Pl, TEXT("skid_mps"), Out.SkidMps);
-	Num(*Pl, TEXT("skid_gain"), Out.SkidGain); Num(*Pl, TEXT("bump_gain"), Out.BumpGain);
+	Num(*Pl, TEXT("skid_gain"), Out.SkidGain); Num(*Pl, TEXT("bump_gain"), Out.BumpGain); Num(*Pl, TEXT("horn_gain"), Out.HornGain);
 	Num(*Tr, TEXT("hum_hz"), Out.HumHz); Num(*Tr, TEXT("whine_hz"), Out.WhineHz); Num(*Tr, TEXT("gain"), Out.TramGain);
 	Num(*Tr, TEXT("far"), Out.TramFar); Num(*Tr, TEXT("bell_far"), Out.BellFar);
 	const TSharedPtr<FJsonObject>* A = Obj(S, TEXT("ambience"));
@@ -130,6 +130,70 @@ bool LoadBrixSoundRules(const FString& Path, FBrixSoundRules& Out, FString& OutE
 	Ints(*Q, TEXT("scale"), Out.RewardScale);
 	Ints(*Bk, TEXT("scale"), Out.InterestScale);
 	if (!Out.RewardScale.Num() || !Out.InterestScale.Num()) { OutError = Path + TEXT(": a reward scale is empty"); return false; }
+	auto Pair = [](const TSharedPtr<FJsonObject>& O, const TCHAR* Key, double V[2]) { const TArray<TSharedPtr<FJsonValue>>* A = nullptr; if (O->TryGetArrayField(Key, A) && A->Num() == 2) { V[0] = (*A)[0]->AsNumber(); V[1] = (*A)[1]->AsNumber(); } };
+	auto Strs = [](const TSharedPtr<FJsonObject>& O, const TCHAR* Key, TArray<FString>& V) { V.Reset(); const TArray<TSharedPtr<FJsonValue>>* A = nullptr; if (O->TryGetArrayField(Key, A)) for (const TSharedPtr<FJsonValue>& X : *A) V.Add(X->AsString()); };
+	const TSharedPtr<FJsonObject>* Vo = Obj(S, TEXT("voices"));
+	if (!Vo) { OutError = Path + TEXT(" lacks voices"); return false; }
+	if (const TSharedPtr<FJsonObject>* Pi = Obj(*Vo, TEXT("pitch"))) { Num(*Pi, TEXT("min"), Out.VoiceMin); Num(*Pi, TEXT("max"), Out.VoiceMax); }
+	Num(*Vo, TEXT("line_gain"), Out.LineGain);
+	Out.VoiceShapes.Reset(); Out.TalkShapes.Reset();
+	if (const TSharedPtr<FJsonObject>* Sh = Obj(*Vo, TEXT("shapes"))) for (const auto& KV : (*Sh)->Values) { Out.VoiceShapes.Add(FString(KV.Key)); if (FString(KV.Key) != TEXT("MBP")) Out.TalkShapes.Add(FString(KV.Key)); }
+	if (!Out.TalkShapes.Num()) { OutError = Path + TEXT(": voices.shapes is empty"); return false; }
+	Out.RolePitch.Reset();
+	if (const TSharedPtr<FJsonObject>* Rp = Obj(*P, TEXT("pitch"))) for (const auto& KV : (*Rp)->Values) { const TArray<TSharedPtr<FJsonValue>>& Pr = KV.Value->AsArray(); if (Pr.Num() == 2) Out.RolePitch.Add(FString(KV.Key), FVector2D(Pr[0]->AsNumber(), Pr[1]->AsNumber())); }
+	double Busy = Out.Busy; Num(*P, TEXT("busy"), Busy); Out.Busy = (int32)Busy;
+	Num(*P, TEXT("call_gain"), Out.CallGain); Num(*P, TEXT("shout_gain"), Out.ShoutGain);
+	if (const TSharedPtr<FJsonObject>* Ch = Obj(*P, TEXT("chat")))
+	{
+		TArray<FString> Ca; Strs(*Ch, TEXT("acts"), Ca); Out.ChatActs = TSet<FString>(Ca);
+		Num(*Ch, TEXT("pair_m"), Out.PairM); Num(*Ch, TEXT("far"), Out.ChatFar); Num(*Ch, TEXT("gain"), Out.ChatGain); Num(*Ch, TEXT("syllables_per_s"), Out.SyllablesPerS);
+		Num(*Ch, TEXT("question"), Out.Question); Num(*Ch, TEXT("laugh"), Out.Laugh); Num(*Ch, TEXT("child_laugh"), Out.ChildLaugh); Num(*Ch, TEXT("laugh_gain"), Out.LaughGain);
+		double G = Out.ChatGroups; Num(*Ch, TEXT("groups"), G); Out.ChatGroups = (int32)G;
+		double Sy[2] = { (double)Out.Syllables[0], (double)Out.Syllables[1] }; Pair(*Ch, TEXT("syllables"), Sy); Out.Syllables[0] = (int32)Sy[0]; Out.Syllables[1] = (int32)Sy[1];
+		Pair(*Ch, TEXT("turn_gap_s"), Out.TurnGap); Pair(*Ch, TEXT("pause_s"), Out.Pause);
+	}
+	if (const TSharedPtr<FJsonObject>* Cw = Obj(*P, TEXT("crowd")))
+	{
+		Num(*Cw, TEXT("min"), Out.CrowdMin); Num(*Cw, TEXT("full"), Out.CrowdFull); Num(*Cw, TEXT("far"), Out.CrowdFar); Num(*Cw, TEXT("gain"), Out.CrowdGain); Num(*Cw, TEXT("per_s"), Out.CrowdPerS);
+	}
+	if (const TSharedPtr<FJsonObject>* Gr = Obj(*P, TEXT("greet")))
+	{
+		Num(*Gr, TEXT("m"), Out.GreetM); Num(*Gr, TEXT("chance"), Out.GreetChance); Num(*Gr, TEXT("every_s"), Out.GreetEvery); Num(*Gr, TEXT("gain"), Out.GreetGain);
+	}
+	Out.Activities.Reset(); Out.ByAct.Reset();
+	const TArray<TSharedPtr<FJsonValue>>* Acs = nullptr;
+	if ((*P)->TryGetArrayField(TEXT("activities"), Acs))
+		for (const TSharedPtr<FJsonValue>& V : *Acs)
+		{
+			const TSharedPtr<FJsonObject> O = V->AsObject();
+			FBrixSoundRules::FActivity Ac;
+			Strs(O, TEXT("acts"), Ac.Acts); Strs(O, TEXT("roles"), Ac.Roles); Pair(O, TEXT("every"), Ac.Every);
+			O->TryGetStringField(TEXT("sound"), Ac.Sound); O->TryGetBoolField(TEXT("call"), Ac.bCall); O->TryGetNumberField(TEXT("chance"), Ac.Chance);
+			const int32 k = Out.Activities.Add(Ac);
+			for (const FString& Name : Ac.Acts) Out.ByAct.FindOrAdd(Name).Add(k);
+		}
+	if (const TSharedPtr<FJsonObject>* Pc = Obj(S, TEXT("podcasts")))
+	{
+		Num(*Pc, TEXT("gap_s"), Out.PodGapS); Num(*Pc, TEXT("intro_s"), Out.PodIntroS); Num(*Pc, TEXT("bed_gain"), Out.PodBedGain); Num(*Pc, TEXT("voice_gain"), Out.PodVoiceGain);
+		Out.Shows.Reset();
+		if (const TSharedPtr<FJsonObject>* Sw = Obj(*Pc, TEXT("shows")))
+			for (const auto& KV : (*Sw)->Values)
+			{
+				const TSharedPtr<FJsonObject> O = KV.Value->AsObject();
+				FBrixSoundRules::FShow Show;
+				O->TryGetStringField(TEXT("title"), Show.Title); O->TryGetStringField(TEXT("bed"), Show.Bed);
+				if (const TSharedPtr<FJsonObject>* Ho = Obj(O, TEXT("hosts")))
+					for (const auto& Hv : (*Ho)->Values) { FBrixSoundRules::FHost Host; Hv.Value->AsObject()->TryGetStringField(TEXT("name"), Host.Name); Num(Hv.Value->AsObject(), TEXT("pitch"), Host.Pitch); Show.Hosts.Add(FString(Hv.Key), Host); }
+				for (const TSharedPtr<FJsonValue>& Ev : O->GetArrayField(TEXT("episodes")))
+				{
+					FBrixSoundRules::FEpisode Ep;
+					Ev->AsObject()->TryGetStringField(TEXT("title"), Ep.Title);
+					for (const TSharedPtr<FJsonValue>& Ln : Ev->AsObject()->GetArrayField(TEXT("lines"))) Ep.Lines.Add({ Ln->AsArray()[0]->AsString(), Ln->AsArray()[1]->AsString() });
+					Show.Episodes.Add(Ep);
+				}
+				Out.Shows.Add(FString(KV.Key), Show);
+			}
+	}
 	return true;
 }
 
@@ -224,7 +288,7 @@ double BrixScoreLevel(const FBrixSoundRules& R, bool bTalking, double Near)
 
 int32 BrixNextStation(const FBrixSoundRules& R, int32 Station)
 {
-	for (int32 k = Station + 1; k <= R.Radio.Num(); ++k) if (!R.Radio[k - 1].Style.IsEmpty()) return k;
+	for (int32 k = Station + 1; k <= R.Radio.Num(); ++k) if (!R.Radio[k - 1].Style.IsEmpty() || R.Shows.Contains(R.Radio[k - 1].Podcast)) return k;
 	return 0;
 }
 
@@ -253,6 +317,203 @@ FString BrixRewardSound(const FBrixSoundRules& R, const FString& What, int32 I, 
 		return FString::Printf(TEXT("reward_coin_take_%d"), FMath::Clamp((int32)FMath::RoundHalfFromZero(I * FMath::Min(1.0, (double)R.TopStep / FMath::Max(1, N - 1))), 0, R.TopStep));
 	if (What == TEXT("interest_coin")) return FString::Printf(TEXT("reward_interest_coin_%d"), FMath::Clamp(I, 0, R.InterestCoins - 1));
 	return TEXT("reward_") + What;
+}
+
+double BrixHashOf(int64 I)
+{
+	uint32 H = (uint32)(((uint64)(I + 1) * 2654435761ull) & 0xffffffffull);   // (i + 1) * 2654435761 >>> 0
+	H ^= H >> 15;
+	H = H * 2246822519u;                                                         // Math.imul(h, 2246822519) >>> 0
+	H ^= H >> 13;
+	return H / 4294967296.0;
+}
+
+double BrixVoiceHz(const FBrixSoundRules& R, int32 Resident, const FString& Role)
+{
+	if (const FVector2D* P = R.RolePitch.Find(Role)) return P->X + BrixHashOf(Resident) * (P->Y - P->X);
+	return R.VoiceMin + BrixHashOf(Resident) * (R.VoiceMax - R.VoiceMin);
+}
+
+double BrixPhrase(const FBrixSoundRules& R, double T, double Base, int32 N, double Gain, bool bAsk, FRandomStream& Rng, TArray<FBrixSyllable>& Out)
+{
+	for (int32 k = 0; k < N; ++k)
+	{
+		const double Len = 1 / R.SyllablesPerS * Rng.FRandRange(.6, 1.25), F = (double)k / FMath::Max(1, N - 1), C = bAsk ? 1 + .22 * F * F : 1.06 - .12 * F;
+		Out.Add({ T, R.TalkShapes[Rng.RandHelper(R.TalkShapes.Num())], Base * C * Rng.FRandRange(.96, 1.04), Len * .8, Gain });
+		T += Len;
+	}
+	return T;
+}
+
+double BrixLaugh(const FBrixSoundRules& R, double T, double Base, double Gain, FRandomStream& Rng, TArray<FBrixSyllable>& Out)
+{
+	const int32 N = 3 + Rng.RandHelper(3);
+	for (int32 k = 0; k < N; ++k) { Out.Add({ T, k % 2 ? TEXT("EH") : TEXT("AA"), Base * (1.3 - k * .06), .09, Gain * (1 - k * .13) }); T += Rng.FRandRange(.13, .17); }
+	return T;
+}
+
+void BrixVoiceLine(const FBrixSoundRules& R, const FBrixLine& Line, double T0, double Base, double Gain, double From, TArray<FBrixSyllable>& Out)
+{
+	const double Start = T0 - From;
+	for (const FBrixLine::FShape& S : Line.Seq)
+	{
+		if (S.T0 < From || !R.VoiceShapes.Contains(S.Shape) || (S.Shape == TEXT("MBP") && S.D < .05)) continue;
+		const FBrixLine::FWord* W = nullptr;
+		for (const FBrixLine::FWord& X : Line.Words) if (X.T0 <= S.T0) W = &X;
+		bool bUp = false;
+		for (double A : Line.Asks) bUp |= A > S.T0 && A - S.T0 < .35;
+		Out.Add({ Start + S.T0, S.Shape, Base * (bUp ? 1.18 : 1.0) * (W && W->bLong ? 1.08 : 1.0), FMath::Min(.22, S.D), Gain });
+	}
+}
+
+void FBrixPeopleTalk::Frame(const FBrixSoundRules& R, const TArray<FBrixHeardPerson>& People, const FVector2D& Here, double Now, double Dt, bool bGreet,
+	const FBrixSpeech* Speech, FRandomStream& Rng, TArray<FBrixSoundEvent>& OutSounds, TArray<FBrixVoiceOut>& OutVoices)
+{
+	auto D = [&](const FBrixHeardPerson& P) { return FVector2D::Distance(P.Pos, Here); };
+	TArray<const FBrixHeardPerson*> Order;
+	for (const FBrixHeardPerson& P : People) Order.Add(&P);
+	Order.StableSort([&](const FBrixHeardPerson& A, const FBrixHeardPerson& B) { return D(A) < D(B); });   // nearest first
+	int32 Busy = 0;
+	for (const FBrixHeardPerson* r : Order)
+	{
+		const double d = D(*r);
+		FState* p = St.Find(r->Id);
+		if (!p) { p = &St.Add(r->Id); p->Act = r->Act; }
+		p->Seen = Now;
+		if (p->Act != r->Act) { p->Act = r->Act; p->Next.Reset(); }
+		const TArray<int32>* Doing = !r->bWalking && d < R.PeopleFar ? R.ByAct.Find(r->Act) : nullptr;
+		if (Doing) ++Busy;
+		if (Doing && Busy <= R.Busy)   // what they are doing, now and then (the nearest few only)
+			for (int32 k : *Doing)
+			{
+				const FBrixSoundRules::FActivity& A = R.Activities[k];
+				if ((A.Roles.Num() && !A.Roles.Contains(r->Role)) || (A.Chance >= 0 && BrixHashOf((int64)r->Id * 7 + 3) > A.Chance)) continue;
+				double* Due = p->Next.Find(k);
+				if (!Due) { p->Next.Add(k, Now + Rng.FRandRange(0, A.Every[1])); continue; }
+				if (Now < *Due) continue;
+				*Due = Now + Rng.FRandRange(A.Every[0], A.Every[1]);
+				if (!A.Sound.IsEmpty()) { FBrixSoundEvent E; E.Sound = TEXT("pact_") + A.Sound; E.Pos = r->Pos; E.Far = R.PeopleFar; OutSounds.Add(E); }
+				if (A.bCall) { FBrixVoiceOut V; V.Pos = r->Pos; V.Far = 30; BrixPhrase(R, .05, BrixVoiceHz(R, r->Id, r->Role) * 1.15, 2 + Rng.RandHelper(2), R.CallGain, false, Rng, V.Syllables); OutVoices.Add(V); }
+			}
+		if (!r->Shout.IsEmpty() && r->Shout != p->Shout && Speech)   // told off: the shout, voiced (CITY-071)
+		{
+			FBrixVoiceOut V; V.Pos = r->Pos; V.Far = 40;
+			BrixVoiceLine(R, Speech->Speak(r->Shout), .02, BrixVoiceHz(R, r->Id, r->Role) * 1.2, R.ShoutGain, 0, V.Syllables);
+			OutVoices.Add(V);
+		}
+		p->Shout = r->Shout;
+		if (bGreet && r->Pose < 2 && d < R.GreetM && Now - p->Greet > R.GreetEvery)   // a passer-by says hello as the player goes by
+		{
+			p->Greet = Now;
+			if (Rng.FRand() < R.GreetChance) { FBrixVoiceOut V; V.Pos = r->Pos; V.Far = 10; BrixPhrase(R, .1, BrixVoiceHz(R, r->Id, r->Role) * 1.1, 2, R.GreetGain, false, Rng, V.Syllables); OutVoices.Add(V); }
+		}
+	}
+	// conversations: people standing or sitting together take turns to talk, and now and then laugh (SND-006)
+	TArray<const FBrixHeardPerson*> Can;
+	for (const FBrixHeardPerson& r : People) if (!r.bWalking && r.Pose != 3 && R.ChatActs.Contains(r.Act) && D(r) < R.ChatFar) Can.Add(&r);
+	TSet<int32> Used;
+	TArray<TArray<const FBrixHeardPerson*>> Found;
+	for (const FBrixHeardPerson* r : Can)
+	{
+		if (Used.Contains(r->Id)) continue;
+		TArray<const FBrixHeardPerson*> G = { r };
+		Used.Add(r->Id);
+		for (int32 k = 0; k < G.Num(); ++k)
+			for (const FBrixHeardPerson* o : Can) if (!Used.Contains(o->Id) && FVector2D::Distance(o->Pos, G[k]->Pos) < R.PairM) { G.Add(o); Used.Add(o->Id); }
+		if (G.Num() > 1) Found.Add(G);
+	}
+	Found.StableSort([&](const TArray<const FBrixHeardPerson*>& A, const TArray<const FBrixHeardPerson*>& B) { return D(*A[0]) < D(*B[0]); });
+	TSet<FString> Live;
+	Chat = 0; Murmur = 0;
+	for (int32 gi = 0; gi < Found.Num() && gi < R.ChatGroups; ++gi)
+	{
+		const TArray<const FBrixHeardPerson*>& G = Found[gi];
+		TArray<int32> Ids;
+		for (const FBrixHeardPerson* r : G) Ids.Add(r->Id);
+		Ids.Sort();
+		FString Key;
+		for (int32 i : Ids) Key += FString::FromInt(i) + TEXT(",");
+		Live.Add(Key); ++Chat; Murmur += G.Num();
+		FGroup* Gs = Groups.Find(Key);
+		if (!Gs) { Gs = &Groups.Add(Key); Gs->Turn = Rng.RandHelper(G.Num()); Gs->Next = Now + Rng.FRandRange(0, 1.5); }
+		if (Now < Gs->Next) continue;
+		const FBrixHeardPerson* Who = G[Gs->Turn % G.Num()];
+		FBrixVoiceOut V; V.Pos = Who->Pos; V.Far = R.ChatFar;
+		double End = BrixPhrase(R, .02, BrixVoiceHz(R, Who->Id, Who->Role), R.Syllables[0] + Rng.RandHelper(R.Syllables[1] - R.Syllables[0] + 1), R.ChatGain, Rng.FRand() < R.Question, Rng, V.Syllables);
+		OutVoices.Add(V);
+		const bool bKids = G.ContainsByPredicate([](const FBrixHeardPerson* r) { return r->Role == TEXT("child"); });
+		if (Rng.FRand() < (bKids ? R.ChildLaugh : R.Laugh))   // someone else in the group laughs at it
+		{
+			const FBrixHeardPerson* O = G[(Gs->Turn + 1) % G.Num()];
+			FBrixVoiceOut L; L.Pos = O->Pos; L.Far = R.ChatFar;
+			End = FMath::Max(End, BrixLaugh(R, End + .05, BrixVoiceHz(R, O->Id, O->Role), R.LaughGain, Rng, L.Syllables));
+			OutVoices.Add(L);
+		}
+		++Gs->Turn;
+		Gs->Next = Now + End + (Gs->Turn % (2 + Rng.RandHelper(2)) == 0 ? Rng.FRandRange(R.Pause[0], R.Pause[1]) : Rng.FRandRange(R.TurnGap[0], R.TurnGap[1]));
+	}
+	for (auto It = Groups.CreateIterator(); It; ++It) if (!Live.Contains(It->Key)) It.RemoveCurrent();
+	// the hum of a crowd: where many are gathered, a low bed and syllables from among them
+	TArray<const FBrixHeardPerson*> Near;
+	for (const FBrixHeardPerson& r : People) if (!r.bWalking && r.Pose != 3 && D(r) < R.CrowdFar) Near.Add(&r);
+	const double T = FMath::Clamp((Near.Num() - R.CrowdMin) / (R.CrowdFull - R.CrowdMin), 0.0, 1.0), K = T * T * (3 - 2 * T);
+	Crowd = Near.Num();
+	CrowdBed = R.CrowdGain * K * .5;
+	CrowdT -= Dt;
+	if (K > 0 && CrowdT <= 0)
+	{
+		const FBrixHeardPerson* r = Near[Rng.RandHelper(Near.Num())];
+		FBrixVoiceOut V; V.Pos = r->Pos; V.Far = R.CrowdFar;
+		BrixPhrase(R, .02, BrixVoiceHz(R, r->Id, r->Role), 2 + Rng.RandHelper(4), R.CrowdGain * (.5 + .5 * K), Rng.FRand() < .2, Rng, V.Syllables);
+		OutVoices.Add(V);
+		CrowdT = Rng.FRandRange(.5, 1.5) / (R.CrowdPerS * (1 + Near.Num() / 4.0));
+	}
+	if (Now - PruneT > 10) { PruneT = Now; for (auto It = St.CreateIterator(); It; ++It) if (Now - It->Value.Seen > 30) It.RemoveCurrent(); }
+}
+
+FBrixOnAir BrixPodcastAt(const FBrixSoundRules& R, const FBrixSpeech& Speech, const FString& ShowId, double Minute, double Pace)
+{
+	FBrixOnAir A;
+	const FBrixSoundRules::FShow* Show = R.Shows.Find(ShowId);
+	if (!Show || !Show->Episodes.Num()) return A;
+	// the plan: every part of the show in order (plan()); worked out once per show
+	struct FItem { double T0, D; int32 Ep, Line; FBrixLine Ln; };
+	static TMap<FString, TPair<TArray<FItem>, double>> Plans;   // by the show and its text, so changed rules make a new plan
+	FString PlanKey = ShowId + Show->Title;
+	for (const FBrixSoundRules::FEpisode& E : Show->Episodes) for (const auto& L : E.Lines) PlanKey += L.Value;
+	TPair<TArray<FItem>, double>* Plan = Plans.Find(PlanKey);
+	if (!Plan)
+	{
+		Plan = &Plans.Add(PlanKey);
+		double t = 0;
+		for (int32 e = 0; e < Show->Episodes.Num(); ++e)
+		{
+			Plan->Key.Add({ t, R.PodIntroS, e, -1, FBrixLine() }); t += R.PodIntroS;
+			for (int32 k = 0; k < Show->Episodes[e].Lines.Num(); ++k)
+			{
+				const FBrixLine Ln = Speech.Speak(Show->Episodes[e].Lines[k].Value);
+				Plan->Key.Add({ t, Ln.End + R.PodGapS, e, k, Ln }); t += Ln.End + R.PodGapS;
+			}
+		}
+		Plan->Value = t;
+	}
+	const double Total = Plan->Value, Pos = FMath::Fmod(FMath::Fmod(Minute * Pace, Total) + Total, Total);
+	const FItem* It = &Plan->Key[0];
+	for (const FItem& I : Plan->Key) if (Pos >= I.T0 && Pos < I.T0 + I.D) { It = &I; break; }
+	const FBrixSoundRules::FEpisode& Ep = Show->Episodes[It->Ep];
+	A.Key = ShowId + TEXT("/") + FString::FromInt(It->Ep) + TEXT(":") + (It->Line < 0 ? FString(TEXT("intro")) : FString::FromInt(It->Line));
+	A.Head = Show->Title + TEXT(" \u00b7 ") + Ep.Title;
+	A.bIntro = It->Line < 0;
+	A.From = Pos - It->T0;
+	if (!A.bIntro)
+	{
+		const FBrixSoundRules::FHost* H = Show->Hosts.Find(Ep.Lines[It->Line].Key);
+		A.Text = (H ? H->Name : Ep.Lines[It->Line].Key) + TEXT(": ") + Ep.Lines[It->Line].Value;
+		A.Pitch = H ? H->Pitch : 180;
+		A.Line = It->Ln;
+	}
+	else A.Text = TEXT("\u2026");
+	return A;
 }
 
 FString BrixStepSurface(bool bInside, const FString& LotKind)
@@ -447,6 +708,17 @@ bool LoadBrixSoundIndex(const FString& Path, TMap<FString, FBrixClipInfo>& Out, 
 	const TArray<TSharedPtr<FJsonValue>>* Hz = nullptr;
 	if (S->TryGetArrayField(TEXT("engine_hz"), Hz)) for (const TSharedPtr<FJsonValue>& V : *Hz) OutEngineHz.Add(V->AsNumber());
 	return true;
+}
+
+void LoadBrixSyllableIndex(const FString& Path, TArray<double>& OutHz, TArray<double>& OutLen)
+{
+	FString Error;
+	OutHz.Reset(); OutLen.Reset();
+	const TSharedPtr<FJsonObject> S = ReadJson(Path, Error);
+	if (!S) return;
+	const TArray<TSharedPtr<FJsonValue>>* A = nullptr;
+	if (S->TryGetArrayField(TEXT("syllable_hz"), A)) for (const TSharedPtr<FJsonValue>& V : *A) OutHz.Add(V->AsNumber());
+	if (S->TryGetArrayField(TEXT("syllable_len"), A)) for (const TSharedPtr<FJsonValue>& V : *A) OutLen.Add(V->AsNumber());
 }
 
 bool ReadBrixWav(const TArray<uint8>& File, TArray<uint8>& OutPcm, int32& OutRate, int32& OutChannels)

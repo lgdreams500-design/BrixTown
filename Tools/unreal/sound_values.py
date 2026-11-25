@@ -18,7 +18,8 @@ bell, engines, the tram's hum, whine and rumble, the street, crickets, the fount
 
 Where a level depends on what is happening (a step's loudness, an engine's level with speed) the sound is recorded at
 level 1 and the game applies the slice's level from World/rules/sound.json; a recipe's own level (a chime, a thud) is
-recorded in. Math.random is seeded, so a run gives the same files. sound.js stays the source while the slice is kept
+recorded in. Math.random is seeded, so a run gives the same files, but for the rewards: their ringing room (delays
+that feed each other) renders a little differently each time in Edge, so leave them as they are unless they changed. sound.js stays the source while the slice is kept
 (ADR-0045): run this again after changing it or World/rules/sound.json.
   python Tools/unreal/sound_values.py
 
@@ -94,12 +95,55 @@ window.__SOUND = async function (CASES) {
   // place(): how loud and where (SND-007)
   out.trace.place = CASES.place.map(([x, z, far, yaw]) => { L.yaw = yaw; return place(x, z, far).map(r6); });
   L.yaw = 0;
+  // the people's voices and doings (SND-015, SND-016): each resident's pitch, the hash it comes from
+  out.trace.hash = CASES.hashes.map(i => r6(hashOf(i)));
+  out.trace.voice = CASES.voices.map(([i, role]) => r6(voiceHz({ i, role })));
+  once = (dest, x, z, far) => { const [a] = place(x, z, far); return a < .004 ? null : { a }; };
+  phrase = (d, t, base, n, gain, ask) => { ev.push(["phrase", r6(base), n, r6(gain), !!ask]); return t + n * .15; };
+  laugh = (d, t, base, gain) => { ev.push(["laugh", r6(base), r6(gain)]); return t + .5; };
+  const keepVoice = voice;
+  voice = (d, ln, base, gain) => { ev.push(["voice", r6(base), r6(gain), ln.seq.length]); };
+  // what they do, over ten minutes: which sounds each resident makes, how often, and the sellers' calls
+  pst.clear(); groups.clear(); crowdBed = { gain: param() };
+  const made = {};
+  for (let f = 0; f < CASES.acts.frames; f++) {
+    ev = []; clock.t = 1000 + f * CASES.acts.dt;
+    const res = CASES.acts.residents.map(r => Object.assign({}, r));
+    step = (x, z) => { };
+    sfx = (name, x, z) => { const r = res.find(q => q.x === x && q.z === z); (made[r.i] = made[r.i] || {})[name] = ((made[r.i] || {})[name] || 0) + 1; };
+    people(res, { dt: CASES.acts.dt });
+    for (const e of ev) if (e[0] === "phrase" && e[3] === r6(PE.call_gain)) { made.calls = (made.calls || 0) + 1; }
+  }
+  out.trace.acts = made;
+  // who talks together (SND-006, SND-016): the groups, how many murmur, the crowd and its hum, the shouts
+  pst.clear(); groups.clear(); crowdBed = { gain: param() }; sfx = () => { };
+  out.trace.groups = CASES.groups.map(F => {
+    ev = []; clock.t = F.t;
+    people(F.residents, { dt: F.dt });
+    return { chat: st.chat, murmur: st.murmur, crowd: st.crowd, bed: r6(crowdBed.gain.v), shouts: ev.filter(e => e[0] === "voice").map(e => e.slice(1)) };
+  });
+  // a line voiced syllable by syllable (voice()): its shapes, times, pitches and lengths
+  voice = keepVoice;
+  const keepSyl = syllable;
+  syllable = (d, t, hz, shape, len, gain) => ev.push([r6(t), r6(hz), shape, r6(len), r6(gain)]);
+  out.trace.lines = CASES.lines.map(([text, base, gain, from]) => { ev = []; clock.t = 0; voice(null, Talk.speak(text), base, gain, from); return ev; });
+  syllable = keepSyl;
+  // the podcasts (SND-014): what is on air at a minute, and its caption
+  const keepCaption = caption, keepVoice2 = voice, keepRecipe = recipe; let cap = null, said = null, chime = null;
+  caption = (head, text) => { cap = [head, text || null]; };
+  voice = (d, ln, base, gain, from) => { said = [r6(base), r6(gain), r6(from || 0), ln.seq.length]; };
+  recipe = (r) => { chime = [r.kind, r.hz, r.len, r.gain]; };
+  ctx = new OfflineAudioContext(1, 64, CASES.rate); bus = { world: ctx.destination, action: ctx.destination, voice: ctx.destination };
+  out.trace.podcasts = CASES.podcasts.map(([id, m]) => { cap = null; said = null; onAir = null; podcast({ m }, { podcast: id }); const key = onAir; offAir(); return { key, caption: cap, said }; });
+  out.trace.podcast_intro = chime;
+  caption = keepCaption; voice = keepVoice2; recipe = keepRecipe; ctx = { get currentTime() { return clock.t; }, state: "running" };
   Object.assign(window.__keep = {}, keep);
   ({ step, sfx, phrase, laugh, once, recipe, engineVoice } = keep);
-  pool = null; mine = null; horn = null; skid = null; tramV.length = 0; tramSeen.clear(); crowdBed = null; pst.clear();
+  pool = null; mine = null; horn = null; skid = null; tramV.length = 0; tramSeen.clear(); crowdBed = null; pst.clear(); groups.clear();
 
   // ---- recordings: each sound into an offline context of its own, positioned nowhere (the game places it)
   const R = CASES.rate;
+  Math.random = seeded(CASES.seed);                     // seeded again: the traces' draws do not change the recordings
   once = d => d; ready = true;
   async function record(name, o) {                      // o: { secs, make(dest), loop?, lead? (s skipped), len? (s kept), xf? (s), fold? (stereo to mono) }
     const lead = o.lead || 0, xf = o.loop ? (o.xf || .08) : 0, secs = o.loop ? lead + o.len + xf : o.secs;
@@ -192,6 +236,17 @@ window.__SOUND = async function (CASES) {
       const b = band(style, into, CASES.seed); b.fade(1, .01); b.run(.1 + 2 * len + 1);
     } });
   }
+  // (new recordings go last, so the random draws of those before them stay the same)
+  // what residents do (SND-015): each sound of sound.json people.sounds, three of each as they vary
+  for (const [name, r] of Object.entries(SND)) for (let k = 0; k < 3; k++) await record("pact_" + name + "_" + k, { secs: (r.len || .3) * (r.n || 1) * 1.6 + 1.2, make: d => recipe(r, d) });
+  // wordless syllables (SND-006, SND-016, SND-014): each mouth shape at four pitches, short and long; the game picks the
+  // nearest and pitches it the rest of the way
+  for (const shape of Object.keys(VO.shapes)) for (const hz of CASES.syllable_hz) for (const len of CASES.syllable_len)
+    await record("syl_" + shape + "_" + hz + "_" + Math.round(len * 100), { secs: len + .3, make: d => syllable(d, 0, hz, shape, len, 1) });
+  await record("crowd_bed", { loop: true, lead: .3, len: 2, make: d => { const g = gainOf(1); chain(noiseSrc(), filt("bandpass", PE.crowd.hz, .9), g, d); } });
+  await record("podcast_intro", { secs: 2, make: d => recipe({ kind: out.trace.podcast_intro[0], hz: out.trace.podcast_intro[1], len: out.trace.podcast_intro[2], gain: out.trace.podcast_intro[3] }, d) });
+  // the horn (SND-009): F while driving
+  await record("car_horn", { loop: true, lead: .3, len: 1, make: () => { pool = null; mine = null; engines([], null); horn.gain.cancelScheduledValues(0); horn.gain.value = 1; } });
   pool = null; mine = null; ready = false;
   return out;
 };
@@ -349,7 +404,40 @@ def cases():
     place = [[dx, dz, far, yaw] for (dx, dz) in ((0, 0), (0.3, 0.2), (1, 0), (2.5, 0), (3, 4), (-6, 8), (10, 0), (0, -20), (30, 40), (49, 0), (60, 0), (69.9, 0), (75, 0))
              for far in (None, 30, 70) for yaw in (0, 1.2)]
     reward_takes = [[i, n] for n in (1, 2, 3, 5, 8, 10, 12, 18, 25) for i in range(n)]
+    rules = json.load(open(RULES, encoding="utf-8"))
+    hashes = list(range(0, 4000, 37)) + [7 * i + 3 for i in range(0, 4000, 53)]
+    voices = [[i, role] for i in range(0, 4000, 97) for role in ("commuter", "child", "elder", "shopkeeper")]
+    # doings: twelve residents at rest, each doing something with a sound, apart so they do not talk; ten minutes in quarter seconds
+    # nearest first: the eight nearest busy ones are heard (people.busy), the ninth and one out of reach are not; of the
+    # two asleep, one snores and one does not (the chance by their hash)
+    import math
+    doers = [(1, "work", "cafe"), (2, "sell", "shopkeeper"), (3, "eat", "commuter"), (4, "sleep", "commuter"), (16, "sleep", "elder"),
+             (6, "slide", "child"), (8, "read", "elder"), (9, "work", "maker"), (11, "work", "clerk"), (10, "deliver", "courier")]
+    acts = dict(dt=0.25, frames=2400, residents=[dict(i=i, x=round((3 + 1.2 * k) * math.cos(k * 2.4), 3), z=round((3 + 1.2 * k) * math.sin(k * 2.4), 3), act=a, walking=False,
+                                                     pose=2 if a in ("eat", "read") else 0, ph=0, inside=False, role=role, run=False, kind=None) for k, (i, a, role) in enumerate(doers)])
+    acts["residents"].append(dict(i=13, x=18.5, z=0.0, act="work", walking=False, pose=0, ph=0, inside=False, role="maker", run=False, kind=None))   # out of reach
+    # groups: a group of three eating, two reading (a quiet act), a chain of four waiting, a pair lying down, six pairs
+    # chatting further off (more than the five groups heard), a walker passing; one resident shouts twice
+    groups = []
+    for f in range(120):
+        t = 3000 + f * 0.25
+        res = [dict(i=100, x=5.0, z=0.0, act="eat", pose=2), dict(i=101, x=6.0, z=1.0, act="eat", pose=2), dict(i=102, x=5.0, z=2.0, act="eat", pose=2, role="child"),
+               dict(i=103, x=5.0, z=10.0, act="read", pose=2), dict(i=104, x=6.0, z=10.5, act="read", pose=2),
+               dict(i=105, x=0.0, z=-5.0, act="wait"), dict(i=106, x=3.0, z=-5.0, act="wait"), dict(i=107, x=6.0, z=-5.0, act="wait"), dict(i=108, x=9.0, z=-5.0, act="wait"),
+               dict(i=109, x=-3.0, z=-6.0, act="home", pose=3), dict(i=110, x=-4.0, z=-6.0, act="home", pose=3),
+               dict(i=111, x=round(-8 + f * 0.1, 3), z=1.0, act="walk", walking=True, pose=1, ph=round((f * 0.5) % 1, 3))]
+        for p in range(6):   # pairs spread round the far side, each out of reach of the others
+            cx, cz = round((9 + p) * math.cos(2.0 + p * .55), 3), round((9 + p) * math.sin(2.0 + p * .55), 3)
+            res += [dict(i=120 + 2 * p, x=cx, z=cz, act="visit"), dict(i=121 + 2 * p, x=round(cx + .8, 3), z=round(cz + .6, 3), act="visit")]
+        res.append(dict(i=140, x=2.0, z=4.0, act="walk", walking=True, pose=1, ph=0.2, shout="Watch where you're going!" if 10 <= f < 50 or 60 <= f < 90 else None))
+        for r in res:
+            r.setdefault("walking", False); r.setdefault("pose", 0); r.setdefault("ph", 0); r.setdefault("inside", False); r.setdefault("role", "commuter"); r.setdefault("run", False); r.setdefault("kind", None)
+        groups.append(dict(t=t, dt=0.25, residents=res))
+    lines = [["Watch where you're going!", 180.0, 0.2, 0.0], ["Well... that's it, isn't it? Yes; quite: really - fine!", 235.0, 0.2, 0.0],
+             ["And I'm Teo. Mira, I walked through Market Square at dawn and the stalls were already up.", 150.0, 0.2, 1.3]]
+    podcasts = [[sid, round(m, 3)] for sid in rules["podcasts"]["shows"] for m in [0.0, 0.1, 0.37, 1.0, 5.5, 13.2, 60.0, 333.3, 1000.7, 1439.9] + [0.03 * k for k in range(200)]]
     return dict(seed=20261125, rate=RATE, step_variants=4, bird_variants=6, engine_hz=[36, 76], music_bars=8, reward_takes=reward_takes,
+                hashes=hashes, voices=voices, acts=acts, groups=groups, lines=lines, podcasts=podcasts, syllable_hz=[120, 170, 240, 340], syllable_len=[0.1, 0.2],
                 people=people, engines=engines, trams=trams, place=place)
 
 
@@ -365,8 +453,13 @@ def main():
     harness = HARNESS.replace("window.__SOUND = ", "function carSound" + m.group(0)[len("    car"):-1] + "\nwindow.__SOUND = ", 1)
     rules = json.load(open(RULES, encoding="utf-8"))
     C = cases()
-    page = ("<!doctype html><meta charset=utf-8><script>window.WASTED = " + json.dumps(dict(sound=rules, day=dict(sunrise=6, sunset=20, market=False)))
-            + ";</script><script>\n" + src.replace(ret, "\n" + harness + ret, 1) + "\n</script>")
+    rules_dir = os.path.dirname(RULES)
+    speech = json.load(open(os.path.join(rules_dir, "speech.json"), encoding="utf-8"))
+    dialogue = json.load(open(os.path.join(rules_dir, "dialogue.json"), encoding="utf-8"))
+    pace = json.load(open(os.path.join(rules_dir, "calendar.json"), encoding="utf-8"))["calendar"]["real_seconds_per_minute"]
+    conv = open(os.path.join(ROOT, "Prototype", "play", "conversations.js"), encoding="utf-8").read()
+    page = ("<!doctype html><meta charset=utf-8><script>window.WASTED = " + json.dumps(dict(sound=rules, day=dict(sunrise=6, sunset=20, market=False), pace=pace, speech=speech, dialogue=dialogue))
+            + ";</script><script>\n" + conv + "\n</script><script>\n" + src.replace(ret, "\n" + harness + ret, 1) + "\n</script>")
     out = run_in_edge(page, "(async () => { const C = %s; return await window.__SOUND(C); })()" % json.dumps(C))
     if not out:
         sys.exit("Edge gave nothing back")
@@ -383,7 +476,7 @@ def main():
         total += os.path.getsize(path)
         index[s["name"]] = dict(file=s["name"] + ".wav", loop=s["loop"], seconds=s["seconds"], scale=s["scale"])
     # the music as Ogg Vorbis, by the engine's own encoder (the BrixEncodeOgg commandlet: build the editor first)
-    music = sorted(n for n in index if n.startswith("music_") or n.startswith("reward_"))   # the long ones: the music, the rewards ringing on
+    music = sorted(n for n in index if n.split("_")[0] in ("music", "reward", "pact", "syl"))   # the long ones and the many: music, rewards, doings, syllables
     if music:
         subprocess.run([UNREAL_CMD, UPROJECT, "-run=BrixEncodeOgg", "-Dir=" + OUT_DIR, "-Files=" + ",".join(music),
                         "-Quality=%d" % OGG_QUALITY, "-unattended", "-nullrhi", "-nosplash", "-stdout"], stdin=subprocess.DEVNULL, capture_output=True, timeout=900)
@@ -399,11 +492,12 @@ def main():
             os.remove(os.path.join(OUT_DIR, f))
     with open(os.path.join(OUT_DIR, "index.json"), "w", encoding="utf-8", newline="\n") as f:
         json.dump(dict(note="Generated by Tools/unreal/sound_values.py from Prototype/play/sound.js and World/rules/sound.json. Do not edit: change those and run it again.",
-                       rate=RATE, engine_hz=C["engine_hz"], sounds=index), f, indent=1)
+                       rate=RATE, engine_hz=C["engine_hz"], syllable_hz=C["syllable_hz"], syllable_len=C["syllable_len"], sounds=index), f, indent=1)
     os.makedirs(os.path.dirname(OUT_VALUES), exist_ok=True)
     with open(OUT_VALUES, "w", encoding="utf-8", newline="\n") as f:
         json.dump(dict(note="Generated by Tools/unreal/sound_values.py: sound.js people(), engines(), trams() and place() in scripted moments, for the SND tests.",
-                       cases=dict(people=C["people"], engines=C["engines"], trams=C["trams"], place=C["place"], rewards=C["reward_takes"]), trace=out["trace"]), f, separators=(",", ":"))
+                       cases=dict(people=C["people"], engines=C["engines"], trams=C["trams"], place=C["place"], rewards=C["reward_takes"], hashes=C["hashes"], voices=C["voices"],
+                                  acts=C["acts"], groups=C["groups"], lines=C["lines"], podcasts=C["podcasts"]), trace=out["trace"]), f, separators=(",", ":"))
     print("wrote %d sounds (%.0f KB) to %s, and %s" % (len(index), total / 1024, os.path.relpath(OUT_DIR, ROOT), os.path.relpath(OUT_VALUES, ROOT)))
 
 
