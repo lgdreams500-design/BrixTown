@@ -444,7 +444,12 @@ alone: `BrixSnowNow`, a port of `world.snow_now()`, checked by `WLD070_snow_fall
 go bare-headed, never an umbrella, and walk at the careful pace (citysim's plan makes the walks slower; they take cover as
 from rain); `CITY107_residents_are_dressed_for_snow`. `-BrixWeather=snow` tries it on the built summer day (with what
 residents would wear on a day of snow). At High: 37 to 39 frames a second in the 08:10 rush in snow (noisy: other
-sessions were running Unreal). Not yet: footprints and tracks, snow on trees, cars and people, the sound of snow.
+sessions were running Unreal). In lying snow (WLD-071) walkers leave footprints behind them, a footstep apart and left and
+right in turn, and vehicles two tyre tracks, from where each went and when (their day and the clock; the player's own
+steps and car from where they went this visit), filled in by falling snow and fading (sky.json `snow.tracks`;
+`WLD071_footprints_and_tracks_follow_the_clock`); parked cars carry snow on their roofs and people out in it gather it on
+their heads and shoulders while it falls (M_People's per-mesh `Snow`, custom primitive data 0, from
+`make_people_material.py`); tree crowns whiten on top. Not yet: the sound of snow.
 
 ## Clouds (WLD-035, WLD-036; ADR-0014)
 Soft heaps on one flat layer overhead, bright on the side towards the sun and shaded underneath, fading into the haze
@@ -855,6 +860,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD036_the_clouds_are_where_world_py_puts_them` | WLD-035, WLD-036 |
 | `BrixTown.World.WLD070_snow_falls_and_lies_as_world_py_says` | WLD-069, WLD-070 |
 | `BrixTown.World.CITY107_residents_are_dressed_for_snow` | CITY-107 |
+| `BrixTown.World.WLD071_footprints_and_tracks_follow_the_clock` | WLD-071 |
 | `BrixTown.World.CITY007_every_conversation_is_sound` | CITY-007 |
 | `BrixTown.World.CHR009_lines_are_mouthed_as_the_slice_mouths_them` | CHR-009 |
 | `BrixTown.World.CHR001_the_designer_makes_the_slices_look` | CHR-001, CHR-002 |
