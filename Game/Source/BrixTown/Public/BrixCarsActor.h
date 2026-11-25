@@ -81,7 +81,7 @@ private:
 	TArray<FBox2D> Paving;              // the blocks' paving: a car leaving its bay steps down off it onto the road
 	bool Free(double X, double Z, double A, bool* bWall = nullptr) const;   // bWall: what stopped it was a wall or a street thing
 	int32 Frame = 0, LastShown = 0;
-	double LastMinute = -1;
+	double LastMinute = -1;             // the clock last frame, for giving way (CITY-049)
 	int32 LastHeld = 0;
 	UPROPERTY() TObjectPtr<UProceduralMeshComponent> Tracks;
 	TArray<struct FBrixPrint> DriveTrail;   // where the player's car has been this visit, Age the minute it was there
