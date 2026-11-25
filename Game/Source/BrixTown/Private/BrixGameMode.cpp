@@ -257,6 +257,12 @@ void ABrixGameMode::StartPlay()
 	FString InLot;
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixInside="), InLot)) PutInside(InLot, false);
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixWalkIn="), InLot)) PutInside(InLot, true);
+	FString MenuPage;   // -BrixMenu=<page>: the game menu open at that page for the test shot (ABrixLife::TestMenu)
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixMenu="), MenuPage) && Life)
+	{
+		FTimerHandle H;
+		GetWorldTimerManager().SetTimer(H, [this, MenuPage]() { if (Life) Life->TestMenu(MenuPage); }, FMath::Max(1.f, ShotDelaySeconds - 3.f), false);
+	}
 	FString Shot;
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixShot="), Shot))
 	{

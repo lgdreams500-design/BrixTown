@@ -7,6 +7,7 @@
 #include "BrixQuests.h"
 #include "BrixRewards.h"
 #include "BrixRewardsWidget.h"
+#include "BrixSettings.h"
 #include "BrixTalk.h"
 #include "BrixLifeActor.generated.h"
 
@@ -42,7 +43,15 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
-	bool IsOpen() const { return !Panel.IsEmpty(); }
+	bool IsOpen() const { return !Panel.IsEmpty() || bMenu; }
+	bool IsMenu() const { return bMenu; }
+	// the game menu (BrixMenu.cpp; UI-005 to UI-019): Esc opens it on its home, a page's key on that page
+	void Menu(const FString& Tab);
+	void MenuKey(const FString& Action);  // settings.json's action: me, money, belongings, property, journal, wardrobe, map, help
+	void CloseMenu();
+	void TestMenu(const FString& Page);
+	void TickMenuShot();
+	FBrixSettings Settings;               // World/rules/settings.json with the device's own values
 	void CounterKey();                    // B: the counter of the lot the player is at, if it has one
 	void WalletKey();                     // I: the money page
 	void QuestsKey();                     // J: the quest log (QST-005)
@@ -76,6 +85,21 @@ public:
 
 private:
 	void BuildUI();
+	void StartMenu();
+	void DrawMenu();
+	TSharedRef<SWidget> HomePage();
+	TSharedRef<SWidget> MenuPage(const FString& Id);
+	void SettingsPage(TSharedRef<SVerticalBox> Body);
+	void SavePage(TSharedRef<SVerticalBox> Body);
+	void HelpPage(TSharedRef<SVerticalBox> Body);
+	FString Headline(const FString& Id) const;
+	const FBrixMenuTab* Tab(const FString& Id) const;
+	FLinearColor TabColour(const FString& Id, bool bLetters) const;
+	FString TabKey(const FString& Id) const;
+	FString SettingsPath() const;
+	void PictureSet();
+	void ApplySettings();
+	void SaveSettings() const;
 	FString CounterWords(int32 Lot) const;
 	void Draw();                          // the open panel, drawn again from the state of the game (life.js draw())
 	void Act(TFunction<bool(FString&)> Fn);   // a button: do it, say what happened or why it was refused, draw again
@@ -172,6 +196,11 @@ private:
 	FString ClickedId;
 	double ClickedAt = 0;
 
-	TSharedPtr<SWidget> Hud, PanelRoot;
+	TSharedPtr<SWidget> Hud, PanelRoot, MenuRoot;
+	TSharedPtr<SBox> MenuBody;
+	bool bMenu = false, bFpsShown = false;
+	FString MenuTab, CityName;
+	int32 SettingsGroup = 0;
+	double MenuShotAt = -1;               // -BrixMenu: the real time to take the test shot at (the menu has stopped the game's own timers)
 	TSharedPtr<SBox> PanelBody;
 };

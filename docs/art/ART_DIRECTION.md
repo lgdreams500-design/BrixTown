@@ -133,6 +133,9 @@ how the renders get their look (and what the slice and Unreal must do to match i
 
 ### 2.7 The interface — "Painted signs" (ADR-0033)
 
+In the Unreal build the menu, the counters and the buy menu are drawn in "Lamplight" (ADR-0049, proposed 2026-11-25 on
+the owner's word, awaiting the owner's verdict; shots in `Art/StyleTests/lamplight_menu_36/`). The rules below stay the slice's.
+
 Reference: sample C of look test 19, `Art/StyleTests/menu_look_19/index.html` (a page, not a render: open it in a browser),
 as built in the slice's menu. It covers the game menu; the counters, the conversation box and the building designer have
 not been brought to it yet.

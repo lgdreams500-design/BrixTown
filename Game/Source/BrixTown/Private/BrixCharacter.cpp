@@ -10,6 +10,8 @@
 #include "Components/CapsuleComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Engine/Engine.h"
+#include "Engine/GameViewportClient.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -74,6 +76,12 @@ void ABrixCharacter::MakeInput()
 	CounterAction = NewObject<UInputAction>(this, TEXT("Counter"));
 	WalletAction = NewObject<UInputAction>(this, TEXT("Wallet"));
 	QuestsAction = NewObject<UInputAction>(this, TEXT("Quests"));
+	PageNames = { TEXT("me"), TEXT("belongings"), TEXT("property"), TEXT("wardrobe"), TEXT("map"), TEXT("help") };   // settings.json actions
+	for (const FString& N : PageNames) PageActions.Add(NewObject<UInputAction>(this, *(TEXT("Page_") + N)));
+	for (UInputAction* A : PageActions) A->bTriggerWhenPaused = true;   // the menu stops the clock; its keys still work
+	LeaveAction->bTriggerWhenPaused = true;
+	WalletAction->bTriggerWhenPaused = true;
+	QuestsAction->bTriggerWhenPaused = true;
 	for (const TCHAR* N : { TEXT("ChooseLeft"), TEXT("ChooseRight"), TEXT("ChooseUp"), TEXT("ChooseDown"), TEXT("ChooseEnter") }) ChooseActions.Add(NewObject<UInputAction>(this, N));
 	for (int32 n = 0; n < 9; ++n) AnswerActions.Add(NewObject<UInputAction>(this, *FString::Printf(TEXT("Answer%d"), n + 1)));
 
@@ -101,6 +109,8 @@ void ABrixCharacter::MakeInput()
 	Keys->MapKey(CounterAction, EKeys::B);
 	Keys->MapKey(WalletAction, EKeys::I);
 	Keys->MapKey(QuestsAction, EKeys::J);
+	const FKey PageKeys[6] = { EKeys::C, EKeys::G, EKeys::P, EKeys::U, EKeys::M, EKeys::H };
+	for (int32 k = 0; k < 6; ++k) Keys->MapKey(PageActions[k], PageKeys[k]);
 	Keys->MapKey(ChooseActions[0], EKeys::Left);
 	Keys->MapKey(ChooseActions[1], EKeys::Right);
 	Keys->MapKey(ChooseActions[2], EKeys::Up);
@@ -141,6 +151,7 @@ void ABrixCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		In->BindAction(CounterAction, ETriggerEvent::Started, this, &ABrixCharacter::CounterKey);
 		In->BindAction(WalletAction, ETriggerEvent::Started, this, &ABrixCharacter::WalletKey);
 		In->BindAction(QuestsAction, ETriggerEvent::Started, this, &ABrixCharacter::QuestsKey);
+		for (UInputAction* A : PageActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::MenuPageKey);
 		for (UInputAction* A : ChooseActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::ChooseKey);
 		for (UInputAction* A : AnswerActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::AnswerKey);
 	}
@@ -159,9 +170,9 @@ void ABrixCharacter::Move(const FInputActionValue& Value)
 void ABrixCharacter::Look(const FInputActionValue& Value)
 {
 	if (bTalking || bPanel) return;
-	const FVector2D V = Value.Get<FVector2D>();
+	const FVector2D V = Value.Get<FVector2D>() * LookScale;
 	AddControllerYawInput(V.X);
-	AddControllerPitchInput(-V.Y);
+	AddControllerPitchInput(bInvertLook ? V.Y : -V.Y);
 }
 
 void ABrixCharacter::StartRun() { GetCharacterMovement()->MaxWalkSpeed = RunSpeed * CmPerM; }
@@ -318,7 +329,9 @@ void ABrixCharacter::AnswerKey(const FInputActionInstance& Instance)
 void ABrixCharacter::LeaveKey()
 {
 	if (ABrixLife* L = Life()) if (L->IsOpen()) { L->Close(); return; }
-	if (ABrixTalk* T = Talk()) T->Close();
+	if (ABrixTalk* T = Talk()) if (T->IsTalking()) { T->Close(); return; }
+	if (bDriving) return;
+	if (ABrixLife* L = Life()) L->Menu(FString());   // Esc with nothing open: the menu's home (UI-005)
 }
 
 ABrixLife* ABrixCharacter::Life() const
@@ -346,6 +359,25 @@ void ABrixCharacter::ChooseKey(const FInputActionInstance& Instance)
 	const int32 n = ChooseActions.IndexOfByKey(Instance.GetSourceAction());
 	if (n == 4) L->EnterKey();
 	else if (n >= 0) L->ArrowKey(n == 0 ? -1 : n == 1 ? 1 : 0, n == 2 ? -1 : n == 3 ? 1 : 0);
+}
+
+void ABrixCharacter::MenuPageKey(const FInputActionInstance& Instance)
+{
+	if (bDriving || bTalking) return;
+	const int32 n = PageActions.IndexOfByKey(Instance.GetSourceAction());
+	if (ABrixLife* L = Life()) if (PageNames.IsValidIndex(n)) L->MenuKey(PageNames[n]);
+}
+
+void ABrixCharacter::SetView(float CameraM, float FovDeg, float LookSpeed, bool bInvertY)
+{
+	CameraDistance = CameraM;
+	if (!bDriving && !bTalking) Boom->TargetArmLength = CameraM * CmPerM;
+	FVector2D Vp(16, 9);
+	if (GEngine && GEngine->GameViewport) GEngine->GameViewport->GetViewportSize(Vp);
+	const float Aspect = Vp.Y > 0 ? (float)(Vp.X / Vp.Y) : 16.f / 9.f;   // the slice's degrees are up and down, the engine's across
+	Camera->SetFieldOfView(FMath::RadiansToDegrees(2.f * FMath::Atan(FMath::Tan(FMath::DegreesToRadians(FovDeg) / 2.f) * Aspect)));
+	LookScale = LookSpeed;
+	bInvertLook = bInvertY;
 }
 
 void ABrixCharacter::QuestsKey()

@@ -1,5 +1,7 @@
 #include "BrixThingWidget.h"
 
+#include "BrixLook.h"
+
 #include "Framework/Application/SlateApplication.h"
 #include "Rendering/DrawElements.h"
 #include "Rendering/SlateRenderer.h"
@@ -51,7 +53,7 @@ FReply SBrixThing::OnMouseMove(const FGeometry& G, const FPointerEvent& E)
 int32 SBrixThing::OnPaint(const FPaintArgs&, const FGeometry& G, const FSlateRect&, FSlateWindowElementList& Out, int32 Layer, const FWidgetStyle&, bool) const
 {
 	// the stage: buymenu.css .bm-stage, #24242b
-	FSlateDrawElement::MakeBox(Out, Layer, G.ToPaintGeometry(), FCoreStyle::Get().GetBrush("WhiteBrush"), ESlateDrawEffect::None, FLinearColor::FromSRGBColor(FColor(36, 36, 43)));
+	FSlateDrawElement::MakeBox(Out, Layer, G.ToPaintGeometry(), BrixLook::Round(FLinearColor::White, 10.f), ESlateDrawEffect::None, BrixLook::Srgb(38, 34, 30));   // the plinth (Lamplight, ADR-0049)
 	if (!Mesh || !Rules || !Mesh->Num() || !FSlateApplication::IsInitialized()) return Layer;
 	const FVector2f Sz = FVector2f(G.GetLocalSize());
 	const double W = Sz.X, H = Sz.Y;
@@ -63,11 +65,24 @@ int32 SBrixThing::OnPaint(const FPaintArgs&, const FGeometry& G, const FSlateRec
 	const FSlateResourceHandle Handle = FSlateApplication::Get().GetRenderer()->GetResourceHandle(*FCoreStyle::Get().GetBrush("WhiteBrush"));
 	TArray<FSlateVertex> V;
 	TArray<SlateIndex> I;
+	// a pool of lantern light on the plinth, under where the thing stands
+	{
+		const FVector2f C((float)(W / 2), (float)(H * .86));
+		const int32 Seg = 32, B0 = V.Num();
+		V.Add(FSlateVertex::Make<ESlateVertexRounding::Disabled>(T, C, FVector2f(.5f, .5f), FColor(240, 163, 90, 40)));
+		for (int32 k = 0; k < Seg; ++k)
+		{
+			const float A = k * UE_TWO_PI / Seg;
+			V.Add(FSlateVertex::Make<ESlateVertexRounding::Disabled>(T, C + FVector2f(FMath::Cos(A) * (float)W * .5f, FMath::Sin(A) * (float)H * .4f), FVector2f(.5f, .5f), FColor(240, 163, 90, 0)));
+		}
+		for (int32 k = 0; k < Seg; ++k) I.Append({ (SlateIndex)B0, (SlateIndex)(B0 + 1 + k), (SlateIndex)(B0 + 1 + (k + 1) % Seg) });
+	}
 	// the shade it stands in: a soft dark ellipse under its foot (paint())
 	{
 		const double Gy = Mesh->Lo.Y - Mesh->Cen.Y, Ey = cp * Gy, Ez = sp * Gy - Dist, Px = H / 2 * F / -Ez;
 		const FVector2f C((float)(W / 2), (float)(H / 2 - Ey * Px));
 		const float Rx = (float)(Mesh->Foot * Px * 1.25), Ry = (float)(Mesh->Foot * Px * FMath::Max(.16, sp) * 1.25);
+		const int32 S0 = V.Num();
 		V.Add(FSlateVertex::Make<ESlateVertexRounding::Disabled>(T, C, FVector2f(.5f, .5f), FColor(0, 0, 0, 128)));
 		const int32 Seg = 28;
 		for (int32 r = 0; r < 2; ++r)
@@ -78,8 +93,8 @@ int32 SBrixThing::OnPaint(const FPaintArgs&, const FGeometry& G, const FSlateRec
 			}
 		for (int32 k = 0; k < Seg; ++k)
 		{
-			const int32 a = 1 + k, b = 1 + (k + 1) % Seg, c = 1 + Seg + k, d = 1 + Seg + (k + 1) % Seg;
-			I.Append({ 0, (SlateIndex)a, (SlateIndex)b, (SlateIndex)a, (SlateIndex)c, (SlateIndex)d, (SlateIndex)a, (SlateIndex)d, (SlateIndex)b });
+			const int32 a = S0 + 1 + k, b = S0 + 1 + (k + 1) % Seg, c = S0 + 1 + Seg + k, d = S0 + 1 + Seg + (k + 1) % Seg;
+			I.Append({ (SlateIndex)S0, (SlateIndex)a, (SlateIndex)b, (SlateIndex)a, (SlateIndex)c, (SlateIndex)d, (SlateIndex)a, (SlateIndex)d, (SlateIndex)b });
 		}
 	}
 	// the triangles: turned, seen from the raised eye, the far ones first; lit at each corner as the slice's shader lights them

@@ -4,6 +4,7 @@
 #include "BrixCity.h"
 #include "BrixDay.h"
 #include "BrixGameMode.h"
+#include "BrixLook.h"
 #include "BrixTalkActor.h"
 #include "BrixThingWidget.h"
 #include "BrixUnits.h"
@@ -60,12 +61,7 @@ namespace
 	// .pbtn: the lantern's orange with dark letters; .off: quiet; disabled: grey
 	TSharedRef<SWidget> UiButton(const FString& Label, TFunction<void()> OnClick, bool bEnabled = true, bool bQuiet = false)
 	{
-		return SNew(SButton).ButtonStyle(&FCoreStyle::Get().GetWidgetStyle<FButtonStyle>("NoBorder")).IsEnabled(bEnabled).IsFocusable(false)
-			.OnClicked_Lambda([OnClick]() { OnClick(); return FReply::Handled(); })
-			[
-				SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(!bEnabled ? UiDisabled : bQuiet ? UiOff : UiLantern).Padding(FMargin(12, 5))
-				[ SNew(STextBlock).Text(FText::FromString(Label)).Font(UiFont(11, true)).ColorAndOpacity(bQuiet ? UiCream : UiInk) ]
-			];
+		return BrixLook::Button(Label, OnClick, !bQuiet, bEnabled);
 	}
 	TSharedRef<SHorizontalBox> UiRow() { return SNew(SHorizontalBox); }
 	void UiAdd(TSharedRef<SHorizontalBox> R, TSharedRef<SWidget> W) { R->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 8, 0)[ W ]; }
@@ -80,6 +76,7 @@ ABrixLife::ABrixLife()
 void ABrixLife::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay)
 {
 	Day = InDay;
+	CityName = City.Name;
 	FString Error;
 	if (!LoadBrixLife(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), LifeFile)), Data, Error) || !BrixEconLots(City, Data, Lots, Error))
 	{
@@ -109,12 +106,14 @@ void ABrixLife::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay)
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: a new game with %s in cash; the bank is %s, the market %s"), *Format(E->L.Balance(TEXT("p:cash"))),
 		E->BankLot >= 0 ? *Lots[E->BankLot].Name : TEXT("missing"), E->MarketLot >= 0 ? *Lots[E->MarketLot].Name : TEXT("missing"));
 	BuildUI();
+	StartMenu();
 }
 
 void ABrixLife::EndPlay(const EEndPlayReason::Type Reason)
 {
 	if (GEngine && GEngine->GameViewport)
 	{
+		if (MenuRoot) GEngine->GameViewport->RemoveViewportWidgetContent(MenuRoot.ToSharedRef());
 		if (Hud) GEngine->GameViewport->RemoveViewportWidgetContent(Hud.ToSharedRef());
 		if (PanelRoot) GEngine->GameViewport->RemoveViewportWidgetContent(PanelRoot.ToSharedRef());
 	}
@@ -164,6 +163,7 @@ void ABrixLife::Tick(float Dt)
 {
 	Super::Tick(Dt);
 	if (!E) return;
+	TickMenuShot();
 	double D0 = 0, M0 = 0;
 	Frame(D0, M0);
 	E->Advance((int32)D0, M0);   // the bank settles each midnight passed (BANK-008)
@@ -227,7 +227,7 @@ void ABrixLife::BuildUI()
 	]
 	+ SOverlay::Slot().HAlign(HAlign_Left).VAlign(VAlign_Top).Padding(FMargin(22, 150, 0, 0))
 	[
-		SNew(SHorizontalBox).Visibility(EVisibility::HitTestInvisible)
+		SNew(SHorizontalBox).Visibility_Lambda([this]() { return bMenu ? EVisibility::Collapsed : EVisibility::HitTestInvisible; })
 		+ SHorizontalBox::Slot().AutoWidth()
 		[ SNew(STextBlock).Font(UiFont(16, true)).ColorAndOpacity(UiCream).ShadowOffset(FVector2D(0, 1)).ShadowColorAndOpacity(FLinearColor(0, 0, 0, .75f))
 			.Text_Lambda([this]() { return FText::FromString(E ? Format(E->L.Balance(TEXT("p:cash")) - HeldCash) : FString()); }) ]
@@ -258,7 +258,8 @@ void ABrixLife::BuildUI()
 	[
 		SNew(SBox).MaxDesiredWidth(560.f).Visibility_Lambda([this]() { return ToastLeft > 0 ? EVisibility::HitTestInvisible : EVisibility::Collapsed; })
 		[
-			SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(UiPanel78).Padding(FMargin(16, 8))
+			SNew(SBorder).BorderImage(UiWhite()).Padding(FMargin(16, 8))
+			.BorderBackgroundColor_Lambda([this]() { FLinearColor C = UiPanel78; C.A *= FMath::Clamp(ToastLeft / .5f, 0.f, 1.f); return FSlateColor(C); })
 			.ColorAndOpacity_Lambda([this]() { return FLinearColor(1, 1, 1, FMath::Clamp(ToastLeft / .5f, 0.f, 1.f)); })
 			[ SNew(STextBlock).Font(UiFont(17)).ColorAndOpacity(UiCream).AutoWrapText(true).Justification(ETextJustify::Center).Text_Lambda([this]() { return FText::FromString(ToastText); }) ]
 		]
@@ -280,17 +281,11 @@ void ABrixLife::BuildUI()
 	];
 	SAssignNew(PanelRoot, SBox)
 		.HAlign(HAlign_Center).VAlign(VAlign_Center).Padding(FMargin(16, 40))
-		.Visibility_Lambda([this]() { return IsOpen() ? EVisibility::Visible : EVisibility::Collapsed; })
+		.Visibility_Lambda([this]() { return !Panel.IsEmpty() ? EVisibility::Visible : EVisibility::Collapsed; })
 		[
 			SNew(SBox).WidthOverride_Lambda([this]() { return Panel == TEXT("shop") ? (float)BuyMenu.WidePanelPx : 620.f; })
 			[
-				SNew(SVerticalBox)
-				+ SVerticalBox::Slot().AutoHeight()[ SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(UiGoldLine).Padding(0)[ SNew(SBox).HeightOverride(2.f) ] ]
-				+ SVerticalBox::Slot().FillHeight(1)
-				[
-					SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(UiPanel92).Padding(FMargin(20, 16, 20, 12))
-					[ SAssignNew(PanelBody, SBox) ]
-				]
+				BrixLook::Card(SAssignNew(PanelBody, SBox), FMargin(22, 18, 22, 14), BrixLook::Stone(), 18.f)
 			]
 		];
 	GEngine->GameViewport->AddViewportWidgetContent(Hud.ToSharedRef(), 15);
@@ -320,17 +315,9 @@ void ABrixLife::CounterKey()
 	else { Side = TEXT("buy"); Open(TEXT("shop"), n); }
 }
 
-void ABrixLife::QuestsKey()
-{
-	if (Panel == TEXT("quests")) { Close(); return; }
-	Open(TEXT("quests"), -1);
-}
+void ABrixLife::QuestsKey() { Menu(TEXT("quests")); }   // J: the Journal page (life.js: I, J and the rest open the menu at their page)
 
-void ABrixLife::WalletKey()
-{
-	if (Panel == TEXT("wallet")) { Close(); return; }
-	Open(TEXT("wallet"), -1);
-}
+void ABrixLife::WalletKey() { Menu(TEXT("wallet")); }
 
 void ABrixLife::Open(const FString& Kind, int32 Lot)
 {
@@ -346,6 +333,7 @@ void ABrixLife::Open(const FString& Kind, int32 Lot)
 
 void ABrixLife::Close()
 {
+	if (bMenu) { CloseMenu(); return; }
 	if (!IsOpen()) return;
 	Panel.Reset();
 	LiveGrid.Reset();
@@ -411,7 +399,7 @@ void ABrixLife::Draw()
 	else if (Panel == TEXT("stall")) { Title = Lots[PanelLot].Name; Sub = TEXT("Your market stall · residents shop here ") + UiHhmm(E->R.StallOpen) + TEXT(" to ") + UiHhmm(E->R.StallClose); }
 	else { Title = TEXT("Money"); Sub = PlayerName + TEXT(" · I"); }
 	if (!Msg.IsEmpty())
-		Body->AddSlot().AutoHeight().Padding(0, 0, 0, 8)[ SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(UiMsgBack).Padding(FMargin(10, 6))[ UiText(Msg, 15) ] ];
+		Body->AddSlot().AutoHeight().Padding(0, 0, 0, 8)[ SNew(SBorder).BorderImage(BrixLook::Round(UiMsgBack, 10.f)).Padding(FMargin(12, 7))[ UiText(Msg, 15) ] ];
 	if (Panel == TEXT("bank")) BankPanel(Body);
 	else if (Panel == TEXT("shop")) ShopPanel(Body);
 	else if (Panel == TEXT("stall")) StallPanel(Body);
@@ -697,10 +685,10 @@ TSharedRef<SWidget> ABrixLife::Grid(const TArray<FWare>& Things, const FGridOpts
 		const FBrixBuyMenuRules::FGoes* G = BuyMenu.Goes.Find(Goes);
 		if (!G) return SNullWidget::NullWidget;
 		const TPair<FColor, FColor> C = Board(Goes);
-		return SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(FLinearColor::FromSRGBColor(C.Key)).Padding(FMargin(8, 2))
+		return SNew(SBorder).BorderImage(BrixLook::Round(FLinearColor::FromSRGBColor(C.Key), 9.f)).Padding(FMargin(9, 2, 9, 3))
 			[ SNew(STextBlock).Font(UiFont(10, true)).ColorAndOpacity(FLinearColor::FromSRGBColor(C.Value)).Text(FText::FromString(G->Name)) ];
 	};
-	auto Price = [](const FWare& W) { return UiText(Format(W.Price), 14, W.State == TEXT("short") ? UiNeg : UiCream, true); };
+	auto Price = [](const FWare& W) { return BrixLook::Tag(Format(W.Price), W.State == TEXT("short"), 12); };
 	auto LeftWords = [this, &O](const FWare& W) -> FString
 	{
 		if (W.Left < 0) return FString();
@@ -740,7 +728,7 @@ TSharedRef<SWidget> ABrixLife::Grid(const TArray<FWare>& Things, const FGridOpts
 					SNew(SVerticalBox)
 					+ SVerticalBox::Slot().AutoHeight()
 					[
-						SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(bSel ? UiLantern : FLinearColor::Transparent).Padding(2)
+						SNew(SBorder).BorderImage(BrixLook::Round(bSel ? UiLantern : BrixLook::StoneDeep(), 12.f)).Padding(bSel ? 3 : 2)
 						[
 							SNew(SOverlay)
 							+ SOverlay::Slot()[ SNew(SBrixThing).Mesh(MeshFor(W.Id, W.Band)).Rules(&BuyMenu).Grey(bOut).Size(FVector2D(CellW - 4, BuyMenu.StagePx)).Yaw(YawFor(O.Id + TEXT(":") + W.Id)) ]
@@ -750,7 +738,7 @@ TSharedRef<SWidget> ABrixLife::Grid(const TArray<FWare>& Things, const FGridOpts
 					+ SVerticalBox::Slot().AutoHeight().Padding(2, 5, 2, 0)
 					[
 						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1).VAlign(VAlign_Center)[ Price(W) ]
+						+ SHorizontalBox::Slot().FillWidth(1).VAlign(VAlign_Center).HAlign(HAlign_Left)[ Price(W) ]
 						+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
 						[ W.Goes.IsEmpty() ? SNullWidget::NullWidget : (TSharedRef<SWidget>)(SNew(SBox).WidthOverride(14).HeightOverride(14)[ SNew(SBorder).BorderImage(FCoreStyle::Get().GetBrush("Icons.FilledCircle")).BorderBackgroundColor(FLinearColor::FromSRGBColor(Dot.Key)) ]) ]
 					]
@@ -778,7 +766,7 @@ TSharedRef<SWidget> ABrixLife::Grid(const TArray<FWare>& Things, const FGridOpts
 	const float StageW = BuyMenu.ShowPx - 24.f;
 	TSharedRef<SWidget> Show = SNew(SBox).WidthOverride((float)BuyMenu.ShowPx)
 	[
-		SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(FLinearColor::FromSRGBColor(FColor(217, 207, 182, 15))).Padding(FMargin(12, 10, 12, 12))
+		SNew(SBorder).BorderImage(BrixLook::Round(BrixLook::StoneDeep(), 14.f)).Padding(FMargin(12, 10, 12, 12))
 		[
 			SNew(SVerticalBox)
 			+ SVerticalBox::Slot().AutoHeight()
@@ -792,12 +780,7 @@ TSharedRef<SWidget> ABrixLife::Grid(const TArray<FWare>& Things, const FGridOpts
 			+ SVerticalBox::Slot().AutoHeight().Padding(0, 0, 0, 10)[ Rows ]
 			+ SVerticalBox::Slot().AutoHeight()
 			[
-				SNew(SButton).ButtonStyle(&FCoreStyle::Get().GetWidgetStyle<FButtonStyle>("NoBorder")).IsFocusable(false).IsEnabled(P.State == TEXT("ok")).ContentPadding(0)
-				.OnClicked_Lambda([this, Op, P]() { Act([Op, P](FString& S) { return Op.Buy(P, S); }); return FReply::Handled(); })
-				[
-					SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(P.State == TEXT("ok") ? UiLantern : UiDisabled).Padding(FMargin(12, 9)).HAlign(HAlign_Center)
-					[ SNew(STextBlock).Font(UiFont(13, true)).ColorAndOpacity(UiInk).Text(FText::FromString(O.Verb + TEXT(" · ") + Format(P.Price))) ]
-				]
+				BrixLook::Button(O.Verb + TEXT(" · ") + Format(P.Price), [this, Op, P]() { Act([Op, P](FString& S) { return Op.Buy(P, S); }); }, true, P.State == TEXT("ok"), UiLantern, UiInk, 14)
 			]
 		]
 	];
