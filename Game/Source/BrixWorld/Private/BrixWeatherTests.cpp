@@ -50,6 +50,38 @@ bool FWLD037_WeatherAsPython::RunTest(const FString&)
 	return Wrong == 0;
 }
 
+// WLD-035, WLD-036 (ADR-0014): the clouds as world.clouds_now() has them (the same values file): how much sky they cover
+// through days of every kind of weather, where the wind has carried them and the phase of their shapes, from the clock.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWLD036_CloudsAsPython, "BrixTown.World.WLD036_the_clouds_are_where_world_py_puts_them",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FWLD036_CloudsAsPython::RunTest(const FString&)
+{
+	FBrixWeatherRules R;
+	FString Error, Text;
+	if (!TestTrue(TEXT("the sky rules load: ") + Error, LoadBrixWeatherRules(Under(TEXT("../World/rules/sky.json")), R, Error))) return false;
+	if (!TestTrue(TEXT("the test values are there"), FFileHelper::LoadFileToString(Text, *Under(TEXT("../Tests/values/weather_city_01.json"))))) return false;
+	TSharedPtr<FJsonObject> Want;
+	if (!TestTrue(TEXT("the test values are JSON"), FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Want) && Want.IsValid())) return false;
+	int32 Wrong = 0, N = 0;
+	for (const TSharedPtr<FJsonValue>& V : Want->GetArrayField(TEXT("clouds")))
+	{
+		const TSharedPtr<FJsonObject> C = V->AsObject();
+		TArray<FString> Day;
+		C->TryGetStringArrayField(TEXT("day"), Day);
+		const double m = C->GetNumberField(TEXT("m"));
+		const FBrixCloudsNow G = BrixCloudsNow(R, Day, (int32)C->GetNumberField(TEXT("n")), m);
+		const TSharedPtr<FJsonObject> E = C->GetObjectField(TEXT("want"));
+		const TArray<TSharedPtr<FJsonValue>>& O = E->GetArrayField(TEXT("offset"));
+		++N;
+		if (FMath::Abs(G.Cover - E->GetNumberField(TEXT("cover"))) > 1e-6 || FMath::Abs(G.Offset.X - O[0]->AsNumber()) > 1e-6
+			|| FMath::Abs(G.Offset.Y - O[1]->AsNumber()) > 1e-6 || FMath::Abs(G.Phase - E->GetNumberField(TEXT("phase"))) > 1e-6)
+			if (Wrong++ < 8) AddError(FString::Printf(TEXT("day %d minute %.2f: cover %.3f, offset (%.3f, %.3f); world.py cover %.3f, offset (%.3f, %.3f)"),
+				(int32)C->GetNumberField(TEXT("n")), m, G.Cover, G.Offset.X, G.Offset.Y, E->GetNumberField(TEXT("cover")), O[0]->AsNumber(), O[1]->AsNumber()));
+	}
+	TestTrue(TEXT("moments checked"), N > 400);
+	return Wrong == 0;
+}
+
 // CITY-077, CITY-080 (ADR-0020): what citysim gives each resident to wear and carry today (Game/Data/day.json "wear")
 // is what they show: a coat in its colour whenever they wear one; out in the rain an umbrella up in the right hand, else
 // the hood up, else a hand over the head while walking; under a roof or in light rain nothing but the coat. CITY-079: a

@@ -187,17 +187,28 @@ does is worked out from the clock and World/rules/sky.json alone (`BrixWorld/Bri
 let less sun through, part of what they stop comes down as soft grey light from the sky, and the air thickens (which
 greys the sky); clear weather leaves the approved light as it is. Rain falls in the world (`ABrixWeather`): drops in
 rings round the camera, 1.6 to 11 m out, falling straight down whichever way you look, none where a building's roof is
-overhead and none while the camera is indoors; one procedural mesh of translucent drops (`/Game/Weather/M_Rain`, made by
-`Tools/unreal/make_rain_material.py`). The paving gets wet: it darkens, takes a faint sheen and holds puddles here and
-there, and walls go a little darker; it dries over `dry_minutes` after the rain (M_Greybox's WetDark, WetSheen and
-Puddles, from `Tools/unreal/greybox_wet.py`). Residents wear what citysim gives them today (day.json "wear"): a coat,
+overhead and none while the camera is indoors; each a thin streak, clear at its top and full at its foot, of its own
+length and brightness, fading near the camera; those within 7 m throw up a small splash where they land. One procedural
+mesh of translucent drops (`/Game/Weather/M_Rain`, made by `Tools/unreal/make_rain_material.py`). The paving gets wet:
+it darkens, takes a faint sheen and holds puddles here and there, rings spread where the drops land (they tilt the
+surface, so the puddles' reflections break up), and walls go a little darker; it dries over `dry_minutes` after the
+rain (M_Greybox's WetDark, WetSheen, Puddles and Ripples, from `Tools/unreal/greybox_wet.py` and
+`greybox_ripples.hlsl`). Residents wear what citysim gives them today (day.json "wear"): a coat,
 and out in the rain an umbrella up, else the hood up, else a hand over the head while walking, with a hurried walk or a
 run for cover; nothing but the coat indoors, sheltering or under a roof (`CITY080_residents_are_dressed_for_the_rain`).
 The look of coats, hoods and umbrellas is still to be approved (ADR-0020). `-BrixWeather=<clear|cloud|rain|fog>`
 tries one kind for the whole day (and the clothes residents would wear on a day of it); the built day 16 has cloud
-before 06:00 and is clear after. At High: 40 to 43 frames a second in the 08:10 school rush in rain, against 15 to 54
+before 06:00 and is clear after. At High: about 40 frames a second in the 08:10 school rush in rain, against 15 to 54
 in clear weather on the same street (noisy: other sessions were running Unreal on the same laptop). Not yet: no key to
-try the weather, rain seen through windows from indoors, ripples, the rain's sound, wet clothes.
+try the weather, rain seen through windows from indoors, the rain's sound, wet clothes.
+
+## Clouds (WLD-035, WLD-036; ADR-0014)
+Soft heaps on one flat layer overhead, bright on the side towards the sun and shaded underneath, fading into the haze
+towards the horizon, taking the colour of the hour (warm at dusk, dark at night). How much sky they cover follows the
+day's weather slots, blended at their edges; where the wind has carried them and how their shapes change come from the
+clock alone: `BrixCloudsNow`, a port of `world.clouds_now()`, checked by `WLD036_the_clouds_are_where_world_py_puts_them`.
+They are drawn on the inside of a dome round the camera by `/Game/Weather/M_Clouds` (`Tools/unreal/make_clouds_material.py`,
+`clouds.hlsl`); 46 to 50 frames a second at High under a clear-day sky and at dusk.
 
 ## The tram (CITY-041)
 Trams run along Tram Street to the timetable of World/rules/calendar.json, stopping at its three stops: a port of the
@@ -387,6 +398,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY076_residents_shout_at_a_smash` | CITY-076 |
 | `BrixTown.World.WLD037_the_weather_is_worked_out_as_world_py_does` | WLD-037 |
 | `BrixTown.World.CITY080_residents_are_dressed_for_the_rain` | CITY-077, CITY-079, CITY-080 |
+| `BrixTown.World.WLD036_the_clouds_are_where_world_py_puts_them` | WLD-035, WLD-036 |
 | `BrixTown.World.CITY007_every_conversation_is_sound` | CITY-007 |
 | `BrixTown.World.CHR009_lines_are_mouthed_as_the_slice_mouths_them` | CHR-009 |
 | `BrixTown.World.SND018_lines_are_voiced` | SND-018 |

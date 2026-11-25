@@ -32,6 +32,10 @@ bool LoadBrixWeatherRules(const FString& SkyPath, FBrixWeatherRules& Out, FStrin
 	Out.BlendMinutes = C->GetNumberField(TEXT("blend_minutes"));
 	Out.bFollow = C->GetBoolField(TEXT("follow_weather"));
 	for (const auto& KV : C->GetObjectField(TEXT("cover"))->Values) Out.Cover.Add(FString(KV.Key), KV.Value->AsNumber());
+	Out.Scale = C->GetNumberField(TEXT("scale")); Out.Soft = C->GetNumberField(TEXT("soft")); Out.CloudSpeed = C->GetNumberField(TEXT("speed"));
+	Out.Change = C->GetNumberField(TEXT("change")); Out.Lit = C->GetNumberField(TEXT("lit")); Out.Shade = C->GetNumberField(TEXT("shade"));
+	const TArray<TSharedPtr<FJsonValue>>& Wd = C->GetArrayField(TEXT("wind"));
+	Out.Wind = FVector2D(Wd[0]->AsNumber(), Wd[1]->AsNumber());
 	S->TryGetNumberField(TEXT("overcast_fill"), Out.OvercastFill);
 	const TSharedPtr<FJsonObject> R = S->GetObjectField(TEXT("rain"));
 	Out.Alpha = R->GetNumberField(TEXT("alpha")); Out.Slant = R->GetNumberField(TEXT("slant")); Out.Speed = R->GetNumberField(TEXT("speed"));
@@ -61,6 +65,26 @@ FBrixWeatherNow BrixWeatherNow(const FBrixWeatherRules& R, const TArray<FString>
 	const double Dry = P.Rain > 0 ? FMath::Clamp(1 - into / R.DryMinutes, 0.0, 1.0) : 0.0;   // drying after a wet slot
 	W.Wet = FMath::Max(FMath::Min(1.0, W.Rain * 1.5), Dry);
 	return W;
+}
+
+FBrixCloudsNow BrixCloudsNow(const FBrixWeatherRules& R, const TArray<FString>& Day, int32 DayIndex, double m, const FString& Trying)
+{
+	auto Cov = [&](int32 i)
+	{
+		FString K = Trying;
+		if (K.IsEmpty() && R.bFollow && Day.Num() == 4) K = Day[((i % 4) + 4) % 4];
+		if (K.IsEmpty()) K = TEXT("clear");
+		return R.Cover.FindRef(K);
+	};
+	const int32 s = FMath::FloorToInt(m / 360);
+	const double into = m - s * 360, b = R.BlendMinutes;
+	FBrixCloudsNow C;
+	C.Cover = into < b ? Cov(s - 1) + (Cov(s) - Cov(s - 1)) * (.5 + .5 * into / b) : into > 360 - b ? Cov(s) + (Cov(s + 1) - Cov(s)) * (.5 * (into - (360 - b)) / b) : Cov(s);
+	const double t = DayIndex * 1440.0 + m;
+	auto Wrap = [](double x) { return x - 512.0 * FMath::FloorToDouble(x / 512.0); };   // Python's % for these
+	C.Offset = FVector2D(Wrap(R.Wind.X * R.CloudSpeed * t), Wrap(R.Wind.Y * R.CloudSpeed * t));
+	C.Phase = Wrap(R.Change * t);
+	return C;
 }
 
 bool LoadBrixWear(const FString& DayPath, const FString& SignaturesPath, FBrixWear& Out, FString& OutError)

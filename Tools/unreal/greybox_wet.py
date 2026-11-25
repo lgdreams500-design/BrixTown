@@ -1,6 +1,7 @@
 r"""Wet paving for /Game/Greybox/M_Greybox (WLD-037, ADR-0016): in rain the ground darkens, takes a faint sheen and fills
-with puddles that hold the sky; walls and everything else out in the rain go a little darker. Three parameters,
-WetDark, WetSheen and Puddles, are 0 in the dry; ABrixWeather sets them through ABrixTownActor::SetWet from the clock and
+with puddles that hold the sky, and rings spread where the drops land (greybox_ripples.hlsl: they tilt the surface, so
+the puddles' reflections break up, and catch a little light); walls and everything else out in the rain go a little
+darker. Four parameters, WetDark, WetSheen, Puddles and Ripples, are 0 in the dry; ABrixWeather sets them through ABrixTownActor::SetWet from the clock and
 World/rules/sky.json "rain" (wet_dark, wet_sheen, puddles, times how wet it is now). The ground is what faces up;
 puddles lie where a soft world-space noise is high. Dry, the material is as before (matte, ART-002 W1).
 
@@ -10,15 +11,19 @@ material as it is, in place (so the kit's meshes keep pointing at it and import_
       -run=pythonscript -script="%CD%\Tools\unreal\greybox_wet.py" -unattended -nullrhi -nosplash
 The asset is binary and kept in Git LFS (ADR-0002): git lfs lock it first.
 """
+import os
 import unreal
 
 lib = unreal.MaterialEditingLibrary
 FULL = "/Game/Greybox/M_Greybox"
 DRY_ROUGHNESS = 0.85      # as make_greybox_material.py
 SHEEN_ROUGHNESS = 0.6     # the wet ground at full sheen: a faint sheen, still mostly matte
-PUDDLE_ROUGHNESS = 0.4    # standing water: holds the grey sky softly, not a mirror
+PUDDLE_ROUGHNESS = 0.28   # standing water: holds the grey sky softly, not a mirror
 PUDDLE_SCALE = 0.0035     # the noise's scale (per centimetre): puddles a metre or two across
 PUDDLE_LEVEL = 0.7        # puddles where the noise is above this: here and there, not a flood
+RIPPLE_TILT = 0.35        # how far a ring tilts the surface
+RIPPLE_ROUGHNESS = 0.12   # a ring's water is smoother
+RIPPLE_LIGHT = 0.35       # and a little lighter
 PUDDLE_EDGE = 8.0         # how sharp a puddle's edge is
 
 
@@ -79,7 +84,6 @@ def add_wet(mat, base):
     colour = _node(mat, unreal.MaterialExpressionMultiply, x + 1350, 500)
     lib.connect_material_expressions(base, "", colour, "A")
     lib.connect_material_expressions(keep, "", colour, "B")
-    lib.connect_material_property(colour, "", unreal.MaterialProperty.MP_BASE_COLOR)
     # roughness: matte when dry, a sheen on wet ground, standing water in the puddles
     shine = _node(mat, unreal.MaterialExpressionMultiply, x + 750, 1200)
     lib.connect_material_expressions(sheen, "", shine, "A")
@@ -91,7 +95,57 @@ def add_wet(mat, base):
     water = _node(mat, unreal.MaterialExpressionLinearInterpolate, x + 1200, 1150, const_b=PUDDLE_ROUGHNESS)
     lib.connect_material_expressions(wet_rough, "", water, "A")
     lib.connect_material_expressions(puddle, "", water, "Alpha")
-    lib.connect_material_property(water, "", unreal.MaterialProperty.MP_ROUGHNESS)
+    # rings where drops land: the surface tilts with them (a world-space normal) and they catch a little light
+    rip_k = _scalar(mat, "Ripples", x, 1400)
+    tm = _node(mat, unreal.MaterialExpressionTime, x, 1500)
+    pos2 = _node(mat, unreal.MaterialExpressionWorldPosition, x, 1600)
+    rip = _node(mat, unreal.MaterialExpressionCustom, x + 300, 1450,
+                code=open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "greybox_ripples.hlsl"), encoding="utf-8").read(),
+                output_type=unreal.CustomMaterialOutputType.CMOT_FLOAT3, description="Brix ripples")
+    ins = []
+    for n in ("Pos", "T", "K"):
+        ci = unreal.CustomInput()
+        ci.set_editor_property("input_name", n)
+        ins.append(ci)
+    rip.set_editor_property("inputs", ins)
+    lib.connect_material_expressions(pos2, "", rip, "Pos")
+    lib.connect_material_expressions(tm, "", rip, "T")
+    lib.connect_material_expressions(rip_k, "", rip, "K")
+    ring = _node(mat, unreal.MaterialExpressionComponentMask, x + 500, 1500, r=False, g=False, b=True, a=False)
+    lib.connect_material_expressions(rip, "", ring, "")
+    ring_g = _node(mat, unreal.MaterialExpressionMultiply, x + 650, 1500)
+    lib.connect_material_expressions(ring, "", ring_g, "A")
+    lib.connect_material_expressions(ground, "", ring_g, "B")
+    tilt = _node(mat, unreal.MaterialExpressionComponentMask, x + 500, 1600, r=True, g=True, b=False, a=False)
+    lib.connect_material_expressions(rip, "", tilt, "")
+    tilt_g = _node(mat, unreal.MaterialExpressionMultiply, x + 650, 1600, const_b=RIPPLE_TILT)
+    lib.connect_material_expressions(tilt, "", tilt_g, "A")
+    tilt_gg = _node(mat, unreal.MaterialExpressionMultiply, x + 800, 1600)
+    lib.connect_material_expressions(tilt_g, "", tilt_gg, "A")
+    lib.connect_material_expressions(ground, "", tilt_gg, "B")
+    zero = _node(mat, unreal.MaterialExpressionConstant, x + 800, 1700, r=0.0)
+    tilt3 = _node(mat, unreal.MaterialExpressionAppendVector, x + 950, 1600)
+    lib.connect_material_expressions(tilt_gg, "", tilt3, "A")
+    lib.connect_material_expressions(zero, "", tilt3, "B")
+    nsum = _node(mat, unreal.MaterialExpressionAdd, x + 1100, 1550)
+    lib.connect_material_expressions(nrm, "", nsum, "A")
+    lib.connect_material_expressions(tilt3, "", nsum, "B")
+    nn = _node(mat, unreal.MaterialExpressionNormalize, x + 1250, 1550)
+    lib.connect_material_expressions(nsum, "", nn, "")
+    mat.set_editor_property("tangent_space_normal", False)
+    lib.connect_material_property(nn, "", unreal.MaterialProperty.MP_NORMAL)
+    shine = _node(mat, unreal.MaterialExpressionLinearInterpolate, x + 1350, 1300, const_b=RIPPLE_ROUGHNESS)
+    lib.connect_material_expressions(water, "", shine, "A")
+    lib.connect_material_expressions(ring_g, "", shine, "Alpha")
+    lib.connect_material_property(shine, "", unreal.MaterialProperty.MP_ROUGHNESS)
+    lift = _node(mat, unreal.MaterialExpressionMultiply, x + 1350, 1450, const_b=RIPPLE_LIGHT)
+    lib.connect_material_expressions(ring_g, "", lift, "A")
+    lift1 = _node(mat, unreal.MaterialExpressionAdd, x + 1500, 1450, const_b=1.0)
+    lib.connect_material_expressions(lift, "", lift1, "A")
+    lit_colour = _node(mat, unreal.MaterialExpressionMultiply, x + 1650, 500)
+    lib.connect_material_expressions(colour, "", lit_colour, "A")
+    lib.connect_material_expressions(lift1, "", lit_colour, "B")
+    lib.connect_material_property(lit_colour, "", unreal.MaterialProperty.MP_BASE_COLOR)
 
 
 if __name__ == "__main__":

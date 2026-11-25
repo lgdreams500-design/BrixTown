@@ -16,6 +16,10 @@ struct BRIXWORLD_API FBrixWeatherRules
 {
 	TMap<FString, FBrixWeatherKind> Kinds;   // clear, cloud, rain, fog
 	TMap<FString, double> Cover;             // how much of the sky the clouds cover, by kind
+	// the clouds (WLD-035, WLD-036; ADR-0014): the size of their noise, how soft their edges, the wind, how fast they drift
+	// and change shape, how bright their sunny side and their shade
+	double Scale = 2.4, Soft = .07, CloudSpeed = .012, Change = .003, Lit = .42, Shade = .8;
+	FVector2D Wind = FVector2D(1, .35);
 	double BlendMinutes = 40, OvercastFill = .2;
 	bool bFollow = true;
 	// rain: how the drops look and how wet the paving gets (ADR-0016)
@@ -32,6 +36,11 @@ struct BRIXWORLD_API FBrixWeatherNow
 
 // world.weather_now(): DayWeather the day's four slots; Trying one kind for the whole day (a look at it), or empty.
 BRIXWORLD_API FBrixWeatherNow BrixWeatherNow(const FBrixWeatherRules& R, const TArray<FString>& DayWeather, double Minute, const FString& Trying = FString());
+
+// world.clouds_now() (WLD-036): how much sky the clouds cover, where the wind has carried them and the phase of their
+// shapes, at minute M of day Day (counted from day 0)
+struct BRIXWORLD_API FBrixCloudsNow { double Cover = 0; FVector2D Offset = FVector2D::ZeroVector; double Phase = 0; };
+BRIXWORLD_API FBrixCloudsNow BrixCloudsNow(const FBrixWeatherRules& R, const TArray<FString>& DayWeather, int32 Day, double Minute, const FString& Trying = FString());
 
 // What the residents wear and carry today (day.json "wear"): per resident a coat's colour (or none), a hood, an
 // umbrella's colour (or none), on the day as it is and on a wet day (shown when rain is tried on a dry day); the pace
