@@ -104,6 +104,7 @@ private:
 	FLinearColor TabColour(const FString& Id, bool bLetters) const;
 	FString TabKey(const FString& Id) const;
 	FString SettingsPath() const;
+	class ABrixDesigner* Designer() const;   // the character designer, whose wardrobe the Wardrobe page is
 	void PictureSet();
 	void ApplySettings();
 	void SaveSettings() const;

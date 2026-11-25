@@ -69,7 +69,7 @@ public:
 	const FBrixLook& CurrentLook() const { return Rules.Player; }
 	// while the character designer is open (life.js camera()): the camera close in front, turned by SpinDeg, the character
 	// framed in the part of the screen PanelShare (of its width, from the left) leaves free; the body drawn as time passes
-	void SetDesignView(bool bOn, double SpinDeg, float PanelShare);
+	void SetDesignView(bool bOn, double SpinDeg, float PanelShare, bool bTakeKeys = true, float CameraM = 0.f);   // CameraM: metres off (times height / 1.72), 0 for DesignCameraM   // bTakeKeys: the game's keys do nothing meanwhile
 	bool IsDesigning() const { return bDesigning; }
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -132,11 +132,12 @@ private:
 	double BoardYaw = 0, BoardBlend = 0, BoardMeant = 0;   // the heading (Unreal degrees), into the push (0 to 1), the metres last meant to go
 	FVector BoardFrom = FVector::ZeroVector;
 	TSharedPtr<class SWidget> BoardBar;
-	bool bDesigning = false;
+	bool bDesigning = false, bDesignKeys = true;
 	const FBrixFace* TalkFace = nullptr;
 	bool bAnswering = false;
 	double TalkYaw = 0;
 	double DesignSpin = 0;
+	float DesignM = 0.f;
 	float DesignShare = 0.f;
 	FVector BoomOffsetBefore = FVector::ZeroVector;
 };

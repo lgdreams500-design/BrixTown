@@ -553,6 +553,15 @@ bool ABrixLife::RunOps(const FString& Ops)
 			bOk = n >= 0 && (A[0] == TEXT("buy") ? E->Buy(n, Sv(2)) : E->Sell(n, Sv(2)));
 		}
 		else if (A[0] == TEXT("setout")) bOk = E->SetOut(Sv(1), I(2));
+		else if (A[0] == TEXT("outlet"))   // outlet,<good>: bought at the first of a mall's outlets that sells it (ECO-013; to wear, CHR-016)
+		{
+			bOk = false;
+			for (const auto& M : E->Outlets)
+			{
+				for (const FBrixOutlet& U : M.Value) if (E->OutletSells(M.Key, U.Id).Contains(Sv(1))) { bOk = E->BuyAt(M.Key, U.Id, Sv(1)); break; }
+				if (bOk) break;
+			}
+		}
 		else { UE_LOG(LogTemp, Warning, TEXT("Brix Town: -BrixLife does not know %s"), *A[0]); bOk = false; }
 		UE_LOG(LogTemp, Display, TEXT("Brix Town: -BrixLife %s: %s%s"), *Op, bOk ? TEXT("ok") : TEXT("refused, "), bOk ? TEXT("") : *E->Why);
 		bAll &= bOk;
