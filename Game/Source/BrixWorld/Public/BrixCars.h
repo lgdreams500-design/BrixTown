@@ -52,6 +52,10 @@ struct BRIXWORLD_API FBrixTraffic
 {
 	float Step = 0.1f;                       // minutes between a trip's points
 	float BusLayover = 0.f;                  // minutes a bus waits at its first stop before a run, and after its last
+	float PlayerTopKmh = 50.f;               // the top speed of a car the player drives (World/rules/traffic.json)
+	// Cars the player has driven (or is driving): they stay where they were left for the rest of the visit and no longer
+	// follow their owner's day (the slice's taken and drv; CITY-061 stand-in).
+	TMap<int32, FBrixCarAt> Moved;
 	TArray<FString> Lines;                   // each bus line's colour (a palette name)
 	TArray<FBrixVehicle> Vehicles;
 	TArray<FString> Parts;
@@ -62,6 +66,10 @@ struct BRIXWORLD_API FBrixTraffic
 	TOptional<FBrixCarAt> At(int32 k, double Minute) const;
 	// The slice's choice of model for vehicle k (cars.js model()): a van's, else small, estate or pickup by its hash. None for a bus.
 	const FBrixCarModel* ModelOf(int32 k) const;
+	// Vehicle k's length, width and how far its middle sits ahead of its point (cars.js dims()).
+	FVector3f Dims(int32 k) const;
+	// Is the point (x, z) inside vehicle k standing at C, grown by Pad (cars.js hits())?
+	bool Hits(const FBrixCarAt& C, int32 k, const FVector2D& P, double Pad) const;
 };
 
 // Reads Game/Data/cars.json and car_models.json. On failure returns false and says why.

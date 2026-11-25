@@ -27,6 +27,7 @@ public:
 	double ClockMinute() const { return FMath::Fmod(ClockMinutes(), 1440.0); }
 	float Daylight = 1.f;                         // the sun's share of its light now, 0 at night (FBrixSky::Daylight)
 	UPROPERTY() TObjectPtr<class ABrixTalk> Talk;    // conversations with residents (CITY-007)
+	UPROPERTY() TObjectPtr<class ABrixCars> Cars;    // the day's vehicles, and the one the player drives
 
 	UPROPERTY(Config) FString CityDir = TEXT("../World/city_01");   // from the project folder (Game/)
 	UPROPERTY(Config) FString DayFile = TEXT("Data/day.json");      // the residents' day, written by Tools/worldgen/build_play.py
@@ -52,7 +53,6 @@ private:
 	TSharedPtr<struct FBrixDay> Today;           // the residents' routines (Game/Data/day.json)
 	UPROPERTY() TObjectPtr<class ABrixPeople> People;
 	TSharedPtr<struct FBrixTraffic> Traffic;     // the day's vehicles (Game/Data/cars.json)
-	UPROPERTY() TObjectPtr<class ABrixCars> Cars;
 	UPROPERTY() TObjectPtr<class ADirectionalLight> SunActor;
 	UPROPERTY() TObjectPtr<class USkyLightComponent> SkyFill;
 	UPROPERTY() TObjectPtr<class UExponentialHeightFogComponent> HazeFog;

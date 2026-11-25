@@ -96,7 +96,9 @@ void ABrixGameMode::StartPlay()
 		if (LoadBrixTraffic(FPaths::Combine(Data, TEXT("cars.json")), FPaths::Combine(Data, TEXT("car_models.json")), *Traffic, CarError))
 		{
 			Cars = GetWorld()->SpawnActor<ABrixCars>();
-			Cars->Start(Traffic, City->Tram);
+			TArray<FBox2D> Paving;
+			for (const FBrixBlock& B : City->Blocks) Paving.Add(FBox2D(B.Origin, B.Origin + B.Extent));
+			Cars->Start(Traffic, City->Tram, Paving);
 			UE_LOG(LogTemp, Display, TEXT("Brix Town: %d vehicles today"), Traffic->Num());
 		}
 		else UE_LOG(LogTemp, Warning, TEXT("Brix Town: no vehicles (%s); run Tools/worldgen/build_play.py"), *CarError);
@@ -162,6 +164,33 @@ void ABrixGameMode::StartPlay()
 					const int32 n = FCString::Atoi(*Picks[k]) - 1;
 					GetWorldTimerManager().SetTimer(A, [this, n]() { if (Talk) Talk->Choose(n); }, 1.5f * (k + 1), false);
 				}
+			}, 0.3f, false);
+		}, ShotDelaySeconds / 3, false);
+	}
+	// -BrixDrive=<vehicle> (with -BrixHold=steer,throttle): a third of the way into a test shot's wait the player is put by
+	// that parked car's door, gets in as with E, and holds the keys from then on
+	int32 DriveK = -1;
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixDrive="), DriveK) && DriveK >= 0 && Traffic)
+	{
+		FString Hold;
+		FParse::Value(FCommandLine::Get(), TEXT("BrixHold="), Hold, false);
+		FTimerHandle H;
+		GetWorldTimerManager().SetTimer(H, [this, DriveK, Hold]()
+		{
+			const TOptional<FBrixCarAt> C = Traffic->At(DriveK, ClockMinute());
+			ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+			if (!C || !Me) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: vehicle %d is not in the town to drive"), DriveK); return; }
+			const FVector3f D = Traffic->Dims(DriveK);
+			const FVector2D Door = C->Pos - FVector2D(-C->Heading.Y, C->Heading.X) * (D.Y / 2 + .6);
+			Me->SetActorLocation(ToWorld(Door, 1.f), false, nullptr, ETeleportType::TeleportPhysics);
+			FTimerHandle O;
+			GetWorldTimerManager().SetTimer(O, [this, Me, Hold]()
+			{
+				Me->TestPress();
+				UE_LOG(LogTemp, Display, TEXT("Brix Town: driving: %s"), Cars && Cars->Driving().K >= 0 ? TEXT("yes") : TEXT("no car near enough"));
+				TArray<FString> V;
+				Hold.ParseIntoArray(V, TEXT(","));
+				if (V.Num() == 2) Me->TestHold = FVector2D(FCString::Atof(*V[0]), FCString::Atof(*V[1]));
 			}, 0.3f, false);
 		}, ShotDelaySeconds / 3, false);
 	}
@@ -275,6 +304,7 @@ void ABrixGameMode::ShootAndQuit()
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: at the shot the game thread took %.1f ms, the render thread %.1f ms, the GPU %.1f ms"),
 		FPlatformTime::ToMilliseconds(GGameThreadTime), FPlatformTime::ToMilliseconds(GRenderThreadTime), FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()));
 	if (Cars) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d vehicles drawn"), Cars->Shown());
+	if (Cars && Cars->Driving().K >= 0) UE_LOG(LogTemp, Display, TEXT("Brix Town: the player's car at (%.1f, %.1f) going %.1f m/s"), Cars->Driving().X, Cars->Driving().Z, Cars->Driving().V);
 	if (People) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents with a body at %02d:%02d, %.2f ms a frame working them out (%s)"), People->Shown(), (int32)ClockMinute() / 60, (int32)ClockMinute() % 60, People->TickMs(), *People->TickParts());
 	FTimerHandle H;
 	GetWorldTimerManager().SetTimer(H, []() { FPlatformMisc::RequestExit(false); }, 3.f, false);

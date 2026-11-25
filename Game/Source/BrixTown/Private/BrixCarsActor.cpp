@@ -8,6 +8,7 @@
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "WorldCollision.h"
 #include "ProceduralMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -57,9 +58,10 @@ ABrixCars::ABrixCars()
 	Material = Mat.Object;
 }
 
-void ABrixCars::Start(TSharedPtr<FBrixTraffic> InTraffic, const FBrixTram& InTram)
+void ABrixCars::Start(TSharedPtr<FBrixTraffic> InTraffic, const FBrixTram& InTram, const TArray<FBox2D>& InPaving)
 {
 	Traffic = InTraffic;
+	Paving = InPaving;
 	Tram = InTram;
 	// the tram as cars.js tram() draws it, around its middle (a along the line, w across it): a terracotta body, open
 	// windows between cream posts, a cream band and the roof, benches inside, a lamp at the front
@@ -222,4 +224,131 @@ void ABrixCars::Tick(float DeltaSeconds)
 		Trams[k]->SetWorldLocationAndRotation(ToWorld(FVector2D(Now[k].X, Tram.Z), RoadUp), FRotator::ZeroRotator);   // eastward along Tram Street
 		Trams[k]->SetVisibility(true);
 	}
+}
+
+// ---- the player's car (cars.js target(), enter(), free(), drive(), leave())
+
+int32 ABrixCars::TargetCar(const FVector2D& P, double& OutD) const
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Traffic || !Mode || Drive.K >= 0) return -1;
+	const double Minute = Mode->ClockMinute();
+	int32 Best = -1;
+	OutD = 1e9;
+	for (int32 k = 0; k < Traffic->Num(); ++k)
+	{
+		if (Traffic->Vehicles[k].Kind == 2) continue;   // buses are ridden, not driven (not brought over yet)
+		const TOptional<FBrixCarAt> C = Traffic->At(k, Minute);
+		if (!C || C->bMoving || FMath::Abs(C->Pos.X - P.X) > 5 || FMath::Abs(C->Pos.Y - P.Y) > 5) continue;
+		if (!Traffic->Hits(*C, k, P, 1.5)) continue;   // within arm's reach of the door
+		const double D = FVector2D::Distance(C->Pos, P);
+		if (D < OutD) { OutD = D; Best = k; }
+	}
+	return Best;
+}
+
+bool ABrixCars::Enter(int32 k)
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	const TOptional<FBrixCarAt> C = Traffic && Mode ? Traffic->At(k, Mode->ClockMinute()) : TOptional<FBrixCarAt>();
+	if (!C) return false;
+	Drive = { k, C->Pos.X, C->Pos.Y, FMath::Atan2(C->Heading.Y, C->Heading.X), 0 };
+	// out of the bay onto the road first, as residents' cars do: a sideways step off the paving, if there is room
+	auto OnPaving = [&](const FVector2D& P) { for (const FBox2D& B : Paving) if (B.IsInside(P)) return true; return false; };
+	const FVector2D Side(-C->Heading.Y, C->Heading.X);
+	bool bOut = false;
+	for (const double d : { 2.85, 2.2, 1.6 })
+	{
+		for (const double s : { -1.0, 1.0 })
+		{
+			const FVector2D P = C->Pos + Side * (s * d);
+			if (!OnPaving(P) && Free(P.X, P.Y, Drive.A)) { Drive.X = P.X; Drive.Z = P.Y; bOut = true; break; }
+		}
+		if (bOut) break;
+	}
+	FBrixCarAt M = *C;
+	M.bMoving = false;
+	Traffic->Moved.Add(k, M);   // it no longer follows its owner's day
+	return true;
+}
+
+bool ABrixCars::Free(double X, double Z, double A) const
+{
+	const FVector3f D = Traffic->Dims(Drive.K);
+	const FVector2D H(FMath::Cos(A), FMath::Sin(A));
+	// a wall, a building, a lamp or a bench: the car's box a little above the street (clear of the paving's kerb)
+	const FVector Mid = ToWorld(FVector2D(X, Z) + H * D.Z, RoadUp + .75f);
+	FCollisionQueryParams Q(TEXT("BrixCar"), false);
+	if (const APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0)) Q.AddIgnoredActor(Me);
+	if (GetWorld()->OverlapAnyTestByChannel(Mid, FQuat(FVector::UpVector, A), ECC_WorldStatic, FCollisionShape::MakeBox(FVector(D.X / 2, D.Y / 2, .5f) * CmPerM), Q)) return false;
+	// another car: any of the outline's eight points inside it (cars.js free())
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	const double Minute = Mode ? Mode->ClockMinute() : 0;
+	const FVector2D Side(-H.Y, H.X);
+	const double L = D.X / 2, W = D.Y / 2;
+	const FVector2D Pts[8] = { { L, -W }, { L, W }, { -L, -W }, { -L, W }, { L, 0 }, { -L, 0 }, { 0, -W }, { 0, W } };
+	for (int32 k = 0; k < Traffic->Num(); ++k)
+	{
+		if (k == Drive.K) continue;
+		const TOptional<FBrixCarAt> C = Traffic->At(k, Minute);
+		if (!C || FMath::Abs(C->Pos.X - X) > 16 || FMath::Abs(C->Pos.Y - Z) > 16) continue;
+		for (const FVector2D& Pt : Pts)
+			if (Traffic->Hits(*C, k, FVector2D(X, Z) + H * (Pt.X + D.Z) + Side * Pt.Y, .05)) return false;
+	}
+	return true;
+}
+
+void ABrixCars::Step(float Dt, float Throttle, float Steer, bool bHandbrake)
+{
+	if (Drive.K < 0 || !Traffic) return;
+	const double Top = Traffic->PlayerTopKmh / 3.6;
+	double v = Drive.V;
+	if (Throttle > 0) v += (v < 0 ? 8 : 3.2 + 2.4 * FMath::Min(1.0, Top / 28)) * Dt;   // a faster car pulls harder
+	else if (Throttle < 0) v -= (v > 0 ? 7 : 2.5) * Dt;
+	else v -= FMath::Sign(v) * FMath::Min(FMath::Abs(v), 1.2 * Dt);
+	if (bHandbrake) v -= FMath::Sign(v) * FMath::Min(FMath::Abs(v), 9.0 * Dt);
+	v = FMath::Clamp(v, -4.0, Top);
+	const double Turn = Steer * .5 * (1 - .5 * FMath::Min(1.0, FMath::Abs(v) / Top)), a = Drive.A + v / 2.6 * FMath::Tan(Turn) * Dt;
+	const double x = Drive.X + FMath::Cos(a) * v * Dt, z = Drive.Z + FMath::Sin(a) * v * Dt;
+	if (Free(x, z, a)) { Drive.X = x; Drive.Z = z; Drive.A = a; Drive.V = v; }
+	else Drive.V = -v * .2;   // a bump: stop, and roll back a little
+	FBrixCarAt M;
+	M.Pos = FVector2D(Drive.X, Drive.Z);
+	M.Heading = FVector2D(FMath::Cos(Drive.A), FMath::Sin(Drive.A));
+	M.bMoving = FMath::Abs(Drive.V) > .2;
+	Traffic->Moved.Add(Drive.K, M);
+}
+
+void ABrixCars::Leave(FVector2D& OutSpot, double& OutYaw)
+{
+	if (Drive.K < 0) return;
+	const FVector3f D = Traffic->Dims(Drive.K);
+	const FVector2D H(FMath::Cos(Drive.A), FMath::Sin(Drive.A)), Side(-H.Y, H.X), C(Drive.X, Drive.Z);
+	FBrixCarAt M;
+	M.Pos = C;
+	M.Heading = H;
+	Traffic->Moved.Add(Drive.K, M);   // it stays where it was left
+	// out by the driver's door, else the other side, else the back, else the front
+	const FVector2D Spots[4] = { C - Side * (D.Y / 2 + .7), C + Side * (D.Y / 2 + .7), C - H * (D.X / 2 + .8), C + H * (D.X / 2 + .8) };
+	OutSpot = Spots[0];
+	FCollisionQueryParams Q(TEXT("BrixOut"), false);
+	if (const APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0)) Q.AddIgnoredActor(Me);
+	for (const FVector2D& S : Spots)
+		if (!GetWorld()->OverlapAnyTestByChannel(ToWorld(S, 1.f), FQuat::Identity, ECC_WorldStatic, FCollisionShape::MakeCapsule(30.f, 70.f), Q)) { OutSpot = S; break; }
+	OutYaw = Drive.A;
+	Drive = FDrive();
+}
+
+bool ABrixCars::DriverSeat(FVector2D& OutPos, double& OutYaw, float& OutUp, float& OutFloor, float Head) const
+{
+	if (Drive.K < 0 || !Traffic) return false;
+	const FBrixCarModel* Md = Traffic->ModelOf(Drive.K);
+	if (!Md) return false;
+	const FVector2D H(FMath::Cos(Drive.A), FMath::Sin(Drive.A)), Side(-H.Y, H.X);
+	OutPos = FVector2D(Drive.X, Drive.Z) + H * Md->Seat.X + Side * Md->Seat.Y;
+	OutYaw = Drive.A;
+	const float Roof = Md->Roof ? *Md->Roof : 1.56f;
+	OutUp = FMath::Min(Md->SeatY, Roof - .05f - Head);   // as low as the head needs under the roof (cars.js seat())
+	OutFloor = (Md->Floor ? *Md->Floor + .03f : .3f) - OutUp;
+	return true;
 }
