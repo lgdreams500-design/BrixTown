@@ -37,6 +37,7 @@ public:
 	// taking it (true if there was one).
 	bool LiftOffer(const FVector& PawnCm, FString& Text, double& Metres) const;
 	bool UseLift(class APawn* Pawn);
+	void AddLiftCalls(const TArray<FBrixLiftCall>& More) { LiftCalls.Append(More); }   // another building's lifts (Eastgate Mall, ABrixMall)
 	UPROPERTY(Config) float LiftReach = 0.9f;          // m from a call (play.js use points)
 
 	UPROPERTY(Config) float NearMetres = 30.f;          // homes within this of the camera are furnished (the slice's near rooms)
