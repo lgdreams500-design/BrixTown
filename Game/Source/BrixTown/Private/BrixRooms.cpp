@@ -150,7 +150,7 @@ void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTown
 					for (const FBrixPartition& Pw : BrixFlatWalls(L, In, f, Ins.Rules))
 					{
 						FBrixWallSeg W;
-						W.Floor = f; W.bDoorway = Pw.bDoorway;
+						W.Floor = f; W.bDoorway = Pw.bDoorway; W.bPartition = true;
 						W.R.Centre = (Pw.Min + Pw.Max) * 0.5;
 						const FVector2D Sz = Pw.Max - Pw.Min;
 						W.R.Along = Sz.X >= Sz.Y ? FVector2D(1, 0) : FVector2D(0, 1);
@@ -280,6 +280,30 @@ void ABrixRooms::Tick(float DeltaSeconds)
 	Rebuild();
 }
 
+bool ABrixRooms::SetPlan(int32 Lot, int32 Floor, const TArray<FBrixPartition>& Segs, const TArray<TOptional<FVector3f>>& Colours)
+{
+	FLotHome* LH = Homes.FindByPredicate([Lot](const FLotHome& X) { return X.Lot == Lot; });
+	if (!LH || !LH->Home) return false;
+	LH->Home->Walls.RemoveAll([Floor](const FBrixWallSeg& W) { return W.Floor == Floor && W.bPartition; });
+	for (int32 i = 0; i < Segs.Num(); ++i)
+	{
+		const FBrixPartition& Pw = Segs[i];
+		FBrixWallSeg W;
+		W.Floor = Floor; W.bDoorway = Pw.bDoorway; W.bPartition = true;
+		if (Colours.IsValidIndex(i)) W.Colour = Colours[i];
+		W.R.Centre = (Pw.Min + Pw.Max) * 0.5;
+		const FVector2D Sz = Pw.Max - Pw.Min;
+		W.R.Along = Sz.X >= Sz.Y ? FVector2D(1, 0) : FVector2D(0, 1);
+		W.R.Length = (float)FMath::Max(Sz.X, Sz.Y); W.R.Width = (float)FMath::Min(Sz.X, Sz.Y);
+		LH->Home->Walls.Add(W);
+	}
+	Near.Reset();   // drawn again at the next look round
+	Wait = 0.f;
+	return true;
+}
+
+bool ABrixRooms::HasRooms(int32 Lot) const { return Homes.ContainsByPredicate([Lot](const FLotHome& X) { return X.Lot == Lot; }); }
+
 void ABrixRooms::Rebuild()
 {
 	for (TPair<FString, TObjectPtr<UInstancedStaticMeshComponent>>& G : Groups) if (G.Value) G.Value->ClearInstances();
@@ -342,8 +366,9 @@ void ABrixRooms::Rebuild()
 		{
 			if (Up(W.Floor) < 0.f) continue;
 			const float Floor0 = Up(W.Floor), Ceil0 = Ceil(W.Floor);
-			if (!W.bDoorway) { AddBox(BoxAt(W.R, Floor0, Ceil0), PartitionColour, Plaster, None); continue; }
-			AddBox(BoxAt(W.R, Floor0 + DoorHeight, Ceil0), PartitionColour, Plaster, None);
+			const FLinearColor Wc = W.Colour ? FLinearColor(W.Colour->X, W.Colour->Y, W.Colour->Z) : PartitionColour;
+			if (!W.bDoorway) { AddBox(BoxAt(W.R, Floor0, Ceil0), Wc, Plaster, None); continue; }
+			AddBox(BoxAt(W.R, Floor0 + DoorHeight, Ceil0), Wc, Plaster, None);
 			for (float E : { -W.R.Length / 2, W.R.Length / 2 })   // the doorway's frame: two posts and a lintel
 			{
 				FBrixRect Post = Part(W.R, E - 0.05f, E + 0.05f);

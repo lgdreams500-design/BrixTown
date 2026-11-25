@@ -19,6 +19,7 @@ struct FBrixBlock;
 struct BRIXWORLD_API FBrixBuilderRules
 {
 	TSharedPtr<FJsonObject> Kit, Planning, Patterns, Checks;
+	TSharedPtr<FJsonObject> RoomPlan;                     // the room plan's rules and fixed run (roomplan.py; BUILD-021 to BUILD-023)
 	bool IsSet() const { return Kit.IsValid() && Planning.IsValid() && Patterns.IsValid(); }
 };
 BRIXWORLD_API bool LoadBrixBuilderRules(const TSharedPtr<FJsonObject>& Builder, FBrixBuilderRules& Out, FString& OutError);

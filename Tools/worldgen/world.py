@@ -958,6 +958,8 @@ def estate_problems(w):
                 out.append("estate: units.%s makes unknown kind %s" % (name, m))
         if rule.get("flat_use") and "flat" not in kinds:
             out.append("estate: units.%s makes flats but there is no flat kind" % name)
+        if "flats_on_main" in rule and not isinstance(rule["flats_on_main"], bool):
+            out.append("estate: units.%s flats_on_main must be true or false" % name)
     if "default" not in R.get("units", {}):
         out.append("estate: units needs a default")
     if R.get("location", {}).get("centre_lot") not in L:

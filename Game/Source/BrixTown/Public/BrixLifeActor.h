@@ -6,6 +6,7 @@
 #include "BrixEconomy.h"
 #include "BrixEstate.h"
 #include "BrixBuilder.h"
+#include "BrixRoomPlan.h"
 #include "BrixQuests.h"
 #include "BrixRewards.h"
 #include "BrixRewardsWidget.h"
@@ -140,7 +141,18 @@ private:
 	bool Holding(int32 Lot, bool& bWhole, TArray<int32>& Floors) const;   // life.js holding()
 	TSharedPtr<FJsonObject> DesignOf(int32 Lot) const;   // as remodelled and paid for, else inside.json's
 	bool RemodelPay(FString& Said);
-	void ApplyRemodel(int32 Lot, const TSharedPtr<FJsonObject>& Design);   // drawn and kept (inside.json's insides too)
+	void ApplyRemodel(int32 Lot, const TSharedPtr<FJsonObject>& Design);
+	// the room plan (BUILD-021 to BUILD-023)
+	const struct FBrixLot* CityLot(int32 Lot) const;
+	FBrixRoomPlanRules PlanRules() const;
+	FBrixPlan PlanNow(int32 Lot, int32 Floor) const;
+	bool RoomFor(int32 Lot, int32 Floor, FBrixRoomSpec& Out) const;
+	void ShowPlan(int32 Lot, int32 Floor, const FBrixPlan& Plan);
+	void PushUndo();
+	void EditPlan(TFunction<void(FBrixPlan&)> Fn);
+	void AddWall(const FString& Ax);
+	void RoomsSection(TSharedRef<SVerticalBox> Body);
+	int64 WorkOf(TArray<FBrixCostLine>& Lines, TArray<FString>& Probs, int64& DesignTotal) const;   // drawn and kept (inside.json's insides too)
 	FString BuyUnits(const TArray<int32>& Units, const FString& Agent, bool& bOk);
 	void QuestsPanel(TSharedRef<SVerticalBox> Body);
 	TMap<FString, FString> JobVars(const FBrixJob& O) const;
@@ -170,9 +182,16 @@ private:
 	TSharedRef<SWidget> PurseLine() const;
 	TSharedRef<SWidget> StatementTable(int32 N) const;
 	void ShopPanel(TSharedRef<SVerticalBox> Body);
+	void SkatePanel(TSharedRef<SVerticalBox> Body);   // the skate store's counter (CITY-102, CITY-103)
+	bool SkateBuy(int32 N, const FString& Kind, FString& Said);
+public:
+	FString SkateStoreName() const;                    // the town's skate store, by name
+private:
 	void StallPanel(TSharedRef<SVerticalBox> Body);
 	// one thing of a buy menu (life.js ware()): whether it can be had now, sold out, or dearer than cash and current account
-	struct FWare { FString Id, Name, Goes, Band; int64 Price = 0; int32 Left = -1; FString State = TEXT("ok"); int64 Short = 0; };
+	// State: ok, short (dearer than cash and the current account), out (sold out) or have (a board already owned: CITY-103);
+	// More: rows the showcase adds under its name (a board's top speed)
+	struct FWare { FString Id, Name, Goes, Band; int64 Price = 0; int32 Left = -1; FString State = TEXT("ok"); int64 Short = 0; TArray<TPair<FString, FString>> More; };
 	struct FGridOpts { FString Id, Verb = TEXT("Buy"), StockLabel, PriceLabel = TEXT("Price"), Empty = TEXT("Nothing here."); bool bMine = false; TFunction<bool(const FWare&, FString&)> Buy; };
 	TSharedRef<SWidget> Grid(const TArray<FWare>& Things, const FGridOpts& O);   // layout B (buymenu.js grid())
 	FWare Ware(const FString& Id, const FString& Name, int64 Price, const FString& Goes, int32 Left, const FString& Band) const;
@@ -199,6 +218,10 @@ private:
 	TMap<FString, TSharedPtr<FJsonObject>> RemodelsDone;
 	TSharedPtr<FJsonObject> Draft, DraftBase;   // the remodel being tried, and what it started from
 	TArray<TSharedPtr<FJsonObject>> DraftUndo;
+	TMap<int32, FBrixPlan> PlanDraft, PlanBase;   // the storeys' room plans being tried, and as they were
+	TArray<TMap<int32, FBrixPlan>> PlanUndo;
+	FString WallSel;                      // the inner wall picked
+	TMap<FString, TMap<int32, FBrixPlan>> PlansDone;   // lot id -> storey -> its plan as paid for (life.js plans)
 	FString DesignTab = TEXT("outside"), DesignFacade = TEXT("*");
 	int32 DesignStorey = 0, ViewTurn = 0;
 	UPROPERTY() TObjectPtr<class ACameraActor> ViewCam;

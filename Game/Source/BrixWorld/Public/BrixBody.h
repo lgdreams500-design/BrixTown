@@ -143,6 +143,10 @@ BRIXWORLD_API FVector2D BrixGlanceAt(double DX, double DZ, double Yaw);
 // looks from where the body faces, + to the right, as yaws turn; CamPitch + up), for FBrixDrawOptions::Look.
 BRIXWORLD_API FVector2D BrixLookAlong(double CamYawLessYaw, double CamPitch);
 
+// A skateboard alone, standing on its wheels on the ground at the origin, its nose along +x (the slice's frame, y up): as
+// people.js board() draws it at a level of detail (0 full), for a board on show (CITY-102).
+BRIXWORLD_API void DrawBrixBoard(const FBrixBoardKind& K, int32 Lod, FBrixBodyMesh& Out);
+
 // Metres covered by one whole cycle of a walk (two steps): its phase is metres walked / this.
 BRIXWORLD_API double BrixStepLength(const FBrixSignature& Sig, double S);
 

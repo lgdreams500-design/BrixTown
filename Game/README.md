@@ -43,13 +43,20 @@ your rooms (the storeys of the units you own), the card at the left of the scree
 three-quarters from its front (BUILD-020; Turn the view goes round it; the inside tab looks down on the storey). Outside:
 the walls of all sides or one facade (plaster, stone or brick and its colour, brick to the eaves), roof tiles, window
 frames, shutters and their colour, balcony, keystones, corner stones and wall lantern, as builder.options() offers them in
-the district's palette; inside, each storey's walls and floor. Each choice shows on the building at once
+the district's palette; inside, each storey's walls and floor, and its rooms (BUILD-021 to BUILD-023): the storey's inner walls as a plan
+(`BrixWorld/BrixRoomPlan`, builder.js RoomPlan and storeys.js planOf(), wallsOf()), each wall picked from a list to open or
+close its doorway, fit between the walls it meets, make longer or shorter, move a quarter metre either way, paint in one of
+the district's inside colours or take down, and walls added east to west or north to south; drawn at once by `ABrixRooms`
+(`SetPlan`), checked (in the room, clear of the way in and the stairs, every room reached from the way in, play.js
+roomFor()) and priced line by line with the rest of the work. Each choice shows on the building at once
 (`ABrixTownActor::Repaint`: its instances folded away and the building built again); the work is priced line by line;
 what would stop it is said (builder.check()); Pay and build pays through the ledger (`sys:builders`) and the remodel is
 there at once (F-BLD-CONSTRUCT level 0, instant); Undo, Start again; Esc leaves it as it was. Remodels are kept in the
-save (`QST008_remodels_are_kept_in_the_save`). To see it in a test shot: `"-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4;remodel,b_9_6_l4;set,walls.*.plaster=peach;set,roof.tiles=slate;set,openings.frame=teal"`
-(and `;pay` to build it). Shots: `Art/StyleTests/unreal_designer_39/`. Not yet: the room plan (BUILD-021 to BUILD-023) and
-furnishing in the designer (FURN-051, FURN-052, FURN-055), the window class's sizes, balconies, keystones, corner stones
+save (`QST008_remodels_are_kept_in_the_save`), and room plans too (`QST008_room_plans_are_kept_in_the_save`);
+`BUILD021_room_plans_match_the_python` runs roomplan.check_script() against Python's and checks that every storey of flats'
+plan draws back the town's own walls. Ops for a shot: `tab,inside`, `storey,<f>`, `addwall,<x|z>`, `wall,<id>`, `door`, `close`. To see it in a test shot: `"-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4;remodel,b_9_6_l4;set,walls.*.plaster=peach;set,roof.tiles=slate;set,openings.frame=teal"`
+(and `;pay` to build it). Shots: `Art/StyleTests/unreal_designer_39/`. Not yet: dragging a wall with the mouse (it moves by buttons), the rooms of a building not drawn inside, furnishing in the
+designer (FURN-051, FURN-052, FURN-055), the window class's sizes, balconies, keystones, corner stones
 and wall lanterns drawn from the design (offered, priced and kept, but laid by the kit's rules), the awning in the
 design's accent, the cut-open storey (BUILD-020), dragging the view; building new on a plot (BUILD-008: F-MAP-PLOTS is at
 level 0, no plots).
@@ -322,9 +329,10 @@ midnights: they stay the same in all a save keeps; a new game holds only the sta
 (`-BrixNoSave` plays without saving too); `-BrixSaveAs=<slot>` saves the shot's game there 6 s in, `-BrixLoad=<slot>`
 carries on from a slot at once (with `-BrixMenu=save` to see the page). The property market is in the save (estate.js save(): every unit's owner,
 tenant, rent and residents by unit id, listings, tenancies, mortgages, the indices and history; a save from before it
-opens the market on loading). Remodels are in the save (life.js remodels: each building's design as paid
-for, drawn again on loading). Not yet in the save: the skateboards owned (CITY-100), room plans and furnishing plans (not
-in this build's designer yet); and a server keeping it (PH2).
+opens the market on loading). Remodels and room plans are in the save (life.js remodels and plans:
+each building's design and each storey's walls as paid for, drawn again on loading). The save keeps the skateboards owned
+(with the economy, as economy.py save() keeps them) and the one in use (life.js save()'s boards), which comes back in the
+hand (CITY-100). Not yet in the save: furnishing plans (not in this build's designer yet); and a server keeping it (PH2).
 
 ## The wardrobe (CHR-014 to CHR-016; F-CHR-WARDROBE 1, with the owned clothes the owner asked for)
 U (or the menu) opens the Wardrobe page as the slice's life.js does: the page stands to one side, the town is not dimmed,
@@ -445,9 +453,12 @@ which (`BrixNextWeatherTry`, `WLD037_the_weather_key_steps_through_the_kinds`; `
 test shot). From indoors the rain is seen through the windows and the open door: the same rings of drops, spread
 `IndoorReach` (1.8) times as far, fall outside, none over the building (its roof) and no splashes; the slice shows none
 indoors. Shots: `Art/StyleTests/unreal_gaps_world_40/` (`weather_key_rain.png`, `rain_through_the_window.png`); 7.9 to 20.5 frames a second at High in rain
-on that street (noisy). Not yet: wet
-clothes (people a little darker out in the rain, as the slice darkens everything outdoors), the rain's sound (the slice has
-none either), snow seen from indoors.
+on that street (noisy). Clothes get wet: everyone out of
+doors (the player too) is darker by wet x sky.json `wet_dark` x `PeopleWet` (0.3, the slice's share: play.js darkens
+everything out of doors so), drying as the paving dries, none indoors or in a vehicle (M_People's custom primitive data 1,
+`BrixWetClothes`, `WLD037_people_out_in_the_rain_are_a_little_darker`; `wet_clothes.png` against `wet_clothes_before.png`,
+the shirt 2 to 3 % darker in the picture through the rain's haze). Not yet: the rain's sound (the slice has none either),
+snow seen from indoors.
 
 ## Snow (WLD-069, WLD-070, CITY-107; ADR-0051)
 At the owner's word (2026-11-25): it snows in Winter only, by its own chance per six-hour slot (`snow_chance` in
@@ -821,15 +832,29 @@ board() and ride() do: the board in use carried by its edge in the right hand, w
 across the deck, knees a little bent, and on the manual board pushes with the back foot on the ground while W is held,
 the front foot along the deck. Y (settings.json `board`) gets on the board in use and off it again, picking it up; on a
 board there is no walk: A and D turn the rider and the camera comes round behind them, more slowly the faster they go;
-the bar at the foot of the screen says which board and how fast. A new game has no board until the skate store
-(CITY-102); a test shot (or `-BrixBoards`) owns all three with the electric board in use, as the slice's `?auto=1`, and
+the bar at the foot of the screen says which board and how fast. A new game has no board until it buys one at the skate
+store; a test shot (or `-BrixBoards`) owns all three with the electric board in use, as the slice's `?auto=1` (unless
+`-BrixNoBoards`, a new game's none), and
 `-BrixBoard=<manual|electric|neon_boost>` gets on that one (with `-BrixHold=steer,throttle`). `Tools/unreal/people_values.py`
 runs boards.js and people.js in headless Edge into `Tests/values/boards_city_01.json`: `CITY099_boards_are_ridden_and_drawn_as_the_slice_does`
 checks every speed of a ride of each kind and 36 riders and carried boards (vertex for vertex, within 1 mm);
-`CITY098_board_kinds_and_speeds`, `CITY100_auto_owns_all_and_rides_electric`. Not yet: the skate store and buying
-(CITY-102, CITY-103), the boards among the belongings in the menu (CITY-100), saving them, the server's check (CITY-104),
-the sounds of getting on and off; the slice has no residents on boards, so there are none here either. 32 frames a second
-at High riding along Tram Street (noisy: other sessions were running Unreal).
+`CITY098_board_kinds_and_speeds`, `CITY100_auto_owns_all_and_rides_electric`.
+
+The skate store (CITY-102, CITY-103; ADR-0053): the slice has none, so its rules were proved first in Python (economy.py
+buy_board(), board_in_use(), `test_CITY_103_*` in Tools/citysim/test_economy.py). It is Market Skate Store, the shop lot by
+the market square that was the Market Grocer (b_9_8_l2, nobody's grocer; World/city_01/blocks/b_9_8.json), of the shop kind
+`skate` (economy.json: no items, buys nothing back, Q-40 being open). The boards' prices are boards.json `price`, cheapest
+to dearest up the store (Bx 60, Bx 280, Bx 900 [ASSUMPTION]). B at its door opens its counter: the three boards in the buy
+menu, each its own model as people.js board() draws it (`DrawBrixBoard`, `BrixThingFromBody`), turning in the showcase with
+its top speed and how it goes; one owned is marked yours and is not sold again. A board is paid into the store's till
+through the ledger (cash first, then the current account), goes to the belongings and is the one in use when it is faster
+than the one in use. The game menu's Belongings page lists the boards owned, the one in use marked (in the hand or ridden),
+with Use this on the others (life.js belongingsTab()). `CITY103_boards_are_bought_as_python_does` runs economy.board_script()
+(refusals, a loan, the in-use rule, the till, a save and load) against Python's results in life.json. To see the store in a
+test shot: `-BrixNoBoards -BrixCounter=skate` (and `"-BrixLife=open,current;loan,30000,7"` to afford a board), the
+belongings with `-BrixMenu=belongings`. Not yet: the boards standing on show in the store itself, the server's check
+(CITY-104), the sounds of getting on and off; the slice has no residents on boards, so there are none here either. 32
+frames a second at High riding along Tram Street (noisy: other sessions were running Unreal).
 
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
@@ -936,6 +961,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY098_board_kinds_and_speeds` | CITY-098 |
 | `BrixTown.World.CITY099_boards_are_ridden_and_drawn_as_the_slice_does` | CITY-099, CITY-101 |
 | `BrixTown.World.CITY100_auto_owns_all_and_rides_electric` | CITY-100 |
+| `BrixTown.World.CITY103_boards_are_bought_as_python_does` | CITY-100, CITY-102, CITY-103 |
 | `BrixTown.World.CITY017_every_plant_is_drawn_as_the_slice_draws_it` | CITY-017, WLD-040 |
 | `BrixTown.World.CITY017_lawns_are_drawn_in_their_own_pattern` | CITY-017, ART-001 |
 | `BrixTown.World.WLD056_the_open_ground_is_drawn_as_the_slice_draws_it` | WLD-056, ART-001 |
@@ -953,6 +979,8 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.BUILD002_every_building_is_built_from_its_design` | BUILD-001, BUILD-002, BUILD-016, BUILD-019 (ADR-0052) |
 | `BrixTown.World.BUILD005_remodels_match_the_python` | BUILD-004 to BUILD-007, BUILD-016 to BUILD-019 |
 | `BrixTown.World.QST008_remodels_are_kept_in_the_save` | QST-008, BUILD-005 |
+| `BrixTown.World.BUILD021_room_plans_match_the_python` | BUILD-021 to BUILD-023 |
+| `BrixTown.World.QST008_room_plans_are_kept_in_the_save` | QST-008, BUILD-021 |
 | `BrixTown.World.PROP021_the_market_matches_the_python` | PROP-010 to PROP-022, BANK-002, FURN-063 |
 | `BrixTown.World.PROP009_every_building_is_carved_into_owned_units` | PROP-009, PROP-010 |
 | `BrixTown.World.PROP018_the_money_supply_holds_and_a_saved_market_goes_on` | PROP-018, PROP-021, QST-008 |

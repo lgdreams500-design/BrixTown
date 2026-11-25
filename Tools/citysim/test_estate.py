@@ -60,6 +60,22 @@ class Units(unittest.TestCase):
         for u in s.units:
             self.assertGreater(u["area"], 0)
 
+    def test_PROP_009_every_bed_and_every_resident_is_in_a_unit(self):
+        """No bed without a flat, and no flat without a unit: a building's flats on its ground storey are a unit too."""
+        units = es.carve(R, LOTS, W["residents"])
+        lived = {m for u in units for m in u["members"]}
+        homeless = [r["id"] for r in W["residents"] if r.get("home") and r["id"] not in lived]
+        self.assertEqual(homeless, [], "residents in no unit")
+        for n, l in enumerate(LOTS):
+            beds = len((l.get("objects") or {}).get("bed") or [])
+            if not beds or l["kind"] in R["public_kinds"] or not l.get("floors"):
+                continue
+            got = sum(u["beds"] for u in units if u["lot"] == n)
+            self.assertEqual(got, beds, "%s: %d beds, %d in its units" % (l["id"], beds, got))
+        for l in LOTS:
+            for q in l.get("flats") or []:
+                self.assertTrue(any(u["lot_id"] == l["id"] and q["floor"] in u["floors"] for u in units), q["id"])
+
     def test_PROP_009_unit_ids_do_not_change(self):
         a = es.carve(R, LOTS, W["residents"])
         b = es.carve(R, copy.deepcopy(LOTS), W["residents"])
