@@ -874,7 +874,7 @@ menu's Belongings page lists the boards owned, the one in use marked (in the han
 (life.js belongingsTab()). `CITY103_boards_are_bought_as_python_does` runs economy.board_script() (refusals, a clothes outlet,
 a loan, the in-use rule, the till, a save and load) against Python's results in life.json. To see it in a test shot:
 `-BrixNoBoards -BrixCounter=b_16_5_u35` (Bobbin's Toys; `"-BrixLife=open,current;loan,30000,7"` to afford a board), the
-belongings with `-BrixMenu=belongings`. Not yet: boards in the sports and toy outlets' windows, a board on show at home (with the Furnish tab, FURN-051), the server's check
+belongings with `-BrixMenu=belongings`. Not yet: boards in the sports and toy outlets' windows, a board on show at home (the boards are not among the Furnish tab's pieces yet), the server's check
 (CITY-104), the sounds of getting on and off; the slice has no residents on boards, so there are none here either. 32
 frames a second at High riding along Tram Street (noisy: other sessions were running Unreal).
 

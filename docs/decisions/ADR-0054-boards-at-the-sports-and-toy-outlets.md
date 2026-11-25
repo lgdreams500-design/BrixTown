@@ -29,8 +29,9 @@ be in sports or toy shop. player can either use them to rid or use it as display
   not sold twice, and the bought board is the one in use when it is faster (`board_in_use()`, unchanged). None are bought
   back while Q-40 is open.
 - **Ride or show**: a board bought is the player's, among their belongings, to ride (Y). Putting an owned board on show in
-  a home is placing it from the building designer's Furnish tab, as a good for the home is (FURN-051, FURN-064); it comes
-  with that tab, which is not built in the Unreal build yet.
+  a home is placing it from the building designer's Furnish tab, as a good for the home is (FURN-051, FURN-064). The tab is
+  built (PR #116), but the boards are not among its pieces yet: that needs each kind as a piece of furnishing.json and its
+  model in a room, and comes next.
 - **Where it is built**: the Unreal build's outlet counters show the three boards in the same grid as the outlet's goods,
   each its own model. The slice still sells no boards (as ADR-0053 had it), and only `?auto=1` gives them.
 
