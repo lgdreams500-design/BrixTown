@@ -1,0 +1,80 @@
+# The light, looked at in every kind of place through the day (UBrixLight's -BrixTour=; Game/README.md "The eye and the
+# night"). One line a shot: name|hh:mm|weather|where. where is cam:x,z,height,yaw,pitch (look from there),
+# stand:x,z,up,yaw (the player there, the camera behind), in:<lot id>[,<pitch>] (the player inside that building) or
+# refroom:<shop|cafe|kitchen> (a Blender reference room built in Unreal; its hour "ref" is when the sun stands right).
+# Metres and degrees in the data's frame, yaw 0 = east. Day first, then dusk, night and dawn, indoors, and day again
+# (so anything that goes wrong after a night shows). Run it with Tools/unreal/light_tour.ps1.
+
+# the spawn alley (in shade all day), Market Square, a street, a park: the day
+alley_0720|07:20||stand:876.5,912,0,0
+alley_1200|12:00||stand:876.5,912,0,0
+square_1200|12:00||cam:912,836,2.2,-90,4
+street_1200|12:00||cam:960,880,1.7,90,0
+park_1200|12:00||cam:316,362,2.2,-90,0
+mall_out_1200|12:00||cam:1640,930,30,-75,-20
+# the afternoon going: golden hour, the sun on the horizon (summer's sunset is 20:30), dusk
+alley_1800|18:00||stand:876.5,912,0,0
+square_1800|18:00||cam:912,836,2.2,-90,4
+alley_1900|19:00||stand:876.5,912,0,0
+square_1900|19:00||cam:912,836,2.2,-90,4
+alley_1930|19:30||stand:876.5,912,0,0
+square_1930|19:30||cam:912,836,2.2,-90,4
+alley_2000|20:00||stand:876.5,912,0,0
+square_2000|20:00||cam:912,836,2.2,-90,4
+street_2000|20:00||cam:960,880,1.7,90,0
+west_2000|20:00||cam:960,880,1.7,180,4
+mall_out_2000|20:00||cam:1640,930,30,-75,-20
+alley_2020|20:20||stand:876.5,912,0,0
+square_2020|20:20||cam:912,836,2.2,-90,4
+alley_2045|20:45||stand:876.5,912,0,0
+square_2045|20:45||cam:912,836,2.2,-90,4
+# night, clear and in rain and fog
+alley_2230|22:30||stand:876.5,912,0,0
+square_2230|22:30||cam:912,836,2.2,-90,4
+street_2230|22:30||cam:960,880,1.7,90,0
+park_2230|22:30||cam:316,362,2.2,-90,0
+rain_2230|22:30|rain|cam:912,836,2.2,-90,4
+fog_2230|22:30|fog|cam:912,836,2.2,-90,4
+mall_out_2230|22:30||cam:1640,930,30,-75,-20
+alley_0200|02:00||stand:876.5,912,0,0
+# dawn (summer's sunrise is 05:00)
+alley_0520|05:20||stand:876.5,912,0,0
+square_0520|05:20||cam:912,836,2.2,-90,4
+square_0600|06:00||cam:912,836,2.2,-90,4
+alley_0630|06:30||stand:876.5,912,0,0
+# indoors by day and by night: a row house, a designed house, a grocer, a cafe, the bank, the library, a tower's hall
+row_1200|12:00||in:b_10_11_l0
+row_2230|22:30||in:b_10_11_l0
+rowup_2230|22:30||in:b_10_11_l0,12
+house_1200|12:00||in:b_0_0_l7
+house_2230|22:30||in:b_0_0_l7
+shop_1200|12:00||in:b_10_9_l2
+shop_2230|22:30||in:b_10_9_l2
+shopup_2230|22:30||in:b_10_9_l2,10
+cafe_1200|12:00||in:b_10_5_l2
+cafe_2230|22:30||in:b_10_5_l2
+bank_1200|12:00||in:b_9_6_l0
+bank_2230|22:30||in:b_9_6_l0
+library_1200|12:00||in:b_8_7_l0
+library_2230|22:30||in:b_8_7_l0
+tower_in_1200|12:00||in:b_12_5_l0
+tower_in_2230|22:30||in:b_12_5_l0
+# Eastgate Mall
+mall_in_1200|12:00||in:b_16_5_l0
+mall_in_2230|22:30||in:b_16_5_l0
+mall_court_1200|12:00||cam:1680,700,1.7,-90,12
+mall_court_2230|22:30||cam:1680,700,1.7,-90,12
+# the Blender reference rooms built again in Unreal (ABrixLightRoom): their own camera, at the hour the game's sun stands
+# as theirs does, and at night. Tools/unreal/light_reference.py measures each against its reference
+ref_shop|ref||refroom:shop
+ref_cafe|ref||refroom:cafe
+ref_kitchen|ref||refroom:kitchen
+ref_shop_night|22:30||refroom:shop
+ref_cafe_night|22:30||refroom:cafe
+# the day again, and its weather
+alley_1200b|12:00||stand:876.5,912,0,0
+square_1200b|12:00||cam:912,836,2.2,-90,4
+rain_1200|12:00|rain|cam:912,836,2.2,-90,4
+fog_1200|12:00|fog|cam:912,836,2.2,-90,4
+cloud_1200|12:00|cloud|cam:912,836,2.2,-90,4
+snow_1200|12:00|snow|cam:912,836,2.2,-90,4
