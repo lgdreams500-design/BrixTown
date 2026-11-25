@@ -266,9 +266,18 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 	FBrixLook L = Rules.Player;
 	if (Speed > (WalkSpeed + RunSpeed) * 0.5) L.SigName = TEXT("Run");
 	Phase = FMath::Fmod(Phase + Speed * DeltaSeconds / BrixStepLength(Rules.Sig(L.SigName), L.S), 1.0);
+	if (bTalking)   // the camera eases between your shoulder and your face
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			FRotator R = PC->GetControlRotation();
+			R.Yaw += FMath::FindDeltaAngleDegrees(R.Yaw, TalkYaw + (bAnswering ? AnswerCameraYaw : TalkCameraYaw)) * FMath::Min(1.0, DeltaSeconds * 3.0);
+			R.Pitch += FMath::FindDeltaAngleDegrees(R.Pitch, bAnswering ? -4.0 : -7.0) * FMath::Min(1.0, DeltaSeconds * 3.0);
+			PC->SetControlRotation(R);
+		}
 	FBrixDrawOptions O;
 	O.Pose = Speed > 0.1 ? 1 : 0;
 	O.Phase = Phase;
+	if (bTalking) O.Face = TalkFace;
 	O.Seconds = GetWorld()->GetTimeSeconds();
 	O.Lod = 0;
 	Scratch.Reset();
@@ -462,6 +471,8 @@ void ABrixCharacter::BeginTalk(const FVector& Them, float CameraM)
 	const FVector To = Them - GetActorLocation();
 	const double Yaw = FMath::RadiansToDegrees(FMath::Atan2(To.Y, To.X));
 	SetActorRotation(FRotator(0, Yaw, 0));
+	TalkYaw = Yaw;
+	bAnswering = false;
 	ArmBefore = Boom->TargetArmLength;
 	Boom->TargetArmLength = FMath::Min(ArmBefore, CameraM * CmPerM);   // come in closer so the face can be read
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
@@ -477,6 +488,8 @@ void ABrixCharacter::BeginTalk(const FVector& Them, float CameraM)
 void ABrixCharacter::EndTalk()
 {
 	bTalking = false;
+	bAnswering = false;
+	TalkFace = nullptr;
 	if (ArmBefore > 0.f) Boom->TargetArmLength = ArmBefore;
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{

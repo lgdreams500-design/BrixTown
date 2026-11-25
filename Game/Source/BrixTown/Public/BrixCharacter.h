@@ -29,6 +29,8 @@ public:
 	UPROPERTY(Config) float RunSpeed = 4.5f;         // m/s
 	UPROPERTY(Config) float CameraDistance = 4.f;    // m behind the player
 	UPROPERTY(Config) float CameraHeight = 0.6f;     // m above the shoulders' pivot
+	UPROPERTY(Config) float AnswerCameraYaw = 160.f;  // degrees round from looking where the player faces, while they answer
+	UPROPERTY(Config) float TalkCameraYaw = 26.f;     // and while the resident speaks: past the shoulder (the slice's .45 rad)
 	UPROPERTY(Config) float DesignCameraM = 2.7f;    // m from the character in the designer, times their height / 1.72 (life.js camera())
 
 protected:
@@ -39,6 +41,10 @@ public:
 	// answers (conversations.js open()); and ends (close()).
 	void BeginTalk(const FVector& Them, float CameraM);
 	void EndTalk();
+	// in a talk: the player's own face (ABrixTalk blends it), drawn on the body; while they answer the camera comes round
+	// to look at them past the resident (a reverse shot), and goes back over the shoulder when the resident speaks
+	void SetTalkFace(const FBrixFace* F) { TalkFace = F; }
+	void SetAnswering(bool bOn) { bAnswering = bOn; }
 	// A counter or the money page opens (life.js open()): the player stands, the mouse is free; and closes.
 	void BeginPanel();
 	void EndPanel();
@@ -113,6 +119,9 @@ private:
 	FVector2D DriveUsed = FVector2D::ZeroVector; // what the car was given this frame (DriveIn is cleared once used)
 	float ArmBefore = 0.f;
 	bool bDesigning = false;
+	const FBrixFace* TalkFace = nullptr;
+	bool bAnswering = false;
+	double TalkYaw = 0;
 	double DesignSpin = 0;
 	float DesignShare = 0.f;
 	FVector BoomOffsetBefore = FVector::ZeroVector;

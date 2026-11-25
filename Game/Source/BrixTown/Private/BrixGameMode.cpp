@@ -200,8 +200,10 @@ void ABrixGameMode::StartPlay()
 	{
 		FString Answers;
 		FParse::Value(FCommandLine::Get(), TEXT("BrixAnswers="), Answers, false);
+		float Gap = 1.5f;   // -BrixAnswerGap=<s>: seconds between the answers (a shot of the player answering wants one late)
+		FParse::Value(FCommandLine::Get(), TEXT("BrixAnswerGap="), Gap);
 		FTimerHandle H;
-		GetWorldTimerManager().SetTimer(H, [this, TalkTo, Answers]()
+		GetWorldTimerManager().SetTimer(H, [this, TalkTo, Answers, Gap]()
 		{
 			const TOptional<FBrixWhere> W = Today->Where(TalkTo, ClockMinute());
 			APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);
@@ -209,7 +211,7 @@ void ABrixGameMode::StartPlay()
 			const FVector2D P = W->Pos + W->Heading * 1.4;   // in front of them
 			Me->SetActorLocation(ToWorld(P, 1.f), false, nullptr, ETeleportType::TeleportPhysics);
 			FTimerHandle O;
-			GetWorldTimerManager().SetTimer(O, [this, Answers]()
+			GetWorldTimerManager().SetTimer(O, [this, Answers, Gap]()
 			{
 				if (!Talk) return;
 				Talk->Open();
@@ -220,7 +222,7 @@ void ABrixGameMode::StartPlay()
 				{
 					FTimerHandle A;
 					const int32 n = FCString::Atoi(*Picks[k]) - 1;
-					GetWorldTimerManager().SetTimer(A, [this, n]() { if (Talk) Talk->Choose(n); }, 1.5f * (k + 1), false);
+					GetWorldTimerManager().SetTimer(A, [this, n]() { if (Talk) Talk->Choose(n); }, Gap * (k + 1), false);
 				}
 			}, 0.3f, false);
 		}, ShotDelaySeconds / 3, false);

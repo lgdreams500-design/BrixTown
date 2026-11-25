@@ -895,7 +895,7 @@ FBrixQuests::FCtx ABrixLife::Ctx() const
 
 TMap<FString, FString> ABrixLife::TalkVars() const
 {
-	return { { TEXT("player"), TEXT("you") } };   // the designed character's name once the designer comes over (CHR-001)
+	return { { TEXT("player"), bNamed ? PlayerName : FString(TEXT("you")) } };   // life.js vars(): the designed character's name (CHR-001)
 }
 
 TMap<FString, FString> ABrixLife::JobVars(const FBrixJob& O) const

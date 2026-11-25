@@ -3,6 +3,7 @@
 #include "BrixCharacter.h"
 #include "BrixGameMode.h"
 #include "BrixLifeActor.h"
+#include "BrixTalkActor.h"
 #include "BrixLook.h"
 #include "Containers/Ticker.h"
 #include "Engine/Engine.h"
@@ -90,7 +91,7 @@ void ABrixDesigner::Tick(float DeltaSeconds)
 			if (FParse::Param(FCommandLine::Get(), TEXT("BrixDesignBegin"))) BeginAt = FPlatformTime::Seconds() + 3.0;   // Begin pressed; the game's own shot after
 			else if (bShot) ShotAt = FPlatformTime::Seconds() + ShotSeconds;
 		}
-		else OnBegin.Broadcast(Look);
+		else Begun();
 	}
 	if (bOpen && C)
 	{
@@ -115,6 +116,16 @@ void ABrixDesigner::Tick(float DeltaSeconds)
 			*FString::Join(BrixLookProblems(D, Look), TEXT("; ")));
 		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([](float) { FPlatformMisc::RequestExit(false); return false; }), 2.f);
 	}
+}
+
+void ABrixDesigner::Begun()   // who the player is from now: their name in the talks and the menu (life.js vars())
+{
+	if (const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))
+	{
+		if (Mode->Life) Mode->Life->SetPlayerName(Look.Name);
+		if (Mode->Talk) Mode->Talk->SetPlayerName(Look.Name);
+	}
+	OnBegin.Broadcast(Look);
 }
 
 void ABrixDesigner::Apply()
@@ -174,7 +185,7 @@ void ABrixDesigner::Close()
 	Body.Reset();
 	UGameplayStatics::SetGamePaused(this, false);
 	if (ABrixCharacter* C = Me()) { C->SetDesignView(false, 0, 0); C->EndPanel(); }
-	OnBegin.Broadcast(Look);
+	Begun();
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
 	if (Mode && Mode->Life) Mode->Life->ShowHud(true);
 	if (Mode && Mode->Life) Mode->Life->Toast(TEXT("Welcome to ") + CityName + TEXT(", ") + Look.Name + TEXT("."));

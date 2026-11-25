@@ -2,6 +2,7 @@
 // outfit changes only what the wardrobe may. Values from Tests/values/designer_city_01.json (Tools/unreal/people_values.py:
 // people.js design() and draw() run in headless Edge, world.look_problems() and world.outfit_problems() in Python).
 #include "BrixDesigner.h"
+#include "BrixTalk.h"
 
 #include "Dom/JsonObject.h"
 #include "Misc/AutomationTest.h"
@@ -189,6 +190,57 @@ bool FCHR014_AnOutfitIsOnlyClothes::RunTest(const FString&)
 	Expect.Sliders = D.Default.Sliders;
 	Expect.Skin = D.Default.Skin; Expect.Eyes = D.Default.Eyes; Expect.Walk = D.Default.Walk;
 	if (!TestTrue(TEXT("wearing it changes only its parts"), A == Expect)) ++Wrong;
+	return Wrong == 0;
+}
+
+// CHR-001: the name typed in the designer is the player's in the talks: every line of the conversations and the quest
+// lines that has {player} says it (life.js vars()), and every answer the player can give has a mouth to say it with
+// (the player's face moves while they answer, CHR-009), however long the name.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCHR001_TheNameIsSaidInTalks, "BrixTown.World.CHR001_the_players_name_is_said_in_talks",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FCHR001_TheNameIsSaidInTalks::RunTest(const FString&)
+{
+	FBrixDesignerRules D;
+	TSharedPtr<FJsonObject> Want;
+	if (!LoadDesignerFor(*this, D, Want)) return false;
+	FBrixSpeech S;
+	FBrixDialogue Dl;
+	FString Error, Text;
+	if (!TestTrue(TEXT("the talk rules load: ") + Error, LoadBrixTalk(Proj(TEXT("../World/rules")), Proj(TEXT("Data/talk.json")), S, Dl, Error))) return false;
+	TArray<FString> Lines, Answers;
+	for (const TPair<FString, FBrixDialogue::FConversation>& C : Dl.Conversations)
+		for (const TPair<FString, FBrixDialogue::FNode>& N : C.Value.Nodes)
+		{
+			Lines.Add(N.Value.Say);
+			for (const FBrixDialogue::FOption& O : N.Value.Options) { Lines.Add(O.Text); Answers.Add(O.Text); }
+		}
+	TSharedPtr<FJsonObject> Quests;   // the quest lines' talks (World/rules/quests.json), every string in it
+	if (!TestTrue(TEXT("the quests are there"), FFileHelper::LoadFileToString(Text, *Proj(TEXT("../World/rules/quests.json"))) && FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Quests) && Quests.IsValid())) return false;
+	TFunction<void(const TSharedPtr<FJsonValue>&)> Walk = [&](const TSharedPtr<FJsonValue>& V)
+	{
+		if (V->Type == EJson::String) Lines.Add(V->AsString());
+		else if (V->Type == EJson::Array) for (const TSharedPtr<FJsonValue>& X : V->AsArray()) Walk(X);
+		else if (V->Type == EJson::Object) for (const auto& KV : V->AsObject()->Values) Walk(KV.Value);
+	};
+	Walk(MakeShared<FJsonValueObject>(Quests));
+	int32 Named = 0, Wrong = 0;
+	const FString LongName = FString::ChrN(D.NameMax, TEXT('m'));
+	for (const FString& Name : { D.Default.Name, FString(TEXT("Ada")), LongName })
+		for (const FString& L : Lines)
+		{
+			if (!L.Contains(TEXT("{player}"))) continue;
+			++Named;
+			const FString Said = FBrixDialogue::Fill(L, { { TEXT("player"), Name } });
+			if (Said.Contains(TEXT("{player}")) || !Said.Contains(Name)) { AddError(TEXT("not said with the name: ") + L); ++Wrong; }
+		}
+	for (const FString& A : Answers)
+	{
+		const FString Said = FBrixDialogue::Fill(A, { { TEXT("player"), TEXT("Ada") } });
+		if (Said.TrimStartAndEnd().IsEmpty()) continue;
+		if (!(S.Speak(Said).End > 0)) { AddError(TEXT("an answer with no mouth to say it: ") + A); ++Wrong; }
+	}
+	TestTrue(TEXT("some lines say the player's name"), Named > 0);
+	TestTrue(TEXT("there are answers"), Answers.Num() > 10);
 	return Wrong == 0;
 }
 
