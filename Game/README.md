@@ -474,7 +474,8 @@ doors (the player too) is darker by wet x sky.json `wet_dark` x `PeopleWet` (0.3
 everything out of doors so), drying as the paving dries, none indoors or in a vehicle (M_People's custom primitive data 1,
 `BrixWetClothes`, `WLD037_people_out_in_the_rain_are_a_little_darker`; `wet_clothes.png` against `wet_clothes_before.png`,
 the shirt 2 to 3 % darker in the picture through the rain's haze). Not yet: the rain's sound (the slice has none either),
-snow seen from indoors.
+snow seen from indoors; round a designed house a strip of its garden about half a metre wide stays dry, as the
+roof map (and the rain's roof test) take the house's whole lot, not the house itself, as under a roof.
 
 ## Snow (WLD-069, WLD-070, CITY-107; ADR-0051)
 At the owner's word (2026-11-25): it snows in Winter only, by its own chance per six-hour slot (`snow_chance` in
