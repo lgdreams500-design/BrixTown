@@ -318,4 +318,118 @@ bool FWLD028_StreetDressing::RunTest(const FString&)
 	return Things > 1000;
 }
 
+
+namespace
+{
+	// the ground under a tree or an out-of-town bus shelter, as streets_values.py sets it: the open ground inside a block of
+	// open ground, the paving inside any other block, else the street
+	double TestGround(const FBrixCity& City, double x, double z)
+	{
+		for (const FBrixBlock& B : City.Blocks)
+			if (x > B.Origin.X && z > B.Origin.Y && x < B.Origin.X + B.Extent.X && z < B.Origin.Y + B.Extent.Y) return BrixIsWildTemplate(B.Template) ? -.03 : .12;
+		return 0;
+	}
+	const FBrixBlock* BlockOf(const FBrixCity& City, double x, double z)   // play.js blockOf(): by the squares a block spans
+	{
+		const int32 i = (int32)FMath::FloorToDouble(x / City.Pitch), j = (int32)FMath::FloorToDouble(z / City.Pitch);
+		for (const FBrixBlock& B : City.Blocks)
+			if (i >= (int32)FMath::FloorToDouble(B.Origin.X / City.Pitch) && i <= (int32)FMath::FloorToDouble((B.Origin.X + B.Extent.X) / City.Pitch)
+				&& j >= (int32)FMath::FloorToDouble(B.Origin.Y / City.Pitch) && j <= (int32)FMath::FloorToDouble((B.Origin.Y + B.Extent.Y) / City.Pitch)) return &B;
+		return nullptr;
+	}
+}
+
+// WLD-056: every tree is drawn as play.js tree() draws it with today's season: a pale trunk and a faceted crown, round, a
+// pine's tiers of cones, or a birch's slim crown on a white trunk with its dark band; bare in winter, in blossom in spring,
+// a fallen one as a log; the ring of mulch round a trunk standing in a lawn; and in the woods with fewer facets and no ring.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWLD056_EveryTree, "BrixTown.World.WLD056_every_tree_is_drawn_as_the_slice_draws_it",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FWLD056_EveryTree::RunTest(const FString&)
+{
+	FStreetsCase C;
+	if (!Load(*this, C)) return false;
+	const TSharedPtr<FJsonObject> Trees = C.Values->GetObjectField(TEXT("trees"));
+	const TArray<FBrixLawn> Lawns = BrixLawnsOf(C.City.Blocks, C.City.Pitch, -.03, .15, .17);
+	int32 Bad = 0, Lite = 0, Ringed = 0;
+	int32 Crowns[3] = { 0, 0, 0 };
+	for (int32 i = 0; i < C.Today.Trees.Num(); ++i)
+	{
+		const FBrixTreeToday& T = C.Today.Trees[i];
+		const FBrixBlock* B = BlockOf(C.City, T.X, T.Z);
+		const bool bLite = B && B->Template == TEXT("woods");
+		TArray<FBrixShape> Got;
+		BrixTreeShapes(T, TestGround(C.City, T.X, T.Z), bLite, Lawns, -.03, .15, C.Today, Got);
+		Lite += bLite; ++Crowns[FMath::Clamp(T.Crown, 0, 2)];
+		if (Got.Num() && Got[0].Kind == FBrixShape::Quad && !bLite) ++Ringed;
+		const TSharedPtr<FJsonObject>* W = nullptr;
+		if (!TestTrue(FString::Printf(TEXT("tree %d: the slice drew it"), i), Trees->TryGetObjectField(FString::FromInt(i), W))) continue;
+		Compare(*this, FString::Printf(TEXT("tree %d at %.1f, %.1f"), i, T.X, T.Z), Got, *W, Bad);
+	}
+	TestEqual(TEXT("trees today (6,466 when written)"), C.Today.Trees.Num(), Trees->Values.Num());
+	TestTrue(TEXT("round crowns, pines and birches"), Crowns[0] > 100 && Crowns[1] > 100 && Crowns[2] > 100);
+	TestTrue(TEXT("trees in the woods, drawn lite"), Lite > 1000);
+	TestTrue(TEXT("trees standing in a lawn have a ring"), Ringed > 50);
+	TestEqual(TEXT("trees drawn otherwise than in the slice"), Bad, 0);
+	return C.Today.Trees.Num() > 1000;
+}
+
+// CITY-043, CITY-045, CITY-091: the road network is drawn as roads.js draws it: zebra crossings, the lay-bys' setts and white
+// lines, the bus stops' lay-bys, shelters and line discs, and a pole with three dark lamps on the right-hand kerb before each
+// signalled junction; each head's lit lamp is in the phase traffic.py's signal() gives (as roads.js phase()), so a car
+// stops on the red it was worked out to stop on.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY043_Roads, "BrixTown.World.CITY043_the_road_markings_and_signals_are_drawn_as_the_slice_draws_them",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FCITY043_Roads::RunTest(const FString&)
+{
+	FStreetsCase C;
+	if (!Load(*this, C)) return false;
+	const TSharedPtr<FJsonObject> Roads = C.Values->GetObjectField(TEXT("roads"));
+	const FBrixRoads& R = C.Today.Roads;
+	int32 Bad = 0;
+	TArray<FBrixSignalHead> Heads;
+	const TArray<FIntPoint> Cells = BrixRoadCells(R, C.City.Pitch);
+	TestEqual(TEXT("block squares with road markings, as the slice's"), Cells.Num(), Roads->Values.Num());
+	for (const FIntPoint& K : Cells)
+	{
+		TArray<FBrixShape> Got;
+		BrixRoadShapes(R, C.City.Pitch, C.City.StreetWidth, K, .12, [&](double x, double z) { return TestGround(C.City, x, z); }, Got, Heads);
+		const FString Key = FString::Printf(TEXT("%d,%d"), K.X, K.Y);
+		const TSharedPtr<FJsonObject>* W = nullptr;
+		if (!TestTrue(Key + TEXT(": the slice drew it"), Roads->TryGetObjectField(Key, W))) continue;
+		Compare(*this, TEXT("road square ") + Key, Got, *W, Bad);
+	}
+	TestTrue(TEXT("zebras, lay-bys, bus stops and signals (292, 1,348, 50 and 17 when written)"), R.Crossings.Num() > 200 && R.Bays.Num() > 1000 && R.Stops.Num() > 20 && R.Signals.Num() > 10);
+	// each head's lamp at 10:00, as roads.js draw() lights it
+	TArray<FBrixShape> Lamps;
+	for (const FBrixSignalHead& H : Heads) Lamps.Add(BrixSignalLamp(H, BrixSignalPhase(R, H.Signal, H.bEw, C.Today.Day, 600, C.Today.Pace)));
+	const TArray<TSharedPtr<FJsonValue>>& Want = C.Values->GetArrayField(TEXT("lamps"));
+	if (TestEqual(TEXT("signal heads (four at each junction)"), Lamps.Num(), Want.Num()))
+		for (int32 i = 0; i < Lamps.Num(); ++i)
+		{
+			const TArray<TSharedPtr<FJsonValue>>& Rw = Want[i]->AsArray();
+			const TArray<TSharedPtr<FJsonValue>>& A = Rw[1]->AsArray(), & Cv = Rw[2]->AsArray();
+			bool bOk = true;
+			for (int32 j = 0; j < 6; ++j) bOk &= FMath::Abs(A[j]->AsNumber() - Lamps[i].A[j]) < 1e-6;
+			for (int32 j = 0; j < 3; ++j) bOk &= FMath::Abs(Cv[j]->AsNumber() - Lamps[i].Col[j]) < 1e-6;
+			if (!bOk && ++Bad <= 12) AddError(FString::Printf(TEXT("head %d's lamp is not where or as the slice lights it"), i));
+		}
+	// every signal's phase through the day for both streets, against roads.js phase()
+	int32 Wrong = 0, Greens = 0;
+	static const TCHAR* Names[3] = { TEXT("green"), TEXT("amber"), TEXT("red") };
+	for (const TSharedPtr<FJsonValue>& V : C.Values->GetArrayField(TEXT("phase")))
+	{
+		const TArray<TSharedPtr<FJsonValue>>& A = V->AsArray();
+		const int32 s = (int32)A[0]->AsNumber();
+		const double m = A[1]->AsNumber();
+		const int32 Ew = BrixSignalPhase(R, s, true, C.Today.Day, m, C.Today.Pace), Ns = BrixSignalPhase(R, s, false, C.Today.Day, m, C.Today.Pace);
+		Greens += (Ew == 0) + (Ns == 0);
+		if (A[2]->AsString() != Names[Ew] || A[3]->AsString() != Names[Ns]) { if (++Wrong <= 5) AddError(FString::Printf(TEXT("signal %d at minute %.2f: %s and %s, the slice %s and %s"), s, m, Names[Ew], Names[Ns], *A[2]->AsString(), *A[3]->AsString())); }
+		if (Ew == 0 && Ns == 0) { AddError(TEXT("both streets green at once")); ++Wrong; }
+	}
+	TestEqual(TEXT("phases otherwise than the slice's"), Wrong, 0);
+	TestTrue(TEXT("lights go green"), Greens > 1000);
+	TestEqual(TEXT("drawn otherwise than in the slice"), Bad, 0);
+	return true;
+}
+
 #endif

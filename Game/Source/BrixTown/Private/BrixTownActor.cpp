@@ -1013,7 +1013,7 @@ void ABrixTownActor::Build(const FBrixCity& City)
 			}
 			BuildLot(L, B);
 		}
-		for (const FBrixTree& T : B.Trees)
+		if (!Today->Trees.Num()) for (const FBrixTree& T : B.Trees)   // (no Game/Data/streets.json trees: a trunk and a ball)
 		{
 			Wrap(TEXT("tree"), T.Pos, 0.f, [&]()
 			{
@@ -1023,7 +1023,8 @@ void ABrixTownActor::Build(const FBrixCity& City)
 		}
 		for (const FBrixProp& P : B.Props) Wrap(P.Kind, P.Pos, BlockSlabHeight, [&]() { BuildProp(P, B); });   // street things a car can break (CITY-072)
 	}
-	// each block's faces (tufts, tracks, ponds) as one mesh made now
+	BuildTreesAndRoads(City);
+	// each block's faces (tufts, tracks, ponds; each square's tree crowns and road markings) as one mesh made now
 	int32 FacetTris = 0;
 	for (TPair<int32, FFacets>& F : Facets)
 	{
@@ -1033,12 +1034,13 @@ void ABrixTownActor::Build(const FBrixCity& City)
 		SC->SetupAttachment(RootComponent);
 		SC->SetStaticMesh(M);
 		SC->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		SC->SetCullDistance(FacetCullDistance * CmPerM);
+		SC->SetCullDistance((F.Key >= TreeKey ? TreeCullDistance : FacetCullDistance) * CmPerM);
 		SC->bAffectDistanceFieldLighting = false;
 		SC->SetAffectDynamicIndirectLighting(false);
 		SC->RegisterComponent();
 		AddInstanceComponent(SC);
 		FacetTris += F.Value.P.Num() / 3;
+		if (F.Value.Owner.ContainsByPredicate([](int32 o) { return o != INDEX_NONE; })) KeptFacets.Add(F.Key, { MoveTemp(F.Value), SC });
 	}
 	Facets.Empty();
 	// Scales are in metres: the shapes and the kit's pieces are 1 m to a unit of scale, so a scale is a size.
@@ -1086,7 +1088,11 @@ void ABrixTownActor::Wrap(const FString& Kind, const FVector2D& Pos, float Groun
 	Wrapping = &B;
 	Fn();
 	Wrapping = nullptr;
-	if (!B.Parts.Num()) return;
+	if (!B.Parts.Num())
+	{
+		if (FFacets* F = Facets.Find(B.FacetKey)) for (int32& o : F->Owner) if (o == Breakables.Num()) o = INDEX_NONE;
+		return;
+	}
 	if (LampLights.Num() > Lights0) B.Light = Lights0;
 	for (int32 Pass = 0; Pass < 2 && !B.Box.bIsValid; ++Pass)
 		for (const FBrixBreakable::FPart& P : B.Parts)
@@ -1132,6 +1138,7 @@ void ABrixTownActor::SetBroken(int32 b, bool bBroken)
 		Touched.Add(P.G);
 	}
 	for (UInstancedStaticMeshComponent* G : Touched) G->MarkRenderStateDirty();
+	if (B.FacetKey != INDEX_NONE) RemakeFacets(B.FacetKey);   // a tree's crown
 	if (LampLights.IsValidIndex(B.Light)) LampLights[B.Light].W = bBroken ? -FMath::Abs(LampLights[B.Light].W) : FMath::Abs(LampLights[B.Light].W);   // a broken lamp goes out
 }
 
@@ -1371,7 +1378,7 @@ void ABrixTownActor::Shapes(const TArray<FBrixShape>& S)
 		{
 			const FVector3d p0 = P3(A[0], A[1], A[2]), p1 = P3(A[3], A[4], A[5]), p2 = P3(A[6], A[7], A[8]), p3 = P3(A[9], A[10], A[11]), h = P3(A[12], A[13], A[14]);
 			Facet(p0, p1, p2, h, Sh.Col);
-			if (!p2.Equals(p3, 1e-9)) Facet(p0, p2, p3, h, Sh.Col);
+			if (!p2.Equals(p3, 1e-9) && !p3.Equals(p0, 1e-9)) Facet(p0, p2, p3, h, Sh.Col);   // (a wedge ends where it starts: one face)
 			break;
 		}
 		case FBrixShape::Ribbon:   // play.js ribbon(): a strip along the line, each piece overlapping the next a little
@@ -1419,6 +1426,121 @@ void ABrixTownActor::Shapes(const TArray<FBrixShape>& S)
 	}
 }
 
+// A block square's facet mesh made again without the faces of the things in it that are broken (a tree's crown)
+void ABrixTownActor::RemakeFacets(int32 Key)
+{
+	FKeptFacets* K = KeptFacets.Find(Key);
+	if (!K || !K->C) return;
+	TArray<FVector3f> P, N;
+	TArray<FLinearColor> Col;
+	for (int32 t = 0; t < K->F.N.Num(); ++t)
+	{
+		const int32 o = K->F.Owner[t];
+		if (Breakables.IsValidIndex(o) && Breakables[o].bBroken) continue;
+		P.Append({ K->F.P[3 * t], K->F.P[3 * t + 1], K->F.P[3 * t + 2] });
+		N.Add(K->F.N[t]);
+		Col.Add(K->F.C[t]);
+	}
+	UStaticMesh* Old = K->C->GetStaticMesh();
+	K->C->SetStaticMesh(FacetMesh(FString::Printf(TEXT("Facets_%d_%d"), Key, ++K->Made), P, N, Col));
+	if (Old) Made.Remove(Old);
+}
+
+// The trees (play.js tree(): WLD-056) and the road network (roads.js: CITY-043, CITY-045, CITY-091), each block square's
+// faces in a mesh of its own; a tree out of the woods a thing of its own a car can break (a fallen one: a log)
+void ABrixTownActor::BuildTreesAndRoads(const FBrixCity& City)
+{
+	const double P = City.Pitch, Wild = BlockSlabHeight + WildUp;
+	auto BlockAt = [&](double x, double z) -> const FBrixBlock*
+	{
+		for (const FBrixBlock& B : City.Blocks) if (x > B.Origin.X && z > B.Origin.Y && x < B.Origin.X + B.Extent.X && z < B.Origin.Y + B.Extent.Y) return &B;
+		return nullptr;
+	};
+	auto Ground = [&](double x, double z)   // the town's ground: the open ground, a garden's lawn, the paving, the street
+	{
+		const FBrixBlock* B = BlockAt(x, z);
+		if (!B) return 0.0;
+		if (BrixIsWildTemplate(B->Template)) return Wild;
+		for (const FBrixLot& L : B->Lots) if (L.Kind == TEXT("garden") && x >= L.Min.X && x <= L.Max.X && z >= L.Min.Y && z <= L.Max.Y) return (double)LawnUp;
+		return (double)BlockSlabHeight;
+	};
+	TArray<FBrixLawn> Lawns = BrixLawnsOf(City.Blocks, P, Wild, BlockSlabHeight, LawnUp);
+	{   // (a terrace's back gardens are its lots' own yards here, not a lawn: no ring there)
+		TArray<FBrixLawn> Rows;
+		for (const FBrixBlock& B : City.Blocks) if (B.Template == TEXT("rows")) Rows.Add({ B.Origin.X + 2, B.Origin.Y + 16.5, B.Origin.X + B.Extent.X - 2, B.Origin.Y + B.Extent.X - 16.5, (double)BlockSlabHeight });
+		Lawns.RemoveAll([&](const FBrixLawn& L) { return Rows.ContainsByPredicate([&](const FBrixLawn& R) { return R.X0 == L.X0 && R.Z0 == L.Z0 && R.X1 == L.X1 && R.Z1 == L.Z1 && R.Y == L.Y; }); });
+	}
+	const int32 Was = BlockIndex;
+	int32 Trees = 0;
+	for (const FBrixTreeToday& T : Today->Trees)
+	{
+		const int32 i = (int32)FMath::FloorToDouble(T.X / P), j = (int32)FMath::FloorToDouble(T.Z / P);
+		const FBrixBlock* B = nullptr;   // play.js blockOf(): by the squares a block spans
+		for (const FBrixBlock& Bk : City.Blocks)
+			if (i >= (int32)FMath::FloorToDouble(Bk.Origin.X / P) && i <= (int32)FMath::FloorToDouble((Bk.Origin.X + Bk.Extent.X) / P)
+				&& j >= (int32)FMath::FloorToDouble(Bk.Origin.Y / P) && j <= (int32)FMath::FloorToDouble((Bk.Origin.Y + Bk.Extent.Y) / P)) { B = &Bk; break; }
+		const bool bLite = B && B->Template == TEXT("woods");   // thousands, standing close: fewer facets, and no car gets in among them
+		const double g = Ground(T.X, T.Z);
+		BlockIndex = TreeKey + i * 1000 + j;
+		TArray<FBrixShape> S;
+		BrixTreeShapes(T, g, bLite, Lawns, Wild, BlockSlabHeight, *Today, S);
+		if (bLite) Shapes(S);
+		else Wrap(T.bFallen ? TEXT("log") : TEXT("tree"), FVector2D(T.X, T.Z), (float)g, [&]() { Shapes(S); });
+		++Trees;
+	}
+	TArray<FBrixShape> S;
+	for (const FIntPoint& K : BrixRoadCells(Today->Roads, P))   // zebras, lay-bys, bus stops, the traffic lights' poles
+	{
+		S.Reset();
+		BlockIndex = RoadKey + K.X * 1000 + K.Y;
+		BrixRoadShapes(Today->Roads, P, City.StreetWidth, K, BlockSlabHeight, Ground, S, SignalHeads);
+		Shapes(S);
+	}
+	BlockIndex = Was;
+	if (SignalHeads.Num())   // each head's lit lamp, glowing in its own colour (roads.js draw(): material 23)
+	{
+		SignalLamps = NewObject<UInstancedStaticMeshComponent>(this, TEXT("SignalLamps"));
+		SignalLamps->SetupAttachment(RootComponent);
+		SignalLamps->SetStaticMesh(Cube);
+		SignalLamps->NumCustomDataFloats = 3;
+		SignalLamps->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		SignalLamps->SetCastShadow(false);
+		if (UMaterialInterface* Glow = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Greybox/M_Glow.M_Glow")))
+		{
+			SignalMat = UMaterialInstanceDynamic::Create(Glow, this);
+			SignalMat->SetScalarParameterValue(TEXT("Glow"), SignalGlow);
+			SignalLamps->SetMaterial(0, SignalMat);
+		}
+		else SignalLamps->SetMaterial(0, Own());
+		SignalLamps->RegisterComponent();
+		AddInstanceComponent(SignalLamps);
+		for (const FBrixSignalHead& Hd : SignalHeads) SignalLamps->AddInstance(FTransform(ToWorld(FVector2D(Hd.X, Hd.Z), -50.f)), false);
+		SignalPhase.Init(-1, SignalHeads.Num());
+	}
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: %d trees as the slice draws them, %d signal heads, %d zebras, %d lay-bys, %d bus stops"), Trees, SignalHeads.Num(),
+		Today->Roads.Crossings.Num(), Today->Roads.Bays.Num(), Today->Roads.Stops.Num());
+}
+
+void ABrixTownActor::SetSignals(int32 Day, double Minutes)
+{
+	if (!SignalLamps || !Today.IsValid()) return;
+	bool bAny = false;
+	for (int32 h = 0; h < SignalHeads.Num(); ++h)
+	{
+		const FBrixSignalHead& Hd = SignalHeads[h];
+		const int32 Ph = BrixSignalPhase(Today->Roads, Hd.Signal, Hd.bEw, Day, Minutes, Today->Pace);
+		if (Ph == SignalPhase[h]) continue;
+		SignalPhase[h] = Ph;
+		const FBrixShape L = BrixSignalLamp(Hd, Ph);
+		const TArray<double, TInlineAllocator<16>>& A = L.A;
+		SignalLamps->UpdateInstanceTransform(h, FTransform(FQuat::Identity, ToWorld(FVector2D((A[0] + A[3]) / 2, (A[2] + A[5]) / 2), (float)((A[1] + A[4]) / 2)),
+			FVector(A[3] - A[0], A[5] - A[2], A[4] - A[1])), false, false, true);
+		SignalLamps->SetCustomData(h, { (float)L.Col.X, (float)L.Col.Y, (float)L.Col.Z }, false);
+		bAny = true;
+	}
+	if (bAny) SignalLamps->MarkRenderStateDirty();
+}
+
 // One face of a block's facet mesh, in the slice's frame, lit on the side its hint is on (the material is two-sided)
 void ABrixTownActor::Facet(const FVector3d& A, const FVector3d& B, const FVector3d& C, const FVector3d& Hint, const FVector3d& Col)
 {
@@ -1429,6 +1551,14 @@ void ABrixTownActor::Facet(const FVector3d& A, const FVector3d& B, const FVector
 	F.P.Append({ U(A), U(B), U(C) });
 	F.N.Add(FVector3f((float)N.X, (float)N.Z, (float)N.Y));
 	F.C.Add(FLinearColor((float)Col.X, (float)Col.Y, (float)Col.Z));
+	F.Owner.Add(Wrapping ? Breakables.Num() : INDEX_NONE);   // (Wrap() adds it next)
+	if (Wrapping)
+	{
+		Wrapping->FacetKey = BlockIndex;
+		Wrapping->FaceP.Append({ U(A), U(B), U(C) });
+		Wrapping->FaceN.Add(F.N.Last());
+		Wrapping->FaceC.Add(F.C.Last());
+	}
 }
 
 // A static mesh made now from triangles (three points each, a normal and a colour each), in M_Facets

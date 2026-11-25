@@ -52,6 +52,13 @@ namespace
 			const FQuat Q(FVector::UpVector, -yaw);
 			Box(Mid, Q.RotateVector(FVector(w / 2 * CmPerM, 0, 0)), Q.RotateVector(FVector(0, d / 2 * CmPerM, 0)), FVector(0, 0, h / 2 * CmPerM), FLinearColor(Col.X, Col.Y, Col.Z));
 		}
+		// one face, turned as Box() turns its faces (Unreal's frame, centimetres)
+		void Face(const FVector& A, const FVector& B, const FVector& Cc, const FVector& Nrm, const FLinearColor& Col)
+		{
+			FVector Q[3] = { A, B, Cc };
+			if (FVector::DotProduct(FVector::CrossProduct(Q[1] - Q[0], Q[2] - Q[0]), Nrm) > 0) Swap(Q[1], Q[2]);
+			for (int32 k = 0; k < 3; ++k) { Tri.Add(V.Num()); V.Add(Q[k]); N.Add(Nrm); C.Add(Col); }
+		}
 		void Upload(UProceduralMeshComponent* M, UMaterialInterface* Mat, int32& Had) const
 		{
 			static const TArray<FVector2D> NoUV;
@@ -210,6 +217,8 @@ void ABrixCrash::Topple(FEffect& E)
 		const FVector S = P.At.GetScale3D() * (CmPerM / 2);
 		O.Box(P.At.GetLocation() - Foot, Q.RotateVector(FVector(S.X, 0, 0)), Q.RotateVector(FVector(0, S.Y, 0)), Q.RotateVector(FVector(0, 0, S.Z)), P.Colour);
 	}
+	for (int32 t = 0; t < Bk.FaceN.Num(); ++t)   // a tree's crown
+		O.Face(FVector(Bk.FaceP[3 * t]) - Foot, FVector(Bk.FaceP[3 * t + 1]) - Foot, FVector(Bk.FaceP[3 * t + 2]) - Foot, FVector(Bk.FaceN[t]), Bk.FaceC[t]);
 	UProceduralMeshComponent* M = Pool.Num() ? Pool.Pop().Get() : nullptr;
 	if (!M)
 	{

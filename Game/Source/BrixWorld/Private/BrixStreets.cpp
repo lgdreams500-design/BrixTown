@@ -210,6 +210,52 @@ bool LoadBrixStreetsToday(const FString& File, FBrixStreetsToday& Out, FString& 
 	if (Out.LawnTones.Num() < 3) Out.LawnTones = { FVector3d(.18, .27, .13), FVector3d(.29, .34, .19), FVector3d(.42, .39, .21) };
 	const TSharedPtr<FJsonObject>* Dr = nullptr;
 	if (Root->TryGetObjectField(TEXT("dressing"), Dr)) { Out.Dressing = *Dr; (*Dr)->TryGetBoolField(TEXT("bunting"), Out.bBunting); }
+	Out.Pace = Numf(Root, TEXT("pace"), Out.Pace);
+	Out.Day = (int32)Numf(Root, TEXT("day"), Out.Day);
+	const TArray<TSharedPtr<FJsonValue>>* Tr = nullptr;
+	if (Root->TryGetArrayField(TEXT("trees"), Tr))   // [x, z, r, leaf, r, g, b, blossom, fallen, crown]
+		for (const TSharedPtr<FJsonValue>& V : *Tr)
+		{
+			const TArray<TSharedPtr<FJsonValue>>& A = V->AsArray();
+			if (A.Num() < 9) continue;
+			FBrixTreeToday& T = Out.Trees.AddDefaulted_GetRef();
+			T.X = A[0]->AsNumber(); T.Z = A[1]->AsNumber(); T.R = A[2]->AsNumber(); T.Leaf = A[3]->AsNumber();
+			T.Col = FVector3d(A[4]->AsNumber(), A[5]->AsNumber(), A[6]->AsNumber());
+			T.bBlossom = A[7]->AsNumber() != 0; T.bFallen = A[8]->AsNumber() != 0; T.Crown = A.Num() > 9 ? (int32)A[9]->AsNumber() : 0;
+		}
+	const TSharedPtr<FJsonObject>* Rd = nullptr;
+	if (Root->TryGetObjectField(TEXT("roads"), Rd))
+	{
+		FBrixRoads& R = Out.Roads;
+		const TArray<TSharedPtr<FJsonValue>>* L = nullptr;
+		auto Marks = [&](const TCHAR* F, TArray<FBrixRoads::FMark>& To)
+		{
+			if ((*Rd)->TryGetArrayField(F, L)) for (const TSharedPtr<FJsonValue>& V : *L)
+			{
+				const TArray<TSharedPtr<FJsonValue>>& A = V->AsArray();
+				if (A.Num() >= 3) To.Add({ A[0]->AsNumber(), A[1]->AsNumber(), A[2]->AsNumber() != 0 });
+			}
+		};
+		Marks(TEXT("crossings"), R.Crossings);
+		Marks(TEXT("bays"), R.Bays);
+		if ((*Rd)->TryGetArrayField(TEXT("stops"), L)) for (const TSharedPtr<FJsonValue>& V : *L)   // [x, z, ux, uz, town, [lines], name]
+		{
+			const TArray<TSharedPtr<FJsonValue>>& A = V->AsArray();
+			if (A.Num() < 6) continue;
+			FBrixRoads::FStop& S = R.Stops.AddDefaulted_GetRef();
+			S.X = A[0]->AsNumber(); S.Z = A[1]->AsNumber(); S.Ux = A[2]->AsNumber(); S.Uz = A[3]->AsNumber(); S.bTown = A[4]->AsNumber() != 0;
+			for (const TSharedPtr<FJsonValue>& K : A[5]->AsArray()) S.Lines.Add((int32)K->AsNumber());
+		}
+		if ((*Rd)->TryGetArrayField(TEXT("lines"), L)) for (const TSharedPtr<FJsonValue>& V : *L) R.LineColours.Add(Strf(V->AsObject(), TEXT("colour")));
+		if ((*Rd)->TryGetArrayField(TEXT("signals"), L)) for (const TSharedPtr<FJsonValue>& V : *L)
+		{
+			const TArray<TSharedPtr<FJsonValue>>& A = V->AsArray();
+			if (A.Num() >= 3) R.Signals.Add({ A[0]->AsNumber(), A[1]->AsNumber(), A[2]->AsNumber() });
+		}
+		const TSharedPtr<FJsonObject>* Cy = nullptr;
+		if ((*Rd)->TryGetObjectField(TEXT("cycle"), Cy)) { R.GreenS = Numf(*Cy, TEXT("green_s"), R.GreenS); R.AmberS = Numf(*Cy, TEXT("amber_s"), R.AmberS); R.AllRedS = Numf(*Cy, TEXT("all_red_s"), R.AllRedS); }
+		R.Width = Numf(*Rd, TEXT("width"), R.Width); R.BayLength = Numf(*Rd, TEXT("bay_length"), R.BayLength);
+	}
 	return true;
 }
 
@@ -991,4 +1037,232 @@ bool BrixBoardSpanOf(const FBrixProp& P, const FBrixBoardWall& Wall, FBrixBoardS
 	if (P.Kind == TEXT("hoarding")) { Out.Y0 = .12 + .1; Out.Y1 = 2.9; }   // (play.js Y_PAVE + 0.1)
 	else { Out.Y0 = Wall.bOld ? 3.55 + .55 : 3.85; Out.Y1 = FMath::Min(Out.Y0 + 2.6, (Wall.H != 0 ? Wall.H : 7) - .5); }   // (OLD_BASE 3.55)
 	return true;
+}
+
+// ---- trees (play.js tree(), treeRing(): WLD-056) and the road network (roads.js: CITY-043, CITY-045, CITY-091)
+
+TArray<FBrixLawn> BrixLawnsOf(const TArray<FBrixBlock>& Blocks, double Pitch, double YWild, double YGrass, double YGarden)
+{
+	TArray<FBrixLawn> Out;
+	for (const FBrixBlock& B : Blocks)
+	{
+		const double bx = B.Origin.X, bz = B.Origin.Y, SX = B.Extent.X, SZ = B.Extent.Y;
+		if (BrixIsWildTemplate(B.Template) && B.Template != TEXT("woods")) Out.Add({ bx, bz, bx + SX, bz + SZ, YWild });   // greenGround()
+		if (B.Template == TEXT("rows")) Out.Add({ bx + 2, bz + 16.5, bx + SX - 2, bz + SX - 16.5, YGrass });   // (b.size: a terrace is one square)
+		if (B.Template == TEXT("park")) Out.Add({ bx + 1, bz + 1, bx + SX - 1, bz + SZ - 1, YGrass });
+		for (const FBrixLot& L : B.Lots) if (L.Kind == TEXT("garden")) Out.Add({ L.Min.X, L.Min.Y, L.Max.X, L.Max.Y, YGarden });   // openLot()
+	}
+	return Out;
+}
+
+void BrixTreeShapes(const FBrixTreeToday& T, double g, bool bLite, const TArray<FBrixLawn>& Lawns, double YWild, double YGrass, const FBrixStreetsToday& Today, TArray<FBrixShape>& Out)
+{
+	FOut O{ Out };
+	const double x = T.X, z = T.Z, r = T.R, leaf = T.Leaf;
+	const int32 crown = T.Crown;
+	const double w = FMath::Clamp(.09 + r * .03, .11, .25) * (crown == 2 ? .8 : 1);
+	const double h = crown == 1 ? 1.1 + r * .35 : crown == 2 ? 1.6 + r * 1.05 : 1.3 + r * .75;
+	const FVector3d bark = crown == 2 ? FVector3d(.7, .68, .62) : crown == 1 ? FVector3d(.4, .3, .24) : FVector3d(.46, .38, .3);
+	if (!bLite)   // treeRing(): a ring of bare earth and mulch round a trunk standing in a lawn
+	{
+		const FBrixLawn* lw = Lawns.FindByPredicate([&](const FBrixLawn& L) { return x > L.X0 + .5 && x < L.X1 - .5 && z > L.Z0 + .5 && z < L.Z1 - .5; });
+		if (lw)
+		{
+			const double R = Today.TreeRingM * (.85 + .3 * Hash({ N(x), N(z), TEXT("ring") })), y = (lw->Y == YWild ? YWild : FMath::Max(g, YGrass)) + .03;
+			const int32 Nr = 9;
+			for (int32 k = 0; k < Nr; ++k)
+			{
+				const double a0 = (double)k / Nr * 6.283, a1 = (double)(k + 1) / Nr * 6.283;
+				const double r0 = R * (.9 + .2 * Hash({ N(x), N(z), N(k) })), r1 = R * (.9 + .2 * Hash({ N(x), N(z), N((k + 1) % Nr) }));
+				O.Quad(FVector3d(x, y, z), FVector3d(x + FMath::Cos(a1) * r1, y, z + FMath::Sin(a1) * r1), FVector3d(x + FMath::Cos(a0) * r0, y, z + FMath::Sin(a0) * r0), FVector3d(x, y, z),
+					Today.MulchColor * (.9 + .2 * Hash({ N(k), N(x) })), FVector3d(0, 1, 0));
+			}
+		}
+	}
+	if (T.bFallen) { O.YBox(x + h / 2, g, z, h, w * 2, w * 2, Hash({ N(x), N(z) }) * 6.28, bark); return; }
+	O.Box(x - w, g, z - w, x + w, g + h + r * .3, z + w, bark); O.Solid(x - w, g, z - w, x + w, g + h, z + w);
+	if (crown == 2) O.Box(x - w - .005, g + h * .3, z - w - .005, x + w + .005, g + h * .34, z + w + .005, FVector3d(.2, .19, .18));   // a dark band in the bark
+	if (leaf <= .05) return;
+	const FVector3d own = T.Col;
+	if (crown == 1)   // tiers of faceted cones, narrowing to the top; evergreen
+	{
+		const FVector3d base = Mix3(own, FVector3d(.16, .24, .15), .4);
+		const int32 Nn = bLite ? 5 : 7, Tt = bLite ? 2 : 3;
+		const double H = r * 3.1;
+		for (int32 k = 0; k < Tt; ++k)
+		{
+			const double y0 = g + h + H * k / (Tt + .6), Rk = r * (1.05 - .3 * k);
+			const FVector3d apex(x, y0 + H * .62, z);
+			TArray<FVector3d, TInlineAllocator<8>> ring;
+			for (int32 i = 0; i < Nn; ++i)
+			{
+				const double a = (double)i / Nn * 6.2832 + k * .7 + Hash({ N(x), N(z), N(k) }), rr = Rk * (.85 + .3 * Hash({ N(x), N(z), N(k), N(i) }));
+				ring.Add(FVector3d(x + FMath::Cos(a) * rr, y0 - .15 * Rk, z + FMath::Sin(a) * rr));
+			}
+			for (int32 i = 0; i < Nn; ++i)
+			{
+				const FVector3d& a = ring[i], & b2 = ring[(i + 1) % Nn];
+				O.Quad(a, b2, apex, apex, base * (.7 + .5 * Hash({ N(x), N(k), N(i) }) + .08 * k), FVector3d((a.X + b2.X) / 2 - x, Rk * .5, (a.Z + b2.Z) / 2 - z));
+			}
+			for (int32 i = 0; i < Nn; ++i) O.Quad(ring[i], FVector3d(x, y0 + .2, z), ring[(i + 1) % Nn], ring[(i + 1) % Nn], base * .55, FVector3d(0, -1, 0));
+		}
+		return;
+	}
+	const FVector3d base = T.bBlossom ? FVector3d(.7, .52, .55) : Mix3(own, FVector3d(.32, .42, .22), .5);
+	const double R = r * (.8 + .2 * leaf) * (crown == 2 ? .62 : 1), sy = crown == 2 ? 1.7 : 1;
+	const double cy = g + h + R * .5 * sy;
+	const int32 Nn = bLite ? 5 : 7, M = bLite ? 3 : 5;
+	TArray<TArray<FVector3d, TInlineAllocator<8>>, TInlineAllocator<6>> ring;
+	for (int32 k = 0; k <= M; ++k)
+	{
+		const double f = -1.2 + (UE_DOUBLE_PI / 2 + 1.2) * k / M;
+		TArray<FVector3d, TInlineAllocator<8>>& row = ring.AddDefaulted_GetRef();
+		for (int32 i = 0; i < Nn; ++i)
+		{
+			const double a = (double)i / Nn * 6.2832 + k * .45, rr = R * (.8 + .4 * Hash({ N(x), N(z), N(k), N(i) })) * (k == M ? 0 : FMath::Cos(f));
+			row.Add(FVector3d(x + FMath::Cos(a) * rr, cy + FMath::Sin(f) * R * .92 * sy * (k == M ? 1 : .85 + .3 * Hash({ N(z), N(x), N(k), N(i) })), z + FMath::Sin(a) * rr));
+		}
+	}
+	for (int32 k = 0; k < M; ++k)
+		for (int32 i = 0; i < Nn; ++i)
+		{
+			const int32 j = (i + 1) % Nn;
+			const FVector3d& a = ring[k][i], & b2 = ring[k][j], & c = ring[k + 1][j], & d = ring[k + 1][i];
+			const FVector3d mid((a.X + c.X) / 2 - x, (a.Y + c.Y) / 2 - cy, (a.Z + c.Z) / 2 - z), col = base * (.72 + .55 * Hash({ N(x), N(k), N(i) }) + .06 * k);
+			O.Quad(a, b2, c, c, col, mid);
+			if (k < M - 1) O.Quad(a, c, d, d, col, mid);
+		}
+	const FVector3d low(x, cy - R * .9, z);
+	for (int32 i = 0; i < Nn; ++i) O.Quad(ring[0][i], ring[0][(i + 1) % Nn], low, low, base * .6, FVector3d(0, -1, 0));
+}
+
+namespace
+{
+	const double RoadPave = 4.5;   // play.js PAVE
+	const FVector3d ZebraPaint(.86, .84, .78), Line(.8, .78, .72), Setts(.36, .34, .34), Dark(.09, .09, .1), PoleMetal(.17, .18, .21), BoxPaint(.78, .62, .25);
+	FIntPoint CellOf(double x, double z, double P) { return FIntPoint((int32)FMath::FloorToDouble(x / P), (int32)FMath::FloorToDouble(z / P)); }
+	double JsSign(double v) { return v > 0 ? 1 : v < 0 ? -1 : 0; }
+	FVector3d Shade(const FString& Name)
+	{
+		if (Name == TEXT("terracotta")) return FVector3d(.44, .24, .18);
+		if (Name == TEXT("ochre")) return FVector3d(.52, .40, .20);
+		if (Name == TEXT("blue")) return FVector3d(.30, .38, .52);
+		if (Name == TEXT("olive")) return FVector3d(.30, .33, .20);
+		if (Name == TEXT("plum")) return FVector3d(.30, .24, .34);
+		return FVector3d(.20, .36, .37);   // teal
+	}
+}
+
+TArray<FIntPoint> BrixRoadCells(const FBrixRoads& R, double P)
+{
+	TArray<FIntPoint> K;
+	for (const FBrixRoads::FMark& M : R.Crossings) K.AddUnique(CellOf(M.X, M.Z, P));
+	for (const FBrixRoads::FMark& M : R.Bays) K.AddUnique(CellOf(M.X, M.Z, P));
+	for (const FBrixRoads::FStop& S : R.Stops) K.AddUnique(CellOf(S.X, S.Z, P));
+	for (const FBrixRoads::FSignal& S : R.Signals)
+		for (const FVector2D d : { FVector2D(-11, 3.95), FVector2D(11, -3.95), FVector2D(-3.95, -11), FVector2D(3.95, 11) }) K.AddUnique(CellOf(S.X + d.X, S.Z + d.Y, P));
+	return K;
+}
+
+void BrixRoadShapes(const FBrixRoads& R, double P, double SW, const FIntPoint& Cell, double Y, TFunctionRef<double(double, double)> Ground, TArray<FBrixShape>& Out, TArray<FBrixSignalHead>& Heads)
+{
+	FOut O{ Out };
+	const double HALF = SW / 2 - RoadPave, y = Y + .006, w = R.Width / 2;
+	for (const FBrixRoads::FMark& C : R.Crossings)   // zebra: bars along the traffic, spaced across the road
+	{
+		if (CellOf(C.X, C.Z, P) != Cell) continue;
+		for (double s = -HALF + .25; s < HALF - .2; s += 1.0)
+			if (C.bAlongX) O.Flat(C.X - w, C.Z + s, C.X + w, C.Z + s + .5, .012, ZebraPaint);
+			else O.Flat(C.X + s, C.Z - w, C.X + s + .5, C.Z + w, .012, ZebraPaint);
+	}
+	auto Side = [&](double x, double z, bool bAlongX, double& c) { const double v = bAlongX ? z : x; c = JsRound(v / P) * P; return JsSign(v - c); };
+	const double L = R.BayLength / 2, d0 = HALF, d1 = HALF + 2.4;   // a bay: road setts in the pavement edge, white ends and back line
+	for (const FBrixRoads::FMark& B : R.Bays)
+	{
+		if (CellOf(B.X, B.Z, P) != Cell) continue;
+		const double x = B.X, z = B.Z;
+		double c;
+		const double side = Side(x, z, B.bAlongX, c), a = c + side * d0, b = c + side * d1, lo = FMath::Min(a, b), hi = FMath::Max(a, b);
+		if (B.bAlongX)
+		{
+			O.Flat(x - L, lo, x + L, hi, y, Setts);
+			for (const double e : { -L, L - .1 }) O.Flat(x + e, lo, x + e + .1, hi, y + .002, Line);
+			O.Flat(x - L, side > 0 ? hi - .1 : lo, x + L, side > 0 ? hi : lo + .1, y + .002, Line);
+		}
+		else
+		{
+			O.Flat(lo, z - L, hi, z + L, y, Setts);
+			for (const double e : { -L, L - .1 }) O.Flat(lo, z + e, hi, z + e + .1, y + .002, Line);
+			O.Flat(side > 0 ? hi - .1 : lo, z - L, side > 0 ? hi : lo + .1, z + L, y + .002, Line);
+		}
+	}
+	for (const FBrixRoads::FStop& St : R.Stops)   // a bus stop (CITY-091): a lay-by in a town street, a shelter and a pole with a disc a line
+	{
+		if (CellOf(St.X, St.Z, P) != Cell) continue;
+		const double x = St.X, z = St.Z, ux = St.Ux, uz = St.Uz, half = 6;
+		TArray<FVector3d, TInlineAllocator<4>> cols;
+		for (const int32 k : St.Lines.Num() ? St.Lines : TArray<int32>{ 0 }) cols.Add(Shade(R.LineColours.IsValidIndex(k) ? R.LineColours[k] : FString()));
+		if (St.bTown)
+		{
+			const bool alongX = FMath::Abs(ux) > .5;
+			double c;
+			const double side = Side(x, z, alongX, c), a = c + side * HALF, b = c + side * (HALF + 2.4), lo = FMath::Min(a, b), hi = FMath::Max(a, b);
+			if (alongX) { O.Flat(x - half, lo, x + half, hi, y, Setts); for (const double e : { lo, hi - .12 }) O.Flat(x - half, e, x + half, e + .12, y + .002, BoxPaint); }
+			else { O.Flat(lo, z - half, hi, z + half, y, Setts); for (const double e : { lo, hi - .12 }) O.Flat(e, z - half, e + .12, z + half, y + .002, BoxPaint); }
+		}
+		const double out = St.bTown ? 3.6 : 2.3, cx = x - uz * out, cz = z + ux * out;
+		const double g = St.bTown ? Y : Ground(cx, cz);
+		auto q = [&](double a, double w2, double yy) { return FVector3d(cx + ux * a - uz * w2, yy, cz + uz * a + ux * w2); };
+		auto n = [&](double na, double nw, double ny) { return FVector3d(ux * na - uz * nw, ny, uz * na + ux * nw); };
+		auto obox = [&](double a0, double a1, double w0, double w1, double y0, double y1, const FVector3d& col)   // a box turned to the street
+		{
+			O.Quad(q(a1, w0, y0), q(a1, w1, y0), q(a1, w1, y1), q(a1, w0, y1), col, n(1, 0, 0));
+			O.Quad(q(a0, w0, y0), q(a0, w1, y0), q(a0, w1, y1), q(a0, w0, y1), col, n(-1, 0, 0));
+			O.Quad(q(a0, w1, y0), q(a1, w1, y0), q(a1, w1, y1), q(a0, w1, y1), col, n(0, 1, 0));
+			O.Quad(q(a0, w0, y0), q(a1, w0, y0), q(a1, w0, y1), q(a0, w0, y1), col, n(0, -1, 0));
+			O.Quad(q(a0, w0, y1), q(a1, w0, y1), q(a1, w1, y1), q(a0, w1, y1), col, n(0, 0, 1));
+		};
+		const FVector3d wood(.24, .16, .11), cream(.66, .61, .50), seat(.34, .23, .15);
+		for (const double a : { -1.7, 1.7 }) obox(a - .07, a + .07, .55, .69, g, g + 2.45, wood);   // posts at the back
+		obox(-1.7, 1.7, .6, .66, g + .8, g + 2.1, cream);                                       // the back panel
+		obox(-2.0, 2.0, -.75, .8, g + 2.45, g + 2.58, cols[0]);                                 // the roof
+		obox(-1.3, 1.3, .1, .5, g + .45, g + .52, seat);                                        // the bench
+		obox(2.6, 2.7, -.6, -.5, g, g + 2.7, PoleMetal);                                        // the sign pole
+		for (int32 k = 0; k < cols.Num(); ++k) obox(2.5, 2.8, -.62, -.48, g + 2.25 - k * .32, g + 2.52 - k * .32, cols[k]);   // a disc for each line
+	}
+	const double k0 = 12 - 1, kerb = HALF + .45;   // a pole on the right-hand kerb just before each stop line
+	for (int32 k = 0; k < R.Signals.Num(); ++k)
+	{
+		const double X = R.Signals[k].X, Z = R.Signals[k].Z;
+		for (const FVector2D u : { FVector2D(1, 0), FVector2D(-1, 0), FVector2D(0, 1), FVector2D(0, -1) })   // heading of the traffic the head faces
+		{
+			const double ux = u.X, uz = u.Y, px = X - ux * k0 - uz * kerb, pz = Z - uz * k0 + ux * kerb;
+			if (CellOf(px, pz, P) != Cell) continue;
+			O.Box(px - .07, Y, pz - .07, px + .07, 3.3, pz + .07, PoleMetal);
+			O.Box(px - .22, 2.25, pz - .22, px + .22, 3.4, pz + .22, PoleMetal);
+			const double fx = -ux * .23, fz = -uz * .23, tx = FMath::Abs(ux) != 0 ? .1 : .13, tz = FMath::Abs(uz) != 0 ? .1 : .13;   // the face toward oncoming cars
+			for (const double hh : { 3.15, 2.83, 2.51 }) O.Box(px + fx - tx, hh - .13, pz + fz - tz, px + fx + tx, hh + .13, pz + fz + tz, Dark);
+			Heads.Add({ px - ux * .35, pz - uz * .35, ux != 0, k, ux, uz });   // just proud of the head's face
+		}
+	}
+}
+
+int32 BrixSignalPhase(const FBrixRoads& R, int32 Signal, bool bEw, int32 Day, double Minutes, double Pace)
+{
+	if (!R.Signals.IsValidIndex(Signal)) return 2;
+	const double g = R.GreenS, a = R.AmberS, red = R.AllRedS, Cycle = 2 * (g + a + red);
+	double tt = std::fmod(std::fmod(((double)Day * 1440 + Minutes) * Pace + R.Signals[Signal].Offset, Cycle) + Cycle, Cycle);
+	const bool bFirstEw = !(tt < g + a + red);
+	if (bFirstEw) tt -= g + a + red;
+	return bEw == bFirstEw && tt < g ? 0 : bEw == bFirstEw && tt < g + a ? 1 : 2;
+}
+
+FBrixShape BrixSignalLamp(const FBrixSignalHead& H, int32 Phase)
+{
+	static const FVector3d Lamp[3] = { FVector3d(.25, 1, .45), FVector3d(1, .6, .1), FVector3d(1, .12, .08) };
+	const double h = Phase == 2 ? 3.15 : Phase == 1 ? 2.83 : 2.51, ex = FMath::Abs(H.Ux) != 0 ? .025 : .1, ez = FMath::Abs(H.Uz) != 0 ? .025 : .1;   // thin toward the traffic, wide across it
+	FBrixShape S;
+	S.Kind = FBrixShape::Box; S.Col = Lamp[FMath::Clamp(Phase, 0, 2)];
+	S.A = { H.X - ex, h - .09, H.Z - ez, H.X + ex, h + .09, H.Z + ez };
+	return S;
 }
