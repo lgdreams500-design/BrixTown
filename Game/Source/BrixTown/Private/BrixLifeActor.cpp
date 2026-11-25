@@ -4,6 +4,7 @@
 #include "BrixCity.h"
 #include "BrixGameMode.h"
 #include "BrixTalkActor.h"
+#include "BrixThingWidget.h"
 #include "BrixUnits.h"
 #include "Engine/Engine.h"
 #include "Engine/GameViewportClient.h"
@@ -17,6 +18,7 @@
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Layout/SWrapBox.h"
+#include "Widgets/Layout/SGridPanel.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/SOverlay.h"
 #include "Widgets/Text/STextBlock.h"
@@ -56,7 +58,7 @@ namespace
 	// .pbtn: the lantern's orange with dark letters; .off: quiet; disabled: grey
 	TSharedRef<SWidget> UiButton(const FString& Label, TFunction<void()> OnClick, bool bEnabled = true, bool bQuiet = false)
 	{
-		return SNew(SButton).ButtonStyle(&FCoreStyle::Get().GetWidgetStyle<FButtonStyle>("NoBorder")).IsEnabled(bEnabled)
+		return SNew(SButton).ButtonStyle(&FCoreStyle::Get().GetWidgetStyle<FButtonStyle>("NoBorder")).IsEnabled(bEnabled).IsFocusable(false)
 			.OnClicked_Lambda([OnClick]() { OnClick(); return FReply::Handled(); })
 			[
 				SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(!bEnabled ? UiDisabled : bQuiet ? UiOff : UiLantern).Padding(FMargin(12, 5))
@@ -83,6 +85,7 @@ void ABrixLife::Start(const FBrixCity& City)
 	}
 	for (const FBrixBlock& B : City.Blocks) for (const FBrixLot& L : B.Lots) { LotAngle.Add(L.AngleDeg); LotDoor.Add(L.Door); }
 	E = MakeUnique<FBrixEconomy>(Data, Lots);
+	if (!LoadBrixBuyMenu(Data.Json, BuyMenu, Error)) UE_LOG(LogTemp, Warning, TEXT("Brix Town: buy menus without pictures (%s)"), *Error);
 	double Day = 0, Minute = 0;
 	Frame(Day, Minute);
 	E->Advance((int32)Day, Minute);
@@ -127,7 +130,7 @@ int32 ABrixLife::CounterHere() const
 	double BestD = CounterReach;
 	for (int32 n = 0; n < Lots.Num(); ++n)
 	{
-		if (n != E->BankLot) continue;   // the bank's counter; shops' and the market's come with them
+		if (n != E->BankLot && n != E->MarketLot && E->ShopKind(n).IsEmpty()) continue;   // the bank, the market and the shops have a counter
 		const FBrixEconLot& L = Lots[n];
 		const FVector2D C = L.Centre(), D = P - C;
 		const double A = FMath::DegreesToRadians(-LotAngle[n]);
@@ -203,19 +206,19 @@ void ABrixLife::BuildUI()
 		{
 			const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
 			const bool bTalk = Mode && Mode->Talk && Mode->Talk->IsTalking();
-			return !IsOpen() && !bTalk && CounterHere() >= 0 ? EVisibility::HitTestInvisible : EVisibility::Collapsed;
+			return !IsOpen() && !bTalk && !CounterWords(CounterHere()).IsEmpty() ? EVisibility::HitTestInvisible : EVisibility::Collapsed;
 		})
 		[
 			SNew(SHorizontalBox)
 			+ SHorizontalBox::Slot().AutoWidth().Padding(0, 0, 8, 0)[ SNew(STextBlock).Font(UiFont(15)).ColorAndOpacity(UiGold).Text(FText::FromString(TEXT("B"))) ]
-			+ SHorizontalBox::Slot().AutoWidth()[ SNew(STextBlock).Font(UiFont(15)).ColorAndOpacity(UiCream).Text_Lambda([this]() { return FText::FromString(CounterHere() == (E ? E->BankLot : -2) ? FString(TEXT("Bank counter")) : FString()); }) ]
+			+ SHorizontalBox::Slot().AutoWidth()[ SNew(STextBlock).Font(UiFont(15)).ColorAndOpacity(UiCream).Text_Lambda([this]() { return FText::FromString(CounterWords(CounterHere())); }) ]
 		]
 	];
 	SAssignNew(PanelRoot, SBox)
 		.HAlign(HAlign_Center).VAlign(VAlign_Center).Padding(FMargin(16, 40))
 		.Visibility_Lambda([this]() { return IsOpen() ? EVisibility::Visible : EVisibility::Collapsed; })
 		[
-			SNew(SBox).WidthOverride(620.f)
+			SNew(SBox).WidthOverride_Lambda([this]() { return Panel == TEXT("shop") ? (float)BuyMenu.WidePanelPx : 620.f; })
 			[
 				SNew(SVerticalBox)
 				+ SVerticalBox::Slot().AutoHeight()[ SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(UiGoldLine).Padding(0)[ SNew(SBox).HeightOverride(2.f) ] ]
@@ -232,12 +235,25 @@ void ABrixLife::BuildUI()
 
 // ---- panels (life.js open(), close(), act(), draw())
 
+// what the offer over a counter says (life.js hud()): nothing for a mall, whose outlets each have their own
+FString ABrixLife::CounterWords(int32 n) const
+{
+	if (!E || n < 0) return FString();
+	if (n == E->BankLot) return TEXT("Bank counter");
+	if (n == E->MarketLot) return TEXT("Your market stall");
+	if (!E->ShopKind(n).IsEmpty() && !E->Outlets.Contains(n)) return TEXT("Buy and sell at ") + Lots[n].Name;
+	return FString();
+}
+
 void ABrixLife::CounterKey()
 {
-	if (Panel == TEXT("bank")) { Close(); return; }
+	if (Panel == TEXT("bank") || Panel == TEXT("shop") || Panel == TEXT("stall")) { Close(); return; }
 	const int32 n = CounterHere();
+	if (n >= 0 && E->Outlets.Contains(n)) { Toast(TEXT("Walk into one of ") + Lots[n].Name + TEXT("'s outlets to buy there: each has its own goods.")); return; }
 	if (n < 0) { Toast(TEXT("No counter here. Shops, cafés, the bank and the market square have one.")); return; }
 	if (n == E->BankLot) Open(TEXT("bank"), n);
+	else if (n == E->MarketLot) Open(TEXT("stall"), n);
+	else { Side = TEXT("buy"); Open(TEXT("shop"), n); }
 }
 
 void ABrixLife::WalletKey()
@@ -262,6 +278,7 @@ void ABrixLife::Close()
 {
 	if (!IsOpen()) return;
 	Panel.Reset();
+	LiveGrid.Reset();
 	if (PanelBody) PanelBody->SetContent(SNullWidget::NullWidget);
 	if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0))) Me->EndPanel();
 }
@@ -311,22 +328,33 @@ void ABrixLife::Draw()
 	if (!IsOpen() || !PanelBody || !E) return;
 	TSharedRef<SVerticalBox> Body = SNew(SVerticalBox);
 	FString Title, Sub;
+	LiveGrid.Reset();
+	FString Hint = TEXT("Esc  close");
 	if (Panel == TEXT("bank")) { Title = Lots[PanelLot].Name; Sub = TEXT("Accounts, savings and loans"); }
+	else if (Panel == TEXT("shop"))
+	{
+		Title = Lots[PanelLot].Name;
+		Sub = E->R.Shop(E->ShopKind(PanelLot))->Name + TEXT(" · restocks at ") + UiHhmm(E->R.RestockMinute);
+		Hint = FString(TEXT("← → ↑ ↓  choose    Enter  ")) + (Side == TEXT("sell") ? TEXT("sell") : TEXT("buy")) + TEXT("    Esc  close");
+	}
+	else if (Panel == TEXT("stall")) { Title = Lots[PanelLot].Name; Sub = TEXT("Your market stall · residents shop here ") + UiHhmm(E->R.StallOpen) + TEXT(" to ") + UiHhmm(E->R.StallClose); }
 	else { Title = TEXT("Money"); Sub = PlayerName + TEXT(" · I"); }
 	if (!Msg.IsEmpty())
 		Body->AddSlot().AutoHeight().Padding(0, 0, 0, 8)[ SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(UiMsgBack).Padding(FMargin(10, 6))[ UiText(Msg, 15) ] ];
 	if (Panel == TEXT("bank")) BankPanel(Body);
+	else if (Panel == TEXT("shop")) ShopPanel(Body);
+	else if (Panel == TEXT("stall")) StallPanel(Body);
 	else WalletPanel(Body);
 	PanelBody->SetContent(
 		SNew(SVerticalBox)
 		+ SVerticalBox::Slot().AutoHeight().Padding(0, 0, 0, 6)
 		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot().AutoWidth()[ SNew(STextBlock).Font(UiFont(24)).ColorAndOpacity(UiCream).Text(FText::FromString(Title)) ]
-			+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Bottom).Padding(12, 0, 0, 3)[ SNew(STextBlock).Font(UiFont(14)).ColorAndOpacity(UiDim).Text(FText::FromString(Sub)) ]
+			SNew(SWrapBox).UseAllottedSize(true)
+			+ SWrapBox::Slot().Padding(0, 0, 12, 0)[ SNew(STextBlock).Font(UiFont(24)).ColorAndOpacity(UiCream).Text(FText::FromString(Title)) ]
+			+ SWrapBox::Slot().VAlign(VAlign_Bottom).Padding(0, 0, 0, 3)[ SNew(STextBlock).Font(UiFont(14)).ColorAndOpacity(UiDim).Text(FText::FromString(Sub)) ]
 		]
 		+ SVerticalBox::Slot().FillHeight(1)[ SNew(SScrollBox) + SScrollBox::Slot()[ Body ] ]
-		+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Right).Padding(0, 8, 0, 0)[ UiText(TEXT("Esc  close"), 13, UiDim) ]);
+		+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Right).Padding(0, 8, 0, 0)[ SNew(STextBlock).Font(UiFont(13)).ColorAndOpacity(UiDim).Text(FText::FromString(Hint)) ]);
 }
 
 // BANK-001, BANK-002, BANK-007 (life.js draw(), kind "bank")
@@ -446,6 +474,12 @@ bool ABrixLife::RunOps(const FString& Ops)
 		else if (A[0] == TEXT("move")) bOk = E->Move(Sv(1), Sv(2), I(3));
 		else if (A[0] == TEXT("loan")) bOk = E->TakeLoan(I(1), (int32)I(2));
 		else if (A[0] == TEXT("rent")) bOk = E->RentStall();
+		else if (A[0] == TEXT("buy") || A[0] == TEXT("sell"))
+		{
+			int32 n = E->LotIndex.FindRef(Sv(1), -1);
+			for (int32 k = 0; n < 0 && k < Lots.Num(); ++k) if (E->ShopKind(k) == Sv(1) && !E->Outlets.Contains(k)) n = k;
+			bOk = n >= 0 && (A[0] == TEXT("buy") ? E->Buy(n, Sv(2)) : E->Sell(n, Sv(2)));
+		}
 		else if (A[0] == TEXT("setout")) bOk = E->SetOut(Sv(1), I(2));
 		else { UE_LOG(LogTemp, Warning, TEXT("Brix Town: -BrixLife does not know %s"), *A[0]); bOk = false; }
 		UE_LOG(LogTemp, Display, TEXT("Brix Town: -BrixLife %s: %s%s"), *Op, bOk ? TEXT("ok") : TEXT("refused, "), bOk ? TEXT("") : *E->Why);
@@ -458,7 +492,8 @@ bool ABrixLife::RunOps(const FString& Ops)
 bool ABrixLife::OpenCounterAt(const FString& What)
 {
 	if (!E) return false;
-	const int32 n = What == TEXT("bank") ? E->BankLot : E->LotIndex.FindRef(What, -1);
+	int32 n = What == TEXT("bank") ? E->BankLot : What == TEXT("market") ? E->MarketLot : E->LotIndex.FindRef(What, -1);
+	for (int32 k = 0; n < 0 && k < Lots.Num(); ++k) if (E->ShopKind(k) == What && !E->Outlets.Contains(k)) n = k;   // the first shop of that kind
 	if (n < 0) return false;
 	APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);
 	if (!Me) return false;
@@ -468,4 +503,295 @@ bool ABrixLife::OpenCounterAt(const FString& What)
 		PC->SetControlRotation(FRotator(-10.0, FMath::RadiansToDegrees(FMath::Atan2(-Out.Y, -Out.X)), 0));
 	CounterKey();
 	return IsOpen();
+}
+
+// ---- shops and the market stall (ECO-005, ECO-010, ECO-011, PROP-008; life.js draw(), kinds "shop" and "stall")
+
+ABrixLife::FWare ABrixLife::Ware(const FString& Id, const FString& Name, int64 Price, const FString& Goes, int32 Left, const FString& Band) const
+{
+	FWare W;
+	W.Id = Id; W.Name = Name; W.Price = Price; W.Goes = Goes; W.Left = Left; W.Band = Band;
+	const int64 Funds = E->Funds();
+	W.State = Left >= 0 && Left < 1 ? TEXT("out") : Price > Funds ? TEXT("short") : TEXT("ok");
+	W.Short = FMath::Max<int64>(0, Price - Funds);
+	return W;
+}
+
+// a shop's own things are carried; what cannot be sold on and comes in a bag or a cup is to eat (life.js shopGoes())
+FString ABrixLife::ShopGoes(const FString& It) const
+{
+	const FBrixEconomyRules::FItem* I = E->Item(It);
+	const FBrixShows S = BuyMenu.Shows(It);
+	return I && !I->bSell && S.Name != BuyMenu.StandInGoes.FindRef(TEXT("carry")) ? TEXT("eat") : TEXT("carry");
+}
+
+TSharedPtr<double> ABrixLife::YawFor(const FString& Key)
+{
+	TSharedPtr<double>& Y = Yaws.FindOrAdd(Key);
+	if (!Y) Y = MakeShared<double>(FMath::DegreesToRadians(BuyMenu.StartDeg));
+	return Y;
+}
+
+TSharedPtr<const FBrixThingMesh> ABrixLife::MeshFor(const FString& Thing, const FString& Band)
+{
+	const FString Key = Thing + TEXT("|") + Band;
+	if (const TSharedPtr<const FBrixThingMesh>* M = Meshes.Find(Key)) return *M;
+	const TOptional<FBrixThingMesh> M = BuyMenu.MeshFor(Thing, Band);
+	TSharedPtr<const FBrixThingMesh> Got; if (M) Got = MakeShared<const FBrixThingMesh>(*M); return Meshes.Add(Key, Got);
+}
+
+void ABrixLife::ShopPanel(TSharedRef<SVerticalBox> Body)
+{
+	const int32 n = PanelLot;
+	const FString K = E->ShopKind(n);
+	const FBrixEconomyRules::FShop& S = *E->R.Shop(K);
+	const FString Band = BuyMenu.Bands.FindRef(K);
+	TArray<FString> Mine;
+	for (const auto& It : E->Inv) if (E->Offer(n, It.Key) > 0) Mine.Add(It.Key);
+	Mine.Sort([](const FString& A, const FString& B) { return FCString::Strcmp(*A, *B) < 0; });
+	const bool bSelling = Side == TEXT("sell") && S.Buys.Num() > 0;
+	Body->AddSlot().AutoHeight()[ PurseLine() ];
+	if (S.Buys.Num())
+	{
+		TSharedRef<SHorizontalBox> Tabs = UiRow();
+		UiAdd(Tabs, UiButton(TEXT("Buy"), [this]() { Side = TEXT("buy"); Msg.Reset(); Draw(); }, true, bSelling));
+		UiAdd(Tabs, UiButton(Mine.Num() ? FString::Printf(TEXT("Sell (%d)"), Mine.Num()) : FString(TEXT("Sell")), [this]() { Side = TEXT("sell"); Msg.Reset(); Draw(); }, true, !bSelling));
+		Body->AddSlot().AutoHeight().Padding(0, 10, 0, 4)[ Tabs ];
+	}
+	else Body->AddSlot().AutoHeight()[ UiHeading(TEXT("Buy")) ];
+	TArray<FWare> Things;
+	FGridOpts O;
+	if (!bSelling)
+	{
+		for (const FString& It : S.Sells) Things.Add(Ware(It, E->Item(It)->Name, E->Price(n, It), ShopGoes(It), E->Stock(n, It), Band));
+		O.Id = FString::Printf(TEXT("shop:%d:buy"), n);
+		O.StockLabel = TEXT("In stock");
+		O.Buy = [this, n](const FWare& W, FString& Said)
+		{
+			int64 P = 0;
+			if (!E->Buy(n, W.Id, &P)) return false;
+			Said = TEXT("Bought ") + W.Name.ToLower() + TEXT(" for ") + Format(P) + TEXT(".");
+			return true;
+		};
+	}
+	else
+	{
+		for (const FString& It : Mine) { FWare W = Ware(It, E->Item(It)->Name, E->Offer(n, It), FString(), E->Inv.FindRef(It), Band); W.State = TEXT("ok"); W.Short = 0; Things.Add(W); }
+		O.Id = FString::Printf(TEXT("shop:%d:sell"), n);
+		O.Verb = TEXT("Sell");
+		O.StockLabel = TEXT("You have");
+		O.PriceLabel = TEXT("They pay");
+		O.Empty = TEXT("Nothing you carry is wanted here.");
+		O.bMine = true;
+		O.Buy = [this, n](const FWare& W, FString& Said)
+		{
+			int64 P = 0;
+			if (!E->Sell(n, W.Id, &P)) return false;
+			Said = TEXT("Sold for ") + Format(P) + TEXT(".");
+			return true;
+		};
+	}
+	Body->AddSlot().AutoHeight().Padding(0, 6, 0, 0)[ Grid(Things, O) ];
+	if (!S.Buys.Num()) Body->AddSlot().AutoHeight().Padding(0, 6, 0, 0)[ UiText(TEXT("Cafés do not buy anything."), 15, UiDim) ];
+	const int32 r = E->RepWithLot(n);
+	if (r) Body->AddSlot().AutoHeight().Padding(0, 6, 0, 0)[ UiText(r > 0 ? TEXT("They know you here: prices are a little lower.") : TEXT("They don't trust you here: prices are higher."), 15, UiDim) ];
+}
+
+// layout B: a grid of the things, each drawn as an object with its price and where it goes, and beside it the chosen one
+// large, turning, with its name, where it goes, what is left, its price, and the one button (buymenu.js grid())
+TSharedRef<SWidget> ABrixLife::Grid(const TArray<FWare>& Things, const FGridOpts& O)
+{
+	if (!Things.Num()) return UiText(O.Empty, 15, UiDim);
+	FString PickId = Chosen.FindRef(O.Id);
+	const FWare* Pick = Things.FindByPredicate([&](const FWare& W) { return W.Id == PickId; });
+	if (!Pick) { Pick = Things.FindByPredicate([](const FWare& W) { return W.State != TEXT("out"); }); if (!Pick) Pick = &Things[0]; Chosen.Add(O.Id, Pick->Id); }
+	const FWare P = *Pick;
+	const float ListW = BuyMenu.WidePanelPx - 40.f - BuyMenu.ShowPx - 16.f, Gap = 9.f;
+	const int32 Cols = FMath::Max(1, (int32)((ListW + Gap) / (BuyMenu.CellPx + Gap)));
+	const float CellW = (ListW - Gap * (Cols - 1)) / Cols;
+	FLive Live;
+	Live.Id = O.Id; Live.Things = Things; Live.O = O; Live.Columns = Cols;
+	LiveGrid = Live;
+	auto Board = [this](const FString& Goes) { const FBrixBuyMenuRules::FGoes* G = BuyMenu.Goes.Find(Goes); const TPair<FColor, FColor>* C = G ? BuyMenu.BoardColours.Find(G->Colour) : nullptr; return C ? *C : TPair<FColor, FColor>(FColor(59, 60, 74), FColor(232, 223, 201)); };
+	auto Chip = [this, Board](const FString& Goes) -> TSharedRef<SWidget>
+	{
+		const FBrixBuyMenuRules::FGoes* G = BuyMenu.Goes.Find(Goes);
+		if (!G) return SNullWidget::NullWidget;
+		const TPair<FColor, FColor> C = Board(Goes);
+		return SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(FLinearColor::FromSRGBColor(C.Key)).Padding(FMargin(8, 2))
+			[ SNew(STextBlock).Font(UiFont(10, true)).ColorAndOpacity(FLinearColor::FromSRGBColor(C.Value)).Text(FText::FromString(G->Name)) ];
+	};
+	auto Price = [](const FWare& W) { return UiText(Format(W.Price), 14, W.State == TEXT("short") ? UiNeg : UiCream, true); };
+	auto LeftWords = [this, &O](const FWare& W) -> FString
+	{
+		if (W.Left < 0) return FString();
+		if (O.bMine) return FString::Printf(TEXT("you have %d"), W.Left);
+		if (W.State == TEXT("out")) return TEXT("sold out, back at ") + UiHhmm(E->R.RestockMinute);
+		return FString::Printf(TEXT("%d left"), W.Left);
+	};
+	auto Flag = [](bool bOut) -> TSharedRef<SWidget>
+	{
+		if (!bOut) return SNullWidget::NullWidget;
+		return SNew(SBox).VAlign(VAlign_Center)
+			[ SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(FLinearColor::FromSRGBColor(FColor(122, 66, 52))).Padding(FMargin(0, 3)).HAlign(HAlign_Center).RenderTransform(FSlateRenderTransform(FQuat2D(FMath::DegreesToRadians(-4.f))))
+				[ SNew(STextBlock).Font(UiFont(10, true)).ColorAndOpacity(FLinearColor::FromSRGBColor(FColor(251, 243, 224))).Text(FText::FromString(TEXT("SOLD OUT"))) ] ];
+	};
+	TSharedRef<SGridPanel> List = SNew(SGridPanel);
+	for (int32 k = 0; k < Things.Num(); ++k)
+	{
+		const FWare W = Things[k];
+		const bool bSel = W.Id == P.Id, bOut = W.State == TEXT("out");
+		const TPair<FColor, FColor> Dot = Board(W.Goes);
+		List->AddSlot(k % Cols, k / Cols).Padding(k % Cols ? Gap : 0.f, k / Cols ? Gap : 0.f, 0.f, 0.f)
+		[
+			SNew(SButton).ButtonStyle(&FCoreStyle::Get().GetWidgetStyle<FButtonStyle>("NoBorder")).IsFocusable(false).ContentPadding(0)
+			.OnClicked_Lambda([this, W, Id = O.Id]()
+			{
+				const double Now = FPlatformTime::Seconds();
+				const bool bTwice = ClickedId == Id + TEXT(":") + W.Id && Now - ClickedAt < .45;
+				ClickedId = bTwice ? FString() : Id + TEXT(":") + W.Id;
+				ClickedAt = Now;
+				if (bTwice) { if (W.State == TEXT("ok") && LiveGrid) { const FGridOpts Op = LiveGrid->O; Act([Op, W](FString& S) { return Op.Buy(W, S); }); } return FReply::Handled(); }
+				if (Chosen.FindRef(Id) != W.Id) { Chosen.Add(Id, W.Id); Draw(); }
+				return FReply::Handled();
+			})
+			[
+				SNew(SBox).WidthOverride(CellW)
+				[
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot().AutoHeight()
+					[
+						SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(bSel ? UiLantern : FLinearColor::Transparent).Padding(2)
+						[
+							SNew(SOverlay)
+							+ SOverlay::Slot()[ SNew(SBrixThing).Mesh(MeshFor(W.Id, W.Band)).Rules(&BuyMenu).Grey(bOut).Size(FVector2D(CellW - 4, BuyMenu.StagePx)).Yaw(YawFor(O.Id + TEXT(":") + W.Id)) ]
+							+ SOverlay::Slot().VAlign(VAlign_Center)[ Flag(bOut) ]
+						]
+					]
+					+ SVerticalBox::Slot().AutoHeight().Padding(2, 5, 2, 0)
+					[
+						SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot().FillWidth(1).VAlign(VAlign_Center)[ Price(W) ]
+						+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
+						[ W.Goes.IsEmpty() ? SNullWidget::NullWidget : (TSharedRef<SWidget>)(SNew(SBox).WidthOverride(14).HeightOverride(14)[ SNew(SBorder).BorderImage(FCoreStyle::Get().GetBrush("Icons.FilledCircle")).BorderBackgroundColor(FLinearColor::FromSRGBColor(Dot.Key)) ]) ]
+					]
+					+ SVerticalBox::Slot().AutoHeight().Padding(2, 1, 2, 0)[ SNew(STextBlock).Font(UiFont(11)).ColorAndOpacity(UiDim).Text(FText::FromString(W.Name)).OverflowPolicy(ETextOverflowPolicy::Ellipsis) ]
+				]
+			]
+		];
+	}
+	// the showcase
+	TSharedRef<SVerticalBox> Rows = SNew(SVerticalBox);
+	auto Line = [&Rows](const FString& A, TSharedRef<SWidget> B)
+	{
+		Rows->AddSlot().AutoHeight()
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot().AutoHeight().Padding(0, 4)
+			[ SNew(SHorizontalBox) + SHorizontalBox::Slot().FillWidth(.42f)[ UiText(A, 14, UiDim) ] + SHorizontalBox::Slot().FillWidth(.58f).HAlign(HAlign_Right)[ B ] ]
+			+ SVerticalBox::Slot().AutoHeight()[ SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(UiRule).Padding(0)[ SNew(SBox).HeightOverride(1.f) ] ]
+		];
+	};
+	if (BuyMenu.Goes.Contains(P.Goes)) Line(TEXT("Goes to"), Chip(P.Goes));
+	if (P.Left >= 0) Line(O.StockLabel, UiText(O.bMine ? FString::FromInt(P.Left) : LeftWords(P), 14, P.State == TEXT("out") ? UiNeg : P.Left == 1 ? UiGold : UiCream));
+	Line(O.PriceLabel, UiText((P.State == TEXT("short") ? Format(P.Short) + TEXT(" short  ") : FString()) + Format(P.Price), 14, P.State == TEXT("short") ? UiNeg : UiCream, true));
+	const FGridOpts Op = O;
+	const float StageW = BuyMenu.ShowPx - 24.f;
+	TSharedRef<SWidget> Show = SNew(SBox).WidthOverride((float)BuyMenu.ShowPx)
+	[
+		SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(FLinearColor::FromSRGBColor(FColor(217, 207, 182, 15))).Padding(FMargin(12, 10, 12, 12))
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot().AutoHeight()
+			[
+				SNew(SOverlay)
+				+ SOverlay::Slot()[ SNew(SBrixThing).Mesh(MeshFor(P.Id, P.Band)).Rules(&BuyMenu).Spin(true).Drag(true).Grey(P.State == TEXT("out")).Size(FVector2D(StageW, BuyMenu.ShowStagePx)).Yaw(YawFor(O.Id + TEXT(":show:") + P.Id)) ]
+				+ SOverlay::Slot().VAlign(VAlign_Center)[ Flag(P.State == TEXT("out")) ]
+				+ SOverlay::Slot().VAlign(VAlign_Bottom).HAlign(HAlign_Center).Padding(0, 0, 0, 5)[ SNew(STextBlock).Visibility(EVisibility::HitTestInvisible).Font(UiFont(10)).ColorAndOpacity(FLinearColor::FromSRGBColor(FColor(217, 207, 182, 115))).Text(FText::FromString(TEXT("drag to turn"))) ]
+			]
+			+ SVerticalBox::Slot().AutoHeight().Padding(0, 10, 0, 6)[ UiText(P.Name, 21) ]
+			+ SVerticalBox::Slot().AutoHeight().Padding(0, 0, 0, 10)[ Rows ]
+			+ SVerticalBox::Slot().AutoHeight()
+			[
+				SNew(SButton).ButtonStyle(&FCoreStyle::Get().GetWidgetStyle<FButtonStyle>("NoBorder")).IsFocusable(false).IsEnabled(P.State == TEXT("ok")).ContentPadding(0)
+				.OnClicked_Lambda([this, Op, P]() { Act([Op, P](FString& S) { return Op.Buy(P, S); }); return FReply::Handled(); })
+				[
+					SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(P.State == TEXT("ok") ? UiLantern : UiDisabled).Padding(FMargin(12, 9)).HAlign(HAlign_Center)
+					[ SNew(STextBlock).Font(UiFont(13, true)).ColorAndOpacity(UiInk).Text(FText::FromString(O.Verb + TEXT(" · ") + Format(P.Price))) ]
+				]
+			]
+		]
+	];
+	return SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot().FillWidth(1).Padding(0, 0, 16, 0)[ SNew(SBox).MaxDesiredHeight((float)BuyMenu.ListPx)[ SNew(SScrollBox) + SScrollBox::Slot()[ List ] ] ]
+		+ SHorizontalBox::Slot().AutoWidth()[ Show ];
+}
+
+bool ABrixLife::ArrowKey(int32 Dx, int32 Dy)
+{
+	if (!LiveGrid || !LiveGrid->Things.Num()) return false;
+	const FLive& G = *LiveGrid;
+	const int32 At = FMath::Max(0, G.Things.IndexOfByPredicate([&](const FWare& W) { return W.Id == Chosen.FindRef(G.Id); }));
+	const int32 To = At + Dx + Dy * G.Columns;
+	if (G.Things.IsValidIndex(To) && (Dy != 0 || To / G.Columns == At / G.Columns)) { Chosen.Add(G.Id, G.Things[To].Id); Draw(); }
+	return true;
+}
+
+bool ABrixLife::EnterKey()
+{
+	if (!LiveGrid) return false;
+	const FLive G = *LiveGrid;
+	const FWare* W = G.Things.FindByPredicate([&](const FWare& X) { return X.Id == Chosen.FindRef(G.Id); });
+	if (W && W->State == TEXT("ok")) { const FWare Thing = *W; Act([G, Thing](FString& S) { return G.O.Buy(Thing, S); }); }
+	return true;
+}
+
+void ABrixLife::StallPanel(TSharedRef<SVerticalBox> Body)
+{
+	const FBrixEconomyRules& R = E->R;
+	auto Slot = [&](TSharedRef<SWidget> W, float Top = 6) { Body->AddSlot().AutoHeight().Padding(0, Top, 0, 0)[ W ]; };
+	Slot(PurseLine(), 0);
+	if (!E->Stall)
+	{
+		Slot(UiText(FString::Printf(TEXT("Rent a stall for today: %s. Set out up to %d things at your own prices; what is left comes home at midnight."), *Format(R.StallRent), R.StallSlots)));
+		TSharedRef<SHorizontalBox> B = UiRow();
+		UiAdd(B, UiButton(TEXT("Rent a stall for today"), [this]() { Act([this](FString& S) { S = TEXT("The stall is yours until midnight."); return E->RentStall(); }); }));
+		Slot(B);
+		return;
+	}
+	Slot(UiHeading(TEXT("On your stall")), 0);
+	if (!E->Stall->Slots.Num()) Slot(UiText(TEXT("Nothing yet."), 15, UiDim));
+	for (int32 k = 0; k < E->Stall->Slots.Num(); ++k)
+	{
+		const FBrixStall::FSlot& Sl = E->Stall->Slots[k];
+		TSharedRef<SHorizontalBox> B = SNew(SHorizontalBox);
+		B->AddSlot().FillWidth(1).VAlign(VAlign_Center)[ UiText(E->Item(Sl.Item)->Name) ];
+		B->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 12, 0)[ UiText(Format(Sl.Price), 15, UiCream, true) ];
+		if (Sl.bSold) B->AddSlot().AutoWidth().VAlign(VAlign_Center)[ UiText(TEXT("sold"), 15, UiPos) ];
+		else B->AddSlot().AutoWidth()[ UiButton(TEXT("Take back"), [this, k]() { Act([this, k](FString& S) { S.Reset(); return E->TakeBack(k); }); }) ];
+		Slot(B, 4);
+	}
+	TArray<FString> Can;
+	for (const auto& It : E->Inv) { const FBrixEconomyRules::FItem* I = E->Item(It.Key); if (I && !I->bQuest && I->Price > 0) Can.Add(It.Key); }
+	Can.Sort([](const FString& A, const FString& B) { return FCString::Strcmp(*A, *B) < 0; });
+	if (Can.Num() && E->Stall->Slots.Num() < R.StallSlots)
+	{
+		StallPick = StallPick % Can.Num();
+		const FString It = Can[StallPick];
+		const FBrixEconomyRules::FItem* I = E->Item(It);
+		if (StallPrice.IsEmpty()) StallPrice = FString::Printf(TEXT("%.2f"), I->Price / 100.0);
+		TSharedRef<SHorizontalBox> B = UiRow();
+		UiAdd(B, UiText(TEXT("Set out")));
+		UiAdd(B, UiButton(FString::Printf(TEXT("%s (%d)"), *I->Name, E->Inv.FindRef(It)), [this, N = Can.Num()]() { StallPick = (StallPick + 1) % N; StallPrice.Reset(); Draw(); }, true, true));
+		UiAdd(B, UiText(TEXT("at Bx")));
+		UiAdd(B, SNew(SBox).WidthOverride(80.f)[ SNew(SEditableTextBox).Text(FText::FromString(StallPrice)).Font(UiFont(14)).OnTextChanged_Lambda([this](const FText& T) { StallPrice = T.ToString(); }) ]);
+		UiAdd(B, UiButton(TEXT("Set out"), [this, It]()
+		{
+			Act([this, It](FString& S) { S.Reset(); const bool bOk = E->SetOut(It, FMath::RoundToInt64(FCString::Atod(*StallPrice) * 100.0)); if (bOk) StallPrice.Reset(); return bOk; });
+		}));
+		UiAdd(B, UiText(TEXT("usually ") + Format(I->Price), 14, UiDim));
+		Slot(B, 10);
+		Slot(UiText(TEXT("Cheaper than usual sells fast; dearer sells slowly."), 14, UiDim));
+	}
+	else if (!Can.Num()) Slot(UiText(TEXT("You have nothing to sell. Buy cheap at a shop, sell dear here."), 14, UiDim));
 }

@@ -229,6 +229,7 @@ def unreal_life(w, city, L):
                 lots=[l["id"] for l in lots_], outlets={str(n): ec.outlets_of(l) for n, l in enumerate(lots_) if ec.outlets_of(l)},
                 checks=L["checks"], bank_checks=dict(script=bs, shops=shops, want=want), reward_checks=L["reward_checks"],
                 achievements=L["achievements"], buy_menu=L["buy_menu"], settings=L["settings"],
+                pieces=list(w["furnishing"]["pieces"]), palette=w["designer"]["palette"],   # for what a buy menu shows (UI-021)
                 residents=[dict(id=r["id"], role=r["role"], home=r["home"], work=r["work"]) for r in w["residents"]])
 
 

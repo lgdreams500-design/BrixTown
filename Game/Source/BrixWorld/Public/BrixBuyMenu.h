@@ -1,0 +1,58 @@
+#pragma once
+
+#include "CoreMinimal.h"
+
+class FJsonObject;
+
+// Buy menus that show what is for sale as objects (UI-020, UI-021; ADR-0044): what each thing shows, and the stand-ins as
+// meshes, as the slice's buymenu.js has them (World/rules/buy_menu.json, carried in Game/Data/life.json). What a thing shows
+// is world.buy_menu_shows of Tools/worldgen/world.py, checked against it by UI021_every_thing_shows_what_python_says.
+
+// A thing's picture: its own object (a piece of furniture, or a mall good for the home) or a stand-in of the rules.
+struct BRIXWORLD_API FBrixShows
+{
+	FString Kind;                 // "piece", "shape", or empty: nothing to show
+	FString Name;                 // the piece, or the stand-in's shape (empty when the rules name none)
+	TOptional<FString> Colour;    // a shape's own colour: the designer's palette name of the clothing's colour
+};
+
+// Triangles of one thing to draw, x across, y up, z towards the viewer (buymenu.js boxMesh(), finish()).
+struct BRIXWORLD_API FBrixThingMesh
+{
+	TArray<FVector3f> P, N, C;    // three of each per triangle: corners, the face's normal, linear colour
+	FVector3f Lo = FVector3f::ZeroVector, Hi = FVector3f::ZeroVector, Cen = FVector3f::ZeroVector;
+	float R = .01f, Foot = 0.f;   // the ball it fits in, round its middle; its footprint's reach
+	bool bStandIn = false;
+	int32 Num() const { return P.Num() / 3; }
+};
+
+struct BRIXWORLD_API FBrixBuyMenuRules
+{
+	struct FGoes { FString Name, Colour, To; };
+	struct FBox { float U, Y, V, Su, Sy, Sv; FString Colour; float Shade = 1.f, TurnDeg = 0.f; };
+	int32 NarrowPx = 560;
+	int32 WidePanelPx = 960, CellPx = 112, StagePx = 96, ShowPx = 320, ShowStagePx = 250, ListPx = 470;
+	float FovDeg = 24, PitchDeg = 17, StartDeg = -34, TurnS = 16, DragDegPx = .7f, StandInFill = .8f;
+	TMap<FString, FGoes> Goes;
+	TMap<FString, FLinearColor> Colours;              // linear
+	TMap<FString, FString> Bands;                     // a shop's kind -> a colour name
+	TMap<FString, TArray<FBox>> Shapes;
+	TMap<FString, FString> StandInGoes, StandInThings;
+	struct FWear { FString Part, Shape, ColourPart; };
+	TArray<FWear> StandInWear;
+	TMap<FString, TPair<FColor, FColor>> BoardColours; // settings.json menu.colours: a board and its lettering
+	TMap<FString, FLinearColor> Palette;              // the designer's palette (a piece of clothing's own colour)
+	TSet<FString> Pieces;                             // furnishing.json's pieces
+	TSet<FString> Items;                              // economy.json's items
+	struct FGood { FString Goes, Piece; TMap<FString, FString> Parts; };
+	TMap<FString, FGood> Goods;                       // mall_goods.json's goods
+
+	FBrixShows Shows(const FString& Thing) const;
+	// A stand-in as boxes: Band is the seller's colour, Own the clothing's (buymenu.js shapeMesh()).
+	FBrixThingMesh ShapeMesh(const FString& Shape, const FLinearColor& Band, const FLinearColor& Own) const;
+	// The mesh for a thing at a counter: its stand-in (a piece's own object is not brought over yet: none).
+	TOptional<FBrixThingMesh> MeshFor(const FString& Thing, const FString& BandColour) const;
+};
+
+// Reads the buy menu's rules from Game/Data/life.json (already parsed: FBrixLifeData::Json).
+BRIXWORLD_API bool LoadBrixBuyMenu(const TSharedPtr<FJsonObject>& Life, FBrixBuyMenuRules& Out, FString& OutError);
