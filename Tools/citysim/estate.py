@@ -64,6 +64,8 @@ def carve(R, lots, residents):
             if "main" in rule:
                 groups.append((rule["main"], [f for f in range(floors) if f == 0 or st[f] in rule.get("with_main", [])]))
             groups += [("flat", [f]) for f in range(1, floors) if st[f] == rule.get("flat_use")]
+            if rule.get("flats_on_main") and any(q.get("floor") == 0 for q in l.get("flats") or []) and not any(0 in fl for _, fl in groups):
+                groups.append(("flat", [0]))                # flats on the ground storey: a flat unit, after the rest (ids kept)
         x, z = centre(l)
         dx, dz = x - cx, z - cz
         dist = int(math.sqrt(dx * dx + dz * dz))

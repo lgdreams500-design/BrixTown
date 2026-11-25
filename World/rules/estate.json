@@ -1,8 +1,8 @@
 {
- "note": "The real estate market (PROP-002, PROP-006, PROP-009 to PROP-020, BANK-002 mortgages; F-PROP-ESTATE level 2; ADR-0022). Every building is carved into units from its floors ('storeys' in the block files): a house is one unit, a tower or the rooms over a shop give a flat per floor, offices a unit per floor, everything else one unit for the whole building. Gardens, stops and the market square are public land and are not sold. Amounts are chips (100 chips = 1 brix); rates in basis points (100 bp = 1%), per game day where they are rates. Rules: Tools/citysim/estate.py, ported to Prototype/play/estate.js. Checked by world.estate_problems(). Every number is a first guess for play-testing [ASSUMPTION].",
+ "note": "The real estate market (PROP-002, PROP-006, PROP-009 to PROP-020, BANK-002 mortgages; F-PROP-ESTATE level 2; ADR-0022). Every building is carved into units from its floors ('storeys' in the block files): a house is one unit, a tower or the rooms over a shop give a flat per floor (with flats_on_main, the ground storey too where the block file puts flats on it, carved after the building's other units so their ids stay as they were: every bed is in a unit), offices a unit per floor, everything else one unit for the whole building. Gardens, stops and the market square are public land and are not sold. Amounts are chips (100 chips = 1 brix); rates in basis points (100 bp = 1%), per game day where they are rates. Rules: Tools/citysim/estate.py, ported to Prototype/play/estate.js. Checked by world.estate_problems(). Every number is a first guess for play-testing [ASSUMPTION].",
  "public_kinds": ["garden", "stop", "market"],
  "units": {
-  "home":    { "flat_use": "flat", "whole": "house" },
+  "home":    { "flat_use": "flat", "whole": "house", "flats_on_main": true },
   "shop":    { "main": "shop", "with_main": ["store"], "flat_use": "rooms" },
   "food":    { "main": "shop", "with_main": ["store"], "flat_use": "rooms" },
   "work":    { "per_floor": "office" },
