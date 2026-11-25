@@ -21,7 +21,7 @@ BRIXWORLD_API bool BrixEconomyLoad(FBrixEconomy& E, const FJsonObject& S, FStrin
 BRIXWORLD_API TSharedRef<FJsonObject> BrixQuestsSave(const FBrixQuests& Q);
 BRIXWORLD_API bool BrixQuestsLoad(FBrixQuests& Q, const FJsonObject& S, FString& OutWhy);
 
-// One slot's save (life.js save(): v, look, pl, clock, econ, quests, outfits, feats, at)
+// One slot's save (life.js save(): v, look, pl, clock, econ, quests, estate, outfits, feats, at)
 struct BRIXWORLD_API FBrixSaveGame
 {
 	int32 Version = 1;
@@ -31,6 +31,7 @@ struct BRIXWORLD_API FBrixSaveGame
 	int32 Day = 0;                               // the economy's day since the game began
 	double Minute = 0;                           // the time of day
 	TSharedPtr<FJsonObject> Econ, Quests;
+	TSharedPtr<FJsonObject> Estate;              // estate.js save(): the property market (PROP-021); none in a save from before it
 	TArray<TSharedPtr<FJsonValue>> Outfits;
 	TMap<FString, int32> Feats;                  // achievement -> the day it was earned (QST-009)
 	FDateTime At;                                // when it was saved (UTC)

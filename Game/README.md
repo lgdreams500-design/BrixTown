@@ -253,8 +253,10 @@ outlet), saves it to text, reads it into a new economy and new quests, and plays
 midnights: they stay the same in all a save keeps; a new game holds only the starting cash. The world shows the built day
 16 whatever the save's day is (the economy's days count on); the time of day comes back. A test shot never saves
 (`-BrixNoSave` plays without saving too); `-BrixSaveAs=<slot>` saves the shot's game there 6 s in, `-BrixLoad=<slot>`
-carries on from a slot at once (with `-BrixMenu=save` to see the page). Not yet in the save: the skateboards owned (CITY-100),
-the property market, remodels and furnishing plans (not in this build yet); and a server keeping it (PH2).
+carries on from a slot at once (with `-BrixMenu=save` to see the page). The property market is in the save (estate.js save(): every unit's owner,
+tenant, rent and residents by unit id, listings, tenancies, mortgages, the indices and history; a save from before it
+opens the market on loading). Not yet in the save: the skateboards owned (CITY-100), remodels and furnishing plans (not in
+this build yet); and a server keeping it (PH2).
 
 ## The wardrobe (CHR-014 to CHR-016; F-CHR-WARDROBE 1, with the owned clothes the owner asked for)
 U (or the menu) opens the Wardrobe page as the slice's life.js does: the page stands to one side, the town is not dimmed,
@@ -634,7 +636,7 @@ it is open the clock stands still (the game is paused; `menu.pauses`). The pages
 Town and Game, each in its colour: Me (what you have, the achievements earned first with their day then those still to
 earn, people you know), Money (accounts, statement), Belongings (what is carried, each drawn on its plinth), Journal (the
 quest log), Wardrobe (below), Settings (one group at a time), Save, Help (the keyboard's controls by where they work,
-from settings.json); Properties and Storage say what they wait for (the property market, F-PROP-STORAGE); Map opens the
+from settings.json); Properties (the real estate market, below); Storage says what it waits for (F-PROP-STORAGE); Map opens the
 big map; and Save shows its three slots (see Saving). The settings are
 `BrixWorld/BrixSettings`: settings.json checked by world.settings_problems()'s rules (`UI009_settings_are_valid`,
 `UI009_a_bad_setting_is_caught`, `UI008_every_platform_maps_every_action`, `UI010_no_control_does_two_things`,
@@ -648,6 +650,33 @@ the town dimmed behind, each page's colour as its lintel and mark, lantern-orang
 goods on plinths in a pool of lantern light. Shots: `Art/StyleTests/lamplight_menu_36/`. To see a page in a test shot:
 `-BrixMenu=<home|me|wallet|quests|belongings|settings|help|...>` (and `-BrixSettingsGroup=<n>`); the shot is taken by the
 menu itself, since the paused game's timers stop.
+
+## The real estate market (PROP-009 to PROP-023, BANK-002; F-PROP-ESTATE 2; ADR-0022)
+The slice's market (estate.js, a port of `Tools/citysim/estate.py`): `BrixWorld/BrixEstate` holds every building's units
+(estate.carve()'s, written into `Game/Data/life.json` as `estate_units` by `build_play.py`, with World/rules/estate.json and
+furnishing_levels.json as `estate`), each with an owner (the town, one of the three companies, the household or business
+there, or the player) and maybe a tenant; prices from area, kind, place, floor and the block's index; listing, selling,
+letting, lodgers, households moving house, upkeep and tax, seizure, mortgages, dividends and the town's spending, all
+settled one day at a time at each midnight as a hook of the economy's day (never ticked), every chip through the ledger.
+`PROP021_the_market_matches_the_python` runs estate.check_script() (buying a flat and, on a mortgage, a house; renting a
+flat; setting a rent; listing; selling at once; 30 days) and must give Python's ledger, balances, owners, tenants, block
+indices, history, mortgages, listings, moves and furnishing levels to the chip; `PROP009_every_building_is_carved_into_owned_units`;
+`PROP018_the_money_supply_holds_and_a_saved_market_goes_on` (a year with no player within estate.json's drift, and a
+market saved to text and loaded going on exactly as the one that was not). A new game opens the estate agents. In play,
+as in the slice: B at an estate agent's office (Lark & Daughters, Harrow Property Co., Cobblestone Homes) opens its counter
+(what is for sale, by kind, cheapest first; what is empty to let; outright or on a mortgage; your property with Sell now,
+List and Take it off the market); P (or the menu's Properties page) shows the building you stand in with what its owners
+would take for each unit and the whole building, your buildings with Show on map (the mark at it, and the big map), your
+property with its rent to set and Offer to let, the places you rent with Move out, mortgages with Repay now, and lately
+sold. A board over the door of every building within 32 m with a unit for sale or to let (`BoardReach`; "▣ 2 to let").
+The big map outlines your buildings and the places you rent in the lantern's orange (settings.json `map_mine`). The
+market is kept in the save. To see it in a test shot: `-BrixCounter=lark "-BrixLife=open,current;give,900000;days,3;buy_cheapest,flat,lark"`,
+`-BrixMenu=property "-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4;buy_cheapest,house,lark,25,60;rent_cheapest,flat"`,
+`-BrixMapZoom=5,912,624 "-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4"` (ops: `give,<chips>` test money into the
+current account, `days,<n>` the clock moved on, `buy_cheapest,<kind>,<agent>[,<deposit %>,<term>]`, `rent_cheapest,<kind>`,
+`buy_lot,<lot id>`). Shots: `Art/StyleTests/unreal_estate_38/`. Not yet: the residents who moved house walking to their new
+home (they keep their day at the old one), the furniture that goes with a unit sold (F-PROP-FURNISH), the board's own
+sign on the wall (it is words over the door).
 
 ## The maps and the words over the street (UI-012, UI-018, QST-005)
 The town is drawn from its data as the slice's play.js drawBase() draws it (`BrixWorld/BrixMap`): the ground, Old Town's
@@ -678,9 +707,8 @@ world.marker_problems() checks it, and a broken copy caught the same way; a spar
 `QST005_each_quest_step_gets_its_marker` (the first person to see, going back to them, the bank, a place by its kind, every
 shop with the bread in stock and only the nearest 3 kept, none once it is carried, the shopping job, a line offered). Shots: `-BrixMap` opens the big map, `-BrixMapZoom=z,x,z` zooms it
 on a place, `-BrixMark=x,z` sets the mark, `-BrixNear=<resident>[,<metres>]` stands the player 3.5 m (or that far) in front of someone; a shot logs
-the residents on the maps, the markers and the words over the street. Not yet: the player's own buildings outlined
-(map_mine; the property market is not brought over), Properties' "show on the map", a tree's crown by the day's
-vegetation (a fixed `TreeRadius`). 31 to 33 frames a second at High with the minimap (noisy: other sessions were running
+the residents on the maps, the markers and the words over the street. Your buildings and the places you rent are outlined on the
+big map (see The real estate market). Not yet: a tree's crown by the day's vegetation (a fixed `TreeRadius`). 31 to 33 frames a second at High with the minimap (noisy: other sessions were running
 Unreal).
 
 ## Skateboards (CITY-098 to CITY-101; F-VEH-SKATES 2)
@@ -811,3 +839,6 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD066_every_outlet_has_its_room` | WLD-066 |
 | `BrixTown.World.CITY105_every_outlet_has_a_counter_its_keeper_stands_at` | CITY-105, WLD-067 |
 | `BrixTown.World.CITY106_visitors_shop_at_the_counters_and_eat_at_the_tables` | CITY-106, WLD-068 |
+| `BrixTown.World.PROP021_the_market_matches_the_python` | PROP-010 to PROP-022, BANK-002, FURN-063 |
+| `BrixTown.World.PROP009_every_building_is_carved_into_owned_units` | PROP-009, PROP-010 |
+| `BrixTown.World.PROP018_the_money_supply_holds_and_a_saved_market_goes_on` | PROP-018, PROP-021, QST-008 |
