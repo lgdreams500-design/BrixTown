@@ -138,6 +138,19 @@ struct BRIXWORLD_API FBrixSky
 	double Daylight(int32 Season, double Minute) const;     // 0 at night to 1 in full day, an hour of dawn and dusk (play.js lighting())
 };
 
+// The tram (CITY-041): its timetable (World/rules/calendar.json "tram") and its line along Tram Street from the map's
+// west edge to its east, stopping at three stops. Where every tram is follows from the minute alone: a port of the
+// slice's tramAt() (play.js), checked by CITY041_trams_are_where_the_timetable_puts_them.
+struct BRIXWORLD_API FBrixTram
+{
+	struct FAt { double X = 0; bool bStopped = false; double Run = 0; };   // along the line; standing at a stop; the minute its run is due at the middle stop
+	double First = 340, Last = 1380, Every = 20, Speed = 8, Dwell = 1;  // minutes, m/s, minutes
+	double Pace = 10;                  // real seconds a game minute
+	double X0 = 0, X1 = 0, Z = 0;      // where a tram comes on and goes off the map, and the line's z
+	TArray<double> Stops;              // x of each stop, west to east
+	TArray<FAt> At(double Minute) const;
+};
+
 struct BRIXWORLD_API FBrixCity
 {
 	FString Id;
@@ -155,6 +168,7 @@ struct BRIXWORLD_API FBrixCity
 	TMap<FString, TArray<FBrixSurfaceRule>> SurfaceRules;   // slot -> rules, first match wins
 	TMap<FString, FBrixHousePlan> HousePlans;  // World/rules/home_plans.json, the plans designed houses are built to
 	FBrixSky Sky;
+	FBrixTram Tram;
 
 	int32 NumLots() const;
 	int32 FindPattern(const FString& Name) const;

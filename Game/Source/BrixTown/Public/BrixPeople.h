@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "BrixBody.h"
+#include "BrixCity.h"
 #include "BrixPeople.generated.h"
 
 struct FBrixCity;
@@ -82,7 +83,11 @@ private:
 	FBrixPeopleRules Rules;
 	TArray<FBrixLook> Looks;            // each resident's, from their role (people.js look()), worked out once
 	TSharedPtr<FBrixTraffic> Traffic;   // the day's vehicles, for whoever rides in them (CITY-040, CITY-094)
-	TArray<FBrixLook> Drivers, Passengers;   // per vehicle: someone from out of town at its wheel, and beside them (cars.js stranger())
+	TArray<FBrixLook> Drivers, Passengers;
+	// residents' tram rides (cars.js tramRiders()): out from a stop or back to one, on which run
+	struct FTramRide { int32 Resident; double T0, T1; TOptional<double> Out, Back; };
+	TArray<FTramRide> TramRides;
+	FBrixTram Tram;   // per vehicle: someone from out of town at its wheel, and beside them (cars.js stranger())
 	TArray<FBox2D> Paving;              // the blocks' paving, a step above the street
 	float Slab = 0.12f;
 	TArray<float> Lane;                 // each resident's own, from the slice's hash

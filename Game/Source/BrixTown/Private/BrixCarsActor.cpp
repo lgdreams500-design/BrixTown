@@ -57,9 +57,54 @@ ABrixCars::ABrixCars()
 	Material = Mat.Object;
 }
 
-void ABrixCars::Start(TSharedPtr<FBrixTraffic> InTraffic)
+void ABrixCars::Start(TSharedPtr<FBrixTraffic> InTraffic, const FBrixTram& InTram)
 {
 	Traffic = InTraffic;
+	Tram = InTram;
+	// the tram as cars.js tram() draws it, around its middle (a along the line, w across it): a terracotta body, open
+	// windows between cream posts, a cream band and the roof, benches inside, a lamp at the front
+	FBrixBodyMesh Body;
+	const FVector3f Seat(.24f, .17f, .12f), Metal(.17f, .18f, .21f), Lamp(1.f, .55f, .22f);
+	Box(Body, -6, 6, -1.2f, 1.2f, .35f, 1.5f, Terra);
+	Box(Body, -6, 6, -1.2f, 1.2f, 2.55f, 2.75f, Cream);
+	Box(Body, -6.1f, 6.1f, -1.25f, 1.25f, 2.75f, 2.95f, Metal);
+	for (const float e : { -1.f, 1.f }) Box(Body, e * 6 - (e > 0 ? .25f : 0), e * 6 + (e < 0 ? .25f : 0), -1.2f, 1.2f, 1.5f, 2.55f, Cream);   // the ends
+	for (int32 k = 1; k <= 6; ++k)   // posts between the six windows, both sides
+	{
+		const float a = -5.525f + k * 1.85f;
+		Box(Body, a - .225f, a + .225f, -1.2f, -1.f, 1.5f, 2.55f, Cream);
+		Box(Body, a - .225f, a + .225f, 1.f, 1.2f, 1.5f, 2.55f, Cream);
+	}
+	for (const float s : { -1.f, 1.f }) Box(Body, -5.75f, -5.3f, s * 1.1f - .1f, s * 1.1f + .1f, 1.5f, 2.55f, Cream);
+	for (const float s : { -1.f, 1.f }) Box(Body, -5.3f + .4f, 5.4f, s * .55f - .3f, s * .55f + .3f, 1.1f, 1.15f, Seat);   // bench seats
+	Box(Body, 6, 6.06f, -.25f, .25f, 1.1f, 1.4f, Lamp);
+	// the rails along Tram Street, end to end (play.js: two iron strips 0.72 m either side of the line)
+	{
+		FBrixBodyMesh Rails;
+		for (const float s : { -.72f, .72f }) Box(Rails, (float)Tram.X0, (float)Tram.X1, s - .05f, s + .05f, 0.f, .04f, Metal);
+		FBrixMeshArrays R;
+		R.From(Rails, false);
+		UProceduralMeshComponent* M = NewObject<UProceduralMeshComponent>(this, TEXT("Rails"));
+		M->SetupAttachment(RootComponent);
+		M->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		M->RegisterComponent();
+		AddInstanceComponent(M);
+		R.Upload(M, -1, Material);
+		M->SetWorldLocation(ToWorld(FVector2D(0, Tram.Z), RoadUp));
+	}
+	FBrixMeshArrays A;
+	A.From(Body, false);
+	for (int32 k = 0; k < 4; ++k)
+	{
+		UProceduralMeshComponent* M = NewObject<UProceduralMeshComponent>(this);
+		M->SetupAttachment(RootComponent);
+		M->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		M->RegisterComponent();
+		AddInstanceComponent(M);
+		A.Upload(M, -1, Material);
+		M->SetVisibility(false);
+		Trams.Add(M);
+	}
 }
 
 void ABrixCars::Build(UProceduralMeshComponent* M, int32 k, int32 Lod)
@@ -170,4 +215,11 @@ void ABrixCars::Tick(float DeltaSeconds)
 		++Shown;
 	}
 	LastShown = Shown;
+	const TArray<FBrixTram::FAt> Now = Tram.At(Minute);
+	for (int32 k = 0; k < Trams.Num(); ++k)
+	{
+		if (k >= Now.Num()) { Trams[k]->SetVisibility(false); continue; }
+		Trams[k]->SetWorldLocationAndRotation(ToWorld(FVector2D(Now[k].X, Tram.Z), RoadUp), FRotator::ZeroRotator);   // eastward along Tram Street
+		Trams[k]->SetVisibility(true);
+	}
 }
