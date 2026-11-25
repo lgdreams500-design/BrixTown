@@ -530,6 +530,37 @@ namespace
 	};
 
 	FVector3f scc(const FVector3f& c, double k) { return c * (float)k; }
+	// a skateboard (CITY-098, CITY-099, CITY-101; people.js board(), the look of Tools/blender/skateboards_35.py): a rounded deck
+	// with its kicktails up, grip on top, two trucks and four wheels; the electric board a battery box under the deck and a
+	// status light, the Neon Boost glowing wheels, a glowing strip under the deck edge and a booster at the tail. C: the middle
+	// of the deck's top; f: nose-forward, up: the deck's normal, side: across
+	void BoardShapes(FShapes& ms, int32 lod, const FVector& C, const FVector& f, const FVector& up, const FVector& side, const FBrixBoardKind& K)
+	{
+		const double Lh = K.DeckM / 2, Wh = K.WidthM / 2, th = .012, wr = K.WheelM / 2;
+		auto at = [&](double a, double b, double u) { return C + f * a + side * b + up * u; };
+		const int32 seg = lod == 0 ? 12 : 6, rg = lod == 0 ? 4 : 3;
+		ms.ball(at(0, 0, -th), side * Wh, f * (Lh * .82), up * th, seg, rg, K.Deck);   // the deck
+		for (const double e : { -1.0, 1.0 }) ms.ball(at(e * Lh * .8, 0, -th + .012), side * (Wh * .92), f * (Lh * .24), up * th + f * (e * th * 2.2), seg, rg, K.Deck);   // nose and tail, kicked up
+		ms.ball(at(0, 0, -th * .2), side * (Wh * .9), f * (Lh * .78), up * (th * .35), seg, rg, K.Grip);   // the grip
+		const double tz = -(K.TopM - wr - th * 2), wb = K.WheelbaseM / 2;
+		for (const double e : { -1.0, 1.0 })
+		{
+			ms.ball(at(e * wb, 0, (tz - th * 2) / 2 - th), side * (Wh * .35), f * .03, up * (FMath::Abs(tz) / 2), 6, 3, K.Truck);   // the truck
+			for (const double gg : { -1.0, 1.0 }) ms.ball(at(e * wb, gg * K.TrackM / 2, -K.TopM + wr), side * (wr * .5), f * wr, up * wr, lod == 0 ? 10 : 6, rg, K.Wheel);   // the wheels
+		}
+		if (K.Battery && lod < 2)
+		{
+			ms.ball(at(0, 0, -th * 2 - .022), side * (Wh * .6), f * (Lh * .45), up * .022, 8, 3, *K.Battery);   // the battery box
+			if (K.Band) ms.ball(at(0, 0, -th * 2 - .022), side * (Wh * .62), f * .02, up * .023, 8, 3, *K.Band);
+			if (K.Light) ms.ball(at(Lh * .3, Wh * .6, -th * 2 - .015), side * .008, f * .008, up * .008, 6, 3, *K.Light);
+		}
+		if (K.Glow && lod < 2) ms.ball(at(0, 0, -th * 2.3), side * (Wh * 1.02), f * (Lh * .84), up * .004, seg, 3, *K.Glow);   // the strip of light under the edge
+		if (K.bBoost && lod < 2)   // the booster
+		{
+			ms.limb(at(-Lh * .9, 0, .01), at(-Lh * 1.02, 0, .02), .026, .032, 8, K.Truck, true, f);
+			ms.ball(at(-Lh * 1.03, 0, .02), side * .022, f * .005, up * .022, 8, 3, K.Core ? *K.Core : K.Glow ? *K.Glow : K.Truck);
+		}
+	}
 }
 
 void ResetBrixWalkHeights() { FScopeLock Lock(&BaseLock()); BaseCache().Reset(); }
@@ -656,37 +687,7 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 		if (!bLong) ms.limb(a, a + (b - a) * .875, .057 * T, .052 * T, nl, L.Top, lt2, fwd);
 		if (lt2) ms.ball(w + dir * (.058 * S), tx * (.03 * T), ty * (.042 * T), dir * (.055 * T), 8, 5, L.Skin);
 	}
-	// a skateboard (CITY-098, CITY-099, CITY-101; people.js board(), the look of Tools/blender/skateboards_35.py): a rounded deck
-	// with its kicktails up, grip on top, two trucks and four wheels; the electric board a battery box under the deck and a
-	// status light, the Neon Boost glowing wheels, a glowing strip under the deck edge and a booster at the tail. C: the middle
-	// of the deck's top; f: nose-forward, up: the deck's normal, side: across
-	auto board = [&](const FVector& C, const FVector& f, const FVector& up, const FVector& side, const FBrixBoardKind& K)
-	{
-		const double Lh = K.DeckM / 2, Wh = K.WidthM / 2, th = .012, wr = K.WheelM / 2;
-		auto at = [&](double a, double b, double u) { return C + f * a + side * b + up * u; };
-		const int32 seg = lod == 0 ? 12 : 6, rg = lod == 0 ? 4 : 3;
-		ms.ball(at(0, 0, -th), side * Wh, f * (Lh * .82), up * th, seg, rg, K.Deck);   // the deck
-		for (const double e : { -1.0, 1.0 }) ms.ball(at(e * Lh * .8, 0, -th + .012), side * (Wh * .92), f * (Lh * .24), up * th + f * (e * th * 2.2), seg, rg, K.Deck);   // nose and tail, kicked up
-		ms.ball(at(0, 0, -th * .2), side * (Wh * .9), f * (Lh * .78), up * (th * .35), seg, rg, K.Grip);   // the grip
-		const double tz = -(K.TopM - wr - th * 2), wb = K.WheelbaseM / 2;
-		for (const double e : { -1.0, 1.0 })
-		{
-			ms.ball(at(e * wb, 0, (tz - th * 2) / 2 - th), side * (Wh * .35), f * .03, up * (FMath::Abs(tz) / 2), 6, 3, K.Truck);   // the truck
-			for (const double gg : { -1.0, 1.0 }) ms.ball(at(e * wb, gg * K.TrackM / 2, -K.TopM + wr), side * (wr * .5), f * wr, up * wr, lod == 0 ? 10 : 6, rg, K.Wheel);   // the wheels
-		}
-		if (K.Battery && lod < 2)
-		{
-			ms.ball(at(0, 0, -th * 2 - .022), side * (Wh * .6), f * (Lh * .45), up * .022, 8, 3, *K.Battery);   // the battery box
-			if (K.Band) ms.ball(at(0, 0, -th * 2 - .022), side * (Wh * .62), f * .02, up * .023, 8, 3, *K.Band);
-			if (K.Light) ms.ball(at(Lh * .3, Wh * .6, -th * 2 - .015), side * .008, f * .008, up * .008, 6, 3, *K.Light);
-		}
-		if (K.Glow && lod < 2) ms.ball(at(0, 0, -th * 2.3), side * (Wh * 1.02), f * (Lh * .84), up * .004, seg, 3, *K.Glow);   // the strip of light under the edge
-		if (K.bBoost && lod < 2)   // the booster
-		{
-			ms.limb(at(-Lh * .9, 0, .01), at(-Lh * 1.02, 0, .02), .026, .032, 8, K.Truck, true, f);
-			ms.ball(at(-Lh * 1.03, 0, .02), side * .022, f * .005, up * .022, 8, 3, K.Core ? *K.Core : K.Glow ? *K.Glow : K.Truck);
-		}
-	};
+	auto board = [&](const FVector& C, const FVector& f, const FVector& up, const FVector& side, const FBrixBoardKind& K) { BoardShapes(ms, lod, C, f, up, side, K); };
 	if (o.Board && o.bCarry)   // carried: held by its edge in the right hand, deck upright, wheels out
 	{
 		const FVector w = Wp(P.wr[1]), dn = Wd(FVector(0, 0, -1)), fw = unit(fwd - dn * dot(fwd, dn)), out = cross(Wd(FVector(0, 0, 1)), fw);
@@ -1019,4 +1020,10 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 		rs.Init(sr * S, pts.Num());
 		ms.tube(pts, rs, 4, Brown, fwd, false, false);
 	}
+}
+
+void DrawBrixBoard(const FBrixBoardKind& K, int32 Lod, FBrixBodyMesh& Out)
+{
+	FShapes ms{ Out };
+	BoardShapes(ms, Lod, FVector(0, K.TopM, 0), FVector(1, 0, 0), FVector(0, 1, 0), FVector(0, 0, -1), K);
 }

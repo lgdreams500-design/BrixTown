@@ -314,7 +314,9 @@ midnights: they stay the same in all a save keeps; a new game holds only the sta
 carries on from a slot at once (with `-BrixMenu=save` to see the page). The property market is in the save (estate.js save(): every unit's owner,
 tenant, rent and residents by unit id, listings, tenancies, mortgages, the indices and history; a save from before it
 opens the market on loading). Remodels are in the save (life.js remodels: each building's design as paid
-for, drawn again on loading). Not yet in the save: the skateboards owned (CITY-100), room plans and furnishing plans (not
+for, drawn again on loading). The save keeps the skateboards owned (with the economy, as economy.py
+save() keeps them) and the one in use (life.js save()'s boards), which comes back in the hand (CITY-100). Not yet in
+the save: room plans and furnishing plans (not
 in this build's designer yet); and a server keeping it (PH2).
 
 ## The wardrobe (CHR-014 to CHR-016; F-CHR-WARDROBE 1, with the owned clothes the owner asked for)
@@ -810,15 +812,29 @@ board() and ride() do: the board in use carried by its edge in the right hand, w
 across the deck, knees a little bent, and on the manual board pushes with the back foot on the ground while W is held,
 the front foot along the deck. Y (settings.json `board`) gets on the board in use and off it again, picking it up; on a
 board there is no walk: A and D turn the rider and the camera comes round behind them, more slowly the faster they go;
-the bar at the foot of the screen says which board and how fast. A new game has no board until the skate store
-(CITY-102); a test shot (or `-BrixBoards`) owns all three with the electric board in use, as the slice's `?auto=1`, and
+the bar at the foot of the screen says which board and how fast. A new game has no board until it buys one at the skate
+store; a test shot (or `-BrixBoards`) owns all three with the electric board in use, as the slice's `?auto=1` (unless
+`-BrixNoBoards`, a new game's none), and
 `-BrixBoard=<manual|electric|neon_boost>` gets on that one (with `-BrixHold=steer,throttle`). `Tools/unreal/people_values.py`
 runs boards.js and people.js in headless Edge into `Tests/values/boards_city_01.json`: `CITY099_boards_are_ridden_and_drawn_as_the_slice_does`
 checks every speed of a ride of each kind and 36 riders and carried boards (vertex for vertex, within 1 mm);
-`CITY098_board_kinds_and_speeds`, `CITY100_auto_owns_all_and_rides_electric`. Not yet: the skate store and buying
-(CITY-102, CITY-103), the boards among the belongings in the menu (CITY-100), saving them, the server's check (CITY-104),
-the sounds of getting on and off; the slice has no residents on boards, so there are none here either. 32 frames a second
-at High riding along Tram Street (noisy: other sessions were running Unreal).
+`CITY098_board_kinds_and_speeds`, `CITY100_auto_owns_all_and_rides_electric`.
+
+The skate store (CITY-102, CITY-103; ADR-0053): the slice has none, so its rules were proved first in Python (economy.py
+buy_board(), board_in_use(), `test_CITY_103_*` in Tools/citysim/test_economy.py). It is Market Skate Store, the shop lot by
+the market square that was the Market Grocer (b_9_8_l2, nobody's grocer; World/city_01/blocks/b_9_8.json), of the shop kind
+`skate` (economy.json: no items, buys nothing back, Q-40 being open). The boards' prices are boards.json `price`, cheapest
+to dearest up the store (Bx 60, Bx 280, Bx 900 [ASSUMPTION]). B at its door opens its counter: the three boards in the buy
+menu, each its own model as people.js board() draws it (`DrawBrixBoard`, `BrixThingFromBody`), turning in the showcase with
+its top speed and how it goes; one owned is marked yours and is not sold again. A board is paid into the store's till
+through the ledger (cash first, then the current account), goes to the belongings and is the one in use when it is faster
+than the one in use. The game menu's Belongings page lists the boards owned, the one in use marked (in the hand or ridden),
+with Use this on the others (life.js belongingsTab()). `CITY103_boards_are_bought_as_python_does` runs economy.board_script()
+(refusals, a loan, the in-use rule, the till, a save and load) against Python's results in life.json. To see the store in a
+test shot: `-BrixNoBoards -BrixCounter=skate` (and `"-BrixLife=open,current;loan,30000,7"` to afford a board), the
+belongings with `-BrixMenu=belongings`. Not yet: the boards standing on show in the store itself, the server's check
+(CITY-104), the sounds of getting on and off; the slice has no residents on boards, so there are none here either. 32
+frames a second at High riding along Tram Street (noisy: other sessions were running Unreal).
 
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
@@ -925,6 +941,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY098_board_kinds_and_speeds` | CITY-098 |
 | `BrixTown.World.CITY099_boards_are_ridden_and_drawn_as_the_slice_does` | CITY-099, CITY-101 |
 | `BrixTown.World.CITY100_auto_owns_all_and_rides_electric` | CITY-100 |
+| `BrixTown.World.CITY103_boards_are_bought_as_python_does` | CITY-100, CITY-102, CITY-103 |
 | `BrixTown.World.CITY017_every_plant_is_drawn_as_the_slice_draws_it` | CITY-017, WLD-040 |
 | `BrixTown.World.CITY017_lawns_are_drawn_in_their_own_pattern` | CITY-017, ART-001 |
 | `BrixTown.World.WLD056_the_open_ground_is_drawn_as_the_slice_draws_it` | WLD-056, ART-001 |

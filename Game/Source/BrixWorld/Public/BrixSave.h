@@ -21,6 +21,11 @@ BRIXWORLD_API bool BrixEconomyLoad(FBrixEconomy& E, const FJsonObject& S, FStrin
 BRIXWORLD_API TSharedRef<FJsonObject> BrixQuestsSave(const FBrixQuests& Q);
 BRIXWORLD_API bool BrixQuestsLoad(FBrixQuests& Q, const FJsonObject& S, FString& OutWhy);
 
+// boards.js save() / load() (CITY-100): the boards owned, the one in use and whether it is ridden; the kind in use of a save
+// (empty when it has none, as a save from before the skate store)
+BRIXWORLD_API TSharedRef<FJsonObject> BrixBoardsSave(const TArray<FString>& Own, const FString& InUse, bool bRiding);
+BRIXWORLD_API FString BrixBoardsInUse(const TSharedPtr<FJsonObject>& Boards);
+
 // One slot's save (life.js save(): v, look, pl, clock, econ, quests, estate, remodels, outfits, feats, at)
 struct BRIXWORLD_API FBrixSaveGame
 {
@@ -35,6 +40,7 @@ struct BRIXWORLD_API FBrixSaveGame
 	TSharedPtr<FJsonObject> Remodels;            // life.js remodels: lot id -> the building's design as remodelled and paid for (BUILD-005)
 	TArray<TSharedPtr<FJsonValue>> Outfits;
 	TMap<FString, int32> Feats;                  // achievement -> the day it was earned (QST-009)
+	TSharedPtr<FJsonObject> Boards;              // boards.js save(): own, kind (the one in use), riding (CITY-100); the economy keeps who owns what
 	FDateTime At;                                // when it was saved (UTC)
 	FString ToString() const;
 	// false, and why, when the text is not a save this game can carry on from (life.js lookOk() of its character too)

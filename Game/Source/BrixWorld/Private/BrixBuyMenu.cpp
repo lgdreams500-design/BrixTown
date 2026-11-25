@@ -1,4 +1,5 @@
 #include "BrixBuyMenu.h"
+#include "BrixBody.h"
 
 #include "Dom/JsonObject.h"
 
@@ -269,4 +270,29 @@ TArray<float> BrixIconCoverage(const TArray<FBrixIconPath>& Paths, int32 Px)
 			Out[y * Px + x] = Hit / (float)(SS * SS);
 		}
 	return Out;
+}
+
+FBrixThingMesh BrixThingFromBody(const FBrixBodyMesh& B)
+{
+	FBrixThingMesh M;
+	for (int32 t = 0; t + 2 < B.Index.Num(); t += 3)
+	{
+		const int32 a = B.Index[t], b = B.Index[t + 1], c = B.Index[t + 2];
+		if (!B.Pos.IsValidIndex(a) || !B.Pos.IsValidIndex(b) || !B.Pos.IsValidIndex(c)) continue;
+		FVector3f N = FVector3f::CrossProduct(B.Pos[b] - B.Pos[a], B.Pos[c] - B.Pos[a]);
+		if (N.SizeSquared() < 1e-14f) continue;   // a sliver at a pole
+		N.Normalize();
+		if (FVector3f::DotProduct(N, B.Normal[a] + B.Normal[b] + B.Normal[c]) < 0) N = -N;
+		const FVector3f Col = (B.Colour[a] + B.Colour[b] + B.Colour[c]) / 3.f;
+		for (const int32 k : { a, b, c }) { M.P.Add(B.Pos[k]); M.N.Add(N); M.C.Add(Col); }
+	}
+	if (!M.P.Num()) return M;
+	M.Lo = FVector3f(1e9f); M.Hi = FVector3f(-1e9f);
+	for (const FVector3f& p : M.P) { M.Lo = FVector3f::Min(M.Lo, p); M.Hi = FVector3f::Max(M.Hi, p); }
+	M.Cen = (M.Lo + M.Hi) * .5f;
+	float R = 0, Foot = 0;
+	for (const FVector3f& p : M.P) { R = FMath::Max(R, (p - M.Cen).Size()); Foot = FMath::Max(Foot, FMath::Sqrt(FMath::Square(p.X - M.Cen.X) + FMath::Square(p.Z - M.Cen.Z))); }
+	M.R = FMath::Max(R, .01f);
+	M.Foot = Foot;
+	return M;
 }

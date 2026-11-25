@@ -29,7 +29,7 @@ GOODS = W["mall_goods"]
 
 
 def town():
-    return ec.Economy(R, LOTS, VISITS, STAFF, GOODS)
+    return ec.Economy(R, LOTS, VISITS, STAFF, GOODS, W["boards"])
 
 
 def player(start=True):
@@ -46,7 +46,7 @@ def first(kind):
     return next(n for n in range(len(LOTS)) if e.shop_kind(n) == kind)
 
 
-GROCER, KIOSK, ARCADE, CAFE = first("grocer"), first("kiosk"), first("arcade"), first("cafe")
+GROCER, KIOSK, ARCADE, CAFE, SKATE = first("grocer"), first("kiosk"), first("arcade"), first("cafe"), first("skate")
 
 
 def invariant(t, e):
@@ -367,6 +367,61 @@ class TheOutlets(unittest.TestCase):
 
 
 class TheBank(unittest.TestCase):
+    def test_CITY_103_a_skateboard_is_bought_at_the_skate_store_through_the_ledger_once(self):
+        e, _ = player(False)
+        e.new_character()
+        B = W["boards"]
+        with self.assertRaises(ec.Refused):
+            e.buy_board(SKATE, "manual")                                    # Bx 40 cash, no account: not enough
+        e.open_account("current")
+        cash, cur, till = e.L.balance("p:cash"), e.L.balance("p:current"), e.L.balance("till:" + LOTS[SKATE]["id"])
+        n = len(e.L.tx)
+        self.assertEqual(e.buy_board(SKATE, "manual"), B["kinds"]["manual"]["price"])
+        self.assertEqual(len(e.L.tx), n + 1)                                 # one transaction
+        self.assertEqual(cash + cur - e.L.balance("p:cash") - e.L.balance("p:current"), B["kinds"]["manual"]["price"])
+        self.assertEqual(e.L.balance("till:" + LOTS[SKATE]["id"]) - till, B["kinds"]["manual"]["price"])   # into the store's till
+        self.assertEqual(e.L.balance("p:cash"), 0)                           # cash first, then the current account
+        self.assertEqual(e.boards, ["manual"])
+        for shop, kind in ((SKATE, "manual"), (SKATE, "skateboard"), (GROCER, "electric"), (KIOSK, "manual")):
+            with self.assertRaises(ec.Refused):                              # not twice; no such kind; no skate store
+                e.buy_board(shop, kind)
+        e.take_loan(30000, 7)
+        e.buy_board(SKATE, "electric")
+        self.assertEqual(e.boards, ["manual", "electric"])                   # in the store's order
+        self.assertNotIn("skateboard", e.inv)                                # a board is not an item carried
+        invariant(self, e)
+
+    def test_CITY_103_the_board_bought_is_the_one_in_use_when_it_is_faster(self):
+        B = W["boards"]
+        self.assertEqual(ec.board_in_use(B, None, "manual"), "manual")
+        self.assertEqual(ec.board_in_use(B, "manual", "electric"), "electric")
+        self.assertEqual(ec.board_in_use(B, "neon_boost", "manual"), "neon_boost")
+        self.assertEqual(ec.board_in_use(B, "electric", "neon_boost"), "neon_boost")
+
+    def test_CITY_100_the_boards_owned_are_kept_in_the_save(self):
+        e, _ = player(False)
+        e.new_character()
+        e.open_account("current")
+        e.buy_board(SKATE, "manual")
+        f = town()
+        f.load(json.loads(json.dumps(e.save())))
+        self.assertEqual(f.boards, ["manual"])
+        with self.assertRaises(ec.Refused):
+            f.buy_board(SKATE, "manual")
+        old = e.save()
+        del old["boards"]                                                     # a save from before the store: no boards
+        g = town()
+        g.load(old)
+        self.assertEqual(g.boards, [])
+
+    def test_CITY_103_the_fixed_run_of_buying_boards(self):
+        shops = {"skate": SKATE, "grocer": GROCER}
+        got = ec.run_boards(town(), ec.board_script(), shops)
+        self.assertEqual(got["results"], ["ok", "ok", "refused", "ok", "ok", "refused", "refused", "refused", "ok", "ok", "ok", "refused"])
+        self.assertEqual(got["boards"], ["manual", "electric"])
+        self.assertEqual(got["uses"][-1], "electric")
+        self.assertEqual(got["balances"]["till:" + LOTS[SKATE]["id"]], R["shops"]["skate"]["till"] + 6000 + 28000)
+
     def test_BANK_007_accounts_and_transfers(self):
         e, q = player()
         with self.assertRaises(ec.Refused):
