@@ -3,11 +3,18 @@
 #include "BrixCity.h"
 #include "BrixHomes.h"
 #include "BrixInside.h"
+#include "BrixStreets.h"
 #include "BrixUnits.h"
 #include "Components/InstancedStaticMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "MeshDescription.h"
+#include "StaticMeshAttributes.h"
 #include "Components/TextRenderComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
+#include "Misc/Paths.h"
 #include "Misc/ScopeExit.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -934,6 +941,17 @@ void ABrixTownActor::Build(const FBrixCity& City)
 {
 	CityData = &City;
 	LotIndex = 0;
+	if (!Today.IsValid())   // how the gardens look today (Game/Data/streets.json, build_play.py)
+	{
+		Today = MakeShared<FBrixStreetsToday>();
+		FString Err;
+		if (!LoadBrixStreetsToday(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/streets.json")), *Today, Err)) UE_LOG(LogTemp, Warning, TEXT("Brix Town: %s (run Tools/worldgen/build_play.py)"), *Err);
+		if (Today->LawnTones.Num() < 3) Today->LawnTones = { FVector3d(.18, .27, .13), FVector3d(.29, .34, .19), FVector3d(.42, .39, .21) };
+	}
+	if (!FacetsMat) FacetsMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Greybox/M_Facets.M_Facets"));
+	if (!FacetsMat) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: /Game/Greybox/M_Facets is missing (run Tools/unreal/make_facets_material.py)")); FacetsMat = Greybox; }
+	BlockIndex = -1;
+	bNoPlants = FParse::Param(FCommandLine::Get(), TEXT("BrixNoPlants"));   // to compare: the town without its planting and open ground
 	UInstancedStaticMeshComponent* Boxes = Group(Kit(TEXT("SM_Kit_Box"), Cube), true);
 	UInstancedStaticMeshComponent* Trunks = Group(Kit(TEXT("SM_Kit_Cylinder"), Cylinder), true);
 	UInstancedStaticMeshComponent* Crowns = Group(Kit(TEXT("SM_Kit_Sphere"), Sphere), false);
@@ -945,7 +963,16 @@ void ABrixTownActor::Build(const FBrixCity& City)
 	Add(Boxes, FTransform(FQuat::Identity, ToWorld(MapSize * 0.5, -0.5f), FVector(MapSize.X, MapSize.Y, 1.f)), Road);
 	for (const FBrixBlock& B : City.Blocks)
 	{
+		++BlockIndex;
 		const bool bGreen = GreenTemplates.Contains(B.Template);
+		if (BrixIsWildTemplate(B.Template) && !bNoPlants)   // the open ground's leaf litter or grass, and its tracks (WLD-056)
+		{
+			TArray<FBrixShape> S;
+			FBrixGround G;
+			G.Wild = BlockSlabHeight + WildUp;
+			BrixGreenGroundShapes(B, G, *Today, S);
+			Shapes(S);
+		}
 		const FTransform Slab(FQuat::Identity, ToWorld(B.Origin + B.Extent * 0.5, BlockSlabHeight * 0.5f), FVector(B.Extent.X, B.Extent.Y, BlockSlabHeight));
 		if (bGreen) Add(Boxes, Slab, GreenColour);
 		else Add(Boxes, Slab, Surface(B.Pavement, TownPave));   // the block's paving (ADR-0017)
@@ -955,7 +982,13 @@ void ABrixTownActor::Build(const FBrixCity& City)
 			if (L.IsOpen())
 			{
 				const FTransform Top(FQuat(FVector::UpVector, FMath::DegreesToRadians(L.AngleDeg)), ToWorld(L.Centre(), BlockSlabHeight + 0.02f), FVector(L.Size().X, L.Size().Y, 0.04f));
-				if (L.Kind == TEXT("garden")) Add(Boxes, Top, GreenColour);
+				if (L.Kind == TEXT("garden") && bNoPlants) Add(Boxes, Top, GreenColour);
+				else if (L.Kind == TEXT("garden"))   // its lawn (ART-001): the grass, its longer edge, the tufts the mower missed
+				{
+					TArray<FBrixShape> S;
+					BrixLawnShapes(L.Min.X, L.Min.Y, L.Max.X, L.Max.Y, LawnUp, BrixSlice::Grass * 1.08, B, true, *Today, S);
+					Shapes(S);
+				}
 				else Add(Boxes, Top, Surface(L.Surface, TownPave));   // the market's setts, a tram stop's slabs
 				continue;
 			}
@@ -971,6 +1004,24 @@ void ABrixTownActor::Build(const FBrixCity& City)
 		}
 		for (const FBrixProp& P : B.Props) Wrap(P.Kind, P.Pos, BlockSlabHeight, [&]() { BuildProp(P, B); });   // street things a car can break (CITY-072)
 	}
+	// each block's faces (tufts, tracks, ponds) as one mesh made now
+	int32 FacetTris = 0;
+	for (TPair<int32, FFacets>& F : Facets)
+	{
+		if (!F.Value.P.Num()) continue;
+		UStaticMesh* M = FacetMesh(FString::Printf(TEXT("Facets_%d"), F.Key), F.Value.P, F.Value.N, F.Value.C);
+		UStaticMeshComponent* SC = NewObject<UStaticMeshComponent>(this, *FString::Printf(TEXT("FacetsOf_%d"), F.Key));
+		SC->SetupAttachment(RootComponent);
+		SC->SetStaticMesh(M);
+		SC->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		SC->SetCullDistance(FacetCullDistance * CmPerM);
+		SC->bAffectDistanceFieldLighting = false;
+		SC->SetAffectDynamicIndirectLighting(false);
+		SC->RegisterComponent();
+		AddInstanceComponent(SC);
+		FacetTris += F.Value.P.Num() / 3;
+	}
+	Facets.Empty();
 	// Scales are in metres: the shapes and the kit's pieces are 1 m to a unit of scale, so a scale is a size.
 	int32 Instances = 0;
 	for (TPair<UInstancedStaticMeshComponent*, FPending>& P : Pending)
@@ -993,8 +1044,8 @@ void ABrixTownActor::Build(const FBrixCity& City)
 	}
 	Pending.Empty();
 	CityData = nullptr;
-	UE_LOG(LogTemp, Display, TEXT("Brix Town: built %s from data: %d blocks, %d buildings (%d you can walk into), %d openings, %d instances in %d groups"),
-		*City.Name, City.Blocks.Num(), Buildings, Hollow, Openings, Instances, Parts.Num());
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: built %s from data: %d blocks, %d buildings (%d you can walk into), %d openings, %d instances in %d groups, %d faces in the blocks' facet meshes"),
+		*City.Name, City.Blocks.Num(), Buildings, Hollow, Openings, Instances, Parts.Num(), FacetTris);
 }
 
 // smash.js wrap(): what Fn adds is one thing a car can break, if its kind breaks; its footprint near the ground and its
@@ -1089,6 +1140,17 @@ void ABrixTownActor::BuildProp(const FBrixProp& P, const FBrixBlock& Blk)
 	};
 	auto H = [&](const TCHAR* K, int32 Q) { return (float)SliceHash({ P.Id + FString::SanitizeFloat(x + z), FString::FromInt(Q), K }); };
 	const FString& k = P.Kind;
+	if (k == TEXT("plant") || P.Set == TEXT("wild"))   // garden planting (CITY-017, WLD-040) and the open ground's own things (WLD-056)
+	{
+		if (bNoPlants) return;
+		FBrixGround G;
+		G.Here = P.Set == TEXT("wild") ? BlockSlabHeight + WildUp : g;
+		G.Wild = BlockSlabHeight + WildUp;
+		TArray<FBrixShape> S;
+		if (k == TEXT("plant")) BrixPlantShapes(P, G, *Today, S);
+		else if (!BrixWildShapes(P, G, S)) S.Reset();
+		if (S.Num() || k == TEXT("plant")) { Shapes(S); return; }
+	}
 	const bool ax = P.Along != TEXT("z");
 	const float Oct = UE_PI / 8;
 	auto glass = [&](float x0, float y0, float z0, float x1, float y1, float z1)   // lit by night (ABrixLamps)
@@ -1206,4 +1268,175 @@ void ABrixTownActor::BuildProp(const FBrixProp& P, const FBrixBlock& Blk)
 		for (const float sx : { -.75f, .75f }) box(x + sx - .06f, g + .8f, z - .06f, x + sx + .06f, g + 2.2f, z + .06f, Wood, true);
 		box(x - 1.f, g + 2.2f, z - .6f, x + 1.f, g + 2.35f, z + .6f, Terra);
 	}
+}
+
+// The slice's drawing calls (BrixWorld BrixStreets) as the town's own shapes. Boxes are instances of the box (no collision:
+// what is in the way comes as the calls' solids), the small ones fading out with the garden's small things; a crown is an
+// instance of one of the dome meshes, turned by its seed; single faces go into the block's facet mesh.
+void ABrixTownActor::Shapes(const TArray<FBrixShape>& S)
+{
+	UStaticMesh* BoxMesh = Kit(TEXT("SM_Kit_Box"), Cube);
+	UInstancedStaticMeshComponent* Open = Group(BoxMesh, false), * Fine = Group(BoxMesh, false, GardenCullDistance);
+	for (UInstancedStaticMeshComponent* G : { Open, Fine }) if (G->bAffectDistanceFieldLighting) { G->bAffectDistanceFieldLighting = false; G->SetAffectDynamicIndirectLighting(false); }
+	auto Lc = [](const FVector3d& C) { return FLinearColor((float)C.X, (float)C.Y, (float)C.Z); };
+	auto P3 = [](double x, double y, double z) { return FVector3d(x, y, z); };
+	for (const FBrixShape& Sh : S)
+	{
+		const TArray<double, TInlineAllocator<16>>& A = Sh.A;
+		switch (Sh.Kind)
+		{
+		case FBrixShape::Box:
+		{
+			const FVector Size(FMath::Abs(A[3] - A[0]), FMath::Abs(A[5] - A[2]), FMath::Abs(A[4] - A[1]));
+			Add(Size.GetMax() <= FineSize ? Fine : Open, FTransform(FQuat::Identity, ToWorld(FVector2D((A[0] + A[3]) / 2, (A[2] + A[5]) / 2), (float)((A[1] + A[4]) / 2)), Size), Lc(Sh.Col));
+			break;
+		}
+		case FBrixShape::YBox:
+		{
+			const FVector Size(A[3], A[5], A[4]);
+			Add(Size.GetMax() <= FineSize ? Fine : Open, FTransform(FQuat(FVector::UpVector, -A[6]), ToWorld(FVector2D(A[0], A[2]), (float)(A[1] + A[4] / 2)), Size), Lc(Sh.Col));
+			break;
+		}
+		case FBrixShape::Flat:   // a level rectangle: two faces of the block's facet mesh (plain grass, earth and water, not
+			// plaster), or a thin box whose top is at its height when it is part of something that breaks
+			if (!Wrapping)
+			{
+				const FVector3d q0(A[0], A[4], A[1]), q1(A[0], A[4], A[3]), q2(A[2], A[4], A[3]), q3(A[2], A[4], A[1]);
+				Facet(q0, q1, q2, FVector3d(0, 1, 0), Sh.Col); Facet(q0, q2, q3, FVector3d(0, 1, 0), Sh.Col);
+				break;
+			}
+			Add(Open, FTransform(FQuat::Identity, ToWorld(FVector2D((A[0] + A[2]) / 2, (A[1] + A[3]) / 2), (float)(A[4] - .01)), FVector(FMath::Abs(A[2] - A[0]), FMath::Abs(A[3] - A[1]), .02)), Lc(Sh.Col));
+			break;
+		case FBrixShape::Dome:   // (the mesh's shades are kept under 1, so its colour is raised to match)
+		{
+			const int32 V = FMath::Abs((int32)FMath::FloorToDouble(A[5])) % FMath::Max(1, DomeVariants);
+			Add(DomeGroup(V), FTransform(FQuat(FVector::UpVector, A[5]), ToWorld(FVector2D(A[0], A[2]), (float)A[1]), FVector(A[3], A[3], A[4])), Lc(Sh.Col * 1.4));
+			break;
+		}
+		case FBrixShape::Quad:
+		{
+			const FVector3d p0 = P3(A[0], A[1], A[2]), p1 = P3(A[3], A[4], A[5]), p2 = P3(A[6], A[7], A[8]), p3 = P3(A[9], A[10], A[11]), h = P3(A[12], A[13], A[14]);
+			Facet(p0, p1, p2, h, Sh.Col);
+			if (!p2.Equals(p3, 1e-9)) Facet(p0, p2, p3, h, Sh.Col);
+			break;
+		}
+		case FBrixShape::Ribbon:   // play.js ribbon(): a strip along the line, each piece overlapping the next a little
+		{
+			const double hw = A[0] / 2, y = A[1];
+			for (int32 k = 0; k + 1 < Sh.Pts.Num(); ++k)
+			{
+				const FVector2D a = Sh.Pts[k], b = Sh.Pts[k + 1];
+				const double L = FVector2D::Distance(a, b);
+				if (L < 1e-3) continue;
+				const double nx = -(b.Y - a.Y) / L * hw, nz = (b.X - a.X) / L * hw, e = FMath::Min(.4, L / 2), ux = (b.X - a.X) / L * e, uz = (b.Y - a.Y) / L * e;
+				const FVector3d q0(a.X - nx - ux, y, a.Y - nz - uz), q1(a.X + nx - ux, y, a.Y + nz - uz), q2(b.X + nx + ux, y, b.Y + nz + uz), q3(b.X - nx + ux, y, b.Y - nz + uz);
+				Facet(q0, q1, q2, FVector3d(0, 1, 0), Sh.Col); Facet(q0, q2, q3, FVector3d(0, 1, 0), Sh.Col);
+			}
+			break;
+		}
+		case FBrixShape::Disc:   // play.js disc(): 18 wedges
+			for (int32 k = 0; k < 18; ++k)
+			{
+				const double a = 2 * UE_DOUBLE_PI * k / 18, b = 2 * UE_DOUBLE_PI * (k + 1) / 18;
+				Facet(P3(A[0], A[3], A[1]), P3(A[0] + FMath::Cos(a) * A[2], A[3], A[1] + FMath::Sin(a) * A[2]), P3(A[0] + FMath::Cos(b) * A[2], A[3], A[1] + FMath::Sin(b) * A[2]), FVector3d(0, 1, 0), Sh.Col);
+			}
+			break;
+		case FBrixShape::Label:   // painted letters facing the way the slice's lettering faces
+			Name(Sh.Text, ToWorld(FVector2D(A[0], A[2]), (float)A[1]), FMath::Atan2(A[4], A[3]), (float)A[5] * 1.6f, 1.5f, true);
+			break;
+		case FBrixShape::Solid:
+			Add(BlockerGroup(), FTransform(FQuat::Identity, ToWorld(FVector2D((A[0] + A[3]) / 2, (A[2] + A[5]) / 2), (float)((A[1] + A[4]) / 2)),
+				FVector(FMath::Abs(A[3] - A[0]), FMath::Abs(A[5] - A[2]), FMath::Abs(A[4] - A[1]))), FLinearColor::White);
+			break;
+		}
+	}
+}
+
+// One face of a block's facet mesh, in the slice's frame, lit on the side its hint is on (the material is two-sided)
+void ABrixTownActor::Facet(const FVector3d& A, const FVector3d& B, const FVector3d& C, const FVector3d& Hint, const FVector3d& Col)
+{
+	FFacets& F = Facets.FindOrAdd(BlockIndex);
+	auto U = [](const FVector3d& Q) { return FVector3f((float)Q.X, (float)Q.Z, (float)Q.Y) * CmPerM; };
+	FVector3d N = FVector3d::CrossProduct(B - A, C - A).GetSafeNormal();
+	if (N.Dot(Hint) < 0) N = -N;
+	F.P.Append({ U(A), U(B), U(C) });
+	F.N.Add(FVector3f((float)N.X, (float)N.Z, (float)N.Y));
+	F.C.Add(FLinearColor((float)Col.X, (float)Col.Y, (float)Col.Z));
+}
+
+// A static mesh made now from triangles (three points each, a normal and a colour each), in M_Facets
+UStaticMesh* ABrixTownActor::FacetMesh(const FString& MeshName, const TArray<FVector3f>& P, const TArray<FVector3f>& Nrm, const TArray<FLinearColor>& Col)
+{
+	FMeshDescription MD;
+	FStaticMeshAttributes Attr(MD);
+	Attr.Register();
+	TVertexAttributesRef<FVector3f> Pos = Attr.GetVertexPositions();
+	TVertexInstanceAttributesRef<FVector3f> N = Attr.GetVertexInstanceNormals(), T = Attr.GetVertexInstanceTangents();
+	TVertexInstanceAttributesRef<float> Bs = Attr.GetVertexInstanceBinormalSigns();
+	TVertexInstanceAttributesRef<FVector4f> C = Attr.GetVertexInstanceColors();
+	TVertexInstanceAttributesRef<FVector2f> UV = Attr.GetVertexInstanceUVs();
+	const FPolygonGroupID G = MD.CreatePolygonGroup();
+	Attr.GetPolygonGroupMaterialSlotNames()[G] = TEXT("facets");
+	MD.ReserveNewVertices(P.Num()); MD.ReserveNewVertexInstances(P.Num()); MD.ReserveNewTriangles(P.Num() / 3);
+	for (int32 t = 0; t + 2 < P.Num(); t += 3)
+	{
+		const FVector3f n = Nrm[t / 3];
+		// the build stores a vertex colour as sRGB bytes and the material reads the bytes as they are: so it is given the
+		// colour whose sRGB bytes are the linear colour wanted
+		const FLinearColor Lin(FLinearColor(Col[t / 3].R, Col[t / 3].G, Col[t / 3].B).ToFColor(false));
+		const FVector3f tg = (FMath::Abs(n.Z) < .9f ? FVector3f::CrossProduct(n, FVector3f::UpVector) : FVector3f::CrossProduct(n, FVector3f::ForwardVector)).GetSafeNormal();
+		FVertexInstanceID Vi[3];
+		for (int32 k = 0; k < 3; ++k)
+		{
+			const FVertexID V = MD.CreateVertex();
+			Pos[V] = P[t + k];
+			Vi[k] = MD.CreateVertexInstance(V);
+			N[Vi[k]] = n; T[Vi[k]] = tg; Bs[Vi[k]] = 1.f;
+			C[Vi[k]] = FVector4f(Lin.R, Lin.G, Lin.B, 1.f);
+			UV.Set(Vi[k], 0, FVector2f::ZeroVector);
+		}
+		MD.CreateTriangle(G, Vi);
+	}
+	UStaticMesh* M = NewObject<UStaticMesh>(this, *MeshName);
+	M->GetStaticMaterials().Add(FStaticMaterial(FacetsMat, TEXT("facets"), TEXT("facets")));
+	UStaticMesh::FBuildMeshDescriptionsParams Params;
+	Params.bBuildSimpleCollision = false;
+	Params.bFastBuild = true;
+	M->BuildFromMeshDescriptions({ &MD }, Params);
+	Made.Add(M);
+	return M;
+}
+
+// A group of one of the bush crowns (play.js dome() at R 1, H 1, its jitter from the variant), each instance in its colour
+UInstancedStaticMeshComponent* ABrixTownActor::DomeGroup(int32 Variant)
+{
+	const FString Key = FString::Printf(TEXT("Dome_%d"), Variant);
+	if (TObjectPtr<UInstancedStaticMeshComponent>* Found = Parts.Find(Key)) return *Found;
+	TArray<FVector3d> Tris;
+	TArray<double> Shade;
+	BrixDomeMesh(Variant, Tris, Shade);
+	TArray<FVector3f> P, N;
+	TArray<FLinearColor> C;
+	for (int32 t = 0; t < Shade.Num(); ++t)
+	{
+		const FVector3d a = Tris[t * 3], b = Tris[t * 3 + 1], c = Tris[t * 3 + 2];
+		FVector3d n = FVector3d::CrossProduct(b - a, c - a).GetSafeNormal();
+		if (n.Dot((a + b + c) / 3 - FVector3d(0, .5, 0)) < 0) n = -n;   // out of the crown
+		for (const FVector3d& q : { a, b, c }) P.Add(FVector3f((float)q.X, (float)q.Z, (float)q.Y) * CmPerM);   // a 1 m crown: a scale is a size
+		N.Add(FVector3f((float)n.X, (float)n.Z, (float)n.Y));
+		const float sh = (float)(Shade[t] / 1.4);
+		C.Add(FLinearColor(sh, sh, sh));
+	}
+	UInstancedStaticMeshComponent* G = NewObject<UInstancedStaticMeshComponent>(this, *Key);
+	G->SetupAttachment(RootComponent);
+	G->SetStaticMesh(FacetMesh(TEXT("SM_") + Key, P, N, C));
+	G->NumCustomDataFloats = 3;
+	G->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	G->bAffectDistanceFieldLighting = false;
+	G->SetAffectDynamicIndirectLighting(false);
+	G->SetCullDistances(0, (int32)(PlantCullDistance * CmPerM));
+	G->RegisterComponent();
+	AddInstanceComponent(G);
+	Parts.Add(Key, G);
+	return G;
 }

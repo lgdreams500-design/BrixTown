@@ -10,6 +10,8 @@ struct FBrixBlock;
 struct FBrixPattern;
 struct FBrixSurface;
 struct FBrixInsides;
+struct FBrixShape;
+struct FBrixStreetsToday;
 class UInstancedStaticMeshComponent;
 class UMaterialInstanceDynamic;
 class UStaticMesh;
@@ -150,6 +152,13 @@ public:
 	UPROPERTY(Config) FVector4 RoadPatternB = FVector4(0.7, 0, 0.1, 0);               // vary, bevel, dome, mortar
 	UPROPERTY(Config) FLinearColor TrunkColour = FLinearColor(0.24f, 0.16f, 0.11f);
 	UPROPERTY(Config) FLinearColor CrownColour = FLinearColor(0.30f, 0.33f, 0.20f);
+	// the gardens and the open ground (CITY-017, WLD-040, WLD-056, ART-001; BrixWorld BrixStreets)
+	UPROPERTY(Config) int32 DomeVariants = 12;         // a bush's crowns: this many meshes of play.js dome(), each turned by its seed
+	UPROPERTY(Config) float PlantCullDistance = 320.f; // m; the crowns and hedges fade out beyond this
+	UPROPERTY(Config) float FacetCullDistance = 260.f; // m; the tufts, tracks and ponds (one mesh a block) beyond this
+	UPROPERTY(Config) float FineSize = 0.6f;           // m; a shape no bigger than this is a small thing (GardenCullDistance)
+	UPROPERTY(Config) float LawnUp = 0.17f;            // a garden's lawn (the slice's Y_GRASS + 0.02)
+	UPROPERTY(Config) float WildUp = 0.004f;           // the open ground's things over its slab
 
 private:
 	struct FOpening { float S, Z0, W, H; UStaticMesh* Mesh; UStaticMesh* Shutters; const FLinearColor* Paint; float MeshZ = -1.f; float SX = 1.f, SZ = 1.f; bool bDoorway = false; };   // MeshZ < 0: the piece sits at Z0; SX, SZ stretch it; bDoorway: the open way in
@@ -168,6 +177,19 @@ private:
 	void BuildLot(const FBrixLot& L, const FBrixBlock& B);
 	void BuildGarden(const FBrixLot& L, const struct FBrixHousePlan& Plan, const struct FBrixHouseLook& Hs, float HouseTop);
 	void BuildProp(const struct FBrixProp& P, const struct FBrixBlock& B);
+	// the slice's drawing calls (BrixStreets) laid as the town's own: boxes as instances, crowns as instances of the dome
+	// meshes, faces into the block's facet mesh, solids as unseen blockers
+	void Shapes(const TArray<FBrixShape>& S);
+	UStaticMesh* FacetMesh(const FString& MeshName, const TArray<FVector3f>& P, const TArray<FVector3f>& N, const TArray<FLinearColor>& C);
+	UInstancedStaticMeshComponent* DomeGroup(int32 Variant);
+	struct FFacets { TArray<FVector3f> P, N; TArray<FLinearColor> C; };
+	void Facet(const FVector3d& A, const FVector3d& B, const FVector3d& C, const FVector3d& Hint, const FVector3d& Col);
+	TMap<int32, FFacets> Facets;        // by block
+	int32 BlockIndex = 0;
+	bool bNoPlants = false;             // -BrixNoPlants
+	TSharedPtr<FBrixStreetsToday> Today;
+	UPROPERTY() TObjectPtr<UMaterialInterface> FacetsMat;   // /Game/Greybox/M_Facets (Tools/unreal/make_facets_material.py)
+	UPROPERTY() TArray<TObjectPtr<UStaticMesh>> Made;       // the meshes made at load
 	UStaticMesh* Kit(const TCHAR* Name, UStaticMesh* Fallback = nullptr);
 	void Name(const FString& Text, const FVector& At, double YawRad, float Size, float MaxWidth, bool bFaceAlong = false);
 

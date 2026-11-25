@@ -503,8 +503,32 @@ bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError)
 				P->TryGetBoolField(TEXT("grand"), Prop.bGrand);
 				P->TryGetBoolField(TEXT("big"), Prop.bBig);
 				Prop.Color = (int32)Num(P, TEXT("color"));
+				Prop.Json = P;
 			}
 		}
+		auto Pt = [](const TSharedPtr<FJsonValue>& V)
+		{
+			const TArray<TSharedPtr<FJsonValue>>* XY = nullptr;
+			return V.IsValid() && V->TryGetArray(XY) && XY->Num() >= 2 ? FVector2D((*XY)[0]->AsNumber(), (*XY)[1]->AsNumber()) : FVector2D::ZeroVector;
+		};
+		const TArray<TSharedPtr<FJsonValue>>* Paths = nullptr;
+		if (B->TryGetArrayField(TEXT("paths"), Paths))
+			for (const TSharedPtr<FJsonValue>& PV : *Paths)
+			{
+				const TArray<TSharedPtr<FJsonValue>>* AB = nullptr;
+				if (PV->TryGetArray(AB) && AB->Num() >= 2) Block.Paths.Add({ Pt((*AB)[0]), Pt((*AB)[1]) });
+			}
+		const TArray<TSharedPtr<FJsonValue>>* Tracks = nullptr;
+		if (B->TryGetArrayField(TEXT("tracks"), Tracks))
+			for (const TSharedPtr<FJsonValue>& TV : *Tracks)
+			{
+				const TSharedPtr<FJsonObject> T = TV->AsObject();
+				if (!T.IsValid()) continue;
+				FBrixTrack& Tr = Block.Tracks.AddDefaulted_GetRef();
+				T->TryGetNumberField(TEXT("width"), Tr.Width);
+				const TArray<TSharedPtr<FJsonValue>>* Pts = nullptr;
+				if (T->TryGetArrayField(TEXT("points"), Pts)) for (const TSharedPtr<FJsonValue>& V : *Pts) Tr.Points.Add(Pt(V));
+			}
 	}
 	// stone, brick and paving (ADR-0017)
 	if (!ReadSurfaces(FPaths::Combine(RulesDir, TEXT("surfaces.json")), OutCity, OutError)) return false;
