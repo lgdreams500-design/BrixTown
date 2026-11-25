@@ -492,6 +492,49 @@ bool FSND016_VoicesAsTheSlice::RunTest(const FString&)
 	return true;
 }
 
+// A talk's line that has no voice yet (SND-018: few lines are voiced while the dialogue is not final) is murmured as the
+// slice murmurs it (sound.js line(), from conversations.js show()): a dozen lines of World/rules/dialogue.json, each said by
+// another resident somewhere else, heard from where they stand out to as far, every syllable at the same moment, pitch,
+// mouth shape, length and level.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSND018_UnvoicedLinesAreMurmured, "BrixTown.World.SND018_unvoiced_lines_are_murmured",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FSND018_UnvoicedLinesAreMurmured::RunTest(const FString&)
+{
+	FBrixSoundRules R;
+	if (!LoadRules(*this, R)) return false;
+	const TSharedPtr<FJsonObject> V = LoadValues(*this);
+	if (!V) return false;
+	const TArray<TSharedPtr<FJsonValue>>* Mc = nullptr, * Mw = nullptr;
+	if (!TestTrue(TEXT("the values have murmured lines (run Tools/unreal/sound_values.py --values-only)"), V->GetObjectField(TEXT("cases"))->TryGetArrayField(TEXT("murmurs"), Mc)
+		&& V->GetObjectField(TEXT("trace"))->TryGetArrayField(TEXT("murmurs"), Mw) && Mc->Num() == Mw->Num() && Mc->Num() > 5)) return false;
+	FBrixSpeech Sp;
+	FBrixDialogue Dl;
+	FString Error;
+	if (!TestTrue(TEXT("the talk rules load"), LoadBrixTalk(FromProject(TEXT("../World/rules")), FromProject(TEXT("Data/talk.json")), Sp, Dl, Error))) return false;
+	int32 Wrong = 0, Syl = 0;
+	for (int32 k = 0; k < Mc->Num(); ++k)
+	{
+		const TArray<TSharedPtr<FJsonValue>>& A = (*Mc)[k]->AsArray();
+		const FVector2D At(A[2]->AsNumber(), A[3]->AsNumber());
+		const FBrixVoiceOut Got = BrixMurmur(R, Sp.Speak(A[0]->AsString()), (int32)A[1]->AsNumber(), At);
+		const TSharedPtr<FJsonObject> E = (*Mw)[k]->AsObject();
+		const TArray<TSharedPtr<FJsonValue>>& Far = E->GetArrayField(TEXT("far")), &Want = E->GetArrayField(TEXT("syllables"));
+		bool bSame = Got.Pos.Equals(FVector2D(Far[0]->AsNumber(), Far[1]->AsNumber()), 1e-6) && Got.Far == Far[2]->AsNumber() && Want.Num() == Got.Syllables.Num();
+		for (int32 j = 0; bSame && j < Want.Num(); ++j)
+		{
+			const TArray<TSharedPtr<FJsonValue>>& X = Want[j]->AsArray();
+			const FBrixSyllable& G = Got.Syllables[j];
+			bSame = FMath::IsNearlyEqual(G.At, X[0]->AsNumber(), 2e-6) && FMath::IsNearlyEqual(G.Hz, X[1]->AsNumber(), 2e-5) && G.Shape == X[2]->AsString()
+				&& FMath::IsNearlyEqual(G.Len, X[3]->AsNumber(), 2e-6) && FMath::IsNearlyEqual(G.Gain, X[4]->AsNumber(), 2e-6);
+		}
+		Syl += Got.Syllables.Num();
+		if (!bSame && ++Wrong <= 4) AddError(FString::Printf(TEXT("\"%s\" from resident %d: sound.js murmurs %d syllables, the port %d (or not the same)"), *A[0]->AsString(), (int32)A[1]->AsNumber(), Want.Num(), Got.Syllables.Num()));
+	}
+	TestTrue(TEXT("every line is murmured"), Syl > Mc->Num() * 3);
+	AddInfo(FString::Printf(TEXT("%d syllables of %d lines"), Syl, Mc->Num()));
+	return Wrong == 0;
+}
+
 // Who talks together (SND-006, SND-016): a group of three eating, two reading (a quiet act: no chatter), a chain of four
 // waiting (one group, each within reach of the next), a pair lying down (silent), six pairs further off (only the five
 // nearest groups are heard), a walker passing, and a resident who shouts at the player's car twice. Every frame the same

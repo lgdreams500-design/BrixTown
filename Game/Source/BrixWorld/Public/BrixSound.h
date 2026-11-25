@@ -237,6 +237,10 @@ BRIXWORLD_API void BrixVoiceLine(const FBrixSoundRules& R, const FBrixLine& Line
 
 // What one speaker says this frame: their syllables, from where, heard how far.
 struct BRIXWORLD_API FBrixVoiceOut { FVector2D Pos = FVector2D::ZeroVector; double Far = 30; TArray<FBrixSyllable> Syllables; };
+// sound.js line(): a talk's line that has not been voiced yet (SND-018), murmured in wordless syllables in time with its
+// mouth, in the resident's own pitch (pitchOf(): the voices' range, whatever their role) at the line's level, heard from
+// where they stand out to 30 m.
+BRIXWORLD_API FBrixVoiceOut BrixMurmur(const FBrixSoundRules& R, const FBrixLine& Line, int32 Resident, const FVector2D& Pos);
 
 // What the residents near do and say (SND-006, SND-015, SND-016; the rest of sound.js people()): the sounds of what each
 // is doing now and then (cutlery, the till, typing, the swings...), for the nearest Busy of them; sellers calling; people

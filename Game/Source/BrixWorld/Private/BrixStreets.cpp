@@ -205,6 +205,8 @@ bool LoadBrixStreetsToday(const FString& File, FBrixStreetsToday& Out, FString& 
 		const TArray<TSharedPtr<FJsonValue>>* Ts = nullptr;
 		if ((*Lw)->TryGetArrayField(TEXT("tones"), Ts)) for (const TSharedPtr<FJsonValue>& C : *Ts) Out.LawnTones.Add(Col3(C->AsArray()));
 		Out.EdgeM = Numf(*Lw, TEXT("edge_m"), Out.EdgeM); Out.TuftsPer100m2 = Numf(*Lw, TEXT("tufts_per_100m2"), Out.TuftsPer100m2); Out.TreeRingM = Numf(*Lw, TEXT("tree_ring_m"), Out.TreeRingM);
+		Out.PatchM = Numf(*Lw, TEXT("patch_m"), Out.PatchM); Out.StripeM = Numf(*Lw, TEXT("stripe_m"), Out.StripeM); Out.Stripe = Numf(*Lw, TEXT("stripe"), Out.Stripe);
+		Out.Clover = Numf(*Lw, TEXT("clover"), Out.Clover); Out.Daisies = Numf(*Lw, TEXT("daisies"), Out.Daisies); Out.DaisyColor = Col3f(*Lw, TEXT("daisy_color"), Out.DaisyColor);
 		Out.EdgeColor = Col3f(*Lw, TEXT("edge_color"), Out.EdgeColor); Out.TuftColor = Col3f(*Lw, TEXT("tuft_color"), Out.TuftColor); Out.MulchColor = Col3f(*Lw, TEXT("mulch_color"), Out.MulchColor);
 	}
 	if (Out.LawnTones.Num() < 3) Out.LawnTones = { FVector3d(.18, .27, .13), FVector3d(.29, .34, .19), FVector3d(.42, .39, .21) };
@@ -446,11 +448,13 @@ bool BrixWildShapes(const FBrixProp& P, const FBrixGround& G, TArray<FBrixShape>
 void BrixLawnShapes(double x0, double z0, double x1, double z1, double y, const FVector3d& c, const FBrixBlock& B, bool bTufts, const FBrixStreetsToday& T, TArray<FBrixShape>& Out)
 {
 	FOut O{ Out };
+	const int32 First = Out.Num();
 	O.Flat(x0, z0, x1, z1, y, c);
 	const double e = T.EdgeM, ye = y + .006;
 	const FVector3d ec = T.EdgeColor * (c.Y / T.LawnTones[1].Y);
 	O.Flat(x0, z0, x1, z0 + e, ye, ec); O.Flat(x0, z1 - e, x1, z1, ye, ec);
 	O.Flat(x0, z0 + e, x0 + e, z1 - e, ye, ec); O.Flat(x1 - e, z0 + e, x1, z1 - e, ye, ec);
+	for (int32 k = First; k < Out.Num(); ++k) Out[k].bLawn = true;   // world.flat(..., 24): the lawn's own pattern
 	if (!bTufts) return;
 	auto Clear = [&](double px, double pz)
 	{

@@ -179,12 +179,26 @@ bool LoadBrixLife(const FString& Path, FBrixLifeData& Out, FString& OutError)
 	R.StallElasticity = Sl->GetNumberField(TEXT("elasticity")); R.StallMaxPriceFactorBp = Int(Sl, TEXT("max_price_factor_bp"));
 	const TArray<TSharedPtr<FJsonValue>>& Open = Sl->GetArrayField(TEXT("open"));
 	if (Open.Num() == 2) { R.StallOpen = (int32)Open[0]->AsNumber(); R.StallClose = (int32)Open[1]->AsNumber(); }
+	const TSharedPtr<FJsonObject>* Bd = nullptr;
+	if (J->TryGetObjectField(TEXT("boards"), Bd))   // CITY-102: the skateboards and their prices
+	{
+		for (const auto& V : (*Bd)->GetArrayField(TEXT("order"))) R.BoardOrder.Add(V->AsString());
+		const TArray<TSharedPtr<FJsonValue>>* At = nullptr;
+		if ((*Bd)->TryGetArrayField(TEXT("sold_at"), At)) for (const auto& V : *At) R.BoardsSoldAt.Add(V->AsString());
+		for (const auto& K : (*Bd)->GetObjectField(TEXT("kinds"))->Values)
+		{
+			const TSharedPtr<FJsonObject> O = K.Value->AsObject();
+			R.Boards.Add(FString(K.Key.ToView()), { O->GetStringField(TEXT("name")), Int(O, TEXT("price")), O->GetNumberField(TEXT("top_kmh")) });
+		}
+	}
 	const TSharedPtr<FJsonObject>* G = nullptr;
 	if (J->TryGetObjectField(TEXT("goods"), G))
 	{
 		R.bGoods = true;
 		R.PerOutlet = (int32)Int(*G, TEXT("per_outlet"), 8);
 		R.OutletStockTarget = (int32)Int((*G)->GetObjectField(TEXT("stock")), TEXT("target"), 6);
+		const TSharedPtr<FJsonObject>* Dsp = nullptr;
+		if ((*G)->TryGetObjectField(TEXT("display"), Dsp)) (*Dsp)->TryGetStringField(TEXT("detail"), R.GoodsDetail);
 		for (const auto& K : (*G)->GetObjectField(TEXT("sells"))->Values)
 		{
 			TArray<FString>& L = R.OutletSells.Add(FString(K.Key.ToView()));
@@ -341,6 +355,10 @@ void FBrixEconomy::Settle(int32 D)
 		for (const FBrixStall::FSlot& Sl : Stall->Slots) if (!Sl.bSold) GiveItem(Sl.Item);
 		Stall.Reset();
 	}
+	TArray<int32> Ids;
+	Hooks.GetKeys(Ids);
+	Ids.Sort();
+	for (const int32 Id : Ids) if (const TFunction<void(int32)>* H = Hooks.Find(Id)) (*H)(D);
 }
 
 bool FBrixEconomy::OpenAccount(const FString& Kind)
@@ -545,6 +563,33 @@ bool FBrixEconomy::Buy(int32 N, const FString& It, int64* OutPaid)
 	GiveItem(It);
 	if (OutPaid) *OutPaid = P;
 	return true;
+}
+
+// economy.py buy_board(), line for line: paid into the skate store's till, cash first; a kind owned is not sold twice
+bool FBrixEconomy::SellsBoards(int32 N, const FString& U) const
+{
+	const FBrixOutlet* O = Outlet(N, U);
+	return O && R.BoardsSoldAt.Contains(O->Kind);
+}
+
+bool FBrixEconomy::BuyBoard(int32 N, const FString& U, const FString& Kind, int64* OutPaid)
+{
+	if (!SellsBoards(N, U)) return No(TEXT("this outlet does not sell skateboards"));
+	const FBrixEconomyRules::FBoard* B = R.Boards.Find(Kind);
+	if (!B) return No(TEXT("no such board"));
+	if (Boards.Contains(Kind)) return No(TEXT("you have that board already"));
+	if (!Spend(B->Price, TEXT("till:") + Lots[N].Id, B->Name + TEXT(", ") + Outlet(N, U)->Name)) return false;
+	TArray<FString> Now;
+	for (const FString& K : R.BoardOrder) if (Boards.Contains(K) || K == Kind) Now.Add(K);
+	Boards = Now;
+	if (OutPaid) *OutPaid = B->Price;
+	return true;
+}
+
+FString FBrixEconomy::BoardInUse(const FBrixEconomyRules& Rules, const FString& InUse, const FString& Bought)
+{
+	const FBrixEconomyRules::FBoard* A = Rules.Boards.Find(InUse), * B = Rules.Boards.Find(Bought);
+	return InUse.IsEmpty() || !A || (B && B->TopKmh > A->TopKmh) ? Bought : InUse;
 }
 
 bool FBrixEconomy::Sell(int32 N, const FString& It, int64* OutPaid)

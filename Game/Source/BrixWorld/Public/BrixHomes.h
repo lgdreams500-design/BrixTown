@@ -59,6 +59,7 @@ struct BRIXWORLD_API FBrixFurniturePiece
 	FVector3f Size = FVector3f::ZeroVector;                 // furniture.js SIZE (w, d, h); zero when the slice has none
 	int32 Item = -1;                                        // into the plan's items
 	bool bBed = false;
+	bool bLayout = false;                                   // placed in the designer (FURN-051): a storey's layout, not the town's
 };
 
 // A rectangle on the floor, turned: its middle, the way its length runs, its length and its width (a designed house is
@@ -75,6 +76,8 @@ struct BRIXWORLD_API FBrixWallSeg
 	FBrixRect R;
 	int32 Floor = 0;
 	bool bDoorway = false;
+	bool bPartition = false;                 // a storey's own inner walls (storeys.js partitions(), or the room plan: BUILD-021)
+	TOptional<FVector3f> Colour;             // its own colour (BUILD-022), else the plaster of the walls
 };
 
 struct BRIXWORLD_API FBrixRoom

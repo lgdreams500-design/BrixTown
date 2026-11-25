@@ -1,4 +1,6 @@
 #include "BrixBuyMenu.h"
+#include "BrixGoods.h"
+#include "BrixBody.h"
 
 #include "Dom/JsonObject.h"
 
@@ -73,6 +75,17 @@ bool LoadBrixBuyMenu(const TSharedPtr<FJsonObject>& J, FBrixBuyMenuRules& Out, F
 				if (!Pt.Value->IsNull()) { FString S; if (Pt.Value->TryGetString(S)) G.Parts.Add(FString(Pt.Key.ToView()), S); else if (Pt.Value->Type == EJson::Boolean && Pt.Value->AsBool()) G.Parts.Add(FString(Pt.Key.ToView()), TEXT("true")); }
 		Out.Goods.Add(FString(V.Key.ToView()), G);
 	}
+	const TSharedPtr<FJsonObject>* Ic = nullptr;
+	if ((*BM)->TryGetObjectField(TEXT("icons"), Ic))
+		for (const auto& I : (*Ic)->Values)
+		{
+			TArray<FBrixIconPath>& L = Out.Icons.Add(FString(I.Key.ToView()));
+			for (const auto& V : I.Value->AsArray())
+			{
+				const TArray<TSharedPtr<FJsonValue>>& A = V->AsArray();
+				if (A.Num() >= 2) L.Add({ A[0]->AsString(), (float)A[1]->AsNumber() });
+			}
+		}
 	if (!Out.Shapes.Num() || !Out.Goes.Num()) { OutError = TEXT("the buy menu's rules are empty"); return false; }
 	return true;
 }
@@ -136,6 +149,173 @@ FBrixThingMesh FBrixBuyMenuRules::ShapeMesh(const FString& Shape, const FLinearC
 		Face(Lo[2], Lo[3], Hi[3], Hi[2], Nm(0, 1));
 		Face(Lo[3], Lo[0], Hi[0], Hi[3], Nm(-1, 0));
 	}
+	Finish(M);
+	return M;
+}
+
+FBrixThingMesh FBrixBuyMenuRules::ModelMesh(const FString& Piece) const
+{
+	FBrixThingMesh M;
+	const FBrixGoodsModel* G = Models ? Models->Find(Piece) : nullptr;
+	if (!G) return M;
+	const FBrixGoodsModel::FLod& L = G->Lods[0];
+	const TArray<FVector3f> Col = Models->Colours(Piece);
+	for (const int32 q : L.I)   // x across, y up, z towards the viewer: the model's v (front to back) turned round
+	{
+		const int32 i = q * 3;
+		M.P.Add(FVector3f(L.P[i] * .001f, L.P[i + 1] * .001f, -L.P[i + 2] * .001f));
+		M.N.Add(FVector3f(L.N[i] * .01f, L.N[i + 1] * .01f, -L.N[i + 2] * .01f));
+		M.C.Add(Col[L.C[q]]);
+	}
+	Finish(M);
+	return M;
+}
+
+void FBrixBuyMenuRules::Finish(FBrixThingMesh& M)   // buymenu.js finish(): bounds, the ball it fits in, its footprint
+{
+	if (!M.P.Num()) return;
+	M.Lo = FVector3f(1e9f); M.Hi = FVector3f(-1e9f);
+	for (const FVector3f& p : M.P) { M.Lo = FVector3f::Min(M.Lo, p); M.Hi = FVector3f::Max(M.Hi, p); }
+	M.Cen = (M.Lo + M.Hi) * .5f;
+	float R = 0, Foot = 0;
+	for (const FVector3f& p : M.P) { R = FMath::Max(R, (p - M.Cen).Size()); Foot = FMath::Max(Foot, FMath::Sqrt(FMath::Square(p.X - M.Cen.X) + FMath::Square(p.Z - M.Cen.Z))); }
+	M.R = FMath::Max(R, .01f);
+	M.Foot = Foot;
+}
+
+TOptional<FBrixThingMesh> FBrixBuyMenuRules::MeshFor(const FString& Thing, const FString& BandColour) const
+{
+	const FBrixShows S = Shows(Thing);
+	if (S.Kind == TEXT("piece"))
+	{
+		FBrixThingMesh M = ModelMesh(S.Name);
+		if (!M.P.Num()) return {};
+		return M;
+	}
+	if (S.Kind != TEXT("shape") || S.Name.IsEmpty()) return {};
+	const FLinearColor* Band = Colours.Find(BandColour);
+	const FLinearColor* Own = S.Colour ? Palette.Find(*S.Colour) : nullptr;
+	FBrixThingMesh M = ShapeMesh(S.Name, Band ? *Band : Colours.FindRef(TEXT("ochre")), Own ? *Own : Colours.FindRef(TEXT("cream")));
+	if (!M.P.Num()) return {};
+	return M;
+}
+
+// ---------------------------------------------------------------- the marks in the dots and chips (UI-020)
+TArray<TArray<FVector2f>> BrixIconOutlines(const FString& D)
+{
+	TArray<TArray<FVector2f>> Out;
+	TCHAR Cmd = 0;
+	FVector2f At(0, 0), Start(0, 0);
+	int32 i = 0;
+	const int32 N = D.Len();
+	auto Skip = [&]() { while (i < N && (FChar::IsWhitespace(D[i]) || D[i] == TEXT(','))) ++i; };
+	auto Num = [&]() -> float
+	{
+		Skip();
+		const int32 a = i;
+		if (i < N && (D[i] == TEXT('-') || D[i] == TEXT('+'))) ++i;
+		while (i < N && (FChar::IsDigit(D[i]) || D[i] == TEXT('.'))) ++i;
+		return FCString::Atof(*D.Mid(a, i - a));
+	};
+	auto Line = [&](FVector2f P) { if (!Out.Num()) Out.AddDefaulted_GetRef().Add(At); Out.Last().Add(P); At = P; };
+	while (true)
+	{
+		Skip();
+		if (i >= N) break;
+		if (FChar::IsAlpha(D[i])) Cmd = D[i++];
+		else if (Cmd == TEXT('M')) Cmd = TEXT('L');   // numbers after a move's first point are lines
+		switch (Cmd)
+		{
+		case TEXT('M'): { const float x = Num(), y = Num(); At = Start = FVector2f(x, y); Out.AddDefaulted_GetRef().Add(At); break; }
+		case TEXT('L'): { const float x = Num(), y = Num(); Line(FVector2f(x, y)); break; }
+		case TEXT('H'): Line(FVector2f(Num(), At.Y)); break;
+		case TEXT('V'): Line(FVector2f(At.X, Num())); break;
+		case TEXT('Q'):
+		{
+			const float cx = Num(), cy = Num(), x = Num(), y = Num();
+			const FVector2f P0 = At, C(cx, cy), P1(x, y);
+			for (int32 k = 1; k <= 16; ++k)
+			{
+				const float t = k / 16.f, u = 1 - t;
+				Line(P0 * (u * u) + C * (2 * u * t) + P1 * (t * t));
+			}
+			break;
+		}
+		case TEXT('Z'): case TEXT('z'): if (Out.Num() && Out.Last().Num() && Out.Last().Last() != Start) Out.Last().Add(Start); At = Start; break;
+		default: ++i; break;   // a command the marks do not use: skipped
+		}
+	}
+	return Out;
+}
+
+TArray<float> BrixIconCoverage(const TArray<FBrixIconPath>& Paths, int32 Px)
+{
+	TArray<float> Out;
+	Out.SetNumZeroed(Px * Px);
+	struct FShape { TArray<TArray<FVector2f>> Rings; float Half; };
+	TArray<FShape> Shapes;
+	for (const FBrixIconPath& P : Paths) Shapes.Add({ BrixIconOutlines(P.D), P.Stroke * .5f });
+	const int32 SS = 4;
+	for (int32 y = 0; y < Px; ++y)
+		for (int32 x = 0; x < Px; ++x)
+		{
+			int32 Hit = 0;
+			for (int32 sy = 0; sy < SS; ++sy)
+				for (int32 sx = 0; sx < SS; ++sx)
+				{
+					const FVector2f Q((x + (sx + .5f) / SS) * 16.f / Px, (y + (sy + .5f) / SS) * 16.f / Px);
+					bool bIn = false;
+					for (const FShape& S : Shapes)
+					{
+						if (S.Half <= 0)   // a fill, by the nonzero rule (each ring closed back to its start)
+						{
+							int32 Wind = 0;
+							for (const TArray<FVector2f>& R : S.Rings)
+								for (int32 k = 0; k < R.Num(); ++k)
+								{
+									const FVector2f A = R[k], B = R[(k + 1) % R.Num()];
+									if (A.Y <= Q.Y) { if (B.Y > Q.Y && (B.X - A.X) * (Q.Y - A.Y) - (Q.X - A.X) * (B.Y - A.Y) > 0) ++Wind; }
+									else if (B.Y <= Q.Y && (B.X - A.X) * (Q.Y - A.Y) - (Q.X - A.X) * (B.Y - A.Y) < 0) --Wind;
+								}
+							bIn = Wind != 0;
+						}
+						else   // a stroke: within half its width of a straight piece, square across its ends
+							for (const TArray<FVector2f>& R : S.Rings)
+							{
+								for (int32 k = 0; k + 1 < R.Num() && !bIn; ++k)
+								{
+									const FVector2f A = R[k], B = R[k + 1], AB = B - A;
+									const float L2 = AB.SizeSquared();
+									if (L2 < 1e-8f) continue;
+									const float t = FVector2f::DotProduct(Q - A, AB) / L2;
+									if (t < 0 || t > 1) continue;
+									bIn = FVector2f::DistSquared(Q, A + AB * t) <= S.Half * S.Half;
+								}
+								if (bIn) break;
+							}
+						if (bIn) break;
+					}
+					Hit += bIn;
+				}
+			Out[y * Px + x] = Hit / (float)(SS * SS);
+		}
+	return Out;
+}
+
+FBrixThingMesh BrixThingFromBody(const FBrixBodyMesh& B)
+{
+	FBrixThingMesh M;
+	for (int32 t = 0; t + 2 < B.Index.Num(); t += 3)
+	{
+		const int32 a = B.Index[t], b = B.Index[t + 1], c = B.Index[t + 2];
+		if (!B.Pos.IsValidIndex(a) || !B.Pos.IsValidIndex(b) || !B.Pos.IsValidIndex(c)) continue;
+		FVector3f N = FVector3f::CrossProduct(B.Pos[b] - B.Pos[a], B.Pos[c] - B.Pos[a]);
+		if (N.SizeSquared() < 1e-14f) continue;   // a sliver at a pole
+		N.Normalize();
+		if (FVector3f::DotProduct(N, B.Normal[a] + B.Normal[b] + B.Normal[c]) < 0) N = -N;
+		const FVector3f Col = (B.Colour[a] + B.Colour[b] + B.Colour[c]) / 3.f;
+		for (const int32 k : { a, b, c }) { M.P.Add(B.Pos[k]); M.N.Add(N); M.C.Add(Col); }
+	}
 	if (!M.P.Num()) return M;
 	M.Lo = FVector3f(1e9f); M.Hi = FVector3f(-1e9f);
 	for (const FVector3f& p : M.P) { M.Lo = FVector3f::Min(M.Lo, p); M.Hi = FVector3f::Max(M.Hi, p); }
@@ -144,16 +324,5 @@ FBrixThingMesh FBrixBuyMenuRules::ShapeMesh(const FString& Shape, const FLinearC
 	for (const FVector3f& p : M.P) { R = FMath::Max(R, (p - M.Cen).Size()); Foot = FMath::Max(Foot, FMath::Sqrt(FMath::Square(p.X - M.Cen.X) + FMath::Square(p.Z - M.Cen.Z))); }
 	M.R = FMath::Max(R, .01f);
 	M.Foot = Foot;
-	return M;
-}
-
-TOptional<FBrixThingMesh> FBrixBuyMenuRules::MeshFor(const FString& Thing, const FString& BandColour) const
-{
-	const FBrixShows S = Shows(Thing);
-	if (S.Kind != TEXT("shape") || S.Name.IsEmpty()) return {};
-	const FLinearColor* Band = Colours.Find(BandColour);
-	const FLinearColor* Own = S.Colour ? Palette.Find(*S.Colour) : nullptr;
-	FBrixThingMesh M = ShapeMesh(S.Name, Band ? *Band : Colours.FindRef(TEXT("ochre")), Own ? *Own : Colours.FindRef(TEXT("cream")));
-	if (!M.P.Num()) return {};
 	return M;
 }

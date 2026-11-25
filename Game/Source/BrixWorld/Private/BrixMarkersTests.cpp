@@ -130,6 +130,58 @@ bool FQST005_EachStepGetsItsMarker::RunTest(const FString&)
 				const FString* P = LotKind.IsValidIndex(N) ? R.PlaceKinds.Find(LotKind[N]) : nullptr;
 				TestEqual(TEXT("a place to go to (") + S.Value.Goal.Value + TEXT(")"), KindOf(-1, N), P ? *P : FString(TEXT("go")));
 			}
+	// a step that needs something: every shop with it in stock today, by what the shop is; none once it is carried
+	auto Shops = [&](const FString& It)
+	{
+		TArray<int32> N;
+		for (const FBrixMapTarget& T : BrixQuestTargets(Q, QR, E)) if (T.Item == It) N.Add(T.Lot);
+		return N;
+	};
+	for (const auto& S : L->Stages)
+		if (S.Value.Goal.Kind == TEXT("have"))
+		{
+			const FString It = S.Value.Goal.Value;
+			Goto(Qid, S.Key);
+			const TArray<int32> N = Shops(It);
+			TestTrue(TEXT("shops with ") + It + TEXT(" are marked"), N.Num() > 0);
+			int32 Want = 0;
+			for (int32 k = 0; k < E.Kinds.Num(); ++k) Want += !E.Kinds[k].IsEmpty() && !E.Outlets.Contains(k) && E.Stock(k, It) > 0;
+			TestEqual(TEXT("every shop with it in stock, and only those"), N.Num(), Want);
+			for (int32 n : N)
+			{
+				const FString* P = LotKind.IsValidIndex(n) ? R.PlaceKinds.Find(LotKind[n]) : nullptr;
+				TestEqual(TEXT("shown by what the shop is"), KindOf(-1, n), P ? *P : FString(TEXT("go")));
+			}
+			{   // only the nearest few are shown
+				TArray<FBrixMapTarget> T = BrixQuestTargets(Q, QR, E);
+				const int32 Others = T.FilterByPredicate([](const FBrixMapTarget& X) { return X.Item.IsEmpty(); }).Num();
+				TArray<FVector2D> Mid;
+				for (const FBrixBlock& B : City.Blocks) for (const FBrixLot& Lt : B.Lots) Mid.Add(Lt.Centre());
+				const FVector2D At = Mid.IsValidIndex(N.Last()) ? Mid[N.Last()] : FVector2D::ZeroVector;   // stand at the last of them
+				BrixKeepNearestShops(T, R, At, [&](int32 k) { return Mid.IsValidIndex(k) ? Mid[k] : FVector2D::ZeroVector; });
+				const TArray<FBrixMapTarget> Kept = T.FilterByPredicate([&](const FBrixMapTarget& X) { return X.Item == It; });
+				TestEqual(TEXT("the nearest few"), Kept.Num(), FMath::Min(R.HaveShops, N.Num()));
+				TestTrue(TEXT("the one you stand at first"), Kept.Num() && Kept[0].Lot == N.Last());
+				TestEqual(TEXT("the rest kept"), T.FilterByPredicate([](const FBrixMapTarget& X) { return X.Item.IsEmpty(); }).Num(), Others);
+			}
+			E.GiveItem(It);
+			TestEqual(TEXT("none once it is carried"), Shops(It).Num(), 0);
+			E.TakeItem(It);
+		}
+	// the elder's shopping: the shops first, then back to the elder
+	if (const FBrixJobKind* Sk = QR.Job(TEXT("shopping")); Sk && Sk->Items.Num())
+	{
+		FBrixJob J;
+		J.Kind = TEXT("shopping");
+		J.Item = Sk->Items[0];
+		J.Giver = Who;
+		Q.Job = J;
+		TestTrue(TEXT("a shopping job marks the shops with ") + J.Item, Shops(J.Item).Num() > 0);
+		E.GiveItem(J.Item);
+		TestTrue(TEXT("with it bought, back to the one who asked"), BrixQuestTargets(Q, QR, E).ContainsByPredicate([&](const FBrixMapTarget& T) { return T.Resident == Who && T.Kind == TEXT("job"); }) && Shops(J.Item).Num() == 0);
+		E.TakeItem(J.Item);
+		Q.Job.Reset();
+	}
 	// one with a line to give
 	bool bOffer = false;
 	for (const FBrixMapTarget& T : BrixQuestTargets(Q, QR, E)) if (T.bOffer) { bOffer = true; TestEqual(TEXT("a line offered"), BrixMarkerKindFor(T, R, FString()), FString(TEXT("offer"))); }

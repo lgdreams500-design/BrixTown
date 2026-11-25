@@ -76,9 +76,15 @@ struct BRIXWORLD_API FBrixEconomyRules
 	double StallElasticity = 3;
 	// a mall's outlets (ECO-013, ECO-014)
 	bool bGoods = false;
+	FString GoodsDetail = TEXT("near");                   // mall_goods.json display.detail: which make of each good stands in an outlet (FURN-065)
 	int32 PerOutlet = 8, OutletStockTarget = 6;
 	TMap<FString, TArray<FString>> OutletSells;           // outlet kind -> the goods that kind deals in
 	TMap<FString, FGood> Goods;
+	// the skateboards a skate store sells (World/rules/boards.json: CITY-102, CITY-103), in the store's order
+	struct FBoard { FString Name; int64 Price = 0; double TopKmh = 0; };
+	TArray<FString> BoardOrder;
+	TArray<FString> BoardsSoldAt;                         // the kinds of mall outlet that sell boards (boards.json sold_at; ADR-0054)
+	TMap<FString, FBoard> Boards;
 
 	const FAccount* Account(const FString& Kind) const { return Accounts.FindByPredicate([&](const FAccount& A) { return A.Kind == Kind; }); }
 	const FShop* Shop(const FString& Kind) const { return Shops.FindByPredicate([&](const FShop& S) { return S.Kind == Kind; }); }
@@ -148,10 +154,14 @@ public:
 	TOptional<FBrixStall> Stall;
 	int32 StallSoldTotal = 0;
 	TMap<FString, int32> Clothes, Homeware;               // bought at a mall's outlets (ECO-014)
+	TArray<FString> Boards;                               // the kinds of skateboard owned, in the store's order (CITY-100, CITY-103)
 	TMap<int32, TArray<FBrixOutlet>> Outlets;
 	TArray<FString> Kinds;                                // each lot's shop kind, or empty
 	int32 BankLot = -1, MarketLot = -1;
 	FString Why;                                          // why the last rule refused
+	// more rules settled at each day's end, after the bank (economy.js hooks: the estate market), by id
+	TMap<int32, TFunction<void(int32)>> Hooks;
+	int32 NextHook = 0;
 
 	// the player
 	void NewCharacter();
@@ -190,6 +200,13 @@ public:
 	int32 OutletStock(int32 N, const FString& U, const FString& G) const;
 	int64 OutletPrice(int32 N, const FString& U, const FString& G) const;
 	bool BuyAt(int32 N, const FString& U, const FString& G, int64* OutPaid = nullptr);
+	// the skate store (CITY-102, CITY-103; economy.py buy_board()): the same price for a kind at every skate store
+	int64 BoardPrice(const FString& Kind) const { const FBrixEconomyRules::FBoard* B = R.Boards.Find(Kind); return B ? B->Price : 0; }
+	// economy.py sells_boards(), buy_board(): at outlet U of the mall at lot N, a sports or toy outlet (CITY-102, CITY-103)
+	bool SellsBoards(int32 N, const FString& U) const;
+	bool BuyBoard(int32 N, const FString& U, const FString& Kind, int64* OutPaid = nullptr);
+	// economy.board_in_use(): the board in use after buying one, the bought one when it is faster (or none was in use)
+	static FString BoardInUse(const FBrixEconomyRules& R, const FString& InUse, const FString& Bought);
 	// the market stall (PROP-008)
 	bool RentStall();
 	bool SetOut(const FString& Item, int64 Price);

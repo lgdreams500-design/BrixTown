@@ -11,6 +11,7 @@ struct FBrixBlock;
 struct FBrixPattern;
 struct FBrixSurface;
 struct FBrixInsides;
+class FJsonObject;
 struct FBrixShape;
 struct FBrixStreetsToday;
 class UInstancedStaticMeshComponent;
@@ -57,6 +58,8 @@ class BRIXTOWN_API ABrixTownActor : public AActor
 public:
 	ABrixTownActor();
 	void Build(const FBrixCity& City);
+	const FBrixStreetsToday* StreetsToday() const { return Today.Get(); }   // how the gardens and trees are today (streets.json)
+	TSet<FString> OwnBuilt;   // lots another actor draws (Eastgate Mall, ABrixMall): set before Build, and left out here
 	// What is inside the buildings (Game/Data/inside.json; CITY-013): set before Build to make the enterable ones hollow,
 	// with an open doorway, a floor, plastered walls and a ceiling
 	const FBrixInsides* Insides = nullptr;
@@ -68,9 +71,16 @@ public:
 	// Everything a car can break, by the rules' kinds (CITY-072): filled while building when Breakable is set
 	TArray<FBrixBreakable> Breakables;
 	TSet<FString> Breakable;            // the prop kinds to keep handles for (set before Build)
+	void Repaint(int32 Lot, const TSharedPtr<FJsonObject>& Design);   // BUILD-005: a building drawn again from a design (none: its own)
 	void SetBroken(int32 b, bool bBroken);   // hide it (its solids and its light too) or show it again
 	// wet paving (WLD-037): M_Greybox's WetDark, WetSheen and Puddles on every surface (Tools/unreal/greybox_wet.py); 0 dry
 	void SetWet(float Dark, float Sheen, float Puddles, float Ripples, float Snow = 0.f);   // Snow: lying snow (WLD-070)
+	// where a roof is overhead (BrixRoofMap): M_Greybox's Roofs and RoofsAt, so the wet and the snow stop under it
+	UPROPERTY(Config) float RoofCell = 0.5f;          // m: the roof map's cells
+	UPROPERTY(Config) float RoofUnder = 0.25f;        // m: indoors is below the walls' top less this (a flat roof's top stays out)
+	UPROPERTY() TObjectPtr<class UTexture2D> RoofTex;
+	FLinearColor RoofAt = FLinearColor(0, 0, 0, 0);   // the map's corner (m) and one over its size (m)
+	void BuildRoofMap(const FBrixCity& City);
 	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> GlassMat;
 	// The windows lit by night (play.js windows()): a warm pane behind the glass of a share of each kind's windows, shown and
 	// glowing as the night comes (0 by day, 1 at night)
@@ -191,10 +201,11 @@ private:
 	// the slice's drawing calls (BrixStreets) laid as the town's own: boxes as instances, crowns as instances of the dome
 	// meshes, faces into the block's facet mesh, solids as unseen blockers
 	void Shapes(const TArray<FBrixShape>& S);
-	UStaticMesh* FacetMesh(const FString& MeshName, const TArray<FVector3f>& P, const TArray<FVector3f>& N, const TArray<FLinearColor>& C);
+	UStaticMesh* FacetMesh(const FString& MeshName, const TArray<FVector3f>& P, const TArray<FVector3f>& N, const TArray<FLinearColor>& C, const TArray<uint8>* Lawn = nullptr);
 	UInstancedStaticMeshComponent* DomeGroup(int32 Variant);
-	struct FFacets { TArray<FVector3f> P, N; TArray<FLinearColor> C; TArray<int32> Owner; };   // Owner: a face's breakable, or INDEX_NONE
-	void Facet(const FVector3d& A, const FVector3d& B, const FVector3d& C, const FVector3d& Hint, const FVector3d& Col);
+	struct FFacets { TArray<FVector3f> P, N; TArray<FLinearColor> C; TArray<int32> Owner; TArray<uint8> Lawn; };   // Owner: a face's breakable, or INDEX_NONE; Lawn: 1 on a lawn's face
+	void Facet(const FVector3d& A, const FVector3d& B, const FVector3d& C, const FVector3d& Hint, const FVector3d& Col, bool bLawn = false);
+	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> LawnMat;   // /Game/Greybox/M_Lawn (Tools/unreal/make_lawn_material.py) with today's lawn numbers
 	TMap<int32, FFacets> Facets;        // by block (and by block square for the trees and the road network: TreeKey, RoadKey)
 	struct FKeptFacets { FFacets F; UStaticMeshComponent* C = nullptr; int32 Made = 0; };
 	TMap<int32, FKeptFacets> KeptFacets;   // the facet meshes with faces of things a car can break, to make again without them
@@ -234,6 +245,11 @@ private:
 	int32 Hollow = 0;
 	TMap<UInstancedStaticMeshComponent*, FPending> Pending;   // instances gathered per group, added in one go
 	FBrixBreakable* Wrapping = nullptr; // the breakable being built: Add() notes its instances (smash.js wrap())
+	TArray<FBrixBreakable::FPart>* Recording = nullptr;   // the building being built: Add() notes its instances (to repaint it)
+	TMap<int32, TArray<FBrixBreakable::FPart>> LotParts;   // each building's instances, by lot
+	TMap<int32, TSharedPtr<FJsonObject>> DesignOver;       // a building drawn from a design other than inside.json's (a remodel)
+	const FBrixCity* KeptCity = nullptr;                   // the city built, for drawing a building again
+	int32 FlushPending();
 	void Wrap(const FString& Kind, const FVector2D& Pos, float Ground, TFunctionRef<void()> Fn);
 	const FBrixCity* CityData = nullptr;
 	int32 Buildings = 0, Openings = 0;

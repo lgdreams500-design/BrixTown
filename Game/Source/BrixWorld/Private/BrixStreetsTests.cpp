@@ -203,6 +203,7 @@ bool FWLD032_ChildrenPlay::RunTest(const FString&)
 			if (P.Set != TEXT("dress")) continue;
 			TArray<FBrixShape> Got;
 			const double G = GroundAt(B, P).Here;
+			if (P.Kind == TEXT("noticeboard") || P.Kind == TEXT("kiosk")) Play.AddPiece(P, G);   // (where readers turn to)
 			if (!BrixDressShapes(P, B, G, C.Today, Got) || !(P.Kind == TEXT("playground") || P.Kind == TEXT("swing") || P.Kind == TEXT("slide") || P.Kind == TEXT("seesaw") || P.Kind == TEXT("sandpit") || P.Kind == TEXT("climber"))) continue;
 			++Pieces;
 			const TSharedPtr<FJsonObject>* W = nullptr;
@@ -264,6 +265,42 @@ bool FWLD032_ChildrenPlay::RunTest(const FString&)
 		Play.KeepOut(x, z);
 		if ((FMath::Abs(x - R[2]->AsNumber()) > 1e-9 || FMath::Abs(z - R[3]->AsNumber()) > 1e-9) && ++Bad <= 12) AddError(FString::Printf(TEXT("kept out to %.3f, %.3f; the slice %.3f, %.3f"), x, z, R[2]->AsNumber(), R[3]->AsNumber()));
 	}
+	// readers at a notice board or the kiosk face it, as apply() turns them (F-MAP-DRESS 2)
+	int32 Turned = 0;
+	for (const TSharedPtr<FJsonValue>& K : C.Values->GetArrayField(TEXT("read")))
+	{
+		const TArray<TSharedPtr<FJsonValue>>& R = K->AsArray();
+		double Yaw = 99;
+		Play.FaceBoard(R[0]->AsNumber(), R[1]->AsNumber(), Yaw);
+		Turned += Yaw != 99;
+		if (FMath::Abs(Yaw - R[3]->AsNumber()) > 1e-9 && ++Bad <= 12) AddError(FString::Printf(TEXT("a reader at %.1f, %.1f faces %.4f; the slice %.4f"), R[0]->AsNumber(), R[1]->AsNumber(), Yaw, R[3]->AsNumber()));
+	}
+	TestTrue(TEXT("readers turn to the boards and kiosks"), Turned > 20);
+	// WLD-041: the player's places and their go at each, as playerAt() and playerOff() have them
+	const TArray<TSharedPtr<FJsonValue>>& Pl = C.Values->GetArrayField(TEXT("player"));
+	if (TestEqual(TEXT("places for the player to have a go (48 when written)"), Play.PlayerUses.Num(), Pl.Num()))
+		for (int32 u = 0; u < Pl.Num(); ++u)
+		{
+			const TArray<TSharedPtr<FJsonValue>>& R = Pl[u]->AsArray();
+			const FBrixPlay::FPlayerUse& Us = Play.PlayerUses[u];
+			auto Near = [](double a, const TSharedPtr<FJsonValue>& b) { return FMath::Abs(a - b->AsNumber()) < 1e-9; };
+			if ((!Near(Us.X, R[0]) || !Near(Us.Z, R[1]) || !Near(Us.Y, R[2]) || !Near(Us.Yaw, R[3]) || Us.Label != R[4]->AsString()) && ++Bad <= 12) { AddError(FString::Printf(TEXT("place %d (%s) is not where the slice has it"), u, *Us.Label)); continue; }
+			static const double At[8] = { .2, 1.1, 2.0, 2.9, 3.4, 4.1, 5.6, 9.3 };
+			const TArray<TSharedPtr<FJsonValue>>& Go = R[5]->AsArray();
+			for (int32 j = 0; j < 8; ++j)
+			{
+				const FBrixPlayPose O = Play.PlayerAt(u, 10, 10 + At[j]);
+				const TArray<TSharedPtr<FJsonValue>>& W = Go[j]->AsArray();
+				bool bOk = Near(O.X, W[0]) && Near(O.Z, W[1]) && Near(O.Y, W[2]) && Near(O.Yaw, W[3]) && O.Pose == (int32)W[4]->AsNumber() && O.bDone == W[6]->AsBool()
+					&& (W[5]->IsNull() || Near(O.Phase, W[5])) && O.bClimb == (W[7]->Type == EJson::String) && O.bStraddle == (W[8]->AsNumber() != 0);
+				if (W[9]->Type == EJson::Array) for (int32 a = 0; a < 2; ++a) { const TArray<TSharedPtr<FJsonValue>>& Ar = W[9]->AsArray()[a]->AsArray(); bOk &= O.Arms[a].IsSet(); if (O.Arms[a]) for (int32 q = 0; q < 4; ++q) bOk &= Near((*O.Arms[a])[q], Ar[q]); }
+				else bOk &= !O.Arms[0] && !O.Arms[1];
+				if (!bOk && ++Bad <= 12) AddError(FString::Printf(TEXT("place %d (%s), %.1f s into a go: at %.3f, %.3f, %.3f pose %d; the slice %.3f, %.3f, %.3f pose %d"), u, *Us.Label, At[j], O.X, O.Z, O.Y, O.Pose,
+					W[0]->AsNumber(), W[1]->AsNumber(), W[2]->AsNumber(), (int32)W[4]->AsNumber()));
+			}
+			const FVector2D Off = Play.PlayerOff(u);
+			if ((!Near(Off.X, R[6]->AsArray()[0]) || !Near(Off.Y, R[6]->AsArray()[1])) && ++Bad <= 12) AddError(FString::Printf(TEXT("place %d steps off elsewhere than the slice"), u));
+		}
 	TestEqual(TEXT("played otherwise than in the slice"), Bad, 0);
 	return true;
 }
@@ -429,6 +466,47 @@ bool FCITY043_Roads::RunTest(const FString&)
 	TestEqual(TEXT("phases otherwise than the slice's"), Wrong, 0);
 	TestTrue(TEXT("lights go green"), Greens > 1000);
 	TestEqual(TEXT("drawn otherwise than in the slice"), Bad, 0);
+	return true;
+}
+
+// CITY-017, ART-001: a lawn is drawn in its own pattern, the slice's material 24 (play.js lawn(): every world.flat of it is
+// material 24, its grass and its longer edge; the tufts are plain faces), with vegetation.json "lawn"'s numbers
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY017_LawnsHaveTheirPattern, "BrixTown.World.CITY017_lawns_are_drawn_in_their_own_pattern",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FCITY017_LawnsHaveTheirPattern::RunTest(const FString&)
+{
+	FStreetsCase C;
+	if (!Load(*this, C)) return false;
+	FString Text;
+	TSharedPtr<FJsonObject> Veg;
+	if (!TestTrue(TEXT("vegetation.json reads"), FFileHelper::LoadFileToString(Text, *Root(TEXT("../World/rules/vegetation.json"))) && FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Veg) && Veg.IsValid())) return false;
+	const TSharedPtr<FJsonObject> L = Veg->GetObjectField(TEXT("lawn"));
+	TestEqual(TEXT("the patches' size"), C.Today.PatchM, L->GetNumberField(TEXT("patch_m")));
+	TestEqual(TEXT("the mowing stripes' width"), C.Today.StripeM, L->GetNumberField(TEXT("stripe_m")));
+	TestEqual(TEXT("the stripes' strength"), C.Today.Stripe, L->GetNumberField(TEXT("stripe")));
+	TestEqual(TEXT("the clover"), C.Today.Clover, L->GetNumberField(TEXT("clover")));
+	TestEqual(TEXT("the daisies"), C.Today.Daisies, L->GetNumberField(TEXT("daisies")));
+	TestEqual(TEXT("the daisies' colour"), C.Today.DaisyColor.X, L->GetArrayField(TEXT("daisy_color"))[0]->AsNumber());
+	TestEqual(TEXT("three tones"), C.Today.LawnTones.Num(), 3);
+	int32 Lawns = 0, Flats = 0, Wrong = 0;
+	for (const FBrixBlock& B : C.City.Blocks)
+		for (const FBrixLot& Lot : B.Lots)
+		{
+			if (!Lot.IsOpen() || Lot.Kind != TEXT("garden")) continue;
+			++Lawns;
+			TArray<FBrixShape> S;
+			BrixLawnShapes(Lot.Min.X, Lot.Min.Y, Lot.Max.X, Lot.Max.Y, .14, BrixSlice::Grass * 1.08, B, true, C.Today, S);
+			for (const FBrixShape& Sh : S)
+			{
+				const bool bFlat = Sh.Kind == FBrixShape::Flat;
+				Flats += bFlat ? 1 : 0;
+				Wrong += bFlat != Sh.bLawn ? 1 : 0;
+			}
+		}
+	AddInfo(FString::Printf(TEXT("%d garden lawns, %d faces in the lawn's pattern"), Lawns, Flats));
+	TestTrue(TEXT("there are garden lawns"), Lawns > 20);
+	TestEqual(TEXT("each lawn's grass and four edge bands"), Flats, Lawns * 5);
+	TestEqual(TEXT("faces in the lawn's pattern that are not the lawn, or lawn that is not"), Wrong, 0);
 	return true;
 }
 

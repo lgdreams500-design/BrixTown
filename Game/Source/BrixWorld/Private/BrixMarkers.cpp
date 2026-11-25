@@ -75,6 +75,8 @@ bool ParseBrixMarkers(const TSharedPtr<FJsonObject>& J, FBrixMarkerRules& Out, F
 		Out.Kinds.Add(MkKey(K.Key), M);
 	}
 	for (const auto& P : (*Places)->Values) Out.PlaceKinds.Add(MkKey(P.Key), P.Value->AsString());
+	J->TryGetStringField(TEXT("have_words"), Out.HaveWords);
+	J->TryGetNumberField(TEXT("have_shops"), Out.HaveShops);
 	for (const auto& S : (*Signs)->Values)
 	{
 		const TSharedPtr<FJsonObject> O = S.Value->AsObject();
@@ -159,6 +161,8 @@ TArray<FString> BrixMarkerProblems(const TSharedPtr<FJsonObject>& J, const TSet<
 		if (LotKinds.Num() && !LotKinds.Contains(P.Key)) Out.Add(TEXT("markers: place kind ") + P.Key + TEXT(" is not a kind of lot"));
 		if (!R.Kinds.Contains(P.Value)) Out.Add(TEXT("markers: place kind ") + P.Key + TEXT(" points at no marker kind ") + P.Value);
 	}
+	if (R.HaveShops < 1 || R.HaveShops > 10) Out.Add(TEXT("markers: have_shops is how many of the nearest shops to mark, 1 to 10"));
+	if (!R.HaveWords.Contains(TEXT("{item}"))) Out.Add(TEXT("markers: have_words must say {item}"));
 	if (!(0 < R.NearM && R.NearM < R.TokenM && R.TokenM < R.SparkM)) Out.Add(TEXT("markers: near_m < token_m < spark_m"));
 	if (!(0 < R.FadeM && R.FadeM < R.TokenM && 0 < R.PlaceM && R.PlaceM <= R.TokenM)) Out.Add(TEXT("markers: fade_m and place_m within token_m"));
 	if (!(0 < R.SparkPx && R.SparkPx < R.TokenPx && R.TokenPx <= R.TokenNearPx)) Out.Add(TEXT("markers: spark_px < token_px <= token_near_px"));
@@ -170,4 +174,14 @@ FString BrixMarkerKindFor(const FBrixMapTarget& T, const FBrixMarkerRules& R, co
 	if (T.Kind == TEXT("go") && T.Lot >= 0)
 		if (const FString* P = R.PlaceKinds.Find(LotKind)) return *P;
 	return T.Kind.IsEmpty() ? FString(TEXT("go")) : T.Kind;
+}
+
+void BrixKeepNearestShops(TArray<FBrixMapTarget>& Targets, const FBrixMarkerRules& R, const FVector2D& Player, TFunctionRef<FVector2D(int32)> Where)
+{
+	TArray<FBrixMapTarget> Kept, Shops;
+	for (const FBrixMapTarget& T : Targets) (T.Item.IsEmpty() ? Kept : Shops).Add(T);
+	Shops.StableSort([&](const FBrixMapTarget& A, const FBrixMapTarget& B) { return FVector2D::DistSquared(Where(A.Lot), Player) < FVector2D::DistSquared(Where(B.Lot), Player); });
+	TMap<FString, int32> Taken;
+	for (const FBrixMapTarget& T : Shops) if (Taken.FindOrAdd(T.Item)++ < R.HaveShops) Kept.Add(T);
+	Targets = MoveTemp(Kept);
 }

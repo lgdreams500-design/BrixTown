@@ -39,6 +39,7 @@ const TCHAR* FBrixPlay::UseName(int32 U)
 void FBrixPlay::AddPiece(const FBrixProp& P, double G)
 {
 	const int32 U = P.Kind == TEXT("swing") ? Swing : P.Kind == TEXT("slide") ? Slide : P.Kind == TEXT("seesaw") ? Seesaw : P.Kind == TEXT("sandpit") ? Sandpit : P.Kind == TEXT("climber") ? Climb : -1;
+	if (P.Kind == TEXT("noticeboard") || P.Kind == TEXT("kiosk")) Boards.Add(P.Pos);
 	if (U < 0) return;
 	FPiece& Pc = Pieces.AddDefaulted_GetRef();
 	Pc.Id = P.Id; Pc.Use = U; Pc.X = P.Pos.X; Pc.Z = P.Pos.Y; Pc.G = G;
@@ -71,6 +72,110 @@ void FBrixPlay::Init(const FBrixCity& City)
 			Grid.FindOrAdd(FIntPoint((int32)FMath::FloorToDouble(s.X), (int32)FMath::FloorToDouble(s.Y))).Add(n);
 		}
 	}
+	// the player can have a go too (WLD-041, F-OBJ-POINTS 1: residents and players share the places): the slice's bySpot,
+	// a spot by its fifth of a metre (the last at a place wins, in the order the first came)
+	TArray<FString> Order;
+	TMap<FString, int32> BySpot;
+	for (int32 n = 0; n < Spots.Num(); ++n) { const FString K = Key(Spots[n].X, Spots[n].Z); if (!BySpot.Contains(K)) Order.Add(K); BySpot.Add(K, n); }
+	static const TCHAR* Label[NumUses] = { TEXT("Have a go on the swing"), TEXT("Go down the slide"), TEXT("Sit on the seesaw"), TEXT("Play in the sandpit"), TEXT("Climb the frame") };
+	TSet<FString> Once;
+	PlayerUses.Reset();
+	for (const FString& K : Order)
+	{
+		const int32 n = BySpot[K];
+		const FSpot& sp = Spots[n];
+		const FPiece& pc = Pieces[sp.Piece];
+		const int32 u = sp.Use;
+		if ((u == Slide || u == Climb) && Once.Contains(pc.Id)) continue;
+		if (u == Sandpit) { int32 Had = 0; for (const FString& O : Once) Had += O.StartsWith(pc.Id + TEXT("#")); if (Had >= 2) continue; }
+		Once.Add(u == Sandpit ? pc.Id + TEXT("#") + Nn(sp.K) : pc.Id);
+		FPlayerUse& Us = PlayerUses.AddDefaulted_GetRef();
+		Us.Spot = n; Us.X = sp.X; Us.Z = sp.Z; Us.Y = pc.G; Us.Label = Label[u];
+		if (u == Swing) { Us.X = pc.X + (sp.K - (pc.N - 1) / 2.0) * 1.1; Us.Z = pc.Z + .75; Us.Yaw = YawOf(0, -1); }
+		else if (u == Seesaw) { Us.X = pc.X + (sp.X < pc.X ? -1 : 1) * 1.6; Us.Z = pc.Z + .7; Us.Yaw = YawOf(0, -1); }
+		else if (u == Slide) { Us.X = pc.X - 2.35; Us.Z = pc.Z; Us.Yaw = YawOf(1, 0); }
+		else if (u == Climb) { Us.X = pc.X + 1.45; Us.Z = pc.Z; Us.Yaw = YawOf(-1, 0); }
+	}
+}
+
+bool FBrixPlay::SlideAt(const FPiece& pc, double e, double c, double dn, FBrixPlayPose& O) const
+{
+	const double x = pc.X, z = pc.Z, g = pc.G;
+	O.Z = z; O.Yaw = YawOf(1, 0);
+	if (e < c) { const double q = e / c, ph = std::fmod(q * 5, 1.0); O.X = x + Ladder; O.Y = g + q * 1.5; O.Pose = 1; O.Phase = ph; O.bClimb = true; Reach(O, ph, 150); return true; }
+	e -= c;
+	if (e < .45) { const double q = e / .45; O.X = Mix(x + Ladder, x - 1.55, q); O.Y = g + Mix(1.5, Deck, FMath::Min(1.0, q * 2)); O.Pose = 1; O.Phase = q * .5; return true; }
+	e -= .45;
+	if (e < SlideTopS - .45) { O.X = x - 1.3; O.Y = g + Deck; O.Pose = 2; return true; }
+	e -= SlideTopS - .45;
+	if (e < dn)
+	{
+		const double q = e / dn, px = Mix(x - 1.3, x + 2.1, q * q), a = x - 1.15, b = x + 2.1;
+		O.X = px; O.Y = px <= a ? g + Deck : g + Mix(1.55, .32, FMath::Min(1.0, (px - a) / (b - a))) + .05; O.Pose = 2;
+		return true;
+	}
+	return false;
+}
+
+void FBrixPlay::FrameAt(const FPiece& pc, int32 face, double lat, double u, FBrixPlayPose& O) const
+{
+	const double tx = -Faces[face][1], tz = Faces[face][0], nx = Faces[face][0], nz = Faces[face][1], dd = FrameH + Outside, g = pc.G;
+	O.X = pc.X + nx * dd + tx * lat; O.Z = pc.Z + nz * dd + tz * lat; O.Yaw = YawOf(-nx, -nz);
+	if (u < .3) { const double q = u / .3, ph = std::fmod(q * 4, 1.0); O.Y = g + q * 1.1; O.Pose = 1; O.Phase = ph; O.bClimb = true; Reach(O, ph, 150); }
+	else if (u < .6) { O.Y = g + 1.1; O.Pose = 0; O.Arms[0] = FVector4d(1, 45, 12, 15); O.Arms[1] = FVector4d(1, 45, 12, 15); }   // feet on the middle bar, hands on the top one
+	else if (u < .85) { const double q = (u - .6) / .25, ph = std::fmod((1 - q) * 4, 1.0); O.Y = g + (1 - q) * 1.1; O.Pose = 1; O.Phase = ph; O.bClimb = true; Reach(O, ph, 150); }
+	else { O.Y = g; O.Pose = 0; }
+}
+
+FBrixPlayPose FBrixPlay::PlayerAt(int32 Use, double T0, double T)
+{
+	FBrixPlayPose O;
+	if (!PlayerUses.IsValidIndex(Use)) { O.bDone = true; return O; }
+	const FSpot& sp = Spots[PlayerUses[Use].Spot];
+	const FPiece& pc = Pieces[sp.Piece];
+	const double g = pc.G, e = T - T0;
+	Busy.Add(pc.Id); Busy.Add(pc.Id + TEXT(":") + Nn(sp.K));
+	if (sp.Use == Swing)   // still at first, swinging higher as they pump
+	{
+		const double th = SwingAngle(pc, sp.K, T) * FMath::Min(1.0, e / Motion.PlayerSwingBuildS);
+		SwingOf.Add(pc.Id + TEXT(":") + Nn(sp.K), th);
+		O.X = pc.X + (sp.K - (pc.N - 1) / 2.0) * 1.1; O.Z = pc.Z + FMath::Sin(th) * SwingL; O.Y = g + 2.36 - FMath::Cos(th) * SwingL + SeatTop; O.Yaw = YawOf(0, 1); O.Pose = 2;
+		return O;
+	}
+	if (sp.Use == Seesaw)
+	{
+		const double s = sp.X < pc.X ? -1 : 1, phi = SeesawAngle(pc, T);
+		O.X = pc.X + s * 1.6 * FMath::Cos(phi); O.Z = pc.Z; O.Y = g + .52 + s * 1.6 * FMath::Sin(phi) + PlankTop; O.Yaw = YawOf(-s, 0); O.Pose = 2; O.bStraddle = true;
+		return O;
+	}
+	if (sp.Use == Slide)   // up the ladder, down the chute, off at the bottom: one go
+	{
+		if (!SlideAt(pc, e, Motion.PlayerSlideClimbS, Motion.PlayerSlideDownS, O)) { O = FBrixPlayPose(); O.X = pc.X + SlideOff; O.Z = pc.Z; O.Y = g; O.Yaw = YawOf(1, 0); O.bDone = true; }
+		return O;
+	}
+	if (sp.Use == Sandpit) { O.X = sp.X; O.Z = sp.Z; O.Y = g + .3; O.Yaw = YawOf(pc.X - sp.X, pc.Z - sp.Z); O.Pose = 2; return O; }
+	if (sp.Use == Climb) { FrameAt(pc, 1, -.45, std::fmod(e / Motion.PlayerClimbCycleS, 1.0), O); return O; }   // up and down the side the place is on
+	O.X = sp.X; O.Z = sp.Z; O.Y = g; O.bDone = true;
+	return O;
+}
+
+FVector2D FBrixPlay::PlayerOff(int32 Use) const
+{
+	if (!PlayerUses.IsValidIndex(Use)) return FVector2D::ZeroVector;
+	const FSpot& sp = Spots[PlayerUses[Use].Spot];
+	const FPiece& pc = Pieces[sp.Piece];
+	if (sp.Use == Swing) return FVector2D(pc.X + (sp.K - (pc.N - 1) / 2.0) * 1.1, pc.Z + 1.1);
+	if (sp.Use == Seesaw) return FVector2D(pc.X + (sp.X < pc.X ? -1 : 1) * 1.6, pc.Z + .8);
+	if (sp.Use == Slide) return FVector2D(pc.X - 2.35, pc.Z);
+	if (sp.Use == Climb) return FVector2D(pc.X + 1.45, pc.Z);
+	return FVector2D(sp.X, sp.Z + .9);
+}
+
+bool FBrixPlay::Taken(int32 Use) const
+{
+	if (!PlayerUses.IsValidIndex(Use)) return true;
+	const FSpot& sp = Spots[PlayerUses[Use].Spot];
+	return sp.Use != Slide && sp.Use != Climb && TakenKeys.Contains(Key(sp.X, sp.Z));
 }
 
 const FBrixPlay::FSpot* FBrixPlay::SpotAt(double X, double Z) const
@@ -129,21 +234,9 @@ bool FBrixPlay::Apply(int32 i, int32 Use, double X, double Z, double T, double S
 	if (pc.Use == Slide)   // up the ladder, down the chute, round the back to the ladder again
 	{
 		const double Tc = Motion.SlideCycleS, e0 = std::fmod((T / Tc) + sp->K / 4.0 + H({ Nn(i), TEXT("sl") }) * .1, 1.0) * Tc, c = .26 * Tc, dn = .14 * Tc;
-		const double x = pc.X, z = pc.Z, f = YawOf(1, 0);
-		double e = e0;
-		O.Z = z; O.Yaw = f;
-		if (e < c) { const double q = e / c, ph = std::fmod(q * 5, 1.0); O.X = x + Ladder; O.Y = g + q * 1.5; O.Pose = 1; O.Phase = ph; O.bClimb = true; Reach(O, ph, 150); return true; }
-		e -= c;
-		if (e < .45) { const double q = e / .45; O.X = Mix(x + Ladder, x - 1.55, q); O.Y = g + Mix(1.5, Deck, FMath::Min(1.0, q * 2)); O.Pose = 1; O.Phase = q * .5; return true; }
-		e -= .45;
-		if (e < SlideTopS - .45) { O.X = x - 1.3; O.Y = g + Deck; O.Pose = 2; return true; }
-		e -= SlideTopS - .45;
-		if (e < dn)
-		{
-			const double q = e / dn, px = Mix(x - 1.3, x + 2.1, q * q), a = x - 1.15, b = x + 2.1;
-			O.X = px; O.Y = px <= a ? g + Deck : g + Mix(1.55, .32, FMath::Min(1.0, (px - a) / (b - a))) + .05; O.Pose = 2;
-			return true;
-		}
+		const double x = pc.X, z = pc.Z;
+		if (SlideAt(pc, e0, c, dn, O)) return true;
+		O.Z = z; O.Yaw = YawOf(1, 0);
 		const double e2 = e0 - (c + SlideTopS + dn);
 		if (e2 < .5) { O.X = x + SlideOff; O.Y = g; O.Pose = 0; return true; }
 		// walking back round
@@ -162,14 +255,9 @@ bool FBrixPlay::Apply(int32 i, int32 Use, double X, double Z, double T, double S
 	if (pc.Use == Climb)   // on the outside of the frame, each child on their own side: up, a look over the top, down, a rest
 	{
 		const int32 face = sp->K % 4;
-		const double tx = -Faces[face][1], tz = Faces[face][0], nx = Faces[face][0], nz = Faces[face][1];
+		const double tx = -Faces[face][1], tz = Faces[face][0];
 		const double lat = FMath::Clamp((sp->X - pc.X) * tx + (sp->Z - pc.Z) * tz, -.6, .6), u = std::fmod((T / Motion.ClimbCycleS) + H({ Nn(i), TEXT("cl") }), 1.0);
-		const double dd = FrameH + Outside;
-		O.X = pc.X + nx * dd + tx * lat; O.Z = pc.Z + nz * dd + tz * lat; O.Yaw = YawOf(-nx, -nz);
-		if (u < .3) { const double q = u / .3, ph = std::fmod(q * 4, 1.0); O.Y = g + q * 1.1; O.Pose = 1; O.Phase = ph; O.bClimb = true; Reach(O, ph, 150); }
-		else if (u < .6) { O.Y = g + 1.1; O.Pose = 0; O.Arms[0] = FVector4d(1, 45, 12, 15); O.Arms[1] = FVector4d(1, 45, 12, 15); }   // feet on the middle bar, hands on the top one
-		else if (u < .85) { const double q = (u - .6) / .25, ph = std::fmod((1 - q) * 4, 1.0); O.Y = g + (1 - q) * 1.1; O.Pose = 1; O.Phase = ph; O.bClimb = true; Reach(O, ph, 150); }
-		else { O.Y = g; O.Pose = 0; }
+		FrameAt(pc, face, lat, u, O);
 		return true;
 	}
 	return false;
@@ -199,7 +287,8 @@ void FBrixPlay::Draw(double EyeX, double EyeZ, double T, TArray<FBrixShape>& Out
 			for (int32 k = 0; k < pc.N; ++k)
 			{
 				const bool on = Busy.Contains(pc.Id + TEXT(":") + Nn(k));
-				const double th = on ? SwingAngle(pc, k, T) : .04 * FMath::Sin(T * .9 + k), a = pc.X + (k - (pc.N - 1) / 2.0) * 1.1;
+				const double* Own = SwingOf.Find(pc.Id + TEXT(":") + Nn(k));
+				const double th = Own ? *Own : on ? SwingAngle(pc, k, T) : .04 * FMath::Sin(T * .9 + k), a = pc.X + (k - (pc.N - 1) / 2.0) * 1.1;
 				const FBrixM4 m = FBrixM4::T(a, pc.G + 2.36, pc.Z) * FBrixM4::Rx(-th);   // swings the seat towards +z as th grows
 				for (const double s : { -.2, .2 }) BrixOBox(Out, m, s, -.9, 0, .02, 1.8, .02, Iron);
 				BrixOBox(Out, m, 0, -1.84, 0, .48, .05, .2, FVector3d(.18, .14, .1));
@@ -212,7 +301,9 @@ void FBrixPlay::Draw(double EyeX, double EyeZ, double T, TArray<FBrixShape>& Out
 			for (const double s : { -1.45, 1.45 }) { BrixOBox(Out, m, s, .2, 0, .05, .35, .05, Iron); BrixOBox(Out, m, s, .38, 0, .05, .05, .4, Iron); }
 		}
 	}
+	TakenKeys = MoveTemp(Busy);
 	Busy.Reset();
+	SwingOf.Reset();
 }
 
 bool LoadBrixPlayMotion(const FString& File, FBrixPlayMotion& Out, FString& OutError)
@@ -226,6 +317,8 @@ bool LoadBrixPlayMotion(const FString& File, FBrixPlayMotion& Out, FString& OutE
 	(*M)->TryGetNumberField(TEXT("swing_period_s"), Out.SwingPeriodS); (*M)->TryGetNumberField(TEXT("swing_angle_deg"), Out.SwingAngleDeg);
 	(*M)->TryGetNumberField(TEXT("seesaw_period_s"), Out.SeesawPeriodS); (*M)->TryGetNumberField(TEXT("seesaw_angle_deg"), Out.SeesawAngleDeg);
 	(*M)->TryGetNumberField(TEXT("slide_cycle_s"), Out.SlideCycleS); (*M)->TryGetNumberField(TEXT("climb_cycle_s"), Out.ClimbCycleS);
+	(*M)->TryGetNumberField(TEXT("player_swing_build_s"), Out.PlayerSwingBuildS); (*M)->TryGetNumberField(TEXT("player_slide_climb_s"), Out.PlayerSlideClimbS);
+	(*M)->TryGetNumberField(TEXT("player_slide_down_s"), Out.PlayerSlideDownS); (*M)->TryGetNumberField(TEXT("player_climb_cycle_s"), Out.PlayerClimbCycleS);
 	return true;
 }
 
@@ -236,4 +329,14 @@ void BrixAddClimbSignature(FBrixPeopleRules& Rules)
 	S.Stride = .14; S.Duty = .5; S.Fore = .5; S.Bounce = 0; S.Sway = 0; S.HipYaw = 0; S.HipRoll = 0; S.Counter = 0;
 	S.Lift = .24; S.Lean = 3; S.HeadPitch = -12; S.HeadBob = 0; S.ToeOut = 3; S.Width = .8;
 	Rules.Signatures.Add(TEXT("Climb"), S);
+}
+
+bool FBrixPlay::FaceBoard(double X, double Z, double& Yaw) const
+{
+	const FVector2D* Best = nullptr;
+	double Bd = 6;
+	for (const FVector2D& Q : Boards) { const double d = FMath::Sqrt(FMath::Square(Q.X - X) + FMath::Square(Q.Y - Z)); if (d < Bd) { Bd = d; Best = &Q; } }
+	if (!Best) return false;
+	Yaw = YawOf(Best->X - X, Best->Y - Z);
+	return true;
 }

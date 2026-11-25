@@ -40,8 +40,12 @@ struct BRIXWORLD_API FBrixMapExtras
 	TArray<FBrixMapLine> Links;                               // roads.json links: out to the new areas
 	TArray<TPair<FVector2D, FVector2D>> Gates;                // the roads out of Old Town: from the gate's junction to its end
 	TArray<FBrixMapBlock> Blocks;                             // in the city's block order
-};
+	TArray<FVector3d> Trees;                                  // today's standing trees (the slice's D.trees): x, z, crown radius;
+};                                                            // empty: the city's trees at the one TreeRadius
 BRIXWORLD_API bool LoadBrixMapExtras(const FString& CityDir, const FBrixCity& City, FBrixMapExtras& Out, FString& OutError);
+
+// today's trees for the map: every standing tree of Game/Data/streets.json with its crown's radius (fallen ones are left off)
+BRIXWORLD_API void BrixMapTreesToday(const TArray<struct FBrixTreeToday>& Trees, FBrixMapExtras& X);
 
 // The map as a picture N pixels square (the slice's 900 and its 2700 three times as fine): K pixels a metre, O metres of
 // margin, pixel = (world + O) * K. Colours are the slice's (play.js KIND_CSS, MAP_GREEN, MAP_CROP).
@@ -87,11 +91,12 @@ struct BRIXWORLD_API FBrixMark
 // The people and places a quest or a job wants now (life.js targets(); QST-005): a resident to see (Resident >= 0, Offer
 // when they have a quest line to give), or a lot to go to, or a place. Kind says what for, for its marker (BrixMarkers.h):
 // "offer", "talk", "handin" (going back to someone the line started with, or to its giver), "job", "go", "bank", "stall".
+// A step or a job that needs the player to have something marks every shop with it in stock today (Item says what).
 struct BRIXWORLD_API FBrixMapTarget
 {
 	int32 Resident = -1, Lot = -1;
 	FVector2D Pos = FVector2D::ZeroVector;
 	bool bOffer = false;
-	FString Kind;
+	FString Kind, Item;
 };
 BRIXWORLD_API TArray<FBrixMapTarget> BrixQuestTargets(const FBrixQuests& Q, const FBrixQuestRules& Rules, const FBrixEconomy& E);

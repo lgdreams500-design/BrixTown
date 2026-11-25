@@ -1,15 +1,19 @@
 #include "BrixRooms.h"
 
+#include "BrixLight.h"
+
 #include "BrixCity.h"
 #include "BrixFurnish.h"
 #include "BrixGameMode.h"
 #include "BrixHomes.h"
+#include "BrixFurnishPlan.h"
 #include "BrixInside.h"
 #include "BrixTownActor.h"
 #include "BrixUnits.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/PointLightComponent.h"
+#include "Components/SpotLightComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -150,7 +154,7 @@ void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTown
 					for (const FBrixPartition& Pw : BrixFlatWalls(L, In, f, Ins.Rules))
 					{
 						FBrixWallSeg W;
-						W.Floor = f; W.bDoorway = Pw.bDoorway;
+						W.Floor = f; W.bDoorway = Pw.bDoorway; W.bPartition = true;
 						W.R.Centre = (Pw.Min + Pw.Max) * 0.5;
 						const FVector2D Sz = Pw.Max - Pw.Min;
 						W.R.Along = Sz.X >= Sz.Y ? FVector2D(1, 0) : FVector2D(0, 1);
@@ -250,8 +254,12 @@ void ABrixRooms::Tick(float DeltaSeconds)
 	const FVector2D Eye(Cam->GetCameraLocation().X / CmPerM, Cam->GetCameraLocation().Y / CmPerM);
 	if (TownRef)   // the windows lit by night, as the lamps light (ABrixLamps: night below NightBelow of the day's light)
 		if (const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))
-			TownRef->SetNight(FMath::SmoothStep(0.f, 1.f, FMath::Clamp(1.f - Mode->Daylight / FMath::Max(NightBelow, .01f), 0.f, 1.f)));
-	PlaceLights(Eye, (float)(Cam->GetCameraLocation().Z / CmPerM));
+		{
+			const UBrixLight* Sight = GetWorld()->GetSubsystem<UBrixLight>();   // and already as the sun gets low, as the lamps
+			TownRef->SetNight(FMath::Max(Sight ? Sight->LowSun() : 0.f, FMath::SmoothStep(0.f, 1.f, FMath::Clamp(1.f - Mode->Daylight / FMath::Max(NightBelow, .01f), 0.f, 1.f))));
+		}
+	const ABrixGameMode* LightMode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	PlaceLights(Eye, (float)(Cam->GetCameraLocation().Z / CmPerM), LightMode ? LightMode->Daylight : 1.f);
 	TSet<int32> Want;
 	for (int32 i = 0; i < Homes.Num(); ++i)
 		if (FVector2D::Distance(Eye, Homes[i].Centre) - Homes[i].Reach < NearMetres) Want.Add(i);
@@ -279,6 +287,78 @@ void ABrixRooms::Tick(float DeltaSeconds)
 	CamFloor = OnFloor;
 	Rebuild();
 }
+
+bool ABrixRooms::SetPlan(int32 Lot, int32 Floor, const TArray<FBrixPartition>& Segs, const TArray<TOptional<FVector3f>>& Colours)
+{
+	FLotHome* LH = Homes.FindByPredicate([Lot](const FLotHome& X) { return X.Lot == Lot; });
+	if (!LH || !LH->Home) return false;
+	LH->Home->Walls.RemoveAll([Floor](const FBrixWallSeg& W) { return W.Floor == Floor && W.bPartition; });
+	for (int32 i = 0; i < Segs.Num(); ++i)
+	{
+		const FBrixPartition& Pw = Segs[i];
+		FBrixWallSeg W;
+		W.Floor = Floor; W.bDoorway = Pw.bDoorway; W.bPartition = true;
+		if (Colours.IsValidIndex(i)) W.Colour = Colours[i];
+		W.R.Centre = (Pw.Min + Pw.Max) * 0.5;
+		const FVector2D Sz = Pw.Max - Pw.Min;
+		W.R.Along = Sz.X >= Sz.Y ? FVector2D(1, 0) : FVector2D(0, 1);
+		W.R.Length = (float)FMath::Max(Sz.X, Sz.Y); W.R.Width = (float)FMath::Min(Sz.X, Sz.Y);
+		LH->Home->Walls.Add(W);
+	}
+	Near.Reset();   // drawn again at the next look round
+	Wait = 0.f;
+	return true;
+}
+
+bool ABrixRooms::TownLayout(int32 Lot, int32 Floor, TArray<FBrixLayoutPiece>& Out) const
+{
+	const FLotHome* LH = Homes.FindByPredicate([Lot](const FLotHome& X) { return X.Lot == Lot; });
+	if (!LH || !LH->Furn.IsValidIndex(Floor)) return false;
+	const FBrixFurnished* Orig = LH->TownFurn.Find(Floor);
+	Out = BrixFurnishPlan::TownPieces(Orig ? *Orig : LH->Furn[Floor]).Pieces;
+	return true;
+}
+
+bool ABrixRooms::SetLayout(int32 Lot, int32 Floor, const TArray<FBrixLayoutPiece>& Layout)
+{
+	FLotHome* LH = Homes.FindByPredicate([Lot](const FLotHome& X) { return X.Lot == Lot; });
+	if (!LH || !LH->Home || !LH->Furn.IsValidIndex(Floor)) return false;
+	if (!LH->TownFurn.Contains(Floor)) LH->TownFurn.Add(Floor, LH->Furn[Floor]);
+	const FBrixFurnished& Orig = LH->TownFurn[Floor];
+	const BrixFurnishPlan::FTown Town = BrixFurnishPlan::TownPieces(Orig);
+	FBrixFurnished& Now = LH->Furn[Floor];
+	BrixFurnishPlan::LayoutBoxes(Orig, Town, Layout, Now.Boxes);
+	Now.Solids.Reset();
+	LH->Home->Pieces.RemoveAll([Floor](const FBrixFurniturePiece& P) { return P.bLayout && P.Floor == Floor; });
+	for (const FBrixLayoutPiece& P : Layout)
+	{
+		const bool bTown = P.Kind == TEXT("town") && Town.Pieces.ContainsByPredicate([&](const FBrixLayoutPiece& X) { return X.Id == P.Id; });
+		if (!P.bRug)   // in the way: its footprint (homes.js one())
+		{
+			FBrixFurnSolid So;
+			So.Min = FVector2D(1e9, 1e9); So.Max = FVector2D(-1e9, -1e9);
+			for (const FVector2D& C : BrixFurnishPlan::Corners(P)) { So.Min = FVector2D::Min(So.Min, C); So.Max = FVector2D::Max(So.Max, C); }
+			So.Y0 = 0.f; So.Y1 = (float)P.H;
+			Now.Solids.Add(So);
+		}
+		if (bTown) continue;
+		const double Y = FMath::DegreesToRadians(P.Yaw), c = FMath::Cos(Y), s = FMath::Sin(Y);
+		FBrixFurniturePiece K;
+		K.Kind = P.Kind == TEXT("town") ? FString(TEXT("town")) : P.Kind;
+		K.Line = P.Line ? *P.Line : FString(TEXT("plain"));
+		K.Floor = Floor;
+		K.At = FVector2D(P.X, P.Z);
+		K.A = FVector2D(c, -s); K.B = FVector2D(s, c);
+		K.Size = FVector3f(P.W, P.D, P.H);
+		K.bLayout = true;
+		LH->Home->Pieces.Add(K);
+	}
+	Near.Reset();   // drawn again at the next look round
+	Wait = 0.f;
+	return true;
+}
+
+bool ABrixRooms::HasRooms(int32 Lot) const { return Homes.ContainsByPredicate([Lot](const FLotHome& X) { return X.Lot == Lot; }); }
 
 void ABrixRooms::Rebuild()
 {
@@ -342,8 +422,9 @@ void ABrixRooms::Rebuild()
 		{
 			if (Up(W.Floor) < 0.f) continue;
 			const float Floor0 = Up(W.Floor), Ceil0 = Ceil(W.Floor);
-			if (!W.bDoorway) { AddBox(BoxAt(W.R, Floor0, Ceil0), PartitionColour, Plaster, None); continue; }
-			AddBox(BoxAt(W.R, Floor0 + DoorHeight, Ceil0), PartitionColour, Plaster, None);
+			const FLinearColor Wc = W.Colour ? FLinearColor(W.Colour->X, W.Colour->Y, W.Colour->Z) : PartitionColour;
+			if (!W.bDoorway) { AddBox(BoxAt(W.R, Floor0, Ceil0), Wc, Plaster, None); continue; }
+			AddBox(BoxAt(W.R, Floor0 + DoorHeight, Ceil0), Wc, Plaster, None);
 			for (float E : { -W.R.Length / 2, W.R.Length / 2 })   // the doorway's frame: two posts and a lintel
 			{
 				FBrixRect Post = Part(W.R, E - 0.05f, E + 0.05f);
@@ -358,7 +439,15 @@ void ABrixRooms::Rebuild()
 		{
 			if (Up(P.Floor) < 0.f) continue;
 			const float Floor0 = Up(P.Floor);
-			UInstancedStaticMeshComponent* G = MeshGroup(TEXT("SM_") + P.Kind.Replace(TEXT(":"), TEXT("_")) + TEXT("_") + P.Line);
+			UInstancedStaticMeshComponent* G = P.Kind == TEXT("town") ? nullptr : MeshGroup(TEXT("SM_") + P.Kind.Replace(TEXT(":"), TEXT("_")) + TEXT("_") + P.Line);
+			if (!G && P.bLayout)   // a piece placed in the designer with no mesh of its own yet (a mall good, a town piece from elsewhere): a box its size
+			{
+				const float Yw = FMath::Atan2(-P.A.Y, P.A.X);
+				FurnAts.Add(FTransform(FQuat(FVector::UpVector, -Yw), FVector(P.At.X, P.At.Y, Floor0 + P.Size.Z / 2) * CmPerM, FVector(P.Size.X, P.Size.Y, P.Size.Z)));
+				FurnData.Add({ NoMeshColour.R, NoMeshColour.G, NoMeshColour.B, -1, 0, 0, 0, 0, 0, 0, 0, -Yw });
+				++Shown;
+				continue;
+			}
 			if (!G) continue;
 			// the kit's piece: x across it, its back toward +y in Blender, which the importer turns to -y
 			const FVector Org(P.At.X * CmPerM, P.At.Y * CmPerM, (Floor0 + P.Lift) * CmPerM);
@@ -385,27 +474,57 @@ void ABrixRooms::Rebuild()
 	Furn->MarkRenderStateDirty();
 }
 
-void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp)
+UPointLightComponent* ABrixRooms::MakeLamp(AActor* Owner, USceneComponent* Root, float Watts, float ConeDeg, bool bShadows)
+{
+	const ABrixRooms* D = GetDefault<ABrixRooms>();
+	UPointLightComponent* L = nullptr;
+	if (ConeDeg > 0.f)
+	{
+		USpotLightComponent* Sp = NewObject<USpotLightComponent>(Owner);
+		Sp->OuterConeAngle = FMath::Min(ConeDeg, 80.f);
+		Sp->InnerConeAngle = FMath::Min(ConeDeg, 80.f) - 4.f;   // as bright to the walls as straight down: a lamp, not a spotlight
+		Sp->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));   // down, out of its shade
+		L = Sp;
+	}
+	else L = NewObject<UPointLightComponent>(Owner);
+	L->SetupAttachment(Root);
+	L->Mobility = EComponentMobility::Movable;
+	L->IntensityUnits = ELightUnits::Candelas;
+	L->Intensity = Watts * D->CandelaPerWatt;
+	L->bUseInverseSquaredFalloff = true;
+	L->AttenuationRadius = D->RoomLampReach * CmPerM;
+	L->LightColor = D->RoomLampColour.ToFColor(true);
+	L->CastShadows = bShadows;
+	L->SourceRadius = 8.f;   // the references' lamps: soft, 0.08 m
+	L->SetVisibility(false);
+	L->RegisterComponent();
+	Owner->AddInstanceComponent(L);
+	return L;
+}
+
+void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp, float Daylight)
 {
 	if (Lights.Num() != RoomLights)
 	{
 		for (UPointLightComponent* L : Lights) if (L) L->DestroyComponent();
 		Lights.Reset();
-		for (int32 n = 0; n < RoomLights; ++n)
-		{
-			UPointLightComponent* L = NewObject<UPointLightComponent>(this);
-			L->SetupAttachment(RootComponent);
-			L->SetIntensityUnits(ELightUnits::Candelas);
-			L->SetIntensity(RoomLightCandela);
-			L->SetAttenuationRadius(RoomLightReach * CmPerM);
-			L->SetLightColor(RoomLightColour);
-			L->SetCastShadows(false);
-			L->SetSourceRadius(30.f);
-			L->SetVisibility(false);
-			L->RegisterComponent();
-			AddInstanceComponent(L);
-			Lights.Add(L);
-		}
+		for (int32 n = 0; n < RoomLights; ++n) Lights.Add(MakeLamp(this, RootComponent, RoomLampWatts, RoomLampCone, n < RoomLampShadows));
+	}
+	if (!Fill)
+	{
+		// the room's own light: even, without a source to burn the ceiling near it, fading out at its reach
+		Fill = NewObject<UPointLightComponent>(this);
+		Fill->SetupAttachment(RootComponent);
+		Fill->Mobility = EComponentMobility::Movable;
+		Fill->bUseInverseSquaredFalloff = false;
+		Fill->LightFalloffExponent = 2.f;
+		Fill->Intensity = RoomFill;
+		Fill->LightColor = RoomFillColour.ToFColor(true);
+		Fill->CastShadows = false;
+		Fill->SourceRadius = 30.f;
+		Fill->SetVisibility(false);
+		Fill->RegisterComponent();
+		AddInstanceComponent(Fill);
 	}
 	// the rooms of the home the camera is in, nearest it first (out of doors, none: they cost GPU time and are not seen)
 	auto InRect = [](const FBrixRect& R, const FVector2D& P)
@@ -417,15 +536,39 @@ void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp)
 	for (const int32 i : Near)
 		for (const FBrixRoom& R : Homes[i].Home->Rooms)
 			if (Homes[i].FloorUp.IsValidIndex(R.Floor) && EyeUp > Homes[i].FloorUp[R.Floor] - 0.1f && EyeUp < Homes[i].CeilUp[R.Floor] && InRect(R.R, Eye)) { In = i; OnFloor = R.Floor; }
-	TArray<TPair<double, FVector>> Rooms;
+	// Where the lamps hang on the camera's floor. A room of a planned home: its middle, RoomLampDrop under the ceiling
+	// (homes.js gives each room one). A floor with no plan: where its dressing hangs or stands a lamp (the small glowing
+	// box of each: play.js lamp(), the desk and floor lamps). And the room's own light, over the whole floor.
+	struct FLamp { double Far; FVector At; };
+	TArray<FLamp> Lamps;
 	if (In != INDEX_NONE)
-		for (const FBrixRoom& R : Homes[In].Home->Rooms)
-			if (R.Floor == OnFloor) Rooms.Add({ FVector2D::Distance(Eye, R.R.Centre), FVector(R.R.Centre.X * CmPerM, R.R.Centre.Y * CmPerM, (Homes[In].CeilUp[OnFloor] - 0.4f) * CmPerM) });
-	Rooms.Sort([](const TPair<double, FVector>& A, const TPair<double, FVector>& B) { return A.Key < B.Key; });
+	{
+		const FLotHome& LH = Homes[In];
+		const float Floor0 = LH.FloorUp[OnFloor], Ceil0 = LH.CeilUp[OnFloor];
+		bool bHall = false;
+		for (const FBrixRoom& R : LH.Home->Rooms)
+		{
+			if (R.Floor != OnFloor) continue;
+			if (R.bFloor) Lamps.Add({ FVector2D::Distance(Eye, R.R.Centre), FVector(R.R.Centre.X, R.R.Centre.Y, Ceil0 - RoomLampDrop) * CmPerM });
+			else bHall = true;
+		}
+		if (bHall && LH.Furn.IsValidIndex(OnFloor))
+			for (const FBrixFurnBox& B : LH.Furn[OnFloor].Boxes)
+				if (B.bGlow && FMath::Max3(B.Size.X, B.Size.Y, B.Size.Z) < 0.3f && B.Colour.X > 0.9f && B.Colour.Z < 0.7f)   // a lamp's glass, not a lit sign
+					Lamps.Add({ FVector2D::Distance(Eye, B.At), FVector(B.At.X, B.At.Y, Floor0 + B.Y0 - 0.05f) * CmPerM });
+		if (bHall && !Lamps.Num()) Lamps.Add({ 0.0, FVector(LH.Centre.X, LH.Centre.Y, Ceil0 - RoomLampDrop) * CmPerM });
+		Fill->SetWorldLocation(FVector(LH.Centre.X, LH.Centre.Y, (Floor0 + Ceil0) * 0.5f) * CmPerM);
+		const float Reach = FMath::Max(RoomLampReach, RoomFillReach * 2.f * LH.Reach) * CmPerM;
+		if (!FMath::IsNearlyEqual(Fill->AttenuationRadius, Reach, 1.f)) Fill->SetAttenuationRadius(Reach);
+		const float Level = FillNow(Daylight);
+		if (!FMath::IsNearlyEqual(Fill->Intensity, Level, 0.002f)) Fill->SetIntensity(Level);
+	}
+	if (Fill->IsVisible() != (In != INDEX_NONE)) Fill->SetVisibility(In != INDEX_NONE);
+	Lamps.Sort([](const FLamp& A, const FLamp& B) { return A.Far < B.Far; });
 	for (int32 n = 0; n < Lights.Num(); ++n)
 	{
-		const bool bOn = Rooms.IsValidIndex(n);
-		if (bOn) Lights[n]->SetWorldLocation(Rooms[n].Value);
+		const bool bOn = Lamps.IsValidIndex(n);
+		if (bOn) Lights[n]->SetWorldLocation(Lamps[n].At);
 		if (Lights[n]->IsVisible() != bOn) Lights[n]->SetVisibility(bOn);
 	}
 }

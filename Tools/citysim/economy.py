@@ -128,11 +128,12 @@ def outlets_of(lot):
 class Economy:
     """One player's money, items, accounts, loans and stall in one town, with the town's shop tills and bank vault."""
 
-    def __init__(self, rules, lots, visits, staff=None, goods=None):
+    def __init__(self, rules, lots, visits, staff=None, goods=None, boards=None):
         """rules: World/rules/economy.json. lots: the town's lots in packed order ({id, kind, name}; a mall's `plan` gives
         its outlets). visits: from visits_from_packed(). staff: {lot index: [resident ids who work there]} for reputation
         prices (QST-007). goods: World/rules/mall_goods.json, what a mall's outlets sell (ECO-013, ECO-014); without it
-        a mall is bought from as one shop, as before."""
+        a mall is bought from as one shop, as before. boards: World/rules/boards.json, the skateboards the mall's sports and toy outlets sell
+        (CITY-102, CITY-103)."""
         self.R = rules
         self.lots = lots
         self.lot_index = {l["id"]: n for n, l in enumerate(lots)}
@@ -143,6 +144,8 @@ class Economy:
         self.outlets = {}                      # lot index -> {unit id: {id, name, kind, level}}, in plan order (ECO-013)
         self.clothes = {}                      # good id -> how many: bought clothes, for the wardrobe (ECO-014)
         self.homeware = {}                     # good id -> how many bought for the home (each one is a belonging to place)
+        self.B = boards
+        self.boards = []                       # the kinds of skateboard owned, in the store's order (CITY-100, CITY-103)
         if goods:
             self.items = dict(rules["items"])  # what is carried: the town's items and the outlets' goods that are carried or eaten
             for g, G in goods["goods"].items():
@@ -519,6 +522,31 @@ class Economy:
             self.give_item(g)
         return p
 
+    # ---------------------------------------------------------------- skateboards at the mall's outlets (CITY-102, CITY-103; ADR-0054)
+    def board_price(self, kind):
+        """What a kind of board costs, in chips (boards.json): the same at every outlet that sells boards, whoever buys."""
+        return self.B["kinds"][kind]["price"]
+
+    def sells_boards(self, n, u):
+        """Whether outlet u of lot n sells skateboards: an outlet of a kind boards.json `sold_at` names (sports, toys)."""
+        O = self.outlets.get(n, {}).get(u)
+        return bool(self.B and O and O["kind"] in self.B.get("sold_at", ()))
+
+    def buy_board(self, n, u, kind):
+        """Buy a skateboard at outlet u of the mall at lot n, paid into the mall's till through the ledger (cash first, then
+        the current account), as its other goods are. A kind already owned is not sold twice; the board is the player's from
+        then on (CITY-100), to ride or to stand on show at home."""
+        if not self.sells_boards(n, u):
+            raise Refused("this outlet does not sell skateboards")
+        if kind not in self.B["kinds"]:
+            raise Refused("no such board")
+        if kind in self.boards:
+            raise Refused("you have that board already")
+        p = self.board_price(kind)
+        self.spend(p, "till:%s" % self.lots[n]["id"], "%s, %s" % (self.B["kinds"][kind]["name"], self.outlets[n][u]["name"]))
+        self.boards = [k for k in self.B["order"] if k in self.boards or k == kind]
+        return p
+
     # ---------------------------------------------------------------- the market stall (PROP-008)
     def rent_stall(self):
         if self.stall:
@@ -573,7 +601,7 @@ class Economy:
     def save(self):
         return copy.deepcopy(dict(tx=self.L.tx, day=self.day, minute=self.minute, settled=self.settled, inv=self.inv, accounts=self.accounts,
                                   welcomed=self.welcomed, loans=self.loans, barred=self.barred, trades=self.trades, rep=self.rep, stall=self.stall,
-                                  stall_sold_total=self.stall_sold_total, clothes=self.clothes, homeware=self.homeware))
+                                  stall_sold_total=self.stall_sold_total, clothes=self.clothes, homeware=self.homeware, boards=self.boards))
 
     def load(self, s):
         s = copy.deepcopy(s)
@@ -582,6 +610,63 @@ class Economy:
             self.L.post(day, minute, memo, [tuple(x) for x in lines])
         for k, v in s.items():
             setattr(self, k, v)
+
+
+def board_in_use(boards, in_use, bought):
+    """CITY-103: the board in use after buying one: the bought board when it is faster than the one in use (or none was),
+    else the one in use stays."""
+    if not in_use or boards["kinds"][bought]["top_kmh"] > boards["kinds"][in_use]["top_kmh"]:
+        return bought
+    return in_use
+
+
+def board_script():
+    """A fixed run of buying skateboards (CITY-102, CITY-103) whose results the Unreal port must reproduce: too little money,
+    a board bought at a sports outlet with cash and the current account, the same kind again at a toy outlet, a kind that is
+    not sold, an outlet that sells no boards, a loan for a faster board bought at a toy outlet while a slower one is in use,
+    and the dearest without the money for it."""
+    return [
+        ["advance", 0, 440], ["new"], ["board", "sports", "manual"], ["open", "current"], ["board", "sports", "manual"],
+        ["board", "toys", "manual"], ["board", "sports", "skateboard"], ["board", "clothes", "electric"],
+        ["loan", 30000, 7], ["board", "toys", "electric"], ["advance", 2, 600], ["board", "sports", "neon_boost"],
+    ]
+
+
+def board_places(econ):
+    """The outlets board_script() buys at: the first outlet of each kind it names, as [lot, unit]."""
+    out = {}
+    for n in sorted(econ.outlets):
+        for u, O in econ.outlets[n].items():
+            if O["kind"] in ("sports", "toys", "clothes") and O["kind"] not in out:
+                out[O["kind"]] = [n, u]
+    return out
+
+
+def run_boards(econ, ops, places):
+    """Runs board_script() ops (as run_script(), with "board": outlet kind, board kind; places from board_places()).
+    Returns a summary to compare."""
+    out, in_use, uses = [], None, []
+    for op in ops:
+        name, a = op[0], op[1:]
+        try:
+            if name == "new":
+                econ.new_character()
+            elif name == "open":
+                econ.open_account(a[0])
+            elif name == "advance":
+                econ.advance(a[0], a[1])
+            elif name == "loan":
+                econ.take_loan(a[0], a[1])
+            elif name == "board":
+                econ.buy_board(places[a[0]][0], places[a[0]][1], a[1])
+                in_use = board_in_use(econ.B, in_use, a[1])
+            out.append("ok")
+        except Refused:
+            out.append("refused")
+        uses.append(in_use)
+    till = "till:%s" % econ.lots[places["sports"][0]]["id"]
+    return dict(results=out, boards=list(econ.boards), uses=uses, balances={a: econ.L.balance(a) for a in PLAYER + (till,)},
+                tx=len(econ.L.tx), supply=econ.L.supply(), memos=[t[3] for t in econ.L.tx[-3:]])
 
 
 def check_script():

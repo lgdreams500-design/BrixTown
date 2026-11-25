@@ -364,7 +364,14 @@ void ABrixSound::Interactions()
 	if (const ABrixTalk* T = Mode->Talk)
 	{
 		if (T->IsTalking() && !bWasTalking) Act(TEXT("talk_open"));
-		else if (!T->IsTalking() && bWasTalking) Act(TEXT("talk_close"));
+		else if (!T->IsTalking() && bWasTalking) { Pending.RemoveAll([](const FPendingSyllable& P) { return P.bLine; }); Act(TEXT("talk_close")); }   // hush()
+		if (T->Murmured != WasMurmured && T->IsTalking())   // a line with no voice yet, murmured (sound.js line(): the last one hushed first)
+		{
+			Pending.RemoveAll([](const FPendingSyllable& P) { return P.bLine; });
+			Say(BrixMurmur(Rules, T->MurmurLine, T->MurmurWho, T->MurmurAt), GetWorld()->GetTimeSeconds(), false, true);
+			Played.FindOrAdd(TEXT("(talk) lines murmured"))++;
+		}
+		WasMurmured = T->Murmured;
 		if (T->Answered != WasAnswered && T->IsTalking()) Act(TEXT("talk_choose"));
 		if (!T->Offer().IsEmpty() && T->Offer() != WasPrompt && !T->IsTalking()) Act(TEXT("prompt"));
 		bWasTalking = T->IsTalking();
@@ -443,9 +450,9 @@ void ABrixSound::Music(double Dt, const FVector2D& Here)
 }
 
 // Says a speaker's syllables, each at its moment (from Now), from where they stand or through the car radio.
-void ABrixSound::Say(const FBrixVoiceOut& V, double Now, bool bRadio)
+void ABrixSound::Say(const FBrixVoiceOut& V, double Now, bool bRadio, bool bLine)
 {
-	for (const FBrixSyllable& S : V.Syllables) Pending.Add({ Now + S.At, V.Pos, V.Far, S, bRadio });
+	for (const FBrixSyllable& S : V.Syllables) Pending.Add({ Now + S.At, V.Pos, V.Far, S, bRadio, bLine });
 }
 
 // One syllable: the recording of its mouth shape at the nearest pitch and length, pitched the rest of the way.

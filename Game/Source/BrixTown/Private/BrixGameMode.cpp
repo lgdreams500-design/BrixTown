@@ -3,13 +3,19 @@
 #include "BrixCharacter.h"
 #include "BrixCity.h"
 #include "BrixDay.h"
+#include "BrixEconomy.h"
+#include "BrixGoods.h"
 #include "BrixInside.h"
 #include "BrixCars.h"
 #include "BrixCarsActor.h"
 #include "BrixCrashActor.h"
 #include "BrixWeatherActor.h"
 #include "BrixLamps.h"
+#include "BrixLight.h"
 #include "BrixLifeActor.h"
+#include "BrixMall.h"
+#include "BrixMallActor.h"
+#include "BrixOutlet.h"
 #include "BrixDesignerActor.h"
 #include "BrixMapActor.h"
 #include "BrixPeople.h"
@@ -103,6 +109,31 @@ void ABrixGameMode::StartPlay()
 		else if (LoadBrixInside(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/inside.json"))), *Insides, InsideError))
 			Town->Insides = Insides.Get();
 		if (!Town->Insides) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: the buildings are shut (%s)"), *InsideError); Insides.Reset(); }
+		// the mall's goods for the home as made in Blender (FURN-065): in the outlets' windows and in the buy menus
+		{
+			TSharedPtr<FBrixGoodsModels> Gm = MakeShared<FBrixGoodsModels>();
+			FString GoodsError;
+			if (LoadBrixGoodsModels(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/goods_models.json"))), *Gm, GoodsError)) GoodsModels = Gm;
+			else UE_LOG(LogTemp, Warning, TEXT("Brix Town: the goods stand in as boxes (%s)"), *GoodsError);
+		}
+		// Eastgate Mall, the one mall whose inside is built (WLD-058): drawn by its own actor, not as the town's box; each outlet's
+		// goods for the home stand in its windows (what it sells: the economy's rules in life.json)
+		TSharedPtr<FBrixMall> MallData = MakeShared<FBrixMall>();
+		FString MallError, LifeError;
+		FBrixLifeData MallLife;
+		FBrixMallGoods MallGoods;
+		if (GoodsModels && LoadBrixLife(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/life.json"))), MallLife, LifeError)) { MallGoods.Rules = &MallLife.Rules; MallGoods.Models = GoodsModels.Get(); }
+		else if (GoodsModels) UE_LOG(LogTemp, Warning, TEXT("Brix Town: the outlets' windows show their stand-ins (%s)"), *LifeError);
+		if (Insides && !FParse::Param(FCommandLine::Get(), TEXT("BrixNoMall")) && LoadBrixMall(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), CityDir)), *MallData, MallError, MallGoods.Rules ? &MallGoods : nullptr))
+			Town->OwnBuilt.Add(MallData->LotId);
+		else { if (Insides) UE_LOG(LogTemp, Warning, TEXT("Brix Town: no mall inside (%s)"), *MallError); MallData.Reset(); }
+		// the furniture outlet's hall, inside and out, and its car park (FURN-020): drawn by an actor of its own, as Eastgate
+		TSharedPtr<FBrixMall> OutletData = MakeShared<FBrixMall>();
+		FString OutletError;
+		if (Insides && !FParse::Param(FCommandLine::Get(), TEXT("BrixNoOutlet")) && LoadBrixOutlet(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), CityDir)),
+			FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/car_models.json"))), *OutletData, OutletError))
+			Town->OwnBuilt.Add(OutletData->LotId);
+		else { if (Insides) UE_LOG(LogTemp, Warning, TEXT("Brix Town: the furniture outlet is the town's box (%s)"), *OutletError); OutletData.Reset(); }
 		Town->Breakable = ABrixCrash::BreakableKinds();   // street things and trees a car can break (CITY-072)
 		Town->Build(*City);
 		Crash = GetWorld()->SpawnActor<ABrixCrash>();
@@ -115,13 +146,29 @@ void ABrixGameMode::StartPlay()
 			Furnisher = GetWorld()->SpawnActor<ABrixRooms>();
 			Furnisher->Start(*City, *Insides, Town, Day);
 		}
+		if (MallData)
+		{
+			Mall = GetWorld()->SpawnActor<ABrixMall>();
+			Mall->GoodsModels = GoodsModels;
+			Mall->Start(MallData, Town);
+		}
 		// the inside of every hollow building, to know when the camera is indoors (CITY-013)
 		int32 Lk = 0;
 		for (const FBrixBlock& B : City->Blocks)
 			for (const FBrixLot& L : B.Lots)
 			{
 				const FBrixInside* In = Insides && Insides->Lots.IsValidIndex(Lk) && Insides->Lots[Lk].IsSet() ? &Insides->Lots[Lk].GetValue() : nullptr;
-				if (In && BrixIsHollow(L, In))
+				const FBrixMall* Own = MallData && L.Id == MallData->LotId ? MallData.Get() : OutletData && L.Id == OutletData->LotId ? OutletData.Get() : nullptr;
+				if (Own)   // the mall or the furniture outlet: its hall, under its roof
+				{
+					FRoom R;
+					R.Lot = Lk;
+					R.Centre = FVector2D((Own->X0 + Own->X1) / 2, (Own->Z0 + Own->Z1) / 2);
+					R.Half = FVector2D((Own->X1 - Own->X0) / 2, (Own->Z1 - Own->Z0) / 2);
+					R.Top = (float)Own->H;
+					Rooms.Add(R);
+				}
+				else if (In && BrixIsHollow(L, In))
 				{
 					FRoom R;
 					R.Lot = Lk;
@@ -148,10 +195,22 @@ void ABrixGameMode::StartPlay()
 			UE_LOG(LogTemp, Display, TEXT("Brix Town: %d vehicles today"), Traffic->Num());
 		}
 		else UE_LOG(LogTemp, Warning, TEXT("Brix Town: no vehicles (%s); run Tools/worldgen/build_play.py"), *CarError);
+		if (OutletData)   // (after the vehicles: its car park's cars are the traffic's own models)
+		{
+			OutletHall = GetWorld()->SpawnActor<ABrixMall>();
+			OutletHall->Start(OutletData, Town);
+		}
 		if (Today)
 		{
 			if (Insides)   // at home inside: in bed, on the sofa (CITY-013, WLD-053)
 				UE_LOG(LogTemp, Display, TEXT("Brix Town: %d of the day's stays at home are in a bed or on a seat"), SeatBrixDayIndoors(*Today, *City, *Insides, FBrixDoorRules::FromConfig()));
+			for (const ABrixMall* Own : { Mall.Get(), OutletHall.Get() })   // Eastgate's keepers, guards, janitors and visitors (CITY-105, CITY-106); the outlet's staff and browsers (FURN-021)
+			{
+				if (!Own || !Own->Data()) continue;
+				int32 Mi = 0, k = 0;
+				for (const FBrixBlock& B : City->Blocks) for (const FBrixLot& L : B.Lots) { if (L.Id == Own->Data()->LotId) Mi = k; ++k; }
+				UE_LOG(LogTemp, Display, TEXT("Brix Town: %d of the day's stays in %s are at its places"), SeatBrixDayInMall(*Today, *Own->Data(), Mi), *Own->Data()->Name);
+			}
 			People = GetWorld()->SpawnActor<ABrixPeople>();
 			People->Start(*City, Today, Cars ? Traffic : nullptr);
 			UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents, their day %d (%s, %s)"), Today->Num(), Today->Day, *Today->Weekday, *Today->Season);
@@ -163,6 +222,7 @@ void ABrixGameMode::StartPlay()
 	if (City)
 	{
 		Life = GetWorld()->SpawnActor<ABrixLife>();   // money and the bank (ADR-0012)
+		Life->GoodsModels = GoodsModels;
 		Life->Start(*City, Today);
 		Designer = GetWorld()->SpawnActor<ABrixDesigner>();   // a new game opens the character designer (CHR-001)
 		Designer->Start(City->Name);
@@ -230,6 +290,12 @@ void ABrixGameMode::StartPlay()
 	// -BrixDrive=<vehicle> (with -BrixHold=steer,throttle): a third of the way into a test shot's wait the player is put by
 	// that parked car's door, gets in as with E, and holds the keys from then on
 	int32 DriveK = -1;
+	int32 PlayK = -1;   // -BrixPlay=<n>: a third into a test shot's wait the player has a go at the n-th play place (WLD-041)
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixPlay="), PlayK) && PlayK >= 0)
+	{
+		FTimerHandle H;
+		GetWorldTimerManager().SetTimer(H, [this, PlayK]() { if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0))) Me->TestPlay(PlayK); }, ShotDelaySeconds / 3, false);
+	}
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixDrive="), DriveK) && DriveK >= 0 && Traffic)
 	{
 		FString Hold;
@@ -253,6 +319,35 @@ void ABrixGameMode::StartPlay()
 				if (V.Num() == 2) Me->TestHold = FVector2D(FCString::Atof(*V[0]), FCString::Atof(*V[1]));
 			}, 0.3f, false);
 		}, ShotDelaySeconds / 3, false);
+	}
+	// -BrixTram (CITY-041): from a second into a test shot, the player is put on the platform by the first tram that stands
+	// at a stop on its way through town and gets on as with E; with -BrixTramOff they get off where it next stands
+	if (FParse::Param(FCommandLine::Get(), TEXT("BrixTram")) && City && Cars)
+	{
+		const bool bOff = FParse::Param(FCommandLine::Get(), TEXT("BrixTramOff"));
+		TSharedRef<double> OnAt = MakeShared<double>(-1e9);
+		FTimerHandle H;
+		GetWorldTimerManager().SetTimer(H, [this, bOff, OnAt]()
+		{
+			ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+			if (!Me || !Cars) return;
+			const ABrixCars::FDrive& D = Cars->Driving();
+			if (!D.bTram && *OnAt < -1e8)
+			{
+				for (const FBrixTram::FAt& A : City->Tram.At(ClockMinute()))
+				{
+					double Dd = 0;
+					const FVector2D Spot = City->Tram.Alight(A.X);
+					if (City->Tram.Standing(ClockMinute(), Spot, 1.5, Dd) < 0) continue;
+					Me->SetActorLocation(ToWorld(Spot, 1.f), false, nullptr, ETeleportType::TeleportPhysics);
+					Me->TestPress();
+					UE_LOG(LogTemp, Display, TEXT("Brix Town: riding the tram: %s"), Cars->Driving().bTram ? TEXT("yes") : TEXT("no, E offered something else"));
+					if (Cars->Driving().bTram) *OnAt = Cars->Driving().X;
+					break;
+				}
+			}
+			else if (bOff && D.bTram && Cars->CanGetOff() && FMath::Abs(D.X - *OnAt) > 1) Me->TestPress();   // the next stop: off
+		}, .25f, true, 1.f);
 	}
 	// -BrixCounter=bank (with -BrixLife=open,current;loan,5000,3...): a third of the way into a test shot's wait the ops are
 	// done as the player would at the counter, then the player is put at its door and the counter opened; -BrixLife= alone
@@ -306,6 +401,22 @@ void ABrixGameMode::StartPlay()
 						}
 				++Lk;
 			}
+		if (Mall && Mall->Data() && Mall->Data()->LotId == LiftLot)   // Eastgate: the ground floor's call up to the top floor
+			for (const FBrixMallCall& C : Mall->Data()->Calls)
+				if (C.Kind == FBrixMallCall::Use && C.A[1] < 1 && C.Text.Contains(FString::Printf(TEXT("up to floor %d"), Mall->Data()->Levels - 1)))
+				{
+					const FVector At = FVector(C.A[0], C.A[2], C.A[1] + 0.95) * BrixUnits::CmPerM;
+					FTimerHandle H;
+					GetWorldTimerManager().SetTimer(H, [this, At]()
+					{
+						ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+						if (!Me) return;
+						Me->SetActorLocation(At, false, nullptr, ETeleportType::TeleportPhysics);
+						FTimerHandle P;
+						GetWorldTimerManager().SetTimer(P, [Me]() { Me->TestPress(); }, 0.5f, false);
+					}, 0.6f, false);
+					break;
+				}
 	}
 	FString Way;   // -BrixWalk=x,z;x,z;...: after the other switches have placed the player, walk them through these points
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixWalk="), Way, false))
@@ -426,7 +537,8 @@ void ABrixGameMode::PutInside(const FString& LotId, bool bWalk)
 	const FBrixDoorway Dw = BrixDoorwayOf(*City, *Found, In->District, FBrixDoorRules::FromConfig());
 	const FVector2D Inward = -Dw.Out;
 	const float Deep = (float)FMath::Min(Found->Size().X, Found->Size().Y);
-	const FVector2D Inside = Dw.Centre + Inward * FMath::Clamp(Deep * 0.45f, 1.5f, 5.f);
+	const bool bMall = Mall && Mall->Data() && Mall->Data()->LotId == LotId;   // Eastgate: in along its south concourse to the court
+	const FVector2D Inside = Dw.Centre + Inward * (bMall ? MallInside : FMath::Clamp(Deep * 0.45f, 1.5f, 5.f));
 	const FVector2D From = bWalk ? Dw.Centre - Inward * 3.0 : Inside;
 	const FRotator Facing(0.f, FMath::RadiansToDegrees(FMath::Atan2(Inward.Y, Inward.X)), 0.f);
 	FTimerHandle H;
@@ -569,7 +681,8 @@ void ABrixGameMode::UpdateSun()
 	// under cloud, rain or snow the haze is lit by the grey sky, not the sun: its colour turns from the sun's to a cool grey by
 	// how much sun the weather stops (ADR-0016: a covered day is flat and cool)
 	const FLinearColor SunTint = FMath::Lerp(SunDawnColour, FLinearColor::White, Low);
-	if (HazeFog) HazeFog->SetFogInscatteringColor(HazeColour * Fill * FMath::Lerp(SunTint, OvercastHaze, bWx ? 1.f - SunLet : 0.f));
+	// (UBrixLight sets the haze's colour, as this by day and its own at dusk and night: only one of the two sets it in a frame)
+	if (HazeFog && !UBrixLight::SetsHaze()) HazeFog->SetFogInscatteringColor(HazeColour * Fill * FMath::Lerp(SunTint, OvercastHaze, bWx ? 1.f - SunLet : 0.f));
 	// little haze indoors (play.js: the fog is cut by 0.85 inside): the height fog is not shut out by walls
 	if (HazeFog)
 	{

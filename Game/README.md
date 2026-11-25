@@ -11,6 +11,7 @@ starts on the engine's empty map and the game mode builds the town from `World/`
 | `Source/BrixTown/` | The game: `BrixGameMode` (load the city, the light, the player's start), `BrixTownActor` (the town as instanced shapes), `BrixCharacter` (the player in third person) |
 | `Config/DefaultGame.ini` | Every tunable number and colour (TECH-005) |
 | `Config/DefaultEngine.ini` | The startup map, Lumen and virtual shadow maps |
+| `Config/DefaultScalability.ini` | The project's own changes to the engine's quality levels (Lumen's surface cache at High) |
 
 ## What it shows so far (grey-box)
 The starting city at the slice's sizes: a box for each building (its footprint, turned by its `angle`; `floors` × 3 m +
@@ -29,8 +30,56 @@ The whole town is 15 groups of instances, one per mesh, each instance carrying i
 the owner's laptop at High it runs at 63-66 fps, as fast as the grey-box (ADR-0046). The binaries are lockable in LFS
 (ADR-0002): `git lfs lock <file>` before running the scripts that remake them.
 
+## Buildings from their designs, and the building designer (BUILD-002, BUILD-004 to BUILD-007, BUILD-016 to BUILD-020; F-BLD-DESIGN; ADR-0052)
+Every building is drawn from its design, as the slice draws it: `Game/Data/inside.json` carries each lot's design (`dsg`,
+world.designs()) and the designer's kit, planning rules and fixed run (`builder`); `BrixWorld/BrixBuilder` is builder.js
+(built(), allowed(), problems(), cost(), options(), check()), and `BuildLot` takes from `BrixBuilder::Built()` each
+facade's plaster and stone or brick (to the eaves where the design says), the roof's tiles, the window frames and the
+shutters (or none). The kit's geometry is ADR-0046's; designed houses keep their colourway. At the owner's word
+(2026-11-25) this replaced the random colours Unreal picked before. `BUILD002_every_building_is_built_from_its_design`
+(the inside built from each of the 959 designs is Python's), `BUILD005_remodels_match_the_python` (builder.check_script():
+what each remodel offers, its problems, its cost line by line, the built front and inside, against Python's).
+The remodel designer, as the slice's life.js remodelPanel(): from Properties, Remodel (the whole building) or Redecorate
+your rooms (the storeys of the units you own), the card at the left of the screen and the camera over the building,
+three-quarters from its front (BUILD-020; Turn the view goes round it; the inside tab looks down on the storey). Outside:
+the walls of all sides or one facade (plaster, stone or brick and its colour, brick to the eaves), roof tiles, window
+frames, shutters and their colour, balcony, keystones, corner stones and wall lantern, as builder.options() offers them in
+the district's palette; inside, each storey's walls and floor, and its rooms (BUILD-021 to BUILD-023): the storey's inner walls as a plan
+(`BrixWorld/BrixRoomPlan`, builder.js RoomPlan and storeys.js planOf(), wallsOf()), each wall picked from a list to open or
+close its doorway, fit between the walls it meets, make longer or shorter, move a quarter metre either way, paint in one of
+the district's inside colours or take down, and walls added east to west or north to south; drawn at once by `ABrixRooms`
+(`SetPlan`), checked (in the room, clear of the way in and the stairs, every room reached from the way in, play.js
+roomFor()) and priced line by line with the rest of the work; and its furniture (Furnish, FURN-051, FURN-052, FURN-055;
+`BrixWorld/BrixFurnishPlan`, builder.js Furnish and play.js townPieces()): the storey's own pieces (the boxes the town
+furnished it with, grouped into pieces: chairs, cabinets, lamps, rugs; those on a wall stay) picked from a list and turned,
+moved a quarter metre at a time or put with your belongings; your belongings placed again; pieces of
+World/rules/furnishing.json added by room and line (bought; the mall's goods are bought at its outlets, FURN-064), drawn as
+the furniture kits' own meshes (a box its size where a piece has none yet); each checked (in the room, on the grid, under
+the ceiling, clear of the way in, the stairs and each other) and priced with the rest; what you take away is among the
+belongings (the menu's Belongings page). Each choice shows on the building at once
+(`ABrixTownActor::Repaint`: its instances folded away and the building built again); the work is priced line by line;
+what would stop it is said (builder.check()); Pay and build pays through the ledger (`sys:builders`) and the remodel is
+there at once (F-BLD-CONSTRUCT level 0, instant); Undo, Start again; Esc leaves it as it was. Remodels are kept in the
+save (`QST008_remodels_are_kept_in_the_save`), room plans (`QST008_room_plans_are_kept_in_the_save`), and each storey's furniture and the pieces among the belongings
+(`QST008_furnishings_are_kept_in_the_save`); `FURN051_furnishing_matches_the_python` runs furnish.check_script() against
+Python's (the problems, the cost and the belongings after each edit);
+`BUILD021_room_plans_match_the_python` runs roomplan.check_script() against Python's and checks that every storey of flats'
+plan draws back the town's own walls. Ops for a shot: `tab,inside`, `storey,<f>`, `addwall,<x|z>`, `wall,<id>`, `door`, `close`; `tab,furnish`, `piece,<id>`,
+`turnpiece,<deg>`, `movepiece,<dx>,<dz>`, `takeaway`, `addpiece,<kind>,<line>`, `placeheld,<n>`. To see it in a test shot: `"-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4;remodel,b_9_6_l4;set,walls.*.plaster=peach;set,roof.tiles=slate;set,openings.frame=teal"`
+(and `;pay` to build it). Shots: `Art/StyleTests/unreal_designer_39/`. Not yet: dragging a wall or a piece with the mouse (they move by buttons), picking a piece in the view, the town pieces' own
+names (the slice tags them; here they are named by their shape), the narrow layout D grid of objects for the pieces (a list
+of names and prices), the planned homes' furniture in the designer (as in the slice, only buildings furnished at their
+places), furniture sold with a unit (F-PROP-FURNISH), the rooms of a building not drawn inside; a storey with many pieces
+(a cafe's chairs) gives a long list that scrolls, the picked piece's buttons below it; a town piece placed from another
+building is drawn as a box its size; a building drawn again from a design (each choice tried, each remodel paid) leaves
+its old instances folded away under the ground until the town is next built (a few hundred each time; ADR-0052) (FURN-051, FURN-052, FURN-055), the window class's sizes, balconies, keystones, corner stones
+and wall lanterns drawn from the design (offered, priced and kept, but laid by the kit's rules), the awning in the
+design's accent, the cut-open storey (BUILD-020), dragging the view; building new on a plot (BUILD-008: F-MAP-PLOTS is at
+level 0, no plots).
+
 ## Going inside (CITY-013; ADR-0048)
-959 of the 965 enterable buildings can be walked into (all but the furniture outlet's hall and the malls), as the slice
+959 of the 965 enterable buildings can be walked into (all but the furniture outlet's hall and the malls; Eastgate Mall
+and the furniture outlet have their own insides, below), as the slice
 builds them (play.js building()): the ground storey is hollow behind its kit walls, with a floor in the storey's finish
 (boards or flags), the walls plastered inside in its colour and a ceiling; above it the core is still solid. The way in is
 the kit's own door standing open (`SM_Kit_DoorPlainOpen`, `DoorArchOpen`, `DoorCivicOpen`, `ShopDoorOpen`, made by
@@ -45,6 +94,92 @@ doorway (the log says how long it took), `-BrixShut` builds every building solid
 and mouse of whoever is at the machine and logs where the player is. A street at High: 46.7 to 48.6 fps, 45.8 to 49.5
 with `-BrixShut` (noisy: other sessions were running Unreal); 50 fps inside a row house. Not yet: furniture, the upper
 storeys and their stairs, residents indoors.
+
+## Eastgate Mall (WLD-057 to WLD-063, WLD-066 to WLD-068; ADR-0037 to ADR-0039, ADR-0041)
+Eastgate Mall (lot `b_16_5_l0`) is built inside and out as the slice builds it (court.js, shell.js, outlets.js; play.js
+mallShell()): `BrixWorld/BrixMall` is the port, giving the same 176,797 drawing calls with the same numbers (its hash() fed
+the same strings, Math.hypot as V8 sums it), from the lot's `plan` and `shell` in `World/city_01/blocks/b_16_5.json`. Outside:
+the skin of plaster ribbons swelling and curling in, lifted off the ground in an arch on each side; the four ochre pierced eggs
+and the cream roof light. Under each arch a porch of ribbon walls sweeps in to the arched opening in the hall's wall, with its
+line of light. Inside: three floors round the court of five atria (6 m storeys), every floor's edge a dark ribbon with a line
+of light under it and a pale upstand, plants trailing over the long ones, bridges at the pinches, four moving stairs, a lift in
+each side concourse, the round skylights with their deep rims, the egg halls under the eggs (the lattice open to the sky from
+inside, their stalls, lanterns and linden), the fountains, gardens, planters, benches, kiosks, the carousel and the coin rides,
+lanterns under the galleries; and the 189 outlets of World/rules/mall_outlets.json, each with its front (piers, the sign band
+in its colour with its name lit on it, plinths either side of the way in), its room as deep as the unit (its own floor, walls,
+light panels) and what it sells (rails, shelves, guitars, screens, cabinets, serveries; tables, racks, bins, drums, glass cases,
+the window's mannequins or plinth), with a counter and till where its keeper works today. `ABrixMall` lays the calls as the
+town's own faces, cut into 40 m squares so what is out of view is not drawn: 598,294 triangles in 263 meshes made at load
+time (2.2 s), in M_Facets outside, `/Game/Mall/M_MallRoom` indoors (with the floor tiles' two tones and joints, and the court's
+even room light: the faces made at load time get no share of Lumen's bounced light, so without it the ceilings were black),
+`M_MallLit` for the lit panels, lines of light, screens and lantern glass and `M_MallLattice` for the eggs' diamond openings
+(made by `Tools/unreal/make_mall_materials.py`); the 39,638 solids are unseen blockers; the names are lettering on the sign
+bands. The moving stairs carry whoever stands on them (`BrixMallCarry`, court.js carry(): up on the right-hand flight seen from
+its foot, down on the left) and lift them onto each step as it comes; E at a lift's call takes the player up or down a floor or
+between the ground and the top, as at the towers. The four lanterns and shop lights nearest the camera on its floor give real
+light (`NearLights`); the haze is off indoors and the town's sounds are muffled (RoomAt). Only the mall whose plan is a court
+with its entrances is built so (`BrixMallCan`): Westgate (`b_1_5_l0`) and Northgate (`b_7_0_l0`) stay the town's solid boxes,
+as the owner asked. Tests: `WLD058_eastgate_is_built_as_the_slice_builds_it` (every call against the slice's, in 442 runs of
+400 with a checksum each and 9,600 calls one by one, the signs' words, the 249 lamps; `Tools/unreal/mall_values.py` runs the
+slice's code in headless Edge into `Tests/values/mall_city_01.json`: run it after changing court.js, shell.js, outlets.js or the
+block file), `WLD066_every_outlet_has_its_room`, `WLD062_moving_stairs_carry_and_lifts_go_between_floors`,
+`WLD058_only_eastgate_has_an_inside`.
+Buying at each outlet (WLD-066, ECO-013, ECO-014): standing in an outlet's room, on any floor (`BrixOutletAt`, outlets.js
+at()), the offer names that outlet ("B Buy at Thimble & Thread") and B opens its own counter as life.js does: its name, its
+kind, the mall and the floor, its goods from World/rules/mall_goods.json in the buy menu's layout B with their stock and
+today's prices (the economy's outlets, ECO-013), each paid through the ledger; a thing for the home goes to the belongings,
+clothes to the wardrobe. On the walks, in the court and in the corner stores B says to walk into an outlet. Who is there
+(CITY-105, CITY-106, WLD-067, WLD-068; `SeatBrixDayInMall`, play.js resident()): each of today's 189 keepers (shop owners and
+food outlet owners) stands behind their outlet's counter on its floor facing the walk, the six guards (in uniform and cap)
+and six janitors at their posts, the residents who come to shop before a counter and those who come to eat at a food
+outlet's table or on a court bench, at their floor's height; the mall's residents are drawn while the camera is in it, as in
+any building. Tests: `CITY105_every_outlet_has_a_counter_its_keeper_stands_at` (every outlet's one keeper's place in its
+room behind the counter, the counter drawn as today's keeper works there, each keeper of the day stood at it facing out; the
+guards and janitors at their posts), `CITY106_visitors_shop_at_the_counters_and_eat_at_the_tables` (the day's 43 stays
+shopping and 195 eating, on all three floors, at their places). `-BrixCounter=<an outlet's unit id>` (b_16_5_u4 is Thimble &
+Thread) stands the player in it and opens its counter. `-BrixInside=b_16_5_l0` stands the player 30 m in from the south door (`MallInside`),
+`-BrixWalkIn=b_16_5_l0` walks them in, `-BrixLift=b_16_5_l0` rides the west lift to the top floor, `-BrixNoMall` builds it as
+the town's box again. At High: 28 to 44 frames a second inside, 21 riding the moving stairs (noisy: other sessions were running
+Unreal). Not yet: sitting on the benches and rides, the ribbon wall's lit joints and the openings' lanterns at night, the
+moving stairs' treads moving, and the shell's lanterns' light outside.
+The goods for the home each outlet sells stand in it as they were made in Blender (FURN-065; outlets.js front() with the
+slice's life data, goods.js put()): on its two window plinths facing the walk, and those too deep for a plinth on its floor
+inside, 464 of them in 112 of the 189 outlets; where an outlet sells none the window keeps its stand-ins. What it sells is
+the economy's `OutletRange` (World/rules/mall_goods.json in life.json), which make is `display.detail` (near). The models
+are `Tools/blender/mall_goods_31.py`'s, copied from `Prototype/play/goods_models.js` to `Game/Data/goods_models.json` by
+`build_play.py` and read by `BrixWorld/BrixGoods` (`LoadBrixGoodsModels`, `BrixGoodPut`, a port of goods.js put(): the
+two open colours by the seed, so two guitars differ); `ABrixMall` lays each in the room's light. `mall_values.py` now runs
+the slice with that life data (run `build_play.py` first) and records each good as a call of its own (kind 14,
+`FBrixMallCall::Good`). Test `FURN065_outlets_show_the_goods_they_sell` (each good in the room of an outlet that sells it,
+facing out, near; the triangles of six as goods.js lays them). Shot: `Art/StyleTests/unreal_mall_goods_41/`.
+
+## The furniture outlet (FURN-020, FURN-021; ADR-0027)
+The furniture outlet outside the East Gate (lot `b_14_8_l0`) is built as the slice builds it (outlet.js; play.js building()
+and furnish()): `BrixWorld/BrixOutlet` is the port, with the play.js helpers it draws with (sideOf, fbox, SP.win, SP.lamp,
+archHead, the lettering), giving the same 2,851 calls. The long hall: a stone base and plaster walls, a parapet, the roof on
+timber trusses with their iron ties and the skylights between them, the tall arched windows with their arch stones on three
+sides, the teal sign band with its name over the door, the door's stone surround and its two lanterns, the three loading doors
+onto the car park. Inside: the painted walking route with its arrows, the sixteen room sets (three plaster walls, a board
+floor, a name board, two price tags), the tills, the sales desks, the cafe counter and its tables and chairs, the packing
+tables, the warehouse's three rows of timber racks of flat-pack boxes in the company's band, the lanterns under the trusses.
+The furniture in the sets is the furniture kits' own pieces in each set's line, where the slice draws boxes, as in the Unreal
+homes (ADR-0050): kit 17's living room (sofa, armchair, coffee table, rug, floor lamp, bookcase, bed, bedside table, wardrobe;
+its stool, trunk, crate or pouffe as the slice's boxes) in the first four, and the twelve rooms of kit 18 (living room,
+bedroom, children's room, study, kitchen, dining room, bathroom, hallway, decoration, garden, cafe and shop fittings), 149
+pieces in all; the 80 meshes of the garden, cafe and shop pieces, the bar stool and the cushions were imported for it
+(`BRIX_FURNITURE_ADD=1 Tools/unreal/import_furniture_kit.py`, which now wants the outlet's pieces too and, so, only adds the
+new). The car park south of the hall: its tarmac, painted bays and aisle line, and its fourteen cars, each one of the
+traffic's own Soft box models in the colours its seed gives (cars.js parked(), `ABrixCars::BuildParked`). It is laid by a
+second `ABrixMall`: its walls are in the way, its lanterns light the hall near the camera, the haze is off inside. Its staff
+(FURN-021) stand at the tills, desks, cafe and packing tables facing the door, and the residents who come to browse stand by
+the room sets and the racks (`SeatBrixDayInMall`). Tests: `FURN020_the_outlet_is_built_as_the_slice_builds_it` (every call
+against outlet.js run in headless Edge by `Tools/unreal/outlet_values.py`, which records each piece of furniture as the piece
+it is and where it stands, into `Tests/values/outlet_city_01.json`), `FURN021_staff_and_browsers_are_at_the_outlets_places`.
+`-BrixInside=b_14_8_l0` stands the player inside its door; `-BrixNoOutlet` builds it as the town's box again. At High: 31 to 33
+frames a second in the hall and over the car park (noisy: other sessions were running Unreal). Not yet: buying at the outlet.
+The slice has no counter there: furniture is bought in the building designer's Furnish tab (FURN-051, FURN-052, FURN-055),
+and buying at the outlet's tills with delivery (FURN-022 to FURN-029) is proposed, not accepted. Also not yet: sitting on
+its sofas and chairs, and the vans of the delivery bay.
 
 ## Storeys and stairs; residents at home inside (WLD-050, WLD-052, WLD-053, CITY-013)
 Every hollow building with a stairwell (462 of two storeys or more) and every designed house is hollow to its roof, every
@@ -92,9 +227,10 @@ own short names clashed as soon as a new file changed which files were joined.
 As in the slice (play.js windows()), a share of each kind of building's windows is lit after dusk (half a home's, a third of a
 shop's, every shopfront window; `LitShare` in DefaultGame.ini), each a warm pane just in front of its glass in one of the
 lamplight's two colours, shown and glowing as the lamps light (`ABrixTownActor::SetNight`, from `ABrixRooms`). Lumen's
-surface cache is some 20 % short of what the town's insides would fill (an on-screen warning in test shots): it only
-lowers the detail of far surfaces' bounced light; a larger cache (`r.LumenScene.SurfaceCache.AtlasSize`) is not set, to
-spare the laptop's video memory.
+surface cache was some 20 % short of what the town's insides would fill (a red line over test shots, and far surfaces
+losing their bounced light at random). A larger cache (`r.LumenScene.SurfaceCache.AtlasSize`) is not set, to spare the
+laptop's video memory; at High each surface's picture in it is 80 % a side instead (`Config/DefaultScalability.ini`,
+ADR-0055), which fits: no warning in the spawn alley or on Market Square.
 
 ## Furnished homes (FURN-060 to FURN-063; ADR-0050)
 The planned homes are furnished as the slice furnishes them (homes.js, houses.js): 469 designed houses (plan house_12x9)
@@ -105,7 +241,8 @@ each piece stands is `BrixWorld/BrixHomes` (`FURN060_every_planned_home_is_furni
 furniture kits' own meshes in the home's line: `Tools/blender/unreal_furniture_37.py` exports them (Blender, about 20 s),
 `Tools/unreal/import_furniture_kit.py` imports the ones the plans use into `/Game/Furniture` (the .glb files are not kept in
 git). `ABrixRooms` furnishes the homes within 30 m of the camera, and lights the rooms of the home the camera is in (three
-lamps, no shadows: 3 to 5 fps). `-BrixStand=x,z,yaw` puts the player in a room for a shot.
+lamps: 3 to 5 fps). What a room's light is, and how that is known, is under What a room's light should be.
+`-BrixStand=x,z,yaw` puts the player in a room for a shot.
 
 ## Designed houses (ADR-0032, ADR-0035)
 The 469 designed houses (lot.house) are built as the slice builds them (houses.js outsideS): the 12 x 9 m house of
@@ -148,7 +285,7 @@ Where anyone is follows from the day and the clock each frame (a port of the sli
 City.at() by `CITY022_residents_are_where_their_routine_puts_them`): at their place, or walking their route at even speed
 a little to one side of the pavement's line. Only the nearest, out of doors and within 90 m, have a body, up to 400 at once.
 
-## People (ART-004, ANIM-001, ANIM-002; ADR-0047)
+## People (ART-004, ANIM-001, ANIM-002, ANIM-004, ANIM-005; ADR-0047)
 The residents are the slice's option B people: `BrixWorld/BrixBody` is a port of `Prototype/play/people.js`. Each is
 dressed by their role (a job's own clothes where it has them) and walks by their role's movement signature, from the
 same tables as the slice: `Game/Data/people.json`, written from people.js by `Tools/unreal/people_values.py` (run it after
@@ -163,8 +300,13 @@ are worked out on the task threads, only the uploads on the game thread. The far
 material is `/Game/People/M_People` (the vertex colour, matte), made by `Tools/unreal/make_people_material.py`.
 Residents at a garden's bench seats and fountain rims sit there, facing the garden's middle or out of the fountain
 (CITY-017, found as the slice finds them: `SeatBrixDay`, checked by `CITY017_residents_sit_on_garden_benches`); others
-stand. Talking faces and boards are not brought over yet; the gesture layers (CHARACTER_MOTION §4), another walk, a
-hood and an umbrella are drawn as people.js draws them (checked by ART004), for dodging and the weather. The player is the character they designed (below) at full
+stand. The gesture layers of CHARACTER_MOTION §4 are drawn as people.js draws them (ANIM-004, checked by ART004): the arms and
+chest (dodging, the weather, a shout at a smash, a repair crew bent over their work, hands on a climbing frame's top bar),
+another walk (running, hurrying, a child climbing a ladder hand over hand), sitting astride a seesaw, a hood and an
+umbrella; and the head and eyes (ANIM-005, as play.js does it): someone the player comes within 5.5 m of, on their level
+and not behind them, turns to look, the eyes leading by up to their limit and the head part of the way, fully within
+3.2 m (`ANIM005_people_look_at_whoever_comes_near`); the player's own head turns part of the way to where the camera
+looks; a resident asleep in bed has their eyes shut. The player is the character they designed (below) at full
 detail, walking by their signature and running by the slice's Run. At High on this laptop: 53 to 55 frames a second on a street with 32 residents near, in
 the morning school rush of some 150 and in a garden with 46 (the same as with none: the GPU is the limit), the people
 taking 1.3 to 3.6 ms of the game thread.
@@ -203,8 +345,13 @@ outlet), saves it to text, reads it into a new economy and new quests, and plays
 midnights: they stay the same in all a save keeps; a new game holds only the starting cash. The world shows the built day
 16 whatever the save's day is (the economy's days count on); the time of day comes back. A test shot never saves
 (`-BrixNoSave` plays without saving too); `-BrixSaveAs=<slot>` saves the shot's game there 6 s in, `-BrixLoad=<slot>`
-carries on from a slot at once (with `-BrixMenu=save` to see the page). Not yet in the save: the skateboards owned (CITY-100),
-the property market, remodels and furnishing plans (not in this build yet); and a server keeping it (PH2).
+carries on from a slot at once (with `-BrixMenu=save` to see the page). The property market is in the save (estate.js save(): every unit's owner,
+tenant, rent and residents by unit id, listings, tenancies, mortgages, the indices and history; a save from before it
+opens the market on loading). Remodels and room plans are in the save (life.js remodels and plans:
+each building's design and each storey's walls as paid for, drawn again on loading). The save keeps the skateboards owned
+(with the economy, as economy.py save() keeps them) and the one in use (life.js save()'s boards), which comes back in the
+hand (CITY-100). Furnishings (each storey's furniture) and the furniture among the belongings are in the save too. Not
+yet in the save: a server keeping it (PH2).
 
 ## The wardrobe (CHR-014 to CHR-016; F-CHR-WARDROBE 1, with the owned clothes the owner asked for)
 U (or the menu) opens the Wardrobe page as the slice's life.js does: the page stands to one side, the town is not dimmed,
@@ -234,7 +381,10 @@ the talking faces in `ART004_...` check the port against the slice's own code). 
 the time it took until they next stand still where they would be anyway. The quests, jobs and counters that the slice's life.js adds to talks are below. The player's name from the designer fills {player}
 (`CHR001_the_players_name_is_said_in_talks`), and while they answer their own face says it, mouth with the voice (or the
 text's own time when it is not voiced), the camera coming round past the resident to look at them (`AnswerCameraYaw`) and
-going back over the shoulder when the resident speaks. Not yet: the wordless murmur of lines with no voice.
+going back over the shoulder when the resident speaks. A resident's line that has no voice yet is murmured as the slice
+murmurs it (sound.js line()): wordless syllables in time with its mouth, in the resident's own pitch, from where they stand,
+hushed when the next line starts or the talk closes (`SND018_unvoiced_lines_are_murmured`, against sound.js traced by
+`Tools/unreal/sound_values.py`; the player's unvoiced answers are silent, as in the slice).
 To see one without anyone at the keys: `-BrixTalk=<resident index>` (and `-BrixAnswers=1,2`, a second and a half apart or
 `-BrixAnswerGap=<s>`) with `-BrixShot=`.
 
@@ -255,7 +405,8 @@ a street thing or a tree in the way breaks (CITY-072); a wall or another car sto
 the driver's door, and the car stays where it was left for the rest of the visit. E offers whichever is nearer, a car to
 drive or someone to talk to. A bus can be ridden (CITY-092): E at a bus
 standing at a stop gets on, a seat near the front, carried along its line with its driver and riders, the camera behind;
-E gets off when it next stands at a stop (and everyone gets off when it leaves service). Not yet: riding the tram. To see a drive in a test shot: `-BrixDrive=<vehicle> "-BrixHold=steer,throttle"`. 51.5 frames a second at High on a street
+E gets off when it next stands at a stop (and everyone gets off when it leaves service). The tram is ridden the same way
+(below). To see a drive in a test shot: `-BrixDrive=<vehicle> "-BrixHold=steer,throttle"`. 51.5 frames a second at High on a street
 with 32 vehicles drawn.
 
 ## Getting out of the way, and giving way (CITY-070, CITY-071, CITY-049)
@@ -290,7 +441,9 @@ says when the crew comes or will be done. Residents within 18 m of a smash turn 
 point. Tests: `CITY072_street_things_break_as_the_rules_say`, `CITY074_damage_is_kept`,
 `CITY075_repair_crews_mend_as_repairs_py_does` (against repairs.py, `Tests/values/repairs_city_01.json`),
 `CITY076_residents_shout_at_a_smash`. Not yet: café tables and crates, garden plants, fences, walls, railings and
-hedges (not drawn in Unreal yet), a broken bench still being sat on, and a server keeping the list for every player. At
+hedges (not drawn in Unreal yet), and a server keeping the list for every player. Nobody sits on a broken bench: whoever
+the day has on it stands `SeatStep` in front of it until it is mended (`BrixOffBrokenSeat`, `CITY072_a_broken_bench_is_not_sat_on`;
+`bench_broken.png` against `bench_whole.png`). At
 High, 38 to 54 frames a second while breaking a post box, a planter and a bin and with two crews at work (noisy: other
 sessions were running Unreal).
 
@@ -307,14 +460,28 @@ mesh of translucent drops (`/Game/Weather/M_Rain`, made by `Tools/unreal/make_ra
 it darkens, takes a faint sheen and holds puddles here and there, rings spread where the drops land (they tilt the
 surface, so the puddles' reflections break up), and walls go a little darker; it dries over `dry_minutes` after the
 rain (M_Greybox's WetDark, WetSheen, Puddles and Ripples, from `Tools/unreal/greybox_wet.py` and
-`greybox_ripples.hlsl`). Residents wear what citysim gives them today (day.json "wear"): a coat,
+`greybox_ripples.hlsl`). None of it, nor lying snow, reaches under a roof: indoor floors, stairs and furniture stay dry
+(a roof map of every building's footprint and height, `BrixRoofMap`, half-metre cells, M_Greybox's Roofs and RoofsAt;
+`RoofCell=0` turns it off to compare; `WLD037_rain_and_snow_stay_out_from_under_roofs`; `dry_indoors.png` against
+`dry_indoors_before.png`, the street still wet in `wet_outdoors.png`). Residents wear what citysim gives them today (day.json "wear"): a coat,
 and out in the rain an umbrella up, else the hood up, else a hand over the head while walking, with a hurried walk or a
 run for cover; nothing but the coat indoors, sheltering or under a roof (`CITY080_residents_are_dressed_for_the_rain`).
 The look of coats, hoods and umbrellas is still to be approved (ADR-0020). `-BrixWeather=<clear|cloud|rain|fog|snow>`
 tries one kind for the whole day (and the clothes residents would wear on a day of it); the built day 16 has cloud
 before 06:00 and is clear after. At High: about 40 frames a second in the 08:10 school rush in rain, against 15 to 54
-in clear weather on the same street (noisy: other sessions were running Unreal on the same laptop). Not yet: no key to
-try the weather, rain seen through windows from indoors, the rain's sound, wet clothes.
+in clear weather on the same street (noisy: other sessions were running Unreal on the same laptop). K is the slice's
+weather key: it tries clear, cloud, rain, fog and snow in turn for the whole day, then the day's own weather again, and says
+which (`BrixNextWeatherTry`, `WLD037_the_weather_key_steps_through_the_kinds`; `-BrixWeatherKey=<n>` presses it n times in a
+test shot). From indoors the rain is seen through the windows and the open door: the same rings of drops, spread
+`IndoorReach` (1.8) times as far, fall outside, none over the building (its roof) and no splashes; the slice shows none
+indoors. Shots: `Art/StyleTests/unreal_gaps_world_40/` (`weather_key_rain.png`, `rain_through_the_window.png`); 7.9 to 20.5 frames a second at High in rain
+on that street (noisy). Clothes get wet: everyone out of
+doors (the player too) is darker by wet x sky.json `wet_dark` x `PeopleWet` (0.3, the slice's share: play.js darkens
+everything out of doors so), drying as the paving dries, none indoors or in a vehicle (M_People's custom primitive data 1,
+`BrixWetClothes`, `WLD037_people_out_in_the_rain_are_a_little_darker`; `wet_clothes.png` against `wet_clothes_before.png`,
+the shirt 2 to 3 % darker in the picture through the rain's haze). Not yet: the rain's sound (the slice has none either),
+snow seen from indoors; round a designed house a strip of its garden about half a metre wide stays dry, as the
+roof map (and the rain's roof test) take the house's whole lot, not the house itself, as under a roof.
 
 ## Snow (WLD-069, WLD-070, CITY-107; ADR-0051)
 At the owner's word (2026-11-25): it snows in Winter only, by its own chance per six-hour slot (`snow_chance` in
@@ -329,7 +496,12 @@ alone: `BrixSnowNow`, a port of `world.snow_now()`, checked by `WLD070_snow_fall
 go bare-headed, never an umbrella, and walk at the careful pace (citysim's plan makes the walks slower; they take cover as
 from rain); `CITY107_residents_are_dressed_for_snow`. `-BrixWeather=snow` tries it on the built summer day (with what
 residents would wear on a day of snow). At High: 37 to 39 frames a second in the 08:10 rush in snow (noisy: other
-sessions were running Unreal). Not yet: footprints and tracks, snow on trees, cars and people, the sound of snow.
+sessions were running Unreal). In lying snow (WLD-071) walkers leave footprints behind them, a footstep apart and left and
+right in turn, and vehicles two tyre tracks, from where each went and when (their day and the clock; the player's own
+steps and car from where they went this visit), filled in by falling snow and fading (sky.json `snow.tracks`;
+`WLD071_footprints_and_tracks_follow_the_clock`); parked cars carry snow on their roofs and people out in it gather it on
+their heads and shoulders while it falls (M_People's per-mesh `Snow`, custom primitive data 0, from
+`make_people_material.py`); tree crowns whiten on top. Not yet: the sound of snow.
 
 ## Clouds (WLD-035, WLD-036; ADR-0014)
 Soft heaps on one flat layer overhead, bright on the side towards the sun and shaded underneath, fading into the haze
@@ -339,12 +511,90 @@ clock alone: `BrixCloudsNow`, a port of `world.clouds_now()`, checked by `WLD036
 They are drawn on the inside of a dome round the camera by `/Game/Weather/M_Clouds` (`Tools/unreal/make_clouds_material.py`,
 `clouds.hlsl`); 46 to 50 frames a second at High under a clear-day sky and at dusk.
 
+## The eye and the night (WLD-042, WLD-028, WLD-043; ADR-0055, after ADR-0023)
+The game mode makes the sun, the sky's fill and the haze and turns them by the clock. `UBrixLight`, a part the engine
+makes for every game world (nothing spawns it), adds what the picture needs as the sun gets low and after it is down; the
+arithmetic is `BrixWorld/BrixNight` (`BrixLightNow`: from the day's light, the sun's height, the weather and whether the
+camera is in a room), checked by `WLD042_the_days_light_is_kept_and_the_night_is_dark`. Out of doors by day with the
+sun up it changes nothing: the haze and its glow are the game mode's own and the eye is free, so the approved daylight
+is as it was (ADR-0007). Then:
+- **the eye**: the engine's automatic exposure opens without limit as the light goes, which made the night as bright as
+  the day. It may open only so far past the day's exposure (`DayEV`, 1.3 measured in the open street at noon):
+  `DuskOpen` stops out of doors with the sun on the horizon, `NightOpen` at night, `NightOpenIndoors` in a room by its
+  lamps, and `DayOpenIndoors` in a room by day (below);
+- **the haze**: the game mode turns all of it the low sun's orange at the day's full strength while the light itself
+  falls away (dusk and dawn were an orange white-out, and the night kept the orange). A low sun's haze is dimmer and
+  cooler (`LowSunHaze`), the sun's colour only in the air towards it (`LowSunGlow`); at night it is `NightHaze`, the
+  slice's dark blue distance;
+- **the lamps and the lit windows** come on as the sun gets low (`UBrixLight::LowSun()`, used by `ABrixLamps` and
+  `ABrixRooms`), from about 19:00 to 06:40 in summer: with the sun on the horizon the alleys are in deep shade;
+- **the night's light**: a faint blue light from high up (`NightLux`, `NightFrom`: the slice's own moon direction when
+  its moon is down), the air's second light, so the sky is a deep blue and the sky light has that to fill the streets
+  with (`NightSky`; the game mode's `NightFill` is 1). It casts shadows, so roofs keep it out of rooms.
+Every number is in DefaultGame.ini, `[/Script/BrixTown.BrixLight]`. `-BrixLightOff` leaves the light as the game mode
+alone makes it, to compare; `-BrixLightNo=<letters>` leaves parts out (e the eye, h the haze, n the night's light, s its
+sky). Pictures before and after: `Art/StyleTests/unreal_light_43/`. Not yet: the stars, the Milky Way, the moon's disc,
+path and phases (the night's light comes from one place and does not wax or wane), the planet (WLD-065); lamps lit in
+shade by day as the reference renders have them; light from lit windows on the pavement (the panes are kept out of
+Lumen); the alley's haze growing heavy from 18:00 as its shade deepens (the game mode's haze has one brightness whatever
+the light). The haze's colour is set once a frame, by this (the game mode sets it only with `-BrixLightOff` or
+`-BrixLightNo=h`). At High with nothing else running: 38 frames a second in the middle of the tour's 64
+stops below, day and night, indoors and out (between 30 and 55 at most; a stop dips under that while its place loads).
+
+**What a room's light should be (ADR-0055).** The look of rooms is decided by Blender renders with an exact recipe
+(Tools/blender/furniture_kit_18.py: a shop, a cafe, a kitchen and nine more in one shell; the kit daylight through a
+side window, pendants of 70 W in the lantern's colour, one camera and exposure), so the game's rooms are measured
+against those, not judged by eye. `ABrixLightRoom` (`-BrixLightRoom`, which the tour script always passes) builds the
+reference shop, cafe and kitchen again in Unreal, 250 m over open ground on paving of their own: the same shell, the
+kits' own pieces at the same places (the meshes of /Game/Furniture), the game's own room lamp where each pendant hangs,
+the references' camera (a tour stop `refroom:<shop|cafe|kitchen>`), turned so that at the hour `ref` the game's sun
+comes in at the window as theirs does. `Tools/unreal/light_reference.py <reference.png> <unreal.png>` then compares the
+same patches of wall, floor and ceiling in both: how much brighter Unreal's is in stops, and how much warmer. A tour stop
+can try numbers on the spot (`lamp=<times> tint=r/g/b fill=<level> filltint=r/g/b ev=<EV100>`), so one run sweeps them.
+What it showed, and what a room's light is as a result (`ABrixRooms`, every number in DefaultGame.ini):
+- with the lamps out, the walls of the reference rooms in Unreal were 7 stops under Blender's: the engine brings almost
+  none of the sky's light or of the sunlight off the floor indoors, and the references are lit mostly by that. So a room
+  has **a light of its own**, even and warm, as the slice's roomLight() has: `RoomFill` by day, `RoomFillNight` of it at
+  night, in `RoomFillColour`, over the floor the camera is on;
+- **its lamps** are the references' pendant: `RoomLampWatts` (70) in the lantern's colour, a real lamp whose light falls
+  off with the square of the distance, shining down out of its shade (`RoomLampCone`), the nearest `RoomLampShadows`
+  casting shadows. `CandelaPerWatt` is a third of what the arithmetic gives (0.026 for 0.075): at the full strength the
+  walls came a stop and more too warm. A planned home's room has one at its middle; a floor with no plan (a shop, a
+  cafe, the bank) has them where its dressing hangs or stands a lamp, the `RoomLights` nearest the camera lit;
+- **the eye** in a room by day may open `DayOpenIndoors` (2.4) stops past the street's exposure: there the reference
+  rooms in Unreal are as bright as Blender's.
+With those, the three reference rooms in Unreal come within about half a stop of Blender's in brightness and a third of
+a stop in warmth (shop, cafe, kitchen: see `Art/StyleTests/unreal_light_43/rooms_against_blender.jpg`). The game's own
+rooms are warmer and about a stop less bright than they were under the engine's free eye (ADR-0048's look): the
+owner said yes to that on 2026-11-25. Not yet: the kits' lamp shades do not glow (their material has no glow), so a pendant's light has no bright
+shade over it; the reference rooms are open behind the camera, as Blender's are, which a real room is not; Eastgate's
+inside keeps its own light.
+
+**Looking at the light everywhere in one run.** A launch costs one to four minutes on this laptop and a shot a few
+seconds, so `-BrixTour=<list> -BrixTourOut=<folder>` (with `-BrixNoDesigner -BrixNoSave`, not `-BrixShot=`) goes through a
+list of stops, sets the clock and the weather at each, waits `TourSeconds` and saves a picture: a stop is
+`name|hh:mm|weather|where[|ev=<EV100>]`, where `cam:x,z,height,yaw,pitch`, `stand:x,z,up,yaw` or `in:<lot id>[,<pitch>]`
+(the player inside that building, as `-BrixInside=`); `ev=` pins the exposure for a shot, to measure with.
+`Tools/unreal/light_tour.txt` is the survey this light was fixed by (64 stops: the spawn alley, Market Square, a street,
+a park and Eastgate from 07:20 through dusk, night and dawn, in rain and fog, seven kinds of room by day and by night,
+and the reference rooms); `Tools/unreal/light_tour.ps1 -OutDir <folder>` runs it offscreen at High (add `-Extra "-BrixLightOff"` for the
+light before), and `Tools/unreal/shot_sheet.py` puts shots side by side with their mean brightness. Run one at a time:
+two at once hung the graphics chip.
+
 ## The tram (CITY-041)
 Trams run along Tram Street to the timetable of World/rules/calendar.json, stopping at its three stops: a port of the
 slice's tramAt() (`FBrixTram`, checked against the slice's own function at 3,000 moments of a day by
 `CITY041_trams_are_where_the_timetable_puts_them`). Each is the slice's terracotta car with open windows, on rails along
 the whole street, and carries the residents whose day takes them out from a stop or back to one, on the run that is
-there when they leave or arrive (cars.js tramRiders()), up to twelve on its benches. The player cannot ride it yet.
+there when they leave or arrive (cars.js tramRiders()), up to twelve on its benches. The player can ride it (CITY-041;
+the slice cannot): E beside a tram standing at a stop ("Ride the tram", within 1.5 m of its side or end) gets on, and the
+player sits on its front bench on the south side among the riders (who then fill the other eleven seats), carried east
+along Tram Street, the camera behind; E ("Get off the tram") gets off where it next stands, onto that stop's platform by
+the front door. Not at the last stop, from which it goes on out of town; anyone still on when it leaves there is put off
+at it. The logic is `FBrixTram` (`Standing`, `Find`, `Seat`, `Alight`, `Rideable`): `CITY041_players_ride_the_tram`
+boards every tram that stands at a stop through the day and rides it to the next. To see it in a test shot: `-BrixTram`
+(the player is put on the platform by the first tram standing at a stop and gets on; `-BrixTramOff` gets off at the next
+stop), for instance with `-BrixTime=07:55`.
 
 ## Street furniture (WLD-028)
 Each block's props are drawn as the slice draws them (play.js prop(), dressing.js), boxes in the palette's colours:
@@ -352,8 +602,8 @@ lamps, benches, bins, bollards, planters, postboxes, bike racks, phone boxes, wa
 market stalls, tram shelters, water towers and wells; garden planting, the open ground's own things, the street dressing,
 the arches and the playgrounds are below. By night (`ABrixLamps`) every lamp's and wall lantern's glass glows
 (`/Game/Greybox/M_Glow`, made by `Tools/unreal/make_glow_material.py`) and the twelve nearest to the camera give real
-light, as the slice's twelve; 68 frames a second at High at 22:30. The night itself (its exposure, the orange haze
-after dusk) is not yet the slice's dark blue night.
+light, as the slice's twelve; 68 frames a second at High at 22:30. They and the lit windows come on as the sun gets
+low, not only by the calendar; the night itself is under The eye and the night.
 
 ## Gardens, lawns and the open ground (CITY-017, WLD-040, WLD-056, ART-001)
 The block files' garden planting is drawn as the slice draws it (play.js plant(), heads(), plantClump()): clipped hedges in
@@ -376,8 +626,12 @@ block of open ground (`Tests/values/streets_city_01.json`), and `CITY017_every_p
 `WLD056_the_open_ground_is_drawn_as_the_slice_draws_it` check the port against them (2,735 plants, 33 lawns, 17 blocks,
 about 600 things); run the script again after changing play.js, the blocks or the vegetation rules (after build_play.py).
 Bushes, hedges and fences break as crash.json says (CITY-072). The plants keep the built day's look whatever day the game
-starts on, as in the slice. Not yet: the lawn's own pattern (the slice's material 24: patches, mowing stripes, clover,
-daisies), so a lawn is one even green (the trees: below). The new shapes are kept out
+starts on, as in the slice. A lawn (its grass and its longer edge) has its own pattern, the slice's material 24: muted patches
+of vegetation.json's three tones, the mower's faint stripes, clumps of clover, blades close up and daisies in drifts, painted
+(`/Game/Greybox/M_Lawn`, `Tools/unreal/make_lawn_material.py` and `lawn.hlsl`, a section of its own in each block's facet
+mesh; `CITY017_lawns_are_drawn_in_their_own_pattern`). Shots: `lawn.png` against `lawn_before.png` (one even green) in
+`Art/StyleTests/unreal_gaps_world_40/`, beside the slice's `lawn_in_the_slice.png`; 10.0 frames a second at High in that garden, 7.7 without M_Lawn (noisy: other
+sessions were running Unreal). The new shapes are kept out
 of Lumen's surface cache (a card an instance oversubscribed it over the fields). `-BrixNoPlants` builds the town without
 them, to compare: 542,212 instances in 45 groups against 462,813 in 33; at High 37.7 fps in a park garden (40.2 without),
 37.8 over the fields (20.6 without: noisy, other sessions were running Unreal on the same laptop).
@@ -397,8 +651,8 @@ pieces and arches; `Tools/unreal/streets_values.py`); a name's width on a board 
 measures it on a canvas. The player's car breaks them as crash.json says (CITY-072): notice boards and timetables topple
 (as "board"), and the café tables and the shops' crates on the pavement (the kit's pieces), the crates by the arches and
 the planters, bins, racks, post and telephone boxes and bollards break as before; the log says how many of each kind there
-are. Statues, the bandstand, the kiosk, wells, sundials, pergolas and the boards on walls do not break. Not yet: residents
-turning to the notice board they read or the kiosk they buy a paper at (dressing.js apply()), the letters of a broken
+are. Statues, the bandstand, the kiosk, wells, sundials, pergolas and the boards on walls do not break. Residents reading the notices or
+buying a paper turn to the nearest board or kiosk within 6 m, as dressing.js apply() turns them (checked in WLD032). Not yet: the letters of a broken
 timetable staying up, the lettering's own font. At High 29.8 to 44.1 fps in Old Town's streets and the market at 11:00
 (noisy: other sessions were running Unreal); Lumen says its surface cache is oversubscribed by a quarter in Old Town (seen
 here; not checked against main).
@@ -439,7 +693,16 @@ and hang still (a seat stirring in the breeze, a plank down at one end) when not
 (no instances moved). Motion from World/rules/dressing.json "motion" (in `Game/Data/streets.json`). `BrixWorld/BrixPlay`
 is the port (pieces, places, apply(), keepOut(), draw()), checked against dressing.js itself by
 `WLD032_children_play_as_the_slice_puts_them` (the 28 pieces' shapes, 352 children at four moments, the moving parts after
-each, walkers kept out; `Tools/unreal/streets_values.py`). Not yet: the player having a go (WLD-041).
+each, walkers kept out; `Tools/unreal/streets_values.py`).
+
+The player can have a go too (WLD-041, F-OBJ-POINTS 1): at a swing seat, a seesaw end, the foot of a slide's ladder, by a
+climbing frame or in a sandpit (48 places, one person each but the slide and the frame), E offers it ("Have a go on the
+swing", ...) when it is nearer than anyone to talk to or a car, and no child is on it. On a swing they sit still at first
+and swing higher over `player_swing_build_s` with the seat going with them; on a seesaw they rock it; on a slide they climb
+the ladder, sit at the top, slide down and get off at the bottom; on the frame they climb up and down its side; in the
+sandpit they sit facing its middle. E, Space or moving gets off, beside the piece (dressing.js playerAt(), playerOff(),
+takenBy(); play.js interact(), stepPlayer()). Checked in the same test: every place, the player's pose at eight moments of a
+go there, and where they step off. `-BrixPlay=<n>` has a go at the n-th place a third into a test shot's wait.
 
 ## Money and the bank (ECO-001 to ECO-003, ECO-009, ECO-012, BANK-001, BANK-002, BANK-007, BANK-008; ADR-0012)
 Money is the slice's (economy.js, a port of `Tools/citysim/economy.py`): `BrixWorld/BrixEconomy` holds one ledger of
@@ -456,8 +719,9 @@ the clock, so interest, instalments and fees are settled for each midnight passe
 the purse at the top left (cash, and the bank's two accounts together once one is open) with a "+" or "-" beside it when
 it changes; at the bank's door (`CounterReach`) or inside it, B opens its counter in the slice's dark panel: open
 accounts, move money (a payment that would take an account below zero is refused, never partly made), borrow and repay,
-and the statement, newest first; I opens the money page (purse, loan, statement). Esc closes either. The money is kept in the save (below). Not yet:
-the game menu's Money page in its painted-sign look. To see the bank in a test shot:
+and the statement, newest first; I opens the money page (purse, loan, statement). Esc closes either. The game menu's Money
+page (the accounts, a loan owed, the statement) is drawn in Lamplight, the look that took the place of the slice's painted
+signs in this build (ADR-0049; `-BrixMenu=wallet` to see it). The money is kept in the save (below). To see the bank in a test shot:
 `-BrixCounter=bank "-BrixLife=open,current;open,savings;move,p:current,p:savings,1000;loan,5000,3"` (ops as
 economy.check_script() writes them, arguments by commas).
 
@@ -529,13 +793,18 @@ of where it goes; the showcase turns it slowly (drag to turn it by hand) with it
 its price, and the one button. Sold out is greyed under a band; a thing dearer than cash and the current account together
 has its price in red with how much is short. A click chooses, a second click soon after buys; the arrow keys choose and
 Enter buys. What each thing shows is world.buy_menu_shows (`BrixWorld/BrixBuyMenu`, checked for all 236 things by
-`UI021_every_thing_shows_what_python_says`); the stand-ins (a parcel in the seller's band, a paper bag, a cup, a case, folded
+`UI021_every_thing_shows_what_python_says`). A mall good for the home shows its own model, made in Blender (FURN-065;
+buymenu.js modelMesh(): `FBrixBuyMenuRules::ModelMesh`, its two open colours by the piece, each corner lit by its own
+normal), checked for all 49 by the same test; the stand-ins (a parcel in the seller's band, a paper bag, a cup, a case, folded
 cloth in the clothing's colour) are the boxes of World/rules/buy_menu.json, drawn by `SBrixThing` with Slate's own
 triangles, lit as the slice's shader lights them. At the market square B opens the player's stall: rent it for the day,
 set out up to six things at the player's own prices, take them back; residents coming to the market buy as the rules say,
-paid through the ledger, and what is left comes home at midnight. Not yet: a mall's outlets (the rules are ported; their
-counters are inside the mall), the narrow layout D (for the building designer), the icons in the dots and chips, a
-good's own Blender model in place of its stand-in, and a resident behind each counter. To see one in a test shot:
+paid through the ledger, and what is left comes home at midnight. Eastgate Mall's outlets each have their own counter (see
+Eastgate Mall). Each cell's dot and the chip beside "Goes to" carry the mark of where the thing goes (a house, a top, a bag,
+a cup, a chair), as in the slice: build_play.py reads the marks from buymenu.js ICON into life.json, `BrixIconCoverage`
+paints each once from its paths (filled by the nonzero rule, the handles stroked) and the dot or chip draws it in its board
+colour's lettering (`UI020_dots_and_chips_show_the_slices_marks`). Not yet: the narrow layout D (for the building designer),
+a piece of furniture's own object in the menu (the slice draws it from furniture.js boxes), and a resident behind each counter. To see one in a test shot:
 `-BrixCounter=grocer "-BrixLife=buy,grocer,bread"` (a shop's kind or lot id), or `-BrixCounter=market
 "-BrixLife=buy,grocer,jam;rent;setout,jam,250"`.
 
@@ -559,8 +828,8 @@ comes with a slip under the purse and its coins fly up into the bank balance. Ac
 facts worked out from the ledger and the quests (`QST009_achievements_are_earned_as_python_says`), each once, its painted
 banner dropping in at the top, one at a time and not over a panel. Their sounds are played by `ABrixSound` (see Sound): `ABrixLife::OnRewardSound`
 is broadcast with sound.js's names (quest_start, coin_out, coin_land, coin_take, quest_end, interest_start,
-interest_coin, interest_end, achievement). The markers over people's heads and on the maps are under The maps. Quests are kept in the save. Not yet: the
-Me page's list of achievements, the stamped coin face. To see a reward in a test shot: `-BrixLifeLead=1.15
+interest_coin, interest_end, achievement). The markers over people's heads and on the maps are under The maps. Quests are kept in the save. The game menu's Me page
+lists the achievements, those earned first with the day of each, then those still to earn (UI-019; `-BrixMenu=me`). To see a reward in a test shot: `-BrixLifeLead=1.15
 "-BrixLife=act,new_in_town,r0504,stage:bank;open,current;check;buy,grocer,bread;check;act,new_in_town,r0504,take:bread|end:gift"`
 (the ops that many seconds before the shot); to see a quest talk, `-BrixTime=15:12 -BrixTalk=504 "-BrixAnswers=1,1"`.
 
@@ -571,7 +840,7 @@ it is open the clock stands still (the game is paused; `menu.pauses`). The pages
 Town and Game, each in its colour: Me (what you have, the achievements earned first with their day then those still to
 earn, people you know), Money (accounts, statement), Belongings (what is carried, each drawn on its plinth), Journal (the
 quest log), Wardrobe (below), Settings (one group at a time), Save, Help (the keyboard's controls by where they work,
-from settings.json); Properties and Storage say what they wait for (the property market, F-PROP-STORAGE); Map opens the
+from settings.json); Properties (the real estate market, below); Storage says what it waits for (F-PROP-STORAGE); Map opens the
 big map; and Save shows its three slots (see Saving). The settings are
 `BrixWorld/BrixSettings`: settings.json checked by world.settings_problems()'s rules (`UI009_settings_are_valid`,
 `UI009_a_bad_setting_is_caught`, `UI008_every_platform_maps_every_action`, `UI010_no_control_does_two_things`,
@@ -585,6 +854,34 @@ the town dimmed behind, each page's colour as its lintel and mark, lantern-orang
 goods on plinths in a pool of lantern light. Shots: `Art/StyleTests/lamplight_menu_36/`. To see a page in a test shot:
 `-BrixMenu=<home|me|wallet|quests|belongings|settings|help|...>` (and `-BrixSettingsGroup=<n>`); the shot is taken by the
 menu itself, since the paused game's timers stop.
+
+## The real estate market (PROP-009 to PROP-023, BANK-002; F-PROP-ESTATE 2; ADR-0022)
+The slice's market (estate.js, a port of `Tools/citysim/estate.py`): `BrixWorld/BrixEstate` holds every building's units
+(estate.carve()'s, written into `Game/Data/life.json` as `estate_units` by `build_play.py`, with World/rules/estate.json and
+furnishing_levels.json as `estate`), each with an owner (the town, one of the three companies, the household or business
+there, or the player) and maybe a tenant; prices from area, kind, place, floor and the block's index; listing, selling,
+letting, lodgers, households moving house, upkeep and tax, seizure, mortgages, dividends and the town's spending, all
+settled one day at a time at each midnight as a hook of the economy's day (never ticked), every chip through the ledger.
+`PROP021_the_market_matches_the_python` runs estate.check_script() (buying a flat and, on a mortgage, a house; renting a
+flat; setting a rent; listing; selling at once; 30 days) and must give Python's ledger, balances, owners, tenants, block
+indices, history, mortgages, listings, moves and furnishing levels to the chip; `PROP009_every_building_is_carved_into_owned_units`;
+`PROP018_the_money_supply_holds_and_a_saved_market_goes_on` (a year with no player within estate.json's drift, and a
+market saved to text and loaded going on exactly as the one that was not). A new game opens the estate agents. In play,
+as in the slice: B at an estate agent's office (Lark & Daughters, Harrow Property Co., Cobblestone Homes) opens its counter
+(what is for sale, by kind, cheapest first; what is empty to let; outright or on a mortgage; your property with Sell now,
+List and Take it off the market); P (or the menu's Properties page) shows the building you stand in with what its owners
+would take for each unit and the whole building, your buildings with Show on map (the mark at it, and the big map), your
+property with its rent to set and Offer to let, the places you rent with Move out, mortgages with Repay now, and lately
+sold. A board over the door of every building within 32 m with a unit for sale or to let (`BoardReach`; "▣ 2 to let").
+The big map outlines your buildings and the places you rent in the lantern's orange (settings.json `map_mine`). The
+market is kept in the save. To see it in a test shot: `-BrixCounter=lark "-BrixLife=open,current;give,900000;days,3;buy_cheapest,flat,lark"`,
+`-BrixMenu=property "-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4;buy_cheapest,house,lark,25,60;rent_cheapest,flat"`,
+`-BrixMapZoom=5,912,624 "-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4"` (ops: `give,<chips>` test money into the
+current account, `days,<n>` the clock moved on, `buy_cheapest,<kind>,<agent>[,<deposit %>,<term>]`, `rent_cheapest,<kind>`,
+`buy_lot,<lot id>`). Shots: `Art/StyleTests/unreal_estate_38/`. The slice's own estate.js is checked against the same
+Python run by `Prototype/play/estate_selftest.html` (headless Edge with `--dump-dom` prints PASSED or what differs). Not yet: the residents who moved house walking to their new
+home (they keep their day at the old one), the furniture that goes with a unit sold (F-PROP-FURNISH), the board's own
+sign on the wall (it is words over the door).
 
 ## The maps and the words over the street (UI-012, UI-018, QST-005)
 The town is drawn from its data as the slice's play.js drawBase() draws it (`BrixWorld/BrixMap`): the ground, Old Town's
@@ -602,7 +899,9 @@ level (name, job, what they are doing or where they are going). Markers (ADR-005
 `BrixWorld/BrixMarkers`, numbers, colours and signs in `World/rules/markers.json`): over each person a quest or a job wants,
 over each place it sends you to and over the mark, a brass coin with a sign for what it is (a letter: a line offered;
 a speech bubble: someone to talk to; a bubble with a tick: going back to hand it in; a parcel: your job; a pin, or what
-the place is: basket, cup, columns, awning; the mark's cream pin), ringed in its colour, in a warm halo. A spark of its
+the place is: basket, cup, columns, awning; the mark's cream pin), ringed in its colour, in a warm halo. A step that needs
+the player to have something (the first line's loaf of bread), or the shopping job, marks the 3 nearest shops with it in
+stock today (`have_shops`; "Loaf of bread sold here" close by), until it is carried. A spark of its
 colour far off (to 160 m), the token within 45 m (a place 30 m), bobbing; within 6 m larger, with a caption and its key
 ("E Talk to Mei"); behind a wall a faint outline; out of view a small token and arrow at the screen's edge; new things
 pulse. The same tokens stand for them on both maps. Hidden while talking. What shows is the player's settings: display.minimap, display.names and the map group (residents, quests,
@@ -610,12 +909,13 @@ shop names). Tests: `UI018_the_big_map_is_drawn_from_the_town` (1,002 of the 1,0
 middle, the streets, the tram line, the woods; the zoom's bounds and its fixed point), `UI012_the_mark_is_set_cleared_and_reached`,
 `QST005_the_people_and_places_a_quest_wants_are_marked`, `QST005_the_markers_are_sound` (markers.json as
 world.marker_problems() checks it, and a broken copy caught the same way; a spark, a token and a near token by distance),
-`QST005_each_quest_step_gets_its_marker` (the first person to see, going back to them, the bank, a place by its kind, a line
-offered). Shots: `-BrixMap` opens the big map, `-BrixMapZoom=z,x,z` zooms it
+`QST005_each_quest_step_gets_its_marker` (the first person to see, going back to them, the bank, a place by its kind, every
+shop with the bread in stock and only the nearest 3 kept, none once it is carried, the shopping job, a line offered). Shots: `-BrixMap` opens the big map, `-BrixMapZoom=z,x,z` zooms it
 on a place, `-BrixMark=x,z` sets the mark, `-BrixNear=<resident>[,<metres>]` stands the player 3.5 m (or that far) in front of someone; a shot logs
-the residents on the maps, the markers and the words over the street. Not yet: the player's own buildings outlined
-(map_mine; the property market is not brought over), Properties' "show on the map", a tree's crown by the day's
-vegetation (a fixed `TreeRadius`). 31 to 33 frames a second at High with the minimap (noisy: other sessions were running
+the residents on the maps, the markers and the words over the street. Your buildings and the places you rent are outlined on the
+big map (see The real estate market). Each tree is drawn on the maps as big as its crown is today and a fallen one not at all
+(play.js drawBase() over D.trees: `BrixMapTreesToday`, `UI018_the_maps_trees_are_todays_crowns`; `TreeRadius` only when
+today's trees did not load). 31 to 33 frames a second at High with the minimap (noisy: other sessions were running
 Unreal).
 
 ## Skateboards (CITY-098 to CITY-101; F-VEH-SKATES 2)
@@ -626,15 +926,30 @@ board() and ride() do: the board in use carried by its edge in the right hand, w
 across the deck, knees a little bent, and on the manual board pushes with the back foot on the ground while W is held,
 the front foot along the deck. Y (settings.json `board`) gets on the board in use and off it again, picking it up; on a
 board there is no walk: A and D turn the rider and the camera comes round behind them, more slowly the faster they go;
-the bar at the foot of the screen says which board and how fast. A new game has no board until the skate store
-(CITY-102); a test shot (or `-BrixBoards`) owns all three with the electric board in use, as the slice's `?auto=1`, and
+the bar at the foot of the screen says which board and how fast. A new game has no board until it buys one at the skate
+store; a test shot (or `-BrixBoards`) owns all three with the electric board in use, as the slice's `?auto=1` (unless
+`-BrixNoBoards`, a new game's none), and
 `-BrixBoard=<manual|electric|neon_boost>` gets on that one (with `-BrixHold=steer,throttle`). `Tools/unreal/people_values.py`
 runs boards.js and people.js in headless Edge into `Tests/values/boards_city_01.json`: `CITY099_boards_are_ridden_and_drawn_as_the_slice_does`
 checks every speed of a ride of each kind and 36 riders and carried boards (vertex for vertex, within 1 mm);
-`CITY098_board_kinds_and_speeds`, `CITY100_auto_owns_all_and_rides_electric`. Not yet: the skate store and buying
-(CITY-102, CITY-103), the boards among the belongings in the menu (CITY-100), saving them, the server's check (CITY-104),
-the sounds of getting on and off; the slice has no residents on boards, so there are none here either. 32 frames a second
-at High riding along Tram Street (noisy: other sessions were running Unreal).
+`CITY098_board_kinds_and_speeds`, `CITY100_auto_owns_all_and_rides_electric`.
+
+Skateboards are sold at Eastgate's sports and toy outlets (CITY-102, CITY-103; ADR-0054, which supersedes ADR-0053's skate
+store; the owner, 2026-11-25: no dedicated skate shop, rideable boards in the sports or toy shops, to ride or to put on show).
+The slice sells none, so the rules were proved first in Python (economy.py sells_boards(), buy_board(n, u, kind),
+board_in_use(), `test_CITY_102_*` and `test_CITY_103_*` in Tools/citysim/test_economy.py). Which outlets is boards.json
+`sold_at` (sports, toys: 34 of the 189); the prices are boards.json `price`, cheapest to dearest (Bx 60, Bx 280, Bx 900
+[ASSUMPTION]). B in such an outlet opens its counter with the three boards after its goods in the same grid, each its own
+model as people.js board() draws it (`DrawBrixBoard`, `BrixThingFromBody`), turning in the showcase with its top speed and how
+it goes; one owned is marked yours and is not sold again. A board is paid into the mall's till through the ledger (cash first,
+then the current account), goes to the belongings and is the one in use when it is faster than the one in use. The game
+menu's Belongings page lists the boards owned, the one in use marked (in the hand or ridden), with Use this on the others
+(life.js belongingsTab()). `CITY103_boards_are_bought_as_python_does` runs economy.board_script() (refusals, a clothes outlet,
+a loan, the in-use rule, the till, a save and load) against Python's results in life.json. To see it in a test shot:
+`-BrixNoBoards -BrixCounter=b_16_5_u35` (Bobbin's Toys; `"-BrixLife=open,current;loan,30000,7"` to afford a board), the
+belongings with `-BrixMenu=belongings`. Not yet: boards in the sports and toy outlets' windows, a board on show at home (the boards are not among the Furnish tab's pieces yet), the server's check
+(CITY-104), the sounds of getting on and off; the slice has no residents on boards, so there are none here either. 32
+frames a second at High riding along Tram Street (noisy: other sessions were running Unreal).
 
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
@@ -666,7 +981,8 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.ART001_every_house_has_its_line_and_colourway` | ART-001 (ADR-0032, ADR-0035) |
 | `BrixTown.World.WLD043_the_sun_follows_the_calendar` | WLD-043 (ADR-0024) |
 | `BrixTown.World.CITY022_residents_are_where_their_routine_puts_them` | CITY-022 |
-| `BrixTown.World.ART004_people_are_drawn_as_the_slice_draws_them` | ART-004, ANIM-001, ANIM-002 |
+| `BrixTown.World.ART004_people_are_drawn_as_the_slice_draws_them` | ART-004, ANIM-001, ANIM-002, ANIM-004, ANIM-005 |
+| `BrixTown.World.ANIM005_people_look_at_whoever_comes_near` | ANIM-005 |
 | `BrixTown.World.CITY013_every_enterable_building_has_a_doorway` | CITY-013 (ADR-0048) |
 | `BrixTown.World.FURN060_every_planned_home_is_furnished_in_its_rooms` | FURN-060, FURN-061, FURN-063 (ADR-0050) |
 | `BrixTown.World.WLD052_every_storey_is_reached_by_its_stair` | WLD-050, WLD-052 |
@@ -678,17 +994,24 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY017_residents_sit_on_garden_benches` | CITY-017 |
 | `BrixTown.World.CITY040_vehicles_are_where_the_traffic_puts_them` | CITY-040 |
 | `BrixTown.World.CITY041_trams_are_where_the_timetable_puts_them` | CITY-041 |
+| `BrixTown.World.CITY041_players_ride_the_tram` | CITY-041 |
 | `BrixTown.World.CITY049_resident_cars_give_way_to_the_player` | CITY-049 |
 | `BrixTown.World.CITY070_residents_dodge_and_scold_as_the_slice_does` | CITY-070, CITY-071 |
 | `BrixTown.World.CITY072_street_things_break_as_the_rules_say` | CITY-072, CITY-073 |
+| `BrixTown.World.CITY072_a_broken_bench_is_not_sat_on` | CITY-072 |
 | `BrixTown.World.CITY074_damage_is_kept` | CITY-074 |
 | `BrixTown.World.CITY075_repair_crews_mend_as_repairs_py_does` | CITY-075 |
 | `BrixTown.World.CITY076_residents_shout_at_a_smash` | CITY-076 |
 | `BrixTown.World.WLD037_the_weather_is_worked_out_as_world_py_does` | WLD-037 |
+| `BrixTown.World.WLD037_the_weather_key_steps_through_the_kinds` | WLD-037 |
+| `BrixTown.World.WLD037_people_out_in_the_rain_are_a_little_darker` | WLD-037 |
+| `BrixTown.World.WLD037_rain_and_snow_stay_out_from_under_roofs` | WLD-037, WLD-070 |
 | `BrixTown.World.CITY080_residents_are_dressed_for_the_rain` | CITY-077, CITY-079, CITY-080 |
 | `BrixTown.World.WLD036_the_clouds_are_where_world_py_puts_them` | WLD-035, WLD-036 |
 | `BrixTown.World.WLD070_snow_falls_and_lies_as_world_py_says` | WLD-069, WLD-070 |
+| `BrixTown.World.WLD042_the_days_light_is_kept_and_the_night_is_dark` | WLD-042 (ADR-0055) |
 | `BrixTown.World.CITY107_residents_are_dressed_for_snow` | CITY-107 |
+| `BrixTown.World.WLD071_footprints_and_tracks_follow_the_clock` | WLD-071 |
 | `BrixTown.World.CITY007_every_conversation_is_sound` | CITY-007 |
 | `BrixTown.World.CHR009_lines_are_mouthed_as_the_slice_mouths_them` | CHR-009 |
 | `BrixTown.World.CHR001_the_designer_makes_the_slices_look` | CHR-001, CHR-002 |
@@ -699,6 +1022,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CHR016_clothes_bought_set_only_their_parts` | CHR-016 |
 | `BrixTown.World.QST008_a_save_brings_the_game_back` | QST-008 |
 | `BrixTown.World.SND018_lines_are_voiced` | SND-018 |
+| `BrixTown.World.SND018_unvoiced_lines_are_murmured` | SND-018 |
 | `BrixTown.World.ECO001_money_is_whole_chips_in_balanced_lines` | ECO-001, ECO-002, ECO-003, BANK-007 |
 | `BrixTown.World.ECO002_the_ledger_matches_the_python` | ECO-002, ECO-005, ECO-010, ECO-011, ECO-013, BANK-001, BANK-007 |
 | `BrixTown.World.BANK008_the_bank_settles_as_the_python_does` | BANK-002, BANK-008 |
@@ -708,7 +1032,8 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.SND009_every_sound_has_its_recording` | SND-009 |
 | `BrixTown.World.SND002_engines_sound_as_the_slice_hears_them` | SND-002, SND-009 |
 | `BrixTown.World.SND004_the_tram_sounds_as_the_slice_hears_it` | SND-004 |
-| `BrixTown.World.UI021_every_thing_shows_what_python_says` | UI-020, UI-021 |
+| `BrixTown.World.UI021_every_thing_shows_what_python_says` | UI-020, UI-021, FURN-065 |
+| `BrixTown.World.UI020_dots_and_chips_show_the_slices_marks` | UI-020 |
 | `BrixTown.World.SND001_the_town_sounds_by_time_of_day` | SND-001 |
 | `BrixTown.World.SND007_outside_is_muffled_indoors` | SND-007 |
 | `BrixTown.World.SND010_the_score_changes_through_the_day` | SND-010, SND-011, SND-012 |
@@ -726,6 +1051,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.UI009_a_bad_setting_is_caught` | UI-009 |
 | `BrixTown.World.UI010_no_control_does_two_things` | UI-010 |
 | `BrixTown.World.UI018_the_big_map_is_drawn_from_the_town` | UI-018 |
+| `BrixTown.World.UI018_the_maps_trees_are_todays_crowns` | UI-018, WLD-056 |
 | `BrixTown.World.UI012_the_mark_is_set_cleared_and_reached` | UI-012 |
 | `BrixTown.World.QST005_the_people_and_places_a_quest_wants_are_marked` | QST-005 |
 | `BrixTown.World.QST005_the_markers_are_sound` | QST-005 |
@@ -733,9 +1059,30 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY098_board_kinds_and_speeds` | CITY-098 |
 | `BrixTown.World.CITY099_boards_are_ridden_and_drawn_as_the_slice_does` | CITY-099, CITY-101 |
 | `BrixTown.World.CITY100_auto_owns_all_and_rides_electric` | CITY-100 |
+| `BrixTown.World.CITY103_boards_are_bought_as_python_does` | CITY-100, CITY-102, CITY-103 |
 | `BrixTown.World.CITY017_every_plant_is_drawn_as_the_slice_draws_it` | CITY-017, WLD-040 |
+| `BrixTown.World.CITY017_lawns_are_drawn_in_their_own_pattern` | CITY-017, ART-001 |
 | `BrixTown.World.WLD056_the_open_ground_is_drawn_as_the_slice_draws_it` | WLD-056, ART-001 |
-| `BrixTown.World.WLD032_children_play_as_the_slice_puts_them` | WLD-032 |
+| `BrixTown.World.WLD032_children_play_as_the_slice_puts_them` | WLD-032, WLD-041 |
 | `BrixTown.World.WLD028_the_street_dressing_is_drawn_as_the_slice_draws_it` | WLD-028, WLD-031, WLD-034 |
 | `BrixTown.World.WLD056_every_tree_is_drawn_as_the_slice_draws_it` | WLD-056 |
 | `BrixTown.World.CITY043_the_road_markings_and_signals_are_drawn_as_the_slice_draws_them` | CITY-043, CITY-045, CITY-091 |
+| `BrixTown.World.WLD058_eastgate_is_built_as_the_slice_builds_it` | WLD-057 to WLD-061, WLD-063, WLD-067, WLD-068 |
+| `BrixTown.World.FURN065_outlets_show_the_goods_they_sell` | FURN-065 |
+| `BrixTown.World.WLD058_only_eastgate_has_an_inside` | WLD-058 |
+| `BrixTown.World.WLD062_moving_stairs_carry_and_lifts_go_between_floors` | WLD-062 |
+| `BrixTown.World.WLD066_every_outlet_has_its_room` | WLD-066 |
+| `BrixTown.World.CITY105_every_outlet_has_a_counter_its_keeper_stands_at` | CITY-105, WLD-067 |
+| `BrixTown.World.CITY106_visitors_shop_at_the_counters_and_eat_at_the_tables` | CITY-106, WLD-068 |
+| `BrixTown.World.BUILD002_every_building_is_built_from_its_design` | BUILD-001, BUILD-002, BUILD-016, BUILD-019 (ADR-0052) |
+| `BrixTown.World.BUILD005_remodels_match_the_python` | BUILD-004 to BUILD-007, BUILD-016 to BUILD-019 |
+| `BrixTown.World.QST008_remodels_are_kept_in_the_save` | QST-008, BUILD-005 |
+| `BrixTown.World.BUILD021_room_plans_match_the_python` | BUILD-021 to BUILD-023 |
+| `BrixTown.World.QST008_room_plans_are_kept_in_the_save` | QST-008, BUILD-021 |
+| `BrixTown.World.FURN051_furnishing_matches_the_python` | FURN-051, FURN-052, FURN-055, FURN-064, INV-001 |
+| `BrixTown.World.QST008_furnishings_are_kept_in_the_save` | QST-008, FURN-051, INV-001 |
+| `BrixTown.World.PROP021_the_market_matches_the_python` | PROP-010 to PROP-022, BANK-002, FURN-063 |
+| `BrixTown.World.PROP009_every_building_is_carved_into_owned_units` | PROP-009, PROP-010 |
+| `BrixTown.World.PROP018_the_money_supply_holds_and_a_saved_market_goes_on` | PROP-018, PROP-021, QST-008 |
+| `BrixTown.World.FURN020_the_outlet_is_built_as_the_slice_builds_it` | FURN-020 |
+| `BrixTown.World.FURN021_staff_and_browsers_are_at_the_outlets_places` | FURN-021 |

@@ -30,6 +30,13 @@ public:
 	ABrixRooms();
 	void Start(const FBrixCity& City, const FBrixInsides& Insides, ABrixTownActor* Town, int32 Day);
 	virtual void Tick(float DeltaSeconds) override;
+	// BUILD-021: a storey's inner walls drawn from a room plan (each piece's own colour, or none for the walls' plaster)
+	bool SetPlan(int32 Lot, int32 Floor, const TArray<struct FBrixPartition>& Segs, const TArray<TOptional<FVector3f>>& Colours);
+	bool HasRooms(int32 Lot) const;
+	// FURN-051 (play.js townLayout(), showLayout()): a storey's furniture as the town laid it, as pieces that can be moved;
+	// and the storey drawn from a layout (the town's pieces moved and turned, pieces of furnishing.json as the kits' meshes)
+	bool TownLayout(int32 Lot, int32 Floor, TArray<struct FBrixLayoutPiece>& Out) const;
+	bool SetLayout(int32 Lot, int32 Floor, const TArray<struct FBrixLayoutPiece>& Layout);   // whether the building's rooms are drawn (furnished or with walls of its own)
 	int32 Furnished() const { return Near.Num(); }
 	int32 PiecesShown() const { return Shown; }
 	int32 LampsOn() const;
@@ -37,11 +44,13 @@ public:
 	// taking it (true if there was one).
 	bool LiftOffer(const FVector& PawnCm, FString& Text, double& Metres) const;
 	bool UseLift(class APawn* Pawn);
+	void AddLiftCalls(const TArray<FBrixLiftCall>& More) { LiftCalls.Append(More); }   // another building's lifts (Eastgate Mall, ABrixMall)
 	UPROPERTY(Config) float LiftReach = 0.9f;          // m from a call (play.js use points)
 
 	UPROPERTY(Config) float NearMetres = 30.f;          // homes within this of the camera are furnished (the slice's near rooms)
 	UPROPERTY(Config) float CheckSeconds = 0.25f;
 	UPROPERTY(Config) FLinearColor PartitionColour = FLinearColor(0.8f, 0.76f, 0.68f);   // homes.js PLASTER
+	UPROPERTY(Config) FLinearColor NoMeshColour = FLinearColor(0.45f, 0.38f, 0.3f);   // a piece with no mesh of its own yet: a box its size
 	UPROPERTY(Config) FLinearColor FrameColour = FLinearColor(0.36f, 0.24f, 0.15f);      // a doorway's frame
 	UPROPERTY(Config) FLinearColor BoardsColour = FLinearColor(0.42f, 0.29f, 0.18f);     // a room's boards
 	UPROPERTY(Config) FLinearColor TilesColour = FLinearColor(0.7f, 0.68f, 0.64f);       // a wet room's tiles
@@ -50,13 +59,38 @@ public:
 	// the rooms' own light (homes.js: a lamp in each room near the camera, 0.4 m under its ceiling): the rooms nearest the
 	// camera in the home it is in (each light costs GPU time with Lumen: 6 cost some 15 ms on the owner's laptop)
 	UPROPERTY(Config) int32 RoomLights = 3;
-	UPROPERTY(Config) float RoomLightCandela = 6.f;
-	UPROPERTY(Config) float RoomLightReach = 7.f;       // m
-	UPROPERTY(Config) FLinearColor RoomLightColour = FLinearColor(1.f, 0.86f, 0.68f);
+	// A room's lamp is the lamp of the Blender reference rooms (Tools/blender/furniture_kit_17.py and _18.py; ADR-0055):
+	// their pendant of 70 W in the lantern's colour, a real lamp whose light falls off with the square of the distance,
+	// shining down out of its shade (RoomLampCone: the half angle; 0 all round). CandelaPerWatt turns the references' watts
+	// into the engine's candela where the sun is SunLux. By the arithmetic it is 0.075 (a Blender point light of P watts
+	// lights a facing surface d away with P / (4 pi d2) W/m2, and the references' sun is 8.5 W/m2 where the game's is 8);
+	// measured in the reference rooms built in Unreal (ABrixLightRoom, Tools/unreal/light_reference.py) a third of that
+	// matches, as a pendant's shade takes part of its light and the engine's picture keeps more colour in what is bright.
+	UPROPERTY(Config) float RoomLampWatts = 70.f;
+	UPROPERTY(Config) float CandelaPerWatt = 0.026f;
+	UPROPERTY(Config) FLinearColor RoomLampColour = FLinearColor(1.f, 0.6f, 0.3f);
+	UPROPERTY(Config) float RoomLampCone = 80.f;
+	UPROPERTY(Config) float RoomLampReach = 9.f;        // m
+	UPROPERTY(Config) float RoomLampDrop = 0.7f;        // m under the ceiling, where a planned home's room has no lamp of its own to hang it from
+	UPROPERTY(Config) int32 RoomLampShadows = 1;        // how many of the nearest lamps cast shadows
+	// A floor with no plan (a shop, a cafe, the bank) hangs many lamps (play.js lamp()); the RoomLights nearest the camera
+	// are the real ones.
+	// The room's own light. The engine brings almost none of the day indoors (in the reference rooms built in Unreal,
+	// with the lamps out, the walls came 7 stops under Blender's, which are lit mostly by the sky and by sunlight off the
+	// floor), so a room has an even warm light of its own, as the slice's has (play.js roomLight(): its room light, weaker
+	// by night): RoomFill strong where the sun is SunLux, RoomFillNight of that with the day gone, in RoomFillColour,
+	// fading out at RoomFillReach of the floor's diagonal. It also stands in for a hall's lamps too far to be real ones.
+	UPROPERTY(Config) float RoomFill = 0.45f;
+	UPROPERTY(Config) float RoomFillNight = 0.4f;
+	UPROPERTY(Config) FLinearColor RoomFillColour = FLinearColor(1.f, 0.75f, 0.48f);
+	UPROPERTY(Config) float RoomFillReach = 0.7f;
+	float FillNow(float Daylight) const { return RoomFill * FMath::Lerp(RoomFillNight, 1.f, FMath::Clamp(Daylight, 0.f, 1.f)); }
+	// a lamp as the rooms make it, for anything else that wants the same lamp (the reference room, ABrixLightRoom)
+	static class UPointLightComponent* MakeLamp(AActor* Owner, USceneComponent* Root, float Watts, float ConeDeg, bool bShadows);
 	UPROPERTY(Config) float NightBelow = 0.35f;        // the windows are lit as the day's light falls below this (as ABrixLamps)
 
 private:
-	struct FLotHome { int32 Lot = -1; FVector2D Centre = FVector2D::ZeroVector; float Reach = 0.f; TArray<float> FloorUp, CeilUp; TArray<TOptional<FBrixRect>> Holes; TSharedPtr<FBrixHome> Home; bool bPlanned = true; TArray<struct FBrixFurnished> Furn; };   // heights of its built floors
+	struct FLotHome { int32 Lot = -1; FVector2D Centre = FVector2D::ZeroVector; float Reach = 0.f; TArray<float> FloorUp, CeilUp; TArray<TOptional<FBrixRect>> Holes; TSharedPtr<FBrixHome> Home; bool bPlanned = true; TArray<struct FBrixFurnished> Furn; TMap<int32, struct FBrixFurnished> TownFurn; };   // heights of its built floors
 	TArray<FLotHome> Homes;
 	TSet<int32> Near;                                   // indexes into Homes, furnished now
 	int32 CamHome = INDEX_NONE, CamFloor = 0;          // the home the camera is in and its floor
@@ -77,5 +111,6 @@ private:
 	TArray<FBrixLiftCall> LiftCalls;
 	UPROPERTY() TObjectPtr<ABrixTownActor> TownRef;
 	UPROPERTY() TArray<TObjectPtr<class UPointLightComponent>> Lights;
-	void PlaceLights(const FVector2D& Eye, float EyeUp);
+	UPROPERTY() TObjectPtr<class UPointLightComponent> Fill;      // the room's own light
+	void PlaceLights(const FVector2D& Eye, float EyeUp, float Daylight);
 };

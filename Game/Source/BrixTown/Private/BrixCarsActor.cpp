@@ -4,6 +4,8 @@
 #include "BrixGameMode.h"
 #include "BrixPeople.h"
 #include "BrixCrashActor.h"
+#include "BrixWeatherActor.h"
+#include "BrixWeather.h"
 #include "BrixUnits.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Engine/World.h"
@@ -16,6 +18,9 @@
 
 using BrixUnits::ToWorld;
 using BrixUnits::CmPerM;
+
+void BrixMarksToMesh(UProceduralMeshComponent* M, UMaterialInterface* Mat, const TArray<FBrixPrint>& P, bool bPairs, float Wid, float Len,
+	const FLinearColor& Snow, const FLinearColor& Pressed, double Fill, TFunctionRef<float(const FVector2D&)> Ground, float Lift);   // BrixPeople.cpp
 
 namespace
 {
@@ -137,11 +142,33 @@ void ABrixCars::Build(UProceduralMeshComponent* M, int32 k, int32 Lod)
 		for (const float a : { h - 2.1f, -h + 2.5f }) for (const float s : { -1.f, 1.f }) Box(Body, a - .5f, a + .5f, s * w - .15f, s * w + .15f, 0.f, 1.f, Tyre);
 	}
 	else if (const FBrixCarModel* Md = Traffic->ModelOf(k))   // a Soft box car in this car's colours (cars.js meshCar())
+		PaintCar(Body, *Md, V.Kind == 1, k, [k](const TCHAR* T) { return H(k, T); }, Lod);
+	FBrixMeshArrays A;
+	A.From(Body, false);
+	A.Upload(M, -1, Material);
+}
+
+FVector2D ABrixCars::BuildParked(UProceduralMeshComponent* M, const FString& Seed) const
+{
+	if (!Traffic) return FVector2D::ZeroVector;
+	const double hm = BrixSliceHash({ Seed, TEXT("model") });
+	const FBrixCarModel* Md = Traffic->Models.Find(hm < .4 ? TEXT("small") : hm < .72 ? TEXT("estate") : TEXT("pickup"));
+	if (!Md) return FVector2D::ZeroVector;
+	FBrixBodyMesh Body;
+	PaintCar(Body, *Md, false, 0, [&Seed](const TCHAR* T) { return BrixSliceHash({ Seed, T }); }, 0);
+	FBrixMeshArrays A;
+	A.From(Body, false);
+	A.Upload(M, -1, Material);
+	return FVector2D(Md->Box.Y - Md->Box.X, Md->Box.W - Md->Box.Z);
+}
+
+void ABrixCars::PaintCar(FBrixBodyMesh& Body, const FBrixCarModel& InMd, bool bVan, int32 k, TFunctionRef<double(const TCHAR*)> R, int32 Lod) const
+{
+	const FBrixCarModel* Md = &InMd;
 	{
-		const bool bVan = V.Kind == 1;
-		const FVector3f BodyC = bVan ? VanPaint[k % 4] : Paint[(int32)(H(k, TEXT("col")) * 9) % 9];
-		const FVector3f RoofC = H(k, TEXT("two")) < .75 ? Roofs[(int32)(H(k, TEXT("roof")) * 2) % 2] : BodyC;
-		const bool bRack = H(k, TEXT("rack")) < .65, bSpare = H(k, TEXT("spare")) < .5;
+		const FVector3f BodyC = bVan ? VanPaint[k % 4] : Paint[(int32)(R(TEXT("col")) * 9) % 9];
+		const FVector3f RoofC = R(TEXT("two")) < .75 ? Roofs[(int32)(R(TEXT("roof")) * 2) % 2] : BodyC;
+		const bool bRack = R(TEXT("rack")) < .65, bSpare = R(TEXT("spare")) < .5;
 		TArray<TOptional<FVector3f>> PartC;
 		for (const FString& N : Traffic->Parts)
 		{
@@ -176,9 +203,6 @@ void ABrixCars::Build(UProceduralMeshComponent* M, int32 k, int32 Lod)
 			}
 		}
 	}
-	FBrixMeshArrays A;
-	A.From(Body, false);
-	A.Upload(M, -1, Material);
 }
 
 void ABrixCars::Tick(float DeltaSeconds)
@@ -210,6 +234,8 @@ void ABrixCars::Tick(float DeltaSeconds)
 		}
 	}
 	int32 Shown = 0;
+	const ABrixWeather* Wx = Mode->Weather.Get();
+	const float Lies = Wx && Wx->bOn ? (float)Wx->Snow.Lying : 0.f;
 	for (int32 k = 0; k < Traffic->Num(); ++k)
 	{
 		const TOptional<FBrixCarAt> C = Traffic->At(k, Minute);
@@ -239,15 +265,58 @@ void ABrixCars::Tick(float DeltaSeconds)
 		// the vehicle's frame: along its heading (Unreal yaw from x towards y), across to its right
 		S->M->SetWorldLocationAndRotation(ToWorld(C->Pos, RoadUp), FRotator(0.0, FMath::RadiansToDegrees(FMath::Atan2(C->Heading.Y, C->Heading.X)), 0.0));
 		S->M->SetVisibility(true);
+		const float Sn = Lies * (C->bMoving ? CarSnowMoving : CarSnow);   // snow on its roof and bonnet (WLD-070)
+		if (FMath::Abs(S->Snow - Sn) > .02f) { S->M->SetCustomPrimitiveDataFloat(0, Sn); S->Snow = Sn; }
 		++Shown;
 	}
 	LastShown = Shown;
+	// tyre tracks in lying snow behind the vehicles near (WLD-071), from where their timelines took them; the player's car's
+	// from where it has been driven this visit
+	if (!Tracks)
+	{
+		Tracks = NewObject<UProceduralMeshComponent>(this, TEXT("Tracks"));
+		Tracks->SetupAttachment(RootComponent);
+		Tracks->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Tracks->SetCastShadow(false);
+		Tracks->RegisterComponent();
+		AddInstanceComponent(Tracks);
+	}
+	if (!Wx || !Wx->bOn || Wx->Snow.Lying < Wx->Rules.MinLying) { Tracks->SetVisibility(false); DriveTrail.Reset(); }
+	else
+	{
+		const double Clock = Mode->ClockMinutes();
+		if (Drive.K >= 0 && !Drive.bRide && FMath::Abs(Drive.V) > .3)   // the player's car on the move
+		{
+			const FVector2D At(Drive.X, Drive.Z), H(FMath::Cos(Drive.A), FMath::Sin(Drive.A));
+			if (!DriveTrail.Num() || FVector2D::Distance(DriveTrail.Last().Pos, At) > .8) { DriveTrail.Add({ At, H, Clock, 1 }); if (DriveTrail.Num() > 300) DriveTrail.RemoveAt(0); }
+		}
+		TArray<FBrixPrint> T;
+		for (const TPair<int32, FShown>& L : Live)
+		{
+			if (L.Key == Drive.K) continue;
+			const TOptional<FBrixCarAt> C = Traffic->At(L.Key, Minute);
+			if (C && FVector2D::Distance(C->Pos, Here) < TrackDistance) BrixTyreTracks(Wx->Rules, *Traffic, L.Key, Minute, Gauge, Wx->Snow.Falling, Wx->Snow.Lying, T);
+		}
+		for (int32 n = 1; n < DriveTrail.Num(); ++n)
+			for (const double s : { -.5, .5 })
+			{
+				const FBrixPrint& A = DriveTrail[n - 1];
+				const FBrixPrint& B = DriveTrail[n];
+				const double Age = Clock - B.Age, Str = BrixPrintStrength(Wx->Rules, Age, Wx->Snow.Falling, Wx->Snow.Lying);
+				if (Str <= 0 || FVector2D::Distance(A.Pos, B.Pos) > 5) continue;
+				T.Add({ A.Pos + FVector2D(-A.Dir.Y, A.Dir.X) * (s * Gauge), A.Dir, Age, Str });
+				T.Add({ B.Pos + FVector2D(-B.Dir.Y, B.Dir.X) * (s * Gauge), B.Dir, Age, Str });
+			}
+		BrixMarksToMesh(Tracks, Material, T, true, .22f, 0.f, SnowTone, PressedSnow, Wx->Snow.Lying / FMath::Max(Wx->Rules.SnowCover, .01),
+			[this](const FVector2D& Q) { for (const FBox2D& B : Paving) if (B.IsInside(Q)) return .12f; return RoadUp; }, MarkLift);
+	}
 	const TArray<FBrixTram::FAt> Now = Tram.At(Minute);
 	for (int32 k = 0; k < Trams.Num(); ++k)
 	{
 		if (k >= Now.Num()) { Trams[k]->SetVisibility(false); continue; }
 		Trams[k]->SetWorldLocationAndRotation(ToWorld(FVector2D(Now[k].X, Tram.Z), RoadUp), FRotator::ZeroRotator);   // eastward along Tram Street
 		Trams[k]->SetVisibility(true);
+		Trams[k]->SetCustomPrimitiveDataFloat(0, Lies * CarSnowMoving);
 	}
 }
 
@@ -269,12 +338,24 @@ int32 ABrixCars::TargetCar(const FVector2D& P, double& OutD) const
 		const double D = FVector2D::Distance(C->Pos, P);
 		if (D < OutD) { OutD = D; Best = k; }
 	}
+	double TramD = 0;   // the tram standing at a stop, within arm's reach of its side (CITY-041)
+	const int32 S = Tram.Standing(Minute, P, 1.5, TramD);
+	if (S >= 0 && TramD < OutD) { OutD = TramD; Best = TramK; TargetRun = Tram.At(Minute)[S].Run; }
 	return Best;
 }
 
 bool ABrixCars::Enter(int32 k)
 {
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (IsTram(k))   // on the tram: a passenger on its front bench, carried along Tram Street (CITY-041)
+	{
+		const TOptional<FBrixTram::FAt> A = Mode ? Tram.Find(Mode->ClockMinute(), TargetRun) : TOptional<FBrixTram::FAt>();
+		if (!A || !A->bStopped) return false;
+		Drive = FDrive();
+		Drive.K = TramK; Drive.X = A->X; Drive.Z = Tram.Z; Drive.A = 0; Drive.bRide = true; Drive.bTram = true; Drive.Run = A->Run;
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: on the tram of run %.0f at x %.1f"), A->Run, A->X);
+		return true;
+	}
 	const TOptional<FBrixCarAt> C = Traffic && Mode ? Traffic->At(k, Mode->ClockMinute()) : TOptional<FBrixCarAt>();
 	if (!C) return false;
 	if (IsBus(k))   // on the bus: a passenger, carried where it goes (CITY-092)
@@ -384,6 +465,17 @@ void ABrixCars::Step(float Dt, float Throttle, float Steer, bool bHandbrake)
 bool ABrixCars::RideSeat(FVector2D& OutPos, double& OutYaw)
 {
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (Drive.bTram)
+	{
+		const double Minute = Mode ? Mode->ClockMinute() : 0;
+		const TOptional<FBrixTram::FAt> A = Tram.Rideable(Minute, Drive.Run) ? Tram.Find(Minute, Drive.Run) : TOptional<FBrixTram::FAt>();
+		if (!A) { Drive.bMoving = false; return false; }   // past the last stop: off at the end of the line
+		Drive.X = A->X; Drive.bMoving = !A->bStopped;
+		Drive.V = Drive.bMoving ? 5 : 0;   // for the camera
+		OutPos = Tram.Seat(A->X, Tram.PlayerSeat);
+		OutYaw = 0;   // east, the way it goes
+		return true;
+	}
 	const TOptional<FBrixCarAt> C = Traffic && Mode && Drive.bRide ? Traffic->At(Drive.K, Mode->ClockMinute()) : TOptional<FBrixCarAt>();
 	if (!C) { Drive.bMoving = false; return false; }   // out of service
 	Drive.X = C->Pos.X; Drive.Z = C->Pos.Y; Drive.A = FMath::Atan2(C->Heading.Y, C->Heading.X); Drive.bMoving = C->bMoving;
@@ -397,6 +489,14 @@ bool ABrixCars::RideSeat(FVector2D& OutPos, double& OutYaw)
 void ABrixCars::Leave(FVector2D& OutSpot, double& OutYaw)
 {
 	if (Drive.K < 0) return;
+	if (Drive.bTram)   // off the tram where it stands, onto the stop by its front door (or the last stop, past which it goes on)
+	{
+		OutSpot = Tram.Alight(Tram.Stops.Num() ? FMath::Min(Drive.X, Tram.Stops.Last()) : Drive.X);
+		OutYaw = -UE_DOUBLE_PI / 2;   // facing the platform (north)
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: off the tram at (%.1f, %.1f)"), OutSpot.X, OutSpot.Y);
+		Drive = FDrive();
+		return;
+	}
 	if (Drive.bRide)   // off the bus where it stands, on the kerb side by the door
 	{
 		const FVector2D H(FMath::Cos(Drive.A), FMath::Sin(Drive.A)), Side(-H.Y, H.X);

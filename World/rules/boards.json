@@ -1,8 +1,9 @@
 {
- "note": "Skateboards (F-VEH-SKATES; LIVING_CITY CITY-098 to CITY-104). The owner, 2026-11-24, first asked for skates, then the same day had them made skateboards: the manual board is pushed along with one foot while W is held, the electric and Neon Boost boards are ridden standing still. Each kind: top speed (km/h, the owner's), how fast it gets there, how it glides and brakes, whether a foot pushes it, its size (metres: deck length and width, height of the deck top above the ground, wheelbase, track, wheel diameter; measured from look test 35) and colours (linear RGB 0-1, from look test 35, Tools/blender/skateboards_35.py). Prices come with the store (CITY-102, CITY-103). All but the top speeds are [ASSUMPTION]. turn_rate: how fast A and D turn the rider standing still (radians a second), slower at speed (divided by 1 + speed in m/s / 15); cam_follow: how fast the camera comes round behind. indoor_top_kmh: the limit inside buildings; mall_top_kmh: inside a mall (the owner, 2026-11-24: \"allow 30 km/h inside the mall\").",
+ "note": "Skateboards (F-VEH-SKATES; LIVING_CITY CITY-098 to CITY-104). The owner, 2026-11-24, first asked for skates, then the same day had them made skateboards: the manual board is pushed along with one foot while W is held, the electric and Neon Boost boards are ridden standing still. Each kind: top speed (km/h, the owner's), how fast it gets there, how it glides and brakes, whether a foot pushes it, its size (metres: deck length and width, height of the deck top above the ground, wheelbase, track, wheel diameter; measured from look test 35) and colours (linear RGB 0-1, from look test 35, Tools/blender/skateboards_35.py). price: what each kind costs, in chips (100 chips = 1 brix), cheapest to dearest in the order (CITY-102) [ASSUMPTION]. sold_at: the kinds of a mall's outlets (World/rules/mall_outlets.json) that sell all three, paid into the mall's till by economy.py buy_board() (CITY-103; ADR-0054; the owner, 2026-11-25: \"we don't need a dedicated skate boards shop. ridable skateboards should be in sports or toy shop. player can either use them to rid or use it as display both.\"). All but the top speeds are [ASSUMPTION]. turn_rate: how fast A and D turn the rider standing still (radians a second), slower at speed (divided by 1 + speed in m/s / 15); cam_follow: how fast the camera comes round behind. indoor_top_kmh: the limit inside buildings; mall_top_kmh: inside a mall (the owner, 2026-11-24: \"allow 30 km/h inside the mall\").",
  "kinds": {
   "manual": {
    "name": "Manual board",
+   "price": 6000,
    "top_kmh": 50,
    "accel_kmh_s": 12,
    "glide_kmh_s": 6,
@@ -39,6 +40,7 @@
   },
   "electric": {
    "name": "Electric board",
+   "price": 28000,
    "top_kmh": 100,
    "accel_kmh_s": 30,
    "glide_kmh_s": 8,
@@ -90,6 +92,7 @@
   },
   "neon_boost": {
    "name": "Neon Boost board",
+   "price": 90000,
    "top_kmh": 250,
    "accel_kmh_s": 70,
    "glide_kmh_s": 10,
@@ -135,6 +138,7 @@
    "wheel_m": 0.1
   }
  },
+ "sold_at": ["sports", "toys"],
  "order": [
   "manual",
   "electric",

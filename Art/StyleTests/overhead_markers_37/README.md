@@ -17,6 +17,8 @@ switches in `Game/README.md`):
 | `unreal_talk_12m.png` | The first quest's person (Mei, resting on the square) 12 m off: the token with the speech bubble | `-BrixTime=15:12 -BrixNear=504,12` |
 | `unreal_near_4m.png` | 4 m off: larger, with its caption and key | `-BrixTime=15:12 -BrixNear=504,4` |
 | `unreal_dusk_7m.png` | At work in the Tram Café towards evening | `-BrixTime=18:40 -BrixNear=504,7` |
+| `unreal_bread_street.png` | The first quest at its bread step: the nearest grocer's basket at the screen's edge, three shops on the minimap | `-BrixTime=15:12 "-BrixLife=act,new_in_town,r0504,stage:bread" -BrixNear=504,14` |
+| `unreal_bread_map.png` | The same on the big map: the three nearest shops with bread | the same, with `-BrixMap` |
 | `unreal_map.png` | The big map: Mei's token by the player's arrow, the mark's pin | `-BrixTime=15:12 -BrixNear=504,9 -BrixMark=300,560 -BrixMap` |
 
 The numbers, colours and signs are `World/rules/markers.json`.

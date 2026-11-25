@@ -41,6 +41,8 @@ public:
 	UPROPERTY() TObjectPtr<class ABrixDesigner> Designer;   // the character designer, and who the player is (CHR-001)
 	UPROPERTY() TObjectPtr<class ABrixLife> Life;    // the player's money, the bank, shops and quests (ADR-0012)
 	UPROPERTY() TObjectPtr<class ABrixMap> Map;
+	UPROPERTY() TObjectPtr<class ABrixMall> Mall;   // Eastgate Mall, inside and out (WLD-058)
+	UPROPERTY() TObjectPtr<class ABrixMall> OutletHall;   // the furniture outlet's hall and car park (FURN-020)
 	class ABrixPeople* PeopleActor() const { return People; }      // the minimap, the big map and the words over the street (UI-012, UI-018)
 
 	UPROPERTY(Config) FString CityDir = TEXT("../World/city_01");   // from the project folder (Game/)
@@ -48,6 +50,7 @@ public:
 	UPROPERTY(Config) int32 StartDay = 16;        // the day the game starts on (the slice is built for day 16); its time is the city's spawn time
 	UPROPERTY(Config) float ClockRate = 1.f;      // times the calendar's pace (real_seconds_per_minute)
 	UPROPERTY(Config) float SunLux = 8.f;         // in full day
+	UPROPERTY(Config) float MallInside = 30.f;    // m in from Eastgate's door that -BrixInside= puts the player
 	UPROPERTY(Config) FLinearColor SunColour = FLinearColor(1.f, 0.86f, 0.68f);   // ART_DIRECTION 2.4, kit daylight
 	UPROPERTY(Config) FLinearColor SunDawnColour = FLinearColor(1.f, 0.42f, 0.22f); // a low sun's (the slice's lighting())
 	UPROPERTY(Config) float SkyLightIntensity = 1.f;  // the sky's fill in shade (with Lumen, also what it bounces)
@@ -63,6 +66,8 @@ public:
 	int32 RoomAt(const FVector& WorldCm) const;
 	const FBrixCity* CityData() const { return City.Get(); }
 	class ABrixRooms* RoomsActor() const { return Furnisher; }   // the furnished rooms near the camera, and the towers' lifts
+	struct FBrixInsides* InsidesData() const { return Insides.Get(); }   // what is inside the buildings, and their designs (BUILD-001)
+	class ABrixTownActor* Town() const { return TownActor; }          // the town, which draws a remodelled building again
 
 private:
 	void SpawnLight();
@@ -76,6 +81,7 @@ private:
 	UPROPERTY() TObjectPtr<class ABrixRooms> Furnisher;      // the homes near the camera, furnished (FURN-060)
 	TSharedPtr<struct FBrixTraffic> Traffic;     // the day's vehicles (Game/Data/cars.json)
 	TSharedPtr<struct FBrixInsides> Insides;     // what is inside the buildings (Game/Data/inside.json; CITY-013)
+	TSharedPtr<const struct FBrixGoodsModels> GoodsModels;   // the mall's goods as made in Blender (Game/Data/goods_models.json; FURN-065)
 	void PutInside(const FString& LotId, bool bWalk);
 	struct FRoom { int32 Lot = -1; FVector2D Centre = FVector2D::ZeroVector, Half = FVector2D::ZeroVector; double Cos = 1, Sin = 0; float Top = 3.f; };
 	TArray<FRoom> Rooms;                         // every hollow building's inside, for RoomAt

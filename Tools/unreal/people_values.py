@@ -21,6 +21,7 @@ people.js stays the source while the slice is kept (ADR-0045): run this again af
 """
 import html
 import json
+import math
 import os
 import re
 import subprocess
@@ -53,6 +54,7 @@ const out = { tables: { base: BASE, signatures: {}, palette: K, skins: SKINS, ha
   looks: [], bodies: [] };
 for (const [k, v] of Object.entries(SIG)) { const s = Object.assign({}, v); delete s.name; out.tables.signatures[k] = s; }
 const sigName = s => Object.keys(SIG).find(k => SIG[k] === s);
+const CLIMB = Object.assign({}, SIG.Careful, %CLIMB%, { name: "Climb" });   // dressing.js climbSig(), cut from dressing.js
 const plain = L => { const o = Object.assign({}, L); o.sig = sigName(L.sig); delete o.cheek; return o; };
 
 const looks = CASES.looks.map(([i, role, sig]) => look(i, role, sig));
@@ -61,9 +63,9 @@ looks.forEach((L, k) => out.looks.push(Object.assign({ i: CASES.looks[k][0], rol
 for (const c of CASES.bodies) {
   const ms = { a: new Float32Array(1 << 20), n: 0, boxes: [], box(x0, y0, z0, x1, y1, z1, col) { this.boxes.push([x0, y0, z0, x1, y1, z1, col[0], col[1], col[2]]); } };
   const L = looks[c.look];
-  const mod = c.floor != null ? { floor: c.floor, arms: c.driver ? [[1, 58, 10, 48], [1, 58, 10, 48]] : null } : c.arms || c.chest ? { arms: c.arms, chest: c.chest } : null;   // in a car (cars.js seat()); a gesture (dodge.js, smash.js, wet.js)
+  const mod = c.floor != null ? { floor: c.floor, arms: c.driver ? [[1, 58, 10, 48], [1, 58, 10, 48]] : null } : c.arms || c.chest || c.straddle ? { arms: c.arms, chest: c.chest, straddle: c.straddle } : null;   // in a car (cars.js seat()); a gesture (dodge.js, smash.js, wet.js, dressing.js); astride a seesaw
   draw(ms, c.x, c.y, c.z, c.yaw, L, c.pose, { ph: c.ph, t: c.t, lod: c.lod, ff: c.ff, fl: 14, face: c.face || null, mod,
-    sig: c.sig ? SIG[c.sig] : undefined, hood: c.hood, umb: c.umb });
+    sig: c.sig === "Climb" ? CLIMB : c.sig ? SIG[c.sig] : undefined, hood: c.hood, umb: c.umb, look: c.look_at, sleep: c.sleep });
   const nv = ms.n / 10, step = Math.max(1, Math.floor(nv / 240)), pts = [];
   for (let v = 0; v < nv; v += step) pts.push([v, ms.a[v * 10], ms.a[v * 10 + 1], ms.a[v * 10 + 2]]);
   out.bodies.push(Object.assign({}, c, { vertices: nv, samples: pts, boxes: ms.boxes }));
@@ -273,8 +275,27 @@ def main():
                            arms=[None, [1, 52, 12, 84]]))   # under an umbrella on a bench
         bodies.append(dict(look=k, x=-1.0, y=0.12, z=0.0, yaw=0.3 * k, pose=1, ph=(0.41 + 0.13 * k) % 1, t=5.1 + k, lod=lod, ff=1.0,
                            sig="Hurried", arms=[[1, 150, 30, 118], None], chest=[6, 0]))   # a hand over the head
+    # the other layers people.js takes (CHARACTER_MOTION §4, ANIM-004, ANIM-005; WLD-032, CITY-075): the head and eyes turned to
+    # look at the player, the eyes shut asleep, astride a seesaw, climbing a ladder hand over hand, hands on a frame's top bar,
+    # a repair crew bent over their work
+    reach = lambda ph, up: [[1, up + math.sin(ph * 6.283) * 18, 10, 30], [1, up - math.sin(ph * 6.283) * 18, 10, 30]]   # dressing.js reach()
+    for k in range(len(looks)):
+        lod = k % 3
+        look = [(-0.85 + 0.15 * k) * (1 if k % 2 else 0.6), 0.25 - 0.04 * k]
+        bodies.append(dict(look=k, x=0.2, y=0.12, z=0.4, yaw=0.4 * k, pose=0, ph=0.0, t=1.2 + k, lod=lod, ff=1.0, look_at=look))
+        bodies.append(dict(look=k, x=0.2, y=0.12, z=0.4, yaw=0.4 * k, pose=1, ph=(0.27 + 0.19 * k) % 1, t=2.6 + k, lod=lod, ff=1.0, look_at=look))
+        bodies.append(dict(look=k, x=0.0, y=0.6, z=0.0, yaw=0.2 * k, pose=2, ph=0.0, t=3.4 + k, lod=lod, ff=1.0, look_at=[look[0], -look[1]]))
+        # asleep in bed: people.js lies a body head to +z, which the port does at yaw pi (it turns it to lie along its bed)
+        bodies.append(dict(look=k, x=1.0, y=0.5, z=2.0, yaw=math.pi, pose=3, ph=0.0, t=1.6 + 0.5 * k, lod=k % 2, ff=1.0, sleep=True))
+        bodies.append(dict(look=k, x=-2.0, y=0.52, z=0.5, yaw=1.0 + 0.3 * k, pose=2, ph=0.0, t=2.8 + k, lod=lod, ff=1.0, straddle=True))
+        ph = (0.13 + 0.21 * k) % 1
+        bodies.append(dict(look=k, x=0.0, y=0.9, z=-1.0, yaw=1.5708, pose=1, ph=ph, t=3.1 + k, lod=lod, ff=1.0, sig="Climb", arms=reach(ph, 150)))
+        bodies.append(dict(look=k, x=0.5, y=1.22, z=0.0, yaw=0.3 * k, pose=0, ph=0.0, t=4.2 + k, lod=lod, ff=1.0, arms=[[1, 45, 12, 15], [1, 45, 12, 15]]))
+        w = math.sin((5.0 + k) * 5 + k) * 20
+        bodies.append(dict(look=k, x=2.0, y=0.12, z=-0.5, yaw=2.0 - 0.3 * k, pose=0, ph=0.0, t=5.0 + k, lod=lod, ff=1.0, arms=[[1, 60 + w, 20, 70], [1, 60 - w, 20, 70]], chest=[24, 0]))
     for n, face in enumerate(face_cases()):   # someone in a conversation: the full face control set (CHR-007)
         bodies.append(dict(look=n * 3, x=0.0, y=0.0, z=0.0, yaw=0.4 * n, pose=0, ph=0.0, t=1.3 + n, lod=0, ff=1.0, face=face))
+        bodies.append(dict(look=n * 3 + 1, x=0.0, y=0.0, z=0.0, yaw=0.4 * n, pose=0, ph=0.0, t=1.8 + n, lod=0, ff=1.0, face=face, look_at=[0.5 - 0.2 * n, 0.1]))   # talking while looking aside
     boards = json.load(open(os.path.join(RULES, "boards.json"), encoding="utf-8"))
     board_bodies = []
     for n, kind in enumerate(boards["order"]):            # each kind carried standing and walking, and ridden standing and pushing
@@ -292,7 +313,11 @@ def main():
         design_bodies.append(dict(design=n, x=1.0, y=0.12, z=-1.0, yaw=0.3 * n, pose=1, ph=(0.41 + 0.13 * n) % 1, t=3.7 + n, lod=1 + n % 3, ff=0.7))
         design_bodies.append(dict(design=n, x=0.0, y=0.0, z=0.0, yaw=0.2 * n, pose=0, ph=0.0, t=1.9 + n, lod=0, ff=1.0, face=face_cases()[n % 6]))
     cases = json.dumps(dict(looks=looks, bodies=bodies, designer=designer, designs=designs, designBodies=design_bodies, boards=boards, boardBodies=board_bodies))
-    patched = src.replace(ret, HARNESS.replace("%CASES%", cases) + ret, 1)
+    dressing = open(os.path.join(ROOT, "Prototype", "play", "dressing.js"), encoding="utf-8").read()
+    cs = re.search(r"Object\.assign\(\{\}, People\.SIG\.Careful, (\{.*?\})\)\);", dressing, re.S)
+    if not cs:
+        sys.exit("dressing.js: climbSig() not found; update people_values.py")
+    patched = src.replace(ret, HARNESS.replace("%CASES%", cases).replace("%CLIMB%", cs.group(1)) + ret, 1)
     # people.js takes hash() from play.js: the same function, cut from play.js
     play = open(os.path.join(ROOT, "Prototype", "play", "play.js"), encoding="utf-8").read()
     h = re.search(r"^function hash\(\) \{.*?^\}\n", play, re.S | re.M)

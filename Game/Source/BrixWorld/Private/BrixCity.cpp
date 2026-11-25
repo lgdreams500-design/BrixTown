@@ -570,6 +570,42 @@ TArray<FString> CheckBrixCity(const FBrixCity& City)
 	return Problems;
 }
 
+int32 FBrixTram::Standing(double Minute, const FVector2D& P, double Reach, double& OutD) const
+{
+	const TArray<FAt> Now = At(Minute);
+	int32 Best = -1;
+	OutD = 1e9;
+	for (int32 k = 0; k < Now.Num(); ++k)
+	{
+		if (!Now[k].bStopped || (Stops.Num() && Now[k].X >= Stops.Last() - .01)) continue;   // at the last stop it goes on out of town
+		const double dx = FMath::Max(0.0, FMath::Abs(P.X - Now[k].X) - HalfLength), dz = FMath::Max(0.0, FMath::Abs(P.Y - Z) - HalfWidth), D = FMath::Sqrt(dx * dx + dz * dz);
+		if (D <= Reach && D < OutD) { OutD = D; Best = k; }
+	}
+	return Best;
+}
+
+TOptional<FBrixTram::FAt> FBrixTram::Find(double Minute, double Run) const
+{
+	for (const FAt& A : At(Minute)) if (A.Run == Run) return A;
+	return {};
+}
+
+FVector2D FBrixTram::Seat(double X, int32 Slot) const
+{
+	return FVector2D(X - 4.7 + (Slot % 6) * 1.85, Z + (Slot < 6 ? -.55 : .55));
+}
+
+FVector2D FBrixTram::Alight(double X) const
+{
+	return FVector2D(X + HalfLength - 2.4, Z - HalfWidth - .9);
+}
+
+bool FBrixTram::Rideable(double Minute, double Run) const
+{
+	const TOptional<FAt> A = Find(Minute, Run);
+	return A && Stops.Num() && (A->X <= Stops.Last() + .01);
+}
+
 TArray<FBrixTram::FAt> FBrixTram::At(double m) const
 {
 	TArray<FAt> Out;

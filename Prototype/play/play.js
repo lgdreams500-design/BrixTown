@@ -2548,7 +2548,7 @@ function stepPlayer(dt) {
 function boardKey() {
   if (pl.pose > 1 || pl.play) return;
   const on = Boards.toggle();
-  if (on === null) return Life.toast("You have no skateboard yet. The skate store is coming.");
+  if (on === null) return Life.toast("You have no skateboard yet. The mall's sports and toy shops sell them in the Unreal build.");
   const K = Boards.kind(); pl.bdB = 0;
   Sound.act(on ? "jump" : "stand"); Life.toast(on ? K.name + ": W to " + (K.push ? "push" : "go") + ", S to brake, Y to pick it up." : K.name + " in your hand.");
 }

@@ -17,6 +17,7 @@ struct FBrixPeopleRules;
 struct BRIXWORLD_API FBrixPlayMotion   // World/rules/dressing.json "motion"
 {
 	double SwingPeriodS = 2.9, SwingAngleDeg = 32, SeesawPeriodS = 3.4, SeesawAngleDeg = 14, SlideCycleS = 9, ClimbCycleS = 8;
+	double PlayerSwingBuildS = 3, PlayerSlideClimbS = 2.6, PlayerSlideDownS = 1.3, PlayerClimbCycleS = 6;   // the player's go (WLD-041)
 };
 
 // Where a child is and how they hold themselves (dressing.js apply()'s r)
@@ -29,6 +30,7 @@ struct BRIXWORLD_API FBrixPlayPose
 	bool bClimb = false;                    // climbing: the Climb walk (BrixClimbSignature)
 	bool bStraddle = false;                 // astride a seesaw's plank
 	TOptional<FVector4d> Arms[2];           // people.js mod.arms: [weight, raise, out, elbow]
+	bool bDone = false;                     // the player's go is over (off the bottom of the slide)
 };
 
 class BRIXWORLD_API FBrixPlay
@@ -50,6 +52,19 @@ public:
 	// dressing.js apply() for someone staying at a place for act Use (an EUse) at (X, Z), T seconds into the visit; StepLen
 	// is their walk's step length (BrixStepLength). False when they are not at a play place. Marks what they are on as busy.
 	bool Apply(int32 Resident, int32 Use, double X, double Z, double T, double StepLen, FBrixPlayPose& Out);
+	// dressing.js apply() for a reader (acts notices, paper): the way to face the nearest notice board or news kiosk within
+	// 6 m of (X, Z) (the slice's yaw); false when there is none (F-MAP-DRESS 2: residents read notices and use the kiosk)
+	bool FaceBoard(double X, double Z, double& Yaw) const;
+	TArray<FVector2D> Boards;   // where the notice boards and kiosks stand (AddPiece)
+	// The player on the playground (WLD-041; dressing.js init(), playerAt(), playerOff(), takenBy()): a place to have a go at
+	// each swing seat and seesaw end, one at the foot of each slide's ladder and by each climbing frame, two at each sandpit
+	struct FPlayerUse { int32 Spot = -1; double X = 0, Z = 0, Y = 0, Yaw = 0; FString Label; };
+	TArray<FPlayerUse> PlayerUses;   // (Init)
+	// where the player is and how they sit or stand at T, a go at that place begun at T0 (seconds); marks the piece as busy
+	// and a swing's seat as going with them
+	FBrixPlayPose PlayerAt(int32 Use, double T0, double T);
+	FVector2D PlayerOff(int32 Use) const;   // where they step off to
+	bool Taken(int32 Use) const;            // a child was on that place at the last draw (a slide takes turns, a frame has room)
 	// dressing.js keepOut(): someone walking is kept out of the climbing frames and slides (to the nearest edge)
 	void KeepOut(double& X, double& Z) const;
 	// dressing.js draw(): the swing seats and seesaw planks within 70 m of the eye, moving with whoever is on them since the
@@ -59,7 +74,10 @@ public:
 	double SeesawAngle(const FPiece& P, double T) const;
 
 private:
-	TSet<FString> Busy;
+	TSet<FString> Busy, TakenKeys;
+	TMap<FString, double> SwingOf;          // a seat the player is on: its angle
+	bool SlideAt(const FPiece& P, double E, double Climb, double Down, FBrixPlayPose& O) const;   // dressing.js slideAt()
+	void FrameAt(const FPiece& P, int32 Face, double Lat, double U, FBrixPlayPose& O) const;      // dressing.js frameAt()
 	TMap<FIntPoint, TArray<int32>> Grid;   // spots by metre cell
 	const FSpot* SpotAt(double X, double Z) const;
 	TArray<FVector2D> BackTo(const FPiece& P) const;

@@ -29,7 +29,7 @@ GOODS = W["mall_goods"]
 
 
 def town():
-    return ec.Economy(R, LOTS, VISITS, STAFF, GOODS)
+    return ec.Economy(R, LOTS, VISITS, STAFF, GOODS, W["boards"])
 
 
 def player(start=True):
@@ -47,6 +47,9 @@ def first(kind):
 
 
 GROCER, KIOSK, ARCADE, CAFE = first("grocer"), first("kiosk"), first("arcade"), first("cafe")
+PLACES = ec.board_places(town())                     # the first sports, toy and clothes outlet of the mall (CITY-102)
+SPORTS, TOYS, CLOTHES = PLACES["sports"], PLACES["toys"], PLACES["clothes"]
+MALL_TILL = "till:" + LOTS[SPORTS[0]]["id"]
 
 
 def invariant(t, e):
@@ -367,6 +370,72 @@ class TheOutlets(unittest.TestCase):
 
 
 class TheBank(unittest.TestCase):
+    def test_CITY_102_every_sports_and_toy_outlet_sells_boards_and_no_other(self):
+        e = town()
+        kinds = collections.Counter()
+        for n in e.outlets:
+            for u, O in e.outlets[n].items():
+                self.assertEqual(e.sells_boards(n, u), O["kind"] in ("sports", "toys"), O["name"])
+                kinds[O["kind"]] += e.sells_boards(n, u)
+        self.assertGreater(kinds["sports"], 0)
+        self.assertGreater(kinds["toys"], 0)
+        self.assertFalse(any(e.shop_kind(n) == "skate" for n in range(len(LOTS))))   # no skate store of its own (ADR-0054)
+
+    def test_CITY_103_a_skateboard_is_bought_at_a_sports_or_toy_outlet_through_the_ledger_once(self):
+        e, _ = player(False)
+        e.new_character()
+        B = W["boards"]
+        with self.assertRaises(ec.Refused):
+            e.buy_board(SPORTS[0], SPORTS[1], "manual")                     # Bx 40 cash, no account: not enough
+        e.open_account("current")
+        cash, cur, till = e.L.balance("p:cash"), e.L.balance("p:current"), e.L.balance(MALL_TILL)
+        n = len(e.L.tx)
+        self.assertEqual(e.buy_board(SPORTS[0], SPORTS[1], "manual"), B["kinds"]["manual"]["price"])
+        self.assertEqual(len(e.L.tx), n + 1)                                 # one transaction
+        self.assertEqual(cash + cur - e.L.balance("p:cash") - e.L.balance("p:current"), B["kinds"]["manual"]["price"])
+        self.assertEqual(e.L.balance(MALL_TILL) - till, B["kinds"]["manual"]["price"])   # into the mall's till, as its goods
+        self.assertIn(e.outlets[SPORTS[0]][SPORTS[1]]["name"], e.L.tx[-1][3])           # the outlet named on the receipt
+        self.assertEqual(e.L.balance("p:cash"), 0)                           # cash first, then the current account
+        self.assertEqual(e.boards, ["manual"])
+        for (m, u), kind in ((TOYS, "manual"), (SPORTS, "skateboard"), (CLOTHES, "electric"), ((GROCER, "x"), "manual")):
+            with self.assertRaises(ec.Refused):                              # not twice; no such kind; not a sports or toy outlet
+                e.buy_board(m, u, kind)
+        e.take_loan(30000, 7)
+        e.buy_board(TOYS[0], TOYS[1], "electric")
+        self.assertEqual(e.boards, ["manual", "electric"])                   # in the boards' order
+        self.assertNotIn("skateboard", e.inv)                                # a board is not an item carried
+        invariant(self, e)
+
+    def test_CITY_103_the_board_bought_is_the_one_in_use_when_it_is_faster(self):
+        B = W["boards"]
+        self.assertEqual(ec.board_in_use(B, None, "manual"), "manual")
+        self.assertEqual(ec.board_in_use(B, "manual", "electric"), "electric")
+        self.assertEqual(ec.board_in_use(B, "neon_boost", "manual"), "neon_boost")
+        self.assertEqual(ec.board_in_use(B, "electric", "neon_boost"), "neon_boost")
+
+    def test_CITY_100_the_boards_owned_are_kept_in_the_save(self):
+        e, _ = player(False)
+        e.new_character()
+        e.open_account("current")
+        e.buy_board(SPORTS[0], SPORTS[1], "manual")
+        f = town()
+        f.load(json.loads(json.dumps(e.save())))
+        self.assertEqual(f.boards, ["manual"])
+        with self.assertRaises(ec.Refused):
+            f.buy_board(TOYS[0], TOYS[1], "manual")
+        old = e.save()
+        del old["boards"]                                                     # a save from before the store: no boards
+        g = town()
+        g.load(old)
+        self.assertEqual(g.boards, [])
+
+    def test_CITY_103_the_fixed_run_of_buying_boards(self):
+        got = ec.run_boards(town(), ec.board_script(), PLACES)
+        self.assertEqual(got["results"], ["ok", "ok", "refused", "ok", "ok", "refused", "refused", "refused", "ok", "ok", "ok", "refused"])
+        self.assertEqual(got["boards"], ["manual", "electric"])
+        self.assertEqual(got["uses"][-1], "electric")
+        self.assertEqual(got["balances"][MALL_TILL] - town().L.balance(MALL_TILL), 6000 + 28000)
+
     def test_BANK_007_accounts_and_transfers(self):
         e, q = player()
         with self.assertRaises(ec.Refused):
