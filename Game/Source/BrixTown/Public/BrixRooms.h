@@ -1,8 +1,9 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "BrixHomes.h"
 #include "BrixFurnish.h"
+#include "BrixInside.h"
 #include "GameFramework/Actor.h"
 #include "BrixRooms.generated.h"
 
@@ -32,6 +33,11 @@ public:
 	int32 Furnished() const { return Near.Num(); }
 	int32 PiecesShown() const { return Shown; }
 	int32 LampsOn() const;
+	// A tower's lift (WLD-051): the call within reach of where the player stands, and what E offers there (false: none); and
+	// taking it (true if there was one).
+	bool LiftOffer(const FVector& PawnCm, FString& Text, double& Metres) const;
+	bool UseLift(class APawn* Pawn);
+	UPROPERTY(Config) float LiftReach = 0.9f;          // m from a call (play.js use points)
 
 	UPROPERTY(Config) float NearMetres = 30.f;          // homes within this of the camera are furnished (the slice's near rooms)
 	UPROPERTY(Config) float CheckSeconds = 0.25f;
@@ -53,6 +59,7 @@ private:
 	struct FLotHome { int32 Lot = -1; FVector2D Centre = FVector2D::ZeroVector; float Reach = 0.f; TArray<float> FloorUp, CeilUp; TArray<TOptional<FBrixRect>> Holes; TSharedPtr<FBrixHome> Home; bool bPlanned = true; TArray<struct FBrixFurnished> Furn; };   // heights of its built floors
 	TArray<FLotHome> Homes;
 	TSet<int32> Near;                                   // indexes into Homes, furnished now
+	int32 CamHome = INDEX_NONE, CamFloor = 0;          // the home the camera is in and its floor
 	float Wait = 0.f;
 	int32 Shown = 0;
 	void Rebuild();
@@ -67,6 +74,7 @@ private:
 	UPROPERTY() TObjectPtr<UMaterialInterface> Greybox;
 	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> OwnColour;
 	TSet<FString> Missing;
+	TArray<FBrixLiftCall> LiftCalls;
 	UPROPERTY() TObjectPtr<ABrixTownActor> TownRef;
 	UPROPERTY() TArray<TObjectPtr<class UPointLightComponent>> Lights;
 	void PlaceLights(const FVector2D& Eye, float EyeUp);

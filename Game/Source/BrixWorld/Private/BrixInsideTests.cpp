@@ -296,4 +296,52 @@ bool FCITY013_Furnished::RunTest(const FString&)
 	return Bad == 0;
 }
 
+// WLD-051: every tower (lift_from_floors storeys or more) has a lift, and from every floor it goes up and down a floor, to
+// the ground, to the top floor and to the roof; every call stands inside the building beside the shaft, every stop on a
+// floor the building has, out of the shaft.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWLD051_Lifts, "BrixTown.World.WLD051_towers_have_a_lift",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FWLD051_Lifts::RunTest(const FString&)
+{
+	FBrixCity City;
+	FBrixInsides Ins;
+	FString Error;
+	if (!TestTrue(TEXT("the city loads: ") + Error, LoadBrixCity(CityDir(), City, Error))) return false;
+	if (!TestTrue(TEXT("inside.json loads: ") + Error, LoadBrixInside(InsidePath(), Ins, Error))) return false;
+	const FBrixDoorRules R = FBrixDoorRules::FromConfig();
+	int32 k = -1, Towers = 0, Calls = 0, Bad = 0;
+	for (const FBrixBlock& B : City.Blocks)
+		for (const FBrixLot& L : B.Lots)
+		{
+			++k;
+			if (!Ins.Lots[k].IsSet() || L.IsOpen() || !L.bEnterable || L.Floors < Ins.Rules.LiftFromFloors) continue;
+			const FBrixInside& In = Ins.Lots[k].GetValue();
+			if (In.Special == TEXT("mall")) continue;
+			++Towers;
+			auto Fail = [&](const FString& Why) { if (Bad++ < 20) AddError(L.Id + TEXT(" (") + L.Name + TEXT("): ") + Why); };
+			if (!In.Lift) { Fail(TEXT("a tower with no lift")); continue; }
+			const float Roof = R.Base + L.Floors * R.Storey + 1.f;
+			const TArray<FBrixLiftCall> C = BrixLiftCalls(L, In, R, Roof);
+			Calls += C.Num();
+			const FBox2D Shaft(*In.Lift - FVector2D(1.1, 1.1), *In.Lift + FVector2D(1.1, 1.1)), Lot(L.Min, L.Max);
+			for (int32 f = -1; f < L.Floors; ++f)
+			{
+				TSet<float> Goes;
+				for (const FBrixLiftCall& X : C) if (X.Floor == f) Goes.Add(X.To.Z);
+				const int32 Want = f == -1 ? 1 : (f == 0 || f == L.Floors - 1) ? 2 + (f == L.Floors - 1 ? 1 : 0) : 3;
+				if (Goes.Num() < FMath::Min(Want, 2)) Fail(FString::Printf(TEXT("floor %d's lift goes to %d places"), f, Goes.Num()));
+			}
+			for (const FBrixLiftCall& X : C)
+			{
+				const FVector2D A(X.At.X, X.At.Y), T(X.To.X, X.To.Y);
+				if (!Lot.IsInside(A) || !Lot.IsInside(T)) Fail(TEXT("a lift call or stop outside the building"));
+				if (Shaft.IsInside(A) || Shaft.IsInside(T)) Fail(TEXT("a lift call or stop inside the shaft"));
+				if (X.Floor >= 0 && FVector2D::Distance(A, *In.Lift) > 2.5) Fail(TEXT("a call far from the shaft"));
+			}
+		}
+	AddInfo(FString::Printf(TEXT("%d towers, %d lift calls"), Towers, Calls));
+	TestTrue(TEXT("the towers are checked"), Towers > 0);
+	return Bad == 0;
+}
+
 #endif

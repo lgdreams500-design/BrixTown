@@ -136,4 +136,14 @@ BRIXWORLD_API bool BrixIsHollow(const FBrixLot& Lot, const FBrixInside* Inside);
 BRIXWORLD_API float BrixFloorUp(const FBrixLot& Lot, int32 Floor, const FBrixDoorRules& R);
 // and its ceiling (the top floor's under the roof)
 BRIXWORLD_API float BrixCeilingUp(const FBrixLot& Lot, int32 Floor, const FBrixDoorRules& R);
+// A call of a tower's lift (WLD-051; storeys.js shell()): where it is (on the plan and above the street), what E offers there
+// and where it takes the player. Floor -1: on the roof.
+struct BRIXWORLD_API FBrixLiftCall
+{
+	FVector At = FVector::ZeroVector, To = FVector::ZeroVector;   // x, z, height above the street
+	FString Text;
+	int32 Floor = 0;
+};
+// Every call of a lot's lift on every floor and on the roof (RoofUp: the height the roof is stood on), or none without one.
+BRIXWORLD_API TArray<FBrixLiftCall> BrixLiftCalls(const FBrixLot& Lot, const FBrixInside& In, const FBrixDoorRules& R, float RoofUp);
 BRIXWORLD_API FBrixDoorway BrixDoorwayOf(const FBrixCity& City, const FBrixLot& Lot, const FString& District, const FBrixDoorRules& R);

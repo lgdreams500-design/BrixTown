@@ -123,7 +123,9 @@ public:
 	UPROPERTY(Config) FLinearColor StairWoodLight = FLinearColor(0.40f, 0.27f, 0.17f);
 	UPROPERTY(Config) FLinearColor StairSpine = FLinearColor(0.78f, 0.73f, 0.64f);       // the wall between a switchback's flights
 	UPROPERTY(Config) FLinearColor StairRail = FLinearColor(0.20f, 0.16f, 0.12f);
-	UPROPERTY(Config) float StairHeadroom = 0.3f;      // a straight stair's hole is this much wider than its flight on the open side
+	UPROPERTY(Config) float StairHeadroom = 0.3f;
+	UPROPERTY(Config) FLinearColor LiftShaft = FLinearColor(0.62f, 0.60f, 0.56f);   // a tower's lift shaft (storeys.js build())
+	UPROPERTY(Config) FLinearColor LiftSteel = FLinearColor(0.42f, 0.44f, 0.46f);   // its doors      // a straight stair's hole is this much wider than its flight on the open side
 	UPROPERTY(Config) FVector4 FloorBoardsA = FVector4(0, 1.2, 0.16, 0.005);   // a boarded floor: pattern type, unit, joint (as RoadPatternA)
 	UPROPERTY(Config) FVector4 FloorBoardsB = FVector4(0.35, 0, 0, 0);
 	UPROPERTY(Config) FVector4 FloorFlagsA = FVector4(3, 0.6, 0.6, 0.008);    // a stone floor: flags
