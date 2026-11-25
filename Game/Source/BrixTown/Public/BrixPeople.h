@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "BrixBody.h"
 #include "BrixCity.h"
+#include "BrixDodge.h"
 #include "BrixPeople.generated.h"
 
 struct FBrixCity;
@@ -11,6 +12,7 @@ struct FBrixDay;
 struct FBrixTraffic;
 class UMaterialInterface;
 class UProceduralMeshComponent;
+class UTextRenderComponent;
 
 // A body in Unreal's frame and centimetres, ready for a procedural mesh: made on any thread, uploaded on the game thread.
 struct BRIXTOWN_API FBrixMeshArrays
@@ -71,6 +73,14 @@ public:
 	// every resident near this frame, for the sound (ABrixSound: their steps, sitting down and getting up; SND-017)
 	struct FHeard { int32 Resident; FVector2D Pos; int32 Pose; double Phase; };
 	TArray<FHeard> Heard;
+	// Out of the way of the player's car (CITY-070, CITY-071; dodge.js): residents it heads at scramble aside, then turn on
+	// the driver and shout, the line shown over them within the rules' tag_m (World/rules/dodge.json)
+	FBrixDodge Dodge;
+	UPROPERTY(Config) float ShoutSize = 0.22f;       // m, the shout's letters
+	UPROPERTY(Config) FLinearColor ShoutColour = FLinearColor(0.16f, 0.12f, 0.10f);
+	UPROPERTY(Config) float ShoutGap = 1.5f;         // m: of shouters closer than this, only the nearest's shout is shown
+	int32 Dodging() const { return Dodge.Live(); }
+	int32 DodgeLogged = 0;
 	double TickMs() const { return TickFrames ? TickSeconds * 1000.0 / TickFrames : 0.0; }   // the people's own time a frame, on average
 	void ResetTickTime() { TickSeconds = 0; TickFrames = 0; for (double& P : Parts) P = 0; }
 	// the time a frame by part: where everyone is, placing and the far figures' boxes, building bodies, uploading them, the far mesh
@@ -82,6 +92,7 @@ private:
 	UPROPERTY() TObjectPtr<UProceduralMeshComponent> Figures;   // the far figures' boxes, all in one mesh (moving instances cost the render thread far more)
 	UPROPERTY() TArray<TObjectPtr<UProceduralMeshComponent>> Meshes;
 	UPROPERTY() TObjectPtr<UMaterialInterface> BodyMaterial;
+	UPROPERTY() TArray<TObjectPtr<UTextRenderComponent>> ShoutTags;   // shouts over residents (CITY-071)
 	TSharedPtr<FBrixDay> Day;
 	FBrixPeopleRules Rules;
 	TArray<FBrixLook> Looks;            // each resident's, from their role (people.js look()), worked out once

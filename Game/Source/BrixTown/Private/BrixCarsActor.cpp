@@ -8,6 +8,7 @@
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Misc/Paths.h"
 #include "WorldCollision.h"
 #include "ProceduralMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
@@ -62,6 +63,11 @@ void ABrixCars::Start(TSharedPtr<FBrixTraffic> InTraffic, const FBrixTram& InTra
 {
 	Traffic = InTraffic;
 	Paving = InPaving;
+	{   // resident cars give way to the player (CITY-049): World/rules/traffic.json
+		FString Error;
+		const FString Rules = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/rules/traffic.json")));
+		if (Traffic && !LoadBrixGiveWay(Rules, Traffic->GiveWayRules, Error)) UE_LOG(LogTemp, Warning, TEXT("Brix Town: %s; resident cars keep the rules' defaults for giving way"), *Error);
+	}
 	Tram = InTram;
 	// the tram as cars.js tram() draws it, around its middle (a along the line, w across it): a terracotta body, open
 	// windows between cream posts, a cream band and the roof, benches inside, a lamp at the front
@@ -184,6 +190,24 @@ void ABrixCars::Tick(float DeltaSeconds)
 	const FVector Eye = PC->PlayerCameraManager->GetCameraLocation();
 	const FVector2D Here(Eye.X / CmPerM, Eye.Y / CmPerM);
 	const double Minute = Mode->ClockMinute();
+	// resident cars give way to the player: on foot, or the car they drive as three circles along it (CITY-049)
+	{
+		TArray<FVector3d> Players;
+		if (Drive.K >= 0 && !Drive.bRide) { if (const FBrixCarAt* Mine = Traffic->Moved.Find(Drive.K)) Traffic->Circles(Drive.K, *Mine, Players); }
+		else if (const APawn* Me = Drive.K < 0 ? PC->GetPawn() : nullptr) Players.Add(FVector3d(Me->GetActorLocation().X / CmPerM, Me->GetActorLocation().Y / CmPerM, Traffic->GiveWayRules.PersonR));
+		const double Dt = LastMinute < 0 ? 0 : FMath::Fmod(Minute - LastMinute + 1440.0, 1440.0);
+		LastMinute = Minute;
+		if (Dt > 0 && Dt < 5)
+		{
+			TArray<int32> All;
+			for (int32 k = 0; k < Traffic->Num(); ++k) if (k != Drive.K) All.Add(k);
+			Traffic->GiveWay(Minute, Dt, Players, All);
+			int32 Held = 0;
+			for (const TPair<int32, double>& L : Traffic->Late) Held += L.Value > 0;
+			if (Held != LastHeld) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d resident cars behind their timeline after giving way to the player"), Held);
+			LastHeld = Held;
+		}
+	}
 	int32 Shown = 0;
 	for (int32 k = 0; k < Traffic->Num(); ++k)
 	{

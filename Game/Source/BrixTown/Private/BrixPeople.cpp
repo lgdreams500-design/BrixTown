@@ -14,6 +14,9 @@
 #include "Async/ParallelFor.h"
 #include "Misc/Paths.h"
 #include "ProceduralMeshComponent.h"
+#include "BrixCarsActor.h"
+#include "Components/TextRenderComponent.h"
+#include "WorldCollision.h"
 #include "UObject/ConstructorHelpers.h"
 
 using BrixUnits::ToWorld;
@@ -92,6 +95,12 @@ void ABrixPeople::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, TShar
 		Looks.Add(BrixLookOf(Rules, i, Day->Wear.IsValidIndex(i) && !Day->Wear[i].IsEmpty() ? Day->Wear[i] : RoleName, Sig ? *Sig : FString(TEXT("Easy"))));
 	}
 	while (RebuildEvery.Num() < 3) RebuildEvery.Add(RebuildEvery.Num() + 1);
+	{   // out of the way of the player's car (CITY-070, CITY-071)
+		FString DodgeError;
+		const FString DodgeRules = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/rules/dodge.json")));
+		Dodge.bOn = LoadBrixDodgeRules(DodgeRules, Dodge.R, DodgeError);
+		if (!Dodge.bOn) UE_LOG(LogTemp, Warning, TEXT("Brix Town: %s; nobody gets out of the way of the player's car"), *DodgeError);
+	}
 	// who rides the tram (CITY-041): someone away whose day takes them from a tram stop, or brings them back to one, rides
 	// the run that is at that stop when they leave or arrive (cars.js tramRiders())
 	Tram = City.Tram;
@@ -183,7 +192,7 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	// everyone out of doors within reach, nearest first
 	// worked out for everyone at once on the task threads (CITY-022: from the day and the minute alone)
 	// i: who (a resident, or 1,000,000 + 2 a vehicle + 0 or 1 for someone from out of town in it), the slot's key
-	struct FNear { int32 i; double D; FVector2D P; float Up; double Yaw; int32 Pose; double Phase; const FBrixLook* L; TOptional<double> Floor; bool bDriving; };
+	struct FNear { int32 i; double D; FVector2D P; float Up; double Yaw; int32 Pose; double Phase; const FBrixLook* L; TOptional<double> Floor; bool bDriving; int32 Extra = -1; };
 	const double Reach2 = (double)ShowDistance * ShowDistance;
 	TArray<FNear> All;
 	All.SetNumUninitialized(Day->Num());
@@ -210,6 +219,38 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	});
 	TArray<FNear> Near;
 	for (const FNear& A : All) if (A.i >= 0) Near.Add(A);
+	// out of the way of the player's car, then telling them off (CITY-070, CITY-071; dodge.js): laid over where the day has them
+	TArray<FBrixDodged> Extras;
+	if (Dodge.bOn)
+	{
+		const ABrixCars* CarsActor = Mode->Cars;
+		const bool bDriving = CarsActor && CarsActor->Driving().K >= 0 && !CarsActor->Driving().bRide;
+		const ABrixCars::FDrive D = CarsActor ? CarsActor->Driving() : ABrixCars::FDrive();
+		Dodge.Frame(Seconds, bDriving, FVector2D(D.X, D.Z), FVector2D(FMath::Cos(D.A), FMath::Sin(D.A)), 0.0, D.V);
+		if (bDriving || Dodge.Live())
+		{
+			FCollisionQueryParams Q(TEXT("BrixDodge"), false);
+			if (const APawn* Me = PC->GetPawn()) Q.AddIgnoredActor(Me);
+			for (FNear& A : Near)
+			{
+				const float Ground = GroundAt(A.P);
+				// somewhere to stand: not a wall, not a step up (dodge.js clear())
+				auto Clear = [&](const FVector2D& P) { return FMath::Abs(GroundAt(P) - Ground) < .5f && !GetWorld()->OverlapAnyTestByChannel(ToWorld(P, Ground + .9f), FQuat::Identity, ECC_WorldStatic, FCollisionShape::MakeSphere(15.f), Q); };
+				FBrixDodged Out;
+				Out.Pos = A.P; Out.Yaw = A.Yaw; Out.Pose = A.Pose; Out.bWalking = A.Pose == 1; Out.Phase = A.Phase;
+				if (!Dodge.Apply(A.i, A.P, A.Up, A.Yaw, A.Pose, false, Clear, Out)) continue;
+				A.P = Out.Pos;
+				A.Up = GroundAt(Out.Pos) + (float)Out.Hop;
+				A.Yaw = Out.Yaw;
+				A.Pose = Out.Pose;
+				A.Phase = Out.Phase;
+				A.D = FVector2D::Distance(A.P, Here);
+				A.Extra = Extras.Add(Out);
+			}
+		}
+		if (Dodge.Live() > DodgeLogged) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents getting out of the way of the player's car"), Dodge.Live());
+		DodgeLogged = Dodge.Live();
+	}
 	// the one to talk to: the nearest to the player (not the camera) within reach, on their level
 	Cand = FCandidate();
 	if (const APawn* Me = PC->GetPawn())
@@ -366,6 +407,13 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		O.Floor = P.Floor;
 		O.bDriving = P.bDriving;
 		if (P.i == Held.Resident) O.Face = HeldFace;
+		if (Extras.IsValidIndex(P.Extra))   // a dodge's run and gestures
+		{
+			const FBrixDodged& X = Extras[P.Extra];
+			O.Sig = X.Sig;
+			O.Arms[0] = X.Arms[0]; O.Arms[1] = X.Arms[1];
+			O.Chest = X.Chest;
+		}
 		O.Pose = P.Pose;
 		O.Phase = P.Phase;
 		O.Seconds = Seconds;
@@ -451,6 +499,39 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	}
 	else Figures->UpdateMeshSection_LinearColor(0, V, N, NoUV, C, NoTangents, false);
 	LastShown = Near.Num();
+	// the shouts, over the residents shouting them, turned to the camera (CITY-071: a tag, no words spoken)
+	{
+		int32 t = 0;
+		TArray<FVector2D> Shouted;
+		for (const FNear& P : Near)
+		{
+			if (!Extras.IsValidIndex(P.Extra) || Extras[P.Extra].Shout.IsEmpty() || P.D > Dodge.R.TagM) continue;
+			bool bCrowded = false;   // in a crowd, one shout of those close together (the nearest), so they can be read
+			for (const FVector2D& O : Shouted) bCrowded |= FVector2D::Distance(O, P.P) < ShoutGap;
+			if (bCrowded) continue;
+			Shouted.Add(P.P);
+			if (t >= ShoutTags.Num())
+			{
+				UTextRenderComponent* T = NewObject<UTextRenderComponent>(this);
+				T->SetupAttachment(RootComponent);
+				T->SetHorizontalAlignment(EHTA_Center);
+				T->SetVerticalAlignment(EVRTA_TextBottom);
+				T->SetWorldSize(ShoutSize * CmPerM);
+				T->SetTextRenderColor(ShoutColour.ToFColor(true));
+				T->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+				T->CastShadow = false;
+				T->RegisterComponent();
+				AddInstanceComponent(T);
+				ShoutTags.Add(T);
+			}
+			UTextRenderComponent* T = ShoutTags[t++];
+			const FVector At = ToWorld(P.P, P.Up + 2.05f * (float)P.L->S);
+			T->SetText(FText::FromString(Extras[P.Extra].Shout));
+			T->SetWorldLocationAndRotation(At, (Eye - At).Rotation());
+			T->SetVisibility(true);
+		}
+		for (; t < ShoutTags.Num(); ++t) ShoutTags[t]->SetVisibility(false);
+	}
 	const double T5 = FPlatformTime::Seconds();
 	Parts[0] += T1 - T0; Parts[1] += T2 - T1; Parts[2] += T3 - T2; Parts[3] += T4 - T3; Parts[4] += T5 - T4;
 	TickSeconds += T5 - T0;

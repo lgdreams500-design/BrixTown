@@ -297,7 +297,16 @@ namespace
 		Out[1] = rad(1) * FMath::Sin(1.3 * t + 2.1 * seed);
 		Out[2] = rad(1.2) * FMath::Sin(.7 * t + .6 * seed);
 	}
-	FPose walk(const FBrixSignature& sig, const FGeo& g, double W, double ph, const double hm[3])
+	// people.js gesture(): CHARACTER_MOTION §4 layers over the pose; arm = [weight, raise, out, elbow], chest = [pitch, yaw] in degrees
+	void gesture(double arms[2][3], double chest[3], const FBrixDrawOptions& md)
+	{
+		for (int k = 0; k < 2; ++k)
+			if (md.Arms[k] && md.Arms[k]->X > 0)
+				for (int j = 0; j < 3; ++j) arms[k][j] += ((*md.Arms[k])[j + 1] - arms[k][j]) * md.Arms[k]->X;
+		chest[1] += rad(md.Chest.X);
+		chest[0] += rad(md.Chest.Y);
+	}
+	FPose walk(const FBrixSignature& sig, const FGeo& g, double W, double ph, const double hm[3], const FBrixDrawOptions& md)
 	{
 		FPose P;
 		const double w = TAU, total = 2 * sig.Duty * sig.Stride * g.leg;
@@ -311,7 +320,7 @@ namespace
 			const FFoot t = foot(sig, g, fmod1(ph + KO[2]), side, total);
 			leg(P, k, g, p.loc + mv(p.R, FVector(side * g.hipx, 0, g.hipdz)), t.P, n0, t.Pitch, side * rad(sig.ToeOut));
 		}
-		const double chest[3] = { -(1 + sig.Counter) * p.yaw, rad(sig.Lean) + rad(.8) * FMath::Cos(2 * w * (ph - .10)), -.85 * p.roll + .25 * p.roll * FMath::Cos(w * ph) };
+		double chest[3] = { -(1 + sig.Counter) * p.yaw, rad(sig.Lean) + rad(.8) * FMath::Cos(2 * w * (ph - .10)), -.85 * p.roll + .25 * p.roll * FMath::Cos(w * ph) };
 		double arms[2][3];
 		for (int k = 0; k < 2; ++k)
 		{
@@ -320,12 +329,13 @@ namespace
 			arms[k][1] = sig.ArmOut;
 			arms[k][2] = sig.Elbow + sig.ElbowSwing * kk * FMath::Max(0.0, sw) + 4 * kk * FMath::Max(0.0, -sw);
 		}
+		gesture(arms, chest, md);
 		const double lag = sig.HeadLag, yawB = -sig.Counter * (-rad(sig.HipYaw) * FMath::Cos(w * (ph - lag)));
 		const double head[3] = { sig.HeadFollow * yawB + hm[0], rad(sig.HeadPitch) + rad(sig.HeadBob) * FMath::Cos(2 * w * (ph - .045 - lag)) + .35 * rad(sig.Lean) + hm[1], .3 * sig.HeadFollow * p.roll + hm[2] };
 		upper(P, g, W, p.loc, p.R, chest, arms, head);
 		return P;
 	}
-	FPose stand(const FBrixSignature& sig, const FGeo& g, double W, double t, const double hm[3], double seed)
+	FPose stand(const FBrixSignature& sig, const FGeo& g, double W, double t, const double hm[3], double seed, const FBrixDrawOptions& md)
 	{
 		FPose P;
 		const double br = FMath::Sin(t * 1.3 + seed);
@@ -336,8 +346,9 @@ namespace
 			leg(P, k, g, pel + FVector(side * g.hipx, 0, g.hipdz), FVector(side * g.hipx * FMath::Max(.8, sig.Width), .01 * side, g.ankz), FVector(1, 0, 0), 0, side * rad(sig.ToeOut + 4));
 		}
 		const double arm[3] = { sig.ArmBias, sig.ArmOut * .3, sig.Elbow * .7 + 4 };
-		const double arms[2][3] = { { arm[0], arm[1], arm[2] }, { arm[0], arm[1], arm[2] } };
-		const double chest[3] = { 0, rad(sig.Lean * .5) + .004 * br, 0 };
+		double arms[2][3] = { { arm[0], arm[1], arm[2] }, { arm[0], arm[1], arm[2] } };
+		double chest[3] = { 0, rad(sig.Lean * .5) + .004 * br, 0 };
+		gesture(arms, chest, md);
 		const double head[3] = { hm[0], rad(sig.HeadPitch * .5) + hm[1], hm[2] };
 		upper(P, g, W, pel, M3::I(), chest, arms, head);
 		return P;
@@ -361,7 +372,8 @@ namespace
 		}
 		double arms[2][3] = { { 26, 6, 62 }, { 26, 6, 62 } };
 		if (md.bDriving) for (int k = 0; k < 2; ++k) { arms[k][0] = 58; arms[k][1] = 10; arms[k][2] = 48; }   // people.js gesture() at weight 1
-		const double chest[3] = { 0, rad(4) + .004 * FMath::Sin(t * 1.3 + seed), 0 };
+		double chest[3] = { 0, rad(4) + .004 * FMath::Sin(t * 1.3 + seed), 0 };
+		gesture(arms, chest, md);   // an umbrella held up while sitting out in the rain
 		const double head[3] = { hm[0], rad(4) + hm[1], hm[2] };
 		upper(P, g, W, pel, M3::I(), chest, arms, head);
 		return P;
@@ -504,7 +516,7 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 		box(x - .11 * S, y + top + .22 * S, z - .11 * S, x + .11 * S, y + top + .33 * S, z + .11 * S, L.Cap ? *L.Cap : L.HairC);
 		return;
 	}
-	const FBrixSignature& sig = Rules.Sig(L.SigName);
+	const FBrixSignature& sig = Rules.Sig(o.Sig.IsEmpty() ? L.SigName : o.Sig);
 	const FGeo g = geo(L.S);
 	const double S = L.S, Sh = S * 1.22, W = L.W, T = 1.12 * S, t = o.Seconds;
 	const int32 lod = o.Lod, sd = L.Seed;
@@ -513,7 +525,7 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	double hm[3];
 	wander(t, sd * .37, hm);
 	if (o.Face) hm[1] += o.Face->Nod;   // a speaker nods on stressed words (ANIM-006)
-	const FPose P = pose == 1 ? walk(sig, g, W, o.Phase, hm) : pose == 2 ? sit(sig, g, W, t, hm, sd, o) : stand(sig, g, W, t, hm, sd);
+	const FPose P = pose == 1 ? walk(sig, g, W, o.Phase, hm, o) : pose == 2 ? sit(sig, g, W, t, hm, sd, o) : stand(sig, g, W, t, hm, sd, o);
 	auto hem = [&](double zz) { return pose == 2 ? FMath::Max(zz, -.06) : zz; };   // seated, a hem ends at the seat instead of hanging through it
 	// where the character's axes point in the world (standing: x left, y back, z up)
 	const double c = FMath::Cos(yaw), s = FMath::Sin(yaw);
@@ -612,7 +624,13 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	{
 		blob(0, b, cc, rx, ry, rz, col, hn, hm2, false, hood, MoveTemp(keep));
 	};
-	if (st == TEXT("afro")) shell(.012, .035, RX + .055, RY + .055, RZ + .06, hairC, [](double, double y, double zz) { return !(zz < -.5 || (y < -.35 && zz < .22)); }, false);
+	if (o.Hood)   // a coat's hood up in the rain (CITY-080): the long-hair shell, a size up, in the coat's colour
+	{
+		const bool af = st == TEXT("afro");
+		shell(.016, .018, RX + (af ? .06 : .036), RY + (af ? .06 : .04), RZ + (af ? .06 : .034), *o.Hood, [](double, double y, double zz) { return !(zz < -.85 || (y < -.28 && zz < .44)); }, true);
+		blob(0, -.104, .118, .074, .03, .03, *o.Hood, hn, 5);   // the hood's front edge over the brow
+	}
+	else if (st == TEXT("afro")) shell(.012, .035, RX + .055, RY + .055, RZ + .06, hairC, [](double, double y, double zz) { return !(zz < -.5 || (y < -.35 && zz < .22)); }, false);
 	else if (st != TEXT("bald"))
 	{
 		TFunction<bool(double, double, double)> keep;
@@ -624,10 +642,36 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 		if (st == TEXT("long") && lt2) for (const double e : { -1.0, 1.0 }) ms.limb(H(e * .106, 0, 0), H(e * .1, -.018, -.19), .021 * Sh, .013 * Sh, 10, hairC, true, fwd);
 		if (st == TEXT("bun")) blob(0, .085, .135, .052, .052, .046, hairC, 8, 5);
 	}
-	if (L.Cap)
+	if (L.Cap && !o.Hood)
 	{
 		shell(.006, .016, RX + .03, RY + .032, RZ + .028, *L.Cap, [](double, double, double zz) { return zz >= .12; }, false);
 		blob(0, -.135, .062, .09, .075, .009, *L.Cap, 8, 3);
+	}
+	if (o.Umbrella)   // an umbrella up (CITY-080): held in the right hand, the canopy over the head
+	{
+		const FVector wr = Wp(P.wr[1]), up = Wd(FVector(0, 0, 1)), top = hc + up * (.36 * S), rim = top + up * (-.13 * S);
+		const double R0 = .5 * S;
+		const FVector ax = Wd(FVector(1, 0, 0)), fx = unit(ax - up * dot(ax, up)), fy = cross(up, fx);
+		const int32 seg = lod == 0 ? 8 : 6;
+		const FVector3f Rib(.12f, .1f, .09f);
+		ms.limb(wr, top + up * (.07 * S), .009 * S, .007 * S, 5, Rib, false, fwd);
+		TArray<FRing> rings, under;
+		for (const FVector2D hr : { FVector2D(.13, .03), FVector2D(.115, .2), FVector2D(.08, .36), FVector2D(.035, .46), FVector2D(0, .5) })
+		{
+			const FVector cc = rim + up * (hr.X * S);
+			rings.Add({ cc, fx * (hr.Y * S), fy * (hr.Y * S) });
+			under.Insert({ cc + up * (-.008 * S), fx * (hr.Y * S * .98), fy * (hr.Y * S * .98) }, 0);
+		}
+		const FVector c1 = rim + up * (-.35 * S), c2 = rim + up * (.6 * S);
+		ms.loft(rings, seg, *o.Umbrella, &c1);            // panels: a soft octagon, normals out of the dome
+		ms.loft(under, seg, *o.Umbrella * .75f, &c2);     // the underside, facing down
+		if (lod == 0)
+			for (int32 k = 0; k < seg; ++k)   // the rib tips
+			{
+				const double a = TAU * k / seg;
+				const FVector d = fx * FMath::Cos(a) + fy * FMath::Sin(a);
+				ms.ball(rim + d * R0, fx * (.008 * S), fy * (.008 * S), up * (.008 * S), 4, 3, Rib);
+			}
 	}
 	// the face
 	auto jaw = [](double zu) { return FShapes::jaw(zu); };

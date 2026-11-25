@@ -116,6 +116,76 @@ bool LoadBrixTraffic(const FString& CarsPath, const FString& ModelsPath, FBrixTr
 
 TOptional<FBrixCarAt> FBrixTraffic::At(int32 k, double m) const
 {
+	const double* L = Late.Find(k);
+	return OnTimeline(k, L ? FMath::Max(0.0, m - *L) : m);
+}
+
+void FBrixTraffic::Circles(int32 k, const FBrixCarAt& C, TArray<FVector3d>& Out) const
+{
+	const FVector3f D = Dims(k);
+	for (const double f : { -1.0, 0.0, 1.0 })
+	{
+		const FVector2D P = C.Pos + C.Heading * (D.Z + f * (D.X - D.Y) / 2);
+		Out.Add(FVector3d(P.X, P.Y, D.Y / 2));
+	}
+}
+
+void FBrixTraffic::GiveWay(double m, double Dt, const TArray<FVector3d>& Players, const TArray<int32>& Cars)
+{
+	const FBrixGiveWayRules& R = GiveWayRules;
+	TArray<FVector3d> Held;
+	TArray<int32> HeldBy;   // which car each held circle is
+	for (const TPair<int32, double>& KV : Late)
+	{
+		if (KV.Value <= 0) continue;
+		if (const TOptional<FBrixCarAt> C = At(KV.Key, m))
+		{
+			const int32 n0 = Held.Num();
+			Circles(KV.Key, *C, Held);
+			for (int32 j = n0; j < Held.Num(); ++j) HeldBy.Add(KV.Key);
+		}
+	}
+	for (const int32 k : Cars)
+	{
+		if (Moved.Contains(k)) continue;
+		const TOptional<FBrixCarAt> C = At(k, m);
+		if (!C) continue;
+		const double L = Late.FindRef(k);
+		double Near = 1e9;
+		for (const FVector3d& P : Players) Near = FMath::Min(Near, FVector2D::Distance(C->Pos, FVector2D(P.X, P.Y)));
+		if (L > R.ResetMin && Near > R.UnloadM) { Late.Add(k, 0.0); continue; }   // put back on its timeline out of sight (Q-25)
+		if (!C->bMoving)
+		{
+			if (L > 0 && (Vehicles[k].Kind == 2 || !C->bTrip))   // at its next stop: it leaves when its timeline does
+			{
+				auto Same = [&](double M2) { const TOptional<FBrixCarAt> Q = OnTimeline(k, FMath::Max(0.0, M2)); return Q && !Q->bMoving && FVector2D::Distance(Q->Pos, C->Pos) < .05; };
+				double lo = 0, hi = L;
+				if (Same(m)) hi = 0;
+				else for (int32 n = 0; n < 24; ++n) { const double mid = (lo + hi) / 2; if (Same(m - mid)) hi = mid; else lo = mid; }
+				Late.Add(k, hi);
+			}
+			continue;
+		}
+		if (Near > R.NearM) continue;
+		// how much of its timeline's speed it may keep: 1 nothing in its way, 0 stand
+		const FVector3f D = Dims(k);
+		const FVector2D H = C->Heading, Front = C->Pos + H * (D.Z + D.X / 2);
+		double Share = 1;
+		auto Look = [&](const FVector3d& O)
+		{
+			const FVector2D d = FVector2D(O.X, O.Y) - Front;
+			const double a = d.X * H.X + d.Y * H.Y, w = FMath::Abs(-d.X * H.Y + d.Y * H.X);
+			if (w > D.Y / 2 + R.PadM + O.Z || a < -D.X || a - O.Z > R.SeeM) return;
+			Share = FMath::Min(Share, FMath::Clamp((a - O.Z - R.StopM) / (R.SeeM - R.StopM), 0.0, 1.0));
+		};
+		for (const FVector3d& O : Players) Look(O);
+		for (int32 j = 0; j < Held.Num(); ++j) if (HeldBy[j] != k) Look(Held[j]);
+		if (Share < 1) Late.Add(k, L + Dt * (1 - Share));   // held back; never less late while it moves
+	}
+}
+
+TOptional<FBrixCarAt> FBrixTraffic::OnTimeline(int32 k, double m) const
+{
 	if (!Vehicles.IsValidIndex(k)) return {};
 	if (const FBrixCarAt* Mv = Moved.Find(k)) return *Mv;
 	const FBrixVehicle& C = Vehicles[k];
@@ -180,4 +250,17 @@ bool FBrixTraffic::Hits(const FBrixCarAt& C, int32 k, const FVector2D& P, double
 	const FVector2D d = P - C.Pos;
 	const double a = d.X * C.Heading.X + d.Y * C.Heading.Y - D.Z, w = -d.X * C.Heading.Y + d.Y * C.Heading.X;
 	return FMath::Abs(a) < D.X / 2 + Pad && FMath::Abs(w) < D.Y / 2 + Pad;
+}
+
+bool LoadBrixGiveWay(const FString& Path, FBrixGiveWayRules& Out, FString& OutError)
+{
+	TSharedPtr<FJsonObject> Root;
+	if (!ReadJsonFile(Path, Root, OutError)) return false;
+	const TSharedPtr<FJsonObject>* G = nullptr;
+	if (!Root->TryGetObjectField(TEXT("give_way"), G)) { OutError = Path + TEXT(" has no give_way"); return false; }
+	const TSharedPtr<FJsonObject>& O = *G;
+	Out.SeeM = O->GetNumberField(TEXT("see_m")); Out.StopM = O->GetNumberField(TEXT("stop_m")); Out.PadM = O->GetNumberField(TEXT("pad_m"));
+	Out.NearM = O->GetNumberField(TEXT("near_m")); Out.PersonR = O->GetNumberField(TEXT("person_r_m"));
+	Out.ResetMin = O->GetNumberField(TEXT("reset_min")); Out.UnloadM = O->GetNumberField(TEXT("unload_m"));
+	return true;
 }
