@@ -225,6 +225,7 @@ void ABrixTalk::Show(const FString& Nid)
 	double Dur = -1;
 	SayAloud(Res, N->Say, Mood, Dur);   // spoken aloud (SND-018)
 	if (Dur > 0) K = Line.End / FMath::Max(.3, Dur);   // the mouth finishes with the voice (CHR-009)
+	else { MurmurLine = Line; MurmurWho = Res; MurmurAt = People->Held.Pos; ++Murmured; }   // no voice yet: wordless syllables, as the slice does
 	Refresh();
 }
 
@@ -302,12 +303,12 @@ void ABrixTalk::Tick(float Dt)
 		{
 			if (Mode->Cars->Driving().K >= 0)
 			{
-				PromptText = !Mode->Cars->Driving().bRide ? TEXT("Get out") : Mode->Cars->CanGetOff() ? TEXT("Get off the bus") : FString();
+				PromptText = !Mode->Cars->Driving().bRide ? TEXT("Get out") : !Mode->Cars->CanGetOff() ? FString() : Mode->Cars->Driving().bTram ? TEXT("Get off the tram") : TEXT("Get off the bus");
 				return;
 			}
 			double D = 0;
 			const int32 CarK = Mode->Cars->TargetCar(FVector2D(Me->GetActorLocation().X, Me->GetActorLocation().Y) / CmPerM, D);
-			if (CarK >= 0 && (C.Resident < 0 || D <= C.D)) PromptText = Mode->Cars->IsBus(CarK) ? TEXT("Ride the bus") : Mode->Cars->IsVan(CarK) ? TEXT("Drive this van") : TEXT("Drive this car");
+			if (CarK >= 0 && (C.Resident < 0 || D <= C.D)) PromptText = ABrixCars::IsTram(CarK) ? TEXT("Ride the tram") : Mode->Cars->IsBus(CarK) ? TEXT("Ride the bus") : Mode->Cars->IsVan(CarK) ? TEXT("Drive this van") : TEXT("Drive this car");
 			if (const ABrixCharacter* Ch = Cast<ABrixCharacter>(Me))   // the playground (WLD-041): a go here, or off again
 			{
 				if (Ch->IsPlaying()) { PromptText = TEXT("Get off"); return; }

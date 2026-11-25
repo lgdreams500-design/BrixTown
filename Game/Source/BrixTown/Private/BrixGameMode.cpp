@@ -303,6 +303,35 @@ void ABrixGameMode::StartPlay()
 			}, 0.3f, false);
 		}, ShotDelaySeconds / 3, false);
 	}
+	// -BrixTram (CITY-041): from a second into a test shot, the player is put on the platform by the first tram that stands
+	// at a stop on its way through town and gets on as with E; with -BrixTramOff they get off where it next stands
+	if (FParse::Param(FCommandLine::Get(), TEXT("BrixTram")) && City && Cars)
+	{
+		const bool bOff = FParse::Param(FCommandLine::Get(), TEXT("BrixTramOff"));
+		TSharedRef<double> OnAt = MakeShared<double>(-1e9);
+		FTimerHandle H;
+		GetWorldTimerManager().SetTimer(H, [this, bOff, OnAt]()
+		{
+			ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+			if (!Me || !Cars) return;
+			const ABrixCars::FDrive& D = Cars->Driving();
+			if (!D.bTram && *OnAt < -1e8)
+			{
+				for (const FBrixTram::FAt& A : City->Tram.At(ClockMinute()))
+				{
+					double Dd = 0;
+					const FVector2D Spot = City->Tram.Alight(A.X);
+					if (City->Tram.Standing(ClockMinute(), Spot, 1.5, Dd) < 0) continue;
+					Me->SetActorLocation(ToWorld(Spot, 1.f), false, nullptr, ETeleportType::TeleportPhysics);
+					Me->TestPress();
+					UE_LOG(LogTemp, Display, TEXT("Brix Town: riding the tram: %s"), Cars->Driving().bTram ? TEXT("yes") : TEXT("no, E offered something else"));
+					if (Cars->Driving().bTram) *OnAt = Cars->Driving().X;
+					break;
+				}
+			}
+			else if (bOff && D.bTram && Cars->CanGetOff() && FMath::Abs(D.X - *OnAt) > 1) Me->TestPress();   // the next stop: off
+		}, .25f, true, 1.f);
+	}
 	// -BrixCounter=bank (with -BrixLife=open,current;loan,5000,3...): a third of the way into a test shot's wait the ops are
 	// done as the player would at the counter, then the player is put at its door and the counter opened; -BrixLife= alone
 	// does the ops (-BrixLifeLead=<s>: that many seconds before the shot, to catch the coins of a reward in flight)

@@ -39,6 +39,11 @@ public:
 	void SetPlayerName(const FString& Name) { Dialogue.PlayerName = Name; }   // {player} (CHR-001)
 	bool IsAnswering() const { return bAnswering; }
 	int32 Answered = 0;                  // answers chosen so far (the sound of choosing, SND-009)
+	// a line of the resident's with no voice yet, to be murmured (sound.js line(), SND-018): counted, so the sound sees each
+	int32 Murmured = 0;
+	FBrixLine MurmurLine;
+	int32 MurmurWho = -1;
+	FVector2D MurmurAt = FVector2D::ZeroVector;
 	const FString& Offer() const { return PromptText; }   // what E offers now ("Talk to ...", "Drive this car"), or empty
 
 	UPROPERTY(Config) float CloseCamera = 2.6f;   // m: the camera comes in this close so the face can be read

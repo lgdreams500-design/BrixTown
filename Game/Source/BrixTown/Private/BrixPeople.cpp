@@ -451,20 +451,20 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		}
 	}
 	// the trams' riders on their benches, facing the way the tram goes (cars.js tram(): up to twelve)
+	const ABrixCars* TramCars = Mode->Cars.Get();
 	for (const FBrixTram::FAt& T : Tram.At(Minute))
 	{
 		if (FMath::Abs(T.X - Here.X) > RideDistance + 6 || FMath::Abs(Tram.Z - Here.Y) > RideDistance) continue;
+		const bool bPlayerOn = TramCars && TramCars->Driving().bTram && TramCars->Driving().Run == T.Run;   // the player's bench seat is theirs (CITY-041)
 		int32 Slot = 0;
 		for (const FTramRide& R : TramRides)
 		{
 			const bool bGoing = R.Out && *R.Out == T.Run && Minute >= R.T0 && Minute < R.T0 + 40, bComing = R.Back && *R.Back == T.Run && Minute < R.T1 && Minute > R.T1 - 40;
 			if (!bGoing && !bComing) continue;
+			if (bPlayerOn && Slot == Tram.PlayerSeat) ++Slot;
 			if (Slot >= 12) break;
-			const int32 Row = Slot % 6;
-			const double Side = Slot < 6 ? -1 : 1;
-			++Slot;
-			const FVector2D P(T.X - 4.7 + Row * 1.85, Tram.Z + Side * .55);
-			Near.Add({ R.Resident, FVector2D::Distance(P, Here), P, 1.15f, FMath::Atan2(1.0, 0.0), 2, 0.0, &Looks[R.Resident], {}, false });
+			const FVector2D P = Tram.Seat(T.X, Slot++);
+			Near.Add({ R.Resident, FVector2D::Distance(P, Here), P, (float)Tram.SeatUp, FMath::Atan2(1.0, 0.0), 2, 0.0, &Looks[R.Resident], {}, false });
 		}
 	}
 	if (Held.Resident >= 0 && Looks.IsValidIndex(Held.Resident))   // held in a talk: where the talk keeps them
@@ -581,6 +581,14 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	BoxScratch.Reset();
 	struct FJob { int32 Slot; const FBrixLook* L; FBrixDrawOptions O; };
 	TArray<FJob> Jobs;
+	// someone near the player turns to look at them, eyes first and the head part of the way (play.js; ANIM-005)
+	TOptional<FVector> PlayerAt;
+	if (const APawn* Me = PC->GetPawn())
+	{
+		const ACharacter* Ch = Cast<ACharacter>(Me);
+		const FVector A = Me->GetActorLocation();
+		PlayerAt = FVector(A.X / CmPerM, A.Y / CmPerM, (A.Z - (Ch && Ch->GetRootComponent() ? Ch->GetSimpleCollisionHalfHeight() : 85.f)) / CmPerM);
+	}
 	for (int32 n = 0; n < Near.Num(); ++n)
 	{
 		const FNear& P = Near[n];
@@ -609,6 +617,8 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		O.Phase = P.Phase;
 		O.Seconds = Seconds;
 		O.Lod = LodOf[n];
+		O.bSleep = P.Pose == 3;
+		if (PlayerAt && P.Pose != 3 && FMath::Abs(P.Up - PlayerAt->Z) < 2) O.Look = BrixGlanceAt(PlayerAt->X - P.P.X, PlayerAt->Y - P.P.Y, P.Yaw);
 		O.FaceFade = FMath::Clamp((FaceOutDistance - P.D) / (FaceOutDistance - MidDistance), 0.0, 1.0);
 		if (O.Lod >= 3)
 		{

@@ -81,9 +81,10 @@ private:
 	void SetLoop(FLoop& L, double Vol, double Pitch, const FVector2D& Pos, double Lowpass = 0);
 	void Music(double Dt, const FVector2D& Here);
 	// a syllable to be said: when (the world's seconds), where, which mouth shape at which pitch; bRadio: through the radio
-	struct FPendingSyllable { double At = 0; FVector2D Pos = FVector2D::ZeroVector; double Far = 30; FBrixSyllable S; bool bRadio = false; };
+	// bLine: a talk's murmured line, hushed when the next line starts or the talk closes (sound.js hush())
+	struct FPendingSyllable { double At = 0; FVector2D Pos = FVector2D::ZeroVector; double Far = 30; FBrixSyllable S; bool bRadio = false; bool bLine = false; };
 	TArray<FPendingSyllable> Pending;
-	void Say(const FBrixVoiceOut& V, double Now, bool bRadio);
+	void Say(const FBrixVoiceOut& V, double Now, bool bRadio, bool bLine = false);
 	void PlaySyllable(const FPendingSyllable& P, const FVector2D& Here);
 	void Radio(double Now, bool bDriving);   // the podcast on air, its caption
 	void OffAir();
@@ -125,7 +126,7 @@ private:
 	FString WasMood, WasPlace;
 	// what the interface and the player were doing last frame, for the sounds of a change
 	bool bWasTalking = false, bWasRiding = false;
-	int32 WasAnswered = 0, WasDriving = -1;
+	int32 WasAnswered = 0, WasDriving = -1, WasMurmured = 0;
 	FString WasPrompt;
 	void Interactions();
 	TSharedPtr<FBrixDay> Day;
