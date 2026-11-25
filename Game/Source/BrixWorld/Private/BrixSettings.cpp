@@ -78,6 +78,17 @@ TArray<FString> BrixSettingsProblems(const TSharedPtr<FJsonObject>& S)
 				Out.Add(TEXT("menu colour ") + K(Cv.Key) + TEXT(": needs a board colour and a lettering colour, as #rrggbb"));
 		}
 	if (!Colours || !(*Colours)->HasField(TEXT("quiet"))) Out.Add(TEXT("menu colours: no quiet colour for the small boards"));
+	const TSharedPtr<FJsonObject>* LL = nullptr;   // ADR-0049: the cards' colours, as #rrggbb
+	M->TryGetObjectField(TEXT("lamplight"), LL);
+	for (const TCHAR* F : { TEXT("stone"), TEXT("stone_deep"), TEXT("stone_lift"), TEXT("cream"), TEXT("dim"), TEXT("ink"), TEXT("lantern"), TEXT("paper"), TEXT("short_tag"), TEXT("good"), TEXT("bad"), TEXT("veil") })
+	{
+		FString Hex;
+		if (!LL || !(*LL)->TryGetStringField(F, Hex) || !IsHex(Hex)) Out.Add(FString(TEXT("menu lamplight.")) + F + TEXT(": needs a colour as #rrggbb"));
+	}
+	{
+		const TSharedPtr<FJsonValue> Va = LL ? (*LL)->TryGetField(TEXT("veil_alpha")) : nullptr;
+		if (!IsNum(Va) || Va->AsNumber() <= 0 || Va->AsNumber() >= 1) Out.Add(TEXT("menu lamplight.veil_alpha: needs a number between 0 and 1"));
+	}
 	const TSharedPtr<FJsonObject>* Live = nullptr;
 	M->TryGetObjectField(TEXT("live"), Live);
 	for (const TCHAR* F : { TEXT("face_d"), TEXT("face_y"), TEXT("face_m"), TEXT("body_y"), TEXT("body_m"), TEXT("body_fill") })
@@ -148,6 +159,12 @@ bool ParseBrixSettings(const TSharedPtr<FJsonObject>& J, FBrixSettings& Out, FSt
 	for (const auto& G : M->GetArrayField(TEXT("groups"))) Out.MenuGroups.Add({ G->AsObject()->GetStringField(TEXT("id")), G->AsObject()->GetStringField(TEXT("name")) });
 	for (const auto& Cv : M->GetObjectField(TEXT("colours"))->Values)
 		Out.Colours.Add(K(Cv.Key), { FColor::FromHex(Cv.Value->AsArray()[0]->AsString()), FColor::FromHex(Cv.Value->AsArray()[1]->AsString()) });
+	for (const auto& Lv : M->GetObjectField(TEXT("lamplight"))->Values)
+	{
+		FString C;
+		if (Lv.Value->TryGetString(C) && C.StartsWith(TEXT("#"))) Out.Lamplight.Add(K(Lv.Key), FColor::FromHex(C));
+	}
+	if (FColor* V = Out.Lamplight.Find(TEXT("veil"))) V->A = (uint8)FMath::RoundToInt(255 * M->GetObjectField(TEXT("lamplight"))->GetNumberField(TEXT("veil_alpha")));
 	for (const auto& Tv : M->GetArrayField(TEXT("tabs")))
 	{
 		const TSharedPtr<FJsonObject> T = Tv->AsObject();

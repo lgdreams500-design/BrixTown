@@ -133,8 +133,24 @@ how the renders get their look (and what the slice and Unreal must do to match i
 
 ### 2.7 The interface — "Painted signs" (ADR-0033)
 
-In the Unreal build the menu, the counters and the buy menu are drawn in "Lamplight" (ADR-0049, proposed 2026-11-25 on
-the owner's word, awaiting the owner's verdict; shots in `Art/StyleTests/lamplight_menu_36/`). The rules below stay the slice's.
+**In the Unreal build the interface is "Lamplight" (ADR-0049, accepted by the owner 2026-11-25: "accept lamplight").**
+Reference: look test 36, `Art/StyleTests/lamplight_menu_36/` (the menu's pages and a shop's counter, before and after). It
+covers the game menu, the counters and the buy menu; the conversation box, the purse, the tracker and the toasts are not
+brought to it yet. Painted signs, below, stays the look of the frozen browser slice (ADR-0045).
+
+| # | Rule | Check |
+|---|---|---|
+| L1 | **Cards of warm dark stone**, corners rounded 10 to 18 px, a darker lower edge 4 to 5 px deep so each reads as a thick slab (W3); a hairline of warm light round the edge; no gloss, no gradient that reads as shine (W1). | No sharp corner and no highlight on the screen. |
+| L2 | **The town stays in sight**: behind the menu it is dimmed and warmed by a brown veil, not blurred or hidden (W6). | The menu reads the same at noon and at night. |
+| L3 | **Page colours from the palette** (§2.3, U1's colours) as the lintel over a page's card, the band of its header and its mark in the rail; the open page is lit in its colour. | Two pages are told apart by colour alone. |
+| L4 | **One main action**, filled lantern orange with dark letters on a darker edge; the rest outlined in cream (U6). | Never two filled buttons side by side. |
+| L5 | **Prices on paper tags**, dark letters on paper; a price the purse cannot meet on a red tag. Keys shown as small paper keycaps. | Every price on the screen is a tag. |
+| L6 | **Goods on plinths in lantern light**: in a buy menu each thing stands on a dark plinth in a pool of lantern light, the chosen one ringed in lantern (ADR-0044's layouts unchanged). | No thing floats on a flat grey. |
+
+The colours are data, `World/rules/settings.json` `menu.lamplight` (stone `#2b2723`, its edge `#1e1b18`, cream `#efe4cc`,
+lantern `#e0964e`, paper `#e9dcbe` and the rest), checked by world.settings_problems().
+
+The rules below are Painted signs, the slice's.
 
 Reference: sample C of look test 19, `Art/StyleTests/menu_look_19/index.html` (a page, not a render: open it in a browser),
 as built in the slice's menu. It covers the game menu; the counters, the conversation box and the building designer have
@@ -240,7 +256,7 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 |---|---|
 | How production character models are made | Q-15 |
 | Vegetation | not started (vehicles: §2.5, interiors and furniture: §2.6, the interface: §2.7) |
-| The interface outside the menu (counters, conversation box, building designer, the lettering over the game) | still the earlier dark-box look; whether they follow §2.7 is for the owner to say |
+| The interface outside the menu (conversation box, building designer, the lettering over the game) | still the earlier dark-box look; the counters and the buy menu are Lamplight in the Unreal build (§2.7, ADR-0049); whether the rest follow is for the owner to say |
 | More furniture kits and decoration (kitchen, bathroom, dining, study, children, hallway, garden, shop, café, bedroom, living, decoration) | not approved; renders of `Tools/blender/furniture_kit_18.py` in `Art/StyleTests/furniture_kit_18/` for the owner to choose from |
 | Wear stages (I8) | not yet rendered. (The furniture outlet's look, `Art/StyleTests/furniture_kit_17/showroom.png`, was approved by the owner's request to build it, ADR-0027.) |
 | Night (after dusk) and bad-weather looks | night: approved in the slice (ADR-0023, owner 2026-11-22), no reference image yet; pictures in `Art/StyleTests/night_sky_15/`. Rain, fog and overcast: approved in the slice (ADR-0016), no rule or reference image yet; must follow W5–W7 |

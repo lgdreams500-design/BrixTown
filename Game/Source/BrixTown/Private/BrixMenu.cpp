@@ -46,6 +46,7 @@ void ABrixLife::StartMenu()
 		return;
 	}
 	FString Text;
+	SetPalette(Settings.Lamplight);   // the look's colours are data (ADR-0049)
 	if (FFileHelper::LoadFileToString(Text, *SettingsPath())) Settings.Load(Text);   // the device's own settings (UI-009)
 	ApplySettings();
 	if (!GEngine || !GEngine->GameViewport) return;

@@ -40,6 +40,14 @@ class TheMenu(unittest.TestCase):
         w = copy.deepcopy(W); w["settings"]["menu"]["tabs"][1]["colour"] = "pink"
         self.assertTrue(any("no colour pink" in p for p in world.settings_problems(w)))
 
+    def test_UI_016_the_lamplight_colours_are_data(self):
+        L = S["menu"]["lamplight"]
+        for k in world.LAMPLIGHT:
+            self.assertIn(k, L)
+        import copy
+        w = copy.deepcopy(W); w["settings"]["menu"]["lamplight"]["stone"] = "dark"
+        self.assertTrue(any("lamplight.stone" in p for p in world.settings_problems(w)))
+
     def test_UI_017_the_menu_shows_the_player_themself(self):
         L = S["menu"]["live"]
         self.assertLess(L["face_m"], 1.0, "the face window shows a face, not a body")
