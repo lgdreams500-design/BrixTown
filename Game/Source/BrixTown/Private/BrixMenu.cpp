@@ -401,7 +401,7 @@ TSharedRef<SWidget> ABrixLife::MenuPage(const FString& Id)
 				];
 			}
 			if (Me->Boards.Own.Num()) Section(TEXT("Skateboards · Y gets on the one in use"), Sk);
-			else Soon(TEXT("You have no skateboard. ") + SkateStoreName() + TEXT(" sells three kinds, from a board you push with a foot to the Neon Boost."));
+			else Soon(TEXT("You have no skateboard. ") + BoardsSoldWhere() + TEXT(" sell three kinds, from a board you push with a foot to the Neon Boost."));
 		}
 	}
 	else if (Id == TEXT("property"))   // PROP-011 to PROP-019, UI-006 (life.js estatePanel(), kind "property": P anywhere)

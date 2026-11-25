@@ -1,7 +1,7 @@
 ---
 adr: ADR-0053
 title: The skate store is the Market Grocer by the market square, renamed; boards are bought through the ledger
-status: proposed        # placeholders for the owner to confirm or change: which lot, the prices
+status: superseded      # by ADR-0054 (the owner, 2026-11-25: boards at the mall's sports and toy outlets, no skate store)
 date: 2026-11-25
 relates_to: [CITY-098, CITY-100, CITY-102, CITY-103, Q-40, ECO-002, ADR-0042]
 ---

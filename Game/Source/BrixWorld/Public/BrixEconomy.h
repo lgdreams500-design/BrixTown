@@ -83,6 +83,7 @@ struct BRIXWORLD_API FBrixEconomyRules
 	// the skateboards a skate store sells (World/rules/boards.json: CITY-102, CITY-103), in the store's order
 	struct FBoard { FString Name; int64 Price = 0; double TopKmh = 0; };
 	TArray<FString> BoardOrder;
+	TArray<FString> BoardsSoldAt;                         // the kinds of mall outlet that sell boards (boards.json sold_at; ADR-0054)
 	TMap<FString, FBoard> Boards;
 
 	const FAccount* Account(const FString& Kind) const { return Accounts.FindByPredicate([&](const FAccount& A) { return A.Kind == Kind; }); }
@@ -201,7 +202,9 @@ public:
 	bool BuyAt(int32 N, const FString& U, const FString& G, int64* OutPaid = nullptr);
 	// the skate store (CITY-102, CITY-103; economy.py buy_board()): the same price for a kind at every skate store
 	int64 BoardPrice(const FString& Kind) const { const FBrixEconomyRules::FBoard* B = R.Boards.Find(Kind); return B ? B->Price : 0; }
-	bool BuyBoard(int32 N, const FString& Kind, int64* OutPaid = nullptr);
+	// economy.py sells_boards(), buy_board(): at outlet U of the mall at lot N, a sports or toy outlet (CITY-102, CITY-103)
+	bool SellsBoards(int32 N, const FString& U) const;
+	bool BuyBoard(int32 N, const FString& U, const FString& Kind, int64* OutPaid = nullptr);
 	// economy.board_in_use(): the board in use after buying one, the bought one when it is faster (or none was in use)
 	static FString BoardInUse(const FBrixEconomyRules& R, const FString& InUse, const FString& Bought);
 	// the market stall (PROP-008)

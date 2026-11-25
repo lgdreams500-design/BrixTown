@@ -182,16 +182,16 @@ private:
 	TSharedRef<SWidget> PurseLine() const;
 	TSharedRef<SWidget> StatementTable(int32 N) const;
 	void ShopPanel(TSharedRef<SVerticalBox> Body);
-	void SkatePanel(TSharedRef<SVerticalBox> Body);   // the skate store's counter (CITY-102, CITY-103)
-	bool SkateBuy(int32 N, const FString& Kind, FString& Said);
+	bool BoardBuy(int32 N, const FString& U, const FString& Kind, FString& Said);
 public:
-	FString SkateStoreName() const;                    // the town's skate store, by name
+	FString BoardsSoldWhere() const;                   // where boards are sold: the mall's sports and toy outlets (ADR-0054)
 private:
 	void StallPanel(TSharedRef<SVerticalBox> Body);
 	// one thing of a buy menu (life.js ware()): whether it can be had now, sold out, or dearer than cash and current account
 	// State: ok, short (dearer than cash and the current account), out (sold out) or have (a board already owned: CITY-103);
 	// More: rows the showcase adds under its name (a board's top speed)
 	struct FWare { FString Id, Name, Goes, Band; int64 Price = 0; int32 Left = -1; FString State = TEXT("ok"); int64 Short = 0; TArray<TPair<FString, FString>> More; };
+	TArray<FWare> BoardWares(const FString& Band) const;   // a sports or toy outlet's three boards, in its grid (CITY-102, CITY-103)
 	struct FGridOpts { FString Id, Verb = TEXT("Buy"), StockLabel, PriceLabel = TEXT("Price"), Empty = TEXT("Nothing here."); bool bMine = false; TFunction<bool(const FWare&, FString&)> Buy; };
 	TSharedRef<SWidget> Grid(const TArray<FWare>& Things, const FGridOpts& O);   // layout B (buymenu.js grid())
 	FWare Ware(const FString& Id, const FString& Name, int64 Price, const FString& Goes, int32 Left, const FString& Band) const;
