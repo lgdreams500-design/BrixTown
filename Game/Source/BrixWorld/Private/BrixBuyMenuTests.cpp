@@ -80,10 +80,10 @@ bool FUI020_DotAndChipIcons::RunTest(const FString&)
 		const float V = At(C, P.X, P.Y);
 		if (P.bIn ? V < .75f : V > .25f) AddError(FString::Printf(TEXT("%s: %s (%.1f, %.1f) is %.2f covered"), P.Mark, P.What, P.X, P.Y, V));
 	}
-	// the outlines: the house is one closed ring of ten corners and back; the bag's handle one open curve
+	// the outlines: the house is one closed ring of eleven corners and back to the first; the bag's handle one open curve
 	const TArray<TArray<FVector2f>> House = BrixIconOutlines(B.Icons.FindRef(TEXT("home")).Num() ? B.Icons[TEXT("home")][0].D : FString());
 	TestEqual(TEXT("the house is one ring"), House.Num(), 1);
-	if (House.Num()) { TestEqual(TEXT("of ten corners, closed"), House[0].Num(), 11); TestTrue(TEXT("back to its start"), House[0][0].Equals(House[0].Last())); }
+	if (House.Num()) { TestEqual(TEXT("of eleven corners, closed"), House[0].Num(), 12); TestTrue(TEXT("back to its start"), House[0][0].Equals(House[0].Last())); }
 	if (const TArray<FBrixIconPath>* Bag = B.Icons.Find(TEXT("carry")); Bag && Bag->Num() == 2)
 	{
 		TestEqual(TEXT("the handle is stroked 1.6 wide"), (*Bag)[1].Stroke, 1.6f);
