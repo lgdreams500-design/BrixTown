@@ -435,7 +435,8 @@ weather key: it tries clear, cloud, rain, fog and snow in turn for the whole day
 which (`BrixNextWeatherTry`, `WLD037_the_weather_key_steps_through_the_kinds`; `-BrixWeatherKey=<n>` presses it n times in a
 test shot). From indoors the rain is seen through the windows and the open door: the same rings of drops, spread
 `IndoorReach` (1.8) times as far, fall outside, none over the building (its roof) and no splashes; the slice shows none
-indoors. Shots: `Art/StyleTests/unreal_gaps_world_40/` (`weather_key_rain.png`, `rain_through_the_window.png`). Not yet: wet
+indoors. Shots: `Art/StyleTests/unreal_gaps_world_40/` (`weather_key_rain.png`, `rain_through_the_window.png`); 7.9 to 20.5 frames a second at High in rain
+on that street (noisy). Not yet: wet
 clothes (people a little darker out in the rain, as the slice darkens everything outdoors), the rain's sound (the slice has
 none either), snow seen from indoors.
 
