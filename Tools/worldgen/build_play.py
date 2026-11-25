@@ -212,6 +212,77 @@ def bank_script():
             ["advance", 9, 10]]
 
 
+def quest_script():
+    """A fixed run of the quest lines and jobs for the Unreal port (QST-001 to QST-007): the first starter line walked to
+    its gift ending, the errand line to its delivered ending, then a shopping job handed over, a courier round delivered,
+    a shift worked and one let run out. Ops: economy ops (advance, open, buy) and newgame, act [qid, acts, resident id],
+    check [lot id or None, x, z], talking / offers [resident id], take [job kind, day] (the first resident offering one),
+    buyfor (the job's item at the first shop that sells it), handover, at [frm or to] (check at the job's lot)."""
+    return [["advance", 0, 440], ["newgame"], ["talking", "r0504"], ["act", "new_in_town", ["stage:bank"], "r0504"],
+            ["check", None, 0, 0], ["open", "current"], ["check", None, 0, 0], ["buy", "grocer", "bread"], ["check", None, 0, 0],
+            ["talking", "r0504"], ["act", "new_in_town", ["take:bread", "end:gift"], "r0504"], ["offers", "r0518"], ["offers", "r0408"],
+            ["act", "errand_runner", ["start"], "r0518"], ["check", "b_9_9_l7", 0, 0], ["talking", "r0505"],
+            ["act", "errand_runner", ["take:parcel", "stage:report"], "r0505"], ["act", "errand_runner", ["rep:5", "end:delivered"], "r0518"],
+            ["offers", "r0497"], ["advance", 0, 600], ["take", "shopping", 0], ["take", "parcel", 0], ["buyfor"], ["handover"],
+            ["take", "parcel", 0], ["at", "frm"], ["advance", 0, 640], ["at", "to"], ["take", "shift", 0], ["at", "to"],
+            ["advance", 0, 680], ["at", "to"], ["advance", 1, 500], ["take", "shift", 1], ["at", "to"], ["advance", 1, 900],
+            ["check", None, 0, 0]]
+
+
+def run_quests(econ, q, ops, shops):
+    """Runs quest_script() ops; returns what the C++ must reproduce."""
+    import economy as ec
+    out = []
+    for op in ops:
+        name, a = op[0], op[1:]
+        try:
+            r = "ok"
+            if name == "advance":
+                econ.advance(a[0], a[1])
+            elif name == "newgame":
+                q.new_game()
+            elif name == "open":
+                econ.open_account(a[0])
+            elif name == "buy":
+                econ.buy(shops[a[0]], a[1])
+            elif name == "act":
+                q.act(a[0], a[1], a[2])
+            elif name == "check":
+                q.check(dict(lot=a[0], pos=(a[1], a[2]), minute=econ.minute))
+            elif name == "talking":
+                r = ",".join(q.talking_to(a[0]))
+            elif name == "offers":
+                r = ",".join(q.offers(a[0]))
+            elif name == "take":
+                o = next((q.job_offer(i, a[1]) for i in range(len(q.residents)) if (q.job_offer(i, a[1]) or {}).get("kind") == a[0]), None)
+                if o is None:
+                    raise ec.Refused("nobody offers that")
+                q.take_job(o)
+                r = "%d|%d" % (o["giver"], o["pay"])
+            elif name == "buyfor":
+                it = q.job["item"]
+                n = next(n for k, n in sorted(((k, n) for n in range(len(econ.lots)) for k in [econ.shop_kind(n)] if k and n not in econ.outlets and it in econ.R["shops"][k]["sells"]), key=lambda x: x[1]))
+                econ.buy(n, it)
+            elif name == "handover":
+                q.hand_over()
+            elif name == "at":
+                q.check(dict(lot=econ.lots[q.job[a[0]]]["id"], pos=None, minute=econ.minute))
+            out.append(r)
+        except ec.Refused:
+            out.append("refused")
+    offers = []
+    for day in (0, 1, 2):
+        for i in range(len(q.residents)):
+            o = q.job_offer(i, day)
+            if o:
+                offers.append([i, day, o["kind"], o["pay"], o.get("frm", -1), o.get("to", -1), o.get("item", ""), o.get("minutes", 0)])
+    j = q.job
+    return dict(results=out, active={k: v["stage"] for k, v in sorted(q.active.items())}, done=dict(sorted(q.done.items())),
+                log=[t for _, _, t in q.log], job=[j["kind"], j["step"], j["deadline"], j["worked"]] if j else None, jobs_done=q.jobs_done,
+                rep=dict(sorted(econ.rep.items())), balances={a: econ.L.balance(a) for a in ec.PLAYER + ("sys:rewards", "sys:residents")},
+                tx=len(econ.L.tx), inv=dict(sorted(econ.inv.items())), offers=offers[:80], offer_count=len(offers))
+
+
 def unreal_life(w, city, L):
     """Game/Data/life.json for the Unreal build (Game/Source/BrixWorld BrixEconomy): the rules and the residents' shop visits
     the slice gets in D.life, each lot's id (to check the lots are in the same order) and a mall's outlets, and the fixed
@@ -224,12 +295,17 @@ def unreal_life(w, city, L):
     shops = L["checks"]["shops"]
     bs = bank_script()
     want = ec.run_script(ec.Economy(e, lots_, visits, staff, goods), bs, shops)
+    import quests as qs
+    qe = ec.Economy(e, lots_, visits, staff, goods)
+    qscript = quest_script()
+    qwant = run_quests(qe, qs.Quests(w["quests"], qe, w["residents"], lots_), qscript, shops)
     return dict(note="Generated by Tools/worldgen/build_play.py from World/. Do not edit: change the data files and run it again.",
                 economy=L["economy"], quests=L["quests"], goods=goods, visits=L["visits"], staff=L["staff"],
                 lots=[l["id"] for l in lots_], outlets={str(n): ec.outlets_of(l) for n, l in enumerate(lots_) if ec.outlets_of(l)},
-                checks=L["checks"], bank_checks=dict(script=bs, shops=shops, want=want), reward_checks=L["reward_checks"],
+                checks=L["checks"], bank_checks=dict(script=bs, shops=shops, want=want), quest_checks=dict(script=qscript, shops=shops, want=qwant), reward_checks=L["reward_checks"],
                 achievements=L["achievements"], buy_menu=L["buy_menu"], settings=L["settings"],
                 pieces=list(w["furnishing"]["pieces"]), palette=w["designer"]["palette"],   # for what a buy menu shows (UI-021)
+                rewards={k: w["sound"]["rewards"][k] for k in ("ledger", "coins")},   # how money coming in is shown (SND-019, SND-020)
                 residents=[dict(id=r["id"], role=r["role"], home=r["home"], work=r["work"]) for r in w["residents"]])
 
 

@@ -2,6 +2,7 @@
 
 #include "BrixCharacter.h"
 #include "BrixCity.h"
+#include "BrixDay.h"
 #include "BrixGameMode.h"
 #include "BrixTalkActor.h"
 #include "BrixThingWidget.h"
@@ -9,6 +10,7 @@
 #include "Engine/Engine.h"
 #include "Engine/GameViewportClient.h"
 #include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/Paths.h"
 #include "Styling/CoreStyle.h"
@@ -75,8 +77,9 @@ ABrixLife::ABrixLife()
 	PrimaryActorTick.bTickEvenWhenPaused = true;
 }
 
-void ABrixLife::Start(const FBrixCity& City)
+void ABrixLife::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay)
 {
+	Day = InDay;
 	FString Error;
 	if (!LoadBrixLife(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), LifeFile)), Data, Error) || !BrixEconLots(City, Data, Lots, Error))
 	{
@@ -86,11 +89,23 @@ void ABrixLife::Start(const FBrixCity& City)
 	for (const FBrixBlock& B : City.Blocks) for (const FBrixLot& L : B.Lots) { LotAngle.Add(L.AngleDeg); LotDoor.Add(L.Door); }
 	E = MakeUnique<FBrixEconomy>(Data, Lots);
 	if (!LoadBrixBuyMenu(Data.Json, BuyMenu, Error)) UE_LOG(LogTemp, Warning, TEXT("Brix Town: buy menus without pictures (%s)"), *Error);
-	double Day = 0, Minute = 0;
-	Frame(Day, Minute);
-	E->Advance((int32)Day, Minute);
-	E->NewCharacter();   // a new game (life.js newGame(): Q.newGame() pays the starting cash in)
+	double D0 = 0, M0 = 0;
+	Frame(D0, M0);
+	E->Advance((int32)D0, M0);
+	if (LoadBrixQuests(Data.Json, QuestRules, QuestResidents, Error))
+	{
+		Q = MakeUnique<FBrixQuests>(QuestRules, *E, QuestResidents);
+		Q->OnNote = [this](const FString& T) { Toast(T); };
+		Q->NewGame();   // a new game (life.js newGame()): the starting cash, and the first starter quest line
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Brix Town: no quests (%s)"), *Error);
+		E->NewCharacter();
+	}
 	LastMoney = E->TotalMoney();
+	if (!LoadBrixRewards(Data.Json, RewardRules, AchievementRules, Error)) UE_LOG(LogTemp, Warning, TEXT("Brix Town: no reward showings (%s)"), *Error);
+	SeenTx = E->L.Tx.Num();   // what a new game starts with is not shown (rewards.js reset())
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: a new game with %s in cash; the bank is %s, the market %s"), *Format(E->L.Balance(TEXT("p:cash"))),
 		E->BankLot >= 0 ? *Lots[E->BankLot].Name : TEXT("missing"), E->MarketLot >= 0 ? *Lots[E->MarketLot].Name : TEXT("missing"));
 	BuildUI();
@@ -107,6 +122,8 @@ void ABrixLife::EndPlay(const EEndPlayReason::Type Reason)
 }
 
 // the economy's day and minute: days since the new game, by the game's clock
+double ABrixLife::Minute() const { double D1 = 0, M1 = 0; Frame(D1, M1); return M1; }
+
 void ABrixLife::Frame(double& OutDay, double& OutMinute) const
 {
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
@@ -135,8 +152,8 @@ int32 ABrixLife::CounterHere() const
 		const FVector2D C = L.Centre(), D = P - C;
 		const double A = FMath::DegreesToRadians(-LotAngle[n]);
 		const FVector2D U(D.X * FMath::Cos(A) - D.Y * FMath::Sin(A), D.X * FMath::Sin(A) + D.Y * FMath::Cos(A));
-		const FVector2D Q = U + C;
-		if (Q.X >= L.Min.X && Q.X <= L.Max.X && Q.Y >= L.Min.Y && Q.Y <= L.Max.Y) return n;
+		const FVector2D Q2 = U + C;
+		if (Q2.X >= L.Min.X && Q2.X <= L.Max.X && Q2.Y >= L.Min.Y && Q2.Y <= L.Max.Y) return n;
 		const double Dd = FVector2D::Distance(P, LotDoor[n]);
 		if (Dd < BestD) { BestD = Dd; Best = n; }
 	}
@@ -147,16 +164,19 @@ void ABrixLife::Tick(float Dt)
 {
 	Super::Tick(Dt);
 	if (!E) return;
-	double Day = 0, Minute = 0;
-	Frame(Day, Minute);
-	E->Advance((int32)Day, Minute);   // the bank settles each midnight passed (BANK-008)
+	double D0 = 0, M0 = 0;
+	Frame(D0, M0);
+	E->Advance((int32)D0, M0);   // the bank settles each midnight passed (BANK-008)
+	if (Q && (CheckLeft -= Dt) <= 0.f) { CheckLeft = CheckSeconds; Q->Check(Ctx()); CheckAchievements(); }
+	Shown = 0;
+	TickRewards(Dt);   // coins first; their "+" is the purse counting up as they land (SND-019, SND-020)
+	SlipLeft = FMath::Max(0.0, SlipLeft - Dt);   // goals met where the player is (QST-001, QST-006)
 	const int64 Tm = E->TotalMoney();
 	if (Tm != LastMoney)
 	{
-		const int64 D = Tm - LastMoney;
-		DeltaText = (D > 0 ? TEXT("+") : TEXT("")) + Format(D);
-		bDeltaUp = D > 0;
-		DeltaLeft = PlusSeconds;
+		const int64 D = Tm - LastMoney - Shown;
+		if (D) DeltaText = (D > 0 ? TEXT("+") : TEXT("")) + Format(D);
+		if (D) { bDeltaUp = D > 0; DeltaLeft = PlusSeconds; }
 		if (IsOpen()) Draw();
 	}
 	LastMoney = Tm;
@@ -176,19 +196,63 @@ void ABrixLife::BuildUI()
 {
 	if (!GEngine || !GEngine->GameViewport) return;
 	SAssignNew(Hud, SOverlay)
+	+ SOverlay::Slot()[ SNew(SBrixCoins).Sprites(&Sprites).ViewportPx(&ViewportPx) ]
+	// the slip from the bank under the purse while interest is paid in (index.html #slip)
+	+ SOverlay::Slot().HAlign(HAlign_Left).VAlign(VAlign_Top).Padding(FMargin(22, 178, 0, 0))
+	[
+		SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(UiCream).Padding(FMargin(12, 6)).Visibility_Lambda([this]() { return SlipLeft > 0 ? EVisibility::HitTestInvisible : EVisibility::Collapsed; })
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot().AutoHeight()[ SNew(STextBlock).Font(UiFont(16)).ColorAndOpacity(UiInk).Text(FText::FromString(TEXT("Interest paid"))) ]
+			+ SVerticalBox::Slot().AutoHeight()[ SNew(STextBlock).Font(UiFont(13)).ColorAndOpacity(UiInk).Text_Lambda([this]() { return FText::FromString(TEXT("into your ") + SlipWhat); }) ]
+		]
+	]
+	// an achievement's painted banner, dropping in at the top (index.html #feat; SND-021)
+	+ SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Top).Padding(FMargin(16, 18, 16, 0))
+	[
+		SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(FLinearColor::FromSRGBColor(FColor(201, 162, 74))).Padding(FMargin(22, 12))
+		.Visibility_Lambda([this]() { return BannerLeft > -0.6 && !BannerName.IsEmpty() ? EVisibility::HitTestInvisible : EVisibility::Collapsed; })
+		.RenderTransform_Lambda([this]()
+		{
+			const double k = FMath::Min(1.0, BannerAge / .55), Out = BannerLeft > 0 ? 0.0 : FMath::Min(1.0, -BannerLeft / .5);
+			const double In = 1 - FMath::Pow(1 - k, 3) * (1 - 2.2 * k);   // drops in with a little overshoot
+			return FSlateRenderTransform(FQuat2D(FMath::DegreesToRadians(-1.5f)), FVector2D(0, (1 - In) * -140 - Out * 160));
+		})
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot().AutoHeight()[ SNew(STextBlock).Font(UiFont(10, true)).ColorAndOpacity(UiInk).Text(FText::FromString(TEXT("ACHIEVEMENT"))) ]
+			+ SVerticalBox::Slot().AutoHeight()[ SNew(STextBlock).Font(UiFont(22)).ColorAndOpacity(UiInk).Text_Lambda([this]() { return FText::FromString(BannerName); }) ]
+			+ SVerticalBox::Slot().AutoHeight()[ SNew(STextBlock).Font(UiFont(12)).ColorAndOpacity(UiInk).Text_Lambda([this]() { return FText::FromString(BannerLine); }) ]
+		]
+	]
 	+ SOverlay::Slot().HAlign(HAlign_Left).VAlign(VAlign_Top).Padding(FMargin(22, 150, 0, 0))
 	[
 		SNew(SHorizontalBox).Visibility(EVisibility::HitTestInvisible)
 		+ SHorizontalBox::Slot().AutoWidth()
 		[ SNew(STextBlock).Font(UiFont(16, true)).ColorAndOpacity(UiCream).ShadowOffset(FVector2D(0, 1)).ShadowColorAndOpacity(FLinearColor(0, 0, 0, .75f))
-			.Text_Lambda([this]() { return FText::FromString(E ? Format(E->L.Balance(TEXT("p:cash"))) : FString()); }) ]
+			.Text_Lambda([this]() { return FText::FromString(E ? Format(E->L.Balance(TEXT("p:cash")) - HeldCash) : FString()); }) ]
 		+ SHorizontalBox::Slot().AutoWidth()
 		[ SNew(STextBlock).Font(UiFont(16)).ColorAndOpacity(UiDim).ShadowOffset(FVector2D(0, 1)).ShadowColorAndOpacity(FLinearColor(0, 0, 0, .75f))
-			.Text_Lambda([this]() { return FText::FromString(E && E->Accounts.Num() ? TEXT(" · bank ") + Format(E->L.Balance(TEXT("p:current")) + E->L.Balance(TEXT("p:savings"))) : FString()); }) ]
+			.Text_Lambda([this]() { return FText::FromString(E && E->Accounts.Num() ? TEXT(" · bank ") + Format(E->L.Balance(TEXT("p:current")) + E->L.Balance(TEXT("p:savings")) - HeldBank) : FString()); }) ]
 		+ SHorizontalBox::Slot().AutoWidth().Padding(10, 0, 0, 0)
 		[ SNew(STextBlock).Font(UiFont(16, true)).ShadowOffset(FVector2D(0, 1)).ShadowColorAndOpacity(FLinearColor(0, 0, 0, .75f))
 			.ColorAndOpacity_Lambda([this]() { FLinearColor C = bDeltaUp ? UiPos : UiNeg; C.A = FMath::Clamp(DeltaLeft / .6f, 0.f, 1.f); return FSlateColor(C); })
 			.Text_Lambda([this]() { return FText::FromString(DeltaText); }) ]
+	]
+	+ SOverlay::Slot().HAlign(HAlign_Right).VAlign(VAlign_Top).Padding(FMargin(0, 270, 18, 0))
+	[
+		SNew(SBox).WidthOverride(260.f).Visibility_Lambda([this]()
+		{
+			const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+			return !IsOpen() && !(Mode && Mode->Talk && Mode->Talk->IsTalking()) && Tracked().Num() ? EVisibility::HitTestInvisible : EVisibility::Collapsed;
+		})
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot().AutoHeight()[ TrackCard(0) ]
+			+ SVerticalBox::Slot().AutoHeight()[ TrackCard(1) ]
+			+ SVerticalBox::Slot().AutoHeight()[ TrackCard(2) ]
+			+ SVerticalBox::Slot().AutoHeight()[ TrackCard(3) ]
+		]
 	]
 	+ SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Top).Padding(FMargin(16, 200, 16, 0))
 	[
@@ -254,6 +318,12 @@ void ABrixLife::CounterKey()
 	if (n == E->BankLot) Open(TEXT("bank"), n);
 	else if (n == E->MarketLot) Open(TEXT("stall"), n);
 	else { Side = TEXT("buy"); Open(TEXT("shop"), n); }
+}
+
+void ABrixLife::QuestsKey()
+{
+	if (Panel == TEXT("quests")) { Close(); return; }
+	Open(TEXT("quests"), -1);
 }
 
 void ABrixLife::WalletKey()
@@ -337,6 +407,7 @@ void ABrixLife::Draw()
 		Sub = E->R.Shop(E->ShopKind(PanelLot))->Name + TEXT(" · restocks at ") + UiHhmm(E->R.RestockMinute);
 		Hint = FString(TEXT("← → ↑ ↓  choose    Enter  ")) + (Side == TEXT("sell") ? TEXT("sell") : TEXT("buy")) + TEXT("    Esc  close");
 	}
+	else if (Panel == TEXT("quests")) { Title = TEXT("Quests"); Sub = FString::Printf(TEXT("Day %d · J"), E->Day + 1); }
 	else if (Panel == TEXT("stall")) { Title = Lots[PanelLot].Name; Sub = TEXT("Your market stall · residents shop here ") + UiHhmm(E->R.StallOpen) + TEXT(" to ") + UiHhmm(E->R.StallClose); }
 	else { Title = TEXT("Money"); Sub = PlayerName + TEXT(" · I"); }
 	if (!Msg.IsEmpty())
@@ -344,6 +415,7 @@ void ABrixLife::Draw()
 	if (Panel == TEXT("bank")) BankPanel(Body);
 	else if (Panel == TEXT("shop")) ShopPanel(Body);
 	else if (Panel == TEXT("stall")) StallPanel(Body);
+	else if (Panel == TEXT("quests")) QuestsPanel(Body);
 	else WalletPanel(Body);
 	PanelBody->SetContent(
 		SNew(SVerticalBox)
@@ -474,6 +546,13 @@ bool ABrixLife::RunOps(const FString& Ops)
 		else if (A[0] == TEXT("move")) bOk = E->Move(Sv(1), Sv(2), I(3));
 		else if (A[0] == TEXT("loan")) bOk = E->TakeLoan(I(1), (int32)I(2));
 		else if (A[0] == TEXT("rent")) bOk = E->RentStall();
+		else if (A[0] == TEXT("act") && Q)   // act,<quest>,<resident id>,<act>|<act>...: what an answer in a talk does
+		{
+			TArray<FString> Acts;
+			Sv(3).ParseIntoArray(Acts, TEXT("|"));
+			bOk = Q->Act(Sv(1), Acts, Sv(2));
+		}
+		else if (A[0] == TEXT("check") && Q) Q->Check(Ctx());
 		else if (A[0] == TEXT("buy") || A[0] == TEXT("sell"))
 		{
 			int32 n = E->LotIndex.FindRef(Sv(1), -1);
@@ -794,4 +873,508 @@ void ABrixLife::StallPanel(TSharedRef<SVerticalBox> Body)
 		Slot(UiText(TEXT("Cheaper than usual sells fast; dearer sells slowly."), 14, UiDim));
 	}
 	else if (!Can.Num()) Slot(UiText(TEXT("You have nothing to sell. Buy cheap at a shop, sell dear here."), 14, UiDim));
+}
+
+// ---- quests and jobs in conversation (QST-001 to QST-007; life.js conversation(), chose(), talkEnded())
+
+int32 ABrixLife::LotHere() const
+{
+	const FVector2D P = PlayerAt();
+	int32 Best = -1;
+	double BestD = CounterReach;
+	for (int32 n = 0; n < Lots.Num(); ++n)
+	{
+		const FBrixEconLot& L = Lots[n];
+		const FVector2D C = L.Centre(), D = P - C;
+		const double A = FMath::DegreesToRadians(-LotAngle[n]);
+		const FVector2D Q2 = FVector2D(D.X * FMath::Cos(A) - D.Y * FMath::Sin(A), D.X * FMath::Sin(A) + D.Y * FMath::Cos(A)) + C;
+		if (Q2.X >= L.Min.X && Q2.X <= L.Max.X && Q2.Y >= L.Min.Y && Q2.Y <= L.Max.Y) return n;
+		const double Dd = FVector2D::Distance(P, LotDoor[n]);
+		if (Dd < BestD) { BestD = Dd; Best = n; }
+	}
+	return Best;
+}
+
+FBrixQuests::FCtx ABrixLife::Ctx() const
+{
+	FBrixQuests::FCtx C;
+	const int32 n = LotHere();
+	if (n >= 0) C.Lot = Lots[n].Id;
+	C.Pos = PlayerAt();
+	C.Minute = E ? E->Minute : 0;
+	return C;
+}
+
+TMap<FString, FString> ABrixLife::TalkVars() const
+{
+	return { { TEXT("player"), TEXT("you") } };   // the designed character's name once the designer comes over (CHR-001)
+}
+
+TMap<FString, FString> ABrixLife::JobVars(const FBrixJob& O) const
+{
+	TMap<FString, FString> V;
+	const FBrixJobKind* K = QuestRules.Job(O.Kind);
+	const double Dl = O.Deadline > 0 ? O.Deadline : E->Day * 1440.0 + E->Minute + O.Hours * 60.0;
+	V.Add(TEXT("pay"), Format(O.Pay));
+	V.Add(TEXT("hours"), FString::FromInt(O.Hours));
+	V.Add(TEXT("by"), UiHhmm(FMath::Fmod(Dl, 1440.0)));
+	V.Add(TEXT("minutes"), FString::FromInt(O.Minutes ? O.Minutes : K ? K->Minutes : 0));
+	V.Add(TEXT("item"), O.Item.IsEmpty() ? FString() : E->Item(O.Item)->Name.ToLower());
+	V.Add(TEXT("from"), O.Kind == TEXT("parcel") ? Lots[O.Frm].Name : Day && Day->Names.IsValidIndex(O.Giver) ? Day->Names[O.Giver] : FString());
+	V.Add(TEXT("to"), O.To >= 0 ? Lots[O.To].Name : FString());
+	return V;
+}
+
+FString ABrixLife::FillJob(const FString& Text, const FBrixJob& O) const { return FBrixDialogue::Fill(Text, JobVars(O)); }
+
+FBrixDialogue::FConversation ABrixLife::Conversation(int32 i, const FBrixDialogue::FConversation& Base)
+{
+	Offered.Reset();
+	if (!Q || !QuestResidents.IsValidIndex(i)) return Base;
+	const FString Rid = QuestResidents[i].Id;
+	auto Prefix = [](const FString& Qid, const TMap<FString, FBrixDialogue::FNode>& Nodes, TMap<FString, FBrixDialogue::FNode>& Into)
+	{
+		for (const auto& N : Nodes)
+		{
+			FBrixDialogue::FNode X = N.Value;
+			for (FBrixDialogue::FOption& O : X.Options) if (!O.Next.IsEmpty()) O.Next = TEXT("q:") + Qid + TEXT(":") + O.Next;
+			Into.Add(TEXT("q:") + Qid + TEXT(":") + N.Key, X);
+		}
+	};
+	const TArray<FString> Talks = Q->TalkingTo(Rid);
+	if (Talks.Num())   // this resident is the one to see for a quest stage: that talk, nothing else
+	{
+		const FBrixQuestStage* St = Q->Stage(Talks[0]);
+		FBrixDialogue::FConversation C;
+		C.Title = QuestRules.Find(Talks[0])->Title;
+		C.Start = TEXT("q:") + Talks[0] + TEXT(":") + St->Start;
+		Prefix(Talks[0], St->Nodes, C.Nodes);
+		return C;
+	}
+	FBrixDialogue::FConversation C = Base;
+	C.Vars.Reset();
+	TArray<FBrixDialogue::FOption> Extra;
+	for (const FString& Qid : Q->Offers(Rid))   // quest lines this resident offers
+	{
+		const FBrixQuestLine* L = QuestRules.Find(Qid);
+		Prefix(Qid, L->OfferNodes, C.Nodes);
+		FBrixDialogue::FOption O;
+		O.Text = L->OfferLine;
+		O.Next = TEXT("q:") + Qid + TEXT(":") + L->OfferStart;
+		Extra.Add(O);
+	}
+	const FString RoleName = QuestResidents[i].Role;
+	const bool bHasKind = QuestRules.Jobs.ContainsByPredicate([&](const FBrixJobKind& K) { return K.Roles.Contains(RoleName); });
+	auto Line = [this](const TCHAR* K) { return QuestRules.Lines.FindRef(K); };
+	auto Node = [](const FString& Say, const FString& Mood, const TArray<FBrixDialogue::FOption>& Opts) { FBrixDialogue::FNode N; N.Say = Say; N.Mood = Mood; N.Options = Opts; return N; };
+	auto Opt = [](const FString& Text, const FString& Job) { FBrixDialogue::FOption O; O.Text = Text; O.Job = Job; return O; };
+	if (Q->Job && Q->Job->Kind == TEXT("shopping") && Q->Job->Giver == i)   // bringing an elder their shopping
+	{
+		C.Vars = JobVars(*Q->Job);
+		C.Nodes.Add(TEXT("job:thanks"), Node(Line(TEXT("thanks")), TEXT("happy"), { Opt(TEXT("Glad to help."), FString()) }));
+		FBrixDialogue::FOption O = Opt(Line(TEXT("hand_over")), TEXT("hand"));
+		O.Next = TEXT("job:thanks");
+		O.Need = { TEXT("have:") + Q->Job->Item };
+		Extra.Add(O);
+	}
+	else if (bHasKind)   // asking for work (QST-006)
+	{
+		if (const TOptional<FBrixJob> O = Q->JobOffer(i, E->Day))
+		{
+			C.Vars = JobVars(*O);
+			if (Q->Job) C.Nodes.Add(TEXT("job:offer"), Node(Line(TEXT("busy")), TEXT("thinking"), { Opt(TEXT("Right, I will finish that first."), FString()) }));
+			else
+			{
+				Offered = *O;
+				C.Nodes.Add(TEXT("job:offer"), Node(QuestRules.Job(O->Kind)->Offer, TEXT("thinking"), { Opt(Line(TEXT("accept")), TEXT("take")), Opt(Line(TEXT("decline")), FString()) }));
+			}
+		}
+		else C.Nodes.Add(TEXT("job:offer"), Node(Line(TEXT("none")), TEXT("neutral"), { Opt(TEXT("Fair enough."), FString()) }));
+		FBrixDialogue::FOption Ask = Opt(Line(TEXT("ask")), FString());
+		Ask.Next = TEXT("job:offer");
+		Extra.Add(Ask);
+	}
+	if (Extra.Num())
+		if (FBrixDialogue::FNode* N = C.Nodes.Find(C.Start))
+		{
+			Extra.Append(N->Options);
+			if (Extra.Num() > 9) Extra.SetNum(9);
+			N->Options = Extra;
+		}
+	return C;
+}
+
+bool ABrixLife::Allowed(const FBrixDialogue::FOption& O) const { return !Q || Q->NeedOk(O.Need); }
+
+void ABrixLife::Chose(int32 i, const FBrixDialogue::FOption& O)
+{
+	if (!Q || !QuestResidents.IsValidIndex(i)) return;
+	bool bOk = true;
+	if (!O.Quest.IsEmpty())
+	{
+		TArray<FString> Acts = O.Act;
+		Acts.RemoveAll([](const FString& A) { return A == TEXT("shop") || A == TEXT("bank"); });
+		bOk = Q->Act(O.Quest, Acts, QuestResidents[i].Id);
+	}
+	if (bOk && O.Job == TEXT("take") && Offered) bOk = Q->TakeJob(*Offered);
+	if (bOk && O.Job == TEXT("hand")) bOk = Q->HandOver();
+	if (!bOk) Toast(E->Why);
+	if (O.Act.Contains(TEXT("shop"))) PendingCounter = i;
+}
+
+void ABrixLife::TalkEnded()
+{
+	Offered.Reset();
+	if (PendingCounter < 0 || !Day) return;
+	const TOptional<FBrixWhere> W = Day->Where(PendingCounter, Minute());
+	PendingCounter = -1;
+	if (W && W->Lot >= 0 && !CounterWords(W->Lot).IsEmpty())
+	{
+		if (W->Lot == E->BankLot) Open(TEXT("bank"), W->Lot);
+		else if (W->Lot == E->MarketLot) Open(TEXT("stall"), W->Lot);
+		else { Side = TEXT("buy"); Open(TEXT("shop"), W->Lot); }
+	}
+	else CounterKey();
+}
+
+// ---- the quest log (QST-005) and the tracker
+
+FString ABrixLife::WhereWords(const FBrixGoal& G) const
+{
+	if (G.Kind == TEXT("talk"))
+	{
+		const int32 i = Q->ResidentIndex(G.Value);
+		const FString N = Day && Day->Names.IsValidIndex(i) ? Day->Names[i] : G.Value;
+		const TOptional<FBrixWhere> W = Day ? Day->Where(i, Minute()) : TOptional<FBrixWhere>();
+		if (!W) return N + TEXT(" is away from the streets just now (by tram or car).");
+		if (W->Lot >= 0 && !W->bWalking) return N + TEXT(" is at ") + Lots[W->Lot].Name + TEXT(" now.");
+		return N + TEXT(" is out and about") + (W->bWalking ? TEXT(", walking.") : TEXT("."));
+	}
+	if (G.Kind == TEXT("go")) { const int32 n = E->LotIndex.FindRef(G.Value, -1); return n >= 0 ? TEXT("Go to ") + Lots[n].Name + TEXT(".") : FString(); }
+	if (G.Kind == TEXT("near")) return TEXT("Between ") + UiHhmm(G.From) + TEXT(" and ") + UiHhmm(G.To) + TEXT(". It is ") + UiHhmm(Minute()) + TEXT(".");
+	return FString();
+}
+
+TArray<TPair<FString, FString>> ABrixLife::Tracked() const
+{
+	TArray<TPair<FString, FString>> Out;
+	if (!Q) return Out;
+	for (int32 k = 0; k < Q->Active.Num() && k < TrackedQuests; ++k)
+		if (const FBrixQuestStage* St = Q->Stage(Q->Active[k].Key)) Out.Add({ QuestRules.Find(Q->Active[k].Key)->Title, St->Log });
+	if (Q->Job)
+	{
+		const FBrixJobKind* K = QuestRules.Job(Q->Job->Kind);
+		const double Left = FMath::Max(0.0, Q->Job->Deadline - (E->Day * 1440.0 + E->Minute));
+		Out.Add({ FString::Printf(TEXT("%s · %dh %02dm left"), *K->Title, (int32)(Left / 60), (int32)FMath::Fmod(Left, 60.0)), FillJob(K->Log, *Q->Job) });
+	}
+	return Out;
+}
+
+TSharedRef<SWidget> ABrixLife::TrackCard(int32 K)
+{
+	return SNew(SBox).Padding(FMargin(0, 0, 0, 6)).Visibility_Lambda([this, K]() { return Tracked().IsValidIndex(K) ? EVisibility::HitTestInvisible : EVisibility::Collapsed; })
+	[
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot().AutoWidth()[ SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(UiGold).Padding(0)[ SNew(SBox).WidthOverride(3.f) ] ]
+		+ SHorizontalBox::Slot().FillWidth(1)
+		[
+			SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(UiPanel62).Padding(FMargin(10, 7))
+			[
+				SNew(SVerticalBox)
+				+ SVerticalBox::Slot().AutoHeight().Padding(0, 0, 0, 2)[ SNew(STextBlock).Font(UiFont(14)).ColorAndOpacity(UiCream).AutoWrapText(true).Text_Lambda([this, K]() { const auto T = Tracked(); return FText::FromString(T.IsValidIndex(K) ? T[K].Key : FString()); }) ]
+				+ SVerticalBox::Slot().AutoHeight()[ SNew(STextBlock).Font(UiFont(11)).ColorAndOpacity(UiCream).AutoWrapText(true).Text_Lambda([this, K]() { const auto T = Tracked(); return FText::FromString(T.IsValidIndex(K) ? T[K].Value : FString()); }) ]
+			]
+		]
+	];
+}
+
+void ABrixLife::QuestsPanel(TSharedRef<SVerticalBox> Body)
+{
+	auto Slot = [&](TSharedRef<SWidget> W, float Top) { Body->AddSlot().AutoHeight().Padding(0, Top, 0, 0)[ W ]; };
+	auto Entry = [&](const FString& Title, const FString& Text, const FString& Where, bool bDone)
+	{
+		TSharedRef<SVerticalBox> V = SNew(SVerticalBox);
+		V->AddSlot().AutoHeight()[ UiText(Title, 17, bDone ? UiDim : UiCream) ];
+		if (!Text.IsEmpty()) V->AddSlot().AutoHeight().Padding(0, 2, 0, 0)[ UiText(Text, 14) ];
+		if (!Where.IsEmpty()) V->AddSlot().AutoHeight().Padding(0, 2, 0, 0)[ UiText(Where, 14, UiDim) ];
+		Slot(V, 8);
+	};
+	if (!Q) { Slot(UiText(TEXT("No quests in this build."), 15, UiDim), 0); return; }
+	Slot(UiHeading(TEXT("Under way")), 0);
+	if (!Q->Active.Num() && !Q->Job) Slot(UiText(TEXT("Nothing under way. Talk to people: some have things for you to do, and some have work (ask them)."), 15, UiDim), 6);
+	for (const auto& A : Q->Active)
+		if (const FBrixQuestStage* St = Q->Stage(A.Key)) Entry(QuestRules.Find(A.Key)->Title, St->Log, WhereWords(St->Goal), false);
+	if (Q->Job)
+	{
+		const FBrixJob& J = *Q->Job;
+		const FBrixJobKind* K = QuestRules.Job(J.Kind);
+		FString T = FillJob(K->Log, J);
+		if (J.Kind == TEXT("shift")) T += FString::Printf(TEXT(" (%d of %d minutes done)"), (int32)J.Worked, J.Minutes);
+		if (J.Kind == TEXT("parcel")) T += J.Step == TEXT("pickup") ? TEXT(" Collect it first.") : TEXT(" You have the parcel.");
+		Entry(K->Title, T, FString(), false);
+	}
+	bool bOffers = false;
+	for (const FBrixQuestLine& L : QuestRules.Quests)
+	{
+		if (L.Giver.IsEmpty() || !Q->Offers(L.Giver).Contains(L.Id)) continue;
+		if (!bOffers) { Slot(UiHeading(TEXT("On offer")), 0); bOffers = true; }
+		FBrixGoal G;
+		G.Kind = TEXT("talk");
+		G.Value = L.Giver;
+		Entry(L.Title, L.Summary, WhereWords(G), false);
+	}
+	if (Q->Done.Num())
+	{
+		Slot(UiHeading(TEXT("Finished")), 0);
+		for (const auto& D : Q->Done) { const FBrixQuestLine* L = QuestRules.Find(D.Key); Entry(L->Title, L->Endings.FindRef(D.Value).Log, FString(), true); }
+	}
+	TArray<TPair<FString, int32>> Reps;
+	for (const auto& R : E->Rep) if (R.Value) Reps.Add({ R.Key, R.Value });
+	Reps.StableSort([](const TPair<FString, int32>& A, const TPair<FString, int32>& B) { return A.Value > B.Value; });
+	if (Reps.Num())
+	{
+		Slot(UiHeading(TEXT("People you know")), 0);
+		for (const auto& R : Reps)
+		{
+			const int32 i = Q->ResidentIndex(R.Key);
+			TSharedRef<SHorizontalBox> B = SNew(SHorizontalBox);
+			B->AddSlot().FillWidth(1)[ UiText(Day && Day->Names.IsValidIndex(i) ? Day->Names[i] : R.Key) ];
+			B->AddSlot().AutoWidth().Padding(12, 0)[ UiText(Day && Day->Careers.IsValidIndex(i) && !Day->Careers[i].IsEmpty() ? Day->Careers[i] : QuestResidents.IsValidIndex(i) ? QuestResidents[i].Role : FString(), 15, UiDim) ];
+			B->AddSlot().AutoWidth()[ UiText((R.Value > 0 ? TEXT("+") : TEXT("")) + FString::FromInt(R.Value), 15, R.Value > 0 ? UiPos : UiNeg) ];
+			Slot(B, 4);
+		}
+	}
+}
+
+// ---- money coming in, shown (SND-019, SND-020; rewards.js) and achievements (QST-009, SND-021)
+// The ledger has already paid: these only show it. While coins are on their way the purse shows that much less (Held),
+// so it counts up as they land.
+
+void ABrixLife::Later(double Dt, TFunction<void()> Fn) { Timeline.Add({ Clock + Dt, MoveTemp(Fn) }); }
+
+void ABrixLife::Sound(const FString& What, int32 I, int32 N)
+{
+	OnRewardSound.Broadcast(What, I, N);   // the sound session plays sound.js's Sound.reward(what, i, n) here
+}
+
+void ABrixLife::Land(const FString& Purse, int64 Chips, TSharedPtr<FShowing> S)
+{
+	(Purse == TEXT("cash") ? HeldCash : HeldBank) -= Chips;
+	Sparks(Purse == TEXT("cash") ? PurseCashPx() : PurseBankPx(), 10);
+	if (++S->Landed < S->N) return;
+	if (S->Kind == TEXT("reward")) Sound(TEXT("quest_end"));
+	else { Later(.12, [this]() { Sound(TEXT("interest_end")); }); Later(RewardRules.SlipS, [this]() { SlipLeft = 0; }); }
+}
+
+void ABrixLife::Sparks(FVector2D At, int32 N)
+{
+	for (int32 k = 0; k < N; ++k)
+	{
+		const double A = FMath::FRandRange(0.0, UE_DOUBLE_TWO_PI), V = FMath::FRandRange(.3, 1.0) * 150 * PxScale;
+		Spark.Add({ At, FVector2D(FMath::Cos(A) * V, FMath::Sin(A) * V - 45 * PxScale), 0, FMath::FRandRange(.4, .9) });
+	}
+}
+
+void ABrixLife::ShowReward(const FBrixRewardEvent& Ev)
+{
+	const FBrixRewardRules& C = RewardRules;
+	TSharedPtr<FShowing> S = MakeShared<FShowing>();
+	S->Kind = Ev.Kind;
+	S->N = FMath::Max(1, Ev.Coins);
+	FString Main = TEXT("p:cash");
+	for (const auto& T : Ev.To) if (T.Value > Ev.To.FindRef(Main)) Main = T.Key;
+	const FString Purse = Main == TEXT("p:cash") ? TEXT("cash") : TEXT("bank");
+	const int64 Each = Ev.Amount / S->N;
+	(Purse == TEXT("cash") ? HeldCash : HeldBank) += Ev.Amount;
+	Sound(TEXT("quest_start"));
+	const APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);
+	const FVector At = Me ? Me->GetActorLocation() / CmPerM - FVector(0, 0, .85) : FVector::ZeroVector;   // the player's feet, metres
+	const bool bTwo = S->N > 10;
+	const double Phase = FMath::FRandRange(0.0, 6.2832), Turn = FMath::RandBool() ? -1.0 : 1.0;
+	for (int32 i = 0; i < S->N; ++i)
+	{
+		const int64 Part = i == S->N - 1 ? Ev.Amount - Each * (S->N - 1) : Each;
+		Later(C.StartS + i * C.GapS, [this, i, S, Purse, Part, Phase, Turn, bTwo, At]()
+		{
+			const FBrixRewardRules& K = RewardRules;
+			if (i % 2 == 0) Sound(TEXT("coin_out"), i, S->N);
+			const double A = Phase + Turn * (6.2832 * i / S->N + FMath::FRandRange(-.08, .08));
+			const double R = (bTwo ? (i % 3 == 0 ? K.RingM[0] : K.RingM[1]) : (K.RingM[0] + K.RingM[1]) / 2) * FMath::FRandRange(.92, 1.08);
+			const double Vy = FMath::FRandRange(K.UpMps[0], K.UpMps[1]), T = (Vy + FMath::Sqrt(Vy * Vy + 2 * K.FallMps2 * (K.FromM - K.SizeM))) / K.FallMps2;
+			FCoin Cn;
+			Cn.P = At + FVector(0, 0, K.FromM);
+			Cn.V = FVector(FMath::Cos(A) * R / T, FMath::Sin(A) * R / T, Vy);
+			Cn.Floor = At.Z + K.SizeM;
+			Cn.Spin = FMath::FRandRange(0.0, 6.0); Cn.Vs = FMath::FRandRange(9.0, 15.0); Cn.Ph = FMath::FRandRange(0.0, 6.0);
+			Cn.Side = Turn;
+			Cn.PullAt = K.PullAfterS + i * K.PullGapS;
+			Cn.Purse = Purse; Cn.Part = Part; Cn.Show = S; Cn.I = i;
+			Coins.Add(Cn);
+		});
+	}
+}
+
+void ABrixLife::ShowInterest(const FBrixRewardEvent& Ev)
+{
+	const FBrixRewardRules& C = RewardRules;
+	TSharedPtr<FShowing> S = MakeShared<FShowing>();
+	S->Kind = Ev.Kind;
+	S->N = FMath::Max(1, C.InterestCoins);
+	const int64 Each = Ev.Amount / S->N;
+	HeldBank += Ev.Amount;
+	TArray<FString> Names;
+	for (const FString& A : Ev.Accounts) Names.Add(A == TEXT("p:current") ? TEXT("current account") : A == TEXT("p:savings") ? TEXT("savings account") : A.Mid(2));
+	SlipWhat = FString::Join(Names, TEXT(" and "));
+	SlipLeft = 1e9;
+	Later(.3, [this]() { Sound(TEXT("interest_start")); });
+	for (int32 i = 0; i < S->N; ++i)
+	{
+		const int64 Part = i == S->N - 1 ? Ev.Amount - Each * (S->N - 1) : Each;
+		Later(C.InterestStartS + i * C.InterestGapS, [this, i, S, Part]()
+		{
+			FFly F;
+			F.A = SlipPx() + FVector2D((-40 + i * 12) * PxScale, 0);
+			F.To = TEXT("bank"); F.Len = RewardRules.InterestFlyS; F.Bend = -34; F.R = 7;
+			F.Land = [this, i, S, Part]() { Sound(TEXT("interest_coin"), i, S->N); Land(TEXT("bank"), Part, S); };
+			Flies.Add(F);
+		});
+	}
+}
+
+FVector2D ABrixLife::PurseCashPx() const { return FVector2D(22 + 36, 150 + 10) * PxScale; }
+FVector2D ABrixLife::PurseBankPx() const { return FVector2D(22 + 120, 150 + 10) * PxScale; }
+FVector2D ABrixLife::SlipPx() const { return FVector2D(22 + 90, 150 + 50) * PxScale; }
+
+void ABrixLife::TickRewards(float FrameDt)
+{
+	const float Dt = FMath::Min(FrameDt, .05f);   // a long frame does not throw the coins across the street
+	const FBrixRewardRules& C = RewardRules;
+	if (GEngine && GEngine->GameViewport)
+	{
+		FVector2D Vp;
+		GEngine->GameViewport->GetViewportSize(Vp);
+		if (Vp.X > 0) { ViewportPx = Vp; PxScale = GEngine->GameViewport->GetDPIScale(); }
+	}
+	if (E->L.Tx.Num() > SeenTx)
+	{
+		for (const FBrixRewardEvent& Ev : BrixRewardEvents(RewardRules, E->L.Tx, SeenTx)) { if (Ev.Kind == TEXT("reward")) ShowReward(Ev); else ShowInterest(Ev); Shown += Ev.Amount; }
+		SeenTx = E->L.Tx.Num();
+	}
+	Clock += Dt;
+	for (int32 k = 0; k < Timeline.Num();) if (Timeline[k].Key <= Clock) { TFunction<void()> Fn = MoveTemp(Timeline[k].Value); Timeline.RemoveAt(k); Fn(); } else ++k;
+	// the banner: one at a time, none while a panel covers the screen
+	BannerLeft = FMath::Max(-5.0, BannerLeft - Dt);
+	if (BannerLeft <= -.7 && Banners.Num() && !IsOpen())
+	{
+		const FBrixAchievement* A = AchievementRules.Find(Banners[0]);
+		Banners.RemoveAt(0);
+		if (A) { BannerName = A->Name; BannerLine = A->Line; BannerLeft = AchievementRules.BannerS; BannerAge = 0; Sound(TEXT("achievement")); }
+	}
+	BannerAge += Dt;
+	// the coins (rewards.js frame())
+	const APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);
+	const FVector Chest = Me ? Me->GetActorLocation() / CmPerM - FVector(0, 0, .85) + FVector(0, 0, C.FromM) : FVector::ZeroVector;
+	for (FCoin& Cn : Coins)
+	{
+		Cn.Age += Dt;
+		Cn.Spin += Cn.Vs * Dt;
+		if (Cn.State == 0)   // thrown out: falls to its spot and bounces twice
+		{
+			Cn.V.Z -= C.FallMps2 * Dt;
+			Cn.P += Cn.V * Dt;
+			if (Cn.P.Z < Cn.Floor)
+			{
+				Cn.P.Z = Cn.Floor;
+				if (!Cn.bHit) { Cn.bHit = true; Sound(TEXT("coin_land"), Cn.I, Cn.Show->N); }
+				Cn.V.Z *= -C.Bounce; Cn.V.X *= .3; Cn.V.Y *= .3; Cn.Vs = FMath::Max(4.0, Cn.Vs * .6);
+				if (++Cn.Bounces >= 2 || Cn.V.Z < 1) { Cn.State = 1; Cn.T = 0; }
+			}
+		}
+		else if (Cn.State == 1)   // waiting: it stands up off the ground, turning slowly and bobbing
+		{
+			Cn.T += Dt;
+			const double k = FMath::Min(1.0, Cn.T / .4), e = 1 - (1 - k) * (1 - k) * (1 - k);
+			Cn.P.Z = Cn.Floor + e * C.HoverM + FMath::Sin(Cn.Age * 3.6 + Cn.Ph) * .03 * e;
+			Cn.Vs += (3 - Cn.Vs) * FMath::Min(1.0, (double)Dt * 5);
+		}
+		if (Cn.State < 2 && Cn.Age >= Cn.PullAt) { Cn.State = 2; Cn.T = 0; Cn.From = Cn.P; }
+		if (Cn.State == 2)   // taken: a small lift, then a curving swoop in to the player, wherever they have walked to
+		{
+			Cn.T += Dt;
+			Cn.Vs = 18;
+			if (Cn.T < C.LiftS) Cn.P.Z = Cn.From.Z + Cn.T / C.LiftS * .16;
+			else
+			{
+				const double u = FMath::Min(1.0, (Cn.T - C.LiftS) / C.PullS), e = u * u;
+				const FVector S0 = Cn.From + FVector(0, 0, .16);
+				const FVector2D D2(Chest.X - S0.X, Chest.Y - S0.Y);
+				const double d = FMath::Max(1e-3, D2.Size());
+				const FVector M((S0.X + Chest.X) / 2 - D2.Y / d * .55 * Cn.Side, (S0.Y + Chest.Y) / 2 + D2.X / d * .55 * Cn.Side, FMath::Max(S0.Z, Chest.Z) + .45);
+				Cn.P = (1 - e) * (1 - e) * S0 + 2 * e * (1 - e) * M + e * e * Chest;
+				Cn.Small = 1 - .45 * e;
+				if (u >= 1)
+				{
+					Cn.bDone = true;
+					Sound(TEXT("coin_take"), Cn.Show->Taken++, Cn.Show->N);
+					FFly F;
+					F.bFromPlayer = true;
+					F.To = Cn.Purse; F.Len = C.FlyS; F.Bend = FMath::FRandRange(-30.0, 30.0); F.R = 6.5f;
+					const FString Purse = Cn.Purse;
+					const int64 Part = Cn.Part;
+					TSharedPtr<FShowing> S = Cn.Show;
+					F.Land = [this, Purse, Part, S]() { Land(Purse, Part, S); };
+					Flies.Add(F);
+				}
+			}
+		}
+	}
+	Coins.RemoveAll([](const FCoin& Cn) { return Cn.bDone; });
+	// what is drawn: coins where they are on the screen, coins flying to the purse, sparks
+	Sprites.Reset();
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	FVector2D PlayerPx = ViewportPx * FVector2D(.5, .92);
+	if (PC && Me) { FVector2D Px; if (PC->ProjectWorldLocationToScreen(Chest * CmPerM, Px)) PlayerPx = Px; }
+	for (const FCoin& Cn : Coins)
+	{
+		FVector2D Px, Up;
+		if (!PC || !PC->ProjectWorldLocationToScreen(Cn.P * CmPerM, Px) || !PC->ProjectWorldLocationToScreen((Cn.P + FVector(0, 0, C.SizeM)) * CmPerM, Up)) continue;
+		const float Pop = Cn.Age < .14 ? (float)(1 + 2.2 * FMath::Pow(Cn.Age / .14 - 1, 3) + 1.2 * FMath::Pow(Cn.Age / .14 - 1, 2)) : 1.f;
+		FBrixCoinSprite Sp;
+		Sp.Px = Px;
+		Sp.R = FMath::Max(3.f * PxScale, (float)FVector2D::Distance(Px, Up)) * Pop * (float)Cn.Small;
+		Sp.Spin = (float)Cn.Spin;
+		Sp.Glow = Cn.State == 1 ? .75f + .25f * FMath::Sin(Cn.Age * 3.6 + Cn.Ph) : Cn.State == 2 ? 1.f : .45f;
+		Sprites.Add(Sp);
+	}
+	for (FFly& F : Flies)
+	{
+		F.T += Dt / F.Len;
+		if (F.bFromPlayer && !F.bStarted) { F.A = PlayerPx; F.bStarted = true; }
+		const FVector2D B = F.To == TEXT("cash") ? PurseCashPx() : PurseBankPx();
+		const double k = FMath::Min(1.0, F.T), e = k * k * (3 - 2 * k);
+		const FVector2D M((F.A.X + B.X) / 2 + F.Bend * PxScale, FMath::Min(F.A.Y, B.Y) - 50 * PxScale);
+		FBrixCoinSprite Sp;
+		Sp.Px = (1 - e) * (1 - e) * F.A + 2 * e * (1 - e) * M + e * e * B;
+		Sp.R = (F.R - 1.5f * (float)e) * PxScale;
+		Sp.Spin = (float)(Clock * 13 + F.A.X);
+		Sp.Glow = .8f;
+		Sprites.Add(Sp);
+		if (F.T >= 1) { F.bDone = true; F.Land(); }
+	}
+	Flies.RemoveAll([](const FFly& F) { return F.bDone; });
+	for (FSpark& S : Spark)
+	{
+		S.T += Dt;
+		S.V.Y += 300 * PxScale * Dt;
+		S.P += S.V * Dt;
+		const double a = 1 - S.T / S.Life;
+		if (a > 0) { FBrixCoinSprite Sp; Sp.bSpark = true; Sp.Px = S.P; Sp.R = 4.5f * PxScale * (float)(.5 + a * .5); Sp.Alpha = (float)a; Sprites.Add(Sp); }
+	}
+	Spark.RemoveAll([](const FSpark& S) { return S.T >= S.Life; });
+}
+
+void ABrixLife::CheckAchievements()
+{
+	if (!AchievementRules.List.Num()) return;
+	for (const FString& Id : BrixAward(AchievementRules, BrixAchievementFacts(AchievementRules, *E, Q.Get()), Feats, E->Day)) Banners.Add(Id);
 }

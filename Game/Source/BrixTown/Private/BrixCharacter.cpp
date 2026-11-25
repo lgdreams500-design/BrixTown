@@ -73,6 +73,7 @@ void ABrixCharacter::MakeInput()
 	LeaveAction = NewObject<UInputAction>(this, TEXT("Leave"));
 	CounterAction = NewObject<UInputAction>(this, TEXT("Counter"));
 	WalletAction = NewObject<UInputAction>(this, TEXT("Wallet"));
+	QuestsAction = NewObject<UInputAction>(this, TEXT("Quests"));
 	for (const TCHAR* N : { TEXT("ChooseLeft"), TEXT("ChooseRight"), TEXT("ChooseUp"), TEXT("ChooseDown"), TEXT("ChooseEnter") }) ChooseActions.Add(NewObject<UInputAction>(this, N));
 	for (int32 n = 0; n < 9; ++n) AnswerActions.Add(NewObject<UInputAction>(this, *FString::Printf(TEXT("Answer%d"), n + 1)));
 
@@ -99,6 +100,7 @@ void ABrixCharacter::MakeInput()
 	Keys->MapKey(LeaveAction, EKeys::Escape);
 	Keys->MapKey(CounterAction, EKeys::B);
 	Keys->MapKey(WalletAction, EKeys::I);
+	Keys->MapKey(QuestsAction, EKeys::J);
 	Keys->MapKey(ChooseActions[0], EKeys::Left);
 	Keys->MapKey(ChooseActions[1], EKeys::Right);
 	Keys->MapKey(ChooseActions[2], EKeys::Up);
@@ -138,6 +140,7 @@ void ABrixCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		In->BindAction(LeaveAction, ETriggerEvent::Started, this, &ABrixCharacter::LeaveKey);
 		In->BindAction(CounterAction, ETriggerEvent::Started, this, &ABrixCharacter::CounterKey);
 		In->BindAction(WalletAction, ETriggerEvent::Started, this, &ABrixCharacter::WalletKey);
+		In->BindAction(QuestsAction, ETriggerEvent::Started, this, &ABrixCharacter::QuestsKey);
 		for (UInputAction* A : ChooseActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::ChooseKey);
 		for (UInputAction* A : AnswerActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::AnswerKey);
 	}
@@ -343,6 +346,12 @@ void ABrixCharacter::ChooseKey(const FInputActionInstance& Instance)
 	const int32 n = ChooseActions.IndexOfByKey(Instance.GetSourceAction());
 	if (n == 4) L->EnterKey();
 	else if (n >= 0) L->ArrowKey(n == 0 ? -1 : n == 1 ? 1 : 0, n == 2 ? -1 : n == 3 ? 1 : 0);
+}
+
+void ABrixCharacter::QuestsKey()
+{
+	if (bDriving || bTalking) return;
+	if (ABrixLife* L = Life()) L->QuestsKey();
 }
 
 void ABrixCharacter::BeginPanel()

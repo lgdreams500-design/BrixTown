@@ -117,7 +117,7 @@ void ABrixGameMode::StartPlay()
 	if (City)
 	{
 		Life = GetWorld()->SpawnActor<ABrixLife>();   // money and the bank (ADR-0012)
-		Life->Start(*City);
+		Life->Start(*City, Today);
 	}
 	SpawnLight();
 	Super::StartPlay();
@@ -203,19 +203,22 @@ void ABrixGameMode::StartPlay()
 		}, ShotDelaySeconds / 3, false);
 	}
 	// -BrixCounter=bank (with -BrixLife=open,current;loan,5000,3...): a third of the way into a test shot's wait the ops are
-	// done as the player would at the counter, then the player is put at its door and the counter opened
-	FString CounterAt;
-	if (FParse::Value(FCommandLine::Get(), TEXT("BrixCounter="), CounterAt) && Life)
+	// done as the player would at the counter, then the player is put at its door and the counter opened; -BrixLife= alone
+	// does the ops (-BrixLifeLead=<s>: that many seconds before the shot, to catch the coins of a reward in flight)
+	FString CounterAt, Ops;
+	FParse::Value(FCommandLine::Get(), TEXT("BrixCounter="), CounterAt);
+	FParse::Value(FCommandLine::Get(), TEXT("BrixLife="), Ops, false);
+	if ((!CounterAt.IsEmpty() || !Ops.IsEmpty()) && Life)
 	{
-		FString Ops;
-		FParse::Value(FCommandLine::Get(), TEXT("BrixLife="), Ops, false);
+		float Lead = 0.f;
+		FParse::Value(FCommandLine::Get(), TEXT("BrixLifeLead="), Lead);
 		FTimerHandle H;
 		GetWorldTimerManager().SetTimer(H, [this, CounterAt, Ops]()
 		{
 			if (!Life) return;
 			if (!Ops.IsEmpty()) Life->RunOps(Ops);
-			UE_LOG(LogTemp, Display, TEXT("Brix Town: the counter at %s: %s"), *CounterAt, Life->OpenCounterAt(CounterAt) ? TEXT("open") : TEXT("not there"));
-		}, ShotDelaySeconds / 3, false);
+			if (!CounterAt.IsEmpty()) UE_LOG(LogTemp, Display, TEXT("Brix Town: the counter at %s: %s"), *CounterAt, Life->OpenCounterAt(CounterAt) ? TEXT("open") : TEXT("not there"));
+		}, Lead > 0 ? FMath::Max(.5f, ShotDelaySeconds - Lead) : ShotDelaySeconds / 3, false);
 	}
 	FString Shot;
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixShot="), Shot))

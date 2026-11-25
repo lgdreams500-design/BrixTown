@@ -103,8 +103,8 @@ decoder and joined into one sound (`SND018_lines_are_voiced`; few lines are voic
 The face follows the line: mouth shapes from its text stretched to the voice's length, brows and nods on stressed words
 and questions, the mood's expression (World/rules/speech.json; `CHR009_lines_are_mouthed_as_the_slice_mouths_them` and
 the talking faces in `ART004_...` check the port against the slice's own code). After a talk the resident runs late by
-the time it took until they next stand still where they would be anyway. Not yet: the quests, jobs and counters that
-the slice's life.js adds to talks, the player's typed name, and the wordless murmur of lines with no voice.
+the time it took until they next stand still where they would be anyway. The quests, jobs and counters that the slice's life.js adds to talks are below. Not yet: the player's typed name
+and the wordless murmur of lines with no voice.
 To see one without anyone at the keys: `-BrixTalk=<resident index>` (and `-BrixAnswers=1,2`) with `-BrixShot=`.
 
 ## Vehicles (CITY-040, CITY-091; ADR-0015)
@@ -233,6 +233,31 @@ good's own Blender model in place of its stand-in, and a resident behind each co
 `-BrixCounter=grocer "-BrixLife=buy,grocer,bread"` (a shop's kind or lot id), or `-BrixCounter=market
 "-BrixLife=buy,grocer,jam;rent;setout,jam,250"`.
 
+## Quests, jobs and rewards (QST-001 to QST-007, QST-009, SND-019 to SND-021; ADR-0012, ADR-0043)
+The quest lines and daily jobs are the slice's (economy.js Quests, a port of `Tools/citysim/quests.py`): `BrixWorld/BrixQuests`
+reads them from World/rules/quests.json (in `Game/Data/life.json`), with stages whose goal is a talk, a place, a thing
+carried, the bank, money, the stall; endings that pay through the ledger from `sys:rewards` and change reputation; jobs
+(a courier round, shopping for an elder, a shift) worked out from the resident and the day, never stored, one at a time,
+against the clock. `QST001_quests_run_as_the_python_does` walks the first two starter lines and four jobs (one let run
+out) through both and compares the notes, endings, reputation, ledger and three days of job offers (1,310) with Python's
+(build_play.py quest_script()). A new game starts the first starter line. In a talk (`ABrixTalk` asks `ABrixLife`, as
+conversations.js asks life.js): the resident a quest stage is waiting on has that stage's talk instead of their own; one
+who gives a quest line offers it; one whose role has work offers the day's job ("Any work going?"); an answer's needs and
+acts are the quest's ({player} is "you" until the character designer comes over); an answer that opens a shop opens it
+when the talk ends. Goals are checked four times a second where the player is (in a lot, or at its door). J opens the quest
+log: under way with where the person to see is now (from their routine), on offer, finished, people you know. The lines
+under way show at the right of the screen, a job with its time left. Money coming in is shown as the owner chose
+(`BrixWorld/BrixRewards`, world.reward_events(), checked by `SND019_money_coming_in_is_shown_as_python_says`): a reward's
+coins spring out round the player, hover, are drawn in and fly to the purse, which counts up as they land; interest
+comes with a slip under the purse and its coins fly up into the bank balance. Achievements (QST-009) are earned from
+facts worked out from the ledger and the quests (`QST009_achievements_are_earned_as_python_says`), each once, its painted
+banner dropping in at the top, one at a time and not over a panel. The sounds are hooks for now: `ABrixLife::OnRewardSound`
+is broadcast with sound.js's names (quest_start, coin_out, coin_land, coin_take, quest_end, interest_start,
+interest_coin, interest_end, achievement). Not yet: saving (QST-008), markers over people's heads and on the map, the
+Me page's list of achievements, the stamped coin face. To see a reward in a test shot: `-BrixLifeLead=1.15
+"-BrixLife=act,new_in_town,r0504,stage:bank;open,current;check;buy,grocer,bread;check;act,new_in_town,r0504,take:bread|end:gift"`
+(the ops that many seconds before the shot); to see a quest talk, `-BrixTime=15:12 -BrixTalk=504 "-BrixAnswers=1,1"`.
+
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
 black. At Epic quality the town runs at about 36 frames a second, at High about 63 with the same shade, at Medium about 86
@@ -283,3 +308,6 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.SND004_the_tram_sounds_as_the_slice_hears_it` | SND-004 |
 | `BrixTown.World.UI021_every_thing_shows_what_python_says` | UI-020, UI-021 |
 | `BrixTown.World.SND001_the_town_sounds_by_time_of_day` | SND-001 |
+| `BrixTown.World.QST001_quests_run_as_the_python_does` | QST-001 to QST-007 |
+| `BrixTown.World.QST009_achievements_are_earned_as_python_says` | QST-009 |
+| `BrixTown.World.SND019_money_coming_in_is_shown_as_python_says` | SND-019, SND-020 |

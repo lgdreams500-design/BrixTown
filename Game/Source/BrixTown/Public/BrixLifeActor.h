@@ -4,12 +4,17 @@
 #include "GameFramework/Actor.h"
 #include "BrixBuyMenu.h"
 #include "BrixEconomy.h"
+#include "BrixQuests.h"
+#include "BrixRewards.h"
+#include "BrixRewardsWidget.h"
+#include "BrixTalk.h"
 #include "BrixLifeActor.generated.h"
 
 class SBox;
 class SVerticalBox;
 class SWidget;
 struct FBrixCity;
+struct FBrixDay;
 
 // The player's life in the town, as the slice's life.js does it (ADR-0012): the money in their purse on screen, the bank's
 // counter, the money page (I). The rules are BrixWorld's FBrixEconomy (a port of economy.js); this actor is the screens
@@ -22,6 +27,10 @@ struct FBrixCity;
 // For test shots: -BrixCounter=bank (or market, or a shop's kind or lot id) puts the player at its door a third into the wait and opens its counter, after
 // doing -BrixLife=<op>;<op>... (ops as Tools/citysim/economy.py check_script() writes them, arguments by commas, such as
 // open,current;move,p:current,p:savings,1000;loan,5000,3).
+// A reward's or interest's sound, as sound.js Sound.reward(what, i, n) names them: quest_start, coin_out, coin_land,
+// coin_take, quest_end, interest_start, interest_coin, interest_end, achievement (SND-019 to SND-021). Bound by the sound.
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnBrixRewardSound, const FString& /*What*/, int32 /*I*/, int32 /*N*/);
+
 UCLASS(Config = Game)
 class BRIXTOWN_API ABrixLife : public AActor
 {
@@ -29,13 +38,23 @@ class BRIXTOWN_API ABrixLife : public AActor
 
 public:
 	ABrixLife();
-	void Start(const FBrixCity& City);
+	void Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay);
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
 	bool IsOpen() const { return !Panel.IsEmpty(); }
 	void CounterKey();                    // B: the counter of the lot the player is at, if it has one
 	void WalletKey();                     // I: the money page
+	void QuestsKey();                     // J: the quest log (QST-005)
+	// conversations (life.js conversation(), allowed(), chose(), talkEnded(), vars(); ABrixTalk calls these)
+	FBrixDialogue::FConversation Conversation(int32 Resident, const FBrixDialogue::FConversation& Base);
+	bool Allowed(const FBrixDialogue::FOption& O) const;
+	void Chose(int32 Resident, const FBrixDialogue::FOption& O);
+	void TalkEnded();
+	TMap<FString, FString> TalkVars() const;
+	FBrixQuests* Quests() const { return Q.Get(); }
+	FOnBrixRewardSound OnRewardSound;
+	const TMap<FString, int32>& Achievements() const { return Feats; }   // earned, and on which day (QST-009)
 	bool ArrowKey(int32 Dx, int32 Dy);    // at a shop's counter: choose the next thing that way
 	bool EnterKey();                      // and buy (or sell) it
 	bool IsShop() const { return Panel == TEXT("shop"); }
@@ -52,6 +71,8 @@ public:
 	UPROPERTY(Config) float PlusSeconds = 2.2f;     // the "+Bx" beside the purse
 	UPROPERTY(Config) int32 BankStatementLines = 12;
 	UPROPERTY(Config) int32 WalletStatementLines = 15;
+	UPROPERTY(Config) float CheckSeconds = 0.25f;   // how often goals are checked (life.js: four times a second)
+	UPROPERTY(Config) int32 TrackedQuests = 3;      // quest lines shown at the right of the screen
 
 private:
 	void BuildUI();
@@ -61,6 +82,31 @@ private:
 	void Open(const FString& Kind, int32 Lot);
 	void BankPanel(TSharedRef<SVerticalBox> Body);
 	void WalletPanel(TSharedRef<SVerticalBox> Body);
+	void QuestsPanel(TSharedRef<SVerticalBox> Body);
+	TMap<FString, FString> JobVars(const FBrixJob& O) const;
+	FString FillJob(const FString& Text, const FBrixJob& O) const;
+	FString WhereWords(const FBrixGoal& G) const;   // QST-005: where the person to see is right now
+	FBrixQuests::FCtx Ctx() const;
+	int32 LotHere() const;                // the lot the player is in, or at the door of
+	double Minute() const;
+	TArray<TPair<FString, FString>> Tracked() const;   // what the right of the screen shows: quest, then what to do
+	TSharedRef<SWidget> TrackCard(int32 K);
+	// the showing of money coming in (rewards.js)
+	struct FShowing { FString Kind; int32 N = 1, Landed = 0, Taken = 0; };
+	struct FCoin { FVector P = FVector::ZeroVector, V = FVector::ZeroVector, From = FVector::ZeroVector; double Floor = 0, Spin = 0, Vs = 0, Ph = 0, Age = 0, T = 0, Side = 1, PullAt = 0, Small = 1; int32 State = 0, Bounces = 0, I = 0; bool bHit = false, bDone = false; FString Purse; int64 Part = 0; TSharedPtr<FShowing> Show; };
+	struct FFly { FVector2D A = FVector2D::ZeroVector; FString To; double T = 0, Len = .4, Bend = 0; float R = 6.f; bool bFromPlayer = false, bStarted = false, bDone = false; TFunction<void()> Land; };
+	struct FSpark { FVector2D P, V; double T = 0, Life = .6; };
+	void Later(double Dt, TFunction<void()> Fn);
+	void Sound(const FString& What, int32 I = 0, int32 N = 0);
+	void Land(const FString& Purse, int64 Chips, TSharedPtr<FShowing> S);
+	void Sparks(FVector2D At, int32 N);
+	void ShowReward(const FBrixRewardEvent& Ev);
+	void ShowInterest(const FBrixRewardEvent& Ev);
+	void TickRewards(float Dt);
+	void CheckAchievements();
+	FVector2D PurseCashPx() const;
+	FVector2D PurseBankPx() const;
+	FVector2D SlipPx() const;
 	TSharedRef<SWidget> PurseLine() const;
 	TSharedRef<SWidget> StatementTable(int32 N) const;
 	void ShopPanel(TSharedRef<SVerticalBox> Body);
@@ -79,6 +125,28 @@ private:
 	FBrixLifeData Data;
 	FBrixBuyMenuRules BuyMenu;
 	TUniquePtr<FBrixEconomy> E;
+	FBrixQuestRules QuestRules;
+	TArray<FBrixQuestResident> QuestResidents;
+	TUniquePtr<FBrixQuests> Q;
+	TSharedPtr<FBrixDay> Day;
+	TOptional<FBrixJob> Offered;          // the job offered in the talk under way (life.js _offer)
+	int32 PendingCounter = -1;            // a resident whose counter opens when the talk ends (an answer's act "shop")
+	float CheckLeft = 0.f;
+	FBrixRewardRules RewardRules;
+	FBrixAchievementRules AchievementRules;
+	TMap<FString, int32> Feats;
+	TArray<FString> Banners;
+	FString BannerName, BannerLine, SlipWhat;
+	double BannerLeft = -5, BannerAge = 0, SlipLeft = 0, Clock = 0;
+	int32 SeenTx = 0;
+	int64 Shown = 0, HeldCash = 0, HeldBank = 0;
+	TArray<TPair<double, TFunction<void()>>> Timeline;
+	TArray<FCoin> Coins;
+	TArray<FFly> Flies;
+	TArray<FSpark> Spark;
+	TArray<FBrixCoinSprite> Sprites;
+	FVector2D ViewportPx = FVector2D(1600, 900);
+	float PxScale = 1.f;
 	TArray<FBrixEconLot> Lots;
 	TArray<float> LotAngle;
 	TArray<FVector2D> LotDoor;
