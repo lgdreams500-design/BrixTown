@@ -52,6 +52,8 @@ public:
 	// What is inside the buildings (Game/Data/inside.json; CITY-013): set before Build to make the enterable ones hollow,
 	// with an open doorway, a floor, plastered walls and a ceiling
 	const FBrixInsides* Insides = nullptr;
+	// each hollow building's ground-storey windows on the inside face of its walls (x0, z0, x1, z1 in metres), by lot index
+	TMap<int32, TArray<FVector4f>> WindowSpans;
 	// Where the lamps' and wall lanterns' light comes from (the slice's lights: x, height, z in metres and a strength), and
 	// their glass, which glows by night (ABrixLamps sets its material's Glow).
 	TArray<FVector4f> LampLights;

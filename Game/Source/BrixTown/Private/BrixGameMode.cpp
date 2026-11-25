@@ -11,6 +11,7 @@
 #include "BrixLamps.h"
 #include "BrixLifeActor.h"
 #include "BrixPeople.h"
+#include "BrixRooms.h"
 #include "BrixSoundActor.h"
 #include "BrixTalkActor.h"
 #include "BrixTownActor.h"
@@ -107,6 +108,11 @@ void ABrixGameMode::StartPlay()
 		Weather = GetWorld()->SpawnActor<ABrixWeather>();
 		Weather->Start(*City, Town);
 		TownActor = Town;
+		if (Insides)   // the homes near the camera, furnished from their plans (FURN-060 to FURN-063)
+		{
+			Furnisher = GetWorld()->SpawnActor<ABrixRooms>();
+			Furnisher->Start(*City, *Insides, Town, Day);
+		}
 		// the inside of every hollow building, to know when the camera is indoors (CITY-013)
 		int32 Lk = 0;
 		for (const FBrixBlock& B : City->Blocks)
@@ -265,6 +271,23 @@ void ABrixGameMode::StartPlay()
 	{
 		FTimerHandle H;
 		GetWorldTimerManager().SetTimer(H, [this, MenuPage]() { if (Life) Life->TestMenu(MenuPage); }, FMath::Max(1.f, ShotDelaySeconds - 3.f), false);
+	}
+	FString Stand;
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixStand="), Stand, false))   // x,z,yaw: the player stands there, facing that way
+	{
+		TArray<FString> P;
+		Stand.ParseIntoArray(P, TEXT(","));
+		if (P.Num() == 3)
+		{
+			const FVector At = ToWorld(FVector2D(FCString::Atof(*P[0]), FCString::Atof(*P[1])), 1.2f);
+			const float Yaw = FCString::Atof(*P[2]);
+			FTimerHandle H;
+			GetWorldTimerManager().SetTimer(H, [this, At, Yaw]()
+			{
+				if (APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0)) Me->SetActorLocationAndRotation(At, FRotator(0, Yaw, 0), false, nullptr, ETeleportType::TeleportPhysics);
+				if (APlayerController* PC = GetWorld()->GetFirstPlayerController()) PC->SetControlRotation(FRotator(-15.f, Yaw, 0.f));
+			}, 0.6f, false);
+		}
 	}
 	FString Shot;
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixShot="), Shot))
@@ -456,6 +479,7 @@ void ABrixGameMode::ShootAndQuit()
 		if (Room != INDEX_NONE && Insides && Insides->Lots.IsValidIndex(Room) && Insides->Lots[Room].IsSet()) Where = TEXT("inside ") + Insides->Lots[Room]->Id;
 		UE_LOG(LogTemp, Display, TEXT("Brix Town: the player is at (%.1f, %.1f) %.2f m up, %s"), Me->GetActorLocation().X / 100, Me->GetActorLocation().Y / 100, Me->GetActorLocation().Z / 100 - 0.85, *Where);
 	}
+	if (Furnisher) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d homes furnished near the camera, %d pieces, %d room lamps on"), Furnisher->Furnished(), Furnisher->PiecesShown(), Furnisher->LampsOn());
 	if (Cars) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d vehicles drawn"), Cars->Shown());
 	if (Cars && Cars->Driving().K >= 0) UE_LOG(LogTemp, Display, TEXT("Brix Town: the player's car at (%.1f, %.1f) going %.1f m/s"), Cars->Driving().X, Cars->Driving().Z, Cars->Driving().V);
 	if (People) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents with a body at %02d:%02d, %.2f ms a frame working them out (%s)"), People->Shown(), (int32)ClockMinute() / 60, (int32)ClockMinute() % 60, People->TickMs(), *People->TickParts());

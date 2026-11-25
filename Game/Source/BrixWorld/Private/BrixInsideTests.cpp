@@ -76,4 +76,73 @@ bool FCITY013_Doorways::RunTest(const FString&)
 	return Bad == 0;
 }
 
+namespace
+{
+	bool InRect(const FBrixRect& R, const FVector2D& P, float Slack)
+	{
+		const FVector2D D = P - R.Centre, Ac(-R.Along.Y, R.Along.X);
+		return FMath::Abs(FVector2D::DotProduct(D, R.Along)) <= R.Length / 2 + Slack && FMath::Abs(FVector2D::DotProduct(D, Ac)) <= R.Width / 2 + Slack;
+	}
+}
+
+// FURN-060, FURN-061, FURN-063: every planned home (the row houses of lot.interior and the designed houses of plan
+// house_12x9) is furnished from its plan: each piece stands in one of the rooms of its floor and inside its lot, at the
+// household's level or below but for the beds, with a bed place for every bed the residents have; the level follows the
+// rule of World/rules/furnishing_levels.json (estate.js furnish.level()).
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFURN060_HomesFurnished, "BrixTown.World.FURN060_every_planned_home_is_furnished_in_its_rooms",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FFURN060_HomesFurnished::RunTest(const FString&)
+{
+	FBrixCity City;
+	FBrixInsides Ins;
+	FString Error;
+	if (!TestTrue(TEXT("the city loads: ") + Error, LoadBrixCity(CityDir(), City, Error))) return false;
+	if (!TestTrue(TEXT("inside.json loads: ") + Error, LoadBrixInside(InsidePath(), Ins, Error))) return false;
+	if (!TestTrue(TEXT("the plans load"), Ins.Plans.Contains(TEXT("house_12x9")) && Ins.Plans.Num() >= 4)) return false;
+
+	// the rule itself (furnishing_levels.json: bands 0 / 9000 / 16000, 10 % saved, steps 30000, 60000, 120000)
+	const FBrixFurnishRules& F = Ins.Furnish;
+	TestEqual(TEXT("no wages: Bare"), F.Level(0, 0), 1);
+	TestEqual(TEXT("9,000 a day starts Basic"), F.Level(9000, 0), 2);
+	TestEqual(TEXT("16,000 a day starts Homely"), F.Level(16000, 0), 3);
+	TestEqual(TEXT("5,000 a day saves 30,000 in 60 days: Basic"), F.Level(5000, 60), 2);
+	TestEqual(TEXT("but not in 59"), F.Level(5000, 59), 1);
+	TestEqual(TEXT("16,000 a day: Full after 75 days"), F.Level(16000, 75), 4);
+
+	int32 k = -1, Homes = 0, Houses = 0, Pieces = 0, Bad = 0;
+	const TArray<FBrixWindowSpan> NoWindows;
+	for (const FBrixBlock& B : City.Blocks)
+		for (const FBrixLot& L : B.Lots)
+		{
+			++k;
+			if (!Ins.Lots[k].IsSet()) continue;
+			const FBrixInside& In = Ins.Lots[k].GetValue();
+			FBrixHome H;
+			if (!BrixHomeOf(Ins, L, In, 16, NoWindows, H)) continue;
+			++Homes;
+			if (L.House.IsSet()) ++Houses;
+			auto Fail = [&](const FString& Why) { if (Bad++ < 20) AddError(L.Id + TEXT(" (") + L.Name + TEXT("): ") + Why); };
+			if (H.Level < 1 || H.Level > 4) Fail(FString::Printf(TEXT("level %d"), H.Level));
+			const FVector2D C = L.Centre();
+			const double A = FMath::DegreesToRadians(L.AngleDeg);
+			FBrixRect Lot;
+			Lot.Centre = C; Lot.Along = FVector2D(FMath::Cos(A), FMath::Sin(A)); Lot.Length = (float)L.Size().X; Lot.Width = (float)L.Size().Y;
+			for (const FBrixFurniturePiece& P : H.Pieces)
+			{
+				++Pieces;
+				if (!InRect(Lot, P.At, 0.f)) Fail(P.Kind + TEXT(" stands outside the lot"));
+				bool bInRoom = false;
+				for (const FBrixRoom& R : H.Rooms) if (R.Floor == P.Floor && InRect(R.R, P.At, 0.05f)) bInRoom = true;
+				if (!bInRoom) Fail(FString::Printf(TEXT("%s on floor %d stands in no room"), *P.Kind, P.Floor));
+			}
+			int32 Lie = 0;
+			for (const FBrixSpot& S : H.Spots) if (S.bLie) ++Lie;
+			const int32 Beds = In.Objects.Contains(TEXT("bed")) ? In.Objects[TEXT("bed")].Num() : 0;
+			if (Lie < Beds) Fail(FString::Printf(TEXT("%d bed places for %d beds"), Lie, Beds));
+		}
+	AddInfo(FString::Printf(TEXT("%d planned homes (%d designed houses), %d pieces on day 16"), Homes, Houses, Pieces));
+	TestTrue(TEXT("the designed houses and the row houses are furnished"), Houses > 400 && Homes > Houses + 100);
+	return Bad == 0;
+}
+
 #endif

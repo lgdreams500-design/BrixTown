@@ -1,0 +1,5530 @@
+{
+ "source": "Tools/blender/unreal_furniture_37.py",
+ "frame": "metres, z up, standing on z = 0, back toward +y, front toward -y (the kits' frame)",
+ "lines": [
+  "plain",
+  "oldtown",
+  "workshop",
+  "curve"
+ ],
+ "pieces": {
+  "k17_sofa": {
+   "plain": {
+    "file": "k17_sofa_plain.glb",
+    "mesh": "SM_k17_sofa_plain",
+    "min": [
+     -1.0,
+     -0.46,
+     0.0
+    ],
+    "max": [
+     1.0,
+     0.48,
+     0.86
+    ],
+    "tris": 3132
+   },
+   "oldtown": {
+    "file": "k17_sofa_oldtown.glb",
+    "mesh": "SM_k17_sofa_oldtown",
+    "min": [
+     -1.021,
+     -0.45,
+     0.0
+    ],
+    "max": [
+     1.021,
+     0.48,
+     0.86
+    ],
+    "tris": 15012
+   },
+   "workshop": {
+    "file": "k17_sofa_workshop.glb",
+    "mesh": "SM_k17_sofa_workshop",
+    "min": [
+     -1.0,
+     -0.46,
+     0.0
+    ],
+    "max": [
+     1.0,
+     0.46,
+     0.86
+    ],
+    "tris": 5736
+   },
+   "curve": {
+    "file": "k17_sofa_curve.glb",
+    "mesh": "SM_k17_sofa_curve",
+    "min": [
+     -1.022,
+     -0.44,
+     -0.006
+    ],
+    "max": [
+     1.022,
+     0.48,
+     0.912
+    ],
+    "tris": 7528
+   }
+  },
+  "k17_armchair": {
+   "plain": {
+    "file": "k17_armchair_plain.glb",
+    "mesh": "SM_k17_armchair_plain",
+    "min": [
+     -0.475,
+     -0.46,
+     0.0
+    ],
+    "max": [
+     0.475,
+     0.48,
+     0.86
+    ],
+    "tris": 2532
+   },
+   "oldtown": {
+    "file": "k17_armchair_oldtown.glb",
+    "mesh": "SM_k17_armchair_oldtown",
+    "min": [
+     -0.496,
+     -0.45,
+     0.0
+    ],
+    "max": [
+     0.496,
+     0.48,
+     0.86
+    ],
+    "tris": 11916
+   },
+   "workshop": {
+    "file": "k17_armchair_workshop.glb",
+    "mesh": "SM_k17_armchair_workshop",
+    "min": [
+     -0.475,
+     -0.46,
+     0.0
+    ],
+    "max": [
+     0.475,
+     0.46,
+     0.86
+    ],
+    "tris": 5136
+   },
+   "curve": {
+    "file": "k17_armchair_curve.glb",
+    "mesh": "SM_k17_armchair_curve",
+    "min": [
+     -0.497,
+     -0.44,
+     -0.006
+    ],
+    "max": [
+     0.497,
+     0.48,
+     0.912
+    ],
+    "tris": 5992
+   }
+  },
+  "k17_coffee": {
+   "plain": {
+    "file": "k17_coffee_plain.glb",
+    "mesh": "SM_k17_coffee_plain",
+    "min": [
+     -0.55,
+     -0.3,
+     0.0
+    ],
+    "max": [
+     0.55,
+     0.3,
+     0.51
+    ],
+    "tris": 2372
+   },
+   "oldtown": {
+    "file": "k17_coffee_oldtown.glb",
+    "mesh": "SM_k17_coffee_oldtown",
+    "min": [
+     -0.55,
+     -0.3,
+     0.0
+    ],
+    "max": [
+     0.55,
+     0.3,
+     0.51
+    ],
+    "tris": 8484
+   },
+   "workshop": {
+    "file": "k17_coffee_workshop.glb",
+    "mesh": "SM_k17_coffee_workshop",
+    "min": [
+     -0.55,
+     -0.3,
+     0.0
+    ],
+    "max": [
+     0.55,
+     0.3,
+     0.51
+    ],
+    "tris": 3792
+   },
+   "curve": {
+    "file": "k17_coffee_curve.glb",
+    "mesh": "SM_k17_coffee_curve",
+    "min": [
+     -0.449,
+     -0.449,
+     0.0
+    ],
+    "max": [
+     0.449,
+     0.449,
+     0.51
+    ],
+    "tris": 4320
+   }
+  },
+  "k17_dining": {
+   "plain": {
+    "file": "k17_dining_plain.glb",
+    "mesh": "SM_k17_dining_plain",
+    "min": [
+     -0.7,
+     -0.95,
+     0.0
+    ],
+    "max": [
+     0.7,
+     0.95,
+     0.88
+    ],
+    "tris": 3228
+   },
+   "oldtown": {
+    "file": "k17_dining_oldtown.glb",
+    "mesh": "SM_k17_dining_oldtown",
+    "min": [
+     -0.7,
+     -0.95,
+     0.0
+    ],
+    "max": [
+     0.7,
+     0.95,
+     0.89
+    ],
+    "tris": 22164
+   },
+   "workshop": {
+    "file": "k17_dining_workshop.glb",
+    "mesh": "SM_k17_dining_workshop",
+    "min": [
+     -0.7,
+     -0.95,
+     0.0
+    ],
+    "max": [
+     0.7,
+     0.95,
+     0.881
+    ],
+    "tris": 7708
+   },
+   "curve": {
+    "file": "k17_dining_curve.glb",
+    "mesh": "SM_k17_dining_curve",
+    "min": [
+     -0.549,
+     -0.97,
+     -0.002
+    ],
+    "max": [
+     0.549,
+     0.97,
+     0.94
+    ],
+    "tris": 10196
+   }
+  },
+  "k17_bed": {
+   "plain": {
+    "file": "k17_bed_plain.glb",
+    "mesh": "SM_k17_bed_plain",
+    "min": [
+     -0.82,
+     -1.05,
+     0.0
+    ],
+    "max": [
+     0.82,
+     1.115,
+     1.07
+    ],
+    "tris": 2232
+   },
+   "oldtown": {
+    "file": "k17_bed_oldtown.glb",
+    "mesh": "SM_k17_bed_oldtown",
+    "min": [
+     -0.85,
+     -1.05,
+     0.0
+    ],
+    "max": [
+     0.85,
+     1.13,
+     1.23
+    ],
+    "tris": 10476
+   },
+   "workshop": {
+    "file": "k17_bed_workshop.glb",
+    "mesh": "SM_k17_bed_workshop",
+    "min": [
+     -0.823,
+     -1.05,
+     0.0
+    ],
+    "max": [
+     0.823,
+     1.103,
+     1.05
+    ],
+    "tris": 6740
+   },
+   "curve": {
+    "file": "k17_bed_curve.glb",
+    "mesh": "SM_k17_bed_curve",
+    "min": [
+     -0.846,
+     -1.077,
+     -0.005
+    ],
+    "max": [
+     0.846,
+     1.14,
+     1.3
+    ],
+    "tris": 7528
+   }
+  },
+  "k17_bedside": {
+   "plain": {
+    "file": "k17_bedside_plain.glb",
+    "mesh": "SM_k17_bedside_plain",
+    "min": [
+     -0.24,
+     -0.278,
+     0.0
+    ],
+    "max": [
+     0.24,
+     0.21,
+     0.95
+    ],
+    "tris": 3628
+   },
+   "oldtown": {
+    "file": "k17_bedside_oldtown.glb",
+    "mesh": "SM_k17_bedside_oldtown",
+    "min": [
+     -0.24,
+     -0.285,
+     0.0
+    ],
+    "max": [
+     0.24,
+     0.21,
+     0.95
+    ],
+    "tris": 10364
+   },
+   "workshop": {
+    "file": "k17_bedside_workshop.glb",
+    "mesh": "SM_k17_bedside_workshop",
+    "min": [
+     -0.24,
+     -0.278,
+     0.0
+    ],
+    "max": [
+     0.24,
+     0.21,
+     0.95
+    ],
+    "tris": 4836
+   },
+   "curve": {
+    "file": "k17_bedside_curve.glb",
+    "mesh": "SM_k17_bedside_curve",
+    "min": [
+     -0.261,
+     -0.285,
+     -0.007
+    ],
+    "max": [
+     0.261,
+     0.222,
+     0.95
+    ],
+    "tris": 5264
+   }
+  },
+  "k17_wardrobe": {
+   "plain": {
+    "file": "k17_wardrobe_plain.glb",
+    "mesh": "SM_k17_wardrobe_plain",
+    "min": [
+     -0.55,
+     -0.368,
+     0.0
+    ],
+    "max": [
+     0.55,
+     0.3,
+     2.0
+    ],
+    "tris": 1032
+   },
+   "oldtown": {
+    "file": "k17_wardrobe_oldtown.glb",
+    "mesh": "SM_k17_wardrobe_oldtown",
+    "min": [
+     -0.6,
+     -0.375,
+     0.0
+    ],
+    "max": [
+     0.6,
+     0.34,
+     2.08
+    ],
+    "tris": 8824
+   },
+   "workshop": {
+    "file": "k17_wardrobe_workshop.glb",
+    "mesh": "SM_k17_wardrobe_workshop",
+    "min": [
+     -0.55,
+     -0.368,
+     0.0
+    ],
+    "max": [
+     0.55,
+     0.3,
+     2.0
+    ],
+    "tris": 1208
+   },
+   "curve": {
+    "file": "k17_wardrobe_curve.glb",
+    "mesh": "SM_k17_wardrobe_curve",
+    "min": [
+     -0.571,
+     -0.335,
+     -0.006
+    ],
+    "max": [
+     0.571,
+     0.32,
+     2.03
+    ],
+    "tris": 3612
+   }
+  },
+  "k17_bookcase": {
+   "plain": {
+    "file": "k17_bookcase_plain.glb",
+    "mesh": "SM_k17_bookcase_plain",
+    "min": [
+     -0.45,
+     -0.17,
+     0.0
+    ],
+    "max": [
+     0.45,
+     0.17,
+     1.8
+    ],
+    "tris": 3032
+   },
+   "oldtown": {
+    "file": "k17_bookcase_oldtown.glb",
+    "mesh": "SM_k17_bookcase_oldtown",
+    "min": [
+     -0.45,
+     -0.17,
+     0.0
+    ],
+    "max": [
+     0.45,
+     0.17,
+     1.8
+    ],
+    "tris": 3032
+   },
+   "workshop": {
+    "file": "k17_bookcase_workshop.glb",
+    "mesh": "SM_k17_bookcase_workshop",
+    "min": [
+     -0.47,
+     -0.17,
+     0.0
+    ],
+    "max": [
+     0.47,
+     0.17,
+     1.8
+    ],
+    "tris": 3940
+   },
+   "curve": {
+    "file": "k17_bookcase_curve.glb",
+    "mesh": "SM_k17_bookcase_curve",
+    "min": [
+     -0.45,
+     -0.17,
+     0.0
+    ],
+    "max": [
+     0.45,
+     0.17,
+     1.8
+    ],
+    "tris": 3032
+   }
+  },
+  "k17_floor_lamp": {
+   "plain": {
+    "file": "k17_floor_lamp_plain.glb",
+    "mesh": "SM_k17_floor_lamp_plain",
+    "min": [
+     -0.237,
+     -0.237,
+     0.0
+    ],
+    "max": [
+     0.237,
+     0.237,
+     1.68
+    ],
+    "tris": 3068
+   },
+   "oldtown": {
+    "file": "k17_floor_lamp_oldtown.glb",
+    "mesh": "SM_k17_floor_lamp_oldtown",
+    "min": [
+     -0.237,
+     -0.237,
+     0.0
+    ],
+    "max": [
+     0.237,
+     0.237,
+     1.68
+    ],
+    "tris": 3068
+   },
+   "workshop": {
+    "file": "k17_floor_lamp_workshop.glb",
+    "mesh": "SM_k17_floor_lamp_workshop",
+    "min": [
+     -0.237,
+     -0.237,
+     0.0
+    ],
+    "max": [
+     0.237,
+     0.237,
+     1.68
+    ],
+    "tris": 3068
+   },
+   "curve": {
+    "file": "k17_floor_lamp_curve.glb",
+    "mesh": "SM_k17_floor_lamp_curve",
+    "min": [
+     -0.22,
+     -0.22,
+     0.0
+    ],
+    "max": [
+     0.22,
+     0.22,
+     1.72
+    ],
+    "tris": 2352
+   }
+  },
+  "k17_rug": {
+   "plain": {
+    "file": "k17_rug_plain.glb",
+    "mesh": "SM_k17_rug_plain",
+    "min": [
+     -1.0,
+     -0.7,
+     0.0
+    ],
+    "max": [
+     1.0,
+     0.7,
+     0.02
+    ],
+    "tris": 44
+   },
+   "oldtown": {
+    "file": "k17_rug_oldtown.glb",
+    "mesh": "SM_k17_rug_oldtown",
+    "min": [
+     -1.0,
+     -0.7,
+     0.0
+    ],
+    "max": [
+     1.0,
+     0.7,
+     0.02
+    ],
+    "tris": 44
+   },
+   "workshop": {
+    "file": "k17_rug_workshop.glb",
+    "mesh": "SM_k17_rug_workshop",
+    "min": [
+     -1.0,
+     -0.7,
+     0.0
+    ],
+    "max": [
+     1.0,
+     0.7,
+     0.02
+    ],
+    "tris": 44
+   },
+   "curve": {
+    "file": "k17_rug_curve.glb",
+    "mesh": "SM_k17_rug_curve",
+    "min": [
+     -1.0,
+     -1.0,
+     0.0
+    ],
+    "max": [
+     1.0,
+     1.0,
+     0.02
+    ],
+    "tris": 2300
+   }
+  },
+  "k17_extra": {
+   "plain": {
+    "file": "k17_extra_plain.glb",
+    "mesh": "SM_k17_extra_plain",
+    "min": [
+     -0.19,
+     -0.19,
+     0.0
+    ],
+    "max": [
+     0.19,
+     0.19,
+     0.445
+    ],
+    "tris": 732
+   },
+   "oldtown": {
+    "file": "k17_extra_oldtown.glb",
+    "mesh": "SM_k17_extra_oldtown",
+    "min": [
+     -0.4,
+     -0.235,
+     0.02
+    ],
+    "max": [
+     0.4,
+     0.235,
+     0.67
+    ],
+    "tris": 776
+   },
+   "workshop": {
+    "file": "k17_extra_workshop.glb",
+    "mesh": "SM_k17_extra_workshop",
+    "min": [
+     -0.3,
+     -0.234,
+     0.0
+    ],
+    "max": [
+     0.3,
+     0.225,
+     0.44
+    ],
+    "tris": 388
+   },
+   "curve": {
+    "file": "k17_extra_curve.glb",
+    "mesh": "SM_k17_extra_curve",
+    "min": [
+     -0.297,
+     -0.297,
+     -0.01
+    ],
+    "max": [
+     0.297,
+     0.297,
+     0.41
+    ],
+    "tris": 3072
+   }
+  },
+  "k_counter": {
+   "plain": {
+    "file": "k_counter_plain.glb",
+    "mesh": "SM_k_counter_plain",
+    "min": [
+     -0.92,
+     -0.368,
+     0.0
+    ],
+    "max": [
+     0.92,
+     0.315,
+     1.123
+    ],
+    "tris": 13216
+   },
+   "oldtown": {
+    "file": "k_counter_oldtown.glb",
+    "mesh": "SM_k_counter_oldtown",
+    "min": [
+     -0.935,
+     -0.375,
+     0.0
+    ],
+    "max": [
+     0.935,
+     0.335,
+     1.123
+    ],
+    "tris": 23216
+   },
+   "workshop": {
+    "file": "k_counter_workshop.glb",
+    "mesh": "SM_k_counter_workshop",
+    "min": [
+     -0.92,
+     -0.368,
+     0.0
+    ],
+    "max": [
+     0.92,
+     0.315,
+     1.123
+    ],
+    "tris": 15104
+   },
+   "curve": {
+    "file": "k_counter_curve.glb",
+    "mesh": "SM_k_counter_curve",
+    "min": [
+     -0.92,
+     -0.375,
+     -0.006
+    ],
+    "max": [
+     0.92,
+     0.315,
+     1.123
+    ],
+    "tris": 17564
+   }
+  },
+  "k_wall": {
+   "plain": {
+    "file": "k_wall_plain.glb",
+    "mesh": "SM_k_wall_plain",
+    "min": [
+     -0.6,
+     -0.237,
+     1.415
+    ],
+    "max": [
+     0.6,
+     0.17,
+     2.15
+    ],
+    "tris": 776
+   },
+   "oldtown": {
+    "file": "k_wall_oldtown.glb",
+    "mesh": "SM_k_wall_oldtown",
+    "min": [
+     -0.635,
+     -0.245,
+     1.415
+    ],
+    "max": [
+     0.635,
+     0.205,
+     2.21
+    ],
+    "tris": 2324
+   },
+   "workshop": {
+    "file": "k_wall_workshop.glb",
+    "mesh": "SM_k_wall_workshop",
+    "min": [
+     -0.6,
+     -0.14,
+     1.29
+    ],
+    "max": [
+     0.6,
+     0.15,
+     2.135
+    ],
+    "tris": 44044
+   },
+   "curve": {
+    "file": "k_wall_curve.glb",
+    "mesh": "SM_k_wall_curve",
+    "min": [
+     -0.6,
+     -0.245,
+     1.415
+    ],
+    "max": [
+     0.6,
+     0.17,
+     2.15
+    ],
+    "tris": 1808
+   }
+  },
+  "k_stove": {
+   "plain": {
+    "file": "k_stove_plain.glb",
+    "mesh": "SM_k_stove_plain",
+    "min": [
+     -0.375,
+     -0.4,
+     0.0
+    ],
+    "max": [
+     0.375,
+     0.31,
+     1.075
+    ],
+    "tris": 11524
+   },
+   "oldtown": {
+    "file": "k_stove_oldtown.glb",
+    "mesh": "SM_k_stove_oldtown",
+    "min": [
+     -0.375,
+     -0.4,
+     0.0
+    ],
+    "max": [
+     0.375,
+     0.328,
+     2.3
+    ],
+    "tris": 15008
+   },
+   "workshop": {
+    "file": "k_stove_workshop.glb",
+    "mesh": "SM_k_stove_workshop",
+    "min": [
+     -0.375,
+     -0.4,
+     0.0
+    ],
+    "max": [
+     0.375,
+     0.328,
+     2.3
+    ],
+    "tris": 15008
+   },
+   "curve": {
+    "file": "k_stove_curve.glb",
+    "mesh": "SM_k_stove_curve",
+    "min": [
+     -0.403,
+     -0.4,
+     -0.02
+    ],
+    "max": [
+     0.403,
+     0.328,
+     1.075
+    ],
+    "tris": 11992
+   }
+  },
+  "k_sink": {
+   "plain": {
+    "file": "k_sink_plain.glb",
+    "mesh": "SM_k_sink_plain",
+    "min": [
+     -0.57,
+     -0.368,
+     0.0
+    ],
+    "max": [
+     0.57,
+     0.315,
+     1.14
+    ],
+    "tris": 4088
+   },
+   "oldtown": {
+    "file": "k_sink_oldtown.glb",
+    "mesh": "SM_k_sink_oldtown",
+    "min": [
+     -0.585,
+     -0.375,
+     0.0
+    ],
+    "max": [
+     0.585,
+     0.335,
+     1.23
+    ],
+    "tris": 12180
+   },
+   "workshop": {
+    "file": "k_sink_workshop.glb",
+    "mesh": "SM_k_sink_workshop",
+    "min": [
+     -0.55,
+     -0.368,
+     0.0
+    ],
+    "max": [
+     0.55,
+     0.315,
+     1.23
+    ],
+    "tris": 5924
+   },
+   "curve": {
+    "file": "k_sink_curve.glb",
+    "mesh": "SM_k_sink_curve",
+    "min": [
+     -0.57,
+     -0.375,
+     -0.006
+    ],
+    "max": [
+     0.57,
+     0.315,
+     1.14
+    ],
+    "tris": 6372
+   }
+  },
+  "k_fridge": {
+   "plain": {
+    "file": "k_fridge_plain.glb",
+    "mesh": "SM_k_fridge_plain",
+    "min": [
+     -0.34,
+     -0.395,
+     0.0
+    ],
+    "max": [
+     0.34,
+     0.33,
+     1.75
+    ],
+    "tris": 944
+   },
+   "oldtown": {
+    "file": "k_fridge_oldtown.glb",
+    "mesh": "SM_k_fridge_oldtown",
+    "min": [
+     -0.375,
+     -0.41,
+     0.0
+    ],
+    "max": [
+     0.375,
+     0.365,
+     1.81
+    ],
+    "tris": 8176
+   },
+   "workshop": {
+    "file": "k_fridge_workshop.glb",
+    "mesh": "SM_k_fridge_workshop",
+    "min": [
+     -0.35,
+     -0.395,
+     0.0
+    ],
+    "max": [
+     0.35,
+     0.33,
+     1.75
+    ],
+    "tris": 1544
+   },
+   "curve": {
+    "file": "k_fridge_curve.glb",
+    "mesh": "SM_k_fridge_curve",
+    "min": [
+     -0.376,
+     -0.37,
+     0.0
+    ],
+    "max": [
+     0.376,
+     0.358,
+     1.85
+    ],
+    "tris": 3716
+   }
+  },
+  "k_potshelf": {
+   "plain": {
+    "file": "k_potshelf_plain.glb",
+    "mesh": "SM_k_potshelf_plain",
+    "min": [
+     -0.5,
+     -0.159,
+     0.0
+    ],
+    "max": [
+     0.5,
+     0.159,
+     1.298
+    ],
+    "tris": 22188
+   },
+   "oldtown": {
+    "file": "k_potshelf_oldtown.glb",
+    "mesh": "SM_k_potshelf_oldtown",
+    "min": [
+     -0.5,
+     -0.159,
+     0.0
+    ],
+    "max": [
+     0.5,
+     0.159,
+     1.298
+    ],
+    "tris": 22188
+   },
+   "workshop": {
+    "file": "k_potshelf_workshop.glb",
+    "mesh": "SM_k_potshelf_workshop",
+    "min": [
+     -0.5,
+     -0.159,
+     0.0
+    ],
+    "max": [
+     0.5,
+     0.159,
+     1.298
+    ],
+    "tris": 22188
+   },
+   "curve": {
+    "file": "k_potshelf_curve.glb",
+    "mesh": "SM_k_potshelf_curve",
+    "min": [
+     -0.5,
+     -0.159,
+     0.0
+    ],
+    "max": [
+     0.5,
+     0.159,
+     1.298
+    ],
+    "tris": 22188
+   }
+  },
+  "b_bath": {
+   "plain": {
+    "file": "b_bath_plain.glb",
+    "mesh": "SM_b_bath_plain",
+    "min": [
+     -0.87,
+     -0.457,
+     0.0
+    ],
+    "max": [
+     0.87,
+     0.41,
+     0.86
+    ],
+    "tris": 3684
+   },
+   "oldtown": {
+    "file": "b_bath_oldtown.glb",
+    "mesh": "SM_b_bath_oldtown",
+    "min": [
+     -0.886,
+     -0.457,
+     0.0
+    ],
+    "max": [
+     0.886,
+     0.433,
+     0.92
+    ],
+    "tris": 9312
+   },
+   "workshop": {
+    "file": "b_bath_workshop.glb",
+    "mesh": "SM_b_bath_workshop",
+    "min": [
+     -0.87,
+     -0.457,
+     0.0
+    ],
+    "max": [
+     0.87,
+     0.41,
+     0.86
+    ],
+    "tris": 3816
+   },
+   "curve": {
+    "file": "b_bath_curve.glb",
+    "mesh": "SM_b_bath_curve",
+    "min": [
+     -0.898,
+     -0.457,
+     -0.0
+    ],
+    "max": [
+     0.898,
+     0.444,
+     0.86
+    ],
+    "tris": 6816
+   }
+  },
+  "b_basin": {
+   "plain": {
+    "file": "b_basin_plain.glb",
+    "mesh": "SM_b_basin_plain",
+    "min": [
+     -0.31,
+     -0.298,
+     0.0
+    ],
+    "max": [
+     0.31,
+     0.24,
+     1.08
+    ],
+    "tris": 3852
+   },
+   "oldtown": {
+    "file": "b_basin_oldtown.glb",
+    "mesh": "SM_b_basin_oldtown",
+    "min": [
+     -0.3,
+     -0.23,
+     0.0
+    ],
+    "max": [
+     0.3,
+     0.23,
+     1.08
+    ],
+    "tris": 4460
+   },
+   "workshop": {
+    "file": "b_basin_workshop.glb",
+    "mesh": "SM_b_basin_workshop",
+    "min": [
+     -0.31,
+     -0.23,
+     0.0
+    ],
+    "max": [
+     0.31,
+     0.23,
+     1.08
+    ],
+    "tris": 5272
+   },
+   "curve": {
+    "file": "b_basin_curve.glb",
+    "mesh": "SM_b_basin_curve",
+    "min": [
+     -0.303,
+     -0.245,
+     0.0
+    ],
+    "max": [
+     0.303,
+     0.245,
+     1.08
+    ],
+    "tris": 7232
+   }
+  },
+  "b_toilet": {
+   "plain": {
+    "file": "b_toilet_plain.glb",
+    "mesh": "SM_b_toilet_plain",
+    "min": [
+     -0.22,
+     -0.324,
+     -0.0
+    ],
+    "max": [
+     0.22,
+     0.32,
+     0.9
+    ],
+    "tris": 4596
+   },
+   "oldtown": {
+    "file": "b_toilet_oldtown.glb",
+    "mesh": "SM_b_toilet_oldtown",
+    "min": [
+     -0.23,
+     -0.324,
+     -0.0
+    ],
+    "max": [
+     0.23,
+     0.34,
+     2.08
+    ],
+    "tris": 5372
+   },
+   "workshop": {
+    "file": "b_toilet_workshop.glb",
+    "mesh": "SM_b_toilet_workshop",
+    "min": [
+     -0.22,
+     -0.324,
+     -0.0
+    ],
+    "max": [
+     0.22,
+     0.32,
+     0.9
+    ],
+    "tris": 4596
+   },
+   "curve": {
+    "file": "b_toilet_curve.glb",
+    "mesh": "SM_b_toilet_curve",
+    "min": [
+     -0.22,
+     -0.324,
+     -0.0
+    ],
+    "max": [
+     0.22,
+     0.32,
+     0.9
+    ],
+    "tris": 4596
+   }
+  },
+  "b_rail": {
+   "plain": {
+    "file": "b_rail_plain.glb",
+    "mesh": "SM_b_rail_plain",
+    "min": [
+     -0.38,
+     -0.16,
+     0.0
+    ],
+    "max": [
+     0.38,
+     0.16,
+     0.901
+    ],
+    "tris": 3280
+   },
+   "oldtown": {
+    "file": "b_rail_oldtown.glb",
+    "mesh": "SM_b_rail_oldtown",
+    "min": [
+     -0.387,
+     -0.16,
+     0.0
+    ],
+    "max": [
+     0.387,
+     0.16,
+     0.901
+    ],
+    "tris": 5776
+   },
+   "workshop": {
+    "file": "b_rail_workshop.glb",
+    "mesh": "SM_b_rail_workshop",
+    "min": [
+     -0.38,
+     -0.16,
+     0.0
+    ],
+    "max": [
+     0.38,
+     0.16,
+     0.901
+    ],
+    "tris": 3280
+   },
+   "curve": {
+    "file": "b_rail_curve.glb",
+    "mesh": "SM_b_rail_curve",
+    "min": [
+     -0.38,
+     -0.16,
+     0.0
+    ],
+    "max": [
+     0.38,
+     0.16,
+     0.901
+    ],
+    "tris": 3280
+   }
+  },
+  "b_mirror": {
+   "plain": {
+    "file": "b_mirror_plain.glb",
+    "mesh": "SM_b_mirror_plain",
+    "min": [
+     -0.3,
+     -0.138,
+     1.16
+    ],
+    "max": [
+     0.3,
+     0.08,
+     1.95
+    ],
+    "tris": 4772
+   },
+   "oldtown": {
+    "file": "b_mirror_oldtown.glb",
+    "mesh": "SM_b_mirror_oldtown",
+    "min": [
+     -0.335,
+     -0.145,
+     1.16
+    ],
+    "max": [
+     0.335,
+     0.115,
+     2.01
+    ],
+    "tris": 5588
+   },
+   "workshop": {
+    "file": "b_mirror_workshop.glb",
+    "mesh": "SM_b_mirror_workshop",
+    "min": [
+     -0.3,
+     -0.138,
+     1.16
+    ],
+    "max": [
+     0.3,
+     0.08,
+     1.95
+    ],
+    "tris": 4772
+   },
+   "curve": {
+    "file": "b_mirror_curve.glb",
+    "mesh": "SM_b_mirror_curve",
+    "min": [
+     -0.359,
+     -0.12,
+     1.16
+    ],
+    "max": [
+     0.359,
+     0.06,
+     1.959
+    ],
+    "tris": 8152
+   }
+  },
+  "b_basket": {
+   "plain": {
+    "file": "b_basket_plain.glb",
+    "mesh": "SM_b_basket_plain",
+    "min": [
+     -1.0,
+     -0.35,
+     0.0
+    ],
+    "max": [
+     0.259,
+     0.259,
+     0.645
+    ],
+    "tris": 3648
+   },
+   "oldtown": {
+    "file": "b_basket_oldtown.glb",
+    "mesh": "SM_b_basket_oldtown",
+    "min": [
+     -1.0,
+     -0.35,
+     0.0
+    ],
+    "max": [
+     0.259,
+     0.259,
+     0.645
+    ],
+    "tris": 3648
+   },
+   "workshop": {
+    "file": "b_basket_workshop.glb",
+    "mesh": "SM_b_basket_workshop",
+    "min": [
+     -1.0,
+     -0.35,
+     0.0
+    ],
+    "max": [
+     0.25,
+     0.19,
+     0.63
+    ],
+    "tris": 776
+   },
+   "curve": {
+    "file": "b_basket_curve.glb",
+    "mesh": "SM_b_basket_curve",
+    "min": [
+     -1.0,
+     -0.35,
+     0.0
+    ],
+    "max": [
+     0.259,
+     0.259,
+     0.645
+    ],
+    "tris": 4116
+   }
+  },
+  "d_sideboard": {
+   "plain": {
+    "file": "d_sideboard_plain.glb",
+    "mesh": "SM_d_sideboard_plain",
+    "min": [
+     -0.8,
+     -0.308,
+     0.0
+    ],
+    "max": [
+     0.8,
+     0.24,
+     1.15
+    ],
+    "tris": 6016
+   },
+   "oldtown": {
+    "file": "d_sideboard_oldtown.glb",
+    "mesh": "SM_d_sideboard_oldtown",
+    "min": [
+     -0.835,
+     -0.315,
+     0.0
+    ],
+    "max": [
+     0.835,
+     0.275,
+     1.21
+    ],
+    "tris": 15056
+   },
+   "workshop": {
+    "file": "d_sideboard_workshop.glb",
+    "mesh": "SM_d_sideboard_workshop",
+    "min": [
+     -0.8,
+     -0.308,
+     0.0
+    ],
+    "max": [
+     0.8,
+     0.24,
+     1.15
+    ],
+    "tris": 7728
+   },
+   "curve": {
+    "file": "d_sideboard_curve.glb",
+    "mesh": "SM_d_sideboard_curve",
+    "min": [
+     -0.802,
+     -0.315,
+     -0.006
+    ],
+    "max": [
+     0.802,
+     0.24,
+     1.15
+    ],
+    "tris": 9332
+   }
+  },
+  "d_dresser": {
+   "plain": {
+    "file": "d_dresser_plain.glb",
+    "mesh": "SM_d_dresser_plain",
+    "min": [
+     -0.62,
+     -0.308,
+     0.0
+    ],
+    "max": [
+     0.62,
+     0.255,
+     1.993
+    ],
+    "tris": 24164
+   },
+   "oldtown": {
+    "file": "d_dresser_oldtown.glb",
+    "mesh": "SM_d_dresser_oldtown",
+    "min": [
+     -0.635,
+     -0.315,
+     0.0
+    ],
+    "max": [
+     0.635,
+     0.275,
+     2.075
+    ],
+    "tris": 32256
+   },
+   "workshop": {
+    "file": "d_dresser_workshop.glb",
+    "mesh": "SM_d_dresser_workshop",
+    "min": [
+     -0.62,
+     -0.308,
+     0.0
+    ],
+    "max": [
+     0.62,
+     0.255,
+     1.993
+    ],
+    "tris": 25700
+   },
+   "curve": {
+    "file": "d_dresser_curve.glb",
+    "mesh": "SM_d_dresser_curve",
+    "min": [
+     -0.62,
+     -0.315,
+     -0.006
+    ],
+    "max": [
+     0.62,
+     0.255,
+     1.993
+    ],
+    "tris": 26448
+   }
+  },
+  "d_bench": {
+   "plain": {
+    "file": "d_bench_plain.glb",
+    "mesh": "SM_d_bench_plain",
+    "min": [
+     -0.7,
+     -0.19,
+     0.0
+    ],
+    "max": [
+     0.7,
+     0.19,
+     0.45
+    ],
+    "tris": 1032
+   },
+   "oldtown": {
+    "file": "d_bench_oldtown.glb",
+    "mesh": "SM_d_bench_oldtown",
+    "min": [
+     -0.7,
+     -0.19,
+     0.0
+    ],
+    "max": [
+     0.7,
+     0.19,
+     0.515
+    ],
+    "tris": 7444
+   },
+   "workshop": {
+    "file": "d_bench_workshop.glb",
+    "mesh": "SM_d_bench_workshop",
+    "min": [
+     -0.7,
+     -0.19,
+     0.0
+    ],
+    "max": [
+     0.7,
+     0.19,
+     0.45
+    ],
+    "tris": 2152
+   },
+   "curve": {
+    "file": "d_bench_curve.glb",
+    "mesh": "SM_d_bench_curve",
+    "min": [
+     -0.72,
+     -0.22,
+     0.0
+    ],
+    "max": [
+     0.72,
+     0.22,
+     0.51
+    ],
+    "tris": 1368
+   }
+  },
+  "d_barstool": {
+   "plain": {
+    "file": "d_barstool_plain.glb",
+    "mesh": "SM_d_barstool_plain",
+    "min": [
+     -0.2,
+     -0.2,
+     0.0
+    ],
+    "max": [
+     0.2,
+     0.2,
+     0.755
+    ],
+    "tris": 2284
+   },
+   "oldtown": {
+    "file": "d_barstool_oldtown.glb",
+    "mesh": "SM_d_barstool_oldtown",
+    "min": [
+     -0.2,
+     -0.2,
+     0.0
+    ],
+    "max": [
+     0.2,
+     0.2,
+     1.01
+    ],
+    "tris": 9212
+   },
+   "workshop": {
+    "file": "d_barstool_workshop.glb",
+    "mesh": "SM_d_barstool_workshop",
+    "min": [
+     -0.2,
+     -0.2,
+     0.0
+    ],
+    "max": [
+     0.2,
+     0.2,
+     1.01
+    ],
+    "tris": 3920
+   },
+   "curve": {
+    "file": "d_barstool_curve.glb",
+    "mesh": "SM_d_barstool_curve",
+    "min": [
+     -0.225,
+     -0.225,
+     -0.002
+    ],
+    "max": [
+     0.225,
+     0.225,
+     0.806
+    ],
+    "tris": 3272
+   }
+  },
+  "d_display": {
+   "plain": {
+    "file": "d_display_plain.glb",
+    "mesh": "SM_d_display_plain",
+    "min": [
+     -0.45,
+     -0.278,
+     0.0
+    ],
+    "max": [
+     0.467,
+     0.225,
+     1.93
+    ],
+    "tris": 14548
+   },
+   "oldtown": {
+    "file": "d_display_oldtown.glb",
+    "mesh": "SM_d_display_oldtown",
+    "min": [
+     -0.485,
+     -0.285,
+     0.0
+    ],
+    "max": [
+     0.485,
+     0.245,
+     1.93
+    ],
+    "tris": 22340
+   },
+   "workshop": {
+    "file": "d_display_workshop.glb",
+    "mesh": "SM_d_display_workshop",
+    "min": [
+     -0.45,
+     -0.278,
+     0.0
+    ],
+    "max": [
+     0.467,
+     0.225,
+     1.93
+    ],
+    "tris": 16084
+   },
+   "curve": {
+    "file": "d_display_curve.glb",
+    "mesh": "SM_d_display_curve",
+    "min": [
+     -0.452,
+     -0.285,
+     -0.006
+    ],
+    "max": [
+     0.467,
+     0.225,
+     1.93
+    ],
+    "tris": 16832
+   }
+  },
+  "d_pendant": {
+   "plain": {
+    "file": "d_pendant_plain.glb",
+    "mesh": "SM_d_pendant_plain",
+    "min": [
+     -0.278,
+     -0.278,
+     1.75
+    ],
+    "max": [
+     0.278,
+     0.278,
+     2.95
+    ],
+    "tris": 1728
+   },
+   "oldtown": {
+    "file": "d_pendant_oldtown.glb",
+    "mesh": "SM_d_pendant_oldtown",
+    "min": [
+     -0.258,
+     -0.375,
+     1.7
+    ],
+    "max": [
+     0.418,
+     0.375,
+     2.95
+    ],
+    "tris": 6196
+   },
+   "workshop": {
+    "file": "d_pendant_workshop.glb",
+    "mesh": "SM_d_pendant_workshop",
+    "min": [
+     -0.236,
+     -0.236,
+     1.7
+    ],
+    "max": [
+     0.236,
+     0.236,
+     2.95
+    ],
+    "tris": 2352
+   },
+   "curve": {
+    "file": "d_pendant_curve.glb",
+    "mesh": "SM_d_pendant_curve",
+    "min": [
+     -0.23,
+     -0.23,
+     1.74
+    ],
+    "max": [
+     0.23,
+     0.23,
+     2.95
+    ],
+    "tris": 1012
+   }
+  },
+  "s_desk": {
+   "plain": {
+    "file": "s_desk_plain.glb",
+    "mesh": "SM_s_desk_plain",
+    "min": [
+     -0.675,
+     -0.358,
+     0.0
+    ],
+    "max": [
+     0.675,
+     0.34,
+     0.951
+    ],
+    "tris": 4056
+   },
+   "oldtown": {
+    "file": "s_desk_oldtown.glb",
+    "mesh": "SM_s_desk_oldtown",
+    "min": [
+     -0.675,
+     -0.395,
+     0.0
+    ],
+    "max": [
+     0.675,
+     0.34,
+     0.951
+    ],
+    "tris": 9176
+   },
+   "workshop": {
+    "file": "s_desk_workshop.glb",
+    "mesh": "SM_s_desk_workshop",
+    "min": [
+     -0.675,
+     -0.358,
+     0.0
+    ],
+    "max": [
+     0.675,
+     0.34,
+     0.951
+    ],
+    "tris": 5652
+   },
+   "curve": {
+    "file": "s_desk_curve.glb",
+    "mesh": "SM_s_desk_curve",
+    "min": [
+     -0.695,
+     -0.36,
+     -0.001
+    ],
+    "max": [
+     0.695,
+     0.36,
+     0.951
+    ],
+    "tris": 5836
+   }
+  },
+  "s_chair": {
+   "plain": {
+    "file": "s_chair_plain.glb",
+    "mesh": "SM_s_chair_plain",
+    "min": [
+     -0.32,
+     -0.278,
+     0.0
+    ],
+    "max": [
+     0.32,
+     0.335,
+     1.04
+    ],
+    "tris": 6436
+   },
+   "oldtown": {
+    "file": "s_chair_oldtown.glb",
+    "mesh": "SM_s_chair_oldtown",
+    "min": [
+     -0.3,
+     -0.24,
+     0.0
+    ],
+    "max": [
+     0.3,
+     0.24,
+     0.86
+    ],
+    "tris": 10460
+   },
+   "workshop": {
+    "file": "s_chair_workshop.glb",
+    "mesh": "SM_s_chair_workshop",
+    "min": [
+     -0.32,
+     -0.278,
+     0.0
+    ],
+    "max": [
+     0.32,
+     0.335,
+     1.04
+    ],
+    "tris": 6436
+   },
+   "curve": {
+    "file": "s_chair_curve.glb",
+    "mesh": "SM_s_chair_curve",
+    "min": [
+     -0.32,
+     -0.278,
+     0.0
+    ],
+    "max": [
+     0.32,
+     0.335,
+     1.04
+    ],
+    "tris": 6984
+   }
+  },
+  "s_filing": {
+   "plain": {
+    "file": "s_filing_plain.glb",
+    "mesh": "SM_s_filing_plain",
+    "min": [
+     -0.24,
+     -0.368,
+     0.0
+    ],
+    "max": [
+     0.24,
+     0.3,
+     1.395
+    ],
+    "tris": 1684
+   },
+   "oldtown": {
+    "file": "s_filing_oldtown.glb",
+    "mesh": "SM_s_filing_oldtown",
+    "min": [
+     -0.24,
+     -0.375,
+     0.0
+    ],
+    "max": [
+     0.24,
+     0.3,
+     1.395
+    ],
+    "tris": 10292
+   },
+   "workshop": {
+    "file": "s_filing_workshop.glb",
+    "mesh": "SM_s_filing_workshop",
+    "min": [
+     -0.24,
+     -0.368,
+     0.0
+    ],
+    "max": [
+     0.24,
+     0.3,
+     1.395
+    ],
+    "tris": 1684
+   },
+   "curve": {
+    "file": "s_filing_curve.glb",
+    "mesh": "SM_s_filing_curve",
+    "min": [
+     -0.24,
+     -0.375,
+     -0.011
+    ],
+    "max": [
+     0.24,
+     0.3,
+     1.395
+    ],
+    "tris": 5300
+   }
+  },
+  "s_lamp": {
+   "plain": {
+    "file": "s_lamp_plain.glb",
+    "mesh": "SM_s_lamp_plain",
+    "min": [
+     -0.127,
+     -0.307,
+     0.0
+    ],
+    "max": [
+     0.127,
+     0.1,
+     0.496
+    ],
+    "tris": 3040
+   },
+   "oldtown": {
+    "file": "s_lamp_oldtown.glb",
+    "mesh": "SM_s_lamp_oldtown",
+    "min": [
+     -0.21,
+     -0.125,
+     0.0
+    ],
+    "max": [
+     0.21,
+     0.125,
+     0.46
+    ],
+    "tris": 2540
+   },
+   "workshop": {
+    "file": "s_lamp_workshop.glb",
+    "mesh": "SM_s_lamp_workshop",
+    "min": [
+     -0.127,
+     -0.307,
+     0.0
+    ],
+    "max": [
+     0.127,
+     0.1,
+     0.496
+    ],
+    "tris": 3040
+   },
+   "curve": {
+    "file": "s_lamp_curve.glb",
+    "mesh": "SM_s_lamp_curve",
+    "min": [
+     -0.13,
+     -0.13,
+     0.0
+    ],
+    "max": [
+     0.13,
+     0.13,
+     0.6
+    ],
+    "tris": 2352
+   }
+  },
+  "s_pinboard": {
+   "plain": {
+    "file": "s_pinboard_plain.glb",
+    "mesh": "SM_s_pinboard_plain",
+    "min": [
+     -0.55,
+     -0.04,
+     1.05
+    ],
+    "max": [
+     0.55,
+     0.025,
+     1.85
+    ],
+    "tris": 5152
+   },
+   "oldtown": {
+    "file": "s_pinboard_oldtown.glb",
+    "mesh": "SM_s_pinboard_oldtown",
+    "min": [
+     -0.55,
+     -0.04,
+     1.05
+    ],
+    "max": [
+     0.55,
+     0.025,
+     1.85
+    ],
+    "tris": 5152
+   },
+   "workshop": {
+    "file": "s_pinboard_workshop.glb",
+    "mesh": "SM_s_pinboard_workshop",
+    "min": [
+     -0.55,
+     -0.04,
+     1.05
+    ],
+    "max": [
+     0.55,
+     0.025,
+     1.85
+    ],
+    "tris": 5152
+   },
+   "curve": {
+    "file": "s_pinboard_curve.glb",
+    "mesh": "SM_s_pinboard_curve",
+    "min": [
+     -0.55,
+     -0.04,
+     1.05
+    ],
+    "max": [
+     0.55,
+     0.025,
+     1.85
+    ],
+    "tris": 5152
+   }
+  },
+  "s_shelving": {
+   "plain": {
+    "file": "s_shelving_plain.glb",
+    "mesh": "SM_s_shelving_plain",
+    "min": [
+     -0.5,
+     -0.2,
+     0.0
+    ],
+    "max": [
+     0.5,
+     0.2,
+     1.9
+    ],
+    "tris": 4940
+   },
+   "oldtown": {
+    "file": "s_shelving_oldtown.glb",
+    "mesh": "SM_s_shelving_oldtown",
+    "min": [
+     -0.5,
+     -0.2,
+     0.0
+    ],
+    "max": [
+     0.5,
+     0.2,
+     1.9
+    ],
+    "tris": 4940
+   },
+   "workshop": {
+    "file": "s_shelving_workshop.glb",
+    "mesh": "SM_s_shelving_workshop",
+    "min": [
+     -0.52,
+     -0.2,
+     0.0
+    ],
+    "max": [
+     0.52,
+     0.2,
+     1.9
+    ],
+    "tris": 5892
+   },
+   "curve": {
+    "file": "s_shelving_curve.glb",
+    "mesh": "SM_s_shelving_curve",
+    "min": [
+     -0.5,
+     -0.2,
+     0.0
+    ],
+    "max": [
+     0.5,
+     0.2,
+     1.9
+    ],
+    "tris": 4940
+   }
+  },
+  "c_bunk": {
+   "plain": {
+    "file": "c_bunk_plain.glb",
+    "mesh": "SM_c_bunk_plain",
+    "min": [
+     -0.543,
+     -1.06,
+     0.0
+    ],
+    "max": [
+     0.535,
+     1.06,
+     1.75
+    ],
+    "tris": 9664
+   },
+   "oldtown": {
+    "file": "c_bunk_oldtown.glb",
+    "mesh": "SM_c_bunk_oldtown",
+    "min": [
+     -0.55,
+     -1.075,
+     0.0
+    ],
+    "max": [
+     0.55,
+     1.075,
+     1.85
+    ],
+    "tris": 12160
+   },
+   "workshop": {
+    "file": "c_bunk_workshop.glb",
+    "mesh": "SM_c_bunk_workshop",
+    "min": [
+     -0.543,
+     -1.05,
+     0.0
+    ],
+    "max": [
+     0.525,
+     1.05,
+     1.75
+    ],
+    "tris": 10016
+   },
+   "curve": {
+    "file": "c_bunk_curve.glb",
+    "mesh": "SM_c_bunk_curve",
+    "min": [
+     -0.543,
+     -1.06,
+     0.0
+    ],
+    "max": [
+     0.535,
+     1.06,
+     1.75
+    ],
+    "tris": 11536
+   }
+  },
+  "c_cot": {
+   "plain": {
+    "file": "c_cot_plain.glb",
+    "mesh": "SM_c_cot_plain",
+    "min": [
+     -0.38,
+     -0.655,
+     0.0
+    ],
+    "max": [
+     0.38,
+     0.655,
+     1.0
+    ],
+    "tris": 11960
+   },
+   "oldtown": {
+    "file": "c_cot_oldtown.glb",
+    "mesh": "SM_c_cot_oldtown",
+    "min": [
+     -0.38,
+     -0.655,
+     0.0
+    ],
+    "max": [
+     0.38,
+     0.655,
+     1.0
+    ],
+    "tris": 10232
+   },
+   "workshop": {
+    "file": "c_cot_workshop.glb",
+    "mesh": "SM_c_cot_workshop",
+    "min": [
+     -0.38,
+     -0.655,
+     0.0
+    ],
+    "max": [
+     0.38,
+     0.655,
+     1.0
+    ],
+    "tris": 11960
+   },
+   "curve": {
+    "file": "c_cot_curve.glb",
+    "mesh": "SM_c_cot_curve",
+    "min": [
+     -0.396,
+     -0.668,
+     -0.002
+    ],
+    "max": [
+     0.396,
+     0.668,
+     0.877
+    ],
+    "tris": 3856
+   }
+  },
+  "c_toychest": {
+   "plain": {
+    "file": "c_toychest_plain.glb",
+    "mesh": "SM_c_toychest_plain",
+    "min": [
+     -0.445,
+     -0.262,
+     0.0
+    ],
+    "max": [
+     0.735,
+     0.26,
+     0.56
+    ],
+    "tris": 2124
+   },
+   "oldtown": {
+    "file": "c_toychest_oldtown.glb",
+    "mesh": "SM_c_toychest_oldtown",
+    "min": [
+     -0.445,
+     -0.262,
+     0.0
+    ],
+    "max": [
+     0.735,
+     0.26,
+     0.56
+    ],
+    "tris": 8668
+   },
+   "workshop": {
+    "file": "c_toychest_workshop.glb",
+    "mesh": "SM_c_toychest_workshop",
+    "min": [
+     -0.445,
+     -0.262,
+     -0.02
+    ],
+    "max": [
+     0.735,
+     0.26,
+     0.56
+    ],
+    "tris": 3872
+   },
+   "curve": {
+    "file": "c_toychest_curve.glb",
+    "mesh": "SM_c_toychest_curve",
+    "min": [
+     -0.445,
+     -0.262,
+     0.0
+    ],
+    "max": [
+     0.735,
+     0.26,
+     0.56
+    ],
+    "tris": 3060
+   }
+  },
+  "c_table": {
+   "plain": {
+    "file": "c_table_plain.glb",
+    "mesh": "SM_c_table_plain",
+    "min": [
+     -0.68,
+     -0.35,
+     0.0
+    ],
+    "max": [
+     0.68,
+     0.35,
+     0.69
+    ],
+    "tris": 3440
+   },
+   "oldtown": {
+    "file": "c_table_oldtown.glb",
+    "mesh": "SM_c_table_oldtown",
+    "min": [
+     -0.68,
+     -0.35,
+     0.0
+    ],
+    "max": [
+     0.68,
+     0.35,
+     0.69
+    ],
+    "tris": 22376
+   },
+   "workshop": {
+    "file": "c_table_workshop.glb",
+    "mesh": "SM_c_table_workshop",
+    "min": [
+     -0.68,
+     -0.35,
+     0.0
+    ],
+    "max": [
+     0.68,
+     0.35,
+     0.69
+    ],
+    "tris": 6800
+   },
+   "curve": {
+    "file": "c_table_curve.glb",
+    "mesh": "SM_c_table_curve",
+    "min": [
+     -0.702,
+     -0.349,
+     -0.004
+    ],
+    "max": [
+     0.702,
+     0.349,
+     0.69
+    ],
+    "tris": 9128
+   }
+  },
+  "c_horse": {
+   "plain": {
+    "file": "c_horse_plain.glb",
+    "mesh": "SM_c_horse_plain",
+    "min": [
+     -0.566,
+     -0.199,
+     0.021
+    ],
+    "max": [
+     0.58,
+     0.199,
+     0.9
+    ],
+    "tris": 13528
+   },
+   "oldtown": {
+    "file": "c_horse_oldtown.glb",
+    "mesh": "SM_c_horse_oldtown",
+    "min": [
+     -0.566,
+     -0.199,
+     0.021
+    ],
+    "max": [
+     0.58,
+     0.199,
+     0.9
+    ],
+    "tris": 13528
+   },
+   "workshop": {
+    "file": "c_horse_workshop.glb",
+    "mesh": "SM_c_horse_workshop",
+    "min": [
+     -0.566,
+     -0.199,
+     0.021
+    ],
+    "max": [
+     0.58,
+     0.199,
+     0.9
+    ],
+    "tris": 13528
+   },
+   "curve": {
+    "file": "c_horse_curve.glb",
+    "mesh": "SM_c_horse_curve",
+    "min": [
+     -0.566,
+     -0.199,
+     0.021
+    ],
+    "max": [
+     0.58,
+     0.199,
+     0.9
+    ],
+    "tris": 13528
+   }
+  },
+  "c_toyshelf": {
+   "plain": {
+    "file": "c_toyshelf_plain.glb",
+    "mesh": "SM_c_toyshelf_plain",
+    "min": [
+     -0.55,
+     -0.18,
+     0.0
+    ],
+    "max": [
+     0.55,
+     0.18,
+     1.17
+    ],
+    "tris": 7484
+   },
+   "oldtown": {
+    "file": "c_toyshelf_oldtown.glb",
+    "mesh": "SM_c_toyshelf_oldtown",
+    "min": [
+     -0.55,
+     -0.18,
+     0.0
+    ],
+    "max": [
+     0.55,
+     0.18,
+     1.17
+    ],
+    "tris": 7484
+   },
+   "workshop": {
+    "file": "c_toyshelf_workshop.glb",
+    "mesh": "SM_c_toyshelf_workshop",
+    "min": [
+     -0.55,
+     -0.18,
+     0.0
+    ],
+    "max": [
+     0.55,
+     0.18,
+     1.17
+    ],
+    "tris": 7484
+   },
+   "curve": {
+    "file": "c_toyshelf_curve.glb",
+    "mesh": "SM_c_toyshelf_curve",
+    "min": [
+     -0.55,
+     -0.18,
+     0.0
+    ],
+    "max": [
+     0.55,
+     0.18,
+     1.17
+    ],
+    "tris": 7484
+   }
+  },
+  "h_coatstand": {
+   "plain": {
+    "file": "h_coatstand_plain.glb",
+    "mesh": "SM_h_coatstand_plain",
+    "min": [
+     -0.229,
+     -0.229,
+     0.001
+    ],
+    "max": [
+     0.309,
+     0.289,
+     1.94
+    ],
+    "tris": 10096
+   },
+   "oldtown": {
+    "file": "h_coatstand_oldtown.glb",
+    "mesh": "SM_h_coatstand_oldtown",
+    "min": [
+     -0.229,
+     -0.229,
+     0.001
+    ],
+    "max": [
+     0.309,
+     0.289,
+     1.94
+    ],
+    "tris": 11968
+   },
+   "workshop": {
+    "file": "h_coatstand_workshop.glb",
+    "mesh": "SM_h_coatstand_workshop",
+    "min": [
+     -0.229,
+     -0.229,
+     0.001
+    ],
+    "max": [
+     0.309,
+     0.289,
+     1.94
+    ],
+    "tris": 10096
+   },
+   "curve": {
+    "file": "h_coatstand_curve.glb",
+    "mesh": "SM_h_coatstand_curve",
+    "min": [
+     -0.229,
+     -0.229,
+     0.001
+    ],
+    "max": [
+     0.309,
+     0.289,
+     1.94
+    ],
+    "tris": 10096
+   }
+  },
+  "h_shoebench": {
+   "plain": {
+    "file": "h_shoebench_plain.glb",
+    "mesh": "SM_h_shoebench_plain",
+    "min": [
+     -0.5,
+     -0.18,
+     -0.0
+    ],
+    "max": [
+     0.71,
+     0.18,
+     0.48
+    ],
+    "tris": 6408
+   },
+   "oldtown": {
+    "file": "h_shoebench_oldtown.glb",
+    "mesh": "SM_h_shoebench_oldtown",
+    "min": [
+     -0.5,
+     -0.18,
+     -0.0
+    ],
+    "max": [
+     0.71,
+     0.18,
+     0.545
+    ],
+    "tris": 12820
+   },
+   "workshop": {
+    "file": "h_shoebench_workshop.glb",
+    "mesh": "SM_h_shoebench_workshop",
+    "min": [
+     -0.5,
+     -0.18,
+     -0.0
+    ],
+    "max": [
+     0.71,
+     0.18,
+     0.48
+    ],
+    "tris": 7528
+   },
+   "curve": {
+    "file": "h_shoebench_curve.glb",
+    "mesh": "SM_h_shoebench_curve",
+    "min": [
+     -0.51,
+     -0.205,
+     -0.0
+    ],
+    "max": [
+     0.71,
+     0.205,
+     0.54
+    ],
+    "tris": 7044
+   }
+  },
+  "h_console": {
+   "plain": {
+    "file": "h_console_plain.glb",
+    "mesh": "SM_h_console_plain",
+    "min": [
+     -0.5,
+     -0.237,
+     0.0
+    ],
+    "max": [
+     0.5,
+     0.17,
+     1.2
+    ],
+    "tris": 5056
+   },
+   "oldtown": {
+    "file": "h_console_oldtown.glb",
+    "mesh": "SM_h_console_oldtown",
+    "min": [
+     -0.5,
+     -0.245,
+     0.0
+    ],
+    "max": [
+     0.5,
+     0.17,
+     1.2
+    ],
+    "tris": 11696
+   },
+   "workshop": {
+    "file": "h_console_workshop.glb",
+    "mesh": "SM_h_console_workshop",
+    "min": [
+     -0.5,
+     -0.237,
+     0.0
+    ],
+    "max": [
+     0.5,
+     0.17,
+     1.2
+    ],
+    "tris": 6564
+   },
+   "curve": {
+    "file": "h_console_curve.glb",
+    "mesh": "SM_h_console_curve",
+    "min": [
+     -0.5,
+     -0.17,
+     -0.002
+    ],
+    "max": [
+     0.5,
+     0.17,
+     1.2
+    ],
+    "tris": 5960
+   }
+  },
+  "h_umbrella": {
+   "plain": {
+    "file": "h_umbrella_plain.glb",
+    "mesh": "SM_h_umbrella_plain",
+    "min": [
+     -0.14,
+     -0.14,
+     0.0
+    ],
+    "max": [
+     0.221,
+     0.151,
+     1.081
+    ],
+    "tris": 7260
+   },
+   "oldtown": {
+    "file": "h_umbrella_oldtown.glb",
+    "mesh": "SM_h_umbrella_oldtown",
+    "min": [
+     -0.168,
+     -0.168,
+     0.0
+    ],
+    "max": [
+     0.221,
+     0.168,
+     1.081
+    ],
+    "tris": 10980
+   },
+   "workshop": {
+    "file": "h_umbrella_workshop.glb",
+    "mesh": "SM_h_umbrella_workshop",
+    "min": [
+     -0.139,
+     -0.139,
+     0.0
+    ],
+    "max": [
+     0.221,
+     0.151,
+     1.081
+    ],
+    "tris": 7916
+   },
+   "curve": {
+    "file": "h_umbrella_curve.glb",
+    "mesh": "SM_h_umbrella_curve",
+    "min": [
+     -0.158,
+     -0.158,
+     0.0
+    ],
+    "max": [
+     0.221,
+     0.158,
+     1.081
+    ],
+    "tris": 8300
+   }
+  },
+  "h_hooks": {
+   "plain": {
+    "file": "h_hooks_plain.glb",
+    "mesh": "SM_h_hooks_plain",
+    "min": [
+     -0.61,
+     -0.279,
+     0.7
+    ],
+    "max": [
+     0.57,
+     0.079,
+     1.91
+    ],
+    "tris": 7312
+   },
+   "oldtown": {
+    "file": "h_hooks_oldtown.glb",
+    "mesh": "SM_h_hooks_oldtown",
+    "min": [
+     -0.61,
+     -0.279,
+     0.7
+    ],
+    "max": [
+     0.57,
+     0.079,
+     1.91
+    ],
+    "tris": 10432
+   },
+   "workshop": {
+    "file": "h_hooks_workshop.glb",
+    "mesh": "SM_h_hooks_workshop",
+    "min": [
+     -0.61,
+     -0.279,
+     0.7
+    ],
+    "max": [
+     0.57,
+     0.079,
+     1.91
+    ],
+    "tris": 7312
+   },
+   "curve": {
+    "file": "h_hooks_curve.glb",
+    "mesh": "SM_h_hooks_curve",
+    "min": [
+     -0.61,
+     -0.279,
+     0.7
+    ],
+    "max": [
+     0.57,
+     0.079,
+     1.91
+    ],
+    "tris": 10432
+   }
+  },
+  "h_mirror": {
+   "plain": {
+    "file": "h_mirror_plain.glb",
+    "mesh": "SM_h_mirror_plain",
+    "min": [
+     -0.36,
+     -0.14,
+     0.655
+    ],
+    "max": [
+     0.36,
+     0.05,
+     1.985
+    ],
+    "tris": 1076
+   },
+   "oldtown": {
+    "file": "h_mirror_oldtown.glb",
+    "mesh": "SM_h_mirror_oldtown",
+    "min": [
+     -0.36,
+     -0.14,
+     0.655
+    ],
+    "max": [
+     0.36,
+     0.05,
+     2.115
+    ],
+    "tris": 1700
+   },
+   "workshop": {
+    "file": "h_mirror_workshop.glb",
+    "mesh": "SM_h_mirror_workshop",
+    "min": [
+     -0.36,
+     -0.14,
+     0.655
+    ],
+    "max": [
+     0.36,
+     0.05,
+     1.985
+    ],
+    "tris": 1076
+   },
+   "curve": {
+    "file": "h_mirror_curve.glb",
+    "mesh": "SM_h_mirror_curve",
+    "min": [
+     -0.351,
+     -0.14,
+     0.655
+    ],
+    "max": [
+     0.351,
+     0.05,
+     1.985
+    ],
+    "tris": 6744
+   }
+  },
+  "g_bench": {
+   "plain": {
+    "file": "g_bench_plain.glb",
+    "mesh": "SM_g_bench_plain",
+    "min": [
+     -0.785,
+     -0.275,
+     -0.001
+    ],
+    "max": [
+     0.785,
+     0.319,
+     0.935
+    ],
+    "tris": 5028
+   },
+   "oldtown": {
+    "file": "g_bench_oldtown.glb",
+    "mesh": "SM_g_bench_oldtown",
+    "min": [
+     -0.785,
+     -0.275,
+     -0.001
+    ],
+    "max": [
+     0.785,
+     0.319,
+     0.935
+    ],
+    "tris": 5028
+   },
+   "workshop": {
+    "file": "g_bench_workshop.glb",
+    "mesh": "SM_g_bench_workshop",
+    "min": [
+     -0.785,
+     -0.275,
+     -0.001
+    ],
+    "max": [
+     0.785,
+     0.319,
+     0.935
+    ],
+    "tris": 5028
+   },
+   "curve": {
+    "file": "g_bench_curve.glb",
+    "mesh": "SM_g_bench_curve",
+    "min": [
+     -0.79,
+     -0.261,
+     -0.0
+    ],
+    "max": [
+     0.79,
+     0.321,
+     0.935
+    ],
+    "tris": 4412
+   }
+  },
+  "g_bistro": {
+   "plain": {
+    "file": "g_bistro_plain.glb",
+    "mesh": "SM_g_bistro_plain",
+    "min": [
+     -0.82,
+     -0.3,
+     -0.002
+    ],
+    "max": [
+     0.82,
+     0.3,
+     1.0
+    ],
+    "tris": 15744
+   },
+   "oldtown": {
+    "file": "g_bistro_oldtown.glb",
+    "mesh": "SM_g_bistro_oldtown",
+    "min": [
+     -0.82,
+     -0.319,
+     -0.002
+    ],
+    "max": [
+     0.82,
+     0.319,
+     1.0
+    ],
+    "tris": 16784
+   },
+   "workshop": {
+    "file": "g_bistro_workshop.glb",
+    "mesh": "SM_g_bistro_workshop",
+    "min": [
+     -0.82,
+     -0.3,
+     -0.002
+    ],
+    "max": [
+     0.82,
+     0.3,
+     1.0
+    ],
+    "tris": 15744
+   },
+   "curve": {
+    "file": "g_bistro_curve.glb",
+    "mesh": "SM_g_bistro_curve",
+    "min": [
+     -0.82,
+     -0.319,
+     -0.002
+    ],
+    "max": [
+     0.82,
+     0.319,
+     1.0
+    ],
+    "tris": 18864
+   }
+  },
+  "g_planter": {
+   "plain": {
+    "file": "g_planter_plain.glb",
+    "mesh": "SM_g_planter_plain",
+    "min": [
+     -0.619,
+     -0.21,
+     0.0
+    ],
+    "max": [
+     0.609,
+     0.21,
+     0.919
+    ],
+    "tris": 14360
+   },
+   "oldtown": {
+    "file": "g_planter_oldtown.glb",
+    "mesh": "SM_g_planter_oldtown",
+    "min": [
+     -0.619,
+     -0.23,
+     0.0
+    ],
+    "max": [
+     0.609,
+     0.21,
+     0.919
+    ],
+    "tris": 14448
+   },
+   "workshop": {
+    "file": "g_planter_workshop.glb",
+    "mesh": "SM_g_planter_workshop",
+    "min": [
+     -0.619,
+     -0.22,
+     0.0
+    ],
+    "max": [
+     0.609,
+     0.22,
+     0.919
+    ],
+    "tris": 14448
+   },
+   "curve": {
+    "file": "g_planter_curve.glb",
+    "mesh": "SM_g_planter_curve",
+    "min": [
+     -0.616,
+     -0.266,
+     0.0
+    ],
+    "max": [
+     0.513,
+     0.266,
+     1.033
+    ],
+    "tris": 16924
+   }
+  },
+  "g_parasol": {
+   "plain": {
+    "file": "g_parasol_plain.glb",
+    "mesh": "SM_g_parasol_plain",
+    "min": [
+     -1.185,
+     -1.185,
+     0.0
+    ],
+    "max": [
+     1.185,
+     1.185,
+     2.42
+    ],
+    "tris": 2732
+   },
+   "oldtown": {
+    "file": "g_parasol_oldtown.glb",
+    "mesh": "SM_g_parasol_oldtown",
+    "min": [
+     -1.208,
+     -1.208,
+     0.0
+    ],
+    "max": [
+     1.208,
+     1.208,
+     2.42
+    ],
+    "tris": 3496
+   },
+   "workshop": {
+    "file": "g_parasol_workshop.glb",
+    "mesh": "SM_g_parasol_workshop",
+    "min": [
+     -1.185,
+     -1.185,
+     0.0
+    ],
+    "max": [
+     1.185,
+     1.185,
+     2.42
+    ],
+    "tris": 2732
+   },
+   "curve": {
+    "file": "g_parasol_curve.glb",
+    "mesh": "SM_g_parasol_curve",
+    "min": [
+     -1.144,
+     -1.144,
+     0.0
+    ],
+    "max": [
+     1.144,
+     1.144,
+     2.42
+    ],
+    "tris": 4892
+   }
+  },
+  "g_lounger": {
+   "plain": {
+    "file": "g_lounger_plain.glb",
+    "mesh": "SM_g_lounger_plain",
+    "min": [
+     -0.34,
+     -0.95,
+     0.0
+    ],
+    "max": [
+     0.34,
+     0.95,
+     0.82
+    ],
+    "tris": 2020
+   },
+   "oldtown": {
+    "file": "g_lounger_oldtown.glb",
+    "mesh": "SM_g_lounger_oldtown",
+    "min": [
+     -0.364,
+     -0.516,
+     -0.018
+    ],
+    "max": [
+     0.364,
+     0.412,
+     0.974
+    ],
+    "tris": 2548
+   },
+   "workshop": {
+    "file": "g_lounger_workshop.glb",
+    "mesh": "SM_g_lounger_workshop",
+    "min": [
+     -0.34,
+     -0.95,
+     0.0
+    ],
+    "max": [
+     0.34,
+     0.95,
+     0.82
+    ],
+    "tris": 3140
+   },
+   "curve": {
+    "file": "g_lounger_curve.glb",
+    "mesh": "SM_g_lounger_curve",
+    "min": [
+     -0.343,
+     -0.95,
+     -0.003
+    ],
+    "max": [
+     0.343,
+     0.95,
+     0.845
+    ],
+    "tris": 4076
+   }
+  },
+  "g_plantstand": {
+   "plain": {
+    "file": "g_plantstand_plain.glb",
+    "mesh": "SM_g_plantstand_plain",
+    "min": [
+     -0.469,
+     -0.199,
+     -0.004
+    ],
+    "max": [
+     0.763,
+     0.171,
+     1.28
+    ],
+    "tris": 23740
+   },
+   "oldtown": {
+    "file": "g_plantstand_oldtown.glb",
+    "mesh": "SM_g_plantstand_oldtown",
+    "min": [
+     -0.469,
+     -0.199,
+     -0.004
+    ],
+    "max": [
+     0.763,
+     0.171,
+     1.28
+    ],
+    "tris": 23740
+   },
+   "workshop": {
+    "file": "g_plantstand_workshop.glb",
+    "mesh": "SM_g_plantstand_workshop",
+    "min": [
+     -0.469,
+     -0.199,
+     -0.004
+    ],
+    "max": [
+     0.763,
+     0.171,
+     1.28
+    ],
+    "tris": 23740
+   },
+   "curve": {
+    "file": "g_plantstand_curve.glb",
+    "mesh": "SM_g_plantstand_curve",
+    "min": [
+     -0.469,
+     -0.199,
+     -0.004
+    ],
+    "max": [
+     0.763,
+     0.171,
+     1.28
+    ],
+    "tris": 23740
+   }
+  },
+  "p_counter": {
+   "plain": {
+    "file": "p_counter_plain.glb",
+    "mesh": "SM_p_counter_plain",
+    "min": [
+     -0.93,
+     -0.34,
+     0.0
+    ],
+    "max": [
+     0.93,
+     0.34,
+     1.435
+    ],
+    "tris": 9680
+   },
+   "oldtown": {
+    "file": "p_counter_oldtown.glb",
+    "mesh": "SM_p_counter_oldtown",
+    "min": [
+     -0.935,
+     -0.346,
+     0.0
+    ],
+    "max": [
+     0.935,
+     0.345,
+     1.435
+    ],
+    "tris": 16548
+   },
+   "workshop": {
+    "file": "p_counter_workshop.glb",
+    "mesh": "SM_p_counter_workshop",
+    "min": [
+     -0.93,
+     -0.346,
+     0.0
+    ],
+    "max": [
+     0.93,
+     0.34,
+     1.435
+    ],
+    "tris": 11304
+   },
+   "curve": {
+    "file": "p_counter_curve.glb",
+    "mesh": "SM_p_counter_curve",
+    "min": [
+     -0.93,
+     -0.34,
+     -0.006
+    ],
+    "max": [
+     0.93,
+     0.34,
+     1.435
+    ],
+    "tris": 10932
+   }
+  },
+  "p_gondola": {
+   "plain": {
+    "file": "p_gondola_plain.glb",
+    "mesh": "SM_p_gondola_plain",
+    "min": [
+     -0.845,
+     -0.4,
+     0.0
+    ],
+    "max": [
+     0.845,
+     0.4,
+     1.81
+    ],
+    "tris": 38772
+   },
+   "oldtown": {
+    "file": "p_gondola_oldtown.glb",
+    "mesh": "SM_p_gondola_oldtown",
+    "min": [
+     -0.845,
+     -0.4,
+     0.0
+    ],
+    "max": [
+     0.845,
+     0.4,
+     1.81
+    ],
+    "tris": 38772
+   },
+   "workshop": {
+    "file": "p_gondola_workshop.glb",
+    "mesh": "SM_p_gondola_workshop",
+    "min": [
+     -0.845,
+     -0.4,
+     0.0
+    ],
+    "max": [
+     0.845,
+     0.4,
+     1.81
+    ],
+    "tris": 38772
+   },
+   "curve": {
+    "file": "p_gondola_curve.glb",
+    "mesh": "SM_p_gondola_curve",
+    "min": [
+     -0.845,
+     -0.4,
+     0.0
+    ],
+    "max": [
+     0.845,
+     0.4,
+     1.81
+    ],
+    "tris": 38772
+   }
+  },
+  "p_rail": {
+   "plain": {
+    "file": "p_rail_plain.glb",
+    "mesh": "SM_p_rail_plain",
+    "min": [
+     -0.74,
+     -0.25,
+     0.005
+    ],
+    "max": [
+     0.74,
+     0.25,
+     1.521
+    ],
+    "tris": 11224
+   },
+   "oldtown": {
+    "file": "p_rail_oldtown.glb",
+    "mesh": "SM_p_rail_oldtown",
+    "min": [
+     -0.74,
+     -0.25,
+     0.0
+    ],
+    "max": [
+     0.74,
+     0.25,
+     1.521
+    ],
+    "tris": 13720
+   },
+   "workshop": {
+    "file": "p_rail_workshop.glb",
+    "mesh": "SM_p_rail_workshop",
+    "min": [
+     -0.74,
+     -0.25,
+     0.005
+    ],
+    "max": [
+     0.74,
+     0.25,
+     1.521
+    ],
+    "tris": 11224
+   },
+   "curve": {
+    "file": "p_rail_curve.glb",
+    "mesh": "SM_p_rail_curve",
+    "min": [
+     -0.74,
+     -0.25,
+     0.0
+    ],
+    "max": [
+     0.74,
+     0.25,
+     1.521
+    ],
+    "tris": 12472
+   }
+  },
+  "p_table": {
+   "plain": {
+    "file": "p_table_plain.glb",
+    "mesh": "SM_p_table_plain",
+    "min": [
+     -0.6,
+     -0.4,
+     0.0
+    ],
+    "max": [
+     0.6,
+     0.4,
+     0.972
+    ],
+    "tris": 4376
+   },
+   "oldtown": {
+    "file": "p_table_oldtown.glb",
+    "mesh": "SM_p_table_oldtown",
+    "min": [
+     -0.6,
+     -0.4,
+     0.0
+    ],
+    "max": [
+     0.6,
+     0.4,
+     0.972
+    ],
+    "tris": 10488
+   },
+   "workshop": {
+    "file": "p_table_workshop.glb",
+    "mesh": "SM_p_table_workshop",
+    "min": [
+     -0.6,
+     -0.4,
+     0.0
+    ],
+    "max": [
+     0.6,
+     0.4,
+     0.972
+    ],
+    "tris": 5496
+   },
+   "curve": {
+    "file": "p_table_curve.glb",
+    "mesh": "SM_p_table_curve",
+    "min": [
+     -0.599,
+     -0.599,
+     0.0
+    ],
+    "max": [
+     0.599,
+     0.599,
+     0.972
+    ],
+    "tris": 7664
+   }
+  },
+  "p_aboard": {
+   "plain": {
+    "file": "p_aboard_plain.glb",
+    "mesh": "SM_p_aboard_plain",
+    "min": [
+     -0.31,
+     -0.212,
+     0.006
+    ],
+    "max": [
+     0.31,
+     0.212,
+     0.994
+    ],
+    "tris": 864
+   },
+   "oldtown": {
+    "file": "p_aboard_oldtown.glb",
+    "mesh": "SM_p_aboard_oldtown",
+    "min": [
+     -0.31,
+     -0.211,
+     0.007
+    ],
+    "max": [
+     0.31,
+     0.211,
+     0.993
+    ],
+    "tris": 864
+   },
+   "workshop": {
+    "file": "p_aboard_workshop.glb",
+    "mesh": "SM_p_aboard_workshop",
+    "min": [
+     -0.31,
+     -0.212,
+     0.006
+    ],
+    "max": [
+     0.31,
+     0.212,
+     0.994
+    ],
+    "tris": 864
+   },
+   "curve": {
+    "file": "p_aboard_curve.glb",
+    "mesh": "SM_p_aboard_curve",
+    "min": [
+     -0.31,
+     -0.21,
+     0.008
+    ],
+    "max": [
+     0.31,
+     0.21,
+     1.019
+    ],
+    "tris": 1252
+   }
+  },
+  "p_form": {
+   "plain": {
+    "file": "p_form_plain.glb",
+    "mesh": "SM_p_form_plain",
+    "min": [
+     -0.219,
+     -0.219,
+     0.0
+    ],
+    "max": [
+     0.28,
+     0.219,
+     1.68
+    ],
+    "tris": 6032
+   },
+   "oldtown": {
+    "file": "p_form_oldtown.glb",
+    "mesh": "SM_p_form_oldtown",
+    "min": [
+     -0.19,
+     -0.261,
+     -0.011
+    ],
+    "max": [
+     0.297,
+     0.261,
+     1.68
+    ],
+    "tris": 5856
+   },
+   "workshop": {
+    "file": "p_form_workshop.glb",
+    "mesh": "SM_p_form_workshop",
+    "min": [
+     -0.219,
+     -0.219,
+     0.0
+    ],
+    "max": [
+     0.28,
+     0.219,
+     1.68
+    ],
+    "tris": 6032
+   },
+   "curve": {
+    "file": "p_form_curve.glb",
+    "mesh": "SM_p_form_curve",
+    "min": [
+     -0.19,
+     -0.261,
+     -0.011
+    ],
+    "max": [
+     0.297,
+     0.261,
+     1.68
+    ],
+    "tris": 5856
+   }
+  },
+  "f_counter": {
+   "plain": {
+    "file": "f_counter_plain.glb",
+    "mesh": "SM_f_counter_plain",
+    "min": [
+     -0.93,
+     -0.469,
+     0.0
+    ],
+    "max": [
+     0.93,
+     0.355,
+     1.33
+    ],
+    "tris": 13780
+   },
+   "oldtown": {
+    "file": "f_counter_oldtown.glb",
+    "mesh": "SM_f_counter_oldtown",
+    "min": [
+     -0.935,
+     -0.469,
+     0.0
+    ],
+    "max": [
+     0.935,
+     0.36,
+     1.33
+    ],
+    "tris": 20756
+   },
+   "workshop": {
+    "file": "f_counter_workshop.glb",
+    "mesh": "SM_f_counter_workshop",
+    "min": [
+     -0.93,
+     -0.469,
+     0.0
+    ],
+    "max": [
+     0.93,
+     0.355,
+     1.33
+    ],
+    "tris": 15492
+   },
+   "curve": {
+    "file": "f_counter_curve.glb",
+    "mesh": "SM_f_counter_curve",
+    "min": [
+     -0.97,
+     -0.385,
+     0.0
+    ],
+    "max": [
+     0.97,
+     0.385,
+     1.33
+    ],
+    "tris": 13596
+   }
+  },
+  "f_machine": {
+   "plain": {
+    "file": "f_machine_plain.glb",
+    "mesh": "SM_f_machine_plain",
+    "min": [
+     -0.4,
+     -0.462,
+     0.0
+    ],
+    "max": [
+     0.408,
+     0.275,
+     1.45
+    ],
+    "tris": 7052
+   },
+   "oldtown": {
+    "file": "f_machine_oldtown.glb",
+    "mesh": "SM_f_machine_oldtown",
+    "min": [
+     -0.4,
+     -0.462,
+     0.0
+    ],
+    "max": [
+     0.408,
+     0.275,
+     1.74
+    ],
+    "tris": 9340
+   },
+   "workshop": {
+    "file": "f_machine_workshop.glb",
+    "mesh": "SM_f_machine_workshop",
+    "min": [
+     -0.4,
+     -0.462,
+     0.0
+    ],
+    "max": [
+     0.408,
+     0.275,
+     1.45
+    ],
+    "tris": 7052
+   },
+   "curve": {
+    "file": "f_machine_curve.glb",
+    "mesh": "SM_f_machine_curve",
+    "min": [
+     -0.4,
+     -0.462,
+     0.0
+    ],
+    "max": [
+     0.408,
+     0.275,
+     1.49
+    ],
+    "tris": 7520
+   }
+  },
+  "f_banquette": {
+   "plain": {
+    "file": "f_banquette_plain.glb",
+    "mesh": "SM_f_banquette_plain",
+    "min": [
+     -0.9,
+     -0.3,
+     0.0
+    ],
+    "max": [
+     0.9,
+     0.35,
+     1.11
+    ],
+    "tris": 2400
+   },
+   "oldtown": {
+    "file": "f_banquette_oldtown.glb",
+    "mesh": "SM_f_banquette_oldtown",
+    "min": [
+     -0.92,
+     -0.3,
+     0.0
+    ],
+    "max": [
+     0.92,
+     0.37,
+     1.155
+    ],
+    "tris": 4572
+   },
+   "workshop": {
+    "file": "f_banquette_workshop.glb",
+    "mesh": "SM_f_banquette_workshop",
+    "min": [
+     -0.9,
+     -0.3,
+     0.0
+    ],
+    "max": [
+     0.9,
+     0.35,
+     1.11
+    ],
+    "tris": 4252
+   },
+   "curve": {
+    "file": "f_banquette_curve.glb",
+    "mesh": "SM_f_banquette_curve",
+    "min": [
+     -0.911,
+     -0.3,
+     0.0
+    ],
+    "max": [
+     0.911,
+     0.35,
+     1.11
+    ],
+    "tris": 5208
+   }
+  },
+  "f_table": {
+   "plain": {
+    "file": "f_table_plain.glb",
+    "mesh": "SM_f_table_plain",
+    "min": [
+     -0.35,
+     -0.35,
+     0.0
+    ],
+    "max": [
+     0.35,
+     0.35,
+     0.91
+    ],
+    "tris": 9696
+   },
+   "oldtown": {
+    "file": "f_table_oldtown.glb",
+    "mesh": "SM_f_table_oldtown",
+    "min": [
+     -0.339,
+     -0.339,
+     0.0
+    ],
+    "max": [
+     0.339,
+     0.339,
+     0.91
+    ],
+    "tris": 12032
+   },
+   "workshop": {
+    "file": "f_table_workshop.glb",
+    "mesh": "SM_f_table_workshop",
+    "min": [
+     -0.35,
+     -0.35,
+     0.0
+    ],
+    "max": [
+     0.35,
+     0.35,
+     0.91
+    ],
+    "tris": 10816
+   },
+   "curve": {
+    "file": "f_table_curve.glb",
+    "mesh": "SM_f_table_curve",
+    "min": [
+     -0.339,
+     -0.339,
+     0.0
+    ],
+    "max": [
+     0.339,
+     0.339,
+     0.91
+    ],
+    "tris": 12032
+   }
+  },
+  "f_menu": {
+   "plain": {
+    "file": "f_menu_plain.glb",
+    "mesh": "SM_f_menu_plain",
+    "min": [
+     -0.6,
+     -0.025,
+     1.15
+    ],
+    "max": [
+     0.6,
+     0.025,
+     2.05
+    ],
+    "tris": 960
+   },
+   "oldtown": {
+    "file": "f_menu_oldtown.glb",
+    "mesh": "SM_f_menu_oldtown",
+    "min": [
+     -0.6,
+     -0.025,
+     1.15
+    ],
+    "max": [
+     0.6,
+     0.025,
+     2.05
+    ],
+    "tris": 960
+   },
+   "workshop": {
+    "file": "f_menu_workshop.glb",
+    "mesh": "SM_f_menu_workshop",
+    "min": [
+     -0.6,
+     -0.025,
+     1.15
+    ],
+    "max": [
+     0.6,
+     0.025,
+     2.05
+    ],
+    "tris": 960
+   },
+   "curve": {
+    "file": "f_menu_curve.glb",
+    "mesh": "SM_f_menu_curve",
+    "min": [
+     -0.6,
+     -0.025,
+     1.15
+    ],
+    "max": [
+     0.6,
+     0.025,
+     2.05
+    ],
+    "tris": 1584
+   }
+  },
+  "f_cakestand": {
+   "plain": {
+    "file": "f_cakestand_plain.glb",
+    "mesh": "SM_f_cakestand_plain",
+    "min": [
+     -0.299,
+     -0.299,
+     0.0
+    ],
+    "max": [
+     0.299,
+     0.299,
+     1.415
+    ],
+    "tris": 15056
+   },
+   "oldtown": {
+    "file": "f_cakestand_oldtown.glb",
+    "mesh": "SM_f_cakestand_oldtown",
+    "min": [
+     -0.299,
+     -0.299,
+     0.0
+    ],
+    "max": [
+     0.299,
+     0.299,
+     1.415
+    ],
+    "tris": 15056
+   },
+   "workshop": {
+    "file": "f_cakestand_workshop.glb",
+    "mesh": "SM_f_cakestand_workshop",
+    "min": [
+     -0.299,
+     -0.299,
+     0.0
+    ],
+    "max": [
+     0.299,
+     0.299,
+     1.415
+    ],
+    "tris": 15056
+   },
+   "curve": {
+    "file": "f_cakestand_curve.glb",
+    "mesh": "SM_f_cakestand_curve",
+    "min": [
+     -0.299,
+     -0.299,
+     0.0
+    ],
+    "max": [
+     0.299,
+     0.299,
+     1.415
+    ],
+    "tris": 15056
+   }
+  },
+  "r_chest": {
+   "plain": {
+    "file": "r_chest_plain.glb",
+    "mesh": "SM_r_chest_plain",
+    "min": [
+     -0.475,
+     -0.318,
+     0.0
+    ],
+    "max": [
+     0.475,
+     0.25,
+     1.329
+    ],
+    "tris": 3364
+   },
+   "oldtown": {
+    "file": "r_chest_oldtown.glb",
+    "mesh": "SM_r_chest_oldtown",
+    "min": [
+     -0.51,
+     -0.325,
+     0.0
+    ],
+    "max": [
+     0.51,
+     0.285,
+     1.389
+    ],
+    "tris": 12836
+   },
+   "workshop": {
+    "file": "r_chest_workshop.glb",
+    "mesh": "SM_r_chest_workshop",
+    "min": [
+     -0.475,
+     -0.318,
+     0.0
+    ],
+    "max": [
+     0.475,
+     0.25,
+     1.329
+    ],
+    "tris": 5164
+   },
+   "curve": {
+    "file": "r_chest_curve.glb",
+    "mesh": "SM_r_chest_curve",
+    "min": [
+     -0.505,
+     -0.295,
+     -0.006
+    ],
+    "max": [
+     0.505,
+     0.27,
+     1.329
+    ],
+    "tris": 6676
+   }
+  },
+  "r_vanity": {
+   "plain": {
+    "file": "r_vanity_plain.glb",
+    "mesh": "SM_r_vanity_plain",
+    "min": [
+     -0.55,
+     -0.76,
+     0.0
+    ],
+    "max": [
+     0.55,
+     0.24,
+     1.54
+    ],
+    "tris": 7076
+   },
+   "oldtown": {
+    "file": "r_vanity_oldtown.glb",
+    "mesh": "SM_r_vanity_oldtown",
+    "min": [
+     -0.596,
+     -0.76,
+     0.0
+    ],
+    "max": [
+     0.596,
+     0.24,
+     1.54
+    ],
+    "tris": 21232
+   },
+   "workshop": {
+    "file": "r_vanity_workshop.glb",
+    "mesh": "SM_r_vanity_workshop",
+    "min": [
+     -0.55,
+     -0.76,
+     0.0
+    ],
+    "max": [
+     0.55,
+     0.24,
+     1.54
+    ],
+    "tris": 9316
+   },
+   "curve": {
+    "file": "r_vanity_curve.glb",
+    "mesh": "SM_r_vanity_curve",
+    "min": [
+     -0.58,
+     -0.786,
+     -0.003
+    ],
+    "max": [
+     0.58,
+     0.26,
+     1.53
+    ],
+    "tris": 16564
+   }
+  },
+  "r_single": {
+   "plain": {
+    "file": "r_single_plain.glb",
+    "mesh": "SM_r_single_plain",
+    "min": [
+     -0.495,
+     -1.025,
+     0.0
+    ],
+    "max": [
+     0.495,
+     1.09,
+     1.03
+    ],
+    "tris": 1932
+   },
+   "oldtown": {
+    "file": "r_single_oldtown.glb",
+    "mesh": "SM_r_single_oldtown",
+    "min": [
+     -0.525,
+     -1.059,
+     0.0
+    ],
+    "max": [
+     0.525,
+     1.105,
+     1.18
+    ],
+    "tris": 11144
+   },
+   "workshop": {
+    "file": "r_single_workshop.glb",
+    "mesh": "SM_r_single_workshop",
+    "min": [
+     -0.498,
+     -1.025,
+     0.0
+    ],
+    "max": [
+     0.498,
+     1.078,
+     1.0
+    ],
+    "tris": 5664
+   },
+   "curve": {
+    "file": "r_single_curve.glb",
+    "mesh": "SM_r_single_curve",
+    "min": [
+     -0.498,
+     -1.05,
+     -0.005
+    ],
+    "max": [
+     0.498,
+     1.115,
+     1.22
+    ],
+    "tris": 6760
+   }
+  },
+  "r_blanket": {
+   "plain": {
+    "file": "r_blanket_plain.glb",
+    "mesh": "SM_r_blanket_plain",
+    "min": [
+     -0.565,
+     -0.282,
+     0.0
+    ],
+    "max": [
+     0.565,
+     0.24,
+     0.565
+    ],
+    "tris": 1008
+   },
+   "oldtown": {
+    "file": "r_blanket_oldtown.glb",
+    "mesh": "SM_r_blanket_oldtown",
+    "min": [
+     -0.55,
+     -0.225,
+     0.0
+    ],
+    "max": [
+     0.55,
+     0.225,
+     0.565
+    ],
+    "tris": 9016
+   },
+   "workshop": {
+    "file": "r_blanket_workshop.glb",
+    "mesh": "SM_r_blanket_workshop",
+    "min": [
+     -0.565,
+     -0.282,
+     0.0
+    ],
+    "max": [
+     0.565,
+     0.24,
+     0.565
+    ],
+    "tris": 2756
+   },
+   "curve": {
+    "file": "r_blanket_curve.glb",
+    "mesh": "SM_r_blanket_curve",
+    "min": [
+     -0.58,
+     -0.255,
+     -0.02
+    ],
+    "max": [
+     0.58,
+     0.255,
+     0.48
+    ],
+    "tris": 2320
+   }
+  },
+  "r_screen": {
+   "plain": {
+    "file": "r_screen_plain.glb",
+    "mesh": "SM_r_screen_plain",
+    "min": [
+     -0.707,
+     -0.317,
+     0.04
+    ],
+    "max": [
+     0.707,
+     0.236,
+     1.755
+    ],
+    "tris": 4300
+   },
+   "oldtown": {
+    "file": "r_screen_oldtown.glb",
+    "mesh": "SM_r_screen_oldtown",
+    "min": [
+     -0.707,
+     -0.317,
+     0.04
+    ],
+    "max": [
+     0.707,
+     0.236,
+     1.85
+    ],
+    "tris": 6172
+   },
+   "workshop": {
+    "file": "r_screen_workshop.glb",
+    "mesh": "SM_r_screen_workshop",
+    "min": [
+     -0.707,
+     -0.317,
+     0.04
+    ],
+    "max": [
+     0.707,
+     0.236,
+     1.755
+    ],
+    "tris": 4300
+   },
+   "curve": {
+    "file": "r_screen_curve.glb",
+    "mesh": "SM_r_screen_curve",
+    "min": [
+     -0.707,
+     -0.317,
+     0.04
+    ],
+    "max": [
+     0.707,
+     0.236,
+     1.75
+    ],
+    "tris": 4480
+   }
+  },
+  "r_cheval": {
+   "plain": {
+    "file": "r_cheval_plain.glb",
+    "mesh": "SM_r_cheval_plain",
+    "min": [
+     -0.39,
+     -0.25,
+     0.0
+    ],
+    "max": [
+     0.39,
+     0.25,
+     1.626
+    ],
+    "tris": 3100
+   },
+   "oldtown": {
+    "file": "r_cheval_oldtown.glb",
+    "mesh": "SM_r_cheval_oldtown",
+    "min": [
+     -0.392,
+     -0.25,
+     0.0
+    ],
+    "max": [
+     0.392,
+     0.25,
+     1.626
+    ],
+    "tris": 5596
+   },
+   "workshop": {
+    "file": "r_cheval_workshop.glb",
+    "mesh": "SM_r_cheval_workshop",
+    "min": [
+     -0.39,
+     -0.25,
+     0.0
+    ],
+    "max": [
+     0.39,
+     0.25,
+     1.626
+    ],
+    "tris": 3100
+   },
+   "curve": {
+    "file": "r_cheval_curve.glb",
+    "mesh": "SM_r_cheval_curve",
+    "min": [
+     -0.39,
+     -0.25,
+     0.0
+    ],
+    "max": [
+     0.39,
+     0.25,
+     1.625
+    ],
+    "tris": 8768
+   }
+  },
+  "l_fireplace": {
+   "plain": {
+    "file": "l_fireplace_plain.glb",
+    "mesh": "SM_l_fireplace_plain",
+    "min": [
+     -0.83,
+     -0.525,
+     0.0
+    ],
+    "max": [
+     0.83,
+     0.225,
+     1.51
+    ],
+    "tris": 10732
+   },
+   "oldtown": {
+    "file": "l_fireplace_oldtown.glb",
+    "mesh": "SM_l_fireplace_oldtown",
+    "min": [
+     -0.83,
+     -0.525,
+     0.0
+    ],
+    "max": [
+     0.83,
+     0.225,
+     1.51
+    ],
+    "tris": 10732
+   },
+   "workshop": {
+    "file": "l_fireplace_workshop.glb",
+    "mesh": "SM_l_fireplace_workshop",
+    "min": [
+     -0.55,
+     -0.5,
+     0.0
+    ],
+    "max": [
+     0.65,
+     0.3,
+     2.6
+    ],
+    "tris": 3088
+   },
+   "curve": {
+    "file": "l_fireplace_curve.glb",
+    "mesh": "SM_l_fireplace_curve",
+    "min": [
+     -0.8,
+     -0.525,
+     -0.0
+    ],
+    "max": [
+     0.8,
+     0.225,
+     1.55
+    ],
+    "tris": 15376
+   }
+  },
+  "l_piano": {
+   "plain": {
+    "file": "l_piano_plain.glb",
+    "mesh": "SM_l_piano_plain",
+    "min": [
+     -0.725,
+     -1.01,
+     0.0
+    ],
+    "max": [
+     0.725,
+     0.29,
+     1.39
+    ],
+    "tris": 4972
+   },
+   "oldtown": {
+    "file": "l_piano_oldtown.glb",
+    "mesh": "SM_l_piano_oldtown",
+    "min": [
+     -0.725,
+     -1.01,
+     0.0
+    ],
+    "max": [
+     0.725,
+     0.29,
+     1.39
+    ],
+    "tris": 14744
+   },
+   "workshop": {
+    "file": "l_piano_workshop.glb",
+    "mesh": "SM_l_piano_workshop",
+    "min": [
+     -0.725,
+     -1.01,
+     0.0
+    ],
+    "max": [
+     0.725,
+     0.29,
+     1.39
+    ],
+    "tris": 6092
+   },
+   "curve": {
+    "file": "l_piano_curve.glb",
+    "mesh": "SM_l_piano_curve",
+    "min": [
+     -0.75,
+     -1.039,
+     -0.004
+    ],
+    "max": [
+     0.75,
+     0.297,
+     1.39
+    ],
+    "tris": 6640
+   }
+  },
+  "l_records": {
+   "plain": {
+    "file": "l_records_plain.glb",
+    "mesh": "SM_l_records_plain",
+    "min": [
+     -0.56,
+     -0.293,
+     0.0
+    ],
+    "max": [
+     0.56,
+     0.235,
+     1.06
+    ],
+    "tris": 7808
+   },
+   "oldtown": {
+    "file": "l_records_oldtown.glb",
+    "mesh": "SM_l_records_oldtown",
+    "min": [
+     -0.585,
+     -0.3,
+     0.0
+    ],
+    "max": [
+     0.585,
+     0.26,
+     1.19
+    ],
+    "tris": 16640
+   },
+   "workshop": {
+    "file": "l_records_workshop.glb",
+    "mesh": "SM_l_records_workshop",
+    "min": [
+     -0.56,
+     -0.293,
+     0.0
+    ],
+    "max": [
+     0.56,
+     0.235,
+     1.06
+    ],
+    "tris": 9256
+   },
+   "curve": {
+    "file": "l_records_curve.glb",
+    "mesh": "SM_l_records_curve",
+    "min": [
+     -0.56,
+     -0.3,
+     -0.006
+    ],
+    "max": [
+     0.56,
+     0.235,
+     1.13
+    ],
+    "tris": 11240
+   }
+  },
+  "l_sidetable": {
+   "plain": {
+    "file": "l_sidetable_plain.glb",
+    "mesh": "SM_l_sidetable_plain",
+    "min": [
+     -0.25,
+     -0.25,
+     0.0
+    ],
+    "max": [
+     0.25,
+     0.25,
+     0.98
+    ],
+    "tris": 3756
+   },
+   "oldtown": {
+    "file": "l_sidetable_oldtown.glb",
+    "mesh": "SM_l_sidetable_oldtown",
+    "min": [
+     -0.25,
+     -0.25,
+     0.0
+    ],
+    "max": [
+     0.25,
+     0.25,
+     0.98
+    ],
+    "tris": 9868
+   },
+   "workshop": {
+    "file": "l_sidetable_workshop.glb",
+    "mesh": "SM_l_sidetable_workshop",
+    "min": [
+     -0.25,
+     -0.25,
+     0.0
+    ],
+    "max": [
+     0.25,
+     0.25,
+     0.98
+    ],
+    "tris": 4876
+   },
+   "curve": {
+    "file": "l_sidetable_curve.glb",
+    "mesh": "SM_l_sidetable_curve",
+    "min": [
+     -0.249,
+     -0.249,
+     0.0
+    ],
+    "max": [
+     0.249,
+     0.249,
+     0.98
+    ],
+    "tris": 6744
+   }
+  },
+  "l_magrack": {
+   "plain": {
+    "file": "l_magrack_plain.glb",
+    "mesh": "SM_l_magrack_plain",
+    "min": [
+     -0.245,
+     -0.18,
+     0.0
+    ],
+    "max": [
+     0.245,
+     0.18,
+     0.521
+    ],
+    "tris": 1764
+   },
+   "oldtown": {
+    "file": "l_magrack_oldtown.glb",
+    "mesh": "SM_l_magrack_oldtown",
+    "min": [
+     -0.245,
+     -0.18,
+     0.0
+    ],
+    "max": [
+     0.245,
+     0.18,
+     0.521
+    ],
+    "tris": 1764
+   },
+   "workshop": {
+    "file": "l_magrack_workshop.glb",
+    "mesh": "SM_l_magrack_workshop",
+    "min": [
+     -0.245,
+     -0.18,
+     0.0
+    ],
+    "max": [
+     0.245,
+     0.18,
+     0.521
+    ],
+    "tris": 1764
+   },
+   "curve": {
+    "file": "l_magrack_curve.glb",
+    "mesh": "SM_l_magrack_curve",
+    "min": [
+     -0.227,
+     -0.227,
+     0.0
+    ],
+    "max": [
+     0.227,
+     0.227,
+     0.4
+    ],
+    "tris": 1516
+   }
+  },
+  "l_tv": {
+   "plain": {
+    "file": "l_tv_plain.glb",
+    "mesh": "SM_l_tv_plain",
+    "min": [
+     -0.65,
+     -0.293,
+     0.0
+    ],
+    "max": [
+     0.65,
+     0.225,
+     1.36
+    ],
+    "tris": 3656
+   },
+   "oldtown": {
+    "file": "l_tv_oldtown.glb",
+    "mesh": "SM_l_tv_oldtown",
+    "min": [
+     -0.685,
+     -0.3,
+     0.0
+    ],
+    "max": [
+     0.685,
+     0.26,
+     1.42
+    ],
+    "tris": 11448
+   },
+   "workshop": {
+    "file": "l_tv_workshop.glb",
+    "mesh": "SM_l_tv_workshop",
+    "min": [
+     -0.65,
+     -0.293,
+     0.0
+    ],
+    "max": [
+     0.65,
+     0.225,
+     1.36
+    ],
+    "tris": 5192
+   },
+   "curve": {
+    "file": "l_tv_curve.glb",
+    "mesh": "SM_l_tv_curve",
+    "min": [
+     -0.652,
+     -0.3,
+     -0.006
+    ],
+    "max": [
+     0.652,
+     0.23,
+     1.36
+    ],
+    "tris": 5628
+   }
+  },
+  "o_floorplant": {
+   "plain": {
+    "file": "o_floorplant_plain.glb",
+    "mesh": "SM_o_floorplant_plain",
+    "min": [
+     -0.425,
+     -0.397,
+     0.0
+    ],
+    "max": [
+     0.441,
+     0.397,
+     1.58
+    ],
+    "tris": 13084
+   },
+   "oldtown": {
+    "file": "o_floorplant_oldtown.glb",
+    "mesh": "SM_o_floorplant_oldtown",
+    "min": [
+     -0.425,
+     -0.397,
+     0.0
+    ],
+    "max": [
+     0.441,
+     0.397,
+     1.58
+    ],
+    "tris": 13084
+   },
+   "workshop": {
+    "file": "o_floorplant_workshop.glb",
+    "mesh": "SM_o_floorplant_workshop",
+    "min": [
+     -0.34,
+     -0.258,
+     0.0
+    ],
+    "max": [
+     0.352,
+     0.241,
+     1.198
+    ],
+    "tris": 10704
+   },
+   "curve": {
+    "file": "o_floorplant_curve.glb",
+    "mesh": "SM_o_floorplant_curve",
+    "min": [
+     -0.383,
+     -0.291,
+     0.0
+    ],
+    "max": [
+     0.397,
+     0.271,
+     1.314
+    ],
+    "tris": 11744
+   }
+  },
+  "o_smallplants": {
+   "plain": {
+    "file": "o_smallplants_plain.glb",
+    "mesh": "SM_o_smallplants_plain",
+    "min": [
+     -0.4,
+     -0.14,
+     -0.02
+    ],
+    "max": [
+     0.4,
+     0.149,
+     0.547
+    ],
+    "tris": 19604
+   },
+   "oldtown": {
+    "file": "o_smallplants_oldtown.glb",
+    "mesh": "SM_o_smallplants_oldtown",
+    "min": [
+     -0.4,
+     -0.14,
+     -0.02
+    ],
+    "max": [
+     0.4,
+     0.149,
+     0.547
+    ],
+    "tris": 19604
+   },
+   "workshop": {
+    "file": "o_smallplants_workshop.glb",
+    "mesh": "SM_o_smallplants_workshop",
+    "min": [
+     -0.4,
+     -0.14,
+     -0.02
+    ],
+    "max": [
+     0.4,
+     0.149,
+     0.547
+    ],
+    "tris": 19604
+   },
+   "curve": {
+    "file": "o_smallplants_curve.glb",
+    "mesh": "SM_o_smallplants_curve",
+    "min": [
+     -0.4,
+     -0.14,
+     -0.02
+    ],
+    "max": [
+     0.4,
+     0.149,
+     0.547
+    ],
+    "tris": 19604
+   }
+  },
+  "o_painting": {
+   "plain": {
+    "file": "o_painting_plain.glb",
+    "mesh": "SM_o_painting_plain",
+    "min": [
+     -0.51,
+     -0.01,
+     1.165
+    ],
+    "max": [
+     0.51,
+     0.05,
+     1.935
+    ],
+    "tris": 1276
+   },
+   "oldtown": {
+    "file": "o_painting_oldtown.glb",
+    "mesh": "SM_o_painting_oldtown",
+    "min": [
+     -0.51,
+     -0.01,
+     1.165
+    ],
+    "max": [
+     0.51,
+     0.05,
+     1.935
+    ],
+    "tris": 1276
+   },
+   "workshop": {
+    "file": "o_painting_workshop.glb",
+    "mesh": "SM_o_painting_workshop",
+    "min": [
+     -0.51,
+     -0.01,
+     1.165
+    ],
+    "max": [
+     0.51,
+     0.05,
+     1.935
+    ],
+    "tris": 1276
+   },
+   "curve": {
+    "file": "o_painting_curve.glb",
+    "mesh": "SM_o_painting_curve",
+    "min": [
+     -0.5,
+     0.007,
+     1.175
+    ],
+    "max": [
+     0.5,
+     0.1,
+     1.925
+    ],
+    "tris": 3916
+   }
+  },
+  "o_clock": {
+   "plain": {
+    "file": "o_clock_plain.glb",
+    "mesh": "SM_o_clock_plain",
+    "min": [
+     -0.21,
+     -0.065,
+     1.59
+    ],
+    "max": [
+     0.21,
+     0.03,
+     2.01
+    ],
+    "tris": 9792
+   },
+   "oldtown": {
+    "file": "o_clock_oldtown.glb",
+    "mesh": "SM_o_clock_oldtown",
+    "min": [
+     -0.25,
+     -0.2,
+     0.0
+    ],
+    "max": [
+     0.25,
+     0.17,
+     2.21
+    ],
+    "tris": 12100
+   },
+   "workshop": {
+    "file": "o_clock_workshop.glb",
+    "mesh": "SM_o_clock_workshop",
+    "min": [
+     -0.219,
+     -0.065,
+     1.581
+    ],
+    "max": [
+     0.219,
+     0.03,
+     2.019
+    ],
+    "tris": 11408
+   },
+   "curve": {
+    "file": "o_clock_curve.glb",
+    "mesh": "SM_o_clock_curve",
+    "min": [
+     -0.259,
+     -0.065,
+     1.541
+    ],
+    "max": [
+     0.259,
+     0.03,
+     2.059
+    ],
+    "tris": 11408
+   }
+  },
+  "o_vases": {
+   "plain": {
+    "file": "o_vases_plain.glb",
+    "mesh": "SM_o_vases_plain",
+    "min": [
+     -0.35,
+     -0.16,
+     0.0
+    ],
+    "max": [
+     0.35,
+     0.16,
+     1.36
+    ],
+    "tris": 7356
+   },
+   "oldtown": {
+    "file": "o_vases_oldtown.glb",
+    "mesh": "SM_o_vases_oldtown",
+    "min": [
+     -0.35,
+     -0.16,
+     0.0
+    ],
+    "max": [
+     0.35,
+     0.16,
+     1.36
+    ],
+    "tris": 7356
+   },
+   "workshop": {
+    "file": "o_vases_workshop.glb",
+    "mesh": "SM_o_vases_workshop",
+    "min": [
+     -0.35,
+     -0.16,
+     0.0
+    ],
+    "max": [
+     0.35,
+     0.16,
+     1.36
+    ],
+    "tris": 7356
+   },
+   "curve": {
+    "file": "o_vases_curve.glb",
+    "mesh": "SM_o_vases_curve",
+    "min": [
+     -0.251,
+     -0.247,
+     0.0
+    ],
+    "max": [
+     0.247,
+     0.247,
+     1.36
+    ],
+    "tris": 10268
+   }
+  },
+  "o_candles": {
+   "plain": {
+    "file": "o_candles_plain.glb",
+    "mesh": "SM_o_candles_plain",
+    "min": [
+     -0.198,
+     -0.059,
+     0.0
+    ],
+    "max": [
+     0.199,
+     0.059,
+     0.435
+    ],
+    "tris": 9912
+   },
+   "oldtown": {
+    "file": "o_candles_oldtown.glb",
+    "mesh": "SM_o_candles_oldtown",
+    "min": [
+     -0.19,
+     -0.096,
+     0.0
+    ],
+    "max": [
+     0.19,
+     0.096,
+     0.625
+    ],
+    "tris": 8008
+   },
+   "workshop": {
+    "file": "o_candles_workshop.glb",
+    "mesh": "SM_o_candles_workshop",
+    "min": [
+     -0.198,
+     -0.059,
+     0.0
+    ],
+    "max": [
+     0.199,
+     0.059,
+     0.435
+    ],
+    "tris": 9912
+   },
+   "curve": {
+    "file": "o_candles_curve.glb",
+    "mesh": "SM_o_candles_curve",
+    "min": [
+     -0.208,
+     -0.069,
+     0.0
+    ],
+    "max": [
+     0.209,
+     0.069,
+     0.435
+    ],
+    "tris": 9912
+   }
+  },
+  "o_curtains": {
+   "plain": {
+    "file": "o_curtains_plain.glb",
+    "mesh": "SM_o_curtains_plain",
+    "min": [
+     -1.315,
+     -0.045,
+     0.11
+    ],
+    "max": [
+     1.315,
+     0.077,
+     2.395
+    ],
+    "tris": 3516
+   },
+   "oldtown": {
+    "file": "o_curtains_oldtown.glb",
+    "mesh": "SM_o_curtains_oldtown",
+    "min": [
+     -1.315,
+     -0.06,
+     0.11
+    ],
+    "max": [
+     1.315,
+     0.077,
+     2.52
+    ],
+    "tris": 4416
+   },
+   "workshop": {
+    "file": "o_curtains_workshop.glb",
+    "mesh": "SM_o_curtains_workshop",
+    "min": [
+     -1.315,
+     -0.045,
+     0.11
+    ],
+    "max": [
+     1.315,
+     0.077,
+     2.395
+    ],
+    "tris": 3516
+   },
+   "curve": {
+    "file": "o_curtains_curve.glb",
+    "mesh": "SM_o_curtains_curve",
+    "min": [
+     -1.315,
+     -0.06,
+     0.11
+    ],
+    "max": [
+     1.315,
+     0.077,
+     2.395
+    ],
+    "tris": 4116
+   }
+  },
+  "o_wallshelf": {
+   "plain": {
+    "file": "o_wallshelf_plain.glb",
+    "mesh": "SM_o_wallshelf_plain",
+    "min": [
+     -0.5,
+     -0.21,
+     1.25
+    ],
+    "max": [
+     0.5,
+     0.01,
+     1.703
+    ],
+    "tris": 2616
+   },
+   "oldtown": {
+    "file": "o_wallshelf_oldtown.glb",
+    "mesh": "SM_o_wallshelf_oldtown",
+    "min": [
+     -0.5,
+     -0.21,
+     1.24
+    ],
+    "max": [
+     0.5,
+     0.017,
+     1.703
+    ],
+    "tris": 4064
+   },
+   "workshop": {
+    "file": "o_wallshelf_workshop.glb",
+    "mesh": "SM_o_wallshelf_workshop",
+    "min": [
+     -0.5,
+     -0.21,
+     1.25
+    ],
+    "max": [
+     0.5,
+     0.01,
+     1.703
+    ],
+    "tris": 2616
+   },
+   "curve": {
+    "file": "o_wallshelf_curve.glb",
+    "mesh": "SM_o_wallshelf_curve",
+    "min": [
+     -0.5,
+     -0.21,
+     1.25
+    ],
+    "max": [
+     0.5,
+     0.01,
+     1.703
+    ],
+    "tris": 2616
+   }
+  },
+  "o_cushions": {
+   "plain": {
+    "file": "o_cushions_plain.glb",
+    "mesh": "SM_o_cushions_plain",
+    "min": [
+     -0.443,
+     -0.227,
+     -0.087
+    ],
+    "max": [
+     0.847,
+     0.227,
+     0.487
+    ],
+    "tris": 2540
+   },
+   "oldtown": {
+    "file": "o_cushions_oldtown.glb",
+    "mesh": "SM_o_cushions_oldtown",
+    "min": [
+     -0.435,
+     -0.227,
+     -0.076
+    ],
+    "max": [
+     0.847,
+     0.227,
+     0.476
+    ],
+    "tris": 2540
+   },
+   "workshop": {
+    "file": "o_cushions_workshop.glb",
+    "mesh": "SM_o_cushions_workshop",
+    "min": [
+     -0.44,
+     -0.227,
+     -0.083
+    ],
+    "max": [
+     0.847,
+     0.227,
+     0.483
+    ],
+    "tris": 2540
+   },
+   "curve": {
+    "file": "o_cushions_curve.glb",
+    "mesh": "SM_o_cushions_curve",
+    "min": [
+     -0.436,
+     -0.227,
+     -0.115
+    ],
+    "max": [
+     0.847,
+     0.227,
+     0.514
+    ],
+    "tris": 4412
+   }
+  },
+  "o_globe": {
+   "plain": {
+    "file": "o_globe_plain.glb",
+    "mesh": "SM_o_globe_plain",
+    "min": [
+     -0.24,
+     -0.217,
+     0.0
+    ],
+    "max": [
+     0.24,
+     0.221,
+     1.103
+    ],
+    "tris": 5532
+   },
+   "oldtown": {
+    "file": "o_globe_oldtown.glb",
+    "mesh": "SM_o_globe_oldtown",
+    "min": [
+     -0.24,
+     -0.217,
+     -0.006
+    ],
+    "max": [
+     0.24,
+     0.221,
+     1.103
+    ],
+    "tris": 6396
+   },
+   "workshop": {
+    "file": "o_globe_workshop.glb",
+    "mesh": "SM_o_globe_workshop",
+    "min": [
+     -0.24,
+     -0.217,
+     0.0
+    ],
+    "max": [
+     0.24,
+     0.221,
+     1.103
+    ],
+    "tris": 5532
+   },
+   "curve": {
+    "file": "o_globe_curve.glb",
+    "mesh": "SM_o_globe_curve",
+    "min": [
+     -0.24,
+     -0.217,
+     -0.006
+    ],
+    "max": [
+     0.24,
+     0.221,
+     1.103
+    ],
+    "tris": 6396
+   }
+  },
+  "o_fruit": {
+   "plain": {
+    "file": "o_fruit_plain.glb",
+    "mesh": "SM_o_fruit_plain",
+    "min": [
+     -0.25,
+     -0.25,
+     0.0
+    ],
+    "max": [
+     0.263,
+     0.25,
+     0.765
+    ],
+    "tris": 7544
+   },
+   "oldtown": {
+    "file": "o_fruit_oldtown.glb",
+    "mesh": "SM_o_fruit_oldtown",
+    "min": [
+     -0.25,
+     -0.25,
+     0.0
+    ],
+    "max": [
+     0.263,
+     0.25,
+     0.765
+    ],
+    "tris": 13656
+   },
+   "workshop": {
+    "file": "o_fruit_workshop.glb",
+    "mesh": "SM_o_fruit_workshop",
+    "min": [
+     -0.25,
+     -0.25,
+     0.0
+    ],
+    "max": [
+     0.263,
+     0.25,
+     0.765
+    ],
+    "tris": 8664
+   },
+   "curve": {
+    "file": "o_fruit_curve.glb",
+    "mesh": "SM_o_fruit_curve",
+    "min": [
+     -0.249,
+     -0.249,
+     0.0
+    ],
+    "max": [
+     0.263,
+     0.249,
+     0.765
+    ],
+    "tris": 10832
+   }
+  },
+  "o_bust": {
+   "plain": {
+    "file": "o_bust_plain.glb",
+    "mesh": "SM_o_bust_plain",
+    "min": [
+     -0.18,
+     -0.18,
+     0.0
+    ],
+    "max": [
+     0.18,
+     0.18,
+     1.55
+    ],
+    "tris": 2704
+   },
+   "oldtown": {
+    "file": "o_bust_oldtown.glb",
+    "mesh": "SM_o_bust_oldtown",
+    "min": [
+     -0.21,
+     -0.21,
+     0.0
+    ],
+    "max": [
+     0.21,
+     0.21,
+     1.55
+    ],
+    "tris": 3004
+   },
+   "workshop": {
+    "file": "o_bust_workshop.glb",
+    "mesh": "SM_o_bust_workshop",
+    "min": [
+     -0.18,
+     -0.18,
+     0.0
+    ],
+    "max": [
+     0.18,
+     0.18,
+     1.55
+    ],
+    "tris": 2704
+   },
+   "curve": {
+    "file": "o_bust_curve.glb",
+    "mesh": "SM_o_bust_curve",
+    "min": [
+     -0.178,
+     -0.178,
+     0.0
+    ],
+    "max": [
+     0.178,
+     0.178,
+     1.55
+    ],
+    "tris": 3744
+   }
+  }
+ }
+}

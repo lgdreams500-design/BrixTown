@@ -478,6 +478,11 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			// a hollow storey's windows are clear, so the room looks out and the sun comes in (M_Clear)
 			Add(Group(O.Mesh, false, OpeningCullDistance, bHollow && !O.bDoorway && O.Z0 < CeilAt), Tr, *O.Paint);
 			if (bHollow && !O.bDoorway) BlockAt(OnWall(O.S, -t / 2), O.Z0, O.Z0 + O.H, Yaw, O.W, t);   // a window is not a way in
+			if (bHollow && !O.bDoorway && O.Z0 < CeilAt)   // where the room's windows are, for its furniture (homes.js dropped())
+			{
+				const FVector Wa = At(OnWall(O.S - O.W / 2, -t), 0.f), Wb = At(OnWall(O.S + O.W / 2, -t), 0.f);
+				WindowSpans.FindOrAdd(LotIndex).Add(FVector4f(Wa.X / CmPerM, Wa.Y / CmPerM, Wb.X / CmPerM, Wb.Y / CmPerM));
+			}
 			if (O.Shutters) Add(Group(O.Shutters, false, ShutterCullDistance), FTransform(Tr.GetRotation(), Tr.GetLocation(), FVector(O.SX, 1, 1)), Shutter);
 			++Openings;
 		}

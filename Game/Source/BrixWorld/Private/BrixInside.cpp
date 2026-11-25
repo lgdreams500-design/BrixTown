@@ -58,6 +58,7 @@ bool LoadBrixInside(const FString& Path, FBrixInsides& Out, FString& OutError)
 		R.KeepClear = (float)S->GetNumberField(TEXT("keep_clear"));
 	}
 
+	LoadBrixHomeData(Root, Out);
 	Out.Lots.Reset();
 	for (const TSharedPtr<FJsonValue>& V : Root->GetArrayField(TEXT("lots")))
 	{
@@ -122,6 +123,15 @@ bool LoadBrixInside(const FString& Path, FBrixInsides& Out, FString& OutError)
 		O->TryGetStringField(TEXT("furniture"), In.Line);
 		In.Frame = FrameOf(O);
 		double Res = 0; if (O->TryGetNumberField(TEXT("residents"), Res)) In.Residents = (int32)Res;
+		double Wage = 0; if (O->TryGetNumberField(TEXT("wage"), Wage)) In.Wage = (int64)Wage;
+		O->TryGetStringField(TEXT("house_line"), In.HouseLine);
+		const TSharedPtr<FJsonObject>* Ob = nullptr;
+		if (O->TryGetObjectField(TEXT("objects"), Ob))
+			for (const auto& KV : (*Ob)->Values)
+			{
+				TArray<FVector2D>& Pts = In.Objects.Add(FString(KV.Key));
+				for (const TSharedPtr<FJsonValue>& P : KV.Value->AsArray()) Pts.Add(V2(P->AsArray()));
+			}
 		Slot = MoveTemp(In);
 	}
 	return true;
