@@ -481,6 +481,12 @@ void ABrixGameMode::SpawnLight()
 	UpdateSun();
 }
 
+void ABrixGameMode::SetClock(double Minutes)
+{
+	StartMinute = Minutes;
+	StartSeconds = GetWorld()->GetTimeSeconds();
+}
+
 double ABrixGameMode::ClockMinutes() const
 {
 	const float Pace = City ? City->Sky.RealSecondsPerMinute : 10.f;

@@ -164,7 +164,7 @@ FString ABrixLife::Headline(const FString& Id) const   // what a page's card say
 	}
 	if (Id == TEXT("storage")) return TEXT("Not yet");
 	if (Id == TEXT("settings")) return TEXT("Picture, sound, controls");
-	if (Id == TEXT("save")) return TEXT("Three slots");
+	if (Id == TEXT("save")) return Designer() ? Designer()->SaveHeadline() : FString(TEXT("Three slots"));
 	if (Id == TEXT("help")) return TEXT("The controls");
 	return FString();
 }
@@ -487,18 +487,9 @@ void ABrixLife::ApplySettings()
 }
 
 // UI-007, UI-013: the slots; saving a game (QST-008) is not in this build yet, so they say so
-void ABrixLife::SavePage(TSharedRef<SVerticalBox> Body)
+void ABrixLife::SavePage(TSharedRef<SVerticalBox> Body)   // QST-008: the slots, as the character designer keeps them
 {
-	for (int32 k = 0; k < Settings.SaveSlots; ++k)
-		Body->AddSlot().AutoHeight().Padding(0, 0, 0, 12)
-		[
-			Card(SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 14, 0)[ Tile(TabColour(TEXT("save"), false), FString::FromInt(k + 1), TabColour(TEXT("save"), true), 34.f) ]
-				+ SHorizontalBox::Slot().FillWidth(1).VAlign(VAlign_Center)[ SNew(SVerticalBox) + SVerticalBox::Slot().AutoHeight()[ Text(FString::Printf(TEXT("Slot %d"), k + 1), 16, Cream(), true) ] + SVerticalBox::Slot().AutoHeight()[ Text(TEXT("Empty"), 12, Dim()) ] ]
-				+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(8, 0, 0, 0)[ Button(TEXT("Save here"), [] {}, true, false) ]
-				+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(8, 0, 0, 0)[ Button(TEXT("Load"), [] {}, false, false) ])
-		];
-	Body->AddSlot().AutoHeight()[ Text(TEXT("Saving and loading a game (QST-008) are not in this build yet: the buttons wait for them. Your settings are already kept on this device."), 13, Dim()) ];
+	if (ABrixDesigner* Dz = Designer()) Dz->SavePage(Body, [this]() { DrawMenu(); }, [this]() { CloseMenu(); });
 }
 
 // UI-008: the controls of the platform played on, by where they work, from settings.json

@@ -4,6 +4,8 @@
 #include "BrixGameMode.h"
 #include "BrixLifeActor.h"
 #include "BrixTalkActor.h"
+#include "HAL/FileManager.h"
+#include "Misc/FileHelper.h"
 #include "BrixLook.h"
 #include "Containers/Ticker.h"
 #include "Engine/Engine.h"
@@ -62,6 +64,13 @@ void ABrixDesigner::Start(const FString& InCityName)
 		Keep.ParseIntoArray(Names, TEXT(","));
 		for (const FString& N : Names) { FString Why; if (!Wardrobe.Save(D, Look, N, Why)) UE_LOG(LogTemp, Warning, TEXT("Brix Town: -BrixOutfit: %s"), *Why); }
 	}
+	FString SlotText;
+	if (FFileHelper::LoadFileToString(SlotText, *FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("BrixTown"), TEXT("slot.txt")))) Slot = FMath::Clamp(FCString::Atoi(*SlotText), 1, 9);
+	FString ShotFile;
+	bTransient = FParse::Value(FCommandLine::Get(), TEXT("BrixShot="), ShotFile) || FParse::Param(FCommandLine::Get(), TEXT("BrixNoSave"));
+	int32 LoadK = 0;   // -BrixLoad=<slot>: carry on from that slot at once (a test shot of a loaded game)
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixLoad="), LoadK)) Slot = LoadK;
+	bOffer = (!bTransient || FParse::Param(FCommandLine::Get(), TEXT("BrixDesigner"))) && ReadSlot(Slot).IsSet();   // a shot of the designer shows the offer too
 	float SpinDeg = 0.f;
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixDesignSpin="), SpinDeg)) Spin = SpinDeg;
 }
@@ -95,7 +104,9 @@ void ABrixDesigner::Tick(float DeltaSeconds)
 		Apply();   // a test shot starts as this character, the default (life.js ?auto=1)
 		FString Shot;
 		const bool bShot = FParse::Value(FCommandLine::Get(), TEXT("BrixShot="), Shot);
-		if (FParse::Param(FCommandLine::Get(), TEXT("BrixDesigner")) || (!bShot && !FParse::Param(FCommandLine::Get(), TEXT("BrixNoDesigner"))))
+		int32 LoadK = 0;
+		if (FParse::Value(FCommandLine::Get(), TEXT("BrixLoad="), LoadK)) { FString Why; UE_LOG(LogTemp, Display, TEXT("Brix Town: -BrixLoad=%d: %s"), LoadK, LoadSlot(LoadK, Why) ? TEXT("loaded") : *Why); bBegun = true; }
+		else if (FParse::Param(FCommandLine::Get(), TEXT("BrixDesigner")) || (!bShot && !FParse::Param(FCommandLine::Get(), TEXT("BrixNoDesigner"))))
 		{
 			Open();
 			if (FParse::Param(FCommandLine::Get(), TEXT("BrixDesignBegin"))) BeginAt = FPlatformTime::Seconds() + 3.0;   // Begin pressed; the game's own shot after
@@ -115,6 +126,21 @@ void ABrixDesigner::Tick(float DeltaSeconds)
 		if (!BrixLookProblems(D, Look).Num()) Close();
 	}
 	if (bWardrobe && C) C->SetDesignView(true, WardrobeSpin, ShareLeftOf(WardrobeBox), false, WardrobeCameraM);   // the wardrobe: all of you, beside the page
+	if (bBegun && !bOpen && CanSave() && FPlatformTime::Seconds() - SavedAt > AutosaveSeconds)   // life.js: saved as it goes
+	{
+		FString Why;
+		if (!SaveSlot(Slot, Why)) UE_LOG(LogTemp, Warning, TEXT("Brix Town: the game could not save itself: %s"), *Why);
+	}
+	int32 SaveAs = 0;   // -BrixSaveAs=<slot>: a test shot saves itself there once, 6 s into the game (shots save nothing else)
+	if (bBegun && !bSavedAs && FParse::Value(FCommandLine::Get(), TEXT("BrixSaveAs="), SaveAs) && FPlatformTime::Seconds() - BegunAt > 6.0)
+	{
+		bSavedAs = true;
+		const bool bWas = bTransient;
+		bTransient = false;
+		FString Why;
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: -BrixSaveAs=%d: %s"), SaveAs, SaveSlot(SaveAs, Why) ? TEXT("saved") : *Why);
+		bTransient = bWas;
+	}
 	if (ShotAt > 0 && FPlatformTime::Seconds() >= ShotAt)
 	{
 		ShotAt = -1;
@@ -128,12 +154,154 @@ void ABrixDesigner::Tick(float DeltaSeconds)
 
 void ABrixDesigner::Begun()   // who the player is from now: their name in the talks and the menu (life.js vars())
 {
+	bBegun = true;
+	BegunAt = FPlatformTime::Seconds();
+	SavedAt = 0;   // a new game is saved at once in the playing slot (life.js newGame())
 	if (const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))
 	{
 		if (Mode->Life) Mode->Life->SetPlayerName(Look.Name);
 		if (Mode->Talk) Mode->Talk->SetPlayerName(Look.Name);
 	}
 	OnBegin.Broadcast(Look);
+}
+
+void ABrixDesigner::CarryOn()
+{
+	FString Why;
+	bOffer = false;
+	if (!LoadSlot(Slot, Why)) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: the save could not be read, starting afresh: %s"), *Why); Look = D.Default; Apply(); Build(); return; }
+	bOpen = false;
+	if (GEngine && GEngine->GameViewport && Root) GEngine->GameViewport->RemoveViewportWidgetContent(Root.ToSharedRef());
+	Root.Reset();
+	Body.Reset();
+	UGameplayStatics::SetGamePaused(this, false);
+	if (ABrixCharacter* C = Me()) { C->SetDesignView(false, 0, 0); C->EndPanel(); }
+	bBegun = true;
+	SavedAt = FPlatformTime::Seconds();
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (Mode && Mode->Life) { Mode->Life->ShowHud(true); Mode->Life->Toast(TEXT("Welcome back, ") + Look.Name + TEXT(".")); }
+}
+
+FString ABrixDesigner::SlotPath(int32 K) const
+{
+	return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("BrixTown"), FString::Printf(TEXT("save_%d.json"), K));
+}
+
+void ABrixDesigner::UseSlot(int32 K)
+{
+	Slot = K;
+	FFileHelper::SaveStringToFile(FString::FromInt(K), *FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("BrixTown"), TEXT("slot.txt")));
+}
+
+bool ABrixDesigner::CanSave() const { return !bTransient && bBegun && !bOpen; }
+
+TOptional<FBrixSaveGame> ABrixDesigner::ReadSlot(int32 K) const
+{
+	FString Text, Why;
+	FBrixSaveGame S;
+	if (!FFileHelper::LoadFileToString(Text, *SlotPath(K)) || !S.FromString(Text, D, Why)) return {};
+	return S;
+}
+
+bool ABrixDesigner::SaveSlot(int32 K, FString& OutWhy)   // life.js save()
+{
+	if (bTransient) { OutWhy = TEXT("a test run saves nothing"); return false; }
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	const APawn* P = UGameplayStatics::GetPlayerPawn(this, 0);
+	if (!Mode || !Mode->Life || !P) { OutWhy = TEXT("there is no game to save"); return false; }
+	FBrixSaveGame S;
+	S.Look = Look;
+	const FVector At = P->GetActorLocation();
+	S.Pos = FVector(At.X / 100.0, At.Z / 100.0, At.Y / 100.0);   // metres: x, up, the slice's z
+	S.Yaw = FMath::DegreesToRadians(P->GetActorRotation().Yaw);
+	Mode->Life->SaveTo(S);
+	S.Outfits = Wardrobe.ToJson();
+	S.At = FDateTime::UtcNow();
+	SavedAt = FPlatformTime::Seconds();
+	if (!FFileHelper::SaveStringToFile(S.ToString(), *SlotPath(K))) { OutWhy = TEXT("the save file could not be written"); return false; }
+	UseSlot(K);
+	return true;
+}
+
+bool ABrixDesigner::LoadSlot(int32 K, FString& OutWhy)   // life.js loadSave()
+{
+	FString Text;
+	FBrixSaveGame S;
+	if (!FFileHelper::LoadFileToString(Text, *SlotPath(K))) { OutWhy = TEXT("the slot is empty"); return false; }
+	if (!S.FromString(Text, D, OutWhy)) return false;
+	ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Mode || !Mode->Life || !Mode->Life->LoadFrom(S, OutWhy)) { if (OutWhy.IsEmpty()) OutWhy = TEXT("there is no game to load into"); return false; }
+	Mode->SetClock(S.Day * 1440.0 + S.Minute);
+	Look = S.Look;
+	Apply();
+	Wardrobe.Load(D, S.Outfits);
+	if (Mode->Talk) Mode->Talk->SetPlayerName(Look.Name);
+	Mode->Life->SetPlayerName(Look.Name);
+	if (APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
+	{
+		P->SetActorLocationAndRotation(FVector(S.Pos.X * 100.0, S.Pos.Z * 100.0, S.Pos.Y * 100.0 + 10.0), FRotator(0, FMath::RadiansToDegrees(S.Yaw), 0), false, nullptr, ETeleportType::TeleportPhysics);
+		if (APlayerController* PC = Cast<APlayerController>(P->GetController())) PC->SetControlRotation(FRotator(-12.0, FMath::RadiansToDegrees(S.Yaw), 0));
+	}
+	UseSlot(K);
+	SavedAt = FPlatformTime::Seconds();
+	return true;
+}
+
+void ABrixDesigner::EndPlay(const EEndPlayReason::Type Reason)
+{
+	if (CanSave()) { FString Why; SaveSlot(Slot, Why); }   // leaving: the game is kept as it is
+	Super::EndPlay(Reason);
+}
+
+FString ABrixDesigner::SaveHeadline() const
+{
+	return bTransient ? FString(TEXT("A test run: nothing is saved")) : FString::Printf(TEXT("Playing slot %d · saves as you go"), Slot);
+}
+
+namespace
+{
+	FString When(const FDateTime& Utc)   // as the slice shows it: 25 Nov 13:23, in local time
+	{
+		static const TCHAR* Months[12] = { TEXT("Jan"), TEXT("Feb"), TEXT("Mar"), TEXT("Apr"), TEXT("May"), TEXT("Jun"), TEXT("Jul"), TEXT("Aug"), TEXT("Sep"), TEXT("Oct"), TEXT("Nov"), TEXT("Dec") };
+		const FDateTime L = Utc + (FDateTime::Now() - FDateTime::UtcNow());
+		return FString::Printf(TEXT("%d %s %02d:%02d"), L.GetDay(), Months[FMath::Clamp(L.GetMonth(), 1, 12) - 1], L.GetHour(), L.GetMinute());
+	}
+}
+
+void ABrixDesigner::SavePage(TSharedRef<SVerticalBox> Page, TFunction<void()> Redraw, TFunction<void()> CloseMenu)   // life.js saveTab() (UI-007, UI-013)
+{
+	if (bTransient) Page->AddSlot().AutoHeight().Padding(4, 0, 0, 10)[ Text(TEXT("This is a test run (a shot): nothing is saved."), 13, Bad()) ];
+	if (!SaveMsg.IsEmpty()) Page->AddSlot().AutoHeight().Padding(4, 0, 0, 10)[ Text(SaveMsg, 13, Good()) ];
+	for (int32 K = 1; K <= D.SaveSlots; ++K)
+	{
+		const TOptional<FBrixSaveGame> S = ReadSlot(K);
+		const FString What = S ? FString::Printf(TEXT("%s · day %d · saved %s"), *S->Look.Name, S->Day + 1, *When(S->At)) : FString(TEXT("Empty"));
+		TSharedRef<SHorizontalBox> Acts = SNew(SHorizontalBox);
+		auto Act = [&Acts](TSharedRef<SWidget> B) { Acts->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(8, 0, 0, 0)[ B ]; };
+		Act(Button(K == Slot ? TEXT("Save now") : TEXT("Save here"), [this, K, Redraw]() { FString Why; SaveMsg = SaveSlot(K, Why) ? FString::Printf(TEXT("Saved in slot %d."), K) : Capital(Why) + TEXT("."); Redraw(); }, true, !bTransient));
+		if (S) Act(Button(TEXT("Load"), [this, K, CloseMenu]() { FString Why; CloseMenu(); if (LoadSlot(K, Why)) { if (const ABrixGameMode* M = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this))) if (M->Life) M->Life->Toast(FString::Printf(TEXT("Loaded slot %d."), K)); } else UE_LOG(LogTemp, Warning, TEXT("Brix Town: load: %s"), *Why); }, false, !bTransient));
+		if (Confirm == K)
+			Act(Button(S ? TEXT("Yes: delete it and start a new character here") : TEXT("Yes: start a new character here"), [this, K]()
+			{
+				IFileManager::Get().Delete(*SlotPath(K));
+				UseSlot(K);
+				bTransient = true;   // the game being left is not saved over the slot made empty
+				UGameplayStatics::OpenLevel(this, FName(*UGameplayStatics::GetCurrentLevelName(this)));   // a new game starts clean (QST-008)
+			}, true, true, Bad(), Ink()));
+		else Act(Button(S ? TEXT("New game here") : TEXT("New game"), [this, K, Redraw]() { Confirm = K; Redraw(); }, false, !bTransient));
+		Page->AddSlot().AutoHeight().Padding(0, 0, 0, 12)
+		[
+			Card(SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot().FillWidth(1).VAlign(VAlign_Center)
+				[
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot().AutoHeight()[ Text(FString::Printf(TEXT("Slot %d%s"), K, K == Slot ? TEXT(" (playing)") : TEXT("")), 16, Cream(), true) ]
+					+ SVerticalBox::Slot().AutoHeight()[ Text(What, 12, Dim()) ]
+				]
+				+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)[ Acts ])
+		];
+	}
+	Page->AddSlot().AutoHeight()[ Text(TEXT("The game saves itself in the slot you are playing as you go, and when you leave. A new game in a slot that holds a save deletes it, so it asks twice. Your settings are kept on this device, not in a save."), 13, Dim()) ];
 }
 
 void ABrixDesigner::Apply()
@@ -324,6 +492,23 @@ void ABrixDesigner::WearRows(TSharedRef<SVerticalBox> V, float Wide, TFunction<v
 void ABrixDesigner::Build()   // life.js buildDesigner(): drawn again after each choice
 {
 	if (!Body) return;
+	if (bOffer)   // life.js go(): a save in the slot played last: carry on, or a new character
+	{
+		const TOptional<FBrixSaveGame> S = ReadSlot(Slot);
+		if (S)
+		{
+			Body->SetContent(SNew(SBox).VAlign(VAlign_Center)[ Card(
+				SNew(SVerticalBox)
+				+ SVerticalBox::Slot().AutoHeight()[ Caps(FString::Printf(TEXT("Slot %d"), Slot)) ]
+				+ SVerticalBox::Slot().AutoHeight().Padding(0, 2, 0, 4)[ Text(TEXT("Welcome back"), 22, Cream(), true) ]
+				+ SVerticalBox::Slot().AutoHeight().Padding(0, 0, 0, 14)[ Text(FString::Printf(TEXT("%s, day %d in %s."), *S->Look.Name, S->Day + 1, *CityName), 14, Dim()) ]
+				+ SVerticalBox::Slot().AutoHeight().Padding(0, 0, 0, 8)[ Button(TEXT("Carry on as ") + S->Look.Name, [this]() { CarryOn(); }, true, true, Lantern(), Ink(), 14) ]
+				+ SVerticalBox::Slot().AutoHeight()[ Button(TEXT("New character"), [this]() { bOffer = false; Look = D.Default; Apply(); Build(); }, false) ],
+				FMargin(20, 16)) ]);
+			return;
+		}
+		bOffer = false;
+	}
 	const float Scrolled = Scroll ? Scroll->GetScrollOffset() : 0.f;
 	TFunction<void()> Again = [this]() { Apply(); Build(); };
 	const float Wide = PanelWidth - 18.f - 40.f - 10.f - LabelWidth - 8.f;   // what a row leaves its choices: the card's padding, the scroll bar, the label
