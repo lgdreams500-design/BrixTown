@@ -10,6 +10,9 @@ Runs Prototype/play/people.js itself in headless Edge (this machine has no Node)
   Game/Data/talk.json               what conversations need from the slice's code: the words for what a resident is
                                     doing or going to do (play.js DOING, GOING) and the voiced pieces of every line
                                     (audio/voices/index.js, Tools/voice/make_dialogue_voices.py; SND-018).
+  Tests/values/boards_city_01.json  riders and carried boards drawn by people.js draw() with board() and ride(), and the
+                                    speeds boards.js step() gives through a ride of each kind (CITY-098 to CITY-101), for
+                                    CITY099_boards_are_ridden_and_drawn_as_the_slice_does.
   Tests/values/talk_city_01.json    every line of World/rules/dialogue.json mouthed by conversations.js speak() (CHR-009),
                                     for CHR009_lines_are_mouthed_as_the_slice_mouths_them.
 
@@ -35,6 +38,8 @@ OUT_TALK_VALUES = os.path.join(ROOT, "Tests", "values", "talk_city_01.json")
 CONV_JS = os.path.join(ROOT, "Prototype", "play", "conversations.js")
 DODGE_JS = os.path.join(ROOT, "Prototype", "play", "dodge.js")
 OUT_DODGE_VALUES = os.path.join(ROOT, "Tests", "values", "dodge_city_01.json")
+BOARDS_JS = os.path.join(ROOT, "Prototype", "play", "boards.js")
+OUT_BOARD_VALUES = os.path.join(ROOT, "Tests", "values", "boards_city_01.json")
 OUT_DESIGN_VALUES = os.path.join(ROOT, "Tests", "values", "designer_city_01.json")
 VOICES_JS = os.path.join(ROOT, "Prototype", "play", "audio", "voices", "index.js")
 RULES = os.path.join(ROOT, "World", "rules")
@@ -62,6 +67,15 @@ for (const c of CASES.bodies) {
   const nv = ms.n / 10, step = Math.max(1, Math.floor(nv / 240)), pts = [];
   for (let v = 0; v < nv; v += step) pts.push([v, ms.a[v * 10], ms.a[v * 10 + 1], ms.a[v * 10 + 2]]);
   out.bodies.push(Object.assign({}, c, { vertices: nv, samples: pts, boxes: ms.boxes }));
+}
+out.boardBodies = [];                                    // CITY-099, CITY-101: a board in the hand, and riders on each kind (play.js draws them so)
+for (const c of CASES.boardBodies) {
+  const ms = { a: new Float32Array(1 << 20), n: 0, boxes: [], box(x0, y0, z0, x1, y1, z1, col) { this.boxes.push([x0, y0, z0, x1, y1, z1, col[0], col[1], col[2]]); } };
+  const K = Object.assign({ id: c.board }, CASES.boards.kinds[c.board]);
+  draw(ms, c.x, c.y, c.z, c.yaw, looks[c.look], c.pose, { ph: c.ph, t: c.t, lod: c.lod, ff: c.ff, fl: 14, board: { kind: K, carry: c.carry }, ride: c.carry ? null : { h: K.top_m, push: c.push, ph: c.ph } });
+  const nv = ms.n / 10, step = Math.max(1, Math.floor(nv / 240)), pts = [];
+  for (let v = 0; v < nv; v += step) pts.push([v, ms.a[v * 10], ms.a[v * 10 + 1], ms.a[v * 10 + 2]]);
+  out.boardBodies.push(Object.assign({}, c, { vertices: nv, samples: pts }));
 }
 if (CASES.designs) {                                     // CHR-001, CHR-002: design() of designer values, and the bodies it draws
   baseCache.clear();                                      // drawn from a fresh start, as the C++ test draws them
@@ -100,6 +114,31 @@ for (let f = 0; f < 330; f++) {
   }) });
 }
 out.dodge = { residents: RES, yaw: Math.PI / 2, frames };
+} catch (e) { window.__ERR = String(e.stack || e); window.__OUT = null; }
+"""
+
+# boards.js (CITY-098, CITY-099): the speeds step() gives through a ride of each kind: W held, let go to glide, S to brake,
+# indoors (capped), a knock (slow), another kind made the one in use; and what give(), toggle() and use() leave
+BOARDS_HARNESS = r"""
+try {
+const out = window.__OUT; if (!out) throw new Error(window.__ERR || "people.js gave nothing");
+const R = Boards.R, rides = [];
+Boards.give([], null);
+const none = { kind: Boards.kind(), toggle: Boards.toggle() };
+Boards.give(R.auto_owned, R.auto_equipped);
+const auto = { owned: Boards.owned(), kind: Boards.kind().id, riding: Boards.riding };
+for (const k of R.order) {
+  Boards.give(R.auto_owned, k); Boards.toggle();
+  const vs = [];
+  const run = (n, dt, go, back, cap) => { for (let i = 0; i < n; i++) vs.push([dt, go ? 1 : 0, back ? 1 : 0, cap == null ? -1 : cap, Boards.step(dt, go, back, cap)]); };
+  run(40, 1 / 30, true, false, null); run(30, 1 / 60, false, false, null); run(10, 1 / 30, true, true, null); run(20, 1 / 30, false, true, null);
+  run(90, 1 / 20, true, false, null); run(30, 1 / 30, true, false, R.indoor_top_kmh); run(20, 1 / 30, true, false, R.mall_top_kmh);
+  Boards.slow(.4); vs.push([0, 0, 0, -2, Boards.v]); run(10, 1 / 30, false, false, null);
+  rides.push({ kind: k, steps: vs });
+}
+Boards.give(R.auto_owned, "neon_boost"); Boards.toggle(); for (let i = 0; i < 200; i++) Boards.step(1 / 20, true, false, null);
+const fast = Boards.v; Boards.use("manual");
+out.boards = { none, auto, rides, use: [fast, Boards.v, Boards.kind().id], toggled: [Boards.toggle(), Boards.v] };
 } catch (e) { window.__ERR = String(e.stack || e); window.__OUT = null; }
 """
 
@@ -236,6 +275,15 @@ def main():
                            sig="Hurried", arms=[[1, 150, 30, 118], None], chest=[6, 0]))   # a hand over the head
     for n, face in enumerate(face_cases()):   # someone in a conversation: the full face control set (CHR-007)
         bodies.append(dict(look=n * 3, x=0.0, y=0.0, z=0.0, yaw=0.4 * n, pose=0, ph=0.0, t=1.3 + n, lod=0, ff=1.0, face=face))
+    boards = json.load(open(os.path.join(RULES, "boards.json"), encoding="utf-8"))
+    board_bodies = []
+    for n, kind in enumerate(boards["order"]):            # each kind carried standing and walking, and ridden standing and pushing
+        for k in (n, n + 6, n + 12):
+            board_bodies.append(dict(look=k, board=kind, carry=True, x=0.4, y=0.12, z=-0.3, yaw=0.5 + 0.3 * n, pose=0, ph=0.0, t=1.4 + k, lod=k % 3, ff=1.0, push=0))
+            board_bodies.append(dict(look=k, board=kind, carry=True, x=0.4, y=0.12, z=-0.3, yaw=1.1 + 0.2 * n, pose=1, ph=(0.19 + 0.11 * k) % 1, t=2.2 + k, lod=k % 3, ff=1.0, push=0))
+            board_bodies.append(dict(look=k, board=kind, carry=False, x=-0.6, y=0.12, z=0.8, yaw=0.2 + 0.4 * n, pose=5, ph=0.0, t=3.1 + k, lod=k % 3, ff=1.0, push=0))
+        for push, ph in ((1, 0.2), (1, 0.7), (0.45, 0.4)):
+            board_bodies.append(dict(look=n + 2, board=kind, carry=False, x=-0.6, y=0.12, z=0.8, yaw=2.0 - 0.3 * n, pose=5, ph=ph, t=4.3 + n, lod=0, ff=1.0, push=push))
     designer = json.load(open(os.path.join(RULES, "designer.json"), encoding="utf-8"))
     designs, design_bodies = design_cases(designer), []
     for n in range(len(designs)):
@@ -243,7 +291,7 @@ def main():
         design_bodies.append(dict(design=n, x=1.0, y=0.12, z=-1.0, yaw=0.3 + 0.4 * n, pose=1, ph=(0.17 + 0.23 * n) % 1, t=2.3 + n, lod=0, ff=1.0))
         design_bodies.append(dict(design=n, x=1.0, y=0.12, z=-1.0, yaw=0.3 * n, pose=1, ph=(0.41 + 0.13 * n) % 1, t=3.7 + n, lod=1 + n % 3, ff=0.7))
         design_bodies.append(dict(design=n, x=0.0, y=0.0, z=0.0, yaw=0.2 * n, pose=0, ph=0.0, t=1.9 + n, lod=0, ff=1.0, face=face_cases()[n % 6]))
-    cases = json.dumps(dict(looks=looks, bodies=bodies, designer=designer, designs=designs, designBodies=design_bodies))
+    cases = json.dumps(dict(looks=looks, bodies=bodies, designer=designer, designs=designs, designBodies=design_bodies, boards=boards, boardBodies=board_bodies))
     patched = src.replace(ret, HARNESS.replace("%CASES%", cases) + ret, 1)
     # people.js takes hash() from play.js: the same function, cut from play.js
     play = open(os.path.join(ROOT, "Prototype", "play", "play.js"), encoding="utf-8").read()
@@ -258,8 +306,9 @@ def main():
     lines += ["Well... that's it, isn't it? Yes; quite: really \u2014 fine!", "", "Hmm."]
     conv = open(CONV_JS, encoding="utf-8").read()
     page = ("<!doctype html><meta charset=utf-8><pre id=out></pre><script>\n" + h.group(0) + patched + "\n</script>"
-            + "<script>window.WASTED = " + json.dumps(dict(dialogue=dialogue, speech=speech, dodge=dodge)) + ";</script>"
+            + "<script>window.WASTED = " + json.dumps(dict(dialogue=dialogue, speech=speech, dodge=dodge, boards=boards)) + ";</script>"
             + "<script>\n" + open(DODGE_JS, encoding="utf-8").read() + "\n</script><script>\n" + DODGE_HARNESS + "\n</script>"
+            + "<script>\n" + open(BOARDS_JS, encoding="utf-8").read() + "\n</script><script>\n" + BOARDS_HARNESS + "\n</script>"
             + "<script>\n" + conv + "\n</script><script>\n" + TALK_HARNESS.replace("%LINES%", json.dumps(lines)).replace("%TRAM%", tram_js()) + "\n</script>")
     # Edge is started through PowerShell's Start-Process with its output sent to a file: since Edge 158 the page runs in
     # a process Edge hands it to, which writes nothing to a pipe from here, and Start-Process -Wait waits for it. Edge's
@@ -297,6 +346,10 @@ def main():
         json.dump(dict(note="Generated by Tools/unreal/people_values.py: dodge.js frame() and apply() for a car driven past residents, for CITY070_residents_dodge_and_scold_as_the_slice_does.",
                        **out["dodge"]), f, separators=(",", ":"), ensure_ascii=False)
     print("wrote %s: %d frames" % (os.path.relpath(OUT_DODGE_VALUES, ROOT), len(out["dodge"]["frames"])))
+    with open(OUT_BOARD_VALUES, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(dict(note="Generated by Tools/unreal/people_values.py: people.js draw() with board() and ride(), and boards.js step(), give(), toggle(), use(), slow(), for CITY099_boards_are_ridden_and_drawn_as_the_slice_does.",
+                       bodies=out["boardBodies"], **out["boards"]), f, separators=(",", ":"), ensure_ascii=False)
+    print("wrote %s: %d bodies, %d rides" % (os.path.relpath(OUT_BOARD_VALUES, ROOT), len(out["boardBodies"]), len(out["boards"]["rides"])))
     sys.path.insert(0, os.path.join(ROOT, "Tools", "worldgen"))
     import world
     w = world.load()

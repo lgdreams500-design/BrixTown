@@ -346,6 +346,24 @@ void ABrixGameMode::StartPlay()
 			if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0)) PC->SetControlRotation(FRotator(-8.0, FMath::RadiansToDegrees(FMath::Atan2(-W->Heading.Y, -W->Heading.X)), 0));
 		}, ShotDelaySeconds / 3, false);
 	}
+	// -BrixBoard=<kind>: on that skateboard a third into a test shot's wait (CITY-099; with -BrixHold=steer,throttle)
+	FString BoardKind;
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixBoard="), BoardKind))
+	{
+		FString Hold;
+		FParse::Value(FCommandLine::Get(), TEXT("BrixHold="), Hold, false);
+		FTimerHandle H;
+		GetWorldTimerManager().SetTimer(H, [this, BoardKind, Hold]()
+		{
+			ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+			if (!Me) return;
+			Me->TestBoard(BoardKind);
+			TArray<FString> P;
+			Hold.ParseIntoArray(P, TEXT(","));
+			if (P.Num() == 2) Me->TestHold = FVector2D(FCString::Atof(*P[0]), FCString::Atof(*P[1]));
+			UE_LOG(LogTemp, Display, TEXT("Brix Town: on the %s board: %s"), *BoardKind, Me->Boards.Riding() ? TEXT("yes") : TEXT("no"));
+		}, ShotDelaySeconds / 3, false);
+	}
 	// -BrixMark=x,z sets the mark; -BrixMap opens the big map (and -BrixMapZoom=z,x,z zooms it on a place) for a test shot
 	FString MarkAt, Zoom;
 	if (Map && FParse::Value(FCommandLine::Get(), TEXT("BrixMark="), MarkAt, false))
@@ -572,6 +590,8 @@ void ABrixGameMode::ShootAndQuit()
 		if (Room != INDEX_NONE && Insides && Insides->Lots.IsValidIndex(Room) && Insides->Lots[Room].IsSet()) Where = TEXT("inside ") + Insides->Lots[Room]->Id;
 		UE_LOG(LogTemp, Display, TEXT("Brix Town: the player is at (%.1f, %.1f) %.2f m up, %s"), Me->GetActorLocation().X / 100, Me->GetActorLocation().Y / 100, Me->GetActorLocation().Z / 100 - 0.85, *Where);
 	}
+	if (const ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)); Me && Me->Boards.Kind())
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: the %s %s, %.1f km/h"), *Me->Boards.Kind()->Name, Me->Boards.Riding() ? TEXT("ridden") : TEXT("in the hand"), Me->Boards.V * 3.6);
 	if (Map)
 	{
 		TArray<FString> Said;

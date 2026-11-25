@@ -88,9 +88,21 @@ struct BRIXWORLD_API FBrixFace
 	double Nod = 0;
 };
 
+// A kind of skateboard (CITY-098, CITY-101; World/rules/boards.json): how it goes and how it looks (the sizes and colours of
+// look test 35, Tools/blender/skateboards_35.py). Unset colours: the part is not there.
+struct BRIXWORLD_API FBrixBoardKind
+{
+	FString Id, Name;
+	double TopKmh = 50, AccelKmhS = 12, GlideKmhS = 6, BrakeKmhS = 40;
+	bool bPowered = false, bPush = false, bBoost = false;
+	double DeckM = .8, WidthM = .21, TopM = .103, WheelbaseM = .38, TrackM = .166, WheelM = .062;
+	FVector3f Deck = FVector3f(.5f), Grip = FVector3f(.2f), Truck = FVector3f(.55f), Wheel = FVector3f(.5f);
+	TOptional<FVector3f> Glow, Battery, Band, Light, Core;
+};
+
 struct BRIXWORLD_API FBrixDrawOptions
 {
-	int32 Pose = 0;          // 0 standing, 1 walking, 2 sitting (the origin is then the seat's top), 3 lying (on the bed's top)
+	int32 Pose = 0;          // 0 standing, 1 walking, 2 sitting (the origin is then the seat's top), 3 lying (on the bed's top), 5 on a skateboard
 	double Phase = 0;        // the walk's cycle, 0..1
 	double Seconds = 0;      // time, for breathing, blinking and the head's wander
 	int32 Lod = 1;           // 0 full (the nearest few), 1 to 16 m, 2 to 35 m; 3 a far figure of boxes
@@ -106,6 +118,11 @@ struct BRIXWORLD_API FBrixDrawOptions
 	FVector2D Chest = FVector2D::ZeroVector;
 	TOptional<FVector3f> Hood;         // people.js o.hood: a coat's hood up, in this colour (CITY-080)
 	TOptional<FVector3f> Umbrella;     // people.js o.umb: an umbrella up in the right hand, its canopy in this colour (CITY-080)
+	// people.js o.board, o.ride (CITY-099): a skateboard carried in the right hand (bCarry), or ridden (pose 5: side-on across
+	// the deck, RidePush 0 to 1 blending to a manual board's push, Phase the push's cycle)
+	const FBrixBoardKind* Board = nullptr;
+	bool bCarry = false;
+	double RidePush = 0;
 };
 
 // people.js draw() for poses 0 to 2: appends the body to Out (lods 0 to 2) or its boxes to OutBoxes (lod 3).

@@ -354,6 +354,32 @@ namespace
 		return P;
 	}
 
+	// people.js ride() (CITY-099): side-on to the way of travel, feet across the deck either side of its middle, knees a little
+	// bent, arms out a little for balance, the head turned to look ahead; b (0 to 1) blends to a manual board's push: turned to
+	// face ahead, the front foot along the deck and the back foot pushing on the ground beside it (ph, 0 to 1 a push); h: the
+	// deck top's height
+	double mix0(double X, double Y, double T) { return X + (Y - X) * T; }
+	FPose ride(const FGeo& g, double W, double t, const double hm[3], double seed, double h, double b, double ph)
+	{
+		FPose P;
+		const double S = g.S, br = FMath::Sin(t * 1.3 + seed);
+		const double a = rad(78) * (1 - b) + rad(14) * b;
+		const M3 Rp = Rz(a);
+		const FVector n0 = mv(Rp, FVector(1, 0, 0));
+		const FVector pel(0, -.02 * S * b, g.pelz + h - .055 * S * (1 - b) - (.06 * S + h) * b + .003 * br);   // pushing, the knee on the board bends so the other foot reaches the ground
+		const bool on = ph < .55;
+		const double s = on ? ph / .55 : (ph - .55) / .45;   // the push foot: on the ground pushing, then lifted back
+		const double py = on ? -.06 * S + .32 * S * s : .26 * S - .32 * S * (s - FMath::Sin(TAU * s) / TAU), pz = g.ankz + (on ? 0 : .07 * S * FMath::Sin(UE_DOUBLE_PI * s));
+		const FVector back(mix0(0, .12 * S, b), mix0(.2 * S, py, b), mix0(g.ankz + h, pz, b)), front(0, -.2 * S - .02 * S * b, g.ankz + h);
+		leg(P, 0, g, pel + mv(Rp, FVector(g.hipx, 0, g.hipdz)), back, n0, 0, a * (1 - b) + rad(6) * b);
+		leg(P, 1, g, pel + mv(Rp, FVector(-g.hipx, 0, g.hipdz)), front, n0, 0, a * (1 - b) + rad(10) * b);
+		const double arms[2][3] = { { 12 - 4 * b, 22 - 10 * b, 24 }, { 12 - 4 * b, 22 - 10 * b, 24 } };
+		const double chest[3] = { -a * .25, rad(6) + rad(8) * b + .004 * br, 0 };
+		const double head[3] = { hm[0], rad(4) + hm[1], hm[2] };   // the head is held in space: it keeps looking ahead
+		upper(P, g, W, pel, Rp, chest, arms, head);
+		return P;
+	}
+
 	FPose sit(const FBrixSignature&, const FGeo& g, double W, double t, const double hm[3], double seed, const FBrixDrawOptions& md)   // on a chair or bench; the origin is the seat top
 	{
 		FPose P;
@@ -533,7 +559,7 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	wander(t, sd * .37, hm);
 	if (o.Face) hm[1] += o.Face->Nod;   // a speaker nods on stressed words (ANIM-006)
 	if (pose == 3) hm[0] = hm[1] = hm[2] = 0;   // lying, the head still (people.js stand(..., [0, 0, 0]))
-	const FPose P = pose == 1 ? walk(sig, g, W, o.Phase, hm, o) : pose == 2 ? sit(sig, g, W, t, hm, sd, o) : stand(sig, g, W, t, hm, sd, o);
+	const FPose P = pose == 5 && o.Board ? ride(g, W, t, hm, sd, o.Board->TopM, o.RidePush, o.Phase) : pose == 1 ? walk(sig, g, W, o.Phase, hm, o) : pose == 2 ? sit(sig, g, W, t, hm, sd, o) : stand(sig, g, W, t, hm, sd, o);
 	auto hem = [&](double zz) { return pose == 2 ? FMath::Max(zz, -.06) : zz; };   // seated, a hem ends at the seat instead of hanging through it
 	// where the character's axes point in the world (standing: x left, y back, z up)
 	const double c = FMath::Cos(yaw), s = FMath::Sin(yaw);
@@ -611,6 +637,44 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 		if (!bLong) ms.limb(a, a + (b - a) * .875, .057 * T, .052 * T, nl, L.Top, lt2, fwd);
 		if (lt2) ms.ball(w + dir * (.058 * S), tx * (.03 * T), ty * (.042 * T), dir * (.055 * T), 8, 5, L.Skin);
 	}
+	// a skateboard (CITY-098, CITY-099, CITY-101; people.js board(), the look of Tools/blender/skateboards_35.py): a rounded deck
+	// with its kicktails up, grip on top, two trucks and four wheels; the electric board a battery box under the deck and a
+	// status light, the Neon Boost glowing wheels, a glowing strip under the deck edge and a booster at the tail. C: the middle
+	// of the deck's top; f: nose-forward, up: the deck's normal, side: across
+	auto board = [&](const FVector& C, const FVector& f, const FVector& up, const FVector& side, const FBrixBoardKind& K)
+	{
+		const double Lh = K.DeckM / 2, Wh = K.WidthM / 2, th = .012, wr = K.WheelM / 2;
+		auto at = [&](double a, double b, double u) { return C + f * a + side * b + up * u; };
+		const int32 seg = lod == 0 ? 12 : 6, rg = lod == 0 ? 4 : 3;
+		ms.ball(at(0, 0, -th), side * Wh, f * (Lh * .82), up * th, seg, rg, K.Deck);   // the deck
+		for (const double e : { -1.0, 1.0 }) ms.ball(at(e * Lh * .8, 0, -th + .012), side * (Wh * .92), f * (Lh * .24), up * th + f * (e * th * 2.2), seg, rg, K.Deck);   // nose and tail, kicked up
+		ms.ball(at(0, 0, -th * .2), side * (Wh * .9), f * (Lh * .78), up * (th * .35), seg, rg, K.Grip);   // the grip
+		const double tz = -(K.TopM - wr - th * 2), wb = K.WheelbaseM / 2;
+		for (const double e : { -1.0, 1.0 })
+		{
+			ms.ball(at(e * wb, 0, (tz - th * 2) / 2 - th), side * (Wh * .35), f * .03, up * (FMath::Abs(tz) / 2), 6, 3, K.Truck);   // the truck
+			for (const double gg : { -1.0, 1.0 }) ms.ball(at(e * wb, gg * K.TrackM / 2, -K.TopM + wr), side * (wr * .5), f * wr, up * wr, lod == 0 ? 10 : 6, rg, K.Wheel);   // the wheels
+		}
+		if (K.Battery && lod < 2)
+		{
+			ms.ball(at(0, 0, -th * 2 - .022), side * (Wh * .6), f * (Lh * .45), up * .022, 8, 3, *K.Battery);   // the battery box
+			if (K.Band) ms.ball(at(0, 0, -th * 2 - .022), side * (Wh * .62), f * .02, up * .023, 8, 3, *K.Band);
+			if (K.Light) ms.ball(at(Lh * .3, Wh * .6, -th * 2 - .015), side * .008, f * .008, up * .008, 6, 3, *K.Light);
+		}
+		if (K.Glow && lod < 2) ms.ball(at(0, 0, -th * 2.3), side * (Wh * 1.02), f * (Lh * .84), up * .004, seg, 3, *K.Glow);   // the strip of light under the edge
+		if (K.bBoost && lod < 2)   // the booster
+		{
+			ms.limb(at(-Lh * .9, 0, .01), at(-Lh * 1.02, 0, .02), .026, .032, 8, K.Truck, true, f);
+			ms.ball(at(-Lh * 1.03, 0, .02), side * .022, f * .005, up * .022, 8, 3, K.Core ? *K.Core : K.Glow ? *K.Glow : K.Truck);
+		}
+	};
+	if (o.Board && o.bCarry)   // carried: held by its edge in the right hand, deck upright, wheels out
+	{
+		const FVector w = Wp(P.wr[1]), dn = Wd(FVector(0, 0, -1)), fw = unit(fwd - dn * dot(fwd, dn)), out = cross(Wd(FVector(0, 0, 1)), fw);
+		board(w + dn * (o.Board->WidthM / 2 - .01) + out * .02, fw, out, Wd(FVector(0, 0, 1)), *o.Board);
+	}
+	if (o.Board && !o.bCarry && pose == 5)   // ridden: under the feet along the way of travel
+		board(Wp(FVector(0, 0, o.Board->TopM)), Wd(FVector(0, -1, 0)), Wd(FVector(0, 0, 1)), Wd(FVector(1, 0, 0)), *o.Board);
 	// neck and head
 	const FVector hx = Wd(mv(P.Rh, FVector(1, 0, 0))) * L.FaceW, hy = Wd(mv(P.Rh, FVector(0, 1, 0))), hz = Wd(mv(P.Rh, FVector(0, 0, 1)));
 	const FVector nk = Wp(P.neck), hj = Wp(P.headJ), hc = hj + hz * (.156 * Sh);   // the head's centre, where character_face_05.py puts it
