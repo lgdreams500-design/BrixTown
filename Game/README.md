@@ -124,7 +124,10 @@ with 32 vehicles drawn.
 Each block's props are drawn as the slice draws them (play.js prop(), dressing.js), boxes in the palette's colours:
 lamps, benches, bins, bollards, planters, postboxes, bike racks, phone boxes, wall lanterns, flowerbeds, fountains,
 market stalls, tram shelters, water towers and wells. Garden planting, playgrounds, arches, adverts and the open ground's
-own things are not brought over yet, and the lamps do not light at night yet.
+own things are not brought over yet. By night (`ABrixLamps`) every lamp's and wall lantern's glass glows
+(`/Game/Greybox/M_Glow`, made by `Tools/unreal/make_glow_material.py`) and the twelve nearest to the camera give real
+light, as the slice's twelve; 68 frames a second at High at 22:30. The night itself (its exposure, the orange haze
+after dusk) is not yet the slice's dark blue night.
 
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is

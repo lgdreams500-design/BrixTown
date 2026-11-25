@@ -34,6 +34,10 @@ class BRIXTOWN_API ABrixTownActor : public AActor
 public:
 	ABrixTownActor();
 	void Build(const FBrixCity& City);
+	// Where the lamps' and wall lanterns' light comes from (the slice's lights: x, height, z in metres and a strength), and
+	// their glass, which glows by night (ABrixLamps sets its material's Glow).
+	TArray<FVector4f> LampLights;
+	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> GlassMat;
 
 	UPROPERTY(Config) float StoreyHeight = 3.f;         // m a floor (WORLD_MAP; kit floor_h)
 	UPROPERTY(Config) float BlockSlabHeight = 0.12f;    // m, the block's paving above the street (slice Y_PAVE)
@@ -128,6 +132,8 @@ private:
 	UPROPERTY() TMap<FString, TObjectPtr<UStaticMesh>> KitMeshes;
 	UPROPERTY() TMap<uint32, TObjectPtr<UMaterialInstanceDynamic>> Colours;
 	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> OwnColour;
+	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Glass;
+	UInstancedStaticMeshComponent* GlassGroup();
 	TMap<UInstancedStaticMeshComponent*, FPending> Pending;   // instances gathered per group, added in one go
 	const FBrixCity* CityData = nullptr;
 	int32 Buildings = 0, Openings = 0;

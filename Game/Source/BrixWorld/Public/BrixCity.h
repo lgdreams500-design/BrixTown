@@ -101,6 +101,7 @@ struct BRIXWORLD_API FBrixProp
 	FString Along;                           // "x" or "z": the way a bench, rack or planter runs
 	FVector2D Out = FVector2D::ZeroVector;   // the way it faces out (a wall lantern, a postbox)
 	float R = 0.f, Height = 0.f, Face = 0.f; // a fountain's radius, a lantern's height, a stall's side (+1 or -1)
+	float Power = 0.f;                       // a wall lantern's watts
 	bool bGrand = false, bBig = false;
 	int32 Color = 0;
 };
