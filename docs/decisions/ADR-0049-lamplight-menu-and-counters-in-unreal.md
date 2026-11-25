@@ -1,7 +1,7 @@
 ---
 adr: ADR-0049
 title: "Lamplight": the Unreal build's game menu, counters and buy menu in one look of warm stone cards
-status: proposed        # built on the owner's word in chat, 2026-11-25; awaiting the owner's verdict on the result
+status: accepted        # the owner in chat, 2026-11-25, after seeing the shots: "accept lamplight"
 date: 2026-11-25
 relates_to: [UI-005, UI-006, UI-007, UI-008, UI-009, UI-010, UI-011, UI-015, UI-016, UI-019, UI-020, ADR-0033, ADR-0044, ADR-0004]
 supersedes_in_part: [ADR-0033]   # the look of the menu in the Unreal build, not its pages, groups or colours
@@ -22,6 +22,8 @@ overall game styling. feel free to come up with a better one".
 | **Lamplight: warm dark stone cards, rounded and chunky, the town dimmed behind; the page colours of ADR-0033 kept as lintels and marks; paper price tags in the store** | One look for every screen of the game; built from the art direction's own rules (W1, W3, W4, W6) | New; the slice is frozen (ADR-0045), so it keeps its own look |
 
 ## Decision
+The owner saw the shots of look test 36 and answered (2026-11-25): "accept lamplight".
+
 Lamplight, for every screen ABrixLife draws: the game menu, the bank's, shops' and the market's counters and the buy menu
 (`Game/Source/BrixTown/Public/BrixLook.h`).
 
@@ -42,12 +44,12 @@ Lamplight, for every screen ABrixLife draws: the game menu, the bank's, shops' a
   game; cream on stone, dark on colour.
 
 ## Consequences
-- The look is new for the interface only; nothing in the town changes (ADR-0004). It needs the owner's verdict: the shots
-  are in `Art/StyleTests/lamplight_menu_36/` (the menu's home, Me, Belongings, Journal, Settings, Help; the grocer's counter,
-  before and after).
-- ART_DIRECTION §2.7 (Painted signs) stays the slice's; for the Unreal build this record holds until it is accepted, then
-  §2.7 is rewritten to match. The colours of the cards are in `BrixLook.h` for now; if accepted they move to settings.json
-  `menu` beside the page colours (TECH-005).
+- The look is new for the interface only; nothing in the town changes (ADR-0004). The shots are in
+  `Art/StyleTests/lamplight_menu_36/` (the menu's home, Me, Belongings, Journal, Settings, Help; the grocer's counter, before
+  and after).
+- ART_DIRECTION §2.7 describes Lamplight (rules L1 to L6); Painted signs stays the frozen slice's look (ADR-0045). The
+  colours of the cards are data, settings.json `menu.lamplight`, beside the page colours (TECH-005), checked by
+  world.settings_problems() and its port.
 - The conversation box, the purse, the tracker and the toasts keep their earlier look; bringing them to Lamplight is for
   the owner to say.
 - The live face on the Me page and in the top bar (UI-017) is not drawn yet in the Unreal build.

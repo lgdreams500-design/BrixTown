@@ -29,6 +29,7 @@ struct BRIXWORLD_API FBrixSettings
 	TArray<FBrixMenuTab> Tabs;
 	TArray<TPair<FString, FString>> MenuGroups;   // you, town, game
 	TMap<FString, TPair<FColor, FColor>> Colours;
+	TMap<FString, FColor> Lamplight;          // menu.lamplight: the cards' colours (ADR-0049); the veil's alpha in Lamplight["veil"].A
 	TArray<TPair<FString, FString>> Contexts, Actions;   // id, words; an action's context in ActionContext
 	TMap<FString, FString> ActionContext;
 	TMap<FString, TMap<FString, TArray<FString>>> Platforms;   // platform -> action -> controls

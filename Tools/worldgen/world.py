@@ -1775,6 +1775,9 @@ def design_problems(w, ds=None):
     return out
 
 
+LAMPLIGHT = ("stone", "stone_deep", "stone_lift", "cream", "dim", "ink", "lantern", "paper", "short_tag", "good", "bad", "veil")   # ADR-0049
+
+
 def settings_problems(w):
     """Every rule World/rules/settings.json must keep (UI-005, UI-008 to UI-010): each setting's default fits its type and
     range; every menu tab names an action; every platform binds every action, and no control does two things where both
@@ -1815,6 +1818,14 @@ def settings_problems(w):
             out.append("menu colour %s: needs a board colour and a lettering colour, as #rrggbb" % k)
     if "quiet" not in S["menu"].get("colours", {}):
         out.append("menu colours: no quiet colour for the small boards")
+    LL = S["menu"].get("lamplight", {})                                               # ADR-0049: the cards' colours, as #rrggbb
+    for k in LAMPLIGHT:
+        c = LL.get(k)
+        if not (isinstance(c, str) and len(c) == 7 and c[0] == "#" and all(x in "0123456789abcdefABCDEF" for x in c[1:])):
+            out.append("menu lamplight.%s: needs a colour as #rrggbb" % k)
+    va = LL.get("veil_alpha")
+    if not (isinstance(va, (int, float)) and not isinstance(va, bool) and 0 < va < 1):
+        out.append("menu lamplight.veil_alpha: needs a number between 0 and 1")
     L = S["menu"].get("live", {})                                                     # UI-017: the camera on the player in the menu
     for k in ("face_d", "face_y", "face_m", "body_y", "body_m", "body_fill"):
         if not (isinstance(L.get(k), (int, float)) and not isinstance(L.get(k), bool) and L[k] > 0):

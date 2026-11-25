@@ -46,6 +46,10 @@ Then, still that day, the owner asked to improve the menu's look and feel and ho
 
 ### 1.1 How it looks and where things are (ADR-0033, ART_DIRECTION §2.7)
 
+In the Unreal build the menu, the counters and the buy menu are "Lamplight" (ADR-0049, accepted 2026-11-25: warm stone
+cards, the town dimmed behind, the page colours below as lintels and marks, paper price tags). Where things are, the
+groups, the pages and their colours are as described here; the painted boards are the slice's.
+
 The menu fills the screen over the veiled game. A bar on top always shows who you are, the day, the time, your cash and
 **Back to town**. Esc opens the menu on its **home screen**: a painted board for every page, in that page's colour, with its
 headline on it (Me with your face, the day and who thinks well of you; Money with what you have in all and what you owe;

@@ -14,4 +14,4 @@ Test shots of the Unreal build (1600 x 900 at the laptop's display scale, High),
 | `counter_grocer.png` | A shop's counter and buy menu in Lamplight | `-BrixCounter=grocer` |
 | `before_counter_grocer.png` | The same counter in the slice's dark box, before | |
 
-Proposed by Claude on the owner's word (2026-11-25); not yet accepted.
+Proposed by Claude on the owner's word and accepted by the owner, 2026-11-25: "accept lamplight" (ADR-0049).

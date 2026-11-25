@@ -12,6 +12,9 @@
       "lantern": ["#e0964e", "#1c1b21"], "ochre": ["#a8843f", "#fbf3e0"], "terracotta": ["#a35a44", "#fbf3e0"], "teal": ["#3f7273", "#fbf3e0"], "blue": ["#55698c", "#fbf3e0"],
       "plum": ["#6c5578", "#fbf3e0"], "olive": ["#6b7245", "#fbf3e0"], "brown": ["#77583f", "#fbf3e0"], "stone": ["#6a6871", "#fbf3e0"], "quiet": ["#3b3c4a", "#e8dfc9"]
     },
+    "lamplight": { "note": "The look of the Unreal build's menu, counters and buy menu (ADR-0049, accepted 2026-11-25): stone the cards, stone_deep their lower edge and wells, stone_lift a field or a row picked, cream and dim the lettering, ink the lettering on colour, lantern the main action, paper a price tag, short_tag a price the purse cannot meet, veil the town behind the menu (with veil_alpha). sRGB.",
+      "stone": "#2b2723", "stone_deep": "#1e1b18", "stone_lift": "#38332d", "cream": "#efe4cc", "dim": "#a99d86", "ink": "#1c1b21",
+      "lantern": "#e0964e", "paper": "#e9dcbe", "short_tag": "#7a4234", "good": "#9fd1a0", "bad": "#e9907a", "veil": "#140f0c", "veil_alpha": 0.59 },
     "tabs": [
       { "id": "me", "name": "Me", "action": "me", "group": "you", "colour": "lantern", "board": "tall" },
       { "id": "wallet", "name": "Money", "action": "money", "group": "you", "colour": "ochre" },

@@ -338,7 +338,7 @@ F-PROP-STORAGE, the big map), and Save shows its three slots but cannot save yet
 resolution and the Picture choice that sets them together, field of view, the frame counter, sound on or off and its
 level, text size, look speed, invert and camera distance. Names over residents, the minimap, first person and the
 separate sound levels are kept for when those come. The menu, the counters and the buy menu are in "Lamplight"
-(ADR-0049, proposed on the owner's word, `BrixLook.h`): cards of warm dark stone with round corners and a thick lower edge,
+(ADR-0049, accepted by the owner; `BrixLook.h`, its colours in settings.json `menu.lamplight`): cards of warm dark stone with round corners and a thick lower edge,
 the town dimmed behind, each page's colour as its lintel and mark, lantern-orange main buttons, prices on paper tags, the
 goods on plinths in a pool of lantern light. Shots: `Art/StyleTests/lamplight_menu_36/`. To see a page in a test shot:
 `-BrixMenu=<home|me|wallet|quests|belongings|settings|help|...>` (and `-BrixSettingsGroup=<n>`); the shot is taken by the

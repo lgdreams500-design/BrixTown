@@ -63,6 +63,8 @@ bool FUI009_BadSettingIsCaught::RunTest(const FString&)
 	const TArray<FString> P = BrixSettingsProblems(J);
 	TestTrue(TEXT("a range's default out of range is caught"), Has(P, TEXT("setting graphics.field_of_view")));
 	TestTrue(TEXT("a switch's default that is not yes or no is caught"), Has(P, TEXT("setting audio.sound")));
+	J->GetObjectField(TEXT("menu"))->GetObjectField(TEXT("lamplight"))->SetStringField(TEXT("stone"), TEXT("dark"));
+	TestTrue(TEXT("a Lamplight colour that is not #rrggbb is caught (ADR-0049)"), Has(BrixSettingsProblems(J), TEXT("menu lamplight.stone")));
 	FBrixSettings S;
 	FString Error;
 	TestFalse(TEXT("broken settings are not used"), ParseBrixSettings(J, S, Error));
