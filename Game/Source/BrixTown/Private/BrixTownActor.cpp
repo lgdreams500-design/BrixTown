@@ -108,7 +108,9 @@ UMaterialInstanceDynamic* ABrixTownActor::Own()
 
 UInstancedStaticMeshComponent* ABrixTownActor::Group(UStaticMesh* Mesh, bool bCollide, float CullM, bool bClear)
 {
-	const FString Key = Mesh->GetName() + (bCollide ? TEXT("") : TEXT("_NoCollision")) + (bClear ? TEXT("_Clear") : TEXT(""));
+	// (the distance it is drawn to is part of what a group is: without it the box's small things, drawn to
+	// GardenCullDistance, and its large ones, drawn however far, were one group, and the large ones went at 150 m too)
+	const FString Key = Mesh->GetName() + (bCollide ? TEXT("") : TEXT("_NoCollision")) + (bClear ? TEXT("_Clear") : TEXT("")) + (CullM > 0.f ? FString::Printf(TEXT("_To%d"), (int32)CullM) : FString());
 	if (TObjectPtr<UInstancedStaticMeshComponent>* Found = Parts.Find(Key)) return *Found;
 	UInstancedStaticMeshComponent* G = NewObject<UInstancedStaticMeshComponent>(this, *Key);
 	G->SetupAttachment(RootComponent);

@@ -1,4 +1,5 @@
 #include "BrixCharacter.h"
+#include "Framework/Application/SlateApplication.h"
 #include "BrixMallActor.h"
 
 #include "BrixCarsActor.h"
@@ -207,10 +208,29 @@ void ABrixCharacter::StopRun() { GetCharacterMovement()->MaxWalkSpeed = WalkSpee
 
 bool ABrixCharacter::CameraFree() const { return GetWorld()->GetTimeSeconds() - LookedAt > LookHoldSeconds; }
 
+void ABrixCharacter::RideCamera(float DeltaSeconds)
+{
+	if (RideArm <= 0.f) return;
+	const FVector From = Boom->GetComponentLocation();
+	const FVector To = From - GetControlRotation().Vector() * RideArm + FVector(0, 0, Boom->SocketOffset.Z);
+	FHitResult Hit;
+	FCollisionQueryParams Q(TEXT("BrixRideCamera"), false, this);
+	float Want = RideArm;
+	if (GetWorld()->SweepSingleByChannel(Hit, From, To, FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(12.f), Q))
+	{
+		RideBlocked += DeltaSeconds;
+		if (RideBlocked >= RideBlockSeconds) Want = FMath::Max(150.f, RideArm * Hit.Time - 20.f);
+		else Want = Boom->TargetArmLength;   // not yet: stay
+	}
+	else RideBlocked = 0.f;
+	Boom->TargetArmLength = FMath::FInterpTo(Boom->TargetArmLength, Want, DeltaSeconds, Want < Boom->TargetArmLength ? 8.f : 2.f);
+}
+
 void ABrixCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	if (!Rules.Roles.Num()) return;
+	if (bDriving) RideCamera(DeltaSeconds);
 	{
 		// the camera pushed in against the player by a wall looks out through an undrawn body, not from inside one
 		const bool bSeen = bDesigning || FVector::Dist(Camera->GetComponentLocation(), GetActorLocation() + FVector(0, 0, 60)) > HideBodyWithin * CmPerM;
@@ -535,13 +555,15 @@ void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whic
 	{
 		if (!C->Enter(Car)) return;
 		bDriving = true;
-		Boom->bDoCollisionTest = false;   // 8.5 m behind a car the arm met every lamp post and corner passed, and the camera jumped in and out
+		Boom->bDoCollisionTest = false;   // 8.5 m behind a car the arm met every lamp post and corner passed, and the camera jumped in and out (RideCamera)
 		SetActorEnableCollision(false);
 		GetCharacterMovement()->StopMovementImmediately();
 		GetCharacterMovement()->DisableMovement();
-		Boom->TargetArmLength = FMath::Max(Boom->TargetArmLength, (ABrixCars::IsTram(Car) ? 13.f : C->IsBus(Car) ? 11.f : 8.5f) * CmPerM);   // back a way, to see the car, the bus or the tram
+		Boom->TargetArmLength = FMath::Max(Boom->TargetArmLength, (ABrixCars::IsTram(Car) ? 17.f : C->IsBus(Car) ? 15.f : 8.5f) * CmPerM);   // back a way, to see the car, the bus or the tram (a bus is 11 m long: from 11 m behind a seat at its front the camera sat over its roof; further back and flatter it is behind the bus and under the trees' crowns, which do not stop it)
+		RideArm = Boom->TargetArmLength;
+		RideBlocked = 0.f;
 		if (APlayerController* PC = Cast<APlayerController>(GetController()))   // looking along the car, a little down on it
-			PC->SetControlRotation(FRotator(-12.0, FMath::RadiansToDegrees(C->Driving().A), 0));
+			PC->SetControlRotation(FRotator(ABrixCars::IsTram(Car) || C->IsBus(Car) ? -5.0 : -12.0, FMath::RadiansToDegrees(C->Driving().A), 0));
 		return;
 	}
 	if (T) T->Open();
@@ -692,6 +714,7 @@ void ABrixCharacter::EndPanel()
 	{
 		PC->bShowMouseCursor = false;
 		PC->SetInputMode(FInputModeGameOnly());
+		if (FSlateApplication::IsInitialized()) FSlateApplication::Get().SetAllUserFocusToGameViewport();   // the mouse turns the camera again without a click
 	}
 }
 
