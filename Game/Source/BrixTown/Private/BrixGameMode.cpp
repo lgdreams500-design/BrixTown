@@ -7,6 +7,7 @@
 #include "BrixCars.h"
 #include "BrixCarsActor.h"
 #include "BrixCrashActor.h"
+#include "BrixWeatherActor.h"
 #include "BrixLamps.h"
 #include "BrixLifeActor.h"
 #include "BrixPeople.h"
@@ -103,6 +104,8 @@ void ABrixGameMode::StartPlay()
 		Town->Build(*City);
 		Crash = GetWorld()->SpawnActor<ABrixCrash>();
 		Crash->Start(Town, *City, StartDay);
+		Weather = GetWorld()->SpawnActor<ABrixWeather>();
+		Weather->Start(*City, Town);
 		TownActor = Town;
 		// the inside of every hollow building, to know when the camera is indoors (CITY-013)
 		int32 Lk = 0;
@@ -405,18 +408,22 @@ void ABrixGameMode::UpdateSun()
 	Light->SetLightColor(FMath::Lerp(SunDawnColour, SunColour, Low));
 	const float Light01 = (float)S.Daylight(Season, Minute);
 	Daylight = Light01;
-	Light->SetIntensity(SunLux * Light01);
+	// the weather (WLD-037, ADR-0016): cloud, rain and fog keep sunlight off the street, and part of it comes down as soft
+	// grey light from the whole sky; the air thickens
+	const bool bWx = Weather && Weather->bOn;
+	const float SunLet = bWx ? (float)Weather->Now.Sun : 1.f;
+	Light->SetIntensity(SunLux * Light01 * SunLet);
 	// the sky's fill and the haze's glow go down with the day, and the haze takes the low sun's colour (lighting(): fog and sky
 	// mix towards the night's as the day goes)
 	const float Fill = FMath::Lerp(NightFill, 1.f, Light01);
-	if (SkyFill) SkyFill->SetIntensity(SkyLightIntensity * Fill);
+	if (SkyFill) SkyFill->SetIntensity(SkyLightIntensity * Fill * (1.f + (bWx ? Weather->OvercastSkyGain * (float)Weather->Rules.OvercastFill * (1.f - SunLet) * Light01 : 0.f)));
 	if (HazeFog) HazeFog->SetFogInscatteringColor(HazeColour * Fill * FMath::Lerp(SunDawnColour, FLinearColor::White, Low));
 	// little haze indoors (play.js: the fog is cut by 0.85 inside): the height fog is not shut out by walls
 	if (HazeFog)
 	{
 		const APlayerCameraManager* Cam = UGameplayStatics::GetPlayerCameraManager(this, 0);
 		const bool bIndoors = Cam && RoomAt(Cam->GetCameraLocation()) != INDEX_NONE;
-		HazeFog->SetFogDensity(HazeDensity * (bIndoors ? IndoorHaze : 1.f));
+		HazeFog->SetFogDensity(HazeDensity * (bIndoors ? IndoorHaze : 1.f) * (bWx ? (float)Weather->Now.Haze : 1.f));
 	}
 }
 

@@ -98,9 +98,11 @@ for src, name in ((pos, "Pos"), (nrm, "N"), (pick, "Base"), (p0, "P0"), (p1, "P1
     lib.connect_material_expressions(src, "", surface, name)
 lib.connect_material_property(surface, "", unreal.MaterialProperty.MP_BASE_COLOR)
 
-rough = lib.create_material_expression(mat, unreal.MaterialExpressionConstant, -300, 220)
-rough.set_editor_property("r", ROUGHNESS)
-lib.connect_material_property(rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
+# wet paving in rain (WLD-037, ADR-0016): base colour and roughness through greybox_wet.py's nodes; matte (ROUGHNESS) when dry
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import greybox_wet
+greybox_wet.add_wet(mat, surface)
 
 lib.recompile_material(mat)
 unreal.EditorAssetLibrary.save_asset(full, only_if_is_dirty=False)
