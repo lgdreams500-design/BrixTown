@@ -162,8 +162,13 @@ bool FCITY103_BoardsAreBoughtAsPython::RunTest(const FString&)
 	TestEqual(TEXT("three kinds of board, priced (CITY-102)"), E.R.Boards.Num(), 3);
 	int64 Last = 0;
 	for (const FString& K : E.R.BoardOrder) { TestTrue(K + TEXT(" costs more than the one before"), E.BoardPrice(K) > Last); Last = E.BoardPrice(K); }
-	const int32 Skate = (int32)Shops->GetNumberField(TEXT("skate"));
-	TestEqual(TEXT("the skate store is a shop lot of the skate kind"), E.ShopKind(Skate), FString(TEXT("skate")));
+	// the outlets the run buys at (economy.py board_places()): the first sports, toy and clothes outlet of the mall
+	auto Place = [&](const FString& K, int32& N, FString& U) { const TArray<TSharedPtr<FJsonValue>>& P = Shops->GetArrayField(K); N = (int32)P[0]->AsNumber(); U = P[1]->AsString(); };
+	int32 Ns = 0; FString Us;
+	Place(TEXT("sports"), Ns, Us);
+	TestTrue(TEXT("a sports outlet sells boards (ADR-0054)"), E.SellsBoards(Ns, Us));
+	{ int32 Nc = 0; FString Uc; Place(TEXT("clothes"), Nc, Uc); TestFalse(TEXT("a clothes outlet does not"), E.SellsBoards(Nc, Uc)); }
+	for (int32 k = 0; k < Life.Lots.Num(); ++k) TestFalse(TEXT("no skate store of its own"), E.ShopKind(k) == TEXT("skate"));
 	FString InUse;
 	TArray<FString> Results, Uses;
 	for (const TSharedPtr<FJsonValue>& OpV : C->GetArrayField(TEXT("script")))
@@ -175,7 +180,7 @@ bool FCITY103_BoardsAreBoughtAsPython::RunTest(const FString&)
 		else if (Name == TEXT("open")) bOk = E.OpenAccount(Op[1]->AsString());
 		else if (Name == TEXT("advance")) E.Advance((int32)Num(Op[1]), Op[2]->AsNumber());
 		else if (Name == TEXT("loan")) bOk = E.TakeLoan(Num(Op[1]), (int32)Num(Op[2]));
-		else if (Name == TEXT("board")) { bOk = E.BuyBoard((int32)Shops->GetNumberField(Op[1]->AsString()), Op[2]->AsString()); if (bOk) InUse = FBrixEconomy::BoardInUse(E.R, InUse, Op[2]->AsString()); }
+		else if (Name == TEXT("board")) { int32 N = 0; FString U; Place(Op[1]->AsString(), N, U); bOk = E.BuyBoard(N, U, Op[2]->AsString()); if (bOk) InUse = FBrixEconomy::BoardInUse(E.R, InUse, Op[2]->AsString()); }
 		else AddError(TEXT("an op the port does not know: ") + Name);
 		Results.Add(bOk ? TEXT("ok") : TEXT("refused"));
 		Uses.Add(InUse);
@@ -183,7 +188,7 @@ bool FCITY103_BoardsAreBoughtAsPython::RunTest(const FString&)
 	auto Join = [](const TArray<FString>& A) { return FString::Join(A, TEXT(" ")); };
 	auto JoinJ = [](const TArray<TSharedPtr<FJsonValue>>& A) { TArray<FString> S; for (const auto& V : A) S.Add(V->IsNull() ? FString() : V->AsString()); return FString::Join(S, TEXT(" ")); };
 	TestEqual(TEXT("each op ok or refused, as Python"), Join(Results), JoinJ(Want->GetArrayField(TEXT("results"))));
-	TestEqual(TEXT("the boards owned, in the store's order"), Join(E.Boards), JoinJ(Want->GetArrayField(TEXT("boards"))));
+	TestEqual(TEXT("the boards owned, in the boards' order"), Join(E.Boards), JoinJ(Want->GetArrayField(TEXT("boards"))));
 	TestEqual(TEXT("the board in use after each op"), Join(Uses), JoinJ(Want->GetArrayField(TEXT("uses"))));
 	for (const auto& B : Want->GetObjectField(TEXT("balances"))->Values)
 		TestEqual(TEXT("the balance of ") + FString(B.Key.ToView()), E.L.Balance(FString(B.Key.ToView())), Num(B.Value));
@@ -197,7 +202,7 @@ bool FCITY103_BoardsAreBoughtAsPython::RunTest(const FString&)
 	FString Why;
 	TestTrue(TEXT("the save loads"), BrixEconomyLoad(F, *BrixEconomySave(E), Why));
 	TestEqual(TEXT("the boards come back from the save"), Join(F.Boards), Join(E.Boards));
-	TestFalse(TEXT("an owned kind is not sold again after loading"), F.BuyBoard(Skate, TEXT("manual")));
+	TestFalse(TEXT("an owned kind is not sold again after loading"), F.BuyBoard(Ns, Us, TEXT("manual")));
 	return true;
 }
 
