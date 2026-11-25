@@ -38,6 +38,9 @@ public:
 	// answers (conversations.js open()); and ends (close()).
 	void BeginTalk(const FVector& Them, float CameraM);
 	void EndTalk();
+	// A counter or the money page opens (life.js open()): the player stands, the mouse is free; and closes.
+	void BeginPanel();
+	void EndPanel();
 	// for test shots: press E as a player would, and hold W/S and A/D (x steer, y throttle)
 	void TestPress() { TalkKey(); }
 	FVector2D TestHold = FVector2D::ZeroVector;
@@ -53,7 +56,10 @@ private:
 	void StopRun();
 	void TalkKey();                  // E: talk to the resident the player is next to (CITY-007)
 	void AnswerKey(const FInputActionInstance& Instance);   // 1 to 9: an answer
-	void LeaveKey();                 // Esc: leave the talk
+	void LeaveKey();                 // Esc: leave the talk, or close a counter or the money page
+	void CounterKey();               // B: the counter here (life.js counter())
+	void WalletKey();                // I: the money page
+	class ABrixLife* Life() const;
 	void JumpKey();                  // Space: a jump on foot, the handbrake in a car
 	void JumpEnd();
 	class ABrixCars* Cars() const;
@@ -75,8 +81,11 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UInputAction> RunAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> TalkAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> LeaveAction;
+	UPROPERTY(Transient) TObjectPtr<UInputAction> CounterAction;
+	UPROPERTY(Transient) TObjectPtr<UInputAction> WalletAction;
 	UPROPERTY(Transient) TArray<TObjectPtr<UInputAction>> AnswerActions;
 	bool bTalking = false;
+	bool bPanel = false;
 	bool bDriving = false, bHandbrake = false;
 	FVector2D DriveIn = FVector2D::ZeroVector;   // this frame's W/S and A/D while driving
 	float ArmBefore = 0.f;

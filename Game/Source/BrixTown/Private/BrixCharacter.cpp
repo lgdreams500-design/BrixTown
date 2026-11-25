@@ -2,6 +2,7 @@
 
 #include "BrixCarsActor.h"
 #include "BrixGameMode.h"
+#include "BrixLifeActor.h"
 #include "BrixPeople.h"
 #include "BrixTalkActor.h"
 #include "BrixUnits.h"
@@ -70,6 +71,8 @@ void ABrixCharacter::MakeInput()
 	RunAction = NewObject<UInputAction>(this, TEXT("Run"));
 	TalkAction = NewObject<UInputAction>(this, TEXT("Talk"));
 	LeaveAction = NewObject<UInputAction>(this, TEXT("Leave"));
+	CounterAction = NewObject<UInputAction>(this, TEXT("Counter"));
+	WalletAction = NewObject<UInputAction>(this, TEXT("Wallet"));
 	for (int32 n = 0; n < 9; ++n) AnswerActions.Add(NewObject<UInputAction>(this, *FString::Printf(TEXT("Answer%d"), n + 1)));
 
 	// Move is (right, forward): D and A on x, W and S on y.
@@ -93,6 +96,8 @@ void ABrixCharacter::MakeInput()
 	Keys->MapKey(RunAction, EKeys::LeftShift);
 	Keys->MapKey(TalkAction, EKeys::E);
 	Keys->MapKey(LeaveAction, EKeys::Escape);
+	Keys->MapKey(CounterAction, EKeys::B);
+	Keys->MapKey(WalletAction, EKeys::I);
 	const FKey Digits[9] = { EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four, EKeys::Five, EKeys::Six, EKeys::Seven, EKeys::Eight, EKeys::Nine };
 	const FKey Pad[9] = { EKeys::NumPadOne, EKeys::NumPadTwo, EKeys::NumPadThree, EKeys::NumPadFour, EKeys::NumPadFive, EKeys::NumPadSix, EKeys::NumPadSeven, EKeys::NumPadEight, EKeys::NumPadNine };
 	for (int32 n = 0; n < 9; ++n) { Keys->MapKey(AnswerActions[n], Digits[n]); Keys->MapKey(AnswerActions[n], Pad[n]); }
@@ -125,6 +130,8 @@ void ABrixCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		In->BindAction(RunAction, ETriggerEvent::Completed, this, &ABrixCharacter::StopRun);
 		In->BindAction(TalkAction, ETriggerEvent::Started, this, &ABrixCharacter::TalkKey);
 		In->BindAction(LeaveAction, ETriggerEvent::Started, this, &ABrixCharacter::LeaveKey);
+		In->BindAction(CounterAction, ETriggerEvent::Started, this, &ABrixCharacter::CounterKey);
+		In->BindAction(WalletAction, ETriggerEvent::Started, this, &ABrixCharacter::WalletKey);
 		for (UInputAction* A : AnswerActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::AnswerKey);
 	}
 }
@@ -133,7 +140,7 @@ void ABrixCharacter::Move(const FInputActionValue& Value)
 {
 	const FVector2D V = Value.Get<FVector2D>();
 	if (bDriving) { DriveIn = V; return; }   // W/S the speed, A/D the steering
-	if (!Controller || bTalking) return;   // a talk holds the player still (conversations.js open())
+	if (!Controller || bTalking || bPanel) return;   // a talk or a counter holds the player still (conversations.js open())
 	const FRotator Yaw(0.f, Controller->GetControlRotation().Yaw, 0.f);
 	AddMovementInput(FRotationMatrix(Yaw).GetUnitAxis(EAxis::X), V.Y);
 	AddMovementInput(FRotationMatrix(Yaw).GetUnitAxis(EAxis::Y), V.X);
@@ -141,7 +148,7 @@ void ABrixCharacter::Move(const FInputActionValue& Value)
 
 void ABrixCharacter::Look(const FInputActionValue& Value)
 {
-	if (bTalking) return;
+	if (bTalking || bPanel) return;
 	const FVector2D V = Value.Get<FVector2D>();
 	AddControllerYawInput(V.X);
 	AddControllerPitchInput(-V.Y);
@@ -299,7 +306,49 @@ void ABrixCharacter::AnswerKey(const FInputActionInstance& Instance)
 
 void ABrixCharacter::LeaveKey()
 {
+	if (ABrixLife* L = Life()) if (L->IsOpen()) { L->Close(); return; }
 	if (ABrixTalk* T = Talk()) T->Close();
+}
+
+ABrixLife* ABrixCharacter::Life() const
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	return Mode ? Mode->Life : nullptr;
+}
+
+void ABrixCharacter::CounterKey()
+{
+	if (bDriving || bTalking) return;
+	if (ABrixLife* L = Life()) L->CounterKey();
+}
+
+void ABrixCharacter::WalletKey()
+{
+	if (bDriving || bTalking) return;
+	if (ABrixLife* L = Life()) L->WalletKey();
+}
+
+void ABrixCharacter::BeginPanel()
+{
+	bPanel = true;
+	GetCharacterMovement()->StopMovementImmediately();
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		PC->bShowMouseCursor = true;
+		FInputModeGameAndUI Mode;
+		Mode.SetHideCursorDuringCapture(false);
+		PC->SetInputMode(Mode);
+	}
+}
+
+void ABrixCharacter::EndPanel()
+{
+	bPanel = false;
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		PC->bShowMouseCursor = false;
+		PC->SetInputMode(FInputModeGameOnly());
+	}
 }
 
 void ABrixCharacter::BeginTalk(const FVector& Them, float CameraM)

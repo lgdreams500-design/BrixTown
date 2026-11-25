@@ -11,6 +11,7 @@ struct FBrixCity;
 //   -BrixShot=<file.png>              take a screenshot after the town has settled, then quit
 //   -BrixCam=<x>,<z>,<height>,<yaw>,<pitch>   look from there instead of the player (metres, degrees; yaw 0 = east)
 //   -BrixDay=<day> -BrixTime=<hh:mm>           start on another day or at another time (the sun follows)
+//   -BrixCounter=bank (with -BrixLife=<ops>)   stand at a counter and open it (ABrixLife)
 UCLASS(Config = Game)
 class BRIXTOWN_API ABrixGameMode : public AGameModeBase
 {
@@ -28,6 +29,7 @@ public:
 	float Daylight = 1.f;                         // the sun's share of its light now, 0 at night (FBrixSky::Daylight)
 	UPROPERTY() TObjectPtr<class ABrixTalk> Talk;    // conversations with residents (CITY-007)
 	UPROPERTY() TObjectPtr<class ABrixCars> Cars;    // the day's vehicles, and the one the player drives
+	UPROPERTY() TObjectPtr<class ABrixLife> Life;    // the player's money, the bank, shops and quests (ADR-0012)
 
 	UPROPERTY(Config) FString CityDir = TEXT("../World/city_01");   // from the project folder (Game/)
 	UPROPERTY(Config) FString DayFile = TEXT("Data/day.json");      // the residents' day, written by Tools/worldgen/build_play.py

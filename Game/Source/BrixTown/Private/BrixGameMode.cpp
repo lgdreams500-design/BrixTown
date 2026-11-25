@@ -6,6 +6,7 @@
 #include "BrixCars.h"
 #include "BrixCarsActor.h"
 #include "BrixLamps.h"
+#include "BrixLifeActor.h"
 #include "BrixPeople.h"
 #include "BrixTalkActor.h"
 #include "BrixTownActor.h"
@@ -111,6 +112,11 @@ void ABrixGameMode::StartPlay()
 			Talk->Start(*City, Today, People);
 		}
 	}
+	if (City)
+	{
+		Life = GetWorld()->SpawnActor<ABrixLife>();   // money and the bank (ADR-0012)
+		Life->Start(*City);
+	}
 	SpawnLight();
 	Super::StartPlay();
 
@@ -192,6 +198,21 @@ void ABrixGameMode::StartPlay()
 				Hold.ParseIntoArray(V, TEXT(","));
 				if (V.Num() == 2) Me->TestHold = FVector2D(FCString::Atof(*V[0]), FCString::Atof(*V[1]));
 			}, 0.3f, false);
+		}, ShotDelaySeconds / 3, false);
+	}
+	// -BrixCounter=bank (with -BrixLife=open,current;loan,5000,3...): a third of the way into a test shot's wait the ops are
+	// done as the player would at the counter, then the player is put at its door and the counter opened
+	FString CounterAt;
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixCounter="), CounterAt) && Life)
+	{
+		FString Ops;
+		FParse::Value(FCommandLine::Get(), TEXT("BrixLife="), Ops, false);
+		FTimerHandle H;
+		GetWorldTimerManager().SetTimer(H, [this, CounterAt, Ops]()
+		{
+			if (!Life) return;
+			if (!Ops.IsEmpty()) Life->RunOps(Ops);
+			UE_LOG(LogTemp, Display, TEXT("Brix Town: the counter at %s: %s"), *CounterAt, Life->OpenCounterAt(CounterAt) ? TEXT("open") : TEXT("not there"));
 		}, ShotDelaySeconds / 3, false);
 	}
 	FString Shot;
