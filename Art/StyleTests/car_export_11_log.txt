@@ -1,19 +1,19 @@
-11:10:31 Blender 5.3.0
-11:10:31   kept whole: Body, L0, L1, Roof, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu, Waist
-11:10:31 small lod 0: 3186 triangles (body, wheels and lamps 2540 kept whole; other parts 944 -> x0.70)
-11:10:31   kept whole: Body, L0, L1, Roof, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu, Waist
-11:10:31 small lod 1: 820 triangles (body, wheels and lamps 684 kept whole; other parts 136 -> x1.00)
-11:10:31   kept whole: Body, L0, L1, Roof, Stripe, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu, Waist
-11:10:31 estate lod 0: 3158 triangles (body, wheels and lamps 2840 kept whole; other parts 1336 -> x0.27)
-11:10:31   kept whole: Body, L0, L1, Roof, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu, Waist
-11:10:31 estate lod 1: 888 triangles (body, wheels and lamps 684 kept whole; other parts 336 -> x0.64)
-11:10:31   kept whole: Body, L0, L1, Roof, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu, Waist
-11:10:31 pickup lod 0: 3180 triangles (body, wheels and lamps 2540 kept whole; other parts 1252 -> x0.53)
-11:10:31   kept whole: Body, L0, L1, Roof, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu, Waist
-11:10:31 pickup lod 1: 890 triangles (body, wheels and lamps 684 kept whole; other parts 356 -> x0.61)
-11:10:31   kept whole: Band, CabRoo, L0, L1, Load, Low, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu
-11:10:31 van lod 0: 3190 triangles (body, wheels and lamps 2840 kept whole; other parts 900 -> x0.40)
-11:10:31   kept whole: Band, CabRoo, L0, L1, Load, Low, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu
-11:10:31 van lod 1: 820 triangles (body, wheels and lamps 728 kept whole; other parts 92 -> x1.00)
-11:10:31 wrote C:/Projects/Wasted/Prototype/play/car_models.js (1376 KB)
-11:10:31 DONE
+01:35:07 Blender 5.3.0
+01:35:07   kept whole: Body, L0, L1, Roof, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu, Waist
+01:35:07 small lod 0: 3386 triangles (body, wheels and lamps 2632 kept whole; other parts 944 -> x0.81)
+01:35:07   kept whole: Body, L0, L1, Roof, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu, Waist
+01:35:07 small lod 1: 892 triangles (body, wheels and lamps 768 kept whole; other parts 136 -> x0.97)
+01:35:07   kept whole: Body, L0, L1, Roof, Stripe, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu, Waist
+01:35:07 estate lod 0: 3392 triangles (body, wheels and lamps 2968 kept whole; other parts 1336 -> x0.32)
+01:35:07   kept whole: Body, L0, L1, Roof, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu, Waist
+01:35:07 estate lod 1: 888 triangles (body, wheels and lamps 768 kept whole; other parts 336 -> x0.39)
+01:35:08   kept whole: Body, L0, L1, Roof, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu, Waist
+01:35:08 pickup lod 0: 3384 triangles (body, wheels and lamps 2632 kept whole; other parts 1252 -> x0.61)
+01:35:08   kept whole: Body, L0, L1, Roof, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu, Waist
+01:35:08 pickup lod 1: 896 triangles (body, wheels and lamps 768 kept whole; other parts 356 -> x0.37)
+01:35:08   kept whole: Band, CabRoo, L0, L1, Load, Low, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu
+01:35:08 van lod 0: 3390 triangles (body, wheels and lamps 2896 kept whole; other parts 900 -> x0.56)
+01:35:08   kept whole: Band, CabRoo, L0, L1, Load, Low, W0-1, W0-1_H, W01, W01_Hu, W1-1, W1-1_H, W11, W11_Hu
+01:35:08 van lod 1: 868 triangles (body, wheels and lamps 776 kept whole; other parts 92 -> x1.00)
+01:35:08 wrote C:/Projects/Wasted/.claude/worktrees/car-seat-board-obstruction-a953c5/Prototype/play/car_models.js (1453 KB)
+01:35:08 DONE
