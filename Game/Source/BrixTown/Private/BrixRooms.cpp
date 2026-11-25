@@ -246,6 +246,7 @@ UInstancedStaticMeshComponent* ABrixRooms::BoxGroup(bool bCollide)
 void ABrixRooms::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	FadeLights(DeltaSeconds);
 	Wait -= DeltaSeconds;
 	if (Wait > 0.f) return;
 	Wait = CheckSeconds;
@@ -281,10 +282,21 @@ void ABrixRooms::Tick(float DeltaSeconds)
 		InHome = i;
 		for (int32 f = 0; f < LH.FloorUp.Num(); ++f) if (EyeUp > LH.FloorUp[f] - 0.1f) OnFloor = f;
 	}
-	if (Want.Num() == Near.Num() && Want.Includes(Near) && InHome == CamHome && OnFloor == CamFloor) return;
-	Near = MoveTemp(Want);
+	// which floors are built turns on the camera's home and floor only in a building of more than two floors
+	auto Tall = [this](int32 h) { return Homes.IsValidIndex(h) && Homes[h].FloorUp.Num() > 2; };
+	const bool bFloors = InHome != CamHome ? Tall(InHome) || Tall(CamHome) : Tall(InHome) && OnFloor != CamFloor;
+	const bool bGrew = !Near.Includes(Want);
+	int32 Stale = 0;
+	for (const int32 i : Near)
+		if (!Want.Contains(i))
+		{
+			if (FVector2D::Distance(Eye, Homes[i].Centre) - Homes[i].Reach < NearMetres + KeepMetres) Want.Add(i);
+			else ++Stale;
+		}
 	CamHome = InHome;
 	CamFloor = OnFloor;
+	if (!bGrew && !bFloors && Stale < FMath::Max(DropAtOnce, 1)) return;
+	Near = MoveTemp(Want);
 	Rebuild();
 }
 
@@ -509,6 +521,9 @@ void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp, float Daylight)
 		for (UPointLightComponent* L : Lights) if (L) L->DestroyComponent();
 		Lights.Reset();
 		for (int32 n = 0; n < RoomLights; ++n) Lights.Add(MakeLamp(this, RootComponent, RoomLampWatts, RoomLampCone, n < RoomLampShadows));
+		LampAt.Init(FVector::ZeroVector, Lights.Num());
+		LampLevel.Init(0.f, Lights.Num());
+		LampHeld.Init(false, Lights.Num());
 	}
 	if (!Fill)
 	{
@@ -560,16 +575,77 @@ void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp, float Daylight)
 		Fill->SetWorldLocation(FVector(LH.Centre.X, LH.Centre.Y, (Floor0 + Ceil0) * 0.5f) * CmPerM);
 		const float Reach = FMath::Max(RoomLampReach, RoomFillReach * 2.f * LH.Reach) * CmPerM;
 		if (!FMath::IsNearlyEqual(Fill->AttenuationRadius, Reach, 1.f)) Fill->SetAttenuationRadius(Reach);
-		const float Level = FillNow(Daylight);
-		if (!FMath::IsNearlyEqual(Fill->Intensity, Level, 0.002f)) Fill->SetIntensity(Level);
+		FillFull = FillNow(Daylight);
 	}
-	if (Fill->IsVisible() != (In != INDEX_NONE)) Fill->SetVisibility(In != INDEX_NONE);
+	bFillWant = In != INDEX_NONE;
+	// the lamps that cast shadows stay where they are until another place is nearer by a good step, so that standing
+	// between two lamps does not swap them back and forth
+	const int32 Shadowed = FMath::Min(RoomLampShadows, Lights.Num());
+	for (FLamp& L : Lamps)
+		for (int32 n = 0; n < Shadowed; ++n)
+			if (LampHeld[n] && LampAt[n].Equals(L.At, 5.)) L.Far -= 1.5;
 	Lamps.Sort([](const FLamp& A, const FLamp& B) { return A.Far < B.Far; });
+	LampWant.Reset();
+	for (int32 n = 0; n < Lights.Num() && n < Lamps.Num(); ++n) LampWant.Add(Lamps[n].At);
+}
+
+// Every frame: the room's own light and its lamps towards what PlaceLights last wanted. A lamp that casts shadows wants
+// the place nearest the camera; it goes down where it is, moves dark, and comes up there, and the plain lamp that lit
+// that place goes down as it comes up. A plain lamp stays where it hangs for as long as that place is wanted.
+void ABrixRooms::FadeLights(float DeltaSeconds)
+{
+	if (!Fill || LampAt.Num() != Lights.Num()) return;
+	const float Step = DeltaSeconds / FMath::Max(LightFadeSeconds, .01f);
+	FillLevel = FMath::Clamp(FillLevel + (bFillWant ? Step : -Step), 0.f, 1.f);
+	const float FillTo = FillFull * FMath::SmoothStep(0.f, 1.f, FillLevel);
+	if (!FMath::IsNearlyEqual(Fill->Intensity, FillTo, 0.002f)) Fill->SetIntensity(FillTo);
+	if (Fill->IsVisible() != (FillLevel > 0.f)) Fill->SetVisibility(FillLevel > 0.f);
+
+	const int32 Shadowed = FMath::Min(RoomLampShadows, Lights.Num());
+	auto WantAt = [this](const FVector& P)
+	{
+		for (int32 i = 0; i < LampWant.Num(); ++i) if (LampWant[i].Equals(P, 5.)) return i;
+		return (int32)INDEX_NONE;
+	};
+	auto There = [this](int32 n) { return LampHeld[n] && LampWant.IsValidIndex(n) && LampAt[n].Equals(LampWant[n], 5.); };
+	TArray<bool, TInlineAllocator<8>> Taken, Up;
+	Taken.Init(false, LampWant.Num());
+	Up.Init(false, Lights.Num());
+	auto Hang = [this, &Up](int32 n, const FVector& At)
+	{
+		LampAt[n] = At;
+		LampHeld[n] = true;
+		Lights[n]->SetWorldLocation(At);
+		Up[n] = true;
+	};
+	for (int32 n = 0; n < Shadowed; ++n)
+	{
+		if (!LampWant.IsValidIndex(n)) { if (LampLevel[n] <= 0.f) LampHeld[n] = false; continue; }
+		Taken[n] = true;
+		if (There(n)) Up[n] = true;
+		else if (LampLevel[n] <= 0.f) Hang(n, LampWant[n]);
+	}
+	for (int32 n = Shadowed; n < Lights.Num(); ++n)
+	{
+		const int32 i = LampHeld[n] ? WantAt(LampAt[n]) : INDEX_NONE;
+		if (i == INDEX_NONE) continue;
+		if (i < Shadowed) Up[n] = !There(i);   // a shadowed lamp is on its way here: lit until it has come
+		else if (!Taken[i]) { Taken[i] = true; Up[n] = true; }
+	}
+	for (int32 n = Shadowed; n < Lights.Num(); ++n)
+	{
+		if (Up[n] || LampLevel[n] > 0.f) continue;
+		LampHeld[n] = false;
+		for (int32 i = Shadowed; i < LampWant.Num(); ++i)
+			if (!Taken[i]) { Taken[i] = true; Hang(n, LampWant[i]); break; }
+	}
+	const float Full = RoomLampWatts * CandelaPerWatt;
 	for (int32 n = 0; n < Lights.Num(); ++n)
 	{
-		const bool bOn = Lamps.IsValidIndex(n);
-		if (bOn) Lights[n]->SetWorldLocation(Lamps[n].At);
-		if (Lights[n]->IsVisible() != bOn) Lights[n]->SetVisibility(bOn);
+		LampLevel[n] = FMath::Clamp(LampLevel[n] + (Up[n] ? Step : -Step), 0.f, 1.f);
+		const float To = Full * FMath::SmoothStep(0.f, 1.f, LampLevel[n]);
+		if (!FMath::IsNearlyEqual(Lights[n]->Intensity, To, Full * 0.002f)) Lights[n]->SetIntensity(To);
+		if (Lights[n]->IsVisible() != (LampLevel[n] > 0.f)) Lights[n]->SetVisibility(LampLevel[n] > 0.f);
 	}
 }
 

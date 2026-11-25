@@ -244,6 +244,12 @@ git). `ABrixRooms` furnishes the homes within 30 m of the camera, and lights the
 lamps: 3 to 5 fps). What a room's light is, and how that is known, is under What a room's light should be.
 `-BrixStand=x,z,yaw` puts the player in a room for a shot.
 
+Furnishing is everything near cleared and made again, a long frame, and it ran at every few steps along a street of
+houses and at every doorway. A home furnished now stays so until it is `KeepMetres` (20) further off than `NearMetres`,
+homes are dropped `DropAtOnce` (8) together or when one comes near, and going in or out of a building of one or two
+floors furnishes nothing again (which floors are built turns on the camera's floor only in taller ones). Not yet: each
+home as its own pieces, made once and hidden or shown, so that nothing near is ever made again.
+
 ## Designed houses (ADR-0032, ADR-0035)
 The 469 designed houses (lot.house) are built as the slice builds them (houses.js outsideS): the 12 x 9 m house of
 `World/rules/home_plans.json` (house_12x9), two 3.3 m storeys on a 0.3 m plinth, its nine windows and front door where
@@ -277,6 +283,10 @@ stored: its place for the season at latitude 40 (World/rules/calendar.json, sky.
 checked by `WLD043_the_sun_follows_the_calendar`), its light from no lower than `sun_lift`, a dawn red as it sinks, the
 calendar's hour of dawn and dusk; the sky's fill and the haze's glow go down with the day. `-BrixDay=` and
 `-BrixTime=hh:mm` start elsewhere in the year or the day.
+
+The sun is turned only when it has moved `SunStepDegrees` (0.1, about every four seconds): turned every frame, the engine
+kept none of the town's shadow from one frame to the next and drew it all again each frame. Its colour and strength
+still follow the clock every frame.
 
 ## Residents (CITY-021, CITY-022, CITY-024)
 All 3,984 residents follow the built day's routines: `Game/Data/day.json`, written by `Tools/worldgen/build_play.py` in
@@ -408,6 +418,12 @@ standing at a stop gets on, a seat near the front, carried along its line with i
 E gets off when it next stands at a stop (and everyone gets off when it leaves service). The tram is ridden the same way
 (below). To see a drive in a test shot: `-BrixDrive=<vehicle> "-BrixHold=steer,throttle"`. 51.5 frames a second at High on a street
 with 32 vehicles drawn.
+
+The models' triangles are taken in the other order from the one they are written in (found in play, 2026-11-25): as
+they come they go round the wrong way for Unreal, which then drew each part's inside and left its outside out, so every
+car and van was a dark hollow with its riders' legs showing through the doors
+(`Art/StyleTests/unreal_play_bugs_44/cars_before_after.jpg`, against `Art/Reference/vehicles_soft_box.png`). Not yet:
+riding a bus, the camera sits low over its roof, which fills the bottom of the picture.
 
 ## Getting out of the way, and giving way (CITY-070, CITY-071, CITY-049)
 Residents on foot get out of the way of a car the player drives, as in the slice (dodge.js, `BrixWorld/BrixDodge`, numbers in
@@ -580,6 +596,21 @@ a park and Eastgate from 07:20 through dusk, night and dawn, in rain and fog, se
 and the reference rooms); `Tools/unreal/light_tour.ps1 -OutDir <folder>` runs it offscreen at High (add `-Extra "-BrixLightOff"` for the
 light before), and `Tools/unreal/shot_sheet.py` puts shots side by side with their mean brightness. Run one at a time:
 two at once hung the graphics chip.
+
+**Light that changes, changes over a moment (found in play, 2026-11-25).** Switched in one frame, each of these was a
+jump in the whole picture: a room's own light and its lamps as the camera crossed a wall (now up and down over
+`LightFadeSeconds`, 0.4; a lamp is not moved while it is lit, and the one that casts shadows goes down, moves dark and
+comes up at the place nearest the camera while the plain lamp there goes down); the haze, which is thin indoors
+(`IndoorHazeSeconds`, 1); the street's lamps, where a pool jumped from post to post as the order of the twelve nearest
+changed (a light now stays on its post while that post is among them, and the pool of a lamp near the edge of the set
+is faded out over the last `FadeBand` of the way to the nearest lamp left out). Only the stronger of the sun and the
+night's light casts shadows (`bOneSkyShadow`): through all of dusk both were lit and two shadows of the whole town were
+drawn each frame. A tour stop logs the mean frames a second of the last two seconds of its wait and the longest of
+those frames, not one frame's. Measured so, old against new in runs one after the other at High, 1066x666: at 19:30 to
+20:20 out of doors 32 to 39 frames a second before, 39 to 47 after; by day and at night the same (other sessions were
+using the laptop: a second pair of runs was slower and closer). Not yet: the eye still takes `IndoorSeconds` to open
+and shut at a doorway, with the camera, not the player, deciding which side it is on; rooms are still furnished again
+in one long frame (below, Furnished homes); breaking a street thing remakes its block square's mesh in one frame.
 
 ## The tram (CITY-041)
 Trams run along Tram Street to the timetable of World/rules/calendar.json, stopping at its three stops: a port of the
@@ -783,6 +814,15 @@ to 340 Hz) and two lengths, pitched the rest of the way, from where the speaker 
 slice's (`BrixVoiceHz`, children higher, elders lower). The horn: F while driving (`-BrixHorn` in a test shot). A test shot
 logs the syllables said.
 
+**Music that dropped (found in play, 2026-11-25).** A tune fading out keeps the distance and the muffling it was heard
+with: cleared each frame, a cafe's music at the edge of its reach came back clear and at full strength for the seconds
+of its fade each time the cafe was left behind. The score goes under a place's music by how much of that is heard now
+(its level, its distance, the wall between), not by how near its door is: a muffled cafe that had hardly begun took the
+score down to a tenth, so driving past one was a hole in the music (the slice ducks by the door's distance; this is the
+Unreal build's own). A place's level and muffling ease over 0.2 s at a doorway, as the slice's do, and music is never
+the voice given up to a louder sound. Not yet: checked by ear by nobody (agents cannot hear); the voices in use at
+dusk in traffic have not been counted against the engine's 32.
+
 ## Shops, cafés and the market stall (ECO-005, ECO-010, ECO-011, PROP-008, UI-020, UI-021; ADR-0044)
 At the door of a shop or café (or inside it) B opens its counter, as in the slice: what it sells at today's price (its
 stock after the residents' visits since the 06:00 restock and the player's own trades, the price rising as the stock
@@ -950,6 +990,19 @@ a loan, the in-use rule, the till, a save and load) against Python's results in 
 belongings with `-BrixMenu=belongings`. Not yet: boards in the sports and toy outlets' windows, a board on show at home (the boards are not among the Furnish tab's pieces yet), the server's check
 (CITY-104), the sounds of getting on and off; the slice has no residents on boards, so there are none here either. 32
 frames a second at High riding along Tram Street (noisy: other sessions were running Unreal).
+
+## The camera (found in play, 2026-11-25)
+Behind the player on an arm of `CameraDistance` (4 m) that shortens where something is in its way. In a room it comes in
+to `IndoorCameraDistance` (2.8): at 4 m it met a wall or the ceiling at almost every turn and sat jammed in the
+player's back. The body is not drawn while the camera is within `HideBodyWithin` (0.55 m) of it. In a car, on a bus or a
+tram and on a board the camera comes round behind, but the mouse has it for `LookHoldSeconds` (1.5) first: pulled back
+every frame, it could not be turned while moving. Behind a car the arm does not shorten: 8.5 m back it met every lamp
+post and corner passed, and the camera jumped in and out. The cars are drawn after the player has moved in a frame: drawn
+before, the player's car was a frame behind its driver and shook under them. E does nothing while a counter, the menu or
+the map is open (it started a drive or a talk under the panel, with the camera held). Not yet: behind a car the camera
+goes through walls in a narrow street; the map, the menu and a counter share one "a panel is open" flag, so opening one
+over another and closing the first leaves the second open with the game's keys live; a counter opened from the building
+designer does not give the camera back; getting out of a car against a wall can put the player in it.
 
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is

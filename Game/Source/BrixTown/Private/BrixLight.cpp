@@ -194,6 +194,15 @@ void UBrixLight::Light(ABrixGameMode& Mode, float DeltaSeconds)
 	// the night's light and its sky
 	if (!NightLight) return;
 	if (!FMath::IsNearlyEqual(NightLight->Intensity, N.NightLux, .0005f)) NightLight->SetIntensity(N.NightLux);
+	// Only the stronger of the sun and the night's light casts shadows: through all of dusk both were lit, and two
+	// shadows of the whole town were drawn each frame. They change over where the two are equal, and both are faint.
+	if (Sun && bOneSkyShadow)
+	{
+		ULightComponent* Day = Sun->GetLightComponent();
+		const bool bNightCasts = N.NightLux > Day->Intensity * (NightLight->CastShadows ? .8f : 1.25f);
+		if ((bool)NightLight->CastShadows != bNightCasts) NightLight->SetCastShadows(bNightCasts);
+		if ((bool)Day->CastShadows == bNightCasts) Day->SetCastShadows(!bNightCasts);
+	}
 	if (!N.Sky.Equals(SkySet, .002f) && !Without.Contains(TEXT("s"))) { SkySet = N.Sky; Air->SetSkyLuminanceFactor(N.Sky); }
 }
 
@@ -205,6 +214,7 @@ void UBrixLight::Tour(ABrixGameMode& Mode, float DeltaSeconds)
 	APawn* Me = PC ? PC->GetPawn() : nullptr;
 	if (!Me || W->GetTimeSeconds() < 1.5) return;
 	StopWait -= DeltaSeconds;
+	if (StopAt >= 0 && !bShot && StopWait < 2.f) { StopTime += DeltaSeconds; StopWorst = FMath::Max(StopWorst, DeltaSeconds); ++StopFrames; }
 	if (StopWait > 0.f) return;
 	if (StopAt >= 0 && !bShot)   // this stop has had its wait: its shot, then a moment for it to be written
 	{
@@ -214,7 +224,8 @@ void UBrixLight::Tour(ABrixGameMode& Mode, float DeltaSeconds)
 		const APlayerCameraManager* Cam = UGameplayStatics::GetPlayerCameraManager(W, 0);
 		UE_LOG(LogTemp, Display, TEXT("Brix Town: tour stop %s at %02d:%02d, weather %s, the camera %s, daylight %.2f, %.1f frames a second"), *S.Name,
 			(int32)Mode.ClockMinute() / 60, (int32)Mode.ClockMinute() % 60, Mode.Weather ? *Mode.Weather->Now.Kind : TEXT("-"),
-			Cam && Mode.RoomAt(Cam->GetCameraLocation()) != INDEX_NONE ? TEXT("indoors") : TEXT("out of doors"), Mode.Daylight, DeltaSeconds > 0 ? 1.f / DeltaSeconds : 0.f);
+			Cam && Mode.RoomAt(Cam->GetCameraLocation()) != INDEX_NONE ? TEXT("indoors") : TEXT("out of doors"), Mode.Daylight, StopTime > 0 ? StopFrames / StopTime : 0.f);
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: tour stop %s: the longest of its last %d frames %.0f ms"), *S.Name, StopFrames, StopWorst * 1000.f);
 		bShot = true;
 		StopWait = 0.7f;
 		return;
@@ -279,4 +290,6 @@ void UBrixLight::Tour(ABrixGameMode& Mode, float DeltaSeconds)
 	}
 	bShot = false;
 	StopWait = TourSeconds;
+	StopTime = StopWorst = 0.f;
+	StopFrames = 0;
 }

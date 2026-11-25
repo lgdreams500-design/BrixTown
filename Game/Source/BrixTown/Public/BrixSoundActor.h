@@ -107,7 +107,9 @@ private:
 	FLoop StreetDayL, StreetNightL, RoomL, CricketsL, FountainL;
 	int32 InLot = INDEX_NONE;            // the building the listener is in, or none (CITY-013's rooms)
 	// the music: one loop a style or mood, each at its own level, eased toward where it should be
-	struct FTune { FLoop Loop; double Level = 0, Target = 0, Tc = 1, Lowpass = 0, Hear = 1; FVector2D Pos = FVector2D::ZeroVector; };
+	// Hear and Lowpass are what the place it plays from asks for; HearNow and LowNow are those eased (sound.js ramps
+	// them over 0.2 s), so a doorway is not a step in level and tone
+	struct FTune { FLoop Loop; double Level = 0, Target = 0, Tc = 1, Lowpass = 0, Hear = 1, HearNow = 1, LowNow = 18000; FVector2D Pos = FVector2D::ZeroVector; };
 	TMap<FString, FTune> Tunes;
 	TArray<FBrixMusicLot> MusicLots;
 	bool bMarketDay = false, bRewardsBound = false;

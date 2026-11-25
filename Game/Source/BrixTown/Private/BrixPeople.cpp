@@ -117,6 +117,7 @@ ABrixPeople::ABrixPeople()
 	Figures = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("Figures"));
 	Figures->SetupAttachment(RootComponent);
 	Figures->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Figures->SetCastShadow(false);   // one mesh of everyone 35 m and further, made again each frame: its shadow kept the shadows under all of them from being kept
 	BodyMaterial = People.Object ? People.Object : Greybox.Object;
 	static ConstructorHelpers::FObjectFinder<UMaterialInterface> Facets(TEXT("/Game/Greybox/M_Facets.M_Facets"));   // Tools/unreal/make_facets_material.py
 	FacetsMat = Facets.Object ? Facets.Object : Greybox.Object;

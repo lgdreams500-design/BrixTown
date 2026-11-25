@@ -26,6 +26,11 @@ public:
 	UPROPERTY(Config) float GlassGlow = 6.f;       // the glass's glow at full night
 	UPROPERTY(Config) FLinearColor Warm = FLinearColor(1.f, .74f, .48f);   // the slice's lamplight
 	UPROPERTY(Config) float NightBelow = .35f;     // daylight under which the lamps come on, fully by 0
+	// The lamps that give real light are the MaxLights nearest; the pool of one near the edge of that set is faded out
+	// over the last FadeBand of the way to the nearest lamp left out, so a lamp joining or leaving the set is not seen to
+	// switch. And a light stays on its post while that post is in the set (moved every frame by its place in the order,
+	// a pool jumped from post to post).
+	UPROPERTY(Config) float FadeBand = .3f;
 
 	float Night() const { return LastNight; }
 
@@ -33,4 +38,5 @@ private:
 	UPROPERTY() TObjectPtr<ABrixTownActor> Town;
 	UPROPERTY() TArray<TObjectPtr<UPointLightComponent>> Lights;
 	float LastNight = -1.f;
+	TArray<int32> Held;   // the lamp of the town each light is on, or none
 };

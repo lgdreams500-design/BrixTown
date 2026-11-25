@@ -30,6 +30,13 @@ public:
 	UPROPERTY(Config) float RunSpeed = 4.5f;         // m/s
 	UPROPERTY(Config) float CameraDistance = 4.f;    // m behind the player
 	UPROPERTY(Config) float CameraHeight = 0.6f;     // m above the shoulders' pivot
+	// In a room the camera comes in to IndoorCameraDistance: at the street's 4 m it was against a wall or the ceiling at
+	// almost every turn, jammed into the player and not following the mouse. The body is not drawn while the camera is
+	// within HideBodyWithin (m) of it, and the mouse has the camera for LookHoldSeconds before a car, a bus or a board
+	// brings it round behind again (pulled back every frame, it could not be turned while moving).
+	UPROPERTY(Config) float IndoorCameraDistance = 2.8f;
+	UPROPERTY(Config) float HideBodyWithin = 0.55f;
+	UPROPERTY(Config) float LookHoldSeconds = 1.5f;
 	UPROPERTY(Config) float AnswerCameraYaw = 160.f;  // degrees round from looking where the player faces, while they answer
 	UPROPERTY(Config) float TalkCameraYaw = 26.f;     // and while the resident speaks: past the shoulder (the slice's .45 rad)
 	UPROPERTY(Config) float DesignCameraM = 2.7f;    // m from the character in the designer, times their height / 1.72 (life.js camera())
@@ -140,6 +147,8 @@ private:
 	FVector2D DriveIn = FVector2D::ZeroVector;   // this frame's W/S and A/D while driving
 	FVector2D DriveUsed = FVector2D::ZeroVector; // what the car was given this frame (DriveIn is cleared once used)
 	float ArmBefore = 0.f;
+	double LookedAt = -100;          // when the mouse last turned the camera
+	bool CameraFree() const;         // the mouse has not turned it for LookHoldSeconds
 	FVector2D BoardIn = FVector2D::ZeroVector;   // this frame's A/D and W/S on a board
 	double BoardYaw = 0, BoardBlend = 0, BoardMeant = 0;   // the heading (Unreal degrees), into the push (0 to 1), the metres last meant to go
 	FVector BoardFrom = FVector::ZeroVector;

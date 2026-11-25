@@ -664,7 +664,8 @@ void ABrixGameMode::UpdateSun()
 	P.Normalize();
 	const FVector ToSun(P.X, P.Z, P.Y);                                  // in Unreal: x east, y south, z up
 	UDirectionalLightComponent* Light = CastChecked<UDirectionalLightComponent>(SunActor->GetLightComponent());
-	SunActor->SetActorRotation((-ToSun).Rotation());
+	const FRotator SunTo = (-ToSun).Rotation();
+	if (!SunActor->GetActorRotation().Equals(SunTo, SunStepDegrees)) SunActor->SetActorRotation(SunTo);
 	const float Low = FMath::SmoothStep(0.05f, 0.5f, (float)P.Y);
 	Light->SetLightColor(FMath::Lerp(SunDawnColour, SunColour, Low));
 	const float Light01 = (float)S.Daylight(Season, Minute);
@@ -688,7 +689,10 @@ void ABrixGameMode::UpdateSun()
 	{
 		const APlayerCameraManager* Cam = UGameplayStatics::GetPlayerCameraManager(this, 0);
 		const bool bIndoors = Cam && RoomAt(Cam->GetCameraLocation()) != INDEX_NONE;
-		HazeFog->SetFogDensity(HazeDensity * (bIndoors ? IndoorHaze : 1.f) * (bWx ? (float)Weather->Now.Haze : 1.f));
+		// eased: the haze going in one frame as the camera crossed a wall was a jump in the whole picture
+		HazeIndoors = FMath::FInterpConstantTo(HazeIndoors, bIndoors ? 1.f : 0.f, GetWorld()->GetDeltaSeconds(), 1.f / FMath::Max(IndoorHazeSeconds, .05f));
+		const float Density = HazeDensity * FMath::Lerp(1.f, IndoorHaze, HazeIndoors) * (bWx ? (float)Weather->Now.Haze : 1.f);
+		if (!FMath::IsNearlyEqual(HazeFog->FogDensity, Density, Density * .002f)) HazeFog->SetFogDensity(Density);
 		if (People) People->CameraLot = Cam ? RoomAt(Cam->GetCameraLocation()) : INDEX_NONE;   // its residents inside are drawn (CITY-013)
 	}
 }

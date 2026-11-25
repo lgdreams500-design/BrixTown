@@ -60,6 +60,10 @@ namespace
 ABrixCars::ABrixCars()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	// after the player has moved this frame: the player's tick drives their car and sits them in it, and a car drawn
+	// before that was a frame behind its driver and the camera, by a distance that changed with each frame's length:
+	// it shook under them
+	PrimaryActorTick.TickGroup = TG_PostPhysics;
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	static ConstructorHelpers::FObjectFinder<UMaterialInterface> Mat(TEXT("/Game/People/M_People.M_People"));   // the vertex colour, matte
 	Material = Mat.Object;
@@ -192,7 +196,10 @@ void ABrixCars::PaintCar(FBrixBodyMesh& Body, const FBrixCarModel& InMd, bool bV
 		{
 			const TOptional<FVector3f>& C = PartC.IsValidIndex(D.Part[t]) ? PartC[D.Part[t]] : TOptional<FVector3f>(BodyC);
 			if (!C) continue;
-			for (int32 v = 0; v < 3; ++v)
+			// The model's triangles go round the other way to the slice's bodies (its frame is along, across, up; theirs
+			// x, up, z), so they are taken in the other order: as they come, Unreal drew each part's inside and left its
+			// outside out, and a car was a dark hollow with its riders' legs showing through the doors.
+			for (const int32 v : { 0, 2, 1 })
 			{
 				const FVector3f& Q = D.P[t * 3 + v];
 				const FVector3f& Nn = D.N[t * 3 + v];
