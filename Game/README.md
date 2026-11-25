@@ -435,7 +435,7 @@ weather key: it tries clear, cloud, rain, fog and snow in turn for the whole day
 which (`BrixNextWeatherTry`, `WLD037_the_weather_key_steps_through_the_kinds`; `-BrixWeatherKey=<n>` presses it n times in a
 test shot). From indoors the rain is seen through the windows and the open door: the same rings of drops, spread
 `IndoorReach` (1.8) times as far, fall outside, none over the building (its roof) and no splashes; the slice shows none
-indoors. Shots: `Art/StyleTests/unreal_gaps_world_39/` (`weather_key_rain.png`, `rain_through_the_window.png`). Not yet: wet
+indoors. Shots: `Art/StyleTests/unreal_gaps_world_40/` (`weather_key_rain.png`, `rain_through_the_window.png`). Not yet: wet
 clothes (people a little darker out in the rain, as the slice darkens everything outdoors), the rain's sound (the slice has
 none either), snow seen from indoors.
 
@@ -516,7 +516,7 @@ starts on, as in the slice. A lawn (its grass and its longer edge) has its own p
 of vegetation.json's three tones, the mower's faint stripes, clumps of clover, blades close up and daisies in drifts, painted
 (`/Game/Greybox/M_Lawn`, `Tools/unreal/make_lawn_material.py` and `lawn.hlsl`, a section of its own in each block's facet
 mesh; `CITY017_lawns_are_drawn_in_their_own_pattern`). Shots: `lawn.png` against `lawn_before.png` (one even green) in
-`Art/StyleTests/unreal_gaps_world_39/`, beside the slice's `lawn_in_the_slice.png`; 10.0 frames a second at High in that garden, 7.7 without M_Lawn (noisy: other
+`Art/StyleTests/unreal_gaps_world_40/`, beside the slice's `lawn_in_the_slice.png`; 10.0 frames a second at High in that garden, 7.7 without M_Lawn (noisy: other
 sessions were running Unreal). The new shapes are kept out
 of Lumen's surface cache (a card an instance oversubscribed it over the fields). `-BrixNoPlants` builds the town without
 them, to compare: 542,212 instances in 45 groups against 462,813 in 33; at High 37.7 fps in a park garden (40.2 without),
