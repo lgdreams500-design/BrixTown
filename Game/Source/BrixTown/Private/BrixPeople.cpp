@@ -196,6 +196,21 @@ float ABrixPeople::GroundAt(const FVector2D& P) const
 	return 0.f;
 }
 
+int32 ABrixPeople::PlayTarget(const FVector& MeCm, double& OutD) const
+{
+	const double x = MeCm.X / CmPerM, z = MeCm.Y / CmPerM, y = MeCm.Z / CmPerM - .95;   // (the capsule's middle 0.95 m over the feet)
+	int32 Best = INDEX_NONE;
+	OutD = 1.7;
+	for (int32 u = 0; u < Play.PlayerUses.Num(); ++u)
+	{
+		const FBrixPlay::FPlayerUse& U = Play.PlayerUses[u];
+		if (FMath::Abs(U.X - x) > 2 || FMath::Abs(U.Z - z) > 2 || FMath::Abs(U.Y - y) > 1.2 || Play.Taken(u)) continue;
+		const double d = FMath::Sqrt(FMath::Square(U.X - x) + FMath::Square(U.Z - z));
+		if (d < OutD) { OutD = d; Best = u; }
+	}
+	return Best;
+}
+
 void ABrixPeople::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);

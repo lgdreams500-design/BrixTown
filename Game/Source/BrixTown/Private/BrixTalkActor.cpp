@@ -308,6 +308,13 @@ void ABrixTalk::Tick(float Dt)
 			double D = 0;
 			const int32 CarK = Mode->Cars->TargetCar(FVector2D(Me->GetActorLocation().X, Me->GetActorLocation().Y) / CmPerM, D);
 			if (CarK >= 0 && (C.Resident < 0 || D <= C.D)) PromptText = Mode->Cars->IsBus(CarK) ? TEXT("Ride the bus") : Mode->Cars->IsVan(CarK) ? TEXT("Drive this van") : TEXT("Drive this car");
+			if (const ABrixCharacter* Ch = Cast<ABrixCharacter>(Me))   // the playground (WLD-041): a go here, or off again
+			{
+				if (Ch->IsPlaying()) { PromptText = TEXT("Get off"); return; }
+				double PD = 0;
+				const int32 U = People->PlayTarget(Me->GetActorLocation(), PD);
+				if (U != INDEX_NONE && (C.Resident < 0 || PD <= C.D) && (CarK < 0 || PD <= D)) PromptText = People->PlayArea().PlayerUses[U].Label;
+			}
 		}
 		// a tower's lift call within reach (WLD-051): E takes it
 		FString Lift;

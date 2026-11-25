@@ -68,6 +68,7 @@ void ABrixCharacter::BeginPlay()
 	FString Error;
 	if (!LoadBrixPeopleRules(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/people.json"))), Rules, Error))
 		UE_LOG(LogTemp, Error, TEXT("Brix Town: %s"), *Error);
+	BrixAddClimbSignature(Rules);   // up a slide's ladder or a climbing frame (dressing.js climbSig(), WLD-041)
 	if (!LoadBrixBoards(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/rules/boards.json"))), BoardRules, Error))
 		UE_LOG(LogTemp, Error, TEXT("Brix Town: no skateboards (%s)"), *Error);
 	Boards.R = &BoardRules;
@@ -177,6 +178,7 @@ void ABrixCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 void ABrixCharacter::Move(const FInputActionValue& Value)
 {
 	const FVector2D V = Value.Get<FVector2D>();
+	if (IsPlaying()) { if (!V.IsNearlyZero()) bPlayOff = true; return; }   // moving gets off what you play on
 	if (bDriving) { DriveIn = V; return; }   // W/S the speed, A/D the steering
 	if (!Controller || bTalking || bPanel) return;   // a talk or a counter holds the player still (conversations.js open())
 	if (Boards.Riding()) { BoardIn = V; return; }    // on a board there is no walk: W goes, S brakes, A and D turn
@@ -217,6 +219,26 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 		Verts = BrixBodyToMesh(Person, Scratch, Verts, false, BodyMaterial);
 		if (GetWorld()->IsPaused())   // a paused world does not move the camera itself
 			if (APlayerController* PC = Cast<APlayerController>(GetController())) if (PC->PlayerCameraManager) PC->PlayerCameraManager->UpdateCamera(DeltaSeconds);
+		return;
+	}
+	if (IsPlaying())   // on a swing, seesaw, slide, sandpit or climbing frame: where the go puts you (dressing.js playerAt())
+	{
+		ABrixPeople* Pp = People();
+		if (!Pp) { PlayUse = INDEX_NONE; return; }
+		const FBrixPlayPose P = Pp->PlayArea().PlayerAt(PlayUse, PlayT0, GetWorld()->GetTimeSeconds());
+		if (bPlayOff || P.bDone) { PlayEnd = FVector2D(P.X, P.Z); StopPlay(P.bDone); return; }
+		SetActorLocationAndRotation(FVector(P.X * CmPerM, P.Z * CmPerM, P.Y * CmPerM + 85.f), FRotator(0, FMath::RadiansToDegrees(P.Yaw) - 90.0, 0));   // (the body is drawn turned a quarter in the actor)
+		FBrixDrawOptions O;
+		O.Pose = P.Pose;
+		O.Phase = P.Phase;
+		O.bStraddle = P.bStraddle;
+		if (P.bClimb) O.Sig = TEXT("Climb");
+		O.Arms[0] = P.Arms[0]; O.Arms[1] = P.Arms[1];
+		O.Seconds = GetWorld()->GetTimeSeconds();
+		O.Lod = 0;
+		Scratch.Reset();
+		DrawBrixPerson(Rules, Rules.Player, FVector::ZeroVector, 0.0, O, Scratch);
+		Verts = BrixBodyToMesh(Person, Scratch, Verts, false, BodyMaterial);
 		return;
 	}
 	if (bDriving)   // on a bus: carried where it goes, sitting near the front (cars.js ride())
@@ -306,6 +328,48 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 	Verts = BrixBodyToMesh(Person, Scratch, Verts, false, BodyMaterial);
 }
 
+ABrixPeople* ABrixCharacter::People() const
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	return Mode ? Mode->PeopleActor() : nullptr;
+}
+
+void ABrixCharacter::StartPlay(int32 Use)
+{
+	ABrixPeople* Pp = People();
+	if (!Pp || !Pp->PlayArea().PlayerUses.IsValidIndex(Use)) return;
+	PlayUse = Use;
+	PlayT0 = GetWorld()->GetTimeSeconds();
+	bPlayOff = false;
+	SetActorEnableCollision(false);
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: the player has a go (%s)"), *Pp->PlayArea().PlayerUses[Use].Label);
+}
+
+void ABrixCharacter::StopPlay(bool bAtEnd)
+{
+	if (!IsPlaying()) return;
+	ABrixPeople* Pp = People();
+	const int32 U = PlayUse;
+	PlayUse = INDEX_NONE;
+	bPlayOff = false;
+	if (!Pp || !Pp->PlayArea().PlayerUses.IsValidIndex(U)) return;
+	const FVector2D Off = bAtEnd ? PlayEnd : Pp->PlayArea().PlayerOff(U);   // off at the slide's bottom, or beside the piece
+	SetActorLocation(FVector(Off.X * CmPerM, Off.Y * CmPerM, Pp->PlayArea().PlayerUses[U].Y * CmPerM + 95.f), false, nullptr, ETeleportType::TeleportPhysics);
+	SetActorEnableCollision(true);
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+}
+
+void ABrixCharacter::TestPlay(int32 Use)
+{
+	ABrixPeople* Pp = People();
+	if (!Pp || !Pp->PlayArea().PlayerUses.IsValidIndex(Use)) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: no play place %d"), Use); return; }
+	const FBrixPlay::FPlayerUse& U = Pp->PlayArea().PlayerUses[Use];
+	SetActorLocation(FVector(U.X * CmPerM, U.Z * CmPerM, U.Y * CmPerM + 95.f), false, nullptr, ETeleportType::TeleportPhysics);
+	TalkKey();   // as the player would, at the place
+}
+
 ABrixTalk* ABrixCharacter::Talk() const
 {
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
@@ -315,6 +379,7 @@ ABrixTalk* ABrixCharacter::Talk() const
 void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whichever is nearest (play.js interact())
 {
 	if (bDesigning && bDesignKeys) return;   // the designer has the keys
+	if (IsPlaying()) { StopPlay(); return; }
 	ABrixCars* C = Cars();
 	ABrixTalk* T = Talk();
 	if (bDriving && C)
@@ -337,6 +402,9 @@ void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whic
 	double CarD = 1e9;
 	const int32 Car = C ? C->TargetCar(Me, CarD) : -1;
 	const double TalkD = T && T->CandidateDistance() >= 0 ? T->CandidateDistance() : 1e9;
+	double PlayD = 1e9;
+	const int32 PlayAt = !bDriving && !Boards.Riding() && People() ? People()->PlayTarget(GetActorLocation(), PlayD) : INDEX_NONE;
+	if (PlayAt != INDEX_NONE && PlayD <= TalkD && (Car < 0 || PlayD <= CarD)) { StartPlay(PlayAt); return; }   // a go on the playground (WLD-041)
 	if (Car >= 0 && CarD <= TalkD)
 	{
 		if (!C->Enter(Car)) return;
@@ -362,6 +430,7 @@ void ABrixCharacter::JumpKey()
 {
 	if (bDesigning && bDesignKeys) return;   // the designer has the keys
 	if (bDriving) { bHandbrake = true; return; }
+	if (IsPlaying()) { bPlayOff = true; return; }
 	if (Boards.Riding()) return;   // no jumping off a board: Y steps off it
 	if (!bTalking) Jump();
 }

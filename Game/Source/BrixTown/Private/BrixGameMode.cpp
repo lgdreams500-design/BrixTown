@@ -258,6 +258,12 @@ void ABrixGameMode::StartPlay()
 	// -BrixDrive=<vehicle> (with -BrixHold=steer,throttle): a third of the way into a test shot's wait the player is put by
 	// that parked car's door, gets in as with E, and holds the keys from then on
 	int32 DriveK = -1;
+	int32 PlayK = -1;   // -BrixPlay=<n>: a third into a test shot's wait the player has a go at the n-th play place (WLD-041)
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixPlay="), PlayK) && PlayK >= 0)
+	{
+		FTimerHandle H;
+		GetWorldTimerManager().SetTimer(H, [this, PlayK]() { if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0))) Me->TestPlay(PlayK); }, ShotDelaySeconds / 3, false);
+	}
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixDrive="), DriveK) && DriveK >= 0 && Traffic)
 	{
 		FString Hold;

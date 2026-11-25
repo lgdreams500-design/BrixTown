@@ -93,7 +93,7 @@ const world = {
 };
 function solid(x0, y0, z0, x1, y1, z1) { rec(8, [x0, y0, z0, x1, y1, z1], null); }
 let G_HERE = .12; const groundBase = () => G_HERE; const Y_PAVE = .12, OLD_BASE = 3.55;   // (play.js)
-const use = () => { }, DOING = {}, GOING = {}, signs = {}, LOTS = [], BLOBS = [], occl = [], Smash = { wrap: (k, x, z, fn) => fn() };
+const USES = [], use = (x, y, z, type, label, yaw, extra) => USES.push({ x, y, z, type, label, yaw, sp: extra && extra.sp }), DOING = {}, GOING = {}, signs = {}, LOTS = [], BLOBS = [], occl = [], Smash = { wrap: (k, x, z, fn) => fn() };
 const SP = { at: (S, a, y, d) => S.ns ? [a, y, S.fix + S.out * d] : [S.fix + S.out * d, y, a], n: S => S.ns ? [0, 0, S.out] : [S.out, 0, 0] };
 function lettering(m, ctr, n, h, cell) { REC.push([7, [ctr[0], ctr[1], ctr[2], n[0], n[2], h], null, null, cell.t]); }
 function nameCell(t) { return { t, tw: Math.min(.99, (t.length * 24 + 8) / 512) }; }   // (the slice measures it on a canvas: estimated, as BrixStreets does)
@@ -135,6 +135,12 @@ for (const park of parks) for (const t of [1.3, 4.2, 6.9, 11.5]) {
 for (const b of D.blocks) for (const p of b.props) if (p.set === "dress" && (p.kind === "slide" || p.kind === "climber"))
   for (const [dx, dz] of [[.3, .1], [-.9, .25], [1.6, -.2], [.8, .9], [-3, 0]]) {
     const r = Dress.apply(0, { x: p.pos[0] + dx, z: p.pos[1] + dz, walking: true }, 1); out.keep.push([p.pos[0] + dx, p.pos[1] + dz, r.x, r.z]); }
+out.player = [];   // the player's go at each play place (WLD-041): the place, then where they are through a go, and where they step off
+const pv = r => [r.x, r.z, r.y, r.yaw, r.pose, r.ph === undefined ? null : r.ph, !!r.done, r.sig ? r.sig.name : null, r.mod && r.mod.straddle ? 1 : 0, r.mod && r.mod.arms ? r.mod.arms : null];
+for (const u of USES) if (u.type === "play") {
+  const st = { sp: u.sp, t0: 10 };
+  out.player.push([u.x, u.z, u.y, u.yaw, u.label, [.2, 1.1, 2.0, 2.9, 3.4, 4.1, 5.6, 9.3].map(e => pv(Dress.playerAt(st, 10 + e))), Dress.playerOff(st)]);
+}
 document.getElementById("out").textContent = "@@" + JSON.stringify(out) + "@@";
 } catch (e) { document.getElementById("out").textContent = "@@" + JSON.stringify({ error: String(e.stack || e) }) + "@@"; }
 """
@@ -271,7 +277,7 @@ def main():
                        "thing, garden and block of open ground, for CITY017_every_plant_is_drawn_as_the_slice_draws_it and "
                        "WLD056_the_open_ground_is_drawn_as_the_slice_draws_it. Calls: [kind, numbers, colour, points, text]; kinds as FBrixShape.",
                   day=streets["day"], props=summary(out["props"]), lawns=summary(out["lawns"], 5), ground=summary(out["ground"], 3),
-                  dress=summary(dress["dress"], 1), apply=dress["apply"], draw=dress["draw"], keep=dress["keep"], read=dress["read"],
+                  dress=summary(dress["dress"], 1), apply=dress["apply"], draw=dress["draw"], keep=dress["keep"], read=dress["read"], player=dress["player"],
                   trees=summary(roads["trees"], 25), roads=summary(roads["roads"], 1), lamps=roads["lamps"], phase=roads["phase"])
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
