@@ -152,6 +152,9 @@ public:
 	TArray<FString> Kinds;                                // each lot's shop kind, or empty
 	int32 BankLot = -1, MarketLot = -1;
 	FString Why;                                          // why the last rule refused
+	// more rules settled at each day's end, after the bank (economy.js hooks: the estate market), by id
+	TMap<int32, TFunction<void(int32)>> Hooks;
+	int32 NextHook = 0;
 
 	// the player
 	void NewCharacter();

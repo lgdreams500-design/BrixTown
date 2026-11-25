@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "BrixBuyMenu.h"
 #include "BrixEconomy.h"
+#include "BrixEstate.h"
 #include "BrixQuests.h"
 #include "BrixRewards.h"
 #include "BrixRewardsWidget.h"
@@ -80,6 +81,13 @@ public:
 	bool RunOps(const FString& Ops);      // the -BrixLife= ops, as economy.run_script() runs them; false if any was refused
 	bool OpenCounterAt(const FString& What);   // -BrixCounter=: stand at that counter's door and open it
 	FBrixEconomy* Economy() const { return E.Get(); }
+	// the real estate market (F-PROP-ESTATE 2; PROP-009 to PROP-023): P opens the menu's Properties page, B at an estate
+	// agent's office its counter
+	FBrixEstate* Estate() const { return Est.Get(); }
+	TArray<int32> MyLots() const { return Est ? Est->MyLots() : TArray<int32>(); }   // owned or rented (the maps' map_mine)
+	FString BoardText(int32 Lot) const;   // PROP-023: what the board over a building's door says, or empty
+	void ShowOnMap(int32 Lot);            // UI-006: the mark at a building, and the big map
+	int32 LotHereForEstate() const { return LotHere(); }
 	int32 CounterHere() const;            // the lot whose counter the player is at, or -1
 
 	UPROPERTY(Config) FString LifeFile = TEXT("Data/life.json");
@@ -113,10 +121,14 @@ private:
 	void SaveSettings() const;
 	FString CounterWords(int32 Lot) const;
 	void Draw();                          // the open panel, drawn again from the state of the game (life.js draw())
-	void Act(TFunction<bool(FString&)> Fn);   // a button: do it, say what happened or why it was refused, draw again
+	void Act(TFunction<bool(FString&)> Fn);
+	void Redraw();   // a button: do it, say what happened or why it was refused, draw again
 	void Open(const FString& Kind, int32 Lot);
 	void BankPanel(TSharedRef<SVerticalBox> Body);
 	void WalletPanel(TSharedRef<SVerticalBox> Body);
+	void EstatePanel(TSharedRef<SVerticalBox> Body, const FString& Agent, int32 Here);   // life.js estatePanel(): at an agent's, or Properties
+	TSharedRef<SWidget> UnitRow(int32 i, const FString& Agent);
+	FString BuyUnits(const TArray<int32>& Units, const FString& Agent, bool& bOk);
 	void QuestsPanel(TSharedRef<SVerticalBox> Body);
 	TMap<FString, FString> JobVars(const FBrixJob& O) const;
 	FString FillJob(const FString& Text, const FBrixJob& O) const;
@@ -163,6 +175,13 @@ private:
 	FBrixQuestRules QuestRules;
 	TArray<FBrixQuestResident> QuestResidents;
 	TUniquePtr<FBrixQuests> Q;
+	FBrixEstateRules EstateRules;
+	TArray<FBrixUnit> EstateUnits;
+	TMap<FString, FString> EstateRoles;
+	TUniquePtr<FBrixEstate> Est;            // holds the economy: goes before it
+	int32 PayTerm = 0;                    // how to pay: 0 outright, else the mortgage term's place + 1 (life.js payChoice())
+	FString AgentFilter = TEXT("all");    // the kind of unit an agent shows
+	TMap<int32, FString> RentEdit;        // the rent typed for a unit of the player's, in brix
 	TSharedPtr<FBrixDay> Day;
 	TOptional<FBrixJob> Offered;          // the job offered in the talk under way (life.js _offer)
 	int32 PendingCounter = -1;            // a resident whose counter opens when the talk ends (an answer's act "shop")

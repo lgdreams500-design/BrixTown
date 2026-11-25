@@ -341,6 +341,10 @@ void FBrixEconomy::Settle(int32 D)
 		for (const FBrixStall::FSlot& Sl : Stall->Slots) if (!Sl.bSold) GiveItem(Sl.Item);
 		Stall.Reset();
 	}
+	TArray<int32> Ids;
+	Hooks.GetKeys(Ids);
+	Ids.Sort();
+	for (const int32 Id : Ids) if (const TFunction<void(int32)>* H = Hooks.Find(Id)) (*H)(D);
 }
 
 bool FBrixEconomy::OpenAccount(const FString& Kind)
