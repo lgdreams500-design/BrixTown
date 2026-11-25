@@ -83,6 +83,7 @@ struct BRIXWORLD_API FBrixRoom
 	int32 Floor = 0;
 	FBrixRect R;
 	bool bWet = false;                                      // a kitchen, bathroom or WC: tiled (homes.js)
+	bool bFloor = true;                                     // its floor is laid (false: a building's whole storey, for its lamps only)
 };
 
 // A place a resident lies or sits (homes.js spots(), houses.js spotsS()): where, its height above the floor, the way the
@@ -120,6 +121,10 @@ BRIXWORLD_API void LoadBrixHomeData(const TSharedPtr<FJsonObject>& Root, FBrixIn
 // house_12x9), or false. Windows: the building's real windows (tall pieces in front of them are left out, homes.js dropped()).
 BRIXWORLD_API bool BrixHomeOf(const FBrixInsides& Ins, const FBrixLot& Lot, const FBrixInside& In, int32 Day,
 	const TArray<FBrixWindowSpan>& Windows, FBrixHome& Out);
+
+// A planned court flat (lot.flats with an interior, homes.js flats()): laid out from its plan on its own floor, at its own
+// household's furnishing level.
+BRIXWORLD_API bool BrixFlatHomeOf(const FBrixInsides& Ins, const FBrixInside& In, int32 FlatIndex, int32 Day, const TArray<FBrixWindowSpan>& Windows, FBrixHome& Out);
 
 // A designed house's stair well in the house's own frame (houses.js SWELL: u0, u1, v0, v1; u as the plan's x, mirrored into
 // the house as everything of houses.js) and where you step off it upstairs (SOFF).

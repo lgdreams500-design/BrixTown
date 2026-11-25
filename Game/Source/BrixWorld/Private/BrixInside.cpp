@@ -117,7 +117,24 @@ bool LoadBrixInside(const FString& Path, FBrixInsides& Out, FString& OutError)
 				F->TryGetStringField(TEXT("interior"), Fl.Interior);
 				F->TryGetStringField(TEXT("furniture"), Fl.Line);
 				Fl.Frame = FrameOf(F);
+				const TArray<TSharedPtr<FJsonValue>>* Ix = nullptr;
+				if (F->TryGetArrayField(TEXT("beds"), Ix)) for (const TSharedPtr<FJsonValue>& X : *Ix) Fl.Beds.Add((int32)X->AsNumber());
+				if (F->TryGetArrayField(TEXT("rooms"), Ix)) for (const TSharedPtr<FJsonValue>& X : *Ix) Fl.Rooms.Add((int32)X->AsNumber());
+				double Wg = 0; if (F->TryGetNumberField(TEXT("wage"), Wg)) Fl.Wage = (int64)Wg;
 				In.Flats.Add(MoveTemp(Fl));
+			}
+		if (O->TryGetArrayField(TEXT("common"), Arr))
+			for (const TSharedPtr<FJsonValue>& Cv : *Arr)
+			{
+				const TSharedPtr<FJsonObject> Co = Cv->AsObject();
+				FBrixCommon Cm;
+				Cm.Kind = Co->GetStringField(TEXT("kind"));
+				Cm.Floor = (int32)Co->GetNumberField(TEXT("floor"));
+				const TArray<TSharedPtr<FJsonValue>>& R = Co->GetArrayField(TEXT("rect"));
+				Cm.Min = V2(R, 0); Cm.Max = V2(R, 2);
+				const TArray<TSharedPtr<FJsonValue>>* D = nullptr;
+				if (Co->TryGetArrayField(TEXT("door"), D)) Cm.Door = V2(*D);
+				In.Common.Add(Cm);
 			}
 		O->TryGetStringField(TEXT("interior"), In.Interior);
 		O->TryGetStringField(TEXT("furniture"), In.Line);
@@ -304,5 +321,52 @@ TArray<FBrixLiftCall> BrixLiftCalls(const FBrixLot& L, const FBrixInside& In, co
 		if (f > 0 && f < n - 1) Add(f, .7, TEXT("Lift: down to the ground"), To(0));
 	}
 	Out.Add({ FVector(bx + ix * 1.9, bz, RoofUp), To(n - 1), TEXT("Take the lift down to the top floor"), -1 });
+	return Out;
+}
+
+TArray<FBrixPartition> BrixFlatWalls(const FBrixLot& L, const FBrixInside& In, int32 Floor, const FBrixStoreyRules& R)
+{
+	TArray<FBrixPartition> Out;
+	struct FRm { FVector2D Min, Max; TOptional<FVector2D> Door; };
+	TArray<FRm> Rooms;
+	for (const FBrixFlat& Q : In.Flats) if (Q.Floor == Floor) Rooms.Add({ Q.Min, Q.Max, Q.Door.IsZero() ? TOptional<FVector2D>() : TOptional<FVector2D>(Q.Door) });
+	for (const FBrixCommon& Cm : In.Common) if (Cm.Floor == Floor && Cm.Kind == TEXT("store")) Rooms.Add({ Cm.Min, Cm.Max, Cm.Door });
+	TArray<FVector2D> Doors;
+	for (const FRm& Q : Rooms) if (Q.Door) Doors.Add(*Q.Door);
+	const double t = R.Wall + .02, X0 = L.Min.X, Z0 = L.Min.Y, X1 = L.Max.X, Z1 = L.Max.Y, DoorW = 1.0, Part = .12;
+	TSet<FString> Seen;
+	for (const FRm& Q : Rooms)
+	{
+		const struct { bool bX; double Fix, A0, A1; } Edges[4] = { { true, Q.Min.Y, Q.Min.X, Q.Max.X }, { true, Q.Max.Y, Q.Min.X, Q.Max.X }, { false, Q.Min.X, Q.Min.Y, Q.Max.Y }, { false, Q.Max.X, Q.Min.Y, Q.Max.Y } };
+		for (const auto& E : Edges)
+		{
+			if (E.bX ? (E.Fix < Z0 + t + .05 || E.Fix > Z1 - t - .05) : (E.Fix < X0 + t + .05 || E.Fix > X1 - t - .05)) continue;   // the outer wall is there
+			const FString Key = FString::Printf(TEXT("%d%.2f:%.2f:%.2f"), E.bX ? 1 : 0, E.Fix, E.A0, E.A1);
+			if (Seen.Contains(Key)) continue;
+			Seen.Add(Key);
+			TArray<double> Cuts;
+			for (const FVector2D& D : Doors)
+				if (E.bX ? (FMath::Abs(D.Y - E.Fix) < .05 && D.X > E.A0 - .01 && D.X < E.A1 + .01) : (FMath::Abs(D.X - E.Fix) < .05 && D.Y > E.A0 - .01 && D.Y < E.A1 + .01))
+					Cuts.Add(E.bX ? D.X : D.Y);
+			Cuts.Sort();
+			auto Seg = [&](double A, double B, bool bDoor)
+			{
+				FBrixPartition P;
+				P.bDoorway = bDoor;
+				P.Min = E.bX ? FVector2D(A, E.Fix - Part / 2) : FVector2D(E.Fix - Part / 2, A);
+				P.Max = E.bX ? FVector2D(B, E.Fix + Part / 2) : FVector2D(E.Fix + Part / 2, B);
+				Out.Add(P);
+			};
+			double At = E.A0;
+			for (const double Cc : Cuts)
+			{
+				const double G0 = FMath::Max(E.A0, Cc - DoorW / 2), G1 = FMath::Min(E.A1, Cc + DoorW / 2);
+				if (G0 - At > .05) Seg(At, G0, false);
+				Seg(G0, G1, true);
+				At = G1;
+			}
+			if (E.A1 - At > .05) Seg(At, E.A1, false);
+		}
+	}
 	return Out;
 }
