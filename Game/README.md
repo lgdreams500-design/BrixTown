@@ -121,7 +121,10 @@ any parked car or van (a stand-in for CITY-061, as the slice's cars.js): E besid
 onto the road first), W/S speed and brake, A/D steer, Space the handbrake, up to the top speed of World/rules/traffic.json;
 a wall, a street thing or another car stops it and it rolls back a little; the camera swings round behind; E gets out by
 the driver's door, and the car stays where it was left for the rest of the visit. E offers whichever is nearer, a car to
-drive or someone to talk to. Not yet: breaking street things (CITY-072, CITY-073), riding the bus, and resident cars
+drive or someone to talk to. A bus can be ridden (CITY-092): E at a bus
+standing at a stop gets on, a seat near the front, carried along its line with its driver and riders, the camera behind;
+E gets off when it next stands at a stop (and everyone gets off when it leaves service). Not yet: breaking street things
+(CITY-072, CITY-073), riding the tram, and resident cars
 giving way to the player (CITY-049). To see a drive in a test shot: `-BrixDrive=<vehicle> "-BrixHold=steer,throttle"`. 51.5 frames a second at High on a street
 with 32 vehicles drawn.
 

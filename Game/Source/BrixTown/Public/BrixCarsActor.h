@@ -33,9 +33,13 @@ public:
 	// The player driving (CITY-061 stand-in, as the slice's cars.js target(), enter(), drive(), leave()): E at a parked car
 	// gets in; W/S speed and brake, A/D steer, Space the handbrake; a wall, a street thing or another car stops it and it
 	// rolls back a little; E gets out by the driver's door, and the car stays where it was left. Buses are not ridden yet.
-	struct FDrive { int32 K = -1; double X = 0, Z = 0, A = 0, V = 0; };
+	struct FDrive { int32 K = -1; double X = 0, Z = 0, A = 0, V = 0; bool bRide = false; bool bMoving = false; };   // bRide: a passenger on a bus (CITY-092)
 	const FDrive& Driving() const { return Drive; }
 	int32 TargetCar(const FVector2D& P, double& OutD) const;
+	bool IsBus(int32 k) const { return Traffic && Traffic->Vehicles.IsValidIndex(k) && Traffic->Vehicles[k].Kind == 2; }
+	// On a bus: where it is now, the player's seat near the front; false when it has left service (everybody off).
+	bool RideSeat(FVector2D& OutPos, double& OutYaw);
+	bool CanGetOff() const { return Drive.K >= 0 && (!Drive.bRide || !Drive.bMoving); }   // off a bus only where it stands
 	bool IsVan(int32 k) const { return Traffic && Traffic->Vehicles.IsValidIndex(k) && Traffic->Vehicles[k].Kind == 1; }   // the nearest parked car within reach of its door, or -1
 	bool Enter(int32 k);
 	void Leave(FVector2D& OutSpot, double& OutYaw);

@@ -270,10 +270,14 @@ void ABrixTalk::Tick(float Dt)
 		const APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);
 		if (Mode && Mode->Cars && Me)
 		{
-			if (Mode->Cars->Driving().K >= 0) { PromptText = TEXT("Get out"); return; }
+			if (Mode->Cars->Driving().K >= 0)
+			{
+				PromptText = !Mode->Cars->Driving().bRide ? TEXT("Get out") : Mode->Cars->CanGetOff() ? TEXT("Get off the bus") : FString();
+				return;
+			}
 			double D = 0;
 			const int32 CarK = Mode->Cars->TargetCar(FVector2D(Me->GetActorLocation().X, Me->GetActorLocation().Y) / CmPerM, D);
-			if (CarK >= 0 && (C.Resident < 0 || D <= C.D)) PromptText = Mode->Cars->IsVan(CarK) ? TEXT("Drive this van") : TEXT("Drive this car");
+			if (CarK >= 0 && (C.Resident < 0 || D <= C.D)) PromptText = Mode->Cars->IsBus(CarK) ? TEXT("Ride the bus") : Mode->Cars->IsVan(CarK) ? TEXT("Drive this van") : TEXT("Drive this car");
 		}
 		return;
 	}

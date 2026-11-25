@@ -237,9 +237,9 @@ int32 ABrixCars::TargetCar(const FVector2D& P, double& OutD) const
 	OutD = 1e9;
 	for (int32 k = 0; k < Traffic->Num(); ++k)
 	{
-		if (Traffic->Vehicles[k].Kind == 2) continue;   // buses are ridden, not driven (not brought over yet)
+		const double Far = Traffic->Vehicles[k].Kind == 2 ? 8 : 5;
 		const TOptional<FBrixCarAt> C = Traffic->At(k, Minute);
-		if (!C || C->bMoving || FMath::Abs(C->Pos.X - P.X) > 5 || FMath::Abs(C->Pos.Y - P.Y) > 5) continue;
+		if (!C || C->bMoving || FMath::Abs(C->Pos.X - P.X) > Far || FMath::Abs(C->Pos.Y - P.Y) > Far) continue;
 		if (!Traffic->Hits(*C, k, P, 1.5)) continue;   // within arm's reach of the door
 		const double D = FVector2D::Distance(C->Pos, P);
 		if (D < OutD) { OutD = D; Best = k; }
@@ -252,6 +252,11 @@ bool ABrixCars::Enter(int32 k)
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
 	const TOptional<FBrixCarAt> C = Traffic && Mode ? Traffic->At(k, Mode->ClockMinute()) : TOptional<FBrixCarAt>();
 	if (!C) return false;
+	if (IsBus(k))   // on the bus: a passenger, carried where it goes (CITY-092)
+	{
+		Drive = { k, C->Pos.X, C->Pos.Y, FMath::Atan2(C->Heading.Y, C->Heading.X), 0, true, false };
+		return true;
+	}
 	Drive = { k, C->Pos.X, C->Pos.Y, FMath::Atan2(C->Heading.Y, C->Heading.X), 0 };
 	// out of the bay onto the road first, as residents' cars do: a sideways step off the paving, if there is room
 	auto OnPaving = [&](const FVector2D& P) { for (const FBox2D& B : Paving) if (B.IsInside(P)) return true; return false; };
@@ -319,9 +324,30 @@ void ABrixCars::Step(float Dt, float Throttle, float Steer, bool bHandbrake)
 	Traffic->Moved.Add(Drive.K, M);
 }
 
+bool ABrixCars::RideSeat(FVector2D& OutPos, double& OutYaw)
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	const TOptional<FBrixCarAt> C = Traffic && Mode && Drive.bRide ? Traffic->At(Drive.K, Mode->ClockMinute()) : TOptional<FBrixCarAt>();
+	if (!C) { Drive.bMoving = false; return false; }   // out of service
+	Drive.X = C->Pos.X; Drive.Z = C->Pos.Y; Drive.A = FMath::Atan2(C->Heading.Y, C->Heading.X); Drive.bMoving = C->bMoving;
+	Drive.V = C->bMoving ? 5 : 0;   // for the camera, which swings round behind while it goes
+	const double a = 11.0 / 2 - 2.3, w = -(2.5 / 2 - .55);   // a seat near the front (cars.js ride())
+	OutPos = C->Pos + C->Heading * a + FVector2D(-C->Heading.Y, C->Heading.X) * w;
+	OutYaw = Drive.A;
+	return true;
+}
+
 void ABrixCars::Leave(FVector2D& OutSpot, double& OutYaw)
 {
 	if (Drive.K < 0) return;
+	if (Drive.bRide)   // off the bus where it stands, on the kerb side by the door
+	{
+		const FVector2D H(FMath::Cos(Drive.A), FMath::Sin(Drive.A)), Side(-H.Y, H.X);
+		OutSpot = FVector2D(Drive.X, Drive.Z) + H * 3.6 - Side * (2.5 / 2 + .9);
+		OutYaw = Drive.A;
+		Drive = FDrive();
+		return;
+	}
 	const FVector3f D = Traffic->Dims(Drive.K);
 	const FVector2D H(FMath::Cos(Drive.A), FMath::Sin(Drive.A)), Side(-H.Y, H.X), C(Drive.X, Drive.Z);
 	FBrixCarAt M;
