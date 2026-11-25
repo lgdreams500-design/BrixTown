@@ -36,7 +36,7 @@ var Life = (() => {
   }
   function newGame(v) {
     fresh(); look = v; clock.day = 0; outfits = []; belongings = []; waypoint = null; plans = {};
-    if (transient) Boards.give(Boards.R.auto_owned, Boards.R.auto_equipped); else Boards.give([]);   // CITY-100: ?auto=1 has every board, the electric one in use; a real game none until the skate store
+    if (transient) Boards.give(Boards.R.auto_owned, Boards.R.auto_equipped); else Boards.give([]);   // CITY-100: ?auto=1 has every board, the electric one in use; a real game none (bought at the mall's sports and toy outlets in the Unreal build); until the skate store
     E.advance(0, clock.m); Q.newGame(); M.start(); ready = true;
     if (new URLSearchParams(location.search).has("rich")) testRich();
     feats = {}; lastMoney = E.totalMoney(); Rewards.reset(E.L.tx.length); save();
@@ -560,7 +560,7 @@ var Life = (() => {
     body.append(h("h3", {}, "Skateboards"), sk.length ? tbl(sk.map(k => { const K = Boards.R.kinds[k], mine = inUse && inUse.id === k;
       return [K.name, h("span", { cls: "dim" }, "up to " + K.top_kmh + " km/h" + (K.push ? ", pushed with a foot" : "") + (mine ? (Boards.riding ? " · riding it" : " · in your hand") : "")),
         mine ? h("span", { cls: "dim" }, "In use") : btn("Use this", () => { const was = Boards.riding; if (was) Boards.toggle(); Boards.use(k); if (was) Boards.toggle(); return "Now using the " + K.name.toLowerCase() + "."; })]; }))
-      : h("p", { cls: "dim" }, "None yet. The skate store is coming."));
+      : h("p", { cls: "dim" }, "None yet. The mall's sports and toy shops sell them in the Unreal build."));
     if (sk.length) body.append(h("p", { cls: "dim" }, "Y takes the board in use from your hand and gets on it, and picks it up again."));
     return ["Belongings", "What you own and carry · G"];
   }

@@ -2579,7 +2579,7 @@
       "id": "F-VEH-SKATES",
       "area": "vehicles",
       "title": "Skateboards",
-      "why": "A fast way to cross town, and something to save up for: better skateboards from the skate store as the player earns money.",
+      "why": "A fast way to cross town, and something to save up for: better skateboards from the mall's sports and toy shops as the player earns money.",
       "pillars": [
         2,
         3
@@ -2609,7 +2609,7 @@
         },
         {
           "name": "Skate store and tiers",
-          "what": "Buy skateboards at the skate store with money through the ledger: manual (50 km/h), electric (100 km/h), Neon Boost (250 km/h); owned boards are belongings, a faster board bought becomes the one in use; speeds and prices are data.",
+          "what": "Buy skateboards at the mall's sports and toy shops (no skate store of its own: the owner, 2026-11-25; ADR-0054) with money through the ledger: manual (50 km/h), electric (100 km/h), Neon Boost (250 km/h); owned boards are belongings, a faster board bought becomes the one in use; speeds and prices are data.",
           "effort": "L",
           "needs": {
             "F-BLD-SHOP": 2,

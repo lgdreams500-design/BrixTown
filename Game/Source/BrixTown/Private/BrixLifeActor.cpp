@@ -546,7 +546,6 @@ FString ABrixLife::CounterWords(int32 n) const
 	if (n == E->BankLot) return TEXT("Bank counter");
 	if (n == E->MarketLot) return TEXT("Your market stall");
 	if (Est) if (const FString* Co = Est->Office.Find(Lots[n].Id)) return TEXT("Estate agent: ") + EstateRules.Company(*Co)->Name;
-	if (E->ShopKind(n) == TEXT("skate")) return TEXT("Skateboards at ") + Lots[n].Name;
 	if (!E->ShopKind(n).IsEmpty() && !E->Outlets.Contains(n)) return TEXT("Buy and sell at ") + Lots[n].Name;
 	return FString();
 }
@@ -647,7 +646,7 @@ void ABrixLife::Draw()
 	else if (Panel == TEXT("shop"))
 	{
 		Title = Lots[PanelLot].Name;
-		Sub = E->R.Shop(E->ShopKind(PanelLot))->Name + (E->ShopKind(PanelLot) == TEXT("skate") ? FString(TEXT(" · three kinds of board")) : TEXT(" · restocks at ") + UiHhmm(E->R.RestockMinute));
+		Sub = E->R.Shop(E->ShopKind(PanelLot))->Name + TEXT(" · restocks at ") + UiHhmm(E->R.RestockMinute);
 		Hint = FString(TEXT("← → ↑ ↓  choose    Enter  ")) + (Side == TEXT("sell") ? TEXT("sell") : TEXT("buy")) + TEXT("    Esc  close");
 	}
 	else if (Panel == TEXT("outlet"))   // one outlet of a mall (life.js draw(), kind "outlet")
@@ -2333,12 +2332,15 @@ bool ABrixLife::RunOps(const FString& Ops)
 			bOk = Rest.Num() && Est->Buy(Rest);
 			if (!bOk) E->Why = Est->Why;
 		}
-		else if (A[0] == TEXT("board"))   // board,<kind>: bought at the skate store (CITY-103)
+		else if (A[0] == TEXT("board"))   // board,<kind>: bought at the first of the mall's outlets that sells boards (CITY-103)
 		{
-			int32 n = -1;
-			for (int32 k = 0; n < 0 && k < Lots.Num(); ++k) if (E->ShopKind(k) == TEXT("skate")) n = k;
+			bOk = false;
 			FString Said;
-			bOk = n >= 0 && SkateBuy(n, Sv(1), Said);
+			for (const auto& M : E->Outlets)
+			{
+				for (const FBrixOutlet& U : M.Value) if (E->SellsBoards(M.Key, U.Id)) { bOk = BoardBuy(M.Key, U.Id, Sv(1), Said); break; }
+				if (bOk) break;
+			}
 		}
 		else if (A[0] == TEXT("outlet"))   // outlet,<good>: bought at the first of a mall's outlets that sells it (ECO-013; to wear, CHR-016)
 		{
@@ -2439,20 +2441,21 @@ TSharedPtr<const FBrixThingMesh> ABrixLife::MeshFor(const FString& Thing, const 
 	TSharedPtr<const FBrixThingMesh> Got; if (M) Got = MakeShared<const FBrixThingMesh>(*M); return Meshes.Add(Key, Got);
 }
 
-FString ABrixLife::SkateStoreName() const
+FString ABrixLife::BoardsSoldWhere() const
 {
-	for (int32 k = 0; E && k < Lots.Num(); ++k) if (E->ShopKind(k) == TEXT("skate")) return Lots[k].Name;
-	return TEXT("The skate store");
+	for (const auto& M : E ? E->Outlets : TMap<int32, TArray<FBrixOutlet>>())
+		if (Lots.IsValidIndex(M.Key)) return TEXT("The sports and toy shops in ") + Lots[M.Key].Name;
+	return TEXT("The mall's sports and toy shops");
 }
 
-// buy a board at the skate store at lot n (CITY-103): through the ledger; the character owns it, and uses it when it is faster
-bool ABrixLife::SkateBuy(int32 n, const FString& K, FString& Said)
+// buy a board at outlet U of the mall at lot n (CITY-103): through the ledger; the character owns it, and uses it when it is faster
+bool ABrixLife::BoardBuy(int32 n, const FString& U, const FString& K, FString& Said)
 {
 	const FBrixEconomyRules::FBoard* B = E->R.Boards.Find(K);
 	ABrixCharacter* Rider = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
 	const FString Was = Rider ? Rider->Boards.InUse : FString();
 	int64 P = 0;
-	if (!E->BuyBoard(n, K, &P)) return false;
+	if (!E->BuyBoard(n, U, K, &P)) return false;
 	const FString Use = FBrixEconomy::BoardInUse(E->R, Was, K);
 	if (Rider)   // the board joins the others; the one in use changes only when the new one is faster (a ride goes on)
 	{
@@ -2462,21 +2465,17 @@ bool ABrixLife::SkateBuy(int32 n, const FString& K, FString& Said)
 		Rider->Boards.Use(Use);
 	}
 	const FBrixEconomyRules::FBoard* WasB = E->R.Boards.Find(Was);
-	Said = TEXT("Bought the ") + (B ? B->Name.ToLower() : K) + TEXT(" for ") + Format(P) + TEXT(".") + (Use == K ? FString(TEXT(" It is the one in use: Y gets on it."))
+	Said = TEXT("Bought the ") + (B ? B->Name.ToLower() : K) + TEXT(" for ") + Format(P) + TEXT(".") + (Use == K ? FString(TEXT(" It is the one in use: Y gets on it, or put it on show at home."))
 		: TEXT(" Your ") + (WasB ? WasB->Name.ToLower() : FString(TEXT("board"))) + TEXT(" stays the one in use; Belongings (G) changes it."));
 	return true;
 }
 
-// the skate store (CITY-102, CITY-103): its three boards in the buy menu, each its own model turning in the showcase, at the
-// store's prices; one owned shows as yours and is not sold again. A board bought goes to the belongings and is the one in use
-// when it is faster than the one in use (economy.board_in_use); the store buys none back (Q-40 is open).
-void ABrixLife::SkatePanel(TSharedRef<SVerticalBox> Body)
+// a sports or toy outlet's skateboards (CITY-102, CITY-103; ADR-0054): the three boards in the buy menu, each its own model
+// turning in the showcase, at boards.json's prices; one owned shows as yours and is not sold again. A board bought goes to the
+// belongings and is the one in use when it is faster than the one in use (economy.board_in_use); none are bought back (Q-40).
+TArray<ABrixLife::FWare> ABrixLife::BoardWares(const FString& Band) const
 {
-	const int32 n = PanelLot;
 	const ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
-	const FString Band = BuyMenu.Bands.FindRef(TEXT("skate"));
-	Body->AddSlot().AutoHeight()[ PurseLine() ];
-	Body->AddSlot().AutoHeight()[ UiHeading(TEXT("Skateboards")) ];
 	TArray<FWare> Things;
 	for (const FString& K : E->R.BoardOrder)
 	{
@@ -2488,17 +2487,12 @@ void ABrixLife::SkatePanel(TSharedRef<SVerticalBox> Body)
 		if (const FBrixBoardKind* BK = Me ? Me->BoardRules.Kind(K) : nullptr) W.More.Add({ TEXT("It goes"), BK->bPush ? TEXT("pushed with a foot") : TEXT("by itself, W held") });
 		Things.Add(W);
 	}
-	FGridOpts O;
-	O.Id = FString::Printf(TEXT("skate:%d"), n);
-	O.Buy = [this, n](const FWare& W, FString& Said) { return SkateBuy(n, W.Id.RightChop(6), Said); };
-	Body->AddSlot().AutoHeight()[ Grid(Things, O) ];
-	Body->AddSlot().AutoHeight().Padding(0, 10, 0, 0)[ UiText(TEXT("A board goes with you, among your belongings (G). The store does not buy boards back."), 13, UiDim) ];
+	return Things;
 }
 
 void ABrixLife::ShopPanel(TSharedRef<SVerticalBox> Body)
 {
 	const int32 n = PanelLot;
-	if (E->ShopKind(n) == TEXT("skate")) { SkatePanel(Body); return; }
 	const FString K = E->ShopKind(n);
 	const FBrixEconomyRules::FShop& S = *E->R.Shop(K);
 	const FString Band = BuyMenu.Bands.FindRef(K);
@@ -2584,11 +2578,14 @@ void ABrixLife::OutletPanel(TSharedRef<SVerticalBox> Body)
 	Body->AddSlot().AutoHeight()[ UiHeading(TEXT("Buy")) ];
 	TArray<FWare> Things;
 	for (const FString& G : E->OutletSells(n, U)) { const FBrixEconomyRules::FGood Gd = E->Good(G); Things.Add(Ware(G, Gd.Name, E->OutletPrice(n, U, G), Gd.Goes, E->OutletStock(n, U, G), Band)); }
+	const bool bBoards = E->SellsBoards(n, U);   // a sports or toy outlet sells the three skateboards too (ADR-0054)
+	if (bBoards) Things.Append(BoardWares(Band));
 	FGridOpts Op;
 	Op.Id = FString::Printf(TEXT("outlet:%d:%s"), n, *U);
 	Op.StockLabel = TEXT("In stock");
 	Op.Buy = [this, n, U](const FWare& W, FString& Said)
 	{
+		if (W.Id.StartsWith(TEXT("board:"))) return BoardBuy(n, U, W.Id.RightChop(6), Said);
 		int64 P = 0;
 		if (!E->BuyAt(n, U, W.Id, &P)) return false;
 		const FBrixEconomyRules::FGood Gd = E->Good(W.Id);
@@ -2596,7 +2593,8 @@ void ABrixLife::OutletPanel(TSharedRef<SVerticalBox> Body)
 		return true;
 	};
 	Body->AddSlot().AutoHeight().Padding(0, 6, 0, 0)[ Grid(Things, Op) ];
-	Body->AddSlot().AutoHeight().Padding(0, 6, 0, 0)[ UiText(TEXT("Things for the home go to your belongings (G): place them from the Furnish tab of the building designer, in any home of yours. Clothes go to your wardrobe (U). Outlets do not buy things back; what you carry can be sold on your market stall."), 15, UiDim) ];
+	Body->AddSlot().AutoHeight().Padding(0, 6, 0, 0)[ UiText(FString(TEXT("Things for the home go to your belongings (G): place them from the Furnish tab of the building designer, in any home of yours. Clothes go to your wardrobe (U). "))
+		+ (bBoards ? TEXT("A skateboard goes with you among your belongings, to ride (Y) or to put on show at home. ") : TEXT("")) + TEXT("Outlets do not buy things back; what you carry can be sold on your market stall."), 15, UiDim) ];
 }
 
 // layout B: a grid of the things, each drawn as an object with its price and where it goes, and beside it the chosen one

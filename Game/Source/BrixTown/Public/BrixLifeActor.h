@@ -219,10 +219,9 @@ private:
 	TSharedRef<SWidget> PurseLine() const;
 	TSharedRef<SWidget> StatementTable(int32 N) const;
 	void ShopPanel(TSharedRef<SVerticalBox> Body);
-	void SkatePanel(TSharedRef<SVerticalBox> Body);   // the skate store's counter (CITY-102, CITY-103)
-	bool SkateBuy(int32 N, const FString& Kind, FString& Said);
+	bool BoardBuy(int32 N, const FString& U, const FString& Kind, FString& Said);
 public:
-	FString SkateStoreName() const;                    // the town's skate store, by name
+	FString BoardsSoldWhere() const;                   // where boards are sold: the mall's sports and toy outlets (ADR-0054)
 private:
 	void StallPanel(TSharedRef<SVerticalBox> Body);
 	// one thing of a buy menu (life.js ware()): whether it can be had now, sold out, or dearer than cash and current account
@@ -230,6 +229,7 @@ private:
 	// More: rows the showcase adds under its name (a board's top speed)
 	// Line: a piece of furniture's line (its own mesh in that line is its picture); Size: its width, depth and height, metres
 	struct FWare { FString Id, Name, Goes, Band, Line; int64 Price = 0; int32 Left = -1; FString State = TEXT("ok"); int64 Short = 0; TArray<TPair<FString, FString>> More; TOptional<FVector3f> Size; };
+	TArray<FWare> BoardWares(const FString& Band) const;   // a sports or toy outlet's three boards, in its grid (CITY-102, CITY-103)
 	// bNarrow: layout D, small cells and a strip under them, Width pixels wide (a panel narrower than the rules' narrow_px)
 	struct FGridOpts { FString Id, Verb = TEXT("Buy"), StockLabel, PriceLabel = TEXT("Price"), Empty = TEXT("Nothing here."); bool bMine = false, bNarrow = false; float Width = 0.f; TFunction<bool(const FWare&, FString&)> Buy; };
 	TSharedRef<SWidget> Grid(const TArray<FWare>& Things, const FGridOpts& O);   // layout B, or D when narrow (buymenu.js grid())

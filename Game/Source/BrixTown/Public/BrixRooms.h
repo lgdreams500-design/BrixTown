@@ -65,9 +65,34 @@ public:
 	// the rooms' own light (homes.js: a lamp in each room near the camera, 0.4 m under its ceiling): the rooms nearest the
 	// camera in the home it is in (each light costs GPU time with Lumen: 6 cost some 15 ms on the owner's laptop)
 	UPROPERTY(Config) int32 RoomLights = 3;
-	UPROPERTY(Config) float RoomLightCandela = 6.f;
-	UPROPERTY(Config) float RoomLightReach = 7.f;       // m
-	UPROPERTY(Config) FLinearColor RoomLightColour = FLinearColor(1.f, 0.86f, 0.68f);
+	// A room's lamp is the lamp of the Blender reference rooms (Tools/blender/furniture_kit_17.py and _18.py; ADR-0055):
+	// their pendant of 70 W in the lantern's colour, a real lamp whose light falls off with the square of the distance,
+	// shining down out of its shade (RoomLampCone: the half angle; 0 all round). CandelaPerWatt turns the references' watts
+	// into the engine's candela where the sun is SunLux. By the arithmetic it is 0.075 (a Blender point light of P watts
+	// lights a facing surface d away with P / (4 pi d2) W/m2, and the references' sun is 8.5 W/m2 where the game's is 8);
+	// measured in the reference rooms built in Unreal (ABrixLightRoom, Tools/unreal/light_reference.py) a third of that
+	// matches, as a pendant's shade takes part of its light and the engine's picture keeps more colour in what is bright.
+	UPROPERTY(Config) float RoomLampWatts = 70.f;
+	UPROPERTY(Config) float CandelaPerWatt = 0.026f;
+	UPROPERTY(Config) FLinearColor RoomLampColour = FLinearColor(1.f, 0.6f, 0.3f);
+	UPROPERTY(Config) float RoomLampCone = 80.f;
+	UPROPERTY(Config) float RoomLampReach = 9.f;        // m
+	UPROPERTY(Config) float RoomLampDrop = 0.7f;        // m under the ceiling, where a planned home's room has no lamp of its own to hang it from
+	UPROPERTY(Config) int32 RoomLampShadows = 1;        // how many of the nearest lamps cast shadows
+	// A floor with no plan (a shop, a cafe, the bank) hangs many lamps (play.js lamp()); the RoomLights nearest the camera
+	// are the real ones.
+	// The room's own light. The engine brings almost none of the day indoors (in the reference rooms built in Unreal,
+	// with the lamps out, the walls came 7 stops under Blender's, which are lit mostly by the sky and by sunlight off the
+	// floor), so a room has an even warm light of its own, as the slice's has (play.js roomLight(): its room light, weaker
+	// by night): RoomFill strong where the sun is SunLux, RoomFillNight of that with the day gone, in RoomFillColour,
+	// fading out at RoomFillReach of the floor's diagonal. It also stands in for a hall's lamps too far to be real ones.
+	UPROPERTY(Config) float RoomFill = 0.45f;
+	UPROPERTY(Config) float RoomFillNight = 0.4f;
+	UPROPERTY(Config) FLinearColor RoomFillColour = FLinearColor(1.f, 0.75f, 0.48f);
+	UPROPERTY(Config) float RoomFillReach = 0.7f;
+	float FillNow(float Daylight) const { return RoomFill * FMath::Lerp(RoomFillNight, 1.f, FMath::Clamp(Daylight, 0.f, 1.f)); }
+	// a lamp as the rooms make it, for anything else that wants the same lamp (the reference room, ABrixLightRoom)
+	static class UPointLightComponent* MakeLamp(AActor* Owner, USceneComponent* Root, float Watts, float ConeDeg, bool bShadows);
 	UPROPERTY(Config) float MarkGlow = 2.5f;            // how brightly the designer's outlines are lit (M_Glow's Glow)
 	UPROPERTY(Config) float NightBelow = 0.35f;        // the windows are lit as the day's light falls below this (as ABrixLamps)
 
@@ -95,5 +120,6 @@ private:
 	TArray<FBrixLiftCall> LiftCalls;
 	UPROPERTY() TObjectPtr<ABrixTownActor> TownRef;
 	UPROPERTY() TArray<TObjectPtr<class UPointLightComponent>> Lights;
-	void PlaceLights(const FVector2D& Eye, float EyeUp);
+	UPROPERTY() TObjectPtr<class UPointLightComponent> Fill;      // the room's own light
+	void PlaceLights(const FVector2D& Eye, float EyeUp, float Daylight);
 };
