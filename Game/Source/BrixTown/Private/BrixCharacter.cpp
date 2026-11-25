@@ -1,9 +1,15 @@
 #include "BrixCharacter.h"
 
 #include "BrixCarsActor.h"
+#include "BrixCity.h"
 #include "BrixGameMode.h"
 #include "BrixLifeActor.h"
 #include "BrixMapActor.h"
+#include "BrixLook.h"
+#include "Widgets/SBoxPanel.h"
+#include "Widgets/Layout/SBorder.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/Text/STextBlock.h"
 #include "BrixPeople.h"
 #include "BrixRooms.h"
 #include "BrixTalkActor.h"
@@ -61,6 +67,11 @@ void ABrixCharacter::BeginPlay()
 	FString Error;
 	if (!LoadBrixPeopleRules(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/people.json"))), Rules, Error))
 		UE_LOG(LogTemp, Error, TEXT("Brix Town: %s"), *Error);
+	if (!LoadBrixBoards(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/rules/boards.json"))), BoardRules, Error))
+		UE_LOG(LogTemp, Error, TEXT("Brix Town: no skateboards (%s)"), *Error);
+	Boards.R = &BoardRules;
+	if (FParse::Param(FCommandLine::Get(), TEXT("BrixBoards")) || FCommandLine::Get() && FCString::Strifind(FCommandLine::Get(), TEXT("-BrixShot=")))
+		Boards.Give(BoardRules.AutoOwned, BoardRules.AutoEquipped);   // CITY-100: a test owns every kind, the electric one in use (the slice's ?auto=1)
 }
 
 void ABrixCharacter::MakeInput()
@@ -78,6 +89,7 @@ void ABrixCharacter::MakeInput()
 	CounterAction = NewObject<UInputAction>(this, TEXT("Counter"));
 	WalletAction = NewObject<UInputAction>(this, TEXT("Wallet"));
 	QuestsAction = NewObject<UInputAction>(this, TEXT("Quests"));
+	BoardAction = NewObject<UInputAction>(this, TEXT("Board"));
 	PageNames = { TEXT("me"), TEXT("belongings"), TEXT("property"), TEXT("wardrobe"), TEXT("map"), TEXT("help") };   // settings.json actions
 	for (const FString& N : PageNames) PageActions.Add(NewObject<UInputAction>(this, *(TEXT("Page_") + N)));
 	for (UInputAction* A : PageActions) A->bTriggerWhenPaused = true;   // the menu stops the clock; its keys still work
@@ -111,6 +123,7 @@ void ABrixCharacter::MakeInput()
 	Keys->MapKey(CounterAction, EKeys::B);
 	Keys->MapKey(WalletAction, EKeys::I);
 	Keys->MapKey(QuestsAction, EKeys::J);
+	Keys->MapKey(BoardAction, EKeys::Y);   // settings.json: board, Y
 	const FKey PageKeys[6] = { EKeys::C, EKeys::G, EKeys::P, EKeys::U, EKeys::M, EKeys::H };
 	for (int32 k = 0; k < 6; ++k) Keys->MapKey(PageActions[k], PageKeys[k]);
 	Keys->MapKey(ChooseActions[0], EKeys::Left);
@@ -153,6 +166,7 @@ void ABrixCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		In->BindAction(CounterAction, ETriggerEvent::Started, this, &ABrixCharacter::CounterKey);
 		In->BindAction(WalletAction, ETriggerEvent::Started, this, &ABrixCharacter::WalletKey);
 		In->BindAction(QuestsAction, ETriggerEvent::Started, this, &ABrixCharacter::QuestsKey);
+		In->BindAction(BoardAction, ETriggerEvent::Started, this, &ABrixCharacter::BoardKey);
 		for (UInputAction* A : PageActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::MenuPageKey);
 		for (UInputAction* A : ChooseActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::ChooseKey);
 		for (UInputAction* A : AnswerActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::AnswerKey);
@@ -164,6 +178,7 @@ void ABrixCharacter::Move(const FInputActionValue& Value)
 	const FVector2D V = Value.Get<FVector2D>();
 	if (bDriving) { DriveIn = V; return; }   // W/S the speed, A/D the steering
 	if (!Controller || bTalking || bPanel) return;   // a talk or a counter holds the player still (conversations.js open())
+	if (Boards.Riding()) { BoardIn = V; return; }    // on a board there is no walk: W goes, S brakes, A and D turn
 	const FRotator Yaw(0.f, Controller->GetControlRotation().Yaw, 0.f);
 	AddMovementInput(FRotationMatrix(Yaw).GetUnitAxis(EAxis::X), V.Y);
 	AddMovementInput(FRotationMatrix(Yaw).GetUnitAxis(EAxis::Y), V.X);
@@ -261,6 +276,7 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 			}
 			return;
 		}
+	if (Boards.Riding()) { StepBoard(DeltaSeconds); return; }
 	// the slice's stepPlayer(): the phase runs on with the distance covered, by the Run signature when running
 	const double Speed = GetVelocity().Size2D() / CmPerM;
 	FBrixLook L = Rules.Player;
@@ -280,6 +296,8 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 	if (bTalking) O.Face = TalkFace;
 	O.Seconds = GetWorld()->GetTimeSeconds();
 	O.Lod = 0;
+	O.Board = Boards.Kind();   // the board in use, carried in the right hand (CITY-099)
+	O.bCarry = true;
 	Scratch.Reset();
 	DrawBrixPerson(Rules, L, FVector::ZeroVector, 0.0, O, Scratch);
 	Verts = BrixBodyToMesh(Person, Scratch, Verts, false, BodyMaterial);
@@ -341,6 +359,7 @@ void ABrixCharacter::JumpKey()
 {
 	if (bDesigning) return;   // the designer has the keys
 	if (bDriving) { bHandbrake = true; return; }
+	if (Boards.Riding()) return;   // no jumping off a board: Y steps off it
 	if (!bTalking) Jump();
 }
 
@@ -497,3 +516,105 @@ void ABrixCharacter::EndTalk()
 		PC->SetInputMode(FInputModeGameOnly());
 	}
 }
+
+// ---- skateboards (CITY-098 to CITY-101; play.js boardKey(), stepBoard(), hud())
+
+void ABrixCharacter::BoardKey()   // Y: from the hand onto the board, and back; not in a car, at a talk, a counter or the designer
+{
+	if (bDriving || bTalking || bPanel || bDesigning) return;
+	const TOptional<bool> On = Boards.Toggle();
+	ABrixLife* L = Life();
+	if (!On) { if (L) L->Toast(TEXT("You have no skateboard yet. The skate store is coming.")); return; }
+	const FBrixBoardKind* K = Boards.Kind();
+	BoardBlend = 0;
+	BoardMeant = 0;
+	BoardYaw = GetActorRotation().Yaw;
+	BoardIn = FVector2D::ZeroVector;
+	Phase = 0;
+	GetCharacterMovement()->bOrientRotationToMovement = !*On;
+	GetCharacterMovement()->MaxWalkSpeed = (*On ? BoardRules.Kind(BoardRules.Order.Last())->TopKmh / 3.6 + 1 : WalkSpeed) * CmPerM;
+	if (L) L->Toast(*On ? K->Name + TEXT(": W to ") + (K->bPush ? TEXT("push") : TEXT("go")) + TEXT(", S to brake, Y to pick it up.") : K->Name + TEXT(" in your hand."));
+}
+
+void ABrixCharacter::TestBoard(const FString& Kind)
+{
+	if (!Boards.Own.Contains(Kind)) Boards.Give(BoardRules.AutoOwned, Kind);
+	Boards.Use(Kind);
+	if (!Boards.Riding()) BoardKey();
+}
+
+// Riding: the board's speed (boards.js) along the rider's heading. A and D turn the rider, and the camera swings round behind
+// them as behind a car, more slowly the faster the board goes; W speeds it up the way they face, S brakes. Only W speeds it up:
+// let go and it glides. A manual board speeds up only while a foot pushes it (W held: the push goes round), and the push stops
+// the moment W is let go; the powered boards go by themselves and the rider just stands. A knock against a wall or a car
+// loses the speed into it. Slower indoors (indoor_top_kmh), less so in a mall.
+void ABrixCharacter::StepBoard(float Dt)
+{
+	const FBrixBoardKind* K = Boards.Kind();
+	if (!TestHold.IsZero()) BoardIn = TestHold;
+	const double F = BoardIn.Y, S = BoardIn.X;
+	BoardIn = FVector2D::ZeroVector;
+	// what the last frame's move came to: running into something loses the speed into it
+	const FVector Here = GetActorLocation();
+	if (BoardMeant > .001)
+	{
+		const double Went = FVector::Dist2D(Here, BoardFrom) / CmPerM;
+		if (Went < BoardMeant * .7) Boards.Slow(FMath::Max(0.0, Went / BoardMeant));
+	}
+	const bool bGo = F > 0, bBack = F < 0;
+	const double V0 = Boards.V;
+	if (S != 0) BoardYaw += FMath::RadiansToDegrees(S * BoardRules.TurnRate / (1 + V0 / 15) * Dt);   // D turns right, A left
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))   // the camera comes round behind
+	{
+		FRotator R = PC->GetControlRotation();
+		R.Yaw += FMath::FindDeltaAngleDegrees(R.Yaw, BoardYaw) * FMath::Min(1.0, Dt * BoardRules.CamFollow);
+		PC->SetControlRotation(R);
+	}
+	const bool bPushing = K->bPush && bGo;
+	BoardBlend += ((bPushing ? 1.0 : 0.0) - BoardBlend) * FMath::Min(1.0, Dt * (bPushing ? 7.0 : 14.0));   // into the push, and straight back to standing
+	Phase = bPushing ? FMath::Fmod(Phase + BoardRules.PushPerS * Dt, 1.0) : 0.0;
+	double Cap = -1;
+	if (const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))
+	{
+		const int32 Room = Mode->RoomAt(Here);
+		if (Room != INDEX_NONE)
+		{
+			Cap = BoardRules.IndoorTopKmh;
+			int32 n = 0;
+			if (const FBrixCity* C = Mode->CityData()) for (const FBrixBlock& B : C->Blocks) for (const FBrixLot& L : B.Lots) if (n++ == Room && L.Tags.Contains(TEXT("mall"))) Cap = BoardRules.MallTopKmh;
+		}
+	}
+	const double V = Boards.Step(Dt, bGo, bBack, Cap);
+	const FVector Dir = FRotator(0, BoardYaw, 0).Vector();
+	GetCharacterMovement()->RequestDirectMove(Dir * V * CmPerM, false);
+	BoardFrom = Here;
+	BoardMeant = V * Dt;
+	FRotator Me = GetActorRotation();
+	Me.Yaw += FMath::FindDeltaAngleDegrees(Me.Yaw, BoardYaw) * FMath::Min(1.0, Dt * 12.0);
+	SetActorRotation(Me);
+	FBrixDrawOptions O;
+	O.Pose = 5;
+	O.Board = K;
+	O.RidePush = BoardBlend;
+	O.Phase = Phase;
+	O.Seconds = GetWorld()->GetTimeSeconds();
+	O.Lod = 0;
+	Scratch.Reset();
+	DrawBrixPerson(Rules, Rules.Player, FVector::ZeroVector, 0.0, O, Scratch);
+	Verts = BrixBodyToMesh(Person, Scratch, Verts, false, BodyMaterial);
+	if (!BoardBar && GEngine && GEngine->GameViewport)   // which board and how fast (play.js #boardbar)
+	{
+		BoardBar = SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Bottom).Padding(FMargin(0, 0, 0, 140))
+			.Visibility_Lambda([this]() { return Boards.Riding() && !bPanel && !bTalking ? EVisibility::HitTestInvisible : EVisibility::Collapsed; })
+			[
+				SNew(SBorder).BorderImage(BrixLook::Round(FLinearColor::White, 6.f)).BorderBackgroundColor(FLinearColor::FromSRGBColor(FColor(23, 23, 28, 153))).Padding(FMargin(12, 5))
+				[ SNew(STextBlock).Font(BrixLook::Font(11)).ColorAndOpacity(BrixLook::Cream()).Text_Lambda([this]()
+				{
+					const FBrixBoardKind* B = Boards.Kind();
+					return FText::FromString(B ? FString::Printf(TEXT("%s \u00B7 %d of %d km/h"), *B->Name, (int32)FMath::RoundHalfFromZero(Boards.V * 3.6), (int32)B->TopKmh) : FString());
+				}) ]
+			];
+		GEngine->GameViewport->AddViewportWidgetContent(BoardBar.ToSharedRef(), 16);
+	}
+}
+

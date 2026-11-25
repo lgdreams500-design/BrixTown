@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "BrixBody.h"
+#include "BrixBoards.h"
 #include "BrixCharacter.generated.h"
 
 class UCameraComponent;
@@ -56,6 +57,13 @@ public:
 	double WalkPhase() const { return Phase; }   // the walk's cycle, 0..1: a step at each half (the sound's steps, SND-003)
 	FVector2D DriveKeys() const { return DriveUsed; }   // this frame's steer and throttle while driving (the engine's sound, SND-009)
 	bool Handbrake() const { return bHandbrake; }
+	// Skateboards (CITY-098 to CITY-101; play.js boardKey(), stepBoard()): the boards owned, the one in use carried in the
+	// right hand or ridden. A test shot (or -BrixBoards) owns every kind with the electric board in use, as the slice's ?auto=1;
+	// -BrixBoard=<kind> gets on that one a third into the shot's wait (with -BrixHold=steer,throttle held)
+	FBrixBoardRules BoardRules;
+	FBrixBoards Boards;
+	void BoardKey();                 // Y: get on the board in use, and off it again, picking it up
+	void TestBoard(const FString& Kind);
 	// the character's look (CHR-001): the designed character's (ABrixDesigner), drawn from the next frame
 	void SetLook(const FBrixLook& L) { Rules.Player = L; }
 	const FBrixLook& CurrentLook() const { return Rules.Player; }
@@ -84,6 +92,7 @@ private:
 	class ABrixLife* Life() const;
 	void JumpKey();                  // Space: a jump on foot, the handbrake in a car
 	void JumpEnd();
+	void StepBoard(float Dt);         // riding: the speed along the heading, A and D turn, the camera comes round behind
 	class ABrixCars* Cars() const;
 	class ABrixTalk* Talk() const;
 
@@ -106,6 +115,7 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UInputAction> CounterAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> WalletAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> QuestsAction;
+	UPROPERTY(Transient) TObjectPtr<UInputAction> BoardAction;
 	UPROPERTY(Transient) TArray<TObjectPtr<UInputAction>> PageActions;
 	TArray<FString> PageNames;
 	float LookScale = 1.f;
@@ -118,6 +128,10 @@ private:
 	FVector2D DriveIn = FVector2D::ZeroVector;   // this frame's W/S and A/D while driving
 	FVector2D DriveUsed = FVector2D::ZeroVector; // what the car was given this frame (DriveIn is cleared once used)
 	float ArmBefore = 0.f;
+	FVector2D BoardIn = FVector2D::ZeroVector;   // this frame's A/D and W/S on a board
+	double BoardYaw = 0, BoardBlend = 0, BoardMeant = 0;   // the heading (Unreal degrees), into the push (0 to 1), the metres last meant to go
+	FVector BoardFrom = FVector::ZeroVector;
+	TSharedPtr<class SWidget> BoardBar;
 	bool bDesigning = false;
 	const FBrixFace* TalkFace = nullptr;
 	bool bAnswering = false;
