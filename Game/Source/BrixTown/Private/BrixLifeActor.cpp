@@ -196,7 +196,7 @@ void ABrixLife::BuildUI()
 {
 	if (!GEngine || !GEngine->GameViewport) return;
 	SAssignNew(Hud, SOverlay)
-	+ SOverlay::Slot()[ SNew(SBrixCoins).Sprites(&Sprites).ViewportPx(&ViewportPx) ]
+	+ SOverlay::Slot()[ SNew(SBrixCoins).Sprites(&Sprites).ViewportPx(&ViewportPx).GlowBoost(CoinGlow) ]
 	// the slip from the bank under the purse while interest is paid in (index.html #slip)
 	+ SOverlay::Slot().HAlign(HAlign_Left).VAlign(VAlign_Top).Padding(FMargin(22, 178, 0, 0))
 	[
@@ -1173,15 +1173,25 @@ void ABrixLife::ShowReward(const FBrixRewardEvent& Ev)
 	const APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);
 	const FVector At = Me ? Me->GetActorLocation() / CmPerM - FVector(0, 0, .85) : FVector::ZeroVector;   // the player's feet, metres
 	const bool bTwo = S->N > 10;
-	const double Phase = FMath::FRandRange(0.0, 6.2832), Turn = FMath::RandBool() ? -1.0 : 1.0;
+	// The slice spreads them all round the player; here the camera is close behind, so they spring out over an arc on the
+	// far side and to the sides (CoinArcDeg), never between the player and the eye where they would loom large.
+	double Away = FMath::FRandRange(0.0, 6.2832);
+	if (const APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
+		if (PC->PlayerCameraManager)
+		{
+			const FVector Eye = PC->PlayerCameraManager->GetCameraLocation() / CmPerM;
+			if (FVector2D(At.X - Eye.X, At.Y - Eye.Y).Size() > .2) Away = FMath::Atan2(At.Y - Eye.Y, At.X - Eye.X);
+		}
+	const double Arc = FMath::DegreesToRadians(FMath::Clamp((double)CoinArcDeg, 30.0, 360.0)), Turn = FMath::RandBool() ? -1.0 : 1.0;
+	const double Phase = Away - Turn * Arc / 2;
 	for (int32 i = 0; i < S->N; ++i)
 	{
 		const int64 Part = i == S->N - 1 ? Ev.Amount - Each * (S->N - 1) : Each;
-		Later(C.StartS + i * C.GapS, [this, i, S, Purse, Part, Phase, Turn, bTwo, At]()
+		Later(C.StartS + i * C.GapS, [this, i, S, Purse, Part, Phase, Turn, Arc, bTwo, At]()
 		{
 			const FBrixRewardRules& K = RewardRules;
 			if (i % 2 == 0) Sound(TEXT("coin_out"), i, S->N);
-			const double A = Phase + Turn * (6.2832 * i / S->N + FMath::FRandRange(-.08, .08));
+			const double A = Phase + Turn * (Arc * (i + .5) / S->N + FMath::FRandRange(-.08, .08));
 			const double R = (bTwo ? (i % 3 == 0 ? K.RingM[0] : K.RingM[1]) : (K.RingM[0] + K.RingM[1]) / 2) * FMath::FRandRange(.92, 1.08);
 			const double Vy = FMath::FRandRange(K.UpMps[0], K.UpMps[1]), T = (Vy + FMath::Sqrt(Vy * Vy + 2 * K.FallMps2 * (K.FromM - K.SizeM))) / K.FallMps2;
 			FCoin Cn;
@@ -1285,6 +1295,8 @@ void ABrixLife::TickRewards(float FrameDt)
 		{
 			Cn.T += Dt;
 			Cn.Vs = 18;
+			Cn.Trail.Add(Cn.P);   // a short trail of light behind it (rewards.js c.trail)
+			if (Cn.Trail.Num() > 6) Cn.Trail.RemoveAt(0);
 			if (Cn.T < C.LiftS) Cn.P.Z = Cn.From.Z + Cn.T / C.LiftS * .16;
 			else
 			{
@@ -1317,16 +1329,60 @@ void ABrixLife::TickRewards(float FrameDt)
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 	FVector2D PlayerPx = ViewportPx * FVector2D(.5, .92);
 	if (PC && Me) { FVector2D Px; if (PC->ProjectWorldLocationToScreen(Chest * CmPerM, Px)) PlayerPx = Px; }
-	for (const FCoin& Cn : Coins)
+	// The coins, far ones first (rewards.js draw()). One behind the player's body is not drawn, as this layer lies over the
+	// whole picture; each has its shadow under it, and while it hovers a pool of its light on the ground.
+	const FVector Eye = PC && PC->PlayerCameraManager ? PC->PlayerCameraManager->GetCameraLocation() / CmPerM : Chest;
+	FBox2D Body(ForceInit);
+	double BodyD = 0;
+	if (PC && Me)
 	{
+		FVector2D F, Hd;
+		const FVector Feet = Chest - FVector(0, 0, C.FromM);
+		if (PC->ProjectWorldLocationToScreen(Feet * CmPerM, F) && PC->ProjectWorldLocationToScreen((Feet + FVector(0, 0, 1.75)) * CmPerM, Hd) && F.Y > Hd.Y)
+		{
+			const double Half = .3 * (F.Y - Hd.Y) / 1.75;
+			Body = FBox2D(FVector2D(F.X - Half, Hd.Y), FVector2D(F.X + Half, F.Y));
+			BodyD = FVector::Distance(Eye, Chest);
+		}
+	}
+	TArray<const FCoin*> Order;
+	for (const FCoin& Cn : Coins) Order.Add(&Cn);
+	Order.Sort([&](const FCoin& A, const FCoin& B) { return FVector::DistSquared(A.P, Eye) > FVector::DistSquared(B.P, Eye); });
+	for (const FCoin* Cp : Order)
+	{
+		const FCoin& Cn = *Cp;
 		FVector2D Px, Up;
 		if (!PC || !PC->ProjectWorldLocationToScreen(Cn.P * CmPerM, Px) || !PC->ProjectWorldLocationToScreen((Cn.P + FVector(0, 0, C.SizeM)) * CmPerM, Up)) continue;
+		if (Body.bIsValid && FVector::Distance(Eye, Cn.P) > BodyD * 1.03 && Body.IsInside(Px)) continue;
 		const float Pop = Cn.Age < .14 ? (float)(1 + 2.2 * FMath::Pow(Cn.Age / .14 - 1, 3) + 1.2 * FMath::Pow(Cn.Age / .14 - 1, 2)) : 1.f;
+		const float Lift = Cn.State == 2 && Cn.T < C.LiftS ? (float)(1 + .18 * Cn.T / C.LiftS) : 1.f;
+		const float R = FMath::Max(3.f * PxScale, (float)FVector2D::Distance(Px, Up)) * Pop * (float)Cn.Small * Lift;
+		for (int32 k = 0; k < Cn.Trail.Num(); ++k)   // the trail, faint at its tail
+		{
+			FVector2D Tp;
+			if (!PC->ProjectWorldLocationToScreen(Cn.Trail[k] * CmPerM, Tp)) continue;
+			FBrixCoinSprite Tr;
+			Tr.Px = Tp; Tr.R = R * (1 + k * .22f); Tr.Glow = (k + 1.f) / Cn.Trail.Num() * .55f; Tr.bHaloOnly = true;
+			Sprites.Add(Tr);
+		}
 		FBrixCoinSprite Sp;
 		Sp.Px = Px;
-		Sp.R = FMath::Max(3.f * PxScale, (float)FVector2D::Distance(Px, Up)) * Pop * (float)Cn.Small;
+		Sp.R = R;
 		Sp.Spin = (float)Cn.Spin;
 		Sp.Glow = Cn.State == 1 ? .75f + .25f * FMath::Sin(Cn.Age * 3.6 + Cn.Ph) : Cn.State == 2 ? 1.f : .45f;
+		const double Tw = FMath::Sin(Cn.Age * 2.3 + Cn.Ph * 5);
+		if (Cn.State == 1 && Tw > .93) Sp.Glint = (float)((Tw - .93) / .07);
+		FVector2D Fp, Fu;
+		const FVector Floor(Cn.P.X, Cn.P.Y, Cn.Floor - C.SizeM + .01);
+		if (Cn.State < 2 && PC->ProjectWorldLocationToScreen(Floor * CmPerM, Fp) && PC->ProjectWorldLocationToScreen((Floor + FVector(0, 0, C.SizeM)) * CmPerM, Fu))
+		{
+			const double UpM = FMath::Min(1.0, (Cn.P.Z - Cn.Floor) / 1.2);
+			Sp.bFloor = true;
+			Sp.FloorPx = Fp;
+			Sp.FloorR = (float)(FVector2D::Distance(Fp, Fu) * (1.1 - UpM * .4));
+			Sp.Shadow = (float)(1 - UpM);
+			Sp.Pool = Cn.State == 1 ? 1.f : 0.f;
+		}
 		Sprites.Add(Sp);
 	}
 	for (FFly& F : Flies)
@@ -1336,6 +1392,14 @@ void ABrixLife::TickRewards(float FrameDt)
 		const FVector2D B = F.To == TEXT("cash") ? PurseCashPx() : PurseBankPx();
 		const double k = FMath::Min(1.0, F.T), e = k * k * (3 - 2 * k);
 		const FVector2D M((F.A.X + B.X) / 2 + F.Bend * PxScale, FMath::Min(F.A.Y, B.Y) - 50 * PxScale);
+		for (int32 j = 3; j >= 1; --j)   // a fading streak of light behind it
+		{
+			const double kk = FMath::Max(0.0, k - j * .07), ee = kk * kk * (3 - 2 * kk);
+			FBrixCoinSprite Tr;
+			Tr.Px = (1 - ee) * (1 - ee) * F.A + 2 * ee * (1 - ee) * M + ee * ee * B;
+			Tr.R = (11 - j * 2) * PxScale / 2.8f; Tr.Glow = .5f - j * .12f; Tr.bHaloOnly = true;
+			Sprites.Add(Tr);
+		}
 		FBrixCoinSprite Sp;
 		Sp.Px = (1 - e) * (1 - e) * F.A + 2 * e * (1 - e) * M + e * e * B;
 		Sp.R = (F.R - 1.5f * (float)e) * PxScale;

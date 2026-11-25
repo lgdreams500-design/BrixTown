@@ -76,6 +76,8 @@ public:
 
 	UPROPERTY(Config) FString LifeFile = TEXT("Data/life.json");
 	UPROPERTY(Config) float CounterReach = 3.f;     // m from a lot's door at which its counter can be used from the street
+	UPROPERTY(Config) float CoinArcDeg = 220.f;     // SND-019: the coins spring out over this arc on the far side of the player from the camera
+	UPROPERTY(Config) float CoinGlow = 1.6f;        // SND-019: the coins' lantern light, times the slice's
 	UPROPERTY(Config) float ToastSeconds = 4.5f;    // life.js toast()
 	UPROPERTY(Config) float PlusSeconds = 2.2f;     // the "+Bx" beside the purse
 	UPROPERTY(Config) int32 BankStatementLines = 12;
@@ -117,7 +119,7 @@ private:
 	TSharedRef<SWidget> TrackCard(int32 K);
 	// the showing of money coming in (rewards.js)
 	struct FShowing { FString Kind; int32 N = 1, Landed = 0, Taken = 0; };
-	struct FCoin { FVector P = FVector::ZeroVector, V = FVector::ZeroVector, From = FVector::ZeroVector; double Floor = 0, Spin = 0, Vs = 0, Ph = 0, Age = 0, T = 0, Side = 1, PullAt = 0, Small = 1; int32 State = 0, Bounces = 0, I = 0; bool bHit = false, bDone = false; FString Purse; int64 Part = 0; TSharedPtr<FShowing> Show; };
+	struct FCoin { FVector P = FVector::ZeroVector, V = FVector::ZeroVector, From = FVector::ZeroVector; double Floor = 0, Spin = 0, Vs = 0, Ph = 0, Age = 0, T = 0, Side = 1, PullAt = 0, Small = 1; int32 State = 0, Bounces = 0, I = 0; bool bHit = false, bDone = false; FString Purse; int64 Part = 0; TSharedPtr<FShowing> Show; TArray<FVector, TInlineAllocator<6>> Trail; };
 	struct FFly { FVector2D A = FVector2D::ZeroVector; FString To; double T = 0, Len = .4, Bend = 0; float R = 6.f; bool bFromPlayer = false, bStarted = false, bDone = false; TFunction<void()> Land; };
 	struct FSpark { FVector2D P, V; double T = 0, Life = .6; };
 	void Later(double Dt, TFunction<void()> Fn);
