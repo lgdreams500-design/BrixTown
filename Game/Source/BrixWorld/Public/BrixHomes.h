@@ -59,6 +59,7 @@ struct BRIXWORLD_API FBrixFurniturePiece
 	FVector3f Size = FVector3f::ZeroVector;                 // furniture.js SIZE (w, d, h); zero when the slice has none
 	int32 Item = -1;                                        // into the plan's items
 	bool bBed = false;
+	bool bLayout = false;                                   // placed in the designer (FURN-051): a storey's layout, not the town's
 };
 
 // A rectangle on the floor, turned: its middle, the way its length runs, its length and its width (a designed house is

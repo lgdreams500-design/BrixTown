@@ -7,6 +7,7 @@
 #include "BrixEstate.h"
 #include "BrixBuilder.h"
 #include "BrixRoomPlan.h"
+#include "BrixFurnishPlan.h"
 #include "BrixQuests.h"
 #include "BrixRewards.h"
 #include "BrixRewardsWidget.h"
@@ -151,7 +152,16 @@ private:
 	void EditPlan(TFunction<void(FBrixPlan&)> Fn);
 	void AddWall(const FString& Ax);
 	void RoomsSection(TSharedRef<SVerticalBox> Body);
-	int64 WorkOf(TArray<FBrixCostLine>& Lines, TArray<FString>& Probs, int64& DesignTotal) const;   // drawn and kept (inside.json's insides too)
+	int64 WorkOf(TArray<FBrixCostLine>& Lines, TArray<FString>& Probs, int64& DesignTotal) const;
+	// furnishing a storey (FURN-051, FURN-052, FURN-055)
+	FBrixFurnishRulesD FurnRules() const;
+	bool CanFurnish(int32 Lot) const;
+	FBrixLayout LayNow(int32 Lot, int32 Floor) const;
+	void ShowLayout(int32 Lot, int32 Floor, const FBrixLayout& Lay);
+	FBrixLayout HeldNow() const;
+	FBrixLayout PoolOf() const;
+	void EditLayout(TFunction<void(FBrixLayout&)> Fn);
+	void FurnishSection(TSharedRef<SVerticalBox> Body);   // drawn and kept (inside.json's insides too)
 	FString BuyUnits(const TArray<int32>& Units, const FString& Agent, bool& bOk);
 	void QuestsPanel(TSharedRef<SVerticalBox> Body);
 	TMap<FString, FString> JobVars(const FBrixJob& O) const;
@@ -220,6 +230,11 @@ private:
 	TMap<int32, FBrixPlan> PlanDraft, PlanBase;   // the storeys' room plans being tried, and as they were
 	TArray<TMap<int32, FBrixPlan>> PlanUndo;
 	FString WallSel;                      // the inner wall picked
+	TMap<int32, FBrixLayout> LayDraft, LayBase;   // the storeys' furniture being tried, and as it was
+	TArray<TMap<int32, FBrixLayout>> LayUndo;
+	FString PieceSel, AddRoom, AddLine;   // the piece picked; the kind of room and the line new pieces come from
+	FBrixLayout FurnHeld;                 // the furniture among the belongings (INV-001; life.js belongings)
+	TMap<FString, TMap<int32, FBrixLayout>> LaysDone;   // lot id -> storey -> its furniture as paid for (life.js furnishings)
 	TMap<FString, TMap<int32, FBrixPlan>> PlansDone;   // lot id -> storey -> its plan as paid for (life.js plans)
 	FString DesignTab = TEXT("outside"), DesignFacade = TEXT("*");
 	int32 DesignStorey = 0, ViewTurn = 0;

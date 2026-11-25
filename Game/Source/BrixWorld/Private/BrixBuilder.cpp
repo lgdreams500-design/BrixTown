@@ -93,7 +93,7 @@ bool LoadBrixBuilderRules(const TSharedPtr<FJsonObject>& B, FBrixBuilderRules& O
 {
 	Out = FBrixBuilderRules();
 	if (!B.IsValid()) { OutError = TEXT("no building designer rules (run Tools/worldgen/build_play.py)"); return false; }
-	Out.Kit = Ob(B, TEXT("kit")); Out.Planning = Ob(B, TEXT("planning")); Out.Patterns = Ob(B, TEXT("patterns")); Out.Checks = Ob(B, TEXT("checks")); Out.RoomPlan = Ob(B, TEXT("room_plan"));
+	Out.Kit = Ob(B, TEXT("kit")); Out.Planning = Ob(B, TEXT("planning")); Out.Patterns = Ob(B, TEXT("patterns")); Out.Checks = Ob(B, TEXT("checks")); Out.RoomPlan = Ob(B, TEXT("room_plan")); Out.Furnish = Ob(B, TEXT("furnish"));
 	if (!Out.IsSet()) { OutError = TEXT("the building designer's kit, planning or patterns are missing"); return false; }
 	return true;
 }
