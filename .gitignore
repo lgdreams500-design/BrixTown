@@ -44,3 +44,8 @@ Claude outputs/
 # Python bytecode caches
 __pycache__/
 *.pyc
+
+# Furniture pieces for Unreal (Tools/blender/unreal_furniture_37.py remakes them in about 20 s; the imported meshes in
+# Game/Content/Furniture are what is kept, ADR-0050)
+Art/Export/unreal_furniture_37/*.glb
+Art/Export/*/*_log.txt

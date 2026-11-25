@@ -46,6 +46,17 @@ and mouse of whoever is at the machine and logs where the player is. A street at
 with `-BrixShut` (noisy: other sessions were running Unreal); 50 fps inside a row house. Not yet: furniture, the upper
 storeys and their stairs, residents indoors.
 
+## Furnished homes (FURN-060 to FURN-063; ADR-0050)
+The planned homes are furnished as the slice furnishes them (homes.js, houses.js): 469 designed houses (plan house_12x9)
+and 250 row houses (lot.interior) from World/rules/home_plans.json, with their inner walls and doorways, tiled kitchens and
+bathrooms, and each plan's pieces at the household's furnishing level (Bare, Basic, Homely or Full from its daily wages and
+the day, FURN-063) with a bed for each resident; tall pieces in front of the building's real windows are left out. Where
+each piece stands is `BrixWorld/BrixHomes` (`FURN060_every_planned_home_is_furnished_in_its_rooms`). The pieces are the
+furniture kits' own meshes in the home's line: `Tools/blender/unreal_furniture_37.py` exports them (Blender, about 20 s),
+`Tools/unreal/import_furniture_kit.py` imports the ones the plans use into `/Game/Furniture` (the .glb files are not kept in
+git). `ABrixRooms` furnishes the homes within 30 m of the camera, and lights the rooms of the home the camera is in (three
+lamps, no shadows: 3 to 5 fps). Only the ground floors so far. `-BrixStand=x,z,yaw` puts the player in a room for a shot.
+
 ## Designed houses (ADR-0032, ADR-0035)
 The 469 designed houses (lot.house) are built as the slice builds them (houses.js outsideS): the 12 x 9 m house of
 `World/rules/home_plans.json` (house_12x9), two 3.3 m storeys on a 0.3 m plinth, its nine windows and front door where
@@ -376,6 +387,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY022_residents_are_where_their_routine_puts_them` | CITY-022 |
 | `BrixTown.World.ART004_people_are_drawn_as_the_slice_draws_them` | ART-004, ANIM-001, ANIM-002 |
 | `BrixTown.World.CITY013_every_enterable_building_has_a_doorway` | CITY-013 (ADR-0048) |
+| `BrixTown.World.FURN060_every_planned_home_is_furnished_in_its_rooms` | FURN-060, FURN-061, FURN-063 (ADR-0050) |
 | `BrixTown.World.CITY017_residents_sit_on_garden_benches` | CITY-017 |
 | `BrixTown.World.CITY040_vehicles_are_where_the_traffic_puts_them` | CITY-040 |
 | `BrixTown.World.CITY041_trams_are_where_the_timetable_puts_them` | CITY-041 |

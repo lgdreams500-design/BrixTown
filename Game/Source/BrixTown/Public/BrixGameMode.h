@@ -14,6 +14,7 @@ struct FBrixCity;
 //   -BrixCounter=bank (with -BrixLife=<ops>)   stand at a counter and open it (ABrixLife)
 //   -BrixInside=<lot id>              put the player inside that building, a way in from its doorway, facing in (CITY-013)
 //   -BrixWalkIn=<lot id>              put the player outside that building's doorway and walk them in through it
+//   -BrixStand=<x>,<z>,<yaw>          put the player there (metres, degrees; yaw 0 = east), the camera behind them
 //   -BrixShut                         every building solid, as before the insides (to compare frame rates)
 UCLASS(Config = Game)
 class BRIXTOWN_API ABrixGameMode : public AGameModeBase
@@ -63,6 +64,7 @@ private:
 	TSharedPtr<struct FBrixDay> Today;           // the residents' routines (Game/Data/day.json)
 	UPROPERTY() TObjectPtr<class ABrixPeople> People;
 	UPROPERTY() TObjectPtr<class ABrixTownActor> TownActor;
+	UPROPERTY() TObjectPtr<class ABrixRooms> Furnisher;      // the homes near the camera, furnished (FURN-060)
 	TSharedPtr<struct FBrixTraffic> Traffic;     // the day's vehicles (Game/Data/cars.json)
 	TSharedPtr<struct FBrixInsides> Insides;     // what is inside the buildings (Game/Data/inside.json; CITY-013)
 	void PutInside(const FString& LotId, bool bWalk);
