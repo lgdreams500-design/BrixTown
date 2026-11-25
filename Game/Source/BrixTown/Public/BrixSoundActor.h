@@ -24,9 +24,15 @@ struct FBrixTraffic;
 // the nearest cars on a trip and of the player's car (its start-up, skids and bumps), the trams' hum, whine, rumble and
 // bell; the street's air by time of day, crickets at night, the nearest fountain, birds by day; the interface and
 // interactions: a prompt appearing, a talk opening, an answer chosen, a talk closing, a jump, getting into a car (the
-// door and the starter) and out of it. Continuous sounds are loops that play only while they can be heard.
+// door and the starter) and out of it; money coming in (the quest and bank widgets' reward moments, SND-019 to SND-021);
+// the music (SND-010 to SND-012): the score by time of day, ducked under a talk and under nearer music, the music of an
+// open café or shop and of the market's busker on market days, muffled from the street and clear inside, and the car
+// radio's music stations (R while driving). While the player is in a building what is outside is muffled and the room
+// has its tone (SND-007). Continuous sounds are loops that play only while they can be heard. The long recordings (the
+// music, the rewards) are Ogg Vorbis, read with the engine's own decoder.
 // N turns all sound off and on (SND-013), remembered between visits in the user's settings (GameUserSettings.ini).
-// -BrixSoundToggle turns it off and on again during a test shot, to check the key's work in the log.
+// -BrixSoundToggle turns it off and on again during a test shot, to check the key's work in the log; -BrixRadio=<k> has the
+// car radio on its k-th station (with -BrixDrive).
 // A test shot logs how many of each sound were played.
 UCLASS(Config = Game)
 class BRIXTOWN_API ABrixSound : public AActor
@@ -47,7 +53,7 @@ public:
 
 	// Plays a one-shot on a bus (the rules' World, Voice or Action share): a variant of the named recording, where the
 	// event says, at the slice's level for the listener (BrixHear) unless it is the listener's own.
-	void Play(const FBrixSoundEvent& E, double Bus);
+	void Play(const FBrixSoundEvent& E, double Bus, bool bOutside = false);   // bOutside: muffled while the listener is indoors
 	void Act(const FString& Name);       // an action sound of sound.json (act_<name>), the listener's own
 	bool IsOn() const { return bOn; }
 	void SetOn(bool bNow);               // all sound on or off (SND-013), and remembered
@@ -59,9 +65,13 @@ private:
 	FString LotKindAt(const FVector2D& P) const;
 	FVector2D Listener() const;
 	// A loop: a component that plays the recording over and over while it is loud enough to hear, stopped when it is not.
-	struct FLoop { int32 Comp = -1; TSharedPtr<FClip> Clip; bool bPlaced = true; };
-	FLoop MakeLoop(const FString& Name, bool bPlaced);
-	void SetLoop(FLoop& L, double Vol, double Pitch, const FVector2D& Pos);   // Vol: the slice's level for the listener, before the mix
+	// bOutside: one of the sounds of out of doors, muffled while the listener is in a building; Bus: its share of the mix
+	struct FLoop { int32 Comp = -1; TSharedPtr<FClip> Clip; bool bPlaced = true; bool bOutside = false; double Bus = -1; };
+	FLoop MakeLoop(const FString& Name, bool bPlaced, bool bOutside = false, double Bus = -1);
+	// Vol: the slice's level for the listener, before the mix; Lowpass: Hz, 0 for none
+	void SetLoop(FLoop& L, double Vol, double Pitch, const FVector2D& Pos, double Lowpass = 0);
+	void Music(double Dt, const FVector2D& Here);
+	void OnReward(const FString& What, int32 I, int32 N);
 	void Engine(FLoop& Lo, FLoop& Hi, double Hz, double Vol, const FVector2D& Pos);   // an engine's note from the two recordings
 	void Vehicles(double Now, const FVector2D& Here);
 
@@ -77,6 +87,14 @@ private:
 	TArray<FVector2D> Fountains, Gardens;
 	double SunriseH = 6, SunsetH = 20;   // the calendar's, for the day's season
 	FLoop StreetDayL, StreetNightL, RoomL, CricketsL, FountainL;
+	int32 InLot = INDEX_NONE;            // the building the listener is in, or none (CITY-013's rooms)
+	// the music: one loop a style or mood, each at its own level, eased toward where it should be
+	struct FTune { FLoop Loop; double Level = 0, Target = 0, Tc = 1, Lowpass = 0, Hear = 1; FVector2D Pos = FVector2D::ZeroVector; };
+	TMap<FString, FTune> Tunes;
+	TArray<FBrixMusicLot> MusicLots;
+	bool bMarketDay = false, bRewardsBound = false;
+	int32 Station = 0;                   // the car radio: 0 off, k the k-th station of sound.json
+	FString WasMood, WasPlace;
 	// what the interface and the player were doing last frame, for the sounds of a change
 	bool bWasTalking = false, bWasRiding = false, bOn = true;
 	int32 WasAnswered = 0, WasDriving = -1;

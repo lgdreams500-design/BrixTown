@@ -6,6 +6,9 @@
 #include "BrixCity.h"
 #include "BrixDay.h"
 #include "BrixGameMode.h"
+#include "BrixLifeActor.h"
+#include "Decoders/VorbisAudioInfo.h"
+#include "Interfaces/IAudioFormat.h"
 #include "BrixPeople.h"
 #include "BrixTalkActor.h"
 #include "AudioDevice.h"
@@ -57,7 +60,17 @@ void ABrixSound::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, ABrixP
 		TArray<uint8> File;
 		TSharedPtr<FClip> C = MakeShared<FClip>();
 		int32 Ch = 0;
-		if (!FFileHelper::LoadFileToArray(File, *FPaths::Combine(Dir, KV.Value.File)) || !ReadBrixWav(File, C->Pcm, C->Rate, Ch) || Ch != 1)
+		bool bRead = FFileHelper::LoadFileToArray(File, *FPaths::Combine(Dir, KV.Value.File));
+		if (bRead && KV.Value.File.EndsWith(TEXT(".ogg")))   // the music and the rewards: Ogg Vorbis, decoded once as the talk's voices are
+		{
+			LoadVorbisLibraries();
+			FVorbisAudioInfo Info;
+			FSoundQualityInfo Q;
+			bRead = Info.ReadCompressedInfo(File.GetData(), File.Num(), &Q);
+			if (bRead) { C->Pcm.SetNumZeroed(Q.SampleDataSize); Info.ExpandFile(C->Pcm.GetData(), &Q); C->Rate = Q.SampleRate; Ch = Q.NumChannels; }
+		}
+		else if (bRead) bRead = ReadBrixWav(File, C->Pcm, C->Rate, Ch);
+		if (!bRead || Ch != 1)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Brix Town: the recording %s does not read (is Git LFS installed?)"), *KV.Value.File);
 			continue;
@@ -70,8 +83,11 @@ void ABrixSound::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, ABrixP
 		int32 Cut = INDEX_NONE;
 		if (KV.Key.FindLastChar(TEXT('_'), Cut) && KV.Key.Mid(Cut + 1).IsNumeric()) Variants.FindOrAdd(KV.Key.Left(Cut))++;
 	}
+	int32 LotIndex = 0;
 	for (const FBrixBlock& B : City.Blocks)
 	{
+		for (const FBrixLot& L : B.Lots)   // the lots that can play music, in the city's order (CITY-013's RoomAt numbers them so)
+			if (Rules.Places.Contains(L.Kind)) MusicLots.Add({ LotIndex++, L.Kind, L.Min, L.Max, L.Door }); else ++LotIndex;
 		for (const FBrixLot& L : B.Lots) if (L.IsOpen())
 		{
 			const double A = FMath::DegreesToRadians(L.AngleDeg);
@@ -85,13 +101,22 @@ void ABrixSound::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, ABrixP
 		const int32 Season = City.Sky.SeasonOf(Day->Day);
 		if (City.Sky.Sunrise.IsValidIndex(Season)) SunriseH = City.Sky.Sunrise[Season];
 		if (City.Sky.Sunset.IsValidIndex(Season)) SunsetH = City.Sky.Sunset[Season];
+		bMarketDay = BrixIsMarketDay(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/rules/calendar.json"))), Day->Weekday);
 	}
+	for (const auto& KV : Clips)   // every mood and style of the music (recorded at the music bus's level: no share of the mix on top)
+		if (KV.Key.StartsWith(TEXT("music_")))
+		{
+			const FString Style = KV.Key.Mid(6);
+			bool bPlace = false;   // a place's music comes from its door; the score and the radio are the listener's own
+			for (const auto& P : Rules.Places) bPlace |= P.Value.Style == Style;
+			Tunes.Add(Style).Loop = MakeLoop(KV.Key, bPlace, false, 1.0);
+		}
 	Rng.Initialize(20261125);
-	StreetDayL = MakeLoop(TEXT("street_day"), false);
-	StreetNightL = MakeLoop(TEXT("street_night"), false);
+	StreetDayL = MakeLoop(TEXT("street_day"), false, true);   // the street, crickets and fountains are out of doors (sound.js outside)
+	StreetNightL = MakeLoop(TEXT("street_night"), false, true);
 	RoomL = MakeLoop(TEXT("room"), false);
-	CricketsL = MakeLoop(TEXT("crickets"), false);
-	FountainL = MakeLoop(TEXT("fountain"), true);
+	CricketsL = MakeLoop(TEXT("crickets"), false, true);
+	FountainL = MakeLoop(TEXT("fountain"), true, true);
 	// on or off as the player last left it (SND-013)
 	bool bSaved = true;
 	GConfig->GetBool(TEXT("/Script/BrixTown.BrixSound"), TEXT("bSoundOn"), bSaved, GGameUserSettingsIni);
@@ -104,15 +129,17 @@ void ABrixSound::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, ABrixP
 			GetWorldTimerManager().SetTimer(B, [this]() { SetOn(!bOn); }, Mode->ShotDelaySeconds * .7f, false);
 		}
 	if (Day) ChildRole = Day->Roles.IndexOfByKey(FString(TEXT("child")));
+	FParse::Value(FCommandLine::Get(), TEXT("BrixRadio="), Station);   // for a test shot: the car radio already on that station
+	Station = FMath::Clamp(Station, 0, Rules.Radio.Num());
 	Placed = NewObject<USoundAttenuation>(this);
 	Placed->Attenuation.bAttenuate = false;   // the slice's own fall-off (BrixHear) is in each sound's volume
 	Placed->Attenuation.bSpatialize = true;
 	if (EngineHz.Num() != 2) EngineHz = { 36, 76 };
-	for (int32 k = 0; k < Rules.EngineVoices; ++k) { CarLo.Add(MakeLoop(TEXT("engine_lo"), true)); CarHi.Add(MakeLoop(TEXT("engine_hi"), true)); }
+	for (int32 k = 0; k < Rules.EngineVoices; ++k) { CarLo.Add(MakeLoop(TEXT("engine_lo"), true, true)); CarHi.Add(MakeLoop(TEXT("engine_hi"), true, true)); }
 	MineLo = MakeLoop(TEXT("engine_lo"), false);
 	MineHi = MakeLoop(TEXT("engine_hi"), false);
 	Skid = MakeLoop(TEXT("car_skid"), false);
-	for (int32 k = 0; k < 2; ++k) { Hum[k] = MakeLoop(TEXT("tram_hum"), true); Whine[k] = MakeLoop(TEXT("tram_whine"), true); Rumble[k] = MakeLoop(TEXT("tram_rumble"), true); }
+	for (int32 k = 0; k < 2; ++k) { Hum[k] = MakeLoop(TEXT("tram_hum"), true, true); Whine[k] = MakeLoop(TEXT("tram_whine"), true, true); Rumble[k] = MakeLoop(TEXT("tram_rumble"), true, true); }
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: %d sounds recorded from the slice (%.1f MB)"), Clips.Num(), Bytes / 1048576.0);
 }
 
@@ -160,7 +187,7 @@ FString ABrixSound::LotKindAt(const FVector2D& P) const
 	return FString();
 }
 
-void ABrixSound::Play(const FBrixSoundEvent& E, double Bus)
+void ABrixSound::Play(const FBrixSoundEvent& E, double Bus, bool bOutside)
 {
 	const TSharedPtr<FClip> C = Pick(E.Sound);
 	if (!C) { Played.FindOrAdd(TEXT("(missing) ") + E.Sound)++; return; }
@@ -171,24 +198,33 @@ void ABrixSound::Play(const FBrixSoundEvent& E, double Bus)
 		if (G.X < .004) return;   // as sound.js once(): too faint to start
 		Vol *= G.X;
 	}
+	const bool bMuffle = bOutside && InLot != INDEX_NONE;
+	if (bMuffle) Vol *= Rules.MuffleGain;
 	USoundWaveProcedural* W = MakeWave(C);
-	if (E.bHere) UGameplayStatics::PlaySound2D(this, W, (float)Vol);
-	else UGameplayStatics::PlaySoundAtLocation(this, W, ToWorld(E.Pos, SourceUp), (float)Vol, 1.f, 0.f, Placed);
+	UAudioComponent* A = E.bHere ? UGameplayStatics::SpawnSound2D(this, W, (float)Vol) : UGameplayStatics::SpawnSoundAtLocation(this, W, ToWorld(E.Pos, SourceUp), FRotator::ZeroRotator, (float)Vol, 1.f, 0.f, Placed);
+	if (A && bMuffle) { A->SetLowPassFilterEnabled(true); A->SetLowPassFilterFrequency((float)Rules.MuffleHz); }
 	Played.FindOrAdd(E.Sound)++;
 }
 
-ABrixSound::FLoop ABrixSound::MakeLoop(const FString& Name, bool bPlaced)
+ABrixSound::FLoop ABrixSound::MakeLoop(const FString& Name, bool bPlaced, bool bOutside, double Bus)
 {
 	FLoop L;
 	L.Clip = Clips.FindRef(Name);
 	L.bPlaced = bPlaced;
+	L.bOutside = bOutside;
+	L.Bus = Bus;
 	if (!L.Clip) UE_LOG(LogTemp, Warning, TEXT("Brix Town: no recording %s; run Tools/unreal/sound_values.py"), *Name);
 	return L;
 }
 
-void ABrixSound::SetLoop(FLoop& L, double Vol, double Pitch, const FVector2D& Pos)
+void ABrixSound::SetLoop(FLoop& L, double Vol, double Pitch, const FVector2D& Pos, double Lowpass)
 {
 	if (!L.Clip) return;
+	if (L.bOutside && InLot != INDEX_NONE)   // the listener is indoors: what is outside comes muffled through the walls (SND-007)
+	{
+		Vol *= Rules.MuffleGain;
+		Lowpass = Lowpass > 0 ? FMath::Min(Lowpass, Rules.MuffleHz) : Rules.MuffleHz;
+	}
 	UAudioComponent* C = LoopComps.IsValidIndex(L.Comp) ? LoopComps[L.Comp].Get() : nullptr;
 	if (Vol < 1e-4)   // out of hearing: stopped, so it takes no voice
 	{
@@ -206,8 +242,10 @@ void ABrixSound::SetLoop(FLoop& L, double Vol, double Pitch, const FVector2D& Po
 		L.Comp = LoopComps.Add(C);
 	}
 	if (L.bPlaced) C->SetWorldLocation(ToWorld(Pos, SourceUp));
-	C->SetVolumeMultiplier((float)(Vol * Rules.Master * Rules.World / L.Clip->Scale));
+	C->SetVolumeMultiplier((float)(Vol * Rules.Master * (L.Bus >= 0 ? L.Bus : Rules.World) / L.Clip->Scale));
 	C->SetPitchMultiplier((float)FMath::Clamp(Pitch, .4, 2.0));
+	C->SetLowPassFilterEnabled(Lowpass > 0);
+	if (Lowpass > 0) C->SetLowPassFilterFrequency((float)Lowpass);
 	if (!C->IsPlaying())
 	{
 		C->SetSound(MakeWave(L.Clip));   // a fresh wave each time it starts, its queue full from the loop's start
@@ -318,6 +356,61 @@ void ABrixSound::Interactions()
 	}
 }
 
+// Money coming in (SND-019 to SND-021): the quest and bank widgets' moments (ABrixLife::OnRewardSound), as sound.js reward()
+void ABrixSound::OnReward(const FString& What, int32 I, int32 N)
+{
+	FBrixSoundEvent E;
+	E.Sound = BrixRewardSound(Rules, What, I, N);
+	E.bHere = true;
+	Play(E, Rules.Action);
+}
+
+// The music (SND-010 to SND-012; sound.js music()): the score's mood, the nearest place playing, the car radio. Each
+// is a loop eased to its level as the slice's bands fade; the score goes under a talk and under nearer music.
+void ABrixSound::Music(double Dt, const FVector2D& Here)
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Mode || !Tunes.Num()) return;
+	const double Minute = Mode->ClockMinute();
+	for (auto& KV : Tunes) { KV.Value.Target = 0; KV.Value.Hear = 1; KV.Value.Lowpass = 0; }
+	double Near = 0;
+	// music from places: the nearest open café or shop, the busker on a market day; clear inside, muffled from the street
+	const FBrixMusicPlace P = BrixMusicPlace(Rules, MusicLots, Here, InLot, Minute, bMarketDay);
+	if (FTune* T = P.Lot >= 0 ? Tunes.Find(P.Style) : nullptr)
+	{
+		T->Target = 1;
+		T->Tc = .8;
+		T->Pos = P.Pos;
+		T->Hear = P.bInside ? 1.0 : BrixHear(Rules, Here, 0, P.Pos, P.Far).X;
+		T->Lowpass = P.bInside || (P.bOpenAir && InLot == INDEX_NONE) ? 0.0 : Rules.MuffleHz * 1.6;
+		Near = FMath::Max(Near, T->Hear);
+	}
+	const FString Place = P.Lot >= 0 ? P.Style + TEXT(" at lot ") + FString::FromInt(P.Lot) : FString();
+	if (Place != WasPlace) { UE_LOG(LogTemp, Display, TEXT("Brix Town: music from a place: %s"), Place.IsEmpty() ? TEXT("none") : *Place); WasPlace = Place; }
+	// the car radio (R while driving)
+	const bool bDriving = Mode->Cars && Mode->Cars->Driving().K >= 0 && !Mode->Cars->Driving().bRide;
+	if (bDriving)
+		if (const APlayerController* PC = GetWorld()->GetFirstPlayerController())
+			if (PC->WasInputKeyJustPressed(EKeys::R))
+			{
+				Station = BrixNextStation(Rules, Station);
+				Act(TEXT("radio"));
+				UE_LOG(LogTemp, Display, TEXT("Brix Town: radio: %s"), Station ? *Rules.Radio[Station - 1].Name : TEXT("off"));
+			}
+	if (bDriving && Station > 0)
+		if (FTune* T = Tunes.Find(Rules.Radio[Station - 1].Style)) { T->Target = 1; T->Tc = .3; T->Pos = Here; Near = 1; }
+	// the score by the time of day, under a talk and under nearer music
+	const FString Mood = BrixMoodAt(Rules, Minute);
+	if (Mood != WasMood) { UE_LOG(LogTemp, Display, TEXT("Brix Town: the score: %s"), *Mood); WasMood = Mood; }
+	if (FTune* T = Tunes.Find(Mood)) { T->Target = BrixScoreLevel(Rules, Mode->Talk && Mode->Talk->IsTalking(), Near); T->Tc = 1.2; T->Pos = Here; }
+	for (auto& KV : Tunes)
+	{
+		FTune& T = KV.Value;
+		T.Level += (T.Target - T.Level) * (1 - FMath::Exp(-Dt / FMath::Max(.05, T.Tc)));
+		SetLoop(T.Loop, T.Level * T.Hear, 1, T.Pos, T.Lowpass);
+	}
+}
+
 void ABrixSound::Tick(float Dt)
 {
 	Super::Tick(Dt);
@@ -328,6 +421,10 @@ void ABrixSound::Tick(float Dt)
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
 	const bool bDriving = Mode && Mode->Cars && Mode->Cars->Driving().K >= 0;
 	Events.Reset();
+	// indoors? (the slice: a lot under the listener, below 30 m)
+	InLot = INDEX_NONE;
+	if (const APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0)) if (Mode) InLot = Mode->RoomAt(Me->GetActorLocation());
+	if (!bRewardsBound && Mode && Mode->Life) { Mode->Life->OnRewardSound.AddUObject(this, &ABrixSound::OnReward); bRewardsBound = true; }
 	// the player's steps and landings (SND-003), on foot
 	if (const ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
 		if (!bDriving)
@@ -335,7 +432,7 @@ void ABrixSound::Tick(float Dt)
 			const double Speed = Me->GetVelocity().Size2D() / CmPerM;
 			const UCharacterMovementComponent* M = Me->GetCharacterMovement();
 			PlayerSounds.Frame(Rules, Speed > .1, M && M->IsMovingOnGround(), Me->WalkPhase(), Speed > (Me->WalkSpeed + Me->RunSpeed) * .5,
-				Me->GetVelocity().Z / CmPerM, BrixStepSurface(false, LotKindAt(Here)), Events);
+				Me->GetVelocity().Z / CmPerM, BrixStepSurface(InLot != INDEX_NONE, LotKindAt(Here)), Events);
 		}
 	// the residents near: their steps, sitting down and getting up (SND-017)
 	if (People && Day)
@@ -359,16 +456,17 @@ void ABrixSound::Tick(float Dt)
 	// engines and the trams (SND-002, SND-004, SND-009)
 	Vehicles(Now, Here);
 	// the town's air, crickets, fountains, birds (SND-001)
-	Ambience.Frame(Rules, Mode ? Mode->ClockMinute() : 720, SunriseH, SunsetH, false, bDriving, Here, Fountains, Gardens, Dt, Rng, Events);
+	Ambience.Frame(Rules, Mode ? Mode->ClockMinute() : 720, SunriseH, SunsetH, InLot != INDEX_NONE, bDriving, Here, Fountains, Gardens, Dt, Rng, Events);
 	SetLoop(StreetDayL, Ambience.Street * FMath::Sin(Ambience.StreetDay * HALF_PI), 1, Here);
 	SetLoop(StreetNightL, Ambience.Street * FMath::Cos(Ambience.StreetDay * HALF_PI), 1, Here);
 	SetLoop(RoomL, Ambience.Room, 1, Here);
 	SetLoop(CricketsL, Ambience.Crickets, 1, Here);
 	SetLoop(FountainL, Ambience.Fountain.bOn ? Ambience.Fountain.Gain * BrixHear(Rules, Here, 0, Ambience.Fountain.Pos, Ambience.Fountain.Far).X : 0, 1, Ambience.Fountain.Pos);
 	Interactions();
+	Music(Dt, Here);
 	if (const APlayerController* PC = GetWorld()->GetFirstPlayerController())
 		if (PC->WasInputKeyJustPressed(EKeys::N)) SetOn(!bOn);   // all sound off and on (SND-013; the slice's N)
-	for (const FBrixSoundEvent& E : Events) Play(E, E.Sound.StartsWith(TEXT("act_")) || E.Sound == TEXT("car_bump") ? Rules.Action : Rules.World);
+	for (const FBrixSoundEvent& E : Events) Play(E, E.Sound.StartsWith(TEXT("act_")) || E.Sound == TEXT("car_bump") ? Rules.Action : Rules.World, E.Sound == TEXT("bird"));
 	if (Now > LogAt) { LogAt = Now + 10; LogPlayed(TEXT("so far")); }
 }
 

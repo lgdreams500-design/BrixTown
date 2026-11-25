@@ -7,7 +7,9 @@ bell, engines, the tram's hum, whine and rumble, the street, crickets, the fount
 
   Game/Data/sounds/*.wav, index.json   the recordings (mono, 16-bit), and for each its length, whether it loops and the
                                        scale it was recorded at (the game multiplies its volume back by 1 / scale).
-                                       Loops are cross-faded end into start, so they repeat without a click.
+                                       Loops are cross-faded end into start, so they repeat without a click. The music
+                                       (eight bars of each style, at the music bus's level) and the rewards are made Ogg Vorbis by the
+                                       engine's own encoder, the BrixEncodeOgg commandlet of the editor build.
   Tests/values/sound_city_01.json      what sound.js's own logic does in scripted moments, with its audio graph swapped
                                        for recorders: which steps and pose sounds people() plays (SND-017), each engine
                                        voice's pitch and level by speed (SND-002), the tram's levels, whine and bells
@@ -43,6 +45,9 @@ RULES = os.path.join(ROOT, "World", "rules", "sound.json")
 OUT_DIR = os.path.join(ROOT, "Game", "Data", "sounds")
 OUT_VALUES = os.path.join(ROOT, "Tests", "values", "sound_city_01.json")
 EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+UNREAL_CMD = r"C:\Users\leena\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
+UPROJECT = os.path.join(ROOT, "Game", "BrixTown.uproject")
+OGG_QUALITY = 40   # the engine's Ogg Vorbis quality (1 to 100) for the music, the only long recordings
 RATE = 22050   # Hz: the slice's sounds have little above 8 kHz (the brightest, a grass step, is filtered at 3.2 to 4.8 kHz)
 
 # Inside sound.js's closure, before its closing return: the sound-making functions are private to it.
@@ -96,12 +101,15 @@ window.__SOUND = async function (CASES) {
   // ---- recordings: each sound into an offline context of its own, positioned nowhere (the game places it)
   const R = CASES.rate;
   once = d => d; ready = true;
-  async function record(name, o) {                      // o: { secs, make(dest), loop?, lead? (s skipped), len? (s kept), xf? (s) }
+  async function record(name, o) {                      // o: { secs, make(dest), loop?, lead? (s skipped), len? (s kept), xf? (s), fold? (stereo to mono) }
     const lead = o.lead || 0, xf = o.loop ? (o.xf || .08) : 0, secs = o.loop ? lead + o.len + xf : o.secs;
-    const oc = new OfflineAudioContext(1, Math.ceil(secs * R), R);
+    const oc = new OfflineAudioContext(o.fold ? 2 : 1, Math.ceil(secs * R), R);
     ctx = oc; noise = makeNoise(); bus = { world: oc.destination, action: oc.destination, voice: oc.destination }; outside = oc.destination;
+    rwOut = null; hall = null; ksCache = new Map();
     o.make(oc.destination);
-    let d = (await oc.startRendering()).getChannelData(0);
+    const buf = await oc.startRendering();
+    let d = buf.getChannelData(0);
+    if (o.fold) { const r = buf.getChannelData(1); d = d.map((v, i) => (v + r[i]) * Math.SQRT1_2); }   // the music's stereo as one channel, its power kept
     if (o.minus) {                                      // the part a voice adds, less what it makes without it (a voice's parts share one output)
       const oc2 = new OfflineAudioContext(1, Math.ceil(secs * R), R);
       ctx = oc2; noise = makeNoise(); bus = { world: oc2.destination, action: oc2.destination, voice: oc2.destination }; outside = oc2.destination;
@@ -160,6 +168,30 @@ window.__SOUND = async function (CASES) {
   await record("fountain", { loop: true, lead: .3, len: 2, make: amb(() => { fount.g.gain.value = 1; }) });
   // the player's car skidding (SND-009)
   await record("car_skid", { loop: true, lead: .3, len: 2, make: () => { pool = null; mine = null; engines([], null); skid.gain.cancelScheduledValues(0); skid.gain.value = 1; } });
+  // money coming in (SND-019 to SND-021): which note each coin rings, as reward() picks it, traced; then every note recorded
+  const RQ = RW.quest, keepStruck = struck; let notes = [];
+  struck = (voice, t, midi) => notes.push(midi);
+  ctx = new OfflineAudioContext(1, 64, R); rwOut = null; bus = { world: ctx.destination, action: ctx.destination, voice: ctx.destination };
+  out.trace.rewards = [];
+  for (const [i, n] of CASES.reward_takes) { notes = []; reward("coin_take", i, n); out.trace.rewards.push(["coin_take", i, n, notes[0]]); }
+  for (let i = 0; i < RW.coins.interest_coins + 4; i++) { notes = []; reward("interest_coin", i, 0); out.trace.rewards.push(["interest_coin", i, 0, notes[0]]); }
+  struck = keepStruck;
+  for (const w of ["quest_start", "coin_out", "quest_end", "interest_start", "interest_end", "achievement"]) await record("reward_" + w, { secs: 6, make: () => reward(w, 0, 1) });
+  for (let k = 0; k < 4; k++) await record("reward_coin_land_" + k, { secs: 2, make: () => reward("coin_land", 0, 1) });
+  for (let k = 0; k <= RQ.top_step; k++) await record("reward_coin_take_" + k, { secs: 3, make: () => reward("coin_take", k, RQ.top_step + 1) });
+  for (let i = 0; i < RW.coins.interest_coins; i++) await record("reward_interest_coin_" + i, { secs: 3, make: () => reward("interest_coin", i, 0) });
+  // music (SND-010 to SND-012): each mood of the score and each style, a section of eight bars after one that warms its
+  // room, at the music bus's level and through its compressor; the radio's styles through the radio's filters (music())
+  const radioStyles = new Set(MU.radio.filter(r => r.style).map(r => r.style));
+  for (const [name, style] of MU.score.moods.map(m => [m.name, m]).concat(Object.keys(MU.styles).map(k => [k, k]))) {
+    const s = styleOf(style), len = CASES.music_bars * 4 * 60 / s.bpm;
+    await record("music_" + name, { loop: true, fold: true, lead: .1 + len, len, xf: .4, make: d => {
+      bus.music = musicChain(d);
+      let into = bus.music;
+      if (radioStyles.has(name)) { const hp = filt("highpass", 180), lp = filt("lowpass", 4200); chain(hp, lp, bus.music); into = hp; }
+      const b = band(style, into, CASES.seed); b.fade(1, .01); b.run(.1 + 2 * len + 1);
+    } });
+  }
   pool = null; mine = null; ready = false;
   return out;
 };
@@ -316,7 +348,8 @@ def cases():
         trams.append(dict(t=round(t, 6), tz=-14.0, list=[[round(xs - 310, 4), not moving, 715.0], [round(-xs + 200, 4), False, 735.0], [400.0, True, 755.0]]))
     place = [[dx, dz, far, yaw] for (dx, dz) in ((0, 0), (0.3, 0.2), (1, 0), (2.5, 0), (3, 4), (-6, 8), (10, 0), (0, -20), (30, 40), (49, 0), (60, 0), (69.9, 0), (75, 0))
              for far in (None, 30, 70) for yaw in (0, 1.2)]
-    return dict(seed=20261125, rate=RATE, step_variants=4, bird_variants=6, engine_hz=[36, 76],
+    reward_takes = [[i, n] for n in (1, 2, 3, 5, 8, 10, 12, 18, 25) for i in range(n)]
+    return dict(seed=20261125, rate=RATE, step_variants=4, bird_variants=6, engine_hz=[36, 76], music_bars=8, reward_takes=reward_takes,
                 people=people, engines=engines, trams=trams, place=place)
 
 
@@ -349,8 +382,20 @@ def main():
             w.writeframes(pcm)
         total += os.path.getsize(path)
         index[s["name"]] = dict(file=s["name"] + ".wav", loop=s["loop"], seconds=s["seconds"], scale=s["scale"])
+    # the music as Ogg Vorbis, by the engine's own encoder (the BrixEncodeOgg commandlet: build the editor first)
+    music = sorted(n for n in index if n.startswith("music_") or n.startswith("reward_"))   # the long ones: the music, the rewards ringing on
+    if music:
+        subprocess.run([UNREAL_CMD, UPROJECT, "-run=BrixEncodeOgg", "-Dir=" + OUT_DIR, "-Files=" + ",".join(music),
+                        "-Quality=%d" % OGG_QUALITY, "-unattended", "-nullrhi", "-nosplash", "-stdout"], stdin=subprocess.DEVNULL, capture_output=True, timeout=900)
+        for n in music:
+            ogg, wav = os.path.join(OUT_DIR, n + ".ogg"), os.path.join(OUT_DIR, n + ".wav")
+            if not os.path.exists(ogg) or os.path.getmtime(ogg) < os.path.getmtime(wav):
+                sys.exit("the BrixEncodeOgg commandlet made no %s.ogg: build BrixTownEditor and run this again" % n)
+            total += os.path.getsize(ogg) - os.path.getsize(wav)
+            os.remove(wav)
+            index[n]["file"] = n + ".ogg"
     for f in os.listdir(OUT_DIR):   # recordings of sounds that are no longer made
-        if f.endswith(".wav") and f[:-4] not in index:
+        if (f.endswith(".wav") or f.endswith(".ogg")) and f[:-4] not in index:
             os.remove(os.path.join(OUT_DIR, f))
     with open(os.path.join(OUT_DIR, "index.json"), "w", encoding="utf-8", newline="\n") as f:
         json.dump(dict(note="Generated by Tools/unreal/sound_values.py from Prototype/play/sound.js and World/rules/sound.json. Do not edit: change those and run it again.",
@@ -358,7 +403,7 @@ def main():
     os.makedirs(os.path.dirname(OUT_VALUES), exist_ok=True)
     with open(OUT_VALUES, "w", encoding="utf-8", newline="\n") as f:
         json.dump(dict(note="Generated by Tools/unreal/sound_values.py: sound.js people(), engines(), trams() and place() in scripted moments, for the SND tests.",
-                       cases=dict(people=C["people"], engines=C["engines"], trams=C["trams"], place=C["place"]), trace=out["trace"]), f, separators=(",", ":"))
+                       cases=dict(people=C["people"], engines=C["engines"], trams=C["trams"], place=C["place"], rewards=C["reward_takes"]), trace=out["trace"]), f, separators=(",", ":"))
     print("wrote %d sounds (%.0f KB) to %s, and %s" % (len(index), total / 1024, os.path.relpath(OUT_DIR, ROOT), os.path.relpath(OUT_VALUES, ROOT)))
 
 

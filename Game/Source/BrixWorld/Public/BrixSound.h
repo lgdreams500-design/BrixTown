@@ -33,6 +33,19 @@ struct BRIXWORLD_API FBrixSoundRules
 	double BirdsFrom = 330, BirdsTo = 1230, BirdsPerMinute = 18, GardenBirdsPerMinute = 40, GardenM = 35;   // minutes of the day
 	double CricketsFrom = 1260, CricketsTo = 300, CricketsGain = .022;
 	double FountainGain = .16, FountainFar = 22;
+	// indoors (SND-007): what is outside is muffled while the listener is in a building
+	double MuffleHz = 650, MuffleGain = .4;
+	// music (SND-010 to SND-012)
+	double ScoreGain = .5, TalkDuck = .25, SourceDuck = .1;
+	struct FMood { FString Name; double From = 0; };
+	TArray<FMood> Moods;                 // the score's moods by time of day, in order
+	struct FPlace { FString Style; double From = 0, To = 1440, Far = 20; bool bMarketDaysOnly = false; };
+	TMap<FString, FPlace> Places;        // by lot kind: the music a café, a shop, the market plays
+	struct FStation { FString Name, Style, Podcast; };
+	TArray<FStation> Radio;              // the car radio's stations in order
+	// money coming in (SND-019 to SND-021)
+	int32 RewardRoot = 74, InterestRoot = 79, TopStep = 9, InterestCoins = 6;
+	TArray<int32> RewardScale, InterestScale;
 };
 
 // sound.js within(): is minute m in [From, To), the window running past midnight when To is before From?
@@ -159,6 +172,29 @@ public:
 private:
 	double BirdT = 0;
 };
+
+// Music (SND-010 to SND-012; sound.js music()). The score's mood at a minute (moodAt()): the last whose time has come.
+BRIXWORLD_API FString BrixMoodAt(const FBrixSoundRules& R, double Minute);
+
+// A lot that can play music, in the city's lot order (the slice's LOTS).
+struct BRIXWORLD_API FBrixMusicLot { int32 Lot = -1; FString Kind; FVector2D Min = FVector2D::ZeroVector, Max = FVector2D::ZeroVector, Door = FVector2D::ZeroVector; };
+// The music the listener hears from a place now: the nearest open café, shop or (on market days) the market within its
+// reach, from its door (or the listener's own spot when they are in it); Lot -1 when none.
+struct BRIXWORLD_API FBrixMusicPlace { int32 Lot = -1; FString Style; FVector2D Pos = FVector2D::ZeroVector; double Far = 0; bool bInside = false, bOpenAir = false; };
+BRIXWORLD_API FBrixMusicPlace BrixMusicPlace(const FBrixSoundRules& R, const TArray<FBrixMusicLot>& Lots, const FVector2D& Here, int32 InLot, double Minute, bool bMarketDay);
+// The score's level: under a conversation, and under nearer music (Near: how loud the nearest other music is, 0..1).
+BRIXWORLD_API double BrixScoreLevel(const FBrixSoundRules& R, bool bTalking, double Near);
+// The radio's next station after Station (0 off, k the k-th music station; podcasts are not brought over yet).
+BRIXWORLD_API int32 BrixNextStation(const FBrixSoundRules& R, int32 Station);
+// Is the weekday a market day (World/rules/calendar.json week and market_days)?
+BRIXWORLD_API bool BrixIsMarketDay(const FString& CalendarPath, const FString& Weekday);
+
+// Money coming in (SND-019 to SND-021; sound.js reward()): the recording for a reward's moment, what the quest and bank
+// widgets call it with (quest_start, coin_out, coin_land, coin_take i of n, quest_end, interest_start, interest_coin i,
+// interest_end, achievement). Each coin taken rings a step higher, the last at the top; each interest coin a step up.
+BRIXWORLD_API FString BrixRewardSound(const FBrixSoundRules& R, const FString& What, int32 I, int32 N);
+// The note (MIDI) step k of a reward scale rings (stepOf()).
+BRIXWORLD_API int32 BrixRewardMidi(int32 Root, const TArray<int32>& Scale, int32 K);
 
 // A recording in Game/Data/sounds/index.json.
 struct BRIXWORLD_API FBrixClipInfo

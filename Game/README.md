@@ -216,11 +216,11 @@ the game menu's Money page in its painted-sign look. To see the bank in a test s
 `-BrixCounter=bank "-BrixLife=open,current;open,savings;move,p:current,p:savings,1000;loan,5000,3"` (ops as
 economy.check_script() writes them, arguments by commas).
 
-## Sound (SND-001 to SND-004, SND-007, SND-009, SND-013, SND-017)
+## Sound (SND-001 to SND-004, SND-007, SND-009 to SND-013, SND-017, SND-019 to SND-021)
 The slice makes its sounds live with Web Audio (`Prototype/play/sound.js`, from `World/rules/sound.json`); the Unreal
 build plays recordings of those same sounds. `Tools/unreal/sound_values.py` runs sound.js itself in headless Edge (over
 its DevTools socket) and renders its own sound-making functions into an OfflineAudioContext: `Game/Data/sounds/*.wav`
-(mono, 16-bit, 22,050 Hz, 62 sounds, 1.2 MB, in Git LFS) and `index.json` (each one's length, whether it loops, its
+(mono, 16-bit, 22,050 Hz; 98 sounds, 2.2 MB, in Git LFS; the music and the rewards as Ogg Vorbis, made by the engine's own encoder through the `BrixEncodeOgg` commandlet, so build the editor before running the script) and `index.json` (each one's length, whether it loops, its
 level). Loops are cross-faded end into start. Run the script again after changing sound.js or sound.json. At run time
 `ABrixSound` reads the WAVs (no editor import) and plays each through a procedural sound wave, as the talk's voices are
 played; a loop refills itself when the engine asks for more. What is heard, where and how loud is BrixWorld's port of
@@ -245,8 +245,18 @@ tick for each answer chosen, a falling chime as it closes, the jump, and getting
 starter) and out of it (the door). N turns all sound off and on, the talk's voices too (SND-013); it is remembered
 between visits in the user's settings (`Saved/Config/.../GameUserSettings.ini`, `[/Script/BrixTown.BrixSound]
 bSoundOn`). A test shot logs how many of each sound were played and how long each loop was heard (`sounds played in
-all: ...`, `loops heard in all: ...`); `-BrixSoundToggle` turns the sound off and on again during it. Not yet: being
-muffled indoors and the room tone (the player cannot go in yet; the room's recording is ready), the music.
+all: ...`, `loops heard in all: ...`); `-BrixSoundToggle` turns the sound off and on again during it.
+Indoors (SND-007): while the player is in a building (the game mode's RoomAt) what is outside (the street, crickets,
+fountains, engines, the trams, birds) comes through a 650 Hz low-pass at 0.4 of its level, the room has its tone and steps
+are on wood. Money coming in (SND-019 to SND-021): the quest and bank widgets' moments (`ABrixLife::OnRewardSound`)
+play sound.js reward()'s recordings, each coin taken a note higher (`SND019_coins_ring_as_the_slice_rings_them`).
+Music (SND-010 to SND-012): eight bars of each of the score's four moods and each style (café, shop, busker, the radio's
+swing, pop and calm), recorded at the music bus's level, each a loop eased to its level as the slice's bands fade: the
+score by the time of day, under a talk and under nearer music; the nearest open café or shop and the market's busker on
+market days, from its door within its reach, muffled from the street and clear inside; the car radio's music stations,
+R while driving (`-BrixRadio=<k>` in a test shot). The music is eight bars of the slice's endless band, so it repeats;
+the podcasts (SND-014) and the radio's caption are not brought over yet. The slice has no sound for the weather, so there
+is none here either.
 
 ## Shops, cafés and the market stall (ECO-005, ECO-010, ECO-011, PROP-008, UI-020, UI-021; ADR-0044)
 At the door of a shop or café (or inside it) B opens its counter, as in the slice: what it sells at today's price (its
@@ -286,7 +296,7 @@ under way show at the right of the screen, a job with its time left. Money comin
 coins spring out round the player, hover, are drawn in and fly to the purse, which counts up as they land; interest
 comes with a slip under the purse and its coins fly up into the bank balance. Achievements (QST-009) are earned from
 facts worked out from the ledger and the quests (`QST009_achievements_are_earned_as_python_says`), each once, its painted
-banner dropping in at the top, one at a time and not over a panel. The sounds are hooks for now: `ABrixLife::OnRewardSound`
+banner dropping in at the top, one at a time and not over a panel. Their sounds are played by `ABrixSound` (see Sound): `ABrixLife::OnRewardSound`
 is broadcast with sound.js's names (quest_start, coin_out, coin_land, coin_take, quest_end, interest_start,
 interest_coin, interest_end, achievement). Not yet: saving (QST-008), markers over people's heads and on the map, the
 Me page's list of achievements, the stamped coin face. To see a reward in a test shot: `-BrixLifeLead=1.15
@@ -348,6 +358,9 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.SND004_the_tram_sounds_as_the_slice_hears_it` | SND-004 |
 | `BrixTown.World.UI021_every_thing_shows_what_python_says` | UI-020, UI-021 |
 | `BrixTown.World.SND001_the_town_sounds_by_time_of_day` | SND-001 |
+| `BrixTown.World.SND007_outside_is_muffled_indoors` | SND-007 |
+| `BrixTown.World.SND010_the_score_changes_through_the_day` | SND-010, SND-011, SND-012 |
+| `BrixTown.World.SND019_coins_ring_as_the_slice_rings_them` | SND-019, SND-020 |
 | `BrixTown.World.QST001_quests_run_as_the_python_does` | QST-001 to QST-007 |
 | `BrixTown.World.QST009_achievements_are_earned_as_python_says` | QST-009 |
 | `BrixTown.World.SND019_money_coming_in_is_shown_as_python_says` | SND-019, SND-020 |

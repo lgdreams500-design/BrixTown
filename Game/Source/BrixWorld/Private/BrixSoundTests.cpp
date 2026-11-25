@@ -336,6 +336,109 @@ bool FSND001_TheTownsAmbience::RunTest(const FString&)
 	return true;
 }
 
+// Money coming in (SND-019, SND-020): which note each coin rings. sound.js reward() traced for coins taken, i of n, for
+// rewards of 1 to 25 coins, and the bank's interest coins: the port picks the recording of the same note; a coin a step,
+// and a big reward's coins spread over the steps so its last rings at the top.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSND019_RewardsRingAsTheSlice, "BrixTown.World.SND019_coins_ring_as_the_slice_rings_them",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FSND019_RewardsRingAsTheSlice::RunTest(const FString&)
+{
+	FBrixSoundRules R;
+	if (!LoadRules(*this, R)) return false;
+	const TSharedPtr<FJsonObject> V = LoadValues(*this);
+	if (!V) return false;
+	int32 Wrong = 0, Takes = 0, Interest = 0;
+	for (const TSharedPtr<FJsonValue>& E : V->GetObjectField(TEXT("trace"))->GetArrayField(TEXT("rewards")))
+	{
+		const TArray<TSharedPtr<FJsonValue>>& A = E->AsArray();
+		const FString What = A[0]->AsString();
+		const int32 I = (int32)A[1]->AsNumber(), N = (int32)A[2]->AsNumber(), Midi = (int32)A[3]->AsNumber();
+		const bool bTake = What == TEXT("coin_take");
+		if (!bTake && I >= R.InterestCoins) continue;   // past the coins the bank pays out: not recorded
+		const FString Name = BrixRewardSound(R, What, I, N);
+		const int32 K = FCString::Atoi(*Name.Mid(Name.Find(TEXT("_"), ESearchCase::CaseSensitive, ESearchDir::FromEnd) + 1));
+		const int32 Got = bTake ? BrixRewardMidi(R.RewardRoot, R.RewardScale, K) : BrixRewardMidi(R.InterestRoot, R.InterestScale, K);
+		(bTake ? Takes : Interest)++;
+		if (Got != Midi && ++Wrong <= 5) AddError(FString::Printf(TEXT("%s %d of %d: sound.js rings %d, the port %s (%d)"), *What, I, N, Midi, *Name, Got));
+		if (bTake && I == N - 1) TestEqual(FString::Printf(TEXT("the last of %d coins a step a coin, up to the top"), N), K, FMath::Min(R.TopStep, N - 1));
+	}
+	AddInfo(FString::Printf(TEXT("%d coins taken, %d interest coins"), Takes, Interest));
+	TestTrue(TEXT("the trace has coins"), Takes > 50 && Interest == R.InterestCoins);
+	TestEqual(TEXT("coins ringing another note than sound.js's"), Wrong, 0);
+	return true;
+}
+
+// The music (SND-010 to SND-012): the score's mood follows the clock (morning from 05:00 ... night, and night again before
+// 05:00), and goes under a talk and under nearer music; a café plays in its hours within its reach, clear inside it, the
+// nearer of two wins; the market's busker only on market days (Wednesday and Saturday); the radio steps through its music
+// stations and back to off.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSND010_TheMusicAsTheSlice, "BrixTown.World.SND010_the_score_changes_through_the_day",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FSND010_TheMusicAsTheSlice::RunTest(const FString&)
+{
+	FBrixSoundRules R;
+	if (!LoadRules(*this, R)) return false;
+	if (!TestTrue(TEXT("the score has its four moods"), R.Moods.Num() == 4)) return false;
+	TestEqual(TEXT("04:00 is still night"), BrixMoodAt(R, 240), R.Moods.Last().Name);
+	TestEqual(TEXT("05:00 is the first mood"), BrixMoodAt(R, R.Moods[0].From), R.Moods[0].Name);
+	for (int32 k = 0; k < R.Moods.Num(); ++k) TestEqual(TEXT("a minute into ") + R.Moods[k].Name, BrixMoodAt(R, R.Moods[k].From + 1), R.Moods[k].Name);
+	TestTrue(TEXT("the score's level alone"), FMath::IsNearlyEqual(BrixScoreLevel(R, false, 0), R.ScoreGain));
+	TestTrue(TEXT("under a talk"), FMath::IsNearlyEqual(BrixScoreLevel(R, true, 0), R.ScoreGain * R.TalkDuck));
+	TestTrue(TEXT("under music near (or the radio)"), FMath::IsNearlyEqual(BrixScoreLevel(R, false, 1), R.ScoreGain * R.SourceDuck));
+	TestTrue(TEXT("under faint music, a little"), FMath::IsNearlyEqual(BrixScoreLevel(R, false, .2), R.ScoreGain * (1 - (1 - R.SourceDuck) * .5)));
+	// places (SND-011)
+	const FBrixSoundRules::FPlace* Food = R.Places.Find(TEXT("food"));
+	const FBrixSoundRules::FPlace* Market = R.Places.Find(TEXT("market"));
+	if (!TestTrue(TEXT("cafés and the market play"), Food && Market && Market->bMarketDaysOnly)) return false;
+	const TArray<FBrixMusicLot> Lots = {
+		{ 3, TEXT("food"), FVector2D(10, 0), FVector2D(20, 10), FVector2D(10, 5) },
+		{ 8, TEXT("food"), FVector2D(-30, 0), FVector2D(-20, 10), FVector2D(-20, 5) },
+		{ 9, TEXT("home"), FVector2D(0, -5), FVector2D(5, 0), FVector2D(2, 0) },
+		{ 12, TEXT("market"), FVector2D(0, 20), FVector2D(30, 40), FVector2D(15, 20) } };
+	const double Noon = 720;
+	FBrixMusicPlace P = BrixMusicPlace(R, Lots, FVector2D(0, 5), INDEX_NONE, Noon, false);
+	TestTrue(TEXT("the nearer café, from its door, muffled"), P.Lot == 3 && P.Style == Food->Style && P.Pos == FVector2D(10, 5) && !P.bInside);
+	P = BrixMusicPlace(R, Lots, FVector2D(-25, 5), 8, Noon, false);
+	TestTrue(TEXT("inside a café: its music, from where the listener is"), P.Lot == 8 && P.bInside && P.Pos == FVector2D(-25, 5));
+	P = BrixMusicPlace(R, Lots, FVector2D(0, 5), INDEX_NONE, Food->To + 1, false);
+	TestEqual(TEXT("a café after its hours plays nothing"), P.Lot, -1);
+	P = BrixMusicPlace(R, Lots, FVector2D(0, -Food->Far - 5), INDEX_NONE, Noon, false);
+	TestEqual(TEXT("beyond its reach, nothing"), P.Lot, -1);
+	P = BrixMusicPlace(R, Lots, FVector2D(15, 30), INDEX_NONE, Noon, false);
+	TestTrue(TEXT("the market on another day: the café"), P.Lot == 3);
+	P = BrixMusicPlace(R, Lots, FVector2D(15, 30), INDEX_NONE, Noon, true);
+	TestTrue(TEXT("the market on a market day: the busker, in the open air"), P.Lot == 12 && P.Style == Market->Style && P.bOpenAir);
+	const FString Cal = FromProject(TEXT("../World/rules/calendar.json"));
+	TestTrue(TEXT("Wednesday is a market day"), BrixIsMarketDay(Cal, TEXT("Wed")));
+	TestFalse(TEXT("Monday is not"), BrixIsMarketDay(Cal, TEXT("Mon")));
+	// the radio (SND-012): its music stations, then off
+	int32 S = 0, Music = 0;
+	TArray<int32> Seen;
+	do { S = BrixNextStation(R, S); Seen.Add(S); } while (S != 0 && Seen.Num() < 20);
+	for (int32 k : Seen) if (k > 0) { ++Music; TestFalse(TEXT("a music station"), R.Radio[k - 1].Style.IsEmpty()); }
+	TestTrue(TEXT("at least three stations, and back to off"), Music >= 3 && Seen.Last() == 0);
+	return true;
+}
+
+// Outside is muffled indoors (SND-007): the rules' muffling, and the room's tone indoors, no crickets.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSND007_OutsideIsMuffledIndoors, "BrixTown.World.SND007_outside_is_muffled_indoors",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FSND007_OutsideIsMuffledIndoors::RunTest(const FString&)
+{
+	FBrixSoundRules R;
+	if (!LoadRules(*this, R)) return false;
+	TestTrue(TEXT("a muffling filter well below the street's brightness, and quieter"), R.MuffleHz > 100 && R.MuffleHz < 2000 && R.MuffleGain > 0 && R.MuffleGain < 1);
+	FBrixAmbience A;
+	FRandomStream Rng(3);
+	TArray<FBrixSoundEvent> E;
+	A.Frame(R, 1380, 6, 20, true, false, FVector2D::ZeroVector, {}, {}, .02, Rng, E);
+	TestTrue(TEXT("indoors at night: the room's tone, no crickets"), A.Room == R.RoomGain && A.Crickets == 0);
+	A.Frame(R, 1380, 6, 20, false, false, FVector2D::ZeroVector, {}, {}, .02, Rng, E);
+	TestTrue(TEXT("out of doors: crickets, no room"), A.Room == 0 && A.Crickets == R.CricketsGain);
+	TestEqual(TEXT("a step indoors is on wood"), BrixStepSurface(true, TEXT("")), FString(TEXT("wood")));
+	return true;
+}
+
 // Every sound has its recording (SND-009): the recordings of Game/Data/sounds (Tools/unreal/sound_values.py) are all
 // there, read as 16-bit WAV at the index's rate and length, loops among them; every action of sound.json has one, every
 // surface's steps for adults and children, and the pose sounds.
@@ -356,9 +459,11 @@ bool FSND009_EverySoundIsRecorded::RunTest(const FString&)
 	{
 		TArray<uint8> File, Pcm;
 		int32 Rate = 0, Ch = 0;
-		const bool bOk = FFileHelper::LoadFileToArray(File, *FPaths::Combine(Dir, KV.Value.File)) && ReadBrixWav(File, Pcm, Rate, Ch)
-			&& Ch == 1 && FMath::IsNearlyEqual((double)Pcm.Num() / (2.0 * Rate), KV.Value.Seconds, 1e-3);
-		if (!bOk && ++Bad <= 5) AddError(KV.Key + TEXT(": not a 16-bit mono WAV of the index's length (is Git LFS installed?)"));
+		const bool bRead = FFileHelper::LoadFileToArray(File, *FPaths::Combine(Dir, KV.Value.File));
+		const bool bOk = KV.Value.File.EndsWith(TEXT(".ogg"))   // Ogg Vorbis (decoded by the engine at run time): its pages begin OggS
+			? bRead && File.Num() > 4 && !FMemory::Memcmp(File.GetData(), "OggS", 4)
+			: bRead && ReadBrixWav(File, Pcm, Rate, Ch) && Ch == 1 && FMath::IsNearlyEqual((double)Pcm.Num() / (2.0 * Rate), KV.Value.Seconds, 1e-3);
+		if (!bOk && ++Bad <= 5) AddError(KV.Key + TEXT(": not a 16-bit mono WAV of the index's length, nor Ogg (is Git LFS installed?)"));
 		Seconds += KV.Value.Seconds;
 	}
 	TestEqual(TEXT("recordings that do not read"), Bad, 0);
@@ -375,6 +480,18 @@ bool FSND009_EverySoundIsRecorded::RunTest(const FString&)
 		TestTrue(FString(TEXT("a loop: ")) + L, Clips.Contains(L) && Clips[L].bLoop);
 	for (const TCHAR* O : { TEXT("tram_bell"), TEXT("car_bump"), TEXT("car_in"), TEXT("bird_0") }) TestTrue(FString(TEXT("a one-shot: ")) + O, Clips.Contains(O) && !Clips[O].bLoop);
 	TestTrue(TEXT("the engine loops' two pitches"), EngineHz.Num() == 2 && EngineHz[0] < EngineHz[1]);
+	// the music (SND-010 to SND-012): every mood of the score, every place's style and every music station, as Ogg loops
+	for (const FBrixSoundRules::FMood& M : R.Moods) TestTrue(TEXT("the score's ") + M.Name, Clips.Contains(TEXT("music_") + M.Name) && Clips[TEXT("music_") + M.Name].bLoop);
+	for (const auto& P : R.Places) TestTrue(TEXT("music at a ") + P.Key, Clips.Contains(TEXT("music_") + P.Value.Style));
+	for (const FBrixSoundRules::FStation& St : R.Radio) if (!St.Style.IsEmpty()) TestTrue(TEXT("the station ") + St.Name, Clips.Contains(TEXT("music_") + St.Style));
+	// money coming in (SND-019 to SND-021): every moment the widgets call, every note
+	for (const TCHAR* W : { TEXT("quest_start"), TEXT("coin_out"), TEXT("coin_land"), TEXT("quest_end"), TEXT("interest_start"), TEXT("interest_end"), TEXT("achievement") })
+	{
+		const FString Name = BrixRewardSound(R, W, 0, 1);
+		TestTrue(TEXT("a reward sound: ") + Name, Clips.Contains(Name) || Clips.Contains(Name + TEXT("_0")));
+	}
+	for (int32 k = 0; k <= R.TopStep; ++k) TestTrue(TEXT("a coin taken, note ") + FString::FromInt(k), Clips.Contains(FString::Printf(TEXT("reward_coin_take_%d"), k)));
+	for (int32 k = 0; k < R.InterestCoins; ++k) TestTrue(TEXT("an interest coin ") + FString::FromInt(k), Clips.Contains(FString::Printf(TEXT("reward_interest_coin_%d"), k)));
 	AddInfo(FString::Printf(TEXT("%d recordings, %.1f s in all"), Clips.Num(), Seconds));
 	// a WAV that is not one is refused
 	TArray<uint8> Junk, Pcm;
