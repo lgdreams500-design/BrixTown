@@ -1,12 +1,12 @@
 ---
 doc_id: WASTED-SPEC-FURNITURE
 title: Wasted — Furniture (designs, the furniture companies and their outlets, furniture in the home)
-version: 0.4.4
+version: 0.4.5
 status: draft            # every row proposed; the owner accepts
 last_updated: 2026-11-25
 parent: docs/specs/GAME_SPEC.md        # extends §4.5 PROP; same ID rules; new prefix FURN
 related: docs/specs/domains/WORLD_MAP.md, docs/specs/domains/LIVING_CITY.md, docs/art/INTERIOR_STYLE.md
-prototype: Tools/citysim/               # delivery, stock and money rules proved here first (to write)
+prototype: Tools/citysim/furniture.py   # buying, delivery, assembly and the company's money proved here first (test_furniture.py)
 scope_source: docs/backlog/feature_choices.json
 ---
 
@@ -108,7 +108,11 @@ are not in this file; the owner said both come later.
 
 ## 3. Data
 
-`World/rules/furniture.json` (to write): kit parts, base pieces, finishes, colours, catalogue items,
+`World/rules/furniture.json`, so far (FURN-022 to FURN-029, proved in `Tools/citysim/furniture.py`): the one company
+(its account, its float and the share of its takings that is wages), the price level, when a piece comes flat-packed and
+in how many boxes, the fee to take a piece at once (0), the delivery fee by size, the delivery slots and how far ahead
+they are booked, the van's speed and the time to carry a piece in, the assembly fee and time. What is sold is the pieces
+of `furnishing.json` that are sold nowhere else, in each of its lines. Still to write there: kit parts, base pieces, finishes, colours, catalogue items,
 style lines and sets, companies (account, price level, share of the catalogue, vans, opening hours),
 fees (instant 0, delivery by size, assembly), times (carry, assembly, slot length), restock, sale days,
 buy-back share. Every number `[ASSUMPTION]` until tuned in play.
@@ -125,6 +129,7 @@ buy-back share. Every number `[ASSUMPTION]` until tuned in play.
 
 | Version | Date | Change |
 |---|---|---|
+| 0.4.5 | 2026-11-25 | FURN-022 to FURN-029 proved in `Tools/citysim/furniture.py` with `test_furniture.py` (13 tests) and `World/rules/furniture.json`: the tag; the catalogue from home; the basket paid in one ledger transaction or not at all; each piece taken at once (free) or booked for delivery to a unit of the player's in a slot, flat-packed or put together by a fitter; the van's place worked out from the booking and the clock; each piece set down where it was marked or at the free spot nearest the way in, or sent to the belongings when the unit is no longer theirs; flat-packed pieces in their boxes until the player or a paid fitter puts them together; the company's takings paid on to wages and stock each day, so the money supply holds. A fixed run (`check_script()`) is there for the slice's and the engine's ports. Not built in the slice or the engine yet; every number is a first guess. |
 | 0.4.4 | 2026-11-25 | The owner asked for the outlet's delivery vans, for sitting on its furniture and for buying at its tills ("both"): FURN-022 to FURN-029 accepted. Built so far, in the slice's data and the Unreal build: the block file's `vans` stands a company van at each loading door (FURN-020), and the showroom's sofas, armchairs, beds and the cafe's chairs can be tried (FURN-022's sitting and lying; Unreal). Buying, delivery and assembly (FURN-022's tags to FURN-029) wait for their proof in `Tools/citysim/test_furniture.py`. |
 | 0.4.3 | 2026-11-24 | FURN-065: the mall's 49 goods for the home are objects made in Blender (`Tools/blender/mall_goods_31.py`, ADR-0041; the owner: "use blender to create the objects, some of these object can be placed in the house like guitar, books etc."). 284 triangles each on average in the near make, 112 in the far. The slice draws a placed good from its object, and each outlet shows the goods it sells: 464 objects stand in 112 of the 189 outlets, 134,674 triangles, 0.40 million points, 3.0 % of the town's mesh. |
 | 0.4.2 | 2026-11-24 | FURN-064: pieces sold elsewhere. The mall's 49 goods for the home are pieces of `furnishing.json` (`from: "mall"`), bought at an outlet (ECO-014, ADR-0041) and placed from the belongings; the designer does not sell them. Drawn in the slice by `goods.js`. |

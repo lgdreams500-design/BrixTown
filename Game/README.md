@@ -231,8 +231,8 @@ seat's top. `-BrixSeat=Try_the_sofa` sits the player at the first seat whose off
 `FURN022_the_outlets_sofas_chairs_and_beds_can_be_tried` (a sofa, an armchair and a bed in each of kit 17's four rooms,
 the three vans). Shots: `Art/StyleTests/unreal_furniture_outlet_39/try_the_sofa.png`, `delivery_vans.png`.
 Not yet: buying at the outlet (FURN-022 to FURN-029: the tags, the catalogue, the basket and tills, instant or delivery,
-the van's run, assembly). The owner asked for it on 2026-11-25; its rules are not proved in Tools/citysim yet, so nothing
-of it is in the slice or here, and furniture is still bought in the building designer's Furnish tab (FURN-051, FURN-052,
+the van's run, assembly). The owner asked for it on 2026-11-25; its rules are proved in `Tools/citysim/furniture.py`
+(`test_furniture.py`, `World/rules/furniture.json`) but nothing of it is in the slice or here yet, and furniture is still bought in the building designer's Furnish tab (FURN-051, FURN-052,
 FURN-055). Also not yet: the vans driving (they stand; deliveries are FURN-027), residents browsing do not sit on the
 showroom's pieces, the player sat on a ride in the mall just sits (the rocket and the car do not rock), and a seat taken
 by a resident can still be sat on.

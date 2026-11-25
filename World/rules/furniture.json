@@ -1,0 +1,18 @@
+{
+ "schema": 1,
+ "note": "Buying furniture at the furniture outlet (FURN-022 to FURN-029; F-FURN-STORE; docs/specs/domains/FURNITURE.md), proved in Tools/citysim/furniture.py. The owner accepted these requirements on 2026-11-25 (\"both\"). What is sold is the pieces of furnishing.json that are sold nowhere else, in each of its lines, at their price there times price_level_bp. One company and one outlet for now (FURN-030, three companies, is level 2 and not built); its name is a placeholder [OPEN: Q-32]. Money is whole chips; times are game minutes; sizes metres. Every number here is a first guess [ASSUMPTION] until tuned in play.",
+ "company": { "id": "outlet", "name": "Furniture Outlet", "account": "co:furniture", "float": 500000, "wages_bp": 4000 },
+ "price_level_bp": 10000,
+ "catalogue_item": "The outlet's catalogue",
+ "flat_pack": { "from_m3": 0.3, "packs_to": 6, "box": [1.2, 0.5, 0.18], "most_boxes": 6, "note": "a piece at least from_m3 big comes flat-packed, packed to one part in packs_to of its size, in boxes of this size stacked" },
+ "instant_fee": 0,
+ "delivery": {
+  "fee_by_m3": [[0.6, 600], [2.0, 1200], [null, 2000]],
+  "slots": [[540, 720], [780, 960], [1020, 1200]],
+  "first_day_after": 1,
+  "days_ahead": 7,
+  "van_m_per_min": 400,
+  "carry_min": 4
+ },
+ "assembly": { "fee_bp": 1000, "least_fee": 300, "min_per_m3": 30, "least_min": 10 }
+}
