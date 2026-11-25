@@ -63,10 +63,14 @@ has met before, and a line that ended badly can be taken again.
   real ledger; no game gets stuck and no two facts of an exclusive group are ever both true.
 - `Game/Data/life.json` carries every line and a recorded game Unreal must reproduce (`story_checks`); the browser slice
   carries the starter lines only, because it has no port of the new rules.
-- The map is not changed here. The Stone Oven is still called Baker Grocer and sells groceries; Oda, Suvi and Len live in
-  ordinary houses because the mill house and Brook Farm's kitchen are not built; a talk happens wherever the person's
-  day has put them, not where the scene is set. Making the shop a bakery renumbers the posts of 446 residents
-  (`careers.assign()`), so it is a change of its own, with the owner's word.
+- The Stone Oven is on the map (the owner, 2026-11-26: "Yes, make the bakery"): Baker Grocer on Baker Street in Old Town
+  (`b_7_7_l2`) is The Stone Oven Bakery, so it sells bread, cake and jam and is staffed as a bakery. `add_careers_01.py`
+  was run again: Noor is its baker and Pip its assistant, with one more of each (the staffing rule gives a shop of its
+  size four posts; the story has two), one grocery worker found other work, and the posts of 446 residents were
+  renumbered. The 78 residents who shopped there for groceries now go to their next nearest grocer. Inside, it is still
+  fitted as a grocer's.
+- Oda, Suvi and Len live in ordinary houses because the mill house and Brook Farm's kitchen are not built; a talk
+  happens wherever the person's day has put them, not where the scene is set.
 - Regard with Mei has to reach 75 by shifts, rounds and endings; whether that is too slow or too fast is not balanced yet.
 - Whether the player owns a home is asked of whoever holds the property market (`Quests.owns_home`); in Python it is set
   by the test, in Unreal it will be the estate (PROP-009).

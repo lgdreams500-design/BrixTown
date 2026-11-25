@@ -900,12 +900,13 @@ name before it, and a stage direction is shown in brackets above the line.
 A scene (a stage at a place with nobody to talk to: the count on Market Square in The Four O'Clock Door, the basket in
 Twenty Minutes) opens the talk box by itself when the player is there (`ABrixLife::PlayScene`, `ABrixTalk::OpenScene`):
 its lines are read, not spoken, and one left unanswered opens again when the player has gone and come back. Seen in the
-running game: `docs/narrative/shots/noor_card.png` (the career starts by talking to Noor) and `count_scene.png`
+running game: `docs/narrative/shots/stone_oven.png` (the career starts by talking to Noor, the baker) and `count_scene.png`
 (`-BrixTime=06:40 -BrixStand=912,816,0 -BrixLife=act,new_in_town,r0504,end:gift;act,four_oclock_door,r0262,start|give:breakfast_loaf|stage:count`).
 Not yet: in a scene the camera comes in as close as in a talk, so the player's shoulder fills a side of the picture;
 lines said by somebody else are murmured in the voice of the person spoken to; none of the story is voiced; the log
-does not show a career's rank; talks happen wherever the person's day has put them, the Stone Oven is still Baker Grocer
-on the map and Noor is called a checkout operator there (ADR-0056); the story has been played through in the game only
+does not show a career's rank; talks happen wherever the person's day has put them; the Stone Oven Bakery (b_7_7_l2) is a bakery by name, goods and
+staff, but inside it is still fitted as a grocer's, with shelves and tills, and it has two more staff than the story's
+Noor and Pip (ADR-0056); the story has been played through in the game only
 as far as those two pictures, the rest by test.
 The quest lines and daily jobs are the slice's (economy.js Quests, a port of `Tools/citysim/quests.py`): `BrixWorld/BrixQuests`
 reads them from World/rules/quests.json (in `Game/Data/life.json`), with stages whose goal is a talk, a place, a thing

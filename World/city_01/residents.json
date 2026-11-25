@@ -2259,7 +2259,7 @@
 "offset": 7,
 "near": {
 "cafe": "b_7_7_l4",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -2285,7 +2285,7 @@
 "offset": -16,
 "near": {
 "cafe": "b_7_7_l4",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -2311,7 +2311,7 @@
 "offset": -9,
 "near": {
 "cafe": "b_7_7_l4",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -2391,7 +2391,7 @@
 "offset": -19,
 "near": {
 "cafe": "b_7_7_l4",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -2407,8 +2407,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "checkout_operator",
-"post": 2
+"career": "baker",
+"post": 1
 },
 {
 "id": "r0089",
@@ -2418,7 +2418,7 @@
 "offset": 3,
 "near": {
 "cafe": "b_7_7_l4",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -2553,7 +2553,7 @@
 "offset": -13,
 "near": {
 "cafe": "b_7_7_l4",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -2569,8 +2569,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "shop_floor_assistant",
-"post": 4
+"career": "bakery_assistant",
+"post": 3
 },
 {
 "id": "r0095",
@@ -2581,7 +2581,7 @@
 "offset": -2,
 "near": {
 "cafe": "b_7_7_l4",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -2608,7 +2608,7 @@
 "offset": 2,
 "near": {
 "cafe": "b_7_7_l4",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -2715,7 +2715,7 @@
 "offset": 10,
 "near": {
 "cafe": "b_7_7_l4",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -2743,7 +2743,7 @@
 "offset": 19,
 "near": {
 "cafe": "b_7_7_l4",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -6934,7 +6934,7 @@
 "offset": -19,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -6962,7 +6962,7 @@
 "offset": 17,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -6990,7 +6990,7 @@
 "offset": 4,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -7018,7 +7018,7 @@
 "offset": 0,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -7046,7 +7046,7 @@
 "offset": 10,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -7242,7 +7242,7 @@
 "offset": 8,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -7258,7 +7258,7 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "checkout_operator",
+"career": "baker",
 "post": 0
 },
 {
@@ -7270,7 +7270,7 @@
 "offset": -9,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -7286,8 +7286,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "checkout_operator",
-"post": 1
+"career": "bakery_assistant",
+"post": 2
 },
 {
 "id": "r0264",
@@ -7298,7 +7298,7 @@
 "offset": -4,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -7325,7 +7325,7 @@
 "offset": 19,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -7352,7 +7352,7 @@
 "offset": 9,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -7380,7 +7380,7 @@
 "offset": 12,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -7408,7 +7408,7 @@
 "offset": -12,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -7436,7 +7436,7 @@
 "offset": 17,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -7464,7 +7464,7 @@
 "offset": 4,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -13636,7 +13636,7 @@
 "school": "b_7_12_l0"
 },
 "career": "barista",
-"post": 2
+"post": 1
 },
 {
 "id": "r0493",
@@ -24274,7 +24274,7 @@
 "school": "b_4_13_l5"
 },
 "career": "barista",
-"post": 2
+"post": 1
 },
 {
 "id": "r0879",
@@ -24302,7 +24302,7 @@
 "school": "b_4_13_l5"
 },
 "career": "table_attendant",
-"post": 3
+"post": 2
 },
 {
 "id": "r0880",
@@ -42382,7 +42382,7 @@
 "offset": -11,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42410,7 +42410,7 @@
 "offset": 3,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42438,7 +42438,7 @@
 "offset": 8,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42466,7 +42466,7 @@
 "offset": 15,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42494,7 +42494,7 @@
 "offset": 15,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42521,7 +42521,7 @@
 "offset": 18,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42548,7 +42548,7 @@
 "offset": 20,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42575,7 +42575,7 @@
 "offset": -10,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42601,7 +42601,7 @@
 "offset": 18,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42627,7 +42627,7 @@
 "offset": 4,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42653,7 +42653,7 @@
 "offset": 17,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42681,7 +42681,7 @@
 "offset": -15,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42707,7 +42707,7 @@
 "offset": -2,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42735,7 +42735,7 @@
 "offset": 3,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42761,7 +42761,7 @@
 "offset": -3,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42789,7 +42789,7 @@
 "offset": 10,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42815,7 +42815,7 @@
 "offset": 8,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42843,7 +42843,7 @@
 "offset": 4,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -42869,7 +42869,7 @@
 "offset": -10,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_7_l5",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_6_l5",
@@ -46137,11 +46137,11 @@
 "name": "Kira",
 "role": "shopkeeper",
 "home": "b_7_8_l0",
-"work": "b_7_7_l2",
+"work": "b_7_7_l5",
 "offset": 12,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46158,18 +46158,18 @@
 "school": "b_7_12_l0"
 },
 "career": "stock_clerk",
-"post": 3
+"post": 2
 },
 {
 "id": "r1678",
 "name": "Raj",
 "role": "shopkeeper",
 "home": "b_7_8_l0",
-"work": "b_7_7_l5",
+"work": "b_7_8_l4",
 "offset": -8,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46191,41 +46191,13 @@
 {
 "id": "r1679",
 "name": "Ben",
-"role": "shopkeeper",
-"home": "b_7_8_l0",
-"work": "b_7_8_l4",
-"offset": -10,
-"near": {
-"cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
-"garden": "b_7_8_l8",
-"stop": "b_6_8_l10",
-"clinic": "b_7_9_l4",
-"market": "b_9_8_l0",
-"bank": "b_9_6_l0",
-"library": "b_8_7_l0",
-"museum": "b_9_9_l2",
-"cinema": "b_8_9_l0",
-"dealer": "b_12_7_l2",
-"playground": "b_8_8_l0",
-"noticeboard": "b_8_8_l0",
-"kiosk": "b_9_8_l0",
-"furniture": "b_14_8_l0",
-"school": "b_7_12_l0"
-},
-"career": "stock_clerk",
-"post": 2
-},
-{
-"id": "r1680",
-"name": "Abe",
 "role": "clerk",
 "home": "b_7_8_l0",
 "work": "b_8_9_l1",
-"offset": 15,
+"offset": -10,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46245,15 +46217,15 @@
 "post": 3
 },
 {
-"id": "r1681",
-"name": "Pia",
+"id": "r1680",
+"name": "Abe",
 "role": "clerk",
 "home": "b_7_8_l0",
 "work": "b_8_9_l1",
-"offset": 14,
+"offset": 15,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46273,6 +46245,34 @@
 "post": 4
 },
 {
+"id": "r1681",
+"name": "Pia",
+"role": "clerk",
+"home": "b_7_8_l0",
+"work": "b_8_9_l1",
+"offset": 14,
+"near": {
+"cafe": "b_7_8_l5",
+"grocer": "b_7_8_l4",
+"garden": "b_7_8_l8",
+"stop": "b_6_8_l10",
+"clinic": "b_7_9_l4",
+"market": "b_9_8_l0",
+"bank": "b_9_6_l0",
+"library": "b_8_7_l0",
+"museum": "b_9_9_l2",
+"cinema": "b_8_9_l0",
+"dealer": "b_12_7_l2",
+"playground": "b_8_8_l0",
+"noticeboard": "b_8_8_l0",
+"kiosk": "b_9_8_l0",
+"furniture": "b_14_8_l0",
+"school": "b_7_12_l0"
+},
+"career": "property_manager",
+"post": 6
+},
+{
 "id": "r1682",
 "name": "Lena",
 "role": "elder",
@@ -46281,7 +46281,7 @@
 "offset": -9,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46307,35 +46307,7 @@
 "offset": 8,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
-"garden": "b_7_8_l8",
-"stop": "b_6_8_l10",
-"clinic": "b_7_9_l4",
-"market": "b_9_8_l0",
-"bank": "b_9_6_l0",
-"library": "b_8_7_l0",
-"museum": "b_9_9_l2",
-"cinema": "b_8_9_l0",
-"dealer": "b_12_7_l2",
-"playground": "b_8_8_l0",
-"noticeboard": "b_8_8_l0",
-"kiosk": "b_9_8_l0",
-"furniture": "b_14_8_l0",
-"school": "b_7_12_l0"
-},
-"career": "property_manager",
-"post": 6
-},
-{
-"id": "r1684",
-"name": "Ana",
-"role": "clerk",
-"home": "b_7_8_l0",
-"work": "b_8_9_l1",
-"offset": -14,
-"near": {
-"cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46355,15 +46327,15 @@
 "post": 7
 },
 {
-"id": "r1685",
-"name": "Zed",
+"id": "r1684",
+"name": "Ana",
 "role": "clerk",
 "home": "b_7_8_l0",
 "work": "b_8_9_l1",
-"offset": 9,
+"offset": -14,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46383,15 +46355,15 @@
 "post": 9
 },
 {
-"id": "r1686",
-"name": "Pia",
+"id": "r1685",
+"name": "Zed",
 "role": "clerk",
 "home": "b_7_8_l0",
 "work": "b_8_6_l0",
-"offset": 18,
+"offset": 9,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46411,15 +46383,15 @@
 "post": 23
 },
 {
-"id": "r1687",
-"name": "Gia",
+"id": "r1686",
+"name": "Pia",
 "role": "clerk",
 "home": "b_7_8_l0",
 "work": "b_8_6_l0",
-"offset": 10,
+"offset": 18,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46439,6 +46411,34 @@
 "post": 24
 },
 {
+"id": "r1687",
+"name": "Gia",
+"role": "clerk",
+"home": "b_7_8_l0",
+"work": "b_8_6_l0",
+"offset": 10,
+"near": {
+"cafe": "b_7_8_l5",
+"grocer": "b_7_8_l4",
+"garden": "b_7_8_l8",
+"stop": "b_6_8_l10",
+"clinic": "b_7_9_l4",
+"market": "b_9_8_l0",
+"bank": "b_9_6_l0",
+"library": "b_8_7_l0",
+"museum": "b_9_9_l2",
+"cinema": "b_8_9_l0",
+"dealer": "b_12_7_l2",
+"playground": "b_8_8_l0",
+"noticeboard": "b_8_8_l0",
+"kiosk": "b_9_8_l0",
+"furniture": "b_14_8_l0",
+"school": "b_7_12_l0"
+},
+"career": "software_developer",
+"post": 25
+},
+{
 "id": "r1688",
 "name": "Tomas",
 "role": "elder",
@@ -46447,7 +46447,7 @@
 "offset": 15,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46473,7 +46473,7 @@
 "offset": -1,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46500,35 +46500,7 @@
 "offset": 13,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
-"garden": "b_7_8_l8",
-"stop": "b_6_8_l10",
-"clinic": "b_7_9_l4",
-"market": "b_9_8_l0",
-"bank": "b_9_6_l0",
-"library": "b_8_7_l0",
-"museum": "b_9_9_l2",
-"cinema": "b_8_9_l0",
-"dealer": "b_12_7_l2",
-"playground": "b_8_8_l0",
-"noticeboard": "b_8_8_l0",
-"kiosk": "b_9_8_l0",
-"furniture": "b_14_8_l0",
-"school": "b_7_12_l0"
-},
-"career": "software_developer",
-"post": 25
-},
-{
-"id": "r1691",
-"name": "Yui",
-"role": "clerk",
-"home": "b_7_8_l0",
-"work": "b_8_6_l0",
-"offset": 14,
-"near": {
-"cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46548,6 +46520,34 @@
 "post": 26
 },
 {
+"id": "r1691",
+"name": "Yui",
+"role": "clerk",
+"home": "b_7_8_l0",
+"work": "b_8_6_l0",
+"offset": 14,
+"near": {
+"cafe": "b_7_8_l5",
+"grocer": "b_7_8_l4",
+"garden": "b_7_8_l8",
+"stop": "b_6_8_l10",
+"clinic": "b_7_9_l4",
+"market": "b_9_8_l0",
+"bank": "b_9_6_l0",
+"library": "b_8_7_l0",
+"museum": "b_9_9_l2",
+"cinema": "b_8_9_l0",
+"dealer": "b_12_7_l2",
+"playground": "b_8_8_l0",
+"noticeboard": "b_8_8_l0",
+"kiosk": "b_9_8_l0",
+"furniture": "b_14_8_l0",
+"school": "b_7_12_l0"
+},
+"career": "software_developer",
+"post": 27
+},
+{
 "id": "r1692",
 "name": "Yui",
 "role": "student",
@@ -46556,7 +46556,7 @@
 "offset": 17,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46582,7 +46582,7 @@
 "offset": -20,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46609,7 +46609,7 @@
 "offset": -17,
 "near": {
 "cafe": "b_7_8_l5",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l4",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46635,7 +46635,7 @@
 "offset": 19,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46661,7 +46661,7 @@
 "offset": -20,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46688,7 +46688,7 @@
 "offset": 3,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46714,7 +46714,7 @@
 "offset": 10,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46742,7 +46742,7 @@
 "offset": -15,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46768,35 +46768,7 @@
 "offset": 1,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
-"garden": "b_7_8_l8",
-"stop": "b_6_8_l10",
-"clinic": "b_7_9_l4",
-"market": "b_9_8_l0",
-"bank": "b_9_6_l0",
-"library": "b_8_7_l0",
-"museum": "b_9_9_l2",
-"cinema": "b_8_9_l0",
-"dealer": "b_12_7_l2",
-"playground": "b_8_8_l0",
-"noticeboard": "b_8_8_l0",
-"kiosk": "b_9_8_l0",
-"furniture": "b_14_8_l0",
-"school": "b_7_12_l0"
-},
-"career": "software_developer",
-"post": 27
-},
-{
-"id": "r1701",
-"name": "Mei",
-"role": "clerk",
-"home": "b_7_8_l1",
-"work": "b_8_6_l0",
-"offset": 3,
-"near": {
-"cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46816,15 +46788,15 @@
 "post": 28
 },
 {
-"id": "r1702",
-"name": "Hari",
+"id": "r1701",
+"name": "Mei",
 "role": "clerk",
 "home": "b_7_8_l1",
 "work": "b_8_6_l0",
-"offset": -3,
+"offset": 3,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46844,15 +46816,15 @@
 "post": 29
 },
 {
-"id": "r1703",
-"name": "Jon",
+"id": "r1702",
+"name": "Hari",
 "role": "clerk",
 "home": "b_7_8_l1",
 "work": "b_8_6_l0",
-"offset": 13,
+"offset": -3,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46872,6 +46844,34 @@
 "post": 30
 },
 {
+"id": "r1703",
+"name": "Jon",
+"role": "clerk",
+"home": "b_7_8_l1",
+"work": "b_8_6_l0",
+"offset": 13,
+"near": {
+"cafe": "b_8_7_l2",
+"grocer": "b_7_8_l7",
+"garden": "b_7_8_l8",
+"stop": "b_6_8_l10",
+"clinic": "b_7_9_l4",
+"market": "b_9_8_l0",
+"bank": "b_9_6_l0",
+"library": "b_8_7_l0",
+"museum": "b_9_9_l2",
+"cinema": "b_8_9_l0",
+"dealer": "b_12_7_l2",
+"playground": "b_8_8_l0",
+"noticeboard": "b_8_8_l0",
+"kiosk": "b_9_8_l0",
+"furniture": "b_14_8_l0",
+"school": "b_7_12_l0"
+},
+"career": "software_developer",
+"post": 31
+},
+{
 "id": "r1704",
 "name": "Nell",
 "role": "elder",
@@ -46880,7 +46880,7 @@
 "offset": -6,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46906,7 +46906,7 @@
 "offset": -10,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46932,7 +46932,7 @@
 "offset": 8,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46958,7 +46958,7 @@
 "offset": 11,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -46984,35 +46984,7 @@
 "offset": 16,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
-"garden": "b_7_8_l8",
-"stop": "b_6_8_l10",
-"clinic": "b_7_9_l4",
-"market": "b_9_8_l0",
-"bank": "b_9_6_l0",
-"library": "b_8_7_l0",
-"museum": "b_9_9_l2",
-"cinema": "b_8_9_l0",
-"dealer": "b_12_7_l2",
-"playground": "b_8_8_l0",
-"noticeboard": "b_8_8_l0",
-"kiosk": "b_9_8_l0",
-"furniture": "b_14_8_l0",
-"school": "b_7_12_l0"
-},
-"career": "software_developer",
-"post": 31
-},
-{
-"id": "r1709",
-"name": "Hari",
-"role": "clerk",
-"home": "b_7_8_l1",
-"work": "b_8_6_l0",
-"offset": -7,
-"near": {
-"cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -47032,6 +47004,34 @@
 "post": 32
 },
 {
+"id": "r1709",
+"name": "Hari",
+"role": "clerk",
+"home": "b_7_8_l1",
+"work": "b_8_6_l0",
+"offset": -7,
+"near": {
+"cafe": "b_8_7_l2",
+"grocer": "b_7_8_l7",
+"garden": "b_7_8_l8",
+"stop": "b_6_8_l10",
+"clinic": "b_7_9_l4",
+"market": "b_9_8_l0",
+"bank": "b_9_6_l0",
+"library": "b_8_7_l0",
+"museum": "b_9_9_l2",
+"cinema": "b_8_9_l0",
+"dealer": "b_12_7_l2",
+"playground": "b_8_8_l0",
+"noticeboard": "b_8_8_l0",
+"kiosk": "b_9_8_l0",
+"furniture": "b_14_8_l0",
+"school": "b_7_12_l0"
+},
+"career": "software_developer",
+"post": 33
+},
+{
 "id": "r1710",
 "name": "Bo",
 "role": "elder",
@@ -47040,7 +47040,7 @@
 "offset": 11,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -47066,7 +47066,7 @@
 "offset": 14,
 "near": {
 "cafe": "b_8_7_l2",
-"grocer": "b_7_7_l2",
+"grocer": "b_7_8_l7",
 "garden": "b_7_8_l8",
 "stop": "b_6_8_l10",
 "clinic": "b_7_9_l4",
@@ -47332,9 +47332,9 @@
 {
 "id": "r1721",
 "name": "Kofi",
-"role": "cafe",
+"role": "nurse",
 "home": "b_7_8_l2",
-"work": "b_10_9_l0",
+"work": "b_9_10_l0",
 "offset": -15,
 "near": {
 "cafe": "b_7_8_l5",
@@ -47354,15 +47354,15 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "cafe_cashier",
-"post": 1
+"career": "doctor",
+"post": 2
 },
 {
 "id": "r1722",
 "name": "Zed",
-"role": "cafe",
+"role": "nurse",
 "home": "b_7_8_l2",
-"work": "b_10_9_l0",
+"work": "b_9_10_l0",
 "offset": -17,
 "near": {
 "cafe": "b_7_8_l5",
@@ -47382,8 +47382,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "barista",
-"post": 3
+"career": "nurse",
+"post": 4
 },
 {
 "id": "r1723",
@@ -47410,8 +47410,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "doctor",
-"post": 2
+"career": "nurse",
+"post": 5
 },
 {
 "id": "r1724",
@@ -47438,8 +47438,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "nurse",
-"post": 4
+"career": "pharmacist",
+"post": 6
 },
 {
 "id": "r1725",
@@ -47470,9 +47470,9 @@
 {
 "id": "r1726",
 "name": "Gia",
-"role": "nurse",
+"role": "utility",
 "home": "b_7_8_l2",
-"work": "b_9_10_l0",
+"work": "b_6_11_l0",
 "offset": -5,
 "near": {
 "cafe": "b_7_8_l5",
@@ -47492,8 +47492,22 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "nurse",
-"post": 5
+"career": "plumber",
+"post": 6,
+"rounds": [
+"b_6_8_l8",
+"b_6_9_l7",
+"b_7_8_l0",
+"b_6_8_l9",
+"b_8_9_l1",
+"b_7_9_l1",
+"b_7_8_l1",
+"b_6_8_l4",
+"b_6_10_l6",
+"b_7_8_l2",
+"b_6_9_l2",
+"b_7_8_l3"
+]
 },
 {
 "id": "r1727",
@@ -48927,9 +48941,9 @@
 {
 "id": "r1779",
 "name": "Sam",
-"role": "nurse",
+"role": "utility",
 "home": "b_7_9_l0",
-"work": "b_9_10_l0",
+"work": "b_6_11_l0",
 "offset": 0,
 "near": {
 "cafe": "b_7_8_l5",
@@ -48949,15 +48963,29 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "pharmacist",
-"post": 6
+"career": "maintenance_technician",
+"post": 8,
+"rounds": [
+"b_7_8_l5",
+"b_7_8_l6",
+"b_6_8_l9",
+"b_6_8_l7",
+"b_7_9_l4",
+"b_7_8_l7",
+"b_7_7_l2",
+"b_7_8_l1",
+"b_6_8_l3",
+"b_7_8_l2",
+"b_8_9_l1",
+"b_7_9_l3"
+]
 },
 {
 "id": "r1780",
 "name": "Kofi",
-"role": "utility",
+"role": "shopkeeper",
 "home": "b_7_9_l0",
-"work": "b_6_11_l0",
+"work": "b_9_9_l3",
 "offset": 3,
 "near": {
 "cafe": "b_7_8_l5",
@@ -48977,22 +49005,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "plumber",
-"rounds": [
-"b_7_7_l5",
-"b_8_9_l1",
-"b_6_9_l9",
-"b_7_9_l2",
-"b_7_7_l3",
-"b_7_8_l3",
-"b_6_9_l7",
-"b_6_10_l6",
-"b_6_9_l3",
-"b_7_9_l0",
-"b_8_9_l4",
-"b_7_9_l1"
-],
-"post": 6
+"career": "checkout_operator",
+"post": 2
 },
 {
 "id": "r1781",
@@ -49023,48 +49037,6 @@
 {
 "id": "r1782",
 "name": "Dev",
-"role": "utility",
-"home": "b_7_9_l0",
-"work": "b_6_11_l0",
-"offset": 6,
-"near": {
-"cafe": "b_7_8_l5",
-"grocer": "b_7_8_l4",
-"garden": "b_7_9_l8",
-"stop": "b_6_8_l10",
-"clinic": "b_7_9_l4",
-"market": "b_7_8_l4",
-"bank": "b_9_6_l0",
-"library": "b_8_7_l0",
-"museum": "b_9_9_l2",
-"cinema": "b_8_9_l0",
-"dealer": "b_12_7_l2",
-"playground": "b_8_8_l0",
-"noticeboard": "b_8_8_l0",
-"kiosk": "b_9_8_l0",
-"furniture": "b_14_8_l0",
-"school": "b_7_12_l0"
-},
-"career": "maintenance_technician",
-"rounds": [
-"b_7_8_l5",
-"b_7_8_l6",
-"b_7_8_l0",
-"b_6_8_l7",
-"b_7_9_l4",
-"b_6_8_l3",
-"b_6_9_l0",
-"b_6_8_l6",
-"b_8_9_l4",
-"b_7_8_l2",
-"b_7_8_l1",
-"b_6_9_l7"
-],
-"post": 8
-},
-{
-"id": "r1783",
-"name": "Hugo",
 "role": "shopkeeper",
 "home": "b_7_9_l0",
 "work": "b_9_9_l3",
@@ -49087,7 +49059,35 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "checkout_operator",
+"career": "shop_floor_assistant",
+"post": 4
+},
+{
+"id": "r1783",
+"name": "Hugo",
+"role": "nurse",
+"home": "b_7_9_l0",
+"work": "b_10_9_l1",
+"offset": 6,
+"near": {
+"cafe": "b_7_8_l5",
+"grocer": "b_7_8_l4",
+"garden": "b_7_9_l8",
+"stop": "b_6_8_l10",
+"clinic": "b_7_9_l4",
+"market": "b_7_8_l4",
+"bank": "b_9_6_l0",
+"library": "b_8_7_l0",
+"museum": "b_9_9_l2",
+"cinema": "b_8_9_l0",
+"dealer": "b_12_7_l2",
+"playground": "b_8_8_l0",
+"noticeboard": "b_8_8_l0",
+"kiosk": "b_9_8_l0",
+"furniture": "b_14_8_l0",
+"school": "b_7_12_l0"
+},
+"career": "doctor",
 "post": 2
 },
 {
@@ -49119,9 +49119,9 @@
 {
 "id": "r1785",
 "name": "Noor",
-"role": "shopkeeper",
+"role": "nurse",
 "home": "b_7_9_l0",
-"work": "b_9_9_l3",
+"work": "b_10_9_l1",
 "offset": -4,
 "near": {
 "cafe": "b_7_8_l5",
@@ -49141,7 +49141,7 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "shop_floor_assistant",
+"career": "nurse",
 "post": 4
 },
 {
@@ -49169,8 +49169,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "doctor",
-"post": 2
+"career": "nurse",
+"post": 5
 },
 {
 "id": "r1787",
@@ -49197,15 +49197,15 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "nurse",
-"post": 4
+"career": "pharmacist",
+"post": 6
 },
 {
 "id": "r1788",
 "name": "Leo",
-"role": "nurse",
+"role": "clerk",
 "home": "b_7_9_l0",
-"work": "b_10_9_l1",
+"work": "b_10_8_l0",
 "offset": 0,
 "near": {
 "cafe": "b_7_8_l5",
@@ -49225,8 +49225,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "nurse",
-"post": 5
+"career": "receptionist",
+"post": 1
 },
 {
 "id": "r1789",
@@ -49257,9 +49257,9 @@
 {
 "id": "r1790",
 "name": "Hugo",
-"role": "nurse",
+"role": "clerk",
 "home": "b_7_9_l0",
-"work": "b_10_9_l1",
+"work": "b_10_8_l0",
 "offset": 13,
 "near": {
 "cafe": "b_7_8_l5",
@@ -49279,8 +49279,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "pharmacist",
-"post": 6
+"career": "software_developer",
+"post": 14
 },
 {
 "id": "r1791",
@@ -49307,8 +49307,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "receptionist",
-"post": 1
+"career": "software_developer",
+"post": 15
 },
 {
 "id": "r1792",
@@ -49441,7 +49441,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 14
+"post": 16
 },
 {
 "id": "r1797",
@@ -50286,7 +50286,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 15
+"post": 17
 },
 {
 "id": "r1828",
@@ -50314,7 +50314,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 16
+"post": 18
 },
 {
 "id": "r1829",
@@ -50342,7 +50342,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 17
+"post": 19
 },
 {
 "id": "r1830",
@@ -50370,7 +50370,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 18
+"post": 20
 },
 {
 "id": "r1831",
@@ -50503,7 +50503,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 19
+"post": 21
 },
 {
 "id": "r1836",
@@ -50557,7 +50557,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 20
+"post": 22
 },
 {
 "id": "r1838",
@@ -50611,7 +50611,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 21
+"post": 23
 },
 {
 "id": "r1840",
@@ -50639,7 +50639,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 22
+"post": 24
 },
 {
 "id": "r1841",
@@ -50720,7 +50720,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 23
+"post": 25
 },
 {
 "id": "r1844",
@@ -50800,7 +50800,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 24
+"post": 26
 },
 {
 "id": "r1847",
@@ -50828,7 +50828,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 25
+"post": 27
 },
 {
 "id": "r1848",
@@ -50882,7 +50882,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 26
+"post": 28
 },
 {
 "id": "r1850",
@@ -50910,7 +50910,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 27
+"post": 29
 },
 {
 "id": "r1851",
@@ -50965,7 +50965,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 28
+"post": 30
 },
 {
 "id": "r1853",
@@ -50993,7 +50993,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 29
+"post": 31
 },
 {
 "id": "r1854",
@@ -51021,7 +51021,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 30
+"post": 32
 },
 {
 "id": "r1855",
@@ -51160,7 +51160,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 31
+"post": 33
 },
 {
 "id": "r1860",
@@ -51214,7 +51214,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 32
+"post": 34
 },
 {
 "id": "r1862",
@@ -51268,7 +51268,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 33
+"post": 35
 },
 {
 "id": "r1864",
@@ -51322,7 +51322,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 34
+"post": 36
 },
 {
 "id": "r1866",
@@ -51350,7 +51350,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 35
+"post": 37
 },
 {
 "id": "r1867",
@@ -51430,7 +51430,7 @@
 "school": "b_7_12_l0"
 },
 "career": "table_attendant",
-"post": 4
+"post": 2
 },
 {
 "id": "r1870",
@@ -57497,9 +57497,9 @@
 {
 "id": "r2092",
 "name": "Kofi",
-"role": "clerk",
+"role": "utility",
 "home": "b_7_10_l0",
-"work": "b_7_12_l0",
+"work": "b_9_12_l0",
 "offset": 2,
 "near": {
 "cafe": "b_7_10_l1",
@@ -57519,8 +57519,22 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "school_cook",
-"post": 26
+"career": "firefighter",
+"post": 9,
+"rounds": [
+"b_6_10_l5",
+"b_7_11_l4",
+"b_8_9_l2",
+"b_9_10_l5",
+"b_7_11_l8",
+"b_6_10_l7",
+"b_6_10_l1",
+"b_6_10_l9",
+"b_7_11_l5",
+"b_6_10_l4",
+"b_8_10_l2",
+"b_6_10_l8"
+]
 },
 {
 "id": "r2093",
@@ -57562,7 +57576,7 @@
 "b_8_9_l2",
 "b_6_10_l3"
 ],
-"post": 9
+"post": 10
 },
 {
 "id": "r2094",
@@ -57593,9 +57607,9 @@
 {
 "id": "r2095",
 "name": "Hugo",
-"role": "utility",
+"role": "clerk",
 "home": "b_7_10_l0",
-"work": "b_9_12_l0",
+"work": "b_10_8_l0",
 "offset": -19,
 "near": {
 "cafe": "b_7_10_l1",
@@ -57615,22 +57629,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "firefighter",
-"rounds": [
-"b_7_11_l8",
-"b_7_11_l2",
-"b_6_10_l8",
-"b_7_11_l1",
-"b_6_10_l6",
-"b_6_10_l7",
-"b_7_11_l7",
-"b_7_11_l0",
-"b_7_9_l5",
-"b_7_11_l5",
-"b_8_10_l2",
-"b_6_10_l1"
-],
-"post": 10
+"career": "software_developer",
+"post": 38
 },
 {
 "id": "r2096",
@@ -57710,7 +57710,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 36
+"post": 39
 },
 {
 "id": "r2099",
@@ -57738,7 +57738,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 37
+"post": 40
 },
 {
 "id": "r2100",
@@ -57793,7 +57793,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 38
+"post": 41
 },
 {
 "id": "r2102",
@@ -57847,7 +57847,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 39
+"post": 42
 },
 {
 "id": "r2104",
@@ -57902,7 +57902,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 40
+"post": 43
 },
 {
 "id": "r2106",
@@ -57982,7 +57982,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 41
+"post": 44
 },
 {
 "id": "r2109",
@@ -58090,7 +58090,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 42
+"post": 45
 },
 {
 "id": "r2113",
@@ -58328,7 +58328,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 43
+"post": 46
 },
 {
 "id": "r2122",
@@ -58356,7 +58356,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 44
+"post": 47
 },
 {
 "id": "r2123",
@@ -58410,7 +58410,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 45
+"post": 48
 },
 {
 "id": "r2125",
@@ -58490,7 +58490,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 46
+"post": 49
 },
 {
 "id": "r2128",
@@ -58518,7 +58518,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 47
+"post": 50
 },
 {
 "id": "r2129",
@@ -58546,7 +58546,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 48
+"post": 51
 },
 {
 "id": "r2130",
@@ -58652,7 +58652,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 49
+"post": 52
 },
 {
 "id": "r2134",
@@ -58680,7 +58680,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 50
+"post": 53
 },
 {
 "id": "r2135",
@@ -58708,7 +58708,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 51
+"post": 54
 },
 {
 "id": "r2136",
@@ -58762,7 +58762,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 52
+"post": 55
 },
 {
 "id": "r2138",
@@ -58790,7 +58790,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 53
+"post": 56
 },
 {
 "id": "r2139",
@@ -58818,7 +58818,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 54
+"post": 57
 },
 {
 "id": "r2140",
@@ -58846,7 +58846,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 55
+"post": 58
 },
 {
 "id": "r2141",
@@ -58874,7 +58874,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 56
+"post": 59
 },
 {
 "id": "r2142",
@@ -58902,7 +58902,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 57
+"post": 60
 },
 {
 "id": "r2143",
@@ -58930,7 +58930,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 58
+"post": 61
 },
 {
 "id": "r2144",
@@ -58958,7 +58958,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 59
+"post": 62
 },
 {
 "id": "r2145",
@@ -58986,7 +58986,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 60
+"post": 63
 },
 {
 "id": "r2146",
@@ -59093,7 +59093,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 61
+"post": 64
 },
 {
 "id": "r2150",
@@ -59121,7 +59121,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 62
+"post": 65
 },
 {
 "id": "r2151",
@@ -59175,7 +59175,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 63
+"post": 66
 },
 {
 "id": "r2153",
@@ -59230,7 +59230,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 64
+"post": 67
 },
 {
 "id": "r2155",
@@ -59311,7 +59311,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 65
+"post": 68
 },
 {
 "id": "r2158",
@@ -59391,7 +59391,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 66
+"post": 69
 },
 {
 "id": "r2161",
@@ -59419,7 +59419,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 67
+"post": 70
 },
 {
 "id": "r2162",
@@ -59500,7 +59500,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 68
+"post": 71
 },
 {
 "id": "r2165",
@@ -59581,7 +59581,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 69
+"post": 72
 },
 {
 "id": "r2168",
@@ -59635,7 +59635,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 70
+"post": 73
 },
 {
 "id": "r2170",
@@ -59663,7 +59663,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 71
+"post": 74
 },
 {
 "id": "r2171",
@@ -59758,7 +59758,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 72
+"post": 75
 },
 {
 "id": "r2174",
@@ -59838,7 +59838,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 73
+"post": 76
 },
 {
 "id": "r2177",
@@ -59933,7 +59933,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 74
+"post": 77
 },
 {
 "id": "r2180",
@@ -60013,7 +60013,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 75
+"post": 78
 },
 {
 "id": "r2183",
@@ -60041,7 +60041,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 76
+"post": 79
 },
 {
 "id": "r2184",
@@ -60069,7 +60069,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 77
+"post": 80
 },
 {
 "id": "r2185",
@@ -60097,7 +60097,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 78
+"post": 81
 },
 {
 "id": "r2186",
@@ -60125,7 +60125,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 79
+"post": 82
 },
 {
 "id": "r2187",
@@ -60153,7 +60153,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 80
+"post": 83
 },
 {
 "id": "r2188",
@@ -60342,7 +60342,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 81
+"post": 84
 },
 {
 "id": "r2195",
@@ -60370,7 +60370,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 82
+"post": 85
 },
 {
 "id": "r2196",
@@ -60398,7 +60398,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 83
+"post": 86
 },
 {
 "id": "r2197",
@@ -60452,7 +60452,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 84
+"post": 87
 },
 {
 "id": "r2199",
@@ -60480,7 +60480,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 85
+"post": 88
 },
 {
 "id": "r2200",
@@ -60535,7 +60535,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 86
+"post": 89
 },
 {
 "id": "r2202",
@@ -60563,7 +60563,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 87
+"post": 90
 },
 {
 "id": "r2203",
@@ -60591,7 +60591,7 @@
 "school": "b_7_12_l0"
 },
 "career": "software_developer",
-"post": 88
+"post": 91
 },
 {
 "id": "r2204",
@@ -60644,8 +60644,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "software_developer",
-"post": 89
+"career": "data_analyst",
+"post": 96
 },
 {
 "id": "r2206",
@@ -60724,8 +60724,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "software_developer",
-"post": 90
+"career": "data_analyst",
+"post": 97
 },
 {
 "id": "r2209",
@@ -60778,8 +60778,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "software_developer",
-"post": 91
+"career": "data_analyst",
+"post": 98
 },
 {
 "id": "r2211",
@@ -60807,7 +60807,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 96
+"post": 99
 },
 {
 "id": "r2212",
@@ -60835,7 +60835,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 97
+"post": 100
 },
 {
 "id": "r2213",
@@ -60863,7 +60863,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 98
+"post": 101
 },
 {
 "id": "r2214",
@@ -60891,7 +60891,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 99
+"post": 102
 },
 {
 "id": "r2215",
@@ -60919,7 +60919,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 100
+"post": 103
 },
 {
 "id": "r2216",
@@ -60947,7 +60947,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 101
+"post": 104
 },
 {
 "id": "r2217",
@@ -60975,7 +60975,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 102
+"post": 105
 },
 {
 "id": "r2218",
@@ -61031,7 +61031,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 103
+"post": 106
 },
 {
 "id": "r2220",
@@ -61085,7 +61085,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 104
+"post": 107
 },
 {
 "id": "r2222",
@@ -61113,7 +61113,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 105
+"post": 108
 },
 {
 "id": "r2223",
@@ -61547,7 +61547,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 106
+"post": 109
 },
 {
 "id": "r2239",
@@ -61575,7 +61575,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 107
+"post": 110
 },
 {
 "id": "r2240",
@@ -61603,7 +61603,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 108
+"post": 111
 },
 {
 "id": "r2241",
@@ -61684,7 +61684,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 109
+"post": 112
 },
 {
 "id": "r2244",
@@ -61712,7 +61712,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 110
+"post": 113
 },
 {
 "id": "r2245",
@@ -61766,7 +61766,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 111
+"post": 114
 },
 {
 "id": "r2247",
@@ -61898,7 +61898,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 112
+"post": 115
 },
 {
 "id": "r2252",
@@ -61978,7 +61978,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 113
+"post": 116
 },
 {
 "id": "r2255",
@@ -62099,7 +62099,7 @@
 "school": "b_7_12_l0"
 },
 "career": "data_analyst",
-"post": 114
+"post": 117
 },
 {
 "id": "r2259",
@@ -62178,8 +62178,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "data_analyst",
-"post": 115
+"career": "project_manager",
+"post": 121
 },
 {
 "id": "r2262",
@@ -62232,8 +62232,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "data_analyst",
-"post": 116
+"career": "project_manager",
+"post": 122
 },
 {
 "id": "r2264",
@@ -62286,8 +62286,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "data_analyst",
-"post": 117
+"career": "project_manager",
+"post": 123
 },
 {
 "id": "r2266",
@@ -62315,7 +62315,7 @@
 "school": "b_7_12_l0"
 },
 "career": "project_manager",
-"post": 121
+"post": 124
 },
 {
 "id": "r2267",
@@ -62369,7 +62369,7 @@
 "school": "b_7_12_l0"
 },
 "career": "project_manager",
-"post": 122
+"post": 125
 },
 {
 "id": "r2269",
@@ -62476,7 +62476,7 @@
 "school": "b_7_12_l0"
 },
 "career": "project_manager",
-"post": 123
+"post": 126
 },
 {
 "id": "r2273",
@@ -62504,7 +62504,7 @@
 "school": "b_7_12_l0"
 },
 "career": "project_manager",
-"post": 124
+"post": 127
 },
 {
 "id": "r2274",
@@ -62861,9 +62861,9 @@
 {
 "id": "r2287",
 "name": "Yui",
-"role": "cafe",
+"role": "utility",
 "home": "b_11_10_l2",
-"work": "b_12_10_l0",
+"work": "b_11_12_l0",
 "offset": -1,
 "near": {
 "cafe": "b_11_10_l5",
@@ -62883,8 +62883,22 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "cafe_cashier",
-"post": 1
+"career": "water_engineer",
+"post": 3,
+"rounds": [
+"b_11_9_l5",
+"b_11_11_l5",
+"b_10_9_l7",
+"b_10_11_l0",
+"b_11_10_l1",
+"b_11_10_l3",
+"b_12_11_l4",
+"b_11_11_l3",
+"b_11_11_l1",
+"b_11_10_l4",
+"b_11_11_l4",
+"b_11_11_l2"
+]
 },
 {
 "id": "r2288",
@@ -62952,7 +62966,7 @@
 "b_11_10_l2",
 "b_9_10_l7"
 ],
-"post": 3
+"post": 4
 },
 {
 "id": "r2290",
@@ -63046,7 +63060,7 @@
 "b_11_10_l7",
 "b_12_11_l2"
 ],
-"post": 4
+"post": 5
 },
 {
 "id": "r2293",
@@ -63178,7 +63192,7 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "water_engineer",
+"career": "plant_operator",
 "rounds": [
 "b_11_10_l1",
 "b_12_11_l0",
@@ -63193,7 +63207,7 @@
 "b_11_10_l3",
 "b_10_11_l4"
 ],
-"post": 5
+"post": 8
 },
 {
 "id": "r2298",
@@ -63261,7 +63275,7 @@
 "b_10_9_l7",
 "b_11_10_l2"
 ],
-"post": 8
+"post": 9
 },
 {
 "id": "r2300",
@@ -63370,9 +63384,9 @@
 {
 "id": "r2304",
 "name": "Nell",
-"role": "utility",
+"role": "nurse",
 "home": "b_11_10_l2",
-"work": "b_11_12_l0",
+"work": "b_12_10_l6",
 "offset": 6,
 "near": {
 "cafe": "b_11_10_l5",
@@ -63392,22 +63406,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "plant_operator",
-"rounds": [
-"b_12_11_l0",
-"b_11_10_l3",
-"b_12_10_l3",
-"b_10_9_l3",
-"b_12_10_l2",
-"b_11_10_l7",
-"b_10_9_l7",
-"b_11_11_l8",
-"b_11_11_l9",
-"b_11_10_l1",
-"b_10_11_l4",
-"b_10_11_l7"
-],
-"post": 9
+"career": "doctor",
+"post": 2
 },
 {
 "id": "r2305",
@@ -63460,8 +63460,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "doctor",
-"post": 2
+"career": "nurse",
+"post": 4
 },
 {
 "id": "r2307",
@@ -63514,8 +63514,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "nurse",
-"post": 4
+"career": "pharmacist",
+"post": 5
 },
 {
 "id": "r2309",
@@ -63575,7 +63575,7 @@
 "name": "Pia",
 "role": "nurse",
 "home": "b_11_10_l4",
-"work": "b_12_10_l6",
+"work": "b_11_8_l0",
 "offset": -14,
 "near": {
 "cafe": "b_11_10_l5",
@@ -63595,8 +63595,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "pharmacist",
-"post": 5
+"career": "medical_receptionist",
+"post": 1
 },
 {
 "id": "r2312",
@@ -68370,9 +68370,9 @@
 {
 "id": "r2488",
 "name": "Cleo",
-"role": "nurse",
+"role": "shopkeeper",
 "home": "b_0_0_l41",
-"work": "b_8_5_l5",
+"work": "b_7_0_l0",
 "offset": -10,
 "near": {
 "cafe": "b_0_0_l2",
@@ -68392,8 +68392,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "nurse",
-"post": 3
+"career": "sales_assistant",
+"post": 21
 },
 {
 "id": "r2489",
@@ -68550,7 +68550,7 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "security_guard",
+"career": "sales_assistant",
 "post": 24
 },
 {
@@ -68582,9 +68582,9 @@
 {
 "id": "r2496",
 "name": "Noor",
-"role": "clerk",
+"role": "shopkeeper",
 "home": "b_0_0_l43",
-"work": "b_8_6_l0",
+"work": "b_1_5_l0",
 "offset": 0,
 "near": {
 "cafe": "b_0_0_l2",
@@ -68604,15 +68604,15 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "software_developer",
-"post": 33
+"career": "sales_assistant",
+"post": 25
 },
 {
 "id": "r2497",
 "name": "Sam",
-"role": "clerk",
+"role": "shopkeeper",
 "home": "b_0_0_l44",
-"work": "b_8_6_l0",
+"work": "b_1_5_l0",
 "offset": -12,
 "near": {
 "cafe": "b_0_0_l2",
@@ -68632,8 +68632,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "software_developer",
-"post": 34
+"career": "visual_merchandiser",
+"post": 26
 },
 {
 "id": "r2498",
@@ -68664,9 +68664,9 @@
 {
 "id": "r2499",
 "name": "Zed",
-"role": "clerk",
+"role": "shopkeeper",
 "home": "b_0_0_l44",
-"work": "b_8_6_l0",
+"work": "b_1_5_l0",
 "offset": 1,
 "near": {
 "cafe": "b_0_0_l2",
@@ -68686,8 +68686,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "software_developer",
-"post": 35
+"career": "visual_merchandiser",
+"post": 27
 },
 {
 "id": "r2500",
@@ -68745,9 +68745,9 @@
 {
 "id": "r2502",
 "name": "Jai",
-"role": "clerk",
+"role": "shopkeeper",
 "home": "b_0_0_l45",
-"work": "b_8_6_l0",
+"work": "b_1_5_l0",
 "offset": -3,
 "near": {
 "cafe": "b_0_0_l2",
@@ -68767,8 +68767,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "software_developer",
-"post": 36
+"career": "security_guard",
+"post": 28
 },
 {
 "id": "r2503",
@@ -68799,9 +68799,9 @@
 {
 "id": "r2504",
 "name": "Leo",
-"role": "clerk",
+"role": "nurse",
 "home": "b_0_0_l45",
-"work": "b_8_6_l0",
+"work": "b_8_5_l5",
 "offset": 19,
 "near": {
 "cafe": "b_0_0_l2",
@@ -68821,8 +68821,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "software_developer",
-"post": 37
+"career": "nurse",
+"post": 3
 },
 {
 "id": "r2505",
@@ -68877,7 +68877,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 38
+"post": 34
 },
 {
 "id": "r2507",
@@ -68905,7 +68905,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 39
+"post": 35
 },
 {
 "id": "r2508",
@@ -68985,7 +68985,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 40
+"post": 36
 },
 {
 "id": "r2511",
@@ -69039,7 +69039,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 41
+"post": 37
 },
 {
 "id": "r2513",
@@ -69067,7 +69067,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 42
+"post": 38
 },
 {
 "id": "r2514",
@@ -69095,7 +69095,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 43
+"post": 39
 },
 {
 "id": "r2515",
@@ -69175,7 +69175,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 44
+"post": 40
 },
 {
 "id": "r2518",
@@ -69229,7 +69229,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 45
+"post": 41
 },
 {
 "id": "r2520",
@@ -69257,7 +69257,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 46
+"post": 42
 },
 {
 "id": "r2521",
@@ -69285,7 +69285,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 47
+"post": 43
 },
 {
 "id": "r2522",
@@ -69339,7 +69339,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 48
+"post": 44
 },
 {
 "id": "r2524",
@@ -69393,7 +69393,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 49
+"post": 45
 },
 {
 "id": "r2526",
@@ -69421,7 +69421,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 50
+"post": 46
 },
 {
 "id": "r2527",
@@ -69475,7 +69475,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 51
+"post": 47
 },
 {
 "id": "r2529",
@@ -69661,7 +69661,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 52
+"post": 48
 },
 {
 "id": "r2536",
@@ -69715,7 +69715,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 53
+"post": 49
 },
 {
 "id": "r2538",
@@ -69769,7 +69769,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 54
+"post": 50
 },
 {
 "id": "r2540",
@@ -69850,7 +69850,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 55
+"post": 51
 },
 {
 "id": "r2543",
@@ -69905,7 +69905,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 56
+"post": 52
 },
 {
 "id": "r2545",
@@ -70011,7 +70011,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 57
+"post": 53
 },
 {
 "id": "r2549",
@@ -70065,7 +70065,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 58
+"post": 54
 },
 {
 "id": "r2551",
@@ -70093,7 +70093,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 59
+"post": 55
 },
 {
 "id": "r2552",
@@ -70121,7 +70121,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 60
+"post": 56
 },
 {
 "id": "r2553",
@@ -70149,7 +70149,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 61
+"post": 57
 },
 {
 "id": "r2554",
@@ -70177,7 +70177,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 62
+"post": 58
 },
 {
 "id": "r2555",
@@ -70231,7 +70231,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 63
+"post": 59
 },
 {
 "id": "r2557",
@@ -70259,7 +70259,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 64
+"post": 60
 },
 {
 "id": "r2558",
@@ -70287,7 +70287,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 65
+"post": 61
 },
 {
 "id": "r2559",
@@ -70315,7 +70315,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 66
+"post": 62
 },
 {
 "id": "r2560",
@@ -70837,7 +70837,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 67
+"post": 63
 },
 {
 "id": "r2579",
@@ -71063,7 +71063,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 68
+"post": 64
 },
 {
 "id": "r2587",
@@ -71118,7 +71118,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 69
+"post": 65
 },
 {
 "id": "r2589",
@@ -71146,7 +71146,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 70
+"post": 66
 },
 {
 "id": "r2590",
@@ -71200,7 +71200,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 71
+"post": 67
 },
 {
 "id": "r2592",
@@ -71228,7 +71228,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 72
+"post": 68
 },
 {
 "id": "r2593",
@@ -71282,7 +71282,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 73
+"post": 69
 },
 {
 "id": "r2595",
@@ -71362,7 +71362,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 74
+"post": 70
 },
 {
 "id": "r2598",
@@ -71390,7 +71390,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 75
+"post": 71
 },
 {
 "id": "r2599",
@@ -71418,7 +71418,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 76
+"post": 72
 },
 {
 "id": "r2600",
@@ -71446,7 +71446,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 77
+"post": 73
 },
 {
 "id": "r2601",
@@ -71474,7 +71474,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 78
+"post": 74
 },
 {
 "id": "r2602",
@@ -71528,7 +71528,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 79
+"post": 75
 },
 {
 "id": "r2604",
@@ -71758,7 +71758,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 80
+"post": 76
 },
 {
 "id": "r2612",
@@ -71945,7 +71945,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 81
+"post": 77
 },
 {
 "id": "r2619",
@@ -72078,7 +72078,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 82
+"post": 78
 },
 {
 "id": "r2624",
@@ -72132,7 +72132,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 83
+"post": 79
 },
 {
 "id": "r2626",
@@ -72160,7 +72160,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 84
+"post": 80
 },
 {
 "id": "r2627",
@@ -72214,7 +72214,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 85
+"post": 81
 },
 {
 "id": "r2629",
@@ -72242,7 +72242,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 86
+"post": 82
 },
 {
 "id": "r2630",
@@ -72270,7 +72270,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 87
+"post": 83
 },
 {
 "id": "r2631",
@@ -72350,7 +72350,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 88
+"post": 84
 },
 {
 "id": "r2634",
@@ -72431,7 +72431,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 89
+"post": 85
 },
 {
 "id": "r2637",
@@ -72590,7 +72590,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 90
+"post": 86
 },
 {
 "id": "r2643",
@@ -72644,7 +72644,7 @@
 "school": "b_0_0_l5"
 },
 "career": "software_developer",
-"post": 91
+"post": 87
 },
 {
 "id": "r2645",
@@ -72671,8 +72671,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "data_analyst",
-"post": 96
+"career": "software_developer",
+"post": 88
 },
 {
 "id": "r2646",
@@ -72725,8 +72725,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "data_analyst",
-"post": 97
+"career": "software_developer",
+"post": 89
 },
 {
 "id": "r2648",
@@ -72805,8 +72805,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "data_analyst",
-"post": 98
+"career": "software_developer",
+"post": 90
 },
 {
 "id": "r2651",
@@ -72833,8 +72833,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "data_analyst",
-"post": 99
+"career": "software_developer",
+"post": 91
 },
 {
 "id": "r2652",
@@ -72992,7 +72992,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 100
+"post": 96
 },
 {
 "id": "r2658",
@@ -73020,7 +73020,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 101
+"post": 97
 },
 {
 "id": "r2659",
@@ -73075,7 +73075,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 102
+"post": 98
 },
 {
 "id": "r2661",
@@ -73103,7 +73103,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 103
+"post": 99
 },
 {
 "id": "r2662",
@@ -73209,7 +73209,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 104
+"post": 100
 },
 {
 "id": "r2666",
@@ -73237,7 +73237,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 105
+"post": 101
 },
 {
 "id": "r2667",
@@ -73265,7 +73265,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 106
+"post": 102
 },
 {
 "id": "r2668",
@@ -73345,7 +73345,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 107
+"post": 103
 },
 {
 "id": "r2671",
@@ -73441,7 +73441,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 108
+"post": 104
 },
 {
 "id": "r2674",
@@ -73496,7 +73496,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 109
+"post": 105
 },
 {
 "id": "r2676",
@@ -73550,7 +73550,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 110
+"post": 106
 },
 {
 "id": "r2678",
@@ -73630,7 +73630,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 111
+"post": 107
 },
 {
 "id": "r2681",
@@ -73710,7 +73710,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 112
+"post": 108
 },
 {
 "id": "r2684",
@@ -73790,7 +73790,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 113
+"post": 109
 },
 {
 "id": "r2687",
@@ -73870,7 +73870,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 114
+"post": 110
 },
 {
 "id": "r2690",
@@ -73924,7 +73924,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 115
+"post": 111
 },
 {
 "id": "r2692",
@@ -73978,7 +73978,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 116
+"post": 112
 },
 {
 "id": "r2694",
@@ -74006,7 +74006,7 @@
 "school": "b_0_0_l5"
 },
 "career": "data_analyst",
-"post": 117
+"post": 113
 },
 {
 "id": "r2695",
@@ -74033,8 +74033,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "project_manager",
-"post": 121
+"career": "data_analyst",
+"post": 114
 },
 {
 "id": "r2696",
@@ -74061,8 +74061,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "project_manager",
-"post": 122
+"career": "data_analyst",
+"post": 115
 },
 {
 "id": "r2697",
@@ -74115,8 +74115,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "project_manager",
-"post": 123
+"career": "data_analyst",
+"post": 116
 },
 {
 "id": "r2699",
@@ -74143,8 +74143,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "project_manager",
-"post": 124
+"career": "data_analyst",
+"post": 117
 },
 {
 "id": "r2700",
@@ -74172,7 +74172,7 @@
 "school": "b_0_0_l5"
 },
 "career": "project_manager",
-"post": 125
+"post": 121
 },
 {
 "id": "r2701",
@@ -74226,7 +74226,7 @@
 "school": "b_0_0_l5"
 },
 "career": "project_manager",
-"post": 126
+"post": 122
 },
 {
 "id": "r2703",
@@ -74254,7 +74254,7 @@
 "school": "b_0_0_l5"
 },
 "career": "project_manager",
-"post": 127
+"post": 123
 },
 {
 "id": "r2704",
@@ -74335,7 +74335,7 @@
 "school": "b_0_0_l5"
 },
 "career": "project_manager",
-"post": 128
+"post": 124
 },
 {
 "id": "r2707",
@@ -74363,7 +74363,7 @@
 "school": "b_0_0_l5"
 },
 "career": "project_manager",
-"post": 129
+"post": 125
 },
 {
 "id": "r2708",
@@ -74390,8 +74390,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "accountant",
-"post": 134
+"career": "project_manager",
+"post": 126
 },
 {
 "id": "r2709",
@@ -74418,8 +74418,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "accountant",
-"post": 135
+"career": "project_manager",
+"post": 127
 },
 {
 "id": "r2710",
@@ -74656,8 +74656,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "accountant",
-"post": 136
+"career": "project_manager",
+"post": 128
 },
 {
 "id": "r2719",
@@ -74684,8 +74684,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "accountant",
-"post": 137
+"career": "project_manager",
+"post": 129
 },
 {
 "id": "r2720",
@@ -74713,7 +74713,7 @@
 "school": "b_0_0_l5"
 },
 "career": "accountant",
-"post": 138
+"post": 134
 },
 {
 "id": "r2721",
@@ -74741,7 +74741,7 @@
 "school": "b_0_0_l5"
 },
 "career": "accountant",
-"post": 139
+"post": 135
 },
 {
 "id": "r2722",
@@ -74769,7 +74769,7 @@
 "school": "b_0_0_l5"
 },
 "career": "accountant",
-"post": 140
+"post": 136
 },
 {
 "id": "r2723",
@@ -74823,7 +74823,7 @@
 "school": "b_0_0_l5"
 },
 "career": "accountant",
-"post": 141
+"post": 137
 },
 {
 "id": "r2725",
@@ -74851,7 +74851,7 @@
 "school": "b_0_0_l5"
 },
 "career": "accountant",
-"post": 142
+"post": 138
 },
 {
 "id": "r2726",
@@ -74879,7 +74879,7 @@
 "school": "b_0_0_l5"
 },
 "career": "accountant",
-"post": 143
+"post": 139
 },
 {
 "id": "r2727",
@@ -74933,7 +74933,7 @@
 "school": "b_0_0_l5"
 },
 "career": "accountant",
-"post": 144
+"post": 140
 },
 {
 "id": "r2729",
@@ -74987,7 +74987,7 @@
 "school": "b_0_0_l5"
 },
 "career": "accountant",
-"post": 145
+"post": 141
 },
 {
 "id": "r2731",
@@ -75095,7 +75095,7 @@
 "school": "b_0_0_l5"
 },
 "career": "accountant",
-"post": 146
+"post": 142
 },
 {
 "id": "r2735",
@@ -75149,7 +75149,7 @@
 "school": "b_0_0_l5"
 },
 "career": "accountant",
-"post": 147
+"post": 143
 },
 {
 "id": "r2737",
@@ -75203,7 +75203,7 @@
 "school": "b_0_0_l5"
 },
 "career": "accountant",
-"post": 148
+"post": 144
 },
 {
 "id": "r2739",
@@ -75257,7 +75257,7 @@
 "school": "b_0_0_l5"
 },
 "career": "accountant",
-"post": 149
+"post": 145
 },
 {
 "id": "r2741",
@@ -75311,7 +75311,7 @@
 "school": "b_0_0_l5"
 },
 "career": "accountant",
-"post": 150
+"post": 146
 },
 {
 "id": "r2743",
@@ -75339,7 +75339,7 @@
 "school": "b_0_0_l5"
 },
 "career": "accountant",
-"post": 151
+"post": 147
 },
 {
 "id": "r2744",
@@ -75444,8 +75444,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "operations_analyst",
-"post": 155
+"career": "accountant",
+"post": 148
 },
 {
 "id": "r2748",
@@ -75472,8 +75472,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "operations_analyst",
-"post": 156
+"career": "accountant",
+"post": 149
 },
 {
 "id": "r2749",
@@ -75527,8 +75527,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "operations_analyst",
-"post": 157
+"career": "accountant",
+"post": 150
 },
 {
 "id": "r2751",
@@ -75555,8 +75555,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_0_0_l5"
 },
-"career": "operations_analyst",
-"post": 158
+"career": "accountant",
+"post": 151
 },
 {
 "id": "r2752",
@@ -75584,7 +75584,7 @@
 "school": "b_0_0_l5"
 },
 "career": "operations_analyst",
-"post": 159
+"post": 155
 },
 {
 "id": "r2753",
@@ -75612,7 +75612,7 @@
 "school": "b_0_0_l5"
 },
 "career": "operations_analyst",
-"post": 160
+"post": 156
 },
 {
 "id": "r2754",
@@ -75640,7 +75640,7 @@
 "school": "b_0_0_l5"
 },
 "career": "operations_analyst",
-"post": 161
+"post": 157
 },
 {
 "id": "r2755",
@@ -75748,7 +75748,7 @@
 "school": "b_0_0_l5"
 },
 "career": "operations_analyst",
-"post": 162
+"post": 158
 },
 {
 "id": "r2759",
@@ -75829,7 +75829,7 @@
 "school": "b_0_0_l5"
 },
 "career": "operations_analyst",
-"post": 163
+"post": 159
 },
 {
 "id": "r2762",
@@ -75857,7 +75857,7 @@
 "school": "b_0_0_l5"
 },
 "career": "operations_analyst",
-"post": 164
+"post": 160
 },
 {
 "id": "r2763",
@@ -75911,7 +75911,7 @@
 "school": "b_0_0_l5"
 },
 "career": "operations_analyst",
-"post": 165
+"post": 161
 },
 {
 "id": "r2765",
@@ -75939,7 +75939,7 @@
 "school": "b_0_0_l5"
 },
 "career": "operations_analyst",
-"post": 166
+"post": 162
 },
 {
 "id": "r2766",
@@ -75967,7 +75967,7 @@
 "school": "b_0_0_l5"
 },
 "career": "operations_analyst",
-"post": 167
+"post": 163
 },
 {
 "id": "r2767",
@@ -75995,7 +75995,7 @@
 "school": "b_0_0_l5"
 },
 "career": "operations_analyst",
-"post": 168
+"post": 164
 },
 {
 "id": "r2768",
@@ -86414,7 +86414,7 @@
 "school": "b_7_12_l0"
 },
 "career": "project_manager",
-"post": 125
+"post": 128
 },
 {
 "id": "r3146",
@@ -86468,7 +86468,7 @@
 "school": "b_7_12_l0"
 },
 "career": "project_manager",
-"post": 126
+"post": 129
 },
 {
 "id": "r3148",
@@ -86573,8 +86573,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "project_manager",
-"post": 127
+"career": "accountant",
+"post": 134
 },
 {
 "id": "r3152",
@@ -86627,8 +86627,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "project_manager",
-"post": 128
+"career": "accountant",
+"post": 135
 },
 {
 "id": "r3154",
@@ -86655,8 +86655,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "project_manager",
-"post": 129
+"career": "accountant",
+"post": 136
 },
 {
 "id": "r3155",
@@ -86684,7 +86684,7 @@
 "school": "b_7_12_l0"
 },
 "career": "accountant",
-"post": 134
+"post": 137
 },
 {
 "id": "r3156",
@@ -86764,7 +86764,7 @@
 "school": "b_7_12_l0"
 },
 "career": "accountant",
-"post": 135
+"post": 138
 },
 {
 "id": "r3159",
@@ -86819,7 +86819,7 @@
 "school": "b_7_12_l0"
 },
 "career": "accountant",
-"post": 136
+"post": 139
 },
 {
 "id": "r3161",
@@ -86874,7 +86874,7 @@
 "school": "b_7_12_l0"
 },
 "career": "accountant",
-"post": 137
+"post": 140
 },
 {
 "id": "r3163",
@@ -86928,7 +86928,7 @@
 "school": "b_7_12_l0"
 },
 "career": "accountant",
-"post": 138
+"post": 141
 },
 {
 "id": "r3165",
@@ -86982,7 +86982,7 @@
 "school": "b_7_12_l0"
 },
 "career": "accountant",
-"post": 139
+"post": 142
 },
 {
 "id": "r3167",
@@ -87010,7 +87010,7 @@
 "school": "b_7_12_l0"
 },
 "career": "accountant",
-"post": 140
+"post": 143
 },
 {
 "id": "r3168",
@@ -87091,7 +87091,7 @@
 "school": "b_7_12_l0"
 },
 "career": "accountant",
-"post": 141
+"post": 144
 },
 {
 "id": "r3171",
@@ -87224,7 +87224,7 @@
 "school": "b_7_12_l0"
 },
 "career": "accountant",
-"post": 142
+"post": 145
 },
 {
 "id": "r3176",
@@ -87357,7 +87357,7 @@
 "school": "b_7_12_l0"
 },
 "career": "accountant",
-"post": 143
+"post": 146
 },
 {
 "id": "r3181",
@@ -87385,7 +87385,7 @@
 "school": "b_7_12_l0"
 },
 "career": "accountant",
-"post": 144
+"post": 147
 },
 {
 "id": "r3182",
@@ -87439,7 +87439,7 @@
 "school": "b_7_12_l0"
 },
 "career": "accountant",
-"post": 145
+"post": 148
 },
 {
 "id": "r3184",
@@ -87467,7 +87467,7 @@
 "school": "b_7_12_l0"
 },
 "career": "accountant",
-"post": 146
+"post": 149
 },
 {
 "id": "r3185",
@@ -87574,7 +87574,7 @@
 "school": "b_7_12_l0"
 },
 "career": "accountant",
-"post": 147
+"post": 150
 },
 {
 "id": "r3189",
@@ -87602,7 +87602,7 @@
 "school": "b_7_12_l0"
 },
 "career": "accountant",
-"post": 148
+"post": 151
 },
 {
 "id": "r3190",
@@ -87656,8 +87656,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "accountant",
-"post": 149
+"career": "operations_analyst",
+"post": 155
 },
 {
 "id": "r3192",
@@ -87791,8 +87791,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "accountant",
-"post": 150
+"career": "operations_analyst",
+"post": 156
 },
 {
 "id": "r3197",
@@ -87819,8 +87819,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "accountant",
-"post": 151
+"career": "operations_analyst",
+"post": 157
 },
 {
 "id": "r3198",
@@ -87953,7 +87953,7 @@
 "school": "b_7_12_l0"
 },
 "career": "operations_analyst",
-"post": 155
+"post": 158
 },
 {
 "id": "r3203",
@@ -87981,7 +87981,7 @@
 "school": "b_7_12_l0"
 },
 "career": "operations_analyst",
-"post": 156
+"post": 159
 },
 {
 "id": "r3204",
@@ -88009,7 +88009,7 @@
 "school": "b_7_12_l0"
 },
 "career": "operations_analyst",
-"post": 157
+"post": 160
 },
 {
 "id": "r3205",
@@ -88063,7 +88063,7 @@
 "school": "b_7_12_l0"
 },
 "career": "operations_analyst",
-"post": 158
+"post": 161
 },
 {
 "id": "r3207",
@@ -88091,7 +88091,7 @@
 "school": "b_7_12_l0"
 },
 "career": "operations_analyst",
-"post": 159
+"post": 162
 },
 {
 "id": "r3208",
@@ -88119,7 +88119,7 @@
 "school": "b_7_12_l0"
 },
 "career": "operations_analyst",
-"post": 160
+"post": 163
 },
 {
 "id": "r3209",
@@ -88279,7 +88279,7 @@
 "school": "b_7_12_l0"
 },
 "career": "operations_analyst",
-"post": 161
+"post": 164
 },
 {
 "id": "r3215",
@@ -88439,7 +88439,7 @@
 "school": "b_7_12_l0"
 },
 "career": "operations_analyst",
-"post": 162
+"post": 165
 },
 {
 "id": "r3221",
@@ -88493,7 +88493,7 @@
 "school": "b_7_12_l0"
 },
 "career": "operations_analyst",
-"post": 163
+"post": 166
 },
 {
 "id": "r3223",
@@ -88573,7 +88573,7 @@
 "school": "b_7_12_l0"
 },
 "career": "operations_analyst",
-"post": 164
+"post": 167
 },
 {
 "id": "r3226",
@@ -88653,7 +88653,7 @@
 "school": "b_7_12_l0"
 },
 "career": "operations_analyst",
-"post": 165
+"post": 168
 },
 {
 "id": "r3229",
@@ -88681,7 +88681,7 @@
 "school": "b_7_12_l0"
 },
 "career": "operations_analyst",
-"post": 166
+"post": 169
 },
 {
 "id": "r3230",
@@ -88786,8 +88786,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "operations_analyst",
-"post": 167
+"career": "customer_support_agent",
+"post": 174
 },
 {
 "id": "r3234",
@@ -88840,8 +88840,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "operations_analyst",
-"post": 168
+"career": "customer_support_agent",
+"post": 175
 },
 {
 "id": "r3236",
@@ -88868,8 +88868,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "operations_analyst",
-"post": 169
+"career": "customer_support_agent",
+"post": 176
 },
 {
 "id": "r3237",
@@ -88976,7 +88976,7 @@
 "school": "b_7_12_l0"
 },
 "career": "customer_support_agent",
-"post": 174
+"post": 177
 },
 {
 "id": "r3241",
@@ -89030,7 +89030,7 @@
 "school": "b_4_13_l5"
 },
 "career": "customer_support_agent",
-"post": 175
+"post": 178
 },
 {
 "id": "r3243",
@@ -89084,7 +89084,7 @@
 "school": "b_4_13_l5"
 },
 "career": "customer_support_agent",
-"post": 176
+"post": 179
 },
 {
 "id": "r3245",
@@ -89217,7 +89217,7 @@
 "school": "b_4_13_l5"
 },
 "career": "customer_support_agent",
-"post": 177
+"post": 180
 },
 {
 "id": "r3250",
@@ -89419,7 +89419,7 @@
 "school": "b_4_13_l5"
 },
 "career": "customer_support_agent",
-"post": 178
+"post": 181
 },
 {
 "id": "r3257",
@@ -89447,7 +89447,7 @@
 "school": "b_4_13_l5"
 },
 "career": "customer_support_agent",
-"post": 179
+"post": 182
 },
 {
 "id": "r3258",
@@ -90458,7 +90458,7 @@
 "school": "b_4_13_l5"
 },
 "career": "medical_receptionist",
-"post": 1
+"post": 2
 },
 {
 "id": "r3294",
@@ -90511,8 +90511,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "medical_receptionist",
-"post": 2
+"career": "doctor",
+"post": 6
 },
 {
 "id": "r3296",
@@ -90540,7 +90540,7 @@
 "school": "b_4_13_l5"
 },
 "career": "doctor",
-"post": 6
+"post": 7
 },
 {
 "id": "r3297",
@@ -90568,7 +90568,7 @@
 "school": "b_4_13_l5"
 },
 "career": "doctor",
-"post": 7
+"post": 8
 },
 {
 "id": "r3298",
@@ -90596,7 +90596,7 @@
 "school": "b_4_13_l5"
 },
 "career": "doctor",
-"post": 8
+"post": 9
 },
 {
 "id": "r3299",
@@ -90703,7 +90703,7 @@
 "school": "b_4_13_l5"
 },
 "career": "doctor",
-"post": 9
+"post": 10
 },
 {
 "id": "r3303",
@@ -90890,7 +90890,7 @@
 "school": "b_4_13_l5"
 },
 "career": "doctor",
-"post": 10
+"post": 11
 },
 {
 "id": "r3310",
@@ -90918,7 +90918,7 @@
 "school": "b_4_13_l5"
 },
 "career": "doctor",
-"post": 11
+"post": 12
 },
 {
 "id": "r3311",
@@ -90972,7 +90972,7 @@
 "school": "b_4_13_l5"
 },
 "career": "doctor",
-"post": 12
+"post": 13
 },
 {
 "id": "r3313",
@@ -91025,8 +91025,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "doctor",
-"post": 13
+"career": "nurse",
+"post": 20
 },
 {
 "id": "r3315",
@@ -91080,7 +91080,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 20
+"post": 21
 },
 {
 "id": "r3317",
@@ -91108,7 +91108,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 21
+"post": 22
 },
 {
 "id": "r3318",
@@ -91136,7 +91136,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 22
+"post": 23
 },
 {
 "id": "r3319",
@@ -91164,7 +91164,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 23
+"post": 24
 },
 {
 "id": "r3320",
@@ -91218,7 +91218,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 24
+"post": 25
 },
 {
 "id": "r3322",
@@ -91246,7 +91246,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 25
+"post": 26
 },
 {
 "id": "r3323",
@@ -91458,7 +91458,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 26
+"post": 27
 },
 {
 "id": "r3331",
@@ -91486,7 +91486,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 27
+"post": 28
 },
 {
 "id": "r3332",
@@ -91593,7 +91593,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 28
+"post": 29
 },
 {
 "id": "r3336",
@@ -91621,7 +91621,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 29
+"post": 30
 },
 {
 "id": "r3337",
@@ -91702,7 +91702,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 30
+"post": 31
 },
 {
 "id": "r3340",
@@ -91756,7 +91756,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 31
+"post": 32
 },
 {
 "id": "r3342",
@@ -91836,7 +91836,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 32
+"post": 33
 },
 {
 "id": "r3345",
@@ -91864,7 +91864,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 33
+"post": 34
 },
 {
 "id": "r3346",
@@ -91892,7 +91892,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 34
+"post": 35
 },
 {
 "id": "r3347",
@@ -91946,7 +91946,7 @@
 "school": "b_4_13_l5"
 },
 "career": "nurse",
-"post": 35
+"post": 36
 },
 {
 "id": "r3349",
@@ -92026,8 +92026,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "nurse",
-"post": 36
+"career": "surgeon",
+"post": 38
 },
 {
 "id": "r3352",
@@ -92108,7 +92108,7 @@
 "school": "b_4_13_l5"
 },
 "career": "surgeon",
-"post": 38
+"post": 39
 },
 {
 "id": "r3355",
@@ -92136,7 +92136,7 @@
 "school": "b_4_13_l5"
 },
 "career": "surgeon",
-"post": 39
+"post": 40
 },
 {
 "id": "r3356",
@@ -92163,8 +92163,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "surgeon",
-"post": 40
+"career": "paramedic",
+"post": 43
 },
 {
 "id": "r3357",
@@ -92218,7 +92218,7 @@
 "school": "b_4_13_l5"
 },
 "career": "paramedic",
-"post": 43
+"post": 44
 },
 {
 "id": "r3359",
@@ -92351,7 +92351,7 @@
 "school": "b_4_13_l5"
 },
 "career": "paramedic",
-"post": 44
+"post": 45
 },
 {
 "id": "r3364",
@@ -92431,7 +92431,7 @@
 "school": "b_4_13_l5"
 },
 "career": "paramedic",
-"post": 45
+"post": 46
 },
 {
 "id": "r3367",
@@ -92484,8 +92484,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "paramedic",
-"post": 46
+"career": "care_assistant",
+"post": 49
 },
 {
 "id": "r3369",
@@ -92566,7 +92566,7 @@
 "school": "b_4_13_l5"
 },
 "career": "care_assistant",
-"post": 49
+"post": 50
 },
 {
 "id": "r3372",
@@ -92594,7 +92594,7 @@
 "school": "b_4_13_l5"
 },
 "career": "care_assistant",
-"post": 50
+"post": 51
 },
 {
 "id": "r3373",
@@ -92625,9 +92625,9 @@
 {
 "id": "r3374",
 "name": "Abe",
-"role": "nurse",
+"role": "clerk",
 "home": "b_4_13_l78",
-"work": "b_11_8_l0",
+"work": "b_10_8_l0",
 "offset": -10,
 "near": {
 "cafe": "b_4_13_l2",
@@ -92647,8 +92647,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "care_assistant",
-"post": 51
+"career": "customer_support_agent",
+"post": 183
 },
 {
 "id": "r3375",
@@ -92702,7 +92702,7 @@
 "school": "b_4_13_l5"
 },
 "career": "customer_support_agent",
-"post": 180
+"post": 184
 },
 {
 "id": "r3377",
@@ -92756,7 +92756,7 @@
 "school": "b_4_13_l5"
 },
 "career": "customer_support_agent",
-"post": 181
+"post": 185
 },
 {
 "id": "r3379",
@@ -92784,7 +92784,7 @@
 "school": "b_4_13_l5"
 },
 "career": "customer_support_agent",
-"post": 182
+"post": 186
 },
 {
 "id": "r3380",
@@ -92812,7 +92812,7 @@
 "school": "b_4_13_l5"
 },
 "career": "customer_support_agent",
-"post": 183
+"post": 187
 },
 {
 "id": "r3381",
@@ -92919,7 +92919,7 @@
 "school": "b_4_13_l5"
 },
 "career": "customer_support_agent",
-"post": 184
+"post": 188
 },
 {
 "id": "r3385",
@@ -92947,7 +92947,7 @@
 "school": "b_4_13_l5"
 },
 "career": "customer_support_agent",
-"post": 185
+"post": 189
 },
 {
 "id": "r3386",
@@ -93688,7 +93688,7 @@
 "school": "b_7_12_l0"
 },
 "career": "customer_support_agent",
-"post": 186
+"post": 190
 },
 {
 "id": "r3412",
@@ -93742,7 +93742,7 @@
 "school": "b_7_12_l0"
 },
 "career": "customer_support_agent",
-"post": 187
+"post": 191
 },
 {
 "id": "r3414",
@@ -93796,7 +93796,7 @@
 "school": "b_7_12_l0"
 },
 "career": "customer_support_agent",
-"post": 188
+"post": 192
 },
 {
 "id": "r3416",
@@ -93850,7 +93850,7 @@
 "school": "b_7_12_l0"
 },
 "career": "customer_support_agent",
-"post": 189
+"post": 193
 },
 {
 "id": "r3418",
@@ -93878,7 +93878,7 @@
 "school": "b_7_12_l0"
 },
 "career": "customer_support_agent",
-"post": 190
+"post": 194
 },
 {
 "id": "r3419",
@@ -93932,7 +93932,7 @@
 "school": "b_7_12_l0"
 },
 "career": "customer_support_agent",
-"post": 191
+"post": 195
 },
 {
 "id": "r3421",
@@ -93960,7 +93960,7 @@
 "school": "b_7_12_l0"
 },
 "career": "customer_support_agent",
-"post": 192
+"post": 196
 },
 {
 "id": "r3422",
@@ -94041,7 +94041,7 @@
 "school": "b_7_12_l0"
 },
 "career": "customer_support_agent",
-"post": 193
+"post": 197
 },
 {
 "id": "r3425",
@@ -94069,7 +94069,7 @@
 "school": "b_7_12_l0"
 },
 "career": "customer_support_agent",
-"post": 194
+"post": 198
 },
 {
 "id": "r3426",
@@ -94150,7 +94150,7 @@
 "school": "b_7_12_l0"
 },
 "career": "customer_support_agent",
-"post": 195
+"post": 199
 },
 {
 "id": "r3429",
@@ -94388,8 +94388,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "customer_support_agent",
-"post": 196
+"career": "it_support",
+"post": 202
 },
 {
 "id": "r3438",
@@ -94416,8 +94416,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "customer_support_agent",
-"post": 197
+"career": "it_support",
+"post": 203
 },
 {
 "id": "r3439",
@@ -94668,8 +94668,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "customer_support_agent",
-"post": 198
+"career": "it_support",
+"post": 204
 },
 {
 "id": "r3448",
@@ -94774,8 +94774,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "customer_support_agent",
-"post": 199
+"career": "it_support",
+"post": 205
 },
 {
 "id": "r3452",
@@ -94803,7 +94803,7 @@
 "school": "b_7_12_l0"
 },
 "career": "it_support",
-"post": 202
+"post": 206
 },
 {
 "id": "r3453",
@@ -94883,7 +94883,7 @@
 "school": "b_7_12_l0"
 },
 "career": "it_support",
-"post": 203
+"post": 207
 },
 {
 "id": "r3456",
@@ -94936,8 +94936,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "it_support",
-"post": 204
+"career": "hr_officer",
+"post": 209
 },
 {
 "id": "r3458",
@@ -95069,8 +95069,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "it_support",
-"post": 205
+"career": "hr_officer",
+"post": 210
 },
 {
 "id": "r3463",
@@ -95124,8 +95124,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "it_support",
-"post": 206
+"career": "hr_officer",
+"post": 211
 },
 {
 "id": "r3465",
@@ -95152,8 +95152,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "it_support",
-"post": 207
+"career": "hr_officer",
+"post": 212
 },
 {
 "id": "r3466",
@@ -95180,8 +95180,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "hr_officer",
-"post": 209
+"career": "office_administrator",
+"post": 215
 },
 {
 "id": "r3467",
@@ -95208,8 +95208,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "hr_officer",
-"post": 210
+"career": "office_administrator",
+"post": 216
 },
 {
 "id": "r3468",
@@ -95289,8 +95289,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "hr_officer",
-"post": 211
+"career": "office_administrator",
+"post": 217
 },
 {
 "id": "r3471",
@@ -95317,8 +95317,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "hr_officer",
-"post": 212
+"career": "office_administrator",
+"post": 218
 },
 {
 "id": "r3472",
@@ -95346,7 +95346,7 @@
 "school": "b_7_12_l0"
 },
 "career": "office_administrator",
-"post": 215
+"post": 219
 },
 {
 "id": "r3473",
@@ -95478,7 +95478,7 @@
 "school": "b_7_12_l0"
 },
 "career": "office_administrator",
-"post": 216
+"post": 220
 },
 {
 "id": "r3478",
@@ -95505,8 +95505,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "office_administrator",
-"post": 217
+"career": "marketing_officer",
+"post": 223
 },
 {
 "id": "r3479",
@@ -95533,8 +95533,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "office_administrator",
-"post": 218
+"career": "marketing_officer",
+"post": 224
 },
 {
 "id": "r3480",
@@ -95613,8 +95613,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "office_administrator",
-"post": 219
+"career": "marketing_officer",
+"post": 225
 },
 {
 "id": "r3483",
@@ -95641,8 +95641,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "office_administrator",
-"post": 220
+"career": "marketing_officer",
+"post": 226
 },
 {
 "id": "r3484",
@@ -95670,7 +95670,7 @@
 "school": "b_7_12_l0"
 },
 "career": "marketing_officer",
-"post": 223
+"post": 227
 },
 {
 "id": "r3485",
@@ -95777,7 +95777,7 @@
 "school": "b_7_12_l0"
 },
 "career": "marketing_officer",
-"post": 224
+"post": 228
 },
 {
 "id": "r3489",
@@ -95857,8 +95857,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "marketing_officer",
-"post": 225
+"career": "insurance_underwriter",
+"post": 231
 },
 {
 "id": "r3492",
@@ -95911,8 +95911,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "marketing_officer",
-"post": 226
+"career": "insurance_underwriter",
+"post": 232
 },
 {
 "id": "r3494",
@@ -95939,8 +95939,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "marketing_officer",
-"post": 227
+"career": "insurance_underwriter",
+"post": 233
 },
 {
 "id": "r3495",
@@ -96045,8 +96045,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "marketing_officer",
-"post": 228
+"career": "insurance_underwriter",
+"post": 234
 },
 {
 "id": "r3499",
@@ -96205,7 +96205,7 @@
 "school": "b_7_12_l0"
 },
 "career": "insurance_underwriter",
-"post": 231
+"post": 235
 },
 {
 "id": "r3505",
@@ -96285,7 +96285,7 @@
 "school": "b_7_12_l0"
 },
 "career": "insurance_underwriter",
-"post": 232
+"post": 236
 },
 {
 "id": "r3508",
@@ -96313,7 +96313,7 @@
 "school": "b_7_12_l0"
 },
 "career": "insurance_underwriter",
-"post": 233
+"post": 237
 },
 {
 "id": "r3509",
@@ -96393,7 +96393,7 @@
 "school": "b_7_12_l0"
 },
 "career": "insurance_underwriter",
-"post": 234
+"post": 238
 },
 {
 "id": "r3512",
@@ -96524,8 +96524,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "insurance_underwriter",
-"post": 235
+"career": "compliance_officer",
+"post": 240
 },
 {
 "id": "r3517",
@@ -96578,8 +96578,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "insurance_underwriter",
-"post": 236
+"career": "compliance_officer",
+"post": 241
 },
 {
 "id": "r3519",
@@ -96606,8 +96606,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "insurance_underwriter",
-"post": 237
+"career": "compliance_officer",
+"post": 242
 },
 {
 "id": "r3520",
@@ -96634,8 +96634,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "insurance_underwriter",
-"post": 238
+"career": "payroll_clerk",
+"post": 244
 },
 {
 "id": "r3521",
@@ -96741,8 +96741,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "compliance_officer",
-"post": 240
+"career": "payroll_clerk",
+"post": 245
 },
 {
 "id": "r3525",
@@ -96769,8 +96769,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "compliance_officer",
-"post": 241
+"career": "payroll_clerk",
+"post": 246
 },
 {
 "id": "r3526",
@@ -96823,8 +96823,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "compliance_officer",
-"post": 242
+"career": "graphic_designer",
+"post": 248
 },
 {
 "id": "r3528",
@@ -96903,8 +96903,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "payroll_clerk",
-"post": 244
+"career": "graphic_designer",
+"post": 249
 },
 {
 "id": "r3531",
@@ -96931,8 +96931,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "payroll_clerk",
-"post": 245
+"career": "graphic_designer",
+"post": 250
 },
 {
 "id": "r3532",
@@ -96959,8 +96959,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "payroll_clerk",
-"post": 246
+"career": "investment_banker",
+"post": 252
 },
 {
 "id": "r3533",
@@ -97013,8 +97013,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "graphic_designer",
-"post": 248
+"career": "investment_banker",
+"post": 253
 },
 {
 "id": "r3535",
@@ -97119,8 +97119,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "graphic_designer",
-"post": 249
+"career": "investment_banker",
+"post": 254
 },
 {
 "id": "r3539",
@@ -97251,8 +97251,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "graphic_designer",
-"post": 250
+"career": "investment_banker",
+"post": 255
 },
 {
 "id": "r3544",
@@ -97332,7 +97332,7 @@
 "school": "b_7_12_l0"
 },
 "career": "investment_banker",
-"post": 252
+"post": 256
 },
 {
 "id": "r3547",
@@ -97385,8 +97385,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "investment_banker",
-"post": 253
+"career": "lawyer",
+"post": 258
 },
 {
 "id": "r3549",
@@ -97439,8 +97439,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "investment_banker",
-"post": 254
+"career": "lawyer",
+"post": 259
 },
 {
 "id": "r3551",
@@ -97599,8 +97599,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "investment_banker",
-"post": 255
+"career": "lawyer",
+"post": 260
 },
 {
 "id": "r3557",
@@ -97679,8 +97679,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "investment_banker",
-"post": 256
+"career": "lawyer",
+"post": 261
 },
 {
 "id": "r3560",
@@ -97760,7 +97760,7 @@
 "school": "b_4_13_l5"
 },
 "career": "lawyer",
-"post": 258
+"post": 262
 },
 {
 "id": "r3563",
@@ -97793,7 +97793,7 @@
 "name": "Kit",
 "role": "clerk",
 "home": "b_4_13_l136",
-"work": "b_10_8_l0",
+"work": "b_9_7_l0",
 "offset": 8,
 "near": {
 "cafe": "b_4_13_l2",
@@ -97813,15 +97813,15 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "lawyer",
-"post": 259
+"career": "civil_servant",
+"post": 5
 },
 {
 "id": "r3565",
 "name": "Cleo",
 "role": "clerk",
 "home": "b_4_13_l136",
-"work": "b_10_8_l0",
+"work": "b_9_7_l0",
 "offset": 3,
 "near": {
 "cafe": "b_4_13_l2",
@@ -97841,8 +97841,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "lawyer",
-"post": 260
+"career": "civil_servant",
+"post": 6
 },
 {
 "id": "r3566",
@@ -97875,7 +97875,7 @@
 "name": "Leo",
 "role": "clerk",
 "home": "b_4_13_l137",
-"work": "b_10_8_l0",
+"work": "b_9_7_l0",
 "offset": 4,
 "near": {
 "cafe": "b_4_13_l2",
@@ -97895,8 +97895,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "lawyer",
-"post": 261
+"career": "civil_servant",
+"post": 7
 },
 {
 "id": "r3568",
@@ -97929,7 +97929,7 @@
 "name": "Pia",
 "role": "clerk",
 "home": "b_4_13_l137",
-"work": "b_10_8_l0",
+"work": "b_9_7_l0",
 "offset": -12,
 "near": {
 "cafe": "b_4_13_l2",
@@ -97949,8 +97949,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "lawyer",
-"post": 262
+"career": "civil_servant",
+"post": 8
 },
 {
 "id": "r3570",
@@ -98082,7 +98082,7 @@
 "school": "b_4_13_l5"
 },
 "career": "civil_servant",
-"post": 5
+"post": 9
 },
 {
 "id": "r3575",
@@ -98162,7 +98162,7 @@
 "school": "b_7_12_l0"
 },
 "career": "operations_analyst",
-"post": 169
+"post": 165
 },
 {
 "id": "r3578",
@@ -98215,8 +98215,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "customer_support_agent",
-"post": 174
+"career": "operations_analyst",
+"post": 166
 },
 {
 "id": "r3580",
@@ -98756,7 +98756,7 @@
 "school": "b_7_12_l0"
 },
 "career": "civil_servant",
-"post": 6
+"post": 10
 },
 {
 "id": "r3600",
@@ -98783,8 +98783,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "civil_servant",
-"post": 7
+"career": "town_planner",
+"post": 12
 },
 {
 "id": "r3601",
@@ -98811,8 +98811,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "customer_support_agent",
-"post": 175
+"career": "operations_analyst",
+"post": 167
 },
 {
 "id": "r3602",
@@ -98839,8 +98839,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_7_12_l0"
 },
-"career": "customer_support_agent",
-"post": 176
+"career": "operations_analyst",
+"post": 168
 },
 {
 "id": "r3603",
@@ -99249,8 +99249,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "civil_servant",
-"post": 8
+"career": "town_planner",
+"post": 13
 },
 {
 "id": "r3616",
@@ -99277,8 +99277,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "civil_servant",
-"post": 9
+"career": "records_clerk",
+"post": 15
 },
 {
 "id": "r3617",
@@ -99331,8 +99331,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "civil_servant",
-"post": 10
+"career": "records_clerk",
+"post": 16
 },
 {
 "id": "r3619",
@@ -99439,8 +99439,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "town_planner",
-"post": 12
+"career": "payroll_clerk",
+"post": 18
 },
 {
 "id": "r3623",
@@ -99738,7 +99738,7 @@
 "name": "Noor",
 "role": "clerk",
 "home": "b_4_13_l155",
-"work": "b_9_7_l0",
+"work": "b_8_6_l0",
 "offset": 17,
 "near": {
 "cafe": "b_4_13_l2",
@@ -99758,8 +99758,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "town_planner",
-"post": 13
+"career": "operations_analyst",
+"post": 169
 },
 {
 "id": "r3635",
@@ -99792,7 +99792,7 @@
 "name": "Kofi",
 "role": "clerk",
 "home": "b_4_13_l156",
-"work": "b_9_7_l0",
+"work": "b_8_6_l0",
 "offset": -4,
 "near": {
 "cafe": "b_4_13_l2",
@@ -99812,8 +99812,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "records_clerk",
-"post": 15
+"career": "customer_support_agent",
+"post": 174
 },
 {
 "id": "r3637",
@@ -99846,7 +99846,7 @@
 "name": "Abe",
 "role": "clerk",
 "home": "b_4_13_l156",
-"work": "b_9_7_l0",
+"work": "b_8_6_l0",
 "offset": -12,
 "near": {
 "cafe": "b_4_13_l2",
@@ -99866,15 +99866,15 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "records_clerk",
-"post": 16
+"career": "customer_support_agent",
+"post": 175
 },
 {
 "id": "r3639",
 "name": "Nell",
 "role": "clerk",
 "home": "b_4_13_l156",
-"work": "b_9_7_l0",
+"work": "b_8_6_l0",
 "offset": -1,
 "near": {
 "cafe": "b_4_13_l2",
@@ -99894,8 +99894,8 @@
 "furniture": "b_14_8_l0",
 "school": "b_4_13_l5"
 },
-"career": "payroll_clerk",
-"post": 18
+"career": "customer_support_agent",
+"post": 176
 },
 {
 "id": "r3640",
