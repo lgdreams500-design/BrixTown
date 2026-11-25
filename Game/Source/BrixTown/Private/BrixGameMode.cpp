@@ -10,6 +10,8 @@
 #include "BrixWeatherActor.h"
 #include "BrixLamps.h"
 #include "BrixLifeActor.h"
+#include "BrixMall.h"
+#include "BrixMallActor.h"
 #include "BrixDesignerActor.h"
 #include "BrixMapActor.h"
 #include "BrixPeople.h"
@@ -103,6 +105,12 @@ void ABrixGameMode::StartPlay()
 		else if (LoadBrixInside(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/inside.json"))), *Insides, InsideError))
 			Town->Insides = Insides.Get();
 		if (!Town->Insides) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: the buildings are shut (%s)"), *InsideError); Insides.Reset(); }
+		// Eastgate Mall, the one mall whose inside is built (WLD-058): drawn by its own actor, not as the town's box
+		TSharedPtr<FBrixMall> MallData = MakeShared<FBrixMall>();
+		FString MallError;
+		if (Insides && !FParse::Param(FCommandLine::Get(), TEXT("BrixNoMall")) && LoadBrixMall(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), CityDir)), *MallData, MallError))
+			Town->OwnBuilt.Add(MallData->LotId);
+		else { if (Insides) UE_LOG(LogTemp, Warning, TEXT("Brix Town: no mall inside (%s)"), *MallError); MallData.Reset(); }
 		Town->Breakable = ABrixCrash::BreakableKinds();   // street things and trees a car can break (CITY-072)
 		Town->Build(*City);
 		Crash = GetWorld()->SpawnActor<ABrixCrash>();
@@ -115,13 +123,27 @@ void ABrixGameMode::StartPlay()
 			Furnisher = GetWorld()->SpawnActor<ABrixRooms>();
 			Furnisher->Start(*City, *Insides, Town, Day);
 		}
+		if (MallData)
+		{
+			Mall = GetWorld()->SpawnActor<ABrixMall>();
+			Mall->Start(MallData, Town);
+		}
 		// the inside of every hollow building, to know when the camera is indoors (CITY-013)
 		int32 Lk = 0;
 		for (const FBrixBlock& B : City->Blocks)
 			for (const FBrixLot& L : B.Lots)
 			{
 				const FBrixInside* In = Insides && Insides->Lots.IsValidIndex(Lk) && Insides->Lots[Lk].IsSet() ? &Insides->Lots[Lk].GetValue() : nullptr;
-				if (In && BrixIsHollow(L, In))
+				if (MallData && L.Id == MallData->LotId)   // the mall: its hall, under its roof
+				{
+					FRoom R;
+					R.Lot = Lk;
+					R.Centre = FVector2D((MallData->X0 + MallData->X1) / 2, (MallData->Z0 + MallData->Z1) / 2);
+					R.Half = FVector2D((MallData->X1 - MallData->X0) / 2, (MallData->Z1 - MallData->Z0) / 2);
+					R.Top = (float)MallData->H;
+					Rooms.Add(R);
+				}
+				else if (In && BrixIsHollow(L, In))
 				{
 					FRoom R;
 					R.Lot = Lk;
@@ -306,6 +328,22 @@ void ABrixGameMode::StartPlay()
 						}
 				++Lk;
 			}
+		if (Mall && Mall->Data() && Mall->Data()->LotId == LiftLot)   // Eastgate: the ground floor's call up to the top floor
+			for (const FBrixMallCall& C : Mall->Data()->Calls)
+				if (C.Kind == FBrixMallCall::Use && C.A[1] < 1 && C.Text.Contains(FString::Printf(TEXT("up to floor %d"), Mall->Data()->Levels - 1)))
+				{
+					const FVector At = FVector(C.A[0], C.A[2], C.A[1] + 0.95) * BrixUnits::CmPerM;
+					FTimerHandle H;
+					GetWorldTimerManager().SetTimer(H, [this, At]()
+					{
+						ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+						if (!Me) return;
+						Me->SetActorLocation(At, false, nullptr, ETeleportType::TeleportPhysics);
+						FTimerHandle P;
+						GetWorldTimerManager().SetTimer(P, [Me]() { Me->TestPress(); }, 0.5f, false);
+					}, 0.6f, false);
+					break;
+				}
 	}
 	FString Way;   // -BrixWalk=x,z;x,z;...: after the other switches have placed the player, walk them through these points
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixWalk="), Way, false))
@@ -426,7 +464,8 @@ void ABrixGameMode::PutInside(const FString& LotId, bool bWalk)
 	const FBrixDoorway Dw = BrixDoorwayOf(*City, *Found, In->District, FBrixDoorRules::FromConfig());
 	const FVector2D Inward = -Dw.Out;
 	const float Deep = (float)FMath::Min(Found->Size().X, Found->Size().Y);
-	const FVector2D Inside = Dw.Centre + Inward * FMath::Clamp(Deep * 0.45f, 1.5f, 5.f);
+	const bool bMall = Mall && Mall->Data() && Mall->Data()->LotId == LotId;   // Eastgate: in along its south concourse to the court
+	const FVector2D Inside = Dw.Centre + Inward * (bMall ? MallInside : FMath::Clamp(Deep * 0.45f, 1.5f, 5.f));
 	const FVector2D From = bWalk ? Dw.Centre - Inward * 3.0 : Inside;
 	const FRotator Facing(0.f, FMath::RadiansToDegrees(FMath::Atan2(Inward.Y, Inward.X)), 0.f);
 	FTimerHandle H;

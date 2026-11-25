@@ -41,6 +41,7 @@ public:
 	UPROPERTY() TObjectPtr<class ABrixDesigner> Designer;   // the character designer, and who the player is (CHR-001)
 	UPROPERTY() TObjectPtr<class ABrixLife> Life;    // the player's money, the bank, shops and quests (ADR-0012)
 	UPROPERTY() TObjectPtr<class ABrixMap> Map;
+	UPROPERTY() TObjectPtr<class ABrixMall> Mall;   // Eastgate Mall, inside and out (WLD-058)
 	class ABrixPeople* PeopleActor() const { return People; }      // the minimap, the big map and the words over the street (UI-012, UI-018)
 
 	UPROPERTY(Config) FString CityDir = TEXT("../World/city_01");   // from the project folder (Game/)
@@ -48,6 +49,7 @@ public:
 	UPROPERTY(Config) int32 StartDay = 16;        // the day the game starts on (the slice is built for day 16); its time is the city's spawn time
 	UPROPERTY(Config) float ClockRate = 1.f;      // times the calendar's pace (real_seconds_per_minute)
 	UPROPERTY(Config) float SunLux = 8.f;         // in full day
+	UPROPERTY(Config) float MallInside = 30.f;    // m in from Eastgate's door that -BrixInside= puts the player
 	UPROPERTY(Config) FLinearColor SunColour = FLinearColor(1.f, 0.86f, 0.68f);   // ART_DIRECTION 2.4, kit daylight
 	UPROPERTY(Config) FLinearColor SunDawnColour = FLinearColor(1.f, 0.42f, 0.22f); // a low sun's (the slice's lighting())
 	UPROPERTY(Config) float SkyLightIntensity = 1.f;  // the sky's fill in shade (with Lumen, also what it bounces)

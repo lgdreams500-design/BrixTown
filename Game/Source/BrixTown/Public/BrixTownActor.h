@@ -57,6 +57,7 @@ class BRIXTOWN_API ABrixTownActor : public AActor
 public:
 	ABrixTownActor();
 	void Build(const FBrixCity& City);
+	TSet<FString> OwnBuilt;   // lots another actor draws (Eastgate Mall, ABrixMall): set before Build, and left out here
 	// What is inside the buildings (Game/Data/inside.json; CITY-013): set before Build to make the enterable ones hollow,
 	// with an open doorway, a floor, plastered walls and a ceiling
 	const FBrixInsides* Insides = nullptr;

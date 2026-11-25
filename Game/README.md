@@ -30,7 +30,8 @@ the owner's laptop at High it runs at 63-66 fps, as fast as the grey-box (ADR-00
 (ADR-0002): `git lfs lock <file>` before running the scripts that remake them.
 
 ## Going inside (CITY-013; ADR-0048)
-959 of the 965 enterable buildings can be walked into (all but the furniture outlet's hall and the malls), as the slice
+959 of the 965 enterable buildings can be walked into (all but the furniture outlet's hall and the malls; Eastgate Mall
+has its own inside, below), as the slice
 builds them (play.js building()): the ground storey is hollow behind its kit walls, with a floor in the storey's finish
 (boards or flags), the walls plastered inside in its colour and a ceiling; above it the core is still solid. The way in is
 the kit's own door standing open (`SM_Kit_DoorPlainOpen`, `DoorArchOpen`, `DoorCivicOpen`, `ShopDoorOpen`, made by
@@ -45,6 +46,41 @@ doorway (the log says how long it took), `-BrixShut` builds every building solid
 and mouse of whoever is at the machine and logs where the player is. A street at High: 46.7 to 48.6 fps, 45.8 to 49.5
 with `-BrixShut` (noisy: other sessions were running Unreal); 50 fps inside a row house. Not yet: furniture, the upper
 storeys and their stairs, residents indoors.
+
+## Eastgate Mall (WLD-057 to WLD-063, WLD-066 to WLD-068; ADR-0037 to ADR-0039, ADR-0041)
+Eastgate Mall (lot `b_16_5_l0`) is built inside and out as the slice builds it (court.js, shell.js, outlets.js; play.js
+mallShell()): `BrixWorld/BrixMall` is the port, giving the same 185,841 drawing calls with the same numbers (its hash() fed
+the same strings, Math.hypot as V8 sums it), from the lot's `plan` and `shell` in `World/city_01/blocks/b_16_5.json`. Outside:
+the skin of plaster ribbons swelling and curling in, lifted off the ground in an arch on each side; the four ochre pierced eggs
+and the cream roof light. Under each arch a porch of ribbon walls sweeps in to the arched opening in the hall's wall, with its
+line of light. Inside: three floors round the court of five atria (6 m storeys), every floor's edge a dark ribbon with a line
+of light under it and a pale upstand, plants trailing over the long ones, bridges at the pinches, four moving stairs, a lift in
+each side concourse, the round skylights with their deep rims, the egg halls under the eggs (the lattice open to the sky from
+inside, their stalls, lanterns and linden), the fountains, gardens, planters, benches, kiosks, the carousel and the coin rides,
+lanterns under the galleries; and the 189 outlets of World/rules/mall_outlets.json, each with its front (piers, the sign band
+in its colour with its name lit on it, plinths either side of the way in), its room as deep as the unit (its own floor, walls,
+light panels) and what it sells (rails, shelves, guitars, screens, cabinets, serveries; tables, racks, bins, drums, glass cases,
+the window's mannequins or plinth), with a counter and till where its keeper works today. `ABrixMall` lays the calls as the
+town's own faces, cut into 40 m squares so what is out of view is not drawn: 598,294 triangles in 263 meshes made at load
+time (2.2 s), in M_Facets outside, `/Game/Mall/M_MallRoom` indoors (with the floor tiles' two tones and joints, and the court's
+even room light: the faces made at load time get no share of Lumen's bounced light, so without it the ceilings were black),
+`M_MallLit` for the lit panels, lines of light, screens and lantern glass and `M_MallLattice` for the eggs' diamond openings
+(made by `Tools/unreal/make_mall_materials.py`); the 39,638 solids are unseen blockers; the names are lettering on the sign
+bands. The moving stairs carry whoever stands on them (`BrixMallCarry`, court.js carry(): up on the right-hand flight seen from
+its foot, down on the left) and lift them onto each step as it comes; E at a lift's call takes the player up or down a floor or
+between the ground and the top, as at the towers. The four lanterns and shop lights nearest the camera on its floor give real
+light (`NearLights`); the haze is off indoors and the town's sounds are muffled (RoomAt). Only the mall whose plan is a court
+with its entrances is built so (`BrixMallCan`): Westgate (`b_1_5_l0`) and Northgate (`b_7_0_l0`) stay the town's solid boxes,
+as the owner asked. Tests: `WLD058_eastgate_is_built_as_the_slice_builds_it` (every call against the slice's, in 465 runs of
+400 with a checksum each and 9,600 calls one by one, the signs' words, the 249 lamps; `Tools/unreal/mall_values.py` runs the
+slice's code in headless Edge into `Tests/values/mall_city_01.json`: run it after changing court.js, shell.js, outlets.js or the
+block file), `WLD066_every_outlet_has_its_room`, `WLD062_moving_stairs_carry_and_lifts_go_between_floors`,
+`WLD058_only_eastgate_has_an_inside`. `-BrixInside=b_16_5_l0` stands the player 30 m in from the south door (`MallInside`),
+`-BrixWalkIn=b_16_5_l0` walks them in, `-BrixLift=b_16_5_l0` rides the west lift to the top floor, `-BrixNoMall` builds it as
+the town's box again. At High: 28 to 44 frames a second inside, 21 riding the moving stairs (noisy: other sessions were running
+Unreal). Not yet: sitting on the benches and rides, the ribbon wall's lit joints and the openings' lanterns at night, the
+moving stairs' treads moving, the goods for the home in the outlets' windows (the stand-ins stand there, as in the slice without
+its life data), and the shell's lanterns' light outside.
 
 ## Storeys and stairs; residents at home inside (WLD-050, WLD-052, WLD-053, CITY-013)
 Every hollow building with a stairwell (462 of two storeys or more) and every designed house is hollow to its roof, every
@@ -741,3 +777,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD028_the_street_dressing_is_drawn_as_the_slice_draws_it` | WLD-028, WLD-031, WLD-034 |
 | `BrixTown.World.WLD056_every_tree_is_drawn_as_the_slice_draws_it` | WLD-056 |
 | `BrixTown.World.CITY043_the_road_markings_and_signals_are_drawn_as_the_slice_draws_them` | CITY-043, CITY-045, CITY-091 |
+| `BrixTown.World.WLD058_eastgate_is_built_as_the_slice_builds_it` | WLD-057 to WLD-061, WLD-063, WLD-067, WLD-068 |
+| `BrixTown.World.WLD058_only_eastgate_has_an_inside` | WLD-058 |
+| `BrixTown.World.WLD062_moving_stairs_carry_and_lifts_go_between_floors` | WLD-062 |
+| `BrixTown.World.WLD066_every_outlet_has_its_room` | WLD-066 |

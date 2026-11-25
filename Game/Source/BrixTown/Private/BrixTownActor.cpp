@@ -1011,6 +1011,7 @@ void ABrixTownActor::Build(const FBrixCity& City)
 				else Add(Boxes, Top, Surface(L.Surface, TownPave));   // the market's setts, a tram stop's slabs
 				continue;
 			}
+			if (OwnBuilt.Contains(L.Id)) continue;   // a building drawn by its own actor (Eastgate Mall: ABrixMall)
 			BuildLot(L, B);
 		}
 		if (!Today->Trees.Num()) for (const FBrixTree& T : B.Trees)   // (no Game/Data/streets.json trees: a trunk and a ball)
