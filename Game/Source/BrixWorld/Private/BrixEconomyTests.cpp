@@ -5,6 +5,7 @@
 #include "BrixCity.h"
 #include "BrixDay.h"
 #include "BrixEconomy.h"
+#include "BrixSave.h"
 
 #include "Dom/JsonObject.h"
 #include "Misc/AutomationTest.h"
@@ -144,6 +145,59 @@ bool FBANK008_BankSettlesAsPython::RunTest(const FString&)
 	FLife Life;
 	if (!LoadLife(*this, Life)) return false;
 	RunAndCompare(*this, Life, Life.Data.Json->GetObjectField(TEXT("bank_checks")), TEXT("bank_script"));
+	return true;
+}
+
+// CITY-102, CITY-103: buying skateboards at the skate store runs as economy.py run_boards() runs board_script(): each op
+// ok or refused, the boards owned and the one in use after each op, the balances (the store's till too), the last memos.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY103_BoardsAreBoughtAsPython, "BrixTown.World.CITY103_boards_are_bought_as_python_does",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FCITY103_BoardsAreBoughtAsPython::RunTest(const FString&)
+{
+	FLife Life;
+	if (!LoadLife(*this, Life)) return false;
+	const TSharedPtr<FJsonObject> C = Life.Data.Json->GetObjectField(TEXT("board_checks"));
+	const TSharedPtr<FJsonObject> Shops = C->GetObjectField(TEXT("shops")), Want = C->GetObjectField(TEXT("want"));
+	FBrixEconomy E(Life.Data, Life.Lots);
+	TestEqual(TEXT("three kinds of board, priced (CITY-102)"), E.R.Boards.Num(), 3);
+	int64 Last = 0;
+	for (const FString& K : E.R.BoardOrder) { TestTrue(K + TEXT(" costs more than the one before"), E.BoardPrice(K) > Last); Last = E.BoardPrice(K); }
+	const int32 Skate = (int32)Shops->GetNumberField(TEXT("skate"));
+	TestEqual(TEXT("the skate store is a shop lot of the skate kind"), E.ShopKind(Skate), FString(TEXT("skate")));
+	FString InUse;
+	TArray<FString> Results, Uses;
+	for (const TSharedPtr<FJsonValue>& OpV : C->GetArrayField(TEXT("script")))
+	{
+		const TArray<TSharedPtr<FJsonValue>>& Op = OpV->AsArray();
+		const FString Name = Op[0]->AsString();
+		bool bOk = true;
+		if (Name == TEXT("new")) E.NewCharacter();
+		else if (Name == TEXT("open")) bOk = E.OpenAccount(Op[1]->AsString());
+		else if (Name == TEXT("advance")) E.Advance((int32)Num(Op[1]), Op[2]->AsNumber());
+		else if (Name == TEXT("loan")) bOk = E.TakeLoan(Num(Op[1]), (int32)Num(Op[2]));
+		else if (Name == TEXT("board")) { bOk = E.BuyBoard((int32)Shops->GetNumberField(Op[1]->AsString()), Op[2]->AsString()); if (bOk) InUse = FBrixEconomy::BoardInUse(E.R, InUse, Op[2]->AsString()); }
+		else AddError(TEXT("an op the port does not know: ") + Name);
+		Results.Add(bOk ? TEXT("ok") : TEXT("refused"));
+		Uses.Add(InUse);
+	}
+	auto Join = [](const TArray<FString>& A) { return FString::Join(A, TEXT(" ")); };
+	auto JoinJ = [](const TArray<TSharedPtr<FJsonValue>>& A) { TArray<FString> S; for (const auto& V : A) S.Add(V->IsNull() ? FString() : V->AsString()); return FString::Join(S, TEXT(" ")); };
+	TestEqual(TEXT("each op ok or refused, as Python"), Join(Results), JoinJ(Want->GetArrayField(TEXT("results"))));
+	TestEqual(TEXT("the boards owned, in the store's order"), Join(E.Boards), JoinJ(Want->GetArrayField(TEXT("boards"))));
+	TestEqual(TEXT("the board in use after each op"), Join(Uses), JoinJ(Want->GetArrayField(TEXT("uses"))));
+	for (const auto& B : Want->GetObjectField(TEXT("balances"))->Values)
+		TestEqual(TEXT("the balance of ") + FString(B.Key.ToView()), E.L.Balance(FString(B.Key.ToView())), Num(B.Value));
+	TestEqual(TEXT("transactions"), (int64)E.L.Tx.Num(), (int64)Want->GetNumberField(TEXT("tx")));
+	TestEqual(TEXT("money in the town (ECO-003)"), E.L.Supply(), (int64)Want->GetNumberField(TEXT("supply")));
+	const TArray<TSharedPtr<FJsonValue>>& WM = Want->GetArrayField(TEXT("memos"));
+	for (int32 k = 0; k < WM.Num(); ++k)
+		if (E.L.Tx.IsValidIndex(E.L.Tx.Num() - WM.Num() + k)) TestEqual(FString::Printf(TEXT("memo %d"), k), E.L.Tx[E.L.Tx.Num() - WM.Num() + k].Memo, WM[k]->AsString());
+	// CITY-100: the boards owned are kept in the save, and a kind owned is still not sold twice after loading
+	FBrixEconomy F(Life.Data, Life.Lots);
+	FString Why;
+	TestTrue(TEXT("the save loads"), BrixEconomyLoad(F, *BrixEconomySave(E), Why));
+	TestEqual(TEXT("the boards come back from the save"), Join(F.Boards), Join(E.Boards));
+	TestFalse(TEXT("an owned kind is not sold again after loading"), F.BuyBoard(Skate, TEXT("manual")));
 	return true;
 }
 

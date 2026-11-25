@@ -73,7 +73,7 @@ void ABrixCharacter::BeginPlay()
 	if (!LoadBrixBoards(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/rules/boards.json"))), BoardRules, Error))
 		UE_LOG(LogTemp, Error, TEXT("Brix Town: no skateboards (%s)"), *Error);
 	Boards.R = &BoardRules;
-	if (FParse::Param(FCommandLine::Get(), TEXT("BrixBoards")) || FCommandLine::Get() && FCString::Strifind(FCommandLine::Get(), TEXT("-BrixShot=")))
+	if ((FParse::Param(FCommandLine::Get(), TEXT("BrixBoards")) || FCommandLine::Get() && FCString::Strifind(FCommandLine::Get(), TEXT("-BrixShot="))) && !FParse::Param(FCommandLine::Get(), TEXT("BrixNoBoards")))
 		Boards.Give(BoardRules.AutoOwned, BoardRules.AutoEquipped);   // CITY-100: a test owns every kind, the electric one in use (the slice's ?auto=1)
 }
 
@@ -617,7 +617,7 @@ void ABrixCharacter::BoardKey()   // Y: from the hand onto the board, and back; 
 	if (bDriving || bTalking || bPanel || bDesigning) return;
 	const TOptional<bool> On = Boards.Toggle();
 	ABrixLife* L = Life();
-	if (!On) { if (L) L->Toast(TEXT("You have no skateboard yet. The skate store is coming.")); return; }
+	if (!On) { if (L) L->Toast(TEXT("You have no skateboard yet. ") + L->SkateStoreName() + TEXT(" sells them.")); return; }
 	const FBrixBoardKind* K = Boards.Kind();
 	BoardBlend = 0;
 	BoardMeant = 0;
@@ -627,6 +627,16 @@ void ABrixCharacter::BoardKey()   // Y: from the hand onto the board, and back; 
 	GetCharacterMovement()->bOrientRotationToMovement = !*On;
 	GetCharacterMovement()->MaxWalkSpeed = (*On ? BoardRules.Kind(BoardRules.Order.Last())->TopKmh / 3.6 + 1 : WalkSpeed) * CmPerM;
 	if (L) L->Toast(*On ? K->Name + TEXT(": W to ") + (K->bPush ? TEXT("push") : TEXT("go")) + TEXT(", S to brake, Y to pick it up.") : K->Name + TEXT(" in your hand."));
+}
+
+void ABrixCharacter::SetBoards(const TArray<FString>& Own, const FString& Use)
+{
+	if (Boards.Riding())   // off the board first, as Y steps off it
+	{
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed * CmPerM;
+	}
+	Boards.Give(Own, Use);
 }
 
 void ABrixCharacter::TestBoard(const FString& Kind)

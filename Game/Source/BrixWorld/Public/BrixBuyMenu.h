@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 
 class FJsonObject;
+struct FBrixBodyMesh;
 
 // Buy menus that show what is for sale as objects (UI-020, UI-021; ADR-0044): what each thing shows, and the stand-ins as
 // meshes, as the slice's buymenu.js has them (World/rules/buy_menu.json, carried in Game/Data/life.json). What a thing shows
@@ -67,6 +68,10 @@ struct BRIXWORLD_API FBrixBuyMenuRules
 	// The mesh for a thing at a counter: its stand-in (a piece's own object is not brought over yet: none).
 	TOptional<FBrixThingMesh> MeshFor(const FString& Thing, const FString& BandColour) const;
 };
+
+// A mesh drawn as people.js draws (a skateboard on show in the skate store, CITY-102) as a buy menu's thing: its triangles,
+// each with its face's normal turned outwards as the corners' normals say, in their colours.
+BRIXWORLD_API FBrixThingMesh BrixThingFromBody(const FBrixBodyMesh& B);
 
 // Reads the buy menu's rules from Game/Data/life.json (already parsed: FBrixLifeData::Json).
 BRIXWORLD_API bool LoadBrixBuyMenu(const TSharedPtr<FJsonObject>& Life, FBrixBuyMenuRules& Out, FString& OutError);
