@@ -51,8 +51,11 @@ public:
 	// the rooms' own light (homes.js: a lamp in each room near the camera, 0.4 m under its ceiling): the rooms nearest the
 	// camera in the home it is in (each light costs GPU time with Lumen: 6 cost some 15 ms on the owner's laptop)
 	UPROPERTY(Config) int32 RoomLights = 3;
-	UPROPERTY(Config) float RoomLightCandela = 6.f;
-	UPROPERTY(Config) float RoomLightReach = 7.f;       // m
+	UPROPERTY(Config) float RoomLightLevel = 1.6f;      // a lamp's light on what faces it close by (the sun's is SunLux)
+	UPROPERTY(Config) float RoomLightFalloff = 2.f;     // how it fades towards its reach: 1 slowly, higher sooner
+	UPROPERTY(Config) float RoomLightReach = 7.f;       // m, a room's lamp
+	UPROPERTY(Config) float HallLightReach = 0.7f;      // the one lamp of a floor with no plan reaches this share of the floor's diagonal
+	UPROPERTY(Config) float RoomLightDrop = 0.7f;       // m under the ceiling (play.js lamp(): its shade hangs there)
 	UPROPERTY(Config) FLinearColor RoomLightColour = FLinearColor(1.f, 0.86f, 0.68f);
 	UPROPERTY(Config) float NightBelow = 0.35f;        // the windows are lit as the day's light falls below this (as ABrixLamps)
 

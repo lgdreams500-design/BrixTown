@@ -1,5 +1,7 @@
 #include "BrixRooms.h"
 
+#include "BrixLight.h"
+
 #include "BrixCity.h"
 #include "BrixFurnish.h"
 #include "BrixGameMode.h"
@@ -250,7 +252,10 @@ void ABrixRooms::Tick(float DeltaSeconds)
 	const FVector2D Eye(Cam->GetCameraLocation().X / CmPerM, Cam->GetCameraLocation().Y / CmPerM);
 	if (TownRef)   // the windows lit by night, as the lamps light (ABrixLamps: night below NightBelow of the day's light)
 		if (const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))
-			TownRef->SetNight(FMath::SmoothStep(0.f, 1.f, FMath::Clamp(1.f - Mode->Daylight / FMath::Max(NightBelow, .01f), 0.f, 1.f)));
+		{
+			const UBrixLight* Sight = GetWorld()->GetSubsystem<UBrixLight>();   // and already as the sun gets low, as the lamps
+			TownRef->SetNight(FMath::Max(Sight ? Sight->LowSun() : 0.f, FMath::SmoothStep(0.f, 1.f, FMath::Clamp(1.f - Mode->Daylight / FMath::Max(NightBelow, .01f), 0.f, 1.f))));
+		}
 	PlaceLights(Eye, (float)(Cam->GetCameraLocation().Z / CmPerM));
 	TSet<int32> Want;
 	for (int32 i = 0; i < Homes.Num(); ++i)
@@ -395,8 +400,12 @@ void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp)
 		{
 			UPointLightComponent* L = NewObject<UPointLightComponent>(this);
 			L->SetupAttachment(RootComponent);
-			L->SetIntensityUnits(ELightUnits::Candelas);
-			L->SetIntensity(RoomLightCandela);
+			// an even pool that fades out at its reach, as the slice's room lamps (play.js roomLight(): no more than so much
+			// close to the lamp, gone past a few metres): a true 1/d2 lamp 0.4 m under the ceiling burnt a white patch on it
+			// and left the walls of a hall black
+			L->bUseInverseSquaredFalloff = false;
+			L->LightFalloffExponent = RoomLightFalloff;
+			L->SetIntensity(RoomLightLevel);
 			L->SetAttenuationRadius(RoomLightReach * CmPerM);
 			L->SetLightColor(RoomLightColour);
 			L->SetCastShadows(false);
@@ -417,15 +426,25 @@ void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp)
 	for (const int32 i : Near)
 		for (const FBrixRoom& R : Homes[i].Home->Rooms)
 			if (Homes[i].FloorUp.IsValidIndex(R.Floor) && EyeUp > Homes[i].FloorUp[R.Floor] - 0.1f && EyeUp < Homes[i].CeilUp[R.Floor] && InRect(R.R, Eye)) { In = i; OnFloor = R.Floor; }
-	TArray<TPair<double, FVector>> Rooms;
+	// each lamp: how far the camera is from it, where it hangs, and its reach. A room of a planned home has its lamp's own
+	// reach; a building with no plan has one lamp a floor, which has to carry the whole floor (a shop's or a bank's hall is
+	// 38 m long), so its reach is the floor's own size
+	struct FLamp { double Far; FVector At; float Reach; };
+	TArray<FLamp> Rooms;
 	if (In != INDEX_NONE)
 		for (const FBrixRoom& R : Homes[In].Home->Rooms)
-			if (R.Floor == OnFloor) Rooms.Add({ FVector2D::Distance(Eye, R.R.Centre), FVector(R.R.Centre.X * CmPerM, R.R.Centre.Y * CmPerM, (Homes[In].CeilUp[OnFloor] - 0.4f) * CmPerM) });
-	Rooms.Sort([](const TPair<double, FVector>& A, const TPair<double, FVector>& B) { return A.Key < B.Key; });
+			if (R.Floor == OnFloor)
+				Rooms.Add({ FVector2D::Distance(Eye, R.R.Centre), FVector(R.R.Centre.X * CmPerM, R.R.Centre.Y * CmPerM, (Homes[In].CeilUp[OnFloor] - RoomLightDrop) * CmPerM),
+					R.bFloor ? RoomLightReach : FMath::Max(RoomLightReach, HallLightReach * (float)FVector2D(R.R.Length, R.R.Width).Size()) });
+	Rooms.Sort([](const FLamp& A, const FLamp& B) { return A.Far < B.Far; });
 	for (int32 n = 0; n < Lights.Num(); ++n)
 	{
 		const bool bOn = Rooms.IsValidIndex(n);
-		if (bOn) Lights[n]->SetWorldLocation(Rooms[n].Value);
+		if (bOn)
+		{
+			Lights[n]->SetWorldLocation(Rooms[n].At);
+			if (!FMath::IsNearlyEqual(Lights[n]->AttenuationRadius, Rooms[n].Reach * CmPerM, 1.f)) Lights[n]->SetAttenuationRadius(Rooms[n].Reach * CmPerM);
+		}
 		if (Lights[n]->IsVisible() != bOn) Lights[n]->SetVisibility(bOn);
 	}
 }

@@ -1,6 +1,7 @@
 #include "BrixLamps.h"
 
 #include "BrixGameMode.h"
+#include "BrixLight.h"
 #include "BrixTownActor.h"
 #include "BrixUnits.h"
 #include "Camera/PlayerCameraManager.h"
@@ -45,7 +46,9 @@ void ABrixLamps::Tick(float DeltaSeconds)
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
 	const APlayerController* PC = GetWorld()->GetFirstPlayerController();
 	if (!Town || !Mode || !PC || !PC->PlayerCameraManager) return;
-	const float Night = FMath::SmoothStep(0.f, 1.f, FMath::Clamp(1.f - Mode->Daylight / FMath::Max(NightBelow, .01f), 0.f, 1.f));
+	// on as the calendar's daylight goes, and already as the sun gets low: the streets are in shade by then (UBrixLight)
+	const UBrixLight* Sight = GetWorld()->GetSubsystem<UBrixLight>();
+	const float Night = FMath::Max(Sight ? Sight->LowSun() : 0.f, FMath::SmoothStep(0.f, 1.f, FMath::Clamp(1.f - Mode->Daylight / FMath::Max(NightBelow, .01f), 0.f, 1.f)));
 	if (Town->GlassMat && !FMath::IsNearlyEqual(Night, LastNight, .002f)) Town->GlassMat->SetScalarParameterValue(TEXT("Glow"), GlassGlow * Night);
 	LastNight = Night;
 	if (Night <= .01f) { for (UPointLightComponent* L : Lights) L->SetVisibility(false); return; }
