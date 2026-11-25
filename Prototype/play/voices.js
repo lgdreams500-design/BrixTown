@@ -3,6 +3,8 @@
 // cut at the line's blanks, for every voice that can say it; audio/voices/index.js lists the pieces (window.VOICES).
 // Voices.speak(who, template, vars, mood) looks up the pieces of a line for that speaker (a resident's index, or
 // "player"), plays them one after another and says how long it will take, so the mouth can finish with the voice.
+// The index names each resident's voice by their id (ADR-0056), so it still fits after the town's list has changed; a
+// resident who is not in it (a role with no voices yet) has no voice and their lines stay wordless syllables.
 // A blank with no piece (a typed player name other than the default) is a short pause; the caption still shows it.
 // Loaded before conversations.js and play.js; plays through <audio> so it also works when index.html is opened as a file.
 var Voices = (() => {
@@ -14,7 +16,8 @@ var Voices = (() => {
   const speakable = t => /[A-Za-z0-9]/.test(t);
   let playing = [], timer = null, playerVoice = V.player_default;
   try { playerVoice = localStorage.getItem("wasted.voice") || V.player_default; } catch (e) { }
-  const cfgOf = who => who === "player" ? V.configs[V.player[playerVoice] !== undefined ? V.player[playerVoice] : V.player[V.player_default]] : V.configs[V.residents[who]];
+  const idOf = i => { const r = window.WASTED && window.WASTED.residents[i]; return r ? r.id : undefined; };   // the resident's id (city_data.js)
+  const cfgOf = who => who === "player" ? V.configs[V.player[playerVoice] !== undefined ? V.player[playerVoice] : V.player[V.player_default]] : V.configs[V.residents[idOf(who)]];
   function plan(who, template, vars, mood) {             // [[file, seconds] | [null, gap]] and the total length
     const cfg = cfgOf(who); if (!cfg) return null;
     const out = []; let found = 0;

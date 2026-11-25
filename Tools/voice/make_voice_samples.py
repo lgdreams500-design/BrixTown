@@ -102,8 +102,14 @@ def tone(s, rate, tilt, edge, breath):
     return s.astype(np.float32)
 
 
+def style(k, o):
+    """What the model is asked to speak in: one of its voices by name, or two of them mixed evenly (ADR-0056)."""
+    v = o["voice"]
+    return v if isinstance(v, str) else np.mean([k.get_voice_style(n) for n in v], axis=0).astype(np.float32)
+
+
 def speak(k, text, o, speed, shift):
-    s, rate = k.create(text, voice=o["voice"], speed=speed / shift, lang=o.get("lang", "en-us"))
+    s, rate = k.create(text, voice=style(k, o), speed=speed / shift, lang=o.get("lang", "en-us"))
     return shifted(s, shift), rate
 
 

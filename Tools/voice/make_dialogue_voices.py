@@ -1,13 +1,17 @@
-"""Voice every dialogue line for every voice that can say it (ADR-0019, SND-018).
+"""Voice every dialogue line for every voice that can say it (ADR-0019, ADR-0056, SND-018).
 
-    python make_dialogue_voices.py MODEL_DIR [--plan]
+    python make_dialogue_voices.py MODEL_DIR      voice what is new, remove what no line needs, write the index
+    python make_dialogue_voices.py --plan         only count what would be made
+    python make_dialogue_voices.py --index        only write the index again: who has which voice, the pieces already made
 
 Reads World/rules/voices.json (who speaks in which voice), dialogue.json and quests.json (the lines), the residents and
 the lots, and writes Prototype/play/audio/voices/<voice>/<id>.ogg with an index, audio/voices/index.js, that the slice
-reads. A line is cut at its blanks ({greeting}, {name}, ...): the fixed pieces are voiced once per voice and mood, and
-each blank is voiced for every value it can take for that speaker. Pieces already made are kept, so a run after a small
-change only voices what is new. --plan only counts what would be made. Needs kokoro-onnx and soundfile; MODEL_DIR holds
-kokoro-v1.0.int8.onnx and voices-v1.0.bin (not in the repository; docs/licenses/kokoro-tts.md).
+reads. A resident in the 'people' list speaks in the voice given there; anyone else in one from their role's pool; a
+resident whose role has no pool is not voiced. A line is cut at its blanks ({greeting}, {name}, ...): the fixed pieces
+are voiced once per voice and mood, and each blank is voiced for every value it can take for that speaker. Pieces
+already made are kept, so a run after a small change only voices what is new. --plan and --index need no voice model;
+voicing needs kokoro-onnx and soundfile, and MODEL_DIR holds kokoro-v1.0.int8.onnx and voices-v1.0.bin (not in the
+repository; docs/licenses/kokoro-tts.md).
 """
 import glob, hashlib, json, os, re, sys, time
 
@@ -46,7 +50,9 @@ def pieces(template):
 
 
 def cfg_id(o):
-    s = o["voice"]
+    """The name of a voice as it is set up: its folder of pieces and its key in the index. Two voices mixed evenly
+    (ADR-0056) are named in a fixed order, so either way round is the same voice."""
+    s = o["voice"] if isinstance(o["voice"], str) else "-".join(sorted(o["voice"]))
     if o.get("shift", 1) != 1:
         s += "_p%d" % round(o["shift"] * 100)
     if o.get("speed", 1) != 1:
@@ -76,17 +82,40 @@ def world():
 
 
 def speakers(V, res):
-    """The voice each resident speaks in: their role's pool, picked by a fixed hash of their id."""
-    out = []
+    """The voice each resident speaks in: their own if they are in the people list (ADR-0056), else one from their
+    role's pool, picked by a fixed hash of their id. None if their role has no pool: they are not voiced."""
+    people, out = V.get("people", {}), []
     for r in res:
-        pool = V["roles"][r["role"]]
-        out.append(pool[int(hashlib.md5(r["id"].encode()).hexdigest(), 16) % len(pool)])
+        pool = V["roles"].get(r["role"])
+        if r["id"] in people:
+            out.append(people[r["id"]])
+        elif pool:
+            out.append(pool[int(hashlib.md5(r["id"].encode()).hexdigest(), 16) % len(pool)])
+        else:
+            out.append(None)
     return out
 
 
-def plan():
-    V, D, Q = read(RULES, "voices.json"), read(RULES, "dialogue.json"), read(RULES, "quests.json")
+def people_problems(V, res):
+    """What is wrong with the people list: an id that is no resident, or a name that is not that resident's. The list
+    is by id; the name is there so that a town dealt again cannot hand a voice to someone else unseen."""
+    by_id = {r["id"]: r for r in res}
+    out = []
+    for pid, o in V.get("people", {}).items():
+        if pid not in by_id:
+            out.append("%s is not a resident" % pid)
+        elif o.get("name") != by_id[pid]["name"]:
+            out.append("%s is %s, not %s" % (pid, by_id[pid]["name"], o.get("name")))
+    return out
+
+
+def plan(V=None):
+    """V: the voices to plan for, if not World/rules/voices.json as it is (the tests try a people list of their own)."""
+    V, D, Q = V or read(RULES, "voices.json"), read(RULES, "dialogue.json"), read(RULES, "quests.json")
     city, lots, res, cal = world()
+    wrong = people_problems(V, res)
+    if wrong:
+        raise SystemExit("World/rules/voices.json, people: " + "; ".join(wrong))
     who = speakers(V, res)
     rid = {r["id"]: i for i, r in enumerate(res)}
     seasons = sorted({s.lower() for s in (cal["seasons"].values() if isinstance(cal["seasons"], dict) else cal["seasons"])})
@@ -102,6 +131,8 @@ def plan():
         ps = pieces(template)
         for i in speakers_i:
             o, r = who[i], res[i]
+            if o is None:                               # their role has no pool: not voiced
+                continue
             vals = {"greeting": GREETINGS, "season": seasons, "weekday": DAYS, "doing": doing, "name": [r["name"]],
                     "role": [D["role_words"].get(r["role"], r["role"])], "place": [lots.get(r.get("work")) or city["name"], city["name"]],
                     "player": [V["player"]["default_name"]]}
@@ -121,15 +152,15 @@ def plan():
     def per_voice(idx):
         seen, out = set(), []
         for i in idx:
-            c = cfg_id(who[i])
-            if c not in seen:
+            c = who[i] and cfg_id(who[i])
+            if c and c not in seen:
                 seen.add(c); out.append(i)
         return out
     for cid, conv in D["conversations"].items():
         roles = set()
         for rule in D["rules"]:
             if rule["conversation"] == cid:
-                roles |= set(rule.get("roles") or V["roles"].keys())
+                roles |= set(rule.get("roles") or by_role.keys())
         idx = [i for role in roles for i in by_role.get(role, [])]
         for n in conv["nodes"].values():
             personal = re.search(r"\{(name|role|place)\}", n["say"])
@@ -170,16 +201,47 @@ def plan():
     return V, res, who, jobs
 
 
-def main(model_dir=None, *flags):
-    if model_dir == "--plan":
-        flags, model_dir = ("--plan",), None
+def index_of(V, res, who, clips, jobs=()):
+    """The index the slice reads: each voiced resident's voice by their id (ADR-0056; not by their place in the list,
+    which moves when the town is dealt again), the player's voices, and every piece made. jobs: the pieces planned,
+    so the note can say how many are still to make."""
+    cfgs = sorted({cfg_id(o) for o in who if o} | {cfg_id(o) for o in V["player"]["voices"].values()})
+    made = sum(1 for k in jobs if "|".join(k) in clips)
+    return {"note": "Made by Tools/voice/make_dialogue_voices.py from World/rules/voices.json, dialogue.json and quests.json. Do not edit."
+                    + (" %d of %d pieces are made so far; a line with no piece is wordless syllables." % (made, len(jobs)) if made < len(jobs) else ""),
+            "play": V["play"], "configs": cfgs, "residents": {r["id"]: cfgs.index(cfg_id(o)) for r, o in zip(res, who) if o},
+            "player": {k: cfgs.index(cfg_id(o)) for k, o in V["player"]["voices"].items()}, "player_default": V["player"]["default"],
+            "clips": dict(sorted(clips.items()))}
+
+
+def write_index(index):
+    with open(os.path.join(OUT, "index.json"), "w", encoding="utf-8", newline="\n") as f:
+        json.dump(index, f, ensure_ascii=False, separators=(",", ":"))
+    with open(os.path.join(OUT, "index.js"), "w", encoding="utf-8", newline="\n") as f:
+        f.write("// Generated by Tools/voice/make_dialogue_voices.py. Do not edit.\nwindow.VOICES = " + json.dumps(index, ensure_ascii=False, separators=(",", ":")) + ";\n")
+
+
+def main(*args):
+    flags = {a for a in args if a.startswith("--")}
+    model_dir = next((a for a in args if not a.startswith("--")), None)
+    if flags - {"--plan", "--index"} or not (model_dir or flags):
+        raise SystemExit(__doc__)
     V, res, who, jobs = plan()
     idx_path = os.path.join(OUT, "index.json")
     old = read(idx_path)["clips"] if os.path.exists(idx_path) else {}
     key = lambda c, m, t: c + "|" + m + "|" + t
     todo = [(k, o) for k, o in jobs.items() if key(*k) not in old or not os.path.exists(os.path.join(OUT, old[key(*k)][0]))]
     print("%d pieces for %d voices; %d to make" % (len(jobs), len({k[0] for k in jobs}), len(todo)))
+    mute = sorted({r["role"] for r, o in zip(res, who) if o is None})
+    print("%d residents: %d with a voice of their own, %d not voiced%s" % (
+        len(res), sum(1 for r in res if r["id"] in V.get("people", {})), sum(1 for o in who if o is None),
+        " (no pool for " + ", ".join(mute) + ")" if mute else ""))
     if "--plan" in flags:
+        return
+    if "--index" in flags:                               # who has which voice now; nothing is voiced or removed
+        clips = {kk: v for kk, v in old.items() if os.path.exists(os.path.join(OUT, v[0]))}
+        write_index(index_of(V, res, who, clips, jobs))
+        print("index: %d residents voiced, %d pieces" % (sum(1 for o in who if o), len(clips)))
         return
     sys.path.insert(0, HERE)
     import soundfile as sf
@@ -200,15 +262,7 @@ def main(model_dir=None, *flags):
     for f in glob.glob(os.path.join(OUT, "*", "*.ogg")):
         if os.path.relpath(f, OUT).replace(os.sep, "/") not in keep:
             os.remove(f)
-    cfgs = sorted({cfg_id(o) for o in who} | {cfg_id(o) for o in V["player"]["voices"].values()})
-    index = {"note": "Made by Tools/voice/make_dialogue_voices.py from World/rules/voices.json, dialogue.json and quests.json. Do not edit.",
-             "play": V["play"], "configs": cfgs, "residents": [cfgs.index(cfg_id(o)) for o in who],
-             "player": {k2: cfgs.index(cfg_id(o)) for k2, o in V["player"]["voices"].items()}, "player_default": V["player"]["default"],
-             "clips": dict(sorted(clips.items()))}
-    with open(idx_path, "w", encoding="utf-8", newline="\n") as f:
-        json.dump(index, f, ensure_ascii=False, separators=(",", ":"))
-    with open(os.path.join(OUT, "index.js"), "w", encoding="utf-8", newline="\n") as f:
-        f.write("// Generated by Tools/voice/make_dialogue_voices.py. Do not edit.\nwindow.VOICES = " + json.dumps(index, ensure_ascii=False, separators=(",", ":")) + ";\n")
+    write_index(index_of(V, res, who, clips, jobs))
     size = sum(os.path.getsize(p) for p in glob.glob(os.path.join(OUT, "*", "*.ogg"))) / 1e6
     print("index: %d pieces, %.1f MB of audio, %.0f s" % (len(clips), size, time.time() - t0))
 

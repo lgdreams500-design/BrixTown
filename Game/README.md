@@ -382,6 +382,10 @@ going back over the shoulder when the resident speaks. A resident's line that ha
 murmurs it (sound.js line()): wordless syllables in time with its mouth, in the resident's own pitch, from where they stand,
 hushed when the next line starts or the talk closes (`SND018_unvoiced_lines_are_murmured`, against sound.js traced by
 `Tools/unreal/sound_values.py`; the player's unvoiced answers are silent, as in the slice).
+Who has which voice is the slice's index, which names residents by id (ADR-0056); `Tools/unreal/people_values.py` turns it
+into the list by place in the residents that `BrixTalk` reads (-1: not voiced). Not yet: `BrixTalk` reading the voices by
+id itself, so until then `people_values.py` must be run again whenever the residents or the voices change; and the list
+made on 2026-11-25 (3,984 residents, where it was 1,134) has not been run in Unreal (`SND018_lines_are_voiced` not run).
 To see one without anyone at the keys: `-BrixTalk=<resident index>` (and `-BrixAnswers=1,2`, a second and a half apart or
 `-BrixAnswerGap=<s>`) with `-BrixShot=`.
 
