@@ -9,6 +9,7 @@
 #include "BrixUnits.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/PointLightComponent.h"
+#include "Components/DirectionalLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "BrixDay.h"
@@ -382,6 +383,19 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 		AddInstanceComponent(L);
 		Lights.Add(L);
 	}
+	PeopleLight = NewObject<UDirectionalLightComponent>(this);   // every property before it is registered: a directional light is the air's sun by default
+	PeopleLight->SetupAttachment(RootComponent);
+	PeopleLight->Mobility = EComponentMobility::Movable;
+	PeopleLight->Intensity = 0.f;
+	PeopleLight->LightColor = LightColour.ToFColor(true);
+	PeopleLight->CastShadows = false;
+	PeopleLight->bAtmosphereSunLight = false;
+	PeopleLight->bAffectsWorld = true;
+	PeopleLight->LightingChannels.bChannel0 = false;
+	PeopleLight->LightingChannels.bChannel1 = true;
+	PeopleLight->SetVisibility(false);
+	PeopleLight->RegisterComponent();
+	AddInstanceComponent(PeopleLight);
 	if (const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))
 		if (ABrixRooms* R = Mode->RoomsActor()) R->AddLiftCalls(Lifts);
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: %s built as the slice builds it: %d calls, %d triangles in %d meshes, %d solids, %d outlets, %d lifts' calls, %d other places to use, %d lamps, %d parked cars, %d pieces of furniture, %d goods for the home (%.2f s)"),
@@ -434,6 +448,16 @@ void ABrixMall::Tick(float DeltaSeconds)
 				const bool bLift = Step > Feet + .01 && Step - Feet < .5;
 				Me->SetActorLocation(FVector(P.X, P.Z, bLift ? Step + Half + .02 : At.Z) * CmPerM, !bLift, nullptr, bLift ? ETeleportType::TeleportPhysics : ETeleportType::None);
 			}
+		}
+	if (PeopleLight)
+		if (const APlayerCameraManager* Cam = UGameplayStatics::GetPlayerCameraManager(this, 0))
+		{
+			const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+			PeopleLevel = FMath::FInterpConstantTo(PeopleLevel, Contains(Cam->GetCameraLocation()) ? 1.f : 0.f, DeltaSeconds, 2.f);
+			const float Lux = PeopleLux * PeopleLevel * FMath::Lerp(1.f, PeopleLuxDay, Mode ? FMath::Clamp(Mode->Daylight, 0.f, 1.f) : 1.f);
+			if (!FMath::IsNearlyEqual(PeopleLight->Intensity, Lux, .01f)) PeopleLight->SetIntensity(Lux);
+			if (PeopleLight->IsVisible() != (Lux > 0.f)) PeopleLight->SetVisibility(Lux > 0.f);
+			if (Lux > 0.f) PeopleLight->SetWorldRotation(FRotator(-50.f, Cam->GetCameraRotation().Yaw, 0.f));
 		}
 	LightWait -= DeltaSeconds;
 	if (LightWait <= 0.f)
