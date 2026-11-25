@@ -11,6 +11,7 @@
 #include "BrixLamps.h"
 #include "BrixLifeActor.h"
 #include "BrixDesignerActor.h"
+#include "BrixMapActor.h"
 #include "BrixPeople.h"
 #include "BrixRooms.h"
 #include "BrixSoundActor.h"
@@ -165,6 +166,8 @@ void ABrixGameMode::StartPlay()
 		Life->Start(*City, Today);
 		Designer = GetWorld()->SpawnActor<ABrixDesigner>();   // a new game opens the character designer (CHR-001)
 		Designer->Start(City->Name);
+		Map = GetWorld()->SpawnActor<ABrixMap>();   // the maps (UI-012, UI-018)
+		Map->Start(*City, Today, FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), CityDir)));
 	}
 	SpawnLight();
 	Super::StartPlay();
@@ -325,6 +328,48 @@ void ABrixGameMode::StartPlay()
 				if (APlayerController* PC = GetWorld()->GetFirstPlayerController()) PC->SetControlRotation(FRotator(-15.f, Yaw, 0.f));
 			}, 0.6f, false);
 		}
+	}
+	// -BrixNear=<resident>: the player stands 3.5 m in front of them, facing them, a third into a test shot's wait (the names over them)
+	int32 NearTo = -1;
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixNear="), NearTo) && NearTo >= 0 && Today)
+	{
+		FTimerHandle H;
+		GetWorldTimerManager().SetTimer(H, [this, NearTo]()
+		{
+			const TOptional<FBrixWhere> W = Today->Where(NearTo, ClockMinute());
+			APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);
+			if (!W || !Me) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: resident %d is not out"), NearTo); return; }
+			const FVector2D P = W->Pos + W->Heading * 3.5;
+			Me->SetActorLocation(ToWorld(P, 1.f), false, nullptr, ETeleportType::TeleportPhysics);
+			if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0)) PC->SetControlRotation(FRotator(-8.0, FMath::RadiansToDegrees(FMath::Atan2(-W->Heading.Y, -W->Heading.X)), 0));
+		}, ShotDelaySeconds / 3, false);
+	}
+	// -BrixMark=x,z sets the mark; -BrixMap opens the big map (and -BrixMapZoom=z,x,z zooms it on a place) for a test shot
+	FString MarkAt, Zoom;
+	if (Map && FParse::Value(FCommandLine::Get(), TEXT("BrixMark="), MarkAt, false))
+	{
+		TArray<FString> P;
+		MarkAt.ParseIntoArray(P, TEXT(","));
+		if (P.Num() == 2) Map->Mark.MarkAt(FVector2D(FCString::Atod(*P[0]), FCString::Atod(*P[1])), FString(), false);
+	}
+	if (Map && (FParse::Param(FCommandLine::Get(), TEXT("BrixMap")) || FParse::Value(FCommandLine::Get(), TEXT("BrixMapZoom="), Zoom, false)))
+	{
+		FTimerHandle H;
+		GetWorldTimerManager().SetTimer(H, [this, Zoom]()
+		{
+			Map->Open();
+			TArray<FString> P;
+			Zoom.ParseIntoArray(P, TEXT(","));
+			if (P.Num() == 3)
+			{
+				const double K9 = 900.0 * Map->Image.K / Map->Image.N;
+				const FVector2D At = (FVector2D(FCString::Atod(*P[1]), FCString::Atod(*P[2])) + FVector2D(Map->Image.O, Map->Image.O)) * K9;
+				Map->View.Z = FMath::Clamp(FCString::Atod(*P[0]), 1.0, 6.0);
+				Map->View.Cx = At.X;
+				Map->View.Cy = At.Y;
+				Map->View.Clamp();
+			}
+		}, ShotDelaySeconds / 3, false);
 	}
 	FString Shot;
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixShot="), Shot))
@@ -524,6 +569,12 @@ void ABrixGameMode::ShootAndQuit()
 		FString Where = TEXT("out of doors");
 		if (Room != INDEX_NONE && Insides && Insides->Lots.IsValidIndex(Room) && Insides->Lots[Room].IsSet()) Where = TEXT("inside ") + Insides->Lots[Room]->Id;
 		UE_LOG(LogTemp, Display, TEXT("Brix Town: the player is at (%.1f, %.1f) %.2f m up, %s"), Me->GetActorLocation().X / 100, Me->GetActorLocation().Y / 100, Me->GetActorLocation().Z / 100 - 0.85, *Where);
+	}
+	if (Map)
+	{
+		TArray<FString> Said;
+		for (const ABrixMap::FTag& T : Map->Tags) Said.Add(T.Text);
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: the maps: %d residents on them, %d markers; over the street: %s"), Map->Folk.Num(), Map->Dots.Num(), Said.Num() ? *FString::Join(Said, TEXT(" | ")) : TEXT("nothing"));
 	}
 	if (Furnisher) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d homes furnished near the camera, %d pieces, %d room lamps on"), Furnisher->Furnished(), Furnisher->PiecesShown(), Furnisher->LampsOn());
 	if (Cars) UE_LOG(LogTemp, Display, TEXT("Brix Town: %d vehicles drawn"), Cars->Shown());

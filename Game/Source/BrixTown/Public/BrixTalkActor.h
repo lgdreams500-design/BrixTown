@@ -25,6 +25,7 @@ class BRIXTOWN_API ABrixTalk : public AActor
 	GENERATED_BODY()
 
 public:
+	const FBrixDialogue& Words() const { return Dialogue; }   // the words for what residents are doing (the names over them)
 	ABrixTalk();
 	void Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, ABrixPeople* InPeople);
 	virtual void Tick(float DeltaSeconds) override;

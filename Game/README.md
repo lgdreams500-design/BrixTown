@@ -414,7 +414,7 @@ comes with a slip under the purse and its coins fly up into the bank balance. Ac
 facts worked out from the ledger and the quests (`QST009_achievements_are_earned_as_python_says`), each once, its painted
 banner dropping in at the top, one at a time and not over a panel. Their sounds are played by `ABrixSound` (see Sound): `ABrixLife::OnRewardSound`
 is broadcast with sound.js's names (quest_start, coin_out, coin_land, coin_take, quest_end, interest_start,
-interest_coin, interest_end, achievement). Not yet: saving (QST-008), markers over people's heads and on the map, the
+interest_coin, interest_end, achievement). The markers over people's heads and on the maps are under The maps. Not yet: saving (QST-008), the
 Me page's list of achievements, the stamped coin face. To see a reward in a test shot: `-BrixLifeLead=1.15
 "-BrixLife=act,new_in_town,r0504,stage:bank;open,current;check;buy,grocer,bread;check;act,new_in_town,r0504,take:bread|end:gift"`
 (the ops that many seconds before the shot); to see a quest talk, `-BrixTime=15:12 -BrixTalk=504 "-BrixAnswers=1,1"`.
@@ -426,20 +426,43 @@ it is open the clock stands still (the game is paused; `menu.pauses`). The pages
 Town and Game, each in its colour: Me (what you have, the achievements earned first with their day then those still to
 earn, people you know), Money (accounts, statement), Belongings (what is carried, each drawn on its plinth), Journal (the
 quest log), Settings (one group at a time), Save, Help (the keyboard's controls by where they work, from settings.json);
-Properties, Wardrobe, Storage and Map say what they wait for (the property market, the character designer,
-F-PROP-STORAGE, the big map), and Save shows its three slots but cannot save yet (QST-008). The settings are
+Properties, Wardrobe and Storage say what they wait for (the property market, the character designer,
+F-PROP-STORAGE); Map opens the big map; and Save shows its three slots but cannot save yet (QST-008). The settings are
 `BrixWorld/BrixSettings`: settings.json checked by world.settings_problems()'s rules (`UI009_settings_are_valid`,
 `UI009_a_bad_setting_is_caught`, `UI008_every_platform_maps_every_action`, `UI010_no_control_does_two_things`,
 `UI005_every_tab_opens_from_a_control_on_every_platform`), the player's values kept on the device in
 `Saved/BrixTown/settings.json`, not in a save, and taking effect at once: sun shadows, ambient occlusion, bounce light,
 resolution and the Picture choice that sets them together, field of view, the frame counter, sound on or off and its
-level, text size, look speed, invert and camera distance. Names over residents, the minimap, first person and the
+level, text size, look speed, invert and camera distance. The minimap, names over residents and the map's filters work (see The maps); first person and the
 separate sound levels are kept for when those come. The menu, the counters and the buy menu are in "Lamplight"
 (ADR-0049, accepted by the owner; `BrixLook.h`, its colours in settings.json `menu.lamplight`): cards of warm dark stone with round corners and a thick lower edge,
 the town dimmed behind, each page's colour as its lintel and mark, lantern-orange main buttons, prices on paper tags, the
 goods on plinths in a pool of lantern light. Shots: `Art/StyleTests/lamplight_menu_36/`. To see a page in a test shot:
 `-BrixMenu=<home|me|wallet|quests|belongings|settings|help|...>` (and `-BrixSettingsGroup=<n>`); the shot is taken by the
 menu itself, since the paused game's timers stop.
+
+## The maps and the words over the street (UI-012, UI-018, QST-005)
+The town is drawn from its data as the slice's play.js drawBase() draws it (`BrixWorld/BrixMap`): the ground, Old Town's
+streets, the roads out of town (roads.json links and gates), each block's lanes or open ground (woods, commons, orchards,
+fields and their crops, ponds, paths, tracks, fences, hedges, plots for sale) or paving, each lot in its kind's colour
+turned by its angle (a sculpted shell's own outline with its domes, roof light and ways in), every tree and the tram line,
+into one 2700 px texture (`MapPixels`; 0.6 s). `ABrixMap` shows it: the round minimap at the top right, the 230 m round the
+player, with the residents out of doors, the people and places quests want (life.js targets(): yellow a quest's, teal
+someone with a line to give), the mark and the player's arrow turned the way the camera looks; and M (or the menu's Map
+page) opens the big map in a square of 84% of the screen with its legend: the wheel zooms about the pointer (1 to 6
+times; + and - about the middle, 0 or the middle button for the whole town), dragging moves it, a click marks a place (a
+click on the mark clears it; Esc or M closes). The mark shows on both maps and over the street with how far it is, and goes
+when reached. Over the street, as the slice's hud() and life.js mark(): the names of residents within 9 m on the player's
+level (name, job, what they are doing or where they are going), "◆ quest" or "◆ has something for you" over those a quest
+wants within 45 m. What shows is the player's settings: display.minimap, display.names and the map group (residents, quests,
+shop names). Tests: `UI018_the_big_map_is_drawn_from_the_town` (1,002 of the 1,005 lots show their kind's colour at their
+middle, the streets, the tram line, the woods; the zoom's bounds and its fixed point), `UI012_the_mark_is_set_cleared_and_reached`,
+`QST005_the_people_and_places_a_quest_wants_are_marked`. Shots: `-BrixMap` opens the big map, `-BrixMapZoom=z,x,z` zooms it
+on a place, `-BrixMark=x,z` sets the mark, `-BrixNear=<resident>` stands the player 3.5 m in front of someone; a shot logs
+the residents on the maps, the markers and the words over the street. Not yet: the player's own buildings outlined
+(map_mine; the property market is not brought over), Properties' "show on the map", a tree's crown by the day's
+vegetation (a fixed `TreeRadius`). 31 to 33 frames a second at High with the minimap (noisy: other sessions were running
+Unreal).
 
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
@@ -522,3 +545,6 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.UI009_settings_are_valid` | UI-009 |
 | `BrixTown.World.UI009_a_bad_setting_is_caught` | UI-009 |
 | `BrixTown.World.UI010_no_control_does_two_things` | UI-010 |
+| `BrixTown.World.UI018_the_big_map_is_drawn_from_the_town` | UI-018 |
+| `BrixTown.World.UI012_the_mark_is_set_cleared_and_reached` | UI-012 |
+| `BrixTown.World.QST005_the_people_and_places_a_quest_wants_are_marked` | QST-005 |

@@ -72,7 +72,7 @@ public:
 	TMap<int32, double> Late;           // resident -> minutes behind their day
 	UPROPERTY(Config) float TalkReach = 2.2f;   // m
 	// every resident near this frame, for the sound (ABrixSound: their steps, sitting down and getting up; SND-017)
-	struct FHeard { int32 Resident; FVector2D Pos; int32 Pose; double Phase; FString Shout; bool bRun = false; };   // a shout at the player's car (CITY-071), voiced
+	struct FHeard { int32 Resident; FVector2D Pos; int32 Pose; double Phase; FString Shout; bool bRun = false; float Up = 0.f; double S = 1; };   // a shout at the player's car (CITY-071), voiced; Up, S: their feet and height (the names over them)
 	TArray<FHeard> Heard;
 	// Out of the way of the player's car (CITY-070, CITY-071; dodge.js): residents it heads at scramble aside, then turn on
 	// the driver and shout, the line shown over them within the rules' tag_m (World/rules/dodge.json)
