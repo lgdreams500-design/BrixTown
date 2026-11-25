@@ -64,6 +64,12 @@ public:
 	// wet paving (WLD-037): M_Greybox's WetDark, WetSheen and Puddles on every surface (Tools/unreal/greybox_wet.py); 0 dry
 	void SetWet(float Dark, float Sheen, float Puddles, float Ripples);
 	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> GlassMat;
+	// The windows lit by night (play.js windows()): a warm pane behind the glass of a share of each kind's windows, shown and
+	// glowing as the night comes (0 by day, 1 at night)
+	void SetNight(float Night01);
+	UPROPERTY(Config) TMap<FString, float> LitShare;     // the share of a kind's windows lit at night (play.js windows() lit)
+	UPROPERTY(Config) TArray<FLinearColor> NightWarm = { FLinearColor(1.f, .5f, .2f), FLinearColor(1.f, .68f, .36f) };   // the two ends of the lamplight's colour
+	UPROPERTY(Config) float NightGlow = 1.5f;
 
 	UPROPERTY(Config) float StoreyHeight = 3.f;         // m a floor (WORLD_MAP; kit floor_h)
 	UPROPERTY(Config) float BlockSlabHeight = 0.12f;    // m, the block's paving above the street (slice Y_PAVE)
@@ -175,6 +181,10 @@ private:
 	UInstancedStaticMeshComponent* GlassGroup();
 	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Blockers;
 	UInstancedStaticMeshComponent* BlockerGroup();
+	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> NightPanes;
+	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> NightMat;
+	UInstancedStaticMeshComponent* NightPaneGroup();
+	float LastNightPane = -1.f;
 	UPROPERTY() TObjectPtr<UMaterialInterface> ClearGlass;   // /Game/Greybox/M_Clear: a hollow storey's window glass   // unseen boxes in an enterable building's windows: only its doorway lets you through
 	int32 LotIndex = 0;                             // the lot being built, in the city's order (the slice's LOTS)
 	int32 Hollow = 0;

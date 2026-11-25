@@ -166,6 +166,37 @@ UInstancedStaticMeshComponent* ABrixTownActor::BlockerGroup()
 	return Blockers;
 }
 
+UInstancedStaticMeshComponent* ABrixTownActor::NightPaneGroup()
+{
+	if (NightPanes) return NightPanes;
+	NightPanes = NewObject<UInstancedStaticMeshComponent>(this, TEXT("NightPanes"));
+	NightPanes->SetupAttachment(RootComponent);
+	NightPanes->SetStaticMesh(Cube);
+	NightPanes->NumCustomDataFloats = 3;
+	NightPanes->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	NightPanes->SetCastShadow(false);
+	NightPanes->SetVisibility(false);   // shown after dusk (SetNight)
+	NightPanes->bAffectDynamicIndirectLighting = false;   // out of Lumen's scene: tens of thousands of small cards overfilled its cache
+	NightPanes->bAffectDistanceFieldLighting = false;
+	if (UMaterialInterface* Glow = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Greybox/M_Glow.M_Glow")))
+	{
+		NightMat = UMaterialInstanceDynamic::Create(Glow, this);
+		NightPanes->SetMaterial(0, NightMat);
+	}
+	else NightPanes->SetMaterial(0, Own());
+	NightPanes->RegisterComponent();
+	AddInstanceComponent(NightPanes);
+	return NightPanes;
+}
+
+void ABrixTownActor::SetNight(float Night01)
+{
+	if (!NightPanes || FMath::IsNearlyEqual(Night01, LastNightPane, 0.002f)) return;
+	LastNightPane = Night01;
+	NightPanes->SetVisibility(Night01 > 0.02f);
+	if (NightMat) NightMat->SetScalarParameterValue(TEXT("Glow"), NightGlow * Night01);
+}
+
 // A painted name: on a shop's fascia (kit text()), shrunk to fit the fascia
 void ABrixTownActor::Name(const FString& Text, const FVector& At, double YawRad, float Size, float MaxWidth, bool bFaceAlong)
 {
@@ -583,6 +614,17 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 				int32 Fw = 0;
 				while (Fw + 1 < NFl && O.Z0 >= FloorTopOf(Fw + 1) - 0.5f) ++Fw;
 				WindowSpans.FindOrAdd(LotIndex * 64 + Fw).Add(FVector4f(Wa.X / CmPerM, Wa.Y / CmPerM, Wb.X / CmPerM, Wb.Y / CmPerM));
+			}
+			// lit by night (play.js windows(): each window of a lot lit by its hash against its kind's share, warm, a shopfront
+			// always): a pane just behind the glass that glows after dusk (NightPanes)
+			const bool bShopWin = O.Mesh == Kit(TEXT("SM_Kit_WinCafe"));
+			if (!O.bDoorway && O.Mesh != Kit(TEXT("SM_Kit_Balcony")) && O.W < 2.6f && (bShopWin || SliceHash({ L.Id, FString::FromInt(k), FString::SanitizeFloat(O.Z0), FString::SanitizeFloat(O.S) }) < (LitShare.Contains(L.Kind) ? LitShare[L.Kind] : 0.3f)))
+			{
+				const bool bArched = O.Mesh == Kit(TEXT("SM_Kit_WinArch")) || O.Mesh == Kit(TEXT("SM_Kit_WinCafe")) || O.Mesh == Kit(TEXT("SM_Kit_WinCivic"));
+				const float Top = O.Z0 + O.H - (bArched ? O.W / 2 : 0.f), Seed = (float)SliceHash({ L.Id, FString::SanitizeFloat(O.S), TEXT("warm") });
+				const FLinearColor Warm = FMath::Lerp(NightWarm[0], NightWarm[1], Seed);
+				if (Top - O.Z0 > 0.2f)
+					Add(NightPaneGroup(), FTransform(FQuat(FVector::UpVector, Yaw + Ang), At(OnWall(O.S, -t + 0.055f), (O.Z0 + Top) * 0.5f), FVector(O.W * O.SX, 0.004f, Top - O.Z0)), Warm);   // just in front of the glass, behind its bars
 			}
 			if (O.Shutters) Add(Group(O.Shutters, false, ShutterCullDistance), FTransform(Tr.GetRotation(), Tr.GetLocation(), FVector(O.SX, 1, 1)), Shutter);
 			++Openings;
