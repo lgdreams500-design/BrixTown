@@ -284,8 +284,7 @@ class TheCompany(unittest.TestCase):
     def test_FURN_025_the_fixed_run_for_the_ports(self):
         """check_script() runs, and the same twice over: what the slice's and the engine's ports must reproduce."""
         def run():
-            e, _, _ = shopper()
-            return fu.run_script(R, F, e, fu.check_script())
+            return fu.run_script(R, F, ec.Economy(E, TOWN, {}), fu.check_script())
         a, b = run(), run()
         self.assertEqual(a, b)
         kinds = [r[0] for r in a["results"]]

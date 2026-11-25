@@ -426,8 +426,21 @@ def check_script():
     ]
 
 
+SCRIPT_MONEY = 600000
+
+
+def script_player(econ):
+    """The player the fixed run starts with: a new character at 07:20 on day 0 with a current account and 600,000 chips in it."""
+    econ.advance(0, 440)
+    econ.new_character()
+    econ.open_account("current")
+    econ.L.post(0, 440, "Test money", [("sys:start", -SCRIPT_MONEY), ("p:current", SCRIPT_MONEY)])
+
+
 def run_script(R, F, econ, script):
-    """Each op of check_script: what it gave or why it was refused, then the store as it stands."""
+    """Each op of check_script: what it gave or why it was refused, then the store as it stands. `econ` is a town's
+    Economy with nobody in it yet (script_player() makes the player)."""
+    script_player(econ)
     held = {"u:mine": True, "u:lost": True}
     store = Store(R, F, econ, lambda u: held.get(u, False), lambda u: 800.0 if u == "u:mine" else 2000.0)
     store.found()
