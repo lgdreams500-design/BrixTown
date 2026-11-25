@@ -78,7 +78,7 @@ void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTown
 {
 	if (UStaticMesh* KitBox = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Kit/SM_Kit_Box.SM_Kit_Box"))) Cube = KitBox;
 	TownRef = Town;
-	int32 k = -1, Pieces = 0, Dropped = 0, Other = 0, BoxCount = 0;
+	int32 k = -1, Pieces = 0, Dropped = 0, Other = 0, BoxCount = 0, Flats = 0;
 	const FBrixDoorRules DR = FBrixDoorRules::FromConfig();
 	TArray<int32> ByLevel = { 0, 0, 0, 0, 0 };
 	for (const FBrixBlock& B : City.Blocks)
@@ -139,10 +139,32 @@ void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTown
 				{
 					bAny |= BrixFurnishFloor(Ins, L, In, f, LH.Furn[f]);
 					FBrixRoom Rm;
-					Rm.Name = TEXT("Room"); Rm.Floor = f;
+					Rm.Name = TEXT("Room"); Rm.Floor = f; Rm.bFloor = false;
 					Rm.R.Centre = L.Centre(); Rm.R.Along = FVector2D(1, 0); Rm.R.Length = (float)L.Size().X - 0.7f; Rm.R.Width = (float)L.Size().Y - 0.7f;
 					H->Rooms.Add(Rm);
 					BoxCount += LH.Furn[f].Boxes.Num();
+				}
+				// a building of flats: every flat's and store's walls with their doorways (storeys.js partitions()), and each planned
+				// flat furnished from its plan at its household's level (homes.js flats())
+				for (int32 f = 0; f < NFl && In.Flats.Num(); ++f)
+					for (const FBrixPartition& Pw : BrixFlatWalls(L, In, f, Ins.Rules))
+					{
+						FBrixWallSeg W;
+						W.Floor = f; W.bDoorway = Pw.bDoorway;
+						W.R.Centre = (Pw.Min + Pw.Max) * 0.5;
+						const FVector2D Sz = Pw.Max - Pw.Min;
+						W.R.Along = Sz.X >= Sz.Y ? FVector2D(1, 0) : FVector2D(0, 1);
+						W.R.Length = (float)FMath::Max(Sz.X, Sz.Y); W.R.Width = (float)FMath::Min(Sz.X, Sz.Y);
+						H->Walls.Add(W);
+					}
+				for (int32 q = 0; q < In.Flats.Num(); ++q)
+				{
+					FBrixHome Fh;
+					if (In.Flats[q].Interior.IsEmpty() || !BrixFlatHomeOf(Ins, In, q, Day, Wins, Fh)) continue;
+					H->Pieces.Append(Fh.Pieces); H->Walls.Append(Fh.Walls); H->Rooms.Append(Fh.Rooms); H->Spots.Append(Fh.Spots);
+					Pieces += Fh.Pieces.Num();
+					++Flats;
+					bAny = true;
 				}
 				if (!bAny) continue;
 				++Other;
@@ -156,7 +178,7 @@ void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTown
 			}
 			Homes.Add(LH);
 		}
-	UE_LOG(LogTemp, Display, TEXT("Brix Town: %d other buildings furnished at their places (%d boxes)"), Other, BoxCount);
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: %d other buildings furnished at their places (%d boxes), %d court flats from their plans"), Other, BoxCount, Flats);
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: %d homes furnished from their plans (%d Bare, %d Basic, %d Homely, %d Full), %d pieces, %d left out in front of a window"),
 		Homes.Num() - Other, ByLevel[1], ByLevel[2], ByLevel[3], ByLevel[4], Pieces, Dropped);
 }
@@ -309,7 +331,7 @@ void ABrixRooms::Rebuild()
 		}
 		for (const FBrixRoom& R : H.Rooms)
 		{
-			if (Up(R.Floor) < 0.f || !LH.bPlanned) continue;   // a storey not built; a building with no plan keeps its own floor
+			if (Up(R.Floor) < 0.f || !R.bFloor) continue;   // a storey not built; a building's whole storey keeps its own floor
 			const float Floor0 = Up(R.Floor);
 			const bool bWet = R.bWet;
 			for (const FBrixRect& Q : Without(R.R, LH.Holes.IsValidIndex(R.Floor) ? LH.Holes[R.Floor] : TOptional<FBrixRect>()))   // open over the stair

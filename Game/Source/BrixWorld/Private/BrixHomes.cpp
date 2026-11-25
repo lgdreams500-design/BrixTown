@@ -166,6 +166,111 @@ void LoadBrixHomeData(const TSharedPtr<FJsonObject>& Root, FBrixInsides& Out)
 	}
 }
 
+// A home laid out from its plan in its frame (homes.js home(), one()): a row house (FixedFloor -1: the plan's storeys) or a
+// court flat (all on its floor), Beds beds wanted, at furnishing Level.
+static bool PlannedHome(const FBrixInsides& Ins, const FString& Interior, const TOptional<FBrixPlanFrame>& Frame, const FString& Line, int32 FixedFloor,
+	int32 Beds, int32 Level, const TArray<FBrixWindowSpan>& Windows, FBrixHome& Out)
+{
+	Out = FBrixHome();
+	const FBrixHomePlan* HousePlan = Ins.Plans.Find(TEXT("house_12x9"));
+	const TArray<TArray<float>>* NoSpots = nullptr;
+	auto SpotsOf = [&](const FString& Kind) -> const TArray<TArray<float>>* { return HousePlan ? HousePlan->Spots.Find(Kind) : NoSpots; };   // homes.js SPOTS: the house plan's
+	// ------------------------------------------------------------ a planned row house (homes.js home(), one())
+	if (Interior.IsEmpty() || !Frame.IsSet()) return false;
+	const FBrixHomePlan* PlanP = Ins.Plans.Find(Interior);
+	if (!PlanP) return false;
+	const FBrixHomePlan& P = *PlanP;
+	const FBrixPlanFrame& Fr = Frame.GetValue();
+	if (Fr.U.Num() < 2 || Fr.V.Num() < 2) return false;
+	auto mu = [&](float X) { return MapA(X, Fr.U[0], Fr.U[1]); };
+	auto mv = [&](float Y) { return MapA(Y, Fr.V[0], Fr.V[1]); };
+	auto W = [&](float X, float Y) { return Fr.O + Fr.X * X + Fr.Y * Y; };
+	auto Dv = [&](float X, float Y) { return Fr.X * X + Fr.Y * Y; };
+	auto FloorOf = [&](const FString& S) { return FixedFloor >= 0 ? FixedFloor : P.Floors.IndexOfByKey(S); };   // a flat: all on its floor
+	Out.Plan = P.Key;
+	Out.Line = Line.IsEmpty() ? FString(TEXT("oldtown")) : Line;
+	Out.Level = Level;
+	for (const auto& KV : P.Rooms)
+		for (const TPair<FString, FVector4f>& R : KV.Value)
+		{
+			FBrixRoom Rm;
+			Rm.Name = R.Key; Rm.Floor = FloorOf(KV.Key); Rm.bWet = IsWet(R.Key);
+			Rm.R = RectOf(W(mu(R.Value.X), mv(R.Value.Z)), W(mu(R.Value.Y), mv(R.Value.W)), Fr.X, Fr.Y);
+			if (Rm.Floor >= 0) Out.Rooms.Add(Rm);
+		}
+	for (const auto& KV : P.Partitions)
+	{
+		const int32 f = FloorOf(KV.Key);
+		if (f < 0) continue;
+		const TArray<FBrixHomePlan::FDoor> Doors = P.Doors.FindRef(KV.Key);
+		for (const FBrixHomePlan::FLine& L : KV.Value)
+		{
+			TArray<float> Cuts;
+			for (const FBrixHomePlan::FDoor& D : Doors) if (D.Ax == L.Ax && FMath::Abs(D.At - L.At) < 1e-3f && D.C > L.A0 && D.C < L.A1) Cuts.Add(D.C);
+			Cuts.Sort();
+			const bool bX = L.Ax == TEXT("x");
+			auto Seg = [&](float Pa, float Qa, bool bDoor)
+			{
+				if (Qa - Pa < 0.02f) return;
+				FBrixWallSeg S;
+				S.Floor = f; S.bDoorway = bDoor;
+				S.R = bX ? RectOf(W(mu(L.At) - PART / 2, mv(Pa)), W(mu(L.At) + PART / 2, mv(Qa)), Fr.X, Fr.Y)
+					: RectOf(W(mu(Pa), mv(L.At) - PART / 2), W(mu(Qa), mv(L.At) + PART / 2), Fr.X, Fr.Y);
+				Out.Walls.Add(S);
+			};
+			float A = L.A0;
+			for (float Cc : Cuts) { Seg(A, Cc - DH, false); Seg(Cc - DH, Cc + DH, true); A = Cc + DH; }
+			Seg(A, L.A1, false);
+		}
+	}
+	// the pieces: their world places, then the ones in front of a window left out (dropped()), then the level (pieces())
+	TArray<FBrixFurniturePiece> All;
+	TSet<int32> Drop;
+	for (int32 i = 0; i < P.Items.Num(); ++i)
+	{
+		const FBrixPlanItem& It = P.Items[i];
+		const int32 f = FloorOf(It.Storey);
+		if (f < 0) continue;
+		const float c = FMath::Cos(It.Yaw), s = FMath::Sin(It.Yaw);
+		FBrixFurniturePiece Pc;
+		Pc.Kind = It.Piece; Pc.Line = Out.Line; Pc.Floor = f; Pc.Lift = It.Lift; Pc.Item = i;
+		Pc.At = W(mu(It.X), mv(It.Y));
+		Pc.A = Dv(c, s); Pc.B = Dv(-s, c);
+		if (const FVector3f* Z = Ins.Sizes.Find(It.Piece)) Pc.Size = *Z;
+		Pc.bBed = It.Piece == TEXT("k17:bed") || It.Piece == TEXT("c_bunk") || It.Piece == TEXT("r_single");   // homes.js BED_KINDS
+		All.Add(Pc);
+		const TArray<float>* Hung = Ins.Hung.Find(It.Piece);
+		const bool bTall = !Pc.Size.IsZero() && Pc.Size.Z > SILL_TALL && It.Piece != TEXT("b_toilet");
+		if (!(bTall || (Hung && It.Piece != TEXT("d_pendant"))) || Pc.bBed) continue;
+		const FVector4f Box = !Pc.Size.IsZero() ? FVector4f(-Pc.Size.X / 2, Pc.Size.X / 2, -Pc.Size.Y / 2, Pc.Size.Y / 2)
+			: FVector4f((*Hung)[0], (*Hung)[1], (*Hung)[2], (*Hung)[3]);
+		if (InFrontOfWindow(Pc, Box, Windows)) { Drop.Add(i); ++Out.Dropped; }
+	}
+	int32 Need = Beds;
+	TSet<int32> Keep;
+	for (const FBrixFurniturePiece& Pc : All)
+		if (Pc.bBed && Need > 0) { Keep.Add(Pc.Item); const auto* S = SpotsOf(Pc.Kind); Need -= S ? S->Num() : 1; }
+	for (const FBrixFurniturePiece& Pc : All)
+	{
+		if (Drop.Contains(Pc.Item) || !(P.Items[Pc.Item].Level <= Out.Level || Keep.Contains(Pc.Item))) continue;
+		Out.Pieces.Add(Pc);
+		const FBrixPlanItem& It = P.Items[Pc.Item];
+		if (!Pc.bBed && !IsSeat(It.Piece)) continue;
+		const float c = FMath::Cos(It.Yaw), s = FMath::Sin(It.Yaw);
+		if (const auto* S = SpotsOf(It.Piece))
+			for (const TArray<float>& Q : *S)
+			{
+				if (Q.Num() < 5) continue;
+				FBrixSpot Sp;
+				Sp.At = W(mu(It.X + Q[0] * c - Q[1] * s), mv(It.Y + Q[0] * s + Q[1] * c));
+				const FVector2D D = Dv(Q[3] * c - Q[4] * s, Q[3] * s + Q[4] * c);
+				Sp.Facing = D; Sp.Floor = Pc.Floor; Sp.Up = Q[2]; Sp.bLie = Pc.bBed;
+				Out.Spots.Add(Sp);
+			}
+	}
+	return true;
+}
+
 bool BrixHomeOf(const FBrixInsides& Ins, const FBrixLot& Lot, const FBrixInside& In, int32 Day, const TArray<FBrixWindowSpan>& Windows, FBrixHome& Out)
 {
 	Out = FBrixHome();
@@ -262,100 +367,7 @@ bool BrixHomeOf(const FBrixInsides& Ins, const FBrixLot& Lot, const FBrixInside&
 		return true;
 	}
 
-	// ------------------------------------------------------------ a planned row house (homes.js home(), one())
-	if (In.Interior.IsEmpty() || !In.Frame.IsSet()) return false;
-	const FBrixHomePlan* PlanP = Ins.Plans.Find(In.Interior);
-	if (!PlanP) return false;
-	const FBrixHomePlan& P = *PlanP;
-	const FBrixPlanFrame& Fr = In.Frame.GetValue();
-	if (Fr.U.Num() < 2 || Fr.V.Num() < 2) return false;
-	auto mu = [&](float X) { return MapA(X, Fr.U[0], Fr.U[1]); };
-	auto mv = [&](float Y) { return MapA(Y, Fr.V[0], Fr.V[1]); };
-	auto W = [&](float X, float Y) { return Fr.O + Fr.X * X + Fr.Y * Y; };
-	auto Dv = [&](float X, float Y) { return Fr.X * X + Fr.Y * Y; };
-	auto FloorOf = [&](const FString& S) { return P.Floors.IndexOfByKey(S); };
-	Out.Plan = P.Key;
-	Out.Line = In.Line.IsEmpty() ? FString(TEXT("oldtown")) : In.Line;
-	Out.Level = LevelOf(Ins, In, Beds, Day);
-	for (const auto& KV : P.Rooms)
-		for (const TPair<FString, FVector4f>& R : KV.Value)
-		{
-			FBrixRoom Rm;
-			Rm.Name = R.Key; Rm.Floor = FloorOf(KV.Key); Rm.bWet = IsWet(R.Key);
-			Rm.R = RectOf(W(mu(R.Value.X), mv(R.Value.Z)), W(mu(R.Value.Y), mv(R.Value.W)), Fr.X, Fr.Y);
-			if (Rm.Floor >= 0) Out.Rooms.Add(Rm);
-		}
-	for (const auto& KV : P.Partitions)
-	{
-		const int32 f = FloorOf(KV.Key);
-		if (f < 0) continue;
-		const TArray<FBrixHomePlan::FDoor> Doors = P.Doors.FindRef(KV.Key);
-		for (const FBrixHomePlan::FLine& L : KV.Value)
-		{
-			TArray<float> Cuts;
-			for (const FBrixHomePlan::FDoor& D : Doors) if (D.Ax == L.Ax && FMath::Abs(D.At - L.At) < 1e-3f && D.C > L.A0 && D.C < L.A1) Cuts.Add(D.C);
-			Cuts.Sort();
-			const bool bX = L.Ax == TEXT("x");
-			auto Seg = [&](float Pa, float Qa, bool bDoor)
-			{
-				if (Qa - Pa < 0.02f) return;
-				FBrixWallSeg S;
-				S.Floor = f; S.bDoorway = bDoor;
-				S.R = bX ? RectOf(W(mu(L.At) - PART / 2, mv(Pa)), W(mu(L.At) + PART / 2, mv(Qa)), Fr.X, Fr.Y)
-					: RectOf(W(mu(Pa), mv(L.At) - PART / 2), W(mu(Qa), mv(L.At) + PART / 2), Fr.X, Fr.Y);
-				Out.Walls.Add(S);
-			};
-			float A = L.A0;
-			for (float Cc : Cuts) { Seg(A, Cc - DH, false); Seg(Cc - DH, Cc + DH, true); A = Cc + DH; }
-			Seg(A, L.A1, false);
-		}
-	}
-	// the pieces: their world places, then the ones in front of a window left out (dropped()), then the level (pieces())
-	TArray<FBrixFurniturePiece> All;
-	TSet<int32> Drop;
-	for (int32 i = 0; i < P.Items.Num(); ++i)
-	{
-		const FBrixPlanItem& It = P.Items[i];
-		const int32 f = FloorOf(It.Storey);
-		if (f < 0) continue;
-		const float c = FMath::Cos(It.Yaw), s = FMath::Sin(It.Yaw);
-		FBrixFurniturePiece Pc;
-		Pc.Kind = It.Piece; Pc.Line = Out.Line; Pc.Floor = f; Pc.Lift = It.Lift; Pc.Item = i;
-		Pc.At = W(mu(It.X), mv(It.Y));
-		Pc.A = Dv(c, s); Pc.B = Dv(-s, c);
-		if (const FVector3f* Z = Ins.Sizes.Find(It.Piece)) Pc.Size = *Z;
-		Pc.bBed = It.Piece == TEXT("k17:bed") || It.Piece == TEXT("c_bunk") || It.Piece == TEXT("r_single");   // homes.js BED_KINDS
-		All.Add(Pc);
-		const TArray<float>* Hung = Ins.Hung.Find(It.Piece);
-		const bool bTall = !Pc.Size.IsZero() && Pc.Size.Z > SILL_TALL && It.Piece != TEXT("b_toilet");
-		if (!(bTall || (Hung && It.Piece != TEXT("d_pendant"))) || Pc.bBed) continue;
-		const FVector4f Box = !Pc.Size.IsZero() ? FVector4f(-Pc.Size.X / 2, Pc.Size.X / 2, -Pc.Size.Y / 2, Pc.Size.Y / 2)
-			: FVector4f((*Hung)[0], (*Hung)[1], (*Hung)[2], (*Hung)[3]);
-		if (InFrontOfWindow(Pc, Box, Windows)) { Drop.Add(i); ++Out.Dropped; }
-	}
-	int32 Need = Beds;
-	TSet<int32> Keep;
-	for (const FBrixFurniturePiece& Pc : All)
-		if (Pc.bBed && Need > 0) { Keep.Add(Pc.Item); const auto* S = SpotsOf(Pc.Kind); Need -= S ? S->Num() : 1; }
-	for (const FBrixFurniturePiece& Pc : All)
-	{
-		if (Drop.Contains(Pc.Item) || !(P.Items[Pc.Item].Level <= Out.Level || Keep.Contains(Pc.Item))) continue;
-		Out.Pieces.Add(Pc);
-		const FBrixPlanItem& It = P.Items[Pc.Item];
-		if (!Pc.bBed && !IsSeat(It.Piece)) continue;
-		const float c = FMath::Cos(It.Yaw), s = FMath::Sin(It.Yaw);
-		if (const auto* S = SpotsOf(It.Piece))
-			for (const TArray<float>& Q : *S)
-			{
-				if (Q.Num() < 5) continue;
-				FBrixSpot Sp;
-				Sp.At = W(mu(It.X + Q[0] * c - Q[1] * s), mv(It.Y + Q[0] * s + Q[1] * c));
-				const FVector2D D = Dv(Q[3] * c - Q[4] * s, Q[3] * s + Q[4] * c);
-				Sp.Facing = D; Sp.Floor = Pc.Floor; Sp.Up = Q[2]; Sp.bLie = Pc.bBed;
-				Out.Spots.Add(Sp);
-			}
-	}
-	return true;
+	return PlannedHome(Ins, In.Interior, In.Frame, In.Line, -1, Beds, LevelOf(Ins, In, Beds, Day), Windows, Out);
 }
 
 bool BrixHouseWell(const FBrixInsides& Ins, FVector4f& Well, float& StepOff)
@@ -384,6 +396,32 @@ int32 SeatBrixDayIndoors(FBrixDay& Day, const FBrixCity& City, const FBrixInside
 			const FBrixLot& L = *Lots[P.Lot];
 			P.Pose = 0;
 			P.SeatUp = BrixFloorUp(L, P.Floor, R);
+			// a planned court flat: the nearest bed or seat of its own plan (homes.js one() for the flat)
+			if (Ins.Lots.IsValidIndex(P.Lot) && Ins.Lots[P.Lot].IsSet() && (P.Use == 0 || P.Use == 1))
+			{
+				const FBrixInside& In = Ins.Lots[P.Lot].GetValue();
+				int32 Fi = INDEX_NONE;
+				for (int32 q = 0; q < In.Flats.Num(); ++q)
+				{
+					const FBrixFlat& Q = In.Flats[q];
+					if (!Q.Interior.IsEmpty() && Q.Floor == P.Floor && P.Pos.X > Q.Min.X - .1 && P.Pos.X < Q.Max.X + .1 && P.Pos.Y > Q.Min.Y - .1 && P.Pos.Y < Q.Max.Y + .1) Fi = q;
+				}
+				if (Fi != INDEX_NONE)
+				{
+					const int32 Key = -(P.Lot * 1000 + Fi) - 1;
+					TSharedPtr<FBrixHome>* Fh = Homes.Find(Key);
+					if (!Fh) { TSharedPtr<FBrixHome> H = MakeShared<FBrixHome>(); if (!BrixFlatHomeOf(Ins, In, Fi, Day.Day, NoWindows, *H)) H.Reset(); Fh = &Homes.Add(Key, H); }
+					if (Fh->IsValid())
+					{
+						const bool bLie = P.Use == 0;
+						const FBrixSpot* Best = nullptr;
+						for (const FBrixSpot& S : (*Fh)->Spots)
+							if (S.bLie == bLie && (!Best || FVector2D::DistSquared(S.At, P.Pos) < FVector2D::DistSquared(Best->At, P.Pos))) Best = &S;
+						if (Best) { P.Pose = bLie ? 3 : 2; P.SeatUp += Best->Up; P.Facing = Best->Facing; P.Pos = Best->At; ++Placed; }
+					}
+					continue;
+				}
+			}
 			// a building with no plan: the place's own spot, as play.js furnish() lays it (BrixFurnish)
 			if (Ins.Lots.IsValidIndex(P.Lot) && Ins.Lots[P.Lot].IsSet() && Ins.Lots[P.Lot]->Interior.IsEmpty() && !L.House.IsSet())
 			{
@@ -426,4 +464,12 @@ int32 SeatBrixDayIndoors(FBrixDay& Day, const FBrixCity& City, const FBrixInside
 			++Placed;
 		}
 	return Placed;
+}
+
+bool BrixFlatHomeOf(const FBrixInsides& Ins, const FBrixInside& In, int32 FlatIndex, int32 Day, const TArray<FBrixWindowSpan>& Windows, FBrixHome& Out)
+{
+	if (!In.Flats.IsValidIndex(FlatIndex)) return false;
+	const FBrixFlat& Q = In.Flats[FlatIndex];
+	const int32 Level = Q.Household.Num() ? Ins.Furnish.Level(Q.Wage, Day) : Ins.Furnish.EmptyLevel;   // furnishing.js: the flat's own household
+	return PlannedHome(Ins, Q.Interior, Q.Frame, Q.Line, Q.Floor, Q.Beds.Num(), Level, Windows, Out);
 }

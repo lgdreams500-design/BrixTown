@@ -67,7 +67,10 @@ bool BrixFurnishFloor(const FBrixInsides& Ins, const FBrixLot& L, const FBrixIns
 		const TArray<FVector2D>* All = In.Objects.Find(K);
 		if (!All) return P;
 		const TArray<int32>* Lv = In.Levels.Find(K);
-		for (int32 i = 0; i < All->Num(); ++i) if (Lv ? (Lv->IsValidIndex(i) && (*Lv)[i] == Floor) : Floor == 0) P.Add((*All)[i]);
+		TSet<int32> Planned;   // homes.js others(): a planned flat's places are furnished from its plan (BrixFlatHomeOf)
+		for (const FBrixFlat& Q : In.Flats)
+			if (!Q.Interior.IsEmpty()) for (const int32 i : FCString::Strcmp(K, TEXT("bed")) == 0 ? Q.Beds : FCString::Strcmp(K, TEXT("room")) == 0 ? Q.Rooms : TArray<int32>()) Planned.Add(i);
+		for (int32 i = 0; i < All->Num(); ++i) if (!Planned.Contains(i) && (Lv ? (Lv->IsValidIndex(i) && (*Lv)[i] == Floor) : Floor == 0)) P.Add((*All)[i]);
 		return P;
 	};
 	// the door's side and the ways to and from it (play.js building(): the edge of the rect the door lies on)

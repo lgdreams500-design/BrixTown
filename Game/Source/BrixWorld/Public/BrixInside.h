@@ -46,6 +46,17 @@ struct BRIXWORLD_API FBrixFlat
 	FVector2D Min = FVector2D::ZeroVector, Max = FVector2D::ZeroVector, Door = FVector2D::ZeroVector;
 	TArray<FString> Household;
 	TOptional<FBrixPlanFrame> Frame;
+	TArray<int32> Beds, Rooms;               // its places among the lot's bed and room places
+	int64 Wage = 0;                          // its household's daily wages (FURN-063)
+};
+
+// A shared part of a building of flats (lot.common: core, corridor, lobby, store).
+struct BRIXWORLD_API FBrixCommon
+{
+	FString Kind;
+	int32 Floor = 0;
+	FVector2D Min = FVector2D::ZeroVector, Max = FVector2D::ZeroVector;
+	TOptional<FVector2D> Door;
 };
 
 struct BRIXWORLD_API FBrixInside
@@ -61,6 +72,7 @@ struct BRIXWORLD_API FBrixInside
 	bool bTower = false;
 	TMap<FString, TArray<int32>> Levels;     // the floor of each of the lot's places, by kind (lot.levels)
 	TArray<FBrixFlat> Flats;
+	TArray<FBrixCommon> Common;
 	FString Interior, Line;                  // a planned home: its plan and the line it is furnished in
 	TOptional<FBrixPlanFrame> Frame;
 	int32 Residents = 0;
@@ -99,6 +111,12 @@ struct BRIXWORLD_API FBrixStairGeo
 	TArray<FVector4f> GroundSolids() const;
 };
 BRIXWORLD_API FBrixStairGeo BrixStairOf(const FBrixStair& S, const FBrixStoreyRules& R);
+
+// storeys.js partitions(): floor f's walls round every flat and store of a building of flats (CITY_BALANCE BAL-006), 0.12 m
+// thick, a doorway 1 m wide where each has its door; a wall on the building's own outer wall left out, one two rooms share
+// built once. Each is (x0, z0, x1, z1) with the doorway flag in W of the second (bDoorway).
+struct BRIXWORLD_API FBrixPartition { FVector2D Min = FVector2D::ZeroVector, Max = FVector2D::ZeroVector; bool bDoorway = false; };
+BRIXWORLD_API TArray<FBrixPartition> BrixFlatWalls(const FBrixLot& Lot, const FBrixInside& In, int32 Floor, const FBrixStoreyRules& R);
 
 // Reads Game/Data/inside.json. On failure returns false and says why.
 BRIXWORLD_API bool LoadBrixInside(const FString& Path, FBrixInsides& Out, FString& OutError);

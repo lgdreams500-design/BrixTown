@@ -344,4 +344,64 @@ bool FWLD051_Lifts::RunTest(const FString&)
 	return Bad == 0;
 }
 
+// FURN-060, FURN-063 for the court flats (homes.js flats(), storeys.js partitions()): every planned flat is furnished from
+// its plan inside its own walls on its own floor, at its own household's level; every flat and store with a door has a
+// doorway in its walls there, and no wall stands across another flat's door.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFURN060_Flats, "BrixTown.World.FURN060_every_planned_flat_is_furnished_inside_its_walls",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FFURN060_Flats::RunTest(const FString&)
+{
+	FBrixCity City;
+	FBrixInsides Ins;
+	FString Error;
+	if (!TestTrue(TEXT("the city loads: ") + Error, LoadBrixCity(CityDir(), City, Error))) return false;
+	if (!TestTrue(TEXT("inside.json loads: ") + Error, LoadBrixInside(InsidePath(), Ins, Error))) return false;
+	const TArray<FBrixWindowSpan> NoWindows;
+	int32 k = -1, Flats = 0, Pieces = 0, Doorways = 0, Bad = 0;
+	for (const FBrixBlock& B : City.Blocks)
+		for (const FBrixLot& L : B.Lots)
+		{
+			++k;
+			if (!Ins.Lots[k].IsSet() || !Ins.Lots[k]->Flats.Num()) continue;
+			const FBrixInside& In = Ins.Lots[k].GetValue();
+			auto Fail = [&](const FString& Why) { if (Bad++ < 20) AddError(L.Id + TEXT(" (") + L.Name + TEXT("): ") + Why); };
+			for (int32 f = 0; f < FMath::Max(1, L.Floors); ++f)
+			{
+				const TArray<FBrixPartition> W = BrixFlatWalls(L, In, f, Ins.Rules);
+				for (const FBrixFlat& Q : In.Flats)
+				{
+					if (Q.Floor != f || Q.Door.IsZero()) continue;
+					bool bWay = false, bOnWall = false;
+					for (const FBrixPartition& P : W)
+					{
+						const FBox2D Bx(P.Min - FVector2D(.02, .02), P.Max + FVector2D(.02, .02));
+						if (Bx.IsInside(Q.Door)) { bOnWall = true; if (P.bDoorway) bWay = true; else Fail(Q.Name + TEXT("'s door is walled up")); }
+					}
+					if (bOnWall && bWay) ++Doorways;
+				}
+			}
+			for (int32 q = 0; q < In.Flats.Num(); ++q)
+			{
+				const FBrixFlat& Q = In.Flats[q];
+				if (Q.Interior.IsEmpty()) continue;
+				FBrixHome H;
+				if (!BrixFlatHomeOf(Ins, In, q, 16, NoWindows, H)) { Fail(Q.Name + TEXT(" has a plan that does not lay out")); continue; }
+				++Flats;
+				const FBox2D Room(Q.Min - FVector2D(.1, .1), Q.Max + FVector2D(.1, .1));
+				for (const FBrixFurniturePiece& P : H.Pieces)
+				{
+					++Pieces;
+					if (P.Floor != Q.Floor) Fail(Q.Name + TEXT(": a piece on another floor"));
+					if (!Room.IsInside(P.At)) { Fail(Q.Name + TEXT(": ") + P.Kind + TEXT(" stands outside the flat")); break; }
+				}
+				int32 Lie = 0;
+				for (const FBrixSpot& S : H.Spots) if (S.bLie) ++Lie;
+				if (Lie < Q.Beds.Num()) Fail(FString::Printf(TEXT("%s: %d bed places for %d beds"), *Q.Name, Lie, Q.Beds.Num()));
+			}
+		}
+	AddInfo(FString::Printf(TEXT("%d planned flats, %d pieces; %d flat doors are doorways in their walls"), Flats, Pieces, Doorways));
+	TestTrue(TEXT("the court flats are furnished"), Flats > 500);
+	return Bad == 0;
+}
+
 #endif
