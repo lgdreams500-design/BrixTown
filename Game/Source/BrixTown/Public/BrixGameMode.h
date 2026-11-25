@@ -65,6 +65,8 @@ public:
 	int32 RoomAt(const FVector& WorldCm) const;
 	const FBrixCity* CityData() const { return City.Get(); }
 	class ABrixRooms* RoomsActor() const { return Furnisher; }   // the furnished rooms near the camera, and the towers' lifts
+	struct FBrixInsides* InsidesData() const { return Insides.Get(); }   // what is inside the buildings, and their designs (BUILD-001)
+	class ABrixTownActor* Town() const { return TownActor; }          // the town, which draws a remodelled building again
 
 private:
 	void SpawnLight();

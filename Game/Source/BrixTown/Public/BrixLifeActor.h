@@ -5,6 +5,7 @@
 #include "BrixBuyMenu.h"
 #include "BrixEconomy.h"
 #include "BrixEstate.h"
+#include "BrixBuilder.h"
 #include "BrixQuests.h"
 #include "BrixRewards.h"
 #include "BrixRewardsWidget.h"
@@ -88,6 +89,9 @@ public:
 	FString BoardText(int32 Lot) const;   // PROP-023: what the board over a building's door says, or empty
 	void ShowOnMap(int32 Lot);            // UI-006: the mark at a building, and the big map
 	int32 LotHereForEstate() const { return LotHere(); }
+	// the building designer (F-BLD-DESIGN; BUILD-004 to BUILD-007, BUILD-016 to BUILD-020): remodel a building or unit you own
+	bool OpenRemodel(int32 Lot);
+	const TMap<FString, TSharedPtr<FJsonObject>>& Remodels() const { return RemodelsDone; }   // lot id -> its design as paid for
 	int32 CounterHere() const;            // the lot whose counter the player is at, or -1
 
 	UPROPERTY(Config) FString LifeFile = TEXT("Data/life.json");
@@ -128,6 +132,14 @@ private:
 	void WalletPanel(TSharedRef<SVerticalBox> Body);
 	void EstatePanel(TSharedRef<SVerticalBox> Body, const FString& Agent, int32 Here);   // life.js estatePanel(): at an agent's, or Properties
 	TSharedRef<SWidget> UnitRow(int32 i, const FString& Agent);
+	void RemodelPanel(TSharedRef<SVerticalBox> Body);
+	void RemodelSet(const FBrixDesignChanges& Changes);
+	void EndRemodel();                    // the building as it was (or as just paid for), the player's own view again
+	void DesignView();                    // BUILD-020: the camera over the building, three-quarters from its front
+	bool Holding(int32 Lot, bool& bWhole, TArray<int32>& Floors) const;   // life.js holding()
+	TSharedPtr<FJsonObject> DesignOf(int32 Lot) const;   // as remodelled and paid for, else inside.json's
+	bool RemodelPay(FString& Said);
+	void ApplyRemodel(int32 Lot, const TSharedPtr<FJsonObject>& Design);   // drawn and kept (inside.json's insides too)
 	FString BuyUnits(const TArray<int32>& Units, const FString& Agent, bool& bOk);
 	void QuestsPanel(TSharedRef<SVerticalBox> Body);
 	TMap<FString, FString> JobVars(const FBrixJob& O) const;
@@ -182,6 +194,16 @@ private:
 	int32 PayTerm = 0;                    // how to pay: 0 outright, else the mortgage term's place + 1 (life.js payChoice())
 	FString AgentFilter = TEXT("all");    // the kind of unit an agent shows
 	TMap<int32, FString> RentEdit;        // the rent typed for a unit of the player's, in brix
+	TArray<FBrixDesignLot> DesignLots;    // the town's lots as the designer sees them (BrixBuilder::LotOf)
+	TMap<FString, TSharedPtr<FJsonObject>> RemodelsDone;
+	TSharedPtr<FJsonObject> Draft, DraftBase;   // the remodel being tried, and what it started from
+	TArray<TSharedPtr<FJsonObject>> DraftUndo;
+	FString DesignTab = TEXT("outside"), DesignFacade = TEXT("*");
+	int32 DesignStorey = 0, ViewTurn = 0;
+	UPROPERTY() TObjectPtr<class ACameraActor> ViewCam;
+	UPROPERTY(Config) float DesignPitchDeg = 35.f;   // BUILD-020: the designer's view at the angle of an isometric drawing
+	UPROPERTY(Config) float RemodelPanelPx = 470.f;  // the designer's card, at the left of the screen
+	UPROPERTY(Config) float DesignTurnDeg = 36.f;    // and turned that far from the front (builder: designCam's .62 rad)
 	TSharedPtr<FBrixDay> Day;
 	TOptional<FBrixJob> Offered;          // the job offered in the talk under way (life.js _offer)
 	int32 PendingCounter = -1;            // a resident whose counter opens when the talk ends (an answer's act "shop")
