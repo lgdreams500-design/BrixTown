@@ -137,11 +137,33 @@ void ABrixCars::Build(UProceduralMeshComponent* M, int32 k, int32 Lod)
 		for (const float a : { h - 2.1f, -h + 2.5f }) for (const float s : { -1.f, 1.f }) Box(Body, a - .5f, a + .5f, s * w - .15f, s * w + .15f, 0.f, 1.f, Tyre);
 	}
 	else if (const FBrixCarModel* Md = Traffic->ModelOf(k))   // a Soft box car in this car's colours (cars.js meshCar())
+		PaintCar(Body, *Md, V.Kind == 1, k, [k](const TCHAR* T) { return H(k, T); }, Lod);
+	FBrixMeshArrays A;
+	A.From(Body, false);
+	A.Upload(M, -1, Material);
+}
+
+FVector2D ABrixCars::BuildParked(UProceduralMeshComponent* M, const FString& Seed) const
+{
+	if (!Traffic) return FVector2D::ZeroVector;
+	const double hm = BrixSliceHash({ Seed, TEXT("model") });
+	const FBrixCarModel* Md = Traffic->Models.Find(hm < .4 ? TEXT("small") : hm < .72 ? TEXT("estate") : TEXT("pickup"));
+	if (!Md) return FVector2D::ZeroVector;
+	FBrixBodyMesh Body;
+	PaintCar(Body, *Md, false, 0, [&Seed](const TCHAR* T) { return BrixSliceHash({ Seed, T }); }, 0);
+	FBrixMeshArrays A;
+	A.From(Body, false);
+	A.Upload(M, -1, Material);
+	return FVector2D(Md->Box.Y - Md->Box.X, Md->Box.W - Md->Box.Z);
+}
+
+void ABrixCars::PaintCar(FBrixBodyMesh& Body, const FBrixCarModel& InMd, bool bVan, int32 k, TFunctionRef<double(const TCHAR*)> R, int32 Lod) const
+{
+	const FBrixCarModel* Md = &InMd;
 	{
-		const bool bVan = V.Kind == 1;
-		const FVector3f BodyC = bVan ? VanPaint[k % 4] : Paint[(int32)(H(k, TEXT("col")) * 9) % 9];
-		const FVector3f RoofC = H(k, TEXT("two")) < .75 ? Roofs[(int32)(H(k, TEXT("roof")) * 2) % 2] : BodyC;
-		const bool bRack = H(k, TEXT("rack")) < .65, bSpare = H(k, TEXT("spare")) < .5;
+		const FVector3f BodyC = bVan ? VanPaint[k % 4] : Paint[(int32)(R(TEXT("col")) * 9) % 9];
+		const FVector3f RoofC = R(TEXT("two")) < .75 ? Roofs[(int32)(R(TEXT("roof")) * 2) % 2] : BodyC;
+		const bool bRack = R(TEXT("rack")) < .65, bSpare = R(TEXT("spare")) < .5;
 		TArray<TOptional<FVector3f>> PartC;
 		for (const FString& N : Traffic->Parts)
 		{
@@ -176,9 +198,6 @@ void ABrixCars::Build(UProceduralMeshComponent* M, int32 k, int32 Lod)
 			}
 		}
 	}
-	FBrixMeshArrays A;
-	A.From(Body, false);
-	A.Upload(M, -1, Material);
 }
 
 void ABrixCars::Tick(float DeltaSeconds)

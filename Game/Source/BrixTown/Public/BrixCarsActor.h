@@ -36,6 +36,9 @@ public:
 	struct FDrive { int32 K = -1; double X = 0, Z = 0, A = 0, V = 0; bool bRide = false; bool bMoving = false; };   // bRide: a passenger on a bus (CITY-092)
 	const FDrive& Driving() const { return Drive; }
 	int32 TargetCar(const FVector2D& P, double& OutD) const;
+	// A car left in a car park (cars.js parked(), the furniture outlet's): one of the Soft box models in the colours its seed
+	// gives, into M in the car's own frame; its length and width (0 when there are no models)
+	FVector2D BuildParked(class UProceduralMeshComponent* M, const FString& Seed) const;
 	bool IsBus(int32 k) const { return Traffic && Traffic->Vehicles.IsValidIndex(k) && Traffic->Vehicles[k].Kind == 2; }
 	// On a bus: where it is now, the player's seat near the front; false when it has left service (everybody off).
 	bool RideSeat(FVector2D& OutPos, double& OutYaw);
@@ -53,6 +56,7 @@ private:
 	UPROPERTY() TObjectPtr<UMaterialInterface> Material;
 	UPROPERTY() TArray<TObjectPtr<UProceduralMeshComponent>> Pool;
 	TSharedPtr<FBrixTraffic> Traffic;
+	void PaintCar(struct FBrixBodyMesh& Body, const struct FBrixCarModel& Md, bool bVan, int32 k, TFunctionRef<double(const TCHAR*)> R, int32 Lod) const;
 	struct FShown { UProceduralMeshComponent* M = nullptr; int32 Lod = -1; int32 Seen = 0; };
 	TMap<int32, FShown> Live;           // vehicle -> its mesh while near
 	FBrixTram Tram;                     // the trams (CITY-041), drawn as the slice's cars.js tram()

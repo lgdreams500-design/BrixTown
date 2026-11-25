@@ -9,8 +9,11 @@ The meshes are binary and kept in Git LFS (ADR-0002); this script is how they ar
 Run from the repository root (engine path as in docs/setup/DEV_ENVIRONMENT.md):
   "C:\Users\leena\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "%CD%\Game\BrixTown.uproject"
       -run=pythonscript -script="%CD%\Tools\unreal\import_furniture_kit.py" -unattended -nullrhi -nosplash
-Only the pieces the game places are imported: those of World/rules/home_plans.json's plans (FURN-060), in every line, and any
-named in BRIX_FURNITURE_EXTRA (comma-separated, e.g. p_counter,f_table), so the binaries stay as few as the town needs.
+Only the pieces the game places are imported: those of World/rules/home_plans.json's plans (FURN-060) and of the furniture
+outlet's room sets (FURN-020; its block file's sets, kit 17's living room and kit 18's rooms), in every line, and any named in
+BRIX_FURNITURE_EXTRA (comma-separated, e.g. p_counter,f_table), so the binaries stay as few as the town needs.
+BRIX_FURNITURE_ADD=1 imports only the pieces wanted that are not in /Game/Furniture yet and leaves the rest as they are (so
+adding pieces does not remake, and change, every mesh already there).
 """
 import glob
 import os
@@ -28,23 +31,38 @@ if not assets.does_asset_exist(MATERIAL):
                  "make_furniture_material.py", "exec"), {"__name__": "__main__"})
 material = unreal.load_asset(MATERIAL)
 
-# the old meshes go (the material stays: it lives in the same folder)
+# the old meshes go (the material stays: it lives in the same folder), unless only new ones are added
+ADD = os.environ.get("BRIX_FURNITURE_ADD", "") == "1"
 if assets.does_directory_exist(STAGE):
     assets.delete_directory(STAGE)
-for name in assets.list_assets(DEST, recursive=True, include_folder=False):
-    if name.split(".")[0] != MATERIAL:
-        assets.delete_asset(name)
+if not ADD:
+    for name in assets.list_assets(DEST, recursive=True, include_folder=False):
+        if name.split(".")[0] != MATERIAL:
+            assets.delete_asset(name)
 
 import json
 _plans = json.load(open(os.path.join(ROOT, "World", "rules", "home_plans.json"), encoding="utf-8"))["plans"]
 WANT = {it["piece"].replace(":", "_") for p in _plans.values() for it in p["items"]}
 WANT |= {n for n in os.environ.get("BRIX_FURNITURE_EXTRA", "").split(",") if n}
+# the furniture outlet's room sets (outlet.js): kit 18's rooms by their pieces, kit 17's living room by its kit pieces
+_city = os.path.join(ROOT, "World", "city_01")
+for _b in json.load(open(os.path.join(_city, "city.json"), encoding="utf-8"))["blocks"]:
+    for _l in json.load(open(os.path.join(_city, _b["file"]), encoding="utf-8"))["lots"]:
+        if _l.get("kind") != "furniture":
+            continue
+        for _st in _l.get("sets", []):
+            if _st.get("pieces"):
+                WANT |= {pc[0].replace(":", "_") for pc in _st["pieces"]}
+            else:
+                WANT |= {"k17_" + k for k in ("rug", "sofa", "armchair", "coffee", "floor_lamp", "bookcase", "bed", "bedside", "wardrobe")}
 _index = json.load(open(os.path.join(SOURCE, "index.json"), encoding="utf-8"))["pieces"]
 stems = []
 tasks = []
 for path in sorted(glob.glob(os.path.join(SOURCE, "*.glb"))):
     stem = os.path.splitext(os.path.basename(path))[0]
     if not any(stem == piece + "_" + line for piece in WANT if piece in _index for line in _index[piece]):
+        continue
+    if ADD and assets.does_asset_exist(DEST + "/SM_" + stem):
         continue
     t = unreal.AssetImportTask()
     t.filename = path
