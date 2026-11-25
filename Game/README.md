@@ -14,7 +14,7 @@ starts on the engine's empty map and the game mode builds the town from `World/`
 
 ## What it shows so far (grey-box)
 The starting city at the slice's sizes: a box for each building (its footprint, turned by its `angle`; `floors` × 3 m +
-0.4 m high, at least 3.6 m), a slab for each block (green for parks and open ground), a trunk and crown for each tree,
+0.4 m high, at least 3.6 m), a slab for each block (green for parks and open ground), each tree as the slice draws it,
 the sun low in the east, sky, haze, Lumen. You walk it from the city's spawn with the slice's keys: W A S D, mouse,
 Shift to run, Space to jump.
 
@@ -362,7 +362,7 @@ block of open ground (`Tests/values/streets_city_01.json`), and `CITY017_every_p
 about 600 things); run the script again after changing play.js, the blocks or the vegetation rules (after build_play.py).
 Bushes, hedges and fences break as crash.json says (CITY-072). The plants keep the built day's look whatever day the game
 starts on, as in the slice. Not yet: the lawn's own pattern (the slice's material 24: patches, mowing stripes, clover,
-daisies), so a lawn is one even green; the trees by species (they are still a trunk and a ball). The new shapes are kept out
+daisies), so a lawn is one even green (the trees: below). The new shapes are kept out
 of Lumen's surface cache (a card an instance oversubscribed it over the fields). `-BrixNoPlants` builds the town without
 them, to compare: 542,212 instances in 45 groups against 462,813 in 33; at High 37.7 fps in a park garden (40.2 without),
 37.8 over the fields (20.6 without: noisy, other sessions were running Unreal on the same laptop).
@@ -387,6 +387,29 @@ turning to the notice board they read or the kiosk they buy a paper at (dressing
 timetable staying up, the lettering's own font. At High 29.8 to 44.1 fps in Old Town's streets and the market at 11:00
 (noisy: other sessions were running Unreal); Lumen says its surface cache is oversubscribed by a quarter in Old Town (seen
 here; not checked against main).
+
+## Trees (WLD-056)
+Every tree is drawn as play.js tree() draws it, as it is today (build_play.py tree_rows(), the `trees` of
+`Game/Data/streets.json`): a pale trunk and a faceted crown in the leaves' own colour: round, a pine's tiers of cones, or a
+birch's slim crown on a white trunk with a dark band; bare in winter, pink in blossom in spring, a fallen one as a log; a ring
+of mulch round a trunk standing in a garden's lawn or the open ground's grass. In the woods each tree has fewer facets and no
+ring, and no car gets in among them; anywhere else a tree is a thing of its own the player's car topples (crash.json
+"tree"), crown and all: its faces are in its block square's mesh, which is made again without them when it falls. The port is
+`BrixTreeShapes` in `BrixStreets`, checked by `WLD056_every_tree_is_drawn_as_the_slice_draws_it` against play.js tree()
+itself (6,466 trees on day 16). Each block square's crowns are one mesh, fading out beyond `TreeCullDistance` (900 m). Not
+yet: a terrace's back-garden lawn (the town draws its lots' own yards there), so its trees have no ring.
+
+## Road markings, bus stops and traffic lights (CITY-043, CITY-045, CITY-091)
+The road network is drawn as roads.js draws it, from the `roads` of `Game/Data/streets.json` (build_play.py roads(), from
+World/city_01/roads.json and traffic.json): zebra crossings, the parking lay-bys' setts with their white ends and back line,
+the bus stops (a lay-by with its yellow box in a town street, a shelter in the colour of the first line that stops there,
+a bench, and a pole with a disc for each line), and at each of the 17 signalled junctions a pole on the right-hand kerb
+before the stop line with three dark lamps facing the oncoming cars. Each head's lit lamp (red, amber or green, glowing in
+its own colour times `SignalGlow`) is the phase traffic.py's signal() gives for the day and the minute (roads.js phase()),
+so a car stops on the red it was worked out to stop on; the game mode sets them each frame from the clock. The port is
+`BrixRoadCells`, `BrixRoadShapes`, `BrixSignalPhase` and `BrixSignalLamp`, checked by
+`CITY043_the_road_markings_and_signals_are_drawn_as_the_slice_draws_them` against roads.js itself (every block square, each
+head's lamp at 10:00, and every signal's phase for both streets through a whole day).
 
 ## Playgrounds and children playing (WLD-032)
 The four parks' playgrounds are drawn as dressing.js draws them: the soft red ground with a pale edge, the swings' A-frames
@@ -686,3 +709,5 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD056_the_open_ground_is_drawn_as_the_slice_draws_it` | WLD-056, ART-001 |
 | `BrixTown.World.WLD032_children_play_as_the_slice_puts_them` | WLD-032 |
 | `BrixTown.World.WLD028_the_street_dressing_is_drawn_as_the_slice_draws_it` | WLD-028, WLD-031, WLD-034 |
+| `BrixTown.World.WLD056_every_tree_is_drawn_as_the_slice_draws_it` | WLD-056 |
+| `BrixTown.World.CITY043_the_road_markings_and_signals_are_drawn_as_the_slice_draws_them` | CITY-043, CITY-045, CITY-091 |

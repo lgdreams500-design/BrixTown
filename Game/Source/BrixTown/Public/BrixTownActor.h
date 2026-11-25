@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "BrixStreets.h"
 #include "BrixTownActor.generated.h"
 
 struct FBrixCity;
@@ -28,6 +29,11 @@ struct FBrixBreakable
 	TArray<FPart> Parts;
 	int32 Light = -1;                   // its entry in LampLights
 	bool bBroken = false;
+	// a tree's crown: faces in a block square's facet mesh (FacetKey), made again without it when it breaks; and the same
+	// faces here (centimetres, the town's frame; a normal and a colour a face) for the toppling copy
+	int32 FacetKey = INDEX_NONE;
+	TArray<FVector3f> FaceP, FaceN;
+	TArray<FLinearColor> FaceC;
 };
 
 // The colour of one material slot of the building kit's pieces (slot names as in Tools/blender/unreal_kit_36.py).
@@ -69,6 +75,11 @@ public:
 	// The windows lit by night (play.js windows()): a warm pane behind the glass of a share of each kind's windows, shown and
 	// glowing as the night comes (0 by day, 1 at night)
 	void SetNight(float Night01);
+	// The traffic lights (CITY-045): each head's lit lamp in the phase traffic.py's cycle gives it now (roads.js draw());
+	// Day and the clock's minutes since its midnight (past 1440 on the days after)
+	void SetSignals(int32 Day, double Minutes);
+	UPROPERTY(Config) float SignalGlow = 3.f;           // how brightly a signal's lamp glows, times its colour (the slice's lamp: x 5)
+	UPROPERTY(Config) float TreeCullDistance = 900.f;   // m; a block square's tree crowns (one mesh a square) beyond this
 	UPROPERTY(Config) TMap<FString, float> LitShare;     // the share of a kind's windows lit at night (play.js windows() lit)
 	UPROPERTY(Config) TArray<FLinearColor> NightWarm = { FLinearColor(1.f, .5f, .2f), FLinearColor(1.f, .68f, .36f) };   // the two ends of the lamplight's colour
 	UPROPERTY(Config) float NightGlow = 1.5f;
@@ -182,9 +193,18 @@ private:
 	void Shapes(const TArray<FBrixShape>& S);
 	UStaticMesh* FacetMesh(const FString& MeshName, const TArray<FVector3f>& P, const TArray<FVector3f>& N, const TArray<FLinearColor>& C);
 	UInstancedStaticMeshComponent* DomeGroup(int32 Variant);
-	struct FFacets { TArray<FVector3f> P, N; TArray<FLinearColor> C; };
+	struct FFacets { TArray<FVector3f> P, N; TArray<FLinearColor> C; TArray<int32> Owner; };   // Owner: a face's breakable, or INDEX_NONE
 	void Facet(const FVector3d& A, const FVector3d& B, const FVector3d& C, const FVector3d& Hint, const FVector3d& Col);
-	TMap<int32, FFacets> Facets;        // by block
+	TMap<int32, FFacets> Facets;        // by block (and by block square for the trees and the road network: TreeKey, RoadKey)
+	struct FKeptFacets { FFacets F; UStaticMeshComponent* C = nullptr; int32 Made = 0; };
+	TMap<int32, FKeptFacets> KeptFacets;   // the facet meshes with faces of things a car can break, to make again without them
+	void RemakeFacets(int32 Key);
+	TArray<FBrixSignalHead> SignalHeads;
+	TArray<int32> SignalPhase;
+	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> SignalLamps;
+	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> SignalMat;
+	void BuildTreesAndRoads(const FBrixCity& City);
+	enum : int32 { RoadKey = 1000000, TreeKey = 2000000 };   // facet keys: + square x * 1000 + square z
 	int32 BlockIndex = 0;
 	bool bNoPlants = false;             // -BrixNoPlants
 	TSharedPtr<FBrixStreetsToday> Today;

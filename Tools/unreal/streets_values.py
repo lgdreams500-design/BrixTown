@@ -9,6 +9,8 @@ every plant and wild thing in the block files, every garden's lawn and every blo
                                       full for one thing in twenty. CITY017_every_plant_is_drawn_as_the_slice_draws_it and
                                       WLD056_the_open_ground_is_drawn_as_the_slice_draws_it check BrixWorld's BrixStreets
                                       against it.
+Also play.js tree() for every tree today and roads.js for the road network (TREES_HARNESS), for
+WLD056_every_tree_is_drawn_as_the_slice_draws_it and CITY043_the_road_markings_and_signals_are_drawn_as_the_slice_draws_them.
 The heights the functions read are the Unreal town's (the paving 0.12 m, an open lot 0.16 m, the open ground -0.03 m), set
 the same way by the tests. Run it again after changing play.js, the block files or the vegetation rules (after build_play.py).
   python Tools/unreal/streets_values.py
@@ -33,6 +35,48 @@ FUNCS = ["heads", "plantClump", "plant", "lawn", "wildProp", "greenGround"]
 CONSTS = ["clamp", "mix", "mix3", "mul3", "LAWN", "PLANTS", "BOARD", "CROP", "GREEN_KINDS"]
 DRESS_JS = os.path.join(ROOT, "Prototype", "play", "dressing.js")
 DAY = os.path.join(ROOT, "Game", "Data", "day.json")
+ROADS_JS = os.path.join(ROOT, "Prototype", "play", "roads.js")
+
+# play.js tree() and treeRing() for every tree today, and roads.js for the road network (WLD-056, CITY-043, CITY-045,
+# CITY-091): each block square's zebras, lay-bys, bus stops and traffic-light poles, each head's lamp, and every signal's
+# phase over a day. The ground under a tree or an out-of-town shelter is the Unreal town's rule, as the test sets it: the
+# open ground -0.03 inside a block of open ground, the paving 0.12 inside any other block, the street 0.
+TREES_HARNESS = r"""
+let REC = [];
+const rec = (k, a, c) => REC.push([k, a, c || null]);
+const world = {
+  box(x0, y0, z0, x1, y1, z1, c) { rec(0, [x0, y0, z0, x1, y1, z1], c); },
+  ybox(cx, y0, cz, w, h, d, yaw, c) { rec(1, [cx, y0, cz, w, h, d, yaw], c); },
+  flat(x0, z0, x1, z1, y, c) { rec(2, [x0, z0, x1, z1, y], c); },
+  quad(p0, p1, p2, p3, c, f, hint) { rec(4, [...p0, ...p1, ...p2, ...p3, ...hint], c); },
+};
+function solid(x0, y0, z0, x1, y1, z1) { rec(8, [x0, y0, z0, x1, y1, z1], null); }
+const Y_WILD = -.03, Y_GRASS = .15, P = D.pitch, LAWNS = [], blockAt = new Map();
+for (const b of D.blocks) {
+  const [ci, cj] = b.span || [1, 1]; b.ext = [b.size + (ci - 1) * P, b.size + (cj - 1) * P];
+  for (let di = 0; di < ci; di++) for (let dj = 0; dj < cj; dj++) blockAt.set((b.grid[0] + di) + "," + (b.grid[1] + dj), b);
+}
+const blockOf = (x, z) => blockAt.get(Math.floor(x / P) + "," + Math.floor(z / P));
+function groundBase(x, z) {
+  for (const b of D.blocks) { const [bx, bz] = b.origin; if (x > bx && z > bz && x < bx + b.ext[0] && z < bz + b.ext[1]) return GREEN_KINDS[b.template] ? Y_WILD : .12; }
+  return 0;
+}
+try {
+for (const b of D.blocks) {   // the lawns in drawBase()'s order (lanes: none of the open ground has them)
+  const [bx, bz] = b.origin, S = b.size, [SX, SZ] = b.ext;
+  if (GREEN_KINDS[b.template] && b.template !== "woods") LAWNS.push([bx, bz, bx + SX, bz + SZ, Y_WILD]);
+  if (b.template === "rows") LAWNS.push([bx + 2, bz + 16.5, bx + S - 2, bz + S - 16.5, Y_GRASS]);
+  if (b.template === "park") LAWNS.push([bx + 1, bz + 1, bx + SX - 1, bz + SZ - 1, Y_GRASS]);
+  for (const l of b.lots) if (l.kind === "garden") LAWNS.push([...l.rect, Y_GRASS + .02]);
+}
+const out = { trees: {}, roads: {}, lamps: [], phase: [] };
+D.trees.forEach((t, i) => { const bk = blockOf(t[0], t[1]); REC = []; tree(t, !!(bk && bk.template === "woods")); out.trees[i] = REC; });
+for (const k of Roads.cells()) { REC = []; Roads.build(world, .12, k); out.roads[k] = REC; }
+REC = []; out.lit = Roads.draw(world, 600, null, 0); out.lamps = REC;
+for (let s = 0; s < Roads.data.signals.length; s++) for (let m = 0; m < 1440; m += 0.37) out.phase.push([s, m, Roads.phase(s, "ew", m), Roads.phase(s, "ns", m)]);
+document.getElementById("out").textContent = "@@" + JSON.stringify(out) + "@@";
+} catch (e) { document.getElementById("out").textContent = "@@" + JSON.stringify({ error: String(e.stack || e) }) + "@@"; }
+"""
 
 # dressing.js (WLD-032) with the play.js globals it reads stubbed: every playground piece's still parts drawn, the play
 # places put on their pieces (init), a child at every place near each playground at four moments (apply), and the moving
@@ -213,16 +257,23 @@ def main():
     pre2 = "const D = " + json.dumps(dict(blocks=blocks, acts=day["acts"], dressing=streets["dressing"], flowers=streets["flowers"])) + ";\n"
     dress = run_page(pre2 + h.group(0) + m.group(0) + "".join(cut(src, c) for c in ["clamp", "mix", "mix3", "mul3", "pick", "yawOf"]) + m4.group(0)
                      + cut(src, "PLASTER") + cut(src, "fbox") + cut(src, "crates") + cut(src, "cratesNow") + arch_fn + DRESS_STUBS + open(DRESS_JS, encoding="utf-8").read() + DRESS_HARNESS)
+    wasted = dict(roads=streets["roads"], city=dict(grid=city["grid"]), day=dict(index=streets["day"]), pace=streets["pace"])
+    pre3 = ("window.WASTED = " + json.dumps(wasted) + ";\nconst D = " + json.dumps(dict(blocks=blocks, pitch=city["grid"]["pitch"], trees=streets["trees"])) + ";\n"
+            + "const LAWN = " + json.dumps(streets["lawn"]) + ";\n")
+    roads = run_page(pre3 + h.group(0) + "".join(cut(src, c) for c in ["clamp", "mix", "mix3", "mul3", "GREEN_KINDS"]) + cut(src, "treeRing") + cut(src, "tree")
+                     + open(ROADS_JS, encoding="utf-8").read() + TREES_HARNESS)   # (roads.js stop() finds the harness's groundBase())
     values = dict(note="Generated by Tools/unreal/streets_values.py: play.js plant(), lawn(), wildProp() and greenGround() for every plant, wild "
                        "thing, garden and block of open ground, for CITY017_every_plant_is_drawn_as_the_slice_draws_it and "
                        "WLD056_the_open_ground_is_drawn_as_the_slice_draws_it. Calls: [kind, numbers, colour, points, text]; kinds as FBrixShape.",
                   day=streets["day"], props=summary(out["props"]), lawns=summary(out["lawns"], 5), ground=summary(out["ground"], 3),
-                  dress=summary(dress["dress"], 1), apply=dress["apply"], draw=dress["draw"], keep=dress["keep"])
+                  dress=summary(dress["dress"], 1), apply=dress["apply"], draw=dress["draw"], keep=dress["keep"],
+                  trees=summary(roads["trees"], 25), roads=summary(roads["roads"], 1), lamps=roads["lamps"], phase=roads["phase"])
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
         json.dump(values, f, separators=(",", ":"))
-    print("wrote %s: %d things, %d lawns, %d blocks of open ground; %d pieces of street dressing, %d children, %d draws" % (os.path.relpath(OUT, ROOT),
-          len(out["props"]), len(out["lawns"]), len(out["ground"]), len(dress["dress"]), len(dress["apply"]), len(dress["draw"])))
+    print("wrote %s: %d things, %d lawns, %d blocks of open ground; %d pieces of street dressing, %d children, %d draws; %d trees, %d road squares, %d signal heads" % (
+          os.path.relpath(OUT, ROOT), len(out["props"]), len(out["lawns"]), len(out["ground"]), len(dress["dress"]), len(dress["apply"]), len(dress["draw"]),
+          len(roads["trees"]), len(roads["roads"]), len(roads["lamps"])))
 
 
 if __name__ == "__main__":

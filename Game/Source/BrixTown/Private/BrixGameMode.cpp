@@ -497,6 +497,7 @@ void ABrixGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	UpdateSun();
+	if (TownActor) TownActor->SetSignals(Day, ClockMinutes());   // the traffic lights on traffic.py's cycle (CITY-045)
 	if (!WalkTo && WalkPoints.Num() && GetWorld()->GetTimeSeconds() > 1.0)   // -BrixWalk: the next point
 	{
 		WalkTo = WalkPoints[0];
