@@ -42,6 +42,7 @@ class BRIXTOWN_API ABrixLife : public AActor
 public:
 	ABrixLife();
 	void Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay);
+	TSharedPtr<const struct FBrixGoodsModels> GoodsModels;   // the mall's goods as made in Blender, for the buy menus (set before Start; FURN-065)
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 

@@ -1,4 +1,5 @@
 #include "BrixBuyMenu.h"
+#include "BrixGoods.h"
 
 #include "Dom/JsonObject.h"
 
@@ -147,7 +148,31 @@ FBrixThingMesh FBrixBuyMenuRules::ShapeMesh(const FString& Shape, const FLinearC
 		Face(Lo[2], Lo[3], Hi[3], Hi[2], Nm(0, 1));
 		Face(Lo[3], Lo[0], Hi[0], Hi[3], Nm(-1, 0));
 	}
-	if (!M.P.Num()) return M;
+	Finish(M);
+	return M;
+}
+
+FBrixThingMesh FBrixBuyMenuRules::ModelMesh(const FString& Piece) const
+{
+	FBrixThingMesh M;
+	const FBrixGoodsModel* G = Models ? Models->Find(Piece) : nullptr;
+	if (!G) return M;
+	const FBrixGoodsModel::FLod& L = G->Lods[0];
+	const TArray<FVector3f> Col = Models->Colours(Piece);
+	for (const int32 q : L.I)   // x across, y up, z towards the viewer: the model's v (front to back) turned round
+	{
+		const int32 i = q * 3;
+		M.P.Add(FVector3f(L.P[i] * .001f, L.P[i + 1] * .001f, -L.P[i + 2] * .001f));
+		M.N.Add(FVector3f(L.N[i] * .01f, L.N[i + 1] * .01f, -L.N[i + 2] * .01f));
+		M.C.Add(Col[L.C[q]]);
+	}
+	Finish(M);
+	return M;
+}
+
+void FBrixBuyMenuRules::Finish(FBrixThingMesh& M)   // buymenu.js finish(): bounds, the ball it fits in, its footprint
+{
+	if (!M.P.Num()) return;
 	M.Lo = FVector3f(1e9f); M.Hi = FVector3f(-1e9f);
 	for (const FVector3f& p : M.P) { M.Lo = FVector3f::Min(M.Lo, p); M.Hi = FVector3f::Max(M.Hi, p); }
 	M.Cen = (M.Lo + M.Hi) * .5f;
@@ -155,12 +180,17 @@ FBrixThingMesh FBrixBuyMenuRules::ShapeMesh(const FString& Shape, const FLinearC
 	for (const FVector3f& p : M.P) { R = FMath::Max(R, (p - M.Cen).Size()); Foot = FMath::Max(Foot, FMath::Sqrt(FMath::Square(p.X - M.Cen.X) + FMath::Square(p.Z - M.Cen.Z))); }
 	M.R = FMath::Max(R, .01f);
 	M.Foot = Foot;
-	return M;
 }
 
 TOptional<FBrixThingMesh> FBrixBuyMenuRules::MeshFor(const FString& Thing, const FString& BandColour) const
 {
 	const FBrixShows S = Shows(Thing);
+	if (S.Kind == TEXT("piece"))
+	{
+		FBrixThingMesh M = ModelMesh(S.Name);
+		if (!M.P.Num()) return {};
+		return M;
+	}
 	if (S.Kind != TEXT("shape") || S.Name.IsEmpty()) return {};
 	const FLinearColor* Band = Colours.Find(BandColour);
 	const FLinearColor* Own = S.Colour ? Palette.Find(*S.Colour) : nullptr;

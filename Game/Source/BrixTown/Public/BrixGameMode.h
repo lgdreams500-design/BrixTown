@@ -81,6 +81,7 @@ private:
 	UPROPERTY() TObjectPtr<class ABrixRooms> Furnisher;      // the homes near the camera, furnished (FURN-060)
 	TSharedPtr<struct FBrixTraffic> Traffic;     // the day's vehicles (Game/Data/cars.json)
 	TSharedPtr<struct FBrixInsides> Insides;     // what is inside the buildings (Game/Data/inside.json; CITY-013)
+	TSharedPtr<const struct FBrixGoodsModels> GoodsModels;   // the mall's goods as made in Blender (Game/Data/goods_models.json; FURN-065)
 	void PutInside(const FString& LotId, bool bWalk);
 	struct FRoom { int32 Lot = -1; FVector2D Centre = FVector2D::ZeroVector, Half = FVector2D::ZeroVector; double Cos = 1, Sin = 0; float Top = 3.f; };
 	TArray<FRoom> Rooms;                         // every hollow building's inside, for RoomAt

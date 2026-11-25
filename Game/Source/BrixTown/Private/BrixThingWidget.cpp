@@ -107,8 +107,10 @@ int32 SBrixThing::OnPaint(const FPaintArgs&, const FGeometry& G, const FSlateRec
 	{
 		FTri Tr;
 		FVector3d Qs[3];
-		const FVector3f& N0 = Mesh->N[t * 3];
-		const FVector3d Nn(cy * N0.X + sy * N0.Z, N0.Y, -sy * N0.X + cy * N0.Z);
+		// each corner's own normal, turned (a model's are smooth; a box's three are its face's)
+		FVector3d Nk[3];
+		for (int32 k = 0; k < 3; ++k) { const FVector3f& N0 = Mesh->N[t * 3 + k]; Nk[k] = FVector3d(cy * N0.X + sy * N0.Z, N0.Y, -sy * N0.X + cy * N0.Z); }
+		const FVector3d Nn = Nk[0] + Nk[1] + Nk[2];
 		double Wsum = 0;
 		for (int32 k = 0; k < 3; ++k)
 		{
@@ -123,10 +125,11 @@ int32 SBrixThing::OnPaint(const FPaintArgs&, const FGeometry& G, const FSlateRec
 		const FVector3d Nv(Nn.X, cp * Nn.Y - sp * Nn.Z, sp * Nn.Y + cp * Nn.Z), Mid = (Qs[0] + Qs[1] + Qs[2]) / 3;
 		if (FVector3d::DotProduct(Nv, FVector3d(0, 0, Dist) - Mid) <= 0) continue;
 		Tr.Depth = Wsum / 3;
-		const float D = FMath::Max(0.f, (float)Nn.X * L.X + (float)Nn.Y * L.Y + (float)Nn.Z * L.Z), Up = (float)Nn.Y * .5f + .5f;
-		const FVector3f Light = FVector3f(1.f, .86f, .68f) * D * 1.5f + FVector3f(.42f, .55f, .82f) * FMath::Lerp(.2f, .62f, Up) + FVector3f(.5f, .44f, .38f) * (1 - Up) * .4f + FVector3f(.1f);
 		for (int32 k = 0; k < 3; ++k)
 		{
+			const FVector3d Nu = Nk[k].GetSafeNormal();
+			const float D = FMath::Max(0.f, (float)Nu.X * L.X + (float)Nu.Y * L.Y + (float)Nu.Z * L.Z), Up = (float)Nu.Y * .5f + .5f;
+			const FVector3f Light = FVector3f(1.f, .86f, .68f) * D * 1.5f + FVector3f(.42f, .55f, .82f) * FMath::Lerp(.2f, .62f, Up) + FVector3f(.5f, .44f, .38f) * (1 - Up) * .4f + FVector3f(.1f);
 			const FVector3f& Col = Mesh->C[t * 3 + k];
 			const float Foot = FMath::Lerp(.7f, 1.f, FMath::SmoothStep(0.f, .22f, (Mesh->P[t * 3 + k].Y - Lo) / Hh));
 			FVector3f Cc(1 - FMath::Exp(-Col.X * Light.X * Foot * 1.25f), 1 - FMath::Exp(-Col.Y * Light.Y * Foot * 1.25f), 1 - FMath::Exp(-Col.Z * Light.Z * Foot * 1.25f));

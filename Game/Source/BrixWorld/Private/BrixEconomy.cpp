@@ -185,6 +185,8 @@ bool LoadBrixLife(const FString& Path, FBrixLifeData& Out, FString& OutError)
 		R.bGoods = true;
 		R.PerOutlet = (int32)Int(*G, TEXT("per_outlet"), 8);
 		R.OutletStockTarget = (int32)Int((*G)->GetObjectField(TEXT("stock")), TEXT("target"), 6);
+		const TSharedPtr<FJsonObject>* Dsp = nullptr;
+		if ((*G)->TryGetObjectField(TEXT("display"), Dsp)) (*Dsp)->TryGetStringField(TEXT("detail"), R.GoodsDetail);
 		for (const auto& K : (*G)->GetObjectField(TEXT("sells"))->Values)
 		{
 			TArray<FString>& L = R.OutletSells.Add(FString(K.Key.ToView()));

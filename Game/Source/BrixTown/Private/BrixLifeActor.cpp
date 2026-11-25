@@ -129,6 +129,7 @@ void ABrixLife::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay)
 	for (const FBrixBlock& B : City.Blocks) for (const FBrixLot& L : B.Lots) { LotAngle.Add(L.AngleDeg); LotDoor.Add(L.Door); DesignLots.Add(BrixBuilder::LotOf(L, B)); }
 	E = MakeUnique<FBrixEconomy>(Data, Lots);
 	if (!LoadBrixBuyMenu(Data.Json, BuyMenu, Error)) UE_LOG(LogTemp, Warning, TEXT("Brix Town: buy menus without pictures (%s)"), *Error);
+	BuyMenu.Models = GoodsModels;   // a good with a model shows its model (FURN-065); without them, its stand-in
 	double D0 = 0, M0 = 0;
 	Frame(D0, M0);
 	E->Advance((int32)D0, M0);
