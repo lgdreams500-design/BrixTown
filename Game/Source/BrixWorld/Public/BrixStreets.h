@@ -26,6 +26,7 @@ struct BRIXWORLD_API FBrixShape
 		Disc,     // A: x, z, r, y (play.js disc(): 18 wedges)
 		Label,    // A: x, y, z (its middle), nx, nz (the way it faces), h (letter height); Text
 		Solid,    // A: x0, y0, z0, x1, y1, z1: in the way, never drawn (play.js solid())
+		OBox,     // A: the slice's matrix m (16, column by column), then the box's middle cx, cy, cz and size sx, sy, sz in its frame (Mesh.obox())
 	};
 	EKind Kind = Box;
 	FVector3d Col = FVector3d::ZeroVector;
@@ -55,6 +56,18 @@ struct BRIXWORLD_API FBrixStreetsToday
 	FVector3d EdgeColor = FVector3d(.23, .31, .16), TuftColor = FVector3d(.24, .32, .16), MulchColor = FVector3d(.2, .15, .11);
 };
 BRIXWORLD_API bool LoadBrixStreetsToday(const FString& Path, FBrixStreetsToday& Out, FString& OutError);
+
+// play.js's M4: 4 x 4 matrices, column by column, as the slice's Mesh.obox() takes them
+struct BRIXWORLD_API FBrixM4
+{
+	double M[16] = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
+	static FBrixM4 T(double X, double Y, double Z);
+	static FBrixM4 Rx(double A);
+	static FBrixM4 Ry(double A);
+	static FBrixM4 Rz(double A);
+	FBrixM4 operator*(const FBrixM4& B) const;   // M4.mul(this, b)
+	FVector3d Pt(double X, double Y, double Z) const;
+};
 
 // play.js's palette (C) and the open ground's own colours
 namespace BrixSlice
@@ -86,6 +99,11 @@ BRIXWORLD_API void BrixLawnShapes(double X0, double Z0, double X1, double Z1, do
 	const FBrixStreetsToday& Today, TArray<FBrixShape>& Out);
 // play.js greenGround() (WLD-056): a wood's leaf litter or a lawn over the whole block, and its tracks
 BRIXWORLD_API void BrixGreenGroundShapes(const FBrixBlock& B, const FBrixGround& G, const FBrixStreetsToday& Today, TArray<FBrixShape>& Out);
+// dressing.js prop() for the playgrounds' still parts (WLD-032): the soft ground, the swings' frames, the slides, the
+// seesaws' pivots, the sandpits and the climbing frames (their seats and planks move: BrixPlay). False for any other kind.
+BRIXWORLD_API bool BrixDressShapes(const FBrixProp& P, const FBrixBlock& B, double G, const FBrixStreetsToday& Today, TArray<FBrixShape>& Out);
+// Mesh.obox() as a shape
+BRIXWORLD_API void BrixOBox(TArray<FBrixShape>& Out, const FBrixM4& M, double Cx, double Cy, double Cz, double Sx, double Sy, double Sz, const FVector3d& Col);
 // The open ground's templates (play.js GREEN_KINDS)
 BRIXWORLD_API bool BrixIsWildTemplate(const FString& Template);
 // The slice's dome() as a mesh: rings of points (M + 1 rings of N), for a crown R = 1, H = 1 standing at the origin, with

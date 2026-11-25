@@ -394,6 +394,7 @@ namespace
 				const double dn = FMath::Min(g.L2 * .98, FMath::Max(.04 * g.S, hip.Z - g.ankz - *md.Floor)), fw = FMath::Sqrt(FMath::Max(0.0, FMath::Square(.93 * (g.L1 + g.L2)) - dn * dn));
 				ft = hip + FVector(side * .05 * g.S, -fw, -dn);
 			}
+			else if (md.bStraddle) ft = hip + FVector(side * .42 * g.S, -g.L1 * .45, -g.L2 * .95);   // astride a plank: a leg down each side of it
 			leg(P, k, g, hip, ft, FVector(1, 0, 0), 0, side * rad(8));
 		}
 		double arms[2][3] = { { 26, 6, 62 }, { 26, 6, 62 } };

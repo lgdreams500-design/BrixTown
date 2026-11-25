@@ -1151,6 +1151,11 @@ void ABrixTownActor::BuildProp(const FBrixProp& P, const FBrixBlock& Blk)
 		else if (!BrixWildShapes(P, G, S)) S.Reset();
 		if (S.Num() || k == TEXT("plant")) { Shapes(S); return; }
 	}
+	if (P.Set == TEXT("dress"))   // the street dressing drawn as dressing.js draws it (WLD-028, WLD-032): the playgrounds so far
+	{
+		TArray<FBrixShape> S;
+		if (BrixDressShapes(P, Blk, g, *Today, S)) { Shapes(S); return; }
+	}
 	const bool ax = P.Along != TEXT("z");
 	const float Oct = UE_PI / 8;
 	auto glass = [&](float x0, float y0, float z0, float x1, float y1, float z1)   // lit by night (ABrixLamps)
@@ -1344,6 +1349,19 @@ void ABrixTownActor::Shapes(const TArray<FBrixShape>& S)
 		case FBrixShape::Label:   // painted letters facing the way the slice's lettering faces
 			Name(Sh.Text, ToWorld(FVector2D(A[0], A[2]), (float)A[1]), FMath::Atan2(A[4], A[3]), (float)A[5] * 1.6f, 1.5f, true);
 			break;
+		case FBrixShape::OBox:   // Mesh.obox(): a box placed by the slice's matrix (its axes swapped to Unreal's: x, z, y)
+		{
+			const double* m = A.GetData();
+			const FVector Ax(m[0], m[2], m[1]), Ay(m[8], m[10], m[9]), Az(m[4], m[6], m[5]);   // the box's x, its z and its y
+			FBrixM4 M;
+			for (int32 j = 0; j < 16; ++j) M.M[j] = m[j];
+			const FVector3d C = M.Pt(A[16], A[17], A[18]);
+			FTransform Tr(FMatrix(Ax, Ay, Az, FVector::ZeroVector));
+			Tr.SetLocation(ToWorld(FVector2D(C.X, C.Z), (float)C.Y));
+			Tr.SetScale3D(FVector(A[19], A[21], A[20]));
+			Add(FVector(A[19], A[20], A[21]).GetMax() <= FineSize ? Fine : Open, Tr, Lc(Sh.Col));
+			break;
+		}
 		case FBrixShape::Solid:
 			Add(BlockerGroup(), FTransform(FQuat::Identity, ToWorld(FVector2D((A[0] + A[3]) / 2, (A[2] + A[5]) / 2), (float)((A[1] + A[4]) / 2)),
 				FVector(FMath::Abs(A[3] - A[0]), FMath::Abs(A[5] - A[2]), FMath::Abs(A[4] - A[1]))), FLinearColor::White);

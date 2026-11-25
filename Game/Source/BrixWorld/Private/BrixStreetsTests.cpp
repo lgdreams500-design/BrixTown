@@ -1,6 +1,7 @@
 // CITY-017, WLD-040, WLD-056, ART-001: the gardens, lawns and open ground drawn as the slice draws them. The slice's own
 // functions run in headless Edge (Tools/unreal/streets_values.py) give the values in Tests/values/streets_city_01.json.
 #include "BrixStreets.h"
+#include "BrixPlay.h"
 #include "BrixCity.h"
 
 #include "Dom/JsonObject.h"
@@ -156,6 +157,114 @@ bool FWLD056_OpenGroundIsDrawn::RunTest(const FString&)
 	TestTrue(TEXT("gardens (33 when written)"), Gardens >= 20);
 	TestTrue(TEXT("the open ground's things (600 or so when written)"), Things > 400);
 	TestEqual(TEXT("drawn otherwise than in the slice"), Bad, 0);
+	return true;
+}
+
+namespace
+{
+	// calls given in full (a draw's), against the slice's: kind, numbers and colour, call by call
+	void CompareCalls(FAutomationTestBase& T, const FString& What, const TArray<FBrixShape>& Got, const TArray<TSharedPtr<FJsonValue>>& Calls, int32& Bad)
+	{
+		FString Why;
+		if (Got.Num() != Calls.Num()) Why = FString::Printf(TEXT("%d calls, the slice %d"), Got.Num(), Calls.Num());
+		for (int32 i = 0; i < Calls.Num() && Why.IsEmpty(); ++i)
+		{
+			const TArray<TSharedPtr<FJsonValue>>& R = Calls[i]->AsArray();
+			const TArray<TSharedPtr<FJsonValue>>& A = R[1]->AsArray();
+			if ((int32)R[0]->AsNumber() != (int32)Got[i].Kind || A.Num() != Got[i].A.Num()) { Why = FString::Printf(TEXT("call %d: kind or count"), i); break; }
+			for (int32 j = 0; j < A.Num(); ++j) if (FMath::Abs(A[j]->AsNumber() - Got[i].A[j]) > 1e-6) { Why = FString::Printf(TEXT("call %d, number %d: %.6f, the slice %.6f"), i, j, Got[i].A[j], A[j]->AsNumber()); break; }
+			if (Why.IsEmpty() && R[2]->Type == EJson::Array) for (int32 j = 0; j < 3; ++j) if (FMath::Abs(R[2]->AsArray()[j]->AsNumber() - Got[i].Col[j]) > 1e-6) Why = FString::Printf(TEXT("call %d: colour"), i);
+		}
+		if (!Why.IsEmpty() && ++Bad <= 12) T.AddError(What + TEXT(": ") + Why);
+	}
+}
+
+// WLD-032: the playgrounds (soft ground, swings, slides, seesaws, sandpits, climbing frames) are drawn as dressing.js draws
+// them, and a child at a play place is where dressing.js puts them at any moment, sitting, climbing or sliding as there:
+// on a swing seat swinging, astride a seesaw's plank, up the slide's ladder (the climbing walk), on its top, down the
+// chute and round the back, in the sandpit facing its middle, up and down the climbing frame's side; the swing seats and
+// seesaw planks swing and rock only while someone is on them; anyone walking is kept out of the slides and frames.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWLD032_ChildrenPlay, "BrixTown.World.WLD032_children_play_as_the_slice_puts_them",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FWLD032_ChildrenPlay::RunTest(const FString&)
+{
+	FStreetsCase C;
+	if (!Load(*this, C)) return false;
+	FBrixPlay Play;
+	FString Err;
+	if (!TestTrue(TEXT("the playgrounds' motion loads: ") + Err, LoadBrixPlayMotion(Root(TEXT("Data/streets.json")), Play.Motion, Err))) return false;
+	const TSharedPtr<FJsonObject> Dress = C.Values->GetObjectField(TEXT("dress"));
+	int32 Bad = 0, Pieces = 0;
+	TArray<const FBrixProp*> Parks;
+	for (const FBrixBlock& B : C.City.Blocks)
+		for (int32 i = 0; i < B.Props.Num(); ++i)
+		{
+			const FBrixProp& P = B.Props[i];
+			if (P.Set != TEXT("dress")) continue;
+			TArray<FBrixShape> Got;
+			const double G = GroundAt(B, P).Here;
+			if (!BrixDressShapes(P, B, G, C.Today, Got) || !(P.Kind == TEXT("playground") || P.Kind == TEXT("swing") || P.Kind == TEXT("slide") || P.Kind == TEXT("seesaw") || P.Kind == TEXT("sandpit") || P.Kind == TEXT("climber"))) continue;
+			++Pieces;
+			const TSharedPtr<FJsonObject>* W = nullptr;
+			if (!TestTrue(B.Id + TEXT("/") + FString::FromInt(i) + TEXT(": the slice drew it"), Dress->TryGetObjectField(B.Id + TEXT("/") + FString::FromInt(i), W))) continue;
+			Compare(*this, B.Id + TEXT("/") + FString::FromInt(i) + TEXT(" (") + P.Kind + TEXT(")"), Got, *W, Bad);
+			Play.AddPiece(P, G);
+			if (P.Kind == TEXT("playground")) Parks.Add(&P);
+		}
+	TestEqual(TEXT("the playgrounds' pieces (28 when written)"), Pieces, 28);
+	Play.Init(C.City);
+	const TArray<TSharedPtr<FJsonValue>>& Apply = C.Values->GetArrayField(TEXT("apply"));
+	const TArray<TSharedPtr<FJsonValue>>& Draw = C.Values->GetArrayField(TEXT("draw"));
+	int32 n = 0, Row = 0, DrawRow = 0, Children = 0;
+	for (const FBrixProp* Park : Parks) for (const double t : { 1.3, 4.2, 6.9, 11.5 })
+	{
+		for (const FBrixBlock& B : C.City.Blocks) for (const FBrixLot& L : B.Lots) for (int32 u = 0; u < FBrixPlay::NumUses; ++u)
+		{
+			const TArray<FVector2D>* At = L.Objects.Find(FBrixPlay::UseName(u));
+			if (!At) continue;
+			for (const FVector2D& S : *At)
+			{
+				if (FVector2D::Distance(S, Park->Pos) > 40) continue;
+				const int32 i = n++ % 500;
+				const double x = S.X + .07, z = S.Y - .05;
+				if (!TestTrue(TEXT("as many children as the slice"), Apply.IsValidIndex(Row))) return false;
+				const TArray<TSharedPtr<FJsonValue>>& R = Apply[Row++]->AsArray();
+				FBrixPlayPose O;
+				const bool bOn = Play.Apply(i, u, x, z, t, 1.37, O);
+				++Children;
+				FString Why;
+				if (bOn != (R[7]->Type != EJson::Null)) Why = TEXT("on a piece or not");
+				else if (bOn)
+				{
+					const double Want[6] = { R[5]->AsNumber(), R[6]->AsNumber(), R[7]->AsNumber(), R[8]->AsNumber(), R[9]->AsNumber(), R[10]->AsNumber() };
+					const double Mine[6] = { O.X, O.Z, O.Y, O.Yaw, (double)O.Pose, O.Phase };
+					for (int32 j = 0; j < 6; ++j) if (FMath::Abs(Want[j] - Mine[j]) > 1e-6) Why = FString::Printf(TEXT("value %d: %.6f, the slice %.6f"), j, Mine[j], Want[j]);
+					if (O.bWalking != R[11]->AsBool()) Why = TEXT("walking");
+					if (O.bClimb != (R[12]->Type == EJson::String && R[12]->AsString() == TEXT("Climb"))) Why = TEXT("the climbing walk");
+					if (O.bStraddle != (R[13]->AsNumber() > 0)) Why = TEXT("astride");
+					const bool bArms = R[14]->Type == EJson::Array;
+					if (bArms != O.Arms[0].IsSet()) Why = TEXT("arms or not");
+					else if (bArms)
+						for (int32 a = 0; a < 2; ++a) for (int32 j = 0; j < 4; ++j)
+							if (FMath::Abs(R[14]->AsArray()[a]->AsArray()[j]->AsNumber() - (*O.Arms[a])[j]) > 1e-6) Why = TEXT("the arms");
+				}
+				if (!Why.IsEmpty() && ++Bad <= 12) AddError(FString::Printf(TEXT("child %d (%s) at %.2f, %.2f, %.1f s: %s"), i, FBrixPlay::UseName(u), x, z, t, *Why));
+			}
+		}
+		TArray<FBrixShape> Moving;
+		Play.Draw(Park->Pos.X, Park->Pos.Y, t, Moving);
+		if (!TestTrue(TEXT("as many draws as the slice"), Draw.IsValidIndex(DrawRow))) return false;
+		CompareCalls(*this, Park->Id + FString::Printf(TEXT(" at %.1f s: the swing seats and planks"), t), Moving, Draw[DrawRow++]->AsArray()[2]->AsArray(), Bad);
+	}
+	TestEqual(TEXT("children placed"), Children, Apply.Num());
+	for (const TSharedPtr<FJsonValue>& K : C.Values->GetArrayField(TEXT("keep")))
+	{
+		const TArray<TSharedPtr<FJsonValue>>& R = K->AsArray();
+		double x = R[0]->AsNumber(), z = R[1]->AsNumber();
+		Play.KeepOut(x, z);
+		if ((FMath::Abs(x - R[2]->AsNumber()) > 1e-9 || FMath::Abs(z - R[3]->AsNumber()) > 1e-9) && ++Bad <= 12) AddError(FString::Printf(TEXT("kept out to %.3f, %.3f; the slice %.3f, %.3f"), x, z, R[2]->AsNumber(), R[3]->AsNumber()));
+	}
+	TestEqual(TEXT("played otherwise than in the slice"), Bad, 0);
 	return true;
 }
 

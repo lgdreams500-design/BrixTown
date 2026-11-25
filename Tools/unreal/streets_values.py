@@ -31,6 +31,62 @@ OUT = os.path.join(ROOT, "Tests", "values", "streets_city_01.json")
 EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 FUNCS = ["heads", "plantClump", "plant", "lawn", "wildProp", "greenGround"]
 CONSTS = ["clamp", "mix", "mix3", "mul3", "LAWN", "PLANTS", "BOARD", "CROP", "GREEN_KINDS"]
+DRESS_JS = os.path.join(ROOT, "Prototype", "play", "dressing.js")
+DAY = os.path.join(ROOT, "Game", "Data", "day.json")
+
+# dressing.js (WLD-032) with the play.js globals it reads stubbed: every playground piece's still parts drawn, the play
+# places put on their pieces (init), a child at every place near each playground at four moments (apply), and the moving
+# seats and planks drawn after (draw); people walking through a slide or a climbing frame kept out (keepOut)
+DRESS_STUBS = r"""
+let REC = [];
+const rec = (k, a, c) => REC.push([k, a, c || null]);
+const world = {
+  box(x0, y0, z0, x1, y1, z1, c, f, o) { rec(0, [x0, y0, z0, x1, y1, z1], o && o[3] ? o[3][0] : c); },
+  ybox(cx, y0, cz, w, h, d, yaw, c) { rec(1, [cx, y0, cz, w, h, d, yaw], c); },
+  flat(x0, z0, x1, z1, y, c) { rec(2, [x0, z0, x1, z1, y], c); },
+  quad(p0, p1, p2, p3, c, f, hint) { rec(4, [...p0, ...p1, ...p2, ...p3, ...hint], c); },
+  obox(m, cx, cy, cz, sx, sy, sz, c) { rec(9, [...m, cx, cy, cz, sx, sy, sz], c); },
+};
+function solid(x0, y0, z0, x1, y1, z1) { rec(8, [x0, y0, z0, x1, y1, z1], null); }
+let G_HERE = .12; const groundBase = () => G_HERE; const Y_PAVE = .12, OLD_BASE = 3.4;
+const use = () => { }, DOING = {}, GOING = {}, signs = {}, SP = { at: () => [0, 0, 0] }, LOTS = [];
+function fbox() { } function lettering() { } function nameCell(t) { return { t }; }
+const People = { SIG: { Easy: { name: "Easy" }, Careful: { name: "Careful" } }, stepLength: (sig, S) => 1.37 * S };
+const looks = new Proxy({}, { get: () => ({ sig: People.SIG.Easy, S: 1 }) });
+"""
+DRESS_HARNESS = r"""
+try {
+const PLAYK = { playground: 1, swing: 1, slide: 1, seesaw: 1, sandpit: 1, climber: 1 }, OPEN = { garden: 1, market: 1, stop: 1 };
+const out = { dress: {}, apply: [], draw: [], keep: [] }, parks = [];
+for (const b of D.blocks) {
+  for (const l of b.lots) { l.block = b; LOTS.push(l); }
+  b.props.forEach((p, i) => {
+    if (p.set !== "dress" || !PLAYK[p.kind]) return;
+    const [x, z] = p.pos; G_HERE = b.lots.some(l => OPEN[l.kind] && x >= l.rect[0] && x <= l.rect[2] && z >= l.rect[1] && z <= l.rect[3]) ? .16 : .12;
+    REC = []; Dress.prop(p, b); out.dress[b.id + "/" + i] = REC;
+    if (p.kind === "playground") parks.push(p);
+  });
+}
+Dress.init();
+const U = ["swing", "slide", "seesaw", "sandpit", "climb"];
+let n = 0;
+const v = q => q === undefined ? null : q;
+for (const park of parks) for (const t of [1.3, 4.2, 6.9, 11.5]) {
+  for (const l of LOTS) for (const u of U) ((l.objects || {})[u] || []).forEach(([sx, sz], k) => {
+    if (Math.hypot(sx - park.pos[0], sz - park.pos[1]) > 40) return;
+    const i = n++ % 500, x = sx + .07, z = sz - .05, act = D.acts.indexOf(u);
+    const r = Dress.apply(i, { x, z, act, walking: false }, t);
+    out.apply.push([i, U.indexOf(u), x, z, t, r.x, r.z, v(r.y), v(r.yaw), v(r.pose), r.ph || 0, !!r.walking, r.sig ? r.sig.name : null,
+      r.mod && r.mod.straddle ? 1 : 0, r.mod && r.mod.arms ? r.mod.arms : null]);
+  });
+  REC = []; Dress.draw(world, [park.pos[0], 0, park.pos[1]], t); out.draw.push([park.id, t, REC]);
+}
+for (const b of D.blocks) for (const p of b.props) if (p.set === "dress" && (p.kind === "slide" || p.kind === "climber"))
+  for (const [dx, dz] of [[.3, .1], [-.9, .25], [1.6, -.2], [.8, .9], [-3, 0]]) {
+    const r = Dress.apply(0, { x: p.pos[0] + dx, z: p.pos[1] + dz, walking: true }, 1); out.keep.push([p.pos[0] + dx, p.pos[1] + dz, r.x, r.z]); }
+document.getElementById("out").textContent = "@@" + JSON.stringify(out) + "@@";
+} catch (e) { document.getElementById("out").textContent = "@@" + JSON.stringify({ error: String(e.stack || e) }) + "@@"; }
+"""
 
 HARNESS = r"""
 let REC = [];
@@ -107,21 +163,9 @@ def summary(table, every=20):
     return out
 
 
-def main():
-    src = open(PLAY_JS, encoding="utf-8").read()
-    city = json.load(open(os.path.join(CITY, "city.json"), encoding="utf-8"))
-    blocks = []
-    for name in city["blocks"]:
-        blocks.append(json.load(open(os.path.join(CITY, name["file"]), encoding="utf-8")))
-    streets = json.load(open(STREETS, encoding="utf-8"))
-    # play.js's palette: its C literal, one block of lines
-    m = re.search(r"^const C = \{.*?^\};\n", src, re.S | re.M)
-    if not m:
-        sys.exit("play.js: the palette C not found; update streets_values.py")
-    h = re.search(r"^function hash\(\) \{.*?^\}\n", src, re.S | re.M)
-    pre = "const D = " + json.dumps(dict(blocks=blocks, pitch=city["grid"]["pitch"], plants=streets["plants"], lawn=streets["lawn"])) + ";\n"
-    code = pre + h.group(0) + m.group(0) + "".join(cut(src, c) for c in CONSTS) + "".join(cut(src, f) for f in FUNCS)
-    page = "<!doctype html><meta charset=utf-8><pre id=out></pre><script>\n" + code + HARNESS + "\n</script>"
+def run_page(code):
+    """The page's script run in headless Edge; what it wrote into <pre id=out>."""
+    page = "<!doctype html><meta charset=utf-8><pre id=out></pre><script>\n" + code + "\n</script>"
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         path = os.path.join(tmp, "streets_values.html")
         open(path, "w", encoding="utf-8").write(page)
@@ -139,15 +183,42 @@ def main():
         sys.exit("Edge gave no values:\n" + text[-2000:])
     out = json.loads(html.unescape(m.group(1)))
     if "error" in out:
-        sys.exit("play.js failed in Edge: " + out["error"])
+        sys.exit("the slice's code failed in Edge: " + out["error"])
+    return out
+
+
+def main():
+    src = open(PLAY_JS, encoding="utf-8").read()
+    city = json.load(open(os.path.join(CITY, "city.json"), encoding="utf-8"))
+    blocks = []
+    for name in city["blocks"]:
+        blocks.append(json.load(open(os.path.join(CITY, name["file"]), encoding="utf-8")))
+    streets = json.load(open(STREETS, encoding="utf-8"))
+    # play.js's palette: its C literal, one block of lines
+    m = re.search(r"^const C = \{.*?^\};\n", src, re.S | re.M)
+    if not m:
+        sys.exit("play.js: the palette C not found; update streets_values.py")
+    h = re.search(r"^function hash\(\) \{.*?^\}\n", src, re.S | re.M)
+    pre = "const D = " + json.dumps(dict(blocks=blocks, pitch=city["grid"]["pitch"], plants=streets["plants"], lawn=streets["lawn"])) + ";\n"
+    code = pre + h.group(0) + m.group(0) + "".join(cut(src, c) for c in CONSTS) + "".join(cut(src, f) for f in FUNCS)
+    out = run_page(code + HARNESS)
+    m4 = re.search(r"^const M4 = \{.*?^\};\n", src, re.S | re.M)
+    if not m4:
+        sys.exit("play.js: M4 not found; update streets_values.py")
+    day = json.load(open(DAY, encoding="utf-8"))
+    pre2 = "const D = " + json.dumps(dict(blocks=blocks, acts=day["acts"], dressing=streets["dressing"])) + ";\n"
+    dress = run_page(pre2 + h.group(0) + m.group(0) + "".join(cut(src, c) for c in ["clamp", "mix", "mix3", "mul3", "pick", "yawOf"]) + m4.group(0)
+                     + DRESS_STUBS + open(DRESS_JS, encoding="utf-8").read() + DRESS_HARNESS)
     values = dict(note="Generated by Tools/unreal/streets_values.py: play.js plant(), lawn(), wildProp() and greenGround() for every plant, wild "
                        "thing, garden and block of open ground, for CITY017_every_plant_is_drawn_as_the_slice_draws_it and "
                        "WLD056_the_open_ground_is_drawn_as_the_slice_draws_it. Calls: [kind, numbers, colour, points, text]; kinds as FBrixShape.",
-                  day=streets["day"], props=summary(out["props"]), lawns=summary(out["lawns"], 5), ground=summary(out["ground"], 3))
+                  day=streets["day"], props=summary(out["props"]), lawns=summary(out["lawns"], 5), ground=summary(out["ground"], 3),
+                  dress=summary(dress["dress"], 1), apply=dress["apply"], draw=dress["draw"], keep=dress["keep"])
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
         json.dump(values, f, separators=(",", ":"))
-    print("wrote %s: %d things, %d lawns, %d blocks of open ground" % (os.path.relpath(OUT, ROOT), len(out["props"]), len(out["lawns"]), len(out["ground"])))
+    print("wrote %s: %d things, %d lawns, %d blocks of open ground; %d playground pieces, %d children, %d draws" % (os.path.relpath(OUT, ROOT),
+          len(out["props"]), len(out["lawns"]), len(out["ground"]), len(dress["dress"]), len(dress["apply"]), len(dress["draw"])))
 
 
 if __name__ == "__main__":
