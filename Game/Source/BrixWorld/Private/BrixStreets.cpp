@@ -518,3 +518,98 @@ double BrixShapesChecksum(const TArray<FBrixShape>& Shapes)
 	}
 	return S;
 }
+
+FBrixM4 FBrixM4::T(double X, double Y, double Z) { FBrixM4 R; R.M[12] = X; R.M[13] = Y; R.M[14] = Z; return R; }
+FBrixM4 FBrixM4::Rx(double A) { const double c = FMath::Cos(A), s = FMath::Sin(A); FBrixM4 R; R.M[5] = c; R.M[6] = s; R.M[9] = -s; R.M[10] = c; return R; }
+FBrixM4 FBrixM4::Ry(double A) { const double c = FMath::Cos(A), s = FMath::Sin(A); FBrixM4 R; R.M[0] = c; R.M[2] = -s; R.M[8] = s; R.M[10] = c; return R; }
+FBrixM4 FBrixM4::Rz(double A) { const double c = FMath::Cos(A), s = FMath::Sin(A); FBrixM4 R; R.M[0] = c; R.M[1] = s; R.M[4] = -s; R.M[5] = c; return R; }
+FBrixM4 FBrixM4::operator*(const FBrixM4& B) const
+{
+	FBrixM4 O;
+	for (int32 c = 0; c < 4; ++c) for (int32 r = 0; r < 4; ++r)
+		O.M[c * 4 + r] = M[r] * B.M[c * 4] + M[4 + r] * B.M[c * 4 + 1] + M[8 + r] * B.M[c * 4 + 2] + M[12 + r] * B.M[c * 4 + 3];
+	return O;
+}
+FVector3d FBrixM4::Pt(double X, double Y, double Z) const
+{
+	return FVector3d(M[0] * X + M[4] * Y + M[8] * Z + M[12], M[1] * X + M[5] * Y + M[9] * Z + M[13], M[2] * X + M[6] * Y + M[10] * Z + M[14]);
+}
+
+void BrixOBox(TArray<FBrixShape>& Out, const FBrixM4& M, double Cx, double Cy, double Cz, double Sx, double Sy, double Sz, const FVector3d& Col)
+{
+	FBrixShape& B = Out.AddDefaulted_GetRef();
+	B.Kind = FBrixShape::OBox; B.Col = Col;
+	for (int32 i = 0; i < 16; ++i) B.A.Add(M.M[i]);
+	B.A.Append({ Cx, Cy, Cz, Sx, Sy, Sz });
+}
+
+namespace
+{
+	// dressing.js's colours and PAINT
+	const FVector3d Rubber(.5, .28, .22), Sand(.72, .62, .44), DWood(.5, .32, .16), Iron(.17, .18, .21), Red(.58, .12, .1), DGreen(.16, .3, .22), Bronze(.3, .42, .36);
+	const FVector3d& Paint(double r)
+	{
+		static const FVector3d P[4] = { Teal, Ochre, Terracotta, Blue };
+		return P[FMath::Min(3, (int32)FMath::FloorToDouble(r * 4))];
+	}
+}
+
+bool BrixDressShapes(const FBrixProp& P, const FBrixBlock& Blk, double g, const FBrixStreetsToday& Today, TArray<FBrixShape>& Out)
+{
+	FOut O{ Out };
+	const TSharedPtr<FJsonObject>& J = P.Json;
+	const double x = P.Pos.X, z = P.Pos.Y;
+	const FString& k = P.Kind;
+	if (k == TEXT("playground"))   // soft red ground with a pale edge
+	{
+		const double hw = Numf(J, TEXT("w")) / 2, hd = Numf(J, TEXT("d")) / 2;
+		O.Flat(x - hw - .15, z - hd - .15, x + hw + .15, z + hd + .15, g + .015, Cream); O.Flat(x - hw, z - hd, x + hw, z + hd, g + .025, Rubber);
+	}
+	else if (k == TEXT("swing"))   // an A-frame at each end and a beam; the seats hang from it (BrixPlay)
+	{
+		const double n = Numf(J, TEXT("seats")), half = n * 1.1 / 2 + .3;
+		const FVector3d col = Paint(Hash({ P.Id }));
+		for (const double s : { -1.0, 1.0 }) for (const double v : { -.75, .75 }) O.YBox(x + s * half, g, z + v * .5, .1, 2.45, .1, 0, col);
+		for (const double s : { -1.0, 1.0 }) O.Box(x + s * half - .06, g + .9, z - .45, x + s * half + .06, g + .98, z + .45, col);
+		O.Box(x - half - .05, g + 2.32, z - .06, x + half + .05, g + 2.44, z + .06, col);
+		for (const double s : { -1.0, 1.0 }) O.Solid(x + s * half - .1, g, z - .5, x + s * half + .1, g + 2.4, z + .5);
+	}
+	else if (k == TEXT("slide"))   // ladder up to a railed top, a shiny chute down to the ground
+	{
+		const FVector3d col = Paint(Hash({ P.Id, TEXT("c") })), Shine(.72, .72, .74);
+		for (const double v : { -.3, .3 }) { O.Box(x - 1.95, g, z + v - .04, x - 1.85, g + 2.3, z + v + .04, Iron); O.Box(x - 1.25, g, z + v - .04, x - 1.15, g + 2.3, z + v + .04, Iron); }
+		for (double r = .3; r < 1.6; r += .3) O.Box(x - 1.95, g + r, z - .3, x - 1.85, g + r + .04, z + .3, Iron);
+		O.Box(x - 1.95, g + 1.5, z - .36, x - 1.15, g + 1.58, z + .36, col);
+		for (const double v : { -.3, .3 }) O.Box(x - 1.95, g + 2.2, z + v - .03, x - 1.15, g + 2.26, z + v + .03, Iron);   // a rail each side: open above
+		const double t0 = x - 1.15, t1 = g + 1.55, b0 = x + 2.1, b1 = g + .32, L = FMath::Sqrt(FMath::Square(b0 - t0) + FMath::Square(b1 - t1)), ang = FMath::Atan2(t1 - b1, b0 - t0);
+		const FBrixM4 m = (FBrixM4::T((t0 + b0) / 2, (t1 + b1) / 2, z) * FBrixM4::Ry(0)) * FBrixM4::Rz(-ang);
+		BrixOBox(Out, m, 0, 0, 0, L, .05, .5, Shine);
+		for (const double v : { -.27, .27 }) BrixOBox(Out, m, 0, .1, v, L, .2, .04, col);
+		O.Box(b0, g, z - .3, b0 + .45, g + .3, z + .3, Shine);
+		O.Solid(x - 1.95, g, z - .36, x - 1.15, g + 2.3, z + .36);
+	}
+	else if (k == TEXT("seesaw"))   // the plank rocks (BrixPlay); here the pivot
+	{
+		O.Box(x - .2, g, z - .25, x + .2, g + .42, z + .25, Iron); O.Box(x - .05, g + .42, z - .3, x + .05, g + .52, z + .3, Iron);
+	}
+	else if (k == TEXT("sandpit"))   // a wooden kerb round the sand, a bucket and a spade
+	{
+		const double w = Numf(J, TEXT("w")), h = (w != 0 ? w : 3.4) / 2;
+		for (const double s : { -1.0, 1.0 }) { O.Box(x - h, g, z + s * h - .12, x + h, g + .28, z + s * h + .12, DWood); O.Box(x + s * h - .12, g, z - h, x + s * h + .12, g + .28, z + h, DWood); }
+		O.Flat(x - h + .12, z - h + .12, x + h - .12, z + h - .12, g + .2, Sand);
+		O.Box(x + .5, g + .2, z - .3, x + .72, g + .42, z - .08, Blue); O.YBox(x - .6, g + .2, z + .4, .08, .04, .5, .6, Ochre);
+		for (int32 q = 0; q < 3; ++q) O.YBox(x - .9 + q * .7, g + .2, z - .8 + .5 * Hash({ P.Id, N(q) }), .4 + .2 * Hash({ N(q), P.Id }), .12, .3, Hash({ P.Id, N(q), TEXT("3") }) * 3, Sand * .92);
+	}
+	else if (k == TEXT("climber"))   // a frame of painted bars with a deck halfway up
+	{
+		const FVector3d col = Paint(Hash({ P.Id, TEXT("cl") }));
+		const double h = 1.0;
+		for (const double sx : { -h, h }) for (const double sz : { -h, h }) O.Box(x + sx - .04, g, z + sz - .04, x + sx + .04, g + 1.9, z + sz + .04, col);
+		for (const double y : { .5, 1.1, 1.85 }) for (const double s : { -h, h }) { O.Box(x - h, g + y, z + s - .03, x + h, g + y + .06, z + s + .03, col); O.Box(x + s - .03, g + y, z - h, x + s + .03, g + y + .06, z + h, col); }
+		O.Box(x - h, g + .84, z - h, x + h, g + .9, z + h, DWood);
+		O.Solid(x - h, g, z - h, x + h, g + .9, z + h);
+	}
+	else return false;
+	(void)Blk; (void)Today;
+	return true;
+}

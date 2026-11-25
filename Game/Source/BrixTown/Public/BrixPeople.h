@@ -5,6 +5,7 @@
 #include "BrixBody.h"
 #include "BrixCity.h"
 #include "BrixDodge.h"
+#include "BrixPlay.h"
 #include "BrixPeople.generated.h"
 
 struct FBrixCity;
@@ -94,6 +95,12 @@ private:
 	float GroundAt(const FVector2D& P) const;
 
 	UPROPERTY() TObjectPtr<UProceduralMeshComponent> Figures;   // the far figures' boxes, all in one mesh (moving instances cost the render thread far more)
+	// children on the playgrounds (WLD-032; dressing.js): who is on which swing, slide, seesaw, sandpit or climbing frame, and
+	// the swing seats and seesaw planks near the camera, moving with them (one small mesh made again each frame)
+	FBrixPlay Play;
+	TArray<int32> PlayUse;              // by the day's act: which play place it is (FBrixPlay::EUse), -1 none
+	UPROPERTY() TObjectPtr<UProceduralMeshComponent> PlayParts;
+	UPROPERTY() TObjectPtr<UMaterialInterface> FacetsMat;
 	UPROPERTY() TArray<TObjectPtr<UProceduralMeshComponent>> Meshes;
 	UPROPERTY() TObjectPtr<UMaterialInterface> BodyMaterial;
 	UPROPERTY() TArray<TObjectPtr<UTextRenderComponent>> ShoutTags;   // shouts over residents (CITY-071)

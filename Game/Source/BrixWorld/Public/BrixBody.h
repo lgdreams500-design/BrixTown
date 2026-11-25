@@ -109,6 +109,7 @@ struct BRIXWORLD_API FBrixDrawOptions
 	double FaceFade = 1;     // at lod 2, how much of the face still shows (0 none)
 	TOptional<double> Floor; // sitting in a car: the floor this far below the seat, the feet out along it (people.js mod.floor)
 	bool bDriving = false;   // sitting at a wheel: the hands up on it (cars.js seat(): arms [1, 58, 10, 48])
+	bool bStraddle = false;  // sitting astride a seesaw's plank: a leg down each side of it (people.js mod.straddle; dressing.js)
 	const FBrixFace* Face = nullptr;   // in a conversation: the face as it speaks (full detail only), and its nod
 	// people.js o.sig: walk by this signature instead of the look's own (a run from a car, a hurry in the rain)
 	FString Sig;

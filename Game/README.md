@@ -343,6 +343,21 @@ of Lumen's surface cache (a card an instance oversubscribed it over the fields).
 them, to compare: 542,212 instances in 45 groups against 462,813 in 33; at High 37.7 fps in a park garden (40.2 without),
 37.8 over the fields (20.6 without: noisy, other sessions were running Unreal on the same laptop).
 
+## Playgrounds and children playing (WLD-032)
+The four parks' playgrounds are drawn as dressing.js draws them: the soft red ground with a pale edge, the swings' A-frames
+and beam, the slide (ladder, railed top, shiny chute), the seesaws' pivots, the sandpit with its kerb, bucket and spade,
+the climbing frame with its deck. Children whose day has them at a play place (the students who live nearest, after
+school and at weekends) are where dressing.js apply() puts them at that moment: on a swing seat swinging, astride a
+seesaw's plank (a leg down each side, people.js mod.straddle) rocking, up the slide's ladder with the climbing walk and
+their hands on the rungs, sitting on its top, down the chute and walking round the back to the ladder again, sitting in
+the sandpit facing its middle, up the climbing frame's side, looking over the top, down and resting; anyone walking is
+kept out of the slides and frames. The swing seats and seesaw planks within 70 m swing and rock while someone is on them
+and hang still (a seat stirring in the breeze, a plank down at one end) when not: one small mesh made again each frame
+(no instances moved). Motion from World/rules/dressing.json "motion" (in `Game/Data/streets.json`). `BrixWorld/BrixPlay`
+is the port (pieces, places, apply(), keepOut(), draw()), checked against dressing.js itself by
+`WLD032_children_play_as_the_slice_puts_them` (the 28 pieces' shapes, 352 children at four moments, the moving parts after
+each, walkers kept out; `Tools/unreal/streets_values.py`). Not yet: the player having a go (WLD-041).
+
 ## Money and the bank (ECO-001 to ECO-003, ECO-009, ECO-012, BANK-001, BANK-002, BANK-007, BANK-008; ADR-0012)
 Money is the slice's (economy.js, a port of `Tools/citysim/economy.py`): `BrixWorld/BrixEconomy` holds one ledger of
 balanced transactions in whole chips (int64), money made and taken only by the `sys:` accounts, the bank's vault and every
@@ -622,3 +637,4 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY100_auto_owns_all_and_rides_electric` | CITY-100 |
 | `BrixTown.World.CITY017_every_plant_is_drawn_as_the_slice_draws_it` | CITY-017, WLD-040 |
 | `BrixTown.World.WLD056_the_open_ground_is_drawn_as_the_slice_draws_it` | WLD-056, ART-001 |
+| `BrixTown.World.WLD032_children_play_as_the_slice_puts_them` | WLD-032 |

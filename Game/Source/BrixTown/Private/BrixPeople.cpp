@@ -4,6 +4,7 @@
 #include "BrixCity.h"
 #include "BrixDay.h"
 #include "BrixGameMode.h"
+#include "BrixTownActor.h"
 #include "BrixUnits.h"
 #include "Camera/PlayerCameraManager.h"
 #include "GameFramework/Character.h"
@@ -75,6 +76,11 @@ ABrixPeople::ABrixPeople()
 	Figures->SetupAttachment(RootComponent);
 	Figures->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	BodyMaterial = People.Object ? People.Object : Greybox.Object;
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> Facets(TEXT("/Game/Greybox/M_Facets.M_Facets"));   // Tools/unreal/make_facets_material.py
+	FacetsMat = Facets.Object ? Facets.Object : Greybox.Object;
+	PlayParts = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("PlayParts"));
+	PlayParts->SetupAttachment(RootComponent);
+	PlayParts->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	if (!People.Object) UE_LOG(LogTemp, Warning, TEXT("Brix Town: /Game/People/M_People is missing (run Tools/unreal/make_people_material.py); the people are grey"));
 }
 
@@ -88,6 +94,24 @@ void ABrixPeople::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, TShar
 	FString Error;
 	const FString Path = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/people.json")));
 	if (!LoadBrixPeopleRules(Path, Rules, Error)) UE_LOG(LogTemp, Error, TEXT("Brix Town: %s"), *Error);
+	BrixAddClimbSignature(Rules);   // children up a ladder or a climbing frame (dressing.js climbSig())
+	{   // the playgrounds' pieces on the ground the town lays (an open lot a little over the paving), their places, their motion
+		const float G0 = GetDefault<ABrixTownActor>()->BlockSlabHeight;
+		for (const FBrixBlock& B : City.Blocks)
+			for (const FBrixProp& P : B.Props)
+			{
+				if (P.Set != TEXT("dress")) continue;
+				bool bOpen = false;
+				for (const FBrixLot& L : B.Lots) if (L.IsOpen() && P.Pos.X >= L.Min.X && P.Pos.X <= L.Max.X && P.Pos.Y >= L.Min.Y && P.Pos.Y <= L.Max.Y) bOpen = true;
+				Play.AddPiece(P, G0 + (bOpen ? .04 : 0));
+			}
+		Play.Init(City);
+		FString PlayError;
+		if (!LoadBrixPlayMotion(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/streets.json"))), Play.Motion, PlayError))
+			UE_LOG(LogTemp, Warning, TEXT("Brix Town: %s (run Tools/worldgen/build_play.py)"), *PlayError);
+		for (const FString& A : Day->Acts) { int32 U = -1; for (int32 u = 0; u < FBrixPlay::NumUses; ++u) if (A == FBrixPlay::UseName(u)) U = u; PlayUse.Add(U); }
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: %d playground pieces, %d play places"), Play.Pieces.Num(), Play.Spots.Num());
+	}
 	for (int32 i = 0; i < Day->Num(); ++i)
 	{
 		Lane.Add((float)(BrixSliceHash({ FString::FromInt(i), TEXT("lane") }) * 2 - 1));
@@ -198,7 +222,7 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	// everyone out of doors within reach, nearest first
 	// worked out for everyone at once on the task threads (CITY-022: from the day and the minute alone)
 	// i: who (a resident, or 1,000,000 + 2 a vehicle + 0 or 1 for someone from out of town in it), the slot's key
-	struct FNear { int32 i; double D; FVector2D P; float Up; double Yaw; int32 Pose; double Phase; const FBrixLook* L; TOptional<double> Floor; bool bDriving; int32 Extra = -1; int32 Wet = -1; };
+	struct FNear { int32 i; double D; FVector2D P; float Up; double Yaw; int32 Pose; double Phase; const FBrixLook* L; TOptional<double> Floor; bool bDriving; int32 Extra = -1; int32 Wet = -1; bool bStraddle = false; };
 	const double Reach2 = (double)ShowDistance * ShowDistance;
 	TArray<FNear> All;
 	All.SetNumUninitialized(Day->Num());
@@ -227,6 +251,70 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	for (const FNear& A : All) if (A.i >= 0) Near.Add(A);
 	// out of the way of the player's car, then telling them off (CITY-070, CITY-071; dodge.js): laid over where the day has them
 	TArray<FBrixDodged> Extras;
+	// children on the playgrounds (WLD-032; dressing.js apply()): on a swing seat, astride a seesaw, up the slide and down it,
+	// in the sandpit, up and down the climbing frame; anyone walking kept out of the slides and frames
+	if (Play.Pieces.Num())
+	{
+		for (FNear& A : Near)
+		{
+			if (A.i < 0 || A.i >= Day->Num()) continue;
+			bool bClose = false;
+			for (const FBrixPlay::FPiece& Pc : Play.Pieces) if (FMath::Abs(Pc.X - A.P.X) < 8 && FMath::Abs(Pc.Z - A.P.Y) < 8) { bClose = true; break; }
+			if (!bClose) continue;
+			if (A.Pose == 1) { double x = A.P.X, z = A.P.Y; Play.KeepOut(x, z); A.P = FVector2D(x, z); continue; }
+			const double* M2 = MinuteOf.Find(A.i);
+			const TOptional<FBrixWhere> W = Day->Where(A.i, M2 ? *M2 : Minute);
+			if (!W || W->bWalking || !PlayUse.IsValidIndex(W->Act) || PlayUse[W->Act] < 0) continue;
+			FBrixPlayPose O;
+			if (!Play.Apply(A.i, PlayUse[W->Act], W->Pos.X, W->Pos.Y, Seconds, BrixStepLength(Rules.Sig(A.L->SigName), A.L->S), O)) continue;
+			A.P = FVector2D(O.X, O.Z); A.Up = (float)O.Y; A.Yaw = O.Yaw; A.Pose = O.Pose; A.Phase = O.Phase; A.bStraddle = O.bStraddle;
+			A.D = FVector2D::Distance(A.P, Here);
+			if (O.bClimb || O.Arms[0] || O.Arms[1])
+			{
+				FBrixDodged X;
+				X.Pos = A.P; X.Yaw = A.Yaw; X.Pose = A.Pose; X.bWalking = O.bWalking; X.Phase = A.Phase;
+				if (O.bClimb) X.Sig = TEXT("Climb");
+				X.Arms[0] = O.Arms[0]; X.Arms[1] = O.Arms[1];
+				A.Extra = Extras.Add(X);
+			}
+		}
+		// the swing seats and seesaw planks near the camera (dressing.js draw()), swinging and rocking with whoever is on them
+		TArray<FBrixShape> Moving;
+		Play.Draw(Here.X, Here.Y, Seconds, Moving);
+		TArray<FVector> V, Nn;
+		TArray<int32> Tri;
+		TArray<FLinearColor> Col;
+		for (const FBrixShape& S : Moving)
+		{
+			if (S.Kind != FBrixShape::OBox) continue;
+			FBrixM4 M;
+			for (int32 j = 0; j < 16; ++j) M.M[j] = S.A[j];
+			const double cx = S.A[16], cy = S.A[17], cz = S.A[18], sx = S.A[19] / 2, sy = S.A[20] / 2, sz = S.A[21] / 2;
+			const FLinearColor C(FLinearColor((float)S.Col.X, (float)S.Col.Y, (float)S.Col.Z).ToFColor(false));
+			static const int32 F[6][4] = { { 0, 1, 3, 2 }, { 4, 6, 7, 5 }, { 0, 4, 5, 1 }, { 2, 3, 7, 6 }, { 0, 2, 6, 4 }, { 1, 5, 7, 3 } };   // -x +x -y +y -z +z
+			static const double Nl[6][3] = { { -1, 0, 0 }, { 1, 0, 0 }, { 0, -1, 0 }, { 0, 1, 0 }, { 0, 0, -1 }, { 0, 0, 1 } };
+			FVector Q[8];
+			for (int32 c = 0; c < 8; ++c)
+			{
+				const FVector3d P = M.Pt(cx + (c & 4 ? sx : -sx), cy + (c & 2 ? sy : -sy), cz + (c & 1 ? sz : -sz));
+				Q[c] = FVector(P.X, P.Z, P.Y) * CmPerM;   // the slice's frame to Unreal's
+			}
+			for (int32 f = 0; f < 6; ++f)
+			{
+				const FVector3d Wn = M.Pt(Nl[f][0], Nl[f][1], Nl[f][2]) - M.Pt(0, 0, 0);
+				const int32 b = V.Num();
+				for (int32 c = 0; c < 4; ++c) { V.Add(Q[F[f][c]]); Nn.Add(FVector(Wn.X, Wn.Z, Wn.Y)); Col.Add(C); }
+				Tri.Append({ b, b + 1, b + 2, b, b + 2, b + 3 });
+			}
+		}
+		if (V.Num())
+		{
+			PlayParts->CreateMeshSection_LinearColor(0, V, Tri, Nn, TArray<FVector2D>(), Col, TArray<FProcMeshTangent>(), false, false);
+			PlayParts->SetMaterial(0, FacetsMat);
+			PlayParts->SetVisibility(true);
+		}
+		else PlayParts->SetVisibility(false);
+	}
 	if (Dodge.bOn)
 	{
 		const ABrixCars* CarsActor = Mode->Cars;
@@ -475,6 +563,7 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		FBrixDrawOptions O;
 		O.Floor = P.Floor;
 		O.bDriving = P.bDriving;
+		O.bStraddle = P.bStraddle;
 		if (P.i == Held.Resident) O.Face = HeldFace;
 		if (Wets.IsValidIndex(P.Wet))   // dressed for the rain (a dodge's run and gestures below come first)
 		{
