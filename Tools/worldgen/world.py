@@ -2095,6 +2095,10 @@ def marker_problems(w):
             out.append("markers: place kind %s is not a kind of lot" % lk)
         if mk not in M["kinds"]:
             out.append("markers: place kind %s points at no marker kind %s" % (lk, mk))
+    if not isinstance(M.get("have_shops"), int) or not 1 <= M["have_shops"] <= 10:
+        out.append("markers: have_shops is how many of the nearest shops to mark, 1 to 10")
+    if "{item}" not in M.get("have_words", ""):
+        out.append("markers: have_words must say {item}")
     T, B = M["token"], M["behaviour"]
     for c in ("face", "face_light", "face_dark", "edge", "rim", "stamp", "halo"):
         if not hexc(T.get(c)):

@@ -403,6 +403,13 @@ TArray<FBrixMapTarget> BrixQuestTargets(const FBrixQuests& Q, const FBrixQuestRu
 {
 	TArray<FBrixMapTarget> Out;
 	auto Lot = [&](int32 N, const TCHAR* Kind) { FBrixMapTarget T; T.Lot = N; T.Kind = Kind; if (N >= 0) Out.Add(T); };
+	auto Stocked = [&](const FString& It, const TCHAR* Kind)   // a thing to get: each shop with it in stock today (ADR-0051)
+	{
+		if (It.IsEmpty() || E.Inv.FindRef(It) > 0) return false;
+		for (int32 N = 0; N < E.Kinds.Num(); ++N)
+			if (!E.Kinds[N].IsEmpty() && !E.Outlets.Contains(N) && E.Stock(N, It) > 0) { FBrixMapTarget T; T.Lot = N; T.Kind = Kind; T.Item = It; Out.Add(T); }
+		return true;
+	};
 	auto Who = [&](int32 I, bool bOffer, const TCHAR* Kind) { FBrixMapTarget T; T.Resident = I; T.bOffer = bOffer; T.Kind = Kind; if (I >= 0) Out.Add(T); };
 	for (const auto& A : Q.Active)
 	{
@@ -419,6 +426,7 @@ TArray<FBrixMapTarget> BrixQuestTargets(const FBrixQuests& Q, const FBrixQuestRu
 		}
 		else if (G.Kind == TEXT("go")) Lot(E.LotIndex.FindRef(G.Value, -1), TEXT("go"));
 		else if (G.Kind == TEXT("near")) { FBrixMapTarget T; T.Pos = G.Near; T.Kind = TEXT("go"); Out.Add(T); }
+		else if (G.Kind == TEXT("have")) Stocked(G.Value, TEXT("go"));
 		else if (G.Kind == TEXT("bank")) Lot(E.BankLot, TEXT("bank"));
 		else if (G.Kind == TEXT("stall") || G.Kind == TEXT("stall_sold")) Lot(E.MarketLot, TEXT("stall"));
 	}
@@ -427,7 +435,7 @@ TArray<FBrixMapTarget> BrixQuestTargets(const FBrixQuests& Q, const FBrixQuestRu
 		const FBrixJob& J = *Q.Job;
 		if (J.Kind == TEXT("parcel")) Lot(J.Step == TEXT("pickup") ? J.Frm : J.To, TEXT("job"));
 		else if (J.Kind == TEXT("shift")) Lot(J.To, TEXT("job"));
-		else Who(J.Giver, false, TEXT("job"));
+		else if (!(J.Kind == TEXT("shopping") && Stocked(J.Item, TEXT("go")))) Who(J.Giver, false, TEXT("job"));   // the shopping, then back to them
 	}
 	for (const FBrixQuestLine& L : Rules.Quests)
 		if (!L.Giver.IsEmpty() && Q.Offers(L.Giver).Contains(L.Id)) Who(Q.ResidentIndex(L.Giver), true, TEXT("offer"));

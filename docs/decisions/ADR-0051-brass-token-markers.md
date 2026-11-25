@@ -36,6 +36,11 @@ The owner chose A (2026-11-25): "A, brass token".
   token, bobbing gently; within 6 m larger, with a small Lamplight caption and its key ("E Talk to Mei"); behind a wall a
   faint outline; out of view a small token and arrow at the edge of the screen. New things (a line offered, one to hand
   in) have a larger halo and a ring that pulses out from them; the rest are steady. Hidden while talking.
+- **Something to get** (owner, 2026-11-25: "if there is a quest to by bread then we show the token where all the player
+  can buy bread"; "yes, do that"): a quest step that needs the player to have a thing, or the shopping job, marks the
+  shops with it in stock today, by their own sign (a grocer's basket, a café's cup), the nearest `have_shops` (3) of them,
+  with an edge arrow only to the nearest; close by the caption says "Loaf of bread sold here". They go once it is
+  carried; the shopping job then marks the one who asked. Shops no quest wants are not marked.
 - **On the maps** the same tokens, small, stand for the people and places quests want and for the mark.
 - Every number, colour and sign is data, `World/rules/markers.json`, checked by `world.marker_problems()` and its port
   `BrixMarkerProblems()` (TECH-005).
@@ -43,7 +48,7 @@ The owner chose A (2026-11-25): "A, brass token".
 ## Consequences
 - The slice keeps its words over heads (it is frozen, ADR-0045).
 - ART_DIRECTION §2.7 gains rule L7.
-- Markers are drawn for what quests and jobs want and for the mark. Tokens over every shop, café or prices board the
-  player passes are not drawn; whether to show them (and from how near) is for the owner to say.
+- Markers are drawn for what quests and jobs want (including the shops for a thing to get) and for the mark; a shop no
+  quest wants has none.
 - A place's token stands over the middle of its lot, a fixed height above the player's feet; one over its door or
   counter would need the counters' places (the mall's counters are not built yet).

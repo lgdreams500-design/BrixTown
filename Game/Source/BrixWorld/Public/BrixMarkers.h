@@ -30,6 +30,8 @@ struct BRIXWORLD_API FBrixMarkerKind
 struct BRIXWORLD_API FBrixMarkerRules
 {
 	TMap<FString, FBrixMarkerKind> Kinds;
+	FString HaveWords = TEXT("{item} sold here");   // the caption over a shop with something a quest needs
+	int32 HaveShops = 3;                             // how many of the nearest such shops are marked
 	TMap<FString, FString> PlaceKinds;   // lot kind -> marker kind, for a place a quest sends you to
 	TMap<FString, FBrixMarkerSign> Signs;
 	// the token
@@ -63,4 +65,7 @@ BRIXWORLD_API TArray<FString> BrixMarkerProblems(const TSharedPtr<FJsonObject>& 
 // The kind of marker for what a quest or a job wants (BrixQuestTargets() gives "offer", "talk", "handin", "job", "go",
 // "bank" or "stall"): a place a quest sends you to shows what it is (a shop's basket, a café's cup) when its lot kind is
 // one of place_kinds.
+// Of the shops marked for a thing to get, only the HaveShops nearest the player (Where gives a lot's middle); the nearest
+// of each thing comes first. Everything else is kept as it is.
+BRIXWORLD_API void BrixKeepNearestShops(TArray<FBrixMapTarget>& Targets, const FBrixMarkerRules& R, const FVector2D& Player, TFunctionRef<FVector2D(int32)> Where);
 BRIXWORLD_API FString BrixMarkerKindFor(const FBrixMapTarget& T, const FBrixMarkerRules& R, const FString& LotKind);

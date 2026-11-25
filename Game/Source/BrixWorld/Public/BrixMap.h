@@ -87,11 +87,12 @@ struct BRIXWORLD_API FBrixMark
 // The people and places a quest or a job wants now (life.js targets(); QST-005): a resident to see (Resident >= 0, Offer
 // when they have a quest line to give), or a lot to go to, or a place. Kind says what for, for its marker (BrixMarkers.h):
 // "offer", "talk", "handin" (going back to someone the line started with, or to its giver), "job", "go", "bank", "stall".
+// A step or a job that needs the player to have something marks every shop with it in stock today (Item says what).
 struct BRIXWORLD_API FBrixMapTarget
 {
 	int32 Resident = -1, Lot = -1;
 	FVector2D Pos = FVector2D::ZeroVector;
 	bool bOffer = false;
-	FString Kind;
+	FString Kind, Item;
 };
 BRIXWORLD_API TArray<FBrixMapTarget> BrixQuestTargets(const FBrixQuests& Q, const FBrixQuestRules& Rules, const FBrixEconomy& E);

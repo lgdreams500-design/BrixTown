@@ -631,6 +631,7 @@ void ABrixMap::Gather(float Dt)
 	{
 		TargetLeft = .5f;
 		Targets = BrixQuestTargets(*Q, Mode->Life->QuestLines(), *Mode->Life->Economy());
+		BrixKeepNearestShops(Targets, Markers, Player, [this](int32 N) { return Lots.IsValidIndex(N) ? Lots[N]->Centre() : FVector2D::ZeroVector; });
 		Marked.Reset();
 		for (const FBrixMapTarget& T : Targets) if (T.Resident >= 0 && !Marked.Contains(T.Resident)) Marked.Add(T.Resident, BrixMarkerKindFor(T, Markers, FString()));
 	}
@@ -704,12 +705,20 @@ void ABrixMap::GatherTokens(float Feet, double Minute, bool bBusy, TFunctionRef<
 		else if (const TOptional<FBrixWhere> W = Day->Where(Mk.Key, Minute); W && !W->bInside)   // not drawn yet: a spark where they are
 			Add(FVector(W->Pos.X * CmPerM, W->Pos.Y * CmPerM, (Feet + 2.12 + Markers.HeadUpM) * CmPerM), Mk.Value, false, true, Name, Mk.Key);
 	}
+	TSet<FString> Pointed;   // of the shops for a thing to get, only the nearest has an arrow at the screen's edge
 	for (const FBrixMapTarget& T : Targets)
 	{
 		if (T.Resident >= 0) continue;
 		const FVector2D P = Lots.IsValidIndex(T.Lot) ? Lots[T.Lot]->Centre() : T.Pos;
 		const FString Name = Lots.IsValidIndex(T.Lot) ? Lots[T.Lot]->Name : FString();
-		Add(FVector(P.X * CmPerM, P.Y * CmPerM, (Feet + Markers.PlaceUpM) * CmPerM), KindOf(T), true, false, Name, T.Lot >= 0 ? 1000 + T.Lot : 999);
+		FToken* Tk = Add(FVector(P.X * CmPerM, P.Y * CmPerM, (Feet + Markers.PlaceUpM) * CmPerM), KindOf(T), true, false, Name, T.Lot >= 0 ? 1000 + T.Lot : 999);
+		if (Tk && !T.Item.IsEmpty()) { bool bSeen = false; Pointed.Add(T.Item, &bSeen); Tk->bEdge &= !bSeen; }
+		if (Tk && !T.Item.IsEmpty() && !Tk->Caption.IsEmpty())   // what to get there: "Loaf of bread sold here"
+		{
+			const FBrixEconomy* E = Mode->Life ? Mode->Life->Economy() : nullptr;
+			const FBrixEconomyRules::FItem* It = E ? E->Item(T.Item) : nullptr;
+			Tk->Caption = Markers.HaveWords.Replace(TEXT("{item}"), *(It ? It->Name : T.Item));
+		}
 	}
 	if (Mark.bSet && bWaypoint)
 		if (FToken* T = Add(FVector(Mark.Pos.X * CmPerM, Mark.Pos.Y * CmPerM, (Feet + 2.5) * CmPerM), TEXT("mark"), true, false, Mark.Name, 7))
