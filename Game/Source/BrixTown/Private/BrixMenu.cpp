@@ -422,6 +422,17 @@ void ABrixLife::PictureSet()   // "Picture" sets the five below it at once (sett
 	if (FBrixSetting* R = Settings.Find(TEXT("graphics"), TEXT("resolution"))) R->Choice = bBetter ? TEXT("auto") : TEXT("soft");
 }
 
+void ABrixLife::ToggleSound()
+{
+	Settings.Step(TEXT("audio"), TEXT("sound"));
+	ApplySettings();
+	SaveSettings();
+	const bool bNow = Settings.On(TEXT("audio"), TEXT("sound"));
+	Toast(bNow ? TEXT("Sound on") : TEXT("Sound off"));   // life.js setting(): "Sound on" / "Sound off"
+	if (bMenu) DrawMenu();
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: sound %s (N turns it %s)"), bNow ? TEXT("on") : TEXT("off"), bNow ? TEXT("off") : TEXT("on"));
+}
+
 void ABrixLife::SaveSettings() const
 {
 	IFileManager::Get().MakeDirectory(*FPaths::GetPath(SettingsPath()), true);

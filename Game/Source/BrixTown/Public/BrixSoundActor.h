@@ -35,7 +35,9 @@ struct FBrixTraffic;
 // at the player's car, each syllable a recording of the slice's voice at the nearest of four pitches, pitched the rest of
 // the way. The radio's podcasts (SND-014), their hosts voiced the same way over the show's bed, with a caption; the
 // horn (F while driving).
-// N turns all sound off and on (SND-013), remembered between visits in the user's settings (GameUserSettings.ini).
+// N turns all sound off and on (SND-013): the game menu's own Sound switch (World/rules/settings.json audio), kept with the
+// menu's settings between visits; the menu's levels (All sound, Music, Street and weather, Voices, Actions and the
+// interface) scale each part of the mix as the slice's Sound.mix() does (UI-009).
 // -BrixSoundToggle turns it off and on again during a test shot, to check the key's work in the log; -BrixRadio=<k> has the
 // car radio on its k-th station (with -BrixDrive).
 // A test shot logs how many of each sound were played.
@@ -60,8 +62,7 @@ public:
 	// event says, at the slice's level for the listener (BrixHear) unless it is the listener's own.
 	void Play(const FBrixSoundEvent& E, double Bus, bool bOutside = false);   // bOutside: muffled while the listener is indoors
 	void Act(const FString& Name);       // an action sound of sound.json (act_<name>), the listener's own
-	bool IsOn() const { return bOn; }
-	void SetOn(bool bNow);               // all sound on or off (SND-013), and remembered
+	void Toggle();                       // all sound off or on (SND-013): the menu's Sound switch
 
 private:
 	struct FClip { TArray<uint8> Pcm; int32 Rate = 22050; double Scale = 1; double Seconds = 0; bool bLoop = false; };
@@ -71,8 +72,11 @@ private:
 	FVector2D Listener() const;
 	// A loop: a component that plays the recording over and over while it is loud enough to hear, stopped when it is not.
 	// bOutside: one of the sounds of out of doors, muffled while the listener is in a building; Bus: its share of the mix
-	struct FLoop { int32 Comp = -1; TSharedPtr<FClip> Clip; bool bPlaced = true; bool bOutside = false; double Bus = -1; };
-	FLoop MakeLoop(const FString& Name, bool bPlaced, bool bOutside = false, double Bus = -1);
+	struct FLoop { int32 Comp = -1; TSharedPtr<FClip> Clip; bool bPlaced = true; bool bOutside = false; const double* Bus = nullptr; };
+	FLoop MakeLoop(const FString& Name, bool bPlaced, bool bOutside = false, const double* Bus = nullptr);   // Bus: one of the Mix levels (World when none)
+	// each part of the mix now: the rules' level times the menu's share (Music: the share alone, its level is in its recordings)
+	double MixWorld = .85, MixVoice = .7, MixAction = .6, MixMusic = 1;
+	void ReadMix();
 	// Vol: the slice's level for the listener, before the mix; Lowpass: Hz, 0 for none
 	void SetLoop(FLoop& L, double Vol, double Pitch, const FVector2D& Pos, double Lowpass = 0);
 	void Music(double Dt, const FVector2D& Here);
@@ -120,7 +124,7 @@ private:
 	bool bTestHorn = false;              // -BrixHorn: the horn held in a test shot
 	FString WasMood, WasPlace;
 	// what the interface and the player were doing last frame, for the sounds of a change
-	bool bWasTalking = false, bWasRiding = false, bOn = true;
+	bool bWasTalking = false, bWasRiding = false;
 	int32 WasAnswered = 0, WasDriving = -1;
 	FString WasPrompt;
 	void Interactions();
