@@ -5,6 +5,7 @@
 #include "BrixCity.h"
 #include "BrixDay.h"
 #include "BrixGameMode.h"
+#include "BrixLifeActor.h"
 #include "BrixUnits.h"
 #include "Components/AudioComponent.h"
 #include "Decoders/VorbisAudioInfo.h"
@@ -124,7 +125,7 @@ void ABrixTalk::Refresh()
 	if (!OptionList) return;
 	OptionList->ClearChildren();
 	if (!IsTalking()) return;
-	const FBrixDialogue::FConversation* C = Dialogue.Conversations.Find(ConvId);
+	const FBrixDialogue::FConversation* C = &Conv;
 	const FBrixDialogue::FNode* N = C ? C->Nodes.Find(NodeId) : nullptr;
 	if (!N) return;
 	const TMap<FString, FString> V = Vars();
@@ -163,8 +164,9 @@ TMap<FString, FString> ABrixTalk::Vars() const
 	const FString* WD = Days().Find(Day->Weekday);
 	V.Add(TEXT("weekday"), WD ? *WD : Day->Weekday);
 	V.Add(TEXT("season"), Day->Season.ToLower());
-	if (const FBrixDialogue::FConversation* C = Dialogue.Conversations.Find(ConvId)) V.Append(C->Vars);
+	V.Append(Conv.Vars);
 	V.Add(TEXT("player"), Dialogue.PlayerName);   // the slice's Life.vars(): the designed character's name, until then "you"
+	if (const ABrixLife* L = Life()) V.Append(L->TalkVars());
 	return V;
 }
 
@@ -176,8 +178,9 @@ void ABrixTalk::Open()
 	const FString RoleName = Day->Roles.IsValidIndex(Day->Role[C.Resident]) ? Day->Roles[Day->Role[C.Resident]] : FString();
 	const FString Act = Day->Acts.IsValidIndex(C.Act) ? Day->Acts[C.Act] : FString();
 	const FString Cid = Dialogue.ConversationFor(C.Resident, RoleName, Act, C.bWalking);
-	const FBrixDialogue::FConversation* Conv = Dialogue.Conversations.Find(Cid);
-	if (!Conv) return;
+	const FBrixDialogue::FConversation* Base = Dialogue.Conversations.Find(Cid);
+	if (!Base) return;
+	Conv = Life() ? Life()->Conversation(C.Resident, *Base) : *Base;   // with the quest lines and work Life adds (life.js conversation())
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
 	Res = C.Resident;
 	At = C;
@@ -191,20 +194,20 @@ void ABrixTalk::Open()
 	People->HeldFace = &Face;
 	if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
 		Me->BeginTalk(FVector(C.Pos.X, C.Pos.Y, 0) * CmPerM, CloseCamera);
-	Show(Conv->Start);
+	Show(Conv.Start);
 }
 
 void ABrixTalk::Show(const FString& Nid)
 {
 	if (Nid.IsEmpty()) { Close(); return; }
-	const FBrixDialogue::FConversation* C = Dialogue.Conversations.Find(ConvId);
+	const FBrixDialogue::FConversation* C = &Conv;
 	const FBrixDialogue::FNode* N = C ? C->Nodes.Find(Nid) : nullptr;
 	if (!N) { Close(); return; }
 	NodeId = Nid;
 	bNextPending = false;
 	const TSet<FString>& F = Flags.FindOrAdd(Res);
 	Opts.Reset();
-	for (int32 k = 0; k < N->Options.Num(); ++k) if (FBrixDialogue::Allowed(N->Options[k], F)) Opts.Add(k);
+	for (int32 k = 0; k < N->Options.Num(); ++k) if (FBrixDialogue::Allowed(N->Options[k], F) && (!Life() || Life()->Allowed(N->Options[k]))) Opts.Add(k);
 	Say = FBrixDialogue::Fill(N->Say, Vars());
 	Mood = N->Mood;
 	Line = Speech.Speak(Say);   // the resident says the line: mouth, face and nods follow it
@@ -219,12 +222,13 @@ void ABrixTalk::Show(const FString& Nid)
 void ABrixTalk::Choose(int32 n)
 {
 	if (!IsTalking() || bNextPending || !Opts.IsValidIndex(n)) return;
-	const FBrixDialogue::FConversation* C = Dialogue.Conversations.Find(ConvId);
+	const FBrixDialogue::FConversation* C = &Conv;
 	const FBrixDialogue::FNode* N = C ? C->Nodes.Find(NodeId) : nullptr;
 	if (!N) return;
 	const FBrixDialogue::FOption O = N->Options[Opts[n]];
 	++Answered;
 	for (const FString& X : O.Do) Flags.FindOrAdd(Res).Add(X);
+	if (ABrixLife* L = Life()) L->Chose(Res, O);   // its quest acts, a job taken or handed over (life.js chose())
 	double Dur = -1;
 	SayAloud(-1, O.Text, TEXT("neutral"), Dur);   // you say your answer (SND-018)
 	if (Dur <= 0) { Show(O.Next); return; }
@@ -256,6 +260,13 @@ void ABrixTalk::Close()
 	bNextPending = false;
 	Say.Reset();
 	Refresh();
+	if (ABrixLife* L = Life()) L->TalkEnded();   // a counter asked for in the talk opens now
+}
+
+ABrixLife* ABrixTalk::Life() const
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	return Mode ? Mode->Life : nullptr;
 }
 
 void ABrixTalk::Tick(float Dt)

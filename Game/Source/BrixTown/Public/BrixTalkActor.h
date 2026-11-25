@@ -17,7 +17,8 @@ struct FBrixCity;
 // Kokoro speech, decoded here at run time) and their face follows it: mouth shapes from the line's text stretched to the
 // voice's length, brows and nods on stressed words and questions, the mood's expression (CHR-007, CHR-009). The player's
 // answers are said in the player's voice. Afterwards the resident runs late by the time the talk took (CITY-022).
-// Quests, jobs and counters that the slice's life.js adds to talks are not brought over yet.
+// The quests, jobs and counters that the slice's life.js adds to talks come from ABrixLife (Conversation(), Allowed(),
+// Chose(), TalkEnded()), as conversations.js asks Life for them.
 UCLASS(Config = Game)
 class BRIXTOWN_API ABrixTalk : public AActor
 {
@@ -43,6 +44,7 @@ public:
 private:
 	void Show(const FString& Node);
 	TMap<FString, FString> Vars() const;
+	class ABrixLife* Life() const;
 	void SayAloud(int32 Who, const FString& Template, const FString& Mood, double& OutDur);
 	void BuildUI();
 	void Refresh();
@@ -62,6 +64,7 @@ private:
 	int32 Res = -1;
 	ABrixPeople::FCandidate At;          // where they were when the talk began (held there)
 	FString ConvId, NodeId, Mood = TEXT("neutral"), Say;
+	FBrixDialogue::FConversation Conv;  // the talk as Life gives it: the resident's own, with quest lines and work added
 	TArray<int32> Opts;                  // the node's answers the player may give
 	FBrixLine Line;
 	FBrixFace Face;
