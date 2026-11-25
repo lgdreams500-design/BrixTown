@@ -516,7 +516,8 @@ starts on, as in the slice. A lawn (its grass and its longer edge) has its own p
 of vegetation.json's three tones, the mower's faint stripes, clumps of clover, blades close up and daisies in drifts, painted
 (`/Game/Greybox/M_Lawn`, `Tools/unreal/make_lawn_material.py` and `lawn.hlsl`, a section of its own in each block's facet
 mesh; `CITY017_lawns_are_drawn_in_their_own_pattern`). Shots: `lawn.png` against `lawn_before.png` (one even green) in
-`Art/StyleTests/unreal_gaps_world_39/`, beside the slice's `lawn_in_the_slice.png`. The new shapes are kept out
+`Art/StyleTests/unreal_gaps_world_39/`, beside the slice's `lawn_in_the_slice.png`; 10.0 frames a second at High in that garden, 7.7 without M_Lawn (noisy: other
+sessions were running Unreal). The new shapes are kept out
 of Lumen's surface cache (a card an instance oversubscribed it over the fields). `-BrixNoPlants` builds the town without
 them, to compare: 542,212 instances in 45 groups against 462,813 in 33; at High 37.7 fps in a park garden (40.2 without),
 37.8 over the fields (20.6 without: noisy, other sessions were running Unreal on the same laptop).
