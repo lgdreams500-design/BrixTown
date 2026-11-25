@@ -85,6 +85,11 @@ public:
 	// On the playground (WLD-041; play.js interact(), stepPlayer(), offPlay()): E at a swing seat, seesaw end, slide's ladder,
 	// sandpit or climbing frame has a go there; E, Space or moving gets off, beside it (a slide's go ends at its bottom)
 	bool IsPlaying() const { return PlayUse != INDEX_NONE; }
+	// Sitting or lying on a piece of furniture that has a place for it (play.js interact(), sit and lie; FURN-022, CITY-030):
+	// E at the place sits the player on it, facing as the piece does; E, Space or moving gets up, where they stood
+	bool IsSeated() const { return bSeated; }
+	bool SeatOffer(FString& OutLabel, double& OutMetres) const;   // what E offers within reach, in the mall or the furniture outlet
+	void TestSeat(const FString& LabelPart);                     // for a test shot: at the first seat whose offer has these words, and E
 	void StartPlay(int32 Use);
 	void StopPlay(bool bAtEnd = false);
 	void TestPlay(int32 Use);   // -BrixPlay=<n>: a test shot has a go at the n-th place
@@ -163,6 +168,12 @@ private:
 	FVector BoomOffsetBefore = FVector::ZeroVector;
 	class ABrixPeople* People() const;
 	int32 PlayUse = INDEX_NONE;
+	bool bSeated = false, bSeatLie = false, bSeatOff = false;
+	FVector SeatAt = FVector::ZeroVector, SeatFrom = FVector::ZeroVector;   // the seat's top (x, z, up; metres); where the player stood (cm)
+	double SeatYaw = 0;
+	const class ABrixMall* SeatHere(int32& OutSeat, double& OutMetres) const;
+	void StartSeat(const FVector& At, double Yaw, bool bLie, const FString& Label);
+	void StopSeat();
 	double PlayT0 = 0;
 	bool bPlayOff = false;           // moving or Space while on it: off at the next frame
 	FVector2D PlayEnd = FVector2D::ZeroVector;

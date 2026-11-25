@@ -271,6 +271,12 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 				L.Floor = FMath::RoundToInt(A[1] / Mall->StoreyHeight);
 				Lifts.Add(L);
 			}
+			else if ((Cl.Text.StartsWith(TEXT("sit|")) || Cl.Text.StartsWith(TEXT("lie|"))) && A.Num() >= 4)
+			{
+				FSeat Se;
+				Se.At = FVector(A[0], A[2], A[1]); Se.Yaw = A[3]; Se.bLie = Cl.Text.StartsWith(TEXT("lie|")); Se.Label = Cl.Text.Mid(4);
+				SeatList.Add(Se);
+			}
 			break;
 		case FBrixMallCall::Name:   // an outlet's name, lit on its sign band, facing the walk
 		{
@@ -387,6 +393,21 @@ bool ABrixMall::Contains(const FVector& WorldCm) const
 	if (!Mall) return false;
 	const FVector P = WorldCm / CmPerM;
 	return P.X > Mall->X0 && P.X < Mall->X1 && P.Y > Mall->Z0 && P.Y < Mall->Z1 && P.Z < Mall->H - .1;
+}
+
+int32 ABrixMall::SeatNear(const FVector& PawnCm, double& OutMetres) const
+{
+	const FVector Me(PawnCm.X / CmPerM, PawnCm.Y / CmPerM, PawnCm.Z / CmPerM - 0.9);   // the player's feet
+	int32 Best = INDEX_NONE;
+	OutMetres = SeatReach;
+	for (int32 i = 0; i < SeatList.Num(); ++i)
+	{
+		const FSeat& Se = SeatList[i];
+		if (FMath::Abs(Se.At.X - Me.X) > 2 || FMath::Abs(Se.At.Y - Me.Y) > 2 || FMath::Abs(Se.At.Z - Me.Z) > 1.2) continue;
+		const double D = FVector2D::Distance(FVector2D(Se.At), FVector2D(Me));
+		if (D < OutMetres) { OutMetres = D; Best = i; }
+	}
+	return Best;
 }
 
 const FBrixOutletRoom* ABrixMall::OutletAt(const FVector& WorldCm) const

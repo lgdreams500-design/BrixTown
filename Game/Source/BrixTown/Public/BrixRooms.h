@@ -37,6 +37,12 @@ public:
 	// and the storey drawn from a layout (the town's pieces moved and turned, pieces of furnishing.json as the kits' meshes)
 	bool TownLayout(int32 Lot, int32 Floor, TArray<struct FBrixLayoutPiece>& Out) const;
 	bool SetLayout(int32 Lot, int32 Floor, const TArray<struct FBrixLayoutPiece>& Layout);   // whether the building's rooms are drawn (furnished or with walls of its own)
+	// BUILD-020: the storey the building designer is looking into. That building's rooms are drawn however far the camera is,
+	// and only that storey's (the storeys over it would hide it); Floor below 0: the designer is not looking inside
+	void SetDesign(int32 Lot, int32 Floor);
+	// the outlines round the piece or wall picked in the designer and the one under the mouse (play.js designMarks()): boxes
+	// in Unreal's frame, each its own colour, lit
+	void SetMarks(const TArray<FTransform>& Boxes, const TArray<FLinearColor>& Colours);
 	int32 Furnished() const { return Near.Num(); }
 	int32 PiecesShown() const { return Shown; }
 	int32 LampsOn() const;
@@ -95,6 +101,7 @@ public:
 	UPROPERTY(Config) float LightFadeSeconds = 0.4f;
 	// a lamp as the rooms make it, for anything else that wants the same lamp (the reference room, ABrixLightRoom)
 	static class UPointLightComponent* MakeLamp(AActor* Owner, USceneComponent* Root, float Watts, float ConeDeg, bool bShadows);
+	UPROPERTY(Config) float MarkGlow = 2.5f;            // how brightly the designer's outlines are lit (M_Glow's Glow)
 	UPROPERTY(Config) float NightBelow = 0.35f;        // the windows are lit as the day's light falls below this (as ABrixLamps)
 
 private:
@@ -108,6 +115,8 @@ private:
 	UInstancedStaticMeshComponent* MeshGroup(const FString& Name);
 	UInstancedStaticMeshComponent* BoxGroup(bool bCollide);
 	UInstancedStaticMeshComponent* FurnGroup();
+	int32 DesignLot = -1, DesignFloor = -1;
+	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> MarkBoxes;
 	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> FurnBoxes;   // the furniture of buildings with no plan: the slice's boxes
 	UPROPERTY() TMap<FString, TObjectPtr<UInstancedStaticMeshComponent>> Groups;
 	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Boxes;      // walls, frames, floors: M_Greybox boxes that block

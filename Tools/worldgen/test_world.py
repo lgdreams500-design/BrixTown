@@ -889,6 +889,11 @@ class TheFurnitureOutlet(unittest.TestCase):
         self.assertEqual(len(staff), l["staff"])
         b = next(b for b in W["blocks"] if any(q is l for q in b["lots"]))
         self.assertTrue(any(p["kind"] == "carpark" for p in b["props"]))
+        # its delivery bay: a company van at a loading door (the hall has three, on the side of the car park), and the car
+        # park far enough off for a van to stand along the wall
+        self.assertTrue(1 <= l["vans"] <= 3, l["vans"])
+        park = next(p for p in b["props"] if p["kind"] == "carpark")
+        self.assertGreaterEqual(park["pos"][1] - park["size"][1] / 2 - z1, 3.0)
 
     def test_FURN_021_residents_browse_and_staff_work(self):
         l = self.outlet()

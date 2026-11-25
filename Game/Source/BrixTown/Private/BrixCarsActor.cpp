@@ -156,10 +156,11 @@ FVector2D ABrixCars::BuildParked(UProceduralMeshComponent* M, const FString& See
 {
 	if (!Traffic) return FVector2D::ZeroVector;
 	const double hm = BrixSliceHash({ Seed, TEXT("model") });
-	const FBrixCarModel* Md = Traffic->Models.Find(hm < .4 ? TEXT("small") : hm < .72 ? TEXT("estate") : TEXT("pickup"));
+	const bool bVan = Seed.StartsWith(TEXT("van"));   // a seed that starts "van": the company's delivery van, in its teal (the outlet's delivery bay; cars.js parked())
+	const FBrixCarModel* Md = Traffic->Models.Find(bVan ? TEXT("van") : hm < .4 ? TEXT("small") : hm < .72 ? TEXT("estate") : TEXT("pickup"));
 	if (!Md) return FVector2D::ZeroVector;
 	FBrixBodyMesh Body;
-	PaintCar(Body, *Md, false, 0, [&Seed](const TCHAR* T) { return BrixSliceHash({ Seed, T }); }, 0);
+	PaintCar(Body, *Md, bVan, 1, [&Seed](const TCHAR* T) { return BrixSliceHash({ Seed, T }); }, 0);
 	FBrixMeshArrays A;
 	A.From(Body, false);
 	A.Upload(M, -1, Material);

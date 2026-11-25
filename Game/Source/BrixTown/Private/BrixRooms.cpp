@@ -263,7 +263,7 @@ void ABrixRooms::Tick(float DeltaSeconds)
 	PlaceLights(Eye, (float)(Cam->GetCameraLocation().Z / CmPerM), LightMode ? LightMode->Daylight : 1.f);
 	TSet<int32> Want;
 	for (int32 i = 0; i < Homes.Num(); ++i)
-		if (FVector2D::Distance(Eye, Homes[i].Centre) - Homes[i].Reach < NearMetres) Want.Add(i);
+		if (FVector2D::Distance(Eye, Homes[i].Centre) - Homes[i].Reach < NearMetres || (DesignFloor >= 0 && Homes[i].Lot == DesignLot)) Want.Add(i);
 	// the building the camera is in and its floor: there the floors from one below to one above it are built, elsewhere the
 	// ground floor and, in a house of two, its upstairs (play.js nearRooms: the camera's floor and its neighbours)
 	int32 InHome = INDEX_NONE, OnFloor = 0;
@@ -356,7 +356,7 @@ bool ABrixRooms::SetLayout(int32 Lot, int32 Floor, const TArray<FBrixLayoutPiece
 		if (bTown) continue;
 		const double Y = FMath::DegreesToRadians(P.Yaw), c = FMath::Cos(Y), s = FMath::Sin(Y);
 		FBrixFurniturePiece K;
-		K.Kind = P.Kind == TEXT("town") ? FString(TEXT("town")) : P.Kind;
+		K.Kind = P.Kind == TEXT("town") || P.bBoxed ? FString(TEXT("town")) : P.Kind;   // (a flat pack not put together yet, FURN-029: the stack of its boxes, a box its size)
 		K.Line = P.Line ? *P.Line : FString(TEXT("plain"));
 		K.Floor = Floor;
 		K.At = FVector2D(P.X, P.Z);
@@ -368,6 +368,51 @@ bool ABrixRooms::SetLayout(int32 Lot, int32 Floor, const TArray<FBrixLayoutPiece
 	Near.Reset();   // drawn again at the next look round
 	Wait = 0.f;
 	return true;
+}
+
+void ABrixRooms::SetDesign(int32 Lot, int32 Floor)
+{
+	if (Floor < 0) Lot = -1;
+	if (Lot == DesignLot && Floor == DesignFloor) return;
+	DesignLot = Lot;
+	DesignFloor = Floor;
+	Near.Reset();   // drawn again at the next look round
+	Wait = 0.f;
+}
+
+void ABrixRooms::SetMarks(const TArray<FTransform>& At, const TArray<FLinearColor>& Colours)
+{
+	if (!MarkBoxes)
+	{
+		if (!At.Num()) return;
+		MarkBoxes = NewObject<UInstancedStaticMeshComponent>(this, TEXT("DesignMarks"));
+		MarkBoxes->SetupAttachment(RootComponent);
+		MarkBoxes->SetStaticMesh(Cube);
+		MarkBoxes->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		MarkBoxes->SetCastShadow(false);
+		MarkBoxes->NumCustomDataFloats = 12;
+		UMaterialInterface* Glow = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Greybox/M_Glow.M_Glow"));   // lit in its own colour, as a lamp's glass
+		if (UMaterialInstanceDynamic* Lit = Glow ? UMaterialInstanceDynamic::Create(Glow, this) : nullptr)
+		{
+			Lit->SetScalarParameterValue(TEXT("Glow"), MarkGlow);
+			for (int32 i = 0; i < MarkBoxes->GetNumMaterials(); ++i) MarkBoxes->SetMaterial(i, Lit);
+		}
+		else
+		{
+			if (!OwnColour) { OwnColour = UMaterialInstanceDynamic::Create(Greybox, this); OwnColour->SetScalarParameterValue(TEXT("InstanceColour"), 1.f); }
+			for (int32 i = 0; i < MarkBoxes->GetNumMaterials(); ++i) MarkBoxes->SetMaterial(i, OwnColour);
+		}
+		MarkBoxes->RegisterComponent();
+		AddInstanceComponent(MarkBoxes);
+	}
+	MarkBoxes->ClearInstances();
+	MarkBoxes->AddInstances(At, false);
+	for (int32 n = 0; n < At.Num(); ++n)
+	{
+		const FLinearColor C = Colours.IsValidIndex(n) ? Colours[n] : FLinearColor::White;
+		MarkBoxes->SetCustomData(n, { C.R, C.G, C.B, -1, 0, 0, 0, 0, 0, 0, 0, 0 }, false);
+	}
+	MarkBoxes->MarkRenderStateDirty();
 }
 
 bool ABrixRooms::HasRooms(int32 Lot) const { return Homes.ContainsByPredicate([Lot](const FLotHome& X) { return X.Lot == Lot; }); }
@@ -399,6 +444,7 @@ void ABrixRooms::Rebuild()
 		auto Up = [&](int32 f)   // a built floor near the camera, or -1
 		{
 			if (!LH.FloorUp.IsValidIndex(f)) return -1.f;
+			if (DesignFloor >= 0 && LH.Lot == DesignLot) return f == DesignFloor ? LH.FloorUp[f] : -1.f;   // the designer's storey, cut open
 			if (LH.FloorUp.Num() > 2 && (bHere ? FMath::Abs(f - CamFloor) > 1 : f > 0)) return -1.f;
 			return LH.FloorUp[f];
 		};

@@ -2,10 +2,65 @@
 
 #include "BrixLook.h"
 
+#include "Engine/StaticMesh.h"
+#include "StaticMeshResources.h"
+
 #include "Framework/Application/SlateApplication.h"
 #include "Rendering/DrawElements.h"
 #include "Rendering/SlateRenderer.h"
 #include "Styling/CoreStyle.h"
+
+TOptional<FBrixThingMesh> BrixThingFromStaticMesh(const UStaticMesh* Mesh)
+{
+	const FStaticMeshRenderData* Rd = Mesh ? Mesh->GetRenderData() : nullptr;
+	if (!Rd || !Rd->LODResources.Num()) return {};
+	const FStaticMeshLODResources& L = Rd->LODResources[Rd->LODResources.Num() - 1];   // the coarsest make: a cell is small
+	const FPositionVertexBuffer& Pos = L.VertexBuffers.PositionVertexBuffer;
+	const FStaticMeshVertexBuffer& Tan = L.VertexBuffers.StaticMeshVertexBuffer;
+	const FColorVertexBuffer& Col = L.VertexBuffers.ColorVertexBuffer;
+	// the corners are kept readable in the editor's builds; a packaged game keeps them only for meshes marked so
+	if (!Pos.GetNumVertices() || !Pos.GetAllowCPUAccess() || !L.IndexBuffer.GetAllowCPUAccess() || Tan.GetNumVertices() != Pos.GetNumVertices() || !Tan.GetAllowCPUAccess()) return {};
+	const bool bColours = Col.GetNumVertices() == Pos.GetNumVertices() && Col.GetAllowCPUAccess();
+	const FIndexArrayView Ix = L.IndexBuffer.GetArrayView();
+	FBrixThingMesh M;
+	M.P.Reserve(Ix.Num()); M.N.Reserve(Ix.Num()); M.C.Reserve(Ix.Num());
+	for (int32 t = 0; t + 2 < Ix.Num(); t += 3)
+		for (int32 k = 0; k < 3; ++k)
+		{
+			const uint32 i = Ix[t + k];
+			if (i >= Pos.GetNumVertices()) return {};
+			// the kit's piece in Unreal: x across, its front toward +y, z up, centimetres
+			const FVector3f P = Pos.VertexPosition(i);
+			const FVector4f N = Tan.VertexTangentZ(i);
+			M.P.Add(FVector3f(P.X, P.Z, P.Y) * .01f);
+			M.N.Add(FVector3f(N.X, N.Z, N.Y));
+			const FColor C = bColours ? Col.VertexColor(i) : FColor(115, 97, 77);
+			M.C.Add(FVector3f(C.R / 255.f, C.G / 255.f, C.B / 255.f));   // as M_Furniture reads it: the colour itself
+		}
+	if (!M.P.Num()) return {};
+	FBrixBuyMenuRules::Finish(M);
+	return M;
+}
+
+FBrixThingMesh BrixThingBox(const FVector3f& Size, const FVector3f& Colour)
+{
+	FBrixThingMesh M;
+	M.bStandIn = true;
+	const float hx = Size.X / 2, hz = Size.Y / 2, h = Size.Z;
+	const FVector3f Lo[4] = { { -hx, 0, -hz }, { hx, 0, -hz }, { hx, 0, hz }, { -hx, 0, hz } }, Hi[4] = { { -hx, h, -hz }, { hx, h, -hz }, { hx, h, hz }, { -hx, h, hz } };
+	auto Face = [&](const FVector3f& a, const FVector3f& b, const FVector3f& c, const FVector3f& d, const FVector3f& n)
+	{
+		for (const FVector3f& p : { a, b, c, a, c, d }) { M.P.Add(p); M.N.Add(n); M.C.Add(Colour); }
+	};
+	Face(Hi[0], Hi[1], Hi[2], Hi[3], FVector3f(0, 1, 0));
+	Face(Lo[0], Lo[1], Lo[2], Lo[3], FVector3f(0, -1, 0));
+	Face(Lo[0], Lo[1], Hi[1], Hi[0], FVector3f(0, 0, -1));
+	Face(Lo[1], Lo[2], Hi[2], Hi[1], FVector3f(1, 0, 0));
+	Face(Lo[2], Lo[3], Hi[3], Hi[2], FVector3f(0, 0, 1));
+	Face(Lo[3], Lo[0], Hi[0], Hi[3], FVector3f(-1, 0, 0));
+	FBrixBuyMenuRules::Finish(M);
+	return M;
+}
 
 void SBrixThing::Construct(const FArguments& A)
 {
