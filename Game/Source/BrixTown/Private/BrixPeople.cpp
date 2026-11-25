@@ -257,6 +257,7 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		const double Ride2 = (double)RideDistance * RideDistance;
 		for (int32 k = 0; k < Traffic->Num(); ++k)
 		{
+			if (Traffic->Moved.Contains(k)) continue;   // the player has it: they sit in it themselves
 			const TOptional<FBrixCarAt> C = Traffic->At(k, Minute);
 			if (!C || FVector2D::DistSquared(C->Pos, Here) > Ride2) continue;
 			const FBrixVehicle& V = Traffic->Vehicles[k];

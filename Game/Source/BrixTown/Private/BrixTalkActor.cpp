@@ -1,5 +1,6 @@
 #include "BrixTalkActor.h"
 
+#include "BrixCarsActor.h"
 #include "BrixCharacter.h"
 #include "BrixCity.h"
 #include "BrixDay.h"
@@ -264,6 +265,16 @@ void ABrixTalk::Tick(float Dt)
 	{
 		const ABrixPeople::FCandidate& C = People->Candidate();
 		PromptText = C.Resident >= 0 && Day->Names.IsValidIndex(C.Resident) ? TEXT("Talk to ") + Day->Names[C.Resident] : FString();
+		// a parked car nearer than anyone to talk to: the offer is to drive it; in a car, to get out
+		const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+		const APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);
+		if (Mode && Mode->Cars && Me)
+		{
+			if (Mode->Cars->Driving().K >= 0) { PromptText = TEXT("Get out"); return; }
+			double D = 0;
+			const int32 CarK = Mode->Cars->TargetCar(FVector2D(Me->GetActorLocation().X, Me->GetActorLocation().Y) / CmPerM, D);
+			if (CarK >= 0 && (C.Resident < 0 || D <= C.D)) PromptText = Mode->Cars->IsVan(CarK) ? TEXT("Drive this van") : TEXT("Drive this car");
+		}
 		return;
 	}
 	if (bNextPending && Now(GetWorld()) >= NextAt) Show(NextNode);
@@ -328,4 +339,9 @@ void ABrixTalk::SayAloud(int32 Who, const FString& Template, const FString& InMo
 	Voice = UGameplayStatics::SpawnSound2D(this, Wave, (float)Dialogue.Volume);
 	OutDur = Wave->Duration;
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: %s says \"%s\" aloud, %.2f s"), Who < 0 ? TEXT("the player") : *FString::FromInt(Who), *Template, OutDur);
+}
+
+double ABrixTalk::CandidateDistance() const
+{
+	return People && People->Candidate().Resident >= 0 ? People->Candidate().D : -1;
 }

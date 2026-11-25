@@ -116,8 +116,13 @@ the slice's paints, roof loads and spares; buses the slice's long soft box in th
 model, to 160 m the light one; each is a procedural mesh built once and moved. Within 70 m whoever rides in them sits
 there as in the slice (cars.js occupants(), seat()): the resident whose car it is at the wheel and neighbours sharing the
 ride beside and behind (CITY-094), a bus's driver and its riders on the benches, someone from out of town in a van or a
-car passing through; as low as the head needs under the roof, feet along the floor, hands on the wheel. Cars do not yet
-give way to the player, and the player cannot drive. 51.5 frames a second at High on a street
+car passing through; as low as the head needs under the roof, feet along the floor, hands on the wheel. The player can drive
+any parked car or van (a stand-in for CITY-061, as the slice's cars.js): E beside it gets in (it steps out of its bay
+onto the road first), W/S speed and brake, A/D steer, Space the handbrake, up to the top speed of World/rules/traffic.json;
+a wall, a street thing or another car stops it and it rolls back a little; the camera swings round behind; E gets out by
+the driver's door, and the car stays where it was left for the rest of the visit. E offers whichever is nearer, a car to
+drive or someone to talk to. Not yet: breaking street things (CITY-072, CITY-073), riding the bus, and resident cars
+giving way to the player (CITY-049). To see a drive in a test shot: `-BrixDrive=<vehicle> "-BrixHold=steer,throttle"`. 51.5 frames a second at High on a street
 with 32 vehicles drawn.
 
 ## The tram (CITY-041)

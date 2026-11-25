@@ -38,6 +38,9 @@ public:
 	// answers (conversations.js open()); and ends (close()).
 	void BeginTalk(const FVector& Them, float CameraM);
 	void EndTalk();
+	// for test shots: press E as a player would, and hold W/S and A/D (x steer, y throttle)
+	void TestPress() { TalkKey(); }
+	FVector2D TestHold = FVector2D::ZeroVector;
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void PawnClientRestart() override;
@@ -51,6 +54,9 @@ private:
 	void TalkKey();                  // E: talk to the resident the player is next to (CITY-007)
 	void AnswerKey(const FInputActionInstance& Instance);   // 1 to 9: an answer
 	void LeaveKey();                 // Esc: leave the talk
+	void JumpKey();                  // Space: a jump on foot, the handbrake in a car
+	void JumpEnd();
+	class ABrixCars* Cars() const;
 	class ABrixTalk* Talk() const;
 
 	UPROPERTY(VisibleAnywhere) TObjectPtr<USpringArmComponent> Boom;
@@ -71,5 +77,7 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UInputAction> LeaveAction;
 	UPROPERTY(Transient) TArray<TObjectPtr<UInputAction>> AnswerActions;
 	bool bTalking = false;
+	bool bDriving = false, bHandbrake = false;
+	FVector2D DriveIn = FVector2D::ZeroVector;   // this frame's W/S and A/D while driving
 	float ArmBefore = 0.f;
 };

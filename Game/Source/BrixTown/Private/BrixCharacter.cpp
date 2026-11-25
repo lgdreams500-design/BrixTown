@@ -1,5 +1,6 @@
 #include "BrixCharacter.h"
 
+#include "BrixCarsActor.h"
 #include "BrixGameMode.h"
 #include "BrixPeople.h"
 #include "BrixTalkActor.h"
@@ -118,8 +119,8 @@ void ABrixCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	{
 		In->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABrixCharacter::Move);
 		In->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABrixCharacter::Look);
-		In->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		In->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		In->BindAction(JumpAction, ETriggerEvent::Started, this, &ABrixCharacter::JumpKey);
+		In->BindAction(JumpAction, ETriggerEvent::Completed, this, &ABrixCharacter::JumpEnd);
 		In->BindAction(RunAction, ETriggerEvent::Started, this, &ABrixCharacter::StartRun);
 		In->BindAction(RunAction, ETriggerEvent::Completed, this, &ABrixCharacter::StopRun);
 		In->BindAction(TalkAction, ETriggerEvent::Started, this, &ABrixCharacter::TalkKey);
@@ -131,6 +132,7 @@ void ABrixCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 void ABrixCharacter::Move(const FInputActionValue& Value)
 {
 	const FVector2D V = Value.Get<FVector2D>();
+	if (bDriving) { DriveIn = V; return; }   // W/S the speed, A/D the steering
 	if (!Controller || bTalking) return;   // a talk holds the player still (conversations.js open())
 	const FRotator Yaw(0.f, Controller->GetControlRotation().Yaw, 0.f);
 	AddMovementInput(FRotationMatrix(Yaw).GetUnitAxis(EAxis::X), V.Y);
@@ -152,6 +154,41 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	if (!Rules.Roles.Num()) return;
+	if (bDriving)   // at the wheel: the car moves, the player sits in it, the camera swings round behind (cars.js drive())
+		if (ABrixCars* C = Cars())
+		{
+			if (!TestHold.IsZero()) DriveIn = TestHold;
+			C->Step(DeltaSeconds, DriveIn.Y, DriveIn.X, bHandbrake);
+			DriveIn = FVector2D::ZeroVector;
+			const FBrixLook& L = Rules.Player;
+			FVector2D Seat;
+			double Yaw = 0;
+			float Up = 0, Floor = 0;
+			const float Head = (L.Cap ? 1.06f : L.Hair == TEXT("afro") ? 1.12f : L.Hair == TEXT("bun") ? 1.06f : 1.04f) * (float)L.S;
+			if (C->DriverSeat(Seat, Yaw, Up, Floor, Head))
+			{
+				SetActorLocationAndRotation(FVector(Seat.X * CmPerM, Seat.Y * CmPerM, Up * CmPerM + 85.f), FRotator(0, FMath::RadiansToDegrees(Yaw), 0));
+				const double V = C->Driving().V;
+				if (FMath::Abs(V) > .5)
+					if (APlayerController* PC = Cast<APlayerController>(GetController()))
+					{
+						FRotator R = PC->GetControlRotation();
+						const double Want = FMath::RadiansToDegrees(Yaw) + (V < 0 ? 180.0 : 0.0);
+						R.Yaw += FMath::FindDeltaAngleDegrees(R.Yaw, Want) * FMath::Min(1.0, DeltaSeconds * 2.2);
+						PC->SetControlRotation(R);
+					}
+				FBrixDrawOptions O;
+				O.Pose = 2;
+				O.Floor = Floor;
+				O.bDriving = true;
+				O.Seconds = GetWorld()->GetTimeSeconds();
+				O.Lod = 0;
+				Scratch.Reset();
+				DrawBrixPerson(Rules, L, FVector::ZeroVector, 0.0, O, Scratch);
+				Verts = BrixBodyToMesh(Person, Scratch, Verts, false, BodyMaterial);
+			}
+			return;
+		}
 	// the slice's stepPlayer(): the phase runs on with the distance covered, by the Run signature when running
 	const double Speed = GetVelocity().Size2D() / CmPerM;
 	FBrixLook L = Rules.Player;
@@ -173,9 +210,56 @@ ABrixTalk* ABrixCharacter::Talk() const
 	return Mode ? Mode->Talk : nullptr;
 }
 
-void ABrixCharacter::TalkKey()
+void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whichever is nearest (play.js interact())
 {
-	if (ABrixTalk* T = Talk()) if (!T->IsTalking()) T->Open();
+	ABrixCars* C = Cars();
+	ABrixTalk* T = Talk();
+	if (bDriving && C)
+	{
+		FVector2D Spot;
+		double Yaw = 0;
+		C->Leave(Spot, Yaw);
+		bDriving = false;
+		SetActorLocationAndRotation(FVector(Spot.X * CmPerM, Spot.Y * CmPerM, 95.f), FRotator(0, FMath::RadiansToDegrees(Yaw), 0));
+		SetActorEnableCollision(true);
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		Boom->TargetArmLength = CameraDistance * CmPerM;
+		return;
+	}
+	if (T && T->IsTalking()) return;
+	const FVector2D Me(GetActorLocation().X / CmPerM, GetActorLocation().Y / CmPerM);
+	double CarD = 1e9;
+	const int32 Car = C ? C->TargetCar(Me, CarD) : -1;
+	const double TalkD = T && T->CandidateDistance() >= 0 ? T->CandidateDistance() : 1e9;
+	if (Car >= 0 && CarD <= TalkD)
+	{
+		if (!C->Enter(Car)) return;
+		bDriving = true;
+		SetActorEnableCollision(false);
+		GetCharacterMovement()->StopMovementImmediately();
+		GetCharacterMovement()->DisableMovement();
+		Boom->TargetArmLength = FMath::Max(Boom->TargetArmLength, 8.5f * CmPerM);   // back a way, to see the car
+		return;
+	}
+	if (T) T->Open();
+}
+
+ABrixCars* ABrixCharacter::Cars() const
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	return Mode ? Mode->Cars : nullptr;
+}
+
+void ABrixCharacter::JumpKey()
+{
+	if (bDriving) { bHandbrake = true; return; }
+	if (!bTalking) Jump();
+}
+
+void ABrixCharacter::JumpEnd()
+{
+	bHandbrake = false;
+	StopJumping();
 }
 
 void ABrixCharacter::AnswerKey(const FInputActionInstance& Instance)

@@ -49,6 +49,8 @@ bool LoadBrixTraffic(const FString& CarsPath, const FString& ModelsPath, FBrixTr
 	double Lay = 0;
 	Root->TryGetNumberField(TEXT("bus_layover_min"), Lay);
 	Out.BusLayover = (float)Lay;
+	double Top = 50;
+	if (Root->TryGetNumberField(TEXT("player_top_kmh"), Top)) Out.PlayerTopKmh = (float)Top;
 	Root->TryGetStringArrayField(TEXT("lines"), Out.Lines);
 	for (const TSharedPtr<FJsonValue>& CV : Root->GetArrayField(TEXT("cars")))
 	{
@@ -115,6 +117,7 @@ bool LoadBrixTraffic(const FString& CarsPath, const FString& ModelsPath, FBrixTr
 TOptional<FBrixCarAt> FBrixTraffic::At(int32 k, double m) const
 {
 	if (!Vehicles.IsValidIndex(k)) return {};
+	if (const FBrixCarAt* Mv = Moved.Find(k)) return *Mv;
 	const FBrixVehicle& C = Vehicles[k];
 	auto Parked = [](const FVector4f& B) { FBrixCarAt A; A.Pos = FVector2D(B.X, B.Y); A.Heading = FVector2D(B.Z, B.W); return A; };
 	const bool bBus = C.Kind == 2;
@@ -161,4 +164,20 @@ const FBrixCarModel* FBrixTraffic::ModelOf(int32 k) const
 	if (Vehicles[k].Kind == 1) return Models.Find(TEXT("van"));
 	const double h = BrixSliceHash({ FString::FromInt(k), TEXT("model") });
 	return Models.Find(h < .4 ? TEXT("small") : h < .72 ? TEXT("estate") : TEXT("pickup"));
+}
+
+FVector3f FBrixTraffic::Dims(int32 k) const
+{
+	if (Vehicles.IsValidIndex(k) && Vehicles[k].Kind == 2) return FVector3f(11.f, 2.5f, 0.f);   // a bus (cars.js BUS)
+	const FBrixCarModel* M = ModelOf(k);
+	if (!M) return FVector3f(4.f, 1.7f, 0.f);
+	return FVector3f(M->Box.Y - M->Box.X, M->Box.W - M->Box.Z, (M->Box.X + M->Box.Y) / 2);
+}
+
+bool FBrixTraffic::Hits(const FBrixCarAt& C, int32 k, const FVector2D& P, double Pad) const
+{
+	const FVector3f D = Dims(k);
+	const FVector2D d = P - C.Pos;
+	const double a = d.X * C.Heading.X + d.Y * C.Heading.Y - D.Z, w = -d.X * C.Heading.Y + d.Y * C.Heading.X;
+	return FMath::Abs(a) < D.X / 2 + Pad && FMath::Abs(w) < D.Y / 2 + Pad;
 }

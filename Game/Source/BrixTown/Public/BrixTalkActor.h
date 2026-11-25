@@ -30,6 +30,7 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
 	bool IsTalking() const { return Res >= 0; }
+	double CandidateDistance() const;   // metres to the resident who could be talked to, or -1
 	void Open();                        // with the resident the player is next to, if any
 	void Choose(int32 N);               // the N-th answer (0 first)
 	void Close();
