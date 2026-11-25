@@ -180,5 +180,15 @@
   "seats": 3,
   "shift_min": 45.0,
   "min_stay_min": 2.0
+ },
+ "give_way": {
+  "note": "CITY-049: resident cars near a car or person a player controls slow, wait or stop instead of colliding, then rejoin their timeline without speeding; presented state near players only (Tools/citysim/giveway.py). [ASSUMPTION] values. Distances in metres from the car's front, times in game minutes.",
+  "see_m": 14.0,
+  "stop_m": 2.5,
+  "pad_m": 0.6,
+  "near_m": 120.0,
+  "person_r_m": 0.4,
+  "reset_min": 10.0,
+  "unload_m": 160.0
  }
 }

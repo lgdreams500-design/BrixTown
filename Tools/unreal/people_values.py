@@ -33,6 +33,8 @@ OUT_VALUES = os.path.join(ROOT, "Tests", "values", "people_city_01.json")
 OUT_TALK = os.path.join(ROOT, "Game", "Data", "talk.json")
 OUT_TALK_VALUES = os.path.join(ROOT, "Tests", "values", "talk_city_01.json")
 CONV_JS = os.path.join(ROOT, "Prototype", "play", "conversations.js")
+DODGE_JS = os.path.join(ROOT, "Prototype", "play", "dodge.js")
+OUT_DODGE_VALUES = os.path.join(ROOT, "Tests", "values", "dodge_city_01.json")
 VOICES_JS = os.path.join(ROOT, "Prototype", "play", "audio", "voices", "index.js")
 RULES = os.path.join(ROOT, "World", "rules")
 EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
@@ -53,8 +55,9 @@ looks.forEach((L, k) => out.looks.push(Object.assign({ i: CASES.looks[k][0], rol
 for (const c of CASES.bodies) {
   const ms = { a: new Float32Array(1 << 20), n: 0, boxes: [], box(x0, y0, z0, x1, y1, z1, col) { this.boxes.push([x0, y0, z0, x1, y1, z1, col[0], col[1], col[2]]); } };
   const L = looks[c.look];
-  draw(ms, c.x, c.y, c.z, c.yaw, L, c.pose, { ph: c.ph, t: c.t, lod: c.lod, ff: c.ff, fl: 14, face: c.face || null,
-    mod: c.floor != null ? { floor: c.floor, arms: c.driver ? [[1, 58, 10, 48], [1, 58, 10, 48]] : null } : null });   // in a car (cars.js seat())
+  const mod = c.floor != null ? { floor: c.floor, arms: c.driver ? [[1, 58, 10, 48], [1, 58, 10, 48]] : null } : c.arms || c.chest ? { arms: c.arms, chest: c.chest } : null;   // in a car (cars.js seat()); a gesture (dodge.js, smash.js, wet.js)
+  draw(ms, c.x, c.y, c.z, c.yaw, L, c.pose, { ph: c.ph, t: c.t, lod: c.lod, ff: c.ff, fl: 14, face: c.face || null, mod,
+    sig: c.sig ? SIG[c.sig] : undefined, hood: c.hood, umb: c.umb });
   const nv = ms.n / 10, step = Math.max(1, Math.floor(nv / 240)), pts = [];
   for (let v = 0; v < nv; v += step) pts.push([v, ms.a[v * 10], ms.a[v * 10 + 1], ms.a[v * 10 + 2]]);
   out.bodies.push(Object.assign({}, c, { vertices: nv, samples: pts, boxes: ms.boxes }));
@@ -64,6 +67,29 @@ window.__OUT = out;
 """
 
 # after people.js: conversations.js with the dialogue and speech rules, and every line mouthed (CHR-009)
+# dodge.js (CITY-070, CITY-071) with the play.js globals it reads stubbed: a car driven east past residents standing, walking
+# and sitting at either side of its line, a wall to the north, then it stops; what dodge.js apply() lays on each, frame by frame
+DODGE_HARNESS = r"""
+try {
+const out = window.__OUT; if (!out) throw new Error(window.__ERR || "people.js gave nothing");
+window.blocked = p => p[2] < -2.6;                       // a wall north of z -2.6
+window.groundBase = (x, z) => .12;
+let V = 0; window.Cars = { speed: () => V };
+const RES = [[11, -20, .3, 0, 0], [27, -15, 1.0, .4, 0], [43, -10, -1.0, 2.0, 0], [58, -5, 2.5, 1.0, 0], [71, -18, .5, 1.57, 1], [96, -12, .2, 0, 2], [130, 20, .3, 0, 0], [205, -2, -.4, 3.0, 1]];
+const frames = [];
+for (let f = 0; f < 330; f++) {
+  const e = f / 30, t = 100 + e, cx = -40 + 9 * Math.min(e, 5);
+  V = e < 5 ? 9 : 0;
+  Dodge.frame(t, { pose: 4, x: cx, z: .3, y: .12, yaw: Math.PI / 2 });
+  frames.push({ t, car: [cx, .3, V], rows: RES.map(([i, x, z, yaw, pose]) => {
+    const r = { x, y: .12, z, yaw, pose, walking: pose === 1, ph: .3, inside: false }, q = Dodge.apply(i, r);
+    return q === r ? null : [q.x, q.z, q.y - .12, q.yaw, q.pose, q.walking ? 1 : 0, q.ph, q.sig ? "Run" : "", q.mod ? q.mod.arms : null, q.mod ? q.mod.chest : null, q.shout || ""];
+  }) });
+}
+out.dodge = { residents: RES, yaw: Math.PI / 2, frames };
+} catch (e) { window.__ERR = String(e.stack || e); window.__OUT = null; }
+"""
+
 TALK_HARNESS = r"""
 try {
 const out = window.__OUT; if (!out) throw new Error(window.__ERR || "people.js gave nothing");
@@ -136,6 +162,24 @@ def main():
         bodies.append(dict(look=k, x=0.0, y=0.0, z=0.0, yaw=0.0, pose=0, ph=0.0, t=2.0 + 0.7 * k, lod=1 if k % 2 else 0, ff=1.0))
         bodies.append(dict(look=k, x=-3.0, y=0.62, z=1.0, yaw=2.0 - 0.2 * k, pose=2, ph=0.0, t=3.0 + 0.4 * k, lod=k % 4, ff=0.8))   # on a bench (CITY-017)
         bodies.append(dict(look=k, x=4.0, y=0.6, z=-1.0, yaw=0.3 * k, pose=2, ph=0.0, t=1.0 + 0.3 * k, lod=k % 3, ff=1.0, floor=-0.45, driver=k % 2 == 0))   # in a car (CITY-040)
+    # gestures, other walks, hoods and umbrellas (dodge.js, smash.js, wet.js: CITY-070, CITY-071, CITY-076, CITY-079, CITY-080)
+    coat, umb = [0.25, 0.3, 0.4], [0.44, 0.24, 0.18]
+    for k in range(len(looks)):
+        lod = k % 3
+        bodies.append(dict(look=k, x=0.5, y=0.12, z=1.0, yaw=0.2 * k, pose=0, ph=0.0, t=1.7 + k, lod=lod, ff=1.0,
+                           arms=[[0.7, 55, 25, 95], [0.7, 55, 25, 95]], chest=[-6.3, 0]))   # startled by a car
+        bodies.append(dict(look=k, x=0.5, y=0.12, z=1.0, yaw=0.5 + 0.2 * k, pose=1, ph=(0.31 + 0.11 * k) % 1, t=2.1 + k, lod=lod, ff=1.0, sig="Run",
+                           arms=[[0.8, 40, 30, 100], [0.8, 30, 34, 105]], chest=[10, 0]))   # the scramble
+        bodies.append(dict(look=k, x=0.5, y=0.12, z=1.0, yaw=1.0 + 0.2 * k, pose=0, ph=0.0, t=2.5 + k, lod=lod, ff=1.0,
+                           arms=[[0.45, 10, 14, 70], [0.9, 171, 8, 71]], chest=[6.3, 0]))   # a fist shaken at the driver
+        bodies.append(dict(look=k, x=-1.0, y=0.12, z=0.0, yaw=0.3 * k, pose=1, ph=(0.07 + 0.13 * k) % 1, t=3.3 + k, lod=lod, ff=1.0, hood=coat,
+                           sig="Hurried", arms=[None, None]))   # a hood up, hurrying in the rain
+        bodies.append(dict(look=k, x=-1.0, y=0.12, z=0.0, yaw=0.3 * k, pose=1 if k % 2 else 0, ph=(0.21 + 0.13 * k) % 1, t=3.9 + k, lod=lod, ff=1.0, umb=umb,
+                           arms=[None, [1, 52, 12, 84]]))   # an umbrella up
+        bodies.append(dict(look=k, x=-3.0, y=0.62, z=1.0, yaw=0.3 * k, pose=2, ph=0.0, t=4.4 + k, lod=lod, ff=1.0, umb=coat,
+                           arms=[None, [1, 52, 12, 84]]))   # under an umbrella on a bench
+        bodies.append(dict(look=k, x=-1.0, y=0.12, z=0.0, yaw=0.3 * k, pose=1, ph=(0.41 + 0.13 * k) % 1, t=5.1 + k, lod=lod, ff=1.0,
+                           sig="Hurried", arms=[[1, 150, 30, 118], None], chest=[6, 0]))   # a hand over the head
     for n, face in enumerate(face_cases()):   # someone in a conversation: the full face control set (CHR-007)
         bodies.append(dict(look=n * 3, x=0.0, y=0.0, z=0.0, yaw=0.4 * n, pose=0, ph=0.0, t=1.3 + n, lod=0, ff=1.0, face=face))
     cases = json.dumps(dict(looks=looks, bodies=bodies))
@@ -147,12 +191,14 @@ def main():
         sys.exit("play.js: hash() not found; update people_values.py")
     dialogue = json.load(open(os.path.join(RULES, "dialogue.json"), encoding="utf-8"))
     speech = json.load(open(os.path.join(RULES, "speech.json"), encoding="utf-8"))
+    dodge = json.load(open(os.path.join(RULES, "dodge.json"), encoding="utf-8"))
     lines = sorted({n["say"] for c in dialogue["conversations"].values() for n in c["nodes"].values()} |
                    {o["text"] for c in dialogue["conversations"].values() for n in c["nodes"].values() for o in n["options"]})
     lines += ["Well... that's it, isn't it? Yes; quite: really \u2014 fine!", "", "Hmm."]
     conv = open(CONV_JS, encoding="utf-8").read()
     page = ("<!doctype html><meta charset=utf-8><pre id=out></pre><script>\n" + h.group(0) + patched + "\n</script>"
-            + "<script>window.WASTED = " + json.dumps(dict(dialogue=dialogue, speech=speech)) + ";</script>"
+            + "<script>window.WASTED = " + json.dumps(dict(dialogue=dialogue, speech=speech, dodge=dodge)) + ";</script>"
+            + "<script>\n" + open(DODGE_JS, encoding="utf-8").read() + "\n</script><script>\n" + DODGE_HARNESS + "\n</script>"
             + "<script>\n" + conv + "\n</script><script>\n" + TALK_HARNESS.replace("%LINES%", json.dumps(lines)).replace("%TRAM%", tram_js()) + "\n</script>")
     # Edge is started through PowerShell's Start-Process with its output sent to a file: since Edge 158 the page runs in
     # a process Edge hands it to, which writes nothing to a pipe from here, and Start-Process -Wait waits for it. Edge's
@@ -186,6 +232,10 @@ def main():
     with open(OUT_TALK_VALUES, "w", encoding="utf-8", newline="\n") as f:
         json.dump(dict(note="Generated by Tools/unreal/people_values.py: conversations.js speak() for every line, for CHR009_lines_are_mouthed_as_the_slice_mouths_them; play.js tramAt() through a day, for CITY041_trams_are_where_the_timetable_puts_them.",
                        speak=out["speak"], tram=out["tram"]), f, separators=(",", ":"), ensure_ascii=False)
+    with open(OUT_DODGE_VALUES, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(dict(note="Generated by Tools/unreal/people_values.py: dodge.js frame() and apply() for a car driven past residents, for CITY070_residents_dodge_and_scold_as_the_slice_does.",
+                       **out["dodge"]), f, separators=(",", ":"), ensure_ascii=False)
+    print("wrote %s: %d frames" % (os.path.relpath(OUT_DODGE_VALUES, ROOT), len(out["dodge"]["frames"])))
     play_src = open(os.path.join(ROOT, "Prototype", "play", "play.js"), encoding="utf-8").read()
     vj = open(VOICES_JS, encoding="utf-8").read()
     voices = json.loads(vj[vj.index("{"):vj.rindex("}") + 1])

@@ -48,6 +48,13 @@ struct BRIXWORLD_API FBrixCarModel
 	TOptional<float> Roof, Floor;            // the underside of the roof over the seats, the body's bottom under the feet (cars.js)
 };
 
+// CITY-049: how resident cars give way to what a player controls (World/rules/traffic.json "give_way"; the rule is
+// proved in Tools/citysim/giveway.py): metres from the car's front, game minutes.
+struct BRIXWORLD_API FBrixGiveWayRules
+{
+	double SeeM = 14, StopM = 2.5, PadM = .6, NearM = 120, PersonR = .4, ResetMin = 10, UnloadM = 160;
+};
+
 struct BRIXWORLD_API FBrixTraffic
 {
 	float Step = 0.1f;                       // minutes between a trip's points
@@ -56,6 +63,11 @@ struct BRIXWORLD_API FBrixTraffic
 	// Cars the player has driven (or is driving): they stay where they were left for the rest of the visit and no longer
 	// follow their owner's day (the slice's taken and drv; CITY-061 stand-in).
 	TMap<int32, FBrixCarAt> Moved;
+	// CITY-049: minutes each resident car runs behind its timeline after giving way near a player (presented state, never
+	// stored): it is shown where its timeline had it that long ago. Grows while it is held back, shrinks only at its next
+	// stop (GiveWay()).
+	TMap<int32, double> Late;
+	FBrixGiveWayRules GiveWayRules;
 	TArray<FString> Lines;                   // each bus line's colour (a palette name)
 	TArray<FBrixVehicle> Vehicles;
 	TArray<FString> Parts;
@@ -64,6 +76,16 @@ struct BRIXWORLD_API FBrixTraffic
 	int32 Num() const { return Vehicles.Num(); }
 	// Where vehicle k is at minute m of the day; unset when it is not in the town (away, out of service, parked off the street).
 	TOptional<FBrixCarAt> At(int32 k, double Minute) const;
+	// The same on its own timeline, without any delay from giving way.
+	TOptional<FBrixCarAt> OnTimeline(int32 k, double Minute) const;
+	// CITY-049, a port of giveway.py GiveWay.step(): Players are what players control, as circles (x, z, radius): the player
+	// on foot, the car they drive as three along its length. Cars, the vehicles to consider (those near players). Dt in
+	// game minutes. A moving car with one of them, or a car already held up, ahead in its path slows over SeeM and stands
+	// StopM short of it; standing at its next stop it leaves as soon as its timeline is there too; more than ResetMin behind
+	// and further than UnloadM from every player it is put back on its timeline.
+	void GiveWay(double Minute, double Dt, const TArray<FVector3d>& Players, const TArray<int32>& Cars);
+	// Vehicle k standing at C as three circles along its length (giveway.py circles()).
+	void Circles(int32 k, const FBrixCarAt& C, TArray<FVector3d>& Out) const;
 	// The slice's choice of model for vehicle k (cars.js model()): a van's, else small, estate or pickup by its hash. None for a bus.
 	const FBrixCarModel* ModelOf(int32 k) const;
 	// Vehicle k's length, width and how far its middle sits ahead of its point (cars.js dims()).
@@ -74,3 +96,6 @@ struct BRIXWORLD_API FBrixTraffic
 
 // Reads Game/Data/cars.json and car_models.json. On failure returns false and says why.
 BRIXWORLD_API bool LoadBrixTraffic(const FString& CarsPath, const FString& ModelsPath, FBrixTraffic& Out, FString& OutError);
+
+// Reads the "give_way" rules of World/rules/traffic.json (CITY-049). On failure returns false and says why.
+BRIXWORLD_API bool LoadBrixGiveWay(const FString& TrafficRulesPath, FBrixGiveWayRules& Out, FString& OutError);

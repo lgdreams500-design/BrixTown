@@ -16,6 +16,8 @@ data file; nothing is stepped frame by frame.
 | `render.py` | Draws top-down clips. Needs Pillow and numpy. |
 | `traffic.py` | Residents' cars: road network, who drives, the day's car plan, `car_at()` (LIVING_CITY 3.4, ADR-0009). Standard library only. |
 | `test_traffic.py` | 21 tests over the whole starting city in `World/` (one skipped until pavements exist). |
+| `giveway.py` | Resident cars giving way to what a player controls: slow, wait or stop, then back on their timeline without speeding, catching up only at their next stop (CITY-049; `World/rules/traffic.json` `give_way`). Standard library only. |
+| `test_giveway.py` | 5 tests: stop short and queue, never faster than the timeline, a short stop skipped, placed back when far behind, the other lane not held. |
 | `economy.py` | Money in the slice (ADR-0012): the ledger, the bank (interest, loans, settled day by day), shop stock and prices from the residents' visits, the market stall. Standard library only. |
 | `quests.py` | Quest lines, daily jobs and reputation, run against `economy.py`; `problems()` checks `World/rules/quests.json`. |
 | `test_economy.py` | 31 tests named after ECO, BANK, PROP, QST and CHR requirements; every starter quest line is played to every ending. `python -m unittest test_economy -v` |

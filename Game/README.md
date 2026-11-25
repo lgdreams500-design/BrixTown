@@ -85,7 +85,8 @@ are worked out on the task threads, only the uploads on the game thread. The far
 material is `/Game/People/M_People` (the vertex colour, matte), made by `Tools/unreal/make_people_material.py`.
 Residents at a garden's bench seats and fountain rims sit there, facing the garden's middle or out of the fountain
 (CITY-017, found as the slice finds them: `SeatBrixDay`, checked by `CITY017_residents_sit_on_garden_benches`); others
-stand. Talking faces, umbrellas and boards are not brought over yet. The player is the slice's player too (people.js
+stand. Talking faces and boards are not brought over yet; the gesture layers (CHARACTER_MOTION §4), another walk, a
+hood and an umbrella are drawn as people.js draws them (checked by ART004), for dodging and the weather. The player is the slice's player too (people.js
 player(), in people.json) at full detail, walking by their signature and running by the slice's Run, until the designed
 character (CHR-001) comes over. At High on this laptop: 53 to 55 frames a second on a street with 32 residents near, in
 the morning school rush of some 150 and in a garden with 46 (the same as with none: the GPU is the limit), the people
@@ -124,9 +125,25 @@ the driver's door, and the car stays where it was left for the rest of the visit
 drive or someone to talk to. A bus can be ridden (CITY-092): E at a bus
 standing at a stop gets on, a seat near the front, carried along its line with its driver and riders, the camera behind;
 E gets off when it next stands at a stop (and everyone gets off when it leaves service). Not yet: breaking street things
-(CITY-072, CITY-073), riding the tram, and resident cars
-giving way to the player (CITY-049). To see a drive in a test shot: `-BrixDrive=<vehicle> "-BrixHold=steer,throttle"`. 51.5 frames a second at High on a street
+(CITY-072, CITY-073) and riding the tram. To see a drive in a test shot: `-BrixDrive=<vehicle> "-BrixHold=steer,throttle"`. 51.5 frames a second at High on a street
 with 32 vehicles drawn.
+
+## Getting out of the way, and giving way (CITY-070, CITY-071, CITY-049)
+Residents on foot get out of the way of a car the player drives, as in the slice (dodge.js, `BrixWorld/BrixDodge`, numbers in
+World/rules/dodge.json): one the car is heading at, due to reach them within its reaction time, flinches, scrambles aside
+with quick running steps and a small hop to the side with room (not into a wall), turns on the driver with a fist or
+both arms up and a shout shown over them (the nearest of a crowd), then walks back to where their day has them. Only an
+offset and a pose laid over their day, near the player, forgotten after a few seconds
+(`CITY070_residents_dodge_and_scold_as_the_slice_does` checks the port against dodge.js frame by frame).
+Resident cars give way to the player on foot or to the car they drive (CITY-049; the slice did not, so the rule is proved
+first in `Tools/citysim/giveway.py`, numbers in World/rules/traffic.json `give_way`): a car with them in its path slows
+and stands 2.5 m short, and those behind queue behind it. It runs that many minutes behind its timeline, shown where its
+timeline had it then; it never catches up on the move (so never faster than its timeline and the limits), only at its
+next stop, which it leaves as soon as its timeline does (a stop shorter than the delay is skipped); one more than 10
+minutes behind with no player within 160 m is put back on its timeline. `CITY049_resident_cars_give_way_to_the_player`
+stands someone in the road in front of cars of the day and checks they stop short, wait, and are back on their timeline
+after their next stop. At High, 36 to 49 frames a second driving into a crowd in the morning rush, 53 with two cars
+queued behind the player's (noisy: other sessions were running Unreal on the same laptop).
 
 ## The tram (CITY-041)
 Trams run along Tram Street to the timetable of World/rules/calendar.json, stopping at its three stops: a port of the
@@ -241,6 +258,8 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY017_residents_sit_on_garden_benches` | CITY-017 |
 | `BrixTown.World.CITY040_vehicles_are_where_the_traffic_puts_them` | CITY-040 |
 | `BrixTown.World.CITY041_trams_are_where_the_timetable_puts_them` | CITY-041 |
+| `BrixTown.World.CITY049_resident_cars_give_way_to_the_player` | CITY-049 |
+| `BrixTown.World.CITY070_residents_dodge_and_scold_as_the_slice_does` | CITY-070, CITY-071 |
 | `BrixTown.World.CITY007_every_conversation_is_sound` | CITY-007 |
 | `BrixTown.World.CHR009_lines_are_mouthed_as_the_slice_mouths_them` | CHR-009 |
 | `BrixTown.World.SND018_lines_are_voiced` | SND-018 |

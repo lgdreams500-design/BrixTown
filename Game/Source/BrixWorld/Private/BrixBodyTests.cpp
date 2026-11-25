@@ -80,6 +80,19 @@ bool FART004_PeopleAreTheSlices::RunTest(const FString&)
 		double Floor = 0;
 		if (B->TryGetNumberField(TEXT("floor"), Floor)) O.Floor = Floor;
 		B->TryGetBoolField(TEXT("driver"), O.bDriving);
+		// a gesture, another walk, a hood or an umbrella (people.js o.mod, o.sig, o.hood, o.umb: dodge.js, smash.js, wet.js)
+		B->TryGetStringField(TEXT("sig"), O.Sig);
+		const TArray<TSharedPtr<FJsonValue>>* Arr = nullptr;
+		if (B->TryGetArrayField(TEXT("arms"), Arr))
+			for (int32 a = 0; a < 2 && a < Arr->Num(); ++a)
+			{
+				const TArray<TSharedPtr<FJsonValue>>* G = nullptr;
+				if ((*Arr)[a]->TryGetArray(G) && G->Num() >= 4) O.Arms[a] = FVector4d((*G)[0]->AsNumber(), (*G)[1]->AsNumber(), (*G)[2]->AsNumber(), (*G)[3]->AsNumber());
+			}
+		if (B->TryGetArrayField(TEXT("chest"), Arr) && Arr->Num() >= 2) O.Chest = FVector2D((*Arr)[0]->AsNumber(), (*Arr)[1]->AsNumber());
+		const FVector3f HoodC = Col(B, TEXT("hood")), UmbC = Col(B, TEXT("umb"));
+		if (HoodC.X >= 0) O.Hood = HoodC;
+		if (UmbC.X >= 0) O.Umbrella = UmbC;
 		FBrixFace Face;
 		const TSharedPtr<FJsonObject>* FaceObj = nullptr;
 		if (B->TryGetObjectField(TEXT("face"), FaceObj))   // a talking face (CHR-007)
@@ -98,7 +111,8 @@ bool FART004_PeopleAreTheSlices::RunTest(const FString&)
 		Mesh.Reset();
 		Boxes.Reset();
 		DrawBrixPerson(Rules, Looks[k], FVector(B->GetNumberField(TEXT("x")), B->GetNumberField(TEXT("y")), B->GetNumberField(TEXT("z"))), B->GetNumberField(TEXT("yaw")), O, Mesh, &Boxes);
-		const FString What = FString::Printf(TEXT("look %d, pose %d, lod %d"), k, O.Pose, O.Lod);
+		const FString What = FString::Printf(TEXT("look %d, pose %d, lod %d%s%s%s%s"), k, O.Pose, O.Lod, O.Arms[0] || O.Arms[1] ? TEXT(", a gesture") : TEXT(""),
+			O.Sig.IsEmpty() ? TEXT("") : TEXT(", another walk"), O.Hood ? TEXT(", a hood") : TEXT(""), O.Umbrella ? TEXT(", an umbrella") : TEXT(""));
 		++Bodies;
 		if (Mesh.Index.Num() != (int32)B->GetNumberField(TEXT("vertices")))
 		{

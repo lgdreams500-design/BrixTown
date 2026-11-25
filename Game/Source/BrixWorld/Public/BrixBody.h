@@ -98,6 +98,14 @@ struct BRIXWORLD_API FBrixDrawOptions
 	TOptional<double> Floor; // sitting in a car: the floor this far below the seat, the feet out along it (people.js mod.floor)
 	bool bDriving = false;   // sitting at a wheel: the hands up on it (cars.js seat(): arms [1, 58, 10, 48])
 	const FBrixFace* Face = nullptr;   // in a conversation: the face as it speaks (full detail only), and its nod
+	// people.js o.sig: walk by this signature instead of the look's own (a run from a car, a hurry in the rain)
+	FString Sig;
+	// people.js o.mod, the gesture layers of CHARACTER_MOTION §4: per arm (left, right) [weight, raise, out, elbow] in
+	// degrees, blended over the pose by weight; the chest's [pitch, yaw] in degrees, added
+	TOptional<FVector4d> Arms[2];
+	FVector2D Chest = FVector2D::ZeroVector;
+	TOptional<FVector3f> Hood;         // people.js o.hood: a coat's hood up, in this colour (CITY-080)
+	TOptional<FVector3f> Umbrella;     // people.js o.umb: an umbrella up in the right hand, its canopy in this colour (CITY-080)
 };
 
 // people.js draw() for poses 0 to 2: appends the body to Out (lods 0 to 2) or its boxes to OutBoxes (lod 3).
