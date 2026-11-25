@@ -269,12 +269,24 @@ int32 ABrixCars::TargetCar(const FVector2D& P, double& OutD) const
 		const double D = FVector2D::Distance(C->Pos, P);
 		if (D < OutD) { OutD = D; Best = k; }
 	}
+	double TramD = 0;   // the tram standing at a stop, within arm's reach of its side (CITY-041)
+	const int32 S = Tram.Standing(Minute, P, 1.5, TramD);
+	if (S >= 0 && TramD < OutD) { OutD = TramD; Best = TramK; TargetRun = Tram.At(Minute)[S].Run; }
 	return Best;
 }
 
 bool ABrixCars::Enter(int32 k)
 {
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (IsTram(k))   // on the tram: a passenger on its front bench, carried along Tram Street (CITY-041)
+	{
+		const TOptional<FBrixTram::FAt> A = Mode ? Tram.Find(Mode->ClockMinute(), TargetRun) : TOptional<FBrixTram::FAt>();
+		if (!A || !A->bStopped) return false;
+		Drive = FDrive();
+		Drive.K = TramK; Drive.X = A->X; Drive.Z = Tram.Z; Drive.A = 0; Drive.bRide = true; Drive.bTram = true; Drive.Run = A->Run;
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: on the tram of run %.0f at x %.1f"), A->Run, A->X);
+		return true;
+	}
 	const TOptional<FBrixCarAt> C = Traffic && Mode ? Traffic->At(k, Mode->ClockMinute()) : TOptional<FBrixCarAt>();
 	if (!C) return false;
 	if (IsBus(k))   // on the bus: a passenger, carried where it goes (CITY-092)
@@ -384,6 +396,17 @@ void ABrixCars::Step(float Dt, float Throttle, float Steer, bool bHandbrake)
 bool ABrixCars::RideSeat(FVector2D& OutPos, double& OutYaw)
 {
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (Drive.bTram)
+	{
+		const double Minute = Mode ? Mode->ClockMinute() : 0;
+		const TOptional<FBrixTram::FAt> A = Tram.Rideable(Minute, Drive.Run) ? Tram.Find(Minute, Drive.Run) : TOptional<FBrixTram::FAt>();
+		if (!A) { Drive.bMoving = false; return false; }   // past the last stop: off at the end of the line
+		Drive.X = A->X; Drive.bMoving = !A->bStopped;
+		Drive.V = Drive.bMoving ? 5 : 0;   // for the camera
+		OutPos = Tram.Seat(A->X, Tram.PlayerSeat);
+		OutYaw = 0;   // east, the way it goes
+		return true;
+	}
 	const TOptional<FBrixCarAt> C = Traffic && Mode && Drive.bRide ? Traffic->At(Drive.K, Mode->ClockMinute()) : TOptional<FBrixCarAt>();
 	if (!C) { Drive.bMoving = false; return false; }   // out of service
 	Drive.X = C->Pos.X; Drive.Z = C->Pos.Y; Drive.A = FMath::Atan2(C->Heading.Y, C->Heading.X); Drive.bMoving = C->bMoving;
@@ -397,6 +420,14 @@ bool ABrixCars::RideSeat(FVector2D& OutPos, double& OutYaw)
 void ABrixCars::Leave(FVector2D& OutSpot, double& OutYaw)
 {
 	if (Drive.K < 0) return;
+	if (Drive.bTram)   // off the tram where it stands, onto the stop by its front door (or the last stop, past which it goes on)
+	{
+		OutSpot = Tram.Alight(Tram.Stops.Num() ? FMath::Min(Drive.X, Tram.Stops.Last()) : Drive.X);
+		OutYaw = -UE_DOUBLE_PI / 2;   // facing the platform (north)
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: off the tram at (%.1f, %.1f)"), OutSpot.X, OutSpot.Y);
+		Drive = FDrive();
+		return;
+	}
 	if (Drive.bRide)   // off the bus where it stands, on the kerb side by the door
 	{
 		const FVector2D H(FMath::Cos(Drive.A), FMath::Sin(Drive.A)), Side(-H.Y, H.X);

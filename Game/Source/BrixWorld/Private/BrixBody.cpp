@@ -155,6 +155,23 @@ FBrixLook BrixLookOf(const FBrixPeopleRules& Rules, int32 Id, const FString& Rol
 
 double BrixStepLength(const FBrixSignature& Sig, double S) { return 2 * Sig.Stride * .7885 * S; }
 
+FVector2D BrixGlanceAt(double DX, double DZ, double Yaw)
+{
+	const double d = FMath::Sqrt(DX * DX + DZ * DZ);
+	if (d >= 5.5) return FVector2D::ZeroVector;
+	double da = FMath::Atan2(DX, -DZ) - Yaw;
+	da = FMath::Atan2(FMath::Sin(da), FMath::Cos(da));
+	if (FMath::Abs(da) >= 1.9) return FVector2D::ZeroVector;
+	const double u = FMath::Clamp((d - 5.5) / (3.2 - 5.5), 0.0, 1.0), w = u * u * (3 - 2 * u);   // play.js smooth(5.5, 3.2, d)
+	return FVector2D(FMath::Clamp(-da * .6, -.85, .85) * w, 0);
+}
+
+FVector2D BrixLookAlong(double CamYawLessYaw, double CamPitch)
+{
+	const double da = FMath::Atan2(FMath::Sin(CamYawLessYaw), FMath::Cos(CamYawLessYaw));
+	return FVector2D(FMath::Clamp(-da, -1.0, 1.0) * .7, FMath::Clamp(-CamPitch, -.5, .5) * .5);
+}
+
 // ---- the maths of people.js (motion_lib's axes: the character faces -Y, +Z is up, +X is the character's left)
 
 namespace
@@ -558,6 +575,7 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	const bool midFace = lod == 1 || (lod == 2 && ff > .02);
 	double hm[3];
 	wander(t, sd * .37, hm);
+	hm[0] += o.Look.X; hm[1] += o.Look.Y;   // looking at someone near (people.js o.look)
 	if (o.Face) hm[1] += o.Face->Nod;   // a speaker nods on stressed words (ANIM-006)
 	if (pose == 3) hm[0] = hm[1] = hm[2] = 0;   // lying, the head still (people.js stand(..., [0, 0, 0]))
 	const FPose P = pose == 5 && o.Board ? ride(g, W, t, hm, sd, o.Board->TopM, o.RidePush, o.Phase) : pose == 1 ? walk(sig, g, W, o.Phase, hm, o) : pose == 2 ? sit(sig, g, W, t, hm, sd, o) : stand(sig, g, W, t, hm, sd, o);
@@ -770,9 +788,9 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 		const FBrixFace& f = *o.Face;
 		const FVector3f MDark(.11f, .035f, .035f), MTeeth(.9f, .88f, .82f), MTongue(.62f, .26f, .26f);
 		const double period = 2.4 + 3.4 * fmod1(sd * .618);
-		const bool blink = FMath::Fmod(t + sd, period) < .17;
-		const double gx = f.Gaze[0], gz = f.Gaze[1];
-		const double es = L.EyeSize, lid = blink ? 1 : f.Lid, op = f.Open * L.EyeOpen, sq = f.Squint;
+		const bool blink = !o.bSleep && FMath::Fmod(t + sd, period) < .17;
+		const double gx = cl(-o.Look.X / rad(34), -1, 1) * .006 + f.Gaze[0], gz = cl(-o.Look.Y / rad(34), -1, 1) * .004 + f.Gaze[1];
+		const double es = L.EyeSize, lid = o.bSleep || blink ? 1 : f.Lid, op = f.Open * L.EyeOpen, sq = f.Squint;
 		for (const double e : { -1.0, 1.0 })   // e = +1 is the character's left
 		{
 			const double eX = e * .042;
@@ -816,8 +834,8 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	}
 	else if (lod == 0)   // full eyes, brows, small nose, mouth at rest
 	{
-		const double period = 2.4 + 3.4 * fmod1(sd * .618), bp = FMath::Fmod(t + sd, period) / .17, lid = bp < 1 ? FMath::Sin(UE_DOUBLE_PI * bp) : 0;
-		const double gx = 0, gz = 0;
+		const double period = 2.4 + 3.4 * fmod1(sd * .618), bp = FMath::Fmod(t + sd, period) / .17, lid = o.bSleep ? 1 : bp < 1 ? FMath::Sin(UE_DOUBLE_PI * bp) : 0;
+		const double gx = cl(-o.Look.X / rad(34), -1, 1) * .006, gz = cl(-o.Look.Y / rad(34), -1, 1) * .004;   // the eyes lead the head (M4)
 		const double es = L.EyeSize * 1.15, eo = L.EyeOpen, ns = L.Nose;   // the reference's eyes are 1.15 times natural size
 		const double eX = .043, eZ = .008 * RZ / .13, ew = .0245 * es, eh = .021 * es * eo, ir = .0155 * es, irz = FMath::Min(ir, eh * .97), yawE = FMath::Asin(FMath::Min(eX / RX, 1.0)) * .55, tilt = .1;
 		for (const double e : { -1.0, 1.0 })

@@ -198,7 +198,7 @@ Where anyone is follows from the day and the clock each frame (a port of the sli
 City.at() by `CITY022_residents_are_where_their_routine_puts_them`): at their place, or walking their route at even speed
 a little to one side of the pavement's line. Only the nearest, out of doors and within 90 m, have a body, up to 400 at once.
 
-## People (ART-004, ANIM-001, ANIM-002; ADR-0047)
+## People (ART-004, ANIM-001, ANIM-002, ANIM-004, ANIM-005; ADR-0047)
 The residents are the slice's option B people: `BrixWorld/BrixBody` is a port of `Prototype/play/people.js`. Each is
 dressed by their role (a job's own clothes where it has them) and walks by their role's movement signature, from the
 same tables as the slice: `Game/Data/people.json`, written from people.js by `Tools/unreal/people_values.py` (run it after
@@ -213,8 +213,13 @@ are worked out on the task threads, only the uploads on the game thread. The far
 material is `/Game/People/M_People` (the vertex colour, matte), made by `Tools/unreal/make_people_material.py`.
 Residents at a garden's bench seats and fountain rims sit there, facing the garden's middle or out of the fountain
 (CITY-017, found as the slice finds them: `SeatBrixDay`, checked by `CITY017_residents_sit_on_garden_benches`); others
-stand. Talking faces and boards are not brought over yet; the gesture layers (CHARACTER_MOTION §4), another walk, a
-hood and an umbrella are drawn as people.js draws them (checked by ART004), for dodging and the weather. The player is the character they designed (below) at full
+stand. The gesture layers of CHARACTER_MOTION §4 are drawn as people.js draws them (ANIM-004, checked by ART004): the arms and
+chest (dodging, the weather, a shout at a smash, a repair crew bent over their work, hands on a climbing frame's top bar),
+another walk (running, hurrying, a child climbing a ladder hand over hand), sitting astride a seesaw, a hood and an
+umbrella; and the head and eyes (ANIM-005, as play.js does it): someone the player comes within 5.5 m of, on their level
+and not behind them, turns to look, the eyes leading by up to their limit and the head part of the way, fully within
+3.2 m (`ANIM005_people_look_at_whoever_comes_near`); the player's own head turns part of the way to where the camera
+looks; a resident asleep in bed has their eyes shut. The player is the character they designed (below) at full
 detail, walking by their signature and running by the slice's Run. At High on this laptop: 53 to 55 frames a second on a street with 32 residents near, in
 the morning school rush of some 150 and in a garden with 46 (the same as with none: the GPU is the limit), the people
 taking 1.3 to 3.6 ms of the game thread.
@@ -286,7 +291,10 @@ the talking faces in `ART004_...` check the port against the slice's own code). 
 the time it took until they next stand still where they would be anyway. The quests, jobs and counters that the slice's life.js adds to talks are below. The player's name from the designer fills {player}
 (`CHR001_the_players_name_is_said_in_talks`), and while they answer their own face says it, mouth with the voice (or the
 text's own time when it is not voiced), the camera coming round past the resident to look at them (`AnswerCameraYaw`) and
-going back over the shoulder when the resident speaks. Not yet: the wordless murmur of lines with no voice.
+going back over the shoulder when the resident speaks. A resident's line that has no voice yet is murmured as the slice
+murmurs it (sound.js line()): wordless syllables in time with its mouth, in the resident's own pitch, from where they stand,
+hushed when the next line starts or the talk closes (`SND018_unvoiced_lines_are_murmured`, against sound.js traced by
+`Tools/unreal/sound_values.py`; the player's unvoiced answers are silent, as in the slice).
 To see one without anyone at the keys: `-BrixTalk=<resident index>` (and `-BrixAnswers=1,2`, a second and a half apart or
 `-BrixAnswerGap=<s>`) with `-BrixShot=`.
 
@@ -307,7 +315,8 @@ a street thing or a tree in the way breaks (CITY-072); a wall or another car sto
 the driver's door, and the car stays where it was left for the rest of the visit. E offers whichever is nearer, a car to
 drive or someone to talk to. A bus can be ridden (CITY-092): E at a bus
 standing at a stop gets on, a seat near the front, carried along its line with its driver and riders, the camera behind;
-E gets off when it next stands at a stop (and everyone gets off when it leaves service). Not yet: riding the tram. To see a drive in a test shot: `-BrixDrive=<vehicle> "-BrixHold=steer,throttle"`. 51.5 frames a second at High on a street
+E gets off when it next stands at a stop (and everyone gets off when it leaves service). The tram is ridden the same way
+(below). To see a drive in a test shot: `-BrixDrive=<vehicle> "-BrixHold=steer,throttle"`. 51.5 frames a second at High on a street
 with 32 vehicles drawn.
 
 ## Getting out of the way, and giving way (CITY-070, CITY-071, CITY-049)
@@ -396,7 +405,15 @@ Trams run along Tram Street to the timetable of World/rules/calendar.json, stopp
 slice's tramAt() (`FBrixTram`, checked against the slice's own function at 3,000 moments of a day by
 `CITY041_trams_are_where_the_timetable_puts_them`). Each is the slice's terracotta car with open windows, on rails along
 the whole street, and carries the residents whose day takes them out from a stop or back to one, on the run that is
-there when they leave or arrive (cars.js tramRiders()), up to twelve on its benches. The player cannot ride it yet.
+there when they leave or arrive (cars.js tramRiders()), up to twelve on its benches. The player can ride it (CITY-041;
+the slice cannot): E beside a tram standing at a stop ("Ride the tram", within 1.5 m of its side or end) gets on, and the
+player sits on its front bench on the south side among the riders (who then fill the other eleven seats), carried east
+along Tram Street, the camera behind; E ("Get off the tram") gets off where it next stands, onto that stop's platform by
+the front door. Not at the last stop, from which it goes on out of town; anyone still on when it leaves there is put off
+at it. The logic is `FBrixTram` (`Standing`, `Find`, `Seat`, `Alight`, `Rideable`): `CITY041_players_ride_the_tram`
+boards every tram that stands at a stop through the day and rides it to the next. To see it in a test shot: `-BrixTram`
+(the player is put on the platform by the first tram standing at a stop and gets on; `-BrixTramOff` gets off at the next
+stop), for instance with `-BrixTime=07:55`.
 
 ## Street furniture (WLD-028)
 Each block's props are drawn as the slice draws them (play.js prop(), dressing.js), boxes in the palette's colours:
@@ -759,7 +776,8 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.ART001_every_house_has_its_line_and_colourway` | ART-001 (ADR-0032, ADR-0035) |
 | `BrixTown.World.WLD043_the_sun_follows_the_calendar` | WLD-043 (ADR-0024) |
 | `BrixTown.World.CITY022_residents_are_where_their_routine_puts_them` | CITY-022 |
-| `BrixTown.World.ART004_people_are_drawn_as_the_slice_draws_them` | ART-004, ANIM-001, ANIM-002 |
+| `BrixTown.World.ART004_people_are_drawn_as_the_slice_draws_them` | ART-004, ANIM-001, ANIM-002, ANIM-004, ANIM-005 |
+| `BrixTown.World.ANIM005_people_look_at_whoever_comes_near` | ANIM-005 |
 | `BrixTown.World.CITY013_every_enterable_building_has_a_doorway` | CITY-013 (ADR-0048) |
 | `BrixTown.World.FURN060_every_planned_home_is_furnished_in_its_rooms` | FURN-060, FURN-061, FURN-063 (ADR-0050) |
 | `BrixTown.World.WLD052_every_storey_is_reached_by_its_stair` | WLD-050, WLD-052 |
@@ -771,6 +789,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY017_residents_sit_on_garden_benches` | CITY-017 |
 | `BrixTown.World.CITY040_vehicles_are_where_the_traffic_puts_them` | CITY-040 |
 | `BrixTown.World.CITY041_trams_are_where_the_timetable_puts_them` | CITY-041 |
+| `BrixTown.World.CITY041_players_ride_the_tram` | CITY-041 |
 | `BrixTown.World.CITY049_resident_cars_give_way_to_the_player` | CITY-049 |
 | `BrixTown.World.CITY070_residents_dodge_and_scold_as_the_slice_does` | CITY-070, CITY-071 |
 | `BrixTown.World.CITY072_street_things_break_as_the_rules_say` | CITY-072, CITY-073 |
@@ -792,6 +811,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CHR016_clothes_bought_set_only_their_parts` | CHR-016 |
 | `BrixTown.World.QST008_a_save_brings_the_game_back` | QST-008 |
 | `BrixTown.World.SND018_lines_are_voiced` | SND-018 |
+| `BrixTown.World.SND018_unvoiced_lines_are_murmured` | SND-018 |
 | `BrixTown.World.ECO001_money_is_whole_chips_in_balanced_lines` | ECO-001, ECO-002, ECO-003, BANK-007 |
 | `BrixTown.World.ECO002_the_ledger_matches_the_python` | ECO-002, ECO-005, ECO-010, ECO-011, ECO-013, BANK-001, BANK-007 |
 | `BrixTown.World.BANK008_the_bank_settles_as_the_python_does` | BANK-002, BANK-008 |

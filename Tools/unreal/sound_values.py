@@ -22,6 +22,7 @@ recorded in. Math.random is seeded, so a run gives the same files, but for the r
 that feed each other) renders a little differently each time in Edge, so leave them as they are unless they changed. sound.js stays the source while the slice is kept
 (ADR-0045): run this again after changing it or World/rules/sound.json.
   python Tools/unreal/sound_values.py
+  python Tools/unreal/sound_values.py --values-only   (only Tests/values/sound_city_01.json: the recordings are left as they are)
 
 Edge is driven over its DevTools socket (a small client below, the standard library only): an OfflineAudioContext
 renders on its own thread, which --dump-dom and virtual time do not wait for.
@@ -127,6 +128,14 @@ window.__SOUND = async function (CASES) {
   const keepSyl = syllable;
   syllable = (d, t, hz, shape, len, gain) => ev.push([r6(t), r6(hz), shape, r6(len), r6(gain)]);
   out.trace.lines = CASES.lines.map(([text, base, gain, from]) => { ev = []; clock.t = 0; voice(null, Talk.speak(text), base, gain, from); return ev; });
+  // a talk's line that has no voice yet, murmured in wordless syllables (line(), called by conversations.js show()): where it
+  // is heard from and how far, and every syllable
+  const keepGain = gainOf, keepOnceL = once, keepReady = ready, keepBus = bus; let far = null;
+  gainOf = () => ({ gain: param(), connect() { }, disconnect() { } });
+  once = (dest, x, z, f) => { far = [r6(x), r6(z), f]; return dest; };
+  ready = true; bus = Object.assign({}, bus, { voice: {} });
+  out.trace.murmurs = CASES.murmurs.map(([text, i, x, z]) => { ev = []; clock.t = 0; far = null; line(Talk.speak(text), i, x, z); return { far, syllables: ev }; });
+  hush(); gainOf = keepGain; once = keepOnceL; ready = keepReady; bus = keepBus;
   syllable = keepSyl;
   // the podcasts (SND-014): what is on air at a minute, and its caption
   const keepCaption = caption, keepVoice2 = voice, keepRecipe = recipe; let cap = null, said = null, chime = null;
@@ -344,6 +353,14 @@ def run_in_edge(page, expression):
     return res["result"].get("value")
 
 
+def murmur_lines(n=12):
+    """Lines residents say in talks (World/rules/dialogue.json), as conversations.js hands them to sound.js line()."""
+    dialogue = json.load(open(os.path.join(os.path.dirname(RULES), "dialogue.json"), encoding="utf-8"))
+    says = sorted({node["say"] for c in dialogue["conversations"].values() for node in c["nodes"].values() if node["say"].strip()})
+    step = max(1, len(says) // n)
+    return [dict(say=says[k]) for k in range(0, len(says), step)][:n]
+
+
 def cases():
     """The scripted moments the logic is traced through (inputs saved with the results for the C++ tests)."""
     dt = 1 / 60.0
@@ -435,9 +452,10 @@ def cases():
         groups.append(dict(t=t, dt=0.25, residents=res))
     lines = [["Watch where you're going!", 180.0, 0.2, 0.0], ["Well... that's it, isn't it? Yes; quite: really - fine!", 235.0, 0.2, 0.0],
              ["And I'm Teo. Mira, I walked through Market Square at dawn and the stalls were already up.", 150.0, 0.2, 1.3]]
+    murmurs = [[n["say"], 40 + 37 * i, round(3.5 - 0.7 * i, 3), round(1.25 * i - 4, 3)] for i, n in enumerate(murmur_lines())]   # lines spoken in talks (CITY-007)
     podcasts = [[sid, round(m, 3)] for sid in rules["podcasts"]["shows"] for m in [0.0, 0.1, 0.37, 1.0, 5.5, 13.2, 60.0, 333.3, 1000.7, 1439.9] + [0.03 * k for k in range(200)]]
     return dict(seed=20261125, rate=RATE, step_variants=4, bird_variants=6, engine_hz=[36, 76], music_bars=8, reward_takes=reward_takes,
-                hashes=hashes, voices=voices, acts=acts, groups=groups, lines=lines, podcasts=podcasts, syllable_hz=[120, 170, 240, 340], syllable_len=[0.1, 0.2],
+                hashes=hashes, voices=voices, acts=acts, groups=groups, lines=lines, murmurs=murmurs, podcasts=podcasts, syllable_hz=[120, 170, 240, 340], syllable_len=[0.1, 0.2],
                 people=people, engines=engines, trams=trams, place=place)
 
 
@@ -463,42 +481,47 @@ def main():
     out = run_in_edge(page, "(async () => { const C = %s; return await window.__SOUND(C); })()" % json.dumps(C))
     if not out:
         sys.exit("Edge gave nothing back")
-    os.makedirs(OUT_DIR, exist_ok=True)
+    values_only = "--values-only" in sys.argv[1:]   # the traces alone, the recordings left as they are (the rewards render a little differently each run)
     index, total = {}, 0
-    for s in out["sounds"]:
-        pcm = base64.b64decode(s["pcm"])
-        path = os.path.join(OUT_DIR, s["name"] + ".wav")
-        with wave.open(path, "wb") as w:
-            w.setnchannels(1)
-            w.setsampwidth(2)
-            w.setframerate(RATE)
-            w.writeframes(pcm)
-        total += os.path.getsize(path)
-        index[s["name"]] = dict(file=s["name"] + ".wav", loop=s["loop"], seconds=s["seconds"], scale=s["scale"])
-    # the music as Ogg Vorbis, by the engine's own encoder (the BrixEncodeOgg commandlet: build the editor first)
-    music = sorted(n for n in index if n.split("_")[0] in ("music", "reward", "pact", "syl"))   # the long ones and the many: music, rewards, doings, syllables
-    if music:
-        subprocess.run([UNREAL_CMD, UPROJECT, "-run=BrixEncodeOgg", "-Dir=" + OUT_DIR, "-Files=" + ",".join(music),
-                        "-Quality=%d" % OGG_QUALITY, "-unattended", "-nullrhi", "-nosplash", "-stdout"], stdin=subprocess.DEVNULL, capture_output=True, timeout=900)
-        for n in music:
-            ogg, wav = os.path.join(OUT_DIR, n + ".ogg"), os.path.join(OUT_DIR, n + ".wav")
-            if not os.path.exists(ogg) or os.path.getmtime(ogg) < os.path.getmtime(wav):
-                sys.exit("the BrixEncodeOgg commandlet made no %s.ogg: build BrixTownEditor and run this again" % n)
-            total += os.path.getsize(ogg) - os.path.getsize(wav)
-            os.remove(wav)
-            index[n]["file"] = n + ".ogg"
-    for f in os.listdir(OUT_DIR):   # recordings of sounds that are no longer made
-        if (f.endswith(".wav") or f.endswith(".ogg")) and f[:-4] not in index:
-            os.remove(os.path.join(OUT_DIR, f))
-    with open(os.path.join(OUT_DIR, "index.json"), "w", encoding="utf-8", newline="\n") as f:
-        json.dump(dict(note="Generated by Tools/unreal/sound_values.py from Prototype/play/sound.js and World/rules/sound.json. Do not edit: change those and run it again.",
-                       rate=RATE, engine_hz=C["engine_hz"], syllable_hz=C["syllable_hz"], syllable_len=C["syllable_len"], sounds=index), f, indent=1)
+    if not values_only:
+        os.makedirs(OUT_DIR, exist_ok=True)
+        for s in out["sounds"]:
+            pcm = base64.b64decode(s["pcm"])
+            path = os.path.join(OUT_DIR, s["name"] + ".wav")
+            with wave.open(path, "wb") as w:
+                w.setnchannels(1)
+                w.setsampwidth(2)
+                w.setframerate(RATE)
+                w.writeframes(pcm)
+            total += os.path.getsize(path)
+            index[s["name"]] = dict(file=s["name"] + ".wav", loop=s["loop"], seconds=s["seconds"], scale=s["scale"])
+        # the music as Ogg Vorbis, by the engine's own encoder (the BrixEncodeOgg commandlet: build the editor first)
+        music = sorted(n for n in index if n.split("_")[0] in ("music", "reward", "pact", "syl"))   # the long ones and the many: music, rewards, doings, syllables
+        if music:
+            subprocess.run([UNREAL_CMD, UPROJECT, "-run=BrixEncodeOgg", "-Dir=" + OUT_DIR, "-Files=" + ",".join(music),
+                            "-Quality=%d" % OGG_QUALITY, "-unattended", "-nullrhi", "-nosplash", "-stdout"], stdin=subprocess.DEVNULL, capture_output=True, timeout=900)
+            for n in music:
+                ogg, wav = os.path.join(OUT_DIR, n + ".ogg"), os.path.join(OUT_DIR, n + ".wav")
+                if not os.path.exists(ogg) or os.path.getmtime(ogg) < os.path.getmtime(wav):
+                    sys.exit("the BrixEncodeOgg commandlet made no %s.ogg: build BrixTownEditor and run this again" % n)
+                total += os.path.getsize(ogg) - os.path.getsize(wav)
+                os.remove(wav)
+                index[n]["file"] = n + ".ogg"
+        for f in os.listdir(OUT_DIR):   # recordings of sounds that are no longer made
+            if (f.endswith(".wav") or f.endswith(".ogg")) and f[:-4] not in index:
+                os.remove(os.path.join(OUT_DIR, f))
+        with open(os.path.join(OUT_DIR, "index.json"), "w", encoding="utf-8", newline="\n") as f:
+            json.dump(dict(note="Generated by Tools/unreal/sound_values.py from Prototype/play/sound.js and World/rules/sound.json. Do not edit: change those and run it again.",
+                           rate=RATE, engine_hz=C["engine_hz"], syllable_hz=C["syllable_hz"], syllable_len=C["syllable_len"], sounds=index), f, indent=1)
     os.makedirs(os.path.dirname(OUT_VALUES), exist_ok=True)
     with open(OUT_VALUES, "w", encoding="utf-8", newline="\n") as f:
         json.dump(dict(note="Generated by Tools/unreal/sound_values.py: sound.js people(), engines(), trams() and place() in scripted moments, for the SND tests.",
                        cases=dict(people=C["people"], engines=C["engines"], trams=C["trams"], place=C["place"], rewards=C["reward_takes"], hashes=C["hashes"], voices=C["voices"],
-                                  acts=C["acts"], groups=C["groups"], lines=C["lines"], podcasts=C["podcasts"]), trace=out["trace"]), f, separators=(",", ":"))
-    print("wrote %d sounds (%.0f KB) to %s, and %s" % (len(index), total / 1024, os.path.relpath(OUT_DIR, ROOT), os.path.relpath(OUT_VALUES, ROOT)))
+                                  acts=C["acts"], groups=C["groups"], lines=C["lines"], murmurs=C["murmurs"], podcasts=C["podcasts"]), trace=out["trace"]), f, separators=(",", ":"))
+    if values_only:
+        print("wrote %s (the recordings left as they were)" % os.path.relpath(OUT_VALUES, ROOT))
+    else:
+        print("wrote %d sounds (%.0f KB) to %s, and %s" % (len(index), total / 1024, os.path.relpath(OUT_DIR, ROOT), os.path.relpath(OUT_VALUES, ROOT)))
 
 
 if __name__ == "__main__":

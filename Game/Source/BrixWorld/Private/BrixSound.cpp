@@ -366,6 +366,15 @@ void BrixVoiceLine(const FBrixSoundRules& R, const FBrixLine& Line, double T0, d
 	}
 }
 
+FBrixVoiceOut BrixMurmur(const FBrixSoundRules& R, const FBrixLine& Line, int32 Resident, const FVector2D& Pos)
+{
+	FBrixVoiceOut V;
+	V.Pos = Pos;
+	V.Far = 30;
+	BrixVoiceLine(R, Line, .02, R.VoiceMin + BrixHashOf(Resident) * (R.VoiceMax - R.VoiceMin), R.LineGain, 0, V.Syllables);
+	return V;
+}
+
 void FBrixPeopleTalk::Frame(const FBrixSoundRules& R, const TArray<FBrixHeardPerson>& People, const FVector2D& Here, double Now, double Dt, bool bGreet,
 	const FBrixSpeech* Speech, FRandomStream& Rng, TArray<FBrixSoundEvent>& OutSounds, TArray<FBrixVoiceOut>& OutVoices)
 {

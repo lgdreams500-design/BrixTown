@@ -241,14 +241,14 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 		Verts = BrixBodyToMesh(Person, Scratch, Verts, false, BodyMaterial);
 		return;
 	}
-	if (bDriving)   // on a bus: carried where it goes, sitting near the front (cars.js ride())
+	if (bDriving)   // on a bus or the tram: carried where it goes, sitting near the front (cars.js ride()) or on the tram's bench
 		if (ABrixCars* C = Cars())
 			if (C->Driving().bRide)
 			{
 				FVector2D Seat;
 				double Yaw = 0;
 				if (!C->RideSeat(Seat, Yaw)) { TalkKey(); return; }   // the bus has left service: everybody off
-				SetActorLocationAndRotation(FVector(Seat.X * CmPerM, Seat.Y * CmPerM, .95f * CmPerM + 85.f), FRotator(0, FMath::RadiansToDegrees(Yaw), 0));
+				SetActorLocationAndRotation(FVector(Seat.X * CmPerM, Seat.Y * CmPerM, C->RideUp() * CmPerM + 85.f), FRotator(0, FMath::RadiansToDegrees(Yaw), 0));
 				if (C->Driving().bMoving)
 					if (APlayerController* PC = Cast<APlayerController>(GetController()))
 					{
@@ -319,6 +319,11 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 	O.Pose = Speed > 0.1 ? 1 : 0;
 	O.Phase = Phase;
 	if (bTalking) O.Face = TalkFace;
+	else if (const APlayerController* PC = Cast<APlayerController>(GetController()))   // the head turned part of the way to where the camera looks (play.js; ANIM-005)
+	{
+		const FRotator R = PC->GetControlRotation();
+		O.Look = BrixLookAlong(FMath::DegreesToRadians(FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, R.Yaw)), FMath::DegreesToRadians(FRotator::NormalizeAxis(R.Pitch)));
+	}
 	O.Seconds = GetWorld()->GetTimeSeconds();
 	O.Lod = 0;
 	O.Board = Boards.Kind();   // the board in use, carried in the right hand (CITY-099)
@@ -412,7 +417,7 @@ void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whic
 		SetActorEnableCollision(false);
 		GetCharacterMovement()->StopMovementImmediately();
 		GetCharacterMovement()->DisableMovement();
-		Boom->TargetArmLength = FMath::Max(Boom->TargetArmLength, (C->IsBus(Car) ? 11.f : 8.5f) * CmPerM);   // back a way, to see the car or the bus
+		Boom->TargetArmLength = FMath::Max(Boom->TargetArmLength, (ABrixCars::IsTram(Car) ? 13.f : C->IsBus(Car) ? 11.f : 8.5f) * CmPerM);   // back a way, to see the car, the bus or the tram
 		if (APlayerController* PC = Cast<APlayerController>(GetController()))   // looking along the car, a little down on it
 			PC->SetControlRotation(FRotator(-12.0, FMath::RadiansToDegrees(C->Driving().A), 0));
 		return;

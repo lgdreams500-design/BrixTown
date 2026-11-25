@@ -161,6 +161,23 @@ struct BRIXWORLD_API FBrixTram
 	double X0 = 0, X1 = 0, Z = 0;      // where a tram comes on and goes off the map, and the line's z
 	TArray<double> Stops;              // x of each stop, west to east
 	TArray<FAt> At(double Minute) const;
+
+	// Riding it (CITY-041: "players shall be able to ride it"), as a bus is ridden (CITY-092). The car is cars.js tram(): 12 m
+	// by 2.4 m about its middle, twelve bench seats (six rows a side, 1.85 m apart, 0.55 m either side of the line, 1.15 m up).
+	double HalfLength = 6, HalfWidth = 1.2, SeatUp = 1.15;
+	int32 PlayerSeat = 11;             // the front seat on the south side: the residents riding fill the others first
+	// The tram standing at a stop that P is within Reach of (metres from its side or end): its index in At(Minute), or -1;
+	// OutD how far P is from it. Not at the last stop, from which it goes on out of town.
+	int32 Standing(double Minute, const FVector2D& P, double Reach, double& OutD) const;
+	// The tram of run Run (FAt::Run) at Minute, if it is on the map.
+	TOptional<FAt> Find(double Minute, double Run) const;
+	// Bench seat Slot (0 to 11, cars.js: row Slot % 6 from the back, the north side first) of a tram at X along the line.
+	FVector2D Seat(double X, int32 Slot) const;
+	// Where someone getting off a tram standing at X steps down: by the front door, on the stop's side (north of the line).
+	FVector2D Alight(double X) const;
+	// Riding run Run at Minute: whether it is still to be ridden. It is not once it has passed the last stop: everybody off
+	// there (the line goes on out of town).
+	bool Rideable(double Minute, double Run) const;
 };
 
 struct BRIXWORLD_API FBrixCity
