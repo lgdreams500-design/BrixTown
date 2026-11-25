@@ -65,6 +65,8 @@ struct BRIXWORLD_API FBrixMall
 	TArray<FBrixOutletRoom> Rooms;
 	TArray<FVector4d> Lamps;                 // every lantern and shop light (x, y, z, strength), court.js lamps
 	TArray<FBrixMovingStair> Moving;
+	TSet<FString> Staffed;                     // the outlets whose keeper works here (the lot's places to work): each has its counter
+	TMap<FString, FString> KindLabel, KindSign;   // each outlet kind's label and sign colour (plan.outlets)
 };
 
 // court.js can(): the lot's plan is a court with its entrances, and it has a ribbon shell (shell.js can())
@@ -73,6 +75,14 @@ BRIXWORLD_API bool BrixMallCan(const FJsonObject& Lot);
 BRIXWORLD_API bool BuildBrixMall(const FJsonObject& Lot, FBrixMall& Out, FString& OutError);
 // The block files' one mall with its inside built (the first lot BrixMallCan() takes), built. False when there is none.
 BRIXWORLD_API bool LoadBrixMall(const FString& CityDir, FBrixMall& Out, FString& OutError);
+struct FBrixDay;
+// The day's stays in the mall at its places (play.js resident(): the spot on the stay's floor, by the mall's own storey
+// height; CITY-105, CITY-106, WLD-067, WLD-068): a keeper stands behind their outlet's counter, a guard or a janitor at their
+// post, a visitor before a counter or on a food outlet's chair or a bench; each faces the way the plan has them face and is
+// at that floor's height. A stay with no place there stands on the ground, as the slice's STAND (in the hall on its ground floor: the
+// court's kiosks; or at the door). MallLot is the mall's
+// index in the city's lots. Returns how many stays it placed.
+BRIXWORLD_API int32 SeatBrixDayInMall(FBrixDay& Day, const FBrixMall& M, int32 MallLot);
 // court.js carry(): someone at P (slice frame) on a moving stair is carried along it, up on the right-hand flight and down
 // on the left; true when they were
 BRIXWORLD_API bool BrixMallCarry(const FBrixMall& M, FVector3d& P, double Dt);
