@@ -206,6 +206,13 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	if (!Rules.Roles.Num()) return;
+	if (const ABrixGameMode* M = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))   // wet clothes out in the rain (WLD-037)
+	{
+		const ABrixWeather* Wx = M->Weather.Get();
+		const bool bIn = bDesigning || bDriving || (Wx && Wx->Roofed(FVector2D(GetActorLocation()) / CmPerM));   // indoors or in a vehicle: dry
+		const float W = !bIn && M->PeopleActor() ? M->PeopleActor()->WetClothes() : 0.f;
+		if (FMath::Abs(W - PersonWet) > .005f) { Person->SetCustomPrimitiveDataFloat(1, W); PersonWet = W; }
+	}
 	if (bDesigning)   // the designer: standing, breathing and blinking while the clock stands still; the camera close in front
 	{
 		const FBrixLook& L = Rules.Player;

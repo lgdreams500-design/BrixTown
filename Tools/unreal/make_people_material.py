@@ -3,6 +3,8 @@ frame by BrixWorld's port of the slice's people.js (BrixBody), each vertex carry
 hair, an eye), so the material is that colour on a matte surface, as ART-002 asks of every surface.
 Snow (WLD-070, ADR-0051): each mesh's custom primitive data 0 is how much snow lies on it (0 by default); it whitens what
 faces up (a car's roof and bonnet, a head and shoulders) in patches, set by ABrixPeople and ABrixCars from the weather.
+Wet (WLD-037): custom primitive data 1 is how much darker the clothes and skin are out in the rain (0 by default), as the
+slice darkens everything out of doors (play.js: c *= 1 - wet * wet_dark * .3), set by ABrixPeople and ABrixCharacter.
 The asset is binary and kept in Git LFS (ADR-0002); this script is how it is made, so it can be made again instead of
 edited by hand.
 
@@ -67,8 +69,15 @@ lies = node(unreal.MaterialExpressionMultiply, 150, 450)
 link(reach_s, lies, "A")
 link(faces_up, lies, "B")
 white = node(unreal.MaterialExpressionConstant3Vector, 150, 200, constant=unreal.LinearColor(*SNOW_COLOUR, 1.0))
+wet = node(unreal.MaterialExpressionScalarParameter, -900, -200, parameter_name="Wet", default_value=0.0,
+           use_custom_primitive_data=True, primitive_data_index=1)   # per mesh, set from C++ (WLD-037)
+dry = node(unreal.MaterialExpressionOneMinus, -750, -200)
+link(wet, dry)
+damp = node(unreal.MaterialExpressionMultiply, -600, -100)
+link(colour, damp, "A")
+link(dry, damp, "B")
 base = node(unreal.MaterialExpressionLinearInterpolate, 350, 0)
-link(colour, base, "A")
+link(damp, base, "A")
 link(white, base, "B")
 link(lies, base, "Alpha")
 lib.connect_material_property(base, "", unreal.MaterialProperty.MP_BASE_COLOR)

@@ -73,6 +73,7 @@ public:
 	// talk they run late by the time it took until they next stand still at a place they would be at anyway.
 	struct FCandidate { int32 Resident = -1; FVector2D Pos = FVector2D::ZeroVector; float Up = 0.f; double Yaw = 0; int32 Pose = 0; int32 Act = 0; int32 Lot = -1; bool bWalking = false; double D = 0; };
 	const FCandidate& Candidate() const { return Cand; }
+	float WetClothes() const { return WetOnPeople; }   // how much darker someone out in the rain is now (WLD-037)
 	FCandidate Held;                    // Held.Resident -1: nobody held
 	const FBrixFace* HeldFace = nullptr;
 	TMap<int32, double> Late;           // resident -> minutes behind their day
@@ -93,6 +94,7 @@ public:
 	TArray<int8> CoatMade;              // 0 not yet, 1 today's, 2 a wet day's
 	// snow (WLD-070, WLD-071): how much settles on people out in it while it snows; their footprints in lying snow
 	UPROPERTY(Config) float PeopleSnow = 0.55f;
+	UPROPERTY(Config) float PeopleWet = 0.3f;    // out in the rain: darker by wet x sky.json wet_dark x this (the slice's .3; WLD-037)
 	UPROPERTY(Config) float PrintDistance = 30.f;
 	UPROPERTY(Config) float MarkLift = 0.012f;   // m: marks in the snow this far above the ground      // m: footprints drawn behind walkers this near the camera
 	UPROPERTY(Config) int32 MaxPlayerSteps = 400;      // the player's own footprints kept this visit
@@ -101,7 +103,8 @@ public:
 	UPROPERTY() TObjectPtr<UProceduralMeshComponent> Prints;
 	TArray<struct FBrixPrint> PlayerSteps;            // where the player stepped, Age the minute they did
 	FVector2D LastStep = FVector2D::ZeroVector;
-	TArray<float> SlotSnow;
+	TArray<float> SlotSnow, SlotWet;
+	float WetOnPeople = 0.f, FigureWet = -1.f;
 	float SnowOnPeople = 0.f, FigureSnow = -1.f;
 	double TickMs() const { return TickFrames ? TickSeconds * 1000.0 / TickFrames : 0.0; }   // the people's own time a frame, on average
 	void ResetTickTime() { TickSeconds = 0; TickFrames = 0; for (double& P : Parts) P = 0; }
