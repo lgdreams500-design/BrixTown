@@ -16,6 +16,7 @@
 #include "ProceduralMeshComponent.h"
 #include "BrixCarsActor.h"
 #include "BrixCrashActor.h"
+#include "BrixWeatherActor.h"
 #include "Components/TextRenderComponent.h"
 #include "WorldCollision.h"
 #include "UObject/ConstructorHelpers.h"
@@ -197,7 +198,7 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	// everyone out of doors within reach, nearest first
 	// worked out for everyone at once on the task threads (CITY-022: from the day and the minute alone)
 	// i: who (a resident, or 1,000,000 + 2 a vehicle + 0 or 1 for someone from out of town in it), the slot's key
-	struct FNear { int32 i; double D; FVector2D P; float Up; double Yaw; int32 Pose; double Phase; const FBrixLook* L; TOptional<double> Floor; bool bDriving; int32 Extra = -1; };
+	struct FNear { int32 i; double D; FVector2D P; float Up; double Yaw; int32 Pose; double Phase; const FBrixLook* L; TOptional<double> Floor; bool bDriving; int32 Extra = -1; int32 Wet = -1; };
 	const double Reach2 = (double)ShowDistance * ShowDistance;
 	TArray<FNear> All;
 	All.SetNumUninitialized(Day->Num());
@@ -303,6 +304,37 @@ void ABrixPeople::Tick(float DeltaSeconds)
 			const TOptional<FBrixWhere> W = Day->Where(A.i, M2 ? *M2 : Minute);
 			if (!W) continue;
 			Cand = { A.i, A.P, A.Up, A.Yaw, A.Pose, W->Act, W->Lot, W->bWalking, D };
+		}
+	}
+	// the weather (CITY-077 to CITY-080; ADR-0020): today's coat; out in the rain an umbrella up, else a hood, else a hand over
+	// the head while walking, and a quicker walk; nothing but the coat indoors, sheltering or under a roof
+	TArray<FBrixWet> Wets;
+	if (const ABrixWeather* Wx = Mode->Weather.Get(); Wx && Wx->bOn)
+	{
+		const bool bTrying = Wx->IsTrying();
+		const int32 Shelter = Day->Acts.IndexOfByKey(FString(TEXT("shelter")));
+		if (CoatLooks.Num() != Day->Num()) { CoatLooks.SetNum(Day->Num()); CoatMade.Init(0, Day->Num()); }
+		for (FNear& A : Near)
+		{
+			if (A.i < 0 || A.i >= Day->Num()) continue;
+			const double* M2 = MinuteOf.Find(A.i);
+			const double Mi = M2 ? *M2 : Minute;
+			const int32 K = Day->PieceAt(A.i, Mi);
+			const FBrixDay::FPiece* P = K >= 0 ? &Day->Plan[A.i][K] : nullptr;
+			const bool bWalk = A.Pose == 1 && P && P->Kind == 1 && P->Cum.Num();
+			const double T1 = K >= 0 && K + 1 < Day->Plan[A.i].Num() ? Day->Plan[A.i][K + 1].T0 : 1440.0;
+			const bool bCovered = (P && P->Act == Shelter) || (A.Up < 6.f && Wx->Roofed(A.P));
+			const bool bOther = Extras.IsValidIndex(A.Extra) && (!Extras[A.Extra].Sig.IsEmpty() || A.Pose != 1);   // running from a car, or held by a smash
+			const FBrixLook& L0 = Looks[A.i];
+			FBrixWet W = BrixWetOf(Rules, Wx->Wear, A.i, Wx->Now.Rain, bTrying, bCovered, bWalk, bOther, L0.SigName, L0.S, Mi, P ? P->T0 : 0, T1, bWalk ? P->Cum.Last() : 0);
+			if (W.Coat && !(L0.Garment == TEXT("coat") && L0.Top == *W.Coat))
+			{
+				const int8 Want = bTrying ? 2 : 1;
+				if (CoatMade[A.i] != Want) { CoatLooks[A.i] = L0; CoatLooks[A.i].Garment = TEXT("coat"); CoatLooks[A.i].Top = *W.Coat; CoatMade[A.i] = Want; }
+				A.L = &CoatLooks[A.i];
+			}
+			if (!W.Sig.IsEmpty() && !Extras.IsValidIndex(A.Extra)) A.Phase = W.Phase;
+			if (W.Hood || W.Umbrella || W.Arms[0] || W.Arms[1] || !W.Sig.IsEmpty()) A.Wet = Wets.Add(MoveTemp(W));
 		}
 	}
 	// the trams' riders on their benches, facing the way the tram goes (cars.js tram(): up to twelve)
@@ -443,6 +475,14 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		O.Floor = P.Floor;
 		O.bDriving = P.bDriving;
 		if (P.i == Held.Resident) O.Face = HeldFace;
+		if (Wets.IsValidIndex(P.Wet))   // dressed for the rain (a dodge's run and gestures below come first)
+		{
+			const FBrixWet& X = Wets[P.Wet];
+			O.Hood = X.Hood; O.Umbrella = X.Umbrella;
+			O.Sig = X.Sig;
+			O.Arms[0] = X.Arms[0]; O.Arms[1] = X.Arms[1];
+			O.Chest = X.Chest;
+		}
 		if (Extras.IsValidIndex(P.Extra))   // a dodge's run and gestures
 		{
 			const FBrixDodged& X = Extras[P.Extra];

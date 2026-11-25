@@ -82,6 +82,8 @@ public:
 	int32 Dodging() const { return Dodge.Live(); }
 	int32 DodgeLogged = 0;
 	TArray<FBrixLook> CrewLooks;        // the repair crews' two looks (smash.js crewLook)
+	TArray<FBrixLook> CoatLooks;        // per resident, today's coat over their clothes (CITY-077), made when first needed
+	TArray<int8> CoatMade;              // 0 not yet, 1 today's, 2 a wet day's
 	double TickMs() const { return TickFrames ? TickSeconds * 1000.0 / TickFrames : 0.0; }   // the people's own time a frame, on average
 	void ResetTickTime() { TickSeconds = 0; TickFrames = 0; for (double& P : Parts) P = 0; }
 	// the time a frame by part: where everyone is, placing and the far figures' boxes, building bodies, uploading them, the far mesh

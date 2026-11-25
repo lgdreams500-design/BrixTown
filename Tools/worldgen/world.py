@@ -263,6 +263,30 @@ def react_problems(w):
     return out
 
 
+def weather_now(w, day_weather, m, trying=None):
+    """WLD-037: the weather at minute m of a day whose six-hour slots are `day_weather` (citysim.weather() at 03, 09, 15,
+    21; a slot before the first is the last of the same day), as sky.json "weather" numbers blended across the slots'
+    edges over clouds.blend_minutes, and how wet the paving is: wet while it rains, drying over rain.dry_minutes after a
+    wet slot ends. trying: one kind for the whole day (a look at it on a dry day). Worked out from the clock alone; the
+    Unreal build's BrixWeatherNow is checked against it."""
+    sky = w["sky"]
+    kind = lambda i: trying or (sky["clouds"]["follow_weather"] and day_weather[i % 4]) or "clear"
+    s = int(m // 360)
+    into, b = m - s * 360, sky["clouds"]["blend_minutes"]
+    out = dict(kind=kind(s))
+    for k in ("sun", "haze", "veil", "grey", "rain"):
+        v = lambda i: sky["weather"][kind(i)][k]
+        if into < b:
+            out[k] = v(s - 1) + (v(s) - v(s - 1)) * (.5 + .5 * into / b)
+        elif into > 360 - b:
+            out[k] = v(s) + (v(s + 1) - v(s)) * (.5 * (into - (360 - b)) / b)
+        else:
+            out[k] = v(s)
+    dry = max(0.0, min(1.0, 1 - into / sky["rain"]["dry_minutes"])) if sky["weather"][kind(s - 1)]["rain"] > 0 else 0.0
+    out["wet"] = max(min(1.0, out["rain"] * 1.5), dry)
+    return out
+
+
 def sky_problems(w):
     """Every rule World/rules/sky.json must keep (WLD-035, WLD-036)."""
     s, out = w["sky"], []

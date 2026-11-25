@@ -32,7 +32,8 @@ public:
 	float Daylight = 1.f;                         // the sun's share of its light now, 0 at night (FBrixSky::Daylight)
 	UPROPERTY() TObjectPtr<class ABrixTalk> Talk;    // conversations with residents (CITY-007)
 	UPROPERTY() TObjectPtr<class ABrixCars> Cars;
-	UPROPERTY() TObjectPtr<class ABrixCrash> Crash;  // what the player's car breaks, and its repairs (CITY-072 to CITY-076)    // the day's vehicles, and the one the player drives
+	UPROPERTY() TObjectPtr<class ABrixCrash> Crash;
+	UPROPERTY() TObjectPtr<class ABrixWeather> Weather;   // the day's weather: the light, the rain, wet streets (WLD-037)  // what the player's car breaks, and its repairs (CITY-072 to CITY-076)    // the day's vehicles, and the one the player drives
 	UPROPERTY() TObjectPtr<class ABrixLife> Life;    // the player's money, the bank, shops and quests (ADR-0012)
 
 	UPROPERTY(Config) FString CityDir = TEXT("../World/city_01");   // from the project folder (Game/)

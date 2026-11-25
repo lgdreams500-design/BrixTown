@@ -502,6 +502,21 @@ class TheSky(unittest.TestCase):
         self.assertGreater(wx["fog"]["haze"], wx["rain"]["haze"])
         self.assertEqual([k for k in wx if wx[k]["rain"] > 0], ["rain"])
 
+    def test_WLD_037_weather_blends_and_the_paving_dries(self):
+        day = ["clear", "rain", "cloud", "fog"]
+        mid = lambda m: world.weather_now(W, day, m)
+        self.assertEqual({k: mid(180)[k] for k in ("sun", "haze", "rain", "wet")}, dict(sun=1.0, haze=1.0, rain=0.0, wet=0.0))   # clear: the light as approved
+        self.assertEqual(mid(540)["rain"], 1.0)
+        self.assertEqual(mid(540)["wet"], 1.0)
+        b = W["sky"]["clouds"]["blend_minutes"]
+        self.assertAlmostEqual(mid(360)["sun"], (W["sky"]["weather"]["clear"]["sun"] + W["sky"]["weather"]["rain"]["sun"]) / 2)   # half way at the edge
+        for m in range(0, 1440, 5):                       # no jumps: it changes smoothly through the day
+            self.assertLess(abs(mid(m + 1)["sun"] - mid(m)["sun"]), 1.0 / b)
+        dry = W["sky"]["rain"]["dry_minutes"]
+        self.assertGreater(mid(720 + dry / 2)["wet"], .4)  # drying after the rain stops ...
+        self.assertEqual(mid(720 + dry)["wet"], 0.0)       # ... and dry in dry_minutes
+        self.assertEqual(world.weather_now(W, ["clear"] * 4, 600, trying="rain")["kind"], "rain")
+
     def test_WLD_037_broken_weather_is_caught(self):
         import copy
         bad = copy.deepcopy(W)

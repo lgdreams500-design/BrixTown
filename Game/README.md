@@ -180,6 +180,25 @@ hedges (not drawn in Unreal yet), a broken bench still being sat on, and a serve
 High, 38 to 54 frames a second while breaking a post box, a planter and a bin and with two crews at work (noisy: other
 sessions were running Unreal).
 
+## Weather (WLD-037, CITY-077 to CITY-080; ADR-0016, ADR-0020)
+The day's weather is citysim's for each six-hour slot (`Game/Data/day.json` "weather", written by build_play.py); what it
+does is worked out from the clock and World/rules/sky.json alone (`BrixWorld/BrixWeather`, a port of
+`world.weather_now()`, checked against it by `WLD037_the_weather_is_worked_out_as_world_py_does`). Cloud, rain and fog
+let less sun through, part of what they stop comes down as soft grey light from the sky, and the air thickens (which
+greys the sky); clear weather leaves the approved light as it is. Rain falls in the world (`ABrixWeather`): drops in
+rings round the camera, 1.6 to 11 m out, falling straight down whichever way you look, none where a building's roof is
+overhead and none while the camera is indoors; one procedural mesh of translucent drops (`/Game/Weather/M_Rain`, made by
+`Tools/unreal/make_rain_material.py`). The paving gets wet: it darkens, takes a faint sheen and holds puddles here and
+there, and walls go a little darker; it dries over `dry_minutes` after the rain (M_Greybox's WetDark, WetSheen and
+Puddles, from `Tools/unreal/greybox_wet.py`). Residents wear what citysim gives them today (day.json "wear"): a coat,
+and out in the rain an umbrella up, else the hood up, else a hand over the head while walking, with a hurried walk or a
+run for cover; nothing but the coat indoors, sheltering or under a roof (`CITY080_residents_are_dressed_for_the_rain`).
+The look of coats, hoods and umbrellas is still to be approved (ADR-0020). `-BrixWeather=<clear|cloud|rain|fog>`
+tries one kind for the whole day (and the clothes residents would wear on a day of it); the built day 16 has cloud
+before 06:00 and is clear after. At High: 40 to 43 frames a second in the 08:10 school rush in rain, against 15 to 54
+in clear weather on the same street (noisy: other sessions were running Unreal on the same laptop). Not yet: no key to
+try the weather, rain seen through windows from indoors, ripples, the rain's sound, wet clothes.
+
 ## The tram (CITY-041)
 Trams run along Tram Street to the timetable of World/rules/calendar.json, stopping at its three stops: a port of the
 slice's tramAt() (`FBrixTram`, checked against the slice's own function at 3,000 moments of a day by
@@ -344,6 +363,8 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY074_damage_is_kept` | CITY-074 |
 | `BrixTown.World.CITY075_repair_crews_mend_as_repairs_py_does` | CITY-075 |
 | `BrixTown.World.CITY076_residents_shout_at_a_smash` | CITY-076 |
+| `BrixTown.World.WLD037_the_weather_is_worked_out_as_world_py_does` | WLD-037 |
+| `BrixTown.World.CITY080_residents_are_dressed_for_the_rain` | CITY-077, CITY-079, CITY-080 |
 | `BrixTown.World.CITY007_every_conversation_is_sound` | CITY-007 |
 | `BrixTown.World.CHR009_lines_are_mouthed_as_the_slice_mouths_them` | CHR-009 |
 | `BrixTown.World.SND018_lines_are_voiced` | SND-018 |

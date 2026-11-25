@@ -856,6 +856,19 @@ void ABrixTownActor::Wrap(const FString& Kind, const FVector2D& Pos, float Groun
 	Breakables.Add(MoveTemp(B));
 }
 
+void ABrixTownActor::SetWet(float Dark, float Sheen, float Puddles)
+{
+	TArray<UMaterialInstanceDynamic*> All;
+	if (OwnColour) All.Add(OwnColour);
+	for (const TPair<uint32, TObjectPtr<UMaterialInstanceDynamic>>& C : Colours) if (C.Value) All.Add(C.Value);
+	for (UMaterialInstanceDynamic* M : All)
+	{
+		M->SetScalarParameterValue(TEXT("WetDark"), Dark);
+		M->SetScalarParameterValue(TEXT("WetSheen"), Sheen);
+		M->SetScalarParameterValue(TEXT("Puddles"), Puddles);
+	}
+}
+
 void ABrixTownActor::SetBroken(int32 b, bool bBroken)
 {
 	if (!Breakables.IsValidIndex(b) || Breakables[b].bBroken == bBroken) return;
