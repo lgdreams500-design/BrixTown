@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Math/RandomStream.h"
 
 // The town's sound as the slice decides it (Prototype/play/sound.js, from World/rules/sound.json): what is heard, from
 // where, how loud and at what pitch. Only the deciding is here, ported from sound.js and checked against it by the SND
@@ -27,7 +28,18 @@ struct BRIXWORLD_API FBrixSoundRules
 	double CarGain = .2, StartLen = .8, SkidMps = 5, SkidGain = .18, BumpGain = .4;
 	// the tram (SND-004)
 	double HumHz = 48, WhineHz = 380, TramGain = .3, TramFar = 140, BellFar = 160;
+	// the ambience (SND-001): the street by day and night, the room, birds by day, crickets at night, fountains
+	double StreetDay = .10, StreetNight = .04, RoomGain = .035;
+	double BirdsFrom = 330, BirdsTo = 1230, BirdsPerMinute = 18, GardenBirdsPerMinute = 40, GardenM = 35;   // minutes of the day
+	double CricketsFrom = 1260, CricketsTo = 300, CricketsGain = .022;
+	double FountainGain = .16, FountainFar = 22;
 };
+
+// sound.js within(): is minute m in [From, To), the window running past midnight when To is before From?
+BRIXWORLD_API bool BrixWithin(double M, double From, double To);
+// How much of the day it is for the street's sound (sound.js frame()): 0 by night, 1 by day, eased over 80 minutes
+// either side of 40 minutes before sunrise and after sunset (hours of the calendar's season).
+BRIXWORLD_API double BrixStreetDay(double Minute, double SunriseH, double SunsetH);
 
 // Reads World/rules/sound.json. On failure returns false and says why.
 BRIXWORLD_API bool LoadBrixSoundRules(const FString& Path, FBrixSoundRules& Out, FString& OutError);
@@ -78,7 +90,8 @@ private:
 };
 
 // The player's own steps and landing (SND-003; sound.js frame()): a step at each half of the walk's cycle while moving on
-// the ground, louder running; a thud on landing from a fall faster than 3 m/s.
+// the ground, louder running; a thud on landing from a fall faster than 3 m/s; and the jump (SND-009, play.js's
+// Sound.act("jump")) as they leave the ground going up.
 class BRIXWORLD_API FBrixPlayerSounds
 {
 public:
@@ -128,6 +141,23 @@ public:
 private:
 	struct FSeen { double Run = 0, X = 0, T = 0; bool bStopped = false; };
 	TArray<FSeen> Seen;                  // in the order first seen, as sound.js's Map
+};
+
+// The town's ambience (SND-001; sound.js frame() and ambience()): the street's air louder and brighter by day (two
+// recordings, the day's and the night's, crossfaded), a room tone indoors, crickets at night out of doors, the nearest
+// fountain from where it is, and birds by day now and then somewhere round the listener (more near a garden; none
+// while driving).
+class BRIXWORLD_API FBrixAmbience
+{
+public:
+	double Street = 0, StreetDay = 0;    // the street's level, and how much of it is the day's recording (0..1)
+	double Room = 0, Crickets = 0;
+	FBrixEngineVoice Fountain;           // the nearest fountain (Pos, Gain, Far; bOn when there is one)
+	void Frame(const FBrixSoundRules& R, double Minute, double SunriseH, double SunsetH, bool bIndoors, bool bDriving, const FVector2D& Here,
+		const TArray<FVector2D>& Fountains, const TArray<FVector2D>& Gardens, double Dt, FRandomStream& Rng, TArray<FBrixSoundEvent>& Out);
+
+private:
+	double BirdT = 0;
 };
 
 // A recording in Game/Data/sounds/index.json.

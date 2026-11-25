@@ -34,6 +34,8 @@ public:
 	void Open();                        // with the resident the player is next to, if any
 	void Choose(int32 N);               // the N-th answer (0 first)
 	void Close();
+	int32 Answered = 0;                  // answers chosen so far (the sound of choosing, SND-009)
+	const FString& Offer() const { return PromptText; }   // what E offers now ("Talk to ...", "Drive this car"), or empty
 
 	UPROPERTY(Config) float CloseCamera = 2.6f;   // m: the camera comes in this close so the face can be read
 	UPROPERTY(Config) float AnswerPause = 0.35f;  // s after the player's voiced answer before the resident's next line

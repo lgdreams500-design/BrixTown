@@ -7,6 +7,12 @@
 #include "BrixDay.h"
 #include "BrixGameMode.h"
 #include "BrixPeople.h"
+#include "BrixTalkActor.h"
+#include "AudioDevice.h"
+#include "GameFramework/PlayerController.h"
+#include "Misc/CommandLine.h"
+#include "Misc/ConfigCacheIni.h"
+#include "TimerManager.h"
 #include "BrixUnits.h"
 #include "Components/AudioComponent.h"
 #include "Engine/World.h"
@@ -64,11 +70,39 @@ void ABrixSound::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, ABrixP
 		int32 Cut = INDEX_NONE;
 		if (KV.Key.FindLastChar(TEXT('_'), Cut) && KV.Key.Mid(Cut + 1).IsNumeric()) Variants.FindOrAdd(KV.Key.Left(Cut))++;
 	}
-	for (const FBrixBlock& B : City.Blocks) for (const FBrixLot& L : B.Lots) if (L.IsOpen())
+	for (const FBrixBlock& B : City.Blocks)
 	{
-		const double A = FMath::DegreesToRadians(L.AngleDeg);
-		OpenLots.Add({ L.Centre(), L.Size() * 0.5, FMath::Cos(A), FMath::Sin(A), L.Kind });
+		for (const FBrixLot& L : B.Lots) if (L.IsOpen())
+		{
+			const double A = FMath::DegreesToRadians(L.AngleDeg);
+			OpenLots.Add({ L.Centre(), L.Size() * 0.5, FMath::Cos(A), FMath::Sin(A), L.Kind });
+			if (L.Kind == TEXT("garden")) Gardens.Add(L.Centre());
+		}
+		for (const FBrixProp& P : B.Props) if (P.Kind == TEXT("fountain")) Fountains.Add(P.Pos);
 	}
+	if (Day)
+	{
+		const int32 Season = City.Sky.SeasonOf(Day->Day);
+		if (City.Sky.Sunrise.IsValidIndex(Season)) SunriseH = City.Sky.Sunrise[Season];
+		if (City.Sky.Sunset.IsValidIndex(Season)) SunsetH = City.Sky.Sunset[Season];
+	}
+	Rng.Initialize(20261125);
+	StreetDayL = MakeLoop(TEXT("street_day"), false);
+	StreetNightL = MakeLoop(TEXT("street_night"), false);
+	RoomL = MakeLoop(TEXT("room"), false);
+	CricketsL = MakeLoop(TEXT("crickets"), false);
+	FountainL = MakeLoop(TEXT("fountain"), true);
+	// on or off as the player last left it (SND-013)
+	bool bSaved = true;
+	GConfig->GetBool(TEXT("/Script/BrixTown.BrixSound"), TEXT("bSoundOn"), bSaved, GGameUserSettingsIni);
+	SetOn(bSaved);
+	if (FParse::Param(FCommandLine::Get(), TEXT("BrixSoundToggle")))   // for a test shot: off at 40 % of the wait, on again at 70 %
+		if (const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))
+		{
+			FTimerHandle A, B;
+			GetWorldTimerManager().SetTimer(A, [this]() { SetOn(!bOn); }, Mode->ShotDelaySeconds * .4f, false);
+			GetWorldTimerManager().SetTimer(B, [this]() { SetOn(!bOn); }, Mode->ShotDelaySeconds * .7f, false);
+		}
 	if (Day) ChildRole = Day->Roles.IndexOfByKey(FString(TEXT("child")));
 	Placed = NewObject<USoundAttenuation>(this);
 	Placed->Attenuation.bAttenuate = false;   // the slice's own fall-off (BrixHear) is in each sound's volume
@@ -241,6 +275,49 @@ void ABrixSound::Vehicles(double Now, const FVector2D& Here)
 	}
 }
 
+void ABrixSound::SetOn(bool bNow)
+{
+	bOn = bNow;
+	if (FAudioDeviceHandle Dev = GetWorld()->GetAudioDevice()) Dev->SetTransientPrimaryVolume(bOn ? 1.f : 0.f);   // everything, the voices too
+	GConfig->SetBool(TEXT("/Script/BrixTown.BrixSound"), TEXT("bSoundOn"), bOn, GGameUserSettingsIni);
+	GConfig->Flush(false, GGameUserSettingsIni);
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: sound %s (N turns it %s)"), bOn ? TEXT("on") : TEXT("off"), bOn ? TEXT("off") : TEXT("on"));
+}
+
+void ABrixSound::Act(const FString& Name)
+{
+	FBrixSoundEvent E;
+	E.Sound = Name.StartsWith(TEXT("car_")) ? Name : TEXT("act_") + Name;
+	E.bHere = true;
+	Play(E, Rules.Action);
+}
+
+// The sounds of the interface and of what the player does (SND-009), from what changed since last frame: a prompt
+// appearing, a talk opening, an answer chosen, a talk closing; getting into a car (its door and starter) and out.
+void ABrixSound::Interactions()
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Mode) return;
+	if (const ABrixTalk* T = Mode->Talk)
+	{
+		if (T->IsTalking() && !bWasTalking) Act(TEXT("talk_open"));
+		else if (!T->IsTalking() && bWasTalking) Act(TEXT("talk_close"));
+		if (T->Answered != WasAnswered && T->IsTalking()) Act(TEXT("talk_choose"));
+		if (!T->Offer().IsEmpty() && T->Offer() != WasPrompt && !T->IsTalking()) Act(TEXT("prompt"));
+		bWasTalking = T->IsTalking();
+		WasAnswered = T->Answered;
+		WasPrompt = T->Offer();
+	}
+	if (const ABrixCars* C = Mode->Cars)
+	{
+		const ABrixCars::FDrive& D = C->Driving();
+		if (D.K >= 0 && WasDriving < 0 && !D.bRide) Act(TEXT("car_in"));   // the door, then the starter (sound.js car("in"))
+		else if (D.K < 0 && WasDriving >= 0 && !bWasRiding) Act(TEXT("car_door"));
+		WasDriving = D.K;
+		bWasRiding = D.bRide;
+	}
+}
+
 void ABrixSound::Tick(float Dt)
 {
 	Super::Tick(Dt);
@@ -281,6 +358,16 @@ void ABrixSound::Tick(float Dt)
 	}
 	// engines and the trams (SND-002, SND-004, SND-009)
 	Vehicles(Now, Here);
+	// the town's air, crickets, fountains, birds (SND-001)
+	Ambience.Frame(Rules, Mode ? Mode->ClockMinute() : 720, SunriseH, SunsetH, false, bDriving, Here, Fountains, Gardens, Dt, Rng, Events);
+	SetLoop(StreetDayL, Ambience.Street * FMath::Sin(Ambience.StreetDay * HALF_PI), 1, Here);
+	SetLoop(StreetNightL, Ambience.Street * FMath::Cos(Ambience.StreetDay * HALF_PI), 1, Here);
+	SetLoop(RoomL, Ambience.Room, 1, Here);
+	SetLoop(CricketsL, Ambience.Crickets, 1, Here);
+	SetLoop(FountainL, Ambience.Fountain.bOn ? Ambience.Fountain.Gain * BrixHear(Rules, Here, 0, Ambience.Fountain.Pos, Ambience.Fountain.Far).X : 0, 1, Ambience.Fountain.Pos);
+	Interactions();
+	if (const APlayerController* PC = GetWorld()->GetFirstPlayerController())
+		if (PC->WasInputKeyJustPressed(EKeys::N)) SetOn(!bOn);   // all sound off and on (SND-013; the slice's N)
 	for (const FBrixSoundEvent& E : Events) Play(E, E.Sound.StartsWith(TEXT("act_")) || E.Sound == TEXT("car_bump") ? Rules.Action : Rules.World);
 	if (Now > LogAt) { LogAt = Now + 10; LogPlayed(TEXT("so far")); }
 }

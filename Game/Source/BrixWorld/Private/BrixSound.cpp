@@ -64,6 +64,23 @@ bool LoadBrixSoundRules(const FString& Path, FBrixSoundRules& Out, FString& OutE
 	Num(*Pl, TEXT("skid_gain"), Out.SkidGain); Num(*Pl, TEXT("bump_gain"), Out.BumpGain);
 	Num(*Tr, TEXT("hum_hz"), Out.HumHz); Num(*Tr, TEXT("whine_hz"), Out.WhineHz); Num(*Tr, TEXT("gain"), Out.TramGain);
 	Num(*Tr, TEXT("far"), Out.TramFar); Num(*Tr, TEXT("bell_far"), Out.BellFar);
+	const TSharedPtr<FJsonObject>* A = Obj(S, TEXT("ambience"));
+	const TSharedPtr<FJsonObject>* St = A ? Obj(*A, TEXT("street")) : nullptr;
+	const TSharedPtr<FJsonObject>* Rm = A ? Obj(*A, TEXT("room")) : nullptr;
+	const TSharedPtr<FJsonObject>* Bi = A ? Obj(*A, TEXT("birds")) : nullptr;
+	const TSharedPtr<FJsonObject>* Cr = A ? Obj(*A, TEXT("crickets")) : nullptr;
+	const TSharedPtr<FJsonObject>* Fo = A ? Obj(*A, TEXT("fountain")) : nullptr;
+	if (!St || !Rm || !Bi || !Cr || !Fo) { OutError = Path + TEXT(" lacks ambience.street, room, birds, crickets or fountain"); return false; }
+	auto Hm = [&](const TSharedPtr<FJsonObject>& O, const TCHAR* Key, double& V)   // "HH:MM" -> minutes of the day
+	{
+		FString T;
+		if (O->TryGetStringField(Key, T) && T.Len() == 5 && T[2] == TEXT(':')) V = FCString::Atoi(*T.Left(2)) * 60 + FCString::Atoi(*T.Mid(3));
+	};
+	Num(*St, TEXT("day_gain"), Out.StreetDay); Num(*St, TEXT("night_gain"), Out.StreetNight); Num(*Rm, TEXT("gain"), Out.RoomGain);
+	Hm(*Bi, TEXT("from"), Out.BirdsFrom); Hm(*Bi, TEXT("to"), Out.BirdsTo); Num(*Bi, TEXT("per_minute"), Out.BirdsPerMinute);
+	Num(*Bi, TEXT("garden_per_minute"), Out.GardenBirdsPerMinute); Num(*Bi, TEXT("garden_m"), Out.GardenM);
+	Hm(*Cr, TEXT("from"), Out.CricketsFrom); Hm(*Cr, TEXT("to"), Out.CricketsTo); Num(*Cr, TEXT("gain"), Out.CricketsGain);
+	Num(*Fo, TEXT("gain"), Out.FountainGain); Num(*Fo, TEXT("far"), Out.FountainFar);
 	return true;
 }
 
@@ -75,6 +92,50 @@ FVector2D BrixHear(const FBrixSoundRules& R, const FVector2D& Here, double Yaw, 
 	const double G = R.Near / (R.Near + R.Rolloff * FMath::Max(0.0, d - R.Near)) * (1 - Smooth(f * .7, f, d));
 	const double Pan = d < .5 ? 0.0 : (D.X * FMath::Cos(Yaw) + D.Y * FMath::Sin(Yaw)) / d * R.Pan;
 	return FVector2D(G, FMath::Clamp(Pan, -1.0, 1.0));
+}
+
+bool BrixWithin(double M, double From, double To)
+{
+	return From <= To ? M >= From && M < To : M >= From || M < To;
+}
+
+double BrixStreetDay(double Minute, double SunriseH, double SunsetH)
+{
+	return Smooth(0, 1, FMath::Min((Minute - (SunriseH * 60 - 40)) / 80, ((SunsetH * 60 + 40) - Minute) / 80));
+}
+
+void FBrixAmbience::Frame(const FBrixSoundRules& R, double Minute, double SunriseH, double SunsetH, bool bIndoors, bool bDriving, const FVector2D& Here,
+	const TArray<FVector2D>& Fountains, const TArray<FVector2D>& Gardens, double Dt, FRandomStream& Rng, TArray<FBrixSoundEvent>& Out)
+{
+	StreetDay = BrixStreetDay(Minute, SunriseH, SunsetH);
+	Street = R.StreetNight + (R.StreetDay - R.StreetNight) * StreetDay;
+	Room = bIndoors ? R.RoomGain : 0;
+	Crickets = BrixWithin(Minute, R.CricketsFrom, R.CricketsTo) && !bIndoors ? R.CricketsGain : 0;
+	Fountain.bOn = false;
+	double Best = 1e18;
+	for (const FVector2D& F : Fountains)
+	{
+		const double d = FVector2D::DistSquared(F, Here);
+		if (d < Best) { Best = d; Fountain.bOn = true; Fountain.Pos = F; }
+	}
+	Fountain.Gain = R.FountainGain;
+	Fountain.Far = R.FountainFar;
+	if (BrixWithin(Minute, R.BirdsFrom, R.BirdsTo) && !bDriving)   // now and then, somewhere round the listener; more by the gardens
+	{
+		const bool bGarden = Gardens.ContainsByPredicate([&](const FVector2D& G) { return FVector2D::Distance(G, Here) < R.GardenM; });
+		const double Rate = (bGarden ? R.GardenBirdsPerMinute : R.BirdsPerMinute) / 60;
+		BirdT -= Dt;
+		if (BirdT <= 0)
+		{
+			const double A = Rng.FRand() * 6.283, D = Rng.FRandRange(6, 28);
+			FBrixSoundEvent E;
+			E.Sound = TEXT("bird");
+			E.Pos = Here + FVector2D(FMath::Cos(A), FMath::Sin(A)) * D;
+			E.Far = 45;
+			Out.Add(E);
+			BirdT = Rng.FRandRange(.3, 1.7) / Rate;
+		}
+	}
 }
 
 FString BrixStepSurface(bool bInside, const FString& LotKind)
@@ -146,6 +207,13 @@ void FBrixPlayerSounds::Frame(const FBrixSoundRules& R, bool bMoving, bool bOnGr
 	}
 	LastHalf = Half;
 	bLast = true;
+	if (!bOnGround && bPrevGround && Vz > 1)   // a jump
+	{
+		FBrixSoundEvent E;
+		E.Sound = TEXT("act_jump");
+		E.bHere = true;
+		Out.Add(E);
+	}
 	if (bOnGround && !bPrevGround && PrevVz < -3)   // a hard landing thuds
 	{
 		FBrixSoundEvent E;

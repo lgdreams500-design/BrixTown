@@ -164,6 +164,9 @@ bool FSND003_ThePlayersSteps::RunTest(const FString&)
 	P.Frame(R, false, false, Ph, false, -2.5, TEXT("stone"), E);
 	P.Frame(R, false, true, Ph, false, 0, TEXT("stone"), E);
 	TestEqual(TEXT("a small hop lands quietly"), E.Num(), 0);
+	P.Frame(R, false, true, Ph, false, 0, TEXT("stone"), E);
+	P.Frame(R, false, false, Ph, false, 4.8, TEXT("stone"), E);   // Space: up at the slice's 4.8 m/s
+	TestTrue(TEXT("a jump is heard (SND-009)"), E.Num() == 1 && E[0].Sound == TEXT("act_jump") && E[0].bHere);
 	return true;
 }
 
@@ -283,6 +286,56 @@ bool FSND004_TheTramAsTheSlice::RunTest(const FString&)
 	return true;
 }
 
+// The town's ambience (SND-001; sound.js frame()): the street quiet and dark at night, louder and brighter by day, eased
+// through 80 minutes either side of dawn and dusk; crickets from 21:00 to 05:00 out of doors only; the nearest fountain;
+// birds by day at the rules' rate, more than twice as many by a garden, none at night or while driving.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSND001_TheTownsAmbience, "BrixTown.World.SND001_the_town_sounds_by_time_of_day",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FSND001_TheTownsAmbience::RunTest(const FString&)
+{
+	FBrixSoundRules R;
+	if (!LoadRules(*this, R)) return false;
+	TestEqual(TEXT("birds from 05:30"), R.BirdsFrom, 330.0);
+	TestEqual(TEXT("crickets from 21:00"), R.CricketsFrom, 1260.0);
+	TestTrue(TEXT("within: 06:00 is in 05:30 to 20:30"), BrixWithin(360, 330, 1230));
+	TestFalse(TEXT("within: 20:30 is not"), BrixWithin(1230, 330, 1230));
+	TestTrue(TEXT("within: 02:00 is in 21:00 to 05:00"), BrixWithin(120, 1260, 300));
+	TestFalse(TEXT("within: 12:00 is not"), BrixWithin(720, 1260, 300));
+	// sunrise 6, sunset 20: dark until 05:20, half at 06:00, full by 06:40, half again at 20:00
+	TestEqual(TEXT("night before 05:20"), BrixStreetDay(300, 6, 20), 0.0);
+	TestTrue(TEXT("half day at 06:00"), FMath::IsNearlyEqual(BrixStreetDay(360, 6, 20), .5, 1e-9));
+	TestEqual(TEXT("full day at noon"), BrixStreetDay(720, 6, 20), 1.0);
+	TestTrue(TEXT("half day at 20:00"), FMath::IsNearlyEqual(BrixStreetDay(1200, 6, 20), .5, 1e-9));
+	TestTrue(TEXT("a quarter in: smooth step"), FMath::IsNearlyEqual(BrixStreetDay(340, 6, 20), .25 * .25 * (3 - .5), 1e-9));
+	FBrixAmbience A;
+	FRandomStream Rng(7);
+	TArray<FBrixSoundEvent> E;
+	const TArray<FVector2D> Fountains = { FVector2D(30, 0), FVector2D(-8, 4) }, Gardens = { FVector2D(200, 200) };
+	A.Frame(R, 720, 6, 20, false, false, FVector2D::ZeroVector, Fountains, Gardens, 1.0 / 60, Rng, E);
+	TestTrue(TEXT("noon: the street at its day level, all the day's recording"), FMath::IsNearlyEqual(A.Street, R.StreetDay) && A.StreetDay == 1.0);
+	TestEqual(TEXT("noon: no crickets"), A.Crickets, 0.0);
+	TestTrue(TEXT("the nearest fountain"), A.Fountain.bOn && A.Fountain.Pos == FVector2D(-8, 4) && A.Fountain.Gain == R.FountainGain);
+	A.Frame(R, 120, 6, 20, false, false, FVector2D::ZeroVector, Fountains, Gardens, 1.0 / 60, Rng, E);
+	TestTrue(TEXT("02:00: the street at its night level, crickets"), FMath::IsNearlyEqual(A.Street, R.StreetNight) && A.StreetDay == 0.0 && A.Crickets == R.CricketsGain);
+	A.Frame(R, 120, 6, 20, true, false, FVector2D::ZeroVector, Fountains, Gardens, 1.0 / 60, Rng, E);
+	TestTrue(TEXT("indoors: no crickets, the room's tone"), A.Crickets == 0 && A.Room == R.RoomGain);
+	auto Birds = [&](double Minute, const FVector2D& Here, bool bDriving)
+	{
+		FBrixAmbience B;
+		TArray<FBrixSoundEvent> Ev;
+		for (int32 f = 0; f < 600 * 60; ++f) B.Frame(R, Minute, 6, 20, false, bDriving, Here, Fountains, Gardens, 1.0 / 60, Rng, Ev);   // ten minutes
+		for (const FBrixSoundEvent& X : Ev) if (X.Sound != TEXT("bird") || FVector2D::Distance(X.Pos, Here) < 6 - 1e-6 || FVector2D::Distance(X.Pos, Here) > 28 + 1e-6) return -1;
+		return Ev.Num() / 10;
+	};
+	const int32 Street = Birds(600, FVector2D::ZeroVector, false), Garden = Birds(600, FVector2D(210, 200), false);
+	AddInfo(FString::Printf(TEXT("birds a minute: %d in the street, %d by a garden"), Street, Garden));
+	TestTrue(TEXT("birds in the street at about the rules' rate, 6 to 28 m away"), Street >= R.BirdsPerMinute * .8 && Street <= R.BirdsPerMinute * 1.2);
+	TestTrue(TEXT("by a garden, at its rate"), Garden >= R.GardenBirdsPerMinute * .8 && Garden <= R.GardenBirdsPerMinute * 1.2);
+	TestEqual(TEXT("no birds at night"), Birds(60, FVector2D::ZeroVector, false), 0);
+	TestEqual(TEXT("no birds while driving"), Birds(600, FVector2D::ZeroVector, true), 0);
+	return true;
+}
+
 // Every sound has its recording (SND-009): the recordings of Game/Data/sounds (Tools/unreal/sound_values.py) are all
 // there, read as 16-bit WAV at the index's rate and length, loops among them; every action of sound.json has one, every
 // surface's steps for adults and children, and the pose sounds.
@@ -317,9 +370,10 @@ bool FSND009_EverySoundIsRecorded::RunTest(const FString&)
 	for (const FString& Su : R.Surfaces) for (const TCHAR* Who : { TEXT("_adult_0"), TEXT("_child_0") }) TestTrue(TEXT("steps on ") + Su, Clips.Contains(TEXT("step_") + Su + Who));
 	for (const FString* P : { &R.PoseSit, &R.PoseStand, &R.PoseLie }) TestTrue(TEXT("a resident's ") + *P, Clips.Contains(TEXT("person_") + *P));
 	TestTrue(TEXT("a hard landing"), Clips.Contains(TEXT("act_land")));
-	for (const TCHAR* L : { TEXT("engine_lo"), TEXT("engine_hi"), TEXT("tram_hum"), TEXT("tram_whine"), TEXT("tram_rumble"), TEXT("car_skid") })
+	for (const TCHAR* L : { TEXT("engine_lo"), TEXT("engine_hi"), TEXT("tram_hum"), TEXT("tram_whine"), TEXT("tram_rumble"), TEXT("car_skid"),
+		TEXT("street_day"), TEXT("street_night"), TEXT("room"), TEXT("crickets"), TEXT("fountain") })
 		TestTrue(FString(TEXT("a loop: ")) + L, Clips.Contains(L) && Clips[L].bLoop);
-	for (const TCHAR* O : { TEXT("tram_bell"), TEXT("car_bump") }) TestTrue(FString(TEXT("a one-shot: ")) + O, Clips.Contains(O) && !Clips[O].bLoop);
+	for (const TCHAR* O : { TEXT("tram_bell"), TEXT("car_bump"), TEXT("car_in"), TEXT("bird_0") }) TestTrue(FString(TEXT("a one-shot: ")) + O, Clips.Contains(O) && !Clips[O].bLoop);
 	TestTrue(TEXT("the engine loops' two pitches"), EngineHz.Num() == 2 && EngineHz[0] < EngineHz[1]);
 	AddInfo(FString::Printf(TEXT("%d recordings, %.1f s in all"), Clips.Num(), Seconds));
 	// a WAV that is not one is refused
