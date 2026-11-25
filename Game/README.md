@@ -149,8 +149,7 @@ Money is the slice's (economy.js, a port of `Tools/citysim/economy.py`): `BrixWo
 balanced transactions in whole chips (int64), money made and taken only by the `sys:` accounts, the bank's vault and every
 shop's till as ordinary accounts; the bank's current and savings accounts, moving money between them and the purse, loans
 paid in daily instalments, late fees, default and repossession; and the shops' stock and prices, a mall's outlets and the
-market stall, worked out from the residents' visits and the player's own trades, never ticked (these have no counter on
-screen yet). The data is `Game/Data/life.json`, written by `Tools/worldgen/build_play.py` in the same run as the slice's
+market stall, worked out from the residents' visits and the player's own trades, never ticked. The data is `Game/Data/life.json`, written by `Tools/worldgen/build_play.py` in the same run as the slice's
 city_data.js (economy.json, mall_goods.json and quests.json, the day's shop visits, who works where), with two fixed runs
 and what Python gives for them: `ECO002_the_ledger_matches_the_python` runs economy.check_script() and its outlet ops,
 `BANK008_the_bank_settles_as_the_python_does` a loan that defaults; both must give Python's ledger, balances, things
@@ -160,8 +159,8 @@ the clock, so interest, instalments and fees are settled for each midnight passe
 the purse at the top left (cash, and the bank's two accounts together once one is open) with a "+" or "-" beside it when
 it changes; at the bank's door (`CounterReach`) or inside it, B opens its counter in the slice's dark panel: open
 accounts, move money (a payment that would take an account below zero is refused, never partly made), borrow and repay,
-and the statement, newest first; I opens the money page (purse, loan, statement). Esc closes either. Not yet: shop and
-stall counters, saving, the game menu's Money page in its painted-sign look. To see the bank in a test shot:
+and the statement, newest first; I opens the money page (purse, loan, statement). Esc closes either. Not yet: saving,
+the game menu's Money page in its painted-sign look. To see the bank in a test shot:
 `-BrixCounter=bank "-BrixLife=open,current;open,savings;move,p:current,p:savings,1000;loan,5000,3"` (ops as
 economy.check_script() writes them, arguments by commas).
 
@@ -187,6 +186,26 @@ nearest trams hum, whine higher and rumble as they go faster, and ring their bel
 continuous sound is a loop that plays only while it can be heard (it is stopped, and takes no voice, when it cannot). A
 test shot logs how many of each sound were played and how long each loop was heard (`sounds played in all: ...`,
 `loops heard in all: ...`). Not yet: being muffled indoors.
+
+## Shops, cafés and the market stall (ECO-005, ECO-010, ECO-011, PROP-008, UI-020, UI-021; ADR-0044)
+At the door of a shop or café (or inside it) B opens its counter, as in the slice: what it sells at today's price (its
+stock after the residents' visits since the 06:00 restock and the player's own trades, the price rising as the stock
+falls, lower or higher with the player's standing with whoever works there), and on a second tab what it buys from the
+player at a share of its price, paid from its till. The goods are shown as objects in a grid with the chosen one large
+beside it (layout B of look test 33, the owner's choice): each cell draws the thing with its price and a dot in the colour
+of where it goes; the showcase turns it slowly (drag to turn it by hand) with its name, where it goes, what is left and
+its price, and the one button. Sold out is greyed under a band; a thing dearer than cash and the current account together
+has its price in red with how much is short. A click chooses, a second click soon after buys; the arrow keys choose and
+Enter buys. What each thing shows is world.buy_menu_shows (`BrixWorld/BrixBuyMenu`, checked for all 236 things by
+`UI021_every_thing_shows_what_python_says`); the stand-ins (a parcel in the seller's band, a paper bag, a cup, a case, folded
+cloth in the clothing's colour) are the boxes of World/rules/buy_menu.json, drawn by `SBrixThing` with Slate's own
+triangles, lit as the slice's shader lights them. At the market square B opens the player's stall: rent it for the day,
+set out up to six things at the player's own prices, take them back; residents coming to the market buy as the rules say,
+paid through the ledger, and what is left comes home at midnight. Not yet: a mall's outlets (the rules are ported; their
+counters are inside the mall), the narrow layout D (for the building designer), the icons in the dots and chips, a
+good's own Blender model in place of its stand-in, and a resident behind each counter. To see one in a test shot:
+`-BrixCounter=grocer "-BrixLife=buy,grocer,bread"` (a shop's kind or lot id), or `-BrixCounter=market
+"-BrixLife=buy,grocer,jam;rent;setout,jam,250"`.
 
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
@@ -234,3 +253,4 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.SND009_every_sound_has_its_recording` | SND-009 |
 | `BrixTown.World.SND002_engines_sound_as_the_slice_hears_them` | SND-002, SND-009 |
 | `BrixTown.World.SND004_the_tram_sounds_as_the_slice_hears_it` | SND-004 |
+| `BrixTown.World.UI021_every_thing_shows_what_python_says` | UI-020, UI-021 |

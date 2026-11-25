@@ -73,6 +73,7 @@ void ABrixCharacter::MakeInput()
 	LeaveAction = NewObject<UInputAction>(this, TEXT("Leave"));
 	CounterAction = NewObject<UInputAction>(this, TEXT("Counter"));
 	WalletAction = NewObject<UInputAction>(this, TEXT("Wallet"));
+	for (const TCHAR* N : { TEXT("ChooseLeft"), TEXT("ChooseRight"), TEXT("ChooseUp"), TEXT("ChooseDown"), TEXT("ChooseEnter") }) ChooseActions.Add(NewObject<UInputAction>(this, N));
 	for (int32 n = 0; n < 9; ++n) AnswerActions.Add(NewObject<UInputAction>(this, *FString::Printf(TEXT("Answer%d"), n + 1)));
 
 	// Move is (right, forward): D and A on x, W and S on y.
@@ -98,6 +99,11 @@ void ABrixCharacter::MakeInput()
 	Keys->MapKey(LeaveAction, EKeys::Escape);
 	Keys->MapKey(CounterAction, EKeys::B);
 	Keys->MapKey(WalletAction, EKeys::I);
+	Keys->MapKey(ChooseActions[0], EKeys::Left);
+	Keys->MapKey(ChooseActions[1], EKeys::Right);
+	Keys->MapKey(ChooseActions[2], EKeys::Up);
+	Keys->MapKey(ChooseActions[3], EKeys::Down);
+	Keys->MapKey(ChooseActions[4], EKeys::Enter);
 	const FKey Digits[9] = { EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four, EKeys::Five, EKeys::Six, EKeys::Seven, EKeys::Eight, EKeys::Nine };
 	const FKey Pad[9] = { EKeys::NumPadOne, EKeys::NumPadTwo, EKeys::NumPadThree, EKeys::NumPadFour, EKeys::NumPadFive, EKeys::NumPadSix, EKeys::NumPadSeven, EKeys::NumPadEight, EKeys::NumPadNine };
 	for (int32 n = 0; n < 9; ++n) { Keys->MapKey(AnswerActions[n], Digits[n]); Keys->MapKey(AnswerActions[n], Pad[n]); }
@@ -132,6 +138,7 @@ void ABrixCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		In->BindAction(LeaveAction, ETriggerEvent::Started, this, &ABrixCharacter::LeaveKey);
 		In->BindAction(CounterAction, ETriggerEvent::Started, this, &ABrixCharacter::CounterKey);
 		In->BindAction(WalletAction, ETriggerEvent::Started, this, &ABrixCharacter::WalletKey);
+		for (UInputAction* A : ChooseActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::ChooseKey);
 		for (UInputAction* A : AnswerActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::AnswerKey);
 	}
 }
@@ -327,6 +334,15 @@ void ABrixCharacter::WalletKey()
 {
 	if (bDriving || bTalking) return;
 	if (ABrixLife* L = Life()) L->WalletKey();
+}
+
+void ABrixCharacter::ChooseKey(const FInputActionInstance& Instance)
+{
+	ABrixLife* L = Life();
+	if (!L || !L->IsShop()) return;
+	const int32 n = ChooseActions.IndexOfByKey(Instance.GetSourceAction());
+	if (n == 4) L->EnterKey();
+	else if (n >= 0) L->ArrowKey(n == 0 ? -1 : n == 1 ? 1 : 0, n == 2 ? -1 : n == 3 ? 1 : 0);
 }
 
 void ABrixCharacter::BeginPanel()

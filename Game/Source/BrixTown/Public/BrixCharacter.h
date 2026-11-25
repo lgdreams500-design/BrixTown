@@ -62,6 +62,7 @@ private:
 	void LeaveKey();                 // Esc: leave the talk, or close a counter or the money page
 	void CounterKey();               // B: the counter here (life.js counter())
 	void WalletKey();                // I: the money page
+	void ChooseKey(const FInputActionInstance& Instance);   // the arrows and Enter at a shop's counter (UI-020)
 	class ABrixLife* Life() const;
 	void JumpKey();                  // Space: a jump on foot, the handbrake in a car
 	void JumpEnd();
@@ -86,6 +87,7 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UInputAction> LeaveAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> CounterAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> WalletAction;
+	UPROPERTY(Transient) TArray<TObjectPtr<UInputAction>> ChooseActions;   // left, right, up, down, Enter
 	UPROPERTY(Transient) TArray<TObjectPtr<UInputAction>> AnswerActions;
 	bool bTalking = false;
 	bool bPanel = false;
