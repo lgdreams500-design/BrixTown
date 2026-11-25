@@ -192,12 +192,23 @@ TSharedRef<FJsonObject> BrixQuestsSave(const FBrixQuests& Q)
 	S->SetArrayField(TEXT("log"), Log);
 	if (Q.Job) S->SetObjectField(TEXT("job"), JobJson(*Q.Job)); else S->SetField(TEXT("job"), MakeShared<FJsonValueNull>());
 	S->SetArrayField(TEXT("jobs_done"), Jobs);
+	FVals Flags, Again, Awarded;   // the story lines' facts (QST-010, QST-013)
+	for (const FString& F : Q.Flags) Flags.Add(Str(F));
+	for (const FString& A : Q.Again) Again.Add(Str(A));
+	for (const auto& A : Q.Awarded) for (const auto& R : A.Value) Awarded.Add(Arr({ Str(A.Key), Str(R.Key), Num(R.Value) }));
+	S->SetArrayField(TEXT("flags"), Flags);
+	S->SetArrayField(TEXT("again"), Again);
+	S->SetArrayField(TEXT("awarded"), Awarded);
 	return S;
 }
 
 bool BrixQuestsLoad(FBrixQuests& Q, const FJsonObject& S, FString& OutWhy)
 {
 	Q.Active.Reset(); Q.Done.Reset(); Q.Log.Reset(); Q.Job.Reset(); Q.JobsDone.Reset();
+	Q.Flags.Reset(); Q.Again.Reset(); Q.Awarded.Reset();   // a save from before the story lines has none
+	for (const TSharedPtr<FJsonValue>& V : Array(S, TEXT("flags"))) Q.Flags.Add(V->AsString());
+	for (const TSharedPtr<FJsonValue>& V : Array(S, TEXT("again"))) Q.Again.Add(V->AsString());
+	for (const TSharedPtr<FJsonValue>& V : Array(S, TEXT("awarded"))) { const FVals& A = V->AsArray(); if (A.Num() >= 3) Q.Awarded.FindOrAdd(A[0]->AsString()).Add(A[1]->AsString(), (int32)A[2]->AsNumber()); }
 	for (const TSharedPtr<FJsonValue>& V : Array(S, TEXT("active")))
 	{
 		const FVals& A = V->AsArray();

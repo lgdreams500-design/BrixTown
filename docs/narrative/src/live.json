@@ -9,7 +9,7 @@
     {"id": "meet", "title": "Meet Mei", "kind": "talk", "with": "mei", "goal": "Talk to Mei at the Tram Café",
      "log": "Your new neighbour Mei works at the Tram Café on Market Square. Go and say hello.", "start": "hello",
      "nodes": {
-      "hello": {"who": "mei", "mood": "happy", "say": "{greeting}! You must be {player}, from across the courtyard. I'm Mei. Welcome to Linden!",
+      "hello": {"who": "mei", "mood": "happy", "say": "{greeting}! You must be {player}, from across the courtyard. I'm Mei. Welcome to Old Town!",
        "options": [{"text": "Thanks! I've only just arrived.", "next": "money"}, {"text": "Hello. Is it always this busy?", "next": "busy"}]},
       "busy": {"who": "mei", "mood": "thinking", "say": "Only when the tram's in! You'll get used to it. Have you sorted yourself out yet? Money and all that?",
        "options": [{"text": "Not yet. Where do I start?", "next": "money"}]},
@@ -19,7 +19,7 @@
        "options": [{"text": "Bank first, then bread. Leave it to me.", "next": null, "act": ["stage:bank"]}]}
      }},
     {"id": "bank", "title": "Open an account", "kind": "bank", "goal": "Open an account at Linden Bank",
-     "log": "Open an account at Linden Bank, on Linden's north side. Go inside and press B at the counter.", "then": "stage:bread"},
+     "log": "Open an account at Linden Bank, on Old Town's north side. Go inside and press B at the counter.", "then": "stage:bread"},
     {"id": "bread", "title": "Buy a loaf", "kind": "have", "goal": "Have a loaf of bread",
      "log": "Buy a loaf of bread at a grocer. Inside a shop, press B.", "sim": ["give:bread"], "then": "stage:back"},
     {"id": "back", "title": "Back to Mei", "kind": "talk", "with": "mei", "goal": "Take the bread to Mei",

@@ -141,6 +141,7 @@ void ABrixLife::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay)
 	{
 		Q = MakeUnique<FBrixQuests>(QuestRules, *E, QuestResidents);
 		Q->OnNote = [this](const FString& T) { Toast(T); };
+		Q->OwnsHome = [this]() { if (Est) for (const int32 u : Est->Owned()) if (Est->Units[u].Kind == TEXT("house") || Est->Units[u].Kind == TEXT("flat")) return true; return false; };   // QST-015: a home of the player's own (PROP-009)
 		Q->NewGame();   // a new game (life.js newGame()): the starting cash, and the first starter quest line
 	}
 	else
@@ -285,6 +286,7 @@ bool ABrixLife::LoadFrom(const FBrixSaveGame& S, FString& OutWhy)   // life.js l
 		NewQ = MakeUnique<FBrixQuests>(QuestRules, *NewE, QuestResidents);
 		if (!BrixQuestsLoad(*NewQ, *S.Quests, OutWhy)) return false;
 		NewQ->OnNote = [this](const FString& T) { Toast(T); };
+		NewQ->OwnsHome = [this]() { if (Est) for (const int32 u : Est->Owned()) if (Est->Units[u].Kind == TEXT("house") || Est->Units[u].Kind == TEXT("flat")) return true; return false; };   // QST-015: a home of the player's own (PROP-009)
 	}
 	TUniquePtr<FBrixEstate> NewM;
 	if (Est)
@@ -2406,22 +2408,31 @@ FBrixDialogue::FConversation ABrixLife::Conversation(int32 i, const FBrixDialogu
 	Offered.Reset();
 	if (!Q || !QuestResidents.IsValidIndex(i)) return Base;
 	const FString Rid = QuestResidents[i].Id;
-	auto Prefix = [](const FString& Qid, const TMap<FString, FBrixDialogue::FNode>& Nodes, TMap<FString, FBrixDialogue::FNode>& Into)
+	auto Prefix = [this](const FString& Qid, const TMap<FString, FBrixDialogue::FNode>& Nodes, TMap<FString, FBrixDialogue::FNode>& Into)
 	{
 		for (const auto& N : Nodes)
 		{
 			FBrixDialogue::FNode X = N.Value;
 			for (FBrixDialogue::FOption& O : X.Options) if (!O.Next.IsEmpty()) O.Next = TEXT("q:") + Qid + TEXT(":") + O.Next;
+			if (!X.Who.IsEmpty() && X.Who != TEXT("scene"))   // QST-012: somebody else says it: their name goes before the line
+			{
+				const int32 w = Q->ResidentIndex(X.Who);
+				if (Day && Day->Names.IsValidIndex(w)) X.Say = Day->Names[w] + TEXT(": ") + X.Say;
+			}
+			if (!X.Dir.IsEmpty()) X.Say = TEXT("(") + X.Dir + TEXT(")\n") + X.Say;   // what is seen, above what is said
 			Into.Add(TEXT("q:") + Qid + TEXT(":") + N.Key, X);
 		}
 	};
+	if (Q->TalkingTo(Rid).IsEmpty())   // QST-011: a story line has no offer talk: it starts when its giver is spoken to
+		for (const FString& Qid : Q->Offers(Rid))
+			if (QuestRules.Find(Qid)->Opens()) { Q->Start(Qid); break; }
 	const TArray<FString> Talks = Q->TalkingTo(Rid);
 	if (Talks.Num())   // this resident is the one to see for a quest stage: that talk, nothing else
 	{
 		const FBrixQuestStage* St = Q->Stage(Talks[0]);
 		FBrixDialogue::FConversation C;
 		C.Title = QuestRules.Find(Talks[0])->Title;
-		C.Start = TEXT("q:") + Talks[0] + TEXT(":") + St->Start;
+		C.Start = TEXT("q:") + Talks[0] + TEXT(":") + Q->FirstLine(Talks[0]);   // the first line whose needs hold (QST-011)
 		Prefix(Talks[0], St->Nodes, C.Nodes);
 		return C;
 	}
@@ -2431,6 +2442,7 @@ FBrixDialogue::FConversation ABrixLife::Conversation(int32 i, const FBrixDialogu
 	for (const FString& Qid : Q->Offers(Rid))   // quest lines this resident offers
 	{
 		const FBrixQuestLine* L = QuestRules.Find(Qid);
+		if (L->Opens()) continue;
 		Prefix(Qid, L->OfferNodes, C.Nodes);
 		FBrixDialogue::FOption O;
 		O.Text = L->OfferLine;

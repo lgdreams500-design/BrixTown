@@ -809,11 +809,21 @@ a piece of furniture's own object in the menu (the slice draws it from furniture
 "-BrixLife=buy,grocer,jam;rent;setout,jam,250"`.
 
 ## Quests, jobs and rewards (QST-001 to QST-007, QST-009, SND-019 to SND-021; ADR-0012, ADR-0043)
-Not yet: a career's story lines (the Baker career and courting Mei, QST-010 to QST-015, ADR-0056). Their rules and data
-are in Python (`Tools/citysim/quests.py`, `World/rules/quests_story.json`) and played to every ending by test, but
-`BrixQuests` and `ABrixTalk` do not run them: `Game/Data/life.json` carries the four starter lines only. To build: facts
-and the needs on them, lines that open by talking to their giver, other speakers and lines nobody says, scenes at a
-place, lines taken again, money in a reply, owning a home asked of the estate, and a fixed run to compare with Python.
+A career's story lines (the Baker career and courting Mei, QST-010 to QST-015, ADR-0056) run on the same rules:
+`BrixQuests` keeps what the player did as facts (`Flags`, in the save), asks about them in needs (`flag:`, `rep:` with a
+named resident, `done:` with endings, `home:owned` asked of the estate, `again:`, each also as "not"), starts a line with
+no offer when its giver is spoken to, opens a stage on the first line whose needs hold (`FirstLine`), pays and charges
+in a reply through the ledger, and lets a line that ended badly be taken again, clean (`Retakes`). The data is
+`World/rules/quests_story.json`, made from the writing in `docs/narrative/src` (`Tools/citysim/story.py`).
+`QST010_story_lines_run_as_the_python_does` replays a recorded game of the whole career and the courting (456 steps,
+`build_play.py story_run()`: every reply open at every line, every act) and compares what is left with Python's: the
+endings, the journal, facts, reputation, the ledger and things carried. In a talk a line somebody else says has their
+name before it, and a stage direction is shown in brackets above the line.
+Not yet: a scene (a stage at a place with nobody to talk to: the count on Market Square in The Four O'Clock Door, the
+basket in Twenty Minutes) is in the rules (`Scenes`) but nothing opens it in the game, so those two lines stop there;
+lines said by somebody else, and lines nobody says, are murmured in the voice of the person spoken to; none of the
+story is voiced; the log does not show a career's rank; talks happen wherever the person's day has put them, and the
+Stone Oven is still Baker Grocer on the map (ADR-0056).
 The quest lines and daily jobs are the slice's (economy.js Quests, a port of `Tools/citysim/quests.py`): `BrixWorld/BrixQuests`
 reads them from World/rules/quests.json (in `Game/Data/life.json`), with stages whose goal is a talk, a place, a thing
 carried, the bank, money, the stall; endings that pay through the ledger from `sys:rewards` and change reputation; jobs

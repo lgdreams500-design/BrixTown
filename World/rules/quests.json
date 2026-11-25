@@ -17,7 +17,7 @@
      "start": "hello",
      "nodes": {
       "hello": {
-       "say": "{greeting}! You must be {player}, from across the courtyard. I'm Mei. Welcome to Linden!",
+       "say": "{greeting}! You must be {player}, from across the courtyard. I'm Mei. Welcome to Old Town!",
        "mood": "happy",
        "options": [
         { "text": "Thanks! I've only just arrived.", "next": "money" },
@@ -47,7 +47,7 @@
      }
     },
     "bank": {
-     "log": "Open an account at Linden Bank, on Linden's north side. Go inside and press B at the counter.",
+     "log": "Open an account at Linden Bank, on Old Town's north side. Go inside and press B at the counter.",
      "goal": { "bank": "open" },
      "then": "stage:bread"
     },

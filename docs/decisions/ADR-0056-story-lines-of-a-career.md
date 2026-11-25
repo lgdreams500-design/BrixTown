@@ -61,7 +61,8 @@ has met before, and a line that ended badly can be taken again.
 ## Consequences
 - The Baker career and the courting are played to every one of their 32 endings by test, 1,500 random games, through the
   real ledger; no game gets stuck and no two facts of an exclusive group are ever both true.
-- Until Unreal's port is built, `Game/Data/life.json` and the browser slice carry the starter lines only.
+- `Game/Data/life.json` carries every line and a recorded game Unreal must reproduce (`story_checks`); the browser slice
+  carries the starter lines only, because it has no port of the new rules.
 - The map is not changed here. The Stone Oven is still called Baker Grocer and sells groceries; Oda, Suvi and Len live in
   ordinary houses because the mill house and Brook Farm's kitchen are not built; a talk happens wherever the person's
   day has put them, not where the scene is set. Making the shop a bakery renumbers the posts of 446 residents

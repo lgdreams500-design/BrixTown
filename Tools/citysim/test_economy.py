@@ -1084,6 +1084,19 @@ class TheStory(unittest.TestCase):
             self.assertEqual(reached.get(qid, set()), set(STORY[qid]["endings"]), qid)
         self.assertGreater(weddings, 20)
 
+    def test_QST_010_the_recorded_play_for_unreal_is_a_whole_game(self):
+        e = town()
+        out = build_play.story_run(e, qs.Quests(W["quests"], e, RESIDENTS, LOTS), W, dict(grocer=GROCER, kiosk=KIOSK, arcade=ARCADE))
+        want = out["want"]
+        self.assertNotIn("refused", want["results"])
+        self.assertEqual(len(out["script"]), len(want["results"]))
+        self.assertTrue(want["again"])                       # a line taken again is in it (QST-013)
+        self.assertEqual(want["done"]["question_mei"], "yes")
+        self.assertIn("the_wedding", want["done"])           # QST-015
+        self.assertEqual(set(BAKER) - set(want["done"]), set())   # QST-014: the career to its last line
+        self.assertEqual(want["active"], {})
+        invariant(self, e)
+
     def test_QST_015_the_question_needs_a_home_and_savings(self):
         e, q = player()
         mei, qid = CAST["mei"], "question_mei"
