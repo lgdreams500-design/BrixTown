@@ -119,6 +119,30 @@ UInstancedStaticMeshComponent* ABrixTownActor::Group(UStaticMesh* Mesh, bool bCo
 	return G;
 }
 
+UInstancedStaticMeshComponent* ABrixTownActor::GlassGroup()
+{
+	if (Glass) return Glass;
+	Glass = NewObject<UInstancedStaticMeshComponent>(this, TEXT("LampGlass"));
+	Glass->SetupAttachment(RootComponent);
+	Glass->SetStaticMesh(Cube);
+	Glass->NumCustomDataFloats = 3;
+	Glass->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Glass->SetCastShadow(false);
+	if (UMaterialInterface* Glow = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Greybox/M_Glow.M_Glow")))
+	{
+		GlassMat = UMaterialInstanceDynamic::Create(Glow, this);
+		Glass->SetMaterial(0, GlassMat);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Brix Town: /Game/Greybox/M_Glow is missing (run Tools/unreal/make_glow_material.py)"));
+		Glass->SetMaterial(0, Own());
+	}
+	Glass->RegisterComponent();
+	AddInstanceComponent(Glass);
+	return Glass;
+}
+
 // A painted name: on a shop's fascia (kit text()), shrunk to fit the fascia
 void ABrixTownActor::Name(const FString& Text, const FVector& At, double YawRad, float Size, float MaxWidth, bool bFaceAlong)
 {
@@ -746,10 +770,16 @@ void ABrixTownActor::BuildProp(const FBrixProp& P, const FBrixBlock& Blk)
 	const FString& k = P.Kind;
 	const bool ax = P.Along != TEXT("z");
 	const float Oct = UE_PI / 8;
-	if (k == TEXT("lamp"))   // a lantern on a post
+	auto glass = [&](float x0, float y0, float z0, float x1, float y1, float z1)   // lit by night (ABrixLamps)
+	{
+		Add(GlassGroup(), FTransform(FQuat::Identity, ToWorld(FVector2D((x0 + x1) / 2, (z0 + z1) / 2), (y0 + y1) / 2),
+			FVector(FMath::Abs(x1 - x0), FMath::Abs(z1 - z0), FMath::Abs(y1 - y0))), Lantern);
+	};
+	if (k == TEXT("lamp"))   // a lantern on a post; its light is real by night (the slice's lights: power 1.3, 3.5 m up)
 	{
 		box(x - .17f, g, z - .17f, x + .17f, g + .55f, z + .17f, StoneDark); box(x - .08f, g + .55f, z - .08f, x + .08f, g + 3.3f, z + .08f, Metal);
-		box(x - .2f, g + 3.3f, z - .2f, x + .2f, g + 3.78f, z + .2f, Lantern, true); box(x - .27f, g + 3.78f, z - .27f, x + .27f, g + 3.88f, z + .27f, Metal, true);
+		glass(x - .2f, g + 3.3f, z - .2f, x + .2f, g + 3.78f, z + .2f);
+		LampLights.Add(FVector4f(x, g + 3.5f, z, 1.3f)); box(x - .27f, g + 3.78f, z - .27f, x + .27f, g + 3.88f, z + .27f, Metal, true);
 	}
 	else if (k == TEXT("bench"))   // a wooden slab on two stone blocks
 	{
@@ -797,7 +827,8 @@ void ABrixTownActor::BuildProp(const FBrixProp& P, const FBrixBlock& Blk)
 	{
 		const float lx = x + P.Out.X * .32f, lz = z + P.Out.Y * .32f, h = P.Height;
 		box(FMath::Min(x, lx) - .03f, h + .28f, FMath::Min(z, lz) - .03f, FMath::Max(x, lx) + .03f, h + .33f, FMath::Max(z, lz) + .03f, Metal, true);
-		box(lx - .11f, h - .12f, lz - .11f, lx + .11f, h + .26f, lz + .11f, Lantern, true); box(lx - .15f, h + .26f, lz - .15f, lx + .15f, h + .31f, lz + .15f, Metal, true);
+		glass(lx - .11f, h - .12f, lz - .11f, lx + .11f, h + .26f, lz + .11f);
+		LampLights.Add(FVector4f(x + P.Out.X * .5f, h, z + P.Out.Y * .5f, P.Power / 120.f));   // (the slice: power / 120) box(lx - .15f, h + .26f, lz - .15f, lx + .15f, h + .31f, lz + .15f, Metal, true);
 	}
 	else if (k == TEXT("flowerbed"))
 	{

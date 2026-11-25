@@ -474,6 +474,7 @@ bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError)
 				P->TryGetStringField(TEXT("along"), Prop.Along);
 				Prop.R = (float)Num(P, TEXT("r"));
 				Prop.Height = (float)Num(P, TEXT("height"));
+				Prop.Power = (float)Num(P, TEXT("power"));
 				double F = 0;
 				if (P->TryGetNumberField(TEXT("face"), F)) Prop.Face = (float)F;
 				P->TryGetBoolField(TEXT("grand"), Prop.bGrand);

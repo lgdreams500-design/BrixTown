@@ -5,6 +5,7 @@
 #include "BrixDay.h"
 #include "BrixCars.h"
 #include "BrixCarsActor.h"
+#include "BrixLamps.h"
 #include "BrixPeople.h"
 #include "BrixTalkActor.h"
 #include "BrixTownActor.h"
@@ -88,6 +89,7 @@ void ABrixGameMode::StartPlay()
 	{
 		ABrixTownActor* Town = GetWorld()->SpawnActor<ABrixTownActor>();
 		Town->Build(*City);
+		GetWorld()->SpawnActor<ABrixLamps>()->Start(Town);   // the lamps light at night (WLD-028)
 		Traffic = MakeShared<FBrixTraffic>();
 		FString CarError;
 		const FString Data = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data")));
@@ -254,6 +256,7 @@ void ABrixGameMode::UpdateSun()
 	const float Low = FMath::SmoothStep(0.05f, 0.5f, (float)P.Y);
 	Light->SetLightColor(FMath::Lerp(SunDawnColour, SunColour, Low));
 	const float Light01 = (float)S.Daylight(Season, Minute);
+	Daylight = Light01;
 	Light->SetIntensity(SunLux * Light01);
 	// the sky's fill and the haze's glow go down with the day, and the haze takes the low sun's colour (lighting(): fog and sky
 	// mix towards the night's as the day goes)
