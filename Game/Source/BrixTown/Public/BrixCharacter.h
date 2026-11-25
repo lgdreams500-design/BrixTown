@@ -136,6 +136,7 @@ private:
 	bool bTalking = false;
 	bool bPanel = false;
 	bool bDriving = false, bHandbrake = false;
+	float PersonWet = -1.f;          // how wet the player's clothes are shown (WLD-037)
 	FVector2D DriveIn = FVector2D::ZeroVector;   // this frame's W/S and A/D while driving
 	FVector2D DriveUsed = FVector2D::ZeroVector; // what the car was given this frame (DriveIn is cleared once used)
 	float ArmBefore = 0.f;

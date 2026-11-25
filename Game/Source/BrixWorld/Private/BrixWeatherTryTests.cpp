@@ -30,4 +30,27 @@ bool FWLD037_WeatherKey::RunTest(const FString&)
 	return true;
 }
 
+// WLD-037: people out in the rain are a little darker, as the slice darkens everything out of doors (play.js: c *= 1 -
+// wet * rain.wet_dark * .3), drying as the paving dries; nobody indoors.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWLD037_WetClothes, "BrixTown.World.WLD037_people_out_in_the_rain_are_a_little_darker",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FWLD037_WetClothes::RunTest(const FString&)
+{
+	FBrixWeatherRules R;
+	FString Error;
+	if (!TestTrue(TEXT("sky.json loads: ") + Error, LoadBrixWeatherRules(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/rules/sky.json"))), R, Error))) return false;
+	const double Share = .3;   // the slice's (DefaultGame.ini PeopleWet)
+	const TArray<FString> Wet = { TEXT("rain"), TEXT("clear"), TEXT("clear"), TEXT("clear") }, Dry = { TEXT("clear"), TEXT("clear"), TEXT("clear"), TEXT("clear") };
+	const FBrixWeatherNow InRain = BrixWeatherNow(R, Wet, 180), Drying = BrixWeatherNow(R, Wet, 360 + R.DryMinutes / 2), After = BrixWeatherNow(R, Wet, 360 + R.DryMinutes + 30);
+	const float Full = BrixWetClothes(InRain.Wet, R.WetDark, Share, false);
+	TestTrue(FString::Printf(TEXT("in the rain: %.3f darker, the slice's wet x wet_dark x .3 (%.3f)"), Full, R.WetDark * Share), FMath::IsNearlyEqual(Full, (float)(R.WetDark * Share), 1e-6f));
+	const float Half = BrixWetClothes(Drying.Wet, R.WetDark, Share, false);
+	TestTrue(FString::Printf(TEXT("drying with the paving: %.3f half-way through dry_minutes"), Half), Half > Full * .3f && Half < Full * .7f);
+	TestEqual(TEXT("dry again after it"), BrixWetClothes(After.Wet, R.WetDark, Share, false), 0.f);
+	TestEqual(TEXT("dry weather: as they are"), BrixWetClothes(BrixWeatherNow(R, Dry, 180).Wet, R.WetDark, Share, false), 0.f);
+	TestEqual(TEXT("indoors in the rain: as they are"), BrixWetClothes(InRain.Wet, R.WetDark, Share, true), 0.f);
+	TestEqual(TEXT("trying rain on a dry day: wet"), BrixWetClothes(BrixWeatherNow(R, Dry, 180, TEXT("rain")).Wet, R.WetDark, Share, false), Full);
+	return true;
+}
+
 #endif

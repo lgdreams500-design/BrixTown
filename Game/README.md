@@ -438,9 +438,12 @@ which (`BrixNextWeatherTry`, `WLD037_the_weather_key_steps_through_the_kinds`; `
 test shot). From indoors the rain is seen through the windows and the open door: the same rings of drops, spread
 `IndoorReach` (1.8) times as far, fall outside, none over the building (its roof) and no splashes; the slice shows none
 indoors. Shots: `Art/StyleTests/unreal_gaps_world_40/` (`weather_key_rain.png`, `rain_through_the_window.png`); 7.9 to 20.5 frames a second at High in rain
-on that street (noisy). Not yet: wet
-clothes (people a little darker out in the rain, as the slice darkens everything outdoors), the rain's sound (the slice has
-none either), snow seen from indoors.
+on that street (noisy). Clothes get wet: everyone out of
+doors (the player too) is darker by wet x sky.json `wet_dark` x `PeopleWet` (0.3, the slice's share: play.js darkens
+everything out of doors so), drying as the paving dries, none indoors or in a vehicle (M_People's custom primitive data 1,
+`BrixWetClothes`, `WLD037_people_out_in_the_rain_are_a_little_darker`; `wet_clothes.png` against `wet_clothes_before.png`,
+the shirt 2 to 3 % darker in the picture through the rain's haze). Not yet: the rain's sound (the slice has none either),
+snow seen from indoors.
 
 ## Snow (WLD-069, WLD-070, CITY-107; ADR-0051)
 At the owner's word (2026-11-25): it snows in Winter only, by its own chance per six-hour slot (`snow_chance` in

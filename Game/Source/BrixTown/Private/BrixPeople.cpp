@@ -5,6 +5,7 @@
 #include "BrixDay.h"
 #include "BrixGameMode.h"
 #include "BrixTownActor.h"
+#include "BrixWeatherTry.h"
 #include "BrixUnits.h"
 #include "Camera/PlayerCameraManager.h"
 #include "GameFramework/Character.h"
@@ -582,6 +583,7 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	{   // snow settles on heads and shoulders while it snows (WLD-070)
 		const ABrixWeather* Wx = Mode->Weather.Get();
 		SnowOnPeople = Wx && Wx->bOn ? (float)(Wx->Snow.Falling * PeopleSnow) : 0.f;
+		WetOnPeople = Wx && Wx->bOn ? BrixWetClothes(Wx->Now.Wet, Wx->Rules.WetDark, PeopleWet, false) : 0.f;   // wet clothes (WLD-037)
 	}
 	Near.Sort([](const FNear& A, const FNear& B) { return A.D < B.D; });
 	if (Near.Num() > MaxBodies) Near.SetNum(MaxBodies);
@@ -685,6 +687,10 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		const float SnowOn = P.Floor.IsSet() || P.bDriving ? 0.f : SnowOnPeople;   // snow on heads and shoulders out in it (WLD-070)
 		if (SlotSnow.Num() != Slots.Num()) SlotSnow.Init(-1.f, Slots.Num());
 		if (FMath::Abs(SlotSnow[s] - SnowOn) > .02f) { M->SetCustomPrimitiveDataFloat(0, SnowOn); SlotSnow[s] = SnowOn; }
+		const ABrixWeather* Wx2 = Mode->Weather.Get();   // wet clothes out in the rain, none indoors (in a building's footprint) or in a vehicle (WLD-037)
+		const float WetOn = P.Floor.IsSet() || P.bDriving || (Wx2 && Wx2->Roofed(P.P)) ? 0.f : WetOnPeople;
+		if (SlotWet.Num() != Slots.Num()) SlotWet.Init(-1.f, Slots.Num());
+		if (FMath::Abs(SlotWet[s] - WetOn) > .005f) { M->SetCustomPrimitiveDataFloat(1, WetOn); SlotWet[s] = WetOn; }
 	}
 	const double T2 = FPlatformTime::Seconds();
 	// the bodies due a rebuild, built at once on the task threads (the body as people.js draws it facing yaw 0 at the origin,
@@ -753,6 +759,7 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	else Figures->UpdateMeshSection_LinearColor(0, V, N, NoUV, C, NoTangents, false);
 	LastShown = Near.Num();
 	if (FMath::Abs(FigureSnow - SnowOnPeople) > .02f) { Figures->SetCustomPrimitiveDataFloat(0, SnowOnPeople); FigureSnow = SnowOnPeople; }
+	if (FMath::Abs(FigureWet - WetOnPeople) > .005f) { Figures->SetCustomPrimitiveDataFloat(1, WetOnPeople); FigureWet = WetOnPeople; }   // the far figures: out of doors
 	// footprints in lying snow behind those walking near, and the player's own (WLD-071): where each went and when, from
 	// their day and the clock; the player's from where they have been this visit
 	{

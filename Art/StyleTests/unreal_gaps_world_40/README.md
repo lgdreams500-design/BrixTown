@@ -14,3 +14,5 @@ other copies of Unreal were running on the same laptop.
 | `weather_key_rain.png` | `-BrixWeatherKey=3 "-BrixCam=1182.5,1007.5,1.9,-42,-14" -BrixWhole` | WLD-037: K pressed three times (clear, cloud, rain): rain, puddles, umbrellas up. 7.9 fps (20.5 fps on a later run after rebasing, fewer copies of Unreal running) |
 | `bench_whole.png` | `"-BrixStand=1180,1012,0" "-BrixCam=1182.5,1007.5,1.9,-42,-14" -BrixWhole` | residents on the garden bench at (1187.2, 1002.0) |
 | `bench_broken.png` | the same without `-BrixWhole`, with `Game/Saved/BrixDamage.json` holding `bench@1187.2,1002.0` | CITY-072: the bench in rubble, those who sat on it standing in front of it. 16.9 fps |
+| `wet_clothes.png` | `-BrixWeather=rain -BrixWhole "-BrixStand=1184,1006,-60" "-BrixCam=1182.5,1007.5,1.9,-42,-14"` | WLD-037: wet clothes; the player's shirt averages (66, 71, 68) in the picture. 21.8 fps |
+| `wet_clothes_before.png` | the same with `"-ini:Game:[/Script/BrixTown.BrixPeople]:PeopleWet=0"` | dry clothes in the rain: (68, 73, 70); the paving the same in both. 20.7 fps |
