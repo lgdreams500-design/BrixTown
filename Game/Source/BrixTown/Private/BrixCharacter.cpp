@@ -190,6 +190,7 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 		{
 			if (!TestHold.IsZero()) DriveIn = TestHold;
 			C->Step(DeltaSeconds, DriveIn.Y, DriveIn.X, bHandbrake);
+			DriveUsed = DriveIn;
 			DriveIn = FVector2D::ZeroVector;
 			const FBrixLook& L = Rules.Player;
 			FVector2D Seat;

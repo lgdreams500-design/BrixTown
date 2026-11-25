@@ -52,6 +52,18 @@ bool LoadBrixSoundRules(const FString& Path, FBrixSoundRules& Out, FString& OutE
 	{
 		(*Po)->TryGetStringField(TEXT("sit"), Out.PoseSit); (*Po)->TryGetStringField(TEXT("stand"), Out.PoseStand); (*Po)->TryGetStringField(TEXT("lie"), Out.PoseLie);
 	}
+	const TSharedPtr<FJsonObject>* Ve = Obj(S, TEXT("vehicles"));
+	const TSharedPtr<FJsonObject>* E = Ve ? Obj(*Ve, TEXT("engine")) : nullptr;
+	const TSharedPtr<FJsonObject>* Pl = Ve ? Obj(*Ve, TEXT("player")) : nullptr;
+	const TSharedPtr<FJsonObject>* Tr = Ve ? Obj(*Ve, TEXT("tram")) : nullptr;
+	if (!E || !Pl || !Tr) { OutError = Path + TEXT(" lacks vehicles.engine, .player or .tram"); return false; }
+	Num(*E, TEXT("idle_hz"), Out.IdleHz); Num(*E, TEXT("hz_per_mps"), Out.HzPerMps); Num(*E, TEXT("max_hz"), Out.MaxHz); Num(*E, TEXT("gain"), Out.EngineGain);
+	Num(*E, TEXT("far"), Out.EngineFar); Num(*E, TEXT("van_pitch"), Out.VanPitch); Num(*E, TEXT("tyres_gain"), Out.TyresGain);
+	double Voices = Out.EngineVoices; Num(*E, TEXT("voices"), Voices); Out.EngineVoices = (int32)Voices;
+	Num(*Pl, TEXT("gain"), Out.CarGain); Num(*Pl, TEXT("start_len"), Out.StartLen); Num(*Pl, TEXT("skid_mps"), Out.SkidMps);
+	Num(*Pl, TEXT("skid_gain"), Out.SkidGain); Num(*Pl, TEXT("bump_gain"), Out.BumpGain);
+	Num(*Tr, TEXT("hum_hz"), Out.HumHz); Num(*Tr, TEXT("whine_hz"), Out.WhineHz); Num(*Tr, TEXT("gain"), Out.TramGain);
+	Num(*Tr, TEXT("far"), Out.TramFar); Num(*Tr, TEXT("bell_far"), Out.BellFar);
 	return true;
 }
 
@@ -144,6 +156,88 @@ void FBrixPlayerSounds::Frame(const FBrixSoundRules& R, bool bMoving, bool bOnGr
 	}
 	bPrevGround = bOnGround;
 	PrevVz = Vz;
+}
+
+void FBrixEngineSounds::Frame(const FBrixSoundRules& R, const TArray<FBrixCarHeard>& Cars, const FVector2D& Here, const FBrixDriveHeard* Drive, double Now, TArray<FBrixSoundEvent>& Out)
+{
+	Pool.SetNum(R.EngineVoices);
+	TArray<TPair<double, const FBrixCarHeard*>> List;
+	for (const FBrixCarHeard& C : Cars) { const double d = FVector2D::Distance(C.Pos, Here); if (d < R.EngineFar) List.Add({ d, &C }); }
+	List.StableSort([](const TPair<double, const FBrixCarHeard*>& A, const TPair<double, const FBrixCarHeard*>& B) { return A.Key < B.Key; });
+	for (int32 k = 0; k < Pool.Num(); ++k)
+	{
+		FBrixEngineVoice& V = Pool[k];
+		V.bOn = k < List.Num();
+		if (!V.bOn) continue;
+		const FBrixCarHeard& C = *List[k].Value;
+		const double v = FMath::Abs(C.V);
+		V.Pos = C.Pos;
+		V.Hz = FMath::Min(R.MaxHz, R.IdleHz + v * R.HzPerMps) * (C.bVan ? R.VanPitch : 1.0);
+		V.Tyres = FMath::Min(1.0, v / 10) * R.TyresGain * 8;
+		V.Gain = R.EngineGain * (.55 + .45 * FMath::Min(1.0, v / 8));
+		V.Far = R.EngineFar;
+	}
+	// the player's own car: louder, not muffled, with skids and bumps (frame(): drive = { since } when it begins)
+	if (Drive && !Since) Since = Now;
+	else if (!Drive) Since.Reset();
+	if (Drive)
+	{
+		const double v = FMath::Abs(Drive->V), Running = Now - *Since;
+		const bool bStarted = Running > R.StartLen;
+		Mine.bOn = true;
+		Mine.Hz = bStarted ? FMath::Min(R.MaxHz * 1.2, R.IdleHz * 1.1 + v * R.HzPerMps * 1.1 + (Drive->bGas ? 8 : 0)) : R.IdleHz * (.4 + .6 * Running / R.StartLen);
+		Mine.Tyres = v / 14 * R.TyresGain * 6;
+		Mine.Gain = bStarted ? R.CarGain * (.7 + .3 * FMath::Min(1.0, v / 8)) : R.CarGain * .6;
+		Skid = Drive->bBrake && v > R.SkidMps ? R.SkidGain : 0;
+		if (PrevV && FMath::Abs(*PrevV) > 2 && FMath::Sign(*PrevV) != FMath::Sign(Drive->V) && FMath::Abs(Drive->V) < FMath::Abs(*PrevV) * .5)
+		{
+			FBrixSoundEvent Ev;   // stopped short: a bump (the recipe of sound.js engines(), recorded as car_bump)
+			Ev.Sound = TEXT("car_bump");
+			Ev.bHere = true;
+			Out.Add(Ev);
+		}
+	}
+	else { Mine.bOn = false; Mine.Gain = 0; Skid = 0; }
+	if (Drive) PrevV = Drive->V; else PrevV.Reset();
+}
+
+void FBrixTramSounds::Frame(const FBrixSoundRules& R, const TArray<FBrixTramHeard>& Trams, double Z, const FVector2D& Here, double Now, TArray<FBrixSoundEvent>& Out)
+{
+	TArray<TPair<double, const FBrixTramHeard*>> Near;   // nearest first, by the distance along and across
+	for (const FBrixTramHeard& T : Trams) Near.Add({ FMath::Abs(T.X - Here.X) + FMath::Abs(Z - Here.Y), &T });
+	Near.StableSort([](const TPair<double, const FBrixTramHeard*>& A, const TPair<double, const FBrixTramHeard*>& B) { return A.Key < B.Key; });
+	auto Find = [&](double Run) { return Seen.IndexOfByPredicate([&](const FSeen& S) { return S.Run == Run; }); };
+	for (int32 k = 0; k < 2; ++k)
+	{
+		FBrixTramVoice& V = Voices[k];
+		V.bOn = k < Near.Num();
+		if (!V.bOn) continue;
+		const FBrixTramHeard& T = *Near[k].Value;
+		const int32 Prev = Find(T.Run);
+		const bool bMoving = !T.bStopped;
+		const double Sp = Prev >= 0 ? FMath::Min(1.0, FMath::Abs(T.X - Seen[Prev].X) / FMath::Max(.001, Now - Seen[Prev].T) / 8) : 0;
+		V.Pos = FVector2D(T.X, Z);
+		V.Gain = R.TramGain * (bMoving ? .6 + .4 * Sp : .35);
+		V.Far = R.TramFar;
+		V.WhineHz = R.WhineHz * (.5 + Sp);
+		V.Whine = bMoving ? .12 * Sp : 0;
+		V.Rumble = bMoving ? .9 * Sp + .1 : 0;
+	}
+	for (const FBrixTramHeard& T : Trams)
+	{
+		const int32 Prev = Find(T.Run);
+		if (Prev >= 0 && Seen[Prev].bStopped != T.bStopped)   // the bell as it stops and as it leaves
+		{
+			FBrixSoundEvent E;
+			E.Sound = TEXT("tram_bell");
+			E.Pos = FVector2D(T.X, Z);
+			E.Far = R.BellFar;
+			Out.Add(E);
+		}
+		if (Prev < 0) Seen.Add({ T.Run, T.X, Now, T.bStopped });
+		else if (Seen[Prev].bStopped != T.bStopped || Now - Seen[Prev].T > .25) Seen[Prev] = { T.Run, T.X, Now, T.bStopped };
+	}
+	if (Seen.Num() > 30) Seen.RemoveAt(0, 10);
 }
 
 bool LoadBrixSoundIndex(const FString& Path, TMap<FString, FBrixClipInfo>& Out, TArray<double>& OutEngineHz, FString& OutError)

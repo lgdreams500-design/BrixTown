@@ -2,14 +2,17 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "BrixCity.h"
 #include "BrixSound.h"
 #include "BrixSoundActor.generated.h"
 
 class ABrixPeople;
+class UAudioComponent;
 class USoundAttenuation;
 class USoundWaveProcedural;
 struct FBrixCity;
 struct FBrixDay;
+struct FBrixTraffic;
 
 // The town's sound (SND-003, SND-007, SND-017): the slice's own sounds (Prototype/play/sound.js), recorded by
 // Tools/unreal/sound_values.py into Game/Data/sounds and played here with no editor import: each WAV is read once and
@@ -17,7 +20,9 @@ struct FBrixDay;
 // decided by BrixWorld's port of sound.js (FBrixPeopleSounds, FBrixPlayerSounds, BrixHear) from World/rules/sound.json;
 // the engine only pans each sound from where it is (its own distance fall-off is off, the slice's is applied instead).
 // So far: the player's steps and landings, and the steps of the residents near, by surface (stone, wood, grass), louder
-// running and lighter for children, and the sound of a resident sitting down, lying down or getting up.
+// running and lighter for children, and the sound of a resident sitting down, lying down or getting up; the engines of
+// the nearest cars on a trip and of the player's car (its start-up, skids and bumps), the trams' hum, whine, rumble and
+// bell. Continuous sounds are loops that play only while they can be heard.
 // A test shot logs how many of each sound were played.
 UCLASS(Config = Game)
 class BRIXTOWN_API ABrixSound : public AActor
@@ -26,7 +31,7 @@ class BRIXTOWN_API ABrixSound : public AActor
 
 public:
 	ABrixSound();
-	void Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, ABrixPeople* InPeople);
+	void Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, ABrixPeople* InPeople, TSharedPtr<FBrixTraffic> InTraffic);
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
@@ -34,6 +39,7 @@ public:
 	UPROPERTY(Config) FString SoundDir = TEXT("Data/sounds");
 	UPROPERTY(Config) float HearPeople = 20.f;   // m: residents this near are listened to (play.js: heard)
 	UPROPERTY(Config) float SourceUp = 1.f;      // m above the street a sound in the town is played from
+	UPROPERTY(Config) float CarsNear = 75.f;     // m: cars on a trip this near along and across are listened to (cars.js near())
 
 	// Plays a one-shot on a bus (the rules' World, Voice or Action share): a variant of the named recording, where the
 	// event says, at the slice's level for the listener (BrixHear) unless it is the listener's own.
@@ -45,13 +51,32 @@ private:
 	USoundWaveProcedural* MakeWave(const TSharedPtr<FClip>& C);
 	FString LotKindAt(const FVector2D& P) const;
 	FVector2D Listener() const;
+	// A loop: a component that plays the recording over and over while it is loud enough to hear, stopped when it is not.
+	struct FLoop { int32 Comp = -1; TSharedPtr<FClip> Clip; bool bPlaced = true; };
+	FLoop MakeLoop(const FString& Name, bool bPlaced);
+	void SetLoop(FLoop& L, double Vol, double Pitch, const FVector2D& Pos);   // Vol: the slice's level for the listener, before the mix
+	void Engine(FLoop& Lo, FLoop& Hi, double Hz, double Vol, const FVector2D& Pos);   // an engine's note from the two recordings
+	void Vehicles(double Now, const FVector2D& Here);
 
 	FBrixSoundRules Rules;
 	TMap<FString, TSharedPtr<FClip>> Clips;
 	TMap<FString, int32> Variants;       // a recording's name without its variant -> how many variants
 	FBrixPeopleSounds PeopleSounds;
 	FBrixPlayerSounds PlayerSounds;
+	FBrixEngineSounds EngineSounds;
+	FBrixTramSounds TramSounds;
 	TSharedPtr<FBrixDay> Day;
+	TSharedPtr<FBrixTraffic> Traffic;
+	FBrixTram Tram;
+	double Pace = 10;                    // real seconds a game minute (the calendar's)
+	TArray<double> EngineHz;             // the pitches the engine loops were recorded at (low, high)
+	UPROPERTY() TArray<TObjectPtr<UAudioComponent>> LoopComps;
+	TArray<FLoop> CarLo, CarHi;          // per engine voice, the low and high recordings
+	FLoop MineLo, MineHi, Skid;          // the player's car
+	FLoop Hum[2], Whine[2], Rumble[2];   // per tram voice
+	TArray<FBrixCarHeard> CarsHeard;
+	TArray<FBrixTramHeard> TramsHeard;
+	TMap<FString, double> LoopTime;      // seconds each loop has been heard, for the log
 	UPROPERTY() TObjectPtr<ABrixPeople> People;
 	UPROPERTY() TObjectPtr<USoundAttenuation> Placed;   // spatialised, with the engine's distance fall-off off
 	struct FLotArea { FVector2D C, Half; double Cos = 1, Sin = 0; FString Kind; };
