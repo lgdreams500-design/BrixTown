@@ -310,11 +310,26 @@ rain (M_Greybox's WetDark, WetSheen, Puddles and Ripples, from `Tools/unreal/gre
 `greybox_ripples.hlsl`). Residents wear what citysim gives them today (day.json "wear"): a coat,
 and out in the rain an umbrella up, else the hood up, else a hand over the head while walking, with a hurried walk or a
 run for cover; nothing but the coat indoors, sheltering or under a roof (`CITY080_residents_are_dressed_for_the_rain`).
-The look of coats, hoods and umbrellas is still to be approved (ADR-0020). `-BrixWeather=<clear|cloud|rain|fog>`
+The look of coats, hoods and umbrellas is still to be approved (ADR-0020). `-BrixWeather=<clear|cloud|rain|fog|snow>`
 tries one kind for the whole day (and the clothes residents would wear on a day of it); the built day 16 has cloud
 before 06:00 and is clear after. At High: about 40 frames a second in the 08:10 school rush in rain, against 15 to 54
 in clear weather on the same street (noisy: other sessions were running Unreal on the same laptop). Not yet: no key to
 try the weather, rain seen through windows from indoors, the rain's sound, wet clothes.
+
+## Snow (WLD-069, WLD-070, CITY-107; ADR-0051)
+At the owner's word (2026-11-25): it snows in Winter only, by its own chance per six-hour slot (`snow_chance` in
+World/rules/calendar.json), in spells, the same for every player (citysim `weather()`). A snowy slot has its own light
+(sky.json `weather.snow`: little sun, thick air) and under a covered sky the haze turns from the sun's colour to a cool grey
+(`OvercastHaze`, for cloud and rain too). Flakes fall slowly round the camera, swaying, not under a roof nor while the
+camera is indoors (`ABrixWeather`, `MaxFlakes`, sky.json `snow`); snow settles on what faces up, streets, pavements, roofs
+and sills, in patches that join into a cool white cover over `settle_minutes`, and melts over `melt_minutes` after
+(M_Greybox `Snow`, from `greybox_wet.py`). How hard it snows and how much lies come from the clock and the day's weather
+alone: `BrixSnowNow`, a port of `world.snow_now()`, checked by `WLD070_snow_falls_and_lies_as_world_py_says`. Residents
+(CITY-107): on a day of snow nearly everyone wears a coat and most coats have a hood; out in it the hood is up, else they
+go bare-headed, never an umbrella, and walk at the careful pace (citysim's plan makes the walks slower; they take cover as
+from rain); `CITY107_residents_are_dressed_for_snow`. `-BrixWeather=snow` tries it on the built summer day (with what
+residents would wear on a day of snow). At High: 37 to 39 frames a second in the 08:10 rush in snow (noisy: other
+sessions were running Unreal). Not yet: footprints and tracks, snow on trees, cars and people, the sound of snow.
 
 ## Clouds (WLD-035, WLD-036; ADR-0014)
 Soft heaps on one flat layer overhead, bright on the side towards the sun and shaded underneath, fading into the haze
@@ -672,6 +687,8 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD037_the_weather_is_worked_out_as_world_py_does` | WLD-037 |
 | `BrixTown.World.CITY080_residents_are_dressed_for_the_rain` | CITY-077, CITY-079, CITY-080 |
 | `BrixTown.World.WLD036_the_clouds_are_where_world_py_puts_them` | WLD-035, WLD-036 |
+| `BrixTown.World.WLD070_snow_falls_and_lies_as_world_py_says` | WLD-069, WLD-070 |
+| `BrixTown.World.CITY107_residents_are_dressed_for_snow` | CITY-107 |
 | `BrixTown.World.CITY007_every_conversation_is_sound` | CITY-007 |
 | `BrixTown.World.CHR009_lines_are_mouthed_as_the_slice_mouths_them` | CHR-009 |
 | `BrixTown.World.CHR001_the_designer_makes_the_slices_look` | CHR-001, CHR-002 |

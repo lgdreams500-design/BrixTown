@@ -27,6 +27,7 @@ bool LoadBrixWeatherRules(const FString& SkyPath, FBrixWeatherRules& Out, FStrin
 		FBrixWeatherKind& K = Out.Kinds.Add(FString(KV.Key));
 		K.Sun = O->GetNumberField(TEXT("sun")); K.Haze = O->GetNumberField(TEXT("haze")); K.Veil = O->GetNumberField(TEXT("veil"));
 		K.Grey = O->GetNumberField(TEXT("grey")); K.Rain = O->GetNumberField(TEXT("rain"));
+		O->TryGetNumberField(TEXT("snow"), K.Snow);
 	}
 	const TSharedPtr<FJsonObject> C = S->GetObjectField(TEXT("clouds"));
 	Out.BlendMinutes = C->GetNumberField(TEXT("blend_minutes"));
@@ -41,6 +42,14 @@ bool LoadBrixWeatherRules(const FString& SkyPath, FBrixWeatherRules& Out, FStrin
 	Out.Alpha = R->GetNumberField(TEXT("alpha")); Out.Slant = R->GetNumberField(TEXT("slant")); Out.Speed = R->GetNumberField(TEXT("speed"));
 	Out.Length = R->GetNumberField(TEXT("length")); Out.WetDark = R->GetNumberField(TEXT("wet_dark")); Out.WetSheen = R->GetNumberField(TEXT("wet_sheen"));
 	Out.Puddles = R->GetNumberField(TEXT("puddles")); Out.Ripples = R->GetNumberField(TEXT("ripples")); Out.DryMinutes = R->GetNumberField(TEXT("dry_minutes"));
+	const TSharedPtr<FJsonObject>* Sn = nullptr;
+	if (S->TryGetObjectField(TEXT("snow"), Sn))
+	{
+		const TSharedPtr<FJsonObject>& N = *Sn;
+		Out.SnowAlpha = N->GetNumberField(TEXT("alpha")); Out.SnowSpeed = N->GetNumberField(TEXT("speed")); Out.SnowSway = N->GetNumberField(TEXT("sway"));
+		Out.FlakeSize = N->GetNumberField(TEXT("size")); Out.SettleMinutes = N->GetNumberField(TEXT("settle_minutes"));
+		Out.MeltMinutes = N->GetNumberField(TEXT("melt_minutes")); Out.SnowCover = N->GetNumberField(TEXT("cover"));
+	}
 	if (!Out.Kinds.Contains(TEXT("clear")) || !Out.Kinds.Contains(TEXT("rain"))) { OutError = SkyPath + TEXT(" has no clear or rain weather"); return false; }
 	return true;
 }
@@ -61,7 +70,7 @@ FBrixWeatherNow BrixWeatherNow(const FBrixWeatherRules& R, const TArray<FString>
 	FBrixWeatherNow W;
 	W.Kind = KindOf(s);
 	W.Sun = Blend(P.Sun, C.Sun, N.Sun); W.Haze = Blend(P.Haze, C.Haze, N.Haze); W.Veil = Blend(P.Veil, C.Veil, N.Veil);
-	W.Grey = Blend(P.Grey, C.Grey, N.Grey); W.Rain = Blend(P.Rain, C.Rain, N.Rain);
+	W.Grey = Blend(P.Grey, C.Grey, N.Grey); W.Rain = Blend(P.Rain, C.Rain, N.Rain); W.Snow = Blend(P.Snow, C.Snow, N.Snow);
 	const double Dry = P.Rain > 0 ? FMath::Clamp(1 - into / R.DryMinutes, 0.0, 1.0) : 0.0;   // drying after a wet slot
 	W.Wet = FMath::Max(FMath::Min(1.0, W.Rain * 1.5), Dry);
 	return W;
@@ -87,6 +96,29 @@ FBrixCloudsNow BrixCloudsNow(const FBrixWeatherRules& R, const TArray<FString>& 
 	return C;
 }
 
+FBrixSnowNow BrixSnowNow(const FBrixWeatherRules& R, const TArray<FString>& Day, double m, const FString& Trying)
+{
+	auto Snows = [&](int32 i)
+	{
+		FString K = Trying;
+		if (K.IsEmpty() && R.bFollow && Day.Num() == 4) K = Day[((i % 4) + 4) % 4];
+		if (K.IsEmpty()) K = TEXT("clear");
+		const FBrixWeatherKind* Kd = R.Kinds.Find(K);
+		return Kd && Kd->Snow > 0;
+	};
+	const int32 s = FMath::FloorToInt(m / 360);
+	double Lying = 0;
+	for (int32 i = s - 2; i <= s; ++i)   // from twelve hours back: building while it snows, melting while it does not
+	{
+		const double dt = i == s ? m - s * 360.0 : 360.0;
+		Lying = Snows(i) ? FMath::Min(1.0, Lying + dt / R.SettleMinutes) : FMath::Max(0.0, Lying - dt / R.MeltMinutes);
+	}
+	FBrixSnowNow Out;
+	Out.Falling = BrixWeatherNow(R, Day, m, Trying).Snow;
+	Out.Lying = Lying * R.SnowCover;
+	return Out;
+}
+
 bool LoadBrixWear(const FString& DayPath, const FString& SignaturesPath, FBrixWear& Out, FString& OutError)
 {
 	TSharedPtr<FJsonObject> D, S;
@@ -106,21 +138,35 @@ bool LoadBrixWear(const FString& DayPath, const FString& SignaturesPath, FBrixWe
 	};
 	Rows(TEXT("today"), Out.Today);
 	Rows(TEXT("wet"), Out.Wet);
+	if ((*W)->HasField(TEXT("snow"))) Rows(TEXT("snow"), Out.Snowy);
 	const TSharedPtr<FJsonObject> P = (*W)->GetObjectField(TEXT("pace"));
 	Out.Run = P->GetNumberField(TEXT("run")); Out.Hurry = P->GetNumberField(TEXT("hurry")); Out.Umbrella = P->GetNumberField(TEXT("umbrella"));
+	P->TryGetNumberField(TEXT("snow"), Out.SnowPace);
 	for (const auto& KV : S->GetObjectField(TEXT("signatures"))->Values) Out.SigSpeed.Add(FString(KV.Key), KV.Value->AsNumber());
 	return true;
 }
 
-FBrixWet BrixWetOf(const FBrixPeopleRules& People, const FBrixWear& W, int32 i, double Rain, bool bTrying, bool bCovered,
+FBrixWet BrixWetOf(const FBrixPeopleRules& People, const FBrixWear& W, int32 i, double Rain, double Snow, int32 Wardrobe, bool bCovered,
 	bool bWalking, bool bOtherWalk, const FString& SigName, double S, double M, double T0, double T1, double Len)
 {
 	FBrixWet Out;
-	const TArray<FBrixWear::FRow>& Rows = bTrying ? W.Wet : W.Today;   // trying rain on a dry day: what they would have worn on a wet one
+	// a kind of weather tried on a day without it: what they would have worn on a day of it
+	const TArray<FBrixWear::FRow>& Rows = Wardrobe == 2 && W.Snowy.Num() ? W.Snowy : Wardrobe == 1 ? W.Wet : W.Today;
 	if (!Rows.IsValidIndex(i)) return Out;
 	const FBrixWear::FRow& w = Rows[i];
 	auto Colour = [&](int32 c) -> TOptional<FVector3f> { if (!W.Colours.IsValidIndex(c)) return {}; const FVector3f* C = People.Palette.Find(W.Colours[c]); return C ? TOptional<FVector3f>(*C) : TOptional<FVector3f>(); };
 	if (w.Coat >= 0) Out.Coat = Colour(w.Coat);
+	if (Snow >= .25 && !bCovered)   // out in the snow (CITY-107): the hood up, else bare-headed, never an umbrella; a careful walk
+	{
+		if (w.bHood) Out.Hood = Out.Coat;
+		if (bWalking && !bOtherWalk)
+		{
+			Out.Sig = TEXT("Careful");
+			const double dur = FMath::Max(T1 - T0, 1e-6), d = FMath::Clamp((M - T0) / dur, 0.0, 1.0) * Len;
+			Out.Phase = FMath::Fmod(d / BrixStepLength(People.Sig(Out.Sig), S), 1.0);
+		}
+		return Out;
+	}
 	if (Rain < .25 || bCovered) return Out;   // dry, indoors, sheltering, under a roof
 	if (w.Umbrella >= 0) { Out.Umbrella = Colour(w.Umbrella); Out.Arms[1] = FVector4d(1, 52, 12, 84); }
 	else if (w.bHood) Out.Hood = Out.Coat;

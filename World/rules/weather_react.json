@@ -13,6 +13,9 @@
   "season": [0.35, 0.05, 0.55, 0.95],
   "rain_day": 0.85,
   "hood": 0.6,
+  "snow_note": "CITY-107: on a day with snow in it at least snow_day of residents wear a coat, and at least snow_hood of coats have a hood (in snow no one puts an umbrella up).",
+  "snow_day": 0.95,
+  "snow_hood": 0.85,
   "colours": ["charcoal", "slate", "indigo", "brown", "olive", "plum"]
  },
  "shelter": {
@@ -25,6 +28,8 @@
   "note": "Walking speed in rain, as a share of the resident's own pace. run: running for cover with no umbrella. hurry: walking in rain with no umbrella. umbrella: walking in rain under one.",
   "run": 2.0,
   "hurry": 1.3,
-  "umbrella": 1.1
+  "umbrella": 1.1,
+  "snow_note": "CITY-107: walking in snow, as a share of the resident's own pace: careful, never hurrying or running (the owner, 2026-11-25).",
+  "snow": 0.85
  }
 }

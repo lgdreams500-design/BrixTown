@@ -135,7 +135,7 @@
     },
     "F-WEATHER": {
       "slice": 1,
-      "note": "Said yes to 'F-WEATHER level 1 for the first slice' so clouds follow the weather (owner, 2026-11-22). Rain and fog are in scope but not drawn yet. Later milestones not picked."
+      "note": "Said yes to 'F-WEATHER level 1 for the first slice' so clouds follow the weather (owner, 2026-11-22). Rain and fog are in scope but not drawn yet. Later milestones not picked. Owner, 2026-11-25: \"can we add snow as well?\", then picked \"Winter only, own chance\", \"Settles, then melts\" and \"Coats and hoods, walk carefully\" (WLD-069, WLD-070, CITY-107; ADR-0051)."
     },
     "F-VEH-CRASH": {
       "slice": 2,

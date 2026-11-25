@@ -102,9 +102,9 @@ bool FCITY080_DressedForTheRain::RunTest(const FString&)
 	for (int32 i = 0; i < W.Wet.Num(); ++i)
 	{
 		const FBrixWear::FRow& Row = W.Wet[i];
-		const FBrixWet Dry = BrixWetOf(People, W, i, 0, true, false, true, false, TEXT("Easy"), 1, 600, 590, 610, 20 * 1.14 * W.Pace);
-		const FBrixWet Roof = BrixWetOf(People, W, i, 1, true, true, true, false, TEXT("Easy"), 1, 600, 590, 610, 20 * 1.14 * W.Pace);
-		const FBrixWet Out = BrixWetOf(People, W, i, 1, true, false, true, false, TEXT("Easy"), 1, 600, 590, 610, 20 * 1.14 * W.Pace);
+		const FBrixWet Dry = BrixWetOf(People, W, i, 0, 0, 1, false, true, false, TEXT("Easy"), 1, 600, 590, 610, 20 * 1.14 * W.Pace);
+		const FBrixWet Roof = BrixWetOf(People, W, i, 1, 0, 1, true, true, false, TEXT("Easy"), 1, 600, 590, 610, 20 * 1.14 * W.Pace);
+		const FBrixWet Out = BrixWetOf(People, W, i, 1, 0, 1, false, true, false, TEXT("Easy"), 1, 600, 590, 610, 20 * 1.14 * W.Pace);
 		const bool bCoat = (Row.Coat >= 0) == Out.Coat.IsSet() && (Row.Coat < 0 || *Out.Coat == People.Palette.FindRef(W.Colours[Row.Coat]));
 		const bool bDry = !Dry.Umbrella && !Dry.Hood && !Dry.Arms[0] && !Dry.Arms[1] && !Roof.Umbrella && !Roof.Hood && !Roof.Arms[0] && Dry.Coat.IsSet() == Out.Coat.IsSet();
 		bool bCover;
@@ -116,11 +116,76 @@ bool FCITY080_DressedForTheRain::RunTest(const FString&)
 	AddInfo(FString::Printf(TEXT("on a wet day: %d umbrellas, %d hoods, %d bare-headed"), Umbrellas, Hoods, Hands));
 	TestTrue(TEXT("some of each"), Umbrellas > 100 && Hoods > 100 && Hands > 10);
 	// running for cover: a walk packed at twice the resident's own pace
-	const FBrixWet Run = BrixWetOf(People, W, 0, 1, true, false, true, false, TEXT("Easy"), 1, 600, 590, 600, 10 * 1.14 * W.Pace * W.Run);
+	const FBrixWet Run = BrixWetOf(People, W, 0, 1, 0, 1, false, true, false, TEXT("Easy"), 1, 600, 590, 600, 10 * 1.14 * W.Pace * W.Run);
 	TestEqual(TEXT("a run for cover"), Run.Sig, FString(TEXT("Run")));
 	TestTrue(TEXT("its step goes on with the distance"), Run.Phase >= 0 && Run.Phase < 1);
-	const FBrixWet Running = BrixWetOf(People, W, 0, 1, true, false, true, true, TEXT("Easy"), 1, 600, 590, 610, 1);
+	const FBrixWet Running = BrixWetOf(People, W, 0, 1, 0, 1, false, true, true, TEXT("Easy"), 1, 600, 590, 610, 1);
 	TestTrue(TEXT("already running from a car: its own walk"), Running.Sig.IsEmpty());
+	return Wrong == 0;
+}
+
+// WLD-070 (ADR-0051): how hard it snows and how much snow lies, as world.snow_now() has them (the same values file),
+// through days with snow in them and a dry day tried as snow: building while it snows, melting after, within a millionth.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWLD070_SnowAsPython, "BrixTown.World.WLD070_snow_falls_and_lies_as_world_py_says",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FWLD070_SnowAsPython::RunTest(const FString&)
+{
+	FBrixWeatherRules R;
+	FString Error, Text;
+	if (!TestTrue(TEXT("the sky rules load: ") + Error, LoadBrixWeatherRules(Under(TEXT("../World/rules/sky.json")), R, Error))) return false;
+	TestTrue(TEXT("snow is a kind of weather"), R.Kinds.Contains(TEXT("snow")) && R.Kinds[TEXT("snow")].Snow > 0);
+	if (!TestTrue(TEXT("the test values are there"), FFileHelper::LoadFileToString(Text, *Under(TEXT("../Tests/values/weather_city_01.json"))))) return false;
+	TSharedPtr<FJsonObject> Want;
+	if (!TestTrue(TEXT("the test values are JSON"), FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Want) && Want.IsValid())) return false;
+	int32 Wrong = 0, N = 0, Lying = 0;
+	for (const TSharedPtr<FJsonValue>& V : Want->GetArrayField(TEXT("snow")))
+	{
+		const TSharedPtr<FJsonObject> C = V->AsObject();
+		TArray<FString> Day;
+		C->TryGetStringArrayField(TEXT("day"), Day);
+		FString Trying;
+		C->TryGetStringField(TEXT("trying"), Trying);
+		const double m = C->GetNumberField(TEXT("m"));
+		const FBrixSnowNow G = BrixSnowNow(R, Day, m, Trying);
+		const TSharedPtr<FJsonObject> E = C->GetObjectField(TEXT("want"));
+		++N;
+		Lying += G.Lying > .1;
+		if (FMath::Abs(G.Falling - E->GetNumberField(TEXT("falling"))) > 1e-6 || FMath::Abs(G.Lying - E->GetNumberField(TEXT("lying"))) > 1e-6)
+			if (Wrong++ < 8) AddError(FString::Printf(TEXT("%s at minute %.2f: falling %.3f, lying %.3f; world.py %.3f, %.3f"), *FString::Join(Day, TEXT("/")), m,
+				G.Falling, G.Lying, E->GetNumberField(TEXT("falling")), E->GetNumberField(TEXT("lying"))));
+	}
+	TestTrue(TEXT("moments checked, some with snow lying"), N > 600 && Lying > 50);
+	return Wrong == 0;
+}
+
+// CITY-107 (ADR-0051): on a day of snow (day.json "wear" "snow", from citysim City.wear()) nearly everyone wears a coat;
+// out in the snow the hood goes up if their coat has one, else they go bare-headed, never an umbrella, and they walk
+// carefully; under a roof, nothing but the coat.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY107_DressedForSnow, "BrixTown.World.CITY107_residents_are_dressed_for_snow",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FCITY107_DressedForSnow::RunTest(const FString&)
+{
+	FBrixPeopleRules People;
+	FBrixWear W;
+	FString Error;
+	if (!TestTrue(TEXT("the people's tables load: ") + Error, LoadBrixPeopleRules(Under(TEXT("Data/people.json")), People, Error))) return false;
+	if (!TestTrue(TEXT("the day's wear loads: ") + Error, LoadBrixWear(Under(TEXT("Data/day.json")), Under(TEXT("../World/rules/signatures.json")), W, Error))) return false;
+	if (!TestEqual(TEXT("a snow day's row for every resident"), W.Snowy.Num(), W.Today.Num())) return false;
+	int32 Coats = 0, Hoods = 0, Wrong = 0;
+	for (int32 i = 0; i < W.Snowy.Num(); ++i)
+	{
+		const FBrixWear::FRow& Row = W.Snowy[i];
+		Coats += Row.Coat >= 0;
+		Hoods += Row.bHood;
+		const FBrixWet Out = BrixWetOf(People, W, i, 0, 1, 2, false, true, false, TEXT("Easy"), 1, 600, 590, 610, 20 * 1.14 * W.Pace * W.SnowPace);
+		const FBrixWet Roof = BrixWetOf(People, W, i, 0, 1, 2, true, true, false, TEXT("Easy"), 1, 600, 590, 610, 20 * 1.14 * W.Pace * W.SnowPace);
+		const bool bOk = !Out.Umbrella && Out.Hood.IsSet() == Row.bHood && Out.Sig == TEXT("Careful") && !Out.Arms[0] && !Out.Arms[1]
+			&& !Roof.Hood && !Roof.Umbrella && Roof.Sig.IsEmpty() && (Row.Coat >= 0) == Out.Coat.IsSet();
+		if (!bOk && Wrong++ < 8) AddError(FString::Printf(TEXT("resident %d: not dressed for the snow as citysim says"), i));
+	}
+	AddInfo(FString::Printf(TEXT("on a day of snow: %d coats, %d hoods of %d residents"), Coats, Hoods, W.Snowy.Num()));
+	TestTrue(TEXT("nearly everyone in a coat"), Coats > W.Snowy.Num() * .88);
+	TestTrue(TEXT("a careful pace, slower than their own"), W.SnowPace < 1);
 	return Wrong == 0;
 }
 

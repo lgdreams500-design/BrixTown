@@ -57,6 +57,13 @@
    0.0,
    0.2,
    0.25
+  ],
+  "snow_note": "WLD-069: the chance that a six-hour slot has snow, by season (Spring, Summer, Autumn, Winter): its own draw, in spells like rain, and before it (the owner, 2026-11-25: winter only, its own chance). [ASSUMPTION] 0.3.",
+  "snow_chance": [
+   0.0,
+   0.0,
+   0.0,
+   0.3
   ]
  },
  "tram": {

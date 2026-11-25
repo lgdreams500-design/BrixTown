@@ -438,7 +438,8 @@ def wear(w, city, day):
     def row(x):
         return [cols.index(x["coat_colour"]) if x["coat"] else -1, int(x["hood"]), cols.index(x["umbrella_colour"]) if x["umbrella"] else -1]
     return dict(colours=cols, today=[row(city.wear(r["id"], day)) for r in w["residents"]], wet=[row(city.wear(r["id"], day, True)) for r in w["residents"]],
-                pace={k: v for k, v in R["pace"].items() if k != "note"})
+                snow=[row(city.wear(r["id"], day, False, True)) for r in w["residents"]],   # CITY-107: on a day of snow (the weather tried)
+                pace={k: v for k, v in R["pace"].items() if not k.endswith("note")})
 
 
 def main(day=16):

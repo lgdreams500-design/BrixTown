@@ -399,7 +399,6 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	TArray<FBrixWet> Wets;
 	if (const ABrixWeather* Wx = Mode->Weather.Get(); Wx && Wx->bOn)
 	{
-		const bool bTrying = Wx->IsTrying();
 		const int32 Shelter = Day->Acts.IndexOfByKey(FString(TEXT("shelter")));
 		if (CoatLooks.Num() != Day->Num()) { CoatLooks.SetNum(Day->Num()); CoatMade.Init(0, Day->Num()); }
 		for (FNear& A : Near)
@@ -414,10 +413,10 @@ void ABrixPeople::Tick(float DeltaSeconds)
 			const bool bCovered = (P && P->Act == Shelter) || (A.Up < 6.f && Wx->Roofed(A.P));
 			const bool bOther = Extras.IsValidIndex(A.Extra) && (!Extras[A.Extra].Sig.IsEmpty() || A.Pose != 1);   // running from a car, or held by a smash
 			const FBrixLook& L0 = Looks[A.i];
-			FBrixWet W = BrixWetOf(Rules, Wx->Wear, A.i, Wx->Now.Rain, bTrying, bCovered, bWalk, bOther, L0.SigName, L0.S, Mi, P ? P->T0 : 0, T1, bWalk ? P->Cum.Last() : 0);
+			FBrixWet W = BrixWetOf(Rules, Wx->Wear, A.i, Wx->Now.Rain, Wx->Now.Snow, Wx->Wardrobe(), bCovered, bWalk, bOther, L0.SigName, L0.S, Mi, P ? P->T0 : 0, T1, bWalk ? P->Cum.Last() : 0);
 			if (W.Coat && !(L0.Garment == TEXT("coat") && L0.Top == *W.Coat))
 			{
-				const int8 Want = bTrying ? 2 : 1;
+				const int8 Want = (int8)(Wx->Wardrobe() + 1);
 				if (CoatMade[A.i] != Want) { CoatLooks[A.i] = L0; CoatLooks[A.i].Garment = TEXT("coat"); CoatLooks[A.i].Top = *W.Coat; CoatMade[A.i] = Want; }
 				A.L = &CoatLooks[A.i];
 			}

@@ -92,6 +92,28 @@ class World(unittest.TestCase):
         for s in range(4):
             self.assertAlmostEqual(share(s), C.d["weather"]["rain_chance"][s], delta=0.07)
 
+    def test_WLD_069_snow_falls_in_winter_only(self):
+        """Snow has its own chance per season (the owner: winter only), comes in spells, and is the same for everyone. Over the
+        real city's calendar (World/rules/calendar.json)."""
+        import os, sys
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "worldgen"))
+        import world
+        C = world.simulation(world.load())
+        def share(season, kind):
+            hits = [cs.weather(C.d, C.clock, (y * 48 + season * 12 + d) * 1440 + h * 360 + 10) == kind for y in range(40) for d in range(12) for h in range(4)]
+            return sum(hits) / len(hits)
+        chance = C.d["weather"]["snow_chance"]
+        for season in range(4):
+            if chance[season] == 0:
+                self.assertEqual(share(season, "snow"), 0.0, season)
+            else:
+                self.assertAlmostEqual(share(season, "snow"), chance[season], delta=0.07)
+        self.assertEqual(chance[:3], [0.0, 0.0, 0.0])
+        slots = [cs.weather(C.d, C.clock, t * 360 + 10) == "snow" for t in range(4 * 12 * 3, 4 * 12 * 4 * 20)]
+        runs = sum(1 for a, b in zip(slots, slots[1:]) if b and not a)
+        self.assertLess(runs, sum(slots) * 0.8)            # in spells: more snowy slots than spells
+        self.assertEqual(cs.weather(C.d, C.clock, 40 * 1440 + 10), cs.weather(world.simulation(world.load()).d, C.clock, 40 * 1440 + 10))
+
     def test_trees_grow_from_age(self):
         """WLD-011: size comes from age alone and only goes up while the tree stands."""
         sap = next(t for t in C.d["trees"] if t["species"] == "linden")
@@ -273,6 +295,34 @@ class Weather(unittest.TestCase):
                     self.assertAlmostEqual(f, p["run"] if s.get("rush") else p["hurry"], places=3, msg=rid)
                     runs += bool(s.get("rush"))
         self.assertGreater(runs, 20, "someone should run for cover")
+
+    def test_CITY_107_coats_hoods_and_a_careful_walk_in_snow(self):
+        """On a day with snow nearly everyone wears a coat and most coats have the hood up; out in the snow no one puts an
+        umbrella up (hood or bare-headed); walks in snow go at the careful pace, slower than their own; they take cover from it
+        as from rain."""
+        C, R = self.C, self.R
+        day = next(d for d in range(36, 48) if any(C.snowing(d * 1440 + k * 360 + 1) for k in (1, 2)))   # snow by day
+        wear = [C.wear(rid, day) for rid in C.res]
+        self.assertGreaterEqual(sum(w["coat"] for w in wear) / len(wear), R["coat"]["snow_day"] - 0.05)
+        coats = [w for w in wear if w["coat"]]
+        self.assertGreater(sum(w["hood"] for w in coats) / len(coats), R["coat"]["snow_hood"] - 0.07)
+        k = next(k for k in (1, 2) if C.snowing(day * 1440 + k * 360 + 1))
+        m = k * 360 + 200
+        seen = set()
+        for rid, st in C.at(day * 1440 + m).items():
+            if st["cover"] is not None:
+                self.assertIn(st["cover"], ("hood", "bare"), rid)
+                seen.add(st["cover"])
+        self.assertIn("hood", seen)
+        self.assertTrue(C.rain_spells(day))                # they take cover from it (CITY-078's spells)
+        slow = 0
+        for rid, pieces in C.plan(day).items():
+            v = C.speed(rid) * C.pace
+            for kind, t0, t1, payload, ss in pieces:
+                if kind == "move" and t1 < 1439.4 and C.snowing(day * 1440 + t0):
+                    self.assertAlmostEqual(payload[2] / v, R["pace"]["snow"], places=3, msg=rid)
+                    slow += 1
+        self.assertGreater(slow, 10)
 
     def test_CITY_080_cover_in_the_rain(self):
         """Out in the rain: umbrella up if they brought one, else a hood if their coat has one, else bare-headed. Dry, indoors
