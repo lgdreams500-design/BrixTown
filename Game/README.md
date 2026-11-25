@@ -16,7 +16,7 @@ starts on the engine's empty map and the game mode builds the town from `World/`
 The starting city at the slice's sizes: a box for each building (its footprint, turned by its `angle`; `floors` × 3 m +
 0.4 m high, at least 3.6 m), a slab for each block (green for parks and open ground), a trunk and crown for each tree,
 the sun low in the east, sky, haze, Lumen. You walk it from the city's spawn with the slice's keys: W A S D, mouse,
-Shift to run, Space to jump. No cars, interiors, money or sound yet.
+Shift to run, Space to jump.
 
 ## Buildings (ADR-0046)
 Each building is laid as the Blender building kit lays it: a core set back by the wall's depth (0.32 m), front walls
@@ -165,6 +165,22 @@ stall counters, saving, the game menu's Money page in its painted-sign look. To 
 `-BrixCounter=bank "-BrixLife=open,current;open,savings;move,p:current,p:savings,1000;loan,5000,3"` (ops as
 economy.check_script() writes them, arguments by commas).
 
+## Sound (SND-003, SND-007, SND-009, SND-017)
+The slice makes its sounds live with Web Audio (`Prototype/play/sound.js`, from `World/rules/sound.json`); the Unreal
+build plays recordings of those same sounds. `Tools/unreal/sound_values.py` runs sound.js itself in headless Edge (over
+its DevTools socket) and renders its own sound-making functions into an OfflineAudioContext: `Game/Data/sounds/*.wav`
+(mono, 16-bit, 22,050 Hz, 62 sounds, 1.2 MB, in Git LFS) and `index.json` (each one's length, whether it loops, its
+level). Loops are cross-faded end into start. Run the script again after changing sound.js or sound.json. At run time
+`ABrixSound` reads the WAVs (no editor import) and plays each through a procedural sound wave, as the talk's voices are
+played; a loop refills itself when the engine asks for more. What is heard, where and how loud is BrixWorld's port of
+sound.js (`BrixSound`): `BrixHear` is its place() (full within 2.5 m, falling off, gone at the sound's reach), the engine
+only pans the sound from where it is. The same script traces sound.js's own logic in scripted moments (its audio swapped
+for recorders) into `Tests/values/sound_city_01.json`, and the SND tests check the port against it.
+So far: the player's steps in time with their walk (louder running) and a thud on a hard landing; the steps of the
+residents within 9 m, at most six a frame, on stone, on grass in a garden (wood indoors, when people are seen indoors),
+louder running, lighter and higher for children; the sound of a resident sitting down or getting up within 10 m. A test
+shot logs how many of each sound were played (`sounds played in all: ...`). Not yet: being muffled indoors.
+
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
 black. At Epic quality the town runs at about 36 frames a second, at High about 63 with the same shade, at Medium about 86
@@ -205,3 +221,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.ECO001_money_is_whole_chips_in_balanced_lines` | ECO-001, ECO-002, ECO-003, BANK-007 |
 | `BrixTown.World.ECO002_the_ledger_matches_the_python` | ECO-002, ECO-005, ECO-010, ECO-011, ECO-013, BANK-001, BANK-007 |
 | `BrixTown.World.BANK008_the_bank_settles_as_the_python_does` | BANK-002, BANK-008 |
+| `BrixTown.World.SND017_people_sound_as_the_slice_hears_them` | SND-017, SND-003 |
+| `BrixTown.World.SND003_the_players_steps_and_landings` | SND-003 |
+| `BrixTown.World.SND007_sounds_are_heard_from_where_they_are` | SND-007 |
+| `BrixTown.World.SND009_every_sound_has_its_recording` | SND-009 |

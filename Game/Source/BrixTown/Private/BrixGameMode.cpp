@@ -8,6 +8,7 @@
 #include "BrixLamps.h"
 #include "BrixLifeActor.h"
 #include "BrixPeople.h"
+#include "BrixSoundActor.h"
 #include "BrixTalkActor.h"
 #include "BrixTownActor.h"
 #include "BrixUnits.h"
@@ -110,6 +111,7 @@ void ABrixGameMode::StartPlay()
 			UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents, their day %d (%s, %s)"), Today->Num(), Today->Day, *Today->Weekday, *Today->Season);
 			Talk = GetWorld()->SpawnActor<ABrixTalk>();
 			Talk->Start(*City, Today, People);
+			GetWorld()->SpawnActor<ABrixSound>()->Start(*City, Today, People);   // the town's sound, recorded from the slice (SND-003, SND-017)
 		}
 	}
 	if (City)

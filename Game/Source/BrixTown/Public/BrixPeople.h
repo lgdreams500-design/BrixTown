@@ -68,6 +68,9 @@ public:
 	const FBrixFace* HeldFace = nullptr;
 	TMap<int32, double> Late;           // resident -> minutes behind their day
 	UPROPERTY(Config) float TalkReach = 2.2f;   // m
+	// every resident near this frame, for the sound (ABrixSound: their steps, sitting down and getting up; SND-017)
+	struct FHeard { int32 Resident; FVector2D Pos; int32 Pose; double Phase; };
+	TArray<FHeard> Heard;
 	double TickMs() const { return TickFrames ? TickSeconds * 1000.0 / TickFrames : 0.0; }   // the people's own time a frame, on average
 	void ResetTickTime() { TickSeconds = 0; TickFrames = 0; for (double& P : Parts) P = 0; }
 	// the time a frame by part: where everyone is, placing and the far figures' boxes, building bodies, uploading them, the far mesh

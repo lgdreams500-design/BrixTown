@@ -44,6 +44,7 @@ public:
 	// for test shots: press E as a player would, and hold W/S and A/D (x steer, y throttle)
 	void TestPress() { TalkKey(); }
 	FVector2D TestHold = FVector2D::ZeroVector;
+	double WalkPhase() const { return Phase; }   // the walk's cycle, 0..1: a step at each half (the sound's steps, SND-003)
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void PawnClientRestart() override;

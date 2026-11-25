@@ -247,6 +247,8 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	}
 	if (Held.Resident >= 0 && Looks.IsValidIndex(Held.Resident))   // held in a talk: where the talk keeps them
 		Near.Add({ Held.Resident, FVector2D::Distance(Held.Pos, Here), Held.Pos, Held.Up, Held.Yaw, Held.Pose, 0.0, &Looks[Held.Resident], {}, false });
+	Heard.Reset();   // for the sound: the residents near, where they are and how they move (SND-017)
+	for (const FNear& A : Near) if (A.i >= 0 && A.i < Day->Num()) Heard.Add({ A.i, A.P, A.Pose, A.Phase });
 	// whoever rides in a vehicle near enough (cars.js occupants() and seat()): its owner at the wheel and neighbours sharing
 	// the ride beside and behind (CITY-094), a bus's driver and riders on its benches, someone from out of town in a van or a
 	// car passing through; seated as low as their head needs under the roof, feet along the floor, hands on the wheel
