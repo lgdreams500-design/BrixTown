@@ -1,11 +1,13 @@
-#include "BrixTownActor.h"
+﻿#include "BrixTownActor.h"
 
 #include "BrixCity.h"
+#include "BrixInside.h"
 #include "BrixUnits.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Misc/ScopeExit.h"
 #include "UObject/ConstructorHelpers.h"
 
 using BrixUnits::ToWorld;
@@ -92,9 +94,9 @@ UMaterialInstanceDynamic* ABrixTownActor::Own()
 	return OwnColour;
 }
 
-UInstancedStaticMeshComponent* ABrixTownActor::Group(UStaticMesh* Mesh, bool bCollide, float CullM)
+UInstancedStaticMeshComponent* ABrixTownActor::Group(UStaticMesh* Mesh, bool bCollide, float CullM, bool bClear)
 {
-	const FString Key = Mesh->GetName() + (bCollide ? TEXT("") : TEXT("_NoCollision"));
+	const FString Key = Mesh->GetName() + (bCollide ? TEXT("") : TEXT("_NoCollision")) + (bClear ? TEXT("_Clear") : TEXT(""));
 	if (TObjectPtr<UInstancedStaticMeshComponent>* Found = Parts.Find(Key)) return *Found;
 	UInstancedStaticMeshComponent* G = NewObject<UInstancedStaticMeshComponent>(this, *Key);
 	G->SetupAttachment(RootComponent);
@@ -107,6 +109,11 @@ UInstancedStaticMeshComponent* ABrixTownActor::Group(UStaticMesh* Mesh, bool bCo
 	{
 		const FName S = Slots[i].MaterialSlotName;
 		if (bPlain || IsOwnSlot(S)) { G->SetMaterial(i, Own()); continue; }
+		if (bClear && (S == TEXT("glass") || S == TEXT("lit")))
+		{
+			if (!ClearGlass) ClearGlass = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Greybox/M_Clear.M_Clear"));   // Tools/unreal/make_clear_material.py
+			if (ClearGlass) { G->SetMaterial(i, ClearGlass); continue; }
+		}
 		FLinearColor C = FLinearColor::Gray;
 		for (const FBrixSlotColour& F : SlotColours) if (F.Slot == S) C = F.Colour;
 		G->SetMaterial(i, Fixed(C));
@@ -141,6 +148,21 @@ UInstancedStaticMeshComponent* ABrixTownActor::GlassGroup()
 	Glass->RegisterComponent();
 	AddInstanceComponent(Glass);
 	return Glass;
+}
+
+UInstancedStaticMeshComponent* ABrixTownActor::BlockerGroup()
+{
+	if (Blockers) return Blockers;
+	Blockers = NewObject<UInstancedStaticMeshComponent>(this, TEXT("Blockers"));
+	Blockers->SetupAttachment(RootComponent);
+	Blockers->SetStaticMesh(Cube);
+	Blockers->SetCollisionProfileName(TEXT("BlockAll"));
+	Blockers->SetHiddenInGame(true);                 // still in the way, never drawn
+	Blockers->SetVisibility(false);
+	Blockers->SetCastShadow(false);
+	Blockers->RegisterComponent();
+	AddInstanceComponent(Blockers);
+	return Blockers;
 }
 
 // A painted name: on a shop's fascia (kit text()), shrunk to fit the fascia
@@ -234,9 +256,38 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 		BoxLook(Look, Local, Z0, Z1, YawRad, Len, Dep);
 	};
 
+	// an enterable building (CITY-013) is hollow on its ground floor, as the slice builds it (play.js building()): an open
+	// doorway at the door, a floor in the storey's finish, the walls plastered inside in its colour, a ceiling; what is
+	// above the ceiling stays the solid core until its storeys are built
+	const FBrixInside* In = Insides && Insides->Lots.IsValidIndex(LotIndex) && Insides->Lots[LotIndex].IsSet() ? &Insides->Lots[LotIndex].GetValue() : nullptr;
+	const bool bHollow = CityData && In && BrixIsHollow(L, In);
+	FBrixDoorway Dw;
+	if (bHollow) Dw = BrixDoorwayOf(*CityData, L, B.District, FBrixDoorRules::FromConfig());
+	const float FloorTop = bHouse ? S0 : InsideFloor;
+	const float CeilAt = FMath::Min(H, (bHouse ? S1 : StoreyHeight) - CeilingDrop);
+	const FLinearColor InWall = In && In->WallColour.Num() ? Lin(In->WallColour[0]) : FLinearColor(0.77f, 0.72f, 0.62f);
+	const FLinearColor InFloor = In && In->FloorColour.Num() ? Lin(In->FloorColour[0]) : FLinearColor(0.4f, 0.27f, 0.17f);
+	const FLinearColor InCeil = FMath::Lerp(InWall, FLinearColor::White, CeilingWhite);
+	auto BlockAt = [&](const FVector2D& Local, float Z0, float Z1, double YawRad, float Len, float Dep)
+	{
+		Add(BlockerGroup(), FTransform(FQuat(FVector::UpVector, YawRad + Ang), At(Local, (Z0 + Z1) * 0.5f), FVector(Len, Dep, Z1 - Z0)), FLinearColor::Black);
+	};
+
 	// the core, set back by the wall's depth all round (the kit's "core": what the reveals look into)
-	if (StoneTo >= H) BoxLook(Stone, FVector2D::ZeroVector, 0.f, H, 0.0, S.X - 2 * t, S.Y - 2 * t);
-	else Box(Plaster, FVector2D::ZeroVector, 0.f, H, 0.0, S.X - 2 * t, S.Y - 2 * t);
+	const float CoreFrom = bHollow ? CeilAt : 0.f;
+	if (StoneTo >= H) BoxLook(Stone, FVector2D::ZeroVector, CoreFrom, H, 0.0, S.X - 2 * t, S.Y - 2 * t);
+	else Box(Plaster, FVector2D::ZeroVector, CoreFrom, H, 0.0, S.X - 2 * t, S.Y - 2 * t);
+	if (bHollow)
+	{
+		FLook Fl;   // boards or flags by the storey's finish (the slice's floor materials 15 and 16)
+		Fl.Colour = InFloor;
+		const bool bBoards = !In || !In->FloorFinish.Num() || In->FloorFinish[0] == 15;
+		Fl.A = FVector4f(bBoards ? FloorBoardsA : FloorFlagsA);
+		Fl.B = FVector4f(bBoards ? FloorBoardsB : FloorFlagsB);
+		BoxLook(Fl, FVector2D::ZeroVector, 0.f, FloorTop, 0.0, S.X - 2 * t, S.Y - 2 * t);
+		Box(InCeil, FVector2D::ZeroVector, CeilAt - 0.02f, CeilAt, 0.0, S.X - 2 * t, S.Y - 2 * t);
+		++Hollow;
+	}
 
 	// which facade has the door: the edge of the footprint nearest the lot's door
 	const FVector2D DL((L.Door.X - C.X) * Ca + (L.Door.Y - C.Y) * Sa, -(L.Door.X - C.X) * Sa + (L.Door.Y - C.Y) * Ca);
@@ -280,15 +331,17 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			{
 				const float Sx = AlongOf(FVector2D(Plan->DoorAt, F.Mid.Y));
 				const bool bArch = Hs->bArches;
-				Ops.Add({ Sx, S0, Plan->DoorWidth, 2.4f, Kit(bArch ? TEXT("SM_Kit_DoorArch") : TEXT("SM_Kit_DoorPlain")), nullptr, &DoorPaint, -1.f,
-					Plan->DoorWidth / 1.3f, 2.4f / (bArch ? 2.5f : 2.3f) });
+				UStaticMesh* DoorMesh = bHollow ? Kit(bArch ? TEXT("SM_Kit_DoorArchOpen") : TEXT("SM_Kit_DoorPlainOpen"), Kit(bArch ? TEXT("SM_Kit_DoorArch") : TEXT("SM_Kit_DoorPlain")))
+					: Kit(bArch ? TEXT("SM_Kit_DoorArch") : TEXT("SM_Kit_DoorPlain"));
+				Ops.Add({ Sx, S0, Plan->DoorWidth, 2.4f, DoorMesh, nullptr, &DoorPaint, -1.f,
+					Plan->DoorWidth / 1.3f, 2.4f / (bArch ? 2.5f : 2.3f), bHollow });
 			}
 		}
 		else if (F.Len >= MinFacadeForOpenings)
 		{
 			const int32 Nb = FMath::Max(1, FMath::RoundToInt(F.Len / Bay));
 			int32 DoorBay = -1;
-			if (k == DoorSide)
+			if (k == DoorSide && !bHollow)
 			{
 				const double Sd = FVector2D::DotProduct(DL - F.Mid, Along);
 				double Best = 1e9;
@@ -325,6 +378,16 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 				}
 			}
 		}
+		if (bHollow && !bHouse && !bShopFront && k == Dw.Side)
+		{
+			// the open doorway at the lot's door (BrixDoorwayOf), the ground storey's windows it would cut into left out
+			const float Ga = Dw.Along - Dw.Width / 2 - 0.3f, Gb = Dw.Along + Dw.Width / 2 + 0.3f;
+			Ops.RemoveAll([&](const FOpening& O) { return O.Z0 < 2.f && O.S + O.W / 2 > Ga && O.S - O.W / 2 < Gb; });
+			const bool bCiv = Dw.Kind == FBrixDoorway::EKind::Civic, bArc = Dw.Kind == FBrixDoorway::EKind::Arch;
+			UStaticMesh* Way = Kit(bCiv ? TEXT("SM_Kit_DoorCivicOpen") : bArc ? TEXT("SM_Kit_DoorArchOpen") : TEXT("SM_Kit_DoorPlainOpen"),
+				Kit(bCiv ? TEXT("SM_Kit_DoorCivic") : bArc ? TEXT("SM_Kit_DoorArch") : TEXT("SM_Kit_DoorPlain")));
+			Ops.Add({ Dw.Along, 0.f, Dw.Width, Dw.Height, Way, nullptr, &DoorPaint, -1.f, 1.f, 1.f, true });
+		}
 
 		const FQuat Face(FVector::UpVector, Yaw + Ang);
 		auto Piece = [&](const TCHAR* Mesh, float Sx, float Z, const FVector& Scale, const FLinearColor& Col, float CullM)
@@ -351,7 +414,15 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			for (int32 i = 0; i < N; ++i)
 			{
 				const float A = X0 + 0.4f + i * (Wd - 0.8f) / N + ShopPier / 2, B2 = X0 + 0.4f + (i + 1) * (Wd - 0.8f) / N - ShopPier / 2;
-				Piece(i == N / 2 ? TEXT("SM_Kit_ShopDoor") : TEXT("SM_Kit_ShopPane"), (A + B2) / 2, 0.f, FVector(B2 - A, 1, 1), FLinearColor::Gray, OpeningCullDistance);
+				if (!bHollow)
+				{
+					Piece(i == N / 2 ? TEXT("SM_Kit_ShopDoor") : TEXT("SM_Kit_ShopPane"), (A + B2) / 2, 0.f, FVector(B2 - A, 1, 1), FLinearColor::Gray, OpeningCullDistance);
+					continue;
+				}
+				// an enterable shop: its door is the pane nearest the lot's door (BrixDoorwayOf), standing open; the rest are glass
+				if (FMath::Abs((A + B2) / 2 - Dw.Along) < 1e-3f) { Piece(TEXT("SM_Kit_ShopDoorOpen"), (A + B2) / 2, 0.f, FVector(B2 - A, 1, 1), FLinearColor::Gray, OpeningCullDistance); continue; }
+				Piece(TEXT("SM_Kit_ShopPane"), (A + B2) / 2, 0.f, FVector(B2 - A, 1, 1), FLinearColor::Gray, OpeningCullDistance);
+				BlockAt(OnWall((A + B2) / 2, -t / 2), 0.f, ShopTop, Yaw, B2 - A + ShopPier, t);
 			}
 			Piece(TEXT("SM_Kit_ShopFascia"), 0.f, 0.f, FVector(Wd - 0.5f, 1, 1), FLinearColor::Gray, OpeningCullDistance);
 			Name(L.Name, At(OnWall(0.f, 0.25f), (2.55f + ShopTop) / 2 + 0.02f), Yaw + Ang, NameSize, Wd - 1.2f);
@@ -387,7 +458,14 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 		if (bHouse)
 		{
 			// a house's plinth and its string course between the storeys, in the light stone of its sills (outsideS)
-			Box(Dark, OnWall(0.f, 0.03f), 0.f, S0 + 0.3f, Yaw, F.Len + 0.1f, 0.06f);
+			if (bHollow && k == 0)   // open at the doorway, so the step up to the door is the plinth's 0.3 m
+			{
+				const float Dsx = (float)FVector2D::DotProduct(FVector2D(Plan->DoorAt, F.Mid.Y) - F.Mid, Along);
+				const float A0 = -F.Len / 2 - 0.05f, A1 = Dsx - Plan->DoorWidth / 2, B0 = Dsx + Plan->DoorWidth / 2, B1 = F.Len / 2 + 0.05f;
+				if (A1 > A0) Box(Dark, OnWall((A0 + A1) / 2, 0.03f), 0.f, S0 + 0.3f, Yaw, A1 - A0, 0.06f);
+				if (B1 > B0) Box(Dark, OnWall((B0 + B1) / 2, 0.03f), 0.f, S0 + 0.3f, Yaw, B1 - B0, 0.06f);
+			}
+			else Box(Dark, OnWall(0.f, 0.03f), 0.f, S0 + 0.3f, Yaw, F.Len + 0.1f, 0.06f);
 			Box(HouseTrimStone, OnWall(0.f, 0.06f), S1 - 0.1f, S1 + 0.15f, Yaw, F.Len + 0.18f, 0.12f);
 		}
 
@@ -396,7 +474,9 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 		{
 			if (!O.Mesh) continue;
 			const FTransform Tr(FQuat(FVector::UpVector, Yaw + Ang), At(OnWall(O.S, 0.f), O.MeshZ >= 0.f ? O.MeshZ : O.Z0), FVector(O.SX, 1, O.SZ));
-			Add(Group(O.Mesh, false, OpeningCullDistance), Tr, *O.Paint);
+			// a hollow storey's windows are clear, so the room looks out and the sun comes in (M_Clear)
+			Add(Group(O.Mesh, false, OpeningCullDistance, bHollow && !O.bDoorway && O.Z0 < CeilAt), Tr, *O.Paint);
+			if (bHollow && !O.bDoorway) BlockAt(OnWall(O.S, -t / 2), O.Z0, O.Z0 + O.H, Yaw, O.W, t);   // a window is not a way in
 			if (O.Shutters) Add(Group(O.Shutters, false, ShutterCullDistance), FTransform(Tr.GetRotation(), Tr.GetLocation(), FVector(O.SX, 1, 1)), Shutter);
 			++Openings;
 		}
@@ -414,6 +494,9 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 		{
 			if (R.bStone) BoxLook(Stone, OnWall((R.Span.X + R.Span.Y) / 2, -t / 2), R.Z0, R.Z1, Yaw, R.Span.Y - R.Span.X, t);
 			else Box(Plaster, OnWall((R.Span.X + R.Span.Y) / 2, -t / 2), R.Z0, R.Z1, Yaw, R.Span.Y - R.Span.X, t);
+			// inside a hollow storey the wall is plastered in the storey's colour (BUILD-019)
+			const float Za = FMath::Max(R.Z0, FloorTop), Zb = FMath::Min(R.Z1, CeilAt);
+			if (bHollow && Zb - Za > 0.01f) Box(InWall, OnWall((R.Span.X + R.Span.Y) / 2, -t - LiningDepth / 2), Za, Zb, Yaw, R.Span.Y - R.Span.X, LiningDepth);
 		};
 		for (int32 b = 0; b + 1 < Breaks.Num(); ++b)
 		{
@@ -679,6 +762,7 @@ void ABrixTownActor::BuildGarden(const FBrixLot& L, const FBrixHousePlan& Plan, 
 void ABrixTownActor::Build(const FBrixCity& City)
 {
 	CityData = &City;
+	LotIndex = 0;
 	UInstancedStaticMeshComponent* Boxes = Group(Kit(TEXT("SM_Kit_Box"), Cube), true);
 	UInstancedStaticMeshComponent* Trunks = Group(Kit(TEXT("SM_Kit_Cylinder"), Cylinder), true);
 	UInstancedStaticMeshComponent* Crowns = Group(Kit(TEXT("SM_Kit_Sphere"), Sphere), false);
@@ -696,6 +780,7 @@ void ABrixTownActor::Build(const FBrixCity& City)
 		else Add(Boxes, Slab, Surface(B.Pavement, TownPave));   // the block's paving (ADR-0017)
 		for (const FBrixLot& L : B.Lots)
 		{
+			ON_SCOPE_EXIT { ++LotIndex; };
 			if (L.IsOpen())
 			{
 				const FTransform Top(FQuat(FVector::UpVector, FMath::DegreesToRadians(L.AngleDeg)), ToWorld(L.Centre(), BlockSlabHeight + 0.02f), FVector(L.Size().X, L.Size().Y, 0.04f));
@@ -719,6 +804,8 @@ void ABrixTownActor::Build(const FBrixCity& City)
 		UInstancedStaticMeshComponent* G = P.Key;
 		const int32 First = G->GetInstanceCount();
 		G->AddInstances(P.Value.At, false);
+		Instances += P.Value.At.Num();
+		if (G->NumCustomDataFloats == 0) { G->MarkRenderStateDirty(); continue; }   // the unseen blockers
 		const bool bPattern = G->NumCustomDataFloats >= 12;
 		for (int32 i = 0; i < P.Value.Look.Num(); ++i)
 		{
@@ -728,12 +815,11 @@ void ABrixTownActor::Build(const FBrixCity& City)
 			else G->SetCustomData(First + i, { L.Colour.R, L.Colour.G, L.Colour.B }, false);
 		}
 		G->MarkRenderStateDirty();
-		Instances += P.Value.At.Num();
 	}
 	Pending.Empty();
 	CityData = nullptr;
-	UE_LOG(LogTemp, Display, TEXT("Brix Town: built %s from data: %d blocks, %d buildings, %d openings, %d instances in %d groups"),
-		*City.Name, City.Blocks.Num(), Buildings, Openings, Instances, Parts.Num());
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: built %s from data: %d blocks, %d buildings (%d you can walk into), %d openings, %d instances in %d groups"),
+		*City.Name, City.Blocks.Num(), Buildings, Hollow, Openings, Instances, Parts.Num());
 }
 
 // A block's street furniture (its 'props'), as the slice draws it (play.js prop(), dressing.js prop()): boxes in the
