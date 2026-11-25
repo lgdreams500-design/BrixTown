@@ -286,11 +286,11 @@ the game menu's Money page in its painted-sign look. To see the bank in a test s
 `-BrixCounter=bank "-BrixLife=open,current;open,savings;move,p:current,p:savings,1000;loan,5000,3"` (ops as
 economy.check_script() writes them, arguments by commas).
 
-## Sound (SND-001 to SND-004, SND-007, SND-009 to SND-013, SND-017, SND-019 to SND-021)
+## Sound (SND-001 to SND-007, SND-009 to SND-017, SND-019 to SND-021)
 The slice makes its sounds live with Web Audio (`Prototype/play/sound.js`, from `World/rules/sound.json`); the Unreal
 build plays recordings of those same sounds. `Tools/unreal/sound_values.py` runs sound.js itself in headless Edge (over
 its DevTools socket) and renders its own sound-making functions into an OfflineAudioContext: `Game/Data/sounds/*.wav`
-(mono, 16-bit, 22,050 Hz; 98 sounds, 2.2 MB, in Git LFS; the music and the rewards as Ogg Vorbis, made by the engine's own encoder through the `BrixEncodeOgg` commandlet, so build the editor before running the script) and `index.json` (each one's length, whether it loops, its
+(mono, 16-bit, 22,050 Hz; 229 sounds, 2.9 MB, in Git LFS; the music and the rewards as Ogg Vorbis, made by the engine's own encoder through the `BrixEncodeOgg` commandlet, so build the editor before running the script) and `index.json` (each one's length, whether it loops, its
 level). Loops are cross-faded end into start. Run the script again after changing sound.js or sound.json. At run time
 `ABrixSound` reads the WAVs (no editor import) and plays each through a procedural sound wave, as the talk's voices are
 played; a loop refills itself when the engine asks for more. What is heard, where and how loud is BrixWorld's port of
@@ -324,9 +324,24 @@ Music (SND-010 to SND-012): eight bars of each of the score's four moods and eac
 swing, pop and calm), recorded at the music bus's level, each a loop eased to its level as the slice's bands fade: the
 score by the time of day, under a talk and under nearer music; the nearest open café or shop and the market's busker on
 market days, from its door within its reach, muffled from the street and clear inside; the car radio's music stations,
-R while driving (`-BrixRadio=<k>` in a test shot). The music is eight bars of the slice's endless band, so it repeats;
-the podcasts (SND-014) and the radio's caption are not brought over yet. The slice has no sound for the weather, so there
-is none here either.
+R while driving (`-BrixRadio=<k>` in a test shot), its name shown a moment under the picture. The music is eight bars of
+the slice's endless band, so it repeats. The slice has no sound for the weather, so there is none here either.
+Podcasts (SND-014): the radio's two talk shows come after its music stations. Where a show is follows the world clock as
+the slice's does (`BrixPodcastAt`, the same part and caption as sound.js podcast() at 420 moments in
+`SND014_the_radio_has_podcasts`): its intro chime, then each line said by its host in wordless syllables in their own
+pitch, through the radio's small speaker, over the show's bed, with the show, episode and line as a caption.
+What people do and say (SND-006, SND-015, SND-016; `FBrixPeopleTalk`, the rest of sound.js people()): the nearest eight
+busy residents now and then make the sound of what they are doing (cutlery and cups, the espresso machine and till,
+bags, coins, pages, typing, hammering, shears, deliveries, the stamp at the bank, snoring for some, shuffling while
+waiting, the swings, slide, seesaw, sandpit and climbing frame: 24 recordings, three of each); sellers and children on
+the slide call out; people standing or sitting together at leisure or work (not in quiet acts such as reading) take turns
+to talk, a phrase that falls to an end or rises to a question, with now and then a laugh (children more often), the five
+nearest groups heard; where six or more are gathered a crowd hums and syllables rise from it; a passer-by sometimes says
+hello as the player walks by; a resident who dodges the player's car shouts it (CITY-071), voiced from their shout's
+mouth shapes. Each syllable is a recording of the slice's voice for its mouth shape at the nearest of four pitches (120
+to 340 Hz) and two lengths, pitched the rest of the way, from where the speaker stands; each resident's pitch is the
+slice's (`BrixVoiceHz`, children higher, elders lower). The horn: F while driving (`-BrixHorn` in a test shot). A test shot
+logs the syllables said.
 
 ## Shops, cafés and the market stall (ECO-005, ECO-010, ECO-011, PROP-008, UI-020, UI-021; ADR-0044)
 At the door of a shop or café (or inside it) B opens its counter, as in the slice: what it sells at today's price (its
@@ -460,6 +475,10 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.SND007_outside_is_muffled_indoors` | SND-007 |
 | `BrixTown.World.SND010_the_score_changes_through_the_day` | SND-010, SND-011, SND-012 |
 | `BrixTown.World.SND019_coins_ring_as_the_slice_rings_them` | SND-019, SND-020 |
+| `BrixTown.World.SND014_the_radio_has_podcasts` | SND-014 |
+| `BrixTown.World.SND015_what_people_do_makes_a_sound` | SND-015 |
+| `BrixTown.World.SND016_talk_is_turns_and_quiet_places_stay_quiet` | SND-006, SND-016, CITY-071 |
+| `BrixTown.World.SND016_each_resident_speaks_in_their_own_pitch` | SND-016, SND-017 |
 | `BrixTown.World.QST001_quests_run_as_the_python_does` | QST-001 to QST-007 |
 | `BrixTown.World.QST009_achievements_are_earned_as_python_says` | QST-009 |
 | `BrixTown.World.SND019_money_coming_in_is_shown_as_python_says` | SND-019, SND-020 |

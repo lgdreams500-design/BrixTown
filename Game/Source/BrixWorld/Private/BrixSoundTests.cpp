@@ -44,6 +44,9 @@ namespace
 		O->TryGetStringField(TEXT("role"), Role);
 		P.bChild = Role == TEXT("child");
 		O->TryGetStringField(TEXT("kind"), P.LotKind);   // null: on no lot
+		O->TryGetStringField(TEXT("act"), P.Act);
+		P.Role = Role;
+		O->TryGetStringField(TEXT("shout"), P.Shout);    // null: no shout
 		return P;
 	}
 }
@@ -371,7 +374,7 @@ bool FSND019_RewardsRingAsTheSlice::RunTest(const FString&)
 // The music (SND-010 to SND-012): the score's mood follows the clock (morning from 05:00 ... night, and night again before
 // 05:00), and goes under a talk and under nearer music; a café plays in its hours within its reach, clear inside it, the
 // nearer of two wins; the market's busker only on market days (Wednesday and Saturday); the radio steps through its music
-// stations and back to off.
+// stations (and the podcasts) and back to off.
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSND010_TheMusicAsTheSlice, "BrixTown.World.SND010_the_score_changes_through_the_day",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
 bool FSND010_TheMusicAsTheSlice::RunTest(const FString&)
@@ -415,7 +418,7 @@ bool FSND010_TheMusicAsTheSlice::RunTest(const FString&)
 	int32 S = 0, Music = 0;
 	TArray<int32> Seen;
 	do { S = BrixNextStation(R, S); Seen.Add(S); } while (S != 0 && Seen.Num() < 20);
-	for (int32 k : Seen) if (k > 0) { ++Music; TestFalse(TEXT("a music station"), R.Radio[k - 1].Style.IsEmpty()); }
+	for (int32 k : Seen) if (k > 0 && !R.Radio[k - 1].Style.IsEmpty()) ++Music;   // and the podcasts (SND014_the_radio_has_podcasts)
 	TestTrue(TEXT("at least three stations, and back to off"), Music >= 3 && Seen.Last() == 0);
 	return true;
 }
@@ -436,6 +439,210 @@ bool FSND007_OutsideIsMuffledIndoors::RunTest(const FString&)
 	A.Frame(R, 1380, 6, 20, false, false, FVector2D::ZeroVector, {}, {}, .02, Rng, E);
 	TestTrue(TEXT("out of doors: crickets, no room"), A.Room == 0 && A.Crickets == R.CricketsGain);
 	TestEqual(TEXT("a step indoors is on wood"), BrixStepSurface(true, TEXT("")), FString(TEXT("wood")));
+	return true;
+}
+
+// People's voices (SND-016, SND-017): sound.js hashOf() for a range of numbers, and voiceHz() for residents of four roles
+// (children higher, elders lower, the rest in the voices' range): the same pitch for the same resident, to a millionth.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSND016_VoicesAsTheSlice, "BrixTown.World.SND016_each_resident_speaks_in_their_own_pitch",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FSND016_VoicesAsTheSlice::RunTest(const FString&)
+{
+	FBrixSoundRules R;
+	if (!LoadRules(*this, R)) return false;
+	const TSharedPtr<FJsonObject> V = LoadValues(*this);
+	if (!V) return false;
+	const TSharedPtr<FJsonObject> C = V->GetObjectField(TEXT("cases")), W = V->GetObjectField(TEXT("trace"));
+	int32 Wrong = 0;
+	const TArray<TSharedPtr<FJsonValue>>& Hc = C->GetArrayField(TEXT("hashes")), &Hw = W->GetArrayField(TEXT("hash"));
+	for (int32 k = 0; k < Hc.Num(); ++k) if (!FMath::IsNearlyEqual(BrixHashOf((int64)Hc[k]->AsNumber()), Hw[k]->AsNumber(), 2e-6) && ++Wrong <= 3) AddError(FString::Printf(TEXT("hashOf(%d)"), (int32)Hc[k]->AsNumber()));
+	const TArray<TSharedPtr<FJsonValue>>& Vc = C->GetArrayField(TEXT("voices")), &Vw = W->GetArrayField(TEXT("voice"));
+	for (int32 k = 0; k < Vc.Num(); ++k)
+	{
+		const int32 I = (int32)Vc[k]->AsArray()[0]->AsNumber();
+		const FString Role = Vc[k]->AsArray()[1]->AsString();
+		if (!FMath::IsNearlyEqual(BrixVoiceHz(R, I, Role), Vw[k]->AsNumber(), 2e-5) && ++Wrong <= 6) AddError(FString::Printf(TEXT("voiceHz(%d, %s): sound.js %g, the port %g"), I, *Role, Vw[k]->AsNumber(), BrixVoiceHz(R, I, Role)));
+	}
+	TestEqual(TEXT("pitches unlike sound.js's"), Wrong, 0);
+	TestTrue(TEXT("a child's voice is higher than an elder's"), BrixVoiceHz(R, 5, TEXT("child")) > BrixVoiceHz(R, 5, TEXT("elder")));
+	// a line voiced (voice()): every syllable at the same time, pitch, shape and length as sound.js
+	FBrixSpeech Sp;
+	FBrixDialogue Dl;
+	FString Error;
+	if (!TestTrue(TEXT("the talk rules load"), LoadBrixTalk(FromProject(TEXT("../World/rules")), FromProject(TEXT("Data/talk.json")), Sp, Dl, Error))) return false;
+	const TArray<TSharedPtr<FJsonValue>>& Lc = C->GetArrayField(TEXT("lines")), &Lw = W->GetArrayField(TEXT("lines"));
+	int32 Syl = 0;
+	for (int32 k = 0; k < Lc.Num(); ++k)
+	{
+		const TArray<TSharedPtr<FJsonValue>>& A = Lc[k]->AsArray();
+		TArray<FBrixSyllable> Got;
+		BrixVoiceLine(R, Sp.Speak(A[0]->AsString()), .02, A[1]->AsNumber(), A[2]->AsNumber(), A[3]->AsNumber(), Got);
+		const TArray<TSharedPtr<FJsonValue>>& Want = Lw[k]->AsArray();
+		bool bSame = Want.Num() == Got.Num();
+		for (int32 j = 0; bSame && j < Want.Num(); ++j)
+		{
+			const TArray<TSharedPtr<FJsonValue>>& E = Want[j]->AsArray();
+			bSame = FMath::IsNearlyEqual(Got[j].At, E[0]->AsNumber(), 2e-6) && FMath::IsNearlyEqual(Got[j].Hz, E[1]->AsNumber(), 2e-5) && Got[j].Shape == E[2]->AsString()
+				&& FMath::IsNearlyEqual(Got[j].Len, E[3]->AsNumber(), 2e-6) && FMath::IsNearlyEqual(Got[j].Gain, E[4]->AsNumber(), 2e-6);
+		}
+		Syl += Got.Num();
+		if (!bSame) AddError(FString::Printf(TEXT("\"%s\": sound.js voices %d syllables, the port %d"), *A[0]->AsString(), Want.Num(), Got.Num()));
+	}
+	AddInfo(FString::Printf(TEXT("%d pitches, %d syllables of %d lines"), Vc.Num(), Syl, Lc.Num()));
+	return true;
+}
+
+// Who talks together (SND-006, SND-016): a group of three eating, two reading (a quiet act: no chatter), a chain of four
+// waiting (one group, each within reach of the next), a pair lying down (silent), six pairs further off (only the five
+// nearest groups are heard), a walker passing, and a resident who shouts at the player's car twice. Every frame the same
+// groups talk, as many murmur, as many are gathered, the crowd hums as loud, and the shouts are voiced at the same
+// moments in the same voice, as in sound.js people().
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSND016_TalkAsTheSlice, "BrixTown.World.SND016_talk_is_turns_and_quiet_places_stay_quiet",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FSND016_TalkAsTheSlice::RunTest(const FString&)
+{
+	FBrixSoundRules R;
+	if (!LoadRules(*this, R)) return false;
+	const TSharedPtr<FJsonObject> V = LoadValues(*this);
+	if (!V) return false;
+	FBrixSpeech Sp;
+	FBrixDialogue Dl;
+	FString Error;
+	if (!TestTrue(TEXT("the talk rules load"), LoadBrixTalk(FromProject(TEXT("../World/rules")), FromProject(TEXT("Data/talk.json")), Sp, Dl, Error))) return false;
+	const TArray<TSharedPtr<FJsonValue>>& Frames = V->GetObjectField(TEXT("cases"))->GetArrayField(TEXT("groups"));
+	const TArray<TSharedPtr<FJsonValue>>& Want = V->GetObjectField(TEXT("trace"))->GetArrayField(TEXT("groups"));
+	FBrixPeopleTalk T;
+	FRandomStream Rng(11);
+	int32 Wrong = 0, Shouts = 0, MaxChat = 0;
+	for (int32 f = 0; f < Frames.Num(); ++f)
+	{
+		const TSharedPtr<FJsonObject> F = Frames[f]->AsObject();
+		TArray<FBrixHeardPerson> People;
+		for (const TSharedPtr<FJsonValue>& P : F->GetArrayField(TEXT("residents"))) People.Add(Person(P->AsObject()));
+		TArray<FBrixSoundEvent> Sounds;
+		TArray<FBrixVoiceOut> Voices;
+		T.Frame(R, People, FVector2D::ZeroVector, F->GetNumberField(TEXT("t")), F->GetNumberField(TEXT("dt")), false, &Sp, Rng, Sounds, Voices);
+		const TSharedPtr<FJsonObject> W = Want[f]->AsObject();
+		TArray<const FBrixVoiceOut*> Shout;
+		for (const FBrixVoiceOut& Vo : Voices) if (Vo.Far == 40) Shout.Add(&Vo);
+		const TArray<TSharedPtr<FJsonValue>>& Ws = W->GetArrayField(TEXT("shouts"));
+		bool bSame = T.Chat == (int32)W->GetNumberField(TEXT("chat")) && T.Murmur == (int32)W->GetNumberField(TEXT("murmur")) && T.Crowd == (int32)W->GetNumberField(TEXT("crowd"))
+			&& FMath::IsNearlyEqual(T.CrowdBed, W->GetNumberField(TEXT("bed")), 2e-6) && Shout.Num() == Ws.Num();
+		for (int32 k = 0; bSame && k < Ws.Num(); ++k)
+		{
+			const TArray<TSharedPtr<FJsonValue>>& E = Ws[k]->AsArray();
+			bSame = Shout[k]->Syllables.Num() > 0 && FMath::IsNearlyEqual(Shout[k]->Syllables[0].Gain, E[1]->AsNumber(), 1e-6)
+				&& FMath::IsNearlyEqual(BrixVoiceHz(R, 140, TEXT("commuter")) * 1.2, E[0]->AsNumber(), 2e-5);
+		}
+		Shouts += Shout.Num();
+		MaxChat = FMath::Max(MaxChat, T.Chat);
+		if (!bSame && ++Wrong <= 5)
+			AddError(FString::Printf(TEXT("frame %d: sound.js %d groups, %d murmuring, %d gathered, %d shouts; the port %d, %d, %d, %d"), f, (int32)W->GetNumberField(TEXT("chat")),
+				(int32)W->GetNumberField(TEXT("murmur")), (int32)W->GetNumberField(TEXT("crowd")), Ws.Num(), T.Chat, T.Murmur, T.Crowd, Shout.Num()));
+	}
+	AddInfo(FString::Printf(TEXT("%d frames: up to %d groups talking, %d shouts"), Frames.Num(), MaxChat, Shouts));
+	TestTrue(TEXT("the groups are capped and the shout comes twice"), MaxChat == R.ChatGroups && Shouts == 2);
+	TestEqual(TEXT("frames that differ from sound.js"), Wrong, 0);
+	return true;
+}
+
+// What people do (SND-015): ten minutes of residents at rest near the listener, each doing something with a sound (a café
+// worker, a seller, someone eating, two asleep, a child on the slide, a reader, a maker, a clerk and a courier, one more
+// out of reach). The port makes the same sounds for the same residents as sound.js people() (only the eight nearest busy
+// ones are heard; only some sleepers snore, by their hash), each about as often, and the seller and the child call out.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSND015_DoingsAsTheSlice, "BrixTown.World.SND015_what_people_do_makes_a_sound",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FSND015_DoingsAsTheSlice::RunTest(const FString&)
+{
+	FBrixSoundRules R;
+	if (!LoadRules(*this, R)) return false;
+	const TSharedPtr<FJsonObject> V = LoadValues(*this);
+	if (!V) return false;
+	const TSharedPtr<FJsonObject> Acts = V->GetObjectField(TEXT("cases"))->GetObjectField(TEXT("acts"));
+	const TSharedPtr<FJsonObject> Want = V->GetObjectField(TEXT("trace"))->GetObjectField(TEXT("acts"));
+	TArray<FBrixHeardPerson> People;
+	for (const TSharedPtr<FJsonValue>& P : Acts->GetArrayField(TEXT("residents"))) People.Add(Person(P->AsObject()));
+	const double Dt = Acts->GetNumberField(TEXT("dt"));
+	FBrixPeopleTalk T;
+	FRandomStream Rng(5);
+	TMap<FString, int32> Got;
+	int32 Calls = 0;
+	for (int32 f = 0; f < (int32)Acts->GetNumberField(TEXT("frames")); ++f)
+	{
+		TArray<FBrixSoundEvent> Sounds;
+		TArray<FBrixVoiceOut> Voices;
+		T.Frame(R, People, FVector2D::ZeroVector, 1000 + f * Dt, Dt, false, nullptr, Rng, Sounds, Voices);
+		for (const FBrixSoundEvent& E : Sounds)
+			for (const FBrixHeardPerson& P : People) if (P.Pos == E.Pos) Got.FindOrAdd(FString::FromInt(P.Id) + TEXT("/") + E.Sound.Mid(5))++;
+		for (const FBrixVoiceOut& Vo : Voices) if (Vo.Syllables.Num() && FMath::IsNearlyEqual(Vo.Syllables[0].Gain, R.CallGain)) ++Calls;
+	}
+	TMap<FString, int32> Js;
+	int32 JsCalls = 0;
+	for (const auto& KV : Want->Values)
+	{
+		if (FString(KV.Key) == TEXT("calls")) { JsCalls = (int32)KV.Value->AsNumber(); continue; }
+		for (const auto& S : KV.Value->AsObject()->Values) Js.Add(FString(KV.Key) + TEXT("/") + FString(S.Key), (int32)S.Value->AsNumber());
+	}
+	TArray<FString> Keys;
+	Js.GetKeys(Keys);
+	for (const auto& KV : Got) Keys.AddUnique(KV.Key);
+	Keys.Sort();
+	for (const FString& K : Keys)
+	{
+		const int32 A = Js.FindRef(K), B = Got.FindRef(K);
+		AddInfo(FString::Printf(TEXT("%s: sound.js %d, the port %d"), *K, A, B));
+		TestTrue(TEXT("made by both, about as often: ") + K, A > 0 && B > 0 && FMath::Abs(A - B) <= FMath::Max(6, (int32)(.25 * A)));
+	}
+	TestTrue(FString::Printf(TEXT("calls: sound.js %d, the port %d"), JsCalls, Calls), JsCalls > 0 && FMath::Abs(JsCalls - Calls) <= FMath::Max(6, (int32)(.25 * JsCalls)));
+	TestTrue(TEXT("seven residents make sounds, and the snore is one sleeper's only"), Keys.Num() >= 8 && Js.Contains(TEXT("16/snore")) && !Js.Contains(TEXT("4/snore")));
+	return true;
+}
+
+// Podcasts on the radio (SND-014): for both shows, at moments through the day, the same part is on air as sound.js
+// podcast() puts there (by the world clock), with the same caption, the same host's voice and the same point in the line.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSND014_PodcastsAsTheSlice, "BrixTown.World.SND014_the_radio_has_podcasts",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FSND014_PodcastsAsTheSlice::RunTest(const FString&)
+{
+	FBrixSoundRules R;
+	if (!LoadRules(*this, R)) return false;
+	const TSharedPtr<FJsonObject> V = LoadValues(*this);
+	if (!V) return false;
+	FBrixSpeech Sp;
+	FBrixDialogue Dl;
+	FString Error;
+	if (!TestTrue(TEXT("the talk rules load"), LoadBrixTalk(FromProject(TEXT("../World/rules")), FromProject(TEXT("Data/talk.json")), Sp, Dl, Error))) return false;
+	FString Cal;
+	FFileHelper::LoadFileToString(Cal, *FromProject(TEXT("../World/rules/calendar.json")));
+	TSharedPtr<FJsonObject> CO;
+	FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Cal), CO);
+	const double Pace = CO.IsValid() ? CO->GetObjectField(TEXT("calendar"))->GetNumberField(TEXT("real_seconds_per_minute")) : 10;
+	const TArray<TSharedPtr<FJsonValue>>& Cases = V->GetObjectField(TEXT("cases"))->GetArrayField(TEXT("podcasts"));
+	const TArray<TSharedPtr<FJsonValue>>& Want = V->GetObjectField(TEXT("trace"))->GetArrayField(TEXT("podcasts"));
+	int32 Wrong = 0, Lines = 0;
+	for (int32 k = 0; k < Cases.Num(); ++k)
+	{
+		const FString Show = Cases[k]->AsArray()[0]->AsString();
+		const double M = Cases[k]->AsArray()[1]->AsNumber();
+		const FBrixOnAir A = BrixPodcastAt(R, Sp, Show, M, Pace);
+		const TSharedPtr<FJsonObject> W = Want[k]->AsObject();
+		const TArray<TSharedPtr<FJsonValue>>& Cap = W->GetArrayField(TEXT("caption"));
+		bool bSame = A.Key == W->GetStringField(TEXT("key")) && A.Head == Cap[0]->AsString() && A.Text == Cap[1]->AsString();
+		const TArray<TSharedPtr<FJsonValue>>* Said = nullptr;
+		if (W->TryGetArrayField(TEXT("said"), Said))
+		{
+			++Lines;
+			bSame = bSame && !A.bIntro && FMath::IsNearlyEqual(A.Pitch, (*Said)[0]->AsNumber(), 1e-6) && FMath::IsNearlyEqual(R.PodVoiceGain, (*Said)[1]->AsNumber(), 1e-6)
+				&& FMath::IsNearlyEqual(A.From, (*Said)[2]->AsNumber(), 2e-5) && A.Line.Seq.Num() == (int32)(*Said)[3]->AsNumber();
+		}
+		if (!bSame && ++Wrong <= 5) AddError(FString::Printf(TEXT("%s at %.2f: sound.js %s \"%s\", the port %s \"%s\""), *Show, M, *W->GetStringField(TEXT("key")), *Cap[1]->AsString(), *A.Key, *A.Text));
+	}
+	AddInfo(FString::Printf(TEXT("%d moments, %d of them a host speaking"), Cases.Num(), Lines));
+	TestTrue(TEXT("hosts speak and the intros play"), Lines > Cases.Num() / 2 && Lines < Cases.Num());
+	TestEqual(TEXT("moments unlike sound.js's"), Wrong, 0);
+	int32 S = 0, Pods = 0;
+	do { S = BrixNextStation(R, S); if (S > 0 && !R.Radio[S - 1].Podcast.IsEmpty()) ++Pods; } while (S != 0);
+	TestEqual(TEXT("the radio steps through both podcasts"), Pods, R.Shows.Num());
 	return true;
 }
 
@@ -492,6 +699,15 @@ bool FSND009_EverySoundIsRecorded::RunTest(const FString&)
 	}
 	for (int32 k = 0; k <= R.TopStep; ++k) TestTrue(TEXT("a coin taken, note ") + FString::FromInt(k), Clips.Contains(FString::Printf(TEXT("reward_coin_take_%d"), k)));
 	for (int32 k = 0; k < R.InterestCoins; ++k) TestTrue(TEXT("an interest coin ") + FString::FromInt(k), Clips.Contains(FString::Printf(TEXT("reward_interest_coin_%d"), k)));
+	// what people do and say (SND-015, SND-016), the podcasts' intro, the horn
+	for (const FBrixSoundRules::FActivity& A : R.Activities) if (!A.Sound.IsEmpty()) TestTrue(TEXT("a doing: ") + A.Sound, Clips.Contains(TEXT("pact_") + A.Sound + TEXT("_0")));
+	TArray<double> SylHz, SylLen;
+	LoadBrixSyllableIndex(FPaths::Combine(Dir, TEXT("index.json")), SylHz, SylLen);
+	TestTrue(TEXT("syllables at several pitches and lengths"), SylHz.Num() >= 2 && SylLen.Num() >= 1);
+	for (const FString& Sh : R.VoiceShapes) for (double Hz : SylHz) for (double Len : SylLen)
+		TestTrue(TEXT("a syllable: ") + Sh, Clips.Contains(FString::Printf(TEXT("syl_%s_%d_%d"), *Sh, FMath::RoundToInt(Hz), FMath::RoundToInt(Len * 100))));
+	for (const TCHAR* N : { TEXT("crowd_bed"), TEXT("car_horn") }) TestTrue(FString(TEXT("a loop: ")) + N, Clips.Contains(N) && Clips[N].bLoop);
+	TestTrue(TEXT("the podcasts' intro"), Clips.Contains(TEXT("podcast_intro")));
 	AddInfo(FString::Printf(TEXT("%d recordings, %.1f s in all"), Clips.Num(), Seconds));
 	// a WAV that is not one is refused
 	TArray<uint8> Junk, Pcm;

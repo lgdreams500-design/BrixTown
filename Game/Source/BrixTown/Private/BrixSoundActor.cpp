@@ -11,6 +11,13 @@
 #include "Interfaces/IAudioFormat.h"
 #include "BrixPeople.h"
 #include "BrixTalkActor.h"
+#include "Engine/Engine.h"
+#include "Engine/GameViewportClient.h"
+#include "Styling/CoreStyle.h"
+#include "Widgets/Layout/SBorder.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/SBoxPanel.h"
+#include "Widgets/Text/STextBlock.h"
 #include "AudioDevice.h"
 #include "GameFramework/PlayerController.h"
 #include "Misc/CommandLine.h"
@@ -129,7 +136,19 @@ void ABrixSound::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, ABrixP
 			GetWorldTimerManager().SetTimer(B, [this]() { SetOn(!bOn); }, Mode->ShotDelaySeconds * .7f, false);
 		}
 	if (Day) ChildRole = Day->Roles.IndexOfByKey(FString(TEXT("child")));
+	LoadBrixSyllableIndex(FPaths::Combine(Dir, TEXT("index.json")), SylHz, SylLen);
+	{
+		FBrixDialogue Unused;
+		FString E2;
+		bSpeech = LoadBrixTalk(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/rules"))),
+			FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/talk.json"))), Speech, Unused, E2);
+		if (!bSpeech) UE_LOG(LogTemp, Warning, TEXT("Brix Town: shouts and podcasts unvoiced (%s)"), *E2);
+	}
+	CrowdL = MakeLoop(TEXT("crowd_bed"), false, false, Rules.Voice);
+	HornL = MakeLoop(TEXT("car_horn"), false, false, Rules.Action);
+	BuildCaption();
 	FParse::Value(FCommandLine::Get(), TEXT("BrixRadio="), Station);   // for a test shot: the car radio already on that station
+	bTestHorn = FParse::Param(FCommandLine::Get(), TEXT("BrixHorn"));
 	Station = FMath::Clamp(Station, 0, Rules.Radio.Num());
 	Placed = NewObject<USoundAttenuation>(this);
 	Placed->Attenuation.bAttenuate = false;   // the slice's own fall-off (BrixHear) is in each sound's volume
@@ -396,9 +415,15 @@ void ABrixSound::Music(double Dt, const FVector2D& Here)
 				Station = BrixNextStation(Rules, Station);
 				Act(TEXT("radio"));
 				UE_LOG(LogTemp, Display, TEXT("Brix Town: radio: %s"), Station ? *Rules.Radio[Station - 1].Name : TEXT("off"));
+				CaptionUntil = 0;
 			}
 	if (bDriving && Station > 0)
-		if (FTune* T = Tunes.Find(Rules.Radio[Station - 1].Style)) { T->Target = 1; T->Tc = .3; T->Pos = Here; Near = 1; }
+	{
+		const FBrixSoundRules::FStation& St = Rules.Radio[Station - 1];
+		const FBrixSoundRules::FShow* Show = Rules.Shows.Find(St.Podcast);
+		// a music station; or a podcast's bed under its hosts (sound.js: the bed at bed_gain x 2)
+		if (FTune* T = Tunes.Find(Show ? Show->Bed : St.Style)) { T->Target = Show ? Rules.PodBedGain * 2 : 1; T->Tc = .3; T->Pos = Here; Near = 1; }
+	}
 	// the score by the time of day, under a talk and under nearer music
 	const FString Mood = BrixMoodAt(Rules, Minute);
 	if (Mood != WasMood) { UE_LOG(LogTemp, Display, TEXT("Brix Town: the score: %s"), *Mood); WasMood = Mood; }
@@ -409,6 +434,111 @@ void ABrixSound::Music(double Dt, const FVector2D& Here)
 		T.Level += (T.Target - T.Level) * (1 - FMath::Exp(-Dt / FMath::Max(.05, T.Tc)));
 		SetLoop(T.Loop, T.Level * T.Hear, 1, T.Pos, T.Lowpass);
 	}
+}
+
+// Says a speaker's syllables, each at its moment (from Now), from where they stand or through the car radio.
+void ABrixSound::Say(const FBrixVoiceOut& V, double Now, bool bRadio)
+{
+	for (const FBrixSyllable& S : V.Syllables) Pending.Add({ Now + S.At, V.Pos, V.Far, S, bRadio });
+}
+
+// One syllable: the recording of its mouth shape at the nearest pitch and length, pitched the rest of the way.
+void ABrixSound::PlaySyllable(const FPendingSyllable& P, const FVector2D& Here)
+{
+	if (!SylHz.Num() || !SylLen.Num()) return;
+	double Hz = SylHz[0], Len = SylLen[0];
+	for (double H : SylHz) if (FMath::Abs(FMath::Loge(H / P.S.Hz)) < FMath::Abs(FMath::Loge(Hz / P.S.Hz))) Hz = H;
+	for (double L : SylLen) if (FMath::Abs(L - P.S.Len) < FMath::Abs(Len - P.S.Len)) Len = L;
+	const TSharedPtr<FClip> C = Clips.FindRef(FString::Printf(TEXT("syl_%s_%d_%d"), *P.S.Shape, FMath::RoundToInt(Hz), FMath::RoundToInt(Len * 100)));
+	if (!C) return;
+	double Vol = Rules.Master * Rules.Voice * P.S.Gain / C->Scale;
+	if (!P.bRadio)
+	{
+		const double G = BrixHear(Rules, Here, 0, P.Pos, P.Far).X;
+		if (G < .004) return;
+		Vol *= G;
+	}
+	const float Pitch = (float)FMath::Clamp(P.S.Hz / Hz, .4, 2.0);
+	USoundWaveProcedural* W = MakeWave(C);
+	UAudioComponent* A = P.bRadio ? UGameplayStatics::SpawnSound2D(this, W, (float)Vol, Pitch) : UGameplayStatics::SpawnSoundAtLocation(this, W, ToWorld(P.Pos, SourceUp + .6f), FRotator::ZeroRotator, (float)Vol, Pitch, 0.f, Placed);
+	if (A && P.bRadio)   // through the radio's small speaker (sound.js: 160 Hz high-pass, 4.6 kHz low-pass)
+	{
+		A->SetHighPassFilterEnabled(true); A->SetHighPassFilterFrequency(160.f);
+		A->SetLowPassFilterEnabled(true); A->SetLowPassFilterFrequency(4600.f);
+	}
+	++Spoken;
+}
+
+void ABrixSound::OffAir()
+{
+	Pending.RemoveAll([](const FPendingSyllable& P) { return P.bRadio; });
+	OnAir.Reset();
+}
+
+// The car radio's caption and podcasts (SND-012, SND-014; sound.js podcast(), caption()): a music station's name shows a
+// moment as it is tuned; a podcast's show and episode stay, with the host's line as they say it (or "…" in its intro).
+void ABrixSound::Radio(double Now, bool bDriving)
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	const FBrixSoundRules::FStation* St = bDriving && Station > 0 ? &Rules.Radio[Station - 1] : nullptr;
+	const FBrixSoundRules::FShow* Show = St ? Rules.Shows.Find(St->Podcast) : nullptr;
+	if (Show && Mode && bSpeech)
+	{
+		const FBrixOnAir A = BrixPodcastAt(Rules, Speech, St->Podcast, Mode->ClockMinute(), Pace);
+		const FString Key = St->Podcast + TEXT("/") + A.Key;
+		if (Key != OnAir)
+		{
+			OffAir();
+			OnAir = Key;
+			if (!A.bIntro)
+			{
+				FBrixVoiceOut V;
+				BrixVoiceLine(Rules, A.Line, .02, A.Pitch, Rules.PodVoiceGain, A.From, V.Syllables);
+				Say(V, Now, true);
+			}
+			else if (A.From < .6) { FBrixSoundEvent E; E.Sound = TEXT("podcast_intro"); E.bHere = true; Play(E, Rules.Voice); }
+			UE_LOG(LogTemp, Display, TEXT("Brix Town: on the radio: %s / %s"), *A.Head, *A.Text);
+		}
+		CaptionHead = TEXT("Radio \u00b7 ") + A.Head;
+		CaptionText = A.Text;
+		CaptionUntil = 0;
+		return;
+	}
+	if (!OnAir.IsEmpty()) OffAir();
+	if (St)   // a music station: its name a moment (2.5 s)
+	{
+		if (CaptionUntil == 0) CaptionUntil = Now + 2.5;
+		CaptionHead = Now < CaptionUntil ? TEXT("Radio \u00b7 ") + St->Name : FString();
+		CaptionText.Reset();
+	}
+	else { CaptionHead.Reset(); CaptionText.Reset(); CaptionUntil = 0; }
+}
+
+void ABrixSound::BuildCaption()
+{
+	if (!GEngine || !GEngine->GameViewport || CaptionBox) return;
+	const FSlateFontInfo Head = FCoreStyle::GetDefaultFontStyle("Regular", 9), Body = FCoreStyle::GetDefaultFontStyle("Regular", 12);
+	SAssignNew(CaptionBox, SBox)
+		.HAlign(HAlign_Center).VAlign(VAlign_Bottom).Padding(FMargin(0, 0, 0, 150))
+		.Visibility_Lambda([this]() { return CaptionHead.IsEmpty() ? EVisibility::Collapsed : EVisibility::HitTestInvisible; })
+		[
+			SNew(SBox).MaxDesiredWidth(640)
+			[
+				SNew(SBorder).BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush")).BorderBackgroundColor(FLinearColor(FColor(23, 23, 28, 184))).Padding(FMargin(16, 8))
+				[
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center)
+					[ SNew(STextBlock).Font(Head).ColorAndOpacity(FLinearColor(FColor(167, 159, 140))).Text_Lambda([this]() { return FText::FromString(CaptionHead.ToUpper()); }) ]
+					+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center).Padding(0, 2, 0, 0)
+					[
+						SNew(STextBlock).Font(Body).ColorAndOpacity(FLinearColor(FColor(217, 207, 182))).AutoWrapText(true).Justification(ETextJustify::Center)
+						.Visibility_Lambda([this]() { return CaptionText.IsEmpty() ? EVisibility::Collapsed : EVisibility::HitTestInvisible; })
+						.Text_Lambda([this]() { return FText::FromString(CaptionText); })
+					]
+				]
+			]
+		];
+	GEngine->GameViewport->AddViewportWidgetContent(CaptionBox.ToSharedRef(), 40);
 }
 
 void ABrixSound::Tick(float Dt)
@@ -449,9 +579,26 @@ void ABrixSound::Tick(float Dt)
 			P.Phase = H.Phase;
 			P.bChild = ChildRole >= 0 && Day->Role.IsValidIndex(H.Resident) && Day->Role[H.Resident] == ChildRole;
 			P.LotKind = LotKindAt(H.Pos);
+			P.Shout = H.Shout;   // at the player's car (CITY-071)
+			P.bRun = H.bRun;
 			Heard.Add(P);
 		}
 		PeopleSounds.Frame(Rules, Heard, Here, Now, Events);
+		// what they do and say (SND-006, SND-015, SND-016): the day's act and role of each
+		const double Minute = Mode ? Mode->ClockMinute() : 720;
+		for (int32 k = 0; k < Heard.Num(); ++k)
+		{
+			FBrixHeardPerson& P = Heard[k];
+			if (Day->Role.IsValidIndex(P.Id) && Day->Roles.IsValidIndex(Day->Role[P.Id])) P.Role = Day->Roles[Day->Role[P.Id]];
+			const TOptional<FBrixWhere> Wh = Day->Where(P.Id, Minute);
+			if (Wh && Day->Acts.IsValidIndex(Wh->Act)) P.Act = Day->Acts[Wh->Act];
+		}
+		const ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+		const bool bGreet = !bDriving && Me && Me->GetVelocity().Size2D() > 10 && !(Mode && Mode->Talk && Mode->Talk->IsTalking());
+		TArray<FBrixVoiceOut> Voices;
+		PeopleTalk.Frame(Rules, Heard, Here, Now, Dt, bGreet, bSpeech ? &Speech : nullptr, Rng, Events, Voices);
+		for (const FBrixVoiceOut& V : Voices) Say(V, Now, false);
+		SetLoop(CrowdL, PeopleTalk.CrowdBed, 1, Here);
 	}
 	// engines and the trams (SND-002, SND-004, SND-009)
 	Vehicles(Now, Here);
@@ -464,9 +611,21 @@ void ABrixSound::Tick(float Dt)
 	SetLoop(FountainL, Ambience.Fountain.bOn ? Ambience.Fountain.Gain * BrixHear(Rules, Here, 0, Ambience.Fountain.Pos, Ambience.Fountain.Far).X : 0, 1, Ambience.Fountain.Pos);
 	Interactions();
 	Music(Dt, Here);
+	Radio(Now, Mode && Mode->Cars && Mode->Cars->Driving().K >= 0 && !Mode->Cars->Driving().bRide);
+	// the horn (SND-009): F held while driving
+	{
+		const APlayerController* PC = GetWorld()->GetFirstPlayerController();
+		const bool bInCar = Mode && Mode->Cars && Mode->Cars->Driving().K >= 0 && !Mode->Cars->Driving().bRide;   // no horn from a bus seat
+		SetLoop(HornL, bInCar && (bTestHorn || (PC && PC->IsInputKeyDown(EKeys::F))) ? Rules.HornGain : 0, 1, Here);
+	}
+	// the syllables due now
+	for (int32 k = 0; k < Pending.Num();)
+		if (Pending[k].At <= Now) { PlaySyllable(Pending[k], Here); Pending.RemoveAtSwap(k); }
+		else ++k;
 	if (const APlayerController* PC = GetWorld()->GetFirstPlayerController())
 		if (PC->WasInputKeyJustPressed(EKeys::N)) SetOn(!bOn);   // all sound off and on (SND-013; the slice's N)
 	for (const FBrixSoundEvent& E : Events) Play(E, E.Sound.StartsWith(TEXT("act_")) || E.Sound == TEXT("car_bump") ? Rules.Action : Rules.World, E.Sound == TEXT("bird"));
+	Played.FindOrAdd(TEXT("(people) groups talking")) = FMath::Max(Played.FindRef(TEXT("(people) groups talking")), PeopleTalk.Chat);
 	if (Now > LogAt) { LogAt = Now + 10; LogPlayed(TEXT("so far")); }
 }
 
@@ -483,10 +642,13 @@ void ABrixSound::LogPlayed(const TCHAR* When)
 	S.Reset();
 	for (const FString& N : Names) S += FString::Printf(TEXT("%s%s %.1f s"), S.IsEmpty() ? TEXT("") : TEXT(", "), *N, LoopTime[N]);
 	if (S.Len()) UE_LOG(LogTemp, Display, TEXT("Brix Town: loops heard %s: %s"), When, *S);
+	if (Spoken) UE_LOG(LogTemp, Display, TEXT("Brix Town: syllables said %s: %d"), When, Spoken);
 }
 
 void ABrixSound::EndPlay(const EEndPlayReason::Type Reason)
 {
 	LogPlayed(TEXT("in all"));
+	if (CaptionBox && GEngine && GEngine->GameViewport) GEngine->GameViewport->RemoveViewportWidgetContent(CaptionBox.ToSharedRef());
+	CaptionBox.Reset();
 	Super::EndPlay(Reason);
 }
