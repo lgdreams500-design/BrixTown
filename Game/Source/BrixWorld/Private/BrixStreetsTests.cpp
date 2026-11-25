@@ -203,6 +203,7 @@ bool FWLD032_ChildrenPlay::RunTest(const FString&)
 			if (P.Set != TEXT("dress")) continue;
 			TArray<FBrixShape> Got;
 			const double G = GroundAt(B, P).Here;
+			if (P.Kind == TEXT("noticeboard") || P.Kind == TEXT("kiosk")) Play.AddPiece(P, G);   // (where readers turn to)
 			if (!BrixDressShapes(P, B, G, C.Today, Got) || !(P.Kind == TEXT("playground") || P.Kind == TEXT("swing") || P.Kind == TEXT("slide") || P.Kind == TEXT("seesaw") || P.Kind == TEXT("sandpit") || P.Kind == TEXT("climber"))) continue;
 			++Pieces;
 			const TSharedPtr<FJsonObject>* W = nullptr;
@@ -264,6 +265,17 @@ bool FWLD032_ChildrenPlay::RunTest(const FString&)
 		Play.KeepOut(x, z);
 		if ((FMath::Abs(x - R[2]->AsNumber()) > 1e-9 || FMath::Abs(z - R[3]->AsNumber()) > 1e-9) && ++Bad <= 12) AddError(FString::Printf(TEXT("kept out to %.3f, %.3f; the slice %.3f, %.3f"), x, z, R[2]->AsNumber(), R[3]->AsNumber()));
 	}
+	// readers at a notice board or the kiosk face it, as apply() turns them (F-MAP-DRESS 2)
+	int32 Turned = 0;
+	for (const TSharedPtr<FJsonValue>& K : C.Values->GetArrayField(TEXT("read")))
+	{
+		const TArray<TSharedPtr<FJsonValue>>& R = K->AsArray();
+		double Yaw = 99;
+		Play.FaceBoard(R[0]->AsNumber(), R[1]->AsNumber(), Yaw);
+		Turned += Yaw != 99;
+		if (FMath::Abs(Yaw - R[3]->AsNumber()) > 1e-9 && ++Bad <= 12) AddError(FString::Printf(TEXT("a reader at %.1f, %.1f faces %.4f; the slice %.4f"), R[0]->AsNumber(), R[1]->AsNumber(), Yaw, R[3]->AsNumber()));
+	}
+	TestTrue(TEXT("readers turn to the boards and kiosks"), Turned > 20);
 	TestEqual(TEXT("played otherwise than in the slice"), Bad, 0);
 	return true;
 }

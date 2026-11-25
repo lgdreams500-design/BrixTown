@@ -433,8 +433,8 @@ pieces and arches; `Tools/unreal/streets_values.py`); a name's width on a board 
 measures it on a canvas. The player's car breaks them as crash.json says (CITY-072): notice boards and timetables topple
 (as "board"), and the café tables and the shops' crates on the pavement (the kit's pieces), the crates by the arches and
 the planters, bins, racks, post and telephone boxes and bollards break as before; the log says how many of each kind there
-are. Statues, the bandstand, the kiosk, wells, sundials, pergolas and the boards on walls do not break. Not yet: residents
-turning to the notice board they read or the kiosk they buy a paper at (dressing.js apply()), the letters of a broken
+are. Statues, the bandstand, the kiosk, wells, sundials, pergolas and the boards on walls do not break. Residents reading the notices or
+buying a paper turn to the nearest board or kiosk within 6 m, as dressing.js apply() turns them (checked in WLD032). Not yet: the letters of a broken
 timetable staying up, the lettering's own font. At High 29.8 to 44.1 fps in Old Town's streets and the market at 11:00
 (noisy: other sessions were running Unreal); Lumen says its surface cache is oversubscribed by a quarter in Old Town (seen
 here; not checked against main).
