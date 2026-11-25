@@ -10,7 +10,7 @@ public class BrixTown : ModuleRules
 		// file's as soon as a new file changes which files are joined
 		bUseUnity = false;
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "ProceduralMeshComponent", "BrixWorld" });
-		PrivateDependencyModuleNames.AddRange(new string[] { "RenderCore", "RHI", "Slate", "SlateCore", "VorbisAudioDecoder", "MeshDescription", "StaticMeshDescription" });   // the talk box, and the voices' Ogg Vorbis
+		PrivateDependencyModuleNames.AddRange(new string[] { "RenderCore", "RHI", "Slate", "SlateCore", "Json", "VorbisAudioDecoder", "MeshDescription", "StaticMeshDescription" });   // the talk box, and the voices' Ogg Vorbis
 		PrivateIncludePathModuleNames.AddRange(new string[] { "TargetPlatform" });   // FSoundQualityInfo   // the frame's thread and GPU times, logged with a test shot
 	}
 }

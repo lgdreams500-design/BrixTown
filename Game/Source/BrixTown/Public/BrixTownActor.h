@@ -11,6 +11,7 @@ struct FBrixBlock;
 struct FBrixPattern;
 struct FBrixSurface;
 struct FBrixInsides;
+class FJsonObject;
 struct FBrixShape;
 struct FBrixStreetsToday;
 class UInstancedStaticMeshComponent;
@@ -68,6 +69,7 @@ public:
 	// Everything a car can break, by the rules' kinds (CITY-072): filled while building when Breakable is set
 	TArray<FBrixBreakable> Breakables;
 	TSet<FString> Breakable;            // the prop kinds to keep handles for (set before Build)
+	void Repaint(int32 Lot, const TSharedPtr<FJsonObject>& Design);   // BUILD-005: a building drawn again from a design (none: its own)
 	void SetBroken(int32 b, bool bBroken);   // hide it (its solids and its light too) or show it again
 	// wet paving (WLD-037): M_Greybox's WetDark, WetSheen and Puddles on every surface (Tools/unreal/greybox_wet.py); 0 dry
 	void SetWet(float Dark, float Sheen, float Puddles, float Ripples, float Snow = 0.f);   // Snow: lying snow (WLD-070)
@@ -234,6 +236,11 @@ private:
 	int32 Hollow = 0;
 	TMap<UInstancedStaticMeshComponent*, FPending> Pending;   // instances gathered per group, added in one go
 	FBrixBreakable* Wrapping = nullptr; // the breakable being built: Add() notes its instances (smash.js wrap())
+	TArray<FBrixBreakable::FPart>* Recording = nullptr;   // the building being built: Add() notes its instances (to repaint it)
+	TMap<int32, TArray<FBrixBreakable::FPart>> LotParts;   // each building's instances, by lot
+	TMap<int32, TSharedPtr<FJsonObject>> DesignOver;       // a building drawn from a design other than inside.json's (a remodel)
+	const FBrixCity* KeptCity = nullptr;                   // the city built, for drawing a building again
+	int32 FlushPending();
 	void Wrap(const FString& Kind, const FVector2D& Pos, float Ground, TFunctionRef<void()> Fn);
 	const FBrixCity* CityData = nullptr;
 	int32 Buildings = 0, Openings = 0;

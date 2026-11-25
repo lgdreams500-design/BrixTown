@@ -8,6 +8,13 @@
 #include "BrixGameMode.h"
 #include "BrixLook.h"
 #include "BrixMapActor.h"
+#include "BrixInside.h"
+#include "BrixTownActor.h"
+#include "Camera/CameraActor.h"
+#include "Dom/JsonObject.h"
+#include "Dom/JsonValue.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 #include "BrixTalkActor.h"
 #include "BrixThingWidget.h"
 #include "BrixUnits.h"
@@ -86,7 +93,7 @@ void ABrixLife::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay)
 		UE_LOG(LogTemp, Error, TEXT("Brix Town: no money or shops (%s)"), *Error);
 		return;
 	}
-	for (const FBrixBlock& B : City.Blocks) for (const FBrixLot& L : B.Lots) { LotAngle.Add(L.AngleDeg); LotDoor.Add(L.Door); }
+	for (const FBrixBlock& B : City.Blocks) for (const FBrixLot& L : B.Lots) { LotAngle.Add(L.AngleDeg); LotDoor.Add(L.Door); DesignLots.Add(BrixBuilder::LotOf(L, B)); }
 	E = MakeUnique<FBrixEconomy>(Data, Lots);
 	if (!LoadBrixBuyMenu(Data.Json, BuyMenu, Error)) UE_LOG(LogTemp, Warning, TEXT("Brix Town: buy menus without pictures (%s)"), *Error);
 	double D0 = 0, M0 = 0;
@@ -198,6 +205,8 @@ void ABrixLife::SaveTo(FBrixSaveGame& S) const
 	S.Econ = BrixEconomySave(*E);
 	if (Q) S.Quests = BrixQuestsSave(*Q);
 	if (Est) S.Estate = Est->Save();   // PROP-021: the market comes back as it was
+	S.Remodels = MakeShared<FJsonObject>();   // QST-008: the buildings remodelled, each its design as paid for (life.js remodels)
+	for (const auto& R : RemodelsDone) S.Remodels->SetObjectField(R.Key, R.Value);
 	S.Feats = Feats;
 }
 
@@ -222,8 +231,17 @@ bool ABrixLife::LoadFrom(const FBrixSaveGame& S, FString& OutWhy)   // life.js l
 	if (!Panel.IsEmpty()) Close();
 	Q = MoveTemp(NewQ);   // the quests and the market hold the economy: the old ones go first
 	Est = MoveTemp(NewM);
+	for (const auto& R : RemodelsDone) if (const int32* n = E->LotIndex.Find(R.Key)) ApplyRemodel(*n, nullptr);   // the old game's remodels undone
 	E = MoveTemp(NewE);
 	RentEdit.Reset();
+	RemodelsDone.Reset();
+	if (S.Remodels)
+		for (const auto& KV : S.Remodels->Values)
+			if (KV.Value.IsValid() && KV.Value->Type == EJson::Object)
+			{
+				RemodelsDone.Add(FString(KV.Key), KV.Value->AsObject());
+				if (const int32* n = E->LotIndex.Find(FString(KV.Key))) ApplyRemodel(*n, KV.Value->AsObject());
+			}
 	Feats = S.Feats;
 	Offered.Reset();
 	PendingCounter = -1;
@@ -335,10 +353,12 @@ void ABrixLife::BuildUI()
 		]
 	];
 	SAssignNew(PanelRoot, SBox)
-		.HAlign(HAlign_Center).VAlign(VAlign_Center).Padding(FMargin(16, 40))
+		.HAlign(HAlign_Center).VAlign(VAlign_Center)
+		// the building designer's card stands to the left, the building in view beside it (BUILD-020)
+		.Padding_Lambda([this]() { return Panel == TEXT("remodel") ? FMargin(16, 24, FMath::Max(16.f, (float)(ViewportPx.X / FMath::Max(PxScale, .1f)) - RemodelPanelPx - 32.f), 24) : FMargin(16, 40); })
 		.Visibility_Lambda([this]() { return !Panel.IsEmpty() ? EVisibility::Visible : EVisibility::Collapsed; })
 		[
-			SNew(SBox).WidthOverride_Lambda([this]() { return Panel == TEXT("shop") ? (float)BuyMenu.WidePanelPx : 620.f; })
+			SNew(SBox).WidthOverride_Lambda([this]() { return Panel == TEXT("shop") ? (float)BuyMenu.WidePanelPx : Panel == TEXT("remodel") ? RemodelPanelPx : 620.f; })
 			[
 				BrixLook::Card(SAssignNew(PanelBody, SBox), FMargin(22, 18, 22, 14), BrixLook::Stone(), 18.f)
 			]
@@ -392,6 +412,7 @@ void ABrixLife::Close()
 {
 	if (bMenu) { CloseMenu(); return; }
 	if (!IsOpen()) return;
+	if (Panel == TEXT("remodel")) EndRemodel();
 	Panel.Reset();
 	LiveGrid.Reset();
 	if (PanelBody) PanelBody->SetContent(SNullWidget::NullWidget);
@@ -455,6 +476,13 @@ void ABrixLife::Draw()
 		Hint = FString(TEXT("← → ↑ ↓  choose    Enter  ")) + (Side == TEXT("sell") ? TEXT("sell") : TEXT("buy")) + TEXT("    Esc  close");
 	}
 	else if (Panel == TEXT("quests")) { Title = TEXT("Quests"); Sub = FString::Printf(TEXT("Day %d · J"), E->Day + 1); }
+	else if (Panel == TEXT("remodel"))
+	{
+		bool bWhole = false; TArray<int32> Fl;
+		Holding(PanelLot, bWhole, Fl);
+		Title = Lots[PanelLot].Name;
+		Sub = bWhole ? TEXT("Remodel · Esc to leave it as it was") : TEXT("Your rooms · Esc to leave them as they were");
+	}
 	else if (Panel == TEXT("agent") && Est) { Title = EstateRules.Company(Est->Office[Lots[PanelLot].Id])->Name; Sub = TEXT("Estate agents · buy, sell and rent anywhere in town"); }
 	else if (Panel == TEXT("stall")) { Title = Lots[PanelLot].Name; Sub = TEXT("Your market stall · residents shop here ") + UiHhmm(E->R.StallOpen) + TEXT(" to ") + UiHhmm(E->R.StallClose); }
 	else { Title = TEXT("Money"); Sub = PlayerName + TEXT(" · I"); }
@@ -464,6 +492,7 @@ void ABrixLife::Draw()
 	else if (Panel == TEXT("shop")) ShopPanel(Body);
 	else if (Panel == TEXT("stall")) StallPanel(Body);
 	else if (Panel == TEXT("quests")) QuestsPanel(Body);
+	else if (Panel == TEXT("remodel")) RemodelPanel(Body);
 	else if (Panel == TEXT("agent") && Est) EstatePanel(Body, Est->Office[Lots[PanelLot].Id], -1);
 	else WalletPanel(Body);
 	PanelBody->SetContent(
@@ -738,6 +767,7 @@ void ABrixLife::EstatePanel(TSharedRef<SVerticalBox> Body, const FString& Agent,
 			TSharedRef<SHorizontalBox> B = UiRow();
 			B->AddSlot().FillWidth(1).VAlign(VAlign_Center)[ SNew(SVerticalBox) + SVerticalBox::Slot().AutoHeight()[ UiText(Lots[n].Name, 15, UiCream, true) ]
 				+ SVerticalBox::Slot().AutoHeight()[ UiText(Est->OwnsWhole(n) ? FString(TEXT("The whole building")) : TEXT("Your rooms on ") + Fl, 12, UiDim) ] ];
+			UiAdd(B, UiButton(Est->OwnsWhole(n) ? TEXT("Remodel") : TEXT("Redecorate your rooms"), [this, n]() { OpenRemodel(n); }, DesignOf(n).IsValid()));
 			UiAdd(B, UiButton(TEXT("Show on map"), [this, n]() { ShowOnMap(n); }, true, true));
 			Slot(B, 4);
 		}
@@ -837,6 +867,319 @@ void ABrixLife::EstatePanel(TSharedRef<SVerticalBox> Body, const FString& Agent,
 	}
 }
 
+// ---- the building designer: remodel (BUILD-004 to BUILD-007, BUILD-016 to BUILD-020; life.js remodelPanel())
+// From Properties (Remodel, or Redecorate your rooms) at a building you own. Every choice comes from BrixBuilder::Options()
+// (the kit and the district's palette); each is shown on the building at once (the town draws it again from the draft) with
+// its price; Pay checks it as builder.py does and pays through the ledger. Outside needs the whole building; inside, the
+// storeys of the units you own. A remodel paid for is there at once (F-BLD-CONSTRUCT level 0: instant) and kept in the save.
+
+namespace
+{
+	FLinearColor Swatch(const FVector3f& C)   // life.js css(): the colour a little lighter, as the slice shows a swatch
+	{
+		return FLinearColor::FromSRGBColor(FColor((uint8)FMath::RoundToInt(FMath::Min(1.f, C.X * 1.25f) * 255), (uint8)FMath::RoundToInt(FMath::Min(1.f, C.Y * 1.25f) * 255), (uint8)FMath::RoundToInt(FMath::Min(1.f, C.Z * 1.25f) * 255)));
+	}
+	TSharedRef<SWidget> SwatchButton(const FBrixDesignOption& O, bool bOn, TFunction<void()> OnClick)
+	{
+		if (!O.Rgb) return UiButton(O.Name, OnClick, true, !bOn);   // a word (With shutters, Ashlar, ...)
+		return SNew(SButton).ButtonStyle(&FCoreStyle::Get().GetWidgetStyle<FButtonStyle>("NoBorder")).ToolTipText(FText::FromString(O.Name)).ContentPadding(0)
+			.OnClicked_Lambda([OnClick]() { OnClick(); return FReply::Handled(); })
+			[
+				SNew(SBorder).BorderImage(BrixLook::Round(bOn ? UiLantern : UiRule, 7.f)).Padding(bOn ? 3.f : 2.f)
+				[ SNew(SBorder).BorderImage(BrixLook::Round(Swatch(*O.Rgb), 5.f)).Padding(0)[ SNew(SBox).WidthOverride(26.f).HeightOverride(26.f) ] ]
+			];
+	}
+	TSharedPtr<FJsonValue> JStr(const FString& S) { return MakeShared<FJsonValueString>(S); }
+}
+
+bool ABrixLife::Holding(int32 Lot, bool& bWhole, TArray<int32>& Floors) const
+{
+	bWhole = false;
+	Floors.Reset();
+	if (!Est || !Est->ByLot.Contains(Lot)) return false;
+	const TArray<int32>& Ix = Est->ByLot[Lot];
+	int32 Mine = 0;
+	for (const int32 i : Ix) if (Est->IsMine(i)) { ++Mine; for (const int32 f : Est->Units[i].Floors) Floors.AddUnique(f); }
+	Floors.Sort();
+	bWhole = Mine == Ix.Num();
+	return Mine > 0;
+}
+
+TSharedPtr<FJsonObject> ABrixLife::DesignOf(int32 Lot) const
+{
+	if (!Lots.IsValidIndex(Lot)) return nullptr;
+	if (const TSharedPtr<FJsonObject>* R = RemodelsDone.Find(Lots[Lot].Id)) return *R;
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Mode || !Mode->InsidesData() || !Mode->InsidesData()->Lots.IsValidIndex(Lot) || !Mode->InsidesData()->Lots[Lot].IsSet()) return nullptr;
+	return Mode->InsidesData()->Lots[Lot]->Design;
+}
+
+void ABrixLife::ApplyRemodel(int32 Lot, const TSharedPtr<FJsonObject>& Design)
+{
+	ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Mode) return;
+	if (Mode->Town()) Mode->Town()->Repaint(Lot, Design);
+	if (Mode->InsidesData() && Mode->InsidesData()->Lots.IsValidIndex(Lot) && Mode->InsidesData()->Lots[Lot].IsSet() && (Design || Mode->InsidesData()->Lots[Lot]->Design))   // the rooms' furnishing reads the finishes there
+	{
+		FBrixInside& In = Mode->InsidesData()->Lots[Lot].GetValue();
+		const FBrixBuiltLook B = BrixBuilder::Built(Mode->InsidesData()->Builder, Design ? Design : In.Design);
+		if (B.WallColour.Num() == In.WallColour.Num()) { In.WallColour = B.WallColour; In.FloorColour = B.FloorColour; In.FloorFinish = B.FloorFinish; }
+	}
+}
+
+bool ABrixLife::OpenRemodel(int32 Lot)
+{
+	if (!E || !Est || !Lots.IsValidIndex(Lot)) return false;
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Mode || !Mode->InsidesData() || !Mode->InsidesData()->Builder.IsSet() || !DesignLots.IsValidIndex(Lot)) { Toast(TEXT("The building designer's rules are not in this game's data.")); return false; }
+	bool bWhole = false;
+	TArray<int32> Floors;
+	if (!Holding(Lot, bWhole, Floors)) { Toast(TEXT("You own nothing in ") + Lots[Lot].Name + TEXT(".")); return false; }
+	const TSharedPtr<FJsonObject> D = DesignOf(Lot);
+	if (!D) { Toast(Lots[Lot].Name + TEXT(" has no design yet.")); return false; }
+	if (bMenu) CloseMenu();
+	DraftBase = D;
+	Draft = D;
+	DraftUndo.Reset();
+	DesignTab = bWhole ? TEXT("outside") : TEXT("inside");
+	DesignFacade = TEXT("*");
+	DesignStorey = Floors.Num() ? Floors[0] : 0;
+	ViewTurn = 0;
+	Open(TEXT("remodel"), Lot);
+	DesignView();
+	return Panel == TEXT("remodel");
+}
+
+void ABrixLife::RemodelSet(const FBrixDesignChanges& Changes)
+{
+	DraftUndo.Add(Draft);
+	Draft = BrixBuilder::Remodel(Draft, Changes);
+	ApplyRemodel(PanelLot, Draft);
+	Msg.Reset();
+	Draw();
+}
+
+void ABrixLife::EndRemodel()
+{
+	if (PanelLot >= 0 && Draft != DraftBase) ApplyRemodel(PanelLot, RemodelsDone.Contains(Lots[PanelLot].Id) ? DraftBase : TSharedPtr<FJsonObject>());   // not paid for: as it was
+	Draft.Reset();
+	DraftBase.Reset();
+	DraftUndo.Reset();
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (PC && PC->GetPawn()) PC->SetViewTargetWithBlend(PC->GetPawn(), 0.5f);
+	if (ViewCam) { ViewCam->Destroy(); ViewCam = nullptr; }
+}
+
+void ABrixLife::DesignView()   // BUILD-020 (life.js startView(), frame3()): over the building, three-quarters from its front
+{
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (!PC || !Draft || !Lots.IsValidIndex(PanelLot)) return;
+	const FBrixEconLot& L = Lots[PanelLot];
+	const TSharedPtr<FJsonObject> Sh = Draft->GetObjectField(TEXT("shell"));
+	FString Front;
+	Sh->TryGetStringField(TEXT("side"), Front);
+	const double Hgt = Sh->GetNumberField(TEXT("height"));
+	const FVector2D Out = Front == TEXT("n") ? FVector2D(0, -1) : Front == TEXT("s") ? FVector2D(0, 1) : Front == TEXT("w") ? FVector2D(-1, 0) : FVector2D(1, 0);
+	const double A = FMath::Atan2(Out.Y, Out.X) + FMath::DegreesToRadians(DesignTurnDeg + 45.0 * ViewTurn);
+	const FVector2D Size = L.Max - L.Min;
+	const bool bInside = DesignTab == TEXT("inside");
+	const double Look = bInside ? 3.0 * DesignStorey + 1.0 : Hgt * 0.5;
+	const double Dist = (FMath::Max(Size.X, Size.Y) * (bInside ? 1.1 : 1.35) + (bInside ? 2.0 : Hgt)) * 1.15;
+	const double P = FMath::DegreesToRadians(bInside ? DesignPitchDeg + 20.0 : (double)DesignPitchDeg);
+	const FVector Target(L.Centre().X * CmPerM, L.Centre().Y * CmPerM, (Look + 0.3) * CmPerM);
+	const FVector Eye = Target + FVector(FMath::Cos(A) * FMath::Cos(P), FMath::Sin(A) * FMath::Cos(P), FMath::Sin(P)) * Dist * CmPerM;
+	if (!ViewCam) ViewCam = GetWorld()->SpawnActor<ACameraActor>();
+	if (!ViewCam) return;
+	const FRotator Rot = (Target - Eye).Rotation();
+	const FVector Left = -FRotationMatrix(Rot).GetUnitAxis(EAxis::Y) * Dist * CmPerM * 0.22;   // the card is on the left: the building to the right of the middle
+	ViewCam->SetActorLocationAndRotation(Eye + Left, Rot);
+	if (PC->GetViewTarget() != ViewCam) PC->SetViewTargetWithBlend(ViewCam, 0.6f);
+}
+
+bool ABrixLife::RemodelPay(FString& Said)
+{
+	const FBrixDesignLot& L = DesignLots[PanelLot];
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	const FBrixBuilderRules& R = Mode->InsidesData()->Builder;
+	bool bWhole = false;
+	TArray<int32> Floors;
+	Holding(PanelLot, bWhole, Floors);
+	TArray<FBrixCostLine> Lines;
+	const int64 Total = BrixBuilder::Cost(R, L, DraftBase, Draft, Lines);
+	const TArray<FString> Probs = BrixBuilder::Check(R, L, DraftBase, Draft, bWhole, Floors, E->Funds());   // as the server will (BUILD-006)
+	if (Probs.Num()) { E->Why = Probs[0]; return false; }
+	if (Total > 0 && !E->Spend(Total, TEXT("sys:builders"), TEXT("Remodel: ") + Lots[PanelLot].Name)) return false;
+	RemodelsDone.Add(Lots[PanelLot].Id, Draft);
+	DraftBase = Draft;
+	DraftUndo.Reset();
+	ApplyRemodel(PanelLot, Draft);
+	Said = TEXT("Done: ") + Lots[PanelLot].Name + (Total ? TEXT(", for ") + Format(Total) : FString()) + TEXT(".");
+	return true;
+}
+
+void ABrixLife::RemodelPanel(TSharedRef<SVerticalBox> Body)
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Draft || !Mode || !Mode->InsidesData() || !DesignLots.IsValidIndex(PanelLot)) return;
+	const FBrixBuilderRules& R = Mode->InsidesData()->Builder;
+	const FBrixDesignLot& L = DesignLots[PanelLot];
+	bool bWhole = false;
+	TArray<int32> Mine;
+	Holding(PanelLot, bWhole, Mine);
+	if (bWhole) { Mine.Reset(); for (int32 f = 0; f < L.Floors; ++f) Mine.Add(f); }
+	auto Slot = [&](TSharedRef<SWidget> W, float Top = 6) { Body->AddSlot().AutoHeight().Padding(0, Top, 0, 0)[ W ]; };
+	const TArray<TPair<FString, TArray<FBrixDesignOption>>> Menu0 = BrixBuilder::Options(R, L, DraftBase);
+	auto MenuOf = [&](const FString& Part) -> const TArray<FBrixDesignOption>* { for (const auto& P : Menu0) if (P.Key == Part) return &P.Value; return nullptr; };
+	auto Row = [&](const FString& Label, const TArray<FBrixDesignOption>& Opts, const TSharedPtr<FJsonValue>& Cur, TFunction<FBrixDesignChanges(const FBrixDesignOption&)> Path)
+	{
+		TSharedRef<SWrapBox> W = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(4, 4));
+		for (const FBrixDesignOption& O : Opts)
+		{
+			const FBrixDesignChanges Ch = Path(O);
+			W->AddSlot()[ SwatchButton(O, BrixBuilder::Same(O.Id, Cur), [this, Ch]() { RemodelSet(Ch); }) ];
+		}
+		Slot(SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Top).Padding(0, 6, 10, 0)[ SNew(SBox).WidthOverride(118.f)[ UiText(Label, 13, UiDim) ] ]
+			+ SHorizontalBox::Slot().FillWidth(1)[ W ], 4);
+	};
+	auto At = [](const FString& Path) { return [Path](const FBrixDesignOption& O) { return FBrixDesignChanges{ { Path, O.Id } }; }; };
+	Slot(PurseLine(), 0);
+	TSharedRef<SHorizontalBox> Tabs = UiRow();
+	UiAdd(Tabs, UiButton(TEXT("Outside"), [this]() { DesignTab = TEXT("outside"); DesignView(); Draw(); }, bWhole, DesignTab != TEXT("outside")));
+	UiAdd(Tabs, UiButton(TEXT("Inside"), [this]() { DesignTab = TEXT("inside"); DesignView(); Draw(); }, true, DesignTab != TEXT("inside")));
+	UiAdd(Tabs, UiButton(TEXT("Turn the view"), [this]() { ViewTurn = (ViewTurn + 1) % 8; DesignView(); }, true, true));
+	Slot(Tabs);
+	if (!bWhole) Slot(UiText(TEXT("You own part of this building: the outside needs all of it."), 13, UiDim));
+	const TSharedPtr<FJsonObject> Sh = Draft->GetObjectField(TEXT("shell")), Op = Draft->GetObjectField(TEXT("openings"));
+	FString Front;
+	Sh->TryGetStringField(TEXT("side"), Front);
+	if (DesignTab == TEXT("outside"))
+	{
+		TSharedRef<SWrapBox> Fs = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+		Fs->AddSlot().VAlign(VAlign_Center)[ UiText(TEXT("Walls"), 13, UiDim) ];
+		for (const FString F : { FString(TEXT("*")), FString(TEXT("n")), FString(TEXT("s")), FString(TEXT("e")), FString(TEXT("w")) })
+		{
+			FString Name = F == TEXT("*") ? FString(TEXT("All sides")) : BrixBuilder::FacadeName(F);
+			if (F != TEXT("*")) Name = Name.Left(1).ToUpper() + Name.Mid(1) + (F == Front ? TEXT(" (front)") : TEXT(""));
+			Fs->AddSlot()[ UiButton(Name, [this, F]() { DesignFacade = F; Draw(); }, true, DesignFacade != F) ];
+		}
+		Slot(Fs);
+		const FString Fc = DesignFacade == TEXT("*") ? Front : DesignFacade, Wp = TEXT("walls.") + DesignFacade;
+		const TSharedPtr<FJsonObject> Fa = Draft->GetObjectField(TEXT("walls"))->GetObjectField(Fc);
+		if (const auto* Pl = MenuOf(TEXT("walls.*.plaster"))) Row(TEXT("Plaster"), *Pl, Fa->TryGetField(TEXT("plaster")), At(Wp + TEXT(".plaster")));
+		const TSharedPtr<FJsonObject> St = Fa->GetObjectField(TEXT("stone"));
+		if (const auto* Ss = MenuOf(TEXT("walls.*.stone")))
+		{
+			Row(TEXT("Stone or brick"), *Ss, St->TryGetField(TEXT("pattern")), [Wp](const FBrixDesignOption& O)
+			{
+				TSharedPtr<FJsonValue> First = MakeShared<FJsonValueNull>();
+				for (const auto& C : O.Colors) if (C.IsValid() && !C->IsNull()) { First = C; break; }
+				TSharedPtr<FJsonObject> S = MakeShared<FJsonObject>();
+				S->SetField(TEXT("pattern"), O.Id);
+				S->SetField(TEXT("color"), First);
+				FBrixDesignChanges Ch = { { Wp + TEXT(".stone"), MakeShared<FJsonValueObject>(S) } };
+				if (!O.bBrickToEaves) Ch.Add({ Wp + TEXT(".brick_to_eaves"), MakeShared<FJsonValueBoolean>(false) });
+				return Ch;
+			});
+			FString Pat;
+			St->TryGetStringField(TEXT("pattern"), Pat);
+			if (const FBrixDesignOption* So = Ss->FindByPredicate([&](const FBrixDesignOption& O) { return O.Id->Type == EJson::String && O.Id->AsString() == Pat; }))
+			{
+				if (So->Colors.Num() > 1)
+				{
+					TArray<FBrixDesignOption> Cs;
+					const TArray<TSharedPtr<FJsonValue>> PatCols = R.Patterns->GetArrayField(Pat);
+					for (int32 k = 0; k < So->Colors.Num(); ++k)
+					{
+						FBrixDesignOption C;
+						C.Id = So->Colors[k];
+						C.Name = So->Colors[k]->IsNull() ? FString(TEXT("The town's stone")) : FString::Printf(TEXT("%s %d"), *So->Name, k + 1);
+						C.Rgb = So->Colors[k]->IsNull() || !PatCols.IsValidIndex(k) || PatCols[k]->Type != EJson::Array ? FVector3f(.55f, .52f, .47f)
+							: FVector3f(PatCols[k]->AsArray()[0]->AsNumber(), PatCols[k]->AsArray()[1]->AsNumber(), PatCols[k]->AsArray()[2]->AsNumber());
+						Cs.Add(C);
+					}
+					Row(TEXT("Its colour"), Cs, St->TryGetField(TEXT("color")), At(Wp + TEXT(".stone.color")));
+				}
+				if (So->bBrickToEaves)
+				{
+					FBrixDesignOption Y, N;
+					Y.Id = MakeShared<FJsonValueBoolean>(true); Y.Name = TEXT("Yes");
+					N.Id = MakeShared<FJsonValueBoolean>(false); N.Name = TEXT("No");
+					Row(TEXT("Brick to the eaves"), { Y, N }, Fa->TryGetField(TEXT("brick_to_eaves")), At(Wp + TEXT(".brick_to_eaves")));
+				}
+			}
+		}
+		if (const auto* Rt = MenuOf(TEXT("roof.tiles"))) Row(TEXT("Roof tiles"), *Rt, Draft->GetObjectField(TEXT("roof"))->TryGetField(TEXT("tiles")), At(TEXT("roof.tiles")));
+		if (const auto* Fr = MenuOf(TEXT("openings.frame"))) Row(TEXT("Window frames"), *Fr, Op->TryGetField(TEXT("frame")), At(TEXT("openings.frame")));
+		if (const auto* Su = MenuOf(TEXT("openings.shutters")))
+		{
+			Row(TEXT("Shutters"), *Su, Op->TryGetField(TEXT("shutters")), At(TEXT("openings.shutters")));
+			bool bSh = false;
+			Op->TryGetBoolField(TEXT("shutters"), bSh);
+			if (const auto* Sc = MenuOf(TEXT("openings.shutter_color")); Sc && bSh) Row(TEXT("Shutter colour"), *Sc, Op->TryGetField(TEXT("shutter_color")), At(TEXT("openings.shutter_color")));
+		}
+		const TPair<const TCHAR*, const TCHAR*> Extra[4] = { { TEXT("openings.balcony"), TEXT("Balcony") }, { TEXT("openings.keystones"), TEXT("Keystones") }, { TEXT("ornament.quoins"), TEXT("Corner stones") }, { TEXT("ornament.lantern"), TEXT("Wall lantern") } };
+		for (const auto& X : Extra) if (const auto* Ox = MenuOf(X.Key)) Row(X.Value, *Ox, BrixBuilder::Get(Draft, X.Key), At(X.Key));
+	}
+	else
+	{
+		TSharedRef<SHorizontalBox> Ss = UiRow();
+		UiAdd(Ss, UiText(TEXT("Storey"), 13, UiDim));
+		for (const int32 f : Mine) UiAdd(Ss, UiButton(f == 0 ? FString(TEXT("Ground")) : FString::Printf(TEXT("Floor %d"), f), [this, f]() { DesignStorey = f; DesignView(); Draw(); }, true, DesignStorey != f));
+		Slot(Ss);
+		if (!Mine.Contains(DesignStorey) && Mine.Num()) DesignStorey = Mine[0];
+		const int32 f = DesignStorey;
+		const TSharedPtr<FJsonObject> In = Draft->GetObjectField(TEXT("inside"));
+		auto Put = [this, f](const FString& Key) { return [this, f, Key](const FBrixDesignOption& O)
+		{
+			TArray<TSharedPtr<FJsonValue>> A = Draft->GetObjectField(TEXT("inside"))->GetArrayField(Key);
+			if (A.IsValidIndex(f)) A[f] = O.Id;
+			return FBrixDesignChanges{ { TEXT("inside.") + Key, MakeShared<FJsonValueArray>(A) } };
+		}; };
+		const TArray<TSharedPtr<FJsonValue>> Ws = In->GetArrayField(TEXT("walls")), Fl = In->GetArrayField(TEXT("floors"));
+		if (const auto* Iw = MenuOf(TEXT("inside.walls")))
+		{
+			TArray<FBrixDesignOption> Mixed = *Iw;   // shown as they look inside (the kit's inner_mix)
+			const TSharedPtr<FJsonObject> Mix = R.Kit->GetObjectField(TEXT("inner_mix"));
+			const TArray<TSharedPtr<FJsonValue>>& With = Mix->GetArrayField(TEXT("with"));
+			const float Share = (float)Mix->GetNumberField(TEXT("share"));
+			for (FBrixDesignOption& O : Mixed) if (O.Rgb) O.Rgb = *O.Rgb + (FVector3f(With[0]->AsNumber(), With[1]->AsNumber(), With[2]->AsNumber()) - *O.Rgb) * Share;
+			Row(TEXT("Walls"), Mixed, Ws.IsValidIndex(f) ? Ws[f] : nullptr, Put(TEXT("walls")));
+		}
+		if (const auto* Ifl = MenuOf(TEXT("inside.floors"))) Row(TEXT("Floor"), *Ifl, Fl.IsValidIndex(f) ? Fl[f] : nullptr, Put(TEXT("floors")));
+		Slot(UiText(TEXT("The room plan and the furniture of a storey are not in this build's designer yet."), 12, UiDim));
+	}
+	// the work, its price line by line, and what would stop it (BUILD-005, BUILD-006)
+	TArray<FBrixCostLine> Lines;
+	const int64 Total = BrixBuilder::Cost(R, L, DraftBase, Draft, Lines);
+	TArray<FString> Probs = Draft == DraftBase ? TArray<FString>() : BrixBuilder::Check(R, L, DraftBase, Draft, bWhole, Mine, {});
+	if (Lines.Num() && Total > E->Funds()) Probs.Add(TEXT("it costs ") + Format(Total) + TEXT(" and you have ") + Format(E->Funds()));
+	Slot(UiHeading(TEXT("The work")), 0);
+	if (!Lines.Num()) Slot(UiText(TEXT("Pick something to change: it shows on the building at once. Nothing is paid until you build."), 13, UiDim));
+	for (const FBrixCostLine& Ln : Lines)
+	{
+		TSharedRef<SHorizontalBox> B = UiRow();
+		B->AddSlot().FillWidth(1).VAlign(VAlign_Center)[ UiText(Ln.What, 14) ];
+		const bool bCount = Ln.Qty == FMath::FloorToDouble(Ln.Qty) && !Ln.What.Contains(TEXT("wall"));
+		UiAdd(B, UiText(Ln.Qty == 1 ? FString() : bCount ? FString::Printf(TEXT("× %d"), (int32)Ln.Qty) : FString::Printf(TEXT("%s m²"), *FString::SanitizeFloat(Ln.Qty)), 12, UiDim));
+		UiAdd(B, UiText(Format(Ln.Chips), 14, UiGold));
+		Slot(B, 2);
+	}
+	if (Lines.Num()) { TSharedRef<SHorizontalBox> B = UiRow(); B->AddSlot().FillWidth(1)[ UiText(TEXT("Total"), 14, UiCream, true) ]; UiAdd(B, UiText(Format(Total), 15, UiGold, true)); Slot(B, 4); }
+	if (Probs.Num())
+	{
+		FString P;
+		for (const FString& X : Probs) P += (P.IsEmpty() ? TEXT("") : TEXT(". ")) + X.Left(1).ToUpper() + X.Mid(1);
+		Slot(UiText(P + TEXT("."), 13, UiNeg));
+	}
+	TSharedRef<SHorizontalBox> Bs = UiRow();
+	UiAdd(Bs, UiButton(Lines.Num() ? (Total ? TEXT("Pay ") + Format(Total) + TEXT(" and build") : FString(TEXT("Keep it like this"))) : FString(TEXT("Pay and build")),
+		[this]() { Act([this](FString& S) { return RemodelPay(S); }); }, Lines.Num() > 0 && !Probs.Num()));
+	UiAdd(Bs, UiButton(TEXT("Undo"), [this]() { if (DraftUndo.Num()) { Draft = DraftUndo.Pop(); ApplyRemodel(PanelLot, Draft); Draw(); } }, DraftUndo.Num() > 0, true));
+	UiAdd(Bs, UiButton(TEXT("Start again"), [this]() { DraftUndo.Add(Draft); Draft = DraftBase; ApplyRemodel(PanelLot, Draft); Draw(); }, Draft != DraftBase, true));
+	Slot(Bs, 10);
+}
+
 // ---- for test shots
 
 bool ABrixLife::RunOps(const FString& Ops)
@@ -885,6 +1228,18 @@ bool ABrixLife::RunOps(const FString& Ops)
 				E->Advance((int32)D1, M1);
 			}
 		}
+		// the designer: remodel,<lot id> opens it; set,<path>=<value> (a kit id, true, false, a number or JSON) tries a change; pay builds it
+		else if (A[0] == TEXT("remodel")) bOk = OpenRemodel(E->LotIndex.FindRef(Sv(1), -1));
+		else if (A[0] == TEXT("set") && Panel == TEXT("remodel"))
+		{
+			FString Path, Val;
+			bOk = Sv(1).Split(TEXT("="), &Path, &Val);
+			TSharedPtr<FJsonValue> V;
+			const TSharedRef<TJsonReader<>> Rd = TJsonReaderFactory<>::Create(Val);
+			if (!FJsonSerializer::Deserialize(Rd, V) || !V.IsValid()) V = MakeShared<FJsonValueString>(Val);
+			if (bOk) RemodelSet({ { Path, V } });
+		}
+		else if (A[0] == TEXT("pay") && Panel == TEXT("remodel")) { FString Said; bOk = RemodelPay(Said); Msg = bOk ? Said : TEXT("Refused: ") + E->Why + TEXT("."); Draw(); }
 		else if (A[0] == TEXT("give")) bOk = E->HasAccount(TEXT("current")) && E->L.Post(E->Day, E->Minute, TEXT("Test money"), { { TEXT("sys:start"), -I(1) }, { TEXT("p:current"), I(1) } }, E->Why);
 		else if (Est && (A[0] == TEXT("buy_cheapest") || A[0] == TEXT("rent_cheapest")))
 		{

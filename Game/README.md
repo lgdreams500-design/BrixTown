@@ -29,6 +29,31 @@ The whole town is 15 groups of instances, one per mesh, each instance carrying i
 the owner's laptop at High it runs at 63-66 fps, as fast as the grey-box (ADR-0046). The binaries are lockable in LFS
 (ADR-0002): `git lfs lock <file>` before running the scripts that remake them.
 
+## Buildings from their designs, and the building designer (BUILD-002, BUILD-004 to BUILD-007, BUILD-016 to BUILD-020; F-BLD-DESIGN; ADR-0052)
+Every building is drawn from its design, as the slice draws it: `Game/Data/inside.json` carries each lot's design (`dsg`,
+world.designs()) and the designer's kit, planning rules and fixed run (`builder`); `BrixWorld/BrixBuilder` is builder.js
+(built(), allowed(), problems(), cost(), options(), check()), and `BuildLot` takes from `BrixBuilder::Built()` each
+facade's plaster and stone or brick (to the eaves where the design says), the roof's tiles, the window frames and the
+shutters (or none). The kit's geometry is ADR-0046's; designed houses keep their colourway. At the owner's word
+(2026-11-25) this replaced the random colours Unreal picked before. `BUILD002_every_building_is_built_from_its_design`
+(the inside built from each of the 959 designs is Python's), `BUILD005_remodels_match_the_python` (builder.check_script():
+what each remodel offers, its problems, its cost line by line, the built front and inside, against Python's).
+The remodel designer, as the slice's life.js remodelPanel(): from Properties, Remodel (the whole building) or Redecorate
+your rooms (the storeys of the units you own), the card at the left of the screen and the camera over the building,
+three-quarters from its front (BUILD-020; Turn the view goes round it; the inside tab looks down on the storey). Outside:
+the walls of all sides or one facade (plaster, stone or brick and its colour, brick to the eaves), roof tiles, window
+frames, shutters and their colour, balcony, keystones, corner stones and wall lantern, as builder.options() offers them in
+the district's palette; inside, each storey's walls and floor. Each choice shows on the building at once
+(`ABrixTownActor::Repaint`: its instances folded away and the building built again); the work is priced line by line;
+what would stop it is said (builder.check()); Pay and build pays through the ledger (`sys:builders`) and the remodel is
+there at once (F-BLD-CONSTRUCT level 0, instant); Undo, Start again; Esc leaves it as it was. Remodels are kept in the
+save (`QST008_remodels_are_kept_in_the_save`). To see it in a test shot: `"-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4;remodel,b_9_6_l4;set,walls.*.plaster=peach;set,roof.tiles=slate;set,openings.frame=teal"`
+(and `;pay` to build it). Shots: `Art/StyleTests/unreal_designer_39/`. Not yet: the room plan (BUILD-021 to BUILD-023) and
+furnishing in the designer (FURN-051, FURN-052, FURN-055), the window class's sizes, balconies, keystones, corner stones
+and wall lanterns drawn from the design (offered, priced and kept, but laid by the kit's rules), the awning in the
+design's accent, the cut-open storey (BUILD-020), dragging the view; building new on a plot (BUILD-008: F-MAP-PLOTS is at
+level 0, no plots).
+
 ## Going inside (CITY-013; ADR-0048)
 959 of the 965 enterable buildings can be walked into (all but the furniture outlet's hall and the malls), as the slice
 builds them (play.js building()): the ground storey is hollow behind its kit walls, with a floor in the storey's finish
@@ -205,8 +230,9 @@ midnights: they stay the same in all a save keeps; a new game holds only the sta
 (`-BrixNoSave` plays without saving too); `-BrixSaveAs=<slot>` saves the shot's game there 6 s in, `-BrixLoad=<slot>`
 carries on from a slot at once (with `-BrixMenu=save` to see the page). The property market is in the save (estate.js save(): every unit's owner,
 tenant, rent and residents by unit id, listings, tenancies, mortgages, the indices and history; a save from before it
-opens the market on loading). Not yet in the save: the skateboards owned (CITY-100), remodels and furnishing plans (not in
-this build yet); and a server keeping it (PH2).
+opens the market on loading). Remodels are in the save (life.js remodels: each building's design as paid
+for, drawn again on loading). Not yet in the save: the skateboards owned (CITY-100), room plans and furnishing plans (not
+in this build's designer yet); and a server keeping it (PH2).
 
 ## The wardrobe (CHR-014 to CHR-016; F-CHR-WARDROBE 1, with the owned clothes the owner asked for)
 U (or the menu) opens the Wardrobe page as the slice's life.js does: the page stands to one side, the town is not dimmed,
@@ -769,6 +795,9 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD028_the_street_dressing_is_drawn_as_the_slice_draws_it` | WLD-028, WLD-031, WLD-034 |
 | `BrixTown.World.WLD056_every_tree_is_drawn_as_the_slice_draws_it` | WLD-056 |
 | `BrixTown.World.CITY043_the_road_markings_and_signals_are_drawn_as_the_slice_draws_them` | CITY-043, CITY-045, CITY-091 |
+| `BrixTown.World.BUILD002_every_building_is_built_from_its_design` | BUILD-001, BUILD-002, BUILD-016, BUILD-019 (ADR-0052) |
+| `BrixTown.World.BUILD005_remodels_match_the_python` | BUILD-004 to BUILD-007, BUILD-016 to BUILD-019 |
+| `BrixTown.World.QST008_remodels_are_kept_in_the_save` | QST-008, BUILD-005 |
 | `BrixTown.World.PROP021_the_market_matches_the_python` | PROP-010 to PROP-022, BANK-002, FURN-063 |
 | `BrixTown.World.PROP009_every_building_is_carved_into_owned_units` | PROP-009, PROP-010 |
 | `BrixTown.World.PROP018_the_money_supply_holds_and_a_saved_market_goes_on` | PROP-018, PROP-021, QST-008 |
