@@ -127,12 +127,13 @@ void ABrixWeather::Tick(float DeltaSeconds)
 	const APlayerController* PC = GetWorld()->GetFirstPlayerController();
 	if (!bOn || !Mode || !PC || !PC->PlayerCameraManager) return;
 	Now = BrixWeatherNow(Rules, Wear.Weather, Mode->ClockMinute(), Trying);
-	// the paving wet in the rain, drying after it, rings where the drops land (WLD-037)
-	const float Wet = (float)Now.Wet, Rip = (float)(Now.Rain * Rules.Ripples);
-	if (Town && (FMath::Abs(Wet - LastWet) > .004f || FMath::Abs(Rip - LastRip) > .004f))
+	Snow = BrixSnowNow(Rules, Wear.Weather, Mode->ClockMinute(), Trying);
+	// the paving wet in the rain, drying after it, rings where the drops land (WLD-037); snow lying on what faces up (WLD-070)
+	const float Wet = (float)Now.Wet, Rip = (float)(Now.Rain * Rules.Ripples), Lies = (float)Snow.Lying;
+	if (Town && (FMath::Abs(Wet - LastWet) > .004f || FMath::Abs(Rip - LastRip) > .004f || FMath::Abs(Lies - LastLies) > .004f))
 	{
-		Town->SetWet(Wet * Rules.WetDark, Wet * Rules.WetSheen, Wet * Rules.Puddles, Rip);
-		LastWet = Wet; LastRip = Rip;
+		Town->SetWet(Wet * Rules.WetDark, Wet * Rules.WetSheen, Wet * Rules.Puddles, Rip, Lies);
+		LastWet = Wet; LastRip = Rip; LastLies = Lies;
 	}
 	const FVector Eye = PC->PlayerCameraManager->GetCameraLocation();
 	const float Day = FMath::Clamp(Mode->Daylight, 0.f, 1.f);
@@ -164,7 +165,8 @@ void ABrixWeather::Tick(float DeltaSeconds)
 	// clear at its top and full at its foot, as a falling drop is seen; near the camera they fade, so none is a bar across
 	// the picture; where one lands near by it throws up a small splash
 	const int32 Count = FMath::Clamp(FMath::RoundToInt(Drops.Num() * Now.Rain), 0, Drops.Num());
-	if (Count == 0 || Mode->RoomAt(Eye) != INDEX_NONE) { Rain->SetVisibility(false); return; }
+	const int32 Flakes = FMath::Clamp(FMath::RoundToInt(FMath::Min(MaxFlakes, Drops.Num()) * Snow.Falling), 0, Drops.Num());   // snow (WLD-070)
+	if ((Count == 0 && Flakes == 0) || Mode->RoomAt(Eye) != INDEX_NONE) { Rain->SetVisibility(false); return; }
 	const FVector2D Here(Eye.X / CmPerM, Eye.Y / CmPerM);
 	const double Up = Eye.Z / CmPerM, T = GetWorld()->GetTimeSeconds(), H = FallHeight, Len = Rules.Length * DropLength;
 	const float Glow = .3f + .7f * Day;
@@ -173,13 +175,13 @@ void ABrixWeather::Tick(float DeltaSeconds)
 	TArray<FLinearColor> C;
 	TArray<int32> Tri;
 	const int32 Splashing = FMath::Min(SplashDrops, Count);
-	V.Reserve(Count * 4 + Splashing * 12); N.Reserve(V.Max()); C.Reserve(V.Max()); Tri.Reserve(Count * 6 + Splashing * 18);
+	V.Reserve((Count + Flakes) * 4 + Splashing * 12); N.Reserve(V.Max()); C.Reserve(V.Max()); Tri.Reserve((Count + Flakes) * 6 + Splashing * 18);
 	const FVector Slant = FVector(Rules.Slant, 0, 0);   // the wind leans the drops a little (east)
 	const FVector EyeM = Eye / CmPerM;
-	auto Quad = [&](const FVector& A, const FVector& B, float W, float AlphaA, float AlphaB, float Bri)
+	auto Quad = [&](const FVector& A, const FVector& B, float W, float AlphaA, float AlphaB, float Bri, const FLinearColor& Rgb)
 	{
 		const FVector To = (EyeM - A).GetSafeNormal2D(), Side = FVector(-To.Y, To.X, 0) * (W / 2);
-		const FLinearColor Ca(DropColour.R * Glow * Bri, DropColour.G * Glow * Bri, DropColour.B * Glow * Bri, AlphaA), Cb(Ca.R, Ca.G, Ca.B, AlphaB);
+		const FLinearColor Ca(Rgb.R * Glow * Bri, Rgb.G * Glow * Bri, Rgb.B * Glow * Bri, AlphaA), Cb(Ca.R, Ca.G, Ca.B, AlphaB);
 		const int32 b = V.Num();
 		V.Add((A - Side) * CmPerM); V.Add((A + Side) * CmPerM); V.Add((B + Side) * CmPerM); V.Add((B - Side) * CmPerM);
 		N.Add(To); N.Add(To); N.Add(To); N.Add(To);
@@ -197,7 +199,7 @@ void ABrixWeather::Tick(float DeltaSeconds)
 		const float Near = FMath::SmoothStep(NearDrops, NearDrops + 2.f, D.R), W = DropWidth * (.7f + D.R / 8.f);
 		const double L = Len * D.Len;
 		const FVector Lo(P.X, P.Y, FMath::Max(Bottom, G)), Hi = Lo + (FVector(0, 0, 1) + Slant) * (bFalling ? L : 0.0);
-		Quad(Lo, Hi, W, bFalling ? A0 * Near * D.Bri : 0.f, 0.f, D.Bri);
+		Quad(Lo, Hi, W, bFalling ? A0 * Near * D.Bri : 0.f, 0.f, D.Bri, DropColour);
 		if (k >= Splashing) continue;
 		// the splash: three short jets thrown up and out where it landed, for SplashSeconds
 		const double Since = bRoof ? 1e9 : (G - Bottom) / (Rules.Speed * D.Speed);
@@ -206,7 +208,20 @@ void ABrixWeather::Tick(float DeltaSeconds)
 		const FVector Out = (EyeM - Foot).GetSafeNormal2D(), Across(-Out.Y, Out.X, 0);
 		const double Rise = (.03 + .05 * u) * On, Spread = (.02 + .07 * u) * On;
 		for (const double sd : { -1.0, 0.0, 1.0 })
-			Quad(Foot + Across * (sd * Spread * .3), Foot + Across * (sd * Spread) + FVector(0, 0, Rise * (sd == 0 ? 1.2 : .8)), W * .8f, A0 * 1.6f * On * D.Bri, 0.f, D.Bri * 1.2f);
+			Quad(Foot + Across * (sd * Spread * .3), Foot + Across * (sd * Spread) + FVector(0, 0, Rise * (sd == 0 ? 1.2 : .8)), W * .8f, A0 * 1.6f * On * D.Bri, 0.f, D.Bri * 1.2f, DropColour);
+	}
+	// the snow: flakes falling slowly, each swaying on its own, a small soft square facing the camera; gone where they land
+	const float FA = (float)(Rules.SnowAlpha * (1.5f - .5f * Day));
+	for (int32 k = 0; k < Flakes; ++k)
+	{
+		const FDrop& D = Drops[(k * 7919) % Drops.Num()];   // spread over every ring, not only the nearest
+		const double Sp = Rules.SnowSpeed * (.7 + .5 * D.Speed), Fall = FMath::Fmod(D.Phase * H + T * Sp, H), Bottom = Up + H * .6 - Fall;
+		const double Sw = Rules.SnowSway, sway = T * (.6 + .5 * D.Len) + D.A * 7;
+		const FVector2D P = Here + FVector2D(FMath::Cos(D.A), FMath::Sin(D.A)) * D.R + FVector2D(FMath::Sin(sway), FMath::Cos(sway * .8)) * Sw;
+		if (Bottom < 0 || Roofed(P)) continue;
+		const float Size = (float)(Rules.FlakeSize * (.7 + .6 * D.Bri)), Near = FMath::SmoothStep(NearDrops, NearDrops + 1.5f, D.R);
+		const FVector Lo(P.X, P.Y, Bottom);
+		Quad(Lo, Lo + FVector(0, 0, Size), Size, FA * Near, FA * Near, 1.f, FlakeColour);
 	}
 	static const TArray<FVector2D> NoUV;
 	static const TArray<FProcMeshTangent> NoT;

@@ -1,7 +1,8 @@
 r"""Wet paving for /Game/Greybox/M_Greybox (WLD-037, ADR-0016): in rain the ground darkens, takes a faint sheen and fills
 with puddles that hold the sky, and rings spread where the drops land (greybox_ripples.hlsl: they tilt the surface, so
 the puddles' reflections break up, and catch a little light); walls and everything else out in the rain go a little
-darker. Four parameters, WetDark, WetSheen, Puddles and Ripples, are 0 in the dry; ABrixWeather sets them through ABrixTownActor::SetWet from the clock and
+darker; and snow lies on what faces up (WLD-070, ADR-0051). Five parameters, WetDark, WetSheen, Puddles, Ripples and
+Snow, are 0 in the dry; ABrixWeather sets them through ABrixTownActor::SetWet from the clock and
 World/rules/sky.json "rain" (wet_dark, wet_sheen, puddles, times how wet it is now). The ground is what faces up;
 puddles lie where a soft world-space noise is high. Dry, the material is as before (matte, ART-002 W1).
 
@@ -21,6 +22,10 @@ SHEEN_ROUGHNESS = 0.6     # the wet ground at full sheen: a faint sheen, still m
 PUDDLE_ROUGHNESS = 0.28   # standing water: holds the grey sky softly, not a mirror
 PUDDLE_SCALE = 0.0035     # the noise's scale (per centimetre): puddles a metre or two across
 PUDDLE_LEVEL = 0.7        # puddles where the noise is above this: here and there, not a flood
+SNOW_COLOUR = (0.80, 0.88, 1.0)    # lying snow: a cool blue-white against the warm light, kept below pure white so it still shades (W1)
+SNOW_ROUGHNESS = 0.9      # matte
+SNOW_FACING = 0.55        # how much a face must face up to take snow (a 24 degree roof does)
+SNOW_PATCH_SCALE = 0.006  # the size of its patches while it builds (per centimetre)
 RIPPLE_TILT = 0.35        # how far a ring tilts the surface
 RIPPLE_ROUGHNESS = 0.12   # a ring's water is smoother
 RIPPLE_LIGHT = 0.35       # and a little lighter
@@ -137,7 +142,6 @@ def add_wet(mat, base):
     shine = _node(mat, unreal.MaterialExpressionLinearInterpolate, x + 1350, 1300, const_b=RIPPLE_ROUGHNESS)
     lib.connect_material_expressions(water, "", shine, "A")
     lib.connect_material_expressions(ring_g, "", shine, "Alpha")
-    lib.connect_material_property(shine, "", unreal.MaterialProperty.MP_ROUGHNESS)
     lift = _node(mat, unreal.MaterialExpressionMultiply, x + 1350, 1450, const_b=RIPPLE_LIGHT)
     lib.connect_material_expressions(ring_g, "", lift, "A")
     lift1 = _node(mat, unreal.MaterialExpressionAdd, x + 1500, 1450, const_b=1.0)
@@ -145,7 +149,46 @@ def add_wet(mat, base):
     lit_colour = _node(mat, unreal.MaterialExpressionMultiply, x + 1650, 500)
     lib.connect_material_expressions(colour, "", lit_colour, "A")
     lib.connect_material_expressions(lift1, "", lit_colour, "B")
-    lib.connect_material_property(lit_colour, "", unreal.MaterialProperty.MP_BASE_COLOR)
+    # lying snow (WLD-070, ADR-0051): white on what faces up (streets, pavements, roofs, sills), patchy at its edges while
+    # it builds; matte, and over any puddles
+    snow = _scalar(mat, "Snow", x, 1900)
+    up5 = _node(mat, unreal.MaterialExpressionSubtract, x + 150, 1950, const_b=SNOW_FACING)
+    lib.connect_material_expressions(up, "", up5, "A")
+    up3 = _node(mat, unreal.MaterialExpressionMultiply, x + 300, 1950, const_b=3.0)
+    lib.connect_material_expressions(up5, "", up3, "A")
+    faces_up = _node(mat, unreal.MaterialExpressionSaturate, x + 450, 1950)
+    lib.connect_material_expressions(up3, "", faces_up, "")
+    patch = _node(mat, unreal.MaterialExpressionNoise, x + 150, 2050, scale=SNOW_PATCH_SCALE, levels=3, output_min=0.0, output_max=1.0)
+    lib.connect_material_expressions(pos, "", patch, "Position")
+    snow15 = _node(mat, unreal.MaterialExpressionMultiply, x + 150, 2150, const_b=1.6)
+    lib.connect_material_expressions(snow, "", snow15, "A")
+    reach = _node(mat, unreal.MaterialExpressionAdd, x + 300, 2050)   # the noise plus how much lies: patches join as it builds, whole at a full cover
+    lib.connect_material_expressions(patch, "", reach, "A")
+    lib.connect_material_expressions(snow15, "", reach, "B")
+    reach1 = _node(mat, unreal.MaterialExpressionSubtract, x + 450, 2050, const_b=1.0)
+    lib.connect_material_expressions(reach, "", reach1, "A")
+    reach4 = _node(mat, unreal.MaterialExpressionMultiply, x + 600, 2050, const_b=4.0)
+    lib.connect_material_expressions(reach1, "", reach4, "A")
+    reach_s = _node(mat, unreal.MaterialExpressionSaturate, x + 750, 2050)
+    lib.connect_material_expressions(reach4, "", reach_s, "")
+    lies = _node(mat, unreal.MaterialExpressionMultiply, x + 900, 2000)
+    lib.connect_material_expressions(reach_s, "", lies, "A")
+    lib.connect_material_expressions(faces_up, "", lies, "B")
+    lies_s = _node(mat, unreal.MaterialExpressionMultiply, x + 1050, 2000)
+    lib.connect_material_expressions(lies, "", lies_s, "A")
+    lib.connect_material_expressions(snow, "", lies_s, "B")
+    lies1 = _node(mat, unreal.MaterialExpressionSaturate, x + 1200, 2000)
+    lib.connect_material_expressions(lies_s, "", lies1, "")
+    white = _node(mat, unreal.MaterialExpressionConstant3Vector, x + 1500, 2100, constant=unreal.LinearColor(*SNOW_COLOUR, 1.0))
+    snowy = _node(mat, unreal.MaterialExpressionLinearInterpolate, x + 1800, 500)
+    lib.connect_material_expressions(lit_colour, "", snowy, "A")
+    lib.connect_material_expressions(white, "", snowy, "B")
+    lib.connect_material_expressions(lies1, "", snowy, "Alpha")
+    lib.connect_material_property(snowy, "", unreal.MaterialProperty.MP_BASE_COLOR)
+    snow_rough = _node(mat, unreal.MaterialExpressionLinearInterpolate, x + 1800, 1300, const_b=SNOW_ROUGHNESS)
+    lib.connect_material_expressions(shine, "", snow_rough, "A")
+    lib.connect_material_expressions(lies1, "", snow_rough, "Alpha")
+    lib.connect_material_property(snow_rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
 
 
 if __name__ == "__main__":

@@ -1484,7 +1484,7 @@
         },
         {
           "name": "Changing weather",
-          "what": "Clear, cloud, rain and fog, the same for every player.",
+          "what": "Clear, cloud, rain, fog and winter snow that settles and melts, the same for every player.",
           "effort": "M",
           "needs": {}
         },

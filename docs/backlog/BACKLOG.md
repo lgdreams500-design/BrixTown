@@ -78,7 +78,7 @@
 |---|---|---|---|---|
 | **Day and night** `F-TIME-DAY` | undecided | undecided | undecided |  |
 | **Sky and clouds** `F-SKY` | 2 Clouds follow the weather ★ | undecided | undecided | Asked for a sky and cloud system, then said yes to cloud cover following the day's weather (owner, 2026-11-22). Later milestones not picked. |
-| **Weather** `F-WEATHER` | 1 Changing weather ★ | undecided | undecided | Said yes to 'F-WEATHER level 1 for the first slice' so clouds follow the weather (owner, 2026-11-22). Rain and fog are in scope but not drawn yet. Later milestones not picked. |
+| **Weather** `F-WEATHER` | 1 Changing weather ★ | undecided | undecided | Said yes to 'F-WEATHER level 1 for the first slice' so clouds follow the weather (owner, 2026-11-22). Rain and fog are in scope but not drawn yet. Later milestones not picked. Owner, 2026-11-25: "can we add snow as well?", then picked "Winter only, own chance", "Settles, then melts" and "Coats and hoods, walk carefully" (WLD-069, WLD-070, CITY-107; ADR-0051). |
 | **Seasons** `F-SEASONS` | undecided | undecided | undecided |  |
 | **Plant and tree growth** `F-VEG-GROW` | undecided | undecided | undecided |  |
 | **Spring, autumn and leaf fall** `F-VEG-LEAF` | undecided | undecided | undecided |  |
@@ -280,7 +280,7 @@
 
 **Weather** (`F-WEATHER`). Rain, cloud and fog shared by everyone.
 - 0 Always clear: No weather. Size -.
-- 1 Changing weather: Clear, cloud, rain and fog, the same for every player. Size M.
+- 1 Changing weather: Clear, cloud, rain, fog and winter snow that settles and melts, the same for every player. Size M.
 - 2 Storms that matter: Storms, puddles and effects on needs and trade. Size L.
 
 **Seasons** (`F-SEASONS`). A year that turns.

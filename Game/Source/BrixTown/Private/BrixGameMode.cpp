@@ -557,7 +557,10 @@ void ABrixGameMode::UpdateSun()
 	// mix towards the night's as the day goes)
 	const float Fill = FMath::Lerp(NightFill, 1.f, Light01);
 	if (SkyFill) SkyFill->SetIntensity(SkyLightIntensity * Fill * (1.f + (bWx ? Weather->OvercastSkyGain * (float)Weather->Rules.OvercastFill * (1.f - SunLet) * Light01 : 0.f)));
-	if (HazeFog) HazeFog->SetFogInscatteringColor(HazeColour * Fill * FMath::Lerp(SunDawnColour, FLinearColor::White, Low));
+	// under cloud, rain or snow the haze is lit by the grey sky, not the sun: its colour turns from the sun's to a cool grey by
+	// how much sun the weather stops (ADR-0016: a covered day is flat and cool)
+	const FLinearColor SunTint = FMath::Lerp(SunDawnColour, FLinearColor::White, Low);
+	if (HazeFog) HazeFog->SetFogInscatteringColor(HazeColour * Fill * FMath::Lerp(SunTint, OvercastHaze, bWx ? 1.f - SunLet : 0.f));
 	// little haze indoors (play.js: the fog is cut by 0.85 inside): the height fog is not shut out by walls
 	if (HazeFog)
 	{

@@ -224,7 +224,7 @@ def dialogue_problems(w, acts=None):
 
 SOUND_ACTIONS = ("prompt", "sit", "lie", "stand", "lift", "jump", "talk_open", "talk_choose", "talk_close", "car_door", "map", "clock", "hour", "radio")
 SOUND_KINDS = ("tick", "thud", "rustle", "chime", "clink", "hiss", "snip", "type", "snore", "creak", "whoosh", "scrape", "clank")
-WEATHER_KINDS = ("clear", "cloud", "rain", "fog")       # what citysim.weather() can answer
+WEATHER_KINDS = ("clear", "cloud", "rain", "fog", "snow")   # what citysim.weather() can answer (snow: WLD-069)
 
 
 REACT_PALETTE = ("cream", "ochre", "terra", "olive", "teal", "blue", "indigo", "plum", "brown", "charcoal", "slate", "black", "sand")   # people.js K names
@@ -274,8 +274,8 @@ def weather_now(w, day_weather, m, trying=None):
     s = int(m // 360)
     into, b = m - s * 360, sky["clouds"]["blend_minutes"]
     out = dict(kind=kind(s))
-    for k in ("sun", "haze", "veil", "grey", "rain"):
-        v = lambda i: sky["weather"][kind(i)][k]
+    for k in ("sun", "haze", "veil", "grey", "rain", "snow"):
+        v = lambda i: sky["weather"][kind(i)].get(k, 0.0)
         if into < b:
             out[k] = v(s - 1) + (v(s) - v(s - 1)) * (.5 + .5 * into / b)
         elif into > 360 - b:
@@ -306,6 +306,24 @@ def clouds_now(w, day_weather, day, m, trying=None):
         cover = v(s)
     t = day * 1440 + m
     return dict(cover=cover, offset=[(c["wind"][0] * c["speed"] * t) % 512, (c["wind"][1] * c["speed"] * t) % 512], phase=(c["change"] * t) % 512)
+
+
+def snow_now(w, day_weather, m, trying=None):
+    """WLD-070 (ADR-0051): how hard it is snowing at minute m (0 to 1, blended across the slots' edges like the light) and
+    how much snow lies (0 to sky.json snow.cover): from twelve hours back, it builds over settle_minutes while a slot has
+    snow and melts over melt_minutes while one does not. A slot before the first is the last of the same day, as in
+    weather_now(). Worked out from the clock alone; the Unreal build's BrixSnowNow is checked against it."""
+    sky, S = w["sky"], w["sky"]["snow"]
+    kind = lambda i: trying or (sky["clouds"]["follow_weather"] and day_weather[i % 4]) or "clear"
+    s = int(m // 360)
+    lying = 0.0
+    for i in (s - 2, s - 1, s):
+        dt = (m - s * 360) if i == s else 360.0
+        if sky["weather"][kind(i)].get("snow", 0.0) > 0:
+            lying = min(1.0, lying + dt / S["settle_minutes"])
+        else:
+            lying = max(0.0, lying - dt / S["melt_minutes"])
+    return dict(falling=weather_now(w, day_weather, m, trying)["snow"], lying=lying * S["cover"])
 
 
 def sky_problems(w):
@@ -343,7 +361,7 @@ def sky_problems(w):
         out.append("sky: overcast_fill should be from 0 to 1")
     wx = s.get("weather", {})
     for k in WEATHER_KINDS:
-        for part, top in (("sun", 1), ("haze", 20), ("veil", 1), ("grey", 1), ("rain", 1)):
+        for part, top in (("sun", 1), ("haze", 20), ("veil", 1), ("grey", 1), ("rain", 1), ("snow", 1)):
             v = wx.get(k, {}).get(part)
             if not (num(v) and 0 <= v <= top):
                 out.append("sky: weather.%s.%s missing or not from 0 to %s" % (k, part, top))
@@ -361,6 +379,14 @@ def sky_problems(w):
             out.append("sky: rain.%s should be above 0" % k)
     if not num(r.get("slant")):
         out.append("sky: rain.slant should be a number")
+    sn = s.get("snow", {})
+    for k in ("alpha", "speed", "size", "settle_minutes", "melt_minutes"):
+        if not (num(sn.get(k)) and sn[k] > 0):
+            out.append("sky: snow.%s should be above 0" % k)
+    if not unit(sn.get("cover")) or not num(sn.get("sway")):
+        out.append("sky: snow.cover should be from 0 to 1 and snow.sway a number")
+    if ok("snow", "snow") and ok("clear", "snow") and not (wx["snow"]["snow"] > 0 and all(wx[k].get("snow", 0) == 0 for k in wx if k != "snow")):
+        out.append("sky: it should snow in snow and in no other weather")
     if num(r.get("dry_minutes")) and r["dry_minutes"] > 360:
         out.append("sky: rain.dry_minutes should be at most 360 (one weather slot)")
     return out + night_sky_problems(w) + planet_problems(w)

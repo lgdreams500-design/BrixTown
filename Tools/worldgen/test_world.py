@@ -498,7 +498,7 @@ class TheSky(unittest.TestCase):
     def test_WLD_037_every_kind_of_weather_changes_the_light(self):
         wx = W["sky"]["weather"]
         self.assertEqual(set(wx), set(world.WEATHER_KINDS))
-        self.assertEqual(wx["clear"], dict(sun=1.0, haze=1.0, veil=0.0, grey=0.0, rain=0.0))   # clear weather is the light as approved
+        self.assertEqual(wx["clear"], dict(sun=1.0, haze=1.0, veil=0.0, grey=0.0, rain=0.0, snow=0.0))   # clear weather is the light as approved
         self.assertGreater(wx["clear"]["sun"], wx["cloud"]["sun"])
         self.assertGreater(wx["cloud"]["sun"], wx["rain"]["sun"])
         self.assertGreater(wx["fog"]["haze"], wx["rain"]["haze"])
@@ -532,6 +532,20 @@ class TheSky(unittest.TestCase):
         self.assertGreater(b["phase"], a["phase"])        # and their shapes change slowly
         self.assertEqual(now(600), now(600))               # the same clock, the same sky
         self.assertNotEqual(now(600, 16)["offset"], now(600, 17)["offset"])
+
+    def test_WLD_070_snow_settles_and_melts(self):
+        S = W["sky"]["snow"]
+        day = ["clear", "snow", "snow", "clear"]
+        now = lambda m: world.snow_now(W, day, m)
+        self.assertEqual(now(300), dict(falling=0.0, lying=0.0))          # before it snows: nothing
+        self.assertEqual(now(600)["falling"], 1.0)
+        self.assertAlmostEqual(now(360 + S["settle_minutes"] / 2)["lying"], S["cover"] / 2)   # builds while it snows ...
+        self.assertAlmostEqual(now(900)["lying"], S["cover"])            # ... to a full cover
+        lie = [now(m)["lying"] for m in range(1080, 1440, 10)]          # then melts after it stops
+        self.assertEqual(lie, sorted(lie, reverse=True))
+        self.assertAlmostEqual(now(1080 + S["melt_minutes"] / 2)["lying"], S["cover"] / 2)
+        self.assertEqual(world.snow_now(W, ["clear"] * 4, 700)["lying"], 0.0)
+        self.assertGreater(world.snow_now(W, ["clear"] * 4, 700, trying="snow")["lying"], 0.0)
 
     def test_WLD_037_broken_weather_is_caught(self):
         import copy

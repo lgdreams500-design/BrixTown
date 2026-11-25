@@ -10,7 +10,7 @@
 // (day.json "wear", City.wear()); BrixWet shows it: a coat, and out in the rain an umbrella up, else a hood, else a hand
 // over the head when walking, and a quicker walk.
 
-struct BRIXWORLD_API FBrixWeatherKind { double Sun = 1, Haze = 1, Veil = 0, Grey = 0, Rain = 0; };
+struct BRIXWORLD_API FBrixWeatherKind { double Sun = 1, Haze = 1, Veil = 0, Grey = 0, Rain = 0, Snow = 0; };
 
 struct BRIXWORLD_API FBrixWeatherRules
 {
@@ -24,6 +24,8 @@ struct BRIXWORLD_API FBrixWeatherRules
 	bool bFollow = true;
 	// rain: how the drops look and how wet the paving gets (ADR-0016)
 	double Alpha = .26, Slant = .1, Speed = 9, Length = .8, WetDark = .4, WetSheen = .3, Puddles = .85, Ripples = 1, DryMinutes = 90;
+	// snow (WLD-070, ADR-0051): how the flakes look and fall, how fast it settles and melts, how white a full cover is
+	double SnowAlpha = .75, SnowSpeed = 1.1, SnowSway = .25, FlakeSize = .022, SettleMinutes = 120, MeltMinutes = 360, SnowCover = .9;
 };
 
 BRIXWORLD_API bool LoadBrixWeatherRules(const FString& SkyPath, FBrixWeatherRules& Out, FString& OutError);
@@ -31,8 +33,13 @@ BRIXWORLD_API bool LoadBrixWeatherRules(const FString& SkyPath, FBrixWeatherRule
 struct BRIXWORLD_API FBrixWeatherNow
 {
 	FString Kind = TEXT("clear");
-	double Sun = 1, Haze = 1, Veil = 0, Grey = 0, Rain = 0, Wet = 0;
+	double Sun = 1, Haze = 1, Veil = 0, Grey = 0, Rain = 0, Snow = 0, Wet = 0;
 };
+
+// world.snow_now() (WLD-070): how hard it snows (0 to 1) and how much snow lies (0 to SnowCover), built while it snows and
+// melting after, from the clock and the day's weather slots alone
+struct BRIXWORLD_API FBrixSnowNow { double Falling = 0, Lying = 0; };
+BRIXWORLD_API FBrixSnowNow BrixSnowNow(const FBrixWeatherRules& R, const TArray<FString>& DayWeather, double Minute, const FString& Trying = FString());
 
 // world.weather_now(): DayWeather the day's four slots; Trying one kind for the whole day (a look at it), or empty.
 BRIXWORLD_API FBrixWeatherNow BrixWeatherNow(const FBrixWeatherRules& R, const TArray<FString>& DayWeather, double Minute, const FString& Trying = FString());
@@ -49,7 +56,8 @@ struct BRIXWORLD_API FBrixWear
 {
 	TArray<FString> Colours;                 // palette names
 	struct FRow { int32 Coat = -1; bool bHood = false; int32 Umbrella = -1; };
-	TArray<FRow> Today, Wet;
+	TArray<FRow> Today, Wet, Snowy;          // today; on a day of rain; on a day of snow (CITY-107)
+	double SnowPace = .85;                   // the careful pace in snow
 	double Run = 2, Hurry = 1.3, Umbrella = 1.1;
 	TArray<FString> Weather;                 // the day's four slots
 	TMap<FString, double> SigSpeed;          // each movement signature's own walking speed, m/s (World/rules/signatures.json)
@@ -69,8 +77,9 @@ struct BRIXWORLD_API FBrixWet
 	FVector2D Chest = FVector2D::ZeroVector;
 };
 
-// Resident i (who walks by SigName, of height S) at minute M: Rain how hard it rains; bTrying rain tried on a dry day;
-// bCovered indoors, sheltering, or under a roof; bWalking and Piece (their walk under way: its start and end minute
-// and length) for the pace. Returns what to draw.
-BRIXWORLD_API FBrixWet BrixWetOf(const FBrixPeopleRules& People, const FBrixWear& W, int32 i, double Rain, bool bTrying, bool bCovered,
+// Resident i (who walks by SigName, of height S) at minute M: Rain and Snow how hard it rains and snows; Wardrobe what
+// they wear: 0 today's, 1 a rain day's, 2 a snow day's (a kind of weather tried on a day without it); bCovered indoors,
+// sheltering, or under a roof; bWalking and Piece (their walk under way: its start and end minute and length) for the
+// pace. In snow (CITY-107): the hood up, else bare-headed, never an umbrella, and a careful walk. Returns what to draw.
+BRIXWORLD_API FBrixWet BrixWetOf(const FBrixPeopleRules& People, const FBrixWear& W, int32 i, double Rain, double Snow, int32 Wardrobe, bool bCovered,
 	bool bWalking, bool bOtherWalk, const FString& SigName, double S, double M, double WalkT0, double WalkT1, double WalkLen);

@@ -15,7 +15,7 @@ struct FBrixCity;
 // paving gets wet and dries again after the rain (ABrixTownActor::SetWet), and rain falls in the world: drops in rings
 // round the camera, from 1.6 to 11 m, falling straight down whichever way you look, not where a roof is overhead and not
 // while the camera is indoors. ABrixPeople dresses the residents for it (CITY-077 to CITY-080, through Wear).
-// -BrixWeather=<clear|cloud|rain|fog> tries one kind for the whole day (the slice's weather key), with what residents
+// -BrixWeather=<clear|cloud|rain|fog|snow> tries one kind for the whole day (the slice's weather key), with what residents
 // would wear on a day of it.
 UCLASS(Config = Game)
 class BRIXTOWN_API ABrixWeather : public AActor
@@ -28,6 +28,8 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 
 	UPROPERTY(Config) int32 MaxDrops = 3500;          // drops at full rain
+	UPROPERTY(Config) int32 MaxFlakes = 4500;         // snowflakes at full snow (WLD-070)
+	UPROPERTY(Config) FLinearColor FlakeColour = FLinearColor(0.80f, 0.82f, 0.86f);
 	UPROPERTY(Config) float SplashReach = 7.f;        // m: drops this near throw up a splash where they land ...
 	UPROPERTY(Config) float SplashSeconds = 0.16f;    // ... for this long
 	UPROPERTY(Config) float CloudDome = 6000.f;       // m: the dome the clouds are drawn on (the haze softens them towards the horizon)
@@ -50,6 +52,9 @@ public:
 	FBrixWeatherNow Now;                               // this frame's
 	bool bOn = false;
 	bool IsTrying() const { return !Trying.IsEmpty() && !Wear.Weather.Contains(Trying); }   // a kind the day does not have: wet-day clothes
+	// what residents wear: 0 today's, 1 a rain day's, 2 a snow day's (rain or snow tried on a day without it)
+	int32 Wardrobe() const { return !IsTrying() ? 0 : Trying == TEXT("snow") ? 2 : Trying == TEXT("rain") ? 1 : 0; }
+	FBrixSnowNow Snow;                                 // this frame's falling and lying snow (WLD-070)
 	bool Roofed(const FVector2D& P) const;             // under a building's roof (not an open lot)
 
 private:
@@ -64,7 +69,7 @@ private:
 	TArray<FDrop> Drops;
 	UPROPERTY() TObjectPtr<UProceduralMeshComponent> Rain;
 	UPROPERTY() TObjectPtr<UMaterialInterface> RainMaterial;
-	float LastWet = -1.f, LastRip = -1.f;
+	float LastWet = -1.f, LastRip = -1.f, LastLies = -1.f;
 	UPROPERTY() TObjectPtr<UProceduralMeshComponent> Clouds;
 	UPROPERTY() TObjectPtr<class UMaterialInstanceDynamic> CloudMat;
 	UPROPERTY() TObjectPtr<class ADirectionalLight> SunLight;

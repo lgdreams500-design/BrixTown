@@ -7,7 +7,7 @@ as data and only create bodies near players (docs/specs/domains/LIVING_CITY.md).
 
 Controllers, one small class or function group each:
     Clock        calendar: day, weekday, season, daylight
-    weather()    clear / cloud / rain / fog, the same for everyone
+    weather()    clear / cloud / rain / fog / snow, the same for everyone
     Network      streets and paths, shortest routes
     Places       lots, doors and interaction points with a number of places each
     Routines     what each resident does today, turned into a timeline of walks and stays
@@ -104,6 +104,9 @@ def weather(data, clock, t):
     slot = day * 4 + int(m // 360)
     s = clock.info(day)["season"]
     w = data["weather"]
+    snow_chance = w.get("snow_chance", [0.0] * 4)[s]            # WLD-069: snow, in its own spells, only where its season has any
+    if snow_chance > 0 and 0.5 * rnd("snow", slot) + 0.3 * rnd("snow", slot - 1) + 0.2 * rnd("snow", slot - 2) > _wet_cut(snow_chance):
+        return "snow"
     wet = 0.5 * rnd("wet", slot) + 0.3 * rnd("wet", slot - 1) + 0.2 * rnd("wet", slot - 2)
     if wet > _wet_cut(w["rain_chance"][s]):
         return "rain"
@@ -365,30 +368,39 @@ class City:
     def raining(self, t):
         return weather(self.d, self.clock, t) == "rain"
 
+    def snowing(self, t):
+        return weather(self.d, self.clock, t) == "snow"
+
+    def falling(self, t):
+        """Rain or snow: what residents take cover from (CITY-078, CITY-107)."""
+        return weather(self.d, self.clock, t) in ("rain", "snow")
+
     def rain_spells(self, day):
-        """[(start, end)] minutes of the day when it rains, neighbouring wet slots joined into one spell."""
+        """[(start, end)] minutes of the day when it rains or snows, neighbouring slots joined into one spell."""
         out = []
         for k in range(4):
-            if self.raining(day * 1440 + k * 360 + 1):
+            if self.falling(day * 1440 + k * 360 + 1):
                 if out and out[-1][1] == k * 360:
                     out[-1] = (out[-1][0], (k + 1) * 360)
                 else:
                     out.append((k * 360, (k + 1) * 360))
         return out
 
-    def wear(self, rid, day, wet=None):
+    def wear(self, rid, day, wet=None, snowy=None):
         """What a resident puts on and takes out today: dict(coat, hood, umbrella, coat_colour, umbrella_colour). Decided
         once in the morning from the season and the day's weather, so it never changes during the day (CITY-077).
-        wet=True or False asks what they would wear if the day did or did not have rain in it."""
+        wet=True or False asks what they would wear if the day did or did not have rain in it; snowy the same for snow."""
         R = self.react
         if not R:
             return dict(coat=False, hood=False, umbrella=False, coat_colour=None, umbrella_colour=None)
-        wet = bool(self.rain_spells(day)) if wet is None else wet
+        snowy = any(self.snowing(day * 1440 + k * 360 + 1) for k in range(4)) if snowy is None else snowy   # CITY-107: a day with snow in it
+        wet = any(self.raining(day * 1440 + k * 360 + 1) for k in range(4)) if wet is None else wet
         season = self.clock.info(day)["season"]
         u, c = R["umbrella"], R["coat"]
         umbrella = rnd("umb", rid, day) < (u["rain_day"] if wet else u["dry_day"])
-        coat = rnd("coat", rid, day) < max(c["season"][season], c["rain_day"] if wet else 0.0)
-        return dict(coat=coat, hood=coat and rnd("hood", rid) < c["hood"], umbrella=umbrella,
+        coat = rnd("coat", rid, day) < max(c["season"][season], c["rain_day"] if wet else 0.0, c.get("snow_day", 0.0) if snowy else 0.0)
+        hood = coat and rnd("hood", rid) < (max(c["hood"], c.get("snow_hood", 0.0)) if snowy else c["hood"])
+        return dict(coat=coat, hood=hood, umbrella=umbrella,
                     coat_colour=c["colours"][int(rnd("coatc", rid) * len(c["colours"]))] if coat else None,
                     umbrella_colour=u["colours"][int(rnd("umbc", rid) * len(u["colours"]))] if umbrella else None)
 
@@ -433,6 +445,8 @@ class City:
     def pace_in_rain(self, rid, day, t, rush):
         """How much faster than their own pace someone walks a leg that sets off at minute t (CITY-079)."""
         R = self.react
+        if R and self.snowing(day * 1440 + t):
+            return R["pace"].get("snow", 1.0)              # CITY-107: careful in the snow, never hurrying
         if not R or not self.raining(day * 1440 + t):
             return 1.0
         p = R["pace"]
@@ -443,16 +457,18 @@ class City:
     def cover(self, rid, day, m, state, act=None):
         """What a resident does about the rain at minute m (CITY-080): None when it is dry or they are under a roof or an
         awning; 'umbrella' (up), 'hood' (up) or 'bare' (head down, a hand up when walking)."""
-        if not self.react or state in ("inside", "away", "driving") or act == "shelter" or not self.raining(day * 1440 + m):
+        if not self.react or state in ("inside", "away", "driving") or act == "shelter" or not self.falling(day * 1440 + m):
             return None
         w = self.wear(rid, day)
+        if self.snowing(day * 1440 + m):                  # CITY-107: no umbrellas in snow
+            return "hood" if w["hood"] else "bare"
         return "umbrella" if w["umbrella"] else "hood" if w["hood"] else "bare"
 
     # -- routines: today's list of things to do --
     def _pick(self, token, rid, day, idx, minute):
         ch = self.d["choices"][token]
         info = self.clock.info(day)
-        wet = weather(self.d, self.clock, day * 1440 + minute) == "rain"
+        wet = weather(self.d, self.clock, day * 1440 + minute) in ("rain", "snow")   # indoor choices in snow too
         if wet and "rain" in ch:
             opts = ch["rain"]
         elif info["market"] and "market" in ch and 7 * 60 + 30 <= minute <= 13 * 60 + 30 and rnd("mkt", rid, day, idx) < 0.6:

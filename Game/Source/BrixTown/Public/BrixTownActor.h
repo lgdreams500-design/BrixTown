@@ -70,7 +70,7 @@ public:
 	TSet<FString> Breakable;            // the prop kinds to keep handles for (set before Build)
 	void SetBroken(int32 b, bool bBroken);   // hide it (its solids and its light too) or show it again
 	// wet paving (WLD-037): M_Greybox's WetDark, WetSheen and Puddles on every surface (Tools/unreal/greybox_wet.py); 0 dry
-	void SetWet(float Dark, float Sheen, float Puddles, float Ripples);
+	void SetWet(float Dark, float Sheen, float Puddles, float Ripples, float Snow = 0.f);   // Snow: lying snow (WLD-070)
 	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> GlassMat;
 	// The windows lit by night (play.js windows()): a warm pane behind the glass of a share of each kind's windows, shown and
 	// glowing as the night comes (0 by day, 1 at night)

@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-LIVING-CITY
 title: Brix Town — Living city (map, residents, things to use, vehicles, seasons and plants)
-version: 0.6.1
+version: 0.6.2
 status: draft
 last_updated: 2026-11-24
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -64,7 +64,7 @@ what is production-ready in the pinned engine version before PH1 work starts `[O
 ## 3. Requirements
 
 Status of all rows: `proposed` (CITY-081 to CITY-088 from the owner's requests of 2026-11-23 for more and more realistic careers), except CITY-043 to CITY-049 and CITY-060 to CITY-067, which the owner
-accepted on 2026-11-22, and CITY-068 and CITY-069, which follow from the owner's answers the same day (Q-29; "both" for busier streets), and CITY-072 to CITY-076 (crash damage), from the owner's request and answers the same day, and CITY-089 to CITY-095 (cars by kind of home, the roads outside the wall, buses, bus rides, parked cars off the street, car pooling, no car on days it is not used), from the owner's requests and answers on 2026-11-23 (F-VEH-TRANSIT level 2 "Network", the tram kept). "Proven by" names the test in `Tools/citysim/test_citysim.py`, or for cars in `Tools/citysim/test_traffic.py`.
+accepted on 2026-11-22, and CITY-068 and CITY-069, which follow from the owner's answers the same day (Q-29; "both" for busier streets), and CITY-072 to CITY-076 (crash damage), from the owner's request and answers the same day, and CITY-089 to CITY-095 (cars by kind of home, the roads outside the wall, buses, bus rides, parked cars off the street, car pooling, no car on days it is not used), from the owner's requests and answers on 2026-11-23 (F-VEH-TRANSIT level 2 "Network", the tram kept), and CITY-107 (residents in snow), from the owner's request and answers on 2026-11-25. "Proven by" names the test in `Tools/citysim/test_citysim.py`, or for cars in `Tools/citysim/test_traffic.py`.
 
 ### 3.1 Map, lots and buildings
 
@@ -94,6 +94,7 @@ accepted on 2026-11-22, and CITY-068 and CITY-069, which follow from the owner's
 | CITY-078 | When rain starts, a resident out in the open (a garden, the market as a customer) shall stop within a few minutes, go to cover (their nearest café or grocer's awning, or home) and wait there until the rain stops, then go back if enough of the stay is left. Someone due out in the open while it already rains goes straight to cover. | F-NPC-REACT | 1 | P2 | `test_CITY_078_take_cover_when_rain_starts`, `test_CITY_078_back_out_when_the_rain_stops` |
 | CITY-079 | Walks in the rain shall be faster than the resident's own pace: a little under an umbrella, more without, and running for cover fastest; factors in data. | F-NPC-REACT | 1 | P2 | `test_CITY_079_hurry_in_the_rain`; Unreal `CITY080_residents_are_dressed_for_the_rain` |
 | CITY-080 | Out in the rain a resident shall have their umbrella up, else their hood up, else go bare-headed (a hand over the head when walking); nothing under a roof or awning. | F-NPC-REACT | 1 | P2 | `test_CITY_080_cover_in_the_rain`; Unreal `CITY080_residents_are_dressed_for_the_rain` |
+| CITY-107 | On a day with snow nearly every resident shall wear a coat (`coat.snow_day`) and most coats have a hood (`coat.snow_hood`); out in the snow they shall have the hood up, else go bare-headed, never an umbrella; they shall take cover from it as from rain (CITY-078) and walk at a careful pace slower than their own (`pace.snow`), never hurrying or running (owner, 2026-11-25: "coats and hoods, walk carefully"). All in `World/rules/weather_react.json` `[ASSUMPTION]`. | F-NPC-REACT | 1 | P2 | `test_CITY_107_coats_hoods_and_a_careful_walk_in_snow`; Unreal `CITY107_residents_are_dressed_for_snow` |
 | CITY-027 | Ambient animals shall appear by time and place and shall not affect play. | F-ANIMALS | 1 | P2 | |
 | CITY-081 | Careers shall be data (`World/rules/careers.json`): more than 50 `[ASSUMPTION: 122]`, each with a title, a group and the routine role it follows. Every resident who works shall have one; the slice shows it as their title in talk and over their head. | F-NPC-POP | 1 | P1 | `test_CITY_081_more_than_fifty_careers_in_data`, `test_CITY_081_everyone_who_works_has_a_career` |
 | CITY-082 | Each kind of workplace shall have posts in data: careers with a min and max head count, moving from min to max with the place's floor area. A place never has more of a career than its posts, and always has its minimum. A café has one or two at the counter, one or two baristas and one table attendant; a grocer two or three at the tills and one or two stocking shelves or helping customers; the others in proportion (`staffing`). | F-NPC-POP | 1 | P1 | `test_CITY_082_cafes_have_two_at_the_counter_two_baristas_and_one_cleaning_tables`, `test_CITY_082_grocers_have_two_or_three_at_the_tills_and_one_or_two_on_the_floor`, `test_CITY_082_every_workplace_within_its_posts`, `test_CITY_082_no_more_crowds_behind_the_counter`, `test_CITY_082_bigger_places_have_more_posts` |
@@ -296,6 +297,7 @@ up to 42 on the road at once, no overlap, no crossing movements in a box, nobody
 ## 7. Change log
 | Version | Date | Change |
 |---|---|---|
+| 0.6.2 | 2026-11-25 | Residents in snow (CITY-107; ADR-0051), accepted from the owner's request and answers in chat. Snow spells are taken cover from as rain spells are (`rain_spells` now gives both). |
 | 0.6.1 | 2026-11-24 | Skates made skateboards at the owner's word: CITY-098 to CITY-104 and Q-40 reworded; no walk on a board, the manual board pushed with one foot while W is held, the powered boards ridden standing; rules in `World/rules/boards.json`; look test 35 (the skates' look test is 34; 30 to 33 were taken on other branches). |
 | 0.6.0 | 2026-11-24 | Skates (`F-VEH-SKATES`, proposed in `features.json`, no level picked): CITY-098 to CITY-104 and Q-40 from the owner's request; kinds and speeds in `World/rules/skates.json` (ADR-0042). CITY-098 to CITY-101 in the slice; the store and buying (CITY-102, CITY-103) are written, not built. All proposed. |
 | 0.1.0 | 2026-11-21 | First version, with the city-in-a-box prototype and its tests. |

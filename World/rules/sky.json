@@ -6,7 +6,7 @@
  "sun_ref": 1.0,
  "clouds": {
   "follow_weather": true,
-  "cover": {"clear": 0.36, "cloud": 0.62, "rain": 0.97, "fog": 0.55},
+  "cover": {"clear": 0.36, "cloud": 0.62, "rain": 0.97, "fog": 0.55, "snow": 0.92},
   "scale": 2.4,
   "soft": 0.07,
   "wind": [1.0, 0.35],
@@ -18,10 +18,11 @@
  },
  "overcast_fill": 0.2,
  "weather": {
-  "clear": {"sun": 1.0, "haze": 1.0, "veil": 0.0, "grey": 0.0, "rain": 0.0},
-  "cloud": {"sun": 0.55, "haze": 1.2, "veil": 0.04, "grey": 0.35, "rain": 0.0},
-  "rain": {"sun": 0.08, "haze": 2.6, "veil": 0.06, "grey": 0.85, "rain": 1.0},
-  "fog": {"sun": 0.3, "haze": 7.0, "veil": 0.22, "grey": 0.2, "rain": 0.0}
+  "clear": {"sun": 1.0, "haze": 1.0, "veil": 0.0, "grey": 0.0, "rain": 0.0, "snow": 0.0},
+  "cloud": {"sun": 0.55, "haze": 1.2, "veil": 0.04, "grey": 0.35, "rain": 0.0, "snow": 0.0},
+  "rain": {"sun": 0.08, "haze": 2.6, "veil": 0.06, "grey": 0.85, "rain": 1.0, "snow": 0.0},
+  "fog": {"sun": 0.3, "haze": 7.0, "veil": 0.22, "grey": 0.2, "rain": 0.0, "snow": 0.0},
+  "snow": {"sun": 0.15, "haze": 2.2, "veil": 0.12, "grey": 0.6, "rain": 0.0, "snow": 1.0}
  },
  "rain": {
   "alpha": 0.26,
@@ -33,6 +34,16 @@
   "puddles": 0.85,
   "ripples": 1.0,
   "dry_minutes": 90
+ },
+ "snow": {
+  "note": "WLD-070 (ADR-0051): snow falling and lying. alpha how much the flakes show, speed how fast they fall (m/s), sway how far they drift side to side (m), size how big a flake is (m). It lies: it builds over settle_minutes of snowfall to a full cover and melts over melt_minutes after it stops; cover is how much of the ground, the roofs and the ledges a full cover whitens (0 to 1). Worked out from the clock and the day's weather. [ASSUMPTION] values.",
+  "alpha": 0.75,
+  "speed": 1.1,
+  "sway": 0.25,
+  "size": 0.018,
+  "settle_minutes": 120,
+  "melt_minutes": 360,
+  "cover": 0.9
  },
  "night": {
   "zenith": [0.0025, 0.0045, 0.014],
@@ -57,7 +68,8 @@
    "clear": {"stars": 1.0, "lamp_glow": 0.3, "cover": 0.4},
    "cloud": {"stars": 0.85, "lamp_glow": 0.45, "cover": 1.0},
    "rain": {"stars": 0.0, "lamp_glow": 0.5, "cover": 1.0},
-   "fog": {"stars": 0.05, "lamp_glow": 0.65, "cover": 1.0}
+   "fog": {"stars": 0.05, "lamp_glow": 0.65, "cover": 1.0},
+   "snow": {"stars": 0.0, "lamp_glow": 0.55, "cover": 1.0}
   }
  },
  "planet": {
