@@ -73,7 +73,10 @@ public:
 	void ToggleSound();                   // N (SND-013): the Sound switch of the settings flipped, applied, kept, and said
 	void SetPlayerName(const FString& Name) { PlayerName = Name; bNamed = !Name.IsEmpty(); }   // the designed character's (CHR-001)
 	const FString& Name() const { return PlayerName; }
-	void ShowHud(bool bShow);             // the purse, toasts and quests on screen; hidden while the character designer is open
+	void ShowHud(bool bShow);
+	// QST-008: the money, quests and achievements into a save, and back (the coins of what was before are not shown)
+	void SaveTo(struct FBrixSaveGame& S) const;
+	bool LoadFrom(const struct FBrixSaveGame& S, FString& OutWhy);             // the purse, toasts and quests on screen; hidden while the character designer is open
 	bool RunOps(const FString& Ops);      // the -BrixLife= ops, as economy.run_script() runs them; false if any was refused
 	bool OpenCounterAt(const FString& What);   // -BrixCounter=: stand at that counter's door and open it
 	FBrixEconomy* Economy() const { return E.Get(); }

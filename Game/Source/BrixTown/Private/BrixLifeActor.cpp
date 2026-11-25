@@ -1,5 +1,7 @@
 #include "BrixLifeActor.h"
 
+#include "BrixSave.h"
+
 #include "BrixCharacter.h"
 #include "BrixCity.h"
 #include "BrixDay.h"
@@ -182,6 +184,41 @@ void ABrixLife::Tick(float Dt)
 	LastMoney = Tm;
 	ToastLeft = FMath::Max(0.f, ToastLeft - Dt);
 	DeltaLeft = FMath::Max(0.f, DeltaLeft - Dt);
+}
+
+void ABrixLife::SaveTo(FBrixSaveGame& S) const
+{
+	if (!E) return;
+	S.Day = E->Day;
+	S.Minute = E->Minute;
+	S.Econ = BrixEconomySave(*E);
+	if (Q) S.Quests = BrixQuestsSave(*Q);
+	S.Feats = Feats;
+}
+
+bool ABrixLife::LoadFrom(const FBrixSaveGame& S, FString& OutWhy)   // life.js loadSave()
+{
+	if (!E || !S.Econ || !S.Quests) { OutWhy = TEXT("nothing to load"); return false; }
+	TUniquePtr<FBrixEconomy> NewE = MakeUnique<FBrixEconomy>(Data, Lots);
+	if (!BrixEconomyLoad(*NewE, *S.Econ, OutWhy)) return false;
+	TUniquePtr<FBrixQuests> NewQ;
+	if (Q)
+	{
+		NewQ = MakeUnique<FBrixQuests>(QuestRules, *NewE, QuestResidents);
+		if (!BrixQuestsLoad(*NewQ, *S.Quests, OutWhy)) return false;
+		NewQ->OnNote = [this](const FString& T) { Toast(T); };
+	}
+	if (!Panel.IsEmpty()) Close();
+	Q = MoveTemp(NewQ);   // the quests hold the economy: the old ones go first
+	E = MoveTemp(NewE);
+	Feats = S.Feats;
+	Offered.Reset();
+	PendingCounter = -1;
+	Coins.Reset(); Flies.Reset(); Spark.Reset(); Timeline.Reset(); Banners.Reset();
+	SeenTx = E->L.Tx.Num();   // what was before the load is not shown again (rewards.js reset())
+	Shown = HeldCash = HeldBank = 0;
+	LastMoney = E->TotalMoney();
+	return true;
 }
 
 void ABrixLife::ShowHud(bool bShow)

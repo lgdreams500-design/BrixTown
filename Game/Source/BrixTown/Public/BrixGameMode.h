@@ -32,6 +32,7 @@ public:
 	// the clock: minutes since midnight of StartDay (past 1440 on the days after); everything that moves with time reads it
 	double ClockMinutes() const;
 	double ClockMinute() const { return FMath::Fmod(ClockMinutes(), 1440.0); }
+	void SetClock(double Minutes);               // a loaded save's day and time (QST-008): the clock runs on from there
 	float Daylight = 1.f;                         // the sun's share of its light now, 0 at night (FBrixSky::Daylight)
 	UPROPERTY() TObjectPtr<class ABrixTalk> Talk;    // conversations with residents (CITY-007)
 	UPROPERTY() TObjectPtr<class ABrixCars> Cars;

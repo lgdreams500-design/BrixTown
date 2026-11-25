@@ -185,7 +185,26 @@ ends) against people.js design() and the bodies it draws standing, walking, furt
 as the default character without the designer, as the slice's ?auto=1; `-BrixDesigner` opens it for the shot (taken by its
 own clock, as the game is paused), `"-BrixDesignSet=name:Ada;hair:afro;skin:7;height:1.8"` sets values first,
 `-BrixDesignSpin=<deg>` turns the character, `-BrixDesignBegin` presses Begin after 3 s (the shot is then taken in play);
-`-BrixNoDesigner` skips it when playing. Not yet: carrying on from a save (QST-008), so every start is a new character.
+`-BrixNoDesigner` skips it when playing. When the slot played last holds a save, the start offers "Carry on as <name>" or a
+new character (see Saving).
+
+## Saving (QST-008)
+As the slice's life.js keeps its save: the game saves itself in the slot being played every 15 s (`AutosaveSeconds`), at
+once when a new character begins, and when the game is left; each slot is a JSON file, `Saved/BrixTown/save_<n>.json` (the
+slot played last in `slot.txt`). A save holds the character (their designer values), where they stand and the time, the
+economy as economy.py save() keeps it (the ledger's transactions, from which every balance is worked out again on loading,
+the accounts, loans, things carried, trades, reputation, the stall, clothes and homeware), the quests as quests.py save()
+(lines under way and finished, the journal, a job, the jobs taken), the wardrobe's outfits and the achievements earned
+(`BrixWorld/BrixSave`). The start offers to carry on in the slot played last, or a new character; the menu's Save page
+lists the slots (whose game, its day, when saved) with Save here, Load and New game here, which asks twice when it would
+delete a save and then starts the game afresh. A save whose character the designer would refuse is not offered.
+`QST008_a_save_brings_the_game_back` stops the quests' fixed walk halfway (with a loan, the stall and clothes from an
+outlet), saves it to text, reads it into a new economy and new quests, and plays both on to the end and over three
+midnights: they stay the same in all a save keeps; a new game holds only the starting cash. The world shows the built day
+16 whatever the save's day is (the economy's days count on); the time of day comes back. A test shot never saves
+(`-BrixNoSave` plays without saving too); `-BrixSaveAs=<slot>` saves the shot's game there 6 s in, `-BrixLoad=<slot>`
+carries on from a slot at once (with `-BrixMenu=save` to see the page). Not yet in the save: the skateboards owned (CITY-100),
+the property market, remodels and furnishing plans (not in this build yet); and a server keeping it (PH2).
 
 ## The wardrobe (CHR-014 to CHR-016; F-CHR-WARDROBE 1, with the owned clothes the owner asked for)
 U (or the menu) opens the Wardrobe page as the slice's life.js does: the page stands to one side, the town is not dimmed,
@@ -199,8 +218,7 @@ designer's own hair and clothes choices, changed at once and free; never the bod
 drawn by `ABrixDesigner` (its helpers are the designer's). While the game is paused (the designer, the wardrobe) the
 character ticks and moves the camera itself, as a paused world does not. To see it in a test shot: `-BrixMenu=wardrobe
 "-BrixLife=outlet,tunic_terra;outlet,cap_blue" "-BrixOutfit=Everyday,Market day"` (`outlet,<good>` buys it at the first
-of a mall's outlets that sells it; `-BrixOutfit=` saves what is worn under those names). Not yet: the outfits kept in a
-save (QST-008), so they last the visit.
+of a mall's outlets that sells it; `-BrixOutfit=` saves what is worn under those names). The outfits are kept in the save.
 
 ## Talking to residents (CITY-007, CHR-007, CHR-009, SND-018)
 As in the slice (conversations.js, voices.js): next to a resident out of doors, E offers "Talk to <name>" and opens the
@@ -379,7 +397,7 @@ the clock, so interest, instalments and fees are settled for each midnight passe
 the purse at the top left (cash, and the bank's two accounts together once one is open) with a "+" or "-" beside it when
 it changes; at the bank's door (`CounterReach`) or inside it, B opens its counter in the slice's dark panel: open
 accounts, move money (a payment that would take an account below zero is refused, never partly made), borrow and repay,
-and the statement, newest first; I opens the money page (purse, loan, statement). Esc closes either. Not yet: saving,
+and the statement, newest first; I opens the money page (purse, loan, statement). Esc closes either. The money is kept in the save (below). Not yet:
 the game menu's Money page in its painted-sign look. To see the bank in a test shot:
 `-BrixCounter=bank "-BrixLife=open,current;open,savings;move,p:current,p:savings,1000;loan,5000,3"` (ops as
 economy.check_script() writes them, arguments by commas).
@@ -482,7 +500,7 @@ comes with a slip under the purse and its coins fly up into the bank balance. Ac
 facts worked out from the ledger and the quests (`QST009_achievements_are_earned_as_python_says`), each once, its painted
 banner dropping in at the top, one at a time and not over a panel. Their sounds are played by `ABrixSound` (see Sound): `ABrixLife::OnRewardSound`
 is broadcast with sound.js's names (quest_start, coin_out, coin_land, coin_take, quest_end, interest_start,
-interest_coin, interest_end, achievement). The markers over people's heads and on the maps are under The maps. Not yet: saving (QST-008), the
+interest_coin, interest_end, achievement). The markers over people's heads and on the maps are under The maps. Quests are kept in the save. Not yet: the
 Me page's list of achievements, the stamped coin face. To see a reward in a test shot: `-BrixLifeLead=1.15
 "-BrixLife=act,new_in_town,r0504,stage:bank;open,current;check;buy,grocer,bread;check;act,new_in_town,r0504,take:bread|end:gift"`
 (the ops that many seconds before the shot); to see a quest talk, `-BrixTime=15:12 -BrixTalk=504 "-BrixAnswers=1,1"`.
@@ -495,7 +513,7 @@ Town and Game, each in its colour: Me (what you have, the achievements earned fi
 earn, people you know), Money (accounts, statement), Belongings (what is carried, each drawn on its plinth), Journal (the
 quest log), Wardrobe (below), Settings (one group at a time), Save, Help (the keyboard's controls by where they work,
 from settings.json); Properties and Storage say what they wait for (the property market, F-PROP-STORAGE); Map opens the
-big map; and Save shows its three slots but cannot save yet (QST-008). The settings are
+big map; and Save shows its three slots (see Saving). The settings are
 `BrixWorld/BrixSettings`: settings.json checked by world.settings_problems()'s rules (`UI009_settings_are_valid`,
 `UI009_a_bad_setting_is_caught`, `UI008_every_platform_maps_every_action`, `UI010_no_control_does_two_things`,
 `UI005_every_tab_opens_from_a_control_on_every_platform`), the player's values kept on the device in
@@ -609,6 +627,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CHR014_an_outfit_is_only_clothes_and_hair_the_designer_offers` | CHR-014 |
 | `BrixTown.World.CHR015_the_wardrobe_holds_a_few_outfits` | CHR-015 |
 | `BrixTown.World.CHR016_clothes_bought_set_only_their_parts` | CHR-016 |
+| `BrixTown.World.QST008_a_save_brings_the_game_back` | QST-008 |
 | `BrixTown.World.SND018_lines_are_voiced` | SND-018 |
 | `BrixTown.World.ECO001_money_is_whole_chips_in_balanced_lines` | ECO-001, ECO-002, ECO-003, BANK-007 |
 | `BrixTown.World.ECO002_the_ledger_matches_the_python` | ECO-002, ECO-005, ECO-010, ECO-011, ECO-013, BANK-001, BANK-007 |

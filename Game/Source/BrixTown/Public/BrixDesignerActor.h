@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "BrixDesigner.h"
 #include "BrixWardrobe.h"
+#include "BrixSave.h"
 #include "BrixDesignerActor.generated.h"
 
 class SBox;
@@ -22,7 +23,8 @@ class SWidget;
 // For test shots: -BrixDesigner opens it (a test shot otherwise starts as the default character, as the slice's ?auto=1),
 // -BrixDesignSet=<key>:<value>;... sets values first (hair:afro;skin:7;height:1.8;cap:terra), -BrixDesignSpin=<deg> turns them,
 // -BrixDesignBegin presses Begin after 3 s (the game's own -BrixShot is then taken in play), -BrixOutfit=<name>,... saves
-// what is worn as outfits (then -BrixMenu=wardrobe shows them).
+// what is worn as outfits (then -BrixMenu=wardrobe shows them), -BrixSaveAs=<slot> saves the shot's game there 6 s in
+// (a test shot saves nothing else), -BrixLoad=<slot> carries on from a slot at once, -BrixNoSave plays without saving.
 UCLASS(Config = Game)
 class BRIXTOWN_API ABrixDesigner : public AActor
 {
@@ -48,7 +50,16 @@ public:
 	// while the Wardrobe page is open the character stands in full beside it (Page: the page, the character to its right)
 	void WardrobeView(bool bOn, TSharedPtr<SWidget> Page = nullptr);
 	FBrixWardrobe Wardrobe;                          // the outfits saved (CHR-015), kept in the save
-	const TMap<FString, FBrixGarment>& GarmentList() const { return Garments; }   // one of -BrixDesignSet's key:value, as the designer would set it
+
+	// Saving (QST-008; life.js save(), loadSave(), saveTab()): a save file a slot in Saved/BrixTown, the game saving itself
+	// in the slot being played as it goes and on leaving; a new game starts clean; the start offers to carry on.
+	void SavePage(TSharedRef<SVerticalBox> Page, TFunction<void()> Redraw, TFunction<void()> CloseMenu);
+	FString SaveHeadline() const;
+	bool SaveSlot(int32 Slot, FString& OutWhy);
+	bool LoadSlot(int32 Slot, FString& OutWhy);
+	TOptional<FBrixSaveGame> ReadSlot(int32 Slot) const;
+	int32 PlayingSlot() const { return Slot; }
+	virtual void EndPlay(const EEndPlayReason::Type Reason) override;	const TMap<FString, FBrixGarment>& GarmentList() const { return Garments; }   // one of -BrixDesignSet's key:value, as the designer would set it
 
 	UPROPERTY(Config) float PanelWidth = 440.f;      // px at 1600 x 900
 	UPROPERTY(Config) float LabelWidth = 106.f;      // a row's label
@@ -56,6 +67,7 @@ public:
 	UPROPERTY(Config) float WardrobeCameraM = 3.6f;  // m off on the Wardrobe page, times height / 1.72: all of you shows
 	UPROPERTY(Config) float WardrobeSpin = -18.f;    // degrees the character is turned on the Wardrobe page
 	UPROPERTY(Config) float SpinPerPixel = .3f;      // degrees the character turns for a pixel dragged
+	UPROPERTY(Config) float AutosaveSeconds = 15.f;  // life.js: the game saves itself this often while played
 	UPROPERTY(Config) float ShotSeconds = 8.f;       // -BrixDesigner: real seconds after it opens that the test shot is taken
 
 private:
@@ -93,4 +105,13 @@ private:
 	FString OutfitName, WardMsg;
 	bool bWardrobe = false;
 	TSharedPtr<SWidget> WardrobeBox;
+	FString SlotPath(int32 K) const;
+	void UseSlot(int32 K);
+	void CarryOn();                                  // the start: the playing slot's save, loaded
+	bool CanSave() const;                            // a game is being played (not in a test shot, not while designing)
+	int32 Slot = 1, Confirm = 0;
+	bool bBegun = false, bOffer = false, bTransient = false;
+	double SavedAt = 0, BegunAt = 0;
+	bool bSavedAs = false;
+	FString SaveMsg;
 };

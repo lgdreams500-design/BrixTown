@@ -97,6 +97,9 @@ bool LoadBrixDesigner(const FString& DesignerPath, const FString& SettingsPath, 
 	TSharedPtr<FJsonObject> St;
 	if (FFileHelper::LoadFileToString(Text, *SettingsPath) && FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), St) && St.IsValid())
 	{
+		const TSharedPtr<FJsonObject>* Sv;
+		double Slots = 0;
+		if (St->TryGetObjectField(TEXT("save"), Sv) && (*Sv)->TryGetNumberField(TEXT("slots"), Slots)) Out.SaveSlots = (int32)Slots;
 		const TSharedPtr<FJsonObject>* W;
 		if (St->TryGetObjectField(TEXT("wardrobe"), W))
 		{

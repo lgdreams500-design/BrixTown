@@ -41,6 +41,7 @@ struct BRIXWORLD_API FBrixDesignerRules
 	FBrixDesign Default;
 	TArray<FString> WardrobeParts;               // settings.json wardrobe.parts: what an outfit may change
 	int32 MaxOutfits = 12;                       // settings.json wardrobe.max_outfits
+	int32 SaveSlots = 3;                         // settings.json save.slots (QST-008)
 	const FVector3f* Colour(const FString& Name) const;
 	const FBrixDesignerSlider* SliderRule(const FString& Key) const;
 	static bool Has(const TArray<TPair<FString, FString>>& List, const FString& Key);
