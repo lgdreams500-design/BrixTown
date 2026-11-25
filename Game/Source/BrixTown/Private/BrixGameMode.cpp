@@ -12,6 +12,7 @@
 #include "BrixLifeActor.h"
 #include "BrixMall.h"
 #include "BrixMallActor.h"
+#include "BrixOutlet.h"
 #include "BrixDesignerActor.h"
 #include "BrixMapActor.h"
 #include "BrixPeople.h"
@@ -111,6 +112,13 @@ void ABrixGameMode::StartPlay()
 		if (Insides && !FParse::Param(FCommandLine::Get(), TEXT("BrixNoMall")) && LoadBrixMall(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), CityDir)), *MallData, MallError))
 			Town->OwnBuilt.Add(MallData->LotId);
 		else { if (Insides) UE_LOG(LogTemp, Warning, TEXT("Brix Town: no mall inside (%s)"), *MallError); MallData.Reset(); }
+		// the furniture outlet's hall, inside and out, and its car park (FURN-020): drawn by an actor of its own, as Eastgate
+		TSharedPtr<FBrixMall> OutletData = MakeShared<FBrixMall>();
+		FString OutletError;
+		if (Insides && !FParse::Param(FCommandLine::Get(), TEXT("BrixNoOutlet")) && LoadBrixOutlet(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), CityDir)),
+			FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/car_models.json"))), *OutletData, OutletError))
+			Town->OwnBuilt.Add(OutletData->LotId);
+		else { if (Insides) UE_LOG(LogTemp, Warning, TEXT("Brix Town: the furniture outlet is the town's box (%s)"), *OutletError); OutletData.Reset(); }
 		Town->Breakable = ABrixCrash::BreakableKinds();   // street things and trees a car can break (CITY-072)
 		Town->Build(*City);
 		Crash = GetWorld()->SpawnActor<ABrixCrash>();
@@ -134,13 +142,14 @@ void ABrixGameMode::StartPlay()
 			for (const FBrixLot& L : B.Lots)
 			{
 				const FBrixInside* In = Insides && Insides->Lots.IsValidIndex(Lk) && Insides->Lots[Lk].IsSet() ? &Insides->Lots[Lk].GetValue() : nullptr;
-				if (MallData && L.Id == MallData->LotId)   // the mall: its hall, under its roof
+				const FBrixMall* Own = MallData && L.Id == MallData->LotId ? MallData.Get() : OutletData && L.Id == OutletData->LotId ? OutletData.Get() : nullptr;
+				if (Own)   // the mall or the furniture outlet: its hall, under its roof
 				{
 					FRoom R;
 					R.Lot = Lk;
-					R.Centre = FVector2D((MallData->X0 + MallData->X1) / 2, (MallData->Z0 + MallData->Z1) / 2);
-					R.Half = FVector2D((MallData->X1 - MallData->X0) / 2, (MallData->Z1 - MallData->Z0) / 2);
-					R.Top = (float)MallData->H;
+					R.Centre = FVector2D((Own->X0 + Own->X1) / 2, (Own->Z0 + Own->Z1) / 2);
+					R.Half = FVector2D((Own->X1 - Own->X0) / 2, (Own->Z1 - Own->Z0) / 2);
+					R.Top = (float)Own->H;
 					Rooms.Add(R);
 				}
 				else if (In && BrixIsHollow(L, In))
@@ -170,15 +179,21 @@ void ABrixGameMode::StartPlay()
 			UE_LOG(LogTemp, Display, TEXT("Brix Town: %d vehicles today"), Traffic->Num());
 		}
 		else UE_LOG(LogTemp, Warning, TEXT("Brix Town: no vehicles (%s); run Tools/worldgen/build_play.py"), *CarError);
+		if (OutletData)   // (after the vehicles: its car park's cars are the traffic's own models)
+		{
+			OutletHall = GetWorld()->SpawnActor<ABrixMall>();
+			OutletHall->Start(OutletData, Town);
+		}
 		if (Today)
 		{
 			if (Insides)   // at home inside: in bed, on the sofa (CITY-013, WLD-053)
 				UE_LOG(LogTemp, Display, TEXT("Brix Town: %d of the day's stays at home are in a bed or on a seat"), SeatBrixDayIndoors(*Today, *City, *Insides, FBrixDoorRules::FromConfig()));
-			if (Mall && Mall->Data())   // Eastgate's keepers, guards, janitors and visitors at their places (CITY-105, CITY-106)
+			for (const ABrixMall* Own : { Mall.Get(), OutletHall.Get() })   // Eastgate's keepers, guards, janitors and visitors (CITY-105, CITY-106); the outlet's staff and browsers (FURN-021)
 			{
+				if (!Own || !Own->Data()) continue;
 				int32 Mi = 0, k = 0;
-				for (const FBrixBlock& B : City->Blocks) for (const FBrixLot& L : B.Lots) { if (L.Id == Mall->Data()->LotId) Mi = k; ++k; }
-				UE_LOG(LogTemp, Display, TEXT("Brix Town: %d of the day's stays in %s are at its places"), SeatBrixDayInMall(*Today, *Mall->Data(), Mi), *Mall->Data()->Name);
+				for (const FBrixBlock& B : City->Blocks) for (const FBrixLot& L : B.Lots) { if (L.Id == Own->Data()->LotId) Mi = k; ++k; }
+				UE_LOG(LogTemp, Display, TEXT("Brix Town: %d of the day's stays in %s are at its places"), SeatBrixDayInMall(*Today, *Own->Data(), Mi), *Own->Data()->Name);
 			}
 			People = GetWorld()->SpawnActor<ABrixPeople>();
 			People->Start(*City, Today, Cars ? Traffic : nullptr);

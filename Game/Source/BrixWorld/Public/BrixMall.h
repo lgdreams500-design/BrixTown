@@ -24,10 +24,13 @@ struct BRIXWORLD_API FBrixMallCall
 		Solid,   // A: x0, y0, z0, x1, y1, z1: in the way, never drawn
 		Use,     // A: x, y, z, yaw, then where it takes you (x, y, z) for a lift; Text: "kind|label" (play.js use())
 		Spot,    // A: x, z, pose (0 stand, 2 sit), yaw, height (-1: none): a place for a resident (play.js spot())
-		Unused,
+		Lamp,    // A: x, y, z, strength: a lamp that lights the room (play.js ROOM_REC lamps; the furniture outlet's)
 		Light,   // A: x, y, z, reach, strength: a lantern's light outside (shell.js)
 		Name,    // A: the middle (x, y, z), the way it faces (x, y, z), the letters' height; Text: the name (an outlet's sign)
 		Occl,    // A: x0, z0, x1, z1, height, 0: ground that sees less sky
+		OBox,    // A: the slice's matrix (16, column by column), then the box's middle and size in its frame (Mesh.obox())
+		Car,     // A: x, z, yaw, y; Text: the seed its model and paints come from (cars.js parked())
+		Piece,   // A: x, y, z, the piece's across axis (x, z), its back axis (x, z); Text: "piece|line": a furniture kit's piece
 	};
 	EKind Kind = Quad;
 	TArray<double, TInlineAllocator<17>> A;

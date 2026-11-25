@@ -21,7 +21,8 @@ class UStaticMesh;
 // openings, the sky seen through them from inside), cut in squares so what is out of view is not drawn; the slice's solids
 // as unseen blockers; its lifts' calls given to ABrixRooms (E). The moving stairs carry whoever stands on them. Near the
 // camera the nearest of the mall's lanterns and shop lights give real light. Only the mall whose plan is a court with its
-// entrances (BrixMallCan) is built so; the other malls are left as the town draws them.
+// entrances (BrixMallCan) is built so; the other malls are left as the town draws them. The furniture outlet's hall
+// (BrixWorld/BrixOutlet, a port of outlet.js) is laid by a second of these, its car park's cars the traffic's own models.
 UCLASS(Config = Game)
 class BRIXTOWN_API ABrixMall : public AActor
 {
@@ -45,6 +46,7 @@ public:
 	UPROPERTY(Config) FLinearColor WarmLit = FLinearColor(1.f, 0.64f, 0.34f);    // a warm light line, a lit case, a tall window (play.js: a shop window by day)
 	UPROPERTY(Config) FLinearColor CoolLit = FLinearColor(0.82f, 0.86f, 0.94f);  // a light panel, a lit screen (.9995)
 	UPROPERTY(Config) FLinearColor TreadColour = FLinearColor(0.16f, 0.16f, 0.17f);   // the moving stairs' treads (material 28)
+	UPROPERTY(Config) FLinearColor DarkGlass = FLinearColor(0.07f, 0.08f, 0.1f);      // a window that is not lit (material 4)
 	UPROPERTY(Config) int32 NearLights = 4;              // the mall's lanterns and shop lights nearest the camera on its floor give real light
 	UPROPERTY(Config) float LightCandela = 8.f;
 	UPROPERTY(Config) float LightReach = 12.f;           // m
