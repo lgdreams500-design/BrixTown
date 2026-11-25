@@ -273,7 +273,7 @@ bool FCITY013_Furnished::RunTest(const FString&)
 			for (int32 f = 0; f < NFl; ++f)
 			{
 				FBrixFurnished F;
-				if (!BrixFurnishFloor(Ins, L, In, f, F)) continue;
+				if (!BrixFurnishFloor(Ins, L, In, f, F, false)) continue;   // the places' furniture (the dressing: CITY013_rooms_are_dressed_...)
 				bAny = true;
 				auto Fail = [&](const FString& Why) { if (Bad++ < 20) AddError(FString::Printf(TEXT("%s (%s) floor %d: %s"), *L.Id, *L.Name, f, *Why)); };
 				const FBox2D Lot(L.Min - FVector2D(0.05, 0.05), L.Max + FVector2D(0.05, 0.05));
@@ -293,6 +293,73 @@ bool FCITY013_Furnished::RunTest(const FString&)
 	for (const TPair<FString, int32>& KV : ByKind) Kinds += FString::Printf(TEXT(" %s %d"), *KV.Key, KV.Value);
 	AddInfo(FString::Printf(TEXT("%d buildings furnished at their places, %d boxes:%s"), Buildings, Boxes, *Kinds));
 	TestTrue(TEXT("the shops and cafes are furnished"), ByKind.FindRef(TEXT("shop")) > 30 && ByKind.FindRef(TEXT("food")) > 30);
+	return Bad == 0;
+}
+
+// CITY-013: the rooms of every hollow building with no plan of its own are dressed as the slice dresses them (play.js room()
+// and layout()): the dressing adds pieces to every kind of building, every piece of it stands inside the walls, and on the
+// ground floor nothing one could walk into stands within 0.6 m of the doorway's inside (a rug on the floor may). A building
+// of flats is left undressed, as in the slice.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY013_Dressed, "BrixTown.World.CITY013_rooms_are_dressed_as_the_slice_dresses_them",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FCITY013_Dressed::RunTest(const FString&)
+{
+	FBrixCity City;
+	FBrixInsides Ins;
+	FString Error;
+	if (!TestTrue(TEXT("the city loads: ") + Error, LoadBrixCity(CityDir(), City, Error))) return false;
+	if (!TestTrue(TEXT("inside.json loads: ") + Error, LoadBrixInside(InsidePath(), Ins, Error))) return false;
+	const FBrixDoorRules R = FBrixDoorRules::FromConfig();
+	int32 k = -1, Buildings = 0, Bad = 0, Before = 0, After = 0;
+	TMap<FString, TPair<int32, int32>> ByKind;   // boxes before and after the dressing
+	for (const FBrixBlock& B : City.Blocks)
+		for (const FBrixLot& L : B.Lots)
+		{
+			++k;
+			if (!Ins.Lots[k].IsSet()) continue;
+			const FBrixInside& In = Ins.Lots[k].GetValue();
+			if (!BrixIsHollow(L, &In) || L.House.IsSet() || !In.Interior.IsEmpty()) continue;   // planned homes are furnished from their plans
+			const int32 NFl = L.Floors >= 2 && In.Stair.IsSet() && L.AngleDeg == 0.f ? L.Floors : 1;
+			const FBrixDoorway Dw = BrixDoorwayOf(City, L, B.District, R);
+			const FVector2D Inside = Dw.Centre - Dw.Out * 0.5;
+			bool bDressed = false;
+			for (int32 f = 0; f < NFl; ++f)
+			{
+				FBrixFurnished Bare, F;
+				BrixFurnishFloor(Ins, L, In, f, Bare, false);
+				BrixFurnishFloor(Ins, L, In, f, F);
+				TPair<int32, int32>& Kd = ByKind.FindOrAdd(L.Kind);
+				Kd.Key += Bare.Boxes.Num(); Kd.Value += F.Boxes.Num(); Before += Bare.Boxes.Num(); After += F.Boxes.Num();
+				if (F.Boxes.Num() > Bare.Boxes.Num()) bDressed = true;
+				auto Fail = [&](const FString& Why) { if (Bad++ < 20) AddError(FString::Printf(TEXT("%s (%s, %s) floor %d: %s"), *L.Id, *L.Name, *L.Kind, f, *Why)); };
+				const FBox2D Lot(L.Min - FVector2D(0.05, 0.05), L.Max + FVector2D(0.05, 0.05));
+				for (int32 i = Bare.Solids.Num(); i < F.Solids.Num(); ++i)
+					if (!Lot.IsInside(F.Solids[i].Min) || !Lot.IsInside(F.Solids[i].Max)) { Fail(TEXT("something of the dressing in the way outside the walls")); break; }
+				for (int32 i = Bare.Boxes.Num(); i < F.Boxes.Num(); ++i)   // the dressing comes after the places' furniture
+				{
+					const FBrixFurnBox& X = F.Boxes[i];
+					const double c = FMath::Abs(FMath::Cos(X.Yaw)), s = FMath::Abs(FMath::Sin(X.Yaw));
+					const FVector2D Half((c * X.Size.X + s * X.Size.Z) / 2, (s * X.Size.X + c * X.Size.Z) / 2);
+					if (!Lot.IsInside(X.At - Half) || !Lot.IsInside(X.At + Half)) { Fail(FString::Printf(TEXT("a dressed box at (%.2f, %.2f), %.2f x %.2f, stands outside the walls"), X.At.X, X.At.Y, Half.X * 2, Half.Y * 2)); break; }
+					const bool bRug = X.Y0 < 0.02f && X.Size.Y < 0.01f;
+					if (f == 0 && !bRug && X.Y0 < 2.f)
+					{
+						const FVector2D Near(FMath::Clamp(Inside.X, X.At.X - Half.X, X.At.X + Half.X), FMath::Clamp(Inside.Y, X.At.Y - Half.Y, X.At.Y + Half.Y));
+						if (FVector2D::Distance(Near, Inside) < 0.6) { Fail(FString::Printf(TEXT("a dressed box at (%.2f, %.2f) stands in the doorway"), X.At.X, X.At.Y)); break; }
+					}
+				}
+			}
+			if (bDressed) ++Buildings;
+		}
+	FString Kinds;
+	for (const TPair<FString, TPair<int32, int32>>& KV : ByKind) Kinds += FString::Printf(TEXT(" %s %d->%d"), *KV.Key, KV.Value.Key, KV.Value.Value);
+	AddInfo(FString::Printf(TEXT("%d buildings dressed; boxes %d before the dressing, %d after:%s"), Buildings, Before, After, *Kinds));
+	for (const TCHAR* K : { TEXT("food"), TEXT("shop"), TEXT("work"), TEXT("health"), TEXT("utility") })   // (the town's unplanned homes are all flats: undressed)
+	{
+		const TPair<int32, int32>* Kd = ByKind.Find(K);
+		TestTrue(FString::Printf(TEXT("the dressing adds pieces to the %s buildings"), K), Kd && Kd->Value > Kd->Key);
+	}
+	TestTrue(TEXT("buildings are dressed"), Buildings > 100);
 	return Bad == 0;
 }
 

@@ -78,8 +78,14 @@ floor is for): a desk with its lamp and chair or a counter with its till, espres
 place, a table for two at a cafe's seats, cinema seats and museum benches facing in, chairs, beds with a nightstand, in the
 slice's colours and room styles, as boxes as the slice draws them; nothing in the stairwell or on the way from the door to
 the stair. Whoever is there stands behind the counter, sits at the desk or table or lies in the bed (`SeatBrixDayIndoors`).
-`CITY013_shops_cafes_and_workplaces_are_furnished_at_their_places`. The slice's room dressing (room(): pictures, shelves,
-plants, a cafe's coffee bar) is not brought over yet. Unity builds are off in both modules (`bUseUnity = false`): files'
+`CITY013_shops_cafes_and_workplaces_are_furnished_at_their_places`. Each room is dressed as the slice dresses it (play.js layout() and
+room(), also in BrixFurnish): a cafe's coffee bar with its machines and cake stand, a grocer's produce shelves, a works' racks
+and hoist, an office's reception, a clinic's screens, a bank's counter and vault, a library's stacks, a museum's paintings,
+a cinema's screen; wardrobes, bookcases, dressers, plants and sideboards along the walls with pictures over the low ones,
+rugs, dining tables, kiosks and benches on the floor, lamps hanging from the ceiling
+(`CITY013_rooms_are_dressed_as_the_slice_dresses_them`: 150 buildings, 251,751 boxes in all). The building's real windows
+are not known to it (the slice's l.inWin), so a tall piece may stand in front of one; two slice slips (a works' rack through
+its back wall, a museum's great painting off the side upstairs) are cut back to the walls. Unity builds are off in both modules (`bUseUnity = false`): files'
 own short names clashed as soon as a new file changed which files were joined.
 
 ## Windows lit by night
@@ -582,6 +588,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY013_shops_cafes_and_workplaces_are_furnished_at_their_places` | CITY-013 |
 | `BrixTown.World.WLD051_towers_have_a_lift` | WLD-051 |
 | `BrixTown.World.FURN060_every_planned_flat_is_furnished_inside_its_walls` | FURN-060, FURN-063 |
+| `BrixTown.World.CITY013_rooms_are_dressed_as_the_slice_dresses_them` | CITY-013 |
 | `BrixTown.World.CITY017_residents_sit_on_garden_benches` | CITY-017 |
 | `BrixTown.World.CITY040_vehicles_are_where_the_traffic_puts_them` | CITY-040 |
 | `BrixTown.World.CITY041_trams_are_where_the_timetable_puts_them` | CITY-041 |
