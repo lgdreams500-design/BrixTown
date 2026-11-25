@@ -33,6 +33,17 @@ struct BRIXWORLD_API FBrixShape
 	TArray<double, TInlineAllocator<16>> A;
 	TArray<FVector2D> Pts;
 	FString Text;
+	FString WrapKind;                        // part of a thing of its own that a car can break (crates by an arch: "crates")
+	FVector2D WrapAt = FVector2D::ZeroVector;
+};
+
+// The wall a board is on (dressing.js board()): its lot's footprint, whether its ground storey is the old quarters' stone
+// (play.js l.old: the kit's stone districts), its height (play.js building(): max(floors x 3 + 0.4, 3.6))
+struct BRIXWORLD_API FBrixBoardWall
+{
+	FVector2D Min = FVector2D::ZeroVector, Max = FVector2D::ZeroVector;
+	bool bOld = false;
+	double H = 0;
 };
 
 // How one kind of garden plant looks today (world.plants_today(): CITY-017, WLD-040)
@@ -54,6 +65,9 @@ struct BRIXWORLD_API FBrixStreetsToday
 	TArray<FVector3d> LawnTones;
 	double EdgeM = .45, TuftsPer100m2 = 7, TreeRingM = 1.2;
 	FVector3d EdgeColor = FVector3d(.23, .31, .16), TuftColor = FVector3d(.24, .32, .16), MulchColor = FVector3d(.2, .15, .11);
+	// the street dressing today (world.dressing_today(): WLD-034): each board's advert, the bunting on market days
+	TSharedPtr<class FJsonObject> Dressing;
+	bool bBunting = false;
 };
 BRIXWORLD_API bool LoadBrixStreetsToday(const FString& Path, FBrixStreetsToday& Out, FString& OutError);
 
@@ -102,6 +116,20 @@ BRIXWORLD_API void BrixGreenGroundShapes(const FBrixBlock& B, const FBrixGround&
 // dressing.js prop() for the playgrounds' still parts (WLD-032): the soft ground, the swings' frames, the slides, the
 // seesaws' pivots, the sandpits and the climbing frames (their seats and planks move: BrixPlay). False for any other kind.
 BRIXWORLD_API bool BrixDressShapes(const FBrixProp& P, const FBrixBlock& B, double G, const FBrixStreetsToday& Today, TArray<FBrixShape>& Out);
+// The rest of dressing.js prop() (WLD-028, WLD-031, WLD-034): the bandstand, notice boards, sundials, wells, pergolas, statues,
+// the news kiosk, bunting on market days, planters, bins, bike racks, post and telephone boxes, bollards, timetables,
+// adverts on blank walls and hoardings (on Wall, the wall of the lot the block file names). False for any other kind.
+BRIXWORLD_API bool BrixMoreDressShapes(const FBrixProp& P, const FBrixBlock& B, double G, const FBrixStreetsToday& Today, const FBrixBoardWall* Wall, TArray<FBrixShape>& Out);
+// The wall of the lot a board names (its 'lot'), or unset; OldDistricts: those whose ground storey is stone
+BRIXWORLD_API TOptional<FBrixBoardWall> BrixBoardWallOf(const FBrixBlock& B, const FBrixProp& P, const TArray<FString>& OldDistricts);
+// dressing.js board(): where an advert or a hoarding is on its wall: the side (n, s, w, e), its ends along the wall and its
+// bottom and top (metres from the street). False for any other kind.
+struct BRIXWORLD_API FBrixBoardSpan { TCHAR Side = 'n'; double A0 = 0, A1 = 0, Y0 = 0, Y1 = 0; };
+BRIXWORLD_API bool BrixBoardSpanOf(const FBrixProp& P, const FBrixBoardWall& Wall, FBrixBoardSpan& Out);
+// play.js prop() for an arch across an alley (and the crates by some), on ground G
+BRIXWORLD_API void BrixArchShapes(const FBrixProp& P, const FBrixBlock& B, double G, TArray<FBrixShape>& Out);
+// play.js crates(): goods stacked by a door, from the seed's hash, marked as a thing of their own ("crates")
+BRIXWORLD_API void BrixCratesShapes(double X, double Z, double G, const FString& Seed, TArray<FBrixShape>& Out);
 // Mesh.obox() as a shape
 BRIXWORLD_API void BrixOBox(TArray<FBrixShape>& Out, const FBrixM4& M, double Cx, double Cy, double Cz, double Sx, double Sy, double Sz, const FVector3d& Col);
 // The open ground's templates (play.js GREEN_KINDS)
