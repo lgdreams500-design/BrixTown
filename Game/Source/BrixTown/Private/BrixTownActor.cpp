@@ -1200,6 +1200,7 @@ void ABrixTownActor::Repaint(int32 Lot, const TSharedPtr<FJsonObject>& Design)
 		for (const FBrixLot& L : B.Lots)
 		{
 			if (k++ != Lot) continue;
+			if (OwnBuilt.Contains(L.Id)) return;   // drawn by its own actor (Eastgate Mall)
 			CityData = KeptCity;
 			LotIndex = Lot;
 			Recording = &LotParts.FindOrAdd(Lot);
