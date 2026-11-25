@@ -75,6 +75,19 @@ struct BRIXWORLD_API FBrixFarBox
 	FVector3f Min, Max, Colour;
 };
 
+// The face control set of docs/art/CHARACTER_FACE.md §1 (people.js face()), as a conversation drives it: the mouth's
+// shape, the smile or frown, each brow's inner and outer end, the lids, a squint, how wide the eyes open, the gaze, a nod.
+struct BRIXWORLD_API FBrixFace
+{
+	struct FMouth { double Width = .0175, Opening = .0011, Round = 0; int32 Teeth = 0; bool bTongue = false; double Curve = 0; };
+	FMouth Mouth;
+	double Curve = .075;
+	double BrowL[2] = { 0, 0 }, BrowR[2] = { 0, 0 };
+	double Lid = 0, Squint = 0, Open = 1;
+	double Gaze[2] = { 0, 0 };
+	double Nod = 0;
+};
+
 struct BRIXWORLD_API FBrixDrawOptions
 {
 	int32 Pose = 0;          // 0 standing, 1 walking, 2 sitting (the origin is then the seat's top)
@@ -84,6 +97,7 @@ struct BRIXWORLD_API FBrixDrawOptions
 	double FaceFade = 1;     // at lod 2, how much of the face still shows (0 none)
 	TOptional<double> Floor; // sitting in a car: the floor this far below the seat, the feet out along it (people.js mod.floor)
 	bool bDriving = false;   // sitting at a wheel: the hands up on it (cars.js seat(): arms [1, 58, 10, 48])
+	const FBrixFace* Face = nullptr;   // in a conversation: the face as it speaks (full detail only), and its nod
 };
 
 // people.js draw() for poses 0 to 2: appends the body to Out (lods 0 to 2) or its boxes to OutBoxes (lod 3).

@@ -5,8 +5,13 @@ Runs Prototype/play/people.js itself in headless Edge (this machine has no Node)
                                     eye colours, what each role wears, the player's look. BrixWorld's BrixPeople reads them, so the Unreal
                                     people are dressed and walk from the same numbers as the slice's.
   Tests/values/people_city_01.json  looks of a dozen residents and bodies drawn by people.js draw() (vertex counts and
-                                    sampled vertex positions, the far figures' boxes): the test
+                                    sampled vertex positions, the far figures' boxes; talking faces too): the test
                                     ART004_people_are_drawn_as_the_slice_draws_them checks the C++ port against them.
+  Game/Data/talk.json               what conversations need from the slice's code: the words for what a resident is
+                                    doing or going to do (play.js DOING, GOING) and the voiced pieces of every line
+                                    (audio/voices/index.js, Tools/voice/make_dialogue_voices.py; SND-018).
+  Tests/values/talk_city_01.json    every line of World/rules/dialogue.json mouthed by conversations.js speak() (CHR-009),
+                                    for CHR009_lines_are_mouthed_as_the_slice_mouths_them.
 
 people.js stays the source while the slice is kept (ADR-0045): run this again after changing it.
   python Tools/unreal/people_values.py
@@ -25,6 +30,11 @@ PEOPLE_JS = os.path.join(ROOT, "Prototype", "play", "people.js")
 DAY = os.path.join(ROOT, "Game", "Data", "day.json")
 OUT_DATA = os.path.join(ROOT, "Game", "Data", "people.json")
 OUT_VALUES = os.path.join(ROOT, "Tests", "values", "people_city_01.json")
+OUT_TALK = os.path.join(ROOT, "Game", "Data", "talk.json")
+OUT_TALK_VALUES = os.path.join(ROOT, "Tests", "values", "talk_city_01.json")
+CONV_JS = os.path.join(ROOT, "Prototype", "play", "conversations.js")
+VOICES_JS = os.path.join(ROOT, "Prototype", "play", "audio", "voices", "index.js")
+RULES = os.path.join(ROOT, "World", "rules")
 EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 
 HARNESS = r"""
@@ -43,15 +53,48 @@ looks.forEach((L, k) => out.looks.push(Object.assign({ i: CASES.looks[k][0], rol
 for (const c of CASES.bodies) {
   const ms = { a: new Float32Array(1 << 20), n: 0, boxes: [], box(x0, y0, z0, x1, y1, z1, col) { this.boxes.push([x0, y0, z0, x1, y1, z1, col[0], col[1], col[2]]); } };
   const L = looks[c.look];
-  draw(ms, c.x, c.y, c.z, c.yaw, L, c.pose, { ph: c.ph, t: c.t, lod: c.lod, ff: c.ff, fl: 14,
+  draw(ms, c.x, c.y, c.z, c.yaw, L, c.pose, { ph: c.ph, t: c.t, lod: c.lod, ff: c.ff, fl: 14, face: c.face || null,
     mod: c.floor != null ? { floor: c.floor, arms: c.driver ? [[1, 58, 10, 48], [1, 58, 10, 48]] : null } : null });   // in a car (cars.js seat())
   const nv = ms.n / 10, step = Math.max(1, Math.floor(nv / 240)), pts = [];
   for (let v = 0; v < nv; v += step) pts.push([v, ms.a[v * 10], ms.a[v * 10 + 1], ms.a[v * 10 + 2]]);
   out.bodies.push(Object.assign({}, c, { vertices: nv, samples: pts, boxes: ms.boxes }));
 }
+window.__OUT = out;
+} catch (e) { document.getElementById("out").textContent = "@@" + JSON.stringify({ error: String(e.stack || e) }) + "@@"; }
+"""
+
+# after people.js: conversations.js with the dialogue and speech rules, and every line mouthed (CHR-009)
+TALK_HARNESS = r"""
+try {
+const out = window.__OUT; if (!out) throw new Error(window.__ERR || "people.js gave nothing");
+out.speak = %LINES%.map(t => [t, Talk.speak(t)]);
 document.getElementById("out").textContent = "@@" + JSON.stringify(out) + "@@";
 } catch (e) { document.getElementById("out").textContent = "@@" + JSON.stringify({ error: String(e.stack || e) }) + "@@"; }
 """
+
+
+def js_object(src, name):
+    """A one-line object literal `const NAME = { key: "text", ... };` in play.js, as a dict."""
+    m = re.search(r"^const " + name + r" = (\{.*?\});", src, re.M)
+    if not m:
+        sys.exit("play.js: " + name + " not found; update people_values.py")
+    return json.loads(re.sub(r'([{,]\s*)(\w+):', r'\1"\2":', m.group(1)))
+
+
+def face_cases():
+    """Talking faces as conversations.js blends them (CHARACTER_FACE §1): an expression of speech.json and a mouth shape."""
+    sp = json.load(open(os.path.join(RULES, "speech.json"), encoding="utf-8"))
+    def shape(n):
+        m = sp["shapes"][n] if isinstance(n, str) else n
+        return dict(width=m["width"] * sp["draw"]["width"], opening=m["opening"] * sp["draw"]["opening"], round=m.get("round", 0),
+                    teeth=m["teeth"], tongue=m["tongue"], curve=m.get("curve", 0))
+    out = []
+    for mood, mouth, nod in (("happy", "AA", 0.03), ("surprised", "OH", 0), ("sad", "rest", 0), ("angry", "EE", 0.05), ("thinking", "MBP", 0), ("neutral", "FV", 0.07)):
+        e = sp["expressions"][mood]
+        mo = shape(mouth)
+        out.append(dict(mouth=mo, curve=e["curve"] + mo["curve"] * .5, brow_l=e["brow_l"], brow_r=e["brow_r"], lid=e["lid"],
+                        squint=e["squint"], open=e["open"], gaze=e["gaze"], nod=nod))
+    return out
 
 
 def main():
@@ -77,6 +120,8 @@ def main():
         bodies.append(dict(look=k, x=0.0, y=0.0, z=0.0, yaw=0.0, pose=0, ph=0.0, t=2.0 + 0.7 * k, lod=1 if k % 2 else 0, ff=1.0))
         bodies.append(dict(look=k, x=-3.0, y=0.62, z=1.0, yaw=2.0 - 0.2 * k, pose=2, ph=0.0, t=3.0 + 0.4 * k, lod=k % 4, ff=0.8))   # on a bench (CITY-017)
         bodies.append(dict(look=k, x=4.0, y=0.6, z=-1.0, yaw=0.3 * k, pose=2, ph=0.0, t=1.0 + 0.3 * k, lod=k % 3, ff=1.0, floor=-0.45, driver=k % 2 == 0))   # in a car (CITY-040)
+    for n, face in enumerate(face_cases()):   # someone in a conversation: the full face control set (CHR-007)
+        bodies.append(dict(look=n * 3, x=0.0, y=0.0, z=0.0, yaw=0.4 * n, pose=0, ph=0.0, t=1.3 + n, lod=0, ff=1.0, face=face))
     cases = json.dumps(dict(looks=looks, bodies=bodies))
     patched = src.replace(ret, HARNESS.replace("%CASES%", cases) + ret, 1)
     # people.js takes hash() from play.js: the same function, cut from play.js
@@ -84,16 +129,32 @@ def main():
     h = re.search(r"^function hash\(\) \{.*?^\}\n", play, re.S | re.M)
     if not h:
         sys.exit("play.js: hash() not found; update people_values.py")
-    page = "<!doctype html><meta charset=utf-8><pre id=out></pre><script>\n" + h.group(0) + patched + "\n</script>"
-    with tempfile.TemporaryDirectory() as tmp:
+    dialogue = json.load(open(os.path.join(RULES, "dialogue.json"), encoding="utf-8"))
+    speech = json.load(open(os.path.join(RULES, "speech.json"), encoding="utf-8"))
+    lines = sorted({n["say"] for c in dialogue["conversations"].values() for n in c["nodes"].values()} |
+                   {o["text"] for c in dialogue["conversations"].values() for n in c["nodes"].values() for o in n["options"]})
+    lines += ["Well... that's it, isn't it? Yes; quite: really \u2014 fine!", "", "Hmm."]
+    conv = open(CONV_JS, encoding="utf-8").read()
+    page = ("<!doctype html><meta charset=utf-8><pre id=out></pre><script>\n" + h.group(0) + patched + "\n</script>"
+            + "<script>window.WASTED = " + json.dumps(dict(dialogue=dialogue, speech=speech)) + ";</script>"
+            + "<script>\n" + conv + "\n</script><script>\n" + TALK_HARNESS.replace("%LINES%", json.dumps(lines)) + "\n</script>")
+    # Edge is started through PowerShell's Start-Process with its output sent to a file: since Edge 158 the page runs in
+    # a process Edge hands it to, which writes nothing to a pipe from here, and Start-Process -Wait waits for it. Edge's
+    # helpers can hold the folder a while after, so it is left for the system to clear if it cannot be removed at once.
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         path = os.path.join(tmp, "people_values.html")
         open(path, "w", encoding="utf-8").write(page)
-        run = subprocess.run([EDGE, "--headless=new", "--user-data-dir=" + os.path.join(tmp, "edge"), "--no-first-run",
-                              "--virtual-time-budget=20000", "--dump-dom", "file:///" + path.replace("\\", "/")],
-                             capture_output=True, text=True, encoding="utf-8", stdin=subprocess.DEVNULL, timeout=180)
-    m = re.search(r"<pre id=\"out\">@@(.*?)@@</pre>", run.stdout, re.S)
+        dump = os.path.join(tmp, "dom.txt")
+        args = ",".join("'%s'" % a for a in ("--headless=new", "--user-data-dir=" + os.path.join(tmp, "edge"), "--no-first-run",
+                                              "--virtual-time-budget=20000", "--dump-dom", "file:///" + path.replace("\\", "/")))
+        subprocess.run(["powershell", "-NoProfile", "-Command",
+                        "Start-Process -FilePath '%s' -ArgumentList %s -RedirectStandardOutput '%s' -NoNewWindow -Wait" % (EDGE, args, dump)],
+                       stdin=subprocess.DEVNULL, capture_output=True, timeout=300)
+        with open(dump, encoding="utf-8", errors="replace") as f:
+            text = f.read()
+    m = re.search(r"<pre id=\"out\">@@(.*?)@@</pre>", text, re.S)
     if not m:
-        sys.exit("Edge gave no values:\n" + run.stdout[-2000:] + run.stderr[-2000:])
+        sys.exit("Edge gave no values:\n" + text[-2000:])
     out = json.loads(html.unescape(m.group(1)))
     if "error" in out:
         sys.exit("people.js failed in Edge: " + out["error"])
@@ -106,6 +167,17 @@ def main():
         json.dump(dict(note="Generated by Tools/unreal/people_values.py: people.js look() and draw() for the test ART004_people_are_drawn_as_the_slice_draws_them.",
                        looks=out["looks"], bodies=out["bodies"]), f, separators=(",", ":"))
     print("wrote %s and %s: %d looks, %d bodies" % (os.path.relpath(OUT_DATA, ROOT), os.path.relpath(OUT_VALUES, ROOT), len(out["looks"]), len(out["bodies"])))
+    with open(OUT_TALK_VALUES, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(dict(note="Generated by Tools/unreal/people_values.py: conversations.js speak() for every line, for CHR009_lines_are_mouthed_as_the_slice_mouths_them.",
+                       speak=out["speak"]), f, separators=(",", ":"), ensure_ascii=False)
+    play_src = open(os.path.join(ROOT, "Prototype", "play", "play.js"), encoding="utf-8").read()
+    vj = open(VOICES_JS, encoding="utf-8").read()
+    voices = json.loads(vj[vj.index("{"):vj.rindex("}") + 1])
+    with open(OUT_TALK, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(dict(note="Generated by Tools/unreal/people_values.py from Prototype/play (play.js DOING, GOING; audio/voices/index.js). Do not edit.",
+                       doing=js_object(play_src, "DOING"), going=js_object(play_src, "GOING"), player_name="you",
+                       voice_dir="Prototype/play/audio/voices", voices=voices), f, separators=(",", ":"), ensure_ascii=False)
+    print("wrote %s and %s: %d lines mouthed" % (os.path.relpath(OUT_TALK, ROOT), os.path.relpath(OUT_TALK_VALUES, ROOT), len(out["speak"])))
 
 
 if __name__ == "__main__":

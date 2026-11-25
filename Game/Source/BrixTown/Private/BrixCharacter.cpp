@@ -1,6 +1,8 @@
 #include "BrixCharacter.h"
 
+#include "BrixGameMode.h"
 #include "BrixPeople.h"
+#include "BrixTalkActor.h"
 #include "BrixUnits.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -11,6 +13,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "InputAction.h"
+#include "Kismet/GameplayStatics.h"
 #include "InputMappingContext.h"
 #include "InputModifiers.h"
 #include "Misc/Paths.h"
@@ -64,6 +67,9 @@ void ABrixCharacter::MakeInput()
 	LookAction->ValueType = EInputActionValueType::Axis2D;
 	JumpAction = NewObject<UInputAction>(this, TEXT("Jump"));
 	RunAction = NewObject<UInputAction>(this, TEXT("Run"));
+	TalkAction = NewObject<UInputAction>(this, TEXT("Talk"));
+	LeaveAction = NewObject<UInputAction>(this, TEXT("Leave"));
+	for (int32 n = 0; n < 9; ++n) AnswerActions.Add(NewObject<UInputAction>(this, *FString::Printf(TEXT("Answer%d"), n + 1)));
 
 	// Move is (right, forward): D and A on x, W and S on y.
 	auto Map = [this](UInputAction* Action, FKey Key, bool bToY, bool bNegate)
@@ -84,6 +90,11 @@ void ABrixCharacter::MakeInput()
 	Keys->MapKey(LookAction, EKeys::Mouse2D);
 	Keys->MapKey(JumpAction, EKeys::SpaceBar);
 	Keys->MapKey(RunAction, EKeys::LeftShift);
+	Keys->MapKey(TalkAction, EKeys::E);
+	Keys->MapKey(LeaveAction, EKeys::Escape);
+	const FKey Digits[9] = { EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four, EKeys::Five, EKeys::Six, EKeys::Seven, EKeys::Eight, EKeys::Nine };
+	const FKey Pad[9] = { EKeys::NumPadOne, EKeys::NumPadTwo, EKeys::NumPadThree, EKeys::NumPadFour, EKeys::NumPadFive, EKeys::NumPadSix, EKeys::NumPadSeven, EKeys::NumPadEight, EKeys::NumPadNine };
+	for (int32 n = 0; n < 9; ++n) { Keys->MapKey(AnswerActions[n], Digits[n]); Keys->MapKey(AnswerActions[n], Pad[n]); }
 }
 
 void ABrixCharacter::PawnClientRestart()
@@ -111,13 +122,16 @@ void ABrixCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		In->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 		In->BindAction(RunAction, ETriggerEvent::Started, this, &ABrixCharacter::StartRun);
 		In->BindAction(RunAction, ETriggerEvent::Completed, this, &ABrixCharacter::StopRun);
+		In->BindAction(TalkAction, ETriggerEvent::Started, this, &ABrixCharacter::TalkKey);
+		In->BindAction(LeaveAction, ETriggerEvent::Started, this, &ABrixCharacter::LeaveKey);
+		for (UInputAction* A : AnswerActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::AnswerKey);
 	}
 }
 
 void ABrixCharacter::Move(const FInputActionValue& Value)
 {
 	const FVector2D V = Value.Get<FVector2D>();
-	if (!Controller) return;
+	if (!Controller || bTalking) return;   // a talk holds the player still (conversations.js open())
 	const FRotator Yaw(0.f, Controller->GetControlRotation().Yaw, 0.f);
 	AddMovementInput(FRotationMatrix(Yaw).GetUnitAxis(EAxis::X), V.Y);
 	AddMovementInput(FRotationMatrix(Yaw).GetUnitAxis(EAxis::Y), V.X);
@@ -125,6 +139,7 @@ void ABrixCharacter::Move(const FInputActionValue& Value)
 
 void ABrixCharacter::Look(const FInputActionValue& Value)
 {
+	if (bTalking) return;
 	const FVector2D V = Value.Get<FVector2D>();
 	AddControllerYawInput(V.X);
 	AddControllerPitchInput(-V.Y);
@@ -150,4 +165,58 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 	Scratch.Reset();
 	DrawBrixPerson(Rules, L, FVector::ZeroVector, 0.0, O, Scratch);
 	Verts = BrixBodyToMesh(Person, Scratch, Verts, false, BodyMaterial);
+}
+
+ABrixTalk* ABrixCharacter::Talk() const
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	return Mode ? Mode->Talk : nullptr;
+}
+
+void ABrixCharacter::TalkKey()
+{
+	if (ABrixTalk* T = Talk()) if (!T->IsTalking()) T->Open();
+}
+
+void ABrixCharacter::AnswerKey(const FInputActionInstance& Instance)
+{
+	ABrixTalk* T = Talk();
+	if (!T || !T->IsTalking()) return;
+	const int32 n = AnswerActions.IndexOfByKey(Instance.GetSourceAction());
+	if (n >= 0) T->Choose(n);
+}
+
+void ABrixCharacter::LeaveKey()
+{
+	if (ABrixTalk* T = Talk()) T->Close();
+}
+
+void ABrixCharacter::BeginTalk(const FVector& Them, float CameraM)
+{
+	bTalking = true;
+	GetCharacterMovement()->StopMovementImmediately();
+	const FVector To = Them - GetActorLocation();
+	const double Yaw = FMath::RadiansToDegrees(FMath::Atan2(To.Y, To.X));
+	SetActorRotation(FRotator(0, Yaw, 0));
+	ArmBefore = Boom->TargetArmLength;
+	Boom->TargetArmLength = FMath::Min(ArmBefore, CameraM * CmPerM);   // come in closer so the face can be read
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		PC->SetControlRotation(FRotator(-7.0, Yaw + 26.0, 0));   // look past the shoulder (the slice: yaw - .45, pitch -.12)
+		PC->bShowMouseCursor = true;
+		FInputModeGameAndUI Mode;
+		Mode.SetHideCursorDuringCapture(false);
+		PC->SetInputMode(Mode);
+	}
+}
+
+void ABrixCharacter::EndTalk()
+{
+	bTalking = false;
+	if (ArmBefore > 0.f) Boom->TargetArmLength = ArmBefore;
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		PC->bShowMouseCursor = false;
+		PC->SetInputMode(FInputModeGameOnly());
+	}
 }
