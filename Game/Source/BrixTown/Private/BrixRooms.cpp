@@ -6,6 +6,7 @@
 #include "BrixFurnish.h"
 #include "BrixGameMode.h"
 #include "BrixHomes.h"
+#include "BrixFurnishPlan.h"
 #include "BrixInside.h"
 #include "BrixTownActor.h"
 #include "BrixUnits.h"
@@ -307,6 +308,54 @@ bool ABrixRooms::SetPlan(int32 Lot, int32 Floor, const TArray<FBrixPartition>& S
 	return true;
 }
 
+bool ABrixRooms::TownLayout(int32 Lot, int32 Floor, TArray<FBrixLayoutPiece>& Out) const
+{
+	const FLotHome* LH = Homes.FindByPredicate([Lot](const FLotHome& X) { return X.Lot == Lot; });
+	if (!LH || !LH->Furn.IsValidIndex(Floor)) return false;
+	const FBrixFurnished* Orig = LH->TownFurn.Find(Floor);
+	Out = BrixFurnishPlan::TownPieces(Orig ? *Orig : LH->Furn[Floor]).Pieces;
+	return true;
+}
+
+bool ABrixRooms::SetLayout(int32 Lot, int32 Floor, const TArray<FBrixLayoutPiece>& Layout)
+{
+	FLotHome* LH = Homes.FindByPredicate([Lot](const FLotHome& X) { return X.Lot == Lot; });
+	if (!LH || !LH->Home || !LH->Furn.IsValidIndex(Floor)) return false;
+	if (!LH->TownFurn.Contains(Floor)) LH->TownFurn.Add(Floor, LH->Furn[Floor]);
+	const FBrixFurnished& Orig = LH->TownFurn[Floor];
+	const BrixFurnishPlan::FTown Town = BrixFurnishPlan::TownPieces(Orig);
+	FBrixFurnished& Now = LH->Furn[Floor];
+	BrixFurnishPlan::LayoutBoxes(Orig, Town, Layout, Now.Boxes);
+	Now.Solids.Reset();
+	LH->Home->Pieces.RemoveAll([Floor](const FBrixFurniturePiece& P) { return P.bLayout && P.Floor == Floor; });
+	for (const FBrixLayoutPiece& P : Layout)
+	{
+		const bool bTown = P.Kind == TEXT("town") && Town.Pieces.ContainsByPredicate([&](const FBrixLayoutPiece& X) { return X.Id == P.Id; });
+		if (!P.bRug)   // in the way: its footprint (homes.js one())
+		{
+			FBrixFurnSolid So;
+			So.Min = FVector2D(1e9, 1e9); So.Max = FVector2D(-1e9, -1e9);
+			for (const FVector2D& C : BrixFurnishPlan::Corners(P)) { So.Min = FVector2D::Min(So.Min, C); So.Max = FVector2D::Max(So.Max, C); }
+			So.Y0 = 0.f; So.Y1 = (float)P.H;
+			Now.Solids.Add(So);
+		}
+		if (bTown) continue;
+		const double Y = FMath::DegreesToRadians(P.Yaw), c = FMath::Cos(Y), s = FMath::Sin(Y);
+		FBrixFurniturePiece K;
+		K.Kind = P.Kind == TEXT("town") ? FString(TEXT("town")) : P.Kind;
+		K.Line = P.Line ? *P.Line : FString(TEXT("plain"));
+		K.Floor = Floor;
+		K.At = FVector2D(P.X, P.Z);
+		K.A = FVector2D(c, -s); K.B = FVector2D(s, c);
+		K.Size = FVector3f(P.W, P.D, P.H);
+		K.bLayout = true;
+		LH->Home->Pieces.Add(K);
+	}
+	Near.Reset();   // drawn again at the next look round
+	Wait = 0.f;
+	return true;
+}
+
 bool ABrixRooms::HasRooms(int32 Lot) const { return Homes.ContainsByPredicate([Lot](const FLotHome& X) { return X.Lot == Lot; }); }
 
 void ABrixRooms::Rebuild()
@@ -388,7 +437,15 @@ void ABrixRooms::Rebuild()
 		{
 			if (Up(P.Floor) < 0.f) continue;
 			const float Floor0 = Up(P.Floor);
-			UInstancedStaticMeshComponent* G = MeshGroup(TEXT("SM_") + P.Kind.Replace(TEXT(":"), TEXT("_")) + TEXT("_") + P.Line);
+			UInstancedStaticMeshComponent* G = P.Kind == TEXT("town") ? nullptr : MeshGroup(TEXT("SM_") + P.Kind.Replace(TEXT(":"), TEXT("_")) + TEXT("_") + P.Line);
+			if (!G && P.bLayout)   // a piece placed in the designer with no mesh of its own yet (a mall good, a town piece from elsewhere): a box its size
+			{
+				const float Yw = FMath::Atan2(-P.A.Y, P.A.X);
+				FurnAts.Add(FTransform(FQuat(FVector::UpVector, -Yw), FVector(P.At.X, P.At.Y, Floor0 + P.Size.Z / 2) * CmPerM, FVector(P.Size.X, P.Size.Y, P.Size.Z)));
+				FurnData.Add({ NoMeshColour.R, NoMeshColour.G, NoMeshColour.B, -1, 0, 0, 0, 0, 0, 0, 0, -Yw });
+				++Shown;
+				continue;
+			}
 			if (!G) continue;
 			// the kit's piece: x across it, its back toward +y in Blender, which the importer turns to -y
 			const FVector Org(P.At.X * CmPerM, P.At.Y * CmPerM, (Floor0 + P.Lift) * CmPerM);

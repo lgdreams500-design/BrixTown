@@ -48,6 +48,7 @@ var Estate = (() => {
       else {
         if ("main" in rule) groups.push([rule.main, [...Array(floors).keys()].filter(f => f === 0 || (rule.with_main || []).includes(st[f]))]);
         for (let f = 1; f < floors; f++) if (st[f] === rule.flat_use) groups.push(["flat", [f]]);
+        if (rule.flats_on_main && (l.flats || []).some(q => q.floor === 0) && !groups.some(g => g[1].includes(0))) groups.push(["flat", [0]]);   // flats on the ground storey, after the rest (ids kept)
       }
       const [x, z] = centre(l), dx = x - cx, dz = z - cz, dist = Math.floor(Math.sqrt(dx * dx + dz * dz));
       const loc = L.near_bp - idiv((L.near_bp - L.far_bp) * Math.min(dist, L.radius), L.radius);

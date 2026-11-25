@@ -32,7 +32,11 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	// BUILD-021: a storey's inner walls drawn from a room plan (each piece's own colour, or none for the walls' plaster)
 	bool SetPlan(int32 Lot, int32 Floor, const TArray<struct FBrixPartition>& Segs, const TArray<TOptional<FVector3f>>& Colours);
-	bool HasRooms(int32 Lot) const;   // whether the building's rooms are drawn (furnished or with walls of its own)
+	bool HasRooms(int32 Lot) const;
+	// FURN-051 (play.js townLayout(), showLayout()): a storey's furniture as the town laid it, as pieces that can be moved;
+	// and the storey drawn from a layout (the town's pieces moved and turned, pieces of furnishing.json as the kits' meshes)
+	bool TownLayout(int32 Lot, int32 Floor, TArray<struct FBrixLayoutPiece>& Out) const;
+	bool SetLayout(int32 Lot, int32 Floor, const TArray<struct FBrixLayoutPiece>& Layout);   // whether the building's rooms are drawn (furnished or with walls of its own)
 	int32 Furnished() const { return Near.Num(); }
 	int32 PiecesShown() const { return Shown; }
 	int32 LampsOn() const;
@@ -46,6 +50,7 @@ public:
 	UPROPERTY(Config) float NearMetres = 30.f;          // homes within this of the camera are furnished (the slice's near rooms)
 	UPROPERTY(Config) float CheckSeconds = 0.25f;
 	UPROPERTY(Config) FLinearColor PartitionColour = FLinearColor(0.8f, 0.76f, 0.68f);   // homes.js PLASTER
+	UPROPERTY(Config) FLinearColor NoMeshColour = FLinearColor(0.45f, 0.38f, 0.3f);   // a piece with no mesh of its own yet: a box its size
 	UPROPERTY(Config) FLinearColor FrameColour = FLinearColor(0.36f, 0.24f, 0.15f);      // a doorway's frame
 	UPROPERTY(Config) FLinearColor BoardsColour = FLinearColor(0.42f, 0.29f, 0.18f);     // a room's boards
 	UPROPERTY(Config) FLinearColor TilesColour = FLinearColor(0.7f, 0.68f, 0.64f);       // a wet room's tiles
@@ -63,7 +68,7 @@ public:
 	UPROPERTY(Config) float NightBelow = 0.35f;        // the windows are lit as the day's light falls below this (as ABrixLamps)
 
 private:
-	struct FLotHome { int32 Lot = -1; FVector2D Centre = FVector2D::ZeroVector; float Reach = 0.f; TArray<float> FloorUp, CeilUp; TArray<TOptional<FBrixRect>> Holes; TSharedPtr<FBrixHome> Home; bool bPlanned = true; TArray<struct FBrixFurnished> Furn; };   // heights of its built floors
+	struct FLotHome { int32 Lot = -1; FVector2D Centre = FVector2D::ZeroVector; float Reach = 0.f; TArray<float> FloorUp, CeilUp; TArray<TOptional<FBrixRect>> Holes; TSharedPtr<FBrixHome> Home; bool bPlanned = true; TArray<struct FBrixFurnished> Furn; TMap<int32, struct FBrixFurnished> TownFurn; };   // heights of its built floors
 	TArray<FLotHome> Homes;
 	TSet<int32> Near;                                   // indexes into Homes, furnished now
 	int32 CamHome = INDEX_NONE, CamFloor = 0;          // the home the camera is in and its floor

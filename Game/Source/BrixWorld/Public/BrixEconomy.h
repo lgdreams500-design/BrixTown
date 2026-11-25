@@ -76,6 +76,7 @@ struct BRIXWORLD_API FBrixEconomyRules
 	double StallElasticity = 3;
 	// a mall's outlets (ECO-013, ECO-014)
 	bool bGoods = false;
+	FString GoodsDetail = TEXT("near");                   // mall_goods.json display.detail: which make of each good stands in an outlet (FURN-065)
 	int32 PerOutlet = 8, OutletStockTarget = 6;
 	TMap<FString, TArray<FString>> OutletSells;           // outlet kind -> the goods that kind deals in
 	TMap<FString, FGood> Goods;
