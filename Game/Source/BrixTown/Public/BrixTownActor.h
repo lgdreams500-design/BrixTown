@@ -75,6 +75,12 @@ public:
 	void SetBroken(int32 b, bool bBroken);   // hide it (its solids and its light too) or show it again
 	// wet paving (WLD-037): M_Greybox's WetDark, WetSheen and Puddles on every surface (Tools/unreal/greybox_wet.py); 0 dry
 	void SetWet(float Dark, float Sheen, float Puddles, float Ripples, float Snow = 0.f);   // Snow: lying snow (WLD-070)
+	// where a roof is overhead (BrixRoofMap): M_Greybox's Roofs and RoofsAt, so the wet and the snow stop under it
+	UPROPERTY(Config) float RoofCell = 0.5f;          // m: the roof map's cells
+	UPROPERTY(Config) float RoofUnder = 0.25f;        // m: indoors is below the walls' top less this (a flat roof's top stays out)
+	UPROPERTY() TObjectPtr<class UTexture2D> RoofTex;
+	FLinearColor RoofAt = FLinearColor(0, 0, 0, 0);   // the map's corner (m) and one over its size (m)
+	void BuildRoofMap(const FBrixCity& City);
 	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> GlassMat;
 	// The windows lit by night (play.js windows()): a warm pane behind the glass of a share of each kind's windows, shown and
 	// glowing as the night comes (0 by day, 1 at night)

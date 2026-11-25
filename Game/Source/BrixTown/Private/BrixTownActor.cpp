@@ -1,4 +1,6 @@
 ﻿#include "BrixTownActor.h"
+#include "BrixRoofs.h"
+#include "Engine/Texture2D.h"
 
 #include "BrixBuilder.h"
 #include "BrixCity.h"
@@ -1078,6 +1080,7 @@ void ABrixTownActor::Build(const FBrixCity& City)
 		for (const FBrixProp& P : B.Props) Wrap(P.Kind, P.Pos, BlockSlabHeight, [&]() { BuildProp(P, B); });   // street things a car can break (CITY-072)
 	}
 	BuildTreesAndRoads(City);
+	BuildRoofMap(City);
 	// each block's faces (tufts, tracks, ponds; each square's tree crowns and road markings) as one mesh made now
 	int32 FacetTris = 0;
 	for (TPair<int32, FFacets>& F : Facets)
@@ -1146,6 +1149,33 @@ void ABrixTownActor::Wrap(const FString& Kind, const FVector2D& Pos, float Groun
 	Breakables.Add(MoveTemp(B));
 }
 
+void ABrixTownActor::BuildRoofMap(const FBrixCity& City)   // WLD-037, WLD-070: no rain or snow under a roof
+{
+	if (RoofCell <= 0.f) return;   // (RoofCell=0: the wet and the snow everywhere, as before, to compare)
+	const double T0 = FPlatformTime::Seconds();
+	const FBrixRoofMap M = BrixRoofMap(City, RoofCell, .5, [&](const FBrixLot& L)
+	{
+		if (OwnBuilt.Contains(L.Id)) return 0.0;   // (Eastgate Mall draws its own)
+		const double H = L.House.IsSet() ? HousePlinth + 2 * HouseStorey : FMath::Max(1, L.Floors) * StoreyHeight;   // as BuildLot's H
+		return BlockSlabHeight + H - RoofUnder;
+	});
+	if (!M.W) return;
+	RoofTex = UTexture2D::CreateTransient(M.W, M.H, PF_G8, TEXT("BrixRoofs"));
+	if (!RoofTex) return;
+	RoofTex->SRGB = false;
+	RoofTex->Filter = TF_Nearest;
+	RoofTex->AddressX = TA_Clamp;
+	RoofTex->AddressY = TA_Clamp;
+	RoofTex->NeverStream = true;
+	void* Data = RoofTex->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+	FMemory::Memcpy(Data, M.Px.GetData(), M.Px.Num());
+	RoofTex->GetPlatformData()->Mips[0].BulkData.Unlock();
+	RoofTex->UpdateResource();
+	RoofAt = FLinearColor((float)M.Origin.X, (float)M.Origin.Y, (float)(1.0 / (M.W * M.Cell)), (float)(1.0 / (M.H * M.Cell)));
+	SetWet(0.f, 0.f, 0.f, 0.f, 0.f);
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: the roof map, %d x %d cells of %.2f m, in %.2f s"), M.W, M.H, M.Cell, FPlatformTime::Seconds() - T0);
+}
+
 void ABrixTownActor::SetWet(float Dark, float Sheen, float Puddles, float Ripples, float Snow)
 {
 	TArray<UMaterialInstanceDynamic*> All;
@@ -1158,6 +1188,7 @@ void ABrixTownActor::SetWet(float Dark, float Sheen, float Puddles, float Ripple
 		M->SetScalarParameterValue(TEXT("Puddles"), Puddles);
 		M->SetScalarParameterValue(TEXT("Ripples"), Ripples);
 		M->SetScalarParameterValue(TEXT("Snow"), Snow);
+		if (RoofTex) { M->SetTextureParameterValue(TEXT("Roofs"), RoofTex); M->SetVectorParameterValue(TEXT("RoofsAt"), RoofAt); }
 	}
 }
 

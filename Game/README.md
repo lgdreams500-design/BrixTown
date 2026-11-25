@@ -441,7 +441,10 @@ mesh of translucent drops (`/Game/Weather/M_Rain`, made by `Tools/unreal/make_ra
 it darkens, takes a faint sheen and holds puddles here and there, rings spread where the drops land (they tilt the
 surface, so the puddles' reflections break up), and walls go a little darker; it dries over `dry_minutes` after the
 rain (M_Greybox's WetDark, WetSheen, Puddles and Ripples, from `Tools/unreal/greybox_wet.py` and
-`greybox_ripples.hlsl`). Residents wear what citysim gives them today (day.json "wear"): a coat,
+`greybox_ripples.hlsl`). None of it, nor lying snow, reaches under a roof: indoor floors, stairs and furniture stay dry
+(a roof map of every building's footprint and height, `BrixRoofMap`, half-metre cells, M_Greybox's Roofs and RoofsAt;
+`RoofCell=0` turns it off to compare; `WLD037_rain_and_snow_stay_out_from_under_roofs`; `dry_indoors.png` against
+`dry_indoors_before.png`, the street still wet in `wet_outdoors.png`). Residents wear what citysim gives them today (day.json "wear"): a coat,
 and out in the rain an umbrella up, else the hood up, else a hand over the head while walking, with a hurried walk or a
 run for cover; nothing but the coat indoors, sheltering or under a roof (`CITY080_residents_are_dressed_for_the_rain`).
 The look of coats, hoods and umbrellas is still to be approved (ADR-0020). `-BrixWeather=<clear|cloud|rain|fog|snow>`
@@ -909,6 +912,8 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY076_residents_shout_at_a_smash` | CITY-076 |
 | `BrixTown.World.WLD037_the_weather_is_worked_out_as_world_py_does` | WLD-037 |
 | `BrixTown.World.WLD037_the_weather_key_steps_through_the_kinds` | WLD-037 |
+| `BrixTown.World.WLD037_people_out_in_the_rain_are_a_little_darker` | WLD-037 |
+| `BrixTown.World.WLD037_rain_and_snow_stay_out_from_under_roofs` | WLD-037, WLD-070 |
 | `BrixTown.World.CITY080_residents_are_dressed_for_the_rain` | CITY-077, CITY-079, CITY-080 |
 | `BrixTown.World.WLD036_the_clouds_are_where_world_py_puts_them` | WLD-035, WLD-036 |
 | `BrixTown.World.WLD070_snow_falls_and_lies_as_world_py_says` | WLD-069, WLD-070 |
