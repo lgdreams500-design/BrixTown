@@ -166,9 +166,9 @@ void ABrixWeather::Tick(float DeltaSeconds)
 	const int32 Count = FMath::Clamp(FMath::RoundToInt(Drops.Num() * Now.Rain), 0, Drops.Num());
 	if (Count == 0 || Mode->RoomAt(Eye) != INDEX_NONE) { Rain->SetVisibility(false); return; }
 	const FVector2D Here(Eye.X / CmPerM, Eye.Y / CmPerM);
-	const double Up = Eye.Z / CmPerM, T = GetWorld()->GetTimeSeconds(), H = FallHeight, Len = Rules.Length;
+	const double Up = Eye.Z / CmPerM, T = GetWorld()->GetTimeSeconds(), H = FallHeight, Len = Rules.Length * DropLength;
 	const float Glow = .3f + .7f * Day;
-	const float A0 = (float)(Rules.Alpha * (2.f - Day));   // by night the drops catch the lamplight and stand out more
+	const float A0 = (float)(Rules.Alpha * DropAlpha * (2.f - Day));   // by night the drops catch the lamplight and stand out more
 	TArray<FVector> V, N;
 	TArray<FLinearColor> C;
 	TArray<int32> Tri;
