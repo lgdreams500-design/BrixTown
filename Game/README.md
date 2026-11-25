@@ -602,7 +602,9 @@ level (name, job, what they are doing or where they are going). Markers (ADR-005
 `BrixWorld/BrixMarkers`, numbers, colours and signs in `World/rules/markers.json`): over each person a quest or a job wants,
 over each place it sends you to and over the mark, a brass coin with a sign for what it is (a letter: a line offered;
 a speech bubble: someone to talk to; a bubble with a tick: going back to hand it in; a parcel: your job; a pin, or what
-the place is: basket, cup, columns, awning; the mark's cream pin), ringed in its colour, in a warm halo. A spark of its
+the place is: basket, cup, columns, awning; the mark's cream pin), ringed in its colour, in a warm halo. A step that needs
+the player to have something (the first line's loaf of bread), or the shopping job, marks the 3 nearest shops with it in
+stock today (`have_shops`; "Loaf of bread sold here" close by), until it is carried. A spark of its
 colour far off (to 160 m), the token within 45 m (a place 30 m), bobbing; within 6 m larger, with a caption and its key
 ("E Talk to Mei"); behind a wall a faint outline; out of view a small token and arrow at the screen's edge; new things
 pulse. The same tokens stand for them on both maps. Hidden while talking. What shows is the player's settings: display.minimap, display.names and the map group (residents, quests,
@@ -610,8 +612,8 @@ shop names). Tests: `UI018_the_big_map_is_drawn_from_the_town` (1,002 of the 1,0
 middle, the streets, the tram line, the woods; the zoom's bounds and its fixed point), `UI012_the_mark_is_set_cleared_and_reached`,
 `QST005_the_people_and_places_a_quest_wants_are_marked`, `QST005_the_markers_are_sound` (markers.json as
 world.marker_problems() checks it, and a broken copy caught the same way; a spark, a token and a near token by distance),
-`QST005_each_quest_step_gets_its_marker` (the first person to see, going back to them, the bank, a place by its kind, a line
-offered). Shots: `-BrixMap` opens the big map, `-BrixMapZoom=z,x,z` zooms it
+`QST005_each_quest_step_gets_its_marker` (the first person to see, going back to them, the bank, a place by its kind, every
+shop with the bread in stock and only the nearest 3 kept, none once it is carried, the shopping job, a line offered). Shots: `-BrixMap` opens the big map, `-BrixMapZoom=z,x,z` zooms it
 on a place, `-BrixMark=x,z` sets the mark, `-BrixNear=<resident>[,<metres>]` stands the player 3.5 m (or that far) in front of someone; a shot logs
 the residents on the maps, the markers and the words over the street. Not yet: the player's own buildings outlined
 (map_mine; the property market is not brought over), Properties' "show on the map", a tree's crown by the day's
