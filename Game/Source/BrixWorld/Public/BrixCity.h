@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 
+class FJsonObject;
+
 // The city as the files in World/ describe it (docs/specs/domains/WORLD_MAP.md). Units are those of the data: metres,
 // x east, z south, angles in degrees. Nothing here knows what is in the map (WLD-020); it only reads what the files say.
 
@@ -104,6 +106,14 @@ struct BRIXWORLD_API FBrixProp
 	float Power = 0.f;                       // a wall lantern's watts
 	bool bGrand = false, bBig = false;
 	int32 Color = 0;
+	TSharedPtr<FJsonObject> Json;            // everything the block file says of it (a plant's shape and species, a board's text...)
+};
+
+// A track across the open ground (a block's 'tracks': WLD-056): gravel along a line of points
+struct BRIXWORLD_API FBrixTrack
+{
+	TArray<FVector2D> Points;
+	double Width = 3.0;
 };
 
 struct BRIXWORLD_API FBrixBlock
@@ -116,6 +126,8 @@ struct BRIXWORLD_API FBrixBlock
 	TArray<FBrixLot> Lots;
 	TArray<FBrixTree> Trees;
 	TArray<FBrixProp> Props;
+	TArray<TPair<FVector2D, FVector2D>> Paths;   // the block's footpaths, each from one point to another
+	TArray<FBrixTrack> Tracks;
 	TMap<FString, FString> OwnSurface;
 	FBrixSurface Pavement;
 };
