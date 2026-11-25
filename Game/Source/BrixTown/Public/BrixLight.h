@@ -60,6 +60,8 @@ public:
 	UPROPERTY(Config) float NightOpen = 2.f;           // at night out of doors
 	UPROPERTY(Config) float NightOpenIndoors = 2.5f;   // at night in a room, by its lamps
 	UPROPERTY(Config) float IndoorSeconds = 1.5f;      // how long the eye takes going in or out
+	// only the stronger of the sun and the night's light casts shadows (off: both, as it was, to measure against)
+	UPROPERTY(Config) bool bOneSkyShadow = true;
 	// the night comes in as the day's light (ABrixGameMode::Daylight) falls from NightBelow to 0
 	UPROPERTY(Config) float NightBelow = 0.3f;
 	UPROPERTY(Config) FLinearColor NightHaze = FLinearColor(0.030f, 0.032f, 0.042f);   // the distance at night
@@ -100,5 +102,7 @@ private:
 	FString TourOut;
 	int32 StopAt = -1;
 	float StopWait = 0.f;
+	float StopTime = 0.f, StopWorst = 0.f;   // the frames of the last two seconds of a stop's wait: their time, the longest
+	int32 StopFrames = 0;
 	bool bShot = false;
 };

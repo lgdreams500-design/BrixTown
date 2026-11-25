@@ -197,6 +197,7 @@ void ABrixCharacter::Look(const FInputActionValue& Value)
 {
 	if (bTalking || bPanel || (bDesigning && bDesignKeys)) return;
 	const FVector2D V = Value.Get<FVector2D>() * LookScale;
+	if (!V.IsNearlyZero(.01)) LookedAt = GetWorld()->GetTimeSeconds();
 	AddControllerYawInput(V.X);
 	AddControllerPitchInput(bInvertLook ? V.Y : -V.Y);
 }
@@ -204,10 +205,17 @@ void ABrixCharacter::Look(const FInputActionValue& Value)
 void ABrixCharacter::StartRun() { GetCharacterMovement()->MaxWalkSpeed = RunSpeed * CmPerM; }
 void ABrixCharacter::StopRun() { GetCharacterMovement()->MaxWalkSpeed = WalkSpeed * CmPerM; }
 
+bool ABrixCharacter::CameraFree() const { return GetWorld()->GetTimeSeconds() - LookedAt > LookHoldSeconds; }
+
 void ABrixCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	if (!Rules.Roles.Num()) return;
+	{
+		// the camera pushed in against the player by a wall looks out through an undrawn body, not from inside one
+		const bool bSeen = bDesigning || FVector::Dist(Camera->GetComponentLocation(), GetActorLocation() + FVector(0, 0, 60)) > HideBodyWithin * CmPerM;
+		if (Person->IsVisible() != bSeen) Person->SetVisibility(bSeen);
+	}
 	if (const ABrixGameMode* M = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))   // wet clothes out in the rain (WLD-037)
 	{
 		const ABrixWeather* Wx = M->Weather.Get();
@@ -275,7 +283,7 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 				double Yaw = 0;
 				if (!C->RideSeat(Seat, Yaw)) { TalkKey(); return; }   // the bus has left service: everybody off
 				SetActorLocationAndRotation(FVector(Seat.X * CmPerM, Seat.Y * CmPerM, C->RideUp() * CmPerM + 85.f), FRotator(0, FMath::RadiansToDegrees(Yaw), 0));
-				if (C->Driving().bMoving)
+				if (C->Driving().bMoving && CameraFree())
 					if (APlayerController* PC = Cast<APlayerController>(GetController()))
 					{
 						FRotator R = PC->GetControlRotation();
@@ -307,7 +315,7 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 			{
 				SetActorLocationAndRotation(FVector(Seat.X * CmPerM, Seat.Y * CmPerM, Up * CmPerM + 85.f), FRotator(0, FMath::RadiansToDegrees(Yaw), 0));
 				const double V = C->Driving().V;
-				if (FMath::Abs(V) > .5)
+				if (FMath::Abs(V) > .5 && CameraFree())
 					if (APlayerController* PC = Cast<APlayerController>(GetController()))
 					{
 						FRotator R = PC->GetControlRotation();
@@ -333,6 +341,13 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 	FBrixLook L = Rules.Player;
 	if (Speed > (WalkSpeed + RunSpeed) * 0.5) L.SigName = TEXT("Run");
 	Phase = FMath::Fmod(Phase + Speed * DeltaSeconds / BrixStepLength(Rules.Sig(L.SigName), L.S), 1.0);
+	if (!bTalking && !bDesigning)   // nearer in a room
+	{
+		const ABrixGameMode* GM = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+		const bool bInRoom = GM && GM->RoomAt(GetActorLocation()) != INDEX_NONE;
+		const float Arm = (bInRoom ? FMath::Min(CameraDistance, IndoorCameraDistance) : CameraDistance) * CmPerM;
+		if (!FMath::IsNearlyEqual(Boom->TargetArmLength, Arm, .5f)) Boom->TargetArmLength = FMath::FInterpTo(Boom->TargetArmLength, Arm, DeltaSeconds, 5.f);
+	}
 	if (bTalking)   // the camera eases between your shoulder and your face
 		if (APlayerController* PC = Cast<APlayerController>(GetController()))
 		{
@@ -385,7 +400,12 @@ void ABrixCharacter::StopPlay(bool bAtEnd)
 	const int32 U = PlayUse;
 	PlayUse = INDEX_NONE;
 	bPlayOff = false;
-	if (!Pp || !Pp->PlayArea().PlayerUses.IsValidIndex(U)) return;
+	if (!Pp || !Pp->PlayArea().PlayerUses.IsValidIndex(U))   // the piece is gone: still back on your feet
+	{
+		SetActorEnableCollision(true);
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		return;
+	}
 	const FVector2D Off = bAtEnd ? PlayEnd : Pp->PlayArea().PlayerOff(U);   // off at the slide's bottom, or beside the piece
 	SetActorLocation(FVector(Off.X * CmPerM, Off.Y * CmPerM, Pp->PlayArea().PlayerUses[U].Y * CmPerM + 95.f), false, nullptr, ETeleportType::TeleportPhysics);
 	SetActorEnableCollision(true);
@@ -487,12 +507,14 @@ void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whic
 		double Yaw = 0;
 		C->Leave(Spot, Yaw);
 		bDriving = false;
+		Boom->bDoCollisionTest = true;
 		SetActorLocationAndRotation(FVector(Spot.X * CmPerM, Spot.Y * CmPerM, 95.f), FRotator(0, FMath::RadiansToDegrees(Yaw), 0));
 		SetActorEnableCollision(true);
 		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 		Boom->TargetArmLength = CameraDistance * CmPerM;
 		return;
 	}
+	if (bPanel) return;   // a counter, the menu or the map is open: E started a drive or a talk under it, with the camera held
 	if (T && T->IsTalking()) return;
 	if (const ABrixGameMode* M = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))   // a tower's lift call within reach (WLD-051)
 		if (M->RoomsActor() && M->RoomsActor()->UseLift(this)) return;
@@ -513,6 +535,7 @@ void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whic
 	{
 		if (!C->Enter(Car)) return;
 		bDriving = true;
+		Boom->bDoCollisionTest = false;   // 8.5 m behind a car the arm met every lamp post and corner passed, and the camera jumped in and out
 		SetActorEnableCollision(false);
 		GetCharacterMovement()->StopMovementImmediately();
 		GetCharacterMovement()->DisableMovement();
@@ -763,7 +786,7 @@ void ABrixCharacter::StepBoard(float Dt)
 	const bool bGo = F > 0, bBack = F < 0;
 	const double V0 = Boards.V;
 	if (S != 0) BoardYaw += FMath::RadiansToDegrees(S * BoardRules.TurnRate / (1 + V0 / 15) * Dt);   // D turns right, A left
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))   // the camera comes round behind
+	if (APlayerController* PC = CameraFree() ? Cast<APlayerController>(GetController()) : nullptr)   // the camera comes round behind
 	{
 		FRotator R = PC->GetControlRotation();
 		R.Yaw += FMath::FindDeltaAngleDegrees(R.Yaw, BoardYaw) * FMath::Min(1.0, Dt * BoardRules.CamFollow);

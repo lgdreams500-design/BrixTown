@@ -50,6 +50,9 @@ public:
 	UPROPERTY(Config) int32 StartDay = 16;        // the day the game starts on (the slice is built for day 16); its time is the city's spawn time
 	UPROPERTY(Config) float ClockRate = 1.f;      // times the calendar's pace (real_seconds_per_minute)
 	UPROPERTY(Config) float SunLux = 8.f;         // in full day
+	// The sun is turned only when it has moved this far (degrees): turned every frame, the engine could keep none of
+	// the town's shadow from one frame to the next and drew it all again each frame. The clock moves it 0.025 a second.
+	UPROPERTY(Config) float SunStepDegrees = 0.1f;
 	UPROPERTY(Config) float MallInside = 30.f;    // m in from Eastgate's door that -BrixInside= puts the player
 	UPROPERTY(Config) FLinearColor SunColour = FLinearColor(1.f, 0.86f, 0.68f);   // ART_DIRECTION 2.4, kit daylight
 	UPROPERTY(Config) FLinearColor SunDawnColour = FLinearColor(1.f, 0.42f, 0.22f); // a low sun's (the slice's lighting())
@@ -62,6 +65,8 @@ public:
 	UPROPERTY(Config) float SkyHaziness = 1.f;        // the sky's Mie scattering, x the engine's: higher is paler, greyer
 	UPROPERTY(Config) float ShotDelaySeconds = 12.f;
 	UPROPERTY(Config) float IndoorHaze = 0.f;        // the haze's density indoors, as a share of the street's (CITY-013)
+	UPROPERTY(Config) float IndoorHazeSeconds = 1.f; // how long the haze takes to thin or thicken as the camera goes through a doorway
+	float HazeIndoors = 0.f;                         // 0 out of doors to 1 in a room, eased
 	UPROPERTY(Config) float DesignHaze = 0.25f;      // and while the building designer looks into a storey cut open (BUILD-020)
 	// the lot (in the city's order) whose inside a point is in, or INDEX_NONE (CITY-013)
 	int32 RoomAt(const FVector& WorldCm) const;

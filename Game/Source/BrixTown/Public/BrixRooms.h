@@ -55,6 +55,11 @@ public:
 
 	UPROPERTY(Config) float NearMetres = 30.f;          // homes within this of the camera are furnished (the slice's near rooms)
 	UPROPERTY(Config) float CheckSeconds = 0.25f;
+	// A home furnished stays so until it is KeepMetres further than NearMetres, and homes are dropped DropAtOnce
+	// together (or when one comes near): furnishing is everything near cleared and made again, a long frame, and it
+	// ran at every few steps along a street of houses.
+	UPROPERTY(Config) float KeepMetres = 20.f;
+	UPROPERTY(Config) int32 DropAtOnce = 8;
 	UPROPERTY(Config) FLinearColor PartitionColour = FLinearColor(0.8f, 0.76f, 0.68f);   // homes.js PLASTER
 	UPROPERTY(Config) FLinearColor NoMeshColour = FLinearColor(0.45f, 0.38f, 0.3f);   // a piece with no mesh of its own yet: a box its size
 	UPROPERTY(Config) FLinearColor FrameColour = FLinearColor(0.36f, 0.24f, 0.15f);      // a doorway's frame
@@ -91,6 +96,9 @@ public:
 	UPROPERTY(Config) FLinearColor RoomFillColour = FLinearColor(1.f, 0.75f, 0.48f);
 	UPROPERTY(Config) float RoomFillReach = 0.7f;
 	float FillNow(float Daylight) const { return RoomFill * FMath::Lerp(RoomFillNight, 1.f, FMath::Clamp(Daylight, 0.f, 1.f)); }
+	// A room's lights come up and go down over LightFadeSeconds, and a lamp is not moved while it is lit: switched and
+	// moved in one frame they were a jump in the picture at every doorway and as the nearest lamps of a hall changed.
+	UPROPERTY(Config) float LightFadeSeconds = 0.4f;
 	// a lamp as the rooms make it, for anything else that wants the same lamp (the reference room, ABrixLightRoom)
 	static class UPointLightComponent* MakeLamp(AActor* Owner, USceneComponent* Root, float Watts, float ConeDeg, bool bShadows);
 	UPROPERTY(Config) float MarkGlow = 2.5f;            // how brightly the designer's outlines are lit (M_Glow's Glow)
@@ -122,4 +130,11 @@ private:
 	UPROPERTY() TArray<TObjectPtr<class UPointLightComponent>> Lights;
 	UPROPERTY() TObjectPtr<class UPointLightComponent> Fill;      // the room's own light
 	void PlaceLights(const FVector2D& Eye, float EyeUp, float Daylight);
+	void FadeLights(float DeltaSeconds);
+	TArray<FVector> LampWant;      // where lamps should hang now, the nearest to the camera first
+	TArray<FVector> LampAt;        // where each of Lights hangs
+	TArray<float> LampLevel;       // and how far up it is, 0 to 1
+	TArray<bool> LampHeld;         // whether it hangs anywhere
+	float FillLevel = 0.f, FillFull = 0.f;
+	bool bFillWant = false;
 };
