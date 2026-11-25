@@ -4,6 +4,8 @@
 #include "BrixGameMode.h"
 #include "BrixPeople.h"
 #include "BrixCrashActor.h"
+#include "BrixWeatherActor.h"
+#include "BrixWeather.h"
 #include "BrixUnits.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Engine/World.h"
@@ -16,6 +18,9 @@
 
 using BrixUnits::ToWorld;
 using BrixUnits::CmPerM;
+
+void BrixMarksToMesh(UProceduralMeshComponent* M, UMaterialInterface* Mat, const TArray<FBrixPrint>& P, bool bPairs, float Wid, float Len,
+	const FLinearColor& Snow, const FLinearColor& Pressed, double Fill, TFunctionRef<float(const FVector2D&)> Ground, float Lift);   // BrixPeople.cpp
 
 namespace
 {
@@ -210,6 +215,8 @@ void ABrixCars::Tick(float DeltaSeconds)
 		}
 	}
 	int32 Shown = 0;
+	const ABrixWeather* Wx = Mode->Weather.Get();
+	const float Lies = Wx && Wx->bOn ? (float)Wx->Snow.Lying : 0.f;
 	for (int32 k = 0; k < Traffic->Num(); ++k)
 	{
 		const TOptional<FBrixCarAt> C = Traffic->At(k, Minute);
@@ -239,15 +246,58 @@ void ABrixCars::Tick(float DeltaSeconds)
 		// the vehicle's frame: along its heading (Unreal yaw from x towards y), across to its right
 		S->M->SetWorldLocationAndRotation(ToWorld(C->Pos, RoadUp), FRotator(0.0, FMath::RadiansToDegrees(FMath::Atan2(C->Heading.Y, C->Heading.X)), 0.0));
 		S->M->SetVisibility(true);
+		const float Sn = Lies * (C->bMoving ? CarSnowMoving : CarSnow);   // snow on its roof and bonnet (WLD-070)
+		if (FMath::Abs(S->Snow - Sn) > .02f) { S->M->SetCustomPrimitiveDataFloat(0, Sn); S->Snow = Sn; }
 		++Shown;
 	}
 	LastShown = Shown;
+	// tyre tracks in lying snow behind the vehicles near (WLD-071), from where their timelines took them; the player's car's
+	// from where it has been driven this visit
+	if (!Tracks)
+	{
+		Tracks = NewObject<UProceduralMeshComponent>(this, TEXT("Tracks"));
+		Tracks->SetupAttachment(RootComponent);
+		Tracks->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Tracks->SetCastShadow(false);
+		Tracks->RegisterComponent();
+		AddInstanceComponent(Tracks);
+	}
+	if (!Wx || !Wx->bOn || Wx->Snow.Lying < Wx->Rules.MinLying) { Tracks->SetVisibility(false); DriveTrail.Reset(); }
+	else
+	{
+		const double Clock = Mode->ClockMinutes();
+		if (Drive.K >= 0 && !Drive.bRide && FMath::Abs(Drive.V) > .3)   // the player's car on the move
+		{
+			const FVector2D At(Drive.X, Drive.Z), H(FMath::Cos(Drive.A), FMath::Sin(Drive.A));
+			if (!DriveTrail.Num() || FVector2D::Distance(DriveTrail.Last().Pos, At) > .8) { DriveTrail.Add({ At, H, Clock, 1 }); if (DriveTrail.Num() > 300) DriveTrail.RemoveAt(0); }
+		}
+		TArray<FBrixPrint> T;
+		for (const TPair<int32, FShown>& L : Live)
+		{
+			if (L.Key == Drive.K) continue;
+			const TOptional<FBrixCarAt> C = Traffic->At(L.Key, Minute);
+			if (C && FVector2D::Distance(C->Pos, Here) < TrackDistance) BrixTyreTracks(Wx->Rules, *Traffic, L.Key, Minute, Gauge, Wx->Snow.Falling, Wx->Snow.Lying, T);
+		}
+		for (int32 n = 1; n < DriveTrail.Num(); ++n)
+			for (const double s : { -.5, .5 })
+			{
+				const FBrixPrint& A = DriveTrail[n - 1];
+				const FBrixPrint& B = DriveTrail[n];
+				const double Age = Clock - B.Age, Str = BrixPrintStrength(Wx->Rules, Age, Wx->Snow.Falling, Wx->Snow.Lying);
+				if (Str <= 0 || FVector2D::Distance(A.Pos, B.Pos) > 5) continue;
+				T.Add({ A.Pos + FVector2D(-A.Dir.Y, A.Dir.X) * (s * Gauge), A.Dir, Age, Str });
+				T.Add({ B.Pos + FVector2D(-B.Dir.Y, B.Dir.X) * (s * Gauge), B.Dir, Age, Str });
+			}
+		BrixMarksToMesh(Tracks, Material, T, true, .22f, 0.f, SnowTone, PressedSnow, Wx->Snow.Lying / FMath::Max(Wx->Rules.SnowCover, .01),
+			[this](const FVector2D& Q) { for (const FBox2D& B : Paving) if (B.IsInside(Q)) return .12f; return RoadUp; }, MarkLift);
+	}
 	const TArray<FBrixTram::FAt> Now = Tram.At(Minute);
 	for (int32 k = 0; k < Trams.Num(); ++k)
 	{
 		if (k >= Now.Num()) { Trams[k]->SetVisibility(false); continue; }
 		Trams[k]->SetWorldLocationAndRotation(ToWorld(FVector2D(Now[k].X, Tram.Z), RoadUp), FRotator::ZeroRotator);   // eastward along Tram Street
 		Trams[k]->SetVisibility(true);
+		Trams[k]->SetCustomPrimitiveDataFloat(0, Lies * CarSnowMoving);
 	}
 }
 

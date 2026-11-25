@@ -1,5 +1,7 @@
 // WLD-037, CITY-077 to CITY-080: the weather and people in it.
 #include "BrixWeather.h"
+#include "BrixCars.h"
+#include "BrixDay.h"
 
 #include "Dom/JsonObject.h"
 #include "Misc/AutomationTest.h"
@@ -186,6 +188,65 @@ bool FCITY107_DressedForSnow::RunTest(const FString&)
 	AddInfo(FString::Printf(TEXT("on a day of snow: %d coats, %d hoods of %d residents"), Coats, Hoods, W.Snowy.Num()));
 	TestTrue(TEXT("nearly everyone in a coat"), Coats > W.Snowy.Num() * .88);
 	TestTrue(TEXT("a careful pace, slower than their own"), W.SnowPace < 1);
+	return Wrong == 0;
+}
+
+// WLD-071 (ADR-0051): in lying snow each resident walking leaves footprints behind them along their own route, a
+// footstep apart, left and right in turn, older and fainter the further back, none ahead of them; a vehicle on the move
+// leaves two tracks along where its timeline took it; falling snow fills them in, and with too little snow lying there are
+// none. All of it from the clock and the day.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWLD071_TracksInTheSnow, "BrixTown.World.WLD071_footprints_and_tracks_follow_the_clock",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FWLD071_TracksInTheSnow::RunTest(const FString&)
+{
+	FBrixWeatherRules R;
+	FBrixDay Day;
+	FBrixTraffic Traffic;
+	FString Error;
+	if (!TestTrue(TEXT("the sky rules load: ") + Error, LoadBrixWeatherRules(Under(TEXT("../World/rules/sky.json")), R, Error))) return false;
+	if (!TestTrue(TEXT("the day loads: ") + Error, LoadBrixDay(Under(TEXT("Data/day.json")), Day, Error))) return false;
+	if (!TestTrue(TEXT("the vehicles load: ") + Error, LoadBrixTraffic(Under(TEXT("Data/cars.json")), Under(TEXT("Data/car_models.json")), Traffic, Error))) return false;
+	const double Stride = .6, Side = .11, Lying = R.SnowCover;
+	int32 Walkers = 0, Wrong = 0;
+	for (int32 i = 0; i < Day.Num() && Walkers < 40; i += 37)
+	{
+		const TOptional<FBrixWhere> W = Day.Where(i, 500);
+		if (!W || !W->bWalking || W->WalkDone < 8) continue;
+		++Walkers;
+		TArray<FBrixPrint> P;
+		BrixFootprints(R, Day, i, 500, Stride, Side, 0, Lying, P);
+		bool bOk = P.Num() >= 8;
+		for (int32 n = 0; bOk && n < P.Num(); ++n)
+		{
+			const double Behind = FVector2D::DotProduct(W->Pos - P[n].Pos, W->Heading), Off = FMath::Abs(FVector2D::DistSquared(P[n].Pos, W->Pos));
+			bOk &= Off < FMath::Square(R.TrailM + 1) && P[n].Strength > 0 && P[n].Strength <= 1;
+			if (n) bOk &= P[n].Age > P[n - 1].Age && P[n].Strength <= P[n - 1].Strength + 1e-9;   // older and fainter going back
+			if (n == 0) bOk &= Behind > -.01;                                                        // none ahead of them
+			if (n) { const FVector2D Across(-P[n].Dir.Y, P[n].Dir.X); bOk &= FMath::Sign(FVector2D::DotProduct(P[n].Pos - P[n - 1].Pos, Across)) != 0; }
+		}
+		TArray<FBrixPrint> Filling, Thin;
+		BrixFootprints(R, Day, i, 500, Stride, Side, 1, Lying, Filling);
+		BrixFootprints(R, Day, i, 500, Stride, Side, 0, R.MinLying * .5, Thin);
+		double A = 0, B = 0;
+		for (const FBrixPrint& Q : P) A += Q.Strength;
+		for (const FBrixPrint& Q : Filling) B += Q.Strength;
+		bOk &= B < A && Thin.Num() == 0;
+		if (!bOk && Wrong++ < 6) AddError(FString::Printf(TEXT("resident %d at 08:20: their footprints are not behind them as they should be (%d)"), i, P.Num()));
+	}
+	int32 Cars = 0;
+	for (int32 k = 0; k < Traffic.Num() && Cars < 10; ++k)
+	{
+		const TOptional<FBrixCarAt> C = Traffic.At(k, 500), C0 = Traffic.At(k, 499.8);
+		if (!C || !C->bMoving || !C0 || FVector2D::Distance(C->Pos, C0->Pos) < 5) continue;
+		++Cars;
+		TArray<FBrixPrint> T;
+		BrixTyreTracks(R, Traffic, k, 500, 1.4, 0, Lying, T);
+		double Far = 0;
+		for (const FBrixPrint& Q : T) Far = FMath::Max(Far, FVector2D::Distance(Q.Pos, C->Pos));
+		if ((T.Num() < 8 || T.Num() % 2 || Far > R.CarTrailM + 30) && Wrong++ < 6) AddError(FString::Printf(TEXT("vehicle %d at 08:20: no tracks behind it (%d)"), k, T.Num()));
+	}
+	TestTrue(TEXT("walkers and vehicles looked at"), Walkers >= 10 && Cars >= 5);
+	TestEqual(TEXT("an old mark under steady snow is filled in"), BrixPrintStrength(R, R.FillMinutes * 1.01, 1, Lying), 0.0);
 	return Wrong == 0;
 }
 

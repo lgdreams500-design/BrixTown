@@ -27,6 +27,14 @@ public:
 	UPROPERTY(Config) float ShowDistance = 160.f;   // m
 	UPROPERTY(Config) float NearDistance = 45.f;    // m: the near model within (the slice's 45 m)
 	UPROPERTY(Config) float RoadUp = 0.f;           // m: the street's height
+	// snow (WLD-070, WLD-071): how much of the lying snow a parked and a moving vehicle carry, and their tracks in it
+	UPROPERTY(Config) float CarSnow = 0.95f;
+	UPROPERTY(Config) float CarSnowMoving = 0.45f;
+	UPROPERTY(Config) float TrackDistance = 70.f;   // m: tracks drawn behind vehicles this near the camera
+	UPROPERTY(Config) float Gauge = 1.4f;
+	UPROPERTY(Config) float MarkLift = 0.012f;   // m: marks in the snow this far above the ground           // m between a car's wheel tracks
+	UPROPERTY(Config) FLinearColor SnowTone = FLinearColor(0.80f, 0.88f, 1.0f);
+	UPROPERTY(Config) FLinearColor PressedSnow = FLinearColor(0.42f, 0.48f, 0.60f);
 
 	int32 Shown() const { return LastShown; }
 
@@ -53,7 +61,7 @@ private:
 	UPROPERTY() TObjectPtr<UMaterialInterface> Material;
 	UPROPERTY() TArray<TObjectPtr<UProceduralMeshComponent>> Pool;
 	TSharedPtr<FBrixTraffic> Traffic;
-	struct FShown { UProceduralMeshComponent* M = nullptr; int32 Lod = -1; int32 Seen = 0; };
+	struct FShown { UProceduralMeshComponent* M = nullptr; int32 Lod = -1; int32 Seen = 0; float Snow = -1.f; };
 	TMap<int32, FShown> Live;           // vehicle -> its mesh while near
 	FBrixTram Tram;                     // the trams (CITY-041), drawn as the slice's cars.js tram()
 	UPROPERTY() TArray<TObjectPtr<UProceduralMeshComponent>> Trams;
@@ -62,5 +70,7 @@ private:
 	bool Free(double X, double Z, double A, bool* bWall = nullptr) const;   // bWall: what stopped it was a wall or a street thing
 	int32 Frame = 0, LastShown = 0;
 	double LastMinute = -1;
-	int32 LastHeld = 0;             // the clock last frame, for giving way (CITY-049)
+	int32 LastHeld = 0;
+	UPROPERTY() TObjectPtr<UProceduralMeshComponent> Tracks;
+	TArray<struct FBrixPrint> DriveTrail;   // where the player's car has been this visit, Age the minute it was there             // the clock last frame, for giving way (CITY-049)
 };

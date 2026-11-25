@@ -40,5 +40,7 @@ melts") and how residents react ("Coats and hoods, walk carefully").
   routines; the summer day the slice and Unreal are built for (day 16) does not change.
 - The browser slice is frozen (ADR-0045) and draws snow as nothing new: it gets the light and sky numbers of a snowy slot
   but no flakes or lying snow. The Unreal build draws all of it.
-- Not done: footprints and tyre tracks in the snow, snow on trees, people's clothes going white, slipping, snowballs, the
-  sound of snow, snow affecting traffic. The look of snow needs rules and a reference image in art direction (ART-006).
+- Added at the owner's word the same day (WLD-071): footprints behind walkers and tyre tracks behind vehicles, worked
+  out from where each went and when, filled in by falling snow and fading; snow on parked cars' roofs and on people's heads
+  and shoulders while it snows (M_People's per-mesh Snow); the tops of tree crowns take it as the rest of the town does.
+- Not done: slipping, snowballs, the sound of snow, snow affecting traffic. The look of snow needs rules and a reference image in art direction (ART-006).
