@@ -81,6 +81,55 @@ bool LoadBrixSoundRules(const FString& Path, FBrixSoundRules& Out, FString& OutE
 	Num(*Bi, TEXT("garden_per_minute"), Out.GardenBirdsPerMinute); Num(*Bi, TEXT("garden_m"), Out.GardenM);
 	Hm(*Cr, TEXT("from"), Out.CricketsFrom); Hm(*Cr, TEXT("to"), Out.CricketsTo); Num(*Cr, TEXT("gain"), Out.CricketsGain);
 	Num(*Fo, TEXT("gain"), Out.FountainGain); Num(*Fo, TEXT("far"), Out.FountainFar);
+	if (const TSharedPtr<FJsonObject>* In = Obj(S, TEXT("indoors"))) { Num(*In, TEXT("muffle_hz"), Out.MuffleHz); Num(*In, TEXT("muffle_gain"), Out.MuffleGain); }
+	const TSharedPtr<FJsonObject>* Mu = Obj(S, TEXT("music"));
+	const TSharedPtr<FJsonObject>* Sc = Mu ? Obj(*Mu, TEXT("score")) : nullptr;
+	const TSharedPtr<FJsonObject>* Pls = Mu ? Obj(*Mu, TEXT("places")) : nullptr;
+	if (!Sc || !Pls) { OutError = Path + TEXT(" lacks music.score or music.places"); return false; }
+	Num(*Sc, TEXT("gain"), Out.ScoreGain); Num(*Sc, TEXT("talk_duck"), Out.TalkDuck); Num(*Sc, TEXT("source_duck"), Out.SourceDuck);
+	Out.Moods.Reset();
+	for (const TSharedPtr<FJsonValue>& V : (*Sc)->GetArrayField(TEXT("moods")))
+	{
+		FBrixSoundRules::FMood M;
+		V->AsObject()->TryGetStringField(TEXT("name"), M.Name);
+		Hm(V->AsObject(), TEXT("from"), M.From);
+		Out.Moods.Add(M);
+	}
+	if (!Out.Moods.Num()) { OutError = Path + TEXT(": the score has no moods"); return false; }
+	Out.Places.Reset();
+	for (const auto& KV : (*Pls)->Values)
+	{
+		const TSharedPtr<FJsonObject> O = KV.Value->AsObject();
+		FBrixSoundRules::FPlace Pl2;
+		O->TryGetStringField(TEXT("style"), Pl2.Style);
+		Hm(O, TEXT("from"), Pl2.From); Hm(O, TEXT("to"), Pl2.To); Num(O, TEXT("far"), Pl2.Far);
+		O->TryGetBoolField(TEXT("market_days_only"), Pl2.bMarketDaysOnly);
+		Out.Places.Add(FString(KV.Key), Pl2);
+	}
+	Out.Radio.Reset();
+	const TArray<TSharedPtr<FJsonValue>>* Ra = nullptr;
+	if ((*Mu)->TryGetArrayField(TEXT("radio"), Ra))
+		for (const TSharedPtr<FJsonValue>& V : *Ra)
+		{
+			FBrixSoundRules::FStation St2;
+			V->AsObject()->TryGetStringField(TEXT("name"), St2.Name);
+			V->AsObject()->TryGetStringField(TEXT("style"), St2.Style);
+			V->AsObject()->TryGetStringField(TEXT("podcast"), St2.Podcast);
+			Out.Radio.Add(St2);
+		}
+	const TSharedPtr<FJsonObject>* Rw = Obj(S, TEXT("rewards"));
+	const TSharedPtr<FJsonObject>* Q = Rw ? Obj(*Rw, TEXT("quest")) : nullptr;
+	const TSharedPtr<FJsonObject>* Bk = Rw ? Obj(*Rw, TEXT("interest")) : nullptr;
+	const TSharedPtr<FJsonObject>* Co = Rw ? Obj(*Rw, TEXT("coins")) : nullptr;
+	if (!Q || !Bk || !Co) { OutError = Path + TEXT(" lacks rewards.quest, .interest or .coins"); return false; }
+	auto Ints = [](const TSharedPtr<FJsonObject>& O, const TCHAR* Key, TArray<int32>& V) { V.Reset(); const TArray<TSharedPtr<FJsonValue>>* A = nullptr; if (O->TryGetArrayField(Key, A)) for (const TSharedPtr<FJsonValue>& X : *A) V.Add((int32)X->AsNumber()); };
+	double D = Out.RewardRoot; Num(*Q, TEXT("root"), D); Out.RewardRoot = (int32)D;
+	D = Out.TopStep; Num(*Q, TEXT("top_step"), D); Out.TopStep = (int32)D;
+	D = Out.InterestRoot; Num(*Bk, TEXT("root"), D); Out.InterestRoot = (int32)D;
+	D = Out.InterestCoins; Num(*Co, TEXT("interest_coins"), D); Out.InterestCoins = (int32)D;
+	Ints(*Q, TEXT("scale"), Out.RewardScale);
+	Ints(*Bk, TEXT("scale"), Out.InterestScale);
+	if (!Out.RewardScale.Num() || !Out.InterestScale.Num()) { OutError = Path + TEXT(": a reward scale is empty"); return false; }
 	return true;
 }
 
@@ -136,6 +185,74 @@ void FBrixAmbience::Frame(const FBrixSoundRules& R, double Minute, double Sunris
 			BirdT = Rng.FRandRange(.3, 1.7) / Rate;
 		}
 	}
+}
+
+FString BrixMoodAt(const FBrixSoundRules& R, double Minute)
+{
+	FString Best = R.Moods.Last().Name;   // before the first mood's time: the last one (the night)
+	for (const FBrixSoundRules::FMood& M : R.Moods) if (M.From <= Minute) Best = M.Name;
+	return Best;
+}
+
+FBrixMusicPlace BrixMusicPlace(const FBrixSoundRules& R, const TArray<FBrixMusicLot>& Lots, const FVector2D& Here, int32 InLot, double Minute, bool bMarketDay)
+{
+	FBrixMusicPlace Best;
+	double Bd = 1e18;
+	for (const FBrixMusicLot& L : Lots)
+	{
+		const FBrixSoundRules::FPlace* P = R.Places.Find(L.Kind);
+		if (!P || !BrixWithin(Minute, P->From, P->To) || (P->bMarketDaysOnly && !bMarketDay)) continue;
+		const double d = L.Lot == InLot ? 0.0 : FVector2D(FMath::Max3(L.Min.X - Here.X, 0.0, Here.X - L.Max.X), FMath::Max3(L.Min.Y - Here.Y, 0.0, Here.Y - L.Max.Y)).Size();
+		if (d < P->Far && d < Bd)
+		{
+			Bd = d;
+			Best.Lot = L.Lot;
+			Best.Style = P->Style;
+			Best.Far = P->Far;
+			Best.bInside = L.Lot == InLot;
+			Best.bOpenAir = L.Kind == TEXT("market");   // the busker plays in the open: not muffled from the street
+			Best.Pos = Best.bInside ? Here : L.Door;
+		}
+	}
+	return Best;
+}
+
+double BrixScoreLevel(const FBrixSoundRules& R, bool bTalking, double Near)
+{
+	return R.ScoreGain * (bTalking ? R.TalkDuck : 1.0) * (1 - (1 - R.SourceDuck) * FMath::Min(1.0, Near * 2.5));
+}
+
+int32 BrixNextStation(const FBrixSoundRules& R, int32 Station)
+{
+	for (int32 k = Station + 1; k <= R.Radio.Num(); ++k) if (!R.Radio[k - 1].Style.IsEmpty()) return k;
+	return 0;
+}
+
+bool BrixIsMarketDay(const FString& CalendarPath, const FString& Weekday)
+{
+	FString Error;
+	const TSharedPtr<FJsonObject> C = ReadJson(CalendarPath, Error);
+	const TSharedPtr<FJsonObject>* Cal = C ? Obj(C, TEXT("calendar")) : nullptr;
+	const TSharedPtr<FJsonObject> O = Cal ? *Cal : C;
+	if (!O) return false;
+	const TArray<TSharedPtr<FJsonValue>>* Days = nullptr;
+	const TArray<TSharedPtr<FJsonValue>>* Market = nullptr;
+	if (!O->TryGetArrayField(TEXT("week"), Days) || !O->TryGetArrayField(TEXT("market_days"), Market)) return false;
+	const int32 i = Days->IndexOfByPredicate([&](const TSharedPtr<FJsonValue>& V) { return V->AsString() == Weekday; });
+	return i >= 0 && Market->ContainsByPredicate([&](const TSharedPtr<FJsonValue>& V) { return (int32)V->AsNumber() == i; });
+}
+
+int32 BrixRewardMidi(int32 Root, const TArray<int32>& Scale, int32 K)
+{
+	return Root + 12 * (K / Scale.Num()) + Scale[K % Scale.Num()];
+}
+
+FString BrixRewardSound(const FBrixSoundRules& R, const FString& What, int32 I, int32 N)
+{
+	if (What == TEXT("coin_take"))
+		return FString::Printf(TEXT("reward_coin_take_%d"), FMath::Clamp((int32)FMath::RoundHalfFromZero(I * FMath::Min(1.0, (double)R.TopStep / FMath::Max(1, N - 1))), 0, R.TopStep));
+	if (What == TEXT("interest_coin")) return FString::Printf(TEXT("reward_interest_coin_%d"), FMath::Clamp(I, 0, R.InterestCoins - 1));
+	return TEXT("reward_") + What;
 }
 
 FString BrixStepSurface(bool bInside, const FString& LotKind)

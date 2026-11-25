@@ -377,6 +377,222 @@
    "loop": true,
    "seconds": 2,
    "scale": 1
+  },
+  "reward_quest_start": {
+   "file": "reward_quest_start.ogg",
+   "loop": false,
+   "seconds": 2.1741,
+   "scale": 1
+  },
+  "reward_coin_out": {
+   "file": "reward_coin_out.ogg",
+   "loop": false,
+   "seconds": 1.4635,
+   "scale": 1
+  },
+  "reward_quest_end": {
+   "file": "reward_quest_end.ogg",
+   "loop": false,
+   "seconds": 2.2907,
+   "scale": 1
+  },
+  "reward_interest_start": {
+   "file": "reward_interest_start.ogg",
+   "loop": false,
+   "seconds": 1.7538,
+   "scale": 1
+  },
+  "reward_interest_end": {
+   "file": "reward_interest_end.ogg",
+   "loop": false,
+   "seconds": 2.0791,
+   "scale": 1
+  },
+  "reward_achievement": {
+   "file": "reward_achievement.ogg",
+   "loop": false,
+   "seconds": 3.0565,
+   "scale": 1
+  },
+  "reward_coin_land_0": {
+   "file": "reward_coin_land_0.ogg",
+   "loop": false,
+   "seconds": 0.8917,
+   "scale": 1
+  },
+  "reward_coin_land_1": {
+   "file": "reward_coin_land_1.ogg",
+   "loop": false,
+   "seconds": 0.884,
+   "scale": 1
+  },
+  "reward_coin_land_2": {
+   "file": "reward_coin_land_2.ogg",
+   "loop": false,
+   "seconds": 0.8911,
+   "scale": 1
+  },
+  "reward_coin_land_3": {
+   "file": "reward_coin_land_3.ogg",
+   "loop": false,
+   "seconds": 0.7139,
+   "scale": 1
+  },
+  "reward_coin_take_0": {
+   "file": "reward_coin_take_0.ogg",
+   "loop": false,
+   "seconds": 1.5261,
+   "scale": 1
+  },
+  "reward_coin_take_1": {
+   "file": "reward_coin_take_1.ogg",
+   "loop": false,
+   "seconds": 1.5256,
+   "scale": 1
+  },
+  "reward_coin_take_2": {
+   "file": "reward_coin_take_2.ogg",
+   "loop": false,
+   "seconds": 1.518,
+   "scale": 1
+  },
+  "reward_coin_take_3": {
+   "file": "reward_coin_take_3.ogg",
+   "loop": false,
+   "seconds": 1.5867,
+   "scale": 1
+  },
+  "reward_coin_take_4": {
+   "file": "reward_coin_take_4.ogg",
+   "loop": false,
+   "seconds": 1.5198,
+   "scale": 1
+  },
+  "reward_coin_take_5": {
+   "file": "reward_coin_take_5.ogg",
+   "loop": false,
+   "seconds": 1.5908,
+   "scale": 1
+  },
+  "reward_coin_take_6": {
+   "file": "reward_coin_take_6.ogg",
+   "loop": false,
+   "seconds": 1.5945,
+   "scale": 1
+  },
+  "reward_coin_take_7": {
+   "file": "reward_coin_take_7.ogg",
+   "loop": false,
+   "seconds": 1.5155,
+   "scale": 1
+  },
+  "reward_coin_take_8": {
+   "file": "reward_coin_take_8.ogg",
+   "loop": false,
+   "seconds": 1.744,
+   "scale": 1
+  },
+  "reward_coin_take_9": {
+   "file": "reward_coin_take_9.ogg",
+   "loop": false,
+   "seconds": 1.5265,
+   "scale": 1
+  },
+  "reward_interest_coin_0": {
+   "file": "reward_interest_coin_0.ogg",
+   "loop": false,
+   "seconds": 1.4747,
+   "scale": 1
+  },
+  "reward_interest_coin_1": {
+   "file": "reward_interest_coin_1.ogg",
+   "loop": false,
+   "seconds": 1.4827,
+   "scale": 1
+  },
+  "reward_interest_coin_2": {
+   "file": "reward_interest_coin_2.ogg",
+   "loop": false,
+   "seconds": 1.4784,
+   "scale": 1
+  },
+  "reward_interest_coin_3": {
+   "file": "reward_interest_coin_3.ogg",
+   "loop": false,
+   "seconds": 1.4781,
+   "scale": 1
+  },
+  "reward_interest_coin_4": {
+   "file": "reward_interest_coin_4.ogg",
+   "loop": false,
+   "seconds": 1.4754,
+   "scale": 1
+  },
+  "reward_interest_coin_5": {
+   "file": "reward_interest_coin_5.ogg",
+   "loop": false,
+   "seconds": 1.4647,
+   "scale": 1
+  },
+  "music_morning": {
+   "file": "music_morning.ogg",
+   "loop": true,
+   "seconds": 22.8571,
+   "scale": 1
+  },
+  "music_afternoon": {
+   "file": "music_afternoon.ogg",
+   "loop": true,
+   "seconds": 20.8696,
+   "scale": 1
+  },
+  "music_evening": {
+   "file": "music_evening.ogg",
+   "loop": true,
+   "seconds": 25.9459,
+   "scale": 1
+  },
+  "music_night": {
+   "file": "music_night.ogg",
+   "loop": true,
+   "seconds": 32,
+   "scale": 1
+  },
+  "music_cafe": {
+   "file": "music_cafe.ogg",
+   "loop": true,
+   "seconds": 20,
+   "scale": 1
+  },
+  "music_shop": {
+   "file": "music_shop.ogg",
+   "loop": true,
+   "seconds": 17.7778,
+   "scale": 1
+  },
+  "music_busker": {
+   "file": "music_busker.ogg",
+   "loop": true,
+   "seconds": 17.1429,
+   "scale": 1
+  },
+  "music_swing": {
+   "file": "music_swing.ogg",
+   "loop": true,
+   "seconds": 14.5454,
+   "scale": 1
+  },
+  "music_pop": {
+   "file": "music_pop.ogg",
+   "loop": true,
+   "seconds": 16.5517,
+   "scale": 1
+  },
+  "music_calm": {
+   "file": "music_calm.ogg",
+   "loop": true,
+   "seconds": 29.0909,
+   "scale": 1
   }
  }
 }
