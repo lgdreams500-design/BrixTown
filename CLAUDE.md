@@ -16,6 +16,9 @@ Brix Town: a third-person multiplayer life-sim in Unreal Engine 5.8. Art source 
 - Never renumber or reuse requirement IDs. To drop one, set `status: cut`.
 - Every `P0` requirement needs an automated test named with its ID.
 - Gameplay logic in C++ modules; tunable numbers in data, not code.
+- Note every known gap in the README of the part it is in, in the same pull request: what is not done yet, a bug
+  seen but not fixed, a shortcut taken. For the Unreal build that is the "Not yet" line of its section in
+  `Game/README.md`. A chat message or a hand-over note is not enough. Remove the note when the gap is closed.
 - Money is integer minor units and moves only through the ledger.
 - The server is authoritative; never trust client input.
 - Never commit directly to `main`. Commit on a work branch (e.g. `work/YYYY-MM-DD`), push it, and merge into `main` only
