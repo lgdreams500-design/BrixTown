@@ -57,7 +57,6 @@
   "kiosk":  { "name": "Kiosk",  "match": { "kind": "shop", "name_has": "Kiosk" }, "sells": ["newspaper", "map", "umbrella", "sweets", "postcard"], "buys": ["map", "umbrella", "sweets", "postcard"], "till": 20000 },
   "arcade": { "name": "Arcade", "match": { "kind": "shop", "name_has": "Arcade" }, "sells": ["scarf", "hat", "book", "candle", "teapot", "umbrella"], "buys": ["scarf", "hat", "book", "candle", "teapot", "umbrella", "rare_book"], "till": 80000 },
   "bakery": { "name": "Bakery", "match": { "kind": "shop", "name_has": "Bakery" }, "sells": ["bread", "cake", "jam"], "buys": [], "till": 15000 },
-  "skate":  { "name": "Skate store", "match": { "kind": "shop", "name_has": "Skate" }, "sells": [], "buys": [], "till": 40000, "note": "Sells skateboards, the kinds of World/rules/boards.json at their prices (CITY-102, CITY-103), not items; buys nothing back (Q-40 is open)." },
   "mall": { "name": "Mall", "match": { "kind": "shop", "name_has": "Mall" }, "sells": ["scarf", "hat", "book", "candle", "teapot", "umbrella"], "buys": [], "till": 200000 },
   "cafe":   { "name": "Café",   "match": { "kind": "food" }, "sells": ["coffee", "cake", "sandwich", "bread"], "buys": [], "till": 15000 }
  },

@@ -1,7 +1,7 @@
 // Skateboards (F-VEH-SKATES; LIVING_CITY CITY-098 to CITY-101): which boards the player owns, the board in use, whether it is
 // carried in the hand or ridden, and how fast it is going. Kinds, speeds, sizes and colours are data in World/rules/boards.json.
 // A manual board goes only while a foot pushes it (W held); the electric and Neon Boost boards drive themselves while W is held.
-// The skate store and buying (CITY-102, CITY-103) come later; until then only ?auto=1 gives boards (all three, electric in use).
+// Buying boards at the mall's sports and toy outlets (CITY-102, CITY-103; ADR-0054) is in the Unreal build only; here only ?auto=1 gives boards (all three, electric in use).
 const Boards = (() => {
   const R = window.WASTED.boards, MS = 1 / 3.6;           // km/h to m/s
   let own = [], kind = null, riding = false, v = 0;

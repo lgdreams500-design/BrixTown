@@ -18,7 +18,7 @@
   "ochre": [0.52, 0.40, 0.20], "terracotta": [0.44, 0.24, 0.18], "teal": [0.20, 0.36, 0.37], "blue": [0.30, 0.38, 0.52], "olive": [0.30, 0.33, 0.20], "plum": [0.30, 0.24, 0.34],
   "cream": [0.66, 0.61, 0.50]
  },
- "bands": { "grocer": "olive", "kiosk": "blue", "arcade": "plum", "bakery": "ochre", "skate": "teal", "mall": "ochre", "cafe": "terracotta" },
+ "bands": { "grocer": "olive", "kiosk": "blue", "arcade": "plum", "bakery": "ochre", "mall": "ochre", "cafe": "terracotta" },
  "shapes": {
   "parcel": [[0, 0, 0, 0.30, 0.17, 0.22, "card"], [0, 0, 0, 0.304, 0.172, 0.06, "band"], [0, 0.001, 0, 0.018, 0.174, 0.224, "string"], [0.06, 0.17, 0, 0.09, 0.012, 0.05, "paper"]],
   "case": [[0, 0, 0, 0.14, 0.05, 0.10, "band"], [0, 0.05, 0, 0.146, 0.022, 0.106, "band", 0.8], [0, 0.055, -0.054, 0.03, 0.012, 0.006, "brass"]],

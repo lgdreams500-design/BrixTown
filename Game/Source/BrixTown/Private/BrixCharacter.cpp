@@ -624,7 +624,7 @@ void ABrixCharacter::BoardKey()   // Y: from the hand onto the board, and back; 
 	if (bDriving || bTalking || bPanel || bDesigning) return;
 	const TOptional<bool> On = Boards.Toggle();
 	ABrixLife* L = Life();
-	if (!On) { if (L) L->Toast(TEXT("You have no skateboard yet. ") + L->SkateStoreName() + TEXT(" sells them.")); return; }
+	if (!On) { if (L) L->Toast(TEXT("You have no skateboard yet. ") + L->BoardsSoldWhere() + TEXT(" sell them.")); return; }
 	const FBrixBoardKind* K = Boards.Kind();
 	BoardBlend = 0;
 	BoardMeant = 0;

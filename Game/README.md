@@ -861,19 +861,20 @@ runs boards.js and people.js in headless Edge into `Tests/values/boards_city_01.
 checks every speed of a ride of each kind and 36 riders and carried boards (vertex for vertex, within 1 mm);
 `CITY098_board_kinds_and_speeds`, `CITY100_auto_owns_all_and_rides_electric`.
 
-The skate store (CITY-102, CITY-103; ADR-0053): the slice has none, so its rules were proved first in Python (economy.py
-buy_board(), board_in_use(), `test_CITY_103_*` in Tools/citysim/test_economy.py). It is Market Skate Store, the shop lot by
-the market square that was the Market Grocer (b_9_8_l2, nobody's grocer; World/city_01/blocks/b_9_8.json), of the shop kind
-`skate` (economy.json: no items, buys nothing back, Q-40 being open). The boards' prices are boards.json `price`, cheapest
-to dearest up the store (Bx 60, Bx 280, Bx 900 [ASSUMPTION]). B at its door opens its counter: the three boards in the buy
-menu, each its own model as people.js board() draws it (`DrawBrixBoard`, `BrixThingFromBody`), turning in the showcase with
-its top speed and how it goes; one owned is marked yours and is not sold again. A board is paid into the store's till
-through the ledger (cash first, then the current account), goes to the belongings and is the one in use when it is faster
-than the one in use. The game menu's Belongings page lists the boards owned, the one in use marked (in the hand or ridden),
-with Use this on the others (life.js belongingsTab()). `CITY103_boards_are_bought_as_python_does` runs economy.board_script()
-(refusals, a loan, the in-use rule, the till, a save and load) against Python's results in life.json. To see the store in a
-test shot: `-BrixNoBoards -BrixCounter=skate` (and `"-BrixLife=open,current;loan,30000,7"` to afford a board), the
-belongings with `-BrixMenu=belongings`. Not yet: the boards standing on show in the store itself, the server's check
+Skateboards are sold at Eastgate's sports and toy outlets (CITY-102, CITY-103; ADR-0054, which supersedes ADR-0053's skate
+store; the owner, 2026-11-25: no dedicated skate shop, rideable boards in the sports or toy shops, to ride or to put on show).
+The slice sells none, so the rules were proved first in Python (economy.py sells_boards(), buy_board(n, u, kind),
+board_in_use(), `test_CITY_102_*` and `test_CITY_103_*` in Tools/citysim/test_economy.py). Which outlets is boards.json
+`sold_at` (sports, toys: 34 of the 189); the prices are boards.json `price`, cheapest to dearest (Bx 60, Bx 280, Bx 900
+[ASSUMPTION]). B in such an outlet opens its counter with the three boards after its goods in the same grid, each its own
+model as people.js board() draws it (`DrawBrixBoard`, `BrixThingFromBody`), turning in the showcase with its top speed and how
+it goes; one owned is marked yours and is not sold again. A board is paid into the mall's till through the ledger (cash first,
+then the current account), goes to the belongings and is the one in use when it is faster than the one in use. The game
+menu's Belongings page lists the boards owned, the one in use marked (in the hand or ridden), with Use this on the others
+(life.js belongingsTab()). `CITY103_boards_are_bought_as_python_does` runs economy.board_script() (refusals, a clothes outlet,
+a loan, the in-use rule, the till, a save and load) against Python's results in life.json. To see it in a test shot:
+`-BrixNoBoards -BrixCounter=b_16_5_u35` (Bobbin's Toys; `"-BrixLife=open,current;loan,30000,7"` to afford a board), the
+belongings with `-BrixMenu=belongings`. Not yet: boards in the sports and toy outlets' windows, a board on show at home (the boards are not among the Furnish tab's pieces yet), the server's check
 (CITY-104), the sounds of getting on and off; the slice has no residents on boards, so there are none here either. 32
 frames a second at High riding along Tram Street (noisy: other sessions were running Unreal).
 
