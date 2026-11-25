@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 
+class FJsonObject;
 struct FBrixCity;
 struct FBrixLot;
 struct FBrixHousePlan;
@@ -80,9 +81,11 @@ struct BRIXWORLD_API FBrixInside
 	FString HouseLine;                       // a designed house's furniture line (lot.house.furniture)
 	FVector3f Accent = FVector3f(0.20f, 0.36f, 0.37f);   // the design's accent (its awning's colour): a counter's top
 	TMap<FString, TArray<FVector2D>> Objects;   // the lot's places by kind (bed, room, work, seat, ...)
+	TSharedPtr<FJsonObject> Design;          // the building's design, its choices by kit id (lot.dsg; BUILD-001, BUILD-016)
 };
 
 #include "BrixHomes.h"
+#include "BrixBuilder.h"
 
 struct BRIXWORLD_API FBrixInsides
 {
@@ -92,6 +95,7 @@ struct BRIXWORLD_API FBrixInsides
 	TMap<FString, FVector3f> Sizes;          // the pieces' sizes, w d h (furniture.js SIZE)
 	TMap<FString, TArray<float>> Hung;       // pieces on a wall or from the ceiling: x0 x1 y0 y1 z0 z1 (homes.js CAM_ONLY)
 	TArray<TOptional<FBrixInside>> Lots;     // per lot in the city's order; unset for open ground
+	FBrixBuilderRules Builder;               // the building designer's kit, planning rules and fixed run (BUILD-002 to BUILD-019)
 };
 
 // A stairwell worked out as the slice does it (storeys.js stairOf()): u along the flights, v across them; lane 0 against the

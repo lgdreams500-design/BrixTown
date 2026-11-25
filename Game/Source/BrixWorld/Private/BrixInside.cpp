@@ -59,6 +59,8 @@ bool LoadBrixInside(const FString& Path, FBrixInsides& Out, FString& OutError)
 	}
 
 	LoadBrixHomeData(Root, Out);
+	const TSharedPtr<FJsonObject>* Bd = nullptr;
+	if (Root->TryGetObjectField(TEXT("builder"), Bd)) { FString BErr; LoadBrixBuilderRules(*Bd, Out.Builder, BErr); }
 	Out.Lots.Reset();
 	for (const TSharedPtr<FJsonValue>& V : Root->GetArrayField(TEXT("lots")))
 	{
@@ -67,6 +69,8 @@ bool LoadBrixInside(const FString& Path, FBrixInsides& Out, FString& OutError)
 		const TSharedPtr<FJsonObject> O = V->AsObject();
 		FBrixInside In;
 		In.Id = O->GetStringField(TEXT("id"));
+		const TSharedPtr<FJsonObject>* Dsg = nullptr;
+		if (O->TryGetObjectField(TEXT("dsg"), Dsg)) In.Design = *Dsg;
 		O->TryGetStringField(TEXT("special"), In.Special);
 		In.DoorWidth = (float)O->GetNumberField(TEXT("door_width"));
 		for (const TSharedPtr<FJsonValue>& F : O->GetArrayField(TEXT("floors")))
