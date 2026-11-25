@@ -1,4 +1,5 @@
 #include "BrixCharacter.h"
+#include "BrixMallActor.h"
 
 #include "BrixCarsActor.h"
 #include "BrixCity.h"
@@ -183,6 +184,7 @@ void ABrixCharacter::Move(const FInputActionValue& Value)
 {
 	const FVector2D V = Value.Get<FVector2D>();
 	if (IsPlaying()) { if (!V.IsNearlyZero()) bPlayOff = true; return; }   // moving gets off what you play on
+	if (bSeated) { if (!V.IsNearlyZero()) bSeatOff = true; return; }      // and up from a seat
 	if (bDriving) { DriveIn = V; return; }   // W/S the speed, A/D the steering
 	if (!Controller || bTalking || bPanel) return;   // a talk or a counter holds the player still (conversations.js open())
 	if (Boards.Riding()) { BoardIn = V; return; }    // on a board there is no walk: W goes, S brakes, A and D turn
@@ -245,6 +247,19 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 		O.bStraddle = P.bStraddle;
 		if (P.bClimb) O.Sig = TEXT("Climb");
 		O.Arms[0] = P.Arms[0]; O.Arms[1] = P.Arms[1];
+		O.Seconds = GetWorld()->GetTimeSeconds();
+		O.Lod = 0;
+		Scratch.Reset();
+		DrawBrixPerson(Rules, Rules.Player, FVector::ZeroVector, 0.0, O, Scratch);
+		Verts = BrixBodyToMesh(Person, Scratch, Verts, false, BodyMaterial);
+		return;
+	}
+	if (bSeated)   // on a sofa, a chair, a bench or a bed: the body sits (or lies) on its top, facing as the piece does
+	{
+		if (bSeatOff) { StopSeat(); return; }
+		SetActorLocationAndRotation(FVector(SeatAt.X * CmPerM, SeatAt.Y * CmPerM, SeatAt.Z * CmPerM + 85.f), FRotator(0, FMath::RadiansToDegrees(SeatYaw) - 90.0, 0));   // (the body is drawn turned a quarter in the actor)
+		FBrixDrawOptions O;
+		O.Pose = bSeatLie ? 3 : 2;
 		O.Seconds = GetWorld()->GetTimeSeconds();
 		O.Lod = 0;
 		Scratch.Reset();
@@ -377,6 +392,72 @@ void ABrixCharacter::StopPlay(bool bAtEnd)
 	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 }
 
+const ABrixMall* ABrixCharacter::SeatHere(int32& OutSeat, double& OutMetres) const
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	const ABrixMall* Best = nullptr;
+	OutSeat = INDEX_NONE;
+	OutMetres = 1e9;
+	if (!Mode || bDriving || bSeated || IsPlaying()) return nullptr;
+	for (const ABrixMall* Hall : { Mode->Mall.Get(), Mode->OutletHall.Get() })
+	{
+		double D = 0;
+		const int32 i = Hall ? Hall->SeatNear(GetActorLocation(), D) : INDEX_NONE;
+		if (i != INDEX_NONE && D < OutMetres) { OutMetres = D; OutSeat = i; Best = Hall; }
+	}
+	return Best;
+}
+
+bool ABrixCharacter::SeatOffer(FString& OutLabel, double& OutMetres) const
+{
+	int32 Se = INDEX_NONE;
+	const ABrixMall* Hall = SeatHere(Se, OutMetres);
+	if (!Hall) return false;
+	OutLabel = Hall->Seats()[Se].Label;
+	return true;
+}
+
+void ABrixCharacter::StartSeat(const FVector& At, double Yaw, bool bLie, const FString& Label)
+{
+	bSeated = true;
+	bSeatLie = bLie;
+	bSeatOff = false;
+	SeatAt = At;
+	SeatYaw = Yaw;
+	SeatFrom = GetActorLocation();
+	SetActorEnableCollision(false);
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: the player %s (%s) at %.2f, %.2f, %.2f m up"), bLie ? TEXT("lies down") : TEXT("sits down"), *Label, At.X, At.Y, At.Z);
+}
+
+void ABrixCharacter::StopSeat()
+{
+	if (!bSeated) return;
+	bSeated = bSeatOff = false;
+	SetActorLocation(SeatFrom, false, nullptr, ETeleportType::TeleportPhysics);   // up, where they stood
+	SetActorEnableCollision(true);
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+}
+
+void ABrixCharacter::TestSeat(const FString& LabelPart)
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	for (const ABrixMall* Hall : { Mode ? Mode->Mall.Get() : nullptr, Mode ? Mode->OutletHall.Get() : nullptr })
+		for (int32 i = 0; Hall && i < Hall->Seats().Num(); ++i)
+		{
+			const ABrixMall::FSeat& X = Hall->Seats()[i];
+			if (!X.Label.Contains(LabelPart)) continue;
+			// stand a step in front of it, facing it, as the player would come to it
+			const FVector2D Fwd(FMath::Sin(X.Yaw), -FMath::Cos(X.Yaw));
+			SetActorLocation(FVector((X.At.X + Fwd.X * .8) * CmPerM, (X.At.Y + Fwd.Y * .8) * CmPerM, (X.At.Z - .45) * CmPerM + 95.f), false, nullptr, ETeleportType::TeleportPhysics);
+			if (APlayerController* PC = Cast<APlayerController>(GetController())) PC->SetControlRotation(FRotator(-18.0, FMath::RadiansToDegrees(FMath::Atan2(-Fwd.Y, -Fwd.X)) + 35.0, 0));
+			StartSeat(X.At, X.Yaw, X.bLie, X.Label);
+			return;
+		}
+	UE_LOG(LogTemp, Warning, TEXT("Brix Town: no seat whose offer says %s"), *LabelPart);
+}
+
 void ABrixCharacter::TestPlay(int32 Use)
 {
 	ABrixPeople* Pp = People();
@@ -396,6 +477,7 @@ void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whic
 {
 	if (bDesigning && bDesignKeys) return;   // the designer has the keys
 	if (IsPlaying()) { StopPlay(); return; }
+	if (bSeated) { StopSeat(); return; }
 	ABrixCars* C = Cars();
 	ABrixTalk* T = Talk();
 	if (bDriving && C)
@@ -421,6 +503,12 @@ void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whic
 	double PlayD = 1e9;
 	const int32 PlayAt = !bDriving && !Boards.Riding() && People() ? People()->PlayTarget(GetActorLocation(), PlayD) : INDEX_NONE;
 	if (PlayAt != INDEX_NONE && PlayD <= TalkD && (Car < 0 || PlayD <= CarD)) { StartPlay(PlayAt); return; }   // a go on the playground (WLD-041)
+	if (!Boards.Riding())   // a seat or a bed to try (FURN-022): nearer than anyone to talk to
+	{
+		int32 Se = INDEX_NONE;
+		double SeatD = 1e9;
+		if (const ABrixMall* Hall = SeatHere(Se, SeatD)) if (SeatD <= TalkD) { const ABrixMall::FSeat& X = Hall->Seats()[Se]; StartSeat(X.At, X.Yaw, X.bLie, X.Label); return; }
+	}
 	if (Car >= 0 && CarD <= TalkD)
 	{
 		if (!C->Enter(Car)) return;
@@ -457,6 +545,7 @@ void ABrixCharacter::JumpKey()
 	if (bDesigning && bDesignKeys) return;   // the designer has the keys
 	if (bDriving) { bHandbrake = true; return; }
 	if (IsPlaying()) { bPlayOff = true; return; }
+	if (bSeated) { bSeatOff = true; return; }
 	if (Boards.Riding()) return;   // no jumping off a board: Y steps off it
 	if (!bTalking) Jump();
 }

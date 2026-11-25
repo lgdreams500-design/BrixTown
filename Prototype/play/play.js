@@ -3134,7 +3134,10 @@ function furnishRoom(l, level, m) {
   if (ROOM_REC) ROOM_REC.lamps.push(...T.lamps);
   for (const p of lay) {
     const src = p.from && LOT_BY_ID.get(p.from.lot), S2 = src && src.furn && townPieces(src, p.from.level), t = p.kind === "town" && (p.from ? S2 && S2.pieces.find(q => q.id === p.from.id) : byId.get(p.id));
-    if (t) putVerts(m, t.v, p, t.c, p.from ? T.F - S2.F : 0); else if (p.kind !== "town") drawKit(m, p, T.F, hash(l.id, p.id));
+    if (p.boxed) {                                          // delivered flat-packed and not put together yet (FURN-029): its boxes, stacked, with the company's band
+      const Yb = p.yaw * Math.PI / 180, bh = D.life.furniture.rules.flat_pack.box[2], nb = Math.max(1, Math.round(p.h / bh));
+      for (let k = 0; k < nb; k++) { m.ybox(p.x, T.F + k * bh, p.z, p.w - .02 * (k % 2), bh - .012, p.d - .02 * (k % 2), Yb, [.58, .48, .32], 19); m.ybox(p.x, T.F + k * bh + bh * .3, p.z, p.w * .3, bh * .4, p.d + .004, Yb, [.20, .36, .37], 19); }
+    } else if (t) putVerts(m, t.v, p, t.c, p.from ? T.F - S2.F : 0); else if (p.kind !== "town") drawKit(m, p, T.F, hash(l.id, p.id));
     if (ROOM_REC && !p.rug) { const C = Furnish.corners(p), xs = C.map(q => q[0]), zs = C.map(q => q[1]); ROOM_REC.foot.push([(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...zs) + Math.max(...zs)) / 2, (Math.max(...xs) - Math.min(...xs)) / 2, (Math.max(...zs) - Math.min(...zs)) / 2, 1]); }
   }
 }
@@ -3184,7 +3187,7 @@ function layoutWorld(l, level) {                             // a storey kept as
     if (p.rug) continue;
     const C = Furnish.corners(p), xs = C.map(q => q[0]), zs = C.map(q => q[1]);
     was.solids.push(solids.length); solid(Math.min(...xs), F, Math.min(...zs), Math.max(...xs), F + Math.min(p.h, 2), Math.max(...zs));
-    const S = p.kind !== "town" && Furniture.SEAT[p.kind];
+    const S = p.kind !== "town" && !p.boxed && Furniture.SEAT[p.kind];
     if (S) { const Y = p.yaw * Math.PI / 180; uses.push(Object.assign({ x: p.x, y: F + S[1], z: p.z, type: S[0], label: S[2], yaw: -Y })); was.uses.push(uses[uses.length - 1]); }
   }
 }

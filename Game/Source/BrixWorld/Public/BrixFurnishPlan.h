@@ -18,11 +18,12 @@ struct BRIXWORLD_API FBrixLayoutPiece
 	FString Id, Kind = TEXT("town"), Name;
 	double W = 1, D = 1, H = 1, X = 0, Z = 0, Yaw = 0;    // metres, degrees
 	bool bRug = false;
+	bool bBoxed = false;                                  // delivered flat-packed and not put together yet (FURN-029): drawn as its boxes
 	TOptional<FString> Line;
 	TOptional<FString> FromLot;                           // a town piece taken from a storey: where it came from (lot, level, its id)
 	int32 FromLevel = 0;
 	FString FromId;
-	bool operator==(const FBrixLayoutPiece& O) const { return Id == O.Id && Kind == O.Kind && X == O.X && Z == O.Z && Yaw == O.Yaw; }
+	bool operator==(const FBrixLayoutPiece& O) const { return Id == O.Id && Kind == O.Kind && X == O.X && Z == O.Z && Yaw == O.Yaw && bBoxed == O.bBoxed; }
 };
 using FBrixLayout = TArray<FBrixLayoutPiece>;
 

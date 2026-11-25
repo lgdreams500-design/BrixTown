@@ -206,6 +206,7 @@ namespace BrixFurnishPlan
 		O->SetNumberField(TEXT("w"), P.W); O->SetNumberField(TEXT("d"), P.D); O->SetNumberField(TEXT("h"), P.H);
 		if (bWhere) { O->SetNumberField(TEXT("x"), P.X); O->SetNumberField(TEXT("z"), P.Z); O->SetNumberField(TEXT("yaw"), P.Yaw); }
 		O->SetBoolField(TEXT("rug"), P.bRug);
+		if (P.bBoxed) O->SetBoolField(TEXT("boxed"), true);
 		if (P.Line) O->SetStringField(TEXT("line"), *P.Line);
 		if (P.FromLot)
 		{
@@ -223,6 +224,7 @@ namespace BrixFurnishPlan
 		O->TryGetNumberField(TEXT("w"), P.W); O->TryGetNumberField(TEXT("d"), P.D); O->TryGetNumberField(TEXT("h"), P.H);
 		O->TryGetNumberField(TEXT("x"), P.X); O->TryGetNumberField(TEXT("z"), P.Z); O->TryGetNumberField(TEXT("yaw"), P.Yaw);
 		O->TryGetBoolField(TEXT("rug"), P.bRug);
+		O->TryGetBoolField(TEXT("boxed"), P.bBoxed);
 		FString Ln;
 		if (O->TryGetStringField(TEXT("line"), Ln)) P.Line = Ln;
 		const TSharedPtr<FJsonObject>* Fr = nullptr;
