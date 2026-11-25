@@ -16,7 +16,7 @@ $Project = Join-Path (Split-Path (Split-Path $PSScriptRoot)) "Game\BrixTown.upro
 New-Item -ItemType Directory -Force $OutDir | Out-Null
 $Out = (Resolve-Path $OutDir).Path.Replace("\", "/")
 $Log = Join-Path $OutDir "tour.log"
-$ArgLine = "`"$Project`" -game -windowed -ResX=1066 -ResY=666 -RenderOffscreen -nosound -nosplash -unattended -BrixNoDesigner -BrixNoSave -ExecCmds=`"scalability 2`" -BrixTour=$((Resolve-Path $List).Path.Replace('\','/')) -BrixTourOut=$Out -abslog=`"$Log`" $Extra"
+$ArgLine = "`"$Project`" -game -windowed -ResX=1066 -ResY=666 -RenderOffscreen -nosound -nosplash -unattended -BrixNoDesigner -BrixNoSave -BrixLightRoom -ExecCmds=`"scalability 2`" -BrixTour=$((Resolve-Path $List).Path.Replace('\','/')) -BrixTourOut=$Out -abslog=`"$Log`" $Extra"
 $T0 = Get-Date
 $P = Start-Process -FilePath $Editor -ArgumentList $ArgLine -PassThru
 if (-not $P.WaitForExit(1800000)) { $P.Kill(); "the tour did not finish in half an hour" }

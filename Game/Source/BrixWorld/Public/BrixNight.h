@@ -10,9 +10,9 @@
 struct BRIXWORLD_API FBrixNightRules
 {
 	// the eye: DayEV is the exposure (EV100) the engine settles on in the open street at noon; the others are how many
-	// stops it may open past that by day (free), out of doors with the sun on the horizon, at night out of doors, and at
-	// night in a room
-	float DayEV = 1.3f, DayOpen = 12.f, DuskOpen = 3.f, NightOpen = 2.f, NightOpenIndoors = 2.5f;
+	// stops it may open past that by day (free), in a room by day, out of doors with the sun on the horizon, at night out
+	// of doors, and at night in a room
+	float DayEV = 1.3f, DayOpen = 12.f, DayOpenIndoors = 2.4f, DuskOpen = 3.f, NightOpen = 2.f, NightOpenIndoors = 2.5f;
 	float NightBelow = 0.3f;                                         // the night comes in as the day's light falls from this to 0
 	FLinearColor NightHaze = FLinearColor(0.030f, 0.032f, 0.042f);   // the distance at night
 	// a low sun: below LowSunBelow of the game mode's measure of the sun's height the haze turns to its own colour x

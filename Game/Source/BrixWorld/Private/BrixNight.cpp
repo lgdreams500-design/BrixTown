@@ -14,7 +14,8 @@ FBrixLightNow BrixLightNow(const FBrixNightRules& R, const FBrixLightNowIn& In)
 	// the eye: free by day with the sun up; with the sun on the horizon the streets are lit by the sky alone and it may
 	// open DuskOpen stops, so dusk is dusk and not a grey noon; once the day is gone, NightOpen (more in a room, by its lamps)
 	const float In01 = FMath::Clamp(In.Indoors, 0.f, 1.f);
-	const float Open = FMath::Lerp(FMath::Lerp(R.NightOpen, R.NightOpenIndoors, In01), FMath::Lerp(FMath::Lerp(R.DuskOpen, R.DayOpen, In01), R.DayOpen, High), Day);
+	const float DayIn = FMath::Lerp(R.DayOpen, R.DayOpenIndoors, In01);
+	const float Open = FMath::Lerp(FMath::Lerp(R.NightOpen, R.NightOpenIndoors, In01), FMath::Lerp(FMath::Lerp(R.DuskOpen, R.DayOpenIndoors, In01), DayIn, High), Day);
 	N.MinEV = R.DayEV - Open;
 
 	// the haze

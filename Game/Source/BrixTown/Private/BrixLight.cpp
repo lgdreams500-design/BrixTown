@@ -3,6 +3,7 @@
 #include "BrixCity.h"
 #include "BrixGameMode.h"
 #include "BrixInside.h"
+#include "BrixLightRoom.h"
 #include "BrixMall.h"
 #include "BrixMallActor.h"
 #include "BrixNight.h"
@@ -55,7 +56,8 @@ void UBrixLight::Tick(float DeltaSeconds)
 				FStop S;
 				S.Name = P[0].TrimStartAndEnd();
 				FString Hh, Mm;
-				if (P[1].TrimStartAndEnd().Split(TEXT(":"), &Hh, &Mm)) S.Minute = FCString::Atoi(*Hh) * 60.0 + FCString::Atoi(*Mm);
+				if (P[1].TrimStartAndEnd() == TEXT("ref")) S.bRefTime = true;
+				else if (P[1].TrimStartAndEnd().Split(TEXT(":"), &Hh, &Mm)) S.Minute = FCString::Atoi(*Hh) * 60.0 + FCString::Atoi(*Mm);
 				S.Weather = P[2].TrimStartAndEnd();
 				FString Kind, Numbers;
 				TArray<FString> N;
@@ -63,6 +65,7 @@ void UBrixLight::Tick(float DeltaSeconds)
 				Numbers.ParseIntoArray(N, TEXT(","));
 				S.bCam = Kind == TEXT("cam");
 				if (Kind == TEXT("in")) { S.Lot = N.Num() ? N[0] : Numbers; S.Pitch = N.Num() > 1 ? FCString::Atof(*N[1]) : -12.f; }   // in:<lot>[,<pitch>]
+				else if (Kind == TEXT("refroom")) { S.RefRoom = Numbers; S.bCam = true; }
 				else
 				{
 					if (N.Num() != (S.bCam ? 5 : 4)) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: the tour's stop %s has no place"), *S.Name); continue; }
@@ -72,11 +75,27 @@ void UBrixLight::Tick(float DeltaSeconds)
 				}
 				float EV = 0.f;
 				if (P.Num() > 4 && FParse::Value(*P[4], TEXT("ev="), EV)) S.EV = EV;
+				if (P.Num() > 4)   // the reference rooms' numbers to try: lamp=<times> fill=<level> tint=<r>/<g>/<b>
+				{
+					FParse::Value(*P[4], TEXT("lamp="), S.Lamp);
+					FParse::Value(*P[4], TEXT("fill="), S.Fill);
+					FString Tint;
+					TArray<FString> C;
+					if (FParse::Value(*P[4], TEXT("tint="), Tint) && Tint.ParseIntoArray(C, TEXT("/")) == 3) S.Tint = FLinearColor(FCString::Atof(*C[0]), FCString::Atof(*C[1]), FCString::Atof(*C[2]));
+					if (FParse::Value(*P[4], TEXT("filltint="), Tint) && Tint.ParseIntoArray(C, TEXT("/")) == 3) S.FillTint = FLinearColor(FCString::Atof(*C[0]), FCString::Atof(*C[1]), FCString::Atof(*C[2]));
+				}
 				Stops.Add(S);
 			}
 			UE_LOG(LogTemp, Display, TEXT("Brix Town: a tour of %d stops, shots into %s"), Stops.Num(), *TourOut);
 		}
 	}
+	FString RoomColours;
+	if (!RefRooms && (FParse::Param(FCommandLine::Get(), TEXT("BrixLightRoom")) || FParse::Value(FCommandLine::Get(), TEXT("BrixLightRoom="), RoomColours)))
+	{
+		RefRooms = W->SpawnActor<ABrixLightRoom>();
+		RefRooms->Start(*Mode, RoomColours == TEXT("game"));
+	}
+	if (RefRooms) RefRooms->Try(Mode->Daylight, TryLamp, TryTint, TryFill, TryFillTint);   // their own light follows the day, as the rooms' does
 	if (!bOff) Light(*Mode, DeltaSeconds);
 	if (Stops.Num()) Tour(*Mode, DeltaSeconds);
 }
@@ -133,10 +152,12 @@ void UBrixLight::Light(ABrixGameMode& Mode, float DeltaSeconds)
 	// what the picture needs now (BrixWorld/BrixNight, WLD-042): worked out from the day's light, the sun's height, the
 	// weather and whether the camera is in a room
 	const APlayerCameraManager* Cam = UGameplayStatics::GetPlayerCameraManager(W, 0);
-	const bool bIn = Cam && Mode.RoomAt(Cam->GetCameraLocation()) != INDEX_NONE;
+	const bool bInRef = Cam && RefRooms && RefRooms->Contains(Cam->GetCameraLocation());
+	const bool bIn = bInRef || (Cam && Mode.RoomAt(Cam->GetCameraLocation()) != INDEX_NONE);
+	if (bInRef && Fog->FogDensity != 0.f) Fog->SetFogDensity(0.f);   // no haze in a room (the game mode knows only its own rooms)
 	Indoors = FMath::FInterpConstantTo(Indoors, bIn ? 1.f : 0.f, DeltaSeconds, 1.f / FMath::Max(IndoorSeconds, .05f));
 	FBrixNightRules R;
-	R.DayEV = DayEV; R.DayOpen = DayOpen; R.DuskOpen = DuskOpen; R.NightOpen = NightOpen; R.NightOpenIndoors = NightOpenIndoors; R.NightBelow = NightBelow;
+	R.DayEV = DayEV; R.DayOpen = DayOpen; R.DayOpenIndoors = DayOpenIndoors; R.DuskOpen = DuskOpen; R.NightOpen = NightOpen; R.NightOpenIndoors = NightOpenIndoors; R.NightBelow = NightBelow;
 	R.NightHaze = NightHaze; R.LowSunBelow = LowSunBelow; R.LowSunHaze = LowSunHaze; R.LowSunGlow = LowSunGlow; R.NightLux = NightLux; R.NightSky = NightSky;
 	FBrixLightNowIn In;
 	In.Daylight = Mode.Daylight;
@@ -197,9 +218,11 @@ void UBrixLight::Tour(ABrixGameMode& Mode, float DeltaSeconds)
 	const FStop& S = Stops[StopAt];
 	PC->SetIgnoreLookInput(true);   // nobody is playing: the keys and mouse of whoever is at this machine do not move it
 	PC->SetIgnoreMoveInput(true);
-	if (S.Minute >= 0) Mode.SetClock(S.Minute);
+	if (S.bRefTime && RefRooms) Mode.SetClock(RefRooms->RefMinute);
+	else if (S.Minute >= 0) Mode.SetClock(S.Minute);
 	if (Mode.Weather) Mode.Weather->Trying = Mode.Weather->Rules.Kinds.Contains(S.Weather) ? S.Weather : FString();
 	PinEV = S.EV;
+	TryLamp = S.Lamp; TryFill = S.Fill; TryTint = S.Tint; TryFillTint = S.FillTint;
 	if (S.bCam)
 	{
 		if (!TourCam)
@@ -207,7 +230,17 @@ void UBrixLight::Tour(ABrixGameMode& Mode, float DeltaSeconds)
 			TourCam = W->SpawnActor<ACameraActor>();
 			TourCam->GetCameraComponent()->bConstrainAspectRatio = false;   // the whole window, no black bars
 		}
-		TourCam->SetActorLocationAndRotation(ToWorld(FVector2D(S.At.X, S.At.Y), (float)S.At.Z), FRotator(S.Pitch, S.Yaw, 0.f));
+		FTransform RefCam;
+		if (!S.RefRoom.IsEmpty() && RefRooms && RefRooms->Camera(S.RefRoom, RefCam))
+		{
+			TourCam->SetActorTransform(RefCam);
+			TourCam->GetCameraComponent()->SetFieldOfView(ABrixLightRoom::Fov);
+		}
+		else
+		{
+			TourCam->SetActorLocationAndRotation(ToWorld(FVector2D(S.At.X, S.At.Y), (float)S.At.Z), FRotator(S.Pitch, S.Yaw, 0.f));
+			TourCam->GetCameraComponent()->SetFieldOfView(90.f);
+		}
 		PC->bAutoManageActiveCameraTarget = false;
 		PC->SetViewTarget(TourCam);
 	}

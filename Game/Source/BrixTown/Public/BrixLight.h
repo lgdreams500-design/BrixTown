@@ -30,6 +30,9 @@
 //       in:<lot id>[,<pitch>] (the player inside that building, as -BrixInside= puts them, looking up or down by
 //       pitch); metres and degrees in the data's frame, yaw 0 = east. ev= pins the exposure for that shot, to measure.
 //       Run it with -BrixNoDesigner -BrixNoSave (not -BrixShot=, which quits after one shot).
+//       With -BrixLightRoom (ABrixLightRoom: the Blender reference rooms built in Unreal) where may be
+//       refroom:<shop|cafe|kitchen>, the reference's own camera in that room, and hh:mm may be ref, when the game's
+//       sun stands as the references' does.
 //   -BrixLightOff                             leave the light as the game mode makes it, to compare
 //   -BrixLightNo=<letters>                    leave parts out: e the eye, h the haze, n the night's light, s its sky
 UCLASS(Config = Game)
@@ -49,6 +52,7 @@ public:
 	// the others are stops it may open past that
 	UPROPERTY(Config) float DayEV = 1.3f;
 	UPROPERTY(Config) float DayOpen = 12.f;            // by day: free, as before
+	UPROPERTY(Config) float DayOpenIndoors = 2.4f;     // in a room by day: where the reference rooms built in Unreal are as bright as Blender's (ABrixLightRoom)
 	UPROPERTY(Config) float DuskOpen = 3.f;            // out of doors with the sun on the horizon, when the sky alone lights the streets
 	UPROPERTY(Config) float NightOpen = 2.f;           // at night out of doors
 	UPROPERTY(Config) float NightOpenIndoors = 2.5f;   // at night in a room, by its lamps
@@ -79,13 +83,16 @@ private:
 	UPROPERTY() TObjectPtr<class UPostProcessComponent> Eye;
 	UPROPERTY() TObjectPtr<class UDirectionalLightComponent> NightLight;
 	UPROPERTY() TObjectPtr<class ACameraActor> TourCam;
+	UPROPERTY() TObjectPtr<class ABrixLightRoom> RefRooms;        // -BrixLightRoom: the Blender reference rooms, to measure against
+	float TryLamp = 1.f, TryFill = -1.f;                          // a tour stop's numbers for them
+	TOptional<FLinearColor> TryTint, TryFillTint;
 	bool bLooked = false, bOff = false;
 	FString Without;                                               // -BrixLightNo=: parts left out
 	float Indoors = 0.f, LowSunNow = 0.f;
 	FLinearColor SkySet = FLinearColor(-1, -1, -1), DayGlow = FLinearColor::Black;
 	TOptional<float> PinEV;
 
-	struct FStop { FString Name, Weather, Lot; double Minute = -1; bool bCam = false; FVector At = FVector::ZeroVector; float Yaw = 0.f, Pitch = 0.f; TOptional<float> EV; };
+	struct FStop { FString Name, Weather, Lot, RefRoom; double Minute = -1; bool bRefTime = false; bool bCam = false; FVector At = FVector::ZeroVector; float Yaw = 0.f, Pitch = 0.f; TOptional<float> EV; float Lamp = 1.f, Fill = -1.f; TOptional<FLinearColor> Tint, FillTint; };
 	TArray<FStop> Stops;
 	FString TourOut;
 	int32 StopAt = -1;

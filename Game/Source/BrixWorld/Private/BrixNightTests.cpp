@@ -36,6 +36,9 @@ bool FWLD042_DayKeptNightDark::RunTest(const FString&)
 	TestTrue(TEXT("by day the sky is the air's own"), Same(N.Sky, FLinearColor::White));
 	TestEqual(TEXT("by day it is not night"), N.Night, 0.f);
 	TestEqual(TEXT("with the sun up the lamps are not wanted"), N.LowSun, 0.f);
+	In.Indoors = 1.f;
+	TestEqual(TEXT("in a room by day the eye opens DayOpenIndoors stops, where the reference rooms match Blender's"), BrixLightNow(R, In).MinEV, R.DayEV - R.DayOpenIndoors);
+	In.Indoors = 0.f;
 
 	// the game's own start, 07:20 in summer: the sun 24 degrees up, the haze in the morning's tint as the game mode has it
 	In.SunUp = 0.40f;
@@ -55,7 +58,7 @@ bool FWLD042_DayKeptNightDark::RunTest(const FString&)
 	TestTrue(TEXT("with the sun on the horizon the lamps are wanted, before the calendar's dusk"), N.LowSun > 0.99f && N.Night == 0.f);
 	TestTrue(TEXT("with the sun on the horizon the eye opens no more than DuskOpen stops"), FMath::Abs(N.MinEV - (R.DayEV - R.DuskOpen)) < 0.02f);
 	In.Indoors = 1.f;
-	TestTrue(TEXT("in a room it is still free then (the approved daylight indoors)"), BrixLightNow(R, In).MinEV <= R.DayEV - 10.f);
+	TestEqual(TEXT("in a room it opens DayOpenIndoors stops then, as by day"), BrixLightNow(R, In).MinEV, R.DayEV - R.DayOpenIndoors);
 	In.Indoors = 0.f;
 	TestTrue(TEXT("a low sun's haze is under a third of the day's"), Lum(N.Haze) < Lum(In.HazeColour) / 3.f);
 	TestTrue(TEXT("a low sun's haze is cool, not orange"), N.Haze.B > N.Haze.R);

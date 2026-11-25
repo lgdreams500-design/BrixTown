@@ -241,11 +241,8 @@ each piece stands is `BrixWorld/BrixHomes` (`FURN060_every_planned_home_is_furni
 furniture kits' own meshes in the home's line: `Tools/blender/unreal_furniture_37.py` exports them (Blender, about 20 s),
 `Tools/unreal/import_furniture_kit.py` imports the ones the plans use into `/Game/Furniture` (the .glb files are not kept in
 git). `ABrixRooms` furnishes the homes within 30 m of the camera, and lights the rooms of the home the camera is in (three
-lamps, no shadows: 3 to 5 fps). A lamp is an even pool that fades out at its reach, as play.js roomLight() caps a lamp
-close by (`RoomLightLevel`, `RoomLightFalloff`, `RoomLightDrop`); a floor with no plan (a shop, a cafe, the bank, a
-tower's hall) has one, reaching `HallLightReach` of the floor's diagonal (ADR-0055: a true 1/d2 lamp 0.4 m under the
-ceiling burnt a white patch on it and left a 38 m hall's walls black). `-BrixStand=x,z,yaw` puts the player in a room
-for a shot.
+lamps: 3 to 5 fps). What a room's light is, and how that is known, is under What a room's light should be.
+`-BrixStand=x,z,yaw` puts the player in a room for a shot.
 
 ## Designed houses (ADR-0032, ADR-0035)
 The 469 designed houses (lot.house) are built as the slice builds them (houses.js outsideS): the 12 x 9 m house of
@@ -518,13 +515,13 @@ They are drawn on the inside of a dome round the camera by `/Game/Weather/M_Clou
 The game mode makes the sun, the sky's fill and the haze and turns them by the clock. `UBrixLight`, a part the engine
 makes for every game world (nothing spawns it), adds what the picture needs as the sun gets low and after it is down; the
 arithmetic is `BrixWorld/BrixNight` (`BrixLightNow`: from the day's light, the sun's height, the weather and whether the
-camera is in a room), checked by `WLD042_the_days_light_is_kept_and_the_night_is_dark`. By day with the sun up it changes
-nothing: the haze and its glow are the game mode's own and the eye is free, so the approved daylight indoors and out is
-as it was (ADR-0007, ADR-0048). Then:
+camera is in a room), checked by `WLD042_the_days_light_is_kept_and_the_night_is_dark`. Out of doors by day with the
+sun up it changes nothing: the haze and its glow are the game mode's own and the eye is free, so the approved daylight
+is as it was (ADR-0007). Then:
 - **the eye**: the engine's automatic exposure opens without limit as the light goes, which made the night as bright as
   the day. It may open only so far past the day's exposure (`DayEV`, 1.3 measured in the open street at noon):
   `DuskOpen` stops out of doors with the sun on the horizon, `NightOpen` at night, `NightOpenIndoors` in a room by its
-  lamps;
+  lamps, and `DayOpenIndoors` in a room by day (below);
 - **the haze**: the game mode turns all of it the low sun's orange at the day's full strength while the light itself
   falls away (dusk and dawn were an orange white-out, and the night kept the orange). A low sun's haze is dimmer and
   cooler (`LowSunHaze`), the sun's colour only in the air towards it (`LowSunGlow`); at night it is `NightHaze`, the
@@ -536,22 +533,51 @@ as it was (ADR-0007, ADR-0048). Then:
   with (`NightSky`; the game mode's `NightFill` is 1). It casts shadows, so roofs keep it out of rooms.
 Every number is in DefaultGame.ini, `[/Script/BrixTown.BrixLight]`. `-BrixLightOff` leaves the light as the game mode
 alone makes it, to compare; `-BrixLightNo=<letters>` leaves parts out (e the eye, h the haze, n the night's light, s its
-sky). Pictures before and after: `Art/StyleTests/unreal_light_42/`. Not yet: the stars, the Milky Way, the moon's disc,
+sky). Pictures before and after: `Art/StyleTests/unreal_light_43/`. Not yet: the stars, the Milky Way, the moon's disc,
 path and phases (the night's light comes from one place and does not wax or wane), the planet (WLD-065); lamps lit in
 shade by day as the reference renders have them; light from lit windows on the pavement (the panes are kept out of
 Lumen); the alley's haze growing heavy from 18:00 as its shade deepens (the game mode's haze has one brightness whatever
 the light). The haze's colour is set twice a frame at dusk and night, by the game mode and then by this: to be folded
-into the game mode's UpdateSun. At High with nothing else running: 32 to 55 frames a second at the 59 stops of the tour
-below (40 in the middle), day and night.
+into the game mode's UpdateSun. At High with nothing else running: 38 frames a second in the middle of the tour's 64
+stops below, day and night, indoors and out (between 30 and 55 at most; a stop dips under that while its place loads).
+
+**What a room's light should be (ADR-0055).** The look of rooms is decided by Blender renders with an exact recipe
+(Tools/blender/furniture_kit_18.py: a shop, a cafe, a kitchen and nine more in one shell; the kit daylight through a
+side window, pendants of 70 W in the lantern's colour, one camera and exposure), so the game's rooms are measured
+against those, not judged by eye. `ABrixLightRoom` (`-BrixLightRoom`, which the tour script always passes) builds the
+reference shop, cafe and kitchen again in Unreal, 250 m over open ground on paving of their own: the same shell, the
+kits' own pieces at the same places (the meshes of /Game/Furniture), the game's own room lamp where each pendant hangs,
+the references' camera (a tour stop `refroom:<shop|cafe|kitchen>`), turned so that at the hour `ref` the game's sun
+comes in at the window as theirs does. `Tools/unreal/light_reference.py <reference.png> <unreal.png>` then compares the
+same patches of wall, floor and ceiling in both: how much brighter Unreal's is in stops, and how much warmer. A tour stop
+can try numbers on the spot (`lamp=<times> tint=r/g/b fill=<level> filltint=r/g/b ev=<EV100>`), so one run sweeps them.
+What it showed, and what a room's light is as a result (`ABrixRooms`, every number in DefaultGame.ini):
+- with the lamps out, the walls of the reference rooms in Unreal were 7 stops under Blender's: the engine brings almost
+  none of the sky's light or of the sunlight off the floor indoors, and the references are lit mostly by that. So a room
+  has **a light of its own**, even and warm, as the slice's roomLight() has: `RoomFill` by day, `RoomFillNight` of it at
+  night, in `RoomFillColour`, over the floor the camera is on;
+- **its lamps** are the references' pendant: `RoomLampWatts` (70) in the lantern's colour, a real lamp whose light falls
+  off with the square of the distance, shining down out of its shade (`RoomLampCone`), the nearest `RoomLampShadows`
+  casting shadows. `CandelaPerWatt` is a third of what the arithmetic gives (0.026 for 0.075): at the full strength the
+  walls came a stop and more too warm. A planned home's room has one at its middle; a floor with no plan (a shop, a
+  cafe, the bank) has them where its dressing hangs or stands a lamp, the `RoomLights` nearest the camera lit;
+- **the eye** in a room by day may open `DayOpenIndoors` (2.4) stops past the street's exposure: there the reference
+  rooms in Unreal are as bright as Blender's.
+With those, the three reference rooms in Unreal come within about half a stop of Blender's in brightness and a third of
+a stop in warmth (shop, cafe, kitchen: see `Art/StyleTests/unreal_light_43/rooms_against_blender.jpg`). The game's own
+rooms are warmer and about a stop less bright than they were under the engine's free eye (ADR-0048's look): the owner's
+to approve. Not yet: the kits' lamp shades do not glow (their material has no glow), so a pendant's light has no bright
+shade over it; the reference rooms are open behind the camera, as Blender's are, which a real room is not; Eastgate's
+inside keeps its own light.
 
 **Looking at the light everywhere in one run.** A launch costs one to four minutes on this laptop and a shot a few
 seconds, so `-BrixTour=<list> -BrixTourOut=<folder>` (with `-BrixNoDesigner -BrixNoSave`, not `-BrixShot=`) goes through a
 list of stops, sets the clock and the weather at each, waits `TourSeconds` and saves a picture: a stop is
 `name|hh:mm|weather|where[|ev=<EV100>]`, where `cam:x,z,height,yaw,pitch`, `stand:x,z,up,yaw` or `in:<lot id>[,<pitch>]`
 (the player inside that building, as `-BrixInside=`); `ev=` pins the exposure for a shot, to measure with.
-`Tools/unreal/light_tour.txt` is the survey this light was fixed by (59 stops: the spawn alley, Market Square, a street,
-a park and Eastgate from 07:20 through dusk, night and dawn, in rain and fog, and seven kinds of room by day and by
-night); `Tools/unreal/light_tour.ps1 -OutDir <folder>` runs it offscreen at High (add `-Extra "-BrixLightOff"` for the
+`Tools/unreal/light_tour.txt` is the survey this light was fixed by (64 stops: the spawn alley, Market Square, a street,
+a park and Eastgate from 07:20 through dusk, night and dawn, in rain and fog, seven kinds of room by day and by night,
+and the reference rooms); `Tools/unreal/light_tour.ps1 -OutDir <folder>` runs it offscreen at High (add `-Extra "-BrixLightOff"` for the
 light before), and `Tools/unreal/shot_sheet.py` puts shots side by side with their mean brightness. Run one at a time:
 two at once hung the graphics chip.
 
