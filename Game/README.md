@@ -68,7 +68,10 @@ plan draws back the town's own walls. Ops for a shot: `tab,inside`, `storey,<f>`
 (and `;pay` to build it). Shots: `Art/StyleTests/unreal_designer_39/`. Not yet: dragging a wall or a piece with the mouse (they move by buttons), picking a piece in the view, the town pieces' own
 names (the slice tags them; here they are named by their shape), the narrow layout D grid of objects for the pieces (a list
 of names and prices), the planned homes' furniture in the designer (as in the slice, only buildings furnished at their
-places), furniture sold with a unit (F-PROP-FURNISH), the rooms of a building not drawn inside (FURN-051, FURN-052, FURN-055), the window class's sizes, balconies, keystones, corner stones
+places), furniture sold with a unit (F-PROP-FURNISH), the rooms of a building not drawn inside; a storey with many pieces
+(a cafe's chairs) gives a long list that scrolls, the picked piece's buttons below it; a town piece placed from another
+building is drawn as a box its size; a building drawn again from a design (each choice tried, each remodel paid) leaves
+its old instances folded away under the ground until the town is next built (a few hundred each time; ADR-0052) (FURN-051, FURN-052, FURN-055), the window class's sizes, balconies, keystones, corner stones
 and wall lanterns drawn from the design (offered, priced and kept, but laid by the kit's rules), the awning in the
 design's accent, the cut-open storey (BUILD-020), dragging the view; building new on a plot (BUILD-008: F-MAP-PLOTS is at
 level 0, no plots).
@@ -802,7 +805,8 @@ market is kept in the save. To see it in a test shot: `-BrixCounter=lark "-BrixL
 `-BrixMenu=property "-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4;buy_cheapest,house,lark,25,60;rent_cheapest,flat"`,
 `-BrixMapZoom=5,912,624 "-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4"` (ops: `give,<chips>` test money into the
 current account, `days,<n>` the clock moved on, `buy_cheapest,<kind>,<agent>[,<deposit %>,<term>]`, `rent_cheapest,<kind>`,
-`buy_lot,<lot id>`). Shots: `Art/StyleTests/unreal_estate_38/`. Not yet: the residents who moved house walking to their new
+`buy_lot,<lot id>`). Shots: `Art/StyleTests/unreal_estate_38/`. The slice's own estate.js is checked against the same
+Python run by `Prototype/play/estate_selftest.html` (headless Edge with `--dump-dom` prints PASSED or what differs). Not yet: the residents who moved house walking to their new
 home (they keep their day at the old one), the furniture that goes with a unit sold (F-PROP-FURNISH), the board's own
 sign on the wall (it is words over the door).
 

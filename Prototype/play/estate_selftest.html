@@ -1,0 +1,20 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Estate self-test</title>
+<!-- PROP-021: runs the slice's estate.js against Tools/citysim/estate.py's fixed run (city_data.js D.life.estate_checks)
+     without the rest of the slice, and writes the result into the page, so headless Edge can read it with --dump-dom:
+     msedge --headless=new --virtual-time-budget=60000 --dump-dom Prototype/play/estate_selftest.html -->
+<pre id="out">running</pre>
+<script src="city_data.js"></script>
+<script src="economy.js"></script>
+<script src="estate.js"></script>
+<script>
+  const D = window.WASTED, LOTS = [];
+  for (const b of D.blocks) for (const l of b.lots) { l.block = b; LOTS.push(l); }
+  let text;
+  try {
+    const bad = Estate.selfTest(D, LOTS);
+    text = bad.length ? "ESTATE SELF-TEST FAILED\n" + bad.join("\n") : "ESTATE SELF-TEST PASSED";
+  } catch (e) { text = "ESTATE SELF-TEST ERROR " + e; }
+  document.getElementById("out").textContent = text;
+</script>
