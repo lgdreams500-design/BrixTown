@@ -12,6 +12,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "BrixDay.h"
+#include "BrixGoods.h"
 #include "Engine/StaticMesh.h"
 #include "GameFramework/Character.h"
 #include "Components/CapsuleComponent.h"
@@ -126,7 +127,9 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 		Tri(S, p0, p1, p2, nf, nf, nf, Col, Col, Col, nullptr, Kind);
 		if (!p2.Equals(p3, 1e-9) && !p3.Equals(p0, 1e-9)) Tri(S, p0, p2, p3, nf, nf, nf, Col, Col, Col, nullptr, Kind);
 	};
-	int32 Uses = 0, Parked = 0, Pieces = 0;
+	int32 Uses = 0, Parked = 0, Pieces = 0, Goods = 0;
+	TArray<FVector3d> GP;
+	TArray<FVector3f> GN, GC;
 	TMap<FString, TArray<FTransform>> PieceAts;   // the furniture kits' pieces, by mesh (as ABrixRooms lays a home's)
 	TArray<FBrixLiftCall> Lifts;
 	for (const FBrixMallCall& Cl : Mall->Calls)
@@ -239,6 +242,20 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 			const FMatrix Mx(FVector(A[3], A[4], 0), FVector(-A[5], -A[6], 0), FVector(0, 0, 1), FVector(A[0], A[2], A[1]) * CmPerM);
 			PieceAts.FindOrAdd(TEXT("SM_") + Kind.Replace(TEXT(":"), TEXT("_")) + TEXT("_") + Line).Add(FTransform(Mx));
 			++Pieces;
+			break;
+		}
+		case FBrixMallCall::Good:   // a good for the home an outlet sells, as made in Blender (goods.js put(), FURN-065), in the room's light
+		{
+			FString Kind, Seed;
+			const FBrixGoodsModel* Model = GoodsModels && Cl.Text.Split(TEXT("|"), &Kind, &Seed) ? GoodsModels->Find(Kind) : nullptr;
+			if (!Model) break;
+			GP.Reset(); GN.Reset(); GC.Reset();
+			BrixGoodPut(*GoodsModels, *Model, A[0], A[1], A[2], A[3], Seed, (int32)A[4], GP, GN, GC);
+			FSink& S = SinkAt(Room, FVector3d(A[0], A[1], A[2]));
+			for (int32 k = 0; k + 2 < GP.Num(); k += 3)
+				Tri(S, GP[k], GP[k + 1], GP[k + 2], UN(FVector3d(GN[k])), UN(FVector3d(GN[k + 1])), UN(FVector3d(GN[k + 2])),
+					FLinearColor(GC[k].X, GC[k].Y, GC[k].Z), FLinearColor(GC[k + 1].X, GC[k + 1].Y, GC[k + 1].Z), FLinearColor(GC[k + 2].X, GC[k + 2].Y, GC[k + 2].Z));
+			++Goods;
 			break;
 		}
 		case FBrixMallCall::Solid:
@@ -361,8 +378,8 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 	}
 	if (const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))
 		if (ABrixRooms* R = Mode->RoomsActor()) R->AddLiftCalls(Lifts);
-	UE_LOG(LogTemp, Display, TEXT("Brix Town: %s built as the slice builds it: %d calls, %d triangles in %d meshes, %d solids, %d outlets, %d lifts' calls, %d other places to use, %d lamps, %d parked cars, %d pieces of furniture (%.2f s)"),
-		*Mall->Name, Mall->Calls.Num(), Tris, Meshes, Solids.Num(), Mall->Rooms.Num(), Lifts.Num(), Uses - Lifts.Num(), Mall->Lamps.Num(), Parked, Pieces, FPlatformTime::Seconds() - T0);
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: %s built as the slice builds it: %d calls, %d triangles in %d meshes, %d solids, %d outlets, %d lifts' calls, %d other places to use, %d lamps, %d parked cars, %d pieces of furniture, %d goods for the home (%.2f s)"),
+		*Mall->Name, Mall->Calls.Num(), Tris, Meshes, Solids.Num(), Mall->Rooms.Num(), Lifts.Num(), Uses - Lifts.Num(), Mall->Lamps.Num(), Parked, Pieces, Goods, FPlatformTime::Seconds() - T0);
 }
 
 bool ABrixMall::Contains(const FVector& WorldCm) const

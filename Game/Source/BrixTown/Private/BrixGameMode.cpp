@@ -3,6 +3,8 @@
 #include "BrixCharacter.h"
 #include "BrixCity.h"
 #include "BrixDay.h"
+#include "BrixEconomy.h"
+#include "BrixGoods.h"
 #include "BrixInside.h"
 #include "BrixCars.h"
 #include "BrixCarsActor.h"
@@ -106,10 +108,22 @@ void ABrixGameMode::StartPlay()
 		else if (LoadBrixInside(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/inside.json"))), *Insides, InsideError))
 			Town->Insides = Insides.Get();
 		if (!Town->Insides) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: the buildings are shut (%s)"), *InsideError); Insides.Reset(); }
-		// Eastgate Mall, the one mall whose inside is built (WLD-058): drawn by its own actor, not as the town's box
+		// the mall's goods for the home as made in Blender (FURN-065): in the outlets' windows and in the buy menus
+		{
+			TSharedPtr<FBrixGoodsModels> Gm = MakeShared<FBrixGoodsModels>();
+			FString GoodsError;
+			if (LoadBrixGoodsModels(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/goods_models.json"))), *Gm, GoodsError)) GoodsModels = Gm;
+			else UE_LOG(LogTemp, Warning, TEXT("Brix Town: the goods stand in as boxes (%s)"), *GoodsError);
+		}
+		// Eastgate Mall, the one mall whose inside is built (WLD-058): drawn by its own actor, not as the town's box; each outlet's
+		// goods for the home stand in its windows (what it sells: the economy's rules in life.json)
 		TSharedPtr<FBrixMall> MallData = MakeShared<FBrixMall>();
-		FString MallError;
-		if (Insides && !FParse::Param(FCommandLine::Get(), TEXT("BrixNoMall")) && LoadBrixMall(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), CityDir)), *MallData, MallError))
+		FString MallError, LifeError;
+		FBrixLifeData MallLife;
+		FBrixMallGoods MallGoods;
+		if (GoodsModels && LoadBrixLife(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/life.json"))), MallLife, LifeError)) { MallGoods.Rules = &MallLife.Rules; MallGoods.Models = GoodsModels.Get(); }
+		else if (GoodsModels) UE_LOG(LogTemp, Warning, TEXT("Brix Town: the outlets' windows show their stand-ins (%s)"), *LifeError);
+		if (Insides && !FParse::Param(FCommandLine::Get(), TEXT("BrixNoMall")) && LoadBrixMall(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), CityDir)), *MallData, MallError, MallGoods.Rules ? &MallGoods : nullptr))
 			Town->OwnBuilt.Add(MallData->LotId);
 		else { if (Insides) UE_LOG(LogTemp, Warning, TEXT("Brix Town: no mall inside (%s)"), *MallError); MallData.Reset(); }
 		// the furniture outlet's hall, inside and out, and its car park (FURN-020): drawn by an actor of its own, as Eastgate
@@ -134,6 +148,7 @@ void ABrixGameMode::StartPlay()
 		if (MallData)
 		{
 			Mall = GetWorld()->SpawnActor<ABrixMall>();
+			Mall->GoodsModels = GoodsModels;
 			Mall->Start(MallData, Town);
 		}
 		// the inside of every hollow building, to know when the camera is indoors (CITY-013)
@@ -206,6 +221,7 @@ void ABrixGameMode::StartPlay()
 	if (City)
 	{
 		Life = GetWorld()->SpawnActor<ABrixLife>();   // money and the bank (ADR-0012)
+		Life->GoodsModels = GoodsModels;
 		Life->Start(*City, Today);
 		Designer = GetWorld()->SpawnActor<ABrixDesigner>();   // a new game opens the character designer (CHR-001)
 		Designer->Start(City->Name);

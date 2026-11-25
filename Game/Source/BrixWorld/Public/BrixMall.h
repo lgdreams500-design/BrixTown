@@ -31,6 +31,7 @@ struct BRIXWORLD_API FBrixMallCall
 		OBox,    // A: the slice's matrix (16, column by column), then the box's middle and size in its frame (Mesh.obox())
 		Car,     // A: x, z, yaw, y; Text: the seed its model and paints come from (cars.js parked())
 		Piece,   // A: x, y, z, the piece's across axis (x, z), its back axis (x, z); Text: "piece|line": a furniture kit's piece
+		Good,    // A: x, y, z, yaw, lod (0 near, 1 far); Text: "piece|seed": a mall good for the home as made in Blender (goods.js put())
 	};
 	EKind Kind = Quad;
 	TArray<double, TInlineAllocator<17>> A;
@@ -72,12 +73,23 @@ struct BRIXWORLD_API FBrixMall
 	TMap<FString, FString> KindLabel, KindSign;   // each outlet kind's label and sign colour (plan.outlets)
 };
 
+struct FBrixEconomyRules;
+struct FBrixGoodsModels;
+// What outlets.js front() reads to stand an outlet's goods for the home in its windows and on its floor (FURN-065): the
+// economy's rules for what each outlet sells (Econ.outletRange, World/rules/mall_goods.json in life.json) and the goods'
+// models (their sizes). Without it the windows show their stand-ins, as the slice does without its life data.
+struct BRIXWORLD_API FBrixMallGoods
+{
+	const FBrixEconomyRules* Rules = nullptr;
+	const FBrixGoodsModels* Models = nullptr;
+};
+
 // court.js can(): the lot's plan is a court with its entrances, and it has a ribbon shell (shell.js can())
 BRIXWORLD_API bool BrixMallCan(const FJsonObject& Lot);
 // play.js mallShell() for such a lot: Court.hall(), Shell.draw(), Court.draw()
-BRIXWORLD_API bool BuildBrixMall(const FJsonObject& Lot, FBrixMall& Out, FString& OutError);
+BRIXWORLD_API bool BuildBrixMall(const FJsonObject& Lot, FBrixMall& Out, FString& OutError, const FBrixMallGoods* Goods = nullptr);
 // The block files' one mall with its inside built (the first lot BrixMallCan() takes), built. False when there is none.
-BRIXWORLD_API bool LoadBrixMall(const FString& CityDir, FBrixMall& Out, FString& OutError);
+BRIXWORLD_API bool LoadBrixMall(const FString& CityDir, FBrixMall& Out, FString& OutError, const FBrixMallGoods* Goods = nullptr);
 struct FBrixDay;
 // The day's stays in the mall at its places (play.js resident(): the spot on the stay's floor, by the mall's own storey
 // height; CITY-105, CITY-106, WLD-067, WLD-068): a keeper stands behind their outlet's counter, a guard or a janitor at their

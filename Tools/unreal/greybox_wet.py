@@ -5,6 +5,10 @@ darker; and snow lies on what faces up (WLD-070, ADR-0051). Five parameters, Wet
 Snow, are 0 in the dry; ABrixWeather sets them through ABrixTownActor::SetWet from the clock and
 World/rules/sky.json "rain" (wet_dark, wet_sheen, puddles, times how wet it is now). The ground is what faces up;
 puddles lie where a soft world-space noise is high. Dry, the material is as before (matte, ART-002 W1).
+Under a roof none of it happens (indoor floors, stairs, furniture tops): the texture Roofs (ABrixTownActor's roof map,
+BrixRoofMap: each cell a building's roof height in half metres) read at the world position through RoofsAt (the map's
+corner in metres and one over its size) says how high the roof over a point is; below it the five parameters count for
+nothing. Without the map (the default black texture) everywhere is out of doors, as before.
 
 make_greybox_material.py calls add_wet() when it makes the material anew. Run on its own, this adds the wet nodes to the
 material as it is, in place (so the kit's meshes keep pointing at it and import_building_kit.py need not run again):
@@ -43,10 +47,58 @@ def _scalar(mat, name, x, y):
     return _node(mat, unreal.MaterialExpressionScalarParameter, x, y, parameter_name=name, default_value=0.0)
 
 
+def _out_of_doors(mat, x, y):
+    """1 where the sky is overhead, 0 under a roof (the Roofs map's height over the point is above it)."""
+    pos = _node(mat, unreal.MaterialExpressionWorldPosition, x, y)
+    xy = _node(mat, unreal.MaterialExpressionComponentMask, x + 150, y, r=True, g=True, b=False, a=False)
+    lib.connect_material_expressions(pos, "", xy, "")
+    xym = _node(mat, unreal.MaterialExpressionMultiply, x + 300, y, const_b=0.01)   # centimetres to metres
+    lib.connect_material_expressions(xy, "", xym, "A")
+    at = _node(mat, unreal.MaterialExpressionVectorParameter, x, y + 150, parameter_name="RoofsAt", default_value=unreal.LinearColor(0, 0, 0, 0))
+    corner = _node(mat, unreal.MaterialExpressionComponentMask, x + 150, y + 150, r=True, g=True, b=False, a=False)
+    lib.connect_material_expressions(at, "RGBA", corner, "")
+    size = _node(mat, unreal.MaterialExpressionComponentMask, x + 150, y + 250, r=False, g=False, b=True, a=True)
+    lib.connect_material_expressions(at, "RGBA", size, "")
+    rel = _node(mat, unreal.MaterialExpressionSubtract, x + 450, y)
+    lib.connect_material_expressions(xym, "", rel, "A")
+    lib.connect_material_expressions(corner, "", rel, "B")
+    uv = _node(mat, unreal.MaterialExpressionMultiply, x + 600, y)
+    lib.connect_material_expressions(rel, "", uv, "A")
+    lib.connect_material_expressions(size, "", uv, "B")
+    black = unreal.load_asset("/Engine/EngineResources/Black.Black")
+    roofs = _node(mat, unreal.MaterialExpressionTextureSampleParameter2D, x + 750, y, parameter_name="Roofs", texture=black)
+    lib.connect_material_expressions(uv, "", roofs, "UVs")
+    top = _node(mat, unreal.MaterialExpressionMultiply, x + 950, y, const_b=127.5)   # half metres to metres (255 x 0.5)
+    lib.connect_material_expressions(roofs, "R", top, "A")
+    z = _node(mat, unreal.MaterialExpressionComponentMask, x + 150, y + 350, r=False, g=False, b=True, a=False)
+    lib.connect_material_expressions(pos, "", z, "")
+    zm = _node(mat, unreal.MaterialExpressionMultiply, x + 300, y + 350, const_b=0.01)
+    lib.connect_material_expressions(z, "", zm, "A")
+    above = _node(mat, unreal.MaterialExpressionSubtract, x + 1100, y + 100)   # how far the point is above its roof's underside
+    lib.connect_material_expressions(zm, "", above, "A")
+    lib.connect_material_expressions(top, "", above, "B")
+    sharp = _node(mat, unreal.MaterialExpressionMultiply, x + 1250, y + 100, const_b=20.0)
+    lib.connect_material_expressions(above, "", sharp, "A")
+    sharp1 = _node(mat, unreal.MaterialExpressionAdd, x + 1400, y + 100, const_b=1.0)
+    lib.connect_material_expressions(sharp, "", sharp1, "A")
+    out = _node(mat, unreal.MaterialExpressionSaturate, x + 1550, y + 100)
+    lib.connect_material_expressions(sharp1, "", out, "")
+    return out
+
+
+def _outside(mat, param, out, x, y):
+    m = _node(mat, unreal.MaterialExpressionMultiply, x, y)
+    lib.connect_material_expressions(param, "", m, "A")
+    lib.connect_material_expressions(out, "", m, "B")
+    return m
+
+
 def add_wet(mat, base):
     """base: the expression that gives the dry colour. Connects base colour and roughness anew."""
     x = 300
+    out = _out_of_doors(mat, -1500, 2400)
     dark, sheen, pud = _scalar(mat, "WetDark", x, 600), _scalar(mat, "WetSheen", x, 700), _scalar(mat, "Puddles", x, 800)
+    dark, sheen, pud = _outside(mat, dark, out, x + 100, 600), _outside(mat, sheen, out, x + 100, 700), _outside(mat, pud, out, x + 100, 800)
     # the ground: what faces up
     nrm = _node(mat, unreal.MaterialExpressionVertexNormalWS, x, 900)
     up = _node(mat, unreal.MaterialExpressionComponentMask, x + 150, 900, r=False, g=False, b=True, a=False)
@@ -101,7 +153,7 @@ def add_wet(mat, base):
     lib.connect_material_expressions(wet_rough, "", water, "A")
     lib.connect_material_expressions(puddle, "", water, "Alpha")
     # rings where drops land: the surface tilts with them (a world-space normal) and they catch a little light
-    rip_k = _scalar(mat, "Ripples", x, 1400)
+    rip_k = _outside(mat, _scalar(mat, "Ripples", x, 1400), out, x + 100, 1400)
     tm = _node(mat, unreal.MaterialExpressionTime, x, 1500)
     pos2 = _node(mat, unreal.MaterialExpressionWorldPosition, x, 1600)
     rip = _node(mat, unreal.MaterialExpressionCustom, x + 300, 1450,
@@ -151,7 +203,7 @@ def add_wet(mat, base):
     lib.connect_material_expressions(lift1, "", lit_colour, "B")
     # lying snow (WLD-070, ADR-0051): white on what faces up (streets, pavements, roofs, sills), patchy at its edges while
     # it builds; matte, and over any puddles
-    snow = _scalar(mat, "Snow", x, 1900)
+    snow = _outside(mat, _scalar(mat, "Snow", x, 1900), out, x + 100, 1900)
     up5 = _node(mat, unreal.MaterialExpressionSubtract, x + 150, 1950, const_b=SNOW_FACING)
     lib.connect_material_expressions(up, "", up5, "A")
     up3 = _node(mat, unreal.MaterialExpressionMultiply, x + 300, 1950, const_b=3.0)
