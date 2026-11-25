@@ -1,0 +1,126 @@
+{
+ "id": "lunch_mei", "group": "romance", "act": "M1", "title": "Twenty Minutes", "rank": "Courting Mei: lunch",
+ "giver": "mei", "next": "dinner_mei",
+ "needs": ["done:four_oclock_door:hired_clean|hired_wary", "rep:mei:25"],
+ "hook": "Once Mei's regard for you reaches 25, a new reply appears on the morning round: “Do you ever get a lunch break?”",
+ "summary": "Mei gets twenty minutes between the noon tram and the twenty past, and spends them eating a crust over the sink. Everybody in Old Town tells Mei things. Nobody has ever asked her one.",
+ "theme": "Do you talk, or do you ask?",
+ "start": "ask",
+ "stages": [
+  {"id": "ask", "title": "The morning round", "kind": "talk", "with": "mei",
+   "goal": "Talk to Mei at the Tram Café",
+   "log": "The Tram Café's twelve loaves, same as every morning. Mei is counting them twice, fast.",
+   "start": "a1",
+   "starts": [{"need": ["again:lunch_mei"], "node": "a_again"}, {"need": ["flag:end_crumb"], "node": "a1_gone"}, {"need": ["flag:end_own_name"], "node": "a1_gone"}],
+   "nodes": {
+    "a1": {"who": "mei", "mood": "happy", "say": "Twelve, warm, on time. You're getting dull, you know. I've nothing left to tell Noor about you.",
+     "options": [
+      {"text": "Do you ever get a lunch break?", "next": "a2"},
+      {"text": "(Just the delivery today.)", "next": null}
+     ]},
+    "a_again": {"who": "mei", "mood": "happy", "say": "There you are. And you've the look of somebody who wants another go at lunch.",
+     "options": [
+      {"text": "I do. I talked about myself for twenty minutes. Let me try again.", "next": "a_again2"},
+      {"text": "(Not today.)", "next": null}
+     ]},
+    "a_again2": {"who": "mei", "mood": "happy", "say": "You did. I timed it. Tomorrow, five past twelve, the fountain rim. Bring bread, and bring a question this time.",
+     "options": [{"text": "Five past twelve.", "next": null, "act": ["stage:basket"]}]},
+    "a1_gone": {"who": "mei", "mood": "happy", "say": "You! I still count twelve every morning and look for your face behind the barrow. You're getting hard to gossip about, now you don't come by.",
+     "options": [
+      {"text": "Do you ever get a lunch break?", "next": "a2"},
+      {"text": "(Just passing.)", "next": null}
+     ]},
+    "a2": {"who": "mei", "mood": "surprised", "say": "A lunch break. Me? I get twenty minutes between the noon tram and the twenty past, and I spend them eating a crust over the sink. Why?",
+     "options": [
+      {"text": "Spend them with me. I'll bring the bread.", "next": "a3"},
+      {"text": "Because you've asked me a hundred questions since I came to town, and I've never asked you one.", "next": "a3b", "act": ["rep:mei:+3"]},
+      {"text": "No reason.", "next": "a_no"}
+     ]},
+    "a_no": {"who": "mei", "mood": "neutral", "say": "Oh. That's the first boring thing you've ever said to me. Shame. I'd have said yes.",
+     "options": [{"text": "(Go. Kick yourself as far as Baker Street.)", "next": null}]},
+    "a3": {"who": "mei", "mood": "thinking", "say": "You're asking me to lunch. With twenty minutes and a tram timetable. That's either very sweet or very badly planned.",
+     "options": [{"text": "Both, probably.", "next": "a4"}]},
+    "a3b": {"who": "mei", "mood": "surprised", "say": "A hundred? You counted? Nobody counts. All right. Now I want to know what you'd ask.",
+     "options": [{"text": "Have lunch with me and find out.", "next": "a4"}]},
+    "a4": {"who": "mei", "mood": "happy", "say": "Tomorrow. Five past twelve, the fountain rim. If you're late I'll have eaten your half and told the whole tram about it.",
+     "options": [{"text": "Five past twelve.", "next": null, "act": ["stage:basket"]}]}
+   }},
+
+  {"id": "basket", "title": "The first loaf", "kind": "moment",
+   "goal": "Decide what goes in the basket",
+   "log": "Lunch with Mei at five past twelve. You are a baker. The bread is the easy part, or ought to be.",
+   "start": "c1",
+   "nodes": {
+    "c1": {"who": "scene", "say": "Before first light, and for once the first loaf you bake today is not for a customer. What goes in the basket?",
+     "options": [
+      {"text": "A wall loaf, still warm, and good butter. Nothing to hide behind.", "next": null, "act": ["flag:lunch_plain", "stage:fountain"]},
+      {"text": "Something fancy. A filled roll, tied up like a present.", "next": null, "act": ["flag:lunch_fancy", "stage:fountain"]},
+      {"text": "Find out what she actually likes. Ask at the café's back door.", "next": "c2"}
+     ]},
+    "c2": {"who": "scene", "say": "The Tram Café's cook doesn't look up from the stove. “Mei? Cheese and pickle. On the end crust, the bit nobody orders. Five years she's eaten the ends so the customers get the middles.” You cut both ends off the best loaf of the morning.",
+     "options": [{"text": "(Wrap them. Five past twelve.)", "next": null, "act": ["flag:lunch_ends", "stage:fountain"]}]}
+   }},
+
+  {"id": "fountain", "title": "The fountain rim", "kind": "talk", "with": "mei",
+   "goal": "Meet Mei at the fountain at five past twelve",
+   "log": "Five past twelve, the fountain on Market Square. She has twenty minutes.",
+   "scene": "Mei is already on the fountain rim with her apron off. She looks oddly unarmed without a counter in front of her.",
+   "start": "f1",
+   "starts": [
+    {"need": ["flag:lunch_ends"], "node": "f_ends"},
+    {"need": ["flag:lunch_fancy"], "node": "f_fancy"}
+   ],
+   "nodes": {
+    "f1": {"who": "mei", "mood": "happy", "say": "You came! And it's still warm; I can smell it from here. I've carried warm bread to other people for five years. It's a different thing, being handed it on a fountain.",
+     "options": [{"text": "This one's yours.", "next": "f2"}]},
+    "f_fancy": {"who": "mei", "mood": "happy", "say": "Oh, it's got a ribbon. It's far too pretty to eat. I'm going to eat it immediately.",
+     "options": [{"text": "That's what it's for.", "next": "f2"}]},
+    "f_ends": {"who": "mei", "mood": "surprised", "say": "Cheese and pickle. On the end crust. Who told you? No. I know who told you. You asked. You went and asked somebody what I like.",
+     "options": [{"text": "It seemed quicker than guessing.", "next": "f2", "act": ["rep:mei:+8"]}]},
+    "f2": {"who": "mei", "mood": "thinking", "say": "Right. Twenty minutes, and I've a hundred things to tell you. There's a rumour about the linden on Linden Street, for a start.",
+     "options": [
+      {"text": "Tell me the rumour.", "next": "f_talk"},
+      {"text": "Not the rumour. You. Where would you go, if the café could spare you for a day?", "next": "f_ask"},
+      {"text": "Let me tell you about my week first.", "next": "f_me"}
+     ]},
+    "f_talk": {"who": "mei", "mood": "happy", "say": "The council wants it down. A bench instead, if you can believe it. And Hari's been buying compost by the barrow, at night, so you tell me what that means. Oh. That's the twenty past. I talked the whole time, didn't I?",
+     "options": [{"text": "I like listening to you.", "next": "f_talk2"}]},
+    "f_talk2": {"who": "mei", "mood": "happy", "say": "Everybody does. That's the job. Still. It was a good twenty minutes. Same time next week, and bring the same bread.",
+     "options": [{"text": "Next week.", "next": null, "act": ["end:nice_enough"]}]},
+    "f_me": {"who": "mei", "mood": "neutral", "say": "Mm. Yes. Go on. No, I am listening. That's the twenty past. I have to run. It was a lovely loaf, truly.",
+     "options": [{"text": "(Watch her go. You never asked her a thing.)", "next": null, "act": ["end:just_lunch"]}]},
+    "f_ask": {"who": "mei", "mood": "surprised", "say": "Where would I go. Nobody asks me that. People tell me where they've been. I sell coffee to the whole line, both directions, and I have never once ridden it past Market Square.",
+     "options": [{"text": "Never? Where does it go?", "next": "f_ask2"}]},
+    "f_ask2": {"who": "mei", "mood": "thinking", "say": "The end of the line. It says so on the front. I've read it eleven thousand times and I don't know what's there. A depot, probably. I'd like it to be a field.",
+     "options": [
+      {"text": "Then we'll go and see. Your next evening off.", "next": "f_ask3", "act": ["flag:promised_line"]},
+      {"text": "It's a depot, Mei. It's always a depot.", "next": "f_depot"}
+     ]},
+    "f_depot": {"who": "mei", "mood": "happy", "say": "It's definitely a depot. Don't tell me, though. Let me have the field a bit longer. That's my tram. Same time next week?",
+     "options": [{"text": "Next week.", "next": null, "act": ["end:went_well"]}]},
+    "f_ask3": {"who": "mei", "mood": "happy", "say": "You'd ride a tram to a depot with me. That is the most romantic thing anyone has said in this square, and I've overheard four proposals from behind that counter. That's the twenty past. Don't walk me back. I want to think about a field.",
+     "options": [{"text": "(Stay on the fountain rim a while.)", "next": null, "act": ["end:went_well"]}]}
+   }}
+ ],
+ "endings": [
+  {"id": "went_well", "title": "She was asked", "log": "You asked Mei a question and listened to the answer. By the twenty past she had told nobody. Mei, telling nobody.",
+   "pay": 0, "rep": {"mei": 20}, "flags": ["courting_mei"],
+   "ripples": [
+    "You are courting Mei. For once, she has told nobody.",
+    "Her regard should now reach 45, which opens dinner.",
+    "If you promised her the end of the line, she has told half the café you'll forget."
+   ],
+   "unlocks": "Courting Mei. Dinner opens at regard 45."},
+  {"id": "nice_enough", "title": "A good twenty minutes", "log": "Mei talked for twenty minutes and you listened. She had a lovely time, and learned nothing about what you think of her.",
+   "pay": 0, "rep": {"mei": 10}, "flags": ["courting_mei"],
+   "ripples": [
+    "You are courting Mei, more or less. Her regard may not yet reach 45; shifts at the café make up the difference.",
+    "In the next quest she says what she noticed about this lunch."
+   ],
+   "unlocks": "Courting Mei. Dinner opens at regard 45."},
+  {"id": "just_lunch", "retake": true, "title": "Just lunch", "log": "You told Mei about your week. She was kind about it. It was a lovely loaf.",
+   "pay": 0, "rep": {"mei": 0}, "flags": [],
+   "ripples": ["Nothing is closed. You can ask her again next week."],
+   "unlocks": "Nothing yet."}
+ ]
+}

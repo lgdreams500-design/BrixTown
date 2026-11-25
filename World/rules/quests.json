@@ -1,5 +1,5 @@
 {
- "note": "Quest lines and daily jobs (QST-001 to QST-008, ADR-0012). A quest line has a giver (null: it starts with a new game), the quest lines that must be finished first ('needs'), an offer (the giver's conversation that starts it), stages and endings. A stage has a log line and a goal: talk (to a resident, using the stage's own nodes), go (into a lot, optionally between two minutes of the day), near (within r metres of a point), have (an item), bank (open), money (cash and accounts together at least), stall (rented) or stall_sold (items sold since the stage began). Goals other than talk move on by themselves to 'then'. 'on_done' gives or takes items when a goal is met. Nodes use the dialogue format (World/rules/dialogue.json) plus, on a reply, 'act': start | stage:<id> | end:<id> | give:<item> | take:<item> | rep:<n> (with the person you are talking to), and 'need': have:<item> | !have:<item> | money:<chips>. Endings pay from sys:rewards ('pay', chips), give and take items and change reputation ('rep'). Jobs: which resident offers which job on a day is worked out from the day (Tools/citysim/quests.py). Amounts are chips [ASSUMPTION]. Checked by world.quest_problems().",
+ "note": "Quest lines and daily jobs (QST-001 to QST-008, ADR-0012). A quest line has a giver (null: it starts with a new game), the quest lines that must be finished first ('needs'), an offer (the giver's conversation that starts it), stages and endings. A stage has a log line and a goal: talk (to a resident, using the stage's own nodes), go (into a lot, optionally between two minutes of the day), near (within r metres of a point), have (an item), bank (open), money (cash and accounts together at least), stall (rented) or stall_sold (items sold since the stage began). Goals other than talk move on by themselves to 'then'. 'on_done' gives or takes items when a goal is met. Nodes use the dialogue format (World/rules/dialogue.json) plus, on a reply, 'act': start | stage:<id> | end:<id> | give:<item> | take:<item> | rep:<n> (with the person you are talking to), and 'need': have:<item> | !have:<item> | money:<chips>. Endings pay from sys:rewards ('pay', chips), give and take items and change reputation ('rep'). Jobs: which resident offers which job on a day is worked out from the day (Tools/citysim/quests.py). Amounts are chips [ASSUMPTION]. Checked by world.quest_problems(). A career's story lines (QST-010 to QST-015, ADR-0056) are in quests_story.json, made from the writing by Tools/citysim/story.py and joined to these when the world is loaded. They add: a quest's 'need' (needs as on a reply), 'line' and 'rank'; no 'offer' (the line starts when the player speaks to its giver); a stage's 'starts' ([{need, node}]: other first lines, the first whose needs hold) and, with a place for a goal and nodes, a scene; a node's 'who' (another resident, or 'scene' for a line nobody says), 'dir' (seen, not spoken) and 'covered' (why one reply is always open); needs flag:, rep:<resident>:n, done:<quest>:<ending|ending|*>, home:owned, again:<quest>, each with ! for not; acts flag:, unflag:, rep:<resident>:n, pay:n, charge:n; an ending's 'flags' and 'retake'; the goal home (owned); and 'exclusive', groups of facts of which one at most is true.",
  "vars": ["player", "item", "from", "to", "by", "hours", "pay", "minutes"],
  "first": "new_in_town",
  "quests": {
@@ -17,7 +17,7 @@
      "start": "hello",
      "nodes": {
       "hello": {
-       "say": "{greeting}! You must be {player}, from across the courtyard. I'm Mei. Welcome to Linden!",
+       "say": "{greeting}! You must be {player}, from across the courtyard. I'm Mei. Welcome to Old Town!",
        "mood": "happy",
        "options": [
         { "text": "Thanks! I've only just arrived.", "next": "money" },
@@ -47,7 +47,7 @@
      }
     },
     "bank": {
-     "log": "Open an account at Linden Bank, on Linden's north side. Go inside and press B at the counter.",
+     "log": "Open an account at Linden Bank, on Old Town's north side. Go inside and press B at the counter.",
      "goal": { "bank": "open" },
      "then": "stage:bread"
     },
@@ -134,7 +134,7 @@
     },
     "deliver": {
      "log": "Take the parcel to Jai at the Old Town Museum. Only Jai.",
-     "goal": { "talk": "r0505" },
+     "goal": { "talk": "r1714" },
      "start": "d1",
      "nodes": {
       "d1": {
@@ -193,7 +193,7 @@
     }
    },
    "endings": {
-    "delivered": { "log": "You delivered Abe's parcel. Couriers now offer you rounds.", "pay": 1500, "rep": { "r0518": 10, "r0505": 10 } },
+    "delivered": { "log": "You delivered Abe's parcel. Couriers now offer you rounds.", "pay": 1500, "rep": { "r0518": 10, "r1714": 10 } },
     "kept": { "log": "You kept the museum's rare book. Abe and Jai will not forget.", "pay": 0, "rep": { "r0518": -40 } }
    }
   },

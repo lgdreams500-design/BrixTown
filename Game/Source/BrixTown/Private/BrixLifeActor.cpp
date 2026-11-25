@@ -200,6 +200,7 @@ void ABrixLife::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay)
 	{
 		Q = MakeUnique<FBrixQuests>(QuestRules, *E, QuestResidents);
 		Q->OnNote = [this](const FString& T) { Toast(T); };
+		Q->OwnsHome = [this]() { if (Est) for (const int32 u : Est->Owned()) if (Est->Units[u].Kind == TEXT("house") || Est->Units[u].Kind == TEXT("flat")) return true; return false; };   // QST-015: a home of the player's own (PROP-009)
 		Q->NewGame();   // a new game (life.js newGame()): the starting cash, and the first starter quest line
 	}
 	else
@@ -277,7 +278,7 @@ void ABrixLife::Tick(float Dt)
 	double D0 = 0, M0 = 0;
 	Frame(D0, M0);
 	E->Advance((int32)D0, M0);   // the bank settles each midnight passed (BANK-008)
-	if (Q && (CheckLeft -= Dt) <= 0.f) { CheckLeft = CheckSeconds; StoreFrame(); Q->Check(Ctx()); CheckAchievements(); }
+	if (Q && (CheckLeft -= Dt) <= 0.f) { CheckLeft = CheckSeconds; StoreFrame(); Q->Check(Ctx()); PlayScene(); CheckAchievements(); }
 	Shown = 0;
 	TickRewards(Dt);   // coins first; their "+" is the purse counting up as they land (SND-019, SND-020)
 	SlipLeft = FMath::Max(0.0, SlipLeft - Dt);   // goals met where the player is (QST-001, QST-006)
@@ -347,6 +348,7 @@ bool ABrixLife::LoadFrom(const FBrixSaveGame& S, FString& OutWhy)   // life.js l
 		NewQ = MakeUnique<FBrixQuests>(QuestRules, *NewE, QuestResidents);
 		if (!BrixQuestsLoad(*NewQ, *S.Quests, OutWhy)) return false;
 		NewQ->OnNote = [this](const FString& T) { Toast(T); };
+		NewQ->OwnsHome = [this]() { if (Est) for (const int32 u : Est->Owned()) if (Est->Units[u].Kind == TEXT("house") || Est->Units[u].Kind == TEXT("flat")) return true; return false; };   // QST-015: a home of the player's own (PROP-009)
 	}
 	TUniquePtr<FBrixEstate> NewM;
 	if (Est)
@@ -3311,22 +3313,19 @@ FBrixDialogue::FConversation ABrixLife::Conversation(int32 i, const FBrixDialogu
 			Into.Add(TEXT("q:") + Qid + TEXT(":") + N.Key, X);
 		}
 	};
+	if (Q->TalkingTo(Rid).IsEmpty())   // QST-011: a story line has no offer talk: it starts when its giver is spoken to
+		for (const FString& Qid : Q->Offers(Rid))
+			if (QuestRules.Find(Qid)->Opens()) { Q->Start(Qid); break; }
 	const TArray<FString> Talks = Q->TalkingTo(Rid);
 	if (Talks.Num())   // this resident is the one to see for a quest stage: that talk, nothing else
-	{
-		const FBrixQuestStage* St = Q->Stage(Talks[0]);
-		FBrixDialogue::FConversation C;
-		C.Title = QuestRules.Find(Talks[0])->Title;
-		C.Start = TEXT("q:") + Talks[0] + TEXT(":") + St->Start;
-		Prefix(Talks[0], St->Nodes, C.Nodes);
-		return C;
-	}
+		return StageTalk(Talks[0]);
 	FBrixDialogue::FConversation C = Base;
 	C.Vars.Reset();
 	TArray<FBrixDialogue::FOption> Extra;
 	for (const FString& Qid : Q->Offers(Rid))   // quest lines this resident offers
 	{
 		const FBrixQuestLine* L = QuestRules.Find(Qid);
+		if (L->Opens()) continue;
 		Prefix(Qid, L->OfferNodes, C.Nodes);
 		FBrixDialogue::FOption O;
 		O.Text = L->OfferLine;
@@ -3374,22 +3373,56 @@ FBrixDialogue::FConversation ABrixLife::Conversation(int32 i, const FBrixDialogu
 	return C;
 }
 
+FBrixDialogue::FConversation ABrixLife::StageTalk(const FString& Qid) const
+{
+	FBrixDialogue::FConversation C;
+	const FBrixQuestStage* St = Q ? Q->Stage(Qid) : nullptr;
+	if (!St) return C;
+	C.Title = QuestRules.Find(Qid)->Title;
+	C.Start = TEXT("q:") + Qid + TEXT(":") + Q->FirstLine(Qid);   // the first line whose needs hold (QST-011)
+	for (const auto& N : St->Nodes)
+	{
+		FBrixDialogue::FNode X = N.Value;
+		for (FBrixDialogue::FOption& O : X.Options) if (!O.Next.IsEmpty()) O.Next = TEXT("q:") + Qid + TEXT(":") + O.Next;
+		if (!X.Who.IsEmpty() && X.Who != TEXT("scene"))   // QST-012: somebody else says it: their name goes before the line
+		{
+			const int32 w = Q->ResidentIndex(X.Who);
+			if (Day && Day->Names.IsValidIndex(w)) X.Say = Day->Names[w] + TEXT(": ") + X.Say;
+		}
+		if (!X.Dir.IsEmpty()) X.Say = TEXT("(") + X.Dir + TEXT(")\n") + X.Say;   // what is seen, above what is said
+		C.Nodes.Add(TEXT("q:") + Qid + TEXT(":") + N.Key, X);
+	}
+	return C;
+}
+
+void ABrixLife::PlayScene()
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Q || !Mode || !Mode->Talk || Mode->Talk->IsTalking() || IsOpen()) return;
+	const TArray<FString> Here = Q->Scenes(Ctx());
+	if (Here.IsEmpty()) { SceneSeen.Reset(); return; }
+	const FString Key = Here[0] + TEXT(":") + Q->ActiveOf(Here[0])->Stage;
+	if (Key == SceneSeen) return;   // left unanswered: it opens again when the player has gone and come back
+	SceneSeen = Key;
+	Mode->Talk->OpenScene(StageTalk(Here[0]));
+}
+
 bool ABrixLife::Allowed(const FBrixDialogue::FOption& O) const { return !Q || Q->NeedOk(O.Need); }
 
 void ABrixLife::Chose(int32 i, const FBrixDialogue::FOption& O)
 {
-	if (!Q || !QuestResidents.IsValidIndex(i)) return;
+	if (!Q || (!QuestResidents.IsValidIndex(i) && O.Quest.IsEmpty())) return;   // i is -1 in a scene: nobody is spoken to (QST-012)
 	bool bOk = true;
 	if (!O.Quest.IsEmpty())
 	{
 		TArray<FString> Acts = O.Act;
 		Acts.RemoveAll([](const FString& A) { return A == TEXT("shop") || A == TEXT("bank"); });
-		bOk = Q->Act(O.Quest, Acts, QuestResidents[i].Id);
+		bOk = Q->Act(O.Quest, Acts, QuestResidents.IsValidIndex(i) ? QuestResidents[i].Id : FString());
 	}
 	if (bOk && O.Job == TEXT("take") && Offered) bOk = Q->TakeJob(*Offered);
 	if (bOk && O.Job == TEXT("hand")) bOk = Q->HandOver();
 	if (!bOk) Toast(E->Why);
-	if (O.Act.Contains(TEXT("shop"))) PendingCounter = i;
+	if (O.Act.Contains(TEXT("shop")) && QuestResidents.IsValidIndex(i)) PendingCounter = i;
 }
 
 void ABrixLife::TalkEnded()

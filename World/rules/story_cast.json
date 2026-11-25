@@ -1,0 +1,46 @@
+{
+ "note": "Who plays whom and where the scenes are, for the story lines written in docs/narrative/src (QST-010 to QST-015, ADR-0056). Tools/citysim/story.py reads this with the writing and writes World/rules/quests_story.json; change the writing or this file, never that one. 'cast': the writing's name for a person -> the resident who plays them. 'places': '<quest>.<stage>' -> the goal of a stage that is not a talk (a lot to go to, or a point with a radius; 'from' and 'to' are minutes of the day). 'covered': '<quest>.<stage>.<node>' -> why a node whose replies all have conditions always has one open, where the checker cannot work that out by itself (the play-through test proves it). 'lines': the files of the writing, in order. The Stone Oven is b_7_7_l2 on Baker Street. Not yet: Oda, Suvi and Len live in ordinary houses, because the mill house and Brook Farm's kitchen are not built (Game/README.md).",
+ "lines": ["q1", "q2", "q3", "q4", "q5", "r_m1", "r_m2", "r_m3", "r_w"],
+ "cast": {
+  "noor": "r0262",
+  "pip": "r0263",
+  "vera": "r1546",
+  "tam": "r1046",
+  "oda": "r3419",
+  "suvi": "r0899",
+  "len": "r3976",
+  "mei": "r0504",
+  "abe": "r0518",
+  "jai": "r1714",
+  "olu": "r0408",
+  "eli": "r0497",
+  "hari": "r0410"
+ },
+ "names": {
+  "r0262": "Noor",
+  "r0263": "Pip",
+  "r1546": "Vera",
+  "r1046": "Tam",
+  "r3419": "Oda",
+  "r0899": "Suvi",
+  "r3976": "Len"
+ },
+ "places": {
+  "four_oclock_door.dawn": { "near": [698.9, 760.0], "r": 14, "from": 230, "to": 260 },
+  "four_oclock_door.count": { "go": "b_9_8_l0" },
+  "lunch_mei.basket": { "go": "b_7_7_l2" },
+  "question_mei.home": { "home": "owned" },
+  "question_mei.savings": { "money": 15000 }
+ },
+ "covered": {
+  "four_oclock_door.verdict.v1": "The count scene always leaves one of its five facts before the line reaches Noor.",
+  "feeding_the_mother.vigil.v_reveal": "Reached only with Tam's jar, and taking the jar always leaves one of the two facts.",
+  "stone_ground.report.r_saved": "Oda's stones are always left dressed or rough before the report.",
+  "stone_ground.report.r_split": "Oda's stones are always left dressed or rough before the report.",
+  "market_day.fair.a_walk": "Tam's secret and Noor knowing are never both true at the fair: telling her ends the secret.",
+  "market_day.judging.hub_great": "The fair always leaves one of the three facts about the oven before the judging.",
+  "market_day.judging.hub_rest": "The fair always leaves one of the three facts about the oven before the judging.",
+  "dinner_mei.tram.t2": "Dinner is only on offer after one of the two lunches these replies ask about.",
+  "the_wedding.square.s_ring": "Eli's clipboard always leaves one of the four best-person facts before the square."
+ }
+}

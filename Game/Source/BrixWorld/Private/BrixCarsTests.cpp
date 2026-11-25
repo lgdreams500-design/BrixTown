@@ -117,7 +117,8 @@ bool FCITY049_CarsGiveWay::RunTest(const FString&)
 				Traffic.GiveWay(m, Dt, {}, { k });
 				m += Dt;
 				const TOptional<FBrixCarAt> C = Traffic.At(k, m);
-				if (C && C->bMoving && Traffic.Late.FindRef(k) < L - 1e-9) bFaster = true;
+				const bool bPutBack = L > Traffic.GiveWayRules.ResetMin && Traffic.Late.FindRef(k) <= 0;   // far behind with nobody in sight: put back on its timeline (Q-25), wherever that is by now
+				if (C && C->bMoving && Traffic.Late.FindRef(k) < L - 1e-9 && !bPutBack) bFaster = true;
 				L = Traffic.Late.FindRef(k);
 			}
 			const TOptional<FBrixCarAt> A = Traffic.At(k, m), B = Traffic.OnTimeline(k, m);

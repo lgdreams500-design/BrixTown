@@ -27,6 +27,12 @@ def load(city="city_01"):
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
     for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers", "furnishing", "settings", "room_plan", "building_styles", "mall_outlets", "mall_goods", "achievements", "boards", "buy_menu", "markers", "furniture"):
         w[name] = _read(rules, name + ".json")
+    story = os.path.join(rules, "quests_story.json")    # the story lines of a career, made from the writing (QST-010, ADR-0056)
+    if os.path.exists(story):
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "citysim"))
+        import story as story_lines
+        w["quests"] = story_lines.join(w["quests"], _read(story))
+        w["story_cast"] = _read(rules, "story_cast.json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
     transit = os.path.join(base, "transit.json")       # bus lines and stops (CITY-091)

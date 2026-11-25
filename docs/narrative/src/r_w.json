@@ -1,0 +1,166 @@
+{
+ "id": "the_wedding", "group": "romance", "act": "W", "title": "The Wedding", "rank": "The wedding",
+ "giver": "eli",
+ "needs": ["done:question_mei:yes"],
+ "hook": "Once Mei has said yes. Eli has had the form filled in since the lunch.",
+ "summary": "A market day by the fountain, Eli's rope line holding back most of Old Town, and a loaf under a clean cloth that you did not bake, because a baker does not bake their own wedding bread. Noor bakes it. Who stands up with you and who is in the crowd depend on how you lived the career. It ends at your own door, with one last question: what do we do first?",
+ "theme": "The end of the quest line, and the first evening of everything after.",
+ "start": "clipboard",
+ "stages": [
+  {"id": "clipboard", "title": "The form", "kind": "talk", "with": "eli",
+   "goal": "See Eli on Market Square",
+   "log": "Eli is organising your wedding, whether or not anybody asked him to. He needs two things.",
+   "start": "e1",
+   "starts": [{"need": ["!done:own_stall:*", "!done:market_day:*"], "node": "e1_new"}],
+   "nodes": {
+    "e1_new": {"who": "eli", "mood": "happy", "say": "You'll not know me. Eli. I run the market, and anything else in this town that needs a rope. A wedding! Mei told me, so I've had the form filled in since the lunch. I need two things from you. Where, and who stands up with you.",
+     "options": [
+      {"text": "By the fountain. Where everybody can see.", "next": "e2", "act": ["flag:wed_fountain"]},
+      {"text": "At the Long Table, with the Town Oven lit.", "next": "e2", "need": ["flag:end_long_table"], "act": ["flag:wed_table"]}
+     ]},
+    "e1": {"who": "eli", "mood": "happy", "say": "A wedding! I've had the form filled in since the lunch. Market day, with a rope line for the aunts. I need two things from you. Where, and who stands up with you.",
+     "options": [
+      {"text": "By the fountain. Where everybody can see.", "next": "e2", "act": ["flag:wed_fountain"]},
+      {"text": "At the Long Table, with the Town Oven lit.", "next": "e2", "need": ["flag:end_long_table"], "act": ["flag:wed_table"]}
+     ]},
+    "e2": {"who": "eli", "mood": "thinking", "say": "And who stands up with you? Somebody has to hold the ring and tell you when to breathe.",
+     "options": [
+      {"text": "Pip.", "next": "e3", "need": ["!flag:pip_leaves", "rep:pip:0"], "act": ["flag:best_pip", "rep:pip:+10"]},
+      {"text": "Abe. He gave me work when I was new in town.", "next": "e3", "need": ["done:errand_runner:delivered"], "act": ["flag:best_abe", "rep:abe:+10"]},
+      {"text": "Tam.", "next": "e3", "need": ["flag:end_long_table"], "act": ["flag:best_tam", "rep:tam:+10"]},
+      {"text": "Tam.", "next": "e3", "need": ["flag:end_homecoming"], "act": ["flag:best_tam", "rep:tam:+10"]},
+      {"text": "Olu. He'll say he introduced us whether I ask him or not.", "next": "e3", "act": ["flag:best_olu", "rep:olu:+10"]}
+     ]},
+    "e3": {"who": "eli", "mood": "happy", "say": "Written down. In ink. Now go away and be nervous somewhere else. I've a rope to measure.",
+     "options": [{"text": "(Go and be nervous.)", "next": null, "act": ["stage:loaf"]}]}
+   }},
+
+  {"id": "loaf", "title": "The wedding loaf", "kind": "talk", "with": "noor",
+   "goal": "Four in the morning at the Stone Oven, on the day",
+   "log": "The morning of the wedding. A baker does not bake their own wedding loaf. Somebody else is at the oven.",
+   "start": "l_noor",
+   "starts": [{"need": ["flag:end_crumb"], "node": "l_noor_crumb"}, {"need": ["done:name_on_the_door:*"], "node": "l_noor_hands"}],
+   "nodes": {
+    "l_noor": {"who": "noor", "mood": "neutral", "say": "A baker doesn't bake their own wedding loaf. It's bad luck, and worse manners. This one's mine. Go and find a clean shirt.",
+     "options": [
+      {"text": "What will you bake?", "next": "l_noor2"},
+      {"text": "Thank you, Noor.", "next": null, "act": ["stage:square"]}
+     ]},
+    "l_noor_hands": {"who": "noor", "mood": "neutral", "say": "A baker doesn't bake their own wedding loaf. It's bad luck, and worse manners. This one's mine. I can't shape it any more, so it will be shaped under my eye, which is harder on whoever does it. The count, the oven and the say-so are still mine. Go and find a clean shirt.",
+     "options": [
+      {"text": "What will you bake?", "next": "l_noor2"},
+      {"text": "Thank you, Noor.", "next": null, "act": ["stage:square"]}
+     ]},
+    "l_noor2": {"who": "noor", "mood": "happy", "say": "The wall loaf. Plain. A marriage that needs raisins has something to hide. Go on. Out of my kitchen.",
+     "options": [{"text": "(Go and find a clean shirt.)", "next": null, "act": ["stage:square"]}]},
+    "l_noor_crumb": {"who": "noor", "mood": "neutral", "say": "You left my bench. You haven't left my street. A baker doesn't bake their own wedding loaf, and I'll not have a mall bake it either. This one's mine.",
+     "options": [{"text": "Thank you, Noor.", "next": null, "act": ["rep:noor:+10", "stage:square"]}]}
+   }},
+
+  {"id": "square", "title": "By the power of a clipboard", "kind": "talk", "with": "eli",
+   "goal": "Market Square, at noon",
+   "log": "Noon on Market Square. Everybody you have ever delivered bread to is behind the rope.",
+   "scene": "Bunting on the arches. A loaf under a clean cloth. The tram stops at the square and nobody gets off, because everybody on it has come to watch.",
+   "start": "s_in",
+   "starts": [{"need": ["flag:wed_table"], "node": "s_in_table"}, {"need": ["!done:market_day:*"], "node": "s_in_new"}],
+   "nodes": {
+    "s_in": {"who": "vera", "mood": "neutral", "say": "Stand up straight. Both of you. I gave half this square its dinners, and I'll not have slouching at a wedding. Eli. Your clipboard.",
+     "options": [{"text": "(Stand up straight.)", "next": "s_ring"}]},
+    "s_in_new": {"who": "vera", "mood": "neutral", "say": "You'll not know me. Vera. I live over the bakery, I gave half this square its school dinners, and I'm told I am to see this done properly. Stand up straight. Both of you. Eli. Your clipboard.",
+     "options": [{"text": "(Stand up straight.)", "next": "s_ring"}]},
+    "s_in_table": {"who": "vera", "mood": "happy", "say": "Stand up straight. Both of you. Married at the Town Oven, with the fire lit. I queued on this spot at eight years old with a token in my mitten, and I never thought to see it used for this. Eli. Your clipboard.",
+     "options": [{"text": "(Stand up straight.)", "next": "s_ring"}]},
+    "s_ring": {"who": "scene", "say": "Eli finds his place on the form. Beside you, somebody is patting every pocket they own.",
+     "options": [
+      {"text": "(Look at Pip.)", "next": "ring_pip", "need": ["flag:best_pip"]},
+      {"text": "(Look at Abe.)", "next": "ring_abe", "need": ["flag:best_abe"]},
+      {"text": "(Look at Tam.)", "next": "ring_tam", "need": ["flag:best_tam"]},
+      {"text": "(Look at Olu.)", "next": "ring_olu", "need": ["flag:best_olu"]}
+     ]},
+    "ring_pip": {"who": "pip", "mood": "surprised", "say": "I've got it. I've checked it over and over. It's in the pocket with the plectrum. No. The other pocket. I've got it.",
+     "options": [{"text": "(Breathe.)", "next": "s_eli"}]},
+    "ring_abe": {"who": "abe", "mood": "happy", "say": "One ring, signed for, on time. First thing I have ever carried that I'd have paid to carry.",
+     "options": [{"text": "(Breathe.)", "next": "s_eli"}]},
+    "ring_tam": {"who": "tam", "mood": "happy", "say": "I'm holding the ring at a wedding my sister baked for. If I drop it, she'll count that too.",
+     "options": [{"text": "(Breathe.)", "next": "s_eli"}]},
+    "ring_olu": {"who": "olu", "mood": "happy", "say": "I have the ring. I have also a few words about how I introduced the two of you. No? After, then.",
+     "options": [{"text": "(Breathe.)", "next": "s_eli"}]},
+    "s_eli": {"who": "eli", "mood": "happy", "say": "By the power of this clipboard, and of the Town Hall, who lent me the stamp. You first. Say what you came to say.",
+     "options": [
+      {"text": "I'll be there at five past twelve. Every day, for as long as there are days.", "next": "s_mei_vow", "act": ["flag:vow_noon"]},
+      {"text": "I'll keep asking you things. I won't ever just tell you.", "next": "s_mei_vow", "act": ["flag:vow_ask"]},
+      {"text": "I'll bring you the ends. Always.", "next": "s_mei_vow", "need": ["flag:lunch_ends"], "act": ["flag:vow_ends"]}
+     ]},
+    "s_mei_vow": {"who": "mei", "mood": "happy", "say": "I had a speech. I've told it to so many people that it's worn out. So. I'll tell you first. Every day, before I tell anybody else. That's the whole vow. It's a big one, for me.",
+     "options": [{"text": "(Eli stamps the form.)", "next": "s_bread"}]},
+    "s_bread": {"who": "vera", "mood": "thinking", "dir": "She uncovers the loaf, tears it, and tastes it. The square holds still. This is the sentence they will be quoting for a year.", "say": "It'll keep.",
+     "options": [{"text": "(The whole square lets out its breath.)", "next": "s_crowd"}]},
+    "s_crowd": {"who": "scene", "say": "Then it is all noise. Eli is coiling his rope with the air of a man whose form was filled in correctly.",
+     "options": [
+      {"text": "(Find Noor at the edge of the crowd.)", "next": "g_noor"},
+      {"text": "(Find Tam in the crowd.)", "next": "g_tam", "need": ["rep:tam:30", "!flag:best_tam"]},
+      {"text": "(Listen to Pip's song.)", "next": "g_pip", "need": ["flag:pip_stays"]},
+      {"text": "(Go home.)", "next": null, "act": ["stage:threshold"]}
+     ]},
+    "g_noor": {"who": "noor", "mood": "happy", "say": "Mei will cut it too thick. She always does. It rose well, though. Go on. You've a hall to go home to.",
+     "options": [
+      {"text": "(Find Tam in the crowd.)", "next": "g_tam", "need": ["rep:tam:30", "!flag:best_tam"]},
+      {"text": "(Listen to Pip's song.)", "next": "g_pip", "need": ["flag:pip_stays"]},
+      {"text": "(Go home.)", "next": null, "act": ["stage:threshold"]}
+     ]},
+    "g_tam": {"who": "tam", "mood": "happy", "say": "I'd have paid for lights and a till that sings. My sister baked you a plain loaf and the whole town cried. She's right again. Don't tell her I said so.",
+     "options": [
+      {"text": "(Listen to Pip's song.)", "next": "g_pip", "need": ["flag:pip_stays"]},
+      {"text": "(Go home.)", "next": null, "act": ["stage:threshold"]}
+     ]},
+    "g_pip": {"who": "pip", "mood": "happy", "say": "It's called “Proved”. There's a key change where the dough knocks back. It's the first one I've ever sung with my eyes open.",
+     "options": [{"text": "(Go home.)", "next": null, "act": ["stage:threshold"]}]}
+   }},
+
+  {"id": "threshold", "title": "Two coats in the hall", "kind": "talk", "with": "mei",
+   "goal": "Go home",
+   "log": "Evening. The house with your name on the deed.",
+   "scene": "Two coats in the hall. The town is still audible, a long way off, getting on with the cake.",
+   "start": "h_mei",
+   "nodes": {
+    "h_mei": {"who": "mei", "mood": "happy", "say": "Two coats. In a hall. I've counted them three times. Right. We're married, the town's been told, and I've nobody left to tell. So. What do we do first?",
+     "options": [
+      {"text": "Fill the house. I want it loud.", "next": "h_mei_house"},
+      {"text": "Get rich. Your café, my bread, and then the shop between them.", "next": "h_mei_rich", "need": ["flag:mei_takes_cafe"]},
+      {"text": "Get rich. Take the café's lease, sell my bread in it, and then the shop next door.", "next": "h_mei_rich", "need": ["!flag:mei_takes_cafe"]},
+      {"text": "Sleep till five. For once.", "next": "h_mei_sleep"}
+     ]},
+    "h_mei_house": {"who": "mei", "mood": "happy", "say": "I grew up four to a room behind a thin wall, and I swore never. Two. And thick walls. And they'll both be told everything, so heaven help the town.",
+     "options": [{"text": "(Put the kettle on.)", "next": null, "act": ["end:full_house"]}]},
+    "h_mei_rich": {"who": "mei", "mood": "thinking", "say": "The old chandler's, next to the café. It's been empty a year, and I know what the company wants for it, because I know everything. We could have it inside the year.",
+     "options": [{"text": "(Put the kettle on.)", "next": null, "act": ["end:second_shop"]}]},
+    "h_mei_sleep": {"who": "mei", "mood": "happy", "say": "Five. You wild thing. All right. Five. I'll make the tea at half past.",
+     "options": [{"text": "(Put the light out.)", "next": null, "act": ["end:long_sleep"]}]}
+   }}
+ ],
+ "endings": [
+  {"id": "full_house", "title": "Married: a full house", "log": "Married on a market day, by the power of a clipboard. Vera's verdict on the loaf was two words long. First: fill the house.",
+   "pay": 0, "rep": {"vera": 5, "eli": 5, "noor": 5}, "flags": ["married", "dream_family"],
+   "ripples": [
+    "The quest line ends here and the end game begins. The first thread it opens is the family.",
+    "Two children, thick walls, and a town that is told everything.",
+    "The other threads, fortune and legacy, stay open; this only decides which comes first."
+   ],
+   "unlocks": "End game: Family first. Then fortune and legacy."},
+  {"id": "second_shop", "title": "Married: the shop between", "log": "Married on a market day, by the power of a clipboard. Vera's verdict on the loaf was two words long. First: get rich.",
+   "pay": 0, "rep": {"vera": 5, "eli": 5, "noor": 5}, "flags": ["married", "dream_fortune"],
+   "ripples": [
+    "The quest line ends here and the end game begins. The first thread it opens is the fortune.",
+    "The empty chandler's shop between the café and the oven is the first thing to buy.",
+    "The other threads, family and legacy, stay open."
+   ],
+   "unlocks": "End game: Fortune first. Then family and legacy."},
+  {"id": "long_sleep", "title": "Married: asleep till five", "log": "Married on a market day, by the power of a clipboard. Vera's verdict on the loaf was two words long. First: sleep.",
+   "pay": 0, "rep": {"vera": 5, "eli": 5, "noor": 5}, "flags": ["married", "dream_quiet"],
+   "ripples": [
+    "The quest line ends here and the end game begins, unhurried. Nothing is chosen first.",
+    "Family, fortune and legacy all wait until you ask for them."
+   ],
+   "unlocks": "End game: all three threads open, none pressed."}
+ ]
+}
