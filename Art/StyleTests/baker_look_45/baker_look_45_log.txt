@@ -1,0 +1,10 @@
+01:39:53 Blender 5.3.0
+01:40:27 noor rendered in 34.3s (119 objects)
+01:41:02 noor_close rendered in 34.6s (119 objects)
+01:42:43 bakery_day rendered in 100.2s (264 objects)
+01:42:43 saved .blend
+01:44:30 bakery_four rendered in 106.3s (264 objects)
+01:44:30 DONE
+01:44:49 Blender 5.3.0
+01:45:22 noor_close rendered in 33.1s (119 objects)
+01:45:22 DONE
