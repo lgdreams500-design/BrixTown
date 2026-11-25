@@ -12,8 +12,11 @@ struct FBrixDoorRules;
 // the places part of the slice's play.js furnish(): a bed with its nightstand and lamp at each bed place, a chair at each
 // room place and chair place, a table with chairs at each seat (a cafe's for two), a cinema's seats and a museum's benches
 // facing in, a desk with its lamp and chair or a counter with its till, espresso machine or ledger at each work place, all
-// in the slice's colours and its room styles (play.js ROOM_STYLE). The slice draws these as boxes; so does Unreal. Its
-// rooms' dressing (play.js room(): pictures, shelves, plants) is not brought over yet.
+// in the slice's colours and its room styles (play.js ROOM_STYLE). The slice draws these as boxes; so does Unreal. Then, but
+// in a building of flats, the room is dressed as the slice dresses it (play.js room() and layout()): each kind of building's
+// arrangement round its places (a cafe's coffee bar, a grocer's aisles and fridges, a home's wardrobe, rug and kitchenette,
+// a bank's counter, a library's stacks, ...), pieces along the walls and pictures over them, what stands on the open floor
+// and the lamps hanging from the beams.
 
 // A box of furniture: its middle on the floor plan, its bottom above the floor, its size (x across, y up, z deep in its own
 // frame), turned by Yaw as the slice turns it (M4.ry), its colour; bGlow: a lamp's shade or a lit sign.
@@ -43,5 +46,5 @@ struct BRIXWORLD_API FBrixFurnished
 
 // Floor f of a lot furnished at its places, unless it is a planned home (BrixHomes) or a building drawn its own way. False
 // when there is nothing to furnish. Nothing is put in the stairwell or 0.6 m round it, nor on the way from the door to the
-// foot of the stair (storeys.js keepOut()).
-BRIXWORLD_API bool BrixFurnishFloor(const FBrixInsides& Ins, const FBrixLot& Lot, const FBrixInside& In, int32 Floor, FBrixFurnished& Out);
+// foot of the stair (storeys.js keepOut()). bDress false: the places' furniture only, the room left undressed.
+BRIXWORLD_API bool BrixFurnishFloor(const FBrixInsides& Ins, const FBrixLot& Lot, const FBrixInside& In, int32 Floor, FBrixFurnished& Out, bool bDress = true);
