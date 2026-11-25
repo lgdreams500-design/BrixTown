@@ -67,6 +67,10 @@ struct FBrixCity;
 // north, a market stall faces its side of the market. Lots are the city's in its blocks' order (the slice's LOTS).
 // Returns how many stays it seated.
 BRIXWORLD_API int32 SeatBrixDay(FBrixDay& Day, const FBrixCity& City);
+// CITY-072: a broken bench is not sat on. Someone the day has sitting out of doors on a seat within Reach metres of a broken
+// bench (Broken: where they stand) stands in front of it instead, facing the way they would have sat, Step metres forward.
+// True when they were moved.
+BRIXWORLD_API bool BrixOffBrokenSeat(FBrixWhere& W, const TArray<FVector2D>& Broken, double Reach = 1.2, double Step = .6);
 
 // Reads the day (Game/Data/day.json). On failure returns false and says why.
 BRIXWORLD_API bool LoadBrixDay(const FString& Path, FBrixDay& OutDay, FString& OutError);

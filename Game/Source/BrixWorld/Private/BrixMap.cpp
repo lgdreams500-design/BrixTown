@@ -1,4 +1,5 @@
 #include "BrixMap.h"
+#include "BrixStreets.h"
 
 #include "BrixEconomy.h"
 #include "BrixQuests.h"
@@ -334,7 +335,8 @@ FBrixMapImage BrixDrawMap(const FBrixCity& City, const FBrixMapExtras& X, int32 
 		}
 	}
 	const FColor Tree = Hex(TEXT("2f4524"));   // every tree, so a wood reads as a wood and an orchard as rows
-	for (const FBrixBlock& B : City.Blocks) for (const FBrixTree& T : B.Trees) G.Disc(Px(T.Pos), FMath::Max(.9, TreeRadius * K * .8), Tree);
+	if (X.Trees.Num()) for (const FVector3d& T : X.Trees) G.Disc(Px(FVector2D(T.X, T.Y)), FMath::Max(.9, T.Z * K * .8), Tree);   // each as big as its crown today
+	else for (const FBrixBlock& B : City.Blocks) for (const FBrixTree& T : B.Trees) G.Disc(Px(T.Pos), FMath::Max(.9, TreeRadius * K * .8), Tree);
 	G.Seg(Px(FVector2D(OX - 8, City.Tram.Z)), Px(FVector2D(OX1 + 8, City.Tram.Z)), 1.5, Hex(TEXT("2a2a30")));
 	return Img;
 }
@@ -442,3 +444,9 @@ TArray<FBrixMapTarget> BrixQuestTargets(const FBrixQuests& Q, const FBrixQuestRu
 	return Out;
 }
 
+
+void BrixMapTreesToday(const TArray<FBrixTreeToday>& Trees, FBrixMapExtras& X)
+{
+	X.Trees.Reset();
+	for (const FBrixTreeToday& T : Trees) if (!T.bFallen) X.Trees.Add(FVector3d(T.X, T.Z, T.R));   // play.js drawBase(): if (t[8]) continue
+}

@@ -40,8 +40,12 @@ struct BRIXWORLD_API FBrixMapExtras
 	TArray<FBrixMapLine> Links;                               // roads.json links: out to the new areas
 	TArray<TPair<FVector2D, FVector2D>> Gates;                // the roads out of Old Town: from the gate's junction to its end
 	TArray<FBrixMapBlock> Blocks;                             // in the city's block order
-};
+	TArray<FVector3d> Trees;                                  // today's standing trees (the slice's D.trees): x, z, crown radius;
+};                                                            // empty: the city's trees at the one TreeRadius
 BRIXWORLD_API bool LoadBrixMapExtras(const FString& CityDir, const FBrixCity& City, FBrixMapExtras& Out, FString& OutError);
+
+// today's trees for the map: every standing tree of Game/Data/streets.json with its crown's radius (fallen ones are left off)
+BRIXWORLD_API void BrixMapTreesToday(const TArray<struct FBrixTreeToday>& Trees, FBrixMapExtras& X);
 
 // The map as a picture N pixels square (the slice's 900 and its 2700 three times as fine): K pixels a metre, O metres of
 // margin, pixel = (world + O) * K. Colours are the slice's (play.js KIND_CSS, MAP_GREEN, MAP_CROP).

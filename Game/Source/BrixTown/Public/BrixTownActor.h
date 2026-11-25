@@ -58,6 +58,7 @@ class BRIXTOWN_API ABrixTownActor : public AActor
 public:
 	ABrixTownActor();
 	void Build(const FBrixCity& City);
+	const FBrixStreetsToday* StreetsToday() const { return Today.Get(); }   // how the gardens and trees are today (streets.json)
 	TSet<FString> OwnBuilt;   // lots another actor draws (Eastgate Mall, ABrixMall): set before Build, and left out here
 	// What is inside the buildings (Game/Data/inside.json; CITY-013): set before Build to make the enterable ones hollow,
 	// with an open doorway, a floor, plastered walls and a ceiling
@@ -194,10 +195,11 @@ private:
 	// the slice's drawing calls (BrixStreets) laid as the town's own: boxes as instances, crowns as instances of the dome
 	// meshes, faces into the block's facet mesh, solids as unseen blockers
 	void Shapes(const TArray<FBrixShape>& S);
-	UStaticMesh* FacetMesh(const FString& MeshName, const TArray<FVector3f>& P, const TArray<FVector3f>& N, const TArray<FLinearColor>& C);
+	UStaticMesh* FacetMesh(const FString& MeshName, const TArray<FVector3f>& P, const TArray<FVector3f>& N, const TArray<FLinearColor>& C, const TArray<uint8>* Lawn = nullptr);
 	UInstancedStaticMeshComponent* DomeGroup(int32 Variant);
-	struct FFacets { TArray<FVector3f> P, N; TArray<FLinearColor> C; TArray<int32> Owner; };   // Owner: a face's breakable, or INDEX_NONE
-	void Facet(const FVector3d& A, const FVector3d& B, const FVector3d& C, const FVector3d& Hint, const FVector3d& Col);
+	struct FFacets { TArray<FVector3f> P, N; TArray<FLinearColor> C; TArray<int32> Owner; TArray<uint8> Lawn; };   // Owner: a face's breakable, or INDEX_NONE; Lawn: 1 on a lawn's face
+	void Facet(const FVector3d& A, const FVector3d& B, const FVector3d& C, const FVector3d& Hint, const FVector3d& Col, bool bLawn = false);
+	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> LawnMat;   // /Game/Greybox/M_Lawn (Tools/unreal/make_lawn_material.py) with today's lawn numbers
 	TMap<int32, FFacets> Facets;        // by block (and by block square for the trees and the road network: TreeKey, RoadKey)
 	struct FKeptFacets { FFacets F; UStaticMeshComponent* C = nullptr; int32 Made = 0; };
 	TMap<int32, FKeptFacets> KeptFacets;   // the facet meshes with faces of things a car can break, to make again without them

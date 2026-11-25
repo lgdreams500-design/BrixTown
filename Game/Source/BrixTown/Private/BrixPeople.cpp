@@ -276,6 +276,9 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		MinuteOf.Add(It->Key, M2);
 	}
 
+	// nobody sits on a broken bench until it is mended (CITY-072): they stand in front of it
+	const ABrixCrash* Smashed = Mode->Crash.Get();
+	const TArray<FVector2D> BrokenSeats = Smashed ? Smashed->BrokenSeats() : TArray<FVector2D>();
 	// everyone out of doors within reach, nearest first
 	// worked out for everyone at once on the task threads (CITY-022: from the day and the minute alone)
 	// i: who (a resident, or 1,000,000 + 2 a vehicle + 0 or 1 for someone from out of town in it), the slot's key
@@ -291,8 +294,9 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		if (i == Held.Resident) return;   // added below, where the talk holds them
 		const double* M2 = MinuteOf.Find(i);
 		const double Mi = M2 ? *M2 : Minute;
-		const TOptional<FBrixWhere> W = Day->Where(i, Mi);
+		TOptional<FBrixWhere> W = Day->Where(i, Mi);
 		if (!W) { InVehicle[i] = Day->VehicleAt(i, Mi); return; }
+		if (BrokenSeats.Num()) BrixOffBrokenSeat(*W, BrokenSeats, Smashed->SeatReach, Smashed->SeatStep);
 		if (W->bInside && W->Lot != CameraLot) return;   // inside: seen only from inside their building (play.js nearPeople)
 		// a little to one side of the pavement's line, never at a door (the slice's lane, CITY-043)
 		FVector2D P = W->Pos;

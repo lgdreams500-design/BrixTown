@@ -4,6 +4,8 @@
 #include "BrixGameMode.h"
 #include "BrixTownActor.h"
 #include "BrixUnits.h"
+#include "BrixWeatherTry.h"
+#include "BrixCharacter.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Engine/DirectionalLight.h"
@@ -14,6 +16,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Misc/Paths.h"
 #include "ProceduralMeshComponent.h"
+#include "TimerManager.h"
 #include "UObject/ConstructorHelpers.h"
 
 using BrixUnits::CmPerM;
@@ -105,6 +108,23 @@ void ABrixWeather::Start(const FBrixCity& City, ABrixTownActor* InTown)
 	}
 	else UE_LOG(LogTemp, Warning, TEXT("Brix Town: /Game/Weather/M_Clouds is missing (run Tools/unreal/make_clouds_material.py); no clouds"));
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: the day's weather %s%s"), *FString::Join(Wear.Weather, TEXT(", ")), Trying.IsEmpty() ? TEXT("") : *(TEXT("; trying ") + Trying));
+	int32 Presses = 0;   // -BrixWeatherKey=<n>: K pressed n times, a second apart from 2 s in, as a player would (a test shot)
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixWeatherKey="), Presses))
+		for (int32 k = 0; k < Presses; ++k)
+		{
+			FTimerHandle Th;
+			GetWorldTimerManager().SetTimer(Th, [this]() { if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0))) Me->WeatherKey(); }, 2.f + k, false);
+		}
+}
+
+FString ABrixWeather::TryNext()   // the weather key, K (WLD-037): the next kind to look at for the whole day
+{
+	TArray<FString> Kinds;
+	Rules.Kinds.GetKeys(Kinds);
+	Trying = BrixNextWeatherTry(Trying, Kinds);
+	LastWet = LastRip = LastLies = -1.f;   // the paving's wet and snow set again
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: the weather key: %s"), Trying.IsEmpty() ? TEXT("the day's own") : *(TEXT("trying ") + Trying));
+	return Trying;
 }
 
 bool ABrixWeather::Roofed(const FVector2D& P) const
@@ -161,12 +181,14 @@ void ABrixWeather::Tick(float DeltaSeconds)
 		Clouds->SetWorldLocation(FVector(Eye.X, Eye.Y, 0));
 		Clouds->SetVisibility(Cl.Cover > 0);
 	}
-	// the rain: drops round the camera, not under a roof, none while the camera is indoors (ADR-0016). Each is a thin streak,
-	// clear at its top and full at its foot, as a falling drop is seen; near the camera they fade, so none is a bar across
-	// the picture; where one lands near by it throws up a small splash
+	// the rain: drops round the camera, not under a roof (ADR-0016). Each is a thin streak, clear at its top and full at its
+	// foot, as a falling drop is seen; near the camera they fade, so none is a bar across the picture; where one lands near
+	// by it throws up a small splash. From indoors the same rings, spread IndoorReach times as far, fall outside the windows
+	// and the open door (those over the building are under its roof), so the rain is seen through them.
 	const int32 Count = FMath::Clamp(FMath::RoundToInt(Drops.Num() * Now.Rain), 0, Drops.Num());
 	const int32 Flakes = FMath::Clamp(FMath::RoundToInt(FMath::Min(MaxFlakes, Drops.Num()) * Snow.Falling), 0, Drops.Num());   // snow (WLD-070)
-	if ((Count == 0 && Flakes == 0) || Mode->RoomAt(Eye) != INDEX_NONE) { Rain->SetVisibility(false); return; }
+	if (Count == 0 && Flakes == 0) { Rain->SetVisibility(false); return; }
+	const double Reach = Mode->RoomAt(Eye) != INDEX_NONE ? IndoorReach : 1.0;
 	const FVector2D Here(Eye.X / CmPerM, Eye.Y / CmPerM);
 	const double Up = Eye.Z / CmPerM, T = GetWorld()->GetTimeSeconds(), H = FallHeight, Len = Rules.Length * DropLength;
 	const float Glow = .3f + .7f * Day;
@@ -191,16 +213,16 @@ void ABrixWeather::Tick(float DeltaSeconds)
 	for (int32 k = 0; k < Count; ++k)
 	{
 		const FDrop& D = Drops[k];
-		const FVector2D P = Here + FVector2D(FMath::Cos(D.A), FMath::Sin(D.A)) * D.R;
+		const FVector2D P = Here + FVector2D(FMath::Cos(D.A), FMath::Sin(D.A)) * (D.R * Reach);
 		const double Fall = FMath::Fmod(D.Phase * H + T * Rules.Speed * D.Speed, H), Bottom = Up + H * .6 - Fall;
 		double G = 0;
 		for (const FBox2D& B : Paving) if (B.IsInside(P)) { G = Town ? Town->BlockSlabHeight : .12; break; }
 		const bool bRoof = Roofed(P), bFalling = !bRoof && Bottom > G;
-		const float Near = FMath::SmoothStep(NearDrops, NearDrops + 2.f, D.R), W = DropWidth * (.7f + D.R / 8.f);
+		const float Near = FMath::SmoothStep(NearDrops, NearDrops + 2.f, D.R), W = DropWidth * (.7f + D.R * (float)Reach / 8.f);
 		const double L = Len * D.Len;
 		const FVector Lo(P.X, P.Y, FMath::Max(Bottom, G)), Hi = Lo + (FVector(0, 0, 1) + Slant) * (bFalling ? L : 0.0);
 		Quad(Lo, Hi, W, bFalling ? A0 * Near * D.Bri : 0.f, 0.f, D.Bri, DropColour);
-		if (k >= Splashing) continue;
+		if (k >= Splashing || Reach != 1.0) continue;   // (from indoors the splashes are too far off to see)
 		// the splash: three short jets thrown up and out where it landed, for SplashSeconds
 		const double Since = bRoof ? 1e9 : (G - Bottom) / (Rules.Speed * D.Speed);
 		const float u = (float)FMath::Clamp(Since / SplashSeconds, 0.0, 1.0), On = Since >= 0 && Since < SplashSeconds ? 1.f - u : 0.f;
@@ -212,7 +234,7 @@ void ABrixWeather::Tick(float DeltaSeconds)
 	}
 	// the snow: flakes falling slowly, each swaying on its own, a small soft square facing the camera; gone where they land
 	const float FA = (float)(Rules.SnowAlpha * (1.5f - .5f * Day));
-	for (int32 k = 0; k < Flakes; ++k)
+	for (int32 k = 0; k < (Reach == 1.0 ? Flakes : 0); ++k)   // (none while the camera is indoors, as before)
 	{
 		const FDrop& D = Drops[(k * 7919) % Drops.Num()];   // spread over every ring, not only the nearest
 		const double Sp = Rules.SnowSpeed * (.7 + .5 * D.Speed), Fall = FMath::Fmod(D.Phase * H + T * Sp, H), Bottom = Up + H * .6 - Fall;
