@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 
 class FJsonObject;
+struct FBrixBodyMesh;
 
 // Buy menus that show what is for sale as objects (UI-020, UI-021; ADR-0044): what each thing shows, and the stand-ins as
 // meshes, as the slice's buymenu.js has them (World/rules/buy_menu.json, carried in Game/Data/life.json). What a thing shows
@@ -26,6 +27,19 @@ struct BRIXWORLD_API FBrixThingMesh
 	int32 Num() const { return P.Num() / 3; }
 };
 
+// One path of a mark in a buy menu's dots and chips (UI-020): SVG path data on a square 16 units across, filled, or stroked
+// this wide (buymenu.js ICON, carried in life.json buy_menu.icons by build_play.py).
+struct BRIXWORLD_API FBrixIconPath
+{
+	FString D;
+	float Stroke = 0.f;   // 0: filled
+};
+// The path's outlines, one per subpath, curves flattened to straight pieces (M, L, H, V, Q, Z, absolute, as the marks use).
+BRIXWORLD_API TArray<TArray<FVector2f>> BrixIconOutlines(const FString& D);
+// How much of each pixel of a Px x Px picture of the mark is covered, 0 to 1, rows from the top: fills by the nonzero rule,
+// strokes as the band within half their width of each straight piece, 4 x 4 samples a pixel.
+BRIXWORLD_API TArray<float> BrixIconCoverage(const TArray<FBrixIconPath>& Paths, int32 Px);
+
 struct BRIXWORLD_API FBrixBuyMenuRules
 {
 	struct FGoes { FString Name, Colour, To; };
@@ -46,6 +60,7 @@ struct BRIXWORLD_API FBrixBuyMenuRules
 	TSet<FString> Items;                              // economy.json's items
 	struct FGood { FString Goes, Piece; TMap<FString, FString> Parts; };
 	TMap<FString, FGood> Goods;                       // mall_goods.json's goods
+	TMap<FString, TArray<FBrixIconPath>> Icons;       // where a thing goes -> its mark in a dot or a chip (buymenu.js ICON)
 
 	FBrixShows Shows(const FString& Thing) const;
 	// A stand-in as boxes: Band is the seller's colour, Own the clothing's (buymenu.js shapeMesh()).
@@ -53,6 +68,10 @@ struct BRIXWORLD_API FBrixBuyMenuRules
 	// The mesh for a thing at a counter: its stand-in (a piece's own object is not brought over yet: none).
 	TOptional<FBrixThingMesh> MeshFor(const FString& Thing, const FString& BandColour) const;
 };
+
+// A mesh drawn as people.js draws (a skateboard on show in the skate store, CITY-102) as a buy menu's thing: its triangles,
+// each with its face's normal turned outwards as the corners' normals say, in their colours.
+BRIXWORLD_API FBrixThingMesh BrixThingFromBody(const FBrixBodyMesh& B);
 
 // Reads the buy menu's rules from Game/Data/life.json (already parsed: FBrixLifeData::Json).
 BRIXWORLD_API bool LoadBrixBuyMenu(const TSharedPtr<FJsonObject>& Life, FBrixBuyMenuRules& Out, FString& OutError);

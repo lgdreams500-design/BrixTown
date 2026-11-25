@@ -111,6 +111,10 @@ struct BRIXWORLD_API FBrixDrawOptions
 	bool bDriving = false;   // sitting at a wheel: the hands up on it (cars.js seat(): arms [1, 58, 10, 48])
 	bool bStraddle = false;  // sitting astride a seesaw's plank: a leg down each side of it (people.js mod.straddle; dressing.js)
 	const FBrixFace* Face = nullptr;   // in a conversation: the face as it speaks (full detail only), and its nod
+	// people.js o.look, the head layer of CHARACTER_MOTION §4 (ANIM-005): [yaw, pitch] in radians the head adds to its own
+	// carriage (yaw + to the left, pitch + a nod down), the eyes leading it by up to their limit (full detail only)
+	FVector2D Look = FVector2D::ZeroVector;
+	bool bSleep = false;      // people.js o.sleep: the eyes shut (lying in bed)
 	// people.js o.sig: walk by this signature instead of the look's own (a run from a car, a hurry in the rain)
 	FString Sig;
 	// people.js o.mod, the gesture layers of CHARACTER_MOTION §4: per arm (left, right) [weight, raise, out, elbow] in
@@ -129,6 +133,19 @@ struct BRIXWORLD_API FBrixDrawOptions
 // people.js draw() for poses 0 to 2: appends the body to Out (lods 0 to 2) or its boxes to OutBoxes (lod 3).
 BRIXWORLD_API void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVector& At, double Yaw,
 	const FBrixDrawOptions& O, FBrixBodyMesh& Out, TArray<FBrixFarBox>* OutBoxes = nullptr);
+
+// play.js: someone the player comes within 5.5 m of turns to look at them, the eyes first and the head part of the way (M4,
+// ANIM-005): fully within 3.2 m, not at all when the player is more than 1.9 radians round from where they face. DX, DZ: from
+// them to the player (metres, x east, z south); Yaw: the way they face. Returns the look to draw them with (FBrixDrawOptions::Look).
+BRIXWORLD_API FVector2D BrixGlanceAt(double DX, double DZ, double Yaw);
+
+// play.js: the player's head turned towards where the camera looks, part of the way (CamYaw - Yaw: how far round the camera
+// looks from where the body faces, + to the right, as yaws turn; CamPitch + up), for FBrixDrawOptions::Look.
+BRIXWORLD_API FVector2D BrixLookAlong(double CamYawLessYaw, double CamPitch);
+
+// A skateboard alone, standing on its wheels on the ground at the origin, its nose along +x (the slice's frame, y up): as
+// people.js board() draws it at a level of detail (0 full), for a board on show (CITY-102).
+BRIXWORLD_API void DrawBrixBoard(const FBrixBoardKind& K, int32 Lod, FBrixBodyMesh& Out);
 
 // Metres covered by one whole cycle of a walk (two steps): its phase is metres walked / this.
 BRIXWORLD_API double BrixStepLength(const FBrixSignature& Sig, double S);

@@ -95,6 +95,7 @@ void ABrixLife::Menu(const FString& Id)
 	}
 	if (bMenu && MenuTab == Id) { CloseMenu(); return; }   // a page's key again: back to town
 	MenuTab = Id;
+	Msg.Reset();
 	if (!bMenu)
 	{
 		bMenu = true;
@@ -155,7 +156,17 @@ FString ABrixLife::Headline(const FString& Id) const   // what a page's card say
 		return Q ? FString::Printf(TEXT("%d under way · %d on offer"), Q->Active.Num() + (Q->Job ? 1 : 0), Offers) : FString();
 	}
 	if (Id == TEXT("belongings")) { int32 n = 0; for (const auto& I : E->Inv) n += I.Value; return n ? FString::Printf(TEXT("%d things carried"), n) : TEXT("Nothing carried"); }
-	if (Id == TEXT("property")) return TEXT("Nothing owned yet");
+	if (Id == TEXT("property"))   // life.js headline(): the buildings owned and their worth, or the places rented
+	{
+		if (!Est) return TEXT("Nothing owned yet");
+		const TArray<int32> Mine = Est->Owned();
+		TSet<int32> LotsOwned;
+		int64 Worth = 0;
+		for (const int32 i : Mine) { LotsOwned.Add(Est->Units[i].Lot); Worth += Est->Value(i); }
+		const int32 Rents = Est->Tenancy.Num();
+		if (LotsOwned.Num()) return FString::Printf(TEXT("%d building%s · worth about %s"), LotsOwned.Num(), LotsOwned.Num() == 1 ? TEXT("") : TEXT("s"), *Format(Worth));
+		return Rents ? FString::Printf(TEXT("%d place%s rented"), Rents, Rents == 1 ? TEXT("") : TEXT("s")) : FString(TEXT("None owned yet"));
+	}
 	if (Id == TEXT("wardrobe")) return Designer() ? Designer()->WardrobeHeadline() : FString(TEXT("What you wear"));
 	if (Id == TEXT("map"))   // life.js headline(): the mark and how far it is
 	{
@@ -360,8 +371,48 @@ TSharedRef<SWidget> ABrixLife::MenuPage(const FString& Id)
 				];
 			Section(FString::Printf(TEXT("Carried · %d kinds"), Keys.Num()), W);
 		}
+		// CITY-100: the skateboards owned (life.js belongingsTab()), each with its top speed and how it goes, the one in use
+		// marked (in the hand or ridden); any other made the one in use
+		if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+		{
+			TSharedRef<SVerticalBox> Sk = SNew(SVerticalBox);
+			for (int32 k = 0; k < Me->Boards.Own.Num(); ++k)
+			{
+				const FString Kind = Me->Boards.Own[k];
+				const FBrixBoardKind* K = Me->BoardRules.Kind(Kind);
+				if (!K) continue;
+				const bool bMine = Me->Boards.InUse == Kind;
+				if (k) Sk->AddSlot().AutoHeight()[ Rule() ];
+				Sk->AddSlot().AutoHeight().Padding(0, 6)
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 12, 0)[ SNew(SBorder).BorderImage(Round(StoneDeep(), 10.f)).Padding(0)[ SNew(SBrixThing).Mesh(MeshFor(TEXT("board:") + Kind, FString())).Rules(&BuyMenu).Size(FVector2D(110, 62)).Yaw(YawFor(TEXT("belongings:board:") + Kind)) ] ]
+					+ SHorizontalBox::Slot().FillWidth(1).VAlign(VAlign_Center)
+					[
+						SNew(SVerticalBox)
+						+ SVerticalBox::Slot().AutoHeight()[ Text(K->Name, 14, Cream(), true) ]
+						+ SVerticalBox::Slot().AutoHeight()[ Text(FString::Printf(TEXT("up to %d km/h"), (int32)K->TopKmh) + (K->bPush ? TEXT(", pushed with a foot") : TEXT("")) + (bMine ? (Me->Boards.Riding() ? TEXT(" · riding it") : TEXT(" · in your hand")) : TEXT("")), 12, Dim()) ]
+					]
+					+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
+					[
+						bMine ? (TSharedRef<SWidget>)Text(TEXT("In use"), 13, Dim(), false, false)
+						: Button(TEXT("Use this"), [this, Me, Kind, K]() { Me->Boards.Use(Kind); Toast(TEXT("Now using the ") + K->Name.ToLower() + TEXT(".")); DrawMenu(); }, false)
+					]
+				];
+			}
+			if (Me->Boards.Own.Num()) Section(TEXT("Skateboards · Y gets on the one in use"), Sk);
+			else Soon(TEXT("You have no skateboard. ") + SkateStoreName() + TEXT(" sells three kinds, from a board you push with a foot to the Neon Boost."));
+		}
 	}
-	else if (Id == TEXT("property")) { Sub = TEXT("What you own and rent"); Soon(TEXT("You own and rent nothing yet. The property market (estate agents, renting, buying, remodelling and furnishing) comes to this build with the building designer.")); }
+	else if (Id == TEXT("property"))   // PROP-011 to PROP-019, UI-006 (life.js estatePanel(), kind "property": P anywhere)
+	{
+		Sub = TEXT("What you own and rent · P");
+		TSharedRef<SVerticalBox> V = SNew(SVerticalBox);
+		if (!Msg.IsEmpty()) V->AddSlot().AutoHeight().Padding(0, 0, 0, 8)[ SNew(SBorder).BorderImage(Round(FLinearColor::FromSRGBColor(FColor(240, 195, 90, 31)), 10.f)).Padding(FMargin(12, 7))[ Text(Msg, 15) ] ];
+		if (Est) EstatePanel(V, FString(), LotHere());
+		else V->AddSlot().AutoHeight()[ Text(TEXT("The property market is not in this game's data (run Tools/worldgen/build_play.py)."), 15, Dim()) ];
+		Section(FString(), V);
+	}
 	else if (Id == TEXT("wardrobe"))   // CHR-014 to CHR-016: the designer's own choices, outfits and the clothes bought
 	{
 		Sub = PlayerName + TEXT(" · changing is free");

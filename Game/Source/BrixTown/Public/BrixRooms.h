@@ -30,6 +30,9 @@ public:
 	ABrixRooms();
 	void Start(const FBrixCity& City, const FBrixInsides& Insides, ABrixTownActor* Town, int32 Day);
 	virtual void Tick(float DeltaSeconds) override;
+	// BUILD-021: a storey's inner walls drawn from a room plan (each piece's own colour, or none for the walls' plaster)
+	bool SetPlan(int32 Lot, int32 Floor, const TArray<struct FBrixPartition>& Segs, const TArray<TOptional<FVector3f>>& Colours);
+	bool HasRooms(int32 Lot) const;   // whether the building's rooms are drawn (furnished or with walls of its own)
 	int32 Furnished() const { return Near.Num(); }
 	int32 PiecesShown() const { return Shown; }
 	int32 LampsOn() const;

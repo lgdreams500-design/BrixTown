@@ -1,6 +1,9 @@
 #include "BrixMallActor.h"
 
+#include "BrixCarsActor.h"
 #include "BrixGameMode.h"
+#include "BrixStreets.h"
+#include "ProceduralMeshComponent.h"
 #include "BrixRooms.h"
 #include "BrixTownActor.h"
 #include "BrixUnits.h"
@@ -99,6 +102,7 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 		if (Mat == 1) return C.Z > .9988 ? CoolLit : WarmLit;
 		if (Mat == 2) return FLinearColor(1.f, .55f, .22f);
 		if (Mat == 28) return TreadColour;
+		if (Mat == 4) return DarkGlass;   // a window not lit (play.js material 4: the glass dark by day)
 		return Lin(C);
 	};
 	auto Tri = [&](FSink& S, const FVector3d& a, const FVector3d& b, const FVector3d& c, const FVector3f& na, const FVector3f& nb, const FVector3f& nc, const FLinearColor& ca, const FLinearColor& cb, const FLinearColor& cc,
@@ -122,7 +126,8 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 		Tri(S, p0, p1, p2, nf, nf, nf, Col, Col, Col, nullptr, Kind);
 		if (!p2.Equals(p3, 1e-9) && !p3.Equals(p0, 1e-9)) Tri(S, p0, p2, p3, nf, nf, nf, Col, Col, Col, nullptr, Kind);
 	};
-	int32 Uses = 0;
+	int32 Uses = 0, Parked = 0, Pieces = 0;
+	TMap<FString, TArray<FTransform>> PieceAts;   // the furniture kits' pieces, by mesh (as ABrixRooms lays a home's)
 	TArray<FBrixLiftCall> Lifts;
 	for (const FBrixMallCall& Cl : Mall->Calls)
 	{
@@ -200,6 +205,42 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 			for (const auto& f : Fq) { const FVector3d mid = (q[f[0]] + q[f[2]]) / 2 - o; Flat4(Cl.Mat, q[f[0]], q[f[1]], q[f[2]], q[f[3]], &mid, Col); }
 			break;
 		}
+		case FBrixMallCall::OBox:   // Mesh.obox(): a box placed by the slice's matrix
+		{
+			FBrixM4 Mx;
+			for (int32 j = 0; j < 16; ++j) Mx.M[j] = A[j];
+			const double cx = A[16], cy = A[17], cz = A[18], hx = A[19] / 2, hy = A[20] / 2, hz = A[21] / 2;
+			FVector3d q[8];
+			for (int32 k = 0; k < 8; ++k) q[k] = Mx.Pt(cx + (k & 1 ? hx : -hx), cy + (k & 2 ? hy : -hy), cz + (k & 4 ? hz : -hz));
+			const FVector3d o = Mx.Pt(cx, cy, cz);
+			const int32 Fq[6][4] = { { 0, 4, 6, 2 }, { 1, 3, 7, 5 }, { 0, 1, 5, 4 }, { 2, 6, 7, 3 }, { 0, 2, 3, 1 }, { 4, 5, 7, 6 } };
+			const FLinearColor Col = Colour(Cl.Mat, Cl.Col);
+			for (const auto& f : Fq) { const FVector3d mid = (q[f[0]] + q[f[2]]) / 2 - o; Flat4(Cl.Mat, q[f[0]], q[f[1]], q[f[2]], q[f[3]], &mid, Col); }
+			break;
+		}
+		case FBrixMallCall::Car:   // a car left in a car park (cars.js parked()): one of the traffic's own models in its seed's colours
+		{
+			const ABrixGameMode* GM = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+			if (!GM || !GM->Cars) break;
+			UProceduralMeshComponent* PM = NewObject<UProceduralMeshComponent>(this);
+			PM->SetupAttachment(RootComponent);
+			PM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			PM->RegisterComponent();
+			AddInstanceComponent(PM);
+			if (GM->Cars->BuildParked(PM, Cl.Text).IsZero()) { PM->DestroyComponent(); break; }
+			PM->SetWorldLocationAndRotation(FVector(A[0], A[1], A[3]) * CmPerM, FRotator(0.0, FMath::RadiansToDegrees(A[2]), 0.0));
+			++Parked;
+			break;
+		}
+		case FBrixMallCall::Piece:   // a furniture kit's piece in its line: x across it, its back toward +y in Blender, which the importer turns to -y
+		{
+			FString Kind, Line;
+			if (!Cl.Text.Split(TEXT("|"), &Kind, &Line)) break;
+			const FMatrix Mx(FVector(A[3], A[4], 0), FVector(-A[5], -A[6], 0), FVector(0, 0, 1), FVector(A[0], A[2], A[1]) * CmPerM);
+			PieceAts.FindOrAdd(TEXT("SM_") + Kind.Replace(TEXT(":"), TEXT("_")) + TEXT("_") + Line).Add(FTransform(Mx));
+			++Pieces;
+			break;
+		}
 		case FBrixMallCall::Solid:
 			Solid(A[0], A[1], A[2], A[3], A[4], A[5]);
 			break;
@@ -236,6 +277,20 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 		}
 	}
 	Blockers->AddInstances(Solids, false);
+	TArray<FString> NoMesh;
+	for (TPair<FString, TArray<FTransform>>& P : PieceAts)
+	{
+		UStaticMesh* PM = LoadObject<UStaticMesh>(nullptr, *FString::Printf(TEXT("/Game/Furniture/%s.%s"), *P.Key, *P.Key));
+		if (!PM) { NoMesh.Add(P.Key); continue; }
+		UInstancedStaticMeshComponent* G = NewObject<UInstancedStaticMeshComponent>(this, *P.Key);
+		G->SetupAttachment(RootComponent);
+		G->SetStaticMesh(PM);
+		G->SetCollisionEnabled(ECollisionEnabled::NoCollision);   // (the slice's solids are what is in the way)
+		G->RegisterComponent();
+		AddInstanceComponent(G);
+		G->AddInstances(P.Value, false);
+	}
+	if (NoMesh.Num()) UE_LOG(LogTemp, Warning, TEXT("Brix Town: %s: no furniture mesh for %s (BRIX_FURNITURE_EXTRA=... Tools/unreal/import_furniture_kit.py)"), *Mall->Name, *FString::Join(NoMesh, TEXT(", ")));
 
 	// the meshes
 	int32 Meshes = 0;
@@ -306,8 +361,8 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 	}
 	if (const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))
 		if (ABrixRooms* R = Mode->RoomsActor()) R->AddLiftCalls(Lifts);
-	UE_LOG(LogTemp, Display, TEXT("Brix Town: %s built inside as the slice builds it: %d calls, %d triangles in %d meshes, %d solids, %d outlets, %d lifts' calls, %d other places to use, %d lamps (%.2f s)"),
-		*Mall->Name, Mall->Calls.Num(), Tris, Meshes, Solids.Num(), Mall->Rooms.Num(), Lifts.Num(), Uses - Lifts.Num(), Mall->Lamps.Num(), FPlatformTime::Seconds() - T0);
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: %s built as the slice builds it: %d calls, %d triangles in %d meshes, %d solids, %d outlets, %d lifts' calls, %d other places to use, %d lamps, %d parked cars, %d pieces of furniture (%.2f s)"),
+		*Mall->Name, Mall->Calls.Num(), Tris, Meshes, Solids.Num(), Mall->Rooms.Num(), Lifts.Num(), Uses - Lifts.Num(), Mall->Lamps.Num(), Parked, Pieces, FPlatformTime::Seconds() - T0);
 }
 
 bool ABrixMall::Contains(const FVector& WorldCm) const

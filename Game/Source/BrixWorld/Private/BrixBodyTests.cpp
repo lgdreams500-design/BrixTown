@@ -3,6 +3,7 @@
 #include "BrixBody.h"
 #include "BrixCity.h"
 #include "BrixDay.h"
+#include "BrixPlay.h"
 
 #include "Dom/JsonObject.h"
 #include "Misc/AutomationTest.h"
@@ -35,6 +36,7 @@ bool FART004_PeopleAreTheSlices::RunTest(const FString&)
 	FString Error, Text;
 	const FString Path = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/people.json")));
 	if (!TestTrue(TEXT("the people's tables load: ") + Error, LoadBrixPeopleRules(Path, Rules, Error))) return false;
+	BrixAddClimbSignature(Rules);   // children up a ladder (dressing.js climbSig(), which people_values.py cuts from dressing.js)
 	const FString Values = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../Tests/values/people_city_01.json")));
 	if (!TestTrue(TEXT("the test values are there: ") + Values, FFileHelper::LoadFileToString(Text, *Values))) return false;
 	TSharedPtr<FJsonObject> Want;
@@ -80,6 +82,8 @@ bool FART004_PeopleAreTheSlices::RunTest(const FString&)
 		double Floor = 0;
 		if (B->TryGetNumberField(TEXT("floor"), Floor)) O.Floor = Floor;
 		B->TryGetBoolField(TEXT("driver"), O.bDriving);
+		B->TryGetBoolField(TEXT("straddle"), O.bStraddle);   // astride a seesaw (dressing.js)
+		B->TryGetBoolField(TEXT("sleep"), O.bSleep);         // asleep in bed: the eyes shut
 		// a gesture, another walk, a hood or an umbrella (people.js o.mod, o.sig, o.hood, o.umb: dodge.js, smash.js, wet.js)
 		B->TryGetStringField(TEXT("sig"), O.Sig);
 		const TArray<TSharedPtr<FJsonValue>>* Arr = nullptr;
@@ -90,6 +94,7 @@ bool FART004_PeopleAreTheSlices::RunTest(const FString&)
 				if ((*Arr)[a]->TryGetArray(G) && G->Num() >= 4) O.Arms[a] = FVector4d((*G)[0]->AsNumber(), (*G)[1]->AsNumber(), (*G)[2]->AsNumber(), (*G)[3]->AsNumber());
 			}
 		if (B->TryGetArrayField(TEXT("chest"), Arr) && Arr->Num() >= 2) O.Chest = FVector2D((*Arr)[0]->AsNumber(), (*Arr)[1]->AsNumber());
+		if (B->TryGetArrayField(TEXT("look_at"), Arr) && Arr->Num() >= 2) O.Look = FVector2D((*Arr)[0]->AsNumber(), (*Arr)[1]->AsNumber());   // the head and eyes turned (ANIM-005)
 		const FVector3f HoodC = Col(B, TEXT("hood")), UmbC = Col(B, TEXT("umb"));
 		if (HoodC.X >= 0) O.Hood = HoodC;
 		if (UmbC.X >= 0) O.Umbrella = UmbC;
@@ -111,8 +116,9 @@ bool FART004_PeopleAreTheSlices::RunTest(const FString&)
 		Mesh.Reset();
 		Boxes.Reset();
 		DrawBrixPerson(Rules, Looks[k], FVector(B->GetNumberField(TEXT("x")), B->GetNumberField(TEXT("y")), B->GetNumberField(TEXT("z"))), B->GetNumberField(TEXT("yaw")), O, Mesh, &Boxes);
-		const FString What = FString::Printf(TEXT("look %d, pose %d, lod %d%s%s%s%s"), k, O.Pose, O.Lod, O.Arms[0] || O.Arms[1] ? TEXT(", a gesture") : TEXT(""),
-			O.Sig.IsEmpty() ? TEXT("") : TEXT(", another walk"), O.Hood ? TEXT(", a hood") : TEXT(""), O.Umbrella ? TEXT(", an umbrella") : TEXT(""));
+		const FString What = FString::Printf(TEXT("look %d, pose %d, lod %d%s%s%s%s%s%s%s"), k, O.Pose, O.Lod, O.Arms[0] || O.Arms[1] ? TEXT(", a gesture") : TEXT(""),
+			O.Sig.IsEmpty() ? TEXT("") : *(TEXT(", walking ") + O.Sig), O.Hood ? TEXT(", a hood") : TEXT(""), O.Umbrella ? TEXT(", an umbrella") : TEXT(""),
+			O.Look.IsZero() ? TEXT("") : TEXT(", looking aside"), O.bSleep ? TEXT(", asleep") : TEXT(""), O.bStraddle ? TEXT(", astride") : TEXT(""));
 		++Bodies;
 		if (Mesh.Index.Num() != (int32)B->GetNumberField(TEXT("vertices")))
 		{
@@ -180,6 +186,28 @@ bool FCITY017_ResidentsSitOnGardenBenches::RunTest(const FString&)
 	TestEqual(TEXT("every seat counted once"), Checked, Seated);
 	TestTrue(TEXT("some of the day's stays are on a garden seat"), Seated > 20);
 	return Wrong == 0;
+}
+
+// ANIM-005: someone near turns to look at the player, the eyes leading and the head part of the way (play.js): straight
+// ahead of them they look back at once, more the nearer the player (fully within 3.2 m, not past 5.5 m), never past 0.85
+// radians or at someone well behind them; and the player's head turns part of the way to where the camera looks.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FANIM005_PeopleLookAtThePlayer, "BrixTown.World.ANIM005_people_look_at_whoever_comes_near",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FANIM005_PeopleLookAtThePlayer::RunTest(const FString&)
+{
+	// facing north (yaw 0, -z): the player 2 m away to the north-east is to their right, so the head turns right (yaw -)
+	const FVector2D Right = BrixGlanceAt(1.4142, -1.4142, 0), Left = BrixGlanceAt(-1.4142, -1.4142, 0);
+	TestTrue(TEXT("the head turns right to someone on the right"), Right.X < 0 && FMath::IsNearlyEqual(Right.X, -UE_DOUBLE_PI / 4 * .6, 1e-9));
+	TestTrue(TEXT("and left to someone on the left"), FMath::IsNearlyEqual(Left.X, -Right.X, 1e-12));
+	TestEqual(TEXT("straight ahead the head stays"), BrixGlanceAt(0, -2, 0).X, 0.0);
+	TestEqual(TEXT("not past 5.5 m"), BrixGlanceAt(5.6, 0, 1.5708).Size(), 0.0);
+	TestTrue(TEXT("less at 4.5 m than at 3 m"), FMath::Abs(BrixGlanceAt(3.18, -3.18, 0).X) < FMath::Abs(BrixGlanceAt(2.12, -2.12, 0).X));
+	TestEqual(TEXT("not at someone behind"), BrixGlanceAt(0, 2, 0).Size(), 0.0);
+	TestTrue(TEXT("never past 0.85 radians"), FMath::IsNearlyEqual(FMath::Abs(BrixGlanceAt(2, 0.3, 0).X), .85, 1e-9));
+	const FVector2D Cam = BrixLookAlong(.5, -.3);   // the camera a little right and looking down
+	TestTrue(TEXT("the player's head turns towards where the camera looks"), FMath::IsNearlyEqual(Cam.X, -.35, 1e-9) && FMath::IsNearlyEqual(Cam.Y, .15, 1e-9));
+	TestTrue(TEXT("part of the way at most"), FMath::IsNearlyEqual(BrixLookAlong(3, 0).X, -.7, 1e-9) && FMath::IsNearlyEqual(BrixLookAlong(0, 2).Y, -.25, 1e-9));
+	return true;
 }
 
 #endif

@@ -75,6 +75,8 @@ struct BRIXWORLD_API FBrixWallSeg
 	FBrixRect R;
 	int32 Floor = 0;
 	bool bDoorway = false;
+	bool bPartition = false;                 // a storey's own inner walls (storeys.js partitions(), or the room plan: BUILD-021)
+	TOptional<FVector3f> Colour;             // its own colour (BUILD-022), else the plaster of the walls
 };
 
 struct BRIXWORLD_API FBrixRoom

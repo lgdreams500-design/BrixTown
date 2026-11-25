@@ -27,20 +27,38 @@ public:
 	UPROPERTY(Config) float ShowDistance = 160.f;   // m
 	UPROPERTY(Config) float NearDistance = 45.f;    // m: the near model within (the slice's 45 m)
 	UPROPERTY(Config) float RoadUp = 0.f;           // m: the street's height
+	// snow (WLD-070, WLD-071): how much of the lying snow a parked and a moving vehicle carry, and their tracks in it
+	UPROPERTY(Config) float CarSnow = 0.95f;
+	UPROPERTY(Config) float CarSnowMoving = 0.45f;
+	UPROPERTY(Config) float TrackDistance = 70.f;   // m: tracks drawn behind vehicles this near the camera
+	UPROPERTY(Config) float Gauge = 1.4f;
+	UPROPERTY(Config) float MarkLift = 0.012f;   // m: marks in the snow this far above the ground           // m between a car's wheel tracks
+	UPROPERTY(Config) FLinearColor SnowTone = FLinearColor(0.80f, 0.88f, 1.0f);
+	UPROPERTY(Config) FLinearColor PressedSnow = FLinearColor(0.42f, 0.48f, 0.60f);
 
 	int32 Shown() const { return LastShown; }
 
 	// The player driving (CITY-061 stand-in, as the slice's cars.js target(), enter(), drive(), leave()): E at a parked car
 	// gets in; W/S speed and brake, A/D steer, Space the handbrake; a wall, a street thing or another car stops it and it
-	// rolls back a little; E gets out by the driver's door, and the car stays where it was left. Buses are not ridden yet.
-	struct FDrive { int32 K = -1; double X = 0, Z = 0, A = 0, V = 0; bool bRide = false; bool bMoving = false; };   // bRide: a passenger on a bus (CITY-092)
+	// rolls back a little; E gets out by the driver's door, and the car stays where it was left. A bus (CITY-092) or the tram
+	// (CITY-041) standing at a stop is ridden: E gets on, E gets off where it next stands.
+	// bRide: a passenger on a bus or (bTram) the tram, whose run is Run (FBrixTram::FAt::Run); K is then TramK
+	struct FDrive { int32 K = -1; double X = 0, Z = 0, A = 0, V = 0; bool bRide = false; bool bMoving = false; bool bTram = false; double Run = 0; };
+	static constexpr int32 TramK = 1 << 30;   // what TargetCar() gives and Enter() takes for the tram standing nearby
 	const FDrive& Driving() const { return Drive; }
+	// the nearest parked car within reach of its door, a bus standing at a stop, or the tram standing at one (TramK); -1 none
 	int32 TargetCar(const FVector2D& P, double& OutD) const;
+	// A car left in a car park (cars.js parked(), the furniture outlet's): one of the Soft box models in the colours its seed
+	// gives, into M in the car's own frame; its length and width (0 when there are no models)
+	FVector2D BuildParked(class UProceduralMeshComponent* M, const FString& Seed) const;
 	bool IsBus(int32 k) const { return Traffic && Traffic->Vehicles.IsValidIndex(k) && Traffic->Vehicles[k].Kind == 2; }
-	// On a bus: where it is now, the player's seat near the front; false when it has left service (everybody off).
+	static bool IsTram(int32 k) { return k == TramK; }
+	// On a bus or the tram: where it is now, the player's seat (near the front of a bus; the tram's front bench on the
+	// south side); false when it has left service or, the tram, passed the last stop (everybody off).
 	bool RideSeat(FVector2D& OutPos, double& OutYaw);
+	float RideUp() const { return Drive.bTram ? (float)Tram.SeatUp : .95f; }   // m: the seat's top
 	bool CanGetOff() const { return Drive.K >= 0 && (!Drive.bRide || !Drive.bMoving); }   // off a bus only where it stands
-	bool IsVan(int32 k) const { return Traffic && Traffic->Vehicles.IsValidIndex(k) && Traffic->Vehicles[k].Kind == 1; }   // the nearest parked car within reach of its door, or -1
+	bool IsVan(int32 k) const { return Traffic && Traffic->Vehicles.IsValidIndex(k) && Traffic->Vehicles[k].Kind == 1; }
 	bool Enter(int32 k);
 	void Leave(FVector2D& OutSpot, double& OutYaw);
 	void Step(float Dt, float Throttle, float Steer, bool bHandbrake);
@@ -53,14 +71,18 @@ private:
 	UPROPERTY() TObjectPtr<UMaterialInterface> Material;
 	UPROPERTY() TArray<TObjectPtr<UProceduralMeshComponent>> Pool;
 	TSharedPtr<FBrixTraffic> Traffic;
-	struct FShown { UProceduralMeshComponent* M = nullptr; int32 Lod = -1; int32 Seen = 0; };
+	void PaintCar(struct FBrixBodyMesh& Body, const struct FBrixCarModel& Md, bool bVan, int32 k, TFunctionRef<double(const TCHAR*)> R, int32 Lod) const;
+	struct FShown { UProceduralMeshComponent* M = nullptr; int32 Lod = -1; int32 Seen = 0; float Snow = -1.f; };
 	TMap<int32, FShown> Live;           // vehicle -> its mesh while near
 	FBrixTram Tram;                     // the trams (CITY-041), drawn as the slice's cars.js tram()
 	UPROPERTY() TArray<TObjectPtr<UProceduralMeshComponent>> Trams;
 	FDrive Drive;
+	mutable double TargetRun = -1;      // the run of the tram TargetCar() last offered
 	TArray<FBox2D> Paving;              // the blocks' paving: a car leaving its bay steps down off it onto the road
 	bool Free(double X, double Z, double A, bool* bWall = nullptr) const;   // bWall: what stopped it was a wall or a street thing
 	int32 Frame = 0, LastShown = 0;
-	double LastMinute = -1;
-	int32 LastHeld = 0;             // the clock last frame, for giving way (CITY-049)
+	double LastMinute = -1;             // the clock last frame, for giving way (CITY-049)
+	int32 LastHeld = 0;
+	UPROPERTY() TObjectPtr<UProceduralMeshComponent> Tracks;
+	TArray<struct FBrixPrint> DriveTrail;   // where the player's car has been this visit, Age the minute it was there
 };

@@ -58,12 +58,16 @@ public:
 	FVector2D DriveKeys() const { return DriveUsed; }   // this frame's steer and throttle while driving (the engine's sound, SND-009)
 	bool Handbrake() const { return bHandbrake; }
 	// Skateboards (CITY-098 to CITY-101; play.js boardKey(), stepBoard()): the boards owned, the one in use carried in the
-	// right hand or ridden. A test shot (or -BrixBoards) owns every kind with the electric board in use, as the slice's ?auto=1;
+	// right hand or ridden. A test shot (or -BrixBoards) owns every kind with the electric board in use, as the slice's ?auto=1,
+	// unless -BrixNoBoards (a new game's none, to buy at the skate store: CITY-102, CITY-103);
 	// -BrixBoard=<kind> gets on that one a third into the shot's wait (with -BrixHold=steer,throttle held)
 	FBrixBoardRules BoardRules;
 	FBrixBoards Boards;
 	void BoardKey();                 // Y: get on the board in use, and off it again, picking it up
+	void WeatherKey();               // K: try the next kind of weather (WLD-037; the slice's K)
 	void TestBoard(const FString& Kind);
+	// the boards owned and the one in use set anew (a game loaded): off any board ridden first (CITY-100)
+	void SetBoards(const TArray<FString>& Own, const FString& Use);
 	// the character's look (CHR-001): the designed character's (ABrixDesigner), drawn from the next frame
 	void SetLook(const FBrixLook& L) { Rules.Player = L; }
 	const FBrixLook& CurrentLook() const { return Rules.Player; }
@@ -71,6 +75,12 @@ public:
 	// framed in the part of the screen PanelShare (of its width, from the left) leaves free; the body drawn as time passes
 	void SetDesignView(bool bOn, double SpinDeg, float PanelShare, bool bTakeKeys = true, float CameraM = 0.f);   // CameraM: metres off (times height / 1.72), 0 for DesignCameraM   // bTakeKeys: the game's keys do nothing meanwhile
 	bool IsDesigning() const { return bDesigning; }
+	// On the playground (WLD-041; play.js interact(), stepPlayer(), offPlay()): E at a swing seat, seesaw end, slide's ladder,
+	// sandpit or climbing frame has a go there; E, Space or moving gets off, beside it (a slide's go ends at its bottom)
+	bool IsPlaying() const { return PlayUse != INDEX_NONE; }
+	void StartPlay(int32 Use);
+	void StopPlay(bool bAtEnd = false);
+	void TestPlay(int32 Use);   // -BrixPlay=<n>: a test shot has a go at the n-th place
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void PawnClientRestart() override;
@@ -116,6 +126,7 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UInputAction> WalletAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> QuestsAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> BoardAction;
+	UPROPERTY(Transient) TObjectPtr<UInputAction> WeatherAction;
 	UPROPERTY(Transient) TArray<TObjectPtr<UInputAction>> PageActions;
 	TArray<FString> PageNames;
 	float LookScale = 1.f;
@@ -125,6 +136,7 @@ private:
 	bool bTalking = false;
 	bool bPanel = false;
 	bool bDriving = false, bHandbrake = false;
+	float PersonWet = -1.f;          // how wet the player's clothes are shown (WLD-037)
 	FVector2D DriveIn = FVector2D::ZeroVector;   // this frame's W/S and A/D while driving
 	FVector2D DriveUsed = FVector2D::ZeroVector; // what the car was given this frame (DriveIn is cleared once used)
 	float ArmBefore = 0.f;
@@ -140,4 +152,9 @@ private:
 	float DesignM = 0.f;
 	float DesignShare = 0.f;
 	FVector BoomOffsetBefore = FVector::ZeroVector;
+	class ABrixPeople* People() const;
+	int32 PlayUse = INDEX_NONE;
+	double PlayT0 = 0;
+	bool bPlayOff = false;           // moving or Space while on it: off at the next frame
+	FVector2D PlayEnd = FVector2D::ZeroVector;
 };

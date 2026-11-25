@@ -289,4 +289,69 @@ bool FCITY041_TramsKeepTheTimetable::RunTest(const FString&)
 	TestTrue(TEXT("trams were checked"), Moments > 1000 && Trams > 500);
 	return Wrong == 0;
 }
+
+// CITY-041: players can ride the tram, as a bus is ridden (CITY-092). Through a whole day, at every moment a tram stands at a
+// stop on its way through town: someone beside it on the platform can get on, someone across the street or along it beyond
+// its ends cannot, nor can anyone while it moves, nor at the last stop (it goes on out of town). Once on, its run is found
+// at each later moment, carrying them east; it next stands at the next stop, where they can get off onto that stop's
+// platform; after the last stop it can no longer be ridden. The player's bench seat is one of the twelve and no rider's.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY041_PlayersRideTheTram, "BrixTown.World.CITY041_players_ride_the_tram",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FCITY041_PlayersRideTheTram::RunTest(const FString&)
+{
+	FBrixCity City;
+	FString Error;
+	if (!TestTrue(TEXT("the starting city loads: ") + Error, LoadBrixCity(StartingCityDir(), City, Error))) return false;
+	const FBrixTram& T = City.Tram;
+	if (!TestTrue(TEXT("the line has its stops"), T.Stops.Num() >= 2)) return false;
+	TArray<FBox2D> Platforms;   // the tram stops' lots
+	for (const FBrixBlock& B : City.Blocks) for (const FBrixLot& L : B.Lots) if (L.Kind == TEXT("stop")) Platforms.Add(FBox2D(L.Min, L.Max));
+	auto OnPlatform = [&](const FVector2D& P) { for (const FBox2D& Bx : Platforms) if (Bx.IsInside(P)) return true; return false; };
+	int32 Boarded = 0, Rides = 0, Wrong = 0;
+	TSet<double> Done;
+	for (double M = T.First - 30; M < T.Last + 60; M += .05)
+	{
+		double D = 0;
+		for (const FBrixTram::FAt& A : T.At(M))
+		{
+			const FVector2D Beside(A.X + 1.5, T.Z - T.HalfWidth - .8), Across(A.X, T.Z + 8), Beyond(A.X + T.HalfLength + 4, T.Z);
+			const bool bLast = FMath::Abs(A.X - T.Stops.Last()) < .01;
+			const int32 S = T.Standing(M, Beside, 1.5, D);
+			const bool bCan = S >= 0 && FMath::IsNearlyEqual(T.At(M)[S].Run, A.Run);
+			if (bCan != (A.bStopped && !bLast)) { if (++Wrong <= 6) AddError(FString::Printf(TEXT("minute %.2f, the tram of run %.0f at x %.1f %s: %s"), M, A.Run, A.X, A.bStopped ? TEXT("standing") : TEXT("moving"), bCan ? TEXT("could be boarded") : TEXT("could not be boarded"))); continue; }
+			if (T.Standing(M, Across, 1.5, D) >= 0 || T.Standing(M, Beyond, 1.5, D) >= 0) { if (++Wrong <= 6) AddError(FString::Printf(TEXT("minute %.2f: boarded from across the street or past its end"), M)); }
+			if (!bCan || Done.Contains(A.Run)) continue;
+			Done.Add(A.Run);   // ride this run from here to the next stop
+			++Boarded;
+			const int32 From = T.Stops.IndexOfByPredicate([&](double X) { return FMath::Abs(X - A.X) < .01; });
+			double Mi = M, LastX = A.X;
+			bool bLeft = false, bArrived = false;
+			while (Mi < M + 60)
+			{
+				Mi += .02;
+				if (!T.Rideable(Mi, A.Run)) break;
+				const TOptional<FBrixTram::FAt> R = T.Find(Mi, A.Run);
+				if (!R || R->X < LastX - 1e-6) { if (++Wrong <= 6) AddError(TEXT("the tram ridden went back or was lost")); break; }
+				LastX = R->X;
+				if (!R->bStopped) { bLeft = true; continue; }
+				if (bLeft)
+				{
+					bArrived = From >= 0 && T.Stops.IsValidIndex(From + 1) && FMath::Abs(R->X - T.Stops[From + 1]) < .01;
+					if (!bArrived && ++Wrong <= 6) AddError(FString::Printf(TEXT("run %.0f: boarded at stop %d, next stood at x %.1f, not the next stop"), A.Run, From, R->X));
+					if (!OnPlatform(T.Alight(R->X)) && ++Wrong <= 6) AddError(FString::Printf(TEXT("getting off at x %.1f: (%.1f, %.1f) is not on the stop"), R->X, T.Alight(R->X).X, T.Alight(R->X).Y));
+					break;
+				}
+			}
+			if (bArrived) ++Rides;
+		}
+	}
+	// every stop's platform is where you step down, and the player's seat is a bench seat apart from the riders' (0 to 10)
+	for (const double X : T.Stops) if (!OnPlatform(T.Alight(X)) && ++Wrong <= 8) AddError(FString::Printf(TEXT("the stop at x %.1f: stepping down at (%.1f, %.1f) is not on it"), X, T.Alight(X).X, T.Alight(X).Y));
+	for (int32 k = 0; k < 11; ++k) if (FVector2D::Distance(T.Seat(0, k), T.Seat(0, T.PlayerSeat)) < .5) { AddError(TEXT("the player's seat is a rider's")); ++Wrong; }
+	const FVector2D Ps = T.Seat(0, T.PlayerSeat);
+	TestTrue(TEXT("the player's seat is inside the tram"), FMath::Abs(Ps.X) < T.HalfLength - .5 && FMath::Abs(Ps.Y - T.Z) < T.HalfWidth);
+	TestTrue(FString::Printf(TEXT("trams boarded (%d) and ridden to the next stop (%d) all day"), Boarded, Rides), Boarded > 50 && Rides == Boarded);
+	TestEqual(TEXT("a moving tram is never ridden after the last stop"), T.Rideable(T.First + 30, -1), false);
+	return Wrong == 0;
+}
 #endif

@@ -146,6 +146,20 @@ TOptional<FBrixWhere> FBrixDay::Where(int32 Resident, double Minute) const
 	return W;
 }
 
+bool BrixOffBrokenSeat(FBrixWhere& W, const TArray<FVector2D>& Broken, double Reach, double Step)
+{
+	if (W.Pose != 2 || W.bInside || W.SeatUp < 0.f || !Broken.Num()) return false;
+	for (const FVector2D& B : Broken)
+		if (FVector2D::DistSquared(B, W.Pos) < Reach * Reach)
+		{
+			W.Pose = 0;
+			W.SeatUp = -1.f;
+			W.Pos += W.Heading.GetSafeNormal() * Step;
+			return true;
+		}
+	return false;
+}
+
 int32 SeatBrixDay(FBrixDay& Day, const FBrixCity& City)
 {
 	// the slice's heights (play.js Y_YARD) and its facing: yaw 0 faces north, (sin yaw, -cos yaw)

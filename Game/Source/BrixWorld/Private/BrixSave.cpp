@@ -110,6 +110,9 @@ TSharedRef<FJsonObject> BrixEconomySave(const FBrixEconomy& E)
 	S->SetNumberField(TEXT("stall_sold_total"), E.StallSoldTotal);
 	S->SetObjectField(TEXT("clothes"), Counts(E.Clothes));
 	S->SetObjectField(TEXT("homeware"), Counts(E.Homeware));
+	FVals Bo;
+	for (const FString& K : E.Boards) Bo.Add(Str(K));
+	S->SetArrayField(TEXT("boards"), Bo);   // CITY-100
 	return S;
 }
 
@@ -168,6 +171,11 @@ bool BrixEconomyLoad(FBrixEconomy& E, const FJsonObject& S, FString& OutWhy)
 	E.StallSoldTotal = (int32)S.GetNumberField(TEXT("stall_sold_total"));
 	ReadCounts(S, TEXT("clothes"), E.Clothes);
 	ReadCounts(S, TEXT("homeware"), E.Homeware);
+	E.Boards.Reset();   // a save from before the skate store has none
+	const TArray<TSharedPtr<FJsonValue>>* Bo = nullptr;
+	if (S.TryGetArrayField(TEXT("boards"), Bo))
+		for (const FString& K : E.R.BoardOrder)
+			if (Bo->ContainsByPredicate([&K](const TSharedPtr<FJsonValue>& V) { return V->AsString() == K; })) E.Boards.Add(K);
 	return true;
 }
 
@@ -207,6 +215,24 @@ bool BrixQuestsLoad(FBrixQuests& Q, const FJsonObject& S, FString& OutWhy)
 	return true;
 }
 
+TSharedRef<FJsonObject> BrixBoardsSave(const TArray<FString>& Own, const FString& InUse, bool bRiding)
+{
+	TSharedRef<FJsonObject> B = MakeShared<FJsonObject>();
+	FVals O;
+	for (const FString& K : Own) O.Add(Str(K));
+	B->SetArrayField(TEXT("own"), O);
+	if (InUse.IsEmpty()) B->SetField(TEXT("kind"), MakeShared<FJsonValueNull>()); else B->SetStringField(TEXT("kind"), InUse);
+	B->SetBoolField(TEXT("riding"), bRiding);
+	return B;
+}
+
+FString BrixBoardsInUse(const TSharedPtr<FJsonObject>& Boards)
+{
+	FString K;
+	if (Boards) Boards->TryGetStringField(TEXT("kind"), K);
+	return K;
+}
+
 FString FBrixSaveGame::ToString() const
 {
 	TSharedRef<FJsonObject> S = MakeShared<FJsonObject>();
@@ -220,8 +246,12 @@ FString FBrixSaveGame::ToString() const
 	S->SetObjectField(TEXT("clock"), Clock);
 	if (Econ) S->SetObjectField(TEXT("econ"), Econ);
 	if (Quests) S->SetObjectField(TEXT("quests"), Quests);
+	if (Estate) S->SetObjectField(TEXT("estate"), Estate);
+	if (Remodels) S->SetObjectField(TEXT("remodels"), Remodels);
+	if (Plans) S->SetObjectField(TEXT("plans"), Plans);
 	S->SetArrayField(TEXT("outfits"), Outfits);
 	S->SetObjectField(TEXT("feats"), Counts(Feats));
+	if (Boards) S->SetObjectField(TEXT("boards"), Boards);
 	S->SetStringField(TEXT("at"), At.ToIso8601());
 	FString Out;
 	const TSharedRef<TJsonWriter<>> W = TJsonWriterFactory<>::Create(&Out);
@@ -243,9 +273,13 @@ bool FBrixSaveGame::FromString(const FString& Text, const FBrixDesignerRules& D,
 	if (S->TryGetObjectField(TEXT("clock"), O)) { Day = (int32)(*O)->GetNumberField(TEXT("day")); Minute = (*O)->GetNumberField(TEXT("m")); }
 	Econ = S->TryGetObjectField(TEXT("econ"), O) ? *O : nullptr;
 	Quests = S->TryGetObjectField(TEXT("quests"), O) ? *O : nullptr;
+	Estate = S->TryGetObjectField(TEXT("estate"), O) ? *O : nullptr;
+	Remodels = S->TryGetObjectField(TEXT("remodels"), O) ? *O : nullptr;
+	Plans = S->TryGetObjectField(TEXT("plans"), O) ? *O : nullptr;
 	if (!Econ || !Quests) { OutWhy = TEXT("the save has no money or quests"); return false; }
 	Outfits = Array(*S, TEXT("outfits"));
 	ReadCounts(*S, TEXT("feats"), Feats);
+	Boards = S->TryGetObjectField(TEXT("boards"), O) ? *O : nullptr;   // none in a save from before the skate store
 	FString When;
 	if (!S->TryGetStringField(TEXT("at"), When) || !FDateTime::ParseIso8601(*When, At)) At = FDateTime();
 	return true;

@@ -42,6 +42,7 @@ public:
 	UPROPERTY() TObjectPtr<class ABrixLife> Life;    // the player's money, the bank, shops and quests (ADR-0012)
 	UPROPERTY() TObjectPtr<class ABrixMap> Map;
 	UPROPERTY() TObjectPtr<class ABrixMall> Mall;   // Eastgate Mall, inside and out (WLD-058)
+	UPROPERTY() TObjectPtr<class ABrixMall> OutletHall;   // the furniture outlet's hall and car park (FURN-020)
 	class ABrixPeople* PeopleActor() const { return People; }      // the minimap, the big map and the words over the street (UI-012, UI-018)
 
 	UPROPERTY(Config) FString CityDir = TEXT("../World/city_01");   // from the project folder (Game/)
@@ -65,6 +66,8 @@ public:
 	int32 RoomAt(const FVector& WorldCm) const;
 	const FBrixCity* CityData() const { return City.Get(); }
 	class ABrixRooms* RoomsActor() const { return Furnisher; }   // the furnished rooms near the camera, and the towers' lifts
+	struct FBrixInsides* InsidesData() const { return Insides.Get(); }   // what is inside the buildings, and their designs (BUILD-001)
+	class ABrixTownActor* Town() const { return TownActor; }          // the town, which draws a remodelled building again
 
 private:
 	void SpawnLight();

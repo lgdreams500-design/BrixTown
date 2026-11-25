@@ -4,6 +4,9 @@
 #include "GameFramework/Actor.h"
 #include "BrixBuyMenu.h"
 #include "BrixEconomy.h"
+#include "BrixEstate.h"
+#include "BrixBuilder.h"
+#include "BrixRoomPlan.h"
 #include "BrixQuests.h"
 #include "BrixRewards.h"
 #include "BrixRewardsWidget.h"
@@ -67,7 +70,7 @@ public:
 	const TMap<FString, int32>& Achievements() const { return Feats; }   // earned, and on which day (QST-009)
 	bool ArrowKey(int32 Dx, int32 Dy);    // at a shop's counter: choose the next thing that way
 	bool EnterKey();                      // and buy (or sell) it
-	bool IsShop() const { return Panel == TEXT("shop"); }
+	bool IsShop() const { return Panel == TEXT("shop") || Panel == TEXT("outlet"); }
 	void Close();
 	void Toast(const FString& Text);
 	void ToggleSound();                   // N (SND-013): the Sound switch of the settings flipped, applied, kept, and said
@@ -80,6 +83,16 @@ public:
 	bool RunOps(const FString& Ops);      // the -BrixLife= ops, as economy.run_script() runs them; false if any was refused
 	bool OpenCounterAt(const FString& What);   // -BrixCounter=: stand at that counter's door and open it
 	FBrixEconomy* Economy() const { return E.Get(); }
+	// the real estate market (F-PROP-ESTATE 2; PROP-009 to PROP-023): P opens the menu's Properties page, B at an estate
+	// agent's office its counter
+	FBrixEstate* Estate() const { return Est.Get(); }
+	TArray<int32> MyLots() const { return Est ? Est->MyLots() : TArray<int32>(); }   // owned or rented (the maps' map_mine)
+	FString BoardText(int32 Lot) const;   // PROP-023: what the board over a building's door says, or empty
+	void ShowOnMap(int32 Lot);            // UI-006: the mark at a building, and the big map
+	int32 LotHereForEstate() const { return LotHere(); }
+	// the building designer (F-BLD-DESIGN; BUILD-004 to BUILD-007, BUILD-016 to BUILD-020): remodel a building or unit you own
+	bool OpenRemodel(int32 Lot);
+	const TMap<FString, TSharedPtr<FJsonObject>>& Remodels() const { return RemodelsDone; }   // lot id -> its design as paid for
 	int32 CounterHere() const;            // the lot whose counter the player is at, or -1
 
 	UPROPERTY(Config) FString LifeFile = TEXT("Data/life.json");
@@ -113,10 +126,33 @@ private:
 	void SaveSettings() const;
 	FString CounterWords(int32 Lot) const;
 	void Draw();                          // the open panel, drawn again from the state of the game (life.js draw())
-	void Act(TFunction<bool(FString&)> Fn);   // a button: do it, say what happened or why it was refused, draw again
+	void Act(TFunction<bool(FString&)> Fn);
+	void Redraw();   // a button: do it, say what happened or why it was refused, draw again
 	void Open(const FString& Kind, int32 Lot);
 	void BankPanel(TSharedRef<SVerticalBox> Body);
 	void WalletPanel(TSharedRef<SVerticalBox> Body);
+	void EstatePanel(TSharedRef<SVerticalBox> Body, const FString& Agent, int32 Here);   // life.js estatePanel(): at an agent's, or Properties
+	TSharedRef<SWidget> UnitRow(int32 i, const FString& Agent);
+	void RemodelPanel(TSharedRef<SVerticalBox> Body);
+	void RemodelSet(const FBrixDesignChanges& Changes);
+	void EndRemodel();                    // the building as it was (or as just paid for), the player's own view again
+	void DesignView();                    // BUILD-020: the camera over the building, three-quarters from its front
+	bool Holding(int32 Lot, bool& bWhole, TArray<int32>& Floors) const;   // life.js holding()
+	TSharedPtr<FJsonObject> DesignOf(int32 Lot) const;   // as remodelled and paid for, else inside.json's
+	bool RemodelPay(FString& Said);
+	void ApplyRemodel(int32 Lot, const TSharedPtr<FJsonObject>& Design);
+	// the room plan (BUILD-021 to BUILD-023)
+	const struct FBrixLot* CityLot(int32 Lot) const;
+	FBrixRoomPlanRules PlanRules() const;
+	FBrixPlan PlanNow(int32 Lot, int32 Floor) const;
+	bool RoomFor(int32 Lot, int32 Floor, FBrixRoomSpec& Out) const;
+	void ShowPlan(int32 Lot, int32 Floor, const FBrixPlan& Plan);
+	void PushUndo();
+	void EditPlan(TFunction<void(FBrixPlan&)> Fn);
+	void AddWall(const FString& Ax);
+	void RoomsSection(TSharedRef<SVerticalBox> Body);
+	int64 WorkOf(TArray<FBrixCostLine>& Lines, TArray<FString>& Probs, int64& DesignTotal) const;   // drawn and kept (inside.json's insides too)
+	FString BuyUnits(const TArray<int32>& Units, const FString& Agent, bool& bOk);
 	void QuestsPanel(TSharedRef<SVerticalBox> Body);
 	TMap<FString, FString> JobVars(const FBrixJob& O) const;
 	FString FillJob(const FString& Text, const FBrixJob& O) const;
@@ -145,9 +181,16 @@ private:
 	TSharedRef<SWidget> PurseLine() const;
 	TSharedRef<SWidget> StatementTable(int32 N) const;
 	void ShopPanel(TSharedRef<SVerticalBox> Body);
+	void SkatePanel(TSharedRef<SVerticalBox> Body);   // the skate store's counter (CITY-102, CITY-103)
+	bool SkateBuy(int32 N, const FString& Kind, FString& Said);
+public:
+	FString SkateStoreName() const;                    // the town's skate store, by name
+private:
 	void StallPanel(TSharedRef<SVerticalBox> Body);
 	// one thing of a buy menu (life.js ware()): whether it can be had now, sold out, or dearer than cash and current account
-	struct FWare { FString Id, Name, Goes, Band; int64 Price = 0; int32 Left = -1; FString State = TEXT("ok"); int64 Short = 0; };
+	// State: ok, short (dearer than cash and the current account), out (sold out) or have (a board already owned: CITY-103);
+	// More: rows the showcase adds under its name (a board's top speed)
+	struct FWare { FString Id, Name, Goes, Band; int64 Price = 0; int32 Left = -1; FString State = TEXT("ok"); int64 Short = 0; TArray<TPair<FString, FString>> More; };
 	struct FGridOpts { FString Id, Verb = TEXT("Buy"), StockLabel, PriceLabel = TEXT("Price"), Empty = TEXT("Nothing here."); bool bMine = false; TFunction<bool(const FWare&, FString&)> Buy; };
 	TSharedRef<SWidget> Grid(const TArray<FWare>& Things, const FGridOpts& O);   // layout B (buymenu.js grid())
 	FWare Ware(const FString& Id, const FString& Name, int64 Price, const FString& Goes, int32 Left, const FString& Band) const;
@@ -163,6 +206,27 @@ private:
 	FBrixQuestRules QuestRules;
 	TArray<FBrixQuestResident> QuestResidents;
 	TUniquePtr<FBrixQuests> Q;
+	FBrixEstateRules EstateRules;
+	TArray<FBrixUnit> EstateUnits;
+	TMap<FString, FString> EstateRoles;
+	TUniquePtr<FBrixEstate> Est;            // holds the economy: goes before it
+	int32 PayTerm = 0;                    // how to pay: 0 outright, else the mortgage term's place + 1 (life.js payChoice())
+	FString AgentFilter = TEXT("all");    // the kind of unit an agent shows
+	TMap<int32, FString> RentEdit;        // the rent typed for a unit of the player's, in brix
+	TArray<FBrixDesignLot> DesignLots;    // the town's lots as the designer sees them (BrixBuilder::LotOf)
+	TMap<FString, TSharedPtr<FJsonObject>> RemodelsDone;
+	TSharedPtr<FJsonObject> Draft, DraftBase;   // the remodel being tried, and what it started from
+	TArray<TSharedPtr<FJsonObject>> DraftUndo;
+	TMap<int32, FBrixPlan> PlanDraft, PlanBase;   // the storeys' room plans being tried, and as they were
+	TArray<TMap<int32, FBrixPlan>> PlanUndo;
+	FString WallSel;                      // the inner wall picked
+	TMap<FString, TMap<int32, FBrixPlan>> PlansDone;   // lot id -> storey -> its plan as paid for (life.js plans)
+	FString DesignTab = TEXT("outside"), DesignFacade = TEXT("*");
+	int32 DesignStorey = 0, ViewTurn = 0;
+	UPROPERTY() TObjectPtr<class ACameraActor> ViewCam;
+	UPROPERTY(Config) float DesignPitchDeg = 35.f;   // BUILD-020: the designer's view at the angle of an isometric drawing
+	UPROPERTY(Config) float RemodelPanelPx = 470.f;  // the designer's card, at the left of the screen
+	UPROPERTY(Config) float DesignTurnDeg = 36.f;    // and turned that far from the front (builder: designCam's .62 rad)
 	TSharedPtr<FBrixDay> Day;
 	TOptional<FBrixJob> Offered;          // the job offered in the talk under way (life.js _offer)
 	int32 PendingCounter = -1;            // a resident whose counter opens when the talk ends (an answer's act "shop")
@@ -195,6 +259,9 @@ private:
 	// the open panel (life.js panel)
 	FString Panel, Msg;
 	int32 PanelLot = -1;
+	FString PanelUnit;                    // the outlet of a mall whose counter is open (ECO-013)
+	bool OutletHere(int32& OutLot, FString& OutUnit) const;   // the outlet the player stands in, on whichever floor (life.js outletHere())
+	void OutletPanel(TSharedRef<SVerticalBox> Body);
 	int32 MoveFrom = 0, MoveTo = 1, LoanSize = 0, LoanTerm = 0;
 	FString Amount = TEXT("5.00");
 	FString Side = TEXT("buy");           // a shop's tab: what it sells, or what it buys

@@ -14,6 +14,7 @@
 #include "BrixRooms.h"
 #include "BrixTalkActor.h"
 #include "BrixUnits.h"
+#include "BrixWeatherActor.h"
 #include "Camera/CameraComponent.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/CapsuleComponent.h"
@@ -68,10 +69,11 @@ void ABrixCharacter::BeginPlay()
 	FString Error;
 	if (!LoadBrixPeopleRules(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/people.json"))), Rules, Error))
 		UE_LOG(LogTemp, Error, TEXT("Brix Town: %s"), *Error);
+	BrixAddClimbSignature(Rules);   // up a slide's ladder or a climbing frame (dressing.js climbSig(), WLD-041)
 	if (!LoadBrixBoards(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/rules/boards.json"))), BoardRules, Error))
 		UE_LOG(LogTemp, Error, TEXT("Brix Town: no skateboards (%s)"), *Error);
 	Boards.R = &BoardRules;
-	if (FParse::Param(FCommandLine::Get(), TEXT("BrixBoards")) || FCommandLine::Get() && FCString::Strifind(FCommandLine::Get(), TEXT("-BrixShot=")))
+	if ((FParse::Param(FCommandLine::Get(), TEXT("BrixBoards")) || FCommandLine::Get() && FCString::Strifind(FCommandLine::Get(), TEXT("-BrixShot="))) && !FParse::Param(FCommandLine::Get(), TEXT("BrixNoBoards")))
 		Boards.Give(BoardRules.AutoOwned, BoardRules.AutoEquipped);   // CITY-100: a test owns every kind, the electric one in use (the slice's ?auto=1)
 }
 
@@ -91,6 +93,7 @@ void ABrixCharacter::MakeInput()
 	WalletAction = NewObject<UInputAction>(this, TEXT("Wallet"));
 	QuestsAction = NewObject<UInputAction>(this, TEXT("Quests"));
 	BoardAction = NewObject<UInputAction>(this, TEXT("Board"));
+	WeatherAction = NewObject<UInputAction>(this, TEXT("Weather"));
 	PageNames = { TEXT("me"), TEXT("belongings"), TEXT("property"), TEXT("wardrobe"), TEXT("map"), TEXT("help") };   // settings.json actions
 	for (const FString& N : PageNames) PageActions.Add(NewObject<UInputAction>(this, *(TEXT("Page_") + N)));
 	for (UInputAction* A : PageActions) A->bTriggerWhenPaused = true;   // the menu stops the clock; its keys still work
@@ -125,6 +128,7 @@ void ABrixCharacter::MakeInput()
 	Keys->MapKey(WalletAction, EKeys::I);
 	Keys->MapKey(QuestsAction, EKeys::J);
 	Keys->MapKey(BoardAction, EKeys::Y);   // settings.json: board, Y
+	Keys->MapKey(WeatherAction, EKeys::K);   // settings.json: weather, K
 	const FKey PageKeys[6] = { EKeys::C, EKeys::G, EKeys::P, EKeys::U, EKeys::M, EKeys::H };
 	for (int32 k = 0; k < 6; ++k) Keys->MapKey(PageActions[k], PageKeys[k]);
 	Keys->MapKey(ChooseActions[0], EKeys::Left);
@@ -168,6 +172,7 @@ void ABrixCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		In->BindAction(WalletAction, ETriggerEvent::Started, this, &ABrixCharacter::WalletKey);
 		In->BindAction(QuestsAction, ETriggerEvent::Started, this, &ABrixCharacter::QuestsKey);
 		In->BindAction(BoardAction, ETriggerEvent::Started, this, &ABrixCharacter::BoardKey);
+		In->BindAction(WeatherAction, ETriggerEvent::Started, this, &ABrixCharacter::WeatherKey);
 		for (UInputAction* A : PageActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::MenuPageKey);
 		for (UInputAction* A : ChooseActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::ChooseKey);
 		for (UInputAction* A : AnswerActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::AnswerKey);
@@ -177,6 +182,7 @@ void ABrixCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 void ABrixCharacter::Move(const FInputActionValue& Value)
 {
 	const FVector2D V = Value.Get<FVector2D>();
+	if (IsPlaying()) { if (!V.IsNearlyZero()) bPlayOff = true; return; }   // moving gets off what you play on
 	if (bDriving) { DriveIn = V; return; }   // W/S the speed, A/D the steering
 	if (!Controller || bTalking || bPanel) return;   // a talk or a counter holds the player still (conversations.js open())
 	if (Boards.Riding()) { BoardIn = V; return; }    // on a board there is no walk: W goes, S brakes, A and D turn
@@ -200,6 +206,13 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	if (!Rules.Roles.Num()) return;
+	if (const ABrixGameMode* M = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))   // wet clothes out in the rain (WLD-037)
+	{
+		const ABrixWeather* Wx = M->Weather.Get();
+		const bool bIn = bDesigning || bDriving || (Wx && Wx->Roofed(FVector2D(GetActorLocation()) / CmPerM));   // indoors or in a vehicle: dry
+		const float W = !bIn && M->PeopleActor() ? M->PeopleActor()->WetClothes() : 0.f;
+		if (FMath::Abs(W - PersonWet) > .005f) { Person->SetCustomPrimitiveDataFloat(1, W); PersonWet = W; }
+	}
 	if (bDesigning)   // the designer: standing, breathing and blinking while the clock stands still; the camera close in front
 	{
 		const FBrixLook& L = Rules.Player;
@@ -219,14 +232,34 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 			if (APlayerController* PC = Cast<APlayerController>(GetController())) if (PC->PlayerCameraManager) PC->PlayerCameraManager->UpdateCamera(DeltaSeconds);
 		return;
 	}
-	if (bDriving)   // on a bus: carried where it goes, sitting near the front (cars.js ride())
+	if (IsPlaying())   // on a swing, seesaw, slide, sandpit or climbing frame: where the go puts you (dressing.js playerAt())
+	{
+		ABrixPeople* Pp = People();
+		if (!Pp) { PlayUse = INDEX_NONE; return; }
+		const FBrixPlayPose P = Pp->PlayArea().PlayerAt(PlayUse, PlayT0, GetWorld()->GetTimeSeconds());
+		if (bPlayOff || P.bDone) { PlayEnd = FVector2D(P.X, P.Z); StopPlay(P.bDone); return; }
+		SetActorLocationAndRotation(FVector(P.X * CmPerM, P.Z * CmPerM, P.Y * CmPerM + 85.f), FRotator(0, FMath::RadiansToDegrees(P.Yaw) - 90.0, 0));   // (the body is drawn turned a quarter in the actor)
+		FBrixDrawOptions O;
+		O.Pose = P.Pose;
+		O.Phase = P.Phase;
+		O.bStraddle = P.bStraddle;
+		if (P.bClimb) O.Sig = TEXT("Climb");
+		O.Arms[0] = P.Arms[0]; O.Arms[1] = P.Arms[1];
+		O.Seconds = GetWorld()->GetTimeSeconds();
+		O.Lod = 0;
+		Scratch.Reset();
+		DrawBrixPerson(Rules, Rules.Player, FVector::ZeroVector, 0.0, O, Scratch);
+		Verts = BrixBodyToMesh(Person, Scratch, Verts, false, BodyMaterial);
+		return;
+	}
+	if (bDriving)   // on a bus or the tram: carried where it goes, sitting near the front (cars.js ride()) or on the tram's bench
 		if (ABrixCars* C = Cars())
 			if (C->Driving().bRide)
 			{
 				FVector2D Seat;
 				double Yaw = 0;
 				if (!C->RideSeat(Seat, Yaw)) { TalkKey(); return; }   // the bus has left service: everybody off
-				SetActorLocationAndRotation(FVector(Seat.X * CmPerM, Seat.Y * CmPerM, .95f * CmPerM + 85.f), FRotator(0, FMath::RadiansToDegrees(Yaw), 0));
+				SetActorLocationAndRotation(FVector(Seat.X * CmPerM, Seat.Y * CmPerM, C->RideUp() * CmPerM + 85.f), FRotator(0, FMath::RadiansToDegrees(Yaw), 0));
 				if (C->Driving().bMoving)
 					if (APlayerController* PC = Cast<APlayerController>(GetController()))
 					{
@@ -297,6 +330,11 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 	O.Pose = Speed > 0.1 ? 1 : 0;
 	O.Phase = Phase;
 	if (bTalking) O.Face = TalkFace;
+	else if (const APlayerController* PC = Cast<APlayerController>(GetController()))   // the head turned part of the way to where the camera looks (play.js; ANIM-005)
+	{
+		const FRotator R = PC->GetControlRotation();
+		O.Look = BrixLookAlong(FMath::DegreesToRadians(FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, R.Yaw)), FMath::DegreesToRadians(FRotator::NormalizeAxis(R.Pitch)));
+	}
 	O.Seconds = GetWorld()->GetTimeSeconds();
 	O.Lod = 0;
 	O.Board = Boards.Kind();   // the board in use, carried in the right hand (CITY-099)
@@ -304,6 +342,48 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 	Scratch.Reset();
 	DrawBrixPerson(Rules, L, FVector::ZeroVector, 0.0, O, Scratch);
 	Verts = BrixBodyToMesh(Person, Scratch, Verts, false, BodyMaterial);
+}
+
+ABrixPeople* ABrixCharacter::People() const
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	return Mode ? Mode->PeopleActor() : nullptr;
+}
+
+void ABrixCharacter::StartPlay(int32 Use)
+{
+	ABrixPeople* Pp = People();
+	if (!Pp || !Pp->PlayArea().PlayerUses.IsValidIndex(Use)) return;
+	PlayUse = Use;
+	PlayT0 = GetWorld()->GetTimeSeconds();
+	bPlayOff = false;
+	SetActorEnableCollision(false);
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: the player has a go (%s)"), *Pp->PlayArea().PlayerUses[Use].Label);
+}
+
+void ABrixCharacter::StopPlay(bool bAtEnd)
+{
+	if (!IsPlaying()) return;
+	ABrixPeople* Pp = People();
+	const int32 U = PlayUse;
+	PlayUse = INDEX_NONE;
+	bPlayOff = false;
+	if (!Pp || !Pp->PlayArea().PlayerUses.IsValidIndex(U)) return;
+	const FVector2D Off = bAtEnd ? PlayEnd : Pp->PlayArea().PlayerOff(U);   // off at the slide's bottom, or beside the piece
+	SetActorLocation(FVector(Off.X * CmPerM, Off.Y * CmPerM, Pp->PlayArea().PlayerUses[U].Y * CmPerM + 95.f), false, nullptr, ETeleportType::TeleportPhysics);
+	SetActorEnableCollision(true);
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+}
+
+void ABrixCharacter::TestPlay(int32 Use)
+{
+	ABrixPeople* Pp = People();
+	if (!Pp || !Pp->PlayArea().PlayerUses.IsValidIndex(Use)) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: no play place %d"), Use); return; }
+	const FBrixPlay::FPlayerUse& U = Pp->PlayArea().PlayerUses[Use];
+	SetActorLocation(FVector(U.X * CmPerM, U.Z * CmPerM, U.Y * CmPerM + 95.f), false, nullptr, ETeleportType::TeleportPhysics);
+	TalkKey();   // as the player would, at the place
 }
 
 ABrixTalk* ABrixCharacter::Talk() const
@@ -315,6 +395,7 @@ ABrixTalk* ABrixCharacter::Talk() const
 void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whichever is nearest (play.js interact())
 {
 	if (bDesigning && bDesignKeys) return;   // the designer has the keys
+	if (IsPlaying()) { StopPlay(); return; }
 	ABrixCars* C = Cars();
 	ABrixTalk* T = Talk();
 	if (bDriving && C)
@@ -337,6 +418,9 @@ void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whic
 	double CarD = 1e9;
 	const int32 Car = C ? C->TargetCar(Me, CarD) : -1;
 	const double TalkD = T && T->CandidateDistance() >= 0 ? T->CandidateDistance() : 1e9;
+	double PlayD = 1e9;
+	const int32 PlayAt = !bDriving && !Boards.Riding() && People() ? People()->PlayTarget(GetActorLocation(), PlayD) : INDEX_NONE;
+	if (PlayAt != INDEX_NONE && PlayD <= TalkD && (Car < 0 || PlayD <= CarD)) { StartPlay(PlayAt); return; }   // a go on the playground (WLD-041)
 	if (Car >= 0 && CarD <= TalkD)
 	{
 		if (!C->Enter(Car)) return;
@@ -344,12 +428,22 @@ void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whic
 		SetActorEnableCollision(false);
 		GetCharacterMovement()->StopMovementImmediately();
 		GetCharacterMovement()->DisableMovement();
-		Boom->TargetArmLength = FMath::Max(Boom->TargetArmLength, (C->IsBus(Car) ? 11.f : 8.5f) * CmPerM);   // back a way, to see the car or the bus
+		Boom->TargetArmLength = FMath::Max(Boom->TargetArmLength, (ABrixCars::IsTram(Car) ? 13.f : C->IsBus(Car) ? 11.f : 8.5f) * CmPerM);   // back a way, to see the car, the bus or the tram
 		if (APlayerController* PC = Cast<APlayerController>(GetController()))   // looking along the car, a little down on it
 			PC->SetControlRotation(FRotator(-12.0, FMath::RadiansToDegrees(C->Driving().A), 0));
 		return;
 	}
 	if (T) T->Open();
+}
+
+void ABrixCharacter::WeatherKey()   // K: the next kind of weather to look at, for the whole day (play.js wxTry)
+{
+	if ((bDesigning && bDesignKeys) || bTalking || bPanel) return;
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	ABrixWeather* Wx = Mode ? Mode->Weather.Get() : nullptr;
+	if (!Wx || !Wx->bOn) return;
+	const FString Now = Wx->TryNext();
+	if (ABrixLife* L = Life()) L->Toast(Now.IsEmpty() ? FString(TEXT("The day's own weather")) : TEXT("Trying ") + Now);
 }
 
 ABrixCars* ABrixCharacter::Cars() const
@@ -362,6 +456,7 @@ void ABrixCharacter::JumpKey()
 {
 	if (bDesigning && bDesignKeys) return;   // the designer has the keys
 	if (bDriving) { bHandbrake = true; return; }
+	if (IsPlaying()) { bPlayOff = true; return; }
 	if (Boards.Riding()) return;   // no jumping off a board: Y steps off it
 	if (!bTalking) Jump();
 }
@@ -529,7 +624,7 @@ void ABrixCharacter::BoardKey()   // Y: from the hand onto the board, and back; 
 	if (bDriving || bTalking || bPanel || bDesigning) return;
 	const TOptional<bool> On = Boards.Toggle();
 	ABrixLife* L = Life();
-	if (!On) { if (L) L->Toast(TEXT("You have no skateboard yet. The skate store is coming.")); return; }
+	if (!On) { if (L) L->Toast(TEXT("You have no skateboard yet. ") + L->SkateStoreName() + TEXT(" sells them.")); return; }
 	const FBrixBoardKind* K = Boards.Kind();
 	BoardBlend = 0;
 	BoardMeant = 0;
@@ -539,6 +634,16 @@ void ABrixCharacter::BoardKey()   // Y: from the hand onto the board, and back; 
 	GetCharacterMovement()->bOrientRotationToMovement = !*On;
 	GetCharacterMovement()->MaxWalkSpeed = (*On ? BoardRules.Kind(BoardRules.Order.Last())->TopKmh / 3.6 + 1 : WalkSpeed) * CmPerM;
 	if (L) L->Toast(*On ? K->Name + TEXT(": W to ") + (K->bPush ? TEXT("push") : TEXT("go")) + TEXT(", S to brake, Y to pick it up.") : K->Name + TEXT(" in your hand."));
+}
+
+void ABrixCharacter::SetBoards(const TArray<FString>& Own, const FString& Use)
+{
+	if (Boards.Riding())   // off the board first, as Y steps off it
+	{
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed * CmPerM;
+	}
+	Boards.Give(Own, Use);
 }
 
 void ABrixCharacter::TestBoard(const FString& Kind)

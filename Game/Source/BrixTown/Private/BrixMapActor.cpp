@@ -8,10 +8,13 @@
 #include "BrixLifeActor.h"
 #include "BrixLook.h"
 #include "BrixPeople.h"
+#include "BrixStreets.h"
 #include "BrixTalkActor.h"
+#include "BrixTownActor.h"
 #include "BrixUnits.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "Engine/GameViewportClient.h"
 #include "Engine/Texture2D.h"
 #include "Fonts/FontMeasure.h"
@@ -316,6 +319,8 @@ void ABrixMap::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, const FS
 	FBrixMapExtras X;
 	FString Error;
 	if (!LoadBrixMapExtras(CityDir, City, X, Error)) UE_LOG(LogTemp, Error, TEXT("Brix Town: the map's data did not load: %s"), *Error);
+	for (TActorIterator<ABrixTownActor> It(GetWorld()); It; ++It)   // each tree as big as its crown today, fallen ones left off
+		if (const FBrixStreetsToday* T = It->StreetsToday()) { BrixMapTreesToday(T->Trees, X); break; }
 	const double T0 = FPlatformTime::Seconds();
 	Image = BrixDrawMap(City, X, MapPixels, TreeRadius);
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: the map drawn, %d px square, in %.2f s"), Image.N, FPlatformTime::Seconds() - T0);
@@ -431,6 +436,20 @@ void ABrixMap::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, const FS
 		const double K9 = 900.0 / MetresPerMap;   // map units a metre
 		auto X = [&](const FVector2D& W) { const FVector2D P9 = (W + FVector2D(Image.O, Image.O)) * K9; return Q.O + FVector2f(View.ScreenAt(P9)) * U; };
 		auto In = [&](const FVector2f& P, float Pad) { return P.X > Q.O.X - Pad && P.Y > Q.O.Y - Pad && P.X < Q.O.X + Q.S + Pad && P.Y < Q.O.Y + Q.S + Pad; };
+		if (bMine)   // the player's own buildings and the places they rent, outlined in the lantern's orange (play.js drawMaps(), map_mine)
+			for (const int32 n : Mine)
+			{
+				if (!Lots.IsValidIndex(n)) continue;
+				const FBrixLot* L = Lots[n];
+				const FVector2D Ctr = L->Centre();
+				const double PxPerM = FMath::Max(1e-3, (double)(X(Ctr + FVector2D(1, 0)) - X(Ctr)).Size());
+				const FVector2D Hf = L->Size() / 2 + FVector2D(2.0 * U / PxPerM, 2.0 * U / PxPerM);   // 2 px out, as the slice's strokeRect
+				const double A = FMath::DegreesToRadians((double)L->AngleDeg), Ca = FMath::Cos(A), Sa = FMath::Sin(A);
+				TArray<FVector2f> Qd;
+				for (const FVector2D& D : { FVector2D(-Hf.X, -Hf.Y), FVector2D(Hf.X, -Hf.Y), FVector2D(Hf.X, Hf.Y), FVector2D(-Hf.X, Hf.Y) })
+					Qd.Add(X(Ctr + FVector2D(D.X * Ca - D.Y * Sa, D.X * Sa + D.Y * Ca)));
+				if (In(Qd[0], 40) || In(Qd[2], 40)) M.Outline(Qd, 3.f * U, Css(TEXT("f0a35a")));
+			}
 		if (bShops)   // each name once, none over another (more of them fit as you zoom in)
 		{
 			const FSlateFontInfo F = TagFont(FMath::Max(6, FMath::RoundToInt(9 * U * .75f)), 2.f * U);
@@ -598,6 +617,8 @@ void ABrixMap::Settings()
 	bQuests = S.On(TEXT("map"), TEXT("map_quests"));
 	bShops = S.On(TEXT("map"), TEXT("map_shops"));
 	bWaypoint = S.On(TEXT("map"), TEXT("map_waypoint"));
+	bMine = S.On(TEXT("map"), TEXT("map_mine"));
+	Mine = Mode->Life->MyLots();
 }
 
 void ABrixMap::Tick(float DeltaSeconds)
@@ -661,6 +682,16 @@ void ABrixMap::Gather(float Dt)
 			const FString* What = Mode->Talk ? (W && W->bWalking ? Mode->Talk->Words().Going.Find(Act) : Mode->Talk->Words().Doing.Find(Act)) : nullptr;
 			const FString Doing = What ? *What : W && W->bWalking ? FString(TEXT("walking")) : Act;
 			Tags.Add({ Pos(H.Pose == 2 ? 1.0 : H.Pose == 3 ? .55 : 1.88), Day->Names[H.Resident] + TEXT(", ") + Job + TEXT(" · ") + Doing, FMath::Clamp((float)(NameReach - D) / 3.f, 0.f, 1.f), 14 });
+		}
+	if (Mode->Life && !bBusy)   // PROP-023: a board over the door of every building near with something on the market (life.js boards())
+		for (int32 n = 0; n < Lots.Num(); ++n)
+		{
+			const FBrixLot* L = Lots[n];
+			if (L->Floors <= 0) continue;
+			const double D = FVector2D::Distance(L->Door, Player);
+			if (D > BoardReach) continue;
+			const FString T = Mode->Life->BoardText(n);
+			if (!T.IsEmpty()) Tags.Add({ FVector(L->Door.X * CmPerM, L->Door.Y * CmPerM, 3.1 * CmPerM), TEXT("▣ ") + T, FMath::Min(1.f, (float)(BoardReach - D) / 8.f), 14 });
 		}
 	GatherTokens(Feet, Minute, bBusy, KindOf);
 	Tags.Sort([this](const FTag& A, const FTag& B) { return FVector2D::DistSquared(FVector2D(A.World) / CmPerM, Player) > FVector2D::DistSquared(FVector2D(B.World) / CmPerM, Player); });
