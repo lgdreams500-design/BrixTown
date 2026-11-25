@@ -182,7 +182,7 @@ shopping and 195 eating, on all three floors, at their places). `-BrixCounter=<a
 Thread) stands the player in it and opens its counter. `-BrixInside=b_16_5_l0` stands the player 30 m in from the south door (`MallInside`),
 `-BrixWalkIn=b_16_5_l0` walks them in, `-BrixLift=b_16_5_l0` rides the west lift to the top floor, `-BrixNoMall` builds it as
 the town's box again. At High: 28 to 44 frames a second inside, 21 riding the moving stairs (noisy: other sessions were running
-Unreal). Not yet: sitting on the benches and rides, the ribbon wall's lit joints and the openings' lanterns at night, the
+Unreal). Sitting on the benches, cafe seats and rides is as in the furniture outlet (below). Not yet: the ribbon wall's lit joints and the openings' lanterns at night, the
 moving stairs' treads moving, and the shell's lanterns' light outside.
 The goods for the home each outlet sells stand in it as they were made in Blender (FURN-065; outlets.js front() with the
 slice's life data, goods.js put()): on its two window plinths facing the walk, and those too deep for a plinth on its floor
@@ -218,10 +218,24 @@ the room sets and the racks (`SeatBrixDayInMall`). Tests: `FURN020_the_outlet_is
 against outlet.js run in headless Edge by `Tools/unreal/outlet_values.py`, which records each piece of furniture as the piece
 it is and where it stands, into `Tests/values/outlet_city_01.json`), `FURN021_staff_and_browsers_are_at_the_outlets_places`.
 `-BrixInside=b_14_8_l0` stands the player inside its door; `-BrixNoOutlet` builds it as the town's box again. At High: 31 to 33
-frames a second in the hall and over the car park (noisy: other sessions were running Unreal). Not yet: buying at the outlet.
-The slice has no counter there: furniture is bought in the building designer's Furnish tab (FURN-051, FURN-052, FURN-055),
-and buying at the outlet's tills with delivery (FURN-022 to FURN-029) is proposed, not accepted. Also not yet: sitting on
-its sofas and chairs, and the vans of the delivery bay.
+frames a second in the hall and over the car park (noisy: other sessions were running Unreal).
+The delivery bay (FURN-020): the block file's `vans` (3) stands a company van along the wall beside each loading door, the
+traffic's own van model in the company's teal (a parked car whose seed starts "van"; cars.js parked(), outlet.js build(),
+`ABrixCars::BuildParked`), in the way like any parked car; the slice draws them too.
+Trying the furniture (FURN-022's sitting and lying; play.js use()): E at a room set's sofa or armchair sits the player on
+it, at a bed lies them down, at the cafe's chairs and the other rooms' seats sits them, facing as the piece does; E, Space
+or moving gets up, where they stood. The offer under the picture says what E does ("Try the sofa", "Get up"). The places
+are the slice's own use points, kept by `ABrixMall` (`Seats()`, `SeatNear()`), so Eastgate Mall's benches, cafe seats and
+rides are sat on the same way; `ABrixCharacter::StartSeat` draws the body sitting (pose 2) or lying (pose 3) on the
+seat's top. `-BrixSeat=Try_the_sofa` sits the player at the first seat whose offer has those words, for a shot. Test:
+`FURN022_the_outlets_sofas_chairs_and_beds_can_be_tried` (a sofa, an armchair and a bed in each of kit 17's four rooms,
+the three vans). Shots: `Art/StyleTests/unreal_furniture_outlet_39/try_the_sofa.png`, `delivery_vans.png`.
+Not yet: buying at the outlet (FURN-022 to FURN-029: the tags, the catalogue, the basket and tills, instant or delivery,
+the van's run, assembly). The owner asked for it on 2026-11-25; its rules are not proved in Tools/citysim yet, so nothing
+of it is in the slice or here, and furniture is still bought in the building designer's Furnish tab (FURN-051, FURN-052,
+FURN-055). Also not yet: the vans driving (they stand; deliveries are FURN-027), residents browsing do not sit on the
+showroom's pieces, the player sat on a ride in the mall just sits (the rocket and the car do not rock), and a seat taken
+by a resident can still be sat on.
 
 ## Storeys and stairs; residents at home inside (WLD-050, WLD-052, WLD-053, CITY-013)
 Every hollow building with a stairwell (462 of two storeys or more) and every designed house is hollow to its roof, every
@@ -1130,3 +1144,4 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.PROP018_the_money_supply_holds_and_a_saved_market_goes_on` | PROP-018, PROP-021, QST-008 |
 | `BrixTown.World.FURN020_the_outlet_is_built_as_the_slice_builds_it` | FURN-020 |
 | `BrixTown.World.FURN021_staff_and_browsers_are_at_the_outlets_places` | FURN-021 |
+| `BrixTown.World.FURN022_the_outlets_sofas_chairs_and_beds_can_be_tried` | FURN-022 (sitting and lying), FURN-020 (the vans) |

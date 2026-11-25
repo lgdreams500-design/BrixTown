@@ -130,4 +130,37 @@ bool FFURN021OutletPeople::RunTest(const FString& Parameters)
 	return true;
 }
 
+// FURN-022 (the trying, not yet the tags): the furniture in the showroom can be tried. Every living-room set of kit 17 has
+// its sofa and armchair to sit on and every bed a place to lie, each at the height of the piece's seat, inside the hall;
+// the cafe's chairs are seats too. FURN-020: a company van stands at each loading door the block file gives one.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFURN022OutletPiecesCanBeTried, "BrixTown.World.FURN022_the_outlets_sofas_chairs_and_beds_can_be_tried",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FFURN022OutletPiecesCanBeTried::RunTest(const FString& Parameters)
+{
+	FBrixMall M;
+	TSharedPtr<FJsonObject> V;
+	if (!LoadOutletCase(*this, M, V)) return false;
+	int32 Sofas = 0, Chairs = 0, Beds = 0, Sits = 0, Lies = 0, Vans = 0, Cars = 0;
+	for (const FBrixMallCall& C : M.Calls)
+	{
+		if (C.Kind == FBrixMallCall::Car) { ++Cars; Vans += C.Text.StartsWith(TEXT("van")); }
+		if (C.Kind != FBrixMallCall::Use) continue;
+		const bool bSit = C.Text.StartsWith(TEXT("sit|")), bLie = C.Text.StartsWith(TEXT("lie|"));
+		if (!bSit && !bLie) continue;
+		Sits += bSit; Lies += bLie;
+		Sofas += C.Text == TEXT("sit|Try the sofa"); Chairs += C.Text == TEXT("sit|Try the armchair"); Beds += C.Text == TEXT("lie|Try the bed");
+		TestTrue(TEXT("a place to sit or lie has where it is and which way it faces: ") + C.Text, C.A.Num() >= 4);
+		if (C.A.Num() < 4) continue;
+		TestTrue(TEXT("it is at a seat's height over the floor: ") + C.Text, C.A[1] > .3 && C.A[1] < 1.2);
+	}
+	TestEqual(TEXT("a sofa to try in each of kit 17's four living rooms"), Sofas, 4);
+	TestEqual(TEXT("and an armchair"), Chairs, 4);
+	TestEqual(TEXT("and a bed to lie on"), Beds, 4);
+	TestTrue(TEXT("the other rooms' seats and the cafe's chairs are places to sit too"), Sits > Sofas + Chairs);
+	TestTrue(TEXT("and their beds places to lie"), Lies >= Beds);
+	TestEqual(TEXT("three company vans at the loading doors"), Vans, 3);
+	TestEqual(TEXT("with the car park's fourteen cars"), Cars, 17);
+	return true;
+}
+
 #endif

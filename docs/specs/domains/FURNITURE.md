@@ -1,9 +1,9 @@
 ---
 doc_id: WASTED-SPEC-FURNITURE
 title: Wasted — Furniture (designs, the furniture companies and their outlets, furniture in the home)
-version: 0.4.3
+version: 0.4.4
 status: draft            # every row proposed; the owner accepts
-last_updated: 2026-11-24
+last_updated: 2026-11-25
 parent: docs/specs/GAME_SPEC.md        # extends §4.5 PROP; same ID rules; new prefix FURN
 related: docs/specs/domains/WORLD_MAP.md, docs/specs/domains/LIVING_CITY.md, docs/art/INTERIOR_STYLE.md
 prototype: Tools/citysim/               # delivery, stock and money rules proved here first (to write)
@@ -27,7 +27,7 @@ Every requirement names a **feature** and a **level** from `docs/backlog/feature
 > Milestones: first slice = PH1, life depth = PH3, full game = PH6. Undecided means ask.
 
 There is no Phase column: the owner's picks decide when. Priority says how much it matters once in
-scope. Status of every row: `proposed`, except FURN-020 and FURN-021: `accepted` (the owner asked for the outlet to be built, 2026-11-22; ADR-0027), FURN-050 `accepted` (met for furniture by MENU.md INV-001, the owner's pick of `F-INV-ITEMS` 1, 2026-11-23), and FURN-051, FURN-052 and FURN-055: `accepted` (the owner, 2026-11-23, picking "Arrange + add, priced" for furniture in the building designer: move, turn and take away the pieces in the home and add pieces from a priced list; BUILDER.md §2.6). A piece taken away goes to the player's belongings and is placed from them (INV-001); until buying at the outlet (FURN-025) is built, a piece is bought straight into place `[ASSUMPTION]`; and FURN-060 to FURN-063: `accepted` (the owner approved the house plan and its four furnishing levels and picked F-HOME-FURNISH level 3, 2026-11-23; ADR-0035). "Proven by" names the test that is still to be written, in
+scope. Status of every row: `proposed`, except FURN-020 and FURN-021: `accepted` (the owner asked for the outlet to be built, 2026-11-22; ADR-0027), FURN-050 `accepted` (met for furniture by MENU.md INV-001, the owner's pick of `F-INV-ITEMS` 1, 2026-11-23), and FURN-051, FURN-052 and FURN-055: `accepted` (the owner, 2026-11-23, picking "Arrange + add, priced" for furniture in the building designer: move, turn and take away the pieces in the home and add pieces from a priced list; BUILDER.md §2.6). A piece taken away goes to the player's belongings and is placed from them (INV-001); until buying at the outlet (FURN-025) is built, a piece is bought straight into place `[ASSUMPTION]`; FURN-022 to FURN-029: `accepted` (the owner, 2026-11-25, asked which of the outlet's gaps to build, "Delivery vans, sitting" or "Buying at the tills": "both"; the rules are still to be proved in `Tools/citysim/` before they are built, and every number in them stays `[ASSUMPTION]`); and FURN-060 to FURN-063: `accepted` (the owner approved the house plan and its four furnishing levels and picked F-HOME-FURNISH level 3, 2026-11-23; ADR-0035). "Proven by" names the test that is still to be written, in
 `Tools/citysim/test_furniture.py` for rules and in a Blender look test for designs.
 
 Storage containers (`F-PROP-STORAGE`) and the assembly mini-game (`F-FURN-ASSEMBLE`) have no pick and
@@ -125,6 +125,7 @@ buy-back share. Every number `[ASSUMPTION]` until tuned in play.
 
 | Version | Date | Change |
 |---|---|---|
+| 0.4.4 | 2026-11-25 | The owner asked for the outlet's delivery vans, for sitting on its furniture and for buying at its tills ("both"): FURN-022 to FURN-029 accepted. Built so far, in the slice's data and the Unreal build: the block file's `vans` stands a company van at each loading door (FURN-020), and the showroom's sofas, armchairs, beds and the cafe's chairs can be tried (FURN-022's sitting and lying; Unreal). Buying, delivery and assembly (FURN-022's tags to FURN-029) wait for their proof in `Tools/citysim/test_furniture.py`. |
 | 0.4.3 | 2026-11-24 | FURN-065: the mall's 49 goods for the home are objects made in Blender (`Tools/blender/mall_goods_31.py`, ADR-0041; the owner: "use blender to create the objects, some of these object can be placed in the house like guitar, books etc."). 284 triangles each on average in the near make, 112 in the far. The slice draws a placed good from its object, and each outlet shows the goods it sells: 464 objects stand in 112 of the 189 outlets, 134,674 triangles, 0.40 million points, 3.0 % of the town's mesh. |
 | 0.4.2 | 2026-11-24 | FURN-064: pieces sold elsewhere. The mall's 49 goods for the home are pieces of `furnishing.json` (`from: "mall"`), bought at an outlet (ECO-014, ADR-0041) and placed from the belongings; the designer does not sell them. Drawn in the slice by `goods.js`. |
 | 0.4.1 | 2026-11-23 | FURN-050 accepted: pieces taken away in the designer go to the belongings (MENU.md INV-001) and are placed from there. |

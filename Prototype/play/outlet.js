@@ -221,6 +221,11 @@ var Outlet = (() => {
     const SS = sideOf(l, "s");                                                                   // the warehouse's loading doors, onto the car park
     for (const a of [x0 + 12, x0 + 24, x1 - 12]) { fbox(world, SS, a - 2.1, a + 2.1, 0, 4.4, 0, .25, C.stoneDark, 6); fbox(world, SS, a - 1.8, a + 1.8, 0, 4.1, .25, .3, C.metal, 9);
       for (let y = .3; y < 4.1; y += .35) fbox(world, SS, a - 1.8, a + 1.8, y, y + .04, .3, .32, [.12, .12, .14], 9); SP.lamp(SS, a, 4.7); }
+    // the delivery bay (FURN-020): a company van drawn up along the wall at each of the first l.vans loading doors
+    [x0 + 12, x0 + 24, x1 - 12].slice(0, l.vans || 0).forEach((a, k) => {
+      const vx = a + 4.6, vz = z1 + 1.75, dims = typeof Cars !== "undefined" && Cars.parked ? Cars.parked(world, vx, vz, 0, "van" + k + l.id, Y_PAVE + .006) : null;
+      const [L, W] = dims || [4.6, 1.9]; solid(vx - L / 2, 0, vz - W / 2, vx + L / 2, 2.2, vz + W / 2); BLOBS.push([vx, vz, L / 2 + .2, W / 2 + .2]);
+    });
     // inside, in the town's mesh too: the route, the room sets' walls, tills, cafe counter, desks, racks of boxes, lanterns
     inside0(l, F);
     l.furn = [side, C.teal, INW]; furnish(l, side, C.teal, INW);

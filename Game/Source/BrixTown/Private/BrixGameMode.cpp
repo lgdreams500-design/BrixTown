@@ -289,6 +289,12 @@ void ABrixGameMode::StartPlay()
 	// -BrixDrive=<vehicle> (with -BrixHold=steer,throttle): a third of the way into a test shot's wait the player is put by
 	// that parked car's door, gets in as with E, and holds the keys from then on
 	int32 DriveK = -1;
+	FString SeatWords;   // -BrixSeat=<words>: a third into a test shot's wait the player sits at the first seat whose offer has them (FURN-022)
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixSeat="), SeatWords) && !SeatWords.IsEmpty())
+	{
+		FTimerHandle H;
+		GetWorldTimerManager().SetTimer(H, [this, SeatWords]() { if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0))) Me->TestSeat(SeatWords.Replace(TEXT("_"), TEXT(" "))); }, ShotDelaySeconds / 3, false);
+	}
 	int32 PlayK = -1;   // -BrixPlay=<n>: a third into a test shot's wait the player has a go at the n-th play place (WLD-041)
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixPlay="), PlayK) && PlayK >= 0)
 	{
