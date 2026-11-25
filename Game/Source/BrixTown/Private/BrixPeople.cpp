@@ -92,6 +92,35 @@ void ABrixPeople::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, TShar
 		Looks.Add(BrixLookOf(Rules, i, Day->Wear.IsValidIndex(i) && !Day->Wear[i].IsEmpty() ? Day->Wear[i] : RoleName, Sig ? *Sig : FString(TEXT("Easy"))));
 	}
 	while (RebuildEvery.Num() < 3) RebuildEvery.Add(RebuildEvery.Num() + 1);
+	// who rides the tram (CITY-041): someone away whose day takes them from a tram stop, or brings them back to one, rides
+	// the run that is at that stop when they leave or arrive (cars.js tramRiders())
+	Tram = City.Tram;
+	{
+		TArray<const FBrixLot*> AllLots;
+		for (const FBrixBlock& B : City.Blocks) for (const FBrixLot& L : B.Lots) AllLots.Add(&L);
+		auto AtStop = [&](const FBrixDay::FPiece& P) { return P.Kind == 0 && AllLots.IsValidIndex(P.Lot) && AllLots[P.Lot]->Kind == TEXT("stop"); };
+		auto RunAt = [&](double M, double X)
+		{
+			TOptional<double> Best;
+			double Bd = 25;
+			for (const FBrixTram::FAt& T : Tram.At(M)) if (FMath::Abs(T.X - X) < Bd) { Bd = FMath::Abs(T.X - X); Best = T.Run; }
+			return Best;
+		};
+		for (int32 i = 0; i < Day->Num(); ++i)
+		{
+			const TArray<FBrixDay::FPiece>& Row = Day->Plan[i];
+			for (int32 j = 1; j < Row.Num(); ++j)
+			{
+				if (Row[j].Kind != 2) continue;
+				const FBrixDay::FPiece& Before = Row[j - 1];
+				const FBrixDay::FPiece* After = j + 1 < Row.Num() ? &Row[j + 1] : nullptr;
+				FTramRide R{ i, Row[j].T0, After ? After->T0 : 1440.0, {}, {} };
+				if (AtStop(Before)) R.Out = RunAt(Row[j].T0, Before.Pos.X);
+				if (After && AtStop(*After)) R.Back = RunAt(R.T1, After->Pos.X);
+				if (R.Out || R.Back) TramRides.Add(R);
+			}
+		}
+	}
 	// people from out of town in the vehicles: the same person every time (C7), by the vehicle (the slice numbers them as it
 	// meets them; here by the vehicle, so the same van always has the same driver)
 	if (Traffic)
@@ -197,6 +226,23 @@ void ABrixPeople::Tick(float DeltaSeconds)
 			const TOptional<FBrixWhere> W = Day->Where(A.i, M2 ? *M2 : Minute);
 			if (!W) continue;
 			Cand = { A.i, A.P, A.Up, A.Yaw, A.Pose, W->Act, W->Lot, W->bWalking, D };
+		}
+	}
+	// the trams' riders on their benches, facing the way the tram goes (cars.js tram(): up to twelve)
+	for (const FBrixTram::FAt& T : Tram.At(Minute))
+	{
+		if (FMath::Abs(T.X - Here.X) > RideDistance + 6 || FMath::Abs(Tram.Z - Here.Y) > RideDistance) continue;
+		int32 Slot = 0;
+		for (const FTramRide& R : TramRides)
+		{
+			const bool bGoing = R.Out && *R.Out == T.Run && Minute >= R.T0 && Minute < R.T0 + 40, bComing = R.Back && *R.Back == T.Run && Minute < R.T1 && Minute > R.T1 - 40;
+			if (!bGoing && !bComing) continue;
+			if (Slot >= 12) break;
+			const int32 Row = Slot % 6;
+			const double Side = Slot < 6 ? -1 : 1;
+			++Slot;
+			const FVector2D P(T.X - 4.7 + Row * 1.85, Tram.Z + Side * .55);
+			Near.Add({ R.Resident, FVector2D::Distance(P, Here), P, 1.15f, FMath::Atan2(1.0, 0.0), 2, 0.0, &Looks[R.Resident], {}, false });
 		}
 	}
 	if (Held.Resident >= 0 && Looks.IsValidIndex(Held.Resident))   // held in a talk: where the talk keeps them

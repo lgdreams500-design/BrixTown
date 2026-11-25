@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "BrixCars.h"
+#include "BrixCity.h"
 #include "BrixCarsActor.generated.h"
 
 class UMaterialInterface;
@@ -20,7 +21,7 @@ class BRIXTOWN_API ABrixCars : public AActor
 
 public:
 	ABrixCars();
-	void Start(TSharedPtr<FBrixTraffic> InTraffic);
+	void Start(TSharedPtr<FBrixTraffic> InTraffic, const FBrixTram& InTram);
 	virtual void Tick(float DeltaSeconds) override;
 
 	UPROPERTY(Config) float ShowDistance = 160.f;   // m
@@ -37,5 +38,7 @@ private:
 	TSharedPtr<FBrixTraffic> Traffic;
 	struct FShown { UProceduralMeshComponent* M = nullptr; int32 Lod = -1; int32 Seen = 0; };
 	TMap<int32, FShown> Live;           // vehicle -> its mesh while near
+	FBrixTram Tram;                     // the trams (CITY-041), drawn as the slice's cars.js tram()
+	UPROPERTY() TArray<TObjectPtr<UProceduralMeshComponent>> Trams;
 	int32 Frame = 0, LastShown = 0;
 };

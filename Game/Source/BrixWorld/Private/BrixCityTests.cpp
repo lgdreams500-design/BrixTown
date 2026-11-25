@@ -253,3 +253,40 @@ bool FCITY022_ResidentsFollowTheirRoutine::RunTest(const FString&)
 }
 
 #endif
+
+#if WITH_DEV_AUTOMATION_TESTS
+// CITY-041: the trams run to their timetable. At 3,000 moments through a day every tram is where the slice's tramAt()
+// (play.js, run by Tools/unreal/people_values.py into Tests/values/talk_city_01.json) has it: the same runs on the map,
+// each within a centimetre along the line, standing at a stop when it does.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY041_TramsKeepTheTimetable, "BrixTown.World.CITY041_trams_are_where_the_timetable_puts_them",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FCITY041_TramsKeepTheTimetable::RunTest(const FString&)
+{
+	FBrixCity City;
+	FString Error, Text;
+	if (!TestTrue(TEXT("the starting city loads: ") + Error, LoadBrixCity(StartingCityDir(), City, Error))) return false;
+	const FString Values = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../Tests/values/talk_city_01.json")));
+	if (!TestTrue(TEXT("the test values are there"), FFileHelper::LoadFileToString(Text, *Values))) return false;
+	TSharedPtr<FJsonObject> Want;
+	if (!TestTrue(TEXT("the test values are JSON"), FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Want) && Want.IsValid())) return false;
+	int32 Moments = 0, Trams = 0, Wrong = 0;
+	for (const TSharedPtr<FJsonValue>& V : Want->GetArrayField(TEXT("tram")))
+	{
+		const TArray<TSharedPtr<FJsonValue>>& P = V->AsArray();
+		const double M = P[0]->AsNumber();
+		const TArray<TSharedPtr<FJsonValue>>& Exp = P[1]->AsArray();
+		const TArray<FBrixTram::FAt> Got = City.Tram.At(M);
+		++Moments;
+		bool bSame = Got.Num() == Exp.Num();
+		for (int32 k = 0; bSame && k < Exp.Num(); ++k)
+		{
+			const TArray<TSharedPtr<FJsonValue>>& E = Exp[k]->AsArray();
+			bSame = FMath::Abs(Got[k].X - E[0]->AsNumber()) < .01 && Got[k].bStopped == E[1]->AsBool() && FMath::IsNearlyEqual(Got[k].Run, E[2]->AsNumber());
+			++Trams;
+		}
+		if (!bSame) { if (Wrong < 8) AddError(FString::Printf(TEXT("minute %.2f: not the trams the slice has (%d, the slice %d)"), M, Got.Num(), Exp.Num())); ++Wrong; }
+	}
+	TestTrue(TEXT("trams were checked"), Moments > 1000 && Trams > 500);
+	return Wrong == 0;
+}
+#endif

@@ -375,6 +375,29 @@ bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError)
 		for (const TSharedPtr<FJsonValue>& V : C->GetArrayField(TEXT("sunset"))) S.Sunset.Add((float)V->AsNumber());
 		S.DaysPerSeason = (int32)Num(C, TEXT("days_per_season"), 12);
 		S.RealSecondsPerMinute = (float)Num(C, TEXT("real_seconds_per_minute"), 10);
+		// the tram: its timetable, and its line as the slice lays it (play.js TRAM_Z, tramAt(): Tram Street, stops a half,
+		// three and a half and seven and a half pitches in from the line the town wall stood on, on 60 m beyond the map)
+		const TSharedPtr<FJsonObject>* Tr = nullptr;
+		if (Cal->TryGetObjectField(TEXT("tram"), Tr))
+		{
+			FBrixTram& T = OutCity.Tram;
+			auto Hm = [](const FString& V) { FString A, B; return V.Split(TEXT(":"), &A, &B) ? FCString::Atod(*A) * 60 + FCString::Atod(*B) : 0.0; };
+			T.First = Hm(Str(*Tr, TEXT("first"))); T.Last = Hm(Str(*Tr, TEXT("last")));
+			T.Every = Num(*Tr, TEXT("every"), 20); T.Speed = Num(*Tr, TEXT("speed"), 8); T.Dwell = Num(*Tr, TEXT("dwell"), 1);
+			T.Pace = S.RealSecondsPerMinute;
+			const TSharedPtr<FJsonObject>* Wall = nullptr;
+			const TArray<TSharedPtr<FJsonValue>>* Cells = nullptr;
+			double Wx0 = 0, Wx1 = OutCity.Columns;
+			if (Root->TryGetObjectField(TEXT("wall"), Wall) && (*Wall)->TryGetArrayField(TEXT("cells"), Cells) && Cells->Num() >= 4) { Wx0 = (*Cells)[0]->AsNumber(); Wx1 = (*Cells)[2]->AsNumber(); }
+			const double P = OutCity.Pitch, OX = Wx0 * P, OX1 = Wx1 * P;
+			T.Stops = { OX + P / 2, OX + 3 * P + P / 2, OX + 7 * P + P / 2 };
+			T.X0 = OX - 60;
+			T.X1 = OX1 + 60;
+			const TSharedPtr<FJsonObject>* Streets = nullptr;
+			TArray<FString> EW;
+			if (Root->TryGetObjectField(TEXT("streets"), Streets)) (*Streets)->TryGetStringArrayField(TEXT("east_west"), EW);
+			T.Z = FMath::Max(0, EW.IndexOfByKey(FString(TEXT("Tram")))) * P - 1.8;
+		}
 		const TSharedPtr<FJsonObject> N = Sky->GetObjectField(TEXT("night"));
 		S.LatitudeDeg = (float)Num(N, TEXT("latitude"), 40);
 		const TSharedPtr<FJsonObject>* Paths = nullptr;
@@ -521,4 +544,30 @@ TArray<FString> CheckBrixCity(const FBrixCity& City)
 		}
 	}
 	return Problems;
+}
+
+TArray<FBrixTram::FAt> FBrixTram::At(double m) const
+{
+	TArray<FAt> Out;
+	if (Stops.Num() < 2) return Out;
+	const double v = Speed * Pace, ref = Stops[1];    // metres a game minute; the middle stop keeps the timetable
+	const int32 K = (int32)FMath::FloorToDouble((m - First) / Every);
+	for (int32 k = K - 2; k <= K + 2; ++k)
+	{
+		const double T = First + k * Every;
+		if (T < First || T > Last) continue;
+		double t = m - (T - (ref - Stops[0]) / v - Dwell - (Stops[0] - X0) / v), x = X0;   // minutes since this tram came on the map
+		for (const double s : Stops)
+		{
+			const double run = (s - x) / v;
+			if (t < run) { x += t * v; t = -1; break; }
+			t -= run;
+			x = s;
+			if (t < Dwell) { t = -2; break; }
+			t -= Dwell;
+		}
+		if (t >= 0) x += t * v;
+		if (m - T > -40 && x > X0 && x < X1) Out.Add({ x, t == -2, T });
+	}
+	return Out;
 }

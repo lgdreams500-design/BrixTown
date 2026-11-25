@@ -120,6 +120,13 @@ car passing through; as low as the head needs under the roof, feet along the flo
 give way to the player, and the player cannot drive. 51.5 frames a second at High on a street
 with 32 vehicles drawn.
 
+## The tram (CITY-041)
+Trams run along Tram Street to the timetable of World/rules/calendar.json, stopping at its three stops: a port of the
+slice's tramAt() (`FBrixTram`, checked against the slice's own function at 3,000 moments of a day by
+`CITY041_trams_are_where_the_timetable_puts_them`). Each is the slice's terracotta car with open windows, on rails along
+the whole street, and carries the residents whose day takes them out from a stop or back to one, on the run that is
+there when they leave or arrive (cars.js tramRiders()), up to twelve on its benches. The player cannot ride it yet.
+
 ## Street furniture (WLD-028)
 Each block's props are drawn as the slice draws them (play.js prop(), dressing.js), boxes in the palette's colours:
 lamps, benches, bins, bollards, planters, postboxes, bike racks, phone boxes, wall lanterns, flowerbeds, fountains,
@@ -162,6 +169,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.ART004_people_are_drawn_as_the_slice_draws_them` | ART-004, ANIM-001, ANIM-002 |
 | `BrixTown.World.CITY017_residents_sit_on_garden_benches` | CITY-017 |
 | `BrixTown.World.CITY040_vehicles_are_where_the_traffic_puts_them` | CITY-040 |
+| `BrixTown.World.CITY041_trams_are_where_the_timetable_puts_them` | CITY-041 |
 | `BrixTown.World.CITY007_every_conversation_is_sound` | CITY-007 |
 | `BrixTown.World.CHR009_lines_are_mouthed_as_the_slice_mouths_them` | CHR-009 |
 | `BrixTown.World.SND018_lines_are_voiced` | SND-018 |

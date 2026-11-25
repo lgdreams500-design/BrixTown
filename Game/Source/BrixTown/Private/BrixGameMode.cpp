@@ -96,7 +96,7 @@ void ABrixGameMode::StartPlay()
 		if (LoadBrixTraffic(FPaths::Combine(Data, TEXT("cars.json")), FPaths::Combine(Data, TEXT("car_models.json")), *Traffic, CarError))
 		{
 			Cars = GetWorld()->SpawnActor<ABrixCars>();
-			Cars->Start(Traffic);
+			Cars->Start(Traffic, City->Tram);
 			UE_LOG(LogTemp, Display, TEXT("Brix Town: %d vehicles today"), Traffic->Num());
 		}
 		else UE_LOG(LogTemp, Warning, TEXT("Brix Town: no vehicles (%s); run Tools/worldgen/build_play.py"), *CarError);
