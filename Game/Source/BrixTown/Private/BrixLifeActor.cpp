@@ -25,6 +25,9 @@
 #include "Engine/Texture2D.h"
 #include "Engine/GameViewportClient.h"
 #include "Engine/World.h"
+#include "Camera/PlayerCameraManager.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Widgets/SLeafWidget.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/Paths.h"
@@ -34,6 +37,7 @@
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Layout/SScrollBox.h"
+#include "Widgets/Layout/SScrollBar.h"
 #include "Widgets/Layout/SWrapBox.h"
 #include "Widgets/Layout/SGridPanel.h"
 #include "Widgets/SBoxPanel.h"
@@ -72,11 +76,66 @@ namespace
 	{
 		return SNew(SBox).Padding(FMargin(0, 16, 0, 6))[ SNew(STextBlock).Text(FText::FromString(S.ToUpper())).Font(UiFont(10, true)).ColorAndOpacity(UiDim) ];
 	}
+	// A row of buttons that goes on to the next line at a width in the interface's own units. (Wrapped at whatever width the
+	// row was given, the designer's rows were measured for one width and laid out at another: they lay over one another.)
+	TSharedRef<SWrapBox> UiWrap(float Width, float Gap = 6.f) { return SNew(SWrapBox).UseAllottedSize(false).PreferredSize(Width).InnerSlotPadding(FVector2D(Gap, 4)); }
 	// .pbtn: the lantern's orange with dark letters; .off: quiet; disabled: grey
 	TSharedRef<SWidget> UiButton(const FString& Label, TFunction<void()> OnClick, bool bEnabled = true, bool bQuiet = false)
 	{
 		return BrixLook::Button(Label, OnClick, !bQuiet, bEnabled);
 	}
+	// The picture behind the building designer's card (life.js pointer()): the mouse over it picks and drags the pieces and
+	// inner walls and turns the view. Kind: 0 down, 1 move, 2 up, 3 the wheel, 4 a double click; Px in the picture's pixels.
+	class SBrixDesignPad : public SLeafWidget
+	{
+	public:
+		using FPoint = TFunction<void(int32 Kind, const FVector2D& Px, int32 Button, bool bShift, const FVector2D& Delta, float Wheel, bool bHeld)>;
+		SLATE_BEGIN_ARGS(SBrixDesignPad) {}
+			SLATE_ARGUMENT(FPoint, OnPoint)
+			SLATE_ARGUMENT(TFunction<int32()>, Hand)   // 0 the arrow, 1 a hand over what can be moved, 2 a hand holding it
+		SLATE_END_ARGS()
+		void Construct(const FArguments& A) { OnPoint = A._OnPoint; Hand = A._Hand; }
+		virtual FVector2D ComputeDesiredSize(float) const override { return FVector2D::ZeroVector; }
+		virtual int32 OnPaint(const FPaintArgs&, const FGeometry&, const FSlateRect&, FSlateWindowElementList&, int32 Layer, const FWidgetStyle&, bool) const override { return Layer; }
+		virtual FReply OnMouseButtonDown(const FGeometry& G, const FPointerEvent& E) override
+		{
+			if (OnPoint) OnPoint(0, Px(G, E), ButtonOf(E), E.IsShiftDown(), FVector2D::ZeroVector, 0.f, true);
+			return FReply::Handled().CaptureMouse(SharedThis(this));
+		}
+		virtual FReply OnMouseButtonUp(const FGeometry& G, const FPointerEvent& E) override
+		{
+			if (!HasMouseCapture()) return FReply::Unhandled();
+			if (OnPoint) OnPoint(2, Px(G, E), ButtonOf(E), E.IsShiftDown(), FVector2D::ZeroVector, 0.f, false);
+			return FReply::Handled().ReleaseMouseCapture();
+		}
+		virtual FReply OnMouseMove(const FGeometry& G, const FPointerEvent& E) override
+		{
+			const bool bHeld = HasMouseCapture();
+			const FVector2f D = E.GetCursorDelta();
+			if (OnPoint) OnPoint(1, Px(G, E), 0, E.IsShiftDown(), FVector2D(D.X, D.Y), 0.f, bHeld);
+			return bHeld ? FReply::Handled() : FReply::Unhandled();
+		}
+		virtual FReply OnMouseWheel(const FGeometry& G, const FPointerEvent& E) override
+		{
+			if (OnPoint) OnPoint(3, Px(G, E), 0, E.IsShiftDown(), FVector2D::ZeroVector, E.GetWheelDelta(), false);
+			return FReply::Handled();
+		}
+		virtual FReply OnMouseButtonDoubleClick(const FGeometry& G, const FPointerEvent& E) override
+		{
+			if (OnPoint) OnPoint(4, Px(G, E), ButtonOf(E), E.IsShiftDown(), FVector2D::ZeroVector, 0.f, false);
+			return FReply::Handled();
+		}
+		virtual FCursorReply OnCursorQuery(const FGeometry&, const FPointerEvent&) const override
+		{
+			const int32 H = Hand ? Hand() : 0;
+			return FCursorReply::Cursor(H == 2 ? EMouseCursor::GrabHandClosed : H == 1 ? EMouseCursor::GrabHand : EMouseCursor::Default);
+		}
+	private:
+		static int32 ButtonOf(const FPointerEvent& E) { const FKey K = E.GetEffectingButton(); return K == EKeys::RightMouseButton ? 2 : K == EKeys::MiddleMouseButton ? 1 : 0; }
+		static FVector2D Px(const FGeometry& G, const FPointerEvent& E) { const FVector2f L = G.AbsoluteToLocal(E.GetScreenSpacePosition()); return FVector2D(L.X, L.Y) * G.Scale; }
+		FPoint OnPoint;
+		TFunction<int32()> Hand;
+	};
 	// UI-020: the mark of where a thing goes, for a buy menu's dots and chips (buymenu.js ICON): painted once from its paths
 	// into a white picture whose alpha is the mark, drawn in the board colour's lettering
 	const FSlateBrush* MarkBrush(const FBrixBuyMenuRules& B, const FString& Goes)
@@ -213,6 +272,7 @@ void ABrixLife::Tick(float Dt)
 	Super::Tick(Dt);
 	if (!E) return;
 	TickMenuShot();
+	if (Panel == TEXT("remodel")) DesignKeys();
 	double D0 = 0, M0 = 0;
 	Frame(D0, M0);
 	E->Advance((int32)D0, M0);   // the bank settles each midnight passed (BANK-008)
@@ -452,11 +512,11 @@ void ABrixLife::BuildUI()
 			+ SHorizontalBox::Slot().AutoWidth()[ SNew(STextBlock).Font(UiFont(15)).ColorAndOpacity(UiCream).Text_Lambda([this]() { return FText::FromString(CounterWords(CounterHere())); }) ]
 		]
 	];
-	SAssignNew(PanelRoot, SBox)
+	SAssignNew(PanelBox, SBox)
 		.HAlign(HAlign_Center).VAlign(VAlign_Center)
 		// the building designer's card stands to the left, the building in view beside it (BUILD-020)
-		.Padding_Lambda([this]() { return Panel == TEXT("remodel") ? FMargin(16, 24, FMath::Max(16.f, (float)(ViewportPx.X / FMath::Max(PxScale, .1f)) - RemodelPanelPx - 32.f), 24) : FMargin(16, 40); })
-		.Visibility_Lambda([this]() { return !Panel.IsEmpty() ? EVisibility::Visible : EVisibility::Collapsed; })
+		.Padding_Lambda([this]() { return Panel == TEXT("remodel") ? FMargin(16, 24) : FMargin(16, 40); })   // (the designer's card is put at the left in Draw())
+		.Visibility_Lambda([this]() { return Panel.IsEmpty() ? EVisibility::Collapsed : Panel == TEXT("remodel") ? EVisibility::SelfHitTestInvisible : EVisibility::Visible; })   // beside the designer's card the mouse is on the picture
 		[
 			SNew(SBox).WidthOverride_Lambda([this]() { return IsShop() ? (float)BuyMenu.WidePanelPx : Panel == TEXT("remodel") ? RemodelPanelPx : 620.f; })
 			[
@@ -464,6 +524,12 @@ void ABrixLife::BuildUI()
 			]
 		];
 	GEngine->GameViewport->AddViewportWidgetContent(Hud.ToSharedRef(), 15);
+	DesignPad = SNew(SBrixDesignPad)
+		.Visibility_Lambda([this]() { return Panel == TEXT("remodel") && !bMenu ? EVisibility::Visible : EVisibility::HitTestInvisible; })
+		.OnPoint([this](int32 Kind, const FVector2D& Px, int32 Button, bool bShift, const FVector2D& Delta, float Wheel, bool bHeld) { DesignPointer((EPoint)Kind, Px, Button, bShift, Delta, Wheel, bHeld); })
+		.Hand([this]() { return Grab.Kind >= 3 ? 2 : (!PieceHover.IsEmpty() || !WallHover.IsEmpty()) ? 1 : 0; });
+	GEngine->GameViewport->AddViewportWidgetContent(DesignPad.ToSharedRef(), 20);
+	PanelRoot = PanelBox;
 	GEngine->GameViewport->AddViewportWidgetContent(PanelRoot.ToSharedRef(), 25);
 }
 
@@ -572,6 +638,7 @@ TSharedRef<SWidget> ABrixLife::StatementTable(int32 N) const
 void ABrixLife::Draw()
 {
 	if (!IsOpen() || !PanelBody || !E) return;
+	if (PanelBox) PanelBox->SetHAlign(Panel == TEXT("remodel") ? HAlign_Left : HAlign_Center);   // the designer's card stands to the left, the building in view beside it (BUILD-020)
 	TSharedRef<SVerticalBox> Body = SNew(SVerticalBox);
 	FString Title, Sub;
 	LiveGrid.Reset();
@@ -612,9 +679,20 @@ void ABrixLife::Draw()
 	else if (Panel == TEXT("outlet")) OutletPanel(Body);
 	else if (Panel == TEXT("stall")) StallPanel(Body);
 	else if (Panel == TEXT("quests")) QuestsPanel(Body);
-	else if (Panel == TEXT("remodel")) RemodelPanel(Body);
+	else if (Panel == TEXT("remodel")) { RemodelPanel(Body); DesignMarks(); }
 	else if (Panel == TEXT("agent") && Est) EstatePanel(Body, Est->Office[Lots[PanelLot].Id], -1);
 	else WalletPanel(Body);
+	// The designer's card keeps room for its scroll bar whether it shows or not: its rows of buttons wrap by the width they
+	// are given, and a bar that came and went with their height left them over one another.
+	TSharedRef<SWidget> Scrolled = SNullWidget::NullWidget;
+	if (Panel == TEXT("remodel"))
+	{
+		TSharedRef<SScrollBar> Bar = SNew(SScrollBar);
+		Scrolled = SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().FillWidth(1)[ SNew(SScrollBox).ExternalScrollbar(Bar) + SScrollBox::Slot()[ Body ] ]
+			+ SHorizontalBox::Slot().AutoWidth()[ SNew(SBox).WidthOverride(12.f)[ Bar ] ];
+	}
+	else Scrolled = SNew(SScrollBox) + SScrollBox::Slot()[ Body ];
 	PanelBody->SetContent(
 		SNew(SVerticalBox)
 		+ SVerticalBox::Slot().AutoHeight().Padding(0, 0, 0, 6)
@@ -623,7 +701,7 @@ void ABrixLife::Draw()
 			+ SWrapBox::Slot().Padding(0, 0, 12, 0)[ SNew(STextBlock).Font(UiFont(24)).ColorAndOpacity(UiCream).Text(FText::FromString(Title)) ]
 			+ SWrapBox::Slot().VAlign(VAlign_Bottom).Padding(0, 0, 0, 3)[ SNew(STextBlock).Font(UiFont(14)).ColorAndOpacity(UiDim).Text(FText::FromString(Sub)) ]
 		]
-		+ SVerticalBox::Slot().FillHeight(1)[ SNew(SScrollBox) + SScrollBox::Slot()[ Body ] ]
+		+ SVerticalBox::Slot().FillHeight(1)[ Scrolled ]
 		+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Right).Padding(0, 8, 0, 0)[ SNew(STextBlock).Font(UiFont(13)).ColorAndOpacity(UiDim).Text(FText::FromString(Hint)) ]);
 }
 
@@ -1038,7 +1116,7 @@ void ABrixLife::ApplyRemodel(int32 Lot, const TSharedPtr<FJsonObject>& Design)
 {
 	ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
 	if (!Mode) return;
-	if (Mode->Town()) Mode->Town()->Repaint(Lot, Design);
+	if (Mode->Town()) Mode->Town()->Repaint(Lot, Design, CutNow(Lot));   // cut open at the storey the designer looks into (BUILD-020)
 	if (Mode->InsidesData() && Mode->InsidesData()->Lots.IsValidIndex(Lot) && Mode->InsidesData()->Lots[Lot].IsSet() && (Design || Mode->InsidesData()->Lots[Lot]->Design))   // the rooms' furnishing reads the finishes there
 	{
 		FBrixInside& In = Mode->InsidesData()->Lots[Lot].GetValue();
@@ -1067,6 +1145,8 @@ bool ABrixLife::OpenRemodel(int32 Lot)
 	DesignFacade = TEXT("*");
 	DesignStorey = Floors.Num() ? Floors[0] : 0;
 	ViewTurn = 0;
+	ViewYawAdd = ViewPitchAdd = 0; ViewZoom = 1; ViewPan = FVector2D::ZeroVector;
+	Grab = FGrab(); PieceHover.Reset(); WallHover.Reset(); bPieceList = false;
 	Open(TEXT("remodel"), Lot);
 	DesignView();
 	return Panel == TEXT("remodel");
@@ -1083,7 +1163,11 @@ void ABrixLife::RemodelSet(const FBrixDesignChanges& Changes)
 
 void ABrixLife::EndRemodel()
 {
-	if (PanelLot >= 0 && Draft != DraftBase) ApplyRemodel(PanelLot, RemodelsDone.Contains(Lots[PanelLot].Id) ? DraftBase : TSharedPtr<FJsonObject>());   // not paid for: as it was
+	const bool bWasCut = CutLot >= 0;   // cut open for the designer: whole again
+	CutLot = CutFloor = -1;
+	Grab = FGrab(); PieceHover.Reset(); WallHover.Reset();
+	if (const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this))) if (Mode->RoomsActor()) { Mode->RoomsActor()->SetDesign(-1, -1); Mode->RoomsActor()->SetMarks({}, {}); }
+	if (PanelLot >= 0 && (Draft != DraftBase || bWasCut)) ApplyRemodel(PanelLot, RemodelsDone.Contains(Lots[PanelLot].Id) ? DraftBase : TSharedPtr<FJsonObject>());   // not paid for: as it was
 	for (const auto& P : PlanDraft) if (!(P.Value == PlanBase.FindRef(P.Key))) ShowPlan(PanelLot, P.Key, PlanNow(PanelLot, P.Key));   // not paid for: as they were
 	Draft.Reset();
 	DraftBase.Reset();
@@ -1096,6 +1180,43 @@ void ABrixLife::EndRemodel()
 	if (ViewCam) { ViewCam->Destroy(); ViewCam = nullptr; }
 }
 
+double ABrixLife::DesignFloorM() const
+{
+	const FBrixLot* L = CityLot(PanelLot);
+	return L ? BrixFloorUp(*L, DesignStorey, FBrixDoorRules::FromConfig()) : 3.0 * DesignStorey;
+}
+
+double ABrixLife::DesignPitch0() const { return FMath::DegreesToRadians(DesignTab != TEXT("outside") ? DesignPitchDeg + 20.0 : (double)DesignPitchDeg); }
+
+double ABrixLife::DesignDist0() const
+{
+	if (!Draft || !Lots.IsValidIndex(PanelLot)) return 10.0;
+	const FVector2D Size = Lots[PanelLot].Max - Lots[PanelLot].Min;
+	const bool bInside = DesignTab != TEXT("outside");
+	return (FMath::Max(Size.X, Size.Y) * (bInside ? 1.1 : 1.35) + (bInside ? 2.0 : Draft->GetObjectField(TEXT("shell"))->GetNumberField(TEXT("height")))) * 1.15;
+}
+
+float ABrixLife::CutNow(int32 Lot) const
+{
+	if (Lot != CutLot || CutFloor < 0) return -1.f;
+	const FBrixLot* L = CityLot(Lot);
+	return L ? BrixFloorUp(*L, CutFloor, FBrixDoorRules::FromConfig()) + DesignCutM : -1.f;
+}
+
+// BUILD-020 (life.js syncView(); play.js: the designer's cut): looking inside, the building is drawn cut open a little above
+// the storey's floor and only that storey's rooms are drawn; from outside it is whole
+void ABrixLife::SyncCut()
+{
+	const bool bIn = Panel == TEXT("remodel") && Draft && DesignTab != TEXT("outside");
+	const int32 WantLot = bIn ? PanelLot : -1, WantFloor = bIn ? DesignStorey : -1;
+	if (WantLot == CutLot && WantFloor == CutFloor) return;
+	CutLot = WantLot;
+	CutFloor = WantFloor;
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (Mode && Mode->RoomsActor()) Mode->RoomsActor()->SetDesign(CutLot, CutFloor);
+	if (PanelLot >= 0 && Draft) ApplyRemodel(PanelLot, Draft);
+}
+
 void ABrixLife::DesignView()   // BUILD-020 (life.js startView(), frame3()): over the building, three-quarters from its front
 {
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
@@ -1106,13 +1227,13 @@ void ABrixLife::DesignView()   // BUILD-020 (life.js startView(), frame3()): ove
 	Sh->TryGetStringField(TEXT("side"), Front);
 	const double Hgt = Sh->GetNumberField(TEXT("height"));
 	const FVector2D Out = Front == TEXT("n") ? FVector2D(0, -1) : Front == TEXT("s") ? FVector2D(0, 1) : Front == TEXT("w") ? FVector2D(-1, 0) : FVector2D(1, 0);
-	const double A = FMath::Atan2(Out.Y, Out.X) + FMath::DegreesToRadians(DesignTurnDeg + 45.0 * ViewTurn);
-	const FVector2D Size = L.Max - L.Min;
+	const double A = FMath::Atan2(Out.Y, Out.X) + FMath::DegreesToRadians(DesignTurnDeg + 45.0 * ViewTurn) + ViewYawAdd;
 	const bool bInside = DesignTab != TEXT("outside");
-	const double Look = bInside ? 3.0 * DesignStorey + 1.0 : Hgt * 0.5;
-	const double Dist = (FMath::Max(Size.X, Size.Y) * (bInside ? 1.1 : 1.35) + (bInside ? 2.0 : Hgt)) * 1.15;
-	const double P = FMath::DegreesToRadians(bInside ? DesignPitchDeg + 20.0 : (double)DesignPitchDeg);
-	const FVector Target(L.Centre().X * CmPerM, L.Centre().Y * CmPerM, (Look + 0.3) * CmPerM);
+	const double Look = bInside ? DesignFloorM() : Hgt * 0.5;
+	const double Dist = FMath::Clamp(DesignDist0() * ViewZoom, 2.0, 160.0);   // (play.js: from 2 m to 160 m)
+	const double P = FMath::Clamp(DesignPitch0() + ViewPitchAdd, .04, 1.55);
+	const FVector2D Mid = L.Centre() + ViewPan;
+	const FVector Target(Mid.X * CmPerM, Mid.Y * CmPerM, (Look + 0.3) * CmPerM);
 	const FVector Eye = Target + FVector(FMath::Cos(A) * FMath::Cos(P), FMath::Sin(A) * FMath::Cos(P), FMath::Sin(P)) * Dist * CmPerM;
 	if (!ViewCam) ViewCam = GetWorld()->SpawnActor<ACameraActor>();
 	if (!ViewCam) return;
@@ -1120,6 +1241,7 @@ void ABrixLife::DesignView()   // BUILD-020 (life.js startView(), frame3()): ove
 	const FVector Left = -FRotationMatrix(Rot).GetUnitAxis(EAxis::Y) * Dist * CmPerM * 0.22;   // the card is on the left: the building to the right of the middle
 	ViewCam->SetActorLocationAndRotation(Eye + Left, Rot);
 	if (PC->GetViewTarget() != ViewCam) PC->SetViewTargetWithBlend(ViewCam, 0.6f);
+	SyncCut();
 }
 
 bool ABrixLife::RemodelPay(FString& Said)
@@ -1161,7 +1283,7 @@ void ABrixLife::RemodelPanel(TSharedRef<SVerticalBox> Body)
 	auto MenuOf = [&](const FString& Part) -> const TArray<FBrixDesignOption>* { for (const auto& P : Menu0) if (P.Key == Part) return &P.Value; return nullptr; };
 	auto Row = [&](const FString& Label, const TArray<FBrixDesignOption>& Opts, const TSharedPtr<FJsonValue>& Cur, TFunction<FBrixDesignChanges(const FBrixDesignOption&)> Path)
 	{
-		TSharedRef<SWrapBox> W = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(4, 4));
+		TSharedRef<SWrapBox> W = UiWrap(CardWide() - 128.f, 4.f);
 		for (const FBrixDesignOption& O : Opts)
 		{
 			const FBrixDesignChanges Ch = Path(O);
@@ -1185,7 +1307,7 @@ void ABrixLife::RemodelPanel(TSharedRef<SVerticalBox> Body)
 	Sh->TryGetStringField(TEXT("side"), Front);
 	if (DesignTab == TEXT("outside"))
 	{
-		TSharedRef<SWrapBox> Fs = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+		TSharedRef<SWrapBox> Fs = UiWrap(CardWide(), 6.f);
 		Fs->AddSlot().VAlign(VAlign_Center)[ UiText(TEXT("Walls"), 13, UiDim) ];
 		for (const FString F : { FString(TEXT("*")), FString(TEXT("n")), FString(TEXT("s")), FString(TEXT("e")), FString(TEXT("w")) })
 		{
@@ -1336,6 +1458,7 @@ void ABrixLife::RemodelPanel(TSharedRef<SVerticalBox> Body)
 		Draw();
 	}, Draft != DraftBase || bPlanned, true));
 	Slot(Bs, 10);
+	Slot(UiText(TEXT("Drag the view to look round; right drag, middle drag or Shift+drag slides it; the wheel comes nearer where the mouse is; double click looks at a spot."), 12, UiDim), 8);
 }
 
 // ---- the room plan (BUILD-021 to BUILD-023; life.js planNow(), editWall(), addWall(), fitWall(), grow(); play.js roomFor())
@@ -1476,8 +1599,8 @@ void ABrixLife::RoomsSection(TSharedRef<SVerticalBox> Body)   // life.js remodel
 	const FBrixRoomPlanRules R = PlanRules();
 	const FBrixPlan& Plan = PlanDraft[DesignStorey];
 	Slot(UiHeading(TEXT("Rooms")), 0);
-	Slot(UiText(TEXT("Pick an inner wall, then move it, stretch it between the walls it meets, open or close its doorway, paint it or take it down. Every room must be reached from the way in, and the stairs kept clear."), 12, UiDim));
-	TSharedRef<SWrapBox> Ws = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+	Slot(UiText(TEXT("Click an inner wall to pick it, drag it to move it either way: its ends catch on the walls they meet. Fit between walls stretches it from wall to wall. Every room must be reached from the way in, and the stairs kept clear."), 12, UiDim));
+	TSharedRef<SWrapBox> Ws = UiWrap(CardWide(), 6.f);
 	for (const FBrixPlanWall& W : Plan)
 	{
 		const FString Id = W.Id;
@@ -1491,7 +1614,7 @@ void ABrixLife::RoomsSection(TSharedRef<SVerticalBox> Body)   // life.js remodel
 		const bool bX = W->Ax == TEXT("x");
 		const double Lo = bX ? S.Room.X : S.Room.Y, Hi = bX ? S.Room.Z : S.Room.W;
 		auto Edit = [this, Id](TFunction<void(FBrixPlanWall&)> Fn) { EditPlan([Id, Fn](FBrixPlan& P) { if (FBrixPlanWall* X = P.FindByPredicate([&](const FBrixPlanWall& Y) { return Y.Id == Id; })) Fn(*X); }); };
-		TSharedRef<SWrapBox> A = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+		TSharedRef<SWrapBox> A = UiWrap(CardWide(), 6.f);
 		A->AddSlot()[ UiButton(W->Door ? TEXT("Close the doorway") : TEXT("Add a doorway"), [Edit, R]() { Edit([R](FBrixPlanWall& X) { if (X.Door) X.Door.Reset(); else X.Door = BrixRoomPlan::Gridded(R, (X.A0 + X.A1) / 2); }); }, true, true) ];
 		A->AddSlot()[ UiButton(TEXT("Fit between walls"), [this, Edit, R, Lo, Hi, Id]()   // life.js fitWall(): to the nearest wall across, or the room's side, at each end
 		{
@@ -1519,7 +1642,7 @@ void ABrixLife::RoomsSection(TSharedRef<SVerticalBox> Body)   // life.js remodel
 		// its own colour (BUILD-022): the district's inside colours, or the storey's
 		if (const TSharedPtr<FJsonObject> Kit = Mode->InsidesData()->Builder.Kit)
 		{
-			TSharedRef<SWrapBox> C = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(4, 4));
+			TSharedRef<SWrapBox> C = UiWrap(CardWide() - 128.f, 4.f);
 			FBrixDesignOption None;
 			None.Id = MakeShared<FJsonValueNull>(); None.Name = TEXT("As the storey");
 			C->AddSlot()[ SwatchButton(None, W->Colour.IsEmpty(), [Edit]() { Edit([](FBrixPlanWall& X) { X.Colour.Reset(); }); }) ];
@@ -1682,38 +1805,42 @@ void ABrixLife::FurnishSection(TSharedRef<SVerticalBox> Body)
 	if (!LayDraft.Contains(DesignStorey)) { const FBrixLayout L = LayNow(PanelLot, DesignStorey); LayBase.Add(DesignStorey, L); LayDraft.Add(DesignStorey, L); }
 	const FBrixFurnishRulesD F = FurnRules();
 	const FBrixLayout& Lay = LayDraft[DesignStorey];
-	Slot(UiText(TEXT("Pick a piece to move it, turn it or put it with your belongings. New pieces come from the kits in any of the four lines; what you take away you can place again, in any home of yours."), 12, UiDim), 0);
-	TSharedRef<SWrapBox> Ps = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
-	TMap<FString, int32> Count, Seen;   // the town's pieces have no names of their own: numbered where several share one
-	for (const FBrixLayoutPiece& P : Lay) ++Count.FindOrAdd(P.Name);
-	for (const FBrixLayoutPiece& P : Lay)
-	{
-		const FString Id = P.Id;
-		const int32 n = ++Seen.FindOrAdd(P.Name);
-		Ps->AddSlot()[ UiButton(Count[P.Name] > 1 ? FString::Printf(TEXT("%s %d"), *P.Name, n) : P.Name, [this, Id]() { PieceSel = PieceSel == Id ? FString() : Id; Draw(); }, true, PieceSel != Id) ];
-	}
-	if (!Lay.Num()) Ps->AddSlot()[ UiText(TEXT("Nothing on this storey."), 13, UiDim) ];
-	Slot(Ps);
+	Slot(UiText(TEXT("Click a piece to pick it, drag it across the floor to move it. R turns it (Shift+R the other way), Delete puts it with your belongings."), 12, UiDim), 0);
 	if (const FBrixLayoutPiece* Sel = Lay.FindByPredicate([this](const FBrixLayoutPiece& X) { return X.Id == PieceSel; }))
 	{
 		const FString Id = Sel->Id;
 		auto Edit = [this, Id](TFunction<void(FBrixLayoutPiece&)> Fn) { EditLayout([Id, Fn](FBrixLayout& L) { if (FBrixLayoutPiece* X = L.FindByPredicate([&](const FBrixLayoutPiece& Y) { return Y.Id == Id; })) Fn(*X); }); };
-		const double Turn = F.Turn, Step = 0.25;
-		TSharedRef<SWrapBox> A = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+		const double Turn = F.Turn;
+		TSharedRef<SWrapBox> A = UiWrap(CardWide(), 6.f);
 		A->AddSlot()[ UiButton(TEXT("Turn left"), [Edit, Turn]() { Edit([Turn](FBrixLayoutPiece& X) { X.Yaw = FMath::Fmod(FMath::Fmod(X.Yaw + Turn, 360.0) + 360.0, 360.0); }); }, true, true) ];
 		A->AddSlot()[ UiButton(TEXT("Turn right"), [Edit, Turn]() { Edit([Turn](FBrixLayoutPiece& X) { X.Yaw = FMath::Fmod(FMath::Fmod(X.Yaw - Turn, 360.0) + 360.0, 360.0); }); }, true, true) ];
-		for (const TPair<const TCHAR*, FVector2D>& M : { TPair<const TCHAR*, FVector2D>(TEXT("North"), FVector2D(0, -Step)), TPair<const TCHAR*, FVector2D>(TEXT("South"), FVector2D(0, Step)),
-			TPair<const TCHAR*, FVector2D>(TEXT("West"), FVector2D(-Step, 0)), TPair<const TCHAR*, FVector2D>(TEXT("East"), FVector2D(Step, 0)) })
-		{
-			const FVector2D Dv = M.Value;
-			A->AddSlot()[ UiButton(M.Key, [Edit, Dv, F]() { Edit([Dv, F](FBrixLayoutPiece& X) { X.X = BrixFurnishPlan::Snap(F, X.X + Dv.X); X.Z = BrixFurnishPlan::Snap(F, X.Z + Dv.Y); }); }, true, true) ];   // life.js: dragging it across the floor
-		}
-		A->AddSlot()[ UiButton(TEXT("To your belongings"), [this, Id]() { EditLayout([Id](FBrixLayout& L) { L.RemoveAll([&](const FBrixLayoutPiece& X) { return X.Id == Id; }); }); PieceSel.Reset(); Draw(); }, true, true) ];
+		A->AddSlot()[ UiButton(TEXT("To your belongings"), [this, Id]() { PieceSel.Reset(); EditLayout([Id](FBrixLayout& L) { L.RemoveAll([&](const FBrixLayoutPiece& X) { return X.Id == Id; }); }); }, true, true) ];
 		A->AddSlot()[ UiButton(TEXT("Put down"), [this]() { PieceSel.Reset(); Draw(); }, true, true) ];
-		Slot(UiText(Sel->Name, 14, UiCream, true), 8);
+		Slot(UiText(Sel->Name + (StoreyBad().Contains(Id) ? TEXT(" · can't stand here") : TEXT("")), 14, UiCream, true), 8);
 		Slot(A, 2);
 	}
-	const double Cx = BrixFurnishPlan::Snap(F, (S.Room.X + S.Room.Z) / 2), Cz = BrixFurnishPlan::Snap(F, (S.Room.Y + S.Room.W) / 2);
+	// the pieces by name too, for a piece that stands behind another (the slice has only the picture)
+	Slot(UiButton(bPieceList ? FString(TEXT("Hide the list of pieces")) : FString::Printf(TEXT("List the %d pieces by name"), Lay.Num()), [this]() { bPieceList = !bPieceList; Draw(); }, Lay.Num() > 0, true));
+	if (bPieceList)
+	{
+		TSharedRef<SWrapBox> Ps = UiWrap(CardWide(), 6.f);
+		TMap<FString, int32> Count, Seen;   // the town's pieces have no names of their own: numbered where several share one
+		for (const FBrixLayoutPiece& P : Lay) ++Count.FindOrAdd(P.Name);
+		for (const FBrixLayoutPiece& P : Lay)
+		{
+			const FString Id = P.Id;
+			const int32 n = ++Seen.FindOrAdd(P.Name);
+			Ps->AddSlot()[ UiButton(Count[P.Name] > 1 ? FString::Printf(TEXT("%s %d"), *P.Name, n) : P.Name, [this, Id]() { PieceSel = PieceSel == Id ? FString() : Id; Draw(); }, true, PieceSel != Id) ];
+		}
+		Slot(Ps);
+	}
+	// a new piece, or one from the belongings, goes where the view looks, on the grid, inside the room (life.js addPiece(), placeHeld())
+	const FVector2D Looks = Lots[PanelLot].Centre() + ViewPan;
+	auto Where = [F, S, Looks](double W, double D)
+	{
+		return FVector2D(BrixFurnishPlan::Snap(F, FMath::Clamp(Looks.X, FMath::Min<double>(S.Room.X + W / 2, S.Room.Z - W / 2), FMath::Max<double>(S.Room.X + W / 2, S.Room.Z - W / 2))),
+			BrixFurnishPlan::Snap(F, FMath::Clamp(Looks.Y, FMath::Min<double>(S.Room.Y + D / 2, S.Room.W - D / 2), FMath::Max<double>(S.Room.Y + D / 2, S.Room.W - D / 2))));
+	};
 	const FBrixLayout Held = HeldNow();
 	if (Held.Num())
 	{
@@ -1723,41 +1850,286 @@ void ABrixLife::FurnishSection(TSharedRef<SVerticalBox> Body)
 			TSharedRef<SHorizontalBox> R = UiRow();
 			R->AddSlot().FillWidth(1).VAlign(VAlign_Center)[ UiText(FString::Printf(TEXT("%s  ·  %.2f × %.2f m"), *B.Name, B.W, B.D), 13) ];
 			const FBrixLayoutPiece Bc = B;
-			UiAdd(R, UiButton(TEXT("Place"), [this, Bc, Cx, Cz]() { EditLayout([&](FBrixLayout& L) { FBrixLayoutPiece Q = Bc; Q.X = Cx; Q.Z = Cz; Q.Yaw = 0; L.Add(Q); }); PieceSel = Bc.Id; Draw(); }, true, true));
+			const FVector2D At = Where(B.W, B.D);
+			UiAdd(R, UiButton(TEXT("Place"), [this, Bc, At]() { PieceSel = Bc.Id; EditLayout([&](FBrixLayout& L) { FBrixLayoutPiece Q = Bc; Q.X = At.X; Q.Z = At.Y; Q.Yaw = 0; L.Add(Q); }); }, true, true));
 			Slot(R, 2);
 		}
 	}
 	Slot(UiHeading(TEXT("Add a piece")), 0);
 	if (AddRoom.IsEmpty() && F.Rooms.Num()) AddRoom = F.Rooms[0].Key;
 	if (AddLine.IsEmpty() && F.Lines.Num()) AddLine = F.Lines[0];
-	TSharedRef<SWrapBox> Rk = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+	TSharedRef<SWrapBox> Rk = UiWrap(CardWide(), 6.f);
 	for (const auto& R : F.Rooms) { const FString K = R.Key; Rk->AddSlot()[ UiButton(K.Left(1).ToUpper() + K.Mid(1), [this, K]() { AddRoom = K; Draw(); }, true, AddRoom != K) ]; }
 	Slot(Rk);
-	TSharedRef<SWrapBox> Lk = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+	TSharedRef<SWrapBox> Lk = UiWrap(CardWide(), 6.f);
 	Lk->AddSlot().VAlign(VAlign_Center)[ UiText(TEXT("Line"), 13, UiDim) ];
 	for (const FString& Ln : F.Lines) Lk->AddSlot()[ UiButton(Ln == TEXT("oldtown") ? FString(TEXT("Old Town")) : Ln.Left(1).ToUpper() + Ln.Mid(1), [this, Ln]() { AddLine = Ln; Draw(); }, true, AddLine != Ln) ];
 	Slot(Lk, 4);
-	TSharedRef<SWrapBox> Ks = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+	// the pieces as objects in the chosen line, small cells (UI-020, layout D: the designer's card is narrow)
+	TArray<FWare> Things;
 	if (const auto* Room = F.Rooms.FindByPredicate([this](const TPair<FString, TArray<FString>>& R) { return R.Key == AddRoom; }))
 		for (const FString& K : Room->Value)
 		{
 			const FBrixFurnishRulesD::FPiece* Pc = F.Pieces.Find(K);
 			if (!Pc || !Pc->From.IsEmpty()) continue;   // sold at the mall's outlets, not here (FURN-064)
-			Ks->AddSlot()[ UiButton(Pc->Name + TEXT("  ") + Format(Pc->Price), [this, K, F, Cx, Cz]()   // life.js addPiece(): where the view looks, on the grid, in the room
-			{
-				FString NewId;
-				EditLayout([&](FBrixLayout& L)
-				{
-					int32 n = 1;
-					for (const FBrixLayoutPiece& X : L) if (X.Id.StartsWith(TEXT("k"))) n = FMath::Max(n, FCString::Atoi(*X.Id.Mid(1)) + 1);
-					NewId = FString::Printf(TEXT("k%d"), n);
-					L.Add(BrixFurnishPlan::KitPiece(F, K, NewId, Cx, Cz, 0, AddLine));
-				});
-				PieceSel = NewId;
-				Draw();
-			}, true, true) ];
+			FWare W;
+			W.Id = K; W.Name = Pc->Name; W.Price = Pc->Price; W.Goes = TEXT("place"); W.Line = AddLine; W.Size = Pc->Size;   // paid with the rest of the work: never too dear to add
+			Things.Add(W);
 		}
-	Slot(Ks, 4);
+	FGridOpts O;
+	O.Id = TEXT("furnish");
+	O.Verb = TEXT("Add");
+	O.Width = CardWide() - 2.f;
+	O.bNarrow = O.Width < BuyMenu.NarrowPx;
+	O.Buy = [this, F, Where](const FWare& W, FString& Said)
+	{
+		const FBrixFurnishRulesD::FPiece* Pc = F.Pieces.Find(W.Id);
+		if (!Pc) { E->Why = TEXT("there is no such piece"); return false; }
+		const FVector2D At = Where(Pc->Size.X, Pc->Size.Y);
+		FString NewId;
+		const FBrixLayout Pool = PoolOf();
+		const FString Here = FString::Printf(TEXT("b:%s:%d:"), *Lots[PanelLot].Id, DesignStorey);
+		EditLayout([&](FBrixLayout& L)
+		{
+			int32 n = 1;   // (never an id a belonging from this storey has)
+			for (const FBrixLayoutPiece& X : L) if (X.Id.StartsWith(TEXT("k"))) n = FMath::Max(n, FCString::Atoi(*X.Id.Mid(1)) + 1);
+			for (const FBrixLayoutPiece& X : Pool) if (X.Id.StartsWith(Here + TEXT("k"))) n = FMath::Max(n, FCString::Atoi(*X.Id.Mid(Here.Len() + 1)) + 1);
+			NewId = FString::Printf(TEXT("k%d"), n);
+			L.Add(BrixFurnishPlan::KitPiece(F, W.Id, NewId, At.X, At.Y, 0, AddLine));
+			PieceSel = NewId;
+		});
+		Said.Reset();
+		return true;
+	};
+	Slot(Grid(Things, O), 4);
+}
+
+// ---- the mouse in the designer (BUILD-020, BUILD-021, FURN-055; life.js pointer(), designMarks(), storeyBad(), designKey();
+// the picking and the dragging themselves are BrixWorld's BrixDesignPick)
+
+bool ABrixLife::DesignRay(const FVector2D& Px, FBrixRay& Out) const
+{
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	FVector O, D;
+	if (!PC || !UGameplayStatics::DeprojectScreenToWorld(PC, Px, O, D)) return false;
+	Out.O = FVector3d(O.X / CmPerM, O.Z / CmPerM, O.Y / CmPerM);   // the data's frame: x east, y up, z south
+	Out.D = FVector3d(D.X, D.Z, D.Y);
+	return true;
+}
+
+TSet<FString> ABrixLife::StoreyBad() const
+{
+	TSet<FString> Bad;
+	const FBrixLayout* A = LayDraft.Find(DesignStorey);
+	const FBrixLayout* B = LayBase.Find(DesignStorey);
+	FBrixRoomSpec S;
+	if (!A || !B || *A == *B || !RoomFor(PanelLot, DesignStorey, S)) return Bad;
+	const FBrixFurnishRulesD F = FurnRules();
+	TSet<FString> Old;
+	for (const TPair<FString, FString>& Pr : BrixFurnishPlan::Problems(F, S.Room, S.Keep, S.Ceiling, *B)) Old.Add(Pr.Key);
+	for (const TPair<FString, FString>& Pr : BrixFurnishPlan::Problems(F, S.Room, S.Keep, S.Ceiling, *A))
+	{
+		if (Old.Contains(Pr.Key)) continue;
+		TArray<FString> Ids;
+		Pr.Key.ParseIntoArray(Ids, TEXT("|"), false);
+		for (int32 k = 0; k + 1 < Ids.Num(); ++k) Bad.Add(Ids[k]);   // the key is the pieces' ids, then what is wrong
+	}
+	return Bad;
+}
+
+void ABrixLife::DesignMarks()
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Mode || !Mode->RoomsActor()) return;
+	TArray<FTransform> At;
+	TArray<FLinearColor> Col;
+	// lit in its own colour, as the slice's signal lamp: what is picked the lantern's orange, what cannot stand there red,
+	// what is under the mouse pale (deeper than the slice's, to read on a floor the sun is on)
+	const FLinearColor Picked(.9f, .3f, .03f), Wrong(.9f, .05f, .03f), Under(.5f, .5f, .45f);
+	auto Put = [&](const FBrixLayoutPiece& P, double F, bool bSel, bool bBad)
+	{
+		for (const BrixDesignPick::FMarkBox& M : BrixDesignPick::Marks(P, F, bSel))
+		{
+			// the slice turns a box by M4.ry(yaw): its x to (cos, -sin) on the plan, which is Unreal's yaw -yaw
+			At.Add(FTransform(FQuat(FVector::UpVector, -FMath::DegreesToRadians(M.YawDeg)), FVector(M.At.X, M.At.Z, M.At.Y + M.Size.Y / 2) * CmPerM, FVector(M.Size.X, M.Size.Z, M.Size.Y)));
+			Col.Add(bBad ? Wrong : bSel ? Picked : Under);
+		}
+	};
+	if (Panel == TEXT("remodel") && Draft && DesignTab != TEXT("outside"))
+	{
+		const double F = DesignFloorM();
+		if (DesignTab == TEXT("inside"))
+		{
+			const FBrixRoomPlanRules PR = PlanRules();
+			if (const FBrixPlan* Plan = PlanDraft.Find(DesignStorey))
+				for (const FBrixPlanWall& W : *Plan)
+					if (W.Id == WallSel || (W.Id == WallHover && Grab.Kind == 0)) Put(BrixDesignPick::WallAsPiece(PR, W), F, W.Id == WallSel, false);
+		}
+		else if (const FBrixLayout* Lay = LayDraft.Find(DesignStorey))
+		{
+			const TSet<FString> Bad = StoreyBad();
+			for (const FBrixLayoutPiece& P : *Lay) if (P.Id == PieceSel || (P.Id == PieceHover && Grab.Kind == 0)) Put(P, F, P.Id == PieceSel, Bad.Contains(P.Id));
+			for (const FBrixLayoutPiece& P : *Lay) if (P.Id != PieceSel && Bad.Contains(P.Id)) Put(P, F, false, true);
+		}
+	}
+	Mode->RoomsActor()->SetMarks(At, Col);
+}
+
+void ABrixLife::DesignPointer(EPoint Type, const FVector2D& Px, int32 Button, bool bShift, const FVector2D& DeltaPx, float Wheel, bool bHeld)
+{
+	if (Panel != TEXT("remodel") || bMenu || !Draft || !Lots.IsValidIndex(PanelLot)) return;
+	const FBrixEconLot& L = Lots[PanelLot];
+	const double Beyond = 20;   // the view goes 20 m beyond the building at most
+	const bool bInside = DesignTab != TEXT("outside");
+	const double Ground = bInside ? DesignFloorM() : 0.0;
+	FBrixRay Ray;
+	const bool bRay = DesignRay(Px, Ray);
+	const TOptional<FVector2D> Hit = bRay ? BrixDesignPick::FloorHit(Ray, Ground) : TOptional<FVector2D>();
+	const FVector2D Mid = L.Centre() + ViewPan;
+	auto Aim = [&](const FVector2D& To)
+	{
+		ViewPan = FVector2D(FMath::Clamp(To.X, L.Min.X - Beyond, L.Max.X + Beyond), FMath::Clamp(To.Y, L.Min.Y - Beyond, L.Max.Y + Beyond)) - L.Centre();
+		DesignView();
+	};
+	const bool bWalls = DesignTab == TEXT("inside") && PlanDraft.Contains(DesignStorey);
+	const bool bPieces = DesignTab == TEXT("furnish") && LayDraft.Contains(DesignStorey);
+	auto WallUnder = [&]() { return bRay ? BrixDesignPick::PickWall(PlanRules(), PlanDraft[DesignStorey], Ground, DesignCutM, Ray) : (int32)INDEX_NONE; };
+	auto PieceUnder = [&]() { return bRay ? BrixDesignPick::PickPiece(LayDraft[DesignStorey], Ground, Ray) : (int32)INDEX_NONE; };
+	if (Type == EPoint::Wheel)   // nearer or further, towards the point under the mouse
+	{
+		const double Base = FMath::Max(DesignDist0(), .1), Was = FMath::Clamp(Base * ViewZoom, 2.0, 160.0), Now = FMath::Clamp(Was * (Wheel < 0 ? 1.15 : 1 / 1.15), 2.0, 160.0), k = Now / Was;
+		ViewZoom = Now / Base;
+		if (Hit && Hit->X > L.Min.X - Beyond && Hit->X < L.Max.X + Beyond && Hit->Y > L.Min.Y - Beyond && Hit->Y < L.Max.Y + Beyond) Aim(*Hit + (Mid - *Hit) * k);   // (not towards the far distance)
+		else DesignView();
+		return;
+	}
+	if (Type == EPoint::Twice) { if (Hit) Aim(*Hit); return; }   // a double click looks at that spot
+	if (Type == EPoint::Down)
+	{
+		Grab = FGrab();
+		if (Button == 2 || Button == 1 || (Button == 0 && bShift)) { Grab.Kind = 2; return; }   // the right or middle button, or Shift, slides the view
+		Grab.Kind = 1;   // on open ground a drag turns the view
+		if (Button != 0) return;
+		if (bWalls)   // an inner wall: pick it, and drag it across the floor
+		{
+			const FBrixPlan& Plan = PlanDraft[DesignStorey];
+			const int32 i = WallUnder();
+			const FString Was = WallSel;
+			WallSel = Plan.IsValidIndex(i) ? Plan[i].Id : FString();
+			if (Plan.IsValidIndex(i) && Hit) { const BrixDesignPick::FWallGrab G = BrixDesignPick::GrabWall(Plan[i], *Hit); Grab.Kind = 4; Grab.Id = Plan[i].Id; Grab.Off = FVector2D(G.Off, 0); Grab.OffA = G.OffA; }
+			if (Was != WallSel) Draw(); else DesignMarks();
+		}
+		else if (bPieces)   // a piece: pick it, and drag it across the floor
+		{
+			const FBrixLayout& Lay = LayDraft[DesignStorey];
+			const int32 i = PieceUnder();
+			const FString Was = PieceSel;
+			PieceSel = Lay.IsValidIndex(i) ? Lay[i].Id : FString();
+			if (Lay.IsValidIndex(i) && Hit) { Grab.Kind = 3; Grab.Id = Lay[i].Id; Grab.Off = BrixDesignPick::GrabPiece(Lay[i], *Hit); }
+			if (Was != PieceSel) Draw(); else DesignMarks();
+		}
+		return;
+	}
+	if (Type == EPoint::Move)
+	{
+		if (!bHeld || Grab.Kind == 0)   // hovering: what is under the mouse is outlined, and the mouse says it can be moved
+		{
+			FString Wall, Piece;
+			if (bWalls) { const int32 i = WallUnder(); if (PlanDraft[DesignStorey].IsValidIndex(i)) Wall = PlanDraft[DesignStorey][i].Id; }
+			else if (bPieces) { const int32 i = PieceUnder(); if (LayDraft[DesignStorey].IsValidIndex(i)) Piece = LayDraft[DesignStorey][i].Id; }
+			if (Wall != WallHover || Piece != PieceHover) { WallHover = Wall; PieceHover = Piece; DesignMarks(); }
+			return;
+		}
+		if (Grab.Kind == 4)   // a wall follows the mouse, across and along, on the grid, inside the room; its ends catch on walls
+		{
+			FBrixRoomSpec S;
+			FBrixPlan* Plan = PlanDraft.Find(DesignStorey);
+			FBrixPlanWall* W = Plan ? Plan->FindByPredicate([&](const FBrixPlanWall& X) { return X.Id == Grab.Id; }) : nullptr;
+			if (!Hit || !W || !RoomFor(PanelLot, DesignStorey, S)) return;
+			const FBrixPlanWall To = BrixDesignPick::DragWall(PlanRules(), *Plan, *W, S.Room, *Hit, { Grab.Off.X, Grab.OffA });
+			if (To.Fix == W->Fix && To.A0 == W->A0) return;
+			if (!Grab.bMoved) { PushUndo(); Grab.bMoved = true; }
+			*W = To;
+			ShowPlan(PanelLot, DesignStorey, *Plan);
+			Msg.Reset();
+			DesignMarks();
+		}
+		else if (Grab.Kind == 3)   // a piece follows the mouse across the floor, on the grid
+		{
+			FBrixLayout* Lay = LayDraft.Find(DesignStorey);
+			FBrixLayoutPiece* P = Lay ? Lay->FindByPredicate([&](const FBrixLayoutPiece& X) { return X.Id == Grab.Id; }) : nullptr;
+			if (!Hit || !P) return;
+			const FVector2D To = BrixDesignPick::DragPiece(FurnRules(), *Hit, Grab.Off);
+			if (To.X == P->X && To.Y == P->Z) return;
+			if (!Grab.bMoved) { PushUndo(); Grab.bMoved = true; }
+			P->X = To.X; P->Z = To.Y;
+			ShowLayout(PanelLot, DesignStorey, *Lay);
+			Msg.Reset();
+			DesignMarks();
+		}
+		else if (Grab.Kind == 2 && ViewCam)   // the view slides: the ground goes with the mouse
+		{
+			const FRotationMatrix M(ViewCam->GetActorRotation());
+			const FVector2D Fwd = FVector2D(M.GetUnitAxis(EAxis::X)).GetSafeNormal(), Right = FVector2D(M.GetUnitAxis(EAxis::Y)).GetSafeNormal();
+			const double k = FMath::Clamp(DesignDist0() * ViewZoom, 2.0, 160.0) * .0016;
+			Aim(Mid - Right * DeltaPx.X * k + Fwd * DeltaPx.Y * k);
+		}
+		else if (Grab.Kind == 1)   // the view turns round the building, and tips
+		{
+			ViewYawAdd += DeltaPx.X * .006;
+			const double P0 = DesignPitch0();
+			ViewPitchAdd = FMath::Clamp(P0 + ViewPitchAdd + DeltaPx.Y * .005, .04, 1.55) - P0;
+			DesignView();
+		}
+		return;
+	}
+	if (Type == EPoint::Up)
+	{
+		const bool bMoved = Grab.bMoved;
+		Grab = FGrab();
+		if (bMoved) Draw(); else DesignMarks();   // the work and what stops it, now that it is put down
+	}
+}
+
+void ABrixLife::DesignKeys()   // life.js designKey()
+{
+	if (DesignTab != TEXT("furnish") || PieceSel.IsEmpty() || bMenu || Grab.Kind >= 3) return;
+	const APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	const FBrixLayout* Lay = LayDraft.Find(DesignStorey);
+	if (!PC || !Lay || !Lay->ContainsByPredicate([this](const FBrixLayoutPiece& X) { return X.Id == PieceSel; })) return;
+	const FString Id = PieceSel;
+	if (PC->WasInputKeyJustPressed(EKeys::R))
+	{
+		const double Turn = FurnRules().Turn * (PC->IsInputKeyDown(EKeys::LeftShift) || PC->IsInputKeyDown(EKeys::RightShift) ? -1 : 1);
+		EditLayout([&](FBrixLayout& L) { if (FBrixLayoutPiece* X = L.FindByPredicate([&](const FBrixLayoutPiece& Y) { return Y.Id == Id; })) X->Yaw = FMath::Fmod(FMath::Fmod(X->Yaw + Turn, 360.0) + 360.0, 360.0); });
+	}
+	else if (PC->WasInputKeyJustPressed(EKeys::Delete) || PC->WasInputKeyJustPressed(EKeys::BackSpace))
+	{
+		PieceSel.Reset();
+		EditLayout([&](FBrixLayout& L) { L.RemoveAll([&](const FBrixLayoutPiece& X) { return X.Id == Id; }); });
+	}
+}
+
+// For a test shot: a mouse's press, move or release at a point of the picture, sent through the interface as the mouse's own
+// would be, so the pad behind the card is what takes it. False when the interface cannot be reached.
+bool ABrixLife::SlatePoint(EPoint Type, const FVector2D& Px)
+{
+	if (!FSlateApplication::IsInitialized() || !DesignPad) return false;
+	const FGeometry G = DesignPad->GetTickSpaceGeometry();
+	if (G.GetLocalSize().X < 1.f) return false;
+	const FVector2f Abs2 = G.LocalToAbsolute(FVector2f(Px / FMath::Max(G.Scale, .01f)));
+	const FVector2D Abs(Abs2.X, Abs2.Y);
+	static FVector2D Last = Abs;
+	TSet<FKey> Down;
+	if (Type != EPoint::Up) Down.Add(EKeys::LeftMouseButton);
+	const FPointerEvent Ev(0, Abs, Last, Down, EKeys::LeftMouseButton, 0.f, FModifierKeysState());
+	Last = Abs;
+	FSlateApplication& App = FSlateApplication::Get();
+	if (Type == EPoint::Down) App.ProcessMouseButtonDownEvent(nullptr, Ev);
+	else if (Type == EPoint::Move) App.ProcessMouseMoveEvent(Ev);
+	else if (Type == EPoint::Up) App.ProcessMouseButtonUpEvent(Ev);
+	else return false;
+	return true;
 }
 
 // ---- for test shots
@@ -1773,6 +2145,13 @@ bool ABrixLife::RunOps(const FString& Ops)
 		TArray<FString> A;
 		Op.ParseIntoArray(A, TEXT(","));
 		if (!A.Num()) continue;
+		if (A[0] == TEXT("later"))   // later,<s>: the ops after it are done that much later (a picture has to be drawn before a mouse can be on it)
+		{
+			FString Rest;
+			for (int32 k = (int32)(&Op - List.GetData()) + 1; k < List.Num(); ++k) Rest += (Rest.IsEmpty() ? TEXT("") : TEXT(";")) + List[k];
+			Later(A.IsValidIndex(1) ? FCString::Atod(*A[1]) : 1.0, [this, Rest]() { RunOps(Rest); });
+			break;
+		}
 		auto I = [&](int32 k) { return A.IsValidIndex(k) ? FCString::Atoi64(*A[k]) : 0; };
 		auto Sv = [&](int32 k) { return A.IsValidIndex(k) ? A[k] : FString(); };
 		bool bOk = true;
@@ -1819,7 +2198,7 @@ bool ABrixLife::RunOps(const FString& Ops)
 			if (!FJsonSerializer::Deserialize(Rd, V) || !V.IsValid()) V = MakeShared<FJsonValueString>(Val);
 			if (bOk) RemodelSet({ { Path, V } });
 		}
-		else if (A[0] == TEXT("tab") && Panel == TEXT("remodel")) { DesignTab = Sv(1); DesignView(); Draw(); }   // tab,<outside|inside>
+		else if (A[0] == TEXT("tab") && Panel == TEXT("remodel")) { DesignTab = Sv(1); DesignView(); Draw(); }   // tab,<outside|inside|furnish>   // tab,<outside|inside>
 		else if (A[0] == TEXT("storey") && Panel == TEXT("remodel")) { DesignStorey = (int32)I(1); WallSel.Reset(); DesignView(); Draw(); }
 		else if (A[0] == TEXT("addwall") && Panel == TEXT("remodel")) { Draw(); AddWall(Sv(1)); }   // addwall,<x|z>: a new wall across the storey's middle
 		else if (A[0] == TEXT("wall") && Panel == TEXT("remodel")) { WallSel = Sv(1); Draw(); }   // wall,<id>: pick it
@@ -1859,6 +2238,74 @@ bool ABrixLife::RunOps(const FString& Ops)
 				L.Add(BrixFurnishPlan::KitPiece(FR, Sv(1), PieceSel, Cx, Cz, 0, Sv(2).IsEmpty() ? FString(TEXT("plain")) : Sv(2)));
 			});
 		}   // close: the panel shut, the player's own view again
+		// the mouse (FURN-055, BUILD-021, BUILD-020): dragpiece,<id>,<x>,<z> presses on that piece in the picture and drags its middle
+		// to there (metres, the data's frame); dragwall,<id>,<x>,<z> the same for an inner wall; view,<turn px>,<tip px>,<wheel clicks>
+		// drags the view round and turns the wheel; listpieces shows the storey's pieces by name; a fifth word "by" makes x and z a distance
+		else if ((A[0] == TEXT("dragpiece") || A[0] == TEXT("dragwall")) && Panel == TEXT("remodel"))
+		{
+			APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+			const bool bWall = A[0] == TEXT("dragwall");
+			const FString Id = Sv(1);
+			const double F = DesignFloorM();
+			FVector2D To(FCString::Atod(*Sv(2)), FCString::Atod(*Sv(3)));
+			FVector2D From = FVector2D::ZeroVector;
+			bOk = false;
+			if (bWall) { if (const FBrixPlan* Pl = PlanDraft.Find(DesignStorey)) if (const FBrixPlanWall* W = Pl->FindByPredicate([&](const FBrixPlanWall& X) { return X.Id == Id; })) { const FBrixLayoutPiece Wp = BrixDesignPick::WallAsPiece(PlanRules(), *W); From = FVector2D(Wp.X, Wp.Z); bOk = true; } }
+			else if (const FBrixLayout* Ly = LayDraft.Find(DesignStorey)) if (const FBrixLayoutPiece* Pc = Ly->FindByPredicate([&](const FBrixLayoutPiece& X) { return X.Id == Id; })) { From = FVector2D(Pc->X, Pc->Z); bOk = true; }
+			if (Sv(4) == TEXT("by")) To += From;   // dragpiece,<id>,<dx>,<dz>,by: that far from where it stands
+			FVector2D S0, S1;
+			E->Why.Reset();
+			double Top = 0;   // the press is on its top, where nothing nearer is in the way
+			if (bWall) Top = DesignCutM - .05;
+			else if (const FBrixLayout* Ly = LayDraft.Find(DesignStorey)) if (const FBrixLayoutPiece* Pc = Ly->FindByPredicate([&](const FBrixLayoutPiece& X) { return X.Id == Id; })) Top = FMath::Max(Pc->H, .05) - .01;
+			if (bOk && PC && ViewCam)
+			{
+				PC->SetViewTarget(ViewCam);   // the view is there at once, so the picture's points are this camera's
+				if (PC->PlayerCameraManager) PC->PlayerCameraManager->UpdateCamera(0.f);
+				FBrixRay Ray;
+				bOk = PC->ProjectWorldLocationToScreen(FVector(From.X, From.Y, F + Top) * CmPerM, S0) && DesignRay(S0, Ray);
+				const TOptional<FVector2D> Hit0 = bOk ? BrixDesignPick::FloorHit(Ray, F) : TOptional<FVector2D>();   // where the mouse is on the floor: the piece keeps its distance from it
+				bOk = Hit0.IsSet() && PC->ProjectWorldLocationToScreen(FVector(Hit0->X + To.X - From.X, Hit0->Y + To.Y - From.Y, F) * CmPerM, S1);
+			}
+			else if (bOk) { bOk = false; E->Why = TEXT("the designer has no view yet"); }
+			else E->Why = TEXT("no ") + Id + TEXT(" on the storey in view");
+			if (!bOk && E->Why.IsEmpty()) E->Why = Id + TEXT(" is not in the picture");
+			if (bOk)
+			{
+				Grab = FGrab();
+				const bool bClear = S0.X > (RemodelPanelPx + 24.f) * PxScale;   // not under the card: a press there would be on its buttons
+				const bool bSent = bClear && SlatePoint(EPoint::Down, S0);   // through the interface, as the mouse's own press would come
+				const bool bPad = bSent && Grab.Kind != 0;
+				FString Took = TEXT("nothing");
+				if (bPad) { if (Grab.Kind >= 3) Took = Grab.Id; SlatePoint(EPoint::Move, (S0 + S1) / 2); SlatePoint(EPoint::Move, S1); SlatePoint(EPoint::Up, S1); }
+				else
+				{
+					if (bSent) SlatePoint(EPoint::Up, S0);
+					DesignPointer(EPoint::Down, S0, 0, false, FVector2D::ZeroVector, 0.f, true);
+					if (Grab.Kind >= 3) Took = Grab.Id;
+					DesignPointer(EPoint::Move, S1, 0, false, S1 - S0, 0.f, true);
+					DesignPointer(EPoint::Up, S1, 0, false, FVector2D::ZeroVector, 0.f, false);
+				}
+				FVector2D Now = FVector2D::ZeroVector;
+				if (bWall) { if (const FBrixPlanWall* W = PlanDraft[DesignStorey].FindByPredicate([&](const FBrixPlanWall& X) { return X.Id == Id; })) { const FBrixLayoutPiece Wp = BrixDesignPick::WallAsPiece(PlanRules(), *W); Now = FVector2D(Wp.X, Wp.Z); } }
+				else if (const FBrixLayoutPiece* Pc = LayDraft[DesignStorey].FindByPredicate([&](const FBrixLayoutPiece& X) { return X.Id == Id; })) Now = FVector2D(Pc->X, Pc->Z);
+				bOk = (bWall ? WallSel : PieceSel) == Id && !Now.Equals(From, 1e-6);
+				UE_LOG(LogTemp, Display, TEXT("Brix Town: the mouse %s %s %s from %.2f, %.2f to %.2f, %.2f (asked to %.2f, %.2f; the picture's %.0f, %.0f to %.0f, %.0f; its press took hold of %s), %s"),
+					bOk ? TEXT("dragged") : TEXT("did not drag"), bWall ? TEXT("wall") : TEXT("piece"), *Id, From.X, From.Y, Now.X, Now.Y, To.X, To.Y, S0.X, S0.Y, S1.X, S1.Y, *Took,
+					bPad ? TEXT("through the pad behind the card") : TEXT("handed straight to the designer (the pad did not take the press)"));
+				if (!bOk) E->Why = TEXT("the mouse did not pick ") + Id;
+			}
+		}
+		else if (A[0] == TEXT("view") && Panel == TEXT("remodel"))
+		{
+			Grab = FGrab();
+			Grab.Kind = 1;
+			DesignPointer(EPoint::Move, ViewportPx / 2, 0, false, FVector2D(FCString::Atod(*Sv(1)), FCString::Atod(*Sv(2))), 0.f, true);
+			Grab = FGrab();
+			const int32 Clicks = FCString::Atoi(*Sv(3));
+			for (int32 k = 0; k < FMath::Abs(Clicks); ++k) DesignPointer(EPoint::Wheel, FVector2D(-1, -1), 0, false, FVector2D::ZeroVector, Clicks > 0 ? 1.f : -1.f, false);
+		}
+		else if (A[0] == TEXT("listpieces") && Panel == TEXT("remodel")) { bPieceList = true; Draw(); }
 		else if (A[0] == TEXT("pay") && Panel == TEXT("remodel")) { FString Said; bOk = RemodelPay(Said); Msg = bOk ? Said : TEXT("Refused: ") + E->Why + TEXT("."); Draw(); }
 		else if (A[0] == TEXT("give")) bOk = E->HasAccount(TEXT("current")) && E->L.Post(E->Day, E->Minute, TEXT("Test money"), { { TEXT("sys:start"), -I(1) }, { TEXT("p:current"), I(1) } }, E->Why);
 		else if (Est && (A[0] == TEXT("buy_cheapest") || A[0] == TEXT("rent_cheapest")))
@@ -1968,9 +2415,9 @@ TSharedPtr<double> ABrixLife::YawFor(const FString& Key)
 	return Y;
 }
 
-TSharedPtr<const FBrixThingMesh> ABrixLife::MeshFor(const FString& Thing, const FString& Band)
+TSharedPtr<const FBrixThingMesh> ABrixLife::MeshFor(const FString& Thing, const FString& Band, const FString& Line)
 {
-	const FString Key = Thing + TEXT("|") + Band;
+	const FString Key = Thing + TEXT("|") + Band + TEXT("|") + Line;
 	if (const TSharedPtr<const FBrixThingMesh>* M = Meshes.Find(Key)) return *M;
 	if (Thing.StartsWith(TEXT("board:")))   // a skateboard on show (CITY-102): its own model, as people.js board() draws it
 	{
@@ -1980,7 +2427,15 @@ TSharedPtr<const FBrixThingMesh> ABrixLife::MeshFor(const FString& Thing, const 
 		if (K) { FBrixBodyMesh Body; DrawBrixBoard(*K, 0, Body); Got = MakeShared<const FBrixThingMesh>(BrixThingFromBody(Body)); }
 		return Meshes.Add(Key, Got);
 	}
-	const TOptional<FBrixThingMesh> M = BuyMenu.MeshFor(Thing, Band);
+	TOptional<FBrixThingMesh> M = BuyMenu.MeshFor(Thing, Band);
+	if (const FBrixShows Sh = BuyMenu.Shows(Thing); !M && Sh.Kind == TEXT("piece"))   // a piece of furniture: the kit's own mesh in its line (ADR-0050), as it will stand in the room
+	{
+		const FString Name = TEXT("SM_") + Sh.Name.Replace(TEXT(":"), TEXT("_")) + TEXT("_") + (Line.IsEmpty() ? FString(TEXT("plain")) : Line);
+		M = BrixThingFromStaticMesh(LoadObject<UStaticMesh>(nullptr, *FString::Printf(TEXT("/Game/Furniture/%s.%s"), *Name, *Name)));
+		const FBrixFurnishRulesD F = FurnRules();
+		if (const FBrixFurnishRulesD::FPiece* Pc = M ? nullptr : F.Pieces.Find(Sh.Name)) M = BrixThingBox(Pc->Size, FVector3f(.45f, .38f, .3f));   // no mesh of its own yet (or one that cannot be read): a box its size, as in the room
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: the picture of %s is %s, %d triangles"), *Name, M && !M->bStandIn ? TEXT("its own mesh") : TEXT("a box its size"), M ? M->Num() : 0);
+	}
 	TSharedPtr<const FBrixThingMesh> Got; if (M) Got = MakeShared<const FBrixThingMesh>(*M); return Meshes.Add(Key, Got);
 }
 
@@ -2188,6 +2643,90 @@ TSharedRef<SWidget> ABrixLife::Grid(const TArray<FWare>& Things, const FGridOpts
 			[ SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(FLinearColor::FromSRGBColor(FColor(122, 66, 52))).Padding(FMargin(0, 3)).HAlign(HAlign_Center).RenderTransform(FSlateRenderTransform(FQuat2D(FMath::DegreesToRadians(-4.f))))
 				[ SNew(STextBlock).Font(UiFont(10, true)).ColorAndOpacity(FLinearColor::FromSRGBColor(FColor(251, 243, 224))).Text(FText::FromString(bHave ? TEXT("YOURS") : TEXT("SOLD OUT"))) ] ];
 	};
+	// layout D (buymenu.js grid(), narrow): small cells a few across, the chosen one turning; under them a strip with its name,
+	// where it goes, what is left, its size, its price and the one button. For a panel narrower than the rules' narrow_px
+	// (the building designer's card).
+	if (O.bNarrow)
+	{
+		const int32 NCols = FMath::Max(1, BuyMenu.NarrowColumns);
+		const float NGap = 6.f, NCell = FMath::Max((float)BuyMenu.NarrowCellMinPx, (O.Width - NGap * (NCols - 1)) / NCols);
+		FLive NLive;
+		NLive.Id = O.Id; NLive.Things = Things; NLive.O = O; NLive.Columns = NCols;
+		LiveGrid = NLive;
+		auto NBoard = [this](const FString& Goes) { const FBrixBuyMenuRules::FGoes* G = BuyMenu.Goes.Find(Goes); const TPair<FColor, FColor>* C = G ? BuyMenu.BoardColours.Find(G->Colour) : nullptr; return C ? *C : TPair<FColor, FColor>(FColor(59, 60, 74), FColor(232, 223, 201)); };
+		TSharedRef<SGridPanel> NList = SNew(SGridPanel);
+		for (int32 k = 0; k < Things.Num(); ++k)
+		{
+			const FWare W = Things[k];
+			const bool bSel = W.Id == P.Id, bOut = W.State == TEXT("out") || W.State == TEXT("have");
+			const TPair<FColor, FColor> Dot = NBoard(W.Goes);
+			TSharedRef<SWidget> CountMark = SNullWidget::NullWidget, DotMark = SNullWidget::NullWidget;
+			if (W.Left > 0) CountMark = SNew(STextBlock).Visibility(EVisibility::HitTestInvisible).Font(UiFont(9, true)).ColorAndOpacity(W.Left == 1 && !O.bMine ? UiGold : UiDim).Text(FText::FromString(FString::Printf(TEXT("×%d"), W.Left)));
+			if (BuyMenu.Goes.Contains(W.Goes))   // .bm-narrow .bm-dot: where it goes
+				DotMark = SNew(SBox).Visibility(EVisibility::HitTestInvisible).WidthOverride(15).HeightOverride(15)
+				[
+					SNew(SBorder).BorderImage(BrixLook::Round(FLinearColor::FromSRGBColor(Dot.Key), 7.5f)).Padding(0).HAlign(HAlign_Center).VAlign(VAlign_Center)
+					[ UiMark(BuyMenu, W.Goes, 9.f, FLinearColor::FromSRGBColor(Dot.Value)) ]
+				];
+			NList->AddSlot(k % NCols, k / NCols).Padding(k % NCols ? NGap : 0.f, k / NCols ? NGap : 0.f, 0.f, 0.f)
+			[
+				SNew(SButton).ButtonStyle(&FCoreStyle::Get().GetWidgetStyle<FButtonStyle>("NoBorder")).IsFocusable(false).ContentPadding(0).ToolTipText(FText::FromString(W.Name))
+				.OnClicked_Lambda([this, W, Id = O.Id]()
+				{
+					const double Now = FPlatformTime::Seconds();
+					const bool bTwice = ClickedId == Id + TEXT(":") + W.Id && Now - ClickedAt < .45;
+					ClickedId = bTwice ? FString() : Id + TEXT(":") + W.Id;
+					ClickedAt = Now;
+					if (bTwice) { if (W.State == TEXT("ok") && LiveGrid) { const FGridOpts Op = LiveGrid->O; Act([Op, W](FString& S) { return Op.Buy(W, S); }); } return FReply::Handled(); }
+					if (Chosen.FindRef(Id) != W.Id) { Chosen.Add(Id, W.Id); Draw(); }
+					return FReply::Handled();
+				})
+				[
+					SNew(SBox).WidthOverride(NCell)
+					[
+						SNew(SVerticalBox)
+						+ SVerticalBox::Slot().AutoHeight()
+						[
+							SNew(SBorder).BorderImage(BrixLook::Round(bSel ? UiLantern : BrixLook::StoneDeep(), 8.f)).Padding(bSel ? 2 : 1)
+							[
+								SNew(SOverlay)   // .bm-narrow .bm-stage: square
+								+ SOverlay::Slot()[ SNew(SBrixThing).Mesh(MeshFor(W.Id, W.Band, W.Line)).Rules(&BuyMenu).Spin(bSel && !bOut).Grey(bOut).Size(FVector2D(NCell - (bSel ? 4 : 2), NCell - (bSel ? 4 : 2))).Yaw(YawFor(O.Id + TEXT(":") + W.Id + TEXT(":") + W.Line)) ]
+								+ SOverlay::Slot().HAlign(HAlign_Left).VAlign(VAlign_Top).Padding(4, 3, 0, 0)[ CountMark ]
+								+ SOverlay::Slot().HAlign(HAlign_Right).VAlign(VAlign_Top).Padding(0, 3, 3, 0)[ DotMark ]
+								+ SOverlay::Slot().VAlign(VAlign_Center)[ Flag(W.State) ]
+							]
+						]
+						+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center).Padding(0, 3, 0, 0)[ BrixLook::Tag(Format(W.Price), W.State == TEXT("short"), 10) ]
+					]
+				]
+			];
+		}
+		const FGridOpts NOp = O;
+		TSharedRef<SWrapBox> Facts = UiWrap(FMath::Max(120.f, O.Width - 20.f - 170.f), 10.f);
+		if (BuyMenu.Goes.Contains(P.Goes)) Facts->AddSlot().VAlign(VAlign_Center)[ Chip(P.Goes) ];
+		if (P.Left >= 0) Facts->AddSlot().VAlign(VAlign_Center)[ UiText(LeftWords(P), 11, P.State == TEXT("out") ? UiNeg : P.Left == 1 && !O.bMine ? UiGold : UiDim) ];
+		if (P.Size) Facts->AddSlot().VAlign(VAlign_Center)[ UiText(FString::Printf(TEXT("%d × %d × %d cm"), FMath::RoundToInt(P.Size->X * 100), FMath::RoundToInt(P.Size->Y * 100), FMath::RoundToInt(P.Size->Z * 100)), 10, UiDim) ];
+		TSharedRef<SHorizontalBox> End = SNew(SHorizontalBox);
+		if (P.State == TEXT("short")) End->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 8, 0)[ UiText(Format(P.Short) + TEXT(" short"), 10, UiNeg) ];
+		End->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 8, 0)[ Price(P) ];
+		End->AddSlot().AutoWidth().VAlign(VAlign_Center)[ BrixLook::Button(O.Verb, [this, NOp, P]() { Act([NOp, P](FString& S) { return NOp.Buy(P, S); }); }, true, P.State == TEXT("ok"), UiLantern, UiInk, 13) ];
+		return SNew(SVerticalBox)
+			+ SVerticalBox::Slot().AutoHeight()[ SNew(SBox).MaxDesiredHeight((float)BuyMenu.NarrowListPx)[ SNew(SScrollBox) + SScrollBox::Slot()[ NList ] ] ]
+			+ SVerticalBox::Slot().AutoHeight().Padding(0, 10, 0, 0)
+			[
+				SNew(SBorder).BorderImage(BrixLook::Round(FLinearColor::FromSRGBColor(FColor(217, 207, 182, 18)), 6.f)).Padding(FMargin(10, 8))   // .bm-strip
+				[
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot().AutoHeight()[ UiText(P.Name, 14) ]
+					+ SVerticalBox::Slot().AutoHeight().Padding(0, 4, 0, 0)
+					[
+						SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot().FillWidth(1).VAlign(VAlign_Center)[ Facts ]
+						+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(8, 0, 0, 0)[ End ]
+					]
+				]
+			];
+	}
 	TSharedRef<SGridPanel> List = SNew(SGridPanel);
 	for (int32 k = 0; k < Things.Num(); ++k)
 	{

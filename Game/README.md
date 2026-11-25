@@ -50,8 +50,8 @@ the district's inside colours or take down, and walls added east to west or nort
 (`SetPlan`), checked (in the room, clear of the way in and the stairs, every room reached from the way in, play.js
 roomFor()) and priced line by line with the rest of the work; and its furniture (Furnish, FURN-051, FURN-052, FURN-055;
 `BrixWorld/BrixFurnishPlan`, builder.js Furnish and play.js townPieces()): the storey's own pieces (the boxes the town
-furnished it with, grouped into pieces: chairs, cabinets, lamps, rugs; those on a wall stay) picked from a list and turned,
-moved a quarter metre at a time or put with your belongings; your belongings placed again; pieces of
+furnished it with, grouped into pieces: chairs, cabinets, lamps, rugs; those on a wall stay) picked in the view and dragged across
+the floor, turned or put with your belongings; your belongings placed again; pieces of
 World/rules/furnishing.json added by room and line (bought; the mall's goods are bought at its outlets, FURN-064), drawn as
 the furniture kits' own meshes (a box its size where a piece has none yet); each checked (in the room, on the grid, under
 the ceiling, clear of the way in, the stairs and each other) and priced with the rest; what you take away is among the
@@ -63,18 +63,59 @@ save (`QST008_remodels_are_kept_in_the_save`), room plans (`QST008_room_plans_ar
 (`QST008_furnishings_are_kept_in_the_save`); `FURN051_furnishing_matches_the_python` runs furnish.check_script() against
 Python's (the problems, the cost and the belongings after each edit);
 `BUILD021_room_plans_match_the_python` runs roomplan.check_script() against Python's and checks that every storey of flats'
-plan draws back the town's own walls. Ops for a shot: `tab,inside`, `storey,<f>`, `addwall,<x|z>`, `wall,<id>`, `door`, `close`; `tab,furnish`, `piece,<id>`,
-`turnpiece,<deg>`, `movepiece,<dx>,<dz>`, `takeaway`, `addpiece,<kind>,<line>`, `placeheld,<n>`. To see it in a test shot: `"-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4;remodel,b_9_6_l4;set,walls.*.plaster=peach;set,roof.tiles=slate;set,openings.frame=teal"`
-(and `;pay` to build it). Shots: `Art/StyleTests/unreal_designer_39/`. Not yet: dragging a wall or a piece with the mouse (they move by buttons), picking a piece in the view, the town pieces' own
-names (the slice tags them; here they are named by their shape), the narrow layout D grid of objects for the pieces (a list
-of names and prices), the planned homes' furniture in the designer (as in the slice, only buildings furnished at their
-places), furniture sold with a unit (F-PROP-FURNISH), the rooms of a building not drawn inside; a storey with many pieces
-(a cafe's chairs) gives a long list that scrolls, the picked piece's buttons below it; a town piece placed from another
-building is drawn as a box its size; a building drawn again from a design (each choice tried, each remodel paid) leaves
+plan draws back the town's own walls.
+The mouse (life.js pointer(); BUILD-020, BUILD-021, FURN-055): a pad behind the card takes it (`SBrixDesignPad`). On the
+Furnish tab a click picks the piece under the mouse (the nearest box the camera's ray goes into, a rug only where nothing
+stands on it) and a drag moves it across the floor on the 5 cm grid, keeping its distance from the mouse; R turns it,
+Shift+R the other way, Delete puts it with the belongings. On the Inside tab a click picks an inner wall and a drag moves
+it across and along on the grid, inside the room, an end within 0.3 m of a wall across it (or of the room's side) catching
+on it, its doorway going with it. What is picked is outlined in the lantern's orange with its corners standing up, what is
+under the mouse in a pale line, a piece that cannot stand where it is in red (`ABrixRooms::SetMarks`, lit by M_Glow). On
+open ground a drag turns the view and tips it; the right or middle button or Shift slides it (20 m beyond the building at
+most); the wheel comes nearer, towards the point under the mouse; a double click looks at a spot. The picking and the
+dragging themselves are `BrixWorld/BrixDesignPick` (play.js pickPiece(), pickWall(), designMarks(); life.js wallStops()),
+tested by `FURN055_a_piece_is_picked_and_dragged_on_the_grid` and
+`BUILD021_a_dragged_wall_stays_in_the_room_and_catches_on_walls`.
+The storey looked into is cut open (BUILD-020; life.js syncView()): on the Inside and Furnish tabs the building is drawn
+again with nothing above 1.25 m over that storey's floor (`ABrixTownActor::Repaint`'s cut: a box standing through it ends
+there, a kit piece through it is left out), `ABrixRooms` draws only that storey's rooms however far the camera is
+(`SetDesign`), and the haze is a quarter of the street's (`DesignHaze`); from outside, and when the designer closes, it is
+whole again. New pieces and belongings go where the view looks, inside the room.
+The pieces to add are objects in a grid (UI-020, layout D: the card is narrower than buy_menu.json's `narrow_px`): cells
+four across, each the kit's own mesh of that piece in the chosen line drawn from its triangles
+(`BrixThingFromStaticMesh`), its price under it and the mark of where it goes; the chosen one turns, and a strip under the
+grid gives its name, "Into the room", its size, its price and the Add button; a second click on a cell adds it.
+A building drawn again (each choice tried, each tab that cuts it open) now takes about 0.1 s on the owner's laptop, where
+it took 6 to 7 s: its old instances are folded away a run at a time (`BatchUpdateInstancesTransforms`), not one by one.
+The card stands at the left at any window size and keeps room for its scroll bar, and its rows of buttons wrap at a fixed
+width (at 1600 x 900 they were measured for one width and laid out at another, and lay over one another).
+Ops for a shot: `tab,inside`, `storey,<f>`, `addwall,<x|z>`, `wall,<id>`, `door`, `close`; `tab,furnish`, `piece,<id>`,
+`turnpiece,<deg>`, `movepiece,<dx>,<dz>`, `takeaway`, `addpiece,<kind>,<line>`, `placeheld,<n>`, `listpieces`; the mouse:
+`dragpiece,<id>,<x>,<z>` presses on that piece in the picture and drags its middle to there (`dragpiece,<id>,<dx>,<dz>,by`:
+that far), `dragwall,<id>,<x>,<z>` the same for an inner wall, both sent through the interface as a mouse's own press
+would come (the log says whether the pad took it), `view,<turn px>,<tip px>,<wheel clicks>` drags the view, and
+`later,<s>` does the ops after it that much later (a picture has to be drawn before a mouse can be on it), such as
+`"-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l2;remodel,b_9_6_l2;tab,furnish;view,60,-20,7;later,2;dragpiece,t3,0.6,0.4,by"`.
+To see it in a test shot: `"-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4;remodel,b_9_6_l4;set,walls.*.plaster=peach;set,roof.tiles=slate;set,openings.frame=teal"`
+(and `;pay` to build it). Shots: `Art/StyleTests/unreal_designer_39/` (`furnish_drag.png`, `rooms_drag.png`: a piece and
+a wall dragged by the mouse, the storey cut open, the grid of pieces). Not yet: the town pieces' own
+names (the slice tags them; here they are named by their shape), the picked piece's name over it in the picture (the card
+says it), the planned homes' furniture in the designer (as in the slice, only buildings furnished at their
+places), furniture sold with a unit (FURN-053, F-PROP-FURNISH: not in the slice or in Tools/citysim either, and still
+proposed), the rooms of a building not drawn inside; a town piece placed from another
+building is drawn as a box its size; a building drawn again from a design (each choice tried, each remodel paid, each
+tab or storey that cuts it open) leaves
 its old instances folded away under the ground until the town is next built (a few hundred each time; ADR-0052) (FURN-051, FURN-052, FURN-055), the window class's sizes, balconies, keystones, corner stones
 and wall lanterns drawn from the design (offered, priced and kept, but laid by the kit's rules), the awning in the
-design's accent, the cut-open storey (BUILD-020), dragging the view; building new on a plot (BUILD-008: F-MAP-PLOTS is at
-level 0, no plots).
+design's accent; building new on a plot (BUILD-008: F-MAP-PLOTS is at
+level 0, no plots). Of the cut-open storey: the walls are cut at the slice's height but a window or door that stands
+through the cut is left out whole, so the cut walls have gaps where their openings are; the residents of the storeys cut
+away are still drawn; with the roof off the sun on a pale floor is very bright (the eye is not held for it). Of the
+mouse: a piece wholly behind another can only be picked from the list of pieces by name (a button on the Furnish tab; the
+slice has only the picture), walls still have their Move buttons beside the drag, and the view's wheel and slide are not
+kept from one opening of the designer to the next. Of the pictures of pieces: they are read from the meshes' own
+triangles, which a packaged game keeps only for meshes marked for it (the furniture kit's are not yet, so there a piece
+would show as a box its size); the arrow keys do not choose in the designer's grid (as in the slice, only at a counter).
 
 ## Going inside (CITY-013; ADR-0048)
 959 of the 965 enterable buildings can be walked into (all but the furniture outlet's hall and the malls; Eastgate Mall
@@ -730,8 +771,8 @@ paid through the ledger, and what is left comes home at midnight. Eastgate Mall'
 Eastgate Mall). Each cell's dot and the chip beside "Goes to" carry the mark of where the thing goes (a house, a top, a bag,
 a cup, a chair), as in the slice: build_play.py reads the marks from buymenu.js ICON into life.json, `BrixIconCoverage`
 paints each once from its paths (filled by the nonzero rule, the handles stroked) and the dot or chip draws it in its board
-colour's lettering (`UI020_dots_and_chips_show_the_slices_marks`). Not yet: the narrow layout D (for the building designer),
-a piece of furniture's own object in the menu (the slice draws it from furniture.js boxes), and a resident behind each counter. To see one in a test shot:
+colour's lettering (`UI020_dots_and_chips_show_the_slices_marks`). The narrow layout D is the building designer's
+list of pieces (above), where a piece of furniture shows the kit's own mesh. Not yet: a resident behind each counter. To see one in a test shot:
 `-BrixCounter=grocer "-BrixLife=buy,grocer,bread"` (a shop's kind or lot id), or `-BrixCounter=market
 "-BrixLife=buy,grocer,jam;rent;setout,jam,250"`.
 
@@ -1003,8 +1044,10 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.BUILD005_remodels_match_the_python` | BUILD-004 to BUILD-007, BUILD-016 to BUILD-019 |
 | `BrixTown.World.QST008_remodels_are_kept_in_the_save` | QST-008, BUILD-005 |
 | `BrixTown.World.BUILD021_room_plans_match_the_python` | BUILD-021 to BUILD-023 |
+| `BrixTown.World.BUILD021_a_dragged_wall_stays_in_the_room_and_catches_on_walls` | BUILD-021 (BUILD-020) |
 | `BrixTown.World.QST008_room_plans_are_kept_in_the_save` | QST-008, BUILD-021 |
 | `BrixTown.World.FURN051_furnishing_matches_the_python` | FURN-051, FURN-052, FURN-055, FURN-064, INV-001 |
+| `BrixTown.World.FURN055_a_piece_is_picked_and_dragged_on_the_grid` | FURN-055 (BUILD-020) |
 | `BrixTown.World.QST008_furnishings_are_kept_in_the_save` | QST-008, FURN-051, INV-001 |
 | `BrixTown.World.PROP021_the_market_matches_the_python` | PROP-010 to PROP-022, BANK-002, FURN-063 |
 | `BrixTown.World.PROP009_every_building_is_carved_into_owned_units` | PROP-009, PROP-010 |

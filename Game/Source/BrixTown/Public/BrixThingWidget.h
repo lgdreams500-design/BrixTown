@@ -4,6 +4,15 @@
 #include "Widgets/SLeafWidget.h"
 #include "BrixBuyMenu.h"
 
+class UStaticMesh;
+
+// A piece of furniture as a buy menu's thing (UI-020, the building designer's list of pieces): the kit's own mesh as it
+// stands in the room (ADR-0050), its triangles in its faces' colours (the mesh carries them at its corners), x across,
+// y up, its front toward the viewer, metres. None when the mesh is missing or its corners cannot be read here.
+BRIXTOWN_API TOptional<FBrixThingMesh> BrixThingFromStaticMesh(const UStaticMesh* Mesh);
+// A box of a size (width, depth, height; metres) in one colour: a piece with no mesh of its own yet, as it stands in the room.
+BRIXTOWN_API FBrixThingMesh BrixThingBox(const FVector3f& Size, const FVector3f& Colour);
+
 // One thing for sale drawn as an object in a buy menu's cell or showcase (UI-020; buymenu.js shot() and paint()): its
 // triangles seen from the rules' camera (fov, pitch), turned about its middle, lit as the slice lights them (a warm low
 // sun against a cool sky, a grey bounce from below, darker at its foot), standing in its own soft shade. It turns slowly

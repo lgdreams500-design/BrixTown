@@ -23,6 +23,12 @@ bool LoadBrixBuyMenu(const TSharedPtr<FJsonObject>& J, FBrixBuyMenuRules& Out, F
 	const TSharedPtr<FJsonObject> W = B->GetObjectField(TEXT("wide")), P = B->GetObjectField(TEXT("picture"));
 	Out.WidePanelPx = (int32)NumOr(W, TEXT("panel_px"), 960); Out.CellPx = (int32)NumOr(W, TEXT("cell_px"), 112); Out.StagePx = (int32)NumOr(W, TEXT("stage_px"), 96);
 	Out.ShowPx = (int32)NumOr(W, TEXT("show_px"), 320); Out.ShowStagePx = (int32)NumOr(W, TEXT("show_stage_px"), 250); Out.ListPx = (int32)NumOr(W, TEXT("list_px"), 470);
+	const TSharedPtr<FJsonObject>* Nw = nullptr;
+	if (B->TryGetObjectField(TEXT("narrow"), Nw))
+	{
+		Out.NarrowPanelPx = (int32)NumOr(*Nw, TEXT("panel_px"), 380); Out.NarrowColumns = (int32)NumOr(*Nw, TEXT("columns"), 4);
+		Out.NarrowCellMinPx = (int32)NumOr(*Nw, TEXT("cell_min_px"), 64); Out.NarrowListPx = (int32)NumOr(*Nw, TEXT("list_px"), 372);
+	}
 	Out.FovDeg = NumOr(P, TEXT("fov_deg"), 24); Out.PitchDeg = NumOr(P, TEXT("pitch_deg"), 17); Out.StartDeg = NumOr(P, TEXT("start_deg"), -34);
 	Out.TurnS = NumOr(P, TEXT("turn_s"), 16); Out.DragDegPx = NumOr(P, TEXT("drag_deg_px"), .7f); Out.StandInFill = NumOr(P, TEXT("stand_in_fill"), .8f);
 	for (const auto& G : B->GetObjectField(TEXT("goes"))->Values)

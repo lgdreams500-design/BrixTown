@@ -686,7 +686,8 @@ void ABrixGameMode::UpdateSun()
 	{
 		const APlayerCameraManager* Cam = UGameplayStatics::GetPlayerCameraManager(this, 0);
 		const bool bIndoors = Cam && RoomAt(Cam->GetCameraLocation()) != INDEX_NONE;
-		HazeFog->SetFogDensity(HazeDensity * (bIndoors ? IndoorHaze : 1.f) * (bWx ? (float)Weather->Now.Haze : 1.f));
+		const bool bDesign = Life && Life->IsDesigningInside();   // the designer looks down into a storey cut open (BUILD-020): the haze must not hide it
+		HazeFog->SetFogDensity(HazeDensity * (bIndoors ? IndoorHaze : bDesign ? DesignHaze : 1.f) * (bWx ? (float)Weather->Now.Haze : 1.f));
 		if (People) People->CameraLot = Cam ? RoomAt(Cam->GetCameraLocation()) : INDEX_NONE;   // its residents inside are drawn (CITY-013)
 	}
 }

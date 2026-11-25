@@ -62,6 +62,7 @@ public:
 	UPROPERTY(Config) float SkyHaziness = 1.f;        // the sky's Mie scattering, x the engine's: higher is paler, greyer
 	UPROPERTY(Config) float ShotDelaySeconds = 12.f;
 	UPROPERTY(Config) float IndoorHaze = 0.f;        // the haze's density indoors, as a share of the street's (CITY-013)
+	UPROPERTY(Config) float DesignHaze = 0.25f;      // and while the building designer looks into a storey cut open (BUILD-020)
 	// the lot (in the city's order) whose inside a point is in, or INDEX_NONE (CITY-013)
 	int32 RoomAt(const FVector& WorldCm) const;
 	const FBrixCity* CityData() const { return City.Get(); }
