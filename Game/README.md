@@ -144,6 +144,27 @@ own things are not brought over yet. By night (`ABrixLamps`) every lamp's and wa
 light, as the slice's twelve; 68 frames a second at High at 22:30. The night itself (its exposure, the orange haze
 after dusk) is not yet the slice's dark blue night.
 
+## Money and the bank (ECO-001 to ECO-003, ECO-009, ECO-012, BANK-001, BANK-002, BANK-007, BANK-008; ADR-0012)
+Money is the slice's (economy.js, a port of `Tools/citysim/economy.py`): `BrixWorld/BrixEconomy` holds one ledger of
+balanced transactions in whole chips (int64), money made and taken only by the `sys:` accounts, the bank's vault and every
+shop's till as ordinary accounts; the bank's current and savings accounts, moving money between them and the purse, loans
+paid in daily instalments, late fees, default and repossession; and the shops' stock and prices, a mall's outlets and the
+market stall, worked out from the residents' visits and the player's own trades, never ticked (these have no counter on
+screen yet). The data is `Game/Data/life.json`, written by `Tools/worldgen/build_play.py` in the same run as the slice's
+city_data.js (economy.json, mall_goods.json and quests.json, the day's shop visits, who works where), with two fixed runs
+and what Python gives for them: `ECO002_the_ledger_matches_the_python` runs economy.check_script() and its outlet ops,
+`BANK008_the_bank_settles_as_the_python_does` a loan that defaults; both must give Python's ledger, balances, things
+carried, loans, prices and outlet stock to the chip. A new game starts when play starts (the character designer is not
+brought over yet): the starting cash is paid in, and the economy's days count from then; each frame it is brought up to
+the clock, so interest, instalments and fees are settled for each midnight passed (BANK-008). On screen, as in the slice:
+the purse at the top left (cash, and the bank's two accounts together once one is open) with a "+" or "-" beside it when
+it changes; at the bank's door (`CounterReach`) or inside it, B opens its counter in the slice's dark panel: open
+accounts, move money (a payment that would take an account below zero is refused, never partly made), borrow and repay,
+and the statement, newest first; I opens the money page (purse, loan, statement). Esc closes either. Not yet: shop and
+stall counters, saving, the game menu's Money page in its painted-sign look. To see the bank in a test shot:
+`-BrixCounter=bank "-BrixLife=open,current;open,savings;move,p:current,p:savings,1000;loan,5000,3"` (ops as
+economy.check_script() writes them, arguments by commas).
+
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
 black. At Epic quality the town runs at about 36 frames a second, at High about 63 with the same shade, at Medium about 86
@@ -181,3 +202,6 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY007_every_conversation_is_sound` | CITY-007 |
 | `BrixTown.World.CHR009_lines_are_mouthed_as_the_slice_mouths_them` | CHR-009 |
 | `BrixTown.World.SND018_lines_are_voiced` | SND-018 |
+| `BrixTown.World.ECO001_money_is_whole_chips_in_balanced_lines` | ECO-001, ECO-002, ECO-003, BANK-007 |
+| `BrixTown.World.ECO002_the_ledger_matches_the_python` | ECO-002, ECO-005, ECO-010, ECO-011, ECO-013, BANK-001, BANK-007 |
+| `BrixTown.World.BANK008_the_bank_settles_as_the_python_does` | BANK-002, BANK-008 |
