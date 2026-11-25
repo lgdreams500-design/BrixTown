@@ -537,8 +537,8 @@ sky). Pictures before and after: `Art/StyleTests/unreal_light_43/`. Not yet: the
 path and phases (the night's light comes from one place and does not wax or wane), the planet (WLD-065); lamps lit in
 shade by day as the reference renders have them; light from lit windows on the pavement (the panes are kept out of
 Lumen); the alley's haze growing heavy from 18:00 as its shade deepens (the game mode's haze has one brightness whatever
-the light). The haze's colour is set twice a frame at dusk and night, by the game mode and then by this: to be folded
-into the game mode's UpdateSun. At High with nothing else running: 38 frames a second in the middle of the tour's 64
+the light). The haze's colour is set once a frame, by this (the game mode sets it only with `-BrixLightOff` or
+`-BrixLightNo=h`). At High with nothing else running: 38 frames a second in the middle of the tour's 64
 stops below, day and night, indoors and out (between 30 and 55 at most; a stop dips under that while its place loads).
 
 **What a room's light should be (ADR-0055).** The look of rooms is decided by Blender renders with an exact recipe
