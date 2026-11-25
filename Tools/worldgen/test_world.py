@@ -115,7 +115,9 @@ class TheResidents(unittest.TestCase):
 
     def test_most_walks_arrive_on_time(self):
         late = [t1 - s["start"] for pieces in CITY.plan(DAY).values() for kind, t0, t1, payload, s in pieces if kind == "move" and payload[1][-1] > 5]
-        self.assertGreaterEqual(sum(l < 2 for l in late) / len(late), 0.8)
+        # 75 %, the owner's pick of 2026-11-25 ("Lower the bar to 75%") while Q-21 (how long a game day is) stays open: on the
+        # 20x16 map the new estates' walks of 1 to 2 km run late (79 % on time; Old Town's 90 %). It was 80 %.
+        self.assertGreaterEqual(sum(l < 2 for l in late) / len(late), 0.75)
 
     def test_the_city_sleeps_at_night_and_is_out_by_day(self):
         night = CITY.at(DAY * 1440 + 3 * 60)                         # a few may be out, as in life (the owner, 2026-11-24)

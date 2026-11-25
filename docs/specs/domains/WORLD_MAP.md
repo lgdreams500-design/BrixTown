@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-WORLD-MAP
 title: Brix Town — World map as data, the starting city and the playable slice
-version: 0.5.32
+version: 0.5.33
 status: draft
 last_updated: 2026-11-24
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -22,7 +22,7 @@ or editing files, never by changing code.
 
 | Thing | Where | State |
 |---|---|---|
-| Starting city, Old Town's 8×8 blocks in a 20×16 map | `World/city_01/` | Generated, checked, 0 problems (`test_world`: walks on time 79.9 % against 80 %, Q-21, see 0.5.29) |
+| Starting city, Old Town's 8×8 blocks in a 20×16 map | `World/city_01/` | Generated, checked, 0 problems (`test_world`: walks on time 79 % against 75 %, Q-21, see 0.5.33) |
 | Shared rules (roles, choices, calendar, plants, walking speeds) | `World/rules/` | Moved out of the one-block prototype |
 | Generator for the starting city | `Tools/worldgen/make_city_01.py` | Deterministic from one seed |
 | Loader and checks | `Tools/worldgen/world.py` | `load()`, `validate()`, `simulation()` |
@@ -335,7 +335,7 @@ keep a timetable with several stops in it. Something has to give `[OPEN: Q-21]`.
 
 | # | Question | Suggested answer |
 |---|---|---|
-| Q-21 | How long is a game day? A 60-minute day (WLD-001) does not fit residents who walk at true speed between places 150 m apart. | A 4-hour day for now. To shorten it later, give residents fewer and longer stops, or let the tram carry them, rather than making them walk faster. |
+| Q-21 | How long is a game day? A 60-minute day (WLD-001) does not fit residents who walk at true speed between places 150 m apart. | A 4-hour day for now; walks on time held to 75 % meanwhile (the owner, 2026-11-25, 0.5.33). To shorten it later, give residents fewer and longer stops, or let the tram carry them, rather than making them walk faster. |
 | Q-22 | Is the starting city generated or hand-made from here on? | Generate once, then edit by hand and with a block editor; keep the generator for new districts. |
 | Q-23 | How are upper floors reached? | Decided 2026-11-22 by the owner: stairs in every building of two or more storeys, stairs and a lift in the towers; each floor's places are in the lot data (`levels`). ADR-0021. |
 | Q-24 | Do streets carry people down the middle, or on pavements with crossings? | **DECIDED 2026-11-22:** pavements and crossings (CITY-043, accepted); the path data needs a lane per side. |
@@ -381,3 +381,4 @@ keep a timetable with several stops in it. Something has to give `[OPEN: Q-21]`.
 | 0.5.30 | 2026-11-24 | Buying at each of Eastgate Mall's outlets (WLD-066, ECO-013, ECO-014, ADR-0041; the owner: "add B or Buy separately at each outlet, instead of showing it for entire mall. each outlets should have buyable products in it with decent catalog"): in an outlet's room the prompt names that outlet and B opens its own goods, stock and prices; 174 goods over the 18 kinds in `World/rules/mall_goods.json`, each going to the home (belongings, then the Furnish tab), the wardrobe, or carried. New in the slice: `goods.js` (the goods for the home, as boxes until the Blender objects are exported), `Outlets.at`, the outlet counter in `life.js`. Still to come: the objects made in Blender, a keeper in every outlet, visitors. |
 | 0.5.31 | 2026-11-24 | A keeper in every outlet of Eastgate Mall, guards and janitors (WLD-067, CITY-105, ADR-0041; the owner: "some taking career as shop owners at the mall outlets, i think one person per outlet is good enough. few security, ganitors etc, can be added to handle entire Mall"). `mall_inside_01.py` gives every outlet one `stand` and the plan its `staff` places; nothing else in the plan changes. `add_careers_01.py` was run: the mall's 201 places to work are the 189 keepers', the six guards' and the six janitors', each with its floor. WLD-061 no longer keeps the old ground floor's 206 posts. In the slice: staff on all three floors (`court.js`), one counter to each outlet (`outlets.js`), clothes for guards and janitors (`people.js`). Also: `play.js` no longer treats the mall as a building with a stairwell; since the world tests gave the mall lot a `stair` (0.5.29) the slice had stopped whenever the camera was inside the mall. |
 | 0.5.32 | 2026-11-24 | Visitors' places in Eastgate Mall (WLD-068, CITY-106, ADR-0041; the owner: "update population to come to mall"): `mall_inside_01.py` adds two places before every outlet's counter and the chairs of the food outlets' tables, on all three floors (378 and 300), with their floors. In the slice: residents shop at the counters and eat at the tables (`court.js`), the bench seats on the court floor are places to sit, and a place is found on the mall's own floor height (`play.js`). |
+| 0.5.33 | 2026-11-25 | `test_most_walks_arrive_on_time` (CITY-052) holds walks on time to 75 %, not 80 %, while Q-21 stays open: the owner, asked how to settle the failing test, answered "Lower the bar to 75%". It has failed since the 20×16 remodel (6d634a2, 2026-11-22): 79.0 % on time, the new estates' walks of 1 to 2 km running late at the 4-hour day. Tried and not taken: planning room to walk between stops (94 % on time, but neighbours' shared drives, CITY-094, and the waste collectors' dawn round, CITY-088, no longer fitted). |
