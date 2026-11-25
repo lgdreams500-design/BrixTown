@@ -18,6 +18,7 @@
 #include "Framework/Application/SlateApplication.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Misc/Paths.h"
 #include "Rendering/DrawElements.h"
 #include "Rendering/SlateRenderer.h"
 #include "Widgets/SLeafWidget.h"
@@ -85,6 +86,28 @@ namespace
 				Quad(O + D0 * (R - W / 2), O + D1 * (R - W / 2), O + D1 * (R + W / 2), O + D0 * (R + W / 2), C);
 			}
 		}
+		void Disc(const FVector2f& O, float R, const FColor& In, const FColor& Rim, int32 Seg = 32)   // shaded from its middle to its rim
+		{
+			const int32 B = V.Num();
+			Vert(O, In);
+			for (int32 k = 0; k < Seg; ++k) { const float A = k * UE_TWO_PI / Seg; Vert(O + FVector2f(FMath::Cos(A), FMath::Sin(A)) * R, Rim); }
+			for (int32 k = 0; k < Seg; ++k) I.Append({ (SlateIndex)B, (SlateIndex)(B + 1 + k), (SlateIndex)(B + 1 + (k + 1) % Seg) });
+		}
+		void Band(const FVector2f& O, float R0, float R1, const FColor& C0, const FColor& C1, int32 Seg = 32)   // a ring shaded across
+		{
+			const int32 B = V.Num();
+			for (int32 k = 0; k < Seg; ++k)
+			{
+				const FVector2f D(FMath::Cos(k * UE_TWO_PI / Seg), FMath::Sin(k * UE_TWO_PI / Seg));
+				Vert(O + D * R0, C0);
+				Vert(O + D * R1, C1);
+			}
+			for (int32 k = 0; k < Seg; ++k)
+			{
+				const SlateIndex a = (SlateIndex)(B + 2 * k), b = (SlateIndex)(B + 2 * k + 1), c = (SlateIndex)(B + 2 * ((k + 1) % Seg)), d = (SlateIndex)(B + 2 * ((k + 1) % Seg) + 1);
+				I.Append({ a, b, d, a, d, c });
+			}
+		}
 		int32 Draw(FSlateWindowElementList& Out, int32 Layer, const FSlateBrush* Brush = nullptr)
 		{
 			if (!I.Num() || !FSlateApplication::IsInitialized()) return Layer;
@@ -114,6 +137,142 @@ namespace
 	{
 		M.Fan(FMesh::Circle(O, R + S), Css(TEXT("17171c")));
 		M.Fan(FMesh::Circle(O, R - S), Fill);
+	}
+
+	FColor MkA(FColor C, float A) { C.A = (uint8)FMath::Clamp(FMath::RoundToInt(C.A * A), 0, 255); return C; }
+	FColor MkMix(const FColor& A, const FColor& B, float T) { return FColor((uint8)FMath::Lerp((float)A.R, (float)B.R, T), (uint8)FMath::Lerp((float)A.G, (float)B.G, T), (uint8)FMath::Lerp((float)A.B, (float)B.B, T), (uint8)FMath::Lerp((float)A.A, (float)B.A, T)); }
+
+	// a sign of World/rules/markers.json, stamped: round-capped strokes on a 24-unit square centred on O, Box pixels across
+	void MkSign(FMesh& M, const FBrixMarkerSign& S, const FVector2f& O, float Box, float Stroke, const FColor& C)
+	{
+		const float K = Box / 24.f, W = Stroke * K;
+		auto P = [&](const FVector2f& Q) { return O + (Q - FVector2f(12, 12)) * K; };
+		for (int32 l = 0; l < S.Lines.Num(); ++l)
+		{
+			const TArray<FVector2f>& L = S.Lines[l];
+			const int32 N = L.Num(), Segs = S.Closed.IsValidIndex(l) && S.Closed[l] ? N : N - 1;
+			for (int32 k = 0; k < Segs; ++k) M.Seg(P(L[k]), P(L[(k + 1) % N]), W, C);
+			for (const FVector2f& Q : L) M.Fan(FMesh::Circle(P(Q), W / 2, 8), C);   // round joints and caps
+		}
+		for (const FVector3f& D : S.Dots) M.Fan(FMesh::Circle(P(FVector2f(D.X, D.Y)), D.Z * K, 12), C);
+	}
+
+	// the brass token (ADR-0051, look test 37 option A): halo, the coin's edge below it, its shaded face, the ring in the
+	// kind's colour, a light rim, the sign stamped dark; a new thing's halo is larger and a ring pulses out from it. Behind
+	// a wall only its outline and sign, faint.
+	void MkToken(FMesh& M, const FBrixMarkerRules& R, const FString& Kind, const FVector2f& O, float Rad, float Alpha, float Pulse, bool bBehind, bool bHalo = true)
+	{
+		const FBrixMarkerKind* K = R.Kind(Kind);
+		const FBrixMarkerSign* S = R.SignOf(Kind);
+		if (!K || !S || Alpha <= 0.01f) return;
+		const FColor Cream = Css(TEXT("efe4cc"));
+		if (bBehind)
+		{
+			const float A = Alpha * R.BehindAlpha;
+			M.Ring(O, Rad, FMath::Max(1.5f, Rad * .1f), MkA(Cream, A), 40);
+			MkSign(M, *S, O, Rad * 2 * R.SignSize * .5f * 1.9f, R.SignStroke, MkA(Cream, A));
+			return;
+		}
+		if (bHalo)
+		{
+			const float Hs = K->bNew ? FMath::Lerp(R.HaloSize, R.HaloNewSize, .5f + .5f * Pulse) : R.HaloSize;
+			const float Ha = (K->bNew ? R.HaloNewAlpha : R.HaloAlpha) * Alpha;
+			M.Disc(O, Rad * Hs * .45f, MkA(R.Halo, Ha), MkA(R.Halo, Ha * .35f), 32);
+			M.Band(O, Rad * Hs * .45f, Rad * Hs, MkA(R.Halo, Ha * .35f), MkA(R.Halo, 0.f), 32);
+			if (K->bNew) M.Ring(O, Rad * FMath::Lerp(1.12f, R.PulseRing, Pulse), Rad * .08f, MkA(Css(TEXT("ffcf8a")), .55f * (1.f - Pulse) * Alpha), 48);
+		}
+		M.Fan(FMesh::Circle(O + FVector2f(0, Rad * R.EdgeDepth), Rad, 40), MkA(R.Edge, Alpha));
+		const FVector2f Lit = O + FVector2f(-.22f, -.28f) * Rad;   // lit from above, a little from the left
+		M.Disc(O, Rad * .72f, MkA(MkMix(R.FaceLight, R.Face, .35f), Alpha), MkA(R.Face, Alpha), 40);
+		M.Band(O, Rad * .72f, Rad, MkA(R.Face, Alpha), MkA(R.FaceDark, Alpha), 40);
+		M.Disc(Lit, Rad * .42f, MkA(R.FaceLight, Alpha * .8f), MkA(R.FaceLight, 0.f), 24);
+		M.Ring(O, Rad * .84f, Rad * R.RingWidth, MkA(K->Colour, Alpha), 48);
+		M.Ring(O, Rad * .97f, FMath::Max(1.f, Rad * .06f), MkA(R.Rim, .8f * Alpha), 48);
+		MkSign(M, *S, O + FVector2f(0, Rad * .03f), Rad * R.SignSize, R.SignStroke, MkA(R.Stamp, Alpha));
+	}
+
+	// far off: a spark of the kind's colour in a little light
+	void MkSpark(FMesh& M, const FBrixMarkerRules& R, const FString& Kind, const FVector2f& O, float Px, float Alpha)
+	{
+		const FBrixMarkerKind* K = R.Kind(Kind);
+		if (!K || Alpha <= 0.01f) return;
+		M.Disc(O, Px * 4.f, MkA(R.Halo, .6f * Alpha), MkA(R.Halo, 0.f), 20);
+		M.Fan(FMesh::Circle(O, Px * 1.25f, 14), MkA(K->Colour, Alpha));
+		M.Fan(FMesh::Circle(O, Px * .7f, 12), MkA(Css(TEXT("ffd59a")), Alpha));
+	}
+
+	// the tokens over the street, far ones first, then the captions of the near ones over them (ADR-0051)
+	int32 MkPaintTokens(const ABrixMap& Map, const FGeometry& G, FSlateWindowElementList& Out, int32 Layer, FMesh& M, const FVector2f& Size)
+	{
+		const FBrixMarkerRules& R = Map.Markers;
+		if (!Map.Tokens.Num() || !GEngine || !GEngine->GameViewport) return Layer;
+		const float Sc = Size.Y / 1080.f;
+		const double Now = FPlatformTime::Seconds();
+		FVector2D Vp(1, 1);
+		GEngine->GameViewport->GetViewportSize(Vp);
+		const APlayerController* PC = UGameplayStatics::GetPlayerController(&Map, 0);
+		struct FCap { FVector2f At; FString Key, Text; float Alpha; };
+		TArray<FCap> Caps;
+		for (const ABrixMap::FToken& T : Map.Tokens)
+		{
+			const float Pulse = R.Pulse(Now + T.Seed * .37);
+			const FVector W = T.World + FVector(0, 0, R.Bob(Now, T.Seed) * CmPerM);
+			FVector2D S;
+			const bool bAhead = Map.ProjectToScreen(W, S);
+			const FVector2f At = FVector2f(S / Vp) * Size;
+			const float Edge = R.EdgePx * Sc;
+			if (!bAhead || At.X < 0 || At.Y < 0 || At.X > Size.X || At.Y > Size.Y)
+			{
+				if (!T.bEdge || !PC || !PC->PlayerCameraManager) continue;
+				FVector2f D = At - Size / 2;
+				if (!bAhead)   // behind the camera: which way to turn
+				{
+					const FRotationMatrix Rm(PC->PlayerCameraManager->GetCameraRotation());
+					const FVector V = W - PC->PlayerCameraManager->GetCameraLocation();
+					D = FVector2f((float)FVector::DotProduct(V, Rm.GetScaledAxis(EAxis::Y)), (float)-FVector::DotProduct(V, Rm.GetScaledAxis(EAxis::Z)));
+					if (FMath::Abs(D.X) < 1.f) D.X = 1.f;
+					D.Y = FMath::Max(D.Y, FMath::Abs(D.X) * .3f);   // low on the screen, so it reads as behind you
+				}
+				if (D.IsNearlyZero()) D = FVector2f(0, 1);
+				D.Normalize();
+				const FVector2f Half = Size / 2 - FVector2f(Edge, Edge);
+				const float Tx = FMath::Abs(D.X) > 1e-4f ? Half.X / FMath::Abs(D.X) : 1e9f, Ty = FMath::Abs(D.Y) > 1e-4f ? Half.Y / FMath::Abs(D.Y) : 1e9f;
+				const FVector2f P = Size / 2 + D * FMath::Min(Tx, Ty);
+				const float Rr = R.TokenPx * Sc * .38f;
+				MkToken(M, R, T.Kind, P, Rr, FMath::Max(.7f, T.Alpha), Pulse, false);
+				const FVector2f Nn(-D.Y, D.X);
+				M.Fan({ P + D * (Rr * 1.95f), P + D * (Rr * 1.3f) + Nn * (Rr * .6f), P + D * (Rr * 1.3f) - Nn * (Rr * .6f) }, Css(TEXT("e0964e")));
+				continue;
+			}
+			if (T.bSpark) { MkSpark(M, R, T.Kind, At, R.SparkPx * Sc, T.Alpha); continue; }
+			const float Rad = T.Size * Sc * .5f;
+			MkToken(M, R, T.Kind, At, Rad, T.Alpha, Pulse, T.bBehind);
+			if (!T.Caption.IsEmpty()) Caps.Add({ At - FVector2f(0, Rad * 1.25f + 6 * Sc), T.Key, T.Caption, T.Alpha });
+		}
+		Layer = M.Draw(Out, Layer);
+		if (!Caps.Num()) return Layer;
+		const TSharedRef<FSlateFontMeasure> Ms = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
+		const FSlateFontInfo F = BrixLook::Font(11), Fk = BrixLook::Font(10, true);
+		for (const FCap& C : Caps)   // a small Lamplight card: dark stone on a darker edge, the key on a paper cap
+		{
+			const FVector2f Tz = FVector2f(Ms->Measure(C.Text, F));
+			const float Hh = 28.f, Kw = C.Key.IsEmpty() ? 0.f : 26.f, Wd = Tz.X + Kw + 22.f;
+			const FVector2D O(C.At.X - Wd / 2, C.At.Y - Hh);
+			auto Box = [&](const FVector2D& At2, const FVector2D& Sz, const FLinearColor& Fill, float Rr, int32 L)
+			{
+				FSlateDrawElement::MakeBox(Out, L, G.ToPaintGeometry(Sz, FSlateLayoutTransform(At2)), BrixLook::Round(FLinearColor::White, Rr), ESlateDrawEffect::None, Fill.CopyWithNewOpacity(Fill.A * C.Alpha));
+			};
+			Box(O + FVector2D(0, 3), FVector2D(Wd, Hh), BrixLook::StoneDeep(), 9.f, Layer);
+			Box(O, FVector2D(Wd, Hh), BrixLook::Stone().CopyWithNewOpacity(.96f), 9.f, Layer + 1);
+			if (!C.Key.IsEmpty())
+			{
+				Box(O + FVector2D(7, 4), FVector2D(20, 20), BrixLook::Paper(), 5.f, Layer + 2);
+				const FVector2f Kz = FVector2f(Ms->Measure(C.Key, Fk));
+				FSlateDrawElement::MakeText(Out, Layer + 3, G.ToPaintGeometry(FVector2D(Kz), FSlateLayoutTransform(O + FVector2D(17 - Kz.X / 2, 14 - Kz.Y / 2))), C.Key, Fk, ESlateDrawEffect::None, BrixLook::Ink().CopyWithNewOpacity(C.Alpha));
+			}
+			FSlateDrawElement::MakeText(Out, Layer + 3, G.ToPaintGeometry(FVector2D(Tz), FSlateLayoutTransform(O + FVector2D(11 + Kw, Hh / 2 - Tz.Y / 2))), C.Text, F, ESlateDrawEffect::None, BrixLook::Cream().CopyWithNewOpacity(C.Alpha));
+		}
+		return Layer + 4;
 	}
 
 	FColor DotColour(int32 Kind) { return Kind == 2 ? Css(TEXT("f4e9d0")) : Kind ? Css(TEXT("f0c35a")) : Css(TEXT("9fd1c4")); }
@@ -148,6 +307,11 @@ ABrixMap::ABrixMap()
 void ABrixMap::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, const FString& CityDir)
 {
 	Day = InDay;
+	{
+		FString MarkError;
+		if (!LoadBrixMarkers(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/rules/markers.json"))), Markers, MarkError))
+			UE_LOG(LogTemp, Error, TEXT("Brix Town: the markers did not load: %s"), *MarkError);
+	}
 	for (const FBrixBlock& B : City.Blocks) for (const FBrixLot& L : B.Lots) Lots.Add(&L);
 	FBrixMapExtras X;
 	FString Error;
@@ -183,6 +347,7 @@ void ABrixMap::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, const FS
 		if (bOpen || !Mode || (Mode->Life && Mode->Life->IsMenu()) || (Mode->Designer && Mode->Designer->IsOpen())) return Layer;   // not over the menu or the character designer (play.js: body.designing)
 		FMesh M{ {}, {}, G.GetAccumulatedRenderTransform() };
 		const FVector2f Size = FVector2f(G.GetLocalSize());
+		Layer = MkPaintTokens(*this, G, Out, Layer, M, Size);
 		// the words over the street, nearest last (drawn over the far ones)
 		for (const FTag& T : Tags)
 		{
@@ -227,7 +392,8 @@ void ABrixMap::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, const FS
 			FVector2f O = FVector2f(D.Pos - Player) * Z;
 			O = FVector2f(FMath::Clamp(O.X, -192.f, 192.f), FMath::Clamp(O.Y, -192.f, 192.f));   // the edge of the canvas (12 in from 408)
 			if (O.SizeSquared() > FMath::Square(190.f)) O = O.GetSafeNormal() * 190.f;   // kept within the round
-			Dot(M, C + O * U, 7 * U, DotColour(D.Kind), U);
+			if (D.Marker.IsEmpty()) Dot(M, C + O * U, 7 * U, DotColour(D.Kind), U);
+			else MkToken(M, Markers, D.Marker, C + O * U, Markers.MiniTokenPx * .5f * (MiniSize / 204.f), 1.f, 0.f, false, false);
 		}
 		Arrow(M, C, Yaw, U);
 		M.Ring(C, Px / 2, 2.f, Css(TEXT("d9cfb6"), .55f), 64);
@@ -293,6 +459,7 @@ void ABrixMap::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, const FS
 		{
 			const FVector2f P = X(D.Pos);
 			if (!In(P, -4 * U)) continue;
+			if (!D.Marker.IsEmpty()) { MkToken(M, Markers, D.Marker, P, Markers.MapTokenPx * .5f * FMath::Max(.75f, U), 1.f, 0.f, false, false); continue; }
 			if (D.Kind == 2)   // the mark: a diamond
 			{
 				const TArray<FVector2f> Dm = { P + FVector2f(0, -11) * U, P + FVector2f(8, 0) * U, P + FVector2f(0, 11) * U, P + FVector2f(-8, 0) * U };
@@ -465,17 +632,18 @@ void ABrixMap::Gather(float Dt)
 		TargetLeft = .5f;
 		Targets = BrixQuestTargets(*Q, Mode->Life->QuestLines(), *Mode->Life->Economy());
 		Marked.Reset();
-		for (const FBrixMapTarget& T : Targets) if (T.Resident >= 0) Marked.Add(T.Resident, T.bOffer);
+		for (const FBrixMapTarget& T : Targets) if (T.Resident >= 0 && !Marked.Contains(T.Resident)) Marked.Add(T.Resident, BrixMarkerKindFor(T, Markers, FString()));
 	}
 	if (bWaypoint && Mark.Reached(Player) && Mode->Life) Mode->Life->Toast(TEXT("You are there: ") + Mark.Name + TEXT("."));
 	Dots.Reset();
-	if (Mark.bSet && bWaypoint) Dots.Add({ Mark.Pos, 2 });
+	if (Mark.bSet && bWaypoint) Dots.Add({ Mark.Pos, 2, TEXT("mark") });
+	auto KindOf = [&](const FBrixMapTarget& T) { return BrixMarkerKindFor(T, Markers, Lots.IsValidIndex(T.Lot) ? Lots[T.Lot]->Kind : FString()); };
 	if (bQuests)
 		for (const FBrixMapTarget& T : Targets)
 		{
-			if (T.Resident >= 0) { const TOptional<FBrixWhere> W = Day->Where(T.Resident, Minute); if (W) Dots.Add({ W->Pos, T.bOffer ? 0 : 1 }); }
-			else if (Lots.IsValidIndex(T.Lot)) Dots.Add({ Lots[T.Lot]->Centre(), 1 });
-			else if (T.Lot < 0) Dots.Add({ T.Pos, 1 });
+			if (T.Resident >= 0) { const TOptional<FBrixWhere> W = Day->Where(T.Resident, Minute); if (W) Dots.Add({ W->Pos, T.bOffer ? 0 : 1, KindOf(T) }); }
+			else if (Lots.IsValidIndex(T.Lot)) Dots.Add({ Lots[T.Lot]->Centre(), 1, KindOf(T) });
+			else if (T.Lot < 0) Dots.Add({ T.Pos, 1, KindOf(T) });
 		}
 	// the words over the street (play.js hud(), life.js mark(), waypointTag())
 	Tags.Reset();
@@ -485,8 +653,6 @@ void ABrixMap::Gather(float Dt)
 		{
 			const double D = FVector2D::Distance(H.Pos, Player);
 			const auto Pos = [&](double Up) { return FVector(H.Pos.X * CmPerM, H.Pos.Y * CmPerM, (H.Up + Up * H.S) * CmPerM); };
-			if (const bool* bOffer = Marked.Find(H.Resident); bOffer && D < QuestReach)
-				Tags.Add({ Pos(H.Pose == 2 ? 1.25 : H.Pose == 3 ? .8 : 2.12), BrixQuestMarkText(*bOffer), FMath::Min(1.f, (float)(QuestReach - D) / 10.f), 15 });
 			if (!bNames || D >= NameReach || FMath::Abs(H.Up - Feet) >= NameRise || !Day->Names.IsValidIndex(H.Resident)) continue;
 			const TOptional<FBrixWhere> W = Day->Where(H.Resident, Minute);
 			const FString Act = W && Day->Acts.IsValidIndex(W->Act) ? Day->Acts[W->Act] : FString();
@@ -495,6 +661,58 @@ void ABrixMap::Gather(float Dt)
 			const FString Doing = What ? *What : W && W->bWalking ? FString(TEXT("walking")) : Act;
 			Tags.Add({ Pos(H.Pose == 2 ? 1.0 : H.Pose == 3 ? .55 : 1.88), Day->Names[H.Resident] + TEXT(", ") + Job + TEXT(" · ") + Doing, FMath::Clamp((float)(NameReach - D) / 3.f, 0.f, 1.f), 14 });
 		}
-	if (Mark.bSet && bWaypoint) Tags.Add({ FVector(Mark.Pos.X * CmPerM, Mark.Pos.Y * CmPerM, 3.35f * CmPerM), Mark.TagText(Player), 1.f, 16 });
+	GatherTokens(Feet, Minute, bBusy, KindOf);
 	Tags.Sort([this](const FTag& A, const FTag& B) { return FVector2D::DistSquared(FVector2D(A.World) / CmPerM, Player) > FVector2D::DistSquared(FVector2D(B.World) / CmPerM, Player); });
+}
+
+void ABrixMap::GatherTokens(float Feet, double Minute, bool bBusy, TFunctionRef<FString(const FBrixMapTarget&)> KindOf)   // ADR-0051
+{
+	Tokens.Reset();
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	const APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	const APawn* Me = PC ? PC->GetPawn() : nullptr;
+	if (bBusy || !Mode || !PC || !Day || !Markers.Kinds.Num()) return;
+	const UWorld* World = GetWorld();
+	const FVector Cam = PC->PlayerCameraManager ? PC->PlayerCameraManager->GetCameraLocation() : FVector(Player.X * CmPerM, Player.Y * CmPerM, (Feet + 1.6) * CmPerM);
+	auto Add = [&](const FVector& Wp, const FString& Kind, bool bPlace, bool bPerson, const FString& Name, int32 Seed) -> FToken*
+	{
+		const double D = FVector2D::Distance(FVector2D(Wp.X, Wp.Y) / CmPerM, Player);
+		const FBrixMarkerRules::FLook L = Markers.At(D, bPlace);
+		if (L.Alpha <= 0.f) return nullptr;
+		FToken T;
+		T.World = Wp; T.Kind = Kind; T.Alpha = L.Alpha; T.Size = L.Size; T.bSpark = L.bSpark; T.Seed = Seed; T.Dist = D; T.bEdge = Markers.bEdgeArrows;
+		if (!L.bSpark && World)   // behind a wall: a faint outline
+		{
+			FHitResult Hit;
+			FCollisionQueryParams Qp(SCENE_QUERY_STAT(BrixMarker), false, Me);
+			T.bBehind = World->LineTraceSingleByChannel(Hit, Cam, Wp, ECC_Visibility, Qp) && Hit.Distance < FVector::Distance(Cam, Wp) - 150.f;
+			if (bPerson && D < Markers.NearM && !T.bBehind) { T.Key = TEXT("E"); T.Caption = Markers.Words(Kind, Name); }
+			else if (!bPerson && D < Markers.NearM * 2) T.Caption = Markers.Words(Kind, Name);
+		}
+		return &Tokens.Add_GetRef(T);
+	};
+	TMap<int32, const ABrixPeople::FHeard*> Seen;
+	if (Mode->PeopleActor()) for (const ABrixPeople::FHeard& H : Mode->PeopleActor()->Heard) Seen.Add(H.Resident, &H);
+	for (const auto& Mk : Marked)
+	{
+		const FString Name = Day->Names.IsValidIndex(Mk.Key) ? Day->Names[Mk.Key] : FString();
+		if (const ABrixPeople::FHeard* const* H = Seen.Find(Mk.Key))
+		{
+			const double Up = (*H)->Pose == 2 ? 1.25 : (*H)->Pose == 3 ? .8 : 2.12;
+			Add(FVector((*H)->Pos.X * CmPerM, (*H)->Pos.Y * CmPerM, ((*H)->Up + Up * (*H)->S + Markers.HeadUpM) * CmPerM), Mk.Value, false, true, Name, Mk.Key);
+		}
+		else if (const TOptional<FBrixWhere> W = Day->Where(Mk.Key, Minute); W && !W->bInside)   // not drawn yet: a spark where they are
+			Add(FVector(W->Pos.X * CmPerM, W->Pos.Y * CmPerM, (Feet + 2.12 + Markers.HeadUpM) * CmPerM), Mk.Value, false, true, Name, Mk.Key);
+	}
+	for (const FBrixMapTarget& T : Targets)
+	{
+		if (T.Resident >= 0) continue;
+		const FVector2D P = Lots.IsValidIndex(T.Lot) ? Lots[T.Lot]->Centre() : T.Pos;
+		const FString Name = Lots.IsValidIndex(T.Lot) ? Lots[T.Lot]->Name : FString();
+		Add(FVector(P.X * CmPerM, P.Y * CmPerM, (Feet + Markers.PlaceUpM) * CmPerM), KindOf(T), true, false, Name, T.Lot >= 0 ? 1000 + T.Lot : 999);
+	}
+	if (Mark.bSet && bWaypoint)
+		if (FToken* T = Add(FVector(Mark.Pos.X * CmPerM, Mark.Pos.Y * CmPerM, (Feet + 2.5) * CmPerM), TEXT("mark"), true, false, Mark.Name, 7))
+			if (!T->bSpark) T->Caption = Mark.TagText(Player).Replace(TEXT("◆ "), TEXT(""));
+	Tokens.Sort([](const FToken& A, const FToken& B) { return A.Dist > B.Dist; });
 }

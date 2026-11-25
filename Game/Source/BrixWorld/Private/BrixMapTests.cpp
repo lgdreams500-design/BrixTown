@@ -132,7 +132,6 @@ bool FQST005_QuestPeopleAreMarked::RunTest(const FString&)
 	TestTrue(FString::Printf(TEXT("the first stage's goal (%s %s) is marked"), *G.Kind, *G.Value), bFound);
 	for (const FBrixMapTarget& X : T)
 		if (X.bOffer) TestTrue(TEXT("one with a line to give offers it"), X.Resident >= 0 && QR.Quests.ContainsByPredicate([&](const FBrixQuestLine& L) { return Q.ResidentIndex(L.Giver) == X.Resident && Q.Offers(L.Giver).Contains(L.Id); }));
-	TestEqual(TEXT("the words over them"), BrixQuestMarkText(true), FString(TEXT("◆ has something for you")));
 	return true;
 }
 

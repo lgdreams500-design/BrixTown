@@ -331,17 +331,26 @@ void ABrixGameMode::StartPlay()
 			}, 0.6f, false);
 		}
 	}
-	// -BrixNear=<resident>: the player stands 3.5 m in front of them, facing them, a third into a test shot's wait (the names over them)
+	// -BrixNear=<resident>[,<metres>]: the player stands 3.5 m (or that far) in front of them, facing them, a third into a
+	// test shot's wait (the names and the markers over them, ADR-0051)
 	int32 NearTo = -1;
-	if (FParse::Value(FCommandLine::Get(), TEXT("BrixNear="), NearTo) && NearTo >= 0 && Today)
+	FString NearArg;
+	double NearM = 3.5;
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixNear="), NearArg, false))
+	{
+		FString A, B;
+		if (NearArg.Split(TEXT(","), &A, &B)) { NearTo = FCString::Atoi(*A); NearM = FCString::Atod(*B); }
+		else NearTo = FCString::Atoi(*NearArg);
+	}
+	if (NearTo >= 0 && Today)
 	{
 		FTimerHandle H;
-		GetWorldTimerManager().SetTimer(H, [this, NearTo]()
+		GetWorldTimerManager().SetTimer(H, [this, NearTo, NearM]()
 		{
 			const TOptional<FBrixWhere> W = Today->Where(NearTo, ClockMinute());
 			APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);
 			if (!W || !Me) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: resident %d is not out"), NearTo); return; }
-			const FVector2D P = W->Pos + W->Heading * 3.5;
+			const FVector2D P = W->Pos + W->Heading * NearM;
 			Me->SetActorLocation(ToWorld(P, 1.f), false, nullptr, ETeleportType::TeleportPhysics);
 			if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0)) PC->SetControlRotation(FRotator(-8.0, FMath::RadiansToDegrees(FMath::Atan2(-W->Heading.Y, -W->Heading.X)), 0));
 		}, ShotDelaySeconds / 3, false);

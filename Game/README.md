@@ -583,12 +583,21 @@ page) opens the big map in a square of 84% of the screen with its legend: the wh
 times; + and - about the middle, 0 or the middle button for the whole town), dragging moves it, a click marks a place (a
 click on the mark clears it; Esc or M closes). The mark shows on both maps and over the street with how far it is, and goes
 when reached. Over the street, as the slice's hud() and life.js mark(): the names of residents within 9 m on the player's
-level (name, job, what they are doing or where they are going), "◆ quest" or "◆ has something for you" over those a quest
-wants within 45 m. What shows is the player's settings: display.minimap, display.names and the map group (residents, quests,
+level (name, job, what they are doing or where they are going). Markers (ADR-0051, look test 37 "Brass token";
+`BrixWorld/BrixMarkers`, numbers, colours and signs in `World/rules/markers.json`): over each person a quest or a job wants,
+over each place it sends you to and over the mark, a brass coin with a sign for what it is (a letter: a line offered;
+a speech bubble: someone to talk to; a bubble with a tick: going back to hand it in; a parcel: your job; a pin, or what
+the place is: basket, cup, columns, awning; the mark's cream pin), ringed in its colour, in a warm halo. A spark of its
+colour far off (to 160 m), the token within 45 m (a place 30 m), bobbing; within 6 m larger, with a caption and its key
+("E Talk to Mei"); behind a wall a faint outline; out of view a small token and arrow at the screen's edge; new things
+pulse. The same tokens stand for them on both maps. Hidden while talking. What shows is the player's settings: display.minimap, display.names and the map group (residents, quests,
 shop names). Tests: `UI018_the_big_map_is_drawn_from_the_town` (1,002 of the 1,005 lots show their kind's colour at their
 middle, the streets, the tram line, the woods; the zoom's bounds and its fixed point), `UI012_the_mark_is_set_cleared_and_reached`,
-`QST005_the_people_and_places_a_quest_wants_are_marked`. Shots: `-BrixMap` opens the big map, `-BrixMapZoom=z,x,z` zooms it
-on a place, `-BrixMark=x,z` sets the mark, `-BrixNear=<resident>` stands the player 3.5 m in front of someone; a shot logs
+`QST005_the_people_and_places_a_quest_wants_are_marked`, `QST005_the_markers_are_sound` (markers.json as
+world.marker_problems() checks it, and a broken copy caught the same way; a spark, a token and a near token by distance),
+`QST005_each_quest_step_gets_its_marker` (the first person to see, going back to them, the bank, a place by its kind, a line
+offered). Shots: `-BrixMap` opens the big map, `-BrixMapZoom=z,x,z` zooms it
+on a place, `-BrixMark=x,z` sets the mark, `-BrixNear=<resident>[,<metres>]` stands the player 3.5 m (or that far) in front of someone; a shot logs
 the residents on the maps, the markers and the words over the street. Not yet: the player's own buildings outlined
 (map_mine; the property market is not brought over), Properties' "show on the map", a tree's crown by the day's
 vegetation (a fixed `TreeRadius`). 31 to 33 frames a second at High with the minimap (noisy: other sessions were running
@@ -702,6 +711,8 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.UI018_the_big_map_is_drawn_from_the_town` | UI-018 |
 | `BrixTown.World.UI012_the_mark_is_set_cleared_and_reached` | UI-012 |
 | `BrixTown.World.QST005_the_people_and_places_a_quest_wants_are_marked` | QST-005 |
+| `BrixTown.World.QST005_the_markers_are_sound` | QST-005 |
+| `BrixTown.World.QST005_each_quest_step_gets_its_marker` | QST-005 |
 | `BrixTown.World.CITY098_board_kinds_and_speeds` | CITY-098 |
 | `BrixTown.World.CITY099_boards_are_ridden_and_drawn_as_the_slice_does` | CITY-099, CITY-101 |
 | `BrixTown.World.CITY100_auto_owns_all_and_rides_electric` | CITY-100 |

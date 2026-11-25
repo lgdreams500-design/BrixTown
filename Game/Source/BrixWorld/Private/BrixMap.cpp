@@ -402,29 +402,35 @@ FString FBrixMark::TagText(const FVector2D& Player) const
 TArray<FBrixMapTarget> BrixQuestTargets(const FBrixQuests& Q, const FBrixQuestRules& Rules, const FBrixEconomy& E)
 {
 	TArray<FBrixMapTarget> Out;
-	auto Lot = [&](int32 N) { FBrixMapTarget T; T.Lot = N; if (N >= 0) Out.Add(T); };
-	auto Who = [&](int32 I, bool bOffer) { FBrixMapTarget T; T.Resident = I; T.bOffer = bOffer; if (I >= 0) Out.Add(T); };
+	auto Lot = [&](int32 N, const TCHAR* Kind) { FBrixMapTarget T; T.Lot = N; T.Kind = Kind; if (N >= 0) Out.Add(T); };
+	auto Who = [&](int32 I, bool bOffer, const TCHAR* Kind) { FBrixMapTarget T; T.Resident = I; T.bOffer = bOffer; T.Kind = Kind; if (I >= 0) Out.Add(T); };
 	for (const auto& A : Q.Active)
 	{
 		const FBrixQuestStage* S = Q.Stage(A.Key);
 		if (!S) continue;
 		const FBrixGoal& G = S->Goal;
-		if (G.Kind == TEXT("talk")) Who(Q.ResidentIndex(G.Value), false);
-		else if (G.Kind == TEXT("go")) Lot(E.LotIndex.FindRef(G.Value, -1));
-		else if (G.Kind == TEXT("near")) { FBrixMapTarget T; T.Pos = G.Near; Out.Add(T); }
-		else if (G.Kind == TEXT("bank")) Lot(E.BankLot);
-		else if (G.Kind == TEXT("stall") || G.Kind == TEXT("stall_sold")) Lot(E.MarketLot);
+		if (G.Kind == TEXT("talk"))
+		{
+			// going back: to the line's giver, or to whom its first stage sent you, from a later stage (ADR-0051)
+			const FBrixQuestLine* L = Rules.Quests.FindByPredicate([&](const FBrixQuestLine& X) { return X.Id == A.Key; });
+			const FBrixQuestStage* First = L ? L->Stages.Find(L->Start) : nullptr;
+			const bool bBack = L && A.Value.Stage != L->Start && (G.Value == L->Giver || (First && First->Goal.Kind == TEXT("talk") && First->Goal.Value == G.Value));
+			Who(Q.ResidentIndex(G.Value), false, bBack ? TEXT("handin") : TEXT("talk"));
+		}
+		else if (G.Kind == TEXT("go")) Lot(E.LotIndex.FindRef(G.Value, -1), TEXT("go"));
+		else if (G.Kind == TEXT("near")) { FBrixMapTarget T; T.Pos = G.Near; T.Kind = TEXT("go"); Out.Add(T); }
+		else if (G.Kind == TEXT("bank")) Lot(E.BankLot, TEXT("bank"));
+		else if (G.Kind == TEXT("stall") || G.Kind == TEXT("stall_sold")) Lot(E.MarketLot, TEXT("stall"));
 	}
 	if (Q.Job)
 	{
 		const FBrixJob& J = *Q.Job;
-		if (J.Kind == TEXT("parcel")) Lot(J.Step == TEXT("pickup") ? J.Frm : J.To);
-		else if (J.Kind == TEXT("shift")) Lot(J.To);
-		else Who(J.Giver, false);
+		if (J.Kind == TEXT("parcel")) Lot(J.Step == TEXT("pickup") ? J.Frm : J.To, TEXT("job"));
+		else if (J.Kind == TEXT("shift")) Lot(J.To, TEXT("job"));
+		else Who(J.Giver, false, TEXT("job"));
 	}
 	for (const FBrixQuestLine& L : Rules.Quests)
-		if (!L.Giver.IsEmpty() && Q.Offers(L.Giver).Contains(L.Id)) Who(Q.ResidentIndex(L.Giver), true);
+		if (!L.Giver.IsEmpty() && Q.Offers(L.Giver).Contains(L.Id)) Who(Q.ResidentIndex(L.Giver), true, TEXT("offer"));
 	return Out;
 }
 
-FString BrixQuestMarkText(bool bOffer) { return bOffer ? TEXT("◆ has something for you") : TEXT("◆ quest"); }

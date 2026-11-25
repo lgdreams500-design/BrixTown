@@ -1,0 +1,47 @@
+{
+  "note": "Markers over heads and over places (QST-005, ADR-0051, look test 37 'Brass token'). Each kind of thing to do has its own sign, so it reads without colour; the ring's colour only backs it up. Signs are drawn on a 24-unit square as chunky round-capped strokes: 'lines' are polylines [x, y, x, y, ...] (closed when 'closed' is true), 'dots' are filled circles [x, y, r]. Distances in metres, times in seconds, sizes in pixels at 1080 lines (scaled with the screen).",
+  "kinds": {
+    "offer":  { "sign": "letter",  "colour": "#e0964e", "new": true,  "words": "has something for you" },
+    "talk":   { "sign": "bubble",  "colour": "#3f7273", "new": false, "words": "Talk to {name}" },
+    "handin": { "sign": "handin",  "colour": "#e0964e", "new": true,  "words": "Tell {name}" },
+    "job":    { "sign": "parcel",  "colour": "#a8843f", "new": false, "words": "Your job" },
+    "go":     { "sign": "pin",     "colour": "#e0964e", "new": false, "words": "Your quest" },
+    "shop":   { "sign": "basket",  "colour": "#a35a44", "new": false, "words": "Shop" },
+    "cafe":   { "sign": "cup",     "colour": "#77583f", "new": false, "words": "Café" },
+    "bank":   { "sign": "columns", "colour": "#6b7245", "new": false, "words": "Bank" },
+    "stall":  { "sign": "awning",  "colour": "#6c5578", "new": false, "words": "Market stall" },
+    "estate": { "sign": "house",   "colour": "#55698c", "new": false, "words": "Estate agent" },
+    "prices": { "sign": "tag",     "colour": "#6a6871", "new": false, "words": "Prices board" },
+    "mark":   { "sign": "pin",     "colour": "#efe4cc", "new": false, "words": "Your mark" }
+  },
+  "place_kinds": { "shop": "shop", "food": "cafe", "bank": "bank", "market": "stall" },
+  "signs": {
+    "letter":  { "lines": [[4, 7, 20, 7, 20, 18, 4, 18], [4, 7.5, 12, 13.5, 20, 7.5]], "closed": [true, false], "dots": [[12, 15.6, 2.2]] },
+    "bubble":  { "lines": [[5, 5, 19, 5, 21, 7, 21, 14, 19, 16, 12, 16, 8, 19.5, 8, 16, 5, 16, 3, 14, 3, 7]], "closed": [true], "dots": [[8, 10.5, 1.4], [12, 10.5, 1.4], [16, 10.5, 1.4]] },
+    "handin":  { "lines": [[5, 5, 19, 5, 21, 7, 21, 14, 19, 16, 12, 16, 8, 19.5, 8, 16, 5, 16, 3, 14, 3, 7], [8, 10.5, 11, 13.5, 16, 8]], "closed": [true, false], "dots": [] },
+    "parcel":  { "lines": [[4, 8, 12, 4, 20, 8, 20, 17, 12, 21, 4, 17], [4, 8, 12, 12, 20, 8], [12, 12, 12, 21], [8, 6, 16, 10]], "closed": [true, false, false, false], "dots": [] },
+    "basket":  { "lines": [[3.5, 10, 20.5, 10, 18.3, 19, 5.7, 19], [8, 10, 11, 4], [16, 10, 13, 4], [9, 13, 9, 16], [15, 13, 15, 16]], "closed": [true, false, false, false, false], "dots": [] },
+    "cup":     { "lines": [[5, 10, 16, 10, 16, 14, 15, 16.5, 12, 18, 9, 18, 6, 16.5, 5, 14], [16, 11, 17.6, 11, 19, 12, 19.4, 13, 19, 14, 17.6, 15, 16, 15], [8.5, 7.2, 9.4, 6, 8.6, 4.6], [12, 7.2, 12.9, 6, 12.1, 4.6]], "closed": [true, false, false, false], "dots": [] },
+    "columns": { "lines": [[3.5, 9.5, 12, 4.5, 20.5, 9.5], [6, 11.5, 6, 17], [10, 11.5, 10, 17], [14, 11.5, 14, 17], [18, 11.5, 18, 17], [4, 19.5, 20, 19.5]], "closed": [true, false, false, false, false, false], "dots": [] },
+    "awning":  { "lines": [[3, 10, 5, 5, 19, 5, 21, 10], [3, 10, 4, 12, 6, 12.8, 8, 12, 9, 10, 10, 12, 12, 12.8, 14, 12, 15, 10, 16, 12, 18, 12.8, 20, 12, 21, 10], [5, 13, 5, 20], [19, 13, 19, 20], [4, 20, 20, 20]], "closed": [false, false, false, false, false], "dots": [] },
+    "house":   { "lines": [[4, 12, 12, 5, 20, 12], [6.5, 10, 6.5, 19.5, 17.5, 19.5, 17.5, 10], [12, 19.5, 12, 15.5]], "closed": [false, false, false], "dots": [] },
+    "tag":     { "lines": [[3.5, 12.5, 12.5, 3.5, 20.5, 3.5, 20.5, 11.5, 11.5, 20.5]], "closed": [true], "dots": [[16, 8, 1.7]] },
+    "pin":     { "lines": [[12, 21, 9, 17.5, 6.6, 13.5, 6, 10, 6.8, 7, 9, 4.8, 12, 4, 15, 4.8, 17.2, 7, 18, 10, 17.4, 13.5, 15, 17.5]], "closed": [true], "dots": [[12, 10, 2.3]] }
+  },
+  "token": {
+    "face": "#d4a654", "face_light": "#f3d48a", "face_dark": "#a87a34", "edge": "#6e4f22", "rim": "#fbe3a6", "stamp": "#3b2a12",
+    "halo": "#ffb565", "halo_alpha": 0.55, "halo_new_alpha": 0.75, "halo_size": 2.4, "halo_new_size": 3.1,
+    "ring_width": 0.16, "edge_depth": 0.14, "sign_size": 1.05, "sign_stroke": 2.6
+  },
+  "behaviour": {
+    "token_px": 50, "token_near_px": 64, "near_m": 6, "spark_px": 5,
+    "token_m": 45, "spark_m": 160, "fade_m": 10,
+    "place_m": 30, "place_up_m": 4.2,
+    "head_up_m": 0.3,
+    "bob_m": 0.06, "bob_s": 2.4,
+    "pulse_s": 1.8, "pulse_ring": 1.45,
+    "behind_alpha": 0.45,
+    "edge_px": 46, "edge_arrows": true,
+    "map_token_px": 20, "mini_token_px": 16
+  }
+}
