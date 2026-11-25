@@ -8,6 +8,7 @@
 #include "BrixGameMode.h"
 #include "BrixMallActor.h"
 #include "BrixLook.h"
+#include "BrixMapActor.h"
 #include "BrixTalkActor.h"
 #include "BrixThingWidget.h"
 #include "BrixUnits.h"
@@ -92,6 +93,8 @@ void ABrixLife::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay)
 	double D0 = 0, M0 = 0;
 	Frame(D0, M0);
 	E->Advance((int32)D0, M0);
+	if (LoadBrixEstate(Data, EstateRules, EstateUnits, EstateRoles, Error)) Est = MakeUnique<FBrixEstate>(EstateRules, *E, EstateUnits, EstateRoles);   // PROP-009
+	else UE_LOG(LogTemp, Warning, TEXT("Brix Town: no property market (%s)"), *Error);
 	if (LoadBrixQuests(Data.Json, QuestRules, QuestResidents, Error))
 	{
 		Q = MakeUnique<FBrixQuests>(QuestRules, *E, QuestResidents);
@@ -103,6 +106,7 @@ void ABrixLife::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay)
 		UE_LOG(LogTemp, Warning, TEXT("Brix Town: no quests (%s)"), *Error);
 		E->NewCharacter();
 	}
+	if (Est) Est->Start();   // the estate agents open (life.js newGame(): M.start())
 	LastMoney = E->TotalMoney();
 	if (!LoadBrixRewards(Data.Json, RewardRules, AchievementRules, Error)) UE_LOG(LogTemp, Warning, TEXT("Brix Town: no reward showings (%s)"), *Error);
 	SeenTx = E->L.Tx.Num();   // what a new game starts with is not shown (rewards.js reset())
@@ -149,7 +153,7 @@ int32 ABrixLife::CounterHere() const
 	double BestD = CounterReach;
 	for (int32 n = 0; n < Lots.Num(); ++n)
 	{
-		if (n != E->BankLot && n != E->MarketLot && E->ShopKind(n).IsEmpty()) continue;   // the bank, the market and the shops have a counter
+		if (n != E->BankLot && n != E->MarketLot && E->ShopKind(n).IsEmpty() && !(Est && Est->Office.Contains(Lots[n].Id))) continue;   // the bank, the market, the shops and the estate agents have a counter
 		const FBrixEconLot& L = Lots[n];
 		const FVector2D C = L.Centre(), D = P - C;
 		const double A = FMath::DegreesToRadians(-LotAngle[n]);
@@ -194,6 +198,7 @@ void ABrixLife::SaveTo(FBrixSaveGame& S) const
 	S.Minute = E->Minute;
 	S.Econ = BrixEconomySave(*E);
 	if (Q) S.Quests = BrixQuestsSave(*Q);
+	if (Est) S.Estate = Est->Save();   // PROP-021: the market comes back as it was
 	S.Feats = Feats;
 }
 
@@ -209,9 +214,17 @@ bool ABrixLife::LoadFrom(const FBrixSaveGame& S, FString& OutWhy)   // life.js l
 		if (!BrixQuestsLoad(*NewQ, *S.Quests, OutWhy)) return false;
 		NewQ->OnNote = [this](const FString& T) { Toast(T); };
 	}
+	TUniquePtr<FBrixEstate> NewM;
+	if (Est)
+	{
+		NewM = MakeUnique<FBrixEstate>(EstateRules, *NewE, EstateUnits, EstateRoles);
+		if (S.Estate) NewM->Load(S.Estate); else NewM->Start();   // a save from before the market: it opens now (life.js loadSave())
+	}
 	if (!Panel.IsEmpty()) Close();
-	Q = MoveTemp(NewQ);   // the quests hold the economy: the old ones go first
+	Q = MoveTemp(NewQ);   // the quests and the market hold the economy: the old ones go first
+	Est = MoveTemp(NewM);
 	E = MoveTemp(NewE);
+	RentEdit.Reset();
 	Feats = S.Feats;
 	Offered.Reset();
 	PendingCounter = -1;
@@ -347,13 +360,14 @@ FString ABrixLife::CounterWords(int32 n) const
 	if (n < 0) return FString();
 	if (n == E->BankLot) return TEXT("Bank counter");
 	if (n == E->MarketLot) return TEXT("Your market stall");
+	if (Est) if (const FString* Co = Est->Office.Find(Lots[n].Id)) return TEXT("Estate agent: ") + EstateRules.Company(*Co)->Name;
 	if (!E->ShopKind(n).IsEmpty() && !E->Outlets.Contains(n)) return TEXT("Buy and sell at ") + Lots[n].Name;
 	return FString();
 }
 
 void ABrixLife::CounterKey()
 {
-	if (Panel == TEXT("bank") || Panel == TEXT("shop") || Panel == TEXT("stall") || Panel == TEXT("outlet")) { Close(); return; }
+	if (Panel == TEXT("bank") || Panel == TEXT("shop") || Panel == TEXT("stall") || Panel == TEXT("outlet") || Panel == TEXT("agent")) { Close(); return; }
 	int32 On = -1;
 	FString U;
 	if (OutletHere(On, U)) { PanelUnit = U; Open(TEXT("outlet"), On); return; }   // each outlet has its own counter (WLD-066, ECO-013)
@@ -361,6 +375,7 @@ void ABrixLife::CounterKey()
 	if (n >= 0 && E->Outlets.Contains(n)) { Toast(TEXT("Walk into one of ") + Lots[n].Name + TEXT("'s outlets to buy there: each has its own goods.")); return; }
 	if (n < 0) { Toast(TEXT("No counter here. Shops, cafés, the bank and the market square have one.")); return; }
 	if (n == E->BankLot) Open(TEXT("bank"), n);
+	else if (Est && Est->Office.Contains(Lots[n].Id)) Open(TEXT("agent"), n);   // PROP-011 to PROP-019 (life.js: B at an estate agent)
 	else if (n == E->MarketLot) Open(TEXT("stall"), n);
 	else { Side = TEXT("buy"); Open(TEXT("shop"), n); }
 }
@@ -391,11 +406,13 @@ void ABrixLife::Close()
 	if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0))) Me->EndPanel();
 }
 
+void ABrixLife::Redraw() { if (bMenu && Panel.IsEmpty()) DrawMenu(); else Draw(); }   // the counter's panel, or the menu's page under it
+
 void ABrixLife::Act(TFunction<bool(FString&)> Fn)
 {
 	FString Said;
 	Msg = Fn(Said) ? Said : TEXT("Refused: ") + E->Why + TEXT(".");
-	Draw();
+	Redraw();
 }
 
 TSharedRef<SWidget> ABrixLife::PurseLine() const
@@ -457,6 +474,7 @@ void ABrixLife::Draw()
 		Hint = TEXT("← → ↑ ↓  choose    Enter  buy    Esc  close");
 	}
 	else if (Panel == TEXT("quests")) { Title = TEXT("Quests"); Sub = FString::Printf(TEXT("Day %d · J"), E->Day + 1); }
+	else if (Panel == TEXT("agent") && Est) { Title = EstateRules.Company(Est->Office[Lots[PanelLot].Id])->Name; Sub = TEXT("Estate agents · buy, sell and rent anywhere in town"); }
 	else if (Panel == TEXT("stall")) { Title = Lots[PanelLot].Name; Sub = TEXT("Your market stall · residents shop here ") + UiHhmm(E->R.StallOpen) + TEXT(" to ") + UiHhmm(E->R.StallClose); }
 	else { Title = TEXT("Money"); Sub = PlayerName + TEXT(" · I"); }
 	if (!Msg.IsEmpty())
@@ -466,6 +484,7 @@ void ABrixLife::Draw()
 	else if (Panel == TEXT("outlet")) OutletPanel(Body);
 	else if (Panel == TEXT("stall")) StallPanel(Body);
 	else if (Panel == TEXT("quests")) QuestsPanel(Body);
+	else if (Panel == TEXT("agent") && Est) EstatePanel(Body, Est->Office[Lots[PanelLot].Id], -1);
 	else WalletPanel(Body);
 	PanelBody->SetContent(
 		SNew(SVerticalBox)
@@ -576,6 +595,268 @@ void ABrixLife::WalletPanel(TSharedRef<SVerticalBox> Body)
 	Body->AddSlot().AutoHeight()[ StatementTable(WalletStatementLines) ];
 }
 
+// ---- the real estate market (PROP-011 to PROP-019, PROP-023; life.js estatePanel(), unitRow(), buyUnits(), buildingsTab())
+
+namespace
+{
+	FString TenantText(const FBrixEstate& M, int32 i)
+	{
+		const FString& t = M.Tenant[i];
+		return t == TEXT("player") ? TEXT("you rent it") : t == TEXT("hh") ? TEXT("lived in") : t == TEXT("firm") ? TEXT("in business") : t == TEXT("lodger") ? TEXT("let") : TEXT("empty");
+	}
+	TSharedRef<SWidget> UiCell(TSharedRef<SWidget> W, float Width) { return SNew(SBox).WidthOverride(Width).VAlign(VAlign_Center)[ W ]; }
+}
+
+FString ABrixLife::BoardText(int32 Lot) const               // PROP-023 (life.js boardText())
+{
+	if (!Est || !Est->ByLot.Contains(Lot)) return FString();
+	const TPair<int32, int32> B = Est->Board(Lot);
+	const int32 k = Est->ByLot[Lot].Num();
+	if (!B.Key && !B.Value) return FString();
+	auto Part = [k](int32 c, const TCHAR* W) { return c ? (k > 1 ? FString::Printf(TEXT("%d %s"), c, W) : FString(W)) : FString(); };
+	FString S = Part(B.Key, TEXT("for sale"));
+	const FString L2 = Part(B.Value, TEXT("to let"));
+	if (!L2.IsEmpty()) S += (S.IsEmpty() ? TEXT("") : TEXT(" · ")) + L2;
+	return S.Left(1).ToUpper() + S.Mid(1);
+}
+
+void ABrixLife::ShowOnMap(int32 Lot)                         // UI-006: a waypoint at a building, and the big map
+{
+	if (!Lots.IsValidIndex(Lot)) return;
+	ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Mode || !Mode->Map) return;
+	Mode->Map->MarkAt(Lots[Lot].Centre(), Lots[Lot].Name);
+	Close();
+	Mode->Map->Open();
+	Toast(TEXT("Marked on the map: ") + Lots[Lot].Name + TEXT(". Esc or M closes the map."));
+}
+
+FString ABrixLife::BuyUnits(const TArray<int32>& Units, const FString& Agent, bool& bOk)   // outright, or a mortgage at the least deposit
+{
+	const FBrixEstateRules& R = EstateRules;
+	if (!PayTerm)
+	{
+		int64 Paid = 0;
+		bOk = Est->Buy(Units, Agent, {}, {}, &Paid);
+		return TEXT("Bought for ") + Format(Paid) + TEXT(" with the transfer tax.");
+	}
+	const int32 Term = R.MortgageTerms[FMath::Clamp(PayTerm - 1, 0, R.MortgageTerms.Num() - 1)];
+	int64 Total = 0;
+	for (const int32 i : Units) { const int64 a = Est->Ask(i).Get(0); Total += Units.Num() > 1 ? BrixMoney::FloorDiv(a * (10000 - R.WholeDiscountBp), 10000) : a; }
+	const int64 Dep = (Total * R.DepositBp + 9999) / 10000;   // Math.ceil
+	bOk = Est->Buy(Units, Agent, Dep, Term);
+	if (!bOk) return FString();
+	const FBrixMortgage& Mg = Est->Mortgages.Last();
+	return FString::Printf(TEXT("Bought with a deposit of %s; the bank lends %s, repaid at about %s a day for %d days."), *Format(Dep), *Format(Mg.Principal), *Format(Mg.Plan[0]), Term);
+}
+
+TSharedRef<SWidget> ABrixLife::UnitRow(int32 i, const FString& Agent)
+{
+	const TOptional<int64> A = Est->Ask(i);
+	TSharedRef<SHorizontalBox> R = UiRow();
+	R->AddSlot().FillWidth(1).VAlign(VAlign_Center).Padding(0, 0, 8, 0)
+	[
+		SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight()[ UiText(Est->Name(i), 14) ]
+		+ SVerticalBox::Slot().AutoHeight()[ UiText(FString::Printf(TEXT("%lld m² · %s · %s"), Est->Units[i].Area, *Est->OwnerName(i), *TenantText(*Est, i)), 12, UiDim) ]
+	];
+	R->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 8, 0)[ UiCell(UiText(A ? Format(*A) : Est->IsMine(i) ? FString(TEXT("yours")) : FString(TEXT("not for sale")), 14, A ? UiGold : UiDim, A.IsSet()), 104.f) ];
+	R->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 8, 0)[ UiCell(UiText(Format(Est->MarketRent(i)) + TEXT("/day"), 12, UiDim), 92.f) ];
+	if (A) UiAdd(R, UiButton(TEXT("Buy"), [this, i, Agent]() { Act([this, i, Agent](FString& S) { bool bOk = false; S = BuyUnits({ i }, Agent, bOk); if (!bOk) E->Why = Est->Why; return bOk; }); }));
+	if (Est->Tenant[i].IsEmpty() && !Est->IsMine(i))
+		UiAdd(R, UiButton(TEXT("Rent"), [this, i, Agent]()
+		{
+			Act([this, i, Agent](FString& S)
+			{
+				if (!Est->RentUnit(i, Agent)) { E->Why = Est->Why; return false; }
+				S = TEXT("You rent ") + Est->Name(i) + TEXT(" for ") + Format(Est->Tenancy[i].Rent) + TEXT(" a day, paid each midnight.");
+				return true;
+			});
+		}, true, true));
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight().Padding(0, 4)[ R ]
+		+ SVerticalBox::Slot().AutoHeight()[ SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(UiRule).Padding(0)[ SNew(SBox).HeightOverride(1.f) ] ];
+}
+
+void ABrixLife::EstatePanel(TSharedRef<SVerticalBox> Body, const FString& Agent, int32 Here)
+{
+	if (!Est) return;
+	const FBrixEstateRules& R = EstateRules;
+	auto Slot = [&](TSharedRef<SWidget> W, float Top = 6) { Body->AddSlot().AutoHeight().Padding(0, Top, 0, 0)[ W ]; };
+	const TArray<int64>* Hist = Est->History.Num() ? &Est->History.Last() : nullptr;
+	Slot(PurseLine(), 0);
+	Slot(UiText(FString::Printf(TEXT("Prices in town %.1f%% of usual · money in town %s"), (Hist ? (*Hist)[1] : Est->TownIndex()) / 100.0, *Format(E->L.Supply()))
+		+ (Hist ? FString::Printf(TEXT(" · %lld sold yesterday"), (*Hist)[3]) : FString()), 13, UiDim));
+	auto PayChoice = [this, &R]()   // outright, or a mortgage (BANK-002, PROP-019)
+	{
+		TSharedRef<SHorizontalBox> P = UiRow();
+		UiAdd(P, UiText(TEXT("Pay"), 14));
+		const FString Now = PayTerm ? FString::Printf(TEXT("mortgage, %d days"), R.MortgageTerms[FMath::Clamp(PayTerm - 1, 0, R.MortgageTerms.Num() - 1)]) : FString(TEXT("outright"));
+		UiAdd(P, UiButton(Now, [this, N = R.MortgageTerms.Num() + 1]() { PayTerm = (PayTerm + 1) % N; Redraw(); }, true, true));
+		return P;
+	};
+	if (Here >= 0 && Est->ByLot.Contains(Here))   // the building the player stands in
+	{
+		const TArray<int32>& Ix = Est->ByLot[Here];
+		TArray<int32> Rest;
+		for (const int32 i : Ix) if (!Est->IsMine(i)) Rest.Add(i);
+		Slot(UiHeading(TEXT("This building: ") + Lots[Here].Name), 0);
+		Slot(PayChoice());
+		for (const int32 i : Ix) Slot(UnitRow(i, FString()), 2);
+		bool bAll = Rest.Num() > 0;
+		for (const int32 i : Rest) bAll &= Est->Ask(i).IsSet();
+		if (Ix.Num() > 1 && bAll)
+		{
+			int64 Tot = 0;
+			for (const int32 i : Rest) Tot += BrixMoney::FloorDiv(*Est->Ask(i) * (10000 - R.WholeDiscountBp), 10000);
+			TSharedRef<SHorizontalBox> B = UiRow();
+			UiAdd(B, UiButton(TEXT("Buy the whole building for ") + Format(Tot), [this, Rest]() { Act([this, Rest](FString& S) { bool bOk = false; S = BuyUnits(Rest, FString(), bOk); if (!bOk) E->Why = Est->Why; return bOk; }); }));
+			Slot(B);
+		}
+	}
+	if (!Agent.IsEmpty())
+	{
+		TArray<FString> Kinds = { TEXT("all") };
+		for (const auto& K : R.Kinds) Kinds.Add(K.Key);
+		auto Want = [this](int32 i) { return AgentFilter == TEXT("all") || Est->Units[i].Kind == AgentFilter; };
+		TArray<int32> Listed;
+		for (const auto& Ls : Est->Listing) if (!Est->IsMine(Ls.Key) && Want(Ls.Key)) Listed.Add(Ls.Key);
+		Listed.Sort([this](int32 a, int32 b) { const int64 pa = Est->Listing[a].Price, pb = Est->Listing[b].Price; return pa != pb ? pa < pb : a < b; });
+		if (Listed.Num() > 12) Listed.SetNum(12);
+		Slot(UiHeading(TEXT("For sale")), 0);
+		TSharedRef<SHorizontalBox> F = UiRow();
+		UiAdd(F, UiText(TEXT("Show"), 14));
+		UiAdd(F, UiButton(AgentFilter == TEXT("all") ? FString(TEXT("everything")) : R.Kinds[AgentFilter].Name.ToLower(), [this, Kinds]() { AgentFilter = Kinds[(Kinds.IndexOfByKey(AgentFilter) + 1) % Kinds.Num()]; Redraw(); }, true, true));
+		Slot(F);
+		Slot(PayChoice());
+		if (Listed.Num()) for (const int32 i : Listed) Slot(UnitRow(i, Agent), 2);
+		else Slot(UiText(TEXT("Nothing of that kind on the market today."), 14, UiDim));
+		Slot(UiText(TEXT("Anything else in town can be bought too: stand in the building and press P to see what its owners would take."), 13, UiDim));
+		TArray<int32> Free;
+		for (int32 i = 0; i < Est->Units.Num(); ++i) if (Est->Tenant[i].IsEmpty() && !Est->IsMine(i) && Want(i)) Free.Add(i);
+		Free.Sort([this](int32 a, int32 b) { const int64 ra = Est->MarketRent(a), rb = Est->MarketRent(b); return ra != rb ? ra < rb : a < b; });
+		if (Free.Num() > 8) Free.SetNum(8);
+		Slot(UiHeading(TEXT("To let")), 0);
+		if (Free.Num()) for (const int32 i : Free) Slot(UnitRow(i, Agent), 2);
+		else Slot(UiText(TEXT("Nothing empty just now."), 14, UiDim));
+	}
+	const TArray<int32> Mine = Est->Owned();
+	if (Agent.IsEmpty())   // UI-006: each building you own once, with Show on map (life.js buildingsTab())
+	{
+		Slot(UiHeading(TEXT("Your buildings")), 0);
+		TArray<int32> LotsOwned;
+		for (const int32 i : Mine) LotsOwned.AddUnique(Est->Units[i].Lot);
+		LotsOwned.Sort();
+		if (!LotsOwned.Num()) Slot(UiText(TEXT("You own no building yet. Buy one: stand in it and press P, or see an estate agent."), 14, UiDim));
+		for (const int32 n : LotsOwned)
+		{
+			TArray<int32> Floors;
+			for (const int32 i : Est->ByLot[n]) if (Est->IsMine(i)) for (const int32 f : Est->Units[i].Floors) Floors.AddUnique(f);
+			Floors.Sort();
+			FString Fl;
+			for (const int32 f : Floors) Fl += (Fl.IsEmpty() ? TEXT("") : TEXT(", ")) + (f ? FString::Printf(TEXT("floor %d"), f) : FString(TEXT("the ground floor")));
+			TSharedRef<SHorizontalBox> B = UiRow();
+			B->AddSlot().FillWidth(1).VAlign(VAlign_Center)[ SNew(SVerticalBox) + SVerticalBox::Slot().AutoHeight()[ UiText(Lots[n].Name, 15, UiCream, true) ]
+				+ SVerticalBox::Slot().AutoHeight()[ UiText(Est->OwnsWhole(n) ? FString(TEXT("The whole building")) : TEXT("Your rooms on ") + Fl, 12, UiDim) ] ];
+			UiAdd(B, UiButton(TEXT("Show on map"), [this, n]() { ShowOnMap(n); }, true, true));
+			Slot(B, 4);
+		}
+	}
+	Slot(UiHeading(TEXT("Your property")), 0);
+	if (!Mine.Num()) Slot(UiText(TEXT("You own nothing yet."), 14, UiDim));
+	for (const int32 i : Mine)
+	{
+		const FBrixListing* Ls = Est->Listing.Find(i);
+		const int64* Ow = Est->Owed.Find(i);
+		FString& Typed = RentEdit.FindOrAdd(i);
+		if (Typed.IsEmpty()) Typed = FString::Printf(TEXT("%.2f"), Est->RentOf(i) / 100.0);
+		Slot(UiText(Est->Name(i), 15, UiCream, true), 8);
+		Slot(UiText(FString::Printf(TEXT("%lld m² · worth about %s · %s · upkeep and tax %s/day"), Est->Units[i].Area, *Format(Est->Value(i)), *TenantText(*Est, i), *Format(Est->CostOf(i)))
+			+ (Ls ? TEXT(" · listed at ") + Format(Ls->Price) : FString()) + (Ow ? TEXT(" · ") + Format(*Ow) + TEXT(" unpaid!") : FString()), 12, Ow ? UiNeg : UiDim), 2);
+		TSharedRef<SHorizontalBox> Rt = UiRow();
+		UiAdd(Rt, UiText(TEXT("Rent Bx"), 14));
+		UiAdd(Rt, SNew(SBox).WidthOverride(80.f)[ SNew(SEditableTextBox).Text(FText::FromString(Typed)).Font(UiFont(14)).OnTextChanged_Lambda([this, i](const FText& T) { RentEdit.Add(i, T.ToString()); }) ]);
+		UiAdd(Rt, UiText(TEXT("a day (market ") + Format(Est->MarketRent(i)) + TEXT(")"), 12, UiDim));
+		UiAdd(Rt, UiButton(TEXT("Set"), [this, i]()
+		{
+			Act([this, i](FString& S)
+			{
+				S = TEXT("Rent set; offered to tenants.");
+				if (Est->SetRent(i, FMath::RoundToInt64(FCString::Atod(*RentEdit.FindRef(i)) * 100.0), true)) return true;
+				E->Why = Est->Why;
+				return false;
+			});
+		}, true, true));
+		UiAdd(Rt, UiButton(Est->ToLet[i] ? TEXT("Stop letting") : TEXT("Offer to let"), [this, i]() { Est->ToLet[i] = !Est->ToLet[i]; Redraw(); }, true, true));
+		Slot(Rt, 2);
+		TSharedRef<SHorizontalBox> Rw = UiRow();
+		UiAdd(Rw, UiButton(TEXT("Sell now for ") + Format(Est->Bid(i)), [this, i, Agent]()
+		{
+			Act([this, i, Agent](FString& S) { int64 P = 0; if (!Est->SellNow(i, Agent, &P)) { E->Why = Est->Why; return false; } RentEdit.Remove(i); S = TEXT("Sold for ") + Format(P) + TEXT("."); return true; });
+		}, true, true));
+		if (!Agent.IsEmpty())
+		{
+			if (Ls) UiAdd(Rw, UiButton(TEXT("Take it off the market"), [this, i]() { Act([this, i](FString& S) { S = TEXT("Taken off the market."); if (Est->Unlist(i)) return true; E->Why = Est->Why; return false; }); }, true, true));
+			else UiAdd(Rw, UiButton(TEXT("List at ") + Format(Est->Value(i)), [this, i, Agent]()
+			{
+				Act([this, i, Agent](FString& S)
+				{
+					if (!Est->ListForSale(i, Est->Value(i), Agent)) { E->Why = Est->Why; return false; }
+					S = TEXT("Listed with ") + EstateRules.Company(Agent)->Name + FString::Printf(TEXT("; the agent takes %s%% when it sells."), *FString::SanitizeFloat(EstateRules.AgentFeeBp / 100.0));
+					return true;
+				});
+			}, true, true));
+		}
+		Slot(Rw, 4);
+	}
+	TArray<int32> Ten;
+	Est->Tenancy.GetKeys(Ten);
+	Ten.Sort();
+	if (Ten.Num())
+	{
+		Slot(UiHeading(TEXT("Places you rent")), 0);
+		for (const int32 i : Ten)
+		{
+			const FBrixTenancy& T = Est->Tenancy[i];
+			TSharedRef<SHorizontalBox> B = UiRow();
+			B->AddSlot().FillWidth(1).VAlign(VAlign_Center)[ UiText(Est->Name(i), 14) ];
+			UiAdd(B, UiText(Format(T.Rent) + TEXT(" a day") + (T.Missed ? FString::Printf(TEXT(", %d unpaid"), T.Missed) : FString()), 13, T.Missed ? UiNeg : UiDim));
+			UiAdd(B, UiButton(TEXT("Move out"), [this, i]() { Act([this, i](FString& S) { S = TEXT("You have moved out."); if (Est->Leave(i)) return true; E->Why = Est->Why; return false; }); }, true, true));
+			Slot(B, 2);
+		}
+	}
+	TArray<const FBrixMortgage*> Ms;
+	for (const FBrixMortgage& Mg : Est->Mortgages) if (Mg.Status == TEXT("active")) Ms.Add(&Mg);
+	if (Ms.Num())
+	{
+		Slot(UiHeading(TEXT("Mortgages")), 0);
+		for (const FBrixMortgage* Mg : Ms)
+		{
+			TSharedRef<SHorizontalBox> B = UiRow();
+			B->AddSlot().FillWidth(1).VAlign(VAlign_Center)[ UiText(FString::Printf(TEXT("Mortgage %d: %s owed, about %s a day"), Mg->Id, *Format(Mg->Owed()), *Format(Mg->Plan[0])) + (Mg->Missed ? FString::Printf(TEXT("; %d missed"), Mg->Missed) : FString()), 14) ];
+			const int32 Id = Mg->Id;
+			UiAdd(B, UiButton(TEXT("Repay now"), [this, Id]() { Act([this, Id](FString& S) { S = TEXT("Mortgage repaid."); if (Est->Repay(Id)) return true; E->Why = Est->Why; return false; }); }, true, true));
+			Slot(B, 2);
+		}
+	}
+	if (Est->Sales.Num())
+	{
+		Slot(UiHeading(TEXT("Lately sold")), 0);
+		for (int32 k = Est->Sales.Num() - 1; k >= FMath::Max(0, Est->Sales.Num() - 5); --k)
+		{
+			const FBrixSale& Sl = Est->Sales[k];
+			const FString& b = Sl.Buyer;
+			const FBrixEstateRules::FCompany* Co = b.StartsWith(TEXT("co:")) ? EstateRules.Company(b.Mid(3)) : nullptr;
+			const FString Who = b == TEXT("player") ? FString(TEXT("you")) : b == TEXT("hh") ? FString(TEXT("the household")) : b == TEXT("firm") ? FString(TEXT("the business")) : b == TEXT("city") ? FString(TEXT("the town")) : Co ? Co->Name : b;
+			TSharedRef<SHorizontalBox> B = UiRow();
+			B->AddSlot().FillWidth(1).VAlign(VAlign_Center)[ UiText(Est->Name(Sl.Unit), 13) ];
+			UiAdd(B, UiText(Format(Sl.Price), 13, UiGold));
+			UiAdd(B, UiText(FString::Printf(TEXT("day %d to %s"), Sl.Day + 1, *Who), 12, UiDim));
+			Slot(B, 2);
+		}
+	}
+}
+
 // ---- for test shots
 
 bool ABrixLife::RunOps(const FString& Ops)
@@ -610,6 +891,46 @@ bool ABrixLife::RunOps(const FString& Ops)
 			bOk = n >= 0 && (A[0] == TEXT("buy") ? E->Buy(n, Sv(2)) : E->Sell(n, Sv(2)));
 		}
 		else if (A[0] == TEXT("setout")) bOk = E->SetOut(Sv(1), I(2));
+		// the property market (estate.run_script()'s ops): give,<chips> into the current account (a test shot's money);
+		// buy_cheapest,<kind>,<agent>[,<deposit %>,<term>]; rent_cheapest,<kind>; buy_lot,<lot id> (every unit not yours)
+		else if (A[0] == TEXT("days"))   // days,<n>: the clock moved on that many days, the bank and the market settled for each (a test shot's)
+		{
+			ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+			bOk = Mode != nullptr;
+			if (Mode)
+			{
+				Mode->SetClock(Mode->ClockMinutes() + I(1) * 1440.0);
+				double D1 = 0, M1 = 0;
+				Frame(D1, M1);
+				E->Advance((int32)D1, M1);
+			}
+		}
+		else if (A[0] == TEXT("give")) bOk = E->HasAccount(TEXT("current")) && E->L.Post(E->Day, E->Minute, TEXT("Test money"), { { TEXT("sys:start"), -I(1) }, { TEXT("p:current"), I(1) } }, E->Why);
+		else if (Est && (A[0] == TEXT("buy_cheapest") || A[0] == TEXT("rent_cheapest")))
+		{
+			int32 Best = -1;
+			const bool bBuy = A[0] == TEXT("buy_cheapest");
+			for (int32 j = 0; j < Est->Units.Num(); ++j)
+			{
+				if (Est->Units[j].Kind != Sv(1)) continue;
+				if (bBuy ? !Est->Ask(j).IsSet() : (!Est->Tenant[j].IsEmpty() || Est->IsMine(j))) continue;
+				const int64 K = bBuy ? *Est->Ask(j) : Est->MarketRent(j);
+				if (Best < 0 || K < (bBuy ? *Est->Ask(Best) : Est->MarketRent(Best))) Best = j;
+			}
+			if (Best < 0) bOk = false;
+			else if (!bBuy) bOk = Est->RentUnit(Best);
+			else if (I(3)) bOk = Est->Buy({ Best }, Sv(2), BrixMoney::FloorDiv(*Est->Ask(Best) * I(3), 100), (int32)I(4));
+			else bOk = Est->Buy({ Best }, Sv(2));
+			if (!bOk) E->Why = Est->Why;
+		}
+		else if (Est && A[0] == TEXT("buy_lot"))
+		{
+			const int32 n = E->LotIndex.FindRef(Sv(1), -1);
+			TArray<int32> Rest;
+			if (const TArray<int32>* Ix = Est->ByLot.Find(n)) for (const int32 i : *Ix) if (!Est->IsMine(i)) Rest.Add(i);
+			bOk = Rest.Num() && Est->Buy(Rest);
+			if (!bOk) E->Why = Est->Why;
+		}
 		else if (A[0] == TEXT("outlet"))   // outlet,<good>: bought at the first of a mall's outlets that sells it (ECO-013; to wear, CHR-016)
 		{
 			bOk = false;
@@ -645,6 +966,7 @@ bool ABrixLife::OpenCounterAt(const FString& What)
 				return IsOpen();
 			}
 	int32 n = What == TEXT("bank") ? E->BankLot : What == TEXT("market") ? E->MarketLot : E->LotIndex.FindRef(What, -1);
+	if (n < 0 && Est && EstateRules.Company(What)) n = E->LotIndex.FindRef(EstateRules.Company(What)->Office, -1);   // an estate agent by its id (lark, harrow, cobble)
 	for (int32 k = 0; n < 0 && k < Lots.Num(); ++k) if (E->ShopKind(k) == What && !E->Outlets.Contains(k)) n = k;   // the first shop of that kind
 	if (n < 0) return false;
 	APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);

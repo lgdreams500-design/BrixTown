@@ -314,6 +314,7 @@ def unreal_life(w, city, L):
     bs = bank_script()
     want = ec.run_script(ec.Economy(e, lots_, visits, staff, goods), bs, shops)
     import quests as qs
+    import estate as es
     qe = ec.Economy(e, lots_, visits, staff, goods)
     qscript = quest_script()
     qwant = run_quests(qe, qs.Quests(w["quests"], qe, w["residents"], lots_), qscript, shops)
@@ -324,6 +325,8 @@ def unreal_life(w, city, L):
                 achievements=L["achievements"], buy_menu=L["buy_menu"], settings=L["settings"],
                 pieces=list(w["furnishing"]["pieces"]), palette=w["designer"]["palette"],   # for what a buy menu shows (UI-021)
                 rewards={k: w["sound"]["rewards"][k] for k in ("ledger", "coins")},   # how money coming in is shown (SND-019, SND-020)
+                estate=L["estate"], estate_checks=L["estate_checks"],   # the real estate market and its fixed run (PROP-009 to PROP-021)
+                estate_units=es.carve(w["estate"], lots_, w["residents"]),   # every building's units, as estate.carve() makes them (PROP-009)
                 residents=[dict(id=r["id"], role=r["role"], home=r["home"], work=r["work"]) for r in w["residents"]])
 
 
