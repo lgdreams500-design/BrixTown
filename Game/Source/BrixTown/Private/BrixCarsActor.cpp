@@ -3,6 +3,7 @@
 #include "BrixDay.h"
 #include "BrixGameMode.h"
 #include "BrixPeople.h"
+#include "BrixCrashActor.h"
 #include "BrixUnits.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Engine/World.h"
@@ -295,13 +296,17 @@ bool ABrixCars::Enter(int32 k)
 		}
 		if (bOut) break;
 	}
+	FString Aim;   // for a test shot: -BrixAim=x,z turns the car towards that point as the player gets in
+	TArray<FString> AimXZ;
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixAim="), Aim, false) && Aim.ParseIntoArray(AimXZ, TEXT(",")) == 2)
+		Drive.A = FMath::Atan2(FCString::Atod(*AimXZ[1]) - Drive.Z, FCString::Atod(*AimXZ[0]) - Drive.X);
 	FBrixCarAt M = *C;
 	M.bMoving = false;
 	Traffic->Moved.Add(k, M);   // it no longer follows its owner's day
 	return true;
 }
 
-bool ABrixCars::Free(double X, double Z, double A) const
+bool ABrixCars::Free(double X, double Z, double A, bool* bWall) const
 {
 	const FVector3f D = Traffic->Dims(Drive.K);
 	const FVector2D H(FMath::Cos(A), FMath::Sin(A));
@@ -309,7 +314,7 @@ bool ABrixCars::Free(double X, double Z, double A) const
 	const FVector Mid = ToWorld(FVector2D(X, Z) + H * D.Z, RoadUp + .75f);
 	FCollisionQueryParams Q(TEXT("BrixCar"), false);
 	if (const APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0)) Q.AddIgnoredActor(Me);
-	if (GetWorld()->OverlapAnyTestByChannel(Mid, FQuat(FVector::UpVector, A), ECC_WorldStatic, FCollisionShape::MakeBox(FVector(D.X / 2, D.Y / 2, .5f) * CmPerM), Q)) return false;
+	if (GetWorld()->OverlapAnyTestByChannel(Mid, FQuat(FVector::UpVector, A), ECC_WorldStatic, FCollisionShape::MakeBox(FVector(D.X / 2, D.Y / 2, .5f) * CmPerM), Q)) { if (bWall) *bWall = true; return false; }
 	// another car: any of the outline's eight points inside it (cars.js free())
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
 	const double Minute = Mode ? Mode->ClockMinute() : 0;
@@ -339,8 +344,36 @@ void ABrixCars::Step(float Dt, float Throttle, float Steer, bool bHandbrake)
 	v = FMath::Clamp(v, -4.0, Top);
 	const double Turn = Steer * .5 * (1 - .5 * FMath::Min(1.0, FMath::Abs(v) / Top)), a = Drive.A + v / 2.6 * FMath::Tan(Turn) * Dt;
 	const double x = Drive.X + FMath::Cos(a) * v * Dt, z = Drive.Z + FMath::Sin(a) * v * Dt;
-	if (Free(x, z, a)) { Drive.X = x; Drive.Z = z; Drive.A = a; Drive.V = v; }
-	else Drive.V = -v * .2;   // a bump: stop, and roll back a little
+	// street things and trees in the way break at any speed (CITY-072, cars.js free() and smash.js): broken first, so
+	// their solids are gone, and the car loses speed (CITY-073); a wall it meets has its corner chipped
+	const ABrixGameMode* Md = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	ABrixCrash* Crash = Md ? Md->Crash.Get() : nullptr;
+	if (Crash && Crash->On() && FMath::Abs(v) > .05 && FMath::Abs(v) >= Crash->BreakSpeed())
+	{
+		const FVector3f D = Traffic->Dims(Drive.K);
+		const FVector2D H(FMath::Cos(a), FMath::Sin(a)), Side(-H.Y, H.X);
+		const double L = D.X / 2, W = D.Y / 2;
+		TArray<int32> Hit;
+		for (const FVector2D& Pt : { FVector2D(L, -W), FVector2D(L, W), FVector2D(-L, -W), FVector2D(-L, W), FVector2D(L, 0), FVector2D(-L, 0), FVector2D(0, -W), FVector2D(0, W) })
+		{
+			const FVector2D P = FVector2D(x, z) + H * (Pt.X + D.Z) + Side * Pt.Y;
+			const int32 b = Crash->Probe(P.X, RoadUp + .2, P.Y);
+			if (b >= 0) Hit.AddUnique(b);
+		}
+		for (const int32 b : Hit) v *= Crash->Smash(b, H.X * v, H.Y * v);
+	}
+	bool bWall = false;
+	if (Free(x, z, a, &bWall)) { Drive.X = x; Drive.Z = z; Drive.A = a; Drive.V = v; }
+	else
+	{
+		if (bWall && Crash && Crash->On() && FMath::Abs(v) > .05)   // the front (or the back, reversing) met a wall
+		{
+			const FVector3f D = Traffic->Dims(Drive.K);
+			const FVector2D H(FMath::Cos(a), FMath::Sin(a)), P = FVector2D(x, z) + H * (D.Z + FMath::Sign(v) * D.X / 2);
+			Crash->Chip(P.X, P.Y, H.X * v, H.Y * v);
+		}
+		Drive.V = -v * .2;   // a bump: stop, and roll back a little
+	}
 	FBrixCarAt M;
 	M.Pos = FVector2D(Drive.X, Drive.Z);
 	M.Heading = FVector2D(FMath::Cos(Drive.A), FMath::Sin(Drive.A));

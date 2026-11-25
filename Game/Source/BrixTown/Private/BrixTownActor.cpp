@@ -195,6 +195,7 @@ void ABrixTownActor::Add(UInstancedStaticMeshComponent* G, const FTransform& At,
 	FPending& P = Pending.FindOrAdd(G);
 	P.At.Add(At);
 	P.Look.Add(Look);
+	if (Wrapping) Wrapping->Parts.Add({ G, P.At.Num() - 1, At, Look.Colour });   // its index among the pending, made the instance's below
 }
 
 // A surface's pattern (World/rules/surfaces.json, picked by BrixWorld as world.surfaces() does) as the material reads it
@@ -792,10 +793,13 @@ void ABrixTownActor::Build(const FBrixCity& City)
 		}
 		for (const FBrixTree& T : B.Trees)
 		{
-			Add(Trunks, FTransform(FQuat::Identity, ToWorld(T.Pos, TreeTrunkHeight * 0.5f), FVector(TreeTrunkWidth, TreeTrunkWidth, TreeTrunkHeight)), TrunkColour);
-			Add(Crowns, FTransform(FQuat::Identity, ToWorld(T.Pos, TreeTrunkHeight + TreeCrownWidth * 0.4f), FVector(TreeCrownWidth)), CrownColour);
+			Wrap(TEXT("tree"), T.Pos, 0.f, [&]()
+			{
+				Add(Trunks, FTransform(FQuat::Identity, ToWorld(T.Pos, TreeTrunkHeight * 0.5f), FVector(TreeTrunkWidth, TreeTrunkWidth, TreeTrunkHeight)), TrunkColour);
+				Add(Crowns, FTransform(FQuat::Identity, ToWorld(T.Pos, TreeTrunkHeight + TreeCrownWidth * 0.4f), FVector(TreeCrownWidth)), CrownColour);
+			});
 		}
-		for (const FBrixProp& P : B.Props) BuildProp(P, B);
+		for (const FBrixProp& P : B.Props) Wrap(P.Kind, P.Pos, BlockSlabHeight, [&]() { BuildProp(P, B); });   // street things a car can break (CITY-072)
 	}
 	// Scales are in metres: the shapes and the kit's pieces are 1 m to a unit of scale, so a scale is a size.
 	int32 Instances = 0;
@@ -805,6 +809,7 @@ void ABrixTownActor::Build(const FBrixCity& City)
 		const int32 First = G->GetInstanceCount();
 		G->AddInstances(P.Value.At, false);
 		Instances += P.Value.At.Num();
+		for (FBrixBreakable& Bk : Breakables) for (FBrixBreakable::FPart& Pt : Bk.Parts) if (Pt.G == G && !Pt.bPlaced) { Pt.Index += First; Pt.bPlaced = true; }   // pending index to the instance's
 		if (G->NumCustomDataFloats == 0) { G->MarkRenderStateDirty(); continue; }   // the unseen blockers
 		const bool bPattern = G->NumCustomDataFloats >= 12;
 		for (int32 i = 0; i < P.Value.Look.Num(); ++i)
@@ -820,6 +825,52 @@ void ABrixTownActor::Build(const FBrixCity& City)
 	CityData = nullptr;
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: built %s from data: %d blocks, %d buildings (%d you can walk into), %d openings, %d instances in %d groups"),
 		*City.Name, City.Blocks.Num(), Buildings, Hollow, Openings, Instances, Parts.Num());
+}
+
+// smash.js wrap(): what Fn adds is one thing a car can break, if its kind breaks; its footprint near the ground and its
+// top worked out from its boxes (each box 1 m to a unit of scale, turned about z)
+void ABrixTownActor::Wrap(const FString& Kind, const FVector2D& Pos, float Ground, TFunctionRef<void()> Fn)
+{
+	if (Wrapping || !Breakable.Contains(Kind)) { Fn(); return; }   // inside another breakable: part of it
+	FBrixBreakable B;
+	B.PropKind = Kind; B.Kind = Kind; B.Pos = Pos; B.Ground = Ground; B.Top = Ground;
+	const int32 Lights0 = LampLights.Num();
+	Wrapping = &B;
+	Fn();
+	Wrapping = nullptr;
+	if (!B.Parts.Num()) return;
+	if (LampLights.Num() > Lights0) B.Light = Lights0;
+	for (int32 Pass = 0; Pass < 2 && !B.Box.bIsValid; ++Pass)
+		for (const FBrixBreakable::FPart& P : B.Parts)
+		{
+			const FVector L = P.At.GetLocation() / CmPerM, S = P.At.GetScale3D();
+			const float Bottom = (float)(L.Z - S.Z / 2);
+			B.Top = FMath::Max(B.Top, (float)(L.Z + S.Z / 2));
+			if (!Pass && Bottom >= Ground + 1.3f) continue;
+			for (const double cx : { -.5, .5 }) for (const double cy : { -.5, .5 })
+			{
+				const FVector C = P.At.GetRotation().RotateVector(FVector(cx * S.X, cy * S.Y, 0));
+				B.Box += FVector2D(L.X + C.X, L.Y + C.Y);
+			}
+		}
+	Breakables.Add(MoveTemp(B));
+}
+
+void ABrixTownActor::SetBroken(int32 b, bool bBroken)
+{
+	if (!Breakables.IsValidIndex(b) || Breakables[b].bBroken == bBroken) return;
+	FBrixBreakable& B = Breakables[b];
+	B.bBroken = bBroken;
+	TSet<UInstancedStaticMeshComponent*> Touched;
+	for (const FBrixBreakable::FPart& P : B.Parts)
+	{
+		FTransform T = P.At;
+		if (bBroken) { T.SetLocation(FVector(T.GetLocation().X, T.GetLocation().Y, -6000.0)); T.SetScale3D(FVector(.001)); }   // folded away under the ground
+		P.G->UpdateInstanceTransform(P.Index, T, false, false, true);
+		Touched.Add(P.G);
+	}
+	for (UInstancedStaticMeshComponent* G : Touched) G->MarkRenderStateDirty();
+	if (LampLights.IsValidIndex(B.Light)) LampLights[B.Light].W = bBroken ? -FMath::Abs(LampLights[B.Light].W) : FMath::Abs(LampLights[B.Light].W);   // a broken lamp goes out
 }
 
 // A block's street furniture (its 'props'), as the slice draws it (play.js prop(), dressing.js prop()): boxes in the

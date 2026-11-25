@@ -6,6 +6,7 @@
 #include "BrixInside.h"
 #include "BrixCars.h"
 #include "BrixCarsActor.h"
+#include "BrixCrashActor.h"
 #include "BrixLamps.h"
 #include "BrixLifeActor.h"
 #include "BrixPeople.h"
@@ -98,7 +99,10 @@ void ABrixGameMode::StartPlay()
 		else if (LoadBrixInside(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/inside.json"))), *Insides, InsideError))
 			Town->Insides = Insides.Get();
 		if (!Town->Insides) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: the buildings are shut (%s)"), *InsideError); Insides.Reset(); }
+		Town->Breakable = ABrixCrash::BreakableKinds();   // street things and trees a car can break (CITY-072)
 		Town->Build(*City);
+		Crash = GetWorld()->SpawnActor<ABrixCrash>();
+		Crash->Start(Town, *City, StartDay);
 		TownActor = Town;
 		// the inside of every hollow building, to know when the camera is indoors (CITY-013)
 		int32 Lk = 0;
