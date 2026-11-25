@@ -249,6 +249,8 @@ FString FBrixSaveGame::ToString() const
 	if (Estate) S->SetObjectField(TEXT("estate"), Estate);
 	if (Remodels) S->SetObjectField(TEXT("remodels"), Remodels);
 	if (Plans) S->SetObjectField(TEXT("plans"), Plans);
+	if (Furnishings) S->SetObjectField(TEXT("furnishings"), Furnishings);
+	S->SetArrayField(TEXT("belongings"), Furniture);
 	S->SetArrayField(TEXT("outfits"), Outfits);
 	S->SetObjectField(TEXT("feats"), Counts(Feats));
 	if (Boards) S->SetObjectField(TEXT("boards"), Boards);
@@ -276,6 +278,8 @@ bool FBrixSaveGame::FromString(const FString& Text, const FBrixDesignerRules& D,
 	Estate = S->TryGetObjectField(TEXT("estate"), O) ? *O : nullptr;
 	Remodels = S->TryGetObjectField(TEXT("remodels"), O) ? *O : nullptr;
 	Plans = S->TryGetObjectField(TEXT("plans"), O) ? *O : nullptr;
+	Furnishings = S->TryGetObjectField(TEXT("furnishings"), O) ? *O : nullptr;
+	Furniture = Array(*S, TEXT("belongings"));
 	if (!Econ || !Quests) { OutWhy = TEXT("the save has no money or quests"); return false; }
 	Outfits = Array(*S, TEXT("outfits"));
 	ReadCounts(*S, TEXT("feats"), Feats);

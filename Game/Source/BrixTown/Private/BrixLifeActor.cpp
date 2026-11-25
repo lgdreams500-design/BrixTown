@@ -255,6 +255,20 @@ void ABrixLife::SaveTo(FBrixSaveGame& S) const
 		}
 		S.Plans->SetObjectField(P.Key, ByFloor);
 	}
+	S.Furnishings = MakeShared<FJsonObject>();   // QST-008: the storeys furnished (life.js furnishings) and the furniture among the belongings
+	for (const auto& P : LaysDone)
+	{
+		TSharedPtr<FJsonObject> ByFloor = MakeShared<FJsonObject>();
+		for (const auto& F : P.Value)
+		{
+			TArray<TSharedPtr<FJsonValue>> Ps;
+			for (const FBrixLayoutPiece& X : F.Value) Ps.Add(MakeShared<FJsonValueObject>(BrixFurnishPlan::ToJson(X)));
+			ByFloor->SetArrayField(FString::FromInt(F.Key), Ps);
+		}
+		S.Furnishings->SetObjectField(P.Key, ByFloor);
+	}
+	S.Furniture.Reset();
+	for (const FBrixLayoutPiece& X : FurnHeld) S.Furniture.Add(MakeShared<FJsonValueObject>(BrixFurnishPlan::ToJson(X, false)));
 	S.Feats = Feats;
 	if (const ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))   // CITY-100
 		S.Boards = BrixBoardsSave(E->Boards, Me->Boards.InUse, Me->Boards.Riding());
@@ -300,6 +314,24 @@ bool ABrixLife::LoadFrom(const FBrixSaveGame& S, FString& OutWhy)   // life.js l
 				if (const int32* n = E->LotIndex.Find(FString(KV.Key))) ShowPlan(*n, f, Pl);
 			}
 		}
+	TMap<FString, TMap<int32, FBrixLayout>> OldLays = MoveTemp(LaysDone);
+	LaysDone.Reset();
+	for (const auto& P : OldLays) if (const int32* n = E->LotIndex.Find(P.Key)) for (const auto& F : P.Value) ShowLayout(*n, F.Key, LayNow(*n, F.Key));   // the old game's furniture as the town had it
+	if (S.Furnishings)
+		for (const auto& KV : S.Furnishings->Values)
+		{
+			if (!KV.Value.IsValid() || KV.Value->Type != EJson::Object) continue;
+			for (const auto& F : KV.Value->AsObject()->Values)
+			{
+				FBrixLayout Ly;
+				for (const auto& X : F.Value->AsArray()) Ly.Add(BrixFurnishPlan::FromJson(X->AsObject()));
+				const int32 f = FCString::Atoi(*FString(F.Key));
+				LaysDone.FindOrAdd(FString(KV.Key)).Add(f, Ly);
+				if (const int32* n = E->LotIndex.Find(FString(KV.Key))) ShowLayout(*n, f, Ly);
+			}
+		}
+	FurnHeld.Reset();
+	for (const auto& X : S.Furniture) if (X.IsValid() && X->Type == EJson::Object) FurnHeld.Add(BrixFurnishPlan::FromJson(X->AsObject()));
 	RemodelsDone.Reset();
 	if (S.Remodels)
 		for (const auto& KV : S.Remodels->Values)
@@ -1030,6 +1062,7 @@ bool ABrixLife::OpenRemodel(int32 Lot)
 	Draft = D;
 	DraftUndo.Reset();
 	PlanUndo.Reset(); PlanDraft.Reset(); PlanBase.Reset(); WallSel.Reset();
+	LayUndo.Reset(); LayDraft.Reset(); LayBase.Reset(); PieceSel.Reset();
 	DesignTab = bWhole ? TEXT("outside") : TEXT("inside");
 	DesignFacade = TEXT("*");
 	DesignStorey = Floors.Num() ? Floors[0] : 0;
@@ -1056,6 +1089,8 @@ void ABrixLife::EndRemodel()
 	DraftBase.Reset();
 	DraftUndo.Reset();
 	PlanUndo.Reset(); PlanDraft.Reset(); PlanBase.Reset();
+	for (const auto& L : LayDraft) if (!(L.Value == LayBase.FindRef(L.Key))) ShowLayout(PanelLot, L.Key, LayNow(PanelLot, L.Key));   // as it was
+	LayUndo.Reset(); LayDraft.Reset(); LayBase.Reset();
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 	if (PC && PC->GetPawn()) PC->SetViewTargetWithBlend(PC->GetPawn(), 0.5f);
 	if (ViewCam) { ViewCam->Destroy(); ViewCam = nullptr; }
@@ -1073,7 +1108,7 @@ void ABrixLife::DesignView()   // BUILD-020 (life.js startView(), frame3()): ove
 	const FVector2D Out = Front == TEXT("n") ? FVector2D(0, -1) : Front == TEXT("s") ? FVector2D(0, 1) : Front == TEXT("w") ? FVector2D(-1, 0) : FVector2D(1, 0);
 	const double A = FMath::Atan2(Out.Y, Out.X) + FMath::DegreesToRadians(DesignTurnDeg + 45.0 * ViewTurn);
 	const FVector2D Size = L.Max - L.Min;
-	const bool bInside = DesignTab == TEXT("inside");
+	const bool bInside = DesignTab != TEXT("outside");
 	const double Look = bInside ? 3.0 * DesignStorey + 1.0 : Hgt * 0.5;
 	const double Dist = (FMath::Max(Size.X, Size.Y) * (bInside ? 1.1 : 1.35) + (bInside ? 2.0 : Hgt)) * 1.15;
 	const double P = FMath::DegreesToRadians(bInside ? DesignPitchDeg + 20.0 : (double)DesignPitchDeg);
@@ -1097,12 +1132,16 @@ bool ABrixLife::RemodelPay(FString& Said)
 	if (Probs.Num()) { E->Why = Probs[0]; return false; }
 	const FString Name = Lots[PanelLot].Name;
 	if (DesignTotal > 0 && !E->Spend(DesignTotal, TEXT("sys:builders"), TEXT("Remodel: ") + Name)) return false;
-	if (Total - DesignTotal > 0 && !E->Spend(Total - DesignTotal, TEXT("sys:builders"), TEXT("Room plan: ") + Name)) return false;   // BUILD-023
+	if (Total - DesignTotal > 0 && !E->Spend(Total - DesignTotal, TEXT("sys:builders"), TEXT("Rooms and furniture: ") + Name)) return false;   // BUILD-023, FURN-052
 	if (Draft != DraftBase) { RemodelsDone.Add(Lots[PanelLot].Id, Draft); DraftBase = Draft; ApplyRemodel(PanelLot, Draft); }
 	for (const auto& P : PlanDraft)
 		if (!(P.Value == PlanBase.FindRef(P.Key))) { PlansDone.FindOrAdd(Lots[PanelLot].Id).Add(P.Key, P.Value); PlanBase.Add(P.Key, P.Value); }
+	FurnHeld = HeldNow();   // what was taken away is with the belongings now; what was placed is not
+	for (const auto& L : LayDraft)
+		if (!(L.Value == LayBase.FindRef(L.Key))) { LaysDone.FindOrAdd(Lots[PanelLot].Id).Add(L.Key, L.Value); LayBase.Add(L.Key, L.Value); }
 	DraftUndo.Reset();
 	PlanUndo.Reset();
+	LayUndo.Reset();
 	Said = TEXT("Done: ") + Name + (Total ? TEXT(", for ") + Format(Total) : FString()) + TEXT(".");
 	return true;
 }
@@ -1137,6 +1176,7 @@ void ABrixLife::RemodelPanel(TSharedRef<SVerticalBox> Body)
 	TSharedRef<SHorizontalBox> Tabs = UiRow();
 	UiAdd(Tabs, UiButton(TEXT("Outside"), [this]() { DesignTab = TEXT("outside"); DesignView(); Draw(); }, bWhole, DesignTab != TEXT("outside")));
 	UiAdd(Tabs, UiButton(TEXT("Inside"), [this]() { DesignTab = TEXT("inside"); DesignView(); Draw(); }, true, DesignTab != TEXT("inside")));
+	if (CanFurnish(PanelLot)) UiAdd(Tabs, UiButton(TEXT("Furnish"), [this]() { DesignTab = TEXT("furnish"); DesignView(); Draw(); }, true, DesignTab != TEXT("furnish")));
 	UiAdd(Tabs, UiButton(TEXT("Turn the view"), [this]() { ViewTurn = (ViewTurn + 1) % 8; DesignView(); }, true, true));
 	Slot(Tabs);
 	if (!bWhole) Slot(UiText(TEXT("You own part of this building: the outside needs all of it."), 13, UiDim));
@@ -1218,6 +1258,8 @@ void ABrixLife::RemodelPanel(TSharedRef<SVerticalBox> Body)
 		for (const int32 f : Mine) UiAdd(Ss, UiButton(f == 0 ? FString(TEXT("Ground")) : FString::Printf(TEXT("Floor %d"), f), [this, f]() { DesignStorey = f; DesignView(); Draw(); }, true, DesignStorey != f));
 		Slot(Ss);
 		if (!Mine.Contains(DesignStorey) && Mine.Num()) DesignStorey = Mine[0];
+		if (DesignTab == TEXT("furnish")) FurnishSection(Body);
+		else {
 		const int32 f = DesignStorey;
 		const TSharedPtr<FJsonObject> In = Draft->GetObjectField(TEXT("inside"));
 		auto Put = [this, f](const FString& Key) { return [this, f, Key](const FBrixDesignOption& O)
@@ -1238,7 +1280,7 @@ void ABrixLife::RemodelPanel(TSharedRef<SVerticalBox> Body)
 		}
 		if (const auto* Ifl = MenuOf(TEXT("inside.floors"))) Row(TEXT("Floor"), *Ifl, Fl.IsValidIndex(f) ? Fl[f] : nullptr, Put(TEXT("floors")));
 		RoomsSection(Body);
-		Slot(UiText(TEXT("Furnishing a storey is not in this build's designer yet."), 12, UiDim));
+		}
 	}
 	// the work, its price line by line, and what would stop it (BUILD-005, BUILD-006)
 	TArray<FBrixCostLine> Lines;
@@ -1273,17 +1315,23 @@ void ABrixLife::RemodelPanel(TSharedRef<SVerticalBox> Body)
 		const TMap<int32, FBrixPlan> Was = PlanUndo.Num() ? PlanUndo.Pop() : PlanDraft;
 		for (const auto& P : PlanDraft) if (!(P.Value == Was.FindRef(P.Key))) ShowPlan(PanelLot, P.Key, Was.Contains(P.Key) ? Was[P.Key] : PlanBase.FindRef(P.Key));
 		PlanDraft = Was;
+		const TMap<int32, FBrixLayout> LWas = LayUndo.Num() ? LayUndo.Pop() : LayDraft;
+		for (const auto& L : LayDraft) if (!(L.Value == LWas.FindRef(L.Key))) ShowLayout(PanelLot, L.Key, LWas.Contains(L.Key) ? LWas[L.Key] : LayBase.FindRef(L.Key));
+		LayDraft = LWas;
 		ApplyRemodel(PanelLot, Draft);
 		Draw();
 	}, DraftUndo.Num() > 0, true));
 	bool bPlanned = false;
 	for (const auto& P : PlanDraft) bPlanned |= !(P.Value == PlanBase.FindRef(P.Key));
+	for (const auto& Ld : LayDraft) bPlanned |= !(Ld.Value == LayBase.FindRef(Ld.Key));
 	UiAdd(Bs, UiButton(TEXT("Start again"), [this]()
 	{
 		PushUndo();
 		Draft = DraftBase;
 		for (const auto& P : PlanDraft) if (!(P.Value == PlanBase.FindRef(P.Key))) ShowPlan(PanelLot, P.Key, PlanBase.FindRef(P.Key));
 		PlanDraft = PlanBase;
+		for (const auto& L : LayDraft) if (!(L.Value == LayBase.FindRef(L.Key))) ShowLayout(PanelLot, L.Key, LayBase.FindRef(L.Key));
+		LayDraft = LayBase;
 		ApplyRemodel(PanelLot, Draft);
 		Draw();
 	}, Draft != DraftBase || bPlanned, true));
@@ -1383,7 +1431,7 @@ void ABrixLife::ShowPlan(int32 Lot, int32 f, const FBrixPlan& Plan)   // play.js
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: %s floor %d drawn from its plan: %d walls, %d pieces%s"), Lots.IsValidIndex(Lot) ? *Lots[Lot].Id : TEXT("?"), f, Plan.Num(), Segs.Num(), bDrawn ? TEXT("") : TEXT(" (its rooms are not drawn)"));
 }
 
-void ABrixLife::PushUndo() { DraftUndo.Add(Draft); PlanUndo.Add(PlanDraft); }
+void ABrixLife::PushUndo() { DraftUndo.Add(Draft); PlanUndo.Add(PlanDraft); LayUndo.Add(LayDraft); }
 
 void ABrixLife::EditPlan(TFunction<void(FBrixPlan&)> Fn)
 {
@@ -1538,8 +1586,178 @@ int64 ABrixLife::WorkOf(TArray<FBrixCostLine>& Lines, TArray<FString>& Probs, in
 		for (const FString& X : BrixRoomPlan::Check(PR, S, Colours, B, A, {})) Probs.Add(X + Tag);
 		if (!bWhole && !Mine.Contains(f)) Probs.Add(FString::Printf(TEXT("floor %d is not yours to change"), f));
 	}
+	// the storeys' furniture (FURN-051, FURN-052): bought pieces, placed belongings, moved and taken away
+	const FBrixFurnishRulesD FR = FurnRules();
+	const FBrixLayout Pool = PoolOf();
+	TArray<int32> Lf;
+	LayDraft.GetKeys(Lf);
+	Lf.Sort();
+	for (const int32 f : Lf)
+	{
+		const FBrixLayout& A = LayDraft[f];
+		const FBrixLayout& B = LayBase.FindRef(f);
+		if (A == B) continue;
+		FBrixRoomSpec S;
+		if (!RoomFor(PanelLot, f, S)) continue;
+		const FString Tag = Mine.Num() > 1 ? (f ? FString::Printf(TEXT(" (floor %d)"), f) : FString(TEXT(" (ground)"))) : FString();
+		TArray<FBrixFurnLine> Fln;
+		Total += BrixFurnishPlan::Cost(FR, B, A, Pool, Fln);
+		for (const FBrixFurnLine& X : Fln) Lines.Add({ X.What + Tag, X.Qty, X.Chips });
+		for (const FString& X : BrixFurnishPlan::Check(FR, S.Room, S.Keep, S.Ceiling, B, A, {}, Pool)) Probs.Add(X + Tag);
+		if (!bWhole && !Mine.Contains(f)) Probs.Add(FString::Printf(TEXT("floor %d is not yours to change"), f));
+	}
 	if (Lines.Num() && Total > E->Funds()) Probs.Add(TEXT("it costs ") + Format(Total) + TEXT(" and you have ") + Format(E->Funds()));
 	return Total;
+}
+
+// ---- furnishing a storey in the designer (FURN-051, FURN-052, FURN-055; life.js remodelPanel()'s Furnish tab, editPiece(),
+// addPiece(), placeHeld(), heldNow(), poolOf(); INV-001: what is taken away goes to the belongings, and is placed from there)
+
+FBrixFurnishRulesD ABrixLife::FurnRules() const
+{
+	FBrixFurnishRulesD F;
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (Mode && Mode->InsidesData() && Mode->InsidesData()->Builder.Furnish) F.Load(Mode->InsidesData()->Builder.Furnish->GetObjectField(TEXT("rules")));
+	return F;
+}
+
+bool ABrixLife::CanFurnish(int32 Lot) const   // life.js canFurnish(): furnished at its places (not a planned home, not the outlet)
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	FBrixLayout L;
+	return Mode && Mode->RoomsActor() && Mode->RoomsActor()->TownLayout(Lot, 0, L);
+}
+
+FBrixLayout ABrixLife::LayNow(int32 Lot, int32 f) const   // a storey as it is now: as furnished and paid for, else as the town furnished it
+{
+	if (Lots.IsValidIndex(Lot)) if (const TMap<int32, FBrixLayout>* P = LaysDone.Find(Lots[Lot].Id)) if (const FBrixLayout* Lq = P->Find(f)) return *Lq;
+	FBrixLayout L;
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (Mode && Mode->RoomsActor()) Mode->RoomsActor()->TownLayout(Lot, f, L);
+	return L;
+}
+
+void ABrixLife::ShowLayout(int32 Lot, int32 f, const FBrixLayout& Lay)
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (Mode && Mode->RoomsActor()) Mode->RoomsActor()->SetLayout(Lot, f, Lay);
+}
+
+FBrixLayout ABrixLife::HeldNow() const   // the belongings as the drafts leave them: less what was placed, with what was taken away
+{
+	FBrixLayout Held = FurnHeld;
+	TArray<int32> Fl;
+	LayDraft.GetKeys(Fl);
+	Fl.Sort();
+	for (const int32 f : Fl) Held = BrixFurnishPlan::Stow(LayBase.FindRef(f), LayDraft[f], Held, Lots.IsValidIndex(PanelLot) ? Lots[PanelLot].Id : FString(), f);
+	return Held;
+}
+
+FBrixLayout ABrixLife::PoolOf() const   // what may be placed: the belongings, and whatever the drafts took away (life.js poolOf())
+{
+	FBrixLayout Pool = FurnHeld;
+	for (const FBrixLayoutPiece& P : HeldNow()) if (!Pool.ContainsByPredicate([&](const FBrixLayoutPiece& X) { return X.Id == P.Id; })) Pool.Add(P);
+	return Pool;
+}
+
+void ABrixLife::EditLayout(TFunction<void(FBrixLayout&)> Fn)
+{
+	if (!LayDraft.Contains(DesignStorey)) { const FBrixLayout L = LayNow(PanelLot, DesignStorey); LayBase.Add(DesignStorey, L); LayDraft.Add(DesignStorey, L); }
+	PushUndo();
+	Fn(LayDraft[DesignStorey]);
+	ShowLayout(PanelLot, DesignStorey, LayDraft[DesignStorey]);
+	Msg.Reset();
+	Draw();
+}
+
+void ABrixLife::FurnishSection(TSharedRef<SVerticalBox> Body)
+{
+	auto Slot = [&](TSharedRef<SWidget> W, float Top = 6) { Body->AddSlot().AutoHeight().Padding(0, Top, 0, 0)[ W ]; };
+	FBrixRoomSpec S;
+	if (!CanFurnish(PanelLot) || !RoomFor(PanelLot, DesignStorey, S))
+	{
+		Slot(UiText(TEXT("This kind of building is not furnished in the designer: the planned homes keep their plans, and the outlet its hall."), 12, UiDim));
+		return;
+	}
+	if (!LayDraft.Contains(DesignStorey)) { const FBrixLayout L = LayNow(PanelLot, DesignStorey); LayBase.Add(DesignStorey, L); LayDraft.Add(DesignStorey, L); }
+	const FBrixFurnishRulesD F = FurnRules();
+	const FBrixLayout& Lay = LayDraft[DesignStorey];
+	Slot(UiText(TEXT("Pick a piece to move it, turn it or put it with your belongings. New pieces come from the kits in any of the four lines; what you take away you can place again, in any home of yours."), 12, UiDim), 0);
+	TSharedRef<SWrapBox> Ps = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+	TMap<FString, int32> Count, Seen;   // the town's pieces have no names of their own: numbered where several share one
+	for (const FBrixLayoutPiece& P : Lay) ++Count.FindOrAdd(P.Name);
+	for (const FBrixLayoutPiece& P : Lay)
+	{
+		const FString Id = P.Id;
+		const int32 n = ++Seen.FindOrAdd(P.Name);
+		Ps->AddSlot()[ UiButton(Count[P.Name] > 1 ? FString::Printf(TEXT("%s %d"), *P.Name, n) : P.Name, [this, Id]() { PieceSel = PieceSel == Id ? FString() : Id; Draw(); }, true, PieceSel != Id) ];
+	}
+	if (!Lay.Num()) Ps->AddSlot()[ UiText(TEXT("Nothing on this storey."), 13, UiDim) ];
+	Slot(Ps);
+	if (const FBrixLayoutPiece* Sel = Lay.FindByPredicate([this](const FBrixLayoutPiece& X) { return X.Id == PieceSel; }))
+	{
+		const FString Id = Sel->Id;
+		auto Edit = [this, Id](TFunction<void(FBrixLayoutPiece&)> Fn) { EditLayout([Id, Fn](FBrixLayout& L) { if (FBrixLayoutPiece* X = L.FindByPredicate([&](const FBrixLayoutPiece& Y) { return Y.Id == Id; })) Fn(*X); }); };
+		const double Turn = F.Turn, Step = 0.25;
+		TSharedRef<SWrapBox> A = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+		A->AddSlot()[ UiButton(TEXT("Turn left"), [Edit, Turn]() { Edit([Turn](FBrixLayoutPiece& X) { X.Yaw = FMath::Fmod(FMath::Fmod(X.Yaw + Turn, 360.0) + 360.0, 360.0); }); }, true, true) ];
+		A->AddSlot()[ UiButton(TEXT("Turn right"), [Edit, Turn]() { Edit([Turn](FBrixLayoutPiece& X) { X.Yaw = FMath::Fmod(FMath::Fmod(X.Yaw - Turn, 360.0) + 360.0, 360.0); }); }, true, true) ];
+		for (const TPair<const TCHAR*, FVector2D>& M : { TPair<const TCHAR*, FVector2D>(TEXT("North"), FVector2D(0, -Step)), TPair<const TCHAR*, FVector2D>(TEXT("South"), FVector2D(0, Step)),
+			TPair<const TCHAR*, FVector2D>(TEXT("West"), FVector2D(-Step, 0)), TPair<const TCHAR*, FVector2D>(TEXT("East"), FVector2D(Step, 0)) })
+		{
+			const FVector2D Dv = M.Value;
+			A->AddSlot()[ UiButton(M.Key, [Edit, Dv, F]() { Edit([Dv, F](FBrixLayoutPiece& X) { X.X = BrixFurnishPlan::Snap(F, X.X + Dv.X); X.Z = BrixFurnishPlan::Snap(F, X.Z + Dv.Y); }); }, true, true) ];   // life.js: dragging it across the floor
+		}
+		A->AddSlot()[ UiButton(TEXT("To your belongings"), [this, Id]() { EditLayout([Id](FBrixLayout& L) { L.RemoveAll([&](const FBrixLayoutPiece& X) { return X.Id == Id; }); }); PieceSel.Reset(); Draw(); }, true, true) ];
+		A->AddSlot()[ UiButton(TEXT("Put down"), [this]() { PieceSel.Reset(); Draw(); }, true, true) ];
+		Slot(UiText(Sel->Name, 14, UiCream, true), 8);
+		Slot(A, 2);
+	}
+	const double Cx = BrixFurnishPlan::Snap(F, (S.Room.X + S.Room.Z) / 2), Cz = BrixFurnishPlan::Snap(F, (S.Room.Y + S.Room.W) / 2);
+	const FBrixLayout Held = HeldNow();
+	if (Held.Num())
+	{
+		Slot(UiHeading(TEXT("From your belongings")), 0);
+		for (const FBrixLayoutPiece& B : Held)
+		{
+			TSharedRef<SHorizontalBox> R = UiRow();
+			R->AddSlot().FillWidth(1).VAlign(VAlign_Center)[ UiText(FString::Printf(TEXT("%s  ·  %.2f × %.2f m"), *B.Name, B.W, B.D), 13) ];
+			const FBrixLayoutPiece Bc = B;
+			UiAdd(R, UiButton(TEXT("Place"), [this, Bc, Cx, Cz]() { EditLayout([&](FBrixLayout& L) { FBrixLayoutPiece Q = Bc; Q.X = Cx; Q.Z = Cz; Q.Yaw = 0; L.Add(Q); }); PieceSel = Bc.Id; Draw(); }, true, true));
+			Slot(R, 2);
+		}
+	}
+	Slot(UiHeading(TEXT("Add a piece")), 0);
+	if (AddRoom.IsEmpty() && F.Rooms.Num()) AddRoom = F.Rooms[0].Key;
+	if (AddLine.IsEmpty() && F.Lines.Num()) AddLine = F.Lines[0];
+	TSharedRef<SWrapBox> Rk = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+	for (const auto& R : F.Rooms) { const FString K = R.Key; Rk->AddSlot()[ UiButton(K.Left(1).ToUpper() + K.Mid(1), [this, K]() { AddRoom = K; Draw(); }, true, AddRoom != K) ]; }
+	Slot(Rk);
+	TSharedRef<SWrapBox> Lk = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+	Lk->AddSlot().VAlign(VAlign_Center)[ UiText(TEXT("Line"), 13, UiDim) ];
+	for (const FString& Ln : F.Lines) Lk->AddSlot()[ UiButton(Ln == TEXT("oldtown") ? FString(TEXT("Old Town")) : Ln.Left(1).ToUpper() + Ln.Mid(1), [this, Ln]() { AddLine = Ln; Draw(); }, true, AddLine != Ln) ];
+	Slot(Lk, 4);
+	TSharedRef<SWrapBox> Ks = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+	if (const auto* Room = F.Rooms.FindByPredicate([this](const TPair<FString, TArray<FString>>& R) { return R.Key == AddRoom; }))
+		for (const FString& K : Room->Value)
+		{
+			const FBrixFurnishRulesD::FPiece* Pc = F.Pieces.Find(K);
+			if (!Pc || !Pc->From.IsEmpty()) continue;   // sold at the mall's outlets, not here (FURN-064)
+			Ks->AddSlot()[ UiButton(Pc->Name + TEXT("  ") + Format(Pc->Price), [this, K, F, Cx, Cz]()   // life.js addPiece(): where the view looks, on the grid, in the room
+			{
+				FString NewId;
+				EditLayout([&](FBrixLayout& L)
+				{
+					int32 n = 1;
+					for (const FBrixLayoutPiece& X : L) if (X.Id.StartsWith(TEXT("k"))) n = FMath::Max(n, FCString::Atoi(*X.Id.Mid(1)) + 1);
+					NewId = FString::Printf(TEXT("k%d"), n);
+					L.Add(BrixFurnishPlan::KitPiece(F, K, NewId, Cx, Cz, 0, AddLine));
+				});
+				PieceSel = NewId;
+				Draw();
+			}, true, true) ];
+		}
+	Slot(Ks, 4);
 }
 
 // ---- for test shots
@@ -1611,7 +1829,36 @@ bool ABrixLife::RunOps(const FString& Ops)
 			const FString Id = WallSel;
 			EditPlan([&](FBrixPlan& Pl) { if (FBrixPlanWall* X = Pl.FindByPredicate([&](const FBrixPlanWall& Y) { return Y.Id == Id; })) { if (X->Door) X->Door.Reset(); else X->Door = BrixRoomPlan::Gridded(PR, (X->A0 + X->A1) / 2); } });
 		}
-		else if (A[0] == TEXT("close")) Close();   // close: the panel shut, the player's own view again
+		else if (A[0] == TEXT("close")) Close();
+		// furnishing (FURN-051): piece,<id> picks one; turnpiece,<deg>; movepiece,<dx>,<dz> (metres); takeaway; addpiece,<kind>,<line>; placeheld,<n>
+		else if (A[0] == TEXT("piece") && Panel == TEXT("remodel")) { PieceSel = Sv(1); Draw(); }
+		else if ((A[0] == TEXT("turnpiece") || A[0] == TEXT("movepiece")) && Panel == TEXT("remodel") && !PieceSel.IsEmpty())
+		{
+			const FBrixFurnishRulesD FR = FurnRules();
+			const FString Id = PieceSel;
+			const bool bTurn = A[0] == TEXT("turnpiece");
+			const double Dx = FCString::Atod(*Sv(1)), Dz = FCString::Atod(*Sv(2));
+			EditLayout([&](FBrixLayout& L) { if (FBrixLayoutPiece* X = L.FindByPredicate([&](const FBrixLayoutPiece& Y) { return Y.Id == Id; })) { if (bTurn) X->Yaw = FMath::Fmod(FMath::Fmod(X->Yaw + Dx, 360.0) + 360.0, 360.0); else { X->X = BrixFurnishPlan::Snap(FR, X->X + Dx); X->Z = BrixFurnishPlan::Snap(FR, X->Z + Dz); } } });
+		}
+		else if (A[0] == TEXT("takeaway") && Panel == TEXT("remodel") && !PieceSel.IsEmpty()) { const FString Id = PieceSel; EditLayout([&](FBrixLayout& L) { L.RemoveAll([&](const FBrixLayoutPiece& X) { return X.Id == Id; }); }); PieceSel.Reset(); }
+		else if ((A[0] == TEXT("addpiece") || A[0] == TEXT("placeheld")) && Panel == TEXT("remodel"))
+		{
+			FBrixRoomSpec Sp;
+			bOk = RoomFor(PanelLot, DesignStorey, Sp);
+			const FBrixFurnishRulesD FR = FurnRules();
+			const double Cx = BrixFurnishPlan::Snap(FR, (Sp.Room.X + Sp.Room.Z) / 2), Cz = BrixFurnishPlan::Snap(FR, (Sp.Room.Y + Sp.Room.W) / 2);
+			const FBrixLayout Held = HeldNow();
+			const int32 k = (int32)I(1);
+			if (A[0] == TEXT("placeheld") && !Held.IsValidIndex(k)) bOk = false;
+			if (bOk) EditLayout([&](FBrixLayout& L)
+			{
+				if (A[0] == TEXT("placeheld")) { FBrixLayoutPiece Q = Held[k]; Q.X = Cx; Q.Z = Cz; Q.Yaw = 0; L.Add(Q); PieceSel = Q.Id; return; }
+				int32 n = 1;
+				for (const FBrixLayoutPiece& X : L) if (X.Id.StartsWith(TEXT("k"))) n = FMath::Max(n, FCString::Atoi(*X.Id.Mid(1)) + 1);
+				PieceSel = FString::Printf(TEXT("k%d"), n);
+				L.Add(BrixFurnishPlan::KitPiece(FR, Sv(1), PieceSel, Cx, Cz, 0, Sv(2).IsEmpty() ? FString(TEXT("plain")) : Sv(2)));
+			});
+		}   // close: the panel shut, the player's own view again
 		else if (A[0] == TEXT("pay") && Panel == TEXT("remodel")) { FString Said; bOk = RemodelPay(Said); Msg = bOk ? Said : TEXT("Refused: ") + E->Why + TEXT("."); Draw(); }
 		else if (A[0] == TEXT("give")) bOk = E->HasAccount(TEXT("current")) && E->L.Post(E->Day, E->Minute, TEXT("Test money"), { { TEXT("sys:start"), -I(1) }, { TEXT("p:current"), I(1) } }, E->Why);
 		else if (Est && (A[0] == TEXT("buy_cheapest") || A[0] == TEXT("rent_cheapest")))
