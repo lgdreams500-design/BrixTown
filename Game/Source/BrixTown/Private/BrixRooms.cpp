@@ -1,6 +1,7 @@
 #include "BrixRooms.h"
 
 #include "BrixCity.h"
+#include "BrixFurnish.h"
 #include "BrixHomes.h"
 #include "BrixInside.h"
 #include "BrixTownActor.h"
@@ -75,7 +76,7 @@ ABrixRooms::ABrixRooms()
 void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTownActor* Town, int32 Day)
 {
 	if (UStaticMesh* KitBox = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Kit/SM_Kit_Box.SM_Kit_Box"))) Cube = KitBox;
-	int32 k = -1, Pieces = 0, Dropped = 0;
+	int32 k = -1, Pieces = 0, Dropped = 0, Other = 0, BoxCount = 0;
 	const FBrixDoorRules DR = FBrixDoorRules::FromConfig();
 	TArray<int32> ByLevel = { 0, 0, 0, 0, 0 };
 	for (const FBrixBlock& B : City.Blocks)
@@ -88,8 +89,9 @@ void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTown
 				if (const TArray<FVector4f>* S = Town->WindowSpans.Find(k * 64 + f))
 					for (const FVector4f& W : *S) { FBrixWindowSpan Sp; Sp.A = FVector2D(W.X, W.Y); Sp.B = FVector2D(W.Z, W.W); Sp.Floor = f; Wins.Add(Sp); }
 			TSharedPtr<FBrixHome> H = MakeShared<FBrixHome>();
-			if (!BrixHomeOf(Ins, L, Ins.Lots[k].GetValue(), Day, Wins, *H)) continue;
+			const bool bPlanned = BrixHomeOf(Ins, L, Ins.Lots[k].GetValue(), Day, Wins, *H);
 			FLotHome LH;
+			LH.bPlanned = bPlanned;
 			LH.Lot = k;
 			LH.Centre = L.Centre();
 			LH.Reach = (float)L.Size().Size() * 0.5f;
@@ -123,14 +125,36 @@ void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTown
 				}
 				LH.Holes[f] = Hole;
 			}
+			if (!bPlanned)
+			{
+				// a building with no plan: each floor furnished at its places (play.js furnish(); BrixFurnish), and one room a floor
+				// for its lamps
+				bool bAny = false;
+				LH.Furn.SetNum(NFl);
+				for (int32 f = 0; f < NFl; ++f)
+				{
+					bAny |= BrixFurnishFloor(Ins, L, In, f, LH.Furn[f]);
+					FBrixRoom Rm;
+					Rm.Name = TEXT("Room"); Rm.Floor = f;
+					Rm.R.Centre = L.Centre(); Rm.R.Along = FVector2D(1, 0); Rm.R.Length = (float)L.Size().X - 0.7f; Rm.R.Width = (float)L.Size().Y - 0.7f;
+					H->Rooms.Add(Rm);
+					BoxCount += LH.Furn[f].Boxes.Num();
+				}
+				if (!bAny) continue;
+				++Other;
+			}
 			LH.Home = H;
-			Pieces += H->Pieces.Num();
-			Dropped += H->Dropped;
-			ByLevel[FMath::Clamp(H->Level, 0, 4)]++;
+			if (bPlanned)
+			{
+				Pieces += H->Pieces.Num();
+				Dropped += H->Dropped;
+				ByLevel[FMath::Clamp(H->Level, 0, 4)]++;
+			}
 			Homes.Add(LH);
 		}
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: %d other buildings furnished at their places (%d boxes)"), Other, BoxCount);
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: %d homes furnished from their plans (%d Bare, %d Basic, %d Homely, %d Full), %d pieces, %d left out in front of a window"),
-		Homes.Num(), ByLevel[1], ByLevel[2], ByLevel[3], ByLevel[4], Pieces, Dropped);
+		Homes.Num() - Other, ByLevel[1], ByLevel[2], ByLevel[3], ByLevel[4], Pieces, Dropped);
 }
 
 UInstancedStaticMeshComponent* ABrixRooms::MeshGroup(const FString& Name)
@@ -152,6 +176,21 @@ UInstancedStaticMeshComponent* ABrixRooms::MeshGroup(const FString& Name)
 	AddInstanceComponent(G);
 	Groups.Add(Name, G);
 	return G;
+}
+
+UInstancedStaticMeshComponent* ABrixRooms::FurnGroup()
+{
+	if (FurnBoxes) return FurnBoxes;
+	FurnBoxes = NewObject<UInstancedStaticMeshComponent>(this, TEXT("FurnitureBoxes"));
+	FurnBoxes->SetupAttachment(RootComponent);
+	FurnBoxes->SetStaticMesh(Cube);
+	FurnBoxes->SetCollisionEnabled(ECollisionEnabled::NoCollision);   // what is in the way is the unseen blocks
+	FurnBoxes->NumCustomDataFloats = 12;
+	if (!OwnColour) { OwnColour = UMaterialInstanceDynamic::Create(Greybox, this); OwnColour->SetScalarParameterValue(TEXT("InstanceColour"), 1.f); }
+	for (int32 i = 0; i < FurnBoxes->GetNumMaterials(); ++i) FurnBoxes->SetMaterial(i, OwnColour);
+	FurnBoxes->RegisterComponent();
+	AddInstanceComponent(FurnBoxes);
+	return FurnBoxes;
 }
 
 UInstancedStaticMeshComponent* ABrixRooms::BoxGroup(bool bCollide)
@@ -202,7 +241,8 @@ void ABrixRooms::Rebuild()
 	ABrixTownActor* TownDefaults = GetMutableDefault<ABrixTownActor>();
 	TMap<UInstancedStaticMeshComponent*, TArray<FTransform>> Add;
 	TArray<FTransform> BoxAts, BlockAts;
-	TArray<TArray<float>> BoxData;
+	TArray<TArray<float>> BoxData, FurnData;
+	TArray<FTransform> FurnAts;
 	auto AddBox = [&](const FTransform& T, const FLinearColor& C, const FVector4& A, const FVector4& B)
 	{
 		BoxAts.Add(T);
@@ -216,9 +256,27 @@ void ABrixRooms::Rebuild()
 		const FBrixHome& H = *LH.Home;
 		auto Up = [&](int32 f) { return LH.FloorUp.IsValidIndex(f) ? LH.FloorUp[f] : -1.f; };
 		auto Ceil = [&](int32 f) { return LH.CeilUp.IsValidIndex(f) ? LH.CeilUp[f] : -1.f; };
+		for (int32 f = 0; f < LH.Furn.Num(); ++f)   // a building furnished at its places: the slice's boxes
+		{
+			if (Up(f) < 0.f) continue;
+			for (const FBrixFurnBox& Fb : LH.Furn[f].Boxes)
+			{
+				// the slice turns a box by M4.ry(yaw): its x to (cos, -sin) on the plan, which is Unreal's yaw -yaw
+				const FTransform T(FQuat(FVector::UpVector, -Fb.Yaw), FVector(Fb.At.X, Fb.At.Y, Up(f) + Fb.Y0 + Fb.Size.Y / 2) * CmPerM, FVector(Fb.Size.X, Fb.Size.Z, Fb.Size.Y));
+				FurnAts.Add(T);
+				FurnData.Add({ Fb.Colour.X, Fb.Colour.Y, Fb.Colour.Z, -1, 0, 0, 0, 0, 0, 0, 0, -Fb.Yaw });
+				++Shown;
+			}
+			for (const FBrixFurnSolid& So : LH.Furn[f].Solids)
+			{
+				FBrixRect Q;
+				Q.Centre = (So.Min + So.Max) * 0.5; Q.Along = FVector2D(1, 0); Q.Length = (float)(So.Max.X - So.Min.X); Q.Width = (float)(So.Max.Y - So.Min.Y);
+				BlockAts.Add(BoxAt(Q, Up(f) + So.Y0, Up(f) + FMath::Max(So.Y1, MinBlockHeight)));
+			}
+		}
 		for (const FBrixRoom& R : H.Rooms)
 		{
-			if (Up(R.Floor) < 0.f) continue;   // a storey not built
+			if (Up(R.Floor) < 0.f || !LH.bPlanned) continue;   // a storey not built; a building with no plan keeps its own floor
 			const float Floor0 = Up(R.Floor);
 			const bool bWet = R.bWet;
 			for (const FBrixRect& Q : Without(R.R, LH.Holes.IsValidIndex(R.Floor) ? LH.Holes[R.Floor] : TOptional<FBrixRect>()))   // open over the stair
@@ -265,6 +323,11 @@ void ABrixRooms::Rebuild()
 	for (int32 n = 0; n < BoxData.Num(); ++n) Box->SetCustomData(n, BoxData[n], false);
 	Box->MarkRenderStateDirty();
 	Block->AddInstances(BlockAts, false);
+	UInstancedStaticMeshComponent* Furn = FurnGroup();
+	Furn->ClearInstances();
+	Furn->AddInstances(FurnAts, false);
+	for (int32 n = 0; n < FurnData.Num(); ++n) Furn->SetCustomData(n, FurnData[n], false);
+	Furn->MarkRenderStateDirty();
 }
 
 void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp)

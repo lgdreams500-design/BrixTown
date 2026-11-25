@@ -125,6 +125,8 @@ bool LoadBrixInside(const FString& Path, FBrixInsides& Out, FString& OutError)
 		double Res = 0; if (O->TryGetNumberField(TEXT("residents"), Res)) In.Residents = (int32)Res;
 		double Wage = 0; if (O->TryGetNumberField(TEXT("wage"), Wage)) In.Wage = (int64)Wage;
 		O->TryGetStringField(TEXT("house_line"), In.HouseLine);
+		const TArray<TSharedPtr<FJsonValue>>* Ac = nullptr;
+		if (O->TryGetArrayField(TEXT("accent"), Ac)) In.Accent = Rgb(*Ac);
 		const TSharedPtr<FJsonObject>* Ob = nullptr;
 		if (O->TryGetObjectField(TEXT("objects"), Ob))
 			for (const auto& KV : (*Ob)->Values)

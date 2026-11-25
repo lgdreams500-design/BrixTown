@@ -7,6 +7,7 @@ public class BrixWorld : ModuleRules
 	public BrixWorld(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		bUseUnity = false;   // each file on its own, so files' short names (a colour, a helper) cannot clash (as BrixTown)
 		PublicDependencyModuleNames.AddRange(new string[] { "Core" });
 		PrivateDependencyModuleNames.AddRange(new string[] { "Json" });
 	}

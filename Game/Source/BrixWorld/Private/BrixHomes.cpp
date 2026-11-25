@@ -3,6 +3,7 @@
 #include "BrixCity.h"
 #include "BrixInside.h"
 #include "BrixDay.h"
+#include "BrixFurnish.h"
 #include "Dom/JsonObject.h"
 
 namespace
@@ -373,6 +374,7 @@ int32 SeatBrixDayIndoors(FBrixDay& Day, const FBrixCity& City, const FBrixInside
 	TArray<const FBrixLot*> Lots;
 	for (const FBrixBlock& B : City.Blocks) for (const FBrixLot& L : B.Lots) Lots.Add(&L);
 	TMap<int32, TSharedPtr<FBrixHome>> Homes;
+	TMap<int32, TSharedPtr<FBrixFurnished>> Furnished;
 	const TArray<FBrixWindowSpan> NoWindows;
 	int32 Placed = 0;
 	for (TArray<FBrixDay::FPiece>& Row : Day.Plan)
@@ -382,6 +384,23 @@ int32 SeatBrixDayIndoors(FBrixDay& Day, const FBrixCity& City, const FBrixInside
 			const FBrixLot& L = *Lots[P.Lot];
 			P.Pose = 0;
 			P.SeatUp = BrixFloorUp(L, P.Floor, R);
+			// a building with no plan: the place's own spot, as play.js furnish() lays it (BrixFurnish)
+			if (Ins.Lots.IsValidIndex(P.Lot) && Ins.Lots[P.Lot].IsSet() && Ins.Lots[P.Lot]->Interior.IsEmpty() && !L.House.IsSet())
+			{
+				const int32 Key = P.Lot * 64 + P.Floor;
+				TSharedPtr<FBrixFurnished>* F = Furnished.Find(Key);
+				if (!F) { TSharedPtr<FBrixFurnished> N = MakeShared<FBrixFurnished>(); BrixFurnishFloor(Ins, L, Ins.Lots[P.Lot].GetValue(), P.Floor, *N); F = &Furnished.Add(Key, N); }
+				for (const FBrixSpot& S : (*F)->Spots)
+					if (FVector2D::DistSquared(S.At, P.Pos) < 0.01)
+					{
+						P.Pose = S.bLie ? 3 : S.Up > 0.f ? 2 : 0;
+						P.SeatUp += S.Up;
+						P.Facing = S.Facing;
+						if (P.Pose) ++Placed;
+						break;
+					}
+				continue;
+			}
 			if (P.Use != 0 && P.Use != 1) continue;          // build_play.py USES: 0 bed, 1 room
 			TSharedPtr<FBrixHome>* Found = Homes.Find(P.Lot);
 			if (!Found)
