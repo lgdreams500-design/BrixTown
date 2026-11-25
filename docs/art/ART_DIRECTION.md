@@ -146,6 +146,7 @@ brought to it yet. Painted signs, below, stays the look of the frozen browser sl
 | L4 | **One main action**, filled lantern orange with dark letters on a darker edge; the rest outlined in cream (U6). | Never two filled buttons side by side. |
 | L5 | **Prices on paper tags**, dark letters on paper; a price the purse cannot meet on a red tag. Keys shown as small paper keycaps. | Every price on the screen is a tag. |
 | L6 | **Goods on plinths in lantern light**: in a buy menu each thing stands on a dark plinth in a pool of lantern light, the chosen one ringed in lantern (ADR-0044's layouts unchanged). | No thing floats on a flat grey. |
+| L7 | **Markers are brass tokens** (ADR-0051, look test 37): a coin with the kind's sign stamped dark in it, ringed in the kind's colour, in a warm halo; one sign per kind of thing to do, so they read without colour; a spark far off, a caption with the key near; new things pulse. Numbers, colours and signs in `World/rules/markers.json`. | No marker is words alone; no two kinds share a shape. |
 
 The colours are data, `World/rules/settings.json` `menu.lamplight` (stone `#2b2723`, its edge `#1e1b18`, cream `#efe4cc`,
 lantern `#e0964e`, paper `#e9dcbe` and the rest), checked by world.settings_problems().

@@ -6,7 +6,7 @@
     city = world.simulation(w)       # a citysim.City running the living-city rules over the whole map
     city = world.simulation(w, traffic=True)   # the same, with residents' cars on the roads (citysim/traffic.py)
 """
-import copy, json, math, os, sys
+import copy, json, math, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 WORLD = os.path.normpath(os.path.join(HERE, "..", "..", "World"))
@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers", "furnishing", "settings", "room_plan", "building_styles", "mall_outlets", "mall_goods", "achievements", "boards", "buy_menu"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers", "furnishing", "settings", "room_plan", "building_styles", "mall_outlets", "mall_goods", "achievements", "boards", "buy_menu", "markers"):
         w[name] = _read(rules, name + ".json")
     roads = os.path.join(base, "roads.json")           # the road network (CITY-043); written by make_roads_01.py
     w["roads"] = _read(roads) if os.path.exists(roads) else None
@@ -136,7 +136,7 @@ def validate(w):
     if w.get("roads") and not out:
         import traffic
         out += traffic.Roads(w["roads"], w["traffic"]).problems(lots_inside(w))   # cars drive inside the wall for now
-    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + mall_goods_problems(w) + buy_menu_problems(w) + mall_visit_problems(w) + estate_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w) + react_problems(w) + achievement_problems(w)
+    out += dialogue_problems(w) + speech_problems(w) + sound_problems(w) + economy_problems(w) + mall_goods_problems(w) + buy_menu_problems(w) + mall_visit_problems(w) + estate_problems(w) + quest_problems(w) + designer_problems(w) + sky_problems(w) + garden_problems(w) + react_problems(w) + achievement_problems(w) + marker_problems(w)
     kinds = {l["kind"] for l in lots(w)}
     for need in ("home", "shop", "food", "work", "health", "garden", "market", "stop", "utility"):
         if need not in kinds:
@@ -2021,4 +2021,69 @@ def buy_menu_problems(w):
             out.append("buy menu: %s has the colour %s, which the designer's palette does not have" % (t, s[2]))
         elif s[0] == "shape" and s[2] is None and any(b[6] == "own" for b in B["shapes"][s[1]]):
             out.append("buy menu: %s shows %s, which needs a colour of its own" % (t, s[1]))
+    return out
+
+
+MARKER_KINDS = ("offer", "talk", "handin", "job", "go", "shop", "cafe", "bank", "stall", "estate", "prices", "mark")
+
+
+def marker_problems(w):
+    """What World/rules/markers.json must keep (QST-005, ADR-0051): every kind of marker the game puts up is there with a
+    sign that exists, a colour, and words; no two kinds share a sign unless they mean the same thing to the player (the
+    quest's place and the player's own mark are both pins, told apart by colour and by the words); every sign stays inside
+    its 24-unit square; a sign's strokes are polylines of whole points; the place kinds name real lot kinds; and the
+    distances are in order (a token before a spark, a token near before far)."""
+    M, out = w["markers"], []
+    hexc = lambda c: isinstance(c, str) and re.fullmatch(r"#[0-9a-fA-F]{6}", c) is not None
+    for k in MARKER_KINDS:
+        if k not in M["kinds"]:
+            out.append("markers: no kind %s" % k)
+    for k, K in M["kinds"].items():
+        if K.get("sign") not in M["signs"]:
+            out.append("markers: kind %s has no sign %s" % (k, K.get("sign")))
+        if not hexc(K.get("colour")):
+            out.append("markers: kind %s's colour is not #rrggbb" % k)
+        if not isinstance(K.get("new"), bool) or not K.get("words"):
+            out.append("markers: kind %s needs new (yes or no) and words" % k)
+    by_sign = {}
+    for k, K in M["kinds"].items():
+        by_sign.setdefault(K.get("sign"), []).append(k)
+    for sgn, ks in by_sign.items():
+        if len(ks) > 1 and sorted(ks) != ["go", "mark"]:
+            out.append("markers: kinds %s share the sign %s (each kind needs its own shape)" % (", ".join(ks), sgn))
+    for n, S in M["signs"].items():
+        lines, closed = S.get("lines", []), S.get("closed", [])
+        if len(lines) != len(closed) or not lines:
+            out.append("markers: sign %s needs a closed flag for each of its lines" % n)
+        for L in lines:
+            if len(L) < 4 or len(L) % 2:
+                out.append("markers: sign %s has a line that is not pairs of points" % n)
+            if any(not 0 <= v <= 24 for v in L):
+                out.append("markers: sign %s goes outside its 24-unit square" % n)
+        for d in S.get("dots", []):
+            if len(d) != 3 or not (0 <= d[0] <= 24 and 0 <= d[1] <= 24 and 0 < d[2] < 6):
+                out.append("markers: sign %s has a dot that is not [x, y, r] inside the square" % n)
+    lot_kinds = {l["kind"] for l in lots(w)}
+    for lk, mk in M["place_kinds"].items():
+        if lk not in lot_kinds:
+            out.append("markers: place kind %s is not a kind of lot" % lk)
+        if mk not in M["kinds"]:
+            out.append("markers: place kind %s points at no marker kind %s" % (lk, mk))
+    T, B = M["token"], M["behaviour"]
+    for c in ("face", "face_light", "face_dark", "edge", "rim", "stamp", "halo"):
+        if not hexc(T.get(c)):
+            out.append("markers: token.%s is not #rrggbb" % c)
+    for a in ("halo_alpha", "halo_new_alpha", "behind_alpha"):
+        v = T.get(a, B.get(a))
+        if not isinstance(v, (int, float)) or not 0 <= v <= 1:
+            out.append("markers: %s is not between 0 and 1" % a)
+    if not 0 < B["near_m"] < B["token_m"] < B["spark_m"]:
+        out.append("markers: near_m < token_m < spark_m")
+    if not 0 < B["fade_m"] < B["token_m"] or not 0 < B["place_m"] <= B["token_m"]:
+        out.append("markers: fade_m and place_m within token_m")
+    if not 0 < B["spark_px"] < B["token_px"] <= B["token_near_px"]:
+        out.append("markers: spark_px < token_px <= token_near_px")
+    for k in ("bob_s", "pulse_s", "map_token_px", "mini_token_px", "edge_px", "place_up_m", "head_up_m"):
+        if not isinstance(B.get(k), (int, float)) or B[k] <= 0:
+            out.append("markers: behaviour.%s must be above 0" % k)
     return out

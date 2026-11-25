@@ -1,0 +1,155 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Overhead markers</title>
+<style>
+html,body{margin:0;background:#1e1b18;color:#efe4cc;font-family:Bahnschrift,'Segoe UI',sans-serif}
+h1{font-family:Constantia,Georgia,serif;font-weight:400;font-size:26px;margin:18px 24px 4px}
+p.s{margin:0 24px 12px;color:#a99d86;font-size:14px}
+.row{display:flex;gap:10px;padding:0 14px}
+.card{background:#2b2723;border-radius:14px;box-shadow:0 5px 0 #141210;overflow:hidden;flex:1}
+.card h2{font-family:Constantia,Georgia,serif;font-weight:400;font-size:20px;margin:10px 14px 0}
+.card p{margin:2px 14px 10px;color:#a99d86;font-size:13px;min-height:34px}
+svg{display:block}
+</style></head><body>
+<div id="page"></div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+const q=new URLSearchParams(location.search), SHEET=q.get("sheet")||"options";
+const C={lantern:"#e0964e",ochre:"#a8843f",terra:"#a35a44",teal:"#3f7273",blue:"#55698c",plum:"#6c5578",olive:"#6b7245",brown:"#77583f",stone:"#6a6871",cream:"#efe4cc",ink:"#1c1b21"};
+// icons on a 24 box, drawn as chunky rounded strokes (W3)
+const ICON={
+ letter:{c:C.lantern,n:"New quest",d:["M4 7h16v11H4z","M4 7.5l8 6 8-6"],dot:[12,15.5,2.4]},
+ talk:{c:C.teal,n:"Talk (quest step)",d:["M5 5h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7l-4 3.5V16H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"],dots:[[8,10.5],[12,10.5],[16,10.5]]},
+ handin:{c:C.lantern,n:"Ready to hand in",d:["M5 5h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7l-4 3.5V16H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z","M8 10.5l3 3 5-5.5"]},
+ job:{c:C.ochre,n:"Daily job",d:["M4 8l8-4 8 4v9l-8 4-8-4z","M4 8l8 4 8-4","M12 12v9","M8 6l8 4"]},
+ shop:{c:C.terra,n:"Shop counter",d:["M3.5 10h17l-2.2 9H5.7z","M8 10l3-6","M16 10l-3-6","M9 13v3","M15 13v3"]},
+ cafe:{c:C.brown,n:"Café",d:["M5 10h11v4a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z","M16 11h1.5a2 2 0 0 1 0 4H16","M8.5 7c0-1.2 1-1.2 1-2.4","M12 7c0-1.2 1-1.2 1-2.4"]},
+ bank:{c:C.olive,n:"Bank",d:["M3.5 9.5L12 4.5l8.5 5z","M6 11v6","M10 11v6","M14 11v6","M18 11v6","M4 19.5h16"]},
+ stall:{c:C.plum,n:"Market stall",d:["M3 10l2-5h14l2 5","M3 10a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0","M5 12.5V20","M19 12.5V20","M4 20h16"]},
+ estate:{c:C.blue,n:"Estate agent",d:["M4 12l8-7 8 7","M6.5 10v9.5h11V10","M12 19.5v-4"]},
+ price:{c:C.stone,n:"Prices board",d:["M3.5 12.5l9-9h8v8l-9 9z"],dot:[16,8,1.6]},
+ mark:{c:C.cream,n:"Your mark",d:["M12 21s-6-6-6-11a6 6 0 0 1 12 0c0 5-6 11-6 11z"],dot:[12,10,2.3]},
+};
+function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+let gid=0;
+function defs(svg){const d=el("defs",{},svg);
+ const g=el("filter",{id:"glow",x:"-60%",y:"-60%",width:"220%",height:"220%"},d);
+ el("feGaussianBlur",{in:"SourceGraphic",stdDeviation:"2.2",result:"b"},g);
+ const m=el("feMerge",{},g);el("feMergeNode",{in:"b"},m);el("feMergeNode",{in:"b"},m);el("feMergeNode",{in:"SourceGraphic"},m);
+ const g2=el("filter",{id:"soft",x:"-50%",y:"-50%",width:"200%",height:"200%"},d);el("feGaussianBlur",{stdDeviation:"6"},g2);
+ return d;}
+function radial(svg,stops){const id="r"+(gid++);const d=svg.querySelector("defs");const r=el("radialGradient",{id},d);
+ for(const [o,c,a] of stops)el("stop",{offset:o,"stop-color":c,"stop-opacity":a==null?1:a},r);return "url(#"+id+")";}
+function lin(svg,stops,x2=0,y2=1){const id="l"+(gid++);const d=svg.querySelector("defs");const r=el("linearGradient",{id,x1:0,y1:0,x2,y2},d);
+ for(const [o,c,a] of stops)el("stop",{offset:o,"stop-color":c,"stop-opacity":a==null?1:a},r);return "url(#"+id+")";}
+function icon(p,k,x,y,size,col,w,glow){const I=ICON[k],s=size/24,g=el("g",{transform:`translate(${x-size/2},${y-size/2}) scale(${s})`},p);
+ if(glow)g.setAttribute("filter","url(#glow)");
+ for(const d of I.d)el("path",{d,fill:"none",stroke:col,"stroke-width":w,"stroke-linecap":"round","stroke-linejoin":"round"},g);
+ if(I.dot)el("circle",{cx:I.dot[0],cy:I.dot[1],r:I.dot[2],fill:col},g);
+ if(I.dots)for(const [a,b] of I.dots)el("circle",{cx:a,cy:b,r:1.3,fill:col},g);
+ return g;}
+function halo(p,svg,x,y,r,a){el("circle",{cx:x,cy:y,r,fill:radial(svg,[[0,"#ffb565",a],[.45,"#e0964e",a*.35],[1,"#e0964e",0]])},p);}
+// ---- the four styles ----
+function token(p,svg,x,y,r,k,st){const I=ICON[k];
+ halo(p,svg,x,y,r*(st=="offer"?3.2:2.4),st=="active"?.35:.6);
+ if(st=="offer")el("circle",{cx:x,cy:y,r:r*1.45,fill:"none",stroke:"#ffcf8a","stroke-opacity":.5,"stroke-width":r*.08},p);
+ el("ellipse",{cx:x,cy:y+r*.14,rx:r,ry:r,fill:"#6e4f22"},p);
+ el("circle",{cx:x,cy:y,r,fill:radial(svg,[[0,"#f3d48a"],[.7,"#d4a654"],[1,"#a87a34"]])},p);
+ el("circle",{cx:x,cy:y,r:r*.84,fill:"none",stroke:I.c,"stroke-width":r*.16},p);
+ el("circle",{cx:x,cy:y,r:r*.97,fill:"none",stroke:"#fbe3a6","stroke-width":r*.06,"stroke-opacity":.8},p);
+ icon(p,k,x,y+r*.03,r*1.05,"#3b2a12",2.6);
+ if(st=="active")el("circle",{cx:x,cy:y,r:r*1.02,fill:"#1e1b18","fill-opacity":.28},p);}
+function lantern(p,svg,x,y,r,k,st){const I=ICON[k],w=r*1.55,h=r*1.9;
+ halo(p,svg,x,y,r*(st=="offer"?3.4:2.6),st=="active"?.4:.7);
+ el("path",{d:`M${x} ${y-h/2-r*.55}q${r*.22} 0 ${r*.22} ${r*.22}`,fill:"none",stroke:"#1e1b18","stroke-width":r*.09},p);
+ el("circle",{cx:x,cy:y-h/2-r*.5,r:r*.12,fill:"none",stroke:"#2b2723","stroke-width":r*.07},p);
+ el("path",{d:`M${x-w*.42} ${y-h/2}L${x-w*.25} ${y-h/2-r*.36}h${w*.5}L${x+w*.42} ${y-h/2}z`,fill:"#2b2723"},p);
+ el("rect",{x:x-w/2,y:y-h/2,width:w,height:h,rx:r*.28,fill:"#2b2723"},p);
+ el("rect",{x:x-w/2+r*.16,y:y-h/2+r*.16,width:w-r*.32,height:h-r*.44,rx:r*.16,fill:radial(svg,[[0,st=="active"?"#a8703a":"#ffd99c"],[1,st=="active"?"#5a3c22":"#c9772f"]])},p);
+ icon(p,k,x,y-r*.1,r*1.05,"#2b2723",2.8);
+ el("rect",{x:x-w/2-r*.06,y:y+h/2-r*.34,width:w+r*.12,height:r*.42,rx:r*.14,fill:I.c},p);
+ el("rect",{x:x-w/2-r*.06,y:y+h/2-r*.02,width:w+r*.12,height:r*.1,rx:r*.05,fill:"#141210","fill-opacity":.6},p);}
+function sign(p,svg,x,y,r,k,st){const I=ICON[k],w=r*2.1,h=r*1.7;
+ el("path",{d:`M${x-w*.32} ${y-h/2}L${x-w*.18} ${y-h/2-r*.5}M${x+w*.32} ${y-h/2}L${x+w*.18} ${y-h/2-r*.5}`,stroke:"#1e1b18","stroke-width":r*.07,"stroke-linecap":"round"},p);
+ el("rect",{x:x-w*.3,y:y-h/2-r*.62,width:w*.6,height:r*.14,rx:r*.07,fill:"#1e1b18"},p);
+ el("rect",{x:x-w/2,y:y-h/2+r*.12,width:w,height:h,rx:r*.3,fill:"#141210"},p);
+ el("rect",{x:x-w/2,y:y-h/2,width:w,height:h,rx:r*.3,fill:I.c},p);
+ el("rect",{x:x-w/2+r*.08,y:y-h/2+r*.08,width:w-r*.16,height:h-r*.16,rx:r*.24,fill:"none",stroke:"#efe4cc","stroke-opacity":.35,"stroke-width":r*.05},p);
+ el("ellipse",{cx:x,cy:y-h*.2,rx:w*.55,ry:h*.55,fill:radial(svg,[[0,"#ffcf8a",st=="active"?.12:.38],[1,"#ffcf8a",0]])},p);
+ icon(p,k,x,y,r*1.15,k=="mark"?"#1c1b21":"#fbf3e0",2.6);
+ if(st=="active")el("rect",{x:x-w/2,y:y-h/2,width:w,height:h,rx:r*.3,fill:"#1e1b18","fill-opacity":.35},p);
+ if(st=="offer"){el("circle",{cx:x+w/2-r*.05,cy:y-h/2+r*.05,r:r*.28,fill:"#e0964e",stroke:"#1e1b18","stroke-width":r*.06},p);}}
+function glyph(p,svg,x,y,r,k,st){const I=ICON[k],lit=st=="active"?"#d9a066":"#ffd59a";
+ halo(p,svg,x,y,r*(st=="offer"?2.8:2.1),st=="active"?.28:.5);
+ icon(p,k,x,y,r*2,lit,2.4,true);
+ el("circle",{cx:x,cy:y+r*1.35,r:r*.12,fill:I.c,stroke:lit,"stroke-width":r*.04},p);}
+const STYLES={token,lantern,sign,glyph};
+// ---- a street at dusk ----
+function street(svg,W,H){const g=el("g",{},svg),gy=H*.7;
+ el("rect",{x:0,y:0,width:W,height:H,fill:lin(svg,[[0,"#33405e"],[.55,"#7a6460"],[1,"#8a6a58"]])},g);
+ el("rect",{x:-10,y:H*.12,width:W+20,height:gy-H*.12,fill:"#4b4440"},g);
+ for(let r=0;r*26<gy-H*.12;r++)for(let c=-1;c*58<W;c++){const xx=c*58+(r%2)*29,yy=H*.12+r*26,t=((c*7+r*13)%5)/5;
+  el("rect",{x:xx+1.5,y:yy+1.5,width:55,height:23,rx:3,fill:t>.5?"#564d47":"#4f4742"},g);}
+ const win=[[W*.12,H*.22],[W*.62,H*.2]];
+ for(const [wx,wy] of win){el("rect",{x:wx-4,y:wy-4,width:68,height:96,rx:30,fill:"#2a2522"},g);
+  el("rect",{x:wx,y:wy,width:60,height:88,rx:27,fill:"#c97a3c"},g);el("rect",{x:wx,y:wy,width:60,height:88,rx:27,fill:"url(#none)"},g);
+  el("ellipse",{cx:wx+30,cy:wy+50,rx:90,ry:80,fill:radial(svg,[[0,"#ffb565",.3],[1,"#ffb565",0]])},g);}
+ el("rect",{x:W*.38,y:H*.26,width:14,height:20,rx:4,fill:"#ffd08a"},g);
+ el("circle",{cx:W*.38+7,cy:H*.26+10,r:70,fill:radial(svg,[[0,"#ffb565",.5],[1,"#ffb565",0]])},g);
+ el("rect",{x:0,y:gy,width:W,height:H-gy,fill:"#3a3431"},g);
+ for(let r=0;gy+r*18<H;r++)el("line",{x1:0,y1:gy+r*18+r*r*2,x2:W,y2:gy+r*18+r*r*2,stroke:"#2c2725","stroke-width":2},g);
+ el("rect",{x:0,y:gy-6,width:W,height:8,fill:"#2a2522"},g);
+ el("rect",{x:0,y:0,width:W,height:H,fill:lin(svg,[[0,"#c9a68a",.0],[1,"#c9a68a",.12]])},g);
+ return gy;}
+function person(svg,x,gy,s,cloth,hair){const g=el("g",{},svg);
+ el("ellipse",{cx:x,cy:gy,rx:26*s,ry:6*s,fill:"#141210","fill-opacity":.5},g);
+ el("rect",{x:x-13*s,y:gy-48*s,width:11*s,height:48*s,rx:5*s,fill:"#2a2a33"},g);
+ el("rect",{x:x+2*s,y:gy-48*s,width:11*s,height:48*s,rx:5*s,fill:"#2a2a33"},g);
+ el("rect",{x:x-20*s,y:gy-102*s,width:40*s,height:60*s,rx:16*s,fill:cloth},g);
+ el("rect",{x:x-26*s,y:gy-98*s,width:10*s,height:44*s,rx:5*s,fill:cloth},g);
+ el("rect",{x:x+16*s,y:gy-98*s,width:10*s,height:44*s,rx:5*s,fill:cloth},g);
+ el("circle",{cx:x,cy:gy-124*s,r:21*s,fill:"#c79a7c"},g);
+ el("path",{d:`M${x-21*s} ${gy-126*s}a21 21 0 0 1 ${42*s} 0q-6 -8 -21 -9q-15 1 -21 9z`,fill:hair},g);
+ el("rect",{x:x-20*s,y:gy-102*s,width:40*s,height:60*s,rx:16*s,fill:lin(svg,[[0,"#ffb565",.18],[.5,"#ffb565",0]],1,0)},g);
+ return gy-150*s;}
+function caption(svg,x,y,key,text){const g=el("g",{},svg),w=text.length*8.2+48;
+ el("rect",{x:x-w/2,y:y+3,width:w,height:30,rx:9,fill:"#141210"},g);
+ el("rect",{x:x-w/2,y:y,width:w,height:30,rx:9,fill:"#2b2723","fill-opacity":.95},g);
+ el("rect",{x:x-w/2+7,y:y+5,width:20,height:20,rx:5,fill:"#e9dcbe"},g);
+ const t=el("text",{x:x-w/2+17,y:y+20,"text-anchor":"middle","font-size":13,"font-family":"Bahnschrift",fill:"#1c1b21"},g);t.textContent=key;
+ const u=el("text",{x:x-w/2+34,y:y+20,"font-size":14,"font-family":"Bahnschrift",fill:"#efe4cc"},g);u.textContent=text;}
+function panel(style,W,H){const svg=el("svg",{width:W,height:H,viewBox:`0 0 ${W} ${H}`});defs(svg);const gy=street(svg,W,H),S=STYLES[style];
+ const far=person(svg,W*.82,gy-26,.62,"#5a4a6a","#2a1d18");S(svg,svg,W*.82,far-14,13,"cafe","active");
+ const a=person(svg,W*.2,gy+8,.9,"#3f6a6b","#3a2618");S(svg,svg,W*.2,a-30,24,"letter","offer");
+ const b=person(svg,W*.52,gy+44,1.08,"#8a5a44","#1e1612");S(svg,svg,W*.52,b-40,28,"talk","near");
+ caption(svg,W*.52,b-138,"E","Talk to Mira");
+ return svg;}
+function options(){const page=document.getElementById("page");
+ page.innerHTML='<h1>Markers over heads: four options</h1><p class="s">Dusk, the hardest light. In each: a resident with a new quest (left), the person your quest says to see, close enough to talk (middle), a café keeper far off (right, dimmer: nothing new there).</p>';
+ const row=document.createElement("div");row.className="row";page.appendChild(row);
+ const T={token:["A · Brass token","A coin like the reward coins, with the sign stamped in it and a ring in the type’s colour. Warm halo."],
+  lantern:["B · Little lantern","An iron lantern lit from inside, the sign as a shadow on its glass; the type’s colour on its band."],
+  sign:["C · Hanging sign","A small painted board on chains, as on the shop fronts: the type’s colour, a cream sign, a lamp lighting it."],
+  glyph:["D · Ember sign","Only the sign itself, drawn in lantern light, with a small coloured bead under it. The lightest touch."]};
+ for(const k in T){const c=document.createElement("div");c.className="card";c.innerHTML=`<h2>${T[k][0]}</h2><p>${T[k][1]}</p>`;c.appendChild(panel(k,386,560));row.appendChild(c);}}
+function icons(){const page=document.getElementById("page");
+ page.innerHTML='<h1>The signs, one per kind of thing to do</h1><p class="s">Each kind has its own shape, so it reads without colour (colour-blind safe); colour only backs it up. Shown in all four options.</p>';
+ const keys=Object.keys(ICON),W=1572,cw=W/keys.length,rows=Object.keys(STYLES),rh=118;
+ const svg=el("svg",{width:W,height:rows.length*rh+44});defs(svg);page.appendChild(svg);svg.style.margin="0 14px";
+ el("rect",{x:0,y:0,width:W,height:rows.length*rh+44,rx:14,fill:"#2b2723"},svg);
+ keys.forEach((k,i)=>{const t=el("text",{x:cw*i+cw/2,y:rows.length*rh+28,"text-anchor":"middle","font-size":14,"font-family":"Bahnschrift",fill:"#efe4cc"},svg);t.textContent=ICON[k].n;});
+ rows.forEach((s,j)=>{const t=el("text",{x:10,y:j*rh+18,"font-size":13,"font-family":"Bahnschrift",fill:"#a99d86"},svg);t.textContent="ABCD"[j];
+  keys.forEach((k,i)=>STYLES[s](svg,svg,cw*i+cw/2,j*rh+rh/2+8,s=="sign"?20:22,k,k=="mark"||k=="letter"||k=="handin"?"offer":"near"));});
+ const p2=document.createElement("p");p2.className="s";p2.style.marginTop="14px";p2.textContent="How a marker behaves (any option): far off only a small spark of its colour; nearer the full marker, gently bobbing; close enough to act, a caption with the key; behind a wall, a faint outline; new things glow brighter and pulse slowly, things already under way are steady and dimmer.";page.appendChild(p2);
+ const sv=el("svg",{width:W,height:170});defs(sv);page.appendChild(sv);sv.style.margin="0 14px";
+ el("rect",{x:0,y:0,width:W,height:170,rx:14,fill:"#2b2723"},sv);
+ const L=[["far: a spark",(x,y)=>{halo(sv,sv,x,y,16,.8);el("circle",{cx:x,cy:y,r:3.5,fill:"#ffd59a"},sv);}],
+  ["in sight",(x,y)=>token(sv,sv,x,y,18,"talk","near")],
+  ["close: caption",(x,y)=>{token(sv,sv,x,y-14,18,"talk","near");caption(sv,x,y+10,"E","Talk to Mira");}],
+  ["behind a wall",(x,y)=>{el("circle",{cx:x,cy:y,r:18,fill:"none",stroke:"#efe4cc","stroke-opacity":.45,"stroke-width":2,"stroke-dasharray":"4 4"},sv);icon(sv,"talk",x,y,19,"#efe4cc",2.4).setAttribute("opacity",.45);}],
+  ["new: bright, pulses",(x,y)=>token(sv,sv,x,y,18,"letter","offer")],
+  ["under way: steady",(x,y)=>token(sv,sv,x,y,18,"talk","active")],
+  ["done, hand it in",(x,y)=>token(sv,sv,x,y,18,"handin","offer")],
+  ["off screen: edge arrow",(x,y)=>{el("path",{d:`M${x+26} ${y}l-12 -12v24z`,fill:"#e0964e"},sv);token(sv,sv,x-6,y,14,"letter","offer");}]];
+ const cw2=W/L.length;L.forEach(([n,f],i)=>{f(cw2*i+cw2/2,62);const t=el("text",{x:cw2*i+cw2/2,y:158,"text-anchor":"middle","font-size":14,"font-family":"Bahnschrift",fill:"#efe4cc"},sv);t.textContent=n;});}
+(SHEET=="icons"?icons:options)();
+</script></body></html>

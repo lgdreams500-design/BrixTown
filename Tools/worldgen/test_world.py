@@ -1,4 +1,5 @@
 """Checks on the city data in World/ and on the living-city rules running over it.   python -m unittest test_world"""
+import copy
 import os
 import unittest
 
@@ -1556,6 +1557,25 @@ class TheMallInside(unittest.TestCase):                                        #
 
 def in_egg_any(eggs, inside, x, z, y):
     return any(inside(d, x, y, z) for d in eggs)
+
+
+class TheMarkers(unittest.TestCase):
+    """QST-005, ADR-0051: the brass tokens over heads and places (World/rules/markers.json)."""
+
+    def test_QST_005_the_markers_are_sound(self):
+        self.assertEqual(world.marker_problems(W), [])
+
+    def test_QST_005_a_bad_marker_is_caught(self):
+        w = copy.deepcopy(W)
+        M = w["markers"]
+        M["kinds"]["cafe"]["sign"] = "basket"                                    # two kinds, one shape
+        M["signs"]["tag"]["lines"][0][0] = 30                                    # out of its square
+        M["kinds"]["bank"]["colour"] = "olive"
+        M["behaviour"]["token_m"] = 500                                          # beyond the spark
+        del M["kinds"]["handin"]
+        p = world.marker_problems(w)
+        for bit in ("share the sign basket", "tag goes outside", "bank's colour", "near_m < token_m < spark_m", "no kind handin"):
+            self.assertTrue(any(bit in x for x in p), bit)
 
 
 if __name__ == "__main__":

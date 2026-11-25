@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "BrixMap.h"
+#include "BrixMarkers.h"
 #include "Styling/SlateBrush.h"
 #include "BrixMapActor.generated.h"
 
@@ -17,8 +18,10 @@ struct FBrixDay;
 // the mark, the player's arrow turned the way the camera looks), and M (or the menu's Map page) opens the big map: the whole
 // town, zoomed about the pointer with the wheel (1 to 6 times; + and - about the middle, 0 or the middle button for the
 // whole town), moved by dragging, a click marking a place (again on the mark clears it). Over the street: the names of
-// residents within 9 m (name, job, what they are doing), "◆ quest" or "◆ has something for you" over those a quest wants
-// within 45 m, and the mark with how far it is (it goes when reached). What shows is the player's settings: display.minimap,
+// residents within 9 m (name, job, what they are doing). The people and places a quest or a job wants, and the mark, carry
+// a brass token (QST-005, ADR-0051; World/rules/markers.json): a spark far off, the token with its sign nearer, a caption
+// with the key near enough to act, a faint outline behind a wall, an arrow at the screen's edge when out of sight; the
+// mark's caption says how far it is (it goes when reached). The same tokens, small, stand for them on both maps. What shows is the player's settings: display.minimap,
 // display.names and the map group (World/rules/settings.json). For test shots: -BrixMap opens the big map,
 // -BrixMapZoom=z,x,z zooms it on a place, -BrixMark=x,z sets the mark.
 UCLASS(Config = Game)
@@ -44,11 +47,13 @@ public:
 	UPROPERTY(Config) float MiniSpan = 230.f;      // m across it
 	UPROPERTY(Config) float NameReach = 9.f;       // m: names over residents this near (play.js), on the player's level within NameRise
 	UPROPERTY(Config) float NameRise = 3.f;
-	UPROPERTY(Config) float QuestReach = 45.f;     // m: the quest marks over heads (life.js mark())
 	UPROPERTY(Config) float FolkEvery = 0.25f;     // s between working out where everyone is for the dots
 
 	// for the painters (BrixMapActor.cpp)
-	struct FDot { FVector2D Pos; int32 Kind; };   // 0 someone with a line to give, 1 a quest's person or place, 2 the mark
+	struct FDot { FVector2D Pos; int32 Kind; FString Marker; };   // 0 someone with a line to give, 1 a quest's person or place, 2 the mark; Marker its token's kind
+	struct FToken { FVector World; FString Kind, Caption, Key; float Alpha = 1.f, Size = 26.f; bool bSpark = false, bBehind = false, bEdge = false; int32 Seed = 0; double Dist = 0; };
+	TArray<FToken> Tokens;
+	FBrixMarkerRules Markers;
 	struct FTag { FVector World; FString Text; float Alpha = 1.f; int32 Size = 14; };
 	TArray<FVector2D> Folk;
 	TArray<FDot> Dots;
@@ -67,11 +72,12 @@ public:
 private:
 	void Settings();
 	void Gather(float Dt);
+	void GatherTokens(float Feet, double Minute, bool bBusy, TFunctionRef<FString(const FBrixMapTarget&)> KindOf);
 	TSharedPtr<FBrixDay> Day;
 	UPROPERTY() TObjectPtr<UTexture2D> Texture;
 	TSharedPtr<SWidget> Hud, Big;
 	bool bOpen = false;
 	float FolkLeft = 0.f, TargetLeft = 0.f;
 	TArray<FBrixMapTarget> Targets;
-	TMap<int32, bool> Marked;                      // resident -> has a line to give (else a quest's)
+	TMap<int32, FString> Marked;                   // resident -> the kind of their marker
 };
