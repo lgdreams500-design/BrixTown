@@ -37,6 +37,7 @@ public:
 	UPROPERTY(Config) float IndoorCameraDistance = 2.8f;
 	UPROPERTY(Config) float HideBodyWithin = 0.55f;
 	UPROPERTY(Config) float LookHoldSeconds = 1.5f;
+	UPROPERTY(Config) float RideBlockSeconds = 0.15f;
 	UPROPERTY(Config) float AnswerCameraYaw = 160.f;  // degrees round from looking where the player faces, while they answer
 	UPROPERTY(Config) float TalkCameraYaw = 26.f;     // and while the resident speaks: past the shoulder (the slice's .45 rad)
 	UPROPERTY(Config) float DesignCameraM = 2.7f;    // m from the character in the designer, times their height / 1.72 (life.js camera())
@@ -154,6 +155,10 @@ private:
 	float ArmBefore = 0.f;
 	double LookedAt = -100;          // when the mouse last turned the camera
 	bool CameraFree() const;         // the mouse has not turned it for LookHoldSeconds
+	// Behind a vehicle the arm is the character's own work: it comes in only for something that has stood in its way for
+	// RideBlockSeconds (a wall, not a lamp post passed), quickly, and goes out again slowly.
+	void RideCamera(float DeltaSeconds);
+	float RideArm = 0.f, RideBlocked = 0.f;
 	FVector2D BoardIn = FVector2D::ZeroVector;   // this frame's A/D and W/S on a board
 	double BoardYaw = 0, BoardBlend = 0, BoardMeant = 0;   // the heading (Unreal degrees), into the push (0 to 1), the metres last meant to go
 	FVector BoardFrom = FVector::ZeroVector;

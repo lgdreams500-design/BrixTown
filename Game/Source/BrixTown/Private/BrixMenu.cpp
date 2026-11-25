@@ -87,6 +87,7 @@ void ABrixLife::Menu(const FString& Id)
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
 	if (Mode && Mode->Talk && Mode->Talk->IsTalking()) return;
 	if (!Panel.IsEmpty()) Close();
+	if (Id != TEXT("map") && Mode && Mode->Map && Mode->Map->IsOpen()) Mode->Map->Close();   // a page over the map: the map goes first
 	if (Id == TEXT("map") && Mode && Mode->Map)   // the map is the town's own big map (life.js panel("map"))
 	{
 		CloseMenu();

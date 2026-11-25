@@ -500,8 +500,8 @@ with 32 vehicles drawn.
 The models' triangles are taken in the other order from the one they are written in (found in play, 2026-11-25): as
 they come they go round the wrong way for Unreal, which then drew each part's inside and left its outside out, so every
 car and van was a dark hollow with its riders' legs showing through the doors
-(`Art/StyleTests/unreal_play_bugs_44/cars_before_after.jpg`, against `Art/Reference/vehicles_soft_box.png`). Not yet:
-riding a bus, the camera sits low over its roof, which fills the bottom of the picture.
+(`Art/StyleTests/unreal_play_bugs_44/cars_before_after.jpg`, against `Art/Reference/vehicles_soft_box.png`). The box's small things (drawn to `GardenCullDistance`) and its large ones (drawn however far) were one group, because
+the distance was not part of a group's name: the large ones went at 150 m too. They are two groups now.
 
 ## Getting out of the way, and giving way (CITY-070, CITY-071, CITY-049)
 Residents on foot get out of the way of a car the player drives, as in the slice (dodge.js, `BrixWorld/BrixDodge`, numbers in
@@ -1095,13 +1095,19 @@ Behind the player on an arm of `CameraDistance` (4 m) that shortens where someth
 to `IndoorCameraDistance` (2.8): at 4 m it met a wall or the ceiling at almost every turn and sat jammed in the
 player's back. The body is not drawn while the camera is within `HideBodyWithin` (0.55 m) of it. In a car, on a bus or a
 tram and on a board the camera comes round behind, but the mouse has it for `LookHoldSeconds` (1.5) first: pulled back
-every frame, it could not be turned while moving. Behind a car the arm does not shorten: 8.5 m back it met every lamp
-post and corner passed, and the camera jumped in and out. The cars are drawn after the player has moved in a frame: drawn
+every frame, it could not be turned while moving. Behind a car, a bus or a tram the arm is the character's own work
+(`RideCamera`): shortened by the engine it met every lamp post and corner passed, and the camera jumped in and out; now
+it comes in only for what has stood in its way for `RideBlockSeconds` (0.15: a wall, not a post passed), quickly, and
+goes out again slowly. Riding a bus or a tram it is 15 or 17 m back and nearly level, behind the vehicle (11 m behind a
+seat at the front of an 11 m bus, it sat over the roof). The cars are drawn after the player has moved in a frame: drawn
 before, the player's car was a frame behind its driver and shook under them. E does nothing while a counter, the menu or
-the map is open (it started a drive or a talk under the panel, with the camera held). Not yet: behind a car the camera
-goes through walls in a narrow street; the map, the menu and a counter share one "a panel is open" flag, so opening one
-over another and closing the first leaves the second open with the game's keys live; a counter opened from the building
-designer does not give the camera back; getting out of a car against a wall can put the player in it.
+the map is open (it started a drive or a talk under the panel, with the camera held). One of the map, the menu and a counter is open at a time (they share the
+player's "a panel is open": a page or a counter opened over the map closes the map first, and a counter opened from the
+building designer gives the designer's camera back first), and closing one gives the mouse back to the camera without a
+click. Getting out of a car, the spot must be free and have nothing between it and the car (a spot free on the far side
+of a thin wall put the player inside a building). Not yet: a tree's crown does not stop the camera, which behind a bus
+can pass through the bottom of one; with no free spot at all the player still gets out at the driver's door, into
+whatever is there; none of this has been played by hand.
 
 ## Light and speed (measured 2026-11-24 on the Intel integrated graphics of the owner's laptop, 1066x666)
 Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/DefaultEngine.ini`); without it the shade is
