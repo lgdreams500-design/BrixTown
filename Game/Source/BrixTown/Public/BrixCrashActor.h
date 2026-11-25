@@ -34,6 +34,8 @@ public:
 	UPROPERTY(Config) float TagDistance = 12.f;     // m: the repair tag shows this near the player
 	UPROPERTY(Config) float TagSize = 0.18f;        // m, its letters
 	UPROPERTY(Config) FLinearColor TagColour = FLinearColor(0.16f, 0.12f, 0.10f);
+	UPROPERTY(Config) float SeatReach = 1.2f;       // m: a seat this near a broken bench is not sat on ...
+	UPROPERTY(Config) float SeatStep = 0.6f;        // m: ... and whoever would sit there stands this far in front of it
 
 	bool On() const { return bOn; }
 	// the car hitting things (smash.js probe(), smash(), chip(); called from ABrixCars)
@@ -49,6 +51,8 @@ public:
 	struct FWorker { FVector2D P; FVector2D Toward; int32 K; };
 	TArray<FWorker> Workers;
 	int32 Broken() const { return Damage.Num(); }
+	// where the broken benches stand now (CITY-072): nobody sits on them until they are mended
+	TArray<FVector2D> BrokenSeats() const;
 
 private:
 	struct FEffect

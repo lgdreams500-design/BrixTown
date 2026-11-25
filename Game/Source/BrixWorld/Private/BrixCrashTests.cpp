@@ -1,6 +1,7 @@
 // CITY-072 to CITY-076: crash damage, as the slice's smash.js and Tools/citysim/repairs.py have it.
 #include "BrixCrash.h"
 #include "BrixCity.h"
+#include "BrixDay.h"
 
 #include "Dom/JsonObject.h"
 #include "Misc/AutomationTest.h"
@@ -153,6 +154,62 @@ bool FCITY076_ResidentsShoutAtASmash::RunTest(const FString&)
 	TestTrue(TEXT("a shout from the rules"), R.Shouts.Contains(Q.Shout));
 	TestFalse(TEXT("too far: carries on"), BrixCrashReact(R, 5, FVector2D(R.ReactM + .1, 0), 0, 0, 1, 100, 101, Q));
 	TestFalse(TEXT("too long ago: carries on"), BrixCrashReact(R, 5, FVector2D(3, 0), 0, 0, R.ReactS, 100, 100 + R.ReactS, Q));
+	return true;
+}
+
+// CITY-072: a broken bench is not sat on. Everyone the day seats on a garden's bench stands in front of it while it is broken
+// (facing the way they would have sat), and sits again once it is mended; nobody on another bench or a fountain's rim moves.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY072_BrokenBenchNotSatOn, "BrixTown.World.CITY072_a_broken_bench_is_not_sat_on",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FCITY072_BrokenBenchNotSatOn::RunTest(const FString&)
+{
+	FBrixCity City;
+	FBrixDay Day;
+	FString Error;
+	const auto Root = [](const TCHAR* P) { return FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), P)); };
+	if (!TestTrue(TEXT("the city loads: ") + Error, LoadBrixCity(Root(TEXT("../World/city_01")), City, Error))) return false;
+	if (!TestTrue(TEXT("the day loads: ") + Error, LoadBrixDay(Root(TEXT("Data/day.json")), Day, Error))) return false;
+	SeatBrixDay(Day, City);
+	TArray<FVector2D> Benches;
+	for (const FBrixBlock& B : City.Blocks) for (const FBrixProp& P : B.Props) if (P.Kind == TEXT("bench")) Benches.Add(P.Pos);
+	if (!TestTrue(TEXT("the town has benches"), Benches.Num() > 50)) return false;
+	auto WhereOf = [](const FBrixDay::FPiece& P)
+	{
+		FBrixWhere W;
+		W.Pos = P.Pos; W.bInside = P.bInside; W.Heading = P.Facing; W.Pose = P.Pose; W.SeatUp = P.SeatUp; W.Lot = P.Lot;
+		return W;
+	};
+	int32 Sat = 0, Stood = 0, Wrong = 0, Others = 0;
+	for (const FVector2D& Broken : Benches)
+	{
+		const TArray<FVector2D> One = { Broken };
+		for (const TArray<FBrixDay::FPiece>& Row : Day.Plan)
+			for (const FBrixDay::FPiece& P : Row)
+			{
+				if (P.Kind != 0 || P.Pose != 2 || P.bInside) continue;
+				FBrixWhere W = WhereOf(P);
+				const bool bOnIt = FVector2D::Distance(P.Pos, Broken) < 1.2;
+				const bool bMoved = BrixOffBrokenSeat(W, One);
+				if (bOnIt)
+				{
+					++Sat;
+					const bool bOk = bMoved && W.Pose == 0 && W.SeatUp < 0 && FMath::IsNearlyEqual(FVector2D::Distance(W.Pos, P.Pos), .6, 1e-6)
+						&& (W.Pos - P.Pos).GetSafeNormal().Equals(P.Facing.GetSafeNormal(), 1e-6) && W.Heading == P.Facing;
+					Stood += bOk ? 1 : 0;
+					FBrixWhere Again = WhereOf(P);
+					Wrong += BrixOffBrokenSeat(Again, {}) || Again.Pose != 2 ? 1 : 0;   // mended: sat on again
+				}
+				else Others += bMoved ? 1 : 0;
+			}
+	}
+	AddInfo(FString::Printf(TEXT("%d stays on a bench, each with that bench broken: %d stood in front of it"), Sat, Stood));
+	TestTrue(TEXT("the day seats people on benches"), Sat > 50);
+	TestEqual(TEXT("everyone on a broken bench stands in front of it"), Stood, Sat);
+	TestEqual(TEXT("a mended bench is sat on again"), Wrong, 0);
+	TestEqual(TEXT("nobody on another seat moves"), Others, 0);
+	FBrixWhere Indoors;
+	Indoors.Pose = 2; Indoors.SeatUp = .5f; Indoors.bInside = true; Indoors.Pos = Benches[0];
+	TestFalse(TEXT("a sofa indoors is not a bench"), BrixOffBrokenSeat(Indoors, { Benches[0] }));
 	return true;
 }
 

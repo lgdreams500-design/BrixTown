@@ -14,6 +14,7 @@
 #include "BrixRooms.h"
 #include "BrixTalkActor.h"
 #include "BrixUnits.h"
+#include "BrixWeatherActor.h"
 #include "Camera/CameraComponent.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/CapsuleComponent.h"
@@ -92,6 +93,7 @@ void ABrixCharacter::MakeInput()
 	WalletAction = NewObject<UInputAction>(this, TEXT("Wallet"));
 	QuestsAction = NewObject<UInputAction>(this, TEXT("Quests"));
 	BoardAction = NewObject<UInputAction>(this, TEXT("Board"));
+	WeatherAction = NewObject<UInputAction>(this, TEXT("Weather"));
 	PageNames = { TEXT("me"), TEXT("belongings"), TEXT("property"), TEXT("wardrobe"), TEXT("map"), TEXT("help") };   // settings.json actions
 	for (const FString& N : PageNames) PageActions.Add(NewObject<UInputAction>(this, *(TEXT("Page_") + N)));
 	for (UInputAction* A : PageActions) A->bTriggerWhenPaused = true;   // the menu stops the clock; its keys still work
@@ -126,6 +128,7 @@ void ABrixCharacter::MakeInput()
 	Keys->MapKey(WalletAction, EKeys::I);
 	Keys->MapKey(QuestsAction, EKeys::J);
 	Keys->MapKey(BoardAction, EKeys::Y);   // settings.json: board, Y
+	Keys->MapKey(WeatherAction, EKeys::K);   // settings.json: weather, K
 	const FKey PageKeys[6] = { EKeys::C, EKeys::G, EKeys::P, EKeys::U, EKeys::M, EKeys::H };
 	for (int32 k = 0; k < 6; ++k) Keys->MapKey(PageActions[k], PageKeys[k]);
 	Keys->MapKey(ChooseActions[0], EKeys::Left);
@@ -169,6 +172,7 @@ void ABrixCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		In->BindAction(WalletAction, ETriggerEvent::Started, this, &ABrixCharacter::WalletKey);
 		In->BindAction(QuestsAction, ETriggerEvent::Started, this, &ABrixCharacter::QuestsKey);
 		In->BindAction(BoardAction, ETriggerEvent::Started, this, &ABrixCharacter::BoardKey);
+		In->BindAction(WeatherAction, ETriggerEvent::Started, this, &ABrixCharacter::WeatherKey);
 		for (UInputAction* A : PageActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::MenuPageKey);
 		for (UInputAction* A : ChooseActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::ChooseKey);
 		for (UInputAction* A : AnswerActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::AnswerKey);
@@ -423,6 +427,16 @@ void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whic
 		return;
 	}
 	if (T) T->Open();
+}
+
+void ABrixCharacter::WeatherKey()   // K: the next kind of weather to look at, for the whole day (play.js wxTry)
+{
+	if ((bDesigning && bDesignKeys) || bTalking || bPanel) return;
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	ABrixWeather* Wx = Mode ? Mode->Weather.Get() : nullptr;
+	if (!Wx || !Wx->bOn) return;
+	const FString Now = Wx->TryNext();
+	if (ABrixLife* L = Life()) L->Toast(Now.IsEmpty() ? FString(TEXT("The day's own weather")) : TEXT("Trying ") + Now);
 }
 
 ABrixCars* ABrixCharacter::Cars() const

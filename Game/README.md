@@ -405,7 +405,9 @@ says when the crew comes or will be done. Residents within 18 m of a smash turn 
 point. Tests: `CITY072_street_things_break_as_the_rules_say`, `CITY074_damage_is_kept`,
 `CITY075_repair_crews_mend_as_repairs_py_does` (against repairs.py, `Tests/values/repairs_city_01.json`),
 `CITY076_residents_shout_at_a_smash`. Not yet: café tables and crates, garden plants, fences, walls, railings and
-hedges (not drawn in Unreal yet), a broken bench still being sat on, and a server keeping the list for every player. At
+hedges (not drawn in Unreal yet), and a server keeping the list for every player. Nobody sits on a broken bench: whoever
+the day has on it stands `SeatStep` in front of it until it is mended (`BrixOffBrokenSeat`, `CITY072_a_broken_bench_is_not_sat_on`;
+`bench_broken.png` against `bench_whole.png`). At
 High, 38 to 54 frames a second while breaking a post box, a planter and a bin and with two crews at work (noisy: other
 sessions were running Unreal).
 
@@ -428,8 +430,15 @@ run for cover; nothing but the coat indoors, sheltering or under a roof (`CITY08
 The look of coats, hoods and umbrellas is still to be approved (ADR-0020). `-BrixWeather=<clear|cloud|rain|fog|snow>`
 tries one kind for the whole day (and the clothes residents would wear on a day of it); the built day 16 has cloud
 before 06:00 and is clear after. At High: about 40 frames a second in the 08:10 school rush in rain, against 15 to 54
-in clear weather on the same street (noisy: other sessions were running Unreal on the same laptop). Not yet: no key to
-try the weather, rain seen through windows from indoors, the rain's sound, wet clothes.
+in clear weather on the same street (noisy: other sessions were running Unreal on the same laptop). K is the slice's
+weather key: it tries clear, cloud, rain, fog and snow in turn for the whole day, then the day's own weather again, and says
+which (`BrixNextWeatherTry`, `WLD037_the_weather_key_steps_through_the_kinds`; `-BrixWeatherKey=<n>` presses it n times in a
+test shot). From indoors the rain is seen through the windows and the open door: the same rings of drops, spread
+`IndoorReach` (1.8) times as far, fall outside, none over the building (its roof) and no splashes; the slice shows none
+indoors. Shots: `Art/StyleTests/unreal_gaps_world_40/` (`weather_key_rain.png`, `rain_through_the_window.png`); 7.9 to 20.5 frames a second at High in rain
+on that street (noisy). Not yet: wet
+clothes (people a little darker out in the rain, as the slice darkens everything outdoors), the rain's sound (the slice has
+none either), snow seen from indoors.
 
 ## Snow (WLD-069, WLD-070, CITY-107; ADR-0051)
 At the owner's word (2026-11-25): it snows in Winter only, by its own chance per six-hour slot (`snow_chance` in
@@ -504,8 +513,12 @@ block of open ground (`Tests/values/streets_city_01.json`), and `CITY017_every_p
 `WLD056_the_open_ground_is_drawn_as_the_slice_draws_it` check the port against them (2,735 plants, 33 lawns, 17 blocks,
 about 600 things); run the script again after changing play.js, the blocks or the vegetation rules (after build_play.py).
 Bushes, hedges and fences break as crash.json says (CITY-072). The plants keep the built day's look whatever day the game
-starts on, as in the slice. Not yet: the lawn's own pattern (the slice's material 24: patches, mowing stripes, clover,
-daisies), so a lawn is one even green (the trees: below). The new shapes are kept out
+starts on, as in the slice. A lawn (its grass and its longer edge) has its own pattern, the slice's material 24: muted patches
+of vegetation.json's three tones, the mower's faint stripes, clumps of clover, blades close up and daisies in drifts, painted
+(`/Game/Greybox/M_Lawn`, `Tools/unreal/make_lawn_material.py` and `lawn.hlsl`, a section of its own in each block's facet
+mesh; `CITY017_lawns_are_drawn_in_their_own_pattern`). Shots: `lawn.png` against `lawn_before.png` (one even green) in
+`Art/StyleTests/unreal_gaps_world_40/`, beside the slice's `lawn_in_the_slice.png`; 10.0 frames a second at High in that garden, 7.7 without M_Lawn (noisy: other
+sessions were running Unreal). The new shapes are kept out
 of Lumen's surface cache (a card an instance oversubscribed it over the fields). `-BrixNoPlants` builds the town without
 them, to compare: 542,212 instances in 45 groups against 462,813 in 33; at High 37.7 fps in a park garden (40.2 without),
 37.8 over the fields (20.6 without: noisy, other sessions were running Unreal on the same laptop).
@@ -784,7 +797,9 @@ world.marker_problems() checks it, and a broken copy caught the same way; a spar
 shop with the bread in stock and only the nearest 3 kept, none once it is carried, the shopping job, a line offered). Shots: `-BrixMap` opens the big map, `-BrixMapZoom=z,x,z` zooms it
 on a place, `-BrixMark=x,z` sets the mark, `-BrixNear=<resident>[,<metres>]` stands the player 3.5 m (or that far) in front of someone; a shot logs
 the residents on the maps, the markers and the words over the street. Your buildings and the places you rent are outlined on the
-big map (see The real estate market). Not yet: a tree's crown by the day's vegetation (a fixed `TreeRadius`). 31 to 33 frames a second at High with the minimap (noisy: other sessions were running
+big map (see The real estate market). Each tree is drawn on the maps as big as its crown is today and a fallen one not at all
+(play.js drawBase() over D.trees: `BrixMapTreesToday`, `UI018_the_maps_trees_are_todays_crowns`; `TreeRadius` only when
+today's trees did not load). 31 to 33 frames a second at High with the minimap (noisy: other sessions were running
 Unreal).
 
 ## Skateboards (CITY-098 to CITY-101; F-VEH-SKATES 2)
@@ -852,10 +867,12 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY049_resident_cars_give_way_to_the_player` | CITY-049 |
 | `BrixTown.World.CITY070_residents_dodge_and_scold_as_the_slice_does` | CITY-070, CITY-071 |
 | `BrixTown.World.CITY072_street_things_break_as_the_rules_say` | CITY-072, CITY-073 |
+| `BrixTown.World.CITY072_a_broken_bench_is_not_sat_on` | CITY-072 |
 | `BrixTown.World.CITY074_damage_is_kept` | CITY-074 |
 | `BrixTown.World.CITY075_repair_crews_mend_as_repairs_py_does` | CITY-075 |
 | `BrixTown.World.CITY076_residents_shout_at_a_smash` | CITY-076 |
 | `BrixTown.World.WLD037_the_weather_is_worked_out_as_world_py_does` | WLD-037 |
+| `BrixTown.World.WLD037_the_weather_key_steps_through_the_kinds` | WLD-037 |
 | `BrixTown.World.CITY080_residents_are_dressed_for_the_rain` | CITY-077, CITY-079, CITY-080 |
 | `BrixTown.World.WLD036_the_clouds_are_where_world_py_puts_them` | WLD-035, WLD-036 |
 | `BrixTown.World.WLD070_snow_falls_and_lies_as_world_py_says` | WLD-069, WLD-070 |
@@ -900,6 +917,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.UI009_a_bad_setting_is_caught` | UI-009 |
 | `BrixTown.World.UI010_no_control_does_two_things` | UI-010 |
 | `BrixTown.World.UI018_the_big_map_is_drawn_from_the_town` | UI-018 |
+| `BrixTown.World.UI018_the_maps_trees_are_todays_crowns` | UI-018, WLD-056 |
 | `BrixTown.World.UI012_the_mark_is_set_cleared_and_reached` | UI-012 |
 | `BrixTown.World.QST005_the_people_and_places_a_quest_wants_are_marked` | QST-005 |
 | `BrixTown.World.QST005_the_markers_are_sound` | QST-005 |
@@ -908,6 +926,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY099_boards_are_ridden_and_drawn_as_the_slice_does` | CITY-099, CITY-101 |
 | `BrixTown.World.CITY100_auto_owns_all_and_rides_electric` | CITY-100 |
 | `BrixTown.World.CITY017_every_plant_is_drawn_as_the_slice_draws_it` | CITY-017, WLD-040 |
+| `BrixTown.World.CITY017_lawns_are_drawn_in_their_own_pattern` | CITY-017, ART-001 |
 | `BrixTown.World.WLD056_the_open_ground_is_drawn_as_the_slice_draws_it` | WLD-056, ART-001 |
 | `BrixTown.World.WLD032_children_play_as_the_slice_puts_them` | WLD-032, WLD-041 |
 | `BrixTown.World.WLD028_the_street_dressing_is_drawn_as_the_slice_draws_it` | WLD-028, WLD-031, WLD-034 |

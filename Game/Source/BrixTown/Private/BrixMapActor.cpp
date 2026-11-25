@@ -8,10 +8,13 @@
 #include "BrixLifeActor.h"
 #include "BrixLook.h"
 #include "BrixPeople.h"
+#include "BrixStreets.h"
 #include "BrixTalkActor.h"
+#include "BrixTownActor.h"
 #include "BrixUnits.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "Engine/GameViewportClient.h"
 #include "Engine/Texture2D.h"
 #include "Fonts/FontMeasure.h"
@@ -316,6 +319,8 @@ void ABrixMap::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, const FS
 	FBrixMapExtras X;
 	FString Error;
 	if (!LoadBrixMapExtras(CityDir, City, X, Error)) UE_LOG(LogTemp, Error, TEXT("Brix Town: the map's data did not load: %s"), *Error);
+	for (TActorIterator<ABrixTownActor> It(GetWorld()); It; ++It)   // each tree as big as its crown today, fallen ones left off
+		if (const FBrixStreetsToday* T = It->StreetsToday()) { BrixMapTreesToday(T->Trees, X); break; }
 	const double T0 = FPlatformTime::Seconds();
 	Image = BrixDrawMap(City, X, MapPixels, TreeRadius);
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: the map drawn, %d px square, in %.2f s"), Image.N, FPlatformTime::Seconds() - T0);

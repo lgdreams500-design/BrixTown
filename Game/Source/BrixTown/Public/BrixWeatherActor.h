@@ -13,10 +13,10 @@ struct FBrixCity;
 // The weather in the town (WLD-037, ADR-0016), worked out each frame from the clock and the day's weather (BrixWeatherNow):
 // the game mode dims the sun, fills the shade with grey light and thickens the haze by it (which greys the sky); here the
 // paving gets wet and dries again after the rain (ABrixTownActor::SetWet), and rain falls in the world: drops in rings
-// round the camera, from 1.6 to 11 m, falling straight down whichever way you look, not where a roof is overhead and not
-// while the camera is indoors. ABrixPeople dresses the residents for it (CITY-077 to CITY-080, through Wear).
-// -BrixWeather=<clear|cloud|rain|fog|snow> tries one kind for the whole day (the slice's weather key), with what residents
-// would wear on a day of it.
+// round the camera, from 1.6 to 11 m, falling straight down whichever way you look, not where a roof is overhead (from
+// indoors spread further out, seen through the windows). ABrixPeople dresses the residents for it (CITY-077 to CITY-080,
+// through Wear). K (TryNext) or -BrixWeather=<clear|cloud|rain|fog|snow> tries one kind for the whole day (the slice's
+// weather key), with what residents would wear on a day of it; -BrixWeatherKey=<n> presses K n times in a test shot.
 UCLASS(Config = Game)
 class BRIXTOWN_API ABrixWeather : public AActor
 {
@@ -39,6 +39,7 @@ public:
 	UPROPERTY(Config) FLinearColor CloudGrey = FLinearColor(0.55f, 0.56f, 0.58f);      // ... and under a grey sky
 	UPROPERTY(Config) float NearDrops = 1.6f;         // m: the rings' inner and outer edge round the camera (ADR-0016)
 	UPROPERTY(Config) float FarDrops = 11.f;
+	UPROPERTY(Config) float IndoorReach = 1.8f;       // from indoors the rings are spread this many times as far, outside the windows
 	UPROPERTY(Config) float DropWidth = 0.009f;       // m
 	UPROPERTY(Config) float DropLength = 0.65f;       // a drop's streak, as a share of sky.json rain.length
 	UPROPERTY(Config) float DropAlpha = 0.85f;        // how much it shows, as a share of sky.json rain.alpha
@@ -56,6 +57,7 @@ public:
 	int32 Wardrobe() const { return !IsTrying() ? 0 : Trying == TEXT("snow") ? 2 : Trying == TEXT("rain") ? 1 : 0; }
 	FBrixSnowNow Snow;                                 // this frame's falling and lying snow (WLD-070)
 	bool Roofed(const FVector2D& P) const;             // under a building's roof (not an open lot)
+	FString TryNext();                                 // the weather key, K: the next kind tried (empty: the day's own)
 
 private:
 	ABrixTownActor* Town = nullptr;

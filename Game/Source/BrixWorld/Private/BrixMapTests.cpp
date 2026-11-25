@@ -5,6 +5,7 @@
 #include "BrixEconomy.h"
 #include "BrixMap.h"
 #include "BrixQuests.h"
+#include "BrixStreets.h"
 
 #include "Misc/AutomationTest.h"
 #include "Misc/Paths.h"
@@ -132,6 +133,42 @@ bool FQST005_QuestPeopleAreMarked::RunTest(const FString&)
 	TestTrue(FString::Printf(TEXT("the first stage's goal (%s %s) is marked"), *G.Kind, *G.Value), bFound);
 	for (const FBrixMapTarget& X : T)
 		if (X.bOffer) TestTrue(TEXT("one with a line to give offers it"), X.Resident >= 0 && QR.Quests.ContainsByPredicate([&](const FBrixQuestLine& L) { return Q.ResidentIndex(L.Giver) == X.Resident && Q.Offers(L.Giver).Contains(L.Id); }));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FUI018_TheMapsTreesAreToday, "BrixTown.World.UI018_the_maps_trees_are_todays_crowns",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FUI018_TheMapsTreesAreToday::RunTest(const FString&)
+{
+	// play.js drawBase(): every tree of D.trees that has not fallen, a disc of max(.9, r * k * .8) pixels in its crown's radius today
+	FBrixCity City;
+	FBrixMapExtras X;
+	FBrixStreetsToday Today;
+	FString Error;
+	if (!TestTrue(TEXT("the city loads: ") + Error, LoadBrixCity(MapCityDir(), City, Error))) return false;
+	if (!TestTrue(TEXT("the map's own data loads: ") + Error, LoadBrixMapExtras(MapCityDir(), City, X, Error))) return false;
+	if (!TestTrue(TEXT("today's trees load (Game/Data/streets.json): ") + Error,
+		LoadBrixStreetsToday(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/streets.json"))), Today, Error))) return false;
+	const FBrixMapImage Fixed = BrixDrawMap(City, X, 2700);
+	BrixMapTreesToday(Today.Trees, X);
+	int32 Standing = 0;
+	for (const FBrixTreeToday& T : Today.Trees) Standing += T.bFallen ? 0 : 1;
+	TestEqual(TEXT("every standing tree is on the map, no fallen one"), X.Trees.Num(), Standing);
+	const FBrixMapImage M = BrixDrawMap(City, X, 2700);
+	const FColor Tree = FColor::FromHex(TEXT("2f4524"));
+	int32 Big = 0, Reach = 0, FixedReach = 0;
+	for (const FBrixTreeToday& T : Today.Trees)
+	{
+		if (T.bFallen || T.R < 5) continue;
+		++Big;
+		const FVector2D Edge(T.X + T.R * .8 * .65, T.Z);   // well inside the crown's disc on the map, outside the old 2.5 m one
+		Reach += M.At(Edge) == Tree ? 1 : 0;
+		FixedReach += Fixed.At(Edge) == Tree ? 1 : 0;
+	}
+	AddInfo(FString::Printf(TEXT("%d big crowns: %d reach their own size on the map, %d did at the one 2.5 m"), Big, Reach, FixedReach));
+	TestTrue(TEXT("there are big crowns today"), Big > 100);
+	TestTrue(TEXT("a big crown is drawn as big as it is today"), Reach >= Big * 97 / 100);
+	TestTrue(TEXT("(and not at the one radius as before)"), FixedReach < Big * 80 / 100);
 	return true;
 }
 

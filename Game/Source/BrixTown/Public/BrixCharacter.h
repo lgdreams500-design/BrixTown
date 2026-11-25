@@ -63,6 +63,7 @@ public:
 	FBrixBoardRules BoardRules;
 	FBrixBoards Boards;
 	void BoardKey();                 // Y: get on the board in use, and off it again, picking it up
+	void WeatherKey();               // K: try the next kind of weather (WLD-037; the slice's K)
 	void TestBoard(const FString& Kind);
 	// the character's look (CHR-001): the designed character's (ABrixDesigner), drawn from the next frame
 	void SetLook(const FBrixLook& L) { Rules.Player = L; }
@@ -122,6 +123,7 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UInputAction> WalletAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> QuestsAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> BoardAction;
+	UPROPERTY(Transient) TObjectPtr<UInputAction> WeatherAction;
 	UPROPERTY(Transient) TArray<TObjectPtr<UInputAction>> PageActions;
 	TArray<FString> PageNames;
 	float LookScale = 1.f;

@@ -42,7 +42,7 @@ public:
 	FString MarkAt(const FVector2D& At, const FString& Name = FString());   // UI-006, UI-012: from a click, or Properties
 
 	UPROPERTY(Config) int32 MapPixels = 2700;      // the big map's texture (the slice's baseHi)
-	UPROPERTY(Config) float TreeRadius = 2.5f;     // m, a tree's crown on the map [ASSUMPTION: the slice takes the day's from vegetation.json]
+	UPROPERTY(Config) float TreeRadius = 2.5f;     // m, a tree's crown on the map when today's trees did not load (each is drawn as big as its crown today)
 	UPROPERTY(Config) float MiniSize = 204.f;      // px across the round map
 	UPROPERTY(Config) float MiniSpan = 230.f;      // m across it
 	UPROPERTY(Config) float NameReach = 9.f;       // m: names over residents this near (play.js), on the player's level within NameRise

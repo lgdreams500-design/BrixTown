@@ -469,4 +469,45 @@ bool FCITY043_Roads::RunTest(const FString&)
 	return true;
 }
 
+// CITY-017, ART-001: a lawn is drawn in its own pattern, the slice's material 24 (play.js lawn(): every world.flat of it is
+// material 24, its grass and its longer edge; the tufts are plain faces), with vegetation.json "lawn"'s numbers
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY017_LawnsHaveTheirPattern, "BrixTown.World.CITY017_lawns_are_drawn_in_their_own_pattern",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FCITY017_LawnsHaveTheirPattern::RunTest(const FString&)
+{
+	FStreetsCase C;
+	if (!Load(*this, C)) return false;
+	FString Text;
+	TSharedPtr<FJsonObject> Veg;
+	if (!TestTrue(TEXT("vegetation.json reads"), FFileHelper::LoadFileToString(Text, *Root(TEXT("../World/rules/vegetation.json"))) && FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Veg) && Veg.IsValid())) return false;
+	const TSharedPtr<FJsonObject> L = Veg->GetObjectField(TEXT("lawn"));
+	TestEqual(TEXT("the patches' size"), C.Today.PatchM, L->GetNumberField(TEXT("patch_m")));
+	TestEqual(TEXT("the mowing stripes' width"), C.Today.StripeM, L->GetNumberField(TEXT("stripe_m")));
+	TestEqual(TEXT("the stripes' strength"), C.Today.Stripe, L->GetNumberField(TEXT("stripe")));
+	TestEqual(TEXT("the clover"), C.Today.Clover, L->GetNumberField(TEXT("clover")));
+	TestEqual(TEXT("the daisies"), C.Today.Daisies, L->GetNumberField(TEXT("daisies")));
+	TestEqual(TEXT("the daisies' colour"), C.Today.DaisyColor.X, L->GetArrayField(TEXT("daisy_color"))[0]->AsNumber());
+	TestEqual(TEXT("three tones"), C.Today.LawnTones.Num(), 3);
+	int32 Lawns = 0, Flats = 0, Wrong = 0;
+	for (const FBrixBlock& B : C.City.Blocks)
+		for (const FBrixLot& Lot : B.Lots)
+		{
+			if (!Lot.IsOpen() || Lot.Kind != TEXT("garden")) continue;
+			++Lawns;
+			TArray<FBrixShape> S;
+			BrixLawnShapes(Lot.Min.X, Lot.Min.Y, Lot.Max.X, Lot.Max.Y, .14, BrixSlice::Grass * 1.08, B, true, C.Today, S);
+			for (const FBrixShape& Sh : S)
+			{
+				const bool bFlat = Sh.Kind == FBrixShape::Flat;
+				Flats += bFlat ? 1 : 0;
+				Wrong += bFlat != Sh.bLawn ? 1 : 0;
+			}
+		}
+	AddInfo(FString::Printf(TEXT("%d garden lawns, %d faces in the lawn's pattern"), Lawns, Flats));
+	TestTrue(TEXT("there are garden lawns"), Lawns > 20);
+	TestEqual(TEXT("each lawn's grass and four edge bands"), Flats, Lawns * 5);
+	TestEqual(TEXT("faces in the lawn's pattern that are not the lawn, or lawn that is not"), Wrong, 0);
+	return true;
+}
+
 #endif
