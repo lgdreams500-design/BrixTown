@@ -91,6 +91,18 @@ public:
 	TArray<FBrixLook> CrewLooks;        // the repair crews' two looks (smash.js crewLook)
 	TArray<FBrixLook> CoatLooks;        // per resident, today's coat over their clothes (CITY-077), made when first needed
 	TArray<int8> CoatMade;              // 0 not yet, 1 today's, 2 a wet day's
+	// snow (WLD-070, WLD-071): how much settles on people out in it while it snows; their footprints in lying snow
+	UPROPERTY(Config) float PeopleSnow = 0.55f;
+	UPROPERTY(Config) float PrintDistance = 30.f;
+	UPROPERTY(Config) float MarkLift = 0.012f;   // m: marks in the snow this far above the ground      // m: footprints drawn behind walkers this near the camera
+	UPROPERTY(Config) int32 MaxPlayerSteps = 400;      // the player's own footprints kept this visit
+	UPROPERTY(Config) FLinearColor SnowTone = FLinearColor(0.80f, 0.88f, 1.0f);      // lying snow (as M_Greybox's) ...
+	UPROPERTY(Config) FLinearColor PressedSnow = FLinearColor(0.42f, 0.48f, 0.60f);  // ... and pressed down by a foot or a tyre
+	UPROPERTY() TObjectPtr<UProceduralMeshComponent> Prints;
+	TArray<struct FBrixPrint> PlayerSteps;            // where the player stepped, Age the minute they did
+	FVector2D LastStep = FVector2D::ZeroVector;
+	TArray<float> SlotSnow;
+	float SnowOnPeople = 0.f, FigureSnow = -1.f;
 	double TickMs() const { return TickFrames ? TickSeconds * 1000.0 / TickFrames : 0.0; }   // the people's own time a frame, on average
 	void ResetTickTime() { TickSeconds = 0; TickFrames = 0; for (double& P : Parts) P = 0; }
 	// the time a frame by part: where everyone is, placing and the far figures' boxes, building bodies, uploading them, the far mesh

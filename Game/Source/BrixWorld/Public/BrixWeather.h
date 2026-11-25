@@ -3,6 +3,9 @@
 #include "CoreMinimal.h"
 #include "BrixBody.h"
 
+struct FBrixDay;
+struct FBrixTraffic;
+
 // The weather (WLD-014, WLD-037; ADR-0016) and people in it (CITY-077 to CITY-080; ADR-0020). The day's weather is
 // citysim.weather() for each six-hour slot (Game/Data/day.json "weather"); what it does to the light and the paving is
 // worked out from the clock and World/rules/sky.json alone (BrixWeatherNow, a port of world.weather_now(), checked by
@@ -26,6 +29,9 @@ struct BRIXWORLD_API FBrixWeatherRules
 	double Alpha = .26, Slant = .1, Speed = 9, Length = .8, WetDark = .4, WetSheen = .3, Puddles = .85, Ripples = 1, DryMinutes = 90;
 	// snow (WLD-070, ADR-0051): how the flakes look and fall, how fast it settles and melts, how white a full cover is
 	double SnowAlpha = .75, SnowSpeed = 1.1, SnowSway = .25, FlakeSize = .022, SettleMinutes = 120, MeltMinutes = 360, SnowCover = .9;
+	// tracks in the snow (WLD-071): how far behind a walker and a vehicle they show, how fast falling snow fills them in,
+	// how fast they fade, the least lying snow that takes them
+	double TrailM = 14, CarTrailM = 60, FillMinutes = 20, FadeMinutes = 90, MinLying = .15;
 };
 
 BRIXWORLD_API bool LoadBrixWeatherRules(const FString& SkyPath, FBrixWeatherRules& Out, FString& OutError);
@@ -40,6 +46,18 @@ struct BRIXWORLD_API FBrixWeatherNow
 // melting after, from the clock and the day's weather slots alone
 struct BRIXWORLD_API FBrixSnowNow { double Falling = 0, Lying = 0; };
 BRIXWORLD_API FBrixSnowNow BrixSnowNow(const FBrixWeatherRules& R, const TArray<FString>& DayWeather, double Minute, const FString& Trying = FString());
+
+// WLD-071: a mark in the snow, a footprint or a stretch of a tyre's track: where (x, z), the way it points, how long ago it
+// was made (game minutes) and how plain it still is (0 to 1: filled in by falling snow, faded with time)
+struct BRIXWORLD_API FBrixPrint { FVector2D Pos = FVector2D::ZeroVector, Dir = FVector2D(1, 0); double Age = 0, Strength = 1; };
+// how plain a mark Age minutes old is with snow Falling now and Lying (0 when too little lies)
+BRIXWORLD_API double BrixPrintStrength(const FBrixWeatherRules& R, double Age, double Falling, double Lying);
+// the footprints behind resident i, walking at minute M: one each Stride metres back along their route, left and right in
+// turn (Side metres off the line), as far as TrailM or the walk's start; none if they are not walking
+BRIXWORLD_API void BrixFootprints(const FBrixWeatherRules& R, const FBrixDay& Day, int32 i, double M, double Stride, double Side, double Falling, double Lying, TArray<FBrixPrint>& Out);
+// the tracks behind vehicle k at minute M: for each of its two wheel lines (Gauge metres apart), the points along where it
+// went, as far as CarTrailM, in pairs (each two a stretch of track)
+BRIXWORLD_API void BrixTyreTracks(const FBrixWeatherRules& R, const FBrixTraffic& Traffic, int32 k, double M, double Gauge, double Falling, double Lying, TArray<FBrixPrint>& Out);
 
 // world.weather_now(): DayWeather the day's four slots; Trying one kind for the whole day (a look at it), or empty.
 BRIXWORLD_API FBrixWeatherNow BrixWeatherNow(const FBrixWeatherRules& R, const TArray<FString>& DayWeather, double Minute, const FString& Trying = FString());
