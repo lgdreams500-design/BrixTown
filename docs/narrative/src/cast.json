@@ -109,7 +109,7 @@
    "story": ["Has carried one seeded loaf from the Stone Oven to Eastgate Mall every Saturday for six years, paid in cash by a man he is too professional to name. It is the only delivery he has never been late for. If you have worked his rounds since Errand runner, you can work out for yourself where that loaf goes."],
    "ties": [["tam", "secret", "the Saturday loaf"], ["noor", "trade", "her deliveries; she doesn't ask"]]},
 
-  {"id": "jai", "name": "Jai", "status": "live", "resident": "r0505", "color": "#5560a8",
+  {"id": "jai", "name": "Jai", "status": "live", "resident": "r1714", "color": "#5560a8",
    "career": "Keeper at the Old Town Museum", "career_id": "curator",
    "place": "Old Town Museum, by Market Square.",
    "quote": "Worth more than this building's roof. Please, it's ours.",

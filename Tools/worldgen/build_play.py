@@ -215,7 +215,8 @@ def life(w, city, plan, acts):
     shops = {k: next(n for n in range(len(lots_)) if probe.shop_kind(n) == k) for k in ("grocer", "kiosk", "arcade")}
     script = ec.check_script() + ec.outlet_script(probe)
     want = ec.run_script(ec.Economy(e, lots_, visits, staff, goods), script, shops)
-    return dict(economy={k: v for k, v in e.items() if k != "note"}, quests={k: v for k, v in w["quests"].items() if k != "note"},
+    return dict(economy={k: v for k, v in e.items() if k != "note"}, quests=dict({k: v for k, v in w["quests"].items() if k not in ("note", "exclusive")},   # the slice and, for now, Unreal run the starter lines only:
+                                                            quests={k: v for k, v in w["quests"]["quests"].items() if "line" not in v}),   # a career's story lines (QST-010) are in the Python rules so far
                 designer={k: v for k, v in w["designer"].items() if k != "note"}, goods=goods,
                 visits={str(k): [[t, i] for t, i in v] for k, v in visits.items()}, visit_acts=visit_acts,
                 staff={str(k): v for k, v in staff.items()}, checks=dict(script=script, shops=shops, want=want), reward_checks=reward_checks(w), achievements=achievement_rules(w),
@@ -241,8 +242,8 @@ def quest_script():
     return [["advance", 0, 440], ["newgame"], ["talking", "r0504"], ["act", "new_in_town", ["stage:bank"], "r0504"],
             ["check", None, 0, 0], ["open", "current"], ["check", None, 0, 0], ["buy", "grocer", "bread"], ["check", None, 0, 0],
             ["talking", "r0504"], ["act", "new_in_town", ["take:bread", "end:gift"], "r0504"], ["offers", "r0518"], ["offers", "r0408"],
-            ["act", "errand_runner", ["start"], "r0518"], ["check", "b_9_9_l7", 0, 0], ["talking", "r0505"],
-            ["act", "errand_runner", ["take:parcel", "stage:report"], "r0505"], ["act", "errand_runner", ["rep:5", "end:delivered"], "r0518"],
+            ["act", "errand_runner", ["start"], "r0518"], ["check", "b_9_9_l7", 0, 0], ["talking", "r1714"],
+            ["act", "errand_runner", ["take:parcel", "stage:report"], "r1714"], ["act", "errand_runner", ["rep:5", "end:delivered"], "r0518"],
             ["offers", "r0497"], ["advance", 0, 600], ["take", "shopping", 0], ["take", "parcel", 0], ["buyfor"], ["handover"],
             ["take", "parcel", 0], ["at", "frm"], ["advance", 0, 640], ["at", "to"], ["take", "shift", 0], ["at", "to"],
             ["advance", 0, 680], ["at", "to"], ["advance", 1, 500], ["take", "shift", 1], ["at", "to"], ["advance", 1, 900],

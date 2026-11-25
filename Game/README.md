@@ -809,6 +809,11 @@ a piece of furniture's own object in the menu (the slice draws it from furniture
 "-BrixLife=buy,grocer,jam;rent;setout,jam,250"`.
 
 ## Quests, jobs and rewards (QST-001 to QST-007, QST-009, SND-019 to SND-021; ADR-0012, ADR-0043)
+Not yet: a career's story lines (the Baker career and courting Mei, QST-010 to QST-015, ADR-0056). Their rules and data
+are in Python (`Tools/citysim/quests.py`, `World/rules/quests_story.json`) and played to every ending by test, but
+`BrixQuests` and `ABrixTalk` do not run them: `Game/Data/life.json` carries the four starter lines only. To build: facts
+and the needs on them, lines that open by talking to their giver, other speakers and lines nobody says, scenes at a
+place, lines taken again, money in a reply, owning a home asked of the estate, and a fixed run to compare with Python.
 The quest lines and daily jobs are the slice's (economy.js Quests, a port of `Tools/citysim/quests.py`): `BrixWorld/BrixQuests`
 reads them from World/rules/quests.json (in `Game/Data/life.json`), with stages whose goal is a talk, a place, a thing
 carried, the bank, money, the stall; endings that pay through the ledger from `sys:rewards` and change reputation; jobs

@@ -7235,7 +7235,7 @@
 },
 {
 "id": "r0262",
-"name": "Hari",
+"name": "Noor",
 "role": "shopkeeper",
 "home": "b_7_8_l0",
 "work": "b_7_7_l2",
@@ -7263,7 +7263,7 @@
 },
 {
 "id": "r0263",
-"name": "Edda",
+"name": "Pip",
 "role": "shopkeeper",
 "home": "b_7_8_l0",
 "work": "b_7_7_l2",
@@ -24844,7 +24844,7 @@
 },
 {
 "id": "r0899",
-"name": "Gia",
+"name": "Suvi",
 "role": "gardener",
 "home": "b_12_10_l1",
 "work": "b_12_10_l8",
@@ -28918,7 +28918,7 @@
 },
 {
 "id": "r1046",
-"name": "Kit",
+"name": "Tam",
 "role": "cafe",
 "home": "b_13_7_l8",
 "work": "b_16_5_l0",
@@ -42568,7 +42568,7 @@
 },
 {
 "id": "r1546",
-"name": "Yui",
+"name": "Vera",
 "role": "elder",
 "home": "b_7_7_l3",
 "work": null,
@@ -93882,7 +93882,7 @@
 },
 {
 "id": "r3419",
-"name": "Bo",
+"name": "Oda",
 "role": "elder",
 "home": "b_4_13_l91",
 "work": null,
@@ -109109,7 +109109,7 @@
 },
 {
 "id": "r3976",
-"name": "Kofi",
+"name": "Len",
 "role": "elder",
 "home": "b_4_13_l255",
 "work": null,
