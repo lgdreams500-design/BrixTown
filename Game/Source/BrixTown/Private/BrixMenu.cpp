@@ -371,6 +371,12 @@ TSharedRef<SWidget> ABrixLife::MenuPage(const FString& Id)
 				];
 			Section(FString::Printf(TEXT("Carried · %d kinds"), Keys.Num()), W);
 		}
+		if (FurnHeld.Num())   // INV-001: the furniture taken away in the designer, to place again in any home of yours (life.js belongingsTab())
+		{
+			TArray<TPair<FString, FString>> Fl;
+			for (const FBrixLayoutPiece& P : FurnHeld) Fl.Add({ P.Name, FString::Printf(TEXT("%.2f × %.2f m"), P.W, P.D) });
+			Section(FString::Printf(TEXT("Furniture · %d pieces · place them from the building designer's Furnish tab"), FurnHeld.Num()), Lines(Fl));
+		}
 		// CITY-100: the skateboards owned (life.js belongingsTab()), each with its top speed and how it goes, the one in use
 		// marked (in the hand or ridden); any other made the one in use
 		if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))

@@ -48,15 +48,30 @@ the district's palette; inside, each storey's walls and floor, and its rooms (BU
 close its doorway, fit between the walls it meets, make longer or shorter, move a quarter metre either way, paint in one of
 the district's inside colours or take down, and walls added east to west or north to south; drawn at once by `ABrixRooms`
 (`SetPlan`), checked (in the room, clear of the way in and the stairs, every room reached from the way in, play.js
-roomFor()) and priced line by line with the rest of the work. Each choice shows on the building at once
+roomFor()) and priced line by line with the rest of the work; and its furniture (Furnish, FURN-051, FURN-052, FURN-055;
+`BrixWorld/BrixFurnishPlan`, builder.js Furnish and play.js townPieces()): the storey's own pieces (the boxes the town
+furnished it with, grouped into pieces: chairs, cabinets, lamps, rugs; those on a wall stay) picked from a list and turned,
+moved a quarter metre at a time or put with your belongings; your belongings placed again; pieces of
+World/rules/furnishing.json added by room and line (bought; the mall's goods are bought at its outlets, FURN-064), drawn as
+the furniture kits' own meshes (a box its size where a piece has none yet); each checked (in the room, on the grid, under
+the ceiling, clear of the way in, the stairs and each other) and priced with the rest; what you take away is among the
+belongings (the menu's Belongings page). Each choice shows on the building at once
 (`ABrixTownActor::Repaint`: its instances folded away and the building built again); the work is priced line by line;
 what would stop it is said (builder.check()); Pay and build pays through the ledger (`sys:builders`) and the remodel is
 there at once (F-BLD-CONSTRUCT level 0, instant); Undo, Start again; Esc leaves it as it was. Remodels are kept in the
-save (`QST008_remodels_are_kept_in_the_save`), and room plans too (`QST008_room_plans_are_kept_in_the_save`);
+save (`QST008_remodels_are_kept_in_the_save`), room plans (`QST008_room_plans_are_kept_in_the_save`), and each storey's furniture and the pieces among the belongings
+(`QST008_furnishings_are_kept_in_the_save`); `FURN051_furnishing_matches_the_python` runs furnish.check_script() against
+Python's (the problems, the cost and the belongings after each edit);
 `BUILD021_room_plans_match_the_python` runs roomplan.check_script() against Python's and checks that every storey of flats'
-plan draws back the town's own walls. Ops for a shot: `tab,inside`, `storey,<f>`, `addwall,<x|z>`, `wall,<id>`, `door`, `close`. To see it in a test shot: `"-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4;remodel,b_9_6_l4;set,walls.*.plaster=peach;set,roof.tiles=slate;set,openings.frame=teal"`
-(and `;pay` to build it). Shots: `Art/StyleTests/unreal_designer_39/`. Not yet: dragging a wall with the mouse (it moves by buttons), the rooms of a building not drawn inside, furnishing in the
-designer (FURN-051, FURN-052, FURN-055), the window class's sizes, balconies, keystones, corner stones
+plan draws back the town's own walls. Ops for a shot: `tab,inside`, `storey,<f>`, `addwall,<x|z>`, `wall,<id>`, `door`, `close`; `tab,furnish`, `piece,<id>`,
+`turnpiece,<deg>`, `movepiece,<dx>,<dz>`, `takeaway`, `addpiece,<kind>,<line>`, `placeheld,<n>`. To see it in a test shot: `"-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4;remodel,b_9_6_l4;set,walls.*.plaster=peach;set,roof.tiles=slate;set,openings.frame=teal"`
+(and `;pay` to build it). Shots: `Art/StyleTests/unreal_designer_39/`. Not yet: dragging a wall or a piece with the mouse (they move by buttons), picking a piece in the view, the town pieces' own
+names (the slice tags them; here they are named by their shape), the narrow layout D grid of objects for the pieces (a list
+of names and prices), the planned homes' furniture in the designer (as in the slice, only buildings furnished at their
+places), furniture sold with a unit (F-PROP-FURNISH), the rooms of a building not drawn inside; a storey with many pieces
+(a cafe's chairs) gives a long list that scrolls, the picked piece's buttons below it; a town piece placed from another
+building is drawn as a box its size; a building drawn again from a design (each choice tried, each remodel paid) leaves
+its old instances folded away under the ground until the town is next built (a few hundred each time; ADR-0052) (FURN-051, FURN-052, FURN-055), the window class's sizes, balconies, keystones, corner stones
 and wall lanterns drawn from the design (offered, priced and kept, but laid by the kit's rules), the awning in the
 design's accent, the cut-open storey (BUILD-020), dragging the view; building new on a plot (BUILD-008: F-MAP-PLOTS is at
 level 0, no plots).
@@ -332,7 +347,8 @@ tenant, rent and residents by unit id, listings, tenancies, mortgages, the indic
 opens the market on loading). Remodels and room plans are in the save (life.js remodels and plans:
 each building's design and each storey's walls as paid for, drawn again on loading). The save keeps the skateboards owned
 (with the economy, as economy.py save() keeps them) and the one in use (life.js save()'s boards), which comes back in the
-hand (CITY-100). Not yet in the save: furnishing plans (not in this build's designer yet); and a server keeping it (PH2).
+hand (CITY-100). Furnishings (each storey's furniture) and the furniture among the belongings are in the save too. Not
+yet in the save: a server keeping it (PH2).
 
 ## The wardrobe (CHR-014 to CHR-016; F-CHR-WARDROBE 1, with the owned clothes the owner asked for)
 U (or the menu) opens the Wardrobe page as the slice's life.js does: the page stands to one side, the town is not dimmed,
@@ -441,7 +457,10 @@ mesh of translucent drops (`/Game/Weather/M_Rain`, made by `Tools/unreal/make_ra
 it darkens, takes a faint sheen and holds puddles here and there, rings spread where the drops land (they tilt the
 surface, so the puddles' reflections break up), and walls go a little darker; it dries over `dry_minutes` after the
 rain (M_Greybox's WetDark, WetSheen, Puddles and Ripples, from `Tools/unreal/greybox_wet.py` and
-`greybox_ripples.hlsl`). Residents wear what citysim gives them today (day.json "wear"): a coat,
+`greybox_ripples.hlsl`). None of it, nor lying snow, reaches under a roof: indoor floors, stairs and furniture stay dry
+(a roof map of every building's footprint and height, `BrixRoofMap`, half-metre cells, M_Greybox's Roofs and RoofsAt;
+`RoofCell=0` turns it off to compare; `WLD037_rain_and_snow_stay_out_from_under_roofs`; `dry_indoors.png` against
+`dry_indoors_before.png`, the street still wet in `wet_outdoors.png`). Residents wear what citysim gives them today (day.json "wear"): a coat,
 and out in the rain an umbrella up, else the hood up, else a hand over the head while walking, with a hurried walk or a
 run for cover; nothing but the coat indoors, sheltering or under a roof (`CITY080_residents_are_dressed_for_the_rain`).
 The look of coats, hoods and umbrellas is still to be approved (ADR-0020). `-BrixWeather=<clear|cloud|rain|fog|snow>`
@@ -458,7 +477,8 @@ doors (the player too) is darker by wet x sky.json `wet_dark` x `PeopleWet` (0.3
 everything out of doors so), drying as the paving dries, none indoors or in a vehicle (M_People's custom primitive data 1,
 `BrixWetClothes`, `WLD037_people_out_in_the_rain_are_a_little_darker`; `wet_clothes.png` against `wet_clothes_before.png`,
 the shirt 2 to 3 % darker in the picture through the rain's haze). Not yet: the rain's sound (the slice has none either),
-snow seen from indoors.
+snow seen from indoors; round a designed house a strip of its garden about half a metre wide stays dry, as the
+roof map (and the rain's roof test) take the house's whole lot, not the house itself, as under a roof.
 
 ## Snow (WLD-069, WLD-070, CITY-107; ADR-0051)
 At the owner's word (2026-11-25): it snows in Winter only, by its own chance per six-hour slot (`snow_chance` in
@@ -785,7 +805,8 @@ market is kept in the save. To see it in a test shot: `-BrixCounter=lark "-BrixL
 `-BrixMenu=property "-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4;buy_cheapest,house,lark,25,60;rent_cheapest,flat"`,
 `-BrixMapZoom=5,912,624 "-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l4"` (ops: `give,<chips>` test money into the
 current account, `days,<n>` the clock moved on, `buy_cheapest,<kind>,<agent>[,<deposit %>,<term>]`, `rent_cheapest,<kind>`,
-`buy_lot,<lot id>`). Shots: `Art/StyleTests/unreal_estate_38/`. Not yet: the residents who moved house walking to their new
+`buy_lot,<lot id>`). Shots: `Art/StyleTests/unreal_estate_38/`. The slice's own estate.js is checked against the same
+Python run by `Prototype/play/estate_selftest.html` (headless Edge with `--dump-dom` prints PASSED or what differs). Not yet: the residents who moved house walking to their new
 home (they keep their day at the old one), the furniture that goes with a unit sold (F-PROP-FURNISH), the board's own
 sign on the wall (it is words over the door).
 
@@ -910,6 +931,8 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY076_residents_shout_at_a_smash` | CITY-076 |
 | `BrixTown.World.WLD037_the_weather_is_worked_out_as_world_py_does` | WLD-037 |
 | `BrixTown.World.WLD037_the_weather_key_steps_through_the_kinds` | WLD-037 |
+| `BrixTown.World.WLD037_people_out_in_the_rain_are_a_little_darker` | WLD-037 |
+| `BrixTown.World.WLD037_rain_and_snow_stay_out_from_under_roofs` | WLD-037, WLD-070 |
 | `BrixTown.World.CITY080_residents_are_dressed_for_the_rain` | CITY-077, CITY-079, CITY-080 |
 | `BrixTown.World.WLD036_the_clouds_are_where_world_py_puts_them` | WLD-035, WLD-036 |
 | `BrixTown.World.WLD070_snow_falls_and_lies_as_world_py_says` | WLD-069, WLD-070 |
@@ -982,6 +1005,8 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.QST008_remodels_are_kept_in_the_save` | QST-008, BUILD-005 |
 | `BrixTown.World.BUILD021_room_plans_match_the_python` | BUILD-021 to BUILD-023 |
 | `BrixTown.World.QST008_room_plans_are_kept_in_the_save` | QST-008, BUILD-021 |
+| `BrixTown.World.FURN051_furnishing_matches_the_python` | FURN-051, FURN-052, FURN-055, FURN-064, INV-001 |
+| `BrixTown.World.QST008_furnishings_are_kept_in_the_save` | QST-008, FURN-051, INV-001 |
 | `BrixTown.World.PROP021_the_market_matches_the_python` | PROP-010 to PROP-022, BANK-002, FURN-063 |
 | `BrixTown.World.PROP009_every_building_is_carved_into_owned_units` | PROP-009, PROP-010 |
 | `BrixTown.World.PROP018_the_money_supply_holds_and_a_saved_market_goes_on` | PROP-018, PROP-021, QST-008 |

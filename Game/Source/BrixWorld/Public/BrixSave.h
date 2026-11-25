@@ -38,6 +38,8 @@ struct BRIXWORLD_API FBrixSaveGame
 	TSharedPtr<FJsonObject> Econ, Quests;
 	TSharedPtr<FJsonObject> Estate;              // estate.js save(): the property market (PROP-021); none in a save from before it
 	TSharedPtr<FJsonObject> Plans;               // life.js plans: lot id -> storey -> its inner walls as replanned and paid for (BUILD-021)
+	TSharedPtr<FJsonObject> Furnishings;         // life.js furnishings: lot id -> storey -> its pieces as placed and paid for (FURN-051)
+	TArray<TSharedPtr<FJsonValue>> Furniture;    // life.js belongings: the pieces taken away, to place again (INV-001)
 	TSharedPtr<FJsonObject> Remodels;            // life.js remodels: lot id -> the building's design as remodelled and paid for (BUILD-005)
 	TArray<TSharedPtr<FJsonValue>> Outfits;
 	TMap<FString, int32> Feats;                  // achievement -> the day it was earned (QST-009)
