@@ -320,9 +320,10 @@ season), crickets from 21:00 to 05:00, the nearest fountain within 22 m, birds b
 player, 18 a minute and 40 near a garden, none while driving. The slice has no sound for the weather, so there is none
 here either. The interface and interactions (SND-009): a tick when E offers something new, a chime as a talk opens, a
 tick for each answer chosen, a falling chime as it closes, the jump, and getting into a car (its door, then the
-starter) and out of it (the door). N turns all sound off and on, the talk's voices too (SND-013); it is remembered
-between visits in the user's settings (`Saved/Config/.../GameUserSettings.ini`, `[/Script/BrixTown.BrixSound]
-bSoundOn`). A test shot logs how many of each sound were played and how long each loop was heard (`sounds played in
+starter) and out of it (the door). N turns all sound off and on, the talk's voices too (SND-013): it flips the game
+menu's own Sound switch, so the menu shows it and keeps it between visits with its other settings, and says "Sound on" or
+"Sound off" as the slice does. The menu's levels scale the mix as the slice's do (UI-009): All sound everything, and
+Music, Street and weather, Voices, and Actions and the interface each their part. A test shot logs how many of each sound were played and how long each loop was heard (`sounds played in
 all: ...`, `loops heard in all: ...`); `-BrixSoundToggle` turns the sound off and on again during it.
 Indoors (SND-007): while the player is in a building (the game mode's RoomAt) what is outside (the street, crickets,
 fountains, engines, the trams, birds) comes through a 650 Hz low-pass at 0.4 of its level, the room has its tone and steps
