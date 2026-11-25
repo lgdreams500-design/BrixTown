@@ -6,6 +6,7 @@
 #include "BrixCity.h"
 #include "BrixDay.h"
 #include "BrixGameMode.h"
+#include "BrixMallActor.h"
 #include "BrixLook.h"
 #include "BrixTalkActor.h"
 #include "BrixThingWidget.h"
@@ -325,7 +326,7 @@ void ABrixLife::BuildUI()
 		.HAlign(HAlign_Center).VAlign(VAlign_Center).Padding(FMargin(16, 40))
 		.Visibility_Lambda([this]() { return !Panel.IsEmpty() ? EVisibility::Visible : EVisibility::Collapsed; })
 		[
-			SNew(SBox).WidthOverride_Lambda([this]() { return Panel == TEXT("shop") ? (float)BuyMenu.WidePanelPx : 620.f; })
+			SNew(SBox).WidthOverride_Lambda([this]() { return IsShop() ? (float)BuyMenu.WidePanelPx : 620.f; })
 			[
 				BrixLook::Card(SAssignNew(PanelBody, SBox), FMargin(22, 18, 22, 14), BrixLook::Stone(), 18.f)
 			]
@@ -339,7 +340,11 @@ void ABrixLife::BuildUI()
 // what the offer over a counter says (life.js hud()): nothing for a mall, whose outlets each have their own
 FString ABrixLife::CounterWords(int32 n) const
 {
-	if (!E || n < 0) return FString();
+	if (!E) return FString();
+	int32 On = -1;
+	FString U;
+	if (OutletHere(On, U)) { const FBrixOutlet* O = E->Outlet(On, U); return TEXT("Buy at ") + (O ? O->Name : U); }   // each outlet has its own counter (WLD-066)
+	if (n < 0) return FString();
 	if (n == E->BankLot) return TEXT("Bank counter");
 	if (n == E->MarketLot) return TEXT("Your market stall");
 	if (!E->ShopKind(n).IsEmpty() && !E->Outlets.Contains(n)) return TEXT("Buy and sell at ") + Lots[n].Name;
@@ -348,7 +353,10 @@ FString ABrixLife::CounterWords(int32 n) const
 
 void ABrixLife::CounterKey()
 {
-	if (Panel == TEXT("bank") || Panel == TEXT("shop") || Panel == TEXT("stall")) { Close(); return; }
+	if (Panel == TEXT("bank") || Panel == TEXT("shop") || Panel == TEXT("stall") || Panel == TEXT("outlet")) { Close(); return; }
+	int32 On = -1;
+	FString U;
+	if (OutletHere(On, U)) { PanelUnit = U; Open(TEXT("outlet"), On); return; }   // each outlet has its own counter (WLD-066, ECO-013)
 	const int32 n = CounterHere();
 	if (n >= 0 && E->Outlets.Contains(n)) { Toast(TEXT("Walk into one of ") + Lots[n].Name + TEXT("'s outlets to buy there: each has its own goods.")); return; }
 	if (n < 0) { Toast(TEXT("No counter here. Shops, cafés, the bank and the market square have one.")); return; }
@@ -437,6 +445,17 @@ void ABrixLife::Draw()
 		Sub = E->R.Shop(E->ShopKind(PanelLot))->Name + TEXT(" · restocks at ") + UiHhmm(E->R.RestockMinute);
 		Hint = FString(TEXT("← → ↑ ↓  choose    Enter  ")) + (Side == TEXT("sell") ? TEXT("sell") : TEXT("buy")) + TEXT("    Esc  close");
 	}
+	else if (Panel == TEXT("outlet"))   // one outlet of a mall (life.js draw(), kind "outlet")
+	{
+		const FBrixOutlet* O = E->Outlet(PanelLot, PanelUnit);
+		const ABrixGameMode* GM = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+		const FBrixMall* MD = GM && GM->Mall ? GM->Mall->Data() : nullptr;
+		const FString* Label = MD && O ? MD->KindLabel.Find(O->Kind) : nullptr;
+		Title = O ? O->Name : PanelUnit;
+		Sub = (Label && !Label->IsEmpty() ? *Label : FString(TEXT("Outlet"))) + TEXT(" · ") + Lots[PanelLot].Name + (O && O->Level ? FString::Printf(TEXT(", floor %d"), O->Level) : FString(TEXT(", ground floor")))
+			+ TEXT(" · restocks at ") + UiHhmm(E->R.RestockMinute);
+		Hint = TEXT("← → ↑ ↓  choose    Enter  buy    Esc  close");
+	}
 	else if (Panel == TEXT("quests")) { Title = TEXT("Quests"); Sub = FString::Printf(TEXT("Day %d · J"), E->Day + 1); }
 	else if (Panel == TEXT("stall")) { Title = Lots[PanelLot].Name; Sub = TEXT("Your market stall · residents shop here ") + UiHhmm(E->R.StallOpen) + TEXT(" to ") + UiHhmm(E->R.StallClose); }
 	else { Title = TEXT("Money"); Sub = PlayerName + TEXT(" · I"); }
@@ -444,6 +463,7 @@ void ABrixLife::Draw()
 		Body->AddSlot().AutoHeight().Padding(0, 0, 0, 8)[ SNew(SBorder).BorderImage(BrixLook::Round(UiMsgBack, 10.f)).Padding(FMargin(12, 7))[ UiText(Msg, 15) ] ];
 	if (Panel == TEXT("bank")) BankPanel(Body);
 	else if (Panel == TEXT("shop")) ShopPanel(Body);
+	else if (Panel == TEXT("outlet")) OutletPanel(Body);
 	else if (Panel == TEXT("stall")) StallPanel(Body);
 	else if (Panel == TEXT("quests")) QuestsPanel(Body);
 	else WalletPanel(Body);
@@ -610,6 +630,20 @@ bool ABrixLife::RunOps(const FString& Ops)
 bool ABrixLife::OpenCounterAt(const FString& What)
 {
 	if (!E) return false;
+	const ABrixGameMode* GM = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (GM && GM->Mall && GM->Mall->Data())   // an outlet of Eastgate, by its unit's id: stood a way into its room, facing its back wall
+		for (const FBrixOutletRoom& R : GM->Mall->Data()->Rooms)
+			if (R.Id == What)
+			{
+				APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);
+				if (!Me) return false;
+				const double a = (R.A0 + R.A1) / 2, v = FMath::Min(R.D * .5, 1.6);
+				const FVector2D At(R.X + R.T.X * a - R.N.X * v, R.Z + R.T.Y * a - R.N.Y * v);
+				Me->SetActorLocation(FVector(At.X * CmPerM, At.Y * CmPerM, (R.Fy + 1.0) * CmPerM), false, nullptr, ETeleportType::TeleportPhysics);
+				if (APlayerController* PC = Cast<APlayerController>(Me->GetController())) PC->SetControlRotation(FRotator(-10.0, FMath::RadiansToDegrees(FMath::Atan2(-R.N.Y, -R.N.X)), 0));
+				CounterKey();
+				return IsOpen();
+			}
 	int32 n = What == TEXT("bank") ? E->BankLot : What == TEXT("market") ? E->MarketLot : E->LotIndex.FindRef(What, -1);
 	for (int32 k = 0; n < 0 && k < Lots.Num(); ++k) if (E->ShopKind(k) == What && !E->Outlets.Contains(k)) n = k;   // the first shop of that kind
 	if (n < 0) return false;
@@ -713,6 +747,52 @@ void ABrixLife::ShopPanel(TSharedRef<SVerticalBox> Body)
 	if (!S.Buys.Num()) Body->AddSlot().AutoHeight().Padding(0, 6, 0, 0)[ UiText(TEXT("Cafés do not buy anything."), 15, UiDim) ];
 	const int32 r = E->RepWithLot(n);
 	if (r) Body->AddSlot().AutoHeight().Padding(0, 6, 0, 0)[ UiText(r > 0 ? TEXT("They know you here: prices are a little lower.") : TEXT("They don't trust you here: prices are higher."), 15, UiDim) ];
+}
+
+// The outlet of a mall the player stands in, on whichever floor (life.js outletHere(); outlets.js at(), WLD-066)
+bool ABrixLife::OutletHere(int32& OutLot, FString& OutUnit) const
+{
+	if (!E) return false;
+	const ABrixGameMode* GM = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	const APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);
+	if (!GM || !GM->Mall || !GM->Mall->Data() || !Me) return false;
+	const FVector Feet = Me->GetActorLocation() - FVector(0, 0, 90.f);
+	const FBrixOutletRoom* R = GM->Mall->OutletAt(Feet);
+	const int32 n = E->LotIndex.FindRef(GM->Mall->Data()->LotId, -1);
+	if (!R || n < 0 || !E->Outlet(n, R->Id)) return false;
+	OutLot = n;
+	OutUnit = R->Id;
+	return true;
+}
+
+// ECO-013, ECO-014: one outlet of a mall, its own goods, stock and prices (life.js draw(), kind "outlet"; buyAt())
+void ABrixLife::OutletPanel(TSharedRef<SVerticalBox> Body)
+{
+	const int32 n = PanelLot;
+	const FString U = PanelUnit;
+	const FBrixOutlet* O = E->Outlet(n, U);
+	if (!O) return;
+	const ABrixGameMode* GM = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	const FBrixMall* MD = GM && GM->Mall ? GM->Mall->Data() : nullptr;
+	const FString Sign = MD ? MD->KindSign.FindRef(O->Kind) : FString();
+	const FString Band = BuyMenu.Colours.Contains(Sign) ? Sign : BuyMenu.Bands.FindRef(TEXT("mall"));
+	Body->AddSlot().AutoHeight()[ PurseLine() ];
+	Body->AddSlot().AutoHeight()[ UiHeading(TEXT("Buy")) ];
+	TArray<FWare> Things;
+	for (const FString& G : E->OutletSells(n, U)) { const FBrixEconomyRules::FGood Gd = E->Good(G); Things.Add(Ware(G, Gd.Name, E->OutletPrice(n, U, G), Gd.Goes, E->OutletStock(n, U, G), Band)); }
+	FGridOpts Op;
+	Op.Id = FString::Printf(TEXT("outlet:%d:%s"), n, *U);
+	Op.StockLabel = TEXT("In stock");
+	Op.Buy = [this, n, U](const FWare& W, FString& Said)
+	{
+		int64 P = 0;
+		if (!E->BuyAt(n, U, W.Id, &P)) return false;
+		const FBrixEconomyRules::FGood Gd = E->Good(W.Id);
+		Said = TEXT("Bought ") + Gd.Name.ToLower() + TEXT(" for ") + Format(P) + (Gd.Goes == TEXT("home") ? TEXT(". It is with your belongings (G), to place at home.") : Gd.Goes == TEXT("wear") ? TEXT(". It is in your wardrobe (U).") : TEXT("."));
+		return true;
+	};
+	Body->AddSlot().AutoHeight().Padding(0, 6, 0, 0)[ Grid(Things, Op) ];
+	Body->AddSlot().AutoHeight().Padding(0, 6, 0, 0)[ UiText(TEXT("Things for the home go to your belongings (G): place them from the Furnish tab of the building designer, in any home of yours. Clothes go to your wardrobe (U). Outlets do not buy things back; what you carry can be sold on your market stall."), 15, UiDim) ];
 }
 
 // layout B: a grid of the things, each drawn as an object with its price and where it goes, and beside it the chosen one

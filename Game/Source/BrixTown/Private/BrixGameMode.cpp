@@ -174,6 +174,12 @@ void ABrixGameMode::StartPlay()
 		{
 			if (Insides)   // at home inside: in bed, on the sofa (CITY-013, WLD-053)
 				UE_LOG(LogTemp, Display, TEXT("Brix Town: %d of the day's stays at home are in a bed or on a seat"), SeatBrixDayIndoors(*Today, *City, *Insides, FBrixDoorRules::FromConfig()));
+			if (Mall && Mall->Data())   // Eastgate's keepers, guards, janitors and visitors at their places (CITY-105, CITY-106)
+			{
+				int32 Mi = 0, k = 0;
+				for (const FBrixBlock& B : City->Blocks) for (const FBrixLot& L : B.Lots) { if (L.Id == Mall->Data()->LotId) Mi = k; ++k; }
+				UE_LOG(LogTemp, Display, TEXT("Brix Town: %d of the day's stays in %s are at its places"), SeatBrixDayInMall(*Today, *Mall->Data(), Mi), *Mall->Data()->Name);
+			}
 			People = GetWorld()->SpawnActor<ABrixPeople>();
 			People->Start(*City, Today, Cars ? Traffic : nullptr);
 			UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents, their day %d (%s, %s)"), Today->Num(), Today->Day, *Today->Weekday, *Today->Season);

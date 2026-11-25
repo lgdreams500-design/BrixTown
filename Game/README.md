@@ -75,7 +75,21 @@ as the owner asked. Tests: `WLD058_eastgate_is_built_as_the_slice_builds_it` (ev
 400 with a checksum each and 9,600 calls one by one, the signs' words, the 249 lamps; `Tools/unreal/mall_values.py` runs the
 slice's code in headless Edge into `Tests/values/mall_city_01.json`: run it after changing court.js, shell.js, outlets.js or the
 block file), `WLD066_every_outlet_has_its_room`, `WLD062_moving_stairs_carry_and_lifts_go_between_floors`,
-`WLD058_only_eastgate_has_an_inside`. `-BrixInside=b_16_5_l0` stands the player 30 m in from the south door (`MallInside`),
+`WLD058_only_eastgate_has_an_inside`.
+Buying at each outlet (WLD-066, ECO-013, ECO-014): standing in an outlet's room, on any floor (`BrixOutletAt`, outlets.js
+at()), the offer names that outlet ("B Buy at Thimble & Thread") and B opens its own counter as life.js does: its name, its
+kind, the mall and the floor, its goods from World/rules/mall_goods.json in the buy menu's layout B with their stock and
+today's prices (the economy's outlets, ECO-013), each paid through the ledger; a thing for the home goes to the belongings,
+clothes to the wardrobe. On the walks, in the court and in the corner stores B says to walk into an outlet. Who is there
+(CITY-105, CITY-106, WLD-067, WLD-068; `SeatBrixDayInMall`, play.js resident()): each of today's 189 keepers (shop owners and
+food outlet owners) stands behind their outlet's counter on its floor facing the walk, the six guards (in uniform and cap)
+and six janitors at their posts, the residents who come to shop before a counter and those who come to eat at a food
+outlet's table or on a court bench, at their floor's height; the mall's residents are drawn while the camera is in it, as in
+any building. Tests: `CITY105_every_outlet_has_a_counter_its_keeper_stands_at` (every outlet's one keeper's place in its
+room behind the counter, the counter drawn as today's keeper works there, each keeper of the day stood at it facing out; the
+guards and janitors at their posts), `CITY106_visitors_shop_at_the_counters_and_eat_at_the_tables` (the day's 43 stays
+shopping and 195 eating, on all three floors, at their places). `-BrixCounter=<an outlet's unit id>` (b_16_5_u4 is Thimble &
+Thread) stands the player in it and opens its counter. `-BrixInside=b_16_5_l0` stands the player 30 m in from the south door (`MallInside`),
 `-BrixWalkIn=b_16_5_l0` walks them in, `-BrixLift=b_16_5_l0` rides the west lift to the top floor, `-BrixNoMall` builds it as
 the town's box again. At High: 28 to 44 frames a second inside, 21 riding the moving stairs (noisy: other sessions were running
 Unreal). Not yet: sitting on the benches and rides, the ribbon wall's lit joints and the openings' lanterns at night, the
@@ -569,8 +583,7 @@ Enter buys. What each thing shows is world.buy_menu_shows (`BrixWorld/BrixBuyMen
 cloth in the clothing's colour) are the boxes of World/rules/buy_menu.json, drawn by `SBrixThing` with Slate's own
 triangles, lit as the slice's shader lights them. At the market square B opens the player's stall: rent it for the day,
 set out up to six things at the player's own prices, take them back; residents coming to the market buy as the rules say,
-paid through the ledger, and what is left comes home at midnight. Not yet: a mall's outlets (the rules are ported; their
-counters are inside the mall), the narrow layout D (for the building designer), the icons in the dots and chips, a
+paid through the ledger, and what is left comes home at midnight. Eastgate Mall's outlets each have their own counter (see Eastgate Mall). Not yet: the narrow layout D (for the building designer), the icons in the dots and chips, a
 good's own Blender model in place of its stand-in, and a resident behind each counter. To see one in a test shot:
 `-BrixCounter=grocer "-BrixLife=buy,grocer,bread"` (a shop's kind or lot id), or `-BrixCounter=market
 "-BrixLife=buy,grocer,jam;rent;setout,jam,250"`.
@@ -781,3 +794,5 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD058_only_eastgate_has_an_inside` | WLD-058 |
 | `BrixTown.World.WLD062_moving_stairs_carry_and_lifts_go_between_floors` | WLD-062 |
 | `BrixTown.World.WLD066_every_outlet_has_its_room` | WLD-066 |
+| `BrixTown.World.CITY105_every_outlet_has_a_counter_its_keeper_stands_at` | CITY-105, WLD-067 |
+| `BrixTown.World.CITY106_visitors_shop_at_the_counters_and_eat_at_the_tables` | CITY-106, WLD-068 |

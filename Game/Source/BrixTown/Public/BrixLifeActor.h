@@ -67,7 +67,7 @@ public:
 	const TMap<FString, int32>& Achievements() const { return Feats; }   // earned, and on which day (QST-009)
 	bool ArrowKey(int32 Dx, int32 Dy);    // at a shop's counter: choose the next thing that way
 	bool EnterKey();                      // and buy (or sell) it
-	bool IsShop() const { return Panel == TEXT("shop"); }
+	bool IsShop() const { return Panel == TEXT("shop") || Panel == TEXT("outlet"); }
 	void Close();
 	void Toast(const FString& Text);
 	void ToggleSound();                   // N (SND-013): the Sound switch of the settings flipped, applied, kept, and said
@@ -195,6 +195,9 @@ private:
 	// the open panel (life.js panel)
 	FString Panel, Msg;
 	int32 PanelLot = -1;
+	FString PanelUnit;                    // the outlet of a mall whose counter is open (ECO-013)
+	bool OutletHere(int32& OutLot, FString& OutUnit) const;   // the outlet the player stands in, on whichever floor (life.js outletHere())
+	void OutletPanel(TSharedRef<SVerticalBox> Body);
 	int32 MoveFrom = 0, MoveTo = 1, LoanSize = 0, LoanTerm = 0;
 	FString Amount = TEXT("5.00");
 	FString Side = TEXT("buy");           // a shop's tab: what it sells, or what it buys

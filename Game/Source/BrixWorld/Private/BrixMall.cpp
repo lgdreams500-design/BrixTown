@@ -1,5 +1,6 @@
 #include "BrixMall.h"
 
+#include "BrixDay.h"
 #include "BrixStreets.h"
 
 #include "Dom/JsonObject.h"
@@ -1350,6 +1351,7 @@ namespace
 					if (any) open.Add(u.Id);
 				}
 			}
+			M.Staffed.Append(open);
 			for (const FFront& fr : Lv.Fronts)
 			{
 				const FFrame S = MakeFrame(fr.A, fr.B, [&](double x, double z) { return R.Walk(x, z); });
@@ -1594,6 +1596,7 @@ bool BuildBrixMall(const FJsonObject& Lot, FBrixMall& Out, FString& OutError)
 	FOut o(Out);
 	FBuild B(L, o, Out);
 	Out.F = B.F;
+	for (const TPair<FString, FSpec>& K : L.Outlets) { Out.KindLabel.Add(K.Key, K.Value.Label); Out.KindSign.Add(K.Key, K.Value.Sign); }
 	B.Hall();
 	B.Skin();
 	for (const FDome& d : L.Domes) B.Egg(d, 0, false);
@@ -1623,6 +1626,36 @@ bool LoadBrixMall(const FString& CityDir, FBrixMall& Out, FString& OutError)
 	}
 	OutError = TEXT("no mall with its inside built in the block files");
 	return false;
+}
+
+int32 SeatBrixDayInMall(FBrixDay& Day, const FBrixMall& M, int32 MallLot)
+{
+	TArray<const FBrixMallCall*> Spots;
+	for (const FBrixMallCall& C : M.Calls) if (C.Kind == FBrixMallCall::Spot) Spots.Add(&C);
+	int32 Placed = 0;
+	for (TArray<FBrixDay::FPiece>& Row : Day.Plan)
+		for (FBrixDay::FPiece& P : Row)
+		{
+			if (P.Kind != 0 || P.Lot != MallLot) continue;
+			P.Pose = 0;
+			P.SeatUp = -1.f;
+			if (P.Use < 0) continue;
+			const double Want = P.Floor * M.StoreyHeight;
+			const FBrixMallCall* Best = nullptr;
+			double Bd = 1e9;
+			for (const FBrixMallCall* S : Spots)
+				if (FMath::Abs(S->A[0] - P.Pos.X) < .2 && FMath::Abs(S->A[1] - P.Pos.Y) < .2 && FMath::Abs(S->A[4] - Want) < Bd) { Bd = FMath::Abs(S->A[4] - Want); Best = S; }
+			if (!Best)   // the slice's STAND, on the ground whatever the stay's floor: in the hall on its ground floor (a kiosk on the court floor), at the door outside
+			{
+				if (P.Pos.X > M.X0 + .3 && P.Pos.X < M.X1 - .3 && P.Pos.Y > M.Z0 + .3 && P.Pos.Y < M.Z1 - .3) P.SeatUp = (float)M.F;
+				continue;
+			}
+			P.Pose = (uint8)Best->A[2];
+			P.SeatUp = (float)Best->A[4];
+			P.Facing = FVector2D(FMath::Sin(Best->A[3]), -FMath::Cos(Best->A[3]));
+			++Placed;
+		}
+	return Placed;
 }
 
 bool BrixMallCarry(const FBrixMall& M, FVector3d& P, double Dt)

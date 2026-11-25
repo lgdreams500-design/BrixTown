@@ -1,6 +1,7 @@
 // WLD-058 to WLD-068: Eastgate Mall's inside built as the slice builds it. The slice's own court.js, shell.js and outlets.js
 // run in headless Edge (Tools/unreal/mall_values.py) give the values in Tests/values/mall_city_01.json.
 #include "BrixMall.h"
+#include "BrixDay.h"
 
 #include "Dom/JsonObject.h"
 #include "Misc/AutomationTest.h"
@@ -24,6 +25,36 @@ namespace
 	}
 
 	bool Near(double A, double B, double Tol = 1e-6) { return FMath::Abs(A - B) <= Tol * FMath::Max(1.0, FMath::Abs(B)); }
+
+	// the mall's index in the city's lots (its blocks' order, the slice's LOTS), and the day placed in it
+	bool LoadMallDay(FAutomationTestBase& T, const FBrixMall& M, FBrixDay& Day, int32& Mi)
+	{
+		FString Error, Text;
+		if (!T.TestTrue(TEXT("the day loads (Game/Data/day.json, build_play.py): ") + Error, LoadBrixDay(MallRoot(TEXT("Data/day.json")), Day, Error))) return false;
+		TSharedPtr<FJsonObject> City;
+		if (!T.TestTrue(TEXT("city.json reads"), FFileHelper::LoadFileToString(Text, *MallRoot(TEXT("../World/city_01/city.json"))) && FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), City) && City)) return false;
+		int32 k = 0;
+		Mi = -1;
+		for (const TSharedPtr<FJsonValue>& BV : City->GetArrayField(TEXT("blocks")))
+		{
+			FString BText;
+			TSharedPtr<FJsonObject> Blk;
+			if (!FFileHelper::LoadFileToString(BText, *MallRoot(*(TEXT("../World/city_01/") + BV->AsObject()->GetStringField(TEXT("file"))))) || !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(BText), Blk) || !Blk) return false;
+			for (const TSharedPtr<FJsonValue>& LV : Blk->GetArrayField(TEXT("lots"))) { if (LV->AsObject()->GetStringField(TEXT("id")) == M.LotId) Mi = k; ++k; }
+		}
+		if (!T.TestTrue(TEXT("the mall is one of the city's lots"), Mi >= 0)) return false;
+		SeatBrixDayInMall(Day, M, Mi);
+		return true;
+	}
+	// the day's stays in the mall at a place (x, z) on a floor, of a use (2 work, 3 a seat, 4 before a counter)
+	TArray<const FBrixDay::FPiece*> StaysAt(const FBrixDay& Day, int32 Mi, double X, double Z, int32 Floor, int32 Use, TArray<int32>* Who = nullptr)
+	{
+		TArray<const FBrixDay::FPiece*> Out;
+		for (int32 i = 0; i < Day.Plan.Num(); ++i)
+			for (const FBrixDay::FPiece& P : Day.Plan[i])
+				if (P.Kind == 0 && P.Lot == Mi && P.Use == Use && P.Floor == Floor && FMath::Abs(P.Pos.X - X) < .2 && FMath::Abs(P.Pos.Y - Z) < .2) { Out.Add(&P); if (Who) Who->AddUnique(i); }
+		return Out;
+	}
 }
 
 // WLD-057 to WLD-061, WLD-063, WLD-067, WLD-068: every face, solid, place, light and sign of the
@@ -184,6 +215,116 @@ bool FWLD058OnlyEastgate::RunTest(const FString& Parameters)
 	TestTrue(TEXT("the three malls are in the town"), Malls.Contains(TEXT("b_16_5_l0")) && Malls.Contains(TEXT("b_1_5_l0")) && Malls.Contains(TEXT("b_7_0_l0")));
 	TestEqual(TEXT("one mall has its inside built"), Can.Num(), 1);
 	TestTrue(TEXT("it is Eastgate (b_16_5_l0)"), Can.Contains(TEXT("b_16_5_l0")));
+	return true;
+}
+
+// CITY-105, WLD-067: every outlet has one keeper's place behind its counter, in its room on its own floor, and the counter is
+// drawn because today's keeper works there; each keeper of the day stands at it, at the floor's height, facing out over the
+// counter to the walk. The whole mall's six guards and six janitors stand at their posts.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY105Keepers, "BrixTown.World.CITY105_every_outlet_has_a_counter_its_keeper_stands_at",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FCITY105Keepers::RunTest(const FString& Parameters)
+{
+	FBrixMall M;
+	TSharedPtr<FJsonObject> V;
+	if (!LoadMallCase(*this, M, V)) return false;
+	FBrixDay Day;
+	int32 Mi = -1;
+	if (!LoadMallDay(*this, M, Day, Mi)) return false;
+	TArray<const FBrixMallCall*> Spots;
+	for (const FBrixMallCall& C : M.Calls) if (C.Kind == FBrixMallCall::Spot) Spots.Add(&C);
+	int32 Rooms = 0, Kept = 0, Bad = 0;
+	TArray<int32> Keepers;
+	for (const FBrixOutletRoom& R : M.Rooms)
+	{
+		++Rooms;
+		// its keeper's place: a standing place inside the room, on its floor, 2.2 m or more in from the front (behind the counter)
+		const FBrixMallCall* Mine = nullptr;
+		int32 Count = 0;
+		for (const FBrixMallCall* S : Spots)
+		{
+			if (S->A[2] != 0 || FMath::Abs(S->A[4] - R.Fy) > .01) continue;
+			const FBrixOutletRoom* In = BrixOutletAt(M, S->A[0], R.Fy + 1, S->A[1]);
+			const double v = -((S->A[0] - R.X) * R.N.X + (S->A[1] - R.Z) * R.N.Y);
+			if (In == &R && v > 2.9) { Mine = S; ++Count; }
+		}
+		if (!Mine || Count != 1) { if (++Bad <= 8) AddError(FString::Printf(TEXT("%s (%s, floor %d): %d keeper's places behind its counter"), *R.Name, *R.Id, R.Level, Count)); continue; }
+		if (!M.Staffed.Contains(R.Id)) { if (++Bad <= 8) AddError(R.Name + TEXT(": no counter (its keeper does not work here)")); continue; }
+		const TArray<const FBrixDay::FPiece*> Here = StaysAt(Day, Mi, Mine->A[0], Mine->A[1], R.Level, 2, &Keepers);
+		if (!Here.Num()) { if (++Bad <= 8) AddError(R.Name + TEXT(": nobody works at its counter today")); continue; }
+		for (const FBrixDay::FPiece* P : Here)
+		{
+			const FVector2D Out(R.N.X, R.N.Y);
+			if (P->Pose != 0 || FMath::Abs(P->SeatUp - R.Fy) > .01 || P->Facing.Dot(Out) < .5) { if (++Bad <= 8) AddError(FString::Printf(TEXT("%s: its keeper is not stood behind the counter facing out (pose %d, %.2f m up, facing %.2f)"), *R.Name, P->Pose, P->SeatUp, P->Facing.Dot(Out))); break; }
+		}
+		++Kept;
+	}
+	TestEqual(TEXT("outlets"), Rooms, 189);
+	TestEqual(TEXT("outlets with a keeper at their counter today"), Kept, Rooms);
+	TestEqual(TEXT("outlets wrong"), Bad, 0);
+	TestEqual(TEXT("one keeper to each outlet's counter"), Keepers.Num(), Rooms);
+	TSet<FString> Careers;
+	for (int32 i : Keepers) Careers.Add(Day.Careers.IsValidIndex(i) ? Day.Careers[i] : FString());
+	TestTrue(TEXT("the keepers are shop owners and food outlet owners"), Careers.Num() == 2 && Careers.Contains(TEXT("shop owner")) && Careers.Contains(TEXT("food outlet owner")));
+	// the guards and the janitors: the spots after every unit's stand, one each at its post (the plan's staff)
+	TMap<FString, int32> Posts;
+	for (int32 i = 0; i < Day.Plan.Num(); ++i)
+	{
+		const FString C = Day.Careers.IsValidIndex(i) ? Day.Careers[i] : FString();
+		if (C != TEXT("security guard") && C != TEXT("janitor")) continue;
+		for (const FBrixDay::FPiece& P : Day.Plan[i])
+			if (P.Kind == 0 && P.Lot == Mi && P.Use == 2)
+			{
+				bool bAt = false;
+				for (const FBrixMallCall* S : Spots) if (S->A[2] == 0 && FMath::Abs(S->A[0] - P.Pos.X) < .2 && FMath::Abs(S->A[1] - P.Pos.Y) < .2 && FMath::Abs(P.SeatUp - S->A[4]) < .01) bAt = true;
+				TestTrue(C + TEXT(" stands at a post of the mall"), bAt);
+				++Posts.FindOrAdd(C);
+				break;
+			}
+	}
+	TestEqual(TEXT("security guards at the mall today"), Posts.FindRef(TEXT("security guard")), 6);
+	TestEqual(TEXT("janitors at the mall today"), Posts.FindRef(TEXT("janitor")), 6);
+	return true;
+}
+
+// CITY-106, WLD-068: the residents who come to the mall to shop stand before an outlet's counter, facing it; those who come
+// to eat sit at a food outlet's table or on a bench of the court, facing it; all on their own floor, inside the mall
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY106Visitors, "BrixTown.World.CITY106_visitors_shop_at_the_counters_and_eat_at_the_tables",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FCITY106Visitors::RunTest(const FString& Parameters)
+{
+	FBrixMall M;
+	TSharedPtr<FJsonObject> V;
+	if (!LoadMallCase(*this, M, V)) return false;
+	FBrixDay Day;
+	int32 Mi = -1;
+	if (!LoadMallDay(*this, M, Day, Mi)) return false;
+	int32 Shop = 0, Eat = 0, InOutlet = 0, Bad = 0, Floors[3] = { 0, 0, 0 };
+	for (const TArray<FBrixDay::FPiece>& Row : Day.Plan)
+		for (const FBrixDay::FPiece& P : Row)
+		{
+			if (P.Kind != 0 || P.Lot != Mi || (P.Use != 3 && P.Use != 4)) continue;
+			const bool bEat = P.Use == 3;
+			(bEat ? Eat : Shop)++;
+			if (P.Floor >= 0 && P.Floor < 3) ++Floors[P.Floor];
+			const bool bKiosk = !bEat && P.Pose == 0 && P.Floor == 0 && FMath::Abs(P.SeatUp - M.F) < .01;   // at a kiosk of the court floor (the lot's own places)
+			const bool bDoor = !(P.Pos.X > M.X0 && P.Pos.X < M.X1 && P.Pos.Y > M.Z0 && P.Pos.Y < M.Z1);   // no place left in the mall: at its door, as in the slice
+			if (bDoor) { if ((P.Pose != 0 || P.SeatUp >= 0) && ++Bad <= 8) AddError(TEXT("a visitor at the door is not stood on the ground")); continue; }
+			const double Up = P.Floor ? P.Floor * M.StoreyHeight : M.F;
+			const bool bOk = bEat ? (P.Pose == 2 && P.SeatUp > Up + .4 && P.SeatUp < Up + .5) : (bKiosk || (P.Pose == 0 && FMath::Abs(P.SeatUp - Up) < .01));
+			if (!bOk && ++Bad <= 8) AddError(FString::Printf(TEXT("a visitor to %s at (%.1f, %.1f) on floor %d: pose %d, %.2f m up"), bEat ? TEXT("eat") : TEXT("shop"), P.Pos.X, P.Pos.Y, P.Floor, P.Pose, P.SeatUp));
+			if (!bEat)   // before a counter: in the outlet, facing in, towards its keeper
+			{
+				const FBrixOutletRoom* R = BrixOutletAt(M, P.Pos.X, Up + 1, P.Pos.Y);
+				if (R) { ++InOutlet; if (P.Facing.Dot(FVector2D(-R->N.X, -R->N.Y)) < .5 && ++Bad <= 8) AddError(R->Name + TEXT(": a shopper does not face the counter")); }
+			}
+		}
+	AddInfo(FString::Printf(TEXT("%d stays shopping, %d eating, %d before an outlet's counter; by floor %d, %d, %d"), Shop, Eat, InOutlet, Floors[0], Floors[1], Floors[2]));
+	TestTrue(TEXT("residents come to shop"), Shop > 20);
+	TestTrue(TEXT("residents come to eat"), Eat > 100);
+	TestTrue(TEXT("most shoppers are before an outlet's counter"), InOutlet * 2 > Shop);
+	TestTrue(TEXT("visitors on the upper floors too"), Floors[1] > 0 && Floors[2] > 0);
+	TestEqual(TEXT("visitors not at their place"), Bad, 0);
 	return true;
 }
 
