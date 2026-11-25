@@ -295,11 +295,38 @@ there when they leave or arrive (cars.js tramRiders()), up to twelve on its benc
 ## Street furniture (WLD-028)
 Each block's props are drawn as the slice draws them (play.js prop(), dressing.js), boxes in the palette's colours:
 lamps, benches, bins, bollards, planters, postboxes, bike racks, phone boxes, wall lanterns, flowerbeds, fountains,
-market stalls, tram shelters, water towers and wells. Garden planting, playgrounds, arches, adverts and the open ground's
-own things are not brought over yet. By night (`ABrixLamps`) every lamp's and wall lantern's glass glows
+market stalls, tram shelters, water towers and wells; garden planting and the open ground's own things are below.
+Playgrounds, arches and adverts are not brought over yet. By night (`ABrixLamps`) every lamp's and wall lantern's glass glows
 (`/Game/Greybox/M_Glow`, made by `Tools/unreal/make_glow_material.py`) and the twelve nearest to the camera give real
 light, as the slice's twelve; 68 frames a second at High at 22:30. The night itself (its exposure, the orange haze
 after dusk) is not yet the slice's dark blue night.
+
+## Gardens, lawns and the open ground (CITY-017, WLD-040, WLD-056, ART-001)
+The block files' garden planting is drawn as the slice draws it (play.js plant(), heads(), plantClump()): clipped hedges in
+sections a little uneven in height and tone with a paler top, shrubs as a faceted crown with two smaller ones leaning off it
+(bare twigs in winter) dotted with flower heads or dry ones, borders of dark earth planted with their two kinds in drifts,
+and drifts of flowers coming up in the grass, each kind as today's season has it (`Game/Data/streets.json`, written by
+`build_play.py`: world.plants_today(), the flowers and the lawn rules of World/rules/vegetation.json). Every garden has its
+lawn (play.js lawn()): the grass, a band of longer, darker grass along its edges and tufts the mower missed, none on a path
+or under a thing. The open ground beyond Old Town (play.js greenGround(), wildProp()): a wood's leaf litter in patches, the
+grass of the commons, orchards, fields, plots and meadows, the gravel tracks, and its own things: post-and-rail fences,
+"For sale" boards on the plots with their pegs, fallen logs, rocks, picnic tables, hay bales, the fields' crops (standing
+wheat and barley, furrows, rows of cabbages, rough grass) and ponds in their ring of reeds. `BrixWorld/BrixStreets` is the
+port: it gives the same drawing calls with the same numbers as the slice's functions (in doubles, its hash() fed the same
+strings, a JavaScript number written as JavaScript writes it), and the town lays them as its own shapes: boxes as instances
+(no collision; what is in the way comes as the slice's solids, unseen blockers), a crown as an instance of one of 12 meshes
+of play.js dome() turned by its seed, single faces (tufts, lawns, tracks, ponds) in one mesh a block made at load, all in
+`/Game/Greybox/M_Facets` (vertex colour times the instance's colour, matte, two-sided; `Tools/unreal/make_facets_material.py`).
+`Tools/unreal/streets_values.py` runs the slice's own functions in headless Edge over every plant, wild thing, lawn and
+block of open ground (`Tests/values/streets_city_01.json`), and `CITY017_every_plant_is_drawn_as_the_slice_draws_it` and
+`WLD056_the_open_ground_is_drawn_as_the_slice_draws_it` check the port against them (2,735 plants, 33 lawns, 17 blocks,
+about 600 things); run the script again after changing play.js, the blocks or the vegetation rules (after build_play.py).
+Bushes, hedges and fences break as crash.json says (CITY-072). The plants keep the built day's look whatever day the game
+starts on, as in the slice. Not yet: the lawn's own pattern (the slice's material 24: patches, mowing stripes, clover,
+daisies), so a lawn is one even green; the trees by species (they are still a trunk and a ball). The new shapes are kept out
+of Lumen's surface cache (a card an instance oversubscribed it over the fields). `-BrixNoPlants` builds the town without
+them, to compare: 542,212 instances in 45 groups against 462,813 in 33; at High 37.7 fps in a park garden (40.2 without),
+37.8 over the fields (20.6 without: noisy, other sessions were running Unreal on the same laptop).
 
 ## Money and the bank (ECO-001 to ECO-003, ECO-009, ECO-012, BANK-001, BANK-002, BANK-007, BANK-008; ADR-0012)
 Money is the slice's (economy.js, a port of `Tools/citysim/economy.py`): `BrixWorld/BrixEconomy` holds one ledger of
@@ -555,3 +582,5 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.UI018_the_big_map_is_drawn_from_the_town` | UI-018 |
 | `BrixTown.World.UI012_the_mark_is_set_cleared_and_reached` | UI-012 |
 | `BrixTown.World.QST005_the_people_and_places_a_quest_wants_are_marked` | QST-005 |
+| `BrixTown.World.CITY017_every_plant_is_drawn_as_the_slice_draws_it` | CITY-017, WLD-040 |
+| `BrixTown.World.WLD056_the_open_ground_is_drawn_as_the_slice_draws_it` | WLD-056, ART-001 |
