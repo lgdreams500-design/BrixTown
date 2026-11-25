@@ -147,4 +147,70 @@ bool FCITY049_CarsGiveWay::RunTest(const FString&)
 	return Wrong == 0;
 }
 
+// CITY-067 (look test 45, Tools/blender/car_kit_09.py's well()): whoever sits in a Soft box car shows, and fits. Over
+// every seat and the lap in front of it nothing of the body, the roof or the band lies between the seat and the roof
+// (before, the body and its waist were solid over the cabin, a board across the lap, and the riders were sunk into it
+// to keep their heads under a low roof); the roof over each seat clears the tallest seated head the designer allows
+// (World/rules/designer.json's top height under an afro, 1.12 S: people.js sit()) by the 5 cm the seating keeps, so no
+// rider is set lower than the seat; and the floor of the cabin is under the feet, above the bottom of the body.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY067_RidersFitInTheCars, "BrixTown.World.CITY067_riders_show_and_fit_in_the_cars",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FCITY067_RidersFitInTheCars::RunTest(const FString&)
+{
+	FBrixTraffic Traffic;
+	FString Error, Text;
+	const FString Data = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data")));
+	if (!TestTrue(TEXT("the vehicles load: ") + Error, LoadBrixTraffic(FPaths::Combine(Data, TEXT("cars.json")), FPaths::Combine(Data, TEXT("car_models.json")), Traffic, Error))) return false;
+	const FString Rules = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/rules/designer.json")));
+	TSharedPtr<FJsonObject> Designer;
+	if (!TestTrue(TEXT("the designer's rules load"), FFileHelper::LoadFileToString(Text, *Rules) && FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Designer) && Designer.IsValid())) return false;
+	const TSharedPtr<FJsonObject>* Sliders = nullptr;
+	const TSharedPtr<FJsonObject>* Height = nullptr;
+	double Max = 0;
+	if (!TestTrue(TEXT("the designer has a top height"), Designer->TryGetObjectField(TEXT("sliders"), Sliders) && (*Sliders)->TryGetObjectField(TEXT("height"), Height) && (*Height)->TryGetNumberField(TEXT("max"), Max) && Max > 1.5)) return false;
+	const float Tallest = (float)Max, Head = 1.12f * Tallest / 1.72f, Gap = .05f;
+	TSet<uint8> Shell;
+	for (const TCHAR* N : { TEXT("body"), TEXT("roof"), TEXT("band") }) { const int32 i = Traffic.Parts.IndexOfByKey(FString(N)); if (i >= 0) Shell.Add((uint8)i); }
+	// the lowest face of the given parts straight above (a, w) between From and To
+	auto Over = [&Shell](const FBrixCarModel::FLod& L, float a, float w, float From, float To) -> TOptional<float>
+	{
+		TOptional<float> Best;
+		for (int32 j = 0, t = 0; j + 2 < L.P.Num(); j += 3, ++t)
+		{
+			if (!Shell.Contains(L.Part[t])) continue;
+			const FVector3f& A = L.P[j]; const FVector3f& B = L.P[j + 1]; const FVector3f& C = L.P[j + 2];
+			const float d = (B.X - A.X) * (C.Y - A.Y) - (C.X - A.X) * (B.Y - A.Y);
+			if (FMath::Abs(d) < 1e-9f) continue;
+			const float u = ((a - A.X) * (C.Y - A.Y) - (C.X - A.X) * (w - A.Y)) / d, v = ((B.X - A.X) * (w - A.Y) - (a - A.X) * (B.Y - A.Y)) / d;
+			if (u < 0 || v < 0 || u + v > 1) continue;
+			const float y = A.Z + u * (B.Z - A.Z) + v * (C.Z - A.Z);
+			if (y > From && y < To && (!Best || y < *Best)) Best = y;
+		}
+		return Best;
+	};
+	int32 Wrong = 0;
+	for (const auto& KV : Traffic.Models)
+	{
+		const FBrixCarModel& Md = KV.Value;
+		if (!TestTrue(KV.Key + TEXT(" has its near model, a roof over the seats and a floor"), Md.Lods.Num() > 0 && Md.Roof.IsSet() && Md.Floor.IsSet())) { ++Wrong; continue; }
+		const float Room = *Md.Roof - Gap - Head;
+		AddInfo(FString::Printf(TEXT("%s: seat %.2f m, roof %.2f m, floor %.2f m; the tallest head (%.2f m seated) leaves %.3f m under the roof"), *KV.Key, Md.SeatY, *Md.Roof, *Md.Floor, Head, *Md.Roof - Md.SeatY - Head));
+		if (Room < Md.SeatY - .005f) { AddError(FString::Printf(TEXT("%s: a %.2f m rider under an afro would be sunk %.2f m below the seat to clear the roof"), *KV.Key, Tallest, Md.SeatY - Room)); ++Wrong; }
+		// the floor must stand above the body's bottom (0.27 to 0.30 m): a floor, not the underside
+		if (*Md.Floor >= Md.SeatY || *Md.Floor < .32f) { AddError(FString::Printf(TEXT("%s: the floor under the feet is at %.2f m (seat %.2f m)"), *KV.Key, *Md.Floor, Md.SeatY)); ++Wrong; }
+		TArray<FVector2f> Seats = { Md.Seat, FVector2f(Md.Seat.X, -Md.Seat.Y) };
+		if (Md.Back) { Seats.Add(FVector2f(*Md.Back, Md.Seat.Y)); Seats.Add(FVector2f(*Md.Back, -Md.Seat.Y)); }
+		for (const FVector2f& S : Seats)
+			for (float da = 0.f; da <= .45f; da += .15f)          // the seat and the thighs to the knee (0.39 S)
+				for (float dw = -.15f; dw <= .151f; dw += .15f)
+					if (const TOptional<float> Y = Over(Md.Lods[0], S.X + da, S.Y + dw, Md.SeatY + .02f, *Md.Roof - .01f))
+					{
+						AddError(FString::Printf(TEXT("%s: the body lies over the lap at %.2f m, %.2f m ahead of the seat at (%.2f, %.2f)"), *KV.Key, *Y, da, S.X, S.Y));
+						++Wrong;
+					}
+	}
+	TestTrue(TEXT("the four Soft box models were checked"), Traffic.Models.Num() >= 4);
+	return Wrong == 0;
+}
+
 #endif

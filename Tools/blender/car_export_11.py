@@ -6,7 +6,8 @@ Builds on car_export_10.py (its lighter shapes, part tags, two levels of detail 
 car_kit_09.py (the option A builders). Adds a Soft box pickup for variety. Writes Prototype/play/car_models.js, replacing
 the Classic models; car_export_10.py stays runnable to write those back.
 
-Parts as in car_export_10, plus the estate's roof load in its own colours: luggage (the case), bag, rail. All three come
+The cabins are hollow wells with the seats on their floor and the roofs high enough for the tallest person (look test 45;
+car_kit_09.py's well()). Parts as in car_export_10, plus the estate's roof load in its own colours: luggage (the case), bag, rail. All three come
 and go together in the slice.
 """
 import bpy, bmesh, os, re, json, traceback
@@ -19,24 +20,26 @@ exec(compile(_e, "car_export_10_helpers", "exec"), globals())
 NAME = "car_export_11"
 LOG = OUT + "/" + NAME + "_log.txt"
 PARTS = PARTS + ["bag", "rail"]
-TARGET = (3200, 900)          # most triangles per model: near, far (the round wheels and lamps cost more than Classic's)
+TARGET = (3400, 900)          # most triangles per model: near, far (the round wheels and lamps cost more than Classic's; the hollow
+                              # cabins of look test 45 another 100 or so near)
 
 
 def a_pickup(P, col, roof):
     """A Soft box pickup: the estate's front and cab, and an open bed with crates."""
     L, W = 3.9, 1.7
-    rbox(P, "A4_Body", col, 0, 0, 0.6, L, W, 0.64, 0.25)
-    rbox(P, "A4_Waist", col, 0.6, 0, 0.96, 1.5, W - 0.1, 0.16, 0.08)
-    posts_roof(P, "A4", 0.0, 1.2, W / 2 - 0.12, 1.0, 1.66, roof)
-    rbox(P, "A4_Roof", roof, 0.58, 0, 1.7, 1.4, W - 0.06, 0.16, 0.08)
-    rbox(P, "A4_CabBack", col, -0.05, 0, 1.25, 0.12, W - 0.1, 0.62, 0.05)
+    body = rbox(P, "A4_Body", col, 0, 0, 0.6, L, W, 0.64, 0.25)
+    waist = rbox(P, "A4_Waist", col, 0.6, 0, 0.96, 1.5, W - 0.1, 0.16, 0.08)
+    well(P, "A4", [body, waist], 0.07, 0.98, W / 2 - 0.15, 0.38)       # the cabin, as car_kit_09's (look test 45)
+    posts_roof(P, "A4", 0.0, 1.2, W / 2 - 0.12, 1.0, 1.77, roof)
+    rbox(P, "A4_Roof", roof, 0.58, 0, 1.81, 1.4, W - 0.06, 0.16, 0.08)
+    rbox(P, "A4_CabBack", col, -0.05, 0, 1.305, 0.12, W - 0.1, 0.73, 0.05)
     for s in (-1, 1):
         rbox(P, "A4_Side%d" % s, col, -1.0, s * (W / 2 - 0.07), 1.06, 1.85, 0.14, 0.3, 0.06)
     rbox(P, "A4_Gate", col, -1.88, 0, 1.06, 0.14, W - 0.1, 0.3, 0.06)
     for i, (x, y, c) in enumerate(((-1.45, -0.3, M["wood"]), (-0.7, 0.28, M["wood"]), (-1.4, 0.35, M["cream"]))):
         rbox(P, "A4_Crate%d" % i, c, x, y, 1.12, 0.5, 0.46, 0.4, 0.05)
     rbox(P, "A4_Dash", M["leather"], 1.1, 0, 1.02, 0.3, W - 0.3, 0.14, 0.05)
-    seats(P, "A4", [0.5], 0.35, 0.74, M["leather"]); steering(P, "A4", 1.0, -0.35, 1.12)
+    seats(P, "A4", [0.5], 0.35, 0.44, M["leather"]); steering(P, "A4", 1.0, -0.35, 1.1)
     lamps(P, "A4", L / 2 - 0.02, 0.68, [-0.55, 0.55], 0.13, M["lampc"])
     rbox(P, "A4_BumpF", M["hub"], L / 2 + 0.02, 0, 0.38, 0.14, W - 0.2, 0.14, 0.06)
     rbox(P, "A4_BumpB", M["hub"], -L / 2 - 0.02, 0, 0.38, 0.14, W - 0.2, 0.14, 0.06)
@@ -45,10 +48,10 @@ def a_pickup(P, col, roof):
 
 # seat tops: the seat cushion is centred at the height seats() is given and is 0.12 thick
 MODELS = dict(
-    small=dict(build=a_small, seat=[-0.35, -0.33], seat_y=0.78, back=None),
-    estate=dict(build=a_estate, seat=[-0.05, -0.35], seat_y=0.80, back=-1.05),
-    pickup=dict(build=a_pickup, seat=[0.5, -0.35], seat_y=0.80, back=None),
-    van=dict(build=a_van, seat=[1.3, -0.42], seat_y=0.88, back=None),
+    small=dict(build=a_small, seat=[-0.35, -0.33], seat_y=0.50, back=None),
+    estate=dict(build=a_estate, seat=[-0.05, -0.35], seat_y=0.50, back=-1.05),
+    pickup=dict(build=a_pickup, seat=[0.5, -0.35], seat_y=0.50, back=None),
+    van=dict(build=a_van, seat=[1.3, -0.42], seat_y=0.60, back=None),
 )
 
 BIG = ("_Body", "_Low", "_Load", "_Waist", "_Roof", "_CabRoof", "_Stripe", "_Band")   # the shapes the round edges show on
@@ -86,11 +89,12 @@ def build(key, spec, lod):
     DETAIL.update(dict(sub=2, seg=4, u=10, v=6, wheel=12) if lod == 0 else dict(sub=1, seg=1, u=6, v=4, wheel=8))
     P = group("Car_" + key, 0, 0, 0)
     spec["build"](P, M["body"], M["roof"] if key != "van" else M["band"])
-    objs = [o for o in bpy.data.objects if o.type == 'MESH']
+    drawn = lambda: [o for o in bpy.data.objects if o.type == 'MESH' and not o.hide_render]   # not the cabin's cutter
+    objs = drawn()
     if lod == 1:
         for o in [o for o in objs if any(s in o.name for s in INSIDE)]:
             bpy.data.objects.remove(o, do_unlink=True)
-        objs = [o for o in bpy.data.objects if o.type == 'MESH']
+        objs = drawn()
     big = [o for o in objs if whole(o.name)]
     small = [o for o in objs if o not in big]
     n_big, n_small = len(triangles(big)), len(triangles(small))

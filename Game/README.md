@@ -495,7 +495,12 @@ the slice's paints, roof loads and spares; buses the slice's long soft box in th
 model, to 160 m the light one; each is a procedural mesh built once and moved. Within 70 m whoever rides in them sits
 there as in the slice (cars.js occupants(), seat()): the resident whose car it is at the wheel and neighbours sharing the
 ride beside and behind (CITY-094), a bus's driver and its riders on the benches, someone from out of town in a van or a
-car passing through; as low as the head needs under the roof, feet along the floor, hands on the wheel. The player can drive
+car passing through; as low as the head needs under the roof, feet along the floor, hands on the wheel. The cabins
+are wells cut out of the body down to a floor, the seats on it (ADR-0057; before, the body and its waist ran solid
+through the cabin, a board over everyone's lap, and the low roofs sank tall riders up to 0.44 m into it): the tallest
+rider sits on the seat with 5 cm under the roof (`CITY067_riders_show_and_fit_in_the_cars`;
+`Art/StyleTests/car_cabins_45/`). Not yet: the feet reach under the dashboard into the solid front of the body (no
+footwell is modelled). The player can drive
 any parked car or van (a stand-in for CITY-061, as the slice's cars.js): E beside it gets in (it steps out of its bay
 onto the road first), W/S speed and brake, A/D steer, Space the handbrake, up to the top speed of World/rules/traffic.json;
 a street thing or a tree in the way breaks (CITY-072); a wall or another car stops it and it rolls back a little; the camera swings round behind; E gets out by
@@ -1163,6 +1168,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY041_trams_are_where_the_timetable_puts_them` | CITY-041 |
 | `BrixTown.World.CITY041_players_ride_the_tram` | CITY-041 |
 | `BrixTown.World.CITY049_resident_cars_give_way_to_the_player` | CITY-049 |
+| `BrixTown.World.CITY067_riders_show_and_fit_in_the_cars` | CITY-067 (ADR-0057) |
 | `BrixTown.World.CITY070_residents_dodge_and_scold_as_the_slice_does` | CITY-070, CITY-071 |
 | `BrixTown.World.CITY072_street_things_break_as_the_rules_say` | CITY-072, CITY-073 |
 | `BrixTown.World.CITY072_a_broken_bench_is_not_sat_on` | CITY-072 |
