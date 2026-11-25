@@ -7,6 +7,7 @@ public class BrixTown : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "ProceduralMeshComponent", "BrixWorld" });
-		PrivateDependencyModuleNames.AddRange(new string[] { "RenderCore", "RHI" });   // the frame's thread and GPU times, logged with a test shot
+		PrivateDependencyModuleNames.AddRange(new string[] { "RenderCore", "RHI", "Slate", "SlateCore", "VorbisAudioDecoder" });   // the talk box, and the voices' Ogg Vorbis
+		PrivateIncludePathModuleNames.AddRange(new string[] { "TargetPlatform" });   // FSoundQualityInfo   // the frame's thread and GPU times, logged with a test shot
 	}
 }

@@ -91,6 +91,21 @@ character (CHR-001) comes over. At High on this laptop: 53 to 55 frames a second
 the morning school rush of some 150 and in a garden with 46 (the same as with none: the GPU is the limit), the people
 taking 1.3 to 3.6 ms of the game thread.
 
+## Talking to residents (CITY-007, CHR-007, CHR-009, SND-018)
+As in the slice (conversations.js, voices.js): next to a resident out of doors, E offers "Talk to <name>" and opens the
+talk; they stop where they are and turn to the player, the camera comes in close over the shoulder, and the box at the
+foot of the screen shows their name and job and what they say, with the blanks filled ({name}, {place}, {doing},
+{greeting}, {weekday}, {season}). 1 to 9 (or a click) answers, Esc leaves. The conversations are World/rules/dialogue.json
+(`CITY007_every_conversation_is_sound`). Each line is said aloud where it has been voiced: the slice's Kokoro pieces in
+`Prototype/play/audio/voices` (indexed in `Game/Data/talk.json`), decoded at run time with the engine's Ogg Vorbis
+decoder and joined into one sound (`SND018_lines_are_voiced`; few lines are voiced yet, as the dialogue is not final).
+The face follows the line: mouth shapes from its text stretched to the voice's length, brows and nods on stressed words
+and questions, the mood's expression (World/rules/speech.json; `CHR009_lines_are_mouthed_as_the_slice_mouths_them` and
+the talking faces in `ART004_...` check the port against the slice's own code). After a talk the resident runs late by
+the time it took until they next stand still where they would be anyway. Not yet: the quests, jobs and counters that
+the slice's life.js adds to talks, the player's typed name, and the wordless murmur of lines with no voice.
+To see one without anyone at the keys: `-BrixTalk=<resident index>` (and `-BrixAnswers=1,2`) with `-BrixShot=`.
+
 ## Vehicles (CITY-040, CITY-091; ADR-0015)
 Every car, van and bus of the day is where `Tools/citysim/traffic.py` puts it at the clock's minute: `Game/Data/cars.json`
 (the same trips as the slice's, written by `build_play.py`) read by `BrixWorld/BrixCars`, a port of the slice's
@@ -144,3 +159,6 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.ART004_people_are_drawn_as_the_slice_draws_them` | ART-004, ANIM-001, ANIM-002 |
 | `BrixTown.World.CITY017_residents_sit_on_garden_benches` | CITY-017 |
 | `BrixTown.World.CITY040_vehicles_are_where_the_traffic_puts_them` | CITY-040 |
+| `BrixTown.World.CITY007_every_conversation_is_sound` | CITY-007 |
+| `BrixTown.World.CHR009_lines_are_mouthed_as_the_slice_mouths_them` | CHR-009 |
+| `BrixTown.World.SND018_lines_are_voiced` | SND-018 |

@@ -56,6 +56,17 @@ public:
 	UPROPERTY(Config) float RideDistance = 70.f;    // m: people in vehicles are drawn this near (cars.js seat())
 
 	int32 Shown() const { return LastShown; }
+
+	// Talking (CITY-007; conversations.js consider(), where()): the nearest resident the player could talk to this frame,
+	// within TalkReach of them and level with them, out of doors and not in a vehicle; and while a talk is under way, the
+	// one held: stopped where they were, turning to the player, their face as they speak, always at full detail. After a
+	// talk they run late by the time it took until they next stand still at a place they would be at anyway.
+	struct FCandidate { int32 Resident = -1; FVector2D Pos = FVector2D::ZeroVector; float Up = 0.f; double Yaw = 0; int32 Pose = 0; int32 Act = 0; int32 Lot = -1; bool bWalking = false; double D = 0; };
+	const FCandidate& Candidate() const { return Cand; }
+	FCandidate Held;                    // Held.Resident -1: nobody held
+	const FBrixFace* HeldFace = nullptr;
+	TMap<int32, double> Late;           // resident -> minutes behind their day
+	UPROPERTY(Config) float TalkReach = 2.2f;   // m
 	double TickMs() const { return TickFrames ? TickSeconds * 1000.0 / TickFrames : 0.0; }   // the people's own time a frame, on average
 	void ResetTickTime() { TickSeconds = 0; TickFrames = 0; for (double& P : Parts) P = 0; }
 	// the time a frame by part: where everyone is, placing and the far figures' boxes, building bodies, uploading them, the far mesh
@@ -82,6 +93,7 @@ private:
 	TArray<FBuilt> Built;               // per slot: the body last built for it
 	TArray<FBrixFarBox> BoxScratch;
 	int32 FigureCap = 0;                // boxes the far figures' mesh has room for (grows and shrinks in steps, so it is mostly updated in place)
+	FCandidate Cand;
 	int32 Frame = 0, LastShown = 0;
 	double TickSeconds = 0, Parts[5] = { 0, 0, 0, 0, 0 };
 	int32 TickFrames = 0;

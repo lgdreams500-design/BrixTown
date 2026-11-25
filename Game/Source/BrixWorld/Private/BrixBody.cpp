@@ -512,6 +512,7 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	const bool midFace = lod == 1 || (lod == 2 && ff > .02);
 	double hm[3];
 	wander(t, sd * .37, hm);
+	if (o.Face) hm[1] += o.Face->Nod;   // a speaker nods on stressed words (ANIM-006)
 	const FPose P = pose == 1 ? walk(sig, g, W, o.Phase, hm) : pose == 2 ? sit(sig, g, W, t, hm, sd, o) : stand(sig, g, W, t, hm, sd);
 	auto hem = [&](double zz) { return pose == 2 ? FMath::Max(zz, -.06) : zz; };   // seated, a hem ends at the seat instead of hanging through it
 	// where the character's axes point in the world (standing: x left, y back, z up)
@@ -643,7 +644,56 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 		const FVector3f C = f >= 1 ? Cheek : L.Skin + (Cheek - L.Skin) * (float)f;
 		for (const double e : { -1.0, 1.0 }) blob(e * .056, -.0835, -.027, .0175, .0062, .0115, C, cn, cm);
 	};
-	if (lod == 0)   // full eyes, brows, small nose, mouth at rest
+	if (lod == 0 && o.Face)   // someone in a conversation: the full control set (CHR-007; people.js face())
+	{
+		const FBrixFace& f = *o.Face;
+		const FVector3f MDark(.11f, .035f, .035f), MTeeth(.9f, .88f, .82f), MTongue(.62f, .26f, .26f);
+		const double period = 2.4 + 3.4 * fmod1(sd * .618);
+		const bool blink = FMath::Fmod(t + sd, period) < .17;
+		const double gx = f.Gaze[0], gz = f.Gaze[1];
+		const double es = L.EyeSize, lid = blink ? 1 : f.Lid, op = f.Open * L.EyeOpen, sq = f.Squint;
+		for (const double e : { -1.0, 1.0 })   // e = +1 is the character's left
+		{
+			const double eX = e * .042;
+			if (lid > .97) { blob(eX, -.0975, .012, .0225 * es, .0105, .0235 * es, L.Skin, 8, 4); continue; }
+			// the open part of the eye: a squint lifts its lower edge, the upper lid lowers its top edge
+			const double R0 = .022 * op * es, top = .012 + R0 * (1 - 2 * lid * .85), bot = .012 - R0 * (1 - sq * .9), rz = (top - bot) / 2, cz = (top + bot) / 2;
+			blob(eX, -.0975, cz, .0215 * op * es, .008, rz, FVector3f(.86f, .84f, .8f), 8, 4);
+			const double ir = FMath::Min(.0172 * op * es, rz * .9), iz = FMath::Min(.0045 + gz, top - ir * .7) + (cz - .012) * .3;
+			blob(eX + gx, -.1035, iz, .0172 * op * es, .004, ir, L.Eyes, 8, 3);
+			blob(eX + gx, -.1065, iz, .0078, .002, FMath::Min(.0078, ir * .55), FVector3f(.01f, .01f, .012f), 6, 3);
+			if (top - iz > .006) blob(eX + gx + .005, -.108, iz + .0055, .0032, .0012, .0032, FVector3f(1.f), 5, 2);
+			if (lid >= .03) blob(eX, -.1062, top - .0008, .0205 * op, .0025, .0016, FVector3f(.08f, .06f, .05f), 8, 3);   // the lash line along the lowered lid
+		}
+		for (const double e : { -1.0, 1.0 })   // each brow: inner and outer end move on their own
+		{
+			const double* b = e > 0 ? f.BrowL : f.BrowR;
+			const double z0 = .051 + (op - 1) * .02 + L.Brow + (es - 1) * .02;
+			for (int32 k = 0; k < 5; ++k) { const double u = k / 4.0; blob(e * (.031 + .024 * u), -.1 + .0015 * u, z0 + .002 * u + b[0] + (b[1] - b[0]) * u, .0115, .0055, .0047, scc(hairC, .8), 6, 3); }
+		}
+		blob(0, -.111, -.014, .0105 * L.Nose, .011 * L.Nose, .0115 * L.Nose, scc(L.Skin, .93), 6, 4);   // nose
+		cheeks(10, 4, 1);
+		const FBrixFace::FMouth& m = f.Mouth;
+		const double w = m.Width * L.Lips * 1.3, oh = FMath::Max(m.Opening, .0005), mz = -.053, rd = m.Round, dep = 1 + rd * .45, cu = cl(f.Curve, -1, 1) * .0045;
+		if (oh > .0012)
+		{
+			blob(0, -.0992, mz, w * .9, .0028, oh, MDark, 8, 3);
+			if (m.Teeth >= 1 && oh > .002) blob(0, -.1002, mz + oh * .6, w * .66, .0022, FMath::Min(oh * .4, .0032), MTeeth, 8, 3);
+			if (m.Teeth >= 2 && oh > .002) blob(0, -.1002, mz - oh * .62, w * .58, .0022, FMath::Min(oh * .32, .0026), MTeeth, 8, 3);
+			if (m.bTongue && oh > .004) blob(0, -.0998, mz - oh * .42, w * .5, .0026, oh * .34, MTongue, 8, 3);
+		}
+		// the lips: a closed ring of overlapping pieces round the opening; the corners carry the smile or frown
+		const int32 NL = 14;
+		const double th = .0024 + rd * .0008, lw = FMath::Max(w * .3, .006);
+		for (int32 k = 0; k < NL; ++k)
+		{
+			const double a = (k + .5) / NL * 2 * UE_DOUBLE_PI, cx = FMath::Cos(a), sz = FMath::Sin(a), lx = w * cx;
+			const double lz = mz + (oh + th * (sz > 0 ? .5 : .65)) * sz + cu * cx * cx;
+			blob(lx, -.0998 - .0006 * FMath::Abs(sz), lz, lw * (.55 + .45 * FMath::Abs(sz)), .0046 * dep, th * (sz < 0 ? 1.15 : 1), Lip, 6, 3);
+		}
+		if (L.bTash) blob(0, -.104, -.037 + FMath::Max(0.0, oh - .002) * .4, .024, .006, .007, hairC, 6, 3);
+	}
+	else if (lod == 0)   // full eyes, brows, small nose, mouth at rest
 	{
 		const double period = 2.4 + 3.4 * fmod1(sd * .618), bp = FMath::Fmod(t + sd, period) / .17, lid = bp < 1 ? FMath::Sin(UE_DOUBLE_PI * bp) : 0;
 		const double gx = 0, gz = 0;

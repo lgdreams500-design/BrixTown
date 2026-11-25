@@ -80,6 +80,21 @@ bool FART004_PeopleAreTheSlices::RunTest(const FString&)
 		double Floor = 0;
 		if (B->TryGetNumberField(TEXT("floor"), Floor)) O.Floor = Floor;
 		B->TryGetBoolField(TEXT("driver"), O.bDriving);
+		FBrixFace Face;
+		const TSharedPtr<FJsonObject>* FaceObj = nullptr;
+		if (B->TryGetObjectField(TEXT("face"), FaceObj))   // a talking face (CHR-007)
+		{
+			const TSharedPtr<FJsonObject>& Fo = *FaceObj;
+			const TSharedPtr<FJsonObject> Mo = Fo->GetObjectField(TEXT("mouth"));
+			Face.Mouth.Width = Mo->GetNumberField(TEXT("width")); Face.Mouth.Opening = Mo->GetNumberField(TEXT("opening"));
+			Face.Mouth.Round = Mo->GetNumberField(TEXT("round")); Face.Mouth.Teeth = (int32)Mo->GetNumberField(TEXT("teeth"));
+			Mo->TryGetBoolField(TEXT("tongue"), Face.Mouth.bTongue);
+			Face.Curve = Fo->GetNumberField(TEXT("curve")); Face.Lid = Fo->GetNumberField(TEXT("lid"));
+			Face.Squint = Fo->GetNumberField(TEXT("squint")); Face.Open = Fo->GetNumberField(TEXT("open")); Face.Nod = Fo->GetNumberField(TEXT("nod"));
+			auto Pair = [&](const TCHAR* K, double Out[2]) { const TArray<TSharedPtr<FJsonValue>>& A = Fo->GetArrayField(K); Out[0] = A[0]->AsNumber(); Out[1] = A[1]->AsNumber(); };
+			Pair(TEXT("brow_l"), Face.BrowL); Pair(TEXT("brow_r"), Face.BrowR); Pair(TEXT("gaze"), Face.Gaze);
+			O.Face = &Face;
+		}
 		Mesh.Reset();
 		Boxes.Reset();
 		DrawBrixPerson(Rules, Looks[k], FVector(B->GetNumberField(TEXT("x")), B->GetNumberField(TEXT("y")), B->GetNumberField(TEXT("z"))), B->GetNumberField(TEXT("yaw")), O, Mesh, &Boxes);

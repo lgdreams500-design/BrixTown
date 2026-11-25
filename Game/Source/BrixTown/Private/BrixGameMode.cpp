@@ -6,6 +6,7 @@
 #include "BrixCars.h"
 #include "BrixCarsActor.h"
 #include "BrixPeople.h"
+#include "BrixTalkActor.h"
 #include "BrixTownActor.h"
 #include "BrixUnits.h"
 #include "Camera/CameraActor.h"
@@ -20,6 +21,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerStart.h"
 #include "HAL/PlatformMisc.h"
+#include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Paths.h"
 #include "TimerManager.h"
@@ -101,6 +103,8 @@ void ABrixGameMode::StartPlay()
 			People = GetWorld()->SpawnActor<ABrixPeople>();
 			People->Start(*City, Today, Cars ? Traffic : nullptr);
 			UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents, their day %d (%s, %s)"), Today->Num(), Today->Day, *Today->Weekday, *Today->Season);
+			Talk = GetWorld()->SpawnActor<ABrixTalk>();
+			Talk->Start(*City, Today, People);
 		}
 	}
 	SpawnLight();
@@ -126,6 +130,38 @@ void ABrixGameMode::StartPlay()
 				}
 			}, 1.f, false);
 		}
+	}
+	// -BrixTalk=<resident> (with -BrixAnswers=1,2,...): to see a talk without anyone at the keys, the player is put beside
+	// that resident a third of the way into a test shot's wait, the talk opened, and the answers given a second apart
+	int32 TalkTo = -1;
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixTalk="), TalkTo) && TalkTo >= 0 && Today)
+	{
+		FString Answers;
+		FParse::Value(FCommandLine::Get(), TEXT("BrixAnswers="), Answers, false);
+		FTimerHandle H;
+		GetWorldTimerManager().SetTimer(H, [this, TalkTo, Answers]()
+		{
+			const TOptional<FBrixWhere> W = Today->Where(TalkTo, ClockMinute());
+			APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);
+			if (!W || !Me) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: resident %d is not out to talk to"), TalkTo); return; }
+			const FVector2D P = W->Pos + W->Heading * 1.4;   // in front of them
+			Me->SetActorLocation(ToWorld(P, 1.f), false, nullptr, ETeleportType::TeleportPhysics);
+			FTimerHandle O;
+			GetWorldTimerManager().SetTimer(O, [this, Answers]()
+			{
+				if (!Talk) return;
+				Talk->Open();
+				UE_LOG(LogTemp, Display, TEXT("Brix Town: talking: %s"), Talk->IsTalking() ? TEXT("yes") : TEXT("nobody near enough"));
+				TArray<FString> Picks;
+				Answers.ParseIntoArray(Picks, TEXT(","));
+				for (int32 k = 0; k < Picks.Num(); ++k)
+				{
+					FTimerHandle A;
+					const int32 n = FCString::Atoi(*Picks[k]) - 1;
+					GetWorldTimerManager().SetTimer(A, [this, n]() { if (Talk) Talk->Choose(n); }, 1.5f * (k + 1), false);
+				}
+			}, 0.3f, false);
+		}, ShotDelaySeconds / 3, false);
 	}
 	FString Shot;
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixShot="), Shot))
@@ -230,7 +266,7 @@ void ABrixGameMode::ShootAndQuit()
 {
 	FString Shot;
 	FParse::Value(FCommandLine::Get(), TEXT("BrixShot="), Shot);
-	FScreenshotRequest::RequestScreenshot(Shot, false, false);
+	FScreenshotRequest::RequestScreenshot(Shot, true, false);   // with what is on screen over the view (a talk's box)
 	const double Secs = FPlatformTime::Seconds() - MarkSeconds;
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: %.1f frames a second over the last %.0f s before the screenshot"), Secs > 0 ? (GFrameCounter - MarkFrame) / Secs : 0.0, Secs);
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: at the shot the game thread took %.1f ms, the render thread %.1f ms, the GPU %.1f ms"),

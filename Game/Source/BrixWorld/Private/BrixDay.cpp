@@ -37,9 +37,11 @@ bool LoadBrixDay(const FString& Path, FBrixDay& Out, FString& OutError)
 		Out.Ids.Add(O->GetStringField(TEXT("id")));
 		Out.Names.Add(O->GetStringField(TEXT("n")));
 		Out.Role.Add((int32)O->GetNumberField(TEXT("r")));
-		FString U;
+		FString U, Cr;
 		O->TryGetStringField(TEXT("u"), U);
 		Out.Wear.Add(U);
+		O->TryGetStringField(TEXT("c"), Cr);
+		Out.Careers.Add(Cr);
 	}
 	const TSharedPtr<FJsonObject>* Sigs;
 	if (Root->TryGetObjectField(TEXT("role_sig"), Sigs))
@@ -90,6 +92,15 @@ namespace
 	}
 }
 
+int32 FBrixDay::PieceAt(int32 Resident, double Minute) const
+{
+	if (!Plan.IsValidIndex(Resident) || Plan[Resident].Num() == 0) return -1;
+	const TArray<FPiece>& Row = Plan[Resident];
+	int32 Lo = 0, Hi = Row.Num() - 1;
+	while (Lo < Hi) { const int32 Mid = (Lo + Hi + 1) >> 1; if (Row[Mid].T0 <= Minute) Lo = Mid; else Hi = Mid - 1; }
+	return Lo;
+}
+
 int32 FBrixDay::VehicleAt(int32 Resident, double Minute) const
 {
 	if (!Plan.IsValidIndex(Resident) || Plan[Resident].Num() == 0) return -1;
@@ -117,6 +128,7 @@ TOptional<FBrixWhere> FBrixDay::Where(int32 Resident, double Minute) const
 		W.Heading = P.Facing;
 		W.Pose = P.Pose;
 		W.SeatUp = P.SeatUp;
+		W.Lot = P.Lot;
 		return W;
 	}
 	if (P.Route.Num() < 2) { W.Pos = P.Route.Num() ? P.Route[0] : FVector2D::ZeroVector; return W; }

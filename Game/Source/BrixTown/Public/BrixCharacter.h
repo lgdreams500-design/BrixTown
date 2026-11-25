@@ -11,6 +11,7 @@ class UInputAction;
 class UInputMappingContext;
 class UProceduralMeshComponent;
 struct FInputActionValue;
+struct FInputActionInstance;
 
 // The player in third person (CORE-001: walk, run, jump). Their body is the slice's player (people.js player(), from
 // Game/Data/people.json) at full detail, built each frame by BrixBody as the residents are (ART-004): walking by their
@@ -32,6 +33,12 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
+public:
+	// A talk begins: stand still facing them, the camera in close and looking past the shoulder, the mouse free for the
+	// answers (conversations.js open()); and ends (close()).
+	void BeginTalk(const FVector& Them, float CameraM);
+	void EndTalk();
+protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void PawnClientRestart() override;
 
@@ -41,6 +48,10 @@ private:
 	void Look(const FInputActionValue& Value);
 	void StartRun();
 	void StopRun();
+	void TalkKey();                  // E: talk to the resident the player is next to (CITY-007)
+	void AnswerKey(const FInputActionInstance& Instance);   // 1 to 9: an answer
+	void LeaveKey();                 // Esc: leave the talk
+	class ABrixTalk* Talk() const;
 
 	UPROPERTY(VisibleAnywhere) TObjectPtr<USpringArmComponent> Boom;
 	UPROPERTY(VisibleAnywhere) TObjectPtr<UCameraComponent> Camera;
@@ -56,4 +67,9 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UInputAction> LookAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> JumpAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> RunAction;
+	UPROPERTY(Transient) TObjectPtr<UInputAction> TalkAction;
+	UPROPERTY(Transient) TObjectPtr<UInputAction> LeaveAction;
+	UPROPERTY(Transient) TArray<TObjectPtr<UInputAction>> AnswerActions;
+	bool bTalking = false;
+	float ArmBefore = 0.f;
 };

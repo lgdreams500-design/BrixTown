@@ -6,6 +6,7 @@
 #include "BrixGameMode.h"
 #include "BrixUnits.h"
 #include "Camera/PlayerCameraManager.h"
+#include "GameFramework/Character.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -140,6 +141,15 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	else if (const APawn* Me = PC->GetPawn()) Eye = Me->GetActorLocation();
 	const FVector2D Here(Eye.X / CmPerM, Eye.Y / CmPerM);
 	const double Minute = Mode->ClockMinute(), Seconds = GetWorld()->GetTimeSeconds();
+	// those who were held in a talk run late until they next stand still where they would be anyway (conversations.js where())
+	TMap<int32, double> MinuteOf;
+	for (auto It = Late.CreateIterator(); It; ++It)
+	{
+		const double M2 = FMath::Fmod(Minute - It->Value + 1440.0, 1440.0);
+		const int32 K2 = Day->PieceAt(It->Key, M2);
+		if (Day->Plan.IsValidIndex(It->Key) && K2 >= 0 && Day->Plan[It->Key][K2].Kind == 0 && Day->PieceAt(It->Key, Minute) == K2) { It.RemoveCurrent(); continue; }
+		MinuteOf.Add(It->Key, M2);
+	}
 
 	// everyone out of doors within reach, nearest first
 	// worked out for everyone at once on the task threads (CITY-022: from the day and the minute alone)
@@ -153,8 +163,11 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	ParallelFor(Day->Num(), [&](int32 i)
 	{
 		All[i].i = -1;
-		const TOptional<FBrixWhere> W = Day->Where(i, Minute);
-		if (!W) { InVehicle[i] = Day->VehicleAt(i, Minute); return; }
+		if (i == Held.Resident) return;   // added below, where the talk holds them
+		const double* M2 = MinuteOf.Find(i);
+		const double Mi = M2 ? *M2 : Minute;
+		const TOptional<FBrixWhere> W = Day->Where(i, Mi);
+		if (!W) { InVehicle[i] = Day->VehicleAt(i, Mi); return; }
 		if (W->bInside) return;
 		// a little to one side of the pavement's line, never at a door (the slice's lane, CITY-043)
 		FVector2D P = W->Pos;
@@ -168,6 +181,26 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	});
 	TArray<FNear> Near;
 	for (const FNear& A : All) if (A.i >= 0) Near.Add(A);
+	// the one to talk to: the nearest to the player (not the camera) within reach, on their level
+	Cand = FCandidate();
+	if (const APawn* Me = PC->GetPawn())
+	{
+		const FVector At = Me->GetActorLocation();
+		const ACharacter* Ch = Cast<ACharacter>(Me);
+		const float Feet = (At.Z - (Ch && Ch->GetRootComponent() ? Ch->GetSimpleCollisionHalfHeight() : 85.f)) / CmPerM;
+		const FVector2D Mine(At.X / CmPerM, At.Y / CmPerM);
+		for (const FNear& A : Near)
+		{
+			const double D = FVector2D::Distance(A.P, Mine);
+			if (Held.Resident >= 0 || D > TalkReach || FMath::Abs(A.Up - Feet) > 1.2f || (Cand.Resident >= 0 && D >= Cand.D)) continue;
+			const double* M2 = MinuteOf.Find(A.i);
+			const TOptional<FBrixWhere> W = Day->Where(A.i, M2 ? *M2 : Minute);
+			if (!W) continue;
+			Cand = { A.i, A.P, A.Up, A.Yaw, A.Pose, W->Act, W->Lot, W->bWalking, D };
+		}
+	}
+	if (Held.Resident >= 0 && Looks.IsValidIndex(Held.Resident))   // held in a talk: where the talk keeps them
+		Near.Add({ Held.Resident, FVector2D::Distance(Held.Pos, Here), Held.Pos, Held.Up, Held.Yaw, Held.Pose, 0.0, &Looks[Held.Resident], {}, false });
 	// whoever rides in a vehicle near enough (cars.js occupants() and seat()): its owner at the wheel and neighbours sharing
 	// the ride beside and behind (CITY-094), a bus's driver and riders on its benches, someone from out of town in a van or a
 	// car passing through; seated as low as their head needs under the roof, feet along the floor, hands on the wheel
@@ -239,7 +272,7 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	for (int32 n = 0; n < Near.Num(); ++n)
 	{
 		const double D = Near[n].D;
-		int32 Lod = D < FullDistance && Full < FullCount ? 0 : D < MidDistance ? 1 : D < NearDistance ? 2 : 3;
+		int32 Lod = Near[n].i == Held.Resident ? 0 : D < FullDistance && Full < FullCount ? 0 : D < MidDistance ? 1 : D < NearDistance ? 2 : 3;   // the one talking: their whole face
 		if (Lod == 0) ++Full;
 		if (Lod < 3 && MeshCount >= MaxMeshBodies) Lod = 3;
 		if (Lod < 3) ++MeshCount;
@@ -283,6 +316,7 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		FBrixDrawOptions O;
 		O.Floor = P.Floor;
 		O.bDriving = P.bDriving;
+		if (P.i == Held.Resident) O.Face = HeldFace;
 		O.Pose = P.Pose;
 		O.Phase = P.Phase;
 		O.Seconds = Seconds;
@@ -297,7 +331,7 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		const int32 s = SlotFor[n];
 		if (s < 0) continue;
 		FSlot& Slot = Slots[s];
-		if (Slot.Lod != O.Lod || ++Slot.Age >= RebuildEvery[FMath::Clamp(O.Lod, 0, 2)] || Slot.Verts == 0) Jobs.Add({ s, &L, O });
+		if (Slot.Lod != O.Lod || ++Slot.Age >= RebuildEvery[FMath::Clamp(O.Lod, 0, 2)] || Slot.Verts == 0 || O.Face) Jobs.Add({ s, &L, O });   // a talking face every frame
 		UProceduralMeshComponent* M = Meshes[s];
 		M->SetWorldLocationAndRotation(ToWorld(P.P, P.Up), FRotator(0.0, FMath::RadiansToDegrees(P.Yaw), 0.0));
 		M->SetVisibility(true);
