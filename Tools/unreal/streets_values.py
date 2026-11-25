@@ -114,6 +114,11 @@ for (const b of D.blocks) {
   });
 }
 Dress.init();
+out.read = [];   // readers at a notice board or the kiosk turn to it (apply(): within 6 m)
+for (const b of D.blocks) for (const p of b.props) if (p.set === "dress" && (p.kind === "noticeboard" || p.kind === "kiosk"))
+  [[1.2, .3], [-2, 1], [4, 3.9], [0, -5.5], [7, 0]].forEach(([dx, dz], q) => {
+    const x = p.pos[0] + dx, z = p.pos[1] + dz, act = D.acts.indexOf(q % 2 ? "paper" : "notices");
+    const r = Dress.apply(0, { x, z, act, walking: false, yaw: 99 }, 1); out.read.push([x, z, q % 2, r.yaw]); });
 const U = ["swing", "slide", "seesaw", "sandpit", "climb"];
 let n = 0;
 const v = q => q === undefined ? null : q;
@@ -266,7 +271,7 @@ def main():
                        "thing, garden and block of open ground, for CITY017_every_plant_is_drawn_as_the_slice_draws_it and "
                        "WLD056_the_open_ground_is_drawn_as_the_slice_draws_it. Calls: [kind, numbers, colour, points, text]; kinds as FBrixShape.",
                   day=streets["day"], props=summary(out["props"]), lawns=summary(out["lawns"], 5), ground=summary(out["ground"], 3),
-                  dress=summary(dress["dress"], 1), apply=dress["apply"], draw=dress["draw"], keep=dress["keep"],
+                  dress=summary(dress["dress"], 1), apply=dress["apply"], draw=dress["draw"], keep=dress["keep"], read=dress["read"],
                   trees=summary(roads["trees"], 25), roads=summary(roads["roads"], 1), lamps=roads["lamps"], phase=roads["phase"])
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:

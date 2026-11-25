@@ -98,6 +98,7 @@ private:
 	// children on the playgrounds (WLD-032; dressing.js): who is on which swing, slide, seesaw, sandpit or climbing frame, and
 	// the swing seats and seesaw planks near the camera, moving with them (one small mesh made again each frame)
 	FBrixPlay Play;
+	TArray<int32> ReadActs;             // the day's acts of reading the notices and buying a paper
 	TArray<int32> PlayUse;              // by the day's act: which play place it is (FBrixPlay::EUse), -1 none
 	UPROPERTY() TObjectPtr<UProceduralMeshComponent> PlayParts;
 	UPROPERTY() TObjectPtr<UMaterialInterface> FacetsMat;

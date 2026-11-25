@@ -109,6 +109,7 @@ void ABrixPeople::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, TShar
 		FString PlayError;
 		if (!LoadBrixPlayMotion(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/streets.json"))), Play.Motion, PlayError))
 			UE_LOG(LogTemp, Warning, TEXT("Brix Town: %s (run Tools/worldgen/build_play.py)"), *PlayError);
+		for (int32 a = 0; a < Day->Acts.Num(); ++a) if (Day->Acts[a] == TEXT("notices") || Day->Acts[a] == TEXT("paper")) ReadActs.Add(a);
 		for (const FString& A : Day->Acts) { int32 U = -1; for (int32 u = 0; u < FBrixPlay::NumUses; ++u) if (A == FBrixPlay::UseName(u)) U = u; PlayUse.Add(U); }
 		UE_LOG(LogTemp, Display, TEXT("Brix Town: %d playground pieces, %d play places"), Play.Pieces.Num(), Play.Spots.Num());
 	}
@@ -253,6 +254,16 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	TArray<FBrixDodged> Extras;
 	// children on the playgrounds (WLD-032; dressing.js apply()): on a swing seat, astride a seesaw, up the slide and down it,
 	// in the sandpit, up and down the climbing frame; anyone walking kept out of the slides and frames
+	if (Play.Boards.Num())   // readers at a notice board or the news kiosk turn to it (dressing.js apply(); F-MAP-DRESS 2)
+		for (FNear& A : Near)
+		{
+			if (A.i < 0 || A.i >= Day->Num() || A.Pose == 1 || A.D > 60) continue;
+			const double* M2 = MinuteOf.Find(A.i);
+			const TOptional<FBrixWhere> W = Day->Where(A.i, M2 ? *M2 : Minute);
+			if (!W || W->bWalking || !ReadActs.Contains(W->Act)) continue;
+			double Yaw;
+			if (Play.FaceBoard(W->Pos.X, W->Pos.Y, Yaw)) A.Yaw = Yaw;
+		}
 	if (Play.Pieces.Num())
 	{
 		for (FNear& A : Near)

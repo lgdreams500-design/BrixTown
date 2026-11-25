@@ -39,6 +39,7 @@ const TCHAR* FBrixPlay::UseName(int32 U)
 void FBrixPlay::AddPiece(const FBrixProp& P, double G)
 {
 	const int32 U = P.Kind == TEXT("swing") ? Swing : P.Kind == TEXT("slide") ? Slide : P.Kind == TEXT("seesaw") ? Seesaw : P.Kind == TEXT("sandpit") ? Sandpit : P.Kind == TEXT("climber") ? Climb : -1;
+	if (P.Kind == TEXT("noticeboard") || P.Kind == TEXT("kiosk")) Boards.Add(P.Pos);
 	if (U < 0) return;
 	FPiece& Pc = Pieces.AddDefaulted_GetRef();
 	Pc.Id = P.Id; Pc.Use = U; Pc.X = P.Pos.X; Pc.Z = P.Pos.Y; Pc.G = G;
@@ -236,4 +237,14 @@ void BrixAddClimbSignature(FBrixPeopleRules& Rules)
 	S.Stride = .14; S.Duty = .5; S.Fore = .5; S.Bounce = 0; S.Sway = 0; S.HipYaw = 0; S.HipRoll = 0; S.Counter = 0;
 	S.Lift = .24; S.Lean = 3; S.HeadPitch = -12; S.HeadBob = 0; S.ToeOut = 3; S.Width = .8;
 	Rules.Signatures.Add(TEXT("Climb"), S);
+}
+
+bool FBrixPlay::FaceBoard(double X, double Z, double& Yaw) const
+{
+	const FVector2D* Best = nullptr;
+	double Bd = 6;
+	for (const FVector2D& Q : Boards) { const double d = FMath::Sqrt(FMath::Square(Q.X - X) + FMath::Square(Q.Y - Z)); if (d < Bd) { Bd = d; Best = &Q; } }
+	if (!Best) return false;
+	Yaw = YawOf(Best->X - X, Best->Y - Z);
+	return true;
 }

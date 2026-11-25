@@ -50,6 +50,10 @@ public:
 	// dressing.js apply() for someone staying at a place for act Use (an EUse) at (X, Z), T seconds into the visit; StepLen
 	// is their walk's step length (BrixStepLength). False when they are not at a play place. Marks what they are on as busy.
 	bool Apply(int32 Resident, int32 Use, double X, double Z, double T, double StepLen, FBrixPlayPose& Out);
+	// dressing.js apply() for a reader (acts notices, paper): the way to face the nearest notice board or news kiosk within
+	// 6 m of (X, Z) (the slice's yaw); false when there is none (F-MAP-DRESS 2: residents read notices and use the kiosk)
+	bool FaceBoard(double X, double Z, double& Yaw) const;
+	TArray<FVector2D> Boards;   // where the notice boards and kiosks stand (AddPiece)
 	// dressing.js keepOut(): someone walking is kept out of the climbing frames and slides (to the nearest edge)
 	void KeepOut(double& X, double& Z) const;
 	// dressing.js draw(): the swing seats and seesaw planks within 70 m of the eye, moving with whoever is on them since the
