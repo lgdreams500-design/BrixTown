@@ -312,7 +312,7 @@ when the talk ends. Goals are checked four times a second where the player is (i
 log: under way with where the person to see is now (from their routine), on offer, finished, people you know. The lines
 under way show at the right of the screen, a job with its time left. Money coming in is shown as the owner chose
 (`BrixWorld/BrixRewards`, world.reward_events(), checked by `SND019_money_coming_in_is_shown_as_python_says`): a reward's
-coins spring out round the player, hover, are drawn in and fly to the purse, which counts up as they land; interest
+coins spring out round the player (over an arc on the far side from the camera, `CoinArcDeg`, so none loom up close), hover, are drawn in and fly to the purse, which counts up as they land; each coin's face is painted once into a texture as the slice paints it (mottled brass, rim, beads, a stamped B), and its lantern glow, the pool of light under it, its trail and its glints are added to the picture as light (`CoinGlow`); interest
 comes with a slip under the purse and its coins fly up into the bank balance. Achievements (QST-009) are earned from
 facts worked out from the ledger and the quests (`QST009_achievements_are_earned_as_python_says`), each once, its painted
 banner dropping in at the top, one at a time and not over a panel. Their sounds are played by `ABrixSound` (see Sound): `ABrixLife::OnRewardSound`
