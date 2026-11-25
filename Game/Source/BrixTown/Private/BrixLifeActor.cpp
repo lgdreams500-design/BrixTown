@@ -587,6 +587,10 @@ void ABrixLife::Open(const FString& Kind, int32 Lot)
 	if (!E) return;
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
 	if (Mode && Mode->Talk && Mode->Talk->IsTalking()) return;
+	// one thing open at a time: the map, the menu and a counter share the player's "a panel is open", and closing the
+	// first of two gave the keys and the mouse back with the second still up
+	if (Mode && Mode->Map && Mode->Map->IsOpen()) Mode->Map->Close();
+	if (Panel == TEXT("remodel") && Kind != TEXT("remodel")) EndRemodel();   // the designer's camera goes back before another counter takes its place
 	Panel = Kind;
 	PanelLot = Lot;
 	Msg.Reset();

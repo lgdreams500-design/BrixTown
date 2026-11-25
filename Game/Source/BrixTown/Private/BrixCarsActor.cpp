@@ -524,8 +524,15 @@ void ABrixCars::Leave(FVector2D& OutSpot, double& OutYaw)
 	OutSpot = Spots[0];
 	FCollisionQueryParams Q(TEXT("BrixOut"), false);
 	if (const APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0)) Q.AddIgnoredActor(Me);
+	// a free spot with nothing between it and the car: a spot free on the far side of a thin wall put the player
+	// inside a building. Failing that, a free spot; failing that, the driver's door as before.
+	bool bFree = false;
 	for (const FVector2D& S : Spots)
-		if (!GetWorld()->OverlapAnyTestByChannel(ToWorld(S, 1.f), FQuat::Identity, ECC_WorldStatic, FCollisionShape::MakeCapsule(30.f, 70.f), Q)) { OutSpot = S; break; }
+	{
+		if (GetWorld()->OverlapAnyTestByChannel(ToWorld(S, 1.f), FQuat::Identity, ECC_WorldStatic, FCollisionShape::MakeCapsule(30.f, 70.f), Q)) continue;
+		if (!bFree) { OutSpot = S; bFree = true; }
+		if (!GetWorld()->LineTraceTestByChannel(ToWorld(C, 1.f), ToWorld(S, 1.f), ECC_WorldStatic, Q)) { OutSpot = S; break; }
+	}
 	OutYaw = Drive.A;
 	Drive = FDrive();
 }
