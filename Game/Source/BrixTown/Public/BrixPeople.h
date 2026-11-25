@@ -62,6 +62,11 @@ public:
 
 	int32 Shown() const { return LastShown; }
 
+	// The player on the playground (WLD-041; play.js findTarget()): the nearest place to have a go within 1.7 m of the player
+	// (2 m either way, level with them to 1.2 m) that no child is on, or INDEX_NONE; and the playground itself
+	int32 PlayTarget(const FVector& MeCm, double& OutD) const;
+	FBrixPlay& PlayArea() { return Play; }
+
 	// Talking (CITY-007; conversations.js consider(), where()): the nearest resident the player could talk to this frame,
 	// within TalkReach of them and level with them, out of doors and not in a vehicle; and while a talk is under way, the
 	// one held: stopped where they were, turning to the player, their face as they speak, always at full detail. After a

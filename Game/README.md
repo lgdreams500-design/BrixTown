@@ -489,7 +489,16 @@ and hang still (a seat stirring in the breeze, a plank down at one end) when not
 (no instances moved). Motion from World/rules/dressing.json "motion" (in `Game/Data/streets.json`). `BrixWorld/BrixPlay`
 is the port (pieces, places, apply(), keepOut(), draw()), checked against dressing.js itself by
 `WLD032_children_play_as_the_slice_puts_them` (the 28 pieces' shapes, 352 children at four moments, the moving parts after
-each, walkers kept out; `Tools/unreal/streets_values.py`). Not yet: the player having a go (WLD-041).
+each, walkers kept out; `Tools/unreal/streets_values.py`).
+
+The player can have a go too (WLD-041, F-OBJ-POINTS 1): at a swing seat, a seesaw end, the foot of a slide's ladder, by a
+climbing frame or in a sandpit (48 places, one person each but the slide and the frame), E offers it ("Have a go on the
+swing", ...) when it is nearer than anyone to talk to or a car, and no child is on it. On a swing they sit still at first
+and swing higher over `player_swing_build_s` with the seat going with them; on a seesaw they rock it; on a slide they climb
+the ladder, sit at the top, slide down and get off at the bottom; on the frame they climb up and down its side; in the
+sandpit they sit facing its middle. E, Space or moving gets off, beside the piece (dressing.js playerAt(), playerOff(),
+takenBy(); play.js interact(), stepPlayer()). Checked in the same test: every place, the player's pose at eight moments of a
+go there, and where they step off. `-BrixPlay=<n>` has a go at the n-th place a third into a test shot's wait.
 
 ## Money and the bank (ECO-001 to ECO-003, ECO-009, ECO-012, BANK-001, BANK-002, BANK-007, BANK-008; ADR-0012)
 Money is the slice's (economy.js, a port of `Tools/citysim/economy.py`): `BrixWorld/BrixEconomy` holds one ledger of
@@ -786,7 +795,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY100_auto_owns_all_and_rides_electric` | CITY-100 |
 | `BrixTown.World.CITY017_every_plant_is_drawn_as_the_slice_draws_it` | CITY-017, WLD-040 |
 | `BrixTown.World.WLD056_the_open_ground_is_drawn_as_the_slice_draws_it` | WLD-056, ART-001 |
-| `BrixTown.World.WLD032_children_play_as_the_slice_puts_them` | WLD-032 |
+| `BrixTown.World.WLD032_children_play_as_the_slice_puts_them` | WLD-032, WLD-041 |
 | `BrixTown.World.WLD028_the_street_dressing_is_drawn_as_the_slice_draws_it` | WLD-028, WLD-031, WLD-034 |
 | `BrixTown.World.WLD056_every_tree_is_drawn_as_the_slice_draws_it` | WLD-056 |
 | `BrixTown.World.CITY043_the_road_markings_and_signals_are_drawn_as_the_slice_draws_them` | CITY-043, CITY-045, CITY-091 |
