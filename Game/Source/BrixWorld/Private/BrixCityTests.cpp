@@ -138,6 +138,9 @@ bool FART001_HousesHaveTheirColourways::RunTest(const FString&)
 	const FBrixHousePlan* Plan = City.HousePlans.Find(TEXT("house_12x9"));
 	if (!TestNotNull(TEXT("the 12 x 9 m house plan is read"), Plan)) return false;
 	TestEqual(TEXT("its nine windows"), Plan->Windows.Num(), 9);
+	// every plan comes with its windows, those listed by floor too (the row houses and flats: read as a list, they gave none)
+	for (const auto& KV : City.HousePlans) TestTrue(KV.Key + TEXT(" has its windows"), KV.Value.Windows.Num() > 0);
+	if (const FBrixHousePlan* Row = City.HousePlans.Find(TEXT("row_14x12_2"))) TestEqual(TEXT("the row house's ground floor windows"), Row->Windows.Num(), 9);
 	TestTrue(TEXT("its door on the front"), Plan->DoorWidth > 0.5f && FMath::Abs(Plan->DoorAt) < Plan->HalfU);
 	int32 Houses = 0, Bad = 0;
 	TSet<FString> Ways;

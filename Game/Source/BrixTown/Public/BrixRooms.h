@@ -67,6 +67,7 @@ public:
 	UPROPERTY(Config) FLinearColor TilesColour = FLinearColor(0.7f, 0.68f, 0.64f);       // a wet room's tiles
 	UPROPERTY(Config) float DoorHeight = 2.15f;         // an inner doorway (homes.js DOOR_H)
 	UPROPERTY(Config) float MinBlockHeight = 0.9f;      // a piece is in the way at least this high (homes.js one())
+	UPROPERTY(Config) float HideHungWithin = 1.0f;      // a hung piece (a pendant, a wall cupboard) is not drawn with the camera this near it (m)
 	// the rooms' own light (homes.js: a lamp in each room near the camera, 0.4 m under its ceiling): the rooms nearest the
 	// camera in the home it is in (each light costs GPU time with Lumen: 6 cost some 15 ms on the owner's laptop)
 	UPROPERTY(Config) int32 RoomLights = 3;
@@ -121,6 +122,12 @@ private:
 	UPROPERTY() TMap<FString, TObjectPtr<UInstancedStaticMeshComponent>> Groups;
 	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Boxes;      // walls, frames, floors: M_Greybox boxes that block
 	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Blocks;     // unseen: what the pieces stand in the way of
+	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> CamBlocks;  // unseen: what only the camera keeps out of (a pendant's shade, a wall cupboard)
+	TMap<FString, TArray<float>> Hung;                                  // those pieces' boxes, x0 x1 y0 y1 z0 z1 (homes.js CAM_ONLY)
+	UInstancedStaticMeshComponent* CamGroup();
+	struct FHungShown { TWeakObjectPtr<UInstancedStaticMeshComponent> G; int32 Index = -1; FTransform T; FBox Box; bool bHidden = false; };
+	TArray<FHungShown> HungShown;                                       // the hung pieces drawn, to leave out next to the camera
+	void HideHungNearCamera();
 	UPROPERTY() TObjectPtr<UStaticMesh> Cube;
 	UPROPERTY() TObjectPtr<UMaterialInterface> Greybox;
 	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> OwnColour;
