@@ -12,6 +12,7 @@
 #include "BrixThingWidget.h"
 #include "BrixUnits.h"
 #include "Engine/Engine.h"
+#include "Engine/Texture2D.h"
 #include "Engine/GameViewportClient.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
@@ -65,6 +66,37 @@ namespace
 	TSharedRef<SWidget> UiButton(const FString& Label, TFunction<void()> OnClick, bool bEnabled = true, bool bQuiet = false)
 	{
 		return BrixLook::Button(Label, OnClick, !bQuiet, bEnabled);
+	}
+	// UI-020: the mark of where a thing goes, for a buy menu's dots and chips (buymenu.js ICON): painted once from its paths
+	// into a white picture whose alpha is the mark, drawn in the board colour's lettering
+	const FSlateBrush* MarkBrush(const FBrixBuyMenuRules& B, const FString& Goes)
+	{
+		static TMap<FString, TUniquePtr<FSlateBrush>> Made;
+		if (const TUniquePtr<FSlateBrush>* Have = Made.Find(Goes)) return Have->Get();
+		TUniquePtr<FSlateBrush>& Br = Made.Add(Goes);
+		const TArray<FBrixIconPath>* Paths = B.Icons.Find(Goes);
+		const int32 Px = 64;
+		UTexture2D* T = Paths && Paths->Num() ? UTexture2D::CreateTransient(Px, Px, PF_B8G8R8A8) : nullptr;
+		if (!T) return nullptr;
+		const TArray<float> Cover = BrixIconCoverage(*Paths, Px);
+		T->SRGB = true;
+		T->Filter = TF_Trilinear;
+		FColor* Dst = static_cast<FColor*>(T->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE));
+		for (int32 i = 0; i < Px * Px; ++i) Dst[i] = FColor(255, 255, 255, (uint8)FMath::RoundToInt(Cover[i] * 255.f));
+		T->GetPlatformData()->Mips[0].BulkData.Unlock();
+		T->UpdateResource();
+		T->AddToRoot();   // painted once, kept for the whole visit
+		Br = MakeUnique<FSlateBrush>();
+		Br->SetResourceObject(T);
+		Br->ImageSize = FVector2D(Px, Px);
+		Br->DrawAs = ESlateBrushDrawType::Image;
+		return Br.Get();
+	}
+	TSharedRef<SWidget> UiMark(const FBrixBuyMenuRules& B, const FString& Goes, float Size, const FLinearColor& Ink)
+	{
+		const FSlateBrush* Br = MarkBrush(B, Goes);
+		if (!Br) return SNullWidget::NullWidget;
+		return SNew(SBox).WidthOverride(Size).HeightOverride(Size)[ SNew(SImage).Image(Br).ColorAndOpacity(Ink) ];
 	}
 	TSharedRef<SHorizontalBox> UiRow() { return SNew(SHorizontalBox); }
 	void UiAdd(TSharedRef<SHorizontalBox> R, TSharedRef<SWidget> W) { R->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 8, 0)[ W ]; }
@@ -816,8 +848,12 @@ TSharedRef<SWidget> ABrixLife::Grid(const TArray<FWare>& Things, const FGridOpts
 		const FBrixBuyMenuRules::FGoes* G = BuyMenu.Goes.Find(Goes);
 		if (!G) return SNullWidget::NullWidget;
 		const TPair<FColor, FColor> C = Board(Goes);
-		return SNew(SBorder).BorderImage(BrixLook::Round(FLinearColor::FromSRGBColor(C.Key), 9.f)).Padding(FMargin(9, 2, 9, 3))
-			[ SNew(STextBlock).Font(UiFont(10, true)).ColorAndOpacity(FLinearColor::FromSRGBColor(C.Value)).Text(FText::FromString(G->Name)) ];
+		return SNew(SBorder).BorderImage(BrixLook::Round(FLinearColor::FromSRGBColor(C.Key), 9.f)).Padding(FMargin(6, 2, 9, 3))   // .bm-chip: the mark, then the words
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 5, 0)[ UiMark(BuyMenu, Goes, 13.f, FLinearColor::FromSRGBColor(C.Value)) ]
+				+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)[ SNew(STextBlock).Font(UiFont(10, true)).ColorAndOpacity(FLinearColor::FromSRGBColor(C.Value)).Text(FText::FromString(G->Name)) ]
+			];
 	};
 	auto Price = [](const FWare& W) { return BrixLook::Tag(Format(W.Price), W.State == TEXT("short"), 12); };
 	auto LeftWords = [this, &O](const FWare& W) -> FString
@@ -871,7 +907,13 @@ TSharedRef<SWidget> ABrixLife::Grid(const TArray<FWare>& Things, const FGridOpts
 						SNew(SHorizontalBox)
 						+ SHorizontalBox::Slot().FillWidth(1).VAlign(VAlign_Center).HAlign(HAlign_Left)[ Price(W) ]
 						+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
-						[ W.Goes.IsEmpty() ? SNullWidget::NullWidget : (TSharedRef<SWidget>)(SNew(SBox).WidthOverride(14).HeightOverride(14)[ SNew(SBorder).BorderImage(FCoreStyle::Get().GetBrush("Icons.FilledCircle")).BorderBackgroundColor(FLinearColor::FromSRGBColor(Dot.Key)) ]) ]
+						[   // .bm-dot: a round of the board colour with the mark in its lettering
+							W.Goes.IsEmpty() ? SNullWidget::NullWidget : (TSharedRef<SWidget>)(SNew(SBox).WidthOverride(18).HeightOverride(18)
+							[
+								SNew(SBorder).BorderImage(BrixLook::Round(FLinearColor::FromSRGBColor(Dot.Key), 9.f)).Padding(0).HAlign(HAlign_Center).VAlign(VAlign_Center)
+								[ UiMark(BuyMenu, W.Goes, 11.f, FLinearColor::FromSRGBColor(Dot.Value)) ]
+							])
+						]
 					]
 					+ SVerticalBox::Slot().AutoHeight().Padding(2, 1, 2, 0)[ SNew(STextBlock).Font(UiFont(11)).ColorAndOpacity(UiDim).Text(FText::FromString(W.Name)).OverflowPolicy(ETextOverflowPolicy::Ellipsis) ]
 				]

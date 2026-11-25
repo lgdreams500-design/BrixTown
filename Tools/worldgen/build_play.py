@@ -5,7 +5,7 @@ are, so a change to World/ shows up after re-running this script and reloading t
 
 Run:  python build_play.py [day]        (default day 16: a summer market day with fair weather)
 """
-import json, os, sys
+import json, os, re, sys
 
 import world
 import citysim
@@ -321,10 +321,26 @@ def unreal_life(w, city, L):
                 economy=L["economy"], quests=L["quests"], goods=goods, visits=L["visits"], staff=L["staff"],
                 lots=[l["id"] for l in lots_], outlets={str(n): ec.outlets_of(l) for n, l in enumerate(lots_) if ec.outlets_of(l)},
                 checks=L["checks"], bank_checks=dict(script=bs, shops=shops, want=want), quest_checks=dict(script=qscript, shops=shops, want=qwant), reward_checks=L["reward_checks"],
-                achievements=L["achievements"], buy_menu=L["buy_menu"], settings=L["settings"],
+                achievements=L["achievements"], buy_menu=dict(L["buy_menu"], icons=buy_menu_icons()), settings=L["settings"],
                 pieces=list(w["furnishing"]["pieces"]), palette=w["designer"]["palette"],   # for what a buy menu shows (UI-021)
                 rewards={k: w["sound"]["rewards"][k] for k in ("ledger", "coins")},   # how money coming in is shown (SND-019, SND-020)
                 residents=[dict(id=r["id"], role=r["role"], home=r["home"], work=r["work"]) for r in w["residents"]])
+
+
+def buy_menu_icons():
+    """The marks in a buy menu's dots and chips (UI-020, ADR-0044): the slice's buymenu.js ICON, which stays their one
+    source, as {where a thing goes: [[path data, stroke width, or 0 for a fill], ...]} on a square 16 units across."""
+    src = open(os.path.join(HERE, "..", "..", "Prototype", "play", "buymenu.js"), encoding="utf-8").read()
+    body = re.search(r"const ICON = \{(.*?)\n  \};", src, re.S).group(1)
+    out = {}
+    for k, svg in re.findall(r"(\w+): '(<svg.*?</svg>)'", body):
+        out[k] = []
+        for tag in re.findall(r"<path [^>]*/>", svg):
+            sw = re.search(r'stroke-width="([\d.]+)"', tag)
+            out[k].append([re.search(r' d="([^"]+)"', tag).group(1), float(sw.group(1)) if sw else 0.0])
+    if sorted(out) != ["carry", "eat", "home", "place", "wear"]:
+        raise SystemExit("buymenu.js ICON is not the five marks build_play.py expects: %s" % sorted(out))
+    return out
 
 
 def walk_net(city, lots_):
