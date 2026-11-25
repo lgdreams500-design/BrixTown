@@ -1,7 +1,7 @@
 ---
 adr: ADR-0055
 title: In Unreal the eye is held at dusk and at night, the lamps follow the sun, and the night has its own light
-status: proposed          # built to fix the light as found on 2026-11-25; the night and dusk it gives are for the owner to approve (pictures: Art/StyleTests/unreal_light_43/)
+status: accepted          # the owner, shown the pictures of Art/StyleTests/unreal_light_43/ and asked "Do the rooms look right now, so pull request 119 can be merged?", said "yes" (2026-11-25)
 date: 2026-11-25
 relates_to: [WLD-028, WLD-037, WLD-042, WLD-043, CITY-013, ADR-0004, ADR-0007, ADR-0023, ADR-0024, ADR-0045, ADR-0048, ADR-0050]
 ---
@@ -69,15 +69,15 @@ The night look itself is decided: ADR-0023, approved in the slice. The slice is 
 ## Consequences
 - Out of doors the approved daylight is unchanged: noon and 07:20 shots match the ones taken before to within a few
   levels, in every kind of weather. Rooms are not as they were: see the next but two.
-- The night and dusk are new in Unreal and follow ADR-0023 by eye, not by the slice's shader: they wait for the owner's
-  word. Still to bring over from WLD-042: the stars, the Milky Way, the moon's disc, path and phases (the night's light
+- The night and dusk are new in Unreal and follow ADR-0023 by eye, not by the slice's shader: accepted with the rest when the
+  owner said yes to merging this (2026-11-25). Still to bring over from WLD-042: the stars, the Milky Way, the moon's disc, path and phases (the night's light
   comes from a fixed place and does not wax or wane), and the planet (WLD-065).
 - Lamps are lit from about an hour before sunset to an hour after sunrise in summer; by day they stay off, though the
   reference renders show them lit in shade. Lighting them by day would change the daylight the owner approved in Unreal.
 - Rooms follow the references' lit rooms (kit 18's shop, cafe and kitchen), not the dark living room of
   `Art/Reference/interior_room_daylight.png`, whose lamps are shut inside closed shades and give almost no light. They
   are warmer and about a stop less bright than under the engine's free eye, which is the look ADR-0048 kept ("the darker
-  mood ... is not chased"): this replaces that part of ADR-0048 and is the owner's to approve.
+  mood ... is not chased"): this replaces that part of ADR-0048, and the owner said yes to it (2026-11-25).
 - The reference rooms stay in the build as a tool: any change to lamps, materials or the eye can be measured again in
   one run (`Tools/unreal/light_tour.ps1`, then `light_reference.py`). They are open behind the camera, as Blender's
   are, so their daylight is not a closed room's.

@@ -2,8 +2,8 @@
 
 The Unreal build's light looked at in every kind of place through the day on 2026-11-25, and what was changed
 (Game/README.md "The eye and the night"). Not a new look: the day is the approved daylight (ADR-0007, ADR-0048) and is
-unchanged; the night follows the slice's approved night (ADR-0023, `../night_sky_15/`) by eye. The night and dusk shown
-here wait for the owner's word (ADR-0055 is proposed).
+unchanged; the night follows the slice's approved night (ADR-0023, `../night_sky_15/`) by eye. The owner, shown these, said yes to
+merging the work on 2026-11-25 (ADR-0055).
 
 Taken at High on the owner's laptop, 1066 x 666, day 16 (a clear summer Wednesday: sunrise 05:00, sunset 20:30), in one
 run each: `Tools\unreal\light_tour.ps1 -OutDir <folder>` for "after" and the same with `-Extra "-BrixLightOff"` for

@@ -565,8 +565,8 @@ What it showed, and what a room's light is as a result (`ABrixRooms`, every numb
   rooms in Unreal are as bright as Blender's.
 With those, the three reference rooms in Unreal come within about half a stop of Blender's in brightness and a third of
 a stop in warmth (shop, cafe, kitchen: see `Art/StyleTests/unreal_light_43/rooms_against_blender.jpg`). The game's own
-rooms are warmer and about a stop less bright than they were under the engine's free eye (ADR-0048's look): the owner's
-to approve. Not yet: the kits' lamp shades do not glow (their material has no glow), so a pendant's light has no bright
+rooms are warmer and about a stop less bright than they were under the engine's free eye (ADR-0048's look): the
+owner said yes to that on 2026-11-25. Not yet: the kits' lamp shades do not glow (their material has no glow), so a pendant's light has no bright
 shade over it; the reference rooms are open behind the camera, as Blender's are, which a real room is not; Eastgate's
 inside keeps its own light.
 
