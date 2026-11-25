@@ -223,6 +223,7 @@ void ABrixTalk::Choose(int32 n)
 	const FBrixDialogue::FNode* N = C ? C->Nodes.Find(NodeId) : nullptr;
 	if (!N) return;
 	const FBrixDialogue::FOption O = N->Options[Opts[n]];
+	++Answered;
 	for (const FString& X : O.Do) Flags.FindOrAdd(Res).Add(X);
 	double Dur = -1;
 	SayAloud(-1, O.Text, TEXT("neutral"), Dur);   // you say your answer (SND-018)

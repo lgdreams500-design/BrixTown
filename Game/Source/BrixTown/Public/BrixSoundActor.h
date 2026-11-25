@@ -22,7 +22,11 @@ struct FBrixTraffic;
 // So far: the player's steps and landings, and the steps of the residents near, by surface (stone, wood, grass), louder
 // running and lighter for children, and the sound of a resident sitting down, lying down or getting up; the engines of
 // the nearest cars on a trip and of the player's car (its start-up, skids and bumps), the trams' hum, whine, rumble and
-// bell. Continuous sounds are loops that play only while they can be heard.
+// bell; the street's air by time of day, crickets at night, the nearest fountain, birds by day; the interface and
+// interactions: a prompt appearing, a talk opening, an answer chosen, a talk closing, a jump, getting into a car (the
+// door and the starter) and out of it. Continuous sounds are loops that play only while they can be heard.
+// N turns all sound off and on (SND-013), remembered between visits in the user's settings (GameUserSettings.ini).
+// -BrixSoundToggle turns it off and on again during a test shot, to check the key's work in the log.
 // A test shot logs how many of each sound were played.
 UCLASS(Config = Game)
 class BRIXTOWN_API ABrixSound : public AActor
@@ -44,6 +48,9 @@ public:
 	// Plays a one-shot on a bus (the rules' World, Voice or Action share): a variant of the named recording, where the
 	// event says, at the slice's level for the listener (BrixHear) unless it is the listener's own.
 	void Play(const FBrixSoundEvent& E, double Bus);
+	void Act(const FString& Name);       // an action sound of sound.json (act_<name>), the listener's own
+	bool IsOn() const { return bOn; }
+	void SetOn(bool bNow);               // all sound on or off (SND-013), and remembered
 
 private:
 	struct FClip { TArray<uint8> Pcm; int32 Rate = 22050; double Scale = 1; double Seconds = 0; bool bLoop = false; };
@@ -65,6 +72,16 @@ private:
 	FBrixPlayerSounds PlayerSounds;
 	FBrixEngineSounds EngineSounds;
 	FBrixTramSounds TramSounds;
+	FBrixAmbience Ambience;
+	FRandomStream Rng;
+	TArray<FVector2D> Fountains, Gardens;
+	double SunriseH = 6, SunsetH = 20;   // the calendar's, for the day's season
+	FLoop StreetDayL, StreetNightL, RoomL, CricketsL, FountainL;
+	// what the interface and the player were doing last frame, for the sounds of a change
+	bool bWasTalking = false, bWasRiding = false, bOn = true;
+	int32 WasAnswered = 0, WasDriving = -1;
+	FString WasPrompt;
+	void Interactions();
 	TSharedPtr<FBrixDay> Day;
 	TSharedPtr<FBrixTraffic> Traffic;
 	FBrixTram Tram;

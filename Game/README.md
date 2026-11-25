@@ -181,7 +181,7 @@ the game menu's Money page in its painted-sign look. To see the bank in a test s
 `-BrixCounter=bank "-BrixLife=open,current;open,savings;move,p:current,p:savings,1000;loan,5000,3"` (ops as
 economy.check_script() writes them, arguments by commas).
 
-## Sound (SND-002 to SND-004, SND-007, SND-009, SND-017)
+## Sound (SND-001 to SND-004, SND-007, SND-009, SND-013, SND-017)
 The slice makes its sounds live with Web Audio (`Prototype/play/sound.js`, from `World/rules/sound.json`); the Unreal
 build plays recordings of those same sounds. `Tools/unreal/sound_values.py` runs sound.js itself in headless Edge (over
 its DevTools socket) and renders its own sound-making functions into an OfflineAudioContext: `Game/Data/sounds/*.wav`
@@ -200,9 +200,18 @@ buses lower) and louder moving; the car the player drives, its engine starting, 
 a skid braking hard above 5 m/s and a bump when it is stopped short. sound.js pitches one voice; here two recordings of
 it, at 36 and 76 Hz, share the note and are each pitched to it, so the timbre stays the slice's across the range. The two
 nearest trams hum, whine higher and rumble as they go faster, and ring their bell as they stop and as they leave. A
-continuous sound is a loop that plays only while it can be heard (it is stopped, and takes no voice, when it cannot). A
-test shot logs how many of each sound were played and how long each loop was heard (`sounds played in all: ...`,
-`loops heard in all: ...`). Not yet: being muffled indoors.
+continuous sound is a loop that plays only while it can be heard (it is stopped, and takes no voice, when it cannot).
+The town's air (SND-001): the street quiet and dark at night and louder and brighter by day (the day's and the night's
+recordings crossfaded over 80 minutes either side of 40 minutes before sunrise and after sunset, the calendar's for the
+season), crickets from 21:00 to 05:00, the nearest fountain within 22 m, birds by day somewhere 6 to 28 m round the
+player, 18 a minute and 40 near a garden, none while driving. The slice has no sound for the weather, so there is none
+here either. The interface and interactions (SND-009): a tick when E offers something new, a chime as a talk opens, a
+tick for each answer chosen, a falling chime as it closes, the jump, and getting into a car (its door, then the
+starter) and out of it (the door). N turns all sound off and on, the talk's voices too (SND-013); it is remembered
+between visits in the user's settings (`Saved/Config/.../GameUserSettings.ini`, `[/Script/BrixTown.BrixSound]
+bSoundOn`). A test shot logs how many of each sound were played and how long each loop was heard (`sounds played in
+all: ...`, `loops heard in all: ...`); `-BrixSoundToggle` turns the sound off and on again during it. Not yet: being
+muffled indoors and the room tone (the player cannot go in yet; the room's recording is ready), the music.
 
 ## Shops, cafés and the market stall (ECO-005, ECO-010, ECO-011, PROP-008, UI-020, UI-021; ADR-0044)
 At the door of a shop or café (or inside it) B opens its counter, as in the slice: what it sells at today's price (its
@@ -267,9 +276,10 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.ECO002_the_ledger_matches_the_python` | ECO-002, ECO-005, ECO-010, ECO-011, ECO-013, BANK-001, BANK-007 |
 | `BrixTown.World.BANK008_the_bank_settles_as_the_python_does` | BANK-002, BANK-008 |
 | `BrixTown.World.SND017_people_sound_as_the_slice_hears_them` | SND-017, SND-003 |
-| `BrixTown.World.SND003_the_players_steps_and_landings` | SND-003 |
+| `BrixTown.World.SND003_the_players_steps_and_landings` | SND-003, SND-009 |
 | `BrixTown.World.SND007_sounds_are_heard_from_where_they_are` | SND-007 |
 | `BrixTown.World.SND009_every_sound_has_its_recording` | SND-009 |
 | `BrixTown.World.SND002_engines_sound_as_the_slice_hears_them` | SND-002, SND-009 |
 | `BrixTown.World.SND004_the_tram_sounds_as_the_slice_hears_it` | SND-004 |
 | `BrixTown.World.UI021_every_thing_shows_what_python_says` | UI-020, UI-021 |
+| `BrixTown.World.SND001_the_town_sounds_by_time_of_day` | SND-001 |
