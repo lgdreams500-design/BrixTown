@@ -843,6 +843,22 @@ class Skateboards(unittest.TestCase):
         self.assertLess(self.R["indoor_top_kmh"], self.R["mall_top_kmh"])
         self.assertTrue(0 < self.R["turn_rate"] <= 6 and 0 < self.R["cam_follow"], "A and D turn the rider, the camera follows")
 
+    def test_CITY_102_the_skate_store_prices_each_kind_cheapest_to_dearest(self):
+        k = self.R["kinds"]
+        prices = [k[n]["price"] for n in self.R["order"]]
+        self.assertTrue(all(type(p) is int and p > 0 for p in prices), prices)   # whole chips (ECO-001)
+        self.assertEqual(prices, sorted(prices))                             # better boards are a goal to save up for
+        self.assertEqual(len(set(prices)), len(prices))
+        start = W["economy"]["start"]["cash"] + W["economy"]["start"]["welcome_deposit"]
+        self.assertGreater(prices[0], W["economy"]["start"]["cash"])         # not on the first morning with the cash alone
+        self.assertGreater(prices[-1], start + W["economy"]["bank"]["loan"]["max"])   # the dearest is saved up for, not borrowed
+        store = [l for l in LOTS if l["kind"] == "shop" and "Skate" in l["name"]]
+        self.assertEqual(len(store), 1)                                      # one skate store in town, a shop lot
+        self.assertTrue(store[0]["enterable"])
+        S = W["economy"]["shops"]["skate"]
+        self.assertEqual((S["match"], S["sells"], S["buys"]), ({"kind": "shop", "name_has": "Skate"}, [], []))   # boards, not items; none bought back (Q-40)
+        self.assertFalse(any(r["near"].get("grocer") == store[0]["id"] for r in W["residents"] if r.get("near")))   # nobody's grocer
+
     def test_CITY_100_auto_owns_all_and_rides_electric(self):
         self.assertEqual(sorted(self.R["auto_owned"]), sorted(self.R["kinds"]))
         self.assertEqual(self.R["auto_equipped"], "electric")               # the owner, 2026-11-24: ?auto=1 loads the electric board

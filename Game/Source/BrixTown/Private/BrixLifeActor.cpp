@@ -1,6 +1,7 @@
 #include "BrixLifeActor.h"
 
 #include "BrixSave.h"
+#include "BrixBody.h"
 
 #include "BrixCharacter.h"
 #include "BrixCity.h"
@@ -254,6 +255,8 @@ void ABrixLife::SaveTo(FBrixSaveGame& S) const
 		S.Plans->SetObjectField(P.Key, ByFloor);
 	}
 	S.Feats = Feats;
+	if (const ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))   // CITY-100
+		S.Boards = BrixBoardsSave(E->Boards, Me->Boards.InUse, Me->Boards.Riding());
 }
 
 bool ABrixLife::LoadFrom(const FBrixSaveGame& S, FString& OutWhy)   // life.js loadSave()
@@ -305,6 +308,8 @@ bool ABrixLife::LoadFrom(const FBrixSaveGame& S, FString& OutWhy)   // life.js l
 				if (const int32* n = E->LotIndex.Find(FString(KV.Key))) ApplyRemodel(*n, KV.Value->AsObject());
 			}
 	Feats = S.Feats;
+	if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))   // CITY-100: the boards owned, the one in use in the hand
+		Me->SetBoards(E->Boards, BrixBoardsInUse(S.Boards));
 	Offered.Reset();
 	PendingCounter = -1;
 	Coins.Reset(); Flies.Reset(); Spark.Reset(); Timeline.Reset(); Banners.Reset();
@@ -442,6 +447,7 @@ FString ABrixLife::CounterWords(int32 n) const
 	if (n == E->BankLot) return TEXT("Bank counter");
 	if (n == E->MarketLot) return TEXT("Your market stall");
 	if (Est) if (const FString* Co = Est->Office.Find(Lots[n].Id)) return TEXT("Estate agent: ") + EstateRules.Company(*Co)->Name;
+	if (E->ShopKind(n) == TEXT("skate")) return TEXT("Skateboards at ") + Lots[n].Name;
 	if (!E->ShopKind(n).IsEmpty() && !E->Outlets.Contains(n)) return TEXT("Buy and sell at ") + Lots[n].Name;
 	return FString();
 }
@@ -541,7 +547,7 @@ void ABrixLife::Draw()
 	else if (Panel == TEXT("shop"))
 	{
 		Title = Lots[PanelLot].Name;
-		Sub = E->R.Shop(E->ShopKind(PanelLot))->Name + TEXT(" · restocks at ") + UiHhmm(E->R.RestockMinute);
+		Sub = E->R.Shop(E->ShopKind(PanelLot))->Name + (E->ShopKind(PanelLot) == TEXT("skate") ? FString(TEXT(" · three kinds of board")) : TEXT(" · restocks at ") + UiHhmm(E->R.RestockMinute));
 		Hint = FString(TEXT("← → ↑ ↓  choose    Enter  ")) + (Side == TEXT("sell") ? TEXT("sell") : TEXT("buy")) + TEXT("    Esc  close");
 	}
 	else if (Panel == TEXT("outlet"))   // one outlet of a mall (life.js draw(), kind "outlet")
@@ -1632,6 +1638,13 @@ bool ABrixLife::RunOps(const FString& Ops)
 			bOk = Rest.Num() && Est->Buy(Rest);
 			if (!bOk) E->Why = Est->Why;
 		}
+		else if (A[0] == TEXT("board"))   // board,<kind>: bought at the skate store (CITY-103)
+		{
+			int32 n = -1;
+			for (int32 k = 0; n < 0 && k < Lots.Num(); ++k) if (E->ShopKind(k) == TEXT("skate")) n = k;
+			FString Said;
+			bOk = n >= 0 && SkateBuy(n, Sv(1), Said);
+		}
 		else if (A[0] == TEXT("outlet"))   // outlet,<good>: bought at the first of a mall's outlets that sells it (ECO-013; to wear, CHR-016)
 		{
 			bOk = false;
@@ -1711,13 +1724,78 @@ TSharedPtr<const FBrixThingMesh> ABrixLife::MeshFor(const FString& Thing, const 
 {
 	const FString Key = Thing + TEXT("|") + Band;
 	if (const TSharedPtr<const FBrixThingMesh>* M = Meshes.Find(Key)) return *M;
+	if (Thing.StartsWith(TEXT("board:")))   // a skateboard on show (CITY-102): its own model, as people.js board() draws it
+	{
+		const ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+		const FBrixBoardKind* K = Me ? Me->BoardRules.Kind(Thing.RightChop(6)) : nullptr;
+		TSharedPtr<const FBrixThingMesh> Got;
+		if (K) { FBrixBodyMesh Body; DrawBrixBoard(*K, 0, Body); Got = MakeShared<const FBrixThingMesh>(BrixThingFromBody(Body)); }
+		return Meshes.Add(Key, Got);
+	}
 	const TOptional<FBrixThingMesh> M = BuyMenu.MeshFor(Thing, Band);
 	TSharedPtr<const FBrixThingMesh> Got; if (M) Got = MakeShared<const FBrixThingMesh>(*M); return Meshes.Add(Key, Got);
+}
+
+FString ABrixLife::SkateStoreName() const
+{
+	for (int32 k = 0; E && k < Lots.Num(); ++k) if (E->ShopKind(k) == TEXT("skate")) return Lots[k].Name;
+	return TEXT("The skate store");
+}
+
+// buy a board at the skate store at lot n (CITY-103): through the ledger; the character owns it, and uses it when it is faster
+bool ABrixLife::SkateBuy(int32 n, const FString& K, FString& Said)
+{
+	const FBrixEconomyRules::FBoard* B = E->R.Boards.Find(K);
+	ABrixCharacter* Rider = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	const FString Was = Rider ? Rider->Boards.InUse : FString();
+	int64 P = 0;
+	if (!E->BuyBoard(n, K, &P)) return false;
+	const FString Use = FBrixEconomy::BoardInUse(E->R, Was, K);
+	if (Rider)   // the board joins the others; the one in use changes only when the new one is faster (a ride goes on)
+	{
+		TArray<FString> Own;
+		for (const FString& X : Rider->BoardRules.Order) if (E->Boards.Contains(X) || Rider->Boards.Own.Contains(X)) Own.Add(X);
+		Rider->Boards.Own = Own;
+		Rider->Boards.Use(Use);
+	}
+	const FBrixEconomyRules::FBoard* WasB = E->R.Boards.Find(Was);
+	Said = TEXT("Bought the ") + (B ? B->Name.ToLower() : K) + TEXT(" for ") + Format(P) + TEXT(".") + (Use == K ? FString(TEXT(" It is the one in use: Y gets on it."))
+		: TEXT(" Your ") + (WasB ? WasB->Name.ToLower() : FString(TEXT("board"))) + TEXT(" stays the one in use; Belongings (G) changes it."));
+	return true;
+}
+
+// the skate store (CITY-102, CITY-103): its three boards in the buy menu, each its own model turning in the showcase, at the
+// store's prices; one owned shows as yours and is not sold again. A board bought goes to the belongings and is the one in use
+// when it is faster than the one in use (economy.board_in_use); the store buys none back (Q-40 is open).
+void ABrixLife::SkatePanel(TSharedRef<SVerticalBox> Body)
+{
+	const int32 n = PanelLot;
+	const ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	const FString Band = BuyMenu.Bands.FindRef(TEXT("skate"));
+	Body->AddSlot().AutoHeight()[ PurseLine() ];
+	Body->AddSlot().AutoHeight()[ UiHeading(TEXT("Skateboards")) ];
+	TArray<FWare> Things;
+	for (const FString& K : E->R.BoardOrder)
+	{
+		const FBrixEconomyRules::FBoard* B = E->R.Boards.Find(K);
+		if (!B) continue;
+		FWare W = Ware(TEXT("board:") + K, B->Name, B->Price, TEXT("carry"), -1, Band);
+		if (E->Boards.Contains(K) || (Me && Me->Boards.Own.Contains(K))) { W.State = TEXT("have"); W.Short = 0; }
+		W.More.Add({ TEXT("Top speed"), FString::Printf(TEXT("%d km/h"), (int32)B->TopKmh) });
+		if (const FBrixBoardKind* BK = Me ? Me->BoardRules.Kind(K) : nullptr) W.More.Add({ TEXT("It goes"), BK->bPush ? TEXT("pushed with a foot") : TEXT("by itself, W held") });
+		Things.Add(W);
+	}
+	FGridOpts O;
+	O.Id = FString::Printf(TEXT("skate:%d"), n);
+	O.Buy = [this, n](const FWare& W, FString& Said) { return SkateBuy(n, W.Id.RightChop(6), Said); };
+	Body->AddSlot().AutoHeight()[ Grid(Things, O) ];
+	Body->AddSlot().AutoHeight().Padding(0, 10, 0, 0)[ UiText(TEXT("A board goes with you, among your belongings (G). The store does not buy boards back."), 13, UiDim) ];
 }
 
 void ABrixLife::ShopPanel(TSharedRef<SVerticalBox> Body)
 {
 	const int32 n = PanelLot;
+	if (E->ShopKind(n) == TEXT("skate")) { SkatePanel(Body); return; }
 	const FString K = E->ShopKind(n);
 	const FBrixEconomyRules::FShop& S = *E->R.Shop(K);
 	const FString Band = BuyMenu.Bands.FindRef(K);
@@ -1854,18 +1932,19 @@ TSharedRef<SWidget> ABrixLife::Grid(const TArray<FWare>& Things, const FGridOpts
 		if (W.State == TEXT("out")) return TEXT("sold out, back at ") + UiHhmm(E->R.RestockMinute);
 		return FString::Printf(TEXT("%d left"), W.Left);
 	};
-	auto Flag = [](bool bOut) -> TSharedRef<SWidget>
+	auto Flag = [](const FString& State) -> TSharedRef<SWidget>
 	{
-		if (!bOut) return SNullWidget::NullWidget;
+		const bool bOut = State == TEXT("out"), bHave = State == TEXT("have");
+		if (!bOut && !bHave) return SNullWidget::NullWidget;
 		return SNew(SBox).VAlign(VAlign_Center)
 			[ SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(FLinearColor::FromSRGBColor(FColor(122, 66, 52))).Padding(FMargin(0, 3)).HAlign(HAlign_Center).RenderTransform(FSlateRenderTransform(FQuat2D(FMath::DegreesToRadians(-4.f))))
-				[ SNew(STextBlock).Font(UiFont(10, true)).ColorAndOpacity(FLinearColor::FromSRGBColor(FColor(251, 243, 224))).Text(FText::FromString(TEXT("SOLD OUT"))) ] ];
+				[ SNew(STextBlock).Font(UiFont(10, true)).ColorAndOpacity(FLinearColor::FromSRGBColor(FColor(251, 243, 224))).Text(FText::FromString(bHave ? TEXT("YOURS") : TEXT("SOLD OUT"))) ] ];
 	};
 	TSharedRef<SGridPanel> List = SNew(SGridPanel);
 	for (int32 k = 0; k < Things.Num(); ++k)
 	{
 		const FWare W = Things[k];
-		const bool bSel = W.Id == P.Id, bOut = W.State == TEXT("out");
+		const bool bSel = W.Id == P.Id, bOut = W.State == TEXT("out") || W.State == TEXT("have");
 		const TPair<FColor, FColor> Dot = Board(W.Goes);
 		List->AddSlot(k % Cols, k / Cols).Padding(k % Cols ? Gap : 0.f, k / Cols ? Gap : 0.f, 0.f, 0.f)
 		[
@@ -1890,7 +1969,7 @@ TSharedRef<SWidget> ABrixLife::Grid(const TArray<FWare>& Things, const FGridOpts
 						[
 							SNew(SOverlay)
 							+ SOverlay::Slot()[ SNew(SBrixThing).Mesh(MeshFor(W.Id, W.Band)).Rules(&BuyMenu).Grey(bOut).Size(FVector2D(CellW - 4, BuyMenu.StagePx)).Yaw(YawFor(O.Id + TEXT(":") + W.Id)) ]
-							+ SOverlay::Slot().VAlign(VAlign_Center)[ Flag(bOut) ]
+							+ SOverlay::Slot().VAlign(VAlign_Center)[ Flag(W.State) ]
 						]
 					]
 					+ SVerticalBox::Slot().AutoHeight().Padding(2, 5, 2, 0)
@@ -1923,7 +2002,9 @@ TSharedRef<SWidget> ABrixLife::Grid(const TArray<FWare>& Things, const FGridOpts
 			+ SVerticalBox::Slot().AutoHeight()[ SNew(SBorder).BorderImage(UiWhite()).BorderBackgroundColor(UiRule).Padding(0)[ SNew(SBox).HeightOverride(1.f) ] ]
 		];
 	};
+	for (const TPair<FString, FString>& Mo : P.More) Line(Mo.Key, UiText(Mo.Value, 14));
 	if (BuyMenu.Goes.Contains(P.Goes)) Line(TEXT("Goes to"), Chip(P.Goes));
+	if (P.State == TEXT("have")) Line(TEXT("Yours"), UiText(TEXT("you have this one"), 14, UiPos));
 	if (P.Left >= 0) Line(O.StockLabel, UiText(O.bMine ? FString::FromInt(P.Left) : LeftWords(P), 14, P.State == TEXT("out") ? UiNeg : P.Left == 1 ? UiGold : UiCream));
 	Line(O.PriceLabel, UiText((P.State == TEXT("short") ? Format(P.Short) + TEXT(" short  ") : FString()) + Format(P.Price), 14, P.State == TEXT("short") ? UiNeg : UiCream, true));
 	const FGridOpts Op = O;
@@ -1936,8 +2017,8 @@ TSharedRef<SWidget> ABrixLife::Grid(const TArray<FWare>& Things, const FGridOpts
 			+ SVerticalBox::Slot().AutoHeight()
 			[
 				SNew(SOverlay)
-				+ SOverlay::Slot()[ SNew(SBrixThing).Mesh(MeshFor(P.Id, P.Band)).Rules(&BuyMenu).Spin(true).Drag(true).Grey(P.State == TEXT("out")).Size(FVector2D(StageW, BuyMenu.ShowStagePx)).Yaw(YawFor(O.Id + TEXT(":show:") + P.Id)) ]
-				+ SOverlay::Slot().VAlign(VAlign_Center)[ Flag(P.State == TEXT("out")) ]
+				+ SOverlay::Slot()[ SNew(SBrixThing).Mesh(MeshFor(P.Id, P.Band)).Rules(&BuyMenu).Spin(true).Drag(true).Grey(P.State == TEXT("out") || P.State == TEXT("have")).Size(FVector2D(StageW, BuyMenu.ShowStagePx)).Yaw(YawFor(O.Id + TEXT(":show:") + P.Id)) ]
+				+ SOverlay::Slot().VAlign(VAlign_Center)[ Flag(P.State) ]
 				+ SOverlay::Slot().VAlign(VAlign_Bottom).HAlign(HAlign_Center).Padding(0, 0, 0, 5)[ SNew(STextBlock).Visibility(EVisibility::HitTestInvisible).Font(UiFont(10)).ColorAndOpacity(FLinearColor::FromSRGBColor(FColor(217, 207, 182, 115))).Text(FText::FromString(TEXT("drag to turn"))) ]
 			]
 			+ SVerticalBox::Slot().AutoHeight().Padding(0, 10, 0, 6)[ UiText(P.Name, 21) ]

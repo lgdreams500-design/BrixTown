@@ -43,7 +43,9 @@
   "size": 0.018,
   "settle_minutes": 120,
   "melt_minutes": 360,
-  "cover": 0.9
+  "cover": 0.9,
+  "tracks_note": "WLD-071: footprints behind people walking in lying snow and tyre tracks behind vehicles, for trail_m (car_trail_m) behind them; falling snow fills them in over fill_minutes and they fade over fade_minutes; none where less than min_lying lies. Worked out from the clock: where each passed and when. [ASSUMPTION] values.",
+  "tracks": {"trail_m": 14.0, "car_trail_m": 60.0, "fill_minutes": 20.0, "fade_minutes": 90.0, "min_lying": 0.15}
  },
  "night": {
   "zenith": [0.0025, 0.0045, 0.014],

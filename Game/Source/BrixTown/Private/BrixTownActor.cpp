@@ -1006,6 +1006,20 @@ void ABrixTownActor::Build(const FBrixCity& City)
 	}
 	if (!FacetsMat) FacetsMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Greybox/M_Facets.M_Facets"));
 	if (!FacetsMat) { UE_LOG(LogTemp, Warning, TEXT("Brix Town: /Game/Greybox/M_Facets is missing (run Tools/unreal/make_facets_material.py)")); FacetsMat = Greybox; }
+	if (!LawnMat)   // a lawn's own pattern (material 24; ART-001): patches, mowing stripes, clover, daisies, from vegetation.json "lawn"
+	{
+		if (UMaterialInterface* LM = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Greybox/M_Lawn.M_Lawn")))
+		{
+			LawnMat = UMaterialInstanceDynamic::Create(LM, this);
+			auto V = [](const FVector3d& c, double w) { return FLinearColor((float)c.X, (float)c.Y, (float)c.Z, (float)w); };
+			LawnMat->SetVectorParameterValue(TEXT("T0"), V(Today->LawnTones[0], 1));
+			LawnMat->SetVectorParameterValue(TEXT("T1"), V(Today->LawnTones[1], 1));
+			LawnMat->SetVectorParameterValue(TEXT("T2"), V(Today->LawnTones[2], 1));
+			LawnMat->SetVectorParameterValue(TEXT("Lawn"), FLinearColor((float)Today->PatchM, (float)Today->StripeM, (float)Today->Stripe, (float)Today->Clover));
+			LawnMat->SetVectorParameterValue(TEXT("Daisy"), V(Today->DaisyColor, Today->Daisies));
+		}
+		else UE_LOG(LogTemp, Warning, TEXT("Brix Town: /Game/Greybox/M_Lawn is missing (run Tools/unreal/make_lawn_material.py); the lawns are one even green"));
+	}
 	BlockIndex = -1;
 	bNoPlants = FParse::Param(FCommandLine::Get(), TEXT("BrixNoPlants"));   // to compare: the town without its planting and open ground
 	UInstancedStaticMeshComponent* Boxes = Group(Kit(TEXT("SM_Kit_Box"), Cube), true);
@@ -1069,7 +1083,7 @@ void ABrixTownActor::Build(const FBrixCity& City)
 	for (TPair<int32, FFacets>& F : Facets)
 	{
 		if (!F.Value.P.Num()) continue;
-		UStaticMesh* M = FacetMesh(FString::Printf(TEXT("Facets_%d"), F.Key), F.Value.P, F.Value.N, F.Value.C);
+		UStaticMesh* M = FacetMesh(FString::Printf(TEXT("Facets_%d"), F.Key), F.Value.P, F.Value.N, F.Value.C, &F.Value.Lawn);
 		UStaticMeshComponent* SC = NewObject<UStaticMeshComponent>(this, *FString::Printf(TEXT("FacetsOf_%d"), F.Key));
 		SC->SetupAttachment(RootComponent);
 		SC->SetStaticMesh(M);
@@ -1451,7 +1465,7 @@ void ABrixTownActor::Shapes(const TArray<FBrixShape>& S)
 			if (!Wrapping)
 			{
 				const FVector3d q0(A[0], A[4], A[1]), q1(A[0], A[4], A[3]), q2(A[2], A[4], A[3]), q3(A[2], A[4], A[1]);
-				Facet(q0, q1, q2, FVector3d(0, 1, 0), Sh.Col); Facet(q0, q2, q3, FVector3d(0, 1, 0), Sh.Col);
+				Facet(q0, q1, q2, FVector3d(0, 1, 0), Sh.Col, Sh.bLawn); Facet(q0, q2, q3, FVector3d(0, 1, 0), Sh.Col, Sh.bLawn);
 				break;
 			}
 			Add(Open, FTransform(FQuat::Identity, ToWorld(FVector2D((A[0] + A[2]) / 2, (A[1] + A[3]) / 2), (float)(A[4] - .01)), FVector(FMath::Abs(A[2] - A[0]), FMath::Abs(A[3] - A[1]), .02)), Lc(Sh.Col));
@@ -1521,6 +1535,7 @@ void ABrixTownActor::RemakeFacets(int32 Key)
 	if (!K || !K->C) return;
 	TArray<FVector3f> P, N;
 	TArray<FLinearColor> Col;
+	TArray<uint8> Lawn;
 	for (int32 t = 0; t < K->F.N.Num(); ++t)
 	{
 		const int32 o = K->F.Owner[t];
@@ -1528,9 +1543,10 @@ void ABrixTownActor::RemakeFacets(int32 Key)
 		P.Append({ K->F.P[3 * t], K->F.P[3 * t + 1], K->F.P[3 * t + 2] });
 		N.Add(K->F.N[t]);
 		Col.Add(K->F.C[t]);
+		Lawn.Add(K->F.Lawn.IsValidIndex(t) ? K->F.Lawn[t] : 0);
 	}
 	UStaticMesh* Old = K->C->GetStaticMesh();
-	K->C->SetStaticMesh(FacetMesh(FString::Printf(TEXT("Facets_%d_%d"), Key, ++K->Made), P, N, Col));
+	K->C->SetStaticMesh(FacetMesh(FString::Printf(TEXT("Facets_%d_%d"), Key, ++K->Made), P, N, Col, &Lawn));
 	if (Old) Made.Remove(Old);
 }
 
@@ -1630,7 +1646,7 @@ void ABrixTownActor::SetSignals(int32 Day, double Minutes)
 }
 
 // One face of a block's facet mesh, in the slice's frame, lit on the side its hint is on (the material is two-sided)
-void ABrixTownActor::Facet(const FVector3d& A, const FVector3d& B, const FVector3d& C, const FVector3d& Hint, const FVector3d& Col)
+void ABrixTownActor::Facet(const FVector3d& A, const FVector3d& B, const FVector3d& C, const FVector3d& Hint, const FVector3d& Col, bool bLawn)
 {
 	FFacets& F = Facets.FindOrAdd(BlockIndex);
 	auto U = [](const FVector3d& Q) { return FVector3f((float)Q.X, (float)Q.Z, (float)Q.Y) * CmPerM; };
@@ -1640,6 +1656,7 @@ void ABrixTownActor::Facet(const FVector3d& A, const FVector3d& B, const FVector
 	F.N.Add(FVector3f((float)N.X, (float)N.Z, (float)N.Y));
 	F.C.Add(FLinearColor((float)Col.X, (float)Col.Y, (float)Col.Z));
 	F.Owner.Add(Wrapping ? Breakables.Num() : INDEX_NONE);   // (Wrap() adds it next)
+	F.Lawn.Add(bLawn ? 1 : 0);
 	if (Wrapping)
 	{
 		Wrapping->FacetKey = BlockIndex;
@@ -1649,8 +1666,9 @@ void ABrixTownActor::Facet(const FVector3d& A, const FVector3d& B, const FVector
 	}
 }
 
-// A static mesh made now from triangles (three points each, a normal and a colour each), in M_Facets
-UStaticMesh* ABrixTownActor::FacetMesh(const FString& MeshName, const TArray<FVector3f>& P, const TArray<FVector3f>& Nrm, const TArray<FLinearColor>& Col)
+// A static mesh made now from triangles (three points each, a normal and a colour each), in M_Facets; a lawn's faces
+// (Lawn 1) in a section of their own in M_Lawn, the lawn's own pattern (material 24)
+UStaticMesh* ABrixTownActor::FacetMesh(const FString& MeshName, const TArray<FVector3f>& P, const TArray<FVector3f>& Nrm, const TArray<FLinearColor>& Col, const TArray<uint8>* Lawn)
 {
 	FMeshDescription MD;
 	FStaticMeshAttributes Attr(MD);
@@ -1662,6 +1680,9 @@ UStaticMesh* ABrixTownActor::FacetMesh(const FString& MeshName, const TArray<FVe
 	TVertexInstanceAttributesRef<FVector2f> UV = Attr.GetVertexInstanceUVs();
 	const FPolygonGroupID G = MD.CreatePolygonGroup();
 	Attr.GetPolygonGroupMaterialSlotNames()[G] = TEXT("facets");
+	const bool bLawns = LawnMat && Lawn && Lawn->Num() * 3 == P.Num() && Lawn->Contains(1);
+	FPolygonGroupID GL = G;
+	if (bLawns) { GL = MD.CreatePolygonGroup(); Attr.GetPolygonGroupMaterialSlotNames()[GL] = TEXT("lawn"); }
 	MD.ReserveNewVertices(P.Num()); MD.ReserveNewVertexInstances(P.Num()); MD.ReserveNewTriangles(P.Num() / 3);
 	for (int32 t = 0; t + 2 < P.Num(); t += 3)
 	{
@@ -1680,10 +1701,11 @@ UStaticMesh* ABrixTownActor::FacetMesh(const FString& MeshName, const TArray<FVe
 			C[Vi[k]] = FVector4f(Lin.R, Lin.G, Lin.B, 1.f);
 			UV.Set(Vi[k], 0, FVector2f::ZeroVector);
 		}
-		MD.CreateTriangle(G, Vi);
+		MD.CreateTriangle(bLawns && (*Lawn)[t / 3] ? GL : G, Vi);
 	}
 	UStaticMesh* M = NewObject<UStaticMesh>(this, *MeshName);
 	M->GetStaticMaterials().Add(FStaticMaterial(FacetsMat, TEXT("facets"), TEXT("facets")));
+	if (bLawns) M->GetStaticMaterials().Add(FStaticMaterial(LawnMat, TEXT("lawn"), TEXT("lawn")));
 	UStaticMesh::FBuildMeshDescriptionsParams Params;
 	Params.bBuildSimpleCollision = false;
 	Params.bFastBuild = true;

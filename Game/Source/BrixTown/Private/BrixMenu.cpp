@@ -371,6 +371,38 @@ TSharedRef<SWidget> ABrixLife::MenuPage(const FString& Id)
 				];
 			Section(FString::Printf(TEXT("Carried · %d kinds"), Keys.Num()), W);
 		}
+		// CITY-100: the skateboards owned (life.js belongingsTab()), each with its top speed and how it goes, the one in use
+		// marked (in the hand or ridden); any other made the one in use
+		if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+		{
+			TSharedRef<SVerticalBox> Sk = SNew(SVerticalBox);
+			for (int32 k = 0; k < Me->Boards.Own.Num(); ++k)
+			{
+				const FString Kind = Me->Boards.Own[k];
+				const FBrixBoardKind* K = Me->BoardRules.Kind(Kind);
+				if (!K) continue;
+				const bool bMine = Me->Boards.InUse == Kind;
+				if (k) Sk->AddSlot().AutoHeight()[ Rule() ];
+				Sk->AddSlot().AutoHeight().Padding(0, 6)
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 12, 0)[ SNew(SBorder).BorderImage(Round(StoneDeep(), 10.f)).Padding(0)[ SNew(SBrixThing).Mesh(MeshFor(TEXT("board:") + Kind, FString())).Rules(&BuyMenu).Size(FVector2D(110, 62)).Yaw(YawFor(TEXT("belongings:board:") + Kind)) ] ]
+					+ SHorizontalBox::Slot().FillWidth(1).VAlign(VAlign_Center)
+					[
+						SNew(SVerticalBox)
+						+ SVerticalBox::Slot().AutoHeight()[ Text(K->Name, 14, Cream(), true) ]
+						+ SVerticalBox::Slot().AutoHeight()[ Text(FString::Printf(TEXT("up to %d km/h"), (int32)K->TopKmh) + (K->bPush ? TEXT(", pushed with a foot") : TEXT("")) + (bMine ? (Me->Boards.Riding() ? TEXT(" · riding it") : TEXT(" · in your hand")) : TEXT("")), 12, Dim()) ]
+					]
+					+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
+					[
+						bMine ? (TSharedRef<SWidget>)Text(TEXT("In use"), 13, Dim(), false, false)
+						: Button(TEXT("Use this"), [this, Me, Kind, K]() { Me->Boards.Use(Kind); Toast(TEXT("Now using the ") + K->Name.ToLower() + TEXT(".")); DrawMenu(); }, false)
+					]
+				];
+			}
+			if (Me->Boards.Own.Num()) Section(TEXT("Skateboards · Y gets on the one in use"), Sk);
+			else Soon(TEXT("You have no skateboard. ") + SkateStoreName() + TEXT(" sells three kinds, from a board you push with a foot to the Neon Boost."));
+		}
 	}
 	else if (Id == TEXT("property"))   // PROP-011 to PROP-019, UI-006 (life.js estatePanel(), kind "property": P anywhere)
 	{

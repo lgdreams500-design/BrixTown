@@ -321,6 +321,14 @@ void ABrixCrash::Chip(double x, double z, double vx, double vz)
 
 // ---- each frame (smash.js draw())
 
+TArray<FVector2D> ABrixCrash::BrokenSeats() const
+{
+	TArray<FVector2D> Out;
+	if (!bOn || !Town || !Damage.Num()) return Out;
+	for (const FBrixBreakable& B : Town->Breakables) if (B.bBroken && B.PropKind == TEXT("bench")) Out.Add(B.Pos);
+	return Out;
+}
+
 void ABrixCrash::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);

@@ -18,6 +18,7 @@
 #include "BrixCarsActor.h"
 #include "BrixCrashActor.h"
 #include "BrixWeatherActor.h"
+#include "BrixWeather.h"
 #include "Components/TextRenderComponent.h"
 #include "WorldCollision.h"
 #include "UObject/ConstructorHelpers.h"
@@ -64,6 +65,46 @@ int32 BrixBodyToMesh(UProceduralMeshComponent* M, const FBrixBodyMesh& Body, int
 	FBrixMeshArrays A;
 	A.From(Body, bFlip);
 	return A.Upload(M, Had, Material);
+}
+
+
+// WLD-071: marks in the snow as flat quads just above the ground, in one mesh made anew each frame: Len along each
+// mark's direction, Wid across, the colour of the snow pressed down, plainer the stronger the mark
+void BrixMarksToMesh(UProceduralMeshComponent* M, UMaterialInterface* Mat, const TArray<FBrixPrint>& P, bool bPairs, float Wid, float Len,
+	const FLinearColor& Snow, const FLinearColor& Pressed, double Fill, TFunctionRef<float(const FVector2D&)> Ground, float Lift)
+{
+	TArray<FVector> V, N;
+	TArray<FLinearColor> C;
+	TArray<int32> Tri;
+	auto Quad = [&](const FVector2D& A, const FVector2D& B, const FVector2D& Across, float Up, const FLinearColor& Col)
+	{
+		const int32 b = V.Num();
+		for (const FVector2D& Q : { A - Across, A + Across, B + Across, B - Across }) { V.Add(ToWorld(Q, Up)); N.Add(FVector::UpVector); C.Add(Col); }
+		for (const int32 i : { 0, 2, 1, 0, 3, 2, 0, 1, 2, 0, 2, 3 }) Tri.Add(b + i);   // both ways, whichever way Unreal's frame turns them
+	};
+	for (int32 k = 0; k + (bPairs ? 1 : 0) < P.Num(); k += bPairs ? 2 : 1)
+	{
+		const FBrixPrint& A = P[k];
+		const float s = (float)(A.Strength * Fill);
+		if (s < .05f) continue;
+		const FLinearColor Col = FMath::Lerp(Snow, Pressed, s);
+		const float Up = Ground(A.Pos) + Lift;
+		if (bPairs)
+		{
+			const FVector2D Dir = (P[k + 1].Pos - A.Pos).GetSafeNormal(), Across(-Dir.Y * Wid / 2, Dir.X * Wid / 2);
+			Quad(A.Pos, P[k + 1].Pos, Across, Up, Col);
+		}
+		else
+		{
+			const FVector2D Along = A.Dir * (Len / 2 * (.6f + .4f * s)), Across = FVector2D(-A.Dir.Y, A.Dir.X) * (Wid / 2 * (.6f + .4f * s));
+			Quad(A.Pos - Along, A.Pos + Along, Across, Up, Col);
+		}
+	}
+	static const TArray<FVector2D> NoUV;
+	static const TArray<FProcMeshTangent> NoT;
+	M->CreateMeshSection_LinearColor(0, V, Tri, N, NoUV, C, NoT, false, false);
+	M->SetMaterial(0, Mat);
+	M->SetVisibility(V.Num() > 0);
 }
 
 ABrixPeople::ABrixPeople()
@@ -235,6 +276,9 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		MinuteOf.Add(It->Key, M2);
 	}
 
+	// nobody sits on a broken bench until it is mended (CITY-072): they stand in front of it
+	const ABrixCrash* Smashed = Mode->Crash.Get();
+	const TArray<FVector2D> BrokenSeats = Smashed ? Smashed->BrokenSeats() : TArray<FVector2D>();
 	// everyone out of doors within reach, nearest first
 	// worked out for everyone at once on the task threads (CITY-022: from the day and the minute alone)
 	// i: who (a resident, or 1,000,000 + 2 a vehicle + 0 or 1 for someone from out of town in it), the slot's key
@@ -250,8 +294,9 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		if (i == Held.Resident) return;   // added below, where the talk holds them
 		const double* M2 = MinuteOf.Find(i);
 		const double Mi = M2 ? *M2 : Minute;
-		const TOptional<FBrixWhere> W = Day->Where(i, Mi);
+		TOptional<FBrixWhere> W = Day->Where(i, Mi);
 		if (!W) { InVehicle[i] = Day->VehicleAt(i, Mi); return; }
+		if (BrokenSeats.Num()) BrixOffBrokenSeat(*W, BrokenSeats, Smashed->SeatReach, Smashed->SeatStep);
 		if (W->bInside && W->Lot != CameraLot) return;   // inside: seen only from inside their building (play.js nearPeople)
 		// a little to one side of the pavement's line, never at a door (the slice's lane, CITY-043)
 		FVector2D P = W->Pos;
@@ -534,6 +579,10 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		}
 	}
 	const double T1 = FPlatformTime::Seconds();
+	{   // snow settles on heads and shoulders while it snows (WLD-070)
+		const ABrixWeather* Wx = Mode->Weather.Get();
+		SnowOnPeople = Wx && Wx->bOn ? (float)(Wx->Snow.Falling * PeopleSnow) : 0.f;
+	}
 	Near.Sort([](const FNear& A, const FNear& B) { return A.D < B.D; });
 	if (Near.Num() > MaxBodies) Near.SetNum(MaxBodies);
 
@@ -633,6 +682,9 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		UProceduralMeshComponent* M = Meshes[s];
 		M->SetWorldLocationAndRotation(ToWorld(P.P, P.Up), FRotator(0.0, FMath::RadiansToDegrees(P.Yaw), 0.0));
 		M->SetVisibility(true);
+		const float SnowOn = P.Floor.IsSet() || P.bDriving ? 0.f : SnowOnPeople;   // snow on heads and shoulders out in it (WLD-070)
+		if (SlotSnow.Num() != Slots.Num()) SlotSnow.Init(-1.f, Slots.Num());
+		if (FMath::Abs(SlotSnow[s] - SnowOn) > .02f) { M->SetCustomPrimitiveDataFloat(0, SnowOn); SlotSnow[s] = SnowOn; }
 	}
 	const double T2 = FPlatformTime::Seconds();
 	// the bodies due a rebuild, built at once on the task threads (the body as people.js draws it facing yaw 0 at the origin,
@@ -700,6 +752,64 @@ void ABrixPeople::Tick(float DeltaSeconds)
 	}
 	else Figures->UpdateMeshSection_LinearColor(0, V, N, NoUV, C, NoTangents, false);
 	LastShown = Near.Num();
+	if (FMath::Abs(FigureSnow - SnowOnPeople) > .02f) { Figures->SetCustomPrimitiveDataFloat(0, SnowOnPeople); FigureSnow = SnowOnPeople; }
+	// footprints in lying snow behind those walking near, and the player's own (WLD-071): where each went and when, from
+	// their day and the clock; the player's from where they have been this visit
+	{
+		const ABrixWeather* Wx = Mode->Weather.Get();
+		const bool bSnow = Wx && Wx->bOn && Wx->Snow.Lying >= Wx->Rules.MinLying;
+		if (!Prints)
+		{
+			Prints = NewObject<UProceduralMeshComponent>(this, TEXT("Prints"));
+			Prints->SetupAttachment(RootComponent);
+			Prints->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			Prints->SetCastShadow(false);
+			Prints->RegisterComponent();
+			AddInstanceComponent(Prints);
+		}
+		const APawn* Me = PC->GetPawn();
+		const ABrixCars* CarsActor = Mode->Cars;
+		const bool bOnFoot = Me && !(CarsActor && CarsActor->Driving().K >= 0);
+		const double Clock = Mode->ClockMinutes();
+		if (bSnow && bOnFoot)   // the player's steps, each a footstep from the last, left and right in turn
+		{
+			const FVector2D At(Me->GetActorLocation().X / CmPerM, Me->GetActorLocation().Y / CmPerM);
+			const double Stride = BrixStepLength(Rules.Sig(Rules.Player.SigName), Rules.Player.S) / 2;
+			if (!PlayerSteps.Num() || FVector2D::Distance(At, LastStep) >= Stride)
+			{
+				const FVector2D Dir = PlayerSteps.Num() ? (At - LastStep).GetSafeNormal() : FVector2D(1, 0), Across(-Dir.Y, Dir.X);
+				PlayerSteps.Add({ At + Across * (PlayerSteps.Num() % 2 ? .1 : -.1), Dir, Clock, 1 });
+				LastStep = At;
+				if (PlayerSteps.Num() > MaxPlayerSteps) PlayerSteps.RemoveAt(0);
+			}
+		}
+		if (!bSnow) { PlayerSteps.Reset(); Prints->SetVisibility(false); }
+		else
+		{
+			TArray<FBrixPrint> P;
+			for (const FNear& A : Near)
+			{
+				if (A.i < 0 || A.i >= Day->Num() || A.Pose != 1 || A.D > PrintDistance || Extras.IsValidIndex(A.Extra)) continue;
+				const double* M2 = MinuteOf.Find(A.i);
+				const double Mi = M2 ? *M2 : Minute;
+				const TOptional<FBrixWhere> W = Day->Where(A.i, Mi);
+				if (!W) continue;
+				const FVector2D Off = A.P - W->Pos;   // a little to one side of the line, as they walk it
+				const FBrixLook& L = Looks[A.i];
+				const int32 n0 = P.Num();
+				BrixFootprints(Wx->Rules, *Day, A.i, Mi, BrixStepLength(Rules.Sig(L.SigName), L.S) / 2, .1 * L.S, Wx->Snow.Falling, Wx->Snow.Lying, P);
+				for (int32 pq = n0; pq < P.Num(); ++pq) P[pq].Pos += Off;
+			}
+			for (const FBrixPrint& S : PlayerSteps)
+			{
+				FBrixPrint Q = S;
+				Q.Age = Clock - S.Age;   // made at minute S.Age
+				Q.Strength = BrixPrintStrength(Wx->Rules, Q.Age, Wx->Snow.Falling, Wx->Snow.Lying);
+				if (Q.Strength > 0) P.Add(Q);
+			}
+			BrixMarksToMesh(Prints, BodyMaterial, P, false, .11f, .26f, SnowTone, PressedSnow, Wx->Snow.Lying / FMath::Max(Wx->Rules.SnowCover, .01), [this](const FVector2D& Q) { return GroundAt(Q); }, MarkLift);
+		}
+	}
 	// the shouts, over the residents shouting them, turned to the camera (CITY-071: a tag, no words spoken)
 	{
 		int32 t = 0;

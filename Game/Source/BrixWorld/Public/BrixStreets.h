@@ -33,6 +33,7 @@ struct BRIXWORLD_API FBrixShape
 	TArray<double, TInlineAllocator<16>> A;
 	TArray<FVector2D> Pts;
 	FString Text;
+	bool bLawn = false;                      // a lawn's grass or edge band: drawn in the lawn's own pattern (material 24)
 	FString WrapKind;                        // part of a thing of its own that a car can break (crates by an arch: "crates")
 	FVector2D WrapAt = FVector2D::ZeroVector;
 };
@@ -88,6 +89,8 @@ struct BRIXWORLD_API FBrixStreetsToday
 	// the lawn (World/rules/vegetation.json "lawn", ART-001)
 	TArray<FVector3d> LawnTones;
 	double EdgeM = .45, TuftsPer100m2 = 7, TreeRingM = 1.2;
+	double PatchM = 8, StripeM = 2.2, Stripe = .06, Clover = .5, Daisies = .05;   // the lawn's pattern (material 24)
+	FVector3d DaisyColor = FVector3d(.72, .69, .58);
 	FVector3d EdgeColor = FVector3d(.23, .31, .16), TuftColor = FVector3d(.24, .32, .16), MulchColor = FVector3d(.2, .15, .11);
 	// the street dressing today (world.dressing_today(): WLD-034): each board's advert, the bunting on market days
 	TSharedPtr<class FJsonObject> Dressing;

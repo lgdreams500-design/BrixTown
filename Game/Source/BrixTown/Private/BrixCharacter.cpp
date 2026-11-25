@@ -14,6 +14,7 @@
 #include "BrixRooms.h"
 #include "BrixTalkActor.h"
 #include "BrixUnits.h"
+#include "BrixWeatherActor.h"
 #include "Camera/CameraComponent.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/CapsuleComponent.h"
@@ -72,7 +73,7 @@ void ABrixCharacter::BeginPlay()
 	if (!LoadBrixBoards(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/rules/boards.json"))), BoardRules, Error))
 		UE_LOG(LogTemp, Error, TEXT("Brix Town: no skateboards (%s)"), *Error);
 	Boards.R = &BoardRules;
-	if (FParse::Param(FCommandLine::Get(), TEXT("BrixBoards")) || FCommandLine::Get() && FCString::Strifind(FCommandLine::Get(), TEXT("-BrixShot=")))
+	if ((FParse::Param(FCommandLine::Get(), TEXT("BrixBoards")) || FCommandLine::Get() && FCString::Strifind(FCommandLine::Get(), TEXT("-BrixShot="))) && !FParse::Param(FCommandLine::Get(), TEXT("BrixNoBoards")))
 		Boards.Give(BoardRules.AutoOwned, BoardRules.AutoEquipped);   // CITY-100: a test owns every kind, the electric one in use (the slice's ?auto=1)
 }
 
@@ -92,6 +93,7 @@ void ABrixCharacter::MakeInput()
 	WalletAction = NewObject<UInputAction>(this, TEXT("Wallet"));
 	QuestsAction = NewObject<UInputAction>(this, TEXT("Quests"));
 	BoardAction = NewObject<UInputAction>(this, TEXT("Board"));
+	WeatherAction = NewObject<UInputAction>(this, TEXT("Weather"));
 	PageNames = { TEXT("me"), TEXT("belongings"), TEXT("property"), TEXT("wardrobe"), TEXT("map"), TEXT("help") };   // settings.json actions
 	for (const FString& N : PageNames) PageActions.Add(NewObject<UInputAction>(this, *(TEXT("Page_") + N)));
 	for (UInputAction* A : PageActions) A->bTriggerWhenPaused = true;   // the menu stops the clock; its keys still work
@@ -126,6 +128,7 @@ void ABrixCharacter::MakeInput()
 	Keys->MapKey(WalletAction, EKeys::I);
 	Keys->MapKey(QuestsAction, EKeys::J);
 	Keys->MapKey(BoardAction, EKeys::Y);   // settings.json: board, Y
+	Keys->MapKey(WeatherAction, EKeys::K);   // settings.json: weather, K
 	const FKey PageKeys[6] = { EKeys::C, EKeys::G, EKeys::P, EKeys::U, EKeys::M, EKeys::H };
 	for (int32 k = 0; k < 6; ++k) Keys->MapKey(PageActions[k], PageKeys[k]);
 	Keys->MapKey(ChooseActions[0], EKeys::Left);
@@ -169,6 +172,7 @@ void ABrixCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		In->BindAction(WalletAction, ETriggerEvent::Started, this, &ABrixCharacter::WalletKey);
 		In->BindAction(QuestsAction, ETriggerEvent::Started, this, &ABrixCharacter::QuestsKey);
 		In->BindAction(BoardAction, ETriggerEvent::Started, this, &ABrixCharacter::BoardKey);
+		In->BindAction(WeatherAction, ETriggerEvent::Started, this, &ABrixCharacter::WeatherKey);
 		for (UInputAction* A : PageActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::MenuPageKey);
 		for (UInputAction* A : ChooseActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::ChooseKey);
 		for (UInputAction* A : AnswerActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::AnswerKey);
@@ -425,6 +429,16 @@ void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whic
 	if (T) T->Open();
 }
 
+void ABrixCharacter::WeatherKey()   // K: the next kind of weather to look at, for the whole day (play.js wxTry)
+{
+	if ((bDesigning && bDesignKeys) || bTalking || bPanel) return;
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	ABrixWeather* Wx = Mode ? Mode->Weather.Get() : nullptr;
+	if (!Wx || !Wx->bOn) return;
+	const FString Now = Wx->TryNext();
+	if (ABrixLife* L = Life()) L->Toast(Now.IsEmpty() ? FString(TEXT("The day's own weather")) : TEXT("Trying ") + Now);
+}
+
 ABrixCars* ABrixCharacter::Cars() const
 {
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
@@ -603,7 +617,7 @@ void ABrixCharacter::BoardKey()   // Y: from the hand onto the board, and back; 
 	if (bDriving || bTalking || bPanel || bDesigning) return;
 	const TOptional<bool> On = Boards.Toggle();
 	ABrixLife* L = Life();
-	if (!On) { if (L) L->Toast(TEXT("You have no skateboard yet. The skate store is coming.")); return; }
+	if (!On) { if (L) L->Toast(TEXT("You have no skateboard yet. ") + L->SkateStoreName() + TEXT(" sells them.")); return; }
 	const FBrixBoardKind* K = Boards.Kind();
 	BoardBlend = 0;
 	BoardMeant = 0;
@@ -613,6 +627,16 @@ void ABrixCharacter::BoardKey()   // Y: from the hand onto the board, and back; 
 	GetCharacterMovement()->bOrientRotationToMovement = !*On;
 	GetCharacterMovement()->MaxWalkSpeed = (*On ? BoardRules.Kind(BoardRules.Order.Last())->TopKmh / 3.6 + 1 : WalkSpeed) * CmPerM;
 	if (L) L->Toast(*On ? K->Name + TEXT(": W to ") + (K->bPush ? TEXT("push") : TEXT("go")) + TEXT(", S to brake, Y to pick it up.") : K->Name + TEXT(" in your hand."));
+}
+
+void ABrixCharacter::SetBoards(const TArray<FString>& Own, const FString& Use)
+{
+	if (Boards.Riding())   // off the board first, as Y steps off it
+	{
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed * CmPerM;
+	}
+	Boards.Give(Own, Use);
 }
 
 void ABrixCharacter::TestBoard(const FString& Kind)
