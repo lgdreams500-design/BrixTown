@@ -505,6 +505,13 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 		{
 			OutBoxes->Add({ FVector3f((float)x0, (float)y0, (float)z0), FVector3f((float)x1, (float)y1, (float)z1), c });
 		};
+		if (pose == 3)   // lying down (people.js: one box along the bed), its length the way the head lies
+		{
+			const bool bAlongX = FMath::Abs(fx) > FMath::Abs(fz);
+			const double a = .22 * S, b = .85 * S;
+			box(x - (bAlongX ? b : a), y + .05, z - (bAlongX ? a : b), x + (bAlongX ? b : a), y + .3, z + (bAlongX ? a : b), L.Top);
+			return;
+		}
 		if (!bSit) for (const double e : { -1.0, 1.0 })
 		{
 			const double sw = pose == 1 ? FMath::Sin(o.Phase * 6.283) * .16 * e * S : 0, lx = x + fx * sw - fz * e * .07 * S, lz = z + fz * sw + fx * e * .07 * S;
@@ -525,11 +532,16 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	double hm[3];
 	wander(t, sd * .37, hm);
 	if (o.Face) hm[1] += o.Face->Nod;   // a speaker nods on stressed words (ANIM-006)
+	if (pose == 3) hm[0] = hm[1] = hm[2] = 0;   // lying, the head still (people.js stand(..., [0, 0, 0]))
 	const FPose P = pose == 1 ? walk(sig, g, W, o.Phase, hm, o) : pose == 2 ? sit(sig, g, W, t, hm, sd, o) : stand(sig, g, W, t, hm, sd, o);
 	auto hem = [&](double zz) { return pose == 2 ? FMath::Max(zz, -.06) : zz; };   // seated, a hem ends at the seat instead of hanging through it
 	// where the character's axes point in the world (standing: x left, y back, z up)
 	const double c = FMath::Cos(yaw), s = FMath::Sin(yaw);
-	const FVector ex(-c, 0, -s), ey(-s, 0, c), ez(0, 1, 0), O(x, y, z);
+	// or lying on the back (pose 3, people.js), head the way the yaw faces: the slice lays everyone head to +z (yaw pi), and
+	// the same frame is turned here so a resident lies along their bed whichever way it stands
+	const FVector Head(s, 0, -c);
+	const FVector ex = pose == 3 ? FVector(c, 0, s) : FVector(-c, 0, -s), ey = pose == 3 ? FVector(0, -1, 0) : FVector(-s, 0, c), ez = pose == 3 ? Head : FVector(0, 1, 0);
+	const FVector O = pose == 3 ? FVector(x, y + .1 * L.S, z) - Head * (.86 * L.S) : FVector(x, y, z);
 	auto Wp = [&](const FVector& p) { return O + ex * p.X + ey * p.Y + ez * p.Z; };
 	auto Wd = [&](const FVector& p) { return ex * p.X + ey * p.Y + ez * p.Z; };
 	const int32 n = lod == 0 ? 16 : lod == 1 ? 8 : 5, nl = lod == 0 ? 12 : lod == 1 ? 6 : 4;

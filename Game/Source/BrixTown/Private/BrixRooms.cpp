@@ -22,6 +22,37 @@ namespace
 		const double Yaw = FMath::Atan2(R.Along.Y, R.Along.X);
 		return FTransform(FQuat(FVector::UpVector, Yaw), FVector(R.Centre.X, R.Centre.Y, (Z0 + Z1) * 0.5) * CmPerM, FVector(R.Length, R.Width, Z1 - Z0));
 	}
+	// a rectangle less a hole lying the same way (homes.js without()): up to four strips
+	TArray<FBrixRect> Without(const FBrixRect& R, const TOptional<FBrixRect>& Hole)
+	{
+		if (!Hole) return { R };
+		const FVector2D Ac(-R.Along.Y, R.Along.X);
+		double U0 = 1e9, U1 = -1e9, V0 = 1e9, V1 = -1e9;
+		const FVector2D Ha(-Hole->Along.Y, Hole->Along.X);
+		for (const double a : { -0.5, 0.5 }) for (const double b : { -0.5, 0.5 })
+		{
+			const FVector2D P = Hole->Centre + Hole->Along * (a * Hole->Length) + Ha * (b * Hole->Width) - R.Centre;
+			const double U = FVector2D::DotProduct(P, R.Along), V = FVector2D::DotProduct(P, Ac);
+			U0 = FMath::Min(U0, U); U1 = FMath::Max(U1, U); V0 = FMath::Min(V0, V); V1 = FMath::Max(V1, V);
+		}
+		const double L0 = -R.Length / 2, L1 = R.Length / 2, W0 = -R.Width / 2, W1 = R.Width / 2;
+		if (U1 <= L0 || U0 >= L1 || V1 <= W0 || V0 >= W1) return { R };
+		TArray<FBrixRect> Out;
+		auto Strip = [&](double a0, double a1, double b0, double b1)
+		{
+			if (a1 - a0 < 0.01 || b1 - b0 < 0.01) return;
+			FBrixRect Q = R;
+			Q.Centre = R.Centre + R.Along * ((a0 + a1) / 2) + Ac * ((b0 + b1) / 2);
+			Q.Length = (float)(a1 - a0); Q.Width = (float)(b1 - b0);
+			Out.Add(Q);
+		};
+		Strip(L0, L1, W0, FMath::Max(W0, V0));
+		Strip(L0, L1, FMath::Min(W1, V1), W1);
+		Strip(L0, FMath::Max(L0, U0), FMath::Max(W0, V0), FMath::Min(W1, V1));
+		Strip(FMath::Min(L1, U1), L1, FMath::Max(W0, V0), FMath::Min(W1, V1));
+		return Out;
+	}
+
 	FBrixRect Part(const FBrixRect& R, float A0, float A1)   // a stretch of a rectangle along its length (from its middle)
 	{
 		FBrixRect Q = R;
@@ -45,6 +76,7 @@ void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTown
 {
 	if (UStaticMesh* KitBox = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Kit/SM_Kit_Box.SM_Kit_Box"))) Cube = KitBox;
 	int32 k = -1, Pieces = 0, Dropped = 0;
+	const FBrixDoorRules DR = FBrixDoorRules::FromConfig();
 	TArray<int32> ByLevel = { 0, 0, 0, 0, 0 };
 	for (const FBrixBlock& B : City.Blocks)
 		for (const FBrixLot& L : B.Lots)
@@ -52,19 +84,45 @@ void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTown
 			++k;
 			if (!Ins.Lots.IsValidIndex(k) || !Ins.Lots[k].IsSet() || !BrixIsHollow(L, &Ins.Lots[k].GetValue())) continue;
 			TArray<FBrixWindowSpan> Wins;
-			if (Town) if (const TArray<FVector4f>* S = Town->WindowSpans.Find(k))
-				for (const FVector4f& W : *S) { FBrixWindowSpan Sp; Sp.A = FVector2D(W.X, W.Y); Sp.B = FVector2D(W.Z, W.W); Wins.Add(Sp); }
+			for (int32 f = 0; Town && f < 64; ++f)
+				if (const TArray<FVector4f>* S = Town->WindowSpans.Find(k * 64 + f))
+					for (const FVector4f& W : *S) { FBrixWindowSpan Sp; Sp.A = FVector2D(W.X, W.Y); Sp.B = FVector2D(W.Z, W.W); Sp.Floor = f; Wins.Add(Sp); }
 			TSharedPtr<FBrixHome> H = MakeShared<FBrixHome>();
 			if (!BrixHomeOf(Ins, L, Ins.Lots[k].GetValue(), Day, Wins, *H)) continue;
 			FLotHome LH;
 			LH.Lot = k;
 			LH.Centre = L.Centre();
 			LH.Reach = (float)L.Size().Size() * 0.5f;
-			const bool bHouse = L.House.IsSet();
-			const float Base = Town ? Town->BlockSlabHeight : 0.12f;
-			LH.Floor0 = Base + (Town ? (bHouse ? Town->HousePlinth : Town->InsideFloor) : 0.08f);
-			LH.Storey = Town ? (bHouse ? Town->HouseStorey : Town->StoreyHeight) : 3.f;
-			LH.Ceil0 = Base + (Town ? (bHouse ? Town->HousePlinth + Town->HouseStorey : Town->StoreyHeight) - Town->CeilingDrop : 2.88f);
+			// the floors' heights as the town builds them (WLD-052); a building whose storeys are not built has its ground floor only
+			const FBrixInside& In = Ins.Lots[k].GetValue();
+			const int32 NFl = L.House.IsSet() ? 2 : (L.Floors >= 2 && In.Stair.IsSet() && L.AngleDeg == 0.f ? L.Floors : 1);
+			for (int32 f = 0; f < NFl; ++f) { LH.FloorUp.Add(BrixFloorUp(L, f, DR)); LH.CeilUp.Add(BrixCeilingUp(L, f, DR)); }
+			// the hole in each floor above the ground that the stair comes up through (as the town cuts it)
+			LH.Holes.SetNum(NFl);
+			FVector4f Well; float StepOff = 0.f;
+			for (int32 f = 1; f < NFl; ++f)
+			{
+				FBrixRect Hole;
+				if (L.House.IsSet())
+				{
+					if (!BrixHouseWell(Ins, Well, StepOff)) continue;
+					const double A = FMath::DegreesToRadians(L.AngleDeg);
+					const FVector2D Eu(-FMath::Cos(A), -FMath::Sin(A)), Ev(-FMath::Sin(A), FMath::Cos(A));   // houses.js: u mirrored, the lot turned
+					Hole.Centre = L.Centre() + Eu * ((Well.X + Well.Y) / 2) + Ev * ((Well.Z + Well.W) / 2);
+					Hole.Along = Eu; Hole.Length = Well.Y - Well.X; Hole.Width = Well.W - Well.Z;
+				}
+				else
+				{
+					const FBrixStairGeo G = BrixStairOf(*In.Stair, Ins.Rules);
+					const FBrixStairGeo::FFlight Fb = G.Flight(f - 1);
+					const float Head = Town ? Town->StairHeadroom : 0.3f;
+					const bool bHigh = G.bStraight && FMath::Abs(G.Open - Fb.Lane.Y) < 1e-3f, bLow = G.bStraight && !bHigh;
+					const float V0 = Fb.Lane.X - (bLow ? Head : 0.f), V1 = Fb.Lane.Y + (bHigh ? Head : 0.f);
+					Hole.Centre = (G.P(G.ULo, V0) + G.P(G.UHi, V1)) * 0.5;
+					Hole.Along = G.bAlongX ? FVector2D(1, 0) : FVector2D(0, 1); Hole.Length = G.UHi - G.ULo; Hole.Width = V1 - V0;
+				}
+				LH.Holes[f] = Hole;
+			}
 			LH.Home = H;
 			Pieces += H->Pieces.Num();
 			Dropped += H->Dropped;
@@ -156,36 +214,41 @@ void ABrixRooms::Rebuild()
 	{
 		const FLotHome& LH = Homes[i];
 		const FBrixHome& H = *LH.Home;
-		// only the ground floor is built inside yet (the storeys above come with their stairs)
+		auto Up = [&](int32 f) { return LH.FloorUp.IsValidIndex(f) ? LH.FloorUp[f] : -1.f; };
+		auto Ceil = [&](int32 f) { return LH.CeilUp.IsValidIndex(f) ? LH.CeilUp[f] : -1.f; };
 		for (const FBrixRoom& R : H.Rooms)
 		{
-			if (R.Floor != 0) continue;
+			if (Up(R.Floor) < 0.f) continue;   // a storey not built
+			const float Floor0 = Up(R.Floor);
 			const bool bWet = R.bWet;
-			AddBox(BoxAt(R.R, LH.Floor0 - 0.02f, LH.Floor0 + 0.006f), bWet ? TilesColour : BoardsColour,
-				bWet ? TownDefaults->FloorFlagsA : TownDefaults->FloorBoardsA, bWet ? TownDefaults->FloorFlagsB : TownDefaults->FloorBoardsB);
+			for (const FBrixRect& Q : Without(R.R, LH.Holes.IsValidIndex(R.Floor) ? LH.Holes[R.Floor] : TOptional<FBrixRect>()))   // open over the stair
+				AddBox(BoxAt(Q, Floor0 - 0.02f, Floor0 + 0.006f), bWet ? TilesColour : BoardsColour,
+					bWet ? TownDefaults->FloorFlagsA : TownDefaults->FloorBoardsA, bWet ? TownDefaults->FloorFlagsB : TownDefaults->FloorBoardsB);
 		}
 		for (const FBrixWallSeg& W : H.Walls)
 		{
-			if (W.Floor != 0) continue;
-			if (!W.bDoorway) { AddBox(BoxAt(W.R, LH.Floor0, LH.Ceil0), PartitionColour, Plaster, None); continue; }
-			AddBox(BoxAt(W.R, LH.Floor0 + DoorHeight, LH.Ceil0), PartitionColour, Plaster, None);
+			if (Up(W.Floor) < 0.f) continue;
+			const float Floor0 = Up(W.Floor), Ceil0 = Ceil(W.Floor);
+			if (!W.bDoorway) { AddBox(BoxAt(W.R, Floor0, Ceil0), PartitionColour, Plaster, None); continue; }
+			AddBox(BoxAt(W.R, Floor0 + DoorHeight, Ceil0), PartitionColour, Plaster, None);
 			for (float E : { -W.R.Length / 2, W.R.Length / 2 })   // the doorway's frame: two posts and a lintel
 			{
 				FBrixRect Post = Part(W.R, E - 0.05f, E + 0.05f);
 				Post.Width += 0.04f;
-				AddBox(BoxAt(Post, LH.Floor0, LH.Floor0 + DoorHeight + 0.08f), FrameColour, None, None);
+				AddBox(BoxAt(Post, Floor0, Floor0 + DoorHeight + 0.08f), FrameColour, None, None);
 			}
 			FBrixRect Lintel = Part(W.R, -W.R.Length / 2 - 0.05f, W.R.Length / 2 + 0.05f);
 			Lintel.Width += 0.04f;
-			AddBox(BoxAt(Lintel, LH.Floor0 + DoorHeight, LH.Floor0 + DoorHeight + 0.08f), FrameColour, None, None);
+			AddBox(BoxAt(Lintel, Floor0 + DoorHeight, Floor0 + DoorHeight + 0.08f), FrameColour, None, None);
 		}
 		for (const FBrixFurniturePiece& P : H.Pieces)
 		{
-			if (P.Floor != 0) continue;
+			if (Up(P.Floor) < 0.f) continue;
+			const float Floor0 = Up(P.Floor);
 			UInstancedStaticMeshComponent* G = MeshGroup(TEXT("SM_") + P.Kind.Replace(TEXT(":"), TEXT("_")) + TEXT("_") + P.Line);
 			if (!G) continue;
 			// the kit's piece: x across it, its back toward +y in Blender, which the importer turns to -y
-			const FVector Org(P.At.X * CmPerM, P.At.Y * CmPerM, (LH.Floor0 + P.Lift) * CmPerM);
+			const FVector Org(P.At.X * CmPerM, P.At.Y * CmPerM, (Floor0 + P.Lift) * CmPerM);
 			const FMatrix M(FVector(P.A.X, P.A.Y, 0), FVector(-P.B.X, -P.B.Y, 0), FVector(0, 0, 1), Org);
 			Add.FindOrAdd(G).Add(FTransform(M));
 			++Shown;
@@ -193,7 +256,7 @@ void ABrixRooms::Rebuild()
 			{
 				FBrixRect Foot;
 				Foot.Centre = P.At; Foot.Along = P.A; Foot.Length = FMath::Max(0.05f, P.Size.X - 0.1f); Foot.Width = FMath::Max(0.05f, P.Size.Y - 0.1f);
-				BlockAts.Add(BoxAt(Foot, LH.Floor0, LH.Floor0 + FMath::Max(P.Size.Z, MinBlockHeight)));
+				BlockAts.Add(BoxAt(Foot, Floor0, Floor0 + FMath::Max(P.Size.Z, MinBlockHeight)));
 			}
 		}
 	}
@@ -232,14 +295,14 @@ void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp)
 		const FVector2D D = P - R.Centre, Ac(-R.Along.Y, R.Along.X);
 		return FMath::Abs(FVector2D::DotProduct(D, R.Along)) <= R.Length / 2 && FMath::Abs(FVector2D::DotProduct(D, Ac)) <= R.Width / 2;
 	};
-	int32 In = INDEX_NONE;
+	int32 In = INDEX_NONE, OnFloor = 0;
 	for (const int32 i : Near)
 		for (const FBrixRoom& R : Homes[i].Home->Rooms)
-			if (R.Floor == 0 && EyeUp < Homes[i].Ceil0 && InRect(R.R, Eye)) In = i;
+			if (Homes[i].FloorUp.IsValidIndex(R.Floor) && EyeUp > Homes[i].FloorUp[R.Floor] - 0.1f && EyeUp < Homes[i].CeilUp[R.Floor] && InRect(R.R, Eye)) { In = i; OnFloor = R.Floor; }
 	TArray<TPair<double, FVector>> Rooms;
 	if (In != INDEX_NONE)
 		for (const FBrixRoom& R : Homes[In].Home->Rooms)
-			if (R.Floor == 0) Rooms.Add({ FVector2D::Distance(Eye, R.R.Centre), FVector(R.R.Centre.X * CmPerM, R.R.Centre.Y * CmPerM, (Homes[In].Ceil0 - 0.4f) * CmPerM) });
+			if (R.Floor == OnFloor) Rooms.Add({ FVector2D::Distance(Eye, R.R.Centre), FVector(R.R.Centre.X * CmPerM, R.R.Centre.Y * CmPerM, (Homes[In].CeilUp[OnFloor] - 0.4f) * CmPerM) });
 	Rooms.Sort([](const TPair<double, FVector>& A, const TPair<double, FVector>& B) { return A.Key < B.Key; });
 	for (int32 n = 0; n < Lights.Num(); ++n)
 	{

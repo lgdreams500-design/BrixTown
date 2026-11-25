@@ -193,7 +193,24 @@ FBrixDoorRules FBrixDoorRules::FromConfig()
 	F(TEXT("ShopPane"), R.ShopPane);
 	F(TEXT("ShopPier"), R.ShopPier);
 	F(TEXT("HousePlinth"), R.HousePlinth);
+	F(TEXT("HouseStorey"), R.HouseStorey);
+	F(TEXT("BlockSlabHeight"), R.Base);
+	F(TEXT("InsideFloor"), R.InsideFloor);
+	F(TEXT("StoreyHeight"), R.Storey);
+	F(TEXT("CeilingDrop"), R.CeilingDrop);
 	return R;
+}
+
+float BrixFloorUp(const FBrixLot& Lot, int32 Floor, const FBrixDoorRules& R)
+{
+	if (Lot.House.IsSet()) return R.Base + R.HousePlinth + Floor * R.HouseStorey;
+	return R.Base + Floor * R.Storey + R.InsideFloor;
+}
+
+float BrixCeilingUp(const FBrixLot& Lot, int32 Floor, const FBrixDoorRules& R)
+{
+	if (Lot.House.IsSet()) return R.Base + R.HousePlinth + (Floor + 1) * R.HouseStorey - (Floor >= 1 ? 0.05f : 0.2f);   // houses.js SK0, SK1
+	return R.Base + (Floor + 1) * R.Storey - R.CeilingDrop;
 }
 
 bool BrixIsHollow(const FBrixLot& Lot, const FBrixInside* Inside)

@@ -212,7 +212,7 @@ void ABrixPeople::Tick(float DeltaSeconds)
 		const double Mi = M2 ? *M2 : Minute;
 		const TOptional<FBrixWhere> W = Day->Where(i, Mi);
 		if (!W) { InVehicle[i] = Day->VehicleAt(i, Mi); return; }
-		if (W->bInside) return;
+		if (W->bInside && W->Lot != CameraLot) return;   // inside: seen only from inside their building (play.js nearPeople)
 		// a little to one side of the pavement's line, never at a door (the slice's lane, CITY-043)
 		FVector2D P = W->Pos;
 		if (W->bWalking) P += FVector2D(-W->Heading.Y, W->Heading.X) * Lane[i] * LaneWidth * FMath::Clamp(FMath::Min(W->WalkDone, W->WalkLeft) / 5.f, 0.f, 1.f);

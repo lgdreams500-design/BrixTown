@@ -86,7 +86,7 @@ struct BRIXWORLD_API FBrixRoom
 };
 
 // A place a resident lies or sits (homes.js spots(), houses.js spotsS()): where, its height above the floor, the way the
-// person faces (a bed: the way their head is from their feet, homes.js yawOf(-d)), lying or sitting.
+// person faces sitting, or the way their head lies (toward the bed's head) lying; lying or sitting.
 struct BRIXWORLD_API FBrixSpot
 {
 	FVector2D At = FVector2D::ZeroVector, Facing = FVector2D(1, 0);
@@ -120,3 +120,15 @@ BRIXWORLD_API void LoadBrixHomeData(const TSharedPtr<FJsonObject>& Root, FBrixIn
 // house_12x9), or false. Windows: the building's real windows (tall pieces in front of them are left out, homes.js dropped()).
 BRIXWORLD_API bool BrixHomeOf(const FBrixInsides& Ins, const FBrixLot& Lot, const FBrixInside& In, int32 Day,
 	const TArray<FBrixWindowSpan>& Windows, FBrixHome& Out);
+
+// A designed house's stair well in the house's own frame (houses.js SWELL: u0, u1, v0, v1; u as the plan's x, mirrored into
+// the house as everything of houses.js) and where you step off it upstairs (SOFF).
+BRIXWORLD_API bool BrixHouseWell(const FBrixInsides& Ins, FVector4f& Well, float& StepOff);
+
+struct FBrixDay;
+struct FBrixCity;
+struct FBrixDoorRules;
+// The day's stays at home inside (CITY-013, WLD-053): at a bed a resident lies on the nearest bed place of their floor, at a
+// room place they sit on the nearest seat (homes.js one(): the lot's places sit on the plan's pieces); any other stay
+// inside stands on its floor. Returns how many lie and sit.
+BRIXWORLD_API int32 SeatBrixDayIndoors(FBrixDay& Day, const FBrixCity& City, const FBrixInsides& Ins, const FBrixDoorRules& R);

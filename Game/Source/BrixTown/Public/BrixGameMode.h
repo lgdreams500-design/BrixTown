@@ -15,6 +15,7 @@ struct FBrixCity;
 //   -BrixInside=<lot id>              put the player inside that building, a way in from its doorway, facing in (CITY-013)
 //   -BrixWalkIn=<lot id>              put the player outside that building's doorway and walk them in through it
 //   -BrixStand=<x>,<z>,<yaw>          put the player there (metres, degrees; yaw 0 = east), the camera behind them
+//   -BrixWalk=<x>,<z>;<x>,<z>;...   then walk the player through those points (up a stair, say); the log says how high they got
 //   -BrixShut                         every building solid, as before the insides (to compare frame rates)
 UCLASS(Config = Game)
 class BRIXTOWN_API ABrixGameMode : public AGameModeBase
@@ -74,6 +75,7 @@ private:
 	FVector2D WalkFrom = FVector2D::ZeroVector;
 	FString WalkLot;
 	float WalkSeconds = 0.f;
+	TArray<FVector2D> WalkPoints;                // -BrixWalk: the points still to walk to
 	UPROPERTY() TObjectPtr<class ADirectionalLight> SunActor;
 	UPROPERTY() TObjectPtr<class USkyLightComponent> SkyFill;
 	UPROPERTY() TObjectPtr<class UExponentialHeightFogComponent> HazeFog;

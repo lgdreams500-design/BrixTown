@@ -17,7 +17,7 @@ struct BRIXWORLD_API FBrixWhere
 	int32 Floor = 0;                         // a place upstairs (stacked flats and offices)
 	int32 Act = 0;                           // into FBrixDay::Acts
 	int32 Lot = -1;                          // a stay's lot (into the city's lots in its blocks' order)
-	int32 Pose = 0;                          // 0 standing, 1 walking, 2 sitting (a bench's seat, a fountain's rim)
+	int32 Pose = 0;                          // 0 standing, 1 walking, 2 sitting (a bench's seat, a fountain's rim, a sofa), 3 lying (a bed)
 	float SeatUp = -1.f;                     // m above the street of a seat, when sitting (-1: on the ground)
 	float Along = 0.f;                       // metres walked along this walk so far (the step's phase)
 	float WalkLeft = 0.f, WalkDone = 0.f;    // metres to the walk's end and from its start (the slice keeps doorways on the line)
