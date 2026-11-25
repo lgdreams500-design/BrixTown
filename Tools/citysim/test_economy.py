@@ -971,12 +971,13 @@ class TheStory(unittest.TestCase):
         S["count"]["nodes"]["c1"]["options"][4]["need"] = []
         del S["verdict"]["nodes"]["v1"]["covered"]
         S["card"]["starts"][0]["node"] = "nowhere"
+        S["count"]["nodes"]["c1"]["options"][1]["act"].append("rep:5")
         S["morning"]["nodes"][S["morning"]["start"]]["options"][0]["need"] = ["rep:nobody:5"]
         Q["lunch_mei"]["need"].append("done:four_oclock_door:no_such_ending")
         w["quests"]["exclusive"].append(["made_up_fact"])
         p = world.quest_problems(w)
         for bit in ("never_set_anywhere", "no resident r9999", "must need that money", "verdict.v1: every reply has a condition", "nowhere", "rep:nobody:5",
-                    "no_such_ending", "made_up_fact"):
+                    "no_such_ending", "made_up_fact", "nobody is spoken to in a scene"):
             self.assertTrue(any(bit in x for x in p), bit)
 
     def test_QST_011_a_story_line_opens_by_talking_to_its_giver_and_its_first_line_depends(self):

@@ -252,6 +252,8 @@ def problems(Q, econ, resident_ids, lot_ids, roles, moods, dialogue_vars):
                 targets = [a for a in acts if a.startswith(("stage:", "end:"))]
                 if not targets:
                     out.append("%s: nothing said here moves the quest on" % at)
+                if any(re.fullmatch(r"rep:[+-]?\d+", a) for a in acts):
+                    out.append("%s: nobody is spoken to in a scene, so reputation must name who it is with" % at)
             else:
                 if kind == "go" and goal["go"] not in lot_ids:
                     out.append("%s: no lot %s" % (at, goal["go"]))
