@@ -29,6 +29,7 @@ public:
 	UPROPERTY(Config) float RunSpeed = 4.5f;         // m/s
 	UPROPERTY(Config) float CameraDistance = 4.f;    // m behind the player
 	UPROPERTY(Config) float CameraHeight = 0.6f;     // m above the shoulders' pivot
+	UPROPERTY(Config) float DesignCameraM = 2.7f;    // m from the character in the designer, times their height / 1.72 (life.js camera())
 
 protected:
 	virtual void BeginPlay() override;
@@ -49,6 +50,13 @@ public:
 	double WalkPhase() const { return Phase; }   // the walk's cycle, 0..1: a step at each half (the sound's steps, SND-003)
 	FVector2D DriveKeys() const { return DriveUsed; }   // this frame's steer and throttle while driving (the engine's sound, SND-009)
 	bool Handbrake() const { return bHandbrake; }
+	// the character's look (CHR-001): the designed character's (ABrixDesigner), drawn from the next frame
+	void SetLook(const FBrixLook& L) { Rules.Player = L; }
+	const FBrixLook& CurrentLook() const { return Rules.Player; }
+	// while the character designer is open (life.js camera()): the camera close in front, turned by SpinDeg, the character
+	// framed in the part of the screen PanelShare (of its width, from the left) leaves free; the body drawn as time passes
+	void SetDesignView(bool bOn, double SpinDeg, float PanelShare);
+	bool IsDesigning() const { return bDesigning; }
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void PawnClientRestart() override;
@@ -104,4 +112,8 @@ private:
 	FVector2D DriveIn = FVector2D::ZeroVector;   // this frame's W/S and A/D while driving
 	FVector2D DriveUsed = FVector2D::ZeroVector; // what the car was given this frame (DriveIn is cleared once used)
 	float ArmBefore = 0.f;
+	bool bDesigning = false;
+	double DesignSpin = 0;
+	float DesignShare = 0.f;
+	FVector BoomOffsetBefore = FVector::ZeroVector;
 };

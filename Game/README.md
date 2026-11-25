@@ -151,11 +151,28 @@ material is `/Game/People/M_People` (the vertex colour, matte), made by `Tools/u
 Residents at a garden's bench seats and fountain rims sit there, facing the garden's middle or out of the fountain
 (CITY-017, found as the slice finds them: `SeatBrixDay`, checked by `CITY017_residents_sit_on_garden_benches`); others
 stand. Talking faces and boards are not brought over yet; the gesture layers (CHARACTER_MOTION §4), another walk, a
-hood and an umbrella are drawn as people.js draws them (checked by ART004), for dodging and the weather. The player is the slice's player too (people.js
-player(), in people.json) at full detail, walking by their signature and running by the slice's Run, until the designed
-character (CHR-001) comes over. At High on this laptop: 53 to 55 frames a second on a street with 32 residents near, in
+hood and an umbrella are drawn as people.js draws them (checked by ART004), for dodging and the weather. The player is the character they designed (below) at full
+detail, walking by their signature and running by the slice's Run. At High on this laptop: 53 to 55 frames a second on a street with 32 residents near, in
 the morning school rush of some 150 and in a garden with 46 (the same as with none: the GPU is the limit), the people
 taking 1.3 to 3.6 ms of the game thread.
+
+## The character designer (CHR-001, CHR-002, CHR-013; F-CHR-DESIGN 2)
+A new game opens the designer, as the slice's life.js does: a Lamplight card down the left (ADR-0049) with the name, the
+body (height, build, skin), the face (width, eye size and openness, brow height, nose, mouth width, eye colour), the hair
+(style, colour), the clothes (a top, a bottom and shoes, each in a palette colour), the extras (scarf, cap, apron, bag,
+moustache) and the walk, every choice and range from World/rules/designer.json; Surprise me picks at random, and Begin
+(once the name is 1 to 16 letters) starts the game as that character. Beside it the character stands live in the street,
+the camera close in front (drag to turn them round), and the clock waits. A character is those values and nothing else
+(`BrixWorld/BrixDesigner`, kept as designer.json writes them, never a mesh): `BrixDesignLook` is people.js design(), so
+the face values change only the shape of the shared face (CHR-007), and `BrixLookProblems` is world.look_problems().
+`CHR001_the_designer_makes_the_slices_look` checks eight designs (the default and one per hair style, sliders at their
+ends) against people.js design() and the bodies it draws standing, walking, further off and talking (to 1 mm), from
+`Tests/values/designer_city_01.json` (written by `Tools/unreal/people_values.py`, which also asks Python for the checks);
+`CHR013_designer_values_stay_in_range` checks 29 sets of values each wrong in a way, and the good ones. A test shot starts
+as the default character without the designer, as the slice's ?auto=1; `-BrixDesigner` opens it for the shot (taken by its
+own clock, as the game is paused), `"-BrixDesignSet=name:Ada;hair:afro;skin:7;height:1.8"` sets values first,
+`-BrixDesignSpin=<deg>` turns the character, `-BrixDesignBegin` presses Begin after 3 s (the shot is then taken in play);
+`-BrixNoDesigner` skips it when playing. Not yet: carrying on from a save (QST-008), so every start is a new character.
 
 ## Talking to residents (CITY-007, CHR-007, CHR-009, SND-018)
 As in the slice (conversations.js, voices.js): next to a resident out of doors, E offers "Talk to <name>" and opens the
@@ -283,8 +300,8 @@ market stall, worked out from the residents' visits and the player's own trades,
 city_data.js (economy.json, mall_goods.json and quests.json, the day's shop visits, who works where), with two fixed runs
 and what Python gives for them: `ECO002_the_ledger_matches_the_python` runs economy.check_script() and its outlet ops,
 `BANK008_the_bank_settles_as_the_python_does` a loan that defaults; both must give Python's ledger, balances, things
-carried, loans, prices and outlet stock to the chip. A new game starts when play starts (the character designer is not
-brought over yet): the starting cash is paid in, and the economy's days count from then; each frame it is brought up to
+carried, loans, prices and outlet stock to the chip. A new game starts when play starts (the character designer opens over
+it): the starting cash is paid in, and the economy's days count from then; each frame it is brought up to
 the clock, so interest, instalments and fees are settled for each midnight passed (BANK-008). On screen, as in the slice:
 the purse at the top left (cash, and the bank's two accounts together once one is open) with a "+" or "-" beside it when
 it changes; at the bank's door (`CounterReach`) or inside it, B opens its counter in the slice's dark panel: open
@@ -469,6 +486,9 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD036_the_clouds_are_where_world_py_puts_them` | WLD-035, WLD-036 |
 | `BrixTown.World.CITY007_every_conversation_is_sound` | CITY-007 |
 | `BrixTown.World.CHR009_lines_are_mouthed_as_the_slice_mouths_them` | CHR-009 |
+| `BrixTown.World.CHR001_the_designer_makes_the_slices_look` | CHR-001, CHR-002 |
+| `BrixTown.World.CHR013_designer_values_stay_in_range` | CHR-013 |
+| `BrixTown.World.CHR014_an_outfit_is_only_clothes_and_hair_the_designer_offers` | CHR-014 |
 | `BrixTown.World.SND018_lines_are_voiced` | SND-018 |
 | `BrixTown.World.ECO001_money_is_whole_chips_in_balanced_lines` | ECO-001, ECO-002, ECO-003, BANK-007 |
 | `BrixTown.World.ECO002_the_ledger_matches_the_python` | ECO-002, ECO-005, ECO-010, ECO-011, ECO-013, BANK-001, BANK-007 |
