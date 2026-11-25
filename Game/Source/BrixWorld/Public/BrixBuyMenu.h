@@ -26,6 +26,19 @@ struct BRIXWORLD_API FBrixThingMesh
 	int32 Num() const { return P.Num() / 3; }
 };
 
+// One path of a mark in a buy menu's dots and chips (UI-020): SVG path data on a square 16 units across, filled, or stroked
+// this wide (buymenu.js ICON, carried in life.json buy_menu.icons by build_play.py).
+struct BRIXWORLD_API FBrixIconPath
+{
+	FString D;
+	float Stroke = 0.f;   // 0: filled
+};
+// The path's outlines, one per subpath, curves flattened to straight pieces (M, L, H, V, Q, Z, absolute, as the marks use).
+BRIXWORLD_API TArray<TArray<FVector2f>> BrixIconOutlines(const FString& D);
+// How much of each pixel of a Px x Px picture of the mark is covered, 0 to 1, rows from the top: fills by the nonzero rule,
+// strokes as the band within half their width of each straight piece, 4 x 4 samples a pixel.
+BRIXWORLD_API TArray<float> BrixIconCoverage(const TArray<FBrixIconPath>& Paths, int32 Px);
+
 struct BRIXWORLD_API FBrixBuyMenuRules
 {
 	struct FGoes { FString Name, Colour, To; };
@@ -46,6 +59,7 @@ struct BRIXWORLD_API FBrixBuyMenuRules
 	TSet<FString> Items;                              // economy.json's items
 	struct FGood { FString Goes, Piece; TMap<FString, FString> Parts; };
 	TMap<FString, FGood> Goods;                       // mall_goods.json's goods
+	TMap<FString, TArray<FBrixIconPath>> Icons;       // where a thing goes -> its mark in a dot or a chip (buymenu.js ICON)
 
 	FBrixShows Shows(const FString& Thing) const;
 	// A stand-in as boxes: Band is the seller's colour, Own the clothing's (buymenu.js shapeMesh()).

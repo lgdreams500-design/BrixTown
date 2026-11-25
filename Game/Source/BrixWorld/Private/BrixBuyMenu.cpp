@@ -73,6 +73,17 @@ bool LoadBrixBuyMenu(const TSharedPtr<FJsonObject>& J, FBrixBuyMenuRules& Out, F
 				if (!Pt.Value->IsNull()) { FString S; if (Pt.Value->TryGetString(S)) G.Parts.Add(FString(Pt.Key.ToView()), S); else if (Pt.Value->Type == EJson::Boolean && Pt.Value->AsBool()) G.Parts.Add(FString(Pt.Key.ToView()), TEXT("true")); }
 		Out.Goods.Add(FString(V.Key.ToView()), G);
 	}
+	const TSharedPtr<FJsonObject>* Ic = nullptr;
+	if ((*BM)->TryGetObjectField(TEXT("icons"), Ic))
+		for (const auto& I : (*Ic)->Values)
+		{
+			TArray<FBrixIconPath>& L = Out.Icons.Add(FString(I.Key.ToView()));
+			for (const auto& V : I.Value->AsArray())
+			{
+				const TArray<TSharedPtr<FJsonValue>>& A = V->AsArray();
+				if (A.Num() >= 2) L.Add({ A[0]->AsString(), (float)A[1]->AsNumber() });
+			}
+		}
 	if (!Out.Shapes.Num() || !Out.Goes.Num()) { OutError = TEXT("the buy menu's rules are empty"); return false; }
 	return true;
 }
@@ -156,4 +167,106 @@ TOptional<FBrixThingMesh> FBrixBuyMenuRules::MeshFor(const FString& Thing, const
 	FBrixThingMesh M = ShapeMesh(S.Name, Band ? *Band : Colours.FindRef(TEXT("ochre")), Own ? *Own : Colours.FindRef(TEXT("cream")));
 	if (!M.P.Num()) return {};
 	return M;
+}
+
+// ---------------------------------------------------------------- the marks in the dots and chips (UI-020)
+TArray<TArray<FVector2f>> BrixIconOutlines(const FString& D)
+{
+	TArray<TArray<FVector2f>> Out;
+	TCHAR Cmd = 0;
+	FVector2f At(0, 0), Start(0, 0);
+	int32 i = 0;
+	const int32 N = D.Len();
+	auto Skip = [&]() { while (i < N && (FChar::IsWhitespace(D[i]) || D[i] == TEXT(','))) ++i; };
+	auto Num = [&]() -> float
+	{
+		Skip();
+		const int32 a = i;
+		if (i < N && (D[i] == TEXT('-') || D[i] == TEXT('+'))) ++i;
+		while (i < N && (FChar::IsDigit(D[i]) || D[i] == TEXT('.'))) ++i;
+		return FCString::Atof(*D.Mid(a, i - a));
+	};
+	auto Line = [&](FVector2f P) { if (!Out.Num()) Out.AddDefaulted_GetRef().Add(At); Out.Last().Add(P); At = P; };
+	while (true)
+	{
+		Skip();
+		if (i >= N) break;
+		if (FChar::IsAlpha(D[i])) Cmd = D[i++];
+		else if (Cmd == TEXT('M')) Cmd = TEXT('L');   // numbers after a move's first point are lines
+		switch (Cmd)
+		{
+		case TEXT('M'): { const float x = Num(), y = Num(); At = Start = FVector2f(x, y); Out.AddDefaulted_GetRef().Add(At); break; }
+		case TEXT('L'): { const float x = Num(), y = Num(); Line(FVector2f(x, y)); break; }
+		case TEXT('H'): Line(FVector2f(Num(), At.Y)); break;
+		case TEXT('V'): Line(FVector2f(At.X, Num())); break;
+		case TEXT('Q'):
+		{
+			const float cx = Num(), cy = Num(), x = Num(), y = Num();
+			const FVector2f P0 = At, C(cx, cy), P1(x, y);
+			for (int32 k = 1; k <= 16; ++k)
+			{
+				const float t = k / 16.f, u = 1 - t;
+				Line(P0 * (u * u) + C * (2 * u * t) + P1 * (t * t));
+			}
+			break;
+		}
+		case TEXT('Z'): case TEXT('z'): if (Out.Num() && Out.Last().Num() && Out.Last().Last() != Start) Out.Last().Add(Start); At = Start; break;
+		default: ++i; break;   // a command the marks do not use: skipped
+		}
+	}
+	return Out;
+}
+
+TArray<float> BrixIconCoverage(const TArray<FBrixIconPath>& Paths, int32 Px)
+{
+	TArray<float> Out;
+	Out.SetNumZeroed(Px * Px);
+	struct FShape { TArray<TArray<FVector2f>> Rings; float Half; };
+	TArray<FShape> Shapes;
+	for (const FBrixIconPath& P : Paths) Shapes.Add({ BrixIconOutlines(P.D), P.Stroke * .5f });
+	const int32 SS = 4;
+	for (int32 y = 0; y < Px; ++y)
+		for (int32 x = 0; x < Px; ++x)
+		{
+			int32 Hit = 0;
+			for (int32 sy = 0; sy < SS; ++sy)
+				for (int32 sx = 0; sx < SS; ++sx)
+				{
+					const FVector2f Q((x + (sx + .5f) / SS) * 16.f / Px, (y + (sy + .5f) / SS) * 16.f / Px);
+					bool bIn = false;
+					for (const FShape& S : Shapes)
+					{
+						if (S.Half <= 0)   // a fill, by the nonzero rule (each ring closed back to its start)
+						{
+							int32 Wind = 0;
+							for (const TArray<FVector2f>& R : S.Rings)
+								for (int32 k = 0; k < R.Num(); ++k)
+								{
+									const FVector2f A = R[k], B = R[(k + 1) % R.Num()];
+									if (A.Y <= Q.Y) { if (B.Y > Q.Y && (B.X - A.X) * (Q.Y - A.Y) - (Q.X - A.X) * (B.Y - A.Y) > 0) ++Wind; }
+									else if (B.Y <= Q.Y && (B.X - A.X) * (Q.Y - A.Y) - (Q.X - A.X) * (B.Y - A.Y) < 0) --Wind;
+								}
+							bIn = Wind != 0;
+						}
+						else   // a stroke: within half its width of a straight piece, square across its ends
+							for (const TArray<FVector2f>& R : S.Rings)
+							{
+								for (int32 k = 0; k + 1 < R.Num() && !bIn; ++k)
+								{
+									const FVector2f A = R[k], B = R[k + 1], AB = B - A;
+									const float L2 = AB.SizeSquared();
+									if (L2 < 1e-8f) continue;
+									const float t = FVector2f::DotProduct(Q - A, AB) / L2;
+									if (t < 0 || t > 1) continue;
+									bIn = FVector2f::DistSquared(Q, A + AB * t) <= S.Half * S.Half;
+								}
+								if (bIn) break;
+							}
+						if (bIn) break;
+					}
+					Hit += bIn;
+				}
+			Out[y * Px + x] = Hit / (float)(SS * SS);
+		}
+	return Out;
 }
