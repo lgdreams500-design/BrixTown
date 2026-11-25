@@ -352,11 +352,15 @@ TSharedRef<SWidget> ABrixLife::MenuPage(const FString& Id)
 	else if (Id == TEXT("quests")) { Sub = TEXT("Quests and work under way, on offer and finished"); TSharedRef<SVerticalBox> V = SNew(SVerticalBox); QuestsPanel(V); Section(FString(), V); }
 	else if (Id == TEXT("belongings"))   // INV-001: what is carried, each drawn as it is in a buy menu
 	{
-		Sub = TEXT("What you carry");
+		Sub = TEXT("What you own and carry");   // life.js belongingsTab(): the goods, the furniture taken away, the skateboards
 		TArray<FString> Keys;
 		E->Inv.GetKeys(Keys);
 		Keys.Sort([](const FString& A, const FString& B) { return FCString::Strcmp(*A, *B) < 0; });
-		if (!Keys.Num()) Soon(TEXT("You carry nothing yet. Shops and cafés sell things (B at their counter); some quests give things too."));
+		const ABrixCharacter* Player = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+		const bool bOwnOther = FurnHeld.Num() > 0 || (Player && Player->Boards.Own.Num() > 0);
+		// with skateboards or furniture listed below, "you carry nothing" read as if they were not yours (found 2026-11-26)
+		if (!Keys.Num()) Soon(bOwnOther ? TEXT("No goods carried yet: shops and cafés sell things (B at their counter); some quests give things too. What else is yours is below.")
+			: TEXT("You carry nothing yet. Shops and cafés sell things (B at their counter); some quests give things too."));
 		else
 		{
 			TSharedRef<SWrapBox> W = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(12, 12));

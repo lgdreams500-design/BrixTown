@@ -1098,8 +1098,9 @@ board_in_use(), `test_CITY_102_*` and `test_CITY_103_*` in Tools/citysim/test_ec
 model as people.js board() draws it (`DrawBrixBoard`, `BrixThingFromBody`), turning in the showcase with its top speed and how
 it goes; one owned is marked yours and is not sold again. A board is paid into the mall's till through the ledger (cash first,
 then the current account), goes to the belongings and is the one in use when it is faster than the one in use. The game
-menu's Belongings page lists the boards owned, the one in use marked (in the hand or ridden), with Use this on the others
-(life.js belongingsTab()). `CITY103_boards_are_bought_as_python_does` runs economy.board_script() (refusals, a clothes outlet,
+menu's Belongings page ("What you own and carry") lists the boards owned, the one in use marked (in the hand or ridden), with
+Use this on the others (life.js belongingsTab()); with no goods carried it says so without "you carry nothing" over the
+boards and furniture listed below it (it did, 2026-11-26). `CITY103_boards_are_bought_as_python_does` runs economy.board_script() (refusals, a clothes outlet,
 a loan, the in-use rule, the till, a save and load) against Python's results in life.json. To see it in a test shot:
 `-BrixNoBoards -BrixCounter=b_16_5_u35` (Bobbin's Toys; `"-BrixLife=open,current;loan,30000,7"` to afford a board), the
 belongings with `-BrixMenu=belongings`. Not yet: boards in the sports and toy outlets' windows, a board on show at home (the boards are not among the Furnish tab's pieces yet), the server's check
