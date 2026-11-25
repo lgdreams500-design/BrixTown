@@ -38,6 +38,15 @@ public:
 	bool Contains(const FVector& WorldCm) const;
 	// The outlet room a point (Unreal cm) is in (outlets.js at(), WLD-066), or null
 	const FBrixOutletRoom* OutletAt(const FVector& WorldCm) const;
+	// The places to sit and lie its furniture gives (play.js use(): a room set's sofa, armchair and bed in the furniture
+	// outlet, its cafe's chairs; a mall's benches and rides; FURN-022, CITY-030): the seat's top in the data's frame
+	// (x, z, up; metres), the way the sitter faces as people.js turns a body, and what E offers there
+	struct FSeat { FVector At = FVector::ZeroVector; double Yaw = 0; bool bLie = false; FString Label; };
+	const TArray<FSeat>& Seats() const { return SeatList; }
+	TArray<FSeat> SeatList;
+	// the seat nearest where the player stands and within reach (play.js: 2 m either way, 1.2 m up or down), or INDEX_NONE
+	int32 SeatNear(const FVector& PawnCm, double& OutMetres) const;
+	UPROPERTY(Config) float SeatReach = 1.6f;            // m from a seat at which E offers it
 	int32 Triangles() const { return Tris; }
 	TSharedPtr<const FBrixGoodsModels> GoodsModels;     // the goods' models, for the outlets' windows (set before Start; FURN-065)
 

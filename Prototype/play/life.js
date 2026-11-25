@@ -33,11 +33,12 @@ var Life = (() => {
     Q = new Econ.Quests(QR, E, residentsForQuests(), LOTS);
     Q.onNote = text => toast(text);
     M = new Estate.Market(X.estate, E, LOTS, Estate.residentsOf(D, LOTS));   // the real estate market (PROP-009 to PROP-021)
+    newStore();                                           // the furniture outlet's tills (FURN-022 to FURN-029)
   }
   function newGame(v) {
     fresh(); look = v; clock.day = 0; outfits = []; belongings = []; waypoint = null; plans = {};
     if (transient) Boards.give(Boards.R.auto_owned, Boards.R.auto_equipped); else Boards.give([]);   // CITY-100: ?auto=1 has every board, the electric one in use; a real game none (bought at the mall's sports and toy outlets in the Unreal build); until the skate store
-    E.advance(0, clock.m); Q.newGame(); M.start(); ready = true;
+    E.advance(0, clock.m); Q.newGame(); M.start(); S.found(0, clock.m); ready = true;
     if (new URLSearchParams(location.search).has("rich")) testRich();
     feats = {}; lastMoney = E.totalMoney(); Rewards.reset(E.L.tx.length); save();
   }
@@ -59,11 +60,12 @@ var Life = (() => {
   function readSave(k) { try { const s = localStorage.getItem(slotKey(k || slot)); return s ? JSON.parse(s) : null; } catch (e) { return null; } }   // a slot's save (UI-013)
   function save() {
     if (!ready || transient) return;                      // ?auto=1 (tests, screenshots) never overwrites a real save
-    try { localStorage.setItem(slotKey(slot), JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), estate: M.save(), remodels, plans, furnishings, outfits, belongings, feats, boards: Boards.save(), at: Date.now() })); } catch (e) { }
+    try { localStorage.setItem(slotKey(slot), JSON.stringify({ v: 1, look, pl: { x: pl.x, y: pl.y, z: pl.z, yaw: pl.yaw }, clock: { day: clock.day, m: clock.m }, econ: E.save(), quests: Q.save(), estate: M.save(), remodels, plans, furnishings, outfits, belongings, feats, boards: Boards.save(), store: S.save(), at: Date.now() })); } catch (e) { }
     lastSave = performance.now();
   }
   function loadSave(s) {
     fresh(); E.load(s.econ); Q.load(s.quests); if (s.estate) M.load(s.estate); else M.start(); look = s.look;
+    if (s.store) S.load(s.store); notesSeen = S.notes.length; S.found(E.day, E.minute);   // the outlet's bookings; a save from before it gets the company its float
     Object.assign(pl, s.pl); pl.pose = 0; pl.vy = 0; cam.yaw = pl.yaw; clock.day = s.clock.day; clock.m = s.clock.m;
     ready = true; lastMoney = E.totalMoney(); Rewards.reset(E.L.tx.length); feats = s.feats || {};
     remodels = s.remodels || {};
@@ -227,7 +229,9 @@ var Life = (() => {
     if (n === E.bankLot) return open("bank", n);
     if (LOTS[n] && M.office[LOTS[n].id]) return open("agent", n);
     if (n === E.marketLot) return open("stall", n);
+    if (LOTS[n] && LOTS[n].kind === "furniture") return open("store", n);   // the furniture outlet's tills (FURN-025)
     if (E.shopKind(n)) return open("shop", n);
+    if (S.hasCatalogue && holding(n)) { open("store", outletLot()); if (panel && panel.kind === "store") { panel.home = true; draw(); } return; }   // FURN-023: from the catalogue, at a home of yours
     toast("No counter here. Shops, cafés, the bank and the market square have one.");
   }
   function open(kind, n, u) {
@@ -236,7 +240,7 @@ var Life = (() => {
     for (const k in keys) keys[k] = false; pl.moving = false;
     if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
     el("life").classList.toggle("side", kind === "remodel");   // the designer stands to one side, so the building shows
-    el("life").classList.toggle("wide", kind === "shop" || kind === "outlet");   // a counter shows its goods as objects, the chosen one large beside them (UI-020)
+    el("life").classList.toggle("wide", kind === "shop" || kind === "outlet" || kind === "store");   // a counter shows its goods as objects, the chosen one large beside them (UI-020)
     el("life").style.setProperty("--bm-panel", BM.wide.panel_px + "px");
     if (kind === "remodel") startView(LOTS[n]);
     el("life").style.display = "block"; Sound.act("talk_open"); draw();
@@ -365,6 +369,7 @@ var Life = (() => {
     }
     else if (P.kind === "agent" || P.kind === "property") { const t = estatePanel(P, body); title = t[0]; sub = t[1]; }
     else if (P.kind === "remodel") { const t = remodelPanel(P, body); title = t[0]; sub = t[1]; }
+    else if (P.kind === "store") { const t = storePanel(P, body); title = t[0]; sub = t[1]; }
     else if ({ me: 1, belongings: 1, wardrobe: 1, storage: 1, settings: 1, save: 1, help: 1 }[P.kind]) { const t = { me: meTab, belongings: belongingsTab, wardrobe: wardrobeTab, storage: storageTab, settings: settingsTab, save: saveTab, help: helpTab }[P.kind](P, body); title = t[0]; sub = t[1]; }
     if (P.menu) cards(body);
     if (P.msg) body.prepend(h("p", { cls: "pmsg" }, P.msg));
@@ -1162,12 +1167,116 @@ var Life = (() => {
   }
   function key(e) {
     if (designKey(e)) { e.preventDefault(); return; }
-    if (panel && (panel.kind === "shop" || panel.kind === "outlet") && BuyMenu.key(e)) { e.preventDefault(); return; }   // arrows choose a thing, Enter buys it (UI-020)
+    if (panel && (panel.kind === "shop" || panel.kind === "outlet" || (panel.kind === "store" && panel.tab === "show")) && BuyMenu.key(e)) { e.preventDefault(); return; }   // arrows choose a thing, Enter buys it (UI-020)
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName) && (document.activeElement.type || "text") === "text";
     if (typing && e.code !== "Escape") return;
     const tab = { KeyC: "me", KeyI: "wallet", KeyG: "belongings", KeyP: "property", KeyJ: "quests", KeyU: "wardrobe", KeyH: "help", KeyM: "map" }[e.code];
     if (tab && panel && (panel.menu || ["property", "wallet", "quests"].includes(panel.kind))) { e.preventDefault(); menu(tab); return; }
-    if (e.code === "Escape" || (panel && ((e.code === "KeyB" && ["shop", "bank", "stall", "agent"].includes(panel.kind)) || (e.code === "KeyP" && panel.kind === "property") || (e.code === "KeyI" && panel.kind === "wallet") || (e.code === "KeyJ" && panel.kind === "quests")))) { e.preventDefault(); close(); }
+    if (e.code === "Escape" || (panel && ((e.code === "KeyB" && ["shop", "bank", "stall", "agent", "store"].includes(panel.kind)) || (e.code === "KeyP" && panel.kind === "property") || (e.code === "KeyI" && panel.kind === "wallet") || (e.code === "KeyJ" && panel.kind === "quests")))) { e.preventDefault(); close(); }
+  }
+
+  // ---------------------------------------------------------------- the furniture outlet's tills (FURN-022 to FURN-029; store.js)
+  // B in the furniture outlet opens its till: the showroom's pieces by room and line as objects (each with its tag), a basket
+  // where each piece is taken now (free, to the belongings) or delivered to a home of yours in a slot (flat-packed, or put
+  // together by a fitter), and the deliveries: where each van is, and the flat packs waiting to be put together. With the
+  // outlet's catalogue, B at a home of yours orders from there, for delivery only. What is delivered is set down on the
+  // home's floor (Store.setDown), in its boxes until it is put together.
+  let S = null, notesSeen = 0;
+  const outletLot = () => LOTS.findIndex(l => l.kind === "furniture");
+  const unitHeld = uid => { const i = M.byId[uid]; return i !== undefined && (M.owner[i] === "player" || M.tenant[i] === "player"); };
+  const doorOf = l => l.door || [(l.rect[0] + l.rect[2]) / 2, (l.rect[1] + l.rect[3]) / 2];
+  function routeTo(uid) {                                 // how far the van drives: along the streets' grid from the outlet's door to the building's [ASSUMPTION: until the van drives the roads, FURN-027]
+    const i = M.byId[uid], a = LOTS[outletLot()], b = i === undefined ? null : LOTS[M.units[i].lot]; if (!a || !b) return 600;
+    const p = doorOf(a), q = doorOf(b); return Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]);
+  }
+  function newStore() { S = new Store.Shop(X.furniture.rules, Furnish.rules(), E, unitHeld, routeTo); notesSeen = 0; E.hooks.push(d => S.settle(d)); }
+  const myHomes = () => M.units.map((u, i) => ({ id: u.id, i, name: M.name(i) })).filter(u => unitHeld(u.id));
+  const asBelonging = p => ({ id: p.id, kind: p.kind, name: p.name, w: p.w, d: p.d, h: p.h, rug: p.rug, line: p.line });
+  function drain() { for (const p of S.owned) belongings.push(asBelonging(p)); S.owned = []; }   // what the store hands over is with the belongings (INV-001), whole
+  function toBelongings(u, p, why) { S.arrived[u] = S.arrived[u].filter(q => q !== p); if (!S.arrived[u].length) delete S.arrived[u]; belongings.push(asBelonging(p)); toast("Your " + p.name.toLowerCase() + " " + why + ": it is with your belongings."); }
+  function standIn(u, p) {                               // FURN-028: a piece carried in is set down on its home's floor
+    const i = M.byId[u], l = LOTS[M.units[i].lot], f = M.units[i].floors[0], FW = window.wasted.furn;
+    if (!canFurnish(l)) return toBelongings(u, p, "was delivered to " + M.name(i) + ", whose rooms are not arranged in the designer");
+    const lay = layNow(l, f), R = FW.roomFor(l, f), entry = R.entries && R.entries.length ? R.entries[0] : [(R.room[0] + R.room[2]) / 2, (R.room[1] + R.room[3]) / 2];
+    const as = S.asPlaced(p.id, clock.day, clock.m); if (p.at) as.at = p.at;
+    const q = Store.setDown(R.room, R.keep, R.ceiling, lay, as, entry);
+    if (!q) return toBelongings(u, p, "found no room on the floor of " + M.name(i));
+    (furnishings[l.id] = furnishings[l.id] || {})[f] = lay.concat([q]); FW.showLayout(l, f, furnishings[l.id][f]); FW.layoutWorld(l, f);
+    p.stood = [l.id, f];
+    toast("Your " + p.name.toLowerCase() + " has been delivered to " + M.name(i) + (q.boxed ? ", in its boxes: put it together from the outlet's Deliveries, or book a fitter." : "."));
+    if (!q.boxed) { S.arrived[u] = S.arrived[u].filter(x => x !== p); if (!S.arrived[u].length) delete S.arrived[u]; }   // whole: it is the home's furniture now
+  }
+  function unbox(u, p) {                                 // FURN-029: put together, it stands as itself where its boxes stood
+    const [lid, f] = p.stood, l = LOTS.find(x => x.id === lid), lay = furnishings[lid] && furnishings[lid][f], FW = window.wasted.furn;
+    if (l && lay && lay.some(q => q.id === p.id)) {
+      furnishings[lid][f] = lay.map(q => q.id === p.id ? Object.assign({}, q, { name: p.name, w: p.w, d: p.d, h: p.h, boxed: false }) : q);
+      FW.showLayout(l, f, furnishings[lid][f]); FW.layoutWorld(l, f);
+    }
+    S.arrived[u] = S.arrived[u].filter(x => x !== p); if (!S.arrived[u].length) delete S.arrived[u];
+    toast("Your " + p.name.toLowerCase() + " is put together.");
+  }
+  function storeFrame() {                                // bring the deliveries up to the clock (four times a second)
+    if (S.advance(clock.day, clock.m).length) save();
+    for (; notesSeen < S.notes.length; notesSeen++) toast(S.notes[notesSeen][2]);
+    drain();
+    for (const u of Object.keys(S.arrived)) for (const p of S.arrived[u].slice()) {
+      if (!p.stood) standIn(u, p);
+      else if (!S.isBoxed(p.id, clock.day, clock.m)) unbox(u, p);
+    }
+  }
+  const slotWords = (d, k) => { const s = X.furniture.rules.delivery.slots[k]; return (d === clock.day + 1 ? "tomorrow" : "day " + (d + 1)) + ", " + hhmm(s[0]) + " to " + hhmm(s[1]); };
+  function storePanel(P, body) {
+    const FR = Furnish.rules(), homes = myHomes(), slots = S.slots();
+    if (!P.tab) Object.assign(P, { tab: "show", room: Object.keys(FR.rooms)[0], line: FR.lines[0], basket: [], unit: homes[0] ? homes[0].id : null, when: 0 });
+    if (!homes.some(u => u.id === P.unit)) P.unit = homes[0] ? homes[0].id : null;
+    const tab = (on, label, fn, dis) => h("button", { type: "button", cls: "pbtn" + (on ? "" : " off"), disabled: !!dis, on: { click: fn } }, label);
+    const go = t => () => { P.tab = t; P.msg = ""; draw(); }, sl = slots[Math.min(P.when, slots.length - 1)];
+    const due = S.orders.filter(o => o.landed < o.pieces.length).length, packs = Object.keys(S.arrived).flatMap(u => S.arrived[u].map(p => [u, p]));
+    body.append(purseLine(), h("div", { cls: "prow" }, tab(P.tab === "show", P.home ? "Catalogue" : "Showroom", go("show")), tab(P.tab === "basket", "Basket (" + P.basket.length + ")", go("basket")),
+      tab(P.tab === "book", "Deliveries" + (due + packs.length ? " (" + (due + packs.length) + ")" : ""), go("book")),
+      !S.hasCatalogue && !P.home ? tab(false, "Take a catalogue (free)", () => act(() => { S.takeCatalogue(); return "You have the outlet's catalogue: B at a home of yours orders from it, for delivery."; })) : null));
+    if (P.tab === "show") {
+      body.append(h("div", { cls: "prow" }, ...Object.keys(FR.rooms).map(r => tab(P.room === r, r[0].toUpperCase() + r.slice(1), () => { P.room = r; draw(); }))),
+        h("div", { cls: "dzrow" }, h("span", { cls: "dzl" }, "Line"), h("div", { cls: "swatches" }, FR.lines.map(x => h("button", { type: "button", cls: "sw word" + (P.line === x ? " on" : ""), on: { click: () => { P.line = x; draw(); } } }, (Outlet.LINES[x] || {}).label || x)))),
+        wares("store", FR.rooms[P.room].filter(k => S.sells().includes(k)).map(k => { const t = S.tag(k, P.line);   // each piece as an object, with what its tag says (FURN-022)
+          return ware(k, t.name + (t.flat_packed ? " · flat-packed, " + t.boxes + (t.boxes === 1 ? " box" : " boxes") : " · comes whole"), t.price, "home", null, BM.bands.mall, { size: t.size, line: P.line, state: "ok", short: 0 }); }),
+        { verb: "Add to basket", buy: e => { P.basket.push({ kind: e.id, line: P.line, how: P.home ? "delivery" : "instant", assembled: false }); P.msg = FR.pieces[e.id].name + " is in your basket."; Sound.act("talk_choose"); draw(); } }),
+        h("p", { cls: "dim" }, "Every piece comes in the four lines. " + (P.home ? "From home everything is delivered." : "At the till each piece is taken now, free, to your belongings (G), or delivered to a home of yours.") + " A flat-packed piece is delivered in its boxes: put it together yourself, or pay a fitter."));
+    } else if (P.tab === "basket") {
+      if (!P.basket.length) body.append(h("p", { cls: "dim" }, "Nothing in your basket yet."));
+      else {
+        body.append(tbl(P.basket.map((it, k) => { const fp = S.flatPacked(it.kind), set = ch => () => { Object.assign(it, ch); draw(); };
+          return [FR.pieces[it.kind].name, h("span", { cls: "dim" }, (Outlet.LINES[it.line] || {}).label || it.line), money(S.price(it.kind)),
+            h("span", {}, tab(it.how === "instant", "Take now", set({ how: "instant" }), !!P.home), " ", tab(it.how === "delivery", "Deliver", set({ how: "delivery" }), !homes.length)),
+            it.how === "delivery" && fp ? h("span", {}, tab(!it.assembled, "In its boxes", set({ assembled: false })), " ", tab(it.assembled, "Put together, " + fmt(S.assemblyFee(it.kind)), set({ assembled: true }))) : h("span", { cls: "dim" }, it.how === "delivery" ? "comes whole" : ""),
+            tab(false, "Take out", () => { P.basket.splice(k, 1); draw(); })]; })));
+        if (P.basket.some(it => it.how === "delivery")) body.append(
+          h("div", { cls: "prow" }, "Deliver to", ...homes.map(u => tab(P.unit === u.id, u.name, () => { P.unit = u.id; draw(); }))),
+          h("div", { cls: "prow" }, "When", tab(false, "Sooner", () => { P.when = Math.max(0, P.when - 1); draw(); }, P.when <= 0), h("b", {}, slotWords(sl[0], sl[1])), tab(false, "Later", () => { P.when = Math.min(slots.length - 1, P.when + 1); draw(); }, P.when >= slots.length - 1)));
+        const filled = P.basket.map(it => it.how === "delivery" ? Object.assign({}, it, { unit: P.unit, day: sl[0], slot: sl[1] }) : it);
+        let q = null, why = "";
+        try { q = S.quote(filled, !!P.home); } catch (e) { if (!(e instanceof Econ.Refused)) throw e; why = e.message; }
+        if (q && q[0] > funds()) why = "it costs " + fmt(q[0]) + " and you have " + fmt(funds());
+        if (q) body.append(h("h3", {}, "The bill"), tbl(q[1].map(([w, n, c]) => [w, h("span", { cls: "dim" }, n === 1 ? "" : "× " + n), money(c)]).concat([[h("b", {}, "Total"), "", money(q[0])]])));
+        if (why) body.append(h("p", { cls: "neg" }, why[0].toUpperCase() + why.slice(1) + "."));
+        body.append(h("div", { cls: "prow" }, h("button", { type: "button", cls: "pbtn", disabled: !!why, on: { click: () => act(() => {
+          const [total, got] = S.checkout(filled, !!P.home); drain(); const sent = S.onItsWay().filter(id => got.includes(id)).length; P.basket = []; P.tab = sent ? "book" : "show";
+          return "Paid " + fmt(total) + "." + (got.length - sent ? " " + (got.length - sent) + " with your belongings (G): place them from the Furnish tab of the building designer." : "") + (sent ? " " + sent + " booked for " + slotWords(sl[0], sl[1]) + "." : "");
+        }) } }, q ? "Pay " + fmt(q[0]) : "Pay")));
+      }
+    } else {
+      const words = { booked: "booked", out: "the van is on its way", "at the door": "the crew is carrying it in", back: "delivered; the van is driving back", done: "delivered" };
+      const open_ = S.orders.filter(o => S.van(o, clock.day, clock.m).phase !== "done");
+      body.append(h("h3", {}, "Deliveries"), open_.length ? tbl(open_.map(o => { const v = S.van(o, clock.day, clock.m), i = M.byId[o.unit];
+        return [slotWords(o.day, o.slot), i === undefined ? o.unit : M.name(i), o.pieces.map(p => p.name).join(", "), h("span", { cls: "dim" }, words[v.phase] + (v.phase === "out" || v.phase === "back" ? ", " + Math.round(v.f * 100) + " %" : v.phase === "at the door" ? ", " + v.landed + " of " + o.pieces.length + " in" : ""))]; }))
+        : h("p", { cls: "dim" }, "Nothing is on its way."));
+      body.append(h("h3", {}, "In their boxes"), packs.length ? tbl(packs.map(([u, p]) => { const i = M.byId[u], busy = p.ready !== null;
+        return [p.name, i === undefined ? u : M.name(i), busy ? h("span", { cls: "dim" }, "ready " + (Math.floor(p.ready / 1440) === clock.day ? "at " : "on day " + (Math.floor(p.ready / 1440) + 1) + " at ") + hhmm(p.ready % 1440))
+          : h("span", {}, tab(false, "Put it together (" + S.assemblyMin(p.kind) + " min)", () => act(() => { const m = S.assemble(p.id, clock.day, clock.m); return "You are putting the " + p.name.toLowerCase() + " together: " + m + " minutes."; })), " ",
+            tab(false, "A fitter, " + fmt(S.assemblyFee(p.kind)) + ", " + slotWords(slots[0][0], slots[0][1]), () => act(() => { const fee = S.fitter(p.id, slots[0][0], slots[0][1]); return "A fitter is booked for " + fmt(fee) + "."; })))]; }))
+        : h("p", { cls: "dim" }, "No flat packs are waiting to be put together."));
+    }
+    return [P.home ? "The outlet's catalogue" : lotName(P.n), P.home ? "Ordered from home · delivery only" : "Furniture · take it now or have it delivered"];
   }
 
   // ---------------------------------------------------------------- each frame (play.js)
@@ -1177,7 +1286,7 @@ var Life = (() => {
     if (clock.day < E.day || (clock.day === E.day && clock.m < E.minute)) { clock.day = E.day; clock.m = E.minute; }   // the clock only goes forward
     E.advance(clock.day, clock.m);
     rehome();                                             // residents who moved house live at the new home (PROP-022)
-    if (performance.now() - checkT > 250) { checkT = performance.now(); Q.check(ctx()); for (const id of Achievements.award(Achievements.facts(E, Q, M), feats, clock.day)) Rewards.achieve(Achievements.get(id)); }   // four times a second, however slow the frames
+    if (performance.now() - checkT > 250) { checkT = performance.now(); storeFrame(); Q.check(ctx()); for (const id of Achievements.award(Achievements.facts(E, Q, M), feats, clock.day)) Rewards.achieve(Achievements.get(id)); }   // four times a second, however slow the frames
     const tm = E.totalMoney(), delta = d => { el("purse-delta").textContent = (d > 0 ? "+" : "") + fmt(d); el("purse-delta").className = d > 0 ? "pos" : "neg"; el("purse-delta").style.opacity = 1; setTimeout(() => el("purse-delta").style.opacity = 0, 2200); };
     const shown = Rewards.frame(dt, E.L.tx, pl, delta);   // rewards and interest: coins first, their "+" when the last one lands (SND-019, SND-020)
     if (lastMoney !== null && tm !== lastMoney) { if (tm - lastMoney !== shown) delta(tm - lastMoney - shown); if (panel) draw(); }
@@ -1198,7 +1307,7 @@ var Life = (() => {
     tr.style.display = lines.length && !Talk.on ? "block" : "none";
     const n = lotHere(), hint = el("counter");
     const oh = outletHere();                              // in a mall each outlet has its own counter (WLD-066); out on its walks there is none
-    const what = oh ? "Buy at " + oh.r.name : n === null || n < 0 ? null : n === E.bankLot ? "Bank counter" : n === E.marketLot ? "Your market stall" : LOTS[n] && M.office[LOTS[n].id] ? "Estate agent: " + M.cos[M.office[LOTS[n].id]].name : E.shopKind(n) && !E.outlets[n] ? "Buy and sell at " + lotName(n) : null;
+    const what = oh ? "Buy at " + oh.r.name : n === null || n < 0 ? null : n === E.bankLot ? "Bank counter" : n === E.marketLot ? "Your market stall" : LOTS[n] && M.office[LOTS[n].id] ? "Estate agent: " + M.cos[M.office[LOTS[n].id]].name : LOTS[n] && LOTS[n].kind === "furniture" ? "Buy at the " + lotName(n) : E.shopKind(n) && !E.outlets[n] ? "Buy and sell at " + lotName(n) : S.hasCatalogue && holding(n) ? "Order from the outlet's catalogue" : null;
     const bt = !what && n !== null && n >= 0 && M.byLot.has(n) ? boardText(n) : null;   // PROP-023: what is on the market here
     if (what && !panel && !Talk.on && pl.pose !== 4) { hint.style.display = "block"; hint.innerHTML = "<kbd>B</kbd>" + what; }
     else if (bt && !panel && !Talk.on && pl.pose !== 4) { hint.style.display = "block"; hint.innerHTML = "<kbd>P</kbd>" + bt + ": see the prices"; }
@@ -1249,6 +1358,8 @@ var Life = (() => {
     if (badR.length) console.error("builder.js RoomPlan does not match Tools/citysim/roomplan.py:\n  " + badR.join("\n  ")); else console.info("builder.js RoomPlan matches Tools/citysim/roomplan.py (self-test passed).");
     const badF = Furnish.selfTest(Furniture.SIZE);
     if (badF.length) console.error("builder.js Furnish does not match Tools/citysim/furnish.py:\n  " + badF.join("\n  ")); else console.info("builder.js Furnish matches Tools/citysim/furnish.py (self-test passed).");
+    const badS = Store.selfTest(X, LOTS);
+    if (badS.length) console.error("store.js does not match Tools/citysim/furniture.py:\n  " + badS.join("\n  ")); else console.info("store.js matches Tools/citysim/furniture.py (self-test passed).");
     const badE = Estate.selfTest(D, LOTS);
     if (badE.length) console.error("estate.js does not match Tools/citysim/estate.py:\n  " + badE.join("\n  ")); else console.info("estate.js matches Tools/citysim/estate.py (self-test passed).");
     const badA = Achievements.selfTest();

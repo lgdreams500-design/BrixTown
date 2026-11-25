@@ -220,10 +220,10 @@ var Cars = (() => {
     }
   }
 
-  function meshCar(m, c, k, y, md, lod) {               // one classic car from its exported mesh, in this car's colours
+  function meshCar(m, c, k, y, md, lod, vanK) {         // one classic car from its exported mesh, in this car's colours (vanK: a van in that company colour)
     if (!PAINT) { PAINT = [C.teal, C.terracotta, C.ochre, C.blue, C.olive, C.cream, C.plum, [.55, .40, .34], [.42, .47, .40]]; ROOF = [C.cream, [.74, .70, .62]]; }
-    const r = t => hash(k, t), van = !!CARS[k] && CARS[k].k === 1;
-    const body = van ? [C.cream, C.teal, C.ochre, [.55, .40, .34]][k % 4] : PAINT[Math.floor(r("col") * PAINT.length)];
+    const r = t => hash(k, t), van = vanK != null || (!!CARS[k] && CARS[k].k === 1);
+    const body = van ? [C.cream, C.teal, C.ochre, [.55, .40, .34]][(vanK != null ? vanK : k) % 4] : PAINT[Math.floor(r("col") * PAINT.length)];
     const roof = r("two") < .75 ? ROOF[Math.floor(r("roof") * 2)] : body;
     const col = { body, roof, band: body === C.cream ? C.teal : C.cream, tyre: [.07, .065, .065], hub: [.58, .56, .52], leather: [.30, .19, .12],
       lamp: [.86, .80, .64], cream: C.cream, iron: [.10, .10, .11], wood: C.wood, luggage: C.terracotta, bag: C.cream, rail: [.10, .10, .11], spare: [.07, .065, .065], cargo: C.wood };
@@ -485,9 +485,10 @@ var Cars = (() => {
 
   function parked(m, x, z, yaw, seed, y) {               // a car left in a car park (the furniture outlet's, FURN-020): drawn once, into the
     if (!CM) return null;                                  // town's own mesh; one of the Soft box models, its colours from the seed
-    const md = MESH[(h => h < .4 ? "small" : h < .72 ? "estate" : "pickup")(hash(seed, "model"))];
+    const van = /^van/.test(seed);                         // a seed that starts "van": the company's delivery van, in its teal (the outlet's delivery bay)
+    const md = MESH[van ? "van" : (h => h < .4 ? "small" : h < .72 ? "estate" : "pickup")(hash(seed, "model"))];
     if (!md) return null;
-    meshCar(m, { x, z, hx: Math.cos(yaw), hz: Math.sin(yaw) }, seed, y || 0, md, 0);
+    meshCar(m, { x, z, hx: Math.cos(yaw), hz: Math.sin(yaw) }, seed, y || 0, md, 0, van ? 1 : null);
     return [md.L, md.W];
   }
 

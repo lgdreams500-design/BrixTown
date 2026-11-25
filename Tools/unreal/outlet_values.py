@@ -50,7 +50,7 @@ const detailOf = () => mesh, BLOBS = { push() { } }, QUAD_UV = true;
 let CELLS = 0, LAST = "";
 function nameCell(name) { LAST = name; return { i: CELLS++, tw: .5 }; }
 function lettering(m, ctr, n, h, cell, f) { rec(9, [...ctr, ...n, h], null, 0, null, LAST); }
-const Cars = { parked(m, x, z, yaw, seed, y) { const md = MODEL[(h => h < .4 ? "small" : h < .72 ? "estate" : "pickup")(hash(seed, "model"))]; rec(12, [x, z, yaw, y], null, 0, null, seed); return [md[0], md[1]]; } };
+const Cars = { parked(m, x, z, yaw, seed, y) { const md = MODEL[/^van/.test(seed) ? "van" : (h => h < .4 ? "small" : h < .72 ? "estate" : "pickup")(hash(seed, "model"))]; rec(12, [x, z, yaw, y], null, 0, null, seed); return [md[0], md[1]]; } };
 const RR = { lamps: { push(a) { rec(7, a); } } };
 let PIECE = null, PAT = null;                              // a piece of furniture: where its frame's origin, across and back axes fall (kind 13)
 const K17 = { rug: "k17:rug", sofa: "k17:sofa", chair: "k17:armchair", coffee: "k17:coffee", lamp: "k17:floor_lamp", case: "k17:bookcase", bed: "k17:bed", side: "k17:bedside", ward: "k17:wardrobe" };

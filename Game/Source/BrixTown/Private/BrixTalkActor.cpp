@@ -312,6 +312,10 @@ void ABrixTalk::Tick(float Dt)
 			if (const ABrixCharacter* Ch = Cast<ABrixCharacter>(Me))   // the playground (WLD-041): a go here, or off again
 			{
 				if (Ch->IsPlaying()) { PromptText = TEXT("Get off"); return; }
+				if (Ch->IsSeated()) { PromptText = TEXT("Get up"); return; }
+				FString Seat;   // a seat or a bed to try, in the mall or the furniture outlet (FURN-022)
+				double SeatD = 0;
+				if (Ch->SeatOffer(Seat, SeatD) && (C.Resident < 0 || SeatD <= C.D)) PromptText = Seat;
 				double PD = 0;
 				const int32 U = People->PlayTarget(Me->GetActorLocation(), PD);
 				if (U != INDEX_NONE && (C.Resident < 0 || PD <= C.D) && (CarK < 0 || PD <= D)) PromptText = People->PlayArea().PlayerUses[U].Label;

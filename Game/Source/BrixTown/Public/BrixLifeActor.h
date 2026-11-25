@@ -8,6 +8,8 @@
 #include "BrixBuilder.h"
 #include "BrixRoomPlan.h"
 #include "BrixFurnishPlan.h"
+#include "BrixDesignPick.h"
+#include "BrixStore.h"
 #include "BrixQuests.h"
 #include "BrixRewards.h"
 #include "BrixRewardsWidget.h"
@@ -72,7 +74,7 @@ public:
 	const TMap<FString, int32>& Achievements() const { return Feats; }   // earned, and on which day (QST-009)
 	bool ArrowKey(int32 Dx, int32 Dy);    // at a shop's counter: choose the next thing that way
 	bool EnterKey();                      // and buy (or sell) it
-	bool IsShop() const { return Panel == TEXT("shop") || Panel == TEXT("outlet"); }
+	bool IsShop() const { return Panel == TEXT("shop") || Panel == TEXT("outlet") || (Panel == TEXT("store") && StoreTab == TEXT("show")); }
 	void Close();
 	void Toast(const FString& Text);
 	void ToggleSound();                   // N (SND-013): the Sound switch of the settings flipped, applied, kept, and said
@@ -94,6 +96,7 @@ public:
 	int32 LotHereForEstate() const { return LotHere(); }
 	// the building designer (F-BLD-DESIGN; BUILD-004 to BUILD-007, BUILD-016 to BUILD-020): remodel a building or unit you own
 	bool OpenRemodel(int32 Lot);
+	bool IsDesigningInside() const { return CutLot >= 0; }   // the designer is looking into a storey cut open (the haze is the room's)
 	const TMap<FString, TSharedPtr<FJsonObject>>& Remodels() const { return RemodelsDone; }   // lot id -> its design as paid for
 	int32 CounterHere() const;            // the lot whose counter the player is at, or -1
 
@@ -163,6 +166,31 @@ private:
 	FBrixLayout PoolOf() const;
 	void EditLayout(TFunction<void(FBrixLayout&)> Fn);
 	void FurnishSection(TSharedRef<SVerticalBox> Body);   // drawn and kept (inside.json's insides too)
+	// the mouse over the picture while the designer is open (BUILD-020, BUILD-021, FURN-055; life.js pointer(), designMarks(),
+	// designKey()): a click picks the piece or inner wall under it, a drag moves it on the grid; on open ground a drag turns
+	// the view, the right or middle button or Shift slides it, the wheel comes nearer, a double click looks at that spot
+	enum class EPoint : uint8 { Down, Move, Up, Wheel, Twice };
+	void DesignPointer(EPoint Type, const FVector2D& Px, int32 Button, bool bShift, const FVector2D& DeltaPx, float Wheel, bool bHeld);
+	bool DesignRay(const FVector2D& Px, FBrixRay& Out) const;   // the camera's ray through a point of the picture (pixels)
+	bool SlatePoint(EPoint Type, const FVector2D& Px);    // for a test shot: the same through the interface, as a mouse would
+	double DesignFloorM() const;          // the storey in view: its floor over the ground
+	double DesignDist0() const;           // how far the view stands off before the wheel
+	double DesignPitch0() const;          // and how steeply it looks down, radians
+	void DesignMarks();                   // the outlines round what is picked, what is under the mouse and what cannot stand
+	TSet<FString> StoreyBad() const;      // the pieces of the storey in view its check finds wrong (life.js storeyBad())
+	void DesignKeys();                    // R turns the piece picked (Shift+R the other way), Delete takes it away
+	void SyncCut();                       // the building cut open at the storey looked into, whole from outside (BUILD-020)
+	float CutNow(int32 Lot) const;        // the height a lot is cut open at now, or below 0
+	struct FGrab { int32 Kind = 0; FString Id; FVector2D Off = FVector2D::ZeroVector; double OffA = 0; bool bMoved = false; };   // 1 turns the view, 2 slides it, 3 a piece, 4 a wall
+	FGrab Grab;
+	FString PieceHover, WallHover;
+	bool bPieceList = false;              // the storey's pieces listed by name as well
+	double ViewYawAdd = 0, ViewPitchAdd = 0, ViewZoom = 1;   // the view as dragged: turned and tipped (radians), nearer or further
+	FVector2D ViewPan = FVector2D::ZeroVector;             // and slid across the ground from the building's middle (metres)
+	int32 CutLot = -1, CutFloor = -1;     // the building drawn cut open, and at which storey
+	TSharedPtr<SWidget> DesignPad;
+	float CardWide() const { return RemodelPanelPx - 44.f - 12.f; }   // the designer's card inside its edges, less the room kept for its scroll bar
+	UPROPERTY(Config) float DesignCutM = 1.25f;      // the outer walls are cut this far above the storey's floor (play.js: F + 1.25)
 	FString BuyUnits(const TArray<int32>& Units, const FString& Agent, bool& bOk);
 	void QuestsPanel(TSharedRef<SVerticalBox> Body);
 	TMap<FString, FString> JobVars(const FBrixJob& O) const;
@@ -200,14 +228,16 @@ private:
 	// one thing of a buy menu (life.js ware()): whether it can be had now, sold out, or dearer than cash and current account
 	// State: ok, short (dearer than cash and the current account), out (sold out) or have (a board already owned: CITY-103);
 	// More: rows the showcase adds under its name (a board's top speed)
-	struct FWare { FString Id, Name, Goes, Band; int64 Price = 0; int32 Left = -1; FString State = TEXT("ok"); int64 Short = 0; TArray<TPair<FString, FString>> More; };
+	// Line: a piece of furniture's line (its own mesh in that line is its picture); Size: its width, depth and height, metres
+	struct FWare { FString Id, Name, Goes, Band, Line; int64 Price = 0; int32 Left = -1; FString State = TEXT("ok"); int64 Short = 0; TArray<TPair<FString, FString>> More; TOptional<FVector3f> Size; };
 	TArray<FWare> BoardWares(const FString& Band) const;   // a sports or toy outlet's three boards, in its grid (CITY-102, CITY-103)
-	struct FGridOpts { FString Id, Verb = TEXT("Buy"), StockLabel, PriceLabel = TEXT("Price"), Empty = TEXT("Nothing here."); bool bMine = false; TFunction<bool(const FWare&, FString&)> Buy; };
-	TSharedRef<SWidget> Grid(const TArray<FWare>& Things, const FGridOpts& O);   // layout B (buymenu.js grid())
+	// bNarrow: layout D, small cells and a strip under them, Width pixels wide (a panel narrower than the rules' narrow_px)
+	struct FGridOpts { FString Id, Verb = TEXT("Buy"), StockLabel, PriceLabel = TEXT("Price"), Empty = TEXT("Nothing here."); bool bMine = false, bNarrow = false; float Width = 0.f; TFunction<bool(const FWare&, FString&)> Buy; };
+	TSharedRef<SWidget> Grid(const TArray<FWare>& Things, const FGridOpts& O);   // layout B, or D when narrow (buymenu.js grid())
 	FWare Ware(const FString& Id, const FString& Name, int64 Price, const FString& Goes, int32 Left, const FString& Band) const;
 	FString ShopGoes(const FString& Item) const;
 	TSharedPtr<double> YawFor(const FString& Key);
-	TSharedPtr<const FBrixThingMesh> MeshFor(const FString& Thing, const FString& Band);
+	TSharedPtr<const FBrixThingMesh> MeshFor(const FString& Thing, const FString& Band, const FString& Line = FString());
 	void Frame(double& OutDay, double& OutMinute) const;
 	FVector2D PlayerAt() const;
 
@@ -221,6 +251,21 @@ private:
 	TArray<FBrixUnit> EstateUnits;
 	TMap<FString, FString> EstateRoles;
 	TUniquePtr<FBrixEstate> Est;            // holds the economy: goes before it
+	// the furniture outlet's tills (FURN-022 to FURN-029; BrixStore): what is booked, what has arrived, the basket at the till
+	TUniquePtr<FBrixStore> Store;           // holds the economy too
+	static constexpr int32 StoreHookId = 7701;
+	int32 OutletLotIx = -1, StoreNotes = 0, StoreWhen = 0;
+	FString StoreTab = TEXT("show"), StoreRoom, StoreLine, StoreUnit;
+	bool bStoreHome = false;              // ordering from the catalogue, at a home (FURN-023)
+	TArray<FBrixBasketItem> Basket;
+	void StartStore(const TSharedPtr<FJsonObject>& Saved);
+	void StorePanel(TSharedRef<SVerticalBox> Body);
+	void StoreFrame();
+	bool StoreCheckout(FString& Said);
+	bool UnitHeld(const FString& Unit) const;
+	double RouteTo(const FString& Unit) const;
+	FString SlotWords(int32 Day, int32 Slot) const;
+	TArray<FBrixBasketItem> BasketFilled() const;
 	int32 PayTerm = 0;                    // how to pay: 0 outright, else the mortgage term's place + 1 (life.js payChoice())
 	FString AgentFilter = TEXT("all");    // the kind of unit an agent shows
 	TMap<int32, FString> RentEdit;        // the rent typed for a unit of the player's, in brix
@@ -297,5 +342,5 @@ private:
 	FString MenuTab, CityName;
 	int32 SettingsGroup = 0;
 	double MenuShotAt = -1;               // -BrixMenu: the real time to take the test shot at (the menu has stopped the game's own timers)
-	TSharedPtr<SBox> PanelBody;
+	TSharedPtr<SBox> PanelBody, PanelBox;   // the card's body; the box that places the card (PanelRoot)
 };

@@ -221,6 +221,7 @@ def life(w, city, plan, acts):
                 visits={str(k): [[t, i] for t, i in v] for k, v in visits.items()}, visit_acts=visit_acts,
                 staff={str(k): v for k, v in staff.items()}, checks=dict(script=script, shops=shops, want=want), reward_checks=reward_checks(w), achievements=achievement_rules(w),
                 estate=estate_rules(w), estate_checks=estate_checks(w, lots_),
+                furniture=furniture_data(w, lots_),   # buying at the furniture outlet and its fixed run (FURN-022 to FURN-029)
                 walk_net=walk_net(city, lots_))
 
 
@@ -458,6 +459,7 @@ def unreal_life(w, city, L):
                 pieces=list(w["furnishing"]["pieces"]), palette=w["designer"]["palette"],   # for what a buy menu shows (UI-021)
                 rewards={k: w["sound"]["rewards"][k] for k in ("ledger", "coins")},   # how money coming in is shown (SND-019, SND-020)
                 estate=L["estate"], estate_checks=L["estate_checks"],   # the real estate market and its fixed run (PROP-009 to PROP-021)
+                furniture=L["furniture"], furnishing={k: v for k, v in w["furnishing"].items() if k != "note"},   # buying at the furniture outlet (FURN-022 to FURN-029)
                 estate_units=es.carve(w["estate"], lots_, w["residents"]),   # every building's units, as estate.carve() makes them (PROP-009)
                 residents=[dict(id=r["id"], role=r["role"], home=r["home"], work=r["work"]) for r in w["residents"]])
 
@@ -532,6 +534,17 @@ def reward_checks(w):
           [5, 2, 20, "Transfer", [["p:cash", -100], ["p:current", 100]]],
           [6, 2, 30, "Sold bread, the grocer", [["shop:1", -200], ["p:cash", 200]]]]
     return dict(tx=tx, want=world.reward_events(w["sound"], tx))
+
+
+def furniture_data(w, lots_):
+    """Buying at the furniture outlet (FURN-022 to FURN-029): its rules, and furniture.check_script() with what Python gives
+    for it, for the slice's and the engine's ports to reproduce."""
+    import economy as ec
+    import furniture as fu
+    R = {k: v for k, v in w["furniture"].items() if k != "note"}
+    script = fu.check_script()
+    want = fu.run_script(R, w["furnishing"], ec.Economy(w["economy"], lots_, {}, {}), script)
+    return dict(rules=R, checks=dict(script=script, want=want))
 
 
 def estate_checks(w, lots_):
