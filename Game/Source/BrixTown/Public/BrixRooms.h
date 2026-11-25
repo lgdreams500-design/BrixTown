@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "BrixHomes.h"
+#include "BrixFurnish.h"
 #include "GameFramework/Actor.h"
 #include "BrixRooms.generated.h"
 
@@ -48,7 +49,7 @@ public:
 	UPROPERTY(Config) FLinearColor RoomLightColour = FLinearColor(1.f, 0.86f, 0.68f);
 
 private:
-	struct FLotHome { int32 Lot = -1; FVector2D Centre = FVector2D::ZeroVector; float Reach = 0.f; TArray<float> FloorUp, CeilUp; TArray<TOptional<FBrixRect>> Holes; TSharedPtr<FBrixHome> Home; };   // heights of its built floors
+	struct FLotHome { int32 Lot = -1; FVector2D Centre = FVector2D::ZeroVector; float Reach = 0.f; TArray<float> FloorUp, CeilUp; TArray<TOptional<FBrixRect>> Holes; TSharedPtr<FBrixHome> Home; bool bPlanned = true; TArray<struct FBrixFurnished> Furn; };   // heights of its built floors
 	TArray<FLotHome> Homes;
 	TSet<int32> Near;                                   // indexes into Homes, furnished now
 	float Wait = 0.f;
@@ -56,6 +57,8 @@ private:
 	void Rebuild();
 	UInstancedStaticMeshComponent* MeshGroup(const FString& Name);
 	UInstancedStaticMeshComponent* BoxGroup(bool bCollide);
+	UInstancedStaticMeshComponent* FurnGroup();
+	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> FurnBoxes;   // the furniture of buildings with no plan: the slice's boxes
 	UPROPERTY() TMap<FString, TObjectPtr<UInstancedStaticMeshComponent>> Groups;
 	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Boxes;      // walls, frames, floors: M_Greybox boxes that block
 	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Blocks;     // unseen: what the pieces stand in the way of

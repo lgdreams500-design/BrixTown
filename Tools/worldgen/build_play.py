@@ -525,7 +525,7 @@ def main(day=16):
         if "design" not in l:
             return None
         Dz = l["design"]
-        return dict(id=l["id"], special=Dz.get("special"), door_width=Dz["shell"]["door_width"], floors=Dz["inside"]["floors"], walls=Dz["inside"]["walls"],
+        return dict(id=l["id"], special=Dz.get("special"), accent=Dz["openings"]["awning"], door_width=Dz["shell"]["door_width"], floors=Dz["inside"]["floors"], walls=Dz["inside"]["walls"],
                     objects=l.get("objects", {}), wage=wage_of.get(k, 0), **({"house_line": l["house"]["furniture"]} if "house" in l else {}),
                     **{k2: l[k2] for k2 in INSIDE_KEYS if k2 in l})
     with open(OUT_UNREAL_INSIDE, "w", encoding="utf-8", newline="\n") as f:

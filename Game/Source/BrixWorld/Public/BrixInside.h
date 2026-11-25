@@ -66,6 +66,7 @@ struct BRIXWORLD_API FBrixInside
 	int32 Residents = 0;
 	int64 Wage = 0;                          // the household's daily wages (FURN-063; furnishing.js earlyLevel())
 	FString HouseLine;                       // a designed house's furniture line (lot.house.furniture)
+	FVector3f Accent = FVector3f(0.20f, 0.36f, 0.37f);   // the design's accent (its awning's colour): a counter's top
 	TMap<FString, TArray<FVector2D>> Objects;   // the lot's places by kind (bed, room, work, seat, ...)
 };
 

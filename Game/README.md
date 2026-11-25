@@ -63,6 +63,18 @@ drawn only while the camera is in their building. `CITY013_every_indoor_place_is
 their lamps. The towers' lifts (WLD-051) and the court flats' own walls are not built yet; a street at High: 41.3 to 41.5
 fps, 43.2 with `-BrixShut` (noisy).
 
+## Shops, cafes, workplaces and civic buildings furnished (CITY-013)
+The 240 hollow buildings with no plan of their own (shops, cafes, workplaces, clinics, the bank, library, museum, cinema,
+dealer, depots, schools, the fire and police stations, and the homes with no plan) are furnished at their places as the
+slice furnishes them (play.js furnish(), ported in `BrixWorld/BrixFurnish`, on every built floor, by what storeys.js says the
+floor is for): a desk with its lamp and chair or a counter with its till, espresso machine, vise or ledger at each work
+place, a table for two at a cafe's seats, cinema seats and museum benches facing in, chairs, beds with a nightstand, in the
+slice's colours and room styles, as boxes as the slice draws them; nothing in the stairwell or on the way from the door to
+the stair. Whoever is there stands behind the counter, sits at the desk or table or lies in the bed (`SeatBrixDayIndoors`).
+`CITY013_shops_cafes_and_workplaces_are_furnished_at_their_places`. The slice's room dressing (room(): pictures, shelves,
+plants, a cafe's coffee bar) is not brought over yet. Unity builds are off in both modules (`bUseUnity = false`): files'
+own short names clashed as soon as a new file changed which files were joined.
+
 ## Furnished homes (FURN-060 to FURN-063; ADR-0050)
 The planned homes are furnished as the slice furnishes them (homes.js, houses.js): 469 designed houses (plan house_12x9)
 and 250 row houses (lot.interior) from World/rules/home_plans.json, with their inner walls and doorways, tiled kitchens and
@@ -418,6 +430,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.FURN060_every_planned_home_is_furnished_in_its_rooms` | FURN-060, FURN-061, FURN-063 (ADR-0050) |
 | `BrixTown.World.WLD052_every_storey_is_reached_by_its_stair` | WLD-050, WLD-052 |
 | `BrixTown.World.CITY013_every_indoor_place_is_inside_its_lot_on_its_floor` | CITY-013, WLD-053 |
+| `BrixTown.World.CITY013_shops_cafes_and_workplaces_are_furnished_at_their_places` | CITY-013 |
 | `BrixTown.World.CITY017_residents_sit_on_garden_benches` | CITY-017 |
 | `BrixTown.World.CITY040_vehicles_are_where_the_traffic_puts_them` | CITY-040 |
 | `BrixTown.World.CITY041_trams_are_where_the_timetable_puts_them` | CITY-041 |

@@ -2,6 +2,7 @@
 #include "BrixCity.h"
 #include "BrixInside.h"
 #include "BrixDay.h"
+#include "BrixFurnish.h"
 
 #include "Misc/AutomationTest.h"
 #include "Misc/Paths.h"
@@ -242,6 +243,56 @@ bool FCITY013_IndoorPlaces::RunTest(const FString&)
 	AddInfo(FString::Printf(TEXT("%d stays inside; %d in a bed, %d on a seat at home (%d placed)"), Stays, Lie, Sit, Placed));
 	TestTrue(TEXT("residents lie in their beds at night"), Lie > 1000);
 	TestTrue(TEXT("and sit at home"), Sit > 100);
+	return Bad == 0;
+}
+
+// CITY-013: the shops, cafes, workplaces and civic buildings (every hollow building with no plan) are furnished at their
+// places as the slice furnishes them (play.js furnish()): every box and everything in the way stands inside the building's
+// walls, nothing within a step of its doorway, and every place a resident works at, sits at or waits at has its spot.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY013_Furnished, "BrixTown.World.CITY013_shops_cafes_and_workplaces_are_furnished_at_their_places",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FCITY013_Furnished::RunTest(const FString&)
+{
+	FBrixCity City;
+	FBrixInsides Ins;
+	FString Error;
+	if (!TestTrue(TEXT("the city loads: ") + Error, LoadBrixCity(CityDir(), City, Error))) return false;
+	if (!TestTrue(TEXT("inside.json loads: ") + Error, LoadBrixInside(InsidePath(), Ins, Error))) return false;
+	const FBrixDoorRules R = FBrixDoorRules::FromConfig();
+	int32 k = -1, Buildings = 0, Boxes = 0, Bad = 0;
+	TMap<FString, int32> ByKind;
+	for (const FBrixBlock& B : City.Blocks)
+		for (const FBrixLot& L : B.Lots)
+		{
+			++k;
+			if (!Ins.Lots[k].IsSet()) continue;
+			const FBrixInside& In = Ins.Lots[k].GetValue();
+			const int32 NFl = L.Floors >= 2 && In.Stair.IsSet() && L.AngleDeg == 0.f ? L.Floors : 1;
+			bool bAny = false;
+			const FBrixDoorway Dw = BrixIsHollow(L, &In) ? BrixDoorwayOf(City, L, B.District, R) : FBrixDoorway();
+			for (int32 f = 0; f < NFl; ++f)
+			{
+				FBrixFurnished F;
+				if (!BrixFurnishFloor(Ins, L, In, f, F)) continue;
+				bAny = true;
+				auto Fail = [&](const FString& Why) { if (Bad++ < 20) AddError(FString::Printf(TEXT("%s (%s) floor %d: %s"), *L.Id, *L.Name, f, *Why)); };
+				const FBox2D Lot(L.Min - FVector2D(0.05, 0.05), L.Max + FVector2D(0.05, 0.05));
+				for (const FBrixFurnBox& X : F.Boxes)
+				{
+					++Boxes;
+					const double Rr = FMath::Max(X.Size.X, X.Size.Z) / 2;
+					if (!Lot.IsInside(X.At - FVector2D(Rr, Rr) * 0.7) || !Lot.IsInside(X.At + FVector2D(Rr, Rr) * 0.7)) { Fail(TEXT("a box stands outside the walls")); break; }
+					if (f == 0 && X.Y0 < 1.f && FVector2D::Distance(X.At, Dw.Centre - Dw.Out * 0.5) < 0.6) { Fail(TEXT("a box stands in the doorway")); break; }
+				}
+				for (const FBrixFurnSolid& So : F.Solids)
+					if (!Lot.IsInside(So.Min) || !Lot.IsInside(So.Max)) { Fail(TEXT("something in the way outside the walls")); break; }
+			}
+			if (bAny) { ++Buildings; ByKind.FindOrAdd(L.Kind)++; }
+		}
+	FString Kinds;
+	for (const TPair<FString, int32>& KV : ByKind) Kinds += FString::Printf(TEXT(" %s %d"), *KV.Key, KV.Value);
+	AddInfo(FString::Printf(TEXT("%d buildings furnished at their places, %d boxes:%s"), Buildings, Boxes, *Kinds));
+	TestTrue(TEXT("the shops and cafes are furnished"), ByKind.FindRef(TEXT("shop")) > 30 && ByKind.FindRef(TEXT("food")) > 30);
 	return Bad == 0;
 }
 
