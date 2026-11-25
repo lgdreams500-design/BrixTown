@@ -82,6 +82,7 @@ void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTown
 {
 	if (UStaticMesh* KitBox = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Kit/SM_Kit_Box.SM_Kit_Box"))) Cube = KitBox;
 	TownRef = Town;
+	Hung = Ins.Hung;
 	int32 k = -1, Pieces = 0, Dropped = 0, Other = 0, BoxCount = 0, Flats = 0;
 	const FBrixDoorRules DR = FBrixDoorRules::FromConfig();
 	TArray<int32> ByLevel = { 0, 0, 0, 0, 0 };
@@ -243,10 +244,46 @@ UInstancedStaticMeshComponent* ABrixRooms::BoxGroup(bool bCollide)
 	return G;
 }
 
+// Hung pieces keep the camera out as the slice's camera-only solids do (homes.js one(), CAM_ONLY): the player walks
+// under a pendant, but the camera behind them stops short of its shade instead of looking out from inside it.
+UInstancedStaticMeshComponent* ABrixRooms::CamGroup()
+{
+	if (CamBlocks) return CamBlocks;
+	CamBlocks = NewObject<UInstancedStaticMeshComponent>(this, TEXT("CameraBlocks"));
+	CamBlocks->SetupAttachment(RootComponent);
+	CamBlocks->SetStaticMesh(Cube);
+	CamBlocks->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	CamBlocks->SetCollisionResponseToAllChannels(ECR_Ignore);
+	CamBlocks->SetCollisionResponseToChannel(ECC_Camera, ECR_Block);
+	CamBlocks->SetHiddenInGame(true); CamBlocks->SetVisibility(false); CamBlocks->SetCastShadow(false);
+	CamBlocks->RegisterComponent();
+	AddInstanceComponent(CamBlocks);
+	return CamBlocks;
+}
+
+// A pendant's shade or a wall cupboard right beside the camera behind the player fills half the picture (the camera
+// stops short of one only when it is between them): with the camera within HideHungWithin of its box it is not drawn,
+// as the player's own body is not with the camera pushed in against them.
+void ABrixRooms::HideHungNearCamera()
+{
+	const APlayerController* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
+	if (!HungShown.Num() || !PC || !PC->PlayerCameraManager) return;
+	const FVector Eye = PC->PlayerCameraManager->GetCameraLocation();
+	const double Near2 = FMath::Square(HideHungWithin * CmPerM);
+	for (FHungShown& Hs : HungShown)
+	{
+		const bool bHide = Hs.Box.ComputeSquaredDistanceToPoint(Eye) < Near2;
+		if (bHide == Hs.bHidden || !Hs.G.IsValid()) continue;
+		Hs.bHidden = bHide;
+		Hs.G->UpdateInstanceTransform(Hs.Index, bHide ? FTransform(FQuat::Identity, Hs.T.GetLocation(), FVector(0.001)) : Hs.T, true, true);
+	}
+}
+
 void ABrixRooms::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	FadeLights(DeltaSeconds);
+	HideHungNearCamera();
 	Wait -= DeltaSeconds;
 	if (Wait > 0.f) return;
 	Wait = CheckSeconds;
@@ -422,11 +459,14 @@ void ABrixRooms::Rebuild()
 	for (TPair<FString, TObjectPtr<UInstancedStaticMeshComponent>>& G : Groups) if (G.Value) G.Value->ClearInstances();
 	UInstancedStaticMeshComponent* Box = BoxGroup(true);
 	UInstancedStaticMeshComponent* Block = BoxGroup(false);
+	UInstancedStaticMeshComponent* Cam = CamGroup();
 	Box->ClearInstances();
 	Block->ClearInstances();
+	Cam->ClearInstances();
+	HungShown.Reset();
 	ABrixTownActor* TownDefaults = GetMutableDefault<ABrixTownActor>();
 	TMap<UInstancedStaticMeshComponent*, TArray<FTransform>> Add;
-	TArray<FTransform> BoxAts, BlockAts;
+	TArray<FTransform> BoxAts, BlockAts, CamAts;
 	TArray<TArray<float>> BoxData, FurnData;
 	TArray<FTransform> FurnAts;
 	auto AddBox = [&](const FTransform& T, const FLinearColor& C, const FVector4& A, const FVector4& B)
@@ -510,13 +550,23 @@ void ABrixRooms::Rebuild()
 			// the kit's piece: x across it, its back toward +y in Blender, which the importer turns to -y
 			const FVector Org(P.At.X * CmPerM, P.At.Y * CmPerM, (Floor0 + P.Lift) * CmPerM);
 			const FMatrix M(FVector(P.A.X, P.A.Y, 0), FVector(-P.B.X, -P.B.Y, 0), FVector(0, 0, 1), Org);
-			Add.FindOrAdd(G).Add(FTransform(M));
+			TArray<FTransform>& GAts = Add.FindOrAdd(G);
+			const int32 Index = (int32)GAts.Num();
+			GAts.Add(FTransform(M));
 			++Shown;
 			if (P.Lift == 0.f && !P.Size.IsZero())   // homes.js one(): its footprint, a little in, at least 0.9 m high
 			{
 				FBrixRect Foot;
 				Foot.Centre = P.At; Foot.Along = P.A; Foot.Length = FMath::Max(0.05f, P.Size.X - 0.1f); Foot.Width = FMath::Max(0.05f, P.Size.Y - 0.1f);
 				BlockAts.Add(BoxAt(Foot, Floor0, Floor0 + FMath::Max(P.Size.Z, MinBlockHeight)));
+			}
+			if (const TArray<float>* Hb = Hung.Find(P.Kind); Hb && Hb->Num() >= 6)   // its camera-only box, on the plan's axes
+			{
+				FBrixRect Q;
+				Q.Centre = P.At + P.A * (((*Hb)[0] + (*Hb)[1]) / 2) + P.B * (((*Hb)[2] + (*Hb)[3]) / 2);
+				Q.Along = P.A; Q.Length = (*Hb)[1] - (*Hb)[0]; Q.Width = (*Hb)[3] - (*Hb)[2];
+				CamAts.Add(BoxAt(Q, Floor0 + (*Hb)[4], Floor0 + (*Hb)[5]));
+				HungShown.Add({ G, Index, FTransform(M), FBox(FVector(-50), FVector(50)).TransformBy(CamAts.Last()), false });
 			}
 		}
 	}
@@ -525,6 +575,8 @@ void ABrixRooms::Rebuild()
 	for (int32 n = 0; n < BoxData.Num(); ++n) Box->SetCustomData(n, BoxData[n], false);
 	Box->MarkRenderStateDirty();
 	Block->AddInstances(BlockAts, false);
+	Cam->AddInstances(CamAts, false);
+	HideHungNearCamera();   // the pieces were all just put back drawn
 	UInstancedStaticMeshComponent* Furn = FurnGroup();
 	Furn->ClearInstances();
 	Furn->AddInstances(FurnAts, false);

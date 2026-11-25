@@ -344,6 +344,8 @@ the plan has them, shutters open at every window, a string course between the st
 chimney and its two pots on the left gable; and the line's trim and its colourway from `World/rules/house_styles.json`:
 plaster or ashlar walls, shutters, door, frames and roof in the colourway's colours, quoins on the Old Town line, window
 boxes on Old Town and Curve, an arched door on Curve. Test `ART001_every_house_has_its_line_and_colourway`.
+The plans of storeys and flats list their windows by floor; they are read as the first floor's (read as one list, they
+gave none and five warnings at every start, 2026-11-26).
 
 ## Shopfronts, cafe fronts and balconies
 On the street front of every shop of two storeys or more, the kit's shopfront(): one opening across the ground storey,
@@ -1107,7 +1109,10 @@ frames a second at High riding along Tram Street (noisy: other sessions were run
 ## The camera (found in play, 2026-11-25)
 Behind the player on an arm of `CameraDistance` (4 m) that shortens where something is in its way. In a room it comes in
 to `IndoorCameraDistance` (2.8): at 4 m it met a wall or the ceiling at almost every turn and sat jammed in the
-player's back. The body is not drawn while the camera is within `HideBodyWithin` (0.55 m) of it. In a car, on a bus or a
+player's back. The body is not drawn while the camera is within `HideBodyWithin` (0.55 m) of it. A hung piece (a pendant's
+shade, a wall cupboard, hooks, a mirror) is not drawn while the camera is within `HideHungWithin` (1 m) of it, and stops
+the camera as the slice's camera-only solids do (homes.js CAM_ONLY; `ABrixRooms::HideHungNearCamera`): in the houses' and
+row houses' halls a pendant's shade beside the camera filled half the picture (found in play, 2026-11-26). In a car, on a bus or a
 tram and on a board the camera comes round behind, but the mouse has it for `LookHoldSeconds` (1.5) first: pulled back
 every frame, it could not be turned while moving. Behind a car, a bus or a tram the arm is the character's own work
 (`RideCamera`): shortened by the engine it met every lamp post and corner passed, and the camera jumped in and out; now
