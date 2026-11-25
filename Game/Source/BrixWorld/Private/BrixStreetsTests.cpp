@@ -268,4 +268,54 @@ bool FWLD032_ChildrenPlay::RunTest(const FString&)
 	return true;
 }
 
+// WLD-028, WLD-031, WLD-034: the rest of the street dressing is drawn as dressing.js and play.js draw it: the arches across
+// the alleys (with the room bridging the alley at the street and crates by some), the bandstand, notice boards, sundials,
+// wells, pergolas, statues, the news kiosk, bunting on market days, planters with today's flowers, bins, bike racks and
+// their bicycles, post and telephone boxes, bollards, the tram stops' timetables, and today's adverts on blank walls and
+// hoardings (their letters' width estimated, as there is no canvas to measure them). Crates by an arch are a thing of their
+// own a car can break.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWLD028_StreetDressing, "BrixTown.World.WLD028_the_street_dressing_is_drawn_as_the_slice_draws_it",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FWLD028_StreetDressing::RunTest(const FString&)
+{
+	FStreetsCase C;
+	if (!Load(*this, C)) return false;
+	const TSharedPtr<FJsonObject> Dress = C.Values->GetObjectField(TEXT("dress"));
+	const TArray<FString> Old = { TEXT("Old Town"), TEXT("Centre") };   // DefaultGame.ini StoneBaseDistricts
+	int32 Bad = 0, Things = 0, Arches = 0, Boards = 0, Crated = 0;
+	TSet<FString> Kinds;
+	for (const FBrixBlock& B : C.City.Blocks)
+		for (int32 i = 0; i < B.Props.Num(); ++i)
+		{
+			const FBrixProp& P = B.Props[i];
+			const FString Key = B.Id + TEXT("/") + FString::FromInt(i);
+			const double G = GroundAt(B, P).Here;
+			TArray<FBrixShape> Got;
+			if (P.Kind == TEXT("arch")) { BrixArchShapes(P, B, G, Got); ++Arches; }
+			else if (P.Set == TEXT("dress"))
+			{
+				TArray<FBrixShape> Play;
+				if (BrixDressShapes(P, B, G, C.Today, Play)) continue;   // the playgrounds: WLD032
+				const TOptional<FBrixBoardWall> Wall = BrixBoardWallOf(B, P, Old);
+				if (!BrixMoreDressShapes(P, B, G, C.Today, Wall.GetPtrOrNull(), Got)) { TestFalse(Key + TEXT(" (") + P.Kind + TEXT("): the slice draws it"), Dress->HasField(Key)); continue; }
+				if (P.Kind == TEXT("advert") || P.Kind == TEXT("hoarding")) ++Boards;
+			}
+			else continue;
+			++Things;
+			Kinds.Add(P.Kind);
+			for (const FBrixShape& S : Got) if (S.WrapKind == TEXT("crates")) { ++Crated; break; }
+			const TSharedPtr<FJsonObject>* W = nullptr;
+			if (!TestTrue(Key + TEXT(" (") + P.Kind + TEXT("): the slice drew it"), Dress->TryGetObjectField(Key, W))) continue;
+			Compare(*this, Key + TEXT(" (") + P.Kind + TEXT(")"), Got, *W, Bad);
+		}
+	TestEqual(TEXT("arches (192 when written)"), Arches, 192);
+	TestTrue(TEXT("adverts and hoardings (37 when written)"), Boards >= 30);
+	TestTrue(TEXT("crates by some of the arches"), Crated > 50);
+	for (const TCHAR* K : { TEXT("bandstand"), TEXT("noticeboard"), TEXT("sundial"), TEXT("well"), TEXT("pergola"), TEXT("statue"), TEXT("kiosk"), TEXT("bunting"),
+		TEXT("planter"), TEXT("bin"), TEXT("bikerack"), TEXT("postbox"), TEXT("phonebox"), TEXT("bollard"), TEXT("timetable"), TEXT("advert"), TEXT("hoarding") })
+		TestTrue(FString(K) + TEXT(" is drawn"), Kinds.Contains(K));
+	TestEqual(TEXT("drawn otherwise than in the slice"), Bad, 0);
+	return Things > 1000;
+}
+
 #endif

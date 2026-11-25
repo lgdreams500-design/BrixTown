@@ -334,8 +334,8 @@ there when they leave or arrive (cars.js tramRiders()), up to twelve on its benc
 ## Street furniture (WLD-028)
 Each block's props are drawn as the slice draws them (play.js prop(), dressing.js), boxes in the palette's colours:
 lamps, benches, bins, bollards, planters, postboxes, bike racks, phone boxes, wall lanterns, flowerbeds, fountains,
-market stalls, tram shelters, water towers and wells; garden planting and the open ground's own things are below.
-Playgrounds, arches and adverts are not brought over yet. By night (`ABrixLamps`) every lamp's and wall lantern's glass glows
+market stalls, tram shelters, water towers and wells; garden planting, the open ground's own things, the street dressing,
+the arches and the playgrounds are below. By night (`ABrixLamps`) every lamp's and wall lantern's glass glows
 (`/Game/Greybox/M_Glow`, made by `Tools/unreal/make_glow_material.py`) and the twelve nearest to the camera give real
 light, as the slice's twelve; 68 frames a second at High at 22:30. The night itself (its exposure, the orange haze
 after dusk) is not yet the slice's dark blue night.
@@ -366,6 +366,27 @@ daisies), so a lawn is one even green; the trees by species (they are still a tr
 of Lumen's surface cache (a card an instance oversubscribed it over the fields). `-BrixNoPlants` builds the town without
 them, to compare: 542,212 instances in 45 groups against 462,813 in 33; at High 37.7 fps in a park garden (40.2 without),
 37.8 over the fields (20.6 without: noisy, other sessions were running Unreal on the same laptop).
+
+## The street dressing (WLD-028, WLD-031, WLD-034)
+Every piece of the block files' street dressing is drawn as dressing.js prop() draws it (the playgrounds below): the
+bandstand on its eight-sided stage under its pointed roof, notice boards with papers pinned up, sundials, wells with their
+little roofs, pergolas under a vine, bronze statues on their pedestals, the green news kiosk, bunting from a pole to the
+fountain on market days (World/rules/dressing.json; today's from world.dressing_today() in `Game/Data/streets.json`),
+planters with today's flowers, bins, bike racks with now and then a bicycle, post and telephone boxes, bollards, the tram
+stops' timetables, and today's adverts painted on blank walls and timber hoardings pasted with posters (no window where a
+board covers the wall, as dressing.js covers() keeps them clear). And play.js prop()'s stone arches across the alleys, each
+with its ring of arch stones, a room bridging the alley over it where it meets the street, and crates by some; the market
+stalls' crates. The port is `BrixStreets` (BrixDressShapes, BrixMoreDressShapes, BrixArchShapes, BrixCratesShapes),
+checked by `WLD028_the_street_dressing_is_drawn_as_the_slice_draws_it` against dressing.js and play.js themselves (1,432
+pieces and arches; `Tools/unreal/streets_values.py`); a name's width on a board is estimated from its length, as the slice
+measures it on a canvas. The player's car breaks them as crash.json says (CITY-072): notice boards and timetables topple
+(as "board"), and the café tables and the shops' crates on the pavement (the kit's pieces), the crates by the arches and
+the planters, bins, racks, post and telephone boxes and bollards break as before; the log says how many of each kind there
+are. Statues, the bandstand, the kiosk, wells, sundials, pergolas and the boards on walls do not break. Not yet: residents
+turning to the notice board they read or the kiosk they buy a paper at (dressing.js apply()), the letters of a broken
+timetable staying up, the lettering's own font. At High 29.8 to 44.1 fps in Old Town's streets and the market at 11:00
+(noisy: other sessions were running Unreal); Lumen says its surface cache is oversubscribed by a quarter in Old Town (seen
+here; not checked against main).
 
 ## Playgrounds and children playing (WLD-032)
 The four parks' playgrounds are drawn as dressing.js draws them: the soft red ground with a pale edge, the swings' A-frames
@@ -664,3 +685,4 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY017_every_plant_is_drawn_as_the_slice_draws_it` | CITY-017, WLD-040 |
 | `BrixTown.World.WLD056_the_open_ground_is_drawn_as_the_slice_draws_it` | WLD-056, ART-001 |
 | `BrixTown.World.WLD032_children_play_as_the_slice_puts_them` | WLD-032 |
+| `BrixTown.World.WLD028_the_street_dressing_is_drawn_as_the_slice_draws_it` | WLD-028, WLD-031, WLD-034 |

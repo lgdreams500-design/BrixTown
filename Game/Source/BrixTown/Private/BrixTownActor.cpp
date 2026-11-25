@@ -545,6 +545,17 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 				Kit(bCiv ? TEXT("SM_Kit_DoorCivic") : bArc ? TEXT("SM_Kit_DoorArch") : TEXT("SM_Kit_DoorPlain")));
 			Ops.Add({ Dw.Along, 0.f, Dw.Width, Dw.Height, Way, nullptr, &DoorPaint, -1.f, 1.f, 1.f, true });
 		}
+		if (L.AngleDeg == 0.f)   // no window where an advert or a hoarding covers this wall (dressing.js covers(), WLD-034)
+			for (const FBrixProp& Bp : B.Props)
+			{
+				FBrixBoardSpan Bs;
+				const TOptional<FBrixBoardWall> Wl = Bp.Set == TEXT("dress") ? BrixBoardWallOf(B, Bp, StoneBaseDistricts) : TOptional<FBrixBoardWall>();
+				if (!Wl || Wl->Min != L.Min || !BrixBoardSpanOf(Bp, *Wl, Bs) || TEXT("nswe")[k] != Bs.Side) continue;
+				const bool bNs = Bs.Side == 'n' || Bs.Side == 's';
+				auto SOf = [&](double A) { const FVector2D P = bNs ? FVector2D(A, 0) : FVector2D(0, A); return FVector2D::DotProduct((bNs ? FVector2D(P.X - C.X, 0) : FVector2D(0, P.Y - C.Y)) - F.Mid * (bNs ? FVector2D(1, 0) : FVector2D(0, 1)), Along); };
+				const double Sa0 = FMath::Min(SOf(Bs.A0), SOf(Bs.A1)), Sa1 = FMath::Max(SOf(Bs.A0), SOf(Bs.A1));
+				Ops.RemoveAll([&](const FOpening& O) { const double Ya = O.Z0 + Base, Yb = O.Z0 + O.H + Base; return !O.bDoorway && O.S > Sa0 - .9 && O.S < Sa1 + .9 && Yb > Bs.Y0 - .2 && Ya < Bs.Y1 + .2; });
+			}
 
 		const FQuat Face(FVector::UpVector, Yaw + Ang);
 		auto Piece = [&](const TCHAR* Mesh, float Sx, float Z, const FVector& Scale, const FLinearColor& Col, float CullM)
@@ -587,7 +598,11 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			for (int32 i = 0; i < CrateAt.Num(); ++i)
 			{
 				const float Sx = i < CrateAt.Num() / 2 ? X0 + CrateAt[i] : X1 - CrateAt[i];
-				if (Sx > X0 + 0.5f && Sx < X1 - 0.5f) Piece(TEXT("SM_Kit_ProduceCrate"), Sx, 0.f, FVector::OneVector, FLinearColor::Gray, ShutterCullDistance);
+				if (Sx > X0 + 0.5f && Sx < X1 - 0.5f)
+				{
+					const FVector Wp = At(OnWall(Sx, 0.f), 0.f) / CmPerM;
+					Wrap(TEXT("crates"), FVector2D(Wp.X, Wp.Y), BlockSlabHeight, [&]() { Piece(TEXT("SM_Kit_ProduceCrate"), Sx, 0.f, FVector::OneVector, FLinearColor::Gray, ShutterCullDistance); });
+				}
 			}
 		}
 		if (bCafeFront)
@@ -598,7 +613,11 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			Piece(TEXT("SM_Kit_BladeSign"), Sx, 0.f, FVector::OneVector, FLinearColor::Gray, OpeningCullDistance);
 			for (int32 Side : { -1, 1 })                    // the cafe's name on both faces of the board (kit text(), 0.17 m)
 				Name(L.Name, At(OnWall(Sx + Side * 0.06f, 0.7f), 3.45f), Yaw + Ang + (Side < 0 ? PI : 0.0), BladeNameSize, 0.9f, true);
-			for (float T : CafeTableAt) if (-F.Len / 2 + T < F.Len / 2 - 1.f) Piece(TEXT("SM_Kit_CafeTable"), -F.Len / 2 + T, 0.f, FVector::OneVector, FLinearColor::Gray, ShutterCullDistance);
+			for (float T : CafeTableAt) if (-F.Len / 2 + T < F.Len / 2 - 1.f)
+			{
+				const FVector Wp = At(OnWall(-F.Len / 2 + T, 0.f), 0.f) / CmPerM;
+				Wrap(TEXT("table"), FVector2D(Wp.X, Wp.Y), BlockSlabHeight, [&]() { Piece(TEXT("SM_Kit_CafeTable"), -F.Len / 2 + T, 0.f, FVector::OneVector, FLinearColor::Gray, ShutterCullDistance); });
+			}
 		}
 
 		for (const FVector& Fb : FlowerBoxes) Piece(TEXT("SM_Kit_WindowBox"), Fb.X, Fb.Y, FVector(Fb.Z, 1, 1), FLinearColor::Gray, ShutterCullDistance);
@@ -1044,6 +1063,14 @@ void ABrixTownActor::Build(const FBrixCity& City)
 	}
 	Pending.Empty();
 	CityData = nullptr;
+	{   // what a car can break, by kind (CITY-072)
+		TMap<FString, int32> ByKind;
+		for (const FBrixBreakable& Bk : Breakables) ++ByKind.FindOrAdd(Bk.Kind);
+		ByKind.KeySort([](const FString& A, const FString& B) { return A < B; });
+		FString List;
+		for (const TPair<FString, int32>& K : ByKind) List += FString::Printf(TEXT("%s%s %d"), List.IsEmpty() ? TEXT("") : TEXT(", "), *K.Key, K.Value);
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: %d things a car can break: %s"), Breakables.Num(), *List);
+	}
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: built %s from data: %d blocks, %d buildings (%d you can walk into), %d openings, %d instances in %d groups, %d faces in the blocks' facet meshes"),
 		*City.Name, City.Blocks.Num(), Buildings, Hollow, Openings, Instances, Parts.Num(), FacetTris);
 }
@@ -1151,10 +1178,18 @@ void ABrixTownActor::BuildProp(const FBrixProp& P, const FBrixBlock& Blk)
 		else if (!BrixWildShapes(P, G, S)) S.Reset();
 		if (S.Num() || k == TEXT("plant")) { Shapes(S); return; }
 	}
-	if (P.Set == TEXT("dress"))   // the street dressing drawn as dressing.js draws it (WLD-028, WLD-032): the playgrounds so far
+	if (P.Set == TEXT("dress"))   // the street dressing drawn as dressing.js draws it (WLD-028, WLD-031, WLD-032, WLD-034)
 	{
 		TArray<FBrixShape> S;
-		if (BrixDressShapes(P, Blk, g, *Today, S)) { Shapes(S); return; }
+		const TOptional<FBrixBoardWall> Wall = BrixBoardWallOf(Blk, P, StoneBaseDistricts);
+		if (BrixDressShapes(P, Blk, g, *Today, S) || BrixMoreDressShapes(P, Blk, g, *Today, Wall.GetPtrOrNull(), S)) { Shapes(S); return; }
+	}
+	if (k == TEXT("arch"))   // a stone arch across an alley (play.js prop()), and crates by some
+	{
+		TArray<FBrixShape> S;
+		BrixArchShapes(P, Blk, g, S);
+		Shapes(S);
+		return;
 	}
 	const bool ax = P.Along != TEXT("z");
 	const float Oct = UE_PI / 8;
@@ -1256,6 +1291,9 @@ void ABrixTownActor::BuildProp(const FBrixProp& P, const FBrixBlock& Blk)
 		for (int32 q = 0; q < 5; ++q) box(x - 1.05f + q * .45f, g + .9f, tz - .25f, x - .75f + q * .45f, g + 1.04f + .12f * H(TEXT("sg"), q), tz + .25f, Goods[(int32)(H(TEXT("sc"), q) * 5) % 5], true);
 		for (const float sx : { -1.4f, 1.4f }) for (const float sz : { -.7f, 1.9f }) box(x + sx - .06f, g, z + f * sz - .06f, x + sx + .06f, g + 2.5f, z + f * sz + .06f, Brown, true);
 		box(x - 1.65f, g + 2.5f, FMath::Min(z - f * .95f, z + f * 2.15f), x + 1.65f, g + 2.64f, FMath::Max(z - f * .95f, z + f * 2.15f), Col);
+		TArray<FBrixShape> S;
+		BrixCratesShapes(x + 1.9, tz, g, TEXT("st") + BrixSlice::Js(P.Pos.X) + BrixSlice::Js(P.Pos.Y), S);
+		Shapes(S);
 	}
 	else if (k == TEXT("shelter"))   // the tram stop's shelter
 	{
@@ -1285,8 +1323,19 @@ void ABrixTownActor::Shapes(const TArray<FBrixShape>& S)
 	for (UInstancedStaticMeshComponent* G : { Open, Fine }) if (G->bAffectDistanceFieldLighting) { G->bAffectDistanceFieldLighting = false; G->SetAffectDynamicIndirectLighting(false); }
 	auto Lc = [](const FVector3d& C) { return FLinearColor((float)C.X, (float)C.Y, (float)C.Z); };
 	auto P3 = [](double x, double y, double z) { return FVector3d(x, y, z); };
-	for (const FBrixShape& Sh : S)
+	for (int32 s = 0; s < S.Num(); ++s)
 	{
+		const FBrixShape& Sh = S[s];
+		if (!Sh.WrapKind.IsEmpty() && !Wrapping)   // crates by an arch: a thing a car can break on its own (smash.js wrap())
+		{
+			int32 e = s;
+			while (e < S.Num() && S[e].WrapKind == Sh.WrapKind && S[e].WrapAt == Sh.WrapAt) ++e;
+			TArray<FBrixShape> Run(S.GetData() + s, e - s);
+			for (FBrixShape& R : Run) R.WrapKind.Reset();
+			Wrap(Sh.WrapKind, Sh.WrapAt, BlockSlabHeight, [&]() { Shapes(Run); });
+			s = e - 1;
+			continue;
+		}
 		const TArray<double, TInlineAllocator<16>>& A = Sh.A;
 		switch (Sh.Kind)
 		{

@@ -208,6 +208,8 @@ bool LoadBrixStreetsToday(const FString& File, FBrixStreetsToday& Out, FString& 
 		Out.EdgeColor = Col3f(*Lw, TEXT("edge_color"), Out.EdgeColor); Out.TuftColor = Col3f(*Lw, TEXT("tuft_color"), Out.TuftColor); Out.MulchColor = Col3f(*Lw, TEXT("mulch_color"), Out.MulchColor);
 	}
 	if (Out.LawnTones.Num() < 3) Out.LawnTones = { FVector3d(.18, .27, .13), FVector3d(.29, .34, .19), FVector3d(.42, .39, .21) };
+	const TSharedPtr<FJsonObject>* Dr = nullptr;
+	if (Root->TryGetObjectField(TEXT("dressing"), Dr)) { Out.Dressing = *Dr; (*Dr)->TryGetBoolField(TEXT("bunting"), Out.bBunting); }
 	return true;
 }
 
@@ -611,5 +613,382 @@ bool BrixDressShapes(const FBrixProp& P, const FBrixBlock& Blk, double g, const 
 	}
 	else return false;
 	(void)Blk; (void)Today;
+	return true;
+}
+
+namespace
+{
+	// the letters' share of a name cell: the slice measures the name on a canvas (Georgia, 46 px, in a 512 px cell); here it is
+	// estimated from its length (streets_values.py stubs nameCell() with the same estimate)
+	double CellTw(const FString& T) { return FMath::Min(.99, (T.Len() * 24 + 8) / 512.0); }
+
+	// play.js fbox(): a box on a wall face (a along the wall, d out from it)
+	struct FFace { bool bNs = true; double Fix = 0, Out = 1; };
+	void WallBox(FOut& O, const FFace& S, double a0, double a1, double y0, double y1, double d0, double d1, const FVector3d& c)
+	{
+		const double p0 = S.Fix + S.Out * d0, p1 = S.Fix + S.Out * d1, lo = FMath::Min(p0, p1), hi = FMath::Max(p0, p1);
+		if (S.bNs) O.Box(a0, y0, lo, a1, y1, hi, c); else O.Box(lo, y0, a0, hi, y1, a1, c);
+	}
+	FVector3d FaceAt(const FFace& S, double a, double y, double d) { return S.bNs ? FVector3d(a, y, S.Fix + S.Out * d) : FVector3d(S.Fix + S.Out * d, y, a); }
+
+	// dressing.js advertOf(): today's advert on a board, k picks the next ones along a long hoarding
+	const TSharedPtr<FJsonObject> AdvertOf(const FBrixStreetsToday& T, const FString& Id, int32 k)
+	{
+		if (!T.Dressing.IsValid()) return nullptr;
+		const TArray<TSharedPtr<FJsonValue>>* List = nullptr;
+		if (!T.Dressing->TryGetArrayField(TEXT("advert_list"), List) || !List->Num()) return nullptr;
+		double Own = 0;
+		const TSharedPtr<FJsonObject>* Ads = nullptr;
+		if (T.Dressing->TryGetObjectField(TEXT("adverts"), Ads)) (*Ads)->TryGetNumberField(Id, Own);
+		return (*List)[((int32)Own + k * 3) % List->Num()]->AsObject();
+	}
+	void PaintBoard(FOut& O, const FFace& S, double a0, double a1, double y0, double y1, const TSharedPtr<FJsonObject>& Ad, double d0)
+	{
+		const FVector3d Ground = Col3f(Ad, TEXT("ground"), Cream), Ink = Col3f(Ad, TEXT("ink"), Charcoal);
+		WallBox(O, S, a0, a1, y0, y1, d0, d0 + .04, Ground);
+		WallBox(O, S, a0 + .12, a1 - .12, y0 + .12, y0 + .2, d0 + .04, d0 + .05, Ink);
+		WallBox(O, S, a0 + .12, a1 - .12, y1 - .2, y1 - .12, d0 + .04, d0 + .05, Ink);
+		const FString Text = Strf(Ad, TEXT("text"));
+		const double fit = FMath::Min((y1 - y0) * .42, (a1 - a0 - .6) / (8 * CellTw(Text) * (64.0 / 46) * .82));
+		const FVector3d C = FaceAt(S, (a0 + a1) / 2, (y0 + y1) / 2, d0 + .06);
+		O.Text(Text, C.X, C.Y, C.Z, S.bNs ? 0 : S.Out, S.bNs ? S.Out : 0, fit);
+	}
+	void Post(FOut& O, double x, double g, double z, double h, double w, const FVector3d& c) { O.Box(x - w, g, z - w, x + w, g + h, z + w, c); }
+}
+
+// play.js crates(): goods stacked by a door, in the accent colours; each lot of them a thing a car can break ("crates")
+void BrixCratesShapes(double x, double z, double g, const FString& Seed, TArray<FBrixShape>& Out)
+{
+	const int32 First = Out.Num();
+	FOut O{ Out };
+	const double a = .38 + .1 * Hash({ Seed, TEXT("c1") });
+	auto col = [&](int32 k)
+	{
+		static const FVector3d Cs[4] = { Ochre, Terracotta, FVector3d(.58, .5, .38), Ochre };
+		return Cs[FMath::Min(3, (int32)FMath::FloorToDouble(Hash({ Seed, TEXT("cc"), N(k) }) * 4))];
+	};
+	O.Box(x - a, g, z - a, x + a, g + 2 * a, z + a, col(0)); O.Solid(x - a, g, z - a, x + a, g + 2 * a, z + a);
+	if (Hash({ Seed, TEXT("c2") }) < .7) { const double b = a * .72, ox = (Hash({ Seed, TEXT("c3") }) - .5) * .2; O.Box(x + ox - b, g + 2 * a, z - b, x + ox + b, g + 2 * a + 2 * b, z + b, col(1)); }
+	if (Hash({ Seed, TEXT("c4") }) < .5) { const double b = .3, ox = a + .42; O.Box(x + ox - b, g, z - b, x + ox + b, g + 2 * b, z + b, col(2)); O.Solid(x + ox - b, g, z - b, x + ox + b, g + 2 * b, z + b); }
+	for (int32 i = First; i < Out.Num(); ++i) { Out[i].WrapKind = TEXT("crates"); Out[i].WrapAt = FVector2D(x, z); }
+}
+
+// play.js prop() for an arch: a stone arch across an alley, wall to wall, its ring of arch stones, a room bridging the alley
+// over it where it meets the street, and now and then crates by it
+void BrixArchShapes(const FBrixProp& P, const FBrixBlock& B, double g, TArray<FBrixShape>& Out)
+{
+	FOut O{ Out };
+	const TSharedPtr<FJsonObject>& J = P.Json;
+	const double x = P.Pos.X, z = P.Pos.Y;
+	const bool ns = Strf(J, TEXT("span")) == TEXT("x");
+	const double r = Numf(J, TEXT("width")) / 2, t = Numf(J, TEXT("thick")) / 2, spring = 2.3, top = spring + r + 1.6;
+	const int32 Nq = 12;
+	auto P3 = [&](double a, double y, double o) { return ns ? FVector3d(x + a, y, z + o) : FVector3d(x + o, y, z + a); };
+	auto Y = [&](double a) { return spring + FMath::Sqrt(FMath::Max(0.0, r * r - a * a)); };
+	for (int32 i = 0; i < Nq; ++i)
+	{
+		const double a0 = -r + 2 * r * i / Nq, a1 = -r + 2 * r * (i + 1) / Nq, y0 = Y(a0), y1 = Y(a1), am = (a0 + a1) / 2;
+		for (const double o : { -t, t }) O.Quad(P3(a0, y0, o), P3(a1, y1, o), P3(a1, top, o), P3(a0, top, o), Stone, ns ? FVector3d(0, 0, o) : FVector3d(o, 0, 0));
+		O.Quad(P3(a0, y0, -t), P3(a1, y1, -t), P3(a1, y1, t), P3(a0, y0, t), Stone * .92, ns ? FVector3d(-am, spring - (y0 + y1) / 2, 0) : FVector3d(0, spring - (y0 + y1) / 2, -am));
+	}
+	O.Quad(P3(-r, top, -t), P3(r, top, -t), P3(r, top, t), P3(-r, top, t), StoneDark, FVector3d(0, 1, 0));
+	const double e = .42 / r;
+	auto V3 = [&](double a, double y, double o) { return P3(a * (1 + e), spring + (y - spring) * (1 + e), o); };
+	for (int32 i = 0; i < Nq; ++i)   // the ring of arch stones, standing a little proud of the wall
+	{
+		const double a0 = -r + 2 * r * i / Nq, a1 = -r + 2 * r * (i + 1) / Nq, y0 = Y(a0), y1 = Y(a1);
+		const FVector3d col = Stone * (.78 + .3 * Hash({ N(x), N(z), N(i) }));
+		for (const double o : { -t - .08, t + .08 }) O.Quad(P3(a0, y0, o), P3(a1, y1, o), V3(a1, y1, o), V3(a0, y0, o), col, ns ? FVector3d(0, 0, o) : FVector3d(o, 0, 0));
+	}
+	for (const double sd : { -1.0, 1.0 })
+	{
+		const FVector3d a = P3(sd * r, 0, -t - .16), b2 = P3(sd * (r - .5), spring, t + .16);
+		O.Box(FMath::Min(a.X, b2.X), 0, FMath::Min(a.Z, b2.Z), FMath::Max(a.X, b2.X), spring + .12, FMath::Max(a.Z, b2.Z), Stone);
+	}
+	const FVector3d q0 = P3(-r, 0, -t), q1 = P3(r, 0, t);
+	const double bx[4] = { FMath::Min(q0.X, q1.X), FMath::Min(q0.Z, q1.Z), FMath::Max(q0.X, q1.X), FMath::Max(q0.Z, q1.Z) };
+	O.Solid(bx[0], spring + r * .7, bx[1], bx[2], top, bx[3]);
+	const double loc = ns ? z - B.Origin.Y : x - B.Origin.X, Size = B.Extent.X;   // (a block's size: its extent over one grid cell)
+	if (loc < 2 || loc > Size - 2)   // this arch is on the street: roof the first 7 m behind it, a room bridging the alley over the gateway
+	{
+		const double dir = loc < 2 ? 1 : -1;
+		const FVector3d c0 = P3(-r, 0, dir * t), c1 = P3(r, 0, dir * (t + 7));
+		const double cb[4] = { FMath::Min(c0.X, c1.X), FMath::Min(c0.Z, c1.Z), FMath::Max(c0.X, c1.X), FMath::Max(c0.Z, c1.Z) };
+		const double ub[4] = { FMath::Min(bx[0], cb[0]), FMath::Min(bx[1], cb[1]), FMath::Max(bx[2], cb[2]), FMath::Max(bx[3], cb[3]) };
+		O.Box(cb[0], top - .5, cb[1], cb[2], top, cb[3], StoneDark); O.Solid(cb[0], top - .5, cb[1], cb[2], top, cb[3]);
+		O.Box(ub[0], top, ub[1], ub[2], top + 2.5, ub[3], FVector3d(.70, .58, .46));
+		O.Box(ub[0] - .15, top + 2.5, ub[1] - .15, ub[2] + .15, top + 2.75, ub[3] + .15, StoneDark);
+		for (int32 kb = 0; kb < 5; ++kb)
+		{
+			const double o = dir * (t + .9 + kb * 1.45);
+			const FVector3d e0 = P3(-r, 0, o - .11), e1 = P3(r, 0, o + .11);
+			O.Box(FMath::Min(e0.X, e1.X), top - .78, FMath::Min(e0.Z, e1.Z), FMath::Max(e0.X, e1.X), top - .5, FMath::Max(e0.Z, e1.Z), Brown);
+		}
+	}
+	const double hk = Hash({ N(x), N(z), TEXT("al") });
+	if (hk > .35) { const FVector3d c = P3(r - .55, 0, (hk > .7 ? 1 : -1) * (t + 1.3)); BrixCratesShapes(c.X, c.Z, g, TEXT("ar") + N(x) + N(z), Out); }
+}
+
+// the rest of dressing.js prop(): the bandstand, notice boards, sundials, wells, pergolas, statues, the news kiosk, bunting on
+// market days, planters, bins, bike racks, post and telephone boxes, bollards, the tram stops' timetables, adverts painted on
+// blank walls and hoardings pasted with posters
+bool BrixMoreDressShapes(const FBrixProp& P, const FBrixBlock& Blk, double g, const FBrixStreetsToday& Today, const FBrixBoardWall* Wall, TArray<FBrixShape>& Out)
+{
+	FOut O{ Out };
+	const TSharedPtr<FJsonObject>& J = P.Json;
+	const double x = P.Pos.X, z = P.Pos.Y;
+	const FString& k = P.Kind;
+	const double Q4 = UE_DOUBLE_PI / 4, Q8 = UE_DOUBLE_PI / 8;
+	auto Pt = [&](double q, double rr, double y) { return FVector3d(x + FMath::Cos(q * Q4) * rr, y, z + FMath::Sin(q * Q4) * rr); };
+	if (k == TEXT("bandstand"))   // an eight-sided stage with iron posts and a pointed roof
+	{
+		const double R = Numf(J, TEXT("r"));
+		for (int32 q = 0; q < 8; ++q)
+		{
+			const FVector3d o(FMath::Cos((q + .5) * Q4), 0, FMath::Sin((q + .5) * Q4));
+			O.Quad(Pt(q, R, g), Pt(q + 1, R, g), Pt(q + 1, R, g + .7), Pt(q, R, g + .7), Stone, o);
+			O.Quad(Pt(q, R, g + .7), Pt(q + 1, R, g + .7), FVector3d(x, g + .7, z), FVector3d(x, g + .7, z), DWood, FVector3d(0, 1, 0));
+			const FVector3d c = Pt(q, R - .25, g + .7);
+			O.Box(c.X - .07, g + .7, c.Z - .07, c.X + .07, g + 3.4, c.Z + .07, Cream);
+			const FVector3d c2 = Pt(q + 1, R - .25, g + 1.6);
+			if (q != 2) O.Box(FMath::Min(c.X, c2.X) - .03, g + 1.55, FMath::Min(c.Z, c2.Z) - .03, FMath::Max(c.X, c2.X) + .03, g + 1.62, FMath::Max(c.Z, c2.Z) + .03, Iron);
+			O.Quad(Pt(q, R + .4, g + 3.4), Pt(q + 1, R + .4, g + 3.4), FVector3d(x, g + 5.0, z), FVector3d(x, g + 5.0, z), Teal, FVector3d(o.X, .8, o.Z));
+			O.Quad(Pt(q + 1, R + .4, g + 3.4), Pt(q, R + .4, g + 3.4), FVector3d(x, g + 3.4, z), FVector3d(x, g + 3.4, z), Cream, FVector3d(0, -1, 0));
+		}
+		O.Box(x - .1, g + 5.0, z - .1, x + .1, g + 5.5, z + .1, Ochre);
+		for (int32 q = 0; q < 3; ++q) { const FVector3d c = Pt(2.3 + q * .2, R + .25 + q * .45, 0); O.Box(c.X - .7, g + .47 * (2 - q) * .5, c.Z - .7, c.X + .7, g + .7 - q * .23, c.Z + .7, Stone); }
+		O.Solid(x - R * .9, g, z - R * .9, x + R * .9, g + .7, z + R * .9);
+	}
+	else if (k == TEXT("noticeboard"))   // two posts, a little roof, papers pinned up
+	{
+		const bool ax = Strf(J, TEXT("face")) == TEXT("x");
+		const double sg = Numf(J, TEXT("sign")) != 0 ? Numf(J, TEXT("sign")) : 1, f[2] = { ax ? sg : 0, ax ? 0 : sg }, r[2] = { ax ? 0.0 : 1.0, ax ? 1.0 : 0.0 };
+		for (const double u : { -.75, .75 }) Post(O, x + r[0] * u, g, z + r[1] * u, 2.1, .05, DWood);
+		O.Box(x - r[0] * .8 - f[0] * .02 - .02 * r[1], g + .9, z - r[1] * .8 - f[1] * .02 - .02 * r[0], x + r[0] * .8 + f[0] * .04 + .02 * r[1], g + 1.95, z + r[1] * .8 + f[1] * .04 + .02 * r[0], DGreen);
+		O.Box(x - r[0] * .95 - .18 * FMath::Abs(f[0]), g + 2.0, z - r[1] * .95 - .18 * FMath::Abs(f[1]), x + r[0] * .95 + .18 * FMath::Abs(f[0]), g + 2.1, z + r[1] * .95 + .18 * FMath::Abs(f[1]), Terracotta);
+		static const FVector3d Paper[4] = { Cream, FVector3d(.86, .82, .7), FVector3d(.8, .7, .5), FVector3d(.7, .78, .8) };
+		for (int32 q = 0; q < 6; ++q)
+		{
+			const double u = -.6 + (q % 3) * .55 + .08 * Hash({ P.Id, N(q) }), v = q < 3 ? 1.55 : 1.1, w = .18 + .08 * Hash({ N(q), P.Id });
+			const FVector3d& c = Paper[FMath::Min(3, (int32)FMath::FloorToDouble(Hash({ P.Id, N(q), TEXT("2") }) * 4))];
+			const double cx = x + r[0] * u + f[0] * .05, cz = z + r[1] * u + f[1] * .05;
+			O.Box(cx - w * r[0] - .005, g + v, cz - w * r[1] - .005, cx + w * r[0] + .005, g + v + .3 + .1 * Hash({ N(q) }), cz + w * r[1] + .005, c);
+		}
+		O.Solid(x - .8 * r[0] - .06, g, z - .8 * r[1] - .06, x + .8 * r[0] + .06, g + 2.1, z + .8 * r[1] + .06);
+	}
+	else if (k == TEXT("sundial"))
+	{
+		const FVector3d Brass(.55, .45, .2);
+		O.Box(x - .5, g, z - .5, x + .5, g + .2, z + .5, Stone); O.YBox(x, g + .2, z, .4, .8, .4, Q4, Stone);
+		O.Box(x - .38, g + 1.0, z - .38, x + .38, g + 1.05, z + .38, Brass); O.Box(x - .02, g + 1.05, z - .25, x + .02, g + 1.3, z + .1, Brass);
+		O.Solid(x - .3, g, z - .3, x + .3, g + 1.05, z + .3);
+	}
+	else if (k == TEXT("well"))   // a round stone well with a little roof, a rope and a bucket
+	{
+		const double R = .85;
+		for (int32 q = 0; q < 8; ++q)
+		{
+			const FVector3d o(FMath::Cos((q + .5) * Q4), 0, FMath::Sin((q + .5) * Q4));
+			O.Quad(Pt(q, R, g), Pt(q + 1, R, g), Pt(q + 1, R, g + .75), Pt(q, R, g + .75), Stone, o);
+			O.Quad(Pt(q, R, g + .75), Pt(q + 1, R, g + .75), Pt(q + 1, R - .2, g + .75), Pt(q, R - .2, g + .75), Stone, FVector3d(0, 1, 0));
+			O.Quad(Pt(q, R - .2, g + .75), Pt(q + 1, R - .2, g + .75), FVector3d(x, g + .3, z), FVector3d(x, g + .3, z), FVector3d(.05, .06, .07), FVector3d(0, 1, 0));
+		}
+		for (const double s : { -1.0, 1.0 }) Post(O, x + s * .8, g + .7, z, 1.5, .06, DWood);
+		O.Box(x - .85, g + 1.75, z - .03, x + .85, g + 1.81, z + .03, DWood); O.Box(x - .02, g + .95, z - .02, x + .02, g + 1.75, z + .02, Cream); O.Box(x - .14, g + .8, z - .14, x + .14, g + 1.0, z + .14, DWood);
+		for (const double s : { -1.0, 1.0 }) O.Quad(FVector3d(x - 1.1, g + 2.2, z), FVector3d(x + 1.1, g + 2.2, z), FVector3d(x + 1.1, g + 1.9, z + s * .75), FVector3d(x - 1.1, g + 1.9, z + s * .75), Terracotta, FVector3d(0, .8, s));
+		O.Solid(x - R, g, z - R, x + R, g + .75, z + R);
+	}
+	else if (k == TEXT("pergola"))   // four posts, beams across, a vine over the top
+	{
+		for (const double sx : { -1.4, 1.4 }) for (const double sz : { -1.4, 1.4 }) { Post(O, x + sx, g, z + sz, 2.45, .09, Cream); O.Solid(x + sx - .1, g, z + sz - .1, x + sx + .1, g + 2.4, z + sz + .1); }
+		for (const double s : { -1.4, 1.4 }) O.Box(x - 1.7, g + 2.4, z + s - .07, x + 1.7, g + 2.56, z + s + .07, Cream);
+		for (int32 q = 0; q < 6; ++q) O.Box(x - 1.6 + q * .64 - .04, g + 2.56, z - 1.7, x - 1.6 + q * .64 + .04, g + 2.66, z + 1.7, Cream);
+		for (int32 q = 0; q < 9; ++q) O.YBox(x - 1.3 + (q % 3) * 1.3 + .3 * Hash({ P.Id, N(q) }), g + 2.6, z - 1.3 + (q / 3) * 1.3, .9, .35 + .2 * Hash({ N(q) }), .8, Hash({ N(q), P.Id }) * 3, Olive * (.9 + .3 * Hash({ P.Id, N(q), TEXT("1") })));
+		for (const double sx : { -1.4, 1.4 }) O.YBox(x + sx, g, z - 1.4, .5, 2.4, .3, 0, Olive * .85);
+		O.Box(x - .9, g + .36, z - .27, x + .9, g + .47, z + .27, DWood); for (const double s : { -.6, .6 }) O.Box(x + s - .15, g, z - .22, x + s + .15, g + .36, z + .22, Stone);
+	}
+	else if (k == TEXT("statue"))   // a figure in green bronze on a stone pedestal, steps round it
+	{
+		bool bSmall = false;
+		if (J.IsValid()) J->TryGetBoolField(TEXT("small"), bSmall);
+		const double sm = bSmall ? .55 : 1, base = bSmall ? 0 : .5;
+		if (!bSmall) for (int32 q = 0; q < 2; ++q) O.Box(x - 2.2 + q * .45, g + q * .25, z - 2.2 + q * .45, x + 2.2 - q * .45, g + (q + 1) * .25, z + 2.2 - q * .45, Stone);
+		const double ph = base + 2.0 * sm;
+		O.Box(x - .75 * sm, g + base, z - .75 * sm, x + .75 * sm, g + ph, z + .75 * sm, Stone); O.Box(x - .9 * sm, g + ph, z - .9 * sm, x + .9 * sm, g + ph + .15 * sm, z + .9 * sm, StoneDark);
+		const double y = g + ph + .15 * sm, S = 1.25 * sm;
+		for (const double s : { -1.0, 1.0 }) O.Box(x + s * .14 * S - .1 * S, y, z - .1 * S, x + s * .14 * S + .1 * S, y + .85 * S, z + .1 * S, Bronze);
+		O.Box(x - .3 * S, y + .7 * S, z - .2 * S, x + .3 * S, y + 1.5 * S, z + .2 * S, Bronze); O.Box(x - .36 * S, y + .55 * S, z - .24 * S, x + .36 * S, y + .95 * S, z + .24 * S, Bronze * .9);
+		O.YBox(x, y + 1.52 * S, z, .26 * S, .3 * S, .26 * S, Q4, Bronze);
+		O.Box(x - .44 * S, y + .85 * S, z - .08 * S, x - .32 * S, y + 1.45 * S, z + .08 * S, Bronze);
+		BrixOBox(Out, FBrixM4::T(x + .38 * S, y + 1.42 * S, z) * FBrixM4::Rz(-2.5), 0, .32 * S, 0, .12 * S, .65 * S, .12 * S, Bronze);
+		O.Box(x + .55 * S, y + 1.95 * S, z - .06 * S, x + .75 * S, y + 2.0 * S, z + .06 * S, FVector3d(.55, .45, .2));
+		const double hs = bSmall ? .5 : 2.2;
+		O.Solid(x - hs, g, z - hs, x + hs, g + ph, z + hs);
+	}
+	else if (k == TEXT("kiosk"))   // a green news kiosk: papers on the counter, its name on the roof
+	{
+		const double f = Numf(J, TEXT("face")) != 0 ? Numf(J, TEXT("face")) : -1;
+		O.Box(x - 1.1, g, z - .95, x + 1.1, g + .95, z + .95, DGreen); O.Box(x - 1.1, g + 2.15, z - .95, x + 1.1, g + 2.4, z + .95, DGreen);
+		for (const double sz : { -1.0, 1.0 }) O.Box(x - 1.1, g + .95, z + sz * .95 - .08, x + 1.1, g + 2.15, z + sz * .95 + .08, DGreen);
+		O.Box(x - f * 1.1 - .08, g + .95, z - .95, x - f * 1.1 + .08, g + 2.15, z + .95, DGreen);
+		O.Box(x - 1.45, g + 2.4, z - 1.3, x + 1.45, g + 2.52, z + 1.3, Terracotta);
+		O.Box(x + f * 1.1 - .02, g + .95, z - .9, x + f * 1.1 + f * .3, g + 1.0, z + .9, DWood);
+		static const FVector3d Papers[3] = { Cream, FVector3d(.86, .82, .7), FVector3d(.6, .2, .16) }, Mags[4] = { Cream, Ochre, FVector3d(.6, .2, .16), Blue };
+		for (int32 q = 0; q < 6; ++q)
+			O.Box(x + f * 1.12 + f * (q % 2) * .14 - .06, g + 1.0, z - .75 + (q / 2) * .55, x + f * 1.12 + f * (q % 2) * .14 + .06, g + 1.03 + .02 * q, z - .5 + (q / 2) * .55,
+				Papers[FMath::Min(2, (int32)FMath::FloorToDouble(Hash({ P.Id, N(q) }) * 3))]);
+		for (int32 q = 0; q < 5; ++q)
+			O.Box(x + f * 1.11, g + 1.3 + (q % 2) * .32, z - .8 + q * .36, x + f * 1.13, g + 1.56 + (q % 2) * .32, z - .54 + q * .36, Mags[FMath::Min(3, (int32)FMath::FloorToDouble(Hash({ P.Id, N(q), TEXT("9") }) * 4))]);
+		O.Text(TEXT("News"), x + f * 1.46, g + 2.46, z, f, 0, .1);
+		WallBox(O, FFace{ false, x + f * 1.1, f }, z - .7, z + .7, 2.17, 2.37, 0, .03, Cream);   // (the slice lays this strip at 2.17 m from the street)
+		O.Text(TEXT("Papers"), x + f * 1.14, g + 2.27, z, f, 0, .12);
+		O.Solid(x - 1.1, g, z - .95, x + 1.1, g + 2.4, z + .95);
+	}
+	else if (k == TEXT("bunting"))   // flags on a line strung from a pole to the fountain: up on market days only
+	{
+		if (!Today.bBunting) return true;
+		const FVector2D To = [&]() { const TArray<TSharedPtr<FJsonValue>>* A = nullptr; return J->TryGetArrayField(TEXT("to"), A) && A->Num() >= 2 ? FVector2D((*A)[0]->AsNumber(), (*A)[1]->AsNumber()) : P.Pos; }();
+		const double hh0 = Numf(J, TEXT("h0")), h0 = g + hh0, h1 = g + Numf(J, TEXT("h1")), L = FVector2D::Distance(To, P.Pos);
+		const int32 n = (int32)FMath::FloorToDouble(L / .55);
+		const double ux = (To.X - x) / L, uz = (To.Y - z) / L;
+		static const FVector3d Cols[5] = { Ochre, Terracotta, Teal, Cream, Blue };
+		bool bPoles = false;
+		if (J.IsValid()) J->TryGetBoolField(TEXT("poles"), bPoles);
+		if (bPoles) { Post(O, x, g, z, hh0 + .2, .05, Cream); O.Solid(x - .05, g, z - .05, x + .05, g + hh0, z + .05); }
+		auto yAt = [&](double t) { return h0 + (h1 - h0) * t - .7 * 4 * t * (1 - t); };
+		for (int32 q = 0; q < n; ++q)
+		{
+			const double t0 = (double)q / n, t1 = (double)(q + 1) / n;
+			const FVector3d a(x + ux * L * t0, yAt(t0), z + uz * L * t0), c(x + ux * L * t1, yAt(t1), z + uz * L * t1);
+			O.Box(FMath::Min(a.X, c.X) - .006, FMath::Min(a.Y, c.Y) - .006, FMath::Min(a.Z, c.Z) - .006, FMath::Max(a.X, c.X) + .006, FMath::Max(a.Y, c.Y) + .006, FMath::Max(a.Z, c.Z) + .006, Iron);
+			const FVector3d m((a.X + c.X) / 2, (a.Y + c.Y) / 2 - .32, (a.Z + c.Z) / 2), nx(-uz, 0, ux);
+			O.Quad(a, c, m, m, Cols[q % 5], nx); O.Quad(c, a, m, m, Cols[q % 5], FVector3d(-nx.X, 0, -nx.Z));
+		}
+	}
+	else if (k == TEXT("planter"))
+	{
+		bool bBig = P.bBig;
+		const double h = bBig ? .75 : .48, s = bBig ? .7 : .45;
+		const FVector3d col = bBig ? Stone : DWood;
+		O.Box(x - s, g, z - s, x + s, g + h, z + s, col); O.Flat(x - s + .08, z - s + .08, x + s - .08, z + s - .08, g + h + .005, Soil);
+		for (int32 q = 0; q < 4; ++q) O.YBox(x + (q % 2 - .5) * s * .9, g + h, z + (q / 2 - .5) * s * .9, s * .8, .3 + .35 * Hash({ P.Id, N(q) }), s * .8, Hash({ N(q), P.Id }) * 3, Olive * (.9 + .3 * Hash({ P.Id, N(q) })));
+		if (Today.FlowerSize > .2 && Today.FlowerColors.Num())
+			for (int32 q = 0; q < 5; ++q)
+			{
+				const double fx = x + (Hash({ P.Id, N(q), TEXT("5") }) - .5) * s * 1.4, fz = z + (Hash({ P.Id, N(q), TEXT("6") }) - .5) * s * 1.4;
+				O.Box(fx - .06, g + h + .45, fz - .06, fx + .06, g + h + .58, fz + .06, Today.FlowerColors[(q + (int32)FMath::FloorToDouble(Hash({ P.Id }) * 9)) % Today.FlowerColors.Num()]);
+			}
+		O.Solid(x - s, g, z - s, x + s, g + h, z + s);
+	}
+	else if (k == TEXT("bin"))
+	{
+		O.YBox(x, g, z, .42, .82, .42, Q8, DGreen); O.YBox(x, g + .82, z, .5, .08, .5, Q8, DGreen * .8); O.Box(x - .12, g + .9, z - .12, x + .12, g + .95, z + .12, Iron);
+		O.Solid(x - .25, g, z - .25, x + .25, g + .9, z + .25);
+	}
+	else if (k == TEXT("bikerack"))   // three hoops, now and then a bicycle leant on one
+	{
+		const bool ax = P.Along == TEXT("x");
+		static const FVector3d Bikes[4] = { Blue, Red, Teal, Ochre };
+		for (int32 q = -1; q <= 1; ++q)
+		{
+			const double cx = x + (ax ? q * .8 : 0), cz = z + (ax ? 0 : q * .8);
+			for (const double s : { -.32, .32 }) O.Box(cx + (ax ? 0 : s) - .03, g, cz + (ax ? s : 0) - .03, cx + (ax ? 0 : s) + .03, g + .8, cz + (ax ? s : 0) + .03, Iron);
+			O.Box(cx - (ax ? .03 : .35), g + .8, cz - (ax ? .35 : .03), cx + (ax ? .03 : .35), g + .86, cz + (ax ? .35 : .03), Iron);
+			if (Hash({ P.Id, N(q) }) < .45)
+			{
+				const FVector3d& col = Bikes[FMath::Min(3, (int32)FMath::FloorToDouble(Hash({ P.Id, N(q), TEXT("2") }) * 4))];
+				const double yaw = ax ? UE_DOUBLE_PI / 2 : 0;
+				for (const double s : { -.55, .55 }) O.YBox(cx + (ax ? .12 : s), g, cz + (ax ? s : .12), ax ? .05 : .66, .66, ax ? .66 : .05, 0, FVector3d(.08, .08, .09));
+				O.YBox(cx + (ax ? .12 : 0), g + .5, cz + (ax ? 0 : .12), ax ? .04 : 1.0, .06, ax ? 1.0 : .04, 0, col);
+				O.YBox(cx + (ax ? .12 : -.3), g + .8, cz + (ax ? -.3 : .12), .1, .05, .22, yaw, FVector3d(.1, .08, .07));
+			}
+		}
+		O.Solid(x - (ax ? 1.2 : .1), g, z - (ax ? .1 : 1.2), x + (ax ? 1.2 : .1), g + .86, z + (ax ? .1 : 1.2));
+	}
+	else if (k == TEXT("postbox"))   // a red pillar box
+	{
+		O.YBox(x, g, z, .46, 1.15, .46, Q8, Red); O.YBox(x, g + 1.15, z, .52, .12, .52, Q8, Red * .85); O.YBox(x, g + 1.27, z, .3, .08, .3, Q8, Red * .85);
+		const bool bOut = J.IsValid() && J->HasField(TEXT("out"));
+		const FVector2D o = bOut ? P.Out : P.Along == TEXT("z") ? FVector2D(1, 0) : FVector2D(0, 1);
+		O.Box(x - o.X * .25 - .12 * FMath::Abs(o.Y) - .01, g + .92, z - o.Y * .25 - .12 * FMath::Abs(o.X) - .01, x - o.X * .23 + .12 * FMath::Abs(o.Y) + .01, g + .96, z - o.Y * .23 + .12 * FMath::Abs(o.X) + .01, FVector3d(.05, .05, .05));
+		O.Solid(x - .25, g, z - .25, x + .25, g + 1.3, z + .25);
+	}
+	else if (k == TEXT("phonebox"))   // a red telephone box with glazed sides and a crown
+	{
+		O.Box(x - .5, g, z - .5, x + .5, g + .15, z + .5, Red);
+		for (const double sx : { -.45, .45 }) for (const double sz : { -.45, .45 }) O.Box(x + sx - .06, g, z + sz - .06, x + sx + .06, g + 2.35, z + sz + .06, Red);
+		const int32 Sides[4][2] = { { 0, -1 }, { 0, 1 }, { 1, -1 }, { 1, 1 } };
+		for (const auto& Sd : Sides)
+		{
+			const bool ax = Sd[0] != 0;
+			const double s = Sd[1], fx = ax ? x + s * .44 : x, fz = ax ? z : z + s * .44;
+			O.Box(fx - (ax ? .015 : .38), g + .85, fz - (ax ? .38 : .015), fx + (ax ? .015 : .38), g + 2.05, fz + (ax ? .38 : .015), FVector3d(.36, .44, .48));
+			for (const double y : { 1.25, 1.65 }) O.Box(fx - (ax ? .025 : .38), g + y, fz - (ax ? .38 : .025), fx + (ax ? .025 : .38), g + y + .04, fz + (ax ? .38 : .025), Red);
+		}
+		O.Box(x - .55, g + 2.35, z - .55, x + .55, g + 2.6, z + .55, Red); O.YBox(x, g + 2.6, z, .9, .14, .9, 0, Red * .9); O.Box(x - .12, g + 2.74, z - .12, x + .12, g + 2.84, z + .12, Red * .9);
+		O.Box(x - .2, g + 1.4, z - .2, x + .2, g + 1.6, z + .2, FVector3d(1, .85, .6));
+		O.Solid(x - .5, g, z - .5, x + .5, g + 2.6, z + .5);
+	}
+	else if (k == TEXT("bollard"))
+	{
+		O.YBox(x, g, z, .2, .78, .2, Q8, Iron); O.YBox(x, g + .78, z, .24, .08, .24, Q8, Iron);
+		O.Solid(x - .1, g, z - .1, x + .1, g + .8, z + .1);
+	}
+	else if (k == TEXT("timetable"))   // a times board on a post at the tram stop
+	{
+		Post(O, x, g, z, 2.1, .05, Teal); O.Box(x - .38, g + 1.2, z - .04, x + .38, g + 2.0, z + .04, Teal);
+		for (int32 q = 0; q < 6; ++q) O.Box(x - .3, g + 1.3 + q * .11, z + .04, x + .3 - .2 * Hash({ P.Id, N(q) }), g + 1.36 + q * .11, z + .05, Cream);
+		O.Text(TEXT("Tram"), x, g + 1.9, z + .05, 0, 1, .1);
+		O.Solid(x - .06, g, z - .06, x + .06, g + 2.1, z + .06);
+	}
+	else if (k == TEXT("advert") || k == TEXT("hoarding"))   // today's advert painted on a blank wall, or a timber hoarding pasted with posters
+	{
+		FBrixBoardSpan Bs;
+		if (!Wall || !BrixBoardSpanOf(P, *Wall, Bs)) return true;
+		const TCHAR s = Bs.Side;
+		const bool ns = s == 'n' || s == 's';
+		const double a0 = Bs.A0, a1 = Bs.A1, y0 = Bs.Y0, y1 = Bs.Y1;
+		const FFace S{ ns, ns ? (s == 'n' ? Wall->Min.Y : Wall->Max.Y) : (s == 'w' ? Wall->Min.X : Wall->Max.X), s == 'n' || s == 'w' ? -1.0 : 1.0 };
+		if (k == TEXT("advert")) { if (const TSharedPtr<FJsonObject> Ad = AdvertOf(Today, P.Id, 0)) PaintBoard(O, S, a0, a1, y0, y1, Ad, .02); }
+		else
+		{
+			WallBox(O, S, a0, a1, y0, y1, 0, .1, FVector3d(.42, .3, .18));
+			for (double a = a0; a < a1; a += .2) WallBox(O, S, a, a + .02, y0, y1, .1, .11, FVector3d(.3, .2, .12));
+			const int32 n = FMath::Max(1, (int32)FMath::FloorToDouble((a1 - a0) / 3.6));
+			const double w = (a1 - a0) / n;
+			for (int32 q = 0; q < n; ++q) if (const TSharedPtr<FJsonObject> Ad = AdvertOf(Today, P.Id, q)) PaintBoard(O, S, a0 + q * w + .25, a0 + (q + 1) * w - .25, y0 + .45, y1 - .3, Ad, .11);
+			WallBox(O, S, a0 - .1, a1 + .1, y1, y1 + .12, 0, .2, FVector3d(.3, .2, .12));
+		}
+	}
+	else return false;
+	(void)Blk;
+	return true;
+}
+
+TOptional<FBrixBoardWall> BrixBoardWallOf(const FBrixBlock& B, const FBrixProp& P, const TArray<FString>& OldDistricts)
+{
+	const FString Lot = Strf(P.Json, TEXT("lot"));
+	for (const FBrixLot& L : B.Lots)
+		if (L.Id == Lot)
+		{
+			FBrixBoardWall W;
+			W.Min = L.Min; W.Max = L.Max;
+			W.bOld = OldDistricts.Contains(B.District);
+			W.H = FMath::Max(L.Floors * 3 + .4, 3.2 + .4);
+			return W;
+		}
+	return {};
+}
+
+bool BrixBoardSpanOf(const FBrixProp& P, const FBrixBoardWall& Wall, FBrixBoardSpan& Out)
+{
+	if (P.Kind != TEXT("advert") && P.Kind != TEXT("hoarding")) return false;
+	const FVector2D o = P.Out;
+	Out.Side = o.Y < 0 ? 'n' : o.Y > 0 ? 's' : o.X < 0 ? 'w' : 'e';
+	const bool ns = Out.Side == 'n' || Out.Side == 's';
+	const double c = ns ? P.Pos.X : P.Pos.Y, hw = Numf(P.Json, TEXT("w")) / 2;
+	Out.A0 = c - hw; Out.A1 = c + hw;
+	if (P.Kind == TEXT("hoarding")) { Out.Y0 = .12 + .1; Out.Y1 = 2.9; }   // (play.js Y_PAVE + 0.1)
+	else { Out.Y0 = Wall.bOld ? 3.55 + .55 : 3.85; Out.Y1 = FMath::Min(Out.Y0 + 2.6, (Wall.H != 0 ? Wall.H : 7) - .5); }   // (OLD_BASE 3.55)
 	return true;
 }
