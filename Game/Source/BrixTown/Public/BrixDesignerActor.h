@@ -3,10 +3,13 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "BrixDesigner.h"
+#include "BrixWardrobe.h"
 #include "BrixDesignerActor.generated.h"
 
 class SBox;
 class SScrollBox;
+class SVerticalBox;
+class SWrapBox;
 class SWidget;
 
 // The character designer (CHR-001, CHR-002, CHR-013; F-CHR-DESIGN level 2), as the slice's life.js openDesigner() and
@@ -18,7 +21,8 @@ class SWidget;
 // The character is the designer's values and nothing else (BrixWorld/BrixDesigner): BrixDesignLook makes their look.
 // For test shots: -BrixDesigner opens it (a test shot otherwise starts as the default character, as the slice's ?auto=1),
 // -BrixDesignSet=<key>:<value>;... sets values first (hair:afro;skin:7;height:1.8;cap:terra), -BrixDesignSpin=<deg> turns them,
-// -BrixDesignBegin presses Begin after 3 s (the game's own -BrixShot is then taken in play).
+// -BrixDesignBegin presses Begin after 3 s (the game's own -BrixShot is then taken in play), -BrixOutfit=<name>,... saves
+// what is worn as outfits (then -BrixMenu=wardrobe shows them).
 UCLASS(Config = Game)
 class BRIXTOWN_API ABrixDesigner : public AActor
 {
@@ -36,9 +40,21 @@ public:
 	// the designer closed and the game begins, as this character (its name for the talks, CHR-001)
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnBegin, const FBrixDesign&);
 	FOnBegin OnBegin;
-	bool SetValue(const FString& Key, const FString& Value);   // one of -BrixDesignSet's key:value, as the designer would set it
+	bool SetValue(const FString& Key, const FString& Value);
+	// the game menu's Wardrobe page (CHR-014 to CHR-016; life.js wardrobeTab()): outfits, the clothes owned (the economy's
+	// Clothes, bought at the mall's outlets) and what is worn, each change at once and free; Redraw draws the menu again
+	void WardrobePage(TSharedRef<SVerticalBox> Page, const TMap<FString, int32>& Owned, TFunction<void()> Redraw);
+	FString WardrobeHeadline() const;
+	// while the Wardrobe page is open the character stands in full beside it (Page: the page, the character to its right)
+	void WardrobeView(bool bOn, TSharedPtr<SWidget> Page = nullptr);
+	FBrixWardrobe Wardrobe;                          // the outfits saved (CHR-015), kept in the save
+	const TMap<FString, FBrixGarment>& GarmentList() const { return Garments; }   // one of -BrixDesignSet's key:value, as the designer would set it
 
 	UPROPERTY(Config) float PanelWidth = 440.f;      // px at 1600 x 900
+	UPROPERTY(Config) float LabelWidth = 106.f;      // a row's label
+	UPROPERTY(Config) float WardrobeWidth = 560.f;   // the Wardrobe page, the character beside it
+	UPROPERTY(Config) float WardrobeCameraM = 3.6f;  // m off on the Wardrobe page, times height / 1.72: all of you shows
+	UPROPERTY(Config) float WardrobeSpin = -18.f;    // degrees the character is turned on the Wardrobe page
 	UPROPERTY(Config) float SpinPerPixel = .3f;      // degrees the character turns for a pixel dragged
 	UPROPERTY(Config) float ShotSeconds = 8.f;       // -BrixDesigner: real seconds after it opens that the test shot is taken
 
@@ -50,6 +66,16 @@ private:
 	void Begun();
 	void Surprise();
 	TSharedRef<SWidget> Foot();
+	TSharedRef<SWidget> Row(const FString& Label, TSharedRef<SWidget> Content) const;
+	TSharedRef<SWidget> Swatch(const FLinearColor& Fill, bool bOn, TFunction<void()> Fn, const FString& Mark = FString()) const;
+	TSharedRef<SWidget> Chip(const FString& Label, bool bOn, TFunction<void()> Fn) const;
+	TSharedRef<SWrapBox> Wrap(float Wide) const;
+	TSharedRef<SWidget> Swatches(int32& Field, const TArray<FVector3f>& List, float Wide, TFunction<void()> Changed);
+	TSharedRef<SWidget> Colours(FString& Field, bool bNone, float Wide, TFunction<void()> Changed);
+	TSharedRef<SWidget> Chips(FString& Field, const TArray<TPair<FString, FString>>& Opts, float Wide, TFunction<void()> Changed);
+	FString ExtraLabel(const TCHAR* Key) const;
+	void WearRows(TSharedRef<SVerticalBox> V, float Wide, TFunction<void()> Changed, bool bHeads);
+	float ShareLeftOf(const TSharedPtr<SWidget>& W) const;
 	class ABrixCharacter* Me() const;
 
 	FBrixDesignerRules D;
@@ -63,4 +89,8 @@ private:
 	TSharedPtr<SWidget> Root;
 	TSharedPtr<SBox> Body, FootBox;
 	TSharedPtr<SScrollBox> Scroll;
+	TMap<FString, FBrixGarment> Garments;
+	FString OutfitName, WardMsg;
+	bool bWardrobe = false;
+	TSharedPtr<SWidget> WardrobeBox;
 };

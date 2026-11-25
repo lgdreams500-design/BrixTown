@@ -6,6 +6,7 @@
 #include "BrixMapActor.h"
 
 #include "BrixCharacter.h"
+#include "BrixDesignerActor.h"
 #include "BrixDay.h"
 #include "BrixGameMode.h"
 #include "BrixTalkActor.h"
@@ -36,6 +37,12 @@ namespace
 	FLinearColor Lin(const FColor& C) { return FLinearColor::FromSRGBColor(C); }
 }
 
+ABrixDesigner* ABrixLife::Designer() const
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	return Mode ? Mode->Designer.Get() : nullptr;
+}
+
 FString ABrixLife::SettingsPath() const { return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("BrixTown"), TEXT("settings.json")); }
 
 void ABrixLife::StartMenu()
@@ -52,7 +59,7 @@ void ABrixLife::StartMenu()
 	ApplySettings();
 	if (!GEngine || !GEngine->GameViewport) return;
 	SAssignNew(MenuRoot, SOverlay).Visibility_Lambda([this]() { return IsMenu() ? EVisibility::Visible : EVisibility::Collapsed; })
-		+ SOverlay::Slot()[ SNew(SBorder).BorderImage(Round(Veil(), 0.f)) ]
+		+ SOverlay::Slot()[ SNew(SBorder).BorderImage(Round(Veil(), 0.f)).Visibility_Lambda([this]() { return MenuTab == TEXT("wardrobe") ? EVisibility::Collapsed : EVisibility::HitTestInvisible; }) ]
 		+ SOverlay::Slot()[ SAssignNew(MenuBody, SBox) ];
 	GEngine->GameViewport->AddViewportWidgetContent(MenuRoot.ToSharedRef(), 30);
 }
@@ -126,6 +133,7 @@ void ABrixLife::CloseMenu()
 {
 	if (!bMenu) return;
 	bMenu = false;
+	if (ABrixDesigner* Dz = Designer()) Dz->WardrobeView(false);
 	if (MenuBody) MenuBody->SetContent(SNullWidget::NullWidget);
 	UGameplayStatics::SetGamePaused(this, false);
 	if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0))) Me->EndPanel();
@@ -148,7 +156,7 @@ FString ABrixLife::Headline(const FString& Id) const   // what a page's card say
 	}
 	if (Id == TEXT("belongings")) { int32 n = 0; for (const auto& I : E->Inv) n += I.Value; return n ? FString::Printf(TEXT("%d things carried"), n) : TEXT("Nothing carried"); }
 	if (Id == TEXT("property")) return TEXT("Nothing owned yet");
-	if (Id == TEXT("wardrobe")) return TEXT("What you wear");
+	if (Id == TEXT("wardrobe")) return Designer() ? Designer()->WardrobeHeadline() : FString(TEXT("What you wear"));
 	if (Id == TEXT("map"))   // life.js headline(): the mark and how far it is
 	{
 		const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
@@ -203,6 +211,10 @@ void ABrixLife::DrawMenu()
 		for (const FBrixMenuTab& T : Settings.Tabs) if (T.Group == G.Key) RailItem(T.Id, T.Name, TabColour(T.Id, false), TabColour(T.Id, true), TabKey(T.Id));
 	}
 	TSharedRef<SWidget> Page = bHome ? HomePage() : MenuPage(MenuTab);
+	const bool bWardrobe = MenuTab == TEXT("wardrobe") && Designer();   // the page to one side, so all of the character shows beside it (life.js side)
+	TSharedPtr<SWidget> PageBox;
+	if (bWardrobe) Page = SAssignNew(PageBox, SBox).WidthOverride(Designer()->WardrobeWidth)[ Page ];
+	if (ABrixDesigner* Dz = Designer()) Dz->WardrobeView(bWardrobe, PageBox);
 	MenuBody->SetContent(
 		SNew(SBox).Padding(FMargin(28, 22))
 		[
@@ -212,7 +224,7 @@ void ABrixLife::DrawMenu()
 			[
 				SNew(SHorizontalBox)
 				+ SHorizontalBox::Slot().AutoWidth().Padding(0, 0, 18, 0)[ SNew(SBox).WidthOverride(212.f)[ Card(SNew(SScrollBox) + SScrollBox::Slot()[ Rail ], FMargin(10, 12)) ] ]
-				+ SHorizontalBox::Slot().FillWidth(1)[ Page ]
+				+ SHorizontalBox::Slot().FillWidth(1)[ bWardrobe ? (TSharedRef<SWidget>)(SNew(SHorizontalBox) + SHorizontalBox::Slot().AutoWidth()[ Page ] + SHorizontalBox::Slot().FillWidth(1)) : Page ]
 			]
 		]);
 }
@@ -350,7 +362,11 @@ TSharedRef<SWidget> ABrixLife::MenuPage(const FString& Id)
 		}
 	}
 	else if (Id == TEXT("property")) { Sub = TEXT("What you own and rent"); Soon(TEXT("You own and rent nothing yet. The property market (estate agents, renting, buying, remodelling and furnishing) comes to this build with the building designer.")); }
-	else if (Id == TEXT("wardrobe")) { Sub = TEXT("What you wear"); Soon(TEXT("The wardrobe comes with the character designer (CHR-001): until then you wear the slice's player clothes.")); }
+	else if (Id == TEXT("wardrobe"))   // CHR-014 to CHR-016: the designer's own choices, outfits and the clothes bought
+	{
+		Sub = PlayerName + TEXT(" · changing is free");
+		if (ABrixDesigner* Dz = Designer()) Dz->WardrobePage(Body, E->Clothes, [this]() { DrawMenu(); });
+	}
 	else if (Id == TEXT("storage")) { Sub = TEXT("Lockers and storage units"); Soon(TEXT("Storage comes when F-PROP-STORAGE is picked (UI-014). Until then what you have is in Belongings.")); }
 	else if (Id == TEXT("map")) { Sub = TEXT("The town"); Soon(TEXT("The big map with its filters and a mark (UI-012, UI-018) is not in this build yet. Its filters are already in Settings, under The map.")); }
 	else if (Id == TEXT("settings")) { Sub = TEXT("Kept on this device, not in your save"); SettingsPage(Body); }
