@@ -52,7 +52,7 @@ public:
 	// What is inside the buildings (Game/Data/inside.json; CITY-013): set before Build to make the enterable ones hollow,
 	// with an open doorway, a floor, plastered walls and a ceiling
 	const FBrixInsides* Insides = nullptr;
-	// each hollow building's ground-storey windows on the inside face of its walls (x0, z0, x1, z1 in metres), by lot index
+	// each hollow storey's windows on the inside face of its walls (x0, z0, x1, z1 in metres), by lot index x 64 + floor
 	TMap<int32, TArray<FVector4f>> WindowSpans;
 	// Where the lamps' and wall lanterns' light comes from (the slice's lights: x, height, z in metres and a strength), and
 	// their glass, which glows by night (ABrixLamps sets its material's Glow).
@@ -113,6 +113,11 @@ public:
 	UPROPERTY(Config) float CeilingDrop = 0.12f;       // a storey's ceiling this far under the next storey's line (its slab's underside)
 	UPROPERTY(Config) float LiningDepth = 0.02f;       // the plaster inside the walls
 	UPROPERTY(Config) float CeilingWhite = 0.25f;
+	UPROPERTY(Config) FLinearColor StairWood = FLinearColor(0.36f, 0.24f, 0.15f);        // storeys.js WOOD and the other step's
+	UPROPERTY(Config) FLinearColor StairWoodLight = FLinearColor(0.40f, 0.27f, 0.17f);
+	UPROPERTY(Config) FLinearColor StairSpine = FLinearColor(0.78f, 0.73f, 0.64f);       // the wall between a switchback's flights
+	UPROPERTY(Config) FLinearColor StairRail = FLinearColor(0.20f, 0.16f, 0.12f);
+	UPROPERTY(Config) float StairHeadroom = 0.3f;      // a straight stair's hole is this much wider than its flight on the open side
 	UPROPERTY(Config) FVector4 FloorBoardsA = FVector4(0, 1.2, 0.16, 0.005);   // a boarded floor: pattern type, unit, joint (as RoadPatternA)
 	UPROPERTY(Config) FVector4 FloorBoardsB = FVector4(0.35, 0, 0, 0);
 	UPROPERTY(Config) FVector4 FloorFlagsA = FVector4(3, 0.6, 0.6, 0.008);    // a stone floor: flags

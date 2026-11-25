@@ -46,6 +46,23 @@ and mouse of whoever is at the machine and logs where the player is. A street at
 with `-BrixShut` (noisy: other sessions were running Unreal); 50 fps inside a row house. Not yet: furniture, the upper
 storeys and their stairs, residents indoors.
 
+## Storeys and stairs; residents at home inside (WLD-050, WLD-052, WLD-053, CITY-013)
+Every hollow building with a stairwell (462 of two storeys or more) and every designed house is hollow to its roof, every
+storey reached by its stair, as storeys.js and houses.js build them: a floor slab on each storey with a hole the flight
+below comes up through, the switchback stair (two flights a storey, a spine wall between them, rails where a floor stops at
+the hole) or a row house's straight stair (one flight a storey up the side wall, its hole 0.3 m wider on the open side so a
+head clears it, a rail along it), a designed house's sixteen steps up the hall to the landing; the floors at the heights of
+`BrixFloorUp` (the ground floor 0.08 m over the paving, floor f 3f + 0.08 m; a designed house 0.3 m and 3.3 m storeys),
+each in its own finish and wall colour, the windows of every storey clear. The planned homes are furnished on every floor.
+`WLD052_every_storey_is_reached_by_its_stair` checks the floors' heights and the flights (892 of them); `-BrixWalk=x,z;...`
+walked the player up a row house's stair to the first floor. Residents at home lie in their beds and sit on their sofas
+(`SeatBrixDayIndoors`: the day's bed and room stays on the nearest bed or seat of their floor; people.js's lying pose,
+turned so the head is at the bed's head); anyone else inside stands on their floor. As in the slice, those inside are
+drawn only while the camera is in their building. `CITY013_every_indoor_place_is_inside_its_lot_on_its_floor` checks all
+23,203 indoor stays of the day (4,547 in a bed, 4,406 on a seat). By night the rooms of the home the camera is in have
+their lamps. The towers' lifts (WLD-051) and the court flats' own walls are not built yet; a street at High: 41.3 to 41.5
+fps, 43.2 with `-BrixShut` (noisy).
+
 ## Furnished homes (FURN-060 to FURN-063; ADR-0050)
 The planned homes are furnished as the slice furnishes them (homes.js, houses.js): 469 designed houses (plan house_12x9)
 and 250 row houses (lot.interior) from World/rules/home_plans.json, with their inner walls and doorways, tiled kitchens and
@@ -55,7 +72,7 @@ each piece stands is `BrixWorld/BrixHomes` (`FURN060_every_planned_home_is_furni
 furniture kits' own meshes in the home's line: `Tools/blender/unreal_furniture_37.py` exports them (Blender, about 20 s),
 `Tools/unreal/import_furniture_kit.py` imports the ones the plans use into `/Game/Furniture` (the .glb files are not kept in
 git). `ABrixRooms` furnishes the homes within 30 m of the camera, and lights the rooms of the home the camera is in (three
-lamps, no shadows: 3 to 5 fps). Only the ground floors so far. `-BrixStand=x,z,yaw` puts the player in a room for a shot.
+lamps, no shadows: 3 to 5 fps). `-BrixStand=x,z,yaw` puts the player in a room for a shot.
 
 ## Designed houses (ADR-0032, ADR-0035)
 The 469 designed houses (lot.house) are built as the slice builds them (houses.js outsideS): the 12 x 9 m house of
@@ -399,6 +416,8 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.ART004_people_are_drawn_as_the_slice_draws_them` | ART-004, ANIM-001, ANIM-002 |
 | `BrixTown.World.CITY013_every_enterable_building_has_a_doorway` | CITY-013 (ADR-0048) |
 | `BrixTown.World.FURN060_every_planned_home_is_furnished_in_its_rooms` | FURN-060, FURN-061, FURN-063 (ADR-0050) |
+| `BrixTown.World.WLD052_every_storey_is_reached_by_its_stair` | WLD-050, WLD-052 |
+| `BrixTown.World.CITY013_every_indoor_place_is_inside_its_lot_on_its_floor` | CITY-013, WLD-053 |
 | `BrixTown.World.CITY017_residents_sit_on_garden_benches` | CITY-017 |
 | `BrixTown.World.CITY040_vehicles_are_where_the_traffic_puts_them` | CITY-040 |
 | `BrixTown.World.CITY041_trams_are_where_the_timetable_puts_them` | CITY-041 |

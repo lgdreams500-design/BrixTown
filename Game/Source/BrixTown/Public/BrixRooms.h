@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BrixHomes.h"
 #include "GameFramework/Actor.h"
 #include "BrixRooms.generated.h"
 
@@ -47,7 +48,7 @@ public:
 	UPROPERTY(Config) FLinearColor RoomLightColour = FLinearColor(1.f, 0.86f, 0.68f);
 
 private:
-	struct FLotHome { int32 Lot = -1; FVector2D Centre = FVector2D::ZeroVector; float Reach = 0.f; float Floor0 = 0.f, Storey = 3.f, Ceil0 = 3.f; TSharedPtr<FBrixHome> Home; };
+	struct FLotHome { int32 Lot = -1; FVector2D Centre = FVector2D::ZeroVector; float Reach = 0.f; TArray<float> FloorUp, CeilUp; TArray<TOptional<FBrixRect>> Holes; TSharedPtr<FBrixHome> Home; };   // heights of its built floors
 	TArray<FLotHome> Homes;
 	TSet<int32> Near;                                   // indexes into Homes, furnished now
 	float Wait = 0.f;

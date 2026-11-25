@@ -121,7 +121,8 @@ struct BRIXWORLD_API FBrixDoorRules
 {
 	float Wall = 0.32f, Bay = 3.2f, MinFacade = 2.f, ShopPane = 2.2f, ShopPier = 0.32f;
 	float DoorPlain = 1.3f, DoorCivic = 1.5f, PlainHeight = 2.3f, ArchHeight = 2.5f, CivicHeight = 2.6f, ShopDoorHeight = 2.3f;
-	float HousePlinth = 0.3f;
+	float HousePlinth = 0.3f, HouseStorey = 3.3f;
+	float Base = 0.12f, InsideFloor = 0.08f, Storey = 3.f, CeilingDrop = 0.12f;   // the block's paving; a floor's top over a storey's line; a storey; a ceiling under the next line
 	TArray<FString> OutskirtDistricts = { TEXT("Outskirts") };   // districts that are not old: doors are plain there
 	static FBrixDoorRules FromConfig();       // from GConfig (Game ini), falling back to the numbers above
 };
@@ -129,4 +130,9 @@ struct BRIXWORLD_API FBrixDoorRules
 // Whether the Unreal town builds this lot hollow, with a doorway (every enterable building but those drawn their own way:
 // the furniture outlet's hall and the malls).
 BRIXWORLD_API bool BrixIsHollow(const FBrixLot& Lot, const FBrixInside* Inside);
+// How high above the street the top of a building's floor f is, as the Unreal town builds it (WLD-052): the ground floor
+// InsideFloor over the paving, floor f InsideFloor over its storey's line; a designed house on its plinth, storeys of 3.3 m.
+BRIXWORLD_API float BrixFloorUp(const FBrixLot& Lot, int32 Floor, const FBrixDoorRules& R);
+// and its ceiling (the top floor's under the roof)
+BRIXWORLD_API float BrixCeilingUp(const FBrixLot& Lot, int32 Floor, const FBrixDoorRules& R);
 BRIXWORLD_API FBrixDoorway BrixDoorwayOf(const FBrixCity& City, const FBrixLot& Lot, const FString& District, const FBrixDoorRules& R);

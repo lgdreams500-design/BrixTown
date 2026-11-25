@@ -2,6 +2,7 @@
 
 #include "BrixCity.h"
 #include "BrixInside.h"
+#include "BrixDay.h"
 #include "Dom/JsonObject.h"
 
 namespace
@@ -253,7 +254,7 @@ bool BrixHomeOf(const FBrixInsides& Ins, const FBrixLot& Lot, const FBrixInside&
 					FBrixSpot Sp;
 					Sp.At = At(mu(It.X + Q[0] * c - Q[1] * s), mv(It.Y + Q[0] * s + Q[1] * c));
 					const FVector2D D = Turn(FVector2D(-(Q[3] * c - Q[4] * s), Q[3] * s + Q[4] * c));
-					Sp.Facing = bLie ? -D : D; Sp.Floor = Pc.Floor; Sp.Up = Q[2]; Sp.bLie = bLie;
+					Sp.Facing = D; Sp.Floor = Pc.Floor; Sp.Up = Q[2]; Sp.bLie = bLie;
 					Out.Spots.Add(Sp);
 				}
 		}
@@ -349,9 +350,61 @@ bool BrixHomeOf(const FBrixInsides& Ins, const FBrixLot& Lot, const FBrixInside&
 				FBrixSpot Sp;
 				Sp.At = W(mu(It.X + Q[0] * c - Q[1] * s), mv(It.Y + Q[0] * s + Q[1] * c));
 				const FVector2D D = Dv(Q[3] * c - Q[4] * s, Q[3] * s + Q[4] * c);
-				Sp.Facing = Pc.bBed ? -D : D; Sp.Floor = Pc.Floor; Sp.Up = Q[2]; Sp.bLie = Pc.bBed;
+				Sp.Facing = D; Sp.Floor = Pc.Floor; Sp.Up = Q[2]; Sp.bLie = Pc.bBed;
 				Out.Spots.Add(Sp);
 			}
 	}
 	return true;
+}
+
+bool BrixHouseWell(const FBrixInsides& Ins, FVector4f& Well, float& StepOff)
+{
+	const FBrixHomePlan* P = Ins.Plans.Find(TEXT("house_12x9"));
+	if (!P || P->Stair.Num() < 4) return false;
+	const float HV = 4.5f, SW = 0.32f, SJ = HV - SW, SM = P->YM, PJ0 = P->D1 - P->T;
+	const TArray<float> VO = { -PJ0, SM, PJ0 }, VN = { -SJ, SM, SJ };
+	Well = FVector4f(P->XB - PART / 2 - (P->Stair[1] - P->Stair[0]), P->XB - PART / 2, Round3(MapA(P->Stair[2], VO, VN)), SJ);
+	StepOff = SJ - 1.1f;
+	return true;
+}
+
+int32 SeatBrixDayIndoors(FBrixDay& Day, const FBrixCity& City, const FBrixInsides& Ins, const FBrixDoorRules& R)
+{
+	TArray<const FBrixLot*> Lots;
+	for (const FBrixBlock& B : City.Blocks) for (const FBrixLot& L : B.Lots) Lots.Add(&L);
+	TMap<int32, TSharedPtr<FBrixHome>> Homes;
+	const TArray<FBrixWindowSpan> NoWindows;
+	int32 Placed = 0;
+	for (TArray<FBrixDay::FPiece>& Row : Day.Plan)
+		for (FBrixDay::FPiece& P : Row)
+		{
+			if (P.Kind != 0 || !P.bInside || !Lots.IsValidIndex(P.Lot)) continue;
+			const FBrixLot& L = *Lots[P.Lot];
+			P.Pose = 0;
+			P.SeatUp = BrixFloorUp(L, P.Floor, R);
+			if (P.Use != 0 && P.Use != 1) continue;          // build_play.py USES: 0 bed, 1 room
+			TSharedPtr<FBrixHome>* Found = Homes.Find(P.Lot);
+			if (!Found)
+			{
+				TSharedPtr<FBrixHome> H;
+				if (Ins.Lots.IsValidIndex(P.Lot) && Ins.Lots[P.Lot].IsSet())
+				{
+					H = MakeShared<FBrixHome>();
+					if (!BrixHomeOf(Ins, L, Ins.Lots[P.Lot].GetValue(), Day.Day, NoWindows, *H)) H.Reset();
+				}
+				Found = &Homes.Add(P.Lot, H);
+			}
+			if (!Found->IsValid()) continue;
+			const bool bLie = P.Use == 0;
+			const FBrixSpot* Best = nullptr;
+			for (const FBrixSpot& S : (*Found)->Spots)
+				if (S.bLie == bLie && S.Floor == P.Floor && (!Best || FVector2D::DistSquared(S.At, P.Pos) < FVector2D::DistSquared(Best->At, P.Pos))) Best = &S;
+			if (!Best) continue;
+			P.Pose = bLie ? 3 : 2;
+			P.SeatUp += Best->Up;
+			P.Facing = Best->Facing;
+			P.Pos = Best->At;                                // on the piece itself (the lot's place is the same point, add_homes_01.py)
+			++Placed;
+		}
+	return Placed;
 }

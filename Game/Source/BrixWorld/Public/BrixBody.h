@@ -90,7 +90,7 @@ struct BRIXWORLD_API FBrixFace
 
 struct BRIXWORLD_API FBrixDrawOptions
 {
-	int32 Pose = 0;          // 0 standing, 1 walking, 2 sitting (the origin is then the seat's top)
+	int32 Pose = 0;          // 0 standing, 1 walking, 2 sitting (the origin is then the seat's top), 3 lying (on the bed's top)
 	double Phase = 0;        // the walk's cycle, 0..1
 	double Seconds = 0;      // time, for breathing, blinking and the head's wander
 	int32 Lod = 1;           // 0 full (the nearest few), 1 to 16 m, 2 to 35 m; 3 a far figure of boxes

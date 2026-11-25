@@ -43,6 +43,7 @@ class BRIXTOWN_API ABrixPeople : public AActor
 public:
 	ABrixPeople();
 	void Start(const FBrixCity& InCity, TSharedPtr<FBrixDay> InDay, TSharedPtr<FBrixTraffic> InTraffic = nullptr);
+	int32 CameraLot = INDEX_NONE;   // the building the camera is in (the game mode's RoomAt): its residents inside are drawn (CITY-013)
 	virtual void Tick(float DeltaSeconds) override;
 
 	UPROPERTY(Config) float ShowDistance = 90.f;    // m; residents further from the player are not drawn (CITY-024)

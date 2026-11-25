@@ -148,6 +148,8 @@ void ABrixGameMode::StartPlay()
 		else UE_LOG(LogTemp, Warning, TEXT("Brix Town: no vehicles (%s); run Tools/worldgen/build_play.py"), *CarError);
 		if (Today)
 		{
+			if (Insides)   // at home inside: in bed, on the sofa (CITY-013, WLD-053)
+				UE_LOG(LogTemp, Display, TEXT("Brix Town: %d of the day's stays at home are in a bed or on a seat"), SeatBrixDayIndoors(*Today, *City, *Insides, FBrixDoorRules::FromConfig()));
 			People = GetWorld()->SpawnActor<ABrixPeople>();
 			People->Start(*City, Today, Cars ? Traffic : nullptr);
 			UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents, their day %d (%s, %s)"), Today->Num(), Today->Day, *Today->Weekday, *Today->Season);
@@ -272,6 +274,13 @@ void ABrixGameMode::StartPlay()
 		FTimerHandle H;
 		GetWorldTimerManager().SetTimer(H, [this, MenuPage]() { if (Life) Life->TestMenu(MenuPage); }, FMath::Max(1.f, ShotDelaySeconds - 3.f), false);
 	}
+	FString Way;   // -BrixWalk=x,z;x,z;...: after the other switches have placed the player, walk them through these points
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixWalk="), Way, false))
+	{
+		TArray<FString> Pts;
+		Way.ParseIntoArray(Pts, TEXT(";"));
+		for (const FString& Pt : Pts) { FString A, B; if (Pt.Split(TEXT(","), &A, &B)) WalkPoints.Add(FVector2D(FCString::Atof(*A), FCString::Atof(*B))); }
+	}
 	FString Stand;
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixStand="), Stand, false))   // x,z,yaw: the player stands there, facing that way
 	{
@@ -389,6 +398,14 @@ void ABrixGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	UpdateSun();
+	if (!WalkTo && WalkPoints.Num() && GetWorld()->GetTimeSeconds() > 1.0)   // -BrixWalk: the next point
+	{
+		WalkTo = WalkPoints[0];
+		WalkPoints.RemoveAt(0);
+		WalkSeconds = 0.f;
+		if (const APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0)) WalkFrom = FVector2D(Me->GetActorLocation().X / BrixUnits::CmPerM, Me->GetActorLocation().Y / BrixUnits::CmPerM);
+		WalkLot = FString::Printf(TEXT("the point (%.1f, %.1f)"), WalkTo->X, WalkTo->Y);
+	}
 	if (WalkTo)   // -BrixWalkIn: walking the player in through the doorway, as if W were held toward the room
 	{
 		APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0);
@@ -398,12 +415,12 @@ void ABrixGameMode::Tick(float DeltaSeconds)
 		WalkSeconds += DeltaSeconds;
 		if (To.Size() < 0.4)
 		{
-			UE_LOG(LogTemp, Display, TEXT("Brix Town: walked in through the doorway of %s in %.1f s"), *WalkLot, WalkSeconds);
+			UE_LOG(LogTemp, Display, TEXT("Brix Town: walked %s %s in %.1f s, %.2f m up"), WalkLot.StartsWith(TEXT("the point")) ? TEXT("to") : TEXT("in through the doorway of"), *WalkLot, WalkSeconds, Me->GetActorLocation().Z / BrixUnits::CmPerM - 0.85);
 			WalkTo.Reset();
 		}
 		else if (WalkSeconds > 12.f)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Brix Town: could not walk into %s: stopped %.2f m short, %.2f m from the start"), *WalkLot, To.Size(), (Here - WalkFrom).Size());
+			UE_LOG(LogTemp, Warning, TEXT("Brix Town: could not walk to %s: stopped %.2f m short, %.2f m from the start"), *WalkLot, To.Size(), (Here - WalkFrom).Size());
 			WalkTo.Reset();
 		}
 		else Me->AddMovementInput(FVector(To.GetSafeNormal(), 0.0), 1.f, true);   // forced: a test shot ignores the keys
@@ -447,6 +464,7 @@ void ABrixGameMode::UpdateSun()
 		const APlayerCameraManager* Cam = UGameplayStatics::GetPlayerCameraManager(this, 0);
 		const bool bIndoors = Cam && RoomAt(Cam->GetCameraLocation()) != INDEX_NONE;
 		HazeFog->SetFogDensity(HazeDensity * (bIndoors ? IndoorHaze : 1.f) * (bWx ? (float)Weather->Now.Haze : 1.f));
+		if (People) People->CameraLot = Cam ? RoomAt(Cam->GetCameraLocation()) : INDEX_NONE;   // its residents inside are drawn (CITY-013)
 	}
 }
 

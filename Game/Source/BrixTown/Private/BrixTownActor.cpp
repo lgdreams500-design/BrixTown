@@ -1,6 +1,7 @@
 ﻿#include "BrixTownActor.h"
 
 #include "BrixCity.h"
+#include "BrixHomes.h"
 #include "BrixInside.h"
 #include "BrixUnits.h"
 #include "Components/InstancedStaticMeshComponent.h"
@@ -265,17 +266,24 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 	FBrixDoorway Dw;
 	if (bHollow) Dw = BrixDoorwayOf(*CityData, L, B.District, FBrixDoorRules::FromConfig());
 	const float FloorTop = bHouse ? S0 : InsideFloor;
-	const float CeilAt = FMath::Min(H, (bHouse ? S1 : StoreyHeight) - CeilingDrop);
+	// WLD-050, WLD-052: a building of two storeys or more with a stairwell (a designed house: its hall stair) is hollow to its
+	// roof, every storey reached by its stair (storeys.js shell()); its storeys' floors and ceilings where BrixWorld has them
+	const bool bStoreys = bHollow && (bHouse || (Floors >= 2 && In && In->Stair.IsSet() && L.AngleDeg == 0.f && Insides));
+	const int32 NFl = bStoreys ? (bHouse ? 2 : Floors) : 1;
+	const FBrixDoorRules DR = FBrixDoorRules::FromConfig();
+	auto FloorTopOf = [&](int32 f) { return BrixFloorUp(L, f, DR) - Base; };
+	auto CeilOf = [&](int32 f) { return bStoreys ? BrixCeilingUp(L, f, DR) - Base : FMath::Min(H, (bHouse ? S1 : StoreyHeight) - CeilingDrop); };
+	auto ColourOf = [&](const TArray<FVector3f>& A, int32 f, const FLinearColor& Else) { return A.Num() ? Lin(A[FMath::Clamp(f, 0, A.Num() - 1)]) : Else; };
 	const FLinearColor InWall = In && In->WallColour.Num() ? Lin(In->WallColour[0]) : FLinearColor(0.77f, 0.72f, 0.62f);
 	const FLinearColor InFloor = In && In->FloorColour.Num() ? Lin(In->FloorColour[0]) : FLinearColor(0.4f, 0.27f, 0.17f);
-	const FLinearColor InCeil = FMath::Lerp(InWall, FLinearColor::White, CeilingWhite);
 	auto BlockAt = [&](const FVector2D& Local, float Z0, float Z1, double YawRad, float Len, float Dep)
 	{
 		Add(BlockerGroup(), FTransform(FQuat(FVector::UpVector, YawRad + Ang), At(Local, (Z0 + Z1) * 0.5f), FVector(Len, Dep, Z1 - Z0)), FLinearColor::Black);
 	};
 
 	// the core, set back by the wall's depth all round (the kit's "core": what the reveals look into)
-	const float CoreFrom = bHollow ? CeilAt : 0.f;
+	const float HollowTop = CeilOf(NFl - 1);
+	const float CoreFrom = bHollow ? HollowTop : 0.f;
 	if (StoneTo >= H) BoxLook(Stone, FVector2D::ZeroVector, CoreFrom, H, 0.0, S.X - 2 * t, S.Y - 2 * t);
 	else Box(Plaster, FVector2D::ZeroVector, CoreFrom, H, 0.0, S.X - 2 * t, S.Y - 2 * t);
 	if (bHollow)
@@ -286,8 +294,99 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 		Fl.A = FVector4f(bBoards ? FloorBoardsA : FloorFlagsA);
 		Fl.B = FVector4f(bBoards ? FloorBoardsB : FloorFlagsB);
 		BoxLook(Fl, FVector2D::ZeroVector, 0.f, FloorTop, 0.0, S.X - 2 * t, S.Y - 2 * t);
-		Box(InCeil, FVector2D::ZeroVector, CeilAt - 0.02f, CeilAt, 0.0, S.X - 2 * t, S.Y - 2 * t);
+		Box(FMath::Lerp(ColourOf(In ? In->WallColour : TArray<FVector3f>(), NFl - 1, InWall), FLinearColor::White, CeilingWhite), FVector2D::ZeroVector, HollowTop - 0.02f, HollowTop, 0.0, S.X - 2 * t, S.Y - 2 * t);
 		++Hollow;
+	}
+	if (bStoreys)
+	{
+		// the stair: the flights' rectangles in the lot's own frame (x0, x1, y0, y1), as storeys.js stairOf() and houses.js stepsS()
+		FBrixStairGeo G;
+		FVector4f Well(0, 0, 0, 0);
+		float StepOff = 0.f;
+		const bool bWell = bHouse ? BrixHouseWell(*Insides, Well, StepOff) : true;
+		if (!bHouse) G = BrixStairOf(*In->Stair, Insides->Rules);
+		auto UvRect = [&](float U0, float U1, float V0, float V1)   // a stairwell rectangle (u, v) to the lot's frame
+		{
+			const FVector2D A = G.P(FMath::Min(U0, U1), FMath::Min(V0, V1)) - C, B2 = G.P(FMath::Max(U0, U1), FMath::Max(V0, V1)) - C;
+			return FVector4f((float)A.X, (float)B2.X, (float)A.Y, (float)B2.Y);
+		};
+		auto HouseRect = [&](float U0, float U1, float V0, float V1) { return FVector4f(-U1, -U0, V0, V1); };   // houses.js: u mirrored
+		auto RectBox = [&](const FLinearColor& Col, const FVector4f& R, float Z0, float Z1)
+		{
+			if (R.Y - R.X > 0.005f && R.W - R.Z > 0.005f) Box(Col, FVector2D((R.X + R.Y) / 2, (R.Z + R.W) / 2), Z0, Z1, 0.0, R.Y - R.X, R.W - R.Z);
+		};
+		// the floors above the ground: a slab over the whole storey but for the hole the flight below comes up through
+		const FVector4f Inner(-S.X / 2 + t, S.X / 2 - t, -S.Y / 2 + t, S.Y / 2 - t);
+		for (int32 f = 1; f < NFl; ++f)
+		{
+			FVector4f Hole(0, 0, 0, 0);
+			if (bHouse && bWell) Hole = HouseRect(Well.X, Well.Y, Well.Z, Well.W);
+			else if (!bHouse)
+			{
+				// over the flight below; a straight stair's hole is wider on its open side, so a head clears the floor's edge
+				const FBrixStairGeo::FFlight Fb = G.Flight(f - 1);
+				const bool bOpenHigh = G.bStraight && FMath::Abs(G.Open - Fb.Lane.Y) < 1e-3f, bOpenLow = G.bStraight && !bOpenHigh;
+				Hole = UvRect(G.ULo, G.UHi, Fb.Lane.X - (bOpenLow ? StairHeadroom : 0.f), Fb.Lane.Y + (bOpenHigh ? StairHeadroom : 0.f));
+			}
+			const float Za = CeilOf(f - 1), Zb = FloorTopOf(f);
+			FLook Fl;
+			Fl.Colour = ColourOf(In->FloorColour, f, InFloor);
+			const bool bBoards = !In->FloorFinish.IsValidIndex(f) || In->FloorFinish[f] == 15;
+			Fl.A = FVector4f(bBoards ? FloorBoardsA : FloorFlagsA);
+			Fl.B = FVector4f(bBoards ? FloorBoardsB : FloorFlagsB);
+			const FLinearColor Ceil = FMath::Lerp(ColourOf(In->WallColour, f - 1, InWall), FLinearColor::White, CeilingWhite);
+			const FVector4f Strips[4] = { FVector4f(Inner.X, Inner.Y, Inner.Z, Hole.Z), FVector4f(Inner.X, Inner.Y, Hole.W, Inner.W),
+				FVector4f(Inner.X, Hole.X, Hole.Z, Hole.W), FVector4f(Hole.Y, Inner.Y, Hole.Z, Hole.W) };
+			for (const FVector4f& R : (Hole.Y > Hole.X ? TArrayView<const FVector4f>(Strips, 4) : TArrayView<const FVector4f>(&Inner, 1)))
+			{
+				RectBox(Ceil, R, Za, Za + 0.02f);
+				if (R.Y - R.X > 0.005f && R.W - R.Z > 0.005f)
+					BoxLook(Fl, FVector2D((R.X + R.Y) / 2, (R.Z + R.W) / 2), Za + 0.02f, Zb, 0.0, R.Y - R.X, R.W - R.Z);
+			}
+		}
+		if (bHouse && bWell)
+		{
+			// houses.js insideS(): sixteen steps up the hall's side to the landing, solid beneath; a rail round the well upstairs,
+			// open where you step off at the top
+			const int32 N = 16;
+			for (int32 k = 0; k < N; ++k)
+			{
+				const float Va = Well.Z + (Well.W - Well.Z) * k / N, Vb = Well.Z + (Well.W - Well.Z) * (k + 1) / N, Top = S0 + HouseStorey * (k + 1) / N;
+				RectBox(k % 2 ? StairWood : StairWoodLight, HouseRect(Well.X, Well.Y, Va, Vb), S0, Top);
+			}
+			RectBox(StairRail, HouseRect(Well.X - 0.04f, Well.X + 0.02f, Well.Z, StepOff), S1, S1 + 1.0f);
+			RectBox(StairRail, HouseRect(Well.X, Well.Y, Well.Z - 0.035f, Well.Z + 0.035f), S1, S1 + 1.0f);
+		}
+		else if (!bHouse)
+		{
+			const float Step = 0.19f;   // storeys.js STEP
+			for (int32 f = 0; f + 1 < NFl; ++f)
+			{
+				const FBrixStairGeo::FFlight Fl = G.Flight(f);
+				const float Y0 = FloorTopOf(f), Rise = FloorTopOf(f + 1) - Y0;
+				const int32 N = FMath::CeilToInt(Rise / Step);
+				const float Tr = (G.UHi - G.ULo) / N;
+				for (int32 k = 0; k < N; ++k)   // each step solid down to the floor (a straight stair's upper ones thin, over the flight below)
+				{
+					const float Ua = Fl.Ub + Fl.Dir * k * Tr, Ub = Fl.Ub + Fl.Dir * (k + 1) * Tr, Top = Y0 + (k + 1) * Rise / N;
+					RectBox(k % 2 ? StairWood : StairWoodLight, UvRect(Ua, Ub, Fl.Lane.X, Fl.Lane.Y), G.bStraight && f > 0 ? Top - 0.2f : Y0, Top);
+				}
+			}
+			for (int32 f = 0; f < NFl; ++f)
+			{
+				if (!G.bStraight) RectBox(StairSpine, UvRect(G.ULo, G.UHi, G.Spine.X, G.Spine.Y), FloorTopOf(f), CeilOf(f));   // the spine wall
+				else if (f > 0)
+				{
+					const float Edge = FMath::Abs(G.Open - G.Lane0.Y) < 1e-3f ? G.Open + StairHeadroom : G.Open - StairHeadroom;
+					RectBox(StairRail, UvRect(G.ULo, G.UHi, Edge - 0.03f, Edge + 0.03f), FloorTopOf(f), FloorTopOf(f) + 1.0f);
+				}
+				if (f > 0 && !(G.bStraight && f < NFl - 1))   // a rail where the floor stops at the hole
+				{
+					const FBrixStairGeo::FFlight Fb = G.Flight(f - 1);
+					RectBox(StairRail, UvRect(Fb.Ub - 0.03f, Fb.Ub + 0.03f, Fb.Lane.X, Fb.Lane.Y), FloorTopOf(f), FloorTopOf(f) + 1.0f);
+				}
+			}
+		}
 	}
 
 	// which facade has the door: the edge of the footprint nearest the lot's door
@@ -476,12 +575,14 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			if (!O.Mesh) continue;
 			const FTransform Tr(FQuat(FVector::UpVector, Yaw + Ang), At(OnWall(O.S, 0.f), O.MeshZ >= 0.f ? O.MeshZ : O.Z0), FVector(O.SX, 1, O.SZ));
 			// a hollow storey's windows are clear, so the room looks out and the sun comes in (M_Clear)
-			Add(Group(O.Mesh, false, OpeningCullDistance, bHollow && !O.bDoorway && O.Z0 < CeilAt), Tr, *O.Paint);
+			Add(Group(O.Mesh, false, OpeningCullDistance, bHollow && !O.bDoorway && O.Z0 < HollowTop), Tr, *O.Paint);
 			if (bHollow && !O.bDoorway) BlockAt(OnWall(O.S, -t / 2), O.Z0, O.Z0 + O.H, Yaw, O.W, t);   // a window is not a way in
-			if (bHollow && !O.bDoorway && O.Z0 < CeilAt)   // where the room's windows are, for its furniture (homes.js dropped())
+			if (bHollow && !O.bDoorway && O.Z0 < HollowTop)   // where the room's windows are, for its furniture (homes.js dropped())
 			{
 				const FVector Wa = At(OnWall(O.S - O.W / 2, -t), 0.f), Wb = At(OnWall(O.S + O.W / 2, -t), 0.f);
-				WindowSpans.FindOrAdd(LotIndex).Add(FVector4f(Wa.X / CmPerM, Wa.Y / CmPerM, Wb.X / CmPerM, Wb.Y / CmPerM));
+				int32 Fw = 0;
+				while (Fw + 1 < NFl && O.Z0 >= FloorTopOf(Fw + 1) - 0.5f) ++Fw;
+				WindowSpans.FindOrAdd(LotIndex * 64 + Fw).Add(FVector4f(Wa.X / CmPerM, Wa.Y / CmPerM, Wb.X / CmPerM, Wb.Y / CmPerM));
 			}
 			if (O.Shutters) Add(Group(O.Shutters, false, ShutterCullDistance), FTransform(Tr.GetRotation(), Tr.GetLocation(), FVector(O.SX, 1, 1)), Shutter);
 			++Openings;
@@ -501,8 +602,11 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			if (R.bStone) BoxLook(Stone, OnWall((R.Span.X + R.Span.Y) / 2, -t / 2), R.Z0, R.Z1, Yaw, R.Span.Y - R.Span.X, t);
 			else Box(Plaster, OnWall((R.Span.X + R.Span.Y) / 2, -t / 2), R.Z0, R.Z1, Yaw, R.Span.Y - R.Span.X, t);
 			// inside a hollow storey the wall is plastered in the storey's colour (BUILD-019)
-			const float Za = FMath::Max(R.Z0, FloorTop), Zb = FMath::Min(R.Z1, CeilAt);
-			if (bHollow && Zb - Za > 0.01f) Box(InWall, OnWall((R.Span.X + R.Span.Y) / 2, -t - LiningDepth / 2), Za, Zb, Yaw, R.Span.Y - R.Span.X, LiningDepth);
+			for (int32 f = 0; bHollow && f < NFl; ++f)
+			{
+				const float Za = FMath::Max(R.Z0, FloorTopOf(f)), Zb = FMath::Min(R.Z1, CeilOf(f));
+				if (Zb - Za > 0.01f) Box(ColourOf(In ? In->WallColour : TArray<FVector3f>(), f, InWall), OnWall((R.Span.X + R.Span.Y) / 2, -t - LiningDepth / 2), Za, Zb, Yaw, R.Span.Y - R.Span.X, LiningDepth);
+			}
 		};
 		for (int32 b = 0; b + 1 < Breaks.Num(); ++b)
 		{
