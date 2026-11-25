@@ -62,6 +62,7 @@ public:
 	void TalkEnded();
 	TMap<FString, FString> TalkVars() const;
 	FBrixQuests* Quests() const { return Q.Get(); }
+	const FBrixQuestRules& QuestLines() const { return QuestRules; }   // the maps' markers (life.js targets())
 	FOnBrixRewardSound OnRewardSound;
 	const TMap<FString, int32>& Achievements() const { return Feats; }   // earned, and on which day (QST-009)
 	bool ArrowKey(int32 Dx, int32 Dy);    // at a shop's counter: choose the next thing that way

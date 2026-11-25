@@ -3,6 +3,7 @@
 // pages stand in their groups (You, Town, Game), each with its colour; along the top who is playing, the day, the time,
 // the cash and the way back to town. While it is open the clock stands still (settings.json menu.pauses).
 #include "BrixLifeActor.h"
+#include "BrixMapActor.h"
 
 #include "BrixCharacter.h"
 #include "BrixDay.h"
@@ -79,6 +80,12 @@ void ABrixLife::Menu(const FString& Id)
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
 	if (Mode && Mode->Talk && Mode->Talk->IsTalking()) return;
 	if (!Panel.IsEmpty()) Close();
+	if (Id == TEXT("map") && Mode && Mode->Map)   // the map is the town's own big map (life.js panel("map"))
+	{
+		CloseMenu();
+		Mode->Map->Toggle();
+		return;
+	}
 	if (bMenu && MenuTab == Id) { CloseMenu(); return; }   // a page's key again: back to town
 	MenuTab = Id;
 	if (!bMenu)
@@ -142,7 +149,11 @@ FString ABrixLife::Headline(const FString& Id) const   // what a page's card say
 	if (Id == TEXT("belongings")) { int32 n = 0; for (const auto& I : E->Inv) n += I.Value; return n ? FString::Printf(TEXT("%d things carried"), n) : TEXT("Nothing carried"); }
 	if (Id == TEXT("property")) return TEXT("Nothing owned yet");
 	if (Id == TEXT("wardrobe")) return TEXT("What you wear");
-	if (Id == TEXT("map")) return CityName;
+	if (Id == TEXT("map"))   // life.js headline(): the mark and how far it is
+	{
+		const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+		return Mode && Mode->Map && Mode->Map->Mark.bSet ? TEXT("Mark: ") + Mode->Map->Mark.Name + FString::Printf(TEXT(", %d m"), (int32)FMath::RoundHalfFromZero(FVector2D::Distance(Mode->Map->Mark.Pos, Mode->Map->Player))) : FString(TEXT("No mark: click the map to set one"));
+	}
 	if (Id == TEXT("storage")) return TEXT("Not yet");
 	if (Id == TEXT("settings")) return TEXT("Picture, sound, controls");
 	if (Id == TEXT("save")) return TEXT("Three slots");

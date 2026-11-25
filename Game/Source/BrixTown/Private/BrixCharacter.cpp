@@ -3,6 +3,7 @@
 #include "BrixCarsActor.h"
 #include "BrixGameMode.h"
 #include "BrixLifeActor.h"
+#include "BrixMapActor.h"
 #include "BrixPeople.h"
 #include "BrixTalkActor.h"
 #include "BrixUnits.h"
@@ -349,6 +350,7 @@ void ABrixCharacter::AnswerKey(const FInputActionInstance& Instance)
 void ABrixCharacter::LeaveKey()
 {
 	if (bDesigning) return;   // the designer has the keys
+	if (const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this))) if (Mode->Map && Mode->Map->IsOpen()) { Mode->Map->Close(); return; }   // Esc closes the big map first (play.js)
 	if (ABrixLife* L = Life()) if (L->IsOpen()) { L->Close(); return; }
 	if (ABrixTalk* T = Talk()) if (T->IsTalking()) { T->Close(); return; }
 	if (bDriving) return;
@@ -390,7 +392,7 @@ void ABrixCharacter::MenuPageKey(const FInputActionInstance& Instance)
 	if (bDesigning) return;   // the designer has the keys
 	if (bDriving || bTalking) return;
 	const int32 n = PageActions.IndexOfByKey(Instance.GetSourceAction());
-	if (ABrixLife* L = Life()) if (PageNames.IsValidIndex(n)) L->MenuKey(PageNames[n]);
+	if (ABrixLife* L = Life()) if (PageNames.IsValidIndex(n)) L->MenuKey(PageNames[n]);   // M: the menu's Map page is the big map (ABrixLife::Menu)
 }
 
 void ABrixCharacter::SetView(float CameraM, float FovDeg, float LookSpeed, bool bInvertY)

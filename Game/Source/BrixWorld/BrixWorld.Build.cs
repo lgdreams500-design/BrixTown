@@ -10,5 +10,7 @@ public class BrixWorld : ModuleRules
 		bUseUnity = false;   // each file on its own, so files' short names (a colour, a helper) cannot clash (as BrixTown)
 		PublicDependencyModuleNames.AddRange(new string[] { "Core" });
 		PrivateDependencyModuleNames.AddRange(new string[] { "Json" });
+		// each file on its own: with unity builds the files' own short helpers (Num, Str) clash when a new file regroups them
+		bUseUnity = false;
 	}
 }

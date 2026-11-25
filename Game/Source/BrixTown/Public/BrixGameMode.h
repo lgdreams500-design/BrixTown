@@ -39,6 +39,8 @@ public:
 	UPROPERTY() TObjectPtr<class ABrixWeather> Weather;   // the day's weather: the light, the rain, wet streets (WLD-037)  // what the player's car breaks, and its repairs (CITY-072 to CITY-076)    // the day's vehicles, and the one the player drives
 	UPROPERTY() TObjectPtr<class ABrixDesigner> Designer;   // the character designer, and who the player is (CHR-001)
 	UPROPERTY() TObjectPtr<class ABrixLife> Life;    // the player's money, the bank, shops and quests (ADR-0012)
+	UPROPERTY() TObjectPtr<class ABrixMap> Map;
+	class ABrixPeople* PeopleActor() const { return People; }      // the minimap, the big map and the words over the street (UI-012, UI-018)
 
 	UPROPERTY(Config) FString CityDir = TEXT("../World/city_01");   // from the project folder (Game/)
 	UPROPERTY(Config) FString DayFile = TEXT("Data/day.json");      // the residents' day, written by Tools/worldgen/build_play.py
