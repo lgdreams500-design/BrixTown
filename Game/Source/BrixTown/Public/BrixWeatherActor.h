@@ -37,9 +37,11 @@ public:
 	UPROPERTY(Config) FLinearColor CloudGrey = FLinearColor(0.55f, 0.56f, 0.58f);      // ... and under a grey sky
 	UPROPERTY(Config) float NearDrops = 1.6f;         // m: the rings' inner and outer edge round the camera (ADR-0016)
 	UPROPERTY(Config) float FarDrops = 11.f;
-	UPROPERTY(Config) float DropWidth = 0.012f;       // m
+	UPROPERTY(Config) float DropWidth = 0.009f;       // m
+	UPROPERTY(Config) float DropLength = 0.65f;       // a drop's streak, as a share of sky.json rain.length
+	UPROPERTY(Config) float DropAlpha = 0.85f;        // how much it shows, as a share of sky.json rain.alpha
 	UPROPERTY(Config) float FallHeight = 9.f;         // m: the band they fall through, around the camera's height
-	UPROPERTY(Config) FLinearColor DropColour = FLinearColor(0.34f, 0.36f, 0.39f);
+	UPROPERTY(Config) FLinearColor DropColour = FLinearColor(0.28f, 0.30f, 0.33f);
 	UPROPERTY(Config) float OvercastSkyGain = 2.5f;   // how much of the sunlight the clouds stop comes down as grey sky light (x sky.json overcast_fill)
 
 	FBrixWeatherRules Rules;

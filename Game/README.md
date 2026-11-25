@@ -198,8 +198,8 @@ does is worked out from the clock and World/rules/sky.json alone (`BrixWorld/Bri
 let less sun through, part of what they stop comes down as soft grey light from the sky, and the air thickens (which
 greys the sky); clear weather leaves the approved light as it is. Rain falls in the world (`ABrixWeather`): drops in
 rings round the camera, 1.6 to 11 m out, falling straight down whichever way you look, none where a building's roof is
-overhead and none while the camera is indoors; each a thin streak, clear at its top and full at its foot, of its own
-length and brightness, fading near the camera; those within 7 m throw up a small splash where they land. One procedural
+overhead and none while the camera is indoors; each a thin grey streak (9 mm, about half a metre: DropWidth, DropLength and DropAlpha in DefaultGame.ini scale
+sky.json's rain), clear at its top and full at its foot, of its own length and brightness, fading near the camera; those within 7 m throw up a small splash where they land. One procedural
 mesh of translucent drops (`/Game/Weather/M_Rain`, made by `Tools/unreal/make_rain_material.py`). The paving gets wet:
 it darkens, takes a faint sheen and holds puddles here and there, rings spread where the drops land (they tilt the
 surface, so the puddles' reflections break up), and walls go a little darker; it dries over `dry_minutes` after the
