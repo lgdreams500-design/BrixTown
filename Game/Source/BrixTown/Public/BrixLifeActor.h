@@ -9,6 +9,7 @@
 #include "BrixRoomPlan.h"
 #include "BrixFurnishPlan.h"
 #include "BrixDesignPick.h"
+#include "BrixStore.h"
 #include "BrixQuests.h"
 #include "BrixRewards.h"
 #include "BrixRewardsWidget.h"
@@ -73,7 +74,7 @@ public:
 	const TMap<FString, int32>& Achievements() const { return Feats; }   // earned, and on which day (QST-009)
 	bool ArrowKey(int32 Dx, int32 Dy);    // at a shop's counter: choose the next thing that way
 	bool EnterKey();                      // and buy (or sell) it
-	bool IsShop() const { return Panel == TEXT("shop") || Panel == TEXT("outlet"); }
+	bool IsShop() const { return Panel == TEXT("shop") || Panel == TEXT("outlet") || (Panel == TEXT("store") && StoreTab == TEXT("show")); }
 	void Close();
 	void Toast(const FString& Text);
 	void ToggleSound();                   // N (SND-013): the Sound switch of the settings flipped, applied, kept, and said
@@ -250,6 +251,21 @@ private:
 	TArray<FBrixUnit> EstateUnits;
 	TMap<FString, FString> EstateRoles;
 	TUniquePtr<FBrixEstate> Est;            // holds the economy: goes before it
+	// the furniture outlet's tills (FURN-022 to FURN-029; BrixStore): what is booked, what has arrived, the basket at the till
+	TUniquePtr<FBrixStore> Store;           // holds the economy too
+	static constexpr int32 StoreHookId = 7701;
+	int32 OutletLotIx = -1, StoreNotes = 0, StoreWhen = 0;
+	FString StoreTab = TEXT("show"), StoreRoom, StoreLine, StoreUnit;
+	bool bStoreHome = false;              // ordering from the catalogue, at a home (FURN-023)
+	TArray<FBrixBasketItem> Basket;
+	void StartStore(const TSharedPtr<FJsonObject>& Saved);
+	void StorePanel(TSharedRef<SVerticalBox> Body);
+	void StoreFrame();
+	bool StoreCheckout(FString& Said);
+	bool UnitHeld(const FString& Unit) const;
+	double RouteTo(const FString& Unit) const;
+	FString SlotWords(int32 Day, int32 Slot) const;
+	TArray<FBrixBasketItem> BasketFilled() const;
 	int32 PayTerm = 0;                    // how to pay: 0 outright, else the mortgage term's place + 1 (life.js payChoice())
 	FString AgentFilter = TEXT("all");    // the kind of unit an agent shows
 	TMap<int32, FString> RentEdit;        // the rent typed for a unit of the player's, in brix

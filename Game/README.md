@@ -230,10 +230,32 @@ rides are sat on the same way; `ABrixCharacter::StartSeat` draws the body sittin
 seat's top. `-BrixSeat=Try_the_sofa` sits the player at the first seat whose offer has those words, for a shot. Test:
 `FURN022_the_outlets_sofas_chairs_and_beds_can_be_tried` (a sofa, an armchair and a bed in each of kit 17's four rooms,
 the three vans). Shots: `Art/StyleTests/unreal_furniture_outlet_39/try_the_sofa.png`, `delivery_vans.png`.
-Not yet: buying at the outlet (FURN-022 to FURN-029: the tags, the catalogue, the basket and tills, instant or delivery,
-the van's run, assembly). The owner asked for it on 2026-11-25; its rules are proved in `Tools/citysim/furniture.py`
-(`test_furniture.py`, `World/rules/furniture.json`) but nothing of it is in the slice or here yet, and furniture is still bought in the building designer's Furnish tab (FURN-051, FURN-052,
-FURN-055). Also not yet: the vans driving (they stand; deliveries are FURN-027), residents browsing do not sit on the
+Buying at its tills (FURN-022 to FURN-029; the owner, 2026-11-25): `BrixWorld/BrixStore` is a port of
+Tools/citysim/furniture.py (as the slice's store.js is), with World/rules/furniture.json and Python's fixed run carried in
+life.json (`furniture`); `FURN025_the_store_matches_the_python` runs it op for op, reads a saved store back and checks
+where a delivered piece is set down. B in the outlet opens the till (`ABrixLife::StorePanel`): the showroom's pieces by
+room and line as objects, each the kit's own mesh, with what its tag says beside the chosen one (size, whether it comes
+flat-packed and in how many boxes, what putting it together takes); a basket in which each piece is taken now (free, to
+the belongings) or delivered to a home of the player's in a slot, in its boxes or put together by a fitter; the bill line
+by line, paid in one ledger transaction to the company (`co:furniture`) or not at all; and the deliveries, each with where
+its van is by the clock, and the flat packs waiting, to put together yourself (it takes the piece's time) or by a paid
+fitter. With the outlet's catalogue (free at the till), B at a home of the player's orders from there, for delivery only
+(FURN-023). What is carried in is set down on the home's floor where it was marked or at the free spot nearest the way in
+(`BrixStoreSetDown`), a flat pack as a box the size of its stack until it is put together, and becomes part of the
+storey's furniture (moved and taken away in the designer like any piece); if the home is no longer the player's the piece
+goes to the belongings and they are told. The company's takings go on to wages and stock at each day's end (FURN-024).
+The store is kept in the save. Ops for a shot: `store` (`store,home`), `storetab,<show|basket|book>`,
+`basket,<kind>,<line>,<instant|delivery>[,assembled]`, `storeunit,<unit>`, `checkout`, `assemble,<piece>`, `catalogue`,
+such as `"-BrixLife=open,current;give,3000000;buy_lot,b_9_6_l2;store;basket,k17:sofa,plain,delivery;checkout;days,2"`.
+Shots: `till_showroom.png`, `till_basket.png`.
+Not yet, of buying: the delivery is not seen (no van driving to the home, no crew carrying the pieces in: FURN-027's
+bodies; the vans stand in the bay) and how far the van drives is the streets' grid from door to door, not the roads; a
+piece's tag is in the till, not on the piece in the hall, and the piece on show is not switched to its other lines there
+(FURN-022); putting a piece together does not keep the player busy; a piece delivered to a home that is not furnished in
+the designer (a planned row house, a court flat) or with no room on its floor goes to the belongings, where a flat pack is
+whole; a delivery that lands while the designer is open on that home shows when it is opened again; the slots never fill
+(FURN-032) and nothing runs out of stock (FURN-031); residents buy nothing (FURN-034); the company's name is a placeholder
+(Q-32) and every fee and time a first guess. Also not yet: the vans driving, residents browsing do not sit on the
 showroom's pieces, the player sat on a ride in the mall just sits (the rocket and the car do not rock), and a seat taken
 by a resident can still be sat on.
 
@@ -1144,4 +1166,5 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.PROP018_the_money_supply_holds_and_a_saved_market_goes_on` | PROP-018, PROP-021, QST-008 |
 | `BrixTown.World.FURN020_the_outlet_is_built_as_the_slice_builds_it` | FURN-020 |
 | `BrixTown.World.FURN021_staff_and_browsers_are_at_the_outlets_places` | FURN-021 |
+| `BrixTown.World.FURN025_the_store_matches_the_python` | FURN-022 to FURN-029, FURN-024, QST-008 |
 | `BrixTown.World.FURN022_the_outlets_sofas_chairs_and_beds_can_be_tried` | FURN-022 (sitting and lying), FURN-020 (the vans) |

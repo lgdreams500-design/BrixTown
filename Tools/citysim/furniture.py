@@ -263,7 +263,7 @@ class Store:
         for o in self.orders:
             n = self.van(o, day, minute)["landed"]
             while o["landed"] < n:
-                p = o["pieces"][o["landed"]]
+                p = dict(o["pieces"][o["landed"]])                               # (the order keeps the piece as it was booked: the van's times stay what they were)
                 o["landed"] += 1
                 if p.pop("fitted", False):
                     p["boxed"] = False

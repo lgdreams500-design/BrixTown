@@ -344,7 +344,7 @@ bool ABrixRooms::SetLayout(int32 Lot, int32 Floor, const TArray<FBrixLayoutPiece
 		if (bTown) continue;
 		const double Y = FMath::DegreesToRadians(P.Yaw), c = FMath::Cos(Y), s = FMath::Sin(Y);
 		FBrixFurniturePiece K;
-		K.Kind = P.Kind == TEXT("town") ? FString(TEXT("town")) : P.Kind;
+		K.Kind = P.Kind == TEXT("town") || P.bBoxed ? FString(TEXT("town")) : P.Kind;   // (a flat pack not put together yet, FURN-029: the stack of its boxes, a box its size)
 		K.Line = P.Line ? *P.Line : FString(TEXT("plain"));
 		K.Floor = Floor;
 		K.At = FVector2D(P.X, P.Z);

@@ -125,7 +125,7 @@ var Store = (() => {
       for (const o of this.orders) {
         const n = this.van(o, day, minute).landed;
         while (o.landed < n) {
-          const p = o.pieces[o.landed]; o.landed += 1;
+          const p = Object.assign({}, o.pieces[o.landed]); o.landed += 1;   // (the order keeps the piece as it was booked: the van's times stay what they were)
           if (p.fitted) p.boxed = false;
           delete p.fitted;
           if (this.holds(o.unit)) (this.arrived[o.unit] = this.arrived[o.unit] || []).push(p);

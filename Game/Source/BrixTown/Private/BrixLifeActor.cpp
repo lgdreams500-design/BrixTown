@@ -208,6 +208,7 @@ void ABrixLife::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay)
 		E->NewCharacter();
 	}
 	if (Est) Est->Start();   // the estate agents open (life.js newGame(): M.start())
+	StartStore(nullptr);     // and the furniture outlet's tills (FURN-022 to FURN-029)
 	LastMoney = E->TotalMoney();
 	if (!LoadBrixRewards(Data.Json, RewardRules, AchievementRules, Error)) UE_LOG(LogTemp, Warning, TEXT("Brix Town: no reward showings (%s)"), *Error);
 	SeenTx = E->L.Tx.Num();   // what a new game starts with is not shown (rewards.js reset())
@@ -254,7 +255,7 @@ int32 ABrixLife::CounterHere() const
 	double BestD = CounterReach;
 	for (int32 n = 0; n < Lots.Num(); ++n)
 	{
-		if (n != E->BankLot && n != E->MarketLot && E->ShopKind(n).IsEmpty() && !(Est && Est->Office.Contains(Lots[n].Id))) continue;   // the bank, the market, the shops and the estate agents have a counter
+		if (n != E->BankLot && n != E->MarketLot && n != OutletLotIx && E->ShopKind(n).IsEmpty() && !(Est && Est->Office.Contains(Lots[n].Id))) continue;   // the bank, the market, the shops and the estate agents have a counter
 		const FBrixEconLot& L = Lots[n];
 		const FVector2D C = L.Centre(), D = P - C;
 		const double A = FMath::DegreesToRadians(-LotAngle[n]);
@@ -276,7 +277,7 @@ void ABrixLife::Tick(float Dt)
 	double D0 = 0, M0 = 0;
 	Frame(D0, M0);
 	E->Advance((int32)D0, M0);   // the bank settles each midnight passed (BANK-008)
-	if (Q && (CheckLeft -= Dt) <= 0.f) { CheckLeft = CheckSeconds; Q->Check(Ctx()); CheckAchievements(); }
+	if (Q && (CheckLeft -= Dt) <= 0.f) { CheckLeft = CheckSeconds; StoreFrame(); Q->Check(Ctx()); CheckAchievements(); }
 	Shown = 0;
 	TickRewards(Dt);   // coins first; their "+" is the purse counting up as they land (SND-019, SND-020)
 	SlipLeft = FMath::Max(0.0, SlipLeft - Dt);   // goals met where the player is (QST-001, QST-006)
@@ -301,6 +302,7 @@ void ABrixLife::SaveTo(FBrixSaveGame& S) const
 	S.Econ = BrixEconomySave(*E);
 	if (Q) S.Quests = BrixQuestsSave(*Q);
 	if (Est) S.Estate = Est->Save();   // PROP-021: the market comes back as it was
+	if (Store) S.Store = Store->Save();   // the furniture outlet's bookings (FURN-025 to FURN-029)
 	S.Remodels = MakeShared<FJsonObject>();   // QST-008: the buildings remodelled, each its design as paid for (life.js remodels)
 	for (const auto& R : RemodelsDone) S.Remodels->SetObjectField(R.Key, R.Value);
 	S.Plans = MakeShared<FJsonObject>();   // QST-008: the storeys replanned (life.js plans: lot id -> storey -> walls)
@@ -353,10 +355,12 @@ bool ABrixLife::LoadFrom(const FBrixSaveGame& S, FString& OutWhy)   // life.js l
 		if (S.Estate) NewM->Load(S.Estate); else NewM->Start();   // a save from before the market: it opens now (life.js loadSave())
 	}
 	if (!Panel.IsEmpty()) Close();
+	Store.Reset();        // the store holds the economy too
 	Q = MoveTemp(NewQ);   // the quests and the market hold the economy: the old ones go first
 	Est = MoveTemp(NewM);
 	for (const auto& R : RemodelsDone) if (const int32* n = E->LotIndex.Find(R.Key)) ApplyRemodel(*n, nullptr);   // the old game's remodels undone
 	E = MoveTemp(NewE);
+	StartStore(S.Store);
 	RentEdit.Reset();
 	TMap<FString, TMap<int32, FBrixPlan>> OldPlans = MoveTemp(PlansDone);
 	PlansDone.Reset();
@@ -518,7 +522,7 @@ void ABrixLife::BuildUI()
 		.Padding_Lambda([this]() { return Panel == TEXT("remodel") ? FMargin(16, 24) : FMargin(16, 40); })   // (the designer's card is put at the left in Draw())
 		.Visibility_Lambda([this]() { return Panel.IsEmpty() ? EVisibility::Collapsed : Panel == TEXT("remodel") ? EVisibility::SelfHitTestInvisible : EVisibility::Visible; })   // beside the designer's card the mouse is on the picture
 		[
-			SNew(SBox).WidthOverride_Lambda([this]() { return IsShop() ? (float)BuyMenu.WidePanelPx : Panel == TEXT("remodel") ? RemodelPanelPx : 620.f; })
+			SNew(SBox).WidthOverride_Lambda([this]() { return IsShop() || Panel == TEXT("store") ? (float)BuyMenu.WidePanelPx : Panel == TEXT("remodel") ? RemodelPanelPx : 620.f; })
 			[
 				BrixLook::Card(SAssignNew(PanelBody, SBox), FMargin(22, 18, 22, 14), BrixLook::Stone(), 18.f)
 			]
@@ -545,6 +549,7 @@ FString ABrixLife::CounterWords(int32 n) const
 	if (n < 0) return FString();
 	if (n == E->BankLot) return TEXT("Bank counter");
 	if (n == E->MarketLot) return TEXT("Your market stall");
+	if (n == OutletLotIx && Store) return TEXT("Buy at the ") + Lots[n].Name;   // the furniture outlet's tills (FURN-025)
 	if (Est) if (const FString* Co = Est->Office.Find(Lots[n].Id)) return TEXT("Estate agent: ") + EstateRules.Company(*Co)->Name;
 	if (!E->ShopKind(n).IsEmpty() && !E->Outlets.Contains(n)) return TEXT("Buy and sell at ") + Lots[n].Name;
 	return FString();
@@ -552,13 +557,21 @@ FString ABrixLife::CounterWords(int32 n) const
 
 void ABrixLife::CounterKey()
 {
-	if (Panel == TEXT("bank") || Panel == TEXT("shop") || Panel == TEXT("stall") || Panel == TEXT("outlet") || Panel == TEXT("agent")) { Close(); return; }
+	if (Panel == TEXT("bank") || Panel == TEXT("shop") || Panel == TEXT("stall") || Panel == TEXT("outlet") || Panel == TEXT("agent") || Panel == TEXT("store")) { Close(); return; }
 	int32 On = -1;
 	FString U;
 	if (OutletHere(On, U)) { PanelUnit = U; Open(TEXT("outlet"), On); return; }   // each outlet has its own counter (WLD-066, ECO-013)
 	const int32 n = CounterHere();
 	if (n >= 0 && E->Outlets.Contains(n)) { Toast(TEXT("Walk into one of ") + Lots[n].Name + TEXT("'s outlets to buy there: each has its own goods.")); return; }
+	if (n < 0 || (n != OutletLotIx && n != E->BankLot && n != E->MarketLot))   // FURN-023: with the outlet's catalogue, B at a home of the player's orders from it
+	{
+		bool bWhole = false;
+		TArray<int32> Fl;
+		const int32 Here = LotHere();
+		if (Store && Store->bCatalogue && Here >= 0 && E->ShopKind(Here).IsEmpty() && Holding(Here, bWhole, Fl)) { bStoreHome = true; StoreTab = TEXT("show"); Open(TEXT("store"), OutletLotIx); return; }
+	}
 	if (n < 0) { Toast(TEXT("No counter here. Shops, cafés, the bank and the market square have one.")); return; }
+	if (n == OutletLotIx && Store) { bStoreHome = false; StoreTab = TEXT("show"); Open(TEXT("store"), n); return; }   // the furniture outlet's tills (FURN-025)
 	if (n == E->BankLot) Open(TEXT("bank"), n);
 	else if (Est && Est->Office.Contains(Lots[n].Id)) Open(TEXT("agent"), n);   // PROP-011 to PROP-019 (life.js: B at an estate agent)
 	else if (n == E->MarketLot) Open(TEXT("stall"), n);
@@ -660,6 +673,12 @@ void ABrixLife::Draw()
 			+ TEXT(" · restocks at ") + UiHhmm(E->R.RestockMinute);
 		Hint = TEXT("← → ↑ ↓  choose    Enter  buy    Esc  close");
 	}
+	else if (Panel == TEXT("store"))
+	{
+		Title = bStoreHome ? FString(TEXT("The outlet's catalogue")) : Lots[PanelLot].Name;
+		Sub = bStoreHome ? TEXT("Ordered from home · delivery only") : TEXT("Furniture · take it now or have it delivered");
+		if (StoreTab == TEXT("show")) Hint = TEXT("← → ↑ ↓  choose    Enter  add to basket    Esc  close");
+	}
 	else if (Panel == TEXT("quests")) { Title = TEXT("Quests"); Sub = FString::Printf(TEXT("Day %d · J"), E->Day + 1); }
 	else if (Panel == TEXT("remodel"))
 	{
@@ -679,6 +698,7 @@ void ABrixLife::Draw()
 	else if (Panel == TEXT("stall")) StallPanel(Body);
 	else if (Panel == TEXT("quests")) QuestsPanel(Body);
 	else if (Panel == TEXT("remodel")) { RemodelPanel(Body); DesignMarks(); }
+	else if (Panel == TEXT("store")) StorePanel(Body);
 	else if (Panel == TEXT("agent") && Est) EstatePanel(Body, Est->Office[Lots[PanelLot].Id], -1);
 	else WalletPanel(Body);
 	// The designer's card keeps room for its scroll bar whether it shows or not: its rows of buttons wrap by the width they
@@ -2131,6 +2151,326 @@ bool ABrixLife::SlatePoint(EPoint Type, const FVector2D& Px)
 	return true;
 }
 
+// ---- the furniture outlet's tills (FURN-022 to FURN-029; life.js storePanel(), storeFrame(), standIn(), unbox(); the rules are
+// BrixWorld's BrixStore). B in the furniture outlet opens its till: the showroom's pieces by room and line as objects (each
+// with what its tag says), a basket where each piece is taken now (free, to the belongings) or delivered to a home of the
+// player's in a slot (in its boxes, or put together by a fitter), and the deliveries: where each van is, and the flat packs
+// waiting to be put together. With the outlet's catalogue, B at a home of the player's orders from there, for delivery only.
+
+void ABrixLife::StartStore(const TSharedPtr<FJsonObject>& Saved)
+{
+	Store.Reset();
+	OutletLotIx = Lots.IndexOfByPredicate([](const FBrixEconLot& L) { return L.Kind == TEXT("furniture"); });
+	const TSharedPtr<FJsonObject>* Fu = nullptr;
+	const TSharedPtr<FJsonObject>* Fg = nullptr;
+	FBrixStoreRules R;
+	FBrixFurnishRulesD F;
+	if (!E || !Data.Json || !Data.Json->TryGetObjectField(TEXT("furniture"), Fu) || !Data.Json->TryGetObjectField(TEXT("furnishing"), Fg) || !R.Load((*Fu)->GetObjectField(TEXT("rules"))) || !F.Load(*Fg))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Brix Town: no furniture store (life.json has no furniture rules: run Tools/worldgen/build_play.py)"));
+		return;
+	}
+	Store = MakeUnique<FBrixStore>(R, F, *E);
+	Store->Holds = [this](const FString& U) { return UnitHeld(U); };
+	Store->RouteM = [this](const FString& U) { return RouteTo(U); };
+	if (Saved) Store->Load(Saved);
+	StoreNotes = Store->Notes.Num();
+	Store->Found(E->Day, E->Minute);   // (a save from before the store gets the company its float)
+	E->Hooks.Add(StoreHookId, [this](int32 D) { if (Store) Store->Settle(D); });   // FURN-024: its takings go on to wages and stock at each day's end
+	Basket.Reset();
+}
+
+bool ABrixLife::UnitHeld(const FString& Unit) const
+{
+	const int32* i = Est ? Est->ById.Find(Unit) : nullptr;
+	return i && (Est->IsMine(*i) || Est->Rents(*i));
+}
+
+double ABrixLife::RouteTo(const FString& Unit) const   // along the streets' grid from the outlet's door to the building's [ASSUMPTION: until the van drives the roads, FURN-027]
+{
+	const int32* i = Est ? Est->ById.Find(Unit) : nullptr;
+	if (!i || !LotDoor.IsValidIndex(OutletLotIx) || !LotDoor.IsValidIndex(Est->Units[*i].Lot)) return 600.0;
+	const FVector2D A = LotDoor[OutletLotIx], B = LotDoor[Est->Units[*i].Lot];
+	return FMath::Abs(A.X - B.X) + FMath::Abs(A.Y - B.Y);
+}
+
+namespace
+{
+	FBrixLayoutPiece StoreAsBelonging(const FBrixStorePiece& P)   // what the store hands over is with the belongings (INV-001), whole
+	{
+		FBrixLayoutPiece Q;
+		Q.Id = P.Id; Q.Kind = P.Kind; Q.Name = P.Name; Q.W = P.W; Q.D = P.D; Q.H = P.H; Q.bRug = P.bRug; Q.Line = P.Line;
+		return Q;
+	}
+}
+
+void ABrixLife::StoreFrame()   // bring the deliveries up to the clock (life.js storeFrame())
+{
+	if (!Store || !Est) return;
+	Store->Advance(E->Day, E->Minute);
+	for (; StoreNotes < Store->Notes.Num(); ++StoreNotes) Toast(Store->Notes[StoreNotes].Words);
+	for (const FBrixStorePiece& P : Store->Owned) FurnHeld.Add(StoreAsBelonging(P));
+	Store->Owned.Reset();
+	TArray<TPair<FString, FBrixStorePiece>> Here;
+	for (const TPair<FString, TArray<FBrixStorePiece>>& A : Store->Arrived) for (const FBrixStorePiece& P : A.Value) Here.Add({ A.Key, P });
+	bool bChanged = false;
+	for (const TPair<FString, FBrixStorePiece>& H : Here)
+	{
+		const FString U = H.Key, Id = H.Value.Id, Name = H.Value.Name.ToLower();
+		const int32* i = Est->ById.Find(U);
+		auto ToBelongings = [&](const FString& Why)
+		{
+			FurnHeld.Add(StoreAsBelonging(H.Value));
+			Store->RemoveArrived(U, Id);
+			Toast(TEXT("Your ") + Name + TEXT(" ") + Why + TEXT(": it is with your belongings."));
+		};
+		if (!i) { ToBelongings(TEXT("has no home to stand in")); bChanged = true; continue; }
+		const int32 Lot = Est->Units[*i].Lot, f = Est->Units[*i].Floors.Num() ? Est->Units[*i].Floors[0] : 0;
+		const FBrixFurnishRulesD F = FurnRules();
+		if (H.Value.StoodLot.IsEmpty())   // FURN-028: carried in, it is set down on its home's floor
+		{
+			FBrixRoomSpec S;
+			FBrixLayoutPiece As, Put;
+			bool bBoxed = false;
+			if (!CanFurnish(Lot) || !RoomFor(Lot, f, S)) { ToBelongings(TEXT("was delivered to ") + Est->Name(*i) + TEXT(", whose rooms are not arranged in the designer")); bChanged = true; continue; }
+			FBrixLayout Lay = LayNow(Lot, f);
+			Store->AsPlaced(Id, E->Day, E->Minute, As, bBoxed);
+			if (!BrixStoreSetDown(F, S.Room, S.Keep, S.Ceiling, Lay, As, H.Value.At, S.Entries.Num() ? S.Entries[0] : FVector2D((S.Room.X + S.Room.Z) / 2, (S.Room.Y + S.Room.W) / 2), Put))
+			{
+				ToBelongings(TEXT("found no room on the floor of ") + Est->Name(*i)); bChanged = true; continue;
+			}
+			Lay.Add(Put);
+			LaysDone.FindOrAdd(Lots[Lot].Id).Add(f, Lay);
+			ShowLayout(Lot, f, Lay);
+			if (FBrixStorePiece* P = Store->Find(Id)) { P->StoodLot = Lots[Lot].Id; P->StoodFloor = f; }
+			Toast(TEXT("Your ") + Name + TEXT(" has been delivered to ") + Est->Name(*i) + (bBoxed ? TEXT(", in its boxes: put it together from the outlet's Deliveries, or book a fitter.") : TEXT(".")));
+			UE_LOG(LogTemp, Display, TEXT("Brix Town: %s (%s) set down in %s floor %d at %.2f, %.2f%s"), *Id, *H.Value.Kind, *Lots[Lot].Id, f, Put.X, Put.Z, bBoxed ? TEXT(", in its boxes") : TEXT(""));
+			if (!bBoxed) Store->RemoveArrived(U, Id);   // whole: it is the home's furniture now
+			bChanged = true;
+		}
+		else if (!Store->IsBoxed(Id, E->Day, E->Minute))   // FURN-029: put together, it stands as itself where its boxes stood
+		{
+			if (TMap<int32, FBrixLayout>* ByF = LaysDone.Find(H.Value.StoodLot))
+				if (FBrixLayout* Lay = ByF->Find(H.Value.StoodFloor))
+					if (FBrixLayoutPiece* Whole = Lay->FindByPredicate([&](const FBrixLayoutPiece& X) { return X.Id == Id; }))
+					{
+						Whole->Name = H.Value.Name; Whole->W = H.Value.W; Whole->D = H.Value.D; Whole->H = H.Value.H; Whole->bBoxed = false;
+						if (const int32* n = E->LotIndex.Find(H.Value.StoodLot)) ShowLayout(*n, H.Value.StoodFloor, *Lay);
+					}
+			Store->RemoveArrived(U, Id);
+			Toast(TEXT("Your ") + Name + TEXT(" is put together."));
+			bChanged = true;
+		}
+	}
+	if (bChanged && Panel == TEXT("store")) Draw();
+}
+
+FString ABrixLife::SlotWords(int32 OnDay, int32 Slot) const
+{
+	const FIntPoint S = Store && Store->R.Slots.IsValidIndex(Slot) ? Store->R.Slots[Slot] : FIntPoint(0, 0);
+	return (OnDay == E->Day + 1 ? FString(TEXT("tomorrow")) : FString::Printf(TEXT("day %d"), OnDay + 1)) + TEXT(", ") + UiHhmm(S.X) + TEXT(" to ") + UiHhmm(S.Y);
+}
+
+TArray<FBrixBasketItem> ABrixLife::BasketFilled() const   // the basket with where and when its deliveries go
+{
+	TArray<FBrixBasketItem> Out = Basket;
+	const TArray<FIntPoint> Sl = Store->SlotsNow();
+	const FIntPoint When = Sl.Num() ? Sl[FMath::Clamp(StoreWhen, 0, Sl.Num() - 1)] : FIntPoint(0, 0);
+	for (FBrixBasketItem& It : Out) if (It.How == TEXT("delivery")) { It.Unit = StoreUnit; It.Day = When.X; It.Slot = When.Y; }
+	return Out;
+}
+
+bool ABrixLife::StoreCheckout(FString& Said)
+{
+	const TArray<FBrixBasketItem> Filled = BasketFilled();
+	int64 Total = 0;
+	TArray<FString> Got;
+	if (!Store->Checkout(Filled, bStoreHome, Total, Got)) { E->Why = Store->Why; return false; }
+	int32 Sent = 0;
+	for (const FBrixBasketItem& It : Filled) Sent += It.How == TEXT("delivery");
+	const FBrixBasketItem* First = Filled.FindByPredicate([](const FBrixBasketItem& It) { return It.How == TEXT("delivery"); });
+	Said = TEXT("Paid ") + Format(Total) + TEXT(".")
+		+ (Got.Num() - Sent ? FString::Printf(TEXT(" %d with your belongings (G): place them from the Furnish tab of the building designer."), Got.Num() - Sent) : FString())
+		+ (First ? FString::Printf(TEXT(" %d booked for "), Sent) + SlotWords(First->Day, First->Slot) + TEXT(".") : FString());
+	Basket.Reset();
+	StoreTab = Sent ? TEXT("book") : TEXT("show");
+	StoreFrame();   // what was taken now is with the belongings at once
+	return true;
+}
+
+void ABrixLife::StorePanel(TSharedRef<SVerticalBox> Body)
+{
+	if (!Store || !Est) return;
+	auto Slot = [&](TSharedRef<SWidget> W, float Top = 6) { Body->AddSlot().AutoHeight().Padding(0, Top, 0, 0)[ W ]; };
+	const FBrixFurnishRulesD& F = Store->F;
+	TArray<int32> Homes;
+	for (int32 i = 0; i < Est->Units.Num(); ++i) if (Est->IsMine(i) || Est->Rents(i)) Homes.Add(i);
+	if (!Homes.ContainsByPredicate([this](int32 i) { return Est->Units[i].Id == StoreUnit; })) StoreUnit = Homes.Num() ? Est->Units[Homes[0]].Id : FString();
+	if (StoreRoom.IsEmpty() && F.Rooms.Num()) StoreRoom = F.Rooms[0].Key;
+	if (StoreLine.IsEmpty() && F.Lines.Num()) StoreLine = F.Lines[0];
+	const TArray<FIntPoint> Sl = Store->SlotsNow();
+	StoreWhen = FMath::Clamp(StoreWhen, 0, FMath::Max(0, Sl.Num() - 1));
+	int32 Due = 0, Packs = 0;
+	for (const FBrixStoreOrder& O : Store->Orders) Due += O.Landed < O.Pieces.Num();
+	for (const TPair<FString, TArray<FBrixStorePiece>>& A : Store->Arrived) Packs += A.Value.Num();
+	auto Go = [this](const TCHAR* T) { const FString Tab = T; return [this, Tab]() { StoreTab = Tab; Msg.Reset(); Draw(); }; };
+	auto LineName = [](const FString& Ln) { return Ln == TEXT("oldtown") ? FString(TEXT("Old Town")) : Ln.Left(1).ToUpper() + Ln.Mid(1); };
+	Slot(PurseLine(), 0);
+	TSharedRef<SHorizontalBox> Tabs = UiRow();
+	UiAdd(Tabs, UiButton(bStoreHome ? TEXT("Catalogue") : TEXT("Showroom"), Go(TEXT("show")), true, StoreTab != TEXT("show")));
+	UiAdd(Tabs, UiButton(FString::Printf(TEXT("Basket (%d)"), Basket.Num()), Go(TEXT("basket")), true, StoreTab != TEXT("basket")));
+	UiAdd(Tabs, UiButton(Due + Packs ? FString::Printf(TEXT("Deliveries (%d)"), Due + Packs) : FString(TEXT("Deliveries")), Go(TEXT("book")), true, StoreTab != TEXT("book")));
+	if (!Store->bCatalogue && !bStoreHome) UiAdd(Tabs, UiButton(TEXT("Take a catalogue (free)"), [this]() { Act([this](FString& S) { Store->bCatalogue = true; S = TEXT("You have the outlet's catalogue: B at a home of yours orders from it, for delivery."); return true; }); }, true, true));
+	Slot(Tabs);
+	if (StoreTab == TEXT("show"))
+	{
+		TSharedRef<SWrapBox> Rk = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+		for (const auto& R : F.Rooms) { const FString K = R.Key; Rk->AddSlot()[ UiButton(K.Left(1).ToUpper() + K.Mid(1), [this, K]() { StoreRoom = K; Draw(); }, true, StoreRoom != K) ]; }
+		Slot(Rk);
+		TSharedRef<SHorizontalBox> Lk = UiRow();
+		UiAdd(Lk, UiText(TEXT("Line"), 13, UiDim));
+		for (const FString& Ln : F.Lines) UiAdd(Lk, UiButton(LineName(Ln), [this, Ln]() { StoreLine = Ln; Draw(); }, true, StoreLine != Ln));
+		Slot(Lk, 4);
+		TArray<FWare> Things;   // each piece as an object, with what its tag says (FURN-022)
+		if (const auto* Room = F.Rooms.FindByPredicate([this](const TPair<FString, TArray<FString>>& R) { return R.Key == StoreRoom; }))
+			for (const FString& K : Room->Value)
+			{
+				FBrixStoreTag T;
+				if (!Store->Tag(K, StoreLine, T)) continue;
+				FWare W;
+				W.Id = K; W.Name = T.Name; W.Price = T.Price; W.Goes = TEXT("home"); W.Band = BuyMenu.Bands.FindRef(TEXT("mall")); W.Line = StoreLine; W.Size = T.Size;
+				W.More.Add({ TEXT("Size"), FString::Printf(TEXT("%d × %d × %d cm"), FMath::RoundToInt(T.Size.X * 100), FMath::RoundToInt(T.Size.Y * 100), FMath::RoundToInt(T.Size.Z * 100)) });
+				W.More.Add({ TEXT("It comes"), T.bFlatPacked ? FString::Printf(TEXT("flat-packed, %d %s"), T.Boxes, T.Boxes == 1 ? TEXT("box") : TEXT("boxes")) : FString(TEXT("whole")) });
+				if (T.bFlatPacked) W.More.Add({ TEXT("To put together"), FString::Printf(TEXT("%d min, or %s"), T.AssemblyMin, *Format(T.AssemblyFee)) });
+				Things.Add(W);
+			}
+		FGridOpts O;
+		O.Id = TEXT("store");
+		O.Verb = TEXT("Add to basket");
+		O.Buy = [this](const FWare& W, FString& Said)
+		{
+			FBrixBasketItem It;
+			It.Kind = W.Id; It.Line = W.Line; It.How = bStoreHome ? TEXT("delivery") : TEXT("instant");
+			Basket.Add(It);
+			Said = W.Name + TEXT(" is in your basket.");
+			return true;
+		};
+		Slot(Grid(Things, O), 6);
+		Slot(UiText(FString(TEXT("Every piece comes in the four lines. ")) + (bStoreHome ? TEXT("From home everything is delivered.") : TEXT("At the till each piece is taken now, free, to your belongings (G), or delivered to a home of yours."))
+			+ TEXT(" A flat-packed piece is delivered in its boxes: put it together yourself, or pay a fitter."), 13, UiDim));
+	}
+	else if (StoreTab == TEXT("basket"))
+	{
+		if (!Basket.Num()) { Slot(UiText(TEXT("Nothing in your basket yet."), 14, UiDim)); return; }
+		bool bAnySent = false;
+		for (int32 k = 0; k < Basket.Num(); ++k)
+		{
+			const FBrixBasketItem It = Basket[k];
+			const bool bPack = Store->FlatPacked(It.Kind), bSend = It.How == TEXT("delivery");
+			bAnySent |= bSend;
+			TSharedRef<SHorizontalBox> Rw = UiRow();
+			Rw->AddSlot().FillWidth(1).VAlign(VAlign_Center)[ UiText(F.Pieces[It.Kind].Name + TEXT("  ·  ") + LineName(It.Line), 14) ];
+			UiAdd(Rw, UiText(Format(Store->Price(It.Kind)), 14, UiGold));
+			UiAdd(Rw, UiButton(TEXT("Take now"), [this, k]() { Basket[k].How = TEXT("instant"); Draw(); }, !bStoreHome, bSend));
+			UiAdd(Rw, UiButton(TEXT("Deliver"), [this, k]() { Basket[k].How = TEXT("delivery"); Draw(); }, Homes.Num() > 0, !bSend));
+			if (bSend && bPack)
+			{
+				UiAdd(Rw, UiButton(TEXT("In its boxes"), [this, k]() { Basket[k].bAssembled = false; Draw(); }, true, It.bAssembled));
+				UiAdd(Rw, UiButton(TEXT("Put together, ") + Format(Store->AssemblyFee(It.Kind)), [this, k]() { Basket[k].bAssembled = true; Draw(); }, true, !It.bAssembled));
+			}
+			else if (bSend) UiAdd(Rw, UiText(TEXT("comes whole"), 12, UiDim));
+			UiAdd(Rw, UiButton(TEXT("Take out"), [this, k]() { if (Basket.IsValidIndex(k)) Basket.RemoveAt(k); Draw(); }, true, true));
+			Slot(Rw, 3);
+		}
+		if (bAnySent)
+		{
+			TSharedRef<SWrapBox> To = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+			To->AddSlot().VAlign(VAlign_Center)[ UiText(TEXT("Deliver to"), 13, UiDim) ];
+			for (const int32 i : Homes) { const FString U = Est->Units[i].Id; To->AddSlot()[ UiButton(Est->Name(i), [this, U]() { StoreUnit = U; Draw(); }, true, StoreUnit != U) ]; }
+			Slot(To, 8);
+			TSharedRef<SHorizontalBox> Wn = UiRow();
+			UiAdd(Wn, UiText(TEXT("When"), 13, UiDim));
+			UiAdd(Wn, UiButton(TEXT("Sooner"), [this]() { --StoreWhen; Draw(); }, StoreWhen > 0, true));
+			if (Sl.Num()) UiAdd(Wn, UiText(SlotWords(Sl[StoreWhen].X, Sl[StoreWhen].Y), 14, UiCream, true));
+			UiAdd(Wn, UiButton(TEXT("Later"), [this]() { ++StoreWhen; Draw(); }, StoreWhen < Sl.Num() - 1, true));
+			Slot(Wn, 4);
+		}
+		int64 Total = 0;
+		TArray<FBrixFurnLine> Lines;
+		FString Why;
+		const bool bCan = Store->Quote(BasketFilled(), bStoreHome, Total, Lines);
+		if (!bCan) Why = Store->Why;
+		else if (Total > E->Funds()) Why = TEXT("it costs ") + Format(Total) + TEXT(" and you have ") + Format(E->Funds());
+		if (bCan)
+		{
+			Slot(UiHeading(TEXT("The bill")), 0);
+			for (const FBrixFurnLine& Ln : Lines)
+			{
+				TSharedRef<SHorizontalBox> B = UiRow();
+				B->AddSlot().FillWidth(1).VAlign(VAlign_Center)[ UiText(Ln.What, 14) ];
+				UiAdd(B, UiText(Ln.Qty == 1 ? FString() : FString::Printf(TEXT("× %d"), (int32)Ln.Qty), 12, UiDim));
+				UiAdd(B, UiText(Format(Ln.Chips), 14, UiGold));
+				Slot(B, 2);
+			}
+			TSharedRef<SHorizontalBox> B = UiRow();
+			B->AddSlot().FillWidth(1)[ UiText(TEXT("Total"), 14, UiCream, true) ];
+			UiAdd(B, UiText(Format(Total), 15, UiGold, true));
+			Slot(B, 4);
+		}
+		if (!Why.IsEmpty()) Slot(UiText(Why.Left(1).ToUpper() + Why.Mid(1) + TEXT("."), 13, UiNeg));
+		TSharedRef<SHorizontalBox> Pay = UiRow();
+		UiAdd(Pay, UiButton(bCan ? TEXT("Pay ") + Format(Total) : FString(TEXT("Pay")), [this]() { Act([this](FString& S) { return StoreCheckout(S); }); }, Why.IsEmpty()));
+		Slot(Pay, 10);
+	}
+	else
+	{
+		Slot(UiHeading(TEXT("Deliveries")), 0);
+		int32 Open = 0;
+		for (const FBrixStoreOrder& O : Store->Orders)
+		{
+			const FBrixVan V = Store->Van(O, E->Day, E->Minute);
+			if (V.Phase == TEXT("done")) continue;
+			++Open;
+			FString Names;
+			for (const FBrixStorePiece& P : O.Pieces) Names += (Names.IsEmpty() ? TEXT("") : TEXT(", ")) + P.Name;
+			const int32* i = Est->ById.Find(O.Unit);
+			const FString How = V.Phase == TEXT("booked") ? FString(TEXT("booked")) : V.Phase == TEXT("out") ? FString::Printf(TEXT("the van is on its way, %d %%"), FMath::RoundToInt(V.F * 100))
+				: V.Phase == TEXT("at the door") ? FString::Printf(TEXT("the crew is carrying it in, %d of %d in"), V.Landed, O.Pieces.Num()) : FString::Printf(TEXT("delivered; the van is driving back, %d %%"), FMath::RoundToInt(V.F * 100));
+			Slot(UiText(SlotWords(O.Day, O.Slot) + TEXT("  ·  ") + (i ? Est->Name(*i) : O.Unit) + TEXT("  ·  ") + Names + TEXT("  ·  ") + How, 14), 3);
+		}
+		if (!Open) Slot(UiText(TEXT("Nothing is on its way."), 14, UiDim));
+		Slot(UiHeading(TEXT("In their boxes")), 0);
+		if (!Packs) Slot(UiText(TEXT("No flat packs are waiting to be put together."), 14, UiDim));
+		for (const TPair<FString, TArray<FBrixStorePiece>>& A : Store->Arrived)
+			for (const FBrixStorePiece& P : A.Value)
+			{
+				const int32* i = Est->ById.Find(A.Key);
+				const FString Id = P.Id, Name = P.Name.ToLower();
+				TSharedRef<SHorizontalBox> Rw = UiRow();
+				Rw->AddSlot().FillWidth(1).VAlign(VAlign_Center)[ UiText(P.Name + TEXT("  ·  ") + (i ? Est->Name(*i) : A.Key), 14) ];
+				if (P.Ready) UiAdd(Rw, UiText((FMath::FloorToInt(*P.Ready / 1440) == E->Day ? FString(TEXT("ready at ")) : FString::Printf(TEXT("ready on day %d at "), FMath::FloorToInt(*P.Ready / 1440) + 1)) + UiHhmm(FMath::Fmod(*P.Ready, 1440.0)), 13, UiDim));
+				else
+				{
+					UiAdd(Rw, UiButton(FString::Printf(TEXT("Put it together (%d min)"), Store->AssemblyMin(P.Kind)), [this, Id, Name]() { Act([this, Id, Name](FString& S)
+					{
+						int32 M = 0;
+						if (!Store->Assemble(Id, E->Day, E->Minute, M)) { E->Why = Store->Why; return false; }
+						S = FString::Printf(TEXT("You are putting the %s together: %d minutes."), *Name, M);
+						return true;
+					}); }, true, true));
+					if (Sl.Num()) UiAdd(Rw, UiButton(TEXT("A fitter, ") + Format(Store->AssemblyFee(P.Kind)) + TEXT(", ") + SlotWords(Sl[0].X, Sl[0].Y), [this, Id, When = Sl[0]]() { Act([this, Id, When](FString& S)
+					{
+						int64 Fee = 0;
+						if (!Store->Fitter(Id, When.X, When.Y, Fee)) { E->Why = Store->Why; return false; }
+						S = TEXT("A fitter is booked for ") + Format(Fee) + TEXT(".");
+						return true;
+					}); }, true, true));
+				}
+				Slot(Rw, 3);
+			}
+	}
+}
+
 // ---- for test shots
 
 bool ABrixLife::RunOps(const FString& Ops)
@@ -2305,6 +2645,23 @@ bool ABrixLife::RunOps(const FString& Ops)
 			for (int32 k = 0; k < FMath::Abs(Clicks); ++k) DesignPointer(EPoint::Wheel, FVector2D(-1, -1), 0, false, FVector2D::ZeroVector, Clicks > 0 ? 1.f : -1.f, false);
 		}
 		else if (A[0] == TEXT("listpieces") && Panel == TEXT("remodel")) { bPieceList = true; Draw(); }
+		// the furniture outlet's till (FURN-022 to FURN-029): store opens it (store,home: from the catalogue); storetab,<show|basket|book>;
+		// basket,<kind>,<line>,<instant|delivery>[,assembled]; storeunit,<unit id>; checkout pays; assemble,<piece id>; catalogue takes one
+		else if (A[0] == TEXT("store") && Store) { bStoreHome = Sv(1) == TEXT("home"); StoreTab = TEXT("show"); if (bStoreHome) Store->bCatalogue = true; Open(TEXT("store"), OutletLotIx); bOk = Panel == TEXT("store"); }
+		else if (A[0] == TEXT("storetab") && Store) { StoreTab = Sv(1); Draw(); }
+		else if (A[0] == TEXT("catalogue") && Store) Store->bCatalogue = true;
+		else if (A[0] == TEXT("basket") && Store) { FBrixBasketItem It; It.Kind = Sv(1); It.Line = Sv(2).IsEmpty() ? FString(TEXT("plain")) : Sv(2); It.How = Sv(3).IsEmpty() ? FString(TEXT("instant")) : Sv(3); It.bAssembled = Sv(4) == TEXT("assembled"); Basket.Add(It); Draw(); }
+		else if (A[0] == TEXT("storeunit") && Store) { StoreUnit = Sv(1); Draw(); }
+		else if (A[0] == TEXT("checkout") && Store)
+		{
+			if (StoreUnit.IsEmpty() && Est) for (int32 j = 0; j < Est->Units.Num(); ++j) if (Est->IsMine(j) || Est->Rents(j)) { StoreUnit = Est->Units[j].Id; break; }
+			FString Said;
+			bOk = StoreCheckout(Said);
+			Msg = bOk ? Said : TEXT("Refused: ") + E->Why + TEXT(".");
+			if (bOk) UE_LOG(LogTemp, Display, TEXT("Brix Town: at the furniture outlet's till: %s"), *Said);
+			Draw();
+		}
+		else if (A[0] == TEXT("assemble") && Store) { int32 Mn = 0; bOk = Store->Assemble(Sv(1), E->Day, E->Minute, Mn); if (!bOk) E->Why = Store->Why; Draw(); }
 		else if (A[0] == TEXT("pay") && Panel == TEXT("remodel")) { FString Said; bOk = RemodelPay(Said); Msg = bOk ? Said : TEXT("Refused: ") + E->Why + TEXT("."); Draw(); }
 		else if (A[0] == TEXT("give")) bOk = E->HasAccount(TEXT("current")) && E->L.Post(E->Day, E->Minute, TEXT("Test money"), { { TEXT("sys:start"), -I(1) }, { TEXT("p:current"), I(1) } }, E->Why);
 		else if (Est && (A[0] == TEXT("buy_cheapest") || A[0] == TEXT("rent_cheapest")))
@@ -2753,7 +3110,7 @@ TSharedRef<SWidget> ABrixLife::Grid(const TArray<FWare>& Things, const FGridOpts
 						SNew(SBorder).BorderImage(BrixLook::Round(bSel ? UiLantern : BrixLook::StoneDeep(), 12.f)).Padding(bSel ? 3 : 2)
 						[
 							SNew(SOverlay)
-							+ SOverlay::Slot()[ SNew(SBrixThing).Mesh(MeshFor(W.Id, W.Band)).Rules(&BuyMenu).Grey(bOut).Size(FVector2D(CellW - 4, BuyMenu.StagePx)).Yaw(YawFor(O.Id + TEXT(":") + W.Id)) ]
+							+ SOverlay::Slot()[ SNew(SBrixThing).Mesh(MeshFor(W.Id, W.Band, W.Line)).Rules(&BuyMenu).Grey(bOut).Size(FVector2D(CellW - 4, BuyMenu.StagePx)).Yaw(YawFor(O.Id + TEXT(":") + W.Id)) ]
 							+ SOverlay::Slot().VAlign(VAlign_Center)[ Flag(W.State) ]
 						]
 					]
@@ -2802,7 +3159,7 @@ TSharedRef<SWidget> ABrixLife::Grid(const TArray<FWare>& Things, const FGridOpts
 			+ SVerticalBox::Slot().AutoHeight()
 			[
 				SNew(SOverlay)
-				+ SOverlay::Slot()[ SNew(SBrixThing).Mesh(MeshFor(P.Id, P.Band)).Rules(&BuyMenu).Spin(true).Drag(true).Grey(P.State == TEXT("out") || P.State == TEXT("have")).Size(FVector2D(StageW, BuyMenu.ShowStagePx)).Yaw(YawFor(O.Id + TEXT(":show:") + P.Id)) ]
+				+ SOverlay::Slot()[ SNew(SBrixThing).Mesh(MeshFor(P.Id, P.Band, P.Line)).Rules(&BuyMenu).Spin(true).Drag(true).Grey(P.State == TEXT("out") || P.State == TEXT("have")).Size(FVector2D(StageW, BuyMenu.ShowStagePx)).Yaw(YawFor(O.Id + TEXT(":show:") + P.Id)) ]
 				+ SOverlay::Slot().VAlign(VAlign_Center)[ Flag(P.State) ]
 				+ SOverlay::Slot().VAlign(VAlign_Bottom).HAlign(HAlign_Center).Padding(0, 0, 0, 5)[ SNew(STextBlock).Visibility(EVisibility::HitTestInvisible).Font(UiFont(10)).ColorAndOpacity(FLinearColor::FromSRGBColor(FColor(217, 207, 182, 115))).Text(FText::FromString(TEXT("drag to turn"))) ]
 			]
