@@ -75,6 +75,14 @@ the stair. Whoever is there stands behind the counter, sits at the desk or table
 plants, a cafe's coffee bar) is not brought over yet. Unity builds are off in both modules (`bUseUnity = false`): files'
 own short names clashed as soon as a new file changed which files were joined.
 
+## Windows lit by night
+As in the slice (play.js windows()), a share of each kind of building's windows is lit after dusk (half a home's, a third of a
+shop's, every shopfront window; `LitShare` in DefaultGame.ini), each a warm pane just in front of its glass in one of the
+lamplight's two colours, shown and glowing as the lamps light (`ABrixTownActor::SetNight`, from `ABrixRooms`). Lumen's
+surface cache is some 20 % short of what the town's insides would fill (an on-screen warning in test shots): it only
+lowers the detail of far surfaces' bounced light; a larger cache (`r.LumenScene.SurfaceCache.AtlasSize`) is not set, to
+spare the laptop's video memory.
+
 ## Furnished homes (FURN-060 to FURN-063; ADR-0050)
 The planned homes are furnished as the slice furnishes them (homes.js, houses.js): 469 designed houses (plan house_12x9)
 and 250 row houses (lot.interior) from World/rules/home_plans.json, with their inner walls and doorways, tiled kitchens and

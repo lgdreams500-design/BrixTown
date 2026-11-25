@@ -47,6 +47,7 @@ public:
 	UPROPERTY(Config) float RoomLightCandela = 6.f;
 	UPROPERTY(Config) float RoomLightReach = 7.f;       // m
 	UPROPERTY(Config) FLinearColor RoomLightColour = FLinearColor(1.f, 0.86f, 0.68f);
+	UPROPERTY(Config) float NightBelow = 0.35f;        // the windows are lit as the day's light falls below this (as ABrixLamps)
 
 private:
 	struct FLotHome { int32 Lot = -1; FVector2D Centre = FVector2D::ZeroVector; float Reach = 0.f; TArray<float> FloorUp, CeilUp; TArray<TOptional<FBrixRect>> Holes; TSharedPtr<FBrixHome> Home; bool bPlanned = true; TArray<struct FBrixFurnished> Furn; };   // heights of its built floors
@@ -66,6 +67,7 @@ private:
 	UPROPERTY() TObjectPtr<UMaterialInterface> Greybox;
 	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> OwnColour;
 	TSet<FString> Missing;
+	UPROPERTY() TObjectPtr<ABrixTownActor> TownRef;
 	UPROPERTY() TArray<TObjectPtr<class UPointLightComponent>> Lights;
 	void PlaceLights(const FVector2D& Eye, float EyeUp);
 };

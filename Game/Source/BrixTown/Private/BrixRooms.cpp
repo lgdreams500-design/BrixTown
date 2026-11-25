@@ -2,6 +2,7 @@
 
 #include "BrixCity.h"
 #include "BrixFurnish.h"
+#include "BrixGameMode.h"
 #include "BrixHomes.h"
 #include "BrixInside.h"
 #include "BrixTownActor.h"
@@ -76,6 +77,7 @@ ABrixRooms::ABrixRooms()
 void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTownActor* Town, int32 Day)
 {
 	if (UStaticMesh* KitBox = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Kit/SM_Kit_Box.SM_Kit_Box"))) Cube = KitBox;
+	TownRef = Town;
 	int32 k = -1, Pieces = 0, Dropped = 0, Other = 0, BoxCount = 0;
 	const FBrixDoorRules DR = FBrixDoorRules::FromConfig();
 	TArray<int32> ByLevel = { 0, 0, 0, 0, 0 };
@@ -222,6 +224,9 @@ void ABrixRooms::Tick(float DeltaSeconds)
 	const APlayerCameraManager* Cam = UGameplayStatics::GetPlayerCameraManager(this, 0);
 	if (!Cam) return;
 	const FVector2D Eye(Cam->GetCameraLocation().X / CmPerM, Cam->GetCameraLocation().Y / CmPerM);
+	if (TownRef)   // the windows lit by night, as the lamps light (ABrixLamps: night below NightBelow of the day's light)
+		if (const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))
+			TownRef->SetNight(FMath::SmoothStep(0.f, 1.f, FMath::Clamp(1.f - Mode->Daylight / FMath::Max(NightBelow, .01f), 0.f, 1.f)));
 	PlaceLights(Eye, (float)(Cam->GetCameraLocation().Z / CmPerM));
 	TSet<int32> Want;
 	for (int32 i = 0; i < Homes.Num(); ++i)
