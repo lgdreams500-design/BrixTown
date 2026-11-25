@@ -280,6 +280,31 @@ void ABrixGameMode::StartPlay()
 		FTimerHandle H;
 		GetWorldTimerManager().SetTimer(H, [this, MenuPage]() { if (Life) Life->TestMenu(MenuPage); }, FMath::Max(1.f, ShotDelaySeconds - 3.f), false);
 	}
+	FString LiftLot;   // -BrixLift=<lot>: at the tower's ground-floor lift call, E pressed to go to the top floor (WLD-051)
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixLift="), LiftLot) && City && Insides)
+	{
+		int32 Lk = 0;
+		for (const FBrixBlock& B : City->Blocks)
+			for (const FBrixLot& L : B.Lots)
+			{
+				if (L.Id == LiftLot && Insides->Lots.IsValidIndex(Lk) && Insides->Lots[Lk].IsSet() && TownActor)
+					for (const FBrixLiftCall& C : BrixLiftCalls(L, Insides->Lots[Lk].GetValue(), FBrixDoorRules::FromConfig(), 0.f))
+						if (C.Floor == 0 && C.Text.Contains(TEXT("top floor")))
+						{
+							const FVector At = FVector(C.At.X, C.At.Y, C.At.Z + 0.95) * BrixUnits::CmPerM;
+							FTimerHandle H;
+							GetWorldTimerManager().SetTimer(H, [this, At]()
+							{
+								ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+								if (!Me) return;
+								Me->SetActorLocation(At, false, nullptr, ETeleportType::TeleportPhysics);
+								FTimerHandle P;
+								GetWorldTimerManager().SetTimer(P, [Me]() { Me->TestPress(); }, 0.5f, false);
+							}, 0.6f, false);
+						}
+				++Lk;
+			}
+	}
 	FString Way;   // -BrixWalk=x,z;x,z;...: after the other switches have placed the player, walk them through these points
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixWalk="), Way, false))
 	{

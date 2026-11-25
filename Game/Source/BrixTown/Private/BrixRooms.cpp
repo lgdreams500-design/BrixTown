@@ -86,6 +86,8 @@ void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTown
 		{
 			++k;
 			if (!Ins.Lots.IsValidIndex(k) || !Ins.Lots[k].IsSet() || !BrixIsHollow(L, &Ins.Lots[k].GetValue())) continue;
+			if (Ins.Lots[k]->Lift && L.Floors >= 2 && Ins.Lots[k]->Stair.IsSet() && L.AngleDeg == 0.f && Town)   // a tower's lift (WLD-051)
+				LiftCalls.Append(BrixLiftCalls(L, Ins.Lots[k].GetValue(), DR, Town->BlockSlabHeight + L.Floors * Town->StoreyHeight + Town->ParapetHeight + Town->CopingHeight));
 			TArray<FBrixWindowSpan> Wins;
 			for (int32 f = 0; Town && f < 64; ++f)
 				if (const TArray<FVector4f>* S = Town->WindowSpans.Find(k * 64 + f))
@@ -231,8 +233,28 @@ void ABrixRooms::Tick(float DeltaSeconds)
 	TSet<int32> Want;
 	for (int32 i = 0; i < Homes.Num(); ++i)
 		if (FVector2D::Distance(Eye, Homes[i].Centre) - Homes[i].Reach < NearMetres) Want.Add(i);
-	if (Want.Num() == Near.Num() && Want.Includes(Near)) return;
+	// the building the camera is in and its floor: there the floors from one below to one above it are built, elsewhere the
+	// ground floor and, in a house of two, its upstairs (play.js nearRooms: the camera's floor and its neighbours)
+	int32 InHome = INDEX_NONE, OnFloor = 0;
+	const float EyeUp = (float)(Cam->GetCameraLocation().Z / CmPerM);
+	for (const int32 i : Want)
+	{
+		const FLotHome& LH = Homes[i];
+		if (FVector2D::Distance(Eye, LH.Centre) > LH.Reach) continue;
+		bool bIn = false;
+		for (const FBrixRoom& R : LH.Home->Rooms)
+		{
+			const FVector2D D = Eye - R.R.Centre, Ac(-R.R.Along.Y, R.R.Along.X);
+			if (FMath::Abs(FVector2D::DotProduct(D, R.R.Along)) <= R.R.Length / 2 && FMath::Abs(FVector2D::DotProduct(D, Ac)) <= R.R.Width / 2) bIn = true;
+		}
+		if (!bIn) continue;
+		InHome = i;
+		for (int32 f = 0; f < LH.FloorUp.Num(); ++f) if (EyeUp > LH.FloorUp[f] - 0.1f) OnFloor = f;
+	}
+	if (Want.Num() == Near.Num() && Want.Includes(Near) && InHome == CamHome && OnFloor == CamFloor) return;
 	Near = MoveTemp(Want);
+	CamHome = InHome;
+	CamFloor = OnFloor;
 	Rebuild();
 }
 
@@ -259,7 +281,13 @@ void ABrixRooms::Rebuild()
 	{
 		const FLotHome& LH = Homes[i];
 		const FBrixHome& H = *LH.Home;
-		auto Up = [&](int32 f) { return LH.FloorUp.IsValidIndex(f) ? LH.FloorUp[f] : -1.f; };
+		const bool bHere = i == CamHome;
+		auto Up = [&](int32 f)   // a built floor near the camera, or -1
+		{
+			if (!LH.FloorUp.IsValidIndex(f)) return -1.f;
+			if (LH.FloorUp.Num() > 2 && (bHere ? FMath::Abs(f - CamFloor) > 1 : f > 0)) return -1.f;
+			return LH.FloorUp[f];
+		};
 		auto Ceil = [&](int32 f) { return LH.CeilUp.IsValidIndex(f) ? LH.CeilUp[f] : -1.f; };
 		for (int32 f = 0; f < LH.Furn.Num(); ++f)   // a building furnished at its places: the slice's boxes
 		{
@@ -385,4 +413,38 @@ int32 ABrixRooms::LampsOn() const
 	int32 N = 0;
 	for (const UPointLightComponent* L : Lights) if (L && L->IsVisible()) ++N;
 	return N;
+}
+
+bool ABrixRooms::LiftOffer(const FVector& PawnCm, FString& Text, double& Metres) const
+{
+	const FVector Me(PawnCm.X / CmPerM, PawnCm.Y / CmPerM, PawnCm.Z / CmPerM - 0.85);   // the feet (the capsule's half height)
+	const FBrixLiftCall* Best = nullptr;
+	double BestD = LiftReach;
+	for (const FBrixLiftCall& C : LiftCalls)
+	{
+		if (FMath::Abs(Me.Z - C.At.Z) > 1.0) continue;
+		const double D = FVector2D::Distance(FVector2D(Me.X, Me.Y), FVector2D(C.At.X, C.At.Y));
+		if (D < BestD) { BestD = D; Best = &C; }
+	}
+	if (!Best) return false;
+	Text = Best->Text;
+	Metres = BestD;
+	return true;
+}
+
+bool ABrixRooms::UseLift(APawn* Pawn)
+{
+	if (!Pawn) return false;
+	FString Text;
+	double D = 0;
+	if (!LiftOffer(Pawn->GetActorLocation(), Text, D)) return false;
+	const FVector Me(Pawn->GetActorLocation().X / CmPerM, Pawn->GetActorLocation().Y / CmPerM, Pawn->GetActorLocation().Z / CmPerM - 0.85);
+	for (const FBrixLiftCall& C : LiftCalls)
+		if (C.Text == Text && FMath::Abs(Me.Z - C.At.Z) <= 1.0 && FVector2D::Distance(FVector2D(Me.X, Me.Y), FVector2D(C.At.X, C.At.Y)) <= D + 1e-6)
+		{
+			Pawn->SetActorLocation(FVector(C.To.X, C.To.Y, C.To.Z + 0.95) * CmPerM, false, nullptr, ETeleportType::TeleportPhysics);
+			UE_LOG(LogTemp, Display, TEXT("Brix Town: %s: now %.2f m up"), *Text, C.To.Z);
+			return true;
+		}
+	return false;
 }

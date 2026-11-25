@@ -60,7 +60,12 @@ walked the player up a row house's stair to the first floor. Residents at home l
 turned so the head is at the bed's head); anyone else inside stands on their floor. As in the slice, those inside are
 drawn only while the camera is in their building. `CITY013_every_indoor_place_is_inside_its_lot_on_its_floor` checks all
 23,203 indoor stays of the day (4,547 in a bed, 4,406 on a seat). By night the rooms of the home the camera is in have
-their lamps. The towers' lifts (WLD-051) and the court flats' own walls are not built yet; a street at High: 41.3 to 41.5
+their lamps. The five towers have their lifts (WLD-051, storeys.js): a shaft from the ground to the top floor with steel doors and a lit
+call button on every floor and its house on the roof; E beside it goes up or down a floor, to the ground, the top floor or
+the roof (`BrixLiftCalls`, `WLD051_towers_have_a_lift`; `-BrixLift=<lot>` rides one to the top in a test shot). As in the
+slice only the camera's floor and the floors either side of it are furnished in the building it is in (elsewhere the ground
+floor): the top of an eleven-storey tower ran at 15.8 fps with every floor furnished, 38.7 like this. The court flats' own
+walls are not built yet; a street at High: 41.3 to 41.5
 fps, 43.2 with `-BrixShut` (noisy).
 
 ## Shops, cafes, workplaces and civic buildings furnished (CITY-013)
@@ -495,6 +500,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD052_every_storey_is_reached_by_its_stair` | WLD-050, WLD-052 |
 | `BrixTown.World.CITY013_every_indoor_place_is_inside_its_lot_on_its_floor` | CITY-013, WLD-053 |
 | `BrixTown.World.CITY013_shops_cafes_and_workplaces_are_furnished_at_their_places` | CITY-013 |
+| `BrixTown.World.WLD051_towers_have_a_lift` | WLD-051 |
 | `BrixTown.World.CITY017_residents_sit_on_garden_benches` | CITY-017 |
 | `BrixTown.World.CITY040_vehicles_are_where_the_traffic_puts_them` | CITY-040 |
 | `BrixTown.World.CITY041_trams_are_where_the_timetable_puts_them` | CITY-041 |

@@ -59,6 +59,7 @@ public:
 	UPROPERTY(Config) float IndoorHaze = 0.f;        // the haze's density indoors, as a share of the street's (CITY-013)
 	// the lot (in the city's order) whose inside a point is in, or INDEX_NONE (CITY-013)
 	int32 RoomAt(const FVector& WorldCm) const;
+	class ABrixRooms* RoomsActor() const { return Furnisher; }   // the furnished rooms near the camera, and the towers' lifts
 
 private:
 	void SpawnLight();
