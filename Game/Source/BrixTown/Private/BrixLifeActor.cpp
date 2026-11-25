@@ -11,6 +11,7 @@
 #include "BrixLook.h"
 #include "BrixMapActor.h"
 #include "BrixInside.h"
+#include "BrixRooms.h"
 #include "BrixTownActor.h"
 #include "Camera/CameraActor.h"
 #include "Dom/JsonObject.h"
@@ -241,6 +242,18 @@ void ABrixLife::SaveTo(FBrixSaveGame& S) const
 	if (Est) S.Estate = Est->Save();   // PROP-021: the market comes back as it was
 	S.Remodels = MakeShared<FJsonObject>();   // QST-008: the buildings remodelled, each its design as paid for (life.js remodels)
 	for (const auto& R : RemodelsDone) S.Remodels->SetObjectField(R.Key, R.Value);
+	S.Plans = MakeShared<FJsonObject>();   // QST-008: the storeys replanned (life.js plans: lot id -> storey -> walls)
+	for (const auto& P : PlansDone)
+	{
+		TSharedPtr<FJsonObject> ByFloor = MakeShared<FJsonObject>();
+		for (const auto& F : P.Value)
+		{
+			TArray<TSharedPtr<FJsonValue>> Ws;
+			for (const FBrixPlanWall& W : F.Value) Ws.Add(MakeShared<FJsonValueObject>(BrixRoomPlan::WallToJson(W)));
+			ByFloor->SetArrayField(FString::FromInt(F.Key), Ws);
+		}
+		S.Plans->SetObjectField(P.Key, ByFloor);
+	}
 	S.Feats = Feats;
 	if (const ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))   // CITY-100
 		S.Boards = BrixBoardsSave(E->Boards, Me->Boards.InUse, Me->Boards.Riding());
@@ -270,6 +283,22 @@ bool ABrixLife::LoadFrom(const FBrixSaveGame& S, FString& OutWhy)   // life.js l
 	for (const auto& R : RemodelsDone) if (const int32* n = E->LotIndex.Find(R.Key)) ApplyRemodel(*n, nullptr);   // the old game's remodels undone
 	E = MoveTemp(NewE);
 	RentEdit.Reset();
+	TMap<FString, TMap<int32, FBrixPlan>> OldPlans = MoveTemp(PlansDone);
+	PlansDone.Reset();
+	for (const auto& P : OldPlans) if (const int32* n = E->LotIndex.Find(P.Key)) for (const auto& F : P.Value) ShowPlan(*n, F.Key, PlanNow(*n, F.Key));   // the old game's room plans undone
+	if (S.Plans)
+		for (const auto& KV : S.Plans->Values)
+		{
+			if (!KV.Value.IsValid() || KV.Value->Type != EJson::Object) continue;
+			for (const auto& F : KV.Value->AsObject()->Values)
+			{
+				FBrixPlan Pl;
+				for (const auto& W : F.Value->AsArray()) Pl.Add(BrixRoomPlan::WallFromJson(W->AsObject()));
+				const int32 f = FCString::Atoi(*FString(F.Key));
+				PlansDone.FindOrAdd(FString(KV.Key)).Add(f, Pl);
+				if (const int32* n = E->LotIndex.Find(FString(KV.Key))) ShowPlan(*n, f, Pl);
+			}
+		}
 	RemodelsDone.Reset();
 	if (S.Remodels)
 		for (const auto& KV : S.Remodels->Values)
@@ -999,6 +1028,7 @@ bool ABrixLife::OpenRemodel(int32 Lot)
 	DraftBase = D;
 	Draft = D;
 	DraftUndo.Reset();
+	PlanUndo.Reset(); PlanDraft.Reset(); PlanBase.Reset(); WallSel.Reset();
 	DesignTab = bWhole ? TEXT("outside") : TEXT("inside");
 	DesignFacade = TEXT("*");
 	DesignStorey = Floors.Num() ? Floors[0] : 0;
@@ -1010,7 +1040,7 @@ bool ABrixLife::OpenRemodel(int32 Lot)
 
 void ABrixLife::RemodelSet(const FBrixDesignChanges& Changes)
 {
-	DraftUndo.Add(Draft);
+	PushUndo();
 	Draft = BrixBuilder::Remodel(Draft, Changes);
 	ApplyRemodel(PanelLot, Draft);
 	Msg.Reset();
@@ -1020,9 +1050,11 @@ void ABrixLife::RemodelSet(const FBrixDesignChanges& Changes)
 void ABrixLife::EndRemodel()
 {
 	if (PanelLot >= 0 && Draft != DraftBase) ApplyRemodel(PanelLot, RemodelsDone.Contains(Lots[PanelLot].Id) ? DraftBase : TSharedPtr<FJsonObject>());   // not paid for: as it was
+	for (const auto& P : PlanDraft) if (!(P.Value == PlanBase.FindRef(P.Key))) ShowPlan(PanelLot, P.Key, PlanNow(PanelLot, P.Key));   // not paid for: as they were
 	Draft.Reset();
 	DraftBase.Reset();
 	DraftUndo.Reset();
+	PlanUndo.Reset(); PlanDraft.Reset(); PlanBase.Reset();
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 	if (PC && PC->GetPawn()) PC->SetViewTargetWithBlend(PC->GetPawn(), 0.5f);
 	if (ViewCam) { ViewCam->Destroy(); ViewCam = nullptr; }
@@ -1056,22 +1088,21 @@ void ABrixLife::DesignView()   // BUILD-020 (life.js startView(), frame3()): ove
 
 bool ABrixLife::RemodelPay(FString& Said)
 {
-	const FBrixDesignLot& L = DesignLots[PanelLot];
-	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
-	const FBrixBuilderRules& R = Mode->InsidesData()->Builder;
-	bool bWhole = false;
-	TArray<int32> Floors;
-	Holding(PanelLot, bWhole, Floors);
 	TArray<FBrixCostLine> Lines;
-	const int64 Total = BrixBuilder::Cost(R, L, DraftBase, Draft, Lines);
-	const TArray<FString> Probs = BrixBuilder::Check(R, L, DraftBase, Draft, bWhole, Floors, E->Funds());   // as the server will (BUILD-006)
+	TArray<FString> Probs;
+	int64 DesignTotal = 0;
+	const int64 Total = WorkOf(Lines, Probs, DesignTotal);   // checked again, as the server will (BUILD-006)
+	if (!Lines.Num()) { E->Why = TEXT("nothing has changed"); return false; }
 	if (Probs.Num()) { E->Why = Probs[0]; return false; }
-	if (Total > 0 && !E->Spend(Total, TEXT("sys:builders"), TEXT("Remodel: ") + Lots[PanelLot].Name)) return false;
-	RemodelsDone.Add(Lots[PanelLot].Id, Draft);
-	DraftBase = Draft;
+	const FString Name = Lots[PanelLot].Name;
+	if (DesignTotal > 0 && !E->Spend(DesignTotal, TEXT("sys:builders"), TEXT("Remodel: ") + Name)) return false;
+	if (Total - DesignTotal > 0 && !E->Spend(Total - DesignTotal, TEXT("sys:builders"), TEXT("Room plan: ") + Name)) return false;   // BUILD-023
+	if (Draft != DraftBase) { RemodelsDone.Add(Lots[PanelLot].Id, Draft); DraftBase = Draft; ApplyRemodel(PanelLot, Draft); }
+	for (const auto& P : PlanDraft)
+		if (!(P.Value == PlanBase.FindRef(P.Key))) { PlansDone.FindOrAdd(Lots[PanelLot].Id).Add(P.Key, P.Value); PlanBase.Add(P.Key, P.Value); }
 	DraftUndo.Reset();
-	ApplyRemodel(PanelLot, Draft);
-	Said = TEXT("Done: ") + Lots[PanelLot].Name + (Total ? TEXT(", for ") + Format(Total) : FString()) + TEXT(".");
+	PlanUndo.Reset();
+	Said = TEXT("Done: ") + Name + (Total ? TEXT(", for ") + Format(Total) : FString()) + TEXT(".");
 	return true;
 }
 
@@ -1205,13 +1236,14 @@ void ABrixLife::RemodelPanel(TSharedRef<SVerticalBox> Body)
 			Row(TEXT("Walls"), Mixed, Ws.IsValidIndex(f) ? Ws[f] : nullptr, Put(TEXT("walls")));
 		}
 		if (const auto* Ifl = MenuOf(TEXT("inside.floors"))) Row(TEXT("Floor"), *Ifl, Fl.IsValidIndex(f) ? Fl[f] : nullptr, Put(TEXT("floors")));
-		Slot(UiText(TEXT("The room plan and the furniture of a storey are not in this build's designer yet."), 12, UiDim));
+		RoomsSection(Body);
+		Slot(UiText(TEXT("Furnishing a storey is not in this build's designer yet."), 12, UiDim));
 	}
 	// the work, its price line by line, and what would stop it (BUILD-005, BUILD-006)
 	TArray<FBrixCostLine> Lines;
-	const int64 Total = BrixBuilder::Cost(R, L, DraftBase, Draft, Lines);
-	TArray<FString> Probs = Draft == DraftBase ? TArray<FString>() : BrixBuilder::Check(R, L, DraftBase, Draft, bWhole, Mine, {});
-	if (Lines.Num() && Total > E->Funds()) Probs.Add(TEXT("it costs ") + Format(Total) + TEXT(" and you have ") + Format(E->Funds()));
+	TArray<FString> Probs;
+	int64 DesignTotal = 0;
+	const int64 Total = WorkOf(Lines, Probs, DesignTotal);
 	Slot(UiHeading(TEXT("The work")), 0);
 	if (!Lines.Num()) Slot(UiText(TEXT("Pick something to change: it shows on the building at once. Nothing is paid until you build."), 13, UiDim));
 	for (const FBrixCostLine& Ln : Lines)
@@ -1233,9 +1265,280 @@ void ABrixLife::RemodelPanel(TSharedRef<SVerticalBox> Body)
 	TSharedRef<SHorizontalBox> Bs = UiRow();
 	UiAdd(Bs, UiButton(Lines.Num() ? (Total ? TEXT("Pay ") + Format(Total) + TEXT(" and build") : FString(TEXT("Keep it like this"))) : FString(TEXT("Pay and build")),
 		[this]() { Act([this](FString& S) { return RemodelPay(S); }); }, Lines.Num() > 0 && !Probs.Num()));
-	UiAdd(Bs, UiButton(TEXT("Undo"), [this]() { if (DraftUndo.Num()) { Draft = DraftUndo.Pop(); ApplyRemodel(PanelLot, Draft); Draw(); } }, DraftUndo.Num() > 0, true));
-	UiAdd(Bs, UiButton(TEXT("Start again"), [this]() { DraftUndo.Add(Draft); Draft = DraftBase; ApplyRemodel(PanelLot, Draft); Draw(); }, Draft != DraftBase, true));
+	UiAdd(Bs, UiButton(TEXT("Undo"), [this]()
+	{
+		if (!DraftUndo.Num()) return;
+		Draft = DraftUndo.Pop();
+		const TMap<int32, FBrixPlan> Was = PlanUndo.Num() ? PlanUndo.Pop() : PlanDraft;
+		for (const auto& P : PlanDraft) if (!(P.Value == Was.FindRef(P.Key))) ShowPlan(PanelLot, P.Key, Was.Contains(P.Key) ? Was[P.Key] : PlanBase.FindRef(P.Key));
+		PlanDraft = Was;
+		ApplyRemodel(PanelLot, Draft);
+		Draw();
+	}, DraftUndo.Num() > 0, true));
+	bool bPlanned = false;
+	for (const auto& P : PlanDraft) bPlanned |= !(P.Value == PlanBase.FindRef(P.Key));
+	UiAdd(Bs, UiButton(TEXT("Start again"), [this]()
+	{
+		PushUndo();
+		Draft = DraftBase;
+		for (const auto& P : PlanDraft) if (!(P.Value == PlanBase.FindRef(P.Key))) ShowPlan(PanelLot, P.Key, PlanBase.FindRef(P.Key));
+		PlanDraft = PlanBase;
+		ApplyRemodel(PanelLot, Draft);
+		Draw();
+	}, Draft != DraftBase || bPlanned, true));
 	Slot(Bs, 10);
+}
+
+// ---- the room plan (BUILD-021 to BUILD-023; life.js planNow(), editWall(), addWall(), fitWall(), grow(); play.js roomFor())
+
+const FBrixLot* ABrixLife::CityLot(int32 Lot) const
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	const FBrixCity* C = Mode ? Mode->CityData() : nullptr;
+	if (!C) return nullptr;
+	int32 k = 0;
+	for (const FBrixBlock& B : C->Blocks) for (const FBrixLot& L : B.Lots) if (k++ == Lot) return &L;
+	return nullptr;
+}
+
+FBrixRoomPlanRules ABrixLife::PlanRules() const
+{
+	FBrixRoomPlanRules R;
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (Mode && Mode->InsidesData() && Mode->InsidesData()->Builder.RoomPlan) R.Load(Mode->InsidesData()->Builder.RoomPlan->GetObjectField(TEXT("rules")));
+	return R;
+}
+
+FBrixPlan ABrixLife::PlanNow(int32 Lot, int32 f) const   // a storey's walls as they are now: planned and paid for, else as the town built them
+{
+	if (Lots.IsValidIndex(Lot)) if (const TMap<int32, FBrixPlan>* P = PlansDone.Find(Lots[Lot].Id)) if (const FBrixPlan* Pq = P->Find(f)) return *Pq;
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	const FBrixInsides* Ins = Mode ? Mode->InsidesData() : nullptr;
+	const FBrixLot* L = CityLot(Lot);
+	if (!Ins || !L || !Ins->Lots.IsValidIndex(Lot) || !Ins->Lots[Lot].IsSet() || !Ins->Lots[Lot]->Flats.Num()) return FBrixPlan();
+	return BrixRoomPlan::PlanOf(BrixFlatWalls(*L, Ins->Lots[Lot].GetValue(), f, Ins->Rules));
+}
+
+bool ABrixLife::RoomFor(int32 Lot, int32 f, FBrixRoomSpec& S) const   // play.js roomFor()
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	const FBrixInsides* Ins = Mode ? Mode->InsidesData() : nullptr;
+	const FBrixLot* L = CityLot(Lot);
+	if (!Ins || !L || !Ins->Lots.IsValidIndex(Lot) || !Ins->Lots[Lot].IsSet()) return false;
+	const FBrixInside& In = Ins->Lots[Lot].GetValue();
+	const double t = .35;
+	S = FBrixRoomSpec();
+	S.Room = FVector4f(L->Min.X + t, L->Min.Y + t, L->Max.X - t, L->Max.Y - t);
+	FString Front = TEXT("s");
+	const TSharedPtr<FJsonObject> D = DesignOf(Lot);
+	if (D) D->GetObjectField(TEXT("shell"))->TryGetStringField(TEXT("side"), Front);
+	const FVector2D Dir = Front == TEXT("n") ? FVector2D(0, -1) : Front == TEXT("s") ? FVector2D(0, 1) : Front == TEXT("w") ? FVector2D(-1, 0) : FVector2D(1, 0);   // play.js DOOR_DIR: out of the door
+	if (f == 0)
+	{
+		const double w = In.DoorWidth / 2 + .2, Ln = 2.2;
+		const FVector2D A = L->Door - Dir * Ln;
+		S.Keep.Add(FVector4f(FMath::Min(L->Door.X, A.X) - (Dir.X ? 0 : w), FMath::Min(L->Door.Y, A.Y) - (Dir.Y ? 0 : w), FMath::Max(L->Door.X, A.X) + (Dir.X ? 0 : w), FMath::Max(L->Door.Y, A.Y) + (Dir.Y ? 0 : w)));
+		S.Entries.Add(L->Door - Dir * .6);
+	}
+	if (In.Stair)
+	{
+		const FBrixStairGeo G = BrixStairOf(*In.Stair, Ins->Rules);
+		const FVector2D A = G.P(G.U0 - .3f, FMath::Min(G.V0, G.V1) - .3f), B = G.P(G.U1 + .3f, FMath::Max(G.V0, G.V1) + .3f);
+		S.Keep.Add(FVector4f(FMath::Min(A.X, B.X), FMath::Min(A.Y, B.Y), FMath::Max(A.X, B.X), FMath::Max(A.Y, B.Y)));
+		if (f > 0) { const FBrixStairGeo::FFlight Fl = G.Flight(f - 1); S.Entries.Add(G.P(Fl.Ut + Fl.Dir * .5f, (Fl.Lane.X + Fl.Lane.Y) / 2)); }
+		if (f < L->Floors - 1) S.Entries.Add(G.FootAt(f));
+	}
+	if (!S.Entries.Num()) S.Entries.Add(FVector2D((S.Room.X + S.Room.Z) / 2, (S.Room.Y + S.Room.W) / 2));
+	const FBrixDoorRules DR = FBrixDoorRules::FromConfig();
+	S.Ceiling = BrixCeilingUp(*L, f, DR) - BrixFloorUp(*L, f, DR);
+	return true;
+}
+
+void ABrixLife::ShowPlan(int32 Lot, int32 f, const FBrixPlan& Plan)   // play.js showPlan(): the storey's walls drawn from it
+{
+	ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Mode || !Mode->RoomsActor() || !Mode->InsidesData()) return;
+	const FBrixRoomPlanRules R = PlanRules();
+	const TSharedPtr<FJsonObject> Kit = Mode->InsidesData()->Builder.Kit;
+	TArray<FBrixPartition> Segs;
+	TArray<TOptional<FVector3f>> Cols;
+	for (const FBrixPlanWall& W : Plan)
+	{
+		TOptional<FVector3f> C;
+		const TSharedPtr<FJsonObject>* Cl = nullptr;
+		if (!W.Colour.IsEmpty() && Kit && Kit->GetObjectField(TEXT("colours"))->TryGetObjectField(W.Colour, Cl))   // mixed as the inside walls are (storeys.js wallColour())
+		{
+			const TArray<TSharedPtr<FJsonValue>>& P = (*Cl)->GetArrayField(TEXT("rgb"));
+			const TSharedPtr<FJsonObject> Mix = Kit->GetObjectField(TEXT("inner_mix"));
+			const TArray<TSharedPtr<FJsonValue>>& With = Mix->GetArrayField(TEXT("with"));
+			const float Sh = (float)Mix->GetNumberField(TEXT("share"));
+			FVector3f V;
+			for (int32 k = 0; k < 3; ++k) V[k] = (float)P[k]->AsNumber() + ((float)With[k]->AsNumber() - (float)P[k]->AsNumber()) * Sh;
+			C = V;
+		}
+		for (const FBrixPartition& S : BrixRoomPlan::SegsOf(R, { W })) { Segs.Add(S); Cols.Add(C); }
+	}
+	const bool bDrawn = Mode->RoomsActor()->SetPlan(Lot, f, Segs, Cols);
+	UE_LOG(LogTemp, Display, TEXT("Brix Town: %s floor %d drawn from its plan: %d walls, %d pieces%s"), Lots.IsValidIndex(Lot) ? *Lots[Lot].Id : TEXT("?"), f, Plan.Num(), Segs.Num(), bDrawn ? TEXT("") : TEXT(" (its rooms are not drawn)"));
+}
+
+void ABrixLife::PushUndo() { DraftUndo.Add(Draft); PlanUndo.Add(PlanDraft); }
+
+void ABrixLife::EditPlan(TFunction<void(FBrixPlan&)> Fn)
+{
+	FBrixPlan& P = PlanDraft.FindOrAdd(DesignStorey);
+	PushUndo();
+	Fn(P);
+	ShowPlan(PanelLot, DesignStorey, P);
+	Msg.Reset();
+	Draw();
+}
+
+void ABrixLife::AddWall(const FString& Ax)   // a new 3 m wall across the middle of the storey (life.js addWall(): where the view looks)
+{
+	FBrixRoomSpec S;
+	if (!RoomFor(PanelLot, DesignStorey, S)) return;
+	const FBrixRoomPlanRules R = PlanRules();
+	const bool bX = Ax == TEXT("x");
+	const double Lo = bX ? S.Room.X : S.Room.Y, Hi = bX ? S.Room.Z : S.Room.W, Flo = bX ? S.Room.Y : S.Room.X, Fhi = bX ? S.Room.W : S.Room.Z;
+	const double C = (Lo + Hi) / 2, Fix = BrixRoomPlan::Gridded(R, (Flo + Fhi) / 2), A0 = BrixRoomPlan::Gridded(R, FMath::Clamp(C - 1.5, Lo, Hi - 3)), A1 = BrixRoomPlan::Gridded(R, FMath::Min(Hi, A0 + 3));
+	EditPlan([&](FBrixPlan& P)
+	{
+		int32 n = 1;
+		for (const FBrixPlanWall& W : P) if (W.Id.StartsWith(TEXT("w"))) n = FMath::Max(n, FCString::Atoi(*W.Id.Mid(1)) + 1);
+		FBrixPlanWall W;
+		W.Id = FString::Printf(TEXT("w%d"), n); W.Ax = Ax; W.Fix = Fix; W.A0 = A0; W.A1 = A1;
+		P.Add(W);
+		WallSel = W.Id;
+	});
+}
+
+void ABrixLife::RoomsSection(TSharedRef<SVerticalBox> Body)   // life.js remodelPanel(), the inside tab's Rooms
+{
+	auto Slot = [&](TSharedRef<SWidget> W, float Top = 6) { Body->AddSlot().AutoHeight().Padding(0, Top, 0, 0)[ W ]; };
+	FBrixRoomSpec S;
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!RoomFor(PanelLot, DesignStorey, S) || !Mode || !Mode->RoomsActor() || !Mode->RoomsActor()->HasRooms(PanelLot))
+	{
+		Slot(UiText(TEXT("This building's rooms are not drawn inside yet, so its walls cannot be planned."), 12, UiDim));
+		return;
+	}
+	if (!PlanDraft.Contains(DesignStorey)) { const FBrixPlan P = PlanNow(PanelLot, DesignStorey); PlanBase.Add(DesignStorey, P); PlanDraft.Add(DesignStorey, P); }
+	const FBrixRoomPlanRules R = PlanRules();
+	const FBrixPlan& Plan = PlanDraft[DesignStorey];
+	Slot(UiHeading(TEXT("Rooms")), 0);
+	Slot(UiText(TEXT("Pick an inner wall, then move it, stretch it between the walls it meets, open or close its doorway, paint it or take it down. Every room must be reached from the way in, and the stairs kept clear."), 12, UiDim));
+	TSharedRef<SWrapBox> Ws = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+	for (const FBrixPlanWall& W : Plan)
+	{
+		const FString Id = W.Id;
+		Ws->AddSlot()[ UiButton(FString::Printf(TEXT("%s %s, %.2f m"), W.Ax == TEXT("x") ? TEXT("E-W") : TEXT("N-S"), *W.Id, W.A1 - W.A0), [this, Id]() { WallSel = WallSel == Id ? FString() : Id; Draw(); }, true, WallSel != Id) ];
+	}
+	if (!Plan.Num()) Ws->AddSlot()[ UiText(TEXT("No inner walls on this storey."), 13, UiDim) ];
+	Slot(Ws);
+	if (const FBrixPlanWall* W = Plan.FindByPredicate([this](const FBrixPlanWall& X) { return X.Id == WallSel; }))
+	{
+		const FString Id = W->Id;
+		const bool bX = W->Ax == TEXT("x");
+		const double Lo = bX ? S.Room.X : S.Room.Y, Hi = bX ? S.Room.Z : S.Room.W;
+		auto Edit = [this, Id](TFunction<void(FBrixPlanWall&)> Fn) { EditPlan([Id, Fn](FBrixPlan& P) { if (FBrixPlanWall* X = P.FindByPredicate([&](const FBrixPlanWall& Y) { return Y.Id == Id; })) Fn(*X); }); };
+		TSharedRef<SWrapBox> A = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(6, 4));
+		A->AddSlot()[ UiButton(W->Door ? TEXT("Close the doorway") : TEXT("Add a doorway"), [Edit, R]() { Edit([R](FBrixPlanWall& X) { if (X.Door) X.Door.Reset(); else X.Door = BrixRoomPlan::Gridded(R, (X.A0 + X.A1) / 2); }); }, true, true) ];
+		A->AddSlot()[ UiButton(TEXT("Fit between walls"), [this, Edit, R, Lo, Hi, Id]()   // life.js fitWall(): to the nearest wall across, or the room's side, at each end
+		{
+			const FBrixPlan Now = PlanDraft[DesignStorey];
+			Edit([&Now, R, Lo, Hi, Id](FBrixPlanWall& X)
+			{
+				TArray<double> St = { Lo, Hi };
+				for (const FBrixPlanWall& Qw : Now) if (Qw.Id != Id && Qw.Ax != X.Ax && Qw.A0 - .01 <= X.Fix && X.Fix <= Qw.A1 + .01) St.Add(Qw.Fix);
+				const double C = (X.A0 + X.A1) / 2;
+				double A0 = -1e9, A1 = 1e9;
+				for (const double v : St) { if (v < C - .3) A0 = FMath::Max(A0, v); if (v > C + .3) A1 = FMath::Min(A1, v); }
+				X.A0 = FCString::Atod(*FString::Printf(TEXT("%.2f"), FMath::CeilToDouble(A0 / R.Grid - 1e-6) * R.Grid));
+				X.A1 = FCString::Atod(*FString::Printf(TEXT("%.2f"), FMath::FloorToDouble(A1 / R.Grid + 1e-6) * R.Grid));
+				if (X.Door) X.Door = BrixRoomPlan::Gridded(R, FMath::Clamp(*X.Door, X.A0 + R.DoorW / 2 + R.DoorMargin, X.A1 - R.DoorW / 2 - R.DoorMargin));
+			});
+		}, true, true) ];
+		auto Grow = [Edit, R, Lo, Hi](double d) { Edit([R, Lo, Hi, d](FBrixPlanWall& X) { X.A0 = BrixRoomPlan::Gridded(R, FMath::Max(Lo, X.A0 - d / 2)); X.A1 = BrixRoomPlan::Gridded(R, FMath::Min(Hi, X.A1 + d / 2)); }); };
+		A->AddSlot()[ UiButton(TEXT("Longer"), [Grow]() { Grow(.5); }, true, true) ];
+		A->AddSlot()[ UiButton(TEXT("Shorter"), [Grow]() { Grow(-.5); }, W->A1 - W->A0 >= 1.1, true) ];
+		auto Move = [Edit, R](double d) { Edit([R, d](FBrixPlanWall& X) { X.Fix = BrixRoomPlan::Gridded(R, X.Fix + d); if (X.Door) X.Door = BrixRoomPlan::Gridded(R, *X.Door); }); };   // life.js: dragging it either way
+		A->AddSlot()[ UiButton(bX ? TEXT("Move north") : TEXT("Move west"), [Move]() { Move(-.25); }, true, true) ];
+		A->AddSlot()[ UiButton(bX ? TEXT("Move south") : TEXT("Move east"), [Move]() { Move(.25); }, true, true) ];
+		A->AddSlot()[ UiButton(TEXT("Take down"), [this, Id]() { EditPlan([Id](FBrixPlan& P) { P.RemoveAll([&](const FBrixPlanWall& X) { return X.Id == Id; }); }); WallSel.Reset(); Draw(); }, true, true) ];
+		Slot(A);
+		// its own colour (BUILD-022): the district's inside colours, or the storey's
+		if (const TSharedPtr<FJsonObject> Kit = Mode->InsidesData()->Builder.Kit)
+		{
+			TSharedRef<SWrapBox> C = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(4, 4));
+			FBrixDesignOption None;
+			None.Id = MakeShared<FJsonValueNull>(); None.Name = TEXT("As the storey");
+			C->AddSlot()[ SwatchButton(None, W->Colour.IsEmpty(), [Edit]() { Edit([](FBrixPlanWall& X) { X.Colour.Reset(); }); }) ];
+			const TSharedPtr<FJsonObject> Mix = Kit->GetObjectField(TEXT("inner_mix"));
+			const TArray<TSharedPtr<FJsonValue>>& With = Mix->GetArrayField(TEXT("with"));
+			const float Sh = (float)Mix->GetNumberField(TEXT("share"));
+			for (const TSharedPtr<FJsonValue>& V : Kit->GetArrayField(TEXT("plaster")))
+			{
+				const FString Cid = V->AsString();
+				const TArray<TSharedPtr<FJsonValue>>& P = Kit->GetObjectField(TEXT("colours"))->GetObjectField(Cid)->GetArrayField(TEXT("rgb"));
+				FBrixDesignOption O;
+				O.Id = V; O.Name = Kit->GetObjectField(TEXT("colours"))->GetObjectField(Cid)->GetStringField(TEXT("name"));
+				FVector3f Rgb;
+				for (int32 k = 0; k < 3; ++k) Rgb[k] = (float)P[k]->AsNumber() + ((float)With[k]->AsNumber() - (float)P[k]->AsNumber()) * Sh;
+				O.Rgb = Rgb;
+				C->AddSlot()[ SwatchButton(O, W->Colour == Cid, [Edit, Cid]() { Edit([Cid](FBrixPlanWall& X) { X.Colour = Cid; }); }) ];
+			}
+			Slot(SNew(SHorizontalBox) + SHorizontalBox::Slot().AutoWidth().Padding(0, 6, 10, 0)[ SNew(SBox).WidthOverride(118.f)[ UiText(TEXT("Its colour"), 13, UiDim) ] ] + SHorizontalBox::Slot().FillWidth(1)[ C ], 4);
+		}
+	}
+	TSharedRef<SHorizontalBox> Add = UiRow();
+	UiAdd(Add, UiButton(TEXT("Add a wall east to west"), [this]() { AddWall(TEXT("x")); }, true, true));
+	UiAdd(Add, UiButton(TEXT("Add a wall north to south"), [this]() { AddWall(TEXT("z")); }, true, true));
+	Slot(Add);
+}
+
+// The work of the whole remodel: the design's (outside and finishes) and each storey's room plan, line by line, and what stops it
+int64 ABrixLife::WorkOf(TArray<FBrixCostLine>& Lines, TArray<FString>& Probs, int64& DesignTotal) const
+{
+	Lines.Reset();
+	Probs.Reset();
+	DesignTotal = 0;
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Draft || !Mode || !Mode->InsidesData() || !DesignLots.IsValidIndex(PanelLot)) return 0;
+	const FBrixBuilderRules& R = Mode->InsidesData()->Builder;
+	const FBrixDesignLot& L = DesignLots[PanelLot];
+	bool bWhole = false;
+	TArray<int32> Mine;
+	Holding(PanelLot, bWhole, Mine);
+	if (Draft != DraftBase)
+	{
+		DesignTotal = BrixBuilder::Cost(R, L, DraftBase, Draft, Lines);
+		Probs = BrixBuilder::Check(R, L, DraftBase, Draft, bWhole, Mine, {});
+		if (!Lines.Num()) Probs.Reset();
+	}
+	int64 Total = DesignTotal;
+	const FBrixRoomPlanRules PR = PlanRules();
+	TArray<FString> Colours;
+	if (R.Kit) for (const auto& V : R.Kit->GetArrayField(TEXT("plaster"))) Colours.Add(V->AsString());
+	TArray<int32> Fl;
+	PlanDraft.GetKeys(Fl);
+	Fl.Sort();
+	for (const int32 f : Fl)
+	{
+		const FBrixPlan& A = PlanDraft[f];
+		const FBrixPlan& B = PlanBase.FindRef(f);
+		if (A == B) continue;
+		FBrixRoomSpec S;
+		if (!RoomFor(PanelLot, f, S)) continue;
+		const FString Tag = Mine.Num() > 1 ? (f ? FString::Printf(TEXT(" (floor %d)"), f) : FString(TEXT(" (ground)"))) : FString();
+		TArray<FBrixPlanLine> Pl;
+		Total += BrixRoomPlan::Cost(PR, B, A, S.Ceiling, Pl);
+		for (const FBrixPlanLine& X : Pl) Lines.Add({ X.What + Tag, X.Qty, X.Chips });
+		for (const FString& X : BrixRoomPlan::Check(PR, S, Colours, B, A, {})) Probs.Add(X + Tag);
+		if (!bWhole && !Mine.Contains(f)) Probs.Add(FString::Printf(TEXT("floor %d is not yours to change"), f));
+	}
+	if (Lines.Num() && Total > E->Funds()) Probs.Add(TEXT("it costs ") + Format(Total) + TEXT(" and you have ") + Format(E->Funds()));
+	return Total;
 }
 
 // ---- for test shots
@@ -1297,6 +1600,17 @@ bool ABrixLife::RunOps(const FString& Ops)
 			if (!FJsonSerializer::Deserialize(Rd, V) || !V.IsValid()) V = MakeShared<FJsonValueString>(Val);
 			if (bOk) RemodelSet({ { Path, V } });
 		}
+		else if (A[0] == TEXT("tab") && Panel == TEXT("remodel")) { DesignTab = Sv(1); DesignView(); Draw(); }   // tab,<outside|inside>
+		else if (A[0] == TEXT("storey") && Panel == TEXT("remodel")) { DesignStorey = (int32)I(1); WallSel.Reset(); DesignView(); Draw(); }
+		else if (A[0] == TEXT("addwall") && Panel == TEXT("remodel")) { Draw(); AddWall(Sv(1)); }   // addwall,<x|z>: a new wall across the storey's middle
+		else if (A[0] == TEXT("wall") && Panel == TEXT("remodel")) { WallSel = Sv(1); Draw(); }   // wall,<id>: pick it
+		else if (A[0] == TEXT("door") && Panel == TEXT("remodel") && !WallSel.IsEmpty())   // door: open or close the picked wall's doorway
+		{
+			const FBrixRoomPlanRules PR = PlanRules();
+			const FString Id = WallSel;
+			EditPlan([&](FBrixPlan& Pl) { if (FBrixPlanWall* X = Pl.FindByPredicate([&](const FBrixPlanWall& Y) { return Y.Id == Id; })) { if (X->Door) X->Door.Reset(); else X->Door = BrixRoomPlan::Gridded(PR, (X->A0 + X->A1) / 2); } });
+		}
+		else if (A[0] == TEXT("close")) Close();   // close: the panel shut, the player's own view again
 		else if (A[0] == TEXT("pay") && Panel == TEXT("remodel")) { FString Said; bOk = RemodelPay(Said); Msg = bOk ? Said : TEXT("Refused: ") + E->Why + TEXT("."); Draw(); }
 		else if (A[0] == TEXT("give")) bOk = E->HasAccount(TEXT("current")) && E->L.Post(E->Day, E->Minute, TEXT("Test money"), { { TEXT("sys:start"), -I(1) }, { TEXT("p:current"), I(1) } }, E->Why);
 		else if (Est && (A[0] == TEXT("buy_cheapest") || A[0] == TEXT("rent_cheapest")))

@@ -6,6 +6,7 @@
 #include "BrixEconomy.h"
 #include "BrixEstate.h"
 #include "BrixBuilder.h"
+#include "BrixRoomPlan.h"
 #include "BrixQuests.h"
 #include "BrixRewards.h"
 #include "BrixRewardsWidget.h"
@@ -139,7 +140,18 @@ private:
 	bool Holding(int32 Lot, bool& bWhole, TArray<int32>& Floors) const;   // life.js holding()
 	TSharedPtr<FJsonObject> DesignOf(int32 Lot) const;   // as remodelled and paid for, else inside.json's
 	bool RemodelPay(FString& Said);
-	void ApplyRemodel(int32 Lot, const TSharedPtr<FJsonObject>& Design);   // drawn and kept (inside.json's insides too)
+	void ApplyRemodel(int32 Lot, const TSharedPtr<FJsonObject>& Design);
+	// the room plan (BUILD-021 to BUILD-023)
+	const struct FBrixLot* CityLot(int32 Lot) const;
+	FBrixRoomPlanRules PlanRules() const;
+	FBrixPlan PlanNow(int32 Lot, int32 Floor) const;
+	bool RoomFor(int32 Lot, int32 Floor, FBrixRoomSpec& Out) const;
+	void ShowPlan(int32 Lot, int32 Floor, const FBrixPlan& Plan);
+	void PushUndo();
+	void EditPlan(TFunction<void(FBrixPlan&)> Fn);
+	void AddWall(const FString& Ax);
+	void RoomsSection(TSharedRef<SVerticalBox> Body);
+	int64 WorkOf(TArray<FBrixCostLine>& Lines, TArray<FString>& Probs, int64& DesignTotal) const;   // drawn and kept (inside.json's insides too)
 	FString BuyUnits(const TArray<int32>& Units, const FString& Agent, bool& bOk);
 	void QuestsPanel(TSharedRef<SVerticalBox> Body);
 	TMap<FString, FString> JobVars(const FBrixJob& O) const;
@@ -205,6 +217,10 @@ private:
 	TMap<FString, TSharedPtr<FJsonObject>> RemodelsDone;
 	TSharedPtr<FJsonObject> Draft, DraftBase;   // the remodel being tried, and what it started from
 	TArray<TSharedPtr<FJsonObject>> DraftUndo;
+	TMap<int32, FBrixPlan> PlanDraft, PlanBase;   // the storeys' room plans being tried, and as they were
+	TArray<TMap<int32, FBrixPlan>> PlanUndo;
+	FString WallSel;                      // the inner wall picked
+	TMap<FString, TMap<int32, FBrixPlan>> PlansDone;   // lot id -> storey -> its plan as paid for (life.js plans)
 	FString DesignTab = TEXT("outside"), DesignFacade = TEXT("*");
 	int32 DesignStorey = 0, ViewTurn = 0;
 	UPROPERTY() TObjectPtr<class ACameraActor> ViewCam;
