@@ -190,9 +190,12 @@ decoder and joined into one sound (`SND018_lines_are_voiced`; few lines are voic
 The face follows the line: mouth shapes from its text stretched to the voice's length, brows and nods on stressed words
 and questions, the mood's expression (World/rules/speech.json; `CHR009_lines_are_mouthed_as_the_slice_mouths_them` and
 the talking faces in `ART004_...` check the port against the slice's own code). After a talk the resident runs late by
-the time it took until they next stand still where they would be anyway. The quests, jobs and counters that the slice's life.js adds to talks are below. Not yet: the player's typed name
-and the wordless murmur of lines with no voice.
-To see one without anyone at the keys: `-BrixTalk=<resident index>` (and `-BrixAnswers=1,2`) with `-BrixShot=`.
+the time it took until they next stand still where they would be anyway. The quests, jobs and counters that the slice's life.js adds to talks are below. The player's name from the designer fills {player}
+(`CHR001_the_players_name_is_said_in_talks`), and while they answer their own face says it, mouth with the voice (or the
+text's own time when it is not voiced), the camera coming round past the resident to look at them (`AnswerCameraYaw`) and
+going back over the shoulder when the resident speaks. Not yet: the wordless murmur of lines with no voice.
+To see one without anyone at the keys: `-BrixTalk=<resident index>` (and `-BrixAnswers=1,2`, a second and a half apart or
+`-BrixAnswerGap=<s>`) with `-BrixShot=`.
 
 ## Vehicles (CITY-040, CITY-091; ADR-0015)
 Every car, van and bus of the day is where `Tools/citysim/traffic.py` puts it at the clock's minute: `Game/Data/cars.json`
@@ -404,7 +407,7 @@ out) through both and compares the notes, endings, reputation, ledger and three 
 (build_play.py quest_script()). A new game starts the first starter line. In a talk (`ABrixTalk` asks `ABrixLife`, as
 conversations.js asks life.js): the resident a quest stage is waiting on has that stage's talk instead of their own; one
 who gives a quest line offers it; one whose role has work offers the day's job ("Any work going?"); an answer's needs and
-acts are the quest's ({player} is "you" until the character designer comes over); an answer that opens a shop opens it
+acts are the quest's ({player} is the name the player chose in the designer); an answer that opens a shop opens it
 when the talk ends. Goals are checked four times a second where the player is (in a lot, or at its door). J opens the quest
 log: under way with where the person to see is now (from their routine), on offer, finished, people you know. The lines
 under way show at the right of the screen, a job with its time left. Money coming in is shown as the owner chose
@@ -517,6 +520,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CHR009_lines_are_mouthed_as_the_slice_mouths_them` | CHR-009 |
 | `BrixTown.World.CHR001_the_designer_makes_the_slices_look` | CHR-001, CHR-002 |
 | `BrixTown.World.CHR013_designer_values_stay_in_range` | CHR-013 |
+| `BrixTown.World.CHR001_the_players_name_is_said_in_talks` | CHR-001, CHR-009 |
 | `BrixTown.World.CHR014_an_outfit_is_only_clothes_and_hair_the_designer_offers` | CHR-014 |
 | `BrixTown.World.SND018_lines_are_voiced` | SND-018 |
 | `BrixTown.World.ECO001_money_is_whole_chips_in_balanced_lines` | ECO-001, ECO-002, ECO-003, BANK-007 |

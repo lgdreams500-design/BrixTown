@@ -36,6 +36,8 @@ public:
 	void Open();                        // with the resident the player is next to, if any
 	void Choose(int32 N);               // the N-th answer (0 first)
 	void Close();
+	void SetPlayerName(const FString& Name) { Dialogue.PlayerName = Name; }   // {player} (CHR-001)
+	bool IsAnswering() const { return bAnswering; }
 	int32 Answered = 0;                  // answers chosen so far (the sound of choosing, SND-009)
 	const FString& Offer() const { return PromptText; }   // what E offers now ("Talk to ...", "Drive this car"), or empty
 
@@ -69,6 +71,10 @@ private:
 	TArray<int32> Opts;                  // the node's answers the player may give
 	FBrixLine Line;
 	FBrixFace Face;
+	FBrixFace PlayerFace;                // the player's own face: it says their answer, then listens (CHR-009)
+	FBrixLine PlayerLine, Quiet;
+	double PT0 = 0, PK = 1;
+	bool bAnswering = false;
 	double T0 = 0, K = 1, Minute0 = 0, NextAt = -1;
 	FString NextNode;
 	bool bNextPending = false;

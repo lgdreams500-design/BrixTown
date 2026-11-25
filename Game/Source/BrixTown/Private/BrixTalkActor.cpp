@@ -188,13 +188,19 @@ void ABrixTalk::Open()
 	ConvId = Cid;
 	Minute0 = Mode ? Mode->ClockMinute() : 0;
 	Face = Speech.Rest();
+	PlayerFace = Speech.Rest();
+	Quiet = Speech.Speak(TEXT(""));
+	bAnswering = false;
 	Flags.FindOrAdd(Res);
 	ABrixPeople::FCandidate H = C;
 	if (H.Pose == 1) H.Pose = 0;   // a walker stops and stands
 	People->Held = H;
 	People->HeldFace = &Face;
 	if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+	{
 		Me->BeginTalk(FVector(C.Pos.X, C.Pos.Y, 0) * CmPerM, CloseCamera);
+		Me->SetTalkFace(&PlayerFace);
+	}
 	Show(Conv.Start);
 }
 
@@ -206,6 +212,8 @@ void ABrixTalk::Show(const FString& Nid)
 	if (!N) { Close(); return; }
 	NodeId = Nid;
 	bNextPending = false;
+	bAnswering = false;   // the resident speaks: the camera back over your shoulder
+	if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0))) Me->SetAnswering(false);
 	const TSet<FString>& F = Flags.FindOrAdd(Res);
 	Opts.Reset();
 	for (int32 k = 0; k < N->Options.Num(); ++k) if (FBrixDialogue::Allowed(N->Options[k], F) && (!Life() || Life()->Allowed(N->Options[k]))) Opts.Add(k);
@@ -232,9 +240,17 @@ void ABrixTalk::Choose(int32 n)
 	if (ABrixLife* L = Life()) L->Chose(Res, O);   // its quest acts, a job taken or handed over (life.js chose())
 	double Dur = -1;
 	SayAloud(-1, O.Text, TEXT("neutral"), Dur);   // you say your answer (SND-018)
-	if (Dur <= 0) { Show(O.Next); return; }
+	const FString Said = FBrixDialogue::Fill(O.Text, Vars());
+	PlayerLine = Speech.Speak(Said);   // and your face says it: the mouth with the voice, or the text's own time when unvoiced
+	PT0 = Now(GetWorld());
+	PK = Dur > 0 ? PlayerLine.End / FMath::Max(.3, Dur) : 1.0;
+	const double Len = Dur > 0 ? Dur : PlayerLine.End;
+	if (Len <= 0) { Show(O.Next); return; }
+	bAnswering = true;
+	if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0))) Me->SetAnswering(true);
+	Dur = Len;
 	Opts.Reset();
-	Say = TEXT("You: ") + FBrixDialogue::Fill(O.Text, Vars());
+	Say = TEXT("You: ") + Said;
 	Mood = TEXT("neutral");
 	Line = Speech.Speak(TEXT(""));   // the resident listens, mouth at rest
 	T0 = Now(GetWorld());
@@ -259,6 +275,7 @@ void ABrixTalk::Close()
 	if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0))) Me->EndTalk();
 	Res = -1;
 	bNextPending = false;
+	bAnswering = false;
 	Say.Reset();
 	Refresh();
 	if (ABrixLife* L = Life()) L->TalkEnded();   // a counter asked for in the talk opens now
@@ -301,6 +318,7 @@ void ABrixTalk::Tick(float Dt)
 	if (bNextPending && Now(GetWorld()) >= NextAt) Show(NextNode);
 	if (!IsTalking()) return;
 	Speech.Blend(Face, Speech.Target(Line, Mood, (Now(GetWorld()) - T0) * K), Dt);   // the face follows the line
+	Speech.Blend(PlayerFace, Speech.Target(bAnswering ? PlayerLine : Quiet, TEXT("neutral"), (Now(GetWorld()) - PT0) * PK), Dt);   // and yours, yours
 	ABrixPeople::FCandidate& H = People->Held;
 	if (H.Pose == 0)   // a standing resident turns to the player
 		if (const APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0))

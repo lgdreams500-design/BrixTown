@@ -169,8 +169,8 @@ void ABrixLife::DrawMenu()
 	Frame(D0, M0);
 	// the bar along the top: who, the day, the time, the cash, back to town (UI-015)
 	TSharedRef<SHorizontalBox> Bar = SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 12, 0)[ Tile(Lantern(), TEXT("Y"), Ink(), 30.f) ]
-		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 22, 0)[ Text(TEXT("You"), 17, Cream(), true, false) ]
+		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 12, 0)[ Tile(Lantern(), PlayerName.Left(1).ToUpper(), Ink(), 30.f) ]
+		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 22, 0)[ Text(PlayerName, 17, Cream(), true, false) ]   // the designed character's name (CHR-001)
 		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 22, 0)[ Text(FString::Printf(TEXT("Day %d · %s · %s"), E->Day + 1, Day ? *Day->Weekday : TEXT(""), Day ? *Day->Season : TEXT("")), 14, Dim(), false, false) ]
 		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 22, 0)[ Text(MenuHhmm(M0) + (Settings.bPauses ? TEXT("  (the clock stands still)") : TEXT("")), 14, Dim(), false, false) ]
 		+ SHorizontalBox::Slot().FillWidth(1)

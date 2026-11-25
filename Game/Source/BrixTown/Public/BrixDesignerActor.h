@@ -47,6 +47,7 @@ private:
 	void Close();
 	void Build();
 	void Apply();
+	void Begun();
 	void Surprise();
 	TSharedRef<SWidget> Foot();
 	class ABrixCharacter* Me() const;
