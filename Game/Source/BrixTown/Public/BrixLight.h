@@ -4,9 +4,10 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "BrixLight.generated.h"
 
-// The eye and the night (ART_DIRECTION W5 to W7; WLD-042, ADR-0023). The game mode makes the sun, the sky's fill and the
-// haze and turns them by the clock; this adds what the picture still needs once the sun is down, and is made by the
-// engine for every game world, so nothing has to spawn it:
+// The eye and the night (ART_DIRECTION W5 to W7; WLD-042, ADR-0023, ADR-0055). The game mode makes the sun, the sky's fill
+// and the haze and turns them by the clock; this adds what the picture still needs as the sun gets low and once it is
+// down, and is made by the engine for every game world, so nothing has to spawn it. The arithmetic is BrixWorld's
+// BrixNight (BrixLightNow), which has the test:
 //   - the eye: the engine's automatic exposure opens without limit as the light goes, which made the night as bright as
 //     the day (a bright orange fog). It may now open only so far past the day's exposure: freely by day (the approved
 //     daylight look indoors and out is untouched, ADR-0048), DuskOpen stops with the sun on the horizon, NightOpen at
@@ -15,8 +16,6 @@
 //     strength while the light itself falls away, so dusk and dawn were an orange white-out and the night kept the
 //     orange. A low sun's haze is now dimmer and cooler with the sun's colour only in the air towards it, and once the
 //     day is gone it is the slice's dark blue distance (sky.json night.horizon and city_glow);
-//   - a low sun's light: the hazy air took nearly all of it an hour before sunset, so there was no golden hour, only a
-//     flat grey town waiting for its lamps. It now comes through as if the sun were no lower than LowSunKeeps degrees;
 //   - the lamps: they and the lit windows came on by the calendar's daylight alone, half an hour and more after the
 //     streets had gone dark. They now come on as the sun gets low (LowSun());
 //   - the night's light: with the sun out the sky was black and gave the shade no fill at all. A faint blue light from
@@ -63,7 +62,6 @@ public:
 	UPROPERTY(Config) float LowSunBelow = 0.6f;
 	UPROPERTY(Config) FLinearColor LowSunHaze = FLinearColor(0.14f, 0.15f, 0.24f);
 	UPROPERTY(Config) float LowSunGlow = 0.1f;
-	UPROPERTY(Config) float LowSunKeeps = 12.f;        // degrees: a lower sun's light comes through the air as if from this high
 	UPROPERTY(Config) float NightLux = 0.35f;          // the night's light on what faces it (the sun's is SunLux)
 	UPROPERTY(Config) FLinearColor NightColour = FLinearColor(0.48f, 0.62f, 1.f);      // sky.json night.moon.light's colour
 	UPROPERTY(Config) FVector NightFrom = FVector(-0.42, -0.52, 0.74);                 // towards it: x east, y south, z up
@@ -76,9 +74,9 @@ private:
 
 	UPROPERTY() TObjectPtr<class UExponentialHeightFogComponent> Fog;
 	UPROPERTY() TObjectPtr<class USkyAtmosphereComponent> Air;
+	UPROPERTY() TObjectPtr<class ADirectionalLight> Sun;          // the game mode's
 	UPROPERTY() TObjectPtr<AActor> Holder;                        // carries the two below
 	UPROPERTY() TObjectPtr<class UPostProcessComponent> Eye;
-	UPROPERTY() TObjectPtr<class ADirectionalLight> Sun;          // the game mode's
 	UPROPERTY() TObjectPtr<class UDirectionalLightComponent> NightLight;
 	UPROPERTY() TObjectPtr<class ACameraActor> TourCam;
 	bool bLooked = false, bOff = false;

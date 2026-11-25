@@ -91,10 +91,6 @@ void UBrixLight::Light(ABrixGameMode& Mode, float DeltaSeconds)
 	{
 		for (TActorIterator<ADirectionalLight> It(W); It; ++It) { Sun = *It; break; }
 		DayGlow = Fog->DirectionalInscatteringLuminance;   // as the game mode's haze was made
-		// a low sun keeps the light it has at LowSunKeeps degrees up: the hazy air (the game mode's SkyHaziness) otherwise
-		// takes nearly all of it for the last hour before sunset and the first after sunrise, so the town went flat and
-		// grey long before the calendar's dusk (the slice's lighting(): never less than a fifth of the sun gets through)
-		Air->SetTransmittanceMinLightElevationAngle(LowSunKeeps);
 	}
 	const bool bEye = !Without.Contains(TEXT("e")), bHaze = !Without.Contains(TEXT("h")), bNight = !Without.Contains(TEXT("n"));
 	if (!Holder)
@@ -107,8 +103,7 @@ void UBrixLight::Light(ABrixGameMode& Mode, float DeltaSeconds)
 	}
 	if (!Eye && bEye)
 	{
-		// a component, not an APostProcessVolume: that actor is a brush, which the engine counts as an object whose
-		// lighting is unbuilt and says so in red over the picture
+		// a component, not an APostProcessVolume actor: the eye has no place, and needs no brush in the world
 		Eye = NewObject<UPostProcessComponent>(Holder, TEXT("Eye"));
 		Eye->SetupAttachment(Holder->GetRootComponent());
 		Eye->bUnbound = true;

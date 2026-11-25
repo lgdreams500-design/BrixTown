@@ -11,6 +11,7 @@ starts on the engine's empty map and the game mode builds the town from `World/`
 | `Source/BrixTown/` | The game: `BrixGameMode` (load the city, the light, the player's start), `BrixTownActor` (the town as instanced shapes), `BrixCharacter` (the player in third person) |
 | `Config/DefaultGame.ini` | Every tunable number and colour (TECH-005) |
 | `Config/DefaultEngine.ini` | The startup map, Lumen and virtual shadow maps |
+| `Config/DefaultScalability.ini` | The project's own changes to the engine's quality levels (Lumen's surface cache at High) |
 
 ## What it shows so far (grey-box)
 The starting city at the slice's sizes: a box for each building (its footprint, turned by its `angle`; `floors` × 3 m +
@@ -202,9 +203,10 @@ own short names clashed as soon as a new file changed which files were joined.
 As in the slice (play.js windows()), a share of each kind of building's windows is lit after dusk (half a home's, a third of a
 shop's, every shopfront window; `LitShare` in DefaultGame.ini), each a warm pane just in front of its glass in one of the
 lamplight's two colours, shown and glowing as the lamps light (`ABrixTownActor::SetNight`, from `ABrixRooms`). Lumen's
-surface cache is some 20 % short of what the town's insides would fill (an on-screen warning in test shots): it only
-lowers the detail of far surfaces' bounced light; a larger cache (`r.LumenScene.SurfaceCache.AtlasSize`) is not set, to
-spare the laptop's video memory.
+surface cache was some 20 % short of what the town's insides would fill (a red line over test shots, and far surfaces
+losing their bounced light at random). A larger cache (`r.LumenScene.SurfaceCache.AtlasSize`) is not set, to spare the
+laptop's video memory; at High each surface's picture in it is 80 % a side instead (`Config/DefaultScalability.ini`,
+ADR-0055), which fits: no warning in the spawn alley or on Market Square.
 
 ## Furnished homes (FURN-060 to FURN-063; ADR-0050)
 The planned homes are furnished as the slice furnishes them (homes.js, houses.js): 469 designed houses (plan house_12x9)
@@ -215,7 +217,11 @@ each piece stands is `BrixWorld/BrixHomes` (`FURN060_every_planned_home_is_furni
 furniture kits' own meshes in the home's line: `Tools/blender/unreal_furniture_37.py` exports them (Blender, about 20 s),
 `Tools/unreal/import_furniture_kit.py` imports the ones the plans use into `/Game/Furniture` (the .glb files are not kept in
 git). `ABrixRooms` furnishes the homes within 30 m of the camera, and lights the rooms of the home the camera is in (three
-lamps, no shadows: 3 to 5 fps). `-BrixStand=x,z,yaw` puts the player in a room for a shot.
+lamps, no shadows: 3 to 5 fps). A lamp is an even pool that fades out at its reach, as play.js roomLight() caps a lamp
+close by (`RoomLightLevel`, `RoomLightFalloff`, `RoomLightDrop`); a floor with no plan (a shop, a cafe, the bank, a
+tower's hall) has one, reaching `HallLightReach` of the floor's diagonal (ADR-0055: a true 1/d2 lamp 0.4 m under the
+ceiling burnt a white patch on it and left a 38 m hall's walls black). `-BrixStand=x,z,yaw` puts the player in a room
+for a shot.
 
 ## Designed houses (ADR-0032, ADR-0035)
 The 469 designed houses (lot.house) are built as the slice builds them (houses.js outsideS): the 12 x 9 m house of
@@ -479,6 +485,47 @@ clock alone: `BrixCloudsNow`, a port of `world.clouds_now()`, checked by `WLD036
 They are drawn on the inside of a dome round the camera by `/Game/Weather/M_Clouds` (`Tools/unreal/make_clouds_material.py`,
 `clouds.hlsl`); 46 to 50 frames a second at High under a clear-day sky and at dusk.
 
+## The eye and the night (WLD-042, WLD-028, WLD-043; ADR-0055, after ADR-0023)
+The game mode makes the sun, the sky's fill and the haze and turns them by the clock. `UBrixLight`, a part the engine
+makes for every game world (nothing spawns it), adds what the picture needs as the sun gets low and after it is down; the
+arithmetic is `BrixWorld/BrixNight` (`BrixLightNow`: from the day's light, the sun's height, the weather and whether the
+camera is in a room), checked by `WLD042_the_days_light_is_kept_and_the_night_is_dark`. By day with the sun up it changes
+nothing: the haze and its glow are the game mode's own and the eye is free, so the approved daylight indoors and out is
+as it was (ADR-0007, ADR-0048). Then:
+- **the eye**: the engine's automatic exposure opens without limit as the light goes, which made the night as bright as
+  the day. It may open only so far past the day's exposure (`DayEV`, 1.3 measured in the open street at noon):
+  `DuskOpen` stops out of doors with the sun on the horizon, `NightOpen` at night, `NightOpenIndoors` in a room by its
+  lamps;
+- **the haze**: the game mode turns all of it the low sun's orange at the day's full strength while the light itself
+  falls away (dusk and dawn were an orange white-out, and the night kept the orange). A low sun's haze is dimmer and
+  cooler (`LowSunHaze`), the sun's colour only in the air towards it (`LowSunGlow`); at night it is `NightHaze`, the
+  slice's dark blue distance;
+- **the lamps and the lit windows** come on as the sun gets low (`UBrixLight::LowSun()`, used by `ABrixLamps` and
+  `ABrixRooms`), from about 19:00 to 06:40 in summer: with the sun on the horizon the alleys are in deep shade;
+- **the night's light**: a faint blue light from high up (`NightLux`, `NightFrom`: the slice's own moon direction when
+  its moon is down), the air's second light, so the sky is a deep blue and the sky light has that to fill the streets
+  with (`NightSky`; the game mode's `NightFill` is 1). It casts shadows, so roofs keep it out of rooms.
+Every number is in DefaultGame.ini, `[/Script/BrixTown.BrixLight]`. `-BrixLightOff` leaves the light as the game mode
+alone makes it, to compare; `-BrixLightNo=<letters>` leaves parts out (e the eye, h the haze, n the night's light, s its
+sky). Pictures before and after: `Art/StyleTests/unreal_light_42/`. Not yet: the stars, the Milky Way, the moon's disc,
+path and phases (the night's light comes from one place and does not wax or wane), the planet (WLD-065); lamps lit in
+shade by day as the reference renders have them; light from lit windows on the pavement (the panes are kept out of
+Lumen); the alley's haze growing heavy from 18:00 as its shade deepens (the game mode's haze has one brightness whatever
+the light). The haze's colour is set twice a frame at dusk and night, by the game mode and then by this: to be folded
+into the game mode's UpdateSun. At High with nothing else running: 32 to 55 frames a second at the 59 stops of the tour
+below (40 in the middle), day and night.
+
+**Looking at the light everywhere in one run.** A launch costs one to four minutes on this laptop and a shot a few
+seconds, so `-BrixTour=<list> -BrixTourOut=<folder>` (with `-BrixNoDesigner -BrixNoSave`, not `-BrixShot=`) goes through a
+list of stops, sets the clock and the weather at each, waits `TourSeconds` and saves a picture: a stop is
+`name|hh:mm|weather|where[|ev=<EV100>]`, where `cam:x,z,height,yaw,pitch`, `stand:x,z,up,yaw` or `in:<lot id>[,<pitch>]`
+(the player inside that building, as `-BrixInside=`); `ev=` pins the exposure for a shot, to measure with.
+`Tools/unreal/light_tour.txt` is the survey this light was fixed by (59 stops: the spawn alley, Market Square, a street,
+a park and Eastgate from 07:20 through dusk, night and dawn, in rain and fog, and seven kinds of room by day and by
+night); `Tools/unreal/light_tour.ps1 -OutDir <folder>` runs it offscreen at High (add `-Extra "-BrixLightOff"` for the
+light before), and `Tools/unreal/shot_sheet.py` puts shots side by side with their mean brightness. Run one at a time:
+two at once hung the graphics chip.
+
 ## The tram (CITY-041)
 Trams run along Tram Street to the timetable of World/rules/calendar.json, stopping at its three stops: a port of the
 slice's tramAt() (`FBrixTram`, checked against the slice's own function at 3,000 moments of a day by
@@ -500,8 +547,8 @@ lamps, benches, bins, bollards, planters, postboxes, bike racks, phone boxes, wa
 market stalls, tram shelters, water towers and wells; garden planting, the open ground's own things, the street dressing,
 the arches and the playgrounds are below. By night (`ABrixLamps`) every lamp's and wall lantern's glass glows
 (`/Game/Greybox/M_Glow`, made by `Tools/unreal/make_glow_material.py`) and the twelve nearest to the camera give real
-light, as the slice's twelve; 68 frames a second at High at 22:30. The night itself (its exposure, the orange haze
-after dusk) is not yet the slice's dark blue night.
+light, as the slice's twelve; 68 frames a second at High at 22:30. They and the lit windows come on as the sun gets
+low, not only by the calendar; the night itself is under The eye and the night.
 
 ## Gardens, lawns and the open ground (CITY-017, WLD-040, WLD-056, ART-001)
 The block files' garden planting is drawn as the slice draws it (play.js plant(), heads(), plantClump()): clipped hedges in
@@ -901,6 +948,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CITY080_residents_are_dressed_for_the_rain` | CITY-077, CITY-079, CITY-080 |
 | `BrixTown.World.WLD036_the_clouds_are_where_world_py_puts_them` | WLD-035, WLD-036 |
 | `BrixTown.World.WLD070_snow_falls_and_lies_as_world_py_says` | WLD-069, WLD-070 |
+| `BrixTown.World.WLD042_the_days_light_is_kept_and_the_night_is_dark` | WLD-042 (ADR-0055) |
 | `BrixTown.World.CITY107_residents_are_dressed_for_snow` | CITY-107 |
 | `BrixTown.World.WLD071_footprints_and_tracks_follow_the_clock` | WLD-071 |
 | `BrixTown.World.CITY007_every_conversation_is_sound` | CITY-007 |
