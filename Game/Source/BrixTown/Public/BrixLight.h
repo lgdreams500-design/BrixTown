@@ -47,6 +47,9 @@ public:
 	// 0 with the sun up to 1 with it on the horizon or down: by then the streets are in shade, whatever the calendar's
 	// daylight says, so the lamps and the lit windows come on by this too (ABrixLamps, ABrixRooms)
 	float LowSun() const { return LowSunNow; }
+	// whether this sets the haze's colour (not with -BrixLightOff or -BrixLightNo=h): the game mode then leaves it alone,
+	// so it is set once a frame
+	static bool SetsHaze();
 
 	// the eye. DayEV: the exposure (EV100) the engine settles on in the open street at noon, measured with a tour's ev=;
 	// the others are stops it may open past that

@@ -11,6 +11,7 @@
 #include "BrixCrashActor.h"
 #include "BrixWeatherActor.h"
 #include "BrixLamps.h"
+#include "BrixLight.h"
 #include "BrixLifeActor.h"
 #include "BrixMall.h"
 #include "BrixMallActor.h"
@@ -680,7 +681,8 @@ void ABrixGameMode::UpdateSun()
 	// under cloud, rain or snow the haze is lit by the grey sky, not the sun: its colour turns from the sun's to a cool grey by
 	// how much sun the weather stops (ADR-0016: a covered day is flat and cool)
 	const FLinearColor SunTint = FMath::Lerp(SunDawnColour, FLinearColor::White, Low);
-	if (HazeFog) HazeFog->SetFogInscatteringColor(HazeColour * Fill * FMath::Lerp(SunTint, OvercastHaze, bWx ? 1.f - SunLet : 0.f));
+	// (UBrixLight sets the haze's colour, as this by day and its own at dusk and night: only one of the two sets it in a frame)
+	if (HazeFog && !UBrixLight::SetsHaze()) HazeFog->SetFogInscatteringColor(HazeColour * Fill * FMath::Lerp(SunTint, OvercastHaze, bWx ? 1.f - SunLet : 0.f));
 	// little haze indoors (play.js: the fog is cut by 0.85 inside): the height fog is not shut out by walls
 	if (HazeFog)
 	{

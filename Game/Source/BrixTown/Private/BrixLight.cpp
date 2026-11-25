@@ -31,6 +31,17 @@
 
 using BrixUnits::ToWorld;
 
+bool UBrixLight::SetsHaze()
+{
+	static const bool bSets = []()
+	{
+		FString No;
+		FParse::Value(FCommandLine::Get(), TEXT("BrixLightNo="), No);
+		return !FParse::Param(FCommandLine::Get(), TEXT("BrixLightOff")) && !No.Contains(TEXT("h"));
+	}();
+	return bSets;
+}
+
 void UBrixLight::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
