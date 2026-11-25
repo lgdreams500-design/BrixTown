@@ -184,6 +184,11 @@ void ABrixLife::Tick(float Dt)
 	DeltaLeft = FMath::Max(0.f, DeltaLeft - Dt);
 }
 
+void ABrixLife::ShowHud(bool bShow)
+{
+	if (Hud) Hud->SetVisibility(bShow ? EVisibility::SelfHitTestInvisible : EVisibility::Collapsed);
+}
+
 void ABrixLife::Toast(const FString& T)
 {
 	ToastText = T;

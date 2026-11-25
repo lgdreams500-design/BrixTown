@@ -169,7 +169,7 @@ void ABrixCharacter::Move(const FInputActionValue& Value)
 
 void ABrixCharacter::Look(const FInputActionValue& Value)
 {
-	if (bTalking || bPanel) return;
+	if (bTalking || bPanel || bDesigning) return;
 	const FVector2D V = Value.Get<FVector2D>() * LookScale;
 	AddControllerYawInput(V.X);
 	AddControllerPitchInput(bInvertLook ? V.Y : -V.Y);
@@ -182,6 +182,23 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	if (!Rules.Roles.Num()) return;
+	if (bDesigning)   // the designer: standing, breathing and blinking while the clock stands still; the camera close in front
+	{
+		const FBrixLook& L = Rules.Player;
+		const float S = (float)L.S, D = DesignCameraM * S * CmPerM;
+		Boom->TargetArmLength = D;
+		const float Half = FMath::DegreesToRadians(Camera->FieldOfView * .5f);
+		Boom->SocketOffset = FVector(0, -D * DesignShare * FMath::Tan(Half), (.95f * S + .18f) * CmPerM - 85.f);   // the free part's middle
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+			PC->SetControlRotation(FRotator(-4.0, GetActorRotation().Yaw + 180.0 + DesignSpin, 0));
+		FBrixDrawOptions O;
+		O.Seconds = GetWorld()->GetRealTimeSeconds();
+		O.Lod = 0;
+		Scratch.Reset();
+		DrawBrixPerson(Rules, L, FVector::ZeroVector, 0.0, O, Scratch);
+		Verts = BrixBodyToMesh(Person, Scratch, Verts, false, BodyMaterial);
+		return;
+	}
 	if (bDriving)   // on a bus: carried where it goes, sitting near the front (cars.js ride())
 		if (ABrixCars* C = Cars())
 			if (C->Driving().bRide)
@@ -265,6 +282,7 @@ ABrixTalk* ABrixCharacter::Talk() const
 
 void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whichever is nearest (play.js interact())
 {
+	if (bDesigning) return;   // the designer has the keys
 	ABrixCars* C = Cars();
 	ABrixTalk* T = Talk();
 	if (bDriving && C)
@@ -308,6 +326,7 @@ ABrixCars* ABrixCharacter::Cars() const
 
 void ABrixCharacter::JumpKey()
 {
+	if (bDesigning) return;   // the designer has the keys
 	if (bDriving) { bHandbrake = true; return; }
 	if (!bTalking) Jump();
 }
@@ -320,6 +339,7 @@ void ABrixCharacter::JumpEnd()
 
 void ABrixCharacter::AnswerKey(const FInputActionInstance& Instance)
 {
+	if (bDesigning) return;   // the designer has the keys
 	ABrixTalk* T = Talk();
 	if (!T || !T->IsTalking()) return;
 	const int32 n = AnswerActions.IndexOfByKey(Instance.GetSourceAction());
@@ -328,6 +348,7 @@ void ABrixCharacter::AnswerKey(const FInputActionInstance& Instance)
 
 void ABrixCharacter::LeaveKey()
 {
+	if (bDesigning) return;   // the designer has the keys
 	if (ABrixLife* L = Life()) if (L->IsOpen()) { L->Close(); return; }
 	if (ABrixTalk* T = Talk()) if (T->IsTalking()) { T->Close(); return; }
 	if (bDriving) return;
@@ -342,18 +363,21 @@ ABrixLife* ABrixCharacter::Life() const
 
 void ABrixCharacter::CounterKey()
 {
+	if (bDesigning) return;   // the designer has the keys
 	if (bDriving || bTalking) return;
 	if (ABrixLife* L = Life()) L->CounterKey();
 }
 
 void ABrixCharacter::WalletKey()
 {
+	if (bDesigning) return;   // the designer has the keys
 	if (bDriving || bTalking) return;
 	if (ABrixLife* L = Life()) L->WalletKey();
 }
 
 void ABrixCharacter::ChooseKey(const FInputActionInstance& Instance)
 {
+	if (bDesigning) return;   // the designer has the keys
 	ABrixLife* L = Life();
 	if (!L || !L->IsShop()) return;
 	const int32 n = ChooseActions.IndexOfByKey(Instance.GetSourceAction());
@@ -363,6 +387,7 @@ void ABrixCharacter::ChooseKey(const FInputActionInstance& Instance)
 
 void ABrixCharacter::MenuPageKey(const FInputActionInstance& Instance)
 {
+	if (bDesigning) return;   // the designer has the keys
 	if (bDriving || bTalking) return;
 	const int32 n = PageActions.IndexOfByKey(Instance.GetSourceAction());
 	if (ABrixLife* L = Life()) if (PageNames.IsValidIndex(n)) L->MenuKey(PageNames[n]);
@@ -382,8 +407,24 @@ void ABrixCharacter::SetView(float CameraM, float FovDeg, float LookSpeed, bool 
 
 void ABrixCharacter::QuestsKey()
 {
+	if (bDesigning) return;   // the designer has the keys
 	if (bDriving || bTalking) return;
 	if (ABrixLife* L = Life()) L->QuestsKey();
+}
+
+void ABrixCharacter::SetDesignView(bool bOn, double SpinDeg, float PanelShare)
+{
+	DesignSpin = SpinDeg;
+	DesignShare = PanelShare;
+	if (bOn == bDesigning) return;
+	bDesigning = bOn;
+	SetTickableWhenPaused(bOn);   // the game is paused while designing; the character and the camera's arm are not
+	Boom->SetTickableWhenPaused(bOn);
+	Boom->bDoCollisionTest = !bOn;
+	if (bOn) { ArmBefore = Boom->TargetArmLength; BoomOffsetBefore = Boom->SocketOffset; return; }
+	Boom->TargetArmLength = ArmBefore > 0.f ? ArmBefore : CameraDistance * CmPerM;
+	Boom->SocketOffset = BoomOffsetBefore;
+	if (APlayerController* PC = Cast<APlayerController>(GetController())) PC->SetControlRotation(FRotator(-12.0, GetActorRotation().Yaw, 0));
 }
 
 void ABrixCharacter::BeginPanel()

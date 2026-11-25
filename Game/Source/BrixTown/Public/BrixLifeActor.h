@@ -70,6 +70,7 @@ public:
 	void Close();
 	void Toast(const FString& Text);
 	void ToggleSound();                   // N (SND-013): the Sound switch of the settings flipped, applied, kept, and said
+	void ShowHud(bool bShow);             // the purse, toasts and quests on screen; hidden while the character designer is open
 	bool RunOps(const FString& Ops);      // the -BrixLife= ops, as economy.run_script() runs them; false if any was refused
 	bool OpenCounterAt(const FString& What);   // -BrixCounter=: stand at that counter's door and open it
 	FBrixEconomy* Economy() const { return E.Get(); }

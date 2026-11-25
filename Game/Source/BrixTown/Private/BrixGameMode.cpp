@@ -10,6 +10,7 @@
 #include "BrixWeatherActor.h"
 #include "BrixLamps.h"
 #include "BrixLifeActor.h"
+#include "BrixDesignerActor.h"
 #include "BrixPeople.h"
 #include "BrixRooms.h"
 #include "BrixSoundActor.h"
@@ -162,6 +163,8 @@ void ABrixGameMode::StartPlay()
 	{
 		Life = GetWorld()->SpawnActor<ABrixLife>();   // money and the bank (ADR-0012)
 		Life->Start(*City, Today);
+		Designer = GetWorld()->SpawnActor<ABrixDesigner>();   // a new game opens the character designer (CHR-001)
+		Designer->Start(City->Name);
 	}
 	SpawnLight();
 	Super::StartPlay();

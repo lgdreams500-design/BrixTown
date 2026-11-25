@@ -17,6 +17,7 @@ struct FBrixCity;
 //   -BrixStand=<x>,<z>,<yaw>          put the player there (metres, degrees; yaw 0 = east), the camera behind them
 //   -BrixWalk=<x>,<z>;<x>,<z>;...   then walk the player through those points (up a stair, say); the log says how high they got
 //   -BrixShut                         every building solid, as before the insides (to compare frame rates)
+//   -BrixDesigner (-BrixDesignSet=hair:afro;skin:7) the character designer open for the shot; -BrixNoDesigner skips it in play
 UCLASS(Config = Game)
 class BRIXTOWN_API ABrixGameMode : public AGameModeBase
 {
@@ -36,6 +37,7 @@ public:
 	UPROPERTY() TObjectPtr<class ABrixCars> Cars;
 	UPROPERTY() TObjectPtr<class ABrixCrash> Crash;
 	UPROPERTY() TObjectPtr<class ABrixWeather> Weather;   // the day's weather: the light, the rain, wet streets (WLD-037)  // what the player's car breaks, and its repairs (CITY-072 to CITY-076)    // the day's vehicles, and the one the player drives
+	UPROPERTY() TObjectPtr<class ABrixDesigner> Designer;   // the character designer, and who the player is (CHR-001)
 	UPROPERTY() TObjectPtr<class ABrixLife> Life;    // the player's money, the bank, shops and quests (ADR-0012)
 
 	UPROPERTY(Config) FString CityDir = TEXT("../World/city_01");   // from the project folder (Game/)

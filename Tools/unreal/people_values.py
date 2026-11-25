@@ -35,6 +35,7 @@ OUT_TALK_VALUES = os.path.join(ROOT, "Tests", "values", "talk_city_01.json")
 CONV_JS = os.path.join(ROOT, "Prototype", "play", "conversations.js")
 DODGE_JS = os.path.join(ROOT, "Prototype", "play", "dodge.js")
 OUT_DODGE_VALUES = os.path.join(ROOT, "Tests", "values", "dodge_city_01.json")
+OUT_DESIGN_VALUES = os.path.join(ROOT, "Tests", "values", "designer_city_01.json")
 VOICES_JS = os.path.join(ROOT, "Prototype", "play", "audio", "voices", "index.js")
 RULES = os.path.join(ROOT, "World", "rules")
 EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
@@ -61,6 +62,18 @@ for (const c of CASES.bodies) {
   const nv = ms.n / 10, step = Math.max(1, Math.floor(nv / 240)), pts = [];
   for (let v = 0; v < nv; v += step) pts.push([v, ms.a[v * 10], ms.a[v * 10 + 1], ms.a[v * 10 + 2]]);
   out.bodies.push(Object.assign({}, c, { vertices: nv, samples: pts, boxes: ms.boxes }));
+}
+if (CASES.designs) {                                     // CHR-001, CHR-002: design() of designer values, and the bodies it draws
+  baseCache.clear();                                      // drawn from a fresh start, as the C++ test draws them
+  const DL = CASES.designs.map(v => design(v, CASES.designer));
+  out.designs = DL.map(plain); out.designBodies = [];
+  for (const c of CASES.designBodies) {
+    const ms = { a: new Float32Array(1 << 20), n: 0, boxes: [], box(x0, y0, z0, x1, y1, z1, col) { this.boxes.push([x0, y0, z0, x1, y1, z1, col[0], col[1], col[2]]); } };
+    draw(ms, c.x, c.y, c.z, c.yaw, DL[c.design], c.pose, { ph: c.ph, t: c.t, lod: c.lod, ff: c.ff, fl: 14, face: c.face || null });
+    const nv = ms.n / 10, step = Math.max(1, Math.floor(nv / 240)), pts = [];
+    for (let v = 0; v < nv; v += step) pts.push([v, ms.a[v * 10], ms.a[v * 10 + 1], ms.a[v * 10 + 2]]);
+    out.designBodies.push(Object.assign({}, c, { vertices: nv, samples: pts, boxes: ms.boxes }));
+  }
 }
 window.__OUT = out;
 } catch (e) { document.getElementById("out").textContent = "@@" + JSON.stringify({ error: String(e.stack || e) }) + "@@"; }
@@ -123,6 +136,47 @@ def tram_js():
     return "(() => { " + pre + m.group(0) + " return " + json.dumps(minutes) + ".map(t => [t, tramAt(t)]); })()"
 
 
+def design_cases(d):
+    """Designer values to try (CHR-001, CHR-002): the default, then each hair style with sliders at their ends and between,
+    every garment, bottom, walk and extra, colours from across the palette and the swatches."""
+    keys, pal = list(d["sliders"]), list(d["palette"])
+    out = [dict(d["default"])]
+    garments, bottoms, walks = list(d["garment"]), list(d["bottom_type"]), list(d["walk"])
+    for n, hair in enumerate(d["hair"]):
+        v = dict(d["default"], name="Case %d" % n, hair=hair)
+        for j, k in enumerate(keys):
+            s = d["sliders"][k]
+            f = ((n + j) % 3) / 2.0                                # min, middle, max in turn
+            v[k] = round(s["min"] + (s["max"] - s["min"]) * f, 4)
+        v.update(skin=(n * 3) % len(d["skin"]), hair_color=n % len(d["hair_color"]), eyes=(n * 2) % len(d["eyes"]),
+                 garment=garments[n % len(garments)], top=pal[n % len(pal)], bottom_type=bottoms[n % len(bottoms)],
+                 bottom=pal[(n * 5 + 3) % len(pal)], shoes=pal[(n * 7 + 1) % len(pal)],
+                 scarf=pal[(n + 2) % len(pal)] if n % 2 else None, cap=pal[(n + 4) % len(pal)] if n % 3 == 1 else None,
+                 apron=pal[(n + 6) % len(pal)] if n % 4 == 2 else None, bag=n % 3 == 0, tash=n % 2 == 1, walk=walks[n % len(walks)])
+        out.append(v)
+    return out
+
+
+def bad_designs(d):
+    """Designer values each wrong in one way, for the checks (CHR-013)."""
+    D, out = d["default"], []
+    for k, s in d["sliders"].items():
+        out.append(dict(D, **{k: s["max"] + s["step"]}))
+        out.append(dict(D, **{k: s["min"] - s["step"]}))
+    out += [dict(D, skin=len(d["skin"])), dict(D, hair_color=-1), dict(D, eyes=len(d["eyes"])), dict(D, hair="mohican"), dict(D, garment="cape"),
+            dict(D, bottom_type="kilt"), dict(D, walk="Strut"), dict(D, top="pink"), dict(D, shoes="gold"), dict(D, cap="neon"),
+            dict(D, name=""), dict(D, name="   "), dict(D, name="x" * (d["name"]["max"] + 1)), dict(D, name="x" * d["name"]["max"])]
+    return out
+
+
+def outfit_cases(d, parts):
+    """Outfits to check (CHR-014): one of every part, and ones that change what an outfit may not or are missing a part."""
+    D = d["default"]
+    good = dict({k: D[k] for k in parts}, name="Work")
+    return [good, dict(good, name=""), dict(good, height=1.7), dict(good, hair="mohican"), dict(good, top="pink"),
+            {k: v for k, v in good.items() if k != "shoes"}, dict(good, cap="ochre", bag=True, name="Out")]
+
+
 def face_cases():
     """Talking faces as conversations.js blends them (CHARACTER_FACE §1): an expression of speech.json and a mouth shape."""
     sp = json.load(open(os.path.join(RULES, "speech.json"), encoding="utf-8"))
@@ -182,7 +236,14 @@ def main():
                            sig="Hurried", arms=[[1, 150, 30, 118], None], chest=[6, 0]))   # a hand over the head
     for n, face in enumerate(face_cases()):   # someone in a conversation: the full face control set (CHR-007)
         bodies.append(dict(look=n * 3, x=0.0, y=0.0, z=0.0, yaw=0.4 * n, pose=0, ph=0.0, t=1.3 + n, lod=0, ff=1.0, face=face))
-    cases = json.dumps(dict(looks=looks, bodies=bodies))
+    designer = json.load(open(os.path.join(RULES, "designer.json"), encoding="utf-8"))
+    designs, design_bodies = design_cases(designer), []
+    for n in range(len(designs)):
+        design_bodies.append(dict(design=n, x=0.0, y=0.0, z=0.0, yaw=0.5 * n, pose=0, ph=0.0, t=1.1 + n, lod=0, ff=1.0))
+        design_bodies.append(dict(design=n, x=1.0, y=0.12, z=-1.0, yaw=0.3 + 0.4 * n, pose=1, ph=(0.17 + 0.23 * n) % 1, t=2.3 + n, lod=0, ff=1.0))
+        design_bodies.append(dict(design=n, x=1.0, y=0.12, z=-1.0, yaw=0.3 * n, pose=1, ph=(0.41 + 0.13 * n) % 1, t=3.7 + n, lod=1 + n % 3, ff=0.7))
+        design_bodies.append(dict(design=n, x=0.0, y=0.0, z=0.0, yaw=0.2 * n, pose=0, ph=0.0, t=1.9 + n, lod=0, ff=1.0, face=face_cases()[n % 6]))
+    cases = json.dumps(dict(looks=looks, bodies=bodies, designer=designer, designs=designs, designBodies=design_bodies))
     patched = src.replace(ret, HARNESS.replace("%CASES%", cases) + ret, 1)
     # people.js takes hash() from play.js: the same function, cut from play.js
     play = open(os.path.join(ROOT, "Prototype", "play", "play.js"), encoding="utf-8").read()
@@ -236,6 +297,15 @@ def main():
         json.dump(dict(note="Generated by Tools/unreal/people_values.py: dodge.js frame() and apply() for a car driven past residents, for CITY070_residents_dodge_and_scold_as_the_slice_does.",
                        **out["dodge"]), f, separators=(",", ":"), ensure_ascii=False)
     print("wrote %s: %d frames" % (os.path.relpath(OUT_DODGE_VALUES, ROOT), len(out["dodge"]["frames"])))
+    sys.path.insert(0, os.path.join(ROOT, "Tools", "worldgen"))
+    import world
+    w = world.load()
+    checks = [[v, world.look_problems(w["designer"], v)] for v in designs + bad_designs(designer)]
+    outfits = [[o, world.outfit_problems(w, o)] for o in outfit_cases(designer, w["settings"]["wardrobe"]["parts"])]
+    with open(OUT_DESIGN_VALUES, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(dict(note="Generated by Tools/unreal/people_values.py: people.js design() and draw() of designer values (World/rules/designer.json), with world.look_problems() and world.outfit_problems() for them, for CHR001_the_designer_makes_the_slices_look, CHR013_designer_values_stay_in_range and CHR014_an_outfit_is_only_clothes_and_hair_the_designer_offers.",
+                       designs=designs, looks=out["designs"], bodies=out["designBodies"], checks=checks, outfits=outfits), f, separators=(",", ":"), ensure_ascii=False)
+    print("wrote %s: %d designs, %d bodies, %d checks" % (os.path.relpath(OUT_DESIGN_VALUES, ROOT), len(designs), len(out["designBodies"]), len(checks) + len(outfits)))
     play_src = open(os.path.join(ROOT, "Prototype", "play", "play.js"), encoding="utf-8").read()
     vj = open(VOICES_JS, encoding="utf-8").read()
     voices = json.loads(vj[vj.index("{"):vj.rindex("}") + 1])
