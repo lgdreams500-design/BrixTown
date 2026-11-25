@@ -1,0 +1,118 @@
+{
+ "id": "question_mei", "group": "romance", "act": "M3", "title": "A Door of Our Own", "rank": "Courting Mei: the question",
+ "giver": "mei", "next": "the_wedding",
+ "needs": ["done:dinner_mei:the_field|good_evening", "rep:mei:75"],
+ "hook": "Once Mei's regard reaches 75. You walk into the Tram Café at closing with a face on.",
+ "summary": "Mei says yes before you have finished asking, and then says not yet. She has lived her whole life behind thin walls, and she watched her mother marry on love and a Tuesday wage. She wants a door that is theirs, and something put by. Then you may ask again.",
+ "theme": "Love is the easy part. Can you keep a roof over it?",
+ "start": "ask",
+ "stages": [
+  {"id": "ask", "title": "A face on", "kind": "talk", "with": "mei",
+   "goal": "Talk to Mei at the Tram Café at closing time",
+   "log": "Closing time at the Tram Café. Mei is stacking chairs. You have something to ask her.",
+   "start": "q1",
+   "starts": [{"need": ["again:question_mei", "home:owned", "money:15000"], "node": "q_ready_again"}, {"need": ["home:owned", "money:15000"], "node": "q_already"}, {"need": ["again:question_mei"], "node": "q_again"}],
+   "nodes": {
+    "q_again": {"who": "mei", "mood": "thinking", "say": "You've a face on again. The same face. Is it the same question?",
+     "options": [
+      {"text": "The same question. And this time I'll hear you out.", "next": "q_again2", "need": ["!home:owned", "!money:15000"]},
+      {"text": "The same question. And this time I'll hear you out.", "next": "q_again2h", "need": ["home:owned", "!money:15000"]},
+      {"text": "The same question. And this time I'll hear you out.", "next": "q_again2m", "need": ["!home:owned", "money:15000"]},
+      {"text": "(Lose your nerve. Order a tea.)", "next": "q_tea"}
+     ]},
+    "q_again2": {"who": "mei", "mood": "happy", "say": "Then it's the same answer. Yes, and not yet. A door of our own, with a key that nobody else has. A hundred and fifty brix put by, in a book I can look at. Then ask me again.",
+     "options": [{"text": "A door and a hundred and fifty brix.", "next": null, "act": ["stage:home"]}]},
+    "q_again2h": {"who": "mei", "mood": "happy", "say": "Then it's the same answer. Yes, and not yet. You've the door; I have walked past it. A hundred and fifty brix put by, in a book I can look at. Then ask me in the hall.",
+     "options": [{"text": "A hundred and fifty brix.", "next": null, "act": ["stage:savings"]}]},
+    "q_again2m": {"who": "mei", "mood": "happy", "say": "Then it's the same answer. Yes, and not yet. You've the money put by; I asked at the bank. A door of our own, with a key that nobody else has. Then ask me again.",
+     "options": [{"text": "A door.", "next": null, "act": ["stage:home"]}]},
+    "q_ready_again": {"who": "mei", "mood": "surprised", "say": "You've a face on again. And a key in your hand. And that's a bank book. You went and got it sorted. Ask me, then. Properly.",
+     "options": [{"text": "Marry me, Mei.", "next": "q_yes"}]},
+    "q1": {"who": "mei", "mood": "thinking", "say": "You've a face on. The face people have when they come in to ask somebody something and order a tea they don't want. Go on. I'm sitting down for it.",
+     "options": [
+      {"text": "Marry me, Mei.", "next": "q2"},
+      {"text": "(Lose your nerve. Order a tea.)", "next": "q_tea"}
+     ]},
+    "q_tea": {"who": "mei", "mood": "happy", "say": "One tea. I'll be here when it's a question.",
+     "options": [{"text": "(Drink the tea.)", "next": null}]},
+    "q2": {"who": "mei", "mood": "happy", "say": "Yes. Obviously yes. I've been telling people yes for a week; I was only waiting for you to ask. But not yet. Listen. For once I'm going to say a thing to you and nobody else.",
+     "options": [
+      {"text": "I'm listening.", "next": "q3", "need": ["!home:owned"]},
+      {"text": "I'm listening.", "next": "q3_home", "need": ["home:owned"]}
+     ]},
+    "q3": {"who": "mei", "mood": "thinking", "say": "I've lived my whole life behind walls thin enough to hear the tram timetable through, and I share a flat even now. I'm not starting a marriage in a rented room off a shared stair. I want a door. Ours. With a key that nobody else has.",
+     "options": [
+      {"text": "A door. What else?", "next": "q4", "need": ["!money:15000"]},
+      {"text": "A door. What else?", "next": "q4_money", "need": ["money:15000"]}
+     ]},
+    "q3_home": {"who": "mei", "mood": "thinking", "say": "You've a door already. I know; I have walked past it, and told myself not to count on it. So it's only the one thing.",
+     "options": [{"text": "What one thing?", "next": "q4_home"}]},
+    "q4_home": {"who": "mei", "mood": "neutral", "say": "Something put by. A hundred and fifty brix, in a bank book I can look at. Not for a wedding. For the day the tram stops, or the oven cracks, or one of us is ill. My mother married on love and a Tuesday wage. I watched how that goes.",
+     "options": [
+      {"text": "A hundred and fifty brix. Then I'll ask again.", "next": null, "act": ["stage:savings"]},
+      {"text": "A hundred and fifty brix is a lot to ask of a baker.", "next": "q5"}
+     ]},
+    "q4_money": {"who": "mei", "mood": "happy", "say": "And something put by, which I'm told you have. I asked at the bank. I'm not proud of it. So it's only the door.",
+     "options": [{"text": "A door. Then I'll ask again.", "next": null, "act": ["stage:home"]}]},
+    "q4": {"who": "mei", "mood": "neutral", "say": "Something put by. A hundred and fifty brix, in a bank book I can look at. Not for a wedding. For the day the tram stops, or the oven cracks, or one of us is ill. My mother married on love and a Tuesday wage. I watched how that goes.",
+     "options": [
+      {"text": "A door and a hundred and fifty brix. Then I'll ask again.", "next": null, "act": ["stage:home"]},
+      {"text": "A hundred and fifty brix is a lot to ask of a baker.", "next": "q5"}
+     ]},
+    "q5": {"who": "mei", "mood": "happy", "say": "It is. I'm worth a lot. Ask anybody. I'll have told them.",
+     "options": [
+      {"text": "Then that is what I'll bring you.", "next": null, "need": ["!home:owned"], "act": ["stage:home"]},
+      {"text": "Then that is what I'll bring you.", "next": null, "need": ["home:owned"], "act": ["stage:savings"]},
+      {"text": "Then perhaps we should wait.", "next": "q_wait"}
+     ]},
+    "q_wait": {"who": "mei", "mood": "sad", "say": "Perhaps we should. I'd rather wait than marry a maybe. You know where the counter is.",
+     "options": [{"text": "(Go.)", "next": null, "act": ["end:not_yet"]}]},
+    "q_already": {"who": "mei", "mood": "surprised", "say": "Before you say it. I was going to make a speech. A door of our own, and a hundred and fifty brix put by, and not before. I've rehearsed it at the till. Don't. I can see it in your face. You've a house. And a bank book. You did it before you asked? Who does it in that order?",
+     "options": [{"text": "A baker. We prove things first.", "next": "q_already2"}]},
+    "q_already2": {"who": "mei", "mood": "happy", "say": "That's the best thing you've ever said, and I'm stealing it. Ask me, then. Properly.",
+     "options": [{"text": "Marry me, Mei.", "next": "q_yes"}]},
+    "q_yes": {"who": "mei", "mood": "happy", "say": "Yes. Yes, and I'm telling everyone, and you can't stop me. I'm starting with Noor.",
+     "options": [{"text": "(Let her tell the town.)", "next": null, "act": ["end:yes"]}]}
+   }},
+
+  {"id": "home", "title": "A door", "kind": "home",
+   "goal": "Own a home of your own",
+   "log": "Buy a home: through an estate agent, or from the board over any door with a home for sale. A mortgage from Linden Bank counts. A rented room does not.",
+   "sim": ["home:owned"], "then": "stage:savings"},
+
+  {"id": "savings", "title": "Something put by", "kind": "money",
+   "goal": "Have 150 Bx put by",
+   "log": "Put by 150 Bx, in cash and accounts together. A savings account at Linden Bank grows a little every day.",
+   "sim": ["pay:15000"], "then": "stage:door"},
+
+  {"id": "door", "title": "The key", "kind": "talk", "with": "mei",
+   "goal": "Bring Mei to the door",
+   "log": "You have the door, and the book. Bring Mei to see them.",
+   "scene": "You give her the key on the step. She looks at it for a while before she uses it.",
+   "start": "r1",
+   "nodes": {
+    "r1": {"who": "mei", "mood": "surprised", "dir": "She tries the key twice, as though it might be a joke.", "say": "It turns. There's a hall. We'd have a hall. I've never had anywhere to put a coat that wasn't a chair.",
+     "options": [{"text": "And the bank book.", "next": "r2"}]},
+    "r2": {"who": "mei", "mood": "happy", "say": "A hundred and fifty. In a book. You've put my name in it. Before I'd said yes?",
+     "options": [{"text": "You said yes the day I asked. You told the tram.", "next": "r3"}]},
+    "r3": {"who": "mei", "mood": "happy", "say": "I did tell the tram. Ask me again. Here, in the hall. I want to remember that it had an echo.",
+     "options": [{"text": "Marry me, Mei.", "next": "r_yes"}]},
+    "r_yes": {"who": "mei", "mood": "happy", "say": "Yes. Yes, and I'm telling everyone, and you can't stop me. I'm starting with Noor.",
+     "options": [{"text": "(Let her tell the town.)", "next": null, "act": ["end:yes"]}]}
+   }}
+ ],
+ "endings": [
+  {"id": "yes", "title": "Yes, and she's telling everyone", "log": "Mei said yes. By the first tram, the whole line knew.",
+   "pay": 0, "rep": {"mei": 20, "noor": 5, "eli": 5}, "flags": ["engaged"],
+   "ripples": [
+    "Eli has had the wedding form filled in since the lunch.",
+    "Noor announces that a baker does not bake their own wedding loaf, and that this one is hers.",
+    "The home you bought is where Mei moves to, out of the flat she shares at Lantern Court."
+   ],
+   "unlocks": "Engaged to Mei. The wedding."},
+  {"id": "not_yet", "retake": true, "title": "Not a maybe", "log": "“I'd rather wait than marry a maybe.” The counter is where it always was.",
+   "pay": 0, "rep": {"mei": -10}, "flags": [],
+   "ripples": ["You are still walking out. The question can be asked again when her regard is back at 75."],
+   "unlocks": "Nothing yet."}
+ ]
+}
