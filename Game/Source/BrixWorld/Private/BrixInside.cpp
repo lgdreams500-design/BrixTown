@@ -285,3 +285,24 @@ FBrixDoorway BrixDoorwayOf(const FBrixCity& City, const FBrixLot& L, const FStri
 	Dw.Out = FVector2D(F.Normal.X * Ca - F.Normal.Y * Sa, F.Normal.X * Sa + F.Normal.Y * Ca);
 	return Dw;
 }
+
+TArray<FBrixLiftCall> BrixLiftCalls(const FBrixLot& L, const FBrixInside& In, const FBrixDoorRules& R, float RoofUp)
+{
+	TArray<FBrixLiftCall> Out;
+	if (!In.Lift || L.Floors < 2) return Out;
+	const int32 n = L.Floors;
+	const double bx = In.Lift->X, bz = In.Lift->Y, ix = bx < L.Centre().X ? 1 : -1;
+	auto At = [&](int32 f, double dz) { return FVector(bx + ix * 1.9, bz + dz, BrixFloorUp(L, f, R)); };
+	auto To = [&](int32 f) { return FVector(bx + ix * 2.2, bz + .6, BrixFloorUp(L, f, R)); };
+	auto Add = [&](int32 f, double dz, const FString& Text, const FVector& Where) { Out.Add({ At(f, dz), Where, Text, f }); };
+	for (int32 f = 0; f < n; ++f)
+	{
+		if (f < n - 1) Add(f, -.35, f == 0 ? FString(TEXT("Take the lift up a floor")) : FString::Printf(TEXT("Lift: up a floor (to %d)"), f + 1), To(f + 1));
+		if (f > 0) Add(f, .35, f - 1 == 0 ? FString(TEXT("Lift: down a floor (to the ground)")) : FString::Printf(TEXT("Lift: down a floor (to %d)"), f - 1), To(f - 1));
+		if (f == 0) Add(f, .35, TEXT("Take the lift to the top floor"), To(n - 1));
+		if (f == n - 1) { Add(f, .7, TEXT("Lift: down to the ground"), To(0)); Add(f, -.7, TEXT("Take the lift to the roof"), FVector(bx + ix * 2.2, bz + .6, RoofUp)); }
+		if (f > 0 && f < n - 1) Add(f, .7, TEXT("Lift: down to the ground"), To(0));
+	}
+	Out.Add({ FVector(bx + ix * 1.9, bz, RoofUp), To(n - 1), TEXT("Take the lift down to the top floor"), -1 });
+	return Out;
+}

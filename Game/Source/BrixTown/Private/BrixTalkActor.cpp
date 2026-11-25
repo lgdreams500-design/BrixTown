@@ -1,4 +1,5 @@
 #include "BrixTalkActor.h"
+#include "BrixRooms.h"
 
 #include "BrixCarsActor.h"
 #include "BrixCharacter.h"
@@ -291,6 +292,10 @@ void ABrixTalk::Tick(float Dt)
 			const int32 CarK = Mode->Cars->TargetCar(FVector2D(Me->GetActorLocation().X, Me->GetActorLocation().Y) / CmPerM, D);
 			if (CarK >= 0 && (C.Resident < 0 || D <= C.D)) PromptText = Mode->Cars->IsBus(CarK) ? TEXT("Ride the bus") : Mode->Cars->IsVan(CarK) ? TEXT("Drive this van") : TEXT("Drive this car");
 		}
+		// a tower's lift call within reach (WLD-051): E takes it
+		FString Lift;
+		double LiftD = 0;
+		if (Mode && Me && Mode->RoomsActor() && Mode->RoomsActor()->LiftOffer(Me->GetActorLocation(), Lift, LiftD)) PromptText = Lift;
 		return;
 	}
 	if (bNextPending && Now(GetWorld()) >= NextAt) Show(NextNode);

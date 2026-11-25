@@ -388,7 +388,26 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			RectBox(StairRail, HouseRect(Well.X - 0.04f, Well.X + 0.02f, Well.Z, StepOff), S1, S1 + 1.0f);
 			RectBox(StairRail, HouseRect(Well.X, Well.Y, Well.Z - 0.035f, Well.Z + 0.035f), S1, S1 + 1.0f);
 		}
-		else if (!bHouse)
+		if (!bHouse && In->Lift)
+		{
+			// WLD-051 (storeys.js shell(), build()): a shaft from the ground to the top floor, on each floor its steel doors and a
+			// lit call button on the side toward the room, and the lift house on the roof
+			const FVector2D Lc = *In->Lift - C;
+			const float Ix = In->Lift->X < C.X ? 1.f : -1.f;
+			const FVector4f Shaft(Lc.X - 1.1f, Lc.X + 1.1f, Lc.Y - 1.1f, Lc.Y + 1.1f);
+			RectBox(LiftShaft, Shaft, FloorTopOf(0), CeilOf(NFl - 1));
+			for (int32 f = 0; f < NFl; ++f)
+			{
+				const float Y = FloorTopOf(f), Xd = Lc.X + Ix * 1.1f;
+				for (const float Dz : { -1.f, 1.f })   // the two leaves
+					RectBox(LiftSteel, FVector4f(FMath::Min(Xd, Xd + Ix * 0.03f), FMath::Max(Xd, Xd + Ix * 0.03f), Lc.Y + (Dz < 0 ? -0.55f : 0.01f), Lc.Y + (Dz < 0 ? -0.01f : 0.55f)), Y + 0.05f, Y + 2.2f);
+				RectBox(IronColour, FVector4f(FMath::Min(Xd, Xd + Ix * 0.04f), FMath::Max(Xd, Xd + Ix * 0.04f), Lc.Y - 0.3f, Lc.Y + 0.3f), Y + 2.3f, Y + 2.45f);
+				const FVector Button = At(FVector2D(Xd + Ix * 0.02f, Lc.Y + 0.75f), Y + 1.22f);
+				Add(GlassGroup(), FTransform(FQuat::Identity, Button, FVector(0.04f, 0.1f, 0.15f)), FLinearColor(1.f, .8f, .5f));
+			}
+			RectBox(LiftShaft, Shaft, H, H + ParapetHeight + CopingHeight + 2.7f);   // the lift house, up through the roof
+		}
+		if (!bHouse)
 		{
 			const float Step = 0.19f;   // storeys.js STEP
 			for (int32 f = 0; f + 1 < NFl; ++f)

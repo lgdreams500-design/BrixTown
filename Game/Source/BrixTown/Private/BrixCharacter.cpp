@@ -4,6 +4,7 @@
 #include "BrixGameMode.h"
 #include "BrixLifeActor.h"
 #include "BrixPeople.h"
+#include "BrixRooms.h"
 #include "BrixTalkActor.h"
 #include "BrixUnits.h"
 #include "Camera/CameraComponent.h"
@@ -299,6 +300,8 @@ void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whic
 		return;
 	}
 	if (T && T->IsTalking()) return;
+	if (const ABrixGameMode* M = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))   // a tower's lift call within reach (WLD-051)
+		if (M->RoomsActor() && M->RoomsActor()->UseLift(this)) return;
 	const FVector2D Me(GetActorLocation().X / CmPerM, GetActorLocation().Y / CmPerM);
 	double CarD = 1e9;
 	const int32 Car = C ? C->TargetCar(Me, CarD) : -1;
