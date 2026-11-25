@@ -56,6 +56,7 @@ ABrixCharacter::ABrixCharacter()
 	Person = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("Person"));
 	Person->SetupAttachment(RootComponent);
 	Person->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Person->LightingChannels.bChannel1 = true;   // a hall's light for people (ABrixMall::PeopleLight)
 	// feet at the capsule's bottom; the body is drawn facing the slice's yaw 0 (Unreal's -Y), turned to face the actor's +X
 	Person->SetRelativeLocationAndRotation(FVector(0, 0, -85), FRotator(0, 90, 0));
 	static ConstructorHelpers::FObjectFinder<UMaterialInterface> PeopleMat(TEXT("/Game/People/M_People.M_People"));

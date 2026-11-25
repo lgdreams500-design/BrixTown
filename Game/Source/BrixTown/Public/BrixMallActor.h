@@ -63,6 +63,14 @@ public:
 	UPROPERTY(Config) float LightReach = 12.f;           // m
 	UPROPERTY(Config) FLinearColor LightColour = FLinearColor(1.f, 0.84f, 0.64f);
 	UPROPERTY(Config) float LightSeconds = 0.5f;         // how often the nearest are chosen again
+	// The hall's faces glow by themselves (RoomLight), which lights nobody: people in it were lit only by what of the
+	// sky's light came in, and with the night dark (ADR-0055) they were black in the court. So with the camera in the
+	// hall there is a light for people alone (lighting channel 1, which the player's and the residents' bodies are on):
+	// from over the camera's shoulder, PeopleLux at night and PeopleLuxDay of that with the day's light also coming in.
+	UPROPERTY(Config) float PeopleLux = 0.6f;
+	UPROPERTY(Config) float PeopleLuxDay = 0.2f;
+	UPROPERTY() TObjectPtr<class UDirectionalLightComponent> PeopleLight;
+	float PeopleLevel = 0.f;
 	UPROPERTY(Config) float NameSize = 0.62f;            // m: an outlet's name on its sign band
 
 private:

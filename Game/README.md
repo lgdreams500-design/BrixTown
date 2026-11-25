@@ -195,6 +195,15 @@ the slice with that life data (run `build_play.py` first) and records each good 
 `FBrixMallCall::Good`). Test `FURN065_outlets_show_the_goods_they_sell` (each good in the room of an outlet that sells it,
 facing out, near; the triangles of six as goods.js lays them). Shot: `Art/StyleTests/unreal_mall_goods_41/`.
 
+**People in the hall are lit by a light of their own (found in play, 2026-11-26).** The hall's faces glow by themselves
+(`RoomLight`), which lights nobody: the player and the residents in it were lit only by what of the sky's light came in,
+and once the night was dark (ADR-0055) they were black in the court at night. With the camera in a hall
+(`ABrixMall::Contains`, so the furniture outlet's too) a light from over the camera's shoulder lights people alone
+(lighting channel 1, which the player's and the residents' bodies are on): `PeopleLux` (0.6) at night and `PeopleLuxDay`
+(0.2) of it with the day's light also coming in, set so that someone in the court at 02:00 looks as they do at noon
+(`Art/StyleTests/unreal_play_bugs_44/mall_people_before_after.jpg`). Not yet: the day's light still comes into the hall
+and onto people, which is why the light is weaker by day; the goods and mannequins are not on the people's light.
+
 ## The furniture outlet (FURN-020, FURN-021; ADR-0027)
 The furniture outlet outside the East Gate (lot `b_14_8_l0`) is built as the slice builds it (outlet.js; play.js building()
 and furnish()): `BrixWorld/BrixOutlet` is the port, with the play.js helpers it draws with (sideOf, fbox, SP.win, SP.lamp,
