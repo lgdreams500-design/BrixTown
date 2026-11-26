@@ -691,6 +691,33 @@
     "Dusk and the lamp-lit night look nearly alike: once the sun is down the pendants and the oven carry it.",
     "The light the facing wall throws back is a hidden soft light (BOUNCE_CARD), as in the home room."
    ]
+  },
+  {
+   "id": "ShopsShopFloor",
+   "category": "Shops",
+   "status": "proposed",
+   "title": "A shop's floor without a fire (bank, grocer and the like) at every hour",
+   "files": [
+    "Shops/ShopsShopFloor_Morning.jpg",
+    "Shops/ShopsShopFloor_Midday.jpg",
+    "Shops/ShopsShopFloor_Dusk.jpg",
+    "Shops/ShopsShopFloor_NightLamps.jpg"
+   ],
+   "locks": "A shop's ground floor at the game's size (the owner, 2026-11-26: \"take the size from game for bank, grocers or library\"): the smallest grocer's lot (Northwood Grocer, 12 m along the street, 11 m deep), 3 m to the ceiling (World/rules/storeys.json); its street side the approved timber shopfront seen from inside (the owner: \"take the windows wall references from build models approved previously\"; BuildingsTypes, shop_front_a): teal pilasters on stone bases, a stall riser under a stone sill, tall panes with a centre bar and a transom, a glazed door, the fascia, the striped awning outside; shelving in rows, the counter and till, a rail, a table, a board, four pendants. In the world's light as the bakery and the home room: by day the sun and sky through the front, the pendants low; at dusk and at night the pendants full in their kind's colour. No fire, no moonlit nights, no weather. It stands for the bank, the grocer, the library and other shops without a fire; the bakery has its own (ShopsBakeryLight).",
+   "approved": "proposed 2026-11-26, for the owner to review",
+   "decision": "the owner, 2026-11-26: \"bakery has oven so it will be different from bank/grocers and other such outlets\"; ADR-0061, ADR-0066",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=shop, shopfloor()) with the pieces of Tools/blender/furniture_kit_18.py and the shopfront of Tools/blender/building_kit_07.py",
+   "models": [
+    "World/city_01/blocks (the shops', bank's and library's lots)",
+    "Game/Source/BrixTown (shops furnished, CITY-013)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "The counter in the near corner hides part of the floor.",
+    "Dusk and the lamp-lit night look nearly alike: once the sun is down the pendants carry it.",
+    "The bank and the library are 38 by 16 m, three times this floor; this reference is the ordinary shop's size."
+   ]
   }
  ],
  "gaps": [

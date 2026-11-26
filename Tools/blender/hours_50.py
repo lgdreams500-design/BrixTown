@@ -31,7 +31,7 @@ from mathutils import Matrix, Vector
 B = "C:/Projects/Wasted/Tools/blender/"
 PLACE = os.environ.get("WASTED_PLACE", "alley")
 SOURCE = {"alley": "old_town_04.py", "square": "old_town_04.py", "street": "building_kit_07.py",
-          "rooms": "baker_look_47.py", "hallway": "baker_look_47.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py", "sky": "old_town_04.py"}[PLACE]
+          "rooms": "baker_look_47.py", "hallway": "baker_look_47.py", "shop": "baker_look_47.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py", "sky": "old_town_04.py"}[PLACE]
 _s = open(B + SOURCE, encoding="utf-8").read()
 exec(compile(_s[:_s.rindex("\nmain()")], SOURCE + "_helpers", "exec"), globals())
 exec(compile(open(B + "sky_52.py", encoding="utf-8").read(), "sky_52", "exec"), globals())   # the sky and its clouds
@@ -84,7 +84,7 @@ STARS = dict(scale=420.0, size=0.045, strength=(2.2, 1.0))   # the night sky's s
 MOON_DISC = dict(distance=320.0, radius=5.0, strength=8.0)    # the full moon seen in the sky
 # indoors the eye works by day too, as the game's opens in a room by day (DayOpenIndoors): the mean brightness it seeks
 INDOOR_EYE = {"Morning": 100, "Midday": 100, "Dusk": 85}
-INDOORS = ("rooms", "hallway", "bakery", "outlet")
+INDOORS = ("rooms", "hallway", "bakery", "shop", "outlet")
 # a place's own eye where it differs: the hallway has no window, so a full moon seen only through a room's door is as dim
 # there as the new moon was (the owner, 2026-11-26: "full moon is giving too much light ... at the level currently shown on
 # new moon"; that picture's mean was 12)
@@ -94,7 +94,7 @@ FIRE_COLOUR = (1.0, 0.24, 0.06)                          # every fire, in every 
                                                           # same color in all references and more red"
 FIRE_OUT_HOURS = {"rooms": ("NightFullMoon", "NightNewMoon")}   # the owner, 2026-11-26: "we need reference of moon lights when the
                                                           # fire place is turned off": these again with the fire out too
-SKIP_HOURS = {"bakery": ("NightFullMoon", "NightNewMoon")}   # the owner, 2026-11-26: "for bakery, don't need moon settings"
+SKIP_HOURS = {"bakery": ("NightFullMoon", "NightNewMoon"), "shop": ("NightFullMoon", "NightNewMoon")}   # a shop as the bakery   # the owner, 2026-11-26: "for bakery, don't need moon settings"
 PLACE_EYE = {"hallway": {"NightFullMoon": 12, "NightNewMoon": 2.5},
              "rooms": {"NightFullMoonFireOut": 12, "NightNewMoonFireOut": 2.5}}   # the home room's fire-out nights as dim (the owner)   # and the new moon darker still ("should not have so much light")
 # the moon: high (a full moon in summer stands about 68 degrees up here), turned from the sun's bearing so it falls along
@@ -122,7 +122,7 @@ if "room_shell" in globals():
     def room_shell(n, ox, oy, w=6.4, d=4.4, h=3.0, ceiling=True, window=True, front=0.0):
         x0, x1, y0, y1 = _room_shell(n, ox, oy, w, d, h, ceiling, window, front)
         box(n + "_Front", x0 - 0.3, x1 + 0.45, y0 - 0.3, y0, 0, h, M["plaster"], bevel=0)   # behind the camera
-        if PLACE in ("rooms", "bakery"):                  # the light that wall throws back onto the people (the owner, 2026-11-26:
+        if PLACE in ("rooms", "bakery", "shop"):          # the light that wall throws back onto the people (the owner, 2026-11-26:
             bc = bpy.data.lights.new("BounceCard", 'AREA')  # "the wall opposite to the character is not reflecting light back")
             bc.shape = 'RECTANGLE'
             bc.size, bc.size_y = (x1 - x0) * 0.9, h * 0.8
@@ -133,7 +133,7 @@ if "room_shell" in globals():
             for k in ("visible_camera", "visible_glossy", "visible_transmission"):
                 setp(bo, k, False)
             COL.objects.link(bo)
-        if window and PLACE in ("rooms", "bakery"):        # the sunlit street outside the window: its light comes in too
+        if window and PLACE in ("rooms", "bakery", "shop"):   # the sunlit street outside the window: its light comes in too
             out = bpy.data.materials.get("M_OutsidePaving") or painted("M_OutsidePaving", (0.22, 0.21, 0.25), (0.46, 0.42, 0.37), noise_scale=0.5)
             box(n + "_Outside", x1 + 0.45, x1 + 40.0, y0 - 30.0, y1 + 30.0, -0.4, -0.1, out, bevel=0)
         return x0, x1, y0, y1
@@ -475,6 +475,100 @@ def corridor(Ls):
     people([("PlayerA", -0.2, 3.0)])
     sun_and_sky(SCENE, (0.78, 0.30, 0.42), 8.5, (1.0, 0.86, 0.68), (0.42, 0.55, 0.82), 0.25)
     return camera(SCENE, "Cam_hallway", (-0.5, Y0 + 0.2, 1.6), (0.35, Y1, 1.5), 16.0)
+
+
+def shopfloor(Ls):
+    """A shop's ground floor at the game's size (the owner, 2026-11-26: "take the size from game for bank, grocers or
+    library"): the smallest grocer's lot, Northwood Grocer, 12 m along the street and 11 m deep, its floor 3 m high under
+    the ceiling (storeys.json); the street side a glass shop front of framed panes and a door, the day coming in there;
+    the kit's shop pieces in it (shelving in rows, the counter and till, a rail, a table, a board) and four pendants. The
+    camera stands at the back, the shop front along the right, as a home room's window."""
+    L = [l for l in Ls if l["key"] == "plain"][0]
+    rng = random.Random(53)
+    X, Y, H = 5.5, 6.0, 3.0                                   # half its depth (to the street at +x), half its length, its height
+    pl, plb, bd, wd = M["plaster"], M["plaster_b"], M["boards"], M["wood"]
+    box("Shp_Floor", -X, X, -Y, Y, -0.1, 0.0, bd, bevel=0)
+    box("Shp_Ceiling", -X - 0.3, X + 0.3, -Y - 0.3, Y + 0.3, H, H + 0.2, pl, bevel=0)
+    box("Shp_Back", -X - 0.3, -X, -Y, Y, 0, H, plb, bevel=0)
+    box("Shp_Left", -X - 0.3, X + 0.3, Y, Y + 0.3, 0, H, pl, bevel=0)
+    for i in range(5):                                       # beams across, as the town's rooms
+        y = -Y + 1.2 + i * (2 * Y - 2.4) / 4
+        box("Shp_Beam%d" % i, -X, X, y - 0.09, y + 0.09, H - 0.18, H, wd, bevel=0.015)
+    # the shop front as the approved build types draw it (Art/Reference/Buildings/BuildingsTypes_1.png, shop_front_a;
+    # building_kit_07.py shopfront()): pilasters on stone bases every 2.2 m or so, a stall riser to 0.7 m under a stone
+    # sill, tall panes with a centre bar and a transom, a glazed door in the middle bay, a fascia over them and a striped
+    # awning out over the pavement; teal frames, a cream and terracotta awning. The kit's depth v (0 the street face,
+    # t the room's face) runs here along x, the kit's length along y.
+    t = 0.35
+    fr = bpy.data.materials.get("M_SignTeal") or flat("M_SignTeal", (0.16, 0.30, 0.31))
+    sd = M["stone_dark"]
+
+    def blk(nm, m, a, b, v0, v1, z0, z1):
+        box(nm, X + t - v1, X + t - v0, a, b, z0, z1, m, bevel=0.01)
+    W, y0 = 2 * Y, -Y
+    n = max(3, round((W - 0.8) / 2.2))
+    pw = 0.32
+    ys = [y0 + 0.4 + i * (W - 0.8) / n for i in range(n + 1)]
+    di = n // 2
+    blk("Shp_EndA", pl, y0 - 0.3, ys[0] - pw / 2, 0.0, t, 0.0, H)
+    blk("Shp_EndB", pl, ys[-1] + pw / 2, Y + 0.3, 0.0, t, 0.0, H)
+    for i, yp in enumerate(ys):
+        blk("Shp_Pilaster%d" % i, fr, yp - pw / 2, yp + pw / 2, -0.16, t, 0.0, 2.55)
+        blk("Shp_PilBase%d" % i, sd, yp - pw / 2 - 0.04, yp + pw / 2 + 0.04, -0.2, t, 0.0, 0.3)
+    for i in range(n):
+        a, b = ys[i] + pw / 2, ys[i + 1] - pw / 2
+        if i == di:                                           # the door: panels low, glass above, a transom light
+            for k in range(3):
+                blk("Shp_DoorPanel%d" % k, fr, a + k * (b - a) / 3 + 0.01, a + (k + 1) * (b - a) / 3 - 0.01, t - 0.2, t - 0.12, 0.0, 0.9)
+            blk("Shp_DoorRail", fr, a, b, t - 0.2, t - 0.12, 1.9, 1.98)
+            blk("Shp_DoorHead", fr, a, b, t - 0.3, t - 0.2, 2.3, 2.55)
+            continue
+        blk("Shp_Riser%d" % i, fr, a, b, -0.06, t, 0.0, 0.7)
+        blk("Shp_Sill%d" % i, sd, a - 0.02, b + 0.02, -0.12, t, 0.7, 0.78)
+        blk("Shp_Bar%d" % i, fr, (a + b) / 2 - 0.03, (a + b) / 2 + 0.03, t - 0.12, t - 0.06, 0.78, 2.55)
+        blk("Shp_Transom%d" % i, fr, a, b, t - 0.12, t - 0.06, 2.0, 2.05)
+    blk("Shp_Fascia", fr, y0 + 0.25, Y - 0.25, -0.22, t, 2.55, H + 0.2)
+    blk("Shp_Cornice", sd, y0 + 0.2, Y - 0.2, -0.3, t, H + 0.2, H + 0.32)
+    p20 = math.radians(20)                                    # the awning: striped canvas sloping out over the pavement
+    na, out, za = max(4, int((W - 1.2) / 0.45)), 1.5, 2.5
+    Lw = out / math.cos(p20)
+    for i in range(na):
+        a = y0 + 0.6 + i * (W - 1.2) / na
+        b = y0 + 0.6 + (i + 1) * (W - 1.2) / na
+        m = M["cream"] if i % 2 == 0 else M["terra"]
+        bm = bmesh.new()
+        bmesh.ops.create_cube(bm, size=1.0)
+        me = bpy.data.meshes.new("Shp_Awning%d" % i)
+        bm.to_mesh(me)
+        bm.free()
+        me.materials.append(m)
+        ob = bpy.data.objects.new("Shp_Awning%d" % i, me)
+        ob.scale = (Lw, b - a, 0.05)
+        ob.rotation_euler = (0, p20, 0)
+        ob.location = (X + t + out / 2, (a + b) / 2, za - out * math.tan(p20) / 2)
+        COL.objects.link(ob)
+    box("Shp_Front", -X - 0.3, X + 0.35, -Y - 0.3, -Y, 0, H, pl, bevel=0)   # the wall the camera stands at
+    out = bpy.data.materials.get("M_OutsidePaving") or painted("M_OutsidePaving", (0.22, 0.21, 0.25), (0.46, 0.42, 0.37), noise_scale=0.5)
+    box("Shp_Outside", X + 0.35, X + 40.0, -Y - 30.0, Y + 30.0, -0.4, -0.1, out, bevel=0)
+    # the light the far wall throws back onto the people, as in the home room (BOUNCE_CARD)
+    bc = bpy.data.lights.new("BounceCard", 'AREA')
+    bc.shape = 'RECTANGLE'
+    bc.size, bc.size_y = 2 * X * 0.9, H * 0.8
+    bo = bpy.data.objects.new("BounceCard", bc)
+    bo.location = (0.0, -Y + 0.05, H * 0.45)
+    bo.rotation_euler = (math.radians(90), 0, 0)
+    for k in ("visible_camera", "visible_glossy", "visible_transmission"):
+        setp(bo, k, False)
+    COL.objects.link(bo)
+    for spec, x, y, yaw in (("p_gondola", -1.6, 2.6, 0.0), ("p_gondola", -1.6, 0.4, 0.0), ("p_gondola", 1.2, 2.6, 0.0),
+                            ("p_gondola", 1.2, 0.4, 0.0), ("p_counter", -3.4, -3.2, math.pi / 2), ("p_rail", -5.0, 4.6, math.pi / 2),
+                            ("p_table", 3.4, -2.6, 0.0), ("p_aboard", 4.4, -1.0, -0.4), ("p_form", -4.8, 1.6, math.pi / 2),
+                            ("d_pendant", -2.4, -2.4, 0), ("d_pendant", 2.4, -2.4, 0), ("d_pendant", -2.4, 2.4, 0), ("d_pendant", 2.4, 2.4, 0)):
+        P = group("Shp_%s" % spec, x, y, yaw)
+        place(spec, P, L, rng)
+    people([("PlayerA", 0.4, -1.4)])
+    sun_and_sky(SCENE, (0.78, 0.30, 0.42), 8.5, (1.0, 0.86, 0.68), (0.42, 0.55, 0.82), 0.25)
+    return camera(SCENE, "Cam_shop", (-X + 0.5, -Y + 0.5, 1.7), (X * 0.4, Y * 0.5, 1.1), 16.0)
 
 
 def greyer(how):
@@ -862,6 +956,13 @@ def main_hours():
         greyer(ROOM_GREYER)
         bounce_more(ROOM_BOUNCE)
         each_hour(scene, cam, 1.3, "Hallway", dict(day_lamps=0.0, day_fires=0.0))
+    elif PLACE == "shop":                            # a shop with no fire (bank, grocer and the like; the owner, 2026-11-26)
+        scene = fresh("Furn_shopfloor")
+        extra_mats()
+        cam = shopfloor(lines())
+        greyer(ROOM_GREYER)
+        bounce_more(ROOM_BOUNCE)
+        each_hour(scene, cam, 1.3, "Shop", dict(day_lamps=0.06, day_fires=0.0))   # lamps low by day, as the bakery
     elif PLACE == "bakery":
         scene = fresh("Furn_bakery")
         bakery_mats()
