@@ -1,0 +1,68 @@
+{
+ "Elder_L": {
+  "faults": [],
+  "brow_line_columns": 142,
+  "shade": 0.085,
+  "straight": 0.2332,
+  "step": 0.0336,
+  "ears": 0.0588,
+  "smooth": 0.1382,
+  "tones": 0.379
+ },
+ "Noor_L": {
+  "faults": [],
+  "brow_line_columns": 148,
+  "shade": 0.081,
+  "straight": 0.2176,
+  "step": 0.0282,
+  "ears": 0.0605,
+  "smooth": 0.1685,
+  "tones": 0.494
+ },
+ "Grandmother_L": {
+  "faults": [],
+  "brow_line_columns": 142,
+  "shade": 0.085,
+  "straight": 0.2305,
+  "step": 0.0336,
+  "ears": 0.0588,
+  "smooth": 0.1258,
+  "tones": 0.351
+ },
+ "Grandfather_L": {
+  "faults": [],
+  "brow_line_columns": 0,
+  "step": 0.0,
+  "ears": 0.0,
+  "smooth": 0.207,
+  "tones": 0.547
+ },
+ "Gentleman_L": {
+  "faults": [],
+  "brow_line_columns": 67,
+  "step": 0.0,
+  "ears": 0.0478,
+  "smooth": 0.2412,
+  "tones": 0.57
+ },
+ "MarketWoman_L": {
+  "faults": [],
+  "brow_line_columns": 152,
+  "shade": 0.066,
+  "straight": 0.1868,
+  "step": 0.0275,
+  "ears": 0.0588,
+  "smooth": 0.1627,
+  "tones": 0.597
+ },
+ "GreatGrandmother_L": {
+  "faults": [],
+  "brow_line_columns": 138,
+  "shade": 0.08,
+  "straight": 0.2283,
+  "step": 0.0302,
+  "ears": 0.0603,
+  "smooth": 0.1269,
+  "tones": 0.335
+ }
+}

@@ -133,27 +133,45 @@ def elder(sp, ox, oy=0.0):
                     limb(n + "_Crow%d_%d" % (sg, j), F(sg * (ex + 0.031), ez + dz * 0.5, 0.0008), F(sg * (ex + 0.040), ez + dz * 1.3, 0.0008), r * 0.8, r * 0.5, line)
             if age >= 0.5:                                                     # under the eyes
                 ellipsoid(n + "_Bag%d" % sg, F(sg * ex, ez - 0.024, 0.0004), (0.017 * K, 0.003 * K, 0.0028 * K), solid(dim(skin, 0.90), 0.6))
-    if style not in ("thin", "wisp", "bald", "afro"):       # hair that sits on the head: the shell character3 makes stands off
-        # the skull, and the gap under its rim fell into shade, so pale hair read as a cap over dark hair (the owner,
-        # 2026-11-26). The gap is filled with hair, set back so the face stays clear and the hairline shows at the brow.
-        ellipsoid(n + "_HairFill", H(0, 0.042, 0.036), ((rx + 0.018) * K, (ry + 0.020) * K, 0.124 * K), hair)
-        if style in ("bob", "long"):                        # these hang lower: filled down to the jaw, behind the ears
-            ellipsoid(n + "_HairFillLow", H(0, 0.050, -0.045), ((rx + 0.016) * K, (ry + 0.006) * K, 0.105 * K), hair)
-    if style in ("thin", "wisp"):                           # a bare crown: hair only round the back and the sides
-        for i in range(9):
-            a = math.radians(-120 + i * 30)                 # from behind one ear round the back to the other (the face is at -y)
+    if style not in ("thin", "wisp", "bald", "afro"):
+        # Hair that sits on the head. character3 makes hair as a shell standing 2 cm off the skull with a cut edge; the
+        # shade under that edge read as dark hair under a pale cap (the owner, 2026-11-26, twice). So the shell is taken
+        # away and the hair is built on the skull: a body that meets the brow in a curved hairline with no step, locks
+        # swept back over it in two close tones, and hair in front of the ears. look_check.py measures all of it.
+        for o in [o for o in COL.objects if o.name in (n + "_Hair", n + "_HairTop")]:
+            bpy.data.objects.remove(o)
+        hair2 = solid(dim(hairc, 0.86), 0.6)
+        ellipsoid(n + "_HairFill", H(0, 0.036, 0.034), ((rx + 0.007) * K, (ry + 0.004) * K, (rz - 0.010) * K), hair)
+        for i in range(9):                                  # locks from the hairline back over the crown
+            u = (i - 4) / 4.0
+            x0 = u * rx * 0.80
+            z0 = 0.086 - 0.030 * u * u                      # the hairline: highest in the middle, lower to the temples
+            limb(n + "_Lock%d" % i, F(x0, z0, 0.002), H(x0 * 0.55, 0.075, 0.118 - 0.030 * u * u), 0.017 * K, 0.021 * K, hair2 if i % 2 else hair)
+        for sg in (-1, 1):                                  # in front of the ears, down to the cheekbone
+            limb(n + "_Temple%d" % sg, F(sg * rx * 0.86, 0.058, 0.001), H(sg * rx * 0.985, -0.012, 0.004), 0.018 * K, 0.012 * K, hair)
+        if style in ("bob", "long"):                        # these hang to the jaw, behind the cheeks
+            ellipsoid(n + "_HairFillLow", H(0, 0.072, -0.040), ((rx - 0.004) * K, (ry - 0.020) * K, 0.085 * K), hair)
+            for sg in (-1, 1):
+                limb(n + "_Lock_Side%d" % sg, H(sg * rx * 0.97, 0.018, 0.03), H(sg * rx * 0.93, 0.022, -0.085), 0.016 * K, 0.012 * K, hair2)
+    if style in ("thin", "wisp"):                           # a bare crown: hair only round the back and the sides, close to the skull
+        for i in range(11):
+            a = math.radians(-100 + i * 20)                 # from behind one ear round the back to the other (the face is at -y)
             x, y = -math.sin(a), math.cos(a)
-            ellipsoid(n + "_Fringe%d" % i, H(x * rx * 0.97, y * ry * 0.93 + 0.012, 0.012), (0.036 * K, 0.036 * K, 0.052 * K), hair)
-        for sg in (-1, 1):
-            ellipsoid(n + "_Temple%d" % sg, H(sg * rx * 0.98, 0.02, 0.03), (0.014 * K, 0.034 * K, 0.034 * K), hair)
-        if style == "wisp":
-            ellipsoid(n + "_Wisp", H(0.006, -0.02, 0.122), (0.050 * K, 0.066 * K, 0.014 * K), hair, (0.0, 0.12, 0.0))
-    if sp.get("beard"):
-        for i in range(7):
-            a = math.radians(-66 + i * 22)
-            x = math.sin(a) * rx * 0.80
-            z = -0.088 - math.cos(a) * 0.030
-            ellipsoid(n + "_Beard%d" % i, F(x, z, 0.004), (0.022 * K, 0.014 * K, 0.026 * K), hair)
+            ellipsoid(n + "_Fringe%d" % i, H(x * rx * 0.93, y * ry * 0.93 + 0.010, -0.004), (0.016 * K, 0.016 * K, 0.044 * K), hair)
+        for sg in (-1, 1):                                  # a little in front of each ear
+            limb(n + "_Temple%d" % sg, H(sg * rx * 0.985, -0.018, 0.030), H(sg * rx * 0.99, -0.012, -0.012), 0.010 * K, 0.007 * K, hair)
+        if style == "wisp":                                 # a few strands combed over the crown, lying on it
+            for i in range(3):
+                x0 = (i - 1) * 0.026
+                zt = math.sqrt(max(1.0 - (x0 / rx) ** 2, 0.0)) * rz
+                ellipsoid(n + "_Wisp%d" % i, H(x0, -0.006, zt * 0.985), (0.011 * K, 0.060 * K, 0.004 * K), hair, (-0.10, 0.0, 0.0))
+    if sp.get("beard"):                                     # a short full beard lying on the jaw, ear to ear, and a moustache
+        for i in range(11):
+            a = math.radians(-75 + i * 15)
+            x = math.sin(a) * rx * 0.74
+            z = -0.052 - math.cos(a) * 0.044
+            ellipsoid(n + "_Beard%d" % i, F(x, z, 0.001), (0.021 * K, 0.008 * K, 0.021 * K), hair)
+        ellipsoid(n + "_Beard_Chin", F(0, -0.088, 0.002), (0.030 * K, 0.009 * K, 0.018 * K), hair)
         ellipsoid(n + "_Moustache", F(0, -0.056, 0.004), (0.028 * K, 0.007 * K, 0.0075 * K), hair)
     if sp.get("glasses"):
         wire = solid(sp["glasses"], 0.5)
@@ -197,11 +215,27 @@ def elder(sp, ox, oy=0.0):
         limb(n + "_CaneHandle", top + Vector((0, 0.045 * S, 0)), top + Vector((0, -0.055 * S, 0.004)), 0.016 * S, 0.014 * S, wood)
 
 
+exec(compile(open(ROOT + "/Tools/blender/look_check.py", encoding="utf-8").read(), "look_check", "exec"), globals())
+STOOD = []                        # everyone built in the scene, for the look check
+
+
+def head_of(sp, x, y):
+    """Where character3 put this person's head: its centre's height and its scale."""
+    cs = CHAR_STYLES["B"]
+    S = sp.get("height", 1.72) / 1.72
+    zm = lambda z: z * cs["leg"] if z <= 0.93 else 0.93 * cs["leg"] + (z - 0.93) * cs["torso"]
+    st = math.radians(sp.get("stoop", 0.0))
+    hz = (zm(1.475) + 0.130 * cs["head"]) * S
+    hip = zm(0.96) * S
+    return dict(name=sp["name"], at=(x, y - math.sin(st) * (hz - hip) * 0.9), K=cs["head"] * S, hz=hip + (hz - hip) * math.cos(st))
+
+
 def stand(who, x, y=0.0, tag="L", **over):
     sp = dict(ELDERS[who] if who in ELDERS else CAST[who])
     sp.update(over)
     sp["name"] = "%s_%s" % (who, tag)
     elder(sp, x, y)
+    STOOD.append(head_of(sp, x, y))
     return sp
 
 
@@ -250,11 +284,17 @@ def main():
     os.makedirs(SRC, exist_ok=True)
     open(LOG, "w").close()
     log("Blender " + bpy.app.version_string)
-    for key in ("lineup", "faces", "ages"):
+    for key in ("check", "lineup", "faces", "ages"):
         if ONLY and key not in ONLY:
             continue
         try:
             scene = fresh("Furn_" + key)
+            del STOOD[:]
+            if key == "check":                               # every head measured close up (look_check.py)
+                lineup_scene()
+                configure(scene, -0.3, (420, 420), 48)
+                say(check_heads(scene, list(STOOD), OUT_DIR + "/check"), log)
+                continue
             if key == "lineup":
                 lineup_scene()
                 render(scene, key, ("cam", (4.2, -10.8, 1.25), (0.1, 0, 1.0), 62.0), -0.3, (2000, 900))

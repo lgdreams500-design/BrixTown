@@ -1,6 +1,13 @@
-09:03:31 Blender 5.3.0
-09:04:12 lineup rendered in 39.3s (477 objects)
-09:04:12 saved .blend
-09:04:45 faces rendered in 31.4s (438 objects)
-09:05:12 ages rendered in 26.8s (198 objects)
-09:05:12 DONE
+09:19:14 Blender 5.3.0
+09:19:51 look check Elder_L: shade 0.085, straight 0.2332, step 0.0336, ears 0.0588, smooth 0.1382, tones 0.379
+09:19:51 look check Noor_L: shade 0.081, straight 0.2176, step 0.0282, ears 0.0605, smooth 0.1685, tones 0.494
+09:19:51 look check Grandmother_L: shade 0.085, straight 0.2305, step 0.0336, ears 0.0588, smooth 0.1258, tones 0.351
+09:19:51 look check Grandfather_L: step 0.0, ears 0.0, smooth 0.207, tones 0.547
+09:19:51 look check Gentleman_L: step 0.0, ears 0.0478, smooth 0.2412, tones 0.57
+09:19:51 look check MarketWoman_L: shade 0.066, straight 0.1868, step 0.0275, ears 0.0588, smooth 0.1627, tones 0.597
+09:19:51 look check GreatGrandmother_L: shade 0.08, straight 0.2283, step 0.0302, ears 0.0603, smooth 0.1269, tones 0.335
+09:19:51 look check: 7 heads, 0 faults
+09:20:35 lineup rendered in 41.7s (540 objects)
+09:21:12 faces rendered in 35.7s (491 objects)
+09:21:44 ages rendered in 31.7s (238 objects)
+09:21:44 DONE
