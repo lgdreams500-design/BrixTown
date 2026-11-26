@@ -6,19 +6,19 @@
   "straight": 0.2172,
   "step": 0.0282,
   "ears": 0.0605,
-  "smooth": 0.1651,
-  "tones": 0.471
+  "smooth": 0.1763,
+  "tones": 0.492
  },
  "Noor_B_L": {
   "faults": [
-   "a dark band lies under the hair's edge along 100% of the brow: it reads as dark hair under a pale cap"
+   "a dark band lies under the hair's edge along 97% of the brow: it reads as dark hair under a pale cap"
   ],
   "brow_line_columns": 148,
-  "shade": 1.0,
+  "shade": 0.966,
   "straight": 0.0847,
   "step": 0.0,
-  "smooth": 0.2911,
-  "tones": 0.634
+  "smooth": 0.3061,
+  "tones": 0.629
  },
  "Noor_C_L": {
   "faults": [],
@@ -27,7 +27,17 @@
   "straight": 0.2047,
   "step": 0.0325,
   "ears": 0.065,
-  "smooth": 0.177,
-  "tones": 0.638
+  "smooth": 0.1762,
+  "tones": 0.628
+ },
+ "Noor_N_L": {
+  "faults": [],
+  "brow_line_columns": 148,
+  "shade": 0.081,
+  "straight": 0.2172,
+  "step": 0.0282,
+  "ears": 0.0605,
+  "smooth": 0.1621,
+  "tones": 0.415
  }
 }

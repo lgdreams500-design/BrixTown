@@ -11,7 +11,7 @@ and the kit's parts. Nothing here is a new shape of person or a new material.
 
 Noor (docs/narrative/src/cast.json): a woman of 58, master baker, fourth keeper of the Stone Oven. Short sentences;
 counts everything; hides her hands. Three options, the same woman dressed three ways:
-    A  Linen      dusty-blue long sleeves, a cream apron, an ochre kerchief at the neck, a grey bun
+    A  Linen      a dusty-blue long tunic to the knee, a cream apron, an ochre kerchief at the neck, a grey bun
     B  Flour cap  terracotta tunic, a cream apron and a soft cream baker's cap set on a dark grey bun
     C  Old Town   an olive dress to the shin, a cream apron, a grey bob
 The bakery: a stone oven with an arched mouth and a wood store under it, a kneading bench, racks of loaves, flour
@@ -20,9 +20,10 @@ sacks, the counter, and the crock of the Mother on the top shelf.
 Renders go to Art/StyleTests/baker_look_47/:
     noor.png          the three options, full height
     noor_close.png    the same three, from the waist up
-    bakery_day.png    the bakery in the kit daylight, Noor (option A) at the bench
+    bakery_day.png    the bakery in the kit daylight, Noor (N, the owner's) at the bench
     bakery_four.png   the same at four in the morning: the oven and the lamps only (rule I5)
-The owner picked A for Noor on 2026-11-26 ("pick option A for noor"); B and C stay as the ones not chosen. The bakery
+The owner picked A for Noor on 2026-11-26 ("pick option A for noor"), asked for a long tunic, then for option C's
+clothes on her: N is that Noor, A's head and bun in C's olive dress. A, B and C stay for the record. The bakery
 inside is not approved yet. Nothing here is in the game.
 """
 import bpy, math, random, os, time, traceback
@@ -52,9 +53,12 @@ IRON_GREY = (0.17, 0.16, 0.17)
 NOOR = dict(age=0.45, stoop=2.0, height=1.62, build=1.12, skin=(0.56, 0.38, 0.27), eyes=(0.17, 0.10, 0.06), eye_open=0.86, brow=1.1, face_w=1.04,
             nose=1.1, shoes=BROWN, bottom=BROWN, extras=("apron",), apron_color=CREAM)
 OPTIONS = [
-    ("A", "Linen", dict(NOOR, hair="bun", hair_color=GREY, garment="long", top=BLUEC, scarf=OCHRE)),
+    ("A", "Linen", dict(NOOR, hair="bun", hair_color=GREY, garment="tunic", tunic_len=0.50, top=BLUEC, scarf=OCHRE)),   # a long tunic to the knee (the owner, 2026-11-26)
     ("B", "Flour cap", dict(NOOR, hair="bun", hair_color=IRON_GREY, garment="tunic", top=TERRA, baker_cap=CREAM)),
     ("C", "Old Town", dict(NOOR, hair="bob", hair_color=GREY, garment="dress", dress_len=0.40, top=OLIVE, bottom=OLIVE)),
+    # the owner's Noor (2026-11-26): picked A, then asked for a long tunic, then "what is option C wearing? can you make
+    # Noor wear that": A's head and grey bun in C's olive dress to the shin with its bib apron
+    ("N", "Noor", dict(NOOR, hair="bun", hair_color=GREY, garment="dress", dress_len=0.40, top=OLIVE, bottom=OLIVE)),
 ]
 
 
@@ -77,7 +81,7 @@ def noor_scene():
     box("Wall_Upper", -8, 8, 1.36, 1.9, 3.2, 6, M["plaster"])
     box("Wall_Ledge", -8, 8, 1.18, 1.9, 3.2, 3.45, M["stone_dark"])
     for i, (key, label, _) in enumerate(OPTIONS):
-        x = (i - 1) * 1.15
+        x = (i - 1.5) * 1.15
         noor(key, x, 0.0, "L")
         text("Label_" + key, "%s  %s" % (key, label), x, 1.16, 1.98, 0.12, "cream")
     lantern("Lamp_L", -2.4, 1.2, 2.8, M, 60)
@@ -205,7 +209,7 @@ def bakery_scene(four):
     shop_counter(group("Counter", 2.35, -1.5, math.pi), L, rng)
     d_pendant(group("Pendant_A", -0.2, -0.15), L, rng)
     d_pendant(group("Pendant_B", 2.4, -1.4), L, rng)
-    noor("A", 1.25, -0.55, "S")
+    noor("N", 1.25, -0.55, "S")
     for ob in SCENE.objects:                                 # by day the lamps are low and the window carries the room (I5)
         if ob.type == 'LIGHT' and ob.name.startswith("Pen_Light"):
             ob.data.energy *= 1.0 if four else 0.12
@@ -255,10 +259,10 @@ def main():
                 continue
             if key == "noor":
                 noor_scene()
-                render(scene, key, [("cam", (0, -9.2, 1.1), (0, 0, 1.0), 88.0)], -0.3, (1500, 1000))
+                render(scene, key, [("cam", (0, -9.2, 1.1), (0, 0, 1.0), 70.0)], -0.3, (1800, 1000))
             elif key == "noor_close":
                 noor_scene()
-                render(scene, key, [("cam", (0, -7.4, 1.42), (0, 0, 1.3), 82.0)], -0.3, (1700, 800))
+                render(scene, key, [("cam", (0, -7.4, 1.42), (0, 0, 1.3), 62.0)], -0.3, (2000, 760))
             else:
                 cams = bakery_scene(key == "bakery_four")
                 render(scene, key, cams, 0.35 if key == "bakery_four" else 1.0, (1700, 1000))

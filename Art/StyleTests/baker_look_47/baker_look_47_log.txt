@@ -1,12 +1,13 @@
-09:33:56 Blender 5.3.0
-09:34:16 look check Noor_A_L: shade 0.081, straight 0.2172, step 0.0282, ears 0.0605, smooth 0.1651, tones 0.471
-09:34:16 look check Noor_B_L: shade 1.0, straight 0.0847, step 0.0, smooth 0.2911, tones 0.634
-09:34:16    FAULT: a dark band lies under the hair's edge along 100% of the brow: it reads as dark hair under a pale cap
-09:34:16 look check Noor_C_L: shade 0.068, straight 0.2047, step 0.0325, ears 0.065, smooth 0.177, tones 0.638
-09:34:16 look check: 3 heads, 1 faults
-09:34:50 noor rendered in 32.7s (179 objects)
-09:35:19 noor_close rendered in 28.7s (179 objects)
-09:36:58 bakery_day rendered in 97.9s (283 objects)
-09:36:58 saved .blend
-09:38:40 bakery_four rendered in 101.4s (283 objects)
-09:38:40 DONE
+09:48:33 Blender 5.3.0
+09:48:54 look check Noor_A_L: shade 0.081, straight 0.2172, step 0.0282, ears 0.0605, smooth 0.1763, tones 0.492
+09:48:54 look check Noor_B_L: shade 0.966, straight 0.0847, step 0.0, smooth 0.3061, tones 0.629
+09:48:54    FAULT: a dark band lies under the hair's edge along 97% of the brow: it reads as dark hair under a pale cap
+09:48:54 look check Noor_C_L: shade 0.068, straight 0.2047, step 0.0325, ears 0.065, smooth 0.1762, tones 0.628
+09:48:54 look check Noor_N_L: shade 0.081, straight 0.2172, step 0.0282, ears 0.0605, smooth 0.1621, tones 0.415
+09:48:54 look check: 4 heads, 1 faults
+09:49:58 noor rendered in 63.5s (235 objects)
+09:50:37 noor_close rendered in 37.6s (235 objects)
+09:52:10 bakery_day rendered in 91.6s (282 objects)
+09:52:10 saved .blend
+09:53:49 bakery_four rendered in 98.3s (282 objects)
+09:53:49 DONE

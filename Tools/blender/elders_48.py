@@ -15,6 +15,7 @@ from them. The values, all optional, all 0 or absent on everyone made so far:
     hair      two more shapes: "thin" (a bare crown with hair round the back and sides) and "wisp" (thin, with a tuft on top)
     glasses   round wire frames, in a colour
     cane      a walking stick in the right hand, in a colour
+    tunic_len how far down a tunic comes (0.80 is the hip, where the cast's tunic ends; 0.50 is the knee)
     shawl     a cloth over the shoulders, in a colour
     beard     a short full beard in the hair's colour
 
@@ -183,6 +184,9 @@ def elder(sp, ox, oy=0.0):
                 limb(n + "_Rim%d_%d" % (sg, i), pts[i], pts[i + 1], 0.0022 * K, 0.0022 * K, wire)
             limb(n + "_Arm%d" % sg, c + Vector((sg * rr, 0, 0.002 * K)), H(sg * rx * 0.99, 0.02, ez + 0.004), 0.002 * K, 0.002 * K, wire)
         limb(n + "_Bridge", F(-ex, ez, 0.013) + Vector((rr, 0, 0.004 * K)), F(ex, ez, 0.013) + Vector((-rr, 0, 0.004 * K)), 0.0022 * K, 0.0022 * K, wire)
+    if sp.get("garment") == "tunic" and "tunic_len" in sp:   # a long tunic: the tunic's own cloth carried down from the hip (0.80) over the trousers
+        tl = sp["tunic_len"]
+        limb(n + "_Skirt", P(0, 0, tl), P(0, 0, 0.86), (0.172 * W + 0.035 * (0.80 - tl) / 0.3) * S, 0.172 * W * S, cloth(sp["top"]), flat=0.50, cap=0.28)
     if "shawl" in sp:
         sh = cloth(sp["shawl"])
         chest = 0.172 * W
