@@ -243,17 +243,18 @@ void ABrixTalk::Show(const FString& Nid)
 	const TSet<FString>& F = Flags.FindOrAdd(Res);
 	Opts.Reset();
 	for (int32 k = 0; k < N->Options.Num(); ++k) if (FBrixDialogue::Allowed(N->Options[k], F) && (!Life() || Life()->Allowed(N->Options[k]))) Opts.Add(k);
-	Say = FBrixDialogue::Fill(N->Say, Vars());
+	Say = FBrixDialogue::Fill(FBrixDialogue::Shown(*N), Vars());   // in the box: what is seen, who says it, the words
 	Mood = N->Mood;
-	Line = Speech.Speak(Say);   // the resident says the line: mouth, face and nods follow it
+	Line = Speech.Speak(FBrixDialogue::Fill(N->Say, Vars()));   // the resident says the line: mouth, face and nods follow the words alone
 	T0 = Now(GetWorld());
 	K = 1;
 	const bool bTold = bScene || N->Who == TEXT("scene");   // a line nobody says is read, not spoken (QST-012)
 	if (bTold) Line = Speech.Speak(TEXT(""));
 	double Dur = -1;
-	if (!bTold) SayAloud(Res, N->Say, Mood, Dur);   // spoken aloud (SND-018)
+	const int32 Speaker = N->Speaker >= 0 ? N->Speaker : Res;   // somebody else's line is in their voice (QST-012)
+	if (!bTold) SayAloud(Speaker, N->Say, Mood, Dur);   // spoken aloud (SND-018): the words, never what is seen
 	if (Dur > 0) K = Line.End / FMath::Max(.3, Dur);   // the mouth finishes with the voice (CHR-009)
-	else if (!bTold) { MurmurLine = Line; MurmurWho = Res; MurmurAt = People->Held.Pos; ++Murmured; }   // no voice yet: wordless syllables, as the slice does
+	else if (!bTold) { MurmurLine = Line; MurmurWho = Speaker; MurmurAt = People->Held.Pos; ++Murmured; }   // no voice yet: wordless syllables, as the slice does
 	Refresh();
 }
 
