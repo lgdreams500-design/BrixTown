@@ -665,7 +665,7 @@ is as it was (ADR-0007). Then:
 Every number is in DefaultGame.ini, `[/Script/BrixTown.BrixLight]`. `-BrixLightOff` leaves the light as the game mode
 alone makes it, to compare; `-BrixLightNo=<letters>` leaves parts out (e the eye, h the haze, n the night's light, s its
 sky). Pictures before and after: `Art/StyleTests/unreal_light_43/`. Not yet: the stars, the Milky Way, the moon's disc,
-path and phases (the night's light comes from one place and does not wax or wane), the planet (WLD-065); lamps lit in
+path and phases (the night's light comes from one place and does not wax or wane); lamps lit in
 shade by day as the reference renders have them; light from lit windows on the pavement (the panes are kept out of
 Lumen); the alley's haze growing heavy from 18:00 as its shade deepens (the game mode's haze has one brightness whatever
 the light). The haze's colour is set once a frame, by this (the game mode sets it only with `-BrixLightOff` or

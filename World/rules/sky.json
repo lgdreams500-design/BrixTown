@@ -75,7 +75,8 @@
   }
  },
  "planet": {
-  "show": true,
+  "note": "WLD-065 cut (the owner, 2026-11-26: \"planet should be out of the game\"; ADR-0062): show is false, so neither the slice nor the game draws it. The numbers are kept, still checked by world.planet_problems().",
+  "show": false,
   "azimuth": 50,
   "elevation": 32,
   "size": 0.19,
