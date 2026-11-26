@@ -136,6 +136,15 @@ private:
 	UPROPERTY() TObjectPtr<ABrixTownActor> TownRef;
 	UPROPERTY() TArray<TObjectPtr<class UPointLightComponent>> Lights;
 	UPROPERTY() TObjectPtr<class UPointLightComponent> Fill;      // the room's own light
+	// The room's own light hangs at the floor's middle, so someone between it and the camera showed the camera their
+	// unlit side: in a tower's hall the player was 2.2 stops under the walls. People (lighting channel 1) have the same
+	// light again from the camera, PeopleFill of it, so that a body is lit like the surfaces round it (the look
+	// gate's G6) and the rooms' own measured light is not changed.
+	UPROPERTY() TObjectPtr<class UPointLightComponent> FillPeople;
+	UPROPERTY(Config) float PeopleFill = 0.7f;
+	// how much of a lamp's light the engine bounces (1 all of it): a few small bright pools bounced by a coarse
+	// bounce were dark blotches on a hall's ceiling and floor
+	UPROPERTY(Config) float RoomLampBounce = 1.f;
 	void PlaceLights(const FVector2D& Eye, float EyeUp, float Daylight);
 	void FadeLights(float DeltaSeconds);
 	TArray<FVector> LampWant;      // where lamps should hang now, the nearest to the camera first

@@ -104,3 +104,6 @@ yet" lines of `Game/README.md`; this is the list they came from.
 | Lawns, the mall's shell, open ground | G3 | One flat colour, no mottle |
 | Rain, snow, fog | G4 | A teal cast over the whole picture |
 | Riding a bus | G8 | The bottom of a tree's crown can be in the picture: crowns do not stop the camera |
+
+Mended since (see `Game/README.md`, The look gate): the tree crowns, the window seen from inside at night, the player
+in a tower's hall, the teal cast, the alley's white-out, and a first pass at Eastgate's hall. The rest is pending there.

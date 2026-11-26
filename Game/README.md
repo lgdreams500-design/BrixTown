@@ -639,7 +639,7 @@ The game mode makes the sun, the sky's fill and the haze and turns them by the c
 makes for every game world (nothing spawns it), adds what the picture needs as the sun gets low and after it is down; the
 arithmetic is `BrixWorld/BrixNight` (`BrixLightNow`: from the day's light, the sun's height, the weather and whether the
 camera is in a room), checked by `WLD042_the_days_light_is_kept_and_the_night_is_dark`. Out of doors by day with the
-sun up it changes nothing: the haze and its glow are the game mode's own and the eye is free, so the approved daylight
+sun up it changes nothing: the haze and its glow are the game mode's own and the eye opens no further than the open street needs (`DayOpen`, 2.2 stops: The look gate, below), so the approved daylight
 is as it was (ADR-0007). Then:
 - **the eye**: the engine's automatic exposure opens without limit as the light goes, which made the night as bright as
   the day. It may open only so far past the day's exposure (`DayEV`, 1.3 measured in the open street at noon):
@@ -1157,11 +1157,42 @@ night beside the references; ten questions about the whole frame (G1 to G10: sha
 and blacks, people, lamps, wholeness, the hours, nothing over the picture); `Tools/unreal/look_check.py` for the
 numbers (burnt whites, crushed blacks, flat fills, light and shade, warmth, the player against the picture round them);
 for a shared change the look tour against `Tools/unreal/look_baseline.json`, which says which stops have moved. The
-first audit's findings are in LOOK_GATE.md; those not yet mended: a tower's hall (the player nearly black, bare
-walls); the engine's dark blotches on the ceilings and floors of shops, the bank, the library and cafes; plain flat
-walls in homes and a white patch burnt by the lamp nearest a wall; a window seen from inside at night is a white pane;
-the spawn alley's far end a white-out by day; tree crowns near black with bright lines along their edges; lawns, the
-mall's shell and open ground one flat colour; a teal cast over the whole picture in rain, snow and fog.
+first audit's findings are in LOOK_GATE.md.
+
+**Mended (2026-11-26, shots in `Art/StyleTests/unreal_look_gate_49/second_batch.jpg`):**
+- *Tree crowns near black with bright lines on their edges*: every face of a crown was turned to its hint side
+  without its points being taken the other way round, and the two-sided material then lit it as if from inside
+  (`ABrixTownActor::Facet()`, `DomeGroup()`). Crowns are the sage, sun-shaded shapes of the references.
+- *A window seen from inside at night was a white pane*: the lit pane was a thin box with a face towards the room; it
+  is one face looking out (`NightPaneGroup()`), so from inside a window shows the dark street.
+- *The player nearly black in a tower's hall*: the room's own light hangs at the floor's middle, so a body between it
+  and the camera showed its unlit side. People have that light again from the camera's side (`FillPeople`,
+  `PeopleFill` 0.7, lighting channel 1); the rooms' own measured light is unchanged.
+- *A teal cast over rain, snow and fog*: the covered sky's haze tint was (0.9, 0.95, 1.05); it is a neutral grey a
+  little darker (`OvercastHaze` 0.80, 0.815, 0.83).
+- *The spawn alley's far end a white-out by day*: by day out of doors the eye was free, so in a shaded alley it opened
+  until the sunlit square beyond burnt. It may now open `DayOpen` 2.2 stops past the street's exposure: the open
+  street, the square and the park do not open that far and are as they were (the tour's numbers did not move there);
+  the alley reads as shade with its far end in sight. This narrows ADR-0055's "by day the eye is free".
+
+**Pending, by the gate's questions (nothing here has been mended):**
+- **Shops, the bank, the library, cafes (G3):** the engine's dark blotches on ceilings and floors. Tried and left:
+  finer bounce settings (no visible change, and 19 to 30 frames a second where there were 32 to 40), and lamps whose
+  light is not bounced (`RoomLampBounce` 0: no change). Not yet tried: the furniture out of the engine's bounce scene.
+- **Homes (G3, G5):** plain flat walls with no mottle; the lamp nearest a wall burns a pale patch on it.
+- **A tower's hall (G3, G7):** bare plain walls, one lamp far off; dim.
+- **Eastgate and the furniture outlet inside (G1, G2, G3, G6):** see Eastgate's own "Not yet"; the outlet's hall has
+  not been looked at since the hall's light was changed.
+- **Lawns, the mall's outer shell, open ground (G3):** the lawn's pattern is there but pale in the sun; the shell is
+  drawn in the plain facets material, which has no mottle.
+- **Snow (G4):** the ground under snow still takes the sun's warm colour, so lying snow is a yellowish grey.
+- **A cafe at night (G7):** two panes on its window wall still glow from inside; not found out whether they are its
+  own or a neighbour's seen through the glass.
+- **The spawn alley in rain (G6):** the player is a dark shape against the grey haze (wet clothes, in shade).
+- **Riding a bus (G8):** the bottom of a tree's crown can be in the picture.
+- **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
+  gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
+  snow other than Market Square.
 
 ## Build, run, test
 Paths below are for this machine (`docs/setup/DEV_ENVIRONMENT.md`); run from the repository root.
