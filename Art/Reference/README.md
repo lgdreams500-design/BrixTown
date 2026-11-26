@@ -15,7 +15,7 @@ look gets a new file, an entry in the catalog and a decision record.
 ## Names
 
 `<Category>/<Category><Subject>[_<Variant>].<ext>`, PascalCase, the reference's id being the name without the variant:
-`Indoor/IndoorRooms_Kitchen.png` (reference `IndoorRooms`), `Vehicles/VehiclesSoftBox.png`, `People/PeopleFaceTalk.mp4`.
+`Indoor/IndoorHomeRoom_Morning.jpg` (reference `IndoorHomeRoom`), `Vehicles/VehiclesSoftBox.png`, `People/PeopleFaceTalk.mp4`.
 
 Categories: `World`, `Buildings`, `Indoor`, `Shops`, `Malls`, `Furniture`, `Vehicles`, `People`, `Interface`.
 

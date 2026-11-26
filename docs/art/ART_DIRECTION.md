@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-ART-DIRECTION
 title: Brix Town — Art direction (locked look)
-version: 1.11.1
+version: 1.11.2
 status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22, interiors and furniture on 2026-11-22, the menu's look on 2026-11-23, the house colourways and the house plan with its furnishing levels on 2026-11-23, every other building's colourways and the row houses and flats inside on 2026-11-24
 last_updated: 2026-11-26
 relates_to: [FURN-003, ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
@@ -105,8 +105,8 @@ down to their floor, where `Art/Retired/vehicles_soft_box.png` had a board over 
 
 ### 2.6 Interiors and furniture (ADR-0026)
 
-References: `Art/Reference/Furniture/FurnitureLines.png` and the rooms of `Art/Reference/Indoor/IndoorRooms_<Kind>.png` (the
-owner, 2026-11-26; `interior_room_daylight.png` is retired: one setting for a generic room). Style lines, the outlet and
+References: `Art/Reference/Furniture/FurnitureLines.png`, and for a home's rooms `Art/Reference/Indoor/IndoorHomeRoom_*` and
+`IndoorHallway_*` (every hour; `IndoorRooms` and `interior_room_daylight.png` are archived in `Art/Retired/`, the owner, 2026-11-26). Style lines, the outlet and
 how the renders get their look (and what the slice and Unreal must do to match it): `docs/art/INTERIOR_STYLE.md`.
 
 | # | Rule | Check |
@@ -250,7 +250,7 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | How production character models are made | Q-15 |
 | Vegetation | not started (vehicles: §2.5, interiors and furniture: §2.6, the interface: §2.7) |
 | The interface outside the menu (conversation box, building designer, the lettering over the game) | still the earlier dark-box look; the counters and the buy menu are Lamplight in the Unreal build (§2.7, ADR-0049); whether the rest follow is for the owner to say |
-| More furniture kits and decoration (kitchen, bathroom, dining, study, children, hallway, garden, shop, café, bedroom, living, decoration) | the twelve rooms of `Tools/blender/furniture_kit_18.py` are a reference since 2026-11-26 (`Art/Reference/Indoor/IndoorRooms_<Kind>.png`, the owner: "as it shows different settings"); their issues are listed in the catalog; the pieces in them are not yet approved one by one |
+| More furniture kits and decoration (kitchen, bathroom, dining, study, children, hallway, garden, shop, café, bedroom, living, decoration) | the twelve rooms of `Tools/blender/furniture_kit_18.py` were a reference from 2026-11-26 and are archived the same day (`Art/Retired/IndoorRooms_<Kind>.png`, the owner: "they are bad"); the pieces in them are not yet approved one by one |
 | Wear stages (I8) | not yet rendered. (The furniture outlet's look, `Art/Reference/Shops/ShopsFurnitureOutlet.png`, was approved by the owner's request to build it, ADR-0027.) |
 | Night (after dusk) and bad-weather looks | night: approved in the slice (ADR-0023, owner 2026-11-22), no reference image yet; pictures in `Art/StyleTests/night_sky_15/`. Rain, fog and overcast: approved in the slice (ADR-0016), no rule or reference image yet; must follow W5–W7 |
 | The sky: blue overhead with drifting clouds | approved in the slice (ADR-0014); not in the reference renders, still needs a rule and a reference image |
@@ -274,5 +274,6 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | 1.9.0 | 2026-11-24 | Every other building's colourways and the row houses and flats inside: the owner approved look tests building_styles_22, home_interiors_22 and house_outside_23 (ADR-0036): §2.9 and nine references. |
 | 1.10.0 | 2026-11-26 | Old age, Noor and the Stone Oven inside (ADR-0059): rule C9, references `character_elders.png`, `character_noor.png`, `bakery_inside_day.png`, `bakery_inside_four.png`. |
 | 1.9.1 | 2026-11-24 | §5: Eastgate Mall's sculpted shell noted as built in the locked materials, with no rule or reference image yet (ADR-0037). No rule or reference changed. |
+| 1.11.2 | 2026-11-26 | `IndoorRooms` archived (the owner: "they are bad"); a home's rooms are `IndoorHomeRoom` and `IndoorHallway`. |
 | 1.11.1 | 2026-11-26 | W7's check is the alley and Market Square at every hour and weather (`WorldAlley`, `WorldMarketSquare`); `WorldHours.png` retired. |
 | 1.11.0 | 2026-11-26 | References organised (ADR-0061): a folder per category, every file named `<Category><Subject>[_<Variant>]`, one list in `Art/Reference/catalog.json` and a page to review them (`Art/Reference/index.html`, written by `Tools/reference_catalog.py`); §1's table replaced by it. The kit-18 rooms are references (`IndoorRooms`); `interior_room_daylight.png`, `vehicles_soft_box.png` and `vehicles_classic.png` retired to `Art/Retired/`. |

@@ -13,8 +13,8 @@ decision: docs/decisions/ADR-0026-interior-and-furniture-look.md
 
 > **Status: accepted** (ADR-0026). The owner chose **all four lines** from the renders of
 > `Tools/blender/furniture_kit_17.py` (in `Art/StyleTests/furniture_kit_17/`). Rules I1–I9 are in force from
-> ART_DIRECTION §2.6, which wins if the two differ; references `Art/Reference/Furniture/FurnitureLines.png` and the rooms of
-> `Art/Reference/Indoor/IndoorRooms_<Kind>.png` (`interior_room_daylight.png` is retired, ADR-0061; every reference is in
+> ART_DIRECTION §2.6, which wins if the two differ; references `Art/Reference/Furniture/FurnitureLines.png` and a home's rooms in
+> `Art/Reference/Indoor/IndoorHomeRoom_*`, `IndoorHallway_*` (`IndoorRooms` and `interior_room_daylight.png` are archived, ADR-0061; every reference is in
 > `Art/Reference/catalog.json`). §4, the outlet, was approved when the owner asked for it to be built like
 > `Art/Reference/Shops/ShopsFurnitureOutlet.png` (ADR-0027); it is in the slice (`Prototype/play/outlet.js`).
 

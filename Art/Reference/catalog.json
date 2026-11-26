@@ -272,47 +272,6 @@
    "issues": []
   },
   {
-   "id": "IndoorRooms",
-   "category": "Indoor",
-   "title": "Rooms of every kind, in one shell",
-   "files": [
-    "Indoor/IndoorRooms.jpg",
-    "Indoor/IndoorRooms_Living.png",
-    "Indoor/IndoorRooms_Kitchen.png",
-    "Indoor/IndoorRooms_Dining.png",
-    "Indoor/IndoorRooms_Bedroom.png",
-    "Indoor/IndoorRooms_Children.png",
-    "Indoor/IndoorRooms_Bathroom.png",
-    "Indoor/IndoorRooms_Hallway.png",
-    "Indoor/IndoorRooms_Study.png",
-    "Indoor/IndoorRooms_Decor.png",
-    "Indoor/IndoorRooms_Garden.png",
-    "Indoor/IndoorRooms_Shop.png",
-    "Indoor/IndoorRooms_Cafe.png"
-   ],
-   "locks": "How a room of each kind is furnished and lit: the kit daylight through a side window, pendants of 70 W in the lantern's colour, one camera and exposure. The game's rooms are measured against the shop, cafe and kitchen (ABrixLightRoom, Tools/unreal/light_reference.py).",
-   "approved": "2026-11-26",
-   "decision": "ADR-0055 (measured against); the owner, 2026-11-26: a good reference, \"as it shows different settings\"",
-   "made_by": "Tools/blender/furniture_kit_18.py",
-   "models": [
-    "Game/Source/BrixTown/Private/BrixLightRoom.cpp (-BrixLightRoom)",
-    "Game/Config/DefaultGame.ini [/Script/BrixTown.BrixRooms]",
-    "Game/Content/Furniture (SM_<piece>_<line>), from Tools/blender/unreal_furniture_37.py and Tools/unreal/import_furniture_kit.py"
-   ],
-   "rules": "docs/art/ART_DIRECTION.md 2.6 (I1-I9), docs/art/INTERIOR_STYLE.md",
-   "was": [
-    "Art/StyleTests/furniture_kit_18/room_*.png"
-   ],
-   "issues": [
-    "The rooms have three walls: the open fourth side lets in light a closed room would not have, and the game's room light was tuned to it.",
-    "The floor boards are about 1 x 2.5 m (the boards material at brick_scale 0.25): they read as flagstones.",
-    "The window is a flat pale panel: nothing of the street or the hour outside shows.",
-    "Lamp shades burn to plain white.",
-    "Brightness differs widely: the bedroom, decor, garden and study are near black in the corners, the cafe bright.",
-    "The shop, the cafe and the garden are the size of a small room."
-   ]
-  },
-  {
    "id": "IndoorHouse12x9",
    "category": "Indoor",
    "title": "The 12 x 9 m house inside, four lines by four furnishing levels",
@@ -672,7 +631,7 @@
    ],
    "rules": "docs/art/ART_DIRECTION.md, docs/art/INTERIOR_STYLE.md",
    "was": [
-    "Indoor/IndoorRooms (the living panel)"
+    "Art/Retired/IndoorRooms (the living panel)"
    ],
    "issues": [
     "The lamps are one warm white for now; each will take its kind's colour from World/rules/lights.json (FURN-066, F-LIGHTS level 2).",
@@ -703,7 +662,7 @@
    ],
    "rules": "docs/art/ART_DIRECTION.md, docs/art/INTERIOR_STYLE.md",
    "was": [
-    "Indoor/IndoorRooms (the hallway panel)"
+    "Art/Retired/IndoorRooms (the hallway panel)"
    ],
    "issues": [
     "The lamps are one warm white for now; each will take its kind's colour from World/rules/lights.json (FURN-066, F-LIGHTS level 2).",
@@ -783,6 +742,26 @@
    "file": "Art/Retired/WorldHours.png",
    "was": "WorldHours: style test 02's alley at morning and dusk and the market square at midday on one sheet",
    "why": "The owner, 2026-11-26: the alley and Market Square each have a reference at every hour and weather (WorldAlley, WorldMarketSquare)."
+  },
+  {
+   "title": "IndoorRooms",
+   "files": [
+    "Art/Retired/IndoorRooms.jpg",
+    "Art/Retired/IndoorRooms_Living.png",
+    "Art/Retired/IndoorRooms_Kitchen.png",
+    "Art/Retired/IndoorRooms_Dining.png",
+    "Art/Retired/IndoorRooms_Bedroom.png",
+    "Art/Retired/IndoorRooms_Children.png",
+    "Art/Retired/IndoorRooms_Bathroom.png",
+    "Art/Retired/IndoorRooms_Hallway.png",
+    "Art/Retired/IndoorRooms_Study.png",
+    "Art/Retired/IndoorRooms_Decor.png",
+    "Art/Retired/IndoorRooms_Garden.png",
+    "Art/Retired/IndoorRooms_Shop.png",
+    "Art/Retired/IndoorRooms_Cafe.png"
+   ],
+   "was": "IndoorRooms: the twelve rooms of furniture_kit_18 in one shell, by day",
+   "why": "The owner, 2026-11-26: \"move IndoorRooms to archived they are bad\". A home's rooms are IndoorHomeRoom and IndoorHallway, in the world's light at every hour."
   }
  ]
 }

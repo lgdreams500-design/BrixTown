@@ -12,7 +12,7 @@ class TheReferences(unittest.TestCase):
         self.assertEqual(RC.problems(cat), [])
         self.assertEqual({c["id"] for c in cat["categories"]},
                          {"World", "Buildings", "Indoor", "Shops", "Malls", "Furniture", "Vehicles", "People", "Interface"})
-        self.assertIn("IndoorRooms", {r["id"] for r in cat["references"]})
+        self.assertIn("IndoorHomeRoom", {r["id"] for r in cat["references"]})
 
     def test_ART_001_a_badly_named_or_missing_file_is_caught(self):
         cat = copy.deepcopy(RC.load())

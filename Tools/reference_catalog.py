@@ -6,7 +6,7 @@ the page to review them, Art/Reference/index.html (a tab per category, each refe
 
 The rules it keeps (an AI agent should get from a thing to its reference in one step):
   - every reference file is in Art/Reference/<Category>/ and named <Category><Subject>[_<Variant>].<ext>, PascalCase
-    (Indoor/IndoorRooms_Kitchen.png, Vehicles/VehiclesSoftBox.png);
+    (Indoor/IndoorHomeRoom_Morning.jpg, Vehicles/VehiclesSoftBox.png);
   - every file there is in the catalog, and every file the catalog names is there;
   - every reference says what it locks, when and by what decision it was approved, and what makes it;
   - retired references are in Art/Retired/, never in Art/Reference/.
@@ -64,10 +64,11 @@ def problems(cat, root=ROOT):
         if g.get("category") not in cats:
             out.append("a gap names no category: %s" % g.get("what"))
     for t in cat.get("retired", []):
-        if not t["file"].startswith("Art/Retired/"):
-            out.append("%s: a retired reference belongs in Art/Retired/" % t["file"])
-        elif not os.path.isfile(os.path.join(root, t["file"])):
-            out.append("%s: the retired file is missing" % t["file"])
+        for f in t.get("files") or [t["file"]]:
+            if not f.startswith("Art/Retired/"):
+                out.append("%s: an archived reference belongs in Art/Retired/" % f)
+            elif not os.path.isfile(os.path.join(root, f)):
+                out.append("%s: the archived file is missing" % f)
     return out
 
 
@@ -85,11 +86,38 @@ HOURS = {"Morning": "Morning", "Midday": "Midday", "Dusk": "Dusk", "NightLamps":
          "Rain": "Rain", "Fog": "Fog", "Snow": "Snow"}       # the hours of Tools/blender/hours_50.py
 
 
-def caption(f):
-    """A picture's name, and its hour when it is one of a place's hours."""
+def label(f):
+    """What a picture shows, in words: its hour when it is one of a place's hours, else its variant (IndoorRooms_Living:
+    Living; IndoorHouse12x9_Ground: Ground), else the whole picture."""
     stem = os.path.splitext(os.path.basename(f))[0]
-    hour = HOURS.get(stem.rsplit("_", 1)[-1]) if "_" in stem else None
-    return ("<b>%s</b> " % e(hour) if hour else "") + "<code>%s</code>" % e(os.path.basename(f))
+    if "_" not in stem:
+        return "The whole sheet"
+    v = stem.rsplit("_", 1)[-1]
+    return HOURS.get(v) or re.sub(r"(?<=[a-z])(?=[A-Z0-9])|(?<=[0-9])(?=[A-Z])", " ", v)
+
+
+def caption(f):
+    """A picture's label in words, and its file name under it."""
+    return "<b>%s</b><br><code>%s</code>" % (e(label(f)), e(os.path.basename(f)))
+
+
+def state(r):
+    """For your review, or approved (and when): how the page marks a reference."""
+    if r.get("status") == "proposed":
+        return 0, "review", "For your review"
+    d = re.search(r"\d{4}-\d{2}-\d{2}", r.get("approved", ""))
+    return 1, "ok", "Approved" + (" " + d.group(0) if d else "")
+
+
+def order(refs):
+    """For your review first, then the latest approved at the top (by its date; of one day, the one listed last)."""
+    def key(ir):
+        i, r = ir
+        if r.get("status") == "proposed":
+            return (0, "", -i)
+        d = re.search(r"\d{4}-\d{2}-\d{2}", r.get("approved", ""))
+        return (1, "".join(chr(255 - ord(ch)) for ch in (d.group(0) if d else "0000-00-00")), -i)
+    return [r for _, r in sorted(enumerate(refs), key=key)]
 
 
 def media(f, alt):
@@ -101,7 +129,7 @@ def media(f, alt):
 def page(cat):
     cats = cat["categories"]
     tabs, panels = [], []
-    for i, c in enumerate(cats + [{"id": "Retired", "title": "Retired", "about": "References taken out of use, kept for the record in Art/Retired/. Never build against these."},
+    for i, c in enumerate(cats + [{"id": "Retired", "title": "Archived", "about": "References taken out of use, kept for the record in Art/Retired/. Never build against these."},
                                   {"id": "Naming", "title": "How it is kept", "about": ""}]):
         refs = [r for r in cat["references"] if r["category"] == c["id"]]
         gaps = [g for g in cat.get("gaps", []) if g["category"] == c["id"]]
@@ -109,6 +137,13 @@ def page(cat):
         tabs.append('<button role="tab" id="tab-%s" aria-controls="p-%s" aria-selected="%s" data-tab="%s">%s<span class="n">%s</span></button>'
                     % (c["id"], c["id"], "true" if i == 0 else "false", c["id"], e(c["title"]), n))
         body = ['<p class="about">%s</p>' % e(c["about"])] if c["about"] else []
+        refs = order(refs)                                       # for review first, then the latest approved
+        if refs:                                                  # the tab's list: pick an entry, jump to it
+            body.append('<ol class="index">%s</ol>' % "".join(
+                '<li><a href="#%s">%s<span><b>%s</b><code>%s</code><em class="st %s">%s</em><small>%d picture%s</small></span></a></li>'
+                % (e(r["id"]), ('<img src="%s" alt="" loading="lazy">' % e(r["files"][0])) if not r["files"][0].endswith(".mp4") else "",
+                   e(r["title"]), e(r["id"]), state(r)[1], e(state(r)[2]), len(r["files"]), "" if len(r["files"]) == 1 else "s")
+                for r in refs))
         for r in refs:
             pics = "".join('<figure>%s<figcaption>%s</figcaption></figure>' % (media(f, r["title"]), caption(f)) for f in r["files"])
             rows = [("Locks", code_or_text(r["locks"])), ("Approved", e(r["approved"])), ("Decision", code_or_text(r["decision"])),
@@ -120,22 +155,26 @@ def page(cat):
             if r.get("was"):
                 rows.append(("Was called", ", ".join("<code>%s</code>" % e(w) for w in r["was"])))
             issues = "".join("<li>%s</li>" % code_or_text(x) for x in r.get("issues", []))
-            body.append('<article class="ref%s" id="%s"><header><h2>%s</h2><code class="rid">%s</code>%s%s</header><div class="pics">%s</div>'
-                        '<dl>%s</dl>%s</article>' % (" proposed" if r.get("status") == "proposed" else "", e(r["id"]), e(r["title"]), e(r["id"]),
-                        '<span class="prop">Proposed, for your review</span>' if r.get("status") == "proposed" else "",
-                        '<span class="flag">%d issue%s seen</span>' % (len(r["issues"]), "" if len(r["issues"]) == 1 else "s") if r.get("issues") else "",
-                        pics, "".join("<dt>%s</dt><dd>%s</dd>" % (k, v) for k, v in rows),
-                        '<div class="issues"><h3>Seen wrong, for the owner to judge</h3><ul>%s</ul></div>' % issues if issues else ""))
+            n, cls, words = state(r)
+            body.append('<article class="ref%s" id="%s"><header><h2>%s</h2><code class="rid">%s</code><em class="st %s">%s</em>%s</header>'
+                        '<div class="pics">%s</div><dl>%s</dl>%s</article>'
+                        % (" proposed" if cls == "review" else "", e(r["id"]), e(r["title"]), e(r["id"]), cls, e(words),
+                           '<span class="flag">%d issue%s seen</span>' % (len(r["issues"]), "" if len(r["issues"]) == 1 else "s") if r.get("issues") else "",
+                           pics, "".join("<dt>%s</dt><dd>%s</dd>" % (k, v) for k, v in rows),
+                           '<div class="issues"><h3>Seen wrong, for the owner to judge</h3><ul>%s</ul></div>' % issues if issues else ""))
         if gaps:
             body.append('<section class="gaps"><h3>No reference yet</h3><ul>%s</ul></section>' % "".join(
                 "<li><b>%s</b> %s</li>" % (e(g["what"]), code_or_text(g["why"])) for g in gaps))
         if c["id"] == "Retired":
-            for t in cat.get("retired", []):
-                body.append('<article class="ref retired"><header><h2>%s</h2></header><div class="pics"><figure>%s</figure></div><dl><dt>Was</dt><dd>%s</dd><dt>Why retired</dt><dd>%s</dd></dl></article>'
-                            % (e(os.path.basename(t["file"])), media("../Retired/" + os.path.basename(t["file"]), t["was"]), code_or_text(t["was"]), code_or_text(t["why"])))
+            for t in reversed(cat.get("retired", [])):           # the latest archived at the top
+                fs = t.get("files") or [t["file"]]
+                body.append('<article class="ref retired"><header><h2>%s</h2></header><div class="pics">%s</div><dl><dt>Was</dt><dd>%s</dd><dt>Why archived</dt><dd>%s</dd></dl></article>'
+                            % (e(t.get("title") or os.path.basename(fs[0])),
+                               "".join('<figure>%s<figcaption>%s</figcaption></figure>' % (media("../Retired/" + f[len("Art/Retired/"):], t["was"]), caption(f)) for f in fs),
+                               code_or_text(t["was"]), code_or_text(t["why"])))
         if c["id"] == "Naming":
             body.append('<article class="ref doc"><h2>How the references are kept</h2><ul>'
-                        "<li>Every approved look reference is in <code>Art/Reference/&lt;Category&gt;/</code>, named <code>&lt;Category&gt;&lt;Subject&gt;[_&lt;Variant&gt;].&lt;ext&gt;</code> in PascalCase: <code>Indoor/IndoorRooms_Kitchen.png</code>, <code>Vehicles/VehiclesSoftBox.png</code>. A reference's id is the name without the variant.</li>"
+                        "<li>Every approved look reference is in <code>Art/Reference/&lt;Category&gt;/</code>, named <code>&lt;Category&gt;&lt;Subject&gt;[_&lt;Variant&gt;].&lt;ext&gt;</code> in PascalCase: <code>Indoor/IndoorHomeRoom_Morning.jpg</code>, <code>Vehicles/VehiclesSoftBox.png</code>. A reference's id is the name without the variant.</li>"
                         "<li><code>Art/Reference/catalog.json</code> is the one list: what each locks, its approval and decision, the script that makes it, the game models built from it, issues seen, its old names. Agents read it there.</li>"
                         "<li>This page is written from it by <code>python Tools/reference_catalog.py</code>, which first checks that every file is listed and named by the rule. Never edit the page by hand.</li>"
                         "<li>A new reference: render it with its script, put it in its category's folder under its name, add it to the catalog, run the script. Changing the look needs a new ADR and the owner's approval (ADR-0004).</li>"
@@ -175,7 +214,12 @@ code{background:var(--code);padding:0 4px;border-radius:4px;font-size:.9em;word-
 .gaps{border:1px dashed var(--line);border-radius:12px;padding:8px 16px;margin-bottom:18px}
 .retired img{filter:grayscale(.6)}
 .prop{font-size:12px;color:#fff;background:var(--accent);padding:1px 8px;border-radius:10px}.ref.proposed{border-color:var(--accent);border-width:2px}
-figcaption b{color:var(--ink);font-weight:600;margin-right:4px}
+figcaption b{color:var(--ink);font-weight:600;font-size:13px}
+.index{list-style:none;padding:0;margin:0 0 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
+.index a{display:flex;gap:10px;align-items:center;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px}
+.index a:hover{border-color:var(--accent)}.index img{width:96px;height:60px;object-fit:cover;border-radius:6px;background:#000;flex:none}
+.index span{display:flex;flex-direction:column;gap:1px;min-width:0}.index b{font-size:14px}.index code{font-size:11px;align-self:flex-start}.index small{color:var(--dim);font-size:12px}
+.st{font-style:normal;font-size:12px;padding:1px 8px;border-radius:10px;align-self:flex-start}.st.review{color:#fff;background:var(--accent)}.st.ok{color:var(--dim);background:var(--code)}
 #big{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:5}
 #big.on{display:flex}#big img{max-width:92vw;max-height:84vh;border-radius:6px}
 #big .cap{color:#eee;margin-top:10px;font-size:14px;text-align:center;padding:0 60px}#big .cap .k{color:#aaa;margin-left:8px}
