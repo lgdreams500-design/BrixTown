@@ -83,6 +83,40 @@
    ]
   },
   {
+   "id": "WorldSky",
+   "category": "World",
+   "status": "proposed",
+   "title": "The sky and its clouds at every hour and in every weather",
+   "files": [
+    "World/WorldSky_Morning.jpg",
+    "World/WorldSky_Midday.jpg",
+    "World/WorldSky_Dusk.jpg",
+    "World/WorldSky_NightLamps.jpg",
+    "World/WorldSky_NightFullMoon.jpg",
+    "World/WorldSky_NightNewMoon.jpg",
+    "World/WorldSky_Cloudy.jpg",
+    "World/WorldSky_Rain.jpg",
+    "World/WorldSky_Fog.jpg",
+    "World/WorldSky_Snow.jpg"
+   ],
+   "locks": "The sky over the town, seen from Market Square over the roofs: blue overhead fading to the pale haze at the horizon by day, warm towards the low sun at dusk, the night's dark blue with the town's glow low down; clouds as soft heaps on one layer about 1.2 km up, flat underneath and rounded on top, lit on the sun's side and shaded underneath, pink at dusk, lit from below by the town's lamps at night; how much of the sky they cover follows the weather (clear 0.36, cloudy 0.62, rain 0.97, fog 0.55, snow 0.92); at night the stars, the Milky Way and the full moon's disc. No planet (ADR-0062).",
+   "approved": "proposed 2026-11-26, for the owner to review",
+   "decision": "the owner, 2026-11-26: \"move to sky and cloud system\"; ADR-0014 (the sky and clouds), ADR-0023 (the night sky), ADR-0062 (no planet)",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=sky) with Tools/blender/sky_52.py, on Market Square of Tools/blender/old_town_04.py",
+   "models": [
+    "World/rules/sky.json (zenith, clouds, night)",
+    "Tools/unreal/clouds.hlsl and Game/Source/BrixTown/Private/BrixWeatherActor.cpp (the game's clouds)",
+    "Prototype/play/play.js (the slice's sky)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.4, W5-W7",
+   "was": [],
+   "issues": [
+    "Falling snow reads as grey dots against the bright covered sky.",
+    "The lying snow is laid in 25 cm squares: their steps show where it meets the fountain's base and the stalls.",
+    "The moon's disc is set where the camera sees it, not where the moonlight comes from."
+   ]
+  },
+  {
    "id": "WorldHours",
    "category": "World",
    "title": "The town at morning, dusk and midday",
@@ -572,21 +606,6 @@
   }
  ],
  "gaps": [
-  {
-   "category": "World",
-   "what": "Night after dusk",
-   "why": "Approved in the slice (ADR-0023); pictures in Art/StyleTests/night_sky_15/ are of the slice, not a reference."
-  },
-  {
-   "category": "World",
-   "what": "Rain, fog, overcast and snow",
-   "why": "Approved in the slice (ADR-0016, ADR-0051); no reference image."
-  },
-  {
-   "category": "World",
-   "what": "The sky with drifting clouds",
-   "why": "Approved in the slice (ADR-0014); not in any reference render."
-  },
   {
    "category": "Buildings",
    "what": "Towers and big modern buildings",

@@ -8,6 +8,7 @@ fall). Reviewed with the owner one place at a time; an approved place goes to `A
 | Place | Pictures | State |
 |---|---|---|
 | The alley (old_town_04.py) | `Alley_<Setting>.jpg`, `review_Alley.jpg` (the ten), `review_Alley_rain_close.jpg` (puddles and rain close up) | approved 2026-11-26: `Art/Reference/World/WorldAlley_*.jpg` |
+| The sky and its clouds, from Market Square (WASTED_PLACE=sky, with sky_52.py) | `Sky_<Setting>.jpg`, `review_Sky.jpg` | proposed: `Art/Reference/World/WorldSky_*.jpg`; no planet (ADR-0062) |
 | Market Square, the street, a home's room, a hallway, the bakery (public room), the furniture outlet (big hall) | to come | |
 
 What the owner changed on the way: fewer lamps down the alley; the moon high and down the alley so it reaches the paving;

@@ -1,0 +1,11 @@
+16:17:24 Blender 5.3.0, place sky
+16:17:25 Sky: sun 12.0 at bearing 53 deg, sky 0.40; 4 lamps, 0 fires, 2 glowing materials, 1 haze
+16:17:25   22 puddles on the open paving (46 tries)
+16:17:26   Rain: 1800 of 2754 tried under open sky, 3600 faces, -0.2 to 21.8 m up, from 5.0 m in front of the camera
+16:17:38   Sky_Rain: the eye at +0.29 stops for a mean of 88
+16:19:55 Sky_Rain.jpg rendered in 137.1s
+16:20:00   Snow lies on 33423 patches of 0.25 m (rays from the sky over 24 m round the camera)
+16:20:00   Snow: 3600 of 5467 tried under open sky, 28800 faces, -0.0 to 21.6 m up, from 5.0 m in front of the camera
+16:20:04   Sky_Snow: the eye at +0.50 stops for a mean of 110
+16:22:43 Sky_Snow.jpg rendered in 158.9s
+16:22:43 DONE

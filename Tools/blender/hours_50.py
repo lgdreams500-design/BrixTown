@@ -31,9 +31,15 @@ from mathutils import Matrix, Vector
 B = "C:/Projects/Wasted/Tools/blender/"
 PLACE = os.environ.get("WASTED_PLACE", "alley")
 SOURCE = {"alley": "old_town_04.py", "square": "old_town_04.py", "street": "building_kit_07.py",
-          "rooms": "baker_look_47.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py"}[PLACE]
+          "rooms": "baker_look_47.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py", "sky": "old_town_04.py"}[PLACE]
 _s = open(B + SOURCE, encoding="utf-8").read()
 exec(compile(_s[:_s.rindex("\nmain()")], SOURCE + "_helpers", "exec"), globals())
+exec(compile(open(B + "sky_52.py", encoding="utf-8").read(), "sky_52", "exec"), globals())   # the sky and its clouds
+SKY_CAM = None                                                             # the sky's own view (WASTED_PLACE=sky)
+# each setting's sky (sky_52.py): daylight, how far towards dusk, the clouds' cover (sky.json clouds.cover)
+SKY_OF = {"Morning": (1.0, 0.15, 0.36), "Midday": (1.0, 0.0, 0.36), "Dusk": (0.5, 1.0, 0.36), "NightLamps": (0.0, 0.0, 0.36),
+          "NightFullMoon": (0.0, 0.0, 0.36), "NightNewMoon": (0.0, 0.0, 0.2), "Cloudy": (1.0, 0.0, 0.62),
+          "Rain": (1.0, 0.0, 0.97), "Fog": (1.0, 0.0, 0.55), "Snow": (1.0, 0.0, 0.92)}
 
 NAME = "hours_50"
 HOURS_OUT = "C:/Projects/Wasted/Art/StyleTests/" + NAME
@@ -62,9 +68,9 @@ HOURS = [
     ("Snow", 50, 0.15, (1.0, 0.98, 0.96), (0.60, 0.63, 0.68), 3.4, 2.20, "day", 0, 0.0, 110, "snow"),
 ]
 WEATHER = dict(sun_angle=dict(cloud=12.0, rain=20.0, fog=20.0, snow=20.0),     # the sun's light softens behind cloud (degrees)
-               drops=4000, drop_length=0.2, drop_width=0.009, drop_alpha=0.75, drop_slant=0.1, near=2.0,   # sky.json "rain"
+               drops_seen=1800, drop_length=0.2, drop_width=0.009, drop_alpha=0.75, drop_slant=0.1, near=5.0,   # sky.json "rain"
                wet_roughness=0.32,                                                # wet paving and stone catch the sky
-               flakes=7000, flake_size=0.045, flake_alpha=1.0, flake_near=2.5,    # sky.json "snow"
+               flakes_seen=3600, flake_size=0.045, flake_alpha=1.0, flake_near=5.0,    # sky.json "snow"
                fog_lamps=0.3, fall_glow=0.0,
                puddles=22, puddle_size=(0.6, 1.5), ripples_per=(5, 9), ripple_width=0.009, ripple_alpha=0.8,   # sky.json rain                                      # drops and flakes: their own faint light                                                     # lanterns by day in fog: their glow tinted it brown
                snow_colour=(0.86, 0.90, 0.96), snow_facing=(0.55, 0.80), snow_cover=0.9,   # lying snow on what faces up
@@ -165,7 +171,7 @@ class Lights:
                 setp(o.data, "angle", math.radians(WEATHER["sun_angle"][weather]))
         for o in [o for o in self.scene.objects if o.name.startswith("MoonDisc")]:
             bpy.data.objects.remove(o, do_unlink=True)
-        if se <= 0:
+        if se <= 0 and SKY_CAM is None:
             stars(self.scene, STARS["strength"][1 if moon else 0])
         if moon:
             el, maz = math.radians(MOON["height"]), az + MOON["turn"]
@@ -177,6 +183,20 @@ class Lights:
             mo.rotation_euler = Vector((math.cos(el) * math.cos(maz), math.cos(el) * math.sin(maz), math.sin(el))).normalized().to_track_quat('Z', 'Y').to_euler()
             self.scene.collection.objects.link(mo)
             disc(self.scene, Vector((math.cos(el) * math.cos(maz), math.cos(el) * math.sin(maz), math.sin(el))))
+        if SKY_CAM is not None:                                  # the sky's place: the whole sky of sky_52.py
+            dl, dk, cv = SKY_OF[key]
+            el = math.radians(h)
+            sun_dir = Vector((math.cos(el) * math.cos(az), math.cos(el) * math.sin(az), math.sin(el)))
+            sky_world(self.scene, dl, dk, cv, moon, sun_dir, self.sky_strength * sks)
+            clouds(self.scene, cv, SKY_CAM.location)
+            if moon:
+                # for the sky's picture the disc is set in the open sky over the square, left of the tower
+                fwd = SKY_CAM.rotation_euler.to_matrix() @ Vector((0, 0, -1))
+                mel, maz = math.radians(38), math.atan2(fwd.y, fwd.x) + math.radians(14)
+                moon_disc(self.scene, Vector((math.cos(mel) * math.cos(maz), math.cos(mel) * math.sin(maz), math.sin(mel))), SKY_CAM.location)
+            else:
+                for o in [o for o in self.scene.objects if o.name.startswith("SkyMoon")]:
+                    bpy.data.objects.remove(o, do_unlink=True)
         for sock, d0 in self.fog:
             sock.default_value = d0 * fog
         for ob, e0 in self.lamps:
@@ -283,12 +303,12 @@ def weather_out(scene, cam, kind):
     made = []
     if kind == "rain":
         made += puddles(scene, cam)                                   # water only where the rain falls, not under a roof
-        made.append(falling(scene, cam, "Rain", WEATHER["drops"] * 2, (WEATHER["drop_width"], WEATHER["drop_width"], WEATHER["drop_length"]),
+        made.append(falling(scene, cam, "Rain", WEATHER["drops_seen"], (WEATHER["drop_width"], WEATHER["drop_width"], WEATHER["drop_length"]),
                             (0.60, 0.67, 0.78), WEATHER["drop_alpha"], WEATHER["drop_slant"], WEATHER["near"]))
     if kind == "snow":
         snow = bpy.data.materials.get("M_SnowLying") or painted("M_SnowLying", (0.78, 0.82, 0.88), WEATHER["snow_colour"], noise_scale=1.6, bump=0.15)
         made.append(lying(scene, cam, "Snow", snow, 0.012, 0.012))
-        made.append(falling(scene, cam, "Snow", WEATHER["flakes"] * 2, (WEATHER["flake_size"],) * 3, (1.0, 1.0, 1.0), WEATHER["flake_alpha"], 0.0,
+        made.append(falling(scene, cam, "Snow", WEATHER["flakes_seen"], (WEATHER["flake_size"],) * 3, (1.0, 1.0, 1.0), WEATHER["flake_alpha"], 0.0,
                             WEATHER["flake_near"], flake=True))
     return made
 
@@ -314,7 +334,9 @@ def falling(scene, cam, name, count, size, colour, alpha, slant, near, flake=Fal
     # the street)
     M = Matrix.Translation(cam.location) @ cam.rotation_euler.to_matrix().to_4x4()
     lens = cam.data.lens / 36.0
-    for _ in range(count):
+    tries = 0
+    while kept < count and tries < count * 8:             # as many under open sky as asked, whatever the place (the alley
+        tries += 1                                         # kept a quarter of what fell; the open square nearly all)
         d = rng.uniform(near, 16.0)
         x, y = rng.uniform(-0.62, 0.62) * d / lens, rng.uniform(-0.42, 0.42) * d / lens
         c = M @ Vector((x, y, -d))
@@ -351,7 +373,7 @@ def falling(scene, cam, name, count, size, colour, alpha, slant, near, flake=Fal
     for k in ("visible_shadow", "visible_diffuse", "visible_glossy"):
         setp(ob, k, False)
     scene.collection.objects.link(ob)
-    hlog("  %s: %d of %d pieces under open sky, %d faces, %.1f to %.1f m up, from %.1f m in front of the camera" % (name, kept, count, len(me.polygons),
+    hlog("  %s: %d of %d tried under open sky, %d faces, %.1f to %.1f m up, from %.1f m in front of the camera" % (name, kept, tries, len(me.polygons),
          min(v.co.z for v in me.vertices), max(v.co.z for v in me.vertices), near))
     return ob
 
@@ -576,6 +598,12 @@ def main_hours():
     elif PLACE == "square":
         scene, ex = square()
         each_hour(scene, scene.camera, ex, "MarketSquare")
+    elif PLACE == "sky":
+        global SKY_CAM
+        scene, ex = square()
+        SKY_CAM = camera(scene, "Cam_Sky", (1.0, -6.0, 1.7), (0.0, 30.0, 13.5), 15.0)   # in the square, up over the roofs
+        SKY_CAM.data.clip_end = 20000.0                     # the clouds are 1.2 km up, the moon further
+        each_hour(scene, SKY_CAM, ex, "Sky")
     elif PLACE == "street":
         scene, facts, street_end = street_scene()
         street_lamps(scene, street_end)

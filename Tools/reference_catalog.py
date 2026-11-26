@@ -176,21 +176,39 @@ code{background:var(--code);padding:0 4px;border-radius:4px;font-size:.9em;word-
 .retired img{filter:grayscale(.6)}
 .prop{font-size:12px;color:#fff;background:var(--accent);padding:1px 8px;border-radius:10px}.ref.proposed{border-color:var(--accent);border-width:2px}
 figcaption b{color:var(--ink);font-weight:600;margin-right:4px}
-#big{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:5;cursor:zoom-out}
-#big img{max-width:96vw;max-height:94vh}#big.on{display:flex}
+#big{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:5}
+#big.on{display:flex}#big img{max-width:92vw;max-height:84vh;border-radius:6px}
+#big .cap{color:#eee;margin-top:10px;font-size:14px;text-align:center;padding:0 60px}#big .cap .k{color:#aaa;margin-left:8px}
+#big button{position:absolute;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:30px;line-height:1;width:52px;height:64px;border-radius:10px;cursor:pointer}
+#big button:hover{background:rgba(255,255,255,.25)}#big button:disabled{opacity:.25;cursor:default}
+#big .prev{left:14px;top:calc(50% - 32px)}#big .next{right:14px;top:calc(50% - 32px)}#big .close{right:14px;top:14px;width:44px;height:44px;font-size:24px}
+@media (max-width:640px){#big button.prev,#big button.next{width:40px;height:52px;font-size:24px}}
 @media (max-width:640px){dl{grid-template-columns:1fr}dt{margin-top:6px}}
 </style></head><body>
 <header class="top"><h1>Brix Town references</h1><p>The look every made thing is checked against. {COUNT}. Written from <code>Art/Reference/catalog.json</code>.</p></header>
 <nav><div role="tablist">{TABS}</div></nav>
 <main>{PANELS}</main>
-<div id="big"><img alt=""></div>
+<div id="big" role="dialog" aria-label="Picture at full size"><button class="close" title="Close (Esc)">&#x2715;</button>
+<button class="prev" title="Previous (left arrow)">&#x2039;</button><img alt=""><button class="next" title="Next (right arrow)">&#x203A;</button>
+<div class="cap"></div></div>
 <script>
 const tabs=[...document.querySelectorAll('[role=tab]')];
 function show(id){tabs.forEach(t=>{const on=t.dataset.tab===id;t.setAttribute('aria-selected',on);document.getElementById('p-'+t.dataset.tab).hidden=!on});try{history.replaceState(null,'','#'+id)}catch(e){}}
 tabs.forEach(t=>t.addEventListener('click',()=>show(t.dataset.tab)));
 const want=(location.hash||'').slice(1);if(want){const t=tabs.find(t=>t.dataset.tab===want);if(t)show(want);else{const a=document.getElementById(want);if(a){show(a.closest('[role=tabpanel]').id.slice(2));a.scrollIntoView()}}}
-const big=document.getElementById('big');document.querySelectorAll('img[data-full]').forEach(i=>i.addEventListener('click',()=>{big.firstChild.src=i.dataset.full;big.classList.add('on')}));
-big.addEventListener('click',()=>big.classList.remove('on'));document.addEventListener('keydown',ev=>{if(ev.key==='Escape')big.classList.remove('on')});
+// the full-size view: the pictures of one reference in turn, with back and next (buttons, the arrow keys, a swipe)
+const big=document.getElementById('big'),bigImg=big.querySelector('img'),cap=big.querySelector('.cap'),prev=big.querySelector('.prev'),next=big.querySelector('.next');
+let set=[],at=0;
+function open(i){bigImg.src=set[i].dataset.full;at=i;const fc=set[i].closest('figure').querySelector('figcaption');
+  cap.innerHTML=(fc?fc.innerHTML:'')+'<span class="k">'+(i+1)+' / '+set.length+'</span>';prev.disabled=i===0;next.disabled=i===set.length-1;big.classList.add('on')}
+function step(d){const i=at+d;if(i>=0&&i<set.length)open(i)}
+document.querySelectorAll('img[data-full]').forEach(i=>i.addEventListener('click',()=>{set=[...i.closest('.pics').querySelectorAll('img[data-full]')];open(set.indexOf(i))}));
+prev.addEventListener('click',ev=>{ev.stopPropagation();step(-1)});next.addEventListener('click',ev=>{ev.stopPropagation();step(1)});
+big.querySelector('.close').addEventListener('click',()=>big.classList.remove('on'));
+big.addEventListener('click',ev=>{if(ev.target===big)big.classList.remove('on')});
+document.addEventListener('keydown',ev=>{if(!big.classList.contains('on'))return;if(ev.key==='Escape')big.classList.remove('on');else if(ev.key==='ArrowLeft')step(-1);else if(ev.key==='ArrowRight')step(1)});
+let x0=null;big.addEventListener('touchstart',ev=>{x0=ev.touches[0].clientX},{passive:true});
+big.addEventListener('touchend',ev=>{if(x0===null)return;const dx=ev.changedTouches[0].clientX-x0;if(Math.abs(dx)>40)step(dx<0?1:-1);x0=null});
 </script></body></html>
 """
 
