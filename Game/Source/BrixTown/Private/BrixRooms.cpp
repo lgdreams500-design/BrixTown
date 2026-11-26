@@ -606,6 +606,7 @@ UPointLightComponent* ABrixRooms::MakeLamp(AActor* Owner, USceneComponent* Root,
 	L->LightColor = D->RoomLampColour.ToFColor(true);
 	L->CastShadows = bShadows;
 	L->SourceRadius = 8.f;   // the references' lamps: soft, 0.08 m
+	L->IndirectLightingIntensity = D->RoomLampBounce;
 	L->SetVisibility(false);
 	L->RegisterComponent();
 	Owner->AddInstanceComponent(L);
@@ -638,6 +639,21 @@ void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp, float Daylight)
 		Fill->SetVisibility(false);
 		Fill->RegisterComponent();
 		AddInstanceComponent(Fill);
+		FillPeople = NewObject<UPointLightComponent>(this);
+		FillPeople->SetupAttachment(RootComponent);
+		FillPeople->Mobility = EComponentMobility::Movable;
+		FillPeople->bUseInverseSquaredFalloff = false;
+		FillPeople->LightFalloffExponent = 2.f;
+		FillPeople->Intensity = 0.f;
+		FillPeople->AttenuationRadius = 1500.f;
+		FillPeople->LightColor = RoomFillColour.ToFColor(true);
+		FillPeople->CastShadows = false;
+		FillPeople->SourceRadius = 30.f;
+		FillPeople->LightingChannels.bChannel0 = false;
+		FillPeople->LightingChannels.bChannel1 = true;
+		FillPeople->SetVisibility(false);
+		FillPeople->RegisterComponent();
+		AddInstanceComponent(FillPeople);
 	}
 	// the rooms of the home the camera is in, nearest it first (out of doors, none: they cost GPU time and are not seen)
 	auto InRect = [](const FBrixRect& R, const FVector2D& P)
@@ -698,6 +714,14 @@ void ABrixRooms::FadeLights(float DeltaSeconds)
 	const float FillTo = FillFull * FMath::SmoothStep(0.f, 1.f, FillLevel);
 	if (!FMath::IsNearlyEqual(Fill->Intensity, FillTo, 0.002f)) Fill->SetIntensity(FillTo);
 	if (Fill->IsVisible() != (FillLevel > 0.f)) Fill->SetVisibility(FillLevel > 0.f);
+	if (FillPeople)
+	{
+		if (!FMath::IsNearlyEqual(FillPeople->Intensity, FillTo * PeopleFill, 0.002f)) FillPeople->SetIntensity(FillTo * PeopleFill);
+		if (FillPeople->IsVisible() != (FillLevel > 0.f)) FillPeople->SetVisibility(FillLevel > 0.f);
+		if (FillLevel > 0.f)
+			if (const APlayerCameraManager* Cam = UGameplayStatics::GetPlayerCameraManager(this, 0))
+				FillPeople->SetWorldLocation(Cam->GetCameraLocation() + FVector(0, 0, 60.f));   // from over the camera
+	}
 
 	const int32 Shadowed = FMath::Min(RoomLampShadows, Lights.Num());
 	auto WantAt = [this](const FVector& P)

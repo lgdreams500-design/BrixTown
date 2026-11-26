@@ -239,6 +239,7 @@ private:
 	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Blockers;
 	UInstancedStaticMeshComponent* BlockerGroup();
 	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> NightPanes;
+	bool bPaneIsPlane = false;   // a night pane is one face looking out (the engine's plane), not a thin box
 	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> NightMat;
 	UInstancedStaticMeshComponent* NightPaneGroup();
 	float LastNightPane = -1.f;

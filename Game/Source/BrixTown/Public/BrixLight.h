@@ -54,7 +54,7 @@ public:
 	// the eye. DayEV: the exposure (EV100) the engine settles on in the open street at noon, measured with a tour's ev=;
 	// the others are stops it may open past that
 	UPROPERTY(Config) float DayEV = 1.3f;
-	UPROPERTY(Config) float DayOpen = 12.f;            // by day: free, as before
+	UPROPERTY(Config) float DayOpen = 2.2f;            // by day out of doors: free it burnt a shaded alley's sunlit end white; the open street never opens this far
 	UPROPERTY(Config) float DayOpenIndoors = 2.4f;     // in a room by day: where the reference rooms built in Unreal are as bright as Blender's (ABrixLightRoom)
 	UPROPERTY(Config) float DuskOpen = 3.f;            // out of doors with the sun on the horizon, when the sky alone lights the streets
 	UPROPERTY(Config) float NightOpen = 2.f;           // at night out of doors

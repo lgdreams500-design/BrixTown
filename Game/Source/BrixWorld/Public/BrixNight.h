@@ -33,7 +33,7 @@ struct BRIXWORLD_API FBrixLightNowIn
 	float Indoors = 0.f;       // 0 out of doors to 1 in a room
 	FLinearColor HazeColour = FLinearColor(0.7f, 0.69f, 0.68f);      // the game mode's
 	FLinearColor SunDawnColour = FLinearColor(1.f, 0.42f, 0.22f);
-	FLinearColor OvercastHaze = FLinearColor(0.9f, 0.95f, 1.05f);
+	FLinearColor OvercastHaze = FLinearColor(0.80f, 0.815f, 0.83f);
 	FLinearColor SunColourNow = FLinearColor::White;                 // the sun light's colour this frame
 	FLinearColor DayGlow = FLinearColor::Black;                      // the glow of the air towards the sun as the haze was made
 };

@@ -184,7 +184,11 @@ UInstancedStaticMeshComponent* ABrixTownActor::NightPaneGroup()
 	if (NightPanes) return NightPanes;
 	NightPanes = NewObject<UInstancedStaticMeshComponent>(this, TEXT("NightPanes"));
 	NightPanes->SetupAttachment(RootComponent);
-	NightPanes->SetStaticMesh(Cube);
+	// a pane is one face looking out: as a thin box it had a face towards the room too, and from inside at night a
+	// window was a glowing white board instead of the dark street (the look gate's G7)
+	UStaticMesh* Pane = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Plane.Plane"));
+	bPaneIsPlane = Pane != nullptr;
+	NightPanes->SetStaticMesh(Pane ? Pane : Cube.Get());
 	NightPanes->NumCustomDataFloats = 3;
 	NightPanes->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	NightPanes->SetCastShadow(false);
@@ -736,7 +740,12 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 				const float Top = O.Z0 + O.H - (bArched ? O.W / 2 : 0.f), Seed = (float)SliceHash({ L.Id, FString::SanitizeFloat(O.S), TEXT("warm") });
 				const FLinearColor Warm = FMath::Lerp(NightWarm[0], NightWarm[1], Seed);
 				if (Top - O.Z0 > 0.2f)
-					Add(NightPaneGroup(), FTransform(FQuat(FVector::UpVector, Yaw + Ang), At(OnWall(O.S, -t + 0.055f), (O.Z0 + Top) * 0.5f), FVector(O.W * O.SX, 0.004f, Top - O.Z0)), Warm);   // just in front of the glass, behind its bars
+				{
+					UInstancedStaticMeshComponent* Panes = NightPaneGroup();   // just in front of the glass, behind its bars
+					if (bPaneIsPlane)   // the plane lies in x,y looking up: tipped so that it looks out of the wall
+						Add(Panes, FTransform(FQuat(FVector::UpVector, Yaw + Ang) * FQuat(FVector::ForwardVector, -UE_HALF_PI), At(OnWall(O.S, -t + 0.055f), (O.Z0 + Top) * 0.5f), FVector(O.W * O.SX, Top - O.Z0, 1.f)), Warm);
+					else Add(Panes, FTransform(FQuat(FVector::UpVector, Yaw + Ang), At(OnWall(O.S, -t + 0.055f), (O.Z0 + Top) * 0.5f), FVector(O.W * O.SX, 0.004f, Top - O.Z0)), Warm);
+				}
 			}
 			if (O.Shutters) Add(Group(O.Shutters, false, ShutterCullDistance), FTransform(Tr.GetRotation(), Tr.GetLocation(), FVector(O.SX, 1, 1)), Shutter);
 			++Openings;
@@ -1727,8 +1736,13 @@ void ABrixTownActor::Facet(const FVector3d& A, const FVector3d& B, const FVector
 	FFacets& F = Facets.FindOrAdd(BlockIndex);
 	auto U = [](const FVector3d& Q) { return FVector3f((float)Q.X, (float)Q.Z, (float)Q.Y) * CmPerM; };
 	FVector3d N = FVector3d::CrossProduct(B - A, C - A).GetSafeNormal();
-	if (N.Dot(Hint) < 0) N = -N;
-	F.P.Append({ U(A), U(B), U(C) });
+	// The face's front must be the side its normal is on: the material is two-sided, and the engine turns the normal
+	// of a face seen from its back. Turned without its points taken the other way round, every face of a tree's crown
+	// was lit as if from inside: near black, with bright lines where light caught its edges.
+	const bool bTurn = N.Dot(Hint) < 0;
+	if (bTurn) N = -N;
+	const FVector3f PA = U(A), PB = U(bTurn ? C : B), PC = U(bTurn ? B : C);
+	F.P.Append({ PA, PB, PC });
 	F.N.Add(FVector3f((float)N.X, (float)N.Z, (float)N.Y));
 	F.C.Add(FLinearColor((float)Col.X, (float)Col.Y, (float)Col.Z));
 	F.Owner.Add(Wrapping ? Breakables.Num() : INDEX_NONE);   // (Wrap() adds it next)
@@ -1736,7 +1750,7 @@ void ABrixTownActor::Facet(const FVector3d& A, const FVector3d& B, const FVector
 	if (Wrapping)
 	{
 		Wrapping->FacetKey = BlockIndex;
-		Wrapping->FaceP.Append({ U(A), U(B), U(C) });
+		Wrapping->FaceP.Append({ PA, PB, PC });
 		Wrapping->FaceN.Add(F.N.Last());
 		Wrapping->FaceC.Add(F.C.Last());
 	}
@@ -1804,8 +1818,9 @@ UInstancedStaticMeshComponent* ABrixTownActor::DomeGroup(int32 Variant)
 	{
 		const FVector3d a = Tris[t * 3], b = Tris[t * 3 + 1], c = Tris[t * 3 + 2];
 		FVector3d n = FVector3d::CrossProduct(b - a, c - a).GetSafeNormal();
-		if (n.Dot((a + b + c) / 3 - FVector3d(0, .5, 0)) < 0) n = -n;   // out of the crown
-		for (const FVector3d& q : { a, b, c }) P.Add(FVector3f((float)q.X, (float)q.Z, (float)q.Y) * CmPerM);   // a 1 m crown: a scale is a size
+		const bool bTurn = n.Dot((a + b + c) / 3 - FVector3d(0, .5, 0)) < 0;   // out of the crown, and its points the same way round (Facet())
+		if (bTurn) n = -n;
+		for (const FVector3d& q : { a, bTurn ? c : b, bTurn ? b : c }) P.Add(FVector3f((float)q.X, (float)q.Z, (float)q.Y) * CmPerM);   // a 1 m crown: a scale is a size
 		N.Add(FVector3f((float)n.X, (float)n.Z, (float)n.Y));
 		const float sh = (float)(Shade[t] / 1.4);
 		C.Add(FLinearColor(sh, sh, sh));

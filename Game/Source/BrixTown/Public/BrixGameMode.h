@@ -60,7 +60,7 @@ public:
 	UPROPERTY(Config) float HazeDensity = 0.02f;
 	UPROPERTY(Config) float NightFill = 0.15f;        // the sky light and the haze's glow at night, as a share of the day's (lighting(): the night fill)
 	UPROPERTY(Config) float HazeFalloff = 0.2f;
-	UPROPERTY(Config) FLinearColor OvercastHaze = FLinearColor(0.9f, 0.95f, 1.05f);   // the haze's tint under a covered sky (ADR-0016, ADR-0051)       // how fast the haze thins with height
+	UPROPERTY(Config) FLinearColor OvercastHaze = FLinearColor(0.80f, 0.815f, 0.83f);   // the haze's tint under a covered sky (ADR-0016, ADR-0051)       // how fast the haze thins with height
 	UPROPERTY(Config) FLinearColor HazeColour = FLinearColor(0.45f, 0.45f, 0.45f);
 	UPROPERTY(Config) float SkyHaziness = 1.f;        // the sky's Mie scattering, x the engine's: higher is paler, greyer
 	UPROPERTY(Config) float ShotDelaySeconds = 12.f;

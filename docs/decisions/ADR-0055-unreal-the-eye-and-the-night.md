@@ -93,3 +93,10 @@ The night look itself is decided: ADR-0023, approved in the slice. The slice is 
   rebuilt" in red over the picture.
 - `-BrixTour=` (one run, a shot at each stop of a list) replaces a launch per shot: a launch costs one to four minutes on
   the owner's laptop, a stop 7 s. Two runs at once hung the graphics chip (`DXGI_ERROR_DEVICE_HUNG`): run one at a time.
+
+## Changed since
+- 2026-11-26 (the look gate, ADR-0058): by day out of doors the eye is no longer free. It may open `DayOpen` 2.2 stops
+  past `DayEV`: free, it opened in the shaded spawn alley until the sunlit square beyond was a white-out. The open
+  street, Market Square and the park do not open that far, so the approved daylight there is as it was.
+- The covered sky's haze (`OvercastHaze`) is a neutral grey (0.80, 0.815, 0.83), not the blue-green (0.9, 0.95, 1.05)
+  that read as a teal filter over rain, snow and fog.
