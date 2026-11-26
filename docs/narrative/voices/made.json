@@ -1,0 +1,889 @@
+{
+"abe_a_1": {
+"key": "[\"One ring, signed for, on time. First thing I have ever carried that I'd have paid to carry.\", \"happy\", \"am_puck\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 4.71
+},
+"abe_a_2": {
+"key": "[\"Well? Did Jai get it?\", \"thinking\", \"am_puck\", \"en-us\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 1.38
+},
+"abe_a_3": {
+"key": "[\"Ha! Keen. Here's your pay. Ask any courier for a round; I'll put the word out.\", \"happy\", \"am_puck\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 3.95
+},
+"abe_b_1": {
+"key": "[\"One ring, signed for, on time. First thing I have ever carried that I'd have paid to carry.\", \"happy\", \"am_fenrir\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 4.56
+},
+"abe_b_2": {
+"key": "[\"Well? Did Jai get it?\", \"thinking\", \"am_fenrir\", \"en-us\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 1.27
+},
+"abe_b_3": {
+"key": "[\"Ha! Keen. Here's your pay. Ask any courier for a round; I'll put the word out.\", \"happy\", \"am_fenrir\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 3.95
+},
+"abe_c_1": {
+"key": "[\"One ring, signed for, on time. First thing I have ever carried that I'd have paid to carry.\", \"happy\", \"am_eric\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 3.91
+},
+"abe_c_2": {
+"key": "[\"Well? Did Jai get it?\", \"thinking\", \"am_eric\", \"en-us\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 1.67
+},
+"abe_c_3": {
+"key": "[\"Ha! Keen. Here's your pay. Ask any courier for a round; I'll put the word out.\", \"happy\", \"am_eric\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 3.19
+},
+"abe_now_1": {
+"key": "[\"One ring, signed for, on time. First thing I have ever carried that I'd have paid to carry.\", \"happy\", \"af_aoede\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 4.46
+},
+"abe_now_2": {
+"key": "[\"Well? Did Jai get it?\", \"thinking\", \"af_aoede\", \"en-us\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 1.31
+},
+"abe_now_3": {
+"key": "[\"Ha! Keen. Here's your pay. Ask any courier for a round; I'll put the word out.\", \"happy\", \"af_aoede\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 3.72
+},
+"eli_a_1": {
+"key": "[\"One loaf per bakery. On the table by nine. The judges' word is final. And no arguing with Vera. That last one isn't a rule. It's advice.\", \"neutral\", \"am_eric\", \"en-us\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 7.4
+},
+"eli_a_2": {
+"key": "[\"By the power of this clipboard, and of the Town Hall, who lent me the stamp. You first. Say what you came to say.\", \"happy\", \"am_eric\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 4.85
+},
+"eli_a_3": {
+"key": "[\"Northwood, Eastbrook, Southfield. And Crumb and Co. First time the mall has ever entered. He signed the form himself. Looked like a man signing for a parcel he wasn't sure he'd ordered.\", \"neutral\", \"am_eric\", \"en-us\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 8.77
+},
+"eli_b_1": {
+"key": "[\"One loaf per bakery. On the table by nine. The judges' word is final. And no arguing with Vera. That last one isn't a rule. It's advice.\", \"neutral\", \"bm_fable\", \"en-gb\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 8.68
+},
+"eli_b_2": {
+"key": "[\"By the power of this clipboard, and of the Town Hall, who lent me the stamp. You first. Say what you came to say.\", \"happy\", \"bm_fable\", \"en-gb\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 5.71
+},
+"eli_b_3": {
+"key": "[\"Northwood, Eastbrook, Southfield. And Crumb and Co. First time the mall has ever entered. He signed the form himself. Looked like a man signing for a parcel he wasn't sure he'd ordered.\", \"neutral\", \"bm_fable\", \"en-gb\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 10.18
+},
+"eli_c_1": {
+"key": "[\"One loaf per bakery. On the table by nine. The judges' word is final. And no arguing with Vera. That last one isn't a rule. It's advice.\", \"neutral\", \"bm_daniel\", \"en-gb\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 7.89
+},
+"eli_c_2": {
+"key": "[\"By the power of this clipboard, and of the Town Hall, who lent me the stamp. You first. Say what you came to say.\", \"happy\", \"bm_daniel\", \"en-gb\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 5.26
+},
+"eli_c_3": {
+"key": "[\"Northwood, Eastbrook, Southfield. And Crumb and Co. First time the mall has ever entered. He signed the form himself. Looked like a man signing for a parcel he wasn't sure he'd ordered.\", \"neutral\", \"bm_daniel\", \"en-gb\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 9.71
+},
+"hari_a_1": {
+"key": "[\"Ah. Yes. The council cut the flower money this year, so... I plant them at night, with my own seeds. Don't tell anyone?\", \"sad\", \"am_onyx\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 7.7
+},
+"hari_a_2": {
+"key": "[\"Really? Then come by the garden any day. There's always weeding, and I'll pay you for it.\", \"happy\", \"am_onyx\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 4.56
+},
+"hari_a_3": {
+"key": "[\"I see. Well. Do what you must.\", \"sad\", \"am_onyx\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 2.75
+},
+"hari_b_1": {
+"key": "[\"Ah. Yes. The council cut the flower money this year, so... I plant them at night, with my own seeds. Don't tell anyone?\", \"sad\", \"am_echo_v94\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 8.03
+},
+"hari_b_2": {
+"key": "[\"Really? Then come by the garden any day. There's always weeding, and I'll pay you for it.\", \"happy\", \"am_echo_v94\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 4.52
+},
+"hari_b_3": {
+"key": "[\"I see. Well. Do what you must.\", \"sad\", \"am_echo_v94\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 2.72
+},
+"hari_c_1": {
+"key": "[\"Ah. Yes. The council cut the flower money this year, so... I plant them at night, with my own seeds. Don't tell anyone?\", \"sad\", \"bm_daniel_v94\", \"en-gb\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 7.21
+},
+"hari_c_2": {
+"key": "[\"Really? Then come by the garden any day. There's always weeding, and I'll pay you for it.\", \"happy\", \"bm_daniel_v94\", \"en-gb\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 4.34
+},
+"hari_c_3": {
+"key": "[\"I see. Well. Do what you must.\", \"sad\", \"bm_daniel_v94\", \"en-gb\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 2.35
+},
+"jai_a_1": {
+"key": "[\"The Stone Oven crock? It's accessioned. Releasing an object needs form D-7, signed by the donor. The donor is Noor. I do have the form. I have all the forms.\", \"surprised\", \"bm_george\", \"en-gb\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"surprise\", \"semitones\": 2.5, \"speed\": 1.02, \"tilt\": 0.1}]",
+"secs": 10.16
+},
+"jai_a_2": {
+"key": "[\"Tonight. Of course it's tonight. It's always tonight with living things. That is why I work with objects. The form is proper. The loan is possible. Please don't choose the third thing you're thinking.\", \"sad\", \"bm_george\", \"en-gb\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 13.54
+},
+"jai_a_3": {
+"key": "[\"Then it is doing what it was made for, which is more than I ever managed for it. I'll change the card. \\u201cOn long loan to its own bakery.\\u201d Now. What was it you wanted?\", \"happy\", \"bm_george\", \"en-gb\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 9.33
+},
+"jai_b_1": {
+"key": "[\"The Stone Oven crock? It's accessioned. Releasing an object needs form D-7, signed by the donor. The donor is Noor. I do have the form. I have all the forms.\", \"surprised\", \"bm_daniel\", \"en-gb\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"surprise\", \"semitones\": 2.5, \"speed\": 1.02, \"tilt\": 0.1}]",
+"secs": 8.0
+},
+"jai_b_2": {
+"key": "[\"Tonight. Of course it's tonight. It's always tonight with living things. That is why I work with objects. The form is proper. The loan is possible. Please don't choose the third thing you're thinking.\", \"sad\", \"bm_daniel\", \"en-gb\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 11.07
+},
+"jai_b_3": {
+"key": "[\"Then it is doing what it was made for, which is more than I ever managed for it. I'll change the card. \\u201cOn long loan to its own bakery.\\u201d Now. What was it you wanted?\", \"happy\", \"bm_daniel\", \"en-gb\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 7.92
+},
+"jai_c_1": {
+"key": "[\"The Stone Oven crock? It's accessioned. Releasing an object needs form D-7, signed by the donor. The donor is Noor. I do have the form. I have all the forms.\", \"surprised\", \"am_echo_v96\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"surprise\", \"semitones\": 2.5, \"speed\": 1.02, \"tilt\": 0.1}]",
+"secs": 8.88
+},
+"jai_c_2": {
+"key": "[\"Tonight. Of course it's tonight. It's always tonight with living things. That is why I work with objects. The form is proper. The loan is possible. Please don't choose the third thing you're thinking.\", \"sad\", \"am_echo_v96\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 12.03
+},
+"jai_c_3": {
+"key": "[\"Then it is doing what it was made for, which is more than I ever managed for it. I'll change the card. \\u201cOn long loan to its own bakery.\\u201d Now. What was it you wanted?\", \"happy\", \"am_echo_v96\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 8.49
+},
+"jai_now_1": {
+"key": "[\"The Stone Oven crock? It's accessioned. Releasing an object needs form D-7, signed by the donor. The donor is Noor. I do have the form. I have all the forms.\", \"surprised\", \"af_river\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"surprise\", \"semitones\": 2.5, \"speed\": 1.02, \"tilt\": 0.1}]",
+"secs": 7.72
+},
+"jai_now_2": {
+"key": "[\"Tonight. Of course it's tonight. It's always tonight with living things. That is why I work with objects. The form is proper. The loan is possible. Please don't choose the third thing you're thinking.\", \"sad\", \"af_river\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 10.59
+},
+"jai_now_3": {
+"key": "[\"Then it is doing what it was made for, which is more than I ever managed for it. I'll change the card. \\u201cOn long loan to its own bakery.\\u201d Now. What was it you wanted?\", \"happy\", \"af_river\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 7.51
+},
+"len_a_1": {
+"key": "[\"Forty years I've grown wheat on the wall's bones. She tastes of the wall coming down. You can't put that in a silo. It won't go.\", \"neutral\", \"bm_lewis_p94_v86\", \"en-gb\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 9.58
+},
+"len_a_2": {
+"key": "[\"So that's the young one's word. Well. I asked for it. Sign, girl. I'll walk the Red tonight. Somebody should.\", \"sad\", \"bm_lewis_p94_v86\", \"en-gb\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 8.93
+},
+"len_a_3": {
+"key": "[\"She'll want more than four acres, a wheat with two buyers. The top field's doing nothing.\", \"happy\", \"bm_lewis_p94_v86\", \"en-gb\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 5.39
+},
+"len_b_1": {
+"key": "[\"Forty years I've grown wheat on the wall's bones. She tastes of the wall coming down. You can't put that in a silo. It won't go.\", \"neutral\", \"bm_george_p90_v86\", \"en-gb\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 9.88
+},
+"len_b_2": {
+"key": "[\"So that's the young one's word. Well. I asked for it. Sign, girl. I'll walk the Red tonight. Somebody should.\", \"sad\", \"bm_george_p90_v86\", \"en-gb\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 8.94
+},
+"len_b_3": {
+"key": "[\"She'll want more than four acres, a wheat with two buyers. The top field's doing nothing.\", \"happy\", \"bm_george_p90_v86\", \"en-gb\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 5.54
+},
+"len_c_1": {
+"key": "[\"Forty years I've grown wheat on the wall's bones. She tastes of the wall coming down. You can't put that in a silo. It won't go.\", \"neutral\", \"am_santa_v92\", \"en-us\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 8.77
+},
+"len_c_2": {
+"key": "[\"So that's the young one's word. Well. I asked for it. Sign, girl. I'll walk the Red tonight. Somebody should.\", \"sad\", \"am_santa_v92\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 8.21
+},
+"len_c_3": {
+"key": "[\"She'll want more than four acres, a wheat with two buyers. The top field's doing nothing.\", \"happy\", \"am_santa_v92\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 5.44
+},
+"mei_a_1": {
+"key": "[\"Oh, it's got a ribbon. It's far too pretty to eat. I'm going to eat it immediately.\", \"happy\", \"af_bella\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 4.46
+},
+"mei_a_2": {
+"key": "[\"Everybody tells me things. All day, the whole line. And nobody asks me anything, because I'm the one behind the counter, and a counter doesn't have a life. You asked. I've been cross with you about it all week, because I didn't know what to do with it.\", \"sad\", \"af_bella\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 16.42
+},
+"mei_a_3": {
+"key": "[\"Eleven minutes! I have had a tram full of people looking at an empty basket for eleven minutes. Do you know what a tram full of people looks like?\", \"angry\", \"af_bella\", \"en-us\", {\"edge\": 1.8, \"peak\": 0.95, \"punctuation\": \"lift\", \"semitones\": 0.5, \"speed\": 1.1, \"tilt\": 0.18}]",
+"secs": 7.61
+},
+"mei_b_1": {
+"key": "[\"Oh, it's got a ribbon. It's far too pretty to eat. I'm going to eat it immediately.\", \"happy\", \"af_heart\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 4.19
+},
+"mei_b_2": {
+"key": "[\"Everybody tells me things. All day, the whole line. And nobody asks me anything, because I'm the one behind the counter, and a counter doesn't have a life. You asked. I've been cross with you about it all week, because I didn't know what to do with it.\", \"sad\", \"af_heart\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 16.15
+},
+"mei_b_3": {
+"key": "[\"Eleven minutes! I have had a tram full of people looking at an empty basket for eleven minutes. Do you know what a tram full of people looks like?\", \"angry\", \"af_heart\", \"en-us\", {\"edge\": 1.8, \"peak\": 0.95, \"punctuation\": \"lift\", \"semitones\": 0.5, \"speed\": 1.1, \"tilt\": 0.18}]",
+"secs": 7.46
+},
+"mei_c_1": {
+"key": "[\"Oh, it's got a ribbon. It's far too pretty to eat. I'm going to eat it immediately.\", \"happy\", \"bf_lily_v105\", \"en-gb\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 4.01
+},
+"mei_c_2": {
+"key": "[\"Everybody tells me things. All day, the whole line. And nobody asks me anything, because I'm the one behind the counter, and a counter doesn't have a life. You asked. I've been cross with you about it all week, because I didn't know what to do with it.\", \"sad\", \"bf_lily_v105\", \"en-gb\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 14.77
+},
+"mei_c_3": {
+"key": "[\"Eleven minutes! I have had a tram full of people looking at an empty basket for eleven minutes. Do you know what a tram full of people looks like?\", \"angry\", \"bf_lily_v105\", \"en-gb\", {\"edge\": 1.8, \"peak\": 0.95, \"punctuation\": \"lift\", \"semitones\": 0.5, \"speed\": 1.1, \"tilt\": 0.18}]",
+"secs": 7.03
+},
+"mei_now_1": {
+"key": "[\"Oh, it's got a ribbon. It's far too pretty to eat. I'm going to eat it immediately.\", \"happy\", \"am_liam\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 3.78
+},
+"mei_now_2": {
+"key": "[\"Everybody tells me things. All day, the whole line. And nobody asks me anything, because I'm the one behind the counter, and a counter doesn't have a life. You asked. I've been cross with you about it all week, because I didn't know what to do with it.\", \"sad\", \"am_liam\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 13.4
+},
+"mei_now_3": {
+"key": "[\"Eleven minutes! I have had a tram full of people looking at an empty basket for eleven minutes. Do you know what a tram full of people looks like?\", \"angry\", \"am_liam\", \"en-us\", {\"edge\": 1.8, \"peak\": 0.95, \"punctuation\": \"lift\", \"semitones\": 0.5, \"speed\": 1.1, \"tilt\": 0.18}]",
+"secs": 6.61
+},
+"m|af_alloy_p96_v86|en-us": {
+"bright": 2305,
+"hi": 169,
+"hz": 136,
+"lo": 108,
+"secs": 7.31
+},
+"m|af_alloy|en-us": {
+"bright": 2793,
+"hi": 177,
+"hz": 143,
+"lo": 112,
+"secs": 6.49
+},
+"m|af_aoede|en-us": {
+"bright": 2175,
+"hi": 240,
+"hz": 183,
+"lo": 150,
+"secs": 6.36
+},
+"m|af_bella|en-us": {
+"bright": 3598,
+"hi": 250,
+"hz": 202,
+"lo": 173,
+"secs": 6.7
+},
+"m|af_heart|en-us": {
+"bright": 3710,
+"hi": 258,
+"hz": 200,
+"lo": 162,
+"secs": 6.46
+},
+"m|af_jessica|en-us": {
+"bright": 2384,
+"hi": 282,
+"hz": 207,
+"lo": 173,
+"secs": 5.74
+},
+"m|af_kore_p94_v95|en-us": {
+"bright": 2302,
+"hi": 210,
+"hz": 139,
+"lo": 103,
+"secs": 7.42
+},
+"m|af_kore_p95_v86|en-us": {
+"bright": 2281,
+"hi": 207,
+"hz": 142,
+"lo": 104,
+"secs": 7.9
+},
+"m|af_kore_v106|en-us": {
+"bright": 2839,
+"hi": 226,
+"hz": 145,
+"lo": 108,
+"secs": 6.66
+},
+"m|af_kore|en-us": {
+"bright": 2822,
+"hi": 224,
+"hz": 148,
+"lo": 109,
+"secs": 6.98
+},
+"m|af_nicole|en-us": {
+"bright": 3312,
+"hi": 176,
+"hz": 146,
+"lo": 136,
+"secs": 10.22
+},
+"m|af_nova|en-us": {
+"bright": 2853,
+"hi": 207,
+"hz": 156,
+"lo": 132,
+"secs": 6.34
+},
+"m|af_river_v104|en-us": {
+"bright": 2539,
+"hi": 220,
+"hz": 176,
+"lo": 152,
+"secs": 5.57
+},
+"m|af_river|en-us": {
+"bright": 2524,
+"hi": 220,
+"hz": 174,
+"lo": 151,
+"secs": 5.67
+},
+"m|af_sarah_p92_v88|en-us": {
+"bright": 2519,
+"hi": 247,
+"hz": 173,
+"lo": 138,
+"secs": 7.05
+},
+"m|af_sarah|en-us": {
+"bright": 3013,
+"hi": 267,
+"hz": 189,
+"lo": 151,
+"secs": 6.4
+},
+"m|af_sky+am_puck_v104|en-us": {
+"bright": 2967,
+"hi": 198,
+"hz": 135,
+"lo": 101,
+"secs": 6.25
+},
+"m|af_sky_p96_v104|en-us": {
+"bright": 2328,
+"hi": 197,
+"hz": 148,
+"lo": 114,
+"secs": 6.27
+},
+"m|af_sky|en-us": {
+"bright": 2716,
+"hi": 202,
+"hz": 154,
+"lo": 121,
+"secs": 6.25
+},
+"m|am_adam|en-us": {
+"bright": 2384,
+"hi": 140,
+"hz": 121,
+"lo": 91,
+"secs": 6.19
+},
+"m|am_echo_v94|en-us": {
+"bright": 2951,
+"hi": 153,
+"hz": 109,
+"lo": 88,
+"secs": 6.53
+},
+"m|am_echo_v96|en-us": {
+"bright": 2949,
+"hi": 155,
+"hz": 111,
+"lo": 90,
+"secs": 6.34
+},
+"m|am_echo|en-us": {
+"bright": 2982,
+"hi": 153,
+"hz": 111,
+"lo": 88,
+"secs": 6.23
+},
+"m|am_eric|en-us": {
+"bright": 2123,
+"hi": 203,
+"hz": 157,
+"lo": 115,
+"secs": 5.5
+},
+"m|am_fenrir_v106|en-us": {
+"bright": 2578,
+"hi": 191,
+"hz": 140,
+"lo": 106,
+"secs": 6.36
+},
+"m|am_fenrir|en-us": {
+"bright": 2590,
+"hi": 196,
+"hz": 140,
+"lo": 96,
+"secs": 6.68
+},
+"m|am_liam|en-us": {
+"bright": 2542,
+"hi": 186,
+"hz": 130,
+"lo": 101,
+"secs": 5.93
+},
+"m|am_michael|en-us": {
+"bright": 2812,
+"hi": 150,
+"hz": 120,
+"lo": 96,
+"secs": 7.34
+},
+"m|am_onyx|en-us": {
+"bright": 1816,
+"hi": 106,
+"hz": 84,
+"lo": 76,
+"secs": 6.42
+},
+"m|am_puck_p110_v104|en-us": {
+"bright": 2721,
+"hi": 198,
+"hz": 121,
+"lo": 98,
+"secs": 6.21
+},
+"m|am_puck_p96_v106|en-us": {
+"bright": 2553,
+"hi": 174,
+"hz": 105,
+"lo": 87,
+"secs": 6.51
+},
+"m|am_puck|en-us": {
+"bright": 3071,
+"hi": 182,
+"hz": 110,
+"lo": 88,
+"secs": 6.68
+},
+"m|am_santa_v92|en-us": {
+"bright": 2386,
+"hi": 261,
+"hz": 164,
+"lo": 118,
+"secs": 7.49
+},
+"m|am_santa|en-us": {
+"bright": 2389,
+"hi": 276,
+"hz": 172,
+"lo": 119,
+"secs": 6.91
+},
+"m|bf_alice_p92_v94|en-gb": {
+"bright": 2163,
+"hi": 258,
+"hz": 202,
+"lo": 141,
+"secs": 7.05
+},
+"m|bf_alice|en-gb": {
+"bright": 2482,
+"hi": 273,
+"hz": 219,
+"lo": 154,
+"secs": 6.59
+},
+"m|bf_emma_p90_v85|en-gb": {
+"bright": 3067,
+"hi": 190,
+"hz": 161,
+"lo": 140,
+"secs": 7.23
+},
+"m|bf_emma_p95_v96|en-gb": {
+"bright": 3117,
+"hi": 200,
+"hz": 170,
+"lo": 146,
+"secs": 6.53
+},
+"m|bf_emma|en-gb": {
+"bright": 3758,
+"hi": 211,
+"hz": 179,
+"lo": 155,
+"secs": 6.27
+},
+"m|bf_isabella_p92_v95|en-gb": {
+"bright": 3352,
+"hi": 224,
+"hz": 185,
+"lo": 161,
+"secs": 6.63
+},
+"m|bf_isabella_p93_v88|en-gb": {
+"bright": 3339,
+"hi": 226,
+"hz": 189,
+"lo": 163,
+"secs": 7.02
+},
+"m|bf_isabella|en-gb": {
+"bright": 4077,
+"hi": 240,
+"hz": 203,
+"lo": 178,
+"secs": 6.29
+},
+"m|bf_lily_v105|en-gb": {
+"bright": 2356,
+"hi": 245,
+"hz": 195,
+"lo": 140,
+"secs": 6.23
+},
+"m|bf_lily_v108|en-gb": {
+"bright": 2339,
+"hi": 242,
+"hz": 194,
+"lo": 140,
+"secs": 6.1
+},
+"m|bf_lily|en-gb": {
+"bright": 2344,
+"hi": 248,
+"hz": 194,
+"lo": 141,
+"secs": 6.42
+},
+"m|bm_daniel_v94|en-gb": {
+"bright": 2175,
+"hi": 143,
+"hz": 126,
+"lo": 105,
+"secs": 6.42
+},
+"m|bm_daniel|en-gb": {
+"bright": 2198,
+"hi": 143,
+"hz": 125,
+"lo": 105,
+"secs": 6.19
+},
+"m|bm_fable_v108|en-gb": {
+"bright": 4824,
+"hi": 162,
+"hz": 126,
+"lo": 95,
+"secs": 6.29
+},
+"m|bm_fable|en-gb": {
+"bright": 4845,
+"hi": 160,
+"hz": 123,
+"lo": 96,
+"secs": 6.49
+},
+"m|bm_george_p90_v86|en-gb": {
+"bright": 2103,
+"hi": 150,
+"hz": 124,
+"lo": 93,
+"secs": 8.49
+},
+"m|bm_george|en-gb": {
+"bright": 2421,
+"hi": 167,
+"hz": 138,
+"lo": 102,
+"secs": 7.27
+},
+"m|bm_lewis_p94_v86|en-gb": {
+"bright": 2025,
+"hi": 121,
+"hz": 93,
+"lo": 69,
+"secs": 8.12
+},
+"m|bm_lewis|en-gb": {
+"bright": 2426,
+"hi": 124,
+"hz": 98,
+"lo": 74,
+"secs": 7.15
+},
+"noor_a_1": {
+"key": "[\"We're closed. We've been closed since the bread ran out, which was ten past nine. The card says early.\", \"neutral\", \"bf_emma_p95_v96\", \"en-gb\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 5.64
+},
+"noor_a_2": {
+"key": "[\"I signed her away the week my mother died. Grief does strange paperwork. You give away the one thing you're going to need.\", \"sad\", \"bf_emma_p95_v96\", \"en-gb\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 7.69
+},
+"noor_a_3": {
+"key": "[\"A new one would make bread. It would not make our bread. You can get a new dog, too.\", \"angry\", \"bf_emma_p95_v96\", \"en-gb\", {\"edge\": 1.8, \"peak\": 0.95, \"punctuation\": \"lift\", \"semitones\": 0.5, \"speed\": 1.1, \"tilt\": 0.18}]",
+"secs": 3.95
+},
+"noor_b_1": {
+"key": "[\"We're closed. We've been closed since the bread ran out, which was ten past nine. The card says early.\", \"neutral\", \"bf_isabella_p92_v95\", \"en-gb\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 5.8
+},
+"noor_b_2": {
+"key": "[\"I signed her away the week my mother died. Grief does strange paperwork. You give away the one thing you're going to need.\", \"sad\", \"bf_isabella_p92_v95\", \"en-gb\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 7.99
+},
+"noor_b_3": {
+"key": "[\"A new one would make bread. It would not make our bread. You can get a new dog, too.\", \"angry\", \"bf_isabella_p92_v95\", \"en-gb\", {\"edge\": 1.8, \"peak\": 0.95, \"punctuation\": \"lift\", \"semitones\": 0.5, \"speed\": 1.1, \"tilt\": 0.18}]",
+"secs": 4.15
+},
+"noor_c_1": {
+"key": "[\"We're closed. We've been closed since the bread ran out, which was ten past nine. The card says early.\", \"neutral\", \"af_kore_p94_v95\", \"en-us\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 6.4
+},
+"noor_c_2": {
+"key": "[\"I signed her away the week my mother died. Grief does strange paperwork. You give away the one thing you're going to need.\", \"sad\", \"af_kore_p94_v95\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 9.36
+},
+"noor_c_3": {
+"key": "[\"A new one would make bread. It would not make our bread. You can get a new dog, too.\", \"angry\", \"af_kore_p94_v95\", \"en-us\", {\"edge\": 1.8, \"peak\": 0.95, \"punctuation\": \"lift\", \"semitones\": 0.5, \"speed\": 1.1, \"tilt\": 0.18}]",
+"secs": 4.45
+},
+"oda_a_1": {
+"key": "[\"Forty years of her. Rye is the nurse of the grains. Wheat's the patient; rye sits up all night. When the Stone Oven buys rye out of season, somebody's poorly.\", \"thinking\", \"af_alloy_p96_v86\", \"en-us\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 11.8
+},
+"oda_a_2": {
+"key": "[\"Marek. My husband. Two winters gone. His tools went to the museum because I couldn't have them in the house. One patient at a time. Rye first.\", \"sad\", \"af_alloy_p96_v86\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 10.78
+},
+"oda_a_3": {
+"key": "[\"You've been to the museum. I can see it on you. People come out of there walking carefully.\", \"neutral\", \"af_alloy_p96_v86\", \"en-us\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 5.96
+},
+"oda_b_1": {
+"key": "[\"Forty years of her. Rye is the nurse of the grains. Wheat's the patient; rye sits up all night. When the Stone Oven buys rye out of season, somebody's poorly.\", \"thinking\", \"af_kore_p95_v86\", \"en-us\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 13.8
+},
+"oda_b_2": {
+"key": "[\"Marek. My husband. Two winters gone. His tools went to the museum because I couldn't have them in the house. One patient at a time. Rye first.\", \"sad\", \"af_kore_p95_v86\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 12.24
+},
+"oda_b_3": {
+"key": "[\"You've been to the museum. I can see it on you. People come out of there walking carefully.\", \"neutral\", \"af_kore_p95_v86\", \"en-us\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 6.06
+},
+"oda_c_1": {
+"key": "[\"Forty years of her. Rye is the nurse of the grains. Wheat's the patient; rye sits up all night. When the Stone Oven buys rye out of season, somebody's poorly.\", \"thinking\", \"bf_emma_p90_v85\", \"en-gb\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 11.87
+},
+"oda_c_2": {
+"key": "[\"Marek. My husband. Two winters gone. His tools went to the museum because I couldn't have them in the house. One patient at a time. Rye first.\", \"sad\", \"bf_emma_p90_v85\", \"en-gb\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 11.01
+},
+"oda_c_3": {
+"key": "[\"You've been to the museum. I can see it on you. People come out of there walking carefully.\", \"neutral\", \"bf_emma_p90_v85\", \"en-gb\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 5.4
+},
+"olu_a_1": {
+"key": "[\"Nine years ago I bet her a sweet roll she couldn't go one year without a day off. Nine years that bet has rolled over. The interest alone is a bakery.\", \"happy\", \"am_fenrir\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 8.63
+},
+"olu_a_2": {
+"key": "[\"And my shelf can? My shelf has feelings. Tell Noor the bet stands, and tell her I counted.\", \"angry\", \"am_fenrir\", \"en-us\", {\"edge\": 1.8, \"peak\": 0.95, \"punctuation\": \"lift\", \"semitones\": 0.5, \"speed\": 1.1, \"tilt\": 0.18}]",
+"secs": 4.81
+},
+"olu_a_3": {
+"key": "[\"A story with an apology in it. I can sell that. It'll cost you, mind. I'll be telling it for a week.\", \"thinking\", \"am_fenrir\", \"en-us\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 6.53
+},
+"olu_b_1": {
+"key": "[\"Nine years ago I bet her a sweet roll she couldn't go one year without a day off. Nine years that bet has rolled over. The interest alone is a bakery.\", \"happy\", \"am_liam\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 7.45
+},
+"olu_b_2": {
+"key": "[\"And my shelf can? My shelf has feelings. Tell Noor the bet stands, and tell her I counted.\", \"angry\", \"am_liam\", \"en-us\", {\"edge\": 1.8, \"peak\": 0.95, \"punctuation\": \"lift\", \"semitones\": 0.5, \"speed\": 1.1, \"tilt\": 0.18}]",
+"secs": 4.5
+},
+"olu_b_3": {
+"key": "[\"A story with an apology in it. I can sell that. It'll cost you, mind. I'll be telling it for a week.\", \"thinking\", \"am_liam\", \"en-us\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 5.62
+},
+"olu_c_1": {
+"key": "[\"Nine years ago I bet her a sweet roll she couldn't go one year without a day off. Nine years that bet has rolled over. The interest alone is a bakery.\", \"happy\", \"am_eric\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 7.22
+},
+"olu_c_2": {
+"key": "[\"And my shelf can? My shelf has feelings. Tell Noor the bet stands, and tell her I counted.\", \"angry\", \"am_eric\", \"en-us\", {\"edge\": 1.8, \"peak\": 0.95, \"punctuation\": \"lift\", \"semitones\": 0.5, \"speed\": 1.1, \"tilt\": 0.18}]",
+"secs": 4.33
+},
+"olu_c_3": {
+"key": "[\"A story with an apology in it. I can sell that. It'll cost you, mind. I'll be telling it for a week.\", \"thinking\", \"am_eric\", \"en-us\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 5.35
+},
+"olu_now_1": {
+"key": "[\"Nine years ago I bet her a sweet roll she couldn't go one year without a day off. Nine years that bet has rolled over. The interest alone is a bakery.\", \"happy\", \"af_heart\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 8.26
+},
+"olu_now_2": {
+"key": "[\"And my shelf can? My shelf has feelings. Tell Noor the bet stands, and tell her I counted.\", \"angry\", \"af_heart\", \"en-us\", {\"edge\": 1.8, \"peak\": 0.95, \"punctuation\": \"lift\", \"semitones\": 0.5, \"speed\": 1.1, \"tilt\": 0.18}]",
+"secs": 4.87
+},
+"olu_now_3": {
+"key": "[\"A story with an apology in it. I can sell that. It'll cost you, mind. I'll be telling it for a week.\", \"thinking\", \"af_heart\", \"en-us\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 6.71
+},
+"pip_a_1": {
+"key": "[\"No, no, no. The seeded batch. Those took all night. She'll turn me into rusks. You didn't see this. Did you see this?\", \"surprised\", \"af_sky_p96_v104\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"surprise\", \"semitones\": 2.5, \"speed\": 1.02, \"tilt\": 0.1}]",
+"secs": 5.6
+},
+"pip_a_2": {
+"key": "[\"I want Noor to say I'm good. Once. Out loud. She says \\u201chm\\u201d. I've learned to live on \\u201chm\\u201d. Tam says \\u201cbrilliant\\u201d about everything, so it's worth nothing. Sorry. That came out more finished than I meant it.\", \"sad\", \"af_sky_p96_v104\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 12.7
+},
+"pip_a_3": {
+"key": "[\"It's called \\u201cProved\\u201d. There's a key change where the dough knocks back. It's the first one I've ever sung with my eyes open.\", \"happy\", \"af_sky_p96_v104\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 5.91
+},
+"pip_b_1": {
+"key": "[\"No, no, no. The seeded batch. Those took all night. She'll turn me into rusks. You didn't see this. Did you see this?\", \"surprised\", \"am_puck_p110_v104\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"surprise\", \"semitones\": 2.5, \"speed\": 1.02, \"tilt\": 0.1}]",
+"secs": 5.82
+},
+"pip_b_2": {
+"key": "[\"I want Noor to say I'm good. Once. Out loud. She says \\u201chm\\u201d. I've learned to live on \\u201chm\\u201d. Tam says \\u201cbrilliant\\u201d about everything, so it's worth nothing. Sorry. That came out more finished than I meant it.\", \"sad\", \"am_puck_p110_v104\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 13.28
+},
+"pip_b_3": {
+"key": "[\"It's called \\u201cProved\\u201d. There's a key change where the dough knocks back. It's the first one I've ever sung with my eyes open.\", \"happy\", \"am_puck_p110_v104\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 6.01
+},
+"pip_c_1": {
+"key": "[\"No, no, no. The seeded batch. Those took all night. She'll turn me into rusks. You didn't see this. Did you see this?\", \"surprised\", \"af_sky+am_puck_v104\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"surprise\", \"semitones\": 2.5, \"speed\": 1.02, \"tilt\": 0.1}]",
+"secs": 5.71
+},
+"pip_c_2": {
+"key": "[\"I want Noor to say I'm good. Once. Out loud. She says \\u201chm\\u201d. I've learned to live on \\u201chm\\u201d. Tam says \\u201cbrilliant\\u201d about everything, so it's worth nothing. Sorry. That came out more finished than I meant it.\", \"sad\", \"af_sky+am_puck_v104\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 13.28
+},
+"pip_c_3": {
+"key": "[\"It's called \\u201cProved\\u201d. There's a key change where the dough knocks back. It's the first one I've ever sung with my eyes open.\", \"happy\", \"af_sky+am_puck_v104\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 5.99
+},
+"suvi_a_1": {
+"key": "[\"You're from the Stone Oven. So you're here about four acres of red wheat, and you've been told I'm the villain.\", \"neutral\", \"af_river_v104\", \"en-us\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 4.93
+},
+"suvi_a_2": {
+"key": "[\"Valley Provisions. One price, whole harvest, every year, paid in one sum. Do you know what one sum a year is, on a farm? It's the first time the money has come in before it ran out. Heritage doesn't pay the vet. A contract pays the vet.\", \"thinking\", \"af_river_v104\", \"en-us\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 12.51
+},
+"suvi_a_3": {
+"key": "[\"Then I can't carry four acres on one promise. Two. I'll keep two out for Noor, and heaven help my yield figures.\", \"sad\", \"af_river_v104\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 6.77
+},
+"suvi_b_1": {
+"key": "[\"You're from the Stone Oven. So you're here about four acres of red wheat, and you've been told I'm the villain.\", \"neutral\", \"bf_lily_v108\", \"en-gb\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 5.27
+},
+"suvi_b_2": {
+"key": "[\"Valley Provisions. One price, whole harvest, every year, paid in one sum. Do you know what one sum a year is, on a farm? It's the first time the money has come in before it ran out. Heritage doesn't pay the vet. A contract pays the vet.\", \"thinking\", \"bf_lily_v108\", \"en-gb\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 13.88
+},
+"suvi_b_3": {
+"key": "[\"Then I can't carry four acres on one promise. Two. I'll keep two out for Noor, and heaven help my yield figures.\", \"sad\", \"bf_lily_v108\", \"en-gb\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 6.91
+},
+"suvi_c_1": {
+"key": "[\"You're from the Stone Oven. So you're here about four acres of red wheat, and you've been told I'm the villain.\", \"neutral\", \"af_kore_v106\", \"en-us\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 6.06
+},
+"suvi_c_2": {
+"key": "[\"Valley Provisions. One price, whole harvest, every year, paid in one sum. Do you know what one sum a year is, on a farm? It's the first time the money has come in before it ran out. Heritage doesn't pay the vet. A contract pays the vet.\", \"thinking\", \"af_kore_v106\", \"en-us\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 15.88
+},
+"suvi_c_3": {
+"key": "[\"Then I can't carry four acres on one promise. Two. I'll keep two out for Noor, and heaven help my yield figures.\", \"sad\", \"af_kore_v106\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 8.03
+},
+"tam_a_1": {
+"key": "[\"Welcome to Crumb and Co, where the bread is warm and the lighting is warmer! What can I get you?\", \"happy\", \"bm_fable_v108\", \"en-gb\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 4.81
+},
+"tam_a_2": {
+"key": "[\"Abe wouldn't have told you. You worked it out. One seeded loaf, every Saturday, six years. I have never once eaten my own bread on a Saturday. Don't tell her that. Tell her anything else.\", \"sad\", \"bm_fable_v108\", \"en-gb\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 11.28
+},
+"tam_a_3": {
+"key": "[\"No, she doesn't. If Noor sent for help, the fountain would hand in its notice. Try again, and leave the sales pitch out. I write three a day.\", \"thinking\", \"bm_fable_v108\", \"en-gb\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 8.6
+},
+"tam_b_1": {
+"key": "[\"Welcome to Crumb and Co, where the bread is warm and the lighting is warmer! What can I get you?\", \"happy\", \"am_fenrir_v106\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 4.7
+},
+"tam_b_2": {
+"key": "[\"Abe wouldn't have told you. You worked it out. One seeded loaf, every Saturday, six years. I have never once eaten my own bread on a Saturday. Don't tell her that. Tell her anything else.\", \"sad\", \"am_fenrir_v106\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 11.89
+},
+"tam_b_3": {
+"key": "[\"No, she doesn't. If Noor sent for help, the fountain would hand in its notice. Try again, and leave the sales pitch out. I write three a day.\", \"thinking\", \"am_fenrir_v106\", \"en-us\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 9.26
+},
+"tam_c_1": {
+"key": "[\"Welcome to Crumb and Co, where the bread is warm and the lighting is warmer! What can I get you?\", \"happy\", \"am_puck_p96_v106\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 4.83
+},
+"tam_c_2": {
+"key": "[\"Abe wouldn't have told you. You worked it out. One seeded loaf, every Saturday, six years. I have never once eaten my own bread on a Saturday. Don't tell her that. Tell her anything else.\", \"sad\", \"am_puck_p96_v106\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 12.29
+},
+"tam_c_3": {
+"key": "[\"No, she doesn't. If Noor sent for help, the fountain would hand in its notice. Try again, and leave the sales pitch out. I write three a day.\", \"thinking\", \"am_puck_p96_v106\", \"en-us\", {\"edge\": 0, \"peak\": 0.72, \"punctuation\": \"pause\", \"semitones\": -0.7, \"speed\": 0.86, \"tilt\": -0.12}]",
+"secs": 9.44
+},
+"vera_a_1": {
+"key": "[\"Six strands. Very handsome. I am sixty-six years old and I have never yet eaten a photograph. The crumb underneath is good. It deserved less scaffolding.\", \"neutral\", \"bf_alice_p92_v94\", \"en-gb\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 9.97
+},
+"vera_a_2": {
+"key": "[\"Then I have outlived her. I did not expect to be saying that at a bake-off. Stand up straight, child. It isn't a judgement. It's a condolence.\", \"sad\", \"bf_alice_p92_v94\", \"en-gb\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 9.66
+},
+"vera_a_3": {
+"key": "[\"That is the wall wheat, through a stone that's cutting true. I have not tasted this since I had to stand on a box to see over the counter.\", \"happy\", \"bf_alice_p92_v94\", \"en-gb\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 7.48
+},
+"vera_b_1": {
+"key": "[\"Six strands. Very handsome. I am sixty-six years old and I have never yet eaten a photograph. The crumb underneath is good. It deserved less scaffolding.\", \"neutral\", \"bf_isabella_p93_v88\", \"en-gb\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 9.93
+},
+"vera_b_2": {
+"key": "[\"Then I have outlived her. I did not expect to be saying that at a bake-off. Stand up straight, child. It isn't a judgement. It's a condolence.\", \"sad\", \"bf_isabella_p93_v88\", \"en-gb\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 9.78
+},
+"vera_b_3": {
+"key": "[\"That is the wall wheat, through a stone that's cutting true. I have not tasted this since I had to stand on a box to see over the counter.\", \"happy\", \"bf_isabella_p93_v88\", \"en-gb\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 7.28
+},
+"vera_c_1": {
+"key": "[\"Six strands. Very handsome. I am sixty-six years old and I have never yet eaten a photograph. The crumb underneath is good. It deserved less scaffolding.\", \"neutral\", \"af_sarah_p92_v88\", \"en-us\", {\"edge\": 0, \"peak\": 0.85, \"semitones\": 0, \"speed\": 1.0, \"tilt\": 0}]",
+"secs": 10.37
+},
+"vera_c_2": {
+"key": "[\"Then I have outlived her. I did not expect to be saying that at a bake-off. Stand up straight, child. It isn't a judgement. It's a condolence.\", \"sad\", \"af_sarah_p92_v88\", \"en-us\", {\"edge\": 0, \"peak\": 0.62, \"punctuation\": \"soften\", \"semitones\": -1.5, \"speed\": 0.84, \"tilt\": -0.3}]",
+"secs": 10.06
+},
+"vera_c_3": {
+"key": "[\"That is the wall wheat, through a stone that's cutting true. I have not tasted this since I had to stand on a box to see over the counter.\", \"happy\", \"af_sarah_p92_v88\", \"en-us\", {\"edge\": 0, \"peak\": 0.9, \"punctuation\": \"lift\", \"semitones\": 1.5, \"speed\": 1.08, \"tilt\": 0.08}]",
+"secs": 7.68
+}
+}

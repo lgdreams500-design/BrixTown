@@ -971,6 +971,9 @@ Twenty Minutes) opens the talk box by itself when the player is there (`ABrixLif
 its lines are read, not spoken, and one left unanswered opens again when the player has gone and come back. Seen in the
 running game: `docs/narrative/shots/stone_oven.png` (the career starts by talking to Noor, the baker) and `count_scene.png`
 (`-BrixTime=06:40 -BrixStand=912,816,0 -BrixLife=act,new_in_town,r0504,end:gift;act,four_oclock_door,r0262,start|give:breakfast_loaf|stage:count`).
+Not yet: the looks approved in Blender on 2026-11-26 (ADR-0059) are not in the game: the Stone Oven's inside (oven, bench,
+bread racks, doors), Noor's own look, and old age on anybody (lines, stoop, glasses, cane, thin hair; hair on the skull
+instead of the shell that reads as a cap). Everything left of the Baker career is listed in `docs/narrative/README.md`.
 Not yet: in a scene the camera comes in as close as in a talk, so the player's shoulder fills a side of the picture;
 lines said by somebody else are murmured in the voice of the person spoken to; none of the story is voiced; the log
 does not show a career's rank; talks happen wherever the person's day has put them; the Stone Oven Bakery (b_7_7_l2) is a bakery by name, goods and
