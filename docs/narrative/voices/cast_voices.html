@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brix Town: voices for the Baker cast</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..600&display=swap">
+<style>
+/* Voice candidates for the Baker cast. A proposal: nothing here is a pick or game data. Samples are made by
+   make_cast_voices.py with the game's own voice tool (Tools/voice) into audio/ and data.js; this page only plays them.
+   Opens as a file. Same tokens as the Quest Atlas beside it. */
+:root{
+  --bg:#f2f3f1; --panel:#ffffff; --sunk:#e8eae7; --ink:#1e2225; --soft:#5d656b; --line:#d7dbd8;
+  --brass:#8f6212; --brass-bg:#f3e8cf; --link:#3c5f9e; --warn:#a2452f; --warn-bg:#f7e3dc;
+  --m-neutral:#727a80; --m-happy:#2f7a4c; --m-sad:#3f6aa8; --m-angry:#b3432f; --m-surprised:#a86b0c; --m-thinking:#7551a8;
+  --shadow:0 1px 2px rgba(20,25,30,.05),0 6px 18px rgba(20,25,30,.06);
+  --display:"Bricolage Grotesque",system-ui,"Segoe UI",Arial,sans-serif;
+  --book:"Literata",Georgia,"Times New Roman",serif;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14171a; --panel:#1c2024; --sunk:#111315; --ink:#e7e9e6; --soft:#98a1a6; --line:#2e3439;
+    --brass:#d9a441; --brass-bg:#2c2412; --link:#8fb0ea; --warn:#e28672; --warn-bg:#33201b;
+    --m-neutral:#99a2a8; --m-happy:#62b683; --m-sad:#7aa3de; --m-angry:#e28672; --m-surprised:#dba545; --m-thinking:#aa8be0;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3);
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{background:var(--bg);color:var(--ink);font-family:var(--display);font-size:15px;line-height:1.5;margin:0}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px 80px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+a{color:var(--link)}
+code{font-family:var(--mono);font-size:.88em;background:var(--sunk);border-radius:4px;padding:1px 5px;overflow-wrap:anywhere}
+
+header.top{padding:28px 0 8px}
+.eyebrow{font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;color:var(--brass)}
+h1{font-size:clamp(30px,5vw,44px);line-height:1.02;margin:6px 0 0;font-weight:750;letter-spacing:-.02em;text-wrap:balance}
+.sub{color:var(--soft);max-width:66ch;margin:10px 0 0}
+h2{font-size:24px;line-height:1.15;margin:44px 0 6px;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+h3{font-size:16px;margin:0 0 4px;font-weight:700}
+.lead{color:var(--soft);max-width:70ch;margin:0 0 16px}
+.prose{max-width:72ch}
+.prose li{margin:5px 0}
+.prose ul,.prose ol{padding-left:20px;margin:8px 0}
+
+nav.jump{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:6px;align-items:center;padding:9px 0;margin-top:14px;overflow-x:auto;scrollbar-width:none}
+nav.jump::-webkit-scrollbar{display:none}
+nav.jump a{flex:0 0 auto;text-decoration:none;color:var(--soft);font-weight:600;font-size:13.5px;padding:4px 9px;border-radius:14px;border:1px solid transparent;display:flex;align-items:center;gap:6px}
+nav.jump a:hover{color:var(--ink);border-color:var(--line);background:var(--panel)}
+nav.jump a.done{color:var(--ink)}
+nav.jump a.done::after{content:"✓";color:var(--brass);font-size:12px}
+nav.jump .dot,.who .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+#stop{flex:0 0 auto;margin-left:auto;position:sticky;right:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px 12px;font-size:13px;font-weight:600}
+#stop[disabled]{opacity:.4;cursor:default}
+
+.note{background:var(--brass-bg);border:1px solid var(--brass);border-radius:10px;padding:12px 16px;margin:16px 0;max-width:76ch}
+.note b{color:var(--brass)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:18px 20px;margin:14px 0}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.cols .panel{margin:0}
+
+/* cast side by side */
+.strip{display:grid;grid-template-columns:86px minmax(120px,1fr) minmax(0,250px);gap:4px 12px;align-items:center}
+.strip .nm{font-weight:650;display:flex;align-items:center;gap:7px;white-space:nowrap}
+.strip .tr{position:relative;height:22px;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+.strip .tr .tick{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+.strip .tr .rg{position:absolute;top:9px;height:4px;border-radius:2px;background:var(--soft);opacity:.45}
+.strip .tr .md{position:absolute;top:5px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--ink);border:2px solid var(--panel)}
+.strip .vl{font-size:12.5px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strip .vl b{color:var(--ink);font-weight:650;font-variant-numeric:tabular-nums}
+.strip .ax{position:relative;height:16px;font-size:11px;color:var(--soft)}
+.strip .ax span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.clash{color:var(--warn);background:var(--warn-bg);border-radius:8px;padding:8px 12px;margin-top:12px;font-size:14px}
+.fine{color:var(--soft);margin-top:12px;font-size:14px}
+@media (max-width:640px){.strip{grid-template-columns:70px minmax(90px,1fr)}.strip .vl{grid-column:1/-1;margin:-4px 0 6px}.strip .ax+.vl{display:none}}
+
+/* together */
+.tog{display:flex;flex-wrap:wrap;gap:8px}
+.tog button,.btn{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-weight:600;font-size:14px;text-align:left}
+.tog button small{display:block;font-weight:400;color:var(--soft);font-size:12px}
+.tog button.on,.play.on{border-color:var(--brass);background:var(--brass-bg)}
+#now{min-height:74px;margin-top:12px;border-left:3px solid var(--line);padding:4px 0 4px 14px;color:var(--soft)}
+#now.on{border-color:var(--brass);color:var(--ink)}
+#now .sp{font-weight:700}#now .tx{font-family:var(--book);font-size:16.5px}
+
+/* a character */
+.char{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin:18px 0;overflow:hidden}
+.char>.hd{padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+.who{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px}
+.who .dot{width:12px;height:12px;align-self:center}
+.who h3{font-size:24px;letter-spacing:-.01em;margin:0}
+.who .meta{color:var(--soft)}
+.tag{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:10px;padding:2px 9px;border:1px solid var(--line);color:var(--soft);white-space:nowrap}
+.tag.hard{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.tag.rec{color:var(--brass);border-color:var(--brass);background:var(--brass-bg)}
+.vnote{font-family:var(--book);font-size:16px;margin:10px 0 0;max-width:70ch}
+.vnote::before{content:"How they talk: ";font-family:var(--display);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
+.sum{color:var(--soft);margin:8px 0 0;max-width:72ch}
+.opt{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:4px 14px;padding:14px 20px;border-bottom:1px solid var(--line);align-items:start}
+.opt.rec{background:linear-gradient(90deg,var(--brass-bg),transparent 55%)}
+.opt.mine{box-shadow:inset 4px 0 0 var(--brass)}
+.opt .k{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-weight:750;background:var(--panel)}
+.opt.rec .k{border-color:var(--brass);color:var(--brass)}
+.opt .ttl{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+.opt .ttl b{font-size:16px}
+.opt .set{font-size:12.5px;color:var(--soft);margin-top:1px}
+.opt .set code{background:none;padding:0}
+.opt .why{margin:6px 0 0;max-width:68ch}
+.opt .needs{margin:8px 0 0;color:var(--warn);background:var(--warn-bg);border-radius:8px;padding:7px 11px;font-size:14px;max-width:68ch}
+.opt .cur{margin:6px 0 0;font-size:13.5px;color:var(--soft);font-style:italic}
+.opt .act{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.play{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-weight:650;font-size:13.5px;white-space:nowrap}
+.play:hover{border-color:var(--soft)}
+.pick{font-size:13px;color:var(--soft);display:flex;gap:6px;align-items:center;cursor:pointer;white-space:nowrap}
+.pick input{accent-color:var(--brass);width:16px;height:16px;margin:0}
+.lines{padding:6px 20px 16px}
+.lines h4{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin:12px 0 4px}
+.ln{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;padding:10px 0;border-top:1px solid var(--line);align-items:center}
+.ln:first-of-type{border-top:0}
+.ln .tx{font-family:var(--book);font-size:16.5px;line-height:1.45}
+.ln .src{font-size:12px;color:var(--soft);margin-top:3px}
+.mood{font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-right:8px;white-space:nowrap}
+.mood.neutral{color:var(--m-neutral)}.mood.happy{color:var(--m-happy)}.mood.sad{color:var(--m-sad)}.mood.angry{color:var(--m-angry)}.mood.surprised{color:var(--m-surprised)}.mood.thinking{color:var(--m-thinking)}
+.ln .bts{display:flex;gap:6px}
+.ln .play{min-width:40px;text-align:center;padding:6px 9px}
+.ln .play.rec{border-color:var(--brass);color:var(--brass)}
+@media (max-width:640px){.opt{grid-template-columns:34px minmax(0,1fr)}.opt .act{grid-column:2;flex-direction:row;align-items:center;flex-wrap:wrap}.ln{grid-template-columns:1fr}}
+
+/* choices */
+#sheet{font-family:var(--mono);font-size:13.5px;background:var(--sunk);border-radius:8px;padding:12px 14px;white-space:pre-wrap;margin:10px 0;min-height:44px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:5px 10px 5px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--soft);font-weight:700}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto}
+#err{color:var(--warn);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Brix Town · proposal for the owner · nothing here is chosen or in the game</div>
+  <h1>Voices for the Baker cast</h1>
+  <p class="sub">Thirteen people, two or three candidate voices each, every one speaking that character's own lines in the mood the script gives the line. One is marked as recommended. Listen, tick the ones you like, and say your picks in chat.</p>
+</header>
+
+<div class="note" id="deaf"><b>Read this first.</b> These are real samples, made on this computer with the same voice model and the same tool the game uses, so what you hear is what the game would play. But I cannot hear. My recommendations come from measuring each voice (how high, how bright, how fast, how much it rises and falls) and from what each voice is known to be like. Treat them as a shortlist in a sensible order, and trust your ear over my tick.</div>
+
+<nav class="jump" id="jump" aria-label="Jump to a character"></nav>
+<p id="err"></p>
+
+<section id="how">
+  <h2>How a resident gets a voice today</h2>
+  <div class="cols">
+    <div class="panel prose"><h3>What exists</h3><ul id="how-exists"></ul></div>
+    <div class="panel prose"><h3>What can be tuned</h3><ul>
+      <li><b>Shift</b>: raises or lowers pitch and the size of the voice together. Below 1 sounds bigger and so a little older; above 1 smaller and younger. The town's elders are at 0.92 to 0.93, its children at 1.24 to 1.28.</li>
+      <li><b>Speed</b>: the pace.</li>
+      <li><b>Accent rules</b>: American or British pronunciation.</li>
+      <li><b>Mood</b>, per line: six settings (neutral, happy, sad, angry, surprised, thinking) that change pitch, pace, tone, loudness and punctuation. Never the words.</li>
+    </ul><p style="margin:8px 0 0;color:var(--soft)">That is all. There is no setting for age, roughness, breath or accent strength.</p></div>
+  </div>
+</section>
+
+<section id="together">
+  <h2>The whole cast, side by side</h2>
+  <p class="lead">Each row is the voice you have ticked for that person, or my recommendation where you have not ticked one. The dot is the usual pitch; the bar is how far the voice rises and falls. People who share scenes should not sit on top of each other.</p>
+  <div class="panel">
+    <div class="strip" id="strip" role="img" aria-label="Pitch of each character's voice"></div>
+    <div id="clash"></div>
+  </div>
+  <h3 style="margin-top:22px">People who share a scene, closest first</h3>
+  <p class="lead">How far apart two voices usually sit, in semitones (twelve to an octave). Under about two, pitch alone will not tell them apart, and they rely on accent, colour and pace instead. This list follows your ticks.</p>
+  <div class="panel scroll"><table id="pairs"></table></div>
+  <h3 style="margin-top:22px">Hear them together</h3>
+  <p class="lead">Each button plays lines back to back, in the voices shown above. These are the pairings where a mix-up would hurt.</p>
+  <div class="tog" id="tog"></div>
+  <div id="now" aria-live="polite">Nothing playing.</div>
+</section>
+
+<section id="cast">
+  <h2>The thirteen</h2>
+  <p class="lead">For each person: the candidates with my reason for each, then the lines, with a button per candidate so you can hear the same line in each voice. A brass letter is the recommended voice.</p>
+  <div id="chars"></div>
+</section>
+
+<section id="choices">
+  <h2>Your choices so far</h2>
+  <p class="lead">Ticking a voice only remembers it on this page, in this browser. Nothing is written to the game. To choose, tell Claude in chat; this line is here to copy.</p>
+  <div id="sheet"></div>
+  <button class="btn" id="copy">Copy</button> <button class="btn" id="clear">Clear my ticks</button>
+</section>
+
+<section id="limits">
+  <h2>What the voice system cannot do today</h2>
+  <div class="panel prose"><ol id="limits-list"></ol></div>
+</section>
+
+<section id="allvoices">
+  <h2>Every English voice in the model</h2>
+  <p class="lead" id="allvoices-lead"></p>
+  <div class="panel scroll"><table id="vt"></table></div>
+</section>
+</div>
+
+<script src="data.js"></script>
+<script>
+"use strict";
+const D = window.CAST_VOICES;
+const $ = (s, r) => (r || document).querySelector(s);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+const KEY = "brix.bakerVoices.v1";
+let mine = {};
+try { mine = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(mine)); } catch (e) { } };
+
+// ---- playing: one clip at a time, in a queue
+const audio = new Audio(); let queue = [], token = 0;
+function stop() { token++; queue = []; audio.pause(); document.querySelectorAll(".on").forEach(e => e.classList.remove("on")); $("#stop").disabled = true; $("#now").textContent = "Nothing playing."; }
+function playSeq(items, owner) {                       // items: [{file, btn, show}]
+  stop(); const t = ++token; queue = items.slice(); $("#stop").disabled = false; if (owner) owner.classList.add("on");
+  const next = () => {
+    if (t !== token) return;
+    document.querySelectorAll(".play.on").forEach(e => e.classList.remove("on"));
+    const it = queue.shift(); if (!it) { stop(); return; }
+    if (it.btn) it.btn.classList.add("on");
+    if (it.show) { const n = $("#now"); n.textContent = ""; n.classList.add("on"); n.append(el("div", "sp", it.show.who), el("div", "tx", "“" + it.show.text + "”")); }
+    audio.src = it.file; audio.onended = () => setTimeout(next, 380);
+    audio.onerror = () => { $("#err").textContent = "Could not play " + it.file + ". The audio folder should sit beside this page."; next(); };
+    audio.play().catch(() => { });
+  };
+  next();
+}
+
+// ---- helpers
+const optOf = (c, k) => c.options.find(o => o.key === k);
+const recOf = c => c.options.find(o => o.rec);
+const chosen = c => optOf(c, mine[c.id]) || recOf(c);
+const pct = x => Math.round(Math.abs(x - 1) * 100);
+function settings(o) {
+  const bits = [o.lang === "en-gb" ? "British" : "American"];
+  if (o.shift !== 1) bits.push((o.shift < 1 ? "lowered " : "raised ") + pct(o.shift) + "%");
+  if (o.speed !== 1) bits.push((o.speed < 1 ? "slowed " : "quickened ") + pct(o.speed) + "%");
+  return bits.join(" · ");
+}
+const range = m => (12 * Math.log2(m.hi / m.lo)).toFixed(0);
+const letter = k => k === "now" ? "Now" : k.toUpperCase();
+const base = cfg => cfg.replace(/(_p\d+)?(_v\d+)?$/, "");
+
+// ---- how it works
+function how() {
+  const S = D.system, V = D.voices, names = Object.keys(V);
+  const cnt = p => names.filter(n => n.startsWith(p)).length;
+  const player = names.filter(n => V[n].player.length), free = names.filter(n => !V[n].pools.length && !V[n].player.length);
+  const ul = $("#how-exists");
+  [
+    `The voice model (Kokoro) has ${names.length} English voices: ${cnt("af_")} American women, ${cnt("am_")} American men, ${cnt("bf_")} British women, ${cnt("bm_")} British men. All of them sound roughly twenty-five to forty-five.`,
+    `Each of the town's ${S.pool_roles} kinds of resident (café worker, elder, clerk and so on) has a pool of three voices. A resident takes one by a fixed sum on their id, so they always sound the same. Who they are (man or woman, age, temperament) plays no part.`,
+    `The player speaks in ${player.join(" or ")}, so I kept those two out of the cast: otherwise you would sometimes be answered in your own voice.`,
+    `${names.length - player.length - free.length} of the other ${names.length - player.length} voices are already somewhere in the town's pools. Only ${free.join(" and ")} are used by nobody. So a named character will usually share a voice with some of the townsfolk.`,
+    `Every line is made in advance, on this computer, and saved as a small sound file. Nothing is sent online.`
+  ].forEach(t => ul.append(el("li", "", t)));
+}
+
+// ---- jump bar
+function jump() {
+  const n = $("#jump"); n.textContent = "";
+  for (const c of D.characters) {
+    const a = el("a", mine[c.id] ? "done" : ""); a.href = "#c-" + c.id; const d = el("span", "dot"); d.style.background = c.color; a.append(d, c.name); n.append(a);
+  }
+  const s = el("button", "", "■ Stop"); s.id = "stop"; s.disabled = true; s.addEventListener("click", stop); n.append(s);
+}
+
+// ---- cast side by side (a range plot on a pitch scale; one series, so no colour coding and no legend)
+const LO = 60, HI = 300, X = hz => 100 * Math.log(hz / LO) / Math.log(HI / LO);
+function strip() {
+  const g = $("#strip"); g.textContent = "";
+  const ticks = [80, 100, 125, 160, 200, 250];
+  for (const c of D.characters) {
+    const o = chosen(c), m = o.measure;
+    const nm = el("div", "nm"); const d = el("span", "dot"); d.style.cssText = "width:9px;height:9px;border-radius:50%;background:" + c.color; nm.append(d, c.name);
+    const tr = el("div", "tr"); tr.title = `${c.name}: usually ${m.hz} Hz, moving between ${m.lo} and ${m.hi} Hz (${range(m)} semitones)`;
+    for (const t of ticks) { const k = el("i", "tick"); k.style.left = X(t) + "%"; tr.append(k); }
+    const rg = el("i", "rg"); rg.style.left = X(m.lo) + "%"; rg.style.width = (X(m.hi) - X(m.lo)) + "%";
+    const md = el("i", "md"); md.style.left = X(m.hz) + "%"; tr.append(rg, md);
+    const vl = el("div", "vl"); vl.append(el("b", "", m.hz + " Hz"), " · " + (o.lang === "en-gb" ? "British" : "American") + " · " + letter(o.key) + " · " + o.cfg + (mine[c.id] ? " ✓" : ""));
+    g.append(nm, tr, vl);
+  }
+  const ax = el("div", "ax"); for (const t of ticks) { const s = el("span", "", t + " Hz"); s.style.left = X(t) + "%"; ax.append(s); }
+  g.append(el("div"), ax, el("div", "vl", "lower ← pitch → higher"));
+  // the same voice given to two people
+  const by = {}; for (const c of D.characters) (by[base(chosen(c).cfg)] = by[base(chosen(c).cfg)] || []).push(c.name);
+  const dup = Object.entries(by).filter(([, n]) => n.length > 1);
+  const box = $("#clash"); box.textContent = "";
+  if (dup.length) box.append(el("div", "clash", "Same voice twice: " + dup.map(([v, n]) => n.join(" and ") + " (" + v + ")").join("; ") + ". Change one of them."));
+  else box.append(el("div", "fine", "No voice is used twice in this set."));
+  // scene partners, closest first
+  const byId = Object.fromEntries(D.characters.map(c => [c.id, c])), t = $("#pairs"); t.textContent = "";
+  const hr = el("tr"); ["Pair", "Apart", "Accents", "Colour", "Rise and fall"].forEach(h => hr.append(el("th", "", h))); t.append(hr);
+  const acc = o => o.lang === "en-gb" ? "British" : "American", tone = m => m.bright >= 3400 ? "bright" : m.bright >= 2700 ? "medium" : "dark";
+  D.scenes.map(([a, b]) => { const x = chosen(byId[a]), y = chosen(byId[b]); return { a: byId[a], b: byId[b], x, y, st: Math.abs(12 * Math.log2(x.measure.hz / y.measure.hz)) }; })
+    .sort((p, q) => p.st - q.st).forEach(p => {
+      const r = el("tr");
+      r.append(el("td", "", p.a.name + " and " + p.b.name), el("td", "n", p.st.toFixed(1) + " st"),
+        el("td", "", acc(p.x) === acc(p.y) ? "both " + acc(p.x) : acc(p.x) + " / " + acc(p.y)),
+        el("td", "", tone(p.x.measure) === tone(p.y.measure) ? "both " + tone(p.x.measure) : tone(p.x.measure) + " / " + tone(p.y.measure)),
+        el("td", "n", range(p.x.measure) + " / " + range(p.y.measure) + " st"));
+      t.append(r);
+    });
+}
+
+// ---- hear them together
+function together() {
+  const g = $("#tog"); g.textContent = "";
+  const byId = Object.fromEntries(D.characters.map(c => [c.id, c]));
+  for (const t of D.together) {
+    const b = el("button"); b.append(t.title, el("small", "", t.why));
+    b.addEventListener("click", () => playSeq(t.say.map(([id, i]) => { const c = byId[id], o = chosen(c); return { file: o.clips[i].file, show: { who: c.name + " · " + o.cfg, text: c.lines[i].text } }; }), b));
+    g.append(b);
+  }
+}
+
+// ---- the thirteen
+function chars() {
+  const root = $("#chars"); root.textContent = "";
+  for (const c of D.characters) {
+    const card = el("article", "char"); card.id = "c-" + c.id;
+    const hd = el("div", "hd"), who = el("div", "who"); const d = el("span", "dot"); d.style.background = c.color;
+    who.append(d, el("h3", "", c.name), el("span", "meta", (c.age ? c.age + " · " : "") + c.trade),
+      el("span", "tag", c.status === "live" ? "already in the game" : "new"), el("span", "tag" + (c.difficulty === "hard" ? " hard" : ""), c.difficulty + " to cast"));
+    hd.append(who, el("p", "vnote", c.note), el("p", "sum", c.summary)); card.append(hd);
+    for (const o of c.options) {
+      const row = el("div", "opt" + (o.rec ? " rec" : "") + (mine[c.id] === o.key ? " mine" : ""));
+      const body = el("div"), ttl = el("div", "ttl");
+      ttl.append(el("b", "", o.about));
+      if (o.rec) ttl.append(el("span", "tag rec", "recommended"));
+      if (o.key === "now") ttl.append(el("span", "tag hard", "in the game today"));
+      const set = el("div", "set"); set.append(el("code", "", o.cfg), " · " + settings(o) + " · usually " + o.measure.hz + " Hz, moves " + range(o.measure) + " semitones");
+      if (o.pools.length) set.append(" · exactly the voice of the town's " + o.pools.join(" and ") + " pool");
+      else if (o.base_pools.length) set.append(" · the same voice, set differently, is in the town's " + o.base_pools.join(" and ") + " pool");
+      else set.append(" · used by nobody in town");
+      body.append(ttl, set, el("p", "why", o.why));
+      if (o.current) body.append(el("p", "cur", o.current));
+      if (o.needs) body.append(el("p", "needs", "Needs a change first. " + o.needs));
+      const act = el("div", "act"), all = el("button", "play", "▶ all " + c.lines.length + " lines");
+      all.addEventListener("click", () => playSeq(o.clips.map((cl, i) => ({ file: cl.file, btn: $(`#c-${c.id} .ln:nth-of-type(${i + 1}) [data-k="${o.key}"]`) })), all));
+      act.append(all);
+      if (o.key !== "now") {
+        const lab = el("label", "pick"), r = el("input"); r.type = "radio"; r.name = "pick-" + c.id; r.checked = mine[c.id] === o.key;
+        r.addEventListener("click", () => { if (mine[c.id] === o.key) delete mine[c.id]; else mine[c.id] = o.key; save(); render(); });
+        lab.append(r, "I like this one"); act.append(lab);
+      }
+      row.append(el("div", "k", letter(o.key)), body, act); card.append(row);
+    }
+    const lines = el("div", "lines"); lines.append(el("h4", "", "The same line in each voice"));
+    c.lines.forEach((ln, i) => {
+      const r = el("div", "ln"), t = el("div"), tx = el("div", "tx");
+      tx.append(el("span", "mood " + ln.mood, ln.mood), "“" + ln.text + "”");
+      t.append(tx, el("div", "src", ln.from)); const bts = el("div", "bts");
+      for (const o of c.options) {
+        const b = el("button", "play" + (o.rec ? " rec" : ""), "▶ " + letter(o.key)); b.dataset.k = o.key; b.title = o.cfg + ", " + o.clips[i].secs + " s";
+        b.addEventListener("click", () => playSeq([{ file: o.clips[i].file, btn: b }])); bts.append(b);
+      }
+      r.append(t, bts); lines.append(r);
+    });
+    card.append(lines); root.append(card);
+  }
+}
+
+// ---- choices
+function sheet() {
+  const got = D.characters.filter(c => mine[c.id]);
+  $("#sheet").textContent = got.length ? "Voices for the Baker cast: " + got.map(c => c.name + " " + letter(mine[c.id]) + " (" + optOf(c, mine[c.id]).cfg + ")").join(", ") + "." +
+    (got.length < D.characters.length ? "\nNot decided: " + D.characters.filter(c => !mine[c.id]).map(c => c.name).join(", ") + "." : "") : "Nothing ticked yet.";
+}
+$("#copy").addEventListener("click", () => { navigator.clipboard && navigator.clipboard.writeText($("#sheet").textContent).then(() => { $("#copy").textContent = "Copied"; setTimeout(() => $("#copy").textContent = "Copy", 1200); }, () => { }); });
+$("#clear").addEventListener("click", () => { mine = {}; save(); render(); });
+
+// ---- limits
+function limits() {
+  const S = D.system, ol = $("#limits-list");
+  const items = [
+    ["Give a named person a chosen voice.", `Voices go to kinds of resident, not to people; there is nowhere to write “Noor speaks in this voice”. Needed: a list of people beside the pools in World/rules/voices.json (resident id, voice, shift, speed), read by the voice tool before it falls back to the pool, and a test for it. Small, but it is a rule change, so it wants your say-so. Without it, none of the choices on this page can be used.`],
+    ["Tell a man from a woman.", `The draw looks only at the id. That is why, in the slice today, Mei speaks in a man's voice and Abe, Jai and Olu in women's voices. Named people would be fixed by the list above; the other ${S.residents.toLocaleString("en")} residents would need each pool split in two and a note of which each resident is, which the world data does not hold.`],
+    ["Sound old.", `No voice in the model is older than about forty-five, except one Father Christmas. Lowering and slowing a voice makes it bigger and heavier, which passes for sixty but not for Len's seventy-four. A truly old voice needs another voice model: one that makes a voice from a description, or one that copies a recording you have the rights to.`],
+    ["Sound in between.", `Every voice is labelled a woman's or a man's. Pip's first two options push one of each toward the middle with the shift setting; the third mixes two voices, which the model can do but the voice tool cannot yet ask for (a few lines in Tools/voice).`],
+    ["Give a named person a voice nobody else has.", `Nearly every voice is already in a pool, so Mei on option A sounds exactly like one café worker in three. A different shift makes a slightly different voice; a mix of two voices makes a new one.`],
+    ["Act within a line.", `Mood is one of six fixed settings for a whole line. Tam “goes quiet exactly once per scene” and Len “gets quieter as he gets more certain”: the nearest thing is tagging that line sad or thinking, which also lowers and slows it. There is no way to drop to a murmur, stress one word, or pause for effect beyond punctuation.`],
+    ["Voice the new quests as written.", `The voice tool expects one speaker per stage of a quest. The Baker drafts name a speaker on every line, often several in one stage, and seven of the speakers are not residents yet. They also have 25 narration lines (“Ten past five. Noor goes down to the cellar…”) with no speaker at all: those need a narrator's voice or stay as text. The tool will need to follow the new layout before any of this can be voiced in the game.`],
+    ["Run at all, at the moment.", `Not caused by this work, and not touched: the town now has ${S.residents.toLocaleString("en")} residents, but the shipped audio was made when it had ${S.indexed.toLocaleString("en")} and matches voices to residents by position in the list, so who has which voice in the slice no longer follows the rule. Two newer kinds of resident (${S.roles_without_pool.join(", ")}) have no pool, so the voice tool stops with an error and its tests fail. This is why the slice and the rule disagree about Eli and Jai.`],
+    ["Keep its model safe.", `The voice model and its Python tools are not in the project (by design) and on this computer they sit in a temporary folder left by an earlier session. A restart or a clean-up can delete them, after which no audio can be made until they are downloaded again. They should be moved somewhere permanent.`]
+  ];
+  for (const [h, t] of items) { const li = el("li"); li.append(el("b", "", h + " "), t); ol.append(li); }
+}
+
+// ---- every voice
+function table() {
+  $("#allvoices-lead").textContent = `Measured on one sentence (“${D.system.test_sentence}”), unshifted, so the numbers are a guide, not a law. Pitch is how high the voice usually sits; movement is how far it rises and falls; brightness is where the weight of the sound lies; time is how long the sentence took.`;
+  const t = $("#vt"); const hr = el("tr"); ["Voice", "Accent", "Pitch", "Movement", "Brightness", "Time", "Used by"].forEach(h => hr.append(el("th", "", h))); t.append(hr);
+  const cast = {}; for (const c of D.characters) for (const o of c.options) if (o.key !== "now") (cast[base(o.cfg).split("+")[0]] = cast[base(o.cfg).split("+")[0]] || []).push(c.name + " " + letter(o.key));
+  for (const [v, m] of Object.entries(D.voices)) {
+    const r = el("tr"); const used = [].concat(m.player.length ? ["the player"] : [], m.pools.map(p => p + " pool"));
+    r.append(el("td", "", v), el("td", "", v[0] === "b" ? "British" : "American"), el("td", "n", m.hz + " Hz"), el("td", "n", range(m) + " st"), el("td", "n", m.bright + " Hz"), el("td", "n", m.secs + " s"),
+      el("td", "", (used.join(", ") || "nobody") + (cast[v] ? " · here: " + cast[v].join(", ") : "")));
+    t.append(r);
+  }
+}
+
+function render() { const y = scrollY; jump(); strip(); together(); chars(); sheet(); scrollTo(0, y); }
+if (!D) $("#err").textContent = "data.js is missing. Run make_cast_voices.py (see the top of that file).";
+else { how(); limits(); table(); render(); }
+</script>
+</body>
+</html>

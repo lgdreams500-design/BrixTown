@@ -1,0 +1,175 @@
+{
+ "note": "Voice candidates for the Baker cast (docs/narrative/src/cast.json). A PROPOSAL for the owner to listen to: nothing here is a pick and nothing here is game data. Voices are Kokoro v1.0 voices, shaped exactly as the game shapes them (Tools/voice/make_voice_samples.py voice(), moods from World/rules/voices.json). 'rec' marks the agent's recommendation, made from measurements and each voice's known character, not by ear. Lines are looked up in the quest files by file/stage/node when the samples are made, so the samples always say the current text. make_cast_voices.py turns this file into audio/ and data.js.",
+ "characters": [
+  {"id": "noor", "difficulty": "medium",
+   "summary": "The lead, with 106 lines, so she gets first call on the best fit. The model has no voice that is actually 58; age is faked by lowering the voice a little.",
+   "lines": [["q1", "card", "n1"], ["q2", "sign", "g1"], ["q2", "still", "only"]],
+   "options": [
+    {"key": "a", "rec": true, "voice": "bf_emma", "lang": "en-gb", "shift": 0.95, "speed": 0.96, "about": "firm, level, British, lowered a little",
+     "why": "One of the most level women's voices in the model, which is what short dry sentences need, and a British accent that suits “you've a tongue on you”."},
+    {"key": "b", "voice": "bf_isabella", "lang": "en-gb", "shift": 0.92, "speed": 0.95, "about": "gentle, refined, British, lowered",
+     "why": "Just as level, but brighter and more polished: she may sound like a headmistress, not a woman who has opened at four for thirty-four years. It would also take the voice Vera's second option needs."},
+    {"key": "c", "voice": "af_kore", "lang": "en-us", "shift": 0.94, "speed": 0.95, "about": "low, plain, American, lowered",
+     "why": "Lower and blunter, but it is the most sing-song woman's voice measured, which works against “never two words where one will do”, and her brother's best voice is British."}
+   ]},
+
+  {"id": "tam", "difficulty": "easy",
+   "summary": "A salesman's voice is what this kind of model does best.",
+   "lines": [["q2", "jar", "t1"], ["q2", "jar", "t_loaf"], ["q2", "jar", "t_lie"]],
+   "options": [
+    {"key": "a", "rec": true, "voice": "bm_fable", "lang": "en-gb", "speed": 1.08, "about": "bright, expressive, British, quick",
+     "why": "By far the brightest voice in the model and a natural storyteller: fast, warm, selling; and British like his sister. Eli must then keep the voice he has in the slice today, not the one the rule would now give him (this one)."},
+    {"key": "b", "voice": "am_fenrir", "lang": "en-us", "speed": 1.06, "about": "big, lively, American, quick",
+     "why": "One of the most animated men's voices, good for the patter, but American against a British sister, and it is the best voice for Olu."},
+    {"key": "c", "voice": "am_puck", "lang": "en-us", "shift": 0.96, "speed": 1.06, "about": "playful, light, American, lowered a touch",
+     "why": "The joker in him, but it is a young man's voice, and even lowered it may not reach 49 or carry the quiet true line each scene turns on."}
+   ]},
+
+  {"id": "pip", "difficulty": "hard",
+   "summary": "The model labels every voice female or male; none is made to be in between. Two voices can be pushed there with the settings the game already has, and a mix of two voices gets nearer but needs a small change to the voice tool.",
+   "lines": [["q1", "morning", "pip1"], ["q4", "pip", "k2"], ["r_w", "square", "g_pip"]],
+   "options": [
+    {"key": "a", "rec": true, "voice": "af_sky", "lang": "en-us", "shift": 0.96, "speed": 1.04, "about": "light, young, lowered a little",
+     "why": "A light young voice whose pitch already sits in the range that reads as neither clearly a man nor a woman; lowered 4% it sits squarely there. Works today with no change to anything."},
+    {"key": "b", "voice": "am_puck", "lang": "en-us", "shift": 1.1, "speed": 1.04, "about": "playful young man, raised",
+     "why": "The same idea from the other side: a boyish voice raised 10%. It keeps Puck's bounce for the blurting, but may tip into sounding like a teenage boy, or like the town's children, who use this voice raised further."},
+    {"key": "c", "voice": "af_sky+am_puck", "lang": "en-us", "speed": 1.04, "about": "an even mix of the two voices above", "needs": "The voice tool cannot mix voices today. The model can: this sample is real. Using it in the game needs a few lines added to Tools/voice so a pool entry can name two voices.",
+     "why": "A voice that is neither of its parents and that nobody else in town would have. Probably the truest answer for Pip, but it is the one option here that needs the tool changed first."}
+   ]},
+
+  {"id": "oda", "difficulty": "medium",
+   "summary": "She has to sit well apart from Noor, her friend of forty years, and she says “Aye”, but the best British woman's voice is Noor's. Her two low options sit as low as some of the men; if she stops sounding like a woman to you, the lowering should come off.",
+   "lines": [["q2", "rye", "o_how"], ["q2", "rye", "o_marek"], ["q3", "oda", "d1"]],
+   "options": [
+    {"key": "a", "rec": true, "voice": "af_alloy", "lang": "en-us", "shift": 0.96, "speed": 0.86, "about": "low, even, American, lowered and slow",
+     "why": "The lowest woman's voice in the model and an even one: slow and exact. It sits well below Noor, so the two old friends are easy to tell apart. It is American, so “Aye” may sit oddly: listen for that."},
+    {"key": "b", "voice": "af_kore", "lang": "en-us", "shift": 0.95, "speed": 0.86, "about": "low, firm, American, lowered and slow",
+     "why": "As low, with much more rise and fall, so she sounds more weathered and less exact; pick it if the first sounds flat on the Marek line."},
+    {"key": "c", "voice": "bf_emma", "lang": "en-gb", "shift": 0.9, "speed": 0.85, "about": "firm, British, lowered more and slow",
+     "why": "The only way to give her a British “Aye”. It is Noor's recommended voice, so it is possible only if Noor takes another: the two share scenes and would be the same woman at two speeds."}
+   ]},
+
+  {"id": "suvi", "difficulty": "medium",
+   "summary": "Easy to voice on her own; the catch is her father, since the best voices for the two of them have different accents.",
+   "lines": [["q3", "farm", "f1"], ["q3", "farm", "f2"], ["q3", "farm", "f_nosecond"]],
+   "options": [
+    {"key": "a", "rec": true, "voice": "af_river", "lang": "en-us", "speed": 1.04, "about": "quick, level, American",
+     "why": "Naturally the fastest talker of the women and a level one: brisk, numerate, a little tired. American, where her father's best voice is British."},
+    {"key": "b", "voice": "bf_lily", "lang": "en-gb", "speed": 1.08, "about": "soft, young, British, quickened",
+     "why": "British, to match her father. A softer voice than “tired of being cast as the villain” asks for, so she may sound gentler than she is written."},
+    {"key": "c", "voice": "af_kore", "lang": "en-us", "speed": 1.06, "about": "low, firm, American, quickened",
+     "why": "Firmer and lower, the one who opens the post; more sing-song than the first, which works against “numerate”."}
+   ]},
+
+  {"id": "len", "difficulty": "hard",
+   "summary": "The model has no old men except a Father Christmas. Every other man's voice sounds thirty to fifty; lowering and slowing one makes it heavier, not older. Nothing here will give the thin, dry voice of a real man of 74.",
+   "lines": [["q3", "farm", "f_len"], ["q3", "farm", "f_sign2"], ["q3", "farm", "f_saved"]],
+   "options": [
+    {"key": "a", "rec": true, "voice": "bm_lewis", "lang": "en-gb", "shift": 0.94, "speed": 0.86, "about": "deep, British, lowered and slow",
+     "why": "The deepest British voice and a slow one: weight and stillness for the biblical cadence. He will sound like a big man of fifty-five speaking slowly, not a man of seventy-four."},
+    {"key": "b", "voice": "bm_george", "lang": "en-gb", "shift": 0.9, "speed": 0.86, "about": "kind, British, lowered and slow",
+     "why": "Naturally one of the slowest men's voices and a kind one; gentler and less certain than Len. It is also the best voice for Jai, so only one of them can have it."},
+    {"key": "c", "voice": "am_santa", "lang": "en-us", "speed": 0.92, "about": "the model's one old man, American",
+     "why": "The only voice in the model that is actually old, and used by nobody in town. But it was made as a Father Christmas: high and jolly, the opposite of a man who gets quieter as he gets surer. Here so you can hear why not."}
+   ]},
+
+  {"id": "vera", "difficulty": "medium",
+   "summary": "She has to be clearly not Noor: both are older, British-written women, and they share the fair and the wedding.",
+   "lines": [["q4", "judging", "j_plait"], ["q4", "judging", "j_nowhere2"], ["q4", "judging", "j_great"]],
+   "options": [
+    {"key": "a", "rec": true, "voice": "bf_alice", "lang": "en-gb", "shift": 0.92, "speed": 0.94, "about": "crisp, wide-ranging, British, lowered",
+     "why": "The widest melody of the British women: theatrical, where Noor's voice is the flattest. Higher than Noor and darker in tone, so the two are apart on pitch, colour and delivery at once. Without the lowering it is a young voice; listen for whether 8% is enough."},
+    {"key": "b", "voice": "bf_isabella", "lang": "en-gb", "shift": 0.93, "speed": 0.88, "about": "gentle, older, British (the town's elder setting)",
+     "why": "Exactly one of the three voices the town's elders already use, so it needs nothing new; but it is gentle where Vera is tart, level where she is theatrical, and close to Noor in pitch and colour."},
+    {"key": "c", "voice": "af_sarah", "lang": "en-us", "shift": 0.92, "speed": 0.88, "about": "warm, older, American (your pick for elders)",
+     "why": "The elder voice you chose for Edda, with plenty of rise and fall. Warm, not tart; American; and about one elder in three in town already speaks in exactly this voice."}
+   ]},
+
+  {"id": "mei", "difficulty": "easy",
+   "summary": "In the game today a draw from the café pool gave her a man's voice. Her own pool already holds the voice you picked for café workers.",
+   "now": {"voice": "am_liam", "lang": "en-us", "about": "young man, American", "why": "What the slice plays for Mei today: the café pool has three voices, the draw is by her id alone, and it landed on the man's one. It clashes with “she”."},
+   "lines": [["r_m1", "fountain", "f_fancy"], ["r_m2", "tram", "t3"], ["q1", "cafe", "m_late"]],
+   "options": [
+    {"key": "a", "rec": true, "voice": "af_bella", "lang": "en-us", "about": "bright, American (your pick for café workers)",
+     "why": "The voice you chose for the café worker, already in her role's pool: bright and quick, the highest and brightest American voice in the recommended cast, so she stands out against everybody she talks to."},
+    {"key": "b", "voice": "af_heart", "lang": "en-us", "about": "warm, expressive, American",
+     "why": "The model's best-made voice and a warmer one with more rise and fall; worth hearing on the tram line, since she carries the courting. Very close to the first in pitch and brightness; the difference is warmth."},
+    {"key": "c", "voice": "bf_lily", "lang": "en-gb", "speed": 1.05, "about": "soft, young, British, a little quicker",
+     "why": "The third voice in her pool, and British, which suits “you've a face on”. Softer and slower by nature than a woman who tells everyone everything."}
+   ]},
+
+  {"id": "abe", "difficulty": "easy",
+   "summary": "One line in this career, so two of his lines from the live game are added. In the game today he draws a woman's voice.",
+   "now": {"voice": "af_aoede", "lang": "en-us", "about": "light young woman, American", "why": "What the slice plays for Abe today, drawn from the courier pool by his id. It clashes with “he”."},
+   "lines": [["r_w", "square", "ring_abe"], ["live", "errand_runner/report", "r1"], ["live", "errand_runner/report", "r3"]],
+   "options": [
+    {"key": "a", "rec": true, "voice": "am_puck", "lang": "en-us", "about": "playful, light, American",
+     "why": "Cheerful and light on his feet, with a lot of bounce; not used by any other named person in the recommended cast."},
+    {"key": "b", "voice": "am_fenrir", "lang": "en-us", "about": "big, lively, American",
+     "why": "From his own courier pool, so nearest to the rule; a bigger voice than “discreet to a fault”, and the best one for Olu."},
+    {"key": "c", "voice": "am_eric", "lang": "en-us", "about": "calm, plain, American",
+     "why": "Also from his own pool and suitably discreet, but less cheerful, and it is the voice Eli has in the slice today."}
+   ]},
+
+  {"id": "jai", "difficulty": "easy",
+   "summary": "The world data still has Jai as a café worker, so he draws from the café pool, and gets a woman's voice either way.",
+   "now": {"voice": "af_river", "lang": "en-us", "about": "quick, level woman, American", "why": "What the slice plays for Jai today. The rule would now give him another woman's voice (the café worker's, af_bella), because he is still filed as café staff. Either clashes with “he”."},
+   "lines": [["q2", "crock", "j2"], ["q2", "crock", "j_press"], ["q3", "book", "b_mend"]],
+   "options": [
+    {"key": "a", "rec": true, "voice": "bm_george", "lang": "en-gb", "about": "kind, measured, British (your pick for the nurse)",
+     "why": "The voice you chose for the nurse: kind, careful and naturally one of the slowest men's voices, which fits a man who loves things through paperwork and melts for a good story."},
+    {"key": "b", "voice": "bm_daniel", "lang": "en-gb", "about": "plain, exact, British",
+     "why": "The flattest man's voice in the model: all rule and no melt. Good for “I have all the forms”, short on the warmth of the long-loan line."},
+    {"key": "c", "voice": "am_echo", "lang": "en-us", "speed": 0.96, "about": "smooth, soft, American",
+     "why": "Softer and younger; earnest, but it loses the dusty, exact quality that British vowels give a museum keeper."}
+   ]},
+
+  {"id": "olu", "difficulty": "easy",
+   "summary": "Six lines, none of them sad, so there is no emotional sample to give. In the game today he draws a woman's voice.",
+   "now": {"voice": "af_heart", "lang": "en-us", "about": "warm woman, American", "why": "What the slice plays for Olu today, drawn from the shopkeeper pool by his id. It clashes with “he”."},
+   "lines": [["q1", "grocer", "o_bet"], ["q1", "grocer", "o_short3"], ["q1", "grocer", "o_short2"]],
+   "options": [
+    {"key": "a", "rec": true, "voice": "am_fenrir", "lang": "en-us", "about": "big, lively, American",
+     "why": "One of the two most animated men's voices measured: a man who relishes news and tells a story for a week."},
+    {"key": "b", "voice": "am_liam", "lang": "en-us", "about": "young, casual, American",
+     "why": "Quick and chatty, but younger and lighter than a grocer nine years into a bet."},
+    {"key": "c", "voice": "am_eric", "lang": "en-us", "about": "calm, plain, American",
+     "why": "The only man's voice in his own shopkeeper pool, so nearest to the rule; plain for a gossip, and it is the voice Eli has in the slice today."}
+   ]},
+
+  {"id": "eli", "difficulty": "easy",
+   "summary": "The slice and the rule disagree about him: the shipped audio is older than the present list of residents. What the slice plays today suits him and keeps him clear of Tam.",
+   "lines": [["q4", "entry", "e2"], ["r_w", "square", "s_eli"], ["q4", "entry", "e4"]],
+   "options": [
+    {"key": "a", "rec": true, "current": "This is what the slice plays for Eli today.", "voice": "am_eric", "lang": "en-us", "about": "calm, plain, quick, American",
+     "why": "Keep it: naturally the fastest man's voice, plain and tidy, right for a man with a clipboard, and far from Tam in pitch, colour and accent."},
+    {"key": "b", "current": "This is what the rule would give Eli if the audio were made again today.", "voice": "bm_fable", "lang": "en-gb", "about": "bright, expressive, British",
+     "why": "Livelier and more of a showman than Eli is. It is Tam's recommended voice, and they stand at the same fair, so only one of them can have it."},
+    {"key": "c", "voice": "bm_daniel", "lang": "en-gb", "about": "plain, exact, British",
+     "why": "A very level, official voice: more clerk, less market seller. A good second choice if you want him British."}
+   ]},
+
+  {"id": "hari", "difficulty": "easy",
+   "summary": "He has no spoken line in the nine Baker and courting files, only mentions, so these are his lines from the live game.",
+   "lines": [["live", "night_gardener/who", "w2"], ["live", "night_gardener/who", "w4"], ["live", "night_gardener/who", "w5"]],
+   "options": [
+    {"key": "a", "rec": true, "current": "This is what the slice plays for Hari today, and what the rule gives him.", "voice": "am_onyx", "lang": "en-us", "about": "very deep, quiet, American",
+     "why": "Keep it: the deepest and darkest voice in the model, level and unhurried. A big quiet man who plants flowers at night; no clash."},
+    {"key": "b", "voice": "am_echo", "lang": "en-us", "speed": 0.94, "about": "smooth, soft, American, a little slower",
+     "why": "Lighter and shyer, if the first sounds too imposing for a man who asks you not to tell anyone."},
+    {"key": "c", "voice": "bm_daniel", "lang": "en-gb", "speed": 0.94, "about": "plain, level, British, a little slower",
+     "why": "Quiet and level, but its flatness reads as official, not shy."}
+   ]}
+ ],
+ "scenes": [["noor","vera"],["noor","oda"],["noor","pip"],["noor","mei"],["noor","tam"],["tam","eli"],["tam","jai"],["tam","pip"],["jai","eli"],["vera","jai"],["vera","eli"],["vera","mei"],["mei","pip"],["mei","olu"],["suvi","len"],["oda","jai"],["abe","eli"],["olu","eli"]],
+ "together": [
+  {"title": "Noor and Vera", "why": "Landlady and tenant; both at the fair and the wedding.", "say": [["noor", 0], ["vera", 0]]},
+  {"title": "Noor and Oda", "why": "Baker and miller, friends for forty years.", "say": [["noor", 0], ["oda", 2]]},
+  {"title": "Tam and Eli", "why": "Both men at the fair's entry table.", "say": [["tam", 0], ["eli", 0]]},
+  {"title": "Noor and Tam", "why": "Sister and brother: should sound like one family.", "say": [["noor", 0], ["tam", 2]]},
+  {"title": "Suvi and Len", "why": "Daughter and father at the kitchen table.", "say": [["suvi", 0], ["len", 0]]},
+  {"title": "Noor and Pip", "why": "Master and apprentice, every morning.", "say": [["noor", 2], ["pip", 0]]},
+  {"title": "The judging table", "why": "Vera, Jai, Eli and Tam within a minute of each other.", "say": [["vera", 0], ["jai", 0], ["eli", 0], ["tam", 0]]},
+  {"title": "Mei, then everyone", "why": "She talks to all of them.", "say": [["mei", 0], ["noor", 0], ["mei", 2], ["vera", 0], ["mei", 0], ["oda", 2], ["mei", 2], ["suvi", 0], ["mei", 0], ["pip", 0], ["mei", 2], ["tam", 0]]}
+ ]
+}
