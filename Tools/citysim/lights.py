@@ -64,7 +64,7 @@ def colour_of(L, kind):
 def kind_of_light(L, name):
     """The kind a Blender lamp stands for, by its name's start (FLamp_Light.003 is a floor lamp); None if not a lamp."""
     for n, k in L["blender_lights"].items():
-        if name == n or name.startswith(n + "."):
+        if name == n or name.startswith(n + ".") or (n.endswith("*") and name.startswith(n[:-1])):
             return L["kinds"][k]
     return None
 

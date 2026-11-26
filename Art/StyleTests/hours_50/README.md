@@ -14,7 +14,8 @@ fall). Reviewed with the owner one place at a time; an approved place goes to `A
 | A home's room (the living room; WASTED_PLACE=rooms WASTED_ONLY=living): six settings, no weather | `Rooms_Living_<Setting>.jpg`, `review_Rooms_Living.jpg` | approved 2026-11-26: `Art/Reference/Indoor/IndoorHomeRoom_*.jpg` |
 | A home's hallway by the stairs (WASTED_PLACE=hallway, `corridor()`): no window, lit through a room's door | `Hallway_<Setting>.jpg`, `review_Hallway.jpg` | approved 2026-11-26: `Art/Reference/Indoor/IndoorHallway_*.jpg` |
 | The bakery (WASTED_PLACE=bakery): four settings, no moon, its oven always lit | `Bakery_<Setting>.jpg`, `review_Bakery.jpg` | approved 2026-11-26: `Art/Reference/Shops/ShopsBakeryLight_*.jpg` |
-| Other shops (bank, grocer and the like, no fire); the furniture outlet (big hall) | to come | |
+| A shop's floor without a fire (WASTED_PLACE=shop, `shopfloor()`): the grocer's size, the approved shopfront | `Shop_<Setting>.jpg`, `review_Shop.jpg` | approved 2026-11-26: `Art/Reference/Shops/ShopsShopFloor_*.jpg`; the awning rolled up mornings (`AWNING_IN`) |
+| The furniture outlet's hall, a big hall (WASTED_PLACE=outlet): the game's size and roof, glazed skylights | `FurnitureOutlet_<Setting>.jpg`, `review_FurnitureOutlet.jpg` | approved 2026-11-26: `Art/Reference/Shops/ShopsBigHall_*.jpg` |
 
 What the owner changed on the way: fewer lamps down the alley; the moon high and down the alley so it reaches the paving;
 one lamp-lit night instead of two; cloud, rain, fog and snow added; no haze at noon; no rain, wet or snow under cover;
@@ -44,3 +45,6 @@ hallway NightFullMoon 12, `MOON` `indoor_colour`), the new moon darker still (Ni
 Fires (the owner, 2026-11-26): one red for every fire in every reference (`FIRE_COLOUR`), its flames glowing without catching
 light (`FIRE_GLOW` 0.1) and its light softer and spread (`FIRE_LIGHT` 0.5); with no other light its red takes the room over, as
 the owner expects. The home room has two more nights with the fire out too (`FIRE_OUT_HOURS`), as dim as the hallway's.
+
+From 2026-11-26 references go to the owner at low quality (WASTED_SCALE=50 WASTED_SAMPLES=24) and are rendered in full only once
+approved (the owner).
