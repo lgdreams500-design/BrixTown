@@ -1,0 +1,6 @@
+09:03:31 Blender 5.3.0
+09:04:12 lineup rendered in 39.3s (477 objects)
+09:04:12 saved .blend
+09:04:45 faces rendered in 31.4s (438 objects)
+09:05:12 ages rendered in 26.8s (198 objects)
+09:05:12 DONE
