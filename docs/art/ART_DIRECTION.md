@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-ART-DIRECTION
 title: Brix Town — Art direction (locked look)
-version: 1.10.0
+version: 1.11.0
 status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22, interiors and furniture on 2026-11-22, the menu's look on 2026-11-23, the house colourways and the house plan with its furnishing levels on 2026-11-23, every other building's colourways and the row houses and flats inside on 2026-11-24
 last_updated: 2026-11-26
 relates_to: [FURN-003, ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
@@ -21,27 +21,12 @@ gets corrected.
 
 ## 1. Reference images (the source of truth)
 
-All in `Art/Reference/`. Originals and every earlier experiment stay in `Art/StyleTests/`.
-
-| File | What it locks | Made by |
-|---|---|---|
-| `world_alley_morning_raw.png` | **The look.** Chosen by the owner as "style test 02, raw". Old-town alley, low sun through haze. | `Tools/blender/style_test_02.py` |
-| `world_overview.png` | The same alley at morning and dusk plus a market square at midday: one place, readable at every hour. | `Tools/blender/old_town_04.py` |
-| `world_street_kit_light.png` | **The daylight** (ADR-0007): a street of real lots built by the building kit, in the softer, warmer kit light. Forms and materials still follow the alley image. | `Tools/blender/building_kit_07.py` |
-| `character_options.png` | Character options A, B, C side by side. **B "Soft" is the chosen one.** | `Tools/blender/old_town_04.py` |
-| `character_lineup.png` | Six people in option B: two player examples and four NPC roles. | `Tools/blender/character_face_05.py` |
-| `face_expressions.png` | Six expressions on one face. | `Tools/blender/character_face_05.py` |
-| `face_mouth_shapes.png` | The eight speech mouth shapes. | `Tools/blender/character_face_05.py` |
-| `furniture_lines.png` | **Furniture**: every piece of the four style lines Plain, Old Town, Workshop and Curve (ADR-0026). | `Tools/blender/furniture_kit_17.py` (`sheet`) |
-| `interior_room_daylight.png` | **Interiors**: an Old Town living room with a bed corner, low sun through a side window, two warm lamps. | `Tools/blender/furniture_kit_17.py` (`room_oldtown`) |
-| `house_colourways.png` | **Houses**: the four house lines Plain, Old Town, Workshop and Curve, three colourways each (ADR-0032). | `Tools/blender/house_styles_20.py` (`house_styles_20_sheet.py`) |
-| `house_interior_ground.png`, `house_interior_upstairs.png` | **Furnished houses**: the house at 12 x 9 m in each line at the four furnishing levels Bare, Basic, Homely and Full (ADR-0035). | `Tools/blender/house_interiors_21.py` (`house_interiors_21_sheet.py`) |
-| `building_colourways_1.png` to `_3.png` | **Every other building**: 17 groups of build types, three colourways each (ADR-0036). | `Tools/blender/building_styles_22.py` (`building_styles_22_sheet.py`) |
-| `home_interior_<plan>.png`, `house_colourways_12x9.png` | **Row houses and flats inside** at the four furnishing levels; the house colourways at 12 x 9 m (ADR-0036). | `Tools/blender/home_interiors_22.py`, `house_outside_23.py` |
-| `character_elders.png` | **Old people**: six elders made from the values that say age, the cast's old Elder at the left for comparison (ADR-0059). Hair built on the skull. | `Tools/blender/elders_48.py` |
-| `character_noor.png` | Noor, the master baker, 58: the head close up (ADR-0059). | `Tools/blender/baker_look_47.py` (`check`) |
-| `bakery_inside_day.png`, `bakery_inside_four.png` | **The Stone Oven inside**, by day and at four in the morning with the oven and lamps only (ADR-0059). | `Tools/blender/baker_look_47.py` |
-| `face_talk.mp4` / `.gif` | A spoken line with lip sync, blink and brow movement. | `Tools/blender/character_face_05.py` |
+Every approved reference is in `Art/Reference/<Category>/`, named `<Category><Subject>[_<Variant>].<ext>`, and listed in
+**`Art/Reference/catalog.json`**: what each locks, its approval and decision, the script that makes it, the game models
+built from it, issues seen in it, and its old names (ADR-0061). The owner reviews them in `Art/Reference/index.html`,
+which `python Tools/reference_catalog.py` writes from the catalog after checking it. Categories: World, Buildings,
+Indoor, Shops, Malls, Furniture, Vehicles, People, Interface. References taken out of use are in `Art/Retired/`; look
+tests and every earlier experiment stay in `Art/StyleTests/`.
 
 Rejected directions, kept only so they are not tried again: the first 2D sketches, the painterly
 filter (`style_test_02_painted.png`), and the three "playful" looks (`look_test_03_*`).
@@ -61,7 +46,7 @@ haze, with small pools of lantern light in the shade.
 | W4 | Palette is **muted and warm**. Colour comes from a few dull accents (shutters, awnings, cloth), never from saturated walls. | See §2.3. |
 | W5 | Light is **low and directional**, warm sun against cool sky fill, with **haze** that lightens distance and shows light shafts. | Far end of a street is visibly paler than the near end. |
 | W6 | **Lanterns and lit windows** give warm pools in shade and carry the scene at dusk. | At dusk the street is still readable without the sun. |
-| W7 | The same place must read clearly at **morning, midday and dusk**; only light and haze change. | `world_overview.png`. |
+| W7 | The same place must read clearly at **morning, midday and dusk**; only light and haze change. | `Art/Reference/World/WorldHours.png`. |
 | W8 | **No painterly or outline post-process.** The image is the plain render. | Owner chose the raw render over the filtered one. |
 
 ### 2.3 Palette
@@ -96,7 +81,7 @@ From the scripts; use as starting values when building the Unreal sky and sun fo
 | Character sheets | (−0.45, −0.50, 0.74) | (1.0, 0.82, 0.62) | 3.2 | (0.42, 0.55, 0.82) | 0.25 | 0.012 or none | −0.3 |
 
 In the playable slice the kit daylight is the reference recipe scaled towards the colours measured in
-`world_street_kit_light.png` (ADR-0013): sun ×0.7 and slightly golden, sky fill ×1.25 by day, a mostly grey
+`Art/Reference/World/WorldDaylight.png` (ADR-0013): sun ×0.7 and slightly golden, sky fill ×1.25 by day, a mostly grey
 bounce ×1.2, haze ×0.55 with a light veil over sky and distance, exposure ×0.74 (`LIGHTS.kit` in
 `Prototype/play/play.js`). The exact measured match was too pale for the owner; it is kept as `?light=measured`. In shade, bounced
 light comes only from sunlit ground nearby and things stand in contact shade (ADR-0018), so alleys go dark and warm as in
@@ -108,8 +93,8 @@ Common to all: AgX view transform with the "Medium High Contrast" look; haze sca
 ### 2.5 Vehicles — "Soft box" (ADR-0015, replacing "Classic" of ADR-0011)
 
 Reference: `Art/Reference/vehicles_soft_box_2.png` (option A of `Tools/blender/car_kit_09.py`; ADR-0057 opened its cabins
-down to their floor, where `vehicles_soft_box.png` had a board over the seats). The owner first chose C
-"Classic" (`vehicles_classic.png`, kept for the record), then after playing with it in the slice preferred A.
+down to their floor, where `Art/Retired/vehicles_soft_box.png` had a board over the seats). The owner first chose C
+"Classic" (`Art/Retired/vehicles_classic.png`, kept for the record), then after playing with it in the slice preferred A.
 
 | # | Rule | Check |
 |---|---|---|
@@ -120,7 +105,8 @@ down to their floor, where `vehicles_soft_box.png` had a board over the seats). 
 
 ### 2.6 Interiors and furniture (ADR-0026)
 
-References: `Art/Reference/furniture_lines.png` and `Art/Reference/interior_room_daylight.png`. Style lines, the outlet and
+References: `Art/Reference/Furniture/FurnitureLines.png` and the rooms of `Art/Reference/Indoor/IndoorRooms_<Kind>.png` (the
+owner, 2026-11-26; `interior_room_daylight.png` is retired: one setting for a generic room). Style lines, the outlet and
 how the renders get their look (and what the slice and Unreal must do to match it): `docs/art/INTERIOR_STYLE.md`.
 
 | # | Rule | Check |
@@ -176,7 +162,7 @@ Brown `#77583f`, Stone `#6a6871` (all with `#fbf3e0`), and the quiet board `#3b3
 
 ### 2.8 Houses (ADR-0032)
 
-Reference: `Art/Reference/house_colourways.png`. Each of the four house lines comes in three colourways; a colourway
+Reference: `Art/Reference/Buildings/BuildingsHouseLines.png`. Each of the four house lines comes in three colourways; a colourway
 sets the walls (a plaster pair from §2.3, or the line's stone), the shutters, door, window frames and roof tiles, and
 the line keeps its shape (Old Town's corner stones, door hood and window boxes; Workshop's dressed stone; Curve's
 arched ground floor). The values are kept in `World/rules/house_styles.json`.
@@ -188,14 +174,15 @@ arched ground floor). The values are kept in `World/rules/house_styles.json`.
 | Workshop | Brown wood, stone, dark roof | Teal, stone, terracotta roof | Dusty blue, stone, slate roof |
 | Curve | Dusty blue and ochre, cool plaster | Cream and terracotta, warm plaster | Teal and cream, pale plaster, brown roof |
 
-Inside (ADR-0035; references `house_interior_ground.png` and `house_interior_upstairs.png`), each line furnishes its own
+Inside (ADR-0035; references `Art/Reference/Indoor/IndoorHouse12x9_Ground.png` and `Art/Reference/Indoor/IndoorHouse12x9_Upstairs.png`), each line furnishes its own
 house, from the plan in `World/rules/home_plans.json`, at one of four levels that add to each other: Bare (beds, sofa, a
 table to eat at, kitchen, bathroom), Basic (storage and comfort), Homely (rugs, shelves, pictures, the hall) and Full (every
 piece and the decoration). Rules I1-I9 hold at every level.
 
 ### 2.9 Every other building (ADR-0036)
 
-References: `Art/Reference/building_colourways_1.png` to `_3.png` and `home_interior_<plan>.png`. Each build type that
+References: `Art/Reference/Buildings/BuildingsTypes_1.png` to `_3.png`, `Art/Reference/Indoor/IndoorRowHouse<plan>.png` and
+`Art/Reference/Indoor/IndoorFlat<area>.png`. Each build type that
 is not a designed house belongs to one of 17 groups of the town kit, and each group comes in three colourways (walls,
 shutters, door, frames, roof, and for shop and café fronts an awning); the values are kept in
 `World/rules/building_styles.json`. Row houses and court flats are furnished from their plans in
@@ -263,12 +250,12 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | How production character models are made | Q-15 |
 | Vegetation | not started (vehicles: §2.5, interiors and furniture: §2.6, the interface: §2.7) |
 | The interface outside the menu (conversation box, building designer, the lettering over the game) | still the earlier dark-box look; the counters and the buy menu are Lamplight in the Unreal build (§2.7, ADR-0049); whether the rest follow is for the owner to say |
-| More furniture kits and decoration (kitchen, bathroom, dining, study, children, hallway, garden, shop, café, bedroom, living, decoration) | not approved; renders of `Tools/blender/furniture_kit_18.py` in `Art/StyleTests/furniture_kit_18/` for the owner to choose from |
-| Wear stages (I8) | not yet rendered. (The furniture outlet's look, `Art/StyleTests/furniture_kit_17/showroom.png`, was approved by the owner's request to build it, ADR-0027.) |
+| More furniture kits and decoration (kitchen, bathroom, dining, study, children, hallway, garden, shop, café, bedroom, living, decoration) | the twelve rooms of `Tools/blender/furniture_kit_18.py` are a reference since 2026-11-26 (`Art/Reference/Indoor/IndoorRooms_<Kind>.png`, the owner: "as it shows different settings"); their issues are listed in the catalog; the pieces in them are not yet approved one by one |
+| Wear stages (I8) | not yet rendered. (The furniture outlet's look, `Art/Reference/Shops/ShopsFurnitureOutlet.png`, was approved by the owner's request to build it, ADR-0027.) |
 | Night (after dusk) and bad-weather looks | night: approved in the slice (ADR-0023, owner 2026-11-22), no reference image yet; pictures in `Art/StyleTests/night_sky_15/`. Rain, fog and overcast: approved in the slice (ADR-0016), no rule or reference image yet; must follow W5–W7 |
 | The sky: blue overhead with drifting clouds | approved in the slice (ADR-0014); not in the reference renders, still needs a rule and a reference image |
 | Big modern buildings outside Old Town (Eastgate Mall's ribbon walls and pierced eggs) | built in the slice at the owner's request, in the locked materials: mottled plaster, ochre and cream, lantern light (ADR-0037). No rule or reference image yet. The photograph it follows is glossy white metal and gold; going that way would change the look (W1, W4) and needs the owner's word and a new ADR |
-| Whether the iris should be smaller than in `face_expressions.png` | owner to say |
+| Whether the iris should be smaller than in `Art/Reference/People/PeopleFaceExpressions.png` | owner to say |
 | How the look is achieved in Unreal on modest hardware (haze, soft light) | PH1 task |
 
 ## 6. Change log
@@ -287,3 +274,4 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | 1.9.0 | 2026-11-24 | Every other building's colourways and the row houses and flats inside: the owner approved look tests building_styles_22, home_interiors_22 and house_outside_23 (ADR-0036): §2.9 and nine references. |
 | 1.10.0 | 2026-11-26 | Old age, Noor and the Stone Oven inside (ADR-0059): rule C9, references `character_elders.png`, `character_noor.png`, `bakery_inside_day.png`, `bakery_inside_four.png`. |
 | 1.9.1 | 2026-11-24 | §5: Eastgate Mall's sculpted shell noted as built in the locked materials, with no rule or reference image yet (ADR-0037). No rule or reference changed. |
+| 1.11.0 | 2026-11-26 | References organised (ADR-0061): a folder per category, every file named `<Category><Subject>[_<Variant>]`, one list in `Art/Reference/catalog.json` and a page to review them (`Art/Reference/index.html`, written by `Tools/reference_catalog.py`); §1's table replaced by it. The kit-18 rooms are references (`IndoorRooms`); `interior_room_daylight.png`, `vehicles_soft_box.png` and `vehicles_classic.png` retired to `Art/Retired/`. |

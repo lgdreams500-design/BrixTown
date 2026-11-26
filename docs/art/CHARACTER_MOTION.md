@@ -16,7 +16,7 @@ How people in Brix Town move, and what makes that movement the game's own. The p
 carry over to Unreal) and `Tools/blender/character_anim_06.py` (builds the jointed test body and
 renders the clips).
 
-Approved clips: `Art/Reference/motion_walks.mp4` and `Art/Reference/motion_walktalk.mp4`
+Approved clips: `Art/Reference/People/PeopleMotionWalks.mp4` and `Art/Reference/People/PeopleMotionWalkTalk.mp4`
 (originals and frames in `Art/StyleTests/character_anim_06_*`). What is approved is the way people
 move; the rigid test body and the limits in §5 and §6 are not the target.
 

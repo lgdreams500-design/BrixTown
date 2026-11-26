@@ -17,7 +17,7 @@ counts everything; hides her hands. Three options, the same woman dressed three 
 The bakery: a stone oven with an arched mouth and a wood store under it, a kneading bench with a tray of rolls, racks
 of loaves with the crock of the Mother on the top shelf, flour sacks under the price board, the counter, the plank door
 to the alley with its lantern (the four o'clock door) and the door to the proofing room. Its light is set against
-Art/Reference/interior_room_daylight.png: mostly warm shade, a patch of sun, pools of lamp and oven light.
+Art/Retired/interior_room_daylight.png: mostly warm shade, a patch of sun, pools of lamp and oven light.
 
 Renders go to Art/StyleTests/baker_look_47/:
     noor.png          the three options, full height

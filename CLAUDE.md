@@ -9,7 +9,8 @@ Brix Town: a third-person multiplayer life-sim in Unreal Engine 5.8. Art source 
 4. Read `docs/process/FEATURE_PROCESS.md` and `docs/backlog/feature_choices.json`. A feature is in scope for a phase only
    at or below the level the owner picked for it; a missing pick means undecided: ask, do not build.
 5. For anything visual, read `docs/art/ART_DIRECTION.md` and `docs/process/LOOK_GATE.md`, and look at
-   `Art/Reference/` first. For faces read
+   the reference for it in `Art/Reference/catalog.json` first (one entry per thing: its picture, rules and the models made
+   from it). For faces read
    `docs/art/CHARACTER_FACE.md`; for body animation read `docs/art/CHARACTER_MOTION.md`.
 
 ## Rules
@@ -57,7 +58,7 @@ Brix Town: a third-person multiplayer life-sim in Unreal Engine 5.8. Art source 
 | Path | Contents |
 |---|---|
 | `Game/` | Unreal project (`BrixTown.uproject`, `Source/`, `Content/`, `Config/`, `Plugins/`) |
-| `Art/Reference/` | Approved look targets (read-only) |
+| `Art/Reference/` | Approved look targets (read-only), one folder per category; `catalog.json` lists them all, `index.html` shows them |
 | `Art/StyleTests/` | Look and animation experiments, including rejected ones |
 | `Art/Source/` | Blender files and textures being authored |
 | `Art/Export/` | Files exported from Blender for import into Unreal |

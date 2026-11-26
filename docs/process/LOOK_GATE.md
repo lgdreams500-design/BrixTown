@@ -16,7 +16,7 @@ The same day the cars had been drawn inside out for days. A thing that is seen i
 at as a whole, against the look, by whoever made it.
 
 ## What it is measured against
-1. `Art/Reference/` and the rules of `docs/art/ART_DIRECTION.md` (W1 to W8 for the world, V for vehicles, I for
+1. `Art/Reference/` (`catalog.json` says which reference covers what) and the rules of `docs/art/ART_DIRECTION.md` (W1 to W8 for the world, V for vehicles, I for
    interiors, C for people, L and U for screens). These are the bar.
 2. **Not the browser slice.** The slice was a prototype (the owner, 2026-11-26: "slice was just a prototype, you need
    to aim even better than slice in the unreal"). "As the slice draws it" describes where a rule or a number came

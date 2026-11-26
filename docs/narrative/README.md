@@ -49,10 +49,10 @@ Each item is also noted where it lives (`Game/README.md`, `Tools/README.md`, `To
 
 **So that what was approved shows in the game**
 1. The Stone Oven's inside in Unreal is still fitted as a grocer's (shelves and tills). The approved inside is
-   `Art/Reference/bakery_inside_day.png` and `bakery_inside_four.png`, made by `Tools/blender/baker_look_47.py`.
+   `Art/Reference/Shops/ShopsBakery_Day.png` and `Art/Reference/Shops/ShopsBakery_4am.png`, made by `Tools/blender/baker_look_47.py`.
 2. Unreal's people (and the slice's) have no age values (lines, stoop, glasses, cane, shawl, beard, thin hair), still have
    the shell hair that reads as a cap with pale hair, and cannot give one named resident a look of her own: Noor wears
-   her job's stock clothes there. The approved look is `Art/Reference/character_noor.png` and `character_elders.png`
+   her job's stock clothes there. The approved look is `Art/Reference/People/PeopleNoor.png` and `Art/Reference/People/PeopleElders.png`
    (`Tools/blender/elders_48.py`).
 3. Pip, Tam, Vera, Oda, Suvi and Len have no designed look. Vera, Oda, Suvi, Len and Tam have no gender written down,
    and five of the cast have no age decided: ask the owner.

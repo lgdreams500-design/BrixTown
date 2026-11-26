@@ -537,7 +537,7 @@ with 32 vehicles drawn.
 The models' triangles are taken in the other order from the one they are written in (found in play, 2026-11-25): as
 they come they go round the wrong way for Unreal, which then drew each part's inside and left its outside out, so every
 car and van was a dark hollow with its riders' legs showing through the doors
-(`Art/StyleTests/unreal_play_bugs_44/cars_before_after.jpg`, against `Art/Reference/vehicles_soft_box.png`). The box's small things (drawn to `GardenCullDistance`) and its large ones (drawn however far) were one group, because
+(`Art/StyleTests/unreal_play_bugs_44/cars_before_after.jpg`, against `Art/Retired/vehicles_soft_box.png`). The box's small things (drawn to `GardenCullDistance`) and its large ones (drawn however far) were one group, because
 the distance was not part of a group's name: the large ones went at 150 m too. They are two groups now.
 
 ## Getting out of the way, and giving way (CITY-070, CITY-071, CITY-049)
@@ -1158,7 +1158,7 @@ Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/Def
 black. At Epic quality the town runs at about 36 frames a second, at High about 63 with the same shade, at Medium about 86
 but without Lumen. On this laptop use High (`scalability 2` in the console, or `-ExecCmds="scalability 2"`). The light
 follows the kit daylight (ADR-0007): a shaded wall on a wide street measures (161, 151, 135) against (159, 151, 146) in
-`Art/Reference/world_street_kit_light.png`. The first run after a change of shader settings compiles shaders for minutes
+`Art/Reference/World/WorldDaylight.png`. The first run after a change of shader settings compiles shaders for minutes
 and runs at a few frames a second; that is not the game's speed.
 
 ## The look gate (ADR-0058)
