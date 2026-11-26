@@ -70,7 +70,7 @@ HOURS = [
 WEATHER = dict(sun_angle=dict(cloud=12.0, rain=20.0, fog=20.0, snow=20.0),     # the sun's light softens behind cloud (degrees)
                drops_seen=1800, drop_length=0.2, drop_width=0.0045, drop_alpha=0.75, drop_slant=0.1, near=5.0,   # sky.json "rain"
                wet_roughness=0.32, wet_alpha=0.18,                                                # wet paving and stone catch the sky
-               flakes_seen=3600, flake_size=0.045, flake_alpha=1.0, flake_near=5.0,    # sky.json "snow"
+               flakes_seen=3600, flake_size=0.036, flake_near_size=0.7, flake_full_at=10.0, flake_alpha=1.0, flake_near=5.0,    # sky.json "snow"
                fog_lamps=0.3, fall_glow=0.0,
                puddles=34, puddle_size=(0.5, 1.6), ripples_per=(5, 9), ripple_width=0.006, ripple_alpha=0.3, ripple_colour=(0.5, 0.53, 0.57),
                puddle_colour=(0.022, 0.025, 0.03), puddle_roughness=0.08, puddle_core=0.55, puddle_depth=0.85,   # as the game's puddles
@@ -370,7 +370,7 @@ def undo_weather(made):
 
 def falling(scene, cam, name, count, size, colour, alpha, slant, near, flake=False):
     """Drops or flakes scattered through the view, from near to 16 m in front of the camera (as the game's rings round
-    it): a drop is two thin crossed strips, a flake a small eight-sided bead."""
+    it): a drop is two thin crossed strips, a flake a small smooth ball."""
     rng = random.Random(50)
     bm = bmesh.new()
     dg = bpy.context.evaluated_depsgraph_get()
@@ -390,10 +390,10 @@ def falling(scene, cam, name, count, size, colour, alpha, slant, near, flake=Fal
             continue
         kept += 1
         sx, sy, sz = size
-        if flake:
-            v = [bm.verts.new(c + Vector(q) * sx) for q in ((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1))]
-            for a, b, t in ((0, 2, 4), (2, 1, 4), (1, 3, 4), (3, 0, 4), (2, 0, 5), (1, 2, 5), (3, 1, 5), (0, 3, 5)):
-                bm.faces.new((v[a], v[b], v[t]))
+        if flake:                                            # a small round ball, smooth, lit on top and shaded under;
+            near_k = WEATHER["flake_near_size"]                 # the nearest smaller (the owner: the large ones only)
+            t = min(1.0, (d - near) / max(0.01, WEATHER["flake_full_at"] - near))
+            bmesh.ops.create_icosphere(bm, subdivisions=1, radius=sx * (near_k + (1.0 - near_k) * t), matrix=Matrix.Translation(c))
             continue
         v = [bm.verts.new(c + Vector((dx * sx, dy * sy, dz * sz)) + Vector((slant * dz * sz, 0, 0)))
              for dx, dy, dz in ((-1, 0, -1), (1, 0, -1), (1, 0, 1), (-1, 0, 1), (0, -1, -1), (0, 1, -1), (0, 1, 1), (0, -1, 1))]
@@ -402,6 +402,8 @@ def falling(scene, cam, name, count, size, colour, alpha, slant, near, flake=Fal
     me = bpy.data.meshes.new(name + "Fall")
     bm.to_mesh(me)
     bm.free()
+    if flake:
+        me.shade_smooth()
     m = bpy.data.materials.get("M_" + name + "Fall")
     if m is None:
         m = bpy.data.materials.new("M_" + name + "Fall")

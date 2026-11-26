@@ -10,7 +10,7 @@ fall). Reviewed with the owner one place at a time; an approved place goes to `A
 | The alley (old_town_04.py) | `Alley_<Setting>.jpg`, `review_Alley.jpg` (the ten), `review_Alley_rain_close.jpg` (puddles and rain close up) | approved 2026-11-26: `Art/Reference/World/WorldAlley_*.jpg` |
 | The sky and its clouds, from Market Square (WASTED_PLACE=sky, with sky_52.py) | `Sky_<Setting>.jpg`, `review_Sky.jpg` | approved 2026-11-26: `Art/Reference/World/WorldSky_*.jpg`; no planet (ADR-0062); cloud shapes tried and dropped (`../sky_clouds_53/`) |
 | Market Square, from its arcade (WASTED_PLACE=square; its shade lifted by SQUARE_BOUNCE) | `MarketSquare_<Setting>.jpg`, `review_MarketSquare.jpg` | approved 2026-11-26: `Art/Reference/World/WorldMarketSquare_*.jpg` |
-| The street (building_kit_07.py) | `Street_<Setting>.jpg`, `review_Street.jpg` | proposed: `Art/Reference/World/WorldStreet_*.jpg` |
+| The street (building_kit_07.py) | `Street_<Setting>.jpg`, `review_Street.jpg` | approved 2026-11-26: `Art/Reference/World/WorldStreet_*.jpg` |
 | A home's room, a hallway, the bakery (public room), the furniture outlet (big hall) | to come | |
 
 What the owner changed on the way: fewer lamps down the alley; the moon high and down the alley so it reaches the paving;
@@ -21,3 +21,7 @@ Rain redone as the game's (the owner, 2026-11-26, after the street's first try s
 darker with a faint sheen in half-metre cells (`lying(..., tile=True)`), soft-edged dark puddles with a little mirror
 (their fade in the UV map), kept apart (overlapping ones mirrored each other black), faint grey rings, drops half as wide
 (4.5 mm). The alley's rain picture was rendered again with it; its other nine are as approved.
+
+Snow (the owner, 2026-11-26): each flake a small smooth ball (was an eight-sided bead that read square), the far
+ones 72 mm across, the near ones shrinking to 30% smaller at 5 m (`flake_near_size`, `flake_full_at`); 3,600 in view as
+before. The four places' snow pictures were rendered again with it.

@@ -66,7 +66,7 @@
    ],
    "locks": "The look of the world (the old-town alley of style test 02: matte mottled plaster and stone, soft rounded forms, W1-W8) at morning, midday and dusk; at night with the lamps on, and with them off under a full and a new moon; and by day in cloud, rain, fog and snow. No haze at midday. Rain and snow fall, puddles lie with rings where the drops fall into them, and the snow lies, only where the sky is open over them: never under the passage's roof. Only the light and the weather change between them. Rain as the game's (Game/README Weather): thin pale streaks (4.5 mm), the open paving darker with a faint sheen in half-metre cells, soft-edged dark puddles with a little mirror and faint grey rings; none under a roof or arch.",
    "approved": "2026-11-26",
-   "decision": "the owner, 2026-11-26: \"approved\" (a reference shows every setting, not one; replaces WorldLook and the alley of WorldHours; ADR-0061); its rain redone as the game's (the owner, 2026-11-26: \"Yes, both\"; drops half as wide)",
+   "decision": "the owner, 2026-11-26: \"approved\" (a reference shows every setting, not one; replaces WorldLook and the alley of WorldHours; ADR-0061); its rain redone as the game's (the owner, 2026-11-26: \"Yes, both\"; drops half as wide); snow as small round balls, the near ones up to 30% smaller (the owner, 2026-11-26)",
    "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=alley), on the alley of Tools/blender/old_town_04.py",
    "models": [
     "Game/Source/BrixTown/Private/BrixLight.cpp and Game/Config/DefaultGame.ini [/Script/BrixTown.BrixLight] (the sun, sky, haze, the eye)",
@@ -100,7 +100,7 @@
    ],
    "locks": "The sky over the town, seen from Market Square over the roofs: blue overhead fading to the pale haze at the horizon by day, warm towards the low sun at dusk, the night's dark blue with the town's glow low down; clouds as soft heaps on one layer about 1.2 km up, flat underneath and rounded on top, lit on the sun's side and shaded underneath, pink at dusk, lit from below by the town's lamps at night; how much of the sky they cover follows the weather (clear 0.36, cloudy 0.62, rain 0.97, fog 0.55, snow 0.92); at night the stars, the Milky Way and the full moon's disc. No planet (ADR-0062).",
    "approved": "2026-11-26, the owner",
-   "decision": "the owner, 2026-11-26: \"move to sky and cloud system\"; ADR-0014 (the sky and clouds), ADR-0023 (the night sky), ADR-0062 (no planet); the owner, 2026-11-26: \"leave the realistic clouds as they were\", then \"Approve, go to Market Square\"",
+   "decision": "the owner, 2026-11-26: \"move to sky and cloud system\"; ADR-0014 (the sky and clouds), ADR-0023 (the night sky), ADR-0062 (no planet); the owner, 2026-11-26: \"leave the realistic clouds as they were\", then \"Approve, go to Market Square\"; snow as small round balls, the near ones up to 30% smaller (the owner, 2026-11-26)",
    "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=sky) with Tools/blender/sky_52.py, on Market Square of Tools/blender/old_town_04.py",
    "models": [
     "World/rules/sky.json (zenith, clouds, night)",
@@ -110,7 +110,6 @@
    "rules": "docs/art/ART_DIRECTION.md 2.4, W5-W7",
    "was": [],
    "issues": [
-    "Falling snow reads as grey dots against the bright covered sky.",
     "The lying snow is laid in 25 cm squares: their steps show where it meets the fountain's base and the stalls.",
     "The moon's disc is set where the camera sees it, not where the moonlight comes from."
    ]
@@ -133,7 +132,7 @@
    ],
    "locks": "Market Square seen from inside its near arcade: the far arcade, the fountain, the stalls' corner and the tree through three arches; sunlit paving bright, the arcade's shade lit by the light the sunlit paving and stone throw back (readable, about 1.5 stops under the sun, not black); lanterns lit in the arcade by day as approved, warm pools at dusk and with the lamps on; the full moon lighting the open paving past the arches, a new moon only starlight; cloud, rain (puddles with rings on the open paving), fog and snow (lying only under open sky), none of it under the arcade.",
    "approved": "2026-11-26, the owner",
-   "decision": "the owner, 2026-11-26: \"market square should be separate reference and have all hours of it's own\" and \"fix it's mid day - shadow areas are too dark, looks like bounce light is missing\"; ADR-0061; the owner, 2026-11-26: \"Approve, next place\"",
+   "decision": "the owner, 2026-11-26: \"market square should be separate reference and have all hours of it's own\" and \"fix it's mid day - shadow areas are too dark, looks like bounce light is missing\"; ADR-0061; the owner, 2026-11-26: \"Approve, next place\"; snow as small round balls, the near ones up to 30% smaller (the owner, 2026-11-26)",
    "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=square; SQUARE_BOUNCE) on Market Square of Tools/blender/old_town_04.py",
    "models": [
     "World/rules/sky.json (weather)",
@@ -152,7 +151,6 @@
   {
    "id": "WorldStreet",
    "category": "World",
-   "status": "proposed",
    "title": "The street at every hour and in every weather",
    "files": [
     "World/WorldStreet_Morning.jpg",
@@ -167,8 +165,8 @@
     "World/WorldStreet_Snow.jpg"
    ],
    "locks": "The example street of real lots from World/ (building_kit_07): the café's awning and its lit windows, the facades' relief raked by the sun, the far rows closing it in haze; street lamps lit at dusk and on the lamp-lit night, dark on the moonlit nights; the full moon a cool light, a new moon only stars. Rain as the game's (Game/README Weather): thin pale streaks (4.5 mm), the open paving darker with a faint sheen in half-metre cells, soft-edged dark puddles with a little mirror and faint grey rings; none under a roof or arch. Snow lies only under open sky.",
-   "approved": "proposed 2026-11-26, for the owner to review",
-   "decision": "the owner, 2026-11-26: \"Street needs to have references for all 4 settings morning, mid day, dusk, and night\"; rain as the game's (\"Yes, both\"); ADR-0061",
+   "approved": "2026-11-26, the owner",
+   "decision": "the owner, 2026-11-26: \"Street needs to have references for all 4 settings morning, mid day, dusk, and night\"; rain as the game's (\"Yes, both\"); ADR-0061; the owner, 2026-11-26: \"Approve, next place\"; snow as small round balls, the near ones up to 30% smaller (the owner, 2026-11-26)",
    "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=street) on the street of Tools/blender/building_kit_07.py",
    "models": [
     "World/rules/sky.json (weather)",
@@ -179,7 +177,6 @@
     "World/WorldDaylight.png (the street by morning)"
    ],
    "issues": [
-    "Falling snow near the camera reads as clumps of square flakes on the right.",
     "Lying snow and the wet film are laid in squares (25 cm, 50 cm): their edges show where cover begins.",
     "Rings near the camera are larger than the game's."
    ]
@@ -204,7 +201,7 @@
     "world_street_kit_light.png"
    ],
    "issues": [
-    "To be replaced by a street at every hour (the owner, 2026-11-26): morning, midday, dusk and night with the lamps on and off, under a full and a new moon."
+    "Kept as the measured daylight target of the game's and the slice's light (ART-001, ADR-0013, play.js ?light=measured); the street at every hour and weather is WorldStreet (approved 2026-11-26)."
    ]
   },
   {
