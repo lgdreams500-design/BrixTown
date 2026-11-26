@@ -42,7 +42,7 @@ SKY_OF = {"Morning": (1.0, 0.15, 0.36), "Midday": (1.0, 0.0, 0.36), "Dusk": (0.5
           "Rain": (1.0, 0.0, 0.97), "Fog": (1.0, 0.0, 0.55), "Snow": (1.0, 0.0, 0.92)}
 
 NAME = "hours_50"
-HOURS_OUT = "C:/Projects/Wasted/Art/StyleTests/" + NAME
+HOURS_OUT = os.environ.get("WASTED_OUT") or "C:/Projects/Wasted/Art/StyleTests/" + NAME   # WASTED_OUT: test shots elsewhere
 HOURS_LOG = HOURS_OUT + "/" + NAME + "_" + PLACE + "_log.txt"
 SAMPLES_H = int(os.environ.get("WASTED_SAMPLES", 64))
 SCALE_H = int(os.environ.get("WASTED_SCALE", 100))
