@@ -18,27 +18,33 @@ def problems(L, pieces=None):
     """Everything wrong with the lights' data, as sentences; empty when it is sound."""
     out = []
     mounts, spreads = L["mounts"], set(L["spreads"])
+    # the named colours of light, which the fittings share
+    for c, v in L["colours"].items():
+        rgb = v["colour"]
+        if not v.get("name"):
+            out.append("colour %s: no name" % c)
+        if len(rgb) != 3 or not all(0.0 <= x <= 1.0 for x in rgb) or max(rgb) != 1.0:
+            out.append("colour %s: colour must be three values 0..1 with the brightest 1" % c)
+        if v["kelvin"] is not None and not 1500 <= v["kelvin"] <= 6500:   # fire and neon have none
+            out.append("colour %s: kelvin %s outside 1500..6500" % (c, v["kelvin"]))
+    # a warmer colour (fewer kelvin) is never bluer than a cooler one
+    cs = sorted(((c, v) for c, v in L["colours"].items() if v["kelvin"] is not None), key=lambda cv: cv[1]["kelvin"])
+    for (a, va), (b, vb) in zip(cs, cs[1:]):
+        if va["kelvin"] < vb["kelvin"] and va["colour"][2] > vb["colour"][2]:
+            out.append("%s (%dK) is bluer than %s (%dK)" % (a, va["kelvin"], b, vb["kelvin"]))
     for k, v in L["kinds"].items():
         if v["mount"] not in mounts:
             out.append("%s: no mount %r" % (k, v["mount"]))
         if v["spread"] not in spreads:
             out.append("%s: no spread %r" % (k, v["spread"]))
-        c = v["colour"]
-        if len(c) != 3 or not all(0.0 <= x <= 1.0 for x in c) or max(c) != 1.0:
-            out.append("%s: colour must be three values 0..1 with the brightest 1" % k)
-        if not 1500 <= v["kelvin"] <= 6500:
-            out.append("%s: kelvin %s outside 1500..6500" % (k, v["kelvin"]))
+        if v["colour"] not in L["colours"]:
+            out.append("%s: no colour %r" % (k, v["colour"]))
         if v["strength"] <= 0 or not 0.0 <= v["glow"] <= 1.0:
             out.append("%s: strength above 0 and glow 0..1" % k)
         if not isinstance(v["price"], int) or v["price"] <= 0:
             out.append("%s: price a whole number of minor units above 0" % k)
         if len(v["size"]) != 3 or min(v["size"]) <= 0:
             out.append("%s: size three lengths above 0" % k)
-    # a warmer light (fewer kelvin) is never bluer than a cooler one
-    ks = sorted(L["kinds"].items(), key=lambda kv: kv[1]["kelvin"])
-    for (a, va), (b, vb) in zip(ks, ks[1:]):
-        if va["kelvin"] < vb["kelvin"] and va["colour"][2] > vb["colour"][2]:
-            out.append("%s (%dK) is bluer than %s (%dK)" % (a, va["kelvin"], b, vb["kelvin"]))
     for p, k in L["pieces"].items():
         if k not in L["kinds"]:
             out.append("piece %s: no kind %r" % (p, k))
@@ -48,6 +54,11 @@ def problems(L, pieces=None):
         if k not in L["kinds"]:
             out.append("Blender light %s: no kind %r" % (n, k))
     return out
+
+
+def colour_of(L, kind):
+    """The colour a kind of light gives: the named colour it shares with other fittings (name, kelvin, linear RGB)."""
+    return L["colours"][L["kinds"][kind]["colour"]]
 
 
 def kind_of_light(L, name):

@@ -25,7 +25,7 @@ Every approved reference is in `Art/Reference/<Category>/`, named `<Category><Su
 **`Art/Reference/catalog.json`**: what each locks, its approval and decision, the script that makes it, the game models
 built from it, issues seen in it, and its old names (ADR-0061). The owner reviews them in `Art/Reference/index.html`,
 which `python Tools/reference_catalog.py` writes from the catalog after checking it. Categories: World, Buildings,
-Indoor, Shops, Malls, Furniture, Vehicles, People, Interface. References taken out of use are in `Art/Retired/`; look
+Indoor, Shops, Malls, Furniture, Ornaments (light fittings first), Vehicles, People, Interface. References taken out of use are in `Art/Retired/`; look
 tests and every earlier experiment stay in `Art/StyleTests/`.
 
 Rejected directions, kept only so they are not tried again: the first 2D sketches, the painterly
