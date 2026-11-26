@@ -1,0 +1,7 @@
+15:25:27 Blender 5.3.0, place alley
+15:25:28 Alley: sun 14.0 at bearing 53 deg, sky 0.35; 3 lamps, 0 fires, 4 glowing materials, 1 haze
+15:25:28   22 puddles on the open paving (250 tries)
+15:25:28   Rain: 2040 of 8000 pieces under open sky, 4080 faces, -6.2 to 13.0 m up, from 2.0 m in front of the camera
+15:25:30   Alley_Rain: the eye at +0.05 stops for a mean of 88
+15:26:30 Alley_Rain.jpg rendered in 60.6s
+15:26:30 DONE

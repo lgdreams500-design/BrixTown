@@ -1,30 +1,24 @@
-# Art/Reference — approved look targets
+# Art/Reference — the approved look references
 
-These images are the **approved visual targets** for Wasted. Do not edit or overwrite them; a new
-approved look gets a new file and an entry here and in `docs/art/ART_DIRECTION.md`.
+The look everything made is checked against (ADR-0004, ADR-0061). Do not edit or overwrite these files: a new approved
+look gets a new file, an entry in the catalog and a decision record.
 
-Experiments and rejected directions live in `Art/StyleTests/`.
+- **Find a reference:** `catalog.json` lists every one: what it locks, when and by what decision it was approved, the
+  script that renders it, the game models and data built from it or measured against it, issues seen in it, and its old
+  names. Its `gaps` say what still has no reference.
+- **Review them:** open `index.html` in a browser: a tab per category, each reference with its pictures and details.
+  Never edit it by hand; it is written from the catalog.
+- **Change them:** render with the script, put the file in its category's folder under its name, add or change its entry
+  in `catalog.json`, then run `python Tools/reference_catalog.py` (it checks the catalog against the folders and writes
+  `index.html`). The owner approves every change of look.
 
-| File | Approved | Locks | Regenerate with |
-|---|---|---|---|
-| `world_alley_morning_raw.png` | 2026-11-21 | The world look (style test 02, unfiltered) | `Tools/blender/style_test_02.py` |
-| `world_overview.png` | 2026-11-21 | Same town at morning, dusk and midday | `Tools/blender/old_town_04.py` |
-| `world_street_kit_light.png` | 2026-11-22 | The daylight (ADR-0007): softer, warmer sun, thinner haze, on a street of kit buildings | `Tools/blender/building_kit_07.py` (the `street` image) |
-| `vehicles_soft_box_2.png` | 2026-11-26 | Cars and vans: option A "Soft box" of car look test 09 with the cabins open down to their floor and the roofs raised for the tallest rider (ADR-0057, amending ADR-0015) | `Tools/blender/car_kit_09.py` (the `A` image; `A_inside` looks into the cabins) |
-| `vehicles_soft_box.png` | 2026-11-22 | Superseded by `vehicles_soft_box_2.png` (ADR-0057): the body and its waist ran solid through the cabins, a board over the seats. Was the car look: option A "Soft box" (ADR-0015) | `car_kit_09.py` before 2026-11-26 |
-| `vehicles_classic.png` | 2026-11-22 | Superseded by `vehicles_soft_box.png` (ADR-0015). Was the car look: option C "Classic" (ADR-0011) | `Tools/blender/car_kit_09.py` (the `C` image) |
-| `furniture_lines.png` | 2026-11-22 | Furniture: every piece of the four style lines Plain, Old Town, Workshop, Curve (ADR-0026) | `Tools/blender/furniture_kit_17.py` (the `sheet` image) |
-| `interior_room_daylight.png` | 2026-11-22 | Interiors: an Old Town room in the kit daylight, sun through the window, two lamps (ADR-0026) | `Tools/blender/furniture_kit_17.py` (the `room_oldtown` image) |
-| `character_options.png` | 2026-11-21 | Character option **B "Soft"** (middle group) | `Tools/blender/old_town_04.py` |
-| `character_lineup.png` | 2026-11-21 | Six people in option B | `Tools/blender/character_face_05.py` |
-| `face_expressions.png` | 2026-11-21 | Six expressions | `Tools/blender/character_face_05.py` |
-| `face_mouth_shapes.png` | 2026-11-21 | Eight speech mouth shapes, with upper and lower teeth | `Tools/blender/character_face_05.py` |
-| `face_talk.mp4`, `face_talk.gif` | 2026-11-21 | Lip sync on a spoken line | `Tools/blender/character_face_05.py` |
-| `motion_walks.mp4`, `motion_walks.gif` | 2026-11-21 | Four movement signatures (Springy, Easy, Hurried, Careful) from one walk system | `Tools/blender/character_anim_06.py` |
-| `motion_walktalk.mp4`, `motion_walktalk.gif` | 2026-11-21 | Talking while walking: head turns, eyes leading, nods, head shake, hand gesture, lip sync | `Tools/blender/character_anim_06.py` |
+## Names
 
-Rules and numbers behind these images: `docs/art/ART_DIRECTION.md`, `docs/art/CHARACTER_FACE.md`,
-`docs/art/CHARACTER_MOTION.md`.
+`<Category>/<Category><Subject>[_<Variant>].<ext>`, PascalCase, the reference's id being the name without the variant:
+`Indoor/IndoorHomeRoom_Morning.jpg` (reference `IndoorHomeRoom`), `Vehicles/VehiclesSoftBox.png`, `People/PeopleFaceTalk.mp4`.
 
-The motion clips approve the *way people move*. The bodies in them are rigid test parts, and the Elder wears
-a tunic and trousers there because long coats and dresses are not solved yet (ANIM-008).
+Categories: `World`, `Buildings`, `Indoor`, `Shops`, `Malls`, `Furniture`, `Vehicles`, `People`, `Interface`.
+
+References taken out of use are in `Art/Retired/` (listed under the catalog's `retired`); look tests and rejected
+directions stay in `Art/StyleTests/` and are not references. Rules and numbers behind the images:
+`docs/art/ART_DIRECTION.md`, `docs/art/CHARACTER_FACE.md`, `docs/art/CHARACTER_MOTION.md`, `docs/art/INTERIOR_STYLE.md`.

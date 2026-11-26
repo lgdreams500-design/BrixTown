@@ -1,0 +1,25 @@
+18:39:12 Blender 5.3.0, place street
+18:39:45 Street: sun 8.5 at bearing -27 deg, sky 0.35; 9 lamps, 0 fires, 2 glowing materials, 1 haze
+18:40:34 Street_Morning.jpg rendered in 49.0s
+18:41:12 Street_Midday.jpg rendered in 38.0s
+18:42:06 Street_Dusk.jpg rendered in 53.3s
+18:42:09   Street_NightLamps: the eye at +2.38 stops for a mean of 70
+18:43:17 Street_NightLamps.jpg rendered in 67.9s
+18:43:19   Street_NightFullMoon: the eye at +2.70 stops for a mean of 42
+18:44:16 Street_NightFullMoon.jpg rendered in 57.3s
+18:44:21   Street_NightNewMoon: the eye at +3.34 stops for a mean of 22
+18:45:42 Street_NightNewMoon.jpg rendered in 81.1s
+18:45:45   Street_Cloudy: the eye at -1.08 stops for a mean of 100
+18:47:17 Street_Cloudy.jpg rendered in 91.6s
+18:48:47   Wet lies on 24108 patches of 0.50 m (rays from the sky over 60 m round the camera)
+18:48:47   16 puddles on the open paving (1360 tries)
+18:48:49   Rain: 1800 of 3370 tried under open sky, 3600 faces, -0.2 to 13.9 m up, from 5.0 m in front of the camera
+18:48:50   Street_Rain: the eye at -0.67 stops for a mean of 88
+18:50:10 Street_Rain.jpg rendered in 80.3s
+18:50:13   Street_Fog: the eye at -0.55 stops for a mean of 105
+18:51:11 Street_Fog.jpg rendered in 58.1s
+18:51:25   Snow lies on 35363 patches of 0.25 m (rays from the sky over 24 m round the camera)
+18:51:28   Snow: 3600 of 6716 tried under open sky, 28800 faces, -0.0 to 13.8 m up, from 5.0 m in front of the camera
+18:51:29   Street_Snow: the eye at -0.68 stops for a mean of 110
+18:52:32 Street_Snow.jpg rendered in 63.2s
+18:52:32 DONE

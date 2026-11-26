@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "note": "The owner's level picks, stated by the owner in chat and recorded by agents (ADR-0008). A feature or milestone missing here is undecided. -1 means out of the game. After editing, run Tools/backlog.ps1.",
-  "updated": "2026-11-25",
+  "updated": "2026-11-26",
   "choices": {
     "F-HOME-FURNISH": {
       "slice": 3,
@@ -204,6 +204,10 @@
     "F-COURT": {
       "slice": 1,
       "note": "Owner, 2026-11-25: asked whether the Unreal build of the Baker career should include courting Mei and the wedding, answered \"Include courting\". Earlier the same day: \"leave noor old and remove her from dating option\" (Mei only). Later milestones not stated; the end game after the wedding was not asked for."
+    },
+    "F-LIGHTS": {
+      "slice": 2,
+      "note": "Owner, 2026-11-26: \"2 Placed in designer\" (lights in kinds, each with its own character in data; in designer mode the player places ground, wall-mounted and ceiling lights). Later milestones not stated."
     }
   }
 }

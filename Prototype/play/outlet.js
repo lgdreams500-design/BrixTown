@@ -2,7 +2,7 @@
 // The furniture outlet outside the East Gate (FURNITURE FURN-020, FURN-021; F-FURN-STORE; Q-30). Its place, size, door,
 // room sets and the places its staff and customers use are data (World/city_01/blocks/b_8_4.json, made by
 // Tools/worldgen/add_outlet_01.py); this file only draws them. The look follows Art/StyleTests/furniture_kit_17/showroom.png
-// and the furniture the four style lines of ADR-0026 (ART_DIRECTION 2.6, Art/Reference/furniture_lines.png):
+// and the furniture the four style lines of ADR-0026 (ART_DIRECTION 2.6, Art/Reference/Furniture/FurnitureLines.png):
 //
 //   a long hall of sandstone and plaster with tall arched windows and a painted sign band, under timber trusses and
 //   skylights; inside, by the door, the tills and a cafe; a painted walking route with arrows; four room sets of three

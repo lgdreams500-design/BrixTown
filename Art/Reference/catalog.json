@@ -1,0 +1,790 @@
+{
+ "note": "Every approved look reference of Brix Town, in one list (ADR-0061). Files live in Art/Reference/<Category>/ and are named <Category><Subject>[_<Variant>].<ext> in PascalCase, so a name says what it is. 'locks' is what the reference decides; 'decision' the ADR and the owner's approval; 'made_by' the script that renders it; 'models' what the game is built from or measured against with it; 'status' proposed when it waits for the owner's approval; 'issues' what is seen wrong in it and not mended, for the owner to judge; 'was' the old names. 'gaps' are references a category still lacks. Tools/reference_catalog.py checks this file against the folders and writes Art/Reference/index.html; run it after any change here.",
+ "categories": [
+  {
+   "id": "World",
+   "title": "World",
+   "about": "The town out of doors: the look, the light through the day, the weather and the sky."
+  },
+  {
+   "id": "Buildings",
+   "title": "Buildings",
+   "about": "Houses and every other build type from outside: lines, colourways, trim."
+  },
+  {
+   "id": "Indoor",
+   "title": "Indoor",
+   "about": "Rooms and homes inside: how a room is lit and furnished, how a plan is laid out."
+  },
+  {
+   "id": "Shops",
+   "title": "Shops",
+   "about": "Shops, cafes, the bakery and the outlets inside."
+  },
+  {
+   "id": "Malls",
+   "title": "Malls",
+   "about": "Eastgate, Westgate and Northgate malls, outside and inside."
+  },
+  {
+   "id": "Furniture",
+   "title": "Furniture",
+   "about": "The pieces themselves: the four style lines, sizes and materials."
+  },
+  {
+   "id": "Vehicles",
+   "title": "Vehicles",
+   "about": "Cars, vans, buses and the tram."
+  },
+  {
+   "id": "People",
+   "title": "People",
+   "about": "Bodies, faces, speech, the way people move, the cast."
+  },
+  {
+   "id": "Interface",
+   "title": "Interface",
+   "about": "Menus, counters and what is drawn over the game."
+  }
+ ],
+ "references": [
+  {
+   "id": "WorldAlley",
+   "category": "World",
+   "title": "The old-town alley at every hour and in every weather",
+   "files": [
+    "World/WorldAlley_Morning.jpg",
+    "World/WorldAlley_Midday.jpg",
+    "World/WorldAlley_Dusk.jpg",
+    "World/WorldAlley_NightLamps.jpg",
+    "World/WorldAlley_NightFullMoon.jpg",
+    "World/WorldAlley_NightNewMoon.jpg",
+    "World/WorldAlley_Cloudy.jpg",
+    "World/WorldAlley_Rain.jpg",
+    "World/WorldAlley_Fog.jpg",
+    "World/WorldAlley_Snow.jpg"
+   ],
+   "locks": "The look of the world (the old-town alley of style test 02: matte mottled plaster and stone, soft rounded forms, W1-W8) at morning, midday and dusk; at night with the lamps on, and with them off under a full and a new moon; and by day in cloud, rain, fog and snow. No haze at midday. Rain and snow fall, puddles lie with rings where the drops fall into them, and the snow lies, only where the sky is open over them: never under the passage's roof. Only the light and the weather change between them. Rain as the game's (Game/README Weather): thin pale streaks (4.5 mm), the open paving darker with a faint sheen in half-metre cells, soft-edged dark puddles with a little mirror and faint grey rings; none under a roof or arch.",
+   "approved": "2026-11-26",
+   "decision": "the owner, 2026-11-26: \"approved\" (a reference shows every setting, not one; replaces WorldLook and the alley of WorldHours; ADR-0061); its rain redone as the game's (the owner, 2026-11-26: \"Yes, both\"; drops half as wide); snow as small round balls, the near ones up to 30% smaller (the owner, 2026-11-26)",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=alley), on the alley of Tools/blender/old_town_04.py",
+   "models": [
+    "Game/Source/BrixTown/Private/BrixLight.cpp and Game/Config/DefaultGame.ini [/Script/BrixTown.BrixLight] (the sun, sky, haze, the eye)",
+    "Game/Source/BrixTown/Private/BrixLamps.cpp (the lamps at night)",
+    "World/rules/sky.json (the night, the moon)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.1-2.4, W5-W7",
+   "was": [
+    "Art/StyleTests/hours_50/Alley_*.jpg"
+   ],
+   "issues": [
+    "The cream banners across the alley catch the gate lamp at dusk and at night and read as bright blocks.",
+    "People are lit like everything else: nobody stands out under a lamp at night."
+   ]
+  },
+  {
+   "id": "WorldSky",
+   "category": "World",
+   "title": "The sky and its clouds at every hour and in every weather",
+   "files": [
+    "World/WorldSky_Morning.jpg",
+    "World/WorldSky_Midday.jpg",
+    "World/WorldSky_Dusk.jpg",
+    "World/WorldSky_NightLamps.jpg",
+    "World/WorldSky_NightFullMoon.jpg",
+    "World/WorldSky_NightNewMoon.jpg",
+    "World/WorldSky_Cloudy.jpg",
+    "World/WorldSky_Rain.jpg",
+    "World/WorldSky_Fog.jpg",
+    "World/WorldSky_Snow.jpg"
+   ],
+   "locks": "The sky over the town, seen from Market Square over the roofs: blue overhead fading to the pale haze at the horizon by day, warm towards the low sun at dusk, the night's dark blue with the town's glow low down; clouds as soft heaps on one layer about 1.2 km up, flat underneath and rounded on top, lit on the sun's side and shaded underneath, pink at dusk, lit from below by the town's lamps at night; how much of the sky they cover follows the weather (clear 0.36, cloudy 0.62, rain 0.97, fog 0.55, snow 0.92); at night the stars, the Milky Way and the full moon's disc. No planet (ADR-0064).",
+   "approved": "2026-11-26, the owner",
+   "decision": "the owner, 2026-11-26: \"move to sky and cloud system\"; ADR-0014 (the sky and clouds), ADR-0023 (the night sky), ADR-0064 (no planet); the owner, 2026-11-26: \"leave the realistic clouds as they were\", then \"Approve, go to Market Square\"; snow as small round balls, the near ones up to 30% smaller (the owner, 2026-11-26)",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=sky) with Tools/blender/sky_52.py, on Market Square of Tools/blender/old_town_04.py",
+   "models": [
+    "World/rules/sky.json (zenith, clouds, night)",
+    "Tools/unreal/clouds.hlsl and Game/Source/BrixTown/Private/BrixWeatherActor.cpp (the game's clouds)",
+    "Prototype/play/play.js (the slice's sky)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.4, W5-W7",
+   "was": [],
+   "issues": [
+    "The lying snow is laid in 25 cm squares: their steps show where it meets the fountain's base and the stalls.",
+    "The moon's disc is set where the camera sees it, not where the moonlight comes from."
+   ]
+  },
+  {
+   "id": "WorldMarketSquare",
+   "category": "World",
+   "title": "Market Square from its arcade at every hour and in every weather",
+   "files": [
+    "World/WorldMarketSquare_Morning.jpg",
+    "World/WorldMarketSquare_Midday.jpg",
+    "World/WorldMarketSquare_Dusk.jpg",
+    "World/WorldMarketSquare_NightLamps.jpg",
+    "World/WorldMarketSquare_NightFullMoon.jpg",
+    "World/WorldMarketSquare_NightNewMoon.jpg",
+    "World/WorldMarketSquare_Cloudy.jpg",
+    "World/WorldMarketSquare_Rain.jpg",
+    "World/WorldMarketSquare_Fog.jpg",
+    "World/WorldMarketSquare_Snow.jpg"
+   ],
+   "locks": "Market Square seen from inside its near arcade: the far arcade, the fountain, the stalls' corner and the tree through three arches; sunlit paving bright, the arcade's shade lit by the light the sunlit paving and stone throw back (readable, about 1.5 stops under the sun, not black); lanterns lit in the arcade by day as approved, warm pools at dusk and with the lamps on; the full moon lighting the open paving past the arches, a new moon only starlight; cloud, rain (puddles with rings on the open paving), fog and snow (lying only under open sky), none of it under the arcade.",
+   "approved": "2026-11-26, the owner",
+   "decision": "the owner, 2026-11-26: \"market square should be separate reference and have all hours of it's own\" and \"fix it's mid day - shadow areas are too dark, looks like bounce light is missing\"; ADR-0061; the owner, 2026-11-26: \"Approve, next place\"; snow as small round balls, the near ones up to 30% smaller (the owner, 2026-11-26)",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=square; SQUARE_BOUNCE) on Market Square of Tools/blender/old_town_04.py",
+   "models": [
+    "World/rules/sky.json (weather)",
+    "Game/Source/BrixTown (the game's square, its light and weather)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.4, W1-W7",
+   "was": [
+    "Art/Retired/WorldHours.png (its market square panel)"
+   ],
+   "issues": [
+    "The shade is lifted by light bounced more strongly than the stone's own colour gives (paving x2.4, stone x1.8): the surfaces look as before, the light in shade is a lift, not a measurement.",
+    "Cloudy still throws a soft-edged patch of sun on the arcade floor.",
+    "Lying snow is laid in 25 cm squares (as in WorldSky)."
+   ]
+  },
+  {
+   "id": "WorldStreet",
+   "category": "World",
+   "title": "The street at every hour and in every weather",
+   "files": [
+    "World/WorldStreet_Morning.jpg",
+    "World/WorldStreet_Midday.jpg",
+    "World/WorldStreet_Dusk.jpg",
+    "World/WorldStreet_NightLamps.jpg",
+    "World/WorldStreet_NightFullMoon.jpg",
+    "World/WorldStreet_NightNewMoon.jpg",
+    "World/WorldStreet_Cloudy.jpg",
+    "World/WorldStreet_Rain.jpg",
+    "World/WorldStreet_Fog.jpg",
+    "World/WorldStreet_Snow.jpg"
+   ],
+   "locks": "The example street of real lots from World/ (building_kit_07): the café's awning and its lit windows, the facades' relief raked by the sun, the far rows closing it in haze; street lamps lit at dusk and on the lamp-lit night, dark on the moonlit nights; the full moon a cool light, a new moon only stars. Rain as the game's (Game/README Weather): thin pale streaks (4.5 mm), the open paving darker with a faint sheen in half-metre cells, soft-edged dark puddles with a little mirror and faint grey rings; none under a roof or arch. Snow lies only under open sky.",
+   "approved": "2026-11-26, the owner",
+   "decision": "the owner, 2026-11-26: \"Street needs to have references for all 4 settings morning, mid day, dusk, and night\"; rain as the game's (\"Yes, both\"); ADR-0061; the owner, 2026-11-26: \"Approve, next place\"; snow as small round balls, the near ones up to 30% smaller (the owner, 2026-11-26)",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=street) on the street of Tools/blender/building_kit_07.py",
+   "models": [
+    "World/rules/sky.json (weather)",
+    "Game/Source/BrixTown (the game's streets, lamps and weather)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.4, W1-W7",
+   "was": [
+    "World/WorldDaylight.png (the street by morning)"
+   ],
+   "issues": [
+    "Lying snow and the wet film are laid in squares (25 cm, 50 cm): their edges show where cover begins.",
+    "Rings near the camera are larger than the game's."
+   ]
+  },
+  {
+   "id": "WorldDaylight",
+   "category": "World",
+   "title": "The daylight on a street of kit buildings",
+   "files": [
+    "World/WorldDaylight.png"
+   ],
+   "locks": "The daylight: softer, warmer sun, thinner haze, on real lots built by the building kit. The light the Unreal sun and sky are set by.",
+   "approved": "2026-11-22",
+   "decision": "ADR-0007",
+   "made_by": "Tools/blender/building_kit_07.py (the street image)",
+   "models": [
+    "Game/Config/DefaultGame.ini [/Script/BrixTown.BrixLight]",
+    "Game/Source/BrixTown/Private/BrixLight.cpp"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.4",
+   "was": [
+    "world_street_kit_light.png"
+   ],
+   "issues": [
+    "Kept as the measured daylight target of the game's and the slice's light (ART-001, ADR-0013, play.js ?light=measured); the street at every hour and weather is WorldStreet (approved 2026-11-26)."
+   ]
+  },
+  {
+   "id": "BuildingsHouseLines",
+   "category": "Buildings",
+   "title": "Houses: four lines, three colourways each",
+   "files": [
+    "Buildings/BuildingsHouseLines.png"
+   ],
+   "locks": "The house lines Plain, Old Town, Workshop and Curve, three colourways each: walls, shutters, door, frames, roof, trim.",
+   "approved": "2026-11-23",
+   "decision": "ADR-0032",
+   "made_by": "Tools/blender/house_styles_20.py (house_styles_20_sheet.py)",
+   "models": [
+    "World/rules/house_styles.json",
+    "Game/Content/Kit (SM_Kit_*), from Tools/blender/unreal_kit_36.py and Tools/unreal/import_building_kit.py"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.8",
+   "was": [
+    "house_colourways.png"
+   ],
+   "issues": []
+  },
+  {
+   "id": "BuildingsHouse12x9",
+   "category": "Buildings",
+   "title": "The 12 x 9 m house in its colourways",
+   "files": [
+    "Buildings/BuildingsHouse12x9.png"
+   ],
+   "locks": "The designed house every house lot builds (plan house_12x9), in each line's colourways.",
+   "approved": "2026-11-24",
+   "decision": "ADR-0036",
+   "made_by": "Tools/blender/house_outside_23.py",
+   "models": [
+    "World/rules/home_plans.json (house_12x9)",
+    "Game/Source/BrixTown/Private/BrixTownActor.cpp (BuildLot)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.8",
+   "was": [
+    "house_colourways_12x9.png"
+   ],
+   "issues": []
+  },
+  {
+   "id": "BuildingsTypes",
+   "category": "Buildings",
+   "title": "Every other build type, three colourways each",
+   "files": [
+    "Buildings/BuildingsTypes_1.png",
+    "Buildings/BuildingsTypes_2.png",
+    "Buildings/BuildingsTypes_3.png"
+   ],
+   "locks": "17 groups of build types (shops, cafes, works, towers, civic buildings...), three colourways each.",
+   "approved": "2026-11-24",
+   "decision": "ADR-0036",
+   "made_by": "Tools/blender/building_styles_22.py (building_styles_22_sheet.py)",
+   "models": [
+    "World/rules/building_styles.json",
+    "Game/Content/Kit (SM_Kit_*)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.9",
+   "was": [
+    "building_colourways_1.png",
+    "building_colourways_2.png",
+    "building_colourways_3.png"
+   ],
+   "issues": []
+  },
+  {
+   "id": "IndoorHouse12x9",
+   "category": "Indoor",
+   "title": "The 12 x 9 m house inside, four lines by four furnishing levels",
+   "files": [
+    "Indoor/IndoorHouse12x9_Ground.png",
+    "Indoor/IndoorHouse12x9_Upstairs.png"
+   ],
+   "locks": "The house's plan, rooms and doorways and what each line puts in them at the levels Bare, Basic, Homely and Full. A layout and furnishing reference, not one for light.",
+   "approved": "2026-11-23",
+   "decision": "ADR-0035",
+   "made_by": "Tools/blender/house_interiors_21.py (house_interiors_21_sheet.py)",
+   "models": [
+    "World/rules/home_plans.json (house_12x9)",
+    "World/rules/furnishing_levels.json",
+    "Game/Source/BrixWorld/Private/BrixHomes.cpp"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.8",
+   "was": [
+    "house_interior_ground.png",
+    "house_interior_upstairs.png"
+   ],
+   "issues": [
+    "The image's own title still says \"look test, not approved\".",
+    "Seen from above with no ceilings, in outdoor daylight: it shows layout, not how a room looks inside.",
+    "Floor boards at flagstone size; pendants burnt white; windows flat navy."
+   ]
+  },
+  {
+   "id": "IndoorRowHouse",
+   "category": "Indoor",
+   "title": "Row houses inside, four lines by four furnishing levels",
+   "files": [
+    "Indoor/IndoorRowHouse14x12_2Storeys.png",
+    "Indoor/IndoorRowHouse14x12_3Storeys.png",
+    "Indoor/IndoorRowHouse16x12_2Storeys.png"
+   ],
+   "locks": "The row houses' plans and furnishing at each level. A layout and furnishing reference, not one for light.",
+   "approved": "2026-11-24",
+   "decision": "ADR-0036",
+   "made_by": "Tools/blender/home_interiors_22.py",
+   "models": [
+    "World/rules/home_plans.json (row_14x12_2, row_14x12_3, row_16x12_2)",
+    "Game/Source/BrixWorld/Private/BrixHomes.cpp"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.9",
+   "was": [
+    "home_interior_row_14x12_2.png",
+    "home_interior_row_14x12_3.png",
+    "home_interior_row_16x12_2.png"
+   ],
+   "issues": [
+    "The image's own title still says \"look test, not approved\".",
+    "Seen from above with no ceilings, in outdoor daylight.",
+    "Floor boards at flagstone size; pendants burnt white."
+   ]
+  },
+  {
+   "id": "IndoorFlat",
+   "category": "Indoor",
+   "title": "Flats inside, four lines by four furnishing levels",
+   "files": [
+    "Indoor/IndoorFlat80.png",
+    "Indoor/IndoorFlat160.png"
+   ],
+   "locks": "The flats' plans and furnishing at each level. A layout and furnishing reference, not one for light.",
+   "approved": "2026-11-24",
+   "decision": "ADR-0036",
+   "made_by": "Tools/blender/home_interiors_22.py",
+   "models": [
+    "World/rules/home_plans.json (flat_80, flat_160)",
+    "Game/Source/BrixWorld/Private/BrixHomes.cpp"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.9",
+   "was": [
+    "home_interior_flat_80.png",
+    "home_interior_flat_160.png"
+   ],
+   "issues": [
+    "The image's own title still says \"look test, not approved\".",
+    "Seen from above with no ceilings, in outdoor daylight.",
+    "Floor boards at flagstone size; pendants burnt white."
+   ]
+  },
+  {
+   "id": "ShopsBakery",
+   "category": "Shops",
+   "title": "The Stone Oven bakery inside, by day and at four in the morning",
+   "files": [
+    "Shops/ShopsBakery_Day.png",
+    "Shops/ShopsBakery_4am.png"
+   ],
+   "locks": "The bakery's inside (QST-014): the counter, ovens, price board, rolls, Noor at her bench; by day, and at 4 am lit by the oven and lamps only.",
+   "approved": "2026-11-26",
+   "decision": "ADR-0059",
+   "made_by": "Tools/blender/baker_look_47.py",
+   "models": [
+    "World/city_01/blocks/b_7_7.json (b_7_7_l2)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.6",
+   "was": [
+    "bakery_inside_day.png",
+    "bakery_inside_four.png"
+   ],
+   "issues": []
+  },
+  {
+   "id": "ShopsFurnitureOutlet",
+   "category": "Shops",
+   "title": "The furniture outlet's showroom",
+   "files": [
+    "Shops/ShopsFurnitureOutlet.png"
+   ],
+   "locks": "The furniture outlet built as a showroom: room sets of each line along a walking route.",
+   "approved": "2026-11-22",
+   "decision": "ADR-0027 (the owner asked for it to be built like this)",
+   "made_by": "Tools/blender/furniture_kit_17.py (the showroom image)",
+   "models": [
+    "Game/Source/BrixTown/Private/BrixMallActor.cpp (the outlet)",
+    "Prototype/play/outlet.js"
+   ],
+   "rules": "docs/art/INTERIOR_STYLE.md 4",
+   "was": [
+    "Art/StyleTests/furniture_kit_17/showroom.png"
+   ],
+   "issues": []
+  },
+  {
+   "id": "FurnitureLines",
+   "category": "Furniture",
+   "title": "Every piece of the four style lines",
+   "files": [
+    "Furniture/FurnitureLines.png"
+   ],
+   "locks": "The furniture: every piece in Plain, Old Town, Workshop and Curve, their silhouettes, sizes and materials (I1-I9).",
+   "approved": "2026-11-22",
+   "decision": "ADR-0026",
+   "made_by": "Tools/blender/furniture_kit_17.py (the sheet image)",
+   "models": [
+    "Game/Content/Furniture (SM_<piece>_<line>), from Tools/blender/unreal_furniture_37.py and Tools/unreal/import_furniture_kit.py",
+    "World/rules/furniture.json"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.6",
+   "was": [
+    "furniture_lines.png"
+   ],
+   "issues": []
+  },
+  {
+   "id": "VehiclesSoftBox",
+   "category": "Vehicles",
+   "title": "Cars and vans: \"Soft box\"",
+   "files": [
+    "Vehicles/VehiclesSoftBox.png",
+    "Vehicles/VehiclesSoftBox_Cabins.png"
+   ],
+   "locks": "The small car, the estate and the van: rounded soft boxes in one accent with a cream roof, open cabins on round posts with the seats on the cabin's floor, roofs high enough for the tallest rider (V1-V4).",
+   "approved": "2026-11-26",
+   "decision": "ADR-0015, amended by ADR-0057",
+   "made_by": "Tools/blender/car_kit_09.py (the A and A_inside images)",
+   "models": [
+    "Game/Data/car_models.json and Prototype/play/car_models.js, from Tools/blender/car_export_11.py",
+    "Game/Source/BrixTown/Private/BrixCarsActor.cpp"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.5",
+   "was": [
+    "vehicles_soft_box_2.png",
+    "Art/StyleTests/car_kit_09_A_inside.png"
+   ],
+   "issues": []
+  },
+  {
+   "id": "PeopleOptions",
+   "category": "People",
+   "title": "Character options A, B, C: B \"Soft\" is the one",
+   "files": [
+    "People/PeopleOptions.png"
+   ],
+   "locks": "The character look: option B \"Soft\" (the middle group).",
+   "approved": "2026-11-21",
+   "decision": "ADR-0004",
+   "made_by": "Tools/blender/old_town_04.py",
+   "models": [
+    "Game/Source/BrixWorld/Private/BrixBody.cpp",
+    "Prototype/play/people.js"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 3",
+   "was": [
+    "character_options.png"
+   ],
+   "issues": []
+  },
+  {
+   "id": "PeopleLineup",
+   "category": "People",
+   "title": "Six people in option B",
+   "files": [
+    "People/PeopleLineup.png"
+   ],
+   "locks": "Two player examples and four resident roles in option B: proportions, clothes, colours.",
+   "approved": "2026-11-21",
+   "decision": "ADR-0004",
+   "made_by": "Tools/blender/character_face_05.py",
+   "models": [
+    "Prototype/play/people.js (cast)",
+    "Game/Source/BrixWorld/Private/BrixBody.cpp"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 3",
+   "was": [
+    "character_lineup.png"
+   ],
+   "issues": []
+  },
+  {
+   "id": "PeopleElders",
+   "category": "People",
+   "title": "Old people",
+   "files": [
+    "People/PeopleElders.png"
+   ],
+   "locks": "Six elders made from the values that say age, the cast's old Elder at the left to compare; hair built on the skull.",
+   "approved": "2026-11-26",
+   "decision": "ADR-0059",
+   "made_by": "Tools/blender/elders_48.py",
+   "models": [
+    "Game/Source/BrixWorld/Private/BrixBody.cpp"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 3",
+   "was": [
+    "character_elders.png"
+   ],
+   "issues": []
+  },
+  {
+   "id": "PeopleNoor",
+   "category": "People",
+   "title": "Noor, the master baker, 58",
+   "files": [
+    "People/PeopleNoor.png"
+   ],
+   "locks": "Noor's head close up.",
+   "approved": "2026-11-26",
+   "decision": "ADR-0059",
+   "made_by": "Tools/blender/baker_look_47.py (check)",
+   "models": [
+    "World/rules/story_cast.json (noor)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 3",
+   "was": [
+    "character_noor.png"
+   ],
+   "issues": []
+  },
+  {
+   "id": "PeopleFace",
+   "category": "People",
+   "title": "The face: expressions, mouth shapes, a spoken line",
+   "files": [
+    "People/PeopleFaceExpressions.png",
+    "People/PeopleFaceMouthShapes.png",
+    "People/PeopleFaceTalk.mp4",
+    "People/PeopleFaceTalk.gif"
+   ],
+   "locks": "The one face control set: six expressions, eight speech mouth shapes with teeth, lip sync with blink and brows.",
+   "approved": "2026-11-21",
+   "decision": "ADR-0004",
+   "made_by": "Tools/blender/character_face_05.py",
+   "models": [
+    "World/rules/speech.json",
+    "Game/Source/BrixWorld/Private/BrixBody.cpp (the face)"
+   ],
+   "rules": "docs/art/CHARACTER_FACE.md",
+   "was": [
+    "face_expressions.png",
+    "face_mouth_shapes.png",
+    "face_talk.mp4",
+    "face_talk.gif"
+   ],
+   "issues": []
+  },
+  {
+   "id": "PeopleMotion",
+   "category": "People",
+   "title": "How people move",
+   "files": [
+    "People/PeopleMotionWalks.mp4",
+    "People/PeopleMotionWalks.gif",
+    "People/PeopleMotionWalkTalk.mp4",
+    "People/PeopleMotionWalkTalk.gif"
+   ],
+   "locks": "Four movement signatures (Springy, Easy, Hurried, Careful) from one walk system, and talking while walking. The way people move, not the bodies (rigid test parts; long coats and dresses not solved, ANIM-008).",
+   "approved": "2026-11-21",
+   "decision": "ADR-0004",
+   "made_by": "Tools/blender/character_anim_06.py",
+   "models": [
+    "Prototype/play/people.js",
+    "Game/Source/BrixWorld/Private/BrixBody.cpp"
+   ],
+   "rules": "docs/art/CHARACTER_MOTION.md",
+   "was": [
+    "motion_walks.mp4",
+    "motion_walks.gif",
+    "motion_walktalk.mp4",
+    "motion_walktalk.gif"
+   ],
+   "issues": []
+  },
+  {
+   "id": "InterfaceLamplight",
+   "category": "Interface",
+   "title": "\"Lamplight\": the game menu and the counters",
+   "files": [
+    "Interface/InterfaceLamplight_MenuHome.png",
+    "Interface/InterfaceLamplight_MenuMe.png",
+    "Interface/InterfaceLamplight_MenuBelongings.png",
+    "Interface/InterfaceLamplight_MenuQuests.png",
+    "Interface/InterfaceLamplight_MenuSettings.png",
+    "Interface/InterfaceLamplight_MenuHelp.png",
+    "Interface/InterfaceLamplight_Counter.png"
+   ],
+   "locks": "Cards of warm dark stone over the dimmed town, page colours from the palette, one lantern-orange main action, prices on paper tags (L1-L5). Shots of the Unreal build.",
+   "approved": "2026-11-25",
+   "decision": "ADR-0049 (the owner: \"accept lamplight\")",
+   "made_by": "Unreal test shots (-BrixMenu=<page>, -BrixCounter=grocer), look test 36",
+   "models": [
+    "Game/Source/BrixTown/Private/BrixMenu.cpp",
+    "Game/Source/BrixTown/Private/BrixLifeActor.cpp (counters)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.7",
+   "was": [
+    "Art/StyleTests/lamplight_menu_36/menu_*.png",
+    "Art/StyleTests/lamplight_menu_36/counter_grocer.png"
+   ],
+   "issues": [
+    "The Belongings shot is from before 2026-11-26: it says \"What you carry\" and \"You carry nothing yet\" over the boards (mended in the game since, PR #131)."
+   ]
+  },
+  {
+   "id": "IndoorHomeRoom",
+   "category": "Indoor",
+   "title": "A home's room (the living room) at every hour",
+   "files": [
+    "Indoor/IndoorHomeRoom_Morning.jpg",
+    "Indoor/IndoorHomeRoom_Midday.jpg",
+    "Indoor/IndoorHomeRoom_Dusk.jpg",
+    "Indoor/IndoorHomeRoom_NightLamps.jpg",
+    "Indoor/IndoorHomeRoom_NightFullMoon.jpg",
+    "Indoor/IndoorHomeRoom_NightNewMoon.jpg",
+    "Indoor/IndoorHomeRoom_NightFullMoonFireOut.jpg",
+    "Indoor/IndoorHomeRoom_NightNewMoonFireOut.jpg"
+   ],
+   "locks": "The living of furniture_kit_18, closed on four sides with one window. In the world's light (the owner, 2026-11-26: \"use the same color etc from world lighting\"): by day only the sun and sky of the hour, through the window, with the sunlit street outside throwing its light in; lamps and the fire out by day; the boards a greyer wood, so the bounced light is not orange; at night the lamps a warm white (until the kinds of light, FURN-066), the fire lit, the full moon a cool patch through the window, a new moon only the window's starlight. No weather settings indoors (the owner). The wall facing the people throws light back onto them (the owner, 2026-11-26: \"the wall opposite to the character is not reflecting light back\"): by day a little of the day through the window, at night a share of the lamps' light in their colour. Every fire, in every reference, one red (the owner, 2026-11-26: \"oven flame should be same color in all references and more red\"): its flames glow red and catch no light; with no other light in a room its red takes the room over, as it should (the owner). Two more nights with the fire out as well as the lamps (the owner: \"we need reference of moon lights when the fire place is turned off\"): the full moon only through the window, dim and cool, a new moon very dark.",
+   "approved": "2026-11-26, the owner",
+   "decision": "the owner, 2026-11-26: one home room and the hallway stand for the home's rooms (\"just do one room, hall way, shop and cafe\"); in the world's light; ADR-0061; the owner, 2026-11-26: \"Approve it\"; the fire redder and the fire-out nights added, 2026-11-26 (the owner)",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=rooms WASTED_ONLY=living) on the rooms of Tools/blender/furniture_kit_18.py",
+   "models": [
+    "World/rules/furnishing.json (the pieces)",
+    "Game/Source/BrixTown (homes' rooms and their light)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md, docs/art/INTERIOR_STYLE.md",
+   "was": [
+    "Art/Retired/IndoorRooms (the living panel)"
+   ],
+   "issues": [
+    "The shade is lifted by light bounced more strongly than the surfaces' own colours give (plaster x2, boards x2, the street outside x2.6).",
+    "The living room still reads warm at dusk: the fire and the dusk sky together.",
+    "The light the facing wall throws back is a hidden soft light on that wall (BOUNCE_CARD in hours_50.py: 25 W by day, 15 % of the lamps by night), not the wall's own bounce, which reached too little."
+   ]
+  },
+  {
+   "id": "IndoorHallway",
+   "category": "Indoor",
+   "title": "A home's hallway by the stairs at every hour",
+   "files": [
+    "Indoor/IndoorHallway_Morning.jpg",
+    "Indoor/IndoorHallway_Midday.jpg",
+    "Indoor/IndoorHallway_Dusk.jpg",
+    "Indoor/IndoorHallway_NightLamps.jpg",
+    "Indoor/IndoorHallway_NightFullMoon.jpg",
+    "Indoor/IndoorHallway_NightNewMoon.jpg"
+   ],
+   "locks": "A home's hallway (the owner, 2026-11-26: \"corridor or near stairs area where there are no direct windows but indirect light coming from room\"): a corridor about 1.7 m wide with no window of its own, the stair rising at its far end under a closed stairwell, the hall table, mirror, coat stand and rug along its left wall. By day its only light is the day coming through the open door of the room beside it, whose window faces the sun; at dusk and at night its pendant and the lamp on the hall table, the doorway dark; the full moon a dim, cool blue light from that doorway (the owner, 2026-11-26: as dim as the new moon was, and cooler), a new moon darker still, only the doorway faintly showing. In the world's light, lamps of their kinds (World/rules/lights.json).",
+   "approved": "2026-11-26, the owner",
+   "decision": "the owner, 2026-11-26: one home room and the hallway stand for the home's rooms (\"just do one room, hall way, shop and cafe\"); in the world's light; ADR-0061; the owner, 2026-11-26: \"Approve it\"",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=hallway, corridor()) with the pieces of Tools/blender/furniture_kit_18.py",
+   "models": [
+    "World/rules/furnishing.json (the pieces)",
+    "Game/Source/BrixTown (homes' rooms and their light)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md, docs/art/INTERIOR_STYLE.md",
+   "was": [],
+   "issues": [
+    "The shade is lifted by light bounced more strongly than the surfaces' own colours give (plaster x2, boards x2, the street outside x2.6).",
+    "Dusk and the lamp-lit night look alike: no window, so only the lamps light it once the day is gone."
+   ]
+  },
+  {
+   "id": "ShopsBakeryLight",
+   "category": "Shops",
+   "title": "The bakery's light at every hour (its oven always lit)",
+   "files": [
+    "Shops/ShopsBakeryLight_Morning.jpg",
+    "Shops/ShopsBakeryLight_Midday.jpg",
+    "Shops/ShopsBakeryLight_Dusk.jpg",
+    "Shops/ShopsBakeryLight_NightLamps.jpg"
+   ],
+   "locks": "The Stone Oven bakery (ShopsBakery's design) in the world's light, as the home room: by day the world's sun and sky through its window with the sunlit street outside, its pendants low (as approved by day), the boards a greyer wood, the shade lifted, the wall facing the counter throwing light back; at dusk and at night the pendants full, in their kind's colour (World/rules/lights.json). The oven burns at every hour: a bakery's own light, which other shops do not have. No moonlit nights (the owner: \"for bakery, don't need moon settings\"), no weather. Every fire, in every reference, one red (the owner, 2026-11-26: \"oven flame should be same color in all references and more red\"): its flames glow red and catch no light; with no other light in a room its red takes the room over, as it should (the owner).",
+   "approved": "2026-11-26, the owner",
+   "decision": "the owner, 2026-11-26: the bakery reviewed at every hour; \"bakery has oven so it will be different from bank/grocers and other such outlets\"; ADR-0061; the owner, 2026-11-26: \"Approve it\"",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=bakery) on the bakery of Tools/blender/baker_look_47.py",
+   "models": [
+    "World/city_01/blocks/b_7_7.json (b_7_7_l2)",
+    "Game/Source/BrixTown (the bakery's inside and its light)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "Dusk and the lamp-lit night look nearly alike: once the sun is down the pendants and the oven carry it.",
+    "The light the facing wall throws back is a hidden soft light (BOUNCE_CARD), as in the home room."
+   ]
+  }
+ ],
+ "gaps": [
+  {
+   "category": "Buildings",
+   "what": "Towers and big modern buildings",
+   "why": "No reference for towers or the malls' ribbon walls and pierced eggs (ADR-0037)."
+  },
+  {
+   "category": "Indoor",
+   "what": "Closed rooms seen from the game's camera, by day and at night",
+   "why": "Every indoor reference is a three-walled set or a cutaway from above: none shows a room as a player stands in it."
+  },
+  {
+   "category": "Indoor",
+   "what": "A tower's hall and offices",
+   "why": "No reference; the game's hall is bare and dim (LOOK_GATE)."
+  },
+  {
+   "category": "Shops",
+   "what": "A grocer, a cafe, the mall's shops inside",
+   "why": "Only the bakery and the furniture outlet have references."
+  },
+  {
+   "category": "Malls",
+   "what": "Eastgate Mall outside and inside",
+   "why": "Built in the slice at the owner's request (the shell ADR-0037, the inside ADR-0038, the outlets ADR-0039); no reference image. The game's hall is measured against the nearest interiors."
+  },
+  {
+   "category": "Malls",
+   "what": "Westgate and Northgate malls",
+   "why": "No reference."
+  },
+  {
+   "category": "Vehicles",
+   "what": "The bus and the tram",
+   "why": "No reference; both are built from the slice's shapes."
+  },
+  {
+   "category": "People",
+   "what": "Long coats, dresses and skirts on the moving body",
+   "why": "Not solved yet (ANIM-008)."
+  },
+  {
+   "category": "Interface",
+   "what": "The conversation box, the purse, the tracker, the toasts and the building designer",
+   "why": "Not brought to Lamplight yet (ART_DIRECTION 2.7)."
+  }
+ ],
+ "retired": [
+  {
+   "file": "Art/Retired/WorldLook.png",
+   "was": "The world look, style test 02's alley at morning (ADR-0004)",
+   "why": "The owner, 2026-11-26: a reference may not be a single setting. WorldAlley shows the same alley at every hour."
+  },
+  {
+   "file": "Art/Retired/interior_room_daylight.png",
+   "was": "The interiors reference (ADR-0026)",
+   "why": "The owner, 2026-11-26: a bad reference, one setting for a generic room. The rooms of IndoorRooms replace it."
+  },
+  {
+   "file": "Art/Retired/vehicles_soft_box.png",
+   "was": "The car look before ADR-0057",
+   "why": "The body and its waist ran solid through the cabins, a board over the seats. Replaced by VehiclesSoftBox."
+  },
+  {
+   "file": "Art/Retired/vehicles_classic.png",
+   "was": "The car look \"Classic\" (ADR-0011)",
+   "why": "Replaced by \"Soft box\" (ADR-0015)."
+  },
+  {
+   "file": "Art/Retired/WorldHours.png",
+   "was": "WorldHours: style test 02's alley at morning and dusk and the market square at midday on one sheet",
+   "why": "The owner, 2026-11-26: the alley and Market Square each have a reference at every hour and weather (WorldAlley, WorldMarketSquare)."
+  },
+  {
+   "title": "IndoorRooms",
+   "files": [
+    "Art/Retired/IndoorRooms.jpg",
+    "Art/Retired/IndoorRooms_Living.png",
+    "Art/Retired/IndoorRooms_Kitchen.png",
+    "Art/Retired/IndoorRooms_Dining.png",
+    "Art/Retired/IndoorRooms_Bedroom.png",
+    "Art/Retired/IndoorRooms_Children.png",
+    "Art/Retired/IndoorRooms_Bathroom.png",
+    "Art/Retired/IndoorRooms_Hallway.png",
+    "Art/Retired/IndoorRooms_Study.png",
+    "Art/Retired/IndoorRooms_Decor.png",
+    "Art/Retired/IndoorRooms_Garden.png",
+    "Art/Retired/IndoorRooms_Shop.png",
+    "Art/Retired/IndoorRooms_Cafe.png"
+   ],
+   "was": "IndoorRooms: the twelve rooms of furniture_kit_18 in one shell, by day",
+   "why": "The owner, 2026-11-26: \"move IndoorRooms to archived they are bad\". A home's rooms are IndoorHomeRoom and IndoorHallway, in the world's light at every hour."
+  }
+ ]
+}

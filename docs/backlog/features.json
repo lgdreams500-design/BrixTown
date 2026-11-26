@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-11-25",
+  "updated": "2026-11-26",
   "note": "The feature backlog. Maintained by the team and AI agents. The owner's picks live in feature_choices.json, never here.",
   "milestones": [
     {
@@ -2572,6 +2572,56 @@
       "suggested": {
         "slice": 2,
         "depth": 3,
+        "full": 3
+      }
+    },
+    {
+      "id": "F-LIGHTS",
+      "area": "objects",
+      "title": "Lights and their kinds",
+      "why": "A room lit by its lamps takes its colour and mood from them: a warm table lamp, a bright ceiling light and a wall light each light a room differently, and players want to light their own places.",
+      "pillars": [
+        1,
+        2
+      ],
+      "spec": [],
+      "levels": [
+        {
+          "name": "One lamp",
+          "what": "As now: every lamp gives the same warm light; rooms have a lamp each (rule I5).",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Kinds of light",
+          "what": "Lights come in kinds, each with its own character set in data (World/rules/lights.json): where it is mounted (floor, table, wall, ceiling), its colour (warm to cool white), its strength, how it spreads (a pool from a shade, light thrown up a wall, a broad ceiling wash) and how its shade glows. A room lit by its lamps takes its colour from the kinds in it; the Blender references and the game use the same data.",
+          "effort": "M",
+          "needs": {
+            "F-FURN-ITEMS": 1
+          }
+        },
+        {
+          "name": "Placed in the designer",
+          "what": "In designer mode the player places lights from the catalogue: standing on the floor or a table, mounted on a wall, or hung from or set into the ceiling; they snap to floors, walls and ceilings, cost through the ledger, and light the room as their kind does. Switched on and off by hand.",
+          "effort": "L",
+          "needs": {
+            "F-BLD-DESIGN": 1,
+            "F-FURN-ITEMS": 1
+          }
+        },
+        {
+          "name": "Dimmers and timers",
+          "what": "Each light can be dimmed and set to a colour within its kind's range; switches and timers by the world clock (on at dusk, off at bedtime), and residents switch their own lights as their routine says (worked out from the clock, never ticked).",
+          "effort": "L",
+          "needs": {
+            "F-BLD-DESIGN": 1,
+            "F-NPC-ROUTINE": 1
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 2,
+        "depth": 2,
         "full": 3
       }
     },

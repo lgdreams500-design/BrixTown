@@ -111,7 +111,7 @@ Details, numbers and reference images: `docs/art/ART_DIRECTION.md` (ADR-0004; da
 
 | ID | Requirement | Pri | Phase | Status |
 |---|---|---|---|---|
-| ART-001 | Environments shall match the old-town look of `Art/Reference/world_alley_morning_raw.png` (forms and materials), the daylight of `Art/Reference/world_street_kit_light.png` (ADR-0007), and the world rules W1–W8 in ART_DIRECTION §2. | P0 | PH1 | accepted |
+| ART-001 | Environments shall match the old-town look of `Art/Reference/World/WorldLook.png` (forms and materials), the daylight of `Art/Reference/World/WorldDaylight.png` (ADR-0007), and the world rules W1–W8 in ART_DIRECTION §2. | P0 | PH1 | accepted |
 | ART-002 | Surfaces shall use the shared palette and the matte, mottled two-tone treatment; no glossy or strongly saturated walls. | P1 | PH1 | accepted |
 | ART-003 | The game shall not apply a painterly or outline full-screen filter. | P1 | PH1 | accepted |
 | ART-004 | Player and NPC characters shall share the option B "Soft" proportions (about 5.6 heads tall, head ×1.22) and the character rules C1–C7 in ART_DIRECTION §3. | P0 | PH1 | accepted |
@@ -141,7 +141,7 @@ Face details: `docs/art/CHARACTER_FACE.md` (ADR-0005).
 ### 4.2a Body motion — `ANIM`
 
 Details and prototype: `docs/art/CHARACTER_MOTION.md` (ADR-0006). The owner approved the prototype clips
-(`Art/Reference/motion_walks.mp4`, `motion_walktalk.mp4`) on 2026-11-21; requirements shown in those clips
+(`Art/Reference/People/PeopleMotionWalks.mp4`, `Art/Reference/People/PeopleMotionWalkTalk.mp4`) on 2026-11-21; requirements shown in those clips
 are accepted, the rest stay proposed.
 
 | ID | Requirement | Pri | Phase | Status |
@@ -504,7 +504,7 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.3.0 | 2026-11-21 | Art direction recorded as requirements (ART-001 to ART-006) with companion documents and `Art/Reference/`. Face requirements accepted; CHR-012 added (teeth, neutral rest face). Body motion section added (ANIM-001 to ANIM-011, proposed). ADR-0004 to ADR-0006. Open questions Q-16, Q-17. |
 | 0.3.1 | 2026-11-21 | Owner approved the body-motion prototype. ADR-0006 accepted; ANIM-001, 002, 004, 005, 006 accepted (shown in the clips); ANIM-003 and ANIM-007 to 011 stay proposed. Clips added to `Art/Reference/`. |
 | 0.4.0 | 2026-11-21 | Scope is now set by feature levels picked by the owner (`docs/backlog/`, `Tools/feature_picker.html`, `docs/process/FEATURE_PROCESS.md`). Living-city domain spec added (CITY-010 to CITY-042, WLD-010 to WLD-014) with the city-in-a-box prototype and tests. Open questions Q-18 to Q-20. |
-| 0.4.1 | 2026-11-22 | Daylight changed to the "kit" light (ADR-0007); ART-001 names `world_street_kit_light.png` as the daylight reference. |
+| 0.4.1 | 2026-11-22 | Daylight changed to the "kit" light (ADR-0007); ART-001 names `Art/Reference/World/WorldDaylight.png` as the daylight reference. |
 | 0.4.2 | 2026-11-22 | Feature picker removed: the owner states picks in chat and agents record them, checked by `Tools/backlog.ps1` (ADR-0008). Q-08 decided: drivable cars and real traffic from the first slice. PH1 is now one district, not one block. CITY-005 updated to match. Car and traffic requirements drafted in LIVING_CITY 0.2.0 (CITY-043 to CITY-049, CITY-060 to CITY-067), accepted by the owner with ADR-0009 and Q-25 to Q-28; CITY-005 accepted. |
 | 0.4.3 | 2026-11-22 | CITY-007 (dialogue with NPCs) accepted by the owner and moved to PH1, matching the owner's pick of F-NPC-TALK level 1 for the first slice. The browser slice has sample conversations (`World/rules/dialogue.json`, WORLD_MAP 0.5.3); outcomes that change game state are still to come. |
 | 0.4.4 | 2026-11-22 | Owner picked `F-NPC-SPEECH` level 2 (lip sync) for the first slice: CHR-008, CHR-009 and ANIM-006 move to PH1, and Q-14 is decided as text first. The slice's faces take the CHR-007 control set for this; the designer part of CHR-007 stays in PH3. |

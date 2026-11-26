@@ -348,7 +348,10 @@ Furnishing is everything near cleared and made again, a long frame, and it ran a
 houses and at every doorway. A home furnished now stays so until it is `KeepMetres` (20) further off than `NearMetres`,
 homes are dropped `DropAtOnce` (8) together or when one comes near, and going in or out of a building of one or two
 floors furnishes nothing again (which floors are built turns on the camera's floor only in taller ones). Not yet: each
-home as its own pieces, made once and hidden or shown, so that nothing near is ever made again.
+home as its own pieces, made once and hidden or shown, so that nothing near is ever made again. Not yet, of lights (FURN-066 to FURN-070,
+F-LIGHTS level 2, ADR-0065): the rooms' lamps are not yet of their kinds in `World/rules/lights.json` (each kind's colour, strength
+and glow), and the building designer cannot place lights (floor, table, wall, ceiling); the rules are proved in
+`Tools/citysim/lights.py` and the Blender room references read the file.
 
 ## Designed houses (ADR-0032, ADR-0035)
 The 469 designed houses (lot.house) are built as the slice builds them (houses.js outsideS): the 12 x 9 m house of
@@ -538,7 +541,7 @@ with 32 vehicles drawn.
 The models' triangles are taken in the other order from the one they are written in (found in play, 2026-11-25): as
 they come they go round the wrong way for Unreal, which then drew each part's inside and left its outside out, so every
 car and van was a dark hollow with its riders' legs showing through the doors
-(`Art/StyleTests/unreal_play_bugs_44/cars_before_after.jpg`, against `Art/Reference/vehicles_soft_box.png`). The box's small things (drawn to `GardenCullDistance`) and its large ones (drawn however far) were one group, because
+(`Art/StyleTests/unreal_play_bugs_44/cars_before_after.jpg`, against `Art/Retired/vehicles_soft_box.png`). The box's small things (drawn to `GardenCullDistance`) and its large ones (drawn however far) were one group, because
 the distance was not part of a group's name: the large ones went at 150 m too. They are two groups now.
 
 ## Getting out of the way, and giving way (CITY-070, CITY-071, CITY-049)
@@ -666,7 +669,7 @@ is as it was (ADR-0007). Then:
 Every number is in DefaultGame.ini, `[/Script/BrixTown.BrixLight]`. `-BrixLightOff` leaves the light as the game mode
 alone makes it, to compare; `-BrixLightNo=<letters>` leaves parts out (e the eye, h the haze, n the night's light, s its
 sky). Pictures before and after: `Art/StyleTests/unreal_light_43/`. Not yet: the stars, the Milky Way, the moon's disc,
-path and phases (the night's light comes from one place and does not wax or wane), the planet (WLD-065); lamps lit in
+path and phases (the night's light comes from one place and does not wax or wane); lamps lit in
 shade by day as the reference renders have them; light from lit windows on the pavement (the panes are kept out of
 Lumen); the alley's haze growing heavy from 18:00 as its shade deepens (the game mode's haze has one brightness whatever
 the light). The haze's colour is set once a frame, by this (the game mode sets it only with `-BrixLightOff` or
@@ -1186,7 +1189,7 @@ Lumen (bounced light, the sky's fill in shade) needs shader model 6 (`Config/Def
 black. At Epic quality the town runs at about 36 frames a second, at High about 63 with the same shade, at Medium about 86
 but without Lumen. On this laptop use High (`scalability 2` in the console, or `-ExecCmds="scalability 2"`). The light
 follows the kit daylight (ADR-0007): a shaded wall on a wide street measures (161, 151, 135) against (159, 151, 146) in
-`Art/Reference/world_street_kit_light.png`. The first run after a change of shader settings compiles shaders for minutes
+`Art/Reference/World/WorldDaylight.png`. The first run after a change of shader settings compiles shaders for minutes
 and runs at a few frames a second; that is not the game's speed.
 
 ## The look gate (ADR-0058)

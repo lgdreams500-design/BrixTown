@@ -21,7 +21,7 @@
 //   - the night's light: with the sun out the sky was black and gave the shade no fill at all. A faint blue light from
 //     high up (the slice's own moon direction when its moon is down) lights the air, so the sky is a deep blue and the
 //     sky light has something to fill the streets with; it casts shadows, so roofs keep it out of rooms.
-// Not here yet: the stars, the Milky Way, the moon's disc, path and phases (WLD-042's sky), the planet (WLD-065).
+// Not here yet: the stars, the Milky Way, the moon's disc, path and phases (WLD-042's sky). (No planet: WLD-065 is cut.)
 //
 // For looking at the light in many places in one run (a launch costs far more than a shot):
 //   -BrixTour=<file> -BrixTourOut=<folder>   each line "name|hh:mm|weather|where[|ev=<EV100>]": set the clock and the

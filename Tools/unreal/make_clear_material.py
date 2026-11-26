@@ -1,7 +1,7 @@
 r"""Makes /Game/Greybox/M_Clear: the glass of a window you can see through (CITY-013). The kit's windows (Tools/blender/
 unreal_kit_36.py) have their glass as a dark box, right for a window in front of a building's solid core; the windows of an
 enterable building's hollow storey draw that slot with this instead, so the room looks out at the street and the sun
-comes in through them (Art/Reference/interior_room_daylight.png). Masked to nothing: it is never drawn and casts no shadow.
+comes in through them (Art/Retired/interior_room_daylight.png). Masked to nothing: it is never drawn and casts no shadow.
 The asset is binary and kept in Git LFS (ADR-0002); this script is how it is made.
 Run from the repository root (the engine path is this machine's, docs/setup/DEV_ENVIRONMENT.md):
   "C:\Users\leena\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "%CD%\Game\BrixTown.uproject"

@@ -54,7 +54,7 @@ Each item is also noted where it lives (`Game/README.md`, `Tools/README.md`, `To
    still a grocer's store. Details in `Game/README.md`, Quests.
 2. In Unreal Noor wears her approved look (`World/rules/cast_looks.json`): dress, bib apron, grey bun, locks along the
    hairline, lines of age. Not carried: the stoop, the shell under her hair, and age for anybody else (the elders of
-   `character_elders.png`: glasses, cane, shawl, beard, thin hair). The slice has none of it.
+   `Art/Reference/People/PeopleElders.png`: glasses, cane, shawl, beard, thin hair). The slice has none of it.
 3. Pip, Tam, Vera, Oda, Suvi and Len have no designed look. Vera, Oda, Suvi, Len and Tam have no gender written down,
    and five of the cast have no age decided: ask the owner.
 

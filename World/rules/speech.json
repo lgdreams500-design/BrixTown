@@ -1,5 +1,5 @@
 {
- "note": "How a resident's face moves while they speak a line (CHR-007 control set, CHR-008 expressions, CHR-009 lip sync timed from the line's text per Q-14, ANIM-006 nods). Values are from docs/art/CHARACTER_FACE.md §2-§4 and Art/Reference/face_mouth_shapes.png, face_expressions.png, face_talk.mp4: metres on a head of natural size. 'draw' is the larger-than-life scale the mouth is drawn at (CHARACTER_FACE §1). Checked by Tools/worldgen/test_world.py.",
+ "note": "How a resident's face moves while they speak a line (CHR-007 control set, CHR-008 expressions, CHR-009 lip sync timed from the line's text per Q-14, ANIM-006 nods). Values are from docs/art/CHARACTER_FACE.md §2-§4 and Art/Reference/People/PeopleFaceMouthShapes.png, Art/Reference/People/PeopleFaceExpressions.png, Art/Reference/People/PeopleFaceTalk.mp4: metres on a head of natural size. 'draw' is the larger-than-life scale the mouth is drawn at (CHARACTER_FACE §1). Checked by Tools/worldgen/test_world.py.",
  "draw": { "width": 1.3, "opening": 1.25 },
  "shapes": {
   "rest":  { "width": 0.0175, "opening": 0.0011, "round": 0,   "teeth": 0, "tongue": false, "curve": 0.15 },

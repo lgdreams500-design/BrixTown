@@ -1,0 +1,11 @@
+21:50:42 Blender 5.3.0, place bakery
+21:50:42 Bakery: sun 8.5 at bearing 21 deg, sky 0.25; 3 lamps, 1 fires, 5 glowing materials, 0 haze
+21:50:43   Bakery_Morning: the eye at +0.62 stops for a mean of 100
+21:51:27 Bakery_Morning.jpg rendered in 43.7s
+21:51:28   Bakery_Midday: the eye at +0.20 stops for a mean of 100
+21:52:25 Bakery_Midday.jpg rendered in 57.1s
+21:52:27   Bakery_Dusk: the eye at -0.75 stops for a mean of 85
+21:53:30 Bakery_Dusk.jpg rendered in 62.7s
+21:53:31   Bakery_NightLamps: the eye at -0.60 stops for a mean of 70
+21:54:24 Bakery_NightLamps.jpg rendered in 52.6s
+21:54:24 DONE

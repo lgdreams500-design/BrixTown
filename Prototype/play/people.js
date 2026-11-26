@@ -324,7 +324,7 @@ const People = (() => {
       top: P[v.top], bottom: P[v.bottom], legs: v.bottom_type, shoes: P[v.shoes], scarf: c("scarf"), cap: c("cap"), apron: c("apron"), bag: !!v.bag, tash: !!v.tash,
       sig: SIG[v.walk] || SIG.Springy, seed: 7, fm: { face_w: v.face_w, eye_size: v.eye_size, eye_open: v.eye_open, brow: v.brow, nose: v.nose, lips: v.lips } };
   }
-  const cast = () => [                                                // left to right as in Art/Reference/character_lineup.png
+  const cast = () => [                                                // left to right as in Art/Reference/People/PeopleLineup.png
     { S: 1.68 / 1.72, W: .92 * 1.04, skin: [.62, .42, .30], hair: "long", hairC: [.28, .10, .05], eyes: [.14, .36, .20], g: "tee", top: K.teal, bottom: K.indigo, legs: "trousers", shoes: K.cream, scarf: K.ochre, sig: SIG.Springy, seed: 7 },
     { S: 1.80 / 1.72, W: 1.06 * 1.04, skin: [.30, .19, .13], hair: "afro", hairC: K.black, eyes: [.2, .1, .05], g: "tunic", top: K.ochre, bottom: K.olive, legs: "shorts", shoes: [.6, .57, .5], bag: true, sig: SIG.Easy, seed: 11 },
     { S: 1.72 / 1.72, W: 1.14 * 1.04, skin: [.78, .56, .44], hair: "side", hairC: [.10, .06, .04], eyes: [.2, .1, .05], g: "long", top: K.cream, bottom: K.brown, legs: "trousers", shoes: [.1, .08, .06], apron: K.terra, tash: true, sig: SIG.Easy, seed: 13, fm: Object.assign({}, FM0, { face_w: 1.05, nose: 1.15 }) },
@@ -389,7 +389,7 @@ const People = (() => {
     const Wd = p => [ex[0] * p[0] + ey[0] * p[1] + ez[0] * p[2], ex[1] * p[0] + ey[1] * p[1] + ez[1] * p[2], ex[2] * p[0] + ey[2] * p[1] + ez[2] * p[2]];
     const n = lod === 0 ? 16 : lod === 1 ? 8 : 5, nl = lod === 0 ? 12 : lod === 1 ? 6 : 4, caps = lod === 0, fat = 1.34 * S, fwd = Wd([0, -1, 0]);
     const long = L.g !== "tee", legCol = L.legs === "skirt" ? L.skin : L.bottom;
-    // ---- the body, part for part as Tools/blender/character_face_05.py builds the people of character_lineup.png (option B: limbs x1.12).
+    // ---- the body, part for part as Tools/blender/character_face_05.py builds the people of Art/Reference/People/PeopleLineup.png (option B: limbs x1.12).
     // Heights there are in the same skeleton: hips .8835, shoulders and yoke +.436 above them, neck +.451.
     const kind = L.legs, bare = kind !== "trousers";
     if (lod === 0) {                                                  // the body's big shapes, for self-shadow: 1 head, 2 hair or hat, 4 torso, 8 and 16 arms, 32 and 64 legs

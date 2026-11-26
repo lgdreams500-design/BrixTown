@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 46 of 59 | 9 of 59 | 9 of 59 |
-| Size of the plan (points) | 576 | 491 | 951 |
-| Size of the suggested plan | 150 | 451 | 919 |
+| Decided | 47 of 60 | 9 of 60 | 9 of 60 |
+| Size of the plan (points) | 587 | 502 | 970 |
+| Size of the suggested plan | 161 | 462 | 938 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -61,6 +61,7 @@
 | **Furniture designs** `F-FURN-ITEMS` | 2 Large range ★ | undecided | undecided | Owner, 2026-11-22: "level to for design and company and outlets" (asked for first-slice levels; read as level 2). Bought furniture is delivered to the flat by NPCs, unassembled or assembled, or the player takes an instant option into the inventory, then places it from the inventory or moves it to storage; "we will build storage container mechanics later". Later milestones not stated. |
 | **Assembling flat-pack furniture** `F-FURN-ASSEMBLE` | undecided | undecided | undecided |  |
 | **How residents' homes are furnished** `F-HOME-FURNISH` | 3 Follows the household ★ | undecided | undecided | Owner, 2026-11-23: "3 Follows the household" (asked which level for furnishing variety, after approving house interiors look test 21). Later milestones not stated. |
+| **Lights and their kinds** `F-LIGHTS` | 2 Placed in the designer | undecided | undecided | Owner, 2026-11-26: "2 Placed in designer" (lights in kinds, each with its own character in data; in designer mode the player places ground, wall-mounted and ceiling lights). Later milestones not stated. |
 
 ## Vehicles
 
@@ -400,6 +401,12 @@
 - 1 One level for all: Every home is furnished the same: every piece of its line's sets in the rooms of its plan. Size S.
 - 2 Four levels per home: Each home is given one of four furnishing levels (Bare, Basic, Homely, Full) once, when it is made, and keeps it; each level adds pieces to the one before (ADR-0035). Size M.
 - 3 Follows the household: A household's level is worked out from its income and how long it has lived there, from data and the world clock (never ticked or stored): it starts from its income band and moves up a level each time its savings for furniture reach the next level's cost. Size L.
+
+**Lights and their kinds** (`F-LIGHTS`). A room lit by its lamps takes its colour and mood from them: a warm table lamp, a bright ceiling light and a wall light each light a room differently, and players want to light their own places.
+- 0 One lamp: As now: every lamp gives the same warm light; rooms have a lamp each (rule I5). Size -.
+- 1 Kinds of light: Lights come in kinds, each with its own character set in data (World/rules/lights.json): where it is mounted (floor, table, wall, ceiling), its colour (warm to cool white), its strength, how it spreads (a pool from a shade, light thrown up a wall, a broad ceiling wash) and how its shade glows. A room lit by its lamps takes its colour from the kinds in it; the Blender references and the game use the same data. Size M.
+- 2 Placed in the designer: In designer mode the player places lights from the catalogue: standing on the floor or a table, mounted on a wall, or hung from or set into the ceiling; they snap to floors, walls and ceilings, cost through the ledger, and light the room as their kind does. Switched on and off by hand. Size L.
+- 3 Dimmers and timers: Each light can be dimmed and set to a colour within its kind's range; switches and timers by the world clock (on at dusk, off at bedtime), and residents switch their own lights as their routine says (worked out from the clock, never ticked). Size L.
 
 **Reward feedback** (`F-UI-REWARD`). Earning money should feel good and be noticed: the player sees and hears it arrive instead of a number changing in the corner.
 - 0 Number only: As before: the purse number changes and the amount shows beside it for a moment. Size -.

@@ -7,6 +7,12 @@ The owner says picks in chat; an agent records them in `docs/backlog/feature_cho
 `powershell -NoProfile -ExecutionPolicy Bypass -File Tools/backlog.ps1`. It rejects invalid picks, lists needs that
 are not picked yet, and rewrites `docs/backlog/BACKLOG.md`. Process: `docs/process/FEATURE_PROCESS.md`, ADR-0008.
 
+## reference_catalog.py — the look references in one list
+Checks `Art/Reference/catalog.json` against the folders (every reference file listed, named
+`<Category>/<Category><Subject>[_<Variant>].<ext>`) and writes `Art/Reference/index.html`, the page the owner reviews them
+on: `python Tools/reference_catalog.py` (or `--check`). Test: `python -m unittest Tools/test_reference_catalog.py`.
+ADR-0061.
+
 ## citysim/ — the city in a box
 The living-city rules with no engine, with tests and top-down clips. See `citysim/README.md`.
 

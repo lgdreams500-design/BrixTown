@@ -1,0 +1,15 @@
+21:13:32 Blender 5.3.0, place rooms
+21:13:32 Rooms_Living: sun 8.5 at bearing 21 deg, sky 0.25; 2 lamps, 1 fires, 5 glowing materials, 0 haze
+21:13:33   Rooms_Living_Morning: the eye at +0.60 stops for a mean of 100
+21:14:13 Rooms_Living_Morning.jpg rendered in 39.4s
+21:14:15   Rooms_Living_Midday: the eye at +0.13 stops for a mean of 100
+21:15:06 Rooms_Living_Midday.jpg rendered in 50.9s
+21:15:07   Rooms_Living_Dusk: the eye at +0.32 stops for a mean of 85
+21:16:16 Rooms_Living_Dusk.jpg rendered in 69.2s
+21:16:19   Rooms_Living_NightLamps: the eye at +0.40 stops for a mean of 70
+21:17:28 Rooms_Living_NightLamps.jpg rendered in 69.2s
+21:17:32   Rooms_Living_NightFullMoon: the eye at +0.86 stops for a mean of 42
+21:18:26 Rooms_Living_NightFullMoon.jpg rendered in 54.4s
+21:18:28   Rooms_Living_NightNewMoon: the eye at -0.22 stops for a mean of 22
+21:19:12 Rooms_Living_NightNewMoon.jpg rendered in 44.1s
+21:19:12 DONE

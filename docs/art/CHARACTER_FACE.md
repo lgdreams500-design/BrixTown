@@ -20,7 +20,7 @@ The prototype is `Tools/blender/character_face_05.py`: `pose(rig, values)` is th
 moves a face. The production rig must expose the same controls, whatever it is built from (morph
 targets, bones or both).
 
-Reference images: `Art/Reference/face_expressions.png`, `face_mouth_shapes.png`, `face_talk.mp4`.
+Reference images: `Art/Reference/People/PeopleFaceExpressions.png`, `Art/Reference/People/PeopleFaceMouthShapes.png`, `Art/Reference/People/PeopleFaceTalk.mp4`.
 
 ## 1. The control set
 
