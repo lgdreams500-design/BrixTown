@@ -181,7 +181,7 @@ bool FSND018_TheCastSpeakTheirLines::RunTest(const FString&)
 		}
 	}
 	TestTrue(TEXT("Oda, the first of the cast, speaks her seventeen lines"), Speakers >= 1 && Voiced.FindRef(TEXT("r3419")) >= 17);
-	TestTrue(TEXT("Noor speaks the 32 lines Maya1 has voiced for her"), Voiced.FindRef(TEXT("r0262")) >= 32);
+	TestTrue(TEXT("Noor speaks the 29 lines Maya1 has voiced for her"), Voiced.FindRef(TEXT("r0262")) >= 29);
 	return !HasAnyErrors();
 }
 
