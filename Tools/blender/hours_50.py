@@ -88,6 +88,7 @@ INDOORS = ("rooms", "hallway", "bakery", "outlet")
 # a place's own eye where it differs: the hallway has no window, so a full moon seen only through a room's door is as dim
 # there as the new moon was (the owner, 2026-11-26: "full moon is giving too much light ... at the level currently shown on
 # new moon"; that picture's mean was 12)
+SKIP_HOURS = {"bakery": ("NightFullMoon", "NightNewMoon")}   # the owner, 2026-11-26: "for bakery, don't need moon settings"
 PLACE_EYE = {"hallway": {"NightFullMoon": 12, "NightNewMoon": 2.5}}   # and the new moon darker still ("should not have so much light")
 # the moon: high (a full moon in summer stands about 68 degrees up here), turned from the sun's bearing so it falls along
 # the alley and the streets, not across them (at 48 degrees across, the alley's houses shaded all of its paving)
@@ -114,7 +115,7 @@ if "room_shell" in globals():
     def room_shell(n, ox, oy, w=6.4, d=4.4, h=3.0, ceiling=True, window=True, front=0.0):
         x0, x1, y0, y1 = _room_shell(n, ox, oy, w, d, h, ceiling, window, front)
         box(n + "_Front", x0 - 0.3, x1 + 0.45, y0 - 0.3, y0, 0, h, M["plaster"], bevel=0)   # behind the camera
-        if PLACE == "rooms":                              # the light that wall throws back onto the people (the owner, 2026-11-26:
+        if PLACE in ("rooms", "bakery"):                  # the light that wall throws back onto the people (the owner, 2026-11-26:
             bc = bpy.data.lights.new("BounceCard", 'AREA')  # "the wall opposite to the character is not reflecting light back")
             bc.shape = 'RECTANGLE'
             bc.size, bc.size_y = (x1 - x0) * 0.9, h * 0.8
@@ -125,7 +126,7 @@ if "room_shell" in globals():
             for k in ("visible_camera", "visible_glossy", "visible_transmission"):
                 setp(bo, k, False)
             COL.objects.link(bo)
-        if window and PLACE == "rooms":                    # the sunlit street outside the window: its light comes in too
+        if window and PLACE in ("rooms", "bakery"):        # the sunlit street outside the window: its light comes in too
             out = bpy.data.materials.get("M_OutsidePaving") or painted("M_OutsidePaving", (0.22, 0.21, 0.25), (0.46, 0.42, 0.37), noise_scale=0.5)
             box(n + "_Outside", x1 + 0.45, x1 + 40.0, y0 - 30.0, y1 + 30.0, -0.4, -0.1, out, bevel=0)
         return x0, x1, y0, y1
@@ -334,6 +335,8 @@ def each_hour(scene, cam, exposure, stem, base=None):
         if WANT and hour[0] not in WANT:
             continue
         if hour[-1] and PLACE in INDOORS:                  # indoors no weather settings (the owner, 2026-11-26)
+            continue
+        if hour[0] in SKIP_HOURS.get(PLACE, ()):           # a place without some settings (the owner)
             continue
         ex = L.set(hour)
         fallen = []
@@ -850,6 +853,8 @@ def main_hours():
         for ob in scene.objects:                     # bakery_scene() dimmed its pendants by day: back to full, the hours set them
             if ob.type == 'LIGHT' and ob.name.startswith("Pen_Light"):
                 ob.data.energy /= 0.06
+        greyer(ROOM_GREYER)                                 # in the world's light, as the home room (the owner, 2026-11-26)
+        bounce_more(ROOM_BOUNCE)
         each_hour(scene, camera(scene, "Cam_bakery", loc, tgt, lens), 1.15, "Bakery", dict(day_lamps=0.06))
     elif PLACE == "outlet":
         scene = fresh("Furn_showroom")
