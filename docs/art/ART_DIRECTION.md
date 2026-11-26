@@ -1,9 +1,9 @@
 ---
 doc_id: WASTED-ART-DIRECTION
 title: Brix Town — Art direction (locked look)
-version: 1.9.1
+version: 1.10.0
 status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22, interiors and furniture on 2026-11-22, the menu's look on 2026-11-23, the house colourways and the house plan with its furnishing levels on 2026-11-23, every other building's colourways and the row houses and flats inside on 2026-11-24
-last_updated: 2026-11-24
+last_updated: 2026-11-26
 relates_to: [FURN-003, ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
 decision: docs/decisions/ADR-0004-art-direction.md, docs/decisions/ADR-0007-warmer-kit-light.md, docs/decisions/ADR-0013-kit-light-measured.md, docs/decisions/ADR-0026-interior-and-furniture-look.md, docs/decisions/ADR-0033-menu-look-painted-signs.md, docs/decisions/ADR-0032-house-colourways.md, docs/decisions/ADR-0035-house-plan-and-furnishing-levels.md, docs/decisions/ADR-0036-building-colourways-and-home-interiors.md
 ---
@@ -38,6 +38,9 @@ All in `Art/Reference/`. Originals and every earlier experiment stay in `Art/Sty
 | `house_interior_ground.png`, `house_interior_upstairs.png` | **Furnished houses**: the house at 12 x 9 m in each line at the four furnishing levels Bare, Basic, Homely and Full (ADR-0035). | `Tools/blender/house_interiors_21.py` (`house_interiors_21_sheet.py`) |
 | `building_colourways_1.png` to `_3.png` | **Every other building**: 17 groups of build types, three colourways each (ADR-0036). | `Tools/blender/building_styles_22.py` (`building_styles_22_sheet.py`) |
 | `home_interior_<plan>.png`, `house_colourways_12x9.png` | **Row houses and flats inside** at the four furnishing levels; the house colourways at 12 x 9 m (ADR-0036). | `Tools/blender/home_interiors_22.py`, `house_outside_23.py` |
+| `character_elders.png` | **Old people**: six elders made from the values that say age, the cast's old Elder at the left for comparison (ADR-0059). Hair built on the skull. | `Tools/blender/elders_48.py` |
+| `character_noor.png` | Noor, the master baker, 58: the head close up (ADR-0059). | `Tools/blender/baker_look_47.py` (`check`) |
+| `bakery_inside_day.png`, `bakery_inside_four.png` | **The Stone Oven inside**, by day and at four in the morning with the oven and lamps only (ADR-0059). | `Tools/blender/baker_look_47.py` |
 | `face_talk.mp4` / `.gif` | A spoken line with lip sync, blink and brow movement. | `Tools/blender/character_face_05.py` |
 
 Rejected directions, kept only so they are not tried again: the first 2D sketches, the painterly
@@ -226,6 +229,7 @@ dressed in whole garments made of the same mottled matte material as the town.
 | C5 | Silhouette says who someone is: apron for a shopkeeper, cap and bag for a courier, long coat for an office worker, scarf and bun for an elder. |
 | C6 | Faces are built for animation first: see `docs/art/CHARACTER_FACE.md`. |
 | C7 | Player and NPC use the **same body and head**; the character designer changes values, not the model. |
+| C9 | **Age shows** (ADR-0059): lines at the brow, the eyes and from nose to mouth are soft creases a little darker than the person's own skin, never black; lips pale with age; a stoop from the hips; thin hair hugs the head. **Hair sits on the skull**: a curved hairline, locks, no shell standing off the head, because the shade under a shell's edge reads as a cap. Checked close up by `Tools/blender/look_check.py`. |
 | C8 | **Rosy cheeks** on every face (ADR-0010): a soft oval below and outside each eye, a redder version of the person's own skin tone. Taken from option C; everything else stays option B. |
 
 ### 3.4 The designer values already in use
@@ -281,4 +285,5 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | 1.7.0 | 2026-11-23 | Houses: the owner approved all twelve colourways of house styles look test 20 (ADR-0032): §2.8, reference `house_colourways.png`. |
 | 1.8.0 | 2026-11-23 | Houses inside: the owner approved house interiors look test 21 (ADR-0035): §2.8, references `house_interior_ground.png` and `house_interior_upstairs.png`. |
 | 1.9.0 | 2026-11-24 | Every other building's colourways and the row houses and flats inside: the owner approved look tests building_styles_22, home_interiors_22 and house_outside_23 (ADR-0036): §2.9 and nine references. |
+| 1.10.0 | 2026-11-26 | Old age, Noor and the Stone Oven inside (ADR-0059): rule C9, references `character_elders.png`, `character_noor.png`, `bakery_inside_day.png`, `bakery_inside_four.png`. |
 | 1.9.1 | 2026-11-24 | §5: Eastgate Mall's sculpted shell noted as built in the locked materials, with no rule or reference image yet (ADR-0037). No rule or reference changed. |
