@@ -51,18 +51,34 @@ public:
 	TSharedPtr<const FBrixGoodsModels> GoodsModels;     // the goods' models, for the outlets' windows (set before Start; FURN-065)
 
 	UPROPERTY(Config) float CellMetres = 40.f;           // the faces are cut into squares this wide, so what is out of view is not drawn
-	UPROPERTY(Config) float LitGlow = 2.5f;              // the lit panels' glow (the slice's material 1)
+	UPROPERTY(Config) float LitGlow = 1.4f;              // the lit panels' glow (the slice's material 1)
 	UPROPERTY(Config) float LanternGlow = 8.f;           // lantern glass (material 2)
 	UPROPERTY(Config) float RoomLight = 0.3f;            // the court's even room light on the indoor faces (play.js roomLight(); M_MallRoom)
 	UPROPERTY(Config) FLinearColor WarmLit = FLinearColor(1.f, 0.64f, 0.34f);    // a warm light line, a lit case, a tall window (play.js: a shop window by day)
 	UPROPERTY(Config) FLinearColor CoolLit = FLinearColor(0.82f, 0.86f, 0.94f);  // a light panel, a lit screen (.9995)
 	UPROPERTY(Config) FLinearColor TreadColour = FLinearColor(0.16f, 0.16f, 0.17f);   // the moving stairs' treads (material 28)
 	UPROPERTY(Config) FLinearColor DarkGlass = FLinearColor(0.07f, 0.08f, 0.1f);      // a window that is not lit (material 4)
-	UPROPERTY(Config) int32 NearLights = 4;              // the mall's lanterns and shop lights nearest the camera on its floor give real light
-	UPROPERTY(Config) float LightCandela = 8.f;
-	UPROPERTY(Config) float LightReach = 12.f;           // m
+	UPROPERTY(Config) int32 NearLights = 6;              // the mall's lanterns and shop lights nearest the camera on its floor give real light
+	UPROPERTY(Config) float LightCandela = 25.f;
+	UPROPERTY(Config) float LightReach = 16.f;           // m
 	UPROPERTY(Config) FLinearColor LightColour = FLinearColor(1.f, 0.84f, 0.64f);
 	UPROPERTY(Config) float LightSeconds = 0.5f;         // how often the nearest are chosen again
+	// The look gate's G1 to G3 (ADR-0058): the hall's faces are mottled (RoomMottle: two close tones blotched, W1), a
+	// face that looks down has RoomUnder of the hall's even light (the underside of a gallery is darker than its top),
+	// and the LightShadows nearest of its lanterns shine down out of their shades (LightCone) and cast shadows, so that
+	// people and things stand on the floor in a pool of light with a shadow, not in an even glow.
+	UPROPERTY(Config) float RoomMottle = 0.2f;
+	UPROPERTY(Config) float RoomUnder = 0.35f;
+	UPROPERTY(Config) int32 LightShadows = 1;
+	UPROPERTY(Config) float LightCone = 75.f;
+	// The hall's faces glow by themselves (RoomLight), which lights nobody: people in it were lit only by what of the
+	// sky's light came in, and with the night dark (ADR-0055) they were black in the court. So with the camera in the
+	// hall there is a light for people alone (lighting channel 1, which the player's and the residents' bodies are on):
+	// from over the camera's shoulder, PeopleLux at night and PeopleLuxDay of that with the day's light also coming in.
+	UPROPERTY(Config) float PeopleLux = 0.6f;
+	UPROPERTY(Config) float PeopleLuxDay = 0.2f;
+	UPROPERTY() TObjectPtr<class UDirectionalLightComponent> PeopleLight;
+	float PeopleLevel = 0.f;
 	UPROPERTY(Config) float NameSize = 0.62f;            // m: an outlet's name on its sign band
 
 private:

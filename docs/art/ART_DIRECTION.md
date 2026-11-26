@@ -104,14 +104,15 @@ Common to all: AgX view transform with the "Medium High Contrast" look; haze sca
 
 ### 2.5 Vehicles — "Soft box" (ADR-0015, replacing "Classic" of ADR-0011)
 
-Reference: `Art/Reference/vehicles_soft_box.png` (option A of `Tools/blender/car_kit_09.py`). The owner first chose C
+Reference: `Art/Reference/vehicles_soft_box_2.png` (option A of `Tools/blender/car_kit_09.py`; ADR-0057 opened its cabins
+down to their floor, where `vehicles_soft_box.png` had a board over the seats). The owner first chose C
 "Classic" (`vehicles_classic.png`, kept for the record), then after playing with it in the slice preferred A.
 
 | # | Rule | Check |
 |---|---|---|
 | V1 | Cars are **small and friendly soft boxes**: simple body shapes with **generously rounded edges and corners** everywhere, a soft waist above the body, round lamps, rounded bumpers, round tyres with pale hubs. No sharp edges, no flat slab sides (W3). | No corner reads as sharp from 5 m. |
 | V2 | **Matte painted** like everything else (W1), one accent of the palette for the body and a **cream roof**, sometimes a cream belt stripe; vans carry a painted band on a rounded load box. No chrome shine, no glossy paint. | No highlights on the body. |
-| V3 | Cabins are **open frames on round posts** with a rounded roof, so the people inside can be seen; seats and a steering wheel inside. | A seated driver shows from the chest up. |
+| V3 | Cabins are **open frames on round posts** with a rounded roof, so the people inside can be seen; seats and a steering wheel inside, the seats on the floor of a **cabin well** cut out of the body (nothing over the lap), under a roof the tallest rider's head clears (ADR-0057). | A seated driver shows from the chest up from the side, and to the knees from above; no head touches the roof. |
 | V4 | Character comes from extras, not from new shapes: roof racks with cases and bags, crates in a pickup bed. | Three cars parked together look like a family, not copies. |
 
 ### 2.6 Interiors and furniture (ADR-0026)

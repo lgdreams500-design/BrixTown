@@ -8,7 +8,8 @@ Brix Town: a third-person multiplayer life-sim in Unreal Engine 5.8. Art source 
 3. Treat `[ASSUMPTION]` values as placeholders and `[OPEN: Q-nn]` items as undecided: ask, do not decide.
 4. Read `docs/process/FEATURE_PROCESS.md` and `docs/backlog/feature_choices.json`. A feature is in scope for a phase only
    at or below the level the owner picked for it; a missing pick means undecided: ask, do not build.
-5. For anything visual, read `docs/art/ART_DIRECTION.md` and look at `Art/Reference/` first. For faces read
+5. For anything visual, read `docs/art/ART_DIRECTION.md` and `docs/process/LOOK_GATE.md`, and look at
+   `Art/Reference/` first. For faces read
    `docs/art/CHARACTER_FACE.md`; for body animation read `docs/art/CHARACTER_MOTION.md`.
 
 ## Rules
@@ -28,6 +29,12 @@ Brix Town: a third-person multiplayer life-sim in Unreal Engine 5.8. Art source 
 - Do not commit secrets, engine binaries, or `Saved/`, `Intermediate/`, `DerivedDataCache/`, `Binaries/`.
 - Binary assets (`.uasset`, `.umap`, `.blend`) cannot be merged: lock before editing.
 - Record any significant design choice as an ADR in `docs/decisions/`.
+- Anything seen in the Unreal game passes the look gate before its pull request (`docs/process/LOOK_GATE.md`,
+  ADR-0058): shots at noon, dusk and night beside the references, the whole frame gone through (G1 to G10),
+  `Tools/unreal/look_check.py` run, the sheet kept in `Art/StyleTests/`, every "no" mended or written in the README's
+  "Not yet". The bar is `Art/Reference/` and ART_DIRECTION's rules, not the browser slice: the slice was a prototype
+  and "as the slice draws it" is never a reason a picture is good enough. Do not write "checked" or "looks right"
+  about something seen without having done this.
 - The look is locked (ADR-0004). New art must match `Art/Reference/`; never overwrite files there. Changing the
   look needs a new ADR and the owner's approval.
 - Every head uses the one face control set and every body the one skeleton (joint names in CHARACTER_MOTION §2).

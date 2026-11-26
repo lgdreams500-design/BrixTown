@@ -155,15 +155,34 @@ def steering(P, n, x, y, z):
     put(bevelled(ob, 0.015, 2), P)
 
 
+def well(P, n, shapes, x0, x1, half_w, z0, z1=1.5, r=0.08):
+    """Hollow the cabin: a rounded well cut out of each of the shapes, from x0 to x1 along the car and down to the floor
+    at z0, so the seats and whoever sits on them show from above and through the open sides (look test 45: before, the
+    body and the waist were solid over the cabin, a board across everyone's lap). The cutter is not drawn."""
+    cut = rbox(P, n + "_Cut", M["hub"], (x0 + x1) / 2, 0, (z0 + z1) / 2, x1 - x0, 2 * half_w, z1 - z0, r)
+    cut.hide_render = True
+    cut.display_type = 'WIRE'
+    for ob in shapes:
+        md = ob.modifiers.new("Well", 'BOOLEAN')
+        setp(md, "operation", 'DIFFERENCE')
+        setp(md, "solver", 'EXACT')
+        md.object = cut
+    return cut
+
+
 # ---- option A: soft box ----------------------------------------------------------------------------------------
+# The cabins are wells in the body with the seats on their floor (seat tops 0.50 m, the van's 0.60 m), under roofs whose
+# undersides are 1.73 m (the van's 1.84 m): the tallest person (1.80 m, under an afro: 1.17 m of seated head) clears them by
+# 5 cm (look test 45).
 def a_small(P, col, roof):
     L, W = 3.0, 1.56
-    rbox(P, "A1_Body", col, 0, 0, 0.58, L, W, 0.62, 0.26)
-    rbox(P, "A1_Waist", col, -0.15, 0, 0.92, L - 0.8, W - 0.1, 0.16, 0.08)
-    posts_roof(P, "A1", -1.0, 0.55, W / 2 - 0.12, 0.95, 1.6, roof)
-    rbox(P, "A1_Roof", roof, -0.25, 0, 1.64, 1.8, W - 0.06, 0.16, 0.08)
+    body = rbox(P, "A1_Body", col, 0, 0, 0.58, L, W, 0.62, 0.26)
+    waist = rbox(P, "A1_Waist", col, -0.15, 0, 0.92, L - 0.8, W - 0.1, 0.16, 0.08)
+    well(P, "A1", [body, waist], -0.75, 0.45, W / 2 - 0.15, 0.38)
+    posts_roof(P, "A1", -1.0, 0.55, W / 2 - 0.12, 0.95, 1.77, roof)
+    rbox(P, "A1_Roof", roof, -0.25, 0, 1.81, 1.8, W - 0.06, 0.16, 0.08)
     rbox(P, "A1_Dash", M["leather"], 0.42, 0, 0.98, 0.3, W - 0.3, 0.14, 0.05)
-    seats(P, "A1", [-0.35], 0.33, 0.72, M["leather"]); steering(P, "A1", 0.25, -0.33, 1.08)
+    seats(P, "A1", [-0.35], 0.33, 0.44, M["leather"]); steering(P, "A1", 0.25, -0.33, 1.08)
     lamps(P, "A1", L / 2 - 0.02, 0.66, [-0.48, 0.48], 0.13, M["lampc"])
     rbox(P, "A1_BumpF", M["hub"], L / 2 + 0.02, 0, 0.36, 0.14, W - 0.2, 0.14, 0.06)
     rbox(P, "A1_BumpB", M["hub"], -L / 2 - 0.02, 0, 0.36, 0.14, W - 0.2, 0.14, 0.06)
@@ -172,19 +191,20 @@ def a_small(P, col, roof):
 
 def a_estate(P, col, roof):
     L, W = 4.1, 1.7
-    rbox(P, "A2_Body", col, 0, 0, 0.6, L, W, 0.64, 0.25)
-    rbox(P, "A2_Stripe", roof, 0, 0, 0.7, L - 0.1, W + 0.012, 0.08, 0.04)
-    rbox(P, "A2_Waist", col, -0.2, 0, 0.96, L - 0.9, W - 0.1, 0.16, 0.08)
-    posts_roof(P, "A2", -1.85, 0.85, W / 2 - 0.12, 1.0, 1.66, roof)
-    rod(P, "A2_PM1", roof, (-0.5, W / 2 - 0.12, 1.0), (-0.5, (W / 2 - 0.12) * 0.97, 1.66), 0.05)
-    rod(P, "A2_PM2", roof, (-0.5, -(W / 2 - 0.12), 1.0), (-0.5, -(W / 2 - 0.12) * 0.97, 1.66), 0.05)
-    rbox(P, "A2_Roof", roof, -0.55, 0, 1.7, 2.95, W - 0.06, 0.16, 0.08)
+    body = rbox(P, "A2_Body", col, 0, 0, 0.6, L, W, 0.64, 0.25)
+    stripe = rbox(P, "A2_Stripe", roof, 0, 0, 0.7, L - 0.1, W + 0.012, 0.08, 0.04)
+    waist = rbox(P, "A2_Waist", col, -0.2, 0, 0.96, L - 0.9, W - 0.1, 0.16, 0.08)
+    well(P, "A2", [body, stripe, waist], -1.42, 0.6, W / 2 - 0.15, 0.38)
+    posts_roof(P, "A2", -1.85, 0.85, W / 2 - 0.12, 1.0, 1.77, roof)
+    rod(P, "A2_PM1", roof, (-0.5, W / 2 - 0.12, 1.0), (-0.5, (W / 2 - 0.12) * 0.97, 1.77), 0.05)
+    rod(P, "A2_PM2", roof, (-0.5, -(W / 2 - 0.12), 1.0), (-0.5, -(W / 2 - 0.12) * 0.97, 1.77), 0.05)
+    rbox(P, "A2_Roof", roof, -0.55, 0, 1.81, 2.95, W - 0.06, 0.16, 0.08)
     for x in (-1.4, 0.2):
-        rbox(P, "A2_Rail%d" % int(x * 10), M["iron"], x, 0, 1.8, 0.08, W - 0.3, 0.06, 0.03)
-    rbox(P, "A2_Case", M["terra"], -0.95, -0.2, 1.97, 0.95, 0.75, 0.34, 0.1)
-    rbox(P, "A2_Bag", M["cream"], -0.05, 0.35, 1.93, 0.6, 0.5, 0.26, 0.1)
+        rbox(P, "A2_Rail%d" % int(x * 10), M["iron"], x, 0, 1.91, 0.08, W - 0.3, 0.06, 0.03)
+    rbox(P, "A2_Case", M["terra"], -0.95, -0.2, 2.08, 0.95, 0.75, 0.34, 0.1)
+    rbox(P, "A2_Bag", M["cream"], -0.05, 0.35, 2.04, 0.6, 0.5, 0.26, 0.1)
     rbox(P, "A2_Dash", M["leather"], 0.72, 0, 1.02, 0.3, W - 0.3, 0.14, 0.05)
-    seats(P, "A2", [-0.05, -1.05], 0.35, 0.74, M["leather"]); steering(P, "A2", 0.55, -0.35, 1.12)
+    seats(P, "A2", [-0.05, -1.05], 0.35, 0.44, M["leather"]); steering(P, "A2", 0.55, -0.35, 1.1)
     lamps(P, "A2", L / 2 - 0.02, 0.68, [-0.55, 0.55], 0.13, M["lampc"])
     rbox(P, "A2_BumpF", M["hub"], L / 2 + 0.02, 0, 0.38, 0.14, W - 0.2, 0.14, 0.06)
     rbox(P, "A2_BumpB", M["hub"], -L / 2 - 0.02, 0, 0.38, 0.14, W - 0.2, 0.14, 0.06)
@@ -193,13 +213,14 @@ def a_estate(P, col, roof):
 
 def a_van(P, col, band):
     L, W = 4.6, 1.9
-    rbox(P, "A3_Low", col, 0, 0, 0.66, L, W, 0.72, 0.25)
+    low = rbox(P, "A3_Low", col, 0, 0, 0.66, L, W, 0.72, 0.25)
+    well(P, "A3", [low], 0.86, 1.78, W / 2 - 0.15, 0.46)
     rbox(P, "A3_Load", col, -0.75, 0, 1.62, 3.1, W, 1.3, 0.3)
     rbox(P, "A3_Band", band, -0.75, 0, 1.6, 2.9, W + 0.014, 0.22, 0.05)
-    posts_roof(P, "A3", 0.85, 2.05, W / 2 - 0.14, 1.0, 1.8, col, lean_front=0.22)
-    rbox(P, "A3_CabRoof", col, 1.35, 0, 1.83, 1.2, W - 0.08, 0.16, 0.08)
+    posts_roof(P, "A3", 0.85, 2.05, W / 2 - 0.14, 1.0, 1.89, col, lean_front=0.22)
+    rbox(P, "A3_CabRoof", col, 1.35, 0, 1.92, 1.2, W - 0.08, 0.16, 0.08)
     rbox(P, "A3_Dash", M["leather"], 1.85, 0, 1.08, 0.3, W - 0.3, 0.16, 0.05)
-    seats(P, "A3", [1.3], 0.42, 0.82, M["leather"]); steering(P, "A3", 1.68, -0.42, 1.2)
+    seats(P, "A3", [1.3], 0.42, 0.54, M["leather"]); steering(P, "A3", 1.68, -0.42, 1.18)
     lamps(P, "A3", L / 2 - 0.02, 0.74, [-0.62, 0.62], 0.15, M["lampc"])
     rbox(P, "A3_BumpF", M["hub"], L / 2 + 0.02, 0, 0.4, 0.14, W - 0.2, 0.16, 0.06)
     wheels(P, "A3", [1.5, -1.45], W / 2, 0.35, 0.26)
@@ -415,6 +436,11 @@ def main():
                 scene.render.filepath = OUT + "/" + NAME + "_" + key + ".png"
                 bpy.ops.render.render(write_still=True, scene=scene.name)
                 log("%s (%s) rendered in %.1fs" % (key, label, time.time() - t))
+                if key == "A":       # and from above, as the camera behind a driver sees it: into the open cabins (look test 45)
+                    scene.camera = camera(scene, "Cam_" + key + "_in", (gx + 0.6, -12.5, 9.5), (gx + 0.6, 0.6, 0.5), 30.0)
+                    scene.render.filepath = OUT + "/" + NAME + "_" + key + "_inside.png"
+                    bpy.ops.render.render(write_still=True, scene=scene.name)
+                    log("%s from above rendered" % key)
             except Exception:
                 log("FAILED %s:\n%s" % (key, traceback.format_exc()))
     except Exception:

@@ -10,7 +10,8 @@ Experiments and rejected directions live in `Art/StyleTests/`.
 | `world_alley_morning_raw.png` | 2026-11-21 | The world look (style test 02, unfiltered) | `Tools/blender/style_test_02.py` |
 | `world_overview.png` | 2026-11-21 | Same town at morning, dusk and midday | `Tools/blender/old_town_04.py` |
 | `world_street_kit_light.png` | 2026-11-22 | The daylight (ADR-0007): softer, warmer sun, thinner haze, on a street of kit buildings | `Tools/blender/building_kit_07.py` (the `street` image) |
-| `vehicles_soft_box.png` | 2026-11-22 | Cars and vans: option A "Soft box" of car look test 09 (ADR-0015) | `Tools/blender/car_kit_09.py` (the `A` image) |
+| `vehicles_soft_box_2.png` | 2026-11-26 | Cars and vans: option A "Soft box" of car look test 09 with the cabins open down to their floor and the roofs raised for the tallest rider (ADR-0057, amending ADR-0015) | `Tools/blender/car_kit_09.py` (the `A` image; `A_inside` looks into the cabins) |
+| `vehicles_soft_box.png` | 2026-11-22 | Superseded by `vehicles_soft_box_2.png` (ADR-0057): the body and its waist ran solid through the cabins, a board over the seats. Was the car look: option A "Soft box" (ADR-0015) | `car_kit_09.py` before 2026-11-26 |
 | `vehicles_classic.png` | 2026-11-22 | Superseded by `vehicles_soft_box.png` (ADR-0015). Was the car look: option C "Classic" (ADR-0011) | `Tools/blender/car_kit_09.py` (the `C` image) |
 | `furniture_lines.png` | 2026-11-22 | Furniture: every piece of the four style lines Plain, Old Town, Workshop, Curve (ADR-0026) | `Tools/blender/furniture_kit_17.py` (the `sheet` image) |
 | `interior_room_daylight.png` | 2026-11-22 | Interiors: an Old Town room in the kit daylight, sun through the window, two lamps (ADR-0026) | `Tools/blender/furniture_kit_17.py` (the `room_oldtown` image) |

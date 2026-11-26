@@ -176,7 +176,19 @@ namespace
 			const FVector2D Door = Vec2(Hs, TEXT("front_door"));
 			P.DoorAt = Mu((float)(Door.X + Door.Y) / 2);
 			P.DoorWidth = (float)(Door.Y - Door.X);
-			for (const TSharedPtr<FJsonValue>& W : Hs->GetArrayField(TEXT("windows")))
+			// a one-storey plan lists its windows; a plan of storeys or a flat lists them by floor ({"ground": [...],
+			// "upstairs": [...]}): the outside takes the first floor's (reading those as a list gave none and a warning each)
+			const TArray<TSharedPtr<FJsonValue>>* Wins = nullptr;
+			const TSharedPtr<FJsonObject>* ByFloor = nullptr;
+			if (!Hs->TryGetArrayField(TEXT("windows"), Wins) && Hs->TryGetObjectField(TEXT("windows"), ByFloor))
+			{
+				const TArray<TSharedPtr<FJsonValue>>* Floors = nullptr;
+				FString First = TEXT("ground");
+				if (Hs->TryGetArrayField(TEXT("floors"), Floors) && Floors->Num()) First = (*Floors)[0]->AsString();
+				if (!(*ByFloor)->TryGetArrayField(First, Wins) && (*ByFloor)->Values.Num()) (*ByFloor)->Values.CreateConstIterator().Value()->TryGetArray(Wins);
+			}
+			static const TArray<TSharedPtr<FJsonValue>> NoWindows;
+			for (const TSharedPtr<FJsonValue>& W : Wins ? *Wins : NoWindows)
 			{
 				const TArray<TSharedPtr<FJsonValue>>& A = W->AsArray();
 				FBrixPlanWindow Win;
