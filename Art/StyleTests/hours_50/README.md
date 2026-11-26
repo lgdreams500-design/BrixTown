@@ -36,3 +36,6 @@ the eye opening up to 9 stops on a moonless night (`EYE_MAX_INDOORS`). Not yet: 
 The home room's wall facing the people throws light back onto them (the owner, 2026-11-26): a hidden soft light on that wall
 (`BOUNCE_CARD`: 25 W by day following the sun and sky, 15 % of the lamps' light at night in their colour), as the wall's own
 bounce reached too little. Tried and taken out: a wider window and a stronger sky (the owner: "no raising the window").
+
+The hallway's moonlit nights (the owner, 2026-11-26): the full moon as dim as the new moon was and cool blue (`PLACE_EYE`
+hallway NightFullMoon 12, `MOON` `indoor_colour`), the new moon darker still (NightNewMoon 2.5). The hallway only.

@@ -85,10 +85,16 @@ MOON_DISC = dict(distance=320.0, radius=5.0, strength=8.0)    # the full moon se
 # indoors the eye works by day too, as the game's opens in a room by day (DayOpenIndoors): the mean brightness it seeks
 INDOOR_EYE = {"Morning": 100, "Midday": 100, "Dusk": 85}
 INDOORS = ("rooms", "hallway", "bakery", "outlet")
+# a place's own eye where it differs: the hallway has no window, so a full moon seen only through a room's door is as dim
+# there as the new moon was (the owner, 2026-11-26: "full moon is giving too much light ... at the level currently shown on
+# new moon"; that picture's mean was 12)
+PLACE_EYE = {"hallway": {"NightFullMoon": 12, "NightNewMoon": 2.5}}   # and the new moon darker still ("should not have so much light")
 # the moon: high (a full moon in summer stands about 68 degrees up here), turned from the sun's bearing so it falls along
 # the alley and the streets, not across them (at 48 degrees across, the alley's houses shaded all of its paving)
-MOON = dict(height=68, turn=0.35, strength=0.012, colour=(0.62, 0.72, 1.0),
-            indoor_height=30, indoor_times=4.0)            # and stronger: beside the fire the patch must still show                              # indoors: on the sun's bearing, 30 degrees up, through the window   # strength times the place's sun
+MOON = dict(height=68, turn=0.35, strength=0.012, colour=(0.62, 0.72, 1.0),   # strength times the place's sun
+            indoor_height=30,                              # indoors: on the sun's bearing, 30 degrees up, through the window
+            indoor_times=4.0,                              # and stronger: beside the fire the patch must still show
+            indoor_colour=(0.26, 0.42, 1.0))               # the hallway's moonlight cooler: off warm plaster the moon's own read warm
 FIRE = ("Fp_", "Cd_", "Oven", "Ember", "Flame")                                # lights that are fires, not lamps
 GLASS_OFF = (0.07, 0.09, 0.12)                                                 # a window with no light behind it
 SHADE_OFF = (0.55, 0.50, 0.42)                                                 # a lamp's glass with the lamp out
@@ -203,7 +209,7 @@ class Lights:
             el, maz = math.radians(mh), az + mt                # indoors from the window's side, low enough to come in
             ml = bpy.data.lights.new("Moon", 'SUN')
             ml.energy = self.sun_energy * MOON["strength"] * (MOON["indoor_times"] if PLACE in INDOORS else 1.0)
-            ml.color = MOON["colour"]
+            ml.color = MOON["indoor_colour"] if PLACE == "hallway" else MOON["colour"]
             setp(ml, "angle", math.radians(0.6))
             mo = bpy.data.objects.new("Moon", ml)
             mo.rotation_euler = Vector((math.cos(el) * math.cos(maz), math.cos(el) * math.sin(maz), math.sin(el))).normalized().to_track_quat('Z', 'Y').to_euler()
@@ -334,6 +340,7 @@ def each_hour(scene, cam, exposure, stem, base=None):
         if hour[-1] and PLACE not in INDOORS and cam is not None:   # out of doors it falls and lies; indoors only the light changes
             fallen = weather_out(scene, cam, hour[-1])
         target = INDOOR_EYE.get(hour[0], hour[-2]) if PLACE in INDOORS else hour[-2]
+        target = PLACE_EYE.get(PLACE, {}).get(hour[0], target)
         if target:
             ex = eye(scene, cam, exposure, ex, target, stem + "_" + hour[0])
         shoot(scene, cam, exposure + ex, "%s/%s_%s.jpg" % (HOURS_OUT, stem, hour[0]))
