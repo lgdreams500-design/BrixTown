@@ -1,10 +1,10 @@
 ---
 doc_id: WASTED-FEATURE-PROCESS
 title: Brix Town — How a feature gets from idea to game
-version: 1.2.0
+version: 1.3.0
 status: accepted          # owner agreed the approach on 2026-11-21
 last_updated: 2026-11-26
-relates_to: [TEST-001, TECH-004, TECH-005]
+relates_to: [TEST-001, TECH-004, TECH-005, ART-001, ADR-0061, ADR-0066]
 ---
 
 # How a feature gets from idea to game
@@ -22,8 +22,9 @@ the work lives.
 | 3 | **Pick** | The owner picks a level for each feature at three milestones: first slice (PH1), life depth (PH3), full game. | The owner says the picks in chat; an agent records them in `docs/backlog/feature_choices.json` | **Owner only** |
 | 4 | **Spec** | Requirements are written per feature and level, each one testable. | `docs/specs/GAME_SPEC.md`, `docs/specs/domains/*.md` | Agents draft, owner accepts |
 | 5 | **Prove** | The rules are built as a small simulation with tests, outside the engine, and shown as a clip or picture. | `Tools/citysim/`, `Tools/blender/` | Owner reacts to what is shown |
-| 6 | **Build** | The proven rules are built in Unreal as a module with automated tests named after the requirement. Anything seen passes the look gate before its pull request. | `Game/`, `docs/process/LOOK_GATE.md` | Agents build, tests and the look gate |
-| 7 | **Review** | Play it. Raise or lower the level (say so in chat) if it earned it or did not. | `feature_choices.json` | Owner |
+| 6 | **Reference** | Before anything seen is built, it has an **approved reference**: a picture of it in the town's look, at every setting it is seen in, made by a script, listed in the catalog and approved by the owner on the reference page. If there is none, it is made first and the owner reviews it, one at a time; nothing is built against an unapproved one. | `Art/Reference/catalog.json`, `Art/Reference/index.html`, `Tools/blender/` | **Owner approves** |
+| 7 | **Build** | The proven rules are built in Unreal as a module with automated tests named after the requirement, matched to the approved reference. Anything seen passes the look gate before its pull request. | `Game/`, `docs/process/LOOK_GATE.md` | Agents build, tests and the look gate |
+| 8 | **Review** | Play it. Raise or lower the level (say so in chat) if it earned it or did not. | `feature_choices.json` | Owner |
 
 ## What makes the cut
 
@@ -41,7 +42,7 @@ Things that help when picking:
 - **Watch the totals.** `BACKLOG.md` adds up rough sizes (S 1, M 3, L 8, XL 20 points) and compares them
   with the suggested plan. The points are estimates; what matters is how much bigger or smaller your
   plan is than the suggestion.
-- **Cheap to change early.** Picks can change at any time. Changing a pick after stage 6 has started
+- **Cheap to change early.** Picks can change at any time. Changing a pick after stage 7 has started
   costs real work, so decide the first-slice column first and carefully.
 
 ## Rules for AI agents
@@ -62,6 +63,19 @@ Things that help when picking:
   requirement's level, the requirement is out of scope for that phase, whatever its priority.
 - Logic that can be worked out from the clock and data must not be ticked every frame (TECH-004). Prove
   it in a headless simulation with tests before any engine work.
+- **Reference before build (stage 6, ADR-0066).** Before building anything that is seen in the game (a place, a room,
+  a building, a piece, a vehicle, a person, a screen), find its reference in `Art/Reference/catalog.json`. If there
+  is none, or it is only `proposed`, stop building it: make the reference first, put it on the reference page as
+  proposed, and ask the owner to review it. A good reference:
+  - is one thing, named `<Category><Subject>[_<Variant>]`, made by a script in `Tools/blender/` that can render it again;
+  - shows every setting the thing is seen in, not one: out of doors morning, midday, dusk, night with the lamps on
+    and off under a full and a new moon, cloudy, rain, fog and snow; indoors the six hours without weather; a shop
+    or hall only the settings it needs (the owner says which; `Tools/blender/hours_50.py`);
+  - is lit by the one light of the town (the world's sun and sky, one colour for each kind of lamp in
+    `World/rules/lights.json`, one red for fire), checked beside an approved reference at the same hour, so
+    that references look alike;
+  - writes down what it locks, what is seen wrong in it (its issues) and what was tried and dropped.
+  The owner reviews references one at a time; test shots go to a scratch folder, never over a picture under review.
 
 ## The one architectural rule behind a living city
 

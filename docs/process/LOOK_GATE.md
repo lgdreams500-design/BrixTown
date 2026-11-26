@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-LOOK-GATE
 title: Brix Town — The look gate: how anything seen in the game is checked when it is made
-version: 1.0.0
+version: 1.1.0
 status: accepted          # the owner, 2026-11-26: "build a process where this is taken care as part of creations instead of waiting for audit to detect it later"
 last_updated: 2026-11-26
 relates_to: [ADR-0004, ADR-0058, ART-001, TEST-001]
@@ -22,9 +22,10 @@ at as a whole, against the look, by whoever made it.
    to aim even better than slice in the unreal"). "As the slice draws it" describes where a rule or a number came
    from; it is never a reason a picture is good enough. A shortcut the slice took (rooms that glow by themselves, no
    shadows, one flat colour) is a defect when it is carried into Unreal.
-3. Where no reference shows that kind of thing (Eastgate's inside has none: ART_DIRECTION §5), the rules still
-   apply, and the nearest reference is used for light and materials (a hall is an interior: I5, W1, W5, W6). Say in
-   the pull request that no reference exists, so the owner can ask for one.
+3. Where no approved reference shows that kind of thing (Eastgate's inside has none: ART_DIRECTION §5), it is not
+   built yet: its reference is made and approved first (`docs/process/FEATURE_PROCESS.md` stage 6, ADR-0066). Work
+   already in the game without one keeps to the rules and the nearest reference for light and materials (a hall
+   is an interior: I5, W1, W5, W6) until its reference is approved, and says so in its README's "Not yet".
 
 ## When it applies
 Any change that alters what is seen in the Unreal game: a new place or thing, a model, a material, a light, the sky,
