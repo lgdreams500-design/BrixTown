@@ -31,7 +31,7 @@ from mathutils import Matrix, Vector
 B = "C:/Projects/Wasted/Tools/blender/"
 PLACE = os.environ.get("WASTED_PLACE", "alley")
 SOURCE = {"alley": "old_town_04.py", "square": "old_town_04.py", "street": "building_kit_07.py",
-          "rooms": "baker_look_47.py", "hallway": "baker_look_47.py", "shop": "baker_look_47.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py", "sky": "old_town_04.py"}[PLACE]
+          "rooms": "baker_look_47.py", "hallway": "baker_look_47.py", "shop": "baker_look_47.py", "mall": "baker_look_47.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py", "sky": "old_town_04.py"}[PLACE]
 _s = open(B + SOURCE, encoding="utf-8").read()
 exec(compile(_s[:_s.rindex("\nmain()")], SOURCE + "_helpers", "exec"), globals())
 exec(compile(open(B + "sky_52.py", encoding="utf-8").read(), "sky_52", "exec"), globals())   # the sky and its clouds
@@ -84,7 +84,7 @@ STARS = dict(scale=420.0, size=0.045, strength=(2.2, 1.0))   # the night sky's s
 MOON_DISC = dict(distance=320.0, radius=5.0, strength=8.0)    # the full moon seen in the sky
 # indoors the eye works by day too, as the game's opens in a room by day (DayOpenIndoors): the mean brightness it seeks
 INDOOR_EYE = {"Morning": 100, "Midday": 100, "Dusk": 85}
-INDOORS = ("rooms", "hallway", "bakery", "shop", "outlet")
+INDOORS = ("rooms", "hallway", "bakery", "shop", "outlet", "mall")
 # a place's own eye where it differs: the hallway has no window, so a full moon seen only through a room's door is as dim
 # there as the new moon was (the owner, 2026-11-26: "full moon is giving too much light ... at the level currently shown on
 # new moon"; that picture's mean was 12)
@@ -95,8 +95,8 @@ FIRE_COLOUR = (1.0, 0.24, 0.06)                          # every fire, in every 
 FIRE_OUT_HOURS = {"rooms": ("NightFullMoon", "NightNewMoon")}   # the owner, 2026-11-26: "we need reference of moon lights when the
                                                           # fire place is turned off": these again with the fire out too
 SKIP_HOURS = {"bakery": ("NightFullMoon", "NightNewMoon"), "shop": ("NightFullMoon", "NightNewMoon"),
-              "outlet": ("NightFullMoon", "NightNewMoon")}       # a hall as the shops   # a shop as the bakery   # the owner, 2026-11-26: "for bakery, don't need moon settings"
-PLACE_EYE = {"hallway": {"NightFullMoon": 12, "NightNewMoon": 2.5},
+              "outlet": ("NightFullMoon", "NightNewMoon"), "mall": ("NightFullMoon", "NightNewMoon")}   # halls as the shops   # a shop as the bakery   # the owner, 2026-11-26: "for bakery, don't need moon settings"
+PLACE_EYE = {"hallway": {"NightFullMoon": 12, "NightNewMoon": 2.5}, "mall": {"Midday": 82},   # the court's midday sun under open skylights
              "rooms": {"NightFullMoonFireOut": 12, "NightNewMoonFireOut": 2.5}}   # the home room's fire-out nights as dim (the owner)   # and the new moon darker still ("should not have so much light")
 # the moon: high (a full moon in summer stands about 68 degrees up here), turned from the sun's bearing so it falls along
 # the alley and the streets, not across them (at 48 degrees across, the alley's houses shaded all of its paving)
@@ -487,6 +487,479 @@ def corridor(Ls):
 
 
 AWNING_IN = ("Morning",)                                  # the shop's awning rolled up while the sun is low (the owner, 2026-11-26)
+
+
+MALL_LOT, MALL_MID = ("b_16_5", "b_16_5_l0"), (1680.0, 678.0)   # Eastgate Mall's lot, and the middle of its court
+MALL_LOOK = dict(brass=(0.78, 0.60, 0.32), glass_tint=(0.80, 0.90, 0.92), glass_alpha=0.18, column=(0.86, 0.82, 0.74),
+                 globe=(1.0, 0.90, 0.74), globe_glow=8.0, globes=12, chandelier_drop=5.5, banner_drop=6.5, column_every=16.0,
+                 fronts=((0.16, 0.30, 0.31), (0.50, 0.24, 0.17), (0.56, 0.44, 0.20), (0.36, 0.26, 0.36), (0.24, 0.32, 0.22)),
+                 banners=((0.86, 0.42, 0.26), (0.30, 0.58, 0.60), (0.92, 0.74, 0.36), (0.62, 0.46, 0.66)),
+                 flowers=((0.78, 0.28, 0.30), (0.92, 0.78, 0.36), (0.86, 0.86, 0.82), (0.58, 0.40, 0.66)), flowers_per=60, banners_per=6,
+                 slat=((0.30, 0.17, 0.09), (0.52, 0.32, 0.17)), slat_every=0.5,
+                 stone=((0.76, 0.74, 0.70), (0.77, 0.75, 0.71)), stone_rough=0.08, joint=0.0012, joint_colour=(0.70, 0.68, 0.64),   # joints hidden: one uniform floor (the owner)
+                 sky_glass=(0.80, 0.86, 0.88), sky_glass_alpha=0.5,   # the roof lights lightly tinted, holding back some of the sun
+                 brown=((0.30, 0.17, 0.09), (0.46, 0.28, 0.15)),   # the galleries' undersides, mottled warm brown
+                 cream=(0.80, 0.74, 0.62), wall=(0.82, 0.80, 0.76), kerb=(0.86, 0.85, 0.82),
+                 tread=(0.20, 0.21, 0.24), strip=(1.0, 0.88, 0.70), strip_glow=6.0,
+                 tiles=((0.86, 0.86, 0.85), (0.70, 0.71, 0.71)), tile=1.2,   # the pale checker of the floor, 1.2 m tiles
+                 hang_every=9.0, lattice=True)
+
+
+def mall_slats():
+    """Warm timber slats under the galleries: bands of two browns every slat_every metres."""
+    m = bpy.data.materials.get("M_MallSlats")
+    if m:
+        return m
+    m = bpy.data.materials.new("M_MallSlats")
+    m.use_nodes = True
+    nt = m.node_tree
+    b = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED')
+    wv = nt.nodes.new("ShaderNodeTexWave")
+    wv.wave_type = 'BANDS'
+    wv.inputs["Scale"].default_value = 1.0
+    wv.inputs["Distortion"].default_value = 0.0
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    sc = nt.nodes.new("ShaderNodeVectorMath")
+    sc.operation = 'SCALE'
+    sc.inputs["Scale"].default_value = 1.0 / (MALL_LOOK["slat_every"] * 6.3)
+    nt.links.new(tc.outputs["Object"], sc.inputs[0])
+    nt.links.new(sc.outputs[0], wv.inputs["Vector"])
+    ramp = nt.nodes.new("ShaderNodeValToRGB")
+    a, c = MALL_LOOK["slat"]
+    ramp.color_ramp.elements[0].color = (*a, 1.0)
+    ramp.color_ramp.elements[0].position = 0.35
+    ramp.color_ramp.elements[1].color = (*c, 1.0)
+    ramp.color_ramp.elements[1].position = 0.42
+    nt.links.new(wv.outputs["Fac"], ramp.inputs[0])
+    nt.links.new(ramp.outputs[0], b.inputs["Base Color"])
+    b.inputs["Roughness"].default_value = 0.6
+    return m
+
+
+def mall_stone():
+    """The court's floor: large polished stone tiles (the owner, 2026-11-26: "mall floors are usually smoother and shiny,
+    use high quality polished stone or high quality tiles"): 1.2 m squares in two close tones with soft veining, fine
+    joints, smooth and shiny."""
+    m = bpy.data.materials.get("M_MallStone")
+    if m:
+        return m
+    ML = MALL_LOOK
+    m = bpy.data.materials.new("M_MallStone")
+    m.use_nodes = True
+    nt = m.node_tree
+    b = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED')
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    br = nt.nodes.new("ShaderNodeTexBrick")                    # square tiles, not offset
+    br.offset = 0.0
+    br.inputs["Scale"].default_value = 1.0
+    br.inputs["Brick Width"].default_value = ML["tile"]
+    br.inputs["Row Height"].default_value = ML["tile"]
+    br.inputs["Mortar Size"].default_value = ML["joint"]
+    br.inputs["Mortar Smooth"].default_value = 0.2
+    a, c = ML["stone"]
+    br.inputs["Color1"].default_value = (*a, 1.0)
+    br.inputs["Color2"].default_value = (*c, 1.0)
+    br.inputs["Mortar"].default_value = (*ML["joint_colour"], 1.0)
+    nt.links.new(tc.outputs["Object"], br.inputs["Vector"])
+    nz = nt.nodes.new("ShaderNodeTexNoise")                    # the stone's soft veins
+    nz.inputs["Scale"].default_value = 0.6
+    nz.inputs["Detail"].default_value = 8.0
+    nz.inputs["Distortion"].default_value = 3.0
+    nt.links.new(tc.outputs["Object"], nz.inputs["Vector"])
+    mix = nt.nodes.new("ShaderNodeMix")
+    mix.data_type = 'RGBA'
+    mix.blend_type = 'MULTIPLY'
+    vr = nt.nodes.new("ShaderNodeMapRange")
+    vr.inputs["From Min"].default_value, vr.inputs["From Max"].default_value = 0.35, 0.75
+    vr.inputs["To Min"].default_value, vr.inputs["To Max"].default_value = 0.88, 1.0
+    nt.links.new(nz.outputs["Fac"], vr.inputs["Value"])
+    nt.links.new(br.outputs["Color"], mix.inputs[6])
+    nt.links.new(vr.outputs["Result"], mix.inputs[7])
+    mix.inputs["Factor"].default_value = 1.0
+    nt.links.new(mix.outputs[2], b.inputs["Base Color"])
+    b.inputs["Roughness"].default_value = ML["stone_rough"]      # polished: it mirrors the light
+    b.inputs["Specular IOR Level"].default_value = 0.6
+    return m
+
+
+def mall_fabric(name, c):
+    """Thin fabric that the daylight behind it shines through (a banner under a roof light)."""
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    out = next(n for n in nt.nodes if n.type == 'OUTPUT_MATERIAL')
+    b = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED')
+    b.inputs["Base Color"].default_value = (*c, 1.0)
+    b.inputs["Roughness"].default_value = 0.9
+    tr = nt.nodes.new("ShaderNodeBsdfTranslucent")
+    tr.inputs["Color"].default_value = (*c, 1.0)
+    mx = nt.nodes.new("ShaderNodeMixShader")
+    mx.inputs["Fac"].default_value = 0.6
+    nt.links.new(b.outputs[0], mx.inputs[1])
+    nt.links.new(tr.outputs[0], mx.inputs[2])
+    nt.links.new(mx.outputs[0], out.inputs["Surface"])
+    return m
+
+
+def mall_metal(name, c, rough):
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    b = next(n for n in m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    b.inputs["Base Color"].default_value = (*c, 1.0)
+    b.inputs["Metallic"].default_value = 1.0
+    b.inputs["Roughness"].default_value = rough
+    return m
+
+
+def mall_glass(name, c, alpha):
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    b = next(n for n in m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    b.inputs["Base Color"].default_value = (*c, 1.0)
+    b.inputs["Roughness"].default_value = 0.04
+    b.inputs["Alpha"].default_value = alpha
+    setp(m, "blend_method", 'BLEND')
+    return m
+
+
+def mall_checker():
+    """The court's floor: a checker of pale and light grey tiles (the owner's screenshots)."""
+    m = bpy.data.materials.get("M_MallTiles")
+    if m:
+        return m
+    m = bpy.data.materials.new("M_MallTiles")
+    m.use_nodes = True
+    nt = m.node_tree
+    b = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED')
+    ck = nt.nodes.new("ShaderNodeTexChecker")
+    ck.inputs["Scale"].default_value = 1.0
+    a, c = MALL_LOOK["tiles"]
+    ck.inputs["Color1"].default_value = (*a, 1.0)
+    ck.inputs["Color2"].default_value = (*c, 1.0)
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    sc = nt.nodes.new("ShaderNodeVectorMath")
+    sc.operation = 'SCALE'
+    sc.inputs["Scale"].default_value = 0.5 / MALL_LOOK["tile"]
+    nt.links.new(tc.outputs["Object"], sc.inputs[0])
+    nt.links.new(sc.outputs[0], ck.inputs["Vector"])
+    nt.links.new(ck.outputs["Color"], b.inputs["Base Color"])
+    b.inputs["Roughness"].default_value = 0.35
+    return m
+
+
+def hang_plant(name, x, y, z):
+    """A pot on the parapet with leaves spilling over and tendrils hanging down (the owner's screenshots)."""
+    leaf = bpy.data.materials.get("M_LeafLight") or flat("M_LeafLight", (0.40, 0.48, 0.24), noise_scale=4.0)
+    for i, (dx, dy, dz, r) in enumerate(((0, 0, 0.25, 0.55), (0.45, 0.1, 0.1, 0.45), (-0.4, -0.1, 0.12, 0.42))):
+        ball(None, "%s_Leaf%d" % (name, i), leaf, x + dx, y + dy, z + dz, 2 * r, 2 * r, 1.6 * r)
+    for i, (dx, dh) in enumerate(((-0.3, 1.6), (0.05, 2.3), (0.4, 1.9))):
+        cylz(None, "%s_Vine%d" % (name, i), leaf, x + dx, y, z - dh, 0.09, dh, r_top=0.07, segs=8)
+
+
+def mall_court(Ls):
+    """Eastgate Mall's Great Court as its plan in World/city_01/blocks/b_16_5.json draws it (WLD-058 to WLD-062, ADR-0038;
+    Tools/worldgen/mall_inside_01.py): 92 x 192 m, three floors 6 m apart; on each upper floor a gallery round the court
+    whose opening (the plan's void) swells round each atrium and pinches between them, a parapet along its edge, bridges
+    across at the pinches; the roof with its five round skylights, glazed as the big hall's; the moving stairs, fountains,
+    gardens with trees, benches and the galleries' planters; along every walk the outlets' fronts (the plan's fronts, in
+    the approved timber shopfront's parts, their windows lit) and walls. Only what stands in and round the court is
+    built. In the town's materials; lanterns of the hall's kind hang under the gallery edges."""
+    blk = json.load(open("C:/Projects/Wasted/World/city_01/blocks/%s.json" % MALL_LOT[0], encoding="utf-8"))
+    P = next(l for l in blk["lots"] if l["id"] == MALL_LOT[1])["plan"]
+    SH = P["storey_height"]
+    mx, mz = MALL_MID
+
+    def loc(q):
+        return (q[0] - mx, q[1] - mz)
+
+    def near(pts):
+        return any(abs(x - mx) < 58 and abs(z - mz) < 106 for x, z in pts)
+
+    # the shapes are the game's; the look is the owner's screenshots of the court (Art/StyleTests/mall_wanted_51/; the
+    # owner, 2026-11-26: "use the shapes from the game ... but texture, color, styling etc, please come up with your self
+    # based on the reference screenshots"): a pale checker of floor tiles, galleries warm brown underneath with cream
+    # edges and a line of light along each edge, plants hanging from the parapets, a lattice in the roof lights, grass
+    # islands in white kerbs, moving stairs with dark treads between brown and cream sides
+    ML = MALL_LOOK
+    floor = mall_checker()
+    slab_under = bpy.data.materials.get("M_MallBrown") or painted("M_MallBrown", *ML["brown"], noise_scale=0.35, bump=0.15)
+    edge = bpy.data.materials.get("M_MallCream") or flat("M_MallCream", ML["cream"])
+    wd = bpy.data.materials.get("M_MallBrownSide") or flat("M_MallBrownSide", ML["brown"][1])
+    pl = bpy.data.materials.get("M_MallWall") or flat("M_MallWall", ML["wall"])
+    sd = bpy.data.materials.get("M_MallKerb") or flat("M_MallKerb", ML["kerb"])
+    tread = bpy.data.materials.get("M_MallTread") or flat("M_MallTread", ML["tread"], rough=0.5)
+    strip = bpy.data.materials.get("M_MallEdgeLit") or emissive("M_MallEdgeLit", ML["strip"], ML["strip_glow"])   # "Lit": on by day too
+    # the owner, 2026-11-26: "feel inspired and take a creative take on the look and feel add ornaments if required use
+    # glass and other material to make it look good": glass balustrades with brass rails, timber slats under the
+    # galleries, slender columns with brass collars, a polished stone floor inlaid with brass along the galleries'
+    # curves, a chandelier of globes in each roof light, banners from the roof, flowers round the trees, glass-sided
+    # moving stairs, shop fronts in the town's colours
+    slab_under = mall_slats()
+    floor = mall_stone()
+    brass = bpy.data.materials.get("M_MallBrass") or mall_metal("M_MallBrass", ML["brass"], 0.28)
+    glassp = bpy.data.materials.get("M_MallGlass") or mall_glass("M_MallGlass", ML["glass_tint"], ML["glass_alpha"])
+    globe = bpy.data.materials.get("M_MallGlobeLit") or emissive("M_MallGlobeLit", ML["globe"], ML["globe_glow"])
+    column = bpy.data.materials.get("M_MallColumn") or flat("M_MallColumn", ML["column"])
+    fronts = [bpy.data.materials.get("M_MallFront%d" % i) or flat("M_MallFront%d" % i, c) for i, c in enumerate(ML["fronts"])]
+    banners = [bpy.data.materials.get("M_MallBanner%d" % i) or mall_fabric("M_MallBanner%d" % i, c) for i, c in enumerate(ML["banners"])]
+    flowers = [bpy.data.materials.get("M_MallFlower%d" % i) or flat("M_MallFlower%d" % i, c) for i, c in enumerate(ML["flowers"])]
+    leaf = bpy.data.materials.get("M_Leaf") or flat("M_Leaf", (0.24, 0.36, 0.20), noise_scale=4.0)
+    leaf2 = bpy.data.materials.get("M_LeafLight") or flat("M_LeafLight", (0.40, 0.48, 0.24), noise_scale=4.0)
+    grass = bpy.data.materials.get("M_Grass") or flat("M_Grass", (0.30, 0.40, 0.22), noise_scale=3.0)
+    water = bpy.data.materials.get("M_Water") or flat("M_Water", (0.10, 0.16, 0.20), rough=0.05)
+    lit = bpy.data.materials.get("M_FrontLit") or emissive("M_FrontLit", (1.0, 0.86, 0.66), 1.2)   # "Lit": a shop window, lit by day
+    fr = bpy.data.materials.get("M_SignTeal") or flat("M_SignTeal", (0.16, 0.30, 0.31))
+    W2, D2 = 46.0, 96.0
+
+    def mesh_obj(name, bm, mat):
+        me = bpy.data.meshes.new(name)
+        bm.to_mesh(me)
+        bm.free()
+        me.materials.append(mat)
+        ob = bpy.data.objects.new(name, me)
+        COL.objects.link(ob)
+        return ob
+
+    def plate(name, outer, holes, z, mat):
+        """A flat plate at height z: the outer loop with the holes cut from it."""
+        bm = bmesh.new()
+        for loop in [outer] + holes:
+            vs = [bm.verts.new((x, y, z)) for x, y in loop]
+            for i in range(len(vs)):
+                bm.edges.new((vs[i], vs[(i + 1) % len(vs)]))
+        bmesh.ops.triangle_fill(bm, use_beauty=True, use_dissolve=False, edges=bm.edges[:])
+        return mesh_obj(name, bm, mat)
+
+    def band(name, line, z0, z1, mat, closed=False, thick=0.0):
+        """An upright strip along a line from z0 to z1 (a gallery's edge, a parapet, a wall)."""
+        bm = bmesh.new()
+        pts = list(line) + ([line[0]] if closed else [])
+        for i in range(len(pts) - 1):
+            (ax, ay), (bx, by) = pts[i], pts[i + 1]
+            if thick:
+                dx, dy = bx - ax, by - ay
+                n = math.hypot(dx, dy) or 1.0
+                ox, oy = -dy / n * thick / 2, dx / n * thick / 2
+                q = [(ax + ox, ay + oy), (bx + ox, by + oy), (bx - ox, by - oy), (ax - ox, ay - oy)]
+                vb = [bm.verts.new((x, y, z0)) for x, y in q]
+                vt = [bm.verts.new((x, y, z1)) for x, y in q]
+                bm.faces.new(vt)
+                for k in range(4):
+                    bm.faces.new((vb[k], vb[(k + 1) % 4], vt[(k + 1) % 4], vt[k]))
+            else:
+                v = [bm.verts.new(c) for c in ((ax, ay, z0), (bx, by, z0), (bx, by, z1), (ax, ay, z1))]
+                bm.faces.new(v)
+        return mesh_obj(name, bm, mat)
+
+    court = [(-W2, -D2), (W2, -D2), (W2, D2), (-W2, D2)]
+    box("Mall_Floor", -W2 - 12, W2 + 12, -D2 - 12, D2 + 12, -0.1, 0.0, floor, bevel=0)
+    lanterns = 0
+    for lv in P["levels"]:
+        L, z = lv["level"], lv["level"] * SH
+        for k, wl in enumerate(lv["walls"]):                     # walls along the walks
+            if near(wl["line"]):
+                band("Mall_Wall%d_%d" % (L, k), [loc(q) for q in wl["line"]], z, z + SH, pl, thick=0.3)
+        for k, f in enumerate(lv["fronts"]):                     # the outlets' fronts, in the approved shopfront's parts
+            if not near((f["a"], f["b"])):
+                continue
+            a, b = loc(f["a"]), loc(f["b"])
+            fr = fronts[(k * 7 + L * 3) % len(fronts)]
+            band("Mall_FrontFascia%d_%d" % (L, k), [a, b], z + 2.55, z + 3.4, fr, thick=0.32)
+            band("Mall_FrontCornice%d_%d" % (L, k), [a, b], z + 3.4, z + 3.5, brass, thick=0.4)
+            band("Mall_FrontRiser%d_%d" % (L, k), [a, b], z, z + 0.7, fr, thick=0.3)
+            band("Mall_FrontSill%d_%d" % (L, k), [a, b], z + 0.7, z + 0.78, sd, thick=0.36)
+            band("Mall_FrontLit%d_%d" % (L, k), [a, b], z + 0.78, z + 2.55, lit, thick=0.06)
+            n = max(2, round(math.hypot(b[0] - a[0], b[1] - a[1]) / 2.2))
+            for i in range(n + 1):
+                t0 = i / n
+                c = (a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0)
+                d = ((b[0] - a[0]) / n * 0.07, (b[1] - a[1]) / n * 0.07)
+                band("Mall_FrontPier%d_%d_%d" % (L, k, i), [(c[0] - d[0], c[1] - d[1]), (c[0] + d[0], c[1] + d[1])], z, z + 2.55, fr, thick=0.4)
+        if L == 0:
+            continue
+        holes = [[loc(q) for q in v] for v in lv["voids"]]
+        plate("Mall_Gallery%d" % L, court, holes, z, slab_under)          # the gallery's floor, its underside brown
+        plate("Mall_GalleryTop%d" % L, court, holes, z + 0.02, floor)
+        for k, v in enumerate(holes):
+            band("Mall_GalleryEdge%d_%d" % (L, k), v, z - 0.7, z, edge, closed=True)   # the cream edge round the opening
+            band("Mall_EdgeTrim%d_%d" % (L, k), [(x * 1.002, y * 1.002) for x, y in v], z - 0.05, z, brass, closed=True)
+            if L == 1:                                            # the brass inlay on the floor below, tracing the curve
+                band("Mall_Inlay%d" % k, [(x * 1.0, y * 1.0) for x, y in v], 0.0, 0.012, brass, closed=True, thick=0.25)
+            run = 0.0                                             # slender columns under the edge, every 16 m or so
+            for i in range(len(v)):
+                (ax, ay), (bx, by) = v[i], v[(i + 1) % len(v)]
+                run += math.hypot(bx - ax, by - ay)
+                if run >= ML["column_every"]:
+                    run = 0.0
+                    cxn, cyn = ax * 1.035, ay * 1.012               # set back under the gallery
+                    cylz(None, "Mall_Column%d_%d_%d" % (L, k, i), column, cxn, cyn, z - SH, 0.32, SH - 0.7, segs=20)
+                    for zz in (z - SH, z - 0.95):
+                        cylz(None, "Mall_Collar%d_%d_%d_%d" % (L, k, i, int(zz)), brass, cxn, cyn, zz, 0.42, 0.25, segs=20)
+            band("Mall_EdgeLine%d_%d" % (L, k), [(x * 1.004, y * 1.004) for x, y in v], z - 0.72, z - 0.66, strip, closed=True)   # its line of light
+            band("Mall_EdgeLineB%d_%d" % (L, k), [(x * 0.99, y * 0.99) for x, y in v], z - 0.71, z - 0.68, strip, closed=True)
+        for k, r in enumerate(lv["rails"]):
+            if near(r):
+                rl = [loc(q) for q in r]
+                g_ = band("Mall_Balustrade%d_%d" % (L, k), rl, z + 0.08, z + 1.02, glassp, thick=0.03)
+                setp(g_, "visible_shadow", False)
+                band("Mall_Rail%d_%d" % (L, k), rl, z + 1.02, z + 1.1, brass, thick=0.1)
+                band("Mall_Shoe%d_%d" % (L, k), rl, z, z + 0.08, brass, thick=0.12)
+                run = 0.0
+                for i in range(len(rl) - 1):                      # plants hanging over the parapet every 9 m or so
+                    (ax, ay), (bx, by) = rl[i], rl[i + 1]
+                    run += math.hypot(bx - ax, by - ay)
+                    if run >= ML["hang_every"]:
+                        run = 0.0
+                        hang_plant("Mall_Hang%d_%d_%d" % (L, k, i), ax, ay, z + 1.1)
+        for k, br in enumerate(lv["bridges"]):
+            q = [loc(p_) for p_ in br]                               # a bridge is a plain rectangle: built solid
+            bx0, bx1 = min(x for x, _ in q), max(x for x, _ in q)
+            by0, by1 = min(y for _, y in q), max(y for _, y in q)
+            box("Mall_Bridge%d_%d" % (L, k), bx0, bx1, by0, by1, z - 0.7, z - 0.02, edge, bevel=0)
+            box("Mall_BridgeTop%d_%d" % (L, k), bx0, bx1, by0, by1, z - 0.02, z + 0.02, floor, bevel=0)
+            box("Mall_BridgeUnder%d_%d" % (L, k), bx0 + 0.05, bx1 - 0.05, by0 + 0.05, by1 - 0.05, z - 0.72, z - 0.68, slab_under, bevel=0)
+        for v in holes:                                            # lanterns under the gallery's edge, every 14 m or so
+            run = 0.0
+            for i in range(len(v)):
+                (ax, ay), (bx, by) = v[i], v[(i + 1) % len(v)]
+                run += math.hypot(bx - ax, by - ay)
+                if run >= 14.0:
+                    run = 0.0
+                    nm = "Hall_LanternM%d" % lanterns                   # a hidden light under the edge's line of light
+                    lt = bpy.data.lights.new(nm + "_Light", 'POINT')
+                    lt.energy = 220.0
+                    setp(lt, "shadow_soft_size", 0.2)
+                    po = bpy.data.objects.new(nm + "_Light", lt)
+                    po.location = (ax, ay, z - 1.5)
+                    COL.objects.link(po)
+                    lanterns += 1
+    RZ = SH * len(P["levels"])                                     # the roof, its round skylights glazed
+    eyes = [[loc(q) for q in o] for o in P["roof"]["openings"]]
+    plate("Mall_Roof", [(-W2 - 12, -D2 - 12), (W2 + 12, -D2 - 12), (W2 + 12, D2 + 12), (-W2 - 12, D2 + 12)], eyes, RZ, slab_under)
+    glass = bpy.data.materials.get("M_MallSkyGlass") or mall_glass("M_MallSkyGlass", ML["sky_glass"], ML["sky_glass_alpha"])
+    for k, e in enumerate(eyes):
+        g = plate("Mall_SkyGlass%d" % k, e, [], RZ + 0.6, glass)   # tinted: half the sun's light comes through
+        band("Mall_SkyCurb%d" % k, e, RZ, RZ + 0.7, sd, closed=True)
+        cx = sum(x for x, _ in e) / len(e)
+        cy = sum(y for _, y in e) / len(e)
+        rr = max(math.hypot(x - cx, y - cy) for x, y in e)
+        for j in range(-6, 7):                                    # the roof light's diamond lattice
+            o_ = j * rr / 6.5
+            h_ = math.sqrt(max(0.0, rr * rr - o_ * o_))
+            c45, s45 = math.cos(math.pi / 4), math.sin(math.pi / 4)
+            for nmk, (ux, uy) in (("A", (c45, s45)), ("B", (-s45, c45))):
+                vx, vy = -uy, ux
+                a_ = (cx + vx * o_ - ux * h_, cy + vy * o_ - uy * h_)
+                b_ = (cx + vx * o_ + ux * h_, cy + vy * o_ + uy * h_)
+                band("Mall_SkyBar%s%d_%d" % (nmk, k, j), [a_, b_], RZ + 0.5, RZ + 0.62, ML["lattice"] and wd, thick=0.16)
+    rngm = random.Random(54)
+    for k, e in enumerate(eyes):                                  # a chandelier of globes hanging in each roof light
+        cx = sum(x for x, _ in e) / len(e)
+        cy = sum(y for _, y in e) / len(e)
+        cz = RZ - ML["chandelier_drop"]
+        cylz(None, "Mall_ChandRod%d" % k, brass, cx, cy, cz + 1.2, 0.05, RZ - cz - 1.2, segs=8)
+        cylz(None, "Mall_ChandRing%d" % k, brass, cx, cy, cz + 1.1, 2.4, 0.12, segs=36)
+        for j in range(ML["globes"]):
+            a_ = 2 * math.pi * j / ML["globes"]
+            rr_ = 2.4 if j % 2 == 0 else 1.4
+            gz = cz + (0.0 if j % 2 == 0 else -0.9)
+            gx, gy = cx + math.cos(a_) * rr_, cy + math.sin(a_) * rr_
+            cylz(None, "Mall_ChandDrop%d_%d" % (k, j), brass, gx, gy, gz + 0.3, 0.02, cz + 1.1 - gz - 0.3, segs=6)
+            ball(None, "Mall_Globe%d_%d" % (k, j), globe, gx, gy, gz, 0.6, 0.6, 0.6)
+        lt = bpy.data.lights.new("Hall_LanternC%d_Light" % k, 'POINT')   # the chandelier's light, of the hall lantern's kind
+        lt.energy = 900.0
+        setp(lt, "shadow_soft_size", 2.0)
+        po = bpy.data.objects.new("Hall_LanternC%d_Light" % k, lt)
+        po.location = (cx, cy, cz - 0.3)
+        COL.objects.link(po)
+    for k, e in enumerate(eyes):                                  # banners hanging in each roof light, round its chandelier,
+        cx = sum(x for x, _ in e) / len(e)                        # where the daylight falls on them (between, under the solid
+        cy = sum(y for _, y in e) / len(e)                        # roof, they hung in the dark)
+        rr = max(math.hypot(x - cx, y - cy) for x, y in e)
+        for j in range(ML["banners_per"]):
+            a_ = 2 * math.pi * (j + 0.5) / ML["banners_per"]
+            px, py = cx + math.cos(a_) * rr * 0.72, cy + math.sin(a_) * rr * 0.72
+            tx, ty = -math.sin(a_) * 0.9, math.cos(a_) * 0.9          # along the ring
+            m_ = banners[(k + j) % len(banners)]
+            band("Mall_Banner%d_%d" % (k, j), [(px - tx, py - ty), (px + tx, py + ty)], RZ - ML["banner_drop"], RZ - 0.3, m_, thick=0.04)
+            band("Mall_BannerBar%d_%d" % (k, j), [(px - tx * 1.1, py - ty * 1.1), (px + tx * 1.1, py + ty * 1.1)], RZ - 0.35, RZ - 0.25, brass, thick=0.08)
+    for k, r in enumerate(P["ramps"]):                             # the moving stairs, with their side walls
+        (ax, ay), (bx, by) = loc(r["a"]), loc(r["b"])
+        za, zb, w = r["from"] * SH, r["to"] * SH, r["width"]
+        dx, dy = bx - ax, by - ay
+        n = math.hypot(dx, dy) or 1.0
+        ox, oy = -dy / n * w / 2, dx / n * w / 2
+        bm = bmesh.new()
+        q = [bm.verts.new(c) for c in ((ax + ox, ay + oy, za), (bx + ox, by + oy, zb), (bx - ox, by - oy, zb), (ax - ox, ay - oy, za))]
+        bm.faces.new(q)
+        mesh_obj("Mall_Ramp%d" % k, bm, tread)
+        bm = bmesh.new()                                          # its underside, timber as the galleries' (from below the
+        q = [bm.verts.new(c) for c in ((ax + ox, ay + oy, za - 0.6), (bx + ox, by + oy, zb - 0.6),   # dark tread read as a hole)
+                                       (bx - ox, by - oy, zb - 0.6), (ax - ox, ay - oy, za - 0.6))]
+        bm.faces.new(q)
+        mesh_obj("Mall_RampUnder%d" % k, bm, slab_under)
+        for sgn in (1, -1):
+            sx, sy = ox * sgn, oy * sgn
+            bm = bmesh.new()                                      # the truss under the stair, brown, its edge cream
+            v = [bm.verts.new(c) for c in ((ax + sx, ay + sy, za - 0.6), (bx + sx, by + sy, zb - 0.6), (bx + sx, by + sy, zb + 0.1), (ax + sx, ay + sy, za + 0.1))]
+            bm.faces.new(v)
+            mesh_obj("Mall_RampSide%d_%d" % (k, sgn), bm, wd)
+            bm = bmesh.new()                                      # its glass side and brass rail
+            v = [bm.verts.new(c) for c in ((ax + sx, ay + sy, za + 0.1), (bx + sx, by + sy, zb + 0.1), (bx + sx, by + sy, zb + 1.0), (ax + sx, ay + sy, za + 1.0))]
+            bm.faces.new(v)
+            g_ = mesh_obj("Mall_RampGlass%d_%d" % (k, sgn), bm, glassp)
+            setp(g_, "visible_shadow", False)
+            bm = bmesh.new()
+            v = [bm.verts.new(c) for c in ((ax + sx, ay + sy, za + 1.0), (bx + sx, by + sy, zb + 1.0), (bx + sx, by + sy, zb + 1.08), (ax + sx, ay + sy, za + 1.08))]
+            bm.faces.new(v)
+            mesh_obj("Mall_RampRail%d_%d" % (k, sgn), bm, brass)
+
+    def tree_(name, x, y, z, h=4.0, sc=1.0):
+        cylz(None, name + "_Trunk", wd, x, y, z, 0.2 * sc, h, r_top=0.13 * sc)
+        for (dx, dy, dz, rr_, m_) in ((0, 0, h + 1.3, 1.7, leaf), (1.1, 0.4, h + 0.7, 1.25, leaf), (-1.0, 0.3, h + 0.8, 1.15, leaf2),
+                                      (0.3, -0.9, h + 0.6, 1.1, leaf), (0.2, 0.2, h + 2.4, 1.05, leaf2)):
+            ball(None, name + "_Leaf", m_, x + dx * sc, y + dy * sc, z + dz, 2 * rr_ * sc, 2 * rr_ * sc, 1.6 * rr_ * sc)
+    for k, g in enumerate(P["gardens"]):
+        if not near([g["pos"]]):
+            continue
+        (gx, gy), (rx, ry) = loc(g["pos"]), g["r"]
+        for nm, m_, r_, h_ in (("Mall_GardenKerb%d" % k, sd, 1.0, 0.45), ("Mall_Garden%d" % k, grass, 0.95, 0.5)):
+            cylz(None, nm, m_, gx, gy, 0.0, r_, h_, segs=40)
+            ob = bpy.data.objects.get(nm)
+            if ob:
+                ob.scale = (rx, ry, 1.0)
+        for j, (tx, tz, sp) in enumerate(g["trees"]):
+            x_, y_ = loc((tx, tz))
+            tree_("Mall_Tree%d_%d" % (k, j), x_, y_, 0.5, h=5.0, sc=1.3)
+        for j in range(ML["flowers_per"]):                         # flowers in the beds
+            a_ = rngm.uniform(0, 2 * math.pi)
+            d_ = math.sqrt(rngm.random()) * 0.85
+            fx_, fy_ = gx + math.cos(a_) * rx * d_, gy + math.sin(a_) * ry * d_
+            ball(None, "Mall_Flower%d_%d" % (k, j), flowers[j % len(flowers)], fx_, fy_, 0.62, 0.32, 0.32, 0.22)
+    for k, f in enumerate(P["fountains"]):
+        fx, fy = loc(f["pos"])
+        cylz(None, "Mall_Fountain%d" % k, sd, fx, fy, 0.0, f["r"], 0.6, segs=40)
+        cylz(None, "Mall_FountainWater%d" % k, water, fx, fy, 0.0, f["r"] - 0.3, 0.62, segs=40)
+        cylz(None, "Mall_FountainBowl%d" % k, pl, fx, fy, 0.6, 0.6, 1.6, r_top=1.4, segs=24)
+    for k, pt in enumerate(P["planters"]):
+        if not near([pt["pos"]]):
+            continue
+        x_, y_ = loc(pt["pos"])
+        z_ = pt["level"] * SH
+        cylz(None, "Mall_Planter%d" % k, sd, x_, y_, z_, pt["r"], 0.6, segs=24)
+        tree_("Mall_PlanterTree%d" % k, x_, y_, z_ + 0.6, h=2.4, sc=0.8)
+    for k, bn in enumerate(P["benches"]):
+        if not near([bn["pos"]]):
+            continue
+        x_, y_ = loc(bn["pos"])
+        g_ = group("Mall_Bench%d" % k, x_, y_, -math.radians(bn["yaw"]))
+        rbox(g_, "Mall_BenchSeat%d" % k, wd, 0, 0, 0.45, 1.8, 0.5, 0.08, 0.02)
+        for sx_ in (-0.75, 0.75):
+            rbox(g_, "Mall_BenchLeg%d_%d" % (k, int(sx_ * 10)), sd, sx_, 0, 0.21, 0.1, 0.45, 0.42, 0.01)
+    people([("PlayerA", 3.0, -12.0), ("PlayerB", -7.0, -4.0), ("Elder", 9.0, 6.0)])
+    sun_and_sky(SCENE, (0.35, -0.30, 0.89), 8.5, (1.0, 0.86, 0.68), (0.42, 0.55, 0.82), 0.45)
+    hlog("  Eastgate's court from its plan: %d lanterns, %d skylights, %d moving stairs" % (lanterns, len(eyes), len(P["ramps"])))
+    return camera(SCENE, "Cam_mall", (-12.0, -42.0, 1.7), (2.0, 30.0, 9.0), 16.0)
 
 
 def game_size_showroom():
@@ -1062,6 +1535,16 @@ def main_hours():
         greyer(ROOM_GREYER)                                 # in the world's light, as the home room (the owner, 2026-11-26)
         bounce_more(ROOM_BOUNCE)
         each_hour(scene, camera(scene, "Cam_bakery", loc, tgt, lens), 1.15, "Bakery", dict(day_lamps=0.06))
+    elif PLACE == "mall":                            # Eastgate Mall's court from its plan (the owner, 2026-11-26)
+        scene = fresh("Furn_mall")
+        extra_mats()
+        cam = mall_court(lines())
+        if os.environ.get("WASTED_MALLTOP"):             # a check from above: the galleries without the roof
+            for ob in [o for o in scene.objects if o.name.startswith(("Mall_Roof", "Mall_Sky", "Mall_Banner", "Mall_Chand", "Mall_Globe"))]:
+                ob.hide_render = True
+            cam = camera(scene, "Cam_malltop", (0.0, 0.0, 60.0), (0.0, 0.01, 0.0), 30.0, ortho=210.0)
+        bounce_more(ROOM_BOUNCE)
+        each_hour(scene, cam, 0.5, "MallCourt", dict(day_lamps=0.15))   # lanterns low by day, as the big hall
     elif PLACE == "outlet":
         scene = fresh("Furn_showroom")
         game_size_showroom()                         # the approved showroom at the game's outlet size

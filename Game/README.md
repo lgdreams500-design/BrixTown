@@ -182,7 +182,7 @@ shopping and 195 eating, on all three floors, at their places). `-BrixCounter=<a
 Thread) stands the player in it and opens its counter. `-BrixInside=b_16_5_l0` stands the player 30 m in from the south door (`MallInside`),
 `-BrixWalkIn=b_16_5_l0` walks them in, `-BrixLift=b_16_5_l0` rides the west lift to the top floor, `-BrixNoMall` builds it as
 the town's box again. At High: 28 to 44 frames a second inside, 21 riding the moving stairs (noisy: other sessions were running
-Unreal). Sitting on the benches, cafe seats and rides is as in the furniture outlet (below). Not yet: the ribbon wall's lit joints and the openings' lanterns at night, the
+Unreal). Sitting on the benches, cafe seats and rides is as in the furniture outlet (below). Not yet: the Great Court is not yet built to its approved reference (`Art/Reference/Malls/MallsEastgateCourt_*.jpg`, ADR-0067: timber slats under the galleries, glass balustrades with brass rails, columns, a polished stone floor with hidden joints, tinted roof lights with chandeliers and banners, lines of light along the gallery edges); the furniture outlet's hall is not yet built to `ShopsBigHall` (the game's size, a 24 m band of glazed skylights); the ribbon wall's lit joints and the openings' lanterns at night, the
 moving stairs' treads moving, and the shell's lanterns' light outside.
 The goods for the home each outlet sells stand in it as they were made in Blender (FURN-065; outlets.js front() with the
 slice's life data, goods.js put()): on its two window plinths facing the walk, and those too deep for a plinth on its floor

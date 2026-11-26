@@ -16,6 +16,7 @@ fall). Reviewed with the owner one place at a time; an approved place goes to `A
 | The bakery (WASTED_PLACE=bakery): four settings, no moon, its oven always lit | `Bakery_<Setting>.jpg`, `review_Bakery.jpg` | approved 2026-11-26: `Art/Reference/Shops/ShopsBakeryLight_*.jpg` |
 | A shop's floor without a fire (WASTED_PLACE=shop, `shopfloor()`): the grocer's size, the approved shopfront | `Shop_<Setting>.jpg`, `review_Shop.jpg` | approved 2026-11-26: `Art/Reference/Shops/ShopsShopFloor_*.jpg`; the awning rolled up mornings (`AWNING_IN`) |
 | The furniture outlet's hall, a big hall (WASTED_PLACE=outlet): the game's size and roof, glazed skylights | `FurnitureOutlet_<Setting>.jpg`, `review_FurnitureOutlet.jpg` | approved 2026-11-26: `Art/Reference/Shops/ShopsBigHall_*.jpg` |
+| Eastgate Mall's Great Court (WASTED_PLACE=mall, `mall_court()`): its plan's shapes, its own look (`MALL_LOOK`) | `MallCourt_<Setting>.jpg`, `review_MallCourt.jpg` | approved 2026-11-26: `Art/Reference/Malls/MallsEastgateCourt_*.jpg` |
 
 What the owner changed on the way: fewer lamps down the alley; the moon high and down the alley so it reaches the paving;
 one lamp-lit night instead of two; cloud, rain, fog and snow added; no haze at noon; no rain, wet or snow under cover;

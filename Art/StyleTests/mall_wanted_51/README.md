@@ -8,3 +8,5 @@ the gaps are listed under Malls in `Art/Reference/catalog.json` and on `Art/Refe
 |---|---|
 | `owner_court_moving_stairs.jpg` | The court from the floor: moving stairs rising under curved galleries, lines of light on the galleries' edges, planter islands with trees, shopfronts round the floor, tiled floor |
 | `owner_galleries_from_below.jpg` | Looking up: the galleries' brown undersides and cream edges, plants hanging from their rims, the lattice roof light, the moving stairs, benches and trees on the islands |
+
+The court's reference was made from these and the mall's plan, and approved on 2026-11-26: `Art/Reference/Malls/MallsEastgateCourt_*.jpg`.
