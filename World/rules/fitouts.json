@@ -1,5 +1,5 @@
 {
- "note": "Rooms fitted out as a design says, instead of as the slice furnishes their kind (QST-014, ADR-0059). A lot names its fit-out ('fitout' in its block file); the Unreal build places these pieces on that floor in place of the shop's places' furniture and dressing. Positions are in the door's frame: 'along' to the right of someone walking in at the door, 'in' from the door inward, metres; 'faces' where the piece's front points: door, back, +along or -along. 'size' is the piece's box (across, deep, high), checked against its export's index by test_world. 'glow': lit boxes (along, in, from the floor, size across/high/deep, colour; a small warm one is also where a room lamp's light is put); 'lamps': the slice's box pendants hung over these points. A piece from another export than the fit-out's names it ('export'): the pendants are furniture kit 18's d_pendant. 'hung': it hangs from the ceiling and is not in anyone's way.",
+ "note": "Rooms fitted out as a design says, instead of as the slice furnishes their kind (QST-014, ADR-0059). A lot names its fit-out ('fitout' in its block file); the Unreal build places these pieces on that floor in place of the shop's places' furniture and dressing. Positions are in the door's frame: 'along' to the left of someone walking in at the door (play.js layout()'s wp()), 'in' from the door inward, metres; 'faces' where the piece's front points: door, back, +along or -along. 'size' is the piece's box (across, deep, high), checked against its export's index by test_world. 'glow': lit boxes (along, in, from the floor, size across/high/deep, colour; a small warm one, blue under 0.7, is also where a room lamp's light is put: one a pendant); 'lamps': the slice's box pendants hung over these points. A piece from another export than the fit-out's names it ('export'): the pendants are furniture kit 18's d_pendant. 'hung': it hangs from the ceiling and is not in anyone's way. 'walls': partitions (from, to in the door's frame), each 0.12 m thick to the ceiling, with doorways ('doors': where along the wall from its start, how wide); 'room': the room they close (along0, in0, along1, in1): every piece, glow and work place of the lot's staff stands in it.",
  "fitouts": {
   "stone_oven": {
    "design": "Tools/blender/baker_look_47.py (approved 2026-11-26, ADR-0059); meshes from Tools/blender/unreal_bakery_50.py",
@@ -8,31 +8,9 @@
    "export": "Art/Export/unreal_bakery_50/index.json",
    "pieces": [
     {
-     "piece": "bk_racks_a",
-     "along": 14.6,
-     "in": 15.38,
-     "faces": "door",
-     "size": [
-      2.5,
-      0.54,
-      2.23
-     ]
-    },
-    {
-     "piece": "bk_racks_mother",
-     "along": 11.9,
-     "in": 15.38,
-     "faces": "door",
-     "size": [
-      2.5,
-      0.54,
-      2.58
-     ]
-    },
-    {
      "piece": "bk_oven",
-     "along": 8.7,
-     "in": 14.88,
+     "along": 2.0,
+     "in": 6.67,
      "faces": "door",
      "size": [
       2.59,
@@ -41,10 +19,43 @@
      ]
     },
     {
-     "piece": "bk_door_alley",
-     "along": 5.9,
-     "in": 15.6,
+     "piece": "bk_racks_mother",
+     "along": -1.1,
+     "in": 7.17,
      "faces": "door",
+     "size": [
+      2.5,
+      0.54,
+      2.58
+     ]
+    },
+    {
+     "piece": "bk_door_proof",
+     "along": -3.55,
+     "in": 7.390000000000001,
+     "faces": "door",
+     "size": [
+      1.14,
+      0.2,
+      2.17
+     ]
+    },
+    {
+     "piece": "bk_racks_a",
+     "along": -4.17,
+     "in": 5.0,
+     "faces": "+along",
+     "size": [
+      2.5,
+      0.54,
+      2.23
+     ]
+    },
+    {
+     "piece": "bk_door_alley",
+     "along": 4.39,
+     "in": 5.6,
+     "faces": "-along",
      "size": [
       1.14,
       0.24,
@@ -53,9 +64,9 @@
     },
     {
      "piece": "bk_sacks",
-     "along": 4.0,
-     "in": 15.32,
-     "faces": "door",
+     "along": 4.11,
+     "in": 3.6,
+     "faces": "-along",
      "size": [
       1.15,
       0.86,
@@ -64,9 +75,9 @@
     },
     {
      "piece": "bk_board",
-     "along": 4.3,
-     "in": 15.63,
-     "faces": "door",
+     "along": 4.42,
+     "in": 3.6,
+     "faces": "-along",
      "size": [
       1.06,
       0.06,
@@ -74,97 +85,9 @@
      ]
     },
     {
-     "piece": "bk_racks_b",
-     "along": 1.2,
-     "in": 15.38,
-     "faces": "door",
-     "size": [
-      2.5,
-      0.54,
-      2.23
-     ]
-    },
-    {
-     "piece": "bk_racks_c",
-     "along": -1.5,
-     "in": 15.38,
-     "faces": "door",
-     "size": [
-      2.5,
-      0.54,
-      2.23
-     ]
-    },
-    {
-     "piece": "bk_racks_a",
-     "along": -4.2,
-     "in": 15.38,
-     "faces": "door",
-     "size": [
-      2.5,
-      0.54,
-      2.23
-     ]
-    },
-    {
-     "piece": "bk_racks_b",
-     "along": -6.9,
-     "in": 15.38,
-     "faces": "door",
-     "size": [
-      2.5,
-      0.54,
-      2.23
-     ]
-    },
-    {
-     "piece": "bk_racks_c",
-     "along": -9.6,
-     "in": 15.38,
-     "faces": "door",
-     "size": [
-      2.5,
-      0.54,
-      2.23
-     ]
-    },
-    {
-     "piece": "bk_racks_a",
-     "along": -12.3,
-     "in": 15.38,
-     "faces": "door",
-     "size": [
-      2.5,
-      0.54,
-      2.23
-     ]
-    },
-    {
-     "piece": "bk_door_proof",
-     "along": -18.5,
-     "in": 13.5,
-     "faces": "+along",
-     "size": [
-      1.14,
-      0.2,
-      2.17
-     ]
-    },
-    {
      "piece": "bk_bench",
-     "along": 8.7,
-     "in": 11.2,
-     "faces": "door",
-     "size": [
-      2.3,
-      0.95,
-      1.06
-     ]
-    },
-    {
-     "piece": "bk_bench",
-     "along": 14.3,
-     "in": 11.4,
+     "along": 0.6,
+     "in": 4.3,
      "faces": "door",
      "size": [
       2.3,
@@ -174,30 +97,8 @@
     },
     {
      "piece": "bk_counter",
-     "along": -5.0,
-     "in": 11.0,
-     "faces": "door",
-     "size": [
-      2.5,
-      0.69,
-      1.44
-     ]
-    },
-    {
-     "piece": "bk_counter",
-     "along": -7.6,
-     "in": 11.0,
-     "faces": "door",
-     "size": [
-      2.5,
-      0.69,
-      1.44
-     ]
-    },
-    {
-     "piece": "bk_counter",
-     "along": -10.2,
-     "in": 11.0,
+     "along": -2.6,
+     "in": 2.6,
      "faces": "door",
      "size": [
       2.5,
@@ -208,8 +109,8 @@
     {
      "piece": "d_pendant",
      "export": "Art/Export/unreal_furniture_37/index.json",
-     "along": 8.7,
-     "in": 11.2,
+     "along": 0.6,
+     "in": 4.3,
      "faces": "door",
      "size": [
       0.68,
@@ -221,8 +122,8 @@
     {
      "piece": "d_pendant",
      "export": "Art/Export/unreal_furniture_37/index.json",
-     "along": 14.3,
-     "in": 11.4,
+     "along": -2.6,
+     "in": 2.6,
      "faces": "door",
      "size": [
       0.68,
@@ -234,60 +135,8 @@
     {
      "piece": "d_pendant",
      "export": "Art/Export/unreal_furniture_37/index.json",
-     "along": -5.0,
-     "in": 11.0,
-     "faces": "door",
-     "size": [
-      0.68,
-      0.75,
-      2.95
-     ],
-     "hung": true
-    },
-    {
-     "piece": "d_pendant",
-     "export": "Art/Export/unreal_furniture_37/index.json",
-     "along": -10.2,
-     "in": 11.0,
-     "faces": "door",
-     "size": [
-      0.68,
-      0.75,
-      2.95
-     ],
-     "hung": true
-    },
-    {
-     "piece": "d_pendant",
-     "export": "Art/Export/unreal_furniture_37/index.json",
-     "along": -7.6,
-     "in": 6.0,
-     "faces": "door",
-     "size": [
-      0.68,
-      0.75,
-      2.95
-     ],
-     "hung": true
-    },
-    {
-     "piece": "d_pendant",
-     "export": "Art/Export/unreal_furniture_37/index.json",
-     "along": 2.0,
-     "in": 6.0,
-     "faces": "door",
-     "size": [
-      0.68,
-      0.75,
-      2.95
-     ],
-     "hung": true
-    },
-    {
-     "piece": "d_pendant",
-     "export": "Art/Export/unreal_furniture_37/index.json",
-     "along": 11.0,
-     "in": 6.0,
+     "along": 2.6,
+     "in": 2.0,
      "faces": "door",
      "size": [
       0.68,
@@ -299,8 +148,8 @@
    ],
    "glow": [
     {
-     "along": 8.7,
-     "in": 14.12,
+     "along": 2.0,
+     "in": 5.91,
      "y0": 1.0,
      "size": [
       0.6,
@@ -314,8 +163,8 @@
      ]
     },
     {
-     "along": 8.84,
-     "in": 14.1,
+     "along": 1.86,
+     "in": 5.89,
      "y0": 1.11,
      "size": [
       0.13,
@@ -329,8 +178,8 @@
      ]
     },
     {
-     "along": 8.68,
-     "in": 14.1,
+     "along": 2.02,
+     "in": 5.89,
      "y0": 1.11,
      "size": [
       0.13,
@@ -344,8 +193,8 @@
      ]
     },
     {
-     "along": 8.53,
-     "in": 14.1,
+     "along": 2.17,
+     "in": 5.89,
      "y0": 1.11,
      "size": [
       0.13,
@@ -359,8 +208,38 @@
      ]
     },
     {
-     "along": 9.02,
-     "in": 11.2,
+     "along": 0.28,
+     "in": 4.3,
+     "y0": 1.68,
+     "size": [
+      0.1,
+      0.02,
+      0.1
+     ],
+     "rgb": [
+      1.0,
+      0.78,
+      0.72
+     ]
+    },
+    {
+     "along": 0.76,
+     "in": 4.577,
+     "y0": 1.68,
+     "size": [
+      0.1,
+      0.02,
+      0.1
+     ],
+     "rgb": [
+      1.0,
+      0.78,
+      0.72
+     ]
+    },
+    {
+     "along": 0.76,
+     "in": 4.023,
      "y0": 1.68,
      "size": [
       0.1,
@@ -374,8 +253,38 @@
      ]
     },
     {
-     "along": 8.54,
-     "in": 11.477,
+     "along": -2.92,
+     "in": 2.6,
+     "y0": 1.68,
+     "size": [
+      0.1,
+      0.02,
+      0.1
+     ],
+     "rgb": [
+      1.0,
+      0.78,
+      0.72
+     ]
+    },
+    {
+     "along": -2.44,
+     "in": 2.877,
+     "y0": 1.68,
+     "size": [
+      0.1,
+      0.02,
+      0.1
+     ],
+     "rgb": [
+      1.0,
+      0.78,
+      0.72
+     ]
+    },
+    {
+     "along": -2.44,
+     "in": 2.323,
      "y0": 1.68,
      "size": [
       0.1,
@@ -389,8 +298,8 @@
      ]
     },
     {
-     "along": 8.54,
-     "in": 10.923,
+     "along": 2.28,
+     "in": 2.0,
      "y0": 1.68,
      "size": [
       0.1,
@@ -400,12 +309,12 @@
      "rgb": [
       1.0,
       0.78,
-      0.5
+      0.72
      ]
     },
     {
-     "along": 14.62,
-     "in": 11.4,
+     "along": 2.76,
+     "in": 2.277,
      "y0": 1.68,
      "size": [
       0.1,
@@ -415,252 +324,12 @@
      "rgb": [
       1.0,
       0.78,
-      0.5
+      0.72
      ]
     },
     {
-     "along": 14.14,
-     "in": 11.677,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": 14.14,
-     "in": 11.123,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": -4.68,
-     "in": 11.0,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": -5.16,
-     "in": 11.277,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": -5.16,
-     "in": 10.723,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": -9.88,
-     "in": 11.0,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": -10.36,
-     "in": 11.277,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": -10.36,
-     "in": 10.723,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": -7.28,
-     "in": 6.0,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": -7.76,
-     "in": 6.277,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": -7.76,
-     "in": 5.723,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": 2.32,
-     "in": 6.0,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": 1.84,
-     "in": 6.277,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": 1.84,
-     "in": 5.723,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": 11.32,
-     "in": 6.0,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": 10.84,
-     "in": 6.277,
-     "y0": 1.68,
-     "size": [
-      0.1,
-      0.02,
-      0.1
-     ],
-     "rgb": [
-      1.0,
-      0.78,
-      0.5
-     ]
-    },
-    {
-     "along": 10.84,
-     "in": 5.723,
+     "along": 2.76,
+     "in": 1.723,
      "y0": 1.68,
      "size": [
       0.1,
@@ -674,7 +343,51 @@
      ]
     }
    ],
-   "lamps": []
+   "lamps": [],
+   "walls": [
+    {
+     "from": [
+      -4.5,
+      0.35
+     ],
+     "to": [
+      -4.5,
+      7.5
+     ]
+    },
+    {
+     "from": [
+      -4.5,
+      7.5
+     ],
+     "to": [
+      4.5,
+      7.5
+     ]
+    },
+    {
+     "from": [
+      4.5,
+      7.5
+     ],
+     "to": [
+      4.5,
+      0.35
+     ],
+     "doors": [
+      [
+       5.2,
+       1.0
+      ]
+     ]
+    }
+   ],
+   "room": [
+    -4.5,
+    0.35,
+    4.5,
+    7.5
+   ]
   }
  }
 }

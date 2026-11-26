@@ -365,7 +365,8 @@ bool FCITY013_Dressed::RunTest(const FString&)
 
 // CITY-013, QST-014 (ADR-0059): the Stone Oven is fitted out as its approved design (World/rules/fitouts.json): on its ground
 // floor stand the design's pieces, each a mesh made from the Blender look (Tools/blender/unreal_bakery_50.py, imported into
-// /Game/Furniture), inside the walls and turned as written, with the oven's glow and the pendants; none of the grocer's
+// /Game/Furniture), inside the walls and turned as written, in a room closed by partitions round the door, with the oven's
+// glow and the pendants; none of the grocer's
 // shelves, tills or fridges the slice would put there. Its upper floors are furnished as before.
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY013_StoneOven, "BrixTown.World.CITY013_the_stone_oven_is_fitted_out_by_its_design",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
@@ -403,10 +404,17 @@ bool FCITY013_StoneOven::RunTest(const FString&)
 				TestTrue(FString::Printf(TEXT("%s is turned square (A at right angles to B)"), *P.Kind), FMath::Abs(FVector2D::DotProduct(P.A, P.B)) < 1e-6 && FMath::IsNearlyEqual(P.A.Size(), 1.0, 1e-6));
 				const FString Asset = FPaths::Combine(FPaths::ProjectContentDir(), TEXT("Furniture"), FString::Printf(TEXT("SM_%s_%s.uasset"), *P.Kind, *P.Line));
 				TestTrue(FString::Printf(TEXT("SM_%s_%s is imported"), *P.Kind, *P.Line), FPaths::FileExists(Asset));
-				if (P.Kind == TEXT("bk_oven")) { bOven = true; TestTrue(TEXT("the oven's back is to the back wall"), FVector2D::DotProduct(P.B, FVector2D(0, -1)) > .99 && P.At.Y < L.Min.Y + 1.5); }
+				if (P.Kind == TEXT("bk_oven")) { bOven = true; TestTrue(TEXT("the oven's back is to the back of the room"), FVector2D::DotProduct(P.B, FVector2D(0, -1)) > .99); }
 				bMother |= P.Kind == TEXT("bk_racks_mother");
 			}
 			TestTrue(TEXT("there is one oven and the Mother's rack"), bOven && bMother && Into.Y < 0);
+			// the partitions close a room round the door, with one doorway (to the stair); the pieces stand in it
+			int32 Doorways = 0;
+			FBox2D Room(ForceInit);
+			for (const FBrixWallSeg& S : F.Walls) { Doorways += S.bDoorway ? 1 : 0; Room += S.R.Centre - S.R.Along * (S.R.Length / 2); Room += S.R.Centre + S.R.Along * (S.R.Length / 2); }
+			TestEqual(TEXT("the room has one doorway in its partitions"), Doorways, 1);
+			TestTrue(TEXT("the room is far smaller than the shop"), Room.GetArea() < .25 * (L.Max - L.Min).X * (L.Max - L.Min).Y);
+			for (const FBrixFurniturePiece& P : F.Pieces) TestTrue(FString::Printf(TEXT("%s stands in the room"), *P.Kind), Room.ExpandBy(.2).IsInside(P.At));
 			TestTrue(TEXT("the floors above are furnished as the slice furnishes them"), BrixFurnishFloor(Ins, L, In, 1, Up) && Up.Pieces.Num() == 0 && Up.Boxes.Num() > 0);
 		}
 	TestEqual(TEXT("one lot has a fit-out"), Fitted, 1);

@@ -980,22 +980,26 @@ its lines are read, not spoken, and one left unanswered opens again when the pla
 running game: `docs/narrative/shots/stone_oven.png` (the career starts by talking to Noor, the baker) and `count_scene.png`
 (`-BrixTime=06:40 -BrixStand=912,816,0 -BrixLife=act,new_in_town,r0504,end:gift;act,four_oclock_door,r0262,start|give:breakfast_loaf|stage:count`).
 The Stone Oven's ground floor is fitted out as its approved design (ADR-0059, ADR-0061): `World/rules/fitouts.json`, named
-by the lot (`"fitout": "stone_oven"`), places the design's own pieces (the oven, two kneading benches, seven bread racks
-with the Mother's crock on one, flour sacks under the price board, the plank door to the alley with its lantern, the
-proofing room's door, three counters, kit 18's three-shade pendants) round the four staff's work places, with the oven's
-fire and the pendants' shades lit; none of the grocer's shelves, tills and fridges (`BrixFurnishFloor`, meshes made by
+by the lot (`"fitout": "stone_oven"`), closes a room of 9 by 7.5 m round the front door with partitions (the owner,
+2026-11-26: "make the bakery room smaller with a partition wall"), a doorway in one of them to the stair, and places in it
+the design's own pieces as the reference has them: the plank door to the alley, the price board and the flour sacks on the
+left wall, the oven at the back on the left, the kneading bench before it, the racks with the Mother's crock at the back
+on the right beside the proofing room's door, a second rack on the right wall, the counter at the front on the right, and
+kit 18's three-shade pendants (one light each), with the oven's fire and the shades lit. The four staff and the customers'
+places stand in the room (moved in `World/city_01/blocks/b_7_7.json`). None of the grocer's shelves, tills and fridges (`BrixFurnishFloor`, meshes made by
 `Tools/blender/unreal_bakery_50.py` and imported into `/Game/Furniture`; `CITY013_the_stone_oven_is_fitted_out_by_its_design`).
 Noor (r0262) wears her approved look (`World/rules/cast_looks.json`, `BrixApplyCastLooks`): an olive dress to the shin with
 short sleeves, a cream bib apron, bare legs and brown shoes, grey hair in a bun on the crown with locks swept back along the
 hairline, and age (creases at the brow, the eyes and from nose to mouth, paler lips, fainter cheeks), drawn only for a cast
 look, so everyone else is as before (`QST014_noor_wears_her_approved_look`; ART004 unchanged). Looked at beside the
 references on 2026-11-26: `Art/StyleTests/unreal_bakery_50/` (look_check: 10 pictures, 0 fail).
-Not yet, of the Stone Oven and Noor (the look gate): the room is a shop of 38 by 16 m, so it is far bigger and emptier in
-front than the designed room of 7.6 by 4.8 m; it has no ceiling beams and is brighter and flatter than the reference, its
-corners not darker (G1), by night brighter than the four o'clock reference; the oven's fire is a few lit boxes, small beside
-the reference's, and gives the room little light; the ceiling carries the engine's blotches (G3, as in every shop); a
-slice-style box lamp still hangs at the ceiling's middle; the bakery's upper floors are still furnished as a grocer's store
-and rooms. Noor has no stoop, her lines are fainter than the reference's, and under the locks her hair is still the shell.
+Not yet, of the Stone Oven and Noor (the look gate): the room has no ceiling beams and is brighter and flatter than the
+reference (mean 78 to 105 against 53 to 61), its corners not darker (G1), by night still bright; it has no window of its
+own (the shop front's panes are orange, below), so 10:00 and 22:30 look alike inside; the oven's fire is a few lit boxes,
+small beside the reference's; the pendants' shades hang at 1.7 m, where a tall player's head passes through them (no
+collision); the ceiling carries the engine's blotches (G3, as in every shop); the rest of the shop behind the partitions
+is empty and unlit, and the bakery's upper floors are still furnished as a grocer's store and rooms; in a talk the camera
+can come close behind a resident's head in so small a room. Noor has no stoop, her lines are fainter than the reference's, and under the locks her hair is still the shell.
 Nobody else has age values or a look of their own. Seen in passing, not this work: a shop's front windows seen from inside
 are plain orange panes with no view of the street (here and in b_10_9_l2), and the back windows glow white at 22:30.
 Everything left of the Baker career is listed in `docs/narrative/README.md`.

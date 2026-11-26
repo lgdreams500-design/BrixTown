@@ -66,7 +66,7 @@ struct BRIXWORLD_API FBrixHousePlan
 };
 
 // A room fitted out as its design says instead of as the slice furnishes its kind (World/rules/fitouts.json; CITY-013,
-// QST-014, ADR-0059: the Stone Oven). Places in the door's frame: Along to the right of someone walking in at the door,
+// QST-014, ADR-0059: the Stone Oven). Places in the door's frame: Along to the left of someone walking in at the door,
 // In from the door inward, metres. A piece is a mesh /Game/Furniture/SM_<Piece>_<Line>; Faces is where its front points
 // (door, back, +along, -along); Size its box (across, deep, high). Glow: lit boxes; Lamps: pendants hung over these points.
 struct BRIXWORLD_API FBrixFitoutPiece
@@ -83,6 +83,14 @@ struct BRIXWORLD_API FBrixFitoutGlow
 	FVector3f Size = FVector3f::ZeroVector, Colour = FVector3f::OneVector;   // across, high, deep
 };
 
+// A partition of a fit-out: from one point to another in the door's frame, square to the room, 0.12 m thick, with doorways
+// (where along it from its start, how wide).
+struct BRIXWORLD_API FBrixFitoutWall
+{
+	FVector2D From = FVector2D::ZeroVector, To = FVector2D::ZeroVector;
+	TArray<FVector2D> Doors;
+};
+
 struct BRIXWORLD_API FBrixFitout
 {
 	FString Name, Line;
@@ -90,6 +98,7 @@ struct BRIXWORLD_API FBrixFitout
 	TArray<FBrixFitoutPiece> Pieces;
 	TArray<FBrixFitoutGlow> Glow;
 	TArray<FVector2D> Lamps;
+	TArray<FBrixFitoutWall> Walls;   // the partitions that close the fitted room
 	double LampDrop = 0.85;
 };
 

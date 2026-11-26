@@ -43,6 +43,7 @@ struct BRIXWORLD_API FBrixFurnished
 	TArray<FBrixFurnSolid> Solids;
 	TArray<FBrixSpot> Spots;        // play.js spot(): who is at each place lies, sits or stands there, facing this way (Up 0: standing)
 	TArray<FBrixFurniturePiece> Pieces;   // a fit-out's meshes (FBrixFitout), on this floor
+	TArray<FBrixWallSeg> Walls;           // a fit-out's partitions, cut at their doorways (a doorway's piece is the wall over it)
 };
 
 // Floor f of a lot furnished at its places, unless it is a planned home (BrixHomes) or a building drawn its own way. False

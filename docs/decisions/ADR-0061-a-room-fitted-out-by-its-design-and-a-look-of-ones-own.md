@@ -14,7 +14,9 @@ building's kind, so the Stone Oven, a shop, was fitted as a grocer's; and every 
 
 ## Decision
 - **A fit-out is data.** `World/rules/fitouts.json` holds a design's pieces, placed in the door's frame (along, in), with
-  where each faces, its size, lit boxes (an oven's fire) and pendants. A lot names its fit-out in its block file
+  where each faces, its size, lit boxes (an oven's fire), and partitions with doorways that close the fitted room inside a
+  larger building (the owner: "make the bakery room smaller with a partition wall"); the lot's staff and customer places
+  are moved into that room in its block file. A lot names its fit-out in its block file
   (`"fitout": "stone_oven"`). On that floor Unreal places the fit-out alone: none of the slice's places' furniture or
   dressing. Other floors are furnished as before. `world.fitout_problems()` checks every piece against its export and that
   it stands inside the walls and out of the stairwell.
@@ -38,9 +40,8 @@ building's kind, so the Stone Oven, a shop, was fitted as a grocer's; and every 
 | **Age and a dress as extra parts on the same body, for a cast look only** | Small; nobody else changes | Not the Blender elders' full set (no stoop, glasses, cane, shawl, beard); the hair is still a shell under the locks |
 
 ## Consequences
-- The Stone Oven's ground floor is the approved bakery's pieces in a shop of 38 by 16 m: the design was a room of 7.6 by
-  4.8 m, so the pieces stand round the four staff's work places, the racks along the back wall, the counters before the
-  staff; the room is larger and emptier in front than the design.
+- The Stone Oven's ground floor is a room of 9 by 7.5 m (the design's is 7.6 by 4.8 m) closed by partitions round the
+  front door, with a doorway to the stair; the rest of the shop behind them is empty.
 - Noor wears her own look wherever she is drawn. The stoop, the Blender brow value and the elders' other values are not
   carried; the hair under the locks is still the shell (ADR-0059's weak point, only covered at the hairline).
 - Neither has passed the look gate beside its reference until the shots are taken and kept (`Art/StyleTests/unreal_bakery_50/`).

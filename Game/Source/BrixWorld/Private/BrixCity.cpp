@@ -458,6 +458,21 @@ bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError)
 						Gl.Along = Num(G, TEXT("along")); Gl.In = Num(G, TEXT("in")); Gl.Y0 = Num(G, TEXT("y0"));
 						Gl.Size = V3(G, TEXT("size"), FVector3f(.1f)); Gl.Colour = V3(G, TEXT("rgb"), FVector3f::OneVector);
 					}
+				if (O->TryGetArrayField(TEXT("walls"), Arr))
+					for (const TSharedPtr<FJsonValue>& WV : *Arr)
+					{
+						const TSharedPtr<FJsonObject> Wo = WV->AsObject();
+						if (!Wo.IsValid()) continue;
+						FBrixFitoutWall& Wl = F->Walls.AddDefaulted_GetRef();
+						Wl.From = Vec2(Wo, TEXT("from")); Wl.To = Vec2(Wo, TEXT("to"));
+						const TArray<TSharedPtr<FJsonValue>>* Ds = nullptr;
+						if (Wo->TryGetArrayField(TEXT("doors"), Ds))
+							for (const TSharedPtr<FJsonValue>& DV : *Ds)
+							{
+								const TArray<TSharedPtr<FJsonValue>>* XY = nullptr;
+								if (DV->TryGetArray(XY) && XY->Num() >= 2) Wl.Doors.Add(FVector2D((*XY)[0]->AsNumber(), (*XY)[1]->AsNumber()));
+							}
+					}
 				if (O->TryGetArrayField(TEXT("lamps"), Arr))
 					for (const TSharedPtr<FJsonValue>& LV : *Arr)
 					{

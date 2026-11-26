@@ -1598,6 +1598,28 @@ def fitout_problems(w):
             inside(g["along"], g["in"], 0, "glow")
         for a, i in fo.get("lamps", []):
             inside(a, i, 0, "lamp")
+        for n, wl in enumerate(fo.get("walls", [])):
+            for end in ("from", "to"):
+                x, z = at(*wl[end])
+                if not (a0 + .3 <= x <= a1 - .3 and c0 + .3 <= z <= c1 - .3):
+                    out.append("%s: fit-out %s's wall %d runs through the building's wall" % (l["id"], l["fitout"], n))
+            ln = abs(wl["to"][0] - wl["from"][0]) + abs(wl["to"][1] - wl["from"][1])
+            if wl["from"][0] != wl["to"][0] and wl["from"][1] != wl["to"][1]:
+                out.append("%s: fit-out %s's wall %d is not square to the room" % (l["id"], l["fitout"], n))
+            for at0, wd in wl.get("doors", []):
+                if at0 < 0 or at0 + wd > ln:
+                    out.append("%s: fit-out %s's wall %d has a doorway past its end" % (l["id"], l["fitout"], n))
+        if fo.get("room"):
+            ra0, ri0, ra1, ri1 = fo["room"]
+            rel = lambda x, z: (-(x - dx) * o[1] + (z - dz) * o[0], -((x - dx) * o[0] + (z - dz) * o[1]))   # the door's frame back
+            for pc in fo["pieces"] + fo.get("glow", []):
+                if not (ra0 < pc["along"] < ra1 and ri0 < pc["in"] < ri1):
+                    out.append("%s: fit-out %s's %s stands outside its room" % (l["id"], l["fitout"], pc.get("piece", "glow")))
+            staff = sum(1 for r in w["residents"] if r.get("work") == l["id"])
+            for x, z in l["objects"].get("work", [])[:staff] + l["objects"].get("customer", []):
+                a, i = rel(x, z)
+                if not (ra0 + .3 < a < ra1 - .3 and ri0 + .3 < i < ri1 - .3):
+                    out.append("%s: a staff or customer place (%s, %s) is outside fit-out %s's room" % (l["id"], x, z, l["fitout"]))
     return out
 
 

@@ -1640,8 +1640,10 @@ class TheStoneOvenFitOut(unittest.TestCase):
         fo["pieces"][1]["piece"] = "bk_nothing"                                  # not exported
         fo["pieces"][2]["in"] = 30                                               # through the back wall
         fo["lamps"].append([17.5, 3.0])                                          # over the stair
+        fo["walls"][0]["to"] = [-30, 7.5]                                        # through the side wall
+        fo["pieces"][3]["along"] = 6.0                                           # out of its room
         p = world.fitout_problems(w)
-        for bit in ("is not its mesh's", "bk_nothing is not in", "bk_oven stands through a wall", "lamp stands in the stairwell"):
+        for bit in ("is not its mesh's", "bk_nothing is not in", "bk_door_proof stands through a wall", "lamp stands in the stairwell", "wall 0 runs through", "bk_racks_a stands outside its room"):
             self.assertTrue(any(bit in x for x in p), bit)
 
 
