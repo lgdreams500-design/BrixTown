@@ -695,7 +695,6 @@
   {
    "id": "ShopsShopFloor",
    "category": "Shops",
-   "status": "proposed",
    "title": "A shop's floor without a fire (bank, grocer and the like) at every hour",
    "files": [
     "Shops/ShopsShopFloor_Morning.jpg",
@@ -703,9 +702,9 @@
     "Shops/ShopsShopFloor_Dusk.jpg",
     "Shops/ShopsShopFloor_NightLamps.jpg"
    ],
-   "locks": "A shop's ground floor at the game's size (the owner, 2026-11-26: \"take the size from game for bank, grocers or library\"): the smallest grocer's lot (Northwood Grocer, 12 m along the street, 11 m deep), 3 m to the ceiling (World/rules/storeys.json); its street side the approved timber shopfront seen from inside (the owner: \"take the windows wall references from build models approved previously\"; BuildingsTypes, shop_front_a): teal pilasters on stone bases, a stall riser under a stone sill, tall panes with a centre bar and a transom, a glazed door, the fascia, the striped awning outside; shelving in rows, the counter and till, a rail, a table, a board, four pendants. In the world's light as the bakery and the home room: by day the sun and sky through the front, the pendants low; at dusk and at night the pendants full in their kind's colour. No fire, no moonlit nights, no weather. It stands for the bank, the grocer, the library and other shops without a fire; the bakery has its own (ShopsBakeryLight).",
-   "approved": "proposed 2026-11-26, for the owner to review",
-   "decision": "the owner, 2026-11-26: \"bakery has oven so it will be different from bank/grocers and other such outlets\"; ADR-0061, ADR-0066",
+   "locks": "A shop's ground floor at the game's size (the owner, 2026-11-26: \"take the size from game for bank, grocers or library\"): the smallest grocer's lot (Northwood Grocer, 12 m along the street, 11 m deep), 3 m to the ceiling (World/rules/storeys.json); its street side the approved timber shopfront seen from inside (the owner: \"take the windows wall references from build models approved previously\"; BuildingsTypes, shop_front_a): teal pilasters on stone bases, a stall riser under a stone sill, tall panes with a centre bar and a transom, a glazed door, the fascia, the striped awning outside, rolled up under the fascia in the morning so the low sun comes deep in, out from midday; shelving in rows, the counter and till, a rail, a table, a board, four pendants. In the world's light as the bakery and the home room: by day the sun and sky through the front, the pendants low; at dusk and at night the pendants full in their kind's colour. No fire, no moonlit nights, no weather. It stands for the bank, the grocer, the library and other shops without a fire; the bakery has its own (ShopsBakeryLight).",
+   "approved": "2026-11-26, the owner",
+   "decision": "the owner, 2026-11-26: \"bakery has oven so it will be different from bank/grocers and other such outlets\"; ADR-0061, ADR-0066; the awning rolled up in the morning (the owner: \"Rolled up mornings\"); the owner, 2026-11-26: \"Approve it\"",
    "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=shop, shopfloor()) with the pieces of Tools/blender/furniture_kit_18.py and the shopfront of Tools/blender/building_kit_07.py",
    "models": [
     "World/city_01/blocks (the shops', bank's and library's lots)",

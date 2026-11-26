@@ -199,6 +199,12 @@ class Lights:
 
     def set(self, hour):
         key, h, se, sc, skc, sks, fog, lamps, moon, ex, eye_target, weather = hour
+        rolled = key in AWNING_IN
+        for ob in self.scene.objects:                         # a shop's awning: out, or rolled up under its fascia
+            if ob.name.startswith("Shp_AwningRoll"):
+                ob.hide_render = not rolled
+            elif ob.name.startswith("Shp_Awning"):
+                ob.hide_render = rolled
         day = lamps == "day"
         lamps = self.day_lamps if day else lamps
         if weather == "fog":
@@ -477,6 +483,9 @@ def corridor(Ls):
     return camera(SCENE, "Cam_hallway", (-0.5, Y0 + 0.2, 1.6), (0.35, Y1, 1.5), 16.0)
 
 
+AWNING_IN = ("Morning",)                                  # the shop's awning rolled up while the sun is low (the owner, 2026-11-26)
+
+
 def shopfloor(Ls):
     """A shop's ground floor at the game's size (the owner, 2026-11-26: "take the size from game for bank, grocers or
     library"): the smallest grocer's lot, Northwood Grocer, 12 m along the street and 11 m deep, its floor 3 m high under
@@ -547,6 +556,16 @@ def shopfloor(Ls):
         ob.rotation_euler = (0, p20, 0)
         ob.location = (X + t + out / 2, (a + b) / 2, za - out * math.tan(p20) / 2)
         COL.objects.link(ob)
+        rb = bmesh.new()                                      # the same stripe rolled up under the fascia (mornings)
+        bmesh.ops.create_cone(rb, cap_ends=True, segments=16, radius1=0.11, radius2=0.11, depth=b - a)
+        rme = bpy.data.meshes.new("Shp_AwningRoll%d" % i)
+        rb.to_mesh(rme)
+        rb.free()
+        rme.materials.append(m)
+        ro = bpy.data.objects.new("Shp_AwningRoll%d" % i, rme)
+        ro.rotation_euler = (math.radians(90), 0, 0)
+        ro.location = (X + t + 0.14, (a + b) / 2, za + 0.02)
+        COL.objects.link(ro)
     box("Shp_Front", -X - 0.3, X + 0.35, -Y - 0.3, -Y, 0, H, pl, bevel=0)   # the wall the camera stands at
     out = bpy.data.materials.get("M_OutsidePaving") or painted("M_OutsidePaving", (0.22, 0.21, 0.25), (0.46, 0.42, 0.37), noise_scale=0.5)
     box("Shp_Outside", X + 0.35, X + 40.0, -Y - 30.0, Y + 30.0, -0.4, -0.1, out, bevel=0)

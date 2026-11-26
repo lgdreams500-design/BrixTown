@@ -1,11 +1,11 @@
-22:28:51 Blender 5.3.0, place shop
-22:28:52 Shop: sun 8.5 at bearing 21 deg, sky 0.25; 4 lamps, 0 fires, 5 glowing materials, 0 haze
-22:28:53   Shop_Morning: the eye at +0.98 stops for a mean of 100
-22:29:28 Shop_Morning.jpg rendered in 35.2s
-22:29:29   Shop_Midday: the eye at +0.36 stops for a mean of 100
-22:30:12 Shop_Midday.jpg rendered in 43.4s
-22:30:14   Shop_Dusk: the eye at -0.46 stops for a mean of 85
-22:30:59 Shop_Dusk.jpg rendered in 45.3s
-22:31:01   Shop_NightLamps: the eye at -0.32 stops for a mean of 70
-22:31:49 Shop_NightLamps.jpg rendered in 48.2s
-22:31:49 DONE
+22:35:38 Blender 5.3.0, place shop
+22:35:38 Shop: sun 8.5 at bearing 21 deg, sky 0.25; 4 lamps, 0 fires, 5 glowing materials, 0 haze
+22:35:39   Shop_Morning: the eye at +0.64 stops for a mean of 100
+22:36:17 Shop_Morning.jpg rendered in 37.7s
+22:36:18   Shop_Midday: the eye at +0.36 stops for a mean of 100
+22:37:00 Shop_Midday.jpg rendered in 42.1s
+22:37:01   Shop_Dusk: the eye at -0.46 stops for a mean of 85
+22:37:45 Shop_Dusk.jpg rendered in 44.4s
+22:37:47   Shop_NightLamps: the eye at -0.32 stops for a mean of 70
+22:38:35 Shop_NightLamps.jpg rendered in 47.5s
+22:38:35 DONE
