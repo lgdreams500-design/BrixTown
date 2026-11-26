@@ -42,6 +42,11 @@ Brix Town: a third-person multiplayer life-sim in Unreal Engine 5.8. Art source 
 - Only the owner picks levels, by saying them in chat. Record a pick in `docs/backlog/feature_choices.json` only from the
   owner's own words, then run `Tools/backlog.ps1` to check it and rewrite `docs/backlog/BACKLOG.md` (never edit that by
   hand; ADR-0008). Propose features and levels by editing `docs/backlog/features.json` and saying so.
+- Voices for named characters are made only by the cast recipe (`Tools/voice/cast/README.md`, ADR-0060): the profile
+  states gender, age and accent before any voice is made; the owner approves one voice card for a person, by ear; a
+  person's lines are all voiced in one run from their cards. Never write a direction for a single line, never choose
+  between readings, and never edit a voiced clip afterwards (no pauses added or cut). No agent can hear: report
+  measurements and let the owner judge.
 - If something can be calculated from the world clock and data, do not tick it or store it. Prove city rules in
   `Tools/citysim/` with tests before building them in the engine (`docs/specs/domains/LIVING_CITY.md` §1).
 - The map is data in `World/` (`docs/specs/domains/WORLD_MAP.md`). Change the city by editing block files, never by
