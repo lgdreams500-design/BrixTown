@@ -9,6 +9,7 @@
 #include "BrixUnits.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/PointLightComponent.h"
+#include "Components/SpotLightComponent.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/TextRenderComponent.h"
@@ -61,7 +62,7 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 	UMaterialInterface* LitM = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Mall/M_MallLit.M_MallLit"));
 	UMaterialInterface* LatticeM = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Mall/M_MallLattice.M_MallLattice"));
 	UMaterialInterface* RoomM = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Mall/M_MallRoom.M_MallRoom"));
-	if (RoomM) { RoomMat = UMaterialInstanceDynamic::Create(RoomM, this); RoomMat->SetScalarParameterValue(TEXT("Glow"), RoomLight); }
+	if (RoomM) { RoomMat = UMaterialInstanceDynamic::Create(RoomM, this); RoomMat->SetScalarParameterValue(TEXT("Glow"), RoomLight); RoomMat->SetScalarParameterValue(TEXT("Mottle"), RoomMottle); RoomMat->SetScalarParameterValue(TEXT("Under"), RoomUnder); }
 	if (!LitM || !LatticeM) UE_LOG(LogTemp, Warning, TEXT("Brix Town: /Game/Mall's materials are missing (run Tools/unreal/make_mall_materials.py)"));
 	if (LitM)
 	{
@@ -370,14 +371,24 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 	}
 	for (int32 i = 0; i < NearLights; ++i)
 	{
-		UPointLightComponent* L = NewObject<UPointLightComponent>(this);
+		UPointLightComponent* L = nullptr;
+		if (i < LightShadows)   // the nearest: down out of its shade, with shadows
+		{
+			USpotLightComponent* Sp = NewObject<USpotLightComponent>(this);
+			Sp->OuterConeAngle = FMath::Min(LightCone, 80.f);
+			Sp->InnerConeAngle = FMath::Min(LightCone, 80.f) - 6.f;
+			Sp->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
+			Sp->SourceRadius = 12.f;
+			L = Sp;
+		}
+		else L = NewObject<UPointLightComponent>(this);
 		L->SetupAttachment(RootComponent);
 		L->SetMobility(EComponentMobility::Movable);
 		L->SetIntensityUnits(ELightUnits::Candelas);
 		L->SetIntensity(LightCandela);
 		L->SetAttenuationRadius(LightReach * CmPerM);
 		L->SetLightColor(LightColour);
-		L->SetCastShadows(false);
+		L->SetCastShadows(i < LightShadows);
 		L->SetVisibility(false);
 		L->RegisterComponent();
 		AddInstanceComponent(L);
@@ -458,7 +469,7 @@ void ABrixMall::Tick(float DeltaSeconds)
 			const float Lux = PeopleLux * PeopleLevel * FMath::Lerp(1.f, PeopleLuxDay, Mode ? FMath::SmoothStep(.5f, 1.f, Mode->Daylight) : 1.f);   // the day's light comes in only with the sun well up: at dusk people were dim again
 			if (!FMath::IsNearlyEqual(PeopleLight->Intensity, Lux, .01f)) PeopleLight->SetIntensity(Lux);
 			if (PeopleLight->IsVisible() != (Lux > 0.f)) PeopleLight->SetVisibility(Lux > 0.f);
-			if (Lux > 0.f) PeopleLight->SetWorldRotation(FRotator(-50.f, Cam->GetCameraRotation().Yaw, 0.f));
+			if (Lux > 0.f) PeopleLight->SetWorldRotation(FRotator(-62.f, Cam->GetCameraRotation().Yaw + 25.f, 0.f));   // from above and a little to one side: a lit side and a shaded one
 		}
 	LightWait -= DeltaSeconds;
 	if (LightWait <= 0.f)

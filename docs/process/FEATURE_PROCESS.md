@@ -1,9 +1,9 @@
 ---
 doc_id: WASTED-FEATURE-PROCESS
 title: Brix Town — How a feature gets from idea to game
-version: 1.1.0
+version: 1.2.0
 status: accepted          # owner agreed the approach on 2026-11-21
-last_updated: 2026-11-22
+last_updated: 2026-11-26
 relates_to: [TEST-001, TECH-004, TECH-005]
 ---
 
@@ -22,7 +22,7 @@ the work lives.
 | 3 | **Pick** | The owner picks a level for each feature at three milestones: first slice (PH1), life depth (PH3), full game. | The owner says the picks in chat; an agent records them in `docs/backlog/feature_choices.json` | **Owner only** |
 | 4 | **Spec** | Requirements are written per feature and level, each one testable. | `docs/specs/GAME_SPEC.md`, `docs/specs/domains/*.md` | Agents draft, owner accepts |
 | 5 | **Prove** | The rules are built as a small simulation with tests, outside the engine, and shown as a clip or picture. | `Tools/citysim/`, `Tools/blender/` | Owner reacts to what is shown |
-| 6 | **Build** | The proven rules are built in Unreal as a module with automated tests named after the requirement. | `Game/` | Agents build, tests gate |
+| 6 | **Build** | The proven rules are built in Unreal as a module with automated tests named after the requirement. Anything seen passes the look gate before its pull request. | `Game/`, `docs/process/LOOK_GATE.md` | Agents build, tests and the look gate |
 | 7 | **Review** | Play it. Raise or lower the level (say so in chat) if it earned it or did not. | `feature_choices.json` | Owner |
 
 ## What makes the cut
