@@ -80,6 +80,18 @@ def code_or_text(s):
     return re.sub(r"((?:Tools|Game|World|Prototype|docs|Art)/[\w./()<>*\-]+|ADR-\d{4})", r"<code>\1</code>", e(s))
 
 
+HOURS = {"Morning": "Morning", "Midday": "Midday", "Dusk": "Dusk", "NightLamps": "Night, lamps on",
+         "NightFullMoon": "Night, lamps off, full moon", "NightNewMoon": "Night, lamps off, new moon", "Cloudy": "Cloudy",
+         "Rain": "Rain", "Fog": "Fog", "Snow": "Snow"}       # the hours of Tools/blender/hours_50.py
+
+
+def caption(f):
+    """A picture's name, and its hour when it is one of a place's hours."""
+    stem = os.path.splitext(os.path.basename(f))[0]
+    hour = HOURS.get(stem.rsplit("_", 1)[-1]) if "_" in stem else None
+    return ("<b>%s</b> " % e(hour) if hour else "") + "<code>%s</code>" % e(os.path.basename(f))
+
+
 def media(f, alt):
     if f.endswith(".mp4"):
         return '<video src="%s" controls muted loop preload="metadata" title="%s"></video>' % (e(f), e(alt))
@@ -98,7 +110,7 @@ def page(cat):
                     % (c["id"], c["id"], "true" if i == 0 else "false", c["id"], e(c["title"]), n))
         body = ['<p class="about">%s</p>' % e(c["about"])] if c["about"] else []
         for r in refs:
-            pics = "".join('<figure>%s<figcaption><code>%s</code></figcaption></figure>' % (media(f, r["title"]), e(os.path.basename(f))) for f in r["files"])
+            pics = "".join('<figure>%s<figcaption>%s</figcaption></figure>' % (media(f, r["title"]), caption(f)) for f in r["files"])
             rows = [("Locks", code_or_text(r["locks"])), ("Approved", e(r["approved"])), ("Decision", code_or_text(r["decision"])),
                     ("Made by", code_or_text(r["made_by"]))]
             if r.get("models"):
@@ -108,8 +120,9 @@ def page(cat):
             if r.get("was"):
                 rows.append(("Was called", ", ".join("<code>%s</code>" % e(w) for w in r["was"])))
             issues = "".join("<li>%s</li>" % code_or_text(x) for x in r.get("issues", []))
-            body.append('<article class="ref" id="%s"><header><h2>%s</h2><code class="rid">%s</code>%s</header><div class="pics">%s</div>'
-                        '<dl>%s</dl>%s</article>' % (e(r["id"]), e(r["title"]), e(r["id"]),
+            body.append('<article class="ref%s" id="%s"><header><h2>%s</h2><code class="rid">%s</code>%s%s</header><div class="pics">%s</div>'
+                        '<dl>%s</dl>%s</article>' % (" proposed" if r.get("status") == "proposed" else "", e(r["id"]), e(r["title"]), e(r["id"]),
+                        '<span class="prop">Proposed, for your review</span>' if r.get("status") == "proposed" else "",
                         '<span class="flag">%d issue%s seen</span>' % (len(r["issues"]), "" if len(r["issues"]) == 1 else "s") if r.get("issues") else "",
                         pics, "".join("<dt>%s</dt><dd>%s</dd>" % (k, v) for k, v in rows),
                         '<div class="issues"><h3>Seen wrong, for the owner to judge</h3><ul>%s</ul></div>' % issues if issues else ""))
@@ -161,6 +174,8 @@ code{background:var(--code);padding:0 4px;border-radius:4px;font-size:.9em;word-
 .issues h3,.gaps h3{margin:4px 0;font-size:14px}.issues ul,.gaps ul{margin:4px 0 8px;padding-left:18px}
 .gaps{border:1px dashed var(--line);border-radius:12px;padding:8px 16px;margin-bottom:18px}
 .retired img{filter:grayscale(.6)}
+.prop{font-size:12px;color:#fff;background:var(--accent);padding:1px 8px;border-radius:10px}.ref.proposed{border-color:var(--accent);border-width:2px}
+figcaption b{color:var(--ink);font-weight:600;margin-right:4px}
 #big{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:5;cursor:zoom-out}
 #big img{max-width:96vw;max-height:94vh}#big.on{display:flex}
 @media (max-width:640px){dl{grid-template-columns:1fr}dt{margin-top:6px}}
