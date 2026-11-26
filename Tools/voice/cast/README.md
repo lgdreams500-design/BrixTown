@@ -69,19 +69,28 @@ by the owner and not in the game** (no `cast` in `World/rules/voices.json`): Abe
 Suvi (10), with their mood cards. The run was then stopped at the owner's word; Jai's part was left at 7 of 19 clips,
 which are not committed.
 
-**Noor** speaks in a Maya1 voice (ADR-0063), not the recipe's: 32 of her 111 lines are in the game (`cast_noor`,
+**Noor** speaks in a Maya1 voice (ADR-0063), not the recipe's: 29 of her 111 lines are in the game (`cast_noor`,
 `"partial"` in `World/rules/voices.json`), from one Maya1 run the owner stopped after 35 lines. Her other lines are
 murmured.
 
+**Every clip is checked by its length** (owner, 2026-11-26: no agent can hear and nobody can listen to thousands of
+lines). A clip longer than its words allow (`words / 1.6 + 2 s`) has more in it than the line: the model read its
+description aloud, or ran away and never stopped (Noor's `verdict/v_lie`: 73 s of babble for 28 words, the request
+was right). Shorter than `words / 5`, words are missing. The numbers are `"length_check"` in `cast_voices.json`;
+`import_maya_clips.py` takes no flagged clip into the game (and takes one out if it was in), unless `--keep` names it
+after the owner has heard it. The Maya1 voicing script outside the repository flags the same clips as it makes them.
+It cannot hear wrong words of the right length; a speech-to-text check would (offered, not wanted for now).
+
 ## Not yet
-- Noor: 79 lines not voiced (76 never made, plus `morning/report` and `verdict/v_lie`, whose clips have faults, and
-  `morning/together2`, which has the player's name in it). Nobody has listened to her clips in the Unreal game. The
-  owner heard only a few in the trial; the slow ones (1.2 to 1.5 words a second against her card's 2.8) wait for the
-  owner's ear. `make_cast_voices.py noor` would voice her remaining lines in the Qwen voice: do not run it for her
+- Noor: 82 lines not voiced: 76 never made; five flagged by length (`morning/report`, `verdict/v_lie`, and three
+  slow ones taken out of the game, `morning/teach`, `verdict/v_wary`, `still/s1`, which wait for the owner's ear and
+  `--keep`); and `morning/together2`, which has the player's name in it. Nobody has listened to her clips in the
+  Unreal game. The owner heard only a few in the trial. `make_cast_voices.py noor` would voice her remaining lines in the Qwen voice: do not run it for her
   until the owner says which model finishes her part.
 - Noor's clips have not been heard in a staged Unreal talk: `-BrixTalk=262` opened Pip's talk at 10:00 (she stands
   nearer) and found nobody near enough at 06:40, 07:21, 12:30 and 16:00. The Unreal test finds every one of her voiced
   lines' clips.
+- The length check is not in `make_cast_voices.py` (the Qwen recipe): Oda's and the others' clips were never checked.
 - Not voiced: Mei 86, Tam 38, Vera 23, Pip 22, Jai 19 (Hari speaks only in the starter quests). Abe, Len,
   Olu, Eli and Suvi are voiced but wait for the owner's ear (a page each, `--page`) before they go into the game.
 - The 25 lines nobody says (`who: scene`) have no narrator's voice.
