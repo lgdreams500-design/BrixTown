@@ -116,6 +116,41 @@
    ]
   },
   {
+   "id": "WorldMarketSquare",
+   "category": "World",
+   "status": "proposed",
+   "title": "Market Square from its arcade at every hour and in every weather",
+   "files": [
+    "World/WorldMarketSquare_Morning.jpg",
+    "World/WorldMarketSquare_Midday.jpg",
+    "World/WorldMarketSquare_Dusk.jpg",
+    "World/WorldMarketSquare_NightLamps.jpg",
+    "World/WorldMarketSquare_NightFullMoon.jpg",
+    "World/WorldMarketSquare_NightNewMoon.jpg",
+    "World/WorldMarketSquare_Cloudy.jpg",
+    "World/WorldMarketSquare_Rain.jpg",
+    "World/WorldMarketSquare_Fog.jpg",
+    "World/WorldMarketSquare_Snow.jpg"
+   ],
+   "locks": "Market Square seen from inside its near arcade: the far arcade, the fountain, the stalls' corner and the tree through three arches; sunlit paving bright, the arcade's shade lit by the light the sunlit paving and stone throw back (readable, about 1.5 stops under the sun, not black); lanterns lit in the arcade by day as approved, warm pools at dusk and with the lamps on; the full moon lighting the open paving past the arches, a new moon only starlight; cloud, rain (puddles with rings on the open paving), fog and snow (lying only under open sky), none of it under the arcade.",
+   "approved": "proposed 2026-11-26, for the owner to review",
+   "decision": "the owner, 2026-11-26: \"market square should be separate reference and have all hours of it's own\" and \"fix it's mid day - shadow areas are too dark, looks like bounce light is missing\"; ADR-0061",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=square; SQUARE_BOUNCE) on Market Square of Tools/blender/old_town_04.py",
+   "models": [
+    "World/rules/sky.json (weather)",
+    "Game/Source/BrixTown (the game's square, its light and weather)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.4, W1-W7",
+   "was": [
+    "World/WorldHours.png (its market square panel)"
+   ],
+   "issues": [
+    "The shade is lifted by light bounced more strongly than the stone's own colour gives (paving x2.4, stone x1.8): the surfaces look as before, the light in shade is a lift, not a measurement.",
+    "Cloudy still throws a soft-edged patch of sun on the arcade floor.",
+    "Lying snow is laid in 25 cm squares (as in WorldSky)."
+   ]
+  },
+  {
    "id": "WorldHours",
    "category": "World",
    "title": "The town at morning, dusk and midday",

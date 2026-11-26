@@ -294,6 +294,48 @@ def each_hour(scene, cam, exposure, stem, base=None):
         undo_weather(fallen)
 
 
+SQUARE_BOUNCE = dict(M_Paving=2.4, M_Stone=1.8, M_StoneDark=1.8)          # how much more light the sunlit ground and walls throw into shade
+
+
+def bounce_more(times):
+    """More light bounced off the named materials into shade, the look of the surfaces unchanged: what the camera sees
+    of them keeps its colour; light that reaches them by way of another surface takes the brighter one (capped at 0.85).
+    The Blender references' counterpart of the slice's "bounce x1.2" (ART_DIRECTION 2.4)."""
+    for name, k in times.items():
+        m = bpy.data.materials.get(name)
+        if m is None or not m.use_nodes:
+            continue
+        nt = m.node_tree
+        for b in [n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED']:
+            base = b.inputs["Base Color"]
+            src = base.links[0].from_socket if base.is_linked else None
+            lp = nt.nodes.new("ShaderNodeLightPath")
+            up = nt.nodes.new("ShaderNodeMix")
+            up.data_type = 'RGBA'
+            up.blend_type = 'MULTIPLY'
+            up.inputs["Factor"].default_value = 1.0
+            if src is not None:
+                nt.links.new(src, up.inputs[6])
+            else:
+                up.inputs[6].default_value = tuple(base.default_value)
+            up.inputs[7].default_value = (k, k, k, 1.0)
+            cap = nt.nodes.new("ShaderNodeMix")
+            cap.data_type = 'RGBA'
+            cap.blend_type = 'DARKEN'
+            cap.inputs["Factor"].default_value = 1.0
+            nt.links.new(up.outputs[2], cap.inputs[6])
+            cap.inputs[7].default_value = (0.85, 0.85, 0.85, 1.0)
+            pick = nt.nodes.new("ShaderNodeMix")
+            pick.data_type = 'RGBA'
+            nt.links.new(lp.outputs["Is Camera Ray"], pick.inputs["Factor"])
+            nt.links.new(cap.outputs[2], pick.inputs[6])           # seen by bounced light: brighter
+            if src is not None:
+                nt.links.new(src, pick.inputs[7])                    # seen by the camera: as it is
+            else:
+                pick.inputs[7].default_value = tuple(base.default_value)
+            nt.links.new(pick.outputs[2], base)
+
+
 WET = {}                                                   # material -> its roughness when dry
 
 
@@ -597,6 +639,7 @@ def main_hours():
         each_hour(scene, scene.camera, 0.3, "Alley", dict(dir=(0.446, 0.594, 0.669), sun=14.0, sky=0.35, fog_times=0.022 / 0.014))
     elif PLACE == "square":
         scene, ex = square()
+        bounce_more(SQUARE_BOUNCE)                  # the owner, 2026-11-26: the midday shade too dark, the bounce missing
         each_hour(scene, scene.camera, ex, "MarketSquare")
     elif PLACE == "sky":
         global SKY_CAM

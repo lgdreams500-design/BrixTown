@@ -1,0 +1,24 @@
+17:31:41 Blender 5.3.0, place square
+17:31:42 MarketSquare: sun 12.0 at bearing 53 deg, sky 0.40; 4 lamps, 0 fires, 2 glowing materials, 1 haze
+17:33:56 MarketSquare_Morning.jpg rendered in 133.4s
+17:35:50 MarketSquare_Midday.jpg rendered in 114.1s
+17:37:27 MarketSquare_Dusk.jpg rendered in 96.9s
+17:37:30   MarketSquare_NightLamps: the eye at +1.34 stops for a mean of 70
+17:39:31 MarketSquare_NightLamps.jpg rendered in 121.0s
+17:39:34   MarketSquare_NightFullMoon: the eye at +3.40 stops for a mean of 42
+17:41:04 MarketSquare_NightFullMoon.jpg rendered in 89.2s
+17:41:08   MarketSquare_NightNewMoon: the eye at +4.45 stops for a mean of 22
+17:42:31 MarketSquare_NightNewMoon.jpg rendered in 82.2s
+17:42:33   MarketSquare_Cloudy: the eye at -0.71 stops for a mean of 100
+17:44:11 MarketSquare_Cloudy.jpg rendered in 97.3s
+17:44:11   22 puddles on the open paving (139 tries)
+17:44:12   Rain: 1800 of 4999 tried under open sky, 3600 faces, -0.2 to 12.9 m up, from 5.0 m in front of the camera
+17:44:14   MarketSquare_Rain: the eye at -0.38 stops for a mean of 88
+17:45:57 MarketSquare_Rain.jpg rendered in 103.0s
+17:46:00   MarketSquare_Fog: the eye at +0.34 stops for a mean of 105
+17:47:33 MarketSquare_Fog.jpg rendered in 93.1s
+17:47:46   Snow lies on 24200 patches of 0.25 m (rays from the sky over 24 m round the camera)
+17:47:49   Snow: 3600 of 10147 tried under open sky, 28800 faces, -0.0 to 12.9 m up, from 5.0 m in front of the camera
+17:47:53   MarketSquare_Snow: the eye at -0.09 stops for a mean of 110
+17:50:29 MarketSquare_Snow.jpg rendered in 156.0s
+17:50:29 DONE
