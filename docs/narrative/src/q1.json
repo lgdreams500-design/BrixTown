@@ -185,7 +185,7 @@
 
   {"id": "grocer", "title": "Market Grocer's six", "kind": "talk", "with": "olu",
    "goal": "Deliver to Olu at Market Grocer",
-   "log": "Second drop: Market Grocer, behind the square. Olu weighs every loaf in his hand, and every piece of news.",
+   "log": "Second drop: Market Grocer, behind the square. Olu weighs every loaf in her hand, and every piece of news.",
    "start": "o_full",
    "starts": [
     {"need": ["flag:shorted_olu"], "node": "o_short"},

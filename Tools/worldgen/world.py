@@ -25,7 +25,7 @@ def load(city="city_01"):
     c = _read(base, "city.json")
     rules = os.path.normpath(os.path.join(base, c["rules"]))
     w = dict(city=c, blocks=[_read(base, b["file"]) for b in c["blocks"]], residents=_read(base, "residents.json")["residents"])
-    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers", "furnishing", "settings", "room_plan", "building_styles", "mall_outlets", "mall_goods", "achievements", "boards", "buy_menu", "markers", "furniture"):
+    for name in ("roles", "choices", "calendar", "vegetation", "signatures", "traffic", "dialogue", "speech", "sound", "dodge", "economy", "quests", "designer", "dressing", "sky", "crash", "surfaces", "storeys", "weather_react", "estate", "building_kit", "planning", "careers", "furnishing", "settings", "room_plan", "building_styles", "mall_outlets", "mall_goods", "achievements", "boards", "buy_menu", "markers", "furniture", "fitouts"):
         w[name] = _read(rules, name + ".json")
     story = os.path.join(rules, "quests_story.json")    # the story lines of a career, made from the writing (QST-010, ADR-0056)
     if os.path.exists(story):
@@ -135,6 +135,7 @@ def validate(w):
         if r["role"] not in w["roles"]["roles"]:
             out.append("%s: unknown role %s" % (r["id"], r["role"]))
     out += career_problems(w)
+    out += fitout_problems(w)
     if not out:                                        # every door must be reachable on foot from every other
         c = simulation(w)
         dd, _ = c.net._from(next(iter(c.anchor.values())))
@@ -1549,6 +1550,54 @@ def storey_problems(w):
                 out.append("%s: %d floors and no lift" % (where, n))
         elif l.get("levels"):
             out.append("%s: one floor but places upstairs" % where)
+    return out
+
+
+def fitout_problems(w):
+    """CITY-013, QST-014: a room fitted out as its design says (World/rules/fitouts.json, ADR-0059). Each lot's fit-out
+    must exist; each piece must be in its export's index at the size written; every piece, glow and lamp must stand inside
+    the building's walls (0.35 m), clear of its stairwell, on a lot that is not turned (the frame is the door's)."""
+    out = []
+    F = w.get("fitouts", {}).get("fitouts", {})
+    for name, fo in F.items():
+        for pc in fo["pieces"]:
+            ex = pc.get("export", fo.get("export"))
+            e = _read(os.path.join(WORLD, ".."), ex)["pieces"].get(pc["piece"], {}).get(fo["line"]) if ex else None
+            if not e:
+                out.append("fit-out %s: %s is not in %s" % (name, pc["piece"], ex))
+                continue
+            box = [e["max"][0] - e["min"][0], e["max"][1] - e["min"][1], e["max"][2]]
+            if any(abs(a - b) > 0.05 for a, b in zip(box, pc["size"])):
+                out.append("fit-out %s: %s's size %s is not its mesh's %s" % (name, pc["piece"], pc["size"], [round(v, 2) for v in box]))
+            if pc["faces"] not in ("door", "back", "+along", "-along"):
+                out.append("fit-out %s: %s faces %s" % (name, pc["piece"], pc["faces"]))
+    for l in lots(w):
+        if "fitout" not in l:
+            continue
+        fo = F.get(l["fitout"])
+        if fo is None:
+            out.append("%s: no fit-out called %s" % (l["id"], l["fitout"]))
+            continue
+        if l.get("angle"):
+            out.append("%s: a fit-out on a turned lot" % l["id"])
+            continue
+        a0, c0, a1, c1 = l["rect"]
+        dx, dz = l["door"]
+        o = (0, -1) if abs(dz - c0) < .01 else (0, 1) if abs(dz - c1) < .01 else (-1, 0) if abs(dx - a0) < .01 else (1, 0)
+        at = lambda a, i: (dx - o[0] * i - o[1] * a, dz - o[1] * i + o[0] * a)      # play.js layout()'s wp()
+        st = l.get("stair", {}).get("rect")
+        def inside(a, i, r, what):
+            x, z = at(a, i)
+            if not (a0 + .35 - .02 <= x - r and x + r <= a1 - .35 + .02 and c0 + .35 - .02 <= z - r and z + r <= c1 - .35 + .02):
+                out.append("%s: fit-out %s's %s stands through a wall" % (l["id"], l["fitout"], what))
+            if st and st[0] - .6 < x + r and x - r < st[2] + .6 and st[1] - .6 < z + r and z - r < st[3] + .6:
+                out.append("%s: fit-out %s's %s stands in the stairwell" % (l["id"], l["fitout"], what))
+        for pc in fo["pieces"]:
+            inside(pc["along"], pc["in"], 0, pc["piece"])
+        for g in fo.get("glow", []):
+            inside(g["along"], g["in"], 0, "glow")
+        for a, i in fo.get("lamps", []):
+            inside(a, i, 0, "lamp")
     return out
 
 

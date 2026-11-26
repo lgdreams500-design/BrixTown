@@ -147,7 +147,7 @@
        ]
       },
       "d2": {
-       "say": "Wonderful. Tell Abe he's got a fast new runner.",
+       "say": "Wonderful. Tell Abe she's got a fast new runner.",
        "mood": "happy",
        "options": [ { "text": "I will.", "next": null, "act": ["stage:report"] } ]
       },
@@ -245,7 +245,7 @@
        "options": [
         { "text": "Your secret's safe with me.", "next": "w3", "act": ["take:trowel"] },
         { "text": "Let me help you plant the next row.", "next": "w4", "act": ["take:trowel"] },
-        { "text": "Olu asked me to find out. I'll have to tell him.", "next": "w5" }
+        { "text": "Olu asked me to find out. I'll have to tell her.", "next": "w5" }
        ]
       },
       "w3": {

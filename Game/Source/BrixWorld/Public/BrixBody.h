@@ -41,6 +41,10 @@ struct BRIXWORLD_API FBrixLook
 	FString SigName = TEXT("Easy");
 	int32 Seed = 0;
 	double FaceW = 1, EyeSize = 1, EyeOpen = 1, Brow = 0, Nose = 1, Lips = 1;   // the face controls at rest (people.js FM0)
+	// Not in the slice: the values that say age (ADR-0059; elders_48.py), for the named people of World/rules/cast_looks.json.
+	// Age 0 to 1: lines at the brow, the eyes and from nose to mouth, paler lips, locks along the hairline. DressLen: garment
+	// "dress", its hem this far over the ground (metres at 1.72 m), short sleeves, bare legs under it. Both 0 for everyone else.
+	double Age = 0, DressLen = 0;
 };
 
 struct BRIXWORLD_API FBrixPeopleRules
@@ -55,6 +59,10 @@ struct BRIXWORLD_API FBrixPeopleRules
 
 // Reads Game/Data/people.json. On failure returns false and says why.
 BRIXWORLD_API bool LoadBrixPeopleRules(const FString& Path, FBrixPeopleRules& Out, FString& OutError);
+
+// The named people with a look of their own (World/rules/cast_looks.json, QST-014, ADR-0059): for each id of Ids found there,
+// Looks[i] takes that look's values (its walk and seed stay the role's). Returns how many; false and why when the file is bad.
+BRIXWORLD_API bool BrixApplyCastLooks(const FString& Path, const FBrixPeopleRules& Rules, const TArray<FString>& Ids, TArray<FBrixLook>& Looks, int32& OutCount, FString& OutError);
 
 // Resident Id's look: their role's clothes (a job's own where it has them, CITY-105) and their role's walk.
 BRIXWORLD_API FBrixLook BrixLookOf(const FBrixPeopleRules& Rules, int32 Id, const FString& Role, const FString& SigName);

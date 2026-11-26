@@ -12,6 +12,9 @@ Run from the repository root (engine path as in docs/setup/DEV_ENVIRONMENT.md):
 Only the pieces the game places are imported: those of World/rules/home_plans.json's plans (FURN-060) and of the furniture
 outlet's room sets (FURN-020; its block file's sets, kit 17's living room and kit 18's rooms), in every line, and any named in
 BRIX_FURNITURE_EXTRA (comma-separated, e.g. p_counter,f_table), so the binaries stay as few as the town needs.
+Also imported: the pieces of the rooms fitted out by their designs (World/rules/fitouts.json, CITY-013, ADR-0059), from the
+export each fit-out names (the Stone Oven's: Art/Export/unreal_bakery_50, made by Tools/blender/unreal_bakery_50.py), into
+the same folder by the same names (SM_bk_oven_oldtown, ...).
 BRIX_FURNITURE_ADD=1 imports only the pieces wanted that are not in /Game/Furniture yet and leaves the rest as they are (so
 adding pieces does not remake, and change, every mesh already there).
 """
@@ -56,9 +59,20 @@ for _b in json.load(open(os.path.join(_city, "city.json"), encoding="utf-8"))["b
             else:
                 WANT |= {"k17_" + k for k in ("rug", "sofa", "armchair", "coffee", "floor_lamp", "bookcase", "bed", "bedside", "wardrobe")}
 _index = json.load(open(os.path.join(SOURCE, "index.json"), encoding="utf-8"))["pieces"]
+FILES = sorted(glob.glob(os.path.join(SOURCE, "*.glb")))
+# the fit-outs' pieces, from their own exports
+for _fo in json.load(open(os.path.join(ROOT, "World", "rules", "fitouts.json"), encoding="utf-8"))["fitouts"].values():
+    for _pc in _fo["pieces"]:
+        WANT.add(_pc["piece"])
+        _ex = os.path.join(ROOT, _pc.get("export", _fo["export"]))
+        _ix = json.load(open(_ex, encoding="utf-8"))["pieces"]
+        _index.setdefault(_pc["piece"], {}).update(_ix[_pc["piece"]])
+        _f = os.path.join(os.path.dirname(_ex), _ix[_pc["piece"]][_fo["line"]]["file"])
+        if _f not in FILES:
+            FILES.append(_f)
 stems = []
 tasks = []
-for path in sorted(glob.glob(os.path.join(SOURCE, "*.glb"))):
+for path in FILES:
     stem = os.path.splitext(os.path.basename(path))[0]
     if not any(stem == piece + "_" + line for piece in WANT if piece in _index for line in _index[piece]):
         continue

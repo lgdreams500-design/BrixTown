@@ -979,14 +979,30 @@ Twenty Minutes) opens the talk box by itself when the player is there (`ABrixLif
 its lines are read, not spoken, and one left unanswered opens again when the player has gone and come back. Seen in the
 running game: `docs/narrative/shots/stone_oven.png` (the career starts by talking to Noor, the baker) and `count_scene.png`
 (`-BrixTime=06:40 -BrixStand=912,816,0 -BrixLife=act,new_in_town,r0504,end:gift;act,four_oclock_door,r0262,start|give:breakfast_loaf|stage:count`).
-Not yet: the looks approved in Blender on 2026-11-26 (ADR-0059) are not in the game: the Stone Oven's inside (oven, bench,
-bread racks, doors), Noor's own look, and old age on anybody (lines, stoop, glasses, cane, thin hair; hair on the skull
-instead of the shell that reads as a cap). Everything left of the Baker career is listed in `docs/narrative/README.md`.
+The Stone Oven's ground floor is fitted out as its approved design (ADR-0059, ADR-0061): `World/rules/fitouts.json`, named
+by the lot (`"fitout": "stone_oven"`), places the design's own pieces (the oven, two kneading benches, seven bread racks
+with the Mother's crock on one, flour sacks under the price board, the plank door to the alley with its lantern, the
+proofing room's door, three counters, kit 18's three-shade pendants) round the four staff's work places, with the oven's
+fire and the pendants' shades lit; none of the grocer's shelves, tills and fridges (`BrixFurnishFloor`, meshes made by
+`Tools/blender/unreal_bakery_50.py` and imported into `/Game/Furniture`; `CITY013_the_stone_oven_is_fitted_out_by_its_design`).
+Noor (r0262) wears her approved look (`World/rules/cast_looks.json`, `BrixApplyCastLooks`): an olive dress to the shin with
+short sleeves, a cream bib apron, bare legs and brown shoes, grey hair in a bun on the crown with locks swept back along the
+hairline, and age (creases at the brow, the eyes and from nose to mouth, paler lips, fainter cheeks), drawn only for a cast
+look, so everyone else is as before (`QST014_noor_wears_her_approved_look`; ART004 unchanged). Looked at beside the
+references on 2026-11-26: `Art/StyleTests/unreal_bakery_50/` (look_check: 10 pictures, 0 fail).
+Not yet, of the Stone Oven and Noor (the look gate): the room is a shop of 38 by 16 m, so it is far bigger and emptier in
+front than the designed room of 7.6 by 4.8 m; it has no ceiling beams and is brighter and flatter than the reference, its
+corners not darker (G1), by night brighter than the four o'clock reference; the oven's fire is a few lit boxes, small beside
+the reference's, and gives the room little light; the ceiling carries the engine's blotches (G3, as in every shop); a
+slice-style box lamp still hangs at the ceiling's middle; the bakery's upper floors are still furnished as a grocer's store
+and rooms. Noor has no stoop, her lines are fainter than the reference's, and under the locks her hair is still the shell.
+Nobody else has age values or a look of their own. Seen in passing, not this work: a shop's front windows seen from inside
+are plain orange panes with no view of the street (here and in b_10_9_l2), and the back windows glow white at 22:30.
+Everything left of the Baker career is listed in `docs/narrative/README.md`.
 Not yet: in a scene the camera comes in as close as in a talk, so the player's shoulder fills a side of the picture;
 lines said by somebody else are murmured in the voice of the person spoken to; none of the story is voiced; the log
-does not show a career's rank; talks happen wherever the person's day has put them; the Stone Oven Bakery (b_7_7_l2) is a bakery by name, goods and
-staff, but inside it is still fitted as a grocer's, with shelves and tills, and it has two more staff than the story's
-Noor and Pip (ADR-0056); the story has been played through in the game only
+does not show a career's rank; talks happen wherever the person's day has put them; the Stone Oven Bakery (b_7_7_l2) has two more staff than the story's
+Noor and Pip (ADR-0056), and Noor's day puts her at work from 08:00, not from four as the story has it; the story has been played through in the game only
 as far as those two pictures, the rest by test.
 The quest lines and daily jobs are the slice's (economy.js Quests, a port of `Tools/citysim/quests.py`): `BrixWorld/BrixQuests`
 reads them from World/rules/quests.json (in `Game/Data/life.json`), with stages whose goal is a talk, a place, a thing

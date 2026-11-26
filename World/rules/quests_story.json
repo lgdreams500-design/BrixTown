@@ -5352,7 +5352,7 @@
        ]
       },
       "y_table4": {
-       "say": "“Bring your own dough.” Vera gets the first loaf. Go and tell Eli he needs a longer rope.",
+       "say": "“Bring your own dough.” Vera gets the first loaf. Go and tell Eli she needs a longer rope.",
        "mood": "happy",
        "options": [
         {
@@ -7068,7 +7068,7 @@
          ]
         },
         {
-         "text": "Abe. He gave me work when I was new in town.",
+         "text": "Abe. She gave me work when I was new in town.",
          "next": "e3",
          "need": [
           "done:errand_runner:delivered"
@@ -7101,7 +7101,7 @@
          ]
         },
         {
-         "text": "Olu. He'll say he introduced us whether I ask him or not.",
+         "text": "Olu. She'll say she introduced us whether I ask her or not.",
          "next": "e3",
          "act": [
           "flag:best_olu",
@@ -7264,7 +7264,7 @@
        ]
       },
       "s_ring": {
-       "say": "Eli finds his place on the form. Beside you, somebody is patting every pocket they own.",
+       "say": "Eli finds her place on the form. Beside you, somebody is patting every pocket they own.",
        "who": "scene",
        "covered": "Eli's clipboard always leaves one of the four best-person facts before the square.",
        "options": [
@@ -7396,7 +7396,7 @@
        ]
       },
       "s_crowd": {
-       "say": "Then it is all noise. Eli is coiling his rope with the air of a man whose form was filled in correctly.",
+       "say": "Then it is all noise. Eli is coiling her rope with the air of a woman whose form was filled in correctly.",
        "who": "scene",
        "options": [
         {

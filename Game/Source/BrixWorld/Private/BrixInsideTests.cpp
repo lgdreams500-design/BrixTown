@@ -363,6 +363,56 @@ bool FCITY013_Dressed::RunTest(const FString&)
 	return Bad == 0;
 }
 
+// CITY-013, QST-014 (ADR-0059): the Stone Oven is fitted out as its approved design (World/rules/fitouts.json): on its ground
+// floor stand the design's pieces, each a mesh made from the Blender look (Tools/blender/unreal_bakery_50.py, imported into
+// /Game/Furniture), inside the walls and turned as written, with the oven's glow and the pendants; none of the grocer's
+// shelves, tills or fridges the slice would put there. Its upper floors are furnished as before.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCITY013_StoneOven, "BrixTown.World.CITY013_the_stone_oven_is_fitted_out_by_its_design",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FCITY013_StoneOven::RunTest(const FString&)
+{
+	FBrixCity City;
+	FBrixInsides Ins;
+	FString Error;
+	if (!TestTrue(TEXT("the city loads: ") + Error, LoadBrixCity(CityDir(), City, Error))) return false;
+	if (!TestTrue(TEXT("inside.json loads: ") + Error, LoadBrixInside(InsidePath(), Ins, Error))) return false;
+	int32 k = -1, Fitted = 0;
+	for (const FBrixBlock& B : City.Blocks)
+		for (const FBrixLot& L : B.Lots)
+		{
+			++k;
+			if (!L.Fitout.IsValid()) continue;
+			++Fitted;
+			TestEqual(TEXT("the fitted lot is the Stone Oven"), L.Id, FString(TEXT("b_7_7_l2")));
+			if (!TestTrue(TEXT("it has an inside"), Ins.Lots.IsValidIndex(k) && Ins.Lots[k].IsSet())) continue;
+			const FBrixInside& In = Ins.Lots[k].GetValue();
+			FBrixFurnished F, Up;
+			TestTrue(TEXT("its ground floor is furnished"), BrixFurnishFloor(Ins, L, In, 0, F));
+			const FBrixFitout& Fo = *L.Fitout;
+			TestEqual(TEXT("every piece of the design is placed"), F.Pieces.Num(), Fo.Pieces.Num());
+			TestEqual(TEXT("only the glow and the pendants are boxes (no shelves, tills or fridges)"), F.Boxes.Num(), Fo.Glow.Num() + 3 * Fo.Lamps.Num());
+			int32 Glow = 0;
+			for (const FBrixFurnBox& X : F.Boxes) Glow += X.bGlow ? 1 : 0;
+			TestEqual(TEXT("the oven's fire and each pendant's glass glow"), Glow, Fo.Glow.Num() + Fo.Lamps.Num());
+			const FBox2D Walls(L.Min + FVector2D(.33, .33), L.Max - FVector2D(.33, .33));
+			const FVector2D Into = (L.Centre() - L.Door).GetSafeNormal();
+			bool bOven = false, bMother = false;
+			for (const FBrixFurniturePiece& P : F.Pieces)
+			{
+				TestTrue(FString::Printf(TEXT("%s stands inside the walls"), *P.Kind), Walls.IsInside(P.At));
+				TestTrue(FString::Printf(TEXT("%s is turned square (A at right angles to B)"), *P.Kind), FMath::Abs(FVector2D::DotProduct(P.A, P.B)) < 1e-6 && FMath::IsNearlyEqual(P.A.Size(), 1.0, 1e-6));
+				const FString Asset = FPaths::Combine(FPaths::ProjectContentDir(), TEXT("Furniture"), FString::Printf(TEXT("SM_%s_%s.uasset"), *P.Kind, *P.Line));
+				TestTrue(FString::Printf(TEXT("SM_%s_%s is imported"), *P.Kind, *P.Line), FPaths::FileExists(Asset));
+				if (P.Kind == TEXT("bk_oven")) { bOven = true; TestTrue(TEXT("the oven's back is to the back wall"), FVector2D::DotProduct(P.B, FVector2D(0, -1)) > .99 && P.At.Y < L.Min.Y + 1.5); }
+				bMother |= P.Kind == TEXT("bk_racks_mother");
+			}
+			TestTrue(TEXT("there is one oven and the Mother's rack"), bOven && bMother && Into.Y < 0);
+			TestTrue(TEXT("the floors above are furnished as the slice furnishes them"), BrixFurnishFloor(Ins, L, In, 1, Up) && Up.Pieces.Num() == 0 && Up.Boxes.Num() > 0);
+		}
+	TestEqual(TEXT("one lot has a fit-out"), Fitted, 1);
+	return true;
+}
+
 // WLD-051: every tower (lift_from_floors storeys or more) has a lift, and from every floor it goes up and down a floor, to
 // the ground, to the top floor and to the roof; every call stands inside the building beside the shaft, every stop on a
 // floor the building has, out of the shaft.

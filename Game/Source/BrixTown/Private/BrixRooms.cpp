@@ -143,6 +143,7 @@ void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTown
 				for (int32 f = 0; f < NFl; ++f)
 				{
 					bAny |= BrixFurnishFloor(Ins, L, In, f, LH.Furn[f]);
+					H->Pieces.Append(LH.Furn[f].Pieces);   // a fit-out's meshes (the Stone Oven's oven, bench, racks, ...)
 					FBrixRoom Rm;
 					Rm.Name = TEXT("Room"); Rm.Floor = f; Rm.bFloor = false;
 					Rm.R.Centre = L.Centre(); Rm.R.Along = FVector2D(1, 0); Rm.R.Length = (float)L.Size().X - 0.7f; Rm.R.Width = (float)L.Size().Y - 0.7f;

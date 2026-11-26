@@ -9,7 +9,7 @@
  "stages": [
   {"id": "clipboard", "title": "The form", "kind": "talk", "with": "eli",
    "goal": "See Eli on Market Square",
-   "log": "Eli is organising your wedding, whether or not anybody asked him to. He needs two things.",
+   "log": "Eli is organising your wedding, whether or not anybody asked her to. She needs two things.",
    "start": "e1",
    "starts": [{"need": ["!done:own_stall:*", "!done:market_day:*"], "node": "e1_new"}],
    "nodes": {
@@ -26,10 +26,10 @@
     "e2": {"who": "eli", "mood": "thinking", "say": "And who stands up with you? Somebody has to hold the ring and tell you when to breathe.",
      "options": [
       {"text": "Pip.", "next": "e3", "need": ["!flag:pip_leaves", "rep:pip:0"], "act": ["flag:best_pip", "rep:pip:+10"]},
-      {"text": "Abe. He gave me work when I was new in town.", "next": "e3", "need": ["done:errand_runner:delivered"], "act": ["flag:best_abe", "rep:abe:+10"]},
+      {"text": "Abe. She gave me work when I was new in town.", "next": "e3", "need": ["done:errand_runner:delivered"], "act": ["flag:best_abe", "rep:abe:+10"]},
       {"text": "Tam.", "next": "e3", "need": ["flag:end_long_table"], "act": ["flag:best_tam", "rep:tam:+10"]},
       {"text": "Tam.", "next": "e3", "need": ["flag:end_homecoming"], "act": ["flag:best_tam", "rep:tam:+10"]},
-      {"text": "Olu. He'll say he introduced us whether I ask him or not.", "next": "e3", "act": ["flag:best_olu", "rep:olu:+10"]}
+      {"text": "Olu. She'll say she introduced us whether I ask her or not.", "next": "e3", "act": ["flag:best_olu", "rep:olu:+10"]}
      ]},
     "e3": {"who": "eli", "mood": "happy", "say": "Written down. In ink. Now go away and be nervous somewhere else. I've a rope to measure.",
      "options": [{"text": "(Go and be nervous.)", "next": null, "act": ["stage:loaf"]}]}
@@ -70,7 +70,7 @@
      "options": [{"text": "(Stand up straight.)", "next": "s_ring"}]},
     "s_in_table": {"who": "vera", "mood": "happy", "say": "Stand up straight. Both of you. Married at the Town Oven, with the fire lit. I queued on this spot at eight years old with a token in my mitten, and I never thought to see it used for this. Eli. Your clipboard.",
      "options": [{"text": "(Stand up straight.)", "next": "s_ring"}]},
-    "s_ring": {"who": "scene", "say": "Eli finds his place on the form. Beside you, somebody is patting every pocket they own.",
+    "s_ring": {"who": "scene", "say": "Eli finds her place on the form. Beside you, somebody is patting every pocket they own.",
      "options": [
       {"text": "(Look at Pip.)", "next": "ring_pip", "need": ["flag:best_pip"]},
       {"text": "(Look at Abe.)", "next": "ring_abe", "need": ["flag:best_abe"]},
@@ -95,7 +95,7 @@
      "options": [{"text": "(Eli stamps the form.)", "next": "s_bread"}]},
     "s_bread": {"who": "vera", "mood": "thinking", "dir": "She uncovers the loaf, tears it, and tastes it. The square holds still. This is the sentence they will be quoting for a year.", "say": "It'll keep.",
      "options": [{"text": "(The whole square lets out its breath.)", "next": "s_crowd"}]},
-    "s_crowd": {"who": "scene", "say": "Then it is all noise. Eli is coiling his rope with the air of a man whose form was filled in correctly.",
+    "s_crowd": {"who": "scene", "say": "Then it is all noise. Eli is coiling her rope with the air of a woman whose form was filled in correctly.",
      "options": [
       {"text": "(Find Noor at the edge of the crowd.)", "next": "g_noor"},
       {"text": "(Find Tam in the crowd.)", "next": "g_tam", "need": ["rep:tam:30", "!flag:best_tam"]},

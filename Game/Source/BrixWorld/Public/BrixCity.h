@@ -65,6 +65,34 @@ struct BRIXWORLD_API FBrixHousePlan
 	TArray<FBrixPlanWindow> Windows;
 };
 
+// A room fitted out as its design says instead of as the slice furnishes its kind (World/rules/fitouts.json; CITY-013,
+// QST-014, ADR-0059: the Stone Oven). Places in the door's frame: Along to the right of someone walking in at the door,
+// In from the door inward, metres. A piece is a mesh /Game/Furniture/SM_<Piece>_<Line>; Faces is where its front points
+// (door, back, +along, -along); Size its box (across, deep, high). Glow: lit boxes; Lamps: pendants hung over these points.
+struct BRIXWORLD_API FBrixFitoutPiece
+{
+	FString Piece, Faces;
+	double Along = 0, In = 0;
+	FVector3f Size = FVector3f::ZeroVector;
+	bool bHung = false;   // hangs from the ceiling: in nobody's way
+};
+
+struct BRIXWORLD_API FBrixFitoutGlow
+{
+	double Along = 0, In = 0, Y0 = 0;
+	FVector3f Size = FVector3f::ZeroVector, Colour = FVector3f::OneVector;   // across, high, deep
+};
+
+struct BRIXWORLD_API FBrixFitout
+{
+	FString Name, Line;
+	int32 Floor = 0;
+	TArray<FBrixFitoutPiece> Pieces;
+	TArray<FBrixFitoutGlow> Glow;
+	TArray<FVector2D> Lamps;
+	double LampDrop = 0.85;
+};
+
 struct BRIXWORLD_API FBrixLot
 {
 	FString Id;
@@ -81,6 +109,7 @@ struct BRIXWORLD_API FBrixLot
 	FBrixSurface Surface;                    // a building's wall, or an open lot's ground (none for a garden)
 	TOptional<FBrixHouseLook> House;         // a designed house (lot.house): its plan, line and colourway
 	TMap<FString, TArray<FVector2D>> Objects; // the lot's places by kind (lot.objects: a garden's bench seats, a fountain's rim, ...)
+	TSharedPtr<const FBrixFitout> Fitout;    // lot.fitout, from World/rules/fitouts.json: a room fitted out by its design
 
 	FVector2D Centre() const { return (Min + Max) * 0.5; }
 	FVector2D Size() const { return Max - Min; }

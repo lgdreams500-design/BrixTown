@@ -1,0 +1,37 @@
+{
+ "note": "Named people of a career's story who have a look of their own instead of their job's stock clothes (QST-014, ADR-0059; ART_DIRECTION C7, C9). Keyed by resident id. Values are the designer's (World/rules/designer.json: height in metres, build, the face controls; colours as palette names or linear RGB) and the ones that say age (ADR-0059): age 0 to 1 (lines at the brow, the eyes and from nose to mouth; paler lips), dress_len (a dress's hem in metres over the ground: garment 'dress', bare legs below it). Each look is copied from the Blender design it names, which the owner approved; a change here is a change to that design, shown to the owner first.",
+ "people": {
+  "r0262": {
+   "name": "Noor",
+   "design": "N in Tools/blender/baker_look_47.py (NOOR and option N); approved 2026-11-26 ('Yes, keep this Noor'); Art/Reference/character_noor.png",
+   "height": 1.62,
+   "build": 1.12,
+   "skin": [
+    0.56,
+    0.38,
+    0.27
+   ],
+   "eyes": [
+    0.17,
+    0.1,
+    0.06
+   ],
+   "eye_open": 0.86,
+   "face_w": 1.04,
+   "nose": 1.1,
+   "hair": "bun",
+   "hair_color": [
+    0.27,
+    0.26,
+    0.27
+   ],
+   "garment": "dress",
+   "dress_len": 0.4,
+   "top": "olive",
+   "bottom": "olive",
+   "shoes": "brown",
+   "apron": "cream",
+   "age": 0.45
+  }
+ }
+}

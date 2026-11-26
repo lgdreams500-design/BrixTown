@@ -1137,6 +1137,7 @@
    "id": "b_7_7_l2",
    "kind": "shop",
    "name": "The Stone Oven Bakery",
+   "fitout": "stone_oven",
    "rect": [
     680.0,
     744.0,
