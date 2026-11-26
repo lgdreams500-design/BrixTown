@@ -1,5 +1,5 @@
 {
-  "note": "Lights and their kinds (F-LIGHTS level 2, the owner 2026-11-26: \"2 Placed in designer\"; docs/specs/domains/FURNITURE.md 2.5, FURN-066 to FURN-070; ADR-0065). A room lit by its lamps takes its colour from the kinds in it; the Blender references (Tools/blender/hours_50.py) and the game read this file. colour: the light's colour as linear RGB (its kelvin given for reading). strength: in Blender watts for a point or spot light. spread: pool (a shade throws light down and round), up (thrown up a wall), wash (broad, from above), flame. glow: how bright its shade or bulb shows. mount: where the designer lets it stand. price: in minor units, paid through the ledger. Every number is [ASSUMPTION] until the owner judges the references.",
+  "note": "Lights and their kinds (F-LIGHTS level 2, the owner 2026-11-26: \"2 Placed in designer\"; docs/specs/domains/FURNITURE.md 2.5, FURN-066 to FURN-070; ADR-0065). A room lit by its lamps takes its colour from the kinds in it; the Blender references (Tools/blender/hours_50.py) and the game read this file. colour: the light's colour as linear RGB (its kelvin given for reading). strength: in Blender watts for a point or spot light. spread: pool (a shade throws light down and round), up (thrown up a wall), wash (broad, from above), flame. glow: how bright its shade or bulb shows. mount: where the designer lets it stand. blender_lights: a lamp's name, or the start of its name ending in *. price: in minor units, paid through the ledger. Every number is [ASSUMPTION] until the owner judges the references.",
   "mounts": {
     "floor": {"on": "floor"},
     "table": {"on": "top", "or": "floor"},
@@ -14,6 +14,7 @@
     "wall_light":      {"name": "Wall light",      "mount": "wall",    "kelvin": 3000, "colour": [1.0, 0.84, 0.67], "strength": 40.0, "spread": "up",    "glow": 0.6, "size": [0.25, 0.15, 0.3],  "price": 2200},
     "ceiling_pendant": {"name": "Pendant",         "mount": "ceiling", "kelvin": 3000, "colour": [1.0, 0.84, 0.67], "strength": 70.0, "spread": "pool",  "glow": 0.8, "size": [0.56, 0.56, 0.6],  "price": 3500},
     "ceiling_light":   {"name": "Ceiling light",   "mount": "ceiling", "kelvin": 4000, "colour": [1.0, 0.93, 0.86], "strength": 90.0, "spread": "wash",  "glow": 0.9, "size": [0.45, 0.45, 0.12], "price": 3000},
+    "hall_lantern":    {"name": "Hall lantern",    "mount": "ceiling", "kelvin": 3000, "colour": [1.0, 0.84, 0.67], "strength": 220.0, "spread": "pool", "glow": 0.8, "size": [0.2, 0.2, 0.33], "price": 6500},
     "candles":         {"name": "Candles",         "mount": "table",   "kelvin": 1900, "colour": [1.0, 0.60, 0.28], "strength": 6.0,  "spread": "flame", "glow": 1.0, "size": [0.3, 0.12, 0.3],   "price": 600}
   },
   "pieces": {
@@ -27,6 +28,7 @@
     "Lamp_Light": "table_lamp",
     "Dl_Light": "desk_lamp",
     "Pen_Light": "ceiling_pendant",
-    "Cd_Light": "candles"
+    "Cd_Light": "candles",
+    "Hall_Lantern*": "hall_lantern"
   }
 }

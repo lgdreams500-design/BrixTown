@@ -27,6 +27,7 @@ class Lights(unittest.TestCase):
             self.assertEqual(li.kind_of_light(L, name), L["kinds"][kind])
         self.assertIsNone(li.kind_of_light(L, "Fp_Light"))                 # a fire is not a lamp
         self.assertIsNone(li.kind_of_light(L, "FLamp_LightX"))
+        self.assertEqual(li.kind_of_light(L, "Hall_LanternB3_Light"), L["kinds"]["hall_lantern"])   # a name's start with *
         for p, k in L["pieces"].items():                                   # every lamp-carrying piece is a known piece
             self.assertIn(p, PIECES)
             self.assertIn(k, L["kinds"])

@@ -1,0 +1,11 @@
+22:35:38 Blender 5.3.0, place shop
+22:35:38 Shop: sun 8.5 at bearing 21 deg, sky 0.25; 4 lamps, 0 fires, 5 glowing materials, 0 haze
+22:35:39   Shop_Morning: the eye at +0.64 stops for a mean of 100
+22:36:17 Shop_Morning.jpg rendered in 37.7s
+22:36:18   Shop_Midday: the eye at +0.36 stops for a mean of 100
+22:37:00 Shop_Midday.jpg rendered in 42.1s
+22:37:01   Shop_Dusk: the eye at -0.46 stops for a mean of 85
+22:37:45 Shop_Dusk.jpg rendered in 44.4s
+22:37:47   Shop_NightLamps: the eye at -0.32 stops for a mean of 70
+22:38:35 Shop_NightLamps.jpg rendered in 47.5s
+22:38:35 DONE
