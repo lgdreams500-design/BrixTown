@@ -621,7 +621,7 @@
     "Indoor/IndoorHomeRoom_NightFullMoon.jpg",
     "Indoor/IndoorHomeRoom_NightNewMoon.jpg"
    ],
-   "locks": "The living of furniture_kit_18, closed on four sides with one window. In the world's light (the owner, 2026-11-26: \"use the same color etc from world lighting\"): by day only the sun and sky of the hour, through the window, with the sunlit street outside throwing its light in; lamps and the fire out by day; the boards a greyer wood, so the bounced light is not orange; at night the lamps a warm white (until the kinds of light, FURN-066), the fire lit, the full moon a cool patch through the window, a new moon only the window's starlight. No weather settings indoors (the owner).",
+   "locks": "The living of furniture_kit_18, closed on four sides with one window. In the world's light (the owner, 2026-11-26: \"use the same color etc from world lighting\"): by day only the sun and sky of the hour, through the window, with the sunlit street outside throwing its light in; lamps and the fire out by day; the boards a greyer wood, so the bounced light is not orange; at night the lamps a warm white (until the kinds of light, FURN-066), the fire lit, the full moon a cool patch through the window, a new moon only the window's starlight. No weather settings indoors (the owner). The wall facing the people throws light back onto them (the owner, 2026-11-26: \"the wall opposite to the character is not reflecting light back\"): by day a little of the day through the window, at night a share of the lamps' light in their colour.",
    "approved": "proposed 2026-11-26, for the owner to review",
    "decision": "the owner, 2026-11-26: one home room and the hallway stand for the home's rooms (\"just do one room, hall way, shop and cafe\"); in the world's light; ADR-0061",
    "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=rooms WASTED_ONLY=living) on the rooms of Tools/blender/furniture_kit_18.py",
@@ -634,9 +634,9 @@
     "Art/Retired/IndoorRooms (the living panel)"
    ],
    "issues": [
-    "The lamps are one warm white for now; each will take its kind's colour from World/rules/lights.json (FURN-066, F-LIGHTS level 2).",
     "The shade is lifted by light bounced more strongly than the surfaces' own colours give (plaster x2, boards x2, the street outside x2.6).",
-    "The living room still reads warm at dusk: the fire and the dusk sky together."
+    "The living room still reads warm at dusk: the fire and the dusk sky together.",
+    "The light the facing wall throws back is a hidden soft light on that wall (BOUNCE_CARD in hours_50.py: 25 W by day, 15 % of the lamps by night), not the wall's own bounce, which reached too little."
    ]
   },
   {

@@ -108,6 +108,17 @@ if "room_shell" in globals():
     def room_shell(n, ox, oy, w=6.4, d=4.4, h=3.0, ceiling=True, window=True, front=0.0):
         x0, x1, y0, y1 = _room_shell(n, ox, oy, w, d, h, ceiling, window, front)
         box(n + "_Front", x0 - 0.3, x1 + 0.45, y0 - 0.3, y0, 0, h, M["plaster"], bevel=0)   # behind the camera
+        if PLACE == "rooms":                              # the light that wall throws back onto the people (the owner, 2026-11-26:
+            bc = bpy.data.lights.new("BounceCard", 'AREA')  # "the wall opposite to the character is not reflecting light back")
+            bc.shape = 'RECTANGLE'
+            bc.size, bc.size_y = (x1 - x0) * 0.9, h * 0.8
+            setp(bc, "use_shadow", True)
+            bo = bpy.data.objects.new("BounceCard", bc)
+            bo.location = ((x0 + x1) / 2, y0 + 0.05, h * 0.45)
+            bo.rotation_euler = (math.radians(90), 0, 0)      # shining into the room (+y)
+            for k in ("visible_camera", "visible_glossy", "visible_transmission"):
+                setp(bo, k, False)
+            COL.objects.link(bo)
         if window and PLACE == "rooms":                    # the sunlit street outside the window: its light comes in too
             out = bpy.data.materials.get("M_OutsidePaving") or painted("M_OutsidePaving", (0.22, 0.21, 0.25), (0.46, 0.42, 0.37), noise_scale=0.5)
             box(n + "_Outside", x1 + 0.45, x1 + 40.0, y0 - 30.0, y1 + 30.0, -0.4, -0.1, out, bevel=0)
@@ -133,7 +144,7 @@ class Lights:
                         self.fog.append((n.inputs["Density"], n.inputs["Density"].default_value))
         self.lamps, self.fires = [], []
         for ob in scene.objects:
-            if ob.type == 'LIGHT' and ob.data.type != 'SUN':
+            if ob.type == 'LIGHT' and ob.data.type != 'SUN' and not ob.name.startswith("BounceCard"):
                 is_fire = ob.name.startswith(FIRE) or any(f in ob.name for f in FIRE)
                 kind = lamp_kind(ob.name) if not is_fire else None
                 if kind:                                             # its kind's colour and strength (FURN-067, lights.json)
@@ -216,6 +227,21 @@ class Lights:
             sock.default_value = d0 * fog
         for ob, e0 in self.lamps:
             ob.data.energy = e0 * lamps
+        card = bpy.data.objects.get("BounceCard")                # the wall facing the people throws back the day and the lamps
+        if card:
+            sky_y = 0.2126 * skc[0] + 0.7152 * skc[1] + 0.0722 * skc[2]          # the sky's own brightness (dark at night)
+            day_w = BOUNCE_CARD["day_watts"] * (se * self.sun_energy / 8.5 + 0.6 * sks * sky_y / 0.53) / 1.6
+            lamp_w = BOUNCE_CARD["lamp_share"] * sum(ob.data.energy for ob, _ in self.lamps)
+            day_c = tuple(0.5 * (a + b) for a, b in zip(sc, skc[:3])) if se > 0 else (1.0, 1.0, 1.0)
+            lamp_c = [0.0, 0.0, 0.0]
+            for ob, _ in self.lamps:
+                for i in range(3):
+                    lamp_c[i] += ob.data.color[i] * ob.data.energy
+            tot = sum(ob.data.energy for ob, _ in self.lamps) or 1.0
+            lamp_c = [c / tot for c in lamp_c]
+            w = day_w + lamp_w
+            card.data.energy = w
+            card.data.color = tuple((day_c[i] * day_w + lamp_c[i] * lamp_w) / (w or 1.0) for i in range(3))
         fire = self.day_fires if day else 1.0
         for ob, e0 in self.fires:
             ob.data.energy = e0 * fire
@@ -358,6 +384,7 @@ def bounce_more(times):
 
 
 ROOM_GREYER = dict(M_Boards=0.4)
+BOUNCE_CARD = dict(day_watts=25.0, lamp_share=0.15)       # the wall facing the people: what it throws back of the day, and of the lamps' light
 ROOM_BOUNCE = dict(M_OutsidePaving=2.6, M_Plaster=2.0, M_PlasterWarm=2.0, M_Boards=2.0)   # as SQUARE_BOUNCE, more: a room is lit by bounce
 LIGHTS = json.load(open("C:/Projects/Wasted/World/rules/lights.json", encoding="utf-8"))   # kinds of light (FURN-066, ADR-0065)
 

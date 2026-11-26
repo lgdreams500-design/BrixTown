@@ -1,28 +1,15 @@
-19:43:40 Blender 5.3.0, place rooms
-19:43:40 Rooms_Hallway: sun 8.5 at bearing 21 deg, sky 0.25; 2 lamps, 0 fires, 5 glowing materials, 0 haze
-19:43:41   Rooms_Hallway_Morning: the eye at +1.82 stops for a mean of 100
-19:44:16 Rooms_Hallway_Morning.jpg rendered in 34.7s
-19:44:16   Rooms_Hallway_Midday: the eye at +2.31 stops for a mean of 100
-19:44:53 Rooms_Hallway_Midday.jpg rendered in 36.8s
-19:44:54   Rooms_Hallway_Dusk: the eye at -0.41 stops for a mean of 85
-19:45:42 Rooms_Hallway_Dusk.jpg rendered in 47.6s
-19:45:44   Rooms_Hallway_NightLamps: the eye at -0.32 stops for a mean of 70
-19:46:38 Rooms_Hallway_NightLamps.jpg rendered in 54.1s
-19:46:40   Rooms_Hallway_NightFullMoon: the eye at +4.94 stops for a mean of 42
-19:47:22 Rooms_Hallway_NightFullMoon.jpg rendered in 42.5s
-19:47:24   Rooms_Hallway_NightNewMoon: the eye at +8.12 stops for a mean of 22
-19:48:04 Rooms_Hallway_NightNewMoon.jpg rendered in 40.3s
-19:48:05 Rooms_Living: sun 8.5 at bearing 21 deg, sky 0.25; 2 lamps, 1 fires, 8 glowing materials, 0 haze
-19:48:05   Rooms_Living_Morning: the eye at +2.52 stops for a mean of 100
-19:48:36 Rooms_Living_Morning.jpg rendered in 30.3s
-19:48:36   Rooms_Living_Midday: the eye at +2.93 stops for a mean of 100
-19:49:09 Rooms_Living_Midday.jpg rendered in 32.5s
-19:49:10   Rooms_Living_Dusk: the eye at +1.70 stops for a mean of 85
-19:49:55 Rooms_Living_Dusk.jpg rendered in 44.9s
-19:49:57   Rooms_Living_NightLamps: the eye at +1.74 stops for a mean of 70
-19:50:38 Rooms_Living_NightLamps.jpg rendered in 41.2s
-19:50:40   Rooms_Living_NightFullMoon: the eye at +1.40 stops for a mean of 42
-19:51:16 Rooms_Living_NightFullMoon.jpg rendered in 36.4s
-19:51:18   Rooms_Living_NightNewMoon: the eye at +0.31 stops for a mean of 22
-19:51:56 Rooms_Living_NightNewMoon.jpg rendered in 38.2s
-19:51:56 DONE
+21:13:32 Blender 5.3.0, place rooms
+21:13:32 Rooms_Living: sun 8.5 at bearing 21 deg, sky 0.25; 2 lamps, 1 fires, 5 glowing materials, 0 haze
+21:13:33   Rooms_Living_Morning: the eye at +0.60 stops for a mean of 100
+21:14:13 Rooms_Living_Morning.jpg rendered in 39.4s
+21:14:15   Rooms_Living_Midday: the eye at +0.13 stops for a mean of 100
+21:15:06 Rooms_Living_Midday.jpg rendered in 50.9s
+21:15:07   Rooms_Living_Dusk: the eye at +0.32 stops for a mean of 85
+21:16:16 Rooms_Living_Dusk.jpg rendered in 69.2s
+21:16:19   Rooms_Living_NightLamps: the eye at +0.40 stops for a mean of 70
+21:17:28 Rooms_Living_NightLamps.jpg rendered in 69.2s
+21:17:32   Rooms_Living_NightFullMoon: the eye at +0.86 stops for a mean of 42
+21:18:26 Rooms_Living_NightFullMoon.jpg rendered in 54.4s
+21:18:28   Rooms_Living_NightNewMoon: the eye at -0.22 stops for a mean of 22
+21:19:12 Rooms_Living_NightNewMoon.jpg rendered in 44.1s
+21:19:12 DONE
