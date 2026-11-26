@@ -1,5 +1,5 @@
 ---
-adr: ADR-0062
+adr: ADR-0064
 title: No planet in the town's sky
 status: accepted          # the owner in chat, 2026-11-26, reviewing the sky's reference: "get rid of the planet in the sky", then "yes, planet should be out of the game"
 date: 2026-11-26

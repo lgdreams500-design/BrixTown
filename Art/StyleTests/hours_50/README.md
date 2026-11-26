@@ -8,10 +8,11 @@ fall). Reviewed with the owner one place at a time; an approved place goes to `A
 | Place | Pictures | State |
 |---|---|---|
 | The alley (old_town_04.py) | `Alley_<Setting>.jpg`, `review_Alley.jpg` (the ten), `review_Alley_rain_close.jpg` (puddles and rain close up) | approved 2026-11-26: `Art/Reference/World/WorldAlley_*.jpg` |
-| The sky and its clouds, from Market Square (WASTED_PLACE=sky, with sky_52.py) | `Sky_<Setting>.jpg`, `review_Sky.jpg` | approved 2026-11-26: `Art/Reference/World/WorldSky_*.jpg`; no planet (ADR-0062); cloud shapes tried and dropped (`../sky_clouds_53/`) |
+| The sky and its clouds, from Market Square (WASTED_PLACE=sky, with sky_52.py) | `Sky_<Setting>.jpg`, `review_Sky.jpg` | approved 2026-11-26: `Art/Reference/World/WorldSky_*.jpg`; no planet (ADR-0064); cloud shapes tried and dropped (`../sky_clouds_53/`) |
 | Market Square, from its arcade (WASTED_PLACE=square; its shade lifted by SQUARE_BOUNCE) | `MarketSquare_<Setting>.jpg`, `review_MarketSquare.jpg` | approved 2026-11-26: `Art/Reference/World/WorldMarketSquare_*.jpg` |
 | The street (building_kit_07.py) | `Street_<Setting>.jpg`, `review_Street.jpg` | approved 2026-11-26: `Art/Reference/World/WorldStreet_*.jpg` |
-| A home's room, a hallway, the bakery (public room), the furniture outlet (big hall) | to come | |
+| A home's room (the living room) and its hallway (WASTED_PLACE=rooms WASTED_ONLY=living,hallway): six settings, no weather | `Rooms_Living_<Setting>.jpg`, `Rooms_Hallway_<Setting>.jpg`, `review_Rooms_*.jpg` | proposed: `Art/Reference/Indoor/IndoorHomeRoom_*.jpg`, `IndoorHallway_*.jpg` |
+| The bakery (public room), the furniture outlet (big hall) | to come | |
 
 What the owner changed on the way: fewer lamps down the alley; the moon high and down the alley so it reaches the paving;
 one lamp-lit night instead of two; cloud, rain, fog and snow added; no haze at noon; no rain, wet or snow under cover;
@@ -25,3 +26,8 @@ darker with a faint sheen in half-metre cells (`lying(..., tile=True)`), soft-ed
 Snow (the owner, 2026-11-26): each flake a small smooth ball (was an eight-sided bead that read square), the far
 ones 72 mm across, the near ones shrinking to 30% smaller at 5 m (`flake_near_size`, `flake_full_at`); 3,600 in view as
 before. The four places' snow pictures were rendered again with it.
+
+Rooms in the world's light (the owner, 2026-11-26): by day lamps and fire out (`day_lamps`, `day_fires` 0), the street outside
+the window sunlit and bouncing light in (`_Outside`), the boards greyer (`ROOM_GREYER`), the shade lifted (`ROOM_BOUNCE`), lamps a
+warm white (`INDOOR_LAMP`, until FURN-066's kinds), the moon low on the sun's side so it comes in (`indoor_height`, `indoor_times`),
+the eye opening up to 9 stops on a moonless night (`EYE_MAX_INDOORS`). Not yet: the lamps' colour from their kinds (FURN-066).

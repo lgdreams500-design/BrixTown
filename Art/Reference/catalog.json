@@ -98,9 +98,9 @@
     "World/WorldSky_Fog.jpg",
     "World/WorldSky_Snow.jpg"
    ],
-   "locks": "The sky over the town, seen from Market Square over the roofs: blue overhead fading to the pale haze at the horizon by day, warm towards the low sun at dusk, the night's dark blue with the town's glow low down; clouds as soft heaps on one layer about 1.2 km up, flat underneath and rounded on top, lit on the sun's side and shaded underneath, pink at dusk, lit from below by the town's lamps at night; how much of the sky they cover follows the weather (clear 0.36, cloudy 0.62, rain 0.97, fog 0.55, snow 0.92); at night the stars, the Milky Way and the full moon's disc. No planet (ADR-0062).",
+   "locks": "The sky over the town, seen from Market Square over the roofs: blue overhead fading to the pale haze at the horizon by day, warm towards the low sun at dusk, the night's dark blue with the town's glow low down; clouds as soft heaps on one layer about 1.2 km up, flat underneath and rounded on top, lit on the sun's side and shaded underneath, pink at dusk, lit from below by the town's lamps at night; how much of the sky they cover follows the weather (clear 0.36, cloudy 0.62, rain 0.97, fog 0.55, snow 0.92); at night the stars, the Milky Way and the full moon's disc. No planet (ADR-0064).",
    "approved": "2026-11-26, the owner",
-   "decision": "the owner, 2026-11-26: \"move to sky and cloud system\"; ADR-0014 (the sky and clouds), ADR-0023 (the night sky), ADR-0062 (no planet); the owner, 2026-11-26: \"leave the realistic clouds as they were\", then \"Approve, go to Market Square\"; snow as small round balls, the near ones up to 30% smaller (the owner, 2026-11-26)",
+   "decision": "the owner, 2026-11-26: \"move to sky and cloud system\"; ADR-0014 (the sky and clouds), ADR-0023 (the night sky), ADR-0064 (no planet); the owner, 2026-11-26: \"leave the realistic clouds as they were\", then \"Approve, go to Market Square\"; snow as small round balls, the near ones up to 30% smaller (the owner, 2026-11-26)",
    "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=sky) with Tools/blender/sky_52.py, on Market Square of Tools/blender/old_town_04.py",
    "models": [
     "World/rules/sky.json (zenith, clouds, night)",
@@ -647,6 +647,67 @@
    ],
    "issues": [
     "The Belongings shot is from before 2026-11-26: it says \"What you carry\" and \"You carry nothing yet\" over the boards (mended in the game since, PR #131)."
+   ]
+  },
+  {
+   "id": "IndoorHomeRoom",
+   "category": "Indoor",
+   "status": "proposed",
+   "title": "A home's room (the living room) at every hour",
+   "files": [
+    "Indoor/IndoorHomeRoom_Morning.jpg",
+    "Indoor/IndoorHomeRoom_Midday.jpg",
+    "Indoor/IndoorHomeRoom_Dusk.jpg",
+    "Indoor/IndoorHomeRoom_NightLamps.jpg",
+    "Indoor/IndoorHomeRoom_NightFullMoon.jpg",
+    "Indoor/IndoorHomeRoom_NightNewMoon.jpg"
+   ],
+   "locks": "The living of furniture_kit_18, closed on four sides with one window. In the world's light (the owner, 2026-11-26: \"use the same color etc from world lighting\"): by day only the sun and sky of the hour, through the window, with the sunlit street outside throwing its light in; lamps and the fire out by day; the boards a greyer wood, so the bounced light is not orange; at night the lamps a warm white (until the kinds of light, FURN-066), the fire lit, the full moon a cool patch through the window, a new moon only the window's starlight. No weather settings indoors (the owner).",
+   "approved": "proposed 2026-11-26, for the owner to review",
+   "decision": "the owner, 2026-11-26: one home room and the hallway stand for the home's rooms (\"just do one room, hall way, shop and cafe\"); in the world's light; ADR-0061",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=rooms WASTED_ONLY=living) on the rooms of Tools/blender/furniture_kit_18.py",
+   "models": [
+    "World/rules/furnishing.json (the pieces)",
+    "Game/Source/BrixTown (homes' rooms and their light)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md, docs/art/INTERIOR_STYLE.md",
+   "was": [
+    "Indoor/IndoorRooms (the living panel)"
+   ],
+   "issues": [
+    "The lamps are one warm white for now; each will take its kind's colour from World/rules/lights.json (FURN-066, F-LIGHTS level 2).",
+    "The shade is lifted by light bounced more strongly than the surfaces' own colours give (plaster x2, boards x2, the street outside x2.6).",
+    "The living room still reads warm at dusk: the fire and the dusk sky together."
+   ]
+  },
+  {
+   "id": "IndoorHallway",
+   "category": "Indoor",
+   "status": "proposed",
+   "title": "A home's hallway at every hour",
+   "files": [
+    "Indoor/IndoorHallway_Morning.jpg",
+    "Indoor/IndoorHallway_Midday.jpg",
+    "Indoor/IndoorHallway_Dusk.jpg",
+    "Indoor/IndoorHallway_NightLamps.jpg",
+    "Indoor/IndoorHallway_NightFullMoon.jpg",
+    "Indoor/IndoorHallway_NightNewMoon.jpg"
+   ],
+   "locks": "The hallway of furniture_kit_18, closed on four sides with one window. In the world's light (the owner, 2026-11-26: \"use the same color etc from world lighting\"): by day only the sun and sky of the hour, through the window, with the sunlit street outside throwing its light in; lamps and the fire out by day; the boards a greyer wood, so the bounced light is not orange; at night the lamps a warm white (until the kinds of light, FURN-066), the fire lit, the full moon a cool patch through the window, a new moon only the window's starlight. No weather settings indoors (the owner).",
+   "approved": "proposed 2026-11-26, for the owner to review",
+   "decision": "the owner, 2026-11-26: one home room and the hallway stand for the home's rooms (\"just do one room, hall way, shop and cafe\"); in the world's light; ADR-0061",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=rooms WASTED_ONLY=hallway) on the rooms of Tools/blender/furniture_kit_18.py",
+   "models": [
+    "World/rules/furnishing.json (the pieces)",
+    "Game/Source/BrixTown (homes' rooms and their light)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md, docs/art/INTERIOR_STYLE.md",
+   "was": [
+    "Indoor/IndoorRooms (the hallway panel)"
+   ],
+   "issues": [
+    "The lamps are one warm white for now; each will take its kind's colour from World/rules/lights.json (FURN-066, F-LIGHTS level 2).",
+    "The shade is lifted by light bounced more strongly than the surfaces' own colours give (plaster x2, boards x2, the street outside x2.6)."
    ]
   }
  ],

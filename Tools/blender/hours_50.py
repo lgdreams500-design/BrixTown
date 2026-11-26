@@ -77,6 +77,7 @@ WEATHER = dict(sun_angle=dict(cloud=12.0, rain=20.0, fog=20.0, snow=20.0),     #
                wet_step=0.5, wet_reach=60.0,                                     # the wet film: half-metre cells, as the game's roof map   # sky.json rain                                      # drops and flakes: their own faint light                                                     # lanterns by day in fog: their glow tinted it brown
                snow_colour=(0.86, 0.90, 0.96), snow_facing=(0.55, 0.80), snow_cover=0.9,   # lying snow on what faces up
                snow_step=0.25, snow_reach=24.0)                    # where it lies: rays from the sky this far apart, this far round                                   # ... and has the sky over it (nothing within this, straight up)
+EYE_MAX_INDOORS = 9.0  # a dark room on a moonless night: only the starlight at the window
 EYE_MAX = 6.0          # the night's eye opens at most this many stops past the place's own exposure
 HOME_WINDOWS = 0.45    # a home's lit window, times its strength as built (at 1 the alley's burnt to plain white)
 STARS = dict(scale=420.0, size=0.045, strength=(2.2, 1.0))   # the night sky's stars: new moon, full moon (a lit sky hides some)
@@ -86,7 +87,8 @@ INDOOR_EYE = {"Morning": 100, "Midday": 100, "Dusk": 85}
 INDOORS = ("rooms", "bakery", "outlet")
 # the moon: high (a full moon in summer stands about 68 degrees up here), turned from the sun's bearing so it falls along
 # the alley and the streets, not across them (at 48 degrees across, the alley's houses shaded all of its paving)
-MOON = dict(height=68, turn=0.35, strength=0.012, colour=(0.62, 0.72, 1.0))   # strength times the place's sun
+MOON = dict(height=68, turn=0.35, strength=0.012, colour=(0.62, 0.72, 1.0),
+            indoor_height=30, indoor_times=4.0)            # and stronger: beside the fire the patch must still show                              # indoors: on the sun's bearing, 30 degrees up, through the window   # strength times the place's sun
 FIRE = ("Fp_", "Cd_", "Oven", "Ember", "Flame")                                # lights that are fires, not lamps
 GLASS_OFF = (0.07, 0.09, 0.12)                                                 # a window with no light behind it
 SHADE_OFF = (0.55, 0.50, 0.42)                                                 # a lamp's glass with the lamp out
@@ -106,6 +108,9 @@ if "room_shell" in globals():
     def room_shell(n, ox, oy, w=6.4, d=4.4, h=3.0, ceiling=True, window=True, front=0.0):
         x0, x1, y0, y1 = _room_shell(n, ox, oy, w, d, h, ceiling, window, front)
         box(n + "_Front", x0 - 0.3, x1 + 0.45, y0 - 0.3, y0, 0, h, M["plaster"], bevel=0)   # behind the camera
+        if window and PLACE == "rooms":                    # the sunlit street outside the window: its light comes in too
+            out = bpy.data.materials.get("M_OutsidePaving") or painted("M_OutsidePaving", (0.22, 0.21, 0.25), (0.46, 0.42, 0.37), noise_scale=0.5)
+            box(n + "_Outside", x1 + 0.45, x1 + 40.0, y0 - 30.0, y1 + 30.0, -0.4, -0.1, out, bevel=0)
         return x0, x1, y0, y1
 
 
@@ -129,6 +134,9 @@ class Lights:
         self.lamps, self.fires = [], []
         for ob in scene.objects:
             if ob.type == 'LIGHT' and ob.data.type != 'SUN':
+                is_fire = ob.name.startswith(FIRE) or any(f in ob.name for f in FIRE)
+                if PLACE in INDOORS and not is_fire:
+                    ob.data.color = INDOOR_LAMP                      # indoors a warm white, not the lanterns' orange
                 (self.fires if ob.name.startswith(FIRE) or any(f in ob.name for f in FIRE) else self.lamps).append((ob, ob.data.energy))
         self.glow = []                                                       # (bsdf, its strength, its colour, kind)
         for m in bpy.data.materials:
@@ -142,11 +150,13 @@ class Lights:
                     self.glow.append((n, n.inputs["Emission Strength"].default_value, tuple(n.inputs["Base Color"].default_value), kind))
         self.sun = sun
         self.day_lamps = 1.0
+        self.day_fires = 1.0
         if base:                                                             # a place built in another light: its morning
             if "dir" in base:
                 self.bearing = math.atan2(base["dir"][1], base["dir"][0])
             self.sun_energy = base.get("sun", self.sun_energy)
             self.day_lamps = base.get("day_lamps", 1.0)
+            self.day_fires = base.get("day_fires", 1.0)
             self.sky_strength = base.get("sky", self.sky_strength)
             if "fog_times" in base:
                 self.fog = [(sock, d0 * base["fog_times"]) for sock, d0 in self.fog]
@@ -176,15 +186,16 @@ class Lights:
         if se <= 0 and SKY_CAM is None:
             stars(self.scene, STARS["strength"][1 if moon else 0])
         if moon:
-            el, maz = math.radians(MOON["height"]), az + MOON["turn"]
+            mh, mt = (MOON["indoor_height"], 0.0) if PLACE in INDOORS else (MOON["height"], MOON["turn"])
+            el, maz = math.radians(mh), az + mt                # indoors from the window's side, low enough to come in
             ml = bpy.data.lights.new("Moon", 'SUN')
-            ml.energy = self.sun_energy * MOON["strength"]
+            ml.energy = self.sun_energy * MOON["strength"] * (MOON["indoor_times"] if PLACE in INDOORS else 1.0)
             ml.color = MOON["colour"]
             setp(ml, "angle", math.radians(0.6))
             mo = bpy.data.objects.new("Moon", ml)
             mo.rotation_euler = Vector((math.cos(el) * math.cos(maz), math.cos(el) * math.sin(maz), math.sin(el))).normalized().to_track_quat('Z', 'Y').to_euler()
             self.scene.collection.objects.link(mo)
-            disc(self.scene, Vector((math.cos(el) * math.cos(maz), math.cos(el) * math.sin(maz), math.sin(el))))
+            moon_in_sky(self.scene, Vector((math.cos(el) * math.cos(maz), math.cos(el) * math.sin(maz), math.sin(el))))
         if SKY_CAM is not None:                                  # the sky's place: the whole sky of sky_52.py
             dl, dk, cv = SKY_OF[key]
             el = math.radians(h)
@@ -203,8 +214,11 @@ class Lights:
             sock.default_value = d0 * fog
         for ob, e0 in self.lamps:
             ob.data.energy = e0 * lamps
+        fire = self.day_fires if day else 1.0
+        for ob, e0 in self.fires:
+            ob.data.energy = e0 * fire
         for n, s0, c0, kind in self.glow:
-            k = 1.0 if kind == "fire" else (0.0 if (kind == "home" and day) else (1.0 if (kind == "window" and day) else lamps))
+            k = fire if kind == "fire" else (0.0 if (kind == "home" and day) else (1.0 if (kind == "window" and day) else lamps))
             if kind == "home":
                 k *= HOME_WINDOWS
             n.inputs["Emission Strength"].default_value = s0 * k
@@ -244,7 +258,7 @@ def stars(scene, strength):
         pass
 
 
-def disc(scene, toward):
+def moon_in_sky(scene, toward):
     """The full moon's disc in the sky, far off along its light; it is seen, it casts and gives no light of its own."""
     p = toward.normalized() * MOON_DISC["distance"]
     bm = bmesh.new()
@@ -284,6 +298,8 @@ def each_hour(scene, cam, exposure, stem, base=None):
          (stem, L.sun_energy, math.degrees(L.bearing), L.sky_strength, len(L.lamps), len(L.fires), len(L.glow), len(L.fog)))
     for hour in HOURS:
         if WANT and hour[0] not in WANT:
+            continue
+        if hour[-1] and PLACE in INDOORS:                  # indoors no weather settings (the owner, 2026-11-26)
             continue
         ex = L.set(hour)
         fallen = []
@@ -337,6 +353,30 @@ def bounce_more(times):
                 pick.inputs[7].default_value = tuple(base.default_value)
             nt.links.new(pick.outputs[2], base)
 
+
+
+ROOM_GREYER = dict(M_Boards=0.4)
+ROOM_BOUNCE = dict(M_OutsidePaving=2.6, M_Plaster=2.0, M_PlasterWarm=2.0, M_Boards=2.0)   # as SQUARE_BOUNCE, more: a room is lit by bounce
+INDOOR_LAMP = (1.0, 0.86, 0.72)                            # the owner, 2026-11-26: the night lamps indoors less orange                          # how far towards grey: the boards as the town's weathered wood
+
+
+def greyer(how):
+    """Take colours part way towards their own grey (the named materials' ramps, bricks and base colours), so a room's
+    floor does not tint its light orange beside the town's grey stone and wood (the owner, 2026-11-26)."""
+    def g(c, k):
+        y = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+        return (c[0] + (y - c[0]) * k, c[1] + (y - c[1]) * k, c[2] + (y - c[2]) * k, c[3] if len(c) > 3 else 1.0)
+    for name, k in how.items():
+        m = bpy.data.materials.get(name)
+        if m is None or not m.use_nodes:
+            continue
+        for n in m.node_tree.nodes:
+            if n.type == 'VALTORGB':
+                for e in n.color_ramp.elements:
+                    e.color = g(tuple(e.color), k)
+            for sock in n.inputs:
+                if sock.type == 'RGBA' and not sock.is_linked:
+                    sock.default_value = g(tuple(sock.default_value), k)
 
 
 WET = {}                                                   # material -> its roughness when dry
@@ -626,7 +666,7 @@ def eye(scene, cam, exposure, ex, target, stem):
         for _ in range(2):
             shoot(scene, cam, exposure + ex, path, quiet=True)
             m = max(mean_of(path), 0.5)
-            ex = max(-2.0, min(EYE_MAX, ex + math.log2(target / m) * 0.9))
+            ex = max(-2.0, min(EYE_MAX_INDOORS if PLACE in INDOORS else EYE_MAX, ex + math.log2(target / m) * 0.9))
     finally:
         globals()["SAMPLES_H"], globals()["SCALE_H"] = keep
         if os.path.exists(path):
@@ -690,8 +730,12 @@ def main_hours():
                 scene = fresh("Furn_room_" + kit[0])
                 extra_mats()
                 spec, label = kit_room(kit, lines())
+                greyer(ROOM_GREYER)                         # the room's surfaces in the town's own colours
+                bounce_more(ROOM_BOUNCE)                    # the light thrown back as in the square's shade
                 (nm, loc, tgt, lens) = spec[0]
-                each_hour(scene, camera(scene, "Cam_" + kit[0], loc, tgt, lens), 1.3, "Rooms_" + kit[0].capitalize())
+                # by day only the world's sun and sky light the room, through its window (the owner, 2026-11-26: the
+                # rooms in the world's light, not their own warm lamps)
+                each_hour(scene, camera(scene, "Cam_" + kit[0], loc, tgt, lens), 1.3, "Rooms_" + kit[0].capitalize(), dict(day_lamps=0.0, day_fires=0.0))
             except Exception:
                 hlog("FAILED room %s:\n%s" % (kit[0], traceback.format_exc()))
     elif PLACE == "bakery":
