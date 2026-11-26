@@ -42,9 +42,13 @@ struct BRIXWORLD_API FBrixFurnished
 	TArray<FBrixFurnBox> Boxes;
 	TArray<FBrixFurnSolid> Solids;
 	TArray<FBrixSpot> Spots;        // play.js spot(): who is at each place lies, sits or stands there, facing this way (Up 0: standing)
+	TArray<FBrixFurniturePiece> Pieces;   // a fit-out's meshes (FBrixFitout), on this floor
+	TArray<FBrixWallSeg> Walls;           // a fit-out's partitions, cut at their doorways (a doorway's piece is the wall over it)
 };
 
 // Floor f of a lot furnished at its places, unless it is a planned home (BrixHomes) or a building drawn its own way. False
 // when there is nothing to furnish. Nothing is put in the stairwell or 0.6 m round it, nor on the way from the door to the
 // foot of the stair (storeys.js keepOut()). bDress false: the places' furniture only, the room left undressed.
+// A lot with a fit-out (lot.fitout) is furnished on the fit-out's floor from it alone: its pieces as meshes, its glow and its
+// lamps; the slice's places' furniture and dressing are not put there (CITY-013, ADR-0059).
 BRIXWORLD_API bool BrixFurnishFloor(const FBrixInsides& Ins, const FBrixLot& Lot, const FBrixInside& In, int32 Floor, FBrixFurnished& Out, bool bDress = true);

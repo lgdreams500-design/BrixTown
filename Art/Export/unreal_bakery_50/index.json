@@ -1,0 +1,196 @@
+{
+ "source": "Tools/blender/unreal_bakery_50.py",
+ "frame": "metres, z up, standing on z = 0, back toward +y, front toward -y (the kits' frame)",
+ "lines": [
+  "oldtown"
+ ],
+ "pieces": {
+  "bk_oven": {
+   "oldtown": {
+    "file": "bk_oven_oldtown.glb",
+    "mesh": "SM_bk_oven_oldtown",
+    "min": [
+     -1.28,
+     -1.35,
+     0.0
+    ],
+    "max": [
+     1.31,
+     0.77,
+     3.2
+    ],
+    "tris": 15656
+   }
+  },
+  "bk_bench": {
+   "oldtown": {
+    "file": "bk_bench_oldtown.glb",
+    "mesh": "SM_bk_bench_oldtown",
+    "min": [
+     -1.15,
+     -0.475,
+     0.0
+    ],
+    "max": [
+     1.15,
+     0.475,
+     1.06
+    ],
+    "tris": 20628
+   }
+  },
+  "bk_racks_mother": {
+   "oldtown": {
+    "file": "bk_racks_mother_oldtown.glb",
+    "mesh": "SM_bk_racks_mother_oldtown",
+    "min": [
+     -1.25,
+     -0.27,
+     0.0
+    ],
+    "max": [
+     1.25,
+     0.27,
+     2.58
+    ],
+    "tris": 28668
+   }
+  },
+  "bk_racks_a": {
+   "oldtown": {
+    "file": "bk_racks_a_oldtown.glb",
+    "mesh": "SM_bk_racks_a_oldtown",
+    "min": [
+     -1.25,
+     -0.27,
+     0.0
+    ],
+    "max": [
+     1.25,
+     0.27,
+     2.225
+    ],
+    "tris": 33804
+   }
+  },
+  "bk_racks_b": {
+   "oldtown": {
+    "file": "bk_racks_b_oldtown.glb",
+    "mesh": "SM_bk_racks_b_oldtown",
+    "min": [
+     -1.25,
+     -0.27,
+     0.0
+    ],
+    "max": [
+     1.25,
+     0.27,
+     2.225
+    ],
+    "tris": 35100
+   }
+  },
+  "bk_racks_c": {
+   "oldtown": {
+    "file": "bk_racks_c_oldtown.glb",
+    "mesh": "SM_bk_racks_c_oldtown",
+    "min": [
+     -1.25,
+     -0.27,
+     0.0
+    ],
+    "max": [
+     1.25,
+     0.27,
+     2.225
+    ],
+    "tris": 32928
+   }
+  },
+  "bk_sacks": {
+   "oldtown": {
+    "file": "bk_sacks_oldtown.glb",
+    "mesh": "SM_bk_sacks_oldtown",
+    "min": [
+     -0.298,
+     -0.53,
+     -0.01
+    ],
+    "max": [
+     0.853,
+     0.329,
+     0.81
+    ],
+    "tris": 4268
+   }
+  },
+  "bk_board": {
+   "oldtown": {
+    "file": "bk_board_oldtown.glb",
+    "mesh": "SM_bk_board_oldtown",
+    "min": [
+     -0.53,
+     -0.035,
+     1.37
+    ],
+    "max": [
+     0.53,
+     0.02,
+     2.13
+    ],
+    "tris": 3132
+   }
+  },
+  "bk_door_alley": {
+   "oldtown": {
+    "file": "bk_door_alley_oldtown.glb",
+    "mesh": "SM_bk_door_alley_oldtown",
+    "min": [
+     -0.57,
+     -0.19,
+     -0.04
+    ],
+    "max": [
+     0.57,
+     0.05,
+     2.47
+    ],
+    "tris": 3324
+   }
+  },
+  "bk_door_proof": {
+   "oldtown": {
+    "file": "bk_door_proof_oldtown.glb",
+    "mesh": "SM_bk_door_proof_oldtown",
+    "min": [
+     -0.57,
+     -0.145,
+     -0.04
+    ],
+    "max": [
+     0.57,
+     0.05,
+     2.17
+    ],
+    "tris": 3024
+   }
+  },
+  "bk_counter": {
+   "oldtown": {
+    "file": "bk_counter_oldtown.glb",
+    "mesh": "SM_bk_counter_oldtown",
+    "min": [
+     -1.567,
+     -0.346,
+     0.0
+    ],
+    "max": [
+     0.935,
+     0.345,
+     1.435
+    ],
+    "tris": 19828
+   }
+  }
+ }
+}

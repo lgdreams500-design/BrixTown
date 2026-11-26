@@ -1,0 +1,383 @@
+{
+ "note": "Rooms fitted out as a design says, instead of as the slice furnishes their kind (QST-014, ADR-0059). A lot names its fit-out ('fitout' in its block file); the Unreal build places these pieces on that floor in place of the shop's places' furniture and dressing. Positions are in the door's frame: 'along' to the left of someone walking in at the door (play.js layout()'s wp()), 'in' from the door inward, metres; 'faces' where the piece's front points: door, back, +along or -along. 'size' is the piece's box (across, deep, high), checked against its export's index by test_world. 'glow': lit boxes (along, in, from the floor, size across/high/deep, colour; a small warm one, blue under 0.7, is also where a room lamp's light is put: one a pendant); 'lamps': the slice's box pendants hung over these points. A piece from another export than the fit-out's names it ('export'): the pendants are furniture kit 18's d_pendant. 'hung': it hangs from the ceiling and is not in anyone's way. 'walls': partitions (from, to in the door's frame), each 0.12 m thick to the ceiling, with doorways ('doors': where along the wall from its start, how wide); 'room': the room they close (along0, in0, along1, in1): every piece, glow and work place of the lot's staff stands in it.",
+ "fitouts": {
+  "stone_oven": {
+   "design": "Tools/blender/baker_look_47.py (approved 2026-11-26, ADR-0059); meshes from Tools/blender/unreal_bakery_50.py",
+   "floor": 0,
+   "line": "oldtown",
+   "export": "Art/Export/unreal_bakery_50/index.json",
+   "pieces": [
+    {
+     "piece": "bk_door_alley",
+     "along": 3.7,
+     "in": 7.390000000000001,
+     "faces": "door",
+     "size": [
+      1.14,
+      0.24,
+      2.47
+     ]
+    },
+    {
+     "piece": "bk_oven",
+     "along": 1.3,
+     "in": 6.67,
+     "faces": "door",
+     "size": [
+      2.59,
+      2.12,
+      3.2
+     ]
+    },
+    {
+     "piece": "bk_racks_mother",
+     "along": -1.6,
+     "in": 7.17,
+     "faces": "door",
+     "size": [
+      2.5,
+      0.54,
+      2.58
+     ]
+    },
+    {
+     "piece": "bk_door_proof",
+     "along": -4.390000000000001,
+     "in": 6.2,
+     "faces": "+along",
+     "size": [
+      1.14,
+      0.2,
+      2.17
+     ]
+    },
+    {
+     "piece": "bk_racks_a",
+     "along": -4.17,
+     "in": 3.6,
+     "faces": "+along",
+     "size": [
+      2.5,
+      0.54,
+      2.23
+     ]
+    },
+    {
+     "piece": "bk_sacks",
+     "along": 4.32,
+     "in": 4.2,
+     "faces": "-along",
+     "size": [
+      1.15,
+      0.86,
+      0.81
+     ]
+    },
+    {
+     "piece": "bk_board",
+     "along": 4.630000000000001,
+     "in": 4.2,
+     "faces": "-along",
+     "size": [
+      1.06,
+      0.06,
+      2.13
+     ]
+    },
+    {
+     "piece": "bk_bench",
+     "along": 1.3,
+     "in": 4.3,
+     "faces": "door",
+     "size": [
+      2.3,
+      0.95,
+      1.06
+     ]
+    },
+    {
+     "piece": "bk_counter",
+     "along": -2.4,
+     "in": 2.6,
+     "faces": "door",
+     "size": [
+      2.5,
+      0.69,
+      1.44
+     ]
+    },
+    {
+     "piece": "d_pendant",
+     "export": "Art/Export/unreal_furniture_37/index.json",
+     "along": 1.3,
+     "in": 4.3,
+     "faces": "door",
+     "size": [
+      0.68,
+      0.75,
+      2.95
+     ],
+     "hung": true
+    },
+    {
+     "piece": "d_pendant",
+     "export": "Art/Export/unreal_furniture_37/index.json",
+     "along": -2.4,
+     "in": 2.6,
+     "faces": "door",
+     "size": [
+      0.68,
+      0.75,
+      2.95
+     ],
+     "hung": true
+    },
+    {
+     "piece": "d_pendant",
+     "export": "Art/Export/unreal_furniture_37/index.json",
+     "along": 2.4,
+     "in": 2.0,
+     "faces": "door",
+     "size": [
+      0.68,
+      0.75,
+      2.95
+     ],
+     "hung": true
+    }
+   ],
+   "glow": [
+    {
+     "along": 1.3,
+     "in": 5.91,
+     "y0": 1.0,
+     "size": [
+      0.6,
+      0.16,
+      0.08
+     ],
+     "rgb": [
+      1.0,
+      0.46,
+      0.16
+     ]
+    },
+    {
+     "along": 1.44,
+     "in": 5.89,
+     "y0": 1.11,
+     "size": [
+      0.13,
+      0.26,
+      0.05
+     ],
+     "rgb": [
+      1.0,
+      0.72,
+      0.32
+     ]
+    },
+    {
+     "along": 1.28,
+     "in": 5.89,
+     "y0": 1.11,
+     "size": [
+      0.13,
+      0.36,
+      0.05
+     ],
+     "rgb": [
+      1.0,
+      0.78,
+      0.38
+     ]
+    },
+    {
+     "along": 1.13,
+     "in": 5.89,
+     "y0": 1.11,
+     "size": [
+      0.13,
+      0.22,
+      0.05
+     ],
+     "rgb": [
+      1.0,
+      0.7,
+      0.3
+     ]
+    },
+    {
+     "along": 1.62,
+     "in": 4.3,
+     "y0": 1.68,
+     "size": [
+      0.1,
+      0.02,
+      0.1
+     ],
+     "rgb": [
+      1.0,
+      0.78,
+      0.5
+     ]
+    },
+    {
+     "along": 1.14,
+     "in": 4.577,
+     "y0": 1.68,
+     "size": [
+      0.1,
+      0.02,
+      0.1
+     ],
+     "rgb": [
+      1.0,
+      0.78,
+      0.72
+     ]
+    },
+    {
+     "along": 1.14,
+     "in": 4.023,
+     "y0": 1.68,
+     "size": [
+      0.1,
+      0.02,
+      0.1
+     ],
+     "rgb": [
+      1.0,
+      0.78,
+      0.72
+     ]
+    },
+    {
+     "along": -2.08,
+     "in": 2.6,
+     "y0": 1.68,
+     "size": [
+      0.1,
+      0.02,
+      0.1
+     ],
+     "rgb": [
+      1.0,
+      0.78,
+      0.5
+     ]
+    },
+    {
+     "along": -2.56,
+     "in": 2.877,
+     "y0": 1.68,
+     "size": [
+      0.1,
+      0.02,
+      0.1
+     ],
+     "rgb": [
+      1.0,
+      0.78,
+      0.72
+     ]
+    },
+    {
+     "along": -2.56,
+     "in": 2.323,
+     "y0": 1.68,
+     "size": [
+      0.1,
+      0.02,
+      0.1
+     ],
+     "rgb": [
+      1.0,
+      0.78,
+      0.72
+     ]
+    },
+    {
+     "along": 2.72,
+     "in": 2.0,
+     "y0": 1.68,
+     "size": [
+      0.1,
+      0.02,
+      0.1
+     ],
+     "rgb": [
+      1.0,
+      0.78,
+      0.5
+     ]
+    },
+    {
+     "along": 2.24,
+     "in": 2.277,
+     "y0": 1.68,
+     "size": [
+      0.1,
+      0.02,
+      0.1
+     ],
+     "rgb": [
+      1.0,
+      0.78,
+      0.72
+     ]
+    },
+    {
+     "along": 2.24,
+     "in": 1.723,
+     "y0": 1.68,
+     "size": [
+      0.1,
+      0.02,
+      0.1
+     ],
+     "rgb": [
+      1.0,
+      0.78,
+      0.72
+     ]
+    }
+   ],
+   "lamps": [],
+   "walls": [
+    {
+     "from": [
+      -4.5,
+      0.35
+     ],
+     "to": [
+      -4.5,
+      7.5
+     ],
+     "doors": [
+      [
+       0.85,
+       1.0
+      ]
+     ]
+    },
+    {
+     "from": [
+      -4.5,
+      7.5
+     ],
+     "to": [
+      4.65,
+      7.5
+     ]
+    }
+   ],
+   "room": [
+    -4.5,
+    0.35,
+    4.65,
+    7.5
+   ]
+  }
+ }
+}

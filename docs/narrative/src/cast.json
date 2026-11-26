@@ -104,10 +104,10 @@
 
   {"id": "abe", "name": "Abe", "status": "live", "resident": "r0518", "color": "#c07f1f",
    "career": "Courier", "career_id": "courier",
-   "place": "Everywhere. Ask him, he'll tell you.",
+   "place": "Everywhere. Ask her, she'll tell you.",
    "quote": "Three rounds and one pair of legs.",
    "voice": "Already in the game: gave you your first round. Cheerful, and discreet to a fault, which is the plot point.",
-   "story": ["Has carried one seeded loaf from the Stone Oven to Eastgate Mall every Saturday for six years, paid in cash by a man he is too professional to name. It is the only delivery he has never been late for. If you have worked his rounds since Errand runner, you can work out for yourself where that loaf goes."],
+   "story": ["Has carried one seeded loaf from the Stone Oven to Eastgate Mall every Saturday for six years, paid in cash by a man she is too professional to name. It is the only delivery she has never been late for. If you have worked her rounds since Errand runner, you can work out for yourself where that loaf goes."],
    "ties": [["tam", "secret", "the Saturday loaf"], ["noor", "trade", "her deliveries; she doesn't ask"]]},
 
   {"id": "jai", "name": "Jai", "status": "live", "resident": "r1714", "color": "#5560a8",
@@ -123,15 +123,15 @@
    "place": "Market Grocer, behind the square.",
    "quote": "If you find out, tell me first. I've got a bet on with the baker.",
    "voice": "Already in the game: the night gardener. Loves news the way other people love money.",
-   "story": ["Shopkeepers in the slice already joke about having a bet on with the baker. This career gives Olu a real one: nine years ago he bet Noor a sweet roll she couldn't go a year without a day off. It has rolled over, unpaid, ever since."],
+   "story": ["Shopkeepers in the slice already joke about having a bet on with the baker. This career gives Olu a real one: nine years ago she bet Noor a sweet roll she couldn't go a year without a day off. It has rolled over, unpaid, ever since."],
    "ties": [["noor", "trade", "six loaves for the shelf"]]},
 
   {"id": "eli", "name": "Eli", "status": "live", "resident": "r0497", "color": "#5c6670",
    "career": "Clerk and market seller; runs the Town Fair", "career_id": "clerk",
    "place": "Market Square, most days.",
    "quote": "Buy cheap, sell dear, and the market crowd does the rest.",
-   "voice": "Already in the game: taught you the stall. Organises things nobody asked him to organise, and does it well.",
-   "story": ["Runs the fair with a clipboard and a rope line, both brought from home. He guards the bake-off's rules mostly so that Vera has something official to overrule."],
+   "voice": "Already in the game: taught you the stall. Organises things nobody asked her to organise, and does it well.",
+   "story": ["Runs the fair with a clipboard and a rope line, both brought from home. She guards the bake-off's rules mostly so that Vera has something official to overrule."],
    "ties": [["vera", "work", "judge and clerk of the fair"]]},
 
   {"id": "hari", "name": "Hari", "status": "live", "resident": "r0410", "color": "#5e8c50",

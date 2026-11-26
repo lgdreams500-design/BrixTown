@@ -48,19 +48,20 @@ should need no change.
 Each item is also noted where it lives (`Game/README.md`, `Tools/README.md`, `Tools/citysim/README.md`).
 
 **So that what was approved shows in the game**
-1. The Stone Oven's inside in Unreal is still fitted as a grocer's (shelves and tills). The approved inside is
-   `Art/Reference/Shops/ShopsBakery_Day.png` and `Art/Reference/Shops/ShopsBakery_4am.png`, made by `Tools/blender/baker_look_47.py`.
-2. Unreal's people (and the slice's) have no age values (lines, stoop, glasses, cane, shawl, beard, thin hair), still have
-   the shell hair that reads as a cap with pale hair, and cannot give one named resident a look of her own: Noor wears
-   her job's stock clothes there. The approved look is `Art/Reference/People/PeopleNoor.png` and `Art/Reference/People/PeopleElders.png`
-   (`Tools/blender/elders_48.py`).
+1. The Stone Oven's ground floor in Unreal is the approved design's own pieces in a room of 9 by 7.5 m in the street
+   corner, closed by partitions and seen into through the shop front and the side windows (ADR-0062,
+   `World/rules/fitouts.json`); brighter and flatter than the reference (no beams, a small fire); its upper floors are
+   still a grocer's store. Details in `Game/README.md`, Quests.
+2. In Unreal Noor wears her approved look (`World/rules/cast_looks.json`): dress, bib apron, grey bun, locks along the
+   hairline, lines of age. Not carried: the stoop, the shell under her hair, and age for anybody else (the elders of
+   `Art/Reference/People/PeopleElders.png`: glasses, cane, shawl, beard, thin hair). The slice has none of it.
 3. Pip, Tam, Vera, Oda, Suvi and Len have no designed look. Vera, Oda, Suvi, Len and Tam have no gender written down,
    and five of the cast have no age decided: ask the owner.
 
 **Left from building the Baker career**
-4. The cast sheet and the quest lines write Abe and Eli as "he"; the owner says both are women. The text is not
-   corrected. Correct it in `src/` (and in `World/rules/quests.json` and `live.json` where the starter lines say it), then
-   follow "How the writing reaches the game".
+4. Abe, Eli and Olu were written as men; the owner says all three are women. Corrected on 2026-11-26 in `src/`,
+   `World/rules/quests.json` and `live.json` (pronouns only, and "the air of a woman" in the wedding): shown to the owner on
+   the page after the change, not before. `cast.json` still has no gender field except Noor's (the voices' profiles have them).
 5. The story has been played in the running game only as far as the two pictures in `shots/`; the rest by test (1,500
    random games in Python; a recorded 456-step game in Unreal).
 6. In a scene the camera comes in too close behind the player's shoulder.

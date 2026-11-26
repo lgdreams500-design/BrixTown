@@ -788,7 +788,60 @@ bool BrixFurnishFloor(const FBrixInsides& Ins, const FBrixLot& L, const FBrixIns
 {
 	Out = FBrixFurnished();
 	TArray<FVector3d> occ;   // play.js occ: [x, z, r] kept clear, for room() to place round
-	if (!BrixIsHollow(L, &In) || L.House.IsSet() || !In.Interior.IsEmpty()) return false;   // planned homes: BrixHomes
+	if (!BrixIsHollow(L, &In) || L.House.IsSet() || !In.Interior.IsEmpty()) return false;   // planned homes: BrixHomes
+	if (L.Fitout.IsValid() && L.AngleDeg == 0.f && Floor == L.Fitout->Floor)
+	{
+		// a room fitted out by its design (World/rules/fitouts.json): in the door's frame, as play.js layout()'s wp() has it
+		const FBrixFitout& Fo = *L.Fitout;
+		const FVector2D Dr = L.Door;
+		const FVector2D o = FMath::Abs(Dr.Y - L.Min.Y) < .01 ? FVector2D(0, -1) : FMath::Abs(Dr.Y - L.Max.Y) < .01 ? FVector2D(0, 1) : FMath::Abs(Dr.X - L.Min.X) < .01 ? FVector2D(-1, 0) : FVector2D(1, 0);
+		const FVector2D AlongV(-o.Y, o.X), InV(-o.X, -o.Y);
+		auto At = [&](double a, double i) { return Dr + AlongV * a + InV * i; };
+		const double FR = FMath::Atan2(-o.X, -o.Y);   // a box turned as the layout turns its boxes
+		for (const FBrixFitoutPiece& Pc : Fo.Pieces)
+		{
+			FBrixFurniturePiece P;
+			P.Kind = Pc.Piece; P.Line = Fo.Line; P.Floor = Floor; P.At = At(Pc.Along, Pc.In); P.Size = Pc.bHung ? FVector3f::ZeroVector : Pc.Size;   // a hung piece: no footprint in the way
+			P.B = Pc.Faces == TEXT("back") ? -InV : Pc.Faces == TEXT("+along") ? -AlongV : Pc.Faces == TEXT("-along") ? AlongV : InV;   // B: toward its back
+			P.A = FVector2D(P.B.Y, -P.B.X);                                                                                           // as BrixHomes turns A to B
+			Out.Pieces.Add(P);
+		}
+		for (const FBrixFitoutGlow& G : Fo.Glow)
+		{
+			const FVector2D p = At(G.Along, G.In);
+			Put(Out, p.X, G.Y0, p.Y, G.Size.X, G.Size.Y, G.Size.Z, FR, G.Colour, true);
+		}
+		for (const FBrixFitoutWall& Wl : Fo.Walls)   // the partitions, each cut at its doorways
+		{
+			const FVector2D P0 = At(Wl.From.X, Wl.From.Y), P1 = At(Wl.To.X, Wl.To.Y);
+			const double Len = FVector2D::Distance(P0, P1);
+			if (Len < .05) continue;
+			const FVector2D U = (P1 - P0) / Len;
+			auto Seg = [&](double s0, double s1, bool bDoor)
+			{
+				if (s1 - s0 < .02) return;
+				FBrixWallSeg S;
+				S.Floor = Floor; S.bDoorway = bDoor; S.bPartition = true;
+				S.R.Centre = P0 + U * ((s0 + s1) / 2); S.R.Along = U; S.R.Length = (float)(s1 - s0); S.R.Width = .12f;
+				Out.Walls.Add(S);
+			};
+			double s = -.06;   // the ends run on by half a wall, so corners close
+			TArray<FVector2D> Ds = Wl.Doors;
+			Ds.Sort([](const FVector2D& A, const FVector2D& B) { return A.X < B.X; });
+			for (const FVector2D& Dd : Ds) { Seg(s, Dd.X, false); Seg(Dd.X, Dd.X + Dd.Y, true); s = Dd.X + Dd.Y; }
+			Seg(s, Len + .06, false);
+		}
+		const double Top = 3.0;   // the ground floor's ceiling over its floor (Storeys: ceilY 3.2, floorY 0.2)
+		for (const FVector2D& Lp : Fo.Lamps)   // a pendant as the layout's lamp(): its rod, its shade, the lit glass under it
+		{
+			const FVector2D p = At(Lp.X, Lp.Y);
+			const double drop = Fo.LampDrop;
+			AABox(Out, p.X - .01, Top - drop, p.Y - .01, p.X + .01, Top, p.Y + .01, FVector3f(.12f, .11f, .1f));
+			Put(Out, p.X, Top - drop - .2, p.Y, .32, .2, .32, 0, FVector3f(.42f, .36f, .22f), false);
+			AABox(Out, p.X - .07, Top - drop - .27, p.Y - .07, p.X + .07, Top - drop - .19, p.Y + .07, FVector3f(1, .78f, .5f), true);
+		}
+		return Out.Pieces.Num() > 0 || Out.Boxes.Num() > 0 || Out.Walls.Num() > 0;
+	}
 	// storeys.js proxy(): what floor f is for, and its own places (lot.levels)
 	FString Kind = L.Kind, Sp = In.Special;
 	if (Floor > 0)

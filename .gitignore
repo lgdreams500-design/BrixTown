@@ -49,3 +49,4 @@ __pycache__/
 # Game/Content/Furniture are what is kept, ADR-0050)
 Art/Export/unreal_furniture_37/*.glb
 Art/Export/*/*_log.txt
+Art/Export/unreal_bakery_50/*.glb

@@ -1626,5 +1626,26 @@ class TheMarkers(unittest.TestCase):
             self.assertTrue(any(bit in x for x in p), bit)
 
 
+class TheStoneOvenFitOut(unittest.TestCase):
+    """CITY-013, QST-014, ADR-0059: the Stone Oven is fitted out as its approved design (World/rules/fitouts.json)."""
+
+    def test_CITY_013_fit_outs_are_sound(self):
+        self.assertEqual(world.fitout_problems(W), [])
+        self.assertEqual([l["fitout"] for l in world.lots(W) if "fitout" in l], ["stone_oven"])
+
+    def test_CITY_013_a_bad_fit_out_is_caught(self):
+        w = copy.deepcopy(W)
+        fo = w["fitouts"]["fitouts"]["stone_oven"]
+        fo["pieces"][0]["size"][0] += 1                                          # not its mesh's size
+        fo["pieces"][1]["piece"] = "bk_nothing"                                  # not exported
+        fo["pieces"][2]["in"] = 30                                               # through the back wall
+        fo["lamps"].append([-31.2, 4.0])                                         # over the stair
+        fo["walls"][0]["to"] = [-45, 7.5]                                        # through the side wall
+        fo["pieces"][3]["along"] = 6.0                                           # out of its room
+        p = world.fitout_problems(w)
+        for bit in ("is not its mesh's", "bk_nothing is not in", "bk_racks_mother stands through a wall", "lamp stands in the stairwell", "wall 0 runs through", "bk_door_proof stands outside its room"):
+            self.assertTrue(any(bit in x for x in p), bit)
+
+
 if __name__ == "__main__":
     unittest.main()

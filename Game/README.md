@@ -506,8 +506,9 @@ id itself, so until then `people_values.py` must be run again whenever the resid
 A story line's words alone are voiced and mouthed: what is seen (its direction) and the name of somebody else who says it are
 written in the box before the words (`FBrixDialogue::Shown`), and somebody else's line is in their own voice (QST-012).
 Oda (r3419) speaks her seventeen story lines in her own voice (`cast_oda`, made by `Tools/voice/cast/`, ADR-0060;
-`SND018_the_cast_speak_their_story_lines`; eleven of them seen in the log of two staged talks on 2026-11-26, sound off). Not yet:
-the other twelve of the Baker cast, the lines nobody says, and Oda's everyday talk, which is murmured until it is voiced.
+`SND018_the_cast_speak_their_story_lines`; eleven of them seen in the log of two staged talks on 2026-11-26, sound off).
+Noor (r0262) speaks 29 of her 111 lines in a Maya1 voice (`cast_noor`, ADR-0063); the rest are murmured. Not yet:
+the rest of Noor's part, the other eleven of the Baker cast, the lines nobody says, and Oda's everyday talk, which is murmured until it is voiced.
 To see one without anyone at the keys: `-BrixTalk=<resident index>` (and `-BrixAnswers=1,2`, a second and a half apart or
 `-BrixAnswerGap=<s>`) with `-BrixShot=`.
 
@@ -982,14 +983,41 @@ Twenty Minutes) opens the talk box by itself when the player is there (`ABrixLif
 its lines are read, not spoken, and one left unanswered opens again when the player has gone and come back. Seen in the
 running game: `docs/narrative/shots/stone_oven.png` (the career starts by talking to Noor, the baker) and `count_scene.png`
 (`-BrixTime=06:40 -BrixStand=912,816,0 -BrixLife=act,new_in_town,r0504,end:gift;act,four_oclock_door,r0262,start|give:breakfast_loaf|stage:count`).
-Not yet: the looks approved in Blender on 2026-11-26 (ADR-0059) are not in the game: the Stone Oven's inside (oven, bench,
-bread racks, doors), Noor's own look, and old age on anybody (lines, stoop, glasses, cane, thin hair; hair on the skull
-instead of the shell that reads as a cap). Everything left of the Baker career is listed in `docs/narrative/README.md`.
+The Stone Oven's ground floor is fitted out as its approved design (ADR-0059, ADR-0062): `World/rules/fitouts.json`, named
+by the lot (`"fitout": "stone_oven"`), closes a room of 9 by 7.5 m in the building's street corner with partitions (the owner, 2026-11-26: "make the bakery
+room smaller with a partition wall", then "move the shop to a corner of the building, so it can be seen through windows
+while people walk on the street outside"): its outer walls are the shop front on Baker Street and the side wall's three
+arched windows on the cross street, the shop's door is moved to the corner, the stair to the building's east end, and a
+doorway in the partition leads on to the stair. In it stand the design's own pieces: the plank door to the alley at the
+back on the left, the oven beside it, the racks with the Mother's crock at the back on the right, the proofing room's
+door and a second rack on the partition, the price board and the flour sacks under the side windows, the kneading bench
+before the oven, the counter at the front on the right, and kit 18's three-shade pendants (one light each), with the
+oven's fire and the shades lit. The four staff and the customers' places stand in the room (moved in
+`World/city_01/blocks/b_7_7.json`). Every enterable shop's front panes are now clear glass, as a hollow storey's windows
+are, so a shop is seen into from the street (they were opaque orange from both sides). None of the grocer's shelves, tills and fridges (`BrixFurnishFloor`, meshes made by
+`Tools/blender/unreal_bakery_50.py` and imported into `/Game/Furniture`; `CITY013_the_stone_oven_is_fitted_out_by_its_design`).
+Noor (r0262) wears her approved look (`World/rules/cast_looks.json`, `BrixApplyCastLooks`): an olive dress to the shin with
+short sleeves, a cream bib apron, bare legs and brown shoes, grey hair in a bun on the crown with locks swept back along the
+hairline, and age (creases at the brow, the eyes and from nose to mouth, paler lips, fainter cheeks), drawn only for a cast
+look, so everyone else is as before (`QST014_noor_wears_her_approved_look`; ART004 unchanged). Looked at beside the
+references on 2026-11-26: `Art/StyleTests/unreal_bakery_50/` (look_check: 10 pictures, 0 fail).
+Not yet, of the Stone Oven and Noor (the look gate): the room has no ceiling beams and is brighter and flatter than the
+reference, its corners not darker (G1); from the street by day the room reads dim behind its glass, as the eye is set for
+the street; after dusk the side windows show the town's lit night panes, which glow and hide the room (the corner at 20:00
+burns 5 % of the picture with them and the low sun on the gable); the shop front has the grocer's crates of produce on
+the pavement, not bread; the oven's fire is a few lit boxes,
+small beside the reference's; the pendants' shades hang at 1.7 m, where a tall player's head passes through them (no
+collision); the ceiling carries the engine's blotches (G3, as in every shop); the rest of the shop behind the partitions
+is empty and unlit, and the bakery's upper floors are still furnished as a grocer's store and rooms; in a talk the camera
+can come close behind a resident's head in so small a room. Noor has no stoop, her lines are fainter than the reference's, and under the locks her hair is still the shell.
+Nobody else has age values or a look of their own. After the clear shop fronts the look tour (66 stops) moved only at `street_2000`, whose crushed blacks went from 0.18 to
+0.12 with no shop front in view: not explained, the baseline not rewritten; its fog, snow and Eastgate-from-above stops
+fail the light-and-shade rule as they did at the baseline.
+Everything left of the Baker career is listed in `docs/narrative/README.md`.
 Not yet: in a scene the camera comes in as close as in a talk, so the player's shoulder fills a side of the picture;
 lines said by somebody else are murmured in the voice of the person spoken to; none of the story is voiced; the log
-does not show a career's rank; talks happen wherever the person's day has put them; the Stone Oven Bakery (b_7_7_l2) is a bakery by name, goods and
-staff, but inside it is still fitted as a grocer's, with shelves and tills, and it has two more staff than the story's
-Noor and Pip (ADR-0056); the story has been played through in the game only
+does not show a career's rank; talks happen wherever the person's day has put them; the Stone Oven Bakery (b_7_7_l2) has two more staff than the story's
+Noor and Pip (ADR-0056), and Noor's day puts her at work from 08:00, not from four as the story has it; the story has been played through in the game only
 as far as those two pictures, the rest by test.
 The quest lines and daily jobs are the slice's (economy.js Quests, a port of `Tools/citysim/quests.py`): `BrixWorld/BrixQuests`
 reads them from World/rules/quests.json (in `Game/Data/life.json`), with stages whose goal is a talk, a place, a thing

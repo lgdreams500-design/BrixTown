@@ -421,6 +421,68 @@ bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError)
 		}
 	}
 
+	// rooms fitted out by their designs (World/rules/fitouts.json; CITY-013, ADR-0059); a city with none has no file
+	TMap<FString, TSharedPtr<const FBrixFitout>> Fitouts;
+	if (const FString FitPath = FPaths::Combine(RulesDir, TEXT("fitouts.json")); FPaths::FileExists(FitPath))
+	{
+		TSharedPtr<FJsonObject> Fj;
+		if (!ReadJson(FitPath, Fj, OutError)) return false;
+		const TSharedPtr<FJsonObject>* All = nullptr;
+		if (Fj->TryGetObjectField(TEXT("fitouts"), All))
+			for (const auto& KV : (*All)->Values)
+			{
+				const TSharedPtr<FJsonObject> O = KV.Value->AsObject();
+				if (!O.IsValid()) continue;
+				TSharedPtr<FBrixFitout> F = MakeShared<FBrixFitout>();
+				F->Name = KV.Key; F->Line = Str(O, TEXT("line")); F->Floor = (int32)Num(O, TEXT("floor")); F->LampDrop = Num(O, TEXT("lamp_drop"), 0.85);
+				auto V3 = [](const TSharedPtr<FJsonObject>& X, const TCHAR* K, const FVector3f& Def)
+				{
+					const TArray<TSharedPtr<FJsonValue>>* A = nullptr;
+					return X->TryGetArrayField(K, A) && A->Num() >= 3 ? FVector3f((float)(*A)[0]->AsNumber(), (float)(*A)[1]->AsNumber(), (float)(*A)[2]->AsNumber()) : Def;
+				};
+				const TArray<TSharedPtr<FJsonValue>>* Arr = nullptr;
+				if (O->TryGetArrayField(TEXT("pieces"), Arr))
+					for (const TSharedPtr<FJsonValue>& PV : *Arr)
+					{
+						const TSharedPtr<FJsonObject> P = PV->AsObject();
+						FBrixFitoutPiece& Pc = F->Pieces.AddDefaulted_GetRef();
+						Pc.Piece = Str(P, TEXT("piece")); Pc.Faces = Str(P, TEXT("faces")); Pc.Along = Num(P, TEXT("along")); Pc.In = Num(P, TEXT("in"));
+						Pc.Size = V3(P, TEXT("size"), FVector3f::ZeroVector);
+						P->TryGetBoolField(TEXT("hung"), Pc.bHung);
+					}
+				if (O->TryGetArrayField(TEXT("glow"), Arr))
+					for (const TSharedPtr<FJsonValue>& GV : *Arr)
+					{
+						const TSharedPtr<FJsonObject> G = GV->AsObject();
+						FBrixFitoutGlow& Gl = F->Glow.AddDefaulted_GetRef();
+						Gl.Along = Num(G, TEXT("along")); Gl.In = Num(G, TEXT("in")); Gl.Y0 = Num(G, TEXT("y0"));
+						Gl.Size = V3(G, TEXT("size"), FVector3f(.1f)); Gl.Colour = V3(G, TEXT("rgb"), FVector3f::OneVector);
+					}
+				if (O->TryGetArrayField(TEXT("walls"), Arr))
+					for (const TSharedPtr<FJsonValue>& WV : *Arr)
+					{
+						const TSharedPtr<FJsonObject> Wo = WV->AsObject();
+						if (!Wo.IsValid()) continue;
+						FBrixFitoutWall& Wl = F->Walls.AddDefaulted_GetRef();
+						Wl.From = Vec2(Wo, TEXT("from")); Wl.To = Vec2(Wo, TEXT("to"));
+						const TArray<TSharedPtr<FJsonValue>>* Ds = nullptr;
+						if (Wo->TryGetArrayField(TEXT("doors"), Ds))
+							for (const TSharedPtr<FJsonValue>& DV : *Ds)
+							{
+								const TArray<TSharedPtr<FJsonValue>>* XY = nullptr;
+								if (DV->TryGetArray(XY) && XY->Num() >= 2) Wl.Doors.Add(FVector2D((*XY)[0]->AsNumber(), (*XY)[1]->AsNumber()));
+							}
+					}
+				if (O->TryGetArrayField(TEXT("lamps"), Arr))
+					for (const TSharedPtr<FJsonValue>& LV : *Arr)
+					{
+						const TArray<TSharedPtr<FJsonValue>>* XY = nullptr;
+						if (LV->TryGetArray(XY) && XY->Num() >= 2) F->Lamps.Add(FVector2D((*XY)[0]->AsNumber(), (*XY)[1]->AsNumber()));
+					}
+				Fitouts.Add(FString(KV.Key), TSharedPtr<const FBrixFitout>(F));
+			}
+	}
+
 	const TArray<TSharedPtr<FJsonValue>>* BlockList = nullptr;
 	if (!Root->TryGetArrayField(TEXT("blocks"), BlockList))
 	{
@@ -478,6 +540,11 @@ bool LoadBrixCity(const FString& CityDir, FBrixCity& OutCity, FString& OutError)
 					}
 				const TSharedPtr<FJsonObject>* House = nullptr;
 				if (L->TryGetObjectField(TEXT("house"), House) && HouseStyles.IsValid()) Lot.House = HouseLook(HouseStyles, *House);
+				if (const FString Fo = Str(L, TEXT("fitout")); !Fo.IsEmpty())
+				{
+					if (const TSharedPtr<const FBrixFitout>* F = Fitouts.Find(Fo)) Lot.Fitout = *F;
+					else { OutError = FString::Printf(TEXT("%s: no fit-out called %s in fitouts.json"), *Lot.Id, *Fo); return false; }
+				}
 			}
 		}
 		const TArray<TSharedPtr<FJsonValue>>* Trees = nullptr;

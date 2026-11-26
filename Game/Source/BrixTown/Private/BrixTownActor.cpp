@@ -660,7 +660,8 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 				}
 				// an enterable shop: its door is the pane nearest the lot's door (BrixDoorwayOf), standing open; the rest are glass
 				if (FMath::Abs((A + B2) / 2 - Dw.Along) < 1e-3f) { Piece(TEXT("SM_Kit_ShopDoorOpen"), (A + B2) / 2, 0.f, FVector(B2 - A, 1, 1), FLinearColor::Gray, OpeningCullDistance); continue; }
-				Piece(TEXT("SM_Kit_ShopPane"), (A + B2) / 2, 0.f, FVector(B2 - A, 1, 1), FLinearColor::Gray, OpeningCullDistance);
+				// its glass clear, as a hollow storey's windows are (M_Clear), so the shop is seen from the street and the street from it
+				if (UStaticMesh* M = Kit(TEXT("SM_Kit_ShopPane"))) Add(Group(M, false, OpeningCullDistance, true), FTransform(Face, At(OnWall((A + B2) / 2, 0.f), 0.f), FVector(B2 - A, 1, 1)), FLinearColor::Gray);
 				BlockAt(OnWall((A + B2) / 2, -t / 2), 0.f, ShopTop, Yaw, B2 - A + ShopPier, t);
 			}
 			Piece(TEXT("SM_Kit_ShopFascia"), 0.f, 0.f, FVector(Wd - 0.5f, 1, 1), FLinearColor::Gray, OpeningCullDistance);
