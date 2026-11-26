@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-ART-DIRECTION
 title: Brix Town — Art direction (locked look)
-version: 1.11.0
+version: 1.11.1
 status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22, interiors and furniture on 2026-11-22, the menu's look on 2026-11-23, the house colourways and the house plan with its furnishing levels on 2026-11-23, every other building's colourways and the row houses and flats inside on 2026-11-24
 last_updated: 2026-11-26
 relates_to: [FURN-003, ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
@@ -46,7 +46,7 @@ haze, with small pools of lantern light in the shade.
 | W4 | Palette is **muted and warm**. Colour comes from a few dull accents (shutters, awnings, cloth), never from saturated walls. | See §2.3. |
 | W5 | Light is **low and directional**, warm sun against cool sky fill, with **haze** that lightens distance and shows light shafts. | Far end of a street is visibly paler than the near end. |
 | W6 | **Lanterns and lit windows** give warm pools in shade and carry the scene at dusk. | At dusk the street is still readable without the sun. |
-| W7 | The same place must read clearly at **morning, midday and dusk**; only light and haze change. | `Art/Reference/World/WorldHours.png`. |
+| W7 | The same place must read clearly at **morning, midday and dusk**; only light and haze change. | `Art/Reference/World/WorldAlley_*.jpg`, `WorldMarketSquare_*.jpg` (every hour and weather). |
 | W8 | **No painterly or outline post-process.** The image is the plain render. | Owner chose the raw render over the filtered one. |
 
 ### 2.3 Palette
@@ -274,4 +274,5 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | 1.9.0 | 2026-11-24 | Every other building's colourways and the row houses and flats inside: the owner approved look tests building_styles_22, home_interiors_22 and house_outside_23 (ADR-0036): §2.9 and nine references. |
 | 1.10.0 | 2026-11-26 | Old age, Noor and the Stone Oven inside (ADR-0059): rule C9, references `character_elders.png`, `character_noor.png`, `bakery_inside_day.png`, `bakery_inside_four.png`. |
 | 1.9.1 | 2026-11-24 | §5: Eastgate Mall's sculpted shell noted as built in the locked materials, with no rule or reference image yet (ADR-0037). No rule or reference changed. |
+| 1.11.1 | 2026-11-26 | W7's check is the alley and Market Square at every hour and weather (`WorldAlley`, `WorldMarketSquare`); `WorldHours.png` retired. |
 | 1.11.0 | 2026-11-26 | References organised (ADR-0061): a folder per category, every file named `<Category><Subject>[_<Variant>]`, one list in `Art/Reference/catalog.json` and a page to review them (`Art/Reference/index.html`, written by `Tools/reference_catalog.py`); §1's table replaced by it. The kit-18 rooms are references (`IndoorRooms`); `interior_room_daylight.png`, `vehicles_soft_box.png` and `vehicles_classic.png` retired to `Art/Retired/`. |
