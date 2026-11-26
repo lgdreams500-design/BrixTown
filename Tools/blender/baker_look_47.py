@@ -1,7 +1,7 @@
-"""Brix Town - baker look 45: Noor, the master baker of the Stone Oven, and the bakery inside (QST-014; look test).
+"""Brix Town - baker look 47: Noor, the master baker of the Stone Oven, and the bakery inside (QST-014; look test).
 
 Headless:
-    blender-launcher.exe -b --factory-startup --python Tools/blender/baker_look_45.py
+    blender-launcher.exe -b --factory-startup --python Tools/blender/baker_look_47.py
 Quick checks: WASTED_ONLY=noor,bakery_day WASTED_SAMPLES=24 WASTED_SCALE=50; WASTED_ROOT is the checkout (default: this file's).
 
 Builds on furniture_kit_18.py (and through it kit 17, the car kit, the building kit, old_town_04.py): the same painted
@@ -16,7 +16,7 @@ counts everything; hides her hands. Three options, the same woman dressed three 
 The bakery: a stone oven with an arched mouth and a wood store under it, a kneading bench, racks of loaves, flour
 sacks, the counter, and the crock of the Mother on the top shelf.
 
-Renders go to Art/StyleTests/baker_look_45/:
+Renders go to Art/StyleTests/baker_look_47/:
     noor.png          the three options, full height
     noor_close.png    the same three, from the waist up
     bakery_day.png    the bakery in the kit daylight, Noor (option A) at the bench
@@ -36,7 +36,7 @@ _k = open(ROOT + "/Tools/blender/furniture_kit_18.py", encoding="utf-8").read()
 _k = _k[:_k.rstrip().rfind("\nmain()")]                   # kit 18's parts and pieces, without running it
 exec(compile(_k, "furniture_kit_18_helpers", "exec"), globals())
 
-NAME = "baker_look_45"
+NAME = "baker_look_47"
 OUT = ROOT + "/Art/StyleTests"
 SRC = ROOT + "/Art/Source/StyleTests"
 OUT_DIR = OUT + "/" + NAME
