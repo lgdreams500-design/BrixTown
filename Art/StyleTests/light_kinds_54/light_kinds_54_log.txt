@@ -1,0 +1,74 @@
+22:55:01 Blender 5.3.0, light kinds 54, from C:/Projects/Wasted/.claude/worktrees/lights-color-requirements-da7694/
+22:55:01 the desk lamp stands 0.83 m up, on the record cabinet
+22:55:01 the candles stand 1.35 m up, on the piano
+22:55:01 lights: Lamp_Light (table_lamp), FLamp_Light (floor_lamp), Pen_Light (ceiling_pendant), Dl_Light (desk_lamp), Wl_Light (wall_light), Cl_Light (ceiling_light), Cc_Light (cool_ceiling_light), Ln_Light (wall_lantern), Nb_Light (neon_blue), Ng_Light (neon_green), Nr_Light (neon_red), Na_Light (neon_amber), Fp_Light (a fire), Cd_Light (candles)
+22:55:01 lit glass and flames: Cc_Shade, Cd_Flame0, Cd_Flame1, Cd_Flame2, Cl_Shade, Dl_Shade, FLamp_Shade, Fp_Fire, Lamp_Shade, Ln_Bowl, Na_Tube, Nb_Tube, Ng_Tube, Nr_Tube, Pen_Shade, Wl_Bowl
+22:55:03   the lamp-lit night: the eye at +0.74 stops for a mean of 70
+22:55:03 the lamp-lit night's exposure: +0.74 stops (3 of the room's own lights)
+22:55:12 Own_NightLamps.jpg rendered in 8.7s
+22:55:12 FloorLamp: 1 light(s) of 80 W, 2950K, colour [1.0, 0.83, 0.65]
+22:55:20 Fixed_FloorLamp.jpg rendered in 8.7s
+22:55:23   FloorLamp: the eye at +1.26 stops for a mean of 70
+22:55:23   FloorLamp: the eye +0.52 stops from the lamp-lit night's
+22:55:32 Eye_FloorLamp.jpg rendered in 8.7s
+22:55:32 TableLamp: 1 light(s) of 35 W, 2950K, colour [1.0, 0.83, 0.65]
+22:55:41 Fixed_TableLamp.jpg rendered in 8.7s
+22:55:44   TableLamp: the eye at +2.23 stops for a mean of 70
+22:55:44   TableLamp: the eye +1.49 stops from the lamp-lit night's
+22:55:53 Eye_TableLamp.jpg rendered in 8.8s
+22:55:53 DeskLamp: 1 light(s) of 30 W, 3600K, colour [1.0, 0.89, 0.78]
+22:56:01 Fixed_DeskLamp.jpg rendered in 8.9s
+22:56:05   DeskLamp: the eye at +2.43 stops for a mean of 70
+22:56:05   DeskLamp: the eye +1.69 stops from the lamp-lit night's
+22:56:13 Eye_DeskLamp.jpg rendered in 8.8s
+22:56:13 WallLight: 1 light(s) of 40 W, 2950K, colour [1.0, 0.83, 0.65]
+22:56:23 Fixed_WallLight.jpg rendered in 9.1s
+22:56:26   WallLight: the eye at +1.49 stops for a mean of 70
+22:56:26   WallLight: the eye +0.75 stops from the lamp-lit night's
+22:56:35 Eye_WallLight.jpg rendered in 9.0s
+22:56:35 Pendant: 1 light(s) of 70 W, 2950K, colour [1.0, 0.83, 0.65]
+22:56:43 Fixed_Pendant.jpg rendered in 8.6s
+22:56:46   Pendant: the eye at -0.61 stops for a mean of 70
+22:56:46   Pendant: the eye -1.35 stops from the lamp-lit night's
+22:56:55 Eye_Pendant.jpg rendered in 8.6s
+22:56:55 CeilingLight: 1 light(s) of 90 W, 4000K, colour [1.0, 0.93, 0.86]
+22:57:05 Fixed_CeilingLight.jpg rendered in 9.6s
+22:57:08   CeilingLight: the eye at -0.96 stops for a mean of 70
+22:57:08   CeilingLight: the eye -1.70 stops from the lamp-lit night's
+22:57:15 Eye_CeilingLight.jpg rendered in 7.3s
+22:57:15 Candles: 1 light(s) of 3 W, a colour, colour [1.0, 0.24, 0.06]
+22:57:20 Fixed_Candles.jpg rendered in 5.1s
+22:57:22   Candles: the eye at +4.18 stops for a mean of 70
+22:57:22   Candles: the eye +2.50 stops from the lamp-lit night's
+22:57:28 Eye_Candles.jpg rendered in 6.0s
+22:57:28 CoolCeilingLight: 1 light(s) of 90 W, 5600K, colour [0.84, 0.92, 1.0]
+22:57:34 Fixed_CoolCeilingLight.jpg rendered in 5.7s
+22:57:36   CoolCeilingLight: the eye at -0.90 stops for a mean of 70
+22:57:36   CoolCeilingLight: the eye -1.64 stops from the lamp-lit night's
+22:57:41 Eye_CoolCeilingLight.jpg rendered in 5.7s
+22:57:41 NeonBlue: 4 light(s) of 142 W, a colour, colour [0.08, 0.32, 1.0]
+22:57:48 Fixed_NeonBlue.jpg rendered in 6.4s
+22:57:50   NeonBlue: the eye at +0.28 stops for a mean of 70
+22:57:50   NeonBlue: the eye -0.46 stops from the lamp-lit night's
+22:57:56 Eye_NeonBlue.jpg rendered in 6.6s
+22:57:56 NeonGreen: 4 light(s) of 140 W, a colour, colour [0.12, 1.0, 0.3]
+22:58:03 Fixed_NeonGreen.jpg rendered in 6.4s
+22:58:05   NeonGreen: the eye at +0.35 stops for a mean of 70
+22:58:05   NeonGreen: the eye -0.39 stops from the lamp-lit night's
+22:58:11 Eye_NeonGreen.jpg rendered in 6.3s
+22:58:11 NeonRed: 4 light(s) of 142 W, a colour, colour [1.0, 0.08, 0.16]
+22:58:17 Fixed_NeonRed.jpg rendered in 6.2s
+22:58:19   NeonRed: the eye at +0.34 stops for a mean of 70
+22:58:19   NeonRed: the eye -0.40 stops from the lamp-lit night's
+22:58:25 Eye_NeonRed.jpg rendered in 6.2s
+22:58:25 NeonAmber: 4 light(s) of 142 W, a colour, colour [1.0, 0.6, 0.08]
+22:58:31 Fixed_NeonAmber.jpg rendered in 6.2s
+22:58:33   NeonAmber: the eye at +0.28 stops for a mean of 70
+22:58:33   NeonAmber: the eye -0.46 stops from the lamp-lit night's
+22:58:40 Eye_NeonAmber.jpg rendered in 6.4s
+22:58:40 WallLantern: 1 light(s) of 40 W, 2200K, colour [1.0, 0.55, 0.22]
+22:58:46 Fixed_WallLantern.jpg rendered in 6.3s
+22:58:48   WallLantern: the eye at +1.83 stops for a mean of 70
+22:58:48   WallLantern: the eye +1.10 stops from the lamp-lit night's
+22:58:54 Eye_WallLantern.jpg rendered in 6.3s
+22:58:54 DONE

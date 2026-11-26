@@ -32,6 +32,11 @@
    "about": "The pieces themselves: the four style lines, sizes and materials."
   },
   {
+   "id": "Ornaments",
+   "title": "Ornaments",
+   "about": "The small things a room or a street is dressed with: light fittings first, as objects in the four lines and each lighting a room."
+  },
+  {
    "id": "Vehicles",
    "title": "Vehicles",
    "about": "Cars, vans, buses and the tram."
@@ -420,6 +425,657 @@
    "issues": []
   },
   {
+   "id": "OrnamentsLightLines",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "The light fittings as objects, in the four style lines",
+   "files": [
+    "Ornaments/OrnamentsLightLines_Standing.jpg",
+    "Ornaments/OrnamentsLightLines_Hung.jpg",
+    "Ornaments/OrnamentsLightLines_Street.jpg"
+   ],
+   "locks": "Every light fitting of World/rules/lights.json as an object, laid out as the furniture lines are (the owner, 2026-11-26, with the picture of FurnitureLines: \"i wanted this kind of reference\"; \"some thing that can be transported easily into unreal\"): each a piece made as the furniture kits' pieces are, in Plain, Old Town, Workshop and Curve, standing in daylight with a person for scale. Three sheets, 27 fittings. Standing (on a floor or a table): floor lamp, arc floor lamp, table lamp, desk lamp, table lantern, candles, candelabra. Hung (on a wall or a ceiling): wall light, wall lantern, string lights, pendant, chandelier, ceiling light, ceiling panel, track spots, neon ring, and neon tubes in blue, green, red and amber. Street (the street's and the shops'; the owner: \"may be we should not leave out street lamps or shop fittings. only mall fitting can be left out\"): street lamp, square lamp, a wall lantern for a house wall, bollard light, a shop's sign and its lamp, shop pendant, shelf light. The home fittings are for the buying catalogue (the owner: \"can you add more of these lights. all of these will be made available in buying catalog\"). How each lights a room, its colour and the way its light falls, is on the room pictures (OrnamentsLight<Fitting>) and the colour sheet (Indoor, IndoorLightKinds).",
+   "approved": "proposed 2026-11-26, for the owner to review; pictures at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26: \"i wanted this kind of reference\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_SHEET=1), on the pieces and the sheet layout of Tools/blender/furniture_kit_17.py and furniture_kit_18.py",
+   "models": [
+    "World/rules/lights.json (the kinds, their named colours, strengths and prices)",
+    "Game/Content/Furniture (not exported yet: the fittings wait for this reference's approval, ADR-0066)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6 (I1 to I7)",
+   "was": [],
+   "issues": [
+    "The pieces of wall and the posts with an arm that the hung fittings are shown on are props of the sheet, not part of any piece; on the hung sheet they are bigger than the fittings.",
+    "Small fittings are hard to read at this distance (table lamps, candles, track spots); the standing sheet has much empty ground.",
+    "On the street sheet the tall lamps stand close: rows overlap and the square lamps' crossbars run into their neighbours; the Plain row is pale against the ground.",
+    "Daylight barely shows the colours of the lights; they are judged at night (IndoorLightKinds).",
+    "The neon tubes are the same in all four lines.",
+    "The table lamp stands on the ground with no table.",
+    "The wall light, ceiling light, neon tubes and every fitting added on 2026-11-26 (arc floor lamp, table lantern, wall lantern, chandelier, track spots, string lights, candelabra, neon ring, ceiling panel, and all seven of the street's and shops') are new designs made for this reference; none was an approved piece. The town's scripts lit the street with a plain lit box on a post, and the game's streets use one street lamp: which line it takes is the owner's to pick.",
+    "The first thirteen fittings are shown lighting the whole home room, the sixteen newer ones a plain corner: the two groups are not shown the same way. Every strength and price is an [ASSUMPTION]. Not in furnishing.json or the buying catalogue yet, and nothing exported to Unreal.",
+    "The first thirteen fittings are shown lighting the whole home room, the sixteen newer ones a plain corner: the two groups are not shown the same way. Every strength and price is an [ASSUMPTION]. Not in furnishing.json or the buying catalogue yet, and nothing exported to Unreal."
+   ]
+  },
+  {
+   "id": "OrnamentsLightFloorLamp",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Floor lamp (Warm white)",
+   "files": [
+    "Ornaments/OrnamentsLightFloorLamp.jpg"
+   ],
+   "locks": "The floor lamp: a light on the floor, in Warm white, 2950 K (linear 1, 0.83, 0.65), 80 W, a pool thrown down and round out of its shade (World/rules/lights.json, kind floor_lamp). Shown lit in the approved home room at night, alone, no moon and the fire out, with the eye set for it. Its colour is the named colour's, shared with every other fitting of that name; its strength is its own. Beside the other fittings: Indoor, IndoorLightKinds.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26: \"can you add individual light types in a dedicated tab called ornaments/furnishing\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_KINDS=FloorLamp; the Eye_ picture)",
+   "models": [
+    "World/rules/lights.json (kind floor_lamp, colour warm_white)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "The floor lamp and the desk lamp stand behind the person from this camera: the fitting itself is half hidden.",
+    "A picture of the room it lights, not of the fitting close up; night only. Its numbers are [ASSUMPTION] until approved."
+   ]
+  },
+  {
+   "id": "OrnamentsLightTableLamp",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Table lamp (Warm white)",
+   "files": [
+    "Ornaments/OrnamentsLightTableLamp.jpg"
+   ],
+   "locks": "The table lamp: a light on the table, in Warm white, 2950 K (linear 1, 0.83, 0.65), 35 W, a pool thrown down and round out of its shade (World/rules/lights.json, kind table_lamp). Shown lit in the approved home room at night, alone, no moon and the fire out, with the eye set for it. Its colour is the named colour's, shared with every other fitting of that name; its strength is its own. Beside the other fittings: Indoor, IndoorLightKinds.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26: \"can you add individual light types in a dedicated tab called ornaments/furnishing\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_KINDS=TableLamp; the Eye_ picture)",
+   "models": [
+    "World/rules/lights.json (kind table_lamp, colour warm_white)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "Looks like the floor lamp and the desk lamp but dimmer: one warm white.",
+    "A picture of the room it lights, not of the fitting close up; night only. Its numbers are [ASSUMPTION] until approved."
+   ]
+  },
+  {
+   "id": "OrnamentsLightDeskLamp",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Desk lamp (Soft white)",
+   "files": [
+    "Ornaments/OrnamentsLightDeskLamp.jpg"
+   ],
+   "locks": "The desk lamp: a light on the table, in Soft white, 3600 K (linear 1, 0.89, 0.78), 30 W, a pool thrown down and round out of its shade (World/rules/lights.json, kind desk_lamp). Shown lit in the approved home room at night, alone, no moon and the fire out, with the eye set for it. Its colour is the named colour's, shared with every other fitting of that name; its strength is its own. Beside the other fittings: Indoor, IndoorLightKinds.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26: \"can you add individual light types in a dedicated tab called ornaments/furnishing\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_KINDS=DeskLamp; the Eye_ picture)",
+   "models": [
+    "World/rules/lights.json (kind desk_lamp, colour soft_white)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "Soft white is barely different from Warm white; the lamp stands behind the person.",
+    "A picture of the room it lights, not of the fitting close up; night only. Its numbers are [ASSUMPTION] until approved."
+   ]
+  },
+  {
+   "id": "OrnamentsLightWallLight",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Wall light (Warm white)",
+   "files": [
+    "Ornaments/OrnamentsLightWallLight.jpg"
+   ],
+   "locks": "The wall light: a light on the wall, in Warm white, 2950 K (linear 1, 0.83, 0.65), 40 W, thrown up the wall (World/rules/lights.json, kind wall_light). Shown lit in the approved home room at night, alone, no moon and the fire out, with the eye set for it. Its colour is the named colour's, shared with every other fitting of that name; its strength is its own. Beside the other fittings: Indoor, IndoorLightKinds.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26: \"can you add individual light types in a dedicated tab called ornaments/furnishing\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_KINDS=WallLight; the Eye_ picture)",
+   "models": [
+    "World/rules/lights.json (kind wall_light, colour warm_white)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "Its bowl is small and hard to read as a fitting. Made for this reference: the kits have no wall light.",
+    "A picture of the room it lights, not of the fitting close up; night only. Its numbers are [ASSUMPTION] until approved."
+   ]
+  },
+  {
+   "id": "OrnamentsLightWallLantern",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Wall lantern (Lantern amber)",
+   "files": [
+    "Ornaments/OrnamentsLightWallLantern.jpg",
+    "Ornaments/OrnamentsLightWallLantern_Corner.jpg"
+   ],
+   "locks": "The wall lantern: a light on the wall, in Lantern amber, 2200 K (linear 1, 0.55, 0.22), 40 W, thrown up the wall (World/rules/lights.json, kind wall_lantern). Shown lit in the approved home room at night, alone, no moon and the fire out, with the eye set for it. Its colour is the named colour's, shared with every other fitting of that name; its strength is its own. Beside the other fittings: Indoor, IndoorLightKinds.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26: \"can you add individual light types in a dedicated tab called ornaments/furnishing\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_KINDS=WallLantern; the Eye_ picture)",
+   "models": [
+    "World/rules/lights.json (kind wall_lantern, colour lantern_amber)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "The wall light's fitting in the lantern's amber, made for this reference; a lantern of its own shape is not designed.",
+    "A picture of the room it lights, not of the fitting close up; night only. Its numbers are [ASSUMPTION] until approved.",
+    "The room picture shows the wall light's bowl in amber; the corner picture and the object sheet show the lantern's own shape, made later the same day.",
+    "In its corner picture the lantern's glass and halo are amber; the picture is dark, the eye opening no further than for the approved lamp-lit street."
+   ]
+  },
+  {
+   "id": "OrnamentsLightPendant",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Pendant (Warm white)",
+   "files": [
+    "Ornaments/OrnamentsLightPendant.jpg"
+   ],
+   "locks": "The pendant: a light on the ceiling, in Warm white, 2950 K (linear 1, 0.83, 0.65), 70 W, a pool thrown down and round out of its shade (World/rules/lights.json, kind ceiling_pendant). Shown lit in the approved home room at night, alone, no moon and the fire out, with the eye set for it. Its colour is the named colour's, shared with every other fitting of that name; its strength is its own. Beside the other fittings: Indoor, IndoorLightKinds.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26: \"can you add individual light types in a dedicated tab called ornaments/furnishing\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_KINDS=Pendant; the Eye_ picture)",
+   "models": [
+    "World/rules/lights.json (kind ceiling_pendant, colour warm_white)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "At the lamp-lit night's exposure it burns out and flattens the room; with the eye set for it, still flat.",
+    "A picture of the room it lights, not of the fitting close up; night only. Its numbers are [ASSUMPTION] until approved."
+   ]
+  },
+  {
+   "id": "OrnamentsLightCeilingLight",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Ceiling light (Neutral white)",
+   "files": [
+    "Ornaments/OrnamentsLightCeilingLight.jpg"
+   ],
+   "locks": "The ceiling light: a light on the ceiling, in Neutral white, 4000 K (linear 1, 0.93, 0.86), 90 W, a broad even light (World/rules/lights.json, kind ceiling_light). Shown lit in the approved home room at night, alone, no moon and the fire out, with the eye set for it. Its colour is the named colour's, shared with every other fitting of that name; its strength is its own. Beside the other fittings: Indoor, IndoorLightKinds.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26: \"can you add individual light types in a dedicated tab called ornaments/furnishing\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_KINDS=CeilingLight; the Eye_ picture)",
+   "models": [
+    "World/rules/lights.json (kind ceiling_light, colour neutral_white)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "The strongest fitting: it flattens the room, little shade under the furniture. Made for this reference: the kits have no ceiling light.",
+    "A picture of the room it lights, not of the fitting close up; night only. Its numbers are [ASSUMPTION] until approved."
+   ]
+  },
+  {
+   "id": "OrnamentsLightCoolCeilingLight",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Cool ceiling light (Cool white)",
+   "files": [
+    "Ornaments/OrnamentsLightCoolCeilingLight.jpg"
+   ],
+   "locks": "The cool ceiling light: a light on the ceiling, in Cool white, 5600 K (linear 0.84, 0.92, 1), 90 W, a broad even light (World/rules/lights.json, kind cool_ceiling_light). Shown lit in the approved home room at night, alone, no moon and the fire out, with the eye set for it. Its colour is the named colour's, shared with every other fitting of that name; its strength is its own. Beside the other fittings: Indoor, IndoorLightKinds.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26: \"can you add individual light types in a dedicated tab called ornaments/furnishing\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_KINDS=CoolCeilingLight; the Eye_ picture)",
+   "models": [
+    "World/rules/lights.json (kind cool_ceiling_light, colour cool_white)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "As the ceiling light: flat. Cool white is at the edge of the look (INTERIOR_STYLE: no fluorescent white light).",
+    "A picture of the room it lights, not of the fitting close up; night only. Its numbers are [ASSUMPTION] until approved."
+   ]
+  },
+  {
+   "id": "OrnamentsLightCandles",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Candles (Fire red)",
+   "files": [
+    "Ornaments/OrnamentsLightCandles.jpg"
+   ],
+   "locks": "The candles: a light on the table, in Fire red (linear 1, 0.24, 0.06), 6 W, a flame (World/rules/lights.json, kind candles). Shown lit in the approved home room at night, alone, no moon and the fire out, with the eye set for it. Its colour is the named colour's, shared with every other fitting of that name; its strength is its own. Beside the other fittings: Indoor, IndoorLightKinds.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26: \"can you add individual light types in a dedicated tab called ornaments/furnishing\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_KINDS=Candles; the Eye_ picture)",
+   "models": [
+    "World/rules/lights.json (kind candles, colour fire_red)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "Lit at 3 W, as the hour script lights every fire, where the file says 6 W; with the eye opened the room goes orange-red.",
+    "A picture of the room it lights, not of the fitting close up; night only. Its numbers are [ASSUMPTION] until approved."
+   ]
+  },
+  {
+   "id": "OrnamentsLightNeonBlue",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Neon tube, blue (Neon blue)",
+   "files": [
+    "Ornaments/OrnamentsLightNeonBlue.jpg"
+   ],
+   "locks": "The neon tube, blue: a light on the wall, in Neon blue (linear 0.08, 0.32, 1), 10 W, a broad even light (World/rules/lights.json, kind neon_blue). Shown lit in the approved home room at night, with the room's own floor lamp, table lamp and fire lit, as an accent, with the eye set for it. Its colour is the named colour's, shared with every other fitting of that name; its strength is its own. Beside the other fittings: Indoor, IndoorLightKinds.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26: \"can you add individual light types in a dedicated tab called ornaments/furnishing\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_KINDS=NeonBlue; the Eye_ picture)",
+   "models": [
+    "World/rules/lights.json (kind neon_blue, colour neon_blue)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "A saturated colour, against the palette rule W4; allowed as a weak accent (ADR-0067). Shown with the room's own lamps and fire lit.",
+    "A picture of the room it lights, not of the fitting close up; night only. Its numbers are [ASSUMPTION] until approved."
+   ]
+  },
+  {
+   "id": "OrnamentsLightNeonGreen",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Neon tube, green (Neon green)",
+   "files": [
+    "Ornaments/OrnamentsLightNeonGreen.jpg"
+   ],
+   "locks": "The neon tube, green: a light on the wall, in Neon green (linear 0.12, 1, 0.3), 8 W, a broad even light (World/rules/lights.json, kind neon_green). Shown lit in the approved home room at night, with the room's own floor lamp, table lamp and fire lit, as an accent, with the eye set for it. Its colour is the named colour's, shared with every other fitting of that name; its strength is its own. Beside the other fittings: Indoor, IndoorLightKinds.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26: \"can you add individual light types in a dedicated tab called ornaments/furnishing\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_KINDS=NeonGreen; the Eye_ picture)",
+   "models": [
+    "World/rules/lights.json (kind neon_green, colour neon_green)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "A saturated colour, against W4; allowed as a weak accent (ADR-0067). Green light turns skin sickly where it falls.",
+    "A picture of the room it lights, not of the fitting close up; night only. Its numbers are [ASSUMPTION] until approved."
+   ]
+  },
+  {
+   "id": "OrnamentsLightNeonRed",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Neon tube, red (Neon red)",
+   "files": [
+    "Ornaments/OrnamentsLightNeonRed.jpg"
+   ],
+   "locks": "The neon tube, red: a light on the wall, in Neon red (linear 1, 0.08, 0.16), 10 W, a broad even light (World/rules/lights.json, kind neon_red). Shown lit in the approved home room at night, with the room's own floor lamp, table lamp and fire lit, as an accent, with the eye set for it. Its colour is the named colour's, shared with every other fitting of that name; its strength is its own. Beside the other fittings: Indoor, IndoorLightKinds.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26: \"can you add individual light types in a dedicated tab called ornaments/furnishing\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_KINDS=NeonRed; the Eye_ picture)",
+   "models": [
+    "World/rules/lights.json (kind neon_red, colour neon_red)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "Reads pink rather than red, and tints more of the room than the other tubes at the same strength. Against W4; a weak accent (ADR-0067).",
+    "A picture of the room it lights, not of the fitting close up; night only. Its numbers are [ASSUMPTION] until approved."
+   ]
+  },
+  {
+   "id": "OrnamentsLightNeonAmber",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Neon tube, amber (Neon amber)",
+   "files": [
+    "Ornaments/OrnamentsLightNeonAmber.jpg"
+   ],
+   "locks": "The neon tube, amber: a light on the wall, in Neon amber (linear 1, 0.6, 0.08), 10 W, a broad even light (World/rules/lights.json, kind neon_amber). Shown lit in the approved home room at night, with the room's own floor lamp, table lamp and fire lit, as an accent, with the eye set for it. Its colour is the named colour's, shared with every other fitting of that name; its strength is its own. Beside the other fittings: Indoor, IndoorLightKinds.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26: \"can you add individual light types in a dedicated tab called ornaments/furnishing\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_KINDS=NeonAmber; the Eye_ picture)",
+   "models": [
+    "World/rules/lights.json (kind neon_amber, colour neon_amber)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "Hard to tell from the fire-lit room it is shown in.",
+    "A picture of the room it lights, not of the fitting close up; night only. Its numbers are [ASSUMPTION] until approved."
+   ]
+  },
+  {
+   "id": "OrnamentsLightArcFloorLamp",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Arc floor lamp (Warm white)",
+   "files": [
+    "Ornaments/OrnamentsLightArcFloorLamp.jpg"
+   ],
+   "locks": "The arc floor lamp: a light on the floor, in Warm white, 2950 K (linear 1, 0.83, 0.65), 80 W, a pool thrown down and round (World/rules/lights.json, kind arc_floor_lamp). Shown lit alone at night in a plain corner (a floor, a back wall, a side wall, a ceiling), with a person for scale, to show how its light spreads (the owner, 2026-11-26: \"may be not full room but just small portion ... idea is to show light spread\"). Its shape in the four lines: OrnamentsLightLines.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the corner pictures: \"yes\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_VIG=1 WASTED_KINDS=ArcFloorLamp)",
+   "models": [
+    "World/rules/lights.json (kind arc_floor_lamp, colour warm_white)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "Its pool falls to one side, under the shade at the end of the arc.",
+    "The person is mostly a dark shape: the light is behind or above them. Night only, the Old Town line only; a new design, not an approved piece; its numbers are [ASSUMPTION]."
+   ]
+  },
+  {
+   "id": "OrnamentsLightTableLantern",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Table lantern (Lantern amber)",
+   "files": [
+    "Ornaments/OrnamentsLightTableLantern.jpg"
+   ],
+   "locks": "The table lantern: a light on the table, in Lantern amber, 2200 K (linear 1, 0.55, 0.22), 25 W, a pool thrown down and round (World/rules/lights.json, kind table_lantern). Shown lit alone at night in a plain corner (a floor, a back wall, a side wall, a ceiling), with a person for scale, to show how its light spreads (the owner, 2026-11-26: \"may be not full room but just small portion ... idea is to show light spread\"). Its shape in the four lines: OrnamentsLightLines.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the corner pictures: \"yes\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_VIG=1 WASTED_KINDS=TableLantern)",
+   "models": [
+    "World/rules/lights.json (kind table_lantern, colour lantern_amber)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "A low amber ring of light round the table it stands on. A dark picture: the eye opens no further than for the approved lamp-lit street.",
+    "The person is mostly a dark shape: the light is behind or above them. Night only, the Old Town line only; a new design, not an approved piece; its numbers are [ASSUMPTION]."
+   ]
+  },
+  {
+   "id": "OrnamentsLightChandelier",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Chandelier (Warm white)",
+   "files": [
+    "Ornaments/OrnamentsLightChandelier.jpg"
+   ],
+   "locks": "The chandelier: a light on the ceiling, in Warm white, 2950 K (linear 1, 0.83, 0.65), 100 W, a broad even light (World/rules/lights.json, kind chandelier). Shown lit alone at night in a plain corner (a floor, a back wall, a side wall, a ceiling), with a person for scale, to show how its light spreads (the owner, 2026-11-26: \"may be not full room but just small portion ... idea is to show light spread\"). Its shape in the four lines: OrnamentsLightLines.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the corner pictures: \"yes\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_VIG=1 WASTED_KINDS=Chandelier)",
+   "models": [
+    "World/rules/lights.json (kind chandelier, colour warm_white)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "Washes the ceiling and the walls; the strongest fitting (100 W).",
+    "The person is mostly a dark shape: the light is behind or above them. Night only, the Old Town line only; a new design, not an approved piece; its numbers are [ASSUMPTION]."
+   ]
+  },
+  {
+   "id": "OrnamentsLightTrackSpots",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Track spots (Neutral white)",
+   "files": [
+    "Ornaments/OrnamentsLightTrackSpots.jpg"
+   ],
+   "locks": "The track spots: a light on the ceiling, in Neutral white, 4000 K (linear 1, 0.93, 0.86), 75 W, a pool thrown down and round (World/rules/lights.json, kind track_spots). Shown lit alone at night in a plain corner (a floor, a back wall, a side wall, a ceiling), with a person for scale, to show how its light spreads (the owner, 2026-11-26: \"may be not full room but just small portion ... idea is to show light spread\"). Its shape in the four lines: OrnamentsLightLines.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the corner pictures: \"yes\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_VIG=1 WASTED_KINDS=TrackSpots)",
+   "models": [
+    "World/rules/lights.json (kind track_spots, colour neutral_white)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "Throws its light down and onto the wall; the ceiling over it stays dark.",
+    "The person is mostly a dark shape: the light is behind or above them. Night only, the Old Town line only; a new design, not an approved piece; its numbers are [ASSUMPTION]."
+   ]
+  },
+  {
+   "id": "OrnamentsLightStringLights",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "String lights (Warm white)",
+   "files": [
+    "Ornaments/OrnamentsLightStringLights.jpg"
+   ],
+   "locks": "The string lights: a light on the wall, in Warm white, 2950 K (linear 1, 0.83, 0.65), 12 W, a broad even light (World/rules/lights.json, kind string_lights). Shown lit alone at night in a plain corner (a floor, a back wall, a side wall, a ceiling), with a person for scale, to show how its light spreads (the owner, 2026-11-26: \"may be not full room but just small portion ... idea is to show light spread\"). Its shape in the four lines: OrnamentsLightLines.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the corner pictures: \"yes\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_VIG=1 WASTED_KINDS=StringLights)",
+   "models": [
+    "World/rules/lights.json (kind string_lights, colour warm_white)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "A small bright patch on the wall behind it; its bulbs burn together into one glare at this exposure.",
+    "The person is mostly a dark shape: the light is behind or above them. Night only, the Old Town line only; a new design, not an approved piece; its numbers are [ASSUMPTION]."
+   ]
+  },
+  {
+   "id": "OrnamentsLightCandelabra",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Candelabra (Fire red)",
+   "files": [
+    "Ornaments/OrnamentsLightCandelabra.jpg"
+   ],
+   "locks": "The candelabra: a light on the floor, in Fire red (linear 1, 0.24, 0.06), 9 W, a flame (World/rules/lights.json, kind candelabra). Shown lit alone at night in a plain corner (a floor, a back wall, a side wall, a ceiling), with a person for scale, to show how its light spreads (the owner, 2026-11-26: \"may be not full room but just small portion ... idea is to show light spread\"). Its shape in the four lines: OrnamentsLightLines.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the corner pictures: \"yes\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_VIG=1 WASTED_KINDS=Candelabra)",
+   "models": [
+    "World/rules/lights.json (kind candelabra, colour fire_red)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "With the eye opened for so weak a light the whole corner goes orange-red, as with the candles.",
+    "The person is mostly a dark shape: the light is behind or above them. Night only, the Old Town line only; a new design, not an approved piece; its numbers are [ASSUMPTION]."
+   ]
+  },
+  {
+   "id": "OrnamentsLightNeonRing",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Neon ring (Neon red)",
+   "files": [
+    "Ornaments/OrnamentsLightNeonRing.jpg"
+   ],
+   "locks": "The neon ring: a light on the wall, in Neon red (linear 1, 0.08, 0.16), 10 W, a broad even light (World/rules/lights.json, kind neon_ring). Shown lit alone at night in a plain corner (a floor, a back wall, a side wall, a ceiling), with a person for scale, to show how its light spreads (the owner, 2026-11-26: \"may be not full room but just small portion ... idea is to show light spread\"). Its shape in the four lines: OrnamentsLightLines.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the corner pictures: \"yes\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_VIG=1 WASTED_KINDS=NeonRing)",
+   "models": [
+    "World/rules/lights.json (kind neon_ring, colour neon_red)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "Alone in a corner it is the only light, so the whole corner is red: an accent is meant to be seen with other lamps lit (ADR-0067).",
+    "The person is mostly a dark shape: the light is behind or above them. Night only, the Old Town line only; a new design, not an approved piece; its numbers are [ASSUMPTION]."
+   ]
+  },
+  {
+   "id": "OrnamentsLightCeilingPanel",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Ceiling panel (Cool white)",
+   "files": [
+    "Ornaments/OrnamentsLightCeilingPanel.jpg"
+   ],
+   "locks": "The ceiling panel: a light on the ceiling, in Cool white, 5600 K (linear 0.84, 0.92, 1), 90 W, a broad even light (World/rules/lights.json, kind ceiling_panel). Shown lit alone at night in a plain corner (a floor, a back wall, a side wall, a ceiling), with a person for scale, to show how its light spreads (the owner, 2026-11-26: \"may be not full room but just small portion ... idea is to show light spread\"). Its shape in the four lines: OrnamentsLightLines.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the corner pictures: \"yes\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_VIG=1 WASTED_KINDS=CeilingPanel)",
+   "models": [
+    "World/rules/lights.json (kind ceiling_panel, colour cool_white)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "A broad even wash; Cool white is at the edge of the look.",
+    "The person is mostly a dark shape: the light is behind or above them. Night only, the Old Town line only; a new design, not an approved piece; its numbers are [ASSUMPTION]."
+   ]
+  },
+  {
+   "id": "OrnamentsLightShopPendant",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Shop pendant (Warm white)",
+   "files": [
+    "Ornaments/OrnamentsLightShopPendant.jpg"
+   ],
+   "locks": "The shop pendant: a light on the ceiling, in Warm white, 2950 K (linear 1, 0.83, 0.65), 70 W, a pool thrown down and round (World/rules/lights.json, kind shop_pendant). Shown lit alone at night in a plain corner (a floor, a back wall, a side wall, a ceiling), with a person for scale, to show how its light spreads (the owner, 2026-11-26: \"may be not full room but just small portion ... idea is to show light spread\"). Its shape in the four lines: OrnamentsLightLines.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the corner pictures: \"yes\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_VIG=1 WASTED_KINDS=ShopPendant)",
+   "models": [
+    "World/rules/lights.json (kind shop_pendant, colour warm_white)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "A pool thrown down out of its cone; the ceiling over it stays dark.",
+    "The person is mostly a dark shape: the light is behind or above them. Night only, the Old Town line only; a new design, not an approved piece; its numbers are [ASSUMPTION]."
+   ]
+  },
+  {
+   "id": "OrnamentsLightShelfLight",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Shelf light (Cool white)",
+   "files": [
+    "Ornaments/OrnamentsLightShelfLight.jpg"
+   ],
+   "locks": "The shelf light: a light on the wall, in Cool white, 5600 K (linear 0.84, 0.92, 1), 15 W, a broad even light (World/rules/lights.json, kind shelf_light). Shown lit alone at night in a plain corner (a floor, a back wall, a side wall, a ceiling), with a person for scale, to show how its light spreads (the owner, 2026-11-26: \"may be not full room but just small portion ... idea is to show light spread\"). Its shape in the four lines: OrnamentsLightLines.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the corner pictures: \"yes\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_VIG=1 WASTED_KINDS=ShelfLight)",
+   "models": [
+    "World/rules/lights.json (kind shelf_light, colour cool_white)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "A tight band under its shelf.",
+    "The person is mostly a dark shape: the light is behind or above them. Night only, the Old Town line only; a new design, not an approved piece; its numbers are [ASSUMPTION]."
+   ]
+  },
+  {
+   "id": "OrnamentsLightSignLamp",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Sign lamp (Warm white)",
+   "files": [
+    "Ornaments/OrnamentsLightSignLamp.jpg"
+   ],
+   "locks": "The sign lamp: a light on the wall, in Warm white, 2950 K (linear 1, 0.83, 0.65), 20 W, a pool thrown down and round (World/rules/lights.json, kind sign_lamp). Shown lit alone at night on paving before a house wall under the night sky, with a person for scale, to show how its light spreads (the owner, 2026-11-26: \"may be not full room but just small portion ... idea is to show light spread\"). Its shape in the four lines: OrnamentsLightLines.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the corner pictures: \"yes\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_VIG=1 WASTED_KINDS=SignLamp)",
+   "models": [
+    "World/rules/lights.json (kind sign_lamp, colour warm_white)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "The sign's board is edge-on to the camera and nearly unseen.",
+    "The person is mostly a dark shape: the light is behind or above them. Night only, the Old Town line only; a new design, not an approved piece; its numbers are [ASSUMPTION]."
+   ]
+  },
+  {
+   "id": "OrnamentsLightStreetLamp",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Street lamp (Lantern amber)",
+   "files": [
+    "Ornaments/OrnamentsLightStreetLamp.jpg"
+   ],
+   "locks": "The street lamp: a light on the ground, in Lantern amber, 2200 K (linear 1, 0.55, 0.22), 90 W, a pool thrown down and round (World/rules/lights.json, kind street_lamp). Shown lit alone at night on paving before a house wall under the night sky, with a person for scale, to show how its light spreads (the owner, 2026-11-26: \"may be not full room but just small portion ... idea is to show light spread\"). Its shape in the four lines: OrnamentsLightLines.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the corner pictures: \"yes\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_VIG=1 WASTED_KINDS=StreetLamp)",
+   "models": [
+    "World/rules/lights.json (kind street_lamp, colour lantern_amber)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "An amber halo on the house wall behind it, but its pool on the paving is faint: one lamp of 90 W, 3.3 m up, where the approved street (WorldStreet_NightLamps) has nine and its lit shop windows. A dark picture.",
+    "The person is mostly a dark shape: the light is behind or above them. Night only, the Old Town line only; a new design, not an approved piece; its numbers are [ASSUMPTION]."
+   ]
+  },
+  {
+   "id": "OrnamentsLightSquareLamp",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Square lamp (Lantern amber)",
+   "files": [
+    "Ornaments/OrnamentsLightSquareLamp.jpg"
+   ],
+   "locks": "The square lamp: a light on the ground, in Lantern amber, 2200 K (linear 1, 0.55, 0.22), 70 W, a pool thrown down and round (World/rules/lights.json, kind square_lamp). Shown lit alone at night on paving before a house wall under the night sky, with a person for scale, to show how its light spreads (the owner, 2026-11-26: \"may be not full room but just small portion ... idea is to show light spread\"). Its shape in the four lines: OrnamentsLightLines.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the corner pictures: \"yes\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_VIG=1 WASTED_KINDS=SquareLamp)",
+   "models": [
+    "World/rules/lights.json (kind square_lamp, colour lantern_amber)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "As the street lamp: an amber halo on the wall, a faint pool on the paving, a dark picture.",
+    "The person is mostly a dark shape: the light is behind or above them. Night only, the Old Town line only; a new design, not an approved piece; its numbers are [ASSUMPTION]."
+   ]
+  },
+  {
+   "id": "OrnamentsLightStreetWallLantern",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Wall lantern, street (Lantern amber)",
+   "files": [
+    "Ornaments/OrnamentsLightStreetWallLantern.jpg"
+   ],
+   "locks": "The wall lantern, street: a light on the wall, in Lantern amber, 2200 K (linear 1, 0.55, 0.22), 70 W, a pool thrown down and round (World/rules/lights.json, kind street_wall_lantern). Shown lit alone at night on paving before a house wall under the night sky, with a person for scale, to show how its light spreads (the owner, 2026-11-26: \"may be not full room but just small portion ... idea is to show light spread\"). Its shape in the four lines: OrnamentsLightLines.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the corner pictures: \"yes\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_VIG=1 WASTED_KINDS=StreetWallLantern)",
+   "models": [
+    "World/rules/lights.json (kind street_wall_lantern, colour lantern_amber)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "An amber halo on the wall round it; little reaches the paving. A dark picture.",
+    "The person is mostly a dark shape: the light is behind or above them. Night only, the Old Town line only; a new design, not an approved piece; its numbers are [ASSUMPTION]."
+   ]
+  },
+  {
+   "id": "OrnamentsLightBollardLight",
+   "category": "Ornaments",
+   "status": "proposed",
+   "title": "Bollard light (Lantern amber)",
+   "files": [
+    "Ornaments/OrnamentsLightBollardLight.jpg"
+   ],
+   "locks": "The bollard light: a light on the ground, in Lantern amber, 2200 K (linear 1, 0.55, 0.22), 15 W, a pool thrown down and round (World/rules/lights.json, kind bollard_light). Shown lit alone at night on paving before a house wall under the night sky, with a person for scale, to show how its light spreads (the owner, 2026-11-26: \"may be not full room but just small portion ... idea is to show light spread\"). Its shape in the four lines: OrnamentsLightLines.",
+   "approved": "proposed 2026-11-26, for the owner to review; picture at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the corner pictures: \"yes\"",
+   "made_by": "Tools/blender/light_kinds_54.py (WASTED_VIG=1 WASTED_KINDS=BollardLight)",
+   "models": [
+    "World/rules/lights.json (kind bollard_light, colour lantern_amber)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.6",
+   "was": [],
+   "issues": [
+    "A small amber pool at its foot; the rest of the frame is dark.",
+    "The person is mostly a dark shape: the light is behind or above them. Night only, the Old Town line only; a new design, not an approved piece; its numbers are [ASSUMPTION]."
+   ]
+  },
+  {
    "id": "VehiclesSoftBox",
    "category": "Vehicles",
    "title": "Cars and vans: \"Soft box\"",
@@ -665,6 +1321,36 @@
    "issues": [
     "The shade is lifted by light bounced more strongly than the surfaces' own colours give (plaster x2, boards x2, the street outside x2.6).",
     "Dusk and the lamp-lit night look alike: no window, so only the lamps light it once the day is gone."
+   ]
+  },
+  {
+   "id": "IndoorLightKinds",
+   "category": "Indoor",
+   "status": "proposed",
+   "title": "The kinds of light and their named colours, in a home's room at night",
+   "files": [
+    "Indoor/IndoorLightKinds_Sheet.jpg"
+   ],
+   "locks": "The named colours of light of World/rules/lights.json and the fittings that share them (the owner, 2026-11-26: \"when the room is lit by lights then the color should be decided by the light types\"; \"each colored light should have a name for different styles of lamps, lights, street lights etc. can share the color behavior\"). Ten colours: Lantern amber (the palette's Lantern, for street lamps and lanterns to share), Warm white, Soft white, Neutral white, Cool white, Fire red, Neon blue, Neon green, Neon red, Neon amber (the owner: \"we also need some cooler and even neon blue and green lights\"; \"add those 3 suggestions\"). Thirteen fittings, each lit alone in the approved home room (IndoorHomeRoom) on a night with no moon and the fire out: floor lamp, table lamp, wall light and pendant in Warm white, desk lamp in Soft white, ceiling light in Neutral white, cool ceiling light in Cool white, wall lantern in Lantern amber, candles in Fire red (every fire one red, candles too: the owner, \"Fire red\"). Neon is an accent (the owner: \"Weaker neon\"): a tube of 8 to 10 W, shown with the room's own floor lamp, table lamp and fire lit, so the room keeps its colours and the tube tints its corner. A fitting's strength is its own; its colour is its named colour's. The sheet shows each fitting twice: at one exposure for all (the lamp-lit night's), and with the eye set for that light, at most 2.5 stops either way; each fitting has its own entry under Ornaments (OrnamentsLight<Fitting>), with the second picture.",
+   "approved": "proposed 2026-11-26, for the owner to review; pictures at low quality until approved",
+   "decision": "ADR-0065, ADR-0067; the owner, 2026-11-26, of the colours and fittings on a trial sheet: \"Yes, propose it\"",
+   "made_by": "Tools/blender/light_kinds_54.py (on the home room of Tools/blender/hours_50.py and furniture_kit_18.py), the sheet by Tools/blender/light_kinds_54_sheet.py",
+   "models": [
+    "World/rules/lights.json (the colours and the fittings)",
+    "Game/Source/BrixTown (the rooms' lamps: not built to this yet, FURN-066, FURN-067)"
+   ],
+   "rules": "docs/specs/domains/FURNITURE.md 2.5, docs/art/ART_DIRECTION.md 2.3 and 2.6",
+   "was": [],
+   "issues": [
+    "Night only: dusk and the day hours are not shown for these lights.",
+    "Neon blue, green and red are saturated colours, against the palette rule W4 (muted and warm); allowed as weak accents by the owner's words (ADR-0067).",
+    "Neon amber is hard to tell from the fire-lit room it is shown in; neon red reads pink and tints more of the room than the other tubes at the same strength.",
+    "The pendant and both ceiling lights burn out at the shared exposure and flatten the room (little shade under the furniture); with the eye set for them they are not burnt but still flat.",
+    "Floor lamp, table lamp and desk lamp look alike: Soft white is barely different from Warm white.",
+    "Candles at the shared exposure are almost black; with the eye opened the room goes orange-red. They are lit at 3 W, as the hour script lights every fire, where the file says 6 W.",
+    "The room holds every fitting at once, so its walls are crowded with unlit tubes and wall fittings; the floor lamp and the desk lamp stand behind the person.",
+    "The wall light, the wall lantern, the ceiling lights and the neon tubes are simple fittings made for this reference; the furniture kits have none, and they are not approved pieces.",
+    "Every colour value and strength is an [ASSUMPTION] in lights.json until this is approved. Tried and dropped: neon tubes of 30 to 40 W alone in the room (the whole room one colour, as a filter); candles in a colour of their own (1.0, 0.60, 0.28)."
    ]
   },
   {

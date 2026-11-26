@@ -1,0 +1,50 @@
+23:54:07 Blender 5.3.0, light kinds 54, each fitting's light in a corner
+23:54:08   ArcFloorLamp: the eye at +1.99 stops for a mean of 55
+23:54:08   ArcFloorLamp: shot at +1.99 stops
+23:54:12 Corner_ArcFloorLamp.jpg rendered in 4.1s
+23:54:13   TableLantern: the eye at +4.12 stops for a mean of 55
+23:54:13   TableLantern: shot at +2.40 stops
+23:54:17 Corner_TableLantern.jpg rendered in 4.1s
+23:54:18   WallLantern: the eye at +4.43 stops for a mean of 55
+23:54:18   WallLantern: shot at +2.40 stops
+23:54:22 Corner_WallLantern.jpg rendered in 4.1s
+23:54:24   Chandelier: the eye at +0.15 stops for a mean of 55
+23:54:24   Chandelier: shot at +0.15 stops
+23:54:29 Corner_Chandelier.jpg rendered in 5.6s
+23:54:30   TrackSpots: the eye at -0.95 stops for a mean of 55
+23:54:30   TrackSpots: shot at -0.95 stops
+23:54:35 Corner_TrackSpots.jpg rendered in 5.1s
+23:54:37   StringLights: the eye at +0.97 stops for a mean of 55
+23:54:37   StringLights: shot at +0.97 stops
+23:54:42 Corner_StringLights.jpg rendered in 5.3s
+23:54:43   Candelabra: the eye at +1.96 stops for a mean of 55
+23:54:43   Candelabra: shot at +1.96 stops
+23:54:48 Corner_Candelabra.jpg rendered in 4.9s
+23:54:49   NeonRing: the eye at +2.10 stops for a mean of 55
+23:54:49   NeonRing: shot at +2.10 stops
+23:54:54 Corner_NeonRing.jpg rendered in 5.1s
+23:54:55   CeilingPanel: the eye at -0.98 stops for a mean of 55
+23:54:55   CeilingPanel: shot at -0.98 stops
+23:54:59 Corner_CeilingPanel.jpg rendered in 4.0s
+23:55:00   ShopPendant: the eye at -0.54 stops for a mean of 55
+23:55:00   ShopPendant: shot at -0.54 stops
+23:55:04 Corner_ShopPendant.jpg rendered in 4.0s
+23:55:05   ShelfLight: the eye at +0.87 stops for a mean of 55
+23:55:05   ShelfLight: shot at +0.87 stops
+23:55:09 Corner_ShelfLight.jpg rendered in 3.9s
+23:55:10   SignLamp: the eye at +1.30 stops for a mean of 55
+23:55:10   SignLamp: shot at +1.30 stops
+23:55:13 Corner_SignLamp.jpg rendered in 2.8s
+23:55:14   StreetLamp: the eye at +3.14 stops for a mean of 55
+23:55:14   StreetLamp: shot at +2.40 stops
+23:55:17 Corner_StreetLamp.jpg rendered in 2.8s
+23:55:18   SquareLamp: the eye at +3.05 stops for a mean of 55
+23:55:18   SquareLamp: shot at +2.40 stops
+23:55:21 Corner_SquareLamp.jpg rendered in 2.8s
+23:55:21   StreetWallLantern: the eye at +3.22 stops for a mean of 55
+23:55:21   StreetWallLantern: shot at +2.40 stops
+23:55:24 Corner_StreetWallLantern.jpg rendered in 2.8s
+23:55:25   BollardLight: the eye at +3.32 stops for a mean of 55
+23:55:25   BollardLight: shot at +2.40 stops
+23:55:28 Corner_BollardLight.jpg rendered in 2.9s
+23:55:28 DONE

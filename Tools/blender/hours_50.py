@@ -413,13 +413,15 @@ ROOM_GREYER = dict(M_Boards=0.4)
 BOUNCE_CARD = dict(day_watts=25.0, lamp_share=0.15)       # the wall facing the people: what it throws back of the day, and of the lamps' light
 ROOM_BOUNCE = dict(M_OutsidePaving=2.6, M_Plaster=2.0, M_PlasterWarm=2.0, M_Boards=2.0)   # as SQUARE_BOUNCE, more: a room is lit by bounce
 LIGHTS = json.load(open("C:/Projects/Wasted/World/rules/lights.json", encoding="utf-8"))   # kinds of light (FURN-066, ADR-0065)
+FIRE_COLOUR = tuple(LIGHTS["colours"]["fire_red"]["colour"])   # the one red of every fire is the file's named colour
 
 
 def lamp_kind(name):
     """The kind a lamp stands for, by its name (FLamp_Light.003 is a floor lamp), as Tools/citysim/lights.py has it."""
     for n, k in LIGHTS["blender_lights"].items():
         if name == n or name.startswith(n + "."):
-            return LIGHTS["kinds"][k]
+            kind = LIGHTS["kinds"][k]                    # its colour is a named one, shared with other fittings
+            return dict(kind, colour=LIGHTS["colours"][kind["colour"]]["colour"], kelvin=LIGHTS["colours"][kind["colour"]]["kelvin"])
     return None                          # how far towards grey: the boards as the town's weathered wood
 
 
