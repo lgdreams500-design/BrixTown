@@ -40,8 +40,10 @@ building's kind, so the Stone Oven, a shop, was fitted as a grocer's; and every 
 | **Age and a dress as extra parts on the same body, for a cast look only** | Small; nobody else changes | Not the Blender elders' full set (no stoop, glasses, cane, shawl, beard); the hair is still a shell under the locks |
 
 ## Consequences
-- The Stone Oven's ground floor is a room of 9 by 7.5 m (the design's is 7.6 by 4.8 m) closed by partitions round the
-  front door, with a doorway to the stair; the rest of the shop behind them is empty.
+- The Stone Oven's ground floor is a room of 9 by 7.5 m (the design's is 7.6 by 4.8 m) in the building's street corner,
+  closed by partitions, with a doorway to the stair; the lot's door and stair were moved for it (block file data). The rest
+  of the shop behind the partitions is empty.
+- So a shop can be seen into, every enterable shop's front panes are clear glass (a change to every shop front).
 - Noor wears her own look wherever she is drawn. The stoop, the Blender brow value and the elders' other values are not
   carried; the hair under the locks is still the shell (ADR-0059's weak point, only covered at the hairline).
 - Neither has passed the look gate beside its reference until the shots are taken and kept (`Art/StyleTests/unreal_bakery_50/`).
