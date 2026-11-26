@@ -1,0 +1,15 @@
+20:20:10 Blender 5.3.0, place hallway
+20:20:10 Hallway: sun 8.5 at bearing 21 deg, sky 0.25; 2 lamps, 0 fires, 5 glowing materials, 0 haze
+20:20:11   Hallway_Morning: the eye at +4.36 stops for a mean of 100
+20:21:31 Hallway_Morning.jpg rendered in 80.0s
+20:21:32   Hallway_Midday: the eye at +4.36 stops for a mean of 100
+20:22:54 Hallway_Midday.jpg rendered in 81.3s
+20:22:56   Hallway_Dusk: the eye at -1.25 stops for a mean of 85
+20:24:37 Hallway_Dusk.jpg rendered in 101.2s
+20:24:40   Hallway_NightLamps: the eye at -1.00 stops for a mean of 70
+20:26:13 Hallway_NightLamps.jpg rendered in 93.5s
+20:26:17   Hallway_NightFullMoon: the eye at +7.39 stops for a mean of 42
+20:27:44 Hallway_NightFullMoon.jpg rendered in 87.1s
+20:27:48   Hallway_NightNewMoon: the eye at +9.00 stops for a mean of 22
+20:29:22 Hallway_NightNewMoon.jpg rendered in 94.0s
+20:29:22 DONE

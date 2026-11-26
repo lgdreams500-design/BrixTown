@@ -25,13 +25,13 @@ each kind of night, at most EYE_MAX stops open, measured on a quick small render
 The rooms of furniture_kit_17/18 were built with three walls and open towards the camera; here they get their fourth
 wall behind the camera, so the only light from outside comes in at the window.
 """
-import bpy, bmesh, os, math, random, time, traceback
+import bpy, bmesh, os, math, random, time, traceback, json
 from mathutils import Matrix, Vector
 
 B = "C:/Projects/Wasted/Tools/blender/"
 PLACE = os.environ.get("WASTED_PLACE", "alley")
 SOURCE = {"alley": "old_town_04.py", "square": "old_town_04.py", "street": "building_kit_07.py",
-          "rooms": "baker_look_47.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py", "sky": "old_town_04.py"}[PLACE]
+          "rooms": "baker_look_47.py", "hallway": "baker_look_47.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py", "sky": "old_town_04.py"}[PLACE]
 _s = open(B + SOURCE, encoding="utf-8").read()
 exec(compile(_s[:_s.rindex("\nmain()")], SOURCE + "_helpers", "exec"), globals())
 exec(compile(open(B + "sky_52.py", encoding="utf-8").read(), "sky_52", "exec"), globals())   # the sky and its clouds
@@ -84,7 +84,7 @@ STARS = dict(scale=420.0, size=0.045, strength=(2.2, 1.0))   # the night sky's s
 MOON_DISC = dict(distance=320.0, radius=5.0, strength=8.0)    # the full moon seen in the sky
 # indoors the eye works by day too, as the game's opens in a room by day (DayOpenIndoors): the mean brightness it seeks
 INDOOR_EYE = {"Morning": 100, "Midday": 100, "Dusk": 85}
-INDOORS = ("rooms", "bakery", "outlet")
+INDOORS = ("rooms", "hallway", "bakery", "outlet")
 # the moon: high (a full moon in summer stands about 68 degrees up here), turned from the sun's bearing so it falls along
 # the alley and the streets, not across them (at 48 degrees across, the alley's houses shaded all of its paving)
 MOON = dict(height=68, turn=0.35, strength=0.012, colour=(0.62, 0.72, 1.0),
@@ -135,8 +135,10 @@ class Lights:
         for ob in scene.objects:
             if ob.type == 'LIGHT' and ob.data.type != 'SUN':
                 is_fire = ob.name.startswith(FIRE) or any(f in ob.name for f in FIRE)
-                if PLACE in INDOORS and not is_fire:
-                    ob.data.color = INDOOR_LAMP                      # indoors a warm white, not the lanterns' orange
+                kind = lamp_kind(ob.name) if not is_fire else None
+                if kind:                                             # its kind's colour and strength (FURN-067, lights.json)
+                    ob.data.color = tuple(kind["colour"])
+                    ob.data.energy = kind["strength"]
                 (self.fires if ob.name.startswith(FIRE) or any(f in ob.name for f in FIRE) else self.lamps).append((ob, ob.data.energy))
         self.glow = []                                                       # (bsdf, its strength, its colour, kind)
         for m in bpy.data.materials:
@@ -357,7 +359,69 @@ def bounce_more(times):
 
 ROOM_GREYER = dict(M_Boards=0.4)
 ROOM_BOUNCE = dict(M_OutsidePaving=2.6, M_Plaster=2.0, M_PlasterWarm=2.0, M_Boards=2.0)   # as SQUARE_BOUNCE, more: a room is lit by bounce
-INDOOR_LAMP = (1.0, 0.86, 0.72)                            # the owner, 2026-11-26: the night lamps indoors less orange                          # how far towards grey: the boards as the town's weathered wood
+LIGHTS = json.load(open("C:/Projects/Wasted/World/rules/lights.json", encoding="utf-8"))   # kinds of light (FURN-066, ADR-0065)
+
+
+def lamp_kind(name):
+    """The kind a lamp stands for, by its name (FLamp_Light.003 is a floor lamp), as Tools/citysim/lights.py has it."""
+    for n, k in LIGHTS["blender_lights"].items():
+        if name == n or name.startswith(n + "."):
+            return LIGHTS["kinds"][k]
+    return None                          # how far towards grey: the boards as the town's weathered wood
+
+
+def corridor(Ls):
+    """A home's hallway (the owner, 2026-11-26): a corridor with no window of its own, the stair rising at its far end, lit
+    by day only through the open door of a room beside it whose window faces the sun; at night by its pendant and the
+    lamp on the hall table. The camera stands at the near end looking along it."""
+    L = [l for l in Ls if l["key"] == "oldtown"][0]
+    rng = random.Random(51)
+    W, H, Y0, Y1 = 0.85, 2.7, -2.4, 7.4                       # half its width, its height, where it starts and ends
+    ST = 4.6                                                  # the stair's foot
+    pl, plb, bd, wd = M["plaster"], M["plaster_b"], M["boards"], M["wood"]
+    box("Cor_Floor", -W, W, Y0, Y1, -0.1, 0.0, bd, bevel=0)
+    box("Cor_Ceiling", -W - 0.3, W + 0.3, Y0 - 0.3, ST, H, H + 0.2, pl, bevel=0)
+    box("Cor_WellNear", -W - 0.3, W + 0.45, ST - 0.3, ST, H, 2 * H + 0.4, pl, bevel=0)   # the stairwell closed above
+    box("Cor_UpCeiling", -W - 0.3, W + 0.3, ST - 0.3, Y1 + 0.3, 2 * H + 0.2, 2 * H + 0.4, pl, bevel=0)   # over the stairwell
+    box("Cor_Back", -W - 0.3, W + 0.3, Y0 - 0.3, Y0, 0, H, pl, bevel=0)          # behind the camera
+    box("Cor_End", -W - 0.3, W + 0.3, Y1, Y1 + 0.3, 0, 2 * H + 0.2, pl, bevel=0)
+    box("Cor_Left", -W - 0.3, -W, Y0, Y1, 0, 2 * H + 0.2, plb, bevel=0)
+    D0, D1, DH = 0.6, 1.9, 2.2                                # the room's open door, in the right-hand wall
+    box("Cor_RightA", W, W + 0.15, Y0, D0, 0, H, pl, bevel=0)
+    box("Cor_RightB", W, W + 0.15, D1, Y1, 0, 2 * H + 0.2, pl, bevel=0)
+    box("Cor_RightC", W, W + 0.15, D0, D1, DH, H, pl, bevel=0)
+    box("Cor_DoorFrame", W - 0.02, W + 0.17, D0 - 0.06, D0, 0, DH + 0.06, wd, bevel=0.005)
+    box("Cor_DoorFrame2", W - 0.02, W + 0.17, D1, D1 + 0.06, 0, DH + 0.06, wd, bevel=0.005)
+    box("Cor_DoorHead", W - 0.02, W + 0.17, D0 - 0.06, D1 + 0.06, DH, DH + 0.06, wd, bevel=0.005)
+    box("Cor_SkirtL", -W, -W + 0.03, Y0, Y1, 0, 0.14, wd, bevel=0.005)
+    # the room beside it: its window, in the wall facing the sun, lets the day in; the street outside is sunlit
+    RX0, RX1, RY0, RY1 = W + 0.15, W + 4.2, -0.6, 3.6
+    box("Side_Floor", RX0, RX1, RY0, RY1, -0.1, 0.0, bd, bevel=0)
+    box("Side_Ceiling", RX0, RX1 + 0.3, RY0 - 0.3, RY1 + 0.3, H, H + 0.2, pl, bevel=0)
+    box("Side_Near", RX0, RX1 + 0.3, RY0 - 0.3, RY0, 0, H, pl, bevel=0)
+    box("Side_Far", RX0, RX1 + 0.3, RY1, RY1 + 0.3, 0, H, pl, bevel=0)
+    WY0, WY1, WZ0, WZ1 = 0.4, 2.2, 0.9, 2.3
+    box("Side_WinA", RX1, RX1 + 0.4, RY0, WY0, 0, H, pl, bevel=0)
+    box("Side_WinB", RX1, RX1 + 0.4, WY1, RY1, 0, H, pl, bevel=0)
+    box("Side_WinC", RX1, RX1 + 0.4, WY0, WY1, 0, WZ0, pl, bevel=0)
+    box("Side_WinD", RX1, RX1 + 0.4, WY0, WY1, WZ1, H, pl, bevel=0)
+    box("Side_Sill", RX1 - 0.05, RX1 + 0.45, WY0, WY1, WZ0 - 0.04, WZ0, wd, bevel=0.005)
+    out = bpy.data.materials.get("M_OutsidePaving") or painted("M_OutsidePaving", (0.22, 0.21, 0.25), (0.46, 0.42, 0.37), noise_scale=0.5)
+    box("Side_Outside", RX1 + 0.4, RX1 + 40.0, RY0 - 30.0, RY1 + 30.0, -0.4, -0.1, out, bevel=0)
+    # the stair up at the far end, along the corridor, under the open stairwell
+    n = 13
+    run, rise = (Y1 - 0.2 - ST) / n, H / n
+    for i in range(n):
+        box("Cor_Step%02d" % i, -W, W, ST + i * run, Y1 - 0.2, 0, (i + 1) * rise, wd if i % 2 == 0 else bd, bevel=0.004)
+    box("Cor_Landing", -W, W, Y1 - 0.2, Y1, 0, H + 0.02, wd, bevel=0.004)
+    # the hall's pieces against its left wall, a pendant overhead, a rug
+    for spec, x, y, yaw in (("h_coatstand", -W + 0.3, 3.9, math.pi / 2), ("h_console", -W + 0.2, 2.4, math.pi / 2),
+                            ("h_mirror", -W + 0.05, 2.4, math.pi / 2), ("k17:rug", 0.0, 1.0, 0.0), ("d_pendant", 0.0, 1.2, 0.0)):
+        P = group("Hall_%s" % spec.replace(":", "_"), x, y, yaw)
+        place(spec, P, L, rng)
+    people([("PlayerA", -0.2, 3.0)])
+    sun_and_sky(SCENE, (0.78, 0.30, 0.42), 8.5, (1.0, 0.86, 0.68), (0.42, 0.55, 0.82), 0.25)
+    return camera(SCENE, "Cam_hallway", (-0.5, Y0 + 0.2, 1.6), (0.35, Y1, 1.5), 16.0)
 
 
 def greyer(how):
@@ -738,6 +802,13 @@ def main_hours():
                 each_hour(scene, camera(scene, "Cam_" + kit[0], loc, tgt, lens), 1.3, "Rooms_" + kit[0].capitalize(), dict(day_lamps=0.0, day_fires=0.0))
             except Exception:
                 hlog("FAILED room %s:\n%s" % (kit[0], traceback.format_exc()))
+    elif PLACE == "hallway":
+        scene = fresh("Furn_corridor")
+        extra_mats()
+        cam = corridor(lines())
+        greyer(ROOM_GREYER)
+        bounce_more(ROOM_BOUNCE)
+        each_hour(scene, cam, 1.3, "Hallway", dict(day_lamps=0.0, day_fires=0.0))
     elif PLACE == "bakery":
         scene = fresh("Furn_bakery")
         bakery_mats()

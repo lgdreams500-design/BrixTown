@@ -643,7 +643,7 @@
    "id": "IndoorHallway",
    "category": "Indoor",
    "status": "proposed",
-   "title": "A home's hallway at every hour",
+   "title": "A home's hallway by the stairs at every hour",
    "files": [
     "Indoor/IndoorHallway_Morning.jpg",
     "Indoor/IndoorHallway_Midday.jpg",
@@ -652,21 +652,19 @@
     "Indoor/IndoorHallway_NightFullMoon.jpg",
     "Indoor/IndoorHallway_NightNewMoon.jpg"
    ],
-   "locks": "The hallway of furniture_kit_18, closed on four sides with one window. In the world's light (the owner, 2026-11-26: \"use the same color etc from world lighting\"): by day only the sun and sky of the hour, through the window, with the sunlit street outside throwing its light in; lamps and the fire out by day; the boards a greyer wood, so the bounced light is not orange; at night the lamps a warm white (until the kinds of light, FURN-066), the fire lit, the full moon a cool patch through the window, a new moon only the window's starlight. No weather settings indoors (the owner).",
+   "locks": "A home's hallway (the owner, 2026-11-26: \"corridor or near stairs area where there are no direct windows but indirect light coming from room\"): a corridor about 1.7 m wide with no window of its own, the stair rising at its far end under a closed stairwell, the hall table, mirror, coat stand and rug along its left wall. By day its only light is the day coming through the open door of the room beside it, whose window faces the sun; at dusk and at night its pendant and the lamp on the hall table, the doorway dark; the full moon a faint cool light from that doorway, a new moon almost nothing. In the world's light, lamps of their kinds (World/rules/lights.json).",
    "approved": "proposed 2026-11-26, for the owner to review",
    "decision": "the owner, 2026-11-26: one home room and the hallway stand for the home's rooms (\"just do one room, hall way, shop and cafe\"); in the world's light; ADR-0061",
-   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=rooms WASTED_ONLY=hallway) on the rooms of Tools/blender/furniture_kit_18.py",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=hallway, corridor()) with the pieces of Tools/blender/furniture_kit_18.py",
    "models": [
     "World/rules/furnishing.json (the pieces)",
     "Game/Source/BrixTown (homes' rooms and their light)"
    ],
    "rules": "docs/art/ART_DIRECTION.md, docs/art/INTERIOR_STYLE.md",
-   "was": [
-    "Art/Retired/IndoorRooms (the hallway panel)"
-   ],
+   "was": [],
    "issues": [
-    "The lamps are one warm white for now; each will take its kind's colour from World/rules/lights.json (FURN-066, F-LIGHTS level 2).",
-    "The shade is lifted by light bounced more strongly than the surfaces' own colours give (plaster x2, boards x2, the street outside x2.6)."
+    "The shade is lifted by light bounced more strongly than the surfaces' own colours give (plaster x2, boards x2, the street outside x2.6).",
+    "Dusk and the lamp-lit night look alike: no window, so only the lamps light it once the day is gone."
    ]
   }
  ],

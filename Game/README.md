@@ -348,7 +348,10 @@ Furnishing is everything near cleared and made again, a long frame, and it ran a
 houses and at every doorway. A home furnished now stays so until it is `KeepMetres` (20) further off than `NearMetres`,
 homes are dropped `DropAtOnce` (8) together or when one comes near, and going in or out of a building of one or two
 floors furnishes nothing again (which floors are built turns on the camera's floor only in taller ones). Not yet: each
-home as its own pieces, made once and hidden or shown, so that nothing near is ever made again.
+home as its own pieces, made once and hidden or shown, so that nothing near is ever made again. Not yet, of lights (FURN-066 to FURN-070,
+F-LIGHTS level 2, ADR-0065): the rooms' lamps are not yet of their kinds in `World/rules/lights.json` (each kind's colour, strength
+and glow), and the building designer cannot place lights (floor, table, wall, ceiling); the rules are proved in
+`Tools/citysim/lights.py` and the Blender room references read the file.
 
 ## Designed houses (ADR-0032, ADR-0035)
 The 469 designed houses (lot.house) are built as the slice builds them (houses.js outsideS): the 12 x 9 m house of
