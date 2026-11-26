@@ -1,0 +1,378 @@
+{
+ "id": "feeding_the_mother", "group": "baker", "act": "II", "title": "Feeding the Mother", "rank": "Oven Hand",
+ "giver": "noor", "needs": ["done:four_oclock_door:hired_clean|hired_wary"],
+ "hook": "A power cut on Baker Street, and the morning the shutters stay down.",
+ "summary": "A power cut has chilled the Mother, the bakery's 120-year-old sourdough culture, and she has gone still. Saving her takes the old stoneware crock from the museum, rye from the last stone mill, and a night's vigil. There is also a second way: a jam jar in a mall fridge, labelled MUM, that nobody was ever meant to know about.",
+ "theme": "When something old is dying, what are you willing to owe, and to whom?",
+ "start": "still",
+ "stages": [
+  {"id": "still", "title": "The Mother goes quiet", "kind": "talk", "with": "noor",
+   "goal": "Talk to Noor at the Stone Oven",
+   "log": "The power was out on Baker Street until two, and the proofing room's heater with it. Noor has not opened the shutters. That has happened once before, ever.",
+   "scene": "The proofing room's heater is ticking as it warms up again, hours too late. Noor stands over a glass jar like a doctor who already knows. The surface of the culture is flat, grey and silent.",
+   "start": "s1",
+   "nodes": {
+    "s1": {"who": "noor", "mood": "neutral", "say": "She's not bubbling. Fed at midnight, fed at five. Nothing. The heater went off with the power, and she went cold.",
+     "options": [
+      {"text": "“She”?", "next": "she"},
+      {"text": "What does she need?", "next": "plan"},
+      {"text": "It's only starter. We could grow a new one in a week.", "next": "only"}
+     ]},
+    "she": {"who": "noor", "mood": "thinking", "say": "The Mother. My great-grandmother started her the week they pulled the wall down. Every loaf this shop has ever sold came off her. You've been eating her since you came.",
+     "options": [{"text": "Then let's wake her. What does she need?", "next": "plan"}]},
+    "only": {"who": "noor", "mood": "angry", "say": "A new one would make bread. It would not make our bread. You can get a new dog, too.",
+     "options": [{"text": "I'm sorry. Tell me what she needs.", "next": "only2"}]},
+    "only2": {"who": "noor", "mood": "sad", "say": "No. That was unfair. You weren't to know. Nobody's to know. That is half my trouble this morning.",
+     "options": [{"text": "So tell me.", "next": "plan"}]},
+    "plan": {"who": "noor", "mood": "thinking", "say": "Warmth that doesn't swing. The old stoneware crock held heat like a grudge; this glass thing holds nothing. Fresh rye, stone-ground. She won't take roller flour, never has. And a night of feeding. The crock is in the museum. The rye is Oda's, at Mill Fields.",
+     "options": [
+      {"text": "Why is your crock in a museum?", "next": "why"},
+      {"text": "Crock, rye, tonight. On it.", "next": null, "act": ["stage:crock"]}
+     ]},
+    "why": {"who": "noor", "mood": "sad", "say": "Jai has it under glass with a little card. “Bread crock, Stone Oven Bakery.” As if it had finished doing things. Ask him. I don't go in there.",
+     "options": [{"text": "I'll get it back.", "next": null, "act": ["stage:crock"]}]}
+   }},
+
+  {"id": "crock", "title": "Object OT-112", "kind": "talk", "with": "jai",
+   "goal": "Get the stoneware crock from the Old Town Museum",
+   "log": "The crock is accession OT-112 at the Old Town Museum. Museums do not lend in a hurry. Jai does not do anything in a hurry.",
+   "start": "j1",
+   "starts": [{"need": ["done:errand_runner:kept", "!flag:book_returned"], "node": "j_thief"}],
+   "nodes": {
+    "j1": {"who": "jai", "mood": "happy", "say": "Come to see the token drawer? I've put it in order of year.",
+     "options": [{"text": "Not today, Jai. I need the bakery crock. OT-112.", "next": "j2"}]},
+    "j2": {"who": "jai", "mood": "surprised", "say": "The Stone Oven crock? It's accessioned. Releasing an object needs form D-7, signed by the donor. The donor is Noor. I do have the form. I have all the forms.",
+     "options": [
+      {"text": "Give me the form. She'll sign.", "next": null, "act": ["give:form_d7", "stage:sign"]},
+      {"text": "Couldn't it go out on loan? Museums lend things.", "next": "j_loan"},
+      {"text": "Jai, the bakery's culture is dying. Tonight.", "next": "j_press"},
+      {"text": "Forget the crock. Blankets will do.", "next": null, "act": ["flag:no_crock", "stage:rye"]}
+     ]},
+    "j_loan": {"who": "jai", "mood": "thinking", "say": "Loans go to the committee, and the committee is Mrs Ellery's kitchen table on the first Thursday. Unless. An object may return to use for “demonstration of original function”. I should have to see it work. I should very much like to see it work.",
+     "options": [
+      {"text": "Come and watch bread happen, Jai.", "next": "j_loan2"},
+      {"text": "A signed form is cleaner. Give me the D-7.", "next": null, "act": ["give:form_d7", "stage:sign"]}
+     ]},
+    "j_loan2": {"who": "jai", "mood": "happy", "dir": "He wraps the crock in acid-free paper like a christening.", "say": "OT-112, outgoing, demonstration of original function. I want to hear what a crock sounds like when it isn't an exhibit.",
+     "options": [{"text": "You're a good sort, Jai.", "next": null, "act": ["flag:crock_loaned", "give:old_crock", "rep:jai:+10", "stage:rye"]}]},
+    "j_press": {"who": "jai", "mood": "sad", "say": "Tonight. Of course it's tonight. It's always tonight with living things. That is why I work with objects. The form is proper. The loan is possible. Please don't choose the third thing you're thinking.",
+     "options": [
+      {"text": "The form. I'll take it to Noor.", "next": null, "act": ["give:form_d7", "stage:sign"]},
+      {"text": "The loan. Come and watch it work.", "next": "j_loan2"},
+      {"text": "(At closing, lift the crock into your barrow.)", "next": "j_take"}
+     ]},
+    "j_take": {"who": "scene", "say": "The case is not locked. A museum like this trusts you; that is most of the exhibit. The crock rides home under a flour sack. The little card stays behind, face down, as if it couldn't watch.",
+     "options": [{"text": "(Go. The Mother can't wait.)", "next": null, "act": ["flag:crock_taken", "give:old_crock", "rep:jai:-25", "stage:rye"]}]},
+    "j_thief": {"who": "jai", "mood": "angry", "say": "You. I have a gap on a shelf where a first edition should be, and now you want to borrow something else?",
+     "options": [
+      {"text": "I brought the book back, Jai.", "next": "j_back", "need": ["have:rare_book"], "act": ["take:rare_book", "flag:book_returned", "rep:jai:+40"]},
+      {"text": "The bakery's culture is dying. This isn't about me.", "next": "j_thief2"}
+     ]},
+    "j_back": {"who": "jai", "mood": "surprised", "say": "You brought it back. Well. The shelf has been wrong for weeks. I had started walking the long way round it. Thank you. Now. What was it you needed?",
+     "options": [{"text": "The bakery crock. OT-112.", "next": "j2"}]},
+    "j_thief2": {"who": "jai", "mood": "neutral", "say": "No. It isn't. Which is why you may have the proper form and nothing else. D-7, donor's signature. Rules are for exactly the people I can't trust.",
+     "options": [
+      {"text": "I'll take the form.", "next": null, "act": ["give:form_d7", "stage:sign"]},
+      {"text": "(At closing, lift the crock into your barrow.)", "next": "j_take"},
+      {"text": "Forget the crock. Blankets will do.", "next": null, "act": ["flag:no_crock", "stage:rye"]}
+     ]}
+   }},
+
+  {"id": "sign", "title": "The donor's line", "kind": "talk", "with": "noor",
+   "goal": "Take form D-7 to Noor",
+   "log": "Form D-7 needs the donor's signature. The donor is Noor.",
+   "start": "g1",
+   "nodes": {
+    "g1": {"who": "noor", "mood": "sad", "dir": "She reads the form twice. Her pen stops over the donor line of the old receipt stapled behind it, where her own signature sits, six years younger.", "say": "I signed her away the week my mother died. Grief does strange paperwork. You give away the one thing you're going to need.",
+     "options": [
+      {"text": "Sign it, Noor. The crock's coming home.", "next": "g2"},
+      {"text": "Take your time.", "next": "g2"}
+     ]},
+    "g2": {"who": "noor", "mood": "neutral", "dir": "She signs. It costs her something you can watch leaving.", "say": "Tell Jai it was looked after there. He'll want to hear that. He labels things so they'll be remembered. It isn't his fault that I wanted to forget.",
+     "options": [{"text": "(Take the signed form back to Jai, tell him so, and carry the crock home.)", "next": null, "act": ["take:form_d7", "flag:crock_signed", "give:old_crock", "rep:noor:+8", "rep:jai:+8", "stage:rye"]}]}
+   }},
+
+  {"id": "rye", "title": "The nurse of grains", "kind": "talk", "with": "oda",
+   "goal": "Get stone-ground rye from Oda at Mill Fields",
+   "log": "Out past the west wall line to Mill Fields. The mill house smells of dust and weather. Something in the machinery sounds wrong, even to you.",
+   "start": "o1",
+   "nodes": {
+    "o1": {"who": "oda", "mood": "neutral", "dir": "She listens to the mill over your shoulder the whole time she talks to you.", "say": "Stone Oven barrow, new face. Let me guess. The Mother's taken a chill and Noor wants rye.",
+     "options": [
+      {"text": "How did you know?", "next": "o_how"},
+      {"text": "That's the size of it. Fresh ground, she said.", "next": "o_grind"}
+     ]},
+    "o_how": {"who": "oda", "mood": "thinking", "say": "Forty years of her. Rye is the nurse of the grains. Wheat's the patient; rye sits up all night. When the Stone Oven sends for rye in a hurry, somebody's poorly.",
+     "options": [{"text": "Then I need the nurse.", "next": "o_grind"}]},
+    "o_grind": {"who": "oda", "mood": "neutral", "say": "Fresh means now, and now means you turn the small stone with me. Mind your sleeve.",
+     "options": [{"text": "(Turn the stone.)", "next": "o_knock"}]},
+    "o_knock": {"who": "scene", "say": "The small stone turns. The flour comes off cool and grey and sweet. Twice in the turning, the big mill behind you knocks: a dull, wrong note, like a cough in a singer.",
+     "options": [
+      {"text": "What was that?", "next": "o_dull"},
+      {"text": "(Say nothing. Hold the sack.)", "next": "o_water"}
+     ]},
+    "o_dull": {"who": "oda", "mood": "sad", "say": "The big stones, going dull. A stone talks while it's cutting right. This one's been mumbling for a year now. They want dressing, and the man who dressed them isn't available.",
+     "options": [
+      {"text": "Who dressed them?", "next": "o_marek"},
+      {"text": "I'm sorry, Oda.", "next": "o_water"}
+     ]},
+    "o_marek": {"who": "oda", "mood": "sad", "say": "Marek. My husband. Two years gone. His tools went to the museum because I couldn't have them in the house. One patient at a time. Rye first.",
+     "options": [{"text": "Rye first.", "next": "o_water", "act": ["flag:knows_marek"]}]},
+    "o_water": {"who": "oda", "mood": "neutral", "say": "Here. And tell Noor what she already knows, because tonight she'll be too tired to know it. Wrist-warm water. Never the kettle. Cold only slows a culture down. Hot kills her dead.",
+     "options": [{"text": "Wrist-warm. Never the kettle.", "next": null, "act": ["give:rye_flour", "stage:pip"]}]}
+   }},
+
+  {"id": "pip", "title": "Something's on fire", "kind": "talk", "with": "pip",
+   "goal": "Bring the rye back to the Stone Oven",
+   "log": "Back to Baker Street with the rye. Pip is waiting at the side door, which is not like Pip.",
+   "start": "p1",
+   "starts": [{"need": ["flag:pip_reported"], "node": "p_cold"}],
+   "nodes": {
+    "p1": {"who": "pip", "mood": "thinking", "say": "You got the rye? Good. Listen. Something's on fire, so I'm being honest. There's another one. Another Mother.",
+     "options": [{"text": "Another what?", "next": "p2"}]},
+    "p2": {"who": "pip", "mood": "sad", "say": "Tam. Noor's brother, at the mall. He offered me a job and I went to hear it, don't look at me like that. In his back fridge there's a jam jar. Labelled MUM. He feeds it every day. Like a goldfish.",
+     "options": [
+      {"text": "You went to hear a job offer from Tam?", "next": "p3"},
+      {"text": "A cutting of the Mother. Alive.", "next": "p4"}
+     ]},
+    "p3": {"who": "pip", "mood": "sad", "say": "Double the wage and a nine o'clock start. I haven't said yes. I haven't said no. That's what I've been carrying about. Now you're carrying it too. Sorry.",
+     "options": [{"text": "One fire at a time. The jar.", "next": "p4"}]},
+    "p4": {"who": "pip", "mood": "thinking", "say": "If she won't wake, his will. Same culture, six years apart. But if Noor finds out where it came from, I don't know what she does. I honestly don't.",
+     "options": [
+      {"text": "I'm going to Eastgate.", "next": null, "act": ["flag:knows_jar", "stage:jar"]},
+      {"text": "No. We do this Noor's way.", "next": null, "act": ["flag:knows_jar", "stage:vigil"]}
+     ]},
+    "p_cold": {"who": "pip", "mood": "neutral", "say": "Rye goes on the bench. Noor says the vigil starts at eleven.",
+     "options": [
+      {"text": "Pip. Is there anything else I should know?", "next": "p_cold2"},
+      {"text": "(Take the rye through.)", "next": null, "act": ["stage:vigil"]}
+     ]},
+    "p_cold2": {"who": "pip", "mood": "thinking", "say": "You'd only report it. Fine. It's bigger than me being cross. Tam, Noor's brother, at the mall, keeps a cutting of the Mother in his fridge. Labelled MUM. Do what you like with that. You usually do.",
+     "options": [
+      {"text": "I'm going to Eastgate.", "next": null, "act": ["flag:knows_jar", "stage:jar"]},
+      {"text": "We do this Noor's way.", "next": null, "act": ["flag:knows_jar", "stage:vigil"]}
+     ]}
+   }},
+
+  {"id": "jar", "title": "The jar marked MUM", "kind": "talk", "with": "tam", "optional": true,
+   "goal": "Optional: ask Tam at Crumb & Co, Eastgate Mall",
+   "log": "Crumb & Co, Eastgate Mall. The lighting is warm. The bread is warm. Something about the warmth is the same temperature all the way through.",
+   "start": "t1",
+   "starts": [{"need": ["flag:met_tam_early"], "node": "t_emergency"}],
+   "nodes": {
+    "t1": {"who": "tam", "mood": "happy", "say": "Welcome to Crumb and Co, where the bread is warm and the lighting is warmer! What can I get you?",
+     "options": [{"text": "I'm from the Stone Oven.", "next": "t2"}]},
+    "t_emergency": {"who": "tam", "mood": "happy", "say": "Hang on, I know you. Emergency white, at the crack of dawn! How was the emergency?",
+     "options": [{"text": "It went into your sister's basket.", "next": "t_emergency2"}]},
+    "t_emergency2": {"who": "tam", "mood": "surprised", "say": "You put one of my loaves in Noor's basket? That is the funniest thing that has ever happened to me, and I can't tell a soul. She caught you, of course.",
+     "options": [{"text": "Within the hour.", "next": "t2"}]},
+    "t2": {"who": "tam", "mood": "neutral", "dir": "The patter stops like a dropped tray. He is looking at the flour on your sleeves.", "say": "You're hers. The new one. Did she send you?",
+     "options": [
+      {"text": "No. She doesn't know I'm here.", "next": "t_truth"},
+      {"text": "Yes. She needs your help.", "next": "t_lie"},
+      {"text": "The Mother is dying, Tam.", "next": "t_dying"}
+     ]},
+    "t_lie": {"who": "tam", "mood": "thinking", "say": "No, she doesn't. If Noor sent for help, the fountain would hand in its notice. Try again, and leave the sales pitch out. I write three a day.",
+     "options": [{"text": "She doesn't know. The Mother's dying.", "next": "t_dying", "act": ["rep:tam:-5"]}]},
+    "t_truth": {"who": "tam", "mood": "neutral", "dir": "He flips the counter sign to CLOSED with a flourish that has nothing behind it.", "say": "Course she doesn't. Come through the back. If you're here and she doesn't know, it's bad. And if it's bad, it's the Mother.",
+     "options": [{"text": "She's gone still.", "next": "t_dying"}]},
+    "t_dying": {"who": "tam", "mood": "sad", "dir": "He takes a jam jar down from the back fridge. MUM, in marker, gone brown at the edges.", "say": "Six years I've kept her alive in there. Fed her before stock-take, every day. I told myself it was insurance. Insurance against exactly this.",
+     "options": [
+      {"text": "Give me a cup of it. Please.", "next": "t_ask"},
+      {"text": "Why keep it secret for six years?", "next": "t_why"},
+      {"text": "A courier brings a seeded loaf here every Saturday. That's you.", "next": "t_loaf", "need": ["done:errand_runner:delivered"]},
+      {"text": "Bring it to her yourself.", "next": "t_self"}
+     ]},
+    "t_why": {"who": "tam", "mood": "thinking", "say": "Because I took it without asking, and every day since has made the first day worse. There's a maths to owing people. My sister invented it. And the funny part: the mall won't let me bake with it. “Non-standard input.” Nobody laughs at that part.",
+     "options": [
+      {"text": "Give me a cup of it. For her.", "next": "t_ask"},
+      {"text": "Bring it to her yourself.", "next": "t_self"}
+     ]},
+    "t_loaf": {"who": "tam", "mood": "sad", "say": "Abe wouldn't have told you. You worked it out. One seeded loaf, every Saturday, six years. I have never once eaten my own bread on a Saturday. Don't tell her that. Tell her anything else.",
+     "options": [
+      {"text": "Give me a cup of it, Tam.", "next": "t_ask", "act": ["flag:knows_saturday"]},
+      {"text": "Bring it to her yourself.", "next": "t_self", "act": ["flag:knows_saturday"]}
+     ]},
+    "t_self": {"who": "tam", "mood": "sad", "say": "Walk up Baker Street with a jam jar and six years of silence? She'd close the shutters. No. Worse. She'd be polite. You take it. You've got clean hands.",
+     "options": [{"text": "Then give me a cup.", "next": "t_ask"}]},
+    "t_ask": {"who": "tam", "mood": "neutral", "dir": "He spoons it into a clean jar like a transfusion.", "say": "One condition, and you pick it. Who tells her where this came from?",
+     "options": [
+      {"text": "I will. Tonight. The truth.", "next": "t_price_truth"},
+      {"text": "Nobody. She never finds out. It's kinder.", "next": "t_price_secret"},
+      {"text": "On second thought, keep it. We'll do this her way.", "next": "t_refuse"}
+     ]},
+    "t_price_truth": {"who": "tam", "mood": "surprised", "say": "Huh. I'd budgeted for the other answer. Then tell her it was fed. Every day. Whatever else she thinks of me, it was fed every day.",
+     "options": [{"text": "Every day. She'll hear it.", "next": null, "act": ["give:mother_cutting", "flag:cutting_truth", "rep:tam:+15", "stage:vigil"]}]},
+    "t_price_secret": {"who": "tam", "mood": "sad", "say": "Kinder. Right. Kind the way the mall is warm. Take it. Saturdays, if anyone asks, you never met me.",
+     "options": [{"text": "(Take the jar.)", "next": null, "act": ["give:mother_cutting", "flag:cutting_secret", "rep:tam:+5", "stage:vigil"]}]},
+    "t_refuse": {"who": "tam", "mood": "neutral", "say": "Her way. It's always her way. That's not a complaint, it's a description. The jar's here if her way runs out.",
+     "options": [{"text": "(Go back to Baker Street.)", "next": null, "act": ["stage:vigil"]}]}
+   }},
+
+  {"id": "vigil", "title": "The vigil", "kind": "talk", "with": "noor",
+   "goal": "Keep the vigil at the Stone Oven from 23:00",
+   "log": "A night of feeding in the oven's falling heat. Noor was always going to sit up. Now there are two of you.",
+   "start": "v0",
+   "starts": [{"need": ["flag:no_crock"], "node": "v0_glass"}],
+   "nodes": {
+    "v0": {"who": "scene", "say": "Eleven at night. The old crock sits in the oven's afterglow, fed with rye and wrist-warm water, stirred with the handle end of a wooden spoon, because that is how she has always been stirred and tonight is not the night for progress.",
+     "options": [{"text": "(Sit down. It's a long time till five.)", "next": "v1"}]},
+    "v0_glass": {"who": "scene", "say": "Eleven at night. The glass jar sits by the oven door, wrapped in two blankets and Noor's cardigan. It looks like a patient. The glass is already cool to the touch.",
+     "options": [{"text": "(Sit down. It's a long time till five.)", "next": "v1"}]},
+    "v1": {"who": "noor", "mood": "thinking", "say": "My great-grandmother started her the week the wall came down. Everyone was starting something that week. A shop, a marriage, an argument. A culture was cheaper than a baby, and she has outlasted most of the marriages. Talk to me. It's a long time till five.",
+     "options": [
+      {"text": "Tell me about your mother.", "next": "v_mother"},
+      {"text": "Tell me about your brother.", "next": "v_tam", "need": ["flag:knows_jar"]},
+      {"text": "Noor. I have something of hers. From Tam.", "next": "v_reveal", "need": ["have:mother_cutting"]}
+     ]},
+    "v_mother": {"who": "noor", "mood": "sad", "say": "She could tell the weather from the crumb. Rain two days out. Hands like paper at the end, and she'd still catch me adding yeast on a slow morning. Not angry. Disappointed. Which, as you know, is the strong one.",
+     "options": [
+      {"text": "And Tam? Was he here then?", "next": "v_tam", "need": ["flag:knows_jar"]},
+      {"text": "(Let the quiet be.)", "next": "v_two"}
+     ]},
+    "v_tam": {"who": "noor", "mood": "neutral", "say": "My brother wanted lights. A till that sings. Our name over six counters in six towns. I wanted the oven. We were both right. That's the trouble with bread. It proves slow, and people won't. He left on a Tuesday. I opened on time.",
+     "options": [
+      {"text": "Have you ever walked past his counter?", "next": "v_counter"},
+      {"text": "Noor. About Tam. I have something.", "next": "v_reveal", "need": ["have:mother_cutting"]},
+      {"text": "(Let the quiet be.)", "next": "v_two"}
+     ]},
+    "v_counter": {"who": "noor", "mood": "neutral", "say": "Once. From the far side. He was laughing with a customer. Good laugh, my brother. Retail laugh now. It started out real.",
+     "options": [
+      {"text": "Noor. I went to see him today.", "next": "v_reveal", "need": ["have:mother_cutting"]},
+      {"text": "(Let the quiet be.)", "next": "v_two"}
+     ]},
+    "v_reveal": {"who": "noor", "mood": "surprised", "dir": "You set a clean jam jar on the table, with a cupful of culture in it. She looks at it for a long time without touching it.", "say": "He took a cutting. And he fed it? Six years, in that place?",
+     "options": [
+      {"text": "Every day. He asked me to tell you that. Every day.", "next": "v_told", "need": ["flag:cutting_truth"]},
+      {"text": "Every day. I promised him I'd say nothing. I'm saying it anyway.", "next": "v_told", "need": ["flag:cutting_secret"], "act": ["flag:broke_promise"]}
+     ]},
+    "v_told": {"who": "noor", "mood": "sad", "dir": "She sits down. Noor, who stands through everything, sits down. Then she opens the jar and smells it.", "say": "Six years I let him be a till with a haircut. And all that time he was feeding her. Same sour. Same stubborn. Then it's still the same bread. Fold it in.",
+     "options": [{"text": "(Fold the cutting into the Mother.)", "next": "v_two", "act": ["take:mother_cutting", "flag:used_cutting", "flag:noor_knows"]}]},
+    "v_two": {"who": "scene", "say": "Two o'clock, and a feed. Then the long hour. Somewhere after three Noor falls asleep in the chair with her hands folded under her arms, the way people hold something that hurts. Four o'clock. The feed is yours.",
+     "options": [{"text": "(Go to the bench.)", "next": "v_four"}]},
+    "v_four": {"who": "scene", "say": "Rye on the bench. The tap runs wrist-warm if you wait for it. The kettle has just boiled for Noor's tea, the hour is very late, and hot would surely be quicker.",
+     "options": [
+      {"text": "Wait for the tap. Wrist-warm water, a fist of rye.", "next": "v_right", "need": ["!flag:no_crock"]},
+      {"text": "Wait for the tap. Wrist-warm water, a fist of rye.", "next": "v_right", "need": ["flag:no_crock", "flag:used_cutting"]},
+      {"text": "Wait for the tap. Wrist-warm water, a fist of rye.", "next": "v_cold", "need": ["flag:no_crock", "!flag:used_cutting"]},
+      {"text": "The kettle's just boiled. Hot water will hurry her along.", "next": "v_scald"},
+      {"text": "Wake Noor.", "next": "v_wake"},
+      {"text": "Fold in the jar from your pocket. Say nothing.", "next": "v_fold", "need": ["have:mother_cutting"]}
+     ]},
+    "v_right": {"who": "scene", "say": "You stir with the handle end. A little before five a bubble rises through the grey, slow as a word remembered. Then another.",
+     "options": [{"text": "(Wake Noor. Show her.)", "next": null, "act": ["stage:morning"]}]},
+    "v_wake": {"who": "noor", "mood": "neutral", "say": "You woke me to ask. Good. Asking is cheaper than guessing. Wrist-warm. Handle end. Watch.",
+     "options": [
+      {"text": "(Watch. Learn it.)", "next": "v_right_noor", "need": ["!flag:no_crock"]},
+      {"text": "(Watch. Learn it.)", "next": "v_right_noor", "need": ["flag:no_crock", "flag:used_cutting"]},
+      {"text": "(Watch. Learn it.)", "next": "v_cold_noor", "need": ["flag:no_crock", "!flag:used_cutting"]}
+     ]},
+    "v_right_noor": {"who": "scene", "say": "She feeds the culture herself, wrist-warm, handle end, and does not go back to sleep. A little before five a bubble rises through the grey, slow as a word remembered. Then another.",
+     "options": [{"text": "(Watch it with her.)", "next": null, "act": ["stage:morning"]}]},
+    "v_cold_noor": {"who": "noor", "mood": "sad", "say": "The feed's right, and it isn't enough. The glass gives the heat away as fast as the oven lends it. I should never have let that crock out of the house.",
+     "options": [
+      {"text": "Noor. There's another one. Tam kept a cutting alive, and I have it here.", "next": "v_told_late", "need": ["have:mother_cutting"]},
+      {"text": "(There is nothing left to try.)", "next": null, "need": ["!have:mother_cutting"], "act": ["flag:mother_dead", "stage:morning"]}
+     ]},
+    "v_told_late": {"who": "noor", "mood": "angry", "say": "He kept a cutting. Six years. And you have sat there with it in your pocket all night while she died in front of me. Give it here. Handle end. Fold it in.",
+     "options": [{"text": "(Fold the cutting into the Mother.)", "next": null, "need": ["!flag:cutting_secret"], "act": ["take:mother_cutting", "flag:used_cutting", "flag:noor_knows", "rep:noor:-5", "stage:morning"]},
+      {"text": "(Fold the cutting into the Mother.)", "next": null, "need": ["flag:cutting_secret"], "act": ["flag:broke_promise", "take:mother_cutting", "flag:used_cutting", "flag:noor_knows", "rep:noor:-5", "stage:morning"]}]},
+    "v_cold": {"who": "scene", "say": "The feed is right, and it isn't enough. The glass gives the heat away as fast as the oven lends it. By half past four the surface is as flat and grey as it was at midnight.",
+     "options": [
+      {"text": "The jar in your pocket. Now or never.", "next": "v_fold", "need": ["have:mother_cutting"]},
+      {"text": "(There is nothing left to try.)", "next": null, "need": ["!have:mother_cutting"], "act": ["flag:mother_dead", "stage:morning"]}
+     ]},
+    "v_fold": {"who": "scene", "say": "You fold the jar's contents in with the handle end of the spoon. Six years of somebody else's kitchen disappear into a hundred and twenty of this one. By five she is rising, and nobody saw.",
+     "options": [{"text": "(Wake Noor. Show her.)", "next": null, "act": ["take:mother_cutting", "flag:used_cutting", "stage:morning"]}]},
+    "v_scald": {"who": "scene", "say": "The water goes in steaming. For a moment the culture loosens and you think: there. Then the smell changes. Flat, cooked, like a kitchen after the guests have gone. Oda said it. Hot kills her dead.",
+     "options": [
+      {"text": "The jar in your pocket. All of it. Start her again.", "next": "v_restart", "need": ["have:mother_cutting"]},
+      {"text": "(Wake Noor. Tell her what you did.)", "next": null, "need": ["!have:mother_cutting"], "act": ["flag:scalded", "flag:mother_dead", "stage:morning"]}
+     ]},
+    "v_restart": {"who": "scene", "say": "You pour the ruined culture away with shaking hands and start her again from the jam jar: his six years, her rye, wrist-warm this time. By five she is rising. Every cell of her came through a mall fridge.",
+     "options": [{"text": "(Wake Noor. Tell her all of it.)", "next": null, "act": ["take:mother_cutting", "flag:used_cutting", "flag:scalded", "stage:morning"]}]}
+   }},
+
+  {"id": "morning", "title": "What rises", "kind": "talk", "with": "noor",
+   "goal": "Five o'clock at the Stone Oven",
+   "log": "Five o'clock. Whatever happened in the night, the town must not see the Stone Oven dark twice.",
+   "start": "w_pure",
+   "starts": [
+    {"need": ["flag:mother_dead", "flag:scalded"], "node": "w_kettle"},
+    {"need": ["flag:mother_dead"], "node": "w_lost"},
+    {"need": ["flag:scalded"], "node": "w_scald"},
+    {"need": ["flag:used_cutting", "flag:noor_knows"], "node": "w_join"},
+    {"need": ["flag:used_cutting"], "node": "w_secret"}
+   ],
+   "nodes": {
+    "w_pure": {"who": "noor", "mood": "happy", "dir": "She lifts the lid. The Mother is loud this morning, frothing at the shoulder of the crock as if making up for lost time.", "say": "Stubborn. Like her keeper. Here. Proofing room key. There are two of those in the world.",
+     "options": [
+      {"text": "(Take the key.)", "next": null, "need": ["!have:mother_cutting"], "act": ["end:saved_pure"]},
+      {"text": "(Take the key. Tam's jar goes back to Eastgate, unopened.)", "next": null, "need": ["have:mother_cutting"], "act": ["take:mother_cutting", "end:saved_pure"]}
+     ]},
+    "w_join": {"who": "noor", "mood": "thinking", "say": "Six years apart, and she takes him back in a night. No argument. No sulk. She's a better family than the rest of us. Proofing room key. And {player}. On Saturday the seeded loaf goes to Eastgate with the morning round. On the books. No more cash.",
+     "options": [{"text": "On the books. Yes, chef.", "next": null, "act": ["end:saved_joined_told"]}]},
+    "w_secret": {"who": "noor", "mood": "happy", "dir": "She tastes the culture off the back of the spoon and holds it on her tongue a moment too long.", "say": "She's risen. She's rounder. As if she's been somewhere. Hm. Sleep does that. Proofing room key.",
+     "options": [
+      {"text": "(Take the key. Say nothing.)", "next": null, "act": ["end:saved_joined_secret"]},
+      {"text": "Noor. She has been somewhere. Tam kept a cutting.", "next": "w_late"}
+     ]},
+    "w_late": {"who": "noor", "mood": "sad", "say": "And you'd have let me think it was the rye. No. Don't explain. You told me before the shutters went up. That counts. It only just counts.",
+     "options": [{"text": "He fed it every day, Noor. Six years.", "next": null, "need": ["!flag:cutting_secret"], "act": ["flag:noor_knows", "rep:noor:-5", "end:saved_joined_told"]},
+      {"text": "He fed it every day, Noor. Six years.", "next": null, "need": ["flag:cutting_secret"], "act": ["flag:broke_promise", "flag:noor_knows", "rep:noor:-5", "end:saved_joined_told"]}]},
+    "w_scald": {"who": "noor", "mood": "sad", "dir": "She smells it before she is fully awake: the flat, cooked smell from the sink.", "say": "You used the kettle.",
+     "options": [{"text": "I did. I killed her. Then I started her again, from a jar Tam has kept for six years.", "next": "w_scald2"}]},
+    "w_scald2": {"who": "noor", "mood": "neutral", "dir": "A very long silence. On the bench the culture goes on rising between you, not caring.", "say": "My great-grandmother's Mother died at four this morning. And she is alive on that bench because my brother stole a cup of her six years ago. I don't know which of you to be angrier with. Open the shutters. I'll decide after the bread.",
+     "options": [{"text": "(Open the shutters.)", "next": null, "need": ["!flag:cutting_secret"], "act": ["flag:noor_knows", "rep:noor:-10", "end:saved_joined_told"]},
+      {"text": "(Open the shutters.)", "next": null, "need": ["flag:cutting_secret"], "act": ["flag:broke_promise", "flag:noor_knows", "rep:noor:-10", "end:saved_joined_told"]}]},
+    "w_kettle": {"who": "noor", "mood": "sad", "dir": "She smells it before she is fully awake: the flat, cooked smell from the sink.", "say": "You used the kettle.",
+     "options": [{"text": "I did. I killed her. I'm sorry, Noor.", "next": "w_kettle2"}]},
+    "w_kettle2": {"who": "noor", "mood": "neutral", "dir": "She looks at the grey, still surface for a long time. Then she reaches for the tin of baker's yeast.", "say": "A hundred and twenty years, and one kettle. Oda will have told you. Everybody is told. The town eats at seven. We'll give them risen something. Shutters.",
+     "options": [
+      {"text": "(Open the shutters.)", "next": null, "act": ["rep:noor:-15", "end:lost"]},
+      {"text": "Noor. There's another one. Tam has kept a cutting alive.", "next": "w_lost2", "need": ["flag:knows_jar", "!flag:noor_knows"], "act": ["rep:noor:-15"]}
+     ]},
+    "w_lost": {"who": "noor", "mood": "sad", "dir": "She looks at the still, grey surface. Then she does the worst thing you have seen her do: she nods, practically, and reaches for the tin of baker's yeast.", "say": "The town eats at seven. We'll give them risen something. Shutters.",
+     "options": [
+      {"text": "(Work the saddest good shift of your life.)", "next": null, "act": ["end:lost"]},
+      {"text": "Noor. There's another one. Tam has kept a cutting alive.", "next": "w_lost2", "need": ["flag:knows_jar", "!flag:noor_knows"]}
+     ]},
+    "w_lost2": {"who": "noor", "mood": "angry", "say": "Don't. Not this morning. I will not go begging my own culture back from a mall. Shutters.",
+     "options": [{"text": "(Open the shutters.)", "next": null, "act": ["flag:told_of_jar", "end:lost"]}]}
+   }}
+ ],
+ "endings": [
+  {"id": "saved_pure", "title": "Saved, the old way", "log": "Crock, rye and a night's vigil. The Mother rose on her own history.",
+   "pay": 2000, "rep": {"noor": 20}, "give": ["proofing_room_key"], "flags": ["mother_pure"],
+   "ripples": [
+    "At the fair, Vera knows the Mother in the loaf at once, and has no questions about where she has been.",
+    "Tam's jar stays in its fridge, and the Saturday loaf keeps its secret.",
+    "If you took the crock without asking, Jai has an empty case and a suspicion. Stone Ground begins there."
+   ],
+   "unlocks": "Rank: Oven Hand. The proofing-room key. Repeatable job: a bake shift."},
+  {"id": "saved_joined_told", "title": "Saved, joined, and Noor knows", "log": "Tam's six years are folded into the Mother, and the truth was spoken before the shutters went up.",
+   "pay": 2000, "rep": {"noor": 15, "tam": 20}, "give": ["proofing_room_key"], "flags": ["mother_joined", "noor_knows"],
+   "ripples": [
+    "The Saturday loaf goes on the books. Abe's six-year secret ends as a standing order.",
+    "At the fair, when Tam's oven fails, Noor herself is ready to say “use ours”.",
+    "The Long Table, the reconciliation ending, becomes reachable."
+   ],
+   "unlocks": "Rank: Oven Hand. The proofing-room key. Repeatable job: a bake shift."},
+  {"id": "saved_joined_secret", "title": "Saved, joined, in silence", "log": "Tam's six years are in the Mother and nobody will say so. The secret is yours to carry now.",
+   "pay": 2000, "rep": {"noor": 15, "tam": 5}, "give": ["proofing_room_key"], "flags": ["mother_joined", "tam_secret"],
+   "ripples": [
+    "Vera can taste where the Mother has been. At the judging table she says so, out loud.",
+    "If you promised Tam silence and then share the oven at the fair, he nearly says it himself in Noor's hearing.",
+    "When the secret comes out, it costs you with Noor."
+   ],
+   "unlocks": "Rank: Oven Hand. The proofing-room key. Repeatable job: a bake shift."},
+  {"id": "lost", "title": "The Mother is gone", "log": "Some nights don't end right. The Stone Oven bakes on bought yeast now: good bread, from nowhere.",
+   "pay": 600, "rep": {"noor": 0}, "flags": ["mother_lost"],
+   "ripples": [
+    "The career continues, diminished. At the fair Vera tastes the difference and asks one question.",
+    "Tam's jar is now the only living line. In the last quest it can come home, and that homecoming is the hardest-won ending in the career.",
+    "Olu stops joking about the nine-year bet. Nobody discusses why."
+   ],
+   "unlocks": "Rank: Oven Hand, earned the hard way."}
+ ]
+}

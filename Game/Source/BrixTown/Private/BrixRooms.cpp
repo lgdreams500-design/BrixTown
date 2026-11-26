@@ -1,5 +1,7 @@
 #include "BrixRooms.h"
 
+#include "BrixLight.h"
+
 #include "BrixCity.h"
 #include "BrixFurnish.h"
 #include "BrixGameMode.h"
@@ -11,6 +13,7 @@
 #include "Camera/PlayerCameraManager.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/PointLightComponent.h"
+#include "Components/SpotLightComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -79,6 +82,7 @@ void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTown
 {
 	if (UStaticMesh* KitBox = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Kit/SM_Kit_Box.SM_Kit_Box"))) Cube = KitBox;
 	TownRef = Town;
+	Hung = Ins.Hung;
 	int32 k = -1, Pieces = 0, Dropped = 0, Other = 0, BoxCount = 0, Flats = 0;
 	const FBrixDoorRules DR = FBrixDoorRules::FromConfig();
 	TArray<int32> ByLevel = { 0, 0, 0, 0, 0 };
@@ -240,9 +244,46 @@ UInstancedStaticMeshComponent* ABrixRooms::BoxGroup(bool bCollide)
 	return G;
 }
 
+// Hung pieces keep the camera out as the slice's camera-only solids do (homes.js one(), CAM_ONLY): the player walks
+// under a pendant, but the camera behind them stops short of its shade instead of looking out from inside it.
+UInstancedStaticMeshComponent* ABrixRooms::CamGroup()
+{
+	if (CamBlocks) return CamBlocks;
+	CamBlocks = NewObject<UInstancedStaticMeshComponent>(this, TEXT("CameraBlocks"));
+	CamBlocks->SetupAttachment(RootComponent);
+	CamBlocks->SetStaticMesh(Cube);
+	CamBlocks->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	CamBlocks->SetCollisionResponseToAllChannels(ECR_Ignore);
+	CamBlocks->SetCollisionResponseToChannel(ECC_Camera, ECR_Block);
+	CamBlocks->SetHiddenInGame(true); CamBlocks->SetVisibility(false); CamBlocks->SetCastShadow(false);
+	CamBlocks->RegisterComponent();
+	AddInstanceComponent(CamBlocks);
+	return CamBlocks;
+}
+
+// A pendant's shade or a wall cupboard right beside the camera behind the player fills half the picture (the camera
+// stops short of one only when it is between them): with the camera within HideHungWithin of its box it is not drawn,
+// as the player's own body is not with the camera pushed in against them.
+void ABrixRooms::HideHungNearCamera()
+{
+	const APlayerController* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
+	if (!HungShown.Num() || !PC || !PC->PlayerCameraManager) return;
+	const FVector Eye = PC->PlayerCameraManager->GetCameraLocation();
+	const double Near2 = FMath::Square(HideHungWithin * CmPerM);
+	for (FHungShown& Hs : HungShown)
+	{
+		const bool bHide = Hs.Box.ComputeSquaredDistanceToPoint(Eye) < Near2;
+		if (bHide == Hs.bHidden || !Hs.G.IsValid()) continue;
+		Hs.bHidden = bHide;
+		Hs.G->UpdateInstanceTransform(Hs.Index, bHide ? FTransform(FQuat::Identity, Hs.T.GetLocation(), FVector(0.001)) : Hs.T, true, true);
+	}
+}
+
 void ABrixRooms::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	FadeLights(DeltaSeconds);
+	HideHungNearCamera();
 	Wait -= DeltaSeconds;
 	if (Wait > 0.f) return;
 	Wait = CheckSeconds;
@@ -251,11 +292,15 @@ void ABrixRooms::Tick(float DeltaSeconds)
 	const FVector2D Eye(Cam->GetCameraLocation().X / CmPerM, Cam->GetCameraLocation().Y / CmPerM);
 	if (TownRef)   // the windows lit by night, as the lamps light (ABrixLamps: night below NightBelow of the day's light)
 		if (const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))
-			TownRef->SetNight(FMath::SmoothStep(0.f, 1.f, FMath::Clamp(1.f - Mode->Daylight / FMath::Max(NightBelow, .01f), 0.f, 1.f)));
-	PlaceLights(Eye, (float)(Cam->GetCameraLocation().Z / CmPerM));
+		{
+			const UBrixLight* Sight = GetWorld()->GetSubsystem<UBrixLight>();   // and already as the sun gets low, as the lamps
+			TownRef->SetNight(FMath::Max(Sight ? Sight->LowSun() : 0.f, FMath::SmoothStep(0.f, 1.f, FMath::Clamp(1.f - Mode->Daylight / FMath::Max(NightBelow, .01f), 0.f, 1.f))));
+		}
+	const ABrixGameMode* LightMode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	PlaceLights(Eye, (float)(Cam->GetCameraLocation().Z / CmPerM), LightMode ? LightMode->Daylight : 1.f);
 	TSet<int32> Want;
 	for (int32 i = 0; i < Homes.Num(); ++i)
-		if (FVector2D::Distance(Eye, Homes[i].Centre) - Homes[i].Reach < NearMetres) Want.Add(i);
+		if (FVector2D::Distance(Eye, Homes[i].Centre) - Homes[i].Reach < NearMetres || (DesignFloor >= 0 && Homes[i].Lot == DesignLot)) Want.Add(i);
 	// the building the camera is in and its floor: there the floors from one below to one above it are built, elsewhere the
 	// ground floor and, in a house of two, its upstairs (play.js nearRooms: the camera's floor and its neighbours)
 	int32 InHome = INDEX_NONE, OnFloor = 0;
@@ -274,10 +319,21 @@ void ABrixRooms::Tick(float DeltaSeconds)
 		InHome = i;
 		for (int32 f = 0; f < LH.FloorUp.Num(); ++f) if (EyeUp > LH.FloorUp[f] - 0.1f) OnFloor = f;
 	}
-	if (Want.Num() == Near.Num() && Want.Includes(Near) && InHome == CamHome && OnFloor == CamFloor) return;
-	Near = MoveTemp(Want);
+	// which floors are built turns on the camera's home and floor only in a building of more than two floors
+	auto Tall = [this](int32 h) { return Homes.IsValidIndex(h) && Homes[h].FloorUp.Num() > 2; };
+	const bool bFloors = InHome != CamHome ? Tall(InHome) || Tall(CamHome) : Tall(InHome) && OnFloor != CamFloor;
+	const bool bGrew = !Near.Includes(Want);
+	int32 Stale = 0;
+	for (const int32 i : Near)
+		if (!Want.Contains(i))
+		{
+			if (FVector2D::Distance(Eye, Homes[i].Centre) - Homes[i].Reach < NearMetres + KeepMetres) Want.Add(i);
+			else ++Stale;
+		}
 	CamHome = InHome;
 	CamFloor = OnFloor;
+	if (!bGrew && !bFloors && Stale < FMath::Max(DropAtOnce, 1)) return;
+	Near = MoveTemp(Want);
 	Rebuild();
 }
 
@@ -337,7 +393,7 @@ bool ABrixRooms::SetLayout(int32 Lot, int32 Floor, const TArray<FBrixLayoutPiece
 		if (bTown) continue;
 		const double Y = FMath::DegreesToRadians(P.Yaw), c = FMath::Cos(Y), s = FMath::Sin(Y);
 		FBrixFurniturePiece K;
-		K.Kind = P.Kind == TEXT("town") ? FString(TEXT("town")) : P.Kind;
+		K.Kind = P.Kind == TEXT("town") || P.bBoxed ? FString(TEXT("town")) : P.Kind;   // (a flat pack not put together yet, FURN-029: the stack of its boxes, a box its size)
 		K.Line = P.Line ? *P.Line : FString(TEXT("plain"));
 		K.Floor = Floor;
 		K.At = FVector2D(P.X, P.Z);
@@ -351,6 +407,51 @@ bool ABrixRooms::SetLayout(int32 Lot, int32 Floor, const TArray<FBrixLayoutPiece
 	return true;
 }
 
+void ABrixRooms::SetDesign(int32 Lot, int32 Floor)
+{
+	if (Floor < 0) Lot = -1;
+	if (Lot == DesignLot && Floor == DesignFloor) return;
+	DesignLot = Lot;
+	DesignFloor = Floor;
+	Near.Reset();   // drawn again at the next look round
+	Wait = 0.f;
+}
+
+void ABrixRooms::SetMarks(const TArray<FTransform>& At, const TArray<FLinearColor>& Colours)
+{
+	if (!MarkBoxes)
+	{
+		if (!At.Num()) return;
+		MarkBoxes = NewObject<UInstancedStaticMeshComponent>(this, TEXT("DesignMarks"));
+		MarkBoxes->SetupAttachment(RootComponent);
+		MarkBoxes->SetStaticMesh(Cube);
+		MarkBoxes->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		MarkBoxes->SetCastShadow(false);
+		MarkBoxes->NumCustomDataFloats = 12;
+		UMaterialInterface* Glow = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Greybox/M_Glow.M_Glow"));   // lit in its own colour, as a lamp's glass
+		if (UMaterialInstanceDynamic* Lit = Glow ? UMaterialInstanceDynamic::Create(Glow, this) : nullptr)
+		{
+			Lit->SetScalarParameterValue(TEXT("Glow"), MarkGlow);
+			for (int32 i = 0; i < MarkBoxes->GetNumMaterials(); ++i) MarkBoxes->SetMaterial(i, Lit);
+		}
+		else
+		{
+			if (!OwnColour) { OwnColour = UMaterialInstanceDynamic::Create(Greybox, this); OwnColour->SetScalarParameterValue(TEXT("InstanceColour"), 1.f); }
+			for (int32 i = 0; i < MarkBoxes->GetNumMaterials(); ++i) MarkBoxes->SetMaterial(i, OwnColour);
+		}
+		MarkBoxes->RegisterComponent();
+		AddInstanceComponent(MarkBoxes);
+	}
+	MarkBoxes->ClearInstances();
+	MarkBoxes->AddInstances(At, false);
+	for (int32 n = 0; n < At.Num(); ++n)
+	{
+		const FLinearColor C = Colours.IsValidIndex(n) ? Colours[n] : FLinearColor::White;
+		MarkBoxes->SetCustomData(n, { C.R, C.G, C.B, -1, 0, 0, 0, 0, 0, 0, 0, 0 }, false);
+	}
+	MarkBoxes->MarkRenderStateDirty();
+}
+
 bool ABrixRooms::HasRooms(int32 Lot) const { return Homes.ContainsByPredicate([Lot](const FLotHome& X) { return X.Lot == Lot; }); }
 
 void ABrixRooms::Rebuild()
@@ -358,11 +459,14 @@ void ABrixRooms::Rebuild()
 	for (TPair<FString, TObjectPtr<UInstancedStaticMeshComponent>>& G : Groups) if (G.Value) G.Value->ClearInstances();
 	UInstancedStaticMeshComponent* Box = BoxGroup(true);
 	UInstancedStaticMeshComponent* Block = BoxGroup(false);
+	UInstancedStaticMeshComponent* Cam = CamGroup();
 	Box->ClearInstances();
 	Block->ClearInstances();
+	Cam->ClearInstances();
+	HungShown.Reset();
 	ABrixTownActor* TownDefaults = GetMutableDefault<ABrixTownActor>();
 	TMap<UInstancedStaticMeshComponent*, TArray<FTransform>> Add;
-	TArray<FTransform> BoxAts, BlockAts;
+	TArray<FTransform> BoxAts, BlockAts, CamAts;
 	TArray<TArray<float>> BoxData, FurnData;
 	TArray<FTransform> FurnAts;
 	auto AddBox = [&](const FTransform& T, const FLinearColor& C, const FVector4& A, const FVector4& B)
@@ -380,6 +484,7 @@ void ABrixRooms::Rebuild()
 		auto Up = [&](int32 f)   // a built floor near the camera, or -1
 		{
 			if (!LH.FloorUp.IsValidIndex(f)) return -1.f;
+			if (DesignFloor >= 0 && LH.Lot == DesignLot) return f == DesignFloor ? LH.FloorUp[f] : -1.f;   // the designer's storey, cut open
 			if (LH.FloorUp.Num() > 2 && (bHere ? FMath::Abs(f - CamFloor) > 1 : f > 0)) return -1.f;
 			return LH.FloorUp[f];
 		};
@@ -445,13 +550,23 @@ void ABrixRooms::Rebuild()
 			// the kit's piece: x across it, its back toward +y in Blender, which the importer turns to -y
 			const FVector Org(P.At.X * CmPerM, P.At.Y * CmPerM, (Floor0 + P.Lift) * CmPerM);
 			const FMatrix M(FVector(P.A.X, P.A.Y, 0), FVector(-P.B.X, -P.B.Y, 0), FVector(0, 0, 1), Org);
-			Add.FindOrAdd(G).Add(FTransform(M));
+			TArray<FTransform>& GAts = Add.FindOrAdd(G);
+			const int32 Index = (int32)GAts.Num();
+			GAts.Add(FTransform(M));
 			++Shown;
 			if (P.Lift == 0.f && !P.Size.IsZero())   // homes.js one(): its footprint, a little in, at least 0.9 m high
 			{
 				FBrixRect Foot;
 				Foot.Centre = P.At; Foot.Along = P.A; Foot.Length = FMath::Max(0.05f, P.Size.X - 0.1f); Foot.Width = FMath::Max(0.05f, P.Size.Y - 0.1f);
 				BlockAts.Add(BoxAt(Foot, Floor0, Floor0 + FMath::Max(P.Size.Z, MinBlockHeight)));
+			}
+			if (const TArray<float>* Hb = Hung.Find(P.Kind); Hb && Hb->Num() >= 6)   // its camera-only box, on the plan's axes
+			{
+				FBrixRect Q;
+				Q.Centre = P.At + P.A * (((*Hb)[0] + (*Hb)[1]) / 2) + P.B * (((*Hb)[2] + (*Hb)[3]) / 2);
+				Q.Along = P.A; Q.Length = (*Hb)[1] - (*Hb)[0]; Q.Width = (*Hb)[3] - (*Hb)[2];
+				CamAts.Add(BoxAt(Q, Floor0 + (*Hb)[4], Floor0 + (*Hb)[5]));
+				HungShown.Add({ G, Index, FTransform(M), FBox(FVector(-50), FVector(50)).TransformBy(CamAts.Last()), false });
 			}
 		}
 	}
@@ -460,6 +575,8 @@ void ABrixRooms::Rebuild()
 	for (int32 n = 0; n < BoxData.Num(); ++n) Box->SetCustomData(n, BoxData[n], false);
 	Box->MarkRenderStateDirty();
 	Block->AddInstances(BlockAts, false);
+	Cam->AddInstances(CamAts, false);
+	HideHungNearCamera();   // the pieces were all just put back drawn
 	UInstancedStaticMeshComponent* Furn = FurnGroup();
 	Furn->ClearInstances();
 	Furn->AddInstances(FurnAts, false);
@@ -467,27 +584,60 @@ void ABrixRooms::Rebuild()
 	Furn->MarkRenderStateDirty();
 }
 
-void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp)
+UPointLightComponent* ABrixRooms::MakeLamp(AActor* Owner, USceneComponent* Root, float Watts, float ConeDeg, bool bShadows)
+{
+	const ABrixRooms* D = GetDefault<ABrixRooms>();
+	UPointLightComponent* L = nullptr;
+	if (ConeDeg > 0.f)
+	{
+		USpotLightComponent* Sp = NewObject<USpotLightComponent>(Owner);
+		Sp->OuterConeAngle = FMath::Min(ConeDeg, 80.f);
+		Sp->InnerConeAngle = FMath::Min(ConeDeg, 80.f) - 4.f;   // as bright to the walls as straight down: a lamp, not a spotlight
+		Sp->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));   // down, out of its shade
+		L = Sp;
+	}
+	else L = NewObject<UPointLightComponent>(Owner);
+	L->SetupAttachment(Root);
+	L->Mobility = EComponentMobility::Movable;
+	L->IntensityUnits = ELightUnits::Candelas;
+	L->Intensity = Watts * D->CandelaPerWatt;
+	L->bUseInverseSquaredFalloff = true;
+	L->AttenuationRadius = D->RoomLampReach * CmPerM;
+	L->LightColor = D->RoomLampColour.ToFColor(true);
+	L->CastShadows = bShadows;
+	L->SourceRadius = 8.f;   // the references' lamps: soft, 0.08 m
+	L->SetVisibility(false);
+	L->RegisterComponent();
+	Owner->AddInstanceComponent(L);
+	return L;
+}
+
+void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp, float Daylight)
 {
 	if (Lights.Num() != RoomLights)
 	{
 		for (UPointLightComponent* L : Lights) if (L) L->DestroyComponent();
 		Lights.Reset();
-		for (int32 n = 0; n < RoomLights; ++n)
-		{
-			UPointLightComponent* L = NewObject<UPointLightComponent>(this);
-			L->SetupAttachment(RootComponent);
-			L->SetIntensityUnits(ELightUnits::Candelas);
-			L->SetIntensity(RoomLightCandela);
-			L->SetAttenuationRadius(RoomLightReach * CmPerM);
-			L->SetLightColor(RoomLightColour);
-			L->SetCastShadows(false);
-			L->SetSourceRadius(30.f);
-			L->SetVisibility(false);
-			L->RegisterComponent();
-			AddInstanceComponent(L);
-			Lights.Add(L);
-		}
+		for (int32 n = 0; n < RoomLights; ++n) Lights.Add(MakeLamp(this, RootComponent, RoomLampWatts, RoomLampCone, n < RoomLampShadows));
+		LampAt.Init(FVector::ZeroVector, Lights.Num());
+		LampLevel.Init(0.f, Lights.Num());
+		LampHeld.Init(false, Lights.Num());
+	}
+	if (!Fill)
+	{
+		// the room's own light: even, without a source to burn the ceiling near it, fading out at its reach
+		Fill = NewObject<UPointLightComponent>(this);
+		Fill->SetupAttachment(RootComponent);
+		Fill->Mobility = EComponentMobility::Movable;
+		Fill->bUseInverseSquaredFalloff = false;
+		Fill->LightFalloffExponent = 2.f;
+		Fill->Intensity = RoomFill;
+		Fill->LightColor = RoomFillColour.ToFColor(true);
+		Fill->CastShadows = false;
+		Fill->SourceRadius = 30.f;
+		Fill->SetVisibility(false);
+		Fill->RegisterComponent();
+		AddInstanceComponent(Fill);
 	}
 	// the rooms of the home the camera is in, nearest it first (out of doors, none: they cost GPU time and are not seen)
 	auto InRect = [](const FBrixRect& R, const FVector2D& P)
@@ -499,16 +649,101 @@ void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp)
 	for (const int32 i : Near)
 		for (const FBrixRoom& R : Homes[i].Home->Rooms)
 			if (Homes[i].FloorUp.IsValidIndex(R.Floor) && EyeUp > Homes[i].FloorUp[R.Floor] - 0.1f && EyeUp < Homes[i].CeilUp[R.Floor] && InRect(R.R, Eye)) { In = i; OnFloor = R.Floor; }
-	TArray<TPair<double, FVector>> Rooms;
+	// Where the lamps hang on the camera's floor. A room of a planned home: its middle, RoomLampDrop under the ceiling
+	// (homes.js gives each room one). A floor with no plan: where its dressing hangs or stands a lamp (the small glowing
+	// box of each: play.js lamp(), the desk and floor lamps). And the room's own light, over the whole floor.
+	struct FLamp { double Far; FVector At; };
+	TArray<FLamp> Lamps;
 	if (In != INDEX_NONE)
-		for (const FBrixRoom& R : Homes[In].Home->Rooms)
-			if (R.Floor == OnFloor) Rooms.Add({ FVector2D::Distance(Eye, R.R.Centre), FVector(R.R.Centre.X * CmPerM, R.R.Centre.Y * CmPerM, (Homes[In].CeilUp[OnFloor] - 0.4f) * CmPerM) });
-	Rooms.Sort([](const TPair<double, FVector>& A, const TPair<double, FVector>& B) { return A.Key < B.Key; });
+	{
+		const FLotHome& LH = Homes[In];
+		const float Floor0 = LH.FloorUp[OnFloor], Ceil0 = LH.CeilUp[OnFloor];
+		bool bHall = false;
+		for (const FBrixRoom& R : LH.Home->Rooms)
+		{
+			if (R.Floor != OnFloor) continue;
+			if (R.bFloor) Lamps.Add({ FVector2D::Distance(Eye, R.R.Centre), FVector(R.R.Centre.X, R.R.Centre.Y, Ceil0 - RoomLampDrop) * CmPerM });
+			else bHall = true;
+		}
+		if (bHall && LH.Furn.IsValidIndex(OnFloor))
+			for (const FBrixFurnBox& B : LH.Furn[OnFloor].Boxes)
+				if (B.bGlow && FMath::Max3(B.Size.X, B.Size.Y, B.Size.Z) < 0.3f && B.Colour.X > 0.9f && B.Colour.Z < 0.7f)   // a lamp's glass, not a lit sign
+					Lamps.Add({ FVector2D::Distance(Eye, B.At), FVector(B.At.X, B.At.Y, Floor0 + B.Y0 - 0.05f) * CmPerM });
+		if (bHall && !Lamps.Num()) Lamps.Add({ 0.0, FVector(LH.Centre.X, LH.Centre.Y, Ceil0 - RoomLampDrop) * CmPerM });
+		Fill->SetWorldLocation(FVector(LH.Centre.X, LH.Centre.Y, (Floor0 + Ceil0) * 0.5f) * CmPerM);
+		const float Reach = FMath::Max(RoomLampReach, RoomFillReach * 2.f * LH.Reach) * CmPerM;
+		if (!FMath::IsNearlyEqual(Fill->AttenuationRadius, Reach, 1.f)) Fill->SetAttenuationRadius(Reach);
+		FillFull = FillNow(Daylight);
+	}
+	bFillWant = In != INDEX_NONE;
+	// the lamps that cast shadows stay where they are until another place is nearer by a good step, so that standing
+	// between two lamps does not swap them back and forth
+	const int32 Shadowed = FMath::Min(RoomLampShadows, Lights.Num());
+	for (FLamp& L : Lamps)
+		for (int32 n = 0; n < Shadowed; ++n)
+			if (LampHeld[n] && LampAt[n].Equals(L.At, 5.)) L.Far -= 1.5;
+	Lamps.Sort([](const FLamp& A, const FLamp& B) { return A.Far < B.Far; });
+	LampWant.Reset();
+	for (int32 n = 0; n < Lights.Num() && n < Lamps.Num(); ++n) LampWant.Add(Lamps[n].At);
+}
+
+// Every frame: the room's own light and its lamps towards what PlaceLights last wanted. A lamp that casts shadows wants
+// the place nearest the camera; it goes down where it is, moves dark, and comes up there, and the plain lamp that lit
+// that place goes down as it comes up. A plain lamp stays where it hangs for as long as that place is wanted.
+void ABrixRooms::FadeLights(float DeltaSeconds)
+{
+	if (!Fill || LampAt.Num() != Lights.Num()) return;
+	const float Step = DeltaSeconds / FMath::Max(LightFadeSeconds, .01f);
+	FillLevel = FMath::Clamp(FillLevel + (bFillWant ? Step : -Step), 0.f, 1.f);
+	const float FillTo = FillFull * FMath::SmoothStep(0.f, 1.f, FillLevel);
+	if (!FMath::IsNearlyEqual(Fill->Intensity, FillTo, 0.002f)) Fill->SetIntensity(FillTo);
+	if (Fill->IsVisible() != (FillLevel > 0.f)) Fill->SetVisibility(FillLevel > 0.f);
+
+	const int32 Shadowed = FMath::Min(RoomLampShadows, Lights.Num());
+	auto WantAt = [this](const FVector& P)
+	{
+		for (int32 i = 0; i < LampWant.Num(); ++i) if (LampWant[i].Equals(P, 5.)) return i;
+		return (int32)INDEX_NONE;
+	};
+	auto There = [this](int32 n) { return LampHeld[n] && LampWant.IsValidIndex(n) && LampAt[n].Equals(LampWant[n], 5.); };
+	TArray<bool, TInlineAllocator<8>> Taken, Up;
+	Taken.Init(false, LampWant.Num());
+	Up.Init(false, Lights.Num());
+	auto Hang = [this, &Up](int32 n, const FVector& At)
+	{
+		LampAt[n] = At;
+		LampHeld[n] = true;
+		Lights[n]->SetWorldLocation(At);
+		Up[n] = true;
+	};
+	for (int32 n = 0; n < Shadowed; ++n)
+	{
+		if (!LampWant.IsValidIndex(n)) { if (LampLevel[n] <= 0.f) LampHeld[n] = false; continue; }
+		Taken[n] = true;
+		if (There(n)) Up[n] = true;
+		else if (LampLevel[n] <= 0.f) Hang(n, LampWant[n]);
+	}
+	for (int32 n = Shadowed; n < Lights.Num(); ++n)
+	{
+		const int32 i = LampHeld[n] ? WantAt(LampAt[n]) : INDEX_NONE;
+		if (i == INDEX_NONE) continue;
+		if (i < Shadowed) Up[n] = !There(i);   // a shadowed lamp is on its way here: lit until it has come
+		else if (!Taken[i]) { Taken[i] = true; Up[n] = true; }
+	}
+	for (int32 n = Shadowed; n < Lights.Num(); ++n)
+	{
+		if (Up[n] || LampLevel[n] > 0.f) continue;
+		LampHeld[n] = false;
+		for (int32 i = Shadowed; i < LampWant.Num(); ++i)
+			if (!Taken[i]) { Taken[i] = true; Hang(n, LampWant[i]); break; }
+	}
+	const float Full = RoomLampWatts * CandelaPerWatt;
 	for (int32 n = 0; n < Lights.Num(); ++n)
 	{
-		const bool bOn = Rooms.IsValidIndex(n);
-		if (bOn) Lights[n]->SetWorldLocation(Rooms[n].Value);
-		if (Lights[n]->IsVisible() != bOn) Lights[n]->SetVisibility(bOn);
+		LampLevel[n] = FMath::Clamp(LampLevel[n] + (Up[n] ? Step : -Step), 0.f, 1.f);
+		const float To = Full * FMath::SmoothStep(0.f, 1.f, LampLevel[n]);
+		if (!FMath::IsNearlyEqual(Lights[n]->Intensity, To, Full * 0.002f)) Lights[n]->SetIntensity(To);
+		if (Lights[n]->IsVisible() != (LampLevel[n] > 0.f)) Lights[n]->SetVisibility(LampLevel[n] > 0.f);
 	}
 }
 

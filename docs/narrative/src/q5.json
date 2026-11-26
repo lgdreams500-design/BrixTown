@@ -1,0 +1,211 @@
+{
+ "id": "name_on_the_door", "group": "baker", "act": "V", "title": "Your Name on the Door", "rank": "Master Baker",
+ "giver": "noor", "needs": ["done:market_day:*"],
+ "hook": "Some weeks after the fair. A tray of rolls on the bench, shaped badly by the best hands in town.",
+ "summary": "Noor's hands are going the way her mother's went. Before long she will not be able to shape a batch. The Stone Oven needs hands, and a name to answer for them, and there is a man standing in the alley who has not knocked on that door in six years. What the bakery becomes is your answer to give, and everything you did since the first morning decides which answers are open.",
+ "theme": "What do you keep, and what do you let change?",
+ "start": "hands",
+ "stages": [
+  {"id": "hands", "title": "Shaped badly", "kind": "talk", "with": "noor",
+   "goal": "Talk to Noor at the bench",
+   "log": "After closing. Noor has asked you to stay behind.",
+   "scene": "A tray of rolls sits on the bench, shaped badly. Not an apprentice's kind of badly. A different kind. Noor is holding her right hand in her left as if it belonged to somebody she was looking after.",
+   "start": "h1",
+   "starts": [{"need": ["flag:noticed_hands"], "node": "h_known"}],
+   "nodes": {
+    "h1": {"who": "noor", "mood": "neutral", "say": "Don't. I know what they look like. I shaped them.",
+     "options": [
+      {"text": "Your hands.", "next": "h2", "need": ["!flag:mother_lost"]},
+      {"text": "Your hands.", "next": "h2_lost", "need": ["flag:mother_lost"]}
+     ]},
+    "h_known": {"who": "noor", "mood": "neutral", "say": "You've known a long while. You asked about the order book, and then you had the manners not to ask the second question. Ask it now.",
+     "options": [
+      {"text": "How bad are they, Noor?", "next": "h2", "need": ["!flag:mother_lost"], "act": ["rep:noor:+5"]},
+      {"text": "How bad are they, Noor?", "next": "h2_lost", "need": ["flag:mother_lost"], "act": ["rep:noor:+5"]}
+     ]},
+    "h2": {"who": "noor", "mood": "sad", "say": "The same as my mother's. I can feed the Mother. I can count. I can taste. I cannot shape a batch, and before long I won't be able to shape a roll. So the Oven needs hands, and a name to answer for them.",
+     "options": [
+      {"text": "It has hands.", "next": "h3"},
+      {"text": "And Pip's bench is empty.", "next": "h_pip", "need": ["flag:pip_leaves"]},
+      {"text": "What do you want it to be?", "next": "h3"}
+     ]},
+    "h2_lost": {"who": "noor", "mood": "sad", "say": "The same as my mother's. I can count. I can taste. I cannot shape a batch, and before long I won't be able to shape a roll. So the Oven needs hands, and a name to answer for them.",
+     "options": [
+      {"text": "It has hands.", "next": "h3"},
+      {"text": "And Pip's bench is empty.", "next": "h_pip", "need": ["flag:pip_leaves"]},
+      {"text": "What do you want it to be?", "next": "h3"}
+     ]},
+    "h_pip": {"who": "noor", "mood": "sad", "say": "Pip went where somebody says “brilliant”. I said “hm”. I have had since the fair to cost that, and it comes out dear.",
+     "options": [{"text": "It still has hands.", "next": "h3"}]},
+    "h3": {"who": "noor", "mood": "thinking", "say": "I've known what the Oven is since I could reach the bench. I don't know what it is without my hands in it. You do the thinking. Go and walk about. Come back this evening and tell me what it should be when I can't.",
+     "options": [{"text": "This evening.", "next": null, "act": ["stage:alley"]}]}
+   }},
+
+  {"id": "alley", "title": "The man who isn't knocking", "kind": "talk", "with": "tam",
+   "goal": "That evening: the alley beside the Stone Oven",
+   "log": "You walk the old wall line and back. When you come back, somebody is standing in the alley by the side door.",
+   "scene": "A man is standing in the alley by the side door, not knocking. He has clearly been not knocking for some time.",
+   "start": "x1",
+   "starts": [
+    {"need": ["flag:mother_lost", "flag:noor_knows"], "node": "x_lost_known"},
+    {"need": ["flag:mother_lost", "flag:told_of_jar"], "node": "x_lost"},
+    {"need": ["flag:mother_lost"], "node": "x_lost_untold"},
+    {"need": ["flag:oven_refused"], "node": "x_offer"},
+    {"need": ["flag:token_tam"], "node": "x_token"}
+   ],
+   "nodes": {
+    "x1": {"who": "tam", "mood": "neutral", "say": "I heard about her hands. Mei told Abe, Abe told a parcel, and the parcel told me. What happens to the Oven?",
+     "options": [
+      {"text": "That depends. Would you come in, if the door opened?", "next": "x_in"},
+      {"text": "Why do you care? You left.", "next": "x_left"}
+     ]},
+    "x_left": {"who": "tam", "mood": "sad", "say": "I left the shop. I never left the bread. I have eaten hers every Saturday for six years.",
+     "options": [{"text": "Would you come in, if the door opened?", "next": "x_in"}]},
+    "x_in": {"who": "tam", "mood": "thinking", "say": "If she opened it. Not you. Her. I've had six years to practise walking through that door, and I still only know the one way. Invited.",
+     "options": [
+      {"text": "Then wait here.", "next": null, "act": ["flag:tam_waiting", "stage:door"]},
+      {"text": "It isn't my door to open.", "next": null, "act": ["stage:door"]}
+     ]},
+    "x_token": {"who": "tam", "mood": "neutral", "dir": "He is holding token forty-one in a paper bag, like something bought.", "say": "This is hers. It was baked in her fire. I've had it on my till ever since, and I can't look at it. Give it to her. Don't say it's from me. No. Say it's from me.",
+     "options": [
+      {"text": "Give it to her yourself. Wait here.", "next": null, "act": ["flag:tam_waiting", "stage:door"]},
+      {"text": "I'll take it in.", "next": null, "act": ["give:fair_token", "stage:door"]}
+     ]},
+    "x_offer": {"who": "tam", "mood": "neutral", "say": "I'll be quick, since I'm not welcome on this street. Her hands are going. The Oven has a year left, two if she's stubborn, and she is. Come and run my counter. Head baker. Sixty brix a day, and you start at nine.",
+     "options": [
+      {"text": "I'll think about it.", "next": null, "act": ["flag:tam_offer", "stage:door"]},
+      {"text": "No. And you know why.", "next": "x_offer2"}
+     ]},
+    "x_offer2": {"who": "tam", "mood": "sad", "say": "I know why. You shut a door on me at the fair, and here I am offering you a job. What does that tell you about how many bakers I trust? The offer stands.",
+     "options": [{"text": "(Go in.)", "next": null, "act": ["flag:tam_offer", "stage:door"]}]},
+    "x_lost_known": {"who": "tam", "mood": "sad", "say": "She had my cutting in her kitchen for one night, and then the kettle took the lot. I heard. I've still the jar. I've waited ever since for her to send for it, and she won't. She had it once already, and look what came of that.",
+     "options": [
+      {"text": "Bring the jar home, Tam. Tonight. I'll get you through the door.", "next": null, "act": ["flag:jar_home", "flag:tam_waiting", "stage:door"]},
+      {"text": "It's too late. Leave her be.", "next": null, "act": ["stage:door"]}
+     ]},
+    "x_lost_untold": {"who": "tam", "mood": "sad", "say": "I know she lost the Mother. Vera said it across the judging table, in front of the whole square, like weather. And I've a jar of her in my fridge, alive, and my sister doesn't know it exists.",
+     "options": [
+      {"text": "Bring the jar home, Tam. Tonight. I'll get you through the door.", "next": null, "act": ["flag:knows_jar", "flag:jar_home", "flag:tam_waiting", "stage:door"]},
+      {"text": "It's too late. Leave her be.", "next": null, "act": ["flag:knows_jar", "stage:door"]}
+     ]},
+    "x_lost": {"who": "tam", "mood": "sad", "say": "I know she lost the Mother. Vera said it across the judging table, in front of the whole square, like weather. And I've a jar of her in my fridge, alive, and a sister who would sooner bake on bought yeast than send for it, if I know her.",
+     "options": [
+      {"text": "Bring the jar home, Tam. Tonight. I'll get you through the door.", "next": null, "act": ["flag:knows_jar", "flag:jar_home", "flag:tam_waiting", "stage:door"]},
+      {"text": "She said she won't beg her own culture back from a mall.", "next": "x_lost2", "need": ["flag:told_of_jar"]},
+      {"text": "It's too late. Leave her be.", "next": null, "act": ["flag:knows_jar", "stage:door"]}
+     ]},
+    "x_lost2": {"who": "tam", "mood": "angry", "say": "Beg? I'd carry it up Baker Street on my knees. Nobody has to beg. Somebody has to knock. All right. I'll fetch the jar, and then I'll knock.",
+     "options": [{"text": "I'll tell her you're coming.", "next": null, "act": ["flag:jar_home", "flag:tam_waiting", "stage:door"]}]}
+   }},
+
+  {"id": "door", "title": "What the Oven should be", "kind": "talk", "with": "noor",
+   "goal": "Give Noor your answer",
+   "log": "The shutters are down. The oven is ticking as it cools. Noor is waiting for an answer.",
+   "start": "y1",
+   "starts": [
+    {"need": ["flag:jar_home", "flag:noor_knows"], "node": "y_home_known"},
+    {"need": ["flag:jar_home"], "node": "y_home"},
+    {"need": ["flag:tam_waiting"], "node": "y0"}
+   ],
+   "nodes": {
+    "y0": {"who": "noor", "mood": "neutral", "say": "Before you answer. There's a man in my alley. I can hear him not knocking. What does he want?",
+     "options": [
+      {"text": "To come in, if you'd open the door.", "next": "y0b", "need": ["!flag:token_tam"]},
+      {"text": "Ask him yourself.", "next": "y0b"},
+      {"text": "To give you the fair token. He won it in your fire, and he can't look at it.", "next": "y0b", "need": ["flag:token_tam", "!have:fair_token"]}
+     ]},
+    "y0b": {"who": "noor", "mood": "neutral", "say": "Then he can hear this through the door. I open at four. Bakers use the alley. If he wants to knock, he knows the hour. Now. Your answer.",
+     "options": [{"text": "(Answer her.)", "next": "y1", "act": ["flag:alley_told", "rep:tam:+10"]}]},
+    "y1": {"who": "noor", "mood": "thinking", "say": "Well. You've thought. What should the Oven be when I can't?",
+     "options": [
+      {"text": "First: this is yours. Tam won it in your fire, and he can't look at it.", "next": "y_token", "need": ["have:fair_token", "flag:token_tam", "!flag:token_given"]},
+      {"text": "The Town Oven, again. Market days, in the square: the whole town's dough, one fire. And it needs your brother.", "next": "y_table", "need": ["flag:tam_waiting", "flag:noor_knows", "flag:oven_shared", "!flag:jar_home"]},
+      {"text": "Yours and mine. Both names on the door.", "next": "y_partner", "need": ["rep:noor:40"]},
+      {"text": "Yours, still. Your name. My hands.", "next": "y_keeper"},
+      {"text": "I want my own name. A stall, my own bread, and a cutting of the Mother, if you'll give me one.", "next": "y_own", "need": ["done:own_stall:*", "!flag:mother_lost", "flag:noor_knows"]},
+      {"text": "I want my own name. A stall, my own bread, and a cutting of the Mother, if you'll give me one.", "next": "y_own2", "need": ["done:own_stall:*", "!flag:mother_lost", "!flag:noor_knows"]},
+      {"text": "Tam has offered me his counter. I'm taking it.", "next": "y_crumb", "need": ["flag:tam_offer"]}
+     ]},
+    "y_table": {"who": "noor", "mood": "neutral", "dir": "She is quiet for a long time. Then she goes to the side door herself, and opens it.", "say": "You. In. You're letting the heat out. Six years I've been cold with that door shut. Sit down. This one has an idea, and it's the kind you would have had, which is the only thing against it.",
+     "options": [
+      {"text": "(Lay token forty-one on the bench between them.)", "next": "y_table2", "need": ["have:fair_token"]},
+      {"text": "(Tell them about the Town Oven.)", "next": "y_table2"}
+     ]},
+    "y_table2": {"who": "tam", "mood": "happy", "say": "One fire, the whole town's dough, market days in the square. A token on every loaf so nobody goes home with the wrong one. That's it. That's what I was trying to say six years ago, with worse words.",
+     "options": [{"text": "Noor?", "next": "y_table3"}]},
+    "y_table3": {"who": "noor", "mood": "happy", "say": "It is not six counters in six towns. It's one oven. But yes. You run the queue; you were always good with a queue. I feed the Mother. {player} bakes. The name over the door stays as it is. We add a line underneath.",
+     "options": [{"text": "What does the line say?", "next": "y_table4"}]},
+    "y_table4": {"who": "noor", "mood": "happy", "say": "“Bring your own dough.” Vera gets the first loaf. Go and tell Eli he needs a longer rope.",
+     "options": [{"text": "(Go and tell Eli.)", "next": null, "act": ["end:long_table"]}]},
+    "y_home": {"who": "noor", "mood": "sad", "dir": "You have barely said that her brother is in the alley when she has the side door open. Tam comes in with the jar held in both hands, the way you would carry a bird. MUM, in marker, gone brown. Nobody says anything. Noor takes it, opens it, and smells it.", "say": "Same sour. Same stubborn. Six years in that place, and you fed her every day. Sit down, you fool. You're letting the heat out.",
+     "options": [
+      {"text": "There's one thing more. The Town Oven, on market days, in the square.", "next": "y_table2", "need": ["flag:oven_shared"], "act": ["unflag:mother_lost", "flag:mother_joined", "flag:noor_knows"]},
+      {"text": "(Leave them to it. Put the kettle on. For tea.)", "next": null, "act": ["unflag:mother_lost", "end:homecoming"]}
+     ]},
+    "y_home_known": {"who": "noor", "mood": "sad", "dir": "You have barely said that her brother is in the alley when she has the side door open. Tam comes in with the jar held in both hands, the way you would carry a bird. Noor takes it, opens it, and smells it.", "say": "Twice. She has come to my door twice now, and the first time she was boiled in my own kitchen. Same sour. Same stubborn. Sit down, you fool. You're letting the heat out.",
+     "options": [
+      {"text": "There's one thing more. The Town Oven, on market days, in the square.", "next": "y_table2", "need": ["flag:oven_shared"], "act": ["unflag:mother_lost", "flag:mother_joined", "flag:noor_knows"]},
+      {"text": "(Leave them to it. Put the kettle on. For tea.)", "next": null, "act": ["unflag:mother_lost", "end:homecoming"]}
+     ]},
+    "y_token": {"who": "noor", "mood": "thinking", "say": "He sent it by another hand. Of course he did. It can hang by the oven, where it was won. Tell him it's there. He'll know what that means.",
+     "options": [{"text": "(Answer her question.)", "next": "y1", "act": ["take:fair_token", "flag:token_given", "rep:tam:+5", "rep:noor:+5"]}]},
+    "y_partner": {"who": "noor", "mood": "happy", "say": "Both names. That door has had one name on it for thirty-four years, and it never once looked lonely until you said that. Underneath mine. Same size. Smaller would be false and larger would be cheek.",
+     "options": [{"text": "Same size.", "next": null, "act": ["end:partner"]}]},
+    "y_keeper": {"who": "noor", "mood": "neutral", "say": "My name, your hands. My mother and I did it the other way about, her last years: my name on the door, and her hands on the Mother. It works. It's lonelier than it looks, the name part. You'll see.",
+     "options": [{"text": "Four o'clock, then.", "next": null, "act": ["end:keeper"]}]},
+    "y_own": {"who": "noor", "mood": "thinking", "say": "Your own name. I was twenty-four when mine went on that door, and it has owned me ever since. Fetch a jar. Third one in the world. Feed her at midnight and at five, and if I ever hear you've used the kettle, I'll come and take her back.",
+     "options": [{"text": "Midnight and five. Never the kettle.", "next": null, "act": ["give:mother_cutting", "end:own_name"]}]},
+    "y_own2": {"who": "noor", "mood": "thinking", "say": "Your own name. I was twenty-four when mine went on that door, and it has owned me ever since. Fetch a jar. Second one in the world, so far as I know. Feed her at midnight and at five, and if I ever hear you've used the kettle, I'll come and take her back.",
+     "options": [{"text": "Midnight and five. Never the kettle.", "next": null, "act": ["give:mother_cutting", "end:own_name"]}]},
+    "y_crumb": {"who": "noor", "mood": "neutral", "say": "The mall. Well. It's honest work, and he pays on time. Leave the proofing room key on the bench. Keep the side door one. Somebody in that mall should know what a door is for.",
+     "options": [{"text": "(Leave the key on the bench.)", "next": null, "act": ["end:crumb"]}]}
+   }}
+ ],
+ "endings": [
+  {"id": "long_table", "title": "The Long Table", "log": "On market days the Town Oven burns again in the square: the whole town's dough, one fire, a brass token on every loaf. Tam runs the queue. Noor feeds the Mother. You bake.",
+   "pay": 5000, "rep": {"noor": 25, "tam": 25, "vera": 20, "jai": 10, "eli": 10}, "flags": ["end_long_table"],
+   "ripples": [
+    "Vera eats the first loaf from the Town Oven in fifty-eight years. Her verdict is one word. Nobody will tell you what it was; you have to be there.",
+    "The sign over the door gains one line: “Bring your own dough.”",
+    "A new repeatable market-day activity opens in your town: bring dough, mark it with a token, bake together."
+   ],
+   "unlocks": "Rank: Master Baker. The Town Oven on market days. A share of its takings."},
+  {"id": "homecoming", "title": "Homecoming", "log": "The Mother came home in a jam jar, carried in both hands. The shop opens at seven on real sourdough again.",
+   "pay": 3500, "rep": {"noor": 20, "tam": 25}, "flags": ["end_homecoming", "mother_joined", "noor_knows"],
+   "ripples": [
+    "The culture that died the night the power went is alive on Baker Street again, by way of a mall fridge.",
+    "Tam has a key now. He uses the alley, at four, like a baker.",
+    "Vera tastes Saturday's loaf and sends down a note: “She's back. Rounder.”"
+   ],
+   "unlocks": "Rank: Master Baker. The Stone Oven is yours to run, with both of them behind you."},
+  {"id": "partner", "title": "Both names", "log": "The signwriter came the next morning. Your name is under Noor's, in the same size.",
+   "pay": 4000, "rep": {"noor": 20}, "flags": ["end_partner"],
+   "ripples": [
+    "You take a share of the Oven's daily takings from now on.",
+    "If Tam was told he could knock, he does, eventually. That is a story for a later career."
+   ],
+   "unlocks": "Rank: Master Baker. Co-owner of the Stone Oven."},
+  {"id": "keeper", "title": "Her name, your hands", "log": "The Oven goes on as it always has. Noor keeps the count. You feed the town.",
+   "pay": 3000, "rep": {"noor": 10}, "flags": ["end_keeper"],
+   "ripples": [
+    "The town never notices the change, which is the highest compliment the Oven knows.",
+    "The name on the door is still hers. On some mornings that is exactly as lonely as she said."
+   ],
+   "unlocks": "Rank: Master Baker. Head baker's wage."},
+  {"id": "own_name", "title": "A jar of your own", "log": "You left with Noor's blessing and a cutting of the Mother. It sits in a jar on a stall with your own name above it.",
+   "pay": 2000, "rep": {"noor": 5}, "flags": ["end_own_name"],
+   "ripples": [
+    "Your market stall can sell sourdough made from the Mother.",
+    "Pip, if they stayed, becomes Noor's hands. She says “good” to them once, out loud. Pip tells everybody."
+   ],
+   "unlocks": "Rank: Master Baker, under your own name. A bakery stall on market days."},
+  {"id": "crumb", "title": "The warm counter", "log": "Head baker at Crumb & Co. Sixty brix a day, a nine o'clock start, music in the ceiling.",
+   "pay": 6000, "rep": {"noor": -30, "tam": 15}, "take": ["proofing_room_key"], "flags": ["end_crumb"],
+   "ripples": [
+    "The best wage in the career, and the only ending where you sleep until eight.",
+    "The Stone Oven's lights still go on at four. You can hear the barrow from your bed, if you're awake.",
+    "The side door key still works. Noor never asks for it back."
+   ],
+   "unlocks": "Rank: Master Baker at Crumb & Co. The highest daily wage."}
+ ]
+}

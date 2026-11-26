@@ -54,7 +54,7 @@ struct BRIXWORLD_API FBrixDialogue
 		TArray<FString> Need, Act;   // a quest's: what the player must have to say it, and what saying it does (BrixQuests)
 		FString Quest, Job;          // the quest line it belongs to; "take" or "hand" for a job (life.js _q, _job)
 	};
-	struct FNode { FString Say, Mood = TEXT("neutral"); TArray<FOption> Options; };
+	struct FNode { FString Say, Mood = TEXT("neutral"); TArray<FOption> Options; FString Who, Dir; };   // Who: another resident who says it, or "scene" for a line nobody says; Dir: what is seen, never spoken (QST-012)
 	struct FConversation { FString Title, Start; TMap<FString, FNode> Nodes; TMap<FString, FString> Vars; };
 	struct FRule { FString Conversation; TArray<FString> Roles, Acts; TOptional<bool> bWalking; };
 	TMap<FString, FConversation> Conversations;

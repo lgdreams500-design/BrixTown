@@ -215,11 +215,13 @@ def life(w, city, plan, acts):
     shops = {k: next(n for n in range(len(lots_)) if probe.shop_kind(n) == k) for k in ("grocer", "kiosk", "arcade")}
     script = ec.check_script() + ec.outlet_script(probe)
     want = ec.run_script(ec.Economy(e, lots_, visits, staff, goods), script, shops)
-    return dict(economy={k: v for k, v in e.items() if k != "note"}, quests={k: v for k, v in w["quests"].items() if k != "note"},
+    return dict(economy={k: v for k, v in e.items() if k != "note"}, quests=dict({k: v for k, v in w["quests"].items() if k not in ("note", "exclusive")},   # the slice runs the starter lines only:
+                                                            quests={k: v for k, v in w["quests"]["quests"].items() if "line" not in v}),   # a career's story lines (QST-010) are in Python and Unreal
                 designer={k: v for k, v in w["designer"].items() if k != "note"}, goods=goods,
                 visits={str(k): [[t, i] for t, i in v] for k, v in visits.items()}, visit_acts=visit_acts,
                 staff={str(k): v for k, v in staff.items()}, checks=dict(script=script, shops=shops, want=want), reward_checks=reward_checks(w), achievements=achievement_rules(w),
                 estate=estate_rules(w), estate_checks=estate_checks(w, lots_),
+                furniture=furniture_data(w, lots_),   # buying at the furniture outlet and its fixed run (FURN-022 to FURN-029)
                 walk_net=walk_net(city, lots_))
 
 
@@ -241,12 +243,167 @@ def quest_script():
     return [["advance", 0, 440], ["newgame"], ["talking", "r0504"], ["act", "new_in_town", ["stage:bank"], "r0504"],
             ["check", None, 0, 0], ["open", "current"], ["check", None, 0, 0], ["buy", "grocer", "bread"], ["check", None, 0, 0],
             ["talking", "r0504"], ["act", "new_in_town", ["take:bread", "end:gift"], "r0504"], ["offers", "r0518"], ["offers", "r0408"],
-            ["act", "errand_runner", ["start"], "r0518"], ["check", "b_9_9_l7", 0, 0], ["talking", "r0505"],
-            ["act", "errand_runner", ["take:parcel", "stage:report"], "r0505"], ["act", "errand_runner", ["rep:5", "end:delivered"], "r0518"],
+            ["act", "errand_runner", ["start"], "r0518"], ["check", "b_9_9_l7", 0, 0], ["talking", "r1714"],
+            ["act", "errand_runner", ["take:parcel", "stage:report"], "r1714"], ["act", "errand_runner", ["rep:5", "end:delivered"], "r0518"],
             ["offers", "r0497"], ["advance", 0, 600], ["take", "shopping", 0], ["take", "parcel", 0], ["buyfor"], ["handover"],
             ["take", "parcel", 0], ["at", "frm"], ["advance", 0, 640], ["at", "to"], ["take", "shift", 0], ["at", "to"],
             ["advance", 0, 680], ["at", "to"], ["advance", 1, 500], ["take", "shift", 1], ["at", "to"], ["advance", 1, 900],
             ["check", None, 0, 0]]
+
+
+def run_op(econ, q, op, shops, home):
+    """One op of a quest script; returns what it gives (raises economy.Refused). home: [bool], whether the player owns one."""
+    import economy as ec
+    name, a = op[0], op[1:]
+    r = "ok"
+    if name == "advance":
+        econ.advance(a[0], a[1])
+    elif name == "newgame":
+        q.new_game()
+    elif name == "open":
+        econ.open_account(a[0])
+    elif name == "buy":
+        econ.buy(shops[a[0]], a[1])
+    elif name == "act":
+        q.act(a[0], a[1], a[2])
+    elif name == "check":
+        q.check(dict(lot=a[0], pos=(a[1], a[2]), minute=econ.minute))
+    elif name == "talking":
+        r = ",".join(q.talking_to(a[0]))
+    elif name == "offers":
+        r = ",".join(q.offers(a[0]))
+    elif name == "take":
+        o = next((q.job_offer(i, a[1]) for i in range(len(q.residents)) if (q.job_offer(i, a[1]) or {}).get("kind") == a[0]), None)
+        if o is None:
+            raise ec.Refused("nobody offers that")
+        q.take_job(o)
+        r = "%d|%d" % (o["giver"], o["pay"])
+    elif name == "buyfor":
+        it = q.job["item"]
+        n = next(n for k, n in sorted(((k, n) for n in range(len(econ.lots)) for k in [econ.shop_kind(n)] if k and n not in econ.outlets and it in econ.R["shops"][k]["sells"]), key=lambda x: x[1]))
+        econ.buy(n, it)
+    elif name == "handover":
+        q.hand_over()
+    elif name == "at":
+        q.check(dict(lot=econ.lots[q.job[a[0]]]["id"], pos=None, minute=econ.minute))
+    # the story lines' ops (QST-010 to QST-015): where [lot or None, x or None, z, minute]
+    elif name == "start":
+        q.start(a[0])
+    elif name == "first":
+        r = q.first_line(a[0])
+    elif name == "replies":
+        r = ",".join(str(n) for n in q.replies(a[0], a[1]))
+    elif name in ("scenes", "checkat"):
+        ctx = dict(lot=a[0], pos=None if a[1] is None else (a[1], a[2]), minute=a[3])
+        if name == "scenes":
+            r = ",".join(q.scenes(ctx))
+        else:
+            q.check(ctx)
+    elif name == "home":
+        home[0] = bool(a[0])
+    elif name == "earn":                                # stand-in for money earned
+        econ.L.post(econ.day, econ.minute, "Earned", [("sys:residents", -a[0]), ("p:cash", a[0])])
+    elif name == "regard":                              # stand-in for shifts, rounds and gifts
+        econ.rep[a[0]] = max(econ.rep.get(a[0], 0), a[1])
+    elif name == "need":
+        r = "yes" if q.need_ok(a[0]) else "no"
+    else:
+        raise ValueError("unknown op " + name)
+    return r
+
+
+def quest_state(econ, q):
+    import economy as ec
+    return dict(active={k: v["stage"] for k, v in sorted(q.active.items())}, done=dict(sorted(q.done.items())),
+                log=[t for _, _, t in q.log], rep=dict(sorted(econ.rep.items())),
+                balances={a: econ.L.balance(a) for a in ec.PLAYER + ("sys:rewards", "sys:residents")},
+                tx=len(econ.L.tx), inv=dict(sorted(econ.inv.items())))
+
+
+STORY_SEED = 6      # a play that is turned away once, courts after the first line and reaches the wedding and the last line
+
+
+def story_run(econ, q, w, shops, seed=STORY_SEED):
+    """A fixed play of the Baker career and the courting for the Unreal port (QST-010 to QST-015): every reply chosen by a
+    seeded dice among those open, each op recorded with what Python gives. The C++ runs the ops and must give the same."""
+    import random
+    import economy as ec
+    rng = random.Random(seed)
+    S = w["quests"]["quests"]
+    baker = [k for k, v in S.items() if v.get("line") == "baker"]
+    courting = [k for k, v in S.items() if v.get("line") == "romance"]
+    ops, results, home = [], [], [False]
+    q.owns_home = lambda: home[0]
+
+    def do(*op):
+        op = list(op)
+        try:
+            r = run_op(econ, q, op, shops, home)
+        except ec.Refused:
+            r = "refused"
+        ops.append(op)
+        results.append(r)
+        return r
+
+    def play(qid):
+        Q = S[qid]
+        for x in Q.get("need", []):
+            if x.startswith("rep:"):
+                do("regard", x.split(":")[1], int(x.split(":")[2]))
+        do("need", Q.get("need", []))
+        if qid not in do("offers", Q["giver"]).split(","):
+            return None
+        do("start", qid)
+        for _ in range(600):
+            if qid not in q.active:
+                return q.done[qid]
+            st = q.stage(qid)
+            g = st["goal"]
+            where = [g.get("go"), g["near"][0] if "near" in g else None, g["near"][1] if "near" in g else 0, g.get("from", int(econ.minute))]
+            if "nodes" not in st:
+                if "home" in g:
+                    do("home", 1)
+                if "money" in g and econ.total_money() < g["money"]:
+                    do("earn", g["money"] - econ.total_money())
+                do("checkat", *where)
+                continue
+            rid = g.get("talk")
+            do("talking", rid) if rid else do("scenes", *where)
+            nid = do("first", qid)
+            for _ in range(200):
+                nd = st["nodes"][nid]
+                open_ = [int(n) for n in do("replies", qid, nid).split(",") if n]
+                going = [n for n in open_ if nd["options"][n]["next"] or any(x.startswith(("stage:", "end:")) for x in nd["options"][n].get("act", []))]
+                o = nd["options"][rng.choice(going or open_)]
+                do("act", qid, o.get("act", []), rid)
+                if o["next"] is None or any(x.startswith(("stage:", "end:")) for x in o.get("act", [])):
+                    break
+                nid = o["next"]
+        raise ValueError("%s never finished" % qid)
+
+    def attempt(qid):
+        for n in range(8):
+            if n and qid == "question_mei":
+                do("home", 1)
+                do("earn", 15000)
+            end = play(qid)
+            if end is None or not S[qid]["endings"][end].get("retake"):
+                return end
+        return None
+
+    for op in quest_script()[:11]:                      # the first starter line, to its gift ending
+        do(*op)
+    for n, qid in enumerate(baker):
+        if attempt(qid) is None:
+            break
+        if n == 0:
+            for c in courting:
+                if attempt(c) is None:
+                    break
+    want = quest_state(econ, q)
+    want.update(results=results, flags=q.flags, again=q.again,
+                awarded=sorted([k, r, v] for k, d in q.awarded.items() for r, v in d.items()))
+    return dict(script=ops, want=want)
 
 
 def run_quests(econ, q, ops, shops):
@@ -254,40 +411,8 @@ def run_quests(econ, q, ops, shops):
     import economy as ec
     out = []
     for op in ops:
-        name, a = op[0], op[1:]
         try:
-            r = "ok"
-            if name == "advance":
-                econ.advance(a[0], a[1])
-            elif name == "newgame":
-                q.new_game()
-            elif name == "open":
-                econ.open_account(a[0])
-            elif name == "buy":
-                econ.buy(shops[a[0]], a[1])
-            elif name == "act":
-                q.act(a[0], a[1], a[2])
-            elif name == "check":
-                q.check(dict(lot=a[0], pos=(a[1], a[2]), minute=econ.minute))
-            elif name == "talking":
-                r = ",".join(q.talking_to(a[0]))
-            elif name == "offers":
-                r = ",".join(q.offers(a[0]))
-            elif name == "take":
-                o = next((q.job_offer(i, a[1]) for i in range(len(q.residents)) if (q.job_offer(i, a[1]) or {}).get("kind") == a[0]), None)
-                if o is None:
-                    raise ec.Refused("nobody offers that")
-                q.take_job(o)
-                r = "%d|%d" % (o["giver"], o["pay"])
-            elif name == "buyfor":
-                it = q.job["item"]
-                n = next(n for k, n in sorted(((k, n) for n in range(len(econ.lots)) for k in [econ.shop_kind(n)] if k and n not in econ.outlets and it in econ.R["shops"][k]["sells"]), key=lambda x: x[1]))
-                econ.buy(n, it)
-            elif name == "handover":
-                q.hand_over()
-            elif name == "at":
-                q.check(dict(lot=econ.lots[q.job[a[0]]]["id"], pos=None, minute=econ.minute))
-            out.append(r)
+            out.append(run_op(econ, q, op, shops, [False]))
         except ec.Refused:
             out.append("refused")
     offers = []
@@ -320,18 +445,21 @@ def unreal_life(w, city, L):
     qe = ec.Economy(e, lots_, visits, staff, goods)
     qscript = quest_script()
     qwant = run_quests(qe, qs.Quests(w["quests"], qe, w["residents"], lots_), qscript, shops)
+    se = ec.Economy(e, lots_, visits, staff, goods)                # the story lines' fixed play (QST-010 to QST-015)
+    story = story_run(se, qs.Quests(w["quests"], se, w["residents"], lots_), w, shops)
     bshops = ec.board_places(ec.Economy(e, lots_, visits, staff, goods, w["boards"]))   # the outlets the run buys at
     bwant = ec.run_boards(ec.Economy(e, lots_, visits, staff, goods, w["boards"]), ec.board_script(), bshops)   # CITY-102, CITY-103
     return dict(note="Generated by Tools/worldgen/build_play.py from World/. Do not edit: change the data files and run it again.",
-                economy=L["economy"], quests=L["quests"], goods=goods, visits=L["visits"], staff=L["staff"],
+                economy=L["economy"], quests={k: v for k, v in w["quests"].items() if k != "note"}, goods=goods, visits=L["visits"], staff=L["staff"],
                 lots=[l["id"] for l in lots_], outlets={str(n): ec.outlets_of(l) for n, l in enumerate(lots_) if ec.outlets_of(l)},
-                checks=L["checks"], bank_checks=dict(script=bs, shops=shops, want=want), quest_checks=dict(script=qscript, shops=shops, want=qwant), reward_checks=L["reward_checks"],
+                checks=L["checks"], bank_checks=dict(script=bs, shops=shops, want=want), quest_checks=dict(script=qscript, shops=shops, want=qwant), story_checks=dict(story, shops=shops), reward_checks=L["reward_checks"],
                 board_checks=dict(script=ec.board_script(), shops=bshops, want=bwant),
                 boards=dict(order=w["boards"]["order"], sold_at=w["boards"]["sold_at"], kinds={k: dict(name=v["name"], price=v["price"], top_kmh=v["top_kmh"]) for k, v in w["boards"]["kinds"].items()}),
                 achievements=L["achievements"], buy_menu=dict(L["buy_menu"], icons=buy_menu_icons()), settings=L["settings"],
                 pieces=list(w["furnishing"]["pieces"]), palette=w["designer"]["palette"],   # for what a buy menu shows (UI-021)
                 rewards={k: w["sound"]["rewards"][k] for k in ("ledger", "coins")},   # how money coming in is shown (SND-019, SND-020)
                 estate=L["estate"], estate_checks=L["estate_checks"],   # the real estate market and its fixed run (PROP-009 to PROP-021)
+                furniture=L["furniture"], furnishing={k: v for k, v in w["furnishing"].items() if k != "note"},   # buying at the furniture outlet (FURN-022 to FURN-029)
                 estate_units=es.carve(w["estate"], lots_, w["residents"]),   # every building's units, as estate.carve() makes them (PROP-009)
                 residents=[dict(id=r["id"], role=r["role"], home=r["home"], work=r["work"]) for r in w["residents"]])
 
@@ -406,6 +534,17 @@ def reward_checks(w):
           [5, 2, 20, "Transfer", [["p:cash", -100], ["p:current", 100]]],
           [6, 2, 30, "Sold bread, the grocer", [["shop:1", -200], ["p:cash", 200]]]]
     return dict(tx=tx, want=world.reward_events(w["sound"], tx))
+
+
+def furniture_data(w, lots_):
+    """Buying at the furniture outlet (FURN-022 to FURN-029): its rules, and furniture.check_script() with what Python gives
+    for it, for the slice's and the engine's ports to reproduce."""
+    import economy as ec
+    import furniture as fu
+    R = {k: v for k, v in w["furniture"].items() if k != "note"}
+    script = fu.check_script()
+    want = fu.run_script(R, w["furnishing"], ec.Economy(w["economy"], lots_, {}, {}), script)
+    return dict(rules=R, checks=dict(script=script, want=want))
 
 
 def estate_checks(w, lots_):

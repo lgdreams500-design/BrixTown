@@ -47,6 +47,7 @@ struct BRIXWORLD_API FBrixBuyMenuRules
 	struct FBox { float U, Y, V, Su, Sy, Sv; FString Colour; float Shade = 1.f, TurnDeg = 0.f; };
 	int32 NarrowPx = 560;
 	int32 WidePanelPx = 960, CellPx = 112, StagePx = 96, ShowPx = 320, ShowStagePx = 250, ListPx = 470;
+	int32 NarrowPanelPx = 380, NarrowColumns = 4, NarrowCellMinPx = 64, NarrowListPx = 372;   // layout D
 	float FovDeg = 24, PitchDeg = 17, StartDeg = -34, TurnS = 16, DragDegPx = .7f, StandInFill = .8f;
 	TMap<FString, FGoes> Goes;
 	TMap<FString, FLinearColor> Colours;              // linear

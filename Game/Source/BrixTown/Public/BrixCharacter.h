@@ -30,6 +30,14 @@ public:
 	UPROPERTY(Config) float RunSpeed = 4.5f;         // m/s
 	UPROPERTY(Config) float CameraDistance = 4.f;    // m behind the player
 	UPROPERTY(Config) float CameraHeight = 0.6f;     // m above the shoulders' pivot
+	// In a room the camera comes in to IndoorCameraDistance: at the street's 4 m it was against a wall or the ceiling at
+	// almost every turn, jammed into the player and not following the mouse. The body is not drawn while the camera is
+	// within HideBodyWithin (m) of it, and the mouse has the camera for LookHoldSeconds before a car, a bus or a board
+	// brings it round behind again (pulled back every frame, it could not be turned while moving).
+	UPROPERTY(Config) float IndoorCameraDistance = 2.8f;
+	UPROPERTY(Config) float HideBodyWithin = 0.55f;
+	UPROPERTY(Config) float LookHoldSeconds = 1.5f;
+	UPROPERTY(Config) float RideBlockSeconds = 0.15f;
 	UPROPERTY(Config) float AnswerCameraYaw = 160.f;  // degrees round from looking where the player faces, while they answer
 	UPROPERTY(Config) float TalkCameraYaw = 26.f;     // and while the resident speaks: past the shoulder (the slice's .45 rad)
 	UPROPERTY(Config) float DesignCameraM = 2.7f;    // m from the character in the designer, times their height / 1.72 (life.js camera())
@@ -78,6 +86,11 @@ public:
 	// On the playground (WLD-041; play.js interact(), stepPlayer(), offPlay()): E at a swing seat, seesaw end, slide's ladder,
 	// sandpit or climbing frame has a go there; E, Space or moving gets off, beside it (a slide's go ends at its bottom)
 	bool IsPlaying() const { return PlayUse != INDEX_NONE; }
+	// Sitting or lying on a piece of furniture that has a place for it (play.js interact(), sit and lie; FURN-022, CITY-030):
+	// E at the place sits the player on it, facing as the piece does; E, Space or moving gets up, where they stood
+	bool IsSeated() const { return bSeated; }
+	bool SeatOffer(FString& OutLabel, double& OutMetres) const;   // what E offers within reach, in the mall or the furniture outlet
+	void TestSeat(const FString& LabelPart);                     // for a test shot: at the first seat whose offer has these words, and E
 	void StartPlay(int32 Use);
 	void StopPlay(bool bAtEnd = false);
 	void TestPlay(int32 Use);   // -BrixPlay=<n>: a test shot has a go at the n-th place
@@ -140,6 +153,12 @@ private:
 	FVector2D DriveIn = FVector2D::ZeroVector;   // this frame's W/S and A/D while driving
 	FVector2D DriveUsed = FVector2D::ZeroVector; // what the car was given this frame (DriveIn is cleared once used)
 	float ArmBefore = 0.f;
+	double LookedAt = -100;          // when the mouse last turned the camera
+	bool CameraFree() const;         // the mouse has not turned it for LookHoldSeconds
+	// Behind a vehicle the arm is the character's own work: it comes in only for something that has stood in its way for
+	// RideBlockSeconds (a wall, not a lamp post passed), quickly, and goes out again slowly.
+	void RideCamera(float DeltaSeconds);
+	float RideArm = 0.f, RideBlocked = 0.f;
 	FVector2D BoardIn = FVector2D::ZeroVector;   // this frame's A/D and W/S on a board
 	double BoardYaw = 0, BoardBlend = 0, BoardMeant = 0;   // the heading (Unreal degrees), into the push (0 to 1), the metres last meant to go
 	FVector BoardFrom = FVector::ZeroVector;
@@ -154,6 +173,12 @@ private:
 	FVector BoomOffsetBefore = FVector::ZeroVector;
 	class ABrixPeople* People() const;
 	int32 PlayUse = INDEX_NONE;
+	bool bSeated = false, bSeatLie = false, bSeatOff = false;
+	FVector SeatAt = FVector::ZeroVector, SeatFrom = FVector::ZeroVector;   // the seat's top (x, z, up; metres); where the player stood (cm)
+	double SeatYaw = 0;
+	const class ABrixMall* SeatHere(int32& OutSeat, double& OutMetres) const;
+	void StartSeat(const FVector& At, double Yaw, bool bLie, const FString& Label);
+	void StopSeat();
 	double PlayT0 = 0;
 	bool bPlayOff = false;           // moving or Space while on it: off at the next frame
 	FVector2D PlayEnd = FVector2D::ZeroVector;

@@ -1,7 +1,6 @@
-01:50:11 Blender 5.3.0
-01:50:11 scene built: 385 objects in 0.4s
-01:50:11 saved .blend
-01:50:29 A (Soft box) rendered in 18.1s
-01:50:47 B (Pebble) rendered in 18.2s
-01:51:08 C (Classic) rendered in 20.2s
-01:51:08 DONE
+01:34:07 Blender 5.3.0
+01:34:08 scene built: 132 objects in 0.2s
+01:34:08 saved .blend
+01:34:36 A (Soft box) rendered in 28.1s
+01:35:02 A from above rendered
+01:35:02 DONE

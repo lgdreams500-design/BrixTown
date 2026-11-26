@@ -253,6 +253,7 @@ void ABrixSound::SetLoop(FLoop& L, double Vol, double Pitch, const FVector2D& Po
 		C->bAutoActivate = false;
 		C->bAutoDestroy = false;
 		C->bAllowSpatialization = L.bPlaced;
+		if (L.Bus == &MixMusic) { C->bIsMusic = true; C->bAlwaysPlay = true; }   // music is never the voice given up to a louder sound
 		if (L.bPlaced) C->AttenuationSettings = Placed;
 		C->RegisterComponent();
 		L.Comp = LoopComps.Add(C);
@@ -404,7 +405,10 @@ void ABrixSound::Music(double Dt, const FVector2D& Here)
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
 	if (!Mode || !Tunes.Num()) return;
 	const double Minute = Mode->ClockMinute();
-	for (auto& KV : Tunes) { KV.Value.Target = 0; KV.Value.Hear = 1; KV.Value.Lowpass = 0; }
+	// only the level asked for is cleared: a tune that is fading out keeps the distance and the muffling it was heard
+	// with (cleared too, a cafe's music at the edge of its reach came back at full strength and clear for the seconds
+	// of its fade each time the cafe was left behind)
+	for (auto& KV : Tunes) KV.Value.Target = 0;
 	double Near = 0;
 	// music from places: the nearest open café or shop, the busker on a market day; clear inside, muffled from the street
 	const FBrixMusicPlace P = BrixMusicPlace(Rules, MusicLots, Here, InLot, Minute, bMarketDay);
@@ -415,7 +419,9 @@ void ABrixSound::Music(double Dt, const FVector2D& Here)
 		T->Pos = P.Pos;
 		T->Hear = P.bInside ? 1.0 : BrixHear(Rules, Here, 0, P.Pos, P.Far).X;
 		T->Lowpass = P.bInside || (P.bOpenAir && InLot == INDEX_NONE) ? 0.0 : Rules.MuffleHz * 1.6;
-		Near = FMath::Max(Near, T->Hear);
+		// the score goes under this by how much of it is heard now, not by how near its door is: a muffled cafe that
+		// has hardly begun took the score down to a tenth, and driving past one was a hole in the music
+		Near = FMath::Max(Near, T->HearNow * T->Level * (T->Lowpass > 0 ? Rules.MuffleGain : 1.0));
 	}
 	const FString Place = P.Lot >= 0 ? P.Style + TEXT(" at lot ") + FString::FromInt(P.Lot) : FString();
 	if (Place != WasPlace) { UE_LOG(LogTemp, Display, TEXT("Brix Town: music from a place: %s"), Place.IsEmpty() ? TEXT("none") : *Place); WasPlace = Place; }
@@ -435,17 +441,21 @@ void ABrixSound::Music(double Dt, const FVector2D& Here)
 		const FBrixSoundRules::FStation& St = Rules.Radio[Station - 1];
 		const FBrixSoundRules::FShow* Show = Rules.Shows.Find(St.Podcast);
 		// a music station; or a podcast's bed under its hosts (sound.js: the bed at bed_gain x 2)
-		if (FTune* T = Tunes.Find(Show ? Show->Bed : St.Style)) { T->Target = Show ? Rules.PodBedGain * 2 : 1; T->Tc = .3; T->Pos = Here; Near = 1; }
+		if (FTune* T = Tunes.Find(Show ? Show->Bed : St.Style)) { T->Target = Show ? Rules.PodBedGain * 2 : 1; T->Tc = .3; T->Pos = Here; T->Hear = 1; T->Lowpass = 0; Near = 1; }
 	}
 	// the score by the time of day, under a talk and under nearer music
 	const FString Mood = BrixMoodAt(Rules, Minute);
 	if (Mood != WasMood) { UE_LOG(LogTemp, Display, TEXT("Brix Town: the score: %s"), *Mood); WasMood = Mood; }
-	if (FTune* T = Tunes.Find(Mood)) { T->Target = BrixScoreLevel(Rules, Mode->Talk && Mode->Talk->IsTalking(), Near); T->Tc = 1.2; T->Pos = Here; }
+	if (FTune* T = Tunes.Find(Mood)) { T->Target = BrixScoreLevel(Rules, Mode->Talk && Mode->Talk->IsTalking(), Near); T->Tc = 1.2; T->Pos = Here; T->Hear = 1; T->Lowpass = 0; }
+	const double Ramp = 1 - FMath::Exp(-Dt / .2);
 	for (auto& KV : Tunes)
 	{
 		FTune& T = KV.Value;
 		T.Level += (T.Target - T.Level) * (1 - FMath::Exp(-Dt / FMath::Max(.05, T.Tc)));
-		SetLoop(T.Loop, T.Level * T.Hear, 1, T.Pos, T.Lowpass);
+		if (T.Level < 1e-3 && T.Target > 0) { T.HearNow = T.Hear; T.LowNow = T.Lowpass > 0 ? T.Lowpass : 18000.0; }   // starting: nothing to ramp from
+		T.HearNow += (T.Hear - T.HearNow) * Ramp;
+		T.LowNow += ((T.Lowpass > 0 ? T.Lowpass : 18000.0) - T.LowNow) * Ramp;
+		SetLoop(T.Loop, T.Level * T.HearNow, 1, T.Pos, T.LowNow < 17000 ? T.LowNow : 0);
 	}
 }
 

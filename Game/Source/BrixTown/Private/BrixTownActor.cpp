@@ -108,7 +108,9 @@ UMaterialInstanceDynamic* ABrixTownActor::Own()
 
 UInstancedStaticMeshComponent* ABrixTownActor::Group(UStaticMesh* Mesh, bool bCollide, float CullM, bool bClear)
 {
-	const FString Key = Mesh->GetName() + (bCollide ? TEXT("") : TEXT("_NoCollision")) + (bClear ? TEXT("_Clear") : TEXT(""));
+	// (the distance it is drawn to is part of what a group is: without it the box's small things, drawn to
+	// GardenCullDistance, and its large ones, drawn however far, were one group, and the large ones went at 150 m too)
+	const FString Key = Mesh->GetName() + (bCollide ? TEXT("") : TEXT("_NoCollision")) + (bClear ? TEXT("_Clear") : TEXT("")) + (CullM > 0.f ? FString::Printf(TEXT("_To%d"), (int32)CullM) : FString());
 	if (TObjectPtr<UInstancedStaticMeshComponent>* Found = Parts.Find(Key)) return *Found;
 	UInstancedStaticMeshComponent* G = NewObject<UInstancedStaticMeshComponent>(this, *Key);
 	G->SetupAttachment(RootComponent);
@@ -233,8 +235,34 @@ void ABrixTownActor::Add(UInstancedStaticMeshComponent* G, const FTransform& At,
 	Add(G, At, L);
 }
 
-void ABrixTownActor::Add(UInstancedStaticMeshComponent* G, const FTransform& At, const FLook& Look)
+// BUILD-020 (play.js: the designer's cut): a building cut open at CutCm. What stands wholly above the cut is not drawn; an
+// upright box standing through it ends there; a kit piece through it (a window, a door, a roof's slope) is not drawn.
+bool ABrixTownActor::CutAt(const UInstancedStaticMeshComponent* G, FTransform& At) const
 {
+	const UStaticMesh* M = G ? G->GetStaticMesh() : nullptr;
+	if (!M) return true;
+	const FBox B = M->GetBoundingBox();
+	const FQuat Q = At.GetRotation();
+	if (FMath::Abs(Q.X) > 1e-4 || FMath::Abs(Q.Y) > 1e-4) return B.TransformBy(At).Max.Z <= CutCm + 0.5;   // leaning (a roof's slope)
+	const double Sz = At.GetScale3D().Z, Z0 = At.GetLocation().Z + B.Min.Z * Sz, Z1 = At.GetLocation().Z + B.Max.Z * Sz;
+	if (Z1 <= CutCm + 0.5) return true;
+	if (Z0 >= CutCm - 0.5) return false;
+	if (M != Cube && M->GetName() != TEXT("SM_Kit_Box")) return false;
+	const double Hgt = B.Max.Z - B.Min.Z;
+	if (Hgt < 1e-3) return false;
+	FVector S = At.GetScale3D();
+	S.Z = (CutCm - Z0) / Hgt;
+	FVector L = At.GetLocation();
+	L.Z = Z0 - B.Min.Z * S.Z;
+	At.SetScale3D(S);
+	At.SetLocation(L);
+	return true;
+}
+
+void ABrixTownActor::Add(UInstancedStaticMeshComponent* G, const FTransform& Whole, const FLook& Look)
+{
+	FTransform At = Whole;
+	if (CutCm >= 0.f && !CutAt(G, At)) return;
 	FPending& P = Pending.FindOrAdd(G);
 	P.At.Add(At);
 	P.Look.Add(Look);
@@ -1220,23 +1248,37 @@ int32 ABrixTownActor::FlushPending()   // the instances gathered per group, adde
 
 // BUILD-005 (play.js repaint()): the building drawn again from a design, a remodel being tried or one paid for. Its old
 // instances are folded away under the ground and it is built afresh, so the rest of the town is untouched.
-void ABrixTownActor::Repaint(int32 Lot, const TSharedPtr<FJsonObject>& Design)
+void ABrixTownActor::Repaint(int32 Lot, const TSharedPtr<FJsonObject>& Design, float CutM)
 {
 	if (!KeptCity) return;
+	const double Began = FPlatformTime::Seconds();
 	TArray<FBrixBreakable::FPart>* Old = LotParts.Find(Lot);
 	if (Old)
 	{
-		TSet<UInstancedStaticMeshComponent*> Touched;
+		// each group's instances of this building in runs that follow on from one another, moved a run at a time: moved one by
+		// one, a group of the whole town's boxes was gone over again for every instance (seconds for one building)
+		TMap<UInstancedStaticMeshComponent*, TArray<TPair<int32, FTransform>>> By;
 		for (const FBrixBreakable::FPart& P : *Old)
 		{
 			if (!P.bPlaced) continue;
 			FTransform T = P.At;
 			T.SetLocation(FVector(T.GetLocation().X, T.GetLocation().Y, -6000.0));
 			T.SetScale3D(FVector(.001));
-			P.G->UpdateInstanceTransform(P.Index, T, false, false, true);
-			Touched.Add(P.G);
+			By.FindOrAdd(P.G).Add({ P.Index, T });
 		}
-		for (UInstancedStaticMeshComponent* G : Touched) G->MarkRenderStateDirty();
+		for (TPair<UInstancedStaticMeshComponent*, TArray<TPair<int32, FTransform>>>& G : By)
+		{
+			G.Value.Sort([](const TPair<int32, FTransform>& A, const TPair<int32, FTransform>& B) { return A.Key < B.Key; });
+			for (int32 a = 0; a < G.Value.Num();)
+			{
+				TArray<FTransform> Run;
+				int32 b = a;
+				for (; b < G.Value.Num() && G.Value[b].Key == G.Value[a].Key + (b - a); ++b) Run.Add(G.Value[b].Value);
+				G.Key->BatchUpdateInstancesTransforms(G.Value[a].Key, Run, false, false, true);
+				a = b;
+			}
+			G.Key->MarkRenderStateDirty();
+		}
 		Old->Reset();
 	}
 	if (Design) DesignOver.Add(Lot, Design); else DesignOver.Remove(Lot);
@@ -1249,9 +1291,12 @@ void ABrixTownActor::Repaint(int32 Lot, const TSharedPtr<FJsonObject>& Design)
 			CityData = KeptCity;
 			LotIndex = Lot;
 			Recording = &LotParts.FindOrAdd(Lot);
+			CutCm = CutM >= 0.f ? CutM * CmPerM : -1.f;
 			BuildLot(L, B);
+			CutCm = -1.f;
 			Recording = nullptr;
 			FlushPending();
+			UE_LOG(LogTemp, Display, TEXT("Brix Town: %s drawn again in %.2f s%s"), *L.Id, FPlatformTime::Seconds() - Began, CutM >= 0.f ? *FString::Printf(TEXT(", cut open %.2f m up"), CutM) : TEXT(""));
 			CityData = nullptr;
 			return;
 		}

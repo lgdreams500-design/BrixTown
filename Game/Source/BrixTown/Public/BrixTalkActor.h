@@ -31,7 +31,8 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
-	bool IsTalking() const { return Res >= 0; }
+	bool IsTalking() const { return Res >= 0 || bScene; }
+	void OpenScene(const FBrixDialogue::FConversation& Scene);   // lines at a place with nobody to talk to (QST-012): read, not spoken
 	double CandidateDistance() const;   // metres to the resident who could be talked to, or -1
 	void Open();                        // with the resident the player is next to, if any
 	void Choose(int32 N);               // the N-th answer (0 first)
@@ -70,6 +71,7 @@ private:
 
 	// the talk under way (conversations.js s)
 	int32 Res = -1;
+	bool bScene = false;                 // a scene is playing: the box is open and Res is nobody
 	ABrixPeople::FCandidate At;          // where they were when the talk began (held there)
 	FString ConvId, NodeId, Mood = TEXT("neutral"), Say;
 	FBrixDialogue::FConversation Conv;  // the talk as Life gives it: the resident's own, with quest lines and work added

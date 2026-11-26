@@ -71,7 +71,9 @@ public:
 	// Everything a car can break, by the rules' kinds (CITY-072): filled while building when Breakable is set
 	TArray<FBrixBreakable> Breakables;
 	TSet<FString> Breakable;            // the prop kinds to keep handles for (set before Build)
-	void Repaint(int32 Lot, const TSharedPtr<FJsonObject>& Design);   // BUILD-005: a building drawn again from a design (none: its own)
+	// BUILD-005: a building drawn again from a design (none: its own). CutM (BUILD-020): cut open for the designer, nothing of
+	// it drawn above that height over the ground (metres; below 0: whole), a box standing through the cut ending there
+	void Repaint(int32 Lot, const TSharedPtr<FJsonObject>& Design, float CutM = -1.f);
 	void SetBroken(int32 b, bool bBroken);   // hide it (its solids and its light too) or show it again
 	// wet paving (WLD-037): M_Greybox's WetDark, WetSheen and Puddles on every surface (Tools/unreal/greybox_wet.py); 0 dry
 	void SetWet(float Dark, float Sheen, float Puddles, float Ripples, float Snow = 0.f);   // Snow: lying snow (WLD-070)
@@ -248,6 +250,8 @@ private:
 	TArray<FBrixBreakable::FPart>* Recording = nullptr;   // the building being built: Add() notes its instances (to repaint it)
 	TMap<int32, TArray<FBrixBreakable::FPart>> LotParts;   // each building's instances, by lot
 	TMap<int32, TSharedPtr<FJsonObject>> DesignOver;       // a building drawn from a design other than inside.json's (a remodel)
+	float CutCm = -1.f;                                    // while a building is drawn cut open (Repaint)
+	bool CutAt(const UInstancedStaticMeshComponent* G, FTransform& At) const;   // false: above the cut, not drawn
 	const FBrixCity* KeptCity = nullptr;                   // the city built, for drawing a building again
 	int32 FlushPending();
 	void Wrap(const FString& Kind, const FVector2D& Pos, float Ground, TFunctionRef<void()> Fn);

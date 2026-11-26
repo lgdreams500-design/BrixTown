@@ -60,6 +60,10 @@ namespace
 ABrixCars::ABrixCars()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	// after the player has moved this frame: the player's tick drives their car and sits them in it, and a car drawn
+	// before that was a frame behind its driver and the camera, by a distance that changed with each frame's length:
+	// it shook under them
+	PrimaryActorTick.TickGroup = TG_PostPhysics;
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	static ConstructorHelpers::FObjectFinder<UMaterialInterface> Mat(TEXT("/Game/People/M_People.M_People"));   // the vertex colour, matte
 	Material = Mat.Object;
@@ -152,10 +156,11 @@ FVector2D ABrixCars::BuildParked(UProceduralMeshComponent* M, const FString& See
 {
 	if (!Traffic) return FVector2D::ZeroVector;
 	const double hm = BrixSliceHash({ Seed, TEXT("model") });
-	const FBrixCarModel* Md = Traffic->Models.Find(hm < .4 ? TEXT("small") : hm < .72 ? TEXT("estate") : TEXT("pickup"));
+	const bool bVan = Seed.StartsWith(TEXT("van"));   // a seed that starts "van": the company's delivery van, in its teal (the outlet's delivery bay; cars.js parked())
+	const FBrixCarModel* Md = Traffic->Models.Find(bVan ? TEXT("van") : hm < .4 ? TEXT("small") : hm < .72 ? TEXT("estate") : TEXT("pickup"));
 	if (!Md) return FVector2D::ZeroVector;
 	FBrixBodyMesh Body;
-	PaintCar(Body, *Md, false, 0, [&Seed](const TCHAR* T) { return BrixSliceHash({ Seed, T }); }, 0);
+	PaintCar(Body, *Md, bVan, 1, [&Seed](const TCHAR* T) { return BrixSliceHash({ Seed, T }); }, 0);
 	FBrixMeshArrays A;
 	A.From(Body, false);
 	A.Upload(M, -1, Material);
@@ -192,7 +197,10 @@ void ABrixCars::PaintCar(FBrixBodyMesh& Body, const FBrixCarModel& InMd, bool bV
 		{
 			const TOptional<FVector3f>& C = PartC.IsValidIndex(D.Part[t]) ? PartC[D.Part[t]] : TOptional<FVector3f>(BodyC);
 			if (!C) continue;
-			for (int32 v = 0; v < 3; ++v)
+			// The model's triangles go round the other way to the slice's bodies (its frame is along, across, up; theirs
+			// x, up, z), so they are taken in the other order: as they come, Unreal drew each part's inside and left its
+			// outside out, and a car was a dark hollow with its riders' legs showing through the doors.
+			for (const int32 v : { 0, 2, 1 })
 			{
 				const FVector3f& Q = D.P[t * 3 + v];
 				const FVector3f& Nn = D.N[t * 3 + v];
@@ -516,8 +524,15 @@ void ABrixCars::Leave(FVector2D& OutSpot, double& OutYaw)
 	OutSpot = Spots[0];
 	FCollisionQueryParams Q(TEXT("BrixOut"), false);
 	if (const APawn* Me = UGameplayStatics::GetPlayerPawn(this, 0)) Q.AddIgnoredActor(Me);
+	// a free spot with nothing between it and the car: a spot free on the far side of a thin wall put the player
+	// inside a building. Failing that, a free spot; failing that, the driver's door as before.
+	bool bFree = false;
 	for (const FVector2D& S : Spots)
-		if (!GetWorld()->OverlapAnyTestByChannel(ToWorld(S, 1.f), FQuat::Identity, ECC_WorldStatic, FCollisionShape::MakeCapsule(30.f, 70.f), Q)) { OutSpot = S; break; }
+	{
+		if (GetWorld()->OverlapAnyTestByChannel(ToWorld(S, 1.f), FQuat::Identity, ECC_WorldStatic, FCollisionShape::MakeCapsule(30.f, 70.f), Q)) continue;
+		if (!bFree) { OutSpot = S; bFree = true; }
+		if (!GetWorld()->LineTraceTestByChannel(ToWorld(C, 1.f), ToWorld(S, 1.f), ECC_WorldStatic, Q)) { OutSpot = S; break; }
+	}
 	OutYaw = Drive.A;
 	Drive = FDrive();
 }

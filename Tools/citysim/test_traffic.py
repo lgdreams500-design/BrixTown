@@ -253,6 +253,9 @@ class TheTraffic(unittest.TestCase):
         c, P = W["traffic"]["crossing_at"], W["city"]["grid"]["pitch"]
         half = W["city"]["grid"]["street_width"] / 2 - 4.5               # the carriageway either side of a centre line
         doors = {tuple(l["door"]) for l in world.lots(W) if l["kind"] == "stop"}   # the tram boards in the street
+        wl = (W["city"].get("wall") or {}).get("cells")
+        def inside(x, z):                                   # pavements and zebras are the walled town's (world.walkways()):
+            return not wl or (wl[0] * P < x < wl[2] * P and wl[1] * P < z < wl[3] * P)   # outside, people walk the gate roads
         def on_road(v):
             return abs(v - round(v / P) * P) < half - .01
         def at_zebra(v):
@@ -263,7 +266,7 @@ class TheTraffic(unittest.TestCase):
                 if kind != "move":
                     continue
                 for (x, z) in payload[0]:
-                    if any(abs(x - d[0]) < 2 and abs(z - d[1]) < 2 for d in doors):
+                    if any(abs(x - d[0]) < 2 and abs(z - d[1]) < 2 for d in doors) or not inside(x, z):
                         continue
                     checked += 1
                     if on_road(x):                                  # in a north-south carriageway: only on a zebra

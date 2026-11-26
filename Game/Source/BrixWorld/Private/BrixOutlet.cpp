@@ -446,6 +446,21 @@ namespace
 			for (double y = .3; y < 4.1; y += .35) FBox(SS, a - 1.8, a + 1.8, y, y + .04, .3, .32, V3(.12, .12, .14), 9);
 			SpLamp(SS, a, 4.7);
 		}
+		// the delivery bay (FURN-020): a company van drawn up along the wall at each of the first l.vans loading doors
+		{
+			const int32 Vans = (int32)Num(L, TEXT("vans"), 0);
+			int32 k = 0;
+			for (const double a : { x0 + 12, x0 + 24, x1 - 12 })
+			{
+				if (k >= Vans) break;
+				const double vx = a + 4.6, vz = z1 + 1.75;
+				V2 dims(4.6, 1.9);
+				if (const FVector2D* Sz = CarSizes.Find(TEXT("van"))) dims = *Sz;
+				o.Car(vx, vz, 0, .12 + .006, TEXT("van") + J(k) + L->GetStringField(TEXT("id")));
+				o.Solid(vx - dims.X / 2, 0, vz - dims.Y / 2, vx + dims.X / 2, 2.2, vz + dims.Y / 2);
+				++k;
+			}
+		}
 		Inside0();
 		Inside(false);   // play.js furnish() at load: the places, the uses, what is in the way
 		Inside(true);    // and near the camera: the furniture

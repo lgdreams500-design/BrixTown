@@ -1,0 +1,249 @@
+{
+ "id": "stone_ground", "group": "baker", "act": "III", "title": "Stone Ground", "rank": "Journeyman",
+ "giver": "noor", "needs": ["done:feeding_the_mother:*"],
+ "hook": "A smell of toast in yesterday's crumb, and a contract on a farmhouse table that gets signed at the end of the week.",
+ "summary": "The flour is failing twice over. Oda's millstones have gone dull, and the only tools that can recut them belonged to her late husband and now sit in a museum drawer. Meanwhile Brook Farm is about to sell its whole harvest, the Old Wall Red included, to the mall's supplier for one flat price. Suvi is not wrong to sign. That is what makes it hard.",
+ "theme": "Heritage against solvency, with no villain at the table.",
+ "start": "toast",
+ "stages": [
+  {"id": "toast", "title": "Toast in the crumb", "kind": "talk", "with": "noor",
+   "goal": "Talk to Noor at the Stone Oven",
+   "log": "Noor wants you at the bench before the shutters go up. She has yesterday's loaf in her hands and a look on her face.",
+   "start": "t1",
+   "starts": [{"need": ["flag:mother_lost"], "node": "t_lost"}],
+   "nodes": {
+    "t1": {"who": "noor", "mood": "neutral", "dir": "She tears yesterday's loaf in half and holds the crumb under your nose.", "say": "Smell that. Under the sour. Toast. The flour is coming off Oda's stones hot. Dull stones rub instead of cut, and rubbing cooks the grain.",
+     "options": [
+      {"text": "Can dull stones be fixed?", "next": "t2"},
+      {"text": "Could we buy flour somewhere else?", "next": "t_else"}
+     ]},
+    "t_lost": {"who": "noor", "mood": "sad", "dir": "She tears yesterday's loaf in half and holds the crumb under your nose.", "say": "First the Mother. Now the flour. Smell that. Toast, in the crumb. At this rate I'll be selling toast racks before the year's out.",
+     "options": [{"text": "What's wrong with the flour?", "next": "t_lost2"}]},
+    "t_lost2": {"who": "noor", "mood": "neutral", "say": "Oda's stones are dull. Dull stones rub instead of cut, and rubbing cooks the grain.",
+     "options": [{"text": "Can they be fixed?", "next": "t2"}]},
+    "t_else": {"who": "noor", "mood": "neutral", "say": "Roller flour, from the silo men. White, even, dead. I would sooner sell toast racks. No. The stones want dressing.",
+     "options": [{"text": "Dressing?", "next": "t2"}]},
+    "t2": {"who": "noor", "mood": "thinking", "say": "Dressed. Recut. Marek did it every second year. Marek's dead, and his tools and his pattern book are in Jai's museum. And that's the small problem.",
+     "options": [{"text": "What's the large one?", "next": "t3"}]},
+    "t3": {"who": "noor", "mood": "neutral", "say": "Brook Farm. Len's girl signs the whole harvest to Valley Provisions at the end of the week. The mall's supplier. One flat price, everything into the silo, the Old Wall Red with it. If the Red goes, there is nothing left worth grinding on a stone.",
+     "options": [
+      {"text": "One thing at a time. The tools first.", "next": null, "act": ["stage:book"]},
+      {"text": "Why does the Red matter so much?", "next": "t_red"}
+     ]},
+    "t_red": {"who": "noor", "mood": "happy", "say": "Because it's the only wheat that tastes of here. Hard grain, grown on the wall's rubble. Rollers hate it. Oda's stones love it. Go and see Jai.",
+     "options": [{"text": "On my way.", "next": null, "act": ["stage:book"]}]}
+   }},
+
+  {"id": "book", "title": "OT-240 to OT-252", "kind": "talk", "with": "jai",
+   "goal": "Ask Jai for Marek's tools and pattern book",
+   "log": "The Old Town Museum, again. Marek's stone-dressing kit is in a drawer there: mill bills, a proof staff, and a pattern book.",
+   "scene": "You ask after Marek's tools before you are properly through the door.",
+   "start": "b1",
+   "starts": [
+    {"need": ["flag:crock_taken", "done:errand_runner:kept", "!flag:book_returned"], "node": "b_both"},
+    {"need": ["flag:crock_taken"], "node": "b_empty"},
+    {"need": ["done:errand_runner:kept", "!flag:book_returned"], "node": "b_thief"}
+   ],
+   "nodes": {
+    "b1": {"who": "jai", "mood": "happy", "say": "Marek's kit! OT-240 through 252. Mill bills, a thrift, a proof staff, and his pattern book. Nobody has asked for them since the day they came in. I dust them at the end of the weeks, in case.",
+     "options": [{"text": "The mill's stones are dull. The tools need to work again.", "next": "b2"}]},
+    "b2": {"who": "jai", "mood": "thinking", "say": "Demonstration of original function. There is a clause for it. But these came from Oda in a bad week, and I won't send them back to her door unless she says so. The pattern book you may study now. The tools go when she asks for them herself.",
+     "options": [{"text": "I'll ask her.", "next": null, "act": ["flag:book_lent", "stage:oda"]}]},
+    "b_both": {"who": "jai", "mood": "angry", "dir": "The case that held OT-112 is empty. So is the place on the shelf where the first edition should be.", "say": "The book. And now the crock. I have two gaps on two shelves, and one face that keeps turning up beside them.",
+     "options": [
+      {"text": "I've brought the book back. And it was me who took the crock.", "next": "b_own", "need": ["have:rare_book"], "act": ["take:rare_book", "flag:book_returned", "rep:jai:+40"]},
+      {"text": "I took the crock. And I still have the book. I'm sorry, Jai.", "next": "b_both2"},
+      {"text": "I don't know anything about that.", "next": "b_deny"}
+     ]},
+    "b_both2": {"who": "jai", "mood": "neutral", "say": "Sorry mends neither shelf. The form, then. D-7, signed by the donor, who is Oda. When she signs, the drawer opens. Not before. Bring the book back, and we shall talk about the rest.",
+     "options": [{"text": "I'll bring her signature.", "next": null, "act": ["flag:book_lent", "stage:oda"]}]},
+    "b_empty": {"who": "jai", "mood": "sad", "dir": "The case that held OT-112 is still empty. He has left the little card where it fell.", "say": "I haven't reported it. I keep trying to work out who I would be reporting. And then you walk in, asking for more.",
+     "options": [
+      {"text": "It was me. I took the crock. I'm sorry, Jai.", "next": "b_own"},
+      {"text": "I don't know anything about that.", "next": "b_deny"}
+     ]},
+    "b_own": {"who": "jai", "mood": "neutral", "say": "I know it was you. I wanted to see whether you did. Tell me one thing. Is it working?",
+     "options": [
+      {"text": "She's alive in it. Come and see her.", "next": "b_mend", "need": ["!flag:mother_lost"]},
+      {"text": "It wasn't enough. We lost her anyway.", "next": "b_mend_lost", "need": ["flag:mother_lost", "!flag:scalded"]},
+      {"text": "It was working. Then I killed her, with a kettle.", "next": "b_mend_lost", "need": ["flag:mother_lost", "flag:scalded"]}
+     ]},
+    "b_mend": {"who": "jai", "mood": "happy", "say": "Then it is doing what it was made for, which is more than I ever managed for it. I'll change the card. “On long loan to its own bakery.” Now. What was it you wanted?",
+     "options": [{"text": "Marek's kit.", "next": "b2", "act": ["flag:jai_mended", "rep:jai:+20"]}]},
+    "b_mend_lost": {"who": "jai", "mood": "sad", "say": "Oh. I am sorry. Keep the crock there. An empty crock in its own bakery is nearer home than a full case here. Now. What was it you wanted?",
+     "options": [{"text": "Marek's kit.", "next": "b2", "act": ["flag:jai_mended", "rep:jai:+15"]}]},
+    "b_deny": {"who": "jai", "mood": "angry", "say": "No. Of course not. Then I can't help you. The pattern book stays in its drawer. I'm told Oda remembers most of it.",
+     "options": [{"text": "(Leave.)", "next": null, "act": ["flag:no_book", "rep:jai:-15", "stage:oda"]}]},
+    "b_thief": {"who": "jai", "mood": "neutral", "say": "The form, then. D-7, signed by the donor, who is Oda. You know how it goes by now. When she signs, the drawer opens. Not before.",
+     "options": [
+      {"text": "I've brought the book back, Jai.", "next": "j_back3", "need": ["have:rare_book"], "act": ["take:rare_book", "flag:book_returned", "rep:jai:+40"]},
+      {"text": "I'll bring her signature.", "next": null, "act": ["flag:book_lent", "stage:oda"]}
+     ]},
+    "j_back3": {"who": "jai", "mood": "surprised", "say": "You brought it back. Well. The shelf has been wrong for a long while. Thank you. Then we can do this properly.",
+     "options": [{"text": "Marek's kit.", "next": "b2"}]}
+   }},
+
+  {"id": "oda", "title": "Land and furrow", "kind": "talk", "with": "oda",
+   "goal": "Ask Oda for her blessing, then dress the stones at Mill Fields",
+   "log": "Mill Fields. Somebody has to ask Oda to let another pair of hands use her husband's tools.",
+   "start": "d1",
+   "starts": [{"need": ["flag:no_book"], "node": "d_nobook"}],
+   "nodes": {
+    "d1": {"who": "oda", "mood": "neutral", "say": "You've been to the museum. I can see it on you. People come out of there walking carefully.",
+     "options": [{"text": "Jai will release Marek's tools, if you ask for them yourself.", "next": "d2"}]},
+    "d2": {"who": "oda", "mood": "sad", "say": "Two years I've listened to those stones go dull, because the cure was in a drawer with his name on it. And now a baker's hand wants to take his bills to my stone.",
+     "options": [
+      {"text": "He'd hate the dust on them more than he'd mind my hands.", "next": "d_yes", "act": ["rep:oda:+8"]},
+      {"text": "No stones, no mill. No mill, no flour. That's the sum, Oda.", "next": "d_yes2"},
+      {"text": "They're tools. Tools want using.", "next": "d_blunt"}
+     ]},
+    "d_blunt": {"who": "oda", "mood": "angry", "say": "They're his hands, is what they are. You'll learn the difference when somebody dies on you.",
+     "options": [{"text": "I'm sorry. That was clumsy. Will you ask for them?", "next": "d_yes2", "act": ["rep:oda:-5"]}]},
+    "d_yes": {"who": "oda", "mood": "happy", "say": "He would. He'd have a duster out before he said hello. Fetch them. I'll write Jai his line. And bring the book. I know the pattern by ear, not by eye.",
+     "options": [{"text": "(Fetch Marek's kit from the museum.)", "next": "d_dress", "act": ["give:marek_tools"]}]},
+    "d_yes2": {"who": "oda", "mood": "neutral", "say": "Aye. That's the sum. Fetch them. I'll write Jai his line. And bring the book. I know the pattern by ear, not by eye.",
+     "options": [{"text": "(Fetch Marek's kit from the museum.)", "next": "d_dress", "act": ["give:marek_tools"]}]},
+    "d_nobook": {"who": "oda", "mood": "neutral", "say": "No book. Jai turned you away. I'll not ask why; your face has the answer. Then we dress from memory. Mine, of his hands. It won't be right. It'll be better than toast.",
+     "options": [{"text": "(Take down Marek's old spare bill from the nail by the door. Begin.)", "next": "d_rough"}]},
+    "d_dress": {"who": "scene", "say": "The runner stone comes up on the crane and lies on its back like something asleep. The pattern book opens flat at a page gone soft with thumbing. Ten harps. Four furrows to the harp. The land between left proud. In the margin, in pencil: “Slow is fast. M.”",
+     "options": [{"text": "(Pick up the mill bill.)", "next": "d_dress2"}]},
+    "d_dress2": {"who": "oda", "mood": "thinking", "say": "Follow the old furrow. You're not cutting a new stone, you're finding the one that's there. Let the bill fall. Push it and it skates. Listen. Hear that? That's her saying yes.",
+     "options": [{"text": "(Work the furrows, harp by harp, until the light goes.)", "next": "d_sign"}]},
+    "d_sign": {"who": "oda", "mood": "sad", "dir": "Near the eye of the stone, no bigger than a thumbnail, an ear of wheat is cut into the land.", "say": "A dresser signs the stone. That's Marek's. You've done the work. You've the right to cut yours beside it.",
+     "options": [
+      {"text": "Leave his alone. It's his stone.", "next": "d_sign_his", "act": ["rep:oda:+10"]},
+      {"text": "A small mark beside his. The work goes on.", "next": "d_sign_mine", "act": ["flag:signed_stone", "rep:oda:+5"]},
+      {"text": "Forty years you've fed this stone, Oda. Cut yours.", "next": "d_sign_oda", "act": ["flag:oda_signed", "rep:oda:+20"]}
+     ]},
+    "d_sign_his": {"who": "oda", "mood": "neutral", "say": "Aye. That's the right kind of pride.",
+     "options": [{"text": "(Lower the stone. Run her.)", "next": "d_run"}]},
+    "d_sign_mine": {"who": "oda", "mood": "happy", "say": "He'd have liked the cheek. Small, mind. He was a small-signature man.",
+     "options": [{"text": "(Cut it small. Lower the stone. Run her.)", "next": "d_run"}]},
+    "d_sign_oda": {"who": "oda", "mood": "surprised", "dir": "She takes the bill. Her hand is steadier than yours was. A millrind, plain, cut beside the wheat.", "say": "Forty years, and I never once thought it was mine to sign. There. Now she's both of ours.",
+     "options": [{"text": "(Lower the stone. Run her.)", "next": "d_run"}]},
+    "d_run": {"who": "scene", "say": "The runner comes down. Oda opens the sluice. The mill takes a breath and the sound comes right: a long, even hush, like rain on a far roof. The flour comes off cool.",
+     "options": [{"text": "(Listen a while. Then on to Brook Farm.)", "next": null, "act": ["flag:stones_dressed", "stage:farm"]}]},
+    "d_rough": {"who": "scene", "say": "You work from Oda's memory of another man's hands. Some furrows come true. Some wander. When the runner comes down the knock is gone, but the hush has a rasp in it, like a voice after a cold.",
+     "options": [{"text": "(It will have to do. On to Brook Farm.)", "next": null, "act": ["flag:stones_rough", "stage:farm"]}]}
+   }},
+
+  {"id": "farm", "title": "The kitchen table", "kind": "talk", "with": "suvi",
+   "goal": "Go to Brook Farm before the week is out",
+   "log": "Brook Farm, past the east wall line. The contract with Valley Provisions is signed at the end of the week.",
+   "scene": "The farmhouse kitchen. A contract lies on the table between a teapot and a vet's bill. Suvi has a pen. Len has taken the bad chair, by choice, and is looking at the range as if it had personally disappointed him.",
+   "start": "f1",
+   "nodes": {
+    "f1": {"who": "suvi", "mood": "neutral", "say": "You're from the Stone Oven. So you're here about four acres of red wheat, and you've been told I'm the villain.",
+     "options": [
+      {"text": "Nobody said villain.", "next": "f2"},
+      {"text": "Are you?", "next": "f1b"}
+     ]},
+    "f1b": {"who": "suvi", "mood": "angry", "say": "I'm the one who opens the post. Sit down.",
+     "options": [{"text": "(Sit.)", "next": "f2"}]},
+    "f2": {"who": "suvi", "mood": "thinking", "say": "Valley Provisions. One price, whole harvest, every year, paid in one sum. Do you know what one sum a year is, on a farm? It's the first time the money has come in before it ran out. Heritage doesn't pay the vet. A contract pays the vet.",
+     "options": [
+      {"text": "And the Old Wall Red?", "next": "f3"},
+      {"text": "Len. What do you say?", "next": "f_len"}
+     ]},
+    "f_len": {"who": "len", "mood": "neutral", "say": "Forty years I've grown wheat on the wall's bones. She tastes of the wall coming down. You can't put that in a silo. It won't go.",
+     "options": [{"text": "Suvi. The Red.", "next": "f3"}]},
+    "f3": {"who": "suvi", "mood": "neutral", "say": "Goes in with the rest. The silo men call it contamination; they'd dock me for keeping it apart. Unless somebody pays me more for four awkward acres than Valley pays for nothing awkward at all. In writing. Before the week is out.",
+     "options": [
+      {"text": "Noor will. Stone price, in writing, paid the day the grain comes in.", "next": "f_noor"},
+      {"text": "Split it. Two acres in the contract, two to the mill.", "next": "f_split"},
+      {"text": "You should sign, Suvi. All of it. The farm comes first.", "next": "f_sign"}
+     ]},
+    "f_noor": {"who": "suvi", "mood": "thinking", "say": "Noor is one bakery. One buyer is a hobby. Two buyers is a market. Bring me a second name and I'll strike the Red out of the contract with this pen.",
+     "options": [
+      {"text": "The Tram Café. Mei has been asking for a wall loaf on the menu.", "next": "f_saved", "need": ["rep:mei:10"]},
+      {"text": "Me. A market stall, every market day. I know how a stall works.", "next": "f_saved", "need": ["done:own_stall:*"]},
+      {"text": "There's no second name. Not yet.", "next": "f_nosecond"}
+     ]},
+    "f_nosecond": {"who": "suvi", "mood": "sad", "say": "Then I can't carry four acres on one promise. Two. I'll keep two out for Noor, and heaven help my yield figures.",
+     "options": [
+      {"text": "Two it is.", "next": null, "act": ["flag:deal_split", "rep:suvi:+5", "rep:len:+5", "stage:report"]},
+      {"text": "Then sign it all. Don't cripple the contract for half a gesture.", "next": "f_sign"}
+     ]},
+    "f_saved": {"who": "len", "mood": "happy", "dir": "Suvi draws one line through a paragraph, initials it, and turns the page round. Len gets up out of the bad chair, which takes a while, and puts the kettle on, which for Len is a speech.", "say": "She'll want more than four acres, a wheat with two buyers. The top field's doing nothing.",
+     "options": [{"text": "Six acres, then?", "next": "f_saved2"}]},
+    "f_saved2": {"who": "suvi", "mood": "happy", "say": "Don't push it, Dad. Fine. Six. And {player}: if either of your buyers is late with the money, the vet's bill goes to the bakery.",
+     "options": [{"text": "Deal.", "next": null, "act": ["flag:deal_saved", "rep:suvi:+10", "rep:len:+25", "stage:report"]}]},
+    "f_split": {"who": "suvi", "mood": "thinking", "say": "Half. Valley won't love it, but they'll swallow two acres. Dad?",
+     "options": [{"text": "Len?", "next": "f_split2"}]},
+    "f_split2": {"who": "len", "mood": "sad", "say": "Half a wheat. Well. Half's a seed crop. You can come back from half.",
+     "options": [{"text": "Then two acres go to the mill.", "next": null, "act": ["flag:deal_split", "rep:suvi:+5", "rep:len:+5", "stage:report"]}]},
+    "f_sign": {"who": "suvi", "mood": "surprised", "say": "So you've come down on the side of the sums.",
+     "options": [{"text": "I came to see the sums. The sums are yours.", "next": "f_sign2"}]},
+    "f_sign2": {"who": "len", "mood": "sad", "say": "So that's the young one's word. Well. I asked for it. Sign, girl. I'll walk the Red tonight. Somebody should.",
+     "options": [{"text": "(Watch her sign.)", "next": "f_sign3"}]},
+    "f_sign3": {"who": "suvi", "mood": "neutral", "dir": "She signs. Then, without looking up:", "say": "Valley pays an introducer's fee. Thirty brix. You talked sense when everyone else talked wheat. It's yours if you want it.",
+     "options": [
+      {"text": "I'll take it.", "next": null, "act": ["pay:3000", "flag:took_fee", "flag:deal_sold", "rep:suvi:+20", "rep:len:-25", "stage:report"]},
+      {"text": "Keep it. Put it toward the vet.", "next": null, "act": ["flag:deal_sold", "rep:suvi:+25", "rep:len:-15", "stage:report"]}
+     ]}
+   }},
+
+  {"id": "report", "title": "What the flour will be", "kind": "talk", "with": "noor",
+   "goal": "Tell Noor how it went",
+   "log": "Back to Baker Street. Noor will want the stones first and the wheat second, and will pretend it's the other way round.",
+   "start": "r_split",
+   "starts": [
+    {"need": ["flag:deal_saved"], "node": "r_saved"},
+    {"need": ["flag:deal_sold"], "node": "r_sold"}
+   ],
+   "nodes": {
+    "r_saved": {"who": "noor", "mood": "happy", "say": "Six acres. And a second buyer. You went out for a sack of flour and came back with a harvest. And the stones?",
+     "options": [
+      {"text": "Dressed. The mill sounds like rain.", "next": "r_good", "need": ["flag:stones_dressed"]},
+      {"text": "Better. Not right. We had no pattern book.", "next": "r_rough", "need": ["flag:stones_rough"]}
+     ]},
+    "r_split": {"who": "noor", "mood": "thinking", "say": "Two acres. Half a wheat, half a contract. Nobody's happy and everybody's solvent. That is most of farming, and most of baking. And the stones?",
+     "options": [
+      {"text": "Dressed. The mill sounds like rain.", "next": "r_good_split", "need": ["flag:stones_dressed"]},
+      {"text": "Better. Not right. We had no pattern book.", "next": "r_rough_split", "need": ["flag:stones_rough"]}
+     ]},
+    "r_sold": {"who": "noor", "mood": "sad", "say": "All of it. Into the silo.",
+     "options": [
+      {"text": "The farm had to come first. I told her so.", "next": "r_sold2"},
+      {"text": "Valley paid me an introducer's fee. I took it.", "next": "r_fee", "need": ["flag:took_fee"]}
+     ]},
+    "r_good": {"who": "noor", "mood": "happy", "say": "I heard. Oda sent word. She said the mill sounds like rain. She hasn't said a thing like that since Marek. Journeyman. Go and scale tomorrow's rye.",
+     "options": [{"text": "I'll scale the rye.", "next": null, "act": ["end:red_saved"]}]},
+    "r_rough": {"who": "noor", "mood": "neutral", "say": "Rough stones and good grain. We'll taste it in the crust, and we'll live. Journeyman. Go and scale tomorrow's rye.",
+     "options": [{"text": "I'll scale the rye.", "next": null, "act": ["end:red_saved"]}]},
+    "r_good_split": {"who": "noor", "mood": "neutral", "say": "Good stones and half the grain to put through them. I've baked on worse. Journeyman. Scale the rye.",
+     "options": [{"text": "I'll scale the rye.", "next": null, "act": ["end:red_split"]}]},
+    "r_rough_split": {"who": "noor", "mood": "neutral", "say": "Half a wheat through half-right stones. Well. We're still a bakery. Journeyman. Scale the rye.",
+     "options": [{"text": "I'll scale the rye.", "next": null, "act": ["end:red_split"]}]},
+    "r_sold2": {"who": "noor", "mood": "neutral", "say": "You did. And you weren't wrong. I'll thank you not to be right like that in my shop again for a while. We bake with what Oda can find. Journeyman. Scale the rye.",
+     "options": [{"text": "Understood.", "next": null, "act": ["end:red_sold"]}]},
+    "r_fee": {"who": "noor", "mood": "angry", "say": "Did they. Then the Red was worth thirty brix, and now we both know the price. Scale the rye.",
+     "options": [{"text": "(Scale the rye.)", "next": null, "act": ["rep:noor:-15", "end:red_sold"]}]}
+   }}
+ ],
+ "endings": [
+  {"id": "red_saved", "title": "The Red stays", "log": "The Old Wall Red is struck out of the contract and six acres go in at the next sowing. The wheat has two buyers now, which makes it a market.",
+   "pay": 2500, "rep": {"noor": 15, "oda": 10}, "flags": ["red_saved"],
+   "ripples": [
+    "The fair loaf can be baked with Old Wall Red. With dressed stones as well, it is the best bread the Oven can make, so long as the Mother lives and the plait stays at home.",
+    "Whoever you named as second buyer is now part of the bakery's week: a wall loaf on Mei's menu, or your own stall on market days.",
+    "Len starts turning up at the side door with a sack and an opinion."
+   ],
+   "unlocks": "Rank: Journeyman. Repeatable job: the flour run to Mill Fields."},
+  {"id": "red_split", "title": "Half a wheat", "log": "Two acres to the silo, two to the mill. Nobody is happy and everybody is solvent.",
+   "pay": 2000, "rep": {"noor": 8, "oda": 5}, "flags": ["red_split"],
+   "ripples": [
+    "There is enough Red for the fair loaf and for Saturdays, and not for much else.",
+    "Len calls it a seed crop. He is already planning the year after."
+   ],
+   "unlocks": "Rank: Journeyman. Repeatable job: the flour run to Mill Fields."},
+  {"id": "red_sold", "title": "Into the silo", "log": "Brook Farm signed everything to Valley Provisions. The farm is safe. The Red is gone into the common grain.",
+   "pay": 1500, "rep": {"noor": 0}, "flags": ["red_sold"],
+   "ripples": [
+    "The Oven bakes with ordinary grain. At the fair the loaf has nothing to hide behind and less to say.",
+    "Suvi remembers who talked sense. Brook Farm becomes a friendly door.",
+    "Len walks the old wall line in the evenings. If you took the fee, he knows."
+   ],
+   "unlocks": "Rank: Journeyman. Repeatable job: the flour run to Mill Fields."}
+ ]
+}

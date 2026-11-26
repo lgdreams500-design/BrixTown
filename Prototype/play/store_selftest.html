@@ -1,0 +1,21 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Furniture store self-test</title>
+<!-- FURN-022 to FURN-029: runs the slice's store.js against Tools/citysim/furniture.py's fixed run (city_data.js
+     D.life.furniture.checks) without the rest of the slice, and writes the result into the page, so headless Edge can
+     read it with --dump-dom (start Edge with PowerShell's Start-Process -RedirectStandardOutput, as estate_selftest.html):
+     msedge --headless=new --virtual-time-budget=60000 --dump-dom Prototype/play/store_selftest.html -->
+<pre id="out">running</pre>
+<script src="city_data.js"></script>
+<script src="economy.js"></script>
+<script src="store.js"></script>
+<script>
+  const D = window.WASTED, LOTS = [];
+  for (const b of D.blocks) for (const l of b.lots) { l.block = b; LOTS.push(l); }
+  let text;
+  try {
+    const bad = Store.selfTest(D.life, LOTS);
+    text = bad.length ? "STORE SELF-TEST FAILED\n" + bad.join("\n") : "STORE SELF-TEST PASSED";
+  } catch (e) { text = "STORE SELF-TEST ERROR " + e + "\n" + (e.stack || ""); }
+  document.getElementById("out").textContent = text;
+</script>

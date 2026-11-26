@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 44 of 57 | 9 of 57 | 9 of 57 |
-| Size of the plan (points) | 548 | 463 | 883 |
-| Size of the suggested plan | 150 | 423 | 851 |
+| Decided | 46 of 59 | 9 of 59 | 9 of 59 |
+| Size of the plan (points) | 576 | 491 | 951 |
+| Size of the suggested plan | 150 | 451 | 919 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -98,6 +98,8 @@
 |---|---|---|---|---|
 | **Money and the bank** `F-ECO-BANK` | 2 Full bank ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Full bank now" for the first slice. Later milestones not stated. |
 | **Quests from residents** `F-QUEST` | 2 Branching and repeatable ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Branching + repeatable" for the first slice. Later milestones not stated. |
+| **A career's story** `F-QUEST-STORY` | 1 One career ★ | undecided | undecided | Owner, 2026-11-25: after reading the Baker career in the Quest Atlas and answering "Approved", said "once the audit is clean, start implementing the quest in the unreal". Recorded as level 1 (one career) for the first slice, the build under way. Later milestones not stated. |
+| **Courting and marriage** `F-COURT` | 1 One courtship ★ | undecided | undecided | Owner, 2026-11-25: asked whether the Unreal build of the Baker career should include courting Mei and the wedding, answered "Include courting". Earlier the same day: "leave noor old and remove her from dating option" (Mei only). Later milestones not stated; the end game after the wedding was not asked for. |
 | **Character designer** `F-CHR-DESIGN` | 2 Full designer ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Full designer" for the first slice. Later milestones not stated. |
 | **Real estate market** `F-PROP-ESTATE` | 2 Living market ★ | undecided | undecided | Owner, 2026-11-22: asked to "build whole real estate economy" (every building residential, commercial, utility sellable, owned by a player, a resident or one of several real estate companies, smaller units inside, balanced), then, asked for first-slice levels: "focus on estate and have it at level 2". Later milestones not stated. Furniture (F-PROP-FURNISH) is being handled in another session; no pick recorded here. |
 | **Furniture that belongs to the unit** `F-PROP-FURNISH` | 2 Arrange and trade ★ | undecided | undecided | Owner, 2026-11-22: "furnish level 2 and carry level 1" (asked for first-slice levels, needed by F-FURN-STORE level 2). Storage taken out to F-PROP-STORAGE, to be built later. Later milestones not stated. |
@@ -327,6 +329,16 @@
 - 0 None: No quests; money comes from the job only. Size -.
 - 1 Starter quest lines: A few short quest lines given in conversation, a quest log, rewards through the ledger, progress saved. Size L.
 - 2 Branching and repeatable: Choices that branch a quest line to different endings, daily jobs offered by residents worked out from the day, reputation with each resident. Size L.
+
+**A career's story** (`F-QUEST-STORY`). A reason to keep a job: people who remember what you did, and a town that ends differently for it.
+- 0 None: Only the starter quest lines. Size -.
+- 1 One career: The Baker career: five story lines whose choices are remembered and change later lines, several people in a talk, scenes, lines that can be taken again; every ending reachable. Written and approved in the Quest Atlas. Size XL.
+- 2 Every career: A story for each career sketched in the Atlas (courier, grocer, gardener, curator, market clerk, miller), their people and choices crossing. Size XL.
+
+**Courting and marriage** (`F-COURT`). Somebody to come home to, and a reason to buy the home.
+- 0 None: Residents are friends at most. Size -.
+- 1 One courtship: Courting Mei: a lunch, a dinner and the question open as her regard rises; she says yes only to a home owned and money put by; a wedding on Market Square ends the line. Size L.
+- 2 A life after: After the wedding: a shared household, children, a fortune and what is left to them (the Atlas's end-game sketch); more than one resident can be courted. Size XL.
 
 **Character designer** (`F-CHR-DESIGN`). Players make who they are before they walk into town.
 - 0 Default character: Everyone starts as the same player character. Size -.

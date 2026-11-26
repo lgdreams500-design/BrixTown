@@ -11,6 +11,7 @@
 #include "BrixCrashActor.h"
 #include "BrixWeatherActor.h"
 #include "BrixLamps.h"
+#include "BrixLight.h"
 #include "BrixLifeActor.h"
 #include "BrixMall.h"
 #include "BrixMallActor.h"
@@ -289,6 +290,12 @@ void ABrixGameMode::StartPlay()
 	// -BrixDrive=<vehicle> (with -BrixHold=steer,throttle): a third of the way into a test shot's wait the player is put by
 	// that parked car's door, gets in as with E, and holds the keys from then on
 	int32 DriveK = -1;
+	FString SeatWords;   // -BrixSeat=<words>: a third into a test shot's wait the player sits at the first seat whose offer has them (FURN-022)
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixSeat="), SeatWords) && !SeatWords.IsEmpty())
+	{
+		FTimerHandle H;
+		GetWorldTimerManager().SetTimer(H, [this, SeatWords]() { if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0))) Me->TestSeat(SeatWords.Replace(TEXT("_"), TEXT(" "))); }, ShotDelaySeconds / 3, false);
+	}
 	int32 PlayK = -1;   // -BrixPlay=<n>: a third into a test shot's wait the player has a go at the n-th play place (WLD-041)
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixPlay="), PlayK) && PlayK >= 0)
 	{
@@ -663,7 +670,8 @@ void ABrixGameMode::UpdateSun()
 	P.Normalize();
 	const FVector ToSun(P.X, P.Z, P.Y);                                  // in Unreal: x east, y south, z up
 	UDirectionalLightComponent* Light = CastChecked<UDirectionalLightComponent>(SunActor->GetLightComponent());
-	SunActor->SetActorRotation((-ToSun).Rotation());
+	const FRotator SunTo = (-ToSun).Rotation();
+	if (!SunActor->GetActorRotation().Equals(SunTo, SunStepDegrees)) SunActor->SetActorRotation(SunTo);
 	const float Low = FMath::SmoothStep(0.05f, 0.5f, (float)P.Y);
 	Light->SetLightColor(FMath::Lerp(SunDawnColour, SunColour, Low));
 	const float Light01 = (float)S.Daylight(Season, Minute);
@@ -680,13 +688,18 @@ void ABrixGameMode::UpdateSun()
 	// under cloud, rain or snow the haze is lit by the grey sky, not the sun: its colour turns from the sun's to a cool grey by
 	// how much sun the weather stops (ADR-0016: a covered day is flat and cool)
 	const FLinearColor SunTint = FMath::Lerp(SunDawnColour, FLinearColor::White, Low);
-	if (HazeFog) HazeFog->SetFogInscatteringColor(HazeColour * Fill * FMath::Lerp(SunTint, OvercastHaze, bWx ? 1.f - SunLet : 0.f));
+	// (UBrixLight sets the haze's colour, as this by day and its own at dusk and night: only one of the two sets it in a frame)
+	if (HazeFog && !UBrixLight::SetsHaze()) HazeFog->SetFogInscatteringColor(HazeColour * Fill * FMath::Lerp(SunTint, OvercastHaze, bWx ? 1.f - SunLet : 0.f));
 	// little haze indoors (play.js: the fog is cut by 0.85 inside): the height fog is not shut out by walls
 	if (HazeFog)
 	{
 		const APlayerCameraManager* Cam = UGameplayStatics::GetPlayerCameraManager(this, 0);
 		const bool bIndoors = Cam && RoomAt(Cam->GetCameraLocation()) != INDEX_NONE;
-		HazeFog->SetFogDensity(HazeDensity * (bIndoors ? IndoorHaze : 1.f) * (bWx ? (float)Weather->Now.Haze : 1.f));
+		// eased: the haze going in one frame as the camera crossed a wall was a jump in the whole picture
+		HazeIndoors = FMath::FInterpConstantTo(HazeIndoors, bIndoors ? 1.f : 0.f, GetWorld()->GetDeltaSeconds(), 1.f / FMath::Max(IndoorHazeSeconds, .05f));
+		const bool bDesign = Life && Life->IsDesigningInside();   // the designer looks down into a storey cut open (BUILD-020): the haze must not hide it
+		const float Density = HazeDensity * FMath::Lerp(bDesign ? DesignHaze : 1.f, IndoorHaze, HazeIndoors) * (bWx ? (float)Weather->Now.Haze : 1.f);
+		if (!FMath::IsNearlyEqual(HazeFog->FogDensity, Density, Density * .002f)) HazeFog->SetFogDensity(Density);
 		if (People) People->CameraLot = Cam ? RoomAt(Cam->GetCameraLocation()) : INDEX_NONE;   // its residents inside are drawn (CITY-013)
 	}
 }

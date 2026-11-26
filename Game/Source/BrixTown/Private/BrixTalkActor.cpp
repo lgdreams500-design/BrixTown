@@ -151,7 +151,11 @@ TMap<FString, FString> ABrixTalk::Vars() const
 {
 	TMap<FString, FString> V;
 	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
-	if (!Day || !Day->Names.IsValidIndex(Res) || !Mode) return V;
+	if (!Day || !Day->Names.IsValidIndex(Res) || !Mode)
+	{
+		if (bScene) { V.Add(TEXT("player"), Dialogue.PlayerName); if (const ABrixLife* L = Life()) V.Append(L->TalkVars()); }   // a scene: nobody to name but the player
+		return V;
+	}
 	const double m = Mode->ClockMinute();
 	const FString RoleName = Day->Roles.IsValidIndex(Day->Role[Res]) ? Day->Roles[Day->Role[Res]] : FString();
 	const FString Act = Day->Acts.IsValidIndex(At.Act) ? Day->Acts[At.Act] : FString();
@@ -204,6 +208,28 @@ void ABrixTalk::Open()
 	Show(Conv.Start);
 }
 
+void ABrixTalk::OpenScene(const FBrixDialogue::FConversation& Scene)
+{
+	if (IsTalking() || !People || !Day || !Scene.Nodes.Contains(Scene.Start)) return;
+	Conv = Scene;
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	bScene = true;
+	Res = -1;
+	At = ABrixPeople::FCandidate();
+	ConvId = TEXT("scene");
+	Minute0 = Mode ? Mode->ClockMinute() : 0;
+	Face = Speech.Rest();
+	PlayerFace = Speech.Rest();
+	Quiet = Speech.Speak(TEXT(""));
+	bAnswering = false;
+	if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+	{
+		Me->BeginTalk(Me->GetActorLocation() + Me->GetActorForwardVector() * 150.f, CloseCamera);   // held where they stand, looking where they looked
+		Me->SetTalkFace(&PlayerFace);
+	}
+	Show(Conv.Start);
+}
+
 void ABrixTalk::Show(const FString& Nid)
 {
 	if (Nid.IsEmpty()) { Close(); return; }
@@ -222,10 +248,12 @@ void ABrixTalk::Show(const FString& Nid)
 	Line = Speech.Speak(Say);   // the resident says the line: mouth, face and nods follow it
 	T0 = Now(GetWorld());
 	K = 1;
+	const bool bTold = bScene || N->Who == TEXT("scene");   // a line nobody says is read, not spoken (QST-012)
+	if (bTold) Line = Speech.Speak(TEXT(""));
 	double Dur = -1;
-	SayAloud(Res, N->Say, Mood, Dur);   // spoken aloud (SND-018)
+	if (!bTold) SayAloud(Res, N->Say, Mood, Dur);   // spoken aloud (SND-018)
 	if (Dur > 0) K = Line.End / FMath::Max(.3, Dur);   // the mouth finishes with the voice (CHR-009)
-	else { MurmurLine = Line; MurmurWho = Res; MurmurAt = People->Held.Pos; ++Murmured; }   // no voice yet: wordless syllables, as the slice does
+	else if (!bTold) { MurmurLine = Line; MurmurWho = Res; MurmurAt = People->Held.Pos; ++Murmured; }   // no voice yet: wordless syllables, as the slice does
 	Refresh();
 }
 
@@ -264,7 +292,7 @@ void ABrixTalk::Choose(int32 n)
 void ABrixTalk::Close()
 {
 	if (!IsTalking()) return;
-	if (const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))
+	if (const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)); Mode && Res >= 0)   // a scene holds nobody up
 	{
 		const double Spent = FMath::Fmod(Mode->ClockMinute() - Minute0 + 1440.0, 1440.0), Dl = People->Late.FindRef(Res) + Spent;
 		if (Spent > 0 && Dl < 180) People->Late.Add(Res, Dl);   // held more than three hours: they just pick up the day where it is
@@ -275,6 +303,7 @@ void ABrixTalk::Close()
 	People->HeldFace = nullptr;
 	if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0))) Me->EndTalk();
 	Res = -1;
+	bScene = false;
 	bNextPending = false;
 	bAnswering = false;
 	Say.Reset();
@@ -312,6 +341,10 @@ void ABrixTalk::Tick(float Dt)
 			if (const ABrixCharacter* Ch = Cast<ABrixCharacter>(Me))   // the playground (WLD-041): a go here, or off again
 			{
 				if (Ch->IsPlaying()) { PromptText = TEXT("Get off"); return; }
+				if (Ch->IsSeated()) { PromptText = TEXT("Get up"); return; }
+				FString Seat;   // a seat or a bed to try, in the mall or the furniture outlet (FURN-022)
+				double SeatD = 0;
+				if (Ch->SeatOffer(Seat, SeatD) && (C.Resident < 0 || SeatD <= C.D)) PromptText = Seat;
 				double PD = 0;
 				const int32 U = People->PlayTarget(Me->GetActorLocation(), PD);
 				if (U != INDEX_NONE && (C.Resident < 0 || PD <= C.D) && (CarK < 0 || PD <= D)) PromptText = People->PlayArea().PlayerUses[U].Label;

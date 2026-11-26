@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "note": "The owner's level picks, stated by the owner in chat and recorded by agents (ADR-0008). A feature or milestone missing here is undecided. -1 means out of the game. After editing, run Tools/backlog.ps1.",
-  "updated": "2026-11-24",
+  "updated": "2026-11-25",
   "choices": {
     "F-HOME-FURNISH": {
       "slice": 3,
@@ -196,6 +196,14 @@
     "F-UI-SHOP": {
       "slice": 1,
       "note": "Owner, 2026-11-24: asked \"Record F-UI-SHOP at level 1 (objects in a grid) for the first slice?\" after the buy menus were built to the owner's choice of look test 33, \"B, and D when narrow\" (ADR-0044), answered \"Yes, level 1\". Later milestones not stated."
+    },
+    "F-QUEST-STORY": {
+      "slice": 1,
+      "note": "Owner, 2026-11-25: after reading the Baker career in the Quest Atlas and answering \"Approved\", said \"once the audit is clean, start implementing the quest in the unreal\". Recorded as level 1 (one career) for the first slice, the build under way. Later milestones not stated."
+    },
+    "F-COURT": {
+      "slice": 1,
+      "note": "Owner, 2026-11-25: asked whether the Unreal build of the Baker career should include courting Mei and the wedding, answered \"Include courting\". Earlier the same day: \"leave noor old and remove her from dating option\" (Mei only). Later milestones not stated; the end game after the wedding was not asked for."
     }
   }
 }

@@ -397,6 +397,7 @@
     "outlet"
    ],
    "staff": 10,
+   "vans": 3,
    "storeys": [
     "main"
    ],

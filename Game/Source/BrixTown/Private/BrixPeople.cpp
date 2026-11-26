@@ -117,6 +117,8 @@ ABrixPeople::ABrixPeople()
 	Figures = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("Figures"));
 	Figures->SetupAttachment(RootComponent);
 	Figures->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Figures->LightingChannels.bChannel1 = true;
+	Figures->SetCastShadow(false);   // one mesh of everyone 35 m and further, made again each frame: its shadow kept the shadows under all of them from being kept
 	BodyMaterial = People.Object ? People.Object : Greybox.Object;
 	static ConstructorHelpers::FObjectFinder<UMaterialInterface> Facets(TEXT("/Game/Greybox/M_Facets.M_Facets"));   // Tools/unreal/make_facets_material.py
 	FacetsMat = Facets.Object ? Facets.Object : Greybox.Object;
@@ -224,6 +226,7 @@ void ABrixPeople::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, TShar
 		M->SetupAttachment(RootComponent);
 		M->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		M->bUseAsyncCooking = true;
+		M->LightingChannels.bChannel1 = true;   // a hall's light for people (ABrixMall::PeopleLight)
 		M->SetVisibility(false);
 		M->RegisterComponent();
 		AddInstanceComponent(M);
