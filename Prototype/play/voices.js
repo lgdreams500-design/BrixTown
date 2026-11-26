@@ -3,7 +3,7 @@
 // cut at the line's blanks, for every voice that can say it; audio/voices/index.js lists the pieces (window.VOICES).
 // Voices.speak(who, template, vars, mood) looks up the pieces of a line for that speaker (a resident's index, or
 // "player"), plays them one after another and says how long it will take, so the mouth can finish with the voice.
-// The index names each resident's voice by their id (ADR-0056), so it still fits after the town's list has changed; a
+// The index names each resident's voice by their id (ADR-0060), so it still fits after the town's list has changed; a
 // resident who is not in it (a role with no voices yet) has no voice and their lines stay wordless syllables.
 // A blank with no piece (a typed player name other than the default) is a short pause; the caption still shows it.
 // Loaded before conversations.js and play.js; plays through <audio> so it also works when index.html is opened as a file.

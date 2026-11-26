@@ -1,4 +1,4 @@
-"""Voice every dialogue line for every voice that can say it (ADR-0019, ADR-0056, SND-018).
+"""Voice every dialogue line for every voice that can say it (ADR-0019, ADR-0060, SND-018).
 
     python make_dialogue_voices.py MODEL_DIR      voice what is new, remove what no line needs, write the index
     python make_dialogue_voices.py --plan         only count what would be made
@@ -7,7 +7,9 @@
 Reads World/rules/voices.json (who speaks in which voice), dialogue.json and quests.json (the lines), the residents and
 the lots, and writes Prototype/play/audio/voices/<voice>/<id>.ogg with an index, audio/voices/index.js, that the slice
 reads. A resident in the 'people' list speaks in the voice given there; anyone else in one from their role's pool; a
-resident whose role has no pool is not voiced. A line is cut at its blanks ({greeting}, {name}, ...): the fixed pieces
+resident whose role has no pool is not voiced. A person whose entry is { "cast": <id> } is a named character voiced by
+Tools/voice/cast/make_cast_voices.py (another model, another recipe): this script makes nothing for them and keeps
+their clips. A line is cut at its blanks ({greeting}, {name}, ...): the fixed pieces
 are voiced once per voice and mood, and each blank is voiced for every value it can take for that speaker. Pieces
 already made are kept, so a run after a small change only voices what is new. --plan and --index need no voice model;
 voicing needs kokoro-onnx and soundfile, and MODEL_DIR holds kokoro-v1.0.int8.onnx and voices-v1.0.bin (not in the
@@ -51,7 +53,10 @@ def pieces(template):
 
 def cfg_id(o):
     """The name of a voice as it is set up: its folder of pieces and its key in the index. Two voices mixed evenly
-    (ADR-0056) are named in a fixed order, so either way round is the same voice."""
+    (ADR-0060) are named in a fixed order, so either way round is the same voice. A cast voice (a named character
+    whose lines are made by Tools/voice/cast/, not by this script) is "cast_<their id in the cast>"."""
+    if o.get("cast"):
+        return "cast_" + o["cast"]
     s = o["voice"] if isinstance(o["voice"], str) else "-".join(sorted(o["voice"]))
     if o.get("shift", 1) != 1:
         s += "_p%d" % round(o["shift"] * 100)
@@ -82,7 +87,7 @@ def world():
 
 
 def speakers(V, res):
-    """The voice each resident speaks in: their own if they are in the people list (ADR-0056), else one from their
+    """The voice each resident speaks in: their own if they are in the people list (ADR-0060), else one from their
     role's pool, picked by a fixed hash of their id. None if their role has no pool: they are not voiced."""
     people, out = V.get("people", {}), []
     for r in res:
@@ -131,7 +136,7 @@ def plan(V=None):
         ps = pieces(template)
         for i in speakers_i:
             o, r = who[i], res[i]
-            if o is None:                               # their role has no pool: not voiced
+            if o is None or o.get("cast"):              # their role has no pool: not voiced; a cast voice: made by Tools/voice/cast/
                 continue
             vals = {"greeting": GREETINGS, "season": seasons, "weekday": DAYS, "doing": doing, "name": [r["name"]],
                     "role": [D["role_words"].get(r["role"], r["role"])], "place": [lots.get(r.get("work")) or city["name"], city["name"]],
@@ -152,7 +157,7 @@ def plan(V=None):
     def per_voice(idx):
         seen, out = set(), []
         for i in idx:
-            c = who[i] and cfg_id(who[i])
+            c = who[i] and not who[i].get("cast") and cfg_id(who[i])
             if c and c not in seen:
                 seen.add(c); out.append(i)
         return out
@@ -202,7 +207,7 @@ def plan(V=None):
 
 
 def index_of(V, res, who, clips, jobs=()):
-    """The index the slice reads: each voiced resident's voice by their id (ADR-0056; not by their place in the list,
+    """The index the slice reads: each voiced resident's voice by their id (ADR-0060; not by their place in the list,
     which moves when the town is dealt again), the player's voices, and every piece made. jobs: the pieces planned,
     so the note can say how many are still to make."""
     cfgs = sorted({cfg_id(o) for o in who if o} | {cfg_id(o) for o in V["player"]["voices"].values()})
@@ -248,7 +253,8 @@ def main(*args):
     from kokoro_onnx import Kokoro
     from make_voice_samples import voice
     k = Kokoro(os.path.join(model_dir, "kokoro-v1.0.int8.onnx"), os.path.join(model_dir, "voices-v1.0.bin"))
-    clips = {kk: v for kk, v in old.items() if tuple(kk.split("|", 2)) in jobs}
+    cast = {cfg_id(o) for o in who if o and o.get("cast")}   # the cast's clips are not this script's to make or to remove
+    clips = {kk: v for kk, v in old.items() if tuple(kk.split("|", 2)) in jobs or kk.split("|", 1)[0] in cast}
     t0 = time.time()
     for n, ((c, m, t), o) in enumerate(todo):
         s, rate = voice(k, t, o, V["moods"][m])

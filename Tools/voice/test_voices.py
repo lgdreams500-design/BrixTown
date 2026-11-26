@@ -1,5 +1,5 @@
-"""Checks on spoken dialogue (SND-018, ADR-0019, ADR-0056): the voice cast, the owner's picks, a named resident's own
-voice, the index by resident id, and that every line can be spoken.
+"""Checks on spoken dialogue (SND-018, ADR-0019, ADR-0060): the voice cast, the owner's picks, a named resident's own
+voice, the named characters' recipe and profiles, the index by resident id, and that every line can be spoken.
 
     python -m unittest test_voices        (from Tools/voice; needs no voice model)
 """
@@ -69,14 +69,16 @@ class TheVoices(unittest.TestCase):
         _, _, res, _ = M.world()
         self.assertEqual(M.people_problems(V, res), [])      # the list as it is: residents, by id and name
         for o in V["people"].values():
-            self.sound(o, mixed=True)
+            if not o.get("cast"):                            # a cast voice is checked in the_cast_is_voiced_by_its_recipe
+                self.sound(o, mixed=True)
         # tried on two residents with voices of this test's own (the list itself is only the owner's picks)
         one = next(r for r in res if r["role"] == "cafe")
         two = next(r for r in res if r["role"] == "creative")   # a role with no pool: a named resident there is voiced all the same
         W = copy.deepcopy(V)
-        W["people"] = {one["id"]: {"name": one["name"], "voice": "bf_alice", "lang": "en-gb", "shift": 0.95},
-                       two["id"]: {"name": two["name"], "voice": ["bm_george", "af_bella"], "lang": "en-gb"}}
-        for o in W["people"].values():
+        mine = {one["id"]: {"name": one["name"], "voice": "bf_alice", "lang": "en-gb", "shift": 0.95},
+                two["id"]: {"name": two["name"], "voice": ["bm_george", "af_bella"], "lang": "en-gb"}}
+        W["people"] = dict(V["people"], **mine)
+        for o in mine.values():
             self.sound(o, mixed=True)
         was, now = M.speakers(V, res), M.speakers(W, res)
         at = {r["id"]: i for i, r in enumerate(res)}
@@ -103,6 +105,46 @@ class TheVoices(unittest.TestCase):
         W["people"] = {one["id"]: {"name": "Nobody", "voice": "bf_alice", "lang": "en-gb"}, "r_none": {"name": "X", "voice": "bf_alice", "lang": "en-gb"}}
         self.assertEqual(len(M.people_problems(W, res)), 2)
         self.assertRaises(SystemExit, M.plan, W)
+
+    def test_SND_018_the_cast_is_voiced_by_its_recipe(self):
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "cast"))
+        import make_cast_voices as K
+        C = K.cast()
+        story = M.read(RULES, "story_cast.json")["cast"]
+        _, _, res, _ = M.world()
+        names = {r["id"]: r["name"] for r in res}
+        for p in C["people"]:                                # every profile says who is speaking before any voice is made
+            self.assertEqual(K.profile_problems(p), [], p["id"])
+            self.assertEqual(p["resident"], story[p["id"]], p["id"])
+            self.assertEqual(names[p["resident"]], p["name"], p["id"])
+            self.assertTrue(os.path.exists(os.path.join(K.HERE, p["card"])), p["id"] + ": the approved voice card is kept")
+            self.assertTrue(p.get("card_approved"), p["id"] + ": only the owner approves a card")
+        self.assertEqual(set(C["recipe"]["mood_text"]) | {"neutral"}, set(V["moods"]))     # a card for every mood a line can have
+        self.assertEqual(K.profile_problems(dict(C["people"][0], voice_is=None)), ["voice_is must be woman or man"])
+        self.assertTrue(K.profile_problems(dict(C["people"][0], description="A baker with a low voice.")))
+        # a resident given a cast voice: this script makes nothing for them and keeps what the cast tool made
+        cast = {rid: o["cast"] for rid, o in V["people"].items() if o.get("cast")}
+        self.assertIn("r3419", cast)                         # Oda, the first whose whole part the owner approved (2026-11-26)
+        who = dict(zip([r["id"] for r in res], M.speakers(V, res)))
+        _, _, _, jobs = M.plan()
+        for rid, pid in cast.items():
+            self.assertEqual(M.cfg_id(who[rid]), "cast_" + pid)
+            self.assertFalse([k for k in jobs if k[0] == "cast_" + pid])
+            self.assertEqual(K.person(C, pid)["resident"], rid)
+        if not os.path.exists(INDEX):
+            self.skipTest("no voices made yet")
+        index = M.read(INDEX)
+        self.assertEqual(index["configs"][index["residents"]["r3419"]], "cast_oda")
+        said = K.lines("oda")
+        self.assertEqual(len(said), 17)
+        for mood, piece in K.jobs("oda"):                    # every line Oda speaks in the story has its clip, as the game looks it up
+            clip = index["clips"].get(K.key("oda", mood, piece))
+            self.assertTrue(clip and os.path.exists(os.path.join(M.OUT, clip[0])), piece)
+            self.assertGreater(clip[1], 0.5, piece)
+        for pid in ("oda",):                                 # the cards her lines were spoken from are kept, so her voice cannot move
+            for mood in {m for _, m, _ in said}:
+                self.assertTrue(os.path.exists(K.card_path(pid, mood)), mood)
 
     def test_SND_018_the_index_names_residents_by_their_id(self):
         _, _, res, _ = M.world()

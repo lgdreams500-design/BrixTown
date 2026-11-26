@@ -103,7 +103,7 @@ def tone(s, rate, tilt, edge, breath):
 
 
 def style(k, o):
-    """What the model is asked to speak in: one of its voices by name, or two of them mixed evenly (ADR-0056)."""
+    """What the model is asked to speak in: one of its voices by name, or two of them mixed evenly (ADR-0060)."""
     v = o["voice"]
     return v if isinstance(v, str) else np.mean([k.get_voice_style(n) for n in v], axis=0).astype(np.float32)
 
