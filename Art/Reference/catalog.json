@@ -641,7 +641,6 @@
   {
    "id": "IndoorHallway",
    "category": "Indoor",
-   "status": "proposed",
    "title": "A home's hallway by the stairs at every hour",
    "files": [
     "Indoor/IndoorHallway_Morning.jpg",
@@ -652,8 +651,8 @@
     "Indoor/IndoorHallway_NightNewMoon.jpg"
    ],
    "locks": "A home's hallway (the owner, 2026-11-26: \"corridor or near stairs area where there are no direct windows but indirect light coming from room\"): a corridor about 1.7 m wide with no window of its own, the stair rising at its far end under a closed stairwell, the hall table, mirror, coat stand and rug along its left wall. By day its only light is the day coming through the open door of the room beside it, whose window faces the sun; at dusk and at night its pendant and the lamp on the hall table, the doorway dark; the full moon a dim, cool blue light from that doorway (the owner, 2026-11-26: as dim as the new moon was, and cooler), a new moon darker still, only the doorway faintly showing. In the world's light, lamps of their kinds (World/rules/lights.json).",
-   "approved": "proposed 2026-11-26, for the owner to review",
-   "decision": "the owner, 2026-11-26: one home room and the hallway stand for the home's rooms (\"just do one room, hall way, shop and cafe\"); in the world's light; ADR-0061",
+   "approved": "2026-11-26, the owner",
+   "decision": "the owner, 2026-11-26: one home room and the hallway stand for the home's rooms (\"just do one room, hall way, shop and cafe\"); in the world's light; ADR-0061; the owner, 2026-11-26: \"Approve it\"",
    "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=hallway, corridor()) with the pieces of Tools/blender/furniture_kit_18.py",
    "models": [
     "World/rules/furnishing.json (the pieces)",
