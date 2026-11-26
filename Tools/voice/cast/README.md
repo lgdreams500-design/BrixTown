@@ -63,11 +63,14 @@ hours, the whole Baker cast about six.
 
 ## Where the cast stands
 All thirteen people of the Baker career have a profile and an approved voice card. Voiced and in the game: **Oda**
-(17 lines, approved by the owner on 2026-11-26).
+(17 lines, approved by the owner on 2026-11-26). Voiced by the recipe on 2026-11-26, kept in the repository, **not heard
+by the owner and not in the game** (no `cast` in `World/rules/voices.json`): Abe (1 line), Len (4), Olu (7), Eli (9) and
+Suvi (10), with their mood cards. The run was then stopped at the owner's word; Jai's part was left at 7 of 19 clips,
+which are not committed.
 
 ## Not yet
-- The other twelve parts are not voiced: Noor 111 lines, Mei 86, Tam 38, Vera 23, Pip 22, Jai 19, Suvi 10, Eli 9,
-  Olu 7, Len 4, Abe 1 (Hari speaks only in the starter quests). Their mood cards are made in that run.
+- Not voiced: Noor 111 lines, Mei 86, Tam 38, Vera 23, Pip 22, Jai 19 (Hari speaks only in the starter quests). Abe, Len,
+  Olu, Eli and Suvi are voiced but wait for the owner's ear (a page each, `--page`) before they go into the game.
 - The 25 lines nobody says (`who: scene`) have no narrator's voice.
 - A resident with a cast voice speaks only what has been voiced for them: Oda's everyday talk as a passer-by (the
   conversations in `dialogue.json`, which her role's Kokoro voice used to say in part) is wordless until it is voiced
