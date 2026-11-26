@@ -1,0 +1,13 @@
+22:48:54 Blender 5.3.0, place outlet
+22:48:54   the outlet's hall at the game's size: 66 x 46 x 8.5 m, 11 trusses
+22:48:54   the roof: a band of 11 glazed skylights 24 m wide down the middle
+22:48:54 FurnitureOutlet: sun 7.0 at bearing -41 deg, sky 0.45; 30 lamps, 0 fires, 3 glowing materials, 0 haze
+22:48:56   FurnitureOutlet_Morning: the eye at +0.60 stops for a mean of 100
+22:50:05 FurnitureOutlet_Morning.jpg rendered in 68.8s
+22:50:07   FurnitureOutlet_Midday: the eye at -0.26 stops for a mean of 100
+22:51:07 FurnitureOutlet_Midday.jpg rendered in 60.3s
+22:51:09   FurnitureOutlet_Dusk: the eye at -0.35 stops for a mean of 85
+22:52:01 FurnitureOutlet_Dusk.jpg rendered in 51.8s
+22:52:03   FurnitureOutlet_NightLamps: the eye at -0.17 stops for a mean of 70
+22:53:00 FurnitureOutlet_NightLamps.jpg rendered in 56.8s
+22:53:00 DONE

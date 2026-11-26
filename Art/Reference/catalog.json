@@ -717,6 +717,32 @@
     "Dusk and the lamp-lit night look nearly alike: once the sun is down the pendants carry it.",
     "The bank and the library are 38 by 16 m, three times this floor; this reference is the ordinary shop's size."
    ]
+  },
+  {
+   "id": "ShopsBigHall",
+   "category": "Shops",
+   "title": "A big hall (the furniture outlet) at every hour",
+   "files": [
+    "Shops/ShopsBigHall_Morning.jpg",
+    "Shops/ShopsBigHall_Midday.jpg",
+    "Shops/ShopsBigHall_Dusk.jpg",
+    "Shops/ShopsBigHall_NightLamps.jpg"
+   ],
+   "locks": "The furniture outlet's hall at the game's size (its lot in World/city_01/blocks/b_14_8.json: 66 x 46 m, the hall 8.5 m high), the approved showroom's design kept (ShopsFurnitureOutlet: room sets of each line along the painted walking route, stock racks at the back, hanging lanterns); its roof as the game's (Prototype/play/outlet.js): solid over the outer 11 m each side, and down the middle a band of skylights 24 m wide between trusses about 6 m apart, glazed so the day comes in and rain and snow do not (the owner, 2026-11-26). In the world's light: by day the sun and sky through the skylights, the sun's stripes on the floor at midday, the lanterns low; at dusk and at night the lanterns full, a warm white of their own kind (hall_lantern, World/rules/lights.json). No moonlit nights, no weather. It stands for big halls.",
+   "approved": "2026-11-26, the owner",
+   "decision": "the owner, 2026-11-26: \"yes, outlet for big halls\"; \"should we cover the ceiling with a glass so light comes but not rain and snow?\"; \"Approve it\"; ADR-0061, ADR-0066",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=outlet; game_size_showroom(), glazed_roof()) on the showroom of Tools/blender/furniture_kit_17.py",
+   "models": [
+    "World/city_01/blocks/b_14_8.json (b_14_8_l0)",
+    "Prototype/play/outlet.js",
+    "Game/Source/BrixTown/Private/BrixMallActor.cpp (the outlet)"
+   ],
+   "rules": "docs/art/INTERIOR_STYLE.md 4",
+   "was": [],
+   "issues": [
+    "The camera stands under the solid outer roof, so the skylights show only as slits overhead though their light reaches the floor.",
+    "Dusk and the lamp-lit night look nearly alike: once the sun is down the lanterns carry it."
+   ]
   }
  ],
  "gaps": [

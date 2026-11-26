@@ -94,7 +94,8 @@ FIRE_COLOUR = (1.0, 0.24, 0.06)                          # every fire, in every 
                                                           # same color in all references and more red"
 FIRE_OUT_HOURS = {"rooms": ("NightFullMoon", "NightNewMoon")}   # the owner, 2026-11-26: "we need reference of moon lights when the
                                                           # fire place is turned off": these again with the fire out too
-SKIP_HOURS = {"bakery": ("NightFullMoon", "NightNewMoon"), "shop": ("NightFullMoon", "NightNewMoon")}   # a shop as the bakery   # the owner, 2026-11-26: "for bakery, don't need moon settings"
+SKIP_HOURS = {"bakery": ("NightFullMoon", "NightNewMoon"), "shop": ("NightFullMoon", "NightNewMoon"),
+              "outlet": ("NightFullMoon", "NightNewMoon")}       # a hall as the shops   # a shop as the bakery   # the owner, 2026-11-26: "for bakery, don't need moon settings"
 PLACE_EYE = {"hallway": {"NightFullMoon": 12, "NightNewMoon": 2.5},
              "rooms": {"NightFullMoonFireOut": 12, "NightNewMoonFireOut": 2.5}}   # the home room's fire-out nights as dim (the owner)   # and the new moon darker still ("should not have so much light")
 # the moon: high (a full moon in summer stands about 68 degrees up here), turned from the sun's bearing so it falls along
@@ -121,6 +122,8 @@ if "room_shell" in globals():
 
     def room_shell(n, ox, oy, w=6.4, d=4.4, h=3.0, ceiling=True, window=True, front=0.0):
         x0, x1, y0, y1 = _room_shell(n, ox, oy, w, d, h, ceiling, window, front)
+        if not ceiling:                                  # a showroom's set: three walls, open to the walking route
+            return x0, x1, y0, y1
         box(n + "_Front", x0 - 0.3, x1 + 0.45, y0 - 0.3, y0, 0, h, M["plaster"], bevel=0)   # behind the camera
         if PLACE in ("rooms", "bakery", "shop"):          # the light that wall throws back onto the people (the owner, 2026-11-26:
             bc = bpy.data.lights.new("BounceCard", 'AREA')  # "the wall opposite to the character is not reflecting light back")
@@ -424,7 +427,7 @@ LIGHTS = json.load(open("C:/Projects/Wasted/World/rules/lights.json", encoding="
 def lamp_kind(name):
     """The kind a lamp stands for, by its name (FLamp_Light.003 is a floor lamp), as Tools/citysim/lights.py has it."""
     for n, k in LIGHTS["blender_lights"].items():
-        if name == n or name.startswith(n + "."):
+        if name == n or name.startswith(n + ".") or (n.endswith("*") and name.startswith(n[:-1])):
             return LIGHTS["kinds"][k]
     return None                          # how far towards grey: the boards as the town's weathered wood
 
@@ -484,6 +487,73 @@ def corridor(Ls):
 
 
 AWNING_IN = ("Morning",)                                  # the shop's awning rolled up while the sun is low (the owner, 2026-11-26)
+
+
+def game_size_showroom():
+    """The furniture outlet's hall at the game's size (the owner, 2026-11-26: references at the game's own size): its lot
+    in World/city_01/blocks/b_14_8.json is 66 x 46 m with a hall 8.5 m high and a skylight 2.2 m wide; the approved
+    showroom (Art/Reference/Shops/ShopsFurnitureOutlet.png, furniture_kit_17.py showroom_scene) was drawn as a corner
+    34 x 22 x 8 m with a 4.5 m skylight. Its design is kept: the same function, its sizes taken from the lot, its
+    trusses at the same spacing."""
+    lot = None
+    blk = json.load(open("C:/Projects/Wasted/World/city_01/blocks/b_14_8.json", encoding="utf-8"))
+    lot = next(l for l in blk["lots"] if l.get("kind") == "furniture")
+    x0, y0, x1, y1 = lot["rect"]
+    W, D, H, sky = x1 - x0, y1 - y0, lot["hall_height"], lot["skylight"]
+    src = open("C:/Projects/Wasted/Tools/blender/furniture_kit_17.py", encoding="utf-8").read()
+    i0 = src.index("def showroom_scene(Ls):")
+    i1 = src.index(chr(10) + "def ", i0 + 10)
+    f = src[i0:i1]
+    nt = round((W - 4) / 6.0) + 1                           # trusses about every 6 m, as the game's (outlet.js)
+    for a, b in (("W, D, H = 34.0, 22.0, 8.0", "W, D, H = %.1f, %.1f, %.1f" % (W, D, H)),
+                 ("for i in range(7):", "for i in range(%d):" % nt),
+                 ("x = -W / 2 + 2 + i * (W - 4) / 6", "x = -W / 2 + 2 + i * (W - 4) / %d" % (nt - 1)),
+                 ("for j in range(6):", "for j in range(%d):" % (nt - 1)),
+                 ("x0 = -W / 2 + 2.3 + j * (W - 4) / 6", "x0 = -W / 2 + 2.3 + j * (W - 4) / %d" % (nt - 1)),
+                 ("x1 = x0 + (W - 4) / 6 - 0.6", "x1 = x0 + (W - 4) / %d - 0.6" % (nt - 1))):
+        assert f.count(a) == 1, a
+        f = f.replace(a, b)
+    exec(compile(f, "showroom_scene (game size)", "exec"), globals())
+    globals()["HALL"] = (W, D, H, nt)
+    hlog("  the outlet's hall at the game's size: %.0f x %.0f x %.1f m, %d trusses" % (W, D, H, nt))
+
+
+def glazed_roof():
+    """The outlet's roof as the game's (Prototype/play/outlet.js): solid over the hall's edges, and down its middle a band of
+    skylights (from 11 m in from each long wall) between the trusses, 0.9 m clear of each, glazed (the owner, 2026-11-26:
+    "cover the ceiling with a glass so light comes but not rain and snow"). The glass lets the sun's light through."""
+    W, D, H, nt = HALL
+    for ob in [o for o in bpy.data.objects if o.name.startswith(("Hall_RoofA", "Hall_RoofB", "Hall_RoofEnd"))]:
+        bpy.data.objects.remove(ob, do_unlink=True)
+    rm, sd = M["plaster"], M["stone_dark"]
+    b0, b1 = -D / 2 + 11.0, D / 2 - 11.0
+    box("Hall_RoofN", -W / 2 - 0.5, W / 2 + 0.5, -D / 2 - 0.5, b0, H, H + 0.3, rm, bevel=0)
+    box("Hall_RoofS", -W / 2 - 0.5, W / 2 + 0.5, b1, D / 2 + 0.5, H, H + 0.3, rm, bevel=0)
+    tx = [-W / 2 + 2 + i * (W - 4) / (nt - 1) for i in range(nt)]
+    edges = [-W / 2 - 0.5] + [x for t in tx for x in (t - 0.9, t + 0.9)] + [W / 2 + 0.5]
+    glass = bpy.data.materials.get("M_RoofGlass")
+    if glass is None:
+        glass = bpy.data.materials.new("M_RoofGlass")
+        glass.use_nodes = True
+        nt_ = glass.node_tree
+        b = next(n for n in nt_.nodes if n.type == 'BSDF_PRINCIPLED')
+        b.inputs["Base Color"].default_value = (0.85, 0.92, 0.95, 1.0)
+        b.inputs["Roughness"].default_value = 0.05
+        b.inputs["Alpha"].default_value = 0.12                  # clear: a faint sheen, the sky seen through it
+        setp(glass, "blend_method", 'BLEND')
+    k = 0
+    for i in range(0, len(edges) - 1, 2):                        # solid strips over the trusses and the ends
+        box("Hall_RoofStrip%d" % i, edges[i], edges[i + 1], b0, b1, H, H + 0.3, rm, bevel=0)
+    for i in range(1, len(edges) - 1, 2):                        # the skylights between them, glazed, on stone curbs
+        a, c = edges[i], edges[i + 1]
+        g = box("Hall_Sky%d" % k, a, c, b0, b1, H + 0.42, H + 0.45, glass, bevel=0)
+        for kk in ("visible_shadow",):
+            for o in [o for o in bpy.data.objects if o.name.startswith("Hall_Sky%d" % k)]:
+                setp(o, kk, False)                             # the sun's light passes the glass
+        for (p0, p1, q0, q1) in ((a, c, b0 - 0.15, b0), (a, c, b1, b1 + 0.15), (a - 0.15, a, b0, b1), (c, c + 0.15, b0, b1)):
+            box("Hall_Curb%d_%d" % (k, int(p0 * 10)), p0, p1, q0, q1, H + 0.3, H + 0.55, sd, bevel=0)
+        k += 1
+    hlog("  the roof: a band of %d glazed skylights %.0f m wide down the middle" % (k, b1 - b0))
 
 
 def shopfloor(Ls):
@@ -994,8 +1064,13 @@ def main_hours():
         each_hour(scene, camera(scene, "Cam_bakery", loc, tgt, lens), 1.15, "Bakery", dict(day_lamps=0.06))
     elif PLACE == "outlet":
         scene = fresh("Furn_showroom")
+        game_size_showroom()                         # the approved showroom at the game's outlet size
         (nm, loc, tgt, lens) = showroom_scene(lines())[0]
-        each_hour(scene, camera(scene, "Cam_showroom", loc, tgt, lens), 0.5, "FurnitureOutlet")
+        glazed_roof()
+        bounce_more(ROOM_BOUNCE)
+        # by day the skylights' daylight leads, the lanterns low (the owner, 2026-11-26: "none of the lights look right":
+        # at full by day the 34 lanterns made day look like night)
+        each_hour(scene, camera(scene, "Cam_showroom", loc, tgt, lens), 0.5, "FurnitureOutlet", dict(day_lamps=0.15))
     hlog("DONE")
 
 
