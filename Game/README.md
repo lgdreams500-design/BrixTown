@@ -503,8 +503,9 @@ id itself, so until then `people_values.py` must be run again whenever the resid
 A story line's words alone are voiced and mouthed: what is seen (its direction) and the name of somebody else who says it are
 written in the box before the words (`FBrixDialogue::Shown`), and somebody else's line is in their own voice (QST-012).
 Oda (r3419) speaks her seventeen story lines in her own voice (`cast_oda`, made by `Tools/voice/cast/`, ADR-0060;
-`SND018_the_cast_speak_their_story_lines`; eleven of them seen in the log of two staged talks on 2026-11-26, sound off). Not yet:
-the other twelve of the Baker cast, the lines nobody says, and Oda's everyday talk, which is murmured until it is voiced.
+`SND018_the_cast_speak_their_story_lines`; eleven of them seen in the log of two staged talks on 2026-11-26, sound off).
+Noor (r0262) speaks 32 of her 111 lines in a Maya1 voice (`cast_noor`, ADR-0063); the rest are murmured. Not yet:
+the rest of Noor's part, the other eleven of the Baker cast, the lines nobody says, and Oda's everyday talk, which is murmured until it is voiced.
 To see one without anyone at the keys: `-BrixTalk=<resident index>` (and `-BrixAnswers=1,2`, a second and a half apart or
 `-BrixAnswerGap=<s>`) with `-BrixShot=`.
 
