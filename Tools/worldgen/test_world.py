@@ -212,6 +212,17 @@ class TheDressing(unittest.TestCase):
             self.assertGreaterEqual(self.count(k), least, k)
         self.assertEqual(self.count("timetable"), sum(p["kind"] == "shelter" for b in W["blocks"] for p in b["props"]))
 
+    def test_WLD_072_every_pavement_is_lit(self):
+        """WLD-072: every pavement of the street grid is within dressing.json's street_lamps reach_m of a street lamp, and
+        no added lamp stands in a doorway; a pavement whose lamps are taken away is caught."""
+        self.assertGreater(len(world.lit_pavements(W)), 3000)
+        self.assertEqual(world.lamp_problems(W), [])
+        import copy
+        w = copy.deepcopy(W)
+        b = next(b for b in w["blocks"] if b["id"] == "b_12_5")
+        b["props"] = [p for p in b["props"] if p["kind"] != "lamp"]
+        self.assertTrue(any(x.startswith("b_12_5:") and "from a street lamp" in x for x in world.lamp_problems(w)))
+
     def test_WLD_032_children_play_after_school(self):
         kids = [r for r in W["residents"] if r["role"] == "child"]
         B = world._read(world.WORLD, "rules", "balance.json")["targets"]          # since BAL-004: the share the balance asks for
