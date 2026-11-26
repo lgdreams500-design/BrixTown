@@ -618,11 +618,13 @@
     "Indoor/IndoorHomeRoom_Dusk.jpg",
     "Indoor/IndoorHomeRoom_NightLamps.jpg",
     "Indoor/IndoorHomeRoom_NightFullMoon.jpg",
-    "Indoor/IndoorHomeRoom_NightNewMoon.jpg"
+    "Indoor/IndoorHomeRoom_NightNewMoon.jpg",
+    "Indoor/IndoorHomeRoom_NightFullMoonFireOut.jpg",
+    "Indoor/IndoorHomeRoom_NightNewMoonFireOut.jpg"
    ],
-   "locks": "The living of furniture_kit_18, closed on four sides with one window. In the world's light (the owner, 2026-11-26: \"use the same color etc from world lighting\"): by day only the sun and sky of the hour, through the window, with the sunlit street outside throwing its light in; lamps and the fire out by day; the boards a greyer wood, so the bounced light is not orange; at night the lamps a warm white (until the kinds of light, FURN-066), the fire lit, the full moon a cool patch through the window, a new moon only the window's starlight. No weather settings indoors (the owner). The wall facing the people throws light back onto them (the owner, 2026-11-26: \"the wall opposite to the character is not reflecting light back\"): by day a little of the day through the window, at night a share of the lamps' light in their colour.",
+   "locks": "The living of furniture_kit_18, closed on four sides with one window. In the world's light (the owner, 2026-11-26: \"use the same color etc from world lighting\"): by day only the sun and sky of the hour, through the window, with the sunlit street outside throwing its light in; lamps and the fire out by day; the boards a greyer wood, so the bounced light is not orange; at night the lamps a warm white (until the kinds of light, FURN-066), the fire lit, the full moon a cool patch through the window, a new moon only the window's starlight. No weather settings indoors (the owner). The wall facing the people throws light back onto them (the owner, 2026-11-26: \"the wall opposite to the character is not reflecting light back\"): by day a little of the day through the window, at night a share of the lamps' light in their colour. Every fire, in every reference, one red (the owner, 2026-11-26: \"oven flame should be same color in all references and more red\"): its flames glow red and catch no light; with no other light in a room its red takes the room over, as it should (the owner). Two more nights with the fire out as well as the lamps (the owner: \"we need reference of moon lights when the fire place is turned off\"): the full moon only through the window, dim and cool, a new moon very dark.",
    "approved": "2026-11-26, the owner",
-   "decision": "the owner, 2026-11-26: one home room and the hallway stand for the home's rooms (\"just do one room, hall way, shop and cafe\"); in the world's light; ADR-0061; the owner, 2026-11-26: \"Approve it\"",
+   "decision": "the owner, 2026-11-26: one home room and the hallway stand for the home's rooms (\"just do one room, hall way, shop and cafe\"); in the world's light; ADR-0061; the owner, 2026-11-26: \"Approve it\"; the fire redder and the fire-out nights added, 2026-11-26 (the owner)",
    "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=rooms WASTED_ONLY=living) on the rooms of Tools/blender/furniture_kit_18.py",
    "models": [
     "World/rules/furnishing.json (the pieces)",
@@ -676,7 +678,7 @@
     "Shops/ShopsBakeryLight_Dusk.jpg",
     "Shops/ShopsBakeryLight_NightLamps.jpg"
    ],
-   "locks": "The Stone Oven bakery (ShopsBakery's design) in the world's light, as the home room: by day the world's sun and sky through its window with the sunlit street outside, its pendants low (as approved by day), the boards a greyer wood, the shade lifted, the wall facing the counter throwing light back; at dusk and at night the pendants full, in their kind's colour (World/rules/lights.json). The oven burns at every hour: a bakery's own light, which other shops do not have. No moonlit nights (the owner: \"for bakery, don't need moon settings\"), no weather.",
+   "locks": "The Stone Oven bakery (ShopsBakery's design) in the world's light, as the home room: by day the world's sun and sky through its window with the sunlit street outside, its pendants low (as approved by day), the boards a greyer wood, the shade lifted, the wall facing the counter throwing light back; at dusk and at night the pendants full, in their kind's colour (World/rules/lights.json). The oven burns at every hour: a bakery's own light, which other shops do not have. No moonlit nights (the owner: \"for bakery, don't need moon settings\"), no weather. Every fire, in every reference, one red (the owner, 2026-11-26: \"oven flame should be same color in all references and more red\"): its flames glow red and catch no light; with no other light in a room its red takes the room over, as it should (the owner).",
    "approved": "proposed 2026-11-26, for the owner to review",
    "decision": "the owner, 2026-11-26: the bakery reviewed at every hour; \"bakery has oven so it will be different from bank/grocers and other such outlets\"; ADR-0061",
    "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=bakery) on the bakery of Tools/blender/baker_look_47.py",

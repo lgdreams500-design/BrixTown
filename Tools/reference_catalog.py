@@ -82,7 +82,8 @@ def code_or_text(s):
 
 
 HOURS = {"Morning": "Morning", "Midday": "Midday", "Dusk": "Dusk", "NightLamps": "Night, lamps on",
-         "NightFullMoon": "Night, lamps off, full moon", "NightNewMoon": "Night, lamps off, new moon", "Cloudy": "Cloudy",
+         "NightFullMoon": "Night, lamps off, full moon", "NightNewMoon": "Night, lamps off, new moon", "NightFullMoonFireOut": "Night, lamps and fire off, full moon",
+         "NightNewMoonFireOut": "Night, lamps and fire off, new moon", "Cloudy": "Cloudy",
          "Rain": "Rain", "Fog": "Fog", "Snow": "Snow"}       # the hours of Tools/blender/hours_50.py
 
 

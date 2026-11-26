@@ -88,8 +88,15 @@ INDOORS = ("rooms", "hallway", "bakery", "outlet")
 # a place's own eye where it differs: the hallway has no window, so a full moon seen only through a room's door is as dim
 # there as the new moon was (the owner, 2026-11-26: "full moon is giving too much light ... at the level currently shown on
 # new moon"; that picture's mean was 12)
+FIRE_LIGHT = 0.5                                           # a fire's light, of its strength as built
+FIRE_GLOW = 0.1                                            # how bright a fire's flames and embers glow, of their strength as built
+FIRE_COLOUR = (1.0, 0.24, 0.06)                          # every fire, in every reference: the owner, 2026-11-26, "oven flame should be
+                                                          # same color in all references and more red"
+FIRE_OUT_HOURS = {"rooms": ("NightFullMoon", "NightNewMoon")}   # the owner, 2026-11-26: "we need reference of moon lights when the
+                                                          # fire place is turned off": these again with the fire out too
 SKIP_HOURS = {"bakery": ("NightFullMoon", "NightNewMoon")}   # the owner, 2026-11-26: "for bakery, don't need moon settings"
-PLACE_EYE = {"hallway": {"NightFullMoon": 12, "NightNewMoon": 2.5}}   # and the new moon darker still ("should not have so much light")
+PLACE_EYE = {"hallway": {"NightFullMoon": 12, "NightNewMoon": 2.5},
+             "rooms": {"NightFullMoonFireOut": 12, "NightNewMoonFireOut": 2.5}}   # the home room's fire-out nights as dim (the owner)   # and the new moon darker still ("should not have so much light")
 # the moon: high (a full moon in summer stands about 68 degrees up here), turned from the sun's bearing so it falls along
 # the alley and the streets, not across them (at 48 degrees across, the alley's houses shaded all of its paving)
 MOON = dict(height=68, turn=0.35, strength=0.012, colour=(0.62, 0.72, 1.0),   # strength times the place's sun
@@ -154,6 +161,10 @@ class Lights:
             if ob.type == 'LIGHT' and ob.data.type != 'SUN' and not ob.name.startswith("BounceCard"):
                 is_fire = ob.name.startswith(FIRE) or any(f in ob.name for f in FIRE)
                 kind = lamp_kind(ob.name) if not is_fire else None
+                if is_fire:
+                    ob.data.color = FIRE_COLOUR
+                    ob.data.energy *= FIRE_LIGHT                  # softer and spread: close up it burnt the stone to pale pink
+                    setp(ob.data, "shadow_soft_size", 0.35)
                 if kind:                                             # its kind's colour and strength (FURN-067, lights.json)
                     ob.data.color = tuple(kind["colour"])
                     ob.data.energy = kind["strength"]
@@ -167,6 +178,11 @@ class Lights:
                     nm = m.name
                     kind = "fire" if any(f in nm for f in ("Ember", "Flame")) else ("home" if "WinLitDusk" in nm else
                             ("window" if ("Lit" in nm or "Win" in nm) else "lamp"))   # homes' windows lit from dusk; shops' always
+                    if kind == "fire":                                    # every fire one warm red (the owner)
+                        n.inputs["Base Color"].default_value = (0.0, 0.0, 0.0, 1.0)   # it glows, it catches no light: red stays red
+                        if n.inputs.get("Emission Color") is not None:
+                            n.inputs["Emission Color"].default_value = (*FIRE_COLOUR, 1.0)
+                        n.inputs["Emission Strength"].default_value *= FIRE_GLOW   # so bright it washed to yellow-white
                     self.glow.append((n, n.inputs["Emission Strength"].default_value, tuple(n.inputs["Base Color"].default_value), kind))
         self.sun = sun
         self.day_lamps = 1.0
@@ -249,7 +265,7 @@ class Lights:
             w = day_w + lamp_w
             card.data.energy = w
             card.data.color = tuple((day_c[i] * day_w + lamp_c[i] * lamp_w) / (w or 1.0) for i in range(3))
-        fire = self.day_fires if day else 1.0
+        fire = 0.0 if key.endswith("FireOut") else (self.day_fires if day else 1.0)   # the moonlit nights with the fire out
         for ob, e0 in self.fires:
             ob.data.energy = e0 * fire
         for n, s0, c0, kind in self.glow:
@@ -331,7 +347,7 @@ def each_hour(scene, cam, exposure, stem, base=None):
     L = Lights(scene, base)
     hlog("%s: sun %.1f at bearing %.0f deg, sky %.2f; %d lamps, %d fires, %d glowing materials, %d haze" %
          (stem, L.sun_energy, math.degrees(L.bearing), L.sky_strength, len(L.lamps), len(L.fires), len(L.glow), len(L.fog)))
-    for hour in HOURS:
+    for hour in HOURS + [(h[0] + "FireOut",) + tuple(h[1:]) for h in HOURS if h[0] in FIRE_OUT_HOURS.get(PLACE, ())]:
         if WANT and hour[0] not in WANT:
             continue
         if hour[-1] and PLACE in INDOORS:                  # indoors no weather settings (the owner, 2026-11-26)

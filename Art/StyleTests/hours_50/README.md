@@ -40,3 +40,7 @@ bounce reached too little. Tried and taken out: a wider window and a stronger sk
 
 The hallway's moonlit nights (the owner, 2026-11-26): the full moon as dim as the new moon was and cool blue (`PLACE_EYE`
 hallway NightFullMoon 12, `MOON` `indoor_colour`), the new moon darker still (NightNewMoon 2.5). The hallway only.
+
+Fires (the owner, 2026-11-26): one red for every fire in every reference (`FIRE_COLOUR`), its flames glowing without catching
+light (`FIRE_GLOW` 0.1) and its light softer and spread (`FIRE_LIGHT` 0.5); with no other light its red takes the room over, as
+the owner expects. The home room has two more nights with the fire out too (`FIRE_OUT_HOURS`), as dim as the hallway's.
