@@ -11,7 +11,7 @@ fall). Reviewed with the owner one place at a time; an approved place goes to `A
 | The sky and its clouds, from Market Square (WASTED_PLACE=sky, with sky_52.py) | `Sky_<Setting>.jpg`, `review_Sky.jpg` | approved 2026-11-26: `Art/Reference/World/WorldSky_*.jpg`; no planet (ADR-0064); cloud shapes tried and dropped (`../sky_clouds_53/`) |
 | Market Square, from its arcade (WASTED_PLACE=square; its shade lifted by SQUARE_BOUNCE) | `MarketSquare_<Setting>.jpg`, `review_MarketSquare.jpg` | approved 2026-11-26: `Art/Reference/World/WorldMarketSquare_*.jpg` |
 | The street (building_kit_07.py) | `Street_<Setting>.jpg`, `review_Street.jpg` | approved 2026-11-26: `Art/Reference/World/WorldStreet_*.jpg` |
-| A home's room (the living room; WASTED_PLACE=rooms WASTED_ONLY=living): six settings, no weather | `Rooms_Living_<Setting>.jpg`, `review_Rooms_Living.jpg` | proposed: `Art/Reference/Indoor/IndoorHomeRoom_*.jpg` |
+| A home's room (the living room; WASTED_PLACE=rooms WASTED_ONLY=living): six settings, no weather | `Rooms_Living_<Setting>.jpg`, `review_Rooms_Living.jpg` | approved 2026-11-26: `Art/Reference/Indoor/IndoorHomeRoom_*.jpg` |
 | A home's hallway by the stairs (WASTED_PLACE=hallway, `corridor()`): no window, lit through a room's door | `Hallway_<Setting>.jpg`, `review_Hallway.jpg` | proposed: `Art/Reference/Indoor/IndoorHallway_*.jpg` |
 | The bakery (public room), the furniture outlet (big hall) | to come | |
 

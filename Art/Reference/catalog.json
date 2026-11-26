@@ -611,7 +611,6 @@
   {
    "id": "IndoorHomeRoom",
    "category": "Indoor",
-   "status": "proposed",
    "title": "A home's room (the living room) at every hour",
    "files": [
     "Indoor/IndoorHomeRoom_Morning.jpg",
@@ -622,8 +621,8 @@
     "Indoor/IndoorHomeRoom_NightNewMoon.jpg"
    ],
    "locks": "The living of furniture_kit_18, closed on four sides with one window. In the world's light (the owner, 2026-11-26: \"use the same color etc from world lighting\"): by day only the sun and sky of the hour, through the window, with the sunlit street outside throwing its light in; lamps and the fire out by day; the boards a greyer wood, so the bounced light is not orange; at night the lamps a warm white (until the kinds of light, FURN-066), the fire lit, the full moon a cool patch through the window, a new moon only the window's starlight. No weather settings indoors (the owner). The wall facing the people throws light back onto them (the owner, 2026-11-26: \"the wall opposite to the character is not reflecting light back\"): by day a little of the day through the window, at night a share of the lamps' light in their colour.",
-   "approved": "proposed 2026-11-26, for the owner to review",
-   "decision": "the owner, 2026-11-26: one home room and the hallway stand for the home's rooms (\"just do one room, hall way, shop and cafe\"); in the world's light; ADR-0061",
+   "approved": "2026-11-26, the owner",
+   "decision": "the owner, 2026-11-26: one home room and the hallway stand for the home's rooms (\"just do one room, hall way, shop and cafe\"); in the world's light; ADR-0061; the owner, 2026-11-26: \"Approve it\"",
    "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=rooms WASTED_ONLY=living) on the rooms of Tools/blender/furniture_kit_18.py",
    "models": [
     "World/rules/furnishing.json (the pieces)",
