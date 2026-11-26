@@ -26,7 +26,7 @@ Renders go to Art/StyleTests/elders_48/:
     lineup.png   the six, full height, with the old Elder of the cast at the left for comparison
     faces.png    the six from the chest up
     ages.png     one woman at age 0, 0.35, 0.7 and 1.0 with nothing else changed
-Not approved: for the owner to choose from. Nothing here is in the game.
+The owner, 2026-11-26: "Yes, hair is right" and "this is good enough" (ADR-0059). Nothing here is in the game.
 """
 import bpy, math, os, time, traceback
 from mathutils import Vector, Matrix

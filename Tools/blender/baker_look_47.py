@@ -27,7 +27,7 @@ Renders go to Art/StyleTests/baker_look_47/:
 The owner picked A for Noor on 2026-11-26 ("pick option A for noor"), asked for a long tunic, then for option C's
 clothes on her: N is that Noor, A's head and bun in C's olive dress, confirmed ("Yes, keep this Noor"). A, B and C stay
 for the record. The bakery
-inside is not approved yet. Nothing here is in the game.
+inside was approved the same day ("Yes, approved"; ADR-0059). Nothing here is in the game.
 """
 import bpy, math, random, os, time, traceback
 
