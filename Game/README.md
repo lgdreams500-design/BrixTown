@@ -201,7 +201,20 @@ and once the night was dark (ADR-0055) they were black in the court at night. Wi
 (`ABrixMall::Contains`, so the furniture outlet's too) a light from over the camera's shoulder lights people alone
 (lighting channel 1, which the player's and the residents' bodies are on): `PeopleLux` (0.6) at night and `PeopleLuxDay`
 (0.2) of it with the day's light also coming in, set so that someone in the court at 02:00 looks as they do at noon
-(`Art/StyleTests/unreal_play_bugs_44/mall_people_before_after.jpg`). Not yet: the day's light still comes into the hall
+(`Art/StyleTests/unreal_play_bugs_44/mall_people_before_after.jpg`). **The hall has shade in it (the look gate's first use, ADR-0058).** Every face of the hall glowed evenly in one plain
+colour: no shade, no shadow, no mottle, whites burnt. Now its faces are mottled (`RoomMottle`: two close tones blotched,
+W1; `M_MallRoom`, made by `Tools/unreal/make_mall_materials.py`), a face that looks down has `RoomUnder` (0.35) of the
+hall's even light, so the underside of a gallery is darker than its top, that even light is less (`RoomLight` 0.11)
+and the lanterns more (`NearLights` 6 of `LightCandela` 25 reaching 16 m), the nearest shining down out of its shade
+and casting shadows (`LightShadows`, `LightCone`): the floor has pools of light with dimmer ground between them. The
+lines of light are less bright (`LitGlow` 1.4) so they are not burnt. Shots beside the owner's screenshot:
+`Art/StyleTests/unreal_look_gate_49/`. Not yet, by the gate's questions: G1 nothing darkens the floor where it stands
+(planters, benches, the moving stairs, people's feet: the hall's faces have no share of the engine's bounced light, as
+they are made at load time); G2 only the nearest lantern casts shadows, and the lines of light and the shops' lit
+fronts light nothing; G3 the floor tiles are plain within each tile; G6 people's own light has no shadow side to
+speak of; the lanterns that give light are chosen again twice a second and change in one frame; the upper floors and
+the shops' insides have not been looked at with the gate; there is no reference picture of a hall to measure against
+(ART_DIRECTION §5). The day's light still comes into the hall
 and onto people, which is why the light is weaker by day; the goods and mannequins are not on the people's light.
 
 ## The furniture outlet (FURN-020, FURN-021; ADR-0027)
@@ -685,7 +698,7 @@ seconds, so `-BrixTour=<list> -BrixTourOut=<folder>` (with `-BrixNoDesigner -Bri
 list of stops, sets the clock and the weather at each, waits `TourSeconds` and saves a picture: a stop is
 `name|hh:mm|weather|where[|ev=<EV100>]`, where `cam:x,z,height,yaw,pitch`, `stand:x,z,up,yaw` or `in:<lot id>[,<pitch>]`
 (the player inside that building, as `-BrixInside=`); `ev=` pins the exposure for a shot, to measure with.
-`Tools/unreal/light_tour.txt` is the survey this light was fixed by (64 stops: the spawn alley, Market Square, a street,
+`Tools/unreal/light_tour.txt` is the survey this light was fixed by (66 stops: the spawn alley, Market Square, a street,
 a park and Eastgate from 07:20 through dusk, night and dawn, in rain and fog, seven kinds of room by day and by night,
 and the reference rooms); `Tools/unreal/light_tour.ps1 -OutDir <folder>` runs it offscreen at High (add `-Extra "-BrixLightOff"` for the
 light before), and `Tools/unreal/shot_sheet.py` puts shots side by side with their mean brightness. Run one at a time:
@@ -1136,6 +1149,19 @@ but without Lumen. On this laptop use High (`scalability 2` in the console, or `
 follows the kit daylight (ADR-0007): a shaded wall on a wide street measures (161, 151, 135) against (159, 151, 146) in
 `Art/Reference/world_street_kit_light.png`. The first run after a change of shader settings compiles shaders for minutes
 and runs at a few frames a second; that is not the game's speed.
+
+## The look gate (ADR-0058)
+Anything seen in this build is looked at as a whole, against `Art/Reference/` and ART_DIRECTION's rules (not the
+browser slice), by whoever makes it, before its pull request: `docs/process/LOOK_GATE.md`. Shots at noon, dusk and
+night beside the references; ten questions about the whole frame (G1 to G10: shade, shadows, surfaces, colour, whites
+and blacks, people, lamps, wholeness, the hours, nothing over the picture); `Tools/unreal/look_check.py` for the
+numbers (burnt whites, crushed blacks, flat fills, light and shade, warmth, the player against the picture round them);
+for a shared change the look tour against `Tools/unreal/look_baseline.json`, which says which stops have moved. The
+first audit's findings are in LOOK_GATE.md; those not yet mended: a tower's hall (the player nearly black, bare
+walls); the engine's dark blotches on the ceilings and floors of shops, the bank, the library and cafes; plain flat
+walls in homes and a white patch burnt by the lamp nearest a wall; a window seen from inside at night is a white pane;
+the spawn alley's far end a white-out by day; tree crowns near black with bright lines along their edges; lawns, the
+mall's shell and open ground one flat colour; a teal cast over the whole picture in rain, snow and fog.
 
 ## Build, run, test
 Paths below are for this machine (`docs/setup/DEV_ENVIRONMENT.md`); run from the repository root.
