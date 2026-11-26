@@ -54,7 +54,7 @@
    "summary": "Abe the courier has too many parcels and not enough legs.",
    "theme": "", "start": "offer",
    "stages": [
-    {"id": "offer", "title": "Abe's offer", "kind": "talk", "with": "abe", "goal": "Talk to Abe", "log": "Abe the courier looks like he could use a hand.", "start": "o1",
+    {"id": "offer", "title": "Abe's offer", "kind": "talk", "with": "abe", "goal": "Talk to Abe", "log": "Abe the courier looks like she could use a hand.", "start": "o1",
      "nodes": {
       "o1": {"who": "abe", "mood": "thinking", "say": "Always! Three rounds and one pair of legs. Say... you're new, aren't you? Want to earn a few brix?",
        "options": [{"text": "What's the job?", "next": "o2"}, {"text": "Not today, thanks.", "next": null}]},
@@ -72,7 +72,7 @@
         {"text": "It might be. What's in it?", "next": "d3", "need": ["have:parcel"]},
         {"text": "Not yet. I'll be back.", "next": null}
        ]},
-      "d2": {"who": "jai", "mood": "happy", "say": "Wonderful. Tell Abe he's got a fast new runner.",
+      "d2": {"who": "jai", "mood": "happy", "say": "Wonderful. Tell Abe she's got a fast new runner.",
        "options": [{"text": "I will.", "next": null, "act": ["stage:report"]}]},
       "d3": {"who": "jai", "mood": "thinking", "say": "A first edition, for the museum. Worth more than this building's roof. Please, it's ours.",
        "options": [{"text": "Of course. Here.", "next": "d2", "act": ["take:parcel"]}, {"text": "I think I'll hold on to it.", "next": "d4"}]},
@@ -117,7 +117,7 @@
        "options": [
         {"text": "Your secret's safe with me.", "next": "w3", "act": ["take:trowel"]},
         {"text": "Let me help you plant the next row.", "next": "w4", "act": ["take:trowel"]},
-        {"text": "Olu asked me to find out. I'll have to tell him.", "next": "w5"}
+        {"text": "Olu asked me to find out. I'll have to tell her.", "next": "w5"}
        ]},
       "w3": {"who": "hari", "mood": "happy", "say": "Thank you. Here, take some seeds. Sell them, plant them, whatever you like.",
        "options": [{"text": "Thanks, Hari.", "next": null, "act": ["end:kept"]}]},

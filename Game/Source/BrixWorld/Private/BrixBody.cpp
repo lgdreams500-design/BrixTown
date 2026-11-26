@@ -153,6 +153,54 @@ FBrixLook BrixLookOf(const FBrixPeopleRules& Rules, int32 Id, const FString& Rol
 	return L;
 }
 
+bool BrixApplyCastLooks(const FString& Path, const FBrixPeopleRules& Rules, const TArray<FString>& Ids, TArray<FBrixLook>& Looks, int32& OutCount, FString& OutError)
+{
+	OutCount = 0;
+	FString Text;
+	if (!FFileHelper::LoadFileToString(Text, *Path)) { OutError = TEXT("Cannot read ") + Path; return false; }
+	TSharedPtr<FJsonObject> Root;
+	if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Root) || !Root.IsValid()) { OutError = Path + TEXT(" is not valid JSON"); return false; }
+	const TSharedPtr<FJsonObject>* People = nullptr;
+	if (!Root->TryGetObjectField(TEXT("people"), People)) return true;
+	for (const auto& KV : (*People)->Values)
+	{
+		const int32 i = Ids.IndexOfByKey(FString(KV.Key));
+		const TSharedPtr<FJsonObject> O = KV.Value->AsObject();
+		if (i == INDEX_NONE || !Looks.IsValidIndex(i) || !O.IsValid()) continue;
+		FBrixLook& L = Looks[i];
+		auto Col = [&](const TCHAR* K, FVector3f& Into) -> bool   // a palette name or linear RGB
+		{
+			FString Name;
+			const TArray<TSharedPtr<FJsonValue>>* A = nullptr;
+			if (O->TryGetStringField(K, Name)) { if (const FVector3f* P = Rules.Palette.Find(Name)) { Into = *P; return true; } OutError = FString::Printf(TEXT("%s: %s's %s is not a palette colour: %s"), *Path, *KV.Key, K, *Name); return false; }
+			if (O->TryGetArrayField(K, A) && A->Num() >= 3) { Into = FVector3f((float)(*A)[0]->AsNumber(), (float)(*A)[1]->AsNumber(), (float)(*A)[2]->AsNumber()); return true; }
+			return false;
+		};
+		double V = 0;
+		if (O->TryGetNumberField(TEXT("height"), V)) L.S = V / 1.72;
+		if (O->TryGetNumberField(TEXT("build"), V)) L.W = V * 1.04;   // as BrixLookOf scales a role's build
+		Col(TEXT("skin"), L.Skin); Col(TEXT("eyes"), L.Eyes); Col(TEXT("hair_color"), L.HairC);
+		Col(TEXT("top"), L.Top); Col(TEXT("bottom"), L.Bottom); Col(TEXT("shoes"), L.Shoes);
+		FVector3f Ap;
+		if (Col(TEXT("apron"), Ap)) L.Apron = Ap; else L.Apron.Reset();
+		FVector3f Cp;
+		if (Col(TEXT("cap"), Cp)) L.Cap = Cp; else L.Cap.Reset();
+		FVector3f Sc;
+		if (Col(TEXT("scarf"), Sc)) L.Scarf = Sc; else L.Scarf.Reset();
+		if (!OutError.IsEmpty()) return false;
+		O->TryGetStringField(TEXT("hair"), L.Hair);
+		O->TryGetStringField(TEXT("garment"), L.Garment);
+		if (!O->TryGetStringField(TEXT("bottom_type"), L.Legs) && L.Garment == TEXT("dress")) L.Legs = TEXT("bare");
+		O->TryGetNumberField(TEXT("eye_open"), L.EyeOpen); O->TryGetNumberField(TEXT("eye_size"), L.EyeSize); O->TryGetNumberField(TEXT("face_w"), L.FaceW);
+		O->TryGetNumberField(TEXT("nose"), L.Nose); O->TryGetNumberField(TEXT("lips"), L.Lips);
+		O->TryGetNumberField(TEXT("age"), L.Age); O->TryGetNumberField(TEXT("dress_len"), L.DressLen);
+		L.bBag = false; L.bTash = false;
+		O->TryGetBoolField(TEXT("bag"), L.bBag); O->TryGetBoolField(TEXT("tash"), L.bTash);
+		++OutCount;
+	}
+	return true;
+}
+
 double BrixStepLength(const FBrixSignature& Sig, double S) { return 2 * Sig.Stride * .7885 * S; }
 
 FVector2D BrixGlanceAt(double DX, double DZ, double Yaw)
@@ -573,7 +621,7 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	{
 		if (!OutBoxes) return;
 		const double S = L.S, W = L.W;
-		const FVector3f legC = L.Legs == TEXT("skirt") ? L.Skin : L.Bottom;
+		const FVector3f legC = L.Legs == TEXT("skirt") || L.Legs == TEXT("bare") ? L.Skin : L.Bottom;
 		const bool bSit = pose == 2;   // sitting, the origin is the seat top: the body starts there
 		const double hip = bSit ? .2 * S : .88 * S, top = hip + .5 * S, fx = FMath::Sin(yaw), fz = -FMath::Cos(yaw);
 		auto box = [&](double x0, double y0, double z0, double x1, double y1, double z1, const FVector3f& c)
@@ -622,7 +670,7 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	auto Wd = [&](const FVector& p) { return ex * p.X + ey * p.Y + ez * p.Z; };
 	const int32 n = lod == 0 ? 16 : lod == 1 ? 8 : 5, nl = lod == 0 ? 12 : lod == 1 ? 6 : 4;
 	const FVector fwd = Wd(FVector(0, -1, 0));
-	const bool bLong = L.Garment != TEXT("tee");
+	const bool bLong = L.Garment != TEXT("tee") && L.Garment != TEXT("dress");   // a dress (cast looks) has short sleeves
 	FShapes Sh_{ Out };
 	FShapes& ms = Sh_;
 	const FString& kind = L.Legs;
@@ -664,7 +712,10 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	// hips, in the colour of what is worn below
 	if (kind != TEXT("skirt")) ms.ball(pel + py * (-.01 * T), px * (.16 * W * S), py * (.098 * T), pz * (.1156 * S), n, lod == 0 ? 6 : 4, L.Bottom);
 	// the garment: a tee or long top to the waist, a tunic to the thigh, a skirt under either, a coat over it all
-	const bool coat = L.Garment == TEXT("coat"), tunic = L.Garment == TEXT("tunic");
+	const bool coat = L.Garment == TEXT("coat"), tunic = L.Garment == TEXT("tunic"), dress = L.Garment == TEXT("dress");
+	// a dress (cast looks, not in the slice): one form from its hem to the chest, as character_face_05.py lofts it: the hem
+	// DressLen over the ground (the hips are .9235 up at 1.72 m), wider the longer it is
+	const double DZ = (L.DressLen > 0 ? L.DressLen : .45) - .9235, DR = (.17 + .12 * (1 - (L.DressLen > 0 ? L.DressLen : .45))) * W;
 	auto topR = [&](double zz) { return tunic ? (.19 * W + (chest - .19 * W) * (zz + .1235) / .545) : (.142 * W + (chest - .142 * W) * (zz - .088) / .3334); };
 	const double SK[4] = { coat ? -.5 : -.44, coat ? .21 * W : .225 * W, coat ? .4214 : tunic ? 0 : .2, coat ? chest - .004 : tunic ? topR(0) - .012 : topR(.2) - .012 };
 	if (kind == TEXT("skirt")) capsule(hem(SK[0]), SK[1], SK[2], SK[3], flat, .28, L.Bottom, 0, 0, 0, swing * .3, true);
@@ -675,6 +726,7 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 		ms.ball(sp + tz * (.387 * S), tx * (.085 * T), ty * (.08 * T), tz * (.035 * S), n, 4, L.Top);   // the collar
 	}
 	else if (tunic) capsule(hem(-.1235), .19 * W, .4214, chest, flat, .28, L.Top, 0, 0, 0, swing * .18, true);
+	else if (dress) capsule(hem(DZ), DR, .4214, chest, flat, .28, L.Top, 0, 0, 0, swing * .3, true);
 	else capsule(.088, .142 * W, .4214, chest, flat, .28, L.Top, 0, 0, 0, 0, true);
 	// the yoke: a rounded bar across the shoulders that the arms hang from
 	const FVector sh0 = Wp(P.sh[0]), sh1 = Wp(P.sh[1]);
@@ -736,7 +788,18 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 		shell(.012, .014, RX + .02, RY + .022, RZ + .02, hairC, MoveTemp(keep), st == TEXT("long"));
 		if (st == TEXT("short") || st == TEXT("side")) blob(st == TEXT("side") ? .022 : 0, -.018, .108, .086, .104, .052, hairC, hn, 5);
 		if (st == TEXT("long") && lt2) for (const double e : { -1.0, 1.0 }) ms.limb(H(e * .106, 0, 0), H(e * .1, -.018, -.19), .021 * Sh, .013 * Sh, 10, hairC, true, fwd);
-		if (st == TEXT("bun")) blob(0, .085, .135, .052, .052, .046, hairC, 8, 5);
+		if (st == TEXT("bun") && L.Age > 0) blob(0, .05, .172, .058, .056, .052, hairC, 10, 6);   // a cast look's bun: up on the crown, where it shows (C9)
+		else if (st == TEXT("bun")) blob(0, .085, .135, .052, .052, .046, hairC, 8, 5);
+		if (L.Age > 0 && lt2 && st != TEXT("afro"))   // not in the slice (ADR-0059, rule C9): locks swept back from the brow and down
+		{                                              // the temples to the ears in two close tones, over the shell's cut edge, so the
+			const int32 NLk = lod == 0 ? 17 : 9;       // hair reaches the face and does not sit on it like a cap with a level brim
+			for (int32 k = 0; k < NLk; ++k)
+			{
+				const double f = -1 + 2.0 * k / (NLk - 1), u = f * rad(104), cu = FMath::Cos(u), su = FMath::Sin(u), c8 = FMath::Cos(u * .86);
+				const double lx = .114 * su, ly = .014 - .118 * cu, lz = -.004 + .09 * c8;
+				blob(lx, ly, lz, .016, .015, .02 - .006 * c8, k % 2 ? scc(hairC, .88) : hairC, lod == 0 ? 8 : 5, lod == 0 ? 5 : 3);
+			}
+		}
 	}
 	if (L.Cap && !o.Hood)
 	{
@@ -777,11 +840,11 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 		return FVector(xx, -RY * sj * FMath::Sqrt(FMath::Max(1 - FMath::Square(xx / (RX * sj)) - zu * zu, 0.0)) - out, zz);
 	};
 	auto HR = [&](const FVector& p) { return hc + (hx * (p.X * Sh) + hy * (p.Y * Sh) + hz * (p.Z * Sh)); };
-	const FVector3f Dark(.03f, .02f, .02f), White(.78f, .76f, .72f), Lip(.34f, .13f, .11f);
+	const FVector3f Dark(.03f, .02f, .02f), White(.78f, .76f, .72f), Lip = FVector3f(.34f, .13f, .11f) + (L.Skin * .92f - FVector3f(.34f, .13f, .11f)) * (float)(.55 * FMath::Clamp(L.Age, 0.0, 1.0));   // paler with age (ADR-0059)
 	const FVector3f Cheek(FMath::Min(L.Skin.X * 1.1f, .9f), L.Skin.Y * .66f, L.Skin.Z * .62f);   // rosy cheeks (ADR-0010): a redder version of the person's own skin
 	auto cheeks = [&](int32 cn, int32 cm, double f)
 	{
-		const FVector3f C = f >= 1 ? Cheek : L.Skin + (Cheek - L.Skin) * (float)f;
+		const FVector3f C0 = f >= 1 ? Cheek : L.Skin + (Cheek - L.Skin) * (float)f, C = L.Age > 0 ? L.Skin + (C0 - L.Skin) * (float)(1 - .6 * FMath::Min(L.Age, 1.0)) : C0;   // fainter with age
 		for (const double e : { -1.0, 1.0 }) blob(e * .056, -.0835, -.027, .0175, .0062, .0115, C, cn, cm);
 	};
 	if (lod == 0 && o.Face)   // someone in a conversation: the full control set (CHR-007; people.js face())
@@ -892,6 +955,22 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 		blob(0, -.1, -.053, .032 * L.Lips, .005, .0062, fc(Lip), 8, 3);
 		if (L.bTash) blob(0, -.104, -.037, .024, .006, .007, fc(hairC), 6, 3);
 	}
+	if (L.Age > 0 && lod == 0)   // not in the slice (ADR-0059, elders_48.py): age shows as soft creases of the person's own skin
+	{
+		const FVector3f Crease = scc(L.Skin, .74);
+		const double A = FMath::Clamp(L.Age, 0.0, 1.0);
+		auto line = [&](double x0, double z0, double x1, double z1, double r)   // a thin crease lying on the face from one point to another
+		{
+			ms.limb(HR(FS(x0, z0, -.0008)), HR(FS(x1, z1, -.0008)), r * Sh, r * Sh, 6, Crease, true, hy);
+		};
+		for (const double zz : { .08, .096 }) line(-.04 * (.7 + A * .3), zz, .04 * (.7 + A * .3), zz, .0022 * (.6 + A * .4));   // across the brow
+		for (const double e : { -1.0, 1.0 })
+		{
+			line(e * .066, .016, e * .081, .024, .0013);    // at the corner of each eye
+			line(e * .066, .006, e * .082, .004, .0013);
+			line(e * .022, -.026, e * .036, -.06, .0017 * (.6 + A * .4));   // from the side of the nose to the corner of the mouth
+		}
+	}
 	// What the role wears on top (C5) lies on the outside of the clothes under it. wear(z, x) is that outside at height z and x
 	// across: [front, back] depth in S.
 	struct FLayer { double z0, r0, z1, r1, fl, cap, yo, sw; };
@@ -899,6 +978,7 @@ void DrawBrixPerson(const FBrixPeopleRules& Rules, const FBrixLook& L, const FVe
 	if (kind == TEXT("skirt")) layers.Add({ hem(SK[0]), SK[1], SK[2], SK[3], flat, .28, 0, swing * .3 });
 	if (coat) layers.Add({ hem(kind == TEXT("skirt") ? -.29 : -.33), .218 * W, .431, chest + .014, flat * 1.06, .25, .006, swing * .3 });
 	else if (tunic) layers.Add({ hem(-.1235), .19 * W, .4214, chest, flat, .28, 0, swing * .18 });
+	else if (dress) layers.Add({ hem(DZ), DR, .4214, chest, flat, .28, 0, swing * .3 });
 	else layers.Add({ .088, .142 * W, .4214, chest, flat, .28, 0, 0 });
 	auto wear = [&](double zz, double xx)
 	{

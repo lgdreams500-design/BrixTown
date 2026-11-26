@@ -135,7 +135,7 @@
      "options": [{"text": "Noor?", "next": "y_table3"}]},
     "y_table3": {"who": "noor", "mood": "happy", "say": "It is not six counters in six towns. It's one oven. But yes. You run the queue; you were always good with a queue. I feed the Mother. {player} bakes. The name over the door stays as it is. We add a line underneath.",
      "options": [{"text": "What does the line say?", "next": "y_table4"}]},
-    "y_table4": {"who": "noor", "mood": "happy", "say": "“Bring your own dough.” Vera gets the first loaf. Go and tell Eli he needs a longer rope.",
+    "y_table4": {"who": "noor", "mood": "happy", "say": "“Bring your own dough.” Vera gets the first loaf. Go and tell Eli she needs a longer rope.",
      "options": [{"text": "(Go and tell Eli.)", "next": null, "act": ["end:long_table"]}]},
     "y_home": {"who": "noor", "mood": "sad", "dir": "You have barely said that her brother is in the alley when she has the side door open. Tam comes in with the jar held in both hands, the way you would carry a bird. MUM, in marker, gone brown. Nobody says anything. Noor takes it, opens it, and smells it.", "say": "Same sour. Same stubborn. Six years in that place, and you fed her every day. Sit down, you fool. You're letting the heat out.",
      "options": [

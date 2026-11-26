@@ -24,6 +24,63 @@ namespace
 	}
 }
 
+// QST-014, ADR-0059: Noor (r0262) wears her approved look (World/rules/cast_looks.json, from baker_look_47.py's N), not her
+// job's stock clothes: an olive dress to the shin with short sleeves and bare legs under it, a cream bib apron, brown shoes,
+// grey hair up in a bun with locks along the hairline, and age at the brow, the eyes and the mouth. Everyone else is as the
+// slice draws them (ART004): the new parts are drawn only for a look with age or a dress.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FQST014_NoorsLook, "BrixTown.World.QST014_noor_wears_her_approved_look",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FQST014_NoorsLook::RunTest(const FString&)
+{
+	FBrixPeopleRules Rules;
+	FBrixDay Day;
+	FString Error;
+	if (!TestTrue(TEXT("the people's tables load: ") + Error, LoadBrixPeopleRules(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/people.json"))), Rules, Error))) return false;
+	if (!TestTrue(TEXT("the day loads: ") + Error, LoadBrixDay(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/day.json"))), Day, Error))) return false;
+	TArray<FBrixLook> Looks, Stock;
+	for (int32 i = 0; i < Day.Num(); ++i)
+	{
+		const FString RoleName = Day.Roles.IsValidIndex(Day.Role[i]) ? Day.Roles[Day.Role[i]] : FString();
+		Looks.Add(BrixLookOf(Rules, i, Day.Wear.IsValidIndex(i) && !Day.Wear[i].IsEmpty() ? Day.Wear[i] : RoleName, TEXT("Easy")));
+	}
+	Stock = Looks;
+	int32 Cast = 0;
+	const FString Path = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/rules/cast_looks.json")));
+	if (!TestTrue(TEXT("cast_looks.json applies: ") + Error, BrixApplyCastLooks(Path, Rules, Day.Ids, Looks, Cast, Error))) return false;
+	TestEqual(TEXT("one resident has a look of their own"), Cast, 1);
+	const int32 N = Day.Ids.IndexOfByKey(FString(TEXT("r0262")));
+	if (!TestTrue(TEXT("Noor is r0262"), N != INDEX_NONE && Day.Names.IsValidIndex(N) && Day.Names[N] == TEXT("Noor"))) return false;
+	const FBrixLook& L = Looks[N];
+	const FVector3f* Olive = Rules.Palette.Find(TEXT("olive"));
+	const FVector3f* Cream = Rules.Palette.Find(TEXT("cream"));
+	TestTrue(TEXT("an olive dress to the shin, bare legs"), L.Garment == TEXT("dress") && L.Legs == TEXT("bare") && Olive && L.Top.Equals(*Olive) && FMath::IsNearlyEqual(L.DressLen, .40));
+	TestTrue(TEXT("a cream apron, no cap"), L.Apron.IsSet() && Cream && L.Apron->Equals(*Cream) && !L.Cap.IsSet());
+	TestTrue(TEXT("grey hair in a bun"), L.Hair == TEXT("bun") && L.HairC.Equals(FVector3f(.27f, .26f, .27f)));
+	TestTrue(TEXT("1.62 m, sturdy, 58"), FMath::IsNearlyEqual(L.S, 1.62 / 1.72) && L.W > 1.1 && FMath::IsNearlyEqual(L.Age, .45));
+	for (int32 i = 0; i < Looks.Num(); ++i)
+		if (i != N && (Looks[i].Age != 0 || Looks[i].DressLen != 0 || Looks[i].Garment != Stock[i].Garment)) { AddError(FString::Printf(TEXT("%s's look changed"), *Day.Ids[i])); break; }
+	// drawn standing at full detail: the dress reaches to the shin (the lowest point of its colour about 0.4 m up), the legs
+	// below it are bare, and age adds the creases and the hairline locks to the stock look's body
+	FBrixDrawOptions O;
+	O.Lod = 0;
+	FBrixBodyMesh Mine, Young;
+	DrawBrixPerson(Rules, L, FVector::ZeroVector, 0, O, Mine);
+	FBrixLook Y = L;
+	Y.Age = 0;
+	DrawBrixPerson(Rules, Y, FVector::ZeroVector, 0, O, Young);
+	double Hem = 1e9, SkinLow = 1e9;
+	for (int32 v = 0; v < Mine.Pos.Num(); ++v)
+	{
+		if (Mine.Colour[v].Equals(L.Top)) Hem = FMath::Min(Hem, (double)Mine.Pos[v].Y);
+		if (Mine.Colour[v].Equals(L.Skin)) SkinLow = FMath::Min(SkinLow, (double)Mine.Pos[v].Y);
+	}
+	AddInfo(FString::Printf(TEXT("Noor: the dress's hem %.2f m up, skin from %.2f m; %d vertices, %d at age 0"), Hem, SkinLow, Mine.Pos.Num(), Young.Pos.Num()));
+	TestTrue(TEXT("the dress's hem is at the shin (0.3 to 0.5 m up)"), Hem > .3 && Hem < .5);
+	TestTrue(TEXT("bare legs under it"), SkinLow < .15);
+	TestTrue(TEXT("age adds creases and locks"), Mine.Pos.Num() > Young.Pos.Num() + 100);
+	return true;
+}
+
 // Prototype/play/people.js, run by Tools/unreal/people_values.py, gives the looks of a set of residents and the bodies it
 // draws for them walking and standing at every distance (Tests/values/people_city_01.json). The C++ port gives the same
 // look (sizes, colours, clothes, hair, walk) and the same body: as many vertices, and every sampled vertex within 1 mm of

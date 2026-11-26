@@ -165,6 +165,13 @@ void ABrixPeople::Start(const FBrixCity& City, TSharedPtr<FBrixDay> InDay, TShar
 		// the slice: look(i, the job's own clothes or the role, the role's walk)
 		Looks.Add(BrixLookOf(Rules, i, Day->Wear.IsValidIndex(i) && !Day->Wear[i].IsEmpty() ? Day->Wear[i] : RoleName, Sig ? *Sig : FString(TEXT("Easy"))));
 	}
+	{   // the named people of a career's story with a look of their own (QST-014, ADR-0059: Noor)
+		int32 Cast = 0;
+		FString CastError;
+		const FString CastPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("../World/rules/cast_looks.json")));
+		if (FPaths::FileExists(CastPath) && !BrixApplyCastLooks(CastPath, Rules, Day->Ids, Looks, Cast, CastError)) UE_LOG(LogTemp, Error, TEXT("Brix Town: %s"), *CastError);
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: %d residents with a look of their own"), Cast);
+	}
 	while (RebuildEvery.Num() < 3) RebuildEvery.Add(RebuildEvery.Num() + 1);
 	{   // the repair crews (smash.js crewLook): two people of the utility role, walking as it walks
 		const FString* Sig = Day->RoleSig.Find(TEXT("utility"));
