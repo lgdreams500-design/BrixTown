@@ -979,7 +979,7 @@ Twenty Minutes) opens the talk box by itself when the player is there (`ABrixLif
 its lines are read, not spoken, and one left unanswered opens again when the player has gone and come back. Seen in the
 running game: `docs/narrative/shots/stone_oven.png` (the career starts by talking to Noor, the baker) and `count_scene.png`
 (`-BrixTime=06:40 -BrixStand=912,816,0 -BrixLife=act,new_in_town,r0504,end:gift;act,four_oclock_door,r0262,start|give:breakfast_loaf|stage:count`).
-The Stone Oven's ground floor is fitted out as its approved design (ADR-0059, ADR-0061): `World/rules/fitouts.json`, named
+The Stone Oven's ground floor is fitted out as its approved design (ADR-0059, ADR-0062): `World/rules/fitouts.json`, named
 by the lot (`"fitout": "stone_oven"`), closes a room of 9 by 7.5 m round the front door with partitions (the owner,
 2026-11-26: "make the bakery room smaller with a partition wall"), a doorway in one of them to the stair, and places in it
 the design's own pieces as the reference has them: the plank door to the alley, the price board and the flour sacks on the

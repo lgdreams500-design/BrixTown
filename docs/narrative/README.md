@@ -49,7 +49,7 @@ Each item is also noted where it lives (`Game/README.md`, `Tools/README.md`, `To
 
 **So that what was approved shows in the game**
 1. The Stone Oven's ground floor in Unreal is the approved design's own pieces in a room of 9 by 7.5 m closed by
-   partitions (ADR-0061, `World/rules/fitouts.json`), laid out as the reference; brighter and flatter than it (no beams, a
+   partitions (ADR-0062, `World/rules/fitouts.json`), laid out as the reference; brighter and flatter than it (no beams, a
    small fire); its upper floors are still a grocer's store. Details in `Game/README.md`, Quests.
 2. In Unreal Noor wears her approved look (`World/rules/cast_looks.json`): dress, bib apron, grey bun, locks along the
    hairline, lines of age. Not carried: the stoop, the shell under her hair, and age for anybody else (the elders of

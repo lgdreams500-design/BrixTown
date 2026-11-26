@@ -1,5 +1,5 @@
 ---
-adr: ADR-0061
+adr: ADR-0062
 title: A room fitted out by its design; a named person with a look of their own
 status: proposed        # built on 2026-11-26 to bring ADR-0059's approved looks into the game; the owner has not seen it in Unreal
 date: 2026-11-26
