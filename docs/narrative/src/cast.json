@@ -1,6 +1,7 @@
 {
  "people": [
   {"id": "noor", "name": "Noor", "status": "new", "age": 58, "color": "#a8752a",
+   "gender": "woman", "look": "Option A, Linen, of Tools/blender/baker_look_47.py (the owner, 2026-11-26): a sturdy woman of 58, grey hair up in a bun, lines at the brow and eyes, dusty-blue long sleeves, a cream apron, an ochre kerchief at the neck, brown trousers and shoes.",
    "career": "Master baker, owner of the Stone Oven", "career_id": "baker",
    "place": "The Stone Oven Bakery, Baker Street, Old Town. Lives in the back rooms. (Proposed new shop: there is no bakery inside the old wall today; the three that exist are out in Northwood, Eastbrook and Southfield.)",
    "quote": "Flour, water, salt, time. Everything else is vanity.",

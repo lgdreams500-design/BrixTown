@@ -1,0 +1,33 @@
+{
+ "Noor_A_L": {
+  "faults": [],
+  "brow_line_columns": 148,
+  "shade": 0.081,
+  "straight": 0.2172,
+  "step": 0.0282,
+  "ears": 0.0605,
+  "smooth": 0.1651,
+  "tones": 0.471
+ },
+ "Noor_B_L": {
+  "faults": [
+   "a dark band lies under the hair's edge along 100% of the brow: it reads as dark hair under a pale cap"
+  ],
+  "brow_line_columns": 148,
+  "shade": 1.0,
+  "straight": 0.0847,
+  "step": 0.0,
+  "smooth": 0.2911,
+  "tones": 0.634
+ },
+ "Noor_C_L": {
+  "faults": [],
+  "brow_line_columns": 146,
+  "shade": 0.068,
+  "straight": 0.2047,
+  "step": 0.0325,
+  "ears": 0.065,
+  "smooth": 0.177,
+  "tones": 0.638
+ }
+}

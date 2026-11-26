@@ -127,7 +127,7 @@ def elder(sp, ox, oy=0.0):
             w = 0.040 - i * 0.006
             limb(n + "_BrowLine%d" % i, F(-w, z, 0.0008), F(w, z, 0.0008), r, r, line)
         for sg in (-1, 1):
-            limb(n + "_Fold%d" % sg, F(sg * 0.021, -0.043, 0.0006), F(sg * 0.033, -0.062, 0.0006), r * 0.8, r * 0.5, line)   # nose to mouth
+            limb(n + "_Fold%d" % sg, F(sg * 0.026, -0.046, 0.0003), F(sg * 0.036, -0.064, 0.0003), r * 0.55, r * 0.35, solid(dim(skin, 0.90), 0.7))   # nose to mouth
             if age >= 0.3:                                                     # at the outer corner of each eye
                 for j, dz in enumerate((0.006, -0.004) if age < 0.7 else (0.009, 0.001, -0.007)):
                     limb(n + "_Crow%d_%d" % (sg, j), F(sg * (ex + 0.031), ez + dz * 0.5, 0.0008), F(sg * (ex + 0.040), ez + dz * 1.3, 0.0008), r * 0.8, r * 0.5, line)

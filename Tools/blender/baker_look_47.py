@@ -4,14 +4,15 @@ Headless:
     blender-launcher.exe -b --factory-startup --python Tools/blender/baker_look_47.py
 Quick checks: WASTED_ONLY=noor,bakery_day WASTED_SAMPLES=24 WASTED_SCALE=50; WASTED_ROOT is the checkout (default: this file's).
 
-Builds on furniture_kit_18.py (and through it kit 17, the car kit, the building kit, old_town_04.py): the same painted
+Builds on elders_48.py (the values that say age, hair built on the skull, look_check.py) and through it on
+furniture_kit_18.py (and through it kit 17, the car kit, the building kit, old_town_04.py): the same painted
 matte materials, the kit daylight (ADR-0007), option B people made from the designer's values only (ART_DIRECTION C7)
 and the kit's parts. Nothing here is a new shape of person or a new material.
 
 Noor (docs/narrative/src/cast.json): a woman of 58, master baker, fourth keeper of the Stone Oven. Short sentences;
 counts everything; hides her hands. Three options, the same woman dressed three ways:
     A  Linen      dusty-blue long sleeves, a cream apron, an ochre kerchief at the neck, a grey bun
-    B  Flour cap  terracotta tunic, a cream apron and a cream baker's cap over a dark grey bun
+    B  Flour cap  terracotta tunic, a cream apron and a soft cream baker's cap set on a dark grey bun
     C  Old Town   an olive dress to the shin, a cream apron, a grey bob
 The bakery: a stone oven with an arched mouth and a wood store under it, a kneading bench, racks of loaves, flour
 sacks, the counter, and the crock of the Mother on the top shelf.
@@ -21,7 +22,8 @@ Renders go to Art/StyleTests/baker_look_47/:
     noor_close.png    the same three, from the waist up
     bakery_day.png    the bakery in the kit daylight, Noor (option A) at the bench
     bakery_four.png   the same at four in the morning: the oven and the lamps only (rule I5)
-Not approved: for the owner to choose from.
+The owner picked A for Noor on 2026-11-26 ("pick option A for noor"); B and C stay as the ones not chosen. The bakery
+inside is not approved yet. Nothing here is in the game.
 """
 import bpy, math, random, os, time, traceback
 
@@ -32,9 +34,9 @@ except NameError:
     _root = "C:/Projects/Wasted"
 ROOT = os.environ.get("WASTED_ROOT", _root).replace("\\", "/").rstrip("/")
 os.environ["WASTED_ROOT"] = ROOT
-_k = open(ROOT + "/Tools/blender/furniture_kit_18.py", encoding="utf-8").read()
-_k = _k[:_k.rstrip().rfind("\nmain()")]                   # kit 18's parts and pieces, without running it
-exec(compile(_k, "furniture_kit_18_helpers", "exec"), globals())
+_k = open(ROOT + "/Tools/blender/elders_48.py", encoding="utf-8").read()
+_k = _k[:_k.rstrip().rfind("\nmain()")]                   # elders 48 (and through it kit 18): the values that say age, hair on the skull, the look check
+exec(compile(_k, "elders_48_helpers", "exec"), globals())
 
 NAME = "baker_look_47"
 OUT = ROOT + "/Art/StyleTests"
@@ -46,13 +48,12 @@ SAMPLES = int(os.environ.get("WASTED_SAMPLES", 96))
 SCALE = int(os.environ.get("WASTED_SCALE", 100))
 
 # ---- Noor: one woman, three ways of dressing (the designer's values only) ------------------------------------------
-GREY = (0.27, 0.26, 0.27)            # grey that still reads as hair, not as a cap
-IRON_GREY = (0.13, 0.12, 0.13)
-NOOR = dict(height=1.62, build=1.12, skin=(0.56, 0.38, 0.27), eyes=(0.17, 0.10, 0.06), eye_open=0.86, brow=1.1, face_w=1.04,
+IRON_GREY = (0.17, 0.16, 0.17)
+NOOR = dict(age=0.45, stoop=2.0, height=1.62, build=1.12, skin=(0.56, 0.38, 0.27), eyes=(0.17, 0.10, 0.06), eye_open=0.86, brow=1.1, face_w=1.04,
             nose=1.1, shoes=BROWN, bottom=BROWN, extras=("apron",), apron_color=CREAM)
 OPTIONS = [
     ("A", "Linen", dict(NOOR, hair="bun", hair_color=GREY, garment="long", top=BLUEC, scarf=OCHRE)),
-    ("B", "Flour cap", dict(NOOR, hair="bun", hair_color=IRON_GREY, garment="tunic", top=TERRA, extras=("apron", "cap"), cap_color=CREAM)),
+    ("B", "Flour cap", dict(NOOR, hair="bun", hair_color=IRON_GREY, garment="tunic", top=TERRA, baker_cap=CREAM)),
     ("C", "Old Town", dict(NOOR, hair="bob", hair_color=GREY, garment="dress", dress_len=0.40, top=OLIVE, bottom=OLIVE)),
 ]
 
@@ -60,7 +61,14 @@ OPTIONS = [
 def noor(key, x, y, tag):
     sp = dict([o for o in OPTIONS if o[0] == key][0][2])
     sp["name"] = "Noor_%s_%s" % (key, tag)
-    character3(sp, CHAR_STYLES["B"], x, y)
+    elder(sp, x, y)                                          # 58: her age shows (elders_48.py)
+    hd = head_of(sp, x, y)
+    STOOD.append(hd)
+    if "baker_cap" in sp:                                    # a soft cloth cap set on the hair, the hairline showing: not the courier's peaked cap
+        K, (hx, hy), hz = hd["K"], hd["at"], hd["hz"]
+        m = cloth(sp["baker_cap"])
+        ellipsoid(sp["name"] + "_Cap", Vector((hx, hy + 0.030 * K, hz + 0.118 * K)), (0.098 * K, 0.104 * K, 0.058 * K), m)
+        ellipsoid(sp["name"] + "_Cap_Band", Vector((hx, hy + 0.028 * K, hz + 0.088 * K)), (0.104 * K, 0.108 * K, 0.022 * K), m)
 
 
 def noor_scene():
@@ -233,12 +241,18 @@ def main():
     os.makedirs(SRC, exist_ok=True)
     open(LOG, "w").close()
     log("Blender " + bpy.app.version_string)
-    for key in ("noor", "noor_close", "bakery_day", "bakery_four"):
+    for key in ("check", "noor", "noor_close", "bakery_day", "bakery_four"):
         if ONLY and key not in ONLY:
             continue
         try:
             scene = fresh("Furn_" + key)
             bakery_mats()
+            del STOOD[:]
+            if key == "check":                               # the three heads measured close up (look_check.py)
+                noor_scene()
+                configure(scene, -0.3, (420, 420), 48)
+                say(check_heads(scene, list(STOOD), OUT_DIR + "/check"), log)
+                continue
             if key == "noor":
                 noor_scene()
                 render(scene, key, [("cam", (0, -9.2, 1.1), (0, 0, 1.0), 88.0)], -0.3, (1500, 1000))
