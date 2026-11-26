@@ -3391,9 +3391,9 @@ FBrixDialogue::FConversation ABrixLife::StageTalk(const FString& Qid) const
 		if (!X.Who.IsEmpty() && X.Who != TEXT("scene"))   // QST-012: somebody else says it: their name goes before the line
 		{
 			const int32 w = Q->ResidentIndex(X.Who);
-			if (Day && Day->Names.IsValidIndex(w)) X.Say = Day->Names[w] + TEXT(": ") + X.Say;
+			if (Day && Day->Names.IsValidIndex(w)) { X.Speaker = w; X.SpeakerName = Day->Names[w]; }   // shown before the line, and theirs is the voice
 		}
-		if (!X.Dir.IsEmpty()) X.Say = TEXT("(") + X.Dir + TEXT(")\n") + X.Say;   // what is seen, above what is said
+		// what is seen (Dir) is shown above what is said by FBrixDialogue::Shown(): Say stays the words alone, or the line has no voice
 		C.Nodes.Add(TEXT("q:") + Qid + TEXT(":") + N.Key, X);
 	}
 	return C;

@@ -54,7 +54,11 @@ struct BRIXWORLD_API FBrixDialogue
 		TArray<FString> Need, Act;   // a quest's: what the player must have to say it, and what saying it does (BrixQuests)
 		FString Quest, Job;          // the quest line it belongs to; "take" or "hand" for a job (life.js _q, _job)
 	};
-	struct FNode { FString Say, Mood = TEXT("neutral"); TArray<FOption> Options; FString Who, Dir; };   // Who: another resident who says it, or "scene" for a line nobody says; Dir: what is seen, never spoken (QST-012)
+	struct FNode { FString Say, Mood = TEXT("neutral"); TArray<FOption> Options; FString Who, Dir; int32 Speaker = -1; FString SpeakerName; };   // Who: another resident who says it, or "scene" for a line nobody says; Dir: what is seen, never spoken (QST-012)
+	// Speaker, SpeakerName: the resident (index, name) who says a line that is not the one talked to's (QST-012).
+	// What is written in the talk box for a line: what is seen above it in brackets, and the name of somebody else who
+	// says it, before the words. Say itself stays the words alone: they are what is voiced and mouthed (SND-018, CHR-009).
+	static FString Shown(const FNode& N) { return (N.Dir.IsEmpty() ? FString() : TEXT("(") + N.Dir + TEXT(")\n")) + (N.SpeakerName.IsEmpty() ? FString() : N.SpeakerName + TEXT(": ")) + N.Say; }
 	struct FConversation { FString Title, Start; TMap<FString, FNode> Nodes; TMap<FString, FString> Vars; };
 	struct FRule { FString Conversation; TArray<FString> Roles, Acts; TOptional<bool> bWalking; };
 	TMap<FString, FConversation> Conversations;

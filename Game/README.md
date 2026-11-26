@@ -499,9 +499,11 @@ hushed when the next line starts or the talk closes (`SND018_unvoiced_lines_are_
 `Tools/unreal/sound_values.py`; the player's unvoiced answers are silent, as in the slice).
 Who has which voice is the slice's index, which names residents by id (ADR-0060); `Tools/unreal/people_values.py` turns it
 into the list by place in the residents that `BrixTalk` reads (-1: not voiced). Not yet: `BrixTalk` reading the voices by
-id itself, so until then `people_values.py` must be run again whenever the residents or the voices change; and the list
-made on 2026-11-26 (3,984 residents, where it was 1,134) has not been run in Unreal (`SND018_lines_are_voiced` not run).
-Oda (r3419) speaks her seventeen story lines in her own voice (`cast_oda`, made by `Tools/voice/cast/`, ADR-0060); not yet:
+id itself, so until then `people_values.py` must be run again whenever the residents or the voices change.
+A story line's words alone are voiced and mouthed: what is seen (its direction) and the name of somebody else who says it are
+written in the box before the words (`FBrixDialogue::Shown`), and somebody else's line is in their own voice (QST-012).
+Oda (r3419) speaks her seventeen story lines in her own voice (`cast_oda`, made by `Tools/voice/cast/`, ADR-0060;
+`SND018_the_cast_speak_their_story_lines`; eleven of them seen in the log of two staged talks on 2026-11-26, sound off). Not yet:
 the other twelve of the Baker cast, the lines nobody says, and Oda's everyday talk, which is murmured until it is voiced.
 To see one without anyone at the keys: `-BrixTalk=<resident index>` (and `-BrixAnswers=1,2`, a second and a half apart or
 `-BrixAnswerGap=<s>`) with `-BrixShot=`.
@@ -1269,6 +1271,7 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.CHR016_clothes_bought_set_only_their_parts` | CHR-016 |
 | `BrixTown.World.QST008_a_save_brings_the_game_back` | QST-008 |
 | `BrixTown.World.SND018_lines_are_voiced` | SND-018 |
+| `BrixTown.World.SND018_the_cast_speak_their_story_lines` | SND-018, QST-012 |
 | `BrixTown.World.SND018_unvoiced_lines_are_murmured` | SND-018 |
 | `BrixTown.World.ECO001_money_is_whole_chips_in_balanced_lines` | ECO-001, ECO-002, ECO-003, BANK-007 |
 | `BrixTown.World.ECO002_the_ledger_matches_the_python` | ECO-002, ECO-005, ECO-010, ECO-011, ECO-013, BANK-001, BANK-007 |

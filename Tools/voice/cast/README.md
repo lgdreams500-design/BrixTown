@@ -32,6 +32,10 @@ their Python packages are not in the repository.
    python -m unittest test_voices            (in Tools/voice)
    python ..\..\unreal\people_values.py      (the Unreal build's copy, Game/Data/talk.json)
    ```
+   Then build and run the Unreal test `BrixTown.World.SND018_the_cast_speak_their_story_lines`: every line of every
+   cast-voiced person must find its clips. To see a scene without anyone at the keys, stage it (the save is not touched):
+   `-BrixNoSave -BrixLife=act,<quest>,<giver id>,start|stage:<stage> -BrixTalk=<the resident's place in the list> -BrixAnswers=1,1,...`;
+   the log says `<resident> says "..." aloud` for each line the game speaks.
 
 ## Rules (the owner's, 2026-11-26)
 - **The instructions are locked.** No direction written for a single line, no choosing between several readings of a
@@ -74,4 +78,4 @@ All thirteen people of the Baker career have a profile and an approved voice car
   both are women (2026-11-26). The profiles here are right; the writing is to be corrected.
 - The accents (British throughout) were this tool's assumption; the owner approved the cards made with it but was
   never asked about accents as such.
-- The Unreal build has not been run with Oda's clips (`SND018_lines_are_voiced` not run).
+- Nobody has listened to Oda in the Unreal game itself: the staged runs had the sound off.
