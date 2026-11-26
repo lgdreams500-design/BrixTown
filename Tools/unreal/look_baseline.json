@@ -465,11 +465,11 @@
   "warmth": 0.258
  },
  "street_2230": {
-  "burnt": 0.0074,
-  "crushed": 0.4997,
-  "flat": 0.5654,
-  "shade": 5.02,
-  "warmth": -0.478
+  "burnt": 0.0082,
+  "crushed": 0.4122,
+  "flat": 0.4483,
+  "shade": 5.09,
+  "warmth": -0.348
  },
  "tower_in_1200": {
   "burnt": 0.0,

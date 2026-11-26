@@ -1190,6 +1190,8 @@ first audit's findings are in LOOK_GATE.md.
   own or a neighbour's seen through the glass.
 - **The spawn alley in rain (G6):** the player is a dark shape against the grey haze (wet clothes, in shade).
 - **Riding a bus (G8):** the bottom of a tree's crown can be in the picture.
+- **The look tour's baseline:** written on 2026-11-26 before the new street lamps (WLD-072) came in; only
+  `street_2230` was taken again after them, so other night stops may report a move that is those lamps.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.
