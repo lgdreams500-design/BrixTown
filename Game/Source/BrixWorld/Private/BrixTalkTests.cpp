@@ -108,6 +108,8 @@ bool FCITY007_ConversationsAreSound::RunTest(const FString&)
 // cast voice (Tools/voice/cast), every line they say in World/rules/quests_story.json has its clips, looked up by the
 // line's words alone, and each clip is a file. What is seen and who speaks are shown in the box but are not part of the
 // words: a line with a direction in front of it would find no voice (it did; found by running Oda's scenes, 2026-11-26).
+// A person whose entry in World/rules/voices.json is "partial" (Noor, voiced in part by Maya1, ADR-0063) may have lines
+// with no voice yet, which are murmured; every line they do have a voice for must find all its clips.
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSND018_TheCastSpeakTheirLines, "BrixTown.World.SND018_the_cast_speak_their_story_lines",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
 bool FSND018_TheCastSpeakTheirLines::RunTest(const FString&)
@@ -131,14 +133,18 @@ bool FSND018_TheCastSpeakTheirLines::RunTest(const FString&)
 		FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), O);
 		return O;
 	};
-	const TSharedPtr<FJsonObject> City = Read(TEXT("../World/city_01/residents.json")), Story = Read(TEXT("../World/rules/quests_story.json")), Cast = Read(TEXT("../World/rules/story_cast.json"));
-	if (!TestTrue(TEXT("the residents, the story and its cast are read"), City.IsValid() && Story.IsValid() && Cast.IsValid())) return false;
+	const TSharedPtr<FJsonObject> City = Read(TEXT("../World/city_01/residents.json")), Story = Read(TEXT("../World/rules/quests_story.json")), Cast = Read(TEXT("../World/rules/story_cast.json")), Voices = Read(TEXT("../World/rules/voices.json"));
+	if (!TestTrue(TEXT("the residents, the story, its cast and the voices are read"), City.IsValid() && Story.IsValid() && Cast.IsValid() && Voices.IsValid())) return false;
+	TSet<FString> Partial;   // residents whose part is not all voiced yet
+	for (const auto& KV : Voices->GetObjectField(TEXT("people"))->Values)
+		if (KV.Value->AsObject()->HasField(TEXT("partial"))) Partial.Add(FString(KV.Key));
 	TMap<FString, int32> Index;
 	for (const TSharedPtr<FJsonValue>& R : City->GetArrayField(TEXT("residents"))) Index.Add(R->AsObject()->GetStringField(TEXT("id")), Index.Num());
 	TMap<FString, FString> Played;   // a cast id is the resident who plays it
 	for (const auto& KV : Cast->GetObjectField(TEXT("cast"))->Values) Played.Add(FString(KV.Key), KV.Value->AsString());
 	const FString Root = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT(".."), D.VoiceDir));
 	int32 Lines = 0, Speakers = 0;
+	TMap<FString, int32> Voiced;   // lines with a voice, by resident
 	TSet<int32> Seen;
 	for (const auto& QV : Story->GetObjectField(TEXT("quests"))->Values)
 	{
@@ -167,13 +173,15 @@ bool FSND018_TheCastSpeakTheirLines::RunTest(const FString&)
 				++Lines;
 				if (!Seen.Contains(*w)) { Seen.Add(*w); ++Speakers; }
 				const TOptional<FBrixDialogue::FPlan> P = D.Plan(*w, Say, {}, Mood);
-				if (!P) { AddError(FString::Printf(TEXT("%s has no voice for: %s"), *Rid, *Say)); continue; }
+				if (!P) { if (!Partial.Contains(Rid)) AddError(FString::Printf(TEXT("%s has no voice for: %s"), *Rid, *Say)); continue; }
+				Voiced.FindOrAdd(Rid)++;
 				for (const TPair<FString, double>& Part : P->Parts)
 					if (Part.Key.IsEmpty() || !FPaths::FileExists(FPaths::Combine(Root, Part.Key))) AddError(FString::Printf(TEXT("%s: a piece of this line is not voiced: %s"), *Rid, *Say));
 			}
 		}
 	}
-	TestTrue(TEXT("Oda, the first of the cast, speaks her seventeen lines"), Speakers >= 1 && Lines >= 17);
+	TestTrue(TEXT("Oda, the first of the cast, speaks her seventeen lines"), Speakers >= 1 && Voiced.FindRef(TEXT("r3419")) >= 17);
+	TestTrue(TEXT("Noor speaks the 32 lines Maya1 has voiced for her"), Voiced.FindRef(TEXT("r0262")) >= 32);
 	return !HasAnyErrors();
 }
 
