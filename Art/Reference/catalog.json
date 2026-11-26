@@ -64,9 +64,9 @@
     "World/WorldAlley_Fog.jpg",
     "World/WorldAlley_Snow.jpg"
    ],
-   "locks": "The look of the world (the old-town alley of style test 02: matte mottled plaster and stone, soft rounded forms, W1-W8) at morning, midday and dusk; at night with the lamps on, and with them off under a full and a new moon; and by day in cloud, rain, fog and snow. No haze at midday. Rain and snow fall, puddles lie with rings where the drops fall into them, and the snow lies, only where the sky is open over them: never under the passage's roof. Only the light and the weather change between them.",
+   "locks": "The look of the world (the old-town alley of style test 02: matte mottled plaster and stone, soft rounded forms, W1-W8) at morning, midday and dusk; at night with the lamps on, and with them off under a full and a new moon; and by day in cloud, rain, fog and snow. No haze at midday. Rain and snow fall, puddles lie with rings where the drops fall into them, and the snow lies, only where the sky is open over them: never under the passage's roof. Only the light and the weather change between them. Rain as the game's (Game/README Weather): thin pale streaks (4.5 mm), the open paving darker with a faint sheen in half-metre cells, soft-edged dark puddles with a little mirror and faint grey rings; none under a roof or arch.",
    "approved": "2026-11-26",
-   "decision": "the owner, 2026-11-26: \"approved\" (a reference shows every setting, not one; replaces WorldLook and the alley of WorldHours; ADR-0061)",
+   "decision": "the owner, 2026-11-26: \"approved\" (a reference shows every setting, not one; replaces WorldLook and the alley of WorldHours; ADR-0061); its rain redone as the game's (the owner, 2026-11-26: \"Yes, both\"; drops half as wide)",
    "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=alley), on the alley of Tools/blender/old_town_04.py",
    "models": [
     "Game/Source/BrixTown/Private/BrixLight.cpp and Game/Config/DefaultGame.ini [/Script/BrixTown.BrixLight] (the sun, sky, haze, the eye)",
@@ -147,6 +147,41 @@
     "The shade is lifted by light bounced more strongly than the stone's own colour gives (paving x2.4, stone x1.8): the surfaces look as before, the light in shade is a lift, not a measurement.",
     "Cloudy still throws a soft-edged patch of sun on the arcade floor.",
     "Lying snow is laid in 25 cm squares (as in WorldSky)."
+   ]
+  },
+  {
+   "id": "WorldStreet",
+   "category": "World",
+   "status": "proposed",
+   "title": "The street at every hour and in every weather",
+   "files": [
+    "World/WorldStreet_Morning.jpg",
+    "World/WorldStreet_Midday.jpg",
+    "World/WorldStreet_Dusk.jpg",
+    "World/WorldStreet_NightLamps.jpg",
+    "World/WorldStreet_NightFullMoon.jpg",
+    "World/WorldStreet_NightNewMoon.jpg",
+    "World/WorldStreet_Cloudy.jpg",
+    "World/WorldStreet_Rain.jpg",
+    "World/WorldStreet_Fog.jpg",
+    "World/WorldStreet_Snow.jpg"
+   ],
+   "locks": "The example street of real lots from World/ (building_kit_07): the café's awning and its lit windows, the facades' relief raked by the sun, the far rows closing it in haze; street lamps lit at dusk and on the lamp-lit night, dark on the moonlit nights; the full moon a cool light, a new moon only stars. Rain as the game's (Game/README Weather): thin pale streaks (4.5 mm), the open paving darker with a faint sheen in half-metre cells, soft-edged dark puddles with a little mirror and faint grey rings; none under a roof or arch. Snow lies only under open sky.",
+   "approved": "proposed 2026-11-26, for the owner to review",
+   "decision": "the owner, 2026-11-26: \"Street needs to have references for all 4 settings morning, mid day, dusk, and night\"; rain as the game's (\"Yes, both\"); ADR-0061",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=street) on the street of Tools/blender/building_kit_07.py",
+   "models": [
+    "World/rules/sky.json (weather)",
+    "Game/Source/BrixTown (the game's streets, lamps and weather)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.4, W1-W7",
+   "was": [
+    "World/WorldDaylight.png (the street by morning)"
+   ],
+   "issues": [
+    "Falling snow near the camera reads as clumps of square flakes on the right.",
+    "Lying snow and the wet film are laid in squares (25 cm, 50 cm): their edges show where cover begins.",
+    "Rings near the camera are larger than the game's."
    ]
   },
   {

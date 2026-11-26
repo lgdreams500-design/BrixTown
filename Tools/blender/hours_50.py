@@ -68,11 +68,13 @@ HOURS = [
     ("Snow", 50, 0.15, (1.0, 0.98, 0.96), (0.60, 0.63, 0.68), 3.4, 2.20, "day", 0, 0.0, 110, "snow"),
 ]
 WEATHER = dict(sun_angle=dict(cloud=12.0, rain=20.0, fog=20.0, snow=20.0),     # the sun's light softens behind cloud (degrees)
-               drops_seen=1800, drop_length=0.2, drop_width=0.009, drop_alpha=0.75, drop_slant=0.1, near=5.0,   # sky.json "rain"
-               wet_roughness=0.32,                                                # wet paving and stone catch the sky
+               drops_seen=1800, drop_length=0.2, drop_width=0.0045, drop_alpha=0.75, drop_slant=0.1, near=5.0,   # sky.json "rain"
+               wet_roughness=0.32, wet_alpha=0.18,                                                # wet paving and stone catch the sky
                flakes_seen=3600, flake_size=0.045, flake_alpha=1.0, flake_near=5.0,    # sky.json "snow"
                fog_lamps=0.3, fall_glow=0.0,
-               puddles=22, puddle_size=(0.6, 1.5), ripples_per=(5, 9), ripple_width=0.009, ripple_alpha=0.8,   # sky.json rain                                      # drops and flakes: their own faint light                                                     # lanterns by day in fog: their glow tinted it brown
+               puddles=34, puddle_size=(0.5, 1.6), ripples_per=(5, 9), ripple_width=0.006, ripple_alpha=0.3, ripple_colour=(0.5, 0.53, 0.57),
+               puddle_colour=(0.022, 0.025, 0.03), puddle_roughness=0.08, puddle_core=0.55, puddle_depth=0.85,   # as the game's puddles
+               wet_step=0.5, wet_reach=60.0,                                     # the wet film: half-metre cells, as the game's roof map   # sky.json rain                                      # drops and flakes: their own faint light                                                     # lanterns by day in fog: their glow tinted it brown
                snow_colour=(0.86, 0.90, 0.96), snow_facing=(0.55, 0.80), snow_cover=0.9,   # lying snow on what faces up
                snow_step=0.25, snow_reach=24.0)                    # where it lies: rays from the sky this far apart, this far round                                   # ... and has the sky over it (nothing within this, straight up)
 EYE_MAX = 6.0          # the night's eye opens at most this many stops past the place's own exposure
@@ -336,6 +338,7 @@ def bounce_more(times):
             nt.links.new(pick.outputs[2], base)
 
 
+
 WET = {}                                                   # material -> its roughness when dry
 
 
@@ -344,6 +347,7 @@ def weather_out(scene, cam, kind):
     Returns what to take away afterwards (lying snow stays: Snow is the last setting)."""
     made = []
     if kind == "rain":
+        made.append(lying(scene, cam, "Wet", wet_film(), 0.002, 0.0, tile=True, step=WEATHER["wet_step"], reach=WEATHER["wet_reach"]))   # the open paving darker and sheened, as the game's
         made += puddles(scene, cam)                                   # water only where the rain falls, not under a roof
         made.append(falling(scene, cam, "Rain", WEATHER["drops_seen"], (WEATHER["drop_width"], WEATHER["drop_width"], WEATHER["drop_length"]),
                             (0.60, 0.67, 0.78), WEATHER["drop_alpha"], WEATHER["drop_slant"], WEATHER["near"]))
@@ -441,19 +445,29 @@ def puddles(scene, cam):
     down = Vector((0.0, 0.0, -1.0))
     cx, cy = cam.location.x, cam.location.y
     water = bpy.data.materials.get("M_Puddle")
-    if water is None:
+    if water is None:                                              # as the game's: a darker, still patch, softly edged
         water = bpy.data.materials.new("M_Puddle")
         water.use_nodes = True
-        b = next(n for n in water.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
-        b.inputs["Base Color"].default_value = (0.04, 0.045, 0.05, 1.0)
-        b.inputs["Roughness"].default_value = 0.04                # still water: a mirror of the sky and the walls
-        b.inputs["Specular IOR Level"].default_value = 1.0
+        nt = water.node_tree
+        b = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED')
+        b.inputs["Base Color"].default_value = (*WEATHER["puddle_colour"], 1.0)
+        b.inputs["Roughness"].default_value = WEATHER["puddle_roughness"]
+        out = next(n for n in nt.nodes if n.type == 'OUTPUT_MATERIAL')
+        tr = nt.nodes.new("ShaderNodeBsdfTransparent")
+        uv = nt.nodes.new("ShaderNodeUVMap")                       # the fade rides in the UV map's u
+        sx = nt.nodes.new("ShaderNodeSeparateXYZ")
+        nt.links.new(uv.outputs["UV"], sx.inputs[0])
+        mx = nt.nodes.new("ShaderNodeMixShader")
+        nt.links.new(sx.outputs["X"], mx.inputs["Fac"])
+        nt.links.new(tr.outputs[0], mx.inputs[1])
+        nt.links.new(b.outputs[0], mx.inputs[2])
+        nt.links.new(mx.outputs[0], out.inputs["Surface"])
     ring = bpy.data.materials.get("M_Ripple")
     if ring is None:
         ring = bpy.data.materials.new("M_Ripple")
         ring.use_nodes = True
         b = next(n for n in ring.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
-        b.inputs["Base Color"].default_value = (0.75, 0.78, 0.82, 1.0)
+        b.inputs["Base Color"].default_value = (*WEATHER["ripple_colour"], 1.0)
         b.inputs["Roughness"].default_value = 0.3
         b.inputs["Alpha"].default_value = WEATHER["ripple_alpha"]
         setp(ring, "blend_method", 'BLEND')
@@ -471,6 +485,8 @@ def puddles(scene, cam):
     lens = cam.data.lens / 36.0
     bp, br = bmesh.new(), bmesh.new()
     made, tries = 0, 0
+    apart = []                                                     # (x, y, reach) of the puddles laid so far
+    core = set()                                                   # the verts inside the soft edge
     reach = WEATHER["snow_reach"]
     while made < WEATHER["puddles"] and tries < WEATHER["puddles"] * 40:
         tries += 1
@@ -482,6 +498,8 @@ def puddles(scene, cam):
         if not g or g[1].z < 0.97 or g[0].z > 0.25 or g[2].name.startswith(("Fig_", "MoonDisc")):
             continue                                               # puddles on the ground only, level, open to the sky
         rx, ry = rng.uniform(*WEATHER["puddle_size"]), rng.uniform(*WEATHER["puddle_size"])
+        if any(math.hypot(x - px0, y - py0) < (max(rx, ry) + pr) * 1.25 for px0, py0, pr in apart):
+            continue                                               # puddles apart: overlapping ones mirror each other black
         turn = rng.uniform(0, math.pi)
         edge = []
         ok = True
@@ -497,10 +515,16 @@ def puddles(scene, cam):
             edge.append(Vector((px, py, g[0].z + 0.004)))
         if not ok:
             continue
+        apart.append((x, y, max(rx, ry) * 1.3))
         mid = bp.verts.new(Vector((x, y, g[0].z + 0.004)))
-        vs = [bp.verts.new(e) for e in edge]
+        vs = [bp.verts.new(e) for e in edge]                       # the edge, where the water thins to nothing
+        cen = Vector((x, y, g[0].z + 0.004))
+        ins = [bp.verts.new(cen + (e - cen) * WEATHER["puddle_core"]) for e in edge]   # the full water inside
         for k in range(len(vs)):
-            bp.faces.new((mid, vs[k], vs[(k + 1) % len(vs)]))
+            bp.faces.new((mid, ins[k], ins[(k + 1) % len(vs)]))
+            bp.faces.new((ins[k], vs[k], vs[(k + 1) % len(vs)], ins[(k + 1) % len(vs)]))
+        for v in [mid] + ins:
+            core.add(v)
         for _ in range(rng.randint(*WEATHER["ripples_per"])):  # rings spreading where drops hit, a few at a time
             a, d = rng.uniform(0, 2 * math.pi), rng.uniform(0.0, 0.6) * min(rx, ry)
             rc = Vector((x + math.cos(a) * d, y + math.sin(a) * d, g[0].z + 0.006))
@@ -514,6 +538,10 @@ def puddles(scene, cam):
                     br.faces.new((inner[k], inner[(k + 1) % 28], outer[(k + 1) % 28], outer[k]))
         made += 1
     obs = []
+    lay = bp.loops.layers.uv.new("UVMap")
+    for f in bp.faces:
+        for lp in f.loops:
+            lp[lay].uv = (WEATHER["puddle_depth"] if lp.vert in core else 0.0, 0.0)
     for bm, nm, m in ((bp, "Puddles", water), (br, "Ripples", ring)):
         me = bpy.data.meshes.new(nm)
         bm.to_mesh(me)
@@ -533,19 +561,19 @@ def wet_film():
         m = bpy.data.materials.new("M_WetFilm")
         m.use_nodes = True
         b = next(n for n in m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
-        b.inputs["Base Color"].default_value = (0.06, 0.06, 0.07, 1.0)
+        b.inputs["Base Color"].default_value = (0.05, 0.05, 0.055, 1.0)
         b.inputs["Roughness"].default_value = WEATHER["wet_roughness"]
-        b.inputs["Alpha"].default_value = 0.4
+        b.inputs["Alpha"].default_value = WEATHER["wet_alpha"]
         setp(m, "blend_method", 'BLEND')
     return m
 
 
-def lying(scene, cam, name, mat, lift, jitter):
+def lying(scene, cam, name, mat, lift, jitter, tile=False, step=None, reach=None):
     """What lies where it falls (snow; the rain's wet): rays straight down from the sky every snow_step m over the ground
     round the camera; where one first lands on a face turned up (paving, a bench, a crate, a ledge, a roof) a thin patch
     lies on it. Under a roof or an arch nothing lands, so the paving there stays bare and dry (WLD-070)."""
     dg = bpy.context.evaluated_depsgraph_get()
-    step, reach, lo = WEATHER["snow_step"], WEATHER["snow_reach"], WEATHER["snow_facing"][0]
+    step, reach, lo = step or WEATHER["snow_step"], reach or WEATHER["snow_reach"], WEATHER["snow_facing"][0]
     down = Vector((0.0, 0.0, -1.0))
     cx, cy = cam.location.x, cam.location.y
     rng = random.Random(51)
@@ -564,7 +592,7 @@ def lying(scene, cam, name, mat, lift, jitter):
                 continue
             h = lift + jitter * rng.random()                 # a soft, uneven cover
             c = loc + nrm * h
-            a, b = step * 0.56, step * 0.56
+            a, b = (step * 0.5, step * 0.5) if tile else (step * 0.56, step * 0.56)   # wet: edge to edge, no doubled film
             v = [bm.verts.new(c + Vector((dx * a, dy * b, 0.0))) for dx, dy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
             bm.faces.new(v)
             n += 1
