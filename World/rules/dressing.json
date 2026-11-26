@@ -16,6 +16,14 @@
  "films": ["The Lantern Thief", "Summer on Quarry Hill", "Two Tickets to Linden", "The Last Tram", "A Fountain in Winter", "Market Day Murder"],
  "film_every_days": 2,
  "bunting": "market_days",
+ "street_lamps": {
+  "note": "WLD-072: every pavement of the street grid (the blocks wholly in grid columns grid[0] to grid[2]-1 and rows grid[1] to grid[3]-1 that have lots: Old Town and Civic Row, not the open ground of WLD-056), looked at every step_m at the kerb, kerb_m out from the block's edge, is within reach_m of a street lamp. Tools/worldgen/add_lamps_01.py adds the lamps (set lamps), keeping clear_m from doors, tram stops, other street things, trees, the zebras and the bus stops. [ASSUMPTION] until tuned.",
+  "grid": [6, 4, 14, 13],
+  "kerb_m": 4.0,
+  "reach_m": 20.0,
+  "step_m": 2.0,
+  "clear_m": {"door": 3.2, "tram": 9.0, "thing": 1.6, "tree": 2.0, "zebra": 2.5, "stop": 10.0}
+ },
  "motion": {
   "swing_period_s": 2.9,
   "swing_angle_deg": 32,

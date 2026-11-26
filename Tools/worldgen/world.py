@@ -1228,6 +1228,46 @@ DRESS_KINDS = {"playground", "swing", "slide", "seesaw", "sandpit", "climber", "
 PLAY_USES = ("swing", "slide", "seesaw", "sandpit", "climb")
 
 
+def lit_pavements(w, blocks=None):
+    """WLD-072: the kerb points of every pavement of the street grid, as dressing.json "street_lamps" says to look at
+    them: [(block id, side, (x, z))] (add_lamps_01.py lights them; lamp_problems() checks it)."""
+    r, P = w["dressing"]["street_lamps"], w["city"]["grid"]["pitch"]
+    g, k, step, sw = r["grid"], r["kerb_m"], r["step_m"], w["city"]["grid"]["street_width"]
+    out = []
+    for b in (blocks if blocks is not None else w["blocks"]):
+        i, j = b["grid"]
+        c, n = b.get("span", [1, 1])
+        if not (g[0] <= i and i + c <= g[2] and g[1] <= j and j + n <= g[3]) or not b["lots"]:   # open ground (WLD-056) is not lit
+            continue
+        ox, oz = b["origin"]
+        W, H = b["size"] * c + sw * (c - 1), b["size"] * n + sw * (n - 1)
+        for side, at, L in (("n", lambda t: (ox + t, oz - k), W), ("s", lambda t: (ox + t, oz + H + k), W),
+                            ("w", lambda t: (ox - k, oz + t), H), ("e", lambda t: (ox + W + k, oz + t), H)):
+            out += [(b["id"], side, at(-k + q * step)) for q in range(int((L + 2 * k) / step) + 1)]
+    return out
+
+
+def lamp_problems(w):
+    """Every rule the street lamps must keep (WLD-072). Returns a list of problems in plain words."""
+    r, out = w["dressing"]["street_lamps"], []
+    lamps = [(b["id"], p) for b in w["blocks"] for p in b["props"] if p["kind"] == "lamp"]
+    grid = {}
+    for _, p in lamps:
+        grid.setdefault((int(p["pos"][0] // 32), int(p["pos"][1] // 32)), []).append(p["pos"])
+    for bid, side, (x, z) in lit_pavements(w):
+        near = [q for i in range(int(x // 32) - 1, int(x // 32) + 2) for j in range(int(z // 32) - 1, int(z // 32) + 2) for q in grid.get((i, j), [])]
+        if not any(math.hypot(x - a, z - c) <= r["reach_m"] for a, c in near):
+            out.append("%s: the %s pavement at (%.1f, %.1f) is more than %.0f m from a street lamp" % (bid, side, x, z, r["reach_m"]))
+    doors = [l["door"] for l in lots(w)]
+    for bid, p in lamps:
+        if p.get("set") != "lamps":
+            continue
+        x, z = p["pos"]
+        if any(math.hypot(x - d[0], z - d[1]) < r["clear_m"]["door"] - 1e-6 for d in doors):
+            out.append("%s: lamp %s at %s stands in a doorway" % (bid, p.get("id"), p["pos"]))
+    return out
+
+
 def dressing_problems(w):
     """Every rule the street dressing must keep (WLD-028, WLD-034). Returns a list of problems in plain words."""
     out = []
