@@ -14,8 +14,10 @@ counts everything; hides her hands. Three options, the same woman dressed three 
     A  Linen      a dusty-blue long tunic to the knee, a cream apron, an ochre kerchief at the neck, a grey bun
     B  Flour cap  terracotta tunic, a cream apron and a soft cream baker's cap set on a dark grey bun
     C  Old Town   an olive dress to the shin, a cream apron, a grey bob
-The bakery: a stone oven with an arched mouth and a wood store under it, a kneading bench, racks of loaves, flour
-sacks, the counter, and the crock of the Mother on the top shelf.
+The bakery: a stone oven with an arched mouth and a wood store under it, a kneading bench with a tray of rolls, racks
+of loaves with the crock of the Mother on the top shelf, flour sacks under the price board, the counter, the plank door
+to the alley with its lantern (the four o'clock door) and the door to the proofing room. Its light is set against
+Art/Reference/interior_room_daylight.png: mostly warm shade, a patch of sun, pools of lamp and oven light.
 
 Renders go to Art/StyleTests/baker_look_47/:
     noor.png          the three options, full height
@@ -122,7 +124,7 @@ def stone_oven(P):
     ball(P, "Oven_Embers", M["ember"], 0, -d / 2 - 0.02, mz + 0.02, 0.62, 0.1, 0.14)   # the fire, seen in the mouth
     for i, (x, hh) in enumerate(((-0.14, 0.26), (0.02, 0.36), (0.17, 0.22))):
         ball(P, "Oven_Flame%d" % i, M["flame"], x, -d / 2 - 0.02, mz + 0.04 + hh / 2, 0.15, 0.06, hh)
-    light(P, "Oven_Glow", 0, -d / 2 - 0.35, mz + 0.2, 110.0)
+    light(P, "Oven_Glow", 0, -d / 2 - 0.35, mz + 0.2, 45.0)
     for i in range(9):                                       # the arch stones round the mouth
         a = math.pi * (i + 0.5) / 9
         x, z = math.cos(a) * (mr + 0.1), mz + 0.14 + math.sin(a) * (mr + 0.1)
@@ -199,26 +201,60 @@ def shop_counter(P, L, rng):
         rod(P, "Ctr_Baton%d" % i, M["crust"], (-1.25 + math.cos(a) * 0.12, math.sin(a) * 0.12, 0.25), (-1.25 + math.cos(a) * 0.2, math.sin(a) * 0.2, 0.92), 0.045)
 
 
+def door(P, n, w=0.9, h=2.05, lamp=False):
+    """A plank door in a stone frame against a wall (the wall is at +y of the group), with a latch; lamp: a lantern over it."""
+    rbox(P, n + "_Frame", M["stone_dark"], 0, 0.0, h / 2 + 0.04, w + 0.24, 0.1, h + 0.16, 0.02)
+    rbox(P, n + "_Leaf", M["wood"], 0, -0.04, h / 2, w, 0.07, h, 0.015)
+    for i in range(4):
+        rbox(P, n + "_Plank%d" % i, M["cardboard"] if i % 2 else M["wood"], -w / 2 + w * (i + 0.5) / 4, -0.08, h / 2, w / 4 - 0.02, 0.02, h - 0.08, 0.008)
+    for z in (0.35, h - 0.35):
+        rbox(P, n + "_Strap%d" % int(z * 10), M["iron"], 0, -0.095, z, w - 0.06, 0.02, 0.07, 0.008)
+    ball(P, n + "_Latch", M["iron"], w / 2 - 0.12, -0.11, 1.0, 0.07, 0.07, 0.07)
+    if lamp:
+        rbox(P, n + "_Lamp", M["shade"], 0, -0.12, h + 0.32, 0.16, 0.14, 0.2, 0.03)
+        light(P, n + "_LampLight", 0, -0.3, h + 0.3, 18.0)
+
+
+def price_board(P):
+    rbox(P, "Board", M["chalk"], 0, 0, 1.75, 1.0, 0.04, 0.7, 0.01)
+    frame_rect(P, "Board_Frame", M["wood"], 0, -0.01, 1.75, 1.06, 0.76)
+    for i, wd in enumerate((0.62, 0.5, 0.7, 0.44)):
+        rbox(P, "Board_Line%d" % i, M["cream"], -0.42 + wd / 2, -0.03, 1.98 - i * 0.15, wd, 0.008, 0.03, 0.004)
+        rbox(P, "Board_Price%d" % i, M["ochre"], 0.36, -0.03, 1.98 - i * 0.15, 0.14, 0.008, 0.03, 0.004)
+
+
+def rolls_tray(P, n, x, y, z, rng):
+    rbox(P, n, M["iron"], x, y, z + 0.012, 0.6, 0.4, 0.025, 0.008)
+    for i in range(4):
+        for j in range(3):
+            ball(P, "%s_Roll%d%d" % (n, i, j), M["crust"] if (i + j) % 3 else M["crust_dark"], x - 0.21 + i * 0.14, y - 0.12 + j * 0.12, z + 0.06, 0.12, 0.11, 0.08)
+
+
 def bakery_scene(four):
     rng = random.Random(45)
     L = [l for l in lines() if l["key"] == "oldtown"][0]
     room_shell("Bakery", 0, 0, w=7.6, d=4.8, h=3.0, front=2.6)
     stone_oven(group("Oven", -2.35, 1.6))
-    racks(group("Racks", 1.15, 2.12), L, rng, w=3.2)
-    bench(group("Bench", -0.2, -0.15, 0.06), L, rng)
-    sacks(group("Sacks", -3.25, -1.0, math.pi / 2), rng)
+    racks(group("Racks", 1.75, 2.12), L, rng, w=2.5)
+    door(group("Door_Proofing", -0.45, 2.36), "Proofing")                    # the proofing room: its key is a quest's reward
+    door(group("Door_Alley", -3.76, -1.9, math.pi / 2), "Alley", lamp=True)  # the side door bakers use, the four o'clock door
+    price_board(group("PriceBoard", -3.78, -0.2, math.pi / 2))                  # on the wall over the flour sacks
+    Pb = group("Bench", -0.2, -0.15, 0.06)
+    bench(Pb, L, rng)
+    rolls_tray(Pb, "Tray", 0.72, -0.2, 0.905, rng)
+    sacks(group("Sacks", -3.25, -0.2, math.pi / 2), rng)
     shop_counter(group("Counter", 2.35, -1.5, math.pi), L, rng)
     d_pendant(group("Pendant_A", -0.2, -0.15), L, rng)
     d_pendant(group("Pendant_B", 2.4, -1.4), L, rng)
-    noor("N", 1.25, -0.55, "S")
+    noor("N", 0.35, 0.72, "S")                              # behind her bench, at work
     for ob in SCENE.objects:                                 # by day the lamps are low and the window carries the room (I5)
         if ob.type == 'LIGHT' and ob.name.startswith("Pen_Light"):
-            ob.data.energy *= 1.0 if four else 0.12
+            ob.data.energy *= 0.5 if four else 0.06
     if four:                                                 # the four o'clock door: no sun yet, the oven and the lamps carry the room
         sun_and_sky(SCENE, (0.42, 0.83, 0.36), 0.02, (0.5, 0.6, 1.0), (0.01, 0.02, 0.07), 0.25)
     else:
         sun_and_sky(SCENE, (0.78, 0.30, 0.42), 8.5, (1.0, 0.86, 0.68), (0.42, 0.55, 0.82), 0.25)
-    return [("cam", (0.9, -3.9, 1.65), (-0.55, 0.9, 1.1), 19.0)]
+    return [("cam", (1.5, -4.75, 1.7), (-0.75, 0.5, 1.1), 15.5)]
 
 
 def bakery_mats():
@@ -266,7 +302,7 @@ def main():
                 render(scene, key, [("cam", (0, -7.4, 1.42), (0, 0, 1.3), 62.0)], -0.3, (2000, 760))
             else:
                 cams = bakery_scene(key == "bakery_four")
-                render(scene, key, cams, 0.35 if key == "bakery_four" else 1.0, (1700, 1000))
+                render(scene, key, cams, 0.55 if key == "bakery_four" else 1.15, (1700, 1000))
                 if key == "bakery_day":
                     try:
                         bpy.ops.wm.save_as_mainfile(filepath=SRC + "/" + NAME + ".blend", check_existing=False)
