@@ -484,6 +484,48 @@
       }
     },
     {
+      "id": "F-BLD-ADVENTURE",
+      "area": "map",
+      "title": "Adventure arcade in a mall egg",
+      "why": "Something to do at the mall: one of Eastgate's egg halls becomes an arcade with adventure sports, a climbing wall up into the egg, a ropes course round the balconies, trampolines and arcade games (the owner, 2026-11-27: \"one of the eggs in the mall should be an arcade with adventure sports like rock climbing etc.\").",
+      "pillars": [
+        1,
+        2,
+        3
+      ],
+      "spec": [],
+      "levels": [
+        {
+          "name": "None",
+          "what": "The four eggs stay the four big stores.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "To look at",
+          "what": "One egg hall fitted as an adventure arcade: a climbing wall rising into the egg, a ropes course along the balconies, trampolines, arcade cabinets; residents are seen on them; the player can walk round but not play.",
+          "effort": "M",
+          "needs": {
+            "F-BLD-MALL": 2
+          }
+        },
+        {
+          "name": "To play",
+          "what": "As To look at, and the player can climb the wall, go round the ropes course, bounce and play the cabinets; a go costs coins through the ledger; staff run it.",
+          "effort": "L",
+          "needs": {
+            "F-BLD-MALL": 2,
+            "F-NPC-POP": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
       "id": "F-BLD-HOSPITAL",
       "area": "map",
       "title": "Hospital and clinic",
