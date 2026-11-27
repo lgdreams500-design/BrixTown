@@ -1,5 +1,5 @@
 {
- "note": "Every approved look reference of Brix Town, in one list (ADR-0061). Files live in Art/Reference/<Category>/ and are named <Category><Subject>[_<Variant>].<ext> in PascalCase, so a name says what it is. 'locks' is what the reference decides; 'decision' the ADR and the owner's approval; 'made_by' the script that renders it; 'models' what the game is built from or measured against with it; 'status' proposed when it waits for the owner's approval; 'issues' what is seen wrong in it and not mended, for the owner to judge; 'was' the old names. 'gaps' are references a category still lacks. Tools/reference_catalog.py checks this file against the folders and writes Art/Reference/index.html; run it after any change here.",
+ "note": "Every approved look reference of Brix Town, in one list (ADR-0061). Files live in Art/Reference/<Category>/ and are named <Category><Subject>[_<Variant>].<ext> in PascalCase, so a name says what it is. 'locks' is what the reference decides; 'decision' the ADR and the owner's approval; 'made_by' the script that renders it; 'models' what the game is built from or measured against with it; 'status' proposed when it waits for the owner's approval; 'issues' what is seen wrong in it and not mended, for the owner to judge; 'was' the old names. 'places' says which reference each kind of place in the game is judged against, and which places have none: python Tools/reference_catalog.py --for <tour stop, lot id or place> answers it; a place's 'camera' names the tour stops that look through its reference's own camera (Tools/unreal/look_match.py compares those square by square). 'gaps' are references a category still lacks. Tools/reference_catalog.py checks this file against the folders and writes Art/Reference/index.html; run it after any change here.",
  "categories": [
   {
    "id": "World",
@@ -1511,6 +1511,254 @@
     "The outlets' names are hard to read across the hall at review size.",
     "The plan has no units for the food outlets and no seating (ADR-0070): the game's hall has neither yet.",
     "Like the court and the entrance, the picture is the game's mirror image (the map's z read as Blender's y)."
+   ]
+  }
+ ],
+ "places": [
+  {
+   "place": "alley",
+   "what": "An Old Town alley out of doors (the spawn alley).",
+   "reference": "WorldAlley",
+   "stops": [
+    "alley"
+   ]
+  },
+  {
+   "place": "market_square",
+   "what": "Market Square out of doors, in every weather. The reference looks out from inside the near arcade.",
+   "reference": "WorldMarketSquare",
+   "stops": [
+    "square",
+    "rain",
+    "fog",
+    "cloud",
+    "snow"
+   ]
+  },
+  {
+   "place": "street",
+   "what": "A street of shops and houses out of doors.",
+   "reference": "WorldStreet",
+   "also": [
+    "WorldDaylight"
+   ],
+   "stops": [
+    "street",
+    "west"
+   ]
+  },
+  {
+   "place": "sky",
+   "what": "The sky and its clouds over the roofs.",
+   "reference": "WorldSky",
+   "stops": []
+  },
+  {
+   "place": "home_room",
+   "what": "Any room of a home that has a window of its own, for its light: living room, bedroom, kitchen, study. The owner, 2026-11-28: \"lighting doesn't change in different rooms of a house\". The reference shows the living room. What furniture a room has is the layout sheets' (IndoorHouse12x9, IndoorRowHouse, IndoorFlat).",
+   "reference": "IndoorHomeRoom",
+   "also": [
+    "IndoorHouse12x9",
+    "IndoorRowHouse",
+    "IndoorFlat"
+   ],
+   "lots": [
+    {
+     "kind": [
+      "home"
+     ]
+    }
+   ],
+   "stops": [
+    "room"
+   ],
+   "note": "The look tour (light_tour.txt) has no stop inside a home's room; the reference tour (reference_tour.txt) has."
+  },
+  {
+   "place": "home_hallway",
+   "what": "Any part of a home with no window of its own, lit only by what comes in from other rooms: the hallway, the stairs, a landing, an inner corridor. The owner, 2026-11-28: \"separate ref for hallway as it doesn't have windows\". It is where the player stands on walking in at the door of a row house or a house.",
+   "reference": "IndoorHallway",
+   "lots": [
+    {
+     "kind": [
+      "home"
+     ]
+    }
+   ],
+   "stops": [
+    "row",
+    "rowup",
+    "house",
+    "hall"
+   ],
+   "note": "Which of the two home references a spot takes is decided by its light, not its name: a window of its own, IndoorHomeRoom; none, IndoorHallway."
+  },
+  {
+   "place": "shop_floor",
+   "what": "A shop's floor without a fire: a grocer, the bank, the library and the like.",
+   "reference": "ShopsShopFloor",
+   "lots": [
+    {
+     "kind": [
+      "shop",
+      "bank",
+      "library"
+     ]
+    }
+   ],
+   "stops": [
+    "shop",
+    "shopup",
+    "bank",
+    "library"
+   ]
+  },
+  {
+   "place": "bakery",
+   "what": "The Stone Oven bakery inside (lot b_7_7_l2). A shop on a street corner with glass on two sides: not a home's room.",
+   "reference": "ShopsBakeryLight",
+   "also": [
+    "ShopsBakery"
+   ],
+   "lots": [
+    {
+     "fitout": "stone_oven"
+    }
+   ],
+   "stops": [
+    "bakery"
+   ],
+   "camera": {
+    "stops": [
+     "bakery"
+    ],
+    "keep": 0.861,
+    "from": "Tools/blender/baker_look_47.py bakery_scene(): 0.25 m inside the front wall, 1.5 m right of the room's middle, 1.7 m up, aimed 23 degrees left and 6 down; its 15.5 mm lens is wider than the tour's 90 degrees, so its middle 86.1 % is the game's field"
+   }
+  },
+  {
+   "place": "big_hall",
+   "what": "The furniture outlet's hall inside (lot b_14_8_l0).",
+   "reference": "ShopsBigHall",
+   "also": [
+    "ShopsFurnitureOutlet"
+   ],
+   "lots": [
+    {
+     "id": "b_14_8_l0"
+    }
+   ],
+   "stops": [
+    "outlet"
+   ]
+  },
+  {
+   "place": "mall_court",
+   "what": "Eastgate Mall's Great Court inside (lot b_16_5_l0).",
+   "reference": "MallsEastgateCourt",
+   "lots": [
+    {
+     "id": "b_16_5_l0"
+    }
+   ],
+   "stops": [
+    "mall_court",
+    "court"
+   ]
+  },
+  {
+   "place": "mall_entrance",
+   "what": "Eastgate Mall's south entrance from the forecourt, out of doors.",
+   "reference": "MallsEastgateEntrance",
+   "lots": [
+    {
+     "id": "b_16_5_l0"
+    }
+   ],
+   "stops": [
+    "porch",
+    "porch_far"
+   ]
+  },
+  {
+   "place": "mall_concourse",
+   "what": "Eastgate Mall's concourses inside: where the player stands on walking in.",
+   "reference": null,
+   "gap": "MallsEastgateCourt does not show the concourses (its issues).",
+   "lots": [
+    {
+     "id": "b_16_5_l0"
+    }
+   ],
+   "stops": [
+    "mall_in"
+   ]
+  },
+  {
+   "place": "mall_outside",
+   "what": "Eastgate Mall from outside, other than its south entrance.",
+   "reference": null,
+   "gap": "Only the stretch of the shell round the south arch has a reference (MallsEastgateEntrance's issues).",
+   "lots": [
+    {
+     "id": "b_16_5_l0"
+    }
+   ],
+   "stops": [
+    "mall_out"
+   ]
+  },
+  {
+   "place": "park",
+   "what": "A park or garden out of doors.",
+   "reference": null,
+   "gap": "No reference shows a park, its lawn or its trees as a place.",
+   "stops": [
+    "park"
+   ]
+  },
+  {
+   "place": "cafe",
+   "what": "A cafe inside.",
+   "reference": null,
+   "gap": "No reference (the catalog's gaps: Shops).",
+   "lots": [
+    {
+     "kind": [
+      "food"
+     ]
+    }
+   ],
+   "stops": [
+    "cafe"
+   ]
+  },
+  {
+   "place": "tower_hall",
+   "what": "A tower's hall and offices inside. Its flats' rooms are home_room.",
+   "reference": null,
+   "gap": "No reference (the catalog's gaps: Indoor).",
+   "lots": [
+    {
+     "kind": [
+      "home"
+     ],
+     "has": "tower"
+    }
+   ],
+   "stops": [
+    "tower_in"
+   ]
+  },
+  {
+   "place": "measuring_room",
+   "what": "The rooms of Tools/blender/furniture_kit_18.py built again in Unreal (ABrixLightRoom), not a place in the town.",
+   "reference": null,
+   "gap": "They are measured against IndoorRooms, which the owner retired on 2026-11-26 (\"they are bad\"). A home's rooms are IndoorHomeRoom and IndoorHallway; the game's room light (ADR-0055) was set by the retired rooms and has not been measured against those.",
+   "stops": [
+    "ref_shop",
+    "ref_cafe",
+    "ref_kitchen"
    ]
   }
  ],

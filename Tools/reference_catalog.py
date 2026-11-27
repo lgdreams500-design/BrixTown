@@ -3,19 +3,26 @@ the page to review them, Art/Reference/index.html (a tab per category, each refe
 
     python Tools/reference_catalog.py            check, then write the page (exits 1 and writes nothing on a problem)
     python Tools/reference_catalog.py --check    check only
+    python Tools/reference_catalog.py --for <tour stop | lot id | place>   which reference that place is judged against
+    python Tools/reference_catalog.py --tour [<tour list>]                 the same for every stop of a look tour
 
 The rules it keeps (an AI agent should get from a thing to its reference in one step):
   - every reference file is in Art/Reference/<Category>/ and named <Category><Subject>[_<Variant>].<ext>, PascalCase
     (Indoor/IndoorHomeRoom_Morning.jpg, Vehicles/VehiclesSoftBox.png);
   - every file there is in the catalog, and every file the catalog names is there;
   - every reference says what it locks, when and by what decision it was approved, and what makes it;
-  - retired references are in Art/Retired/, never in Art/Reference/.
+  - retired references are in Art/Retired/, never in Art/Reference/;
+  - every kind of place in the game has one line in 'places': its approved reference, or that it has none (a gap), and
+    every stop of the look tour (Tools/unreal/light_tour.txt) belongs to exactly one place. A place with no reference
+    is never judged against another place's: its reference is made first (docs/process/LOOK_GATE.md).
 """
-import html, json, os, re, sys
+import glob, html, json, os, re, sys
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 REF = os.path.join(ROOT, "Art", "Reference")
 CATALOG = os.path.join(REF, "catalog.json")
+TOUR = os.path.join(ROOT, "Tools", "unreal", "light_tour.txt")
+TOURS = ("light_tour.txt", "reference_tour.txt")          # every tour list whose stops must belong to a place
 PAGE = os.path.join(REF, "index.html")
 KINDS = (".png", ".jpg", ".gif", ".mp4")
 NEEDS = ("id", "category", "title", "files", "locks", "approved", "decision", "made_by")
@@ -69,6 +76,124 @@ def problems(cat, root=ROOT):
                 out.append("%s: an archived reference belongs in Art/Retired/" % f)
             elif not os.path.isfile(os.path.join(root, f)):
                 out.append("%s: the archived file is missing" % f)
+    approved = {r.get("id") for r in cat["references"] if r.get("status") != "proposed"}
+    keys, stops = set(), {}
+    for p in cat.get("places", []):
+        k = p.get("place", "?")
+        if k in keys or not p.get("what"):
+            out.append("place %s: named twice, or does not say what it is" % k)
+        keys.add(k)
+        for i in ([p["reference"]] if p.get("reference") else []) + p.get("also", []):
+            if i not in approved:
+                out.append("place %s: %s is not an approved reference" % (k, i))
+        if not p.get("reference") and not p.get("gap"):
+            out.append("place %s: no reference, and no gap saying why" % k)
+        for s in p.get("stops", []):
+            if s in stops:
+                out.append("tour stop %s belongs to two places: %s and %s" % (s, stops[s], k))
+            stops[s] = k
+    for t in TOURS:
+        tour = os.path.join(root, "Tools", "unreal", t)
+        if cat.get("places") and os.path.isfile(tour):
+            for name in tour_stops(tour):
+                if stop_key(name) not in stops:
+                    out.append("tour stop %s belongs to no place: add it to a place's stops in the catalog" % name)
+    for p in cat.get("places", []):
+        for s in (p.get("camera") or {}).get("stops", []):
+            if s not in p.get("stops", []) or not p.get("reference"):
+                out.append("place %s: its camera names the stop %s, which is not one of its stops, or it has no reference" % (p.get("place"), s))
+    return out
+
+
+# ---- from a place in the game to its reference -------------------------------------------------------------------------
+WEATHER = {"rain": "Rain", "fog": "Fog", "cloud": "Cloudy", "snow": "Snow"}
+
+
+def tour_stops(path=TOUR):
+    """The names of a look tour's stops (Tools/unreal/light_tour.txt: name|hh:mm|weather|where)."""
+    with open(path, encoding="utf-8") as f:
+        return [l.split("|")[0].strip() for l in f if l.count("|") >= 3 and not l.lstrip().startswith("#")]
+
+
+def stop_key(name):
+    """alley_1200b -> alley, ref_shop_night -> ref_shop: a stop's name without its hour."""
+    return re.sub(r"_(\d{4}b?|night)$", "", name)
+
+
+def lot_of(lot_id, root=ROOT):
+    for path in glob.glob(os.path.join(root, "World", "*", "blocks", "*.json")):
+        with open(path, encoding="utf-8") as f:
+            for lot in json.load(f).get("lots", []):
+                if lot.get("id") == lot_id:
+                    return lot
+    return None
+
+
+def places_for(cat, what, root=ROOT):
+    """The places a tour stop, a lot id, a place's name or a reference's id belongs to (a home's lot is two: its room
+    and its hallway). ([], why) when nothing is recorded for it."""
+    places = cat.get("places", [])
+    hit = [p for p in places if what in (p["place"], p.get("reference")) or what in p.get("also", [])]
+    if hit:
+        return hit, ""
+    hit = [p for p in places if stop_key(what) in p.get("stops", [])]
+    if hit:
+        return hit, ""
+    lot = lot_of(what, root) if re.match(r"^b_\d+_\d+_l\d+$", what) else None
+    if lot:
+        best, hit = 0, []
+        for p in places:
+            for rule in p.get("lots", []):
+                score = (4 if rule.get("id") == lot["id"] else 0) or (3 if rule.get("fitout") and rule["fitout"] == lot.get("fitout") else 0) \
+                    or (2 if rule.get("has") and rule["has"] in lot and lot.get("kind") in rule.get("kind", []) else 0) \
+                    or (1 if not (rule.get("id") or rule.get("fitout") or rule.get("has")) and lot.get("kind") in rule.get("kind", []) else 0)
+                if score > best:
+                    best, hit = score, [p]
+                elif score and score == best and p not in hit:
+                    hit.append(p)
+        if hit:
+            return hit, ""
+        return [], "lot %s (%s, %s) is a kind of place the catalog's 'places' does not list: add it there, with its reference or its gap" % (what, lot.get("kind"), lot.get("name"))
+    return [], "%s is not a tour stop, a lot, a place or a reference the catalog knows" % what
+
+
+def setting_file(ref, stop):
+    """The one file of a reference a tour stop is judged against, when its name says the hour or the weather."""
+    key, hour = stop_key(stop), re.search(r"_(\d{2})(\d{2})b?$", stop)
+    want = WEATHER.get(key) or ("NightLamps" if stop.endswith("_night") else None)
+    if not want and hour:
+        h = int(hour.group(1)) + int(hour.group(2)) / 60.0
+        want = "NightLamps" if h >= 21 or h < 5 else "Midday" if 11 <= h <= 13 else None
+    for f in ref["files"]:
+        if want and f.rsplit(".", 1)[0].endswith("_" + want):
+            return f
+    return None
+
+
+def answer(cat, what, root=ROOT):
+    """A few plain lines: what place that is and which reference it is judged against."""
+    hit, why = places_for(cat, what, root)
+    if not hit:
+        return ["%s: NOT KNOWN. %s" % (what, why)]
+    refs, out = {r["id"]: r for r in cat["references"]}, []
+    if len(hit) > 1:
+        out.append("%s is %d places: say which part before comparing anything." % (what, len(hit)))
+    for p in hit:
+        out.append("%s: %s. %s" % (what, p["place"], p["what"]))
+        if not p.get("reference"):
+            out.append("  NO REFERENCE. %s Make and approve its reference first; do not judge it against another place's." % p["gap"])
+            continue
+        r = refs[p["reference"]]
+        one = setting_file(r, what)
+        out.append("  reference %s (approved %s): %s" % (r["id"], r["approved"], "Art/Reference/" + one if one else "%d settings, Art/Reference/%s" % (len(r["files"]), r["files"][0].rsplit("_", 1)[0] + "_*")))
+        if p.get("also"):
+            out.append("  also: " + ", ".join(p["also"]))
+        if r.get("rules"):
+            out.append("  rules: " + r["rules"])
+        if r.get("issues"):
+            out.append("  %d known issues in the reference itself: read them in the catalog before calling a difference a defect" % len(r["issues"]))
+        if p.get("note"):
+            out.append("  note: " + p["note"])
     return out
 
 
@@ -265,6 +390,22 @@ def main(argv):
         print("problem:", p)
     if bad:
         return 1
+    if "--for" in argv or "--tour" in argv:
+        if "--for" in argv:
+            asked = argv[argv.index("--for") + 1:]
+        else:
+            rest = argv[argv.index("--tour") + 1:]
+            asked = tour_stops(rest[0] if rest else TOUR)
+        seen = set()
+        for a in asked:
+            if "--tour" in argv:                     # one line a stop
+                hit, why = places_for(cat, a)
+                p = hit[0] if hit else None
+                print("%-18s %-16s %s" % (a, p["place"] if p else "?", (p.get("reference") or "NO REFERENCE") if p else "NOT KNOWN: " + why))
+            elif a not in seen:
+                print("\n".join(answer(cat, a)))
+            seen.add(a)
+        return 0
     if "--check" not in argv:
         with open(PAGE, "w", encoding="utf-8", newline="\n") as f:
             f.write(page(cat))

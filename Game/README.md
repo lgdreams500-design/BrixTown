@@ -1234,6 +1234,24 @@ first audit's findings are in LOOK_GATE.md.
 - **Riding a bus (G8):** the bottom of a tree's crown can be in the picture.
 - **The look tour's baseline:** written on 2026-11-26 before the new street lamps (WLD-072) came in; only
   `street_2230` was taken again after them, so other night stops may report a move that is those lamps.
+- **The look tour and the references (found 2026-11-27, `python Tools/reference_catalog.py --tour`):** 16 of the
+  tour's 64 stops show a place with no approved reference (a park, a cafe, a tower's hall, Eastgate's concourse and its
+  outside from above, and the five measuring rooms); the tour has no stop inside a home's room (`IndoorHomeRoom`): its
+  home stops stand in the hallway; no stop looks through its reference's own camera, so a shot and its reference show
+  the same kind of place from different spots. `Tools/unreal/reference_tour.txt` and `Tools/unreal/look_match.py`
+  (LOOK_GATE, The matching round) now take and measure each place against its own reference; of its stops only the
+  bakery's look through the reference's camera, which hour of the game's day a reference's Morning and Dusk are is not
+  recorded, and a tour stop can try several numbers in one launch only in the measuring rooms, not in the town's rooms.
+  The rooms' light is the same with a window or without: a hallway is lit as a room is, where its reference is dim.
+- **The rooms' light by day (2026-11-28, `Art/StyleTests/unreal_rooms_light_57/`):** a first step the owner took as
+  "not perfect but a huge improvement": by day the lamps are at a quarter (`RoomLampDay`) and the room's own light is
+  the day's colour (`RoomFillColourDay`), which takes the orange out. Still wrong: every room is 1 to 2 stops brighter
+  than its reference (the eye opens too far indoors: trial D, not yet looked at); the hallway brightest of all; the
+  bakery darker than before; warmth still over the pass mark; blotches on ceilings show more. Not measured with these
+  numbers: dusk, morning, the look tour against its baseline. The look gate's own steps were not done for it, and
+  the engine's automated tests were not run after the change to `BrixRooms`. The rooms' light (above, ADR-0055) was set by the rooms of
+  `furniture_kit_18`, which the owner retired as references on 2026-11-26; it has not been set against `IndoorHomeRoom`,
+  `IndoorHallway` or `ShopsShopFloor`.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.

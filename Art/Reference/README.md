@@ -6,6 +6,10 @@ look gets a new file, an entry in the catalog and a decision record.
 - **Find a reference:** `catalog.json` lists every one: what it locks, when and by what decision it was approved, the
   script that renders it, the game models and data built from it or measured against it, issues seen in it, and its old
   names. Its `gaps` say what still has no reference.
+- **Which reference for a place in the game:** `python Tools/reference_catalog.py --for <tour stop | lot id | place>`
+  answers from the catalog's `places`: the kind of place, its own reference and the file for the hour, or that it has
+  none (`--tour` lists every stop of the look tour). One line a kind of place; a place is never judged against another
+  place's reference.
 - **Review them:** open `index.html` in a browser: a tab per category, each reference with its pictures and details.
   Never edit it by hand; it is written from the catalog.
 - **Change them:** render with the script, put the file in its category's folder under its name, add or change its entry

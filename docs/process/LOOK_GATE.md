@@ -1,9 +1,9 @@
 ---
 doc_id: WASTED-LOOK-GATE
 title: Brix Town — The look gate: how anything seen in the game is checked when it is made
-version: 1.1.0
+version: 1.2.0
 status: accepted          # the owner, 2026-11-26: "build a process where this is taken care as part of creations instead of waiting for audit to detect it later"
-last_updated: 2026-11-26
+last_updated: 2026-11-27
 relates_to: [ADR-0004, ADR-0058, ART-001, TEST-001]
 ---
 
@@ -27,6 +27,15 @@ at as a whole, against the look, by whoever made it.
    already in the game without one keeps to the rules and the nearest reference for light and materials (a hall
    is an interior: I5, W1, W5, W6) until its reference is approved, and says so in its README's "Not yet".
 
+**Which reference.** Before any comparing, measuring or tuning, ask the catalog what the place is and what it is judged
+against: `python Tools/reference_catalog.py --for <tour stop, lot id or place>` (`--tour` for every stop of a tour). It
+answers from the catalog's `places` with the place's own reference and the file for the hour, or that the place has
+none. Say both first ("the library: shop_floor, ShopsShopFloor_Midday"). A shot is put beside its own place's
+reference and no other: a hallway is not judged by a shop, nor a shop by the bakery. Where 3 lets work with no
+reference keep to the nearest one for light and materials, say that it is borrowed and from which place. When the owner
+names a kind of place (a room, a hallway, a shop), that place's reference is the one meant: do not put another indoor
+place in its stead. A new tour stop is added to its place's `stops` in the catalog (its test fails otherwise).
+
 ## When it applies
 Any change that alters what is seen in the Unreal game: a new place or thing, a model, a material, a light, the sky,
 the camera, a screen. It is part of stage 6 (Build) of `FEATURE_PROCESS.md`, done before the pull request is opened,
@@ -42,7 +51,7 @@ Take pictures of the thing in the game (`Tools/unreal/light_tour.ps1`, or `-Brix
 - once with the HUD on (`-BrixShot=`): the engine's own warnings are drawn only there.
 
 ### 2. Beside the reference
-Put each shot beside its reference on one sheet (`Tools/unreal/shot_sheet.py`) and look at the **whole frame**, not
+Put each shot beside its own reference (Which reference, above) on one sheet (`Tools/unreal/shot_sheet.py`) and look at the **whole frame**, not
 the thing you changed. Answer every line; a "no" is a defect to mend or to note (step 5).
 
 | # | Look for | The rule |
@@ -82,12 +91,45 @@ in it"). It is never left for the owner to find.
 Something new that a player can stand in or beside gets a stop in `Tools/unreal/light_tour.txt` (by day and by
 night), so that every later shared change is looked at there too.
 
+## The matching round: getting a place to its reference
+The gate above checks a change. This is the round for mending what does not match: one place, or one shared cause, a
+round. Each step is there because skipping it cost a round on 2026-11-27.
+
+1. **Name it.** `python Tools/reference_catalog.py --for <stop, lot or place>`: the place and its own reference. No
+   reference: stop, it is a gap; its reference is made first. A home's two references are split by light, not by a
+   room's name: a window of its own, `IndoorHomeRoom`; none, `IndoorHallway`.
+2. **What is there, before how it is lit.** Put the reference beside a shot and write down first what differs in what
+   is *there*: the room's shape, where its windows are, its floor and ceiling, its furniture. Those are mended in the
+   map's data and the models; no light setting closes them, and tuning light to hide them makes other places worse.
+3. **Shoot.** `Tools\unreal\light_tour.ps1 -OutDir <folder> -List Tools\unreal\reference_tour.txt`: every place that
+   has a reference, at the hours its reference shows, in one launch (a shot is seconds, a launch most of a minute, so
+   never one launch a shot). While working on one place, a list of its own stops. A place being worked on gets a
+   matched stop: its reference's own camera, read from the script in the reference's `made_by`, written as the place's
+   `camera` in the catalog and as a stop here.
+4. **Measure.** `python Tools/unreal/look_match.py <folder>`: each shot against its own reference, worst first, with
+   the stop's frame rate. Work from the top row. Numbers first: a picture is opened for the row being mended and at
+   the end, not for every stop. A loose row (not the reference's camera) that passes proves little.
+5. **Shared causes first, and never tuned on one place.** The order: the eye and its tone, the sun and sky, the rooms'
+   light, a material many things use, then one kind of place, then one place. A number many places share is changed
+   only with the reference tour taken before and after, and every row read, not the one being mended.
+6. **Done** when the place's matched rows pass (within 0.5 of a stop in brightness and 0.33 in warmth, ADR-0055's
+   figures), `look_check.py` passes, and the stop's frame rate is no lower than before (say the window's size and the
+   quality level with any frame rate). Then the gate's own steps 1 to 5, with the pictures. What does not pass is
+   written in "Not yet".
+7. **The machine.** One Unreal at a time: `light_tour.ps1` waits for any other run. Never Blender and Unreal together.
+   A checkout with no build cannot take shots: build it once (about three minutes), or, for the game as it is, use a
+   built checkout at the same commit.
+
 ## For AI agents
 - Do not write "checked", "verified" or "looks right" about anything seen unless steps 1 to 3 were done for it in
   this session, and say which shots.
 - Read the shot before the claim: open the picture and go down G1 to G10. Looking only for the defect being fixed is
   how the mall and the cars were missed.
 - Report what you see that is wrong even when nobody asked about it, and even when another session made it.
+- Name the place and its reference (Which reference, above) before comparing, tuning or reporting. A number shared by
+  many places (the rooms' light, the sun, a material) is set against the references of every kind of place it lights,
+  never tuned on one of them: on 2026-11-27 the rooms' light was tuned on the bakery, a street-corner shop, when a
+  home's room had been asked for, and the hallways and shop floors were then judged with no reference at all.
 
 ## What the first audit found (2026-11-26)
 Looked at with this gate: the 64 stops of the look tour and the owner's own screenshots. Open items are in the "Not
