@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-ART-DIRECTION
 title: Brix Town — Art direction (locked look)
-version: 1.11.2
+version: 1.12.0
 status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22, interiors and furniture on 2026-11-22, the menu's look on 2026-11-23, the house colourways and the house plan with its furnishing levels on 2026-11-23, every other building's colourways and the row houses and flats inside on 2026-11-24
 last_updated: 2026-11-26
 relates_to: [FURN-003, ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
@@ -252,9 +252,9 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | The interface outside the menu (conversation box, building designer, the lettering over the game) | still the earlier dark-box look; the counters and the buy menu are Lamplight in the Unreal build (§2.7, ADR-0049); whether the rest follow is for the owner to say |
 | More furniture kits and decoration (kitchen, bathroom, dining, study, children, hallway, garden, shop, café, bedroom, living, decoration) | the twelve rooms of `Tools/blender/furniture_kit_18.py` were a reference from 2026-11-26 and are archived the same day (`Art/Retired/IndoorRooms_<Kind>.png`, the owner: "they are bad"); the pieces in them are not yet approved one by one |
 | Wear stages (I8) | not yet rendered. (The furniture outlet's look, `Art/Reference/Shops/ShopsFurnitureOutlet.png`, was approved by the owner's request to build it, ADR-0027.) |
-| Night (after dusk) and bad-weather looks | night: approved in the slice (ADR-0023, owner 2026-11-22), no reference image yet; pictures in `Art/StyleTests/night_sky_15/`. Rain, fog and overcast: approved in the slice (ADR-0016), no rule or reference image yet; must follow W5–W7 |
-| The sky: blue overhead with drifting clouds | approved in the slice (ADR-0014); not in the reference renders, still needs a rule and a reference image |
-| Big modern buildings outside Old Town (Eastgate Mall's ribbon walls and pierced eggs) | built in the slice at the owner's request, in the locked materials: mottled plaster, ochre and cream, lantern light (ADR-0037). No rule or reference image yet. The photograph it follows is glossy white metal and gold; going that way would change the look (W1, W4) and needs the owner's word and a new ADR |
+| Night (after dusk) and bad-weather looks | references at every hour and weather since 2026-11-26: `WorldAlley`, `WorldMarketSquare`, `WorldStreet` (night with the lamps on and off under a full and a new moon; cloudy, rain, fog, snow), made by `Tools/blender/hours_50.py`; rules W5–W7 |
+| The sky: blue overhead with drifting clouds | reference `WorldSky` at every hour and weather (2026-11-26; no planet, ADR-0064) |
+| Big modern buildings outside Old Town (Eastgate Mall's ribbon walls and pierced eggs) | built in the slice at the owner's request, in the locked materials: mottled plaster, ochre and cream, lantern light (ADR-0037). No rule or reference image yet for the outside. Eastgate's Great Court inside has a reference and a look of its own (`MallsEastgateCourt`, ADR-0069): timber, cream, glass, brass and polished stone; that look is the court's, not the town's |
 | Whether the iris should be smaller than in `Art/Reference/People/PeopleFaceExpressions.png` | owner to say |
 | How the look is achieved in Unreal on modest hardware (haze, soft light) | PH1 task |
 
@@ -274,6 +274,7 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | 1.9.0 | 2026-11-24 | Every other building's colourways and the row houses and flats inside: the owner approved look tests building_styles_22, home_interiors_22 and house_outside_23 (ADR-0036): §2.9 and nine references. |
 | 1.10.0 | 2026-11-26 | Old age, Noor and the Stone Oven inside (ADR-0059): rule C9, references `character_elders.png`, `character_noor.png`, `bakery_inside_day.png`, `bakery_inside_four.png`. |
 | 1.9.1 | 2026-11-24 | §5: Eastgate Mall's sculpted shell noted as built in the locked materials, with no rule or reference image yet (ADR-0037). No rule or reference changed. |
+| 1.12.0 | 2026-11-26 | Eastgate's Great Court has a look of its own, approved by the owner (`MallsEastgateCourt`, ADR-0069). §5: night, weather and the sky now have references at every setting. |
 | 1.11.2 | 2026-11-26 | `IndoorRooms` archived (the owner: "they are bad"); a home's rooms are `IndoorHomeRoom` and `IndoorHallway`. |
 | 1.11.1 | 2026-11-26 | W7's check is the alley and Market Square at every hour and weather (`WorldAlley`, `WorldMarketSquare`); `WorldHours.png` retired. |
 | 1.11.0 | 2026-11-26 | References organised (ADR-0061): a folder per category, every file named `<Category><Subject>[_<Variant>]`, one list in `Art/Reference/catalog.json` and a page to review them (`Art/Reference/index.html`, written by `Tools/reference_catalog.py`); §1's table replaced by it. The kit-18 rooms are references (`IndoorRooms`); `interior_room_daylight.png`, `vehicles_soft_box.png` and `vehicles_classic.png` retired to `Art/Retired/`. |

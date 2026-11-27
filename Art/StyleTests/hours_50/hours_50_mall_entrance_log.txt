@@ -1,0 +1,14 @@
+11:18:02 Blender 5.3.0, place mall_entrance
+11:18:07   floodlights: 8 on the forecourt
+11:18:08   the forecourt: 90 trees from the block
+11:18:09   Eastgate's court from its plan: 60 lanterns, 5 skylights, 4 moving stairs; 20 outlets' insides in view
+11:18:09 MallEntrance: sun 8.5 at bearing -41 deg, sky 0.45; 85 lamps, 0 fires, 10 glowing materials, 0 haze
+11:18:14   MallEntrance_Morning: the eye at -0.36 stops for a mean of 100
+11:18:53 MallEntrance_Morning.jpg rendered in 39.1s
+11:18:58   MallEntrance_Midday: the eye at -1.87 stops for a mean of 100
+11:19:41 MallEntrance_Midday.jpg rendered in 42.6s
+11:19:46   MallEntrance_Dusk: the eye at +0.47 stops for a mean of 85
+11:20:31 MallEntrance_Dusk.jpg rendered in 45.1s
+11:20:36   MallEntrance_NightLamps: the eye at +2.12 stops for a mean of 70
+11:21:30 MallEntrance_NightLamps.jpg rendered in 53.8s
+11:21:30 DONE

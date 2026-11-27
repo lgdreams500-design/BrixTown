@@ -48,7 +48,8 @@
     "sign_lamp":          {"name": "Sign lamp",          "mount": "wall",    "colour": "warm_white",    "strength": 20.0, "spread": "pool",  "glow": 0.6, "size": [0.2, 0.8, 0.9],    "price": 3000},
     "shop_pendant":       {"name": "Shop pendant",       "mount": "ceiling", "colour": "warm_white",    "strength": 70.0, "spread": "pool",  "glow": 0.8, "size": [0.52, 0.52, 0.9],  "price": 3800},
     "shelf_light":        {"name": "Shelf light",        "mount": "wall",    "colour": "cool_white",    "strength": 15.0, "spread": "wash",  "glow": 0.9, "size": [0.9, 0.3, 0.1],    "price": 1900},
-    "hall_lantern":       {"name": "Hall lantern",       "mount": "ceiling", "colour": "warm_white",    "strength": 220.0, "spread": "pool", "glow": 0.8, "size": [0.2, 0.2, 0.33],  "price": 6500}
+    "hall_lantern":       {"name": "Hall lantern",       "mount": "ceiling", "colour": "warm_white",    "strength": 220.0, "spread": "pool", "glow": 0.8, "size": [0.2, 0.2, 0.33],  "price": 6500},
+    "ground_flood":       {"name": "Ground floodlight",  "mount": "floor",   "colour": "warm_white",    "strength": 2600.0, "spread": "up", "glow": 0.6, "size": [0.5, 0.4, 0.18], "price": 18000}
   },
   "pieces": {
     "k17:floor_lamp": "floor_lamp",
@@ -85,6 +86,7 @@
     "Sn_Light": "sign_lamp",
     "Sp_Light": "shop_pendant",
     "Sh_Light": "shelf_light",
-    "Hall_Lantern*": "hall_lantern"
+    "Hall_Lantern*": "hall_lantern",
+    "Fd_Light*": "ground_flood"
   }
 }
