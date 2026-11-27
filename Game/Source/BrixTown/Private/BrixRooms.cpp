@@ -692,7 +692,14 @@ void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp, float Daylight)
 		const float Reach = FMath::Max(RoomLampReach, RoomFillReach * 2.f * LH.Reach) * CmPerM;
 		if (!FMath::IsNearlyEqual(Fill->AttenuationRadius, Reach, 1.f)) Fill->SetAttenuationRadius(Reach);
 		FillFull = FillNow(Daylight);
+		const FLinearColor FillColour = FillColourNow(Daylight);   // the day's colour by day, the lamps' by night
+		if (Fill->LightColor != FillColour.ToFColor(true))
+		{
+			Fill->SetLightColor(FillColour);
+			if (FillPeople) FillPeople->SetLightColor(FillColour);
+		}
 	}
+	DayNow = Daylight;
 	bFillWant = In != INDEX_NONE;
 	// the lamps that cast shadows stay where they are until another place is nearer by a good step, so that standing
 	// between two lamps does not swap them back and forth
@@ -763,7 +770,7 @@ void ABrixRooms::FadeLights(float DeltaSeconds)
 		for (int32 i = Shadowed; i < LampWant.Num(); ++i)
 			if (!Taken[i]) { Taken[i] = true; Hang(n, LampWant[i]); break; }
 	}
-	const float Full = RoomLampWatts * CandelaPerWatt;
+	const float Full = RoomLampWatts * CandelaPerWatt * LampNow(DayNow);   // low by day: the day carries the room
 	for (int32 n = 0; n < Lights.Num(); ++n)
 	{
 		LampLevel[n] = FMath::Clamp(LampLevel[n] + (Up[n] ? Step : -Step), 0.f, 1.f);

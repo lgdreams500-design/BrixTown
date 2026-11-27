@@ -97,6 +97,15 @@ public:
 	UPROPERTY(Config) FLinearColor RoomFillColour = FLinearColor(1.f, 0.75f, 0.48f);
 	UPROPERTY(Config) float RoomFillReach = 0.7f;
 	float FillNow(float Daylight) const { return RoomFill * FMath::Lerp(RoomFillNight, 1.f, FMath::Clamp(Daylight, 0.f, 1.f)); }
+	// By day the day carries a room and its lamps are low (the references in the world's light, approved 2026-11-26:
+	// Art/Reference/Shops/ShopsBakeryLight and the others of Tools/blender/hours_50.py, day_lamps 0.06): the lamps at
+	// RoomLampDay of their strength where the daylight is full, and the room's own light in RoomFillColourDay, the
+	// day's colour, where by night it is RoomFillColour, the lamps'. Measured patch against patch through the bakery
+	// reference's own camera.
+	UPROPERTY(Config) float RoomLampDay = 0.06f;
+	UPROPERTY(Config) FLinearColor RoomFillColourDay = FLinearColor(1.f, 0.9f, 0.8f);
+	float LampNow(float Daylight) const { return FMath::Lerp(1.f, RoomLampDay, FMath::Clamp(Daylight, 0.f, 1.f)); }
+	FLinearColor FillColourNow(float Daylight) const { return RoomFillColour + (RoomFillColourDay - RoomFillColour) * FMath::Clamp(Daylight, 0.f, 1.f); }
 	// A room's lights come up and go down over LightFadeSeconds, and a lamp is not moved while it is lit: switched and
 	// moved in one frame they were a jump in the picture at every doorway and as the nearest lamps of a hall changed.
 	UPROPERTY(Config) float LightFadeSeconds = 0.4f;
@@ -152,5 +161,6 @@ private:
 	TArray<float> LampLevel;       // and how far up it is, 0 to 1
 	TArray<bool> LampHeld;         // whether it hangs anywhere
 	float FillLevel = 0.f, FillFull = 0.f;
+	float DayNow = 1.f;                                 // the daylight PlaceLights last had: the lamps' strength follows it
 	bool bFillWant = false;
 };
