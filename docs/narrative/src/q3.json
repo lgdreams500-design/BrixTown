@@ -166,7 +166,7 @@
      ]},
     "f_saved": {"who": "len", "mood": "happy", "dir": "Suvi draws one line through a paragraph, initials it, and turns the page round. Len gets up out of the bad chair, which takes a while, and puts the kettle on, which for Len is a speech.", "say": "She'll want more than four acres, a wheat with two buyers. The top field's doing nothing.",
      "options": [{"text": "Six acres, then?", "next": "f_saved2"}]},
-    "f_saved2": {"who": "suvi", "mood": "happy", "say": "Don't push it, Dad. Fine. Six. And {player}: if either of your buyers is late with the money, the vet's bill goes to the bakery.",
+    "f_saved2": {"who": "suvi", "mood": "happy", "say": "Don't push it, Dad. Fine. Six. And Ashby: if either of your buyers is late with the money, the vet's bill goes to the bakery.",
      "options": [{"text": "Deal.", "next": null, "act": ["flag:deal_saved", "rep:suvi:+10", "rep:len:+25", "stage:report"]}]},
     "f_split": {"who": "suvi", "mood": "thinking", "say": "Half. Valley won't love it, but they'll swallow two acres. Dad?",
      "options": [{"text": "Len?", "next": "f_split2"}]},
