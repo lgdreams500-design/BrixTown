@@ -980,7 +980,7 @@ def mall_porch(shell, loc, brass, globe):
 
 
 def mall_entrance_doors(P, loc, SH, glassp, brass, edge, strip, globe, slab_under):
-    """The main (south) entrance in the court's look (ADR-0068): the hall's wall across the end of the concourse with the
+    """The main (south) entrance in the court's look (ADR-0069): the hall's wall across the end of the concourse with the
     plan's opening in it, glazed doors in brass frames under a glass transom, the sunlit street outside; pendant globes
     down the middle of the concourse; a line of light along its ceiling."""
     e = next(a for a in P["entrances"] if a["side"] == "s")
