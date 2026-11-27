@@ -9,7 +9,7 @@ checkout, a review round or the full set (FEATURE_PROCESS 6):
     Tools/blender/reference_render.ps1 -Place <place> [-Review] [-Hours Midday] -Out <folder>
 or by hand:
     WASTED_PLACE=<place> blender-launcher.exe -b --factory-startup --python C:/Projects/Wasted/Tools/blender/hours_50.py
-    places also mall, mall_entrance (Eastgate's court, its south entrance): only what the camera sees is built in detail
+    places also mall, mall_entrance, egg_hall (Eastgate's court, its south entrance, the Food Market's egg hall): only what the camera sees is built in detail
     (sees(); WASTED_ALL=1 builds everything, to check that nothing seen was left out)
     places: alley, square, street (Tools/blender/old_town_04.py, building_kit_07.py), rooms, bakery, outlet
     (furniture_kit_18.py's rooms, baker_look_47.py's Stone Oven, furniture_kit_17.py's showroom)
@@ -36,7 +36,7 @@ from mathutils import Matrix, Vector
 B = "C:/Projects/Wasted/Tools/blender/"
 PLACE = os.environ.get("WASTED_PLACE", "alley")
 SOURCE = {"alley": "old_town_04.py", "square": "old_town_04.py", "street": "building_kit_07.py",
-          "rooms": "baker_look_47.py", "hallway": "baker_look_47.py", "shop": "baker_look_47.py", "mall": "baker_look_47.py", "mall_entrance": "baker_look_47.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py", "sky": "old_town_04.py"}[PLACE]
+          "rooms": "baker_look_47.py", "hallway": "baker_look_47.py", "shop": "baker_look_47.py", "mall": "baker_look_47.py", "mall_entrance": "baker_look_47.py", "egg_hall": "baker_look_47.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py", "sky": "old_town_04.py"}[PLACE]
 _s = open(B + SOURCE, encoding="utf-8").read()
 exec(compile(_s[:_s.rindex("\nmain()")], SOURCE + "_helpers", "exec"), globals())
 exec(compile(open(B + "sky_52.py", encoding="utf-8").read(), "sky_52", "exec"), globals())   # the sky and its clouds
@@ -89,7 +89,7 @@ STARS = dict(scale=420.0, size=0.045, strength=(2.2, 1.0))   # the night sky's s
 MOON_DISC = dict(distance=320.0, radius=5.0, strength=8.0)    # the full moon seen in the sky
 # indoors the eye works by day too, as the game's opens in a room by day (DayOpenIndoors): the mean brightness it seeks
 INDOOR_EYE = {"Morning": 100, "Midday": 100, "Dusk": 85}
-INDOORS = ("rooms", "hallway", "bakery", "shop", "outlet", "mall", "mall_entrance")
+INDOORS = ("rooms", "hallway", "bakery", "shop", "outlet", "mall", "mall_entrance", "egg_hall")
 # a place's own eye where it differs: the hallway has no window, so a full moon seen only through a room's door is as dim
 # there as the new moon was (the owner, 2026-11-26: "full moon is giving too much light ... at the level currently shown on
 # new moon"; that picture's mean was 12)
@@ -101,7 +101,7 @@ FIRE_OUT_HOURS = {"rooms": ("NightFullMoon", "NightNewMoon")}   # the owner, 202
                                                           # fire place is turned off": these again with the fire out too
 SKIP_HOURS = {"bakery": ("NightFullMoon", "NightNewMoon"), "shop": ("NightFullMoon", "NightNewMoon"),
               "outlet": ("NightFullMoon", "NightNewMoon"), "mall": ("NightFullMoon", "NightNewMoon"),
-              "mall_entrance": ("NightFullMoon", "NightNewMoon")}   # halls as the shops   # a shop as the bakery   # the owner, 2026-11-26: "for bakery, don't need moon settings"
+              "mall_entrance": ("NightFullMoon", "NightNewMoon"), "egg_hall": ("NightFullMoon", "NightNewMoon")}   # halls as the shops   # a shop as the bakery   # the owner, 2026-11-26: "for bakery, don't need moon settings"
 PLACE_EYE = {"hallway": {"NightFullMoon": 12, "NightNewMoon": 2.5}, "mall": {"Midday": 82},   # the court's midday sun under open skylights
              "rooms": {"NightFullMoonFireOut": 12, "NightNewMoonFireOut": 2.5}}   # the home room's fire-out nights as dim (the owner)   # and the new moon darker still ("should not have so much light")
 # the moon: high (a full moon in summer stands about 68 degrees up here), turned from the sun's bearing so it falls along
@@ -506,6 +506,7 @@ MALL_LOOK = dict(brass=(0.78, 0.60, 0.32), glass_tint=(0.80, 0.90, 0.92), glass_
                  front_glass=3.0, mullion_every=3.4, mullion=(0.22, 0.22, 0.24),   # the game's outlet fronts
                  shell_tones=(((0.80, 0.72, 0.60), (0.82, 0.74, 0.62)),),   # the ribbon wall: one even honed cream stone
                  shell_groove=(0.26, 0.21, 0.17), shell_lap=0.07,
+                 egg=(0.74, 0.54, 0.26), egg_bar=0.12, egg_counter=(0.46, 0.32, 0.20), egg_seat=(0.36, 0.42, 0.40), egg_floor_warm=(0.56, 0.40, 0.27), egg_floor_deep=(0.36, 0.27, 0.21),   # the egg hall: the lattice's gold, its bars' width of a cell, the stalls' timber
                  floods=dict(out=12.0, along=(-62.0, -48.0, -34.0, 34.0, 48.0, 62.0), crown=(-7.0, 7.0), wall_aim=13.0, crown_aim=19.0, beam=38.0),   # the forecourt's floodlights             # the dark groove, and how far a ribbon laps
                  forecourt=((0.52, 0.42, 0.33), (0.66, 0.55, 0.43)), door_side=3.4, door_rise=2.4,   # the doorway's straight sides, then its curve
                  signs=dict(terracotta=(0.66, 0.32, 0.22), teal=(0.20, 0.44, 0.44), blue=(0.26, 0.36, 0.56), plum=(0.44, 0.28, 0.44),
@@ -651,7 +652,9 @@ GOODS = dict(books=((0.55, 0.20, 0.16), (0.18, 0.32, 0.36), (0.62, 0.52, 0.28), 
              bread=((0.70, 0.48, 0.24), (0.56, 0.34, 0.16)),
              bottles=((0.26, 0.40, 0.26), (0.60, 0.22, 0.20), (0.82, 0.78, 0.60)),
              balls=((0.88, 0.86, 0.80), (0.70, 0.30, 0.20), (0.24, 0.40, 0.60)),
-             plush=((0.72, 0.52, 0.36), (0.86, 0.70, 0.74), (0.60, 0.72, 0.80)))
+             plush=((0.72, 0.52, 0.36), (0.86, 0.70, 0.74), (0.60, 0.72, 0.80)),
+             produce=((0.70, 0.16, 0.12), (0.88, 0.50, 0.12), (0.86, 0.74, 0.20), (0.36, 0.56, 0.20), (0.24, 0.40, 0.16),
+                      (0.52, 0.20, 0.36), (0.80, 0.62, 0.40), (0.90, 0.84, 0.70)))
 
 
 def mall_sign_mat(name):
@@ -676,6 +679,16 @@ class GoodsMesh:
         for f in {f for v in r["verts"] for f in v.link_faces}:
             f.material_index = k
 
+    def cyl(self, mat, x, y, z0, r, h, segs=16):
+        if mat not in self.mats:
+            self.mats.append(mat)
+        k = self.mats.index(mat)
+        res = bmesh.ops.create_cone(self.bm, cap_ends=True, cap_tris=False, segments=segs, radius1=r, radius2=r, depth=h)
+        for v in res["verts"]:
+            v.co.x, v.co.y, v.co.z = v.co.x + x, v.co.y + y, v.co.z + z0 + h / 2
+        for f in {f for v in res["verts"] for f in v.link_faces}:
+            f.material_index = k
+
     def done(self):
         if not self.mats:
             self.bm.free()
@@ -687,7 +700,8 @@ class GoodsMesh:
             me.materials.append(m)
         ob = bpy.data.objects.new(self.name, me)
         COL.objects.link(ob)
-        ob.parent = self.P
+        if self.P is not None:
+            ob.parent = self.P
         return ob
 
 
@@ -1108,6 +1122,7 @@ def hang_plant(name, x, y, z):
 
 
 MALL_CAMS = {"entrance": ((5.0, 216.0, 1.7), (-0.5, 172.0, 5.5), 17.0),   # arriving on the forecourt
+             "egg": ((-82.4, 151.6, 1.7), (-95.1, 140.9, 5.0), 16.0),       # in the Food Market's hall, as the game's shot
              "court": ((-12.0, -42.0, 1.7), (2.0, 30.0, 9.0), 16.0)}
 
 
@@ -1135,6 +1150,543 @@ def sees(cam_at, portal=None, reach=170.0):
                 return abs(xi - px) < ph and 0.0 < zi < top
         return True
     return see
+
+
+def mall_polished(name, c):
+    """A polished stone, one even colour, as the court's floor but in another tone."""
+    m, nt, bsdf = new_mat(name)
+    sset(bsdf, "Base Color", rgba(c))
+    sset(bsdf, "Roughness", 0.1)
+    sset(bsdf, "Specular IOR Level", 0.5)
+    return m
+
+
+def egg_lattice(name):
+    """The egg's skin: a lattice of warm gold bars with diamond openings to the sky between them, the game's pattern
+    (BrixMall.cpp Egg(), its cells) in the court's look (ADR-0069). The UV map carries the cells: u round the egg in
+    cells, v up its arc in cells; a bar runs along every line where u + v or u - v is whole."""
+    ML = MALL_LOOK
+    m, nt, bsdf = new_mat(name)
+    N, L_ = nt.nodes, nt.links
+    sset(bsdf, "Base Color", rgba(ML["egg"]))
+    sset(bsdf, "Metallic", 0.55)
+    sset(bsdf, "Roughness", 0.38)
+    out = next(n for n in N if n.type == 'OUTPUT_MATERIAL')
+    uv = N.new("ShaderNodeUVMap")
+    sep = N.new("ShaderNodeSeparateXYZ")
+    L_.new(uv.outputs[0], sep.inputs[0])
+    bars = []
+    for op in ('ADD', 'SUBTRACT'):
+        a = N.new("ShaderNodeMath")
+        a.operation = op
+        L_.new(sep.outputs[0], a.inputs[0])
+        L_.new(sep.outputs[1], a.inputs[1])
+        fr = N.new("ShaderNodeMath")
+        fr.operation = 'FRACT'
+        L_.new(a.outputs[0], fr.inputs[0])
+        d = N.new("ShaderNodeMath")                           # how far from the nearest whole number: 0 on a bar's line
+        d.operation = 'PINGPONG'
+        L_.new(fr.outputs[0], d.inputs[0])
+        sset(d, 1, 0.5)
+        lt = N.new("ShaderNodeMath")
+        lt.operation = 'LESS_THAN'
+        L_.new(d.outputs[0], lt.inputs[0])
+        sset(lt, 1, ML["egg_bar"])
+        bars.append(lt)
+    mx = N.new("ShaderNodeMath")
+    mx.operation = 'MAXIMUM'
+    L_.new(bars[0].outputs[0], mx.inputs[0])
+    L_.new(bars[1].outputs[0], mx.inputs[1])
+    tr = N.new("ShaderNodeBsdfTransparent")
+    mix = N.new("ShaderNodeMixShader")
+    L_.new(mx.outputs[0], mix.inputs[0])
+    L_.new(tr.outputs[0], mix.inputs[1])
+    L_.new(bsdf.outputs[0], mix.inputs[2])
+    L_.new(mix.outputs[0], out.inputs[0])
+    return m
+
+
+EGG_FOOD = ("Noodle House", "Pizzeria", "The Grill", "Curry Pot", "Sushi Bar", "Juice Bar", "Dumplings", "Tacos",
+            "Bakehouse", "Ice Cream", "Kebabs", "Salad Bar", "Pancakes", "Coffee", "Fish & Chips", "Bao")
+
+
+def egg_door(drum0, hx, hz):
+    """The doorway's middle and half width in degrees (the game's angles round the hall): where the ground floor's drum
+    line leaves its gap."""
+    a = [math.degrees(math.atan2(z - hz, x - hx)) for x, z in drum0]
+    a0, a1 = a[-1], a[0]                                   # the line runs round from one side of the gap to the other
+    gap = (a1 - a0) % 360.0
+    return (a0 + gap / 2) % 360.0, gap / 2
+
+
+def egg_food_court(drum0, hx, hz, R, SH, loc, M_, stone, rng):
+    """Food outlets skirting the round wall on the ground floor, as in a mall's food court (the owner, 2026-11-27: "we
+    can have addition food outlets skirting the round wall, like we have in many malls"): each an open counter set into
+    the drum, its sign in its colour with its name above, lit menus on its back wall, its kitchen behind; stone piers
+    between them; their lights on all day."""
+    ML = MALL_LOOK
+    mid, half = egg_door(drum0, hx, hz)
+    FH = ML["front_glass"]
+    span0, span = mid + half, 360.0 - 2 * half
+    n = int(span // 22.0)
+    each = span / n
+    D = 4.5
+    ceil = bpy.data.materials.get("M_OutCeiling") or flat("M_OutCeiling", (0.92, 0.91, 0.88))
+    striplit = bpy.data.materials.get("M_OutStripLit") or emissive("M_OutStripLit", (1.0, 0.96, 0.90), 5.0)
+    menu = bpy.data.materials.get("M_EggMenuLit") or emissive("M_EggMenuLit", (1.0, 0.95, 0.84), 2.2)   # "Lit": on all day
+    board = bpy.data.materials.get("M_EggBoard") or flat("M_EggBoard", (0.10, 0.10, 0.11), rough=0.5)
+    steel = bpy.data.materials.get("M_EggSteel") or mall_metal("M_EggSteel", (0.62, 0.63, 0.64), 0.3)
+    counter = bpy.data.materials.get("M_EggCounter") or flat("M_EggCounter", ML["egg_counter"])
+    top_ = bpy.data.materials.get("M_EggTop") or flat("M_EggTop", ML["cream"], rough=0.3)
+    tile = bpy.data.materials.get("M_OutTiles") or flat("M_OutTiles", (0.80, 0.79, 0.76), rough=0.25)
+    signs = list(ML["signs"].keys())
+    km = globals().setdefault("K_M", {})
+    km["EggLetters"] = bpy.data.materials.get("M_EggLettersLit") or emissive("M_EggLettersLit", (1.0, 0.93, 0.80), 3.0)   # backlit, on all day
+
+    def at(r, deg, z=None):
+        x, y = loc((hx + r * math.cos(math.radians(deg)), hz + r * math.sin(math.radians(deg))))
+        return (x, y) if z is None else (x, y, z)
+
+    def arc(r, d0, d1, k=12):
+        return [at(r, d0 + (d1 - d0) * i / k) for i in range(k + 1)]
+
+    def strip_(name, pts, z0, z1, mat, thick):
+        bm = bmesh.new()
+        for i in range(len(pts) - 1):
+            (ax, ay), (bx, by) = pts[i], pts[i + 1]
+            dx, dy = bx - ax, by - ay
+            l_ = math.hypot(dx, dy) or 1.0
+            ox, oy = -dy / l_ * thick / 2, dx / l_ * thick / 2
+            q = [(ax + ox, ay + oy), (bx + ox, by + oy), (bx - ox, by - oy), (ax - ox, ay - oy)]
+            vb = [bm.verts.new((x, y, z0)) for x, y in q]
+            vt = [bm.verts.new((x, y, z1)) for x, y in q]
+            bm.faces.new(vt)
+            bm.faces.new(list(reversed(vb)))
+            for j in range(4):
+                bm.faces.new((vb[j], vb[(j + 1) % 4], vt[(j + 1) % 4], vt[j]))
+        me = bpy.data.meshes.new(name)
+        bm.to_mesh(me)
+        bm.free()
+        me.materials.append(mat)
+        ob = bpy.data.objects.new(name, me)
+        COL.objects.link(ob)
+        return ob
+
+    def flat_arc(name, r0, r1, d0, d1, z, mat, k=12):
+        bm = bmesh.new()
+        a_ = [bm.verts.new(at(r0, d0 + (d1 - d0) * i / k, z)) for i in range(k + 1)]
+        b_ = [bm.verts.new(at(r1, d0 + (d1 - d0) * i / k, z)) for i in range(k + 1)]
+        for i in range(k):
+            bm.faces.new((a_[i], a_[i + 1], b_[i + 1], b_[i]))
+        me = bpy.data.meshes.new(name)
+        bm.to_mesh(me)
+        bm.free()
+        me.materials.append(mat)
+        ob = bpy.data.objects.new(name, me)
+        COL.objects.link(ob)
+        return ob
+    for i in range(n):
+        d0, d1 = span0 + i * each, span0 + (i + 1) * each
+        p0, p1 = d0 + 1.2, d1 - 1.2                          # a stone pier between each two outlets
+        strip_("Egg_Pier%d" % i, arc(R, d0 - 1.2, d0 + 1.2, 2), 0.0, FH + 0.7, stone, 0.6)
+        strip_("Egg_PierFoot%d" % i, arc(R - 0.31, d0 - 1.2, d0 + 1.2, 2), 0.0, 0.14, M_["brass"], 0.04)
+        lt = bpy.data.lights.new("Wl_Light", 'SPOT')              # Wl_Light.001 and on: the wall light's kind
+        lt.spot_size = math.radians(50.0)
+        lt.spot_blend = 0.8
+        setp(lt, "shadow_soft_size", 0.08)
+        po = bpy.data.objects.new("Wl_Light", lt)
+        px_, py_ = at(R - 0.55, d0)
+        po.location = (px_, py_, 0.12)
+        out_ = Vector((px_ - HXY[0], py_ - HXY[1], 0)).normalized()    # aimed up the pier, leaning onto it
+        po.rotation_euler = (out_ + Vector((0, 0, 3.5))).to_track_quat('-Z', 'Y').to_euler()
+        COL.objects.link(po)
+        sign = mall_sign_mat(signs[(i * 5) % len(signs)])
+        strip_("Egg_Sign%d" % i, arc(R - 0.05, p0, p1), FH + 0.06, FH + 0.66, sign, 0.3)   # its sign in its colour
+        strip_("Egg_SignTrimB%d" % i, arc(R - 0.08, p0, p1), FH + 0.0, FH + 0.06, M_["brass"], 0.36)
+        strip_("Egg_SignTrimT%d" % i, arc(R - 0.08, p0, p1), FH + 0.66, FH + 0.72, M_["brass"], 0.36)
+        strip_("Egg_SignLight%d" % i, arc(R - 0.3, p0, p1), FH - 0.04, FH, M_["strip"], 0.06)
+        name = EGG_FOOD[i % len(EGG_FOOD)]
+        tx, ty = at(R - 0.22, (p0 + p1) / 2)
+        nm_ = text("Egg_Name%d" % i, name, tx, ty, FH + 0.36, min(0.4, (p1 - p0) / 360 * 2 * math.pi * R / max(6, len(name)) * 1.2), "EggLetters", depth=0.02)
+        nm_.rotation_euler = (math.pi / 2, 0, math.atan2(HXY[0] - tx, -(HXY[1] - ty)))
+        flat_arc("Egg_FoodFloor%d" % i, R - 0.15, R + D, p0, p1, 0.005, tile)               # its kitchen behind
+        flat_arc("Egg_FoodCeil%d" % i, R - 0.15, R + D, p0, p1, FH + 0.05, ceil)
+        strip_("Egg_FoodBack%d" % i, arc(R + D, p0, p1), 0.0, FH + 0.1, stone, 0.2)
+        for e_ in (p0, p1):
+            strip_("Egg_FoodSide%d_%d" % (i, int(e_)), [at(R, e_), at(R + D, e_)], 0.0, FH + 0.1, stone, 0.2)
+        strip_("Egg_FoodCounter%d" % i, arc(R + 0.9, p0 + 0.8, p1 - 0.8), 0.0, 1.0, counter, 0.7)   # the counter, open to the hall
+        strip_("Egg_FoodCounterTop%d" % i, arc(R + 0.9, p0 + 0.6, p1 - 0.6), 1.0, 1.07, top_, 0.85)
+        strip_("Egg_FoodKick%d" % i, arc(R + 0.53, p0 + 0.8, p1 - 0.8), 0.0, 0.12, M_["brass"], 0.03)
+        strip_("Egg_FoodBackCounter%d" % i, arc(R + D - 0.45, p0 + 0.4, p1 - 0.4), 0.0, 0.95, top_, 0.6)
+        for j in range(3):                                   # three menu boards on the back wall: dark, lit lines and pictures
+            c_ = p0 + (p1 - p0) * (j + 0.5) / 3
+            w_ = (p1 - p0) / 3 * 0.8
+            strip_("Egg_Menu%d_%d" % (i, j), arc(R + D - 0.13, c_ - w_ / 2, c_ + w_ / 2, 3), 1.6, 2.55, board, 0.04)
+            strip_("Egg_MenuFrame%d_%d" % (i, j), arc(R + D - 0.12, c_ - w_ / 2 - 0.15, c_ + w_ / 2 + 0.15, 3), 1.56, 2.59, M_["brass"], 0.03)
+            strip_("Egg_MenuTitle%d_%d" % (i, j), arc(R + D - 0.16, c_ - w_ * 0.3, c_ + w_ * 0.3, 2), 2.38, 2.46, menu, 0.01)
+            for r_ in range(4):
+                zz = 2.22 - r_ * 0.13
+                strip_("Egg_MenuLine%d_%d_%d" % (i, j, r_), arc(R + D - 0.16, c_ - w_ * 0.42, c_ + w_ * (0.05 + 0.1 * (r_ % 2)), 2), zz, zz + 0.035, menu, 0.01)
+                strip_("Egg_MenuPrice%d_%d_%d" % (i, j, r_), arc(R + D - 0.16, c_ + w_ * 0.3, c_ + w_ * 0.42, 1), zz, zz + 0.035, menu, 0.01)
+            strip_("Egg_MenuPic%d_%d" % (i, j), arc(R + D - 0.16, c_ - w_ * 0.3, c_ + w_ * 0.3, 2), 1.66, 1.78,
+                   goods_mat("produce", (i + j) % 8), 0.01)
+        strip_("Egg_FoodHood%d" % i, arc(R + D - 0.5, p0 + 0.6, p1 - 0.6, 6), FH - 0.55, FH - 0.05, steel, 0.8)   # the kitchen's hood
+        for j, r_ in enumerate((R + 1.5, R + 3.4)):          # its strip lights and their light, on all day
+            strip_("Egg_FoodStrip%d_%d" % (i, j), arc(r_, p0 + 0.6, p1 - 0.6, 6), FH - 0.02, FH + 0.03, striplit, 0.12)
+            lt = bpy.data.lights.new("ShopIn_Egg%d_%d" % (i, j), 'POINT')
+            lt.energy = 150.0
+            lt.color = tuple(LIGHTS["colours"]["warm_white"]["colour"])   # the kitchens warm, against the hall's daylight
+            setp(lt, "shadow_soft_size", 0.6)
+            po = bpy.data.objects.new("ShopIn_Egg%d_%d" % (i, j), lt)
+            po.location = at(r_, (p0 + p1) / 2, FH - 0.3)
+            COL.objects.link(po)
+        G = group("Egg_FoodGoods%d" % i, *at(R + 0.9, (p0 + p1) / 2), 0.0)   # dishes on the counter, pans behind
+        gm = GoodsMesh(G, "Egg_FoodGoodsM%d" % i)
+        for j in range(6):
+            gm.cyl(goods_mat("produce", (i + j) % 8), rng.uniform(-1.8, 1.8), rng.uniform(-0.2, 0.2), 1.07, rng.uniform(0.12, 0.2), rng.uniform(0.05, 0.14))
+        gm.done()
+    strip_("Egg_SignBandBack", arc(R + 0.1, span0, span0 + span, 96), FH + 0.06, FH + 0.66, stone, 0.12)
+    hlog("  the food court: %d outlets round the drum, the doorway at %.0f deg (%.0f wide)" % (n, mid, 2 * half))
+
+
+def egg_seating(hx, hz, R, loc, M_, rng, stalls, drum0):
+    """Tables and chairs filling the hall as a food court (the owner, 2026-11-27: "needs tables and chair, even long
+    tables with more chairs like in the mall"): a ring of long tables for ten between the stalls and the outlets, round
+    tables for four between them and near the tree; clear ways to the doorway and through the stalls. In the court's look:
+    timber tops and seats on slender brass, the round tables topped in cream stone. Each table and its chairs one object."""
+    ML = MALL_LOOK
+    wood_ = bpy.data.materials.get("M_EggCounter") or flat("M_EggCounter", ML["egg_counter"])
+    top_ = bpy.data.materials.get("M_EggTop") or flat("M_EggTop", ML["cream"], rough=0.3)
+    seat = bpy.data.materials.get("M_EggSeat") or flat("M_EggSeat", ML["egg_seat"], rough=0.6)
+    br = M_["brass"]
+    mid, half = egg_door(drum0, hx, hz)
+    cam = math.degrees(math.atan2(MALL_CAMS["egg"][0][1] - (hz - MALL_MID[1]), MALL_CAMS["egg"][0][0] - (hx - MALL_MID[0])))
+
+    def clear(deg, width):
+        return all(abs((deg - c + 180) % 360 - 180) > w for c, w in ((mid, half + width), (cam, 9 + width)))
+
+    def chair(gm, x, y, face):
+        """A chair at (x, y), its back away from face (+1: the table at +y)."""
+        for sx in (-1, 1):
+            for sy in (-1, 1):
+                gm.add(br, x + sx * 0.18, y + sy * 0.18, 0.225, 0.03, 0.03, 0.45)
+        gm.add(seat, x, y, 0.47, 0.44, 0.44, 0.05)
+        gm.add(wood_, x, y - face * 0.21, 0.72, 0.42, 0.04, 0.36)
+
+    def round_table(name, deg, r):
+        X, Y = loc((hx + r * math.cos(math.radians(deg)), hz + r * math.sin(math.radians(deg))))
+        G = group(name, X, Y, rng.uniform(0, math.pi / 2))
+        gm = GoodsMesh(G, name + "_M")
+        gm.cyl(br, 0, 0, 0.0, 0.26, 0.03, 20)
+        gm.cyl(br, 0, 0, 0.03, 0.04, 0.69, 8)
+        gm.cyl(top_, 0, 0, 0.72, 0.46, 0.04, 28)
+        for k in range(4):
+            a = k * math.pi / 2
+            cx, cy = 0.66 * math.cos(a), 0.66 * math.sin(a)
+            if k % 2 == 0:                                       # the chairs square to the table, two each way
+                for sx in (-1, 1):
+                    for sy in (-1, 1):
+                        gm.add(br, cx + sx * 0.18, cy + sy * 0.18, 0.225, 0.03, 0.03, 0.45)
+                gm.add(seat, cx, cy, 0.47, 0.44, 0.44, 0.05)
+                gm.add(wood_, cx + math.copysign(0.21, cx), cy, 0.72, 0.04, 0.42, 0.36)
+            else:
+                chair(gm, cx, cy, -1 if cy > 0 else 1)
+        gm.done()
+
+    def long_table(name, deg, r, radial=False):
+        X, Y = loc((hx + r * math.cos(math.radians(deg)), hz + r * math.sin(math.radians(deg))))
+        X0, Y0 = loc((hx, hz))
+        yaw = math.atan2(Y - Y0, X - X0) + (0.0 if radial else math.pi / 2)
+        G = group(name, X, Y, yaw)
+        gm = GoodsMesh(G, name + "_M")
+        gm.add(wood_, 0, 0, 0.745, 4.8, 0.92, 0.05)
+        for sx in (-1, 1):                                       # brass trestles
+            gm.add(br, sx * 2.1, 0, 0.36, 0.06, 0.7, 0.04)
+            gm.add(br, sx * 2.1, 0, 0.53, 0.05, 0.05, 0.40)
+            gm.add(br, sx * 2.1, 0, 0.02, 0.08, 0.8, 0.04)
+        gm.add(br, 0, 0, 0.36, 4.2, 0.04, 0.04)
+        for i in range(5):
+            x = -1.92 + i * 0.96
+            chair(gm, x, 0.74, -1)
+            chair(gm, x, -0.74, 1)
+        for i in range(3):                                       # a little greenery down its middle
+            gm.cyl(top_, -1.6 + i * 1.6, 0, 0.77, 0.07, 0.1, 10)
+            gm.add(M_["leaf2"], -1.6 + i * 1.6, 0, 0.92, 0.16, 0.16, 0.14)
+        for i in (-1, 1):                                        # two pendants over it, warm pools on the timber
+            gm.cyl(br, i * 1.2, 0, 3.0, 0.012, 15.0, 6)
+            gm.cyl(br, i * 1.2, 0, 2.86, 0.3, 0.14, 24)
+        gm.done()
+        for i in (-1, 1):
+            ox, oy = math.cos(yaw) * i * 1.2, math.sin(yaw) * i * 1.2
+            ball(None, name + "_Opal%d" % i, M_["globe"], X + ox, Y + oy, 2.74, 0.44, 0.44, 0.3)
+            lt = bpy.data.lights.new("Sp_Light", 'POINT')         # Sp_Light.001 and on: the shop pendant's kind
+            setp(lt, "shadow_soft_size", 0.2)
+            po = bpy.data.objects.new("Sp_Light", lt)
+            po.location = (X + ox, Y + oy, 2.6)
+            COL.objects.link(po)
+    n_long = n_round = 0
+    for k in range(12):                                          # the long tables, round the outer ring
+        deg = mid + 15.0 + k * 30.0
+        if clear(deg, 8):
+            long_table("Egg_Long%d" % k, deg, 17.3)
+            n_long += 1
+    for k in range(12):                                          # round tables between them, a little further in
+        deg = mid + k * 30.0
+        if clear(deg, 4):
+            round_table("Egg_Round%d" % k, deg, 14.0)
+            n_round += 1
+    for k, a in enumerate(stalls):                               # and near the tree, between the stalls
+        deg = a + 30.0
+        if clear(deg, 3):
+            round_table("Egg_RoundIn%d" % k, deg, 6.4)
+            n_round += 1
+    hlog("  seating: %d long tables for ten, %d round tables for four" % (n_long, n_round))
+
+
+def mall_egg_hall(P, LOT, loc, SH, M_):
+    """The Food Market's egg hall as the plan draws it (World/city_01/blocks/b_16_5.json halls[0], WLD-059, ADR-0038;
+    the game's BrixMall.cpp): a round hall 22 m across its radius, three floors high, its drum walls (the walls of kind
+    drum) with the slanting walk from the court coming in through them, on the upper floors ending in a balcony; the roof
+    open over the hall in a round eye, the egg above it (38 x 31 x 45 m, its middle 11 m up) a lattice whose openings
+    show the sky; a stall where each of the six staff stands, a tree in a round planter in the middle, lanterns hanging in
+    a ring. The look is the court's (ADR-0069): cream drum walls with a line of light round each floor and brass at their
+    foot, the polished stone floor with brass rings let into it, timber under the balconies, glass and brass rails, the
+    lattice in warm gold; the stalls timber with cream tops under striped canopies, heaped with produce."""
+    ML = MALL_LOOK
+    h = P["halls"][0]
+    egg = LOT["shell"]["domes"][h["dome"]]
+    hx, hz, R = h["pos"][0], h["pos"][1], h["r"]
+    HX, HY = loc((hx, hz))
+    globals()["HXY"] = (HX, HY)
+    n_lv = len(P["levels"])
+    Hh = SH * n_lv
+    rng = random.Random(56)
+    drum0 = []
+    cols = ML["shell_tones"]                                  # the drum in the ribbon wall's honed stone, smooth (posh)
+    stone = bpy.data.materials.get("M_Shell0") or sandstone("M_Shell0", cols[0][0], cols[0][1])
+
+    def near(pts, d=10.0):
+        return any(math.hypot(x - hx, z - hz) < R + d for x, z in pts)
+
+    def obj(name, bm, mat):
+        me = bpy.data.meshes.new(name)
+        bm.to_mesh(me)
+        bm.free()
+        me.materials.append(mat)
+        ob = bpy.data.objects.new(name, me)
+        COL.objects.link(ob)
+        return ob
+
+    def plate(name, loop, holes, z, mat):
+        bm = bmesh.new()
+        for lp in [loop] + holes:
+            vs = [bm.verts.new((x, y, z)) for x, y in lp]
+            for i in range(len(vs)):
+                bm.edges.new((vs[i], vs[(i + 1) % len(vs)]))
+        bmesh.ops.triangle_fill(bm, use_beauty=True, use_dissolve=False, edges=bm.edges[:])
+        return obj(name, bm, mat)
+
+    def band(name, line, z0, z1, mat, closed=False, thick=0.0):
+        bm = bmesh.new()
+        pts = list(line) + ([line[0]] if closed else [])
+        for i in range(len(pts) - 1):
+            (ax, ay), (bx, by) = pts[i], pts[i + 1]
+            if thick:
+                dx, dy = bx - ax, by - ay
+                n = math.hypot(dx, dy) or 1.0
+                ox, oy = -dy / n * thick / 2, dx / n * thick / 2
+                q = [(ax + ox, ay + oy), (bx + ox, by + oy), (bx - ox, by - oy), (ax - ox, ay - oy)]
+                vb = [bm.verts.new((x, y, z0)) for x, y in q]
+                vt = [bm.verts.new((x, y, z1)) for x, y in q]
+                bm.faces.new(vt)
+                for k in range(4):
+                    bm.faces.new((vb[k], vb[(k + 1) % 4], vt[(k + 1) % 4], vt[k]))
+            else:
+                bm.faces.new([bm.verts.new(c) for c in ((ax, ay, z0), (bx, by, z0), (bx, by, z1), (ax, ay, z1))])
+        return obj(name, bm, mat)
+
+    def ring(r, n=96):
+        return [(HX + r * math.cos(2 * math.pi * i / n), HY + r * math.sin(2 * math.pi * i / n)) for i in range(n)]
+
+    # the floors: the hall's own round floor, the walks into it on every floor
+    for lv in P["levels"]:
+        L, z = lv["level"], lv["level"] * SH
+        for k, w in enumerate(lv["walks"]):
+            if not near(w):
+                continue
+            q = [loc(p_) for p_ in w]
+            if L == 0:
+                plate("Egg_Walk%d_%d" % (L, k), q, [], 0.0, M_["floor"])
+                if len(q) == 4:                                  # the walk in from the court, lit along its middle as a concourse
+                    for j, t in enumerate((0.15, 0.4, 0.65)):
+                        ax, ay = (q[0][0] + q[3][0]) / 2, (q[0][1] + q[3][1]) / 2
+                        bx, by = (q[1][0] + q[2][0]) / 2, (q[1][1] + q[2][1]) / 2
+                        x, y = bx + (ax - bx) * t, by + (ay - by) * t
+                        lt = bpy.data.lights.new("Hall_LanternW%d_%d_Light" % (k, j), 'POINT')
+                        lt.energy = 220.0
+                        setp(lt, "shadow_soft_size", 0.4)
+                        po = bpy.data.objects.new("Hall_LanternW%d_%d_Light" % (k, j), lt)
+                        po.location = (x, y, SH - 1.4)
+                        COL.objects.link(po)
+            else:                                                # a walk on an upper floor: timber under it, a cream edge
+                plate("Egg_WalkUnder%d_%d" % (L, k), q, [], z - 0.7, M_["under"])
+                plate("Egg_Walk%d_%d" % (L, k), q, [], z + 0.02, M_["floor"])
+                band("Egg_WalkEdge%d_%d" % (L, k), q, z - 0.7, z + 0.02, M_["edge"], closed=True)
+                band("Egg_WalkLine%d_%d" % (L, k), [(x, y) for x, y in q], z - 0.72, z - 0.66, M_["strip"], closed=True)
+                if L == 1 and len(q) == 4:                       # a line of light down the middle of its underside: on all day
+                    ax, ay = (q[0][0] + q[3][0]) / 2, (q[0][1] + q[3][1]) / 2
+                    bx, by = (q[1][0] + q[2][0]) / 2, (q[1][1] + q[2][1]) / 2
+                    band("Egg_WalkGlow%d_%d" % (L, k), [(ax, ay), (bx, by)], z - 0.74, z - 0.72, M_["strip"], thick=0.5)
+        for k, wl in enumerate(lv["walls"]):
+            if not near(wl["line"]):
+                continue
+            line = [loc(q) for q in wl["line"]]
+            if wl.get("kind") == "drum":                         # the hall's drum: cream, its line of light, brass at its foot
+                band("Egg_Drum%d_%d" % (L, k), line, z + (ML["front_glass"] + 0.7 if L == 0 else 0.0), z + SH, stone, thick=0.3)
+                band("Egg_DrumLight%d_%d" % (L, k), [(HX + (x - HX) * 0.993, HY + (y - HY) * 0.993) for x, y in line], z + 4.3, z + 4.38, M_["strip"], thick=0.04)
+                band("Egg_DrumTrim%d_%d" % (L, k), [(HX + (x - HX) * 0.992, HY + (y - HY) * 0.992) for x, y in line], z + SH - 0.08, z + SH, M_["brass"], thick=0.06)
+                if L == 0:
+                    drum0 = wl["line"]
+            else:
+                band("Egg_Wall%d_%d" % (L, k), line, z, z + SH, M_["wall"], thick=0.3)
+        for k, r in enumerate(lv["rails"]):
+            if near(r):
+                rl = [loc(q) for q in r]
+                g_ = band("Egg_Balustrade%d_%d" % (L, k), rl, z + 0.08, z + 1.02, M_["glass"], thick=0.03)
+                setp(g_, "visible_shadow", False)
+                band("Egg_Rail%d_%d" % (L, k), rl, z + 1.02, z + 1.1, M_["brass"], thick=0.1)
+                band("Egg_Shoe%d_%d" % (L, k), rl, z, z + 0.08, M_["brass"], thick=0.12)
+    egg_food_court(drum0, hx, hz, R, SH, loc, M_, stone, rng)
+    egg_seating(hx, hz, R, loc, M_, rng, [math.degrees(math.atan2(st[1] - hz, st[0] - hx)) for st in
+                next(u for u in P["levels"][0]["units"] if u["id"] == h["unit"]).get("stand", [])], drum0)
+    warm = bpy.data.materials.get("M_EggStoneWarm") or mall_polished("M_EggStoneWarm", ML["egg_floor_warm"])
+    deep = bpy.data.materials.get("M_EggStoneDeep") or mall_polished("M_EggStoneDeep", ML["egg_floor_deep"])
+    for nm_, r0, r1, m_ in (("Egg_FloorRing", 12.6, 15.4, warm), ("Egg_FloorQueue", 19.4, R - 0.2, deep), ("Egg_FloorInner", 3.4, 4.6, deep)):
+        bm = bmesh.new()
+        a_ = [bm.verts.new((HX + r0 * math.cos(2 * math.pi * i / 128), HY + r0 * math.sin(2 * math.pi * i / 128), 0.004)) for i in range(128)]
+        b_ = [bm.verts.new((HX + r1 * math.cos(2 * math.pi * i / 128), HY + r1 * math.sin(2 * math.pi * i / 128), 0.004)) for i in range(128)]
+        for i in range(128):
+            bm.faces.new((a_[i], a_[(i + 1) % 128], b_[(i + 1) % 128], b_[i]))
+        obj(nm_, bm, m_)
+    # 4. timber fins round the drum on the upper floors: the low sun striped across them
+    fins = GoodsMesh(None, "Egg_Fins")
+    nf = 120
+    for i in range(nf):
+        a = 2 * math.pi * i / nf
+        dg = (math.degrees(a)) % 360
+        mid_, half_ = egg_door(drum0, hx, hz)
+        if abs((dg - mid_ + 180) % 360 - 180) < half_ + 1:
+            continue
+        x, y = HX + (R - 0.35) * math.cos(a), HY + (R - 0.35) * math.sin(a)
+        # a fin is a thin box turned to face the middle: built in place from its four corners
+        t = (-math.sin(a), math.cos(a))
+        nrm = (math.cos(a), math.sin(a))
+        for z0, z1 in ((SH + 1.2, 2 * SH - 0.2), (2 * SH + 1.2, Hh - 0.3)):
+            v = []
+            for dn in (-0.2, 0.2):
+                for dt in (-0.04, 0.04):
+                    v.append((x + nrm[0] * dn + t[0] * dt, y + nrm[1] * dn + t[1] * dt))
+            bmv = [fins.bm.verts.new((px, py, zz)) for zz in (z0, z1) for px, py in v]
+            if M_["wood"] not in fins.mats:
+                fins.mats.append(M_["wood"])
+            k_ = fins.mats.index(M_["wood"])
+            for f_ in ((0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)):
+                fins.bm.faces.new([bmv[q] for q in f_]).material_index = k_
+    fins.done()
+    for r_, w_ in ((R - 1.6, 0.1), (9.0, 0.16), (5.2, 0.08)):    # brass rings let into the floor
+        band("Egg_Inlay%d" % int(r_ * 10), ring(r_), 0.0, 0.012, M_["brass"], closed=True, thick=w_)
+    # the roof, open over the hall in a round eye, its edge cream with a line of light; the egg above it
+    S_ = R + 26.0
+    sq = [(HX - S_, HY - S_), (HX + S_, HY - S_), (HX + S_, HY + S_), (HX - S_, HY + S_)]
+    eye = ring(R + 1.2)
+    plate("Egg_Roof", sq, [eye], Hh, M_["edge"])
+    plate("Egg_RoofTop", sq, [eye], Hh + 0.4, M_["edge"])
+    band("Egg_EyeEdge", eye, Hh, Hh + 0.4, M_["edge"], closed=True)
+    band("Egg_EyeLine", [(HX + (x - HX) * 0.998, HY + (y - HY) * 0.998) for x, y in eye], Hh + 0.02, Hh + 0.08, M_["strip"], closed=True)
+    rx, ry, rz = egg["radii"]
+    EX, EY = loc(egg["pos"])
+    cy = egg["centre"]
+    base = Hh - 0.6
+    end = math.acos(max(-1.0, min(1.0, (base - cy) / ry)))
+    RINGS, SEG = 56, 192
+    cell = math.pi * (rx + rz) / egg["cells"]
+    arcs, arc = [0.0], 0.0
+    for r in range(1, RINGS + 1):
+        a, a0 = end * r / RINGS, end * (r - 1) / RINGS
+        arc += math.hypot((rx + rz) / 2 * (math.sin(a) - math.sin(a0)), ry * (math.cos(a) - math.cos(a0)))
+        arcs.append(arc)
+    bm = bmesh.new()
+    uvl = bm.loops.layers.uv.new("UVMap")
+    V = [[bm.verts.new((EX + rx * math.sin(end * r / RINGS) * math.cos(2 * math.pi * s_ / SEG),
+                        EY + rz * math.sin(end * r / RINGS) * math.sin(2 * math.pi * s_ / SEG),
+                        cy + ry * math.cos(end * r / RINGS))) for s_ in range(SEG)] for r in range(RINGS + 1)]
+    for r in range(RINGS):
+        for s_ in range(SEG):
+            t = (s_ + 1) % SEG
+            f = bm.faces.new((V[r][s_], V[r][t], V[r + 1][t], V[r + 1][s_]))
+            for lp, (ss, rr) in zip(f.loops, ((s_, r), (s_ + 1, r), (s_ + 1, r + 1), (s_, r + 1))):
+                lp[uvl].uv = (ss / SEG * egg["cells"], arcs[rr] / cell)
+    eo = obj("Egg_Lattice", bm, egg_lattice("M_EggLattice"))
+    for pg in eo.data.polygons:
+        pg.use_smooth = True
+    # lanterns hanging in a ring, as the game's: globes on brass rods from the roof, of the hall lantern's kind
+    for i in range(6):
+        a = 2 * math.pi * (i + 0.5) / 6
+        x, y = HX + R * 0.62 * math.cos(a), HY + R * 0.62 * math.sin(a)
+        zz = 6.4 + (i % 2) * 1.6
+        cylz(None, "Egg_LanternRod%d" % i, M_["brass"], x, y, zz + 0.5, 0.03, Hh + 6 - zz - 0.5, segs=8)
+        cylz(None, "Egg_LanternCap%d" % i, M_["brass"], x, y, zz + 0.45, 0.32, 0.1, segs=20)
+        ball(None, "Egg_Lantern%d" % i, M_["globe"], x, y, zz, 0.9, 0.9, 0.9)
+        lt = bpy.data.lights.new("Hall_LanternH%d_Light" % i, 'POINT')
+        lt.energy = 220.0
+        setp(lt, "shadow_soft_size", 0.4)
+        po = bpy.data.objects.new("Hall_LanternH%d_Light" % i, lt)
+        po.location = (x, y, zz - 0.2)
+        COL.objects.link(po)
+    # the planter in the middle and its tree, flowers round it
+    cylz(None, "Egg_Planter", M_["kerb"], HX, HY, 0.0, 3.2, 0.7, segs=48)
+    cylz(None, "Egg_PlanterRim", M_["brass"], HX, HY, 0.68, 3.25, 0.05, segs=48)
+    cylz(None, "Egg_PlanterSoil", bpy.data.materials.get("M_Grass") or flat("M_Grass", (0.30, 0.40, 0.22), noise_scale=3.0), HX, HY, 0.0, 3.05, 0.74, segs=48)
+    cylz(None, "Egg_Trunk", M_["wood"], HX, HY, 0.7, 0.28, 6.0, r_top=0.18)
+    for (dx, dy, dz, rr_, m_) in ((0, 0, 7.9, 2.4, M_["leaf"]), (1.5, 0.5, 7.1, 1.8, M_["leaf"]), (-1.4, 0.4, 7.3, 1.7, M_["leaf2"]),
+                                  (0.4, -1.3, 7.0, 1.6, M_["leaf"]), (0.2, 0.3, 9.4, 1.5, M_["leaf2"])):
+        ball(None, "Egg_Leaf", m_, HX + dx, HY + dy, dz, 2 * rr_, 2 * rr_, 1.6 * rr_)
+    for j in range(40):
+        a = rng.uniform(0, 2 * math.pi)
+        d = rng.uniform(1.0, 2.8)
+        ball(None, "Egg_Flower%d" % j, M_["flowers"][j % len(M_["flowers"])], HX + d * math.cos(a), HY + d * math.sin(a), 0.82, 0.3, 0.3, 0.2)
+    # a stall where each of the hall's staff stands, facing the middle: a timber counter with a cream top, heaped with
+    # produce, under a striped canopy on brass poles
+    unit = next(u for u in P["levels"][0]["units"] if u["id"] == h["unit"])
+    counter = bpy.data.materials.get("M_EggCounter") or flat("M_EggCounter", ML["egg_counter"])
+    top_ = bpy.data.materials.get("M_EggTop") or flat("M_EggTop", ML["cream"], rough=0.3)
+    for k, st in enumerate(unit.get("stand", [])):
+        dx, dz = hx - st[0], hz - st[1]
+        d = math.hypot(dx, dz) or 1.0
+        cx, cz = st[0] + dx / d * 1.0, st[1] + dz / d * 1.0
+        X, Y = loc((cx, cz))
+        G = group("Egg_Stall%d" % k, X, Y, math.atan2(dx, -dz))   # local +y towards the middle
+        rbox(G, "Egg_StallBody%d" % k, counter, 0, 0, 0.5, 2.8, 0.8, 1.0, 0.02, 1)
+        rbox(G, "Egg_StallTop%d" % k, top_, 0, 0, 1.04, 3.0, 1.0, 0.08, 0.02, 1)
+        rbox(G, "Egg_StallKick%d" % k, M_["brass"], 0, 0.41, 0.06, 2.8, 0.02, 0.12, 0.0, 1)
+        gm = GoodsMesh(G, "Egg_StallGoods%d" % k)                 # crates of produce on the top, sloping to the front
+        for i in range(5):
+            gx = -1.2 + i * 0.6
+            gm.add(counter, gx, 0.05, 1.14, 0.52, 0.7, 0.12)
+            kind_ = goods_mat("produce", (i * 3 + k) % 8)        # one kind to a crate, heaped
+            for j in range(22):
+                rr = rng.uniform(0.04, 0.06)
+                gm.cyl(kind_, gx + rng.uniform(-0.2, 0.2), rng.uniform(-0.28, 0.28), 1.2 + rng.uniform(0, 0.07), rr, rr * 1.4, 8)
+        gm.done()
+        stripe = M_["banners"][k % len(M_["banners"])]
+        for sx in (-1, 1):
+            for sy in (-1, 1):
+                cylz(G, "Egg_StallPole%d_%d_%d" % (k, sx, sy), M_["brass"], sx * 1.45, sy * 0.55, 1.1, 0.03, 1.5, segs=8)
+        for i in range(6):                                       # the canopy in stripes, cream between its colour
+            rbox(G, "Egg_StallCanopy%d_%d" % (k, i), stripe if i % 2 == 0 else top_, -1.5 + (i + 0.5) * 0.5, 0, 2.62, 0.5, 1.3, 0.04, 0.0, 1)
+    people([("PlayerA", HX + 4.0, HY + 15.5), ("PlayerB", HX - 5.0, HY + 8.5), ("Shopkeeper", HX + 2.0, HY - 9.0)])
+    hlog("  the Food Market's egg hall: radius %.1f m, %d floors, the egg %s m with %d cells, %d stalls" % (
+        R, n_lv, "x".join("%.0f" % v for v in egg["radii"]), egg["cells"], len(unit.get("stand", []))))
 
 
 def mall_court(Ls, view="court"):
@@ -1244,6 +1796,12 @@ def mall_court(Ls, view="court"):
                 bm.faces.new(v)
         return mesh_obj(name, bm, mat)
 
+    if view == "egg":
+        mall_egg_hall(P, LOT, loc, SH, dict(floor=floor, under=slab_under, edge=edge, wall=pl, kerb=sd, brass=brass,
+                                            glass=glassp, globe=globe, strip=strip, wood=wd, leaf=leaf, leaf2=leaf2,
+                                            banners=banners, flowers=flowers))
+        sun_and_sky(SCENE, (0.35, -0.30, 0.89), 8.5, (1.0, 0.86, 0.68), (0.42, 0.55, 0.82), 0.45)
+        return camera(SCENE, "Cam_test" if os.environ.get("WASTED_CAM") else "Cam_egg_hall", *cam_at)
     court = [(-W2, -D2), (W2, -D2), (W2, D2), (-W2, D2)]
     box("Mall_Floor", -W2 - 12, W2 + 12, -D2 - 12, max(D2 + 12, y_hi - 4), -0.1, 0.0, floor, bevel=0)   # out to the entrance
     lanterns = 0
@@ -2076,6 +2634,12 @@ def main_hours():
         cam = mall_court(lines(), view="entrance")
         bounce_more(ROOM_BOUNCE)
         each_hour(scene, cam, 0.5, "MallEntrance", dict(day_lamps=0.15))
+    elif PLACE == "egg_hall":                        # an egg hall: the Food Market under Eastgate's south-west egg (the owner, 2026-11-27)
+        scene = fresh("Furn_mall")
+        extra_mats()
+        cam = mall_court(lines(), view="egg")
+        bounce_more(ROOM_BOUNCE)
+        each_hour(scene, cam, 0.5, "EggHall", dict(day_lamps=0.15))
     elif PLACE == "outlet":
         scene = fresh("Furn_showroom")
         game_size_showroom()                         # the approved showroom at the game's outlet size

@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 47 of 60 | 9 of 60 | 9 of 60 |
-| Size of the plan (points) | 587 | 502 | 970 |
-| Size of the suggested plan | 161 | 462 | 938 |
+| Decided | 47 of 61 | 9 of 61 | 9 of 61 |
+| Size of the plan (points) | 587 | 505 | 981 |
+| Size of the suggested plan | 161 | 465 | 949 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -30,6 +30,7 @@
 | **Shops and market** `F-BLD-SHOP` | 2 Stock and prices ★ | undecided | undecided | Owner, 2026-11-22: chose "2: Stock and prices" for the first slice. Later milestones not stated. |
 | **Mall** `F-BLD-MALL` | 2 Full mall ★ | undecided | undecided | Owner, 2026-11-24: asked "Shall I record the Mall feature at level 2 (Full mall) for the first slice?" after Eastgate Mall's shell and three-floor inside were built (ADR-0037, ADR-0038), answered "Yes, level 2". Later milestones not stated. |
 | **Mall rides** `F-BLD-RIDES` | undecided | undecided | undecided |  |
+| **Adventure arcade in a mall egg** `F-BLD-ADVENTURE` | undecided | undecided | undecided |  |
 | **Hospital and clinic** `F-BLD-HOSPITAL` | undecided | undecided | undecided |  |
 | **Bank, showroom, library, museum, cinema** `F-BLD-CIVIC` | 1 Places to visit | undecided | undecided | Owner, 2026-11-22: "Places to visit (Recommended)" for the bank, car showroom, library, museum, cinema and a second hospital and mall, made from existing lots. Later milestones not stated. |
 | **Workplaces** `F-BLD-WORK` | undecided | undecided | undecided |  |
@@ -165,6 +166,11 @@
 - 0 None: No rides. Size -.
 - 1 To sit on: A carousel and coin rides that stand still; the player can sit on them. Size S.
 - 2 Rides that turn: The carousel turns and the coin rides rock, with music; a go costs a coin; children queue for them. Size M.
+
+**Adventure arcade in a mall egg** (`F-BLD-ADVENTURE`). Something to do at the mall: one of Eastgate's egg halls becomes an arcade with adventure sports, a climbing wall up into the egg, a ropes course round the balconies, trampolines and arcade games (the owner, 2026-11-27: "one of the eggs in the mall should be an arcade with adventure sports like rock climbing etc.").
+- 0 None: The four eggs stay the four big stores. Size -.
+- 1 To look at: One egg hall fitted as an adventure arcade: a climbing wall rising into the egg, a ropes course along the balconies, trampolines, arcade cabinets; residents are seen on them; the player can walk round but not play. Size M.
+- 2 To play: As To look at, and the player can climb the wall, go round the ropes course, bounce and play the cabinets; a go costs coins through the ledger; staff run it. Size L.
 
 **Hospital and clinic** (`F-BLD-HOSPITAL`). Where health is restored.
 - 0 A door: A clinic front you cannot enter. Size S.
