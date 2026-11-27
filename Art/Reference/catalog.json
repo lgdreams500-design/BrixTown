@@ -1456,6 +1456,34 @@
     "Midday is the brightest setting: the polished floor catches the sun's patches and the roof lights.",
     "The outlets' fronts are lit strips at this distance; their insides, the egg halls and the concourses are not in this reference."
    ]
+  },
+  {
+   "id": "MallsEastgateEntrance",
+   "category": "Malls",
+   "title": "Eastgate Mall's south entrance from the forecourt, at every hour",
+   "files": [
+    "Malls/MallsEastgateEntrance_Morning.jpg",
+    "Malls/MallsEastgateEntrance_Midday.jpg",
+    "Malls/MallsEastgateEntrance_Dusk.jpg",
+    "Malls/MallsEastgateEntrance_NightLamps.jpg"
+   ],
+   "locks": "The shapes are the game's (Art/StyleTests/unreal_mall_entrance_55/): the shell's ribbon wall 14 m out from the hall (World/city_01/blocks/b_16_5.json shell, Tools/worldgen/mall_shell_01.py, ADR-0037), lifted over the south door into an arch 44 m wide and 12.5 m high, the porch's vault behind it with three lanterns hanging in it; the hall's curved doorway, 16 m wide, straight sides rising into a wide curve, glazed to the curve with thin brass mullions and a line of light round its edge; the concourse and its outlets seen through it, their fronts in the game's style (clear glass, thin dark mullions, a sign band in the kind's colour with its name); the forecourt's trees where the block puts them. The ribbon wall is one even honed cream stone with a soft satin sheen, no patches and no alternating tones (the owner, 2026-11-27: \"alternate bands on the external structure is not looking good\", \"we shouldn't have patches. Malls are posh\"); the slice's pattern kept: each ribbon laps a little over the one below over a thin dark groove. From dusk ground floodlights set in the forecourt 12 m out throw warm fans up the wall, six along it and two lighting the arch's crown (the owner: \"place flood light on the ground away from the mall casting light on the dome\"; lights.json ground_flood). In the world's light; no moonlit nights, no weather.",
+   "approved": "2026-11-27, the owner",
+   "decision": "the owner, 2026-11-27: \"where is the entry point to the mall?\"; \"why you turning a nice curved entrace which exists in game to a box entrancve\"; \"see this from the old slice, can you use this pattern and enhance it\"; \"Approve it\"; ADR-0037, ADR-0066, ADR-0068",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=mall_entrance; mall_porch(), mall_entrance_doors(), mall_floods(), mall_forecourt(), MALL_LOOK) from the shell and plan in World/city_01/blocks/b_16_5.json",
+   "models": [
+    "World/city_01/blocks/b_16_5.json (b_16_5_l0, its shell and plan)",
+    "Prototype/play (the slice's mall)",
+    "Game/Source/BrixTown/Private/BrixMallActor.cpp (Eastgate)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 5 (Eastgate), World/rules/lights.json (ground_flood)",
+   "was": [],
+   "issues": [
+    "The floodlights' fans start part way up the wall; its foot between them stays dark.",
+    "The floodlights' lenses glow by day too; when off they should be dark.",
+    "The forecourt is pale grey slabs where the game has warm brick.",
+    "Only the stretch of the shell round the south arch is built; the rest of the mall outside has no reference."
+   ]
   }
  ],
  "gaps": [
@@ -1477,7 +1505,7 @@
   {
    "category": "Malls",
    "what": "Eastgate Mall outside, its outlets inside, its egg halls",
-   "why": "The court has a reference (MallsEastgateCourt, 2026-11-26); the shell outside (ADR-0037), the outlets' insides (ADR-0039) and the four egg halls do not."
+   "why": "The court (MallsEastgateCourt, 2026-11-26) and the south entrance with the shell round it (MallsEastgateEntrance, 2026-11-27) have references; the rest of the shell outside (ADR-0037), the outlets' insides (ADR-0039) and the four egg halls do not."
   },
   {
    "category": "Malls",
