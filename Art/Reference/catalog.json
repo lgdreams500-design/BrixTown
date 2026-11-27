@@ -1441,9 +1441,9 @@
     "Malls/MallsEastgateCourt_Dusk.jpg",
     "Malls/MallsEastgateCourt_NightLamps.jpg"
    ],
-   "locks": "The shapes are the game's: the court as the mall's plan draws it (World/city_01/blocks/b_16_5.json; Tools/worldgen/mall_inside_01.py, ADR-0038): 92 x 192 m, three floors 6 m apart, the galleries' openings swelling round each atrium and pinching between them, bridges at the pinches, five round roof lights, the moving stairs, fountains, gardens, benches, planters and every outlet's front. The look is its own, from the owner's screenshots of the game's court (Art/StyleTests/mall_wanted_51/) taken further (the owner, 2026-11-26: \"feel inspired and take a creative take on the look and feel add ornaments if required use glass and other material\"): warm timber slats under the galleries, cream edges with a line of light along each and brass trim, glass balustrades with brass rails, slender cream columns with brass collars, plants hanging over the balustrades; a uniform polished stone floor of large tiles with hidden joints (the owner: \"smoother and shiny\", \"hide the tile edges\"), a brass inlay tracing the galleries' curves; the roof lights lightly tinted with a diamond lattice, a chandelier of globes and translucent banners hanging in each; grass islands in white kerbs with trees and flowers; moving stairs with dark treads, glass sides and brass rails; shop fronts in the town's colours, lit. In the world's light: by day the sun and sky through the roof lights, the hidden lights under the edges low; at dusk and at night those at full in the hall lantern's warm white. No moonlit nights, no weather.",
+   "locks": "The shapes are the game's: the court as the mall's plan draws it (World/city_01/blocks/b_16_5.json; Tools/worldgen/mall_inside_01.py, ADR-0038): 92 x 192 m, three floors 6 m apart, the galleries' openings swelling round each atrium and pinching between them, bridges at the pinches, five round roof lights, the moving stairs, fountains, gardens, benches, planters and every outlet's front. The look is its own, from the owner's screenshots of the game's court (Art/StyleTests/mall_wanted_51/) taken further (the owner, 2026-11-26: \"feel inspired and take a creative take on the look and feel add ornaments if required use glass and other material\"): warm timber slats under the galleries, cream edges with a line of light along each and brass trim, glass balustrades with brass rails, slender cream columns with brass collars, plants hanging over the balustrades; a uniform polished stone floor of large tiles with hidden joints (the owner: \"smoother and shiny\", \"hide the tile edges\"), a brass inlay tracing the galleries' curves; the roof lights lightly tinted with a diamond lattice, a chandelier of globes and translucent banners hanging in each; grass islands in white kerbs with trees and flowers; moving stairs with dark treads, glass sides and brass rails; shop fronts with their signs in coloured glass, lit (MallsEastgateShop, ADR-0071). In the world's light: by day the sun and sky through the roof lights, the hidden lights under the edges low; at dusk and at night those at full in the hall lantern's warm white. No moonlit nights, no weather.",
    "approved": "2026-11-26, the owner",
-   "decision": "the owner, 2026-11-26: \"there will be more reference for mall required for screenshot in attached pics\"; \"use the shapes from the game for the mall interiors but texture, color, styling etc, please come up with your self\"; \"Approve it\"; ADR-0038, ADR-0061, ADR-0066",
+   "decision": "the owner, 2026-11-26: \"there will be more reference for mall required for screenshot in attached pics\"; \"use the shapes from the game for the mall interiors but texture, color, styling etc, please come up with your self\"; \"Approve it\"; ADR-0038, ADR-0061, ADR-0066; made again with the glass shop signs, the owner, 2026-11-28: \"Yes, every shop\", \"Approve, all four\" (ADR-0071)",
    "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=mall; mall_court(), MALL_LOOK) from the plan in World/city_01/blocks/b_16_5.json",
    "models": [
     "World/city_01/blocks/b_16_5.json (b_16_5_l0, its plan)",
@@ -1482,7 +1482,8 @@
     "The floodlights' fans start part way up the wall; its foot between them stays dark.",
     "The floodlights' lenses glow by day too; when off they should be dark.",
     "The forecourt is pale grey slabs where the game has warm brick.",
-    "Only the stretch of the shell round the south arch is built; the rest of the mall outside has no reference."
+    "Only the stretch of the shell round the south arch is built; the rest of the mall outside has no reference.",
+    "The concourse's shops seen through the doorway still have their earlier matte signs; at this distance they read the same as the glass ones (ADR-0071, MallsEastgateShop)."
    ]
   },
   {
@@ -1495,9 +1496,9 @@
     "Malls/MallsEastgateFoodCourt_Dusk.jpg",
     "Malls/MallsEastgateFoodCourt_NightLamps.jpg"
    ],
-   "locks": "The shapes are the game's (Art/StyleTests/unreal_egg_hall_56/): the Food Market's round hall under the south-west egg (World/city_01/blocks/b_16_5.json halls[0], WLD-059, ADR-0038), 22 m in radius and three floors high, its drum walls, the walk in from the court ending in a balcony on each upper floor, the roof open over it in a round eye, the egg above (38 x 31 x 45 m, its middle 11 m up) a lattice of diamond openings onto the sky, six produce stalls where its staff stand, a tree in a round planter in the middle, lanterns hanging in a ring. Added (the owner, 2026-11-27, ADR-0070): food outlets skirting the drum on the ground floor, each an open counter between stone piers with its sign in its colour and its name backlit, lit menu boards and a kitchen behind; long tables for ten in a ring and round tables for four between them and near the tree. The look is the court's (ADR-0069) taken warmer: honed stone drums with a line of light round each floor and timber fins round the upper drum, polished stone floor with warm caramel and dark bands and brass rings let into it, the lattice in gold, timber and cream stalls under striped canopies, timber and brass seating; uplit piers, warm kitchens, opal pendants over the long tables. In the world's light: by day the sky and sun through the egg, the lanterns low; at dusk and night the egg dark and the lamps at full. No moonlit nights, no weather.",
+   "locks": "The shapes are the game's (Art/StyleTests/unreal_egg_hall_56/): the Food Market's round hall under the south-west egg (World/city_01/blocks/b_16_5.json halls[0], WLD-059, ADR-0038), 22 m in radius and three floors high, its drum walls, the walk in from the court ending in a balcony on each upper floor, the roof open over it in a round eye, the egg above (38 x 31 x 45 m, its middle 11 m up) a lattice of diamond openings onto the sky, six produce stalls where its staff stand, a tree in a round planter in the middle, lanterns hanging in a ring. Added (the owner, 2026-11-27, ADR-0070): food outlets skirting the drum on the ground floor, each an open counter between stone piers with its sign in its colour and its name backlit, lit menu boards and a kitchen behind; long tables for ten in a ring and round tables for four between them and near the tree. The look is the court's (ADR-0069) taken warmer: honed stone drums with a line of light round each floor and timber fins round the upper drum, polished stone floor with warm caramel and dark bands and brass rings let into it, the lattice in gold, timber and cream stalls under striped canopies, timber and brass seating; uplit piers, warm kitchens, opal pendants over the long tables. In the world's light: by day the sky and sun through the egg, the lanterns low; at dusk and night the egg dark and the lamps at full. No moonlit nights, no weather. The outlets' signs are coloured glass with backlit names (ADR-0071), not raked, as they follow the drum.",
    "approved": "2026-11-27, the owner",
-   "decision": "the owner, 2026-11-27: \"needs tables and chair, even long tables with more chairs like in the mall. we can have addition food outlets skirting the round wall, like we have in many malls\"; \"structure is really good. Food stall at skirting the wall are really nice and matches my vision but currently the colors and light is a bit bland and missing depth\"; \"Approve it\"; ADR-0038, ADR-0066, ADR-0069, ADR-0070",
+   "decision": "the owner, 2026-11-27: \"needs tables and chair, even long tables with more chairs like in the mall. we can have addition food outlets skirting the round wall, like we have in many malls\"; \"structure is really good. Food stall at skirting the wall are really nice and matches my vision but currently the colors and light is a bit bland and missing depth\"; \"Approve it\"; ADR-0038, ADR-0066, ADR-0069, ADR-0070; made again with the glass shop signs, the owner, 2026-11-28: \"Yes, every shop\", \"Approve, all four\" (ADR-0071)",
    "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=egg_hall; mall_egg_hall(), egg_food_court(), egg_seating(), MALL_LOOK) from the plan and shell in World/city_01/blocks/b_16_5.json",
    "models": [
     "World/city_01/blocks/b_16_5.json (b_16_5_l0, halls[0] and its egg)",
@@ -1510,7 +1511,34 @@
     "The pendants over the long tables hardly show from this camera; the long tables sit at the edges of the frame.",
     "The outlets' names are hard to read across the hall at review size.",
     "The plan has no units for the food outlets and no seating (ADR-0070): the game's hall has neither yet.",
-    "Like the court and the entrance, the picture is the game's mirror image (the map's z read as Blender's y)."
+    "Like the court and the entrance, the picture is the game's mirror image (the map's z read as Blender's y).",
+    "The outlets' names glow less than when this was first approved (1.2, as every shop's, ADR-0071)."
+   ]
+  },
+  {
+   "id": "MallsEastgateShop",
+   "category": "Malls",
+   "title": "One of Eastgate Mall's shops close by, its glass sign, at every hour",
+   "files": [
+    "Malls/MallsEastgateShop_Morning.jpg",
+    "Malls/MallsEastgateShop_Midday.jpg",
+    "Malls/MallsEastgateShop_Dusk.jpg",
+    "Malls/MallsEastgateShop_NightLamps.jpg"
+   ],
+   "locks": "Every outlet's sign in Eastgate Mall, shown on The Linen Press on the south concourse (World/city_01/blocks/b_16_5.json, unit b_16_5_u15): a band over the front in its kind's colour (MALL_LOOK[\"signs\"], the mall's own colours), even, behind a pane of clear glass, raked back 5 degrees so the glass shows the hall's lit ceiling as a thin line along its top; brass trim above and below it and a line of light under it; its name in cream letters lit from behind, on all day; a brass trough on three arms out from the galleries' slats above, its light (the sign lamp's kind, World/rules/lights.json) falling onto the sign all day. Below it the outlet's glass front between dark mullions, its inside lit, as the court's (MallsEastgateCourt). In the world's light: the sign looks the same at every hour; the hall round it follows the court. No moonlit nights, no weather.",
+   "approved": "2026-11-28, the owner",
+   "decision": "the owner, 2026-11-27: \"can you show me shop banner options which are not pastel like what exists now in the malls shops?\"; 2026-11-28: \"can you use the colors from row 1 but use glass as the material\"; \"Yes, every shop\"; \"Yes, add it\"; \"Approve, all four\"; ADR-0066, ADR-0069, ADR-0071",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=mall_shop; mall_court(view=\"shop\"), shop_banner(), sign_glass(), MALL_LOOK) from the plan in World/city_01/blocks/b_16_5.json",
+   "models": [
+    "World/city_01/blocks/b_16_5.json (b_16_5_l0, its plan and outlets)",
+    "Game/Source/BrixWorld/Private/BrixMall.cpp (the outlets' fronts)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 5 (Eastgate), ADR-0069, ADR-0071, World/rules/lights.json",
+   "was": [],
+   "issues": [
+    "The brass trough sits just above the frame's top edge from this camera; only its light shows.",
+    "Its right-hand end meets the next outlet's sign, which is turned away from the camera.",
+    "Like the court, the picture is the game's mirror image (the map's z read as Blender's y)."
    ]
   }
  ],
@@ -1533,7 +1561,7 @@
   {
    "category": "Malls",
    "what": "Eastgate Mall outside, its outlets inside, three of its egg halls",
-   "why": "The court (MallsEastgateCourt), the south entrance with the shell round it (MallsEastgateEntrance) and the Food Market's egg hall (MallsEastgateFoodCourt, 2026-11-27) have references; the rest of the shell outside (ADR-0037), the outlets' insides (ADR-0039) and the Cinema's, Department Store's and Fashion House's egg halls do not."
+   "why": "The court (MallsEastgateCourt), the south entrance with the shell round it (MallsEastgateEntrance) the Food Market's egg hall (MallsEastgateFoodCourt, 2026-11-27) and one shop's front with its glass sign (MallsEastgateShop, 2026-11-28) have references; the rest of the shell outside (ADR-0037), the outlets' insides (ADR-0039) and the Cinema's, Department Store's and Fashion House's egg halls do not."
   },
   {
    "category": "Malls",

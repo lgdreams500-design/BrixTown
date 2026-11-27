@@ -1,0 +1,12 @@
+00:34:29 Blender 5.3.0, place mall_shop
+00:34:34   Eastgate's court from its plan: 60 lanterns, 5 skylights, 4 moving stairs; 8 outlets' insides in view
+00:34:34 MallShop: sun 8.5 at bearing -41 deg, sky 0.45; 74 lamps, 0 fires, 10 glowing materials, 0 haze
+00:34:41   MallShop_Morning: the eye at -0.70 stops for a mean of 100
+00:36:26 MallShop_Morning.jpg rendered in 105.9s
+00:36:31   MallShop_Midday: the eye at -0.90 stops for a mean of 100
+00:38:23 MallShop_Midday.jpg rendered in 111.5s
+00:38:27   MallShop_Dusk: the eye at -0.85 stops for a mean of 85
+00:40:25 MallShop_Dusk.jpg rendered in 118.5s
+00:40:30   MallShop_NightLamps: the eye at -0.71 stops for a mean of 70
+00:42:43 MallShop_NightLamps.jpg rendered in 132.5s
+00:42:43 DONE

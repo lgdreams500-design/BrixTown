@@ -1,12 +1,12 @@
-23:22:50 Blender 5.3.0, place mall
-23:22:53   Eastgate's court from its plan: 60 lanterns, 5 skylights, 4 moving stairs
-23:22:53 MallCourt: sun 8.5 at bearing -41 deg, sky 0.45; 65 lamps, 0 fires, 8 glowing materials, 0 haze
-23:22:55   MallCourt_Morning: the eye at +0.13 stops for a mean of 100
-23:24:14 MallCourt_Morning.jpg rendered in 79.5s
-23:24:16   MallCourt_Midday: the eye at -1.31 stops for a mean of 82
-23:25:30 MallCourt_Midday.jpg rendered in 73.8s
-23:25:32   MallCourt_Dusk: the eye at -0.18 stops for a mean of 85
-23:27:23 MallCourt_Dusk.jpg rendered in 110.4s
-23:27:28   MallCourt_NightLamps: the eye at -0.01 stops for a mean of 70
-23:28:53 MallCourt_NightLamps.jpg rendered in 84.6s
-23:28:53 DONE
+00:47:31 Blender 5.3.0, place mall
+00:47:42   Eastgate's court from its plan: 60 lanterns, 5 skylights, 4 moving stairs; 41 outlets' insides in view
+00:47:42 MallCourt: sun 8.5 at bearing -41 deg, sky 0.45; 65 lamps, 0 fires, 10 glowing materials, 0 haze
+00:47:52   MallCourt_Morning: the eye at +0.32 stops for a mean of 100
+00:50:35 MallCourt_Morning.jpg rendered in 163.1s
+00:50:46   MallCourt_Midday: the eye at -1.18 stops for a mean of 82
+00:53:29 MallCourt_Midday.jpg rendered in 163.2s
+00:53:40   MallCourt_Dusk: the eye at -0.08 stops for a mean of 85
+00:56:24 MallCourt_Dusk.jpg rendered in 164.3s
+00:56:35   MallCourt_NightLamps: the eye at +0.01 stops for a mean of 70
+00:59:28 MallCourt_NightLamps.jpg rendered in 172.9s
+00:59:28 DONE
