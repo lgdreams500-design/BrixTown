@@ -47,6 +47,12 @@ should need no change.
 ## Not yet
 Each item is also noted where it lives (`Game/README.md`, `Tools/README.md`, `Tools/citysim/README.md`).
 
+**The Baker's hero is Ashby** (owner, 2026-11-27; ADR-0068, QST-016): the cast call him by his surname. Not yet:
+the four lines that say `{player}` (`four_oclock_door/morning/together2`, `feeding_the_mother/morning/w_join`,
+`name_on_the_door/door/y_table3`, `stone_ground/farm/f_saved2`) still say it, until the owner has read them with
+"Ashby"; Mei's endearments (honey, sweetheart) are not written; the character designer does not hold a hero to his
+career's gender and age.
+
 **So that what was approved shows in the game**
 1. The Stone Oven's ground floor in Unreal is the approved design's own pieces in a room of 9 by 7.5 m in the street
    corner, closed by partitions and seen into through the shop front and the side windows (ADR-0062,

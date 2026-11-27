@@ -83,6 +83,10 @@ after the owner has heard it. The Maya1 voicing script outside the repository fl
 It cannot hear wrong words of the right length; a speech-to-text check would (offered, not wanted for now).
 
 ## Not yet
+- The Baker's hero, Ashby (`"heroes"` in `cast_voices.json`, ADR-0068), has no voice card: the player still speaks in
+  the Kokoro player voice of `World/rules/voices.json` (a woman's, US English by default). One test of a line with
+  "Ashby" in Noor's Maya1 voice was made outside the repository (`together2`, 19.9 s for 27 words, a second over the
+  length check); it is not in the game.
 - Noor: four lines murmured. `four_oclock_door/verdict/v_lie` ran to Maya1's token limit (73 s of babble) on both
   tries, 2026-11-26 and 2026-11-27; its words or another model would need the owner's say. `morning/together2`,
   `morning/w_join` and `door/y_table3` have the player's name inside, and the importer takes only whole lines with no
