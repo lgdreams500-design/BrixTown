@@ -69,9 +69,10 @@ by the owner and not in the game** (no `cast` in `World/rules/voices.json`): Abe
 Suvi (10), with their mood cards. The run was then stopped at the owner's word; Jai's part was left at 7 of 19 clips,
 which are not committed.
 
-**Noor** speaks in a Maya1 voice (ADR-0063), not the recipe's: 29 of her 111 lines are in the game (`cast_noor`,
-`"partial"` in `World/rules/voices.json`), from one Maya1 run the owner stopped after 35 lines. Her other lines are
-murmured.
+**Noor** speaks in a Maya1 voice (ADR-0063), not the recipe's: 107 of her 111 lines are in the game (`cast_noor`,
+`"partial"` in `World/rules/voices.json`), from two Maya1 runs (35 lines, then the other 76 on 2026-11-27). The owner
+listened to the twelve clips the length check flagged and found them right (2026-11-27: `verdict/v_lie` "is the only
+bad one"), so they went in with `--keep`.
 
 **Every clip is checked by its length** (owner, 2026-11-26: no agent can hear and nobody can listen to thousands of
 lines). A clip longer than its words allow (`words / 1.6 + 2 s`) has more in it than the line: the model read its
@@ -82,11 +83,11 @@ after the owner has heard it. The Maya1 voicing script outside the repository fl
 It cannot hear wrong words of the right length; a speech-to-text check would (offered, not wanted for now).
 
 ## Not yet
-- Noor: 82 lines not voiced: 76 never made; five flagged by length (`morning/report`, `verdict/v_lie`, and three
-  slow ones taken out of the game, `morning/teach`, `verdict/v_wary`, `still/s1`, which wait for the owner's ear and
-  `--keep`); and `morning/together2`, which has the player's name in it. Nobody has listened to her clips in the
-  Unreal game. The owner heard only a few in the trial. `make_cast_voices.py noor` would voice her remaining lines in the Qwen voice: do not run it for her
-  until the owner says which model finishes her part.
+- Noor: four lines murmured. `four_oclock_door/verdict/v_lie` ran to Maya1's token limit (73 s of babble) on both
+  tries, 2026-11-26 and 2026-11-27; its words or another model would need the owner's say. `morning/together2`,
+  `morning/w_join` and `door/y_table3` have the player's name inside, and the importer takes only whole lines with no
+  blank. Nobody has listened to her clips in the Unreal game. Do not run `make_cast_voices.py noor` (the Qwen voice)
+  over her part.
 - Noor's clips have not been heard in a staged Unreal talk: `-BrixTalk=262` opened Pip's talk at 10:00 (she stands
   nearer) and found nobody near enough at 06:40, 07:21, 12:30 and 16:00. The Unreal test finds every one of her voiced
   lines' clips.
