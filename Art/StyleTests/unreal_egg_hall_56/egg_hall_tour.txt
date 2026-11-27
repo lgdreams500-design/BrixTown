@@ -1,0 +1,7 @@
+# Eastgate's Food Market egg hall in the game as it is (hall b_16_5_u0, centre 1584.5,816.5, r 22 m; under egg 0)
+hall_1200|12:00||cam:1600,832,1.7,-139,14
+hall_up_1200|12:00||cam:1588,820,1.7,-135,55
+hall_door_1200|12:00||cam:1630,824,1.7,180,6
+hall_0800|08:00||cam:1600,832,1.7,-139,14
+hall_1930|19:30||cam:1600,832,1.7,-139,14
+hall_2230|22:30||cam:1600,832,1.7,-139,14

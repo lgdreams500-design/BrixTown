@@ -1484,6 +1484,34 @@
     "The forecourt is pale grey slabs where the game has warm brick.",
     "Only the stretch of the shell round the south arch is built; the rest of the mall outside has no reference."
    ]
+  },
+  {
+   "id": "MallsEastgateFoodCourt",
+   "category": "Malls",
+   "title": "Eastgate Mall's Food Market egg hall as a food court, at every hour",
+   "files": [
+    "Malls/MallsEastgateFoodCourt_Morning.jpg",
+    "Malls/MallsEastgateFoodCourt_Midday.jpg",
+    "Malls/MallsEastgateFoodCourt_Dusk.jpg",
+    "Malls/MallsEastgateFoodCourt_NightLamps.jpg"
+   ],
+   "locks": "The shapes are the game's (Art/StyleTests/unreal_egg_hall_56/): the Food Market's round hall under the south-west egg (World/city_01/blocks/b_16_5.json halls[0], WLD-059, ADR-0038), 22 m in radius and three floors high, its drum walls, the walk in from the court ending in a balcony on each upper floor, the roof open over it in a round eye, the egg above (38 x 31 x 45 m, its middle 11 m up) a lattice of diamond openings onto the sky, six produce stalls where its staff stand, a tree in a round planter in the middle, lanterns hanging in a ring. Added (the owner, 2026-11-27, ADR-0070): food outlets skirting the drum on the ground floor, each an open counter between stone piers with its sign in its colour and its name backlit, lit menu boards and a kitchen behind; long tables for ten in a ring and round tables for four between them and near the tree. The look is the court's (ADR-0069) taken warmer: honed stone drums with a line of light round each floor and timber fins round the upper drum, polished stone floor with warm caramel and dark bands and brass rings let into it, the lattice in gold, timber and cream stalls under striped canopies, timber and brass seating; uplit piers, warm kitchens, opal pendants over the long tables. In the world's light: by day the sky and sun through the egg, the lanterns low; at dusk and night the egg dark and the lamps at full. No moonlit nights, no weather.",
+   "approved": "2026-11-27, the owner",
+   "decision": "the owner, 2026-11-27: \"needs tables and chair, even long tables with more chairs like in the mall. we can have addition food outlets skirting the round wall, like we have in many malls\"; \"structure is really good. Food stall at skirting the wall are really nice and matches my vision but currently the colors and light is a bit bland and missing depth\"; \"Approve it\"; ADR-0038, ADR-0066, ADR-0069, ADR-0070",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=egg_hall; mall_egg_hall(), egg_food_court(), egg_seating(), MALL_LOOK) from the plan and shell in World/city_01/blocks/b_16_5.json",
+   "models": [
+    "World/city_01/blocks/b_16_5.json (b_16_5_l0, halls[0] and its egg)",
+    "Game/Source/BrixWorld/Private/BrixMall.cpp (the egg halls)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 5 (Eastgate), ADR-0069, ADR-0070, World/rules/lights.json",
+   "was": [],
+   "issues": [
+    "The sun's net of diamonds on the floor is faint: the town's sun is 2.5 degrees wide, which blurs a shadow cast from 20 to 40 m up; the game's is crisp.",
+    "The pendants over the long tables hardly show from this camera; the long tables sit at the edges of the frame.",
+    "The outlets' names are hard to read across the hall at review size.",
+    "The plan has no units for the food outlets and no seating (ADR-0070): the game's hall has neither yet.",
+    "Like the court and the entrance, the picture is the game's mirror image (the map's z read as Blender's y)."
+   ]
   }
  ],
  "gaps": [
@@ -1504,8 +1532,8 @@
   },
   {
    "category": "Malls",
-   "what": "Eastgate Mall outside, its outlets inside, its egg halls",
-   "why": "The court (MallsEastgateCourt, 2026-11-26) and the south entrance with the shell round it (MallsEastgateEntrance, 2026-11-27) have references; the rest of the shell outside (ADR-0037), the outlets' insides (ADR-0039) and the four egg halls do not."
+   "what": "Eastgate Mall outside, its outlets inside, three of its egg halls",
+   "why": "The court (MallsEastgateCourt), the south entrance with the shell round it (MallsEastgateEntrance) and the Food Market's egg hall (MallsEastgateFoodCourt, 2026-11-27) have references; the rest of the shell outside (ADR-0037), the outlets' insides (ADR-0039) and the Cinema's, Department Store's and Fashion House's egg halls do not."
   },
   {
    "category": "Malls",
