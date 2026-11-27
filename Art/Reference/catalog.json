@@ -1,5 +1,5 @@
 {
- "note": "Every approved look reference of Brix Town, in one list (ADR-0061). Files live in Art/Reference/<Category>/ and are named <Category><Subject>[_<Variant>].<ext> in PascalCase, so a name says what it is. 'locks' is what the reference decides; 'decision' the ADR and the owner's approval; 'made_by' the script that renders it; 'models' what the game is built from or measured against with it; 'status' proposed when it waits for the owner's approval; 'issues' what is seen wrong in it and not mended, for the owner to judge; 'was' the old names. 'places' says which reference each kind of place in the game is judged against, and which places have none: python Tools/reference_catalog.py --for <tour stop, lot id or place> answers it. 'gaps' are references a category still lacks. Tools/reference_catalog.py checks this file against the folders and writes Art/Reference/index.html; run it after any change here.",
+ "note": "Every approved look reference of Brix Town, in one list (ADR-0061). Files live in Art/Reference/<Category>/ and are named <Category><Subject>[_<Variant>].<ext> in PascalCase, so a name says what it is. 'locks' is what the reference decides; 'decision' the ADR and the owner's approval; 'made_by' the script that renders it; 'models' what the game is built from or measured against with it; 'status' proposed when it waits for the owner's approval; 'issues' what is seen wrong in it and not mended, for the owner to judge; 'was' the old names. 'places' says which reference each kind of place in the game is judged against, and which places have none: python Tools/reference_catalog.py --for <tour stop, lot id or place> answers it; a place's 'camera' names the tour stops that look through its reference's own camera (Tools/unreal/look_match.py compares those square by square). 'gaps' are references a category still lacks. Tools/reference_catalog.py checks this file against the folders and writes Art/Reference/index.html; run it after any change here.",
  "categories": [
   {
    "id": "World",
@@ -1541,8 +1541,10 @@
      ]
     }
    ],
-   "stops": [],
-   "note": "The look tour has no stop inside a home's room: the home stops stand in the hallway."
+   "stops": [
+    "room"
+   ],
+   "note": "The look tour (light_tour.txt) has no stop inside a home's room; the reference tour (reference_tour.txt) has."
   },
   {
    "place": "home_hallway",
@@ -1558,7 +1560,8 @@
    "stops": [
     "row",
     "rowup",
-    "house"
+    "house",
+    "hall"
    ],
    "note": "Which of the two home references a spot takes is decided by its light, not its name: a window of its own, IndoorHomeRoom; none, IndoorHallway."
   },
@@ -1596,7 +1599,14 @@
    ],
    "stops": [
     "bakery"
-   ]
+   ],
+   "camera": {
+    "stops": [
+     "bakery"
+    ],
+    "keep": 0.861,
+    "from": "Tools/blender/baker_look_47.py bakery_scene(): 0.25 m inside the front wall, 1.5 m right of the room's middle, 1.7 m up, aimed 23 degrees left and 6 down; its 15.5 mm lens is wider than the tour's 90 degrees, so its middle 86.1 % is the game's field"
+   }
   },
   {
    "place": "big_hall",

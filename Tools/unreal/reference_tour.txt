@@ -1,0 +1,29 @@
+# The places that have an approved reference, each at the hours its reference shows, for Tools/unreal/look_match.py
+# (docs/process/LOOK_GATE.md, The matching round). Same form as light_tour.txt; run it with
+#   Tools\unreal\light_tour.ps1 -OutDir <folder> -List Tools\unreal\reference_tour.txt
+# A stop's name without its hour is one of its place's stops in Art/Reference/catalog.json. Only 12:00 (Midday) and
+# 22:30 (NightLamps) are here: which hour of the game's day a reference's Morning and Dusk are is not recorded yet.
+
+# the Stone Oven bakery through its reference's own camera (the catalog's camera for the place bakery): matched
+bakery_1200|12:00||cam:686.4,759.4,1.7,-113.2,-6
+bakery_2230|22:30||cam:686.4,759.4,1.7,-113.2,-6
+# a home's hallway, no window of its own: the hall of the house 6 Orchard End (b_4_13_l133), looking down it from the door
+hall_1200|12:00||cam:780.13,1445.07,1.8,143.5,-4
+hall_2230|22:30||cam:780.13,1445.07,1.8,143.5,-4
+# a home's room with its own windows: a ground-floor room of the same house, from its inner corner
+room_1200|12:00||cam:776.14,1445.72,1.8,-78.7,-6
+room_2230|22:30||cam:776.14,1445.72,1.8,-78.7,-6
+# a shop's floor: the grocer, the bank and the library, the player walked in
+shop_1200|12:00||in:b_10_9_l2
+shop_2230|22:30||in:b_10_9_l2
+bank_1200|12:00||in:b_9_6_l0
+library_1200|12:00||in:b_8_7_l0
+# out of doors: the alley, Market Square, the street, and Eastgate's court
+alley_1200|12:00||stand:876.5,912,0,0
+alley_2230|22:30||stand:876.5,912,0,0
+square_1200|12:00||cam:912,836,2.2,-90,4
+square_2230|22:30||cam:912,836,2.2,-90,4
+street_1200|12:00||cam:960,880,1.7,90,0
+street_2230|22:30||cam:960,880,1.7,90,0
+mall_court_1200|12:00||cam:1680,700,1.7,-90,12
+mall_court_2230|22:30||cam:1680,700,1.7,-90,12

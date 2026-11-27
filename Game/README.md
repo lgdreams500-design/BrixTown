@@ -1238,7 +1238,11 @@ first audit's findings are in LOOK_GATE.md.
   tour's 64 stops show a place with no approved reference (a park, a cafe, a tower's hall, Eastgate's concourse and its
   outside from above, and the five measuring rooms); the tour has no stop inside a home's room (`IndoorHomeRoom`): its
   home stops stand in the hallway; no stop looks through its reference's own camera, so a shot and its reference show
-  the same kind of place from different spots. The rooms' light (above, ADR-0055) was set by the rooms of
+  the same kind of place from different spots. `Tools/unreal/reference_tour.txt` and `Tools/unreal/look_match.py`
+  (LOOK_GATE, The matching round) now take and measure each place against its own reference; of its stops only the
+  bakery's look through the reference's camera, which hour of the game's day a reference's Morning and Dusk are is not
+  recorded, and a tour stop can try several numbers in one launch only in the measuring rooms, not in the town's rooms.
+  The rooms' light is the same with a window or without: a hallway is lit as a room is, where its reference is dim. The rooms' light (above, ADR-0055) was set by the rooms of
   `furniture_kit_18`, which the owner retired as references on 2026-11-26; it has not been set against `IndoorHomeRoom`,
   `IndoorHallway` or `ShopsShopFloor`.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,

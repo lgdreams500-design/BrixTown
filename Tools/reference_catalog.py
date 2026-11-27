@@ -22,6 +22,7 @@ ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
 REF = os.path.join(ROOT, "Art", "Reference")
 CATALOG = os.path.join(REF, "catalog.json")
 TOUR = os.path.join(ROOT, "Tools", "unreal", "light_tour.txt")
+TOURS = ("light_tour.txt", "reference_tour.txt")          # every tour list whose stops must belong to a place
 PAGE = os.path.join(REF, "index.html")
 KINDS = (".png", ".jpg", ".gif", ".mp4")
 NEEDS = ("id", "category", "title", "files", "locks", "approved", "decision", "made_by")
@@ -91,11 +92,16 @@ def problems(cat, root=ROOT):
             if s in stops:
                 out.append("tour stop %s belongs to two places: %s and %s" % (s, stops[s], k))
             stops[s] = k
-    tour = os.path.join(root, "Tools", "unreal", "light_tour.txt")
-    if cat.get("places") and os.path.isfile(tour):
-        for name in tour_stops(tour):
-            if stop_key(name) not in stops:
-                out.append("tour stop %s belongs to no place: add it to a place's stops in the catalog" % name)
+    for t in TOURS:
+        tour = os.path.join(root, "Tools", "unreal", t)
+        if cat.get("places") and os.path.isfile(tour):
+            for name in tour_stops(tour):
+                if stop_key(name) not in stops:
+                    out.append("tour stop %s belongs to no place: add it to a place's stops in the catalog" % name)
+    for p in cat.get("places", []):
+        for s in (p.get("camera") or {}).get("stops", []):
+            if s not in p.get("stops", []) or not p.get("reference"):
+                out.append("place %s: its camera names the stop %s, which is not one of its stops, or it has no reference" % (p.get("place"), s))
     return out
 
 
