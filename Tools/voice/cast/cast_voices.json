@@ -24,6 +24,17 @@
   "grace_seconds": 2.0,
   "fastest_words_a_second": 5.0
  },
+ "heroes": {
+  "note": "A career's hero: the character the player plays in that career's story (ADR-0068). The career fixes gender, age, accent and surname; the player picks the first name and the looks. The cast call the hero by the surname. No voice card yet: the player voice in World/rules/voices.json is not his.",
+  "baker": {
+   "surname": "Ashby",
+   "voice_is": "man",
+   "written_as": "he",
+   "age": 24,
+   "accent": "British",
+   "from": "The owner, 2026-11-27, in chat: 'Baker male, fixed age 24' and, of the surnames proposed, 'Ashby, British accent'."
+  }
+ },
  "people": [
   {
    "id": "noor",
