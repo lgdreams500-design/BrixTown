@@ -89,8 +89,8 @@ It cannot hear wrong words of the right length; a speech-to-text check would (of
   length check); it is not in the game.
 - Noor: four lines murmured. `four_oclock_door/verdict/v_lie` ran to Maya1's token limit (73 s of babble) on both
   tries, 2026-11-26 and 2026-11-27; its words or another model would need the owner's say. `morning/together2`,
-  `morning/w_join` and `door/y_table3` have the player's name inside, and the importer takes only whole lines with no
-  blank. Nobody has listened to her clips in the Unreal game. Do not run `make_cast_voices.py noor` (the Qwen voice)
+  `morning/w_join` and `door/y_table3` had the player's name inside; since 2026-11-27 they say "Ashby" (ADR-0068) and
+  can be voiced whole, but are not voiced yet (the one test of `together2` was made before the writing changed). Nobody has listened to her clips in the Unreal game. Do not run `make_cast_voices.py noor` (the Qwen voice)
   over her part.
 - Noor's clips have not been heard in a staged Unreal talk: `-BrixTalk=262` opened Pip's talk at 10:00 (she stands
   nearer) and found nobody near enough at 06:40, 07:21, 12:30 and 16:00. The Unreal test finds every one of her voiced

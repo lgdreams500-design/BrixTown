@@ -447,7 +447,7 @@
        ]
       },
       "together2": {
-       "say": "Burns get shown, not hidden. Same with trays. Reshape, prove again, and the pair of you owe me an hour of pastry. {player}. You said “we”. Noted.",
+       "say": "Burns get shown, not hidden. Same with trays. Reshape, prove again, and the pair of you owe me an hour of pastry. Ashby. You said “we”. Noted.",
        "mood": "neutral",
        "dir": "She looks at the tray, then at the two of you standing shoulder to shoulder like a court martial.",
        "options": [
@@ -2444,7 +2444,7 @@
        ]
       },
       "w_join": {
-       "say": "Six years apart, and she takes him back in a night. No argument. No sulk. She's a better family than the rest of us. Proofing room key. And {player}. On Saturday the seeded loaf goes to Eastgate with the morning round. On the books. No more cash.",
+       "say": "Six years apart, and she takes him back in a night. No argument. No sulk. She's a better family than the rest of us. Proofing room key. And Ashby. On Saturday the seeded loaf goes to Eastgate with the morning round. On the books. No more cash.",
        "mood": "thinking",
        "options": [
         {
@@ -3355,7 +3355,7 @@
        ]
       },
       "f_saved2": {
-       "say": "Don't push it, Dad. Fine. Six. And {player}: if either of your buyers is late with the money, the vet's bill goes to the bakery.",
+       "say": "Don't push it, Dad. Fine. Six. And Ashby: if either of your buyers is late with the money, the vet's bill goes to the bakery.",
        "mood": "happy",
        "options": [
         {
@@ -5342,7 +5342,7 @@
        ]
       },
       "y_table3": {
-       "say": "It is not six counters in six towns. It's one oven. But yes. You run the queue; you were always good with a queue. I feed the Mother. {player} bakes. The name over the door stays as it is. We add a line underneath.",
+       "say": "It is not six counters in six towns. It's one oven. But yes. You run the queue; you were always good with a queue. I feed the Mother. Ashby bakes. The name over the door stays as it is. We add a line underneath.",
        "mood": "happy",
        "options": [
         {
@@ -5665,7 +5665,7 @@
        ]
       },
       "a1_gone": {
-       "say": "You! I still count twelve every morning and look for your face behind the barrow. You're getting hard to gossip about, now you don't come by.",
+       "say": "Ashby! I still count twelve every morning and look for your face behind the barrow. You're getting hard to gossip about, now you don't come by.",
        "mood": "happy",
        "options": [
         {
@@ -5710,7 +5710,7 @@
        ]
       },
       "a3": {
-       "say": "You're asking me to lunch. With twenty minutes and a tram timetable. That's either very sweet or very badly planned.",
+       "say": "You're asking me to lunch, Ashby. With twenty minutes and a tram timetable. That's either very sweet or very badly planned.",
        "mood": "thinking",
        "options": [
         {
@@ -6701,7 +6701,7 @@
        ]
       },
       "q_tea": {
-       "say": "One tea. I'll be here when it's a question.",
+       "say": "One tea, love. I'll be here when it's a question.",
        "mood": "happy",
        "options": [
         {
@@ -6871,7 +6871,7 @@
        ]
       },
       "q_yes": {
-       "say": "Yes. Yes, and I'm telling everyone, and you can't stop me. I'm starting with Noor.",
+       "say": "Yes. Yes, sweetheart, and I'm telling everyone, and you can't stop me. I'm starting with Noor.",
        "mood": "happy",
        "options": [
         {
@@ -6938,7 +6938,7 @@
        ]
       },
       "r_yes": {
-       "say": "Yes. Yes, and I'm telling everyone, and you can't stop me. I'm starting with Noor.",
+       "say": "Yes. Yes, sweetheart, and I'm telling everyone, and you can't stop me. I'm starting with Noor.",
        "mood": "happy",
        "options": [
         {
@@ -7501,7 +7501,7 @@
      "start": "h_mei",
      "nodes": {
       "h_mei": {
-       "say": "Two coats. In a hall. I've counted them three times. Right. We're married, the town's been told, and I've nobody left to tell. So. What do we do first?",
+       "say": "Two coats. In a hall. I've counted them three times. Right. We're married, the town's been told, and I've nobody left to tell. So, sweetheart. What do we do first?",
        "mood": "happy",
        "options": [
         {
@@ -7555,7 +7555,7 @@
        ]
       },
       "h_mei_sleep": {
-       "say": "Five. You wild thing. All right. Five. I'll make the tea at half past.",
+       "say": "Five. You wild thing. All right, love. Five. I'll make the tea at half past.",
        "mood": "happy",
        "options": [
         {

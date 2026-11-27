@@ -123,7 +123,7 @@
    "scene": "Two coats in the hall. The town is still audible, a long way off, getting on with the cake.",
    "start": "h_mei",
    "nodes": {
-    "h_mei": {"who": "mei", "mood": "happy", "say": "Two coats. In a hall. I've counted them three times. Right. We're married, the town's been told, and I've nobody left to tell. So. What do we do first?",
+    "h_mei": {"who": "mei", "mood": "happy", "say": "Two coats. In a hall. I've counted them three times. Right. We're married, the town's been told, and I've nobody left to tell. So, sweetheart. What do we do first?",
      "options": [
       {"text": "Fill the house. I want it loud.", "next": "h_mei_house"},
       {"text": "Get rich. Your café, my bread, and then the shop between them.", "next": "h_mei_rich", "need": ["flag:mei_takes_cafe"]},
@@ -134,7 +134,7 @@
      "options": [{"text": "(Put the kettle on.)", "next": null, "act": ["end:full_house"]}]},
     "h_mei_rich": {"who": "mei", "mood": "thinking", "say": "The old chandler's, next to the café. It's been empty a year, and I know what the company wants for it, because I know everything. We could have it inside the year.",
      "options": [{"text": "(Put the kettle on.)", "next": null, "act": ["end:second_shop"]}]},
-    "h_mei_sleep": {"who": "mei", "mood": "happy", "say": "Five. You wild thing. All right. Five. I'll make the tea at half past.",
+    "h_mei_sleep": {"who": "mei", "mood": "happy", "say": "Five. You wild thing. All right, love. Five. I'll make the tea at half past.",
      "options": [{"text": "(Put the light out.)", "next": null, "act": ["end:long_sleep"]}]}
    }}
  ],

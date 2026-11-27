@@ -41,17 +41,17 @@ should need no change.
 - The Baker career and the courting are built; the end game after the wedding was not asked for.
 - Baker Grocer on Baker Street is The Stone Oven Bakery ("Yes, make the bakery").
 - Noor's look, the elders and the Stone Oven's inside are approved as Blender looks (ADR-0059).
+- The Baker's hero is Ashby, a man of 24 with a British accent; the cast call him Ashby, and only Mei uses endearments
+  ("love", "sweetheart") (ADR-0068).
 - Genders the owner stated on 2026-11-26: Hari is a man, Abe a woman, Jai a man, Olu a woman, Eli a woman; Pip is a young
   woman, written as "they". Every profile must state gender, age and accent before a voice or a look is made.
 
 ## Not yet
 Each item is also noted where it lives (`Game/README.md`, `Tools/README.md`, `Tools/citysim/README.md`).
 
-**The Baker's hero is Ashby** (owner, 2026-11-27; ADR-0068, QST-016): the cast call him by his surname. Not yet:
-the four lines that say `{player}` (`four_oclock_door/morning/together2`, `feeding_the_mother/morning/w_join`,
-`name_on_the_door/door/y_table3`, `stone_ground/farm/f_saved2`) still say it, until the owner has read them with
-"Ashby"; Mei's endearments (honey, sweetheart) are not written; the character designer does not hold a hero to his
-career's gender and age.
+**The Baker's hero is Ashby** (owner, 2026-11-27; ADR-0068, QST-016): the cast call him by his surname. The four lines that said `{player}` say "Ashby", Mei calls him Ashby in two lunch
+lines and uses "love" or "sweetheart" in five lines from the proposal on (approved by the owner on 2026-11-27: "yes
+apply them"). Not yet: the character designer does not hold a hero to his career's gender and age.
 
 **So that what was approved shows in the game**
 1. The Stone Oven's ground floor in Unreal is the approved design's own pieces in a room of 9 by 7.5 m in the street

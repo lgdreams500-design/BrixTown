@@ -310,7 +310,7 @@
       {"text": "(Take the key.)", "next": null, "need": ["!have:mother_cutting"], "act": ["end:saved_pure"]},
       {"text": "(Take the key. Tam's jar goes back to Eastgate, unopened.)", "next": null, "need": ["have:mother_cutting"], "act": ["take:mother_cutting", "end:saved_pure"]}
      ]},
-    "w_join": {"who": "noor", "mood": "thinking", "say": "Six years apart, and she takes him back in a night. No argument. No sulk. She's a better family than the rest of us. Proofing room key. And {player}. On Saturday the seeded loaf goes to Eastgate with the morning round. On the books. No more cash.",
+    "w_join": {"who": "noor", "mood": "thinking", "say": "Six years apart, and she takes him back in a night. No argument. No sulk. She's a better family than the rest of us. Proofing room key. And Ashby. On Saturday the seeded loaf goes to Eastgate with the morning round. On the books. No more cash.",
      "options": [{"text": "On the books. Yes, chef.", "next": null, "act": ["end:saved_joined_told"]}]},
     "w_secret": {"who": "noor", "mood": "happy", "dir": "She tastes the culture off the back of the spoon and holds it on her tongue a moment too long.", "say": "She's risen. She's rounder. As if she's been somewhere. Hm. Sleep does that. Proofing room key.",
      "options": [

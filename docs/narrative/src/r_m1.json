@@ -25,7 +25,7 @@
      ]},
     "a_again2": {"who": "mei", "mood": "happy", "say": "You did. I timed it. Tomorrow, five past twelve, the fountain rim. Bring bread, and bring a question this time.",
      "options": [{"text": "Five past twelve.", "next": null, "act": ["stage:basket"]}]},
-    "a1_gone": {"who": "mei", "mood": "happy", "say": "You! I still count twelve every morning and look for your face behind the barrow. You're getting hard to gossip about, now you don't come by.",
+    "a1_gone": {"who": "mei", "mood": "happy", "say": "Ashby! I still count twelve every morning and look for your face behind the barrow. You're getting hard to gossip about, now you don't come by.",
      "options": [
       {"text": "Do you ever get a lunch break?", "next": "a2"},
       {"text": "(Just passing.)", "next": null}
@@ -38,7 +38,7 @@
      ]},
     "a_no": {"who": "mei", "mood": "neutral", "say": "Oh. That's the first boring thing you've ever said to me. Shame. I'd have said yes.",
      "options": [{"text": "(Go. Kick yourself as far as Baker Street.)", "next": null}]},
-    "a3": {"who": "mei", "mood": "thinking", "say": "You're asking me to lunch. With twenty minutes and a tram timetable. That's either very sweet or very badly planned.",
+    "a3": {"who": "mei", "mood": "thinking", "say": "You're asking me to lunch, Ashby. With twenty minutes and a tram timetable. That's either very sweet or very badly planned.",
      "options": [{"text": "Both, probably.", "next": "a4"}]},
     "a3b": {"who": "mei", "mood": "surprised", "say": "A hundred? You counted? Nobody counts. All right. Now I want to know what you'd ask.",
      "options": [{"text": "Have lunch with me and find out.", "next": "a4"}]},
