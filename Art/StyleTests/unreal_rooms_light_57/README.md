@@ -1,7 +1,9 @@
 # Unreal: the rooms' light against the rooms' own references — a round in progress (2026-11-28)
 
-The first round of `docs/process/LOOK_GATE.md`, The matching round. **Not finished and not approved: the settings
-on this branch are a trial.** To carry on, read this page, then LOOK_GATE's matching round.
+The first round of `docs/process/LOOK_GATE.md`, The matching round. **Not finished. The settings in the game are trial C**, which the owner saw beside the references
+(`before_and_trial_c.jpg`) and took on 2026-11-28: "it's not perfect but a huge improvement ... merge this strategy
+so far and we can refine it further". Trial D below is the next candidate; nobody has looked at its pictures.
+To carry on, read this page, then LOOK_GATE's matching round.
 
 ## The shared cause
 By day the game lit every room with its lamps at full strength and one warm light of the room's own, the same with a
@@ -13,8 +15,8 @@ world's daylight, lamps low or out; the hallway, with no window of its own, is d
 - `BrixRooms.h/.cpp`: `RoomLampDay` (the lamps' share of their strength in full daylight) and `RoomFillColourDay`
   (the room's own light's colour by day; `RoomFillColour` stays the night's). Night is unchanged by design
   (`RoomFill` x `RoomFillNight` is still 0.18).
-- `DefaultGame.ini`, trial D: `RoomLampDay=0.25`, `RoomFill=0.7`, `RoomFillNight=0.257`,
-  `RoomFillColourDay=(1,0.9,0.8)`, `DayOpenIndoors=1.5` (was 2.4).
+- `DefaultGame.ini`, trial C: `RoomLampDay=0.25`, `RoomFill=0.7`, `RoomFillNight=0.257`,
+  `RoomFillColourDay=(1,0.9,0.8)`; `DayOpenIndoors` stays 2.4 (trial D would make it 1.5).
 
 ## The trials: game against each place's own reference at 12:00 (stops; brightness / warmth)
 `Tools/unreal/look_match.py` on `Tools/unreal/reference_tour.txt`'s indoor noon stops. Only the bakery looks through
