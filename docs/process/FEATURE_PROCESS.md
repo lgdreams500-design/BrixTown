@@ -1,9 +1,9 @@
 ---
 doc_id: WASTED-FEATURE-PROCESS
 title: Brix Town — How a feature gets from idea to game
-version: 1.3.1
+version: 1.3.2
 status: accepted          # owner agreed the approach on 2026-11-21
-last_updated: 2026-11-26
+last_updated: 2026-11-27
 relates_to: [TEST-001, TECH-004, TECH-005, ART-001, ADR-0061, ADR-0066]
 ---
 
@@ -81,8 +81,15 @@ Things that help when picking:
     never a stand-in of another size or a home room dressed as something else.
   How it is reviewed:
   - the owner reviews references one at a time, on the reference page or as a sheet in chat;
-  - every round of review is rendered at **low quality** (`Tools/blender/hours_50.py` with `WASTED_SCALE=50
-    WASTED_SAMPLES=24`, a few seconds a picture) into a scratch folder (`WASTED_OUT`), never over a picture under review;
+  - every round of review is rendered at **low quality** (`Tools/blender/reference_render.ps1 -Place <place> -Review
+    -Out <scratch folder>`, a few seconds a picture), never over a picture under review; a round that changes the light
+    of one hour, or that tries something new, renders that one setting first (`-Hours Midday`) and the rest only once it
+    looks right;
+  - a place builds in seconds, not minutes (the owner, 2026-11-27: "it usually doesn't take this long ... something is
+    wrong"): only what the camera can see is built in detail (an outlet's inside only where its front is seen, through
+    a doorway only what shows through it), and many small things (the goods on a shelf, a wall's ribbons) are one
+    object, not one each; the run's log gives the build's time, and a build over a minute is a fault to mend before
+    the next round;
   - only once the owner approves is the full-quality set rendered, put in `Art/Reference/`, listed as approved and
     committed (the owner, 2026-11-26: "wouldn't lower quality be faster and once approved go for full quality?").
 

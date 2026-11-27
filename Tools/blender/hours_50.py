@@ -4,8 +4,13 @@ big hall (the furniture outlet) each at morning, midday, dusk and night, the nig
 full and a new moon, and in cloud, rain, fog and snow; Market Square's midday shade too dark, as if the bounced light
 were missing).
 
-Headless, one place a run (each place is built by the script it always was, then lit for each hour):
+Headless, one place a run (each place is built by the script it always was, then lit for each hour); from any
+checkout, a review round or the full set (FEATURE_PROCESS 6):
+    Tools/blender/reference_render.ps1 -Place <place> [-Review] [-Hours Midday] -Out <folder>
+or by hand:
     WASTED_PLACE=<place> blender-launcher.exe -b --factory-startup --python C:/Projects/Wasted/Tools/blender/hours_50.py
+    places also mall, mall_entrance (Eastgate's court, its south entrance): only what the camera sees is built in detail
+    (sees(); WASTED_ALL=1 builds everything, to check that nothing seen was left out)
     places: alley, square, street (Tools/blender/old_town_04.py, building_kit_07.py), rooms, bakery, outlet
     (furniture_kit_18.py's rooms, baker_look_47.py's Stone Oven, furniture_kit_17.py's showroom)
     WASTED_HOURS=Morning,Dusk  some hours only;  WASTED_ONLY=kitchen,shop  some rooms only;
@@ -500,7 +505,8 @@ MALL_LOOK = dict(brass=(0.78, 0.60, 0.32), glass_tint=(0.80, 0.90, 0.92), glass_
                  globe=(1.0, 0.90, 0.74), globe_glow=8.0, globes=12, chandelier_drop=5.5, banner_drop=6.5, column_every=16.0,
                  front_glass=3.0, mullion_every=3.4, mullion=(0.22, 0.22, 0.24),   # the game's outlet fronts
                  shell_tones=(((0.80, 0.72, 0.60), (0.82, 0.74, 0.62)),),   # the ribbon wall: one even honed cream stone
-                 shell_groove=(0.26, 0.21, 0.17), shell_lap=0.07,             # the dark groove, and how far a ribbon laps
+                 shell_groove=(0.26, 0.21, 0.17), shell_lap=0.07,
+                 floods=dict(out=12.0, along=(-62.0, -48.0, -34.0, 34.0, 48.0, 62.0), crown=(-7.0, 7.0), wall_aim=13.0, crown_aim=19.0, beam=38.0),   # the forecourt's floodlights             # the dark groove, and how far a ribbon laps
                  forecourt=((0.52, 0.42, 0.33), (0.66, 0.55, 0.43)), door_side=3.4, door_rise=2.4,   # the doorway's straight sides, then its curve
                  signs=dict(terracotta=(0.66, 0.32, 0.22), teal=(0.20, 0.44, 0.44), blue=(0.26, 0.36, 0.56), plum=(0.44, 0.28, 0.44),
                             ochre=(0.74, 0.58, 0.26), olive=(0.42, 0.46, 0.24), cream=(0.84, 0.78, 0.62), red=(0.62, 0.20, 0.18),
@@ -654,6 +660,37 @@ def mall_sign_mat(name):
     return bpy.data.materials.get(nm) or flat(nm, c)
 
 
+class GoodsMesh:
+    """Many small goods as one object (the owner, 2026-11-27, "something is wrong" with how long a build takes: 30,000
+    goods made one object each took most of the six minutes): boxes in the frame of P_, each with its own material."""
+    def __init__(self, P_, name):
+        self.P, self.name, self.bm, self.mats = P_, name, bmesh.new(), []
+
+    def add(self, mat, cx, cy, cz, sx, sy, sz):
+        if mat not in self.mats:
+            self.mats.append(mat)
+        k = self.mats.index(mat)
+        r = bmesh.ops.create_cube(self.bm, size=1.0)
+        for v in r["verts"]:
+            v.co.x, v.co.y, v.co.z = cx + v.co.x * sx, cy + v.co.y * sy, cz + v.co.z * sz
+        for f in {f for v in r["verts"] for f in v.link_faces}:
+            f.material_index = k
+
+    def done(self):
+        if not self.mats:
+            self.bm.free()
+            return None
+        me = bpy.data.meshes.new(self.name)
+        self.bm.to_mesh(me)
+        self.bm.free()
+        for m in self.mats:
+            me.materials.append(m)
+        ob = bpy.data.objects.new(self.name, me)
+        COL.objects.link(ob)
+        ob.parent = self.P
+        return ob
+
+
 def goods_mat(kind, i):
     cs = GOODS.get(kind, GOODS["boxes"])
     c = cs[i % len(cs)]
@@ -749,27 +786,33 @@ def mall_outlet(u, a, b, z, kind, Ls, rng, mats):
             for sz in (0.1, 0.65, 1.2, 1.75, 2.3):
                 rbox(P_, P_.name + "_Shelf%d" % int(sz * 10), frame, 0, -0.25, sz, sw, 0.42, 0.04, 0.0, 1)
             gk = what or {"guitars": "boxes", "screens": "gadgets", "posters": "boxes"}.get(k_, "boxes")
+            gm = GoodsMesh(P_, P_.name + "_Goods")
             for sz in (0.14, 0.69, 1.24, 1.79):
                 gx = -sw / 2 + 0.1
                 j = 0
                 while gx < sw / 2 - 0.15:
                     gw = rng.uniform(0.12, 0.32) if gk != "books" else rng.uniform(0.04, 0.08)
                     gh = rng.uniform(0.18, 0.42)
-                    rbox(P_, P_.name + "_G%d_%d" % (int(sz * 10), j), goods_mat(gk, j + int(sz * 7)), gx + gw / 2, -0.25, sz + gh / 2, gw, 0.3, gh, 0.01, 1)
+                    gm.add(goods_mat(gk, j + int(sz * 7)), gx + gw / 2, -0.25, sz + gh / 2, gw, 0.3, gh)
                     gx += gw + 0.03
                     j += 1
+            gm.done()
         elif k_ in ("table", "glasscase", "screen", "amps", "drums", "keyboard", "claw", "bin", "guitarstand"):
             place("p_table", P_, L, rng)
             gk = what or {"screen": "gadgets", "amps": "gadgets", "keyboard": "gadgets"}.get(k_, "boxes")
+            gm = GoodsMesh(P_, P_.name + "_Goods")
             for j in range(6):
-                rbox(P_, P_.name + "_T%d" % j, goods_mat(gk, j), -0.5 + (j % 3) * 0.5, -0.15 + (j // 3) * 0.3, 0.8, 0.32, 0.22, rng.uniform(0.06, 0.2), 0.01, 1)
+                gm.add(goods_mat(gk, j), -0.5 + (j % 3) * 0.5, -0.15 + (j // 3) * 0.3, 0.8, 0.32, 0.22, rng.uniform(0.06, 0.2))
+            gm.done()
             if k_ == "glasscase":
                 rbox(P_, P_.name + "_Case", glassp, 0, 0, 1.0, 1.3, 0.7, 0.45, 0.01, 1)
         else:                                                    # stacks and plinths: something to look at in the window
             rbox(P_, P_.name + "_Plinth", wall, 0, 0, 0.35, 0.7, 0.7, 0.7, 0.02, 1)
             gk = what if what in GOODS else "boxes"
+            gm = GoodsMesh(P_, P_.name + "_Goods")
             for j in range(3):
-                rbox(P_, P_.name + "_S%d" % j, goods_mat(gk, j), 0, 0, 0.78 + j * 0.24, 0.5 - j * 0.1, 0.5 - j * 0.1, 0.22, 0.01, 1)
+                gm.add(goods_mat(gk, j), 0, 0, 0.78 + j * 0.24, 0.5 - j * 0.1, 0.5 - j * 0.1, 0.22)
+            gm.done()
     walls = kind.get("walls", ["shelves:boxes"] * 3) or ["shelves:boxes"]
     nb = max(1, int(W / 3.3))                                 # the back wall lined all along, the kind's wall things in turn
     for i in range(nb):
@@ -825,6 +868,34 @@ def mall_forecourt(blk, loc, strip):
     hlog("  the forecourt: %d trees from the block" % n)
 
 
+def mall_floods(loc):
+    """Floodlights set in the forecourt's paving, out from the mall, throwing light up its ribbon wall from dusk (the
+    owner, 2026-11-27: "place flood light on the ground away from the mall casting light on the dome"): a row along the
+    wall either side of the arch, aimed at its middle height, and a pair before the arch aimed at its crown. Their kind,
+    colour and strength are lights.json's ground_flood."""
+    F = MALL_LOOK["floods"]
+    wall_y = loc((0, 862.0))[1]
+    y = wall_y + F["out"]
+    case = bpy.data.materials.get("M_FloodCase") or flat("M_FloodCase", (0.20, 0.20, 0.21), rough=0.4)
+    lens = bpy.data.materials.get("M_FloodLens") or emissive("M_FloodLens", (1.0, 0.92, 0.80), 6.0)   # a lamp's glass: lit with the lamps
+    aims = [(x, wall_y, F["wall_aim"]) for x in F["along"]] + [(x, wall_y, F["crown_aim"]) for x in F["crown"]]
+    for i, (ax, ay, az) in enumerate(aims):
+        x = ax if abs(ax) > 20 else ax * 1.6
+        box("Flood_Case%d" % i, x - 0.25, x + 0.25, y - 0.2, y + 0.2, -0.02, 0.16, case, bevel=0)   # sunk flush in the paving
+        box("Flood_Lens%d" % i, x - 0.2, x + 0.2, y - 0.15, y + 0.15, 0.16, 0.18, lens, bevel=0)
+        lt = bpy.data.lights.new("Fd_Light%d" % i, 'SPOT')
+        lt.energy = 1.0                                       # set from its kind when the place's lights are read
+        lt.spot_size = math.radians(F["beam"])
+        lt.spot_blend = 0.7
+        setp(lt, "shadow_soft_size", 0.15)
+        po = bpy.data.objects.new("Fd_Light%d" % i, lt)
+        po.location = (x, y, 0.3)
+        d = Vector((ax - x, ay - y, az - 0.3))
+        po.rotation_euler = d.to_track_quat('-Z', 'Y').to_euler()
+        COL.objects.link(po)
+    hlog("  floodlights: %d on the forecourt" % len(aims))
+
+
 def sandstone(name, c1, c2):
     """The ribbon wall's finish: one even, smooth, honed cream stone with a soft satin sheen, no patches (the owner,
     2026-11-27: "we shouldn't have patches. Malls are posh"). c1 is kept for the call's shape; c2 is the colour."""
@@ -863,36 +934,24 @@ def mall_porch(shell, loc, brass, globe):
             curl = roll * (1 - math.cos(g * math.pi / 2)) * 0.9
         return (x, y + out - curl, h)
     NB = bands
+    bm_s, bm_g = bmesh.new(), bmesh.new()                       # the wall's stone and its grooves, one object each
     for i in range(len(pts) - 1):
         (x0, z0, b0, t0), (x1, z1, b1, t1) = pts[i], pts[i + 1]
         (X0, Y0), (X1, Y1) = loc((x0, z0)), loc((x1, z1))
         for j in range(NB):                                       # a ribbon at a time, the two tones in turn
-            bm = bmesh.new()
             f0, f1 = j / NB, (j + 1) / NB
             lap = MALL_LOOK["shell_lap"]                          # its foot stands proud of the ribbon below
 
             def low(q):
                 return (q[0], q[1] + lap, q[2])
-            v = [bm.verts.new(c) for c in (low(at(X0, Y0, b0, t0, f0)), low(at(X1, Y1, b1, t1, f0)), at(X1, Y1, b1, t1, f1), at(X0, Y0, b0, t0, f1))]
-            bm.faces.new(v)
-            me = bpy.data.meshes.new("Shell_%d_%d" % (i, j))
-            bm.to_mesh(me)
-            bm.free()
-            me.materials.append(tone[j % 2])
-            ob = bpy.data.objects.new("Shell_%d_%d" % (i, j), me)
-            COL.objects.link(ob)
+            v = [bm_s.verts.new(c) for c in (low(at(X0, Y0, b0, t0, f0)), low(at(X1, Y1, b1, t1, f0)), at(X1, Y1, b1, t1, f1), at(X0, Y0, b0, t0, f1))]
+            bm_s.faces.new(v)
             if j > 0:                                             # the groove under its lapped foot
-                bm = bmesh.new()
                 q0, q1 = at(X0, Y0, b0, t0, f0), at(X1, Y1, b1, t1, f0)
                 gy = lap * 0.5
-                v = [bm.verts.new(c) for c in ((q0[0], q0[1] + gy, q0[2] - 0.035), (q1[0], q1[1] + gy, q1[2] - 0.035),
-                                               (q1[0], q1[1] + gy, q1[2] + 0.01), (q0[0], q0[1] + gy, q0[2] + 0.01))]
-                bm.faces.new(v)
-                me = bpy.data.meshes.new("ShellGroove_%d_%d" % (i, j))
-                bm.to_mesh(me)
-                bm.free()
-                me.materials.append(joint)
-                COL.objects.link(bpy.data.objects.new("ShellGroove_%d_%d" % (i, j), me))
+                v = [bm_g.verts.new(c) for c in ((q0[0], q0[1] + gy, q0[2] - 0.035), (q1[0], q1[1] + gy, q1[2] - 0.035),
+                                                 (q1[0], q1[1] + gy, q1[2] + 0.01), (q0[0], q0[1] + gy, q0[2] + 0.01))]
+                bm_g.faces.new(v)
         if b0 > 0.01 and b1 > 0.01:                               # the porch's soffit, from the arch back to the hall's front
             bm = bmesh.new()
             v = [bm.verts.new(c) for c in ((X0, Y0, b0), (X1, Y1, b1), (X1, hall_y + 0.5, b1 * 0.96), (X0, hall_y + 0.5, b0 * 0.96))]
@@ -902,7 +961,12 @@ def mall_porch(shell, loc, brass, globe):
             bm.free()
             me.materials.append(tone[1])
             COL.objects.link(bpy.data.objects.new("Porch_Soffit%d" % i, me))
-    wall = bpy.data.materials.get("M_MallWall") or flat("M_MallWall", MALL_LOOK["wall"])
+    for nm, bm_, m_ in (("Shell_Ribbons", bm_s, one), ("Shell_Grooves", bm_g, joint)):
+        me = bpy.data.meshes.new(nm)
+        bm_.to_mesh(me)
+        bm_.free()
+        me.materials.append(m_)
+        COL.objects.link(bpy.data.objects.new(nm, me))
     for k, x in enumerate((-9.0, 0.0, 9.0)):                      # lanterns hanging in the porch
         y = (hall_y + loc((0, 862.0))[1]) / 2
         cylz(None, "Porch_LanternRod%d" % k, brass, x, y, 8.2, 0.04, 3.6, segs=8)
@@ -1043,6 +1107,36 @@ def hang_plant(name, x, y, z):
         cylz(None, "%s_Vine%d" % (name, i), leaf, x + dx, y, z - dh, 0.09, dh, r_top=0.07, segs=8)
 
 
+MALL_CAMS = {"entrance": ((5.0, 216.0, 1.7), (-0.5, 172.0, 5.5), 17.0),   # arriving on the forecourt
+             "court": ((-12.0, -42.0, 1.7), (2.0, 30.0, 9.0), 16.0)}
+
+
+def sees(cam_at, portal=None, reach=170.0):
+    """Whether the camera can see a point: inside its view (with a margin) and nearer than reach; with a portal
+    (the plane's y, the opening's middle x, half its width, its top), a point beyond the plane only through it."""
+    (cx, cy, cz), (tx, ty, tz), lens = cam_at
+    f = Vector((tx - cx, ty - cy, tz - cz)).normalized()
+    r = f.cross(Vector((0, 0, 1))).normalized()
+    u = r.cross(f)
+    k = 18.0 / lens * 1.15                                    # the half width of a 36 mm sensor, and a margin
+
+    def see(p):
+        if os.environ.get("WASTED_ALL") == "1":              # a check: build everything, seen or not
+            return True
+        d = Vector((p[0] - cx, p[1] - cy, p[2] - cz))
+        zf = d.dot(f)
+        if zf < 0.3 or zf > reach or abs(d.dot(r)) > zf * k or abs(d.dot(u)) > zf * k:
+            return False
+        if portal:
+            py, px, ph, top = portal
+            if (p[1] - py) * (cy - py) < 0:                   # beyond the plane: through the opening, or not at all
+                t = (py - cy) / (p[1] - cy)
+                xi, zi = cx + t * (p[0] - cx), cz + t * (p[2] - cz)
+                return abs(xi - px) < ph and 0.0 < zi < top
+        return True
+    return see
+
+
 def mall_court(Ls, view="court"):
     """Eastgate Mall's Great Court as its plan in World/city_01/blocks/b_16_5.json draws it (WLD-058 to WLD-062, ADR-0038;
     Tools/worldgen/mall_inside_01.py): 92 x 192 m, three floors 6 m apart; on each upper floor a gallery round the court
@@ -1061,6 +1155,15 @@ def mall_court(Ls, view="court"):
         return (q[0] - mx, q[1] - mz)
 
     y_hi = 175 if view == "entrance" else 106                 # the entrance's view takes in the south concourse too
+    cam_at = MALL_CAMS[view]
+    if os.environ.get("WASTED_CAM"):                          # a test view: x,y,z,tx,ty,tz,lens
+        v_ = [float(t) for t in os.environ["WASTED_CAM"].split(",")]
+        cam_at = (tuple(v_[0:3]), tuple(v_[3:6]), v_[6])
+    portal = None
+    if view == "entrance":                                    # from the forecourt the hall is seen only through its doorway
+        e_ = next(a for a in P["entrances"] if a["side"] == "s")
+        portal = (loc((0, 848.0))[1], loc(e_["at"])[0], e_["width"] / 2.0, MALL_LOOK["door_side"] + MALL_LOOK["door_rise"])
+    seen = sees(cam_at, portal)
 
     def near(pts):
         return any(abs(x - mx) < 58 and -106 < z - mz < y_hi for x, z in pts)
@@ -1144,6 +1247,7 @@ def mall_court(Ls, view="court"):
     court = [(-W2, -D2), (W2, -D2), (W2, D2), (-W2, D2)]
     box("Mall_Floor", -W2 - 12, W2 + 12, -D2 - 12, max(D2 + 12, y_hi - 4), -0.1, 0.0, floor, bevel=0)   # out to the entrance
     lanterns = 0
+    built_in = 0
     rngm = random.Random(54)
     for lv in P["levels"]:
         L, z = lv["level"], lv["level"] * SH
@@ -1177,8 +1281,10 @@ def mall_court(Ls, view="court"):
             band("Mall_FrontSignLight%d_%d" % (L, k), [a, b], z + FH + 0.0, z + FH + 0.04, strip, thick=0.4)
             band("Mall_FrontAbove%d_%d" % (L, k), [a, b], z + FH + 0.68, z + SH - 0.7, slab_under, thick=0.3)   # the slats up to the next floor
             band("Mall_FrontAboveTrim%d_%d" % (L, k), [a, b], z + SH - 0.72, z + SH - 0.68, brass, thick=0.34)
-            if u_ is not None:
-                mall_outlet(u_, a, b, z, kind_, Ls, rngm, (glassp, brass))
+            if u_ is not None and any(seen((a[0] + (b[0] - a[0]) * t_, a[1] + (b[1] - a[1]) * t_, z + h_))
+                                      for t_ in (0.0, 0.25, 0.5, 0.75, 1.0) for h_ in (0.3, 1.6, 2.9)):
+                mall_outlet(u_, a, b, z, kind_, Ls, rngm, (glassp, brass))   # its inside, only where its front is seen
+                built_in += 1
         if L == 0:
             continue
         holes = [[loc(q) for q in v] for v in lv["voids"]]
@@ -1369,18 +1475,16 @@ def mall_court(Ls, view="court"):
     if view == "entrance":
         mall_entrance_doors(P, loc, SH, glassp, brass, edge, strip, globe, slab_under)
         mall_porch(LOT["shell"], loc, brass, globe)
+        mall_floods(loc)
         mall_forecourt(blk, loc, strip)
         people([("PlayerA", 1.0, 196.0), ("PlayerB", -6.0, 179.0), ("Elder", 7.0, 186.0), ("Shopkeeper", -2.0, 150.0)])
     else:
         people([("PlayerA", 3.0, -12.0), ("PlayerB", -7.0, -4.0), ("Elder", 9.0, 6.0)])
     sun_and_sky(SCENE, (0.35, -0.30, 0.89), 8.5, (1.0, 0.86, 0.68), (0.42, 0.55, 0.82), 0.45)
-    hlog("  Eastgate's court from its plan: %d lanterns, %d skylights, %d moving stairs" % (lanterns, len(eyes), len(P["ramps"])))
-    if os.environ.get("WASTED_CAM"):                      # a test view: x,y,z,tx,ty,tz,lens
-        v_ = [float(t) for t in os.environ["WASTED_CAM"].split(",")]
-        return camera(SCENE, "Cam_test", tuple(v_[0:3]), tuple(v_[3:6]), v_[6])
-    if view == "entrance":
-        return camera(SCENE, "Cam_mall_entrance", (5.0, 216.0, 1.7), (-0.5, 172.0, 5.5), 17.0)   # arriving on the forecourt
-    return camera(SCENE, "Cam_mall", (-12.0, -42.0, 1.7), (2.0, 30.0, 9.0), 16.0)
+    hlog("  Eastgate's court from its plan: %d lanterns, %d skylights, %d moving stairs; %d outlets' insides in view" % (
+        lanterns, len(eyes), len(P["ramps"]), built_in))
+    name = "Cam_test" if os.environ.get("WASTED_CAM") else ("Cam_mall_entrance" if view == "entrance" else "Cam_mall")
+    return camera(SCENE, name, *cam_at)
 
 
 def game_size_showroom():
