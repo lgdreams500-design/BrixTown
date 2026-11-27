@@ -133,7 +133,7 @@
      ]},
     "y_table2": {"who": "tam", "mood": "happy", "say": "One fire, the whole town's dough, market days in the square. A token on every loaf so nobody goes home with the wrong one. That's it. That's what I was trying to say six years ago, with worse words.",
      "options": [{"text": "Noor?", "next": "y_table3"}]},
-    "y_table3": {"who": "noor", "mood": "happy", "say": "It is not six counters in six towns. It's one oven. But yes. You run the queue; you were always good with a queue. I feed the Mother. {player} bakes. The name over the door stays as it is. We add a line underneath.",
+    "y_table3": {"who": "noor", "mood": "happy", "say": "It is not six counters in six towns. It's one oven. But yes. You run the queue; you were always good with a queue. I feed the Mother. Ashby bakes. The name over the door stays as it is. We add a line underneath.",
      "options": [{"text": "What does the line say?", "next": "y_table4"}]},
     "y_table4": {"who": "noor", "mood": "happy", "say": "“Bring your own dough.” Vera gets the first loaf. Go and tell Eli she needs a longer rope.",
      "options": [{"text": "(Go and tell Eli.)", "next": null, "act": ["end:long_table"]}]},

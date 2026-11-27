@@ -33,7 +33,7 @@
       {"text": "Marry me, Mei.", "next": "q2"},
       {"text": "(Lose your nerve. Order a tea.)", "next": "q_tea"}
      ]},
-    "q_tea": {"who": "mei", "mood": "happy", "say": "One tea. I'll be here when it's a question.",
+    "q_tea": {"who": "mei", "mood": "happy", "say": "One tea, love. I'll be here when it's a question.",
      "options": [{"text": "(Drink the tea.)", "next": null}]},
     "q2": {"who": "mei", "mood": "happy", "say": "Yes. Obviously yes. I've been telling people yes for a week; I was only waiting for you to ask. But not yet. Listen. For once I'm going to say a thing to you and nobody else.",
      "options": [
@@ -71,7 +71,7 @@
      "options": [{"text": "A baker. We prove things first.", "next": "q_already2"}]},
     "q_already2": {"who": "mei", "mood": "happy", "say": "That's the best thing you've ever said, and I'm stealing it. Ask me, then. Properly.",
      "options": [{"text": "Marry me, Mei.", "next": "q_yes"}]},
-    "q_yes": {"who": "mei", "mood": "happy", "say": "Yes. Yes, and I'm telling everyone, and you can't stop me. I'm starting with Noor.",
+    "q_yes": {"who": "mei", "mood": "happy", "say": "Yes. Yes, sweetheart, and I'm telling everyone, and you can't stop me. I'm starting with Noor.",
      "options": [{"text": "(Let her tell the town.)", "next": null, "act": ["end:yes"]}]}
    }},
 
@@ -97,7 +97,7 @@
      "options": [{"text": "You said yes the day I asked. You told the tram.", "next": "r3"}]},
     "r3": {"who": "mei", "mood": "happy", "say": "I did tell the tram. Ask me again. Here, in the hall. I want to remember that it had an echo.",
      "options": [{"text": "Marry me, Mei.", "next": "r_yes"}]},
-    "r_yes": {"who": "mei", "mood": "happy", "say": "Yes. Yes, and I'm telling everyone, and you can't stop me. I'm starting with Noor.",
+    "r_yes": {"who": "mei", "mood": "happy", "say": "Yes. Yes, sweetheart, and I'm telling everyone, and you can't stop me. I'm starting with Noor.",
      "options": [{"text": "(Let her tell the town.)", "next": null, "act": ["end:yes"]}]}
    }}
  ],

@@ -110,7 +110,7 @@
      "options": [{"text": "(Keep kneading. Very attentively.)", "next": "barrow"}]},
     "together": {"who": "pip", "mood": "surprised", "say": "Together? Nobody says together in a kitchen. It's always one person's fault. That's what kitchens are for.",
      "options": [{"text": "Not this one. Come on.", "next": "together2"}]},
-    "together2": {"who": "noor", "mood": "neutral", "dir": "She looks at the tray, then at the two of you standing shoulder to shoulder like a court martial.", "say": "Burns get shown, not hidden. Same with trays. Reshape, prove again, and the pair of you owe me an hour of pastry. {player}. You said “we”. Noted.",
+    "together2": {"who": "noor", "mood": "neutral", "dir": "She looks at the tray, then at the two of you standing shoulder to shoulder like a court martial.", "say": "Burns get shown, not hidden. Same with trays. Reshape, prove again, and the pair of you owe me an hour of pastry. Ashby. You said “we”. Noted.",
      "options": [{"text": "Yes, chef.", "next": "barrow", "act": ["rep:noor:+8", "rep:pip:+10"]}]},
     "report": {"who": "noor", "mood": "neutral", "dir": "She comes up slowly, looks at the tray, then at Pip for a long moment, then at you.", "say": "Thank you for the report.",
      "options": [{"text": "It seemed like you should know.", "next": "report2"}]},
