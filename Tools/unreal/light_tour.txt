@@ -4,6 +4,8 @@
 # refroom:<shop|cafe|kitchen> (a Blender reference room built in Unreal; its hour "ref" is when the sun stands right).
 # Metres and degrees in the data's frame, yaw 0 = east. Day first, then dusk, night and dawn, indoors, and day again
 # (so anything that goes wrong after a night shows). Run it with Tools/unreal/light_tour.ps1.
+# Which reference each stop is judged against: python Tools/reference_catalog.py --tour (the catalog's places; a new
+# stop's name, without its hour, goes into its place's stops there, or Tools/test_reference_catalog.py fails).
 
 # the spawn alley (in shade all day), Market Square, a street, a park: the day
 alley_0720|07:20||stand:876.5,912,0,0

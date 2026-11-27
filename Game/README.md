@@ -1234,6 +1234,13 @@ first audit's findings are in LOOK_GATE.md.
 - **Riding a bus (G8):** the bottom of a tree's crown can be in the picture.
 - **The look tour's baseline:** written on 2026-11-26 before the new street lamps (WLD-072) came in; only
   `street_2230` was taken again after them, so other night stops may report a move that is those lamps.
+- **The look tour and the references (found 2026-11-27, `python Tools/reference_catalog.py --tour`):** 16 of the
+  tour's 64 stops show a place with no approved reference (a park, a cafe, a tower's hall, Eastgate's concourse and its
+  outside from above, and the five measuring rooms); the tour has no stop inside a home's room (`IndoorHomeRoom`): its
+  home stops stand in the hallway; no stop looks through its reference's own camera, so a shot and its reference show
+  the same kind of place from different spots. The rooms' light (above, ADR-0055) was set by the rooms of
+  `furniture_kit_18`, which the owner retired as references on 2026-11-26; it has not been set against `IndoorHomeRoom`,
+  `IndoorHallway` or `ShopsShopFloor`.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.

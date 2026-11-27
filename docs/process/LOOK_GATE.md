@@ -1,9 +1,9 @@
 ---
 doc_id: WASTED-LOOK-GATE
 title: Brix Town — The look gate: how anything seen in the game is checked when it is made
-version: 1.1.0
+version: 1.2.0
 status: accepted          # the owner, 2026-11-26: "build a process where this is taken care as part of creations instead of waiting for audit to detect it later"
-last_updated: 2026-11-26
+last_updated: 2026-11-27
 relates_to: [ADR-0004, ADR-0058, ART-001, TEST-001]
 ---
 
@@ -27,6 +27,15 @@ at as a whole, against the look, by whoever made it.
    already in the game without one keeps to the rules and the nearest reference for light and materials (a hall
    is an interior: I5, W1, W5, W6) until its reference is approved, and says so in its README's "Not yet".
 
+**Which reference.** Before any comparing, measuring or tuning, ask the catalog what the place is and what it is judged
+against: `python Tools/reference_catalog.py --for <tour stop, lot id or place>` (`--tour` for every stop of a tour). It
+answers from the catalog's `places` with the place's own reference and the file for the hour, or that the place has
+none. Say both first ("the library: shop_floor, ShopsShopFloor_Midday"). A shot is put beside its own place's
+reference and no other: a hallway is not judged by a shop, nor a shop by the bakery. Where 3 lets work with no
+reference keep to the nearest one for light and materials, say that it is borrowed and from which place. When the owner
+names a kind of place (a room, a hallway, a shop), that place's reference is the one meant: do not put another indoor
+place in its stead. A new tour stop is added to its place's `stops` in the catalog (its test fails otherwise).
+
 ## When it applies
 Any change that alters what is seen in the Unreal game: a new place or thing, a model, a material, a light, the sky,
 the camera, a screen. It is part of stage 6 (Build) of `FEATURE_PROCESS.md`, done before the pull request is opened,
@@ -42,7 +51,7 @@ Take pictures of the thing in the game (`Tools/unreal/light_tour.ps1`, or `-Brix
 - once with the HUD on (`-BrixShot=`): the engine's own warnings are drawn only there.
 
 ### 2. Beside the reference
-Put each shot beside its reference on one sheet (`Tools/unreal/shot_sheet.py`) and look at the **whole frame**, not
+Put each shot beside its own reference (Which reference, above) on one sheet (`Tools/unreal/shot_sheet.py`) and look at the **whole frame**, not
 the thing you changed. Answer every line; a "no" is a defect to mend or to note (step 5).
 
 | # | Look for | The rule |
@@ -88,6 +97,10 @@ night), so that every later shared change is looked at there too.
 - Read the shot before the claim: open the picture and go down G1 to G10. Looking only for the defect being fixed is
   how the mall and the cars were missed.
 - Report what you see that is wrong even when nobody asked about it, and even when another session made it.
+- Name the place and its reference (Which reference, above) before comparing, tuning or reporting. A number shared by
+  many places (the rooms' light, the sun, a material) is set against the references of every kind of place it lights,
+  never tuned on one of them: on 2026-11-27 the rooms' light was tuned on the bakery, a street-corner shop, when a
+  home's room had been asked for, and the hallways and shop floors were then judged with no reference at all.
 
 ## What the first audit found (2026-11-26)
 Looked at with this gate: the 64 stops of the look tour and the owner's own screenshots. Open items are in the "Not

@@ -10,7 +10,11 @@ Brix Town: a third-person multiplayer life-sim in Unreal Engine 5.8. Art source 
    at or below the level the owner picked for it; a missing pick means undecided: ask, do not build.
 5. For anything visual, read `docs/art/ART_DIRECTION.md` and `docs/process/LOOK_GATE.md`, and look at
    the reference for it in `Art/Reference/catalog.json` first (one entry per thing: its picture, rules and the models made
-   from it). **No approved reference, no building it:** make the reference first, at every setting it is seen in and in
+   from it). For a place in the game, ask which reference it is judged against before anything else:
+   `python Tools/reference_catalog.py --for <tour stop, lot id or place>` names the place, its own reference and the file
+   for the hour, or says it has none. Never judge a place against another place's reference (a hallway by a shop, a shop
+   by the bakery), and when the owner names a kind of place (a room, a hallway, a shop) use that place's.
+   **No approved reference, no building it:** make the reference first, at every setting it is seen in and in
    the town's one light, and get the owner's approval on the reference page (FEATURE_PROCESS stage 6, ADR-0066). For faces read
    `docs/art/CHARACTER_FACE.md`; for body animation read `docs/art/CHARACTER_MOTION.md`.
 
