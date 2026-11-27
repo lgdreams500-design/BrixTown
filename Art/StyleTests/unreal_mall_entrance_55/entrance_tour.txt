@@ -1,0 +1,8 @@
+# Eastgate's south entrance in the game as it is: the porch from the forecourt, the doors, the concourse
+porch_1200|12:00||cam:1686,900,1.7,-92,8
+porch_far_1200|12:00||cam:1690,930,1.7,-93,10
+porch_1930|19:30||cam:1686,900,1.7,-92,8
+porch_2230|22:30||cam:1686,900,1.7,-92,8
+doors_1200|12:00||cam:1683,862,1.7,-90,4
+concourse_in_1200|12:00||cam:1682,842,1.7,-90,2
+concourse_out_1200|12:00||cam:1680,800,1.7,90,2
