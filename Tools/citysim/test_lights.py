@@ -17,8 +17,18 @@ class Lights(unittest.TestCase):
         for mount in ("floor", "table", "wall", "ceiling"):              # every way of mounting has a kind
             self.assertTrue(any(v["mount"] == mount for v in L["kinds"].values()), mount)
         bad = json.loads(json.dumps(L))
-        bad["kinds"]["candles"]["colour"] = [0.2, 0.6, 1.0]                # a candle bluer than a ceiling light
+        bad["colours"]["warm_white"]["colour"] = [0.2, 0.6, 1.0]           # a warm white bluer than a cool white
         self.assertTrue(any("bluer" in p for p in li.problems(bad)))
+        bad["kinds"]["candles"]["colour"] = "candlelight"                  # a colour nobody named
+        self.assertTrue(any("no colour" in p for p in li.problems(bad)))
+        # fittings share named colours: the lamps of a home one warm white, every fire one red
+        for a, b in (("floor_lamp", "table_lamp"), ("table_lamp", "ceiling_pendant"), ("wall_light", "ceiling_pendant")):
+            self.assertEqual(li.colour_of(L, a), li.colour_of(L, b))
+        self.assertEqual(li.colour_of(L, "candles")["name"], "Fire red")
+        self.assertNotEqual(li.colour_of(L, "ceiling_light"), li.colour_of(L, "cool_ceiling_light"))
+        self.assertTrue(all(c["name"] for c in L["colours"].values()))     # every colour has a name
+        used = set(v["colour"] for v in L["kinds"].values())
+        self.assertEqual(used, set(L["colours"]))                          # and a fitting that shows it
         bad["kinds"]["floor_lamp"]["mount"] = "roof"
         self.assertTrue(any("no mount" in p for p in li.problems(bad)))
 

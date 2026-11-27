@@ -41,6 +41,11 @@ Noor's run with that description was stopped by the owner after 35 of her 111 li
    not taken into the game until the owner has heard it. On Noor's clips the check flags the two faults above and three
    slow clips that had gone in (`morning/teach` 18.2 s for 24 words, `verdict/v_wary` 15.4 s for 19, `still/s1` 15.5 s
    for 21), which came out again: **29 are in the game**.
+6. **The rest of her part, 2026-11-27** (owner: "voice remaining lines of noor"): the other 76 lines were voiced with
+   the same description and settings. The check flagged eight more as long. The owner listened and said `verdict/v_lie`
+   "is the only bad one", so the twelve other flagged clips went in with `--keep`. v_lie was voiced again and ran to
+   the token limit again; it stays out. **107 of her 111 lines are in the game**; the other three have the player's
+   name inside them (item 4).
 
 v_lie was not wrong text: the request held only the description and the line's words. Maya1 never gave its
 end-of-speech token and spoke on to the 6,000-token limit, about 73 s of babble. Why that line, is not known: the
@@ -53,7 +58,6 @@ quantised model (Q4_K_M), LM Studio's repeat penalty and the line's mood (Maya1 
 - Maya1 does not repeat a take for a seed through LM Studio: a kept clip is the only exact copy.
 
 ## Not decided
-- Maya1 for the rest of Noor's part (76 lines), for the other twelve of the cast, or in place of Qwen3-TTS.
-- Whether the three slow clips taken out are right, and the two slow ones still in (`card/n_again`, `card/lastone`,
-  1.5 words a second): no agent can hear; the owner's ear decides.
+- Maya1 for the other twelve of the cast, or in place of Qwen3-TTS.
+- What Noor's `verdict/v_lie` becomes: it runs away in Maya1 every time.
 - A speech-to-text check of every clip against its words (Whisper, local): offered, not wanted for now.

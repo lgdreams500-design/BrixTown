@@ -25,7 +25,7 @@ Every approved reference is in `Art/Reference/<Category>/`, named `<Category><Su
 **`Art/Reference/catalog.json`**: what each locks, its approval and decision, the script that makes it, the game models
 built from it, issues seen in it, and its old names (ADR-0061). The owner reviews them in `Art/Reference/index.html`,
 which `python Tools/reference_catalog.py` writes from the catalog after checking it. Categories: World, Buildings,
-Indoor, Shops, Malls, Furniture, Vehicles, People, Interface. References taken out of use are in `Art/Retired/`; look
+Indoor, Shops, Malls, Furniture, Ornaments (light fittings first), Vehicles, People, Interface. References taken out of use are in `Art/Retired/`; look
 tests and every earlier experiment stay in `Art/StyleTests/`.
 
 Rejected directions, kept only so they are not tried again: the first 2D sketches, the painterly
@@ -254,7 +254,7 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | Wear stages (I8) | not yet rendered. (The furniture outlet's look, `Art/Reference/Shops/ShopsFurnitureOutlet.png`, was approved by the owner's request to build it, ADR-0027.) |
 | Night (after dusk) and bad-weather looks | references at every hour and weather since 2026-11-26: `WorldAlley`, `WorldMarketSquare`, `WorldStreet` (night with the lamps on and off under a full and a new moon; cloudy, rain, fog, snow), made by `Tools/blender/hours_50.py`; rules W5–W7 |
 | The sky: blue overhead with drifting clouds | reference `WorldSky` at every hour and weather (2026-11-26; no planet, ADR-0064) |
-| Big modern buildings outside Old Town (Eastgate Mall's ribbon walls and pierced eggs) | built in the slice at the owner's request, in the locked materials: mottled plaster, ochre and cream, lantern light (ADR-0037). No rule or reference image yet for the outside. Eastgate's Great Court inside has a reference and a look of its own (`MallsEastgateCourt`, ADR-0067): timber, cream, glass, brass and polished stone; that look is the court's, not the town's |
+| Big modern buildings outside Old Town (Eastgate Mall's ribbon walls and pierced eggs) | built in the slice at the owner's request, in the locked materials: mottled plaster, ochre and cream, lantern light (ADR-0037). No rule or reference image yet for the outside. Eastgate's Great Court inside has a reference and a look of its own (`MallsEastgateCourt`, ADR-0068): timber, cream, glass, brass and polished stone; that look is the court's, not the town's |
 | Whether the iris should be smaller than in `Art/Reference/People/PeopleFaceExpressions.png` | owner to say |
 | How the look is achieved in Unreal on modest hardware (haze, soft light) | PH1 task |
 
@@ -274,7 +274,7 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | 1.9.0 | 2026-11-24 | Every other building's colourways and the row houses and flats inside: the owner approved look tests building_styles_22, home_interiors_22 and house_outside_23 (ADR-0036): §2.9 and nine references. |
 | 1.10.0 | 2026-11-26 | Old age, Noor and the Stone Oven inside (ADR-0059): rule C9, references `character_elders.png`, `character_noor.png`, `bakery_inside_day.png`, `bakery_inside_four.png`. |
 | 1.9.1 | 2026-11-24 | §5: Eastgate Mall's sculpted shell noted as built in the locked materials, with no rule or reference image yet (ADR-0037). No rule or reference changed. |
-| 1.12.0 | 2026-11-26 | Eastgate's Great Court has a look of its own, approved by the owner (`MallsEastgateCourt`, ADR-0067). §5: night, weather and the sky now have references at every setting. |
+| 1.12.0 | 2026-11-26 | Eastgate's Great Court has a look of its own, approved by the owner (`MallsEastgateCourt`, ADR-0068). §5: night, weather and the sky now have references at every setting. |
 | 1.11.2 | 2026-11-26 | `IndoorRooms` archived (the owner: "they are bad"); a home's rooms are `IndoorHomeRoom` and `IndoorHallway`. |
 | 1.11.1 | 2026-11-26 | W7's check is the alley and Market Square at every hour and weather (`WorldAlley`, `WorldMarketSquare`); `WorldHours.png` retired. |
 | 1.11.0 | 2026-11-26 | References organised (ADR-0061): a folder per category, every file named `<Category><Subject>[_<Variant>]`, one list in `Art/Reference/catalog.json` and a page to review them (`Art/Reference/index.html`, written by `Tools/reference_catalog.py`); §1's table replaced by it. The kit-18 rooms are references (`IndoorRooms`); `interior_room_daylight.png`, `vehicles_soft_box.png` and `vehicles_classic.png` retired to `Art/Retired/`. |

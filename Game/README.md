@@ -182,7 +182,7 @@ shopping and 195 eating, on all three floors, at their places). `-BrixCounter=<a
 Thread) stands the player in it and opens its counter. `-BrixInside=b_16_5_l0` stands the player 30 m in from the south door (`MallInside`),
 `-BrixWalkIn=b_16_5_l0` walks them in, `-BrixLift=b_16_5_l0` rides the west lift to the top floor, `-BrixNoMall` builds it as
 the town's box again. At High: 28 to 44 frames a second inside, 21 riding the moving stairs (noisy: other sessions were running
-Unreal). Sitting on the benches, cafe seats and rides is as in the furniture outlet (below). Not yet: the Great Court is not yet built to its approved reference (`Art/Reference/Malls/MallsEastgateCourt_*.jpg`, ADR-0067: timber slats under the galleries, glass balustrades with brass rails, columns, a polished stone floor with hidden joints, tinted roof lights with chandeliers and banners, lines of light along the gallery edges); the furniture outlet's hall is not yet built to `ShopsBigHall` (the game's size, a 24 m band of glazed skylights); the ribbon wall's lit joints and the openings' lanterns at night, the
+Unreal). Sitting on the benches, cafe seats and rides is as in the furniture outlet (below). Not yet: the Great Court is not yet built to its approved reference (`Art/Reference/Malls/MallsEastgateCourt_*.jpg`, ADR-0068: timber slats under the galleries, glass balustrades with brass rails, columns, a polished stone floor with hidden joints, tinted roof lights with chandeliers and banners, lines of light along the gallery edges); the furniture outlet's hall is not yet built to `ShopsBigHall` (the game's size, a 24 m band of glazed skylights); the ribbon wall's lit joints and the openings' lanterns at night, the
 moving stairs' treads moving, and the shell's lanterns' light outside.
 The goods for the home each outlet sells stand in it as they were made in Blender (FURN-065; outlets.js front() with the
 slice's life data, goods.js put()): on its two window plinths facing the walk, and those too deep for a plinth on its floor
@@ -507,8 +507,8 @@ A story line's words alone are voiced and mouthed: what is seen (its direction) 
 written in the box before the words (`FBrixDialogue::Shown`), and somebody else's line is in their own voice (QST-012).
 Oda (r3419) speaks her seventeen story lines in her own voice (`cast_oda`, made by `Tools/voice/cast/`, ADR-0060;
 `SND018_the_cast_speak_their_story_lines`; eleven of them seen in the log of two staged talks on 2026-11-26, sound off).
-Noor (r0262) speaks 29 of her 111 lines in a Maya1 voice (`cast_noor`, ADR-0063); the rest are murmured. Not yet:
-the rest of Noor's part, the other eleven of the Baker cast, the lines nobody says, and Oda's everyday talk, which is murmured until it is voiced.
+Noor (r0262) speaks 107 of her 111 lines in a Maya1 voice (`cast_noor`, ADR-0063). Not yet: four of Noor's lines are
+murmured (`verdict/v_lie` runs away in Maya1 every time; `together2`, `w_join`, `y_table3` have the player's name inside), the other eleven of the Baker cast, the lines nobody says, and Oda's everyday talk, which is murmured until it is voiced.
 To see one without anyone at the keys: `-BrixTalk=<resident index>` (and `-BrixAnswers=1,2`, a second and a half apart or
 `-BrixAnswerGap=<s>`) with `-BrixShot=`.
 

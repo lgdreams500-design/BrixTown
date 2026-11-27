@@ -1,5 +1,5 @@
 ---
-adr: ADR-0067
+adr: ADR-0068
 title: Eastgate Mall's Great Court has a look of its own
 status: accepted          # the owner in chat, 2026-11-26: "use the shapes from the game for the mall interiors but texture, color, styling etc, please come up with your self based on the reference screenshots", then "feel inspired and take a creative take on the look and feel add ornaments if required use glass and other material to make it look good", then "Approve it"
 date: 2026-11-26

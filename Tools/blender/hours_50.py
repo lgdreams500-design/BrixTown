@@ -426,13 +426,15 @@ ROOM_GREYER = dict(M_Boards=0.4)
 BOUNCE_CARD = dict(day_watts=25.0, lamp_share=0.15)       # the wall facing the people: what it throws back of the day, and of the lamps' light
 ROOM_BOUNCE = dict(M_OutsidePaving=2.6, M_Plaster=2.0, M_PlasterWarm=2.0, M_Boards=2.0)   # as SQUARE_BOUNCE, more: a room is lit by bounce
 LIGHTS = json.load(open("C:/Projects/Wasted/World/rules/lights.json", encoding="utf-8"))   # kinds of light (FURN-066, ADR-0065)
+FIRE_COLOUR = tuple(LIGHTS["colours"]["fire_red"]["colour"])   # the one red of every fire is the file's named colour
 
 
 def lamp_kind(name):
     """The kind a lamp stands for, by its name (FLamp_Light.003 is a floor lamp), as Tools/citysim/lights.py has it."""
     for n, k in LIGHTS["blender_lights"].items():
         if name == n or name.startswith(n + ".") or (n.endswith("*") and name.startswith(n[:-1])):
-            return LIGHTS["kinds"][k]
+            kind = LIGHTS["kinds"][k]                    # its colour is a named one, shared with other fittings
+            return dict(kind, colour=LIGHTS["colours"][kind["colour"]]["colour"], kelvin=LIGHTS["colours"][kind["colour"]]["kelvin"])
     return None                          # how far towards grey: the boards as the town's weathered wood
 
 
@@ -914,7 +916,7 @@ def mall_porch(shell, loc, brass, globe):
 
 
 def mall_entrance_doors(P, loc, SH, glassp, brass, edge, strip, globe, slab_under):
-    """The main (south) entrance in the court's look (ADR-0067): the hall's wall across the end of the concourse with the
+    """The main (south) entrance in the court's look (ADR-0068): the hall's wall across the end of the concourse with the
     plan's opening in it, glazed doors in brass frames under a glass transom, the sunlit street outside; pendant globes
     down the middle of the concourse; a line of light along its ceiling."""
     e = next(a for a in P["entrances"] if a["side"] == "s")
