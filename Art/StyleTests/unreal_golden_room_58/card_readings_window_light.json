@@ -1,0 +1,72 @@
+{
+ "golden_hall_1200": {
+  "card": 0.0005,
+  "card_warm": 2.18,
+  "ball": 0.0007,
+  "ball_warm": 2.01,
+  "ball_side": -1.06
+ },
+ "golden_hall_2000": {
+  "card": 0.0014,
+  "card_warm": 2.98,
+  "ball": 0.0015,
+  "ball_warm": 3.12,
+  "ball_side": -0.77
+ },
+ "golden_hall_2230": {
+  "card": 0.008,
+  "card_warm": 2.88,
+  "ball": 0.0088,
+  "ball_warm": 2.92,
+  "ball_side": -0.34
+ },
+ "golden_hall_ref": {
+  "card": 0.0005,
+  "card_warm": 2.01,
+  "ball": 0.0006,
+  "ball_warm": 2.01,
+  "ball_side": -1.14
+ },
+ "golden_hall_ref_day": {
+  "card": 0.0004,
+  "card_warm": 2.08,
+  "ball": 0.0005,
+  "ball_warm": 1.64,
+  "ball_side": -1.45
+ },
+ "golden_home_1200": {
+  "card": 0.0339,
+  "card_warm": 0.47,
+  "ball": 0.0247,
+  "ball_warm": 0.51,
+  "ball_side": 0.19
+ },
+ "golden_home_2000": {
+  "card": 0.0085,
+  "card_warm": 0.72,
+  "ball": 0.0063,
+  "ball_warm": 0.76,
+  "ball_side": 0.14
+ },
+ "golden_home_2230": {
+  "card": 0.0043,
+  "card_warm": 2.56,
+  "ball": 0.0073,
+  "ball_warm": 2.2,
+  "ball_side": -1.09
+ },
+ "golden_home_ref": {
+  "card": 0.0336,
+  "card_warm": 0.48,
+  "ball": 0.0244,
+  "ball_warm": 0.51,
+  "ball_side": 0.19
+ },
+ "golden_home_ref_day": {
+  "card": 0.0334,
+  "card_warm": 0.47,
+  "ball": 0.0244,
+  "ball_warm": 0.5,
+  "ball_side": 0.19
+ }
+}

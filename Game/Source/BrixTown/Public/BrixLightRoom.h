@@ -25,7 +25,8 @@
 // Each is lit as ABrixRooms lights a planned room today: the room's own light over its middle (FillNow x FillRoomNow, in
 // FillColourNow) and the game's lamp where the reference's lamps stand, at LampNow of their strength. A grey card and a
 // grey ball stand where the reference's person stands: the card is what is measured (Tools/unreal/card_read.py), the
-// ball shows where the light comes from. No number of theirs is set against a Blender picture: the owner approves the
+// ball shows where the light comes from. The player and a resident stand in each, lit as the game lights people (the
+// rooms' light and the people's own from over the camera). No number of theirs is set against a Blender picture: the owner approves the
 // pictures, and other rooms are then measured against the card.
 //
 // Made only with -BrixLightRoom (or -BrixLightRoom=game for the game's own room colours in place of the references'
@@ -48,13 +49,25 @@ public:
 	// The rooms' own light as the game's rooms have it now (ABrixRooms::FillNow), or numbers to try in one run (a tour
 	// stop's lamp=, tint=, fill= and filltint=): the lamps' strength times LampScale, in Tint, and the room's own light
 	// FillLevel strong (under 0: the game's own) in FillTint
-	void Try(float Daylight, float LampScale, const TOptional<FLinearColor>& Tint, float FillLevel, const TOptional<FLinearColor>& FillTint);
+	// For a golden room also WindowLevel, the light at its window, and BackLevel, the light the wall behind the camera
+	// throws back (under 0: the config's WindowLight and BackLight)
+	void Try(float Daylight, float LampScale, const TOptional<FLinearColor>& Tint, float FillLevel, const TOptional<FLinearColor>& FillTint, float WindowLevel = -1.f, float BackLevel = -1.f, float LowSun = 0.f);
 	double RefMinute = 455.0;                               // the minute of the day the game's sun is as high as the references'
 
 	UPROPERTY(Config) FVector RoomsAt = FVector(-400.0, -400.0, 250.0);   // metres: x east, y south, z up
 	UPROPERTY(Config) float RoomsApart = 40.f;
 	UPROPERTY(Config) float GoldenAt = 5.f;                 // the golden rooms stand this many RoomsApart along, clear of the others' paving
 	UPROPERTY(Config) float WallSmooth = 1.f;               // how smooth a golden room's plaster is: 0 the street's mottle, 1 one even tone, no paint (the owner, 2026-11-28; ADR-0074)
+	// A golden room's light by day (ADR-0073: set here, then carried to the rooms). MidFillDay: how much of the game's
+	// light over the room's middle stays by day (1: the rule of 2026-11-28, trial K). WindowLight: a light the size of the
+	// window, in it, shining in and casting shadows: the day comes from where the day comes in, so a wall stops it and a
+	// hallway has only what its doorway lets through. BackLight: the wall behind the camera throwing the day back onto
+	// what faces the camera, as the Blender rooms' has (hours_50.py BOUNCE_CARD), of the window's light. All by the daylight.
+	UPROPERTY(Config) float MidFillDay = 1.f;
+	UPROPERTY(Config) float WindowLight = 0.f;              // candela
+	UPROPERTY(Config) float BackLight = 0.f;                // candela
+	UPROPERTY(Config) bool bLampsByLowSun = false;          // a golden room's lamps come up with a low sun (the rooms': by the daylight alone)
+	UPROPERTY(Config) float WindowLowSun = 1.f;             // of both, with the sun on the horizon (UBrixLight::LowSun): the day's light goes before the calendar's daylight does
 	UPROPERTY(Config) float CardGrey = 0.18f;               // the card's and the ball's grey (a photographer's mid grey)
 	UPROPERTY(Config) float CardUp = 1.0f;                  // m: the card's lower edge; it is CardWide x CardHigh, its face to the camera
 	UPROPERTY(Config) float CardWide = 0.3f;
@@ -76,5 +89,9 @@ private:
 	UPROPERTY() TArray<TObjectPtr<class UPointLightComponent>> Fills;
 	UPROPERTY() TArray<TObjectPtr<class UPointLightComponent>> GoldLamps;   // the golden rooms': lit by the game's rule of today
 	UPROPERTY() TArray<TObjectPtr<class UPointLightComponent>> GoldFills;
+	UPROPERTY() TArray<TObjectPtr<class URectLightComponent>> GoldWindows;
+	UPROPERTY() TArray<TObjectPtr<class URectLightComponent>> GoldBacks;
+	UPROPERTY() TArray<TObjectPtr<class UPointLightComponent>> GoldPeople;   // the people's own light, from over the camera (ABrixRooms' FillPeople)
+	UPROPERTY() TArray<TObjectPtr<class UProceduralMeshComponent>> Bodies;   // the player and a resident standing in each golden room
 	float LampCandela = 0.f, GoldCandela = 0.f;
 };

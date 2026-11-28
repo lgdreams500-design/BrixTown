@@ -1,14 +1,19 @@
 #include "BrixLightRoom.h"
 
+#include "BrixBody.h"
 #include "BrixCity.h"
 #include "BrixGameMode.h"
+#include "BrixPeople.h"
 #include "BrixRooms.h"
 #include "BrixTownActor.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/PointLightComponent.h"
+#include "Components/RectLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Misc/Paths.h"
+#include "ProceduralMeshComponent.h"
 
 namespace
 {
@@ -216,12 +221,12 @@ void ABrixLightRoom::Start(const ABrixGameMode& Mode, bool bGameColours)
 		GoldLamps.Add(L);
 	};
 	// the grey card on its post, its face to the camera (which looks along +y), and the grey ball beside it
-	auto CardAt = [&](FOne& R, double X, double Y)
+	auto CardAt = [&](FOne& R, double X, double Y, double BallSide)
 	{
 		R.bCard = true;
 		R.CardLo = FVector(X - CardWide / 2, Y, CardUp);
 		R.CardHi = FVector(X + CardWide / 2, Y, CardUp + CardHigh);
-		R.BallAt = FVector(X + CardWide / 2 + 0.1 + BallAcross / 2, Y, CardUp + CardHigh / 2);
+		R.BallAt = FVector(X + BallSide * (CardWide / 2 + 0.1 + BallAcross / 2), Y, CardUp + CardHigh / 2);
 		Box(R, R.CardLo.X, R.CardHi.X, Y, Y + 0.01, R.CardLo.Z, R.CardHi.Z, Grey, EvenP, NoneP);
 		Box(R, X - 0.01, X + 0.01, Y + 0.01, Y + 0.03, 0, R.CardLo.Z + 0.05, Wood, PlasterP, NoneP);
 		Box(R, R.BallAt.X - 0.01, R.BallAt.X + 0.01, Y - 0.01, Y + 0.01, 0, R.BallAt.Z - BallAcross / 2 + 0.02, Wood, PlasterP, NoneP);
@@ -232,6 +237,75 @@ void ABrixLightRoom::Start(const ABrixGameMode& Mode, bool bGameColours)
 	auto ReachCm = [&](double Wide, double Deep)
 	{
 		return FMath::Max(RoomDefaults->RoomLampReach, RoomDefaults->RoomFillReach * (float)FMath::Sqrt(Wide * Wide + Deep * Deep)) * 100.f;
+	};
+
+	// a light the size of an opening or a wall, shining along Dir (the references' frame): the day at a window, or the
+	// wall behind the camera throwing it back
+	auto Sheet = [&](const FOne& R, const FVector& Mid, const FVector& Dir, double Wide, double High, bool bShadows, TArray<TObjectPtr<URectLightComponent>>& Into)
+	{
+		URectLightComponent* L = NewObject<URectLightComponent>(this);
+		L->SetupAttachment(RootComponent);
+		L->Mobility = EComponentMobility::Movable;
+		L->IntensityUnits = ELightUnits::Candelas;
+		L->Intensity = 0.f;
+		L->SourceWidth = (float)Wide * 100.f;
+		L->SourceHeight = (float)High * 100.f;
+		L->BarnDoorAngle = 88.f;
+		L->AttenuationRadius = 2000.f;
+		L->CastShadows = bShadows;
+		L->LightColor = RoomDefaults->RoomFillColourDay.ToFColor(true);
+		L->SetVisibility(false);
+		L->RegisterComponent();
+		AddInstanceComponent(L);
+		L->SetWorldLocationAndRotation(At(R, Mid.X, Mid.Y, Mid.Z), Turn.RotateVector(FVector(Dir.X, -Dir.Y, Dir.Z)).Rotation());
+		Into.Add(L);
+	};
+	// the people's own light, from over the camera, for people only (ABrixRooms' FillPeople)
+	auto PeopleLight = [&](const FOne& R)
+	{
+		UPointLightComponent* F = NewObject<UPointLightComponent>(this);
+		F->SetupAttachment(RootComponent);
+		F->Mobility = EComponentMobility::Movable;
+		F->bUseInverseSquaredFalloff = false;
+		F->LightFalloffExponent = 2.f;
+		F->Intensity = 0.f;
+		F->AttenuationRadius = 1500.f;
+		F->CastShadows = false;
+		F->SourceRadius = 30.f;
+		F->LightingChannels.bChannel0 = false;
+		F->LightingChannels.bChannel1 = true;
+		F->SetVisibility(false);
+		F->RegisterComponent();
+		AddInstanceComponent(F);
+		F->SetWorldLocation(At(R, R.CamAt.X, R.CamAt.Y, R.CamAt.Z + 0.6));
+		GoldPeople.Add(F);
+	};
+	// someone standing, facing the camera, drawn as the game draws people
+	FBrixPeopleRules PeopleRules;
+	FString PeopleError;
+	const bool bPeople = LoadBrixPeopleRules(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Data/people.json"))), PeopleRules, PeopleError);
+	if (!bPeople) UE_LOG(LogTemp, Warning, TEXT("Brix Town: nobody stands in the golden room: %s"), *PeopleError);
+	UMaterialInterface* PeopleMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/People/M_People.M_People"));
+	FString SomeRole;
+	for (const TPair<FString, FBrixRoleWear>& K : PeopleRules.Roles) { SomeRole = K.Key; break; }
+	const FBrixLook Resident = bPeople ? BrixLookOf(PeopleRules, 7, SomeRole, TEXT("Easy")) : FBrixLook();
+	auto Person = [&](const FOne& R, const FBrixLook& L, double X, double Y)
+	{
+		if (!bPeople) return;
+		UProceduralMeshComponent* M = NewObject<UProceduralMeshComponent>(this);
+		M->SetupAttachment(RootComponent);
+		M->SetMobility(EComponentMobility::Movable);
+		M->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		M->LightingChannels.bChannel1 = true;   // the people's own light reaches them
+		const FVector Feet = At(R, X, Y, 0), Eye = At(R, R.CamAt.X, R.CamAt.Y, 0);
+		M->RegisterComponent();
+		AddInstanceComponent(M);
+		M->SetWorldLocationAndRotation(Feet, FRotator(0.0, (Eye - Feet).Rotation().Yaw + 90.0, 0.0));   // a body is drawn facing Unreal's -Y
+		FBrixDrawOptions O;
+		FBrixBodyMesh Body;
+		DrawBrixPerson(PeopleRules, L, FVector::ZeroVector, 0.0, O, Body);
+		BrixBodyToMesh(M, Body, 0, false, PeopleMat);
+		Bodies.Add(M);
 	};
 
 	for (int32 k = 0; k < Sets().Num(); ++k)
@@ -270,7 +344,12 @@ void ABrixLightRoom::Start(const ABrixGameMode& Mode, bool bGameColours)
 		GoldLamp(R, 2.6, 1.5, FloorLampUp, true);       // the floor lamp
 		GoldLamp(R, 1.4, -0.5, TableLampUp, false);     // the lamp on the side table
 		OwnLight(R, (X0 + X1) / 2, (Y0 + Y1) / 2, H / 2, ReachCm(X1 - X0, Y1 - Y0), GoldFills);
-		CardAt(R, 0.9, -1.4);                           // where the reference's person stands
+		Sheet(R, FVector(X1 - 0.03, (WY0 + WY1) / 2, (WZ0 + WZ1) / 2), FVector(-1, 0, 0), WY1 - WY0, WZ1 - WZ0, true, GoldWindows);   // the day at the window
+		Sheet(R, FVector((X0 + X1) / 2, Y0 + 0.05, H * 0.45), FVector(0, 1, 0), (X1 - X0) * 0.9, H * 0.8, false, GoldBacks);      // the wall behind the camera throws it back
+		PeopleLight(R);
+		Person(R, PeopleRules.Player, 1.1, -1.5);       // the player, where the reference's person stands
+		Person(R, Resident, -0.5, 0.0);                 // a resident, further in
+		CardAt(R, 1.75, -1.9, 1.0);                     // the card and ball beside them
 		Rooms.Add(R);
 	}
 	// ---- the golden room: its hallway (corridor() of hours_50.py, box for box) ----
@@ -315,7 +394,11 @@ void ABrixLightRoom::Start(const ABrixGameMode& Mode, bool bGameColours)
 		GoldLamp(R, 0.0, 1.2, PendantLightUp, true);            // its pendant
 		GoldLamp(R, -CW + 0.2, 2.4, TableLampUp + 0.1, false);  // the lamp on the hall table
 		OwnLight(R, 0, (CY0 + CY1) / 2, CH / 2, ReachCm(RX1 + CW, CY1 - CY0), GoldFills);   // over the hallway's middle: the camera's room
-		CardAt(R, -0.1, 1.6);
+		Sheet(R, FVector(RX1 - 0.03, (SWY0 + SWY1) / 2, (SWZ0 + SWZ1) / 2), FVector(-1, 0, 0), SWY1 - SWY0, SWZ1 - SWZ0, true, GoldWindows);   // the day at the side room's window: the hallway has what its doorway lets through
+		PeopleLight(R);
+		Person(R, PeopleRules.Player, -0.2, 3.0);       // the player, where the reference's person stands
+		Person(R, Resident, 0.35, 3.9);                 // a resident, by the stair
+		CardAt(R, 0.55, 0.4, -1.0);                     // the card by the right wall before the door, its ball to its left
 		Rooms.Add(R);
 	}
 
@@ -333,7 +416,7 @@ void ABrixLightRoom::Start(const ABrixGameMode& Mode, bool bGameColours)
 		Rooms.Num(), RoomsAt.Z, bGameColours ? TEXT("the game's") : TEXT("the references'"), Pieces.Num(), Lamps.Num() + GoldLamps.Num(), (int32)RefMinute / 60, (int32)RefMinute % 60);
 }
 
-void ABrixLightRoom::Try(float Daylight, float LampScale, const TOptional<FLinearColor>& Tint, float FillLevel, const TOptional<FLinearColor>& FillTint)
+void ABrixLightRoom::Try(float Daylight, float LampScale, const TOptional<FLinearColor>& Tint, float FillLevel, const TOptional<FLinearColor>& FillTint, float WindowLevel, float BackLevel, float LowSun)
 {
 	const ABrixRooms* D = GetDefault<ABrixRooms>();
 	for (UPointLightComponent* L : Lamps)
@@ -350,19 +433,36 @@ void ABrixLightRoom::Try(float Daylight, float LampScale, const TOptional<FLinea
 		F->SetVisibility(Level > 0.f);
 	}
 	// the golden rooms: lit as ABrixRooms lights a planned room now (PlaceLights), unless a stop tries other numbers
+	// the lamps come up as the sun gets low, not only when the calendar's daylight goes: at 20:00 the day is still "full"
+	// and the room would stand dark between the window's light going and the lamps coming
+	const float LampDay = FMath::Clamp(Daylight, 0.f, 1.f) * (1.f - (bLampsByLowSun ? FMath::Clamp(LowSun, 0.f, 1.f) : 0.f));
 	for (UPointLightComponent* L : GoldLamps)
 	{
-		const float Level = GoldCandela * D->LampNow(Daylight) * LampScale;
+		const float Level = GoldCandela * D->LampNow(LampDay) * LampScale;
 		L->SetIntensity(Level);
 		L->SetLightColor(Tint ? *Tint : D->RoomLampColour);
 		L->SetVisibility(Level > 0.f);
 	}
+	const float Day = FMath::Clamp(Daylight, 0.f, 1.f);
+	// over the room's middle: by night as the rooms', by day MidFillDay of what the rooms have
+	const float Mid = FillLevel < 0.f ? D->RoomFill * FMath::Lerp(D->RoomFillNight, MidFillDay * D->FillRoomNow(true, 1.f), Day) : FillLevel;
 	for (UPointLightComponent* F : GoldFills)
 	{
-		const float Level = FillLevel < 0.f ? D->FillNow(Daylight) * D->FillRoomNow(true, Daylight) : FillLevel;
-		F->SetIntensity(Level);
+		F->SetIntensity(Mid);
 		F->SetLightColor(FillTint ? *FillTint : D->FillColourNow(Daylight));
-		F->SetVisibility(Level > 0.f);
+		F->SetVisibility(Mid > 0.f);
+	}
+	const float Sky = Day * FMath::Lerp(1.f, WindowLowSun, FMath::Clamp(LowSun, 0.f, 1.f));   // how much of the day there is to come in
+	const float Win = (WindowLevel < 0.f ? WindowLight : WindowLevel) * Sky, Back = (BackLevel < 0.f ? BackLight : BackLevel) * Sky;
+	for (URectLightComponent* L : GoldWindows) { L->SetIntensity(Win); L->SetVisibility(Win > 0.f); }
+	for (URectLightComponent* L : GoldBacks) { L->SetIntensity(Back); L->SetVisibility(Back > 0.f); }
+	// people: the rooms' own light again from over the camera, PeopleShare of it (the rule of today, whatever is tried above)
+	const float People = D->FillNow(Daylight) * D->FillRoomNow(true, Daylight) * D->PeopleShare();
+	for (UPointLightComponent* F : GoldPeople)
+	{
+		F->SetIntensity(People);
+		F->SetLightColor(D->FillColourNow(Daylight));
+		F->SetVisibility(People > 0.f);
 	}
 }
 

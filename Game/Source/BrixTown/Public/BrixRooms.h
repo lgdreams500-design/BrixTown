@@ -123,6 +123,7 @@ public:
 	UPROPERTY(Config) float RoomFillHome = 1.f;
 	UPROPERTY(Config) float RoomWindowNear = 0.5f;     // m
 	float FillRoomNow(bool bPlannedRoom, float Daylight) const { return bPlannedRoom ? FMath::Lerp(1.f, RoomFillHome, FMath::Clamp(Daylight, 0.f, 1.f)) : 1.f; }
+	float PeopleShare() const { return PeopleFill; }   // the people's own light, of the room's (the golden room lights its people as the rooms do)
 	// A room's lights come up and go down over LightFadeSeconds, and a lamp is not moved while it is lit: switched and
 	// moved in one frame they were a jump in the picture at every doorway and as the nearest lamps of a hall changed.
 	UPROPERTY(Config) float LightFadeSeconds = 0.4f;

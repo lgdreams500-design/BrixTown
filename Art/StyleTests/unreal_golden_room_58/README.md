@@ -62,3 +62,46 @@ pictures is the game's rule of today (trial K of `unreal_rooms_light_57`), shown
 - The plain plaster is only here: the town's rooms still draw the street's mottle (ADR-0074).
 - The old measuring rooms (shop, cafe, kitchen) are as they were; their sill, shutters and paving are drawn with no
   pattern, which draws black (seen in the code, not shot here).
+
+## Carried on, 2026-11-28: people in the rooms, and the day as a light in the window
+The owner: "yes set the light but also have a character placed so we know how player and NPC will look inside". Then, shown
+the first trial, "I am happy with what I seeing so far". **Not approved: these are trials for the owner to judge.**
+
+- **People** (done): the player and a resident stand in each room, drawn as the game draws people and lit as it lights
+  them (the room's light and the people's own from over the camera). The card and ball moved aside.
+- **The light tried** (`DefaultGame.ini`, `[/Script/BrixTown.BrixLightRoom]`; only the golden room):
+  - none over the room's middle by day (`MidFillDay=0`);
+  - the day as a light the size of the window, in it, casting shadows (`WindowLight=12` candela). A wall stops it, so the
+    hallway has only what its doorway lets through, with no rule of its own;
+  - the wall behind the camera throws a quarter of it back onto what faces the camera (`BackLight=3`), as the Blender
+    room's does;
+  - both fall to 0.4 with the sun on the horizon (`WindowLowSun`), and the lamps come up with the low sun, not only when
+    the calendar's daylight goes (`bLampsByLowSun`).
+  A tour stop can try other numbers in one run: `fill=` `win=` `back=` `lamp=`.
+- `window_light_home_beside_blender.jpg`, `window_light_hall_beside_blender.jpg`: the ten stops with it beside Blender's
+  pictures. `card_readings_window_light.json`: their cards. The first trial (window 4, 16 and 64, with and without the
+  wall's light) was looked at in scratch and is not kept.
+
+| Mean of the picture (0 to 255) | Blender | before | with the window light |
+|---|---|---|---|
+| Room, morning | 93 | 66 | 103 |
+| Room, dusk / 20:00 | 84 | 57 | 69 |
+| Room, night | 77 | 83 | 77 |
+| Hallway, morning | 24 | 47 | 18 |
+| Hallway, dusk / 20:00 | 86 | 46 | 27 |
+| Hallway, night | 95 | 74 | 70 |
+(These means are to see the direction only: no number here is passed or failed against a Blender picture, ADR-0073.)
+
+### Still wrong in these pictures
+- **Dusk is too dark**, most of all the hallway: at 20:00 the lamps are only part of the way up and the fire is not lit.
+  Blender's dusk has both fully lit.
+- **Night is orange and the lamps are harsh**: the floor lamp burns the wall by the window, the hallway's table lamp
+  throws hard wedges on both walls, the player's trousers are near black in the room and bleached in the hallway.
+- **A soft dark smudge on the room's left wall by day**, and a small spade-shaped one on the hallway's left wall: shadows
+  the window's light throws (which thing throws each is not found).
+- **The card reads little in the hallway by day** (0.0005): it faces the camera and the doorway's light comes from its
+  side. The ball shows the side light. Where the hallway's card should stand is not settled.
+- `look_check.py` fails the hallway by day for crushed blacks (43 to 53 %) as well as flat fill: it is dim with a bright
+  doorway, as its Blender picture is.
+- Frames a second, 1066 x 666 at High: 39 to 47 with two people and the window's shadows (44 to 47 before, with nobody).
+- Only the golden room has this light. The rooms of the town are as they were.

@@ -91,6 +91,8 @@ void UBrixLight::Tick(float DeltaSeconds)
 				{
 					FParse::Value(*P[4], TEXT("lamp="), S.Lamp);
 					FParse::Value(*P[4], TEXT("fill="), S.Fill);
+					FParse::Value(*P[4], TEXT("win="), S.Win);
+					FParse::Value(*P[4], TEXT("back="), S.Back);
 					FParse::Value(*P[4], TEXT("pt="), S.PathSeconds);
 					FString Tint;
 					TArray<FString> C;
@@ -108,7 +110,7 @@ void UBrixLight::Tick(float DeltaSeconds)
 		RefRooms = W->SpawnActor<ABrixLightRoom>();
 		RefRooms->Start(*Mode, RoomColours == TEXT("game"));
 	}
-	if (RefRooms) RefRooms->Try(Mode->Daylight, TryLamp, TryTint, TryFill, TryFillTint);   // their own light follows the day, as the rooms' does
+	if (RefRooms) RefRooms->Try(Mode->Daylight, TryLamp, TryTint, TryFill, TryFillTint, TryWin, TryBack, LowSunNow);   // their own light follows the day, as the rooms' does
 	if (!bOff) Light(*Mode, DeltaSeconds);
 	if (Stops.Num()) Tour(*Mode, DeltaSeconds);
 }
@@ -284,7 +286,7 @@ void UBrixLight::Tour(ABrixGameMode& Mode, float DeltaSeconds)
 	else if (S.Minute >= 0) Mode.SetClock(S.Minute);
 	if (Mode.Weather) Mode.Weather->Trying = Mode.Weather->Rules.Kinds.Contains(S.Weather) ? S.Weather : FString();
 	PinEV = S.EV;
-	TryLamp = S.Lamp; TryFill = S.Fill; TryTint = S.Tint; TryFillTint = S.FillTint;
+	TryLamp = S.Lamp; TryFill = S.Fill; TryTint = S.Tint; TryFillTint = S.FillTint; TryWin = S.Win; TryBack = S.Back;
 	if (S.bCam)
 	{
 		if (!TourCam)
