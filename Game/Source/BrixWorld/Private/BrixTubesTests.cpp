@@ -86,10 +86,13 @@ bool FCITY109_Ride::RunTest(const FString&)
 			const double Step = FVector::Dist(W.At(F[i - 1]), W.At(F[i]));
 			if (Step > R.SpeedMps / FPS + 1e-6) { AddError(FString::Printf(TEXT("%s: a jump of %.2f m at %.2f s"), *W.Nodes.Last(), Step, F[i])); break; }
 			if (FMath::Abs(W.Lean(F[i]) - W.Lean(F[i - 1])) >= 12) { AddError(TEXT("flipped, not turned")); break; }
-			const FVector P = W.At(F[i] - 0.3), Q = W.At(F[i] + 0.3);
+			const FVector P = W.At(F[i] - 0.1), Q = W.At(F[i] + 0.1);
 			if (W.Phase(F[i]) == EBrixRidePhase::Run && FMath::Abs(Q.Z - P.Z) < 0.01 && FVector::Dist(P, Q) > 1) Level = FMath::Max(Level, W.Lean(F[i]));
 		}
 		TestTrue(TEXT("lying along the level tube"), Level > 85);
+		auto Speed = [&W](double S) { return FVector::Dist(W.At(S - .5 / FPS), W.At(S + .5 / FPS)) * FPS; };
+		for (const double T : { W.T0, W.T1 })                  // on into the tube at the speed they came up at, and out of it the same
+			TestTrue(FString::Printf(TEXT("%s: no stop at %.2f s"), *W.Nodes.Last(), T), FMath::Abs(Speed(T - 1 / FPS) - Speed(T + 1 / FPS)) <= .15 * Speed(T - 1 / FPS) + 1);
 		TestTrue(TEXT("upright going up"), W.Lean(W.T0 * 0.5) < 5);
 		TestEqual(TEXT("on their feet at the end"), W.Lean(W.Duration), 0.0);
 		const double Mid = W.T0 + W.TRun * 0.37;                // worked out from time: asked twice, the same

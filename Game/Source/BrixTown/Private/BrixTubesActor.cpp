@@ -29,6 +29,10 @@ ABrixTubes::ABrixTubes()
 	Solid->SetupAttachment(Mesh);
 	Solid->bUseComplexAsSimpleCollision = true;
 	Solid->SetCollisionProfileName(TEXT("BlockAll"));
+	// walls to walk into, not to the camera: standing in a booth its back wall is 0.35 m behind the rider, and the boom's
+	// probe met it and drew the camera into their head after a ride (the owner, 2026-11-28: "after landing when I moved a
+	// bit camera eye got blocked by something"); the glass is seen through
+	Solid->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 }
 
 FString ABrixTubes::Choice(const FString& From, int32 Pick) const

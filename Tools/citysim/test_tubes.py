@@ -167,6 +167,18 @@ class Riding(unittest.TestCase):
                 step = math.dist(ride.at(s), ride.at(t))
                 self.assertLessEqual(step, v / FPS + 1e-6, (ride.nodes, s))      # in the tube or out of it, no jump
 
+    def test_CITY_109_the_speed_carries_on_out_of_the_draw_in(self):
+        """The owner, 2026-11-28: "increase the speed when going up the tube, show faster accelaration". Sucked up, the
+        rider goes on into the tube at the speed they came up at, never stopping at the top of the draw-in, and the speed
+        never falls while they climb out of the booth; the same coming down into the far one."""
+        dt = 1 / FPS
+        for ride in self.rides:
+            v = lambda s: math.dist(ride.at(s - dt / 2), ride.at(s + dt / 2)) / dt
+            for t in (ride.t0, ride.t1):
+                self.assertAlmostEqual(v(t - dt), v(t + dt), delta=0.15 * v(t - dt) + 1, msg=(ride.nodes, t))
+            up = [v(s) for s in frames(ride) if 0.05 < s < ride.t0 + ride.ta - 0.05]
+            self.assertTrue(all(b >= a - 1e-6 for a, b in zip(up, up[1:])), ride.nodes)
+
     def test_CITY_109_worked_out_from_time_not_stepped(self):
         ride = self.rides[0]
         fr = frames(ride)
@@ -177,16 +189,17 @@ class Riding(unittest.TestCase):
         self.assertEqual(first, [again[s] for s in fr])
 
     def test_CITY_109_upright_going_up_lying_along_level_runs(self):
+        level = []                                       # (some of the sample's rides climb all the way: no level run)
         for ride in self.rides:
             fr = frames(ride)
             leans = [ride.lean(s) for s in fr]
             self.assertLess(ride.lean(ride.t0 * 0.5), 5, "going up into the tube: upright")
-            level = [l for s, l in zip(fr, leans) if ride.phase(s) == "run"
-                     and abs(ride.at(s + 0.3)[2] - ride.at(s - 0.3)[2]) < 0.01 and math.dist(ride.at(s + 0.3), ride.at(s - 0.3)) > 1]
-            self.assertTrue(level and min(level) > 85, "lying along the level tube")
+            level += [l for s, l in zip(fr, leans) if ride.phase(s) == "run"
+                      and abs(ride.at(s + 0.1)[2] - ride.at(s - 0.1)[2]) < 0.01 and math.dist(ride.at(s + 0.1), ride.at(s - 0.1)) > 1]
             self.assertEqual((leans[0], ride.lean(ride.duration)), (0.0, 0.0), "on their feet at both stops")
             for p, q in zip(leans, leans[1:]):
                 self.assertLess(abs(p - q), 12, "turned smoothly, never flipped")
+        self.assertTrue(level and min(level) > 85, "lying along the level tube")
 
     def test_CITY_109_the_tube_fits_a_rider(self):
         self.assertLessEqual(RULES["tube_inner_m"], 0.8)

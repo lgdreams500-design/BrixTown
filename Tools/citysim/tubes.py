@@ -174,17 +174,22 @@ class Ride:
         fa, fb = _unit(sa["face"]), _unit(sb["face"])
         self.face_a, self.face_b = fa, fb
         self.out_b = (self.floor_b[0] + fb[0] * self.r["pop_out_arc_m"], self.floor_b[1] + fb[1] * self.r["pop_out_arc_m"], fl)
-        # the run's speed: up to speed_mps over ease_s, then down again; shorter tubes never reach full speed
+        # the run's speed: on from the speed the rider is sucked up at (v0), up to speed_mps at speed_mps / ease_s a second,
+        # and down again to the speed they are shot out at (v1); shorter tubes never reach full speed (the owner,
+        # 2026-11-28: "increase the speed when going up the tube, show faster accelaration and increase top speed")
         L, v, ea = self.cum[-1], self.r["speed_mps"], self.r["ease_s"]
         acc = v / ea
-        if acc * ea * ea >= L:                              # a triangle: speed up for half the way, slow down for the rest
-            self.te, self.vtop = math.sqrt(L / acc), math.sqrt(L * acc)
-            self.tc = 0.0
-        else:
-            self.te, self.vtop = ea, v
-            self.tc = (L - acc * ea * ea) / v
-        self.acc = acc
-        self.t_run = 2 * self.te + self.tc
+        v0 = 2 * _d(self.floor_a, self.run[0]) / self.r["draw_in_s"]           # at() below: f * f up the draw-in
+        v1 = 2.5 * _d(self.run[-1], self.floor_b) / self.r["pop_out_s"]        # at() below: 1.25 (1 - (1 - f)^2) down
+        v0, v1 = min(v0, v), min(v1, v)
+        vtop = v
+        if (2 * v * v - v0 * v0 - v1 * v1) / (2 * acc) > L:  # never at full speed: as fast as the length allows
+            vtop = max(v0, v1, math.sqrt((2 * acc * L + v0 * v0 + v1 * v1) / 2))
+        self.v0, self.v1, self.vtop, self.acc = v0, v1, vtop, acc
+        self.ta, self.tb = (vtop - v0) / acc, (vtop - v1) / acc
+        da, db = (vtop * vtop - v0 * v0) / (2 * acc), (vtop * vtop - v1 * v1) / (2 * acc)
+        self.tc = max(0.0, (L - da - db) / vtop)
+        self.t_run = self.ta + self.tc + self.tb
         self.t0, self.t1 = self.r["draw_in_s"], self.r["draw_in_s"] + self.t_run
         self.duration = self.t1 + self.r["pop_out_s"]
 
@@ -193,13 +198,13 @@ class Ride:
 
     def _run_dist(self, u):
         u = min(max(u, 0.0), self.t_run)
-        a, te, tc = self.acc, self.te, self.tc
-        if u < te:
-            return 0.5 * a * u * u
-        if u < te + tc:
-            return 0.5 * a * te * te + self.vtop * (u - te)
+        a, ta, tc = self.acc, self.ta, self.tc
+        if u < ta:
+            return self.v0 * u + 0.5 * a * u * u
+        if u < ta + tc:
+            return self.v0 * ta + 0.5 * a * ta * ta + self.vtop * (u - ta)
         w = self.t_run - u
-        return self.cum[-1] - 0.5 * a * w * w
+        return max(0.0, self.cum[-1] - self.v1 * w - 0.5 * a * w * w)
 
     def _on_run(self, d):
         i = 0

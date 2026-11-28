@@ -32,9 +32,9 @@ struct BRIXWORLD_API FBrixTubeNet
 struct BRIXWORLD_API FBrixTubeRules
 {
 	double ClearanceM = 6;
-	double DrawInS = 1.6, DrawInHeightM = 7, SpeedMps = 40, EaseS = 1.5, PopOutS = 1.2, PopOutArcM = 0.4, FloorM = 0.31, TurnWindowM = 2;
+	double DrawInS = 0.9, DrawInHeightM = 7, SpeedMps = 60, EaseS = 1.2, PopOutS = 1.2, PopOutArcM = 0.4, FloorM = 0.31, TurnWindowM = 2.5;
 	double BendRM = 1.8, JunctionBendRM = 0.8;   // corners built and ridden as arcs; the turns from one tube into the next
-	double BehindM = 6, AboveM = 2, FollowS = 0.35, MaxJumpM = 1;
+	double BehindM = 6, AboveM = 2, FollowS = 0.35, MaxJumpM = 1.25;
 	double TubeInnerM = 0.68;
 	// the look, from the approved reference VehiclesGlassTube (Tools/blender/hours_50.py TUBE)
 	double BoothR = 0.75, BoothH = 3.0, PlinthR = 1.0, PlinthH = 0.25, FunnelH = 0.7, RingEveryM = 4, PostEveryM = 14;
@@ -71,7 +71,7 @@ struct BRIXWORLD_API FBrixRide
 	FVector2D SideA = FVector2D(1, 0), SideB = FVector2D(1, 0);   // across the first and last level stretch
 	FVector FloorA, FloorB, OutB;
 	FVector2D FaceA, FaceB;
-	double Acc = 0, Te = 0, Tc = 0, VTop = 0, TRun = 0, T0 = 0, T1 = 0, Duration = 0;
+	double Acc = 0, V0 = 0, V1 = 0, Ta = 0, Tc = 0, Tb = 0, VTop = 0, TRun = 0, T0 = 0, T1 = 0, Duration = 0;   // the run: on at V0, speeding up for Ta, at VTop for Tc, slowing to V1 for Tb
 	FBrixTubeRules R;
 
 	bool IsValid() const { return Nodes.Num() >= 2; }

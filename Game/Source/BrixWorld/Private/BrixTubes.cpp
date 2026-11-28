@@ -254,11 +254,19 @@ FBrixRide BrixMakeRide(const FBrixTubeNet& Net, const FBrixTubeRules& R, const F
 	W.FaceA = SA.Face;
 	W.FaceB = SB.Face;
 	W.OutB = FVector(SB.Pos + SB.Face * R.PopOutArcM, R.FloorM);
-	// the run's speed: up to SpeedMps over EaseS, then down again; shorter rides never reach full speed
+	// the run's speed (tubes.py Ride): on from the speed the rider is sucked up at (V0), up to SpeedMps at SpeedMps / EaseS
+	// a second, and down again to the speed they are shot out at (V1); shorter rides never reach full speed (the owner,
+	// 2026-11-28: "increase the speed when going up the tube, show faster accelaration and increase top speed")
 	const double L = W.Cum.Last(), V = R.SpeedMps, Ea = R.EaseS;
 	W.Acc = V / Ea;
-	if (W.Acc * Ea * Ea >= L) { W.Te = FMath::Sqrt(L / W.Acc); W.VTop = FMath::Sqrt(L * W.Acc); W.Tc = 0; }
-	else { W.Te = Ea; W.VTop = V; W.Tc = (L - W.Acc * Ea * Ea) / V; }
+	W.V0 = FMath::Min(V, 2 * FVector::Dist(W.FloorA, W.Run[0]) / R.DrawInS);       // At(): F * F up the draw-in
+	W.V1 = FMath::Min(V, 2.5 * FVector::Dist(W.Run.Last(), W.FloorB) / R.PopOutS); // At(): 1.25 (1 - (1 - F)^2) down
+	W.VTop = V;
+	if ((2 * V * V - W.V0 * W.V0 - W.V1 * W.V1) / (2 * W.Acc) > L)                   // never at full speed: as fast as the length allows
+		W.VTop = FMath::Max3(W.V0, W.V1, FMath::Sqrt((2 * W.Acc * L + W.V0 * W.V0 + W.V1 * W.V1) / 2));
+	W.Ta = (W.VTop - W.V0) / W.Acc;
+	W.Tb = (W.VTop - W.V1) / W.Acc;
+	W.Tc = FMath::Max(0.0, (L - (W.VTop * W.VTop - W.V0 * W.V0) / (2 * W.Acc) - (W.VTop * W.VTop - W.V1 * W.V1) / (2 * W.Acc)) / W.VTop);
 	W.Way.Add(W.FloorA);
 	W.Way.Append(W.Run);
 	W.Way.Add(W.FloorB);
@@ -280,7 +288,7 @@ FBrixRide BrixMakeRide(const FBrixTubeNet& Net, const FBrixTubeRules& R, const F
 	};
 	W.SideA = Across(true);
 	W.SideB = Across(false);
-	W.TRun = 2 * W.Te + W.Tc;
+	W.TRun = W.Ta + W.Tc + W.Tb;
 	W.T0 = R.DrawInS;
 	W.T1 = R.DrawInS + W.TRun;
 	W.Duration = W.T1 + R.PopOutS;
@@ -295,10 +303,10 @@ EBrixRidePhase FBrixRide::Phase(double S) const
 double FBrixRide::RunDist(double U) const
 {
 	U = FMath::Clamp(U, 0.0, TRun);
-	if (U < Te) return 0.5 * Acc * U * U;
-	if (U < Te + Tc) return 0.5 * Acc * Te * Te + VTop * (U - Te);
+	if (U < Ta) return V0 * U + 0.5 * Acc * U * U;
+	if (U < Ta + Tc) return V0 * Ta + 0.5 * Acc * Ta * Ta + VTop * (U - Ta);
 	const double W = TRun - U;
-	return Cum.Last() - 0.5 * Acc * W * W;
+	return FMath::Max(0.0, Cum.Last() - V1 * W - 0.5 * Acc * W * W);
 }
 
 FVector FBrixRide::OnRun(double D) const
