@@ -172,7 +172,54 @@
    "issues": [
     "The lying snow is laid in 25 cm squares: their steps show where it meets the fountain's base and the stalls.",
     "The moon's disc is set where the camera sees it, not where the moonlight comes from."
-   ]
+   ],
+   "unreal": {
+    "where": "cam:900,912,1.7,0,18",
+    "blender": "World/WorldSky_Midday.jpg",
+    "settings": {
+     "Morning": "07:20",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30",
+     "Cloudy": "12:00|cloud",
+     "Rain": "12:00|rain",
+     "Fog": "12:00|fog",
+     "Snow": "12:00|snow"
+    },
+    "missing": {
+     "NightFullMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart.",
+     "NightNewMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart."
+    },
+    "files": [
+     "World/Unreal/WorldSky_Morning.jpg",
+     "World/Unreal/WorldSky_Midday.jpg",
+     "World/Unreal/WorldSky_Dusk.jpg",
+     "World/Unreal/WorldSky_NightLamps.jpg",
+     "World/Unreal/WorldSky_Cloudy.jpg",
+     "World/Unreal/WorldSky_Rain.jpg",
+     "World/Unreal/WorldSky_Fog.jpg",
+     "World/Unreal/WorldSky_Snow.jpg"
+    ],
+    "shot": {
+     "commit": "e03ba09",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "39 to 46"
+    },
+    "status": "proposed",
+    "issues": [
+     "The spot: in the fountain court behind Market Square (x 900, z 912), 1.7 m up, looking east and 18 degrees up over the roofs, as the reference's camera looks up from its square. The game's camera is 90 degrees wide where the reference's 15 mm lens sees 100.",
+     "The sky is the weakest part beside the reference: the reference's clouds are large, shaded and layered, grey beneath and white on top, filling the sky; the game's are a few thin soft smears on a pale blue-white ground, with no shading and no depth.",
+     "Morning's sky is burnt out near white with hardly a cloud to see; Fog, Rain and Snow are one blank pale grey with no cloud at all, where the reference's fog and rain skies are dark, heavy and layered (G5).",
+     "Cloudy is not overcast: pale sky with thin cloud and the sun still out, the trees lit and throwing shadows. The reference's Cloudy is a full grey deck.",
+     "Night: a plain dark blue with dim cloud bands and no stars; the reference has stars and moonlit cloud edges. The lawn, the fountain and the trees are near black (G5).",
+     "Dusk: the sky is pale lilac with soft white cloud, with little of the reference's warm orange under-lighting on the clouds; everything below the roofs is near black, the trees flat black shapes.",
+     "Rain: the streaks are few and faint against the sky; the trees go dark grey-green and the houses fade to grey.",
+     "Snow: sparse square white dots; the lawn stays green with no snow lying on it, the roofs, the well or the fountain. The reference's snow lies on every ledge.",
+     "What is there differs: the reference looks up at a clock tower and a loggia over market stalls and a fountain close by, with people near; here it is a lawned court with trees, a fountain and a well, the houses far off, and nobody in it. Two tree crowns cut into the top corners of the picture.",
+     "A tower block shows pale behind the left roofs."
+    ]
+   }
   },
   {
    "id": "WorldMarketSquare",
@@ -244,6 +291,7 @@
     "issues": [
      "The spot: under the arch at the east end of the spawn alley (a passage through the houses), looking out on the fountain court behind Market Square, the reference's own eye (1.7 m up, aimed 4.4 degrees up). It replaces the first spot, the look tour's stop on the open stall square, which the owner said was not the right one (2026-11-28). The game's camera is 90 degrees wide where the reference's 24 mm lens sees 74.",
      "The place differs from the reference in what is there. The reference stands inside a three-arched arcade with two wall lamps on its piers, on a small paved square with a fountain close by, a bench, a tree and a loggia of lit shop windows across it. The game has one plain arch of a passage with no lamp on it, and beyond it a wide lawned court: the fountain, the trees and the arcaded houses stand far off and small.",
+     "Rain falls under the roof: in Rain the streaks come down inside the passage, under its arch and the house above it, and in Snow the flakes do too (the owner, 2026-11-28: \"water is falling even in the place where there is roof\"). The reference's rain and snow fall only under open sky (G8).",
      "The arch's stone is a smooth plain cream with no joints or blocks, and the two door leaves standing open in it are plain flat slabs; the walls beside it are rough blocks with heavy joints. The reference's arch is dressed stone throughout (G3).",
      "No lamp lights the arch: by day the reference's piers carry warm pools, at dusk and at night its lamps carry the picture. Here the passage at night is lit only by a strip of window light on the left (G7).",
      "Nobody stands in the passage or near the arch in any setting; the reference has a person close to the camera and two by the fountain (G6).",

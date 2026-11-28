@@ -1289,7 +1289,7 @@ first audit's findings are in LOOK_GATE.md.
     and the flakes are big square dots; no wet sheen in rain; the sun's patch is burnt at midday and still hard-edged under
     cloud; the lanterns are plain white blocks at night.
   - `WorldMarketSquare` (from under the arch at the spawn alley's east end, looking on the fountain court; 38 to 43 frames a
-    second; the first spot, on the open stall square, was wrong): not the reference's arcade in what is there (one plain arch
+    second; the first spot, on the open stall square, was wrong): rain and snow fall inside the passage, under its roof (the owner: "water is falling even in the place where there is roof"); not the reference's arcade in what is there (one plain arch
     with no lamp, a wide lawned court with the fountain far off; no people near); the arch is plain cream with no stonework
     and its door leaves are flat slabs; the passage has no lamp at dusk or night; the paving beyond is burnt near white at
     midday and under cloud, and cloud still throws a hard sun patch; rain and fog are grey and cold; snow lies as one flat
@@ -1299,6 +1299,11 @@ first audit's findings are in LOOK_GATE.md.
     end); the shop is unlit in every setting, so at dusk and night the left side is black; at night the near paving is plain
     black with a hard edge; dusk is very dark under a pale sky; rain and fog are pale grey, no warm reflections; snow is one
     flat sheet, none on ledges; cloudy still throws a hard shadow.
+  - `WorldSky` (the fountain court behind Market Square, looking 18 degrees up over the roofs; 39 to 46 frames a second): the
+    clouds are thin soft smears with no shading where the reference's are large, shaded and layered; morning's sky is burnt
+    out, and fog, rain and snow are one blank pale grey; cloudy is not overcast, the sun still out; night has no stars and the
+    court is near black; dusk has little warm light under the clouds; no snow lies on the lawn, roofs or fountain; nobody is
+    in the court.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.
