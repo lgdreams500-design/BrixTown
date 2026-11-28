@@ -9,7 +9,7 @@ checkout, a review round or the full set (FEATURE_PROCESS 6):
     Tools/blender/reference_render.ps1 -Place <place> [-Review] [-Hours Midday] -Out <folder>
 or by hand:
     WASTED_PLACE=<place> blender-launcher.exe -b --factory-startup --python C:/Projects/Wasted/Tools/blender/hours_50.py
-    places also mall, mall_entrance, mall_shop, egg_hall (Eastgate's court, its south entrance, one outlet's front on the
+    places also mall, mall_entrance, mall_shop, mall_escalators, egg_hall (Eastgate's court, its south entrance, one outlet's front on the
     south concourse, the Food Market's egg hall): only what the camera sees is built in detail
     (sees(); WASTED_ALL=1 builds everything, to check that nothing seen was left out)
     places: alley, square, street (Tools/blender/old_town_04.py, building_kit_07.py), rooms, bakery, outlet
@@ -37,7 +37,7 @@ from mathutils import Matrix, Vector
 B = "C:/Projects/Wasted/Tools/blender/"
 PLACE = os.environ.get("WASTED_PLACE", "alley")
 SOURCE = {"alley": "old_town_04.py", "square": "old_town_04.py", "street": "building_kit_07.py",
-          "rooms": "baker_look_47.py", "hallway": "baker_look_47.py", "shop": "baker_look_47.py", "mall": "baker_look_47.py", "mall_entrance": "baker_look_47.py", "mall_shop": "baker_look_47.py", "egg_hall": "baker_look_47.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py", "sky": "old_town_04.py"}[PLACE]
+          "rooms": "baker_look_47.py", "hallway": "baker_look_47.py", "shop": "baker_look_47.py", "mall": "baker_look_47.py", "mall_entrance": "baker_look_47.py", "mall_shop": "baker_look_47.py", "mall_escalators": "baker_look_47.py", "egg_hall": "baker_look_47.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py", "sky": "old_town_04.py"}[PLACE]
 _s = open(B + SOURCE, encoding="utf-8").read()
 exec(compile(_s[:_s.rindex("\nmain()")], SOURCE + "_helpers", "exec"), globals())
 exec(compile(open(B + "sky_52.py", encoding="utf-8").read(), "sky_52", "exec"), globals())   # the sky and its clouds
@@ -90,7 +90,7 @@ STARS = dict(scale=420.0, size=0.045, strength=(2.2, 1.0))   # the night sky's s
 MOON_DISC = dict(distance=320.0, radius=5.0, strength=8.0)    # the full moon seen in the sky
 # indoors the eye works by day too, as the game's opens in a room by day (DayOpenIndoors): the mean brightness it seeks
 INDOOR_EYE = {"Morning": 100, "Midday": 100, "Dusk": 85}
-INDOORS = ("rooms", "hallway", "bakery", "shop", "outlet", "mall", "mall_entrance", "mall_shop", "egg_hall")
+INDOORS = ("rooms", "hallway", "bakery", "shop", "outlet", "mall", "mall_entrance", "mall_shop", "mall_escalators", "egg_hall")
 # a place's own eye where it differs: the hallway has no window, so a full moon seen only through a room's door is as dim
 # there as the new moon was (the owner, 2026-11-26: "full moon is giving too much light ... at the level currently shown on
 # new moon"; that picture's mean was 12)
@@ -102,7 +102,7 @@ FIRE_OUT_HOURS = {"rooms": ("NightFullMoon", "NightNewMoon")}   # the owner, 202
                                                           # fire place is turned off": these again with the fire out too
 SKIP_HOURS = {"bakery": ("NightFullMoon", "NightNewMoon"), "shop": ("NightFullMoon", "NightNewMoon"),
               "outlet": ("NightFullMoon", "NightNewMoon"), "mall": ("NightFullMoon", "NightNewMoon"),
-              "mall_entrance": ("NightFullMoon", "NightNewMoon"), "mall_shop": ("NightFullMoon", "NightNewMoon"), "egg_hall": ("NightFullMoon", "NightNewMoon")}   # halls as the shops   # a shop as the bakery   # the owner, 2026-11-26: "for bakery, don't need moon settings"
+              "mall_entrance": ("NightFullMoon", "NightNewMoon"), "mall_shop": ("NightFullMoon", "NightNewMoon"), "mall_escalators": ("NightFullMoon", "NightNewMoon"), "egg_hall": ("NightFullMoon", "NightNewMoon")}   # halls as the shops   # a shop as the bakery   # the owner, 2026-11-26: "for bakery, don't need moon settings"
 PLACE_EYE = {"hallway": {"NightFullMoon": 12, "NightNewMoon": 2.5}, "mall": {"Midday": 82},   # the court's midday sun under open skylights
              "rooms": {"NightFullMoonFireOut": 12, "NightNewMoonFireOut": 2.5}}   # the home room's fire-out nights as dim (the owner)   # and the new moon darker still ("should not have so much light")
 # a place's eye held at a set opening for each setting instead of opening to the target: the hallway's, where the
@@ -1203,7 +1203,8 @@ def hang_plant(name, x, y, z):
 MALL_CAMS = {"entrance": ((5.0, 216.0, 1.7), (-0.5, 172.0, 5.5), 17.0),   # arriving on the forecourt
              "egg": ((-82.4, 151.6, 1.7), (-95.1, 140.9, 5.0), 16.0),       # in the Food Market's hall, as the game's shot
              "court": ((-12.0, -42.0, 1.7), (2.0, 30.0, 9.0), 16.0),
-             "shop": ((-4.0, 121.2, 1.7), (-14.0, 124.0, 3.2), 22.0)}       # one outlet's front close by: The Linen Press
+             "shop": ((-4.0, 121.2, 1.7), (-14.0, 124.0, 3.2), 22.0),       # one outlet's front close by: The Linen Press
+             "escalators": ((4.8, -15.8, 1.5), (0.9, -6.5, 1.7), 18.0)}     # at the foot of the moving stairs in the middle of the court
 
 
 def sees(cam_at, portal=None, reach=170.0):
@@ -1771,6 +1772,169 @@ def mall_egg_hall(P, LOT, loc, SH, M_):
         R, n_lv, "x".join("%.0f" % v for v in egg["radii"]), egg["cells"], len(unit.get("stand", []))))
 
 
+def mall_ribbed(name, c, pitch, rough=0.45):
+    """A moving stair's tread: dark metal ribbed along the way it travels, the ribs' tops catching the light."""
+    m = bpy.data.materials.get(name)
+    if m:
+        return m
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    b = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED')
+    b.inputs["Base Color"].default_value = (*c, 1.0)
+    b.inputs["Metallic"].default_value = 0.15             # mostly not metal: the sun through the roof lights shows on it
+    b.inputs["Roughness"].default_value = rough
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+    nt.links.new(tc.outputs["Object"], sep.inputs[0])
+    mul = nt.nodes.new("ShaderNodeMath")                     # ribs across x: a sine of x
+    mul.operation = 'MULTIPLY'
+    mul.inputs[1].default_value = 2 * math.pi / pitch
+    nt.links.new(sep.outputs["X"], mul.inputs[0])
+    sn = nt.nodes.new("ShaderNodeMath")
+    sn.operation = 'SINE'
+    nt.links.new(mul.outputs[0], sn.inputs[0])
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.5
+    bump.inputs["Distance"].default_value = 0.004
+    nt.links.new(sn.outputs[0], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], b.inputs["Normal"])
+    return m
+
+
+ESCALATOR = dict(plate=1.2, flat=2, step_rise=0.2, skirt_in=0.28, glass_in=0.10, deck_up=0.32, glass_top=1.0,
+                 newel=0.45, truss=0.95, comb_pitch=0.045, rib_pitch=0.018, steel=(0.72, 0.72, 0.70),
+                 plate_colour=(0.40, 0.40, 0.39), plate_edge=0.04,   # the floor plates darker steel, a thin brass edge round them
+                 mid=0.15, mid_glass=0.06)   # the game's parapet down the middle (BrixMall.cpp MID): two lanes, glass each side of it
+
+
+def mall_escalator(k, r, loc, SH, seen, M):
+    """One of the plan's moving stairs close up (the owner, 2026-11-28), its shape the game's (the plan's ramp from a to
+    b, its width, floor to floor): a fixed brass floor plate at each end with a comb where the steps slide under it, two
+    flat steps, then steps of the stair's rise up the slope; polished steel skirts with a line of light along them, a
+    cream deck, glass sides ending in round newels, a brass handrail round them, the truss clad in the galleries' timber
+    slats with a cream edge and a line of light along its foot. As the game's, a parapet down the middle makes it two
+    lanes (the owner, 2026-11-28: "Add the parapet"): steel skirts, a cream deck, two glass sides each with its handrail."""
+    E = ESCALATOR
+
+    def mesh_obj(name, bm, mat):
+        me = bpy.data.meshes.new(name)
+        bm.to_mesh(me)
+        bm.free()
+        me.materials.append(mat)
+        ob = bpy.data.objects.new(name, me)
+        COL.objects.link(ob)
+        return ob
+
+    (ax, ay), (bx, by) = loc(r["a"]), loc(r["b"])
+    za, zb, w = r["from"] * SH, r["to"] * SH, r["width"]
+    L = math.hypot(bx - ax, by - ay)
+    ux, uy = (bx - ax) / L, (by - ay) / L                     # along, and across
+    vx, vy = -uy, ux
+    s0, s1 = E["plate"] + E["flat"] * 0.6, L - E["plate"] - E["flat"] * 0.6   # where the slope starts and ends
+    rise = zb - za
+
+    def H(s):                                                 # the line of the steps' noses
+        return za if s <= s0 else zb if s >= s1 else za + rise * (s - s0) / (s1 - s0)
+
+    def P(s, t, h):
+        return (ax + ux * s + vx * t, ay + uy * s + vy * t, h)
+
+    if not any(seen(P(s, 0.0, H(s) + 0.5)) for s in [L * i / 12.0 for i in range(13)]):
+        return
+    knees = [0.0, s0, s1, L]
+
+    def strip(name, mat, t0, t1, h0, h1, s_a=0.0, s_b=None):  # a band along the profile, from (t0, h0) to (t1, h1) across
+        s_b = L if s_b is None else s_b
+        ss = [s_a] + [s for s in knees if s_a < s < s_b] + [s_b]
+        bm = bmesh.new()
+        lo = [bm.verts.new(P(s, t0, H(s) + h0)) for s in ss]
+        hi = [bm.verts.new(P(s, t1, H(s) + h1)) for s in ss]
+        for i in range(len(ss) - 1):
+            bm.faces.new((lo[i], lo[i + 1], hi[i + 1], hi[i]))
+        return mesh_obj(name, bm, mat)
+
+    def box(mat, s, t, h, ls, lt, lh):                        # a box along and across the stair (the plan's stairs run along y)
+        c_ = P(s, t, h)
+        G.add(mat, c_[0], c_[1], c_[2], abs(ux) * ls + abs(vx) * lt, abs(uy) * ls + abs(vy) * lt, lh)
+
+    G = GoodsMesh(None, "Mall_Esc%d_Parts" % k)
+    hw = w / 2.0
+    sw = hw - E["skirt_in"]                                  # the steps' half width
+    n_up = max(1, int(round(abs(rise) / E["step_rise"])))
+    dep = (s1 - s0) / n_up
+    steps = [(E["plate"] + i * 0.6, E["plate"] + (i + 1) * 0.6, za) for i in range(E["flat"])]
+    steps += [(s0 + i * dep, s0 + (i + 1) * dep, za + rise * (i + 1) / n_up) for i in range(n_up)]
+    steps += [(s1 + i * 0.6, s1 + (i + 1) * 0.6, zb) for i in range(E["flat"])]
+    hh = E["step_rise"] + 0.12
+    lanes = [(E["mid"], sw), (-sw, -E["mid"])]               # two lanes, the parapet between them
+    for (sa, sb, top) in steps:                              # the steps, each a box: its tread and riser ribbed, a brass nose
+        for (l0, l1) in lanes:
+            box(M["tread"], (sa + sb) / 2, (l0 + l1) / 2, top - hh / 2, sb - sa - 0.01, l1 - l0, hh)
+            box(M["brass"], sa + 0.025, (l0 + l1) / 2, top + 0.002, 0.04, l1 - l0, 0.006)
+    for (pa, pb, ph, edge_s, sgn) in ((0.0, E["plate"], za, E["plate"], 1), (L - E["plate"], L, zb, L - E["plate"], -1)):
+        box(M["plate"], (pa + pb) / 2, 0.0, ph + 0.008, pb - pa, 2 * hw, 0.016)   # the floor plates, their combs over the steps
+        e_ = E["plate_edge"]
+        box(M["brass"], pa + e_ / 2 if sgn > 0 else pb - e_ / 2, 0.0, ph + 0.009, e_, 2 * hw, 0.018)
+        for t_ in (-hw + e_ / 2, hw - e_ / 2):
+            box(M["brass"], (pa + pb) / 2, t_, ph + 0.009, pb - pa, e_, 0.018)
+        for (l0, l1) in lanes:
+            for j in range(int((l1 - l0) / E["comb_pitch"])):
+                box(M["comb"], edge_s + sgn * 0.05, l0 + (j + 0.5) * E["comb_pitch"], ph + 0.006, 0.1, 0.022, 0.012)
+            box(M["comb"], edge_s - sgn * 0.03, (l0 + l1) / 2, ph + 0.012, 0.06, l1 - l0, 0.024)
+    G.done()
+    nr, gb, gt = E["newel"], E["deck_up"], E["glass_top"]
+
+    def glass_side(name, t_g):                                # a glass side from newel to newel, the handrail along its top and round each newel
+        a0, a1 = 0.3 + nr, L - 0.3 - nr
+        mid = [s for s in knees if a0 < s < a1]
+        near_ = [(a0 - math.sin(math.pi * i / 12.0) * nr, za + gb + (gt - gb) * (1 - math.cos(math.pi * i / 12.0)) / 2) for i in range(13)]
+        far_ = [(a1 + math.sin(math.pi * i / 12.0) * nr, zb + gt - (gt - gb) * (1 - math.cos(math.pi * i / 12.0)) / 2) for i in range(13)]
+        rail = near_ + [(s, H(s) + gt) for s in mid] + far_
+        poly = rail + [(s, H(s) + gb) for s in reversed(mid)]
+        bm = bmesh.new()
+        bm.faces.new([bm.verts.new(P(s, t_g, h)) for s, h in poly])
+        g_ = mesh_obj("Mall_Esc%d_Glass%s" % (k, name), bm, M["glass"])
+        setp(g_, "visible_shadow", False)
+        cu = bpy.data.curves.new("Mall_Esc%d_Rail%s" % (k, name), 'CURVE')
+        cu.dimensions = '3D'
+        cu.bevel_depth = 0.042
+        cu.bevel_resolution = 3
+        sp = cu.splines.new('POLY')
+        sp.points.add(len(rail) - 1)
+        for i, (s, h) in enumerate(rail):
+            x_, y_, z_ = P(s, t_g, h + 0.04)
+            sp.points[i].co = (x_, y_, z_, 1.0)
+        ob = bpy.data.objects.new("Mall_Esc%d_Rail%s" % (k, name), cu)
+        ob.data.materials.append(M["brass"])
+        COL.objects.link(ob)
+
+    for sgn in (1, -1):                                       # the parapet down the middle: its skirts, deck and two glass sides
+        t_s, t_g = sgn * E["mid"], sgn * E["mid_glass"]
+        strip("Mall_Esc%d_MidSkirt%d" % (k, sgn), M["steel"], t_s, t_s, -E["step_rise"] - 0.1, 0.14, E["plate"], L - E["plate"])
+        strip("Mall_Esc%d_MidSkirtLight%d" % (k, sgn), M["strip"], t_s, t_s - sgn * 0.02, 0.14, 0.16, E["plate"], L - E["plate"])
+        strip("Mall_Esc%d_MidDeck%d" % (k, sgn), M["cream"], t_s - sgn * 0.02, t_g, 0.16, E["deck_up"], 0.3, L - 0.3)
+        glass_side("Mid%d" % sgn, t_g)
+    strip("Mall_Esc%d_MidDeckTop" % k, M["cream"], -E["mid_glass"], E["mid_glass"], E["deck_up"], E["deck_up"], 0.3, L - 0.3)
+    for sgn in (1, -1):
+        t_s, t_g, t_o = sgn * sw, sgn * (hw - E["glass_in"]), sgn * hw
+        strip("Mall_Esc%d_Skirt%d" % (k, sgn), M["steel"], t_s, t_s, -E["step_rise"] - 0.1, 0.14, E["plate"], L - E["plate"])
+        strip("Mall_Esc%d_SkirtLight%d" % (k, sgn), M["strip"], t_s, t_s + sgn * 0.02, 0.14, 0.16, E["plate"], L - E["plate"])
+        strip("Mall_Esc%d_Deck%d" % (k, sgn), M["cream"], t_s + sgn * 0.02, t_g, 0.16, E["deck_up"], 0.3, L - 0.3)
+        strip("Mall_Esc%d_DeckTop%d" % (k, sgn), M["cream"], t_g, t_o, E["deck_up"], E["deck_up"], 0.3, L - 0.3)
+        strip("Mall_Esc%d_Clad%d" % (k, sgn), M["slats"], t_o, t_o, -E["truss"] + 0.12, E["deck_up"], 0.3, L - 0.3)
+        strip("Mall_Esc%d_CladEdge%d" % (k, sgn), M["cream"], t_o, t_o, -E["truss"], -E["truss"] + 0.1, 0.3, L - 0.3)
+        strip("Mall_Esc%d_CladLight%d" % (k, sgn), M["strip"], t_o, t_o, -E["truss"] + 0.1, -E["truss"] + 0.12, 0.3, L - 0.3)
+        glass_side(str(sgn), t_g)
+    bm = bmesh.new()                                          # the underside, timber as the galleries'
+    ss = [0.3] + [s for s in knees if 0.3 < s < L - 0.3] + [L - 0.3]
+    lo = [bm.verts.new(P(s, -hw, H(s) - E["truss"])) for s in ss]
+    hi = [bm.verts.new(P(s, hw, H(s) - E["truss"])) for s in ss]
+    for i in range(len(ss) - 1):
+        bm.faces.new((lo[i], hi[i], hi[i + 1], lo[i + 1]))
+    mesh_obj("Mall_Esc%d_Under" % k, bm, M["slats"])
+
+
 def mall_court(Ls, view="court"):
     """Eastgate Mall's Great Court as its plan in World/city_01/blocks/b_16_5.json draws it (WLD-058 to WLD-062, ADR-0038;
     Tools/worldgen/mall_inside_01.py): 92 x 192 m, three floors 6 m apart; on each upper floor a gallery round the court
@@ -2041,7 +2205,15 @@ def mall_court(Ls, view="court"):
             m_ = banners[(k + j) % len(banners)]
             band("Mall_Banner%d_%d" % (k, j), [(px - tx, py - ty), (px + tx, py + ty)], RZ - ML["banner_drop"], RZ - 0.3, m_, thick=0.04)
             band("Mall_BannerBar%d_%d" % (k, j), [(px - tx * 1.1, py - ty * 1.1), (px + tx * 1.1, py + ty * 1.1)], RZ - 0.35, RZ - 0.25, brass, thick=0.08)
-    for k, r in enumerate(P["ramps"]):                             # the moving stairs, with their side walls
+    if view == "escalators":                                   # close up, the moving stairs in their parts
+        EM = dict(tread=mall_ribbed("M_MallTreadRibbed", ML["tread"], ESCALATOR["rib_pitch"]), brass=brass, glass=glassp,
+                  plate=bpy.data.materials.get("M_MallPlate") or mall_metal("M_MallPlate", ESCALATOR["plate_colour"], 0.38),
+                  comb=bpy.data.materials.get("M_MallComb") or mall_metal("M_MallComb", ML["tread"], 0.35),
+                  steel=bpy.data.materials.get("M_MallSteel") or mall_metal("M_MallSteel", ESCALATOR["steel"], 0.16),
+                  cream=edge, strip=strip, slats=slab_under)
+        for k, r in enumerate(P["ramps"]):
+            mall_escalator(k, r, loc, SH, seen, EM)
+    for k, r in enumerate(P["ramps"] if view != "escalators" else ()):   # the moving stairs, with their side walls
         (ax, ay), (bx, by) = loc(r["a"]), loc(r["b"])
         za, zb, w = r["from"] * SH, r["to"] * SH, r["width"]
         dx, dy = bx - ax, by - ay
@@ -2122,11 +2294,11 @@ def mall_court(Ls, view="court"):
         mall_forecourt(blk, loc, strip)
         people([("PlayerA", 1.0, 196.0), ("PlayerB", -6.0, 179.0), ("Elder", 7.0, 186.0), ("Shopkeeper", -2.0, 150.0)])
     else:
-        people([("PlayerA", 3.0, -12.0), ("PlayerB", -7.0, -4.0), ("Elder", 9.0, 6.0)])
+        people([("PlayerA", 2.8, -12.7) if view == "escalators" else ("PlayerA", 3.0, -12.0), ("PlayerB", -7.0, -4.0), ("Elder", 9.0, 6.0)])   # close up on a flat step
     sun_and_sky(SCENE, (0.35, -0.30, 0.89), 8.5, (1.0, 0.86, 0.68), (0.42, 0.55, 0.82), 0.45)
     hlog("  Eastgate's court from its plan: %d lanterns, %d skylights, %d moving stairs; %d outlets' insides in view" % (
         lanterns, len(eyes), len(P["ramps"]), built_in))
-    name = "Cam_test" if os.environ.get("WASTED_CAM") else {"entrance": "Cam_mall_entrance", "shop": "Cam_mall_shop"}.get(view, "Cam_mall")
+    name = "Cam_test" if os.environ.get("WASTED_CAM") else {"entrance": "Cam_mall_entrance", "shop": "Cam_mall_shop", "escalators": "Cam_mall_escalators"}.get(view, "Cam_mall")
     return camera(SCENE, name, *cam_at)
 
 
@@ -2732,6 +2904,12 @@ def main_hours():
         cam = mall_court(lines(), view="shop")
         bounce_more(ROOM_BOUNCE)
         each_hour(scene, cam, 0.5, "MallShop", dict(day_lamps=0.15))
+    elif PLACE == "mall_escalators":                 # the moving stairs in the court close up (the owner, 2026-11-28)
+        scene = fresh("Furn_mall")
+        extra_mats()
+        cam = mall_court(lines(), view="escalators")
+        bounce_more(ROOM_BOUNCE)
+        each_hour(scene, cam, 0.5, "MallEscalators", dict(day_lamps=0.15))
     elif PLACE == "egg_hall":                        # an egg hall: the Food Market under Eastgate's south-west egg (the owner, 2026-11-27)
         scene = fresh("Furn_mall")
         extra_mats()
