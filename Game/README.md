@@ -1294,6 +1294,11 @@ first audit's findings are in LOOK_GATE.md.
     and its door leaves are flat slabs; the passage has no lamp at dusk or night; the paving beyond is burnt near white at
     midday and under cloud, and cloud still throws a hard sun patch; rain and fog are grey and cold; snow lies as one flat
     sheet.
+  - `WorldStreet` (the street south of Market Square, x 957 z 925 looking north, a shop's awning on the left; 38 to 41 frames
+    a second): not the reference's cafe in what is there (dark glass, no terrace, no lamp by it; a tower block at the street's
+    end); the shop is unlit in every setting, so at dusk and night the left side is black; at night the near paving is plain
+    black with a hard edge; dusk is very dark under a pale sky; rain and fog are pale grey, no warm reflections; snow is one
+    flat sheet, none on ledges; cloudy still throws a hard shadow.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.

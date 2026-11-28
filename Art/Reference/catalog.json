@@ -242,7 +242,7 @@
     },
     "status": "proposed",
     "issues": [
-     "The spot: under the arch at the east end of the spawn alley (lot b_9_9's passage), looking out on the fountain court behind Market Square, the reference's own eye (1.7 m up, aimed 4.4 degrees up). It replaces the first spot, the look tour's stop on the open stall square, which the owner said was not the right one (2026-11-28). The game's camera is 90 degrees wide where the reference's 24 mm lens sees 74.",
+     "The spot: under the arch at the east end of the spawn alley (a passage through the houses), looking out on the fountain court behind Market Square, the reference's own eye (1.7 m up, aimed 4.4 degrees up). It replaces the first spot, the look tour's stop on the open stall square, which the owner said was not the right one (2026-11-28). The game's camera is 90 degrees wide where the reference's 24 mm lens sees 74.",
      "The place differs from the reference in what is there. The reference stands inside a three-arched arcade with two wall lamps on its piers, on a small paved square with a fountain close by, a bench, a tree and a loggia of lit shop windows across it. The game has one plain arch of a passage with no lamp on it, and beyond it a wide lawned court: the fountain, the trees and the arcaded houses stand far off and small.",
      "The arch's stone is a smooth plain cream with no joints or blocks, and the two door leaves standing open in it are plain flat slabs; the walls beside it are rough blocks with heavy joints. The reference's arch is dressed stone throughout (G3).",
      "No lamp lights the arch: by day the reference's piers carry warm pools, at dusk and at night its lamps carry the picture. Here the passage at night is lit only by a strip of window light on the left (G7).",
@@ -286,7 +286,55 @@
    "issues": [
     "Lying snow and the wet film are laid in squares (25 cm, 50 cm): their edges show where cover begins.",
     "Rings near the camera are larger than the game's."
-   ]
+   ],
+   "unreal": {
+    "where": "cam:957,925,1.7,-90,3",
+    "blender": "World/WorldStreet_Midday.jpg",
+    "settings": {
+     "Morning": "07:20",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30",
+     "Cloudy": "12:00|cloud",
+     "Rain": "12:00|rain",
+     "Fog": "12:00|fog",
+     "Snow": "12:00|snow"
+    },
+    "missing": {
+     "NightFullMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart.",
+     "NightNewMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart."
+    },
+    "files": [
+     "World/Unreal/WorldStreet_Morning.jpg",
+     "World/Unreal/WorldStreet_Midday.jpg",
+     "World/Unreal/WorldStreet_Dusk.jpg",
+     "World/Unreal/WorldStreet_NightLamps.jpg",
+     "World/Unreal/WorldStreet_Cloudy.jpg",
+     "World/Unreal/WorldStreet_Rain.jpg",
+     "World/Unreal/WorldStreet_Fog.jpg",
+     "World/Unreal/WorldStreet_Snow.jpg"
+    ],
+    "shot": {
+     "commit": "b61bd72",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "38 to 41"
+    },
+    "status": "proposed",
+    "issues": [
+     "The spot: on the street south of Market Square (x 957, z 925), looking north along it at the reference's eye (1.7 m up), a shop with its striped awning on the left as the reference's cafe is. Scouted for this: the look tour's street stop has a tree and a kiosk in front of the camera. The game's camera is 90 degrees wide where the reference's 22 mm lens sees 79.",
+     "What is there differs: the reference's cafe has three large lit arched windows, a terrace of tables and chairs, window boxes and a lamp on a post by it; the game's shop front is a dark green band with dark glass, two crates outside, no terrace. A grey tower block stands over the roofs at the end of the street; the reference's street ends in a wall and a tree.",
+     "The shop's windows are dark by day and at dusk, and at night the whole left side of the street is black: the shop is unlit, one window above glows. The reference's cafe windows glow in every setting and carry dusk and night (G7).",
+     "At night the near half of the paving is plain black with a hard straight edge to it (a shadow line with nothing in it), and nobody is in the street (G5, G6).",
+     "Dusk is very dark: the near paving and the left houses are near black while the sky is still pale pink; the reference's dusk street is readable from end to end.",
+     "Morning: the near paving is a dark brown band in the houses' shadow and the far street is white haze; a person at the left is a dark shape.",
+     "Nobody stands near the camera in any setting but Morning, so how a person is lit here is not seen (G6).",
+     "Rain and Fog are pale grey with the warm cast gone; the far street whites out. The reference keeps warm lit windows and wet reflections of them: here the wet paving reflects nothing warm (G4).",
+     "Snow lies as one flat cream sheet with a few faint lines in it, none on the awning, sills or crates; the flakes are sparse square dots. The reference's snow shows the paving's joints through it and lies on ledges.",
+     "Cloudy is Midday with a paler sky: the houses still throw a hard shadow on the paving.",
+     "The paving is small warm brick setts where the reference has large grey slabs; the houses' plaster is plain flat tones with little mottle at this distance (G3)."
+    ]
+   }
   },
   {
    "id": "WorldDaylight",
