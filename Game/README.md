@@ -1306,6 +1306,11 @@ first audit's findings are in LOOK_GATE.md.
     sky near white, the plaster reads flat and the stone one brown; square dark shop windows, no window boxes or lanterns by
     the café; morning's whites are burnt (the look check fails, 5 %); fog whites out (fails, 0.87 stops); dusk is near black
     under a pale sky; nobody near the camera.
+  - `ShopsBakeryLight` (the Stone Oven through its reference's own camera; 31 to 39 frames a second, the lowest of the places
+    shot): the walls are plain cold white where the reference is warm buff; the oven's fire is flat pale yellow and lights
+    nothing; morning, midday and dusk are one picture inside; the pendants are dim by day and give an even orange at night
+    with no pools; little contact shade under the furniture; the baker is gone at dusk and night; a door post cuts the left
+    edge; stone tiles for the reference's boards.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.
