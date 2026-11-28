@@ -1294,16 +1294,18 @@ first audit's findings are in LOOK_GATE.md.
     and its door leaves are flat slabs; the passage has no lamp at dusk or night; the paving beyond is burnt near white at
     midday and under cloud, and cloud still throws a hard sun patch; rain and fog are grey and cold; snow lies as one flat
     sheet.
-  - `WorldStreet` (the street south of Market Square, x 957 z 925 looking north, a shop's awning on the left; 38 to 41 frames
-    a second): not the reference's cafe in what is there (dark glass, no terrace, no lamp by it; a tower block at the street's
-    end); the shop is unlit in every setting, so at dusk and night the left side is black; at night the near paving is plain
-    black with a hard edge; dusk is very dark under a pale sky; rain and fog are pale grey, no warm reflections; snow is one
-    flat sheet, none on ledges; cloudy still throws a hard shadow.
   - `WorldSky` (the fountain court behind Market Square, looking 18 degrees up over the roofs; 39 to 46 frames a second): the
     clouds are thin soft smears with no shading where the reference's are large, shaded and layered; morning's sky is burnt
     out, and fog, rain and snow are one blank pale grey; cloudy is not overcast, the sun still out; night has no stars and the
     court is near black; dusk has little warm light under the clouds; no snow lies on the lawn, roofs or fountain; nobody is
     in the court.
+  - `WorldStreet` (by Café Asha on the street south of Market Square, x 960 z 915 looking north, its awning and seats on the
+    left; an earlier spot by a grocer was wrong): the buildings are not the reference's in their parts or colours (the owner:
+    "the blender has better colors ... the palette and color selection both"): the palette's numbers are the same, but this
+    house is tan on tan on brown, the game's light turns plaster orange (191,162,126 against a neutral 179,175,174) and the
+    sky near white, the plaster reads flat and the stone one brown; square dark shop windows, no window boxes or lanterns by
+    the café; morning's whites are burnt (the look check fails, 5 %); fog whites out (fails, 0.87 stops); dusk is near black
+    under a pale sky; nobody near the camera.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.

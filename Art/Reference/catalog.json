@@ -336,7 +336,7 @@
     "Rings near the camera are larger than the game's."
    ],
    "unreal": {
-    "where": "cam:957,925,1.7,-90,3",
+    "where": "cam:960,915,1.7,-100,3",
     "blender": "World/WorldStreet_Midday.jpg",
     "settings": {
      "Morning": "07:20",
@@ -363,24 +363,31 @@
      "World/Unreal/WorldStreet_Snow.jpg"
     ],
     "shot": {
-     "commit": "b61bd72",
+     "commit": "fc22006",
      "date": "2026-11-28",
      "quality": "High, 1066 x 666",
-     "fps": "38 to 41"
+     "fps": "36 to 42"
+    },
+    "checks": {
+     "Morning": [
+      "burnt whites over 5% of the picture (limit 4%)"
+     ],
+     "Fog": [
+      "look at it: little light and shade, 0.87 stops (a scene in the look has 1.0 or more; a white-out in haze reads so)"
+     ]
     },
     "status": "proposed",
     "issues": [
-     "The spot: on the street south of Market Square (x 957, z 925), looking north along it at the reference's eye (1.7 m up), a shop with its striped awning on the left as the reference's cafe is. Scouted for this: the look tour's street stop has a tree and a kiosk in front of the camera. The game's camera is 90 degrees wide where the reference's 22 mm lens sees 79.",
-     "What is there differs: the reference's cafe has three large lit arched windows, a terrace of tables and chairs, window boxes and a lamp on a post by it; the game's shop front is a dark green band with dark glass, two crates outside, no terrace. A grey tower block stands over the roofs at the end of the street; the reference's street ends in a wall and a tree.",
-     "The shop's windows are dark by day and at dusk, and at night the whole left side of the street is black: the shop is unlit, one window above glows. The reference's cafe windows glow in every setting and carry dusk and night (G7).",
-     "At night the near half of the paving is plain black with a hard straight edge to it (a shadow line with nothing in it), and nobody is in the street (G5, G6).",
-     "Dusk is very dark: the near paving and the left houses are near black while the sky is still pale pink; the reference's dusk street is readable from end to end.",
-     "Morning: the near paving is a dark brown band in the houses' shadow and the far street is white haze; a person at the left is a dark shape.",
-     "Nobody stands near the camera in any setting but Morning, so how a person is lit here is not seen (G6).",
-     "Rain and Fog are pale grey with the warm cast gone; the far street whites out. The reference keeps warm lit windows and wet reflections of them: here the wet paving reflects nothing warm (G4).",
-     "Snow lies as one flat cream sheet with a few faint lines in it, none on the awning, sills or crates; the flakes are sparse square dots. The reference's snow shows the paving's joints through it and lies on ledges.",
-     "Cloudy is Midday with a paler sky: the houses still throw a hard shadow on the paving.",
-     "The paving is small warm brick setts where the reference has large grey slabs; the houses' plaster is plain flat tones with little mottle at this distance (G3)."
+     "The spot: by Café Asha on the street south of Market Square (x 960, z 915), looking north along it at the reference's eye (1.7 m up), the café's awning and its tables and chairs on the left as in the reference. It replaces an earlier spot by a grocer, where the owner saw \"missing chair\" (2026-11-28): the café is the place the reference shows. The game's camera is 90 degrees wide where the reference's 22 mm lens sees 79.",
+     "The buildings are not like the reference's (the owner, 2026-11-28: \"some of the structures in the game are not like the ones in the blender. notice the color of wall, windows etc in blender are so much good\"). The reference's café has a rough stone ground floor with three large arched windows glowing warm, upper windows evenly spaced with stone surrounds, sills and pairs of louvred shutters, window boxes, an iron balcony, a hanging sign and lit lanterns on posts. The game's has square dark shop windows with nothing seen inside by day, heavier dark window frames, no window boxes, and one lamp post far down the street.",
+     "The colours are poorer than the reference's (the owner: \"review the colors used in these building in the game, the blender has better colors ... the palette and color selection both\"). The palette's numbers are the same on both sides (World/rules/building_styles.json and Tools/blender/building_kit_07.py), but (1) selection: this house is warm plaster with ochre shutters and wood frames, tan on tan on brown, and the house opposite bare brown stone, where the reference leads with cool grey plaster and mixes blue, teal and red shutters; (2) the light turns it orange: sunlit plaster measures 191,162,126 here against the reference's neutral 179,175,174, paving 209,197,184 against 191,187,188, and the sky is near white (212,215,218) against the reference's blue (150,165,184), so no cool colour sets off the warm ones; (3) the plaster is a flat fill at this distance and the stone one brown with heavy dark joints (G3, G4).",
+     "A grey tower block stands over the roofs at the end of the street; the reference's street ends in a wall and a tree.",
+     "Morning: the look check fails for burnt whites (5 % against 4 %): the sunlit house fronts and the sky white out, and the near paving is a dark brown band (G5).",
+     "Dusk and night: the café's windows are lit, flat cream panels with nothing seen in them; the paving and the upper walls are near black at dusk under a still-pale sky (G5, G7).",
+     "Fog whites out: the look check fails it (0.87 stops of light and shade against 1.0).",
+     "Rain and Fog are pale grey with the warm cast gone; Snow lies as one flat cream sheet; Cloudy still throws hard shadows.",
+     "Nobody stands in the street near the camera; the reference has people by the café (G6).",
+     "The paving is small warm brick setts with no kerb where the reference has large grey slabs and a raised kerb."
     ]
    }
   },
