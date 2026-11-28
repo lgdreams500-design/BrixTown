@@ -36,9 +36,12 @@ The owner was shown the room and the hallway three ways, at 07:36 and at 22:30
 - ART_DIRECTION 1.14.0: I1 says so. Floors, cloth, wood furniture and everything out of doors keep W1.
 
 ## Consequences
-- **Only the golden room has it.** The rooms of the town (`ABrixRooms`) and the inner faces of the buildings' own walls
-  (`ABrixTownActor`) still draw the street's mottle. Carrying it over is a change to something every room shares, so
-  it goes with the look tour, once the golden room's pictures are approved. Written in `Game/README.md`, Not yet.
+- **At first only the golden room had it.** Carried to the town the same day, at the owner's word on the reference page's
+  bakery and shop floor ("you have not used 0 paint like you did in the home rooms else where interiors"): the rooms of
+  the town (`ABrixRooms`) and the inside faces of the buildings' own walls, their ceilings, a stair's spine wall and a
+  lift's shaft (`ABrixTownActor`, in a group of their own so the street faces keep their mottle) use `M_Room` at
+  `WallSmooth=1.0` (`[/Script/BrixTown.BrixRooms]`). Before and after, indoors and out: `Art/StyleTests/unreal_plain_plaster_59`.
+  Eastgate Mall and the Furniture Outlet are not done; `Game/README.md`, Not yet, says what else is not.
 - **The look check's flat-fill limit fails the hallway by day**: 55 % of the picture is plain where the limit is 45 %
   (it was 44 % with the mottle). The limit was set to catch a place with no shade at all. It is not changed here: what
   it should be for a room is to settle with the owner, and until then the hallway's "flat" failure is this decision,
