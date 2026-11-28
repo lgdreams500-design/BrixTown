@@ -29,10 +29,6 @@ ABrixTubes::ABrixTubes()
 	Solid->SetupAttachment(Mesh);
 	Solid->bUseComplexAsSimpleCollision = true;
 	Solid->SetCollisionProfileName(TEXT("BlockAll"));
-	// walls to walk into, not to the camera: standing in a booth its back wall is 0.35 m behind the rider, and the boom's
-	// probe met it and drew the camera into their head after a ride (the owner, 2026-11-28: "after landing when I moved a
-	// bit camera eye got blocked by something"); the glass is seen through
-	Solid->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 }
 
 FString ABrixTubes::Choice(const FString& From, int32 Pick) const
@@ -57,6 +53,14 @@ bool ABrixTubes::Start(const FString& NetPath, const FString& RulesPath, ABrixTo
 	for (const FString& P : BrixTubeProblems(TubeNet, TubeRules)) UE_LOG(LogTemp, Warning, TEXT("Brix Town: tubes.json: %s"), *P);
 	for (const FString& Id : TubeNet.StopOrder) Booth(TubeNet.Stops[Id]);
 	for (const FBrixTube& T : TubeNet.Tubes) Tube(T.Line);
+	const double Tr = TubeRules.TubeInnerM / 2;
+	for (const FBrixTubeNet::FPost& P : TubeNet.Posts)       // the posts where the map puts them: on the pavement, clear of the street's things
+	{
+		const FVector At(P.At, 0), Dir(P.Along, 0);
+		Cylinder(IronPost, At * M, .09 * M, (P.Z - Tr - .06) * M, 14);
+		Cylinder(StoneDark, At * M, .24 * M, .25 * M, 20);
+		Ring(Iron, FVector(P.At, P.Z) * M, Dir, (Tr + .03) * M, .045 * M);
+	}
 	Flush();
 	bReady = true;
 	UE_LOG(LogTemp, Display, TEXT("Brix Town: %d tube stops, %d tubes (%d glass triangles)"), TubeNet.Stops.Num(), TubeNet.Tubes.Num(), Glass.T.Num() / 3);
@@ -210,32 +214,19 @@ void ABrixTubes::Tube(const TArray<FVector>& Line)
 	TArray<FVector> Pts;
 	for (const FVector& P : L) Pts.Add(Cm(P));
 	Sweep(Glass, Pts, Tr * M, TubeSides, false);
-	double Along = 0, ToRing = R.RingEveryM * .5, ToPost = R.PostEveryM * .5;
+	double ToRing = R.RingEveryM * .5;
 	for (int32 i = 1; i < L.Num(); ++i)
 	{
 		const FVector A = L[i - 1], B = L[i];
 		const double Seg = FVector::Dist(A, B);
 		if (Seg < 1e-6) continue;
 		const FVector Dir = (B - A) / Seg;
-		const bool bLevel = FMath::Abs(Dir.Z) < .02 && A.Z >= R.ClearanceM;
 		for (double s = 0; s < Seg; )
 		{
-			const double Step = FMath::Min(Seg - s, FMath::Min(ToRing, ToPost));
-			s += Step; ToRing -= Step; ToPost -= Step;
+			const double Step = FMath::Min(Seg - s, ToRing);
+			s += Step; ToRing -= Step;
 			const FVector P = A + Dir * s;
 			if (ToRing <= 1e-6) { Ring(Brass, Cm(P), Dir, (Tr + .015) * M, .025 * M); ToRing = R.RingEveryM; }
-			if (ToPost <= 1e-6)
-			{
-				ToPost = R.PostEveryM;
-				if (!bLevel) { ToPost = 1; continue; }            // only under the level runs: try again a metre on
-				bool bNear = false;                                // where tubes run together, one post
-				for (const FVector& Q : Posts) if (FVector2D::Distance(FVector2D(Q), FVector2D(P)) < 3) { bNear = true; break; }
-				if (bNear) continue;
-				Posts.Add(P);
-				Cylinder(IronPost, FVector(P.X, P.Y, 0) * M, .09 * M, (P.Z - Tr - .06) * M, 14);
-				Cylinder(StoneDark, FVector(P.X, P.Y, 0) * M, .24 * M, .25 * M, 20);
-				Ring(Iron, Cm(P), Dir, (Tr + .03) * M, .045 * M);
-			}
 		}
 	}
 }

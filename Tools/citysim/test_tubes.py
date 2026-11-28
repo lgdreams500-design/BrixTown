@@ -7,7 +7,7 @@ import itertools, math, os, random, sys, unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "worldgen"))
 import world                                               # noqa: E402
-from tubes import Ride, crown_top, mouth, problems, rounded, route, through_crowns   # noqa: E402
+from tubes import Near, Ride, booth_clashes, crown_top, mouth, post_clashes, problems, road_middles, rounded, route, street_things, through_crowns   # noqa: E402
 
 RULES = world.load()["tubes"]
 H = RULES["ride"]["draw_in_height_m"]
@@ -91,6 +91,71 @@ class TheTownsTubes(unittest.TestCase):
         self.assertGreater(crown_top(6.5)[0], 15.0)          # a grown plane: the tallest tree on the lines
         low = {**self.net, "tubes": [{**t, "line": [[x, y, min(z, 9.0)] for x, y, z in t["line"]]} for t in self.net["tubes"]]}
         self.assertTrue(through_crowns(low, RULES, trees))   # at the first 9 m they went through crowns
+
+    def test_CITY_108_booths_keep_clear_of_the_street(self):
+        """No booth stands on or crowds a bus stop, a door, a lamp, bin, bench or plant, a tree, a parking bay, a zebra or
+        a lot (World/rules/tubes.json "place"; the owner, 2026-11-28: "it's overlapping bus stop etc at some place. these
+        are basic common sense checks"); and the check finds such a booth."""
+        w = world.load()
+        things, place = {**street_things(w), "middles": road_middles(w)}, RULES["place"]
+        for sid, st in self.net["stops"].items():
+            self.assertEqual(booth_clashes(st["pos"], things, place), [], sid)
+        bus = w["transit"]["stops"][0]["at"]
+        self.assertIn("bus stop " + w["transit"]["stops"][0]["id"], booth_clashes((bus[0] + 4, bus[1]), things, place))
+
+    def test_CITY_108_posts_stand_on_the_pavement_clear_of_the_street(self):
+        """Every post stands off the road (road_m from every road's middle), clear of the bus stops, zebras, doors, lamps,
+        trees, parking bays and booths (place.post), and the level tubes are held up all along: no point of one is further
+        than half the widest span from a post (the owner, 2026-11-28: "overlapping bus stop etc")."""
+        w = world.load()
+        near = Near({**street_things(w), "middles": road_middles(w), "booths": [tuple(st["pos"]) for st in self.net["stops"].values()]})
+        posts = self.net["posts"]
+        self.assertGreater(len(posts), 100)
+        for p in posts:
+            n = near(p[:2])
+            self.assertEqual(post_clashes(p[:2], n, RULES["place"], n["booths"], n["middles"]), [], p)
+        reach = RULES["place"]["post"]["max_span_m"] / 2
+        over = RULES["place"]["post"]["max_span_over_road_m"] / 2
+        middles = Near({"middles": road_middles(w)})
+        for t in self.net["tubes"]:
+            line = [q for q in rounded(t["line"], RULES["ride"]["bend_r_m"]) if q[2] >= max(q2[2] for q2 in t["line"]) - .01]
+            for a, b in zip(line, line[1:]):
+                for k in range(int(math.dist(a, b) / 2) + 1):
+                    f = k / max(1, int(math.dist(a, b) / 2))
+                    q = (a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f)
+                    if t["a"] in self.net["stops"] and math.dist(q, self.net["stops"][t["a"]]["pos"]) < reach:
+                        continue                                  # the booth holds its own tube up
+                    road = (any(math.dist(q, m) < RULES["place"]["post"]["road_m"] for m in middles(q)["middles"])
+                            or any(math.dist(q, j["pos"]) < 16 for j in w["roads"]["junctions"]))   # a crossing, its zebras
+                    self.assertLess(min(math.dist(q, p[:2]) for p in posts), over if road else reach, (t["a"], t["b"], q))
+
+    def test_CITY_108_every_booth_door_has_room_to_step_out(self):
+        """2.5 m clear of any lot in front of each booth's door (0.75 m across), so the rider steps out onto the pavement
+        and the camera behind them is not caught against a wall (the owner, 2026-11-28: "camera eye got blocked")."""
+        lots = world.lots(world.load())
+        for sid, st in self.net["stops"].items():
+            (x, z), f = st["pos"], st["face"]
+            for k in range(11):
+                d = .75 + k * .25
+                q = (x + f[0] * d, z + f[1] * d)
+                self.assertFalse([l["id"] for l in lots if l["rect"][0] <= q[0] <= l["rect"][2] and l["rect"][1] <= q[1] <= l["rect"][3]], (sid, d))
+
+    def test_CITY_110_the_camera_beside_each_booth_is_clear(self):
+        """Where the ride's camera stands beside a booth as the rider rises and comes down (its "camera" side, behind_m off),
+        and half way out to it, it is clear of every grown street tree's crown and every lot (the owner, 2026-11-28: "i
+        noticed camera issues": at Market Square it stood in a plane's crown)."""
+        w = world.load()
+        veg = w["vegetation"].get("species", w["vegetation"])
+        trees = [(t["pos"], crown_top(veg.get(t["species"], {}).get("r_max", 4.0), veg.get(t["species"], {}).get("crown"))[1])
+                 for bl in w["blocks"] for t in bl.get("trees", [])]
+        lots = world.lots(w)
+        for sid, st in self.net["stops"].items():
+            (x, z), c = st["pos"], st["camera"]                  # metres out from the booth
+            self.assertGreaterEqual(math.hypot(*c), 2.5, sid)
+            for f in (.5, 1.0):
+                q = (x + c[0] * f, z + c[1] * f)
+                self.assertFalse([p for p, reach in trees if math.dist(q, p) < reach], (sid, f))
+                self.assertFalse([l["id"] for l in lots if l["rect"][0] <= q[0] <= l["rect"][2] and l["rect"][1] <= q[1] <= l["rect"][3]], (sid, f))
 
     def test_CITY_112_every_stop_in_town_reaches_every_other(self):
         for a, b in itertools.permutations(self.net["stops"], 2):

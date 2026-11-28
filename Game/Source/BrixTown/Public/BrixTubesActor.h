@@ -46,7 +46,6 @@ private:
 	bool bReady = false;
 	FMeshPart Glass, Brass, Iron, Stone, StoneDark, Cream, BoothWall, IronPost;
 	TArray<FVector> LanternAt;                                   // engine units
-	TArray<FVector> Posts;                                       // where a post stands (metres), one where tubes run together
 	UPROPERTY() TObjectPtr<UProceduralMeshComponent> Mesh;        // drawn, no collision
 	UPROPERTY() TObjectPtr<class UInstancedStaticMeshComponent> Lanterns;   // the lantern glass, lit at night with the street lamps' (ABrixLamps)
 	UPROPERTY() TObjectPtr<UProceduralMeshComponent> Solid;       // what the player walks against: plinths, booth glass, posts

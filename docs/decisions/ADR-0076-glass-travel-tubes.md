@@ -34,4 +34,8 @@ owner's approval.
   trees back (2026-11-28: "Raise the tubes"). `Tools/citysim/make_tubes_01.py` sets one height for the whole network, a
   metre over the tallest grown crown under a line and its glass: 17 m in Old Town. The booths stay 3 m high; their own
   tubes rise further.
+- The tubes run over the pavement and their posts stand on it, never in the road (the owner, 2026-11-28: "it's
+  overlapping bus stop etc at some place. these are basic common sense checks"). A line runs 6 m off its street's
+  middle, on the far side from the street's booths; posts and booths are placed in data clear of the road and of
+  everything on the street, and tests check it (`World/rules/tubes.json` `place`).
 - Where the stops go on the map is the owner's to say. Fares (Q-42) and which residents ride (Q-41) are open.

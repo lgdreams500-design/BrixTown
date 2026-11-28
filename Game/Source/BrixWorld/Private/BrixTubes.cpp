@@ -71,6 +71,7 @@ bool LoadBrixTubeNet(const FString& Path, FBrixTubeNet& Out, FString& OutError)
 		const TArray<TSharedPtr<FJsonValue>>* A = nullptr;
 		if (O->TryGetArrayField(TEXT("pos"), A)) S.Pos = TubeVec2(*A);
 		if (O->TryGetArrayField(TEXT("face"), A)) S.Face = TubeVec2(*A).GetSafeNormal();
+		if (O->TryGetArrayField(TEXT("camera"), A)) S.Camera = TubeVec2(*A);   // its length: how far out it stands
 		Out.Stops.Add(S.Id, S);
 		Out.StopOrder.Add(S.Id);
 	}
@@ -95,6 +96,13 @@ bool LoadBrixTubeNet(const FString& Path, FBrixTubeNet& Out, FString& OutError)
 		if (O->TryGetArrayField(TEXT("line"), L)) for (const TSharedPtr<FJsonValue>& P : *L) T.Line.Add(TubeVec3(P->AsArray()));
 		Out.Tubes.Add(T);
 	}
+	const TArray<TSharedPtr<FJsonValue>>* Ps = nullptr;
+	if (J->TryGetArrayField(TEXT("posts"), Ps))
+		for (const TSharedPtr<FJsonValue>& V : *Ps)
+		{
+			const TArray<TSharedPtr<FJsonValue>>& A = V->AsArray();
+			if (A.Num() >= 5) Out.Posts.Add({ FVector2D(A[0]->AsNumber(), A[1]->AsNumber()), A[2]->AsNumber(), FVector2D(A[3]->AsNumber(), A[4]->AsNumber()).GetSafeNormal() });
+		}
 	return true;
 }
 
@@ -286,8 +294,8 @@ FBrixRide BrixMakeRide(const FBrixTubeNet& Net, const FBrixTubeRules& R, const F
 		}
 		return FVector2D(1, 0);
 	};
-	W.SideA = Across(true);
-	W.SideB = Across(false);
+	W.SideA = SA.Camera.IsNearlyZero() ? Across(true) * R.BehindM : SA.Camera;    // the stop's own clear spot, where the map gives one
+	W.SideB = SB.Camera.IsNearlyZero() ? Across(false) * R.BehindM : SB.Camera;
 	W.TRun = W.Ta + W.Tc + W.Tb;
 	W.T0 = R.DrawInS;
 	W.T1 = R.DrawInS + W.TRun;
@@ -376,7 +384,7 @@ FVector FBrixRide::Camera(double S) const
 	const double Flat = FVector2D(On.X - T.X, On.Y - T.Y).Size(), Rise = FMath::Abs(On.Z - T.Z);
 	const double Wl = Flat + Rise > 1e-9 ? Flat / FMath::Sqrt(Flat * Flat + Rise * Rise) : 0;   // 1 along a level tube, 0 up or down
 	const FVector2D Side = D < WayCum.Last() / 2 ? SideA : SideB;
-	const double K = (1 - Wl) * R.BehindM;
+	const double K = 1 - Wl;
 	const FVector Rider = At(S);
 	return FVector(T.X + Side.X * K, T.Y + Side.Y * K, T.Z * Wl + Rider.Z * (1 - Wl) + R.AboveM);
 }

@@ -13,6 +13,7 @@ struct BRIXWORLD_API FBrixTubeStop
 	FString Id, Name;
 	FVector2D Pos = FVector2D::ZeroVector;     // the middle of its floor
 	FVector2D Face = FVector2D(0, 1);          // the way its door looks out, unit
+	FVector2D Camera = FVector2D::ZeroVector;  // where the ride's camera stands beside the booth, metres from it (map data: clear of crowns and buildings); zero: behind_m along the street
 };
 
 struct BRIXWORLD_API FBrixTube
@@ -27,14 +28,16 @@ struct BRIXWORLD_API FBrixTubeNet
 	TArray<FString> StopOrder;                 // as the file lists them
 	TMap<FString, FVector> Junctions;
 	TArray<FBrixTube> Tubes;
+	struct FPost { FVector2D At; double Z; FVector2D Along; };   // a post on the pavement: where, the tube's middle over it, the tube's way there
+	TArray<FPost> Posts;                       // map data (make_tubes_01.py: clear of the road and the street's things)
 };
 
 struct BRIXWORLD_API FBrixTubeRules
 {
 	double ClearanceM = 6;
 	double DrawInS = 0.9, DrawInHeightM = 7, SpeedMps = 60, EaseS = 1.2, PopOutS = 1.2, PopOutArcM = 0.4, FloorM = 0.31, TurnWindowM = 2.5;
-	double BendRM = 1.8, JunctionBendRM = 0.8;   // corners built and ridden as arcs; the turns from one tube into the next
-	double BehindM = 6, AboveM = 2, FollowS = 0.35, MaxJumpM = 1.25;
+	double BendRM = 1.8, JunctionBendRM = 0.75;   // corners built and ridden as arcs; the turns from one tube into the next
+	double BehindM = 6, AboveM = 2, FollowS = 0.35, MaxJumpM = 1.5;
 	double TubeInnerM = 0.68;
 	// the look, from the approved reference VehiclesGlassTube (Tools/blender/hours_50.py TUBE)
 	double BoothR = 0.75, BoothH = 3.0, PlinthR = 1.0, PlinthH = 0.25, FunnelH = 0.7, RingEveryM = 4, PostEveryM = 14;
@@ -68,7 +71,7 @@ struct BRIXWORLD_API FBrixRide
 	TArray<FVector> Way;                       // the whole way: the first booth's floor, Run, the last booth's floor, where they stand
 	TArray<double> WayCum;
 	double UpM = 0, DownM = 0;                 // from the floor to the tube's mouth; from it to where they stand
-	FVector2D SideA = FVector2D(1, 0), SideB = FVector2D(1, 0);   // across the first and last level stretch
+	FVector2D SideA = FVector2D(6, 0), SideB = FVector2D(6, 0);   // where the camera stands beside the first and last booth, metres from it
 	FVector FloorA, FloorB, OutB;
 	FVector2D FaceA, FaceB;
 	double Acc = 0, V0 = 0, V1 = 0, Ta = 0, Tc = 0, Tb = 0, VTop = 0, TRun = 0, T0 = 0, T1 = 0, Duration = 0;   // the run: on at V0, speeding up for Ta, at VTop for Tc, slowing to V1 for Tb

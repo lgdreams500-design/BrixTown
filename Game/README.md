@@ -653,29 +653,41 @@ it; no request from a client over the network (single player: the local player i
 Clear glass tubes as slim as a rider run 17 m over the streets on iron posts, a metre over the tallest street tree's crown as it will grow (the owner, 2026-11-28: "Raise the tubes"), between 24 stops (`World/city_01/tubes.json`,
 approved on the map; `World/rules/tubes.json` for the ride and the look). `ABrixTubes` builds them once at load, as the
 approved reference `VehiclesGlassTube` draws them: the tube swept along each line with its corners turned on arcs
-(`bend_r_m`), brass bands every 4 m, a post with an iron cradle every 14 m under the level runs (one where tubes run
-together); at each stop a slim glass booth (0.75 m) on a stone plinth, open at its door, three brass ribs and three bands,
+(`bend_r_m`), brass bands every 4 m, and posts with iron cradles where the map puts them (`posts` in `tubes.json`). The
+lines run over the pavement, 6 m off each street's middle (behind the kerb's lamps, trees and parked cars), on the far
+side from the street's booths, so each booth's own tube crosses the street to its line; `make_tubes_01.py` places each
+post about every 14 m on the pavement clear of the road, the bus stops, zebras, doors, lamps, trees, parking bays and
+booths, and each booth clear of the same and off the road, with room to step out of its door (the owner, 2026-11-28:
+"it's overlapping bus stop etc at some place"; `test_CITY_108_booths_keep_clear_of_the_street`,
+`test_CITY_108_posts_stand_on_the_pavement_clear_of_the_street`, `test_CITY_108_every_booth_door_has_room_to_step_out`).
+The booths' walls stop the camera as any wall does, except while standing in a booth (the boom's probe is off there: its
+back wall is 0.35 m behind the rider). At each stop a slim glass booth (0.75 m) on a stone plinth, open at its door, three brass ribs and three bands,
 a cream cap narrowing through a glass funnel into the tube, a lantern by the door that is lit, and lights the booth, with
 the street lamps. The glass is `/Game/Greybox/M_TubeGlass` (`Tools/unreal/make_tube_glass_material.py`): a faint
 sea-green tint, clearer looked through, brighter at the edges. Standing in a booth the prompt offers a ride to another
 stop (the arrow keys choose which, E rides); the server (`ABrixGameMode::RideTube`) checks the rider stands in a booth and
 the stop can be reached, and works the ride out (`BrixTubes`, a port of `Tools/citysim/tubes.py`): drawn up out of the
-booth, along the tubes the shortest way at up to 40 m/s, lying on their side head first along the level runs, and set
+booth, on up the tube without slowing, along the tubes the shortest way at up to 60 m/s (the owner, 2026-11-28: faster up the tube, faster speeding up, a higher top speed), lying on their side head first along the level runs, and set
 down in the far booth facing out of its door. The camera leaves the boom for the ride and comes back to it eased, never
-cut: beside the booth as the rider rises and comes down, chasing behind along the tubes. No skipping time on a ride.
+cut: beside the booth as the rider rises and comes down (on its side clear of crowns and buildings, `camera` in
+`tubes.json`, nearer than 6 m where the street's planes crowd it), chasing behind along the tubes. No skipping time on a ride.
 Checked by `CITY108_the_towns_tubes_are_sound_and_reach_every_stop`, `CITY109_a_ride_goes_floor_tube_floor_without_a_jump`,
 `CITY110_the_camera_follows_the_rider_without_a_cut` and `CITY111_the_server_checks_the_stop_and_the_way`. To see a ride in
 a test shot: `-BrixTube=<from>,<to>,<seconds into the ride at the shot>`; `-BrixNoTubes` leaves them out. Shots:
-`Art/StyleTests/unreal_tubes_59/`, raised over the trees `unreal_tubes_60/`.
+`Art/StyleTests/unreal_tubes_59/`, raised over the trees `unreal_tubes_60/`, on the pavement `unreal_tubes_61/`.
 Not yet: the approved reference draws the tubes 9 m up; they run at 17 m to clear the trees, which the reference does
 not show (the posts are taller, and each booth's own tube rises from its funnel to 17 m): from the street they read as thin lines high up and the risers as tall poles, less than the reference's tube close over the street. The heights are over Old Town's level: the
 outskirts' rising ground (`World/city_01/terrain.json`, up to 21 m, not yet in Unreal) is not taken into account, and
 where it is built the suburbs' booths and tubes need to stand on it. The stop is chosen in the prompt
 with the arrow keys: the tube map each stop should show (CITY-112) is not made, and needs an Interface reference first.
-The brass is the greybox's matte paint, not metal; the glass neither gets wet nor holds snow. The posts stand under the
-line, over the street's middle, and the cars drive through them. The booth's door is an opening in its glass (`door_deg`
+The brass is the greybox's matte paint, not metal; the glass neither gets wet nor holds snow. Where a line crosses a road
+or passes a crossing and its zebras no post can stand, and a span there is up to 34 m (26 m elsewhere); where a line
+changes sides at a crossing it crosses over the junction diagonally; at the three-road junctions (Northgate, Market
+Street's crossings with the loops, Southfield Road) the roads' lines come across to the street's line. In the suburbs
+the lines pass over the front edges of some gardens (17 m up). The camera a step out of a booth's door (the probe on
+again) is not yet shot. The booth's door is an opening in its glass (`door_deg`
 70), which the reference does not show. The rider keeps the standing pose all the way (no arms held in), and the turn
-from facing into the booth to lying on their side swings their yaw quickly at the top bend. At 40 m/s the engine's
+from facing into the booth to lying on their side swings their yaw quickly at the top bend. At 60 m/s the engine's
 motion blur smears the town. No other riders (CITY-113, Q-41), no fare (Q-42), no ride for a client over the network
 (single player: the server is this machine). `-BrixTube` cannot start a ride before 2 s after load, so a test shot is
 at most 10 s into a ride.

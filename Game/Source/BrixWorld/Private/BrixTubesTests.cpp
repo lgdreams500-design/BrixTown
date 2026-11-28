@@ -55,6 +55,16 @@ bool FCITY108_Net::RunTest(const FString&)
 			if (!TestTrue(FString::Printf(TEXT("%s reaches %s"), *A, *B), Way.Num() >= 2)) continue;
 			for (int32 i = 1; i + 1 < Way.Num(); ++i) TestFalse(TEXT("passes a stop: ") + Way[i], Net.Stops.Contains(Way[i]));
 		}
+	TestTrue(TEXT("posts from the map (on the pavement: Tools/citysim/test_tubes.py)"), Net.Posts.Num() > 100);
+	for (const FBrixTubeNet::FPost& Q : Net.Posts)          // each under a tube, never under a booth
+	{
+		bool bUnder = false;
+		for (const FBrixTube& T : Net.Tubes)
+			for (int32 i = 1; i < T.Line.Num() && !bUnder; ++i)
+				bUnder = FMath::Abs(T.Line[i].Z - Q.Z) < .05 && FMath::PointDistToSegment(FVector(Q.At, Q.Z), T.Line[i - 1], T.Line[i]) < 1.0;
+		if (!TestTrue(FString::Printf(TEXT("a post at %.1f, %.1f under a tube"), Q.At.X, Q.At.Y), bUnder)) break;
+		for (const auto& KV : Net.Stops) if (FVector2D::Distance(KV.Value.Pos, Q.At) < 1.5) { AddError(TEXT("a post in a booth: ") + KV.Key); break; }
+	}
 	FBrixTubeNet Low = Net;                                 // a tube too low is caught
 	Low.Tubes[0].Line[Low.Tubes[0].Line.Num() / 2].Z = R.ClearanceM - 1;
 	TestTrue(TEXT("a tube too low is caught"), BrixTubeProblems(Low, R).Num() > 0);
@@ -121,7 +131,7 @@ bool FCITY110_Camera::RunTest(const FString&)
 		for (const double S : { 0.0, F.Last() })               // beside the booth at both ends, at the rider's height
 		{
 			const FVector C = W.Camera(S), P = W.At(S);
-			TestTrue(TEXT("beside the booth"), FMath::IsNearlyEqual(FVector2D::Distance(FVector2D(C), FVector2D(P)), R.BehindM, .5));
+			TestTrue(TEXT("beside the booth"), FMath::IsNearlyEqual(FVector2D::Distance(FVector2D(C), FVector2D(P)), (S == 0 ? W.SideA : W.SideB).Size(), .5));
 			TestTrue(TEXT("over the rider"), FMath::IsNearlyEqual(C.Z, P.Z + R.AboveM, .5));
 		}
 		for (const double S : F)

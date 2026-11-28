@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-LIVING-CITY
 title: Brix Town — Living city (map, residents, things to use, vehicles, seasons and plants)
-version: 0.6.8
+version: 0.7.0
 status: draft
 last_updated: 2026-11-28
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -326,6 +326,8 @@ up to 42 on the road at once, no overlap, no crossing movements in a box, nobody
 ## 7. Change log
 | Version | Date | Change |
 |---|---|---|
+| 0.7.0 | 2026-11-28 | The tubes over the pavement, the posts and booths clear of the street (the owner: "it's overlapping bus stop etc at some place. these are basic common sense checks"): the lines run 6 m off each street's middle on the far side from its booths; posts are map data in `tubes.json`, each on the pavement clear of the road, bus stops, zebras, doors, lamps, trees, parking bays and booths; booths clear of the same and off the road, with room at the door; each stop's camera spot clear of crowns and buildings (`World/rules/tubes.json` `place`; `test_CITY_108_booths_keep_clear_of_the_street`, `test_CITY_108_posts_stand_on_the_pavement_clear_of_the_street`, `test_CITY_108_every_booth_door_has_room_to_step_out`, `test_CITY_110_the_camera_beside_each_booth_is_clear`). |
+| 0.6.9 | 2026-11-28 | A ride carries the draw-in's speed on into the tube and slows only to the pop-out's, faster: `draw_in_s` 0.9, `speed_mps` 60, `ease_s` 1.2 (the owner: "increase the speed when going up the tube, show faster accelaration and increase top speed"); `test_CITY_109_the_speed_carries_on_out_of_the_draw_in`. |
 | 0.6.8 | 2026-11-28 | The tubes run over the grown street trees, 17 m up (the owner: "Raise the tubes"; `make_tubes_01.py` takes the height from the tallest grown crown under the lines; `test_CITY_108_the_tubes_run_over_the_grown_street_trees`). |
 | 0.6.7 | 2026-11-28 | CITY-108 to CITY-112, CITY-114 and WLD-073 to WLD-075 accepted (the owner's requests and picks; "Build tubes in Unreal"). A ride's corners are arcs (`bend_r_m`, `junction_bend_r_m`) and it starts and ends on the booth's floor (`floor_m`), set down inside the far booth facing out. |
 | 0.6.6 | 2026-11-28 | The tube routes approved by the owner on the map (CITY-108, CITY-112): 24 stops, `World/city_01/tubes.json`. |

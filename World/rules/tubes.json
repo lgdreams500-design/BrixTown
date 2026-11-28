@@ -1,6 +1,22 @@
 {
   "note": "Glass travel tubes (CITY-108 to CITY-112; F-VEH-TUBE level 2, owner 2026-11-28). How a ride moves. Where the stops and tubes are is map data (World/<city>/tubes.json), not here. All numbers [ASSUMPTION] until the tube reference is approved.",
   "clearance_m": 6.0,
+  "place": {
+    "note": "How far a stop's booth (plinth 1 m round) keeps from the things on and by the street (Tools/citysim/tubes.py booth_clashes(); make_tubes_01.py moves a booth along its pavement until nothing clashes; test_CITY_108_booths_keep_clear_of_the_street). The owner, 2026-11-28: \"it's overlapping bus stop etc at some place. these are basic common sense checks\". bus_stop_m: from a bus stop's sign, its shelter and the bus at it; door_m / tram_door_m: from a building's (a tram stop's) door; thing_m: from a lamp, bin, bench, sign or plant; big_m: more for the big things; trunk_m: from a tree's trunk; bay_m: from a parking bay's middle; zebra_m: along the street from a zebra crossing; lot_m / market_m: outside a lot (the market's stalls); road_m: from every road's middle, so the plinth stands on the pavement. [ASSUMPTION]",
+    "bus_stop_m": 12.0,
+    "door_m": 3.2,
+    "tram_door_m": 9.0,
+    "thing_m": 2.2,
+    "big_m": {"fountain": 4.0, "pond": 5.0, "playground": 6.0, "bandstand": 5.0, "carpark": 10.0, "watertower": 4.0, "statue": 2.5, "stall": 3.0, "kiosk": 3.0, "shelter": 3.0, "well": 2.5, "pergola": 3.0},
+    "skip": ["paving", "bunting"],
+    "trunk_m": 2.5,
+    "bay_m": 3.2,
+    "zebra_m": 3.5,
+    "lot_m": 0.5,
+    "market_m": 1.5,
+    "road_m": 5.5,
+    "post": {"note": "A post (0.24 m plinth) under a level tube, at least every span_m and never more than max_span_m apart (max_span_over_road_m where the tube crosses a road or passes a crossing and its zebras, where no post can stand); moved along the line up to shift_m to keep clear of the same things as a booth, at these distances, and road_m from every road's middle (on the pavement, not in the road). [ASSUMPTION]", "span_m": 14.0, "max_span_m": 26.0, "max_span_over_road_m": 34.0, "shift_m": 6.0, "bus_stop_m": 4.0, "door_m": 1.8, "tram_door_m": 4.0, "thing_m": 1.0, "trunk_m": 1.2, "bay_m": 3.0, "zebra_m": 2.5, "lot_m": 0.2, "market_m": 0.5, "booth_m": 2.0, "road_m": 5.0}
+  },
   "ride": {
     "draw_in_s": 0.9,
     "draw_in_height_m": 7.0,
@@ -8,16 +24,16 @@
     "ease_s": 1.2,
     "pop_out_s": 1.2,
     "pop_out_arc_m": 0.4,
-    "turn_window_m": 2.5,
+    "turn_window_m": 3.0,
     "bend_r_m": 1.8,
-    "junction_bend_r_m": 0.8,
+    "junction_bend_r_m": 0.75,
     "floor_m": 0.31
   },
   "camera": {
     "behind_m": 6.0,
     "above_m": 2.0,
     "follow_s": 0.35,
-    "max_jump_m": 1.25
+    "max_jump_m": 1.5
   },
   "tube_inner_m": 0.68,
   "tube_note": "The owner, 2026-11-28: \"thinner diameter should be just enough fit the player's waist. so the player will rotate laterally when going horizontal\". 0.68 m inside: the reference's rider measures 0.63 m across with the arms at the sides. [ASSUMPTION]",

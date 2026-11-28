@@ -164,6 +164,7 @@ private:
 	// a glass tube ride (CITY-109, CITY-110): the server's ride, when it began, the camera's place and turn as the ride took
 	// it over and as it gave it back, and which stop the booth's arrows have chosen
 	bool bTubeRiding = false;
+	bool bBoothProbeOff = false;               // the boom's probe turned off while standing in a tube booth
 	TSharedPtr<struct FBrixRide> TubeRide;
 	double TubeT0 = 0, TubeBackLeft = 0;
 	FVector TubeCamFrom = FVector::ZeroVector, TubeCamLast = FVector::ZeroVector;

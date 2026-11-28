@@ -274,6 +274,13 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 		return;
 	}
 	if (bTubeRiding || TubeBackLeft > 0) { TubeTick(DeltaSeconds); if (bTubeRiding) return; }   // in a glass tube (CITY-109)
+	if (!bTubeRiding && TubeBackLeft <= 0)   // in a booth the boom's probe meets its wall right behind the rider and draws the camera
+	{                                        // into their head: off there; outside, the booth stops the camera as any wall does
+		const ABrixTubes* Tb = Tubes();      // (the owner, 2026-11-28: "camera eye got blocked by something")
+		const bool bIn = Tb && !Tb->StopAt(FVector2D(GetActorLocation()) / CmPerM).IsEmpty();
+		if (bIn && Boom->bDoCollisionTest) { Boom->bDoCollisionTest = false; bBoothProbeOff = true; }
+		else if (!bIn && bBoothProbeOff) { Boom->bDoCollisionTest = true; bBoothProbeOff = false; }
+	}
 	if (IsPlaying())   // on a swing, seesaw, slide, sandpit or climbing frame: where the go puts you (dressing.js playerAt())
 	{
 		ABrixPeople* Pp = People();

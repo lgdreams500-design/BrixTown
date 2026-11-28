@@ -4,7 +4,8 @@ A ride is worked out from when it began and the tubes it uses, never stepped (TE
 the camera is, at any second of the ride and the answer is the same every time, in any order.
 
 Network data (World/<city>/tubes.json, CITY-108):
-    stops      {id: {"name", "pos": [x, y], "face": [dx, dy]}}   pos on the ground; face: the way the door looks out
+    stops      {id: {"name", "pos": [x, y], "face": [dx, dy], "camera": [dx, dy]}}   pos on the ground; face: the way the door
+               looks out; camera (optional): where the ride's camera stands beside the booth (dx, dy in metres), clear of crowns and buildings
     junctions  {id: {"pos": [x, y, z]}}                          where tubes meet, high over the street
     tubes      [{"a": node id, "b": node id, "line": [[x, y, z], ...]}]
                A tube's line runs from its first node's mouth to its second's: a stop's mouth is straight over its floor at
@@ -12,6 +13,7 @@ Network data (World/<city>/tubes.json, CITY-108):
 Ride numbers: World/rules/tubes.json.
 
     problems(net, rules)          what is wrong with the network data, [] when nothing
+    booth_clashes(q, things, place)  what a booth at q stands on or crowds (bus stops, doors, lamps, zebras...), [] when nothing
     crown_top(r, crown, leaf)     how high a tree's crown reaches and how far out, as the game draws it (BrixTreeShapes)
     through_crowns(net, rules, trees)  the level runs that pass through a tree's crown, [] when none
     route(net, a, b)              the shortest way from stop a to stop b: [node ids], or None
@@ -89,6 +91,98 @@ def problems(net, rules):
     return out
 
 
+def street_things(w):
+    """What a booth keeps clear of (booth_clashes()), from the world (Tools/worldgen world.load()): the blocks' props,
+    trees, lots and doors, the roads' parking bays and zebras, the bus stops."""
+    blocks = w["blocks"]
+    return dict(props=[(tuple(p["pos"]), p["kind"]) for b in blocks for p in b.get("props", []) if "pos" in p],
+                trunks=[tuple(t["pos"]) for b in blocks for t in b.get("trees", [])],
+                lots=[l for b in blocks for l in b["lots"]],
+                bays=[tuple(b["pos"]) for b in w["roads"].get("bays", [])],
+                zebras=[(tuple(c["pos"]), (1, 0) if "_ew_" in c["street"] else (0, 1)) for c in w["roads"].get("crossings", [])],
+                bus=[(tuple(s["at"]), s["id"]) for s in w["transit"]["stops"]])
+
+
+def road_middles(w, step=2.0):
+    """Points every few metres down the middle of every road a car drives (roads.json streets, links; the suburbs' lanes)."""
+    r, js = w["roads"], {j["id"]: j["pos"] for j in w["roads"]["junctions"]}
+    lines = [[js[s["a"]], js[s["b"]]] for s in r["streets"]] + [l["points"] for l in r.get("links", [])]
+    lines += [ln["points"] for b in w["blocks"] for ln in b.get("lanes", [])]
+    out = []
+    for line in lines:
+        for p, q in zip(line, line[1:]):
+            n = max(1, int(math.hypot(q[0] - p[0], q[1] - p[1]) / step))
+            out += [(p[0] + (q[0] - p[0]) * k / n, p[1] + (q[1] - p[1]) * k / n) for k in range(n + 1)]
+    return out
+
+
+def post_clashes(q, things, place, booths=(), middles=()):
+    """What a post standing at q would stand on or crowd: the booth's things at the post's own distances
+    (World/rules/tubes.json place.post), the booths, and the road (closer than road_m to a road's middle)."""
+    post = place["post"]
+    out = booth_clashes(q, things, {**post, "big_m": {k: v * .6 for k, v in place["big_m"].items()}, "skip": place["skip"]})
+    out += ["booth" for b in booths if math.hypot(q[0] - b[0], q[1] - b[1]) < post["booth_m"]]
+    if not things.get("middles") and any(math.hypot(q[0] - m[0], q[1] - m[1]) < post["road_m"] for m in middles):
+        out.append("road")
+    return out
+
+
+class Near:
+    """The street things (street_things()) by 16 m squares, to ask only about those near a point (all within 16 m)."""
+    def __init__(self, things, cell=16.0):
+        self.cell, self.cells = cell, {}
+        def key(p):
+            return (int(math.floor(p[0] / cell)), int(math.floor(p[1] / cell)))
+        for name, items in things.items():
+            for it in items:
+                if name == "lots":
+                    r = it["rect"]
+                    for i in range(key((r[0] - 2, 0))[0], key((r[2] + 2, 0))[0] + 1):
+                        for j in range(key((0, r[1] - 2))[1], key((0, r[3] + 2))[1] + 1):
+                            self.cells.setdefault((i, j), {}).setdefault(name, []).append(it)
+                    continue
+                p = it if name in ("trunks", "bays", "middles", "booths") else it[0]
+                self.cells.setdefault(key(p), {}).setdefault(name, []).append(it)
+        self.names = list(things)
+
+    def __call__(self, q):
+        i, j = int(math.floor(q[0] / self.cell)), int(math.floor(q[1] / self.cell))
+        out = {n: [] for n in self.names}
+        seen = set()
+        for di in (-1, 0, 1):
+            for dj in (-1, 0, 1):
+                for n, items in self.cells.get((i + di, j + dj), {}).items():
+                    for it in items:
+                        if n == "lots":
+                            if id(it) in seen:
+                                continue
+                            seen.add(id(it))
+                        out[n].append(it)
+        return out
+
+
+def booth_clashes(q, things, place):
+    """What a booth standing at q would stand on or crowd ([] when nothing); place: World/rules/tubes.json "place".
+    things may carry "middles" (road_middles()): then a booth closer than road_m to a road's middle stands in the road."""
+    out, d = [], lambda p: math.hypot(q[0] - p[0], q[1] - p[1])
+    if "road_m" in place and any(d(m) < place["road_m"] for m in things.get("middles", ())):
+        out.append("road")
+    out += ["bus stop " + i for p, i in things["bus"] if d(p) < place["bus_stop_m"]]
+    out += [k for p, k in things["props"] if k not in place["skip"] and d(p) < place["big_m"].get(k, place["thing_m"])]
+    out += ["tree" for p in things["trunks"] if d(p) < place["trunk_m"]]
+    out += ["parking bay" for p in things["bays"] if d(p) < place["bay_m"]]
+    for (x, z), (ax, az) in things["zebras"]:                  # along the street from the stripes, either side of it
+        if abs((q[0] - x) * ax + (q[1] - z) * az) < place["zebra_m"] and abs((q[0] - x) * az - (q[1] - z) * ax) < 9.0:
+            out.append("zebra")
+    for l in things["lots"]:
+        r, pad = l["rect"], place["market_m"] if l["kind"] == "market" else place["lot_m"]
+        if r[0] - pad <= q[0] <= r[2] + pad and r[1] - pad <= q[1] <= r[3] + pad:
+            out.append("lot " + l["id"])
+        if "door" in l and d(l["door"]) < (place["tram_door_m"] if l["kind"] == "stop" else place["door_m"]):
+            out.append("door of " + l["id"])
+    return out
+
+
 def crown_top(r, crown=None, leaf=1.0):
     """(top, reach): how high a tree of crown radius r reaches over its ground, and how far out its crown goes, as the game
     draws it (BrixStreets.cpp BrixTreeShapes, play.js tree(): the trunk's height grows with r, the crown sits on it, its
@@ -153,7 +247,7 @@ def route(net, a, b):
 
 class Ride:
     def __init__(self, net, rules, a, b):
-        self.r, self.c = rules["ride"], rules["camera"]
+        self.r, self.c, self.net = rules["ride"], rules["camera"], net
         self.nodes = route(net, a, b)
         if self.nodes is None:
             raise ValueError("no way from %s to %s" % (a, b))
@@ -277,14 +371,18 @@ class Ride:
         return _lerp(pts[i], pts[i + 1], (d - cum[i]) / seg if seg > 1e-9 else 0.0)
 
     def _sideways(self, first):
-        """Across the first (or last) level stretch of the run: along the street the booth stands by."""
+        """Across the first (or last) level stretch of the run: along the street the booth stands by. A stop's own
+        "camera" (map data: the side clear of tree crowns and buildings) wins."""
+        own = self.net["stops"][self.nodes[0] if first else self.nodes[-1]].get("camera")
+        if own:                                              # its length: how far out it stands
+            return tuple(own)
         seq = zip(self.run, self.run[1:]) if first else zip(self.run[::-1][1:], self.run[::-1])
         for p, q in seq:
             fx, fy = q[0] - p[0], q[1] - p[1]
             n = math.hypot(fx, fy)
             if n > 0.05:
-                return (-fy / n, fx / n)
-        return (1.0, 0.0)
+                return (-fy / n * self.c["behind_m"], fx / n * self.c["behind_m"])
+        return (self.c["behind_m"], 0.0)
 
     def camera(self, s):
         """Where the camera is (CITY-110), always outside the glass. Along a level tube it chases the rider behind_m back
@@ -300,7 +398,7 @@ class Ride:
         flat, rise = math.hypot(on[0] - t[0], on[1] - t[1]), abs(on[2] - t[2])   # the way from the camera's point to the rider
         w = flat / math.hypot(flat, rise) if flat + rise > 1e-9 else 0.0               # 1 along a level tube, 0 up or down
         side = self._sideways(d < cum[-1] / 2)
-        k = (1 - w) * self.c["behind_m"]
+        k = 1 - w
         return (t[0] + side[0] * k, t[1] + side[1] * k, t[2] * w + rider[2] * (1 - w) + self.c["above_m"])
 
 
