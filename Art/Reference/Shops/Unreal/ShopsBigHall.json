@@ -1,0 +1,80 @@
+{
+ "reference": "ShopsBigHall",
+ "where": "cam:1395,787,3.8,60,-8.6",
+ "shot": {
+  "commit": "d3126c7",
+  "date": "2026-11-28",
+  "quality": "High, 1066 x 666",
+  "fps": "31 to 39"
+ },
+ "settings": {
+  "Morning": {
+   "hour": "07:20",
+   "look": {
+    "burnt": 0.0019,
+    "crushed": 0.0001,
+    "flat": 0.0898,
+    "shade": 1.05,
+    "warmth": 0.53
+   },
+   "fails": [],
+   "at": "07:20",
+   "weather": "clear",
+   "camera": "indoors",
+   "daylight": 1.0,
+   "fps": 31.3,
+   "worst_ms": 37
+  },
+  "Midday": {
+   "hour": "12:00",
+   "look": {
+    "burnt": 0.0055,
+    "crushed": 0.0,
+    "flat": 0.0957,
+    "shade": 1.03,
+    "warmth": 0.405
+   },
+   "fails": [],
+   "at": "12:00",
+   "weather": "clear",
+   "camera": "indoors",
+   "daylight": 1.0,
+   "fps": 39.0,
+   "worst_ms": 30
+  },
+  "Dusk": {
+   "hour": "20:00",
+   "look": {
+    "burnt": 0.0019,
+    "crushed": 0.0042,
+    "flat": 0.1079,
+    "shade": 1.55,
+    "warmth": 0.526
+   },
+   "fails": [],
+   "at": "20:00",
+   "weather": "clear",
+   "camera": "indoors",
+   "daylight": 1.0,
+   "fps": 35.9,
+   "worst_ms": 35
+  },
+  "NightLamps": {
+   "hour": "22:30",
+   "look": {
+    "burnt": 0.0019,
+    "crushed": 0.0,
+    "flat": 0.1234,
+    "shade": 1.76,
+    "warmth": 0.255
+   },
+   "fails": [],
+   "at": "22:30",
+   "weather": "clear",
+   "camera": "indoors",
+   "daylight": 0.0,
+   "fps": 38.2,
+   "worst_ms": 36
+  }
+ }
+}

@@ -1805,7 +1805,43 @@
    "issues": [
     "The camera stands under the solid outer roof, so the skylights show only as slits overhead though their light reaches the floor.",
     "Dusk and the lamp-lit night look nearly alike: once the sun is down the lanterns carry it."
-   ]
+   ],
+   "unreal": {
+    "where": "cam:1395,787,3.8,60,-8.6",
+    "blender": "Shops/ShopsBigHall_Midday.jpg",
+    "settings": {
+     "Morning": "07:20",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30"
+    },
+    "files": [
+     "Shops/Unreal/ShopsBigHall_Morning.jpg",
+     "Shops/Unreal/ShopsBigHall_Midday.jpg",
+     "Shops/Unreal/ShopsBigHall_Dusk.jpg",
+     "Shops/Unreal/ShopsBigHall_NightLamps.jpg"
+    ],
+    "shot": {
+     "commit": "d3126c7",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "31 to 39"
+    },
+    "status": "proposed",
+    "issues": [
+     "The spot: just inside the Furniture Outlet's door (lot b_14_8_l0; x 1395, z 787), at the reference's height and tilt (3.8 m up, 8.6 degrees down), turned so the red walking route runs across the front with the room sets and the racks beyond, as the reference shows them. The reference's own numbers, laid on the game's hall, put the camera over the middle of a room set, so the spot was scouted. The game's camera is 90 degrees wide where the reference's 19 mm lens sees 87.",
+     "At night the hall is as bright as by day and whiter: the floor and the room sets' walls are near white under a dark blue sky in the skylights, with no pools under the lanterns. The reference's night is dim and warm, carried by its lanterns (G5, G7, G9).",
+     "Midday: the sun's patches on the floor and the room sets' floors are burnt white, with hard edges; the reference's sun falls as soft bars (G5).",
+     "Dusk: the skylights' frames glow bright orange-red as if lit from inside, and a streak of orange light hangs in the air at the left by the racks (G2).",
+     "The roof is mostly sky: the game's skylights are wide open panels between thin beams, where the reference has a solid dark roof with narrow slits of glass and heavy timber trusses. So the game's hall is far brighter and flatter by day than its reference (what is there, and G1).",
+     "Nobody is in the hall in any setting; the reference has five people on the route and in the sets (G6).",
+     "The room sets' walls are plain flat cream with no mottle and no shade inside the sets; the floor is plain pale grey squares; the route is a flat red-brown (G1, G3).",
+     "Nothing darkens the floor where the furniture and the sets' walls stand on it (G1).",
+     "The lanterns are small white cubes that light nothing visibly by day or at night.",
+     "The racks at the back are pale yellow-cream boxes that wash out into the back wall; the reference's are darker timber racks under a grey wall.",
+     "Frames a second fall to 31 at Morning here, 36 to 39 otherwise."
+    ]
+   }
   },
   {
    "id": "MallsEastgateCourt",
