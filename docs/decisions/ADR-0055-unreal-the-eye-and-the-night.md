@@ -100,3 +100,7 @@ The night look itself is decided: ADR-0023, approved in the slice. The slice is 
   street, Market Square and the park do not open that far, so the approved daylight there is as it was.
 - The covered sky's haze (`OvercastHaze`) is a neutral grey (0.80, 0.815, 0.83), not the blue-green (0.9, 0.95, 1.05)
   that read as a teal filter over rain, snow and fog.
+- 2026-11-28 (ADR-0073): what a room's light should be is no longer measured against the Blender pictures. It is set in
+  Unreal in a golden room and approved there by the owner, and other rooms are measured against that room on a grey
+  card. The pass marks here (half a stop in brightness, a third in warmth) are kept, and the measuring rooms
+  (`ABrixLightRoom`) are where the golden room is to be built.

@@ -151,3 +151,17 @@ as style targets judged by eye. The trial is the hallway at noon.
   the live shot may not be quite the game's. The room's pair, the auto-eye path-traced shot and the time to stage a
   reference this way were not reached. No reference has been made this way yet, and no ADR: ADR-0004 locks the look
   to `Art/Reference/`, so making references in Unreal needs one and the owner's approval.
+
+### Decided, 2026-11-28: a room's light is set and approved in Unreal (ADR-0073)
+The owner, asked "Make the rooms' light reference in Unreal and keep Blender for what a place is?": "Yes, light in
+Unreal". **The trials on the town's rooms stop here.** What follows is in `docs/process/LOOK_GATE.md`, A room's light.
+- The measured target is not a path-traced picture of the game's own room, as the hallway trial above set out to try:
+  the path tracer shows whether the live light is true to the scene's lamps, not what those lamps should be. It stays
+  as a check. The target is the golden room's Unreal pictures, approved by the owner with the Blender picture beside
+  them for mood.
+- The figures on this page against Blender pictures are what was measured, not pass marks.
+- Of "Still to do": 1 (the hallway) and 3 (warmth) are settled in the golden room, on a grey card; 2 (stops that see what
+  their references see) stays, for what is there; 5 (the home room reference's bounce) sets no number now and is the
+  owner's to decide; 4 and 6 stand.
+- Next: build the golden room (the home room with its hallway, a grey card in each) where the measuring rooms are
+  (`ABrixLightRoom`), and take the path-traced pair of the hallway with the room light off.

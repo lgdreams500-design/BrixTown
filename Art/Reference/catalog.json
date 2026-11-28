@@ -1,5 +1,5 @@
 {
- "note": "Every approved look reference of Brix Town, in one list (ADR-0061). Files live in Art/Reference/<Category>/ and are named <Category><Subject>[_<Variant>].<ext> in PascalCase, so a name says what it is. 'locks' is what the reference decides; 'decision' the ADR and the owner's approval; 'made_by' the script that renders it; 'models' what the game is built from or measured against with it; 'status' proposed when it waits for the owner's approval; 'issues' what is seen wrong in it and not mended, for the owner to judge; 'was' the old names. 'places' says which reference each kind of place in the game is judged against, and which places have none: python Tools/reference_catalog.py --for <tour stop, lot id or place> answers it; a place's 'camera' names the tour stops that look through its reference's own camera (Tools/unreal/look_match.py compares those square by square). 'gaps' are references a category still lacks. Tools/reference_catalog.py checks this file against the folders and writes Art/Reference/index.html; run it after any change here.",
+ "note": "Every approved look reference of Brix Town, in one list (ADR-0061). Files live in Art/Reference/<Category>/ and are named <Category><Subject>[_<Variant>].<ext> in PascalCase, so a name says what it is. 'locks' is what the reference decides; 'decision' the ADR and the owner's approval; 'made_by' the script that renders it; 'models' what the game is built from or measured against with it; 'status' proposed when it waits for the owner's approval; 'issues' what is seen wrong in it and not mended, for the owner to judge; 'was' the old names. 'places' says which reference each kind of place in the game is judged against, and which places have none: python Tools/reference_catalog.py --for <tour stop, lot id or place> answers it; a place's 'camera' names the tour stops that look through its reference's own camera (Tools/unreal/look_match.py compares those square by square). 'gaps' are references a category still lacks. Tools/reference_catalog.py checks this file against the folders and writes Art/Reference/index.html; run it after any change here. 'unreal' (ADR-0075, docs/process/UNREAL_REFERENCES.md) is a place's light settings as pictures taken in the game: 'where' the tour stop's place, 'blender' the one Blender picture the page keeps showing, 'settings' the hour of the game each setting is shot at (hh:mm or ref, |<weather> after it), 'missing' the settings the game cannot show and why, 'issues' what is seen wrong in the game's pictures; 'files', 'checks', 'shot' and 'status' are written by Tools/unreal/reference_shots.py, and only the owner's words make its status approved (then with a 'decision' quoting them).",
  "categories": [
   {
    "id": "World",
@@ -85,7 +85,62 @@
    "issues": [
     "The cream banners across the alley catch the gate lamp at dusk and at night and read as bright blocks.",
     "People are lit like everything else: nobody stands out under a lamp at night."
-   ]
+   ],
+   "unreal": {
+    "where": "stand:876.5,912,0,0",
+    "blender": "World/WorldAlley_Midday.jpg",
+    "settings": {
+     "Morning": "07:20",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30",
+     "Cloudy": "12:00|cloud",
+     "Rain": "12:00|rain",
+     "Fog": "12:00|fog",
+     "Snow": "12:00|snow"
+    },
+    "missing": {
+     "NightFullMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart.",
+     "NightNewMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart."
+    },
+    "files": [
+     "World/Unreal/WorldAlley_Morning.jpg",
+     "World/Unreal/WorldAlley_Midday.jpg",
+     "World/Unreal/WorldAlley_Dusk.jpg",
+     "World/Unreal/WorldAlley_NightLamps.jpg",
+     "World/Unreal/WorldAlley_Cloudy.jpg",
+     "World/Unreal/WorldAlley_Rain.jpg",
+     "World/Unreal/WorldAlley_Fog.jpg",
+     "World/Unreal/WorldAlley_Snow.jpg"
+    ],
+    "shot": {
+     "commit": "2d9d02b",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "38 to 43"
+    },
+    "checks": {
+     "Fog": [
+      "look at it: little light and shade, 0.94 stops (a scene in the look has 1.0 or more; a white-out in haze reads so)"
+     ]
+    },
+    "status": "proposed",
+    "issues": [
+     "The place differs from the reference in what is there. The reference is the alley of Tools/blender/old_town_04.py seen from under a gate arch (its camera 1.7 m up, a 24 mm lens, people facing it): an alley with crates, cloth banners across it, a bridge and a second arch. The game's spawn alley (the look tour's stop, the player from behind, a 90 degree view) is a bare paved lane between two stone houses to an arch on Market Square: no gate arch over the camera, no banners, no crates, nobody but the player.",
+     "The game's walls are large rough blocks with heavy dark joints and jutting window surrounds; the reference's are smooth dressed stone with fine joints (G3).",
+     "Nobody else is in the alley in any setting; the reference has six people (G6).",
+     "Rain, Fog, Snow and Cloudy are grey and cold where the reference keeps its warm stone in every weather: in Rain and Snow the walls go near black, and the warm cast of the look is gone (G4, W4).",
+     "Fog whites the whole picture out: the look check fails it for too little light and shade (0.94 stops against 1.0) (G5).",
+     "Snow: flakes fall as large square white dots and no snow lies on the paving, the sills or the bench; the reference has lying snow and small flakes.",
+     "Rain: the paving shows a few dark puddles but no wet sheen; the streaks are long white lines, heavier than the reference's.",
+     "At Midday and under cloud the sun's patch on the paving by the arch is burnt white (G5).",
+     "Cloudy still throws a hard-edged patch of sun on the paving: under cloud there should be none.",
+     "At night the two wall lanterns are large plain white blocks with no shape, and the lit windows are flat cream panels with nothing seen in them (G7).",
+     "Dusk reads much lighter than the reference's dusk, and its lit window on the left is burnt.",
+     "The orange lantern box high on the left wall by day is a plain flat-coloured block (G3).",
+     "Morning: the sun lies in a large hard patch across the right wall and the paving; the reference's morning alley is in soft haze with no direct sun. Which is right for the hour is the owner's to say."
+    ]
+   }
   },
   {
    "id": "WorldSky",
@@ -151,7 +206,54 @@
     "The shade is lifted by light bounced more strongly than the stone's own colour gives (paving x2.4, stone x1.8): the surfaces look as before, the light in shade is a lift, not a measurement.",
     "Cloudy still throws a soft-edged patch of sun on the arcade floor.",
     "Lying snow is laid in 25 cm squares (as in WorldSky)."
-   ]
+   ],
+   "unreal": {
+    "where": "cam:882,912,1.7,0,4.4",
+    "blender": "World/WorldMarketSquare_Midday.jpg",
+    "settings": {
+     "Morning": "07:20",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30",
+     "Cloudy": "12:00|cloud",
+     "Rain": "12:00|rain",
+     "Fog": "12:00|fog",
+     "Snow": "12:00|snow"
+    },
+    "missing": {
+     "NightFullMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart.",
+     "NightNewMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart."
+    },
+    "files": [
+     "World/Unreal/WorldMarketSquare_Morning.jpg",
+     "World/Unreal/WorldMarketSquare_Midday.jpg",
+     "World/Unreal/WorldMarketSquare_Dusk.jpg",
+     "World/Unreal/WorldMarketSquare_NightLamps.jpg",
+     "World/Unreal/WorldMarketSquare_Cloudy.jpg",
+     "World/Unreal/WorldMarketSquare_Rain.jpg",
+     "World/Unreal/WorldMarketSquare_Fog.jpg",
+     "World/Unreal/WorldMarketSquare_Snow.jpg"
+    ],
+    "shot": {
+     "commit": "37dd835",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "38 to 43"
+    },
+    "status": "proposed",
+    "issues": [
+     "The spot: under the arch at the east end of the spawn alley (a passage through the houses), looking out on the fountain court behind Market Square, the reference's own eye (1.7 m up, aimed 4.4 degrees up). It replaces the first spot, the look tour's stop on the open stall square, which the owner said was not the right one (2026-11-28). The game's camera is 90 degrees wide where the reference's 24 mm lens sees 74.",
+     "The place differs from the reference in what is there. The reference stands inside a three-arched arcade with two wall lamps on its piers, on a small paved square with a fountain close by, a bench, a tree and a loggia of lit shop windows across it. The game has one plain arch of a passage with no lamp on it, and beyond it a wide lawned court: the fountain, the trees and the arcaded houses stand far off and small.",
+     "The arch's stone is a smooth plain cream with no joints or blocks, and the two door leaves standing open in it are plain flat slabs; the walls beside it are rough blocks with heavy joints. The reference's arch is dressed stone throughout (G3).",
+     "No lamp lights the arch: by day the reference's piers carry warm pools, at dusk and at night its lamps carry the picture. Here the passage at night is lit only by a strip of window light on the left (G7).",
+     "Nobody stands in the passage or near the arch in any setting; the reference has a person close to the camera and two by the fountain (G6).",
+     "Midday and Cloudy: the paving beyond the arch is burnt near white, and Cloudy still throws a hard-edged sun patch (G5).",
+     "Rain and Fog are grey and cold, the warm cast gone; in Rain the stone goes dark grey-green. The reference keeps its warm stone in every weather (G4).",
+     "Snow lies as one flat cream sheet beyond the arch with no shade in it; the flakes are a few square white dots.",
+     "Morning: a hard-edged slab of sun lies across the right wall and the paving in the passage; the reference's morning is soft haze.",
+     "Far things (the houses across the court) fade to pale blue-grey haze at Midday already."
+    ]
+   }
   },
   {
    "id": "WorldStreet",
@@ -184,7 +286,55 @@
    "issues": [
     "Lying snow and the wet film are laid in squares (25 cm, 50 cm): their edges show where cover begins.",
     "Rings near the camera are larger than the game's."
-   ]
+   ],
+   "unreal": {
+    "where": "cam:957,925,1.7,-90,3",
+    "blender": "World/WorldStreet_Midday.jpg",
+    "settings": {
+     "Morning": "07:20",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30",
+     "Cloudy": "12:00|cloud",
+     "Rain": "12:00|rain",
+     "Fog": "12:00|fog",
+     "Snow": "12:00|snow"
+    },
+    "missing": {
+     "NightFullMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart.",
+     "NightNewMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart."
+    },
+    "files": [
+     "World/Unreal/WorldStreet_Morning.jpg",
+     "World/Unreal/WorldStreet_Midday.jpg",
+     "World/Unreal/WorldStreet_Dusk.jpg",
+     "World/Unreal/WorldStreet_NightLamps.jpg",
+     "World/Unreal/WorldStreet_Cloudy.jpg",
+     "World/Unreal/WorldStreet_Rain.jpg",
+     "World/Unreal/WorldStreet_Fog.jpg",
+     "World/Unreal/WorldStreet_Snow.jpg"
+    ],
+    "shot": {
+     "commit": "b61bd72",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "38 to 41"
+    },
+    "status": "proposed",
+    "issues": [
+     "The spot: on the street south of Market Square (x 957, z 925), looking north along it at the reference's eye (1.7 m up), a shop with its striped awning on the left as the reference's cafe is. Scouted for this: the look tour's street stop has a tree and a kiosk in front of the camera. The game's camera is 90 degrees wide where the reference's 22 mm lens sees 79.",
+     "What is there differs: the reference's cafe has three large lit arched windows, a terrace of tables and chairs, window boxes and a lamp on a post by it; the game's shop front is a dark green band with dark glass, two crates outside, no terrace. A grey tower block stands over the roofs at the end of the street; the reference's street ends in a wall and a tree.",
+     "The shop's windows are dark by day and at dusk, and at night the whole left side of the street is black: the shop is unlit, one window above glows. The reference's cafe windows glow in every setting and carry dusk and night (G7).",
+     "At night the near half of the paving is plain black with a hard straight edge to it (a shadow line with nothing in it), and nobody is in the street (G5, G6).",
+     "Dusk is very dark: the near paving and the left houses are near black while the sky is still pale pink; the reference's dusk street is readable from end to end.",
+     "Morning: the near paving is a dark brown band in the houses' shadow and the far street is white haze; a person at the left is a dark shape.",
+     "Nobody stands near the camera in any setting but Morning, so how a person is lit here is not seen (G6).",
+     "Rain and Fog are pale grey with the warm cast gone; the far street whites out. The reference keeps warm lit windows and wet reflections of them: here the wet paving reflects nothing warm (G4).",
+     "Snow lies as one flat cream sheet with a few faint lines in it, none on the awning, sills or crates; the flakes are sparse square dots. The reference's snow shows the paving's joints through it and lies on ledges.",
+     "Cloudy is Midday with a paler sky: the houses still throw a hard shadow on the paving.",
+     "The paving is small warm brick setts where the reference has large grey slabs; the houses' plaster is plain flat tones with little mottle at this distance (G3)."
+    ]
+   }
   },
   {
    "id": "WorldDaylight",
@@ -1125,15 +1275,15 @@
     "Vehicles/VehiclesGlassTube_RideFog.jpg",
     "Vehicles/VehiclesGlassTube_RideSnow.jpg"
    ],
-   "locks": "The glass travel tubes (F-VEH-TUBE, CITY-108 to CITY-114; ADR-0074). On the approved street (WorldStreet): a round glass booth 1.5 m across and 3 m high (40% narrower than the first draft: the owner, 2026-11-28: \"make the entry chamber narrower, may be reduce by 40%\") on a dark stone plinth, three brass ribs and brass bands, a cream cap and a lantern by its door; its top narrows in a glass funnel into a tube only as wide as a rider (0.68 m inside; the owner, 2026-11-28: \"thinner diameter should be just enough fit the player's waist\"), which rises, bends over and runs level 9 m over the street on slim iron posts with cradles, thin brass rings every 4 m, to a second booth at the street's far end. One person waits in the near booth; one rides the tube lying along it head first (\"the player will rotate laterally when going horizontal\"). Two views: the stop and its tube from across the street, and the rider close by. In the world's light: the street's hours and weather, unchanged. Full quality (1280 x 800), rendered after approval.",
+   "locks": "The glass travel tubes (F-VEH-TUBE, CITY-108 to CITY-114; ADR-0076). On the approved street (WorldStreet): a round glass booth 1.5 m across and 3 m high (40% narrower than the first draft: the owner, 2026-11-28: \"make the entry chamber narrower, may be reduce by 40%\") on a dark stone plinth, three brass ribs and brass bands, a cream cap and a lantern by its door; its top narrows in a glass funnel into a tube only as wide as a rider (0.68 m inside; the owner, 2026-11-28: \"thinner diameter should be just enough fit the player's waist\"), which rises, bends over and runs level 9 m over the street on slim iron posts with cradles, thin brass rings every 4 m, to a second booth at the street's far end. One person waits in the near booth; one rides the tube lying along it head first (\"the player will rotate laterally when going horizontal\"). Two views: the stop and its tube from across the street, and the rider close by. In the world's light: the street's hours and weather, unchanged. Full quality (1280 x 800), rendered after approval.",
    "approved": "2026-11-28, the owner",
-   "decision": "the owner, 2026-11-28: asked for glass tubes that \"suck player in and move them to the next location where they popout of the tube\"; picked F-VEH-TUBE level 2 and \"Draft one, I'll react\"; then \"thinner diameter should be just enough fit the player's waist. so the player will rotate laterally when going horizontal\", then \"make the entry chamber narrower, may be reduce by 40%\", then \"Approve, go on\"; ADR-0074",
+   "decision": "the owner, 2026-11-28: asked for glass tubes that \"suck player in and move them to the next location where they popout of the tube\"; picked F-VEH-TUBE level 2 and \"Draft one, I'll react\"; then \"thinner diameter should be just enough fit the player's waist. so the player will rotate laterally when going horizontal\", then \"make the entry chamber narrower, may be reduce by 40%\", then \"Approve, go on\"; ADR-0076",
    "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=tube, Tools/blender/reference_render.ps1 -Place tube; tube_scene(), tube_booth(), tube_path(), sweep(), tube_glass(), TUBE) on the street of Tools/blender/building_kit_07.py",
    "models": [
     "World/rules/tubes.json",
     "Tools/citysim/tubes.py (the ride, the rider's lean, the camera)"
    ],
-   "rules": "docs/art/ART_DIRECTION.md 2.2 (glass an exception to W1 for the tubes, ADR-0074), docs/specs/domains/LIVING_CITY.md 3.4",
+   "rules": "docs/art/ART_DIRECTION.md 2.2 (glass an exception to W1 for the tubes, ADR-0076), docs/specs/domains/LIVING_CITY.md 3.4",
    "was": [],
    "issues": [
         "At night the tube all but disappears: it has no light of its own, only the booth's lantern. A line of light along it, or none, is undecided.",
@@ -1339,7 +1489,49 @@
     "The living room still reads warm at dusk: the fire and the dusk sky together.",
     "The light the facing wall throws back is a hidden soft light on that wall (BOUNCE_CARD in hours_50.py: 25 W by day, 15 % of the lamps by night), not the wall's own bounce, which reached too little.",
     "Its bounce is raised x2 where the remade hallway's (IndoorHallway, 2026-11-28, ADR-0072) is the surfaces' own: the two rooms of one house are not lit by quite the same rule."
-   ]
+   ],
+   "unreal": {
+    "where": "refroom:home",
+    "blender": "Indoor/IndoorHomeRoom_Midday.jpg",
+    "settings": {
+     "Morning": "ref",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30"
+    },
+    "missing": {
+     "NightFullMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart.",
+     "NightNewMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart.",
+     "NightFullMoonFireOut": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart. The game lights no fire either, so there is none to put out.",
+     "NightNewMoonFireOut": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart. The game lights no fire either, so there is none to put out."
+    },
+    "files": [
+     "Indoor/Unreal/IndoorHomeRoom_Morning.jpg",
+     "Indoor/Unreal/IndoorHomeRoom_Midday.jpg",
+     "Indoor/Unreal/IndoorHomeRoom_Dusk.jpg",
+     "Indoor/Unreal/IndoorHomeRoom_NightLamps.jpg"
+    ],
+    "shot": {
+     "commit": "5704528",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "40 to 46"
+    },
+    "status": "proposed",
+    "issues": [
+     "This is the golden room (ADR-0073), built to this reference, with a trial light: nothing in it is approved, and the rooms of the town are not lit like this yet.",
+     "Morning and Midday are almost one picture: only the sun's patch on the floor and the view out change (G9).",
+     "The fire is never lit: at Dusk and at night the Blender room's red fire carries half the mood, here the fireplace is dark (G7).",
+     "Dusk is darker than its Blender picture and the day is gone from the walls; the floor lamp is only part of the way up.",
+     "At night the room is orange, the floor lamp burns a pale patch on the wall by the window, and the player's trousers go near black (G4, G5, G6).",
+     "A soft dark smudge on the left wall above the sofa by day: a shadow the window's light throws; what throws it is not found (G2).",
+     "The boards are a darker, redder brown than the Blender room's greyer boards; the plaster is one plain tone by the owner's choice (ADR-0074), whiter and cooler by day than Blender's pink-warm plaster (G3, G4).",
+     "The grey card and ball (measuring aids) stand in every picture at the right, and read near black by day (card 0.034): little light reaches what faces the camera on that side.",
+     "A resident stands in front of the fireplace and hides it; the Blender picture has one person. The picture over the fireplace is not the Blender room's shelf of small things.",
+     "Out of the window is a flat ground to a far horizon, not a sunlit street.",
+     "The ceiling's edge along the left wall is drawn ragged (a saw-toothed line where the wall meets the ceiling)."
+    ]
+   }
   },
   {
    "id": "IndoorHallway",
@@ -1369,7 +1561,61 @@
     "Its bounce is the surfaces' own; the home room's (IndoorHomeRoom) is still raised x2, so the two rooms of one house are not lit by quite the same rule.",
     "Dusk and the lamp-lit night look alike: no window, so only the lamps light it once the day is gone.",
     "The new moon is at its eye's limit: mean 1 against the 2.5 asked for; only the doorway faintly shows."
-   ]
+   ],
+   "unreal": {
+    "where": "refroom:hall",
+    "blender": "Indoor/IndoorHallway_Midday.jpg",
+    "settings": {
+     "Morning": "ref",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30"
+    },
+    "missing": {
+     "NightFullMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart.",
+     "NightNewMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart."
+    },
+    "files": [
+     "Indoor/Unreal/IndoorHallway_Morning.jpg",
+     "Indoor/Unreal/IndoorHallway_Midday.jpg",
+     "Indoor/Unreal/IndoorHallway_Dusk.jpg",
+     "Indoor/Unreal/IndoorHallway_NightLamps.jpg"
+    ],
+    "shot": {
+     "commit": "37cfee5",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "42 to 46"
+    },
+    "checks": {
+     "Morning": [
+      "crushed blacks over 45%",
+      "flat: 65% of the picture has no shade or mottle in it (limit 45%)"
+     ],
+     "Midday": [
+      "crushed blacks over 43%",
+      "flat: 66% of the picture has no shade or mottle in it (limit 45%)"
+     ],
+     "Dusk": [
+      "crushed blacks over 26%",
+      "flat: 59% of the picture has no shade or mottle in it (limit 45%)"
+     ]
+    },
+    "status": "proposed",
+    "issues": [
+     "This is the golden hallway (ADR-0073), built to this reference, with a trial light: nothing in it is approved, and the hallways of the town are not lit like this yet.",
+     "Dusk is nearly as dark as the day: at 20:00 the pendant and the table lamp are only part of the way up, where the Blender hallway's dusk is fully lamp-lit and looks like its night (G7, G9).",
+     "By day the left half of the picture is plain black: the near left wall has nothing to see in it. The look check fails Morning, Midday and Dusk for crushed blacks (45 %, 43 %, 26 %) (G5).",
+     "The look check also fails the three for flat fill (59 to 66 % against 45 %): the plain plaster of ADR-0074 and the black wall together; the limit is not set for a room's plain walls.",
+     "At night the table lamp throws hard wedges of light and shadow on both walls, and the whole hallway is orange where the Blender one is a soft warm white (G2, G4).",
+     "The doorway of the side room is a white blank by day: nothing of the room beyond is seen through it, where the Blender doorway shows a lit wall (G5).",
+     "The stair at the far end is hardly seen by day or at night; in Blender it reads at dusk and at night (G1).",
+     "The grey card and ball (measuring aids) stand in the middle of every picture, in front of the doorway, and are black by day: the card faces the camera and the doorway's light comes from its side.",
+     "Two people stand here (the player and a resident) where the Blender picture has one; by day they are lit from the doorway side only, their near sides dark (G6).",
+     "The rug is paler and pinker than the Blender hallway's violet.",
+     "Morning and Midday are one picture (G9)."
+    ]
+   }
   },
   {
    "id": "IndoorLightKinds",

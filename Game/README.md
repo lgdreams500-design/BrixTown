@@ -1265,6 +1265,51 @@ first audit's findings are in LOOK_GATE.md.
   stops facing away from the shopfront), so their numbers are loose. Not done: dusk and morning measured, the look tour
   against its baseline, the gate's own steps, the engine's automated tests after the change to `BrixRooms`. The home
   room reference's bounce is raised x2 where the remade hallway's is the surfaces' own.
+- **A room's light has no measured target yet (ADR-0073, 2026-11-28):** a room's light is to be set and approved in
+  Unreal, in a golden room, and every other room measured against it on its grey card. The golden room and its hallway
+  are built (`ABrixLightRoom`: `refroom:home`, `refroom:hall`, a grey card and ball in each; `Tools/unreal/golden_tour.txt`,
+  `Tools/unreal/card_read.py`; first shots and what is wrong in them in `Art/StyleTests/unreal_golden_room_58/`). Its
+  light is still the game's rule of today and **nothing in it is approved**. Seen there: what faces the camera is almost
+  black by day (the room's own light hangs in mid-room, behind it); the hallway by day is twice as bright as its
+  reference; morning, noon and 20:00 are one picture; at night the floor lamp burns the wall and the fire is not lit.
+  Not built: a place in the catalog and on the reference page for an Unreal light picture; a person in the golden room.
+  Not taken: the path-traced pair of the hallway with the room light off; a `-BrixShot=` shot. The engine's automated
+  tests were not run after the changes to `BrixLight` and `BrixLightRoom`. Until the golden room's pictures are approved
+  the rooms' light stays at "K + beams", and the brightness and warmth figures above, which are against Blender
+  pictures, are what was measured and not pass marks. Not decided: whether out of doors follows, whether a room's
+  Blender reference still needs every hour, the home room reference's raised bounce.
+- **A room's plaster is plain only in the golden room (ADR-0074, 2026-11-28):** the town's rooms (`ABrixRooms`) and the
+  inner faces of the buildings' walls still draw the street's mottle; carrying it over goes with the look tour.
+  `look_check.py` fails the golden hallway's "flat" by day (52 to 55 % against 45 %): the limit is not yet set for a
+  room's plain walls. The old measuring rooms' sill, shutters and paving are drawn with no pattern, which draws black.
+- **The reference page's light settings, as the game shows them (ADR-0075, 2026-11-28):** each place's settings are shot in the game by
+  `python Tools/unreal/reference_shots.py --all` and shown on `Art/Reference/index.html` beside one Blender picture, all "for your
+  review"; what is wrong in each is in its `unreal` block's `issues` in `Art/Reference/catalog.json`. No light, material or
+  model was changed to take them. Nowhere in the game: the moon nights (no moon, WLD-042) and the fire-out nights (no fire is lit).
+  - `IndoorHomeRoom` (the golden room, 40 to 46 frames a second): morning and midday are one picture but for the sun's patch; the
+    fire is never lit; dusk is dark; night is orange with a burnt patch by the floor lamp and the player's trousers near black; a
+    smudge of shadow on the left wall by day; darker, redder boards than the reference; the card and ball near black by day; a
+    ragged line where the left wall meets the ceiling. The town's rooms are not lit as the golden room is.
+  - `IndoorHallway` (the golden hallway, 42 to 46 frames a second): dusk is nearly as dark as the day, the lamps only part of
+    the way up; by day the near left wall is plain black and the look check fails for crushed blacks (43 to 45 %) and flat
+    fill (59 to 66 %); at night the table lamp throws hard wedges on both walls and all is orange; the doorway is a white
+    blank; the stair hardly shows; the card and ball stand in the middle of the picture and are black by day.
+  - `WorldAlley` (the spawn alley, the look tour's stop; 38 to 43 frames a second): not the reference's alley in what is there
+    (no gate arch, banners, crates or people; rough blocks with heavy joints for dressed stone); rain, fog, snow and cloud are
+    grey and cold, the walls near black in rain and snow; fog whites out (the look check fails it, 0.94 stops); no snow lies
+    and the flakes are big square dots; no wet sheen in rain; the sun's patch is burnt at midday and still hard-edged under
+    cloud; the lanterns are plain white blocks at night.
+  - `WorldMarketSquare` (from under the arch at the spawn alley's east end, looking on the fountain court; 38 to 43 frames a
+    second; the first spot, on the open stall square, was wrong): not the reference's arcade in what is there (one plain arch
+    with no lamp, a wide lawned court with the fountain far off; no people near); the arch is plain cream with no stonework
+    and its door leaves are flat slabs; the passage has no lamp at dusk or night; the paving beyond is burnt near white at
+    midday and under cloud, and cloud still throws a hard sun patch; rain and fog are grey and cold; snow lies as one flat
+    sheet.
+  - `WorldStreet` (the street south of Market Square, x 957 z 925 looking north, a shop's awning on the left; 38 to 41 frames
+    a second): not the reference's cafe in what is there (dark glass, no terrace, no lamp by it; a tower block at the street's
+    end); the shop is unlit in every setting, so at dusk and night the left side is black; at night the near paving is plain
+    black with a hard edge; dusk is very dark under a pale sky; rain and fog are pale grey, no warm reflections; snow is one
+    flat sheet, none on ledges; cloudy still throws a hard shadow.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.

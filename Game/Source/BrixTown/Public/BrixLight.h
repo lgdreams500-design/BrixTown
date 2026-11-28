@@ -35,8 +35,11 @@
 //       default: run it with Tools/unreal/light_tour.ps1 -PathTrace.
 //       Run it with -BrixNoDesigner -BrixNoSave (not -BrixShot=, which quits after one shot).
 //       With -BrixLightRoom (ABrixLightRoom: the Blender reference rooms built in Unreal) where may be
-//       refroom:<shop|cafe|kitchen>, the reference's own camera in that room, and hh:mm may be ref, when the game's
-//       sun stands as the references' does.
+//       refroom:<shop|cafe|kitchen|home|hall>, the reference's own camera in that room, and hh:mm may be ref, when the
+//       game's sun stands as the references' does. home and hall are the golden room and its hallway (ADR-0073): the log
+//       then says where their grey card and ball are in the shot ("card x0,y0,x1,y1 ball x,y,r", shares of the picture).
+//       A golden room's stop may try its light: fill=<the light over the room's middle> win=<the light at its window>
+//       back=<the light the wall behind the camera throws back> lamp=<times the lamps>; without them, the config's.
 //   -BrixLightOff                             leave the light as the game mode makes it, to compare
 //   -BrixLightNo=<letters>                    leave parts out: e the eye, h the haze, n the night's light, s its sky
 UCLASS(Config = Game)
@@ -95,7 +98,7 @@ private:
 	UPROPERTY() TObjectPtr<class UDirectionalLightComponent> NightLight;
 	UPROPERTY() TObjectPtr<class ACameraActor> TourCam;
 	UPROPERTY() TObjectPtr<class ABrixLightRoom> RefRooms;        // -BrixLightRoom: the Blender reference rooms, to measure against
-	float TryLamp = 1.f, TryFill = -1.f;                          // a tour stop's numbers for them
+	float TryLamp = 1.f, TryFill = -1.f, TryWin = -1.f, TryBack = -1.f;   // a tour stop's numbers for them
 	TOptional<FLinearColor> TryTint, TryFillTint;
 	bool bLooked = false, bOff = false;
 	FString Without;                                               // -BrixLightNo=: parts left out
@@ -103,7 +106,7 @@ private:
 	FLinearColor SkySet = FLinearColor(-1, -1, -1), DayGlow = FLinearColor::Black;
 	TOptional<float> PinEV;
 
-	struct FStop { FString Name, Weather, Lot, RefRoom; double Minute = -1; bool bRefTime = false; bool bCam = false; FVector At = FVector::ZeroVector; float Yaw = 0.f, Pitch = 0.f; TOptional<float> EV; float Lamp = 1.f, Fill = -1.f; TOptional<FLinearColor> Tint, FillTint; float PathSeconds = 0.f; };
+	struct FStop { FString Name, Weather, Lot, RefRoom; double Minute = -1; bool bRefTime = false; bool bCam = false; FVector At = FVector::ZeroVector; float Yaw = 0.f, Pitch = 0.f; TOptional<float> EV; float Lamp = 1.f, Fill = -1.f, Win = -1.f, Back = -1.f; TOptional<FLinearColor> Tint, FillTint; float PathSeconds = 0.f; };
 	TArray<FStop> Stops;
 	FString TourOut;
 	int32 StopAt = -1;

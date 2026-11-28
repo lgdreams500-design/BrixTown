@@ -14,7 +14,11 @@ The rules it keeps (an AI agent should get from a thing to its reference in one 
   - retired references are in Art/Retired/, never in Art/Reference/;
   - every kind of place in the game has one line in 'places': its approved reference, or that it has none (a gap), and
     every stop of the look tour (Tools/unreal/light_tour.txt) belongs to exactly one place. A place with no reference
-    is never judged against another place's: its reference is made first (docs/process/LOOK_GATE.md).
+    is never judged against another place's: its reference is made first (docs/process/LOOK_GATE.md);
+  - a place with light settings may have an "unreal" block (ADR-0075, docs/process/UNREAL_REFERENCES.md): the one Blender
+    picture the page shows for what it is, and its settings as pictures taken in the game by
+    Tools/unreal/reference_shots.py, in Art/Reference/<Category>/Unreal/<Id>_<Setting>.jpg. Every setting of the
+    reference is either shot or listed as missing with its reason; a block is approved only in the owner's words.
 """
 import glob, html, json, os, re, sys
 
@@ -62,6 +66,9 @@ def problems(cat, root=ROOT):
                 out.append("%s: %s does not start with its reference's id" % (r["id"], f))
             if not os.path.isfile(os.path.join(ref, f)):
                 out.append("%s: %s is missing" % (r["id"], f))
+        if r.get("unreal"):
+            out += unreal_problems(r, root)
+            listed.update(f.replace("\\", "/") for f in r["unreal"].get("files", []))
     for dirpath, _, names in os.walk(ref):
         for n in names:
             rel = os.path.relpath(os.path.join(dirpath, n), ref).replace("\\", "/")
@@ -102,6 +109,60 @@ def problems(cat, root=ROOT):
         for s in (p.get("camera") or {}).get("stops", []):
             if s not in p.get("stops", []) or not p.get("reference"):
                 out.append("place %s: its camera names the stop %s, which is not one of its stops, or it has no reference" % (p.get("place"), s))
+    return out
+
+
+# ---- a place's light settings as pictures taken in the game (ADR-0075) -------------------------------------------------
+WHERE = re.compile(r"refroom:\w+|cam:(-?[\d.]+,){4}-?[\d.]+|stand:(-?[\d.]+,){3}-?[\d.]+|in:b_\d+_\d+_l\d+(,-?[\d.]+)?")
+WHEN = re.compile(r"(ref|[0-2]\d:[0-5]\d)(\|(rain|fog|cloud|snow))?")
+
+
+def settings_of(r):
+    """The names of a reference's settings, in its own order: the suffix of each of its files (Morning, Rain)."""
+    return [os.path.splitext(f)[0].rsplit("_", 1)[-1] for f in r.get("files", []) if "_" in os.path.basename(f)]
+
+
+def unreal_problems(r, root=ROOT, files=True):
+    """Everything wrong with a reference's "unreal" block ([] when all is well). files=False: before its shots exist."""
+    u, i, out = r["unreal"], r.get("id", "?"), []
+    own = settings_of(r)
+    shot, missing = u.get("settings") or {}, u.get("missing") or {}
+    if not WHERE.fullmatch(str(u.get("where", ""))):
+        out.append("%s: its unreal block's where (%s) is not refroom:<room>, cam:x,z,up,yaw,pitch, stand:x,z,up,yaw or in:<lot>[,<pitch>]" % (i, u.get("where")))
+    if u.get("blender") not in r.get("files", []):
+        out.append("%s: its unreal block's blender picture (%s) is not one of the reference's files" % (i, u.get("blender")))
+    for s, v in shot.items():
+        if s not in own:
+            out.append("%s: its unreal block names the setting %s, which the reference has not" % (i, s))
+        if not WHEN.fullmatch(str(v)):
+            out.append("%s: its unreal block's %s is %s, not hh:mm or ref with |<weather> after it" % (i, s, v))
+    for s, why in missing.items():
+        if s not in own:
+            out.append("%s: its unreal block lists as missing the setting %s, which the reference has not" % (i, s))
+        if s in shot or not str(why).strip():
+            out.append("%s: its unreal block's missing setting %s is also shot, or gives no reason" % (i, s))
+    for s in own:
+        if s not in shot and s not in missing:
+            out.append("%s: its unreal block neither shoots the setting %s nor lists it as missing with a reason" % (i, s))
+    if u.get("status") not in (None, "proposed", "approved"):
+        out.append("%s: its unreal block's status is %s, not proposed or approved" % (i, u.get("status")))
+    if u.get("status") == "approved" and '"' not in str(u.get("decision", "")):
+        out.append("%s: its unreal block is approved without a decision in the owner's own words" % i)
+    for s in u.get("checks") or {}:
+        if s not in shot:
+            out.append("%s: its unreal block has a look check for %s, which it does not shoot" % (i, s))
+    if files:
+        for f in u.get("files", []):
+            folder, name = os.path.split(f)
+            s = os.path.splitext(name)[0].rsplit("_", 1)[-1]
+            if folder != "%s/Unreal" % r.get("category") or name != "%s_%s.jpg" % (i, s) or s not in shot:
+                out.append("%s: %s is not Art/Reference/%s/Unreal/%s_<a setting it shoots>.jpg" % (i, f, r.get("category"), i))
+            elif not os.path.isfile(os.path.join(root, "Art", "Reference", f)):
+                out.append("%s: %s is missing" % (i, f))
+        if u.get("files") and [os.path.splitext(f)[0].rsplit("_", 1)[-1] for f in u["files"]] != list(shot):
+            out.append("%s: its unreal block's files are not its settings, one each and in their order: run Tools/unreal/reference_shots.py --area %s" % (i, i))
+        if u.get("files") and not u.get("status"):
+            out.append("%s: its unreal block has pictures and no status" % i)
     return out
 
 
@@ -227,10 +288,18 @@ def caption(f):
     return "<b>%s</b><br><code>%s</code>" % (e(label(f)), e(os.path.basename(f)))
 
 
+def game_light(r):
+    """A reference's pictures taken in the game: None when it has none, else whether the owner has approved them."""
+    u = r.get("unreal")
+    return None if not u or not u.get("files") else u.get("status") == "approved"
+
+
 def state(r):
     """For your review, or approved (and when): how the page marks a reference."""
     if r.get("status") == "proposed":
         return 0, "review", "For your review"
+    if game_light(r) is False:
+        return 0, "review", "Its light in the game: for your review"
     d = re.search(r"\d{4}-\d{2}-\d{2}", r.get("approved", ""))
     return 1, "ok", "Approved" + (" " + d.group(0) if d else "")
 
@@ -239,7 +308,7 @@ def order(refs):
     """For your review first, then the latest approved at the top (by its date; of one day, the one listed last)."""
     def key(ir):
         i, r = ir
-        if r.get("status") == "proposed":
+        if r.get("status") == "proposed" or game_light(r) is False:
             return (0, "", -i)
         d = re.search(r"\d{4}-\d{2}-\d{2}", r.get("approved", ""))
         return (1, "".join(chr(255 - ord(ch)) for ch in (d.group(0) if d else "0000-00-00")), -i)
@@ -250,6 +319,52 @@ def media(f, alt):
     if f.endswith(".mp4"):
         return '<video src="%s" controls muted loop preload="metadata" title="%s"></video>' % (e(f), e(alt))
     return '<img src="%s" alt="%s" loading="lazy" data-full="%s">' % (e(f), e(alt), e(f))
+
+
+def shown(r):
+    """The pictures the page shows for a reference: all of its files, or with an "unreal" block its one Blender picture
+    and the game's."""
+    u = r.get("unreal")
+    return r["files"] if not u else [u["blender"]] + u.get("files", [])
+
+
+def in_the_game(r):
+    """A reference with an "unreal" block: what it is (one Blender picture), its light in the game (a picture a
+    setting, taken in Unreal), and the settings the game cannot show yet (ADR-0075)."""
+    u = r["unreal"]
+    rest = [f for f in r["files"] if f != u["blender"]]
+    out = ['<h3 class="part">What it is <small>made in Blender, approved</small></h3><div class="pics one"><figure>%s<figcaption>%s</figcaption></figure></div>'
+           % (media(u["blender"], r["title"]), caption(u["blender"]))]
+    if rest:
+        out.append('<details class="kept"><summary>Its other %d Blender settings are kept, not shown</summary><p>%s</p></details>'
+                   % (len(rest), " ".join('<a href="%s"><code>%s</code></a>' % (e(f), e(os.path.basename(f))) for f in rest)))
+    ok = u.get("status") == "approved"
+    mark = '<em class="st ok">Approved</em>' if ok else '<em class="st review">For your review</em>'
+    out.append('<h3 class="part">Its light, in the game <small>taken in Unreal%s</small> %s</h3>'
+               % (" at %s" % e(u["where"]) if u.get("where") else "", mark if u.get("files") else '<em class="st ok">Not shot yet</em>'))
+    figs = []
+    for f in u.get("files", []):
+        s = os.path.splitext(f)[0].rsplit("_", 1)[-1]
+        hour, _, weather = u["settings"][s].partition("|")
+        when = ("the references' own hour" if hour == "ref" else hour) + (", " + weather if weather else "")
+        fails = "".join("<li>%s</li>" % e(x) for x in (u.get("checks") or {}).get(s, []))
+        figs.append('<figure>%s<figcaption>%s <span class="when">%s</span>%s</figcaption></figure>'
+                    % (media(f, r["title"] + ", in the game"), caption(f), e(when),
+                       '<ul class="fails" title="Tools/unreal/look_check.py">%s</ul>' % fails if fails else ""))
+    if figs:
+        out.append('<div class="pics">%s</div>' % "".join(figs))
+        t = u.get("shot") or {}
+        out.append('<p class="shot">Shot %s at commit <code>%s</code>, %s%s, by <code>Tools/unreal/reference_shots.py --area %s</code>. Numbers: <code>Art/Reference/%s/Unreal/%s.json</code>.%s</p>'
+                   % (e(t.get("date", "?")), e(t.get("commit", "?")), e(t.get("quality", "?")),
+                      ", %s frames a second" % e(t["fps"]) if t.get("fps") else "", e(r["id"]), e(r["category"]), e(r["id"]),
+                      " Approved: %s" % code_or_text(u["decision"]) if ok and u.get("decision") else ""))
+    if u.get("issues"):
+        out.append('<div class="issues"><h3>Seen wrong in the game\'s pictures, for the owner to judge</h3><ul>%s</ul></div>'
+                   % "".join("<li>%s</li>" % code_or_text(x) for x in u["issues"]))
+    if u.get("missing"):
+        out.append('<h3 class="part">Not in the game yet</h3><ul class="missing">%s</ul>'
+                   % "".join("<li><b>%s</b> %s</li>" % (e(HOURS.get(s, s)), code_or_text(why)) for s, why in u["missing"].items()))
+    return "".join(out)
 
 
 def page(cat):
@@ -267,11 +382,12 @@ def page(cat):
         if refs:                                                  # the tab's list: pick an entry, jump to it
             body.append('<ol class="index">%s</ol>' % "".join(
                 '<li><a href="#%s">%s<span><b>%s</b><code>%s</code><em class="st %s">%s</em><small>%d picture%s</small></span></a></li>'
-                % (e(r["id"]), ('<img src="%s" alt="" loading="lazy">' % e(r["files"][0])) if not r["files"][0].endswith(".mp4") else "",
-                   e(r["title"]), e(r["id"]), state(r)[1], e(state(r)[2]), len(r["files"]), "" if len(r["files"]) == 1 else "s")
+                % (e(r["id"]), ('<img src="%s" alt="" loading="lazy">' % e(shown(r)[0])) if not shown(r)[0].endswith(".mp4") else "",
+                   e(r["title"]), e(r["id"]), state(r)[1], e(state(r)[2]), len(shown(r)), "" if len(shown(r)) == 1 else "s")
                 for r in refs))
         for r in refs:
             pics = "".join('<figure>%s<figcaption>%s</figcaption></figure>' % (media(f, r["title"]), caption(f)) for f in r["files"])
+            pics = in_the_game(r) if r.get("unreal") else '<div class="pics">%s</div>' % pics
             rows = [("Locks", code_or_text(r["locks"])), ("Approved", e(r["approved"])), ("Decision", code_or_text(r["decision"])),
                     ("Made by", code_or_text(r["made_by"]))]
             if r.get("models"):
@@ -283,11 +399,11 @@ def page(cat):
             issues = "".join("<li>%s</li>" % code_or_text(x) for x in r.get("issues", []))
             n, cls, words = state(r)
             body.append('<article class="ref%s" id="%s"><header><h2>%s</h2><code class="rid">%s</code><em class="st %s">%s</em>%s</header>'
-                        '<div class="pics">%s</div><dl>%s</dl>%s</article>'
+                        '%s<dl>%s</dl>%s</article>'
                         % (" proposed" if cls == "review" else "", e(r["id"]), e(r["title"]), e(r["id"]), cls, e(words),
                            '<span class="flag">%d issue%s seen</span>' % (len(r["issues"]), "" if len(r["issues"]) == 1 else "s") if r.get("issues") else "",
                            pics, "".join("<dt>%s</dt><dd>%s</dd>" % (k, v) for k, v in rows),
-                           '<div class="issues"><h3>Seen wrong, for the owner to judge</h3><ul>%s</ul></div>' % issues if issues else ""))
+                           '<div class="issues"><h3>Seen wrong%s, for the owner to judge</h3><ul>%s</ul></div>' % (" in the Blender pictures" if r.get("unreal") else "", issues) if issues else ""))
         if gaps:
             body.append('<section class="gaps"><h3>No reference yet</h3><ul>%s</ul></section>' % "".join(
                 "<li><b>%s</b> %s</li>" % (e(g["what"]), code_or_text(g["why"])) for g in gaps))
@@ -304,12 +420,15 @@ def page(cat):
                         "<li><code>Art/Reference/catalog.json</code> is the one list: what each locks, its approval and decision, the script that makes it, the game models built from it, issues seen, its old names. Agents read it there.</li>"
                         "<li>This page is written from it by <code>python Tools/reference_catalog.py</code>, which first checks that every file is listed and named by the rule. Never edit the page by hand.</li>"
                         "<li>A new reference: render it with its script, put it in its category's folder under its name, add it to the catalog, run the script. Changing the look needs a new ADR and the owner's approval (ADR-0004).</li>"
+                        "<li>A place with light settings (morning, midday, dusk, the nights, the weathers) shows one Blender picture for what it is, and its settings as pictures taken in the game (ADR-0075): <code>Art/Reference/&lt;Category&gt;/Unreal/&lt;Id&gt;_&lt;Setting&gt;.jpg</code>, written by <code>python Tools/unreal/reference_shots.py --all</code> from the reference's <code>unreal</code> block in the catalog. They are for the owner's review until the owner approves them; a setting the game cannot show is listed as not in the game yet. The Blender settings stay in the folder and in the catalog.</li>"
                         "<li>A reference taken out of use moves to <code>Art/Retired/</code> and is listed under Retired.</li>"
                         "<li>Look tests and rejected ideas stay in <code>Art/StyleTests/</code>; they are not references.</li></ul></article>")
         panels.append('<section role="tabpanel" id="p-%s" aria-labelledby="tab-%s"%s>%s</section>' % (c["id"], c["id"], "" if i == 0 else " hidden", "".join(body) or '<p class="about">Nothing here yet.</p>'))
     total = sum(len(r["files"]) for r in cat["references"])
+    game = sum(len((r.get("unreal") or {}).get("files", [])) for r in cat["references"])
     return TEMPLATE.replace("{TABS}", "".join(tabs)).replace("{PANELS}", "".join(panels)).replace(
-        "{COUNT}", "%d references in %d files, %d gaps" % (len(cat["references"]), total, len(cat.get("gaps", []))))
+        "{COUNT}", "%d references in %d files, %d gaps%s" % (len(cat["references"]), total, len(cat.get("gaps", [])),
+                                                             ", %d pictures taken in the game" % game if game else ""))
 
 
 TEMPLATE = """<!doctype html>
@@ -339,6 +458,10 @@ code{background:var(--code);padding:0 4px;border-radius:4px;font-size:.9em;word-
 .issues h3,.gaps h3{margin:4px 0;font-size:14px}.issues ul,.gaps ul{margin:4px 0 8px;padding-left:18px}
 .gaps{border:1px dashed var(--line);border-radius:12px;padding:8px 16px;margin-bottom:18px}
 .retired img{filter:grayscale(.6)}
+h3.part{margin:16px 0 0;font-size:15px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}h3.part small{font-weight:400;color:var(--dim);font-size:12px}
+.pics.one{grid-template-columns:minmax(260px,420px)}.kept{font-size:13px;color:var(--dim);margin:0 0 4px}.kept p{margin:4px 0}.kept a{text-decoration:none}
+.when{color:var(--dim)}.fails{margin:3px 0 0;padding-left:16px;color:var(--flag);word-break:normal}.shot{font-size:12px;color:var(--dim);margin:0 0 10px}
+.missing{margin:6px 0 14px;padding-left:18px}
 .prop{font-size:12px;color:#fff;background:var(--accent);padding:1px 8px;border-radius:10px}.ref.proposed{border-color:var(--accent);border-width:2px}
 figcaption b{color:var(--ink);font-weight:600;font-size:13px}
 .index{list-style:none;padding:0;margin:0 0 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}

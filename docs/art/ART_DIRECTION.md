@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-ART-DIRECTION
 title: Brix Town — Art direction (locked look)
-version: 1.14.0
+version: 1.15.0
 status: accepted          # owner approved the world look and character option B on 2026-11-21, the kit daylight on 2026-11-22, interiors and furniture on 2026-11-22, the menu's look on 2026-11-23, the house colourways and the house plan with its furnishing levels on 2026-11-23, every other building's colourways and the row houses and flats inside on 2026-11-24
 last_updated: 2026-11-28
 relates_to: [FURN-003, ART-001, ART-002, ART-003, ART-004, ART-005, ART-006, CHR-007, Q-10, Q-15]
@@ -111,7 +111,7 @@ how the renders get their look (and what the slice and Unreal must do to match i
 
 | # | Rule | Check |
 |---|---|---|
-| I1 | **Matte and mottled, like the streets** (W1): wood, cloth, paint and tile use the `painted()` material. No gloss, no chrome, no shiny glass; metal is dull dark iron or painted. | Roughness about 0.9; no highlights on any piece. |
+| I1 | **Matte and mottled, like the streets** (W1): wood, cloth, paint and tile use the `painted()` material. No gloss, no chrome, no shiny glass; metal is dull dark iron or painted. **In the game a room's plaster is the exception: one even tone, no mottle** (walls, ceiling and the painted wood on them; the owner, 2026-11-28, ADR-0074). | Roughness about 0.9; no highlights on any piece. |
 | I2 | **Chunky and soft** (W3): tops at least 4 cm thick, every edge bevelled at least 1 cm, fat cushions, block or turned legs. | No leg under 4 cm across; no edge reads sharp from 3 m. |
 | I3 | **True size, readable details**: pieces true size for people 1.58–1.80 m (seats about 45 cm, tables 75 cm, beds 50 cm); handles, knobs, buttons and seams about 1.3× real. | A character sits with feet on the floor. |
 | I4 | **The world palette indoors** (§2.3): woods from Brown, Ochre and Cream, cloth from the accents, walls in Plaster, floors in boards, flags or tiles. | Every catalogue colour is a palette entry or a mix of two. |
@@ -255,7 +255,7 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | Night (after dusk) and bad-weather looks | references at every hour and weather since 2026-11-26: `WorldAlley`, `WorldMarketSquare`, `WorldStreet` (night with the lamps on and off under a full and a new moon; cloudy, rain, fog, snow), made by `Tools/blender/hours_50.py`; rules W5–W7 |
 | The sky: blue overhead with drifting clouds | reference `WorldSky` at every hour and weather (2026-11-26; no planet, ADR-0064) |
 | Big modern buildings outside Old Town (Eastgate Mall's ribbon walls and pierced eggs) | built in the slice at the owner's request, in the locked materials: mottled plaster, ochre and cream, lantern light (ADR-0037). No rule or reference image yet for the outside. Eastgate's Great Court inside has a reference and a look of its own (`MallsEastgateCourt`, ADR-0069): timber, cream, glass, brass and polished stone; that look is the court's, not the town's. Its shop signs are coloured glass, raked back and lit, an exception to W1 and U2 for Eastgate's signs only (`MallsEastgateShop`, ADR-0071) |
-| Glass travel tubes over the streets (F-VEH-TUBE) | clear glass, an exception to W1 for the tubes and their stops only: reference `VehiclesGlassTube`, approved 2026-11-28 (ADR-0074) |
+| Glass travel tubes over the streets (F-VEH-TUBE) | clear glass, an exception to W1 for the tubes and their stops only: reference `VehiclesGlassTube`, approved 2026-11-28 (ADR-0076) |
 | Whether the iris should be smaller than in `Art/Reference/People/PeopleFaceExpressions.png` | owner to say |
 | How the look is achieved in Unreal on modest hardware (haze, soft light) | PH1 task |
 
@@ -277,7 +277,8 @@ Scripts build on each other by loading the helper part of an earlier script, so 
 | 1.9.1 | 2026-11-24 | §5: Eastgate Mall's sculpted shell noted as built in the locked materials, with no rule or reference image yet (ADR-0037). No rule or reference changed. |
 | 1.12.0 | 2026-11-26 | Eastgate's Great Court has a look of its own, approved by the owner (`MallsEastgateCourt`, ADR-0069). §5: night, weather and the sky now have references at every setting. |
 | 1.13.0 | 2026-11-28 | Eastgate's shop signs are coloured glass, raked back, lit from a brass trough, their names backlit: an exception to W1 and U2 for the mall's signs only, approved by the owner (`MallsEastgateShop`, ADR-0071). |
-| 1.14.0 | 2026-11-28 | The glass travel tubes and their stops are clear glass with brass bands on iron posts: an exception to W1 for the tubes only, approved by the owner with their reference (`VehiclesGlassTube`, ADR-0074). |
+| 1.15.0 | 2026-11-28 | The glass travel tubes and their stops are clear glass with brass bands on iron posts: an exception to W1 for the tubes only, approved by the owner with their reference (`VehiclesGlassTube`, ADR-0076). |
+| 1.14.0 | 2026-11-28 | In the game a room's plaster is one even tone, no mottle: an exception to W1 and I1 for room walls and ceilings only, chosen by the owner from the golden room shown three ways (ADR-0074). |
 | 1.11.2 | 2026-11-26 | `IndoorRooms` archived (the owner: "they are bad"); a home's rooms are `IndoorHomeRoom` and `IndoorHallway`. |
 | 1.11.1 | 2026-11-26 | W7's check is the alley and Market Square at every hour and weather (`WorldAlley`, `WorldMarketSquare`); `WorldHours.png` retired. |
 | 1.11.0 | 2026-11-26 | References organised (ADR-0061): a folder per category, every file named `<Category><Subject>[_<Variant>]`, one list in `Art/Reference/catalog.json` and a page to review them (`Art/Reference/index.html`, written by `Tools/reference_catalog.py`); §1's table replaced by it. The kit-18 rooms are references (`IndoorRooms`); `interior_room_daylight.png`, `vehicles_soft_box.png` and `vehicles_classic.png` retired to `Art/Retired/`. |

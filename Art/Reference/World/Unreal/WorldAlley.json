@@ -1,0 +1,158 @@
+{
+ "reference": "WorldAlley",
+ "where": "stand:876.5,912,0,0",
+ "shot": {
+  "commit": "2d9d02b",
+  "date": "2026-11-28",
+  "quality": "High, 1066 x 666",
+  "fps": "38 to 43"
+ },
+ "settings": {
+  "Morning": {
+   "hour": "07:20",
+   "look": {
+    "burnt": 0.0002,
+    "crushed": 0.0,
+    "flat": 0.0503,
+    "shade": 1.91,
+    "warmth": 0.498,
+    "figure": -0.02
+   },
+   "fails": [],
+   "at": "07:20",
+   "weather": "clear",
+   "camera": "out of doors",
+   "daylight": 1.0,
+   "fps": 40.3,
+   "worst_ms": 35
+  },
+  "Midday": {
+   "hour": "12:00",
+   "look": {
+    "burnt": 0.0027,
+    "crushed": 0.0,
+    "flat": 0.0721,
+    "shade": 1.44,
+    "warmth": 0.281,
+    "figure": -0.02
+   },
+   "fails": [],
+   "at": "12:00",
+   "weather": "clear",
+   "camera": "out of doors",
+   "daylight": 1.0,
+   "fps": 41.6,
+   "worst_ms": 34
+  },
+  "Dusk": {
+   "hour": "20:00",
+   "look": {
+    "burnt": 0.0168,
+    "crushed": 0.0,
+    "flat": 0.0089,
+    "shade": 1.58,
+    "warmth": 0.547,
+    "figure": -0.03
+   },
+   "fails": [],
+   "at": "20:00",
+   "weather": "clear",
+   "camera": "out of doors",
+   "daylight": 1.0,
+   "fps": 38.1,
+   "worst_ms": 35
+  },
+  "NightLamps": {
+   "hour": "22:30",
+   "look": {
+    "burnt": 0.0125,
+    "crushed": 0.0007,
+    "flat": 0.0174,
+    "shade": 2.12,
+    "warmth": 0.707,
+    "figure": -0.02
+   },
+   "fails": [],
+   "at": "22:30",
+   "weather": "clear",
+   "camera": "out of doors",
+   "daylight": 0.0,
+   "fps": 40.2,
+   "worst_ms": 29
+  },
+  "Cloudy": {
+   "hour": "12:00|cloud",
+   "look": {
+    "burnt": 0.0001,
+    "crushed": 0.0,
+    "flat": 0.1275,
+    "shade": 1.53,
+    "warmth": 0.219,
+    "figure": 0.05
+   },
+   "fails": [],
+   "at": "12:00",
+   "weather": "cloud",
+   "camera": "out of doors",
+   "daylight": 1.0,
+   "fps": 41.3,
+   "worst_ms": 34
+  },
+  "Rain": {
+   "hour": "12:00|rain",
+   "look": {
+    "burnt": 0.0,
+    "crushed": 0.0,
+    "flat": 0.1523,
+    "shade": 1.53,
+    "warmth": 0.054,
+    "figure": 0.08
+   },
+   "fails": [],
+   "at": "12:00",
+   "weather": "rain",
+   "camera": "out of doors",
+   "daylight": 1.0,
+   "fps": 40.2,
+   "worst_ms": 30
+  },
+  "Fog": {
+   "hour": "12:00|fog",
+   "look": {
+    "burnt": 0.0,
+    "crushed": 0.0,
+    "flat": 0.0846,
+    "shade": 0.94,
+    "warmth": 0.01,
+    "figure": 0.07
+   },
+   "fails": [
+    "look at it: little light and shade, 0.94 stops (a scene in the look has 1.0 or more; a white-out in haze reads so)"
+   ],
+   "at": "12:00",
+   "weather": "fog",
+   "camera": "out of doors",
+   "daylight": 1.0,
+   "fps": 43.4,
+   "worst_ms": 28
+  },
+  "Snow": {
+   "hour": "12:00|snow",
+   "look": {
+    "burnt": 0.0,
+    "crushed": 0.0,
+    "flat": 0.1382,
+    "shade": 1.46,
+    "warmth": 0.076,
+    "figure": 0.13
+   },
+   "fails": [],
+   "at": "12:00",
+   "weather": "snow",
+   "camera": "out of doors",
+   "daylight": 1.0,
+   "fps": 40.1,
+   "worst_ms": 42
+  }
+ }
+}
