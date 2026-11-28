@@ -1744,7 +1744,42 @@
     "The counter in the near corner hides part of the floor.",
     "Dusk and the lamp-lit night look nearly alike: once the sun is down the pendants carry it.",
     "The bank and the library are 38 by 16 m, three times this floor; this reference is the ordinary shop's size."
-   ]
+   ],
+   "unreal": {
+    "where": "cam:263.2,236.4,1.7,-140.4,-4",
+    "blender": "Shops/ShopsShopFloor_Midday.jpg",
+    "settings": {
+     "Morning": "07:20",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30"
+    },
+    "files": [
+     "Shops/Unreal/ShopsShopFloor_Morning.jpg",
+     "Shops/Unreal/ShopsShopFloor_Midday.jpg",
+     "Shops/Unreal/ShopsShopFloor_Dusk.jpg",
+     "Shops/Unreal/ShopsShopFloor_NightLamps.jpg"
+    ],
+    "shot": {
+     "commit": "39f06ef",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "41 to 45"
+    },
+    "status": "proposed",
+    "issues": [
+     "The spot: inside Northwood Grocer (lot b_0_0_l0), the lot the reference was sized from, at the reference's camera corner: the back corner away from the street, 1.7 m up, looking across the floor with the shop front to the right. The game's camera is 90 degrees wide where the reference's 16 mm lens sees 97.",
+     "What is there differs. The reference's shop has a glazed shop front of teal-framed panes all along one side with the street seen through it, rows of shelving with goods, one cream counter with a till, a rail, a table and a board. The game's has four brown counters with tills and no shelving or goods at all; the long side is a run of blank pale panels under a teal band with only a strip of the street showing over them, and the street is seen only through the arched doorway.",
+     "The day does not come in: no sun patch on the floor at Morning (the reference's is the strongest thing in its picture), and Morning, Midday and Dusk are one picture inside (G7, G9).",
+     "The walls and the pale panels are blotched with large soft light and dark patches, most of all on the right wall: the engine's own blotches, not the look's mottle (G3).",
+     "The ceiling between the beams is the same blotched cream, with a pale box hanging from it at the top of the picture that reads as a lamp lit from nowhere (G2).",
+     "The floor is grey-brown stone tiles where the reference has warm wide boards; the counters are plain flat brown with dark panel lines (G3).",
+     "At night the shop is an even dull orange with no pools under the pendants and the lamps' shades hardly brighter than the ceiling; the reference's pendants are bright and the floor under them lit (G7).",
+     "At Dusk and at night nobody is in the shop; at Morning and Midday a shopkeeper stands close to the camera at the nearest counter, his back to it, and two more stand at other counters.",
+     "A teal sign board hangs from the ceiling near the camera, edge on, with nothing to read on it.",
+     "Little shade where the counters meet the floor by day (G1)."
+    ]
+   }
   },
   {
    "id": "ShopsBigHall",

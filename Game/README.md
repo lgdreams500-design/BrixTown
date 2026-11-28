@@ -1311,6 +1311,11 @@ first audit's findings are in LOOK_GATE.md.
     nothing; morning, midday and dusk are one picture inside; the pendants are dim by day and give an even orange at night
     with no pools; little contact shade under the furniture; the baker is gone at dusk and night; a door post cuts the left
     edge; stone tiles for the reference's boards.
+  - `ShopsShopFloor` (Northwood Grocer, the lot the reference was sized from, from the reference's camera corner; 41 to 45
+    frames a second): not the reference's shop in what is there (four brown counters, no shelving or goods; the street side is
+    blank pale panels, the street seen only through the doorway); no sun comes in, so morning, midday and dusk are one
+    picture; walls, panels and ceiling carry the engine's large soft blotches; a pale box on the ceiling lit from nowhere;
+    night is an even dull orange with no pools under the pendants; stone tiles for the reference's boards.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.
