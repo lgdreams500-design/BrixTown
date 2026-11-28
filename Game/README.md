@@ -638,6 +638,17 @@ steps and car from where they went this visit), filled in by falling snow and fa
 their heads and shoulders while it falls (M_People's per-mesh `Snow`, custom primitive data 0, from
 `make_people_material.py`); tree crowns whiten on top. Not yet: the sound of snow.
 
+## Skip time (WLD-073, WLD-074; F-TIME-SKIP level 1)
+The host moves the clock on by 10 minutes (Z), an hour (T) or to the next change of weather (X); nothing else is moved,
+everything that changes with time is read from the clock. Steps and limits are `World/rules/time_skip.json`, read by
+`BrixTimeSkip` (a port of `Tools/citysim/time_skip.py`) and asked of the server through `ABrixGameMode::SkipTime`; a skip
+is refused in a conversation or on a ride. Checked by `WLD073_ten_minutes_an_hour_and_the_next_weather` and
+`WLD074_only_the_host_skips_and_not_while_busy`. Not yet: the tests have been built but not run in the engine, and a skip
+has not been tried in the game; the Unreal build shows one day's weather on every day, so "the next weather" goes round
+that day's four slots; the menu-bar control (WLD-075) has no Interface reference yet, so the keys Z, T and X stand in for
+it; no request from a client over the network (single player: the local player is the host); the glass travel tubes
+(CITY-108 to CITY-114, reference `VehiclesGlassTube` and routes `World/city_01/tubes.json` approved) are not built here.
+
 ## Clouds (WLD-035, WLD-036; ADR-0014)
 Soft heaps on one flat layer overhead, bright on the side towards the sun and shaded underneath, fading into the haze
 towards the horizon, taking the colour of the hour (warm at dusk, dark at night). How much sky they cover follows the
@@ -1312,6 +1323,8 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD042_the_days_light_is_kept_and_the_night_is_dark` | WLD-042 (ADR-0055) |
 | `BrixTown.World.CITY107_residents_are_dressed_for_snow` | CITY-107 |
 | `BrixTown.World.WLD071_footprints_and_tracks_follow_the_clock` | WLD-071 |
+| `BrixTown.World.WLD073_ten_minutes_an_hour_and_the_next_weather` | WLD-073 |
+| `BrixTown.World.WLD074_only_the_host_skips_and_not_while_busy` | WLD-074 |
 | `BrixTown.World.CITY007_every_conversation_is_sound` | CITY-007 |
 | `BrixTown.World.CHR009_lines_are_mouthed_as_the_slice_mouths_them` | CHR-009 |
 | `BrixTown.World.CHR001_the_designer_makes_the_slices_look` | CHR-001, CHR-002 |

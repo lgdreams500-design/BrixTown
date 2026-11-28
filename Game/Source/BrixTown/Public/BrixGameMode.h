@@ -33,6 +33,10 @@ public:
 	double ClockMinutes() const;
 	double ClockMinute() const { return FMath::Fmod(ClockMinutes(), 1440.0); }
 	void SetClock(double Minutes);               // a loaded save's day and time (QST-008): the clock runs on from there
+	// Skip time (WLD-073, WLD-074): the server moves the clock by a step of World/rules/time_skip.json ("10m", "1h",
+	// "weather") when Asker is the host and not busy; returns empty, or why not (BrixAskSkip). Everything else follows the clock.
+	FString SkipTime(const FString& Step, const class APlayerController* Asker, const TArray<FString>& Busy);
+	const struct FBrixTimeSkipRules* TimeSkipRules() const { return SkipRules.Get(); }
 	float Daylight = 1.f;                         // the sun's share of its light now, 0 at night (FBrixSky::Daylight)
 	UPROPERTY() TObjectPtr<class ABrixTalk> Talk;    // conversations with residents (CITY-007)
 	UPROPERTY() TObjectPtr<class ABrixCars> Cars;
@@ -81,6 +85,7 @@ private:
 	void ShootAndQuit();
 
 	TSharedPtr<FBrixCity> City;
+	TSharedPtr<struct FBrixTimeSkipRules> SkipRules;   // World/rules/time_skip.json (WLD-073)
 	TSharedPtr<struct FBrixDay> Today;           // the residents' routines (Game/Data/day.json)
 	UPROPERTY() TObjectPtr<class ABrixPeople> People;
 	UPROPERTY() TObjectPtr<class ABrixTownActor> TownActor;

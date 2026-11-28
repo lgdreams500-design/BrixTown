@@ -22,6 +22,7 @@
 #include "BrixRooms.h"
 #include "BrixSoundActor.h"
 #include "BrixTalkActor.h"
+#include "BrixTimeSkip.h"
 #include "BrixTownActor.h"
 #include "BrixUnits.h"
 #include "Camera/CameraActor.h"
@@ -140,6 +141,12 @@ void ABrixGameMode::StartPlay()
 		Crash->Start(Town, *City, StartDay);
 		Weather = GetWorld()->SpawnActor<ABrixWeather>();
 		Weather->Start(*City, Town);
+		{   // skip time (WLD-073): its steps and who may skip
+			TSharedPtr<FBrixTimeSkipRules> R = MakeShared<FBrixTimeSkipRules>();
+			FString SkipError;
+			if (LoadBrixTimeSkipRules(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), CityDir, TEXT("../rules/time_skip.json"))), *R, SkipError)) SkipRules = R;
+			else UE_LOG(LogTemp, Warning, TEXT("Brix Town: no skipping time (%s)"), *SkipError);
+		}
 		TownActor = Town;
 		if (Insides)   // the homes near the camera, furnished from their plans (FURN-060 to FURN-063)
 		{
@@ -612,6 +619,24 @@ void ABrixGameMode::SetClock(double Minutes)
 {
 	StartMinute = Minutes;
 	StartSeconds = GetWorld()->GetTimeSeconds();
+}
+
+FString ABrixGameMode::SkipTime(const FString& Step, const APlayerController* Asker, const TArray<FString>& Busy)
+{
+	if (!HasAuthority() || !SkipRules) return TEXT("no_skip");   // the server alone moves the clock (WLD-074)
+	// the host: the player at this machine on a listen server or alone; a client's controller is never local here
+	const bool bHost = Asker && Asker->IsLocalController();
+	static const TArray<FString> NoWeather;
+	const TArray<FString>& DayWeather = Weather ? Weather->Wear.Weather : NoWeather;
+	double To = 0;
+	const FString Why = BrixAskSkip(*SkipRules, DayWeather, ClockMinutes(), Step, bHost, Busy, To);
+	if (Why.IsEmpty())
+	{
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: skipped %s, %.1f to %.1f"), *Step, ClockMinutes(), To);
+		SetClock(To);
+		UpdateSun();
+	}
+	return Why;
 }
 
 double ABrixGameMode::ClockMinutes() const

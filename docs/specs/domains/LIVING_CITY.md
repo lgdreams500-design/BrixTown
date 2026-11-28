@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-LIVING-CITY
 title: Brix Town — Living city (map, residents, things to use, vehicles, seasons and plants)
-version: 0.6.5
+version: 0.6.6
 status: draft
 last_updated: 2026-11-28
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -198,17 +198,24 @@ animation." The owner picked `F-VEH-SKATES` level 2 for the first slice. Kinds, 
 The owner, 2026-11-28: "teleport points on the map ... glass tubes which suck player in and move them to the next location where
 they popout of the tube. all this should happen with camera following in real time smoothly." The owner picked `F-VEH-TUBE`
 level 2 ("Tube network") for the first slice. Stops and tubes are map data in `World/`; ride numbers are data in
-`World/rules/tubes.json`. Nothing is built in the engine before the tube's reference is approved (ADR-0066).
+`World/rules/tubes.json`.
+
+The routes (owner, 2026-11-28, on the map: "Approve the routes"): 24 stops and 9.3 km of tube, written by
+`Tools/citysim/make_tubes_01.py`. A hub over the crossing of Baker Street and Market Street by Market Square; Baker Street
+out to Westgate, the Furniture Outlet and Eastgate (its stop by the main entrance); Market Street from gate to gate on to
+Northgate and out to the suburbs, each with a West, Central and East stop along its main way; and two loops round the
+centre with stops at key buildings (inner: Linden Bank, Fountain Hospital, Old Town Museum, Palace Cinema, Fountain
+Library; outer: Tanner Clinic, The Stone Oven Bakery, Plum Works, Garden Clinic, Town Depot). Nothing is built in the engine before the tube's reference is approved (ADR-0066).
 
 | ID | Requirement | Feature | Lvl | Pri | Proven by |
 |---|---|---|---|---|---|
-| CITY-108 | Tube stops and the glass tubes between them shall be map data in `World/` (a stop: its id, name, place on the ground and the way its door faces; a tube: the two stops it joins and the line it runs along, high over the streets), never placed in code. Every tube shall start and end at a stop, keep clear of buildings and run at least `clearance_m` (6 m `[ASSUMPTION]`) over any street. | F-VEH-TUBE | 1 | P1 | `test_CITY_108_*` (Tools/citysim/test_tubes.py, on a sample network; the map has no stops yet) |
+| CITY-108 | Tube stops and the glass tubes between them shall be map data in `World/` (a stop: its id, name, place on the ground and the way its door faces; a tube: the two stops it joins and the line it runs along, high over the streets), never placed in code. Every tube shall start and end at a stop, keep clear of buildings and run at least `clearance_m` (6 m `[ASSUMPTION]`) over any street. | F-VEH-TUBE | 1 | P1 | `test_CITY_108_*` (Tools/citysim/test_tubes.py: a sample network, and the town's own `World/city_01/tubes.json`) |
 | CITY-109 | A ride shall go in three parts: drawn in (the rider is lifted off the floor of the stop and sucked up into the tube, `draw_in_s`), the run (along the tube at up to `speed_mps`, speeding up and slowing down smoothly, `ease_s`) and popped out (shot out of the tube at the other stop and set down on their feet, facing out of its door, `pop_out_s`); all numbers in `World/rules/tubes.json` `[ASSUMPTION]`. A tube is only as wide as a rider (`tube_inner_m`): the rider is upright where it goes up or down and lies along it head first where it runs level, turning smoothly between the two in its bends (the owner, 2026-11-28: "thinner diameter should be just enough fit the player's waist. so the player will rotate laterally when going horizontal"). Where the rider is, and how they lie, at any moment of a ride shall be worked out from when the ride began and the tubes it uses, never stepped (TECH-004). | F-VEH-TUBE | 1 | P1 | `test_CITY_109_*` (Tools/citysim/test_tubes.py) |
 | CITY-110 | The camera shall follow the rider through the whole ride in real time, smoothly: no cut, fade or jump from the moment the rider is drawn in until they stand at the other stop, and it shall keep the rider in view inside the glass. | F-VEH-TUBE | 1 | P1 | `test_CITY_110_*` (Tools/citysim/test_tubes.py): the camera's path has no jump; engine test `CITY110` |
 | CITY-111 | Riding shall be server-authoritative: the client sends only the stop it chose; the server checks that the rider stands in a stop and that the chosen stop can be reached, then moves them along the ride; the rider has no control during a ride. | F-VEH-TUBE | 1 | P0 | Engine test `CITY111` |
 | CITY-112 | Tubes shall form a network over the town: from any stop a rider can choose any other stop, and the ride takes the shortest way through the tubes, passing junctions without stopping. Each stop shall show a tube map with the stops and where you are. | F-VEH-TUBE | 2 | P1 | `test_CITY_112_*` (Tools/citysim/test_tubes.py) |
 | CITY-113 | Other riders shall be seen in the tubes: other players on their rides, and residents who use the tubes on some trips (which trips `[OPEN: Q-41]`). | F-VEH-TUBE | 2 | P2 | |
-| CITY-114 | The stops and tubes shall match the art direction (ART-001): their reference (`VehiclesGlassTube`), at every setting a stop is seen in, is approved by the owner before any model is made (ADR-0066). Glass is an exception to W1 (ADR-0074, proposed). Whether a ride costs a fare is `[OPEN: Q-42]`. | F-VEH-TUBE | 1 | P1 | Reference `VehiclesGlassTube` (Tools/blender/hours_50.py, WASTED_PLACE=tube) |
+| CITY-114 | The stops and tubes shall match the art direction (ART-001): their reference (`VehiclesGlassTube`), at every setting a stop is seen in, is approved by the owner before any model is made (ADR-0066). Glass is an exception to W1 for the tubes (ADR-0074). Whether a ride costs a fare is `[OPEN: Q-42]`. | F-VEH-TUBE | 1 | P1 | Reference `VehiclesGlassTube` (Tools/blender/hours_50.py, WASTED_PLACE=tube) |
 
 ### 3.5 Seasons, weather and plants
 
@@ -319,6 +326,7 @@ up to 42 on the road at once, no overlap, no crossing movements in a box, nobody
 ## 7. Change log
 | Version | Date | Change |
 |---|---|---|
+| 0.6.6 | 2026-11-28 | The tube routes approved by the owner on the map (CITY-108, CITY-112): 24 stops, `World/city_01/tubes.json`. |
 | 0.6.5 | 2026-11-28 | Skip time (WLD-073 to WLD-075; F-TIME-SKIP level 1) and glass travel tubes (CITY-108 to CITY-114; F-VEH-TUBE level 2), from the owner's request and picks in chat. Q-41 and Q-42 opened. All proposed. |
 | 0.6.4 | 2026-11-25 | Skateboards sold at the mall's sports and toy outlets, at the owner's word ("we don't need a dedicated skate boards shop. ridable skateboards should be in sports or toy shop. player can either use them to rid or use it as display both."): CITY-102 and CITY-103 reworded (ADR-0054, superseding ADR-0053); Market Skate Store is the Market Grocer again; boards.json `sold_at`. |
 | 0.6.3 | 2026-11-25 | The skate store built (CITY-102, CITY-103; ADR-0053): Market Skate Store, the Market Grocer by the market square renamed; shop kind `skate` in economy.json; prices in boards.json [ASSUMPTION]; economy.py buy_board() and board_in_use(), proved in Python, then in the Unreal build. Selling back stays open (Q-40). |

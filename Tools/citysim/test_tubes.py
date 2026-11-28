@@ -71,6 +71,20 @@ class Network(unittest.TestCase):
         self.assertGreater(math.dist(ride.at(s), ride.at(s + 1 / FPS)) * FPS, RULES["ride"]["speed_mps"] * 0.9)
 
 
+class TheTownsTubes(unittest.TestCase):
+    """World/city_01/tubes.json (proposed routes, make_tubes_01.py): sound, and every stop reaches every other."""
+    def setUp(self):
+        import json
+        self.net = json.load(open(os.path.join(world.WORLD, "city_01", "tubes.json"), encoding="utf-8"))
+
+    def test_CITY_108_the_towns_tubes_have_no_problems(self):
+        self.assertEqual(problems(self.net, RULES), [])
+
+    def test_CITY_112_every_stop_in_town_reaches_every_other(self):
+        for a, b in itertools.permutations(self.net["stops"], 2):
+            self.assertIsNotNone(route(self.net, a, b), (a, b))
+
+
 class Riding(unittest.TestCase):
     def setUp(self):
         self.rides = [Ride(NET, RULES, a, b) for a, b in itertools.permutations(NET["stops"], 2)]

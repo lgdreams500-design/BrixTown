@@ -73,6 +73,10 @@ public:
 	FBrixBoards Boards;
 	void BoardKey();                 // Y: get on the board in use, and off it again, picking it up
 	void WeatherKey();               // K: try the next kind of weather (WLD-037; the slice's K)
+	void SkipMinutesKey() { SkipKey(TEXT("10m")); }   // Z: skip 10 minutes (WLD-073; settings.json minutes)
+	void SkipHourKey() { SkipKey(TEXT("1h")); }       // T: skip an hour (settings.json hour, the slice's T)
+	void SkipWeatherKey() { SkipKey(TEXT("weather")); }   // X: skip to the next change of weather (settings.json next_weather)
+	void SkipKey(const FString& Step);
 	void TestBoard(const FString& Kind);
 	// the boards owned and the one in use set anew (a game loaded): off any board ridden first (CITY-100)
 	void SetBoards(const TArray<FString>& Own, const FString& Use);
@@ -140,6 +144,9 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UInputAction> QuestsAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> BoardAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> WeatherAction;
+	UPROPERTY(Transient) TObjectPtr<UInputAction> SkipMinutesAction;
+	UPROPERTY(Transient) TObjectPtr<UInputAction> SkipHourAction;
+	UPROPERTY(Transient) TObjectPtr<UInputAction> SkipWeatherAction;
 	UPROPERTY(Transient) TArray<TObjectPtr<UInputAction>> PageActions;
 	TArray<FString> PageNames;
 	float LookScale = 1.f;

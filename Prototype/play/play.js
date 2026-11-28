@@ -2403,6 +2403,21 @@ addEventListener("keydown", e => { if (e.code === "F9" && !e.repeat && started &
   location.search = u.toString(); } });
 addEventListener("keydown", e => { if (e.code === "KeyK" && !e.repeat) { const order = [null, "clear", "cloud", "rain", "fog"]; wxTry = order[(order.indexOf(wxTry) + 1) % order.length]; } });
 const WX_KIND = i => wxTry || (SKY.clouds.follow_weather && (D.day.weather || [])[((i % 4) + 4) % 4]) || "clear";
+// WLD-073 (World/rules/time_skip.json; Tools/citysim/time_skip.py): a skip moves the clock and nothing else. The slice shows
+// one day's weather (D.day.weather, four slots) on every day, so the next weather is the next slot of it, round the day, that differs.
+function skipTo(id) {
+  const R = window.WASTED.time_skip, step = R && R.steps.find(s => s.id === id);
+  if (!step) return;
+  const now = clock.day * 1440 + clock.m;
+  let to = now + (step.minutes || 0);
+  if (step.to === "next_weather") {
+    const size = R.next_weather.slot_minutes, limit = now + R.next_weather.max_days * 1440, w0 = WX_KIND(Math.floor(now / size));
+    for (to = (Math.floor(now / size) + 1) * size; to < limit && WX_KIND(Math.floor(to / size)) === w0; to += size);
+    to = Math.min(to, limit);
+  }
+  clock.day = Math.floor(to / 1440); clock.m = to - clock.day * 1440;
+  Sound.act("hour");
+}
 function weatherNow(m) {
   const s = Math.floor(m / 360), into = m - s * 360, b = SKY.clouds.blend_minutes, out = { kind: WX_KIND(s) };
   for (const k of ["sun", "haze", "veil", "grey", "rain"]) { const v = i => SKY.weather[WX_KIND(i)][k];
@@ -3024,7 +3039,9 @@ addEventListener("keydown", e => {
   else if (e.code.startsWith("Bracket")) Sound.act("clock");
   if (e.code === "BracketRight") clock.rate = RATES[Math.min(RATES.length - 1, RATES.indexOf(clock.rate) + 1)];
   else if (e.code === "BracketLeft") clock.rate = RATES[Math.max(0, RATES.indexOf(clock.rate) - 1)];
-  else if (e.code === "KeyT") { if (clock.m + 60 >= 1440) clock.day++; clock.m = (clock.m + 60) % 1440; Sound.act("hour"); }
+  else if (e.code === "KeyT") skipTo("1h");
+  else if (e.code === "KeyZ") skipTo("10m");           // WLD-073: skip 10 minutes
+  else if (e.code === "KeyX") skipTo("weather");       // WLD-073: skip to the next change of the day's weather (the slice shows one day's)
   else if (e.code === "KeyO") Life.setting("graphics", "picture");   // better or simple picture: all its parts at once
 });
 addEventListener("keyup", e => { keys[e.code] = false; if (e.code === "KeyF") Sound.horn(false); });

@@ -97,6 +97,9 @@ void ABrixCharacter::MakeInput()
 	QuestsAction = NewObject<UInputAction>(this, TEXT("Quests"));
 	BoardAction = NewObject<UInputAction>(this, TEXT("Board"));
 	WeatherAction = NewObject<UInputAction>(this, TEXT("Weather"));
+	SkipMinutesAction = NewObject<UInputAction>(this, TEXT("SkipMinutes"));
+	SkipHourAction = NewObject<UInputAction>(this, TEXT("SkipHour"));
+	SkipWeatherAction = NewObject<UInputAction>(this, TEXT("SkipWeather"));
 	PageNames = { TEXT("me"), TEXT("belongings"), TEXT("property"), TEXT("wardrobe"), TEXT("map"), TEXT("help") };   // settings.json actions
 	for (const FString& N : PageNames) PageActions.Add(NewObject<UInputAction>(this, *(TEXT("Page_") + N)));
 	for (UInputAction* A : PageActions) A->bTriggerWhenPaused = true;   // the menu stops the clock; its keys still work
@@ -132,6 +135,9 @@ void ABrixCharacter::MakeInput()
 	Keys->MapKey(QuestsAction, EKeys::J);
 	Keys->MapKey(BoardAction, EKeys::Y);   // settings.json: board, Y
 	Keys->MapKey(WeatherAction, EKeys::K);   // settings.json: weather, K
+	Keys->MapKey(SkipMinutesAction, EKeys::Z);   // settings.json: minutes, Z (WLD-073)
+	Keys->MapKey(SkipHourAction, EKeys::T);      // settings.json: hour, T
+	Keys->MapKey(SkipWeatherAction, EKeys::X);   // settings.json: next_weather, X
 	const FKey PageKeys[6] = { EKeys::C, EKeys::G, EKeys::P, EKeys::U, EKeys::M, EKeys::H };
 	for (int32 k = 0; k < 6; ++k) Keys->MapKey(PageActions[k], PageKeys[k]);
 	Keys->MapKey(ChooseActions[0], EKeys::Left);
@@ -176,6 +182,9 @@ void ABrixCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		In->BindAction(QuestsAction, ETriggerEvent::Started, this, &ABrixCharacter::QuestsKey);
 		In->BindAction(BoardAction, ETriggerEvent::Started, this, &ABrixCharacter::BoardKey);
 		In->BindAction(WeatherAction, ETriggerEvent::Started, this, &ABrixCharacter::WeatherKey);
+		In->BindAction(SkipMinutesAction, ETriggerEvent::Started, this, &ABrixCharacter::SkipMinutesKey);
+		In->BindAction(SkipHourAction, ETriggerEvent::Started, this, &ABrixCharacter::SkipHourKey);
+		In->BindAction(SkipWeatherAction, ETriggerEvent::Started, this, &ABrixCharacter::SkipWeatherKey);
 		for (UInputAction* A : PageActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::MenuPageKey);
 		for (UInputAction* A : ChooseActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::ChooseKey);
 		for (UInputAction* A : AnswerActions) In->BindAction(A, ETriggerEvent::Started, this, &ABrixCharacter::AnswerKey);
@@ -578,6 +587,25 @@ void ABrixCharacter::WeatherKey()   // K: the next kind of weather to look at, f
 	if (!Wx || !Wx->bOn) return;
 	const FString Now = Wx->TryNext();
 	if (ABrixLife* L = Life()) L->Toast(Now.IsEmpty() ? FString(TEXT("The day's own weather")) : TEXT("Trying ") + Now);
+}
+
+void ABrixCharacter::SkipKey(const FString& Step)   // WLD-073, WLD-074: ask the server to move the clock
+{
+	if ((bDesigning && bDesignKeys) || bPanel) return;
+	ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Mode) return;   // only the server has the game mode; there is no network play yet
+	TArray<FString> Busy;
+	if (bTalking) Busy.Add(TEXT("conversation"));
+	const FString Why = Mode->SkipTime(Step, Cast<APlayerController>(GetController()), Busy);
+	ABrixLife* L = Life();
+	if (!L) return;
+	if (Why.IsEmpty())
+	{
+		const int32 M = (int32)FMath::Fmod(Mode->ClockMinutes(), 1440.0);
+		L->Toast(FString::Printf(TEXT("%s: now %02d:%02d"), Step == TEXT("weather") ? TEXT("To the next weather") : (Step == TEXT("1h") ? TEXT("An hour on") : TEXT("10 minutes on")), M / 60, M % 60));
+	}
+	else if (Why == TEXT("not_host")) L->Toast(TEXT("Only the host can skip time"));
+	else if (Why.StartsWith(TEXT("busy:"))) L->Toast(TEXT("Not now"));
 }
 
 ABrixCars* ABrixCharacter::Cars() const

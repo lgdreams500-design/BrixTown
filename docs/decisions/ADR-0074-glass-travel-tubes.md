@@ -1,7 +1,7 @@
 ---
 adr: ADR-0074
 title: Glass travel tubes over the streets, as slim as a rider
-status: proposed          # drafted by an agent from the owner's request in chat, 2026-11-28; waits for the owner's approval of the reference
+status: accepted          # the owner in chat, 2026-11-28, of the reference VehiclesGlassTube (slim tube, booth 40% narrower, every setting): "Approve, go on"
 date: 2026-11-28
 relates_to: [ADR-0004, ADR-0066, ADR-0071, CITY-108, CITY-109, CITY-110, CITY-111, CITY-112, CITY-113, CITY-114]
 ---
@@ -16,7 +16,7 @@ The town's surfaces are matte (ART_DIRECTION W1), and the rooms forbid shiny gla
 exception to the locked look (ADR-0004), as Eastgate's glass signs are (ADR-0071), and it needs this record and the
 owner's approval.
 
-## Decision (proposed)
+## Decision
 - A stop is a round glass booth on a dark stone plinth, 1.5 m across and 3 m high (the owner, 2026-11-28: "make the entry chamber narrower, may be reduce by 40%"), with three brass ribs and
   brass bands, a cream cap and one lantern by its door. Its top narrows in a glass funnel into the tube.
 - The tube is clear glass, faintly tinted and brighter at its edges where it catches the sky. It is only as wide as a
@@ -28,5 +28,5 @@ owner's approval.
 - Ride numbers are data (`World/rules/tubes.json`). Stops and tubes are map data in `World/` (CITY-108).
 
 ## Consequences
-- Nothing of the tubes is built in Unreal until the reference `VehiclesGlassTube` is approved (ADR-0066).
+- The reference `VehiclesGlassTube` is approved (the owner, 2026-11-28); the tubes are built against it (ADR-0066).
 - Where the stops go on the map is the owner's to say. Fares (Q-42) and which residents ride (Q-41) are open.
