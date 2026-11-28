@@ -1336,6 +1336,11 @@ first audit's findings are in LOOK_GATE.md.
     outlets, stalls, seating or fins; the drum is one plain flat tone; at night the floor and drum are pale and brighter than
     at dusk, lit from nowhere; at dusk the egg's lattice is a strong orange-red; the sun's net on the floor is burnt white at
     midday; a matte checker for polished stone; nobody in the hall.
+  - `MallsEastgateShop` (The Linen Press from the walk, through its reference's own camera; the mirror image of the reference;
+    43 to 46 frames a second): the sign is a flat matte band with an unlit name that is a dark smear at dusk and night, not
+    the approved glass sign (ADR-0071); the ceiling over the walk is plain near-black brown, no slats or line of light; the
+    shop's inside is plain flat fills and block mannequins; at night the shop and walk go pale white, whiter than by day; the
+    glass shows no reflection or tint; no contact shade; a matte checker for polished stone.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.

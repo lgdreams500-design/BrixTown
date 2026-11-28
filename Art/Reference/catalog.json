@@ -2062,7 +2062,41 @@
     "The brass trough sits just above the frame's top edge from this camera; only its light shows.",
     "Its right-hand end meets the next outlet's sign, which is turned away from the camera.",
     "Like the court, the picture is the game's mirror image (the map's z read as Blender's y)."
-   ]
+   ],
+   "unreal": {
+    "where": "cam:1676,799.2,1.7,164.4,8.2",
+    "blender": "Malls/MallsEastgateShop_Midday.jpg",
+    "settings": {
+     "Morning": "07:20",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30"
+    },
+    "files": [
+     "Malls/Unreal/MallsEastgateShop_Morning.jpg",
+     "Malls/Unreal/MallsEastgateShop_Midday.jpg",
+     "Malls/Unreal/MallsEastgateShop_Dusk.jpg",
+     "Malls/Unreal/MallsEastgateShop_NightLamps.jpg"
+    ],
+    "shot": {
+     "commit": "7623122",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "42 to 46"
+    },
+    "status": "proposed",
+    "issues": [
+     "The spot is the reference's own camera on the walk by The Linen Press (MALL_CAMS shop in Tools/blender/hours_50.py, laid on the map: x 1676, z 799.2, 1.7 m up, aimed 8.2 degrees up). The game's picture is the reference's mirror image, as the reference's own issues say. The game's camera is 90 degrees wide where the reference's 22 mm lens sees 79, so the shop reads further off than in the reference.",
+     "The sign is a flat matte terracotta band with the name painted on it, not the approved coloured glass raked back with backlit letters and a brass trough's light on it (ADR-0071; Game/README.md says so). The name is unlit: at Dusk and at night it is a dark smear that can hardly be read, where the reference's name glows white in every setting (G7).",
+     "The ceiling over the walk is plain dark brown, near black, with no timber slats and no line of light along it; the reference's warm slatted soffit with its bright line fills the top third of the picture (G1, G3).",
+     "The shop's inside is plain flat fills: cream walls, a flat ceiling with three white lines, a plain brown counter, shelves of small pastel blocks. The mannequins are stacks of square blocks. The reference has shelves of folded goods, rails, rounded busts and a boarded floor (G3).",
+     "At night the shop and the walk go pale and white, whiter than by day, and the walk's floor is near white; Morning, Midday and Dusk are nearly one picture (G9).",
+     "Nothing darkens the floor where the counter, the plinths and the mannequins stand (G1).",
+     "The glass shows no reflection and no tint: the front reads as an open hole with thin dark posts, where the reference's glass carries soft reflections of the court's lights (G3).",
+     "The walk's floor is a matte pale checker; the reference's is polished stone with reflections.",
+     "The shopkeeper stands behind the counter at Morning and Midday and is gone at Dusk and at night; nobody is on the walk (G6)."
+    ]
+   }
   },
   {
    "id": "MallsEastgateEscalators",
