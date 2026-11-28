@@ -1886,15 +1886,16 @@
      "Malls/Unreal/MallsEastgateCourt_NightLamps.jpg"
     ],
     "shot": {
-     "commit": "67b3f70",
+     "commit": "ce60acf",
      "date": "2026-11-28",
      "quality": "High, 1066 x 666",
-     "fps": "39 to 43"
+     "fps": "37 to 42"
     },
     "status": "proposed",
     "issues": [
      "The spot is the reference's own camera in the Great Court (MALL_CAMS court in Tools/blender/hours_50.py, laid on the map: x 1668, z 636, 1.7 m up, aimed 5.7 degrees up at the galleries). The game's picture is the mirror image of the reference, as the reference's own issues say (the map's z read as Blender's y). The game's camera is 90 degrees wide where the reference's 16 mm lens sees 97.",
-     "The floor is a matte checker of grey tiles with no reflection at all; the reference's is polished stone with hidden joints that mirrors the lights, the columns and the roof, and that sheen carries the whole picture (G3; Game/README.md already says the court is not built to its reference, ADR-0069).",
+     "The owner, 2026-11-28: \"there are no steps pattern of escalator visible, floor is square titled instead of smoot\". Mended for the floor (WLD-058, Art/StyleTests/unreal_mall_stairs_floor_60): it is polished stone with hidden joints now, softly clouded, and it mirrors the lines of light, the trees and the shop fronts (G3).",
+     "The floor is a paler, cooler grey than the reference's warm stone; nothing casts a shadow on it and the sun leaves no patches on it at Midday; its reflections are long soft streaks, with none of the reference's small bright points under chandeliers, as the game's court has no chandeliers (G2).",
      "At night the floor is near white and the brightest thing in the picture, brighter than by day, under dark galleries; nothing lights it that can be seen (G2, G5, G9).",
      "The undersides of the galleries are plain dark brown with white lines of light on their edges; the reference's are warm timber slats that take the light. No glass balustrades with brass rails, no columns, no chandeliers or banners are in the game's court.",
      "The roof light reads as a patch of dots (a pale grid by day, orange at dusk, blue at night), not as glazing with the sky through it.",
@@ -2019,10 +2020,10 @@
      "Malls/Unreal/MallsEastgateFoodCourt_NightLamps.jpg"
     ],
     "shot": {
-     "commit": "1bcb0ff",
+     "commit": "ce60acf",
      "date": "2026-11-28",
      "quality": "High, 1066 x 666",
-     "fps": "46 to 49"
+     "fps": "44 to 48"
     },
     "status": "proposed",
     "issues": [
@@ -2032,7 +2033,7 @@
      "At night the floor and the drum are pale and bright, brighter than at dusk, with nothing seen to light them; the reference's night is warm, lit by its pendants and the outlets (G2, G9).",
      "At Dusk the egg's lattice glows a strong orange-red against white gaps, far more saturated than anything in the reference, while the hall under it is grey (G4).",
      "Midday: the sun's net of diamonds on the floor is burnt white. It is crisp, as the reference's issues say the game's would be (G5).",
-     "The floor is a matte grey checker where the reference has polished stone that mirrors the hall.",
+     "The floor is polished stone now, with no tiles (WLD-058; the owner, 2026-11-28: \"floor is square titled instead of smoot\"): it mirrors the tree, the boxes and the drum's lines of light. The sun's net lies on it as hard burnt diamonds, harder than before on the polished stone (G5).",
      "The pendants are small white cubes on long wires that light nothing; the reference's are large white globes.",
      "Nobody is in the hall in any setting (G6)."
     ]
@@ -2079,10 +2080,10 @@
      "Malls/Unreal/MallsEastgateShop_NightLamps.jpg"
     ],
     "shot": {
-     "commit": "7623122",
+     "commit": "ce60acf",
      "date": "2026-11-28",
      "quality": "High, 1066 x 666",
-     "fps": "42 to 46"
+     "fps": "42 to 45"
     },
     "status": "proposed",
     "issues": [
@@ -2093,7 +2094,7 @@
      "At night the shop and the walk go pale and white, whiter than by day, and the walk's floor is near white; Morning, Midday and Dusk are nearly one picture (G9).",
      "Nothing darkens the floor where the counter, the plinths and the mannequins stand (G1).",
      "The glass shows no reflection and no tint: the front reads as an open hole with thin dark posts, where the reference's glass carries soft reflections of the court's lights (G3).",
-     "The walk's floor is a matte pale checker; the reference's is polished stone with reflections.",
+     "The walk's floor is polished stone now, with no tiles (WLD-058; the owner, 2026-11-28: \"floor is square titled instead of smoot\"): it mirrors the shop's lit ceiling lines as soft streaks, as the reference's does.",
      "The shopkeeper stands behind the counter at Morning and Midday and is gone at Dusk and at night; nobody is on the walk (G6)."
     ]
    }
@@ -2141,20 +2142,21 @@
      "Malls/Unreal/MallsEastgateEscalators_NightLamps.jpg"
     ],
     "shot": {
-     "commit": "29cf580",
+     "commit": "ce60acf",
      "date": "2026-11-28",
      "quality": "High, 1066 x 666",
-     "fps": "44 to 46"
+     "fps": "37 to 44"
     },
     "status": "proposed",
     "issues": [
      "The spot: at the foot of the Great Court's moving stairs (the plan's ramp from x 1682.4, z 663.5), 1.5 m up as the reference's camera is, on the stairs' own line and 3.5 m back, looking up them. The reference's own camera numbers (MALL_CAMS escalators), laid on the map, stand beside the stairs with their solid side filling the picture, mirrored or not, so the spot was scouted. The game's camera is 90 degrees wide, as the reference's 18 mm lens.",
-     "These are not moving stairs yet (Game/README.md says so): two plain dark sloped ramps between plain cream and brown slabs. None of the reference's parts is there: no steps with brass noses, no floor plate and comb, no steel skirts with a line of light, no glass sides with round newels, no brass handrail, no timber cladding.",
-     "The ramps are one flat dark grey with nothing to see on them; their sides are flat fills with hard edges (G3, G5).",
-     "The slope is shallow (12 degrees, a moving walk's, as the reference's issues say), so from the foot the stairs read as a low wedge and the court's far side shows over them.",
+     "The owner, 2026-11-28: \"there are no steps pattern of escalator visible, floor is square titled instead of smoot\". Mended for the steps and the floor (WLD-058, Art/StyleTests/unreal_mall_stairs_floor_60): the stairs are drawn as thirty steps a flight, each a dark ribbed tread with a brass nose and a darker riser, with a steel floor plate and comb at the foot and the head, steel skirts with a line of light along the steps, and a brass handrail on each parapet.",
+     "Still not as the reference: no glass sides with round newels (the parapets are plain cream slabs with brown ends); the handrail is a square bar ending in a flat drop, not a round rail curling over at the foot; no timber cladding on the sides and underside; the brass is a dull ochre, less golden than the reference's. The steps stand still while the walker is carried.",
+     "The parapets' faces and the stairs' sides are flat fills with hard edges; the skirts' lines of light are burnt white (G3, G5).",
+     "The slope is shallow (12 degrees, a moving walk's, as the reference's issues say), so the steps are long and low and the stairs read as a low wedge from the foot; the reference's are steeper, with short steps.",
      "Nobody stands on the stairs or in the court; the reference has a person on the foot plate (G6).",
      "Morning, Midday and Dusk are nearly one picture: only the small roof patch above changes colour. At night the floor goes paler than by day (G9).",
-     "Round it, as in the Great Court: a matte grey checker floor with no reflection, plain dark brown gallery undersides with burnt white lines of light, no banners, chandeliers or glass balustrades.",
+     "Round it, as in the Great Court: the floor is polished stone now and mirrors the lights and the trees; plain dark brown gallery undersides with burnt white lines of light, no banners, chandeliers or glass balustrades.",
      "The trees in the court are a few large flat facets, yellow-green by day and near black-green at dusk."
     ]
    }

@@ -152,7 +152,7 @@ in its colour with its name lit on it, plinths either side of the way in), its r
 light panels) and what it sells (rails, shelves, guitars, screens, cabinets, serveries; tables, racks, bins, drums, glass cases,
 the window's mannequins or plinth), with a counter and till where its keeper works today. `ABrixMall` lays the calls as the
 town's own faces, cut into 40 m squares so what is out of view is not drawn: 598,294 triangles in 263 meshes made at load
-time (2.2 s), in M_Facets outside, `/Game/Mall/M_MallRoom` indoors (with the floor tiles' two tones and joints, and the court's
+time (2.2 s), in M_Facets outside, `/Game/Mall/M_MallRoom` indoors (with the floor tiles' two tones and joints in the furniture outlet's hall, a court mall's floor as polished stone with hidden joints (`FloorStone`, `FloorRough`; the owner, 2026-11-28: "floor is square titled instead of smoot"), and the court's
 even room light: the faces made at load time get no share of Lumen's bounced light, so without it the ceilings were black),
 `M_MallLit` for the lit panels, lines of light, screens and lantern glass and `M_MallLattice` for the eggs' diamond openings
 (made by `Tools/unreal/make_mall_materials.py`); the 39,638 solids are unseen blockers; the names are lettering on the sign
@@ -182,7 +182,7 @@ shopping and 195 eating, on all three floors, at their places). `-BrixCounter=<a
 Thread) stands the player in it and opens its counter. `-BrixInside=b_16_5_l0` stands the player 30 m in from the south door (`MallInside`),
 `-BrixWalkIn=b_16_5_l0` walks them in, `-BrixLift=b_16_5_l0` rides the west lift to the top floor, `-BrixNoMall` builds it as
 the town's box again. At High: 28 to 44 frames a second inside, 21 riding the moving stairs (noisy: other sessions were running
-Unreal). Sitting on the benches, cafe seats and rides is as in the furniture outlet (below). Not yet: the mall's moving stairs are still plain sloped ramps with glass sides, not built to their approved reference (`Art/Reference/Malls/MallsEastgateEscalators_*.jpg`: steel floor plates with combs, ribbed steps with brass noses, steel skirts with a line of light, a cream deck, glass sides with round newels and a brass handrail, timber-clad sides and underside, the middle parapet with a glass side and handrail to each lane); the mall's shop signs are still matte bands, not the approved coloured glass, raked back with backlit names and a brass trough's light onto them (`Art/Reference/Malls/MallsEastgateShop_*.jpg`, ADR-0071); the Food Market's egg hall is not yet a food court as its approved reference (`Art/Reference/Malls/MallsEastgateFoodCourt_*.jpg`, ADR-0070): the plan has no units for food outlets round its drum and no seating, and its drum, floor and egg are not in the court's look; the south entrance is not yet built to its approved reference (`Art/Reference/Malls/MallsEastgateEntrance_*.jpg`: the ribbon wall in one even honed stone with lapped dark grooves, no tones in turn; ground floodlights on the forecourt lighting it from dusk, kind `ground_flood` in `World/rules/lights.json`); the Great Court is not yet built to its approved reference (`Art/Reference/Malls/MallsEastgateCourt_*.jpg`, ADR-0069: timber slats under the galleries, glass balustrades with brass rails, columns, a polished stone floor with hidden joints, tinted roof lights with chandeliers and banners, lines of light along the gallery edges); the furniture outlet's hall is not yet built to `ShopsBigHall` (the game's size, a 24 m band of glazed skylights); the ribbon wall's lit joints and the openings' lanterns at night, the
+Unreal). Sitting on the benches, cafe seats and rides is as in the furniture outlet (below). The moving stairs are drawn as steps (`ABrixMall`, `StairSteps`; the owner, 2026-11-28: "there are no steps pattern of escalator visible"): over the slice's slope, the thirty steps a flight that a walker's feet climb, each a dark ribbed tread with a brass nose and a darker riser, steel floor plates with a brass edge and a comb at the foot and the head, steel skirts with a line of light, a brass handrail on each parapet; look gate and shots in `Art/StyleTests/unreal_mall_stairs_floor_60/`. Not yet: the moving stairs are not wholly built to their approved reference (`Art/Reference/Malls/MallsEastgateEscalators_*.jpg`): no glass sides with round newels (the parapets are the slice's plain slabs), the handrail a square bar ending in a flat drop where the reference's is round and curls over, no timber-clad sides and underside, the slope the plan's 12 degrees with long low steps, the steps standing still while the walker is carried, nothing casting a shadow on them; the mall's shop signs are still matte bands, not the approved coloured glass, raked back with backlit names and a brass trough's light onto them (`Art/Reference/Malls/MallsEastgateShop_*.jpg`, ADR-0071); the Food Market's egg hall is not yet a food court as its approved reference (`Art/Reference/Malls/MallsEastgateFoodCourt_*.jpg`, ADR-0070): the plan has no units for food outlets round its drum and no seating, and its drum, floor and egg are not in the court's look; the south entrance is not yet built to its approved reference (`Art/Reference/Malls/MallsEastgateEntrance_*.jpg`: the ribbon wall in one even honed stone with lapped dark grooves, no tones in turn; ground floodlights on the forecourt lighting it from dusk, kind `ground_flood` in `World/rules/lights.json`); the Great Court is not yet built to its approved reference (`Art/Reference/Malls/MallsEastgateCourt_*.jpg`, ADR-0069: timber slats under the galleries, glass balustrades with brass rails, columns, tinted roof lights with chandeliers and banners, lines of light along the gallery edges; its floor is polished stone with hidden joints now, but paler and cooler than the reference's, with no shadows or sun patches on it, and its reflections were looked at from the tour's stops only); the furniture outlet's hall is not yet built to `ShopsBigHall` (the game's size, a 24 m band of glazed skylights); the ribbon wall's lit joints and the openings' lanterns at night, the
 moving stairs' treads moving, and the shell's lanterns' light outside.
 The goods for the home each outlet sells stand in it as they were made in Blender (FURN-065; outlets.js front() with the
 slice's life data, goods.js put()): on its two window plinths facing the walk, and those too deep for a plinth on its floor
@@ -1321,30 +1321,33 @@ first audit's findings are in LOOK_GATE.md.
     white at midday; at dusk the skylights' frames glow orange-red and a streak of orange light hangs in the air; the roof is
     mostly open sky where the reference has a solid roof with slits and heavy trusses; nobody in the hall; walls, floor and
     route are plain flat fills with no contact shade.
-  - `MallsEastgateCourt` (Eastgate's Great Court through its reference's own camera; the mirror image of the reference; 39 to
-    43 frames a second): the floor is a matte grey checker with no reflection where the reference's polished stone carries the
-    picture; at night the floor is near white, brighter than by day; gallery undersides plain dark brown, no slats, glass
-    balustrades, columns, chandeliers or banners; the roof light is a patch of dots; the edge lights are burnt white lines;
-    morning, midday and dusk are one picture; nobody in the court.
+  - `MallsEastgateCourt` (Eastgate's Great Court through its reference's own camera; the mirror image of the reference; 37 to
+    42 frames a second): the floor is polished stone with hidden joints now and mirrors the lights, trees and shop fronts
+    (WLD-058), but is paler and cooler than the reference's, with no shadows or sun patches on it; at night the floor is paler
+    than by day; gallery undersides plain dark brown, no slats, glass balustrades, columns, chandeliers or banners; the roof
+    light is a patch of dots; the edge lights are burnt white lines; morning, midday and dusk are one picture; nobody in the
+    court.
   - `MallsEastgateEntrance` (Eastgate's south entrance from the forecourt, the reference's camera mirrored across the
     entrance's middle; 40 to 46 frames a second): the ribbon wall is a smooth plain cream skin with no grooves (the look check
     fails dusk for flat fill, 64 %); at dusk and night the forecourt and wall are near black, no floodlights; the lower third
     is a dark band at morning; midday fails for little light and shade (0.99 stops); the arch is a low square opening, not a
     lit vault; the doorway is a burnt-white strip by day; nobody on the forecourt.
   - `MallsEastgateFoodCourt` (the Food Market's egg hall through its reference's own camera; the mirror image of the
-    reference; 46 to 49 frames a second): not a food court yet (ADR-0070): a tree, five brown boxes and a bare drum, no
+    reference; 44 to 48 frames a second): not a food court yet (ADR-0070): a tree, five brown boxes and a bare drum, no
     outlets, stalls, seating or fins; the drum is one plain flat tone; at night the floor and drum are pale and brighter than
     at dusk, lit from nowhere; at dusk the egg's lattice is a strong orange-red; the sun's net on the floor is burnt white at
-    midday; a matte checker for polished stone; nobody in the hall.
+    midday, harder on the polished stone the floor now is (WLD-058); nobody in the hall.
   - `MallsEastgateShop` (The Linen Press from the walk, through its reference's own camera; the mirror image of the reference;
-    43 to 46 frames a second): the sign is a flat matte band with an unlit name that is a dark smear at dusk and night, not
+    42 to 45 frames a second): the sign is a flat matte band with an unlit name that is a dark smear at dusk and night, not
     the approved glass sign (ADR-0071); the ceiling over the walk is plain near-black brown, no slats or line of light; the
     shop's inside is plain flat fills and block mannequins; at night the shop and walk go pale white, whiter than by day; the
-    glass shows no reflection or tint; no contact shade; a matte checker for polished stone.
-  - `MallsEastgateEscalators` (the foot of the Great Court's moving stairs, on their own line; 44 to 46 frames a second): not
-    moving stairs yet: two plain dark sloped ramps between flat slabs, no steps, plates, skirts, glass sides, newels or
-    handrail; the ramps are one flat dark grey; nobody on them; morning, midday and dusk are one picture and the floor goes
-    paler at night; the court round them as in MallsEastgateCourt.
+    glass shows no reflection or tint; no contact shade; the walk's floor is polished stone now and mirrors the shop's lights
+    (WLD-058).
+  - `MallsEastgateEscalators` (the foot of the Great Court's moving stairs, on their own line; 37 to 44 frames a second, 44 to
+    46 before the steps were drawn): drawn as steps now, with brass noses, floor plates and combs, lit steel skirts and brass
+    handrails (WLD-058); still no glass sides or newels, the handrail a square bar with flat ends, no timber cladding, the
+    parapets flat fills, the skirts' lines burnt white; the slope is shallow, so the steps are long and low; nobody on them;
+    morning, midday and dusk are one picture and the floor goes paler at night; the court round them as in MallsEastgateCourt.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.

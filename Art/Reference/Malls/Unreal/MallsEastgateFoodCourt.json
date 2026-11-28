@@ -2,79 +2,79 @@
  "reference": "MallsEastgateFoodCourt",
  "where": "cam:1597.6,829.6,1.7,-139.9,11.2",
  "shot": {
-  "commit": "1bcb0ff",
+  "commit": "b1a152f",
   "date": "2026-11-28",
   "quality": "High, 1066 x 666",
-  "fps": "46 to 49"
+  "fps": "44 to 48"
  },
  "settings": {
   "Morning": {
    "hour": "07:20",
    "look": {
-    "burnt": 0.0234,
+    "burnt": 0.0239,
     "crushed": 0.0,
-    "flat": 0.0155,
-    "shade": 1.79,
-    "warmth": 0.501
+    "flat": 0.0399,
+    "shade": 1.77,
+    "warmth": 0.564
    },
    "fails": [],
    "at": "07:20",
    "weather": "clear",
    "camera": "indoors",
    "daylight": 1.0,
-   "fps": 46.9,
+   "fps": 45.8,
    "worst_ms": 26
   },
   "Midday": {
    "hour": "12:00",
    "look": {
-    "burnt": 0.0088,
+    "burnt": 0.0079,
     "crushed": 0.0,
-    "flat": 0.0111,
-    "shade": 1.12,
-    "warmth": 0.512
+    "flat": 0.017,
+    "shade": 1.15,
+    "warmth": 0.567
    },
    "fails": [],
    "at": "12:00",
    "weather": "clear",
    "camera": "indoors",
    "daylight": 1.0,
-   "fps": 45.6,
-   "worst_ms": 27
+   "fps": 43.8,
+   "worst_ms": 43
   },
   "Dusk": {
    "hour": "20:00",
    "look": {
-    "burnt": 0.0079,
+    "burnt": 0.008,
     "crushed": 0.0056,
-    "flat": 0.0492,
-    "shade": 1.57,
-    "warmth": 0.553
+    "flat": 0.095,
+    "shade": 1.6,
+    "warmth": 0.604
    },
    "fails": [],
    "at": "20:00",
    "weather": "clear",
    "camera": "indoors",
    "daylight": 1.0,
-   "fps": 49.1,
-   "worst_ms": 24
+   "fps": 47.5,
+   "worst_ms": 30
   },
   "NightLamps": {
    "hour": "22:30",
    "look": {
-    "burnt": 0.0134,
-    "crushed": 0.0005,
-    "flat": 0.0333,
-    "shade": 1.9,
-    "warmth": 0.13
+    "burnt": 0.0132,
+    "crushed": 0.0004,
+    "flat": 0.0488,
+    "shade": 1.87,
+    "warmth": 0.17
    },
    "fails": [],
    "at": "22:30",
    "weather": "clear",
    "camera": "indoors",
    "daylight": 0.0,
-   "fps": 47.7,
-   "worst_ms": 26
+   "fps": 46.6,
+   "worst_ms": 23
   }
  }
 }
