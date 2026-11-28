@@ -1279,6 +1279,10 @@ first audit's findings are in LOOK_GATE.md.
     fire is never lit; dusk is dark; night is orange with a burnt patch by the floor lamp and the player's trousers near black; a
     smudge of shadow on the left wall by day; darker, redder boards than the reference; the card and ball near black by day; a
     ragged line where the left wall meets the ceiling. The town's rooms are not lit as the golden room is.
+  - `IndoorHallway` (the golden hallway, 42 to 46 frames a second): dusk is nearly as dark as the day, the lamps only part of
+    the way up; by day the near left wall is plain black and the look check fails for crushed blacks (43 to 45 %) and flat
+    fill (59 to 66 %); at night the table lamp throws hard wedges on both walls and all is orange; the doorway is a white
+    blank; the stair hardly shows; the card and ball stand in the middle of the picture and are black by day.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.
