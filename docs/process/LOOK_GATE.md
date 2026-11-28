@@ -93,7 +93,7 @@ night), so that every later shared change is looked at there too.
 
 ## The matching round: getting a place to its reference
 The gate above checks a change. This is the round for mending what does not match: one place, or one shared cause, a
-round. Each step is there because skipping it cost a round on 2026-11-27.
+round. Each step is there because skipping it cost a round (2026-11-27 and 2026-11-28).
 
 1. **Name it.** `python Tools/reference_catalog.py --for <stop, lot or place>`: the place and its own reference. No
    reference: stop, it is a gap; its reference is made first. A home's two references are split by light, not by a
@@ -101,22 +101,39 @@ round. Each step is there because skipping it cost a round on 2026-11-27.
 2. **What is there, before how it is lit.** Put the reference beside a shot and write down first what differs in what
    is *there*: the room's shape, where its windows are, its floor and ceiling, its furniture. Those are mended in the
    map's data and the models; no light setting closes them, and tuning light to hide them makes other places worse.
-3. **Shoot.** `Tools\unreal\light_tour.ps1 -OutDir <folder> -List Tools\unreal\reference_tour.txt`: every place that
+   The list is written in the round's README **before the first trial**, and what can be mended is mended first. On
+   2026-11-28 the rooms' light was tried ten times (trials A to K) before anyone wrote down that no game ceiling had the references'
+   beams and that the game's room had three windows on two walls where its reference has one (the owner: "you need to
+   understand the structural difference before trying to fix the light").
+3. **Is the reference right?** A reference is a picture made to a rule, and it can be wrong. Before matching a place to
+   it, read how its script lights it and look for what a real place would not have: light bounced more strongly than
+   the surfaces' colours give, a lamp or sun aimed for the picture, an eye that opens further than the game's. Above
+   all, the eye: the game opens its eye by one fixed amount in every room (`DayOpenIndoors`), so a reference whose eye
+   opens until its picture reaches a set brightness shows a dim place as bright as a lit one, and the game cannot match
+   it. On 2026-11-28 the hallway's bright doorway was its eye opened 4.4 stops past the home room's, and its bounce
+   raised x2; it was remade (ADR-0072). A reference that is wrong goes back to the owner, with candidates: never
+   matched to, and never quietly changed.
+4. **A stop sees what its reference sees.** A stop in another room, or facing another way, is loose, and its number
+   can pass or fail for reasons that are not the light: the home room's stop was a corner room with three windows,
+   unfurnished, against a reference with one window, furnished; the shop stops looked at the back wall with the
+   shopfront behind them, against a reference beside its wall of windows. Choose or build a stop that matches what the
+   reference shows (the same kind of room, its windows, the way it looks) before trusting its numbers.
+5. **Shoot.** `Tools\unreal\light_tour.ps1 -OutDir <folder> -List Tools\unreal\reference_tour.txt`: every place that
    has a reference, at the hours its reference shows, in one launch (a shot is seconds, a launch most of a minute, so
    never one launch a shot). While working on one place, a list of its own stops. A place being worked on gets a
    matched stop: its reference's own camera, read from the script in the reference's `made_by`, written as the place's
    `camera` in the catalog and as a stop here.
-4. **Measure.** `python Tools/unreal/look_match.py <folder>`: each shot against its own reference, worst first, with
+6. **Measure.** `python Tools/unreal/look_match.py <folder>`: each shot against its own reference, worst first, with
    the stop's frame rate. Work from the top row. Numbers first: a picture is opened for the row being mended and at
    the end, not for every stop. A loose row (not the reference's camera) that passes proves little.
-5. **Shared causes first, and never tuned on one place.** The order: the eye and its tone, the sun and sky, the rooms'
+7. **Shared causes first, and never tuned on one place.** The order: the eye and its tone, the sun and sky, the rooms'
    light, a material many things use, then one kind of place, then one place. A number many places share is changed
    only with the reference tour taken before and after, and every row read, not the one being mended.
-6. **Done** when the place's matched rows pass (within 0.5 of a stop in brightness and 0.33 in warmth, ADR-0055's
+8. **Done** when the place's matched rows pass (within 0.5 of a stop in brightness and 0.33 in warmth, ADR-0055's
    figures), `look_check.py` passes, and the stop's frame rate is no lower than before (say the window's size and the
    quality level with any frame rate). Then the gate's own steps 1 to 5, with the pictures. What does not pass is
    written in "Not yet".
-7. **The machine.** One Unreal at a time: `light_tour.ps1` waits for any other run. Never Blender and Unreal together.
+9. **The machine.** One Unreal at a time: `light_tour.ps1` waits for any other run. Never Blender and Unreal together.
    A checkout with no build cannot take shots: build it once (about three minutes), or, for the game as it is, use a
    built checkout at the same commit.
 

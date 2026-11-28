@@ -29,6 +29,10 @@
 //       where is cam:x,z,height,yaw,pitch (look from there), stand:x,z,up,yaw (the player there, the camera behind) or
 //       in:<lot id>[,<pitch>] (the player inside that building, as -BrixInside= puts them, looking up or down by
 //       pitch); metres and degrees in the data's frame, yaw 0 = east. ev= pins the exposure for that shot, to measure.
+//       pt=<seconds> takes that shot with the engine's path tracer instead (the slow, correct light of the same scene,
+//       to measure the live light against): after the wait the world is paused, the path tracer gathers PathSamples
+//       samples a pixel for that long, then the shot. It needs ray tracing, which the project does not compile by
+//       default: run it with Tools/unreal/light_tour.ps1 -PathTrace.
 //       Run it with -BrixNoDesigner -BrixNoSave (not -BrixShot=, which quits after one shot).
 //       With -BrixLightRoom (ABrixLightRoom: the Blender reference rooms built in Unreal) where may be
 //       refroom:<shop|cafe|kitchen>, the reference's own camera in that room, and hh:mm may be ref, when the game's
@@ -43,6 +47,7 @@ class BRIXTOWN_API UBrixLight : public UTickableWorldSubsystem
 public:
 	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override { return WorldType == EWorldType::Game || WorldType == EWorldType::PIE; }
 	virtual void Tick(float DeltaSeconds) override;
+	virtual bool IsTickableWhenPaused() const override { return true; }   // a pt= stop pauses the world for the path tracer
 	virtual TStatId GetStatId() const override { RETURN_QUICK_DECLARE_CYCLE_STAT(UBrixLight, STATGROUP_Tickables); }
 	// 0 with the sun up to 1 with it on the horizon or down: by then the streets are in shade, whatever the calendar's
 	// daylight says, so the lamps and the lit windows come on by this too (ABrixLamps, ABrixRooms)
@@ -76,6 +81,7 @@ public:
 	UPROPERTY(Config) FVector NightFrom = FVector(-0.42, -0.52, 0.74);                 // towards it: x east, y south, z up
 	UPROPERTY(Config) FLinearColor NightSky = FLinearColor(2.f, 2.3f, 3.f);            // how much the air gives back of it: the sky's blue and its fill
 	UPROPERTY(Config) float TourSeconds = 6.f;         // -BrixTour: the wait at each stop before its shot
+	UPROPERTY(Config) int32 PathSamples = 512;         // -BrixTour: a pt= stop's samples a pixel
 
 private:
 	void Light(class ABrixGameMode& Mode, float DeltaSeconds);
@@ -97,7 +103,7 @@ private:
 	FLinearColor SkySet = FLinearColor(-1, -1, -1), DayGlow = FLinearColor::Black;
 	TOptional<float> PinEV;
 
-	struct FStop { FString Name, Weather, Lot, RefRoom; double Minute = -1; bool bRefTime = false; bool bCam = false; FVector At = FVector::ZeroVector; float Yaw = 0.f, Pitch = 0.f; TOptional<float> EV; float Lamp = 1.f, Fill = -1.f; TOptional<FLinearColor> Tint, FillTint; };
+	struct FStop { FString Name, Weather, Lot, RefRoom; double Minute = -1; bool bRefTime = false; bool bCam = false; FVector At = FVector::ZeroVector; float Yaw = 0.f, Pitch = 0.f; TOptional<float> EV; float Lamp = 1.f, Fill = -1.f; TOptional<FLinearColor> Tint, FillTint; float PathSeconds = 0.f; };
 	TArray<FStop> Stops;
 	FString TourOut;
 	int32 StopAt = -1;
@@ -105,4 +111,6 @@ private:
 	float StopTime = 0.f, StopWorst = 0.f;   // the frames of the last two seconds of a stop's wait: their time, the longest
 	int32 StopFrames = 0;
 	bool bShot = false;
+	bool bPathing = false;          // a pt= stop: paused, the path tracer gathering
+	double PathUntil = 0.0, LastReal = 0.0;
 };

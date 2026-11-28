@@ -65,6 +65,12 @@ public:
 	UPROPERTY(Config) FLinearColor FrameColour = FLinearColor(0.36f, 0.24f, 0.15f);      // a doorway's frame
 	UPROPERTY(Config) FLinearColor BoardsColour = FLinearColor(0.42f, 0.29f, 0.18f);     // a room's boards
 	UPROPERTY(Config) FLinearColor TilesColour = FLinearColor(0.7f, 0.68f, 0.64f);       // a wet room's tiles
+	UPROPERTY(Config) FLinearColor BeamColour = FLinearColor(0.36f, 0.24f, 0.15f);       // the ceiling's beams (the references' wood)
+	UPROPERTY(Config) float BeamEvery = 1.4f;           // m apart (the reference room's five over its width)
+	UPROPERTY(Config) float BeamWidth = 0.18f;
+	UPROPERTY(Config) float BeamDepth = 0.18f;
+	UPROPERTY(Config) float BeamInset = 0.5f;           // m from the wall to the first
+	UPROPERTY(Config) float BeamMinSpan = 2.6f;         // a room narrower than this has none (a hallway)
 	UPROPERTY(Config) float DoorHeight = 2.15f;         // an inner doorway (homes.js DOOR_H)
 	UPROPERTY(Config) float MinBlockHeight = 0.9f;      // a piece is in the way at least this high (homes.js one())
 	UPROPERTY(Config) float HideHungWithin = 1.0f;      // a hung piece (a pendant, a wall cupboard) is not drawn with the camera this near it (m)
@@ -106,6 +112,17 @@ public:
 	UPROPERTY(Config) FLinearColor RoomFillColourDay = FLinearColor(1.f, 0.9f, 0.8f);
 	float LampNow(float Daylight) const { return FMath::Lerp(1.f, RoomLampDay, FMath::Clamp(Daylight, 0.f, 1.f)); }
 	FLinearColor FillColourNow(float Daylight) const { return RoomFillColour + (RoomFillColourDay - RoomFillColour) * FMath::Clamp(Daylight, 0.f, 1.f); }
+	// The room's own light stands where the camera is: over the middle of a planned room, or, on a storey with no plan
+	// (a shop's floor, the bakery in the corner of its lot), at the camera's own spot, so a room far from its lot's middle
+	// is not left in the dark. By day a planned room (a home's, a flat's) has RoomFillHome of it: with the fill over the
+	// room, a home's hallway and its dining room came out equally bright against their references (+1.3 and +1.2 stops)
+	// where the shop floors, a storey's whole floor each, came out half a stop dark (2026-11-28, the rooms' light round;
+	// Art/StyleTests/unreal_rooms_light_57). By night the lamps carry it: no change. How much of the room's round is its own
+	// windows (the spans within RoomWindowNear of its floor) is written to the log as the camera comes into a room: it
+	// did not tell the hallway (none) from the dining room (0.2 of its round) in the numbers, so it sets nothing yet.
+	UPROPERTY(Config) float RoomFillHome = 1.f;
+	UPROPERTY(Config) float RoomWindowNear = 0.5f;     // m
+	float FillRoomNow(bool bPlannedRoom, float Daylight) const { return bPlannedRoom ? FMath::Lerp(1.f, RoomFillHome, FMath::Clamp(Daylight, 0.f, 1.f)) : 1.f; }
 	// A room's lights come up and go down over LightFadeSeconds, and a lamp is not moved while it is lit: switched and
 	// moved in one frame they were a jump in the picture at every doorway and as the nearest lamps of a hall changed.
 	UPROPERTY(Config) float LightFadeSeconds = 0.4f;
@@ -115,7 +132,7 @@ public:
 	UPROPERTY(Config) float NightBelow = 0.35f;        // the windows are lit as the day's light falls below this (as ABrixLamps)
 
 private:
-	struct FLotHome { int32 Lot = -1; FVector2D Centre = FVector2D::ZeroVector; float Reach = 0.f; TArray<float> FloorUp, CeilUp; TArray<TOptional<FBrixRect>> Holes; TSharedPtr<FBrixHome> Home; bool bPlanned = true; TArray<struct FBrixFurnished> Furn; TMap<int32, struct FBrixFurnished> TownFurn; };   // heights of its built floors
+	struct FLotHome { int32 Lot = -1; FVector2D Centre = FVector2D::ZeroVector; float Reach = 0.f; TArray<float> FloorUp, CeilUp; TArray<TOptional<FBrixRect>> Holes; TSharedPtr<FBrixHome> Home; bool bPlanned = true; TArray<struct FBrixFurnished> Furn; TMap<int32, struct FBrixFurnished> TownFurn; TArray<FBrixWindowSpan> Wins; };   // heights of its built floors; its facade's windows
 	TArray<FLotHome> Homes;
 	TSet<int32> Near;                                   // indexes into Homes, furnished now
 	int32 CamHome = INDEX_NONE, CamFloor = 0;          // the home the camera is in and its floor
@@ -163,4 +180,5 @@ private:
 	float FillLevel = 0.f, FillFull = 0.f;
 	float DayNow = 1.f;                                 // the daylight PlaceLights last had: the lamps' strength follows it
 	bool bFillWant = false;
+	int32 LastShareKey = INDEX_NONE;                    // the room last written to the log with its windows
 };

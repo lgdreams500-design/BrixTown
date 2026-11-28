@@ -102,6 +102,7 @@ void ABrixRooms::Start(const FBrixCity& City, const FBrixInsides& Ins, ABrixTown
 			FLotHome LH;
 			LH.bPlanned = bPlanned;
 			LH.Lot = k;
+			LH.Wins = Wins;
 			LH.Centre = L.Centre();
 			LH.Reach = (float)L.Size().Size() * 0.5f;
 			// the floors' heights as the town builds them (WLD-052); a building whose storeys are not built has its ground floor only
@@ -518,6 +519,30 @@ void ABrixRooms::Rebuild()
 				AddBox(BoxAt(Q, Floor0 - 0.02f, Floor0 + 0.006f), bWet ? TilesColour : BoardsColour,
 					bWet ? TownDefaults->FloorFlagsA : TownDefaults->FloorBoardsA, bWet ? TownDefaults->FloorFlagsB : TownDefaults->FloorBoardsB);
 		}
+		// the ceiling's beams, as every approved room has them (Tools/blender/furniture_kit_17.py room(), hours_50.py shop()):
+		// across the room's shorter span, BeamEvery apart, the first BeamInset in from the wall; none in a room narrower than
+		// BeamMinSpan (the hallway reference has none); cut where the stair comes up through the floor above. A storey's
+		// whole floor (a shop) has them over all of it, unless its flats or rooms are planned on it.
+		for (const FBrixRoom& R : H.Rooms)
+		{
+			if (Up(R.Floor) < 0.f || Ceil(R.Floor) < 0.f) continue;
+			if (!R.bFloor && H.Rooms.ContainsByPredicate([&R](const FBrixRoom& X) { return X.bFloor && X.Floor == R.Floor; })) continue;
+			const bool bLong = R.R.Length >= R.R.Width;   // the beams run across the shorter span, set out along the longer
+			const float Span = bLong ? R.R.Width : R.R.Length, Run = bLong ? R.R.Length : R.R.Width;
+			if (Span < BeamMinSpan || Run < 2.f * BeamInset) continue;
+			const FVector2D Ac(-R.R.Along.Y, R.R.Along.X), Dir = bLong ? R.R.Along : Ac, Cross = bLong ? Ac : R.R.Along;
+			const int32 N = FMath::FloorToInt((Run - 2.f * BeamInset) / FMath::Max(BeamEvery, 0.3f)) + 1;
+			const float Used = (N - 1) * BeamEvery;
+			const TOptional<FBrixRect> Hole = LH.Holes.IsValidIndex(R.Floor + 1) ? LH.Holes[R.Floor + 1] : TOptional<FBrixRect>();
+			for (int32 b = 0; b < N; ++b)
+			{
+				FBrixRect Beam;
+				Beam.Centre = R.R.Centre + Dir * (-Used / 2 + b * BeamEvery);
+				Beam.Along = Cross; Beam.Length = Span; Beam.Width = BeamWidth;
+				for (const FBrixRect& Q : Without(Beam, Hole))
+					AddBox(BoxAt(Q, Ceil(R.Floor) - BeamDepth, Ceil(R.Floor)), BeamColour, Plaster, None);   // plain: no pattern (a zero-sized one draws black)
+			}
+		}
 		for (const FBrixWallSeg& W : H.Walls)
 		{
 			if (Up(W.Floor) < 0.f) continue;
@@ -529,11 +554,11 @@ void ABrixRooms::Rebuild()
 			{
 				FBrixRect Post = Part(W.R, E - 0.05f, E + 0.05f);
 				Post.Width += 0.04f;
-				AddBox(BoxAt(Post, Floor0, Floor0 + DoorHeight + 0.08f), FrameColour, None, None);
+				AddBox(BoxAt(Post, Floor0, Floor0 + DoorHeight + 0.08f), FrameColour, Plaster, None);
 			}
 			FBrixRect Lintel = Part(W.R, -W.R.Length / 2 - 0.05f, W.R.Length / 2 + 0.05f);
 			Lintel.Width += 0.04f;
-			AddBox(BoxAt(Lintel, Floor0 + DoorHeight, Floor0 + DoorHeight + 0.08f), FrameColour, None, None);
+			AddBox(BoxAt(Lintel, Floor0 + DoorHeight, Floor0 + DoorHeight + 0.08f), FrameColour, Plaster, None);
 		}
 		for (const FBrixFurniturePiece& P : H.Pieces)
 		{
@@ -664,9 +689,11 @@ void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp, float Daylight)
 		return FMath::Abs(FVector2D::DotProduct(D, R.Along)) <= R.Length / 2 && FMath::Abs(FVector2D::DotProduct(D, Ac)) <= R.Width / 2;
 	};
 	int32 In = INDEX_NONE, OnFloor = 0;
+	const FBrixRoom* Room = nullptr;   // the room the camera is in (a planned room before a storey's whole floor)
 	for (const int32 i : Near)
 		for (const FBrixRoom& R : Homes[i].Home->Rooms)
-			if (Homes[i].FloorUp.IsValidIndex(R.Floor) && EyeUp > Homes[i].FloorUp[R.Floor] - 0.1f && EyeUp < Homes[i].CeilUp[R.Floor] && InRect(R.R, Eye)) { In = i; OnFloor = R.Floor; }
+			if (Homes[i].FloorUp.IsValidIndex(R.Floor) && EyeUp > Homes[i].FloorUp[R.Floor] - 0.1f && EyeUp < Homes[i].CeilUp[R.Floor] && InRect(R.R, Eye)
+				&& (In != i || !Room || !Room->bFloor || R.bFloor)) { In = i; OnFloor = R.Floor; Room = &R; }
 	// Where the lamps hang on the camera's floor. A room of a planned home: its middle, RoomLampDrop under the ceiling
 	// (homes.js gives each room one). A floor with no plan: where its dressing hangs or stands a lamp (the small glowing
 	// box of each: play.js lamp(), the desk and floor lamps). And the room's own light, over the whole floor.
@@ -688,10 +715,30 @@ void ABrixRooms::PlaceLights(const FVector2D& Eye, float EyeUp, float Daylight)
 				if (B.bGlow && FMath::Max3(B.Size.X, B.Size.Y, B.Size.Z) < 0.3f && B.Colour.X > 0.9f && B.Colour.Z < 0.7f)   // a lamp's glass, not a lit sign
 					Lamps.Add({ FVector2D::Distance(Eye, B.At), FVector(B.At.X, B.At.Y, Floor0 + B.Y0 - 0.05f) * CmPerM });
 		if (bHall && !Lamps.Num()) Lamps.Add({ 0.0, FVector(LH.Centre.X, LH.Centre.Y, Ceil0 - RoomLampDrop) * CmPerM });
-		Fill->SetWorldLocation(FVector(LH.Centre.X, LH.Centre.Y, (Floor0 + Ceil0) * 0.5f) * CmPerM);
+		const FVector2D FillAt = Room && Room->bFloor ? Room->R.Centre : Eye;
+		Fill->SetWorldLocation(FVector(FillAt.X, FillAt.Y, (Floor0 + Ceil0) * 0.5f) * CmPerM);
 		const float Reach = FMath::Max(RoomLampReach, RoomFillReach * 2.f * LH.Reach) * CmPerM;
 		if (!FMath::IsNearlyEqual(Fill->AttenuationRadius, Reach, 1.f)) Fill->SetAttenuationRadius(Reach);
-		FillFull = FillNow(Daylight);
+		// how much of the room's wall is its own windows: the spans of its floor's windows that come within RoomWindowNear
+		// of its floor, over the room's round (a storey's whole floor: the lot's windows on that floor over the lot's round)
+		float Share = 0.f;
+		if (Room)
+		{
+			FBrixRect Around = Room->R;
+			Around.Length += 2.f * RoomWindowNear; Around.Width += 2.f * RoomWindowNear;
+			double Glass = 0.;
+			for (const FBrixWindowSpan& W : LH.Wins)
+				if (W.Floor == OnFloor && (InRect(Around, W.A) || InRect(Around, W.B) || InRect(Around, (W.A + W.B) * 0.5))) Glass += FVector2D::Distance(W.A, W.B);
+			Share = (float)(Glass / FMath::Max(2. * (Room->R.Length + Room->R.Width), 1.));
+			const int32 Key = LH.Lot * 4096 + OnFloor * 256 + (int32)(Room - LH.Home->Rooms.GetData());
+			if (Key != LastShareKey)
+			{
+				LastShareKey = Key;
+				UE_LOG(LogTemp, Log, TEXT("BrixRooms: the camera is in lot %d floor %d room %s (%.1f x %.1f m): windows %.1f m, %.2f of its round"),
+					LH.Lot, OnFloor, *Room->Name, Room->R.Length, Room->R.Width, Glass, Share);
+			}
+		}
+		FillFull = FillNow(Daylight) * FillRoomNow(Room && Room->bFloor, Daylight);
 		const FLinearColor FillColour = FillColourNow(Daylight);   // the day's colour by day, the lamps' by night
 		if (Fill->LightColor != FillColour.ToFColor(true))
 		{

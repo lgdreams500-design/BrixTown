@@ -105,6 +105,9 @@ SKIP_HOURS = {"bakery": ("NightFullMoon", "NightNewMoon"), "shop": ("NightFullMo
               "mall_entrance": ("NightFullMoon", "NightNewMoon"), "mall_shop": ("NightFullMoon", "NightNewMoon"), "mall_escalators": ("NightFullMoon", "NightNewMoon"), "egg_hall": ("NightFullMoon", "NightNewMoon")}   # halls as the shops   # a shop as the bakery   # the owner, 2026-11-26: "for bakery, don't need moon settings"
 PLACE_EYE = {"hallway": {"NightFullMoon": 12, "NightNewMoon": 2.5}, "mall": {"Midday": 82},   # the court's midday sun under open skylights
              "rooms": {"NightFullMoonFireOut": 12, "NightNewMoonFireOut": 2.5}}   # the home room's fire-out nights as dim (the owner)   # and the new moon darker still ("should not have so much light")
+# a place's eye held at a set opening for each setting instead of opening to the target: the hallway's, where the
+# hallway approved on 2026-11-26 (with the bounce x2) had its eye; WASTED_EYE=<stops> holds any place's for a trial
+PLACE_EYE_HELD = {"hallway": {"Morning": 4.36, "Midday": 4.36, "Dusk": -1.24, "NightLamps": -1.00}}   # the moon nights open to the levels the owner set (PLACE_EYE)
 # the moon: high (a full moon in summer stands about 68 degrees up here), turned from the sun's bearing so it falls along
 # the alley and the streets, not across them (at 48 degrees across, the alley's houses shaded all of its paving)
 MOON = dict(height=68, turn=0.35, strength=0.012, colour=(0.62, 0.72, 1.0),   # strength times the place's sun
@@ -2769,6 +2772,10 @@ def mean_of(path):
 def eye(scene, cam, exposure, ex, target, stem):
     """The night's eye, as the game's (ADR-0055): a small quick render, then the exposure that brings its mean brightness
     to the target, at most EYE_MAX stops open; twice, as the picture's tone curve is not straight."""
+    held = os.environ.get("WASTED_EYE") or PLACE_EYE_HELD.get(PLACE, {}).get(stem.split("_")[-1])
+    if held is not None:                                      # an eye held where it is set, not one that opens to the target
+        hlog("  %s: the eye held at %+.2f stops" % (stem, float(held)))
+        return float(held)
     keep = (SAMPLES_H, SCALE_H)
     globals()["SAMPLES_H"], globals()["SCALE_H"] = 10, 20
     path = HOURS_OUT + "/_eye.jpg"
@@ -2853,7 +2860,10 @@ def main_hours():
         extra_mats()
         cam = corridor(lines())
         greyer(ROOM_GREYER)
-        bounce_more(ROOM_BOUNCE)
+        # no bounce_more(ROOM_BOUNCE): the light the side room's door lets in is as the surfaces' own colours give it, and
+        # the eye is held where the hallway approved on 2026-11-26 had it (PLACE_EYE_HELD), so the doorway reads as a room
+        # beyond, not as a lamp (the owner, 2026-11-28: "hall in reference has a bright source of light coming from room
+        # ... room don't have such high light source"; candidate 2, Art/StyleTests/unreal_rooms_light_57)
         each_hour(scene, cam, 1.3, "Hallway", dict(day_lamps=0.0, day_fires=0.0))
     elif PLACE == "shop":                            # a shop with no fire (bank, grocer and the like; the owner, 2026-11-26)
         scene = fresh("Furn_shopfloor")
