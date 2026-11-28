@@ -1707,6 +1707,7 @@
     "status": "proposed",
     "issues": [
      "The spot is the reference's own camera in the Stone Oven (the catalog's camera for the place bakery), 1.7 m up; the game's camera is 90 degrees wide, the middle 86 % of the reference's 15.5 mm view. The room is the game's own, so what is there differs: the door, the menu board and the oven stand on other walls, a big arched window fills the left where the reference has a plank door, and the floor is grey-brown stone tiles where the reference has warm wide boards.",
+     "The walls still carry the old blotched paint: the plain plaster with no paint (ADR-0074) is only in the golden room and its hallway, not in the town's rooms (the owner, 2026-11-28: \"you have not used 0 paint like you did in the home rooms else where interiors\").",
      "The walls are a plain cold white in every setting by day, with no mottle; the reference's plaster is a warm pink-buff that takes the oven's glow (G3, G4).",
      "The oven's fire is pale yellow flat shapes and throws no light on the oven's mouth, the floor or the wall: the reference's fire is red-orange and warms that whole corner in every setting (G7; the owner's rule that every fire is one red).",
      "Morning, Midday and Dusk are nearly one picture inside: only the view out of the window changes. The reference's morning has the sun's patch across the floor and table, and its dusk goes warm (G9).",
@@ -1769,6 +1770,7 @@
     "status": "proposed",
     "issues": [
      "The spot: inside Northwood Grocer (lot b_0_0_l0), the lot the reference was sized from, at the reference's camera corner: the back corner away from the street, 1.7 m up, looking across the floor with the shop front to the right. The game's camera is 90 degrees wide where the reference's 16 mm lens sees 97.",
+     "The walls still carry the old blotched paint: the plain plaster with no paint (ADR-0074) is only in the golden room and its hallway, not in the town's rooms (the owner, 2026-11-28: \"you have not used 0 paint like you did in the home rooms else where interiors\").",
      "What is there differs. The reference's shop has a glazed shop front of teal-framed panes all along one side with the street seen through it, rows of shelving with goods, one cream counter with a till, a rail, a table and a board. The game's has four brown counters with tills and no shelving or goods at all; the long side is a run of blank pale panels under a teal band with only a strip of the street showing over them, and the street is seen only through the arched doorway.",
      "The day does not come in: no sun patch on the floor at Morning (the reference's is the strongest thing in its picture), and Morning, Midday and Dusk are one picture inside (G7, G9).",
      "The walls and the pale panels are blotched with large soft light and dark patches, most of all on the right wall: the engine's own blotches, not the look's mottle (G3).",
@@ -1930,7 +1932,48 @@
     "The forecourt is pale grey slabs where the game has warm brick.",
     "Only the stretch of the shell round the south arch is built; the rest of the mall outside has no reference.",
     "The concourse's shops seen through the doorway still have their earlier matte signs; at this distance they read the same as the glass ones (ADR-0071, MallsEastgateShop)."
-   ]
+   ],
+   "unreal": {
+    "where": "cam:1675,894,1.7,-82.9,4.9",
+    "blender": "Malls/MallsEastgateEntrance_Midday.jpg",
+    "settings": {
+     "Morning": "07:20",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30"
+    },
+    "files": [
+     "Malls/Unreal/MallsEastgateEntrance_Morning.jpg",
+     "Malls/Unreal/MallsEastgateEntrance_Midday.jpg",
+     "Malls/Unreal/MallsEastgateEntrance_Dusk.jpg",
+     "Malls/Unreal/MallsEastgateEntrance_NightLamps.jpg"
+    ],
+    "shot": {
+     "commit": "b5a0fde",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "40 to 46"
+    },
+    "checks": {
+     "Midday": [
+      "look at it: little light and shade, 0.99 stops (a scene in the look has 1.0 or more; a white-out in haze reads so)"
+     ],
+     "Dusk": [
+      "flat: 64% of the picture has no shade or mottle in it (limit 45%)"
+     ]
+    },
+    "status": "proposed",
+    "issues": [
+     "The spot is the reference's own camera on the forecourt (MALL_CAMS entrance in Tools/blender/hours_50.py), 1.7 m up and aimed 4.9 degrees up at the arch, mirrored across the entrance's middle line (x 1675, z 894) because the reference is the game's mirror image; unmirrored, a tree stood in front of the camera. The game's camera is 90 degrees wide where the reference's 17 mm lens sees 93.",
+     "The ribbon wall is a smooth plain cream skin with no grooves or courses at all; the reference's is honed stone in lapped bands with dark grooves, which gives the wall its shape. The look check fails Dusk for flat fill (64 % against 45 %) (G3; Game/README.md already says the entrance is not built to its reference).",
+     "At Dusk and at night the forecourt and the wall are near black: no floodlights on the ground throw their fans up the wall, and the bottom third of the picture is plain black. In the reference the floodlit wall and the lit arch carry both settings (G5, G7).",
+     "Morning: the lower third is a plain dark band (the forecourt in one shadow) and the wall is washed pale in haze; the look check fails Midday for little light and shade (0.99 stops against 1.0).",
+     "The arch is a low square opening with a flat dark side, not the reference's deep rounded vault lit from inside; the three lanterns in it are small white squares.",
+     "The doorway shows the concourse as a small, burnt-white strip by day (G5).",
+     "The forecourt is warm herringbone brick where the reference has pale grey slabs (the reference's own issues say the game has brick).",
+     "The tree's crown is a few large flat yellow-green facets and at dusk and night a plain black shape; nobody is on the forecourt (G6)."
+    ]
+   }
   },
   {
    "id": "MallsEastgateFoodCourt",
