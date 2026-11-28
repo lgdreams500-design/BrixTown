@@ -40,6 +40,7 @@
 #include "HAL/PlatformMisc.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
+#include "BrixTubesActor.h"
 #include "Misc/Paths.h"
 #include "TimerManager.h"
 #include "RHI.h"
@@ -146,6 +147,12 @@ void ABrixGameMode::StartPlay()
 			FString SkipError;
 			if (LoadBrixTimeSkipRules(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), CityDir, TEXT("../rules/time_skip.json"))), *R, SkipError)) SkipRules = R;
 			else UE_LOG(LogTemp, Warning, TEXT("Brix Town: no skipping time (%s)"), *SkipError);
+		}
+		if (!FParse::Param(FCommandLine::Get(), TEXT("BrixNoTubes")))   // the glass travel tubes over the streets (CITY-108)
+		{
+			Tubes = GetWorld()->SpawnActor<ABrixTubes>();
+			Tubes->Start(FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), CityDir, TEXT("tubes.json"))),
+				FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), CityDir, TEXT("../rules/tubes.json"))), Town);
 		}
 		TownActor = Town;
 		if (Insides)   // the homes near the camera, furnished from their plans (FURN-060 to FURN-063)
@@ -431,6 +438,34 @@ void ABrixGameMode::StartPlay()
 					break;
 				}
 	}
+	FString TubeArg;   // -BrixTube=<from>,<to>[,<seconds>]: stand in stop <from>'s booth, ride to <to>; the shot <seconds> into the ride
+	if (FParse::Value(FCommandLine::Get(), TEXT("BrixTube="), TubeArg, false) && Tubes && Tubes->IsReady())
+	{
+		TArray<FString> P;
+		TubeArg.ParseIntoArray(P, TEXT(","));
+		const FBrixTubeStop* From = P.Num() >= 2 ? Tubes->Net().Stops.Find(P[0]) : nullptr;
+		if (From)
+		{
+			const FString To = P[1];
+			const float Into = P.Num() >= 3 ? FCString::Atof(*P[2]) : 3.f;
+			const FVector At = FVector(From->Pos.X, From->Pos.Y, Tubes->Rules().FloorM + 1.0) * BrixUnits::CmPerM;
+			const double Yaw = FMath::RadiansToDegrees(FMath::Atan2(-From->Face.Y, -From->Face.X));   // walked in, facing into the booth
+			FTimerHandle H;
+			GetWorldTimerManager().SetTimer(H, [this, At, Yaw]()
+			{
+				ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+				if (!Me) return;
+				Me->SetActorLocationAndRotation(At, FRotator(0, Yaw, 0), false, nullptr, ETeleportType::TeleportPhysics);
+				if (APlayerController* PC = Cast<APlayerController>(Me->GetController())) PC->SetControlRotation(FRotator(-10, Yaw, 0));
+			}, 1.f, false);
+			FTimerHandle R;
+			GetWorldTimerManager().SetTimer(R, [this, To]()
+			{
+				if (ABrixCharacter* Me = Cast<ABrixCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0))) Me->TestTube(To);
+			}, FMath::Max(2.f, ShotDelaySeconds - Into), false);
+		}
+		else UE_LOG(LogTemp, Warning, TEXT("Brix Town: -BrixTube=%s: no such stop"), *TubeArg);
+	}
 	FString Way;   // -BrixWalk=x,z;x,z;...: after the other switches have placed the player, walk them through these points
 	if (FParse::Value(FCommandLine::Get(), TEXT("BrixWalk="), Way, false))
 	{
@@ -636,6 +671,17 @@ FString ABrixGameMode::SkipTime(const FString& Step, const APlayerController* As
 		SetClock(To);
 		UpdateSun();
 	}
+	return Why;
+}
+
+FString ABrixGameMode::RideTube(const APawn* Asker, bool bRiding, const FString& To, FBrixRide& OutRide) const
+{
+	OutRide = FBrixRide();
+	if (!HasAuthority() || !Asker) return TEXT("not_server");   // the server alone starts a ride (CITY-111)
+	if (!Tubes || !Tubes->IsReady()) return TEXT("no_tubes");
+	const FVector2D At = FVector2D(Asker->GetActorLocation()) / BrixUnits::CmPerM;   // where the server has the rider, not what a client says
+	const FString Why = BrixAskRide(Tubes->Net(), Tubes->Rules(), At, bRiding, To, OutRide);
+	if (Why.IsEmpty()) UE_LOG(LogTemp, Display, TEXT("Brix Town: a tube ride %s to %s, %.1f s"), *OutRide.Nodes[0], *To, OutRide.Duration);
 	return Why;
 }
 

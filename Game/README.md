@@ -643,11 +643,42 @@ The host moves the clock on by 10 minutes (Z), an hour (T) or to the next change
 everything that changes with time is read from the clock. Steps and limits are `World/rules/time_skip.json`, read by
 `BrixTimeSkip` (a port of `Tools/citysim/time_skip.py`) and asked of the server through `ABrixGameMode::SkipTime`; a skip
 is refused in a conversation or on a ride. Checked by `WLD073_ten_minutes_an_hour_and_the_next_weather` and
-`WLD074_only_the_host_skips_and_not_while_busy`. Not yet: the tests have been built but not run in the engine, and a skip
-has not been tried in the game; the Unreal build shows one day's weather on every day, so "the next weather" goes round
+`WLD074_only_the_host_skips_and_not_while_busy`. The tests pass in the engine. Not yet: a skip
+has not been tried by key in a running game; the Unreal build shows one day's weather on every day, so "the next weather" goes round
 that day's four slots; the menu-bar control (WLD-075) has no Interface reference yet, so the keys Z, T and X stand in for
-it; no request from a client over the network (single player: the local player is the host); the glass travel tubes
-(CITY-108 to CITY-114, reference `VehiclesGlassTube` and routes `World/city_01/tubes.json` approved) are not built here.
+it; no request from a client over the network (single player: the local player is the host).
+
+
+## Glass travel tubes (CITY-108 to CITY-112, CITY-114; F-VEH-TUBE level 2; ADR-0076)
+Clear glass tubes as slim as a rider run 9 m over the streets on iron posts, between 24 stops (`World/city_01/tubes.json`,
+approved on the map; `World/rules/tubes.json` for the ride and the look). `ABrixTubes` builds them once at load, as the
+approved reference `VehiclesGlassTube` draws them: the tube swept along each line with its corners turned on arcs
+(`bend_r_m`), brass bands every 4 m, a post with an iron cradle every 14 m under the level runs (one where tubes run
+together); at each stop a slim glass booth (0.75 m) on a stone plinth, open at its door, three brass ribs and three bands,
+a cream cap narrowing through a glass funnel into the tube, a lantern by the door that is lit, and lights the booth, with
+the street lamps. The glass is `/Game/Greybox/M_TubeGlass` (`Tools/unreal/make_tube_glass_material.py`): a faint
+sea-green tint, clearer looked through, brighter at the edges. Standing in a booth the prompt offers a ride to another
+stop (the arrow keys choose which, E rides); the server (`ABrixGameMode::RideTube`) checks the rider stands in a booth and
+the stop can be reached, and works the ride out (`BrixTubes`, a port of `Tools/citysim/tubes.py`): drawn up out of the
+booth, along the tubes the shortest way at up to 40 m/s, lying on their side head first along the level runs, and set
+down in the far booth facing out of its door. The camera leaves the boom for the ride and comes back to it eased, never
+cut: beside the booth as the rider rises and comes down, chasing behind along the tubes. No skipping time on a ride.
+Checked by `CITY108_the_towns_tubes_are_sound_and_reach_every_stop`, `CITY109_a_ride_goes_floor_tube_floor_without_a_jump`,
+`CITY110_the_camera_follows_the_rider_without_a_cut` and `CITY111_the_server_checks_the_stop_and_the_way`. To see a ride in
+a test shot: `-BrixTube=<from>,<to>,<seconds into the ride at the shot>`; `-BrixNoTubes` leaves them out. Shots:
+`Art/StyleTests/unreal_tubes_59/`.
+Not yet: the tubes run 9 m up through the crowns of the street trees on Baker Street and elsewhere (a grown plane
+reaches higher): the ride's camera goes through a crown there; whether the tubes rise over the trees, the trees are cut
+back under them or the lines move is the owner's to say. Booths were moved off trees when placed (Market Square 10 m
+east, Plum Works 4 m, Fountain Hospital 2 m; `make_tubes_01.py`), the lines were not. The stop is chosen in the prompt
+with the arrow keys: the tube map each stop should show (CITY-112) is not made, and needs an Interface reference first.
+The brass is the greybox's matte paint, not metal; the glass neither gets wet nor holds snow. The posts stand under the
+line, over the street's middle, and the cars drive through them. The booth's door is an opening in its glass (`door_deg`
+70), which the reference does not show. The rider keeps the standing pose all the way (no arms held in), and the turn
+from facing into the booth to lying on their side swings their yaw quickly at the top bend. At 40 m/s the engine's
+motion blur smears the town. No other riders (CITY-113, Q-41), no fare (Q-42), no ride for a client over the network
+(single player: the server is this machine). `-BrixTube` cannot start a ride before 2 s after load, so a test shot is
+at most 10 s into a ride.
 
 ## Clouds (WLD-035, WLD-036; ADR-0014)
 Soft heaps on one flat layer overhead, bright on the side towards the sun and shaded underneath, fading into the haze
@@ -1370,6 +1401,10 @@ Play there. To check the picture without anyone at the keys, add `-BrixShot=C:/f
 | `BrixTown.World.WLD071_footprints_and_tracks_follow_the_clock` | WLD-071 |
 | `BrixTown.World.WLD073_ten_minutes_an_hour_and_the_next_weather` | WLD-073 |
 | `BrixTown.World.WLD074_only_the_host_skips_and_not_while_busy` | WLD-074 |
+| `BrixTown.World.CITY108_the_towns_tubes_are_sound_and_reach_every_stop` | CITY-108, CITY-112 |
+| `BrixTown.World.CITY109_a_ride_goes_floor_tube_floor_without_a_jump` | CITY-109 |
+| `BrixTown.World.CITY110_the_camera_follows_the_rider_without_a_cut` | CITY-110 |
+| `BrixTown.World.CITY111_the_server_checks_the_stop_and_the_way` | CITY-111 |
 | `BrixTown.World.CITY007_every_conversation_is_sound` | CITY-007 |
 | `BrixTown.World.CHR009_lines_are_mouthed_as_the_slice_mouths_them` | CHR-009 |
 | `BrixTown.World.CHR001_the_designer_makes_the_slices_look` | CHR-001, CHR-002 |

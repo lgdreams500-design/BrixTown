@@ -355,6 +355,12 @@ void ABrixTalk::Tick(float Dt)
 		FString Lift;
 		double LiftD = 0;
 		if (Mode && Me && Mode->RoomsActor() && Mode->RoomsActor()->LiftOffer(Me->GetActorLocation(), Lift, LiftD)) PromptText = Lift;
+		if (const ABrixCharacter* Ch = Cast<ABrixCharacter>(Me))   // in a tube stop's booth (CITY-111), or on a ride: nothing to press
+		{
+			if (Ch->IsTubeRiding()) { PromptText.Empty(); return; }
+			const FString Tube = Ch->TubeOffer();
+			if (!Tube.IsEmpty()) PromptText = Tube;
+		}
 		return;
 	}
 	if (bNextPending && Now(GetWorld()) >= NextAt) Show(NextNode);

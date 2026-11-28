@@ -7,7 +7,7 @@ import itertools, math, os, random, sys, unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "worldgen"))
 import world                                               # noqa: E402
-from tubes import Ride, mouth, problems, route             # noqa: E402
+from tubes import Ride, mouth, problems, rounded, route            # noqa: E402
 
 RULES = world.load()["tubes"]
 H = RULES["ride"]["draw_in_height_m"]
@@ -84,6 +84,49 @@ class TheTownsTubes(unittest.TestCase):
         for a, b in itertools.permutations(self.net["stops"], 2):
             self.assertIsNotNone(route(self.net, a, b), (a, b))
 
+    def test_CITY_109_the_rider_stays_inside_the_glass(self):
+        """The rider's line, bends and the turns where one tube meets the next rounded, never leaves the tubes as built."""
+        r = RULES["ride"]
+        built = [rounded(t["line"], r["bend_r_m"]) for t in self.net["tubes"]]
+        segs = [(p, q) for line in built for p, q in zip(line, line[1:])]
+
+        def off(x):
+            best = math.inf
+            for p, q in segs:
+                d = [b - a for a, b in zip(p, q)]
+                dd = sum(v * v for v in d)
+                f = 0.0 if dd < 1e-12 else max(0.0, min(1.0, sum((xi - a) * v for xi, a, v in zip(x, p, d)) / dd))
+                best = min(best, math.dist(x, [a + v * f for a, v in zip(p, d)]))
+            return best
+        stops = list(self.net["stops"])
+        for a, b in [(stops[0], s) for s in stops[1:]] + [(stops[-1], stops[1])]:
+            ride = Ride(self.net, RULES, a, b)
+            for k in range(0, int(ride.cum[-1]), 3):
+                x = ride._on_run(k)
+                self.assertLess(off(x), RULES["tube_inner_m"] / 2, (a, b, k))
+
+    def test_CITY_109_town_rides_turn_smoothly_and_the_camera_never_cuts(self):
+        stops = list(self.net["stops"])
+        for b in stops[1:]:
+            ride = Ride(self.net, RULES, stops[0], b)
+            leans = [ride.lean(s) for s in frames(ride)]
+            for p, q in zip(leans, leans[1:]):
+                self.assertLess(abs(p - q), 12, (stops[0], b))
+            fr = frames(ride)
+            cams = [ride.camera(s) for s in fr]
+            for s, cam in zip(fr, cams):
+                self.assertGreater(math.dist(cam, ride.at(s)), RULES["camera"]["above_m"], (stops[0], b, s))
+            for p, q in zip(cams, cams[1:]):
+                self.assertLessEqual(math.dist(p, q), RULES["camera"]["max_jump_m"], (stops[0], b))
+
+    def test_CITY_109_bends_are_rounded(self):
+        line = rounded([(0, 0, 7), (0, 0, 9), (10, 0, 9), (10, 5, 9)], 1.8)
+        self.assertEqual((line[0], line[-1]), ((0, 0, 7), (10, 5, 9)), "the ends stay at the mouths")
+        for p, q, s in zip(line, line[1:], line[2:]):
+            u, v = [b - a for a, b in zip(p, q)], [b - a for a, b in zip(q, s)]
+            cos = sum(x * y for x, y in zip(u, v)) / (math.hypot(*u) * math.hypot(*v))
+            self.assertGreater(cos, math.cos(math.radians(25)), "no sharp corner")
+
 
 class Riding(unittest.TestCase):
     def setUp(self):
@@ -93,13 +136,13 @@ class Riding(unittest.TestCase):
         r = RULES["ride"]
         for ride in self.rides:
             a, b = NET["stops"][ride.nodes[0]], NET["stops"][ride.nodes[-1]]
-            self.assertEqual(ride.at(0), (a["pos"][0], a["pos"][1], 0.0))
+            self.assertEqual(ride.at(0), (a["pos"][0], a["pos"][1], r["floor_m"]))
             self.assertEqual(ride.phase(0.1), "draw_in")
             self.assertAlmostEqual(ride.at(r["draw_in_s"])[2], H, places=6)
             self.assertEqual(ride.phase(ride.t0 + 0.01), "run")
             self.assertEqual(ride.phase(ride.t1 + 0.01), "pop_out")
             end = ride.at(ride.duration)
-            self.assertEqual(end[2], 0.0)
+            self.assertEqual(end[2], r["floor_m"])                                  # on the far booth's floor
             out = math.dist(end[:2], b["pos"])
             self.assertAlmostEqual(out, r["pop_out_arc_m"], places=6)          # landed past the door, facing out
             self.assertAlmostEqual(ride.duration, r["draw_in_s"] + ride.t_run + r["pop_out_s"])
@@ -144,14 +187,17 @@ class Riding(unittest.TestCase):
             cams = [ride.camera(s) for s in fr]
             for p, q in zip(cams, cams[1:]):
                 self.assertLessEqual(math.dist(p, q), c["max_jump_m"], ride.nodes)
-            a = NET["stops"][ride.nodes[0]]
-            walk_in = (a["pos"][0] + a["face"][0] * c["behind_m"], a["pos"][1] + a["face"][1] * c["behind_m"], c["above_m"])
-            for x, y in zip(cams[0], walk_in):
-                self.assertAlmostEqual(x, y)                                    # starts as the everyday camera
-            b, end = NET["stops"][ride.nodes[-1]], ride.at(ride.duration)
-            settled = (end[0] - b["face"][0] * c["behind_m"], end[1] - b["face"][1] * c["behind_m"], c["above_m"])
-            for x, y in zip(cams[-1], settled):
-                self.assertAlmostEqual(x, y)                                    # and ends as it, behind the rider
+            for s, cam in ((0.0, cams[0]), (fr[-1], cams[-1])):            # beside the booth at both ends, at the rider's height
+                at = ride.at(s)
+                self.assertAlmostEqual(math.hypot(cam[0] - at[0], cam[1] - at[1]), c["behind_m"], delta=0.5)
+                self.assertAlmostEqual(cam[2], at[2] + c["above_m"], delta=0.5)
+
+    def test_CITY_110_the_camera_stays_outside_the_rider(self):
+        c = RULES["camera"]
+        near = c["above_m"]                                              # never nearer than it stands over them
+        for ride in self.rides:
+            for s in frames(ride):
+                self.assertGreater(math.dist(ride.camera(s), ride.at(s)), near, (ride.nodes, s))
 
     def test_CITY_110_the_camera_keeps_the_rider_close(self):
         c, v = RULES["camera"], RULES["ride"]["speed_mps"]

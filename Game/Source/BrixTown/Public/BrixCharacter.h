@@ -61,6 +61,11 @@ public:
 	void SetView(float CameraM, float FovDeg, float LookSpeed, bool bInvertY);
 	// for test shots: press E as a player would, and hold W/S and A/D (x steer, y throttle)
 	void TestPress() { TalkKey(); }
+	// Glass travel tubes (CITY-109 to CITY-111): on a ride; the stop E would ride to from the booth stood in (empty if
+	// none); the arrow keys choose another; a test shot's ride to a stop, as if chosen and E pressed
+	bool IsTubeRiding() const { return bTubeRiding; }
+	FString TubeOffer() const;
+	void TestTube(const FString& To);
 	FVector2D TestHold = FVector2D::ZeroVector;
 	double WalkPhase() const { return Phase; }   // the walk's cycle, 0..1: a step at each half (the sound's steps, SND-003)
 	FVector2D DriveKeys() const { return DriveUsed; }   // this frame's steer and throttle while driving (the engine's sound, SND-009)
@@ -156,6 +161,20 @@ private:
 	bool bTalking = false;
 	bool bPanel = false;
 	bool bDriving = false, bHandbrake = false;
+	// a glass tube ride (CITY-109, CITY-110): the server's ride, when it began, the camera's place and turn as the ride took
+	// it over and as it gave it back, and which stop the booth's arrows have chosen
+	bool bTubeRiding = false;
+	TSharedPtr<struct FBrixRide> TubeRide;
+	double TubeT0 = 0, TubeBackLeft = 0;
+	FVector TubeCamFrom = FVector::ZeroVector, TubeCamLast = FVector::ZeroVector;
+	FQuat TubeCamFromRot = FQuat::Identity, TubeCamLastRot = FQuat::Identity;
+	FTransform TubeCamRel;
+	int32 TubePick = 0;
+	FString TubePickAt;
+	UPROPERTY(EditAnywhere) float TubeCamBlendSeconds = .8f;   // from the everyday camera onto the ride's, and back
+	bool StartTube(const FString& To);
+	void TubeTick(float DeltaSeconds);
+	class ABrixTubes* Tubes() const;
 	float PersonWet = -1.f;          // how wet the player's clothes are shown (WLD-037)
 	FVector2D DriveIn = FVector2D::ZeroVector;   // this frame's W/S and A/D while driving
 	FVector2D DriveUsed = FVector2D::ZeroVector; // what the car was given this frame (DriveIn is cleared once used)

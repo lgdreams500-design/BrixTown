@@ -34,6 +34,7 @@
 #include "InputModifiers.h"
 #include "Misc/Paths.h"
 #include "ProceduralMeshComponent.h"
+#include "BrixTubesActor.h"
 #include "UObject/ConstructorHelpers.h"
 
 using BrixUnits::CmPerM;
@@ -272,6 +273,7 @@ void ABrixCharacter::Tick(float DeltaSeconds)
 			if (APlayerController* PC = Cast<APlayerController>(GetController())) if (PC->PlayerCameraManager) PC->PlayerCameraManager->UpdateCamera(DeltaSeconds);
 		return;
 	}
+	if (bTubeRiding || TubeBackLeft > 0) { TubeTick(DeltaSeconds); if (bTubeRiding) return; }   // in a glass tube (CITY-109)
 	if (IsPlaying())   // on a swing, seesaw, slide, sandpit or climbing frame: where the go puts you (dressing.js playerAt())
 	{
 		ABrixPeople* Pp = People();
@@ -526,6 +528,7 @@ ABrixTalk* ABrixCharacter::Talk() const
 void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whichever is nearest (play.js interact())
 {
 	if (bDesigning && bDesignKeys) return;   // the designer has the keys
+	if (bTubeRiding) return;   // the rider has no say during a ride (CITY-111)
 	if (IsPlaying()) { StopPlay(); return; }
 	if (bSeated) { StopSeat(); return; }
 	ABrixCars* C = Cars();
@@ -546,6 +549,11 @@ void ABrixCharacter::TalkKey()   // E: talk, get in a car or get out of it, whic
 	}
 	if (bPanel) return;   // a counter, the menu or the map is open: E started a drive or a talk under it, with the camera held
 	if (T && T->IsTalking()) return;
+	if (ABrixTubes* Tb = Tubes())   // in a tube stop's booth: ride to the stop chosen (CITY-111)
+	{
+		const FString From = Tb->StopAt(FVector2D(GetActorLocation()) / CmPerM);
+		if (!From.IsEmpty()) { StartTube(Tb->Choice(From, TubePickAt == From ? TubePick : 0)); return; }
+	}
 	if (const ABrixGameMode* M = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this)))   // a tower's lift call within reach (WLD-051)
 		if (M->RoomsActor() && M->RoomsActor()->UseLift(this)) return;
 	const FVector2D Me(GetActorLocation().X / CmPerM, GetActorLocation().Y / CmPerM);
@@ -596,6 +604,7 @@ void ABrixCharacter::SkipKey(const FString& Step)   // WLD-073, WLD-074: ask the
 	if (!Mode) return;   // only the server has the game mode; there is no network play yet
 	TArray<FString> Busy;
 	if (bTalking) Busy.Add(TEXT("conversation"));
+	if (bTubeRiding) Busy.Add(TEXT("ride"));
 	const FString Why = Mode->SkipTime(Step, Cast<APlayerController>(GetController()), Busy);
 	ABrixLife* L = Life();
 	if (!L) return;
@@ -673,8 +682,19 @@ void ABrixCharacter::ChooseKey(const FInputActionInstance& Instance)
 {
 	if (bDesigning && bDesignKeys) return;   // the designer has the keys
 	ABrixLife* L = Life();
-	if (!L || !L->IsShop()) return;
 	const int32 n = ChooseActions.IndexOfByKey(Instance.GetSourceAction());
+	if ((!L || !L->IsShop()) && !bTubeRiding && (n == 0 || n == 1))   // in a tube booth: the arrows choose the stop to ride to
+		if (ABrixTubes* Tb = Tubes())
+		{
+			const FString From = Tb->StopAt(FVector2D(GetActorLocation()) / CmPerM);
+			if (!From.IsEmpty())
+			{
+				if (TubePickAt != From) { TubePickAt = From; TubePick = 0; }
+				TubePick += n == 0 ? -1 : 1;
+				return;
+			}
+		}
+	if (!L || !L->IsShop()) return;
 	if (n == 4) L->EnterKey();
 	else if (n >= 0) L->ArrowKey(n == 0 ? -1 : n == 1 ? 1 : 0, n == 2 ? -1 : n == 3 ? 1 : 0);
 }
@@ -892,3 +912,118 @@ void ABrixCharacter::StepBoard(float Dt)
 	}
 }
 
+// Glass travel tubes (CITY-109 to CITY-111) ----------------------------------------------------------------------------
+
+ABrixTubes* ABrixCharacter::Tubes() const
+{
+	const ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	return Mode && Mode->Tubes && Mode->Tubes->IsReady() ? Mode->Tubes.Get() : nullptr;
+}
+
+FString ABrixCharacter::TubeOffer() const
+{
+	const ABrixTubes* Tb = Tubes();
+	if (!Tb || bTubeRiding || bDriving || bSeated || IsPlaying()) return FString();
+	const FString From = Tb->StopAt(FVector2D(GetActorLocation()) / CmPerM);
+	if (From.IsEmpty()) return FString();
+	const FString To = Tb->Choice(From, TubePickAt == From ? TubePick : 0);
+	const FBrixTubeStop* S = Tb->Net().Stops.Find(To);
+	return S ? FString::Printf(TEXT("Ride the tube to %s   (arrows: another stop)"), *S->Name) : FString();
+}
+
+void ABrixCharacter::TestTube(const FString& To)
+{
+	if (!StartTube(To)) UE_LOG(LogTemp, Warning, TEXT("Brix Town: -BrixTube: no ride to %s"), *To);
+}
+
+bool ABrixCharacter::StartTube(const FString& To)
+{
+	ABrixGameMode* Mode = Cast<ABrixGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!Mode) return false;   // only the server has the game mode; there is no network play yet
+	TSharedPtr<FBrixRide> W = MakeShared<FBrixRide>();
+	const FString Why = Mode->RideTube(this, bTubeRiding, To, *W);
+	if (!Why.IsEmpty())
+	{
+		if (ABrixLife* L = Life()) L->Toast(Why == TEXT("no_way") ? TEXT("No tube goes there from here") : TEXT("You can only ride from inside a tube stop"));
+		return false;
+	}
+	TubeRide = W;
+	TubeT0 = GetWorld()->GetTimeSeconds();
+	bTubeRiding = true;
+	TubeBackLeft = 0;
+	TubePick = 0;
+	// the camera leaves the boom: from here the ride places it, starting from where it is (CITY-110: no cut)
+	TubeCamRel = Camera->GetRelativeTransform();
+	TubeCamFrom = Camera->GetComponentLocation();
+	TubeCamFromRot = Camera->GetComponentQuat();
+	Camera->SetUsingAbsoluteLocation(true);
+	Camera->SetUsingAbsoluteRotation(true);
+	Camera->SetWorldLocationAndRotation(TubeCamFrom, TubeCamFromRot);
+	Boom->bDoCollisionTest = false;
+	SetActorEnableCollision(false);
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+	return true;
+}
+
+void ABrixCharacter::TubeTick(float DeltaSeconds)
+{
+	auto Smooth = [](double F) { F = FMath::Clamp(F, 0.0, 1.0); return F * F * (3 - 2 * F); };
+	const double Half = .95;   // the capsule's middle over the feet, standing (as the stops and seats put the player)
+	if (bTubeRiding && TubeRide)
+	{
+		const FBrixRide& W = *TubeRide;
+		const double S = GetWorld()->GetTimeSeconds() - TubeT0;
+		// the rider: feet where the ride has them, upright going up or down and lying along the level tube head first,
+		// turned on their side (the owner, 2026-11-28: "the player will rotate laterally when going horizontal")
+		const FVector Feet = W.At(S), Up = W.Heading(S);
+		const double Lean = W.Lean(S);
+		const FVector Mid = Feet + Up * Half * FMath::Cos(FMath::DegreesToRadians(Lean));
+		const FVector Base = S < (W.T0 + W.T1) / 2 ? FVector(-W.FaceA, 0) : FVector(W.FaceB, 0);   // into the first booth, out of the last
+		const FVector Flat = FVector(Up.X, Up.Y, 0).GetSafeNormal();
+		const FVector Side = Flat.IsNearlyZero() ? Base : FVector::CrossProduct(Flat, FVector::UpVector);
+		FVector Fwd = FMath::Lerp(Base, Side, FMath::Clamp(Lean / 80.0, 0.0, 1.0));
+		Fwd = (Fwd - Up * FVector::DotProduct(Fwd, Up)).GetSafeNormal();
+		if (Fwd.IsNearlyZero()) Fwd = FVector::CrossProduct(Up, FVector::RightVector).GetSafeNormal();
+		SetActorLocationAndRotation(Mid * CmPerM, FRotationMatrix::MakeFromZX(Up, Fwd).Rotator(), false, nullptr, ETeleportType::TeleportPhysics);
+		// the camera: the ride's (FBrixRide::Camera), eased in from where the everyday camera was, looking at the rider
+		const double K = Smooth(S / TubeCamBlendSeconds);
+		const FVector C = W.Camera(S) * CmPerM + (TubeCamFrom - W.Camera(0) * CmPerM) * (1 - K);
+		const FQuat Look = FRotationMatrix::MakeFromX(Mid * CmPerM - C).ToQuat();
+		Camera->SetWorldLocationAndRotation(C, FQuat::Slerp(TubeCamFromRot, Look, K));
+		FBrixDrawOptions O;
+		O.Seconds = GetWorld()->GetTimeSeconds();
+		O.Lod = 0;
+		Scratch.Reset();
+		DrawBrixPerson(Rules, Rules.Player, FVector::ZeroVector, 0.0, O, Scratch);
+		Verts = BrixBodyToMesh(Person, Scratch, Verts, false, BodyMaterial);
+		if (S < W.Duration + W.R.FollowS) return;
+		// set down in the far booth, facing out of its door, the everyday camera behind again
+		bTubeRiding = false;
+		const double Yaw = FMath::RadiansToDegrees(FMath::Atan2(W.FaceB.Y, W.FaceB.X));
+		SetActorLocationAndRotation((W.OutB + FVector(0, 0, Half + .05)) * CmPerM, FRotator(0, Yaw, 0), false, nullptr, ETeleportType::TeleportPhysics);
+		SetActorEnableCollision(true);
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		Boom->bDoCollisionTest = true;
+		const FVector Toward = (W.OutB + FVector(0, 0, Half)) * CmPerM - C;   // the everyday camera taken up from where the ride left it, not swung round
+		if (APlayerController* PC = Cast<APlayerController>(GetController())) PC->SetControlRotation(FRotator(-10, FMath::RadiansToDegrees(FMath::Atan2(Toward.Y, Toward.X)), 0));
+		TubeCamLast = C;
+		TubeCamLastRot = Camera->GetComponentQuat();
+		TubeBackLeft = TubeCamBlendSeconds;
+		return;
+	}
+	// back to the boom: where it would put the camera, eased into from where the ride left it
+	TubeBackLeft = FMath::Max(0.0, TubeBackLeft - DeltaSeconds);
+	const APlayerController* PC = Cast<APlayerController>(GetController());
+	const FRotator R = PC ? PC->GetControlRotation() : GetActorRotation();
+	const FVector Pivot = Boom->GetComponentLocation() + Boom->TargetOffset;
+	const FVector Natural = Pivot - R.Vector() * Boom->TargetArmLength + FRotationMatrix(R).TransformVector(Boom->SocketOffset) + TubeCamRel.GetLocation();
+	const double F = Smooth(1 - TubeBackLeft / TubeCamBlendSeconds);
+	Camera->SetWorldLocationAndRotation(FMath::Lerp(TubeCamLast, Natural, F), FQuat::Slerp(TubeCamLastRot, R.Quaternion(), F));
+	if (TubeBackLeft <= 0)
+	{
+		Camera->SetUsingAbsoluteLocation(false);
+		Camera->SetUsingAbsoluteRotation(false);
+		Camera->SetRelativeTransform(TubeCamRel);
+	}
+}

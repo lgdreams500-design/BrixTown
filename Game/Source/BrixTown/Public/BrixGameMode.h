@@ -37,6 +37,10 @@ public:
 	// "weather") when Asker is the host and not busy; returns empty, or why not (BrixAskSkip). Everything else follows the clock.
 	FString SkipTime(const FString& Step, const class APlayerController* Asker, const TArray<FString>& Busy);
 	const struct FBrixTimeSkipRules* TimeSkipRules() const { return SkipRules.Get(); }
+	// A rider asks for a ride to stop To (CITY-111): empty and OutRide the server's ride, or why not (BrixAskRide's reasons,
+	// "not_server", "no_tubes"). Where the rider stands is the server's own copy of them.
+	FString RideTube(const APawn* Asker, bool bRiding, const FString& To, struct FBrixRide& OutRide) const;
+	UPROPERTY() TObjectPtr<class ABrixTubes> Tubes;   // the glass travel tubes (CITY-108 to CITY-114)
 	float Daylight = 1.f;                         // the sun's share of its light now, 0 at night (FBrixSky::Daylight)
 	UPROPERTY() TObjectPtr<class ABrixTalk> Talk;    // conversations with residents (CITY-007)
 	UPROPERTY() TObjectPtr<class ABrixCars> Cars;

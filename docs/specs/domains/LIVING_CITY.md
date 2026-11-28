@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-LIVING-CITY
 title: Brix Town — Living city (map, residents, things to use, vehicles, seasons and plants)
-version: 0.6.6
+version: 0.6.7
 status: draft
 last_updated: 2026-11-28
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -64,7 +64,7 @@ what is production-ready in the pinned engine version before PH1 work starts `[O
 ## 3. Requirements
 
 Status of all rows: `proposed` (CITY-081 to CITY-088 from the owner's requests of 2026-11-23 for more and more realistic careers), except CITY-043 to CITY-049 and CITY-060 to CITY-067, which the owner
-accepted on 2026-11-22, and CITY-068 and CITY-069, which follow from the owner's answers the same day (Q-29; "both" for busier streets), and CITY-072 to CITY-076 (crash damage), from the owner's request and answers the same day, and CITY-089 to CITY-095 (cars by kind of home, the roads outside the wall, buses, bus rides, parked cars off the street, car pooling, no car on days it is not used), from the owner's requests and answers on 2026-11-23 (F-VEH-TRANSIT level 2 "Network", the tram kept), and CITY-107 (residents in snow), from the owner's request and answers on 2026-11-25. "Proven by" names the test in `Tools/citysim/test_citysim.py`, or for cars in `Tools/citysim/test_traffic.py`.
+accepted on 2026-11-22, and CITY-068 and CITY-069, which follow from the owner's answers the same day (Q-29; "both" for busier streets), and CITY-072 to CITY-076 (crash damage), from the owner's request and answers the same day, and CITY-089 to CITY-095 (cars by kind of home, the roads outside the wall, buses, bus rides, parked cars off the street, car pooling, no car on days it is not used), from the owner's requests and answers on 2026-11-23 (F-VEH-TRANSIT level 2 "Network", the tram kept), and CITY-107 (residents in snow), from the owner's request and answers on 2026-11-25, and CITY-108 to CITY-112 and CITY-114 (glass travel tubes) and WLD-073 to WLD-075 (skip time), from the owner's requests and picks on 2026-11-28 (F-TIME-SKIP level 1, F-VEH-TUBE level 2, the tube's reference and routes approved, then "Build tubes in Unreal"); CITY-113 stays proposed while Q-41 is open. "Proven by" names the test in `Tools/citysim/test_citysim.py`, or for cars in `Tools/citysim/test_traffic.py`.
 
 ### 3.1 Map, lots and buildings
 
@@ -326,6 +326,7 @@ up to 42 on the road at once, no overlap, no crossing movements in a box, nobody
 ## 7. Change log
 | Version | Date | Change |
 |---|---|---|
+| 0.6.7 | 2026-11-28 | CITY-108 to CITY-112, CITY-114 and WLD-073 to WLD-075 accepted (the owner's requests and picks; "Build tubes in Unreal"). A ride's corners are arcs (`bend_r_m`, `junction_bend_r_m`) and it starts and ends on the booth's floor (`floor_m`), set down inside the far booth facing out. |
 | 0.6.6 | 2026-11-28 | The tube routes approved by the owner on the map (CITY-108, CITY-112): 24 stops, `World/city_01/tubes.json`. |
 | 0.6.5 | 2026-11-28 | Skip time (WLD-073 to WLD-075; F-TIME-SKIP level 1) and glass travel tubes (CITY-108 to CITY-114; F-VEH-TUBE level 2), from the owner's request and picks in chat. Q-41 and Q-42 opened. All proposed. |
 | 0.6.4 | 2026-11-25 | Skateboards sold at the mall's sports and toy outlets, at the owner's word ("we don't need a dedicated skate boards shop. ridable skateboards should be in sports or toy shop. player can either use them to rid or use it as display both."): CITY-102 and CITY-103 reworded (ADR-0054, superseding ADR-0053); Market Skate Store is the Market Grocer again; boards.json `sold_at`. |

@@ -7,8 +7,11 @@
     "speed_mps": 40.0,
     "ease_s": 1.5,
     "pop_out_s": 1.2,
-    "pop_out_arc_m": 1.5,
-    "turn_window_m": 2.0
+    "pop_out_arc_m": 0.4,
+    "turn_window_m": 2.0,
+    "bend_r_m": 1.8,
+    "junction_bend_r_m": 0.8,
+    "floor_m": 0.31
   },
   "camera": {
     "behind_m": 6.0,
@@ -17,5 +20,30 @@
     "max_jump_m": 1.0
   },
   "tube_inner_m": 0.68,
-  "tube_note": "The owner, 2026-11-28: \"thinner diameter should be just enough fit the player's waist. so the player will rotate laterally when going horizontal\". 0.68 m inside: the reference's rider measures 0.63 m across with the arms at the sides. [ASSUMPTION]"
+  "tube_note": "The owner, 2026-11-28: \"thinner diameter should be just enough fit the player's waist. so the player will rotate laterally when going horizontal\". 0.68 m inside: the reference's rider measures 0.63 m across with the arms at the sides. [ASSUMPTION]",
+  "look": {
+    "note": "From the approved reference VehiclesGlassTube (Tools/blender/hours_50.py TUBE; the owner, 2026-11-28: \"Approve, go on\"). Metres; colours linear RGB. glass_edge: how much more the glass covers at a grazing angle than looked through (0.34 in Blender read milky close to the camera in Unreal, 2026-11-28).",
+    "booth_r": 0.75,
+    "booth_h": 3.0,
+    "plinth_r": 1.0,
+    "plinth_h": 0.25,
+    "funnel_h": 0.7,
+    "ring_every_m": 4.0,
+    "post_every_m": 14.0,
+    "door_deg": 70,
+    "glass": [
+      0.7,
+      0.86,
+      0.88
+    ],
+    "glass_alpha": 0.16,
+    "brass": [
+      0.62,
+      0.48,
+      0.26
+    ],
+    "glass_edge": 0.15
+  },
+  "bend_note": "bend_r_m: each corner of a tube's line is built and ridden as an arc this wide (the reference's bend_r); junction_bend_r_m: where a ride turns from one tube into another at a junction, small enough to stay inside the crossing tubes. [ASSUMPTION]",
+  "floor_note": "floor_m: the booth's floor over the street (look.plinth_h and its 6 cm step): where a ride starts and where the rider is set down, pop_out_arc_m in from the middle towards the door, inside the booth, facing out. [ASSUMPTION]"
 }

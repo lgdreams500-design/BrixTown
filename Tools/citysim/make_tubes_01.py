@@ -19,6 +19,7 @@ import world                                               # noqa: E402
 from tubes import problems                                 # noqa: E402
 
 RUN_Z = 9.0
+CROWN_CLEAR = 1.0                 # a booth this far outside a grown tree's crown (vegetation.json r_max)
 SIDE = 8.0        # m from a lane's middle to a booth beside it
 STEP = 12.0       # m between the points a tube keeps along a curving road
 
@@ -158,12 +159,14 @@ def build():
         for (s0, a), (s1, b) in zip(order, order[1:]):
             trunks.append((a, b, [tuple(junctions[a])] + thin(W, s0, s1, cw)[1:-1] + [tuple(junctions[b])]))
     props = [tuple(pr["pos"]) for bl in w["blocks"] for pr in bl.get("props", [])]
-    for sid, st in stops.items():                                  # a booth clear of the street's lamps, plants and signs
-        x, z = st["pos"]
+    veg = w["vegetation"].get("species", w["vegetation"])
+    trees = [(tuple(t["pos"]), veg.get(t["species"], {}).get("r_max", 4.0)) for bl in w["blocks"] for t in bl.get("trees", [])]
+    for sid, st in stops.items():                                  # a booth clear of the street's lamps, plants and signs,
+        x, z = st["pos"]                                           # and its riser clear of a grown tree's crown
         along = (-st["face"][1], st["face"][0])
-        for k in (0, 1, -1, 2, -2, 3, -3, 4, -4):
+        for k in (0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8, -8):
             q = (x + along[0] * 2.0 * k, z + along[1] * 2.0 * k)
-            if all(abs(q[0] - pp[0]) >= 1.6 or abs(q[1] - pp[1]) >= 1.6 for pp in props) and not inside_lot(q, lots, 0.5):
+            if all(abs(q[0] - pp[0]) >= 1.6 or abs(q[1] - pp[1]) >= 1.6 for pp in props) and not inside_lot(q, lots, 0.5)                     and all(math.dist(q, tp) >= r + CROWN_CLEAR for tp, r in trees):
                 st["pos"] = [round(q[0], 2), round(q[1], 2)]
                 break
         else:

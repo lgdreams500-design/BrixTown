@@ -31,6 +31,36 @@ def _smooth(f):
     return f * f * (3 - 2 * f)
 
 
+def rounded(line, r, step_deg=10.0):
+    """The line with each corner turned on an arc of radius r (smaller where a leg is too short for it): what the tube is
+    built along and what a rider follows. Its ends stay where they are."""
+    pts = [tuple(p) for p in line]
+    if len(pts) < 3 or r <= 0:
+        return pts
+    out = [pts[0]]
+    for i in range(1, len(pts) - 1):
+        p, c, q = out[-1], pts[i], pts[i + 1]
+        a, b = _d(p, c), _d(c, q)
+        if a < 1e-9 or b < 1e-9:
+            continue
+        u = tuple((x - y) / a for x, y in zip(p, c))           # from the corner back along the leg in
+        v = tuple((x - y) / b for x, y in zip(q, c))           # and on along the leg out
+        cos = max(-1.0, min(1.0, sum(x * y for x, y in zip(u, v))))
+        turn = math.pi - math.acos(cos)                        # how far the line turns here
+        if turn < math.radians(1.0):
+            out.append(c)
+            continue
+        t = min(r * math.tan(turn / 2), a * 0.5, b * 0.5)      # how far back along each leg the arc starts
+        s0 = tuple(y + x * t for x, y in zip(u, c))
+        s1 = tuple(y + x * t for x, y in zip(v, c))
+        n = max(2, int(math.ceil(math.degrees(turn) / step_deg)))
+        for k in range(n + 1):                                 # a quadratic arc through the corner: tangent to both legs
+            f = k / n
+            out.append(tuple((1 - f) ** 2 * x + 2 * (1 - f) * f * y + f * f * z for x, y, z in zip(s0, c, s1)))
+    out.append(pts[-1])
+    return out
+
+
 def mouth(net, rules, n):
     if n in net["stops"]:
         x, y = net["stops"][n]["pos"]
@@ -57,10 +87,10 @@ def problems(net, rules):
     return out
 
 
-def _edges(net):
+def _edges(net, bend=0.0):
     e = {}
     for t in net["tubes"]:
-        line = [tuple(p) for p in t["line"]]
+        line = rounded(t["line"], bend)
         length = sum(_d(p, q) for p, q in zip(line, line[1:]))
         e.setdefault(t["a"], []).append((t["b"], length, line))
         e.setdefault(t["b"], []).append((t["a"], length, line[::-1]))
@@ -91,20 +121,23 @@ class Ride:
         self.nodes = route(net, a, b)
         if self.nodes is None:
             raise ValueError("no way from %s to %s" % (a, b))
-        e = _edges(net)
+        e = _edges(net, self.r.get("bend_r_m", 0.0))
         run = []
         for n, m in zip(self.nodes, self.nodes[1:]):
             line = min((l for k, length, l in e[n] if k == m), key=lambda l: sum(_d(p, q) for p, q in zip(l, l[1:])))
             run += line if not run else line[1:]
+        if len(self.nodes) > 2:
+            run = rounded(run, self.r.get("junction_bend_r_m", 0.0))   # the turns where one tube meets the next
         self.run = run
         self.cum = [0.0]
         for p, q in zip(run, run[1:]):
             self.cum.append(self.cum[-1] + _d(p, q))
         sa, sb = net["stops"][a], net["stops"][b]
-        self.floor_a, self.floor_b = (sa["pos"][0], sa["pos"][1], 0.0), (sb["pos"][0], sb["pos"][1], 0.0)
+        fl = self.r.get("floor_m", 0.0)                       # the booth's floor
+        self.floor_a, self.floor_b = (sa["pos"][0], sa["pos"][1], fl), (sb["pos"][0], sb["pos"][1], fl)
         fa, fb = _unit(sa["face"]), _unit(sb["face"])
         self.face_a, self.face_b = fa, fb
-        self.out_b = (self.floor_b[0] + fb[0] * self.r["pop_out_arc_m"], self.floor_b[1] + fb[1] * self.r["pop_out_arc_m"], 0.0)
+        self.out_b = (self.floor_b[0] + fb[0] * self.r["pop_out_arc_m"], self.floor_b[1] + fb[1] * self.r["pop_out_arc_m"], fl)
         # the run's speed: up to speed_mps over ease_s, then down again; shorter tubes never reach full speed
         L, v, ea = self.cum[-1], self.r["speed_mps"], self.r["ease_s"]
         acc = v / ea
@@ -163,8 +196,8 @@ class Ride:
         if self.phase(s) != "run":
             return 0.0
         d = self._run_dist(s - self.t0)
-        w = self.r["turn_window_m"]
-        a, b = self._on_run(max(0.0, d - w)), self._on_run(min(self.cum[-1], d + w))
+        w = min(self.r["turn_window_m"], d, self.cum[-1] - d)   # narrower at the ends, which go straight up and down
+        a, b = self._on_run(d - w), self._on_run(d + w)
         flat = math.hypot(b[0] - a[0], b[1] - a[1])
         return math.degrees(math.atan2(flat, abs(b[2] - a[2])))
 
@@ -172,21 +205,62 @@ class Ride:
         """The everyday third-person camera behind someone who looks the way `face` does."""
         return (p[0] - face[0] * self.c["behind_m"], p[1] - face[1] * self.c["behind_m"], p[2] + self.c["above_m"])
 
-    def camera(self, s):
-        """Where the camera is (CITY-110): it starts as the everyday camera behind the rider walking in, rides the rider's
-        own path a little behind them, and settles into the everyday camera behind them as they step out. Never a cut."""
-        back = self.c["follow_s"]
-        start = self._behind(self.floor_a, (-self.face_a[0], -self.face_a[1]))   # walking in, facing into the stop
+    def _path(self):
+        """The rider's whole way, booth floor to booth floor: up out of the first booth, the run, down into the last."""
+        if not hasattr(self, "_full"):
+            pts = [self.floor_a] + self.run + [self.floor_b, self.out_b]
+            cum = [0.0]
+            for p, q in zip(pts, pts[1:]):
+                cum.append(cum[-1] + _d(p, q))
+            self._full = (pts, cum, _d(self.floor_a, self.run[0]), _d(self.run[-1], self.floor_b) + _d(self.floor_b, self.out_b))
+        return self._full
+
+    def _along(self, s):
+        """How far along _path() the rider is at s."""
+        pts, cum, up, down = self._path()
         if s <= 0:
-            return start
-        if s < back:                                        # from the everyday camera onto the rider's path
-            return _lerp(start, _lift(self.at(0), self.c["above_m"]), _smooth(s / back))
-        trail = _lift(self.at(s - back), self.c["above_m"])
+            return 0.0
+        if s < self.t0:
+            return _d(self.floor_a, self.at(s))
         if s < self.t1:
-            return trail
-        end = self._behind(self.out_b, self.face_b)
-        f = _smooth((s - self.t1) / (self.duration - self.t1 + back))
-        return _lerp(trail, end, f) if f < 1 else end
+            return up + self._run_dist(s - self.t0)
+        return up + self.cum[-1] + down * min(1.0, (s - self.t1) / self.r["pop_out_s"])
+
+    def _on_path(self, d):
+        pts, cum, _, _ = self._path()
+        d = min(max(d, 0.0), cum[-1])
+        i = 0
+        while i < len(cum) - 2 and cum[i + 1] < d:
+            i += 1
+        seg = cum[i + 1] - cum[i]
+        return _lerp(pts[i], pts[i + 1], (d - cum[i]) / seg if seg > 1e-9 else 0.0)
+
+    def _sideways(self, first):
+        """Across the first (or last) level stretch of the run: along the street the booth stands by."""
+        seq = zip(self.run, self.run[1:]) if first else zip(self.run[::-1][1:], self.run[::-1])
+        for p, q in seq:
+            fx, fy = q[0] - p[0], q[1] - p[1]
+            n = math.hypot(fx, fy)
+            if n > 0.05:
+                return (-fy / n, fx / n)
+        return (1.0, 0.0)
+
+    def camera(self, s):
+        """Where the camera is (CITY-110), always outside the glass. Along a level tube it chases the rider behind_m back
+        along their way and above_m over it; where the way goes straight up or down (out of the first booth, into the
+        last) it stands behind_m to the side, along the street, at the rider's height and above_m over, as if on a crane.
+        Between the two it moves as the way turns, so it never cuts."""
+        d = self._along(s)
+        _, cum, _, _ = self._path()
+        dc = max(0.0, d - self.c["behind_m"])
+        t = self._on_path(dc)
+        rider = self.at(s)
+        on = self._on_path(min(d, cum[-2]))                  # the rider on their way, short of the step out of the booth
+        flat, rise = math.hypot(on[0] - t[0], on[1] - t[1]), abs(on[2] - t[2])   # the way from the camera's point to the rider
+        w = flat / math.hypot(flat, rise) if flat + rise > 1e-9 else 0.0               # 1 along a level tube, 0 up or down
+        side = self._sideways(d < cum[-1] / 2)
+        k = (1 - w) * self.c["behind_m"]
+        return (t[0] + side[0] * k, t[1] + side[1] * k, t[2] * w + rider[2] * (1 - w) + self.c["above_m"])
 
 
 def _unit(v):
