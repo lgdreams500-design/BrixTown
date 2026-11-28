@@ -206,7 +206,62 @@
     "The shade is lifted by light bounced more strongly than the stone's own colour gives (paving x2.4, stone x1.8): the surfaces look as before, the light in shade is a lift, not a measurement.",
     "Cloudy still throws a soft-edged patch of sun on the arcade floor.",
     "Lying snow is laid in 25 cm squares (as in WorldSky)."
-   ]
+   ],
+   "unreal": {
+    "where": "cam:912,836,2.2,-90,4",
+    "blender": "World/WorldMarketSquare_Midday.jpg",
+    "settings": {
+     "Morning": "07:20",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30",
+     "Cloudy": "12:00|cloud",
+     "Rain": "12:00|rain",
+     "Fog": "12:00|fog",
+     "Snow": "12:00|snow"
+    },
+    "missing": {
+     "NightFullMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart.",
+     "NightNewMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart."
+    },
+    "files": [
+     "World/Unreal/WorldMarketSquare_Morning.jpg",
+     "World/Unreal/WorldMarketSquare_Midday.jpg",
+     "World/Unreal/WorldMarketSquare_Dusk.jpg",
+     "World/Unreal/WorldMarketSquare_NightLamps.jpg",
+     "World/Unreal/WorldMarketSquare_Cloudy.jpg",
+     "World/Unreal/WorldMarketSquare_Rain.jpg",
+     "World/Unreal/WorldMarketSquare_Fog.jpg",
+     "World/Unreal/WorldMarketSquare_Snow.jpg"
+    ],
+    "shot": {
+     "commit": "a1aa1da",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "39 to 44"
+    },
+    "checks": {
+     "Fog": [
+      "look at it: little light and shade, 0.92 stops (a scene in the look has 1.0 or more; a white-out in haze reads so)"
+     ],
+     "Snow": [
+      "look at it: little light and shade, 0.94 stops (a scene in the look has 1.0 or more; a white-out in haze reads so)"
+     ]
+    },
+    "status": "proposed",
+    "issues": [
+     "The place differs from the reference in what is there. The reference looks out from inside a stone arcade (three arches, two wall lamps) on a small enclosed square with a fountain, a tree and a loggia across it (Tools/blender/old_town_04.py, its camera 1.7 m up with a 24 mm lens). The game's Market Square, from the look tour's stop (2.2 m up, a 90 degree view, from the road at its south side), is a wide open square of market stalls and bunting with tower blocks behind: no arcade over the camera, so no warm lamp-lit stone frames the picture in any setting.",
+     "Morning and Dusk: the bottom third of the picture is a plain dark band, the near paving in one flat shadow with nothing to see in it (G5).",
+     "At night the square is dark blue all over and nothing on it is lit by a lamp: the stalls and the paving are near black, and only far windows glow. The reference's night is carried by its warm lamps (G7).",
+     "Morning is white with haze: the far side of the square and the towers are nearly gone, and the sky is burnt out.",
+     "Rain and Fog are a flat pale grey with the warm cast gone; the look check fails Fog (0.92 stops of light and shade against 1.0) (G4, G5).",
+     "Snow: the lying snow is one flat cream sheet with no shade or tread in it, a black line runs across it near the camera, and the flakes are sparse square dots; the look check fails it (0.94 stops) (G3, G8).",
+     "Cloudy is close to Midday: the stalls and people still throw hard shadows under a clouded sky.",
+     "Two grey tower blocks stand over the Old Town's roofs, flat-fronted, in every setting (what is there, not light).",
+     "The people on the square are small and dark against the paving at Midday; nobody stands near the camera, so how a person is lit here is not seen (G6).",
+     "The stalls' counters and crates are plain flat browns (G3)."
+    ]
+   }
   },
   {
    "id": "WorldStreet",
