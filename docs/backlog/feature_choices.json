@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "note": "The owner's level picks, stated by the owner in chat and recorded by agents (ADR-0008). A feature or milestone missing here is undecided. -1 means out of the game. After editing, run Tools/backlog.ps1.",
-  "updated": "2026-11-26",
+  "updated": "2026-11-28",
   "choices": {
     "F-HOME-FURNISH": {
       "slice": 3,
@@ -208,6 +208,14 @@
     "F-LIGHTS": {
       "slice": 2,
       "note": "Owner, 2026-11-26: \"2 Placed in designer\" (lights in kinds, each with its own character in data; in designer mode the player places ground, wall-mounted and ceiling lights). Later milestones not stated."
+    },
+    "F-TIME-SKIP": {
+      "slice": 1,
+      "note": "Owner, 2026-11-28: asked to \"skip time 10m, 1h and skip to next weather\", then picked \"Level 1: Skip buttons\" (only the host skips on a shared server). Later milestones not stated."
+    },
+    "F-VEH-TUBE": {
+      "slice": 2,
+      "note": "Owner, 2026-11-28: asked for teleport points where \"glass tubes ... suck player in and move them to the next location where they popout of the tube\", camera following smoothly in real time; picked \"Level 2: Tube network\" and \"Draft one, I'll react\" for the reference. Later milestones not stated."
     }
   }
 }

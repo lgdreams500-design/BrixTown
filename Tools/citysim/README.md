@@ -29,6 +29,10 @@ data file; nothing is stepped frame by frame.
 | `test_careers.py` | 15 tests over the whole starting city: 50+ careers, café and grocer staff counts, posts as caps, artists at home, office share, own post at work, same answer in any order. `python -m unittest test_careers -v` |
 | `repairs.py` | Repair crews mending crash damage: when each broken thing is mended, worked out from the damage list and `World/rules/crash.json` (CITY-075). Standard library only. |
 | `test_repairs.py` | 8 tests: everything mended, one job at a time at walking pace, working hours only, same answer in any order. |
+| `time_skip.py` | Skip time (WLD-073, WLD-074): 10 minutes, 1 hour, or to the next change of weather, from `World/rules/time_skip.json`; only the host, not during a ride or a conversation. A skip moves the clock only. Standard library only. |
+| `test_time_skip.py` | 8 tests: the steps, landing on the first change of weather, the limit when it never changes, host only, refused while busy. Not yet: no Unreal or slice control; the needs (NEED-002) are not yet shown to follow a skip, since they are not in citysim. |
+| `tubes.py` | Glass travel tubes (CITY-108 to CITY-112): network checks, the shortest way, a ride (drawn in, the run, popped out) and the camera following it, all worked out from the ride's start, from `World/rules/tubes.json`. Standard library only. |
+| `test_tubes.py` | 10 tests on a sample network: no problems in good data, bad data found, every stop reaches every other, shortest way, junctions passed at speed, floor to tube to floor, no jump, not stepped, the camera never cuts and starts and ends as the everyday camera. Not yet: the map has no stops (the owner says where); tubes are not checked against buildings; the run starts from standstill at the top of the draw-in instead of carrying its speed on; other riders (CITY-113) and fares (Q-42) are not in it; nothing built in Unreal until the reference is approved. |
 
 ```
 python -m unittest test_citysim -v

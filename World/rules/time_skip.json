@@ -1,0 +1,14 @@
+{
+  "note": "Skip time (WLD-073, WLD-074; F-TIME-SKIP level 1, owner 2026-11-28: \"skip time 10m, 1h and skip to next weather\"). A skip moves the world clock and nothing else; everything else is worked out from the clock. All numbers [ASSUMPTION].",
+  "steps": [
+    {"id": "10m", "label": "10 min", "minutes": 10},
+    {"id": "1h", "label": "1 hour", "minutes": 60},
+    {"id": "weather", "label": "Next weather", "to": "next_weather"}
+  ],
+  "next_weather": {
+    "slot_minutes": 360,
+    "max_days": 7
+  },
+  "who": "host",
+  "not_during": ["ride", "conversation"]
+}

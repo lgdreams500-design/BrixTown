@@ -1,9 +1,9 @@
 ---
 spec_id: WASTED-SPEC
 title: Brix Town — Game Specification
-version: 0.5.16
+version: 0.5.18
 status: draft            # draft | reviewed | approved
-last_updated: 2026-11-26
+last_updated: 2026-11-28
 owner: project-owner
 engine: Unreal Engine 5.8
 dcc: Blender 5.2 LTS       # 5.3 is what is installed and was used for all look tests; see Q-16
@@ -529,3 +529,4 @@ ADR-0001 to ADR-0003 are reserved numbers; their files are written when the deci
 | 0.5.15 | 2026-11-25 | SND-018: a named resident can be given a voice of their own in `World/rules/voices.json`, used before their role's pool, and the index of voiced pieces names residents by id (ADR-0060). |
 | 0.5.16 | 2026-11-26 | SND-018: named characters are voiced by the cast recipe (owner: "Let's finalize this process for voice generation"; ADR-0060 accepted): a voice card each for the thirteen people of the Baker career, approved by the owner, and Oda's seventeen lines in the game. |
 | 0.5.17 | 2026-11-27 | QST-016: a career's hero is a written character called by a surname; the Baker's is Ashby, a man of 24 with a British accent (owner; ADR-0068). |
+| 0.5.18 | 2026-11-28 | Skip time (F-TIME-SKIP level 1) and glass travel tubes (F-VEH-TUBE level 2), from the owner's request and picks in chat: WLD-073 to WLD-075 and CITY-108 to CITY-114 in LIVING_CITY 0.6.5, all proposed; proved in `Tools/citysim/time_skip.py` and `tubes.py`. |

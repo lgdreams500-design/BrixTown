@@ -1100,6 +1100,51 @@
    "issues": []
   },
   {
+   "id": "VehiclesGlassTube",
+   "category": "Vehicles",
+   "status": "proposed",
+   "title": "A glass travel tube and its stop over the street, at every hour and in every weather",
+   "files": [
+    "Vehicles/VehiclesGlassTube_Morning.jpg",
+    "Vehicles/VehiclesGlassTube_Midday.jpg",
+    "Vehicles/VehiclesGlassTube_Dusk.jpg",
+    "Vehicles/VehiclesGlassTube_NightLamps.jpg",
+    "Vehicles/VehiclesGlassTube_NightFullMoon.jpg",
+    "Vehicles/VehiclesGlassTube_NightNewMoon.jpg",
+    "Vehicles/VehiclesGlassTube_Cloudy.jpg",
+    "Vehicles/VehiclesGlassTube_Rain.jpg",
+    "Vehicles/VehiclesGlassTube_Fog.jpg",
+    "Vehicles/VehiclesGlassTube_Snow.jpg",
+    "Vehicles/VehiclesGlassTube_RideMorning.jpg",
+    "Vehicles/VehiclesGlassTube_RideMidday.jpg",
+    "Vehicles/VehiclesGlassTube_RideDusk.jpg",
+    "Vehicles/VehiclesGlassTube_RideNightLamps.jpg",
+    "Vehicles/VehiclesGlassTube_RideNightFullMoon.jpg",
+    "Vehicles/VehiclesGlassTube_RideNightNewMoon.jpg",
+    "Vehicles/VehiclesGlassTube_RideCloudy.jpg",
+    "Vehicles/VehiclesGlassTube_RideRain.jpg",
+    "Vehicles/VehiclesGlassTube_RideFog.jpg",
+    "Vehicles/VehiclesGlassTube_RideSnow.jpg"
+   ],
+   "locks": "A first draft for the owner to react to (F-VEH-TUBE, CITY-108 to CITY-114; ADR-0074, proposed). On the approved street (WorldStreet): a round glass booth 1.5 m across and 3 m high (40% narrower than the first draft: the owner, 2026-11-28: \"make the entry chamber narrower, may be reduce by 40%\") on a dark stone plinth, three brass ribs and brass bands, a cream cap and a lantern by its door; its top narrows in a glass funnel into a tube only as wide as a rider (0.68 m inside; the owner, 2026-11-28: \"thinner diameter should be just enough fit the player's waist\"), which rises, bends over and runs level 9 m over the street on slim iron posts with cradles, thin brass rings every 4 m, to a second booth at the street's far end. One person waits in the near booth; one rides the tube lying along it head first (\"the player will rotate laterally when going horizontal\"). Two views: the stop and its tube from across the street, and the rider close by. In the world's light: the street's hours and weather, unchanged.",
+   "approved": "proposed 2026-11-28, for the owner to review; pictures at low quality until approved",
+   "decision": "the owner, 2026-11-28: asked for glass tubes that \"suck player in and move them to the next location where they popout of the tube\"; picked F-VEH-TUBE level 2 and \"Draft one, I'll react\"; then \"thinner diameter should be just enough fit the player's waist. so the player will rotate laterally when going horizontal\", then \"make the entry chamber narrower, may be reduce by 40%\"",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=tube, Tools/blender/reference_render.ps1 -Place tube; tube_scene(), tube_booth(), tube_path(), sweep(), tube_glass(), TUBE) on the street of Tools/blender/building_kit_07.py",
+   "models": [
+    "World/rules/tubes.json",
+    "Tools/citysim/tubes.py (the ride, the rider's lean, the camera)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 2.2 (glass an exception to W1, ADR-0074 proposed), docs/specs/domains/LIVING_CITY.md 3.4",
+   "was": [],
+   "issues": [
+    "Glass is shiny where the town is matte (W1): an exception the owner has to approve (ADR-0074).",
+    "At night the tube all but disappears: it has no light of its own, only the booth's lantern. A line of light along it, or none, is undecided.",
+    "The rider in the tube is small from across the street; the close view shows them. The rider is the street's PlayerB turned to lie down, arms at the sides: no riding pose of its own (CHARACTER_MOTION).",
+    "No door is cut in the booth's glass; the far booth is too far to read; where the tubes run on the map is not decided, so the street is the approved example street, not a real tube route.",
+    "The tube's bend is round; the posts and rings are a guess at a light, glassy look with no approved piece behind them. All numbers [ASSUMPTION]."
+   ]
+  },
+  {
    "id": "PeopleOptions",
    "category": "People",
    "title": "Character options A, B, C: B \"Soft\" is the one",

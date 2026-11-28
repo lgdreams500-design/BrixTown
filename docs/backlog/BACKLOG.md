@@ -5,9 +5,9 @@
 
 | | First slice (PH1) | Life depth (PH3) | Full game (PH6) |
 |---|---|---|---|
-| Decided | 47 of 61 | 9 of 61 | 9 of 61 |
-| Size of the plan (points) | 587 | 505 | 981 |
-| Size of the suggested plan | 161 | 465 | 949 |
+| Decided | 49 of 63 | 9 of 63 | 9 of 63 |
+| Size of the plan (points) | 604 | 514 | 1001 |
+| Size of the suggested plan | 162 | 474 | 969 |
 
 **Needs not met yet** (these levels are not in scope until their needs are picked):
 
@@ -15,6 +15,8 @@
 - F-BLD-MALL at First slice needs F-NPC-POP at level 2 (picked 1)
 - F-GARDEN at First slice needs F-VEG-LEAF at level 1 (undecided)
 - F-VEH-TRANSIT at First slice needs F-MAP-CITY at level 2 (picked 1)
+- F-VEH-TUBE at First slice needs F-MAP-CITY at level 2 (picked 1)
+- F-TIME-SKIP at First slice needs F-TIME-DAY at level 1 (undecided)
 - F-SKY at First slice needs F-TIME-DAY at level 1 (undecided)
 
 ## City and buildings
@@ -70,6 +72,7 @@
 |---|---|---|---|---|
 | **Traffic** `F-VEH-TRAFFIC` | 2 Real traffic ★ | 2 Real traffic ★ | 2 Real traffic ★ | Owner, 2026-11-22: residents have their cars as part of their routine, from the first slice. Cars need this level. |
 | **Tram or bus** `F-VEH-TRANSIT` | 2 Network ★ | undecided | undecided | Owner, 2026-11-23: "Level 2: Network" for buses; keep the tram and add buses. Residents of independent houses own the cars; those in the central flats mostly don't and use public transport. Depth and full not picked yet. |
+| **Glass travel tubes** `F-VEH-TUBE` | 2 Tube network ★ | undecided | undecided | Owner, 2026-11-28: asked for teleport points where "glass tubes ... suck player in and move them to the next location where they popout of the tube", camera following smoothly in real time; picked "Level 2: Tube network" and "Draft one, I'll react" for the reference. Later milestones not stated. |
 | **Driving yourself** `F-VEH-DRIVE` | 2 Cars ★ | 2 Cars ★ | 2 Cars ★ | Owner, 2026-11-22: walking, and drivable cars, from the first slice. |
 | **Crash damage** `F-VEH-CRASH` | 2 Broken until mended ★ | undecided | undecided | Owner, 2026-11-22: objects on the pavements, trees and building corners destructible when driving, with a breaking animation; "Until a worker fixes it", "Fast hits break", residents "Yes, they shout". Later milestones not stated. Then the same day: "remove speed requirement for the damage, it should damage at any speed". |
 | **Skateboards** `F-VEH-SKATES` | 2 Skate store and tiers | undecided | undecided | Owner, 2026-11-24: "Level 2 for slice" (asked which level for skates after the models, Y to carry or wear and the store requirements were built, PR #28). Then the same day the owner had the skates made skateboards; the pick stands. The skate store and buying (CITY-102, CITY-103) are to be added separately. Later milestones not stated. |
@@ -79,6 +82,7 @@
 | Feature | First slice | Life depth | Full game | Note |
 |---|---|---|---|---|
 | **Day and night** `F-TIME-DAY` | undecided | undecided | undecided |  |
+| **Skip time** `F-TIME-SKIP` | 1 Skip buttons | undecided | undecided | Owner, 2026-11-28: asked to "skip time 10m, 1h and skip to next weather", then picked "Level 1: Skip buttons" (only the host skips on a shared server). Later milestones not stated. |
 | **Sky and clouds** `F-SKY` | 2 Clouds follow the weather ★ | undecided | undecided | Asked for a sky and cloud system, then said yes to cloud cover following the day's weather (owner, 2026-11-22). Later milestones not picked. |
 | **Weather** `F-WEATHER` | 1 Changing weather ★ | undecided | undecided | Said yes to 'F-WEATHER level 1 for the first slice' so clouds follow the weather (owner, 2026-11-22). Rain and fog are in scope but not drawn yet. Later milestones not picked. Owner, 2026-11-25: "can we add snow as well?", then picked "Winter only, own chance", "Settles, then melts" and "Coats and hoods, walk carefully" (WLD-069, WLD-070, CITY-107; ADR-0051). |
 | **Seasons** `F-SEASONS` | undecided | undecided | undecided |  |
@@ -267,6 +271,11 @@
 - 1 One line: One tram line on a timetable; residents use it to leave and return; players ride it. Size L.
 - 2 Network: Several lines across the city. Size L.
 
+**Glass travel tubes** (`F-VEH-TUBE`). Get across town fast, and enjoy the ride.
+- 0 None: No tubes; walk, drive or ride. Size -.
+- 1 Tube stops: Glass tube stops placed on the map as data. Step in and pick a stop: the tube sucks you up, you shoot along a glass tube over the streets with the camera following smoothly in real time, and you pop out of the tube at the other stop. Size L.
+- 2 Tube network: Tubes run visibly across the whole city; other people and players are seen whizzing through them; a tube map at each stop. Size L.
+
 **Driving yourself** (`F-VEH-DRIVE`). Whether players steer anything.
 - 0 Walking only: Players walk. Size -.
 - 1 Bicycle or scooter: A light vehicle to own and ride. Size L.
@@ -281,6 +290,11 @@
 - 0 Fixed hour: Always the same time of day. Size -.
 - 1 Clock-driven light: Sun, dusk, lanterns and lit windows follow the world clock. Size M.
 - 2 Night life: The town works differently after dark: night shops, quiet streets. Size M.
+
+**Skip time** (`F-TIME-SKIP`). Jump ahead instead of waiting for a shop to open, the evening or the rain.
+- 0 None: Time only passes at its own pace. Size -.
+- 1 Skip buttons: Skip 10 minutes, 1 hour, or to the next weather change. The server moves the world clock forward; light, weather, shops and people jump to what the clock says (nothing is ticked through). On a shared server only the host may skip. Size S.
+- 2 Shared skip: On a shared server any player can ask to skip; it happens when everyone nearby agrees or is asleep, so no one loses time they did not choose to. Size M.
 
 **Sky and clouds** (`F-SKY`). A sky worth looking up at, that changes with the hour.
 - 0 Plain sky: One hazy colour with a glow round the sun. Size -.

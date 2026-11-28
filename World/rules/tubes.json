@@ -1,0 +1,21 @@
+{
+  "note": "Glass travel tubes (CITY-108 to CITY-112; F-VEH-TUBE level 2, owner 2026-11-28). How a ride moves. Where the stops and tubes are is map data (World/<city>/tubes.json), not here. All numbers [ASSUMPTION] until the tube reference is approved.",
+  "clearance_m": 6.0,
+  "ride": {
+    "draw_in_s": 1.6,
+    "draw_in_height_m": 7.0,
+    "speed_mps": 40.0,
+    "ease_s": 1.5,
+    "pop_out_s": 1.2,
+    "pop_out_arc_m": 1.5,
+    "turn_window_m": 2.0
+  },
+  "camera": {
+    "behind_m": 6.0,
+    "above_m": 2.0,
+    "follow_s": 0.35,
+    "max_jump_m": 1.0
+  },
+  "tube_inner_m": 0.68,
+  "tube_note": "The owner, 2026-11-28: \"thinner diameter should be just enough fit the player's waist. so the player will rotate laterally when going horizontal\". 0.68 m inside: the reference's rider measures 0.63 m across with the arms at the sides. [ASSUMPTION]"
+}

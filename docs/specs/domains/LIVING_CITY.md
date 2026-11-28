@@ -1,9 +1,9 @@
 ---
 doc_id: WASTED-SPEC-LIVING-CITY
 title: Brix Town — Living city (map, residents, things to use, vehicles, seasons and plants)
-version: 0.6.4
+version: 0.6.5
 status: draft
-last_updated: 2026-11-24
+last_updated: 2026-11-28
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
 prototype: Tools/citysim/               # rules and tests with no engine; careers in careers.py, test_careers.py
 scope_source: docs/backlog/feature_choices.json
@@ -193,6 +193,23 @@ animation." The owner picked `F-VEH-SKATES` level 2 for the first slice. Kinds, 
 | CITY-103 | A character shall buy a skateboard at the counter of a sports or toy outlet (CITY-102), paid through the ledger (ECO-002) into the mall's till, with ownership recorded on the server (PROP-001); a kind already owned is not sold twice. The bought board goes to their belongings (CITY-100), to ride or to put on show at home (the owner, 2026-11-25: "player can either use them to rid or use it as display both."; placed from the Furnish tab, FURN-051), and becomes the one in use if it is faster than the one they had. Whether boards can be sold back is `[OPEN: Q-40]`. | F-VEH-SKATES | 2 | P0 | `test_CITY_103_a_skateboard_is_bought_at_a_sports_or_toy_outlet_through_the_ledger_once`, `test_CITY_103_the_board_bought_is_the_one_in_use_when_it_is_faster`, `test_CITY_103_the_fixed_run_of_buying_boards`; engine `CITY103_boards_are_bought_as_python_does` |
 | CITY-104 | Riding a skateboard shall be server-authoritative: the client sends inputs only; the server moves the character and puts back one moving faster than the board in use allows, or riding a kind they do not own. | F-VEH-SKATES | 1 | P0 | Engine test `CITY-104` |
 
+#### Glass travel tubes
+
+The owner, 2026-11-28: "teleport points on the map ... glass tubes which suck player in and move them to the next location where
+they popout of the tube. all this should happen with camera following in real time smoothly." The owner picked `F-VEH-TUBE`
+level 2 ("Tube network") for the first slice. Stops and tubes are map data in `World/`; ride numbers are data in
+`World/rules/tubes.json`. Nothing is built in the engine before the tube's reference is approved (ADR-0066).
+
+| ID | Requirement | Feature | Lvl | Pri | Proven by |
+|---|---|---|---|---|---|
+| CITY-108 | Tube stops and the glass tubes between them shall be map data in `World/` (a stop: its id, name, place on the ground and the way its door faces; a tube: the two stops it joins and the line it runs along, high over the streets), never placed in code. Every tube shall start and end at a stop, keep clear of buildings and run at least `clearance_m` (6 m `[ASSUMPTION]`) over any street. | F-VEH-TUBE | 1 | P1 | `test_CITY_108_*` (Tools/citysim/test_tubes.py, on a sample network; the map has no stops yet) |
+| CITY-109 | A ride shall go in three parts: drawn in (the rider is lifted off the floor of the stop and sucked up into the tube, `draw_in_s`), the run (along the tube at up to `speed_mps`, speeding up and slowing down smoothly, `ease_s`) and popped out (shot out of the tube at the other stop and set down on their feet, facing out of its door, `pop_out_s`); all numbers in `World/rules/tubes.json` `[ASSUMPTION]`. A tube is only as wide as a rider (`tube_inner_m`): the rider is upright where it goes up or down and lies along it head first where it runs level, turning smoothly between the two in its bends (the owner, 2026-11-28: "thinner diameter should be just enough fit the player's waist. so the player will rotate laterally when going horizontal"). Where the rider is, and how they lie, at any moment of a ride shall be worked out from when the ride began and the tubes it uses, never stepped (TECH-004). | F-VEH-TUBE | 1 | P1 | `test_CITY_109_*` (Tools/citysim/test_tubes.py) |
+| CITY-110 | The camera shall follow the rider through the whole ride in real time, smoothly: no cut, fade or jump from the moment the rider is drawn in until they stand at the other stop, and it shall keep the rider in view inside the glass. | F-VEH-TUBE | 1 | P1 | `test_CITY_110_*` (Tools/citysim/test_tubes.py): the camera's path has no jump; engine test `CITY110` |
+| CITY-111 | Riding shall be server-authoritative: the client sends only the stop it chose; the server checks that the rider stands in a stop and that the chosen stop can be reached, then moves them along the ride; the rider has no control during a ride. | F-VEH-TUBE | 1 | P0 | Engine test `CITY111` |
+| CITY-112 | Tubes shall form a network over the town: from any stop a rider can choose any other stop, and the ride takes the shortest way through the tubes, passing junctions without stopping. Each stop shall show a tube map with the stops and where you are. | F-VEH-TUBE | 2 | P1 | `test_CITY_112_*` (Tools/citysim/test_tubes.py) |
+| CITY-113 | Other riders shall be seen in the tubes: other players on their rides, and residents who use the tubes on some trips (which trips `[OPEN: Q-41]`). | F-VEH-TUBE | 2 | P2 | |
+| CITY-114 | The stops and tubes shall match the art direction (ART-001): their reference (`VehiclesGlassTube`), at every setting a stop is seen in, is approved by the owner before any model is made (ADR-0066). Glass is an exception to W1 (ADR-0074, proposed). Whether a ride costs a fare is `[OPEN: Q-42]`. | F-VEH-TUBE | 1 | P1 | Reference `VehiclesGlassTube` (Tools/blender/hours_50.py, WASTED_PLACE=tube) |
+
 ### 3.5 Seasons, weather and plants
 
 | ID | Requirement | Feature | Lvl | Pri | Proven by |
@@ -202,6 +219,9 @@ animation." The owner picked `F-VEH-SKATES` level 2 for the first slice. Kinds, 
 | WLD-012 | Each species shall have its own dates for bud, full leaf, blossom, autumn colour and bare branches; fallen leaves shall appear under trees and clear away. | F-VEG-LEAF | 1 | P1 | `test_leaf_cycle` |
 | WLD-013 | Trees shall have a lifespan. At its end a tree falls, the site stands empty, and a sapling is planted; all dates come from the tree's seed. | F-VEG-LIFE | 1 | P2 | `test_trees_fall_and_are_replanted` |
 | WLD-014 | Weather shall be calculated from time and a world seed, come in spells, and be the same for every player (refines WLD-003). | F-WEATHER | 1 | P1 | `test_weather_is_shared_and_seasonal` |
+| WLD-073 | A player shall be able to skip time: 10 minutes, 1 hour, or to the next change of weather (the start of the first six-hour slot after now whose weather differs from now's, looked for up to `max_days` ahead, 7 `[ASSUMPTION]`; if none is found, it skips to that limit). A skip moves the world clock forward and nothing else: light, weather, snow lying, residents, shops, plants and needs are whatever the clock says at the new time, because all of them are worked out from it (TECH-004); nothing is stepped through the skipped time. Steps are data in `World/rules/time_skip.json` `[ASSUMPTION]`. Owner, 2026-11-28: "skip time 10m, 1h and skip to next weather". | F-TIME-SKIP | 1 | P0 | `test_WLD_073_*` (Tools/citysim/test_time_skip.py) |
+| WLD-074 | Skipping shall be server-authoritative: the client asks for a step; the server moves the clock; on a shared server only the host may skip, and the server refuses anyone else. No skip is allowed during a ride (CITY-109), a conversation or with the menu's clock stopped mid-action `[ASSUMPTION]`. | F-TIME-SKIP | 1 | P0 | `test_WLD_074_*` (Tools/citysim/test_time_skip.py); engine test `WLD074` |
+| WLD-075 | The three skips shall be offered beside the day and the time in the menu's top bar (UI-015) `[ASSUMPTION]`, each with the time it would take you to ("to 14:00", "to rain at 18:00"). Its look needs an approved reference first (ADR-0066). | F-TIME-SKIP | 1 | P1 | Slice; reference |
 
 ## 4. Numbers used by the prototype
 
@@ -293,10 +313,13 @@ up to 42 on the road at once, no overlap, no crossing movements in a box, nobody
 | Q-29 | Should commuters who own a car drive out of town instead of taking the tram, and should some errands go beyond the nearest shop or café? | **DECIDED 2026-11-22** (owner: "drive out"), now CITY-068: car-owning commuters drive out through a town gate on the wall streets; the tram stays for everyone else. Errands stay nearest. |
 | Q-28 | Do cars need fuel, and what do they cost to keep? | **DECIDED 2026-11-22:** no fuel; a small weekly upkeep through the ledger, from PH4 with the other recurring costs (PROP-006). |
 | Q-40 | Can skateboards be sold back, and for how much? | A sold-back board would let players trade up and get some money back. | Suggested: no selling back in the first slice; skates are kept. Undecided. |
+| Q-41 | Which residents ride the glass tubes, and on which trips? | Suggested: residents whose walk would be longer than a ride, at the share of trips that take the bus. Undecided. |
+| Q-42 | Does a tube ride cost a fare? | Suggested: free in the first slice. Undecided. |
 
 ## 7. Change log
 | Version | Date | Change |
 |---|---|---|
+| 0.6.5 | 2026-11-28 | Skip time (WLD-073 to WLD-075; F-TIME-SKIP level 1) and glass travel tubes (CITY-108 to CITY-114; F-VEH-TUBE level 2), from the owner's request and picks in chat. Q-41 and Q-42 opened. All proposed. |
 | 0.6.4 | 2026-11-25 | Skateboards sold at the mall's sports and toy outlets, at the owner's word ("we don't need a dedicated skate boards shop. ridable skateboards should be in sports or toy shop. player can either use them to rid or use it as display both."): CITY-102 and CITY-103 reworded (ADR-0054, superseding ADR-0053); Market Skate Store is the Market Grocer again; boards.json `sold_at`. |
 | 0.6.3 | 2026-11-25 | The skate store built (CITY-102, CITY-103; ADR-0053): Market Skate Store, the Market Grocer by the market square renamed; shop kind `skate` in economy.json; prices in boards.json [ASSUMPTION]; economy.py buy_board() and board_in_use(), proved in Python, then in the Unreal build. Selling back stays open (Q-40). |
 | 0.6.2 | 2026-11-25 | Residents in snow (CITY-107; ADR-0051), accepted from the owner's request and answers in chat. Snow spells are taken cover from as rain spells are (`rain_spells` now gives both). |

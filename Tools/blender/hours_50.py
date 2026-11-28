@@ -37,7 +37,7 @@ from mathutils import Matrix, Vector
 B = "C:/Projects/Wasted/Tools/blender/"
 PLACE = os.environ.get("WASTED_PLACE", "alley")
 SOURCE = {"alley": "old_town_04.py", "square": "old_town_04.py", "street": "building_kit_07.py",
-          "rooms": "baker_look_47.py", "hallway": "baker_look_47.py", "shop": "baker_look_47.py", "mall": "baker_look_47.py", "mall_entrance": "baker_look_47.py", "mall_shop": "baker_look_47.py", "mall_escalators": "baker_look_47.py", "egg_hall": "baker_look_47.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py", "sky": "old_town_04.py"}[PLACE]
+          "rooms": "baker_look_47.py", "hallway": "baker_look_47.py", "shop": "baker_look_47.py", "mall": "baker_look_47.py", "mall_entrance": "baker_look_47.py", "mall_shop": "baker_look_47.py", "mall_escalators": "baker_look_47.py", "egg_hall": "baker_look_47.py", "tube": "building_kit_07.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py", "sky": "old_town_04.py"}[PLACE]
 _s = open(B + SOURCE, encoding="utf-8").read()
 exec(compile(_s[:_s.rindex("\nmain()")], SOURCE + "_helpers", "exec"), globals())
 exec(compile(open(B + "sky_52.py", encoding="utf-8").read(), "sky_52", "exec"), globals())   # the sky and its clouds
@@ -2808,6 +2808,143 @@ def street_lamps(scene, street_end):
         x += 16.0
 
 
+# ---- a glass travel tube over the street (CITY-108 to CITY-114, F-VEH-TUBE; the owner, 2026-11-28: "glass tubes which suck
+# player in and move them to the next location where they popout of the tube"). A first draft for the owner to react to: a
+# round glass booth on a stone plinth, its tube rising out of its cap, bending over and running along the street high over
+# it (World/rules/tubes.json clearance_m 6, draw_in_height_m 7) on iron posts, brass rings along it; one rider waiting in the
+# booth and one being carried along the tube. The tube is only as wide as a rider (the owner, 2026-11-28: "thinner diameter
+# should be just enough fit the player's waist. so the player will rotate laterally when going horizontal"): upright going
+# up and down, lying along it head first where it runs level (CITY-109). Glass is an exception to W1 the owner has to approve (as ADR-0071 for
+# Eastgate's signs).
+TUBE = dict(booth_r=0.75, booth_h=3.0, plinth_r=1.0,   # booth 40% narrower (the owner, 2026-11-28: "make the entry chamber narrower, may be reduce by 40%")
+            plinth_h=0.25, tube_r=0.34, run_z=9.0, bend_r=1.8, funnel_h=0.7,
+            ring_every=4.0, post_every=14.0, glass=(0.70, 0.86, 0.88), glass_alpha=0.16, brass=(0.62, 0.48, 0.26))
+
+
+def tube_glass(name, c, alpha):
+    """Glass that reads as glass from the street: a faint tint, the sky caught at a grazing angle, brighter at the edges."""
+    m = mall_glass(name, c, alpha)
+    nt = m.node_tree
+    b = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED')
+    b.inputs["Roughness"].default_value = 0.08
+    fr = nt.nodes.new("ShaderNodeLayerWeight")
+    fr.inputs["Blend"].default_value = 0.35
+    mp = nt.nodes.new("ShaderNodeMapRange")
+    mp.inputs["To Min"].default_value, mp.inputs["To Max"].default_value = alpha, min(1.0, alpha + 0.34)
+    nt.links.new(fr.outputs["Facing"], mp.inputs["Value"])
+    nt.links.new(mp.outputs["Result"], b.inputs["Alpha"])
+    return m
+
+
+def sweep(name, pts, r, mat, segs=28, closed=False, caps=False):
+    """A round tube of radius r along a path of points (an open tube unless caps); its rings face along the path."""
+    bm = bmesh.new()
+    P = [Vector(p) for p in pts]
+    n = len(P)
+    rings = []
+    for i in range(n):
+        a = P[i - 1] if (closed or i > 0) else P[i]
+        b = P[(i + 1) % n] if (closed or i < n - 1) else P[i]
+        t = (b - a).normalized()
+        up = Vector((0, 0, 1)) if abs(t.z) < 0.95 else Vector((1, 0, 0))
+        u = t.cross(up).normalized()
+        v = u.cross(t).normalized()
+        rings.append([bm.verts.new(P[i] + (u * math.cos(2 * math.pi * k / segs) + v * math.sin(2 * math.pi * k / segs)) * r) for k in range(segs)])
+    for i in range(n if closed else n - 1):
+        A, Bq = rings[i], rings[(i + 1) % n]
+        for k in range(segs):
+            bm.faces.new((A[k], A[(k + 1) % segs], Bq[(k + 1) % segs], Bq[k]))
+    if caps and not closed:
+        bm.faces.new(list(reversed(rings[0])))
+        bm.faces.new(rings[-1])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    ob = add_obj(name, bm, mat)
+    for f in ob.data.polygons:
+        f.use_smooth = True
+    return ob
+
+
+def ring(name, c, axis, r, thick, mat):
+    """A brass ring round a tube: centre c, facing along axis."""
+    a = Vector(axis).normalized()
+    up = Vector((0, 0, 1)) if abs(a.z) < 0.95 else Vector((1, 0, 0))
+    u = a.cross(up).normalized()
+    v = u.cross(a).normalized()
+    pts = [Vector(c) + (u * math.cos(2 * math.pi * k / 40) + v * math.sin(2 * math.pi * k / 40)) * r for k in range(40)]
+    return sweep(name, pts, thick, mat, segs=10, closed=True)
+
+
+def tube_path(x0, x1, y, T):
+    """Booth top at x0 up, over and along the street to x1, down into the far booth: points every 0.25 m or so."""
+    top = T["plinth_h"] + T["booth_h"]
+    R, Z = T["bend_r"], T["run_z"]
+    pts = [(x0, y, top + k * 0.5) for k in range(int((Z - R - top) / 0.5) + 1)] + [(x0, y, Z - R)]
+    pts += [(x0 + R - R * math.cos(t), y, Z - R + R * math.sin(t)) for t in (math.pi / 2 * k / 12 for k in range(1, 13))]
+    k = int((x1 - x0 - 2 * R) / 2.0)
+    pts += [(x0 + R + (x1 - x0 - 2 * R) * j / k, y, Z) for j in range(1, k)]
+    pts += [(x1 - R + R * math.sin(t), y, Z - R + R * math.cos(t)) for t in (math.pi / 2 * k / 12 for k in range(0, 13))]
+    pts += [(x1, y, Z - R - k * 0.5) for k in range(1, int((Z - R - top) / 0.5) + 1)] + [(x1, y, top)]
+    return pts
+
+
+def tube_booth(name, x, y, m):
+    T = TUBE
+    cyl(name + "_Plinth", x, y, 0.0, T["plinth_r"], T["plinth_h"], K_M["stone_dark"], segs=40)
+    cyl(name + "_Step", x, y, T["plinth_h"], T["plinth_r"] - 0.15, 0.06, K_M["stone"], segs=40)
+    z0, z1 = T["plinth_h"] + 0.06, T["plinth_h"] + T["booth_h"]
+    sweep(name + "_Glass", [(x, y, z0), (x, y, z1)], T["booth_r"], m["glass"], segs=40)
+    for z in (z0 + 0.05, z0 + 1.05, z1 - 0.05):
+        ring(name + "_Ring", (x, y, z), (0, 0, 1), T["booth_r"] + 0.02, 0.05, m["brass"])
+    cream = K_M["cream"] if "cream" in K_M else K_M["stone"]
+    cyl(name + "_Cap", x, y, z1, T["booth_r"] + 0.12, 0.12, cream, segs=40)
+    cyl(name + "_Funnel", x, y, z1 + 0.12, T["booth_r"] + 0.04, T["funnel_h"], m["glass"], segs=40, r_top=T["tube_r"])   # the booth narrows into the tube
+    ring(name + "_Collar", (x, y, z1 + 0.12 + T["funnel_h"]), (0, 0, 1), T["tube_r"] + 0.02, 0.04, m["brass"])
+    for k in range(3):                                      # three ribs up the booth, the door between two of them
+        a = math.radians(-90 + 120 * k + 60)
+        cyl(name + "_Rib", x + math.cos(a) * (T["booth_r"] + 0.02), y + math.sin(a) * (T["booth_r"] + 0.02), z0, 0.045, T["booth_h"] - 0.06, m["brass"], segs=10)
+    lantern(name + "_Lamp", x, y - T["booth_r"] - 0.2, z1 - 0.25, dict(lamp=bpy.data.materials.get("M_Lamp") or emissive("M_Lamp", (1.0, 0.55, 0.22), 6.0)), 60)
+
+
+def tube_scene(scene, street_end):
+    T = TUBE
+    m = dict(glass=tube_glass("M_TubeGlass", T["glass"], T["glass_alpha"]), brass=mall_metal("M_TubeBrass", T["brass"], 0.55))
+    y, xa, xb = -6.8, 12.0, street_end - 6.0
+    tube_booth("TubeA", xa, y, m)
+    tube_booth("TubeB", xb, y, m)
+    pts = tube_path(xa, xb, y, T)
+    sweep("Tube_Glass", pts, T["tube_r"], m["glass"], segs=32)
+    s = 0.0
+    for p, q in zip(pts, pts[1:]):                          # brass rings along it
+        s += math.dist(p, q)
+        if s >= T["ring_every"]:
+            ring("Tube_Ring", q, Vector(q) - Vector(p), T["tube_r"] + 0.015, 0.025, m["brass"])
+            s = 0.0
+    x = xa + T["bend_r"] + T["post_every"] * 0.6             # iron posts carrying it, a cradle under it
+    while x < xb - T["bend_r"] - 2:
+        cyl("Tube_Post", x, y, 0.0, 0.09, T["run_z"] - T["tube_r"] - 0.06, K_M.get("iron") or K_M["stone_dark"], segs=14)
+        cyl("Tube_PostFoot", x, y, 0.0, 0.24, 0.25, K_M["stone_dark"], segs=20)
+        ring("Tube_Cradle", (x, y, T["run_z"]), (1, 0, 0), T["tube_r"] + 0.03, 0.045, K_M.get("iron") or K_M["stone_dark"])
+        x += T["post_every"]
+    cs = CHAR_STYLES["B"]                                   # one waiting in the booth, one being carried along the tube
+    character3(CAST["Office"], cs, xa, y)
+    before = set(bpy.data.objects)
+    character3(CAST["PlayerB"], cs, xa + 15.0, y)
+    parts = [ob for ob in set(bpy.data.objects) - before if ob.parent is None]
+    bpy.context.view_layer.update()
+    vs = [ob.matrix_world @ v.co for ob in parts if ob.type == 'MESH' for v in ob.data.vertices]
+    wide, deep = max(v.x for v in vs) - min(v.x for v in vs), max(v.y for v in vs) - min(v.y for v in vs)
+    tall = max(v.z for v in vs)
+    # lying along the tube head first: turned a quarter about the across-street axis, so the head points along the run
+    # (towards the far stop), its middle on the tube's line
+    mid = Vector((xa + 15.0, y, tall * 0.5))
+    M = Matrix.Translation((xa + 15.0, y, T["run_z"])) @ Matrix.Rotation(math.pi / 2, 4, 'Y') @ Matrix.Translation(-mid)
+    for ob in parts:
+        ob.matrix_world = M @ ob.matrix_world
+    hlog("tube rider: %d parts, %.2f m tall, %.2f m across, %.2f m front to back; tube %.2f m across inside"
+         % (len(parts), tall, wide, deep, 2 * T["tube_r"]))
+    return xa, y
+
+
 def main_hours():
     os.makedirs(HOURS_OUT, exist_ok=True)
     open(HOURS_LOG, "w").close()
@@ -2839,6 +2976,14 @@ def main_hours():
         street_lamps(scene, street_end)
         cam = cams(scene, facts, street_end)[0][1]
         each_hour(scene, cam, -0.15, "Street")
+    elif PLACE == "tube":                            # a glass travel tube over the approved street (the owner, 2026-11-28)
+        scene, facts, street_end = street_scene()
+        street_lamps(scene, street_end)
+        xa, y = tube_scene(scene, street_end)
+        cam = camera(scene, "Cam_Tube", (xa + 2.0, y - 9.8, 1.6), (xa + 5.5, y, 5.0), 16.0)
+        each_hour(scene, cam, -0.15, "Tube")
+        near = camera(scene, "Cam_TubeRide", (xa + 11.5, y - 5.0, 6.8), (xa + 15.0, y, 8.9), 32.0)   # the rider close by, lying along the tube
+        each_hour(scene, near, -0.15, "TubeRide")
     elif PLACE == "rooms":
         for kit in KITS:
             if ROOMS_ONLY and kit[0] not in ROOMS_ONLY:

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-11-26",
+  "updated": "2026-11-28",
   "note": "The feature backlog. Maintained by the team and AI agents. The owner's picks live in feature_choices.json, never here.",
   "milestones": [
     {
@@ -1334,6 +1334,43 @@
       }
     },
     {
+      "id": "F-VEH-TUBE",
+      "area": "vehicles",
+      "title": "Glass travel tubes",
+      "why": "Get across town fast, and enjoy the ride.",
+      "pillars": [
+        1
+      ],
+      "spec": [],
+      "levels": [
+        {
+          "name": "None",
+          "what": "No tubes; walk, drive or ride.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Tube stops",
+          "what": "Glass tube stops placed on the map as data. Step in and pick a stop: the tube sucks you up, you shoot along a glass tube over the streets with the camera following smoothly in real time, and you pop out of the tube at the other stop.",
+          "effort": "L",
+          "needs": {}
+        },
+        {
+          "name": "Tube network",
+          "what": "Tubes run visibly across the whole city; other people and players are seen whizzing through them; a tube map at each stop.",
+          "effort": "L",
+          "needs": {
+            "F-MAP-CITY": 2
+          }
+        }
+      ],
+      "suggested": {
+        "slice": 0,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
       "id": "F-VEH-DRIVE",
       "area": "vehicles",
       "title": "Driving yourself",
@@ -1453,6 +1490,44 @@
           "needs": {
             "F-NPC-ROUTINE": 1
           }
+        }
+      ],
+      "suggested": {
+        "slice": 1,
+        "depth": 1,
+        "full": 2
+      }
+    },
+    {
+      "id": "F-TIME-SKIP",
+      "area": "nature",
+      "title": "Skip time",
+      "why": "Jump ahead instead of waiting for a shop to open, the evening or the rain.",
+      "pillars": [
+        1
+      ],
+      "spec": [],
+      "levels": [
+        {
+          "name": "None",
+          "what": "Time only passes at its own pace.",
+          "effort": "-",
+          "needs": {}
+        },
+        {
+          "name": "Skip buttons",
+          "what": "Skip 10 minutes, 1 hour, or to the next weather change. The server moves the world clock forward; light, weather, shops and people jump to what the clock says (nothing is ticked through). On a shared server only the host may skip.",
+          "effort": "S",
+          "needs": {
+            "F-TIME-DAY": 1,
+            "F-WEATHER": 1
+          }
+        },
+        {
+          "name": "Shared skip",
+          "what": "On a shared server any player can ask to skip; it happens when everyone nearby agrees or is asleep, so no one loses time they did not choose to.",
+          "effort": "M",
+          "needs": {}
         }
       ],
       "suggested": {
