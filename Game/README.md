@@ -1283,6 +1283,11 @@ first audit's findings are in LOOK_GATE.md.
     the way up; by day the near left wall is plain black and the look check fails for crushed blacks (43 to 45 %) and flat
     fill (59 to 66 %); at night the table lamp throws hard wedges on both walls and all is orange; the doorway is a white
     blank; the stair hardly shows; the card and ball stand in the middle of the picture and are black by day.
+  - `WorldAlley` (the spawn alley, the look tour's stop; 38 to 43 frames a second): not the reference's alley in what is there
+    (no gate arch, banners, crates or people; rough blocks with heavy joints for dressed stone); rain, fog, snow and cloud are
+    grey and cold, the walls near black in rain and snow; fog whites out (the look check fails it, 0.94 stops); no snow lies
+    and the flakes are big square dots; no wet sheen in rain; the sun's patch is burnt at midday and still hard-edged under
+    cloud; the lanterns are plain white blocks at night.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.
