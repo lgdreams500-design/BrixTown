@@ -1540,6 +1540,34 @@
     "Its right-hand end meets the next outlet's sign, which is turned away from the camera.",
     "Like the court, the picture is the game's mirror image (the map's z read as Blender's y)."
    ]
+  },
+  {
+   "id": "MallsEastgateEscalators",
+   "category": "Malls",
+   "title": "Eastgate Mall's moving stairs close by, at every hour",
+   "files": [
+    "Malls/MallsEastgateEscalators_Morning.jpg",
+    "Malls/MallsEastgateEscalators_Midday.jpg",
+    "Malls/MallsEastgateEscalators_Dusk.jpg",
+    "Malls/MallsEastgateEscalators_NightLamps.jpg"
+   ],
+   "locks": "Every moving stair in Eastgate Mall, shown at the foot of the pair in the Great Court's middle. Their shapes are the game's: the plan's ramps (World/city_01/blocks/b_16_5.json, b_16_5_l0: from a to b, 4.4 m wide, floor to floor, 6 m over 29 m), with the game's parapet down the middle (BrixMall.cpp, 0.3 m wide) making two lanes of about 1.8 m. Close by, in the court's look (MallsEastgateCourt, ADR-0069): at each end a fixed floor plate of darker steel with a thin brass edge and a dark comb where the steps slide under it; two flat steps, then steps of 0.2 m up the slope; dark grey treads and risers, ribbed along the way they travel, mostly not metal so the sun through the roof lights shows on them, a thin brass line on each step's nose; polished steel skirts with a line of light along their top; a cream deck; glass sides ending in round newels with a brass handrail along their top and round each newel; the middle parapet the same, a steel skirt and line of light to each lane, a cream deck and a glass side with its handrail to each lane; the outside clad in the galleries' timber slats, a cream edge and a line of light along its foot; the underside in the same slats. In the world's light: at Midday the sun through the middle roof light falls on the upper part of the stairs; in the Morning and at Dusk it is too low to reach them; at dusk and at night the lines of light and the hall's lanterns at full. No moonlit nights, no weather.",
+   "approved": "2026-11-28, the owner",
+   "decision": "the owner, 2026-11-28: \"Yes, go ahead\" (darker floor plates, a closer camera, then every setting); \"All four, as the court\"; \"Mend the gaps first\"; \"Approve all four\" (one wide stair); then \"Add the parapet\" (the game's middle parapet), \"Yes, all four\", \"Approve all four\"; ADR-0066, ADR-0069",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=mall_escalators; mall_court(view=\"escalators\"), mall_escalator(), mall_ribbed(), ESCALATOR, MALL_LOOK) from the plan in World/city_01/blocks/b_16_5.json",
+   "models": [
+    "World/city_01/blocks/b_16_5.json (b_16_5_l0, its plan's ramps)",
+    "Game/Source/BrixWorld/Private/BrixMall.cpp (the moving stairs)"
+   ],
+   "rules": "docs/art/ART_DIRECTION.md 5 (Eastgate), ADR-0069, World/rules/lights.json",
+   "was": [],
+   "issues": [
+    "The game's stairs climb 12 degrees, a moving walk's slope, and are 4.4 m wide: drawn as stairs their steps are long (0.8 m) and wide (3.9 m). The slope starts 2.4 m in from each end, after the plate and the two flat steps, so the middle sits on the game's line and the ends a little below it.",
+    "The middle parapet's two glass sides stand 0.12 m apart, so from the foot of the stairs their two handrails read as one; the far lane shows only through the parapet's glass.",
+    "The first two flat steps lie in the shade of the gallery bridge overhead and read nearly black.",
+    "Morning, Dusk and NightLamps look much alike: by the town's one light the sun reaches these stairs only at Midday.",
+    "Like the court, the picture is the game's mirror image (the map's z read as Blender's y)."
+   ]
   }
  ],
  "places": [
@@ -1707,6 +1735,39 @@
     "porch",
     "porch_far"
    ]
+  },
+  {
+   "place": "mall_shop_front",
+   "what": "One of Eastgate Mall's outlets seen close by from its walk: its front, window, door and glass sign (lot b_16_5_l0).",
+   "reference": "MallsEastgateShop",
+   "lots": [
+    {
+     "id": "b_16_5_l0"
+    }
+   ],
+   "stops": []
+  },
+  {
+   "place": "mall_food_court",
+   "what": "Eastgate Mall's Food Market inside, the food court under the south-west egg (lot b_16_5_l0).",
+   "reference": "MallsEastgateFoodCourt",
+   "lots": [
+    {
+     "id": "b_16_5_l0"
+    }
+   ],
+   "stops": []
+  },
+  {
+   "place": "mall_escalators",
+   "what": "Eastgate Mall's moving stairs in the Great Court seen close by: at their foot, riding them, or from under them (lot b_16_5_l0).",
+   "reference": "MallsEastgateEscalators",
+   "lots": [
+    {
+     "id": "b_16_5_l0"
+    }
+   ],
+   "stops": []
   },
   {
    "place": "mall_concourse",
