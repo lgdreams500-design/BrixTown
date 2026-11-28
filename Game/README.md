@@ -1326,6 +1326,11 @@ first audit's findings are in LOOK_GATE.md.
     picture; at night the floor is near white, brighter than by day; gallery undersides plain dark brown, no slats, glass
     balustrades, columns, chandeliers or banners; the roof light is a patch of dots; the edge lights are burnt white lines;
     morning, midday and dusk are one picture; nobody in the court.
+  - `MallsEastgateEntrance` (Eastgate's south entrance from the forecourt, the reference's camera mirrored across the
+    entrance's middle; 40 to 46 frames a second): the ribbon wall is a smooth plain cream skin with no grooves (the look check
+    fails dusk for flat fill, 64 %); at dusk and night the forecourt and wall are near black, no floodlights; the lower third
+    is a dark band at morning; midday fails for little light and shade (0.99 stops); the arch is a low square opening, not a
+    lit vault; the doorway is a burnt-white strip by day; nobody on the forecourt.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.
