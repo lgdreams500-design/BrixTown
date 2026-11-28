@@ -2124,7 +2124,40 @@
     "The first two flat steps lie in the shade of the gallery bridge overhead and read nearly black.",
     "Morning, Dusk and NightLamps look much alike: by the town's one light the sun reaches these stairs only at Midday.",
     "Like the court, the picture is the game's mirror image (the map's z read as Blender's y)."
-   ]
+   ],
+   "unreal": {
+    "where": "cam:1683.4,660,1.5,96,3",
+    "blender": "Malls/MallsEastgateEscalators_Midday.jpg",
+    "settings": {
+     "Morning": "07:20",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30"
+    },
+    "files": [
+     "Malls/Unreal/MallsEastgateEscalators_Morning.jpg",
+     "Malls/Unreal/MallsEastgateEscalators_Midday.jpg",
+     "Malls/Unreal/MallsEastgateEscalators_Dusk.jpg",
+     "Malls/Unreal/MallsEastgateEscalators_NightLamps.jpg"
+    ],
+    "shot": {
+     "commit": "29cf580",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "44 to 46"
+    },
+    "status": "proposed",
+    "issues": [
+     "The spot: at the foot of the Great Court's moving stairs (the plan's ramp from x 1682.4, z 663.5), 1.5 m up as the reference's camera is, on the stairs' own line and 3.5 m back, looking up them. The reference's own camera numbers (MALL_CAMS escalators), laid on the map, stand beside the stairs with their solid side filling the picture, mirrored or not, so the spot was scouted. The game's camera is 90 degrees wide, as the reference's 18 mm lens.",
+     "These are not moving stairs yet (Game/README.md says so): two plain dark sloped ramps between plain cream and brown slabs. None of the reference's parts is there: no steps with brass noses, no floor plate and comb, no steel skirts with a line of light, no glass sides with round newels, no brass handrail, no timber cladding.",
+     "The ramps are one flat dark grey with nothing to see on them; their sides are flat fills with hard edges (G3, G5).",
+     "The slope is shallow (12 degrees, a moving walk's, as the reference's issues say), so from the foot the stairs read as a low wedge and the court's far side shows over them.",
+     "Nobody stands on the stairs or in the court; the reference has a person on the foot plate (G6).",
+     "Morning, Midday and Dusk are nearly one picture: only the small roof patch above changes colour. At night the floor goes paler than by day (G9).",
+     "Round it, as in the Great Court: a matte grey checker floor with no reflection, plain dark brown gallery undersides with burnt white lines of light, no banners, chandeliers or glass balustrades.",
+     "The trees in the court are a few large flat facets, yellow-green by day and near black-green at dusk."
+    ]
+   }
   }
  ],
  "places": [
