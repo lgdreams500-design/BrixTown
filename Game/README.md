@@ -1316,6 +1316,11 @@ first audit's findings are in LOOK_GATE.md.
     blank pale panels, the street seen only through the doorway); no sun comes in, so morning, midday and dusk are one
     picture; walls, panels and ceiling carry the engine's large soft blotches; a pale box on the ceiling lit from nowhere;
     night is an even dull orange with no pools under the pendants; stone tiles for the reference's boards.
+  - `ShopsBigHall` (the Furniture Outlet from just inside its door, the route in front and the room sets beyond; 31 to 39
+    frames a second): night is as bright as day and whiter, with no pools under the lanterns; the sun's patches are burnt
+    white at midday; at dusk the skylights' frames glow orange-red and a streak of orange light hangs in the air; the roof is
+    mostly open sky where the reference has a solid roof with slits and heavy trusses; nobody in the hall; walls, floor and
+    route are plain flat fills with no contact shade.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.
