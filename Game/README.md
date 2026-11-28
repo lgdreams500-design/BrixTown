@@ -1271,6 +1271,14 @@ first audit's findings are in LOOK_GATE.md.
   inner faces of the buildings' walls still draw the street's mottle; carrying it over goes with the look tour.
   `look_check.py` fails the golden hallway's "flat" by day (52 to 55 % against 45 %): the limit is not yet set for a
   room's plain walls. The old measuring rooms' sill, shutters and paving are drawn with no pattern, which draws black.
+- **The reference page's light settings, as the game shows them (ADR-0075, 2026-11-28):** each place's settings are shot in the game by
+  `python Tools/unreal/reference_shots.py --all` and shown on `Art/Reference/index.html` beside one Blender picture, all "for your
+  review"; what is wrong in each is in its `unreal` block's `issues` in `Art/Reference/catalog.json`. No light, material or
+  model was changed to take them. Nowhere in the game: the moon nights (no moon, WLD-042) and the fire-out nights (no fire is lit).
+  - `IndoorHomeRoom` (the golden room, 40 to 46 frames a second): morning and midday are one picture but for the sun's patch; the
+    fire is never lit; dusk is dark; night is orange with a burnt patch by the floor lamp and the player's trousers near black; a
+    smudge of shadow on the left wall by day; darker, redder boards than the reference; the card and ball near black by day; a
+    ragged line where the left wall meets the ceiling. The town's rooms are not lit as the golden room is.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.

@@ -1,5 +1,5 @@
 {
- "note": "Every approved look reference of Brix Town, in one list (ADR-0061). Files live in Art/Reference/<Category>/ and are named <Category><Subject>[_<Variant>].<ext> in PascalCase, so a name says what it is. 'locks' is what the reference decides; 'decision' the ADR and the owner's approval; 'made_by' the script that renders it; 'models' what the game is built from or measured against with it; 'status' proposed when it waits for the owner's approval; 'issues' what is seen wrong in it and not mended, for the owner to judge; 'was' the old names. 'places' says which reference each kind of place in the game is judged against, and which places have none: python Tools/reference_catalog.py --for <tour stop, lot id or place> answers it; a place's 'camera' names the tour stops that look through its reference's own camera (Tools/unreal/look_match.py compares those square by square). 'gaps' are references a category still lacks. Tools/reference_catalog.py checks this file against the folders and writes Art/Reference/index.html; run it after any change here.",
+ "note": "Every approved look reference of Brix Town, in one list (ADR-0061). Files live in Art/Reference/<Category>/ and are named <Category><Subject>[_<Variant>].<ext> in PascalCase, so a name says what it is. 'locks' is what the reference decides; 'decision' the ADR and the owner's approval; 'made_by' the script that renders it; 'models' what the game is built from or measured against with it; 'status' proposed when it waits for the owner's approval; 'issues' what is seen wrong in it and not mended, for the owner to judge; 'was' the old names. 'places' says which reference each kind of place in the game is judged against, and which places have none: python Tools/reference_catalog.py --for <tour stop, lot id or place> answers it; a place's 'camera' names the tour stops that look through its reference's own camera (Tools/unreal/look_match.py compares those square by square). 'gaps' are references a category still lacks. Tools/reference_catalog.py checks this file against the folders and writes Art/Reference/index.html; run it after any change here. 'unreal' (ADR-0075, docs/process/UNREAL_REFERENCES.md) is a place's light settings as pictures taken in the game: 'where' the tour stop's place, 'blender' the one Blender picture the page keeps showing, 'settings' the hour of the game each setting is shot at (hh:mm or ref, |<weather> after it), 'missing' the settings the game cannot show and why, 'issues' what is seen wrong in the game's pictures; 'files', 'checks', 'shot' and 'status' are written by Tools/unreal/reference_shots.py, and only the owner's words make its status approved (then with a 'decision' quoting them).",
  "categories": [
   {
    "id": "World",
@@ -1296,7 +1296,49 @@
     "The living room still reads warm at dusk: the fire and the dusk sky together.",
     "The light the facing wall throws back is a hidden soft light on that wall (BOUNCE_CARD in hours_50.py: 25 W by day, 15 % of the lamps by night), not the wall's own bounce, which reached too little.",
     "Its bounce is raised x2 where the remade hallway's (IndoorHallway, 2026-11-28, ADR-0072) is the surfaces' own: the two rooms of one house are not lit by quite the same rule."
-   ]
+   ],
+   "unreal": {
+    "where": "refroom:home",
+    "blender": "Indoor/IndoorHomeRoom_Midday.jpg",
+    "settings": {
+     "Morning": "ref",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30"
+    },
+    "missing": {
+     "NightFullMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart.",
+     "NightNewMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart.",
+     "NightFullMoonFireOut": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart. The game lights no fire either, so there is none to put out.",
+     "NightNewMoonFireOut": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart. The game lights no fire either, so there is none to put out."
+    },
+    "files": [
+     "Indoor/Unreal/IndoorHomeRoom_Morning.jpg",
+     "Indoor/Unreal/IndoorHomeRoom_Midday.jpg",
+     "Indoor/Unreal/IndoorHomeRoom_Dusk.jpg",
+     "Indoor/Unreal/IndoorHomeRoom_NightLamps.jpg"
+    ],
+    "shot": {
+     "commit": "5704528",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "40 to 46"
+    },
+    "status": "proposed",
+    "issues": [
+     "This is the golden room (ADR-0073), built to this reference, with a trial light: nothing in it is approved, and the rooms of the town are not lit like this yet.",
+     "Morning and Midday are almost one picture: only the sun's patch on the floor and the view out change (G9).",
+     "The fire is never lit: at Dusk and at night the Blender room's red fire carries half the mood, here the fireplace is dark (G7).",
+     "Dusk is darker than its Blender picture and the day is gone from the walls; the floor lamp is only part of the way up.",
+     "At night the room is orange, the floor lamp burns a pale patch on the wall by the window, and the player's trousers go near black (G4, G5, G6).",
+     "A soft dark smudge on the left wall above the sofa by day: a shadow the window's light throws; what throws it is not found (G2).",
+     "The boards are a darker, redder brown than the Blender room's greyer boards; the plaster is one plain tone by the owner's choice (ADR-0074), whiter and cooler by day than Blender's pink-warm plaster (G3, G4).",
+     "The grey card and ball (measuring aids) stand in every picture at the right, and read near black by day (card 0.034): little light reaches what faces the camera on that side.",
+     "A resident stands in front of the fireplace and hides it; the Blender picture has one person. The picture over the fireplace is not the Blender room's shelf of small things.",
+     "Out of the window is a flat ground to a far horizon, not a sunlit street.",
+     "The ceiling's edge along the left wall is drawn ragged (a saw-toothed line where the wall meets the ceiling)."
+    ]
+   }
   },
   {
    "id": "IndoorHallway",

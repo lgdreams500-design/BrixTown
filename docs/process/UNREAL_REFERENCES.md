@@ -1,10 +1,10 @@
 ---
 doc_id: WASTED-UNREAL-REFERENCES
 title: Brix Town — Plan: every place's light settings as pictures taken in Unreal
-version: 0.1.0
-status: proposed          # the owner in chat, 2026-11-28: "devise a plan to convert all the references in the index.html to unreal based reference. like a script or something which will update or create a fresh index.html that will have single image for blender and light settings references built in unreal. what settings we need for each area is already there in index.html." ... "ideally should run without requiring llm or tokens" ... "keep merging changes area by area and update index.html area by area so I can check without stopping the session"
+version: 1.0.0
+status: accepted          # ADR-0075; the owner in chat, 2026-11-28: "devise a plan to convert all the references in the index.html to unreal based reference. like a script or something which will update or create a fresh index.html that will have single image for blender and light settings references built in unreal. what settings we need for each area is already there in index.html." ... "ideally should run without requiring llm or tokens" ... "keep merging changes area by area and update index.html area by area so I can check without stopping the session"
 last_updated: 2026-11-28
-relates_to: [ADR-0004, ADR-0058, ADR-0061, ADR-0066, ADR-0073, ADR-0074, ART-001]
+relates_to: [ADR-0004, ADR-0058, ADR-0061, ADR-0066, ADR-0073, ADR-0074, ADR-0075, ART-001]
 ---
 
 # Every place's light settings, taken in Unreal
@@ -111,5 +111,5 @@ what is wrong into the block's `issues` and `Game/README.md` "Not yet", open the
   most of Eastgate: those areas first need the camera read from the reference's script (`made_by`), and where the
   game's place differs from the reference in what is there, that is written as an issue, not hidden by another view.
 - The golden room's light is a trial (`Art/StyleTests/unreal_golden_room_58`): its pictures go up as "for your review".
-- This needs an ADR (the look stays locked to `Art/Reference/`, ADR-0004; ADR-0073 was about rooms only, and this
-  takes it out of doors and to the shops and the mall, which the owner has now asked for).
+- The decision is ADR-0075 (the look stays locked to `Art/Reference/`, ADR-0004; ADR-0073 was about rooms only, and
+  this takes it out of doors and to the shops and the mall, which the owner asked for).
