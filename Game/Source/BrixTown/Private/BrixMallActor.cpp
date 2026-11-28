@@ -118,6 +118,8 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 		S.UV1.Append({ uv1, uv1, uv1 });
 		Tris++;
 	};
+	const bool bCourt = Mall->Moving.Num() > 0;                  // Eastgate; the furniture outlet's hall has no moving stairs
+	const bool bTiles = !bCourt || FloorTiles, bSteps = bCourt && StairSteps;
 	auto Flat4 = [&](int32 Mat, const FVector3d& p0, const FVector3d& p1, const FVector3d& p2, const FVector3d& p3, const FVector3d* Hint, const FLinearColor& Col)
 	{
 		FVector3d n = FVector3d::CrossProduct(p1 - p0, p2 - p0);
@@ -125,7 +127,7 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 		if (Hint && n.Dot(*Hint) < 0) n = -n;
 		const FVector3f nf = UN(n);
 		FSink& S = SinkAt(Bucket(Mat), (p0 + p2) / 2);
-		const FVector2f Kind(0.f, Mat == 16 ? 1.f : 0.f);   // tiles: their pattern (M_MallRoom)
+		const FVector2f Kind(0.f, Mat == 16 && bTiles ? 1.f : 0.f);   // tiles: their pattern (M_MallRoom); a court mall's floor is smooth stone, its joints hidden
 		Tri(S, p0, p1, p2, nf, nf, nf, Col, Col, Col, nullptr, Kind);
 		if (!p2.Equals(p3, 1e-9) && !p3.Equals(p0, 1e-9)) Tri(S, p0, p2, p3, nf, nf, nf, Col, Col, Col, nullptr, Kind);
 	};
@@ -150,6 +152,7 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 			FVector3d P[4], C[4];
 			FVector3f N[4];
 			for (int32 i = 0; i < 4; ++i) { P[i] = FVector3d(A[i * 3], A[i * 3 + 1], A[i * 3 + 2]); N[i] = UN(FVector3d(A[12 + i * 3], A[13 + i * 3], A[14 + i * 3])); C[i] = FVector3d(A[24 + i * 3], A[25 + i * 3], A[26 + i * 3]); }
+			if (Cl.Mat == 28 && bSteps) break;   // the moving stairs' slope: drawn as steps below
 			FSink& S = SinkAt(Bucket(Cl.Mat), (P[0] + P[2]) / 2);
 			if (Cl.Mat == 25 || Cl.Mat == 27)   // the pierced shell: (round, down, openings + 1000 x tone) for the lattice
 			{
@@ -303,6 +306,70 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 	}
 	Blockers->AddInstances(Solids, false);
 	TArray<FString> NoMesh;
+	// The moving stairs as their approved reference draws them (Art/Reference/Malls/MallsEastgateEscalators; Tools/blender/
+	// hours_50.py mall_escalator()), laid over the slice's plain slope: the thirty steps a walker's feet already climb
+	// (BrixMallStepUnder), each a dark ribbed tread with a brass nose and a darker riser; a steel floor plate with a brass
+	// edge and a comb at the foot and the head; steel skirts with a line of light along the steps; a brass handrail along
+	// each parapet, turned down at each end. Not here: the glass sides and newels, the timber cladding (Game/README.md, Not yet).
+	if (bSteps)
+		for (const FBrixMovingStair& R : Mall->Moving)
+		{
+			const int32 N = 30;
+			const double Rise = (R.Yb - R.Ya) / N, Go = R.Lr / N, MID = .15, In = R.Hw - .3, RAIL = 1.1, Top = R.Yb - R.Ya;
+			const FVector3d T(R.T.X, 0, R.T.Y), S(R.S.X, 0, R.S.Y), Up(0, 1, 0), A(R.A.X, R.Ya, R.A.Y);
+			auto At = [&](double Along, double Side, double Y) { return A + T * Along + S * Side + Up * Y; };
+			const FLinearColor Tread = TreadColour, Riser = TreadColour * 0.45f, Rib = TreadColour * 1.9f;
+			const FVector3d Back = -T, Fwd = T;
+			for (const double Sg : { -1.0, 1.0 })
+			{
+				const double s0 = Sg > 0 ? MID : -In, s1 = Sg > 0 ? In : -MID;
+				for (int32 i = 0; i < N; ++i)
+				{
+					const double a0 = i * Go, a1 = (i + 1) * Go, y = (i + 1) * Rise;
+					Flat4(3, At(a0, s0, y), At(a0, s1, y), At(a1, s1, y), At(a1, s0, y), &Up, Tread);
+					for (int32 k = 1; k < StairRibs; ++k)   // the tread's ribs, along the way it runs
+					{
+						const double c = s0 + (s1 - s0) * k / StairRibs;
+						Flat4(3, At(a0 + StairNose, c - .012, y + .002), At(a0 + StairNose, c + .012, y + .002), At(a1, c + .012, y + .002), At(a1, c - .012, y + .002), &Up, Rib);
+					}
+					Flat4(3, At(a0, s0, y + .003), At(a0, s1, y + .003), At(a0 + StairNose, s1, y + .003), At(a0 + StairNose, s0, y + .003), &Up, StairBrass);   // its brass nose
+					Flat4(3, At(a0, s0, y - Rise), At(a0, s1, y - Rise), At(a0, s1, y), At(a0, s0, y), &Back, Riser);
+					Flat4(3, At(a0 - .002, s0, y - .03), At(a0 - .002, s1, y - .03), At(a0 - .002, s1, y), At(a0 - .002, s0, y), &Back, StairBrass);
+				}
+				// the floor plates: steel, a brass edge round them, the comb's teeth where the steps slide under
+				for (const double End : { 0.0, 1.0 })
+				{
+					const double a0 = End > 0 ? R.Lr : -(double)StairPlate, a1 = a0 + StairPlate, y = (End > 0 ? Top : 0.0) + .012, e = .04;
+					Flat4(3, At(a0, s0, y), At(a0, s1, y), At(a1, s1, y), At(a1, s0, y), &Up, StairBrass);
+					Flat4(3, At(a0 + e, s0 + e, y + .002), At(a0 + e, s1 - e, y + .002), At(a1 - e, s1 - e, y + .002), At(a1 - e, s0 + e, y + .002), &Up, StairPlateColour);
+					const double c0 = End > 0 ? a0 + e : a1 - e - .14, c1 = c0 + .14;   // the comb, on the side the steps are
+					for (double c = s0 + e + .02; c < s1 - e - .02; c += .09)
+						Flat4(3, At(c0, c, y + .004), At(c0, c + .045, y + .004), At(c1, c + .045, y + .004), At(c1, c, y + .004), &Up, Riser);
+				}
+				// the skirts: polished steel up each side of the lane over the steps' noses, a line of light along their foot
+				for (const double Side : { s0, s1 })
+				{
+					const double In1 = Side == s0 ? 1.0 : -1.0, q = Side + In1 * .004, l = Side + In1 * .007;
+					const FVector3d Into = S * In1;
+					Flat4(3, At(0, q, 0), At(R.Lr, q, Top), At(R.Lr, q, Top + .28 + Rise), At(0, q, .28 + Rise), &Into, StairSteel);
+					Flat4(1, At(0, l, Rise + .05), At(R.Lr, l, Top + Rise + .05), At(R.Lr, l, Top + Rise + .08), At(0, l, Rise + .08), &Into, FLinearColor(1.f, .8f, .6f));
+				}
+			}
+			// a brass handrail along the top of each parapet (the two outer ones and the middle one's two sides), turned down at each end
+			for (const double Side : { -R.Hw + .15, -MID, MID, R.Hw - .15 })
+			{
+				const double w = .05, h0 = (FMath::Abs(Side) < .5 ? RAIL - .2 : RAIL) + .02, h1 = h0 + .07, r0 = Side - w, r1 = Side + w;
+				Flat4(3, At(0, r0, h1), At(0, r1, h1), At(R.Lr, r1, Top + h1), At(R.Lr, r0, Top + h1), &Up, StairBrass);
+				for (const double Sd : { r0, r1 })
+				{
+					const FVector3d Out = S * (Sd == r0 ? -1.0 : 1.0);
+					Flat4(3, At(0, Sd, h0), At(R.Lr, Sd, Top + h0), At(R.Lr, Sd, Top + h1), At(0, Sd, h1), &Out, StairBrass);
+				}
+				Flat4(3, At(0, r0, h0 - .5), At(0, r1, h0 - .5), At(0, r1, h1), At(0, r0, h1), &Back, StairBrass);
+				Flat4(3, At(R.Lr, r0, Top + h0 - .5), At(R.Lr, r1, Top + h0 - .5), At(R.Lr, r1, Top + h1), At(R.Lr, r0, Top + h1), &Fwd, StairBrass);
+			}
+		}
+
 	for (TPair<FString, TArray<FTransform>>& P : PieceAts)
 	{
 		UStaticMesh* PM = LoadObject<UStaticMesh>(nullptr, *FString::Printf(TEXT("/Game/Furniture/%s.%s"), *P.Key, *P.Key));
