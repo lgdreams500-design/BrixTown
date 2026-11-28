@@ -1,10 +1,10 @@
 ---
 doc_id: WASTED-FEATURE-PROCESS
 title: Brix Town — How a feature gets from idea to game
-version: 1.3.2
+version: 1.3.3
 status: accepted          # owner agreed the approach on 2026-11-21
-last_updated: 2026-11-27
-relates_to: [TEST-001, TECH-004, TECH-005, ART-001, ADR-0061, ADR-0066]
+last_updated: 2026-11-28
+relates_to: [TEST-001, TECH-004, TECH-005, ART-001, ADR-0061, ADR-0066, ADR-0073]
 ---
 
 # How a feature gets from idea to game
@@ -78,7 +78,10 @@ Things that help when picking:
   - is built at the game's own size and from what is already approved: a room, shop or hall takes its size from the
     map and the rules (`World/city_01/blocks/*.json` lot rects, `World/rules/storeys.json` heights), and its walls,
     windows and fronts from the approved building references (`Art/Reference/Buildings/`, the scripts that made them),
-    never a stand-in of another size or a home room dressed as something else.
+    never a stand-in of another size or a home room dressed as something else;
+  - of a room, says what the room is and its mood at each hour, not what number its light must reach (ADR-0073): a
+    room's light is set and approved in Unreal, in the golden room (`docs/process/LOOK_GATE.md`, A room's light), and
+    no room in the game is passed or failed by number against a Blender picture.
   How it is reviewed:
   - the owner reviews references one at a time, on the reference page or as a sheet in chat;
   - every round of review is rendered at **low quality** (`Tools/blender/reference_render.ps1 -Place <place> -Review
