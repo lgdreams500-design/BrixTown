@@ -61,16 +61,19 @@ unreal.log_warning("Brix Town: made " + full)
 # ---- the indoor faces
 TILES = r"""
 float3 c = C;
-if (Kind.y > 0.5)   // play.js material 16: tiles 0.42 m in two tones, each a little its own, with dark joints
+if (Kind.y > 0.5 && Kind.y < 1.5)   // play.js material 16: tiles 0.42 m in two tones, each a little its own, with dark joints
 {
     float2 q = W.xy / 42.0, fr = frac(q), cell = floor(q);
     float ck = fmod(abs(cell.x + cell.y), 2.0), t1 = frac(sin(dot(cell, float2(12.9898, 78.233))) * 43758.5453);
     c = lerp(c, c * float3(0.8, 0.8, 0.84), ck) * (0.95 + 0.1 * t1);
     c = lerp(c, c * 0.62, max(smoothstep(0.955, 0.985, fr.x), smoothstep(0.955, 0.985, fr.y)));
 }
+// A court mall's floor (Kind.y 2): polished stone with hidden joints (Art/Reference/Malls/MallsEastgateCourt, ADR-0069),
+// the floor's own colour toned by the parameter Stone, its clouds some metres across.
+if (Kind.y > 1.5) c *= Stone;
 // W1: matte and mottled, two close tones of the one colour blotched together, never a flat fill. Blotches about
 // 1.5 m across with smaller ones in them, the same on every face whichever way it looks.
-float3 q3 = W / 150.0;
+float3 q3 = W / (Kind.y > 1.5 ? 420.0 : 150.0);
 float2 m0 = q3.xy + q3.z * float2(0.37, 0.71);
 float n = 0.0, amp = 0.62;
 for (int o = 0; o < 2; ++o)
@@ -104,11 +107,13 @@ wp = node(mat, unreal.MaterialExpressionWorldPosition, -900, 150)
 uv1 = node(mat, unreal.MaterialExpressionTextureCoordinate, -900, 300, coordinate_index=1)
 tc = node(mat, unreal.MaterialExpressionCustom, -650, 100, output_type=unreal.CustomMaterialOutputType.CMOT_FLOAT3, description="Brix tiles", code=TILES)
 ins = []
-for n in ("C", "W", "Kind", "Mottle"):
+for n in ("C", "W", "Kind", "Mottle", "Stone"):
     ci = unreal.CustomInput()
     ci.set_editor_property("input_name", n)
     ins.append(ci)
 tc.set_editor_property("inputs", ins)
+stone = node(mat, unreal.MaterialExpressionVectorParameter, -900, -150, parameter_name="Stone", default_value=unreal.LinearColor(0.6, 0.575, 0.54, 1.0))
+lib.connect_material_expressions(stone, "", tc, "Stone")
 mottle = node(mat, unreal.MaterialExpressionScalarParameter, -900, 450, parameter_name="Mottle", default_value=0.12)
 lib.connect_material_expressions(vc, "", tc, "C")
 lib.connect_material_expressions(wp, "", tc, "W")
@@ -136,7 +141,18 @@ lit = node(mat, unreal.MaterialExpressionMultiply, -400, 200)
 lib.connect_material_expressions(tc, "", lit, "A")
 lib.connect_material_expressions(amb, "", lit, "B")
 lib.connect_material_property(lit, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
-rough = node(mat, unreal.MaterialExpressionConstant, -400, 300, r=ROUGHNESS)
+# matte, but for the polished stone floor (the parameter StoneRough)
+srough = node(mat, unreal.MaterialExpressionScalarParameter, -900, 1050, parameter_name="StoneRough", default_value=0.3)
+rough = node(mat, unreal.MaterialExpressionCustom, -400, 1000, output_type=unreal.CustomMaterialOutputType.CMOT_FLOAT1, description="Brix floor polish",
+             code="return Kind.y > 1.5 ? R : %s;" % ROUGHNESS)
+rins = []
+for n in ("Kind", "R"):
+    ci = unreal.CustomInput()
+    ci.set_editor_property("input_name", n)
+    rins.append(ci)
+rough.set_editor_property("inputs", rins)
+lib.connect_material_expressions(uv1, "", rough, "Kind")
+lib.connect_material_expressions(srough, "", rough, "R")
 lib.connect_material_property(rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
 lib.recompile_material(mat)
 unreal.EditorAssetLibrary.save_asset(full, only_if_is_dirty=False)
