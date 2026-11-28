@@ -62,12 +62,15 @@ public:
 	// And a court mall's floor as its reference's stone with hidden joints, not tiles (MallsEastgateCourt, ADR-0069).
 	UPROPERTY(Config) bool StairSteps = true;
 	UPROPERTY(Config) bool FloorTiles = false;           // the slice's two-toned tiles on a court mall's floor (the outlet's hall keeps its own)
-	UPROPERTY(Config) int32 StairRibs = 14;              // ribs across a lane's tread
+	UPROPERTY(Config) FLinearColor FloorStone = FLinearColor(0.6f, 0.575f, 0.54f);   // the polished stone's tone, on the floor's own colour (M_MallRoom's Stone)
+	UPROPERTY(Config) float FloorRough = 0.1f;           // how polished it is (M_MallRoom's StoneRough; every other face 0.85)
+	UPROPERTY(Config) int32 StairRibs = 24;              // ribs across a lane's tread
+	UPROPERTY(Config) float StairRib = 1.4f;             // a rib's tone, times the tread's
 	UPROPERTY(Config) float StairNose = 0.06f;           // m: the brass nose along a tread's front
 	UPROPERTY(Config) float StairPlate = 1.2f;           // m: the floor plate at each end (hours_50.py ESCALATOR plate)
-	UPROPERTY(Config) FLinearColor StairBrass = FLinearColor(0.62f, 0.45f, 0.2f);
+	UPROPERTY(Config) FLinearColor StairBrass = FLinearColor(0.56f, 0.38f, 0.13f);
 	UPROPERTY(Config) FLinearColor StairSteel = FLinearColor(0.55f, 0.55f, 0.53f);
-	UPROPERTY(Config) FLinearColor StairPlateColour = FLinearColor(0.4f, 0.4f, 0.39f);
+	UPROPERTY(Config) FLinearColor StairPlateColour = FLinearColor(0.27f, 0.27f, 0.265f);
 	UPROPERTY(Config) FLinearColor DarkGlass = FLinearColor(0.07f, 0.08f, 0.1f);      // a window that is not lit (material 4)
 	UPROPERTY(Config) int32 NearLights = 6;              // the mall's lanterns and shop lights nearest the camera on its floor give real light
 	UPROPERTY(Config) float LightCandela = 25.f;

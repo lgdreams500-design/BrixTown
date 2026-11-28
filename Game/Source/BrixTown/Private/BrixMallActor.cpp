@@ -62,7 +62,7 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 	UMaterialInterface* LitM = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Mall/M_MallLit.M_MallLit"));
 	UMaterialInterface* LatticeM = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Mall/M_MallLattice.M_MallLattice"));
 	UMaterialInterface* RoomM = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Mall/M_MallRoom.M_MallRoom"));
-	if (RoomM) { RoomMat = UMaterialInstanceDynamic::Create(RoomM, this); RoomMat->SetScalarParameterValue(TEXT("Glow"), RoomLight); RoomMat->SetScalarParameterValue(TEXT("Mottle"), RoomMottle); RoomMat->SetScalarParameterValue(TEXT("Under"), RoomUnder); }
+	if (RoomM) { RoomMat = UMaterialInstanceDynamic::Create(RoomM, this); RoomMat->SetScalarParameterValue(TEXT("Glow"), RoomLight); RoomMat->SetScalarParameterValue(TEXT("Mottle"), RoomMottle); RoomMat->SetScalarParameterValue(TEXT("Under"), RoomUnder); RoomMat->SetVectorParameterValue(TEXT("Stone"), FloorStone); RoomMat->SetScalarParameterValue(TEXT("StoneRough"), FloorRough); }
 	if (!LitM || !LatticeM) UE_LOG(LogTemp, Warning, TEXT("Brix Town: /Game/Mall's materials are missing (run Tools/unreal/make_mall_materials.py)"));
 	if (LitM)
 	{
@@ -127,7 +127,7 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 		if (Hint && n.Dot(*Hint) < 0) n = -n;
 		const FVector3f nf = UN(n);
 		FSink& S = SinkAt(Bucket(Mat), (p0 + p2) / 2);
-		const FVector2f Kind(0.f, Mat == 16 && bTiles ? 1.f : 0.f);   // tiles: their pattern (M_MallRoom); a court mall's floor is smooth stone, its joints hidden
+		const FVector2f Kind(0.f, Mat != 16 ? 0.f : bTiles ? 1.f : 2.f);   // the floor: tiles in their pattern, or a court mall's polished stone, its joints hidden (M_MallRoom)
 		Tri(S, p0, p1, p2, nf, nf, nf, Col, Col, Col, nullptr, Kind);
 		if (!p2.Equals(p3, 1e-9) && !p3.Equals(p0, 1e-9)) Tri(S, p0, p2, p3, nf, nf, nf, Col, Col, Col, nullptr, Kind);
 	};
@@ -318,7 +318,7 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 			const double Rise = (R.Yb - R.Ya) / N, Go = R.Lr / N, MID = .15, In = R.Hw - .3, RAIL = 1.1, Top = R.Yb - R.Ya;
 			const FVector3d T(R.T.X, 0, R.T.Y), S(R.S.X, 0, R.S.Y), Up(0, 1, 0), A(R.A.X, R.Ya, R.A.Y);
 			auto At = [&](double Along, double Side, double Y) { return A + T * Along + S * Side + Up * Y; };
-			const FLinearColor Tread = TreadColour, Riser = TreadColour * 0.45f, Rib = TreadColour * 1.9f;
+			const FLinearColor Tread = TreadColour, Riser = TreadColour * 0.45f, Rib = TreadColour * StairRib;
 			const FVector3d Back = -T, Fwd = T;
 			for (const double Sg : { -1.0, 1.0 })
 			{
@@ -330,7 +330,7 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 					for (int32 k = 1; k < StairRibs; ++k)   // the tread's ribs, along the way it runs
 					{
 						const double c = s0 + (s1 - s0) * k / StairRibs;
-						Flat4(3, At(a0 + StairNose, c - .012, y + .002), At(a0 + StairNose, c + .012, y + .002), At(a1, c + .012, y + .002), At(a1, c - .012, y + .002), &Up, Rib);
+						Flat4(3, At(a0 + StairNose, c - .006, y + .002), At(a0 + StairNose, c + .006, y + .002), At(a1, c + .006, y + .002), At(a1, c - .006, y + .002), &Up, Rib);
 					}
 					Flat4(3, At(a0, s0, y + .003), At(a0, s1, y + .003), At(a0 + StairNose, s1, y + .003), At(a0 + StairNose, s0, y + .003), &Up, StairBrass);   // its brass nose
 					Flat4(3, At(a0, s0, y - Rise), At(a0, s1, y - Rise), At(a0, s1, y), At(a0, s0, y), &Back, Riser);
@@ -343,8 +343,8 @@ void ABrixMall::Start(TSharedPtr<FBrixMall> InMall, ABrixTownActor* Town)
 					Flat4(3, At(a0, s0, y), At(a0, s1, y), At(a1, s1, y), At(a1, s0, y), &Up, StairBrass);
 					Flat4(3, At(a0 + e, s0 + e, y + .002), At(a0 + e, s1 - e, y + .002), At(a1 - e, s1 - e, y + .002), At(a1 - e, s0 + e, y + .002), &Up, StairPlateColour);
 					const double c0 = End > 0 ? a0 + e : a1 - e - .14, c1 = c0 + .14;   // the comb, on the side the steps are
-					for (double c = s0 + e + .02; c < s1 - e - .02; c += .09)
-						Flat4(3, At(c0, c, y + .004), At(c0, c + .045, y + .004), At(c1, c + .045, y + .004), At(c1, c, y + .004), &Up, Riser);
+					for (double c = s0 + e + .02; c < s1 - e - .02; c += .05)
+						Flat4(3, At(c0, c, y + .004), At(c0, c + .025, y + .004), At(c1, c + .025, y + .004), At(c1, c, y + .004), &Up, Riser);
 				}
 				// the skirts: polished steel up each side of the lane over the steps' noses, a line of light along their foot
 				for (const double Side : { s0, s1 })
