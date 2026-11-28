@@ -2002,7 +2002,41 @@
     "The plan has no units for the food outlets and no seating (ADR-0070): the game's hall has neither yet.",
     "Like the court and the entrance, the picture is the game's mirror image (the map's z read as Blender's y).",
     "The outlets' names glow less than when this was first approved (1.2, as every shop's, ADR-0071)."
-   ]
+   ],
+   "unreal": {
+    "where": "cam:1597.6,829.6,1.7,-139.9,11.2",
+    "blender": "Malls/MallsEastgateFoodCourt_Midday.jpg",
+    "settings": {
+     "Morning": "07:20",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30"
+    },
+    "files": [
+     "Malls/Unreal/MallsEastgateFoodCourt_Morning.jpg",
+     "Malls/Unreal/MallsEastgateFoodCourt_Midday.jpg",
+     "Malls/Unreal/MallsEastgateFoodCourt_Dusk.jpg",
+     "Malls/Unreal/MallsEastgateFoodCourt_NightLamps.jpg"
+    ],
+    "shot": {
+     "commit": "1bcb0ff",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "46 to 49"
+    },
+    "status": "proposed",
+    "issues": [
+     "The spot is the reference's own camera in the Food Market's egg hall (MALL_CAMS egg in Tools/blender/hours_50.py, laid on the map: x 1597.6, z 829.6, 1.7 m up, aimed 11.2 degrees up). The game's picture is the reference's mirror image, as the reference's own issues say. The game's camera is 90 degrees wide where the reference's 16 mm lens sees 97.",
+     "It is not a food court yet (ADR-0070; Game/README.md says so): the game's hall has a tree in a ring, five plain brown boxes and a bare drum wall. None of the reference's food outlets round the drum, their lit menu boards, the market stalls, the tables and chairs, the timber fins up the drum or the galleries' glass is there.",
+     "The drum wall is one plain flat tone (buff by day, grey at dusk, pale grey at night) with three thin white lines of light round it; nothing on it takes shade but the egg's net by day (G1, G3).",
+     "At night the floor and the drum are pale and bright, brighter than at dusk, with nothing seen to light them; the reference's night is warm, lit by its pendants and the outlets (G2, G9).",
+     "At Dusk the egg's lattice glows a strong orange-red against white gaps, far more saturated than anything in the reference, while the hall under it is grey (G4).",
+     "Midday: the sun's net of diamonds on the floor is burnt white. It is crisp, as the reference's issues say the game's would be (G5).",
+     "The floor is a matte grey checker where the reference has polished stone that mirrors the hall.",
+     "The pendants are small white cubes on long wires that light nothing; the reference's are large white globes.",
+     "Nobody is in the hall in any setting (G6)."
+    ]
+   }
   },
   {
    "id": "MallsEastgateShop",
