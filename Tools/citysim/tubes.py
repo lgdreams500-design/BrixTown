@@ -12,6 +12,8 @@ Network data (World/<city>/tubes.json, CITY-108):
 Ride numbers: World/rules/tubes.json.
 
     problems(net, rules)          what is wrong with the network data, [] when nothing
+    crown_top(r, crown, leaf)     how high a tree's crown reaches and how far out, as the game draws it (BrixTreeShapes)
+    through_crowns(net, rules, trees)  the level runs that pass through a tree's crown, [] when none
     route(net, a, b)              the shortest way from stop a to stop b: [node ids], or None
     Ride(net, rules, a, b)        .duration, .at(s) -> rider (x, y, z), .lean(s) -> degrees from upright, .camera(s), .phase(s)
 """
@@ -84,6 +86,40 @@ def problems(net, rules):
     for s in net["stops"]:
         if not any(s in (t["a"], t["b"]) for t in net["tubes"]):
             out.append("stop %s: no tube" % s)
+    return out
+
+
+def crown_top(r, crown=None, leaf=1.0):
+    """(top, reach): how high a tree of crown radius r reaches over its ground, and how far out its crown goes, as the game
+    draws it (BrixStreets.cpp BrixTreeShapes, play.js tree(): the trunk's height grows with r, the crown sits on it, its
+    facets jittered up to 1.2 times its radius). crown: None round, "cone" a pine, "slim" a birch."""
+    if crown == "cone":
+        return 1.1 + r * .35 + r * 3.1 * (1 / 3.6 * 2 + .62), r * 1.05 * 1.2
+    if crown == "slim":
+        R = .62 * r * (.8 + .2 * leaf)
+        return 1.6 + r * 1.05 + R * 1.7 * 1.42, R * 1.2
+    R = r * (.8 + .2 * leaf)
+    return 1.3 + r * .75 + R * 1.42, R * 1.2
+
+
+def _seg_dist(p, a, b):
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    u = max(0.0, min(1.0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy or 1e-9)))
+    return math.hypot(p[0] - a[0] - u * dx, p[1] - a[1] - u * dy)
+
+
+def through_crowns(net, rules, trees, clear=0.0):
+    """The level runs that pass through (or within clear m of) a tree's crown: [(tube index, tree, crown top)].
+    trees: [(x, y, r, crown)], r the crown's radius (a grown tree's: vegetation.json r_max)."""
+    out, tr = [], rules["tube_inner_m"] / 2 + .12                # the glass and its rings
+    for i, t in enumerate(net["tubes"]):
+        for a, b in zip(t["line"], t["line"][1:]):
+            if abs(a[2] - b[2]) > .01:
+                continue
+            for tree in trees:
+                top, reach = crown_top(tree[2], tree[3])
+                if _seg_dist(tree, a, b) < reach + tr and a[2] - tr < top + clear:
+                    out.append((i, tree, top))
     return out
 
 

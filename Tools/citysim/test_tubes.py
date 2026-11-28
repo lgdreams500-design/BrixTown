@@ -7,7 +7,7 @@ import itertools, math, os, random, sys, unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "worldgen"))
 import world                                               # noqa: E402
-from tubes import Ride, mouth, problems, rounded, route            # noqa: E402
+from tubes import Ride, crown_top, mouth, problems, rounded, route, through_crowns   # noqa: E402
 
 RULES = world.load()["tubes"]
 H = RULES["ride"]["draw_in_height_m"]
@@ -79,6 +79,18 @@ class TheTownsTubes(unittest.TestCase):
 
     def test_CITY_108_the_towns_tubes_have_no_problems(self):
         self.assertEqual(problems(self.net, RULES), [])
+
+    def test_CITY_108_the_tubes_run_over_the_grown_street_trees(self):
+        """The owner, 2026-11-28: "Raise the tubes". No level run passes through a street tree's crown as it will grow
+        (vegetation.json r_max, drawn as BrixTreeShapes draws it), nor within a metre of it."""
+        w = world.load()
+        veg = w["vegetation"].get("species", w["vegetation"])
+        trees = [(t["pos"][0], t["pos"][1], veg.get(t["species"], {}).get("r_max", 4.0), veg.get(t["species"], {}).get("crown"))
+                 for bl in w["blocks"] for t in bl.get("trees", [])]
+        self.assertEqual(through_crowns(self.net, RULES, trees, 1.0), [])
+        self.assertGreater(crown_top(6.5)[0], 15.0)          # a grown plane: the tallest tree on the lines
+        low = {**self.net, "tubes": [{**t, "line": [[x, y, min(z, 9.0)] for x, y, z in t["line"]]} for t in self.net["tubes"]]}
+        self.assertTrue(through_crowns(low, RULES, trees))   # at the first 9 m they went through crowns
 
     def test_CITY_112_every_stop_in_town_reaches_every_other(self):
         for a, b in itertools.permutations(self.net["stops"], 2):

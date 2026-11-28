@@ -1,7 +1,7 @@
 ---
 doc_id: WASTED-SPEC-LIVING-CITY
 title: Brix Town — Living city (map, residents, things to use, vehicles, seasons and plants)
-version: 0.6.7
+version: 0.6.8
 status: draft
 last_updated: 2026-11-28
 parent: docs/specs/GAME_SPEC.md        # extends §4.6 CITY and §4.7 WLD; same ID rules
@@ -326,6 +326,7 @@ up to 42 on the road at once, no overlap, no crossing movements in a box, nobody
 ## 7. Change log
 | Version | Date | Change |
 |---|---|---|
+| 0.6.8 | 2026-11-28 | The tubes run over the grown street trees, 17 m up (the owner: "Raise the tubes"; `make_tubes_01.py` takes the height from the tallest grown crown under the lines; `test_CITY_108_the_tubes_run_over_the_grown_street_trees`). |
 | 0.6.7 | 2026-11-28 | CITY-108 to CITY-112, CITY-114 and WLD-073 to WLD-075 accepted (the owner's requests and picks; "Build tubes in Unreal"). A ride's corners are arcs (`bend_r_m`, `junction_bend_r_m`) and it starts and ends on the booth's floor (`floor_m`), set down inside the far booth facing out. |
 | 0.6.6 | 2026-11-28 | The tube routes approved by the owner on the map (CITY-108, CITY-112): 24 stops, `World/city_01/tubes.json`. |
 | 0.6.5 | 2026-11-28 | Skip time (WLD-073 to WLD-075; F-TIME-SKIP level 1) and glass travel tubes (CITY-108 to CITY-114; F-VEH-TUBE level 2), from the owner's request and picks in chat. Q-41 and Q-42 opened. All proposed. |

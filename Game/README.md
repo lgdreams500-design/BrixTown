@@ -650,7 +650,7 @@ it; no request from a client over the network (single player: the local player i
 
 
 ## Glass travel tubes (CITY-108 to CITY-112, CITY-114; F-VEH-TUBE level 2; ADR-0076)
-Clear glass tubes as slim as a rider run 9 m over the streets on iron posts, between 24 stops (`World/city_01/tubes.json`,
+Clear glass tubes as slim as a rider run 17 m over the streets on iron posts, a metre over the tallest street tree's crown as it will grow (the owner, 2026-11-28: "Raise the tubes"), between 24 stops (`World/city_01/tubes.json`,
 approved on the map; `World/rules/tubes.json` for the ride and the look). `ABrixTubes` builds them once at load, as the
 approved reference `VehiclesGlassTube` draws them: the tube swept along each line with its corners turned on arcs
 (`bend_r_m`), brass bands every 4 m, a post with an iron cradle every 14 m under the level runs (one where tubes run
@@ -666,11 +666,11 @@ cut: beside the booth as the rider rises and comes down, chasing behind along th
 Checked by `CITY108_the_towns_tubes_are_sound_and_reach_every_stop`, `CITY109_a_ride_goes_floor_tube_floor_without_a_jump`,
 `CITY110_the_camera_follows_the_rider_without_a_cut` and `CITY111_the_server_checks_the_stop_and_the_way`. To see a ride in
 a test shot: `-BrixTube=<from>,<to>,<seconds into the ride at the shot>`; `-BrixNoTubes` leaves them out. Shots:
-`Art/StyleTests/unreal_tubes_59/`.
-Not yet: the tubes run 9 m up through the crowns of the street trees on Baker Street and elsewhere (a grown plane
-reaches higher): the ride's camera goes through a crown there; whether the tubes rise over the trees, the trees are cut
-back under them or the lines move is the owner's to say. Booths were moved off trees when placed (Market Square 10 m
-east, Plum Works 4 m, Fountain Hospital 2 m; `make_tubes_01.py`), the lines were not. The stop is chosen in the prompt
+`Art/StyleTests/unreal_tubes_59/`, raised over the trees `unreal_tubes_60/`.
+Not yet: the approved reference draws the tubes 9 m up; they run at 17 m to clear the trees, which the reference does
+not show (the posts are taller, and each booth's own tube rises from its funnel to 17 m): from the street they read as thin lines high up and the risers as tall poles, less than the reference's tube close over the street. The heights are over Old Town's level: the
+outskirts' rising ground (`World/city_01/terrain.json`, up to 21 m, not yet in Unreal) is not taken into account, and
+where it is built the suburbs' booths and tubes need to stand on it. The stop is chosen in the prompt
 with the arrow keys: the tube map each stop should show (CITY-112) is not made, and needs an Interface reference first.
 The brass is the greybox's matte paint, not metal; the glass neither gets wet nor holds snow. The posts stand under the
 line, over the street's middle, and the cars drive through them. The booth's door is an opening in its glass (`door_deg`

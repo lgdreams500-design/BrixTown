@@ -29,4 +29,9 @@ owner's approval.
 
 ## Consequences
 - The reference `VehiclesGlassTube` is approved (the owner, 2026-11-28); the tubes are built against it (ADR-0066).
+- The tubes run over the street trees as they will grow: at 9 m, as the reference draws them, they went through the
+  crowns of Baker Street's planes (a grown plane reaches 15.4 m), and the owner chose to raise them rather than cut the
+  trees back (2026-11-28: "Raise the tubes"). `Tools/citysim/make_tubes_01.py` sets one height for the whole network, a
+  metre over the tallest grown crown under a line and its glass: 17 m in Old Town. The booths stay 3 m high; their own
+  tubes rise further.
 - Where the stops go on the map is the owner's to say. Fares (Q-42) and which residents ride (Q-41) are open.

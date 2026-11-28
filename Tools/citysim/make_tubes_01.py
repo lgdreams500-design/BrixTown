@@ -16,10 +16,10 @@ import json, math, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "worldgen"))
 import world                                               # noqa: E402
-from tubes import problems                                 # noqa: E402
+from tubes import problems, through_crowns                  # noqa: E402
 
-RUN_Z = 9.0
-CROWN_CLEAR = 1.0                 # a booth this far outside a grown tree's crown (vegetation.json r_max)
+RUN_Z = 9.0                       # the lowest the tubes run; higher where a grown tree's crown would reach them
+CROWN_CLEAR = 1.0                 # a booth this far outside a grown tree's crown (vegetation.json r_max), the tubes this far over it
 SIDE = 8.0        # m from a lane's middle to a booth beside it
 STEP = 12.0       # m between the points a tube keeps along a curving road
 
@@ -161,6 +161,8 @@ def build():
     props = [tuple(pr["pos"]) for bl in w["blocks"] for pr in bl.get("props", [])]
     veg = w["vegetation"].get("species", w["vegetation"])
     trees = [(tuple(t["pos"]), veg.get(t["species"], {}).get("r_max", 4.0)) for bl in w["blocks"] for t in bl.get("trees", [])]
+    grown = [(p[0], p[1], r, veg.get(t["species"], {}).get("crown")) for bl in w["blocks"] for t in bl.get("trees", [])
+             for p, r in [(t["pos"], veg.get(t["species"], {}).get("r_max", 4.0))]]
     for sid, st in stops.items():                                  # a booth clear of the street's lamps, plants and signs,
         x, z = st["pos"]                                           # and its riser clear of a grown tree's crown
         along = (-st["face"][1], st["face"][0])
@@ -171,15 +173,24 @@ def build():
                 break
         else:
             raise SystemExit("no room for the booth of " + sid)
-    net = dict(stops={k: {kk: vv for kk, vv in v.items() if kk != "junction"} for k, v in stops.items()},
-               junctions={j: dict(pos=[x, y, RUN_Z]) for j, (x, y) in junctions.items()}, tubes=[])
-    mouth_z = rules["ride"]["draw_in_height_m"]
-    for sid, s in stops.items():                                   # each stop's own tube up to the line
-        x, y = s["pos"]
-        jx, jy = junctions[s["junction"]]
-        net["tubes"].append(dict(a=sid, b=s["junction"], line=[[x, y, mouth_z], [x, y, RUN_Z], [jx, jy, RUN_Z]]))
-    for a, b, pts in trunks:
-        net["tubes"].append(dict(a=a, b=b, line=[[round(x, 2), round(y, 2), RUN_Z] for x, y in pts]))
+    def lay(run_z):
+        net = dict(stops={k: {kk: vv for kk, vv in v.items() if kk != "junction"} for k, v in stops.items()},
+                   junctions={j: dict(pos=[x, y, run_z]) for j, (x, y) in junctions.items()}, tubes=[])
+        mouth_z = rules["ride"]["draw_in_height_m"]
+        for sid, s in stops.items():                               # each stop's own tube up to the line
+            x, y = s["pos"]
+            jx, jy = junctions[s["junction"]]
+            net["tubes"].append(dict(a=sid, b=s["junction"], line=[[x, y, mouth_z], [x, y, run_z], [jx, jy, run_z]]))
+        for a, b, pts in trunks:
+            net["tubes"].append(dict(a=a, b=b, line=[[round(x, 2), round(y, 2), run_z] for x, y in pts]))
+        return net
+    # the tubes over the street trees as they will grow (the owner, 2026-11-28: "Raise the tubes"): one height for all of
+    # them, the half metre over the tallest grown crown under a run and its glass
+    hit = through_crowns(lay(RUN_Z), rules, grown, CROWN_CLEAR)
+    run_z = max([RUN_Z] + [math.ceil((top + CROWN_CLEAR + rules["tube_inner_m"] / 2 + .12) * 2) / 2 for _, _, top in hit])
+    net = lay(run_z)
+    if through_crowns(net, rules, grown, CROWN_CLEAR):
+        raise SystemExit("the tubes still pass through a tree's crown at %.1f m" % run_z)
     out = dict(note="Glass travel tubes (CITY-108, CITY-112; F-VEH-TUBE level 2). Written by Tools/citysim/make_tubes_01.py. "
                     "Approved by the owner on the map (Tools/citysim/tube_map.py, Art/StyleTests/tube_routes_03.png), 2026-11-28: \"Approve the routes\", "
                     "after three stops in each suburb, Eastgate's stop by its main entrance and two loops round the centre with stops at key buildings.",
@@ -191,7 +202,8 @@ def build():
     with open(p, "w", encoding="utf-8", newline="\n") as f:
         json.dump(out, f, indent=1)
         f.write("\n")
-    print("wrote %s: %d stops, %d junctions, %d tubes" % (p, len(stops), len(junctions), len(net["tubes"])))
+    print("wrote %s: %d stops, %d junctions, %d tubes, running at %.1f m (%d grown crowns under the lines)"
+          % (p, len(stops), len(junctions), len(net["tubes"]), run_z, len({h[1] for h in hit})))
 
 
 if __name__ == "__main__":
