@@ -1867,7 +1867,41 @@
    "issues": [
     "Midday is the brightest setting: the polished floor catches the sun's patches and the roof lights.",
     "The outlets' fronts are lit strips at this distance; their insides, the egg halls and the concourses are not in this reference."
-   ]
+   ],
+   "unreal": {
+    "where": "cam:1668,636,1.7,79,5.7",
+    "blender": "Malls/MallsEastgateCourt_Midday.jpg",
+    "settings": {
+     "Morning": "07:20",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30"
+    },
+    "files": [
+     "Malls/Unreal/MallsEastgateCourt_Morning.jpg",
+     "Malls/Unreal/MallsEastgateCourt_Midday.jpg",
+     "Malls/Unreal/MallsEastgateCourt_Dusk.jpg",
+     "Malls/Unreal/MallsEastgateCourt_NightLamps.jpg"
+    ],
+    "shot": {
+     "commit": "67b3f70",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "39 to 43"
+    },
+    "status": "proposed",
+    "issues": [
+     "The spot is the reference's own camera in the Great Court (MALL_CAMS court in Tools/blender/hours_50.py, laid on the map: x 1668, z 636, 1.7 m up, aimed 5.7 degrees up at the galleries). The game's picture is the mirror image of the reference, as the reference's own issues say (the map's z read as Blender's y). The game's camera is 90 degrees wide where the reference's 16 mm lens sees 97.",
+     "The floor is a matte checker of grey tiles with no reflection at all; the reference's is polished stone with hidden joints that mirrors the lights, the columns and the roof, and that sheen carries the whole picture (G3; Game/README.md already says the court is not built to its reference, ADR-0069).",
+     "At night the floor is near white and the brightest thing in the picture, brighter than by day, under dark galleries; nothing lights it that can be seen (G2, G5, G9).",
+     "The undersides of the galleries are plain dark brown with white lines of light on their edges; the reference's are warm timber slats that take the light. No glass balustrades with brass rails, no columns, no chandeliers or banners are in the game's court.",
+     "The roof light reads as a patch of dots (a pale grid by day, orange at dusk, blue at night), not as glazing with the sky through it.",
+     "The lines of light along the gallery edges are plain white and burnt, with no glow on the surfaces beside them (G5, G7).",
+     "Morning, Midday and Dusk are nearly one picture: only the small roof patch changes. In the reference Midday is the brightest setting, the sun's patches on the floor (G9).",
+     "The shop fronts round the court are small flat strips of colour at this distance, lit evenly; nobody is in the court in any setting (G6).",
+     "The fountain's basin at the left is a plain dark ring with flat blue in it."
+    ]
+   }
   },
   {
    "id": "MallsEastgateEntrance",

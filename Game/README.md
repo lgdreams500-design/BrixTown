@@ -1321,6 +1321,11 @@ first audit's findings are in LOOK_GATE.md.
     white at midday; at dusk the skylights' frames glow orange-red and a streak of orange light hangs in the air; the roof is
     mostly open sky where the reference has a solid roof with slits and heavy trusses; nobody in the hall; walls, floor and
     route are plain flat fills with no contact shade.
+  - `MallsEastgateCourt` (Eastgate's Great Court through its reference's own camera; the mirror image of the reference; 39 to
+    43 frames a second): the floor is a matte grey checker with no reflection where the reference's polished stone carries the
+    picture; at night the floor is near white, brighter than by day; gallery undersides plain dark brown, no slats, glass
+    balustrades, columns, chandeliers or banners; the roof light is a patch of dots; the edge lights are burnt white lines;
+    morning, midday and dusk are one picture; nobody in the court.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.
