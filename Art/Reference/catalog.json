@@ -1368,7 +1368,61 @@
     "Its bounce is the surfaces' own; the home room's (IndoorHomeRoom) is still raised x2, so the two rooms of one house are not lit by quite the same rule.",
     "Dusk and the lamp-lit night look alike: no window, so only the lamps light it once the day is gone.",
     "The new moon is at its eye's limit: mean 1 against the 2.5 asked for; only the doorway faintly shows."
-   ]
+   ],
+   "unreal": {
+    "where": "refroom:hall",
+    "blender": "Indoor/IndoorHallway_Midday.jpg",
+    "settings": {
+     "Morning": "ref",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30"
+    },
+    "missing": {
+     "NightFullMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart.",
+     "NightNewMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart."
+    },
+    "files": [
+     "Indoor/Unreal/IndoorHallway_Morning.jpg",
+     "Indoor/Unreal/IndoorHallway_Midday.jpg",
+     "Indoor/Unreal/IndoorHallway_Dusk.jpg",
+     "Indoor/Unreal/IndoorHallway_NightLamps.jpg"
+    ],
+    "shot": {
+     "commit": "37cfee5",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "42 to 46"
+    },
+    "checks": {
+     "Morning": [
+      "crushed blacks over 45%",
+      "flat: 65% of the picture has no shade or mottle in it (limit 45%)"
+     ],
+     "Midday": [
+      "crushed blacks over 43%",
+      "flat: 66% of the picture has no shade or mottle in it (limit 45%)"
+     ],
+     "Dusk": [
+      "crushed blacks over 26%",
+      "flat: 59% of the picture has no shade or mottle in it (limit 45%)"
+     ]
+    },
+    "status": "proposed",
+    "issues": [
+     "This is the golden hallway (ADR-0073), built to this reference, with a trial light: nothing in it is approved, and the hallways of the town are not lit like this yet.",
+     "Dusk is nearly as dark as the day: at 20:00 the pendant and the table lamp are only part of the way up, where the Blender hallway's dusk is fully lamp-lit and looks like its night (G7, G9).",
+     "By day the left half of the picture is plain black: the near left wall has nothing to see in it. The look check fails Morning, Midday and Dusk for crushed blacks (45 %, 43 %, 26 %) (G5).",
+     "The look check also fails the three for flat fill (59 to 66 % against 45 %): the plain plaster of ADR-0074 and the black wall together; the limit is not set for a room's plain walls.",
+     "At night the table lamp throws hard wedges of light and shadow on both walls, and the whole hallway is orange where the Blender one is a soft warm white (G2, G4).",
+     "The doorway of the side room is a white blank by day: nothing of the room beyond is seen through it, where the Blender doorway shows a lit wall (G5).",
+     "The stair at the far end is hardly seen by day or at night; in Blender it reads at dusk and at night (G1).",
+     "The grey card and ball (measuring aids) stand in the middle of every picture, in front of the doorway, and are black by day: the card faces the camera and the doorway's light comes from its side.",
+     "Two people stand here (the player and a resident) where the Blender picture has one; by day they are lit from the doorway side only, their near sides dark (G6).",
+     "The rug is paler and pinker than the Blender hallway's violet.",
+     "Morning and Midday are one picture (G9)."
+    ]
+   }
   },
   {
    "id": "IndoorLightKinds",

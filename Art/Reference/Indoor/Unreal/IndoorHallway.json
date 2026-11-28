@@ -1,0 +1,117 @@
+{
+ "reference": "IndoorHallway",
+ "where": "refroom:hall",
+ "shot": {
+  "commit": "37cfee5",
+  "date": "2026-11-28",
+  "quality": "High, 1066 x 666",
+  "fps": "42 to 46"
+ },
+ "settings": {
+  "Morning": {
+   "hour": "ref",
+   "look": {
+    "burnt": 0.0,
+    "crushed": 0.4533,
+    "flat": 0.6534,
+    "shade": 3.74,
+    "warmth": 0.974
+   },
+   "fails": [
+    "crushed blacks over 45%",
+    "flat: 65% of the picture has no shade or mottle in it (limit 45%)"
+   ],
+   "at": "07:36",
+   "weather": "clear",
+   "camera": "out of doors",
+   "daylight": 1.0,
+   "fps": 42.2,
+   "worst_ms": 27,
+   "card": {
+    "card": 0.0005,
+    "card_warm": 2.21,
+    "ball": 0.0006,
+    "ball_warm": 2.02,
+    "ball_side": -1.16
+   }
+  },
+  "Midday": {
+   "hour": "12:00",
+   "look": {
+    "burnt": 0.0,
+    "crushed": 0.426,
+    "flat": 0.6563,
+    "shade": 3.74,
+    "warmth": 0.985
+   },
+   "fails": [
+    "crushed blacks over 43%",
+    "flat: 66% of the picture has no shade or mottle in it (limit 45%)"
+   ],
+   "at": "12:00",
+   "weather": "clear",
+   "camera": "out of doors",
+   "daylight": 1.0,
+   "fps": 42.7,
+   "worst_ms": 28,
+   "card": {
+    "card": 0.0005,
+    "card_warm": 2.3,
+    "ball": 0.0007,
+    "ball_warm": 2.01,
+    "ball_side": -1.05
+   }
+  },
+  "Dusk": {
+   "hour": "20:00",
+   "look": {
+    "burnt": 0.0005,
+    "crushed": 0.2588,
+    "flat": 0.5891,
+    "shade": 4.04,
+    "warmth": 1.513
+   },
+   "fails": [
+    "crushed blacks over 26%",
+    "flat: 59% of the picture has no shade or mottle in it (limit 45%)"
+   ],
+   "at": "20:00",
+   "weather": "clear",
+   "camera": "out of doors",
+   "daylight": 1.0,
+   "fps": 43.3,
+   "worst_ms": 27,
+   "card": {
+    "card": 0.0014,
+    "card_warm": 2.98,
+    "ball": 0.0015,
+    "ball_warm": 3.14,
+    "ball_side": -0.76
+   }
+  },
+  "NightLamps": {
+   "hour": "22:30",
+   "look": {
+    "burnt": 0.0016,
+    "crushed": 0.0,
+    "flat": 0.4191,
+    "shade": 1.56,
+    "warmth": 1.262
+   },
+   "fails": [],
+   "at": "22:30",
+   "weather": "clear",
+   "camera": "out of doors",
+   "daylight": 0.0,
+   "fps": 45.8,
+   "worst_ms": 26,
+   "card": {
+    "card": 0.0079,
+    "card_warm": 2.87,
+    "ball": 0.0087,
+    "ball_warm": 2.91,
+    "ball_side": -0.34
+   }
+  }
+ }
+}
