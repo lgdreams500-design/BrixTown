@@ -6,6 +6,7 @@
 #include "BrixCity.h"
 #include "BrixHomes.h"
 #include "BrixInside.h"
+#include "BrixRooms.h"
 #include "BrixStreets.h"
 #include "BrixUnits.h"
 #include "Components/InstancedStaticMeshComponent.h"
@@ -134,6 +135,26 @@ UInstancedStaticMeshComponent* ABrixTownActor::Group(UStaticMesh* Mesh, bool bCo
 	}
 	G->SetCollisionProfileName(bCollide ? TEXT("BlockAll") : TEXT("NoCollision"));
 	if (CullM > 0.f) G->SetCullDistances(0, (int32)(CullM * CmPerM));
+	G->RegisterComponent();
+	AddInstanceComponent(G);
+	Parts.Add(Key, G);
+	return G;
+}
+
+UInstancedStaticMeshComponent* ABrixTownActor::RoomGroup(UStaticMesh* Mesh)
+{
+	const FString Key = TEXT("RoomPlaster");
+	if (TObjectPtr<UInstancedStaticMeshComponent>* Found = Parts.Find(Key)) return *Found;
+	UMaterialInterface* Room = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Greybox/M_Room.M_Room"));   // Tools/unreal/make_greybox_material.py with BRIX_MATERIAL=M_Room
+	if (!Room) return Group(Mesh, true);   // without it the town's own boxes, and the street's mottle
+	UInstancedStaticMeshComponent* G = NewObject<UInstancedStaticMeshComponent>(this, *Key);
+	G->SetupAttachment(RootComponent);
+	G->SetStaticMesh(Mesh);
+	G->NumCustomDataFloats = 12;   // colour, pattern, its turn (as the town's boxes)
+	RoomColour = UMaterialInstanceDynamic::Create(Room, this);
+	RoomColour->SetScalarParameterValue(TEXT("InstanceColour"), 1.f);
+	for (int32 i = 0; i < G->GetNumMaterials(); ++i) G->SetMaterial(i, RoomColour);
+	G->SetCollisionProfileName(TEXT("BlockAll"));
 	G->RegisterComponent();
 	AddInstanceComponent(G);
 	Parts.Add(Key, G);
@@ -366,6 +387,17 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 		Look.Colour = Col;
 		BoxLook(Look, Local, Z0, Z1, YawRad, Len, Dep);
 	};
+	// a face seen from inside a room (a wall's lining, a ceiling, a spine wall, a lift's shaft): the rooms' plain plaster
+	// (ADR-0074), in a group of its own so that the street's faces keep their mottle
+	UInstancedStaticMeshComponent* RoomBoxes = RoomGroup(BoxMesh);
+	const float RoomSmooth = GetDefault<ABrixRooms>()->WallSmooth;
+	auto InBox = [&](const FLinearColor& Col, const FVector2D& Local, float Z0, float Z1, double YawRad, float Len, float Dep)
+	{
+		FLook Look;
+		Look.Colour = Col;
+		Look.A = FVector4f(-1, RoomSmooth, 0, 0);
+		Add(RoomBoxes, FTransform(FQuat(FVector::UpVector, YawRad + Ang), At(Local, (Z0 + Z1) * 0.5f), FVector(Len, Dep, Z1 - Z0)), Look);
+	};
 
 	// an enterable building (CITY-013) is hollow on its ground floor, as the slice builds it (play.js building()): an open
 	// doorway at the door, a floor in the storey's finish, the walls plastered inside in its colour, a ceiling; what is
@@ -403,7 +435,7 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 		Fl.A = FVector4f(bBoards ? FloorBoardsA : FloorFlagsA);
 		Fl.B = FVector4f(bBoards ? FloorBoardsB : FloorFlagsB);
 		BoxLook(Fl, FVector2D::ZeroVector, 0.f, FloorTop, 0.0, S.X - 2 * t, S.Y - 2 * t);
-		Box(FMath::Lerp(ColourOf(In ? In->WallColour : TArray<FVector3f>(), NFl - 1, InWall), FLinearColor::White, CeilingWhite), FVector2D::ZeroVector, HollowTop - 0.02f, HollowTop, 0.0, S.X - 2 * t, S.Y - 2 * t);
+		InBox(FMath::Lerp(ColourOf(In ? In->WallColour : TArray<FVector3f>(), NFl - 1, InWall), FLinearColor::White, CeilingWhite), FVector2D::ZeroVector, HollowTop - 0.02f, HollowTop, 0.0, S.X - 2 * t, S.Y - 2 * t);
 		++Hollow;
 	}
 	if (bStoreys)
@@ -423,6 +455,10 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 		auto RectBox = [&](const FLinearColor& Col, const FVector4f& R, float Z0, float Z1)
 		{
 			if (R.Y - R.X > 0.005f && R.W - R.Z > 0.005f) Box(Col, FVector2D((R.X + R.Y) / 2, (R.Z + R.W) / 2), Z0, Z1, 0.0, R.Y - R.X, R.W - R.Z);
+		};
+		auto InRectBox = [&](const FLinearColor& Col, const FVector4f& R, float Z0, float Z1)   // the same, seen from inside a room
+		{
+			if (R.Y - R.X > 0.005f && R.W - R.Z > 0.005f) InBox(Col, FVector2D((R.X + R.Y) / 2, (R.Z + R.W) / 2), Z0, Z1, 0.0, R.Y - R.X, R.W - R.Z);
 		};
 		// the floors above the ground: a slab over the whole storey but for the hole the flight below comes up through
 		const FVector4f Inner(-S.X / 2 + t, S.X / 2 - t, -S.Y / 2 + t, S.Y / 2 - t);
@@ -448,7 +484,7 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 				FVector4f(Inner.X, Hole.X, Hole.Z, Hole.W), FVector4f(Hole.Y, Inner.Y, Hole.Z, Hole.W) };
 			for (const FVector4f& R : (Hole.Y > Hole.X ? TArrayView<const FVector4f>(Strips, 4) : TArrayView<const FVector4f>(&Inner, 1)))
 			{
-				RectBox(Ceil, R, Za, Za + 0.02f);
+				InRectBox(Ceil, R, Za, Za + 0.02f);
 				if (R.Y - R.X > 0.005f && R.W - R.Z > 0.005f)
 					BoxLook(Fl, FVector2D((R.X + R.Y) / 2, (R.Z + R.W) / 2), Za + 0.02f, Zb, 0.0, R.Y - R.X, R.W - R.Z);
 			}
@@ -473,7 +509,7 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			const FVector2D Lc = *In->Lift - C;
 			const float Ix = In->Lift->X < C.X ? 1.f : -1.f;
 			const FVector4f Shaft(Lc.X - 1.1f, Lc.X + 1.1f, Lc.Y - 1.1f, Lc.Y + 1.1f);
-			RectBox(LiftShaft, Shaft, FloorTopOf(0), CeilOf(NFl - 1));
+			InRectBox(LiftShaft, Shaft, FloorTopOf(0), CeilOf(NFl - 1));
 			for (int32 f = 0; f < NFl; ++f)
 			{
 				const float Y = FloorTopOf(f), Xd = Lc.X + Ix * 1.1f;
@@ -502,7 +538,7 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			}
 			for (int32 f = 0; f < NFl; ++f)
 			{
-				if (!G.bStraight) RectBox(StairSpine, UvRect(G.ULo, G.UHi, G.Spine.X, G.Spine.Y), FloorTopOf(f), CeilOf(f));   // the spine wall
+				if (!G.bStraight) InRectBox(StairSpine, UvRect(G.ULo, G.UHi, G.Spine.X, G.Spine.Y), FloorTopOf(f), CeilOf(f));   // the spine wall
 				else if (f > 0)
 				{
 					const float Edge = FMath::Abs(G.Open - G.Lane0.Y) < 1e-3f ? G.Open + StairHeadroom : G.Open - StairHeadroom;
@@ -769,7 +805,7 @@ void ABrixTownActor::BuildLot(const FBrixLot& L, const FBrixBlock& B)
 			for (int32 f = 0; bHollow && f < NFl; ++f)
 			{
 				const float Za = FMath::Max(R.Z0, FloorTopOf(f)), Zb = FMath::Min(R.Z1, CeilOf(f));
-				if (Zb - Za > 0.01f) Box(ColourOf(In ? In->WallColour : TArray<FVector3f>(), f, InWall), OnWall((R.Span.X + R.Span.Y) / 2, -t - LiningDepth / 2), Za, Zb, Yaw, R.Span.Y - R.Span.X, LiningDepth);
+				if (Zb - Za > 0.01f) InBox(ColourOf(In ? In->WallColour : TArray<FVector3f>(), f, InWall), OnWall((R.Span.X + R.Span.Y) / 2, -t - LiningDepth / 2), Za, Zb, Yaw, R.Span.Y - R.Span.X, LiningDepth);
 			}
 		};
 		for (int32 b = 0; b + 1 < Breaks.Num(); ++b)

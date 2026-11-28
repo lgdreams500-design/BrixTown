@@ -61,6 +61,7 @@ public:
 	UPROPERTY(Config) float KeepMetres = 20.f;
 	UPROPERTY(Config) int32 DropAtOnce = 8;
 	UPROPERTY(Config) FLinearColor PartitionColour = FLinearColor(0.8f, 0.76f, 0.68f);   // homes.js PLASTER
+	UPROPERTY(Config) float WallSmooth = 1.f;               // how smooth a room's plaster is, in every building of the town: 0 the street's mottle, 1 one even tone (ADR-0074); the walls, the ceilings and the painted wood on them, ABrixTownActor's inside faces too
 	UPROPERTY(Config) FLinearColor NoMeshColour = FLinearColor(0.45f, 0.38f, 0.3f);   // a piece with no mesh of its own yet: a box its size
 	UPROPERTY(Config) FLinearColor FrameColour = FLinearColor(0.36f, 0.24f, 0.15f);      // a doorway's frame
 	UPROPERTY(Config) FLinearColor BoardsColour = FLinearColor(0.42f, 0.29f, 0.18f);     // a room's boards
@@ -147,7 +148,7 @@ private:
 	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> MarkBoxes;
 	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> FurnBoxes;   // the furniture of buildings with no plan: the slice's boxes
 	UPROPERTY() TMap<FString, TObjectPtr<UInstancedStaticMeshComponent>> Groups;
-	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Boxes;      // walls, frames, floors: M_Greybox boxes that block
+	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Boxes;      // walls, frames, floors: M_Room boxes that block
 	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Blocks;     // unseen: what the pieces stand in the way of
 	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> CamBlocks;  // unseen: what only the camera keeps out of (a pendant's shade, a wall cupboard)
 	TMap<FString, TArray<float>> Hung;                                  // those pieces' boxes, x0 x1 y0 y1 z0 z1 (homes.js CAM_ONLY)
@@ -158,6 +159,7 @@ private:
 	UPROPERTY() TObjectPtr<UStaticMesh> Cube;
 	UPROPERTY() TObjectPtr<UMaterialInterface> Greybox;
 	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> OwnColour;
+	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> RoomColour;   // the rooms' copy of the material (M_Room), where plaster has its "how smooth" (ADR-0074)
 	TSet<FString> Missing;
 	TArray<FBrixLiftCall> LiftCalls;
 	UPROPERTY() TObjectPtr<ABrixTownActor> TownRef;
