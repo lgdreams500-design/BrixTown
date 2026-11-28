@@ -28,3 +28,7 @@ building in Unreal, and the look gate let a thing with no reference be built aga
 - Features with something to see start with a reference review, which costs the owner a look and saves rework.
 - Still without approved references: a shop without a fire (bank, grocer), the furniture outlet's hall, the mall
   (Eastgate's court), and the vehicles, people and screens not yet remade at every setting; work on those waits for them.
+
+## Changed since
+- 2026-11-28 (ADR-0073): a room's reference still comes first and says what the room is and its mood. Its light is set
+  and approved in Unreal, in a golden room, and is not matched to the Blender picture by number.

@@ -1254,6 +1254,13 @@ first audit's findings are in LOOK_GATE.md.
   stops facing away from the shopfront), so their numbers are loose. Not done: dusk and morning measured, the look tour
   against its baseline, the gate's own steps, the engine's automated tests after the change to `BrixRooms`. The home
   room reference's bounce is raised x2 where the remade hallway's is the surfaces' own.
+- **A room's light has no measured target yet (ADR-0073, 2026-11-28):** a room's light is to be set and approved in
+  Unreal, in a golden room (the home room with its hallway, a grey card in each), and every other room measured against
+  it on its card. Not built: the golden room, the card, a place in the catalog for an Unreal light picture,
+  `look_match.py` reading a card. Not taken: the path-traced pair of the hallway with the room light off. Until the
+  golden room's pictures are approved the rooms' light stays at "K + beams", and the brightness and warmth figures
+  above, which are against Blender pictures, are what was measured and not pass marks. Not decided: whether out of
+  doors follows, whether a room's Blender reference still needs every hour, the home room reference's raised bounce.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.

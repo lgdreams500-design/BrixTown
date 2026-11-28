@@ -35,3 +35,7 @@ eye still opened to the target: the eye just opened further.
   by quite the same rule. That is recorded in both references' issues, not decided here.
 - Against the remade reference, the game's hallway at noon is 2.3 stops too bright while its home room passes. That gap
   is the next step of the matching round.
+
+## Changed since
+- 2026-11-28 (ADR-0073): a room's Blender picture sets no number for its light, so the 2.3 stops is what was measured,
+  not a pass mark missed. The hallway's light is settled in the golden room, in Unreal.

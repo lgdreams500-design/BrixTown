@@ -1,10 +1,10 @@
 ---
 doc_id: WASTED-LOOK-GATE
 title: Brix Town — The look gate: how anything seen in the game is checked when it is made
-version: 1.2.0
+version: 1.3.0
 status: accepted          # the owner, 2026-11-26: "build a process where this is taken care as part of creations instead of waiting for audit to detect it later"
-last_updated: 2026-11-27
-relates_to: [ADR-0004, ADR-0058, ART-001, TEST-001]
+last_updated: 2026-11-28
+relates_to: [ADR-0004, ADR-0058, ADR-0073, ART-001, TEST-001]
 ---
 
 # The look gate
@@ -26,6 +26,12 @@ at as a whole, against the look, by whoever made it.
    built yet: its reference is made and approved first (`docs/process/FEATURE_PROCESS.md` stage 6, ADR-0066). Work
    already in the game without one keeps to the rules and the nearest reference for light and materials (a hall
    is an interior: I5, W1, W5, W6) until its reference is approved, and says so in its README's "Not yet".
+4. **A room's light is judged in Unreal's own pictures (ADR-0073).** A room's Blender reference says what the room is
+   (its shape, windows, materials, colours, furniture) and its mood at each hour: a shot is put beside it and G1 to G10
+   answered as for anything else. Its light is not matched to the Blender picture by number: the two are different
+   rooms lit by different recipes. The light reference for rooms is the golden room's Unreal pictures, approved by the
+   owner (A room's light, below). Until those are approved a room's light has no measured target: it is not tuned, and
+   what looks wrong beside the Blender picture is written in "Not yet".
 
 **Which reference.** Before any comparing, measuring or tuning, ask the catalog what the place is and what it is judged
 against: `python Tools/reference_catalog.py --for <tour stop, lot id or place>` (`--tour` for every stop of a tour). It
@@ -93,7 +99,9 @@ night), so that every later shared change is looked at there too.
 
 ## The matching round: getting a place to its reference
 The gate above checks a change. This is the round for mending what does not match: one place, or one shared cause, a
-round. Each step is there because skipping it cost a round (2026-11-27 and 2026-11-28).
+round. Each step is there because skipping it cost a round (2026-11-27 and 2026-11-28). For a room's light read "A
+room's light" below first: steps 1, 2, 4 and 9 hold for a room, and the measuring against a Blender picture (steps 5, 6
+and 8) holds out of doors only.
 
 1. **Name it.** `python Tools/reference_catalog.py --for <stop, lot or place>`: the place and its own reference. No
    reference: stop, it is a gap; its reference is made first. A home's two references are split by light, not by a
@@ -112,7 +120,8 @@ round. Each step is there because skipping it cost a round (2026-11-27 and 2026-
    opens until its picture reaches a set brightness shows a dim place as bright as a lit one, and the game cannot match
    it. On 2026-11-28 the hallway's bright doorway was its eye opened 4.4 stops past the home room's, and its bounce
    raised x2; it was remade (ADR-0072). A reference that is wrong goes back to the owner, with candidates: never
-   matched to, and never quietly changed.
+   matched to, and never quietly changed. Since ADR-0073 a room's Blender picture sets no number for its light, so for
+   a room this is a question of the picture's mood; out of doors it still decides whether a number can be matched.
 4. **A stop sees what its reference sees.** A stop in another room, or facing another way, is loose, and its number
    can pass or fail for reasons that are not the light: the home room's stop was a corner room with three windows,
    unfurnished, against a reference with one window, furnished; the shop stops looked at the back wall with the
@@ -125,17 +134,41 @@ round. Each step is there because skipping it cost a round (2026-11-27 and 2026-
    `camera` in the catalog and as a stop here.
 6. **Measure.** `python Tools/unreal/look_match.py <folder>`: each shot against its own reference, worst first, with
    the stop's frame rate. Work from the top row. Numbers first: a picture is opened for the row being mended and at
-   the end, not for every stop. A loose row (not the reference's camera) that passes proves little.
+   the end, not for every stop. A loose row (not the reference's camera) that passes proves little. A room's rows
+   are still printed, as what was measured: they pass or fail nothing (ADR-0073).
 7. **Shared causes first, and never tuned on one place.** The order: the eye and its tone, the sun and sky, the rooms'
    light, a material many things use, then one kind of place, then one place. A number many places share is changed
-   only with the reference tour taken before and after, and every row read, not the one being mended.
+   only with the reference tour taken before and after, and every row read, not the one being mended. The rooms' light
+   is changed only in the golden room (A room's light, below), never on a room of the town.
 8. **Done** when the place's matched rows pass (within 0.5 of a stop in brightness and 0.33 in warmth, ADR-0055's
    figures), `look_check.py` passes, and the stop's frame rate is no lower than before (say the window's size and the
    quality level with any frame rate). Then the gate's own steps 1 to 5, with the pictures. What does not pass is
-   written in "Not yet".
+   written in "Not yet". For a room the rows that must pass are its grey card's against the golden room's, not its
+   picture's against a Blender picture.
 9. **The machine.** One Unreal at a time: `light_tour.ps1` waits for any other run. Never Blender and Unreal together.
    A checkout with no build cannot take shots: build it once (about three minutes), or, for the game as it is, use a
    built checkout at the same commit.
+
+### A room's light (ADR-0073)
+The owner, 2026-11-28, asked "Make the rooms' light reference in Unreal and keep Blender for what a place is?": "Yes,
+light in Unreal". Blender is quick at a picture of a new thing and says what a place is. Unreal is where a room's light
+is set, approved and measured, so that every light number compares Unreal with Unreal.
+
+1. **The golden room.** One room built in the game to look like its Blender reference: the home room (`IndoorHomeRoom`)
+   with its hallway (`IndoorHallway`) beside it, each with the reference's shell, window, floor, furniture and camera,
+   and a grey card standing in it. It is built where the measuring rooms are (`ABrixLightRoom`, ADR-0055). Where the
+   card stands and how high is written down with the first one and is the same in every room after.
+2. **The light is set there and nowhere else**: the eye indoors, the room's own light, the lamps by day and by night.
+   When the live light is in doubt, a path-traced shot of the same stop (`light_tour.ps1 -PathTrace`, a stop's `pt=`)
+   tells a fault of the live light from a fault of the build. It is a check, never the target.
+3. **The owner approves its pictures** at each hour the room's light changes in, the Blender picture beside each for
+   mood, reviewed one at a time as references are. Approved, they are the light reference for rooms: kept in
+   `Art/Reference/`, listed in the catalog, never over a Blender picture.
+4. **Every other room is measured on its card** against the golden room's at the same hour: within 0.5 of a stop in
+   brightness and 0.33 in warmth. What differs in what is there (step 2 of the round) is mended in the map's data and
+   the models, as before.
+5. **Not built yet (2026-11-28):** the golden room, the card, the catalog's place for an Unreal light picture, and
+   `look_match.py` reading a card. Until the golden room's pictures are approved, leave the rooms' light as it is.
 
 ## For AI agents
 - Do not write "checked", "verified" or "looks right" about anything seen unless steps 1 to 3 were done for it in
@@ -144,9 +177,12 @@ round. Each step is there because skipping it cost a round (2026-11-27 and 2026-
   how the mall and the cars were missed.
 - Report what you see that is wrong even when nobody asked about it, and even when another session made it.
 - Name the place and its reference (Which reference, above) before comparing, tuning or reporting. A number shared by
-  many places (the rooms' light, the sun, a material) is set against the references of every kind of place it lights,
+  many places (the sun, the eye, a material) is set against the references of every kind of place it lights,
   never tuned on one of them: on 2026-11-27 the rooms' light was tuned on the bakery, a street-corner shop, when a
   home's room had been asked for, and the hallways and shop floors were then judged with no reference at all.
+- Do not tune a room's light against a Blender picture, nor on a room of the town (ADR-0073). It is set in the golden
+  room and approved there by the owner; no agent approves it. Until that is done, leave the rooms' light as it is and
+  write what looks wrong in "Not yet".
 
 ## What the first audit found (2026-11-26)
 Looked at with this gate: the 64 stops of the look tour and the owner's own screenshots. Open items are in the "Not
