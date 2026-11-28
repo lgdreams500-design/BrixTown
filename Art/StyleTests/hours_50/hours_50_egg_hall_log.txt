@@ -1,14 +1,14 @@
-22:52:30 Blender 5.3.0, place egg_hall
-22:52:30   the food court: 15 outlets round the drum, the doorway at 304 deg (28 wide)
-22:52:31   seating: 9 long tables for ten, 14 round tables for four
-22:52:31   the Food Market's egg hall: radius 22.1 m, 3 floors, the egg 38x31x45 m with 100 cells, 6 stalls
-22:52:31 EggHall: sun 8.5 at bearing -41 deg, sky 0.45; 42 lamps, 0 fires, 11 glowing materials, 0 haze
-22:52:33   EggHall_Morning: the eye at -1.13 stops for a mean of 100
-22:53:33 EggHall_Morning.jpg rendered in 60.2s
-22:53:35   EggHall_Midday: the eye at -1.82 stops for a mean of 100
-22:54:41 EggHall_Midday.jpg rendered in 66.4s
-22:54:43   EggHall_Dusk: the eye at -0.66 stops for a mean of 85
-22:55:52 EggHall_Dusk.jpg rendered in 68.2s
-22:55:55   EggHall_NightLamps: the eye at -0.17 stops for a mean of 70
-22:57:17 EggHall_NightLamps.jpg rendered in 81.8s
-22:57:17 DONE
+00:42:46 Blender 5.3.0, place egg_hall
+00:42:46   the food court: 15 outlets round the drum, the doorway at 304 deg (28 wide)
+00:42:46   seating: 9 long tables for ten, 14 round tables for four
+00:42:46   the Food Market's egg hall: radius 22.1 m, 3 floors, the egg 38x31x45 m with 100 cells, 6 stalls
+00:42:46 EggHall: sun 8.5 at bearing -41 deg, sky 0.45; 42 lamps, 0 fires, 11 glowing materials, 0 haze
+00:42:48   EggHall_Morning: the eye at -1.13 stops for a mean of 100
+00:43:55 EggHall_Morning.jpg rendered in 66.9s
+00:43:57   EggHall_Midday: the eye at -1.82 stops for a mean of 100
+00:45:05 EggHall_Midday.jpg rendered in 68.0s
+00:45:07   EggHall_Dusk: the eye at -0.65 stops for a mean of 85
+00:46:12 EggHall_Dusk.jpg rendered in 65.1s
+00:46:14   EggHall_NightLamps: the eye at -0.16 stops for a mean of 70
+00:47:28 EggHall_NightLamps.jpg rendered in 73.8s
+00:47:28 DONE

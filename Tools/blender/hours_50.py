@@ -9,7 +9,8 @@ checkout, a review round or the full set (FEATURE_PROCESS 6):
     Tools/blender/reference_render.ps1 -Place <place> [-Review] [-Hours Midday] -Out <folder>
 or by hand:
     WASTED_PLACE=<place> blender-launcher.exe -b --factory-startup --python C:/Projects/Wasted/Tools/blender/hours_50.py
-    places also mall, mall_entrance, egg_hall (Eastgate's court, its south entrance, the Food Market's egg hall): only what the camera sees is built in detail
+    places also mall, mall_entrance, mall_shop, egg_hall (Eastgate's court, its south entrance, one outlet's front on the
+    south concourse, the Food Market's egg hall): only what the camera sees is built in detail
     (sees(); WASTED_ALL=1 builds everything, to check that nothing seen was left out)
     places: alley, square, street (Tools/blender/old_town_04.py, building_kit_07.py), rooms, bakery, outlet
     (furniture_kit_18.py's rooms, baker_look_47.py's Stone Oven, furniture_kit_17.py's showroom)
@@ -36,7 +37,7 @@ from mathutils import Matrix, Vector
 B = "C:/Projects/Wasted/Tools/blender/"
 PLACE = os.environ.get("WASTED_PLACE", "alley")
 SOURCE = {"alley": "old_town_04.py", "square": "old_town_04.py", "street": "building_kit_07.py",
-          "rooms": "baker_look_47.py", "hallway": "baker_look_47.py", "shop": "baker_look_47.py", "mall": "baker_look_47.py", "mall_entrance": "baker_look_47.py", "egg_hall": "baker_look_47.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py", "sky": "old_town_04.py"}[PLACE]
+          "rooms": "baker_look_47.py", "hallway": "baker_look_47.py", "shop": "baker_look_47.py", "mall": "baker_look_47.py", "mall_entrance": "baker_look_47.py", "mall_shop": "baker_look_47.py", "egg_hall": "baker_look_47.py", "bakery": "baker_look_47.py", "outlet": "baker_look_47.py", "sky": "old_town_04.py"}[PLACE]
 _s = open(B + SOURCE, encoding="utf-8").read()
 exec(compile(_s[:_s.rindex("\nmain()")], SOURCE + "_helpers", "exec"), globals())
 exec(compile(open(B + "sky_52.py", encoding="utf-8").read(), "sky_52", "exec"), globals())   # the sky and its clouds
@@ -89,7 +90,7 @@ STARS = dict(scale=420.0, size=0.045, strength=(2.2, 1.0))   # the night sky's s
 MOON_DISC = dict(distance=320.0, radius=5.0, strength=8.0)    # the full moon seen in the sky
 # indoors the eye works by day too, as the game's opens in a room by day (DayOpenIndoors): the mean brightness it seeks
 INDOOR_EYE = {"Morning": 100, "Midday": 100, "Dusk": 85}
-INDOORS = ("rooms", "hallway", "bakery", "shop", "outlet", "mall", "mall_entrance", "egg_hall")
+INDOORS = ("rooms", "hallway", "bakery", "shop", "outlet", "mall", "mall_entrance", "mall_shop", "egg_hall")
 # a place's own eye where it differs: the hallway has no window, so a full moon seen only through a room's door is as dim
 # there as the new moon was (the owner, 2026-11-26: "full moon is giving too much light ... at the level currently shown on
 # new moon"; that picture's mean was 12)
@@ -101,7 +102,7 @@ FIRE_OUT_HOURS = {"rooms": ("NightFullMoon", "NightNewMoon")}   # the owner, 202
                                                           # fire place is turned off": these again with the fire out too
 SKIP_HOURS = {"bakery": ("NightFullMoon", "NightNewMoon"), "shop": ("NightFullMoon", "NightNewMoon"),
               "outlet": ("NightFullMoon", "NightNewMoon"), "mall": ("NightFullMoon", "NightNewMoon"),
-              "mall_entrance": ("NightFullMoon", "NightNewMoon"), "egg_hall": ("NightFullMoon", "NightNewMoon")}   # halls as the shops   # a shop as the bakery   # the owner, 2026-11-26: "for bakery, don't need moon settings"
+              "mall_entrance": ("NightFullMoon", "NightNewMoon"), "mall_shop": ("NightFullMoon", "NightNewMoon"), "egg_hall": ("NightFullMoon", "NightNewMoon")}   # halls as the shops   # a shop as the bakery   # the owner, 2026-11-26: "for bakery, don't need moon settings"
 PLACE_EYE = {"hallway": {"NightFullMoon": 12, "NightNewMoon": 2.5}, "mall": {"Midday": 82},   # the court's midday sun under open skylights
              "rooms": {"NightFullMoonFireOut": 12, "NightNewMoonFireOut": 2.5}}   # the home room's fire-out nights as dim (the owner)   # and the new moon darker still ("should not have so much light")
 # a place's eye held at a set opening for each setting instead of opening to the target: the hallway's, where the
@@ -663,7 +664,82 @@ GOODS = dict(books=((0.55, 0.20, 0.16), (0.18, 0.32, 0.36), (0.62, 0.52, 0.28), 
 def mall_sign_mat(name):
     c = MALL_LOOK["signs"].get(name, MALL_LOOK["signs"]["teal"])
     nm = "M_MallSign_%s" % name
-    return bpy.data.materials.get(nm) or flat(nm, c)
+    return bpy.data.materials.get(nm) or flat(nm, c, rough=0.3, bump=0.0)   # back-painted: an even colour behind glass
+
+
+def sign_glass():
+    """The glass in front of a sign: clear, polished, the hall and the sign light seen in it."""
+    m = bpy.data.materials.get("M_SignGlass")
+    if m:
+        return m
+    m, nt, bsdf = new_mat("M_SignGlass")
+    sset(bsdf, "Base Color", (1, 1, 1, 1))
+    sset(bsdf, "Roughness", 0.02)
+    sset(bsdf, "Transmission Weight", 1.0)
+    sset(bsdf, "IOR", 1.5)
+    return m
+
+
+SIGN_LETTERS = ("M_SignLettersLit", (1.0, 0.93, 0.80), 1.2)   # every outlet's name: cream, backlit, on all day
+SIGN_RAKE = 5.0            # degrees a sign leans back: its glass shows the lit ceiling as a line along its top
+SIGN_LIGHT_EVERY = 6.0     # metres of front to each sign lamp's strength in the trough over a sign
+
+
+def sign_letters():
+    nm, c, e = SIGN_LETTERS
+    return bpy.data.materials.get(nm) or emissive(nm, c, e)
+
+
+def shop_banner(L, k, a, b, u, z, FH, band, brass, loc, seen):
+    """An outlet's sign as the owner chose it (2026-11-28, "use the colors from row 1 but use glass as the material"; "Yes,
+    every shop"): its colour behind a pane of glass, the sign raked back SIGN_RAKE degrees, its name backlit, and a brass
+    trough out from the slats above with the sign lamp's light down onto it."""
+    al = Vector((b[0] - a[0], b[1] - a[1], 0.0))
+    Wf = al.length
+    if Wf < 0.5:
+        return
+    al.normalize()
+    rx0, rz0, rx1, rz1 = u["rect"]
+    mid = Vector(((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 0.0))
+    cx, cy = loc(((rx0 + rx1) / 2, (rz0 + rz1) / 2))
+    n = Vector((-al.y, al.x, 0.0))                           # out of the outlet, into the walk
+    if n.dot(mid - Vector((cx, cy, 0.0))) < 0:
+        n = -n
+    g = band("Mall_FrontSignGlass%d_%d" % (L, k), [(a[0] + n.x * 0.205, a[1] + n.y * 0.205), (b[0] + n.x * 0.205, b[1] + n.y * 0.205)],
+             z + FH + 0.08, z + FH + 0.64, sign_glass(), thick=0.012)
+    setp(g, "visible_shadow", False)                        # the sign light passes through it
+    th = math.radians(SIGN_RAKE) * (1 if al.cross(Vector((0, 0, 1))).dot(-n) > 0 else -1)
+    piv = Vector((a[0], a[1], z + FH + 0.04))
+    Rm = Matrix.Translation(piv) @ Matrix.Rotation(th, 4, al) @ Matrix.Translation(-piv)
+    raked = globals().setdefault("RAKED", set())
+    for nm in ("Mall_FrontSign%d_%d" % (L, k), "Mall_FrontSignTrimB%d_%d" % (L, k), "Mall_FrontSignTrimT%d_%d" % (L, k),
+               "Mall_FrontSignGlass%d_%d" % (L, k), "Out_Name_%s" % u["id"]):
+        o = bpy.data.objects.get(nm)
+        if o and nm not in raked:
+            o.matrix_basis = Rm @ o.matrix_basis
+            raked.add(nm)
+    if not seen((mid.x, mid.y, z + FH + 0.4)):
+        return
+    o_, hz = 0.7, z + FH + 1.0
+    band("Mall_SignTrough%d_%d" % (L, k), [(a[0] + al.x * 0.2 + n.x * o_, a[1] + al.y * 0.2 + n.y * o_),
+                                           (b[0] - al.x * 0.2 + n.x * o_, b[1] - al.y * 0.2 + n.y * o_)], hz, hz + 0.07, brass, thick=0.1)
+    for t_ in (0.15, 0.5, 0.85):
+        c_ = Vector((a[0], a[1], 0)) + al * (Wf * t_)
+        band("Mall_SignArm%d_%d_%d" % (L, k, int(t_ * 100)), [(c_.x + n.x * 0.15, c_.y + n.y * 0.15), (c_.x + n.x * o_, c_.y + n.y * o_)],
+             hz + 0.02, hz + 0.05, brass, thick=0.025)
+    sk = lamp_kind("Sn_Light")                               # the sign lamp's kind; on all day, as an outlet's own lights
+    lt = bpy.data.lights.new("ShopIn_Sign%d_%d" % (L, k), 'AREA')
+    lt.shape = 'RECTANGLE'
+    lt.size, lt.size_y = max(0.3, Wf - 0.5), 0.06
+    lt.energy = sk["strength"] * max(1, round(Wf / SIGN_LIGHT_EVERY))
+    lt.color = tuple(sk["colour"])
+    setp(lt, "spread", math.radians(110.0))
+    po = bpy.data.objects.new("ShopIn_Sign%d_%d" % (L, k), lt)
+    po.location = mid + n * o_ + Vector((0, 0, hz - 0.01))
+    zx = -((mid + n * 0.15 + Vector((0, 0, z + FH + 0.3))) - po.location).normalized()
+    yx = zx.cross(al).normalized()
+    po.rotation_euler = Matrix((yx.cross(zx), yx, zx)).transposed().to_euler()
+    COL.objects.link(po)
 
 
 class GoodsMesh:
@@ -741,8 +817,8 @@ def mall_outlet(u, a, b, z, kind, Ls, rng, mats):
     H = MALL_LOOK["front_glass"]
     if u.get("name"):                                          # its name on the sign band, in cream letters
         km = globals().setdefault("K_M", {})
-        km["MallLetters"] = bpy.data.materials.get("M_MallLetters") or flat("M_MallLetters", (0.94, 0.90, 0.80))
-        nm_ = text("Out_Name_%s" % u["id"], u["name"], cx + n[0] * 0.17, cy + n[1] * 0.17, z + H + 0.36, min(0.42, W / max(6, len(u["name"])) * 1.2), "MallLetters", depth=0.02)
+        km["MallLetters"] = sign_letters()
+        nm_ = text("Out_Name_%s" % u["id"], u["name"], cx + n[0] * 0.17, cy + n[1] * 0.17, z + H + 0.33, min(0.32, W / max(6, len(u["name"])) * 1.2), "MallLetters", depth=0.02)
         nm_.rotation_euler = (math.pi / 2, 0, ang)
     rbox(G, "Out_Floor_%s" % u["id"], fl, 0, D / 2, 0.015, W, D, 0.03, 0.0, 1)
     rbox(G, "Out_Back_%s" % u["id"], wall, 0, D, H / 2, W, 0.2, H, 0.0, 1)
@@ -1126,7 +1202,8 @@ def hang_plant(name, x, y, z):
 
 MALL_CAMS = {"entrance": ((5.0, 216.0, 1.7), (-0.5, 172.0, 5.5), 17.0),   # arriving on the forecourt
              "egg": ((-82.4, 151.6, 1.7), (-95.1, 140.9, 5.0), 16.0),       # in the Food Market's hall, as the game's shot
-             "court": ((-12.0, -42.0, 1.7), (2.0, 30.0, 9.0), 16.0)}
+             "court": ((-12.0, -42.0, 1.7), (2.0, 30.0, 9.0), 16.0),
+             "shop": ((-4.0, 121.2, 1.7), (-14.0, 124.0, 3.2), 22.0)}       # one outlet's front close by: The Linen Press
 
 
 def sees(cam_at, portal=None, reach=170.0):
@@ -1244,7 +1321,7 @@ def egg_food_court(drum0, hx, hz, R, SH, loc, M_, stone, rng):
     tile = bpy.data.materials.get("M_OutTiles") or flat("M_OutTiles", (0.80, 0.79, 0.76), rough=0.25)
     signs = list(ML["signs"].keys())
     km = globals().setdefault("K_M", {})
-    km["EggLetters"] = bpy.data.materials.get("M_EggLettersLit") or emissive("M_EggLettersLit", (1.0, 0.93, 0.80), 3.0)   # backlit, on all day
+    km["EggLetters"] = sign_letters()                         # backlit, on all day, as every outlet's
 
     def at(r, deg, z=None):
         x, y = loc((hx + r * math.cos(math.radians(deg)), hz + r * math.sin(math.radians(deg))))
@@ -1304,7 +1381,9 @@ def egg_food_court(drum0, hx, hz, R, SH, loc, M_, stone, rng):
         po.rotation_euler = (out_ + Vector((0, 0, 3.5))).to_track_quat('-Z', 'Y').to_euler()
         COL.objects.link(po)
         sign = mall_sign_mat(signs[(i * 5) % len(signs)])
-        strip_("Egg_Sign%d" % i, arc(R - 0.05, p0, p1), FH + 0.06, FH + 0.66, sign, 0.3)   # its sign in its colour
+        strip_("Egg_Sign%d" % i, arc(R - 0.05, p0, p1), FH + 0.06, FH + 0.66, sign, 0.3)   # its sign in its colour, behind glass
+        g_ = strip_("Egg_SignGlass%d" % i, arc(R - 0.235, p0, p1), FH + 0.08, FH + 0.64, sign_glass(), 0.012)
+        setp(g_, "visible_shadow", False)
         strip_("Egg_SignTrimB%d" % i, arc(R - 0.08, p0, p1), FH + 0.0, FH + 0.06, M_["brass"], 0.36)
         strip_("Egg_SignTrimT%d" % i, arc(R - 0.08, p0, p1), FH + 0.66, FH + 0.72, M_["brass"], 0.36)
         strip_("Egg_SignLight%d" % i, arc(R - 0.3, p0, p1), FH - 0.04, FH, M_["strip"], 0.06)
@@ -1709,7 +1788,7 @@ def mall_court(Ls, view="court"):
     def loc(q):
         return (q[0] - mx, q[1] - mz)
 
-    y_hi = 175 if view == "entrance" else 106                 # the entrance's view takes in the south concourse too
+    y_hi = 175 if view in ("entrance", "shop") else 106                 # the entrance's view takes in the south concourse too
     cam_at = MALL_CAMS[view]
     if os.environ.get("WASTED_CAM"):                          # a test view: x,y,z,tx,ty,tz,lens
         v_ = [float(t) for t in os.environ["WASTED_CAM"].split(",")]
@@ -1846,6 +1925,8 @@ def mall_court(Ls, view="court"):
                                       for t_ in (0.0, 0.25, 0.5, 0.75, 1.0) for h_ in (0.3, 1.6, 2.9)):
                 mall_outlet(u_, a, b, z, kind_, Ls, rngm, (glassp, brass))   # its inside, only where its front is seen
                 built_in += 1
+            if u_ is not None:
+                shop_banner(L, k, a, b, u_, z, FH, band, brass, loc, seen)
         if L == 0:
             continue
         holes = [[loc(q) for q in v] for v in lv["voids"]]
@@ -2033,8 +2114,9 @@ def mall_court(Ls, view="court"):
         rbox(g_, "Mall_BenchSeat%d" % k, wd, 0, 0, 0.45, 1.8, 0.5, 0.08, 0.02)
         for sx_ in (-0.75, 0.75):
             rbox(g_, "Mall_BenchLeg%d_%d" % (k, int(sx_ * 10)), sd, sx_, 0, 0.21, 0.1, 0.45, 0.42, 0.01)
-    if view == "entrance":
+    if view in ("entrance", "shop"):                         # the south doorway: its lights reach the shop's walk too
         mall_entrance_doors(P, loc, SH, glassp, brass, edge, strip, globe, slab_under)
+    if view == "entrance":
         mall_porch(LOT["shell"], loc, brass, globe)
         mall_floods(loc)
         mall_forecourt(blk, loc, strip)
@@ -2044,7 +2126,7 @@ def mall_court(Ls, view="court"):
     sun_and_sky(SCENE, (0.35, -0.30, 0.89), 8.5, (1.0, 0.86, 0.68), (0.42, 0.55, 0.82), 0.45)
     hlog("  Eastgate's court from its plan: %d lanterns, %d skylights, %d moving stairs; %d outlets' insides in view" % (
         lanterns, len(eyes), len(P["ramps"]), built_in))
-    name = "Cam_test" if os.environ.get("WASTED_CAM") else ("Cam_mall_entrance" if view == "entrance" else "Cam_mall")
+    name = "Cam_test" if os.environ.get("WASTED_CAM") else {"entrance": "Cam_mall_entrance", "shop": "Cam_mall_shop"}.get(view, "Cam_mall")
     return camera(SCENE, name, *cam_at)
 
 
@@ -2644,6 +2726,12 @@ def main_hours():
         cam = mall_court(lines(), view="entrance")
         bounce_more(ROOM_BOUNCE)
         each_hour(scene, cam, 0.5, "MallEntrance", dict(day_lamps=0.15))
+    elif PLACE == "mall_shop":                       # one outlet's front, its glass sign close by (the owner, 2026-11-28)
+        scene = fresh("Furn_mall")
+        extra_mats()
+        cam = mall_court(lines(), view="shop")
+        bounce_more(ROOM_BOUNCE)
+        each_hour(scene, cam, 0.5, "MallShop", dict(day_lamps=0.15))
     elif PLACE == "egg_hall":                        # an egg hall: the Food Market under Eastgate's south-west egg (the owner, 2026-11-27)
         scene = fresh("Furn_mall")
         extra_mats()
