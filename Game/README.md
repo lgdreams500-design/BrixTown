@@ -1267,10 +1267,21 @@ first audit's findings are in LOOK_GATE.md.
   the rooms' light stays at "K + beams", and the brightness and warmth figures above, which are against Blender
   pictures, are what was measured and not pass marks. Not decided: whether out of doors follows, whether a room's
   Blender reference still needs every hour, the home room reference's raised bounce.
-- **A room's plaster is plain only in the golden room (ADR-0074, 2026-11-28):** the town's rooms (`ABrixRooms`) and the
-  inner faces of the buildings' walls still draw the street's mottle; carrying it over goes with the look tour.
-  `look_check.py` fails the golden hallway's "flat" by day (52 to 55 % against 45 %): the limit is not yet set for a
-  room's plain walls. The old measuring rooms' sill, shutters and paving are drawn with no pattern, which draws black.
+- **A room's plaster is plain in every building of the town (ADR-0074, 2026-11-28; `Art/StyleTests/unreal_plain_plaster_59`):**
+  the walls, ceilings, beams and doorway frames of `ABrixRooms` and the inside faces of the buildings' own walls, their
+  ceilings, a stair's spine wall and a lift's shaft (`ABrixTownActor`, a group of its own, `RoomPlaster`) are drawn in the
+  rooms' copy of the material (`M_Room`) at `WallSmooth=1.0` (`[/Script/BrixTown.BrixRooms]` in `DefaultGame.ini`).
+  Floors, furniture and everything out of doors keep their mottle; the alley and the street measured the same before
+  and after. Not done: Eastgate Mall and the Furniture Outlet (drawn by `ABrixMallActor`, not touched) keep the old
+  paint on their inside walls; the boxes a shop is dressed with (counters, hanging signs, a lamp's pale shade: the
+  slice's furniture boxes) and the stairs keep the street's strong mottle, which now shows against plain walls; a
+  building's solid core above an unbuilt storey and the reveals of its windows are the street's material. The golden
+  room has a number of its own (`BrixLightRoom`'s `WallSmooth`), so there are two to keep the same. Plain walls read
+  cold white by day in the bakery and a tower's hall, with nothing on them: that is light and dressing, not paint, and
+  was not touched. `look_check.py` fails the golden hallway's "flat" by day (52 to 55 % against 45 %) and the limit is
+  not yet set for a room's plain walls; of the town's rooms shot, none fails by day (a tower's hall is nearest, 37 %),
+  and a tower's hall at night is 48 %, where night is not judged. No `-BrixShot=` shot with the HUD was taken. The old
+  measuring rooms' sill, shutters and paving are drawn with no pattern, which draws black.
 - **The reference page's light settings, as the game shows them (ADR-0075, 2026-11-28):** each place's settings are shot in the game by
   `python Tools/unreal/reference_shots.py --all` and shown on `Art/Reference/index.html` beside one Blender picture, all "for your
   review"; what is wrong in each is in its `unreal` block's `issues` in `Art/Reference/catalog.json`. No light, material or
@@ -1306,15 +1317,15 @@ first audit's findings are in LOOK_GATE.md.
     sky near white, the plaster reads flat and the stone one brown; square dark shop windows, no window boxes or lanterns by
     the café; morning's whites are burnt (the look check fails, 5 %); fog whites out (fails, 0.87 stops); dusk is near black
     under a pale sky; nobody near the camera.
-  - `ShopsBakeryLight` (the Stone Oven through its reference's own camera; 31 to 39 frames a second, the lowest of the places
-    shot): the walls are plain cold white where the reference is warm buff; the oven's fire is flat pale yellow and lights
+  - `ShopsBakeryLight` (the Stone Oven through its reference's own camera; re-shot with the plain plaster, 40 to 41 frames a
+    second): the walls are plain cold white where the reference is warm buff; the oven's fire is flat pale yellow and lights
     nothing; morning, midday and dusk are one picture inside; the pendants are dim by day and give an even orange at night
     with no pools; little contact shade under the furniture; the baker is gone at dusk and night; a door post cuts the left
     edge; stone tiles for the reference's boards.
   - `ShopsShopFloor` (Northwood Grocer, the lot the reference was sized from, from the reference's camera corner; 41 to 45
-    frames a second): not the reference's shop in what is there (four brown counters, no shelving or goods; the street side is
+    frames a second; re-shot with the plain plaster): not the reference's shop in what is there (four brown counters, no shelving or goods; the street side is
     blank pale panels, the street seen only through the doorway); no sun comes in, so morning, midday and dusk are one
-    picture; walls, panels and ceiling carry the engine's large soft blotches; a pale box on the ceiling lit from nowhere;
+    picture; the right wall is a large blank cream face; a pale box on the ceiling, still mottled, lit from nowhere;
     night is an even dull orange with no pools under the pendants; stone tiles for the reference's boards.
   - `ShopsBigHall` (the Furniture Outlet from just inside its door, the route in front and the room sets beyond; 31 to 39
     frames a second): night is as bright as day and whiter, with no pools under the lanterns; the sun's patches are burnt

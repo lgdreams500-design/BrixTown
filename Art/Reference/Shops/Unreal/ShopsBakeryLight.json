@@ -2,10 +2,10 @@
  "reference": "ShopsBakeryLight",
  "where": "cam:686.4,759.4,1.7,-113.2,-6",
  "shot": {
-  "commit": "a5dc56e",
+  "commit": "3c323e7",
   "date": "2026-11-28",
   "quality": "High, 1066 x 666",
-  "fps": "31 to 38"
+  "fps": "40 to 41"
  },
  "settings": {
   "Morning": {
@@ -13,68 +13,68 @@
    "look": {
     "burnt": 0.0,
     "crushed": 0.0001,
-    "flat": 0.0968,
-    "shade": 1.55,
-    "warmth": 0.375
+    "flat": 0.1752,
+    "shade": 1.54,
+    "warmth": 0.383
    },
    "fails": [],
    "at": "07:20",
    "weather": "clear",
    "camera": "indoors",
    "daylight": 1.0,
-   "fps": 37.0,
-   "worst_ms": 41
+   "fps": 39.5,
+   "worst_ms": 35
   },
   "Midday": {
    "hour": "12:00",
    "look": {
     "burnt": 0.0,
     "crushed": 0.0,
-    "flat": 0.0846,
-    "shade": 1.46,
-    "warmth": 0.372
+    "flat": 0.1685,
+    "shade": 1.49,
+    "warmth": 0.383
    },
    "fails": [],
    "at": "12:00",
    "weather": "clear",
    "camera": "indoors",
    "daylight": 1.0,
-   "fps": 31.3,
-   "worst_ms": 50
+   "fps": 39.5,
+   "worst_ms": 30
   },
   "Dusk": {
    "hour": "20:00",
    "look": {
     "burnt": 0.0057,
-    "crushed": 0.0014,
-    "flat": 0.0946,
-    "shade": 1.51,
-    "warmth": 0.387
+    "crushed": 0.0012,
+    "flat": 0.1774,
+    "shade": 1.53,
+    "warmth": 0.399
    },
    "fails": [],
    "at": "20:00",
    "weather": "clear",
    "camera": "indoors",
    "daylight": 1.0,
-   "fps": 38.5,
-   "worst_ms": 39
+   "fps": 40.3,
+   "worst_ms": 32
   },
   "NightLamps": {
    "hour": "22:30",
    "look": {
     "burnt": 0.0047,
     "crushed": 0.0008,
-    "flat": 0.0791,
-    "shade": 2.01,
-    "warmth": 1.073
+    "flat": 0.139,
+    "shade": 1.97,
+    "warmth": 1.086
    },
    "fails": [],
    "at": "22:30",
    "weather": "clear",
    "camera": "indoors",
    "daylight": 0.0,
-   "fps": 37.2,
-   "worst_ms": 45
+   "fps": 41.1,
+   "worst_ms": 30
   }
  }
 }

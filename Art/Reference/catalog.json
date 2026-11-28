@@ -1699,16 +1699,15 @@
      "Shops/Unreal/ShopsBakeryLight_NightLamps.jpg"
     ],
     "shot": {
-     "commit": "a5dc56e",
+     "commit": "3c323e7",
      "date": "2026-11-28",
      "quality": "High, 1066 x 666",
-     "fps": "31 to 38"
+     "fps": "40 to 41"
     },
     "status": "proposed",
     "issues": [
      "The spot is the reference's own camera in the Stone Oven (the catalog's camera for the place bakery), 1.7 m up; the game's camera is 90 degrees wide, the middle 86 % of the reference's 15.5 mm view. The room is the game's own, so what is there differs: the door, the menu board and the oven stand on other walls, a big arched window fills the left where the reference has a plank door, and the floor is grey-brown stone tiles where the reference has warm wide boards.",
-     "The walls still carry the old blotched paint: the plain plaster with no paint (ADR-0074) is only in the golden room and its hallway, not in the town's rooms (the owner, 2026-11-28: \"you have not used 0 paint like you did in the home rooms else where interiors\").",
-     "The walls are a plain cold white in every setting by day, with no mottle; the reference's plaster is a warm pink-buff that takes the oven's glow (G3, G4).",
+     "The walls and the ceiling are plain, one even tone with no paint, as the owner chose (ADR-0074; re-shot 2026-11-28 after it was carried to the town's rooms). By day they are a cold white in every setting; the reference's plaster is a warm pink-buff that takes the oven's glow (G4). The oven's grey body keeps its mottle.",
      "The oven's fire is pale yellow flat shapes and throws no light on the oven's mouth, the floor or the wall: the reference's fire is red-orange and warms that whole corner in every setting (G7; the owner's rule that every fire is one red).",
      "Morning, Midday and Dusk are nearly one picture inside: only the view out of the window changes. The reference's morning has the sun's patch across the floor and table, and its dusk goes warm (G9).",
      "The pendant lamps are small and dim by day and at dusk, and at night light the room an even orange with no pools under them; the reference's pendants are bright white shades that carry dusk and night (G7).",
@@ -1717,7 +1716,7 @@
      "The left edge of every picture is cut by a teal door post, and the counter's dark end fills the bottom right corner (G8).",
      "The till on the counter is a plain black block with nothing to see in it by day (G5).",
      "Out of the window at Morning and Midday the street is bright but not burnt; at night a street lamp shows. The window does show the hour (G7, yes).",
-     "Frames a second are the lowest so far: 31 at Midday, 37 to 39 otherwise."
+     "Frames a second: 40 to 41 in every setting."
     ]
    }
   },
@@ -1762,7 +1761,7 @@
      "Shops/Unreal/ShopsShopFloor_NightLamps.jpg"
     ],
     "shot": {
-     "commit": "39f06ef",
+     "commit": "3c323e7",
      "date": "2026-11-28",
      "quality": "High, 1066 x 666",
      "fps": "41 to 45"
@@ -1770,11 +1769,10 @@
     "status": "proposed",
     "issues": [
      "The spot: inside Northwood Grocer (lot b_0_0_l0), the lot the reference was sized from, at the reference's camera corner: the back corner away from the street, 1.7 m up, looking across the floor with the shop front to the right. The game's camera is 90 degrees wide where the reference's 16 mm lens sees 97.",
-     "The walls still carry the old blotched paint: the plain plaster with no paint (ADR-0074) is only in the golden room and its hallway, not in the town's rooms (the owner, 2026-11-28: \"you have not used 0 paint like you did in the home rooms else where interiors\").",
      "What is there differs. The reference's shop has a glazed shop front of teal-framed panes all along one side with the street seen through it, rows of shelving with goods, one cream counter with a till, a rail, a table and a board. The game's has four brown counters with tills and no shelving or goods at all; the long side is a run of blank pale panels under a teal band with only a strip of the street showing over them, and the street is seen only through the arched doorway.",
      "The day does not come in: no sun patch on the floor at Morning (the reference's is the strongest thing in its picture), and Morning, Midday and Dusk are one picture inside (G7, G9).",
-     "The walls and the pale panels are blotched with large soft light and dark patches, most of all on the right wall: the engine's own blotches, not the look's mottle (G3).",
-     "The ceiling between the beams is the same blotched cream, with a pale box hanging from it at the top of the picture that reads as a lamp lit from nowhere (G2).",
+     "The walls, the pale panels and the ceiling are plain, one even tone with no paint, as the owner chose (ADR-0074; re-shot 2026-11-28 after it was carried to the town's rooms). The right wall is a large blank cream face with nothing on or against it.",
+     "A pale box hangs from the ceiling at the top of the picture, still mottled (it is furniture, not plaster), and reads as a lamp lit from nowhere (G2).",
      "The floor is grey-brown stone tiles where the reference has warm wide boards; the counters are plain flat brown with dark panel lines (G3).",
      "At night the shop is an even dull orange with no pools under the pendants and the lamps' shades hardly brighter than the ceiling; the reference's pendants are bright and the floor under them lit (G7).",
      "At Dusk and at night nobody is in the shop; at Morning and Midday a shopkeeper stands close to the camera at the nearest counter, his back to it, and two more stand at other counters.",

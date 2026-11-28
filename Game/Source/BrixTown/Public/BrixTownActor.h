@@ -197,6 +197,10 @@ private:
 	FLook Surface(const FBrixSurface& S, const FLinearColor& Town) const;
 	UMaterialInstanceDynamic* Fixed(const FLinearColor& C);
 	UMaterialInstanceDynamic* Own();
+	// the inside faces of a building's own walls, its ceilings, a stair's spine wall and a lift's shaft: boxes in the
+	// rooms' copy of the material (M_Room), whose plaster is plain (ADR-0074; how smooth is ABrixRooms' WallSmooth)
+	UInstancedStaticMeshComponent* RoomGroup(UStaticMesh* Mesh);
+	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> RoomColour;
 	void BuildLot(const FBrixLot& L, const FBrixBlock& B);
 	void BuildGarden(const FBrixLot& L, const struct FBrixHousePlan& Plan, const struct FBrixHouseLook& Hs, float HouseTop);
 	void BuildProp(const struct FBrixProp& P, const struct FBrixBlock& B);

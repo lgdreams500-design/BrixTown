@@ -237,9 +237,17 @@ UInstancedStaticMeshComponent* ABrixRooms::BoxGroup(bool bCollide)
 	G->SetCollisionProfileName(TEXT("BlockAll"));
 	if (bCollide)
 	{
-		G->NumCustomDataFloats = 12;   // M_Greybox: colour, pattern, its turn (as the town's boxes)
-		if (!OwnColour) { OwnColour = UMaterialInstanceDynamic::Create(Greybox, this); OwnColour->SetScalarParameterValue(TEXT("InstanceColour"), 1.f); }
-		for (int32 i = 0; i < G->GetNumMaterials(); ++i) G->SetMaterial(i, OwnColour);
+		G->NumCustomDataFloats = 12;   // M_Room: colour, pattern, its turn (as the town's boxes)
+		// the rooms' copy of the town's material, where painted plaster has its "how smooth" (ADR-0074; Tools/unreal/
+		// make_greybox_material.py with BRIX_MATERIAL=M_Room); without it the town's own, and the street's mottle
+		if (!RoomColour)
+		{
+			UMaterialInterface* Room = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Greybox/M_Room.M_Room"));
+			if (!Room) UE_LOG(LogTemp, Warning, TEXT("Brix Town: /Game/Greybox/M_Room is missing (make_greybox_material.py with BRIX_MATERIAL=M_Room): the rooms' plaster keeps the street's mottle"));
+			RoomColour = UMaterialInstanceDynamic::Create(Room ? Room : Greybox.Get(), this);
+			RoomColour->SetScalarParameterValue(TEXT("InstanceColour"), 1.f);
+		}
+		for (int32 i = 0; i < G->GetNumMaterials(); ++i) G->SetMaterial(i, RoomColour);
 	}
 	else { G->SetHiddenInGame(true); G->SetVisibility(false); G->SetCastShadow(false); G->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore); }   // the camera looks past furniture
 	G->RegisterComponent();
@@ -477,7 +485,7 @@ void ABrixRooms::Rebuild()
 		BoxAts.Add(T);
 		BoxData.Add({ C.R, C.G, C.B, (float)A.X, (float)A.Y, (float)A.Z, (float)A.W, (float)B.X, (float)B.Y, (float)B.Z, (float)B.W, FMath::DegreesToRadians((float)T.GetRotation().Rotator().Yaw) });
 	};
-	const FVector4 Plaster(-1, 0, 0, 0), None(0, 0, 0, 0);
+	const FVector4 Plaster(-1, WallSmooth, 0, 0), None(0, 0, 0, 0);   // a room's plaster and the painted wood on it: plain (ADR-0074)
 	Shown = 0;
 	for (const int32 i : Near)
 	{
