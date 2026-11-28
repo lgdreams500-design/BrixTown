@@ -85,7 +85,62 @@
    "issues": [
     "The cream banners across the alley catch the gate lamp at dusk and at night and read as bright blocks.",
     "People are lit like everything else: nobody stands out under a lamp at night."
-   ]
+   ],
+   "unreal": {
+    "where": "stand:876.5,912,0,0",
+    "blender": "World/WorldAlley_Midday.jpg",
+    "settings": {
+     "Morning": "07:20",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30",
+     "Cloudy": "12:00|cloud",
+     "Rain": "12:00|rain",
+     "Fog": "12:00|fog",
+     "Snow": "12:00|snow"
+    },
+    "missing": {
+     "NightFullMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart.",
+     "NightNewMoon": "The game has no moon yet (WLD-042's sky: the moon's disc, path and phases are not built): its night is one faint blue light whatever the moon, so a full moon and a new moon cannot be told apart."
+    },
+    "files": [
+     "World/Unreal/WorldAlley_Morning.jpg",
+     "World/Unreal/WorldAlley_Midday.jpg",
+     "World/Unreal/WorldAlley_Dusk.jpg",
+     "World/Unreal/WorldAlley_NightLamps.jpg",
+     "World/Unreal/WorldAlley_Cloudy.jpg",
+     "World/Unreal/WorldAlley_Rain.jpg",
+     "World/Unreal/WorldAlley_Fog.jpg",
+     "World/Unreal/WorldAlley_Snow.jpg"
+    ],
+    "shot": {
+     "commit": "2d9d02b",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "38 to 43"
+    },
+    "checks": {
+     "Fog": [
+      "look at it: little light and shade, 0.94 stops (a scene in the look has 1.0 or more; a white-out in haze reads so)"
+     ]
+    },
+    "status": "proposed",
+    "issues": [
+     "The place differs from the reference in what is there. The reference is the alley of Tools/blender/old_town_04.py seen from under a gate arch (its camera 1.7 m up, a 24 mm lens, people facing it): an alley with crates, cloth banners across it, a bridge and a second arch. The game's spawn alley (the look tour's stop, the player from behind, a 90 degree view) is a bare paved lane between two stone houses to an arch on Market Square: no gate arch over the camera, no banners, no crates, nobody but the player.",
+     "The game's walls are large rough blocks with heavy dark joints and jutting window surrounds; the reference's are smooth dressed stone with fine joints (G3).",
+     "Nobody else is in the alley in any setting; the reference has six people (G6).",
+     "Rain, Fog, Snow and Cloudy are grey and cold where the reference keeps its warm stone in every weather: in Rain and Snow the walls go near black, and the warm cast of the look is gone (G4, W4).",
+     "Fog whites the whole picture out: the look check fails it for too little light and shade (0.94 stops against 1.0) (G5).",
+     "Snow: flakes fall as large square white dots and no snow lies on the paving, the sills or the bench; the reference has lying snow and small flakes.",
+     "Rain: the paving shows a few dark puddles but no wet sheen; the streaks are long white lines, heavier than the reference's.",
+     "At Midday and under cloud the sun's patch on the paving by the arch is burnt white (G5).",
+     "Cloudy still throws a hard-edged patch of sun on the paving: under cloud there should be none.",
+     "At night the two wall lanterns are large plain white blocks with no shape, and the lit windows are flat cream panels with nothing seen in them (G7).",
+     "Dusk reads much lighter than the reference's dusk, and its lit window on the left is burnt.",
+     "The orange lantern box high on the left wall by day is a plain flat-coloured block (G3).",
+     "Morning: the sun lies in a large hard patch across the right wall and the paving; the reference's morning alley is in soft haze with no direct sun. Which is right for the hour is the owner's to say."
+    ]
+   }
   },
   {
    "id": "WorldSky",
