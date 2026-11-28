@@ -1682,7 +1682,43 @@
    "issues": [
     "Dusk and the lamp-lit night look nearly alike: once the sun is down the pendants and the oven carry it.",
     "The light the facing wall throws back is a hidden soft light (BOUNCE_CARD), as in the home room."
-   ]
+   ],
+   "unreal": {
+    "where": "cam:686.4,759.4,1.7,-113.2,-6",
+    "blender": "Shops/ShopsBakeryLight_Midday.jpg",
+    "settings": {
+     "Morning": "07:20",
+     "Midday": "12:00",
+     "Dusk": "20:00",
+     "NightLamps": "22:30"
+    },
+    "files": [
+     "Shops/Unreal/ShopsBakeryLight_Morning.jpg",
+     "Shops/Unreal/ShopsBakeryLight_Midday.jpg",
+     "Shops/Unreal/ShopsBakeryLight_Dusk.jpg",
+     "Shops/Unreal/ShopsBakeryLight_NightLamps.jpg"
+    ],
+    "shot": {
+     "commit": "a5dc56e",
+     "date": "2026-11-28",
+     "quality": "High, 1066 x 666",
+     "fps": "31 to 38"
+    },
+    "status": "proposed",
+    "issues": [
+     "The spot is the reference's own camera in the Stone Oven (the catalog's camera for the place bakery), 1.7 m up; the game's camera is 90 degrees wide, the middle 86 % of the reference's 15.5 mm view. The room is the game's own, so what is there differs: the door, the menu board and the oven stand on other walls, a big arched window fills the left where the reference has a plank door, and the floor is grey-brown stone tiles where the reference has warm wide boards.",
+     "The walls are a plain cold white in every setting by day, with no mottle; the reference's plaster is a warm pink-buff that takes the oven's glow (G3, G4).",
+     "The oven's fire is pale yellow flat shapes and throws no light on the oven's mouth, the floor or the wall: the reference's fire is red-orange and warms that whole corner in every setting (G7; the owner's rule that every fire is one red).",
+     "Morning, Midday and Dusk are nearly one picture inside: only the view out of the window changes. The reference's morning has the sun's patch across the floor and table, and its dusk goes warm (G9).",
+     "The pendant lamps are small and dim by day and at dusk, and at night light the room an even orange with no pools under them; the reference's pendants are bright white shades that carry dusk and night (G7).",
+     "Nothing darkens the floor where it stands: the table, the counter and the shelves sit on the tiles with almost no contact shade by day (G1).",
+     "At Dusk and at night the baker is gone from behind the table and nobody is in the shop; at Morning a customer's head and shoulders fill the middle right of the picture, close to the camera.",
+     "The left edge of every picture is cut by a teal door post, and the counter's dark end fills the bottom right corner (G8).",
+     "The till on the counter is a plain black block with nothing to see in it by day (G5).",
+     "Out of the window at Morning and Midday the street is bright but not burnt; at night a street lamp shows. The window does show the hour (G7, yes).",
+     "Frames a second are the lowest so far: 31 at Midday, 37 to 39 otherwise."
+    ]
+   }
   },
   {
    "id": "ShopsShopFloor",
