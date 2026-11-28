@@ -1294,7 +1294,8 @@
    "issues": [
     "The shade is lifted by light bounced more strongly than the surfaces' own colours give (plaster x2, boards x2, the street outside x2.6).",
     "The living room still reads warm at dusk: the fire and the dusk sky together.",
-    "The light the facing wall throws back is a hidden soft light on that wall (BOUNCE_CARD in hours_50.py: 25 W by day, 15 % of the lamps by night), not the wall's own bounce, which reached too little."
+    "The light the facing wall throws back is a hidden soft light on that wall (BOUNCE_CARD in hours_50.py: 25 W by day, 15 % of the lamps by night), not the wall's own bounce, which reached too little.",
+    "Its bounce is raised x2 where the remade hallway's (IndoorHallway, 2026-11-28, ADR-0072) is the surfaces' own: the two rooms of one house are not lit by quite the same rule."
    ]
   },
   {
@@ -1310,18 +1311,21 @@
     "Indoor/IndoorHallway_NightNewMoon.jpg"
    ],
    "locks": "A home's hallway (the owner, 2026-11-26: \"corridor or near stairs area where there are no direct windows but indirect light coming from room\"): a corridor about 1.7 m wide with no window of its own, the stair rising at its far end under a closed stairwell, the hall table, mirror, coat stand and rug along its left wall. By day its only light is the day coming through the open door of the room beside it, whose window faces the sun; at dusk and at night its pendant and the lamp on the hall table, the doorway dark; the full moon a dim, cool blue light from that doorway (the owner, 2026-11-26: as dim as the new moon was, and cooler), a new moon darker still, only the doorway faintly showing. In the world's light, lamps of their kinds (World/rules/lights.json).",
-   "approved": "2026-11-26, the owner",
-   "decision": "the owner, 2026-11-26: one home room and the hallway stand for the home's rooms (\"just do one room, hall way, shop and cafe\"); in the world's light; ADR-0061; the owner, 2026-11-26: \"Approve it\"",
-   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=hallway, corridor()) with the pieces of Tools/blender/furniture_kit_18.py",
+   "approved": "2026-11-28, the owner (remade); first approved 2026-11-26",
+   "decision": "the owner, 2026-11-26: one home room and the hallway stand for the home's rooms (\"just do one room, hall way, shop and cafe\"); in the world's light; ADR-0061; the owner, 2026-11-26: \"Approve it\"; remade 2026-11-28 (the owner: \"hall in reference has a bright source of light coming from room ... room don't have such high light source\"; candidate 2 picked, then \"Approve\"): the bounce as the surfaces' own colours give it, the eye held where the first hallway had it, so the doorway reads as a sunlit room beyond, not a lamp (ADR-0072)",
+   "made_by": "Tools/blender/hours_50.py (WASTED_PLACE=hallway, corridor(); no bounce_more, its eye held by PLACE_EYE_HELD) with the pieces of Tools/blender/furniture_kit_18.py",
    "models": [
     "World/rules/furnishing.json (the pieces)",
     "Game/Source/BrixTown (homes' rooms and their light)"
    ],
    "rules": "docs/art/ART_DIRECTION.md, docs/art/INTERIOR_STYLE.md",
-   "was": [],
+   "was": [
+    "Art/Retired/IndoorHallway_2026-11-26_*.jpg (the first hallway, bounce x2 and an eye that opened to the target)"
+   ],
    "issues": [
-    "The shade is lifted by light bounced more strongly than the surfaces' own colours give (plaster x2, boards x2, the street outside x2.6).",
-    "Dusk and the lamp-lit night look alike: no window, so only the lamps light it once the day is gone."
+    "Its bounce is the surfaces' own; the home room's (IndoorHomeRoom) is still raised x2, so the two rooms of one house are not lit by quite the same rule.",
+    "Dusk and the lamp-lit night look alike: no window, so only the lamps light it once the day is gone.",
+    "The new moon is at its eye's limit: mean 1 against the 2.5 asked for; only the doorway faintly shows."
    ]
   },
   {
@@ -1849,6 +1853,19 @@
    ],
    "was": "IndoorRooms: the twelve rooms of furniture_kit_18 in one shell, by day",
    "why": "The owner, 2026-11-26: \"move IndoorRooms to archived they are bad\". A home's rooms are IndoorHomeRoom and IndoorHallway, in the world's light at every hour."
+  },
+  {
+   "title": "IndoorHallway (2026-11-26)",
+   "files": [
+    "Art/Retired/IndoorHallway_2026-11-26_Morning.jpg",
+    "Art/Retired/IndoorHallway_2026-11-26_Midday.jpg",
+    "Art/Retired/IndoorHallway_2026-11-26_Dusk.jpg",
+    "Art/Retired/IndoorHallway_2026-11-26_NightLamps.jpg",
+    "Art/Retired/IndoorHallway_2026-11-26_NightFullMoon.jpg",
+    "Art/Retired/IndoorHallway_2026-11-26_NightNewMoon.jpg"
+   ],
+   "was": "The home's hallway approved 2026-11-26",
+   "why": "The owner, 2026-11-28: its doorway read as a bright source the room beside it does not have. Its bounce was raised x2 (the street x2.6) and its eye opened 4.4 stops past the home room's. Remade as IndoorHallway."
   }
  ]
 }

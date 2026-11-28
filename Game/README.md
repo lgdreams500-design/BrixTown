@@ -1001,7 +1001,7 @@ short sleeves, a cream bib apron, bare legs and brown shoes, grey hair in a bun 
 hairline, and age (creases at the brow, the eyes and from nose to mouth, paler lips, fainter cheeks), drawn only for a cast
 look, so everyone else is as before (`QST014_noor_wears_her_approved_look`; ART004 unchanged). Looked at beside the
 references on 2026-11-26: `Art/StyleTests/unreal_bakery_50/` (look_check: 10 pictures, 0 fail).
-Not yet, of the Stone Oven and Noor (the look gate): the room has no ceiling beams and is brighter and flatter than the
+Not yet, of the Stone Oven and Noor (the look gate): the room (ceiling beams since 2026-11-28) is brighter and flatter than the
 reference, its corners not darker (G1); from the street by day the room reads dim behind its glass, as the eye is set for
 the street; after dusk the side windows show the town's lit night panes, which glow and hide the room (the corner at 20:00
 burns 5 % of the picture with them and the low sun on the gable); the shop front has the grocer's crates of produce on
@@ -1243,15 +1243,17 @@ first audit's findings are in LOOK_GATE.md.
   bakery's look through the reference's camera, which hour of the game's day a reference's Morning and Dusk are is not
   recorded, and a tour stop can try several numbers in one launch only in the measuring rooms, not in the town's rooms.
   The rooms' light is the same with a window or without: a hallway is lit as a room is, where its reference is dim.
-- **The rooms' light by day (2026-11-28, `Art/StyleTests/unreal_rooms_light_57/`):** a first step the owner took as
-  "not perfect but a huge improvement": by day the lamps are at a quarter (`RoomLampDay`) and the room's own light is
-  the day's colour (`RoomFillColourDay`), which takes the orange out. Still wrong: every room is 1 to 2 stops brighter
-  than its reference (the eye opens too far indoors: trial D, not yet looked at); the hallway brightest of all; the
-  bakery darker than before; warmth still over the pass mark; blotches on ceilings show more. Not measured with these
-  numbers: dusk, morning, the look tour against its baseline. The look gate's own steps were not done for it, and
-  the engine's automated tests were not run after the change to `BrixRooms`. The rooms' light (above, ADR-0055) was set by the rooms of
-  `furniture_kit_18`, which the owner retired as references on 2026-11-26; it has not been set against `IndoorHomeRoom`,
-  `IndoorHallway` or `ShopsShopFloor`.
+- **The rooms' light by day (2026-11-28, `Art/StyleTests/unreal_rooms_light_57/`, its README is the whole round):**
+  by day the lamps are at a tenth (`RoomLampDay`), the room's own light is near the day's colour (`RoomFillColourDay`),
+  stands over the camera's planned room or, on a storey with no plan, at the camera (it moves four times a second, not
+  every frame), and a planned room has `RoomFillHome` of it; the eye opens 1.5 stops indoors. Every planned room and
+  storey has the references' ceiling beams. Still wrong: the hallway 2.3 stops brighter than its reference (remade
+  2026-11-28) while the home room passes; warmth 0.5 to 0.8 over in rooms, hallway, library and bakery; the bakery 0.6
+  off by its squares; at night the room about +0.9, the shop floor about -1.5, the bakery about +0.9. The shop and room
+  stops do not see what their references see (a corner room with three windows, unfurnished, orange boards; shop
+  stops facing away from the shopfront), so their numbers are loose. Not done: dusk and morning measured, the look tour
+  against its baseline, the gate's own steps, the engine's automated tests after the change to `BrixRooms`. The home
+  room reference's bounce is raised x2 where the remade hallway's is the surfaces' own.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.

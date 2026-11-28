@@ -1,8 +1,11 @@
 # Unreal: the rooms' light against the rooms' own references — a round in progress (2026-11-28)
 
-The first round of `docs/process/LOOK_GATE.md`, The matching round. **Not finished. The settings in the game are trial C**, which the owner saw beside the references
-(`before_and_trial_c.jpg`) and took on 2026-11-28: "it's not perfect but a huge improvement ... merge this strategy
-so far and we can refine it further". Trial D below is the next candidate; nobody has looked at its pictures.
+The first round of `docs/process/LOOK_GATE.md`, The matching round. **Not finished.** The first part below (to "Next")
+is how it stood at trial C; **the second part, "Carried on, 2026-11-28", is where it stands now**: the game at trial K
+with ceiling beams, and the hallway reference remade.
+
+The owner saw trial C beside the references (`before_and_trial_c.jpg`) and took it on 2026-11-28: "it's not perfect
+but a huge improvement ... merge this strategy so far and we can refine it further".
 To carry on, read this page, then LOOK_GATE's matching round.
 
 ## The shared cause
@@ -61,3 +64,68 @@ tower's hall washed out: a shared number is never tuned on one place.
 
 A trial: `python Tools/unreal/try_values.py <out folder> <tour list> BrixRooms:RoomFill=0.7 BrixLight:DayOpenIndoors=1.5`.
 This checkout's build has the trial's code; a checkout without a build cannot take shots (LOOK_GATE, the machine).
+
+## Carried on, 2026-11-28
+The owner looks at the pictures; the numbers are `look_match.py`'s (brightness / warmth in stops; the pass is 0.5 / 0.33).
+
+### The room's own light where the camera is (`BrixRooms`)
+- It stands over the middle of the planned room the camera is in, or, on a storey with no plan (a shop's floor), at the
+  camera's own spot; it used to stand at the middle of the lot. By day a planned room (a home's, a flat's) has
+  `RoomFillHome` of it. Its reach is `RoomFillReach` 2.0 of the floor's diagonal (was 0.7).
+- As the camera comes into a room the log says how much of the room's round is its own windows (`RoomWindowNear`). The
+  hallway has none, the dining room 0.2, the shop floors 0.36 to 0.42. A rule by that share was tried and dropped: with
+  the light over the room, the hallway and the dining room came out equally bright against their (first) references,
+  and the shop floors half a stop dark, so the share did not tell the rooms apart in the numbers.
+
+| Trial | change (on trial D) | room | hallway* | grocer | bank | library | bakery |
+|---|---|---|---|---|---|---|---|
+| F | the light over the camera's room | +1.15 / +0.74 | +1.24 / +0.55 | -0.78 / +0.51 | -0.46 / +0.46 | -1.01 / +0.88 | 0.55 / 0.35 |
+| H | reach 2.0 | +1.23 / +0.74 | +1.34 / +0.53 | -0.53 / +0.57 | -0.18 / +0.45 | -0.72 / +0.86 | 0.61 / 0.33 |
+| J | room light 0.8 (night share 0.225: by night still 0.18), home rooms 0.37 of it by day | +0.10 / +0.91 | +0.02 / +0.93 | -0.26 / +0.54 | +0.07 / +0.42 | -0.47 / +0.85 | 0.73 / 0.34 |
+| **K** | lamps 0.1 by day, day colour (1, .96, .94) | +0.11 / +0.67 | -0.02 / +0.57 | -0.22 / +0.23 | +0.11 / +0.11 | -0.40 / +0.56 | 0.75 / 0.52 |
+| K + beams | the ceilings' beams | +0.00 / +0.65 | +0.00 / +0.60 | -0.44 / +0.32 | -0.05 / +0.17 | -0.60 / +0.57 | 0.64 / 0.50 |
+
+\* against the first hallway reference. The bakery's figures are the mean miss over its 12 squares (it is too bright:
++0.37 signed at H). Sheets: `reference_H_J_K.jpg`, `reference_K_beams.jpg`. **The game is at "K + beams".**
+
+### The owner's note: the structure first
+"you need to understand the structural difference before trying to fix the light, beams are missing in ceiling add
+them. windows are bit different in reference and the game location you picked there will be difference due to that.
+hall in reference has a bright source of light coming from room, which is missing in game".
+- **Beams** (done): every planned room and every storey's whole floor has the references' beams (furniture_kit_17.py
+  room(), hours_50.py shop()): dark wood 0.18 m square under the ceiling, across the shorter span, 1.4 m apart, the first
+  0.5 m in; none in a room narrower than 2.6 m (the hallway reference has none); cut over the stair. Boxes drawn with no
+  pattern drew black (a zero-sized pattern in M_Greybox): the beams and the doorways' frames, black till now, are plain.
+- **Where the places differ in build** (not mended): the home room's reference is closed with one window in a side wall
+  and furnished; the game's stop is an unfurnished corner dining room with 3.6 m of windows on two walls and orange
+  boards (the reference: grey-beige slabs). The shop floors' reference stands beside a wall of windows; the game's shop
+  stops look at the back wall with the shopfront behind the camera; the library's floor is dark boards. The bakery's game
+  view has a big arched window on the left where the reference has a door in a dark wall and a lit oven fire. Every game
+  ceiling has the engine's dark blotches.
+- **The hallway reference, remade** (approved by the owner, 2026-11-28): its bright doorway was not the room beside it
+  but the reference's making: its bounce raised x2 (the street x2.6) and its eye opened till the picture's mean was 100,
+  4.36 stops past the home room's +0.13 in the same light. Candidates (`hallway_remake_midday.jpg`): with the bounce as
+  the surfaces' own colours give it and the same eye (candidate 2, picked) the doorway reads as a sunlit room beyond.
+  `hallway_remake_all_hours.jpg` is every hour: morning, noon, dusk and lamp-lit night with the first hallway's eye held
+  (`PLACE_EYE_HELD` in hours_50.py), the moon nights opening to the owner's levels as before (the full moon at 12; the new
+  moon at its limit, 1). The first hallway is in `Art/Retired/IndoorHallway_2026-11-26_*.jpg`.
+
+### The reference tour at "K + beams", against the remade hallway
+Indoors: room +0.00 / +0.66 by day, +0.95 / +0.24 at night; **hallway +2.31 / +0.79 by day**, +0.54 / +0.82 at night;
+grocer -0.47 / +0.31 by day (passes), -1.43 / +0.78 at night; bank -0.08 / +0.16 (passes); library -0.61 / +0.56; bakery
+0.64 / 0.50 by day, 0.88 / 0.54 at night. Out of doors (not touched by this work): alley by day passes; Market Square at
+night -1.50 / -3.04, the street at night -1.39 / -1.67. The night stops with the old reach (0.7) came out the same within
+0.3 stops, so the reach is not what is wrong at night; there is no night measurement from before this round to set them
+beside.
+
+### Still to do
+1. The hallway: the game's is 2.3 stops brighter than the remade reference while the home room passes. Find what in the
+   build lights it (the room light over it; its doorways; no rooms beside it lit by the sun) before setting a number.
+2. Give the reference tour stops that see what their references see (a home room with one window, furnished; a shop
+   floor looking along its shopfront), or the shop and room numbers stay loose.
+3. Warmth: 0.5 to 0.8 over in the rooms, the hallway, the library and the bakery.
+4. Night indoors and out (above); dusk and morning not measured; the look tour against its baseline; the gate (G1 to
+   G10, the sheet). The engine's automated tests not run after the changes to `BrixRooms`.
+5. The home room reference's bounce is still x2: the hallway's is now the surfaces' own, so the two rooms of one house
+   are not lit by quite the same rule (in the catalog's issues).
+6. On a storey with no plan the room light follows the camera, moved four times a second (`CheckSeconds`), not every frame.
