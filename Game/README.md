@@ -1288,11 +1288,12 @@ first audit's findings are in LOOK_GATE.md.
     grey and cold, the walls near black in rain and snow; fog whites out (the look check fails it, 0.94 stops); no snow lies
     and the flakes are big square dots; no wet sheen in rain; the sun's patch is burnt at midday and still hard-edged under
     cloud; the lanterns are plain white blocks at night.
-  - `WorldMarketSquare` (Market Square from the look tour's stop; 39 to 43 frames a second): not the reference's view in what
-    is there (no arcade over the camera, no lamps near it; an open square of stalls with tower blocks behind); the near paving
-    is a plain dark band at morning and dusk; at night nothing on the square is lamp-lit; morning whites out in haze; rain and
-    fog are flat pale grey (the look check fails fog, 0.92 stops); the lying snow is one flat sheet with a black line across
-    it (fails, 0.94 stops); cloudy still throws hard shadows.
+  - `WorldMarketSquare` (from under the arch at the spawn alley's east end, looking on the fountain court; 38 to 43 frames a
+    second; the first spot, on the open stall square, was wrong): not the reference's arcade in what is there (one plain arch
+    with no lamp, a wide lawned court with the fountain far off; no people near); the arch is plain cream with no stonework
+    and its door leaves are flat slabs; the passage has no lamp at dusk or night; the paving beyond is burnt near white at
+    midday and under cloud, and cloud still throws a hard sun patch; rain and fog are grey and cold; snow lies as one flat
+    sheet.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.
