@@ -1341,6 +1341,10 @@ first audit's findings are in LOOK_GATE.md.
     the approved glass sign (ADR-0071); the ceiling over the walk is plain near-black brown, no slats or line of light; the
     shop's inside is plain flat fills and block mannequins; at night the shop and walk go pale white, whiter than by day; the
     glass shows no reflection or tint; no contact shade; a matte checker for polished stone.
+  - `MallsEastgateEscalators` (the foot of the Great Court's moving stairs, on their own line; 44 to 46 frames a second): not
+    moving stairs yet: two plain dark sloped ramps between flat slabs, no steps, plates, skirts, glass sides, newels or
+    handrail; the ramps are one flat dark grey; nobody on them; morning, midday and dusk are one picture and the floor goes
+    paler at night; the court round them as in MallsEastgateCourt.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.

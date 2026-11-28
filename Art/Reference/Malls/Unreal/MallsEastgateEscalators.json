@@ -1,0 +1,80 @@
+{
+ "reference": "MallsEastgateEscalators",
+ "where": "cam:1683.4,660,1.5,96,3",
+ "shot": {
+  "commit": "29cf580",
+  "date": "2026-11-28",
+  "quality": "High, 1066 x 666",
+  "fps": "44 to 46"
+ },
+ "settings": {
+  "Morning": {
+   "hour": "07:20",
+   "look": {
+    "burnt": 0.0072,
+    "crushed": 0.0,
+    "flat": 0.2494,
+    "shade": 1.88,
+    "warmth": 0.561
+   },
+   "fails": [],
+   "at": "07:20",
+   "weather": "clear",
+   "camera": "indoors",
+   "daylight": 1.0,
+   "fps": 46.1,
+   "worst_ms": 27
+  },
+  "Midday": {
+   "hour": "12:00",
+   "look": {
+    "burnt": 0.008,
+    "crushed": 0.0,
+    "flat": 0.248,
+    "shade": 2.05,
+    "warmth": 0.579
+   },
+   "fails": [],
+   "at": "12:00",
+   "weather": "clear",
+   "camera": "indoors",
+   "daylight": 1.0,
+   "fps": 44.3,
+   "worst_ms": 28
+  },
+  "Dusk": {
+   "hour": "20:00",
+   "look": {
+    "burnt": 0.0062,
+    "crushed": 0.0305,
+    "flat": 0.2646,
+    "shade": 2.25,
+    "warmth": 0.389
+   },
+   "fails": [],
+   "at": "20:00",
+   "weather": "clear",
+   "camera": "indoors",
+   "daylight": 1.0,
+   "fps": 46.4,
+   "worst_ms": 24
+  },
+  "NightLamps": {
+   "hour": "22:30",
+   "look": {
+    "burnt": 0.0133,
+    "crushed": 0.0,
+    "flat": 0.1966,
+    "shade": 1.84,
+    "warmth": 0.315
+   },
+   "fails": [],
+   "at": "22:30",
+   "weather": "clear",
+   "camera": "indoors",
+   "daylight": 0.0,
+   "fps": 45.6,
+   "worst_ms": 27
+  }
+ }
+}
