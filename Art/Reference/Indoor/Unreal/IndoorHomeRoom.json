@@ -1,0 +1,108 @@
+{
+ "reference": "IndoorHomeRoom",
+ "where": "refroom:home",
+ "shot": {
+  "commit": "5704528",
+  "date": "2026-11-28",
+  "quality": "High, 1066 x 666",
+  "fps": "40 to 46"
+ },
+ "settings": {
+  "Morning": {
+   "hour": "ref",
+   "look": {
+    "burnt": 0.0007,
+    "crushed": 0.0017,
+    "flat": 0.0421,
+    "shade": 1.96,
+    "warmth": 0.366
+   },
+   "fails": [],
+   "at": "07:36",
+   "weather": "clear",
+   "camera": "out of doors",
+   "daylight": 1.0,
+   "fps": 40.9,
+   "worst_ms": 28,
+   "card": {
+    "card": 0.0343,
+    "card_warm": 0.48,
+    "ball": 0.0252,
+    "ball_warm": 0.52,
+    "ball_side": 0.18
+   }
+  },
+  "Midday": {
+   "hour": "12:00",
+   "look": {
+    "burnt": 0.0007,
+    "crushed": 0.0017,
+    "flat": 0.041,
+    "shade": 1.98,
+    "warmth": 0.336
+   },
+   "fails": [],
+   "at": "12:00",
+   "weather": "clear",
+   "camera": "out of doors",
+   "daylight": 1.0,
+   "fps": 40.5,
+   "worst_ms": 27,
+   "card": {
+    "card": 0.0347,
+    "card_warm": 0.47,
+    "ball": 0.0254,
+    "ball_warm": 0.5,
+    "ball_side": 0.17
+   }
+  },
+  "Dusk": {
+   "hour": "20:00",
+   "look": {
+    "burnt": 0.0002,
+    "crushed": 0.0059,
+    "flat": 0.0628,
+    "shade": 2.42,
+    "warmth": 0.698
+   },
+   "fails": [],
+   "at": "20:00",
+   "weather": "clear",
+   "camera": "out of doors",
+   "daylight": 1.0,
+   "fps": 40.3,
+   "worst_ms": 27,
+   "card": {
+    "card": 0.0086,
+    "card_warm": 0.74,
+    "ball": 0.0064,
+    "ball_warm": 0.81,
+    "ball_side": 0.12
+   }
+  },
+  "NightLamps": {
+   "hour": "22:30",
+   "look": {
+    "burnt": 0.0004,
+    "crushed": 0.0001,
+    "flat": 0.0684,
+    "shade": 1.77,
+    "warmth": 1.124
+   },
+   "fails": [],
+   "at": "22:30",
+   "weather": "clear",
+   "camera": "out of doors",
+   "daylight": 0.0,
+   "fps": 46.2,
+   "worst_ms": 24,
+   "card": {
+    "card": 0.0044,
+    "card_warm": 2.47,
+    "ball": 0.0074,
+    "ball_warm": 2.18,
+    "ball_side": -1.08
+   }
+  }
+ }
+}

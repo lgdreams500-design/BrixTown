@@ -58,6 +58,68 @@ class TheReferences(unittest.TestCase):
         next(p for p in bad["places"] if p["place"] == "cafe")["reference"] = "OrnamentsNotApproved"
         self.assertTrue(any("is not an approved reference" in x for x in RC.problems(bad)))
 
+    def test_ART_001_a_places_light_in_the_game_is_its_own_settings_in_its_own_folder(self):
+        """ADR-0075: an "unreal" block's settings are the reference's, each shot or missing with a reason; its files
+        exist, in <Category>/Unreal/; nothing there is listed as a Blender file; none is approved but in the owner's words."""
+        cat = RC.load()
+        blocks = [r for r in cat["references"] if r.get("unreal")]
+        self.assertIn("IndoorHomeRoom", {r["id"] for r in blocks})
+        for r in blocks:
+            u, own = r["unreal"], RC.settings_of(r)
+            self.assertEqual(RC.unreal_problems(r), [], r["id"])
+            self.assertEqual([s for s in own if s in u["settings"] or s in u["missing"]], own, r["id"])
+            self.assertFalse(set(u["settings"]) & set(u.get("missing", {})), r["id"])
+            self.assertIn(u["blender"], r["files"])
+            for f in u.get("files", []):
+                self.assertTrue(f.startswith(r["category"] + "/Unreal/" + r["id"] + "_"), f)
+                self.assertTrue(os.path.isfile(os.path.join(RC.REF, f)), f)
+            if u.get("files"):
+                self.assertEqual([os.path.splitext(f)[0].rsplit("_", 1)[-1] for f in u["files"]], list(u["settings"]), r["id"])
+            if u.get("status") == "approved":
+                self.assertIn('"', u.get("decision", ""), r["id"] + ": approved without the owner's words")
+        for r in cat["references"]:
+            self.assertFalse([f for f in r["files"] if "/Unreal/" in f], r["id"] + ": a game picture listed as a Blender file")
+        # what the check catches
+        bad = copy.deepcopy(next(r for r in blocks if r["id"] == "IndoorHomeRoom"))
+        u = bad["unreal"]
+        u["settings"]["Noon"] = "12:00"
+        u["settings"]["Dusk"] = "sunset"
+        del u["missing"]["NightNewMoon"]
+        u["where"] = "the living room"
+        u["status"] = "approved"
+        u["files"] = ["Indoor/IndoorHomeRoom_Morning.jpg"]
+        p = RC.unreal_problems(bad)
+        for words in ("names the setting Noon, which the reference has not", "Dusk is sunset", "neither shoots the setting NightNewMoon",
+                      "where (the living room)", "approved without a decision in the owner's own words",
+                      "Indoor/IndoorHomeRoom_Morning.jpg is not Art/Reference/Indoor/Unreal/"):
+            self.assertTrue(any(words in x for x in p), words)
+        # a picture in an Unreal folder that no block lists is caught by the folders' check
+        whole = copy.deepcopy(cat)
+        shot = next(r for r in whole["references"] if (r.get("unreal") or {}).get("files"))
+        gone = shot["unreal"]["files"].pop()
+        self.assertTrue(any(gone + " is in Art/Reference but not in the catalog" in x for x in RC.problems(whole)))
+
+    def test_ART_001_the_page_shows_one_blender_picture_and_the_games_settings(self):
+        cat = RC.load()
+        r = next(r for r in cat["references"] if r["id"] == "IndoorHomeRoom")
+        part = RC.in_the_game(r)
+        self.assertEqual(part.count("<img "), 1 + len(r["unreal"].get("files", [])))
+        self.assertIn('src="Indoor/IndoorHomeRoom_Midday.jpg"', part)
+        self.assertNotIn('src="Indoor/IndoorHomeRoom_Dusk.jpg"', part)          # kept and linked, not shown
+        self.assertIn('href="Indoor/IndoorHomeRoom_Dusk.jpg"', part)
+        self.assertIn("Not in the game yet", part)
+        self.assertIn("Night, lamps off, full moon", part)
+        self.assertIn("For your review", part)
+        self.assertEqual(RC.state(r)[1], "review")
+        self.assertNotIn("Approved</em>", part)
+        # a reference without the block is drawn as before: every one of its files
+        plain = next(r for r in cat["references"] if not r.get("unreal") and len(r["files"]) > 1)
+        self.assertEqual(RC.shown(plain), plain["files"])
+        # the look check's failures are under their picture
+        tried = copy.deepcopy(r)
+        tried["unreal"]["checks"] = {"Midday": ["burnt whites over 9% of the picture"]}
+        self.assertIn("burnt whites over 9% of the picture", RC.in_the_game(tried))
+
 
 if __name__ == "__main__":
     unittest.main()
