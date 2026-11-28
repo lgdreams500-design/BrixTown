@@ -1,0 +1,80 @@
+{
+ "reference": "MallsEastgateFoodCourt",
+ "where": "cam:1597.6,829.6,1.7,-139.9,11.2",
+ "shot": {
+  "commit": "1bcb0ff",
+  "date": "2026-11-28",
+  "quality": "High, 1066 x 666",
+  "fps": "46 to 49"
+ },
+ "settings": {
+  "Morning": {
+   "hour": "07:20",
+   "look": {
+    "burnt": 0.0234,
+    "crushed": 0.0,
+    "flat": 0.0155,
+    "shade": 1.79,
+    "warmth": 0.501
+   },
+   "fails": [],
+   "at": "07:20",
+   "weather": "clear",
+   "camera": "indoors",
+   "daylight": 1.0,
+   "fps": 46.9,
+   "worst_ms": 26
+  },
+  "Midday": {
+   "hour": "12:00",
+   "look": {
+    "burnt": 0.0088,
+    "crushed": 0.0,
+    "flat": 0.0111,
+    "shade": 1.12,
+    "warmth": 0.512
+   },
+   "fails": [],
+   "at": "12:00",
+   "weather": "clear",
+   "camera": "indoors",
+   "daylight": 1.0,
+   "fps": 45.6,
+   "worst_ms": 27
+  },
+  "Dusk": {
+   "hour": "20:00",
+   "look": {
+    "burnt": 0.0079,
+    "crushed": 0.0056,
+    "flat": 0.0492,
+    "shade": 1.57,
+    "warmth": 0.553
+   },
+   "fails": [],
+   "at": "20:00",
+   "weather": "clear",
+   "camera": "indoors",
+   "daylight": 1.0,
+   "fps": 49.1,
+   "worst_ms": 24
+  },
+  "NightLamps": {
+   "hour": "22:30",
+   "look": {
+    "burnt": 0.0134,
+    "crushed": 0.0005,
+    "flat": 0.0333,
+    "shade": 1.9,
+    "warmth": 0.13
+   },
+   "fails": [],
+   "at": "22:30",
+   "weather": "clear",
+   "camera": "indoors",
+   "daylight": 0.0,
+   "fps": 47.7,
+   "worst_ms": 26
+  }
+ }
+}

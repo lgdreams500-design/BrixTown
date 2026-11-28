@@ -1331,6 +1331,11 @@ first audit's findings are in LOOK_GATE.md.
     fails dusk for flat fill, 64 %); at dusk and night the forecourt and wall are near black, no floodlights; the lower third
     is a dark band at morning; midday fails for little light and shade (0.99 stops); the arch is a low square opening, not a
     lit vault; the doorway is a burnt-white strip by day; nobody on the forecourt.
+  - `MallsEastgateFoodCourt` (the Food Market's egg hall through its reference's own camera; the mirror image of the
+    reference; 46 to 49 frames a second): not a food court yet (ADR-0070): a tree, five brown boxes and a bare drum, no
+    outlets, stalls, seating or fins; the drum is one plain flat tone; at night the floor and drum are pale and brighter than
+    at dusk, lit from nowhere; at dusk the egg's lattice is a strong orange-red; the sun's net on the floor is burnt white at
+    midday; a matte checker for polished stone; nobody in the hall.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.
