@@ -23,6 +23,7 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "HAL/PlatformMisc.h"
+#include "HAL/PlatformTime.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CommandLine.h"
 #include "Misc/FileHelper.h"
@@ -90,6 +91,7 @@ void UBrixLight::Tick(float DeltaSeconds)
 				{
 					FParse::Value(*P[4], TEXT("lamp="), S.Lamp);
 					FParse::Value(*P[4], TEXT("fill="), S.Fill);
+					FParse::Value(*P[4], TEXT("pt="), S.PathSeconds);
 					FString Tint;
 					TArray<FString> C;
 					if (FParse::Value(*P[4], TEXT("tint="), Tint) && Tint.ParseIntoArray(C, TEXT("/")) == 3) S.Tint = FLinearColor(FCString::Atof(*C[0]), FCString::Atof(*C[1]), FCString::Atof(*C[2]));
@@ -213,9 +215,23 @@ void UBrixLight::Tour(ABrixGameMode& Mode, float DeltaSeconds)
 	APlayerController* PC = W->GetFirstPlayerController();
 	APawn* Me = PC ? PC->GetPawn() : nullptr;
 	if (!Me || W->GetTimeSeconds() < 1.5) return;
+	const double Now = FPlatformTime::Seconds();
+	if (bPathing) DeltaSeconds = (float)(Now - LastReal);   // paused: the real time
+	LastReal = Now;
+	if (bPathing && !bShot && Now < PathUntil) return;
 	StopWait -= DeltaSeconds;
 	if (StopAt >= 0 && !bShot && StopWait < 2.f) { StopTime += DeltaSeconds; StopWorst = FMath::Max(StopWorst, DeltaSeconds); ++StopFrames; }
 	if (StopWait > 0.f) return;
+	if (StopAt >= 0 && !bShot && !bPathing && Stops[StopAt].PathSeconds > 0.f)   // a pt= stop, settled: the path tracer, the world held still
+	{
+		PC->SetPause(true);
+		PC->ConsoleCommand(FString::Printf(TEXT("r.PathTracing.SamplesPerPixel %d"), PathSamples));
+		PC->ConsoleCommand(TEXT("ShowFlag.PathTracing 1"));
+		bPathing = true;
+		PathUntil = Now + Stops[StopAt].PathSeconds;
+		UE_LOG(LogTemp, Display, TEXT("Brix Town: tour stop %s: path tracing for %.0f s"), *Stops[StopAt].Name, Stops[StopAt].PathSeconds);
+		return;
+	}
 	if (StopAt >= 0 && !bShot)   // this stop has had its wait: its shot, then a moment for it to be written
 	{
 		const FStop& S = Stops[StopAt];
@@ -229,6 +245,12 @@ void UBrixLight::Tour(ABrixGameMode& Mode, float DeltaSeconds)
 		bShot = true;
 		StopWait = 0.7f;
 		return;
+	}
+	if (bPathing)   // the path-traced shot is written: back to the live light
+	{
+		PC->ConsoleCommand(TEXT("ShowFlag.PathTracing 0"));
+		PC->SetPause(false);
+		bPathing = false;
 	}
 	if (++StopAt >= Stops.Num())
 	{

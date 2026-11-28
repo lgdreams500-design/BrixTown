@@ -129,3 +129,25 @@ beside.
 5. The home room reference's bounce is still x2: the hallway's is now the surfaces' own, so the two rooms of one house
    are not lit by quite the same rule (in the catalog's issues).
 6. On a storey with no plan the room light follows the camera, moved four times a second (`CheckSeconds`), not every frame.
+
+### The hallway trial: references made in Unreal (started 2026-11-28, stopped part-way)
+The owner asked how studios do this and took the suggestion to try making a place's reference in Unreal itself: the
+measured target is the game's own scene, path traced (the engine's slow, correct light), and the Blender pictures stay
+as style targets judged by eye. The trial is the hallway at noon.
+- **The tool** (done): a tour stop's `pt=<seconds>` (`UBrixLight`, BrixLight.h) waits as usual, pauses the world, turns
+  the engine's path tracer on for that long, then takes the shot. `light_tour.ps1 -PathTrace` compiles ray tracing for
+  that run only (an `-ini:` override; the project's settings are unchanged). This laptop's chip has ray tracing (D3D12
+  tier 1.1); the first run's shaders compiled in about two minutes.
+- **The first numbers** (one run, stopped by the owner after three shots): with the eye pinned the same (`ev=-0.2`), the
+  path tracer and the live light (Lumen) agree in the hallway within 0.04 stops in brightness and warmth. So Lumen
+  is not losing the light the path tracer finds: the hallway's lack of daylight with the room light off (-6.5 stops)
+  is the build's, not a fault of the live light. Sheets: `trial_pt_hall_1200.jpg` (the game's eye),
+  `trial_pt_hall_1200_ev.jpg` (Lumen, pinned eye), `trial_pt_hall_1200_pt_ev.jpg` (path traced, pinned eye).
+- **Not done:** both shots had the room light on, so they say that the two agree, not how much daylight a doorway
+  brings in; next is the same pair with the room light off (`-ini` RoomFill=0, or a tour stop's `fill=0`). The path
+  tracer gathered about one sample a pixel a second (about 90 of `PathSamples` 512 in 90 s): grainy, fine for means,
+  not for the owner's eye; its progress bar is in the shot (`r.PathTracing.ProgressDisplay 0` to add). With ray
+  tracing compiled, whether Lumen switched to hardware ray tracing in that run is not checked (`r.Lumen.HardwareRayTracing`):
+  the live shot may not be quite the game's. The room's pair, the auto-eye path-traced shot and the time to stage a
+  reference this way were not reached. No reference has been made this way yet, and no ADR: ADR-0004 locks the look
+  to `Art/Reference/`, so making references in Unreal needs one and the owner's approval.
