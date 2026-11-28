@@ -1,0 +1,19 @@
+# The golden room and its hallway (ADR-0073; docs/process/LOOK_GATE.md, A room's light): where a room's light is set and
+# approved. Same form as light_tour.txt; run it with
+#   Tools\unreal\light_tour.ps1 -OutDir <folder> -List Tools\unreal\golden_tour.txt
+# then  python Tools/unreal/card_read.py <folder>  reads the light on each stop's grey card and ball.
+# home is IndoorHomeRoom's room, hall is IndoorHallway's corridor, each through its reference's own camera
+# (ABrixLightRoom). The hour "ref" is when the game's sun stands as the references' does and comes in at the window.
+
+golden_home_ref|ref||refroom:home
+golden_home_1200|12:00||refroom:home
+golden_home_2000|20:00||refroom:home
+golden_home_2230|22:30||refroom:home
+golden_hall_ref|ref||refroom:hall
+golden_hall_1200|12:00||refroom:hall
+golden_hall_2000|20:00||refroom:hall
+golden_hall_2230|22:30||refroom:hall
+
+# the day alone, the room's own light and the lamps out: how much of each room's light is the day's
+golden_home_ref_day|ref||refroom:home|fill=0 lamp=0
+golden_hall_ref_day|ref||refroom:hall|fill=0 lamp=0

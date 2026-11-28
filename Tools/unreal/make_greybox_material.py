@@ -12,7 +12,10 @@ Run from the repository root (the engine path is this machine's, docs/setup/DEV_
 import os
 import unreal
 
-PATH, NAME = "/Game/Greybox", "M_Greybox"
+# BRIX_MATERIAL=M_Room makes the same material under another name and leaves M_Greybox as it is: the rooms' own copy,
+# made from the surface's code as it now stands (painted plaster with its "how smooth", ADR-0073's golden room), so
+# the whole town's material and the kit's meshes need not be made again for it.
+PATH, NAME = "/Game/Greybox", os.environ.get("BRIX_MATERIAL", "M_Greybox")
 ROUGHNESS = 0.85          # matte, as ART-002 asks of every surface
 
 lib = unreal.MaterialEditingLibrary

@@ -1255,12 +1255,22 @@ first audit's findings are in LOOK_GATE.md.
   against its baseline, the gate's own steps, the engine's automated tests after the change to `BrixRooms`. The home
   room reference's bounce is raised x2 where the remade hallway's is the surfaces' own.
 - **A room's light has no measured target yet (ADR-0073, 2026-11-28):** a room's light is to be set and approved in
-  Unreal, in a golden room (the home room with its hallway, a grey card in each), and every other room measured against
-  it on its card. Not built: the golden room, the card, a place in the catalog for an Unreal light picture,
-  `look_match.py` reading a card. Not taken: the path-traced pair of the hallway with the room light off. Until the
-  golden room's pictures are approved the rooms' light stays at "K + beams", and the brightness and warmth figures
-  above, which are against Blender pictures, are what was measured and not pass marks. Not decided: whether out of
-  doors follows, whether a room's Blender reference still needs every hour, the home room reference's raised bounce.
+  Unreal, in a golden room, and every other room measured against it on its grey card. The golden room and its hallway
+  are built (`ABrixLightRoom`: `refroom:home`, `refroom:hall`, a grey card and ball in each; `Tools/unreal/golden_tour.txt`,
+  `Tools/unreal/card_read.py`; first shots and what is wrong in them in `Art/StyleTests/unreal_golden_room_58/`). Its
+  light is still the game's rule of today and **nothing in it is approved**. Seen there: what faces the camera is almost
+  black by day (the room's own light hangs in mid-room, behind it); the hallway by day is twice as bright as its
+  reference; morning, noon and 20:00 are one picture; at night the floor lamp burns the wall and the fire is not lit.
+  Not built: a place in the catalog and on the reference page for an Unreal light picture; a person in the golden room.
+  Not taken: the path-traced pair of the hallway with the room light off; a `-BrixShot=` shot. The engine's automated
+  tests were not run after the changes to `BrixLight` and `BrixLightRoom`. Until the golden room's pictures are approved
+  the rooms' light stays at "K + beams", and the brightness and warmth figures above, which are against Blender
+  pictures, are what was measured and not pass marks. Not decided: whether out of doors follows, whether a room's
+  Blender reference still needs every hour, the home room reference's raised bounce.
+- **A room's plaster is plain only in the golden room (ADR-0074, 2026-11-28):** the town's rooms (`ABrixRooms`) and the
+  inner faces of the buildings' walls still draw the street's mottle; carrying it over goes with the look tour.
+  `look_check.py` fails the golden hallway's "flat" by day (52 to 55 % against 45 %): the limit is not yet set for a
+  room's plain walls. The old measuring rooms' sill, shutters and paving are drawn with no pattern, which draws black.
 - **Not looked at with the gate at all:** the upper floors of Eastgate and its shops' insides, the tram, playgrounds,
   gardens, the designed houses' rooms, the building designer's views, the menus and counters, any place in rain or
   snow other than Market Square.

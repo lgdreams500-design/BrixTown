@@ -242,6 +242,24 @@ void UBrixLight::Tour(ABrixGameMode& Mode, float DeltaSeconds)
 			(int32)Mode.ClockMinute() / 60, (int32)Mode.ClockMinute() % 60, Mode.Weather ? *Mode.Weather->Now.Kind : TEXT("-"),
 			Cam && Mode.RoomAt(Cam->GetCameraLocation()) != INDEX_NONE ? TEXT("indoors") : TEXT("out of doors"), Mode.Daylight, StopTime > 0 ? StopFrames / StopTime : 0.f);
 		UE_LOG(LogTemp, Display, TEXT("Brix Town: tour stop %s: the longest of its last %d frames %.0f ms"), *S.Name, StopFrames, StopWorst * 1000.f);
+		// a golden room's grey card and ball: where they are in this picture, as shares of its width and height, for
+		// Tools/unreal/card_read.py to read the light on them (ADR-0073)
+		TArray<FVector> Corners;
+		FVector Ball;
+		float BallRadius = 0.f;
+		int32 ViewX = 0, ViewY = 0;
+		PC->GetViewportSize(ViewX, ViewY);
+		if (!S.RefRoom.IsEmpty() && RefRooms && Cam && ViewX > 0 && ViewY > 0 && RefRooms->Card(S.RefRoom, Corners, Ball, BallRadius))
+		{
+			FBox2D On(ForceInit);
+			FVector2D P, Mid, Rim;
+			bool bAll = true;
+			for (const FVector& C : Corners) { if (PC->ProjectWorldLocationToScreen(C, P)) On += P; else bAll = false; }
+			bAll &= PC->ProjectWorldLocationToScreen(Ball, Mid) && PC->ProjectWorldLocationToScreen(Ball + Cam->GetCameraRotation().RotateVector(FVector::RightVector) * BallRadius, Rim);
+			if (bAll)
+				UE_LOG(LogTemp, Display, TEXT("Brix Town: tour stop %s: card %.4f,%.4f,%.4f,%.4f ball %.4f,%.4f,%.4f"), *S.Name,
+					On.Min.X / ViewX, On.Min.Y / ViewY, On.Max.X / ViewX, On.Max.Y / ViewY, Mid.X / ViewX, Mid.Y / ViewY, FVector2D::Distance(Mid, Rim) / ViewX);
+		}
 		bShot = true;
 		StopWait = 0.7f;
 		return;
@@ -275,10 +293,11 @@ void UBrixLight::Tour(ABrixGameMode& Mode, float DeltaSeconds)
 			TourCam->GetCameraComponent()->bConstrainAspectRatio = false;   // the whole window, no black bars
 		}
 		FTransform RefCam;
-		if (!S.RefRoom.IsEmpty() && RefRooms && RefRooms->Camera(S.RefRoom, RefCam))
+		float RefFov = ABrixLightRoom::Fov;
+		if (!S.RefRoom.IsEmpty() && RefRooms && RefRooms->Camera(S.RefRoom, RefCam, &RefFov))
 		{
 			TourCam->SetActorTransform(RefCam);
-			TourCam->GetCameraComponent()->SetFieldOfView(ABrixLightRoom::Fov);
+			TourCam->GetCameraComponent()->SetFieldOfView(RefFov);
 		}
 		else
 		{

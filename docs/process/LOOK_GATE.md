@@ -167,8 +167,12 @@ is set, approved and measured, so that every light number compares Unreal with U
 4. **Every other room is measured on its card** against the golden room's at the same hour: within 0.5 of a stop in
    brightness and 0.33 in warmth. What differs in what is there (step 2 of the round) is mended in the map's data and
    the models, as before.
-5. **Not built yet (2026-11-28):** the golden room, the card, the catalog's place for an Unreal light picture, and
-   `look_match.py` reading a card. Until the golden room's pictures are approved, leave the rooms' light as it is.
+5. **Where it stands (2026-11-28):** the golden room and its hallway are built (`refroom:home`, `refroom:hall`), with
+   their cards. Shoot them with `Tools\unreal\light_tour.ps1 -OutDir <folder> -List Tools\unreal\golden_tour.txt` and
+   read the cards with `python Tools/unreal/card_read.py <folder>` (`--write` keeps the readings, `--against` compares
+   with kept ones). First shots: `Art/StyleTests/unreal_golden_room_58/`. Its light is not set and nothing is approved;
+   the catalog has no place yet for an Unreal light picture. Until the golden room's pictures are approved, leave the
+   rooms' light as it is. A room's plaster is plain (ADR-0074), so far only there.
 
 ## For AI agents
 - Do not write "checked", "verified" or "looks right" about anything seen unless steps 1 to 3 were done for it in

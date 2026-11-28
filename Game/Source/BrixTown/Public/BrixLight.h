@@ -35,8 +35,9 @@
 //       default: run it with Tools/unreal/light_tour.ps1 -PathTrace.
 //       Run it with -BrixNoDesigner -BrixNoSave (not -BrixShot=, which quits after one shot).
 //       With -BrixLightRoom (ABrixLightRoom: the Blender reference rooms built in Unreal) where may be
-//       refroom:<shop|cafe|kitchen>, the reference's own camera in that room, and hh:mm may be ref, when the game's
-//       sun stands as the references' does.
+//       refroom:<shop|cafe|kitchen|home|hall>, the reference's own camera in that room, and hh:mm may be ref, when the
+//       game's sun stands as the references' does. home and hall are the golden room and its hallway (ADR-0073): the log
+//       then says where their grey card and ball are in the shot ("card x0,y0,x1,y1 ball x,y,r", shares of the picture).
 //   -BrixLightOff                             leave the light as the game mode makes it, to compare
 //   -BrixLightNo=<letters>                    leave parts out: e the eye, h the haze, n the night's light, s its sky
 UCLASS(Config = Game)
